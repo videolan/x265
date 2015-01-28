@@ -208,7 +208,7 @@ void Encoder::create()
             m_csvfpt = fopen(m_param->csvfn, "wb");
             if (m_csvfpt)
             {
-                if (m_param->logLevel >= X265_LOG_DEBUG)
+                if (m_param->logLevel >= X265_LOG_FRAME)
                 {
                     fprintf(m_csvfpt, "Encode Order, Type, POC, QP, Bits, ");
                     if (m_param->rc.rateControlMode == X265_RC_CRF)
@@ -977,7 +977,7 @@ void Encoder::writeLog(int argc, char **argv)
 {
     if (m_csvfpt)
     {
-        if (m_param->logLevel >= X265_LOG_DEBUG)
+        if (m_param->logLevel >= X265_LOG_FRAME)
         {
             // adding summary to a per-frame csv log file needs a summary header
             fprintf(m_csvfpt, "\nSummary\n");
@@ -1116,14 +1116,14 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
             m_analyzeB.addSsim(ssim);
     }
 
-    // if debug log level is enabled, per frame logging is performed
+    char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
+    int poc = slice->m_poc;
+    if (!IS_REFERENCED(curFrame))
+        c += 32; // lower case if unreferenced
+
+    // if debug log level is enabled, per frame console logging is performed
     if (m_param->logLevel >= X265_LOG_DEBUG)
     {
-        char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
-        int poc = slice->m_poc;
-        if (!IS_REFERENCED(curFrame))
-            c += 32; // lower case if unreferenced
-
         char buf[1024];
         int p;
         p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, curEncData.m_avgQpAq, slice->m_sliceQp, (int)bits);
@@ -1150,58 +1150,6 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
             }
         }
 
-        // per frame CSV logging if the file handle is valid
-        if (m_csvfpt)
-        {
-            fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", m_outputCount++, c, poc, curEncData.m_avgQpAq, (int)bits);
-            if (m_param->rc.rateControlMode == X265_RC_CRF)
-                fprintf(m_csvfpt, "%.3lf,", curEncData.m_rateFactor);
-            double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
-            if (m_param->bEnablePsnr)
-                fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);
-            else
-                fputs(" -, -, -, -,", m_csvfpt);
-            if (m_param->bEnableSsim)
-                fprintf(m_csvfpt, " %.6f, %6.3f", ssim, x265_ssim2dB(ssim));
-            else
-                fputs(" -, -", m_csvfpt);
-            if (slice->isIntra())
-                fputs(", -, -", m_csvfpt);
-            else
-            {
-                int numLists = slice->isInterP() ? 1 : 2;
-                for (int list = 0; list < numLists; list++)
-                {
-                    fprintf(m_csvfpt, ", ");
-                    for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
-                    {
-                        int k = slice->m_refPOCList[list][ref] - slice->m_lastIDR;
-                        fprintf(m_csvfpt, " %d", k);
-                    }
-                }
-
-                if (numLists == 1)
-                    fputs(", -", m_csvfpt);
-            }
-
-#define ELAPSED_MSEC(start, end) (((double)(end) - (start)) / 1000)
-
-            // detailed frame statistics
-            fprintf(m_csvfpt, ", %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf",
-                ELAPSED_MSEC(0, curEncoder->m_slicetypeWaitTime),
-                ELAPSED_MSEC(curEncoder->m_startCompressTime, curEncoder->m_row0WaitTime),
-                ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_endCompressTime),
-                ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_allRowsAvailableTime),
-                ELAPSED_MSEC(0, curEncoder->m_totalWorkerElapsedTime),
-                ELAPSED_MSEC(0, curEncoder->m_totalNoWorkerTime));
-            if (curEncoder->m_totalActiveWorkerCount)
-                fprintf(m_csvfpt, ", %.3lf", (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples);
-            else
-                fputs(", 1", m_csvfpt);
-            fprintf(m_csvfpt, ", %d", curEncoder->m_countRowBlocks);
-            fprintf(m_csvfpt, "\n");
-        }
-
         if (m_param->decodedPictureHashSEI && m_param->logLevel >= X265_LOG_FULL)
         {
             const char* digestStr = NULL;
@@ -1221,7 +1169,60 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
                 p += sprintf(buf + p, " [Checksum:%s]", digestStr);
             }
         }
+
         x265_log(m_param, X265_LOG_DEBUG, "%s\n", buf);
+    }
+
+    if (m_param->logLevel >= X265_LOG_FRAME && m_csvfpt)
+    {
+        // per frame CSV logging if the file handle is valid
+        fprintf(m_csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", m_outputCount++, c, poc, curEncData.m_avgQpAq, (int)bits);
+        if (m_param->rc.rateControlMode == X265_RC_CRF)
+            fprintf(m_csvfpt, "%.3lf,", curEncData.m_rateFactor);
+        double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
+        if (m_param->bEnablePsnr)
+            fprintf(m_csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", psnrY, psnrU, psnrV, psnr);
+        else
+            fputs(" -, -, -, -,", m_csvfpt);
+        if (m_param->bEnableSsim)
+            fprintf(m_csvfpt, " %.6f, %6.3f", ssim, x265_ssim2dB(ssim));
+        else
+            fputs(" -, -", m_csvfpt);
+        if (slice->isIntra())
+            fputs(", -, -", m_csvfpt);
+        else
+        {
+            int numLists = slice->isInterP() ? 1 : 2;
+            for (int list = 0; list < numLists; list++)
+            {
+                fprintf(m_csvfpt, ", ");
+                for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
+                {
+                    int k = slice->m_refPOCList[list][ref] - slice->m_lastIDR;
+                    fprintf(m_csvfpt, " %d", k);
+                }
+            }
+
+            if (numLists == 1)
+                fputs(", -", m_csvfpt);
+        }
+
+#define ELAPSED_MSEC(start, end) (((double)(end) - (start)) / 1000)
+
+        // detailed frame statistics
+        fprintf(m_csvfpt, ", %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf",
+            ELAPSED_MSEC(0, curEncoder->m_slicetypeWaitTime),
+            ELAPSED_MSEC(curEncoder->m_startCompressTime, curEncoder->m_row0WaitTime),
+            ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_endCompressTime),
+            ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_allRowsAvailableTime),
+            ELAPSED_MSEC(0, curEncoder->m_totalWorkerElapsedTime),
+            ELAPSED_MSEC(0, curEncoder->m_totalNoWorkerTime));
+        if (curEncoder->m_totalActiveWorkerCount)
+            fprintf(m_csvfpt, ", %.3lf", (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples);
+        else
+            fputs(", 1", m_csvfpt);
+        fprintf(m_csvfpt, ", %d", curEncoder->m_countRowBlocks);
+        fprintf(m_csvfpt, "\n");
         fflush(stderr);
     }
 }

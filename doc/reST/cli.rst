@@ -28,7 +28,7 @@ consider this an error and abort.
 
 Generally, when an option expects a string value from a list of strings
 the user may specify the integer ordinal of the value they desire. ie:
-:option:`--log-level` 3 is equivalent to :option:`--log-level` debug.
+:option:`--log-level` 4 is equivalent to :option:`--log-level` debug.
 
 Executable Options
 ==================
@@ -51,7 +51,7 @@ Logging/Statistic Options
 .. option:: --log-level <integer|string>
 
 	Logging level. Debug level enables per-frame QP, metric, and bitrate
-	logging. If a CSV file is being generated, debug level makes the log
+	logging. If a CSV file is being generated, frame level makes the log
 	be per-frame rather than per-encode. Full level enables hash and
 	weight logging. -1 disables all logging, except certain fatal
 	errors, and can be specified by the string "none".
@@ -59,8 +59,9 @@ Logging/Statistic Options
 	0. error
 	1. warning
 	2. info **(default)**
-	3. debug
-	4. full
+	3. frame
+	4. debug
+	5. full
 
 .. option:: --no-progress
 
@@ -72,7 +73,7 @@ Logging/Statistic Options
 
 	Writes encoding results to a comma separated value log file. Creates
 	the file if it doesnt already exist, else adds one line per run.  if
-	:option:`--log-level` is debug or above, it writes one line per
+	:option:`--log-level` is frame or above, it writes one line per
 	frame. Default none
 
 	When frame level logging is enabled, several frame performance

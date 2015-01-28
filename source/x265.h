@@ -221,8 +221,9 @@ typedef enum
 #define X265_LOG_ERROR          0
 #define X265_LOG_WARNING        1
 #define X265_LOG_INFO           2
-#define X265_LOG_DEBUG          3
-#define X265_LOG_FULL           4
+#define X265_LOG_FRAME          3
+#define X265_LOG_DEBUG          4
+#define X265_LOG_FULL           5
 
 #define X265_B_ADAPT_NONE       0
 #define X265_B_ADAPT_FAST       1
@@ -404,11 +405,12 @@ typedef struct x265_param
     /* Enable the measurement and reporting of SSIM. Default is disabled */
     int       bEnableSsim;
 
-    /* filename of CSV log. If logLevel is X265_LOG_DEBUG, the encoder will emit
-     * per-slice statistics to this log file in encode order. Otherwise the
-     * encoder will emit per-stream statistics into the log file when
-     * x265_encoder_log is called (presumably at the end of the encode) */
-    char *csvfn;
+    /* filename of CSV log. If logLevel greater than or equal to X265_LOG_FRAME,
+     * the encoder will emit per-slice statistics to this log file in encode
+     * order. Otherwise the encoder will emit per-stream statistics into the log
+     * file when x265_encoder_log is called (presumably at the end of the
+     * encode) */
+    char*     csvfn;
 
     /* Enable the generation of SEI messages for each encoded frame containing
      * the hashes of the three reconstructed picture planes. Most decoders will
