@@ -643,6 +643,7 @@ void FrameEncoder::compressCTURows()
             }
         }
 
+        m_allRowsAvailableTime = x265_mdate();
         m_completionEvent.wait();
 
         WaveFront::dequeue();
@@ -673,6 +674,8 @@ void FrameEncoder::compressCTURows()
 
                 if (!i)
                     m_row0WaitTime = x265_mdate();
+                else if (i == m_numRows - 1)
+                    m_allRowsAvailableTime = x265_mdate();
                 processRowEncoder(i, *m_tld);
             }
 

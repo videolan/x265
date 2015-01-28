@@ -169,9 +169,11 @@ public:
     volatile int             m_countRowBlocks;           // count of workers forced to abandon a row because of top dependency
     int64_t                  m_startCompressTime;        // timestamp when frame encoder is given a frame
     int64_t                  m_row0WaitTime;             // timestamp when row 0 is allowed to start
+    int64_t                  m_allRowsAvailableTime;     // timestamp when all reference dependencies are resolved
     int64_t                  m_endCompressTime;          // timestamp after all CTUs are compressed
     int64_t                  m_endFrameTime;             // timestamp after RCEnd, NR updates, etc
-    int64_t                  m_totalWorkerElapsedTime;
+    int64_t                  m_totalWorkerElapsedTime;   // total elapsed time spent by worker threads processing CTUs
+    int64_t                  m_totalNoWorkerTime;        // total elapsed time without any active worker threads
 
     Encoder*                 m_top;
     x265_param*              m_param;

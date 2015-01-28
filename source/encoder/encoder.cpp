@@ -215,7 +215,7 @@ void Encoder::create()
                         fprintf(m_csvfpt, "RateFactor, ");
                     fprintf(m_csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB),  List 0, List 1");
                     /* detailed performance statistics */
-                    fprintf(m_csvfpt, ", Row0Wait ms, Wall time ms, FrameEnd ms, Total CTU time ms, Avg WPP, Row Blocks\n");
+                    fprintf(m_csvfpt, ", Row0Wait ms, Wall time ms, Ref Wait Wall ms, Total CTU time ms, Avg WPP, Row Blocks\n");
                 }
                 else
                     fputs(summaryCSVHeader, m_csvfpt);
@@ -1190,7 +1190,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
             fprintf(m_csvfpt, ", %.1lf, %.1lf, %.1lf, %.1lf",
                 ELAPSED_MSEC(curEncoder->m_startCompressTime, curEncoder->m_row0WaitTime),
                 ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_endCompressTime),
-                ELAPSED_MSEC(curEncoder->m_endCompressTime, curEncoder->m_endFrameTime),
+                ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_allRowsAvailableTime),
                 ELAPSED_MSEC(0, curEncoder->m_totalWorkerElapsedTime));
             if (curEncoder->m_totalActiveWorkerCount)
                 fprintf(m_csvfpt, ", %.3lf", (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples);
