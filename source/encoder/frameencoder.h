@@ -134,11 +134,19 @@ public:
 
     Event                    m_enable;
     Event                    m_done;
+    Event                    m_completionEvent;
     bool                     m_threadActive;
+    int                      m_frameEncoderID;
 
-    int                      m_numRows;
+    uint32_t                 m_numRows;
     uint32_t                 m_numCols;
-    int                      m_refLagRows;
+    uint32_t                 m_filterRowDelay;
+    uint32_t                 m_filterRowDelayCus;
+    uint32_t                 m_refLagRows;
+
+    volatile bool            m_bAllRowsStop;
+    volatile int             m_vbvResetTriggerRow;
+
     CTURow*                  m_rows;
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
@@ -152,16 +160,15 @@ public:
     MD5Context               m_state[3];
     uint32_t                 m_crc[3];
     uint32_t                 m_checksum[3];
-    double                   m_elapsedCompressTime; // elapsed time spent in worker threads
-    double                   m_frameTime;           // wall time from frame start to finish
     StatisticLog             m_sliceTypeLog[3];     // per-slice type CU statistics
     FrameStats               m_frameStats;          // stats of current frame for multi-pass encodes
-    volatile bool            m_bAllRowsStop;
-    volatile int             m_vbvResetTriggerRow;
 
+    double                   m_elapsedCompressTime;      // elapsed time spent in worker threads
+    double                   m_frameTime;                // wall time from frame start to finish
     volatile int             m_activeWorkerCount;        // count of workers current encoding or filtering CTUs
     volatile int             m_totalActiveWorkerCount;   // sum of m_activeWorkerCount sampled at end of each CTU
     volatile int             m_activeWorkerCountSamples; // count of times m_activeWorkerCount was sampled (think vbv restarts)
+    int64_t                  m_totalTime;
 
     Encoder*                 m_top;
     x265_param*              m_param;
@@ -180,12 +187,6 @@ public:
     Entropy                  m_initSliceContext;
     FrameFilter              m_frameFilter;
     NALList                  m_nalList;
-
-    int                      m_filterRowDelay;
-    int                      m_filterRowDelayCus;
-    Event                    m_completionEvent;
-    int64_t                  m_totalTime;
-    int                      m_frameEncoderID;
 
 protected:
 

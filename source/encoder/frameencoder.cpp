@@ -165,7 +165,7 @@ bool FrameEncoder::initializeGeoms()
     {
         // right
         CUData::calcCTUGeoms(widthRem, maxCUSize, maxCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
-        for (int i = 0; i < m_numRows; i++)
+        for (uint32_t i = 0; i < m_numRows; i++)
         {
             uint32_t ctuAddr = m_numCols * (i + 1) - 1;
             m_ctuGeomMap[ctuAddr] = countGeoms * CUGeom::MAX_GEOMS;
@@ -289,7 +289,7 @@ void FrameEncoder::compressFrame()
 
     // reset entropy coders
     m_entropyCoder.load(m_initSliceContext);
-    for (int i = 0; i < m_numRows; i++)
+    for (uint32_t i = 0; i < m_numRows; i++)
         m_rows[i].init(m_initSliceContext);
 
     uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : 1;
@@ -395,7 +395,7 @@ void FrameEncoder::compressFrame()
         int totalI = 0, totalP = 0, totalSkip = 0;
 
         // accumulate intra,inter,skip cu count per frame for 2 pass
-        for (int i = 0; i < m_numRows; i++)
+        for (uint32_t i = 0; i < m_numRows; i++)
         {
             m_frameStats.mvBits    += m_rows[i].rowStats.mvBits;
             m_frameStats.coeffBits += m_rows[i].rowStats.coeffBits;
@@ -610,7 +610,7 @@ void FrameEncoder::compressCTURows()
         WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
-        for (int row = 0; row < m_numRows; row++)
+        for (uint32_t row = 0; row < m_numRows; row++)
         {
             // block until all reference frames have reconstructed the rows we need
             for (int l = 0; l < numPredDir; l++)
@@ -619,7 +619,7 @@ void FrameEncoder::compressCTURows()
                 {
                     Frame *refpic = slice->m_refPicList[l][ref];
 
-                    int reconRowCount = refpic->m_reconRowCount.get();
+                    uint32_t reconRowCount = refpic->m_reconRowCount.get();
                     while ((reconRowCount != m_numRows) && (reconRowCount < row + m_refLagRows))
                         reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
 
@@ -641,7 +641,7 @@ void FrameEncoder::compressCTURows()
     }
     else
     {
-        for (int i = 0; i < this->m_numRows + m_filterRowDelay; i++)
+        for (uint32_t i = 0; i < this->m_numRows + m_filterRowDelay; i++)
         {
             // Encode
             if (i < m_numRows)
@@ -654,7 +654,7 @@ void FrameEncoder::compressCTURows()
                     {
                         Frame *refpic = slice->m_refPicList[list][ref];
 
-                        int reconRowCount = refpic->m_reconRowCount.get();
+                        uint32_t reconRowCount = refpic->m_reconRowCount.get();
                         while ((reconRowCount != m_numRows) && (reconRowCount < i + m_refLagRows))
                             reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
 
@@ -679,8 +679,8 @@ void FrameEncoder::processRow(int row, int threadId)
 {
     ATOMIC_INC(&m_activeWorkerCount);
 
-    const int realRow = row >> 1;
-    const int typeNum = row & 1;
+    const uint32_t realRow = row >> 1;
+    const uint32_t typeNum = row & 1;
 
     ThreadLocalData& tld = threadId >= 0 ? m_top->m_threadLocalData[threadId] : *m_tld;
     
@@ -701,8 +701,9 @@ void FrameEncoder::processRow(int row, int threadId)
 }
 
 // Called by worker threads
-void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
+void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 {
+    uint32_t row = (uint32_t)intRow;
     CTURow& curRow = m_rows[row];
 
     if (m_param->bEnableWavefront)
@@ -740,7 +741,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     {
         ProfileScopeEvent(encodeCTU);
 
-        int col = curRow.completed;
+        uint32_t col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
         CUData* ctu = curEncData.getPicCTU(cuAddr);
         ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp);
@@ -753,7 +754,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 curEncData.m_rowStat[row].diagQpScale = x265_qp2qScale(curEncData.m_avgQpRc);
             }
 
-            if (row >= col && row && m_vbvResetTriggerRow != row)
+            if (row >= col && row && m_vbvResetTriggerRow != intRow)
                 curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_cuStat[cuAddr - numCols + 1].baseQp;
             else
                 curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_rowStat[row].diagQp;
@@ -852,7 +853,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                     m_vbvResetTriggerRow = row;
                     m_bAllRowsStop = true;
 
-                    for (int r = m_numRows - 1; r >= row; r--)
+                    for (uint32_t r = m_numRows - 1; r >= row; r--)
                     {
                         CTURow& stopRow = m_rows[r];
 
@@ -916,7 +917,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             ScopedLock below(m_rows[row + 1].lock);
             if (m_rows[row + 1].active == false &&
                 m_rows[row + 1].completed + 2 <= curRow.completed &&
-                (!m_bAllRowsStop || row + 1 < m_vbvResetTriggerRow))
+                (!m_bAllRowsStop || intRow + 1 < m_vbvResetTriggerRow))
             {
                 m_rows[row + 1].active = true;
                 enqueueRowEncoder(row + 1);
@@ -924,7 +925,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
 
         ScopedLock self(curRow.lock);
-        if ((m_bAllRowsStop && row > m_vbvResetTriggerRow) ||
+        if ((m_bAllRowsStop && intRow > m_vbvResetTriggerRow) ||
             (row > 0 && curRow.completed < numCols - 1 && m_rows[row - 1].completed < m_rows[row].completed + 2))
         {
             curRow.active = false;
@@ -946,7 +947,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
      * after half the frame is encoded, but after this initial period we update
      * after refLagRows (the number of rows reference frames must have completed
      * before referencees may begin encoding) */
-    int rowCount = 0;
+    uint32_t rowCount = 0;
     if (m_param->rc.rateControlMode == X265_RC_ABR)
     {
         if ((uint32_t)m_rce.encodeOrder <= 2 * (m_param->fpsNum / m_param->fpsDenom))
@@ -958,7 +959,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     {
         m_rce.rowTotalBits = 0;
         if (bIsVbv)
-            for (int i = 0; i < rowCount; i++)
+            for (uint32_t i = 0; i < rowCount; i++)
                 m_rce.rowTotalBits += curEncData.m_rowStat[i].encodedBits;
         else
             for (uint32_t cuAddr = 0; cuAddr < rowCount * numCols; cuAddr++)
@@ -980,7 +981,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
         if (row == m_numRows - 1)
         {
-            for (int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
+            for (uint32_t i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
                 enableRowFilter(i);
         }
     }
