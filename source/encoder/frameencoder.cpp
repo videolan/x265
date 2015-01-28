@@ -685,6 +685,7 @@ void FrameEncoder::compressCTURows()
 
 void FrameEncoder::processRow(int row, int threadId)
 {
+    int64_t startTime = x265_mdate();
     ATOMIC_INC(&m_activeWorkerCount);
 
     const uint32_t realRow = row >> 1;
@@ -706,6 +707,7 @@ void FrameEncoder::processRow(int row, int threadId)
     }
 
     ATOMIC_DEC(&m_activeWorkerCount);
+    m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
 }
 
 // Called by worker threads
@@ -740,7 +742,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     FrameData& curEncData = *m_frame->m_encData;
     Slice *slice = curEncData.m_slice;
 
-    int64_t startTime = x265_mdate();
     const uint32_t numCols = m_numCols;
     const uint32_t lineStartCUAddr = row * numCols;
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
@@ -938,7 +939,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         {
             curRow.active = false;
             curRow.busy = false;
-            m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
             ATOMIC_INC(&m_countRowBlocks);
             return;
         }
@@ -995,7 +995,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         }
     }
 
-    m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
     curRow.busy = false;
 }
 
