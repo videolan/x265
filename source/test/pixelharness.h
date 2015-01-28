@@ -63,6 +63,7 @@ protected:
     int      int_test_buff[TEST_CASES][BUFFSIZE];
     uint16_t ushort_test_buff[TEST_CASES][BUFFSIZE];
     uint8_t  uchar_test_buff[TEST_CASES][BUFFSIZE];
+    double   double_test_buff[TEST_CASES][BUFFSIZE];
 
     bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
@@ -99,6 +100,7 @@ protected:
     bool check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt);
     bool check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt);
     bool check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt);
+    bool check_cutree_propagate_cost(cutree_propagate_cost ref, cutree_propagate_cost opt);
     bool check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_psyCost_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
     bool check_calSign(sign_t ref, sign_t opt);

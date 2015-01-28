@@ -1048,6 +1048,34 @@ bool PixelHarness::check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt)
     return true;
 }
 
+bool PixelHarness::check_cutree_propagate_cost(cutree_propagate_cost ref, cutree_propagate_cost opt)
+{
+    ALIGN_VAR_16(int, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    double fps = 1.0;
+    int width = 16 + rand() % 64;
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        checked(opt, opt_dest, ushort_test_buff[index] + j, int_test_buff[index] + j, ushort_test_buff[index] + j, int_test_buff[index] + j, &fps, width);
+        ref(ref_dest, ushort_test_buff[index] + j, int_test_buff[index] + j, ushort_test_buff[index] + j, int_test_buff[index] + j, &fps, width);
+
+        if (memcmp(ref_dest, opt_dest, width * sizeof(pixel)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt)
 {
     int j = 0, index1, index2, optres, refres;
@@ -1608,6 +1636,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.propagateCost)
+    {
+        if (!check_cutree_propagate_cost(ref.propagateCost, opt.propagateCost))
+        {
+            printf("propagateCost failed\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -1946,5 +1983,11 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("planecopy_cp");
         REPORT_SPEEDUP(opt.planecopy_cp, ref.planecopy_cp, uchar_test_buff[0], 64, pbuf1, 64, 64, 64, 2);
+    }
+
+    if (opt.propagateCost)
+    {
+        HEADER0("propagateCost");
+        REPORT_SPEEDUP(opt.propagateCost, ref.propagateCost, ibuf1, ushort_test_buff[0], int_test_buff[0], ushort_test_buff[0], int_test_buff[0], double_test_buff[0], 80);
     }
 }
