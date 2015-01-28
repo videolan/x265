@@ -157,6 +157,7 @@ public:
     FrameStats               m_frameStats;          // stats of current frame for multi-pass encodes
     volatile bool            m_bAllRowsStop;
     volatile int             m_vbvResetTriggerRow;
+    volatile int             m_activeWorkerCount;
     uint64_t                 m_accessUnitBits;
 
     Encoder*                 m_top;

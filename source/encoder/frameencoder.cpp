@@ -44,6 +44,7 @@ FrameEncoder::FrameEncoder()
 {
     m_totalTime = 0;
     m_frameEncoderID = 0;
+    m_activeWorkerCount = 0;
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
     m_outStreams = NULL;
@@ -673,6 +674,8 @@ void FrameEncoder::compressCTURows()
 
 void FrameEncoder::processRow(int row, int threadId)
 {
+    ATOMIC_INC(&m_activeWorkerCount);
+
     const int realRow = row >> 1;
     const int typeNum = row & 1;
 
@@ -690,6 +693,8 @@ void FrameEncoder::processRow(int row, int threadId)
         else
             m_completionEvent.trigger();
     }
+
+    ATOMIC_DEC(&m_activeWorkerCount);
 }
 
 // Called by worker threads
