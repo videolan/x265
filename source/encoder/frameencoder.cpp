@@ -42,7 +42,9 @@ FrameEncoder::FrameEncoder()
     : WaveFront(NULL)
     , m_threadActive(true)
 {
+    m_prevOutputTime = x265_mdate();
     m_totalWorkerElapsedTime = 0;
+    m_slicetypeWaitTime = 0;
     m_frameEncoderID = 0;
     m_activeWorkerCount = 0;
     m_bAllRowsStop = false;
@@ -200,6 +202,7 @@ bool FrameEncoder::initializeGeoms()
 
 bool FrameEncoder::startCompressFrame(Frame* curFrame)
 {
+    m_slicetypeWaitTime = x265_mdate() - m_prevOutputTime;
     m_frame = curFrame;
     curFrame->m_encData->m_frameEncoderID = m_frameEncoderID; // Each Frame knows the ID of the FrameEncoder encoding it
     curFrame->m_encData->m_slice->m_mref = m_mref;
@@ -1186,6 +1189,7 @@ Frame *FrameEncoder::getEncodedPicture(NALList& output)
         Frame *ret = m_frame;
         m_frame = NULL;
         output.takeContents(m_nalList);
+        m_prevOutputTime = x265_mdate();
         return ret;
     }
 

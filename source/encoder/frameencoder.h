@@ -173,6 +173,8 @@ public:
     int64_t                  m_endCompressTime;          // timestamp after all CTUs are compressed
     int64_t                  m_endFrameTime;             // timestamp after RCEnd, NR updates, etc
     int64_t                  m_stallStartTime;           // timestamp when worker count becomes 0
+    int64_t                  m_prevOutputTime;           // timestamp when prev frame was retrieved by API thread
+    int64_t                  m_slicetypeWaitTime;        // total elapsed time waiting for decided frame
     int64_t                  m_totalWorkerElapsedTime;   // total elapsed time spent by worker threads processing CTUs
     int64_t                  m_totalNoWorkerTime;        // total elapsed time without any active worker threads
 
