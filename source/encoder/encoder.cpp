@@ -213,10 +213,9 @@ void Encoder::create()
                     fprintf(m_csvfpt, "Encode Order, Type, POC, QP, Bits, ");
                     if (m_param->rc.rateControlMode == X265_RC_CRF)
                         fprintf(m_csvfpt, "RateFactor, ");
-                    fprintf(m_csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), "
-                                      "List 0, List 1");
+                    fprintf(m_csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB),  List 0, List 1");
                     /* detailed performance statistics */
-                    fprintf(m_csvfpt, ", Wall time, Total CTU time, Avg WPP, Row Blocks\n");
+                    fprintf(m_csvfpt, ", Row0Wait, Wall time, FrameEnd, Total CTU time, Avg WPP, Row Blocks\n");
                 }
                 else
                     fputs(summaryCSVHeader, m_csvfpt);
@@ -1188,8 +1187,10 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
 #define ELAPSED_SEC(start, end) (((double)(end) - (start)) / 1000000)
 
             // detailed frame statistics
-            fprintf(m_csvfpt, ", %.3lf, %.3lf",
-                ELAPSED_SEC(curEncoder->m_startCompressTime, curEncoder->m_endCompressTime),
+            fprintf(m_csvfpt, ", %.3lf, %.3lf, %.3lf, %.3lf",
+                ELAPSED_SEC(curEncoder->m_startCompressTime, curEncoder->m_row0WaitTime),
+                ELAPSED_SEC(curEncoder->m_row0WaitTime, curEncoder->m_endCompressTime),
+                ELAPSED_SEC(curEncoder->m_endCompressTime, curEncoder->m_endFrameTime),
                 ELAPSED_SEC(0, curEncoder->m_totalWorkerElapsedTime));
             if (curEncoder->m_totalActiveWorkerCount)
                 fprintf(m_csvfpt, ", %.3lf", (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples);
