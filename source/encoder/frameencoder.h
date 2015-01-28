@@ -163,12 +163,14 @@ public:
     StatisticLog             m_sliceTypeLog[3];     // per-slice type CU statistics
     FrameStats               m_frameStats;          // stats of current frame for multi-pass encodes
 
-    double                   m_elapsedCompressTime;      // elapsed time spent in worker threads
-    double                   m_frameTime;                // wall time from frame start to finish
     volatile int             m_activeWorkerCount;        // count of workers current encoding or filtering CTUs
     volatile int             m_totalActiveWorkerCount;   // sum of m_activeWorkerCount sampled at end of each CTU
     volatile int             m_activeWorkerCountSamples; // count of times m_activeWorkerCount was sampled (think vbv restarts)
-    int64_t                  m_totalTime;
+    int64_t                  m_startCompressTime;        // timestamp when frame encoder is given a frame
+    int64_t                  m_row0WaitTime;             // timestamp when row 0 is allowed to start
+    int64_t                  m_endCompressTime;          // timestamp after all CTUs are compressed
+    int64_t                  m_endFrameTime;             // timestamp after RCEnd, NR updates, etc
+    int64_t                  m_totalWorkerElapsedTime;
 
     Encoder*                 m_top;
     x265_param*              m_param;

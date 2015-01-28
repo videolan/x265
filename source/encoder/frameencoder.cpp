@@ -42,7 +42,7 @@ FrameEncoder::FrameEncoder()
     : WaveFront(NULL)
     , m_threadActive(true)
 {
-    m_totalTime = 0;
+    m_totalWorkerElapsedTime = 0;
     m_frameEncoderID = 0;
     m_activeWorkerCount = 0;
     m_bAllRowsStop = false;
@@ -234,15 +234,16 @@ void FrameEncoder::threadMain()
 void FrameEncoder::compressFrame()
 {
     ProfileScopeEvent(frameThread);
-    int64_t startCompressTime = x265_mdate();
-    Slice* slice = m_frame->m_encData->m_slice;
 
+    m_startCompressTime = x265_mdate();
     m_totalActiveWorkerCount = 0;
     m_activeWorkerCountSamples = 0;
+    m_totalWorkerElapsedTime = 0;
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
      * unit) */
+    Slice* slice = m_frame->m_encData->m_slice;
     if (m_param->bEnableAccessUnitDelimiters && (m_frame->m_poc || m_param->bRepeatHeaders))
     {
         m_bs.resetBits();
@@ -473,7 +474,8 @@ void FrameEncoder::compressFrame()
     }
     m_accessUnitBits = bytes << 3;
 
-    m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
+    m_endCompressTime = x265_mdate();
+
     /* rateControlEnd may also block for earlier frames to call rateControlUpdateStats */
     if (m_top->m_rateControl->rateControlEnd(m_frame, m_accessUnitBits, &m_rce, &m_frameStats) < 0)
         m_top->m_aborted = true;
@@ -517,6 +519,8 @@ void FrameEncoder::compressFrame()
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
+
+    m_endFrameTime = x265_mdate();
 }
 
 void FrameEncoder::encodeSlice()
@@ -629,10 +633,13 @@ void FrameEncoder::compressCTURows()
             }
 
             enableRowEncoder(row);
-            if (row == 0)
-                enqueueRowEncoder(0);
-            else
+            if (row)
                 m_pool->pokeIdleThread();
+            else
+            {
+                m_row0WaitTime = x265_mdate();
+                enqueueRowEncoder(0);
+            }
         }
 
         m_completionEvent.wait();
@@ -663,6 +670,8 @@ void FrameEncoder::compressCTURows()
                     }
                 }
 
+                if (!i)
+                    m_row0WaitTime = x265_mdate();
                 processRowEncoder(i, *m_tld);
             }
 
@@ -671,8 +680,6 @@ void FrameEncoder::compressCTURows()
                 m_frameFilter.processRow(i - m_filterRowDelay);
         }
     }
-    m_frameTime = (double)m_totalTime / 1000000;
-    m_totalTime = 0;
 }
 
 void FrameEncoder::processRow(int row, int threadId)
@@ -930,7 +937,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         {
             curRow.active = false;
             curRow.busy = false;
-            m_totalTime += x265_mdate() - startTime;
+            m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
             return;
         }
     }
@@ -986,7 +993,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         }
     }
 
-    m_totalTime += x265_mdate() - startTime;
+    m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
     curRow.busy = false;
 }
 

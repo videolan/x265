@@ -1184,8 +1184,13 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
                 if (numLists == 1)
                     fputs(", -", m_csvfpt);
             }
+
+#define ELAPSED_SEC(start, end) (((double)(end) - (start)) / 1000000)
+
             // detailed frame statistics
-            fprintf(m_csvfpt, ", %.3lf, %.3lf", curEncoder->m_frameTime, curEncoder->m_elapsedCompressTime);
+            fprintf(m_csvfpt, ", %.3lf, %.3lf",
+                ELAPSED_SEC(curEncoder->m_startCompressTime, curEncoder->m_endCompressTime),
+                ELAPSED_SEC(0, curEncoder->m_totalWorkerElapsedTime));
             if (curEncoder->m_totalActiveWorkerCount)
                 fprintf(m_csvfpt, ", %.3lf", (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples);
             else
