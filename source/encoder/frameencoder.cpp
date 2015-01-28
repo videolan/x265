@@ -239,7 +239,10 @@ void FrameEncoder::compressFrame()
     m_totalActiveWorkerCount = 0;
     m_activeWorkerCountSamples = 0;
     m_totalWorkerElapsedTime = 0;
+    m_totalNoWorkerTime = 0;
     m_countRowBlocks = 0;
+    m_allRowsAvailableTime = 0;
+    m_stallStartTime = 0;
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
@@ -689,7 +692,8 @@ void FrameEncoder::compressCTURows()
 void FrameEncoder::processRow(int row, int threadId)
 {
     int64_t startTime = x265_mdate();
-    ATOMIC_INC(&m_activeWorkerCount);
+    if (ATOMIC_INC(&m_activeWorkerCount) == 1 && m_stallStartTime)
+        m_totalNoWorkerTime += x265_mdate() - m_stallStartTime;
 
     const uint32_t realRow = row >> 1;
     const uint32_t typeNum = row & 1;
@@ -709,7 +713,9 @@ void FrameEncoder::processRow(int row, int threadId)
             m_completionEvent.trigger();
     }
 
-    ATOMIC_DEC(&m_activeWorkerCount);
+    if (ATOMIC_DEC(&m_activeWorkerCount) == 0)
+        m_stallStartTime = x265_mdate();
+
     m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
 }
 
