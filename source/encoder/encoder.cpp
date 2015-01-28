@@ -216,7 +216,7 @@ void Encoder::create()
                     fprintf(m_csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB), "
                                       "List 0, List 1");
                     /* detailed performance statistics */
-                    fprintf(m_csvfpt, ", Wall time, Total CTU time, Avg WPP\n");
+                    fprintf(m_csvfpt, ", Wall time, Total CTU time, Avg WPP, Row Blocks\n");
                 }
                 else
                     fputs(summaryCSVHeader, m_csvfpt);
@@ -1195,6 +1195,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
                 fprintf(m_csvfpt, ", %.3lf", (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples);
             else
                 fputs(", 1", m_csvfpt);
+            fprintf(m_csvfpt, ", %d", curEncoder->m_countRowBlocks);
             fprintf(m_csvfpt, "\n");
         }
 

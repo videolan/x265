@@ -239,6 +239,7 @@ void FrameEncoder::compressFrame()
     m_totalActiveWorkerCount = 0;
     m_activeWorkerCountSamples = 0;
     m_totalWorkerElapsedTime = 0;
+    m_countRowBlocks = 0;
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
@@ -938,6 +939,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             curRow.active = false;
             curRow.busy = false;
             m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
+            ATOMIC_INC(&m_countRowBlocks);
             return;
         }
     }
