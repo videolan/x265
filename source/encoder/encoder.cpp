@@ -221,6 +221,12 @@ void Encoder::create()
                     fputs(summaryCSVHeader, m_csvfpt);
             }
         }
+
+        if (!m_csvfpt)
+        {
+            x265_log(m_param, X265_LOG_ERROR, "Unable to open CSV log file <%s>, aborting\n", m_param->csvfn);
+            m_aborted = true;
+        }
     }
 
     if (m_frameEncoder)
