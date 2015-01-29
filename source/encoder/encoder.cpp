@@ -1444,11 +1444,7 @@ void Encoder::configure(x265_param *p)
         p->bEnableCbfFastMode = 0;
     }
     if (p->rdLevel < 4)
-    {
-        if (p->psyRdoq > 0)             /* impossible */
-            x265_log(p, X265_LOG_WARNING, "--psy-rdoq disabled, requires --rdlevel 4 or higher\n");
-        p->psyRdoq = 0;
-    }
+        p->psyRdoq = 0;                 /* impossible */
     if (p->rdLevel < 3)
     {
         if (p->bCULossless)             /* impossible */
@@ -1463,9 +1459,7 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "--pmode disabled, requires --rdlevel 2 or higher\n");
         p->bDistributeModeAnalysis = 0;
 
-        if (p->psyRd > 0)               /* impossible */
-            x265_log(p, X265_LOG_WARNING, "--psy-rd disabled, requires --rdlevel 2 or higher\n");
-        p->psyRd = 0;
+        p->psyRd = 0;                   /* impossible */
 
         if (p->bEnableRectInter)        /* broken, not very useful */
             x265_log(p, X265_LOG_WARNING, "--rect disabled, requires --rdlevel 2 or higher\n");
