@@ -447,6 +447,14 @@ bool CLIOptions::parseQPFile(x265_picture &pic_org)
     return 1;
 }
 
+/* CLI return codes:
+ *
+ * 0 - encode successful
+ * 1 - unable to parse command line
+ * 2 - unable to open encoder
+ * 3 - unable to generate stream headers
+ * 4 - encoder abort */
+
 int main(int argc, char **argv)
 {
 #if HAVE_VLD
@@ -473,7 +481,7 @@ int main(int argc, char **argv)
         cliopt.destroy();
         x265_param_free(param);
         x265_cleanup();
-        exit(1);
+        exit(2);
     }
 
     /* get the encoder parameters post-initialization */
@@ -493,12 +501,14 @@ int main(int argc, char **argv)
     x265_stats stats;
     uint32_t nal;
     int16_t *errorBuf = NULL;
+    int ret = 0;
 
     if (!param->bRepeatHeaders)
     {
         if (x265_encoder_headers(encoder, &p_nal, &nal) < 0)
         {
             x265_log(param, X265_LOG_ERROR, "Failure generating stream headers\n");
+            ret = 3;
             goto fail;
         }
         else
@@ -550,6 +560,7 @@ int main(int argc, char **argv)
         if (numEncoded < 0)
         {
             b_ctrl_c = 1;
+            ret = 4;
             break;
         }
         outFrameCount += numEncoded;
@@ -565,7 +576,12 @@ int main(int argc, char **argv)
     /* Flush the encoder */
     while (!b_ctrl_c)
     {
-        uint32_t numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, NULL, pic_recon);
+        int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, NULL, pic_recon);
+        if (numEncoded < 0)
+        {
+            ret = 4;
+            break;
+        }
         outFrameCount += numEncoded;
         if (numEncoded && pic_recon && cliopt.recon)
             cliopt.recon->writePicture(pic_out);
@@ -622,5 +638,6 @@ fail:
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);
 #endif
-    return 0;
+
+    return ret;
 }

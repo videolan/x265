@@ -377,6 +377,12 @@ static void showHelp(x265_param *param)
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
+    H1("\nExecutable return codes:\n");
+    H1("    0 - encode successful\n");
+    H1("    1 - unable to parse command line\n");
+    H1("    2 - unable to open encoder\n");
+    H1("    3 - unable to generate stream headers\n");
+    H1("    4 - encoder abort\n");
 #undef OPT
 #undef H0
 #undef H1
@@ -384,7 +390,7 @@ static void showHelp(x265_param *param)
     if (level < X265_LOG_DEBUG)
         printf("\nUse --log-level full --help for a full listing\n");
     printf("\n\nComplete documentation may be found at http://x265.readthedocs.org/en/default/cli.html\n");
-    exit(0);
+    exit(1);
 }
 
 #ifdef __cplusplus

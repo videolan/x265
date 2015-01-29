@@ -45,6 +45,14 @@ Executable Options
 
 	**CLI ONLY**
 
+Command line executable return codes::
+
+	0. encode successful
+	1. unable to parse command line
+	2. unable to open encoder
+	3. unable to generate stream headers
+	4. encoder abort
+
 Logging/Statistic Options
 =========================
 
