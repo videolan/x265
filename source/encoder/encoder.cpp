@@ -1299,7 +1299,7 @@ void Encoder::initSPS(SPS *sps)
     m_vps.ptl.progressiveSourceFlag = !m_param->interlaceMode;
     m_vps.ptl.interlacedSourceFlag = !!m_param->interlaceMode;
     m_vps.ptl.nonPackedConstraintFlag = false;
-    m_vps.ptl.frameOnlyConstraintFlag = false;
+    m_vps.ptl.frameOnlyConstraintFlag = !m_param->interlaceMode;
 
     sps->conformanceWindow = m_conformanceWindow;
     sps->chromaFormatIdc = m_param->internalCsp;
