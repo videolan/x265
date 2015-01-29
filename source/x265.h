@@ -669,7 +669,7 @@ typedef struct x265_param
      * Default is 0 */
     int       rdPenalty;
 
-    /* A value betwen X265_NO_RDO_NO_RDOQ and X265_RDO_LEVEL which determines
+    /* A value between X265_NO_RDO_NO_RDOQ and X265_RDO_LEVEL which determines
      * the level of rate distortion optimizations to perform during mode
      * decisions and quantization. The more RDO the better the compression
      * efficiency at a major cost of performance. Default is no RDO (0) */
@@ -703,6 +703,7 @@ typedef struct x265_param
      * buffer and use this analysis information to reduce the amount of work
      * the encoder must perform. Default X265_ANALYSIS_OFF */
     int       analysisMode;
+
     /* Filename for analysisMode save/load. Default name is "x265_analysis.dat" */
     char*     analysisFileName;
 
