@@ -568,7 +568,6 @@ int main(int argc, char **argv)
         if (nal)
             cliopt.writeNALs(p_nal, nal);
 
-        // Because x265_encoder_encode() lazily encodes entire GOPs, updates are per-GOP
         cliopt.printStatus(outFrameCount, param);
     }
 
