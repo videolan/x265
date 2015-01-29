@@ -97,7 +97,7 @@ Logging/Statistic Options
 	available.
 	
 	**Total CTU time ms** the total time (measured in milliseconds)
-	spent by worker threads compressing of filtering CTUs for this
+	spent by worker threads compressing and filtering CTUs for this
 	frame.
 	
 	**Stall Time ms** the number of milliseconds of the reported wall

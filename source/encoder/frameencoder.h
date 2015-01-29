@@ -163,7 +163,7 @@ public:
     StatisticLog             m_sliceTypeLog[3];     // per-slice type CU statistics
     FrameStats               m_frameStats;          // stats of current frame for multi-pass encodes
 
-    volatile int             m_activeWorkerCount;        // count of workers current encoding or filtering CTUs
+    volatile int             m_activeWorkerCount;        // count of workers currently encoding or filtering CTUs
     volatile int             m_totalActiveWorkerCount;   // sum of m_activeWorkerCount sampled at end of each CTU
     volatile int             m_activeWorkerCountSamples; // count of times m_activeWorkerCount was sampled (think vbv restarts)
     volatile int             m_countRowBlocks;           // count of workers forced to abandon a row because of top dependency

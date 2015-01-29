@@ -215,7 +215,7 @@ void Encoder::create()
                         fprintf(m_csvfpt, "RateFactor, ");
                     fprintf(m_csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB),  List 0, List 1");
                     /* detailed performance statistics */
-                    fprintf(m_csvfpt, ", DecideWait ms, Row0Wait ms, Wall time ms, Ref Wait Wall ms, Total CTU time ms, Stall Time ms, Avg WPP, Row Blocks\n");
+                    fprintf(m_csvfpt, ", DecideWait (ms), Row0Wait (ms), Wall time (ms), Ref Wait Wall (ms), Total CTU time (ms), Stall Time (ms), Avg WPP, Row Blocks\n");
                 }
                 else
                     fputs(summaryCSVHeader, m_csvfpt);
