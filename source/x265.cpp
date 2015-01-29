@@ -507,15 +507,6 @@ int main(int argc, char **argv)
 
     x265_picture_init(param, pic_in);
 
-    if (param->analysisMode)
-    {
-        if (param->bDistributeModeAnalysis || param->bDistributeMotionEstimation)
-        {
-            x265_log(NULL, X265_LOG_ERROR, "Analysis load/save options incompatible with pmode/pme");
-            goto fail;
-        }
-    }
-
     if (cliopt.bDither)
     {
         errorBuf = X265_MALLOC(int16_t, param->sourceWidth + 1);

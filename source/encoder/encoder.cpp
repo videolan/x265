@@ -1540,6 +1540,12 @@ void Encoder::configure(x265_param *p)
         p->rc.rfConstantMin = 0;
     }
 
+    if (p->analysisMode && (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation))
+    {
+        x265_log(p, X265_LOG_ERROR, "Analysis load/save options incompatible with pmode/pme");
+        p->bDistributeMotionEstimation = p->bDistributeModeAnalysis = 0;
+    }
+
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
 
     p->bFrameBias = X265_MIN(X265_MAX(-90, p->bFrameBias), 100);
