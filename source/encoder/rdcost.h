@@ -48,9 +48,16 @@ public:
     {
         m_qp = qp;
         int qpCb, qpCr;
+
         /* Scale PSY RD factor by a slice type factor */
         static const uint32_t psyScaleFix8[3] = { 300, 256, 96 }; /* B, P, I */
         m_psyRd = (m_psyRdBase * psyScaleFix8[slice.m_sliceType]) >> 8;
+
+        /* Scale PSY RD factor by QP, at high QP psy-rd can cause artifacts */
+        if (qp >= 50)
+            m_psyRd = 0;
+        else if (qp >= 42)
+            m_psyRd >>= 1;
 
         setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
         if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
