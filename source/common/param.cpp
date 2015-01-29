@@ -174,8 +174,8 @@ void x265_param_default(x265_param *param)
     param->cbQpOffset = 0;
     param->crQpOffset = 0;
     param->rdPenalty = 0;
-    param->psyRd = 0.0;
-    param->psyRdoq = 0.0;
+    param->psyRd = 1.0;
+    param->psyRdoq = 1.0;
     param->analysisMode = 0;
     param->analysisFileName = NULL;
     param->bIntraInBFrames = 0;

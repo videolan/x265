@@ -792,7 +792,7 @@ areas of high motion.
 	energy of the source image in the encoded image at the expense of
 	compression efficiency. It only has effect on presets which use
 	RDO-based mode decisions (:option:`--rd` 3 and above).  1.0 is a
-	typical value. Default disabled.  Experimental
+	typical value. Default 1.0
 
 	**Range of values:** 0 .. 2.0
 
@@ -804,7 +804,7 @@ areas of high motion.
 	has effect on slower presets which use RDO Quantization
 	(:option:`--rd` 4, 5 and 6). 1.0 is a typical value. Default
 	disabled. High values can be beneficial in preserving high-frequency
-	detail like film grain. Experimental
+	detail like film grain. Default: 1.0
 
 	**Range of values:** 0 .. 50.0
 
