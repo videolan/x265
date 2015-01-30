@@ -963,7 +963,7 @@ int x265_check_params(x265_param *param)
           "x265 was compiled for 8bit encodes, only 8bit internal depth supported");
 #endif
 
-    CHECK(param->rc.qp < -6 * (param->internalBitDepth - 8) || param->rc.qp > 51,
+    CHECK(param->rc.qp < -6 * (param->internalBitDepth - 8) || param->rc.qp > QP_MAX_SPEC,
           "QP exceeds supported range (-QpBDOffsety to 51)");
     CHECK(param->fpsNum == 0 || param->fpsDenom == 0,
           "Frame rate numerator and denominator must be specified");

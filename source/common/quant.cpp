@@ -211,7 +211,7 @@ void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
         if (chFmt == X265_CSP_I420)
             qp = g_chromaScale[qp];
         else
-            qp = X265_MIN(qp, 51);
+            qp = X265_MIN(qp, QP_MAX_SPEC);
     }
     m_qpParam[ttype].setQpParam(qp + QP_BD_OFFSET);
 }

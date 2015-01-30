@@ -529,7 +529,7 @@ void Deblock::edgeFilterChroma(const CUData* cuQ, uint32_t absPartIdx, uint32_t 
         {
             int32_t qp = qpA + pps->chromaQpOffset[chromaIdx];
             if (qp >= 30)
-                qp = chFmt == X265_CSP_I420 ? g_chromaScale[qp] : X265_MIN(qp, 51);
+                qp = chFmt == X265_CSP_I420 ? g_chromaScale[qp] : X265_MIN(qp, QP_MAX_SPEC);
 
             int32_t indexTC = x265_clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET + tcOffset));
             const int32_t bitdepthShift = X265_DEPTH - 8;
