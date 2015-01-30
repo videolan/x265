@@ -1428,30 +1428,65 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     TUEntropyCodingParameters codingParameters;
     cu.getTUEntropyCodingParameters(codingParameters, absPartIdx, log2TrSize, bIsLuma);
 
+    uint8_t coeffNum[MLS_GRP_NUM];      // value range[0, 16]
+    uint16_t coeffSign[MLS_GRP_NUM];    // bit mask map for non-zero coeff sign
+    uint16_t coeffFlag[MLS_GRP_NUM];    // bit mask map for non-zero coeff
+    memset(coeffNum, 0, sizeof(coeffNum));
+    memset(coeffFlag, 0, sizeof(coeffFlag));
+    memset(coeffSign, 0, sizeof(coeffSign));
+
     //----- encode significance map -----
 
     // Find position of last coefficient
     int scanPosLast = 0;
     uint32_t posLast;
     uint64_t sigCoeffGroupFlag64 = 0;
-    const uint32_t maskPosXY = ((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1;
-    assert((uint32_t)((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1) == (((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1));
+    //const uint32_t maskPosXY = ((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1;
+    X265_CHECK((uint32_t)((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1) == (((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1), "maskPosXY fault\n");
+
+    uint32_t cgBlkNum = 0;
     do
     {
+        const uint32_t cgBlkIdx = scanPosLast & (MLS_CG_BLK_SIZE - 1);
+        const uint32_t cgIdx = scanPosLast >> MLS_CG_SIZE;
+
         posLast = codingParameters.scan[scanPosLast++];
 
-        const uint32_t isNZCoeff = (coeff[posLast] != 0);
+        const int curCoeff = coeff[posLast];
+        const uint32_t isNZCoeff = (curCoeff != 0);
         // get L1 sig map
         // NOTE: the new algorithm is complicated, so I keep reference code here
         //uint32_t posy   = posLast >> log2TrSize;
         //uint32_t posx   = posLast - (posy << log2TrSize);
         //uint32_t blkIdx0 = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
-        const uint32_t blkIdx = ((posLast >> (2 * MLS_CG_LOG2_SIZE)) & ~maskPosXY) + ((posLast >> MLS_CG_LOG2_SIZE) & maskPosXY);
-        sigCoeffGroupFlag64 |= ((uint64_t)isNZCoeff << blkIdx);
+        //const uint32_t blkIdx = ((posLast >> (2 * MLS_CG_LOG2_SIZE)) & ~maskPosXY) + ((posLast >> MLS_CG_LOG2_SIZE) & maskPosXY);
+        //sigCoeffGroupFlag64 |= ((uint64_t)isNZCoeff << blkIdx);
         numSig -= isNZCoeff;
+
+        // TODO: optimize by instruction BTS
+        coeffSign[cgIdx] += (uint16_t)(((uint32_t)curCoeff >> 31) << cgBlkNum);
+        coeffFlag[cgIdx] = (coeffFlag[cgIdx] << 1) + (uint16_t)isNZCoeff;
+        cgBlkNum += isNZCoeff;
+        // TODO: reduce memory store operator, but avoid conditional branch
+        coeffNum[cgIdx] = (uint8_t)cgBlkNum;
+
+        if (cgBlkIdx == (MLS_CG_BLK_SIZE - 1))
+        {
+            cgBlkNum = 0;
+        }
     }
     while (numSig > 0);
     scanPosLast--;
+    const int lastScanSet = scanPosLast >> MLS_CG_SIZE;
+
+    // Calculate CG block non-zero mask, the latest CG always flag as non-zero in CG scan loop
+    for(int idx = 0; idx < lastScanSet; idx++)
+    {
+        const uint8_t subSet = (uint8_t)codingParameters.scanCG[idx];
+        const uint8_t nonZero = (coeffNum[idx] != 0);
+        sigCoeffGroupFlag64 |= ((nonZero ? (uint64_t)1 : 0) << subSet);
+    }
+
 
     // Code position of last coefficient
     {
@@ -1492,33 +1527,33 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     // code significance flag
     uint8_t * const baseCoeffGroupCtx = &m_contextState[OFF_SIG_CG_FLAG_CTX + (bIsLuma ? 0 : NUM_SIG_CG_FLAG_CTX)];
     uint8_t * const baseCtx = bIsLuma ? &m_contextState[OFF_SIG_FLAG_CTX] : &m_contextState[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
-    const int lastScanSet = scanPosLast >> MLS_CG_SIZE;
     uint32_t c1 = 1;
     uint32_t goRiceParam = 0;
-    int scanPosSig = scanPosLast;
+    int scanPosSigOff = scanPosLast - (lastScanSet << MLS_CG_SIZE) - 1;
+    int absCoeff[1 << MLS_CG_SIZE];
+    int numNonZero = 1;
+    unsigned long lastNZPosInCG;
+    unsigned long firstNZPosInCG;
+
+    absCoeff[0] = int(abs(coeff[posLast]));
 
     for (int subSet = lastScanSet; subSet >= 0; subSet--)
     {
-        int numNonZero = 0;
-        int subPos     = subSet << MLS_CG_SIZE;
+        const uint32_t subCoeffFlag = coeffFlag[subSet];
+        uint32_t scanFlagMask = subCoeffFlag;
+        int subPosBase = subSet << MLS_CG_SIZE;
         goRiceParam    = 0;
-        int absCoeff[1 << MLS_CG_SIZE];
-        uint32_t coeffSigns = 0;
-        int lastNZPosInCG = -1;
-        int firstNZPosInCG = 1 << MLS_CG_SIZE;
-        if (scanPosSig == scanPosLast)
+        
+        if (subSet == lastScanSet)
         {
-            absCoeff[0] = int(abs(coeff[posLast]));
-            coeffSigns  = (coeff[posLast] < 0);
-            numNonZero  = 1;
-            lastNZPosInCG  = scanPosSig;
-            firstNZPosInCG = scanPosSig;
-            scanPosSig--;
+            X265_CHECK(scanPosSigOff == scanPosLast - (lastScanSet << MLS_CG_SIZE) - 1, "scanPos mistake\n");
+            scanFlagMask >>= 1;
         }
+
         // encode significant_coeffgroup_flag
         const int cgBlkPos = codingParameters.scanCG[subSet];
-        const int cgPosY   = cgBlkPos >> codingParameters.log2TrSizeCG;
-        const int cgPosX   = cgBlkPos - (cgPosY << codingParameters.log2TrSizeCG);
+        const int cgPosY   = cgBlkPos >> (log2TrSize - MLS_CG_LOG2_SIZE);
+        const int cgPosX   = cgBlkPos & ((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1);
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
 
         if (subSet == lastScanSet || !subSet)
@@ -1535,31 +1570,31 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         {
             const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
             uint32_t blkPos, sig, ctxSig;
-            for (; scanPosSig >= subPos; scanPosSig--)
+            for (; scanPosSigOff >= 0; scanPosSigOff--)
             {
-                blkPos  = codingParameters.scan[scanPosSig];
-                sig     = (coeff[blkPos] != 0);
-                if (scanPosSig > subPos || subSet == 0 || numNonZero)
+                blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
+                sig     = scanFlagMask & 1;
+                scanFlagMask >>= 1;
+                X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
+                if (scanPosSigOff != 0 || subSet == 0 || numNonZero)
                 {
                     ctxSig = Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext);
                     encodeBin(sig, baseCtx[ctxSig]);
                 }
-                if (sig)
-                {
-                    absCoeff[numNonZero] = int(abs(coeff[blkPos]));
-                    coeffSigns = 2 * coeffSigns + ((uint32_t)coeff[blkPos] >> 31);
-                    numNonZero++;
-                    if (lastNZPosInCG < 0)
-                        lastNZPosInCG = scanPosSig;
-                    firstNZPosInCG = scanPosSig;
-                }
+                absCoeff[numNonZero] = int(abs(coeff[blkPos]));
+                numNonZero += sig;
             }
         }
-        else
-            scanPosSig = subPos - 1;
+        X265_CHECK(coeffNum[subSet] == numNonZero, "coefNum mistake\n");
 
+        uint32_t coeffSigns = coeffSign[subSet];
+        numNonZero = coeffNum[subSet];
         if (numNonZero > 0)
         {
+            X265_CHECK(subCoeffFlag > 0, "subCoeffFlag is zero\n");
+            CLZ(lastNZPosInCG, subCoeffFlag);
+            CTZ(firstNZPosInCG, subCoeffFlag);
+
             bool signHidden = (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD);
             uint32_t ctxSet = (subSet > 0 && bIsLuma) ? 2 : 0;
 
@@ -1596,10 +1631,8 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 }
             }
 
-            if (bHideFirstSign && signHidden)
-                encodeBinsEP((coeffSigns >> 1), numNonZero - 1);
-            else
-                encodeBinsEP(coeffSigns, numNonZero);
+            const int hiddenShift = (bHideFirstSign && signHidden) ? 1 : 0;
+            encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);
 
             int firstCoeff2 = 1;
             if (!c1 || numNonZero > C1FLAG_NUMBER)
@@ -1619,6 +1652,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 }
             }
         }
+        // Initialize value for next loop
+        numNonZero = 0;
+        scanPosSigOff = (1 << MLS_CG_SIZE) - 1;
     }
 }
 

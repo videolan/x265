@@ -281,6 +281,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 #define MLS_GRP_NUM                 64 // Max number of coefficient groups, max(16, 64)
 #define MLS_CG_SIZE                 4  // Coefficient group size of 4x4
+#define MLS_CG_BLK_SIZE             (MLS_CG_SIZE * MLS_CG_SIZE)
 #define MLS_CG_LOG2_SIZE            2
 
 #define QUANT_IQUANT_SHIFT          20 // Q(QP%6) * IQ(QP%6) = 2^20
