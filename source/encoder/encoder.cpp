@@ -136,7 +136,7 @@ void Encoder::create()
         if (!p->bEnableWavefront)
             p->frameNumThreads = X265_MIN(cpuCount, (rows + 1) / 2);
         else if (cpuCount >= 32)
-            p->frameNumThreads = 6; // dual-socket 10-core IvyBridge or higher
+            p->frameNumThreads = (p->sourceHeight > 2000) ? 8 : 6; // dual-socket 10-core IvyBridge or higher
         else if (cpuCount >= 16)
             p->frameNumThreads = 5; // 8 HT cores, or dual socket
         else if (cpuCount >= 8)
