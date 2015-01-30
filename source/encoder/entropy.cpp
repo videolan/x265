@@ -1419,7 +1419,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
     bool bHideFirstSign = cu.m_slice->m_pps->bSignHideEnabled && !tqBypass;
 
-    if (cu.m_slice->m_pps->bTransformSkipEnabled && !tqBypass && (trSize == 4))
+    if (log2TrSize <= MAX_LOG2_TS_SIZE && !tqBypass && cu.m_slice->m_pps->bTransformSkipEnabled)
         codeTransformSkipFlags(cu.m_transformSkip[ttype][absPartIdx], ttype);
 
     bool bIsLuma = ttype == TEXT_LUMA;

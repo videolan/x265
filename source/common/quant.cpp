@@ -169,6 +169,7 @@ bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList, 
     m_resiDctCoeff = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
     m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
     m_fencShortBuf = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE);
+    m_tqBypass = false;
 
     return m_resiDctCoeff && m_fencShortBuf;
 }
@@ -190,13 +191,16 @@ Quant::~Quant()
     X265_FREE(m_fencShortBuf);
 }
 
-void Quant::setQPforQuant(const CUData& ctu)
+void Quant::setQPforQuant(const CUData& cu)
 {
-    m_nr = m_frameNr ? &m_frameNr[ctu.m_encData->m_frameEncoderID] : NULL;
-    int qpy = ctu.m_qp[0];
+    m_tqBypass = !!cu.m_tqBypass[0];
+    if (m_tqBypass)
+        return;
+    m_nr = m_frameNr ? &m_frameNr[cu.m_encData->m_frameEncoderID] : NULL;
+    int qpy = cu.m_qp[0];
     m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
-    setChromaQP(qpy + ctu.m_slice->m_pps->chromaQpOffset[0], TEXT_CHROMA_U, ctu.m_chromaFormat);
-    setChromaQP(qpy + ctu.m_slice->m_pps->chromaQpOffset[1], TEXT_CHROMA_V, ctu.m_chromaFormat);
+    setChromaQP(qpy + cu.m_slice->m_pps->chromaQpOffset[0], TEXT_CHROMA_U, cu.m_chromaFormat);
+    setChromaQP(qpy + cu.m_slice->m_pps->chromaQpOffset[1], TEXT_CHROMA_V, cu.m_chromaFormat);
 }
 
 void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
@@ -326,7 +330,7 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
                              coeff_t* coeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip)
 {
     const uint32_t sizeIdx = log2TrSize - 2;
-    if (cu.m_tqBypass[absPartIdx])
+    if (m_tqBypass)
     {
         X265_CHECK(log2TrSize >= 2 && log2TrSize <= 5, "Block size mistake!\n");
         return primitives.cu[sizeIdx].copy_cnt(coeff, residual, resiStride);
@@ -406,11 +410,11 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
     }
 }
 
-void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t resiStride, const coeff_t* coeff,
+void Quant::invtransformNxN(int16_t* residual, uint32_t resiStride, const coeff_t* coeff,
                             uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig)
 {
     const uint32_t sizeIdx = log2TrSize - 2;
-    if (transQuantBypass)
+    if (m_tqBypass)
     {
         primitives.cu[sizeIdx].cpy1Dto2D_shl(residual, coeff, resiStride, 0);
         return;

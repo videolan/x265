@@ -401,14 +401,22 @@ void Deblock::edgeFilterLuma(const CUData* cuQ, uint32_t absPartIdx, uint32_t de
         if (!bs)
             continue;
 
-        int32_t qpQ = cuQ->m_qp[partQ];
-
         // Derive neighboring PU index
         uint32_t partP;
         const CUData* cuP = (dir == EDGE_VER ? cuQ->getPULeft(partP, partQ) : cuQ->getPUAbove(partP, partQ));
 
+        if (bCheckNoFilter)
+        {
+            // check if each of PUs is lossless coded
+            maskP = cuP->m_tqBypass[partP] - 1;
+            maskQ = cuQ->m_tqBypass[partQ] - 1;
+            if (!(maskP | maskQ))
+                continue;
+        }
+
+        int32_t qpQ = cuQ->m_qp[partQ];
         int32_t qpP = cuP->m_qp[partP];
-        int32_t qp = (qpP + qpQ + 1) >> 1;
+        int32_t qp  = (qpP + qpQ + 1) >> 1;
 
         int32_t indexB = x265_clip3(0, QP_MAX_SPEC, qp + betaOffset);
 
@@ -427,13 +435,6 @@ void Deblock::edgeFilterLuma(const CUData* cuQ, uint32_t absPartIdx, uint32_t de
 
         if (d >= beta)
             continue;
-
-        if (bCheckNoFilter)
-        {
-            // check if each of PUs is lossless coded
-            maskP = (cuP->m_tqBypass[partP] ? 0 : -1);
-            maskQ = (cuQ->m_tqBypass[partQ] ? 0 : -1);
-        }
 
         int32_t indexTC = x265_clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET * (bs - 1) + tcOffset));
         int32_t tc = s_tcTable[indexTC] << bitdepthShift;
@@ -506,33 +507,29 @@ void Deblock::edgeFilterChroma(const CUData* cuQ, uint32_t absPartIdx, uint32_t 
         if (bs <= 1)
             continue;
 
-        int32_t qpQ = cuQ->m_qp[partQ];
-
         // Derive neighboring PU index
         uint32_t partP;
         const CUData* cuP = (dir == EDGE_VER ? cuQ->getPULeft(partP, partQ) : cuQ->getPUAbove(partP, partQ));
-
-        int32_t qpP = cuP->m_qp[partP];
 
         if (bCheckNoFilter)
         {
             // check if each of PUs is lossless coded
             maskP = (cuP->m_tqBypass[partP] ? 0 : -1);
             maskQ = (cuQ->m_tqBypass[partQ] ? 0 : -1);
+            if (!(maskP | maskQ))
+                continue;
         }
+
+        int32_t qpQ = cuQ->m_qp[partQ];
+        int32_t qpP = cuP->m_qp[partP];
+        int32_t qpA = (qpP + qpQ + 1) >> 1;
 
         intptr_t unitOffset = idx * srcStep << LOG2_UNIT_SIZE;
         for (uint32_t chromaIdx = 0; chromaIdx < 2; chromaIdx++)
         {
-            int32_t chromaQPOffset  = pps->chromaQpOffset[chromaIdx];
-            int32_t qp = ((qpP + qpQ + 1) >> 1) + chromaQPOffset;
+            int32_t qp = qpA + pps->chromaQpOffset[chromaIdx];
             if (qp >= 30)
-            {
-                if (chFmt == X265_CSP_I420)
-                    qp = g_chromaScale[qp];
-                else
-                    qp = X265_MIN(qp, 51);
-            }
+                qp = chFmt == X265_CSP_I420 ? g_chromaScale[qp] : X265_MIN(qp, 51);
 
             int32_t indexTC = x265_clip3(0, QP_MAX_SPEC + DEFAULT_INTRA_TC_OFFSET, int32_t(qp + DEFAULT_INTRA_TC_OFFSET + tcOffset));
             const int32_t bitdepthShift = X265_DEPTH - 8;
