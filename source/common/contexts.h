@@ -1,5 +1,5 @@
 /*****************************************************************************
-* Copyright (C) 2014 x265 project
+* Copyright (C) 2015 x265 project
 *
 * Authors: Steve Borho <steve@borho.org>
 *

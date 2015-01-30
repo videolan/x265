@@ -49,6 +49,7 @@ public:
         PRED_SKIP,
         PRED_INTRA,
         PRED_2Nx2N,
+        PRED_BIDIR,
         PRED_Nx2N,
         PRED_2NxN,
         PRED_SPLIT,
@@ -71,11 +72,16 @@ public:
 
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
     bool      m_bTryLossless;
+    bool      m_bChromaSa8d;
 
+    /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
+    analysis_intra_data* m_reuseIntraDataCTU;
+    analysis_inter_data* m_reuseInterDataCTU;
+    int32_t* reuseRef;
     Analysis();
     bool create(ThreadLocalData* tld);
     void destroy();
-    Search::Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
+    Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
 
 protected:
 
@@ -83,18 +89,19 @@ protected:
     int           m_totalNumJobs;
     volatile int  m_numAcquiredJobs;
     volatile int  m_numCompletedJobs;
+    Lock          m_pmodeLock;
     Event         m_modeCompletionEvent;
     bool findJob(int threadId);
     void parallelModeAnalysis(int threadId, int jobId);
     void parallelME(int threadId, int meId);
 
     /* full analysis for an I-slice CU */
-    void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, x265_intra_data* sdata, uint32_t &zOrder);
+    void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder);
 
     /* full analysis for a P or B slice CU */
     void compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom);
     void compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom);
-    void compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom);
+    void compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder);
 
     /* measure merge and skip */
     void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGeom);
@@ -104,20 +111,36 @@ protected:
     void checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize);
     void checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, bool bMergeOnly);
 
-    /* measure intra options */
-    void checkIntraInInter_rd0_4(Mode& intraMode, const CUGeom& cuGeom);
-    void encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
+    void checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom& cuGeom);
 
     /* encode current bestMode losslessly, pick best RD cost */
     void tryLossless(const CUGeom& cuGeom);
 
-    void checkDQP(CUData& cu, const CUGeom& cuGeom);
+    /* add the RD cost of coding a split flag (0 or 1) to the given mode */
     void addSplitFlagCost(Mode& mode, uint32_t depth);
-    void checkBestMode(Mode& mode, uint32_t depth);
+
+    /* update CBF flags and QP values to be internally consistent */
+    void checkDQP(CUData& cu, const CUGeom& cuGeom);
+
+    /* work-avoidance heuristics for RD levels < 5 */
     uint32_t topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom);
     bool recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom, const Mode& bestMode);
 
+    /* generate residual and recon pixels for an entire CTU recursively (RD0) */
     void encodeResidue(const CUData& parentCTU, const CUGeom& cuGeom);
+
+    /* check whether current mode is the new best */
+    inline void checkBestMode(Mode& mode, uint32_t depth)
+    {
+        ModeDepth& md = m_modeDepth[depth];
+        if (md.bestMode)
+        {
+            if (mode.rdCost < md.bestMode->rdCost)
+                md.bestMode = &mode;
+        }
+        else
+            md.bestMode = &mode;
+    }
 };
 
 struct ThreadLocalData

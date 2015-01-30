@@ -74,7 +74,7 @@ struct ThreadLocalData;
 
 class Encoder : public x265_encoder
 {
-private:
+public:
 
     int                m_pocLast;         // time index (POC)
     int                m_encodedFrameNum;
@@ -113,9 +113,7 @@ private:
     int                m_numChromaWPFrames;  // number of P frames with weighted chroma reference
     int                m_numLumaWPBiFrames;  // number of B frames with weighted luma reference
     int                m_numChromaWPBiFrames; // number of B frames with weighted chroma reference
-
-public:
-
+    FILE*              m_analysisFile;
     int                m_conformanceMode;
     VPS                m_vps;
     SPS                m_sps;
@@ -133,15 +131,14 @@ public:
     Lookahead*         m_lookahead;
     Window             m_conformanceWindow;
 
+    bool               m_bZeroLatency;     // x265_encoder_encode() returns NALs for the input picture, zero lag
     bool               m_aborted;          // fatal error detected
 
     Encoder();
-
     ~Encoder() {}
 
     void create();
     void destroy();
-    void init();
 
     int encode(const x265_picture* pic, x265_picture *pic_out);
 
@@ -163,12 +160,20 @@ public:
 
     void updateVbvPlan(RateControl* rc);
 
+    void allocAnalysis(x265_analysis_data* analysis);
+
+    void freeAnalysis(x265_analysis_data* analysis);
+
+    void readAnalysisFile(x265_analysis_data* analysis, int poc);
+
+    void writeAnalysisFile(x265_analysis_data* pic);
+
+    void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits);
+
 protected:
 
     void initSPS(SPS *sps);
     void initPPS(PPS *pps);
-
-    void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits);
 };
 }
 

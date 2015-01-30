@@ -88,36 +88,16 @@ typedef struct x265_nal
     uint8_t* payload;
 } x265_nal;
 
-/* Stores inter (motion estimation) analysis data for a single frame */
-typedef struct x265_inter_data
-{
-    uint32_t zOrder;
-    int      ref[2];
-    int      costZero[2];
-    int16_t  mvx[2];
-    int16_t  mvy[2];
-    uint32_t depth;
-    int      poc;
-    uint32_t cuAddr;
-} x265_inter_data;
-
-/* Stores intra (motion estimation) analysis data for a single frame */
-typedef struct x265_intra_data
-{
-    uint8_t*  depth;
-    uint8_t*  modes;
-    char*     partSizes;
-    int*      poc;
-    uint32_t* cuAddr;
-} x265_intra_data;
-
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
-    x265_inter_data* interData;
-    x265_intra_data* intraData;
+    uint32_t         frameRecordSize;
+    int32_t          poc;
+    int32_t          sliceType;
     uint32_t         numCUsInFrame;
     uint32_t         numPartitions;
+    void*            interData;
+    void*            intraData;
 } x265_analysis_data;
 
 /* Used to pass pictures into the encoder, and to get picture data back out of
@@ -241,8 +221,9 @@ typedef enum
 #define X265_LOG_ERROR          0
 #define X265_LOG_WARNING        1
 #define X265_LOG_INFO           2
-#define X265_LOG_DEBUG          3
-#define X265_LOG_FULL           4
+#define X265_LOG_FRAME          3
+#define X265_LOG_DEBUG          4
+#define X265_LOG_FULL           5
 
 #define X265_B_ADAPT_NONE       0
 #define X265_B_ADAPT_FAST       1
@@ -290,7 +271,6 @@ typedef enum
 #define X265_ANALYSIS_OFF  0
 #define X265_ANALYSIS_SAVE 1
 #define X265_ANALYSIS_LOAD 2
-
 typedef struct
 {
     int planes;
@@ -349,6 +329,16 @@ static const char * const x265_sar_names[] = { "undef", "1:1", "12:11", "10:11",
 static const char * const x265_interlace_names[] = { "prog", "tff", "bff", 0 };
 static const char * const x265_analysis_names[] = { "off", "save", "load", 0 };
 
+/* Zones: override ratecontrol for specific sections of the video.
+ * If zones overlap, whichever comes later in the list takes precedence. */
+typedef struct x265_zone
+{
+    int startFrame, endFrame;   /* range of frame numbers */
+    int bForceQp;               /* whether to use qp vs bitrate factor */
+    int qp;
+    float bitrateFactor;
+} x265_zone;
+    
 /* x265 input parameters
  *
  * For version safety you may use x265_param_alloc/free() to manage the
@@ -415,11 +405,12 @@ typedef struct x265_param
     /* Enable the measurement and reporting of SSIM. Default is disabled */
     int       bEnableSsim;
 
-    /* filename of CSV log. If logLevel is X265_LOG_DEBUG, the encoder will emit
-     * per-slice statistics to this log file in encode order. Otherwise the
-     * encoder will emit per-stream statistics into the log file when
-     * x265_encoder_log is called (presumably at the end of the encode) */
-    const char *csvfn;
+    /* filename of CSV log. If logLevel greater than or equal to X265_LOG_FRAME,
+     * the encoder will emit per-slice statistics to this log file in encode
+     * order. Otherwise the encoder will emit per-stream statistics into the log
+     * file when x265_encoder_log is called (presumably at the end of the
+     * encode) */
+    char*     csvfn;
 
     /* Enable the generation of SEI messages for each encoded frame containing
      * the hashes of the three reconstructed picture planes. Most decoders will
@@ -504,13 +495,13 @@ typedef struct x265_param
 
     /* The additional depth the residual quadtree is allowed to recurse beyond
      * the coding quadtree, for inter coded blocks. This must be between 1 and
-     * 3. The higher the value the more efficiently the residual can be
+     * 4. The higher the value the more efficiently the residual can be
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxInterDepth;
 
     /* The additional depth the residual quadtree is allowed to recurse beyond
      * the coding quadtree, for intra coded blocks. This must be between 1 and
-     * 3. The higher the value the more efficiently the residual can be
+     * 4. The higher the value the more efficiently the residual can be
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxIntraDepth;
 
@@ -664,7 +655,7 @@ typedef struct x265_param
 
     /* Enable the use of `coded block flags` (flags set to true when a residual
      * has been coded for a given block) to avoid intra analysis in likely skip
-     * blocks. Default is disabled */
+     * blocks. Only applicable in RD levels 5 and 6. Default is disabled */
     int       bEnableCbfFastMode;
 
     /* Enable early skip decisions to avoid intra and inter analysis in likely
@@ -678,7 +669,7 @@ typedef struct x265_param
      * Default is 0 */
     int       rdPenalty;
 
-    /* A value betwen X265_NO_RDO_NO_RDOQ and X265_RDO_LEVEL which determines
+    /* A value between X265_NO_RDO_NO_RDOQ and X265_RDO_LEVEL which determines
      * the level of rate distortion optimizations to perform during mode
      * decisions and quantization. The more RDO the better the compression
      * efficiency at a major cost of performance. Default is no RDO (0) */
@@ -687,7 +678,7 @@ typedef struct x265_param
     /* Psycho-visual rate-distortion strength. Only has an effect in presets
      * which use RDO. It makes mode decision favor options which preserve the
      * energy of the source, at the cost of lost compression. The value must
-     * be between 0 and 2.0, 1.0 is typical. Default 0.0 */
+     * be between 0 and 2.0, 1.0 is typical. Default 1.0 */
     double    psyRd;
 
     /* Quantization scaling lists. HEVC supports 6 quantization scaling lists to
@@ -704,7 +695,7 @@ typedef struct x265_param
 
     /* Strength of psycho-visual optimizations in quantization. Only has an
      * effect in presets which use RDOQ (rd-levels 4 and 5).  The value must be
-     * between 0 and 50, 1.0 is typical. Default 0.0 */
+     * between 0 and 50, 1.0 is typical. Default 1.0 */
     double    psyRdoq;
 
     /* If X265_ANALYSIS_SAVE, write per-frame analysis information into analysis
@@ -713,8 +704,10 @@ typedef struct x265_param
      * the encoder must perform. Default X265_ANALYSIS_OFF */
     int       analysisMode;
 
-    /*== Coding tools ==*/
+    /* Filename for analysisMode save/load. Default name is "x265_analysis.dat" */
+    char*     analysisFileName;
 
+    /*== Coding tools ==*/
     /* Enable the implicit signaling of the sign bit of the last coefficient of
      * each transform unit. This saves one bit per TU at the expense of figuring
      * out which coefficient can be toggled with the least distortion.
@@ -735,8 +728,16 @@ typedef struct x265_param
     /* Enable the deblocking loop filter, which improves visual quality by
      * reducing blocking effects at block edges, particularly at lower bitrates
      * or higher QP. When enabled it adds another CU row of reference lag,
-     * reducing frame parallelism effectiveness.  Default is enabled */
+     * reducing frame parallelism effectiveness. Default is enabled */
     int       bEnableLoopFilter;
+
+    /* deblocking filter tC offset [-6, 6] -6 light filter, 6 strong.
+     * This is the coded div2 value, actual offset is doubled at use */
+    int       deblockingFilterTCOffset;
+
+    /* deblocking filter Beta offset [-6, 6] -6 light filter, 6 strong
+     * This is the coded div2 value, actual offset is doubled at use */
+    int       deblockingFilterBetaOffset;
 
     /* Enable the Sample Adaptive Offset loop filter, which reduces distortion
      * effects by adjusting reconstructed sample values based on histogram
@@ -769,9 +770,13 @@ typedef struct x265_param
      * regardless of this setting. */
     int       bIntraInBFrames;
 
-    /* An integer value in range of 100 to 1000, which denotes strength of noise
-     * reduction */
-    int       noiseReduction;
+    /* An integer value in range of 0 to 2000, which denotes strength of noise
+     * reduction in intra CUs. 0 means disabled */
+    int       noiseReductionIntra;
+
+    /* An integer value in range of 0 to 2000, which denotes strength of noise
+     * reduction in inter CUs. 0 means disabled */
+    int       noiseReductionInter;
 
     /* The lossless flag enables true lossless coding, by bypassing scaling,
      * transform, quantization and in-loop filter processes. This is used for
@@ -801,11 +806,6 @@ typedef struct x265_param
          * bitrate is specified on the command line, ABR is implied. Default 0 */
         int       bitrate;
 
-        /* The degree of rate fluctuation that x265 tolerates. Rate tolerance is used
-         * alongwith overflow (difference between actual and target bitrate), to adjust
-         * qp. Default is 1.0 */
-        double    rateTolerance;
-
         /* qComp sets the quantizer curve compression factor. It weights the frame
          * quantizer based on the complexity of residual (measured by lookahead).
          * Default value is 0.6. Increasing it to 1 will effectively generate CQP */
@@ -824,12 +824,12 @@ typedef struct x265_param
         double    rfConstant;
 
         /* Enable adaptive quantization. This mode distributes available bits between all
-         * macroblocks of a frame, assigning more bits to low complexity areas. Turning
+         * CTUs of a frame, assigning more bits to low complexity areas. Turning
          * this ON will usually affect PSNR negatively, however SSIM and visual quality
-         * generally improves. Default: X265_AQ_AUTO_VARIANCE */
+         * generally improves. Default: X265_AQ_VARIANCE */
         int       aqMode;
 
-        /* Sets the strength of AQ bias towards low detail macroblocks. Valid only if
+        /* Sets the strength of AQ bias towards low detail CTUs. Valid only if
          * AQ is enabled. Default value: 1.0. Acceptable values between 0.0 and 3.0 */
         double    aqStrength;
 
@@ -856,14 +856,15 @@ typedef struct x265_param
         /* In CRF mode, minimum CRF as caused by VBV */
         double    rfConstantMin;
 
-        /* Two pass (INCOMPLETE) */
+        /* Multi-pass encoding */
         /* Enable writing the stats in a multipass encode to the stat output file */
         int       bStatWrite;
 
         /* Enable loading data from the stat input file in a multi pass encode */
         int       bStatRead;
 
-        /* Filename of the 2pass output/input stats file */
+        /* Filename of the 2pass output/input stats file, if unspecified the
+         * encoder will default to using x265_2pass.log */
         char*     statFileName;
 
         /* temporally blur quants */
@@ -874,6 +875,10 @@ typedef struct x265_param
 
         /* Enable slow and a more detailed first pass encode in multi pass rate control */
         int       bEnableSlowFirstPass;
+        
+        /* ratecontrol overrides */
+        int        zoneCount;
+        x265_zone* zones;
 
         /* specify a text file which contains MAX_MAX_QP + 1 floating point
          * values to be copied into x265_lambda_tab and a second set of
@@ -882,6 +887,10 @@ typedef struct x265_param
          * ignored. The lambda tables are process-global, so these new lambda
          * values will affect all encoders in the same process */
         const char* lambdaFileName;
+
+        /* Enable stricter conditions to check bitrate deviations in CBR mode. May compromise 
+           quality to maintain bitrate adherence */
+        int bStrictCbr;
     } rc;
 
     /*== Video Usability Information ==*/
@@ -991,7 +1000,7 @@ void x265_setup_primitives(x265_param *param, int cpu);
  *  special in any way, but using this method together with x265_param_free()
  *  and x265_param_parse() to set values by name allows the application to treat
  *  x265_param as an opaque data struct for version safety */
-x265_param *x265_param_alloc();
+x265_param *x265_param_alloc(void);
 
 /* x265_param_free:
  *  Use x265_param_free() to release storage for an x265_param instance
@@ -1039,7 +1048,7 @@ static const char * const x265_preset_names[] = { "ultrafast", "superfast", "ver
  *      100 times faster than placebo!
  *
  *      Currently available tunings are: */
-static const char * const x265_tune_names[] = { "psnr", "ssim", "zerolatency", "fastdecode", 0 };
+static const char * const x265_tune_names[] = { "psnr", "ssim", "grain", "zerolatency", "fastdecode", 0 };
 
 /*      returns 0 on success, negative on failure (e.g. invalid preset/tune name). */
 int x265_param_default_preset(x265_param *, const char *preset, const char *tune);
@@ -1049,22 +1058,12 @@ int x265_param_default_preset(x265_param *, const char *preset, const char *tune
  *  special in any way, but using this method together with x265_picture_free()
  *  and x265_picture_init() allows some version safety. New picture fields will
  *  always be added to the end of x265_picture */
-x265_picture *x265_picture_alloc();
+x265_picture *x265_picture_alloc(void);
 
 /* x265_picture_free:
  *  Use x265_picture_free() to release storage for an x265_picture instance
  *  allocated by x265_picture_alloc() */
 void x265_picture_free(x265_picture *);
-
-/* x265_alloc_analysis_data:
- *  Allocate memory to hold analysis data, returns 0 on success else negative */
-int x265_alloc_analysis_data(x265_picture*);
-
-/* x265_free_analysis_data:
- *  Use x265_free_analysis_data to release storage of members allocated by
- *  x265_alloc_analysis_data */
-void x265_free_analysis_data(x265_picture*);
-
 /***
  * Initialize an x265_picture structure to default values. It sets the pixel
  * depth and color space to the encoder's internal values and sets the slice

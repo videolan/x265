@@ -1,6 +1,4 @@
 /*****************************************************************************
- * x265: singleton thread pool and interface classes
- *****************************************************************************
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
@@ -87,7 +85,7 @@ private:
     int          m_numThreads;
     int          m_numSleepMapWords;
     PoolThread  *m_threads;
-    volatile uint64_t *m_sleepMap;
+    volatile uint32_t *m_sleepMap;
 
     /* Lock for write access to the provider lists.  Threads are
      * always allowed to read m_firstProvider and follow the
@@ -139,6 +137,8 @@ public:
 
 void PoolThread::threadMain()
 {
+    THREAD_NAME("Worker", m_id);
+
 #if _WIN32
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL);
 #else
@@ -174,8 +174,8 @@ void PoolThread::threadMain()
 
 void ThreadPoolImpl::markThreadAsleep(int id)
 {
-    int word = id >> 6;
-    uint64_t bit = 1LL << (id & 63);
+    int word = id >> 5;
+    uint32_t bit = 1 << (id & 31);
 
     ATOMIC_OR(&m_sleepMap[word], bit);
 }
@@ -186,16 +186,16 @@ void ThreadPoolImpl::pokeIdleThread()
      * not give up until a thread is awakened or all of them are awake */
     for (int i = 0; i < m_numSleepMapWords; i++)
     {
-        uint64_t oldval = m_sleepMap[i];
+        uint32_t oldval = m_sleepMap[i];
         while (oldval)
         {
             unsigned long id;
-            CTZ64(id, oldval);
+            CTZ(id, oldval);
 
-            uint64_t newval = oldval & ~(1LL << id);
-            if (ATOMIC_CAS(&m_sleepMap[i], oldval, newval) == oldval)
+            uint32_t bit = 1 << id;
+            if (ATOMIC_AND(&m_sleepMap[i], ~bit) & bit)
             {
-                m_threads[(i << 6) | id].poke();
+                m_threads[i * 32 + id].poke();
                 return;
             }
 
@@ -249,8 +249,8 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     , m_firstProvider(NULL)
     , m_lastProvider(NULL)
 {
-    m_numSleepMapWords = (numThreads + 63) >> 6;
-    m_sleepMap = X265_MALLOC(uint64_t, m_numSleepMapWords);
+    m_numSleepMapWords = (numThreads + 31) >> 5;
+    m_sleepMap = X265_MALLOC(uint32_t, m_numSleepMapWords);
 
     char *buffer = (char*)X265_MALLOC(PoolThread, numThreads);
     m_threads = reinterpret_cast<PoolThread*>(buffer);
@@ -259,9 +259,7 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
     if (m_threads && m_sleepMap)
     {
         for (int i = 0; i < m_numSleepMapWords; i++)
-        {
             m_sleepMap[i] = 0;
-        }
 
         m_ok = true;
         int i;
@@ -277,9 +275,7 @@ ThreadPoolImpl::ThreadPoolImpl(int numThreads)
         }
 
         if (m_ok)
-        {
             waitForAllIdle();
-        }
         else
         {
             // stop threads that did start up
@@ -300,12 +296,10 @@ void ThreadPoolImpl::waitForAllIdle()
     int id = 0;
     do
     {
-        int word = id >> 6;
-        uint64_t bit = 1LL << (id & 63);
+        int word = id >> 5;
+        uint32_t bit = 1 << (id & 31);
         if (m_sleepMap[word] & bit)
-        {
             id++;
-        }
         else
         {
             GIVE_UP_TIME();
@@ -338,9 +332,7 @@ ThreadPoolImpl::~ThreadPoolImpl()
     {
         // cleanup thread handles
         for (int i = 0; i < m_numThreads; i++)
-        {
             m_threads[i].~PoolThread();
-        }
 
         X265_FREE(reinterpret_cast<char*>(m_threads));
     }

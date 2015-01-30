@@ -53,7 +53,6 @@ public:
     x265_param*         m_param;
     MotionEstimate      m_me;
     Lock                m_lock;
-    pixel*              m_predictions;    // buffer for 35 intra predictions
 
     volatile uint32_t   m_completed;      // Number of CUs in this row for which cost estimation is completed
     volatile bool       m_active;
@@ -73,16 +72,9 @@ public:
     EstimateRow()
     {
         m_me.setQP(X265_LOOKAHEAD_QP);
-        m_me.setSearchMethod(X265_HEX_SEARCH);
-        m_me.setSubpelRefine(1);
-        m_predictions = X265_MALLOC(pixel, 35 * 8 * 8);
+        m_me.init(X265_HEX_SEARCH, 1, X265_CSP_I400);
         m_merange = 16;
         m_lookAheadLambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
-    }
-
-    ~EstimateRow()
-    {
-        X265_FREE(m_predictions);
     }
 
     void init();
@@ -148,20 +140,25 @@ public:
 
     void addPicture(Frame*, int sliceType);
     void flush();
+    void stop();
     Frame* getDecidedPicture();
 
     void getEstimatedPictureCost(Frame *pic);
 
 protected:
 
+
     Lock  m_inputQueueLock;
     Lock  m_outputQueueLock;
-    Lock  m_decideLock;
     Event m_outputAvailable;
-    volatile int  m_bReady;
-    volatile bool m_bFilling;
-    volatile bool m_bFlushed;
-    bool findJob(int);
+
+    bool  m_bReady;   /* input lock - slicetypeDecide() can be started */
+    bool  m_bBusy;    /* input lock - slicetypeDecide() is running */
+    bool  m_bFilled;  /* enough frames in lookahead for output to be available */
+    bool  m_bFlushed; /* all frames have been decided, lookahead is finished */
+    bool  m_bFlush;   /* no more frames will be received, empty the input queue */
+
+    bool  findJob(int);
 
     /* called by addPicture() or flush() to trigger slice decisions */
     void slicetypeDecide();

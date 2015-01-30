@@ -90,7 +90,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
     uint8_t *out = m_buffer + m_occupancy;
     uint32_t bytes = 0;
 
-    if (!m_numNal || nalUnitType == NAL_UNIT_SPS || nalUnitType == NAL_UNIT_PPS)
+    if (!m_numNal || nalUnitType == NAL_UNIT_VPS || nalUnitType == NAL_UNIT_SPS || nalUnitType == NAL_UNIT_PPS)
     {
         memcpy(out, startCodePrefix, 4);
         bytes += 4;
@@ -193,12 +193,10 @@ uint32_t NALList::serializeSubstreams(uint32_t* streamSizeBytes, uint32_t stream
         {
             for (uint32_t i = 0; i < inSize; i++)
             {
-                if (bytes > 2 && !out[bytes - 2] && !out[bytes - 3] && out[bytes - 1] <= 0x03)
+                if (bytes >= 2 && !out[bytes - 2] && !out[bytes - 1] && inBytes[i] <= 0x03)
                 {
                     /* inject 0x03 to prevent emulating a start code */
-                    out[bytes] = out[bytes - 1];
-                    out[bytes - 1] = 0x03;
-                    bytes++;
+                    out[bytes++] = 3;
                 }
 
                 out[bytes++] = inBytes[i];

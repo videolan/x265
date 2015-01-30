@@ -28,6 +28,7 @@
 #include "reference.h"
 #include "mv.h"
 #include "bitcost.h"
+#include "yuv.h"
 
 namespace x265 {
 // private x265 namespace
@@ -36,24 +37,22 @@ class MotionEstimate : public BitCost
 {
 protected:
 
-    /* Aligned copy of original pixels, extra room for manual alignment */
-    pixel *fencplane;
-    intptr_t fencLumaStride;
-
-    pixelcmp_t sad;
-    pixelcmp_t satd;
-    pixelcmp_t sa8d;
-    pixelcmp_x3_t sad_x3;
-    pixelcmp_x4_t sad_x4;
-
     intptr_t blockOffset;
-    int partEnum;
+    
+    int ctuAddr;
+    int absPartIdx;  // part index of PU, including CU offset within CTU
+
     int searchMethod;
     int subpelRefine;
 
-    /* subpel generation buffers */
     int blockwidth;
     int blockheight;
+
+    pixelcmp_t sad;
+    pixelcmp_x3_t sad_x3;
+    pixelcmp_x4_t sad_x4;
+    pixelcmp_t satd;
+    pixelcmp_t chromaSatd;
 
     MotionEstimate& operator =(const MotionEstimate&);
 
@@ -61,38 +60,36 @@ public:
 
     static const int COST_MAX = 1 << 28;
 
-    pixel *fenc;
+    Yuv fencPUYuv;
+    int partEnum;
+    bool bChromaSATD;
 
     MotionEstimate();
-
     ~MotionEstimate();
 
-    void setSearchMethod(int i) { searchMethod = i; }
-
-    void setSubpelRefine(int i) { subpelRefine = i; }
+    void init(int method, int refine, int csp);
 
     /* Methods called at slice setup */
 
-    void setSourcePlane(pixel *Y, intptr_t luma)
-    {
-        fencplane = Y;
-        fencLumaStride = luma;
-    }
-
-    void setSourcePU(intptr_t offset, int pwidth, int pheight);
+    void setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset, int pwidth, int pheight);
+    void setSourcePU(const Yuv& srcFencYuv, int ctuAddr, int cuPartIdx, int puPartIdx, int pwidth, int pheight);
 
     /* buf*() and motionEstimate() methods all use cached fenc pixels and thus
      * require setSourcePU() to be called prior. */
 
-    inline int bufSAD(pixel *fref, intptr_t stride)  { return sad(fenc, FENC_STRIDE, fref, stride); }
+    inline int bufSAD(const pixel* fref, intptr_t stride)  { return sad(fencPUYuv.m_buf[0], FENC_STRIDE, fref, stride); }
 
-    inline int bufSA8D(pixel *fref, intptr_t stride) { return sa8d(fenc, FENC_STRIDE, fref, stride); }
+    inline int bufSATD(const pixel* fref, intptr_t stride) { return satd(fencPUYuv.m_buf[0], FENC_STRIDE, fref, stride); }
 
-    inline int bufSATD(pixel *fref, intptr_t stride) { return satd(fenc, FENC_STRIDE, fref, stride); }
+    inline int bufChromaSATD(const Yuv& refYuv, int puPartIdx)
+    {
+        return chromaSatd(refYuv.getCbAddr(puPartIdx), refYuv.m_csize, fencPUYuv.m_buf[1], fencPUYuv.m_csize) +
+               chromaSatd(refYuv.getCrAddr(puPartIdx), refYuv.m_csize, fencPUYuv.m_buf[2], fencPUYuv.m_csize);
+    }
 
-    int motionEstimate(ReferencePlanes *ref, const MV & mvmin, const MV & mvmax, const MV & qmvp, int numCandidates, const MV * mvc, int merange, MV & outQMv);
+    int motionEstimate(ReferencePlanes* ref, const MV & mvmin, const MV & mvmax, const MV & qmvp, int numCandidates, const MV * mvc, int merange, MV & outQMv);
 
-    int subpelCompare(ReferencePlanes * ref, const MV &qmv, pixelcmp_t);
+    int subpelCompare(ReferencePlanes* ref, const MV &qmv, pixelcmp_t);
 
 protected:
 

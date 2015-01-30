@@ -42,7 +42,7 @@ class SEIBufferingPeriod;
 #define MAX_FRAME_DURATION 1.00
 #define MIN_FRAME_DURATION 0.01
 
-#define CLIP_DURATION(f) Clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
+#define CLIP_DURATION(f) x265_clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
 
 /* Current frame stats for 2 pass */
 struct FrameStats
@@ -139,6 +139,7 @@ public:
     bool   m_isAbrReset;
     int    m_lastAbrResetPoc;
 
+    double  m_rateTolerance;
     double m_frameDuration;     /* current frame duration in seconds */
     double m_bitrate;
     double m_rateFactorConstant;
@@ -173,8 +174,9 @@ public:
     double   m_shortTermCplxCount;
     double   m_lastRceq;
     double   m_qCompress;
-    int64_t  m_totalBits;        /* total bits used for already encoded frames */
+    int64_t  m_totalBits;        /* total bits used for already encoded frames (after ammortization) */
     int      m_framesDone;       /* # of frames passed through RateCotrol already */
+    int64_t  m_encodedBits;      /* bits used for encoded frames (without ammortization) */
     double   m_fps;
     int64_t  m_satdCostWindow[50];
     int      m_sliderPos;
@@ -233,11 +235,10 @@ public:
     void initHRD(SPS* sps);
     int rateControlSliceType(int frameNum);
     bool cuTreeReadFor2Pass(Frame* curFrame);
+    double tuneAbrQScaleFromFeedback(double qScale);
 
 protected:
 
-    static const double s_amortizeFraction;
-    static const int    s_amortizeFrames;
     static const int    s_slidingWindowFrames;
     static const char  *s_defaultStatFileName;
 
@@ -245,7 +246,10 @@ protected:
     int m_partialResidualFrames;
     int m_residualCost;
     int m_partialResidualCost;
+    int m_amortizeFrames;
+    double m_amortizeFraction;
 
+    x265_zone* getZone();
     double getQScale(RateControlEntry *rce, double rateFactor);
     double rateEstimateQscale(Frame* pic, RateControlEntry *rce); // main logic for calculating QP based on ABR
     void accumPQpUpdate();

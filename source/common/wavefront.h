@@ -43,8 +43,8 @@ private:
     // Dependencies are categorized as internal and external. Internal dependencies
     // are caused by neighbor block availability.  External dependencies are generally
     // reference frame reconstructed pixels being available.
-    uint64_t volatile *m_internalDependencyBitmap;
-    uint64_t volatile *m_externalDependencyBitmap;
+    uint32_t volatile *m_internalDependencyBitmap;
+    uint32_t volatile *m_externalDependencyBitmap;
 
     // number of words in the bitmap
     int m_numWords;
@@ -92,10 +92,6 @@ public:
     // Start or resume encode processing of this row, must be implemented by
     // derived classes.
     virtual void processRow(int row, int threadId) = 0;
-
-    // Returns true if a row above curRow is available for processing.  The processRow()
-    // method may call this function periodically and voluntarily exit
-    bool checkHigherPriorityRow(int curRow);
 };
 } // end namespace x265
 

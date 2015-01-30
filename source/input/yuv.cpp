@@ -167,6 +167,7 @@ void YUVInput::startReader()
 
 void YUVInput::threadMain()
 {
+    THREAD_NAME("YUVRead", 0);
     while (threadActive)
     {
         if (!populateFrameQueue())
@@ -193,6 +194,7 @@ bool YUVInput::populateFrameQueue()
             return false;
     }
 
+    ProfileScopeEvent(frameRead);
     ifs->read(buf[written % QUEUE_SIZE], framesize);
     if (ifs->good())
     {

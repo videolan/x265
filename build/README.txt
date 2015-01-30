@@ -11,26 +11,27 @@ Note: MSVC12 requires cmake 2.8.11 or later
 
 1. Yasm 1.2.0 or later, to compile assembly primitives (performance)
 
-   For Windows, download
-   http://www.tortall.net/projects/yasm/releases/yasm-1.2.0-win32.exe or
-   http://www.tortall.net/projects/yasm/releases/yasm-1.2.0-win64.exe
-   depending on your O/S and copy the EXE into C:\Windows or somewhere else
-   in your %PATH% that a 32-bit app (cmake) can find it. If it is not in the
-   path, you must manually tell cmake where to find it.
+   For Windows, download the latest yasm executable
+   http://yasm.tortall.net/Download.html and copy the EXE into
+   C:\Windows or somewhere else in your %PATH% that a 32-bit app (cmake)
+   can find it. If it is not in the path, you must manually tell cmake
+   where to find it.  Note: you do not need the vsyasm packages, x265
+   does not use them.  You only need the yasm executable itself.
 
-   For Linux, yasm-1.2.0 is likely too new to be packaged for your system so you
-   will need get http://www.tortall.net/projects/yasm/releases/yasm-1.2.0.tar.gz
-   compile, and install it.
+   On Linux, the packaged yasm may be older than 1.2, in which case
+   so you will need get the latest source and build it yourself.
 
    Once YASM is properly installed, run cmake to regenerate projects. If you
    do not see the below line in the cmake output, YASM is not in the PATH.
 
-   -- Found Yasm 1.2.0 to build assembly primitives
+   -- Found Yasm 1.3.0 to build assembly primitives
 
-   Now build the encoder and run x265 -V. If you see "assembly" on this
-   line, you have YASM properly installed:
+   Now build the encoder and run x265 -V:
 
-   x265 [info]: performance primitives: intrinsic assembly
+   x265 [info]: using cpu capabilities: MMX, SSE2, ...
+
+   If cpu capabilities line says 'none!', then the encoder was built
+   without yasm.
 
 2. VisualLeakDetector (Windows Only)
 

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2014 x265 project
+ * Copyright (C) 2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
  *
@@ -58,6 +58,20 @@ struct QpParam
     }
 };
 
+#define MAX_NUM_TR_COEFFS        MAX_TR_SIZE * MAX_TR_SIZE /* Maximum number of transform coefficients, for a 32x32 transform */
+#define MAX_NUM_TR_CATEGORIES    16                        /* 32, 16, 8, 4 transform categories each for luma and chroma */
+
+// NOTE: MUST be 16-byte aligned for asm code
+struct NoiseReduction
+{
+    /* 0 = luma 4x4,   1 = luma 8x8,   2 = luma 16x16,   3 = luma 32x32
+     * 4 = chroma 4x4, 5 = chroma 8x8, 6 = chroma 16x16, 7 = chroma 32x32
+     * Intra 0..7 - Inter 8..15 */
+    uint16_t offsetDenoise[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    uint32_t residualSum[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    uint32_t count[MAX_NUM_TR_CATEGORIES];
+};
+
 class Quant
 {
 protected:
@@ -69,8 +83,8 @@ protected:
 
     bool               m_useRDOQ;
     int64_t            m_psyRdoqScale;
-    int32_t*           m_resiDctCoeff;
-    int32_t*           m_fencDctCoeff;
+    int16_t*           m_resiDctCoeff;
+    int16_t*           m_fencDctCoeff;
     int16_t*           m_fencShortBuf;
 
     enum { IEP_RATE = 32768 }; /* FIX15 cost of an equal probable bit */
@@ -79,6 +93,7 @@ public:
 
     NoiseReduction*    m_nr;
     NoiseReduction*    m_frameNr; // Array of NR structures, one for each frameEncoder
+    bool               m_tqBypass;
 
     Quant();
     ~Quant();
@@ -88,12 +103,12 @@ public:
     bool allocNoiseReduction(const x265_param& param);
 
     /* CU setup */
-    void setQPforQuant(const CUData& ctu);
+    void setQPforQuant(const CUData& cu);
 
-    uint32_t transformNxN(CUData& cu, pixel *fenc, uint32_t fencstride, int16_t* residual, uint32_t stride, coeff_t* coeff,
+    uint32_t transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencStride, const int16_t* residual, uint32_t resiStride, coeff_t* coeff,
                           uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip);
 
-    void invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff,
+    void invtransformNxN(int16_t* residual, uint32_t resiStride, const coeff_t* coeff,
                          uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
 
     /* static methods shared with entropy.cpp */
@@ -107,30 +122,8 @@ protected:
 
     uint32_t signBitHidingHDQ(int16_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
 
-    uint32_t rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
-    inline uint32_t getRateLast(uint32_t posx, uint32_t posy) const;
+    uint32_t rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
 };
-
-static inline uint32_t getGroupIdx(const uint32_t idx)
-{
-    // TODO: Why is this not a table lookup?
-
-    uint32_t group = (idx >> 3);
-
-    if (idx >= 24)
-        group = 2;
-    uint32_t groupIdx = ((idx >> (group + 1)) - 2) + 4 + (group << 1);
-    if (idx <= 3)
-        groupIdx = idx;
-
-#ifdef _DEBUG
-    static const uint8_t g_groupIdx[32] = { 0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9 };
-    assert(groupIdx == g_groupIdx[idx]);
-#endif
-
-    return groupIdx;
-}
-
 }
 
 #endif // ifndef X265_QUANT_H

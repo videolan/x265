@@ -27,13 +27,13 @@
 #include <stdlib.h>
 
 #define PPA_REGISTER_CPU_EVENT2GROUP(x, y) # x, # y,
-#define PPA_REGISTER_CPU_EVENT(x) PPA_REGISTER_CPU_EVENT2GROUP(x, NoGroup)
+#define CPU_EVENT(x) PPA_REGISTER_CPU_EVENT2GROUP(x, NoGroup)
 const char *PPACpuAndGroup[] =
 {
-#include "ppaCPUEvents.h"
+#include "../cpuEvents.h"
     ""
 };
-#undef PPA_REGISTER_CPU_EVENT
+#undef CPU_EVENT
 #undef PPA_REGISTER_CPU_EVENT2GROUP
 
 extern "C" {
@@ -41,8 +41,10 @@ typedef ppa::Base *(FUNC_PPALibInit)(const char **, int);
 typedef void (FUNC_PPALibRelease)(ppa::Base* &);
 }
 
+using namespace ppa;
+
 static FUNC_PPALibRelease *_pfuncPpaRelease;
-ppa::Base *ppabase;
+ppa::Base *ppa::ppabase;
 
 static void _ppaReleaseAtExit()
 {

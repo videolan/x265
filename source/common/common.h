@@ -41,6 +41,31 @@
 
 #include "x265.h"
 
+#if ENABLE_PPA && ENABLE_VTUNE
+#error "PPA and VTUNE cannot both be enabled. Disable one of them."
+#endif
+#if ENABLE_PPA
+#include "profile/PPA/ppa.h"
+#define ProfileScopeEvent(x) PPAScopeEvent(x)
+#define THREAD_NAME(n,i)
+#define PROFILE_INIT()       PPA_INIT()
+#define PROFILE_PAUSE()
+#define PROFILE_RESUME()
+#elif ENABLE_VTUNE
+#include "profile/vtune/vtune.h"
+#define ProfileScopeEvent(x) VTuneScopeEvent _vtuneTask(x)
+#define THREAD_NAME(n,i)     vtuneSetThreadName(n, i)
+#define PROFILE_INIT()       vtuneInit()
+#define PROFILE_PAUSE()      __itt_pause()
+#define PROFILE_RESUME()     __itt_resume()
+#else
+#define ProfileScopeEvent(x)
+#define THREAD_NAME(n,i)
+#define PROFILE_INIT()
+#define PROFILE_PAUSE()
+#define PROFILE_RESUME()
+#endif
+
 #define FENC_STRIDE 64
 #define NUM_INTRA_MODE 35
 
@@ -54,6 +79,10 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 #define x265_stack_align(func, ...) x265_stack_align((void (*)())func, __VA_ARGS__)
 #else
 #define x265_stack_align(func, ...) func(__VA_ARGS__)
+#endif
+
+#if defined(__MINGW32__)
+#define fseeko fseeko64
 #endif
 
 #elif defined(_MSC_VER)
@@ -133,22 +162,16 @@ typedef int32_t  ssum2_t;      //Signed sum
 #define BITS_FOR_POC 8
 
 template<typename T>
-inline pixel Clip(T x)
-{
-    return (pixel)std::min<T>(T((1 << X265_DEPTH) - 1), std::max<T>(T(0), x));
-}
-
-template<typename T>
-inline T Clip3(T minVal, T maxVal, T a)
-{
-    return std::min<T>(std::max<T>(minVal, a), maxVal);
-}
-
-template<typename T>
 inline T x265_min(T a, T b) { return a < b ? a : b; }
 
 template<typename T>
 inline T x265_max(T a, T b) { return a > b ? a : b; }
+
+template<typename T>
+inline T x265_clip3(T minVal, T maxVal, T a) { return x265_min(x265_max(minVal, a), maxVal); }
+
+template<typename T> /* clip to pixel range, 0..255 or 0..1023 */
+inline pixel x265_clip(T x) { return (pixel)x265_min<T>(T((1 << X265_DEPTH) - 1), x265_max<T>(T(0), x)); }
 
 typedef int16_t  coeff_t;      // transform coefficient
 
@@ -245,9 +268,6 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define MAX_TR_SIZE (1 << MAX_LOG2_TR_SIZE)
 #define MAX_TS_SIZE (1 << MAX_LOG2_TS_SIZE)
 
-#define MAX_NUM_TR_COEFFS        MAX_TR_SIZE * MAX_TR_SIZE /* Maximum number of transform coefficients, for a 32x32 transform */
-#define MAX_NUM_TR_CATEGORIES    8                         /* 32, 16, 8, 4 transform categories each for luma and chroma */
-
 #define COEF_REMAIN_BIN_REDUCTION   3 // indicates the level at which the VLC
                                       // transitions from Golomb-Rice to TU+EG(k)
 
@@ -261,6 +281,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 #define MLS_GRP_NUM                 64 // Max number of coefficient groups, max(16, 64)
 #define MLS_CG_SIZE                 4  // Coefficient group size of 4x4
+#define MLS_CG_BLK_SIZE             (MLS_CG_SIZE * MLS_CG_SIZE)
 #define MLS_CG_LOG2_SIZE            2
 
 #define QUANT_IQUANT_SHIFT          20 // Q(QP%6) * IQ(QP%6) = 2^20
@@ -297,20 +318,11 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 #define CHROMA_H_SHIFT(x) (x == X265_CSP_I420 || x == X265_CSP_I422)
 #define CHROMA_V_SHIFT(x) (x == X265_CSP_I420)
+#define X265_MAX_PRED_MODE_PER_CTU 85 * 2 * 8
 
 namespace x265 {
 
 enum { SAO_NUM_OFFSET = 4 };
-
-// NOTE: MUST be alignment to 16 or 32 bytes for asm code
-struct NoiseReduction
-{
-    /* 0 = luma 4x4, 1 = luma 8x8, 2 = luma 16x16, 3 = luma 32x32
-     * 4 = chroma 4x4, 5 = chroma 8x8, 6 = chroma 16x16, 7 = chroma 32x32 */
-    uint16_t offsetDenoise[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
-    uint32_t residualSum[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
-    uint32_t count[MAX_NUM_TR_CATEGORIES];
-};
 
 enum SaoMergeMode
 {
@@ -358,6 +370,22 @@ struct SAOParam
     }
 };
 
+/* Stores inter analysis data for a single frame */
+struct analysis_inter_data
+{
+    int32_t*    ref;
+    uint8_t*    depth;
+    uint8_t*    modes;
+};
+
+/* Stores intra analysis data for a single frame. This struct needs better packing */
+struct analysis_intra_data
+{
+    uint8_t*  depth;
+    uint8_t*  modes;
+    char*     partSizes;
+};
+
 enum TextType
 {
     TEXT_LUMA     = 0,  // luma
@@ -382,6 +410,10 @@ enum SignificanceMapContextType
     CONTEXT_TYPE_NxN = 2,
     CONTEXT_NUMBER_OF_TYPES = 3
 };
+
+/* located in pixel.cpp */
+void extendPicBorder(pixel* recon, intptr_t stride, int width, int height, int marginX, int marginY);
+
 }
 
 /* outside x265 namespace, but prefixed. defined in common.cpp */

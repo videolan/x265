@@ -1,0 +1,49 @@
+x265 CLI Documentation
+######################
+
+
+SYNOPSIS
+========
+
+**x265** [options] infile [-o] outfile
+
+Bit depth: 8
+
+
+**x265-10bit** [options] infile [-o] outfile
+
+Bit depth: 10
+
+
+infile can be YUV or Y4M
+
+outfile is raw HEVC bitstream
+
+
+DESCRIPTION
+===========
+
+.. toctree::
+   :maxdepth: 2
+
+   introduction
+
+
+OPTIONS
+=======
+
+.. toctree::
+   :maxdepth: 2
+
+   cli
+   presets
+   lossless
+
+
+SEE ALSO
+========
+
+**libx265**\(3)
+
+Online documentation: http://x265.readthedocs.org/en/default/cli.html
+

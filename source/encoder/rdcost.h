@@ -37,30 +37,44 @@ public:
     /* all weights and factors stored as FIX8 */
     uint64_t  m_lambda2;
     uint64_t  m_lambda;
-    uint64_t  m_cbDistortionWeight;
-    uint64_t  m_crDistortionWeight;
+    uint32_t  m_chromaDistWeight[2];
+    uint32_t  m_psyRdBase;
     uint32_t  m_psyRd;
     int       m_qp;
 
-    void setPsyRdScale(double scale)                { m_psyRd = (uint32_t)floor(256.0 * scale * 0.33); }
-    void setCbDistortionWeight(uint16_t weightFix8) { m_cbDistortionWeight = weightFix8; }
-    void setCrDistortionWeight(uint16_t weightFix8) { m_crDistortionWeight = weightFix8; }
+    void setPsyRdScale(double scale)                { m_psyRdBase = (uint32_t)floor(256.0 * scale * 0.33); }
 
     void setQP(const Slice& slice, int qp)
     {
         m_qp = qp;
+        int qpCb, qpCr;
+
+        /* Scale PSY RD factor by a slice type factor */
+        static const uint32_t psyScaleFix8[3] = { 300, 256, 96 }; /* B, P, I */
+        m_psyRd = (m_psyRdBase * psyScaleFix8[slice.m_sliceType]) >> 8;
+
+        /* Scale PSY RD factor by QP, at high QP psy-rd can cause artifacts */
+        if (qp >= 50)
+            m_psyRd = 0;
+        else if (qp >= 42)
+            m_psyRd >>= 1;
 
         setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
-
-        int qpCb = Clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaCbQpOffset);
+        if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
+            qpCb = x265_clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
+        else
+            qpCb = X265_MIN(qp + slice.m_pps->chromaQpOffset[0], QP_MAX_SPEC);
         int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
         uint16_t lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
-        setCbDistortionWeight(lambdaOffset);
+        m_chromaDistWeight[0] = lambdaOffset;
 
-        int qpCr = Clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaCrQpOffset);
+        if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
+            qpCr = x265_clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
+        else
+            qpCr = X265_MIN(qp + slice.m_pps->chromaQpOffset[0], QP_MAX_SPEC);
         chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
         lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
-        setCrDistortionWeight(lambdaOffset);
+        m_chromaDistWeight[1] = lambdaOffset;
     }
 
     void setLambda(double lambda2, double lambda)
@@ -72,20 +86,20 @@ public:
     inline uint64_t calcRdCost(uint32_t distortion, uint32_t bits) const
     {
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda2,
-                   "calcRdCost wrap detected dist: %d, bits %d, lambda: %d\n", distortion, bits, (int)m_lambda2);
+                   "calcRdCost wrap detected dist: %u, bits %u, lambda: "X265_LL"\n", distortion, bits, m_lambda2);
         return distortion + ((bits * m_lambda2 + 128) >> 8);
     }
 
     /* return the difference in energy between the source block and the recon block */
-    inline int psyCost(int size, pixel *source, intptr_t sstride, pixel *recon, intptr_t rstride) const
+    inline int psyCost(int size, const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride) const
     {
-        return primitives.psy_cost_pp[size](source, sstride, recon, rstride);
+        return primitives.cu[size].psy_cost_pp(source, sstride, recon, rstride);
     }
 
     /* return the difference in energy between the source block and the recon block */
-    inline int psyCost(int size, int16_t *source, intptr_t sstride, int16_t *recon, intptr_t rstride) const
+    inline int psyCost(int size, const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride) const
     {
-        return primitives.psy_cost_ss[size](source, sstride, recon, rstride);
+        return primitives.cu[size].psy_cost_ss(source, sstride, recon, rstride);
     }
 
     /* return the RD cost of this prediction, including the effect of psy-rd */
@@ -97,22 +111,15 @@ public:
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits) const
     {
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda,
-                   "calcRdSADCost wrap detected dist: %d, bits %d, lambda: "X265_LL"\n", sadCost, bits, m_lambda);
+                   "calcRdSADCost wrap detected dist: %u, bits %u, lambda: "X265_LL"\n", sadCost, bits, m_lambda);
         return sadCost + ((bits * m_lambda + 128) >> 8);
     }
 
-    inline uint32_t scaleChromaDistCb(uint32_t dist) const
+    inline uint32_t scaleChromaDist(uint32_t plane, uint32_t dist) const
     {
-        X265_CHECK(dist <= (UINT64_MAX - 128) / m_cbDistortionWeight,
-                   "scaleChromaDistCb wrap detected dist: %d, lambda: "X265_LL"\n", dist, m_cbDistortionWeight);
-        return (uint32_t)(((dist * m_cbDistortionWeight) + 128) >> 8);
-    }
-
-    inline uint32_t scaleChromaDistCr(uint32_t dist) const
-    {
-        X265_CHECK(dist <= (UINT64_MAX - 128) / m_crDistortionWeight,
-                   "scaleChromaDistCr wrap detected dist: %d, lambda: "X265_LL"\n", dist, m_crDistortionWeight);
-        return (uint32_t)(((dist * m_crDistortionWeight) + 128) >> 8);
+        X265_CHECK(dist <= (UINT64_MAX - 128) / m_chromaDistWeight[plane - 1],
+                   "scaleChromaDist wrap detected dist: %u, lambda: %u\n", dist, m_chromaDistWeight[plane - 1]);
+        return (uint32_t)((dist * (uint64_t)m_chromaDistWeight[plane - 1] + 128) >> 8);
     }
 
     inline uint32_t getCost(uint32_t bits) const

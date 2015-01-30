@@ -44,19 +44,19 @@ public:
         int32_t word;
     };
 
-    MV() : word(0)                             {}
-
+    MV()                                       {}
+    MV(int32_t w) : word(w)                    {}
     MV(int16_t _x, int16_t _y) : x(_x), y(_y)  {}
 
-    const MV& operator =(uint32_t w)           { word = w; return *this; }
+    MV& operator =(uint32_t w)                 { word = w; return *this; }
 
-    const MV& operator +=(const MV& other)     { x += other.x; y += other.y; return *this; }
+    MV& operator +=(const MV& other)           { x += other.x; y += other.y; return *this; }
 
-    const MV& operator -=(const MV& other)     { x -= other.x; y -= other.y; return *this; }
+    MV& operator -=(const MV& other)           { x -= other.x; y -= other.y; return *this; }
 
-    const MV& operator >>=(int i)              { x >>= i; y >>= i; return *this; }
+    MV& operator >>=(int i)                    { x >>= i; y >>= i; return *this; }
 
-    const MV& operator <<=(int i)              { x <<= i; y <<= i; return *this; }
+    MV& operator <<=(int i)                    { x <<= i; y <<= i; return *this; }
 
     MV operator >>(int i) const                { return MV(x >> i, y >> i); }
 
@@ -64,16 +64,18 @@ public:
 
     MV operator *(int16_t i) const             { return MV(x * i, y * i); }
 
-    const MV operator -(const MV& other) const { return MV(x - other.x, y - other.y); }
+    MV operator -(const MV& other) const       { return MV(x - other.x, y - other.y); }
 
-    const MV operator +(const MV& other) const { return MV(x + other.x, y + other.y); }
+    MV operator +(const MV& other) const       { return MV(x + other.x, y + other.y); }
 
     bool operator ==(const MV& other) const    { return word == other.word; }
 
     bool operator !=(const MV& other) const    { return word != other.word; }
 
+    bool operator !() const                    { return !word; }
+
     // Scale down a QPEL mv to FPEL mv, rounding up by one HPEL offset
-    MV roundToFPel() const                     { return MV(x + 2, y + 2) >> 2; }
+    MV roundToFPel() const                     { return MV((x + 2) >> 2, (y + 2) >> 2); }
 
     // Scale up an FPEL mv to QPEL by shifting up two bits
     MV toQPel() const                          { return *this << 2; }

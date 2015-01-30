@@ -27,35 +27,13 @@
 using namespace x265;
 
 namespace {
-pixel dcPredValue(pixel* above, pixel* left, intptr_t width)
-{
-    int w, sum = 0;
-    pixel pDcVal;
-
-    for (w = 0; w < width; w++)
-    {
-        sum += above[w];
-    }
-
-    for (w = 0; w < width; w++)
-    {
-        sum += left[w];
-    }
-
-    pDcVal = (pixel)((sum + width) / (width + width));
-
-    return pDcVal;
-}
-
-void dcPredFilter(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int size)
+void dcPredFilter(const pixel* above, const pixel* left, pixel* dst, intptr_t dststride, int size)
 {
     // boundary pixels processing
     dst[0] = (pixel)((above[0] + left[0] + 2 * dst[0] + 2) >> 2);
 
     for (int x = 1; x < size; x++)
-    {
         dst[x] = (pixel)((above[x] +  3 * dst[x] + 2) >> 2);
-    }
 
     dst += dststride;
     for (int y = 1; y < size; y++)
@@ -66,195 +44,152 @@ void dcPredFilter(pixel* above, pixel* left, pixel* dst, intptr_t dststride, int
 }
 
 template<int width>
-void intra_pred_dc_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int /*dirMode*/, int bFilter)
+void intra_pred_dc_c(pixel* dst, intptr_t dstStride, const pixel* srcPix, int /*dirMode*/, int bFilter)
 {
     int k, l;
 
-    pixel dcval = dcPredValue(above + 1, left + 1, width);
+    int dcVal = width;
+    for (int i = 0; i < width; i++)
+        dcVal += srcPix[1 + i] + srcPix[2 * width + 1 + i];
 
+    dcVal = dcVal / (width + width);
     for (k = 0; k < width; k++)
-    {
         for (l = 0; l < width; l++)
-        {
-            dst[k * dstStride + l] = dcval;
-        }
-    }
+            dst[k * dstStride + l] = (pixel)dcVal;
 
     if (bFilter)
-    {
-        dcPredFilter(above + 1, left + 1, dst, dstStride, width);
-    }
+        dcPredFilter(srcPix + 1, srcPix + (2 * width + 1), dst, dstStride, width);
 }
 
 template<int log2Size>
-void planar_pred_c(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int /*dirMode*/, int /*bFilter*/)
+void planar_pred_c(pixel* dst, intptr_t dstStride, const pixel* srcPix, int /*dirMode*/, int /*bFilter*/)
 {
-    above += 1;
-    left  += 1;
-    int k, l;
-    pixel bottomLeft, topRight;
-    int horPred;
-    int32_t leftColumn[MAX_CU_SIZE + 1], topRow[MAX_CU_SIZE + 1];
-    // CHECK_ME: dynamic range is 9 bits or 15 bits(I assume max input bit_depth is 14 bits)
-    int16_t bottomRow[MAX_CU_SIZE], rightColumn[MAX_CU_SIZE];
     const int blkSize = 1 << log2Size;
-    const int offset2D = blkSize;
-    const int shift1D = log2Size;
-    const int shift2D = shift1D + 1;
 
-    // Get left and above reference column and row
-    for (k = 0; k < blkSize + 1; k++)
-    {
-        topRow[k] = above[k];
-        leftColumn[k] = left[k];
-    }
+    const pixel* above = srcPix + 1;
+    const pixel* left  = srcPix + (2 * blkSize + 1);
 
-    // Prepare intermediate variables used in interpolation
-    bottomLeft = (pixel)leftColumn[blkSize];
-    topRight   = (pixel)topRow[blkSize];
-    for (k = 0; k < blkSize; k++)
-    {
-        bottomRow[k]   = (int16_t)(bottomLeft - topRow[k]);
-        rightColumn[k] = (int16_t)(topRight   - leftColumn[k]);
-        topRow[k]      <<= shift1D;
-        leftColumn[k]  <<= shift1D;
-    }
-
-    // Generate prediction signal
-    for (k = 0; k < blkSize; k++)
-    {
-        horPred = leftColumn[k] + offset2D;
-        for (l = 0; l < blkSize; l++)
-        {
-            horPred += rightColumn[k];
-            topRow[l] += bottomRow[l];
-            dst[k * dstStride + l] = (pixel)((horPred + topRow[l]) >> shift2D);
-        }
-    }
+    pixel topRight = above[blkSize];
+    pixel bottomLeft = left[blkSize];
+    for (int y = 0; y < blkSize; y++)
+        for (int x = 0; x < blkSize; x++)
+            dst[y * dstStride + x] = (pixel) (((blkSize - 1 - x) * left[y] + (blkSize - 1 -y) * above[x] + (x + 1) * topRight + (y + 1) * bottomLeft + blkSize) >> (log2Size + 1));
 }
 
 template<int width>
-void intra_pred_ang_c(pixel* dst, intptr_t dstStride, pixel *refLeft, pixel *refAbove, int dirMode, int bFilter)
+void intra_pred_ang_c(pixel* dst, intptr_t dstStride, const pixel *srcPix0, int dirMode, int bFilter)
 {
-    // Map the mode index to main prediction direction and angle
-    int k, l;
-    bool modeHor       = (dirMode < 18);
-    bool modeVer       = !modeHor;
-    int intraPredAngle = modeVer ? (int)dirMode - VER_IDX : modeHor ? -((int)dirMode - HOR_IDX) : 0;
-    int absAng         = abs(intraPredAngle);
-    int signAng        = intraPredAngle < 0 ? -1 : 1;
+    int width2 = width << 1;
+    // Flip the neighbours in the horizontal case.
+    int horMode = dirMode < 18;
+    pixel neighbourBuf[129];
+    const pixel *srcPix = srcPix0;
 
-    // Set bitshifts and scale the angle parameter to block size
-    static const int angTable[9]    = { 0,    2,    5,   9,  13,  17,  21,  26,  32 };
-    static const int invAngTable[9] = { 0, 4096, 1638, 910, 630, 482, 390, 315, 256 }; // (256 * 32) / Angle
-    int invAngle       = invAngTable[absAng];
-
-    absAng             = angTable[absAng];
-    intraPredAngle     = signAng * absAng;
-
-    // Do angular predictions
+    if (horMode)
     {
-        pixel* refMain;
-        pixel* refSide;
-
-        // Initialise the Main and Left reference array.
-        if (intraPredAngle < 0)
+        neighbourBuf[0] = srcPix[0];
+        for (int i = 0; i < width << 1; i++)
         {
-            refMain = (modeVer ? refAbove : refLeft); // + (width - 1);
-            refSide = (modeVer ? refLeft : refAbove); // + (width - 1);
+            neighbourBuf[1 + i] = srcPix[width2 + 1 + i];
+            neighbourBuf[width2 + 1 + i] = srcPix[1 + i];
+        }
+        srcPix = neighbourBuf;
+    }
 
-            // Extend the Main reference to the left.
-            int invAngleSum    = 128; // rounding for (shift by 8)
-            for (k = -1; k > width * intraPredAngle >> 5; k--)
+    // Intra prediction angle and inverse angle tables.
+    const int8_t angleTable[17] = { -32, -26, -21, -17, -13, -9, -5, -2, 0, 2, 5, 9, 13, 17, 21, 26, 32 };
+    const int16_t invAngleTable[8] = { 4096, 1638, 910, 630, 482, 390, 315, 256 };
+
+    // Get the prediction angle.
+    int angleOffset = horMode ? 10 - dirMode : dirMode - 26;
+    int angle = angleTable[8 + angleOffset];
+
+    // Vertical Prediction.
+    if (!angle)
+    {
+        for (int y = 0; y < width; y++)
+            for (int x = 0; x < width; x++)
+                dst[y * dstStride + x] = srcPix[1 + x];
+
+        if (bFilter)
+        {
+            int topLeft = srcPix[0], top = srcPix[1];
+            for (int y = 0; y < width; y++)
+                dst[y * dstStride] = x265_clip((int16_t)(top + ((srcPix[width2 + 1 + y] - topLeft) >> 1)));
+        }
+    }
+    else // Angular prediction.
+    {
+        // Get the reference pixels. The reference base is the first pixel to the top (neighbourBuf[1]).
+        pixel refBuf[64];
+        const pixel *ref;
+
+        // Use the projected left neighbours and the top neighbours.
+        if (angle < 0)
+        {
+            // Number of neighbours projected. 
+            int nbProjected = -((width * angle) >> 5) - 1;
+            pixel *ref_pix = refBuf + nbProjected + 1;
+
+            // Project the neighbours.
+            int invAngle = invAngleTable[- angleOffset - 1];
+            int invAngleSum = 128;
+            for (int i = 0; i < nbProjected; i++)
             {
                 invAngleSum += invAngle;
-                refMain[k] = refSide[invAngleSum >> 8];
-            }
-        }
-        else
-        {
-            refMain = modeVer ? refAbove : refLeft;
-            refSide = modeVer ? refLeft  : refAbove;
-        }
-
-        if (intraPredAngle == 0)
-        {
-            for (k = 0; k < width; k++)
-            {
-                for (l = 0; l < width; l++)
-                {
-                    dst[k * dstStride + l] = refMain[l + 1];
-                }
+                ref_pix[- 2 - i] = srcPix[width2 + (invAngleSum >> 8)];
             }
 
-            if (bFilter)
-            {
-                for (k = 0; k < width; k++)
-                {
-                    dst[k * dstStride] = (pixel)Clip3((int16_t)0, (int16_t)((1 << X265_DEPTH) - 1), static_cast<int16_t>((dst[k * dstStride]) + ((refSide[k + 1] - refSide[0]) >> 1)));
-                }
-            }
+            // Copy the top-left and top pixels.
+            for (int i = 0; i < width + 1; i++)
+                ref_pix[-1 + i] = srcPix[i];
+            ref = ref_pix;
         }
-        else
+        else // Use the top and top-right neighbours.
+            ref = srcPix + 1;
+
+        // Pass every row.
+        int angleSum = 0;
+        for (int y = 0; y < width; y++)
         {
-            int deltaPos = 0;
-            int deltaInt;
-            int deltaFract;
-            int refMainIndex;
+            angleSum += angle;
+            int offset = angleSum >> 5;
+            int fraction = angleSum & 31;
 
-            for (k = 0; k < width; k++)
-            {
-                deltaPos += intraPredAngle;
-                deltaInt   = deltaPos >> 5;
-                deltaFract = deltaPos & (32 - 1);
-
-                if (deltaFract)
-                {
-                    // Do linear filtering
-                    for (l = 0; l < width; l++)
-                    {
-                        refMainIndex = l + deltaInt + 1;
-                        dst[k * dstStride + l] = (pixel)(((32 - deltaFract) * refMain[refMainIndex] + deltaFract * refMain[refMainIndex + 1] + 16) >> 5);
-                    }
-                }
-                else
-                {
-                    // Just copy the integer samples
-                    for (l = 0; l < width; l++)
-                    {
-                        dst[k * dstStride + l] = refMain[l + deltaInt + 1];
-                    }
-                }
-            }
+            if (fraction) // Interpolate
+                for (int x = 0; x < width; x++)
+                    dst[y * dstStride + x] = (pixel)(((32 - fraction) * ref[offset + x] + fraction * ref[offset + x + 1] + 16) >> 5);
+            else // Copy.
+                for (int x = 0; x < width; x++)
+                    dst[y * dstStride + x] = ref[offset + x];
         }
+    }
 
-        // Flip the block if this is the horizontal mode
-        if (modeHor)
+    // Flip for horizontal.
+    if (horMode)
+    {
+        for (int y = 0; y < width - 1; y++)
         {
-            for (k = 0; k < width - 1; k++)
+            for (int x = y + 1; x < width; x++)
             {
-                for (l = k + 1; l < width; l++)
-                {
-                    pixel tmp              = dst[k * dstStride + l];
-                    dst[k * dstStride + l] = dst[l * dstStride + k];
-                    dst[l * dstStride + k] = tmp;
-                }
+                pixel tmp              = dst[y * dstStride + x];
+                dst[y * dstStride + x] = dst[x * dstStride + y];
+                dst[x * dstStride + y] = tmp;
             }
         }
     }
 }
 
 template<int log2Size>
-void all_angs_pred_c(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pixel *left1, int bLuma)
+void all_angs_pred_c(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
 {
     const int size = 1 << log2Size;
     for (int mode = 2; mode <= 34; mode++)
     {
-        pixel *left  = (g_intraFilterFlags[mode] & size ? left1  : left0);
-        pixel *above = (g_intraFilterFlags[mode] & size ? above1 : above0);
+        pixel *srcPix  = (g_intraFilterFlags[mode] & size ? filtPix  : refPix);
         pixel *out = dest + ((mode - 2) << (log2Size * 2));
 
-        intra_pred_ang_c<size>(out, size, left, above, mode, bLuma);
+        intra_pred_ang_c<size>(out, size, srcPix, mode, bLuma);
 
         // Optimize code don't flip buffer
         bool modeHor = (mode < 18);
@@ -279,29 +214,29 @@ void all_angs_pred_c(pixel *dest, pixel *above0, pixel *left0, pixel *above1, pi
 namespace x265 {
 // x265 private namespace
 
-void Setup_C_IPredPrimitives(EncoderPrimitives& p)
+void setupIntraPrimitives_c(EncoderPrimitives& p)
 {
-    p.intra_pred[0][BLOCK_4x4] = planar_pred_c<2>;
-    p.intra_pred[0][BLOCK_8x8] = planar_pred_c<3>;
-    p.intra_pred[0][BLOCK_16x16] = planar_pred_c<4>;
-    p.intra_pred[0][BLOCK_32x32] = planar_pred_c<5>;
+    p.cu[BLOCK_4x4].intra_pred[PLANAR_IDX] = planar_pred_c<2>;
+    p.cu[BLOCK_8x8].intra_pred[PLANAR_IDX] = planar_pred_c<3>;
+    p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = planar_pred_c<4>;
+    p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = planar_pred_c<5>;
 
-    // Intra Prediction DC
-    p.intra_pred[1][BLOCK_4x4] = intra_pred_dc_c<4>;
-    p.intra_pred[1][BLOCK_8x8] = intra_pred_dc_c<8>;
-    p.intra_pred[1][BLOCK_16x16] = intra_pred_dc_c<16>;
-    p.intra_pred[1][BLOCK_32x32] = intra_pred_dc_c<32>;
+    p.cu[BLOCK_4x4].intra_pred[DC_IDX] = intra_pred_dc_c<4>;
+    p.cu[BLOCK_8x8].intra_pred[DC_IDX] = intra_pred_dc_c<8>;
+    p.cu[BLOCK_16x16].intra_pred[DC_IDX] = intra_pred_dc_c<16>;
+    p.cu[BLOCK_32x32].intra_pred[DC_IDX] = intra_pred_dc_c<32>;
+
     for (int i = 2; i < NUM_INTRA_MODE; i++)
     {
-        p.intra_pred[i][BLOCK_4x4] = intra_pred_ang_c<4>;
-        p.intra_pred[i][BLOCK_8x8] = intra_pred_ang_c<8>;
-        p.intra_pred[i][BLOCK_16x16] = intra_pred_ang_c<16>;
-        p.intra_pred[i][BLOCK_32x32] = intra_pred_ang_c<32>;
+        p.cu[BLOCK_4x4].intra_pred[i] = intra_pred_ang_c<4>;
+        p.cu[BLOCK_8x8].intra_pred[i] = intra_pred_ang_c<8>;
+        p.cu[BLOCK_16x16].intra_pred[i] = intra_pred_ang_c<16>;
+        p.cu[BLOCK_32x32].intra_pred[i] = intra_pred_ang_c<32>;
     }
 
-    p.intra_pred_allangs[BLOCK_4x4] = all_angs_pred_c<2>;
-    p.intra_pred_allangs[BLOCK_8x8] = all_angs_pred_c<3>;
-    p.intra_pred_allangs[BLOCK_16x16] = all_angs_pred_c<4>;
-    p.intra_pred_allangs[BLOCK_32x32] = all_angs_pred_c<5>;
+    p.cu[BLOCK_4x4].intra_pred_allangs = all_angs_pred_c<2>;
+    p.cu[BLOCK_8x8].intra_pred_allangs = all_angs_pred_c<3>;
+    p.cu[BLOCK_16x16].intra_pred_allangs = all_angs_pred_c<4>;
+    p.cu[BLOCK_32x32].intra_pred_allangs = all_angs_pred_c<5>;
 }
 }

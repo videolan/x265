@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2014 x265 project
+ * Copyright (C) 2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
  *
@@ -50,7 +50,7 @@ inline int fastMin(int x, int y)
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
-inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
+inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
 {
     X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
     X265_CHECK(absGoRice <= 4, "absGoRice check failure\n");
@@ -81,7 +81,7 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOne
 
             // NOTE: mapping to x86 hardware instruction BSR
             unsigned long size;
-            CLZ32(size, absLevel);
+            CLZ(size, absLevel);
             int egs = size * 2 + 1;
 
             rate += egs << 15;
@@ -106,7 +106,7 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int *greaterOne
 }
 
 /* Calculates the cost for specific absolute transform level */
-inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *greaterOneBits, const int *levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
+inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
 {
     X265_CHECK(absLevel, "absLevel should not be zero\n");
 
@@ -135,7 +135,7 @@ inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int *g
             if (symbol)
             {
                 unsigned long idx;
-                CLZ32(idx, symbol + 1);
+                CLZ(idx, symbol + 1);
                 length = idx;
             }
 
@@ -166,9 +166,10 @@ bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList, 
     m_useRDOQ = useRDOQ;
     m_psyRdoqScale = (int64_t)(psyScale * 256.0);
     m_scalingList = &scalingList;
-    m_resiDctCoeff = X265_MALLOC(int32_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
+    m_resiDctCoeff = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
     m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
     m_fencShortBuf = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE);
+    m_tqBypass = false;
 
     return m_resiDctCoeff && m_fencShortBuf;
 }
@@ -190,24 +191,27 @@ Quant::~Quant()
     X265_FREE(m_fencShortBuf);
 }
 
-void Quant::setQPforQuant(const CUData& ctu)
+void Quant::setQPforQuant(const CUData& cu)
 {
-    m_nr = m_frameNr ? &m_frameNr[ctu.m_encData->m_frameEncoderID] : NULL;
-    int qpy = ctu.m_qp[0];
+    m_tqBypass = !!cu.m_tqBypass[0];
+    if (m_tqBypass)
+        return;
+    m_nr = m_frameNr ? &m_frameNr[cu.m_encData->m_frameEncoderID] : NULL;
+    int qpy = cu.m_qp[0];
     m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
-    setChromaQP(qpy + ctu.m_slice->m_pps->chromaCbQpOffset, TEXT_CHROMA_U, ctu.m_chromaFormat);
-    setChromaQP(qpy + ctu.m_slice->m_pps->chromaCrQpOffset, TEXT_CHROMA_V, ctu.m_chromaFormat);
+    setChromaQP(qpy + cu.m_slice->m_pps->chromaQpOffset[0], TEXT_CHROMA_U, cu.m_chromaFormat);
+    setChromaQP(qpy + cu.m_slice->m_pps->chromaQpOffset[1], TEXT_CHROMA_V, cu.m_chromaFormat);
 }
 
 void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
 {
-    int qp = Clip3(-QP_BD_OFFSET, 57, qpin);
+    int qp = x265_clip3(-QP_BD_OFFSET, 57, qpin);
     if (qp >= 30)
     {
         if (chFmt == X265_CSP_I420)
             qp = g_chromaScale[qp];
         else
-            qp = X265_MIN(qp, 51);
+            qp = X265_MIN(qp, QP_MAX_SPEC);
     }
     m_qpParam[ttype].setQpParam(qp + QP_BD_OFFSET);
 }
@@ -216,7 +220,7 @@ void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
 uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codeParams)
 {
     const uint32_t log2TrSizeCG = codeParams.log2TrSizeCG;
-    const uint16_t *scan = codeParams.scan;
+    const uint16_t* scan = codeParams.scan;
     bool lastCG = true;
 
     for (int cg = (1 << (log2TrSizeCG * 2)) - 1; cg >= 0; cg--)
@@ -322,58 +326,56 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
     return numSig;
 }
 
-uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16_t* residual, uint32_t stride,
+uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencStride, const int16_t* residual, uint32_t resiStride,
                              coeff_t* coeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip)
 {
-    if (cu.m_tqBypass[absPartIdx])
+    const uint32_t sizeIdx = log2TrSize - 2;
+    if (m_tqBypass)
     {
         X265_CHECK(log2TrSize >= 2 && log2TrSize <= 5, "Block size mistake!\n");
-        return primitives.copy_cnt[log2TrSize - 2](coeff, residual, stride);
+        return primitives.cu[sizeIdx].copy_cnt(coeff, residual, resiStride);
     }
 
     bool isLuma  = ttype == TEXT_LUMA;
     bool usePsy  = m_psyRdoqScale && isLuma && !useTransformSkip;
-    bool isIntra = cu.m_predMode[absPartIdx] == MODE_INTRA;
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; // Represents scaling through forward transform
-    int trSize = 1 << log2TrSize;
 
     X265_CHECK((cu.m_slice->m_sps->quadtreeTULog2MaxSize >= log2TrSize), "transform size too large\n");
     if (useTransformSkip)
     {
 #if X265_DEPTH <= 10
-        primitives.cvt16to32_shl(m_resiDctCoeff, residual, stride, transformShift, trSize);
+        X265_CHECK(transformShift >= 0, "invalid transformShift\n");
+        primitives.cu[sizeIdx].cpy2Dto1D_shl(m_resiDctCoeff, residual, resiStride, transformShift);
 #else
         if (transformShift >= 0)
-            primitives.cvt16to32_shl(m_resiDctCoeff, residual, stride, transformShift, trSize);
+            primitives.cu[sizeIdx].cpy2Dto1D_shl(m_resiDctCoeff, residual, resiStride, transformShift);
         else
-        {
-            int shift = -transformShift;
-            int offset = (1 << (shift - 1));
-            primitives.cvt16to32_shr[log2TrSize - 2](m_resiDctCoeff, residual, stride, shift, offset);
-        }
+            primitives.cu[sizeIdx].cpy2Dto1D_shr(m_resiDctCoeff, residual, resiStride, -transformShift);
 #endif
     }
     else
     {
-        const uint32_t sizeIdx = log2TrSize - 2;
-        int useDST = !sizeIdx && isLuma && isIntra;
-        int index = DCT_4x4 + sizeIdx - useDST;
+        bool isIntra = cu.isIntra(absPartIdx);
 
-        primitives.dct[index](residual, m_resiDctCoeff, stride);
+        if (!sizeIdx && isLuma && isIntra)
+            primitives.dst4x4(residual, m_resiDctCoeff, resiStride);
+        else
+            primitives.cu[sizeIdx].dct(residual, m_resiDctCoeff, resiStride);
 
         /* NOTE: if RDOQ is disabled globally, psy-rdoq is also disabled, so
          * there is no risk of performing this DCT unnecessarily */
         if (usePsy)
         {
+            int trSize = 1 << log2TrSize;
             /* perform DCT on source pixels for psy-rdoq */
-            primitives.square_copy_ps[sizeIdx](m_fencShortBuf, trSize, fenc, fencStride);
-            primitives.dct[index](m_fencShortBuf, m_fencDctCoeff, trSize);
+            primitives.cu[sizeIdx].copy_ps(m_fencShortBuf, trSize, fenc, fencStride);
+            primitives.cu[sizeIdx].dct(m_fencShortBuf, m_fencDctCoeff, trSize);
         }
 
-        if (m_nr && !isIntra)
+        if (m_nr)
         {
             /* denoise is not applied to intra residual, so DST can be ignored */
-            int cat = sizeIdx + 4 * !isLuma;
+            int cat = sizeIdx + 4 * !isLuma + 8 * !isIntra;
             int numCoeff = 1 << (log2TrSize * 2);
             primitives.denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offsetDenoise[cat], numCoeff);
             m_nr->count[cat]++;
@@ -389,7 +391,7 @@ uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16
         int scalingListType = ttype + (isLuma ? 3 : 0);
         int rem = m_qpParam[ttype].rem;
         int per = m_qpParam[ttype].per;
-        int32_t *quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
+        const int32_t* quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
         int qbits = QUANT_SHIFT + per + transformShift;
         int add = (cu.m_slice->m_sliceType == I_SLICE ? 171 : 85) << (qbits - 9);
@@ -408,12 +410,13 @@ uint32_t Quant::transformNxN(CUData& cu, pixel* fenc, uint32_t fencStride, int16
     }
 }
 
-void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t stride, coeff_t* coeff,
+void Quant::invtransformNxN(int16_t* residual, uint32_t resiStride, const coeff_t* coeff,
                             uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig)
 {
-    if (transQuantBypass)
+    const uint32_t sizeIdx = log2TrSize - 2;
+    if (m_tqBypass)
     {
-        primitives.copy_shl[log2TrSize - 2](residual, coeff, stride, 0);
+        primitives.cu[sizeIdx].cpy1Dto2D_shl(residual, coeff, resiStride, 0);
         return;
     }
 
@@ -427,7 +430,7 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
     if (m_scalingList->m_bEnabled)
     {
         int scalingListType = (bIntra ? 0 : 3) + ttype;
-        int32_t *dequantCoef = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
+        const int32_t* dequantCoef = m_scalingList->m_dequantCoef[sizeIdx][scalingListType][rem];
         primitives.dequant_scaling(coeff, dequantCoef, m_resiDctCoeff, numCoeff, per, shift);
     }
     else
@@ -438,20 +441,18 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
 
     if (useTransformSkip)
     {
-        int trSize = 1 << log2TrSize;
-
 #if X265_DEPTH <= 10
-        primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, transformShift, trSize);
+        X265_CHECK(transformShift > 0, "invalid transformShift\n");
+        primitives.cu[sizeIdx].cpy1Dto2D_shr(residual, m_resiDctCoeff, resiStride, transformShift);
 #else
         if (transformShift > 0)
-            primitives.cvt32to16_shr(residual, m_resiDctCoeff, stride, transformShift, trSize);
+            primitives.cu[sizeIdx].cpy1Dto2D_shr(residual, m_resiDctCoeff, resiStride, transformShift);
         else
-            primitives.cvt32to16_shl[log2TrSize - 2](residual, m_resiDctCoeff, stride, -transformShift);
+            primitives.cu[sizeIdx].cpy1Dto2D_shl(residual, m_resiDctCoeff, resiStride, -transformShift);
 #endif
     }
     else
     {
-        const uint32_t sizeIdx = log2TrSize - 2;
         int useDST = !sizeIdx && ttype == TEXT_LUMA && bIntra;
 
         X265_CHECK((int)numSig == primitives.count_nonzero(coeff, 1 << (log2TrSize * 2)), "numSig differ\n");
@@ -459,23 +460,26 @@ void Quant::invtransformNxN(bool transQuantBypass, int16_t* residual, uint32_t s
         // DC only
         if (numSig == 1 && coeff[0] != 0 && !useDST)
         {
-            const int shift_1st = 7;
+            const int shift_1st = 7 - 6;
             const int add_1st = 1 << (shift_1st - 1);
-            const int shift_2nd = 12 - (X265_DEPTH - 8);
+            const int shift_2nd = 12 - (X265_DEPTH - 8) - 3;
             const int add_2nd = 1 << (shift_2nd - 1);
 
-            int dc_val = (((m_resiDctCoeff[0] * 64 + add_1st) >> shift_1st) * 64 + add_2nd) >> shift_2nd;
-            primitives.blockfill_s[sizeIdx](residual, stride, (int16_t)dc_val);
+            int dc_val = (((m_resiDctCoeff[0] * (64 >> 6) + add_1st) >> shift_1st) * (64 >> 3) + add_2nd) >> shift_2nd;
+            primitives.cu[sizeIdx].blockfill_s(residual, resiStride, (int16_t)dc_val);
             return;
         }
 
-        primitives.idct[IDCT_4x4 + sizeIdx - useDST](m_resiDctCoeff, residual, stride);
+        if (useDST)
+            primitives.idst4x4(m_resiDctCoeff, residual, resiStride);
+        else
+            primitives.cu[sizeIdx].idct(m_resiDctCoeff, residual, resiStride);
     }
 }
 
 /* Rate distortion optimized quantization for entropy coding engines using
  * probability models like CABAC */
-uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
+uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu.isIntra(absPartIdx) ? 0 : 3) + ttype;
@@ -486,7 +490,7 @@ uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
     int per = m_qpParam[ttype].per;
     int qbits = QUANT_SHIFT + per + transformShift; /* Right shift of non-RDOQ quantizer level = (coeff*Q + offset)>>q_bits */
     int add = (1 << (qbits - 1));
-    int32_t *qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
+    const int32_t* qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
     int numCoeff = 1 << (log2TrSize * 2);
 
@@ -503,7 +507,7 @@ uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
     /* unquant constants for measuring distortion. Scaling list quant coefficients have a (1 << 4)
      * scale applied that must be removed during unquant. Note that in real dequant there is clipping
      * at several stages. We skip the clipping for simplicity when measuring RD cost */
-    int32_t *unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
+    const int32_t* unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift + (m_scalingList->m_bEnabled ? 4 : 0);
     int unquantRound = (unquantShift > per) ? 1 << (unquantShift - per - 1) : 0;
     int scaleBits = SCALE_BITS - 2 * transformShift;
@@ -616,8 +620,8 @@ uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
                 // coefficient level estimation
                 const uint32_t oneCtx = 4 * ctxSet + c1;
                 const uint32_t absCtx = ctxSet + c2;
-                const int *greaterOneBits = estBitsSbac.greaterOneBits[oneCtx];
-                const int *levelAbsBits = estBitsSbac.levelAbsBits[absCtx];
+                const int* greaterOneBits = estBitsSbac.greaterOneBits[oneCtx];
+                const int* levelAbsBits = estBitsSbac.levelAbsBits[absCtx];
 
                 uint16_t level = 0;
                 uint32_t sigCoefBits = 0;
@@ -842,12 +846,23 @@ uint32_t Quant::rdoQuant(CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, Tex
              * cost of signaling it as not-significant */
             uint32_t blkPos = codeParams.scan[scanPos];
             if (dstCoeff[blkPos])
-            {
-                /* Swap the cost of signaling its significant coeff bit with the cost of
-                 * signaling its lastNZ pos */
-                uint32_t posY = blkPos >> log2TrSize;
-                uint32_t posX = blkPos - (posY << log2TrSize);
-                uint32_t bitsLastNZ = codeParams.scanType == SCAN_VER ? getRateLast(posY, posX) : getRateLast(posX, posY);
+            {                
+                // Calculates the cost of signaling the last significant coefficient in the block 
+                uint32_t pos[2] = { (blkPos & (trSize - 1)), (blkPos >> log2TrSize) };
+                if (codeParams.scanType == SCAN_VER)
+                    std::swap(pos[0], pos[1]);
+                uint32_t bitsLastNZ = 0;
+
+                for (int i = 0; i < 2; i++)
+                {
+                    int temp = g_lastCoeffTable[pos[i]];
+                    int prefixOnes = temp & 15;
+                    int suffixLen = temp >> 4;
+
+                    bitsLastNZ += m_entropyCoder->m_estBitsSbac.lastBits[i][prefixOnes];
+                    bitsLastNZ += IEP_RATE * suffixLen;
+                }
+
                 int64_t costAsLast = totalRdCost - costSig[scanPos] + SIGCOST(bitsLastNZ);
 
                 if (costAsLast < bestCost)
@@ -1094,21 +1109,6 @@ uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32
     offset += cnt;
 
     return (bIsLuma && (posX | posY) >= 4) ? 3 + offset : offset;
-}
-
-/* Calculates the cost of signaling the last significant coefficient in the block */
-inline uint32_t Quant::getRateLast(uint32_t posx, uint32_t posy) const
-{
-    uint32_t ctxX = getGroupIdx(posx);
-    uint32_t ctxY = getGroupIdx(posy);
-    uint32_t cost = m_entropyCoder->m_estBitsSbac.lastXBits[ctxX] + m_entropyCoder->m_estBitsSbac.lastYBits[ctxY];
-
-    int32_t maskX = (int32_t)(2 - posx) >> 31;
-    int32_t maskY = (int32_t)(2 - posy) >> 31;
-
-    cost += maskX & (IEP_RATE * ((ctxX - 2) >> 1));
-    cost += maskY & (IEP_RATE * ((ctxY - 2) >> 1));
-    return cost;
 }
 
 /* Context derivation process of coeff_abs_significant_flag */

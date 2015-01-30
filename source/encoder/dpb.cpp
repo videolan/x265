@@ -52,8 +52,8 @@ DPB::~DPB()
         FrameData* next = m_picSymFreeList->m_freeListNext;
         m_picSymFreeList->destroy();
 
-        m_picSymFreeList->m_reconPicYuv->destroy();
-        delete m_picSymFreeList->m_reconPicYuv;
+        m_picSymFreeList->m_reconPic->destroy();
+        delete m_picSymFreeList->m_reconPic;
 
         delete m_picSymFreeList;
         m_picSymFreeList = next;
@@ -82,7 +82,7 @@ void DPB::recycleUnreferenced()
             curFrame->m_encData->m_freeListNext = m_picSymFreeList;
             m_picSymFreeList = curFrame->m_encData;
             curFrame->m_encData = NULL;
-            curFrame->m_reconPicYuv = NULL;
+            curFrame->m_reconPic = NULL;
         }
     }
 }

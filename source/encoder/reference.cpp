@@ -33,86 +33,142 @@ using namespace x265;
 
 MotionReference::MotionReference()
 {
-    m_weightBuffer = NULL;
+    weightBuffer[0] = NULL;
+    weightBuffer[1] = NULL;
+    weightBuffer[2] = NULL;
 }
 
-int MotionReference::init(PicYuv* recPic, WeightParam *w)
+MotionReference::~MotionReference()
 {
-    m_reconPic = recPic;
-    lumaStride = recPic->m_stride;
-    intptr_t startpad = recPic->m_lumaMarginY * lumaStride + recPic->m_lumaMarginX;
+    X265_FREE(weightBuffer[0]);
+    X265_FREE(weightBuffer[1]);
+    X265_FREE(weightBuffer[2]);
+}
 
-    /* directly reference the pre-extended integer pel plane */
-    fpelPlane = recPic->m_picBuf[0] + startpad;
+int MotionReference::init(PicYuv* recPic, WeightParam *wp, const x265_param& p)
+{
+    reconPic = recPic;
+    numWeightedRows = 0;
+    lumaStride = recPic->m_stride;
+    chromaStride = recPic->m_strideC;
+    numInterpPlanes = p.subpelRefine > 2 ? 3 : 1; /* is chroma satd possible? */
+
+    /* directly reference the extended integer pel planes */
+    fpelPlane[0] = recPic->m_picOrg[0];
+    fpelPlane[1] = recPic->m_picOrg[1];
+    fpelPlane[2] = recPic->m_picOrg[2];
     isWeighted = false;
 
-    if (w)
+    if (wp)
     {
-        if (!m_weightBuffer)
+        uint32_t numCUinHeight = (reconPic->m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
+
+        int marginX = reconPic->m_lumaMarginX;
+        int marginY = reconPic->m_lumaMarginY;
+        intptr_t stride = reconPic->m_stride;
+        int cuHeight = g_maxCUSize;
+
+        for (int c = 0; c < numInterpPlanes; c++)
         {
-            uint32_t numCUinHeight = (recPic->m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
-            size_t padheight = (numCUinHeight * g_maxCUSize) + recPic->m_lumaMarginY * 2;
-            m_weightBuffer = X265_MALLOC(pixel, lumaStride * padheight);
-            if (!m_weightBuffer)
-                return -1;
+            if (c == 1)
+            {
+                marginX = reconPic->m_chromaMarginX;
+                marginY = reconPic->m_chromaMarginY;
+                stride  = reconPic->m_strideC;
+                cuHeight >>= reconPic->m_vChromaShift;
+            }
+
+            if (wp[c].bPresentFlag)
+            {
+                if (!weightBuffer[c])
+                {
+                    size_t padheight = (numCUinHeight * cuHeight) + marginY * 2;
+                    weightBuffer[c] = X265_MALLOC(pixel, stride * padheight);
+                    if (!weightBuffer[c])
+                        return -1;
+                }
+
+                /* use our buffer which will have weighted pixels written to it */
+                fpelPlane[c] = weightBuffer[c] + marginY * stride + marginX;
+                X265_CHECK(recPic->m_picOrg[c] - recPic->m_picBuf[c] == marginY * stride + marginX, "PicYuv pad calculation mismatch\n");
+
+                w[c].weight = wp[c].inputWeight;
+                w[c].offset = wp[c].inputOffset * (1 << (X265_DEPTH - 8));
+                w[c].shift = wp[c].log2WeightDenom;
+                w[c].round = w[c].shift ? 1 << (w[c].shift - 1) : 0;
+            }
         }
 
         isWeighted = true;
-        weight = w->inputWeight;
-        offset = w->inputOffset * (1 << (X265_DEPTH - 8));
-        shift  = w->log2WeightDenom;
-        round  = shift ? 1 << (shift - 1) : 0;
-        m_numWeightedRows = 0;
-
-        /* use our buffer which will have weighted pixels written to it */
-        fpelPlane = m_weightBuffer + startpad;
     }
 
     return 0;
 }
 
-MotionReference::~MotionReference()
+void MotionReference::applyWeight(int finishedRows, int maxNumRows)
 {
-    X265_FREE(m_weightBuffer);
-}
-
-void MotionReference::applyWeight(int rows, int numRows)
-{
-    rows = X265_MIN(rows, numRows);
-    if (m_numWeightedRows >= rows)
+    finishedRows = X265_MIN(finishedRows, maxNumRows);
+    if (numWeightedRows >= finishedRows)
         return;
-    int marginX = m_reconPic->m_lumaMarginX;
-    int marginY = m_reconPic->m_lumaMarginY;
-    pixel* src = (pixel*)m_reconPic->m_picOrg[0] + (m_numWeightedRows * (int)g_maxCUSize * lumaStride);
-    pixel* dst = fpelPlane + ((m_numWeightedRows * (int)g_maxCUSize) * lumaStride);
-    int width = m_reconPic->m_picWidth;
-    int height = ((rows - m_numWeightedRows) * g_maxCUSize);
-    if (rows == numRows)
-        height = ((m_reconPic->m_picHeight % g_maxCUSize) ? (m_reconPic->m_picHeight % g_maxCUSize) : g_maxCUSize);
 
-    // Computing weighted CU rows
-    int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
-    int padwidth = (width + 15) & ~15;  // weightp assembly needs even 16 byte widths
-    primitives.weight_pp(src, dst, lumaStride, padwidth, height,
-                         weight, round << correction, shift + correction, offset);
-
-    // Extending Left & Right
-    primitives.extendRowBorder(dst, lumaStride, width, height, marginX);
-
-    // Extending Above
-    if (m_numWeightedRows == 0)
+    int marginX = reconPic->m_lumaMarginX;
+    int marginY = reconPic->m_lumaMarginY;
+    intptr_t stride = reconPic->m_stride;
+    int width   = reconPic->m_picWidth;
+    int height  = (finishedRows - numWeightedRows) * g_maxCUSize;
+    if (finishedRows == maxNumRows && (reconPic->m_picHeight % g_maxCUSize))
     {
-        pixel *pixY = fpelPlane - marginX;
-        for (int y = 0; y < marginY; y++)
-            memcpy(pixY - (y + 1) * lumaStride, pixY, lumaStride * sizeof(pixel));
+        /* the last row may be partial height */
+        height -= g_maxCUSize;
+        height += reconPic->m_picHeight % g_maxCUSize;
+    }
+    int cuHeight = g_maxCUSize;
+
+    for (int c = 0; c < numInterpPlanes; c++)
+    {
+        if (c == 1)
+        {
+            marginX = reconPic->m_chromaMarginX;
+            marginY = reconPic->m_chromaMarginY;
+            stride  = reconPic->m_strideC;
+            width    >>= reconPic->m_hChromaShift;
+            height   >>= reconPic->m_vChromaShift;
+            cuHeight >>= reconPic->m_vChromaShift;
+        }
+
+        /* Do not generate weighted predictions if using original picture */
+        if (fpelPlane[c] == reconPic->m_picOrg[c])
+            continue;
+
+        const pixel* src = reconPic->m_picOrg[c] + numWeightedRows * cuHeight * stride;
+        pixel* dst = fpelPlane[c] + numWeightedRows * cuHeight * stride;
+
+        // Computing weighted CU rows
+        int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
+        int padwidth = (width + 15) & ~15;              // weightp assembly needs even 16 byte widths
+        primitives.weight_pp(src, dst, stride, padwidth, height, w[c].weight, w[c].round << correction, w[c].shift + correction, w[c].offset);
+
+        // Extending Left & Right
+        primitives.extendRowBorder(dst, stride, width, height, marginX);
+
+        // Extending Above
+        if (numWeightedRows == 0)
+        {
+            pixel *pixY = fpelPlane[c] - marginX;
+            for (int y = 0; y < marginY; y++)
+                memcpy(pixY - (y + 1) * stride, pixY, stride * sizeof(pixel));
+        }
+
+        // Extending Bottom
+        if (finishedRows == maxNumRows)
+        {
+            int picHeight = reconPic->m_picHeight;
+            if (c) picHeight >>= reconPic->m_vChromaShift;
+            pixel *pixY = fpelPlane[c] - marginX + (picHeight - 1) * stride;
+            for (int y = 0; y < marginY; y++)
+                memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(pixel));
+        }
     }
 
-    // Extending Bottom
-    if (rows == numRows)
-    {
-        pixel *pixY = fpelPlane - marginX + (m_reconPic->m_picHeight - 1) * lumaStride;
-        for (int y = 0; y < marginY; y++)
-            memcpy(pixY + (y + 1) * lumaStride, pixY, lumaStride * sizeof(pixel));
-    }
-    m_numWeightedRows = rows;
+    numWeightedRows = finishedRows;
 }

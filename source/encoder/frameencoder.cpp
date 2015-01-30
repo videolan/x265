@@ -29,8 +29,6 @@
 #include "wavefront.h"
 #include "param.h"
 
-#include "PPA/ppa.h"
-
 #include "encoder.h"
 #include "frameencoder.h"
 #include "common.h"
@@ -44,8 +42,11 @@ FrameEncoder::FrameEncoder()
     : WaveFront(NULL)
     , m_threadActive(true)
 {
-    m_totalTime = 0;
+    m_prevOutputTime = x265_mdate();
+    m_totalWorkerElapsedTime = 0;
+    m_slicetypeWaitTime = 0;
     m_frameEncoderID = 0;
+    m_activeWorkerCount = 0;
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
     m_outStreams = NULL;
@@ -126,23 +127,24 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols, int id)
         ok &= m_rce.picTimingSEI && m_rce.hrdTiming;
     }
 
-    if (m_param->noiseReduction)
+    if (m_param->noiseReductionIntra || m_param->noiseReductionInter)
         m_nr = X265_MALLOC(NoiseReduction, 1);
     if (m_nr)
         memset(m_nr, 0, sizeof(NoiseReduction));
     else
-        m_param->noiseReduction = 0;
+        m_param->noiseReductionIntra = m_param->noiseReductionInter = 0;
 
     start();
     return ok;
 }
 
 /* Generate a complete list of unique geom sets for the current picture dimensions */
-bool FrameEncoder::initializeGeoms(const FrameData& encData)
+bool FrameEncoder::initializeGeoms()
 {
     /* Geoms only vary between CTUs in the presence of picture edges */
-    int heightRem = m_param->sourceHeight & (m_param->maxCUSize - 1);
-    int widthRem = m_param->sourceWidth & (m_param->maxCUSize - 1);
+    int maxCUSize = m_param->maxCUSize;
+    int heightRem = m_param->sourceHeight & (maxCUSize - 1);
+    int widthRem = m_param->sourceWidth & (maxCUSize - 1);
     int allocGeoms = 1; // body
     if (heightRem && widthRem)
         allocGeoms = 4; // body, right, bottom, corner
@@ -154,33 +156,45 @@ bool FrameEncoder::initializeGeoms(const FrameData& encData)
     if (!m_cuGeoms || !m_ctuGeomMap)
         return false;
 
-    CUGeom cuLocalData[CUGeom::MAX_GEOMS];
-    memset(cuLocalData, 0, sizeof(cuLocalData)); // temporal fix for memcmp
+    // body
+    CUData::calcCTUGeoms(maxCUSize, maxCUSize, maxCUSize, m_cuGeoms);
+    memset(m_ctuGeomMap, 0, sizeof(uint32_t) * m_numRows * m_numCols);
+    if (allocGeoms == 1)
+        return true;
 
-    int countGeoms = 0;
-    for (uint32_t ctuAddr = 0; ctuAddr < m_numRows * m_numCols; ctuAddr++)
+    int countGeoms = 1;
+    if (widthRem)
     {
-        /* TODO: detach this logic from TComDataCU */
-        encData.m_picCTU[ctuAddr].initCTU(*m_frame, ctuAddr, 0);
-        encData.m_picCTU[ctuAddr].calcCTUGeoms(m_param->sourceWidth, m_param->sourceHeight, m_param->maxCUSize, cuLocalData);
-
-        m_ctuGeomMap[ctuAddr] = MAX_INT;
-        for (int i = 0; i < countGeoms; i++)
+        // right
+        CUData::calcCTUGeoms(widthRem, maxCUSize, maxCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
+        for (uint32_t i = 0; i < m_numRows; i++)
         {
-            if (!memcmp(cuLocalData, m_cuGeoms + i * CUGeom::MAX_GEOMS, sizeof(CUGeom) * CUGeom::MAX_GEOMS))
-            {
-                m_ctuGeomMap[ctuAddr] = i * CUGeom::MAX_GEOMS;
-                break;
-            }
-        }
-
-        if (m_ctuGeomMap[ctuAddr] == MAX_INT)
-        {
-            X265_CHECK(countGeoms < allocGeoms, "geometry match check failure\n");
+            uint32_t ctuAddr = m_numCols * (i + 1) - 1;
             m_ctuGeomMap[ctuAddr] = countGeoms * CUGeom::MAX_GEOMS;
-            memcpy(m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS, cuLocalData, sizeof(CUGeom) * CUGeom::MAX_GEOMS);
+        }
+        countGeoms++;
+    }
+    if (heightRem)
+    {
+        // bottom
+        CUData::calcCTUGeoms(maxCUSize, heightRem, maxCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
+        for (uint32_t i = 0; i < m_numCols; i++)
+        {
+            uint32_t ctuAddr = m_numCols * (m_numRows - 1) + i;
+            m_ctuGeomMap[ctuAddr] = countGeoms * CUGeom::MAX_GEOMS;
+        }
+        countGeoms++;
+
+        if (widthRem)
+        {
+            // corner
+            CUData::calcCTUGeoms(widthRem, heightRem, maxCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
+
+            uint32_t ctuAddr = m_numCols * m_numRows - 1;
+            m_ctuGeomMap[ctuAddr] = countGeoms * CUGeom::MAX_GEOMS;
             countGeoms++;
         }
+        X265_CHECK(countGeoms == allocGeoms, "geometry match check failure\n");
     }
 
     return true;
@@ -188,20 +202,25 @@ bool FrameEncoder::initializeGeoms(const FrameData& encData)
 
 bool FrameEncoder::startCompressFrame(Frame* curFrame)
 {
+    m_slicetypeWaitTime = x265_mdate() - m_prevOutputTime;
     m_frame = curFrame;
     curFrame->m_encData->m_frameEncoderID = m_frameEncoderID; // Each Frame knows the ID of the FrameEncoder encoding it
     curFrame->m_encData->m_slice->m_mref = m_mref;
+
     if (!m_cuGeoms)
     {
-        if (!initializeGeoms(*curFrame->m_encData))
+        if (!initializeGeoms())
             return false;
     }
+
     m_enable.trigger();
     return true;
 }
 
 void FrameEncoder::threadMain()
 {
+    THREAD_NAME("Frame", m_frameEncoderID);
+
     // worker thread routine for FrameEncoder
     do
     {
@@ -217,13 +236,21 @@ void FrameEncoder::threadMain()
 
 void FrameEncoder::compressFrame()
 {
-    PPAScopeEvent(FrameEncoder_compressFrame);
-    int64_t startCompressTime = x265_mdate();
-    Slice* slice = m_frame->m_encData->m_slice;
+    ProfileScopeEvent(frameThread);
+
+    m_startCompressTime = x265_mdate();
+    m_totalActiveWorkerCount = 0;
+    m_activeWorkerCountSamples = 0;
+    m_totalWorkerElapsedTime = 0;
+    m_totalNoWorkerTime = 0;
+    m_countRowBlocks = 0;
+    m_allRowsAvailableTime = 0;
+    m_stallStartTime = 0;
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
      * unit) */
+    Slice* slice = m_frame->m_encData->m_slice;
     if (m_param->bEnableAccessUnitDelimiters && (m_frame->m_poc || m_param->bRepeatHeaders))
     {
         m_bs.resetBits();
@@ -252,7 +279,7 @@ void FrameEncoder::compressFrame()
             WeightParam *w = NULL;
             if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
                 w = slice->m_weightPredTable[l][ref];
-            m_mref[l][ref].init(slice->m_refPicList[l][ref]->m_reconPicYuv, w);
+            m_mref[l][ref].init(slice->m_refPicList[l][ref]->m_reconPic, w, *m_param);
         }
     }
 
@@ -262,7 +289,7 @@ void FrameEncoder::compressFrame()
     m_rce.newQp = qp;
 
     /* Clip slice QP to 0-51 spec range before encoding */
-    slice->m_sliceQp = Clip3(-QP_BD_OFFSET, QP_MAX_SPEC, qp);
+    slice->m_sliceQp = x265_clip3(-QP_BD_OFFSET, QP_MAX_SPEC, qp);
 
     m_initSliceContext.resetEntropy(*slice);
 
@@ -270,7 +297,7 @@ void FrameEncoder::compressFrame()
 
     // reset entropy coders
     m_entropyCoder.load(m_initSliceContext);
-    for (int i = 0; i < m_numRows; i++)
+    for (uint32_t i = 0; i < m_numRows; i++)
         m_rows[i].init(m_initSliceContext);
 
     uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : 1;
@@ -285,6 +312,8 @@ void FrameEncoder::compressFrame()
     else
         for (uint32_t i = 0; i < numSubstreams; i++)
             m_outStreams[i].resetBits();
+
+    int prevBPSEI = m_rce.encodeOrder ? m_top->m_lastBPSEI : 0;
 
     if (m_frame->m_lowres.bKeyframe)
     {
@@ -354,7 +383,7 @@ void FrameEncoder::compressFrame()
             // access unit associated with the picture timing SEI message has to
             // wait after removal of the access unit with the most recent
             // buffering period SEI message
-            sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, m_rce.encodeOrder - m_top->m_lastBPSEI), (1 << hrd->cpbRemovalDelayLength));
+            sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, m_rce.encodeOrder - prevBPSEI), (1 << hrd->cpbRemovalDelayLength));
             sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics + poc - m_rce.encodeOrder;
         }
 
@@ -374,7 +403,7 @@ void FrameEncoder::compressFrame()
         int totalI = 0, totalP = 0, totalSkip = 0;
 
         // accumulate intra,inter,skip cu count per frame for 2 pass
-        for (int i = 0; i < m_numRows; i++)
+        for (uint32_t i = 0; i < m_numRows; i++)
         {
             m_frameStats.mvBits    += m_rows[i].rowStats.mvBits;
             m_frameStats.coeffBits += m_rows[i].rowStats.coeffBits;
@@ -452,7 +481,8 @@ void FrameEncoder::compressFrame()
     }
     m_accessUnitBits = bytes << 3;
 
-    m_elapsedCompressTime = (double)(x265_mdate() - startCompressTime) / 1000000;
+    m_endCompressTime = x265_mdate();
+
     /* rateControlEnd may also block for earlier frames to call rateControlUpdateStats */
     if (m_top->m_rateControl->rateControlEnd(m_frame, m_accessUnitBits, &m_rce, &m_frameStats) < 0)
         m_top->m_aborted = true;
@@ -481,7 +511,7 @@ void FrameEncoder::compressFrame()
         for (int i = 0; i < m_top->m_numThreadLocalData; i++)
         {
             NoiseReduction* nr = &m_top->m_threadLocalData[i].analysis.m_quant.m_frameNr[m_frameEncoderID];
-            memcpy(nr->offsetDenoise, m_nr->offsetDenoise, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
+            memcpy(nr->offsetDenoise, m_nr->offsetDenoise, sizeof(uint16_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
             memset(nr->count, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES);
             memset(nr->residualSum, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
         }
@@ -496,6 +526,8 @@ void FrameEncoder::compressFrame()
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
+
+    m_endFrameTime = x265_mdate();
 }
 
 void FrameEncoder::encodeSlice()
@@ -569,7 +601,6 @@ void FrameEncoder::encodeSlice()
 
 void FrameEncoder::compressCTURows()
 {
-    PPAScopeEvent(FrameEncoder_compressRows);
     Slice* slice = m_frame->m_encData->m_slice;
 
     m_bAllRowsStop = false;
@@ -590,7 +621,7 @@ void FrameEncoder::compressCTURows()
         WaveFront::clearEnabledRowMask();
         WaveFront::enqueue();
 
-        for (int row = 0; row < m_numRows; row++)
+        for (uint32_t row = 0; row < m_numRows; row++)
         {
             // block until all reference frames have reconstructed the rows we need
             for (int l = 0; l < numPredDir; l++)
@@ -599,7 +630,7 @@ void FrameEncoder::compressCTURows()
                 {
                     Frame *refpic = slice->m_refPicList[l][ref];
 
-                    int reconRowCount = refpic->m_reconRowCount.get();
+                    uint32_t reconRowCount = refpic->m_reconRowCount.get();
                     while ((reconRowCount != m_numRows) && (reconRowCount < row + m_refLagRows))
                         reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
 
@@ -609,19 +640,23 @@ void FrameEncoder::compressCTURows()
             }
 
             enableRowEncoder(row);
-            if (row == 0)
-                enqueueRowEncoder(0);
-            else
+            if (row)
                 m_pool->pokeIdleThread();
+            else
+            {
+                m_row0WaitTime = x265_mdate();
+                enqueueRowEncoder(0);
+            }
         }
 
+        m_allRowsAvailableTime = x265_mdate();
         m_completionEvent.wait();
 
         WaveFront::dequeue();
     }
     else
     {
-        for (int i = 0; i < this->m_numRows + m_filterRowDelay; i++)
+        for (uint32_t i = 0; i < this->m_numRows + m_filterRowDelay; i++)
         {
             // Encode
             if (i < m_numRows)
@@ -634,7 +669,7 @@ void FrameEncoder::compressCTURows()
                     {
                         Frame *refpic = slice->m_refPicList[list][ref];
 
-                        int reconRowCount = refpic->m_reconRowCount.get();
+                        uint32_t reconRowCount = refpic->m_reconRowCount.get();
                         while ((reconRowCount != m_numRows) && (reconRowCount < i + m_refLagRows))
                             reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
 
@@ -643,22 +678,28 @@ void FrameEncoder::compressCTURows()
                     }
                 }
 
-                processRow(i * 2 + 0, -1);
+                if (!i)
+                    m_row0WaitTime = x265_mdate();
+                else if (i == m_numRows - 1)
+                    m_allRowsAvailableTime = x265_mdate();
+                processRowEncoder(i, *m_tld);
             }
 
             // Filter
             if (i >= m_filterRowDelay)
-                processRow((i - m_filterRowDelay) * 2 + 1, -1);
+                m_frameFilter.processRow(i - m_filterRowDelay);
         }
     }
-    m_frameTime = (double)m_totalTime / 1000000;
-    m_totalTime = 0;
 }
 
 void FrameEncoder::processRow(int row, int threadId)
 {
-    const int realRow = row >> 1;
-    const int typeNum = row & 1;
+    int64_t startTime = x265_mdate();
+    if (ATOMIC_INC(&m_activeWorkerCount) == 1 && m_stallStartTime)
+        m_totalNoWorkerTime += x265_mdate() - m_stallStartTime;
+
+    const uint32_t realRow = row >> 1;
+    const uint32_t typeNum = row & 1;
 
     ThreadLocalData& tld = threadId >= 0 ? m_top->m_threadLocalData[threadId] : *m_tld;
     
@@ -666,7 +707,7 @@ void FrameEncoder::processRow(int row, int threadId)
         processRowEncoder(realRow, tld);
     else
     {
-        processRowFilter(realRow);
+        m_frameFilter.processRow(realRow);
 
         // NOTE: Active next row
         if (realRow != m_numRows - 1)
@@ -674,15 +715,20 @@ void FrameEncoder::processRow(int row, int threadId)
         else
             m_completionEvent.trigger();
     }
+
+    if (ATOMIC_DEC(&m_activeWorkerCount) == 0)
+        m_stallStartTime = x265_mdate();
+
+    m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
 }
 
 // Called by worker threads
-void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
+void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 {
-    PPAScopeEvent(Thread_ProcessRow);
-
+    uint32_t row = (uint32_t)intRow;
     CTURow& curRow = m_rows[row];
 
+    if (m_param->bEnableWavefront)
     {
         ScopedLock self(curRow.lock);
         if (!curRow.active)
@@ -707,18 +753,16 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     Entropy& rowCoder = m_param->bEnableWavefront ? m_rows[row].rowGoOnCoder : m_rows[0].rowGoOnCoder;
     FrameData& curEncData = *m_frame->m_encData;
     Slice *slice = curEncData.m_slice;
-    PicYuv* fencPic = m_frame->m_origPicYuv;
 
-    tld.analysis.m_me.setSourcePlane(fencPic->m_picOrg[0], fencPic->m_stride);
-
-    int64_t startTime = x265_mdate();
     const uint32_t numCols = m_numCols;
     const uint32_t lineStartCUAddr = row * numCols;
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
     while (curRow.completed < numCols)
     {
-        int col = curRow.completed;
+        ProfileScopeEvent(encodeCTU);
+
+        uint32_t col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
         CUData* ctu = curEncData.getPicCTU(cuAddr);
         ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp);
@@ -731,7 +775,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                 curEncData.m_rowStat[row].diagQpScale = x265_qp2qScale(curEncData.m_avgQpRc);
             }
 
-            if (row >= col && row && m_vbvResetTriggerRow != row)
+            if (row >= col && row && m_vbvResetTriggerRow != intRow)
                 curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_cuStat[cuAddr - numCols + 1].baseQp;
             else
                 curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_rowStat[row].diagQp;
@@ -743,8 +787,8 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         {
             int qp = calcQpForCu(cuAddr, curEncData.m_cuStat[cuAddr].baseQp);
             tld.analysis.setQP(*slice, qp);
-            qp = Clip3(QP_MIN, QP_MAX_SPEC, qp);
-            ctu->setQPSubParts((char)qp, 0, 0);
+            qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
+            ctu->setQPSubParts((int8_t)qp, 0, 0);
             curEncData.m_rowStat[row].sumQpAq += qp;
         }
         else
@@ -758,7 +802,11 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
 
         // Does all the CU analysis, returns best top level mode decision
-        Search::Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, m_cuGeoms[m_ctuGeomMap[cuAddr]], rowCoder);
+        Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, m_cuGeoms[m_ctuGeomMap[cuAddr]], rowCoder);
+
+        // take a sample of the current active worker count
+        ATOMIC_ADD(&m_totalActiveWorkerCount, m_activeWorkerCount);
+        ATOMIC_INC(&m_activeWorkerCountSamples);
 
         /* advance top-level row coder to include the context of this CTU.
          * if SAO is disabled, rowCoder writes the final CTU bitstream */
@@ -813,7 +861,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             {
                 double qpBase = curEncData.m_cuStat[cuAddr].baseQp;
                 int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_frame, row, &m_rce, qpBase);
-                qpBase = Clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);
+                qpBase = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);
                 curEncData.m_rowStat[row].diagQp = qpBase;
                 curEncData.m_rowStat[row].diagQpScale =  x265_qp2qScale(qpBase);
 
@@ -826,7 +874,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                     m_vbvResetTriggerRow = row;
                     m_bAllRowsStop = true;
 
-                    for (int r = m_numRows - 1; r >= row; r--)
+                    for (uint32_t r = m_numRows - 1; r >= row; r--)
                     {
                         CTURow& stopRow = m_rows[r];
 
@@ -839,9 +887,13 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
                                 if (dequeueRow(r * 2))
                                     stopRow.active = false;
                                 else
+                                {
+                                    /* we must release the row lock to allow the thread to exit */
+                                    stopRow.lock.release();
                                     GIVE_UP_TIME();
+                                    stopRow.lock.acquire();
+                                }
                             }
-
                             stopRow.lock.release();
 
                             bool bRowBusy = true;
@@ -886,7 +938,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
             ScopedLock below(m_rows[row + 1].lock);
             if (m_rows[row + 1].active == false &&
                 m_rows[row + 1].completed + 2 <= curRow.completed &&
-                (!m_bAllRowsStop || row + 1 < m_vbvResetTriggerRow))
+                (!m_bAllRowsStop || intRow + 1 < m_vbvResetTriggerRow))
             {
                 m_rows[row + 1].active = true;
                 enqueueRowEncoder(row + 1);
@@ -894,12 +946,12 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         }
 
         ScopedLock self(curRow.lock);
-        if ((m_bAllRowsStop && row > m_vbvResetTriggerRow) ||
+        if ((m_bAllRowsStop && intRow > m_vbvResetTriggerRow) ||
             (row > 0 && curRow.completed < numCols - 1 && m_rows[row - 1].completed < m_rows[row].completed + 2))
         {
             curRow.active = false;
             curRow.busy = false;
-            m_totalTime += x265_mdate() - startTime;
+            ATOMIC_INC(&m_countRowBlocks);
             return;
         }
     }
@@ -916,7 +968,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
      * after half the frame is encoded, but after this initial period we update
      * after refLagRows (the number of rows reference frames must have completed
      * before referencees may begin encoding) */
-    int rowCount = 0;
+    uint32_t rowCount = 0;
     if (m_param->rc.rateControlMode == X265_RC_ABR)
     {
         if ((uint32_t)m_rce.encodeOrder <= 2 * (m_param->fpsNum / m_param->fpsDenom))
@@ -928,7 +980,7 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
     {
         m_rce.rowTotalBits = 0;
         if (bIsVbv)
-            for (int i = 0; i < rowCount; i++)
+            for (uint32_t i = 0; i < rowCount; i++)
                 m_rce.rowTotalBits += curEncData.m_rowStat[i].encodedBits;
         else
             for (uint32_t cuAddr = 0; cuAddr < rowCount * numCols; cuAddr++)
@@ -937,22 +989,24 @@ void FrameEncoder::processRowEncoder(int row, ThreadLocalData& tld)
         m_top->m_rateControl->rateControlUpdateStats(&m_rce);
     }
 
-    // trigger row-wise loop filters
-    if (row >= m_filterRowDelay)
+    if (m_param->bEnableWavefront)
     {
-        enableRowFilter(row - m_filterRowDelay);
+        /* trigger row-wise loop filters */
+        if (row >= m_filterRowDelay)
+        {
+            enableRowFilter(row - m_filterRowDelay);
 
-        // NOTE: Active Filter to first row (row 0)
-        if (row == m_filterRowDelay)
-            enqueueRowFilter(0);
-    }
-    if (row == m_numRows - 1)
-    {
-        for (int i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
-            enableRowFilter(i);
+            /* NOTE: Activate filter if first row (row 0) */
+            if (row == m_filterRowDelay)
+                enqueueRowFilter(0);
+        }
+        if (row == m_numRows - 1)
+        {
+            for (uint32_t i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
+                enableRowFilter(i);
+        }
     }
 
-    m_totalTime += x265_mdate() - startTime;
     curRow.busy = false;
 }
 
@@ -971,13 +1025,13 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
             log->cntIntra[depth]++;
             log->qTreeIntraCnt[depth]++;
 
-            if (ctu.m_partSize[absPartIdx] == SIZE_NONE)
+            if (ctu.m_predMode[absPartIdx] == MODE_NONE)
             {
                 log->totalCu--;
                 log->cntIntra[depth]--;
                 log->qTreeIntraCnt[depth]--;
             }
-            else if (ctu.m_partSize[absPartIdx] == SIZE_NxN)
+            else if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
             {
                 /* TODO: log intra modes at absPartIdx +0 to +3 */
                 X265_CHECK(depth == g_maxCUDepth, "Intra NxN found at improbable depth\n");
@@ -1000,7 +1054,7 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
             log->totalCu++;
             log->cntTotalCu[depth]++;
 
-            if (ctu.m_partSize[absPartIdx] == SIZE_NONE)
+            if (ctu.m_predMode[absPartIdx] == MODE_NONE)
             {
                 log->totalCu--;
                 log->cntTotalCu[depth]--;
@@ -1011,7 +1065,7 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
                 log->cntSkipCu[depth]++;
                 log->qTreeSkipCnt[depth]++;
             }
-            else if (ctu.m_predMode[absPartIdx] == MODE_INTER)
+            else if (ctu.isInter(absPartIdx))
             {
                 log->cntInter[depth]++;
                 log->qTreeInterCnt[depth]++;
@@ -1021,12 +1075,12 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
                 else
                     log->cuInterDistribution[depth][AMP_ID]++;
             }
-            else if (ctu.m_predMode[absPartIdx] == MODE_INTRA)
+            else if (ctu.isIntra(absPartIdx))
             {
                 log->cntIntra[depth]++;
                 log->qTreeIntraCnt[depth]++;
 
-                if (ctu.m_partSize[absPartIdx] == SIZE_NxN)
+                if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
                 {
                     X265_CHECK(depth == g_maxCUDepth, "Intra NxN found at improbable depth\n");
                     log->cntIntraNxN++;
@@ -1061,7 +1115,8 @@ void FrameEncoder::noiseReductionUpdate()
             m_nr->count[cat] >>= 1;
         }
 
-        uint64_t scaledCount = (uint64_t)m_param->noiseReduction * m_nr->count[cat];
+        int nrStrength = cat < 8 ? m_param->noiseReductionIntra : m_param->noiseReductionInter;
+        uint64_t scaledCount = (uint64_t)nrStrength * m_nr->count[cat];
 
         for (int i = 0; i < coefCount; i++)
         {
@@ -1091,8 +1146,8 @@ int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
 
     /* Derive qpOffet for each CU by averaging offsets for all 16x16 blocks in the cu. */
     double qp_offset = 0;
-    uint32_t maxBlockCols = (m_frame->m_origPicYuv->m_picWidth + (16 - 1)) / 16;
-    uint32_t maxBlockRows = (m_frame->m_origPicYuv->m_picHeight + (16 - 1)) / 16;
+    uint32_t maxBlockCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
+    uint32_t maxBlockRows = (m_frame->m_fencPic->m_picHeight + (16 - 1)) / 16;
     uint32_t noOfBlocks = g_maxCUSize / 16;
     uint32_t block_y = (ctuAddr / curEncData.m_slice->m_sps->numCuInWidth) * noOfBlocks;
     uint32_t block_x = (ctuAddr * noOfBlocks) - block_y * curEncData.m_slice->m_sps->numCuInWidth;
@@ -1121,7 +1176,7 @@ int FrameEncoder::calcQpForCu(uint32_t ctuAddr, double baseQp)
     qp_offset /= cnt;
     qp += qp_offset;
 
-    return Clip3(QP_MIN, QP_MAX_MAX, (int)(qp + 0.5));
+    return x265_clip3(QP_MIN, QP_MAX_MAX, (int)(qp + 0.5));
 }
 
 Frame *FrameEncoder::getEncodedPicture(NALList& output)
@@ -1134,6 +1189,7 @@ Frame *FrameEncoder::getEncodedPicture(NALList& output)
         Frame *ret = m_frame;
         m_frame = NULL;
         output.takeContents(m_nalList);
+        m_prevOutputTime = x265_mdate();
         return ret;
     }
 

@@ -34,7 +34,7 @@ Frame::Frame()
     m_reconRowCount.set(0);
     m_countRefEncoders = 0;
     m_encData = NULL;
-    m_reconPicYuv = NULL;
+    m_reconPic = NULL;
     m_next = NULL;
     m_prev = NULL;
     memset(&m_lowres, 0, sizeof(m_lowres));
@@ -42,26 +42,26 @@ Frame::Frame()
 
 bool Frame::create(x265_param *param)
 {
-    m_origPicYuv = new PicYuv;
+    m_fencPic = new PicYuv;
 
-    return m_origPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
-           m_lowres.create(m_origPicYuv, param->bframes, !!param->rc.aqMode);
+    return m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
+           m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode);
 }
 
 bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
 {
     m_encData = new FrameData;
-    m_reconPicYuv = new PicYuv;
-    m_encData->m_reconPicYuv = m_reconPicYuv;
-    bool ok = m_encData->create(param, sps) && m_reconPicYuv->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
+    m_reconPic = new PicYuv;
+    m_encData->m_reconPic = m_reconPic;
+    bool ok = m_encData->create(param, sps) && m_reconPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     if (ok)
     {
         /* initialize right border of m_reconpicYuv as SAO may read beyond the
          * end of the picture accessing uninitialized pixels */
         int maxHeight = sps.numCuInHeight * g_maxCUSize;
-        memset(m_reconPicYuv->m_picOrg[0], 0, m_reconPicYuv->m_stride * maxHeight);
-        memset(m_reconPicYuv->m_picOrg[1], 0, m_reconPicYuv->m_strideC * (maxHeight >> m_reconPicYuv->m_vChromaShift));
-        memset(m_reconPicYuv->m_picOrg[2], 0, m_reconPicYuv->m_strideC * (maxHeight >> m_reconPicYuv->m_vChromaShift));
+        memset(m_reconPic->m_picOrg[0], 0, m_reconPic->m_stride * maxHeight);
+        memset(m_reconPic->m_picOrg[1], 0, m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
+        memset(m_reconPic->m_picOrg[2], 0, m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
     }
     return ok;
 }
@@ -70,7 +70,7 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
 void Frame::reinit(const SPS& sps)
 {
     m_bChromaExtended = false;
-    m_reconPicYuv = m_encData->m_reconPicYuv;
+    m_reconPic = m_encData->m_reconPic;
     m_encData->reinit(sps);
 }
 
@@ -83,18 +83,18 @@ void Frame::destroy()
         m_encData = NULL;
     }
 
-    if (m_origPicYuv)
+    if (m_fencPic)
     {
-        m_origPicYuv->destroy();
-        delete m_origPicYuv;
-        m_origPicYuv = NULL;
+        m_fencPic->destroy();
+        delete m_fencPic;
+        m_fencPic = NULL;
     }
 
-    if (m_reconPicYuv)
+    if (m_reconPic)
     {
-        m_reconPicYuv->destroy();
-        delete m_reconPicYuv;
-        m_reconPicYuv = NULL;
+        m_reconPic->destroy();
+        delete m_reconPic;
+        m_reconPic = NULL;
     }
 
     m_lowres.destroy();

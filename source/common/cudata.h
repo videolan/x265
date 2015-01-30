@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2014 x265 project
+ * Copyright (C) 2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
  *
@@ -46,14 +46,15 @@ enum PartSize
     SIZE_2NxnD, // asymmetric motion partition, 2Nx(3N/2) + 2Nx( N/2)
     SIZE_nLx2N, // asymmetric motion partition, ( N/2)x2N + (3N/2)x2N
     SIZE_nRx2N, // asymmetric motion partition, (3N/2)x2N + ( N/2)x2N
-    SIZE_NONE = 15
+    NUM_SIZES
 };
 
 enum PredMode
 {
-    MODE_INTER,
-    MODE_INTRA,
-    MODE_NONE = 15
+    MODE_NONE  = 0,
+    MODE_INTER = (1 << 0),
+    MODE_INTRA = (1 << 1),
+    MODE_SKIP  = (1 << 2) | MODE_INTER
 };
 
 // motion vector predictor direction used in AMVP
@@ -126,15 +127,14 @@ public:
     int           m_vChromaShift;
 
     /* Per-part data, stored contiguously */
-    char*         m_qp;               // array of QP values
+    int8_t*       m_qp;               // array of QP values
     uint8_t*      m_log2CUSize;       // array of cu log2Size TODO: seems redundant to depth
-    uint8_t*      m_partSize;         // array of partition sizes
-    uint8_t*      m_predMode;         // array of prediction modes
     uint8_t*      m_lumaIntraDir;     // array of intra directions (luma)
     uint8_t*      m_tqBypass;         // array of CU lossless flags
-    char*         m_refIdx[2];        // array of motion reference indices per list
+    int8_t*       m_refIdx[2];        // array of motion reference indices per list
     uint8_t*      m_cuDepth;          // array of depths
-    uint8_t*      m_skipFlag;         // array of skip flags
+    uint8_t*      m_predMode;         // array of prediction modes
+    uint8_t*      m_partSize;         // array of partition sizes
     uint8_t*      m_mergeFlag;        // array of merge flags
     uint8_t*      m_interDir;         // array of inter directions
     uint8_t*      m_mvpIdx[2];        // array of motion vector predictor candidates or merge candidate indices [0]
@@ -142,7 +142,7 @@ public:
     uint8_t*      m_transformSkip[3]; // array of transform skipping flags per plane
     uint8_t*      m_cbf[3];           // array of coded block flags (CBF) per plane
     uint8_t*      m_chromaIntraDir;   // array of intra directions (chroma)
-    enum { BytesPerPartition = 22 };  // combined sizeof() of all per-part data
+    enum { BytesPerPartition = 21 };  // combined sizeof() of all per-part data
 
     coeff_t*      m_trCoeff[3];       // transformed coefficient buffer per plane
 
@@ -158,7 +158,7 @@ public:
     CUData();
 
     void     initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, int instance);
-    void     calcCTUGeoms(uint32_t picWidth, uint32_t picHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]) const;
+    static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
 
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
     void     initSubCU(const CUData& ctu, const CUGeom& cuGeom);
@@ -173,12 +173,11 @@ public:
     void     updatePic(uint32_t depth) const;
 
     void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSize, (uint8_t)size); }
-    void     setSkipFlagSubParts(uint8_t skipFlag) { m_partSet(m_skipFlag, skipFlag); }
     void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }
     void     clearCbf()                            { m_partSet(m_cbf[0], 0); m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0); }
 
     /* these functions all take depth as an absolute depth from CTU, it is used to calculate the number of parts to copy */
-    void     setQPSubParts(char qp, uint32_t absPartIdx, uint32_t depth)                      { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)qp); }
+    void     setQPSubParts(int8_t qp, uint32_t absPartIdx, uint32_t depth)                    { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)qp); }
     void     setTUDepthSubParts(uint8_t tuDepth, uint32_t absPartIdx, uint32_t depth)         { s_partSet[depth](m_tuDepth + absPartIdx, tuDepth); }
     void     setLumaIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)        { s_partSet[depth](m_lumaIntraDir + absPartIdx, dir); }
     void     setChromIntraDirSubParts(uint8_t dir, uint32_t absPartIdx, uint32_t depth)       { s_partSet[depth](m_chromaIntraDir + absPartIdx, dir); }
@@ -187,15 +186,15 @@ public:
     void     setTransformSkipSubParts(uint8_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t depth) { s_partSet[depth](m_transformSkip[ttype] + absPartIdx, tskip); }
     void     setTransformSkipPartRange(uint8_t tskip, TextType ttype, uint32_t absPartIdx, uint32_t coveredPartIdxes) { memset(m_transformSkip[ttype] + absPartIdx, tskip, coveredPartIdxes); }
 
-    bool     setQPSubCUs(char qp, uint32_t absPartIdx, uint32_t depth);
+    bool     setQPSubCUs(int8_t qp, uint32_t absPartIdx, uint32_t depth);
 
     void     setPUInterDir(uint8_t dir, uint32_t absPartIdx, uint32_t puIdx);
     void     setPUMv(int list, const MV& mv, int absPartIdx, int puIdx);
-    void     setPURefIdx(int list, char refIdx, int absPartIdx, int puIdx);
+    void     setPURefIdx(int list, int8_t refIdx, int absPartIdx, int puIdx);
 
-    uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t trDepth) const { return (m_cbf[ttype][absPartIdx] >> trDepth) & 0x1; }
+    uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t tuDepth) const { return (m_cbf[ttype][absPartIdx] >> tuDepth) & 0x1; }
     uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx]; }
-    char     getRefQP(uint32_t currAbsIdxInCTU) const;
+    int8_t   getRefQP(uint32_t currAbsIdxInCTU) const;
     uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours) const;
     void     clipMv(MV& outMV) const;
     int      fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int refIdx, MV* amvpCand, MV* mvc) const;
@@ -204,7 +203,8 @@ public:
 
     uint32_t getNumPartInter() const              { return nbPartsTable[(int)m_partSize[0]]; }
     bool     isIntra(uint32_t absPartIdx) const   { return m_predMode[absPartIdx] == MODE_INTRA; }
-    bool     isSkipped(uint32_t absPartIdx) const { return !!m_skipFlag[absPartIdx]; }
+    bool     isInter(uint32_t absPartIdx) const   { return !!(m_predMode[absPartIdx] & MODE_INTER); }
+    bool     isSkipped(uint32_t absPartIdx) const { return m_predMode[absPartIdx] == MODE_SKIP; }
     bool     isBipredRestriction() const          { return m_log2CUSize[0] == 3 && m_partSize[0] != SIZE_2Nx2N; }
 
     void     getPartIndexAndSize(uint32_t puIdx, uint32_t& absPartIdx, int& puWidth, int& puHeight) const;
@@ -212,7 +212,6 @@ public:
 
     void     getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList) const;
     int      getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred) const;
-    void     deriveLeftRightTopIdxAdi(uint32_t& partIdxLT, uint32_t& partIdxRT, uint32_t partOffset, uint32_t partDepth) const;
 
     uint32_t getSCUAddr() const                  { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
     uint32_t getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const;
@@ -221,7 +220,7 @@ public:
     void     getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma) const;
 
     const CUData* getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx) const;
-    const CUData* getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx, bool planarAtCTUBoundary = false) const;
+    const CUData* getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx) const;
     const CUData* getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUnitIdx) const;
     const CUData* getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartUnitIdx) const;
     const CUData* getPUBelowLeft(uint32_t& blPartUnitIdx, uint32_t curPartUnitIdx) const;
@@ -237,7 +236,7 @@ protected:
     template<typename T>
     void setAllPU(T *p, const T& val, int absPartIdx, int puIdx);
 
-    char getLastCodedQP(uint32_t absPartIdx) const;
+    int8_t getLastCodedQP(uint32_t absPartIdx) const;
     int  getLastValidPartIdx(int absPartIdx) const;
 
     bool hasEqualMotion(uint32_t absPartIdx, const CUData& candCU, uint32_t candAbsPartIdx) const;

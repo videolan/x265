@@ -1,6 +1,4 @@
 /*****************************************************************************
- * x265: threading class and intrinsics
- *****************************************************************************
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
@@ -48,21 +46,21 @@ bool Thread::start()
 {
     DWORD threadId;
 
-    this->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadShim, this, 0, &threadId);
+    thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadShim, this, 0, &threadId);
 
     return threadId > 0;
 }
 
 void Thread::stop()
 {
-    if (this->thread)
-        WaitForSingleObject(this->thread, INFINITE);
+    if (thread)
+        WaitForSingleObject(thread, INFINITE);
 }
 
 Thread::~Thread()
 {
-    if (this->thread)
-        CloseHandle(this->thread);
+    if (thread)
+        CloseHandle(thread);
 }
 
 #else /* POSIX / pthreads */
@@ -79,10 +77,9 @@ static void *ThreadShim(void *opaque)
 
 bool Thread::start()
 {
-    if (pthread_create(&this->thread, NULL, ThreadShim, this))
+    if (pthread_create(&thread, NULL, ThreadShim, this))
     {
-        this->thread = 0;
-
+        thread = 0;
         return false;
     }
 
@@ -91,8 +88,8 @@ bool Thread::start()
 
 void Thread::stop()
 {
-    if (this->thread)
-        pthread_join(this->thread, NULL);
+    if (thread)
+        pthread_join(thread, NULL);
 }
 
 Thread::~Thread() {}
@@ -101,6 +98,7 @@ Thread::~Thread() {}
 
 Thread::Thread()
 {
-    this->thread = 0;
+    thread = 0;
 }
+
 }

@@ -35,7 +35,7 @@ class BitCost
 {
 public:
 
-    BitCost() : m_cost_mvx(0), m_cost_mvy(0), m_cost(0) {}
+    BitCost() : m_cost_mvx(0), m_cost_mvy(0), m_cost(0), m_mvp(0) {}
 
     void setQP(unsigned int qp);
 

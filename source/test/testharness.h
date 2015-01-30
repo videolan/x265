@@ -44,7 +44,7 @@
 
 using namespace x265;
 
-extern const char* lumaPartStr[NUM_LUMA_PARTITIONS];
+extern const char* lumaPartStr[NUM_PU_SIZES];
 extern const char* const* chromaPartStr[X265_CSP_COUNT];
 
 class TestHarness

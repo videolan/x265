@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013 x265 project
+ * Copyright (C) 2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
  *
@@ -21,51 +21,38 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#ifndef _PPA_H_
-#define _PPA_H_
+#include "vtune.h"
+#include <stdio.h>
 
-#if !defined(ENABLE_PPA)
+namespace {
 
-#define PPA_INIT()
-#define PPAStartCpuEventFunc(e)
-#define PPAStopCpuEventFunc(e)
-#define PPAScopeEvent(e)
-
-#else
-
-/* declare enum list of users CPU events */
-#define PPA_REGISTER_CPU_EVENT(x) x,
-enum PPACpuEventEnum
+#define CPU_EVENT(x) #x,
+const char *stringNames[] =
 {
-#include "ppaCPUEvents.h"
-    PPACpuGroupNums
+#include "../cpuEvents.h"
+    ""
 };
+#undef CPU_EVENT
 
-#undef PPA_REGISTER_CPU_EVENT
+}
 
-#define PPA_INIT()               initializePPA()
-#define PPAStartCpuEventFunc(e)  if (ppabase) ppabase->triggerStartEvent(ppabase->getEventId(e))
-#define PPAStopCpuEventFunc(e)   if (ppabase) ppabase->triggerEndEvent(ppabase->getEventId(e))
-#define PPAScopeEvent(e)         _PPAScope __scope_(e)
+namespace x265 {
 
-#include "ppaApi.h"
+__itt_domain* domain;
+__itt_string_handle* taskHandle[NUM_VTUNE_TASKS];
 
-void initializePPA();
-extern ppa::Base *ppabase;
-
-class _PPAScope
+void vtuneInit()
 {
-protected:
+    domain = __itt_domain_create("x265");
+    for (size_t i = 0; i < sizeof(stringNames) / sizeof(const char *); i++)
+        taskHandle[i] = __itt_string_handle_create(stringNames[i]);
+}
 
-    ppa::EventID m_id;
+void vtuneSetThreadName(const char *name, int id)
+{
+    char threadname[128];
+    sprintf(threadname, "%s %d", name, id);
+    __itt_thread_set_name(threadname);
+}
 
-public:
-
-    _PPAScope(int e) { if (ppabase) { m_id = ppabase->getEventId(e); ppabase->triggerStartEvent(m_id); } else m_id = 0; }
-
-    ~_PPAScope()     { if (ppabase) ppabase->triggerEndEvent(m_id); }
-};
-
-#endif // if !defined(ENABLE_PPA)
-
-#endif /* _PPA_H_ */
+}

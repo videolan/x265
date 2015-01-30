@@ -172,7 +172,7 @@ count, but may be manually specified via :option:`--frame-threads`
 	+-------+--------+
 	| Cores | Frames |
 	+=======+========+
-	|  > 32 |   6    |
+	|  > 32 |  6..8  |
 	+-------+--------+
 	| >= 16 |   5    |
 	+-------+--------+

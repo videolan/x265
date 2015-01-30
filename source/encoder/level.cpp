@@ -199,8 +199,8 @@ void determineLevel(const x265_param &param, VPS& vps)
  * circumstances it will be quite noisy */
 bool enforceLevel(x265_param& param, VPS& vps)
 {
-    vps.numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : 1;
-    vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + vps.numReorderPics);
+    vps.numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : !!param.bframes;
+    vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 2, (uint32_t)param.maxNumReferences) + vps.numReorderPics);
 
     /* no level specified by user, just auto-detect from the configuration */
     if (param.levelIdc <= 0)

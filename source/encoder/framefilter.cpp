@@ -29,7 +29,6 @@
 #include "framefilter.h"
 #include "frameencoder.h"
 #include "wavefront.h"
-#include "PPA/ppa.h"
 
 using namespace x265;
 
@@ -64,8 +63,6 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows)
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
     m_lastHeight = m_param->sourceHeight % g_maxCUSize ? m_param->sourceHeight % g_maxCUSize : g_maxCUSize;
 
-    m_deblock.init();
-
     if (m_param->bEnableSAO)
         if (!m_sao.create(m_param))
             m_param->bEnableSAO = 0;
@@ -84,7 +81,7 @@ void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
 
 void FrameFilter::processRow(int row)
 {
-    PPAScopeEvent(Thread_filterCU);
+    ProfileScopeEvent(filterCTURow);
 
     if (!m_param->bEnableLoopFilter && !m_param->bEnableSAO)
     {
@@ -97,22 +94,24 @@ void FrameFilter::processRow(int row)
 
     if (m_param->bEnableLoopFilter)
     {
+        const CUGeom* cuGeoms = m_frameEncoder->m_cuGeoms;
+        const uint32_t* ctuGeomMap = m_frameEncoder->m_ctuGeomMap;
+
         for (uint32_t col = 0; col < numCols; col++)
         {
             uint32_t cuAddr = lineStartCUAddr + col;
-            CUData* cu = encData.getPicCTU(cuAddr);
-
-            m_deblock.deblockCTU(cu, Deblock::EDGE_VER);
+            const CUData* ctu = encData.getPicCTU(cuAddr);
+            deblockCTU(ctu, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_VER);
 
             if (col > 0)
             {
-                CUData* cuPrev = encData.getPicCTU(cuAddr - 1);
-                m_deblock.deblockCTU(cuPrev, Deblock::EDGE_HOR);
+                const CUData* ctuPrev = encData.getPicCTU(cuAddr - 1);
+                deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
             }
         }
 
-        CUData* cuPrev = encData.getPicCTU(lineStartCUAddr + numCols - 1);
-        m_deblock.deblockCTU(cuPrev, Deblock::EDGE_HOR);
+        const CUData* ctuPrev = encData.getPicCTU(lineStartCUAddr + numCols - 1);
+        deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[lineStartCUAddr + numCols - 1]], Deblock::EDGE_HOR);
     }
 
     // SAO
@@ -156,7 +155,7 @@ uint32_t FrameFilter::getCUHeight(int rowNum) const
 
 void FrameFilter::processRowPost(int row)
 {
-    PicYuv *reconPic = m_frame->m_reconPicYuv;
+    PicYuv *reconPic = m_frame->m_reconPic;
     const uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
     const int realH = getCUHeight(row);
@@ -209,19 +208,19 @@ void FrameFilter::processRowPost(int row)
     uint32_t cuAddr = lineStartCUAddr;
     if (m_param->bEnablePsnr)
     {
-        PicYuv* origPic = m_frame->m_origPicYuv;
+        PicYuv* fencPic = m_frame->m_fencPic;
 
         intptr_t stride = reconPic->m_stride;
         uint32_t width  = reconPic->m_picWidth - m_pad[0];
         uint32_t height = getCUHeight(row);
 
-        uint64_t ssdY = computeSSD(origPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height);
+        uint64_t ssdY = computeSSD(fencPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height);
         height >>= m_vChromaShift;
         width  >>= m_hChromaShift;
         stride = reconPic->m_strideC;
 
-        uint64_t ssdU = computeSSD(origPic->getCbAddr(cuAddr), reconPic->getCbAddr(cuAddr), stride, width, height);
-        uint64_t ssdV = computeSSD(origPic->getCrAddr(cuAddr), reconPic->getCrAddr(cuAddr), stride, width, height);
+        uint64_t ssdU = computeSSD(fencPic->getCbAddr(cuAddr), reconPic->getCbAddr(cuAddr), stride, width, height);
+        uint64_t ssdV = computeSSD(fencPic->getCrAddr(cuAddr), reconPic->getCrAddr(cuAddr), stride, width, height);
 
         m_frameEncoder->m_SSDY += ssdY;
         m_frameEncoder->m_SSDU += ssdU;
@@ -229,10 +228,10 @@ void FrameFilter::processRowPost(int row)
     }
     if (m_param->bEnableSsim && m_ssimBuf)
     {
-        pixel *rec = m_frame->m_reconPicYuv->m_picOrg[0];
-        pixel *org = m_frame->m_origPicYuv->m_picOrg[0];
-        intptr_t stride1 = m_frame->m_origPicYuv->m_stride;
-        intptr_t stride2 = m_frame->m_reconPicYuv->m_stride;
+        pixel *rec = m_frame->m_reconPic->m_picOrg[0];
+        pixel *fenc = m_frame->m_fencPic->m_picOrg[0];
+        intptr_t stride1 = m_frame->m_fencPic->m_stride;
+        intptr_t stride2 = m_frame->m_reconPic->m_stride;
         uint32_t bEnd = ((row + 1) == (this->m_numRows - 1));
         uint32_t bStart = (row == 0);
         uint32_t minPixY = row * g_maxCUSize - 4 * !bStart;
@@ -243,7 +242,7 @@ void FrameFilter::processRowPost(int row)
         /* SSIM is done for each row in blocks of 4x4 . The First blocks are offset by 2 pixels to the right
         * to avoid alignment of ssim blocks with DCT blocks. */
         minPixY += bStart ? 2 : -6;
-        m_frameEncoder->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, org + 2 + minPixY * stride2, stride2,
+        m_frameEncoder->m_ssim += calculateSSIM(rec + 2 + minPixY * stride1, stride1, fenc + 2 + minPixY * stride2, stride2,
                                                 m_param->sourceWidth - 2, maxPixY - minPixY, m_ssimBuf, ssim_cnt);
         m_frameEncoder->m_ssimCnt += ssim_cnt;
     }
@@ -324,65 +323,43 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t wi
     }
 
     uint32_t y = 0;
-    /* Consume Y in chunks of 64 */
-    for (; y + 64 <= height; y += 64)
+
+    /* Consume rows in ever narrower chunks of height */
+    for (int size = BLOCK_64x64; size >= BLOCK_4x4 && y < height; size--)
     {
-        uint32_t x = 0;
+        uint32_t rowHeight = 1 << (size + 2);
 
-        if (!(stride & 31))
-            for (; x + 64 <= width; x += 64)
-                ssd += primitives.sse_pp[LUMA_64x64](fenc + x, stride, rec + x, stride);
-
-        if (!(stride & 15))
-            for (; x + 16 <= width; x += 16)
-                ssd += primitives.sse_pp[LUMA_16x64](fenc + x, stride, rec + x, stride);
-
-        for (; x + 4 <= width; x += 4)
+        for (; y + rowHeight <= height; y += rowHeight)
         {
-            ssd += primitives.sse_pp[LUMA_4x16](fenc + x, stride, rec + x, stride);
-            ssd += primitives.sse_pp[LUMA_4x16](fenc + x + 16 * stride, stride, rec + x + 16 * stride, stride);
-            ssd += primitives.sse_pp[LUMA_4x16](fenc + x + 32 * stride, stride, rec + x + 32 * stride, stride);
-            ssd += primitives.sse_pp[LUMA_4x16](fenc + x + 48 * stride, stride, rec + x + 48 * stride, stride);
+            uint32_t y1, x = 0;
+
+            /* Consume each row using the largest square blocks possible */
+            if (size == BLOCK_64x64 && !(stride & 31))
+                for (; x + 64 <= width; x += 64)
+                    ssd += primitives.cu[BLOCK_64x64].sse_pp(fenc + x, stride, rec + x, stride);
+
+            if (size >= BLOCK_32x32 && !(stride & 15))
+                for (; x + 32 <= width; x += 32)
+                    for (y1 = 0; y1 + 32 <= rowHeight; y1 += 32)
+                        ssd += primitives.cu[BLOCK_32x32].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
+
+            if (size >= BLOCK_16x16)
+                for (; x + 16 <= width; x += 16)
+                    for (y1 = 0; y1 + 16 <= rowHeight; y1 += 16)
+                        ssd += primitives.cu[BLOCK_16x16].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
+
+            if (size >= BLOCK_8x8)
+                for (; x + 8 <= width; x += 8)
+                    for (y1 = 0; y1 + 8 <= rowHeight; y1 += 8)
+                        ssd += primitives.cu[BLOCK_8x8].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
+
+            for (; x + 4 <= width; x += 4)
+                for (y1 = 0; y1 + 4 <= rowHeight; y1 += 4)
+                    ssd += primitives.cu[BLOCK_4x4].sse_pp(fenc + y1 * stride + x, stride, rec + y1 * stride + x, stride);
+
+            fenc += stride * rowHeight;
+            rec += stride * rowHeight;
         }
-
-        fenc += stride * 64;
-        rec += stride * 64;
-    }
-
-    /* Consume Y in chunks of 16 */
-    for (; y + 16 <= height; y += 16)
-    {
-        uint32_t x = 0;
-
-        if (!(stride & 31))
-            for (; x + 64 <= width; x += 64)
-                ssd += primitives.sse_pp[LUMA_64x16](fenc + x, stride, rec + x, stride);
-
-        if (!(stride & 15))
-            for (; x + 16 <= width; x += 16)
-                ssd += primitives.sse_pp[LUMA_16x16](fenc + x, stride, rec + x, stride);
-
-        for (; x + 4 <= width; x += 4)
-            ssd += primitives.sse_pp[LUMA_4x16](fenc + x, stride, rec + x, stride);
-
-        fenc += stride * 16;
-        rec += stride * 16;
-    }
-
-    /* Consume Y in chunks of 4 */
-    for (; y + 4 <= height; y += 4)
-    {
-        uint32_t x = 0;
-
-        if (!(stride & 15))
-            for (; x + 16 <= width; x += 16)
-                ssd += primitives.sse_pp[LUMA_16x4](fenc + x, stride, rec + x, stride);
-
-        for (; x + 4 <= width; x += 4)
-            ssd += primitives.sse_pp[LUMA_4x4](fenc + x, stride, rec + x, stride);
-
-        fenc += stride * 4;
-        rec += stride * 4;
     }
 
     return ssd;
@@ -417,59 +394,54 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
 }
 
 /* restore original YUV samples to recon after SAO (if lossless) */
-static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absPartIdx, uint32_t depth)
+static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absPartIdx)
 {
-    uint32_t size = g_maxCUSize >> depth;
-    int part = partitionFromSizes(size, size);
+    int size = cu->m_log2CUSize[absPartIdx] - 2;
+    uint32_t cuAddr = cu->m_cuAddr;
 
-    PicYuv* reconPic = frame.m_reconPicYuv;
-    PicYuv* fencPic  = frame.m_origPicYuv;
+    PicYuv* reconPic = frame.m_reconPic;
+    PicYuv* fencPic  = frame.m_fencPic;
 
-    pixel* dst = reconPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
-    pixel* src = fencPic->getLumaAddr(cu->m_cuAddr, absPartIdx);
+    pixel* dst = reconPic->getLumaAddr(cuAddr, absPartIdx);
+    pixel* src = fencPic->getLumaAddr(cuAddr, absPartIdx);
 
-    primitives.luma_copy_pp[part](dst, reconPic->m_stride, src, fencPic->m_stride);
+    primitives.cu[size].copy_pp(dst, reconPic->m_stride, src, fencPic->m_stride);
    
-    pixel* dstCb = reconPic->getCbAddr(cu->m_cuAddr, absPartIdx);
-    pixel* srcCb = fencPic->getCbAddr(cu->m_cuAddr, absPartIdx);
+    pixel* dstCb = reconPic->getCbAddr(cuAddr, absPartIdx);
+    pixel* srcCb = fencPic->getCbAddr(cuAddr, absPartIdx);
 
-    pixel* dstCr = reconPic->getCrAddr(cu->m_cuAddr, absPartIdx);
-    pixel* srcCr = fencPic->getCrAddr(cu->m_cuAddr, absPartIdx);
+    pixel* dstCr = reconPic->getCrAddr(cuAddr, absPartIdx);
+    pixel* srcCr = fencPic->getCrAddr(cuAddr, absPartIdx);
 
     int csp = fencPic->m_picCsp;
-    primitives.chroma[csp].copy_pp[part](dstCb, reconPic->m_strideC, srcCb, fencPic->m_strideC);
-    primitives.chroma[csp].copy_pp[part](dstCr, reconPic->m_strideC, srcCr, fencPic->m_strideC);
+    primitives.chroma[csp].cu[size].copy_pp(dstCb, reconPic->m_strideC, srcCb, fencPic->m_strideC);
+    primitives.chroma[csp].cu[size].copy_pp(dstCr, reconPic->m_strideC, srcCr, fencPic->m_strideC);
 }
 
 /* Original YUV restoration for CU in lossless coding */
-static void origCUSampleRestoration(const CUData* cu, Frame& frame, uint32_t absPartIdx, uint32_t depth)
+static void origCUSampleRestoration(const CUData* cu, const CUGeom& cuGeom, Frame& frame)
 {
-    if (cu->m_cuDepth[absPartIdx] > depth)
+    uint32_t absPartIdx = cuGeom.encodeIdx;
+    if (cu->m_cuDepth[absPartIdx] > cuGeom.depth)
     {
-        /* TODO: this could use cuGeom.numPartition and flags */
-        uint32_t curNumParts = NUM_CU_PARTITIONS >> (depth << 1);
-        uint32_t qNumParts   = curNumParts >> 2;
-        uint32_t xmax = cu->m_slice->m_sps->picWidthInLumaSamples  - cu->m_cuPelX;
-        uint32_t ymax = cu->m_slice->m_sps->picHeightInLumaSamples - cu->m_cuPelY;
-
-        /* process four split sub-cu at next depth */
-        for (int subPartIdx = 0; subPartIdx < 4; subPartIdx++, absPartIdx += qNumParts)
+        for (int subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
-            if (g_zscanToPelX[absPartIdx] < xmax && g_zscanToPelY[absPartIdx] < ymax)
-                origCUSampleRestoration(cu, frame, absPartIdx, depth + 1);
+            const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + subPartIdx);
+            if (childGeom.flags & CUGeom::PRESENT)
+                origCUSampleRestoration(cu, childGeom, frame);
         }
-
         return;
     }
 
     // restore original YUV samples
     if (cu->m_tqBypass[absPartIdx])
-        restoreOrigLosslessYuv(cu, frame, absPartIdx, depth);
+        restoreOrigLosslessYuv(cu, frame, absPartIdx);
 }
 
 void FrameFilter::processSao(int row)
 {
-    SAOParam* saoParam = m_frame->m_encData->m_saoParam;
+    FrameData& encData = *m_frame->m_encData;
+    SAOParam* saoParam = encData.m_saoParam;
 
     if (saoParam->bSaoFlag[0])
         m_sao.processSaoUnitRow(saoParam->ctuParam[0], row, 0);
@@ -480,12 +452,19 @@ void FrameFilter::processSao(int row)
         m_sao.processSaoUnitRow(saoParam->ctuParam[2], row, 2);
     }
 
-    if (m_frame->m_encData->m_slice->m_pps->bTransquantBypassEnabled)
+    if (encData.m_slice->m_pps->bTransquantBypassEnabled)
     {
-        uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
+        uint32_t numCols = encData.m_slice->m_sps->numCuInWidth;
         uint32_t lineStartCUAddr = row * numCols;
 
+        const CUGeom* cuGeoms = m_frameEncoder->m_cuGeoms;
+        const uint32_t* ctuGeomMap = m_frameEncoder->m_ctuGeomMap;
+
         for (uint32_t col = 0; col < numCols; col++)
-            origCUSampleRestoration(m_frame->m_encData->getPicCTU(lineStartCUAddr + col), *m_frame, 0, 0);
+        {
+            uint32_t cuAddr = lineStartCUAddr + col;
+            const CUData* ctu = encData.getPicCTU(cuAddr);
+            origCUSampleRestoration(ctu, cuGeoms[ctuGeomMap[cuAddr]], *m_frame);
+        }
     }
 }

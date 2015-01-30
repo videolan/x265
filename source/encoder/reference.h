@@ -25,13 +25,13 @@
 #define X265_REFERENCE_H
 
 #include "primitives.h"
+#include "picyuv.h"
 #include "lowres.h"
 #include "mv.h"
 
 namespace x265 {
 // private x265 namespace
 
-class PicYuv;
 struct WeightParam;
 
 class MotionReference : public ReferencePlanes
@@ -40,12 +40,12 @@ public:
 
     MotionReference();
     ~MotionReference();
-    int  init(PicYuv*, WeightParam* w = NULL);
+    int  init(PicYuv*, WeightParam* wp, const x265_param& p);
     void applyWeight(int rows, int numRows);
 
-    PicYuv* m_reconPic;
-    pixel*  m_weightBuffer;
-    int     m_numWeightedRows;
+    pixel*  weightBuffer[3];
+    int     numInterpPlanes;
+    int     numWeightedRows;
 
 protected:
 

@@ -51,62 +51,139 @@ extern const uint8_t lumaPartitionMapTable[] =
 /* the "authoritative" set of encoder primitives */
 EncoderPrimitives primitives;
 
-void Setup_C_PixelPrimitives(EncoderPrimitives &p);
-void Setup_C_DCTPrimitives(EncoderPrimitives &p);
-void Setup_C_IPFilterPrimitives(EncoderPrimitives &p);
-void Setup_C_IPredPrimitives(EncoderPrimitives &p);
-void Setup_C_LoopFilterPrimitives(EncoderPrimitives &p);
+void setupPixelPrimitives_c(EncoderPrimitives &p);
+void setupDCTPrimitives_c(EncoderPrimitives &p);
+void setupFilterPrimitives_c(EncoderPrimitives &p);
+void setupIntraPrimitives_c(EncoderPrimitives &p);
+void setupLoopFilterPrimitives_c(EncoderPrimitives &p);
 
-void Setup_C_Primitives(EncoderPrimitives &p)
+void setupCPrimitives(EncoderPrimitives &p)
 {
-    Setup_C_PixelPrimitives(p);      // pixel.cpp
-    Setup_C_DCTPrimitives(p);        // dct.cpp
-    Setup_C_IPFilterPrimitives(p);   // ipfilter.cpp
-    Setup_C_IPredPrimitives(p);      // intrapred.cpp
-    Setup_C_LoopFilterPrimitives(p); // loopfilter.cpp
+    setupPixelPrimitives_c(p);      // pixel.cpp
+    setupDCTPrimitives_c(p);        // dct.cpp
+    setupFilterPrimitives_c(p);     // ipfilter.cpp
+    setupIntraPrimitives_c(p);      // intrapred.cpp
+    setupLoopFilterPrimitives_c(p); // loopfilter.cpp
 }
 
-void Setup_Alias_Primitives(EncoderPrimitives &p)
+void setupAliasPrimitives(EncoderPrimitives &p)
 {
-    /* copy reusable luma primitives to chroma 4:4:4 */
-    for (int i = 0; i < NUM_LUMA_PARTITIONS; i++)
+#if HIGH_BIT_DEPTH
+    /* at HIGH_BIT_DEPTH, pixel == short so we can alias many primitives */
+    for (int i = 0; i < NUM_CU_SIZES; i++)
     {
-        p.chroma[X265_CSP_I444].copy_pp[i] = p.luma_copy_pp[i];
-        p.chroma[X265_CSP_I444].copy_ps[i] = p.luma_copy_ps[i];
-        p.chroma[X265_CSP_I444].copy_sp[i] = p.luma_copy_sp[i];
-        p.chroma[X265_CSP_I444].copy_ss[i] = p.luma_copy_ss[i];
-        p.chroma[X265_CSP_I444].addAvg[i]  = p.luma_addAvg[i];
+        p.cu[i].sse_pp = (pixelcmp_t)p.cu[i].sse_ss;
+
+        p.cu[i].copy_ps = (copy_ps_t)p.pu[i].copy_pp;
+        p.cu[i].copy_sp = (copy_sp_t)p.pu[i].copy_pp;
+        p.cu[i].copy_ss = (copy_ss_t)p.pu[i].copy_pp;
+
+        p.chroma[X265_CSP_I420].cu[i].copy_ps = (copy_ps_t)p.chroma[X265_CSP_I420].pu[i].copy_pp;
+        p.chroma[X265_CSP_I420].cu[i].copy_sp = (copy_sp_t)p.chroma[X265_CSP_I420].pu[i].copy_pp;
+        p.chroma[X265_CSP_I420].cu[i].copy_ss = (copy_ss_t)p.chroma[X265_CSP_I420].pu[i].copy_pp;
+
+        p.chroma[X265_CSP_I422].cu[i].copy_ps = (copy_ps_t)p.chroma[X265_CSP_I422].pu[i].copy_pp;
+        p.chroma[X265_CSP_I422].cu[i].copy_sp = (copy_sp_t)p.chroma[X265_CSP_I422].pu[i].copy_pp;
+        p.chroma[X265_CSP_I422].cu[i].copy_ss = (copy_ss_t)p.chroma[X265_CSP_I422].pu[i].copy_pp;
+    }
+#endif
+
+    /* alias chroma 4:4:4 from luma primitives (all but chroma filters) */
+
+    p.chroma[X265_CSP_I444].p2s = p.luma_p2s;
+    p.chroma[X265_CSP_I444].cu[BLOCK_4x4].sa8d = NULL;
+
+    for (int i = 0; i < NUM_PU_SIZES; i++)
+    {
+        p.chroma[X265_CSP_I444].pu[i].copy_pp = p.pu[i].copy_pp;
+        p.chroma[X265_CSP_I444].pu[i].addAvg  = p.pu[i].addAvg;
+        p.chroma[X265_CSP_I444].pu[i].satd    = p.pu[i].satd;
     }
 
-    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
+    for (int i = 0; i < NUM_CU_SIZES; i++)
     {
-        p.chroma[X265_CSP_I444].add_ps[i]  = p.luma_add_ps[i];
-        p.chroma[X265_CSP_I444].sub_ps[i]  = p.luma_sub_ps[i];
+        p.chroma[X265_CSP_I444].cu[i].sa8d    = p.cu[i].sa8d;
+        p.chroma[X265_CSP_I444].cu[i].sse_pp  = p.cu[i].sse_pp;
+        p.chroma[X265_CSP_I444].cu[i].sub_ps  = p.cu[i].sub_ps;
+        p.chroma[X265_CSP_I444].cu[i].add_ps  = p.cu[i].add_ps;
+        p.chroma[X265_CSP_I444].cu[i].copy_ps = p.cu[i].copy_ps;
+        p.chroma[X265_CSP_I444].cu[i].copy_sp = p.cu[i].copy_sp;
+        p.chroma[X265_CSP_I444].cu[i].copy_ss = p.cu[i].copy_ss;
     }
 
-    for (int i = 0; i < NUM_SQUARE_BLOCKS; i++)
+    p.cu[BLOCK_4x4].sa8d = p.pu[LUMA_4x4].satd;
+
+    /* Chroma PU can often use luma satd primitives */
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_4x4].satd   = p.pu[LUMA_4x4].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].satd   = p.pu[LUMA_8x8].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].satd = p.pu[LUMA_16x16].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].satd = p.pu[LUMA_32x32].satd;
+
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_8x4].satd   = p.pu[LUMA_8x4].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_4x8].satd   = p.pu[LUMA_4x8].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].satd  = p.pu[LUMA_16x8].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_8x16].satd  = p.pu[LUMA_8x16].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].satd = p.pu[LUMA_32x16].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].satd = p.pu[LUMA_16x32].satd;
+
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].satd = p.pu[LUMA_16x12].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].satd = p.pu[LUMA_12x16].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].satd  = p.pu[LUMA_16x4].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_4x16].satd  = p.pu[LUMA_4x16].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].satd = p.pu[LUMA_32x24].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].satd = p.pu[LUMA_24x32].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].satd  = p.pu[LUMA_32x8].satd;
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].satd  = p.pu[LUMA_8x32].satd;
+
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_4x8].satd   = p.pu[LUMA_4x8].satd;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].satd  = p.pu[LUMA_8x16].satd;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].satd = p.pu[LUMA_16x32].satd;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].satd = p.pu[LUMA_32x64].satd;
+
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_4x4].satd   = p.pu[LUMA_4x4].satd;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].satd   = p.pu[LUMA_8x8].satd;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_4x16].satd  = p.pu[LUMA_4x16].satd;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].satd = p.pu[LUMA_16x16].satd;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_8x32].satd  = p.pu[LUMA_8x32].satd;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].satd = p.pu[LUMA_32x32].satd;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].satd = p.pu[LUMA_16x64].satd;
+
+    //p.chroma[X265_CSP_I422].satd[CHROMA_422_8x12]  = satd4<8, 12>;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].satd  = p.pu[LUMA_8x4].satd;
+    //p.chroma[X265_CSP_I422].satd[CHROMA_422_16x24] = satd8<16, 24>;
+    //p.chroma[X265_CSP_I422].satd[CHROMA_422_12x32] = satd4<12, 32>;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].satd = p.pu[LUMA_16x8].satd;
+    //p.chroma[X265_CSP_I422].satd[CHROMA_422_4x32]  = satd4<4, 32>;
+    //p.chroma[X265_CSP_I422].satd[CHROMA_422_32x48] = satd8<32, 48>;
+    //p.chroma[X265_CSP_I422].satd[CHROMA_422_24x64] = satd8<24, 64>;
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].satd = p.pu[LUMA_32x16].satd;
+    //p.chroma[X265_CSP_I422].satd[CHROMA_422_8x64]  = satd8<8, 64>;
+
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_2x2].sa8d = NULL;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].sa8d = p.pu[LUMA_4x4].satd;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sa8d = p.cu[BLOCK_8x8].sa8d;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sa8d = p.cu[BLOCK_16x16].sa8d;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sa8d = p.cu[BLOCK_32x32].sa8d;
+
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_2x4].sa8d = NULL;
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sa8d = p.pu[LUMA_4x8].satd;
+
+    /* alias CU copy_pp from square PU copy_pp */
+    for (int i = 0; i < NUM_CU_SIZES; i++)
     {
-        int partL = partitionFromLog2Size(i + 2);
-        p.square_copy_pp[i] = p.luma_copy_pp[partL];
-        p.square_copy_ps[i] = p.luma_copy_ps[partL];
-        p.square_copy_sp[i] = p.luma_copy_sp[partL];
-        p.square_copy_ss[i] = p.luma_copy_ss[partL];
+        p.cu[i].copy_pp = p.pu[i].copy_pp;
+
+        for (int c = 0; c < X265_CSP_COUNT; c++)
+            p.chroma[c].cu[i].copy_pp = p.chroma[c].pu[i].copy_pp;
     }
 
-    primitives.sa8d[BLOCK_4x4]   = primitives.sa8d_inter[LUMA_4x4];
-    primitives.sa8d[BLOCK_8x8]   = primitives.sa8d_inter[LUMA_8x8];
-    primitives.sa8d[BLOCK_16x16] = primitives.sa8d_inter[LUMA_16x16];
-    primitives.sa8d[BLOCK_32x32] = primitives.sa8d_inter[LUMA_32x32];
-    primitives.sa8d[BLOCK_64x64] = primitives.sa8d_inter[LUMA_64x64];
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_2x2].sse_pp = NULL;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_4x4].sse_pp = p.cu[BLOCK_4x4].sse_pp;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sse_pp = p.cu[BLOCK_8x8].sse_pp;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sse_pp = p.cu[BLOCK_16x16].sse_pp;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = p.cu[BLOCK_32x32].sse_pp;
 
-    // SA8D devolves to SATD for blocks not even multiples of 8x8
-    primitives.sa8d_inter[LUMA_4x4]   = primitives.satd[LUMA_4x4];
-    primitives.sa8d_inter[LUMA_4x8]   = primitives.satd[LUMA_4x8];
-    primitives.sa8d_inter[LUMA_4x16]  = primitives.satd[LUMA_4x16];
-    primitives.sa8d_inter[LUMA_8x4]   = primitives.satd[LUMA_8x4];
-    primitives.sa8d_inter[LUMA_16x4]  = primitives.satd[LUMA_16x4];
-    primitives.sa8d_inter[LUMA_16x12] = primitives.satd[LUMA_16x12];
-    primitives.sa8d_inter[LUMA_12x16] = primitives.satd[LUMA_12x16];
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_2x4].sse_pp = NULL;
 }
 }
 using namespace x265;
@@ -120,20 +197,24 @@ void x265_setup_primitives(x265_param *param, int cpuid)
         cpuid = x265::cpu_detect();
 
     // initialize global variables
-    if (!primitives.sad[0])
+    if (!primitives.pu[0].sad)
     {
-        Setup_C_Primitives(primitives);
-        Setup_Instrinsic_Primitives(primitives, cpuid);
+        setupCPrimitives(primitives);
+
+        /* We do not want the encoder to use the un-optimized intra all-angles
+         * C references. It is better to call the individual angle functions
+         * instead. We must check for NULL before using this primitive */
+        for (int i = 0; i < NUM_TR_SIZE; i++)
+            primitives.cu[i].intra_pred_allangs = NULL;
 
 #if ENABLE_ASSEMBLY
-        Setup_Assembly_Primitives(primitives, cpuid);
+        setupInstrinsicPrimitives(primitives, cpuid);
+        setupAssemblyPrimitives(primitives, cpuid);
 #else
         x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
 #endif
 
-        Setup_Alias_Primitives(primitives);
-
-        initROM();
+        setupAliasPrimitives(primitives);
     }
 
     if (param->logLevel >= X265_LOG_INFO)
@@ -169,74 +250,14 @@ void x265_setup_primitives(x265_param *param, int cpuid)
     }
 }
 
-#if !defined(ENABLE_ASSEMBLY)
-#if defined(_MSC_VER)
-#include <intrin.h>
-#endif
-
-extern "C" {
-// the intrinsic primitives will not use MMX instructions, so if assembly
-// is disabled there should be no reason to use EMMS.
-void x265_cpu_emms(void) {}
-
-#if defined(X265_ARCH_X86)
-
-#if defined(_MSC_VER)
-# pragma warning(disable: 4100)
-#elif defined(__GNUC__) || defined(__clang__)    // use inline assembly, Gnu/AT&T syntax
-# define __cpuidex(regsArray, level, index) \
-    __asm__ __volatile__ ("cpuid" \
-                          : "=a" ((regsArray)[0]), "=b" ((regsArray)[1]), "=c" ((regsArray)[2]), "=d" ((regsArray)[3]) \
-                          : "0" (level), "2" (index));
+#if ENABLE_ASSEMBLY
+/* these functions are implemented in assembly. When assembly is not being
+ * compiled, they are unnecessary and can be NOPs */
 #else
-# error "compiler not supported"
+extern "C" {
+int x265_cpu_cpuid_test(void) { return 0; }
+void x265_cpu_emms(void) {}
+void x265_cpu_cpuid(uint32_t, uint32_t *, uint32_t *, uint32_t *, uint32_t *) {}
+void x265_cpu_xgetbv(uint32_t, uint32_t *, uint32_t *) {}
+}
 #endif
-
-int x265_cpu_cpuid_test(void)
-{
-    return 0;
-}
-
-void x265_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx)
-{
-    int output[4];
-
-    __cpuidex(output, op, 0);
-    *eax = output[0];
-    *ebx = output[1];
-    *ecx = output[2];
-    *edx = output[3];
-}
-
-void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx)
-{
-    uint64_t out = 0;
-
-#if X265_ARCH_X86
-
-#if (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 1200)
-
-    // MSVC 2010 SP1 or later, or similar Intel release
-    out = _xgetbv(op);
-
-#elif defined(__GNUC__) || defined(__clang__)    // use inline assembly, Gnu/AT&T syntax
-
-    uint32_t a, d;
-    __asm("xgetbv" : "=a" (a), "=d" (d) : "c" (op) :);
-    *eax = a;
-    *edx = d;
-    return;
-
-#elif defined(_WIN64)      // On x64 with older compilers, this is impossible
-
-#endif // if (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 160040000) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 1200)
-
-#endif // if x86
-
-    *eax = (uint32_t)out;
-    *edx = (uint32_t)(out >> 32);
-}
-
-#endif // X265_ARCH_X86
-}
-#endif // if !ENABLE_ASSEMBLY

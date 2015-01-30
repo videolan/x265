@@ -13,7 +13,7 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-.PHONY: help clean html web pickle htmlhelp qthelp qhc latex changes linkcheck
+.PHONY: help clean distclean html web pickle htmlhelp qthelp qhc latex changes linkcheck
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -24,11 +24,15 @@ help:
 	@echo "  qthelp    to make HTML files and a qthelp project"
 	@echo "  qhc       to make QHC file"
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
+	@echo "  man       to make manpages"
 	@echo "  changes   to make an overview over all changed/added/deprecated items"
 	@echo "  linkcheck to check all external links for integrity"
 
 clean:
 	-rm -rf build/*
+
+distclean: clean
+	-rmdir build/
 
 html:
 	mkdir -p build/html build/doctrees
@@ -82,6 +86,14 @@ latex:
 	@echo "Build finished; the LaTeX files are in build/latex."
 	@echo "Run \`make all-pdf' or \`make all-ps' in that directory to" \
 	      "run these through (pdf)latex."
+
+man:
+	mkdir -p build/man build/doctrees
+	$(SPHINXBUILD) -b man $(ALLSPHINXOPTS) build/man
+	@echo
+	@echo "Build finished; the manpages are in build/man."
+	@echo "Run \`man -l build/man/x265.1' or \`man -l build/man/libx265.3'" \
+	      "to view them."
 
 changes:
 	mkdir -p build/changes build/doctrees

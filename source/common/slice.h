@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2014 x265 project
+ * Copyright (C) 2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
  *
@@ -230,6 +230,7 @@ struct SPS
 
     uint32_t maxDecPicBuffering; // these are dups of VPS values
     int      numReorderPics;
+    int      maxLatencyIncrease;
 
     bool     bUseStrongIntraSmoothing; // use param
     bool     bTemporalMVPEnabled;
@@ -242,8 +243,7 @@ struct PPS
 {
     uint32_t maxCuDQPDepth;
 
-    int      chromaCbQpOffset;       // use param
-    int      chromaCrQpOffset;       // use param
+    int      chromaQpOffset[2];      // use param
 
     bool     bUseWeightPred;         // use param
     bool     bUseWeightedBiPred;     // use param
@@ -333,6 +333,8 @@ public:
     void disableWeights();
 
     void setRefPicList(PicList& picList);
+
+    const Frame* getRefPic(int list, int refIdx) const { return refIdx >= 0 ? m_refPicList[list][refIdx] : NULL; }
 
     bool getRapPicFlag() const
     {

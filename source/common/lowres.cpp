@@ -69,6 +69,7 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled)
     lowresPlane[3] = buffer[3] + padoffset;
 
     CHECKED_MALLOC(intraCost, int32_t, cuCount);
+    CHECKED_MALLOC(intraMode, uint8_t, cuCount);
 
     for (int i = 0; i < bframes + 2; i++)
     {
@@ -99,6 +100,7 @@ void Lowres::destroy()
         X265_FREE(buffer[i]);
 
     X265_FREE(intraCost);
+    X265_FREE(intraMode);
 
     for (int i = 0; i < bframes + 2; i++)
     {
@@ -155,7 +157,7 @@ void Lowres::init(PicYuv *origPic, int poc, int type)
         intraMbs[i] = 0;
 
     /* downscale and generate 4 hpel planes for lookahead */
-    primitives.frame_init_lowres_core(origPic->m_picOrg[0],
+    primitives.frameInitLowres(origPic->m_picOrg[0],
                                       lowresPlane[0], lowresPlane[1], lowresPlane[2], lowresPlane[3],
                                       origPic->m_stride, lumaStride, width, lines);
 
@@ -164,5 +166,5 @@ void Lowres::init(PicYuv *origPic, int poc, int type)
     extendPicBorder(lowresPlane[1], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);
     extendPicBorder(lowresPlane[2], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);
     extendPicBorder(lowresPlane[3], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);
-    fpelPlane = lowresPlane[0];
+    fpelPlane[0] = lowresPlane[0];
 }
