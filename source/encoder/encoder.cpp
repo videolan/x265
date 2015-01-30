@@ -1510,7 +1510,7 @@ void Encoder::configure(x265_param *p)
     if (p->rc.aqMode == X265_AQ_NONE && p->rc.cuTree == 0)
         p->rc.aqStrength = 0;
 
-    if (p->totalFrames <= 2 * ((float)p->fpsNum)/p->fpsDenom && p->rc.bStrictCbr)
+    if (p->totalFrames <= 2 * ((float)p->fpsNum) / p->fpsDenom && p->rc.bStrictCbr)
         p->lookaheadDepth = p->totalFrames;
 
     if (p->internalCsp != X265_CSP_I420)

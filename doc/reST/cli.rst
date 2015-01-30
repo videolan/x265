@@ -802,9 +802,9 @@ areas of high motion.
 	energy in the reconstructed image. This generally improves perceived
 	visual quality at the cost of lower quality metric scores.  It only
 	has effect on slower presets which use RDO Quantization
-	(:option:`--rd` 4, 5 and 6). 1.0 is a typical value. Default
-	disabled. High values can be beneficial in preserving high-frequency
-	detail like film grain. Default: 1.0
+	(:option:`--rd` 4, 5 and 6). 1.0 is a typical value. High values can 
+	be beneficial in preserving high-frequency detail like film grain. 
+	Default: 1.0
 
 	**Range of values:** 0 .. 50.0
 
