@@ -979,8 +979,8 @@ int x265_check_params(x265_param *param)
           "subme must be less than or equal to X265_MAX_SUBPEL_LEVEL (7)");
     CHECK(param->subpelRefine < 0,
           "subme must be greater than or equal to 0");
-    CHECK(param->frameNumThreads < 0,
-          "frameNumThreads (--frame-threads) must be 0 or higher");
+    CHECK(param->frameNumThreads < 0 || param->frameNumThreads > X265_MAX_FRAME_THREADS,
+          "frameNumThreads (--frame-threads) must be [0 .. X265_MAX_FRAME_THREADS)");
     CHECK(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
     CHECK(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
     CHECK(param->crQpOffset < -12, "Min. Chroma Cr QP Offset is -12");
