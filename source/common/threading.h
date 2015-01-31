@@ -408,6 +408,23 @@ protected:
     Lock &inst;
 };
 
+// Utility class which adds elapsed time of the scope of the object into the
+// accumulator provided to the constructor
+struct ScopedElapsedTime
+{
+    ScopedElapsedTime(int64_t& accum) : accumlatedTime(accum) { startTime = x265_mdate(); }
+
+    ~ScopedElapsedTime() { accumlatedTime += x265_mdate() - startTime; }
+
+protected:
+
+    int64_t  startTime;
+    int64_t& accumlatedTime;
+
+    // do not allow assignments
+    ScopedElapsedTime &operator =(const ScopedElapsedTime &);
+};
+
 //< Simplistic portable thread class.  Shutdown signalling left to derived class
 class Thread
 {
