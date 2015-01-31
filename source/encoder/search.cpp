@@ -40,7 +40,6 @@ using namespace x265;
 
 #define MVP_IDX_BITS 1
 
-ALIGN_VAR_32(const pixel, Search::zeroPixel[MAX_CU_SIZE]) = { 0 };
 ALIGN_VAR_32(const int16_t, Search::zeroShort[MAX_CU_SIZE]) = { 0 };
 
 Search::Search() : JobProvider(NULL)
