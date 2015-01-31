@@ -47,18 +47,19 @@ public:
     void setQP(const Slice& slice, int qp)
     {
         m_qp = qp;
-        int qpCb, qpCr;
 
         /* Scale PSY RD factor by a slice type factor */
         static const uint32_t psyScaleFix8[3] = { 300, 256, 96 }; /* B, P, I */
         m_psyRd = (m_psyRdBase * psyScaleFix8[slice.m_sliceType]) >> 8;
 
         /* Scale PSY RD factor by QP, at high QP psy-rd can cause artifacts */
-        if (qp >= 50)
-            m_psyRd = 0;
-        else if (qp >= 42)
-            m_psyRd >>= 1;
+        if (qp >= 40)
+        {
+            int scale = qp >= QP_MAX_SPEC ? 0 : (QP_MAX_SPEC - qp) * 23;
+            m_psyRd = (m_psyRd * scale) >> 8;
+        }
 
+        int qpCb, qpCr;
         setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
         if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
             qpCb = x265_clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
