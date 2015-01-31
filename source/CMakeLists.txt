@@ -240,6 +240,11 @@ if(ENABLE_VTUNE)
     add_subdirectory(profile/vtune)
 endif(ENABLE_VTUNE)
 
+option(DETAILED_CU_STATS "Enable internal profiling of encoder work" OFF)
+if(DETAILED_CU_STATS)
+    add_definitions(-DDETAILED_CU_STATS)
+endif(DETAILED_CU_STATS)
+
 add_subdirectory(encoder)
 add_subdirectory(common)
 

@@ -143,6 +143,8 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         }
     }
 
+    ProfileCUScope(ctu, totalCTUTime, totalCTUs);
+
     uint32_t zOrder = 0;
     if (m_slice->m_sliceType == I_SLICE)
     {
@@ -328,8 +330,11 @@ bool Analysis::findJob(int threadId)
         int id = m_numAcquiredJobs++;
         m_pmodeLock.release();
 
-        ProfileScopeEvent(pmode);
-        parallelModeAnalysis(threadId, id);
+        {
+            ProfileScopeEvent(pmode);
+            ProfileCUScope(m_modeDepth[m_curGeom->depth].pred[PRED_2Nx2N].cu, pmodeTime, countPModeTasks);
+            parallelModeAnalysis(threadId, id);
+        }
 
         m_pmodeLock.acquire();
         if (++m_numCompletedJobs == m_totalNumJobs)
@@ -346,8 +351,11 @@ bool Analysis::findJob(int threadId)
         int id = m_numAcquiredME++;
         m_meLock.release();
 
-        ProfileScopeEvent(pme);
-        parallelME(threadId, id);
+        {
+            ProfileScopeEvent(pme);
+            ProfileCUScope(m_curInterMode->cu, pmeTime, countPMETasks);
+            parallelME(threadId, id);
+        }
 
         m_meLock.acquire();
         if (++m_numCompletedME == m_totalNumME)
@@ -576,7 +584,10 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         {
             checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
-            m_modeCompletionEvent.wait();
+            {
+                ProfileCUScope(parentCTU, pmodeBlockTime, countPModeMasters);
+                m_modeCompletionEvent.wait();
+            }
 
             /* select best inter mode based on sa8d cost */
             Mode *bestInter = &md.pred[PRED_2Nx2N];
@@ -654,7 +665,10 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         else
         {
             checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
-            m_modeCompletionEvent.wait();
+            {
+                ProfileCUScope(parentCTU, pmodeBlockTime, countPModeMasters);
+                m_modeCompletionEvent.wait();
+            }
 
             checkBestMode(md.pred[PRED_2Nx2N], depth);
             checkBestMode(md.pred[PRED_BIDIR], depth);

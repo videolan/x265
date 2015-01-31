@@ -1142,6 +1142,8 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
     uint32_t tuDepthRange[2];
     cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
+    ProfileCUScope(intraMode.cu, intraAnalysisElapsedTime, countIntraAnalysis);
+
     intraMode.initCosts();
     intraMode.distortion += estIntraPredQT(intraMode, cuGeom, tuDepthRange, sharedModes);
     intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom);
@@ -1178,6 +1180,8 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
  * be generated later. It records the best mode in the cu */
 void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 {
+    ProfileCUScope(intraMode.cu, intraAnalysisElapsedTime, countIntraAnalysis);
+
     CUData& cu = intraMode.cu;
     uint32_t depth = cuGeom.depth;
 
@@ -1347,6 +1351,8 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
 void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 {
+    ProfileCUScope(intraMode.cu, intraRDOElapsedTime, countIntraRDO);
+
     CUData& cu = intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
 
@@ -1543,6 +1549,9 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
             {
                 if (candCostList[i] == MAX_INT64)
                     break;
+
+                ProfileCUScope(intraMode.cu, intraRDOElapsedTime, countIntraRDO);
+
                 m_entropyCoder.load(m_rqt[depth].cur);
                 cu.setLumaIntraDirSubParts(rdModeList[i], absPartIdx, depth + initTuDepth);
 
@@ -1554,6 +1563,8 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
                 COPY2_IF_LT(bcost, icosts.rdcost, bmode, rdModeList[i]);
             }
         }
+
+        ProfileCUScope(intraMode.cu, intraRDOElapsedTime, countIntraRDO);
 
         /* remeasure best mode, allowing TU splits */
         cu.setLumaIntraDirSubParts(bmode, absPartIdx, depth + initTuDepth);
@@ -1657,6 +1668,8 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom)
 
 uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
 {
+    ProfileCUScope(intraMode.cu, intraRDOElapsedTime, countIntraRDO);
+
     CUData& cu = intraMode.cu;
     Yuv& reconYuv = intraMode.reconYuv;
 
@@ -1909,6 +1922,8 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
  * returns true if predYuv was filled with a motion compensated prediction */
 bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChromaSA8D)
 {
+    ProfileCUScope(interMode.cu, motionEstimationElapsedTime, countMotionEstimate);
+
     CUData& cu = interMode.cu;
     Yuv* predYuv = &interMode.predYuv;
 
@@ -2087,6 +2102,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 m_meCompletionEvent.trigger();
             m_meLock.release();
 
+            ProfileCUScopeNamed(pmeWaitScope, interMode.cu, pmeBlockTime, countPMEMasters);
             m_meCompletionEvent.wait();
         }
         else
@@ -2482,6 +2498,8 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
  * Note: this function overwrites the RD cost variables of interMode, but leaves the sa8d cost unharmed */
 void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
 {
+    ProfileCUScope(interMode.cu, interRDOElapsedTime, countInterRDO);
+
     CUData& cu = interMode.cu;
     Yuv* reconYuv = &interMode.reconYuv;
     Yuv* predYuv = &interMode.predYuv;

@@ -177,6 +177,9 @@ public:
     int64_t                  m_slicetypeWaitTime;        // total elapsed time waiting for decided frame
     int64_t                  m_totalWorkerElapsedTime;   // total elapsed time spent by worker threads processing CTUs
     int64_t                  m_totalNoWorkerTime;        // total elapsed time without any active worker threads
+#if DETAILED_CU_STATS
+    CUStats                  m_cuStats;
+#endif
 
     Encoder*                 m_top;
     x265_param*              m_param;
