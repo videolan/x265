@@ -1148,7 +1148,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
             }
             else
             {
-                /* 1.5 * MaxLumaSr * (AuCpbRemovalTime[ n ] - AyCpbRemovalTime[ n - 1 ]) ? MinCr */
+                /* 1.5 * MaxLumaSr * (AuCpbRemovalTime[ n ] - AuCpbRemovalTime[ n - 1 ]) / MinCr */
                 rce->frameSizeMaximum = 8 * 1.5 * enc->m_vps.ptl.maxLumaSrForLevel * m_frameDuration / mincr;
             }
         }
