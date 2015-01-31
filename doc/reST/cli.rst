@@ -171,6 +171,8 @@ Performance Options
 	Over-allocation of frame threads will not improve performance, it
 	will generally just increase memory use.
 
+	**Values:** any value between 8 and 16. Default is 0, auto-detect
+
 .. option:: --threads <integer>
 
 	Number of threads to allocate for the worker thread pool  This pool
