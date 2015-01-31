@@ -271,7 +271,8 @@ typedef enum
 #define X265_ANALYSIS_OFF  0
 #define X265_ANALYSIS_SAVE 1
 #define X265_ANALYSIS_LOAD 2
-typedef struct
+
+typedef struct x265_cli_csp
 {
     int planes;
     int width[3];
