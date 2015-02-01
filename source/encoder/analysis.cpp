@@ -570,8 +570,19 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             m_pool->pokeIdleThread();
 
         /* participate in processing jobs, until all are distributed */
-        while (findJob(-1))
-            ;
+        m_pmodeLock.acquire();
+        while (m_totalNumJobs > m_numAcquiredJobs)
+        {
+            int id = m_numAcquiredJobs++;
+            m_pmodeLock.release();
+
+            parallelModeAnalysis(-1, id);
+
+            m_pmodeLock.acquire();
+            if (++m_numCompletedJobs == m_totalNumJobs)
+                m_modeCompletionEvent.trigger();
+        }
+        m_pmodeLock.release();
 
         JobProvider::dequeue();
         m_bJobsQueued = false;
