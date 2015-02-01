@@ -344,7 +344,7 @@ protected:
     static void updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList);
 
     // get most probable luma modes for CU part, and bit cost of all non mpm modes
-    uint32_t getIntraRemModeBits(CUData & cu, uint32_t absPartIdx, uint32_t preds[3], uint64_t& mpms) const;
+    uint32_t getIntraRemModeBits(CUData & cu, uint32_t absPartIdx, uint32_t mpmModes[3], uint64_t& mpms) const;
 
     void updateModeCost(Mode& m) const { m.rdCost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(m.distortion, m.totalBits, m.psyEnergy) : m_rdCost.calcRdCost(m.distortion, m.totalBits); }
 };
