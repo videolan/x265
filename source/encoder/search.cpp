@@ -1430,120 +1430,120 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
             int maxCandCount = 2 + m_param->rdLevel + ((depth + initTuDepth) >> 1);
 
             {
-            ProfileCUScope(intraMode.cu, intraAnalysisElapsedTime, countIntraAnalysis);
+                ProfileCUScope(intraMode.cu, intraAnalysisElapsedTime, countIntraAnalysis);
 
-            // Reference sample smoothing
-            IntraNeighbors intraNeighbors;
-            initIntraNeighbors(cu, absPartIdx, initTuDepth, true, &intraNeighbors);
-            initAdiPattern(cu, cuGeom, absPartIdx, intraNeighbors, ALL_IDX);
+                // Reference sample smoothing
+                IntraNeighbors intraNeighbors;
+                initIntraNeighbors(cu, absPartIdx, initTuDepth, true, &intraNeighbors);
+                initAdiPattern(cu, cuGeom, absPartIdx, intraNeighbors, ALL_IDX);
 
-            // determine set of modes to be tested (using prediction signal only)
-            const pixel* fenc = fencYuv->getLumaAddr(absPartIdx);
-            uint32_t stride = predYuv->m_size;
+                // determine set of modes to be tested (using prediction signal only)
+                const pixel* fenc = fencYuv->getLumaAddr(absPartIdx);
+                uint32_t stride = predYuv->m_size;
 
-            int scaleTuSize = tuSize;
-            int scaleStride = stride;
-            int costShift = 0;
+                int scaleTuSize = tuSize;
+                int scaleStride = stride;
+                int costShift = 0;
 
-            if (tuSize > 32)
-            {
-                // origin is 64x64, we scale to 32x32 and setup required parameters
-                ALIGN_VAR_32(pixel, bufScale[32 * 32]);
-                primitives.scale2D_64to32(bufScale, fenc, stride);
-                fenc = bufScale;
-
-                pixel nScale[129];
-                intraNeighbourBuf[1][0] = intraNeighbourBuf[0][0];
-                primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1, 0);
-
-                // TO DO: primitive
-                for (int x = 1; x < 65; x++)
+                if (tuSize > 32)
                 {
-                    intraNeighbourBuf[0][x] = nScale[x];           // Top pixel
-                    intraNeighbourBuf[0][x + 64] = nScale[x + 64]; // Left pixel
-                    intraNeighbourBuf[1][x] = nScale[x];           // Top pixel
-                    intraNeighbourBuf[1][x + 64] = nScale[x + 64]; // Left pixel
+                    // origin is 64x64, we scale to 32x32 and setup required parameters
+                    ALIGN_VAR_32(pixel, bufScale[32 * 32]);
+                    primitives.scale2D_64to32(bufScale, fenc, stride);
+                    fenc = bufScale;
+
+                    pixel nScale[129];
+                    intraNeighbourBuf[1][0] = intraNeighbourBuf[0][0];
+                    primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1, 0);
+
+                    // TO DO: primitive
+                    for (int x = 1; x < 65; x++)
+                    {
+                        intraNeighbourBuf[0][x] = nScale[x];           // Top pixel
+                        intraNeighbourBuf[0][x + 64] = nScale[x + 64]; // Left pixel
+                        intraNeighbourBuf[1][x] = nScale[x];           // Top pixel
+                        intraNeighbourBuf[1][x + 64] = nScale[x + 64]; // Left pixel
+                    }
+
+                    scaleTuSize = 32;
+                    scaleStride = 32;
+                    costShift = 2;
+                    sizeIdx = 5 - 2; // log2(scaleTuSize) - 2
                 }
 
-                scaleTuSize = 32;
-                scaleStride = 32;
-                costShift = 2;
-                sizeIdx = 5 - 2; // log2(scaleTuSize) - 2
-            }
+                m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
 
-            m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
+                /* there are three cost tiers for intra modes:
+                *  pred[0]          - mode probable, least cost
+                *  pred[1], pred[2] - less probable, slightly more cost
+                *  non-mpm modes    - all cost the same (rbits) */
+                uint64_t mpms;
+                uint32_t mpmModes[3];
+                uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, mpmModes, mpms);
 
-            /* there are three cost tiers for intra modes:
-             *  pred[0]          - mode probable, least cost
-             *  pred[1], pred[2] - less probable, slightly more cost
-             *  non-mpm modes    - all cost the same (rbits) */
-            uint64_t mpms;
-            uint32_t mpmModes[3];
-            uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, mpmModes, mpms);
+                pixelcmp_t sa8d = primitives.cu[sizeIdx].sa8d;
+                uint64_t modeCosts[35];
 
-            pixelcmp_t sa8d = primitives.cu[sizeIdx].sa8d;
-            uint64_t modeCosts[35];
+                // DC
+                primitives.cu[sizeIdx].intra_pred[DC_IDX](pred, scaleStride, intraNeighbourBuf[0], 0, (scaleTuSize <= 16));
+                uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, DC_IDX) : rbits;
+                uint32_t sad = sa8d(fenc, scaleStride, pred, scaleStride) << costShift;
+                modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
 
-            // DC
-            primitives.cu[sizeIdx].intra_pred[DC_IDX](pred, scaleStride, intraNeighbourBuf[0], 0, (scaleTuSize <= 16));
-            uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, DC_IDX) : rbits;
-            uint32_t sad = sa8d(fenc, scaleStride, pred, scaleStride) << costShift;
-            modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
+                // PLANAR
+                pixel* planar = intraNeighbourBuf[0];
+                if (tuSize >= 8 && tuSize <= 32)
+                    planar = intraNeighbourBuf[1];
 
-            // PLANAR
-            pixel* planar = intraNeighbourBuf[0];
-            if (tuSize >= 8 && tuSize <= 32)
-                planar = intraNeighbourBuf[1];
+                primitives.cu[sizeIdx].intra_pred[PLANAR_IDX](pred, scaleStride, planar, 0, 0);
+                bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, PLANAR_IDX) : rbits;
+                sad = sa8d(fenc, scaleStride, pred, scaleStride) << costShift;
+                modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
+                COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
 
-            primitives.cu[sizeIdx].intra_pred[PLANAR_IDX](pred, scaleStride, planar, 0, 0);
-            bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, PLANAR_IDX) : rbits;
-            sad = sa8d(fenc, scaleStride, pred, scaleStride) << costShift;
-            modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
-            COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
-
-            // angular predictions
-            if (primitives.cu[sizeIdx].intra_pred_allangs)
-            {
-                ALIGN_VAR_32(pixel, bufTrans[32 * 32]);      // TODO: Use aligned mallocs
-                ALIGN_VAR_32(pixel, allPreds[33 * 32 * 32]);
-
-                primitives.cu[sizeIdx].transpose(bufTrans, fenc, scaleStride);
-                primitives.cu[sizeIdx].intra_pred_allangs(allPreds, intraNeighbourBuf[0], intraNeighbourBuf[1], (scaleTuSize <= 16));
-                for (int mode = 2; mode < 35; mode++)
+                // angular predictions
+                if (primitives.cu[sizeIdx].intra_pred_allangs)
                 {
-                    bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, mode) : rbits;
-                    if (mode < 18)
-                        sad = sa8d(bufTrans, scaleTuSize, &allPreds[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
-                    else
-                        sad = sa8d(fenc, scaleStride, &allPreds[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
-                    modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
-                    COPY1_IF_LT(bcost, modeCosts[mode]);
+                    ALIGN_VAR_32(pixel, bufTrans[32 * 32]);      // TODO: Use aligned mallocs
+                    ALIGN_VAR_32(pixel, allPreds[33 * 32 * 32]);
+
+                    primitives.cu[sizeIdx].transpose(bufTrans, fenc, scaleStride);
+                    primitives.cu[sizeIdx].intra_pred_allangs(allPreds, intraNeighbourBuf[0], intraNeighbourBuf[1], (scaleTuSize <= 16));
+                    for (int mode = 2; mode < 35; mode++)
+                    {
+                        bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, mode) : rbits;
+                        if (mode < 18)
+                            sad = sa8d(bufTrans, scaleTuSize, &allPreds[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
+                        else
+                            sad = sa8d(fenc, scaleStride, &allPreds[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
+                        modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
+                        COPY1_IF_LT(bcost, modeCosts[mode]);
+                    }
                 }
-            }
-            else
-            {
-                for (int mode = 2; mode < 35; mode++)
+                else
                 {
-                    bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, mode) : rbits;
-                    int filter = !!(g_intraFilterFlags[mode] & scaleTuSize);
-                    primitives.cu[sizeIdx].intra_pred[mode](pred, scaleTuSize, intraNeighbourBuf[filter], mode, scaleTuSize <= 16);
-                    sad = sa8d(fenc, scaleStride, pred, scaleTuSize) << costShift;
-                    modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
-                    COPY1_IF_LT(bcost, modeCosts[mode]);
+                    for (int mode = 2; mode < 35; mode++)
+                    {
+                        bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, mode) : rbits;
+                        int filter = !!(g_intraFilterFlags[mode] & scaleTuSize);
+                        primitives.cu[sizeIdx].intra_pred[mode](pred, scaleTuSize, intraNeighbourBuf[filter], mode, scaleTuSize <= 16);
+                        sad = sa8d(fenc, scaleStride, pred, scaleTuSize) << costShift;
+                        modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
+                        COPY1_IF_LT(bcost, modeCosts[mode]);
+                    }
                 }
-            }
 
-            /* Find the top maxCandCount candidate modes with cost within 25% of best
-             * or among the most probable modes. maxCandCount is derived from the
-             * rdLevel and depth. In general we want to try more modes at slower RD
-             * levels and at higher depths */
-            for (int i = 0; i < maxCandCount; i++)
-                candCostList[i] = MAX_INT64;
+                /* Find the top maxCandCount candidate modes with cost within 25% of best
+                * or among the most probable modes. maxCandCount is derived from the
+                * rdLevel and depth. In general we want to try more modes at slower RD
+                * levels and at higher depths */
+                for (int i = 0; i < maxCandCount; i++)
+                    candCostList[i] = MAX_INT64;
 
-            uint64_t paddedBcost = bcost + (bcost >> 3); // 1.12%
-            for (int mode = 0; mode < 35; mode++)
-                if (modeCosts[mode] < paddedBcost || (mpms & ((uint64_t)1 << mode)))
-                    updateCandList(mode, modeCosts[mode], maxCandCount, rdModeList, candCostList);
+                uint64_t paddedBcost = bcost + (bcost >> 3); // 1.12%
+                for (int mode = 0; mode < 35; mode++)
+                    if (modeCosts[mode] < paddedBcost || (mpms & ((uint64_t)1 << mode)))
+                        updateCandList(mode, modeCosts[mode], maxCandCount, rdModeList, candCostList);
             }
 
             /* measure best candidates using simple RDO (no TU splits) */
