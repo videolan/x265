@@ -1444,11 +1444,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     //const uint32_t maskPosXY = ((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1;
     X265_CHECK((uint32_t)((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1) == (((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1), "maskPosXY fault\n");
 
-    uint32_t cgBlkNum = 0;
     do
     {
-        const uint32_t cgBlkIdx = scanPosLast & (MLS_CG_BLK_SIZE - 1);
-        const uint32_t cgIdx = scanPosLast >> MLS_CG_SIZE;
+        const uint32_t cgIdx = (uint32_t)scanPosLast >> MLS_CG_SIZE;
 
         posLast = codingParameters.scan[scanPosLast++];
 
@@ -1464,16 +1462,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         numSig -= isNZCoeff;
 
         // TODO: optimize by instruction BTS
-        coeffSign[cgIdx] += (uint16_t)(((uint32_t)curCoeff >> 31) << cgBlkNum);
+        coeffSign[cgIdx] += (uint16_t)(((uint32_t)curCoeff >> 31) << coeffNum[cgIdx]);
         coeffFlag[cgIdx] = (coeffFlag[cgIdx] << 1) + (uint16_t)isNZCoeff;
-        cgBlkNum += isNZCoeff;
-        // TODO: reduce memory store operator, but avoid conditional branch
-        coeffNum[cgIdx] = (uint8_t)cgBlkNum;
-
-        if (cgBlkIdx == (MLS_CG_BLK_SIZE - 1))
-        {
-            cgBlkNum = 0;
-        }
+        coeffNum[cgIdx] += (uint8_t)isNZCoeff;
     }
     while (numSig > 0);
     scanPosLast--;
