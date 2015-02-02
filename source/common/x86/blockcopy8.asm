@@ -1858,13 +1858,14 @@ RET
 ;-----------------------------------------------------------------------------
 ; void blockfill_s_%1x%2(int16_t* dst, intptr_t dstride, int16_t val)
 ;-----------------------------------------------------------------------------
-%macro BLOCKFILL_S_W32_H4 2
+%macro BLOCKFILL_S_W32_H8 2
 INIT_XMM sse2
 cglobal blockfill_s_%1x%2, 3, 5, 1, dst, dstStride, val
 
-mov        r3d,           %2/4
+mov        r3d,           %2/8
 
 add        r1,            r1
+lea        r4,            [3 * r1]
 
 movd       m0,            r2d
 pshuflw    m0,            m0,       0
@@ -1886,12 +1887,31 @@ pshufd     m0,            m0,       0
      movu       [r0 + 2 * r1 + 32], m0
      movu       [r0 + 2 * r1 + 48], m0
 
-     lea        r4,                 [r0 + 2 * r1]
+     movu       [r0 + r4],          m0
+     movu       [r0 + r4 + 16],     m0
+     movu       [r0 + r4 + 32],     m0
+     movu       [r0 + r4 + 48],     m0
 
-     movu       [r4 + r1],          m0
-     movu       [r4 + r1 + 16],     m0
-     movu       [r4 + r1 + 32],     m0
-     movu       [r4 + r1 + 48],     m0
+     movu       [r0 + 4 * r1],      m0
+     movu       [r0 + 4 * r1 + 16], m0
+     movu       [r0 + 4 * r1 + 32], m0
+     movu       [r0 + 4 * r1 + 48], m0
+
+     lea        r0,                 [r0 + 4 * r1]
+     movu       [r0 + r1],          m0
+     movu       [r0 + r1 + 16],     m0
+     movu       [r0 + r1 + 32],     m0
+     movu       [r0 + r1 + 48],     m0
+
+     movu       [r0 + 2 * r1],      m0
+     movu       [r0 + 2 * r1 + 16], m0
+     movu       [r0 + 2 * r1 + 32], m0
+     movu       [r0 + 2 * r1 + 48], m0
+
+     movu       [r0 + r4],          m0
+     movu       [r0 + r4 + 16],     m0
+     movu       [r0 + r4 + 32],     m0
+     movu       [r0 + r4 + 48],     m0
 
      lea        r0,                 [r0 + 4 * r1]
 
@@ -1901,7 +1921,7 @@ pshufd     m0,            m0,       0
 RET
 %endmacro
 
-BLOCKFILL_S_W32_H4 32, 32
+BLOCKFILL_S_W32_H8 32, 32
 
 INIT_YMM avx2
 cglobal blockfill_s_32x32, 3, 4, 1
