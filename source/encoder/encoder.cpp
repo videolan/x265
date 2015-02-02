@@ -824,7 +824,7 @@ void Encoder::printSummary()
 #define ELAPSED_SEC(val)  ((double)(val) / 1000000)
 #define ELAPSED_MSEC(val) ((double)(val) / 1000)
 
-    int64_t totalWorkerTime = cuStats.totalCTUTime;
+    int64_t totalWorkerTime = cuStats.totalCTUTime + cuStats.loopFilterElapsedTime;
     if (m_param->bDistributeModeAnalysis && cuStats.countPModeMasters)
         totalWorkerTime += cuStats.pmodeTime;
     if (m_param->bDistributeMotionEstimation && cuStats.countPMEMasters)
@@ -857,6 +857,9 @@ void Encoder::printSummary()
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in intra RDO, measuring %.3lf intra predictions per CTU\n",
             100.0 * cuStats.intraRDOElapsedTime / totalWorkerTime,
             (double)cuStats.countIntraRDO / cuStats.totalCTUs);
+    x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in loop filters, average %.3lf ms per call\n",
+            100.0 * cuStats.loopFilterElapsedTime / totalWorkerTime,
+            ELAPSED_MSEC(cuStats.loopFilterElapsedTime) / cuStats.countLoopFilter);
     if (m_param->bDistributeModeAnalysis && cuStats.countPModeMasters)
     {
         x265_log(m_param, X265_LOG_INFO, "CU: %.3lf PMODE masters per CTU, each blocked an average of %.3lf ns\n",
@@ -868,7 +871,7 @@ void Encoder::printSummary()
     }
 
     int64_t elapsedEncodeTime = x265_mdate() - m_encodeStartTime;
-    int64_t unaccounted = totalWorkerTime - 
+    int64_t unaccounted = totalWorkerTime - cuStats.loopFilterElapsedTime -
                           cuStats.intraAnalysisElapsedTime - cuStats.motionEstimationElapsedTime -
                           cuStats.interRDOElapsedTime - cuStats.intraRDOElapsedTime -
                           cuStats.pmeTime - cuStats.pmodeTime;

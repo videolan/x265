@@ -145,6 +145,7 @@ struct CUStats
     int64_t  interRDOElapsedTime;
     int64_t  intraAnalysisElapsedTime;    /* in RD > 4, includes RDO cost */
     int64_t  motionEstimationElapsedTime;
+    int64_t  loopFilterElapsedTime;
     int64_t  pmeTime;
     int64_t  pmeBlockTime;
     int64_t  pmodeTime;
@@ -155,6 +156,7 @@ struct CUStats
     uint64_t countInterRDO;
     uint64_t countIntraAnalysis;
     uint64_t countMotionEstimate;
+    uint64_t countLoopFilter;
     uint64_t countPMETasks;
     uint64_t countPMEMasters;
     uint64_t countPModeTasks;
@@ -174,6 +176,7 @@ struct CUStats
         interRDOElapsedTime += other.interRDOElapsedTime;
         intraAnalysisElapsedTime += other.intraAnalysisElapsedTime;
         motionEstimationElapsedTime += other.motionEstimationElapsedTime;
+        loopFilterElapsedTime += other.loopFilterElapsedTime;
         pmeTime += other.pmeTime;
         pmeBlockTime += other.pmeBlockTime;
         pmodeTime += other.pmodeTime;
@@ -184,6 +187,7 @@ struct CUStats
         countInterRDO += other.countInterRDO;
         countIntraAnalysis += other.countIntraAnalysis;
         countMotionEstimate += other.countMotionEstimate;
+        countLoopFilter += other.countLoopFilter;
         countPMETasks += other.countPMETasks;
         countPMEMasters += other.countPMEMasters;
         countPModeTasks += other.countPModeTasks;
