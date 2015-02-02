@@ -1748,9 +1748,10 @@ RET
 ; void blockfill_s_8x8(int16_t* dst, intptr_t dstride, int16_t val)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockfill_s_8x8, 3, 3, 1, dst, dstStride, val
+cglobal blockfill_s_8x8, 3, 4, 1, dst, dstStride, val
 
 add        r1,            r1
+lea        r3,            [3 * r1]
 
 movd       m0,            r2d
 pshuflw    m0,            m0,         0
@@ -1760,17 +1761,13 @@ movu       [r0],          m0
 movu       [r0 + r1],     m0
 movu       [r0 + 2 * r1], m0
 
-lea        r0,            [r0 + 2 * r1]
+movu       [r0 + r3],     m0
+
+lea        r0,            [r0 + 4 * r1]
+movu       [r0],          m0
 movu       [r0 + r1],     m0
 movu       [r0 + 2 * r1], m0
-
-lea        r0,            [r0 + 2 * r1]
-movu       [r0 + r1],     m0
-movu       [r0 + 2 * r1], m0
-
-lea        r0,            [r0 + 2 * r1]
-movu       [r0 + r1],     m0
-
+movu       [r0 + r3],     m0
 RET
 
 ;-----------------------------------------------------------------------------
