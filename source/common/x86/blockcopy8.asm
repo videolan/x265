@@ -1774,57 +1774,58 @@ movu       [r0 + r1],     m0
 RET
 
 ;-----------------------------------------------------------------------------
-; void blockfill_s_%1x%2(int16_t* dst, intptr_t dstride, int16_t val)
+; void blockfill_s_16x16(int16_t* dst, intptr_t dstride, int16_t val)
 ;-----------------------------------------------------------------------------
-%macro BLOCKFILL_S_W16_H8 2
 INIT_XMM sse2
-cglobal blockfill_s_%1x%2, 3, 5, 1, dst, dstStride, val
-
-mov        r3d,           %2/8
+cglobal blockfill_s_16x16, 3, 4, 1, dst, dstStride, val
 
 add        r1,            r1
+lea        r3,            [3 * r1]
 
 movd       m0,            r2d
-pshuflw    m0,            m0,       0
-pshufd     m0,            m0,       0
+pshuflw    m0,            m0,         0
+pshufd     m0,            m0,         0
 
-.loop:
-     movu       [r0],               m0
-     movu       [r0 + 16],          m0
+movu       [r0],           m0
+movu       [r0 + 16],      m0
+movu       [r0 + r1],      m0
+movu       [r0 + r1 + 16], m0
+movu       [r0 + 2 * r1],  m0
+movu       [r0 + 2 * r1 + 16], m0
 
-     movu       [r0 + r1],          m0
-     movu       [r0 + r1 + 16],     m0
+movu       [r0 + r3],          m0
+movu       [r0 + r3 + 16],     m0
+movu       [r0 + 4 * r1],      m0
+movu       [r0 + 4 * r1 + 16], m0
 
-     movu       [r0 + 2 * r1],      m0
-     movu       [r0 + 2 * r1 + 16], m0
+lea        r0,                 [r0 + 4 * r1]
+movu       [r0 + r1],          m0
+movu       [r0 + r1 + 16],     m0
+movu       [r0 + 2 * r1],      m0
+movu       [r0 + 2 * r1 + 16], m0
+movu       [r0 + r3],          m0
+movu       [r0 + r3 + 16],     m0
+movu       [r0 + 4 * r1],      m0
+movu       [r0 + 4 * r1 + 16], m0
 
-     lea        r4,                 [r0 + 2 * r1]
-     movu       [r4 + r1],          m0
-     movu       [r4 + r1 + 16],     m0
+lea        r0,                 [r0 + 4 * r1]
+movu       [r0 + r1],          m0
+movu       [r0 + r1 + 16],     m0
+movu       [r0 + 2 * r1],      m0
+movu       [r0 + 2 * r1 + 16], m0
+movu       [r0 + r3],          m0
+movu       [r0 + r3 + 16],     m0
+movu       [r0 + 4 * r1],      m0
+movu       [r0 + 4 * r1 + 16], m0
 
-     movu       [r0 + 4 * r1],      m0
-     movu       [r0 + 4 * r1 + 16], m0
-
-     lea        r4,                 [r0 + 4 * r1]
-     movu       [r4 + r1],          m0
-     movu       [r4 + r1 + 16],     m0
-
-     movu       [r4 + 2 * r1],      m0
-     movu       [r4 + 2 * r1 + 16], m0
-
-     lea        r4,                 [r4 + 2 * r1]
-     movu       [r4 + r1],          m0
-     movu       [r4 + r1 + 16],     m0
-
-     lea        r0,                 [r0 + 8 * r1]
-
-     dec        r3d
-     jnz        .loop
-
+lea        r0,                 [r0 + 4 * r1]
+movu       [r0 + r1],          m0
+movu       [r0 + r1 + 16],     m0
+movu       [r0 + 2 * r1],      m0
+movu       [r0 + 2 * r1 + 16], m0
+movu       [r0 + r3],          m0
+movu       [r0 + r3 + 16],     m0
 RET
-%endmacro
-
-BLOCKFILL_S_W16_H8 16, 16
 
 INIT_YMM avx2
 cglobal blockfill_s_16x16, 3, 4, 1
