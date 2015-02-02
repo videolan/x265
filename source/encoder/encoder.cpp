@@ -817,6 +817,9 @@ void Encoder::printSummary()
     CUStats cuStats;
     for (int i = 0; i < m_param->frameNumThreads; i++)
         cuStats.accumulate(m_frameEncoder[i].m_cuStats);
+    
+    if (!cuStats.totalCTUTime)
+        return;
 
 #define ELAPSED_SEC(val)  ((double)(val) / 1000000)
 #define ELAPSED_MSEC(val) ((double)(val) / 1000)
