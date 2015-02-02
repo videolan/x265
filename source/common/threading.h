@@ -64,7 +64,7 @@
 #define CTZ(id, x)                          _BitScanForward(&id, x)
 #define ATOMIC_INC(ptr)                     InterlockedIncrement((volatile LONG*)ptr)
 #define ATOMIC_DEC(ptr)                     InterlockedDecrement((volatile LONG*)ptr)
-#define ATOMIC_ADD(ptr, value)              InterlockedAdd((volatile LONG*)ptr, value)
+#define ATOMIC_ADD(ptr, value)              InterlockedExchangeAdd((volatile LONG*)ptr, value)
 #define ATOMIC_OR(ptr, mask)                _InterlockedOr((volatile LONG*)ptr, (LONG)mask)
 #define ATOMIC_AND(ptr, mask)               _InterlockedAnd((volatile LONG*)ptr, (LONG)mask)
 #define GIVE_UP_TIME()                      Sleep(0)
