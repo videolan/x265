@@ -368,7 +368,7 @@ typedef struct x265_param
 
     /* Number of concurrently encoded frames between 1 and X265_MAX_FRAME_THREADS
      * or 0 for auto-detection. By default x265 will use a number of frame
-     * threads emperically determined to be optimal for your CPU core count,
+     * threads empirically determined to be optimal for your CPU core count,
      * between 2 and 6.  Using more than one frame thread causes motion search
      * in the down direction to be clamped but otherwise encode behavior is
      * unaffected. With CQP rate control the output bitstream is deterministic
