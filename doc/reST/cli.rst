@@ -1362,6 +1362,18 @@ Bitstream options
 	Picture Timing SEI messages providing timing information to the
 	decoder. Default disabled
 
+.. option:: --temporal-layers,--no-temporal-layers
+
+	Enable a temporal sub layer. All referenced I/P/B frames are in the
+	base layer and all unreferenced B frames are placed in a temporal
+	sublayer. A decoder may chose to drop the sublayer and only decode
+	and display the base layer slices.
+	
+	If used with a fixed GOP (:option:`b-adapt` 0) and :option:`bframes`
+	3 then the two layers evenly split the frame rate, with a cadence of
+	PbBbP. You probably also want :option:`--no-scenecut` and a keyframe
+	interval that is a multiple of 4.
+
 .. option:: --aud, --no-aud
 
 	Emit an access unit delimiter NAL at the start of each slice access
