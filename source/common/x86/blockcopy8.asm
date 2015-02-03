@@ -351,17 +351,34 @@ cglobal blockcopy_pp_8x6, 4, 4, 6
 ; void blockcopy_pp_8x12(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockcopy_pp_8x12, 4, 5, 2
-    mov      r4d,       12/2
-.loop:
-    movh     m0,        [r2]
-    movh     m1,        [r2 + r3]
-    movh     [r0],      m0
-    movh     [r0 + r1], m1
-    dec      r4d
-    lea      r0,        [r0 + 2 * r1]
-    lea      r2,        [r2 + 2 * r3]
-    jnz      .loop
+cglobal blockcopy_pp_8x12, 4, 5, 4
+
+    lea      r4, [3 * r3]
+    lea      r5, [3 * r1]
+
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+
+    %rep 2
+    lea      r2, [r2 + 4 * r3]
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    lea      r0,            [r0 + 4 * r1]
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+    %endrep
     RET
 
 ;-----------------------------------------------------------------------------
