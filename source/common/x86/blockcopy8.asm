@@ -341,24 +341,24 @@ cglobal blockcopy_pp_8x4, 4, 4, 4
 ; void blockcopy_pp_8x6(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockcopy_pp_8x6, 4, 7, 6
+cglobal blockcopy_pp_8x6, 4, 4, 6
     movh     m0,     [r2]
     movh     m1,     [r2 + r3]
-    movh     m2,     [r2 + 2 * r3]
-    lea      r5,     [r2 + 2 * r3]
-    movh     m3,     [r5 + r3]
-    movh     m4,     [r5 + 2 * r3]
-    lea      r5,     [r5 + 2 * r3]
-    movh     m5,     [r5 + r3]
+    lea      r2,     [r2 + 2 * r3]
+    movh     m2,     [r2]
+    movh     m3,     [r2 + r3]
+    lea      r2,     [r2 + 2 * r3]
+    movh     m4,     [r2]
+    movh     m5,     [r2 + r3]
 
-    movh     [r0],            m0
-    movh     [r0 + r1],       m1
-    movh     [r0 + 2 * r1],   m2
-    lea      r6,              [r0 + 2 * r1]
-    movh     [r6 + r1],       m3
-    movh     [r6 + 2 * r1],   m4
-    lea      r6,              [r6 + 2 * r1]
-    movh     [r6 + r1],       m5
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    lea      r0,            [r0 + 2 * r1]
+    movh     [r0],          m2
+    movh     [r0 + r1],     m3
+    lea      r0,            [r0 + 2 * r1]
+    movh     [r0],          m4
+    movh     [r0 + r1],     m5
     RET
 
 ;-----------------------------------------------------------------------------
