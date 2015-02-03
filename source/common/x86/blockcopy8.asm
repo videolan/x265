@@ -224,65 +224,51 @@ BLOCKCOPY_PP_W4_H8 4, 32
 ; void blockcopy_pp_6x8(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockcopy_pp_6x8, 4, 7, 8
+cglobal blockcopy_pp_6x8, 4, 7, 3
 
-    movd     m0,     [r2]
-    movd     m1,     [r2 + r3]
-    movd     m2,     [r2 + 2 * r3]
-    lea      r5,     [r2 + 2 * r3]
-    movd     m3,     [r5 + r3]
+    movd     m0,  [r2]
+    mov      r4w, [r2 + 4]
+    movd     m1,  [r2 + r3]
+    mov      r5w, [r2 + r3 + 4]
+    movd     m2,  [r2 + 2 * r3]
+    mov      r6w, [r2 + 2 * r3 + 4]
 
-    movd     m4,     [r5 + 2 * r3]
-    lea      r5,     [r5 + 2 * r3]
-    movd     m5,     [r5 + r3]
-    movd     m6,     [r5 + 2 * r3]
-    lea      r5,     [r5 + 2 * r3]
-    movd     m7,     [r5 + r3]
+    movd     [r0],              m0
+    mov      [r0 + 4],          r4w
+    movd     [r0 + r1],         m1
+    mov      [r0 + r1 + 4],     r5w
+    movd     [r0 + 2 * r1],     m2
+    mov      [r0 + 2 * r1 + 4], r6w
 
-    movd     [r0],                m0
-    movd     [r0 + r1],           m1
-    movd     [r0 + 2 * r1],       m2
-    lea      r6,                  [r0 + 2 * r1]
-    movd     [r6 + r1],           m3
+    lea      r2,  [r2 + 2 * r3]
+    movd     m0,  [r2 + r3]
+    mov      r4w, [r2 + r3 + 4]
+    movd     m1,  [r2 + 2 * r3]
+    mov      r5w, [r2 + 2 * r3 + 4]
+    lea      r2,  [r2 + 2 * r3]
+    movd     m2,  [r2 + r3]
+    mov      r6w, [r2 + r3 + 4]
 
-    movd     [r6 + 2 * r1],        m4
-    lea      r6,                   [r6 + 2 * r1]
-    movd     [r6 + r1],            m5
-    movd     [r6 + 2 * r1],        m6
-    lea      r6,                   [r6 + 2 * r1]
-    movd     [r6 + r1],            m7
+    lea      r0,                [r0 + 2 * r1]
+    movd     [r0 + r1],         m0
+    mov      [r0 + r1 + 4],     r4w
+    movd     [r0 + 2 * r1],     m1
+    mov      [r0 + 2 * r1 + 4], r5w
+    lea      r0,                [r0 + 2 * r1]
+    movd     [r0 + r1],         m2
+    mov      [r0 + r1 + 4],     r6w
 
-    mov     r4w,     [r2 + 4]
-    mov     r5w,     [r2 + r3 + 4]
-    mov     r6w,     [r2 + 2 * r3 + 4]
+    lea      r2,                [r2 + 2 * r3]
+    movd     m0,                [r2]
+    mov      r4w,               [r2 + 4]
+    movd     m1,                [r2 + r3]
+    mov      r5w,               [r2 + r3 + 4]
 
-    mov     [r0 + 4],            r4w
-    mov     [r0 + r1 + 4],       r5w
-    mov     [r0 + 2 * r1 + 4],   r6w
-
-    lea     r0,              [r0 + 2 * r1]
-    lea     r2,              [r2 + 2 * r3]
-
-    mov     r4w,             [r2 + r3 + 4]
-    mov     r5w,             [r2 + 2 * r3 + 4]
-
-    mov     [r0 + r1 + 4],       r4w
-    mov     [r0 + 2 * r1 + 4],   r5w
-
-    lea     r0,              [r0 + 2 * r1]
-    lea     r2,              [r2 + 2 * r3]
-
-    mov     r4w,             [r2 + r3 + 4]
-    mov     r5w,             [r2 + 2 * r3 + 4]
-
-    mov     [r0 + r1 + 4],       r4w
-    mov     [r0 + 2 * r1 + 4],   r5w
-
-    lea     r0,              [r0 + 2 * r1]
-    lea     r2,              [r2 + 2 * r3]
-
-    mov     r4w,             [r2 + r3 + 4]
-    mov     [r0 + r1 + 4],       r4w
+    lea      r0,            [r0 + 2 * r1]
+    movd     [r0],          m0
+    mov      [r0 + 4],      r4w
+    movd     [r0 + r1],     m1
+    mov      [r0 + r1 + 4], r5w
     RET
 
 ;-----------------------------------------------------------------------------
