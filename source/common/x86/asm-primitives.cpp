@@ -1324,6 +1324,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.pu[LUMA_64x32].luma_vpp = x265_interp_8tap_vert_pp_64x32_avx2;
         p.pu[LUMA_64x48].luma_vpp = x265_interp_8tap_vert_pp_64x48_avx2;
         p.pu[LUMA_64x64].luma_vpp = x265_interp_8tap_vert_pp_64x64_avx2;
+
+        p.pu[LUMA_64x16].luma_vps = x265_interp_8tap_vert_ps_64x16_avx2;
+        p.pu[LUMA_64x32].luma_vps = x265_interp_8tap_vert_ps_64x32_avx2;
+        p.pu[LUMA_64x48].luma_vps = x265_interp_8tap_vert_ps_64x48_avx2;
+        p.pu[LUMA_64x64].luma_vps = x265_interp_8tap_vert_ps_64x64_avx2;
 #endif
         p.pu[LUMA_4x4].luma_hpp = x265_interp_8tap_horiz_pp_4x4_avx2;
 
