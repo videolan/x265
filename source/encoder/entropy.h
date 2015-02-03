@@ -230,7 +230,7 @@ private:
     void writeEpExGolomb(uint32_t symbol, uint32_t count);
     void writeCoefRemainExGolomb(uint32_t symbol, const uint32_t absGoRice);
 
-    void codeProfileTier(const ProfileTierLevel& ptl);
+    void codeProfileTier(const ProfileTierLevel& ptl, int maxTempSubLayers);
     void codeScalingList(const ScalingList&);
     void codeScalingList(const ScalingList& scalingList, uint32_t sizeId, uint32_t listId);
 

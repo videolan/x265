@@ -60,6 +60,7 @@ LevelSpec levels[] =
 /* determine minimum decoder level required to decode the described video */
 void determineLevel(const x265_param &param, VPS& vps)
 {
+    vps.maxTempSubLayers = param.bEnableTemporalSubLayers ? 2 : 1;
     if (param.bLossless)
         vps.ptl.profileIdc = Profile::NONE;
     else if (param.internalCsp == X265_CSP_I420)

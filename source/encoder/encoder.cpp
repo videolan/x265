@@ -1444,9 +1444,10 @@ void Encoder::initSPS(SPS *sps)
     sps->bUseAMP = m_param->bEnableAMP;
     sps->maxAMPDepth = m_param->bEnableAMP ? g_maxCUDepth : 0;
 
+    sps->maxTempSubLayers = m_param->bEnableTemporalSubLayers ? 2 : 1;
     sps->maxDecPicBuffering = m_vps.maxDecPicBuffering;
     sps->numReorderPics = m_vps.numReorderPics;
-    sps->maxLatencyIncrease = m_param->bframes;
+    sps->maxLatencyIncrease = m_vps.maxLatencyIncrease = m_param->bframes;
 
     sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
     sps->bTemporalMVPEnabled = m_param->bEnableTemporalMvp;
@@ -1651,6 +1652,12 @@ void Encoder::configure(x265_param *p)
     {
         x265_log(p, X265_LOG_ERROR, "Analysis load/save options incompatible with pmode/pme");
         p->bDistributeMotionEstimation = p->bDistributeModeAnalysis = 0;
+    }
+
+    if (p->bEnableTemporalSubLayers && !p->bframes)
+    {
+        x265_log(p, X265_LOG_WARNING, "B frames not enabled, temporal sublayer disabled\n");
+        p->bEnableTemporalSubLayers = 0;
     }
 
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;

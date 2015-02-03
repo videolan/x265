@@ -181,6 +181,7 @@ void x265_param_default(x265_param *param)
     param->bIntraInBFrames = 0;
     param->bLossless = 0;
     param->bCULossless = 0;
+    param->bEnableTemporalSubLayers = 0;
 
     /* Rate control options */
     param->rc.vbvMaxBitrate = 0;
@@ -605,6 +606,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->scenecutThreshold = atoi(value);
         }
     }
+    OPT("temporal-layers") p->bEnableTemporalSubLayers = atobool(value);
     OPT("keyint") p->keyframeMax = atoi(value);
     OPT("min-keyint") p->keyframeMin = atoi(value);
     OPT("rc-lookahead") p->lookaheadDepth = atoi(value);

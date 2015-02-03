@@ -51,17 +51,21 @@ void Entropy::codeVPS(const VPS& vps)
     WRITE_CODE(0,       4, "vps_video_parameter_set_id");
     WRITE_CODE(3,       2, "vps_reserved_three_2bits");
     WRITE_CODE(0,       6, "vps_reserved_zero_6bits");
-    WRITE_CODE(0,       3, "vps_max_sub_layers_minus1");
-    WRITE_FLAG(1,          "vps_temporal_id_nesting_flag");
+    WRITE_CODE(vps.maxTempSubLayers - 1, 3, "vps_max_sub_layers_minus1");
+    WRITE_FLAG(vps.maxTempSubLayers == 1,   "vps_temporal_id_nesting_flag");
     WRITE_CODE(0xffff, 16, "vps_reserved_ffff_16bits");
 
-    codeProfileTier(vps.ptl);
+    codeProfileTier(vps.ptl, vps.maxTempSubLayers);
 
     WRITE_FLAG(true, "vps_sub_layer_ordering_info_present_flag");
-    WRITE_UVLC(vps.maxDecPicBuffering - 1, "vps_max_dec_pic_buffering_minus1[i]");
-    WRITE_UVLC(vps.numReorderPics,         "vps_num_reorder_pics[i]");
 
-    WRITE_UVLC(0,    "vps_max_latency_increase_plus1[i]");
+    for (uint32_t i = 0; i < vps.maxTempSubLayers; i++)
+    {
+        WRITE_UVLC(vps.maxDecPicBuffering - 1, "vps_max_dec_pic_buffering_minus1[i]");
+        WRITE_UVLC(vps.numReorderPics,         "vps_num_reorder_pics[i]");
+        WRITE_UVLC(vps.maxLatencyIncrease + 1, "vps_max_latency_increase_plus1[i]");
+    }
+
     WRITE_CODE(0, 6, "vps_max_nuh_reserved_zero_layer_id");
     WRITE_UVLC(0,    "vps_max_op_sets_minus1");
     WRITE_FLAG(0,    "vps_timing_info_present_flag"); /* we signal timing info in SPS-VUI */
@@ -71,16 +75,16 @@ void Entropy::codeVPS(const VPS& vps)
 void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const ProfileTierLevel& ptl)
 {
     WRITE_CODE(0, 4, "sps_video_parameter_set_id");
-    WRITE_CODE(0, 3, "sps_max_sub_layers_minus1");
-    WRITE_FLAG(1,    "sps_temporal_id_nesting_flag");
+    WRITE_CODE(sps.maxTempSubLayers - 1, 3, "sps_max_sub_layers_minus1");
+    WRITE_FLAG(sps.maxTempSubLayers == 1,   "sps_temporal_id_nesting_flag");
 
-    codeProfileTier(ptl);
+    codeProfileTier(ptl, sps.maxTempSubLayers);
 
     WRITE_UVLC(0, "sps_seq_parameter_set_id");
     WRITE_UVLC(sps.chromaFormatIdc, "chroma_format_idc");
 
     if (sps.chromaFormatIdc == X265_CSP_I444)
-        WRITE_FLAG(0,                        "separate_colour_plane_flag");
+        WRITE_FLAG(0,                       "separate_colour_plane_flag");
 
     WRITE_UVLC(sps.picWidthInLumaSamples,   "pic_width_in_luma_samples");
     WRITE_UVLC(sps.picHeightInLumaSamples,  "pic_height_in_luma_samples");
@@ -101,9 +105,12 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_UVLC(BITS_FOR_POC - 4, "log2_max_pic_order_cnt_lsb_minus4");
     WRITE_FLAG(true,             "sps_sub_layer_ordering_info_present_flag");
 
-    WRITE_UVLC(sps.maxDecPicBuffering - 1, "sps_max_dec_pic_buffering_minus1[i]");
-    WRITE_UVLC(sps.numReorderPics,         "sps_num_reorder_pics[i]");
-    WRITE_UVLC(sps.maxLatencyIncrease + 1, "sps_max_latency_increase_plus1[i]");
+    for (uint32_t i = 0; i < sps.maxTempSubLayers; i++)
+    {
+        WRITE_UVLC(sps.maxDecPicBuffering - 1, "sps_max_dec_pic_buffering_minus1[i]");
+        WRITE_UVLC(sps.numReorderPics,         "sps_num_reorder_pics[i]");
+        WRITE_UVLC(sps.maxLatencyIncrease + 1, "sps_max_latency_increase_plus1[i]");
+    }
 
     WRITE_UVLC(sps.log2MinCodingBlockSize - 3,    "log2_min_coding_block_size_minus3");
     WRITE_UVLC(sps.log2DiffMaxMinCodingBlockSize, "log2_diff_max_min_coding_block_size");
@@ -184,7 +191,7 @@ void Entropy::codePPS(const PPS& pps)
     WRITE_FLAG(0, "pps_extension_flag");
 }
 
-void Entropy::codeProfileTier(const ProfileTierLevel& ptl)
+void Entropy::codeProfileTier(const ProfileTierLevel& ptl, int maxTempSubLayers)
 {
     WRITE_CODE(0, 2,                "XXX_profile_space[]");
     WRITE_FLAG(ptl.tierFlag,        "XXX_tier_flag[]");
@@ -222,6 +229,14 @@ void Entropy::codeProfileTier(const ProfileTierLevel& ptl)
     }
 
     WRITE_CODE(ptl.levelIdc, 8, "general_level_idc");
+
+    if (maxTempSubLayers > 1)
+    {
+         WRITE_FLAG(0, "sub_layer_profile_present_flag[i]");
+         WRITE_FLAG(0, "sub_layer_level_present_flag[i]");
+         for (int i = maxTempSubLayers - 1; i < 8 ; i++)
+             WRITE_CODE(0, 2, "reserved_zero_2bits");
+    }
 }
 
 void Entropy::codeVUI(const VUI& vui)
@@ -331,24 +346,27 @@ void Entropy::codeScalingList(const ScalingList& scalingList, uint32_t sizeId, u
 
 void Entropy::codeHrdParameters(const HRDInfo& hrd)
 {
-    WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
-    WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
-    WRITE_FLAG(0, "sub_pic_hrd_params_present_flag");
+    for (int i = 0; i <= 1; i++)
+    {
+        WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
+        WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
+        WRITE_FLAG(0, "sub_pic_hrd_params_present_flag");
 
-    WRITE_CODE(hrd.bitRateScale, 4, "bit_rate_scale");
-    WRITE_CODE(hrd.cpbSizeScale, 4, "cpb_size_scale");
+        WRITE_CODE(hrd.bitRateScale, 4, "bit_rate_scale");
+        WRITE_CODE(hrd.cpbSizeScale, 4, "cpb_size_scale");
 
-    WRITE_CODE(hrd.initialCpbRemovalDelayLength - 1, 5, "initial_cpb_removal_delay_length_minus1");
-    WRITE_CODE(hrd.cpbRemovalDelayLength - 1,        5, "au_cpb_removal_delay_length_minus1");
-    WRITE_CODE(hrd.dpbOutputDelayLength - 1,         5, "dpb_output_delay_length_minus1");
+        WRITE_CODE(hrd.initialCpbRemovalDelayLength - 1, 5, "initial_cpb_removal_delay_length_minus1");
+        WRITE_CODE(hrd.cpbRemovalDelayLength - 1,        5, "au_cpb_removal_delay_length_minus1");
+        WRITE_CODE(hrd.dpbOutputDelayLength - 1,         5, "dpb_output_delay_length_minus1");
 
-    WRITE_FLAG(1, "fixed_pic_rate_general_flag");
-    WRITE_UVLC(0, "elemental_duration_in_tc_minus1");
-    WRITE_UVLC(0, "cpb_cnt_minus1");
+        WRITE_FLAG(1, "fixed_pic_rate_general_flag");
+        WRITE_UVLC(0, "elemental_duration_in_tc_minus1");
+        WRITE_UVLC(0, "cpb_cnt_minus1");
 
-    WRITE_UVLC(hrd.bitRateValue - 1, "bit_rate_value_minus1");
-    WRITE_UVLC(hrd.cpbSizeValue - 1, "cpb_size_value_minus1");
-    WRITE_FLAG(hrd.cbrFlag, "cbr_flag");
+        WRITE_UVLC(hrd.bitRateValue - 1, "bit_rate_value_minus1");
+        WRITE_UVLC(hrd.cpbSizeValue - 1, "cpb_size_value_minus1");
+        WRITE_FLAG(hrd.cbrFlag, "cbr_flag");
+    }
 }
 
 void Entropy::codeAUD(const Slice& slice)
