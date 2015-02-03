@@ -181,37 +181,36 @@ cglobal blockcopy_pp_4x8, 4, 6, 4
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PP_W4_H8 2
 INIT_XMM sse2
-cglobal blockcopy_pp_%1x%2, 4, 5, 4
+cglobal blockcopy_pp_%1x%2, 4, 7, 4
     mov    r4d,    %2/8
+    lea    r5,     [3 * r1]
+    lea    r6,     [3 * r3]
+
 .loop:
     movd     m0,     [r2]
     movd     m1,     [r2 + r3]
-    lea      r2,     [r2 + 2 * r3]
-    movd     m2,     [r2]
-    movd     m3,     [r2 + r3]
+    movd     m2,     [r2 + 2 * r3]
+    movd     m3,     [r2 + r6]
 
-    movd     [r0],                m0
-    movd     [r0 + r1],           m1
-    lea      r0,                  [r0 + 2 * r1]
-    movd     [r0],                m2
-    movd     [r0 + r1],           m3
+    movd     [r0],          m0
+    movd     [r0 + r1],     m1
+    movd     [r0 + 2 * r1], m2
+    movd     [r0 + r5],     m3
 
-    lea       r0,     [r0 + 2 * r1]
-    lea       r2,     [r2 + 2 * r3]
+    lea      r2,     [r2 + 4 * r3]
     movd     m0,     [r2]
     movd     m1,     [r2 + r3]
-    lea      r2,     [r2 + 2 * r3]
-    movd     m2,     [r2]
-    movd     m3,     [r2 + r3]
+    movd     m2,     [r2 + 2 * r3]
+    movd     m3,     [r2 + r6]
 
-    movd     [r0],                m0
-    movd     [r0 + r1],           m1
-    lea      r0,                  [r0 + 2 * r1]
-    movd     [r0],                m2
-    movd     [r0 + r1],           m3
+    lea      r0,            [r0 + 4 * r1]
+    movd     [r0],          m0
+    movd     [r0 + r1],     m1
+    movd     [r0 + 2 * r1], m2
+    movd     [r0 + r5],     m3
 
-    lea       r0,                  [r0 + 2 * r1]
-    lea       r2,                  [r2 + 2 * r3]
+    lea       r0,                  [r0 + 4 * r1]
+    lea       r2,                  [r2 + 4 * r3]
 
     dec       r4d
     jnz       .loop
@@ -219,7 +218,6 @@ cglobal blockcopy_pp_%1x%2, 4, 5, 4
 %endmacro
 
 BLOCKCOPY_PP_W4_H8 4, 16
-
 BLOCKCOPY_PP_W4_H8 4, 32
 
 ;-----------------------------------------------------------------------------
