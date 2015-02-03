@@ -482,48 +482,38 @@ cglobal blockcopy_pp_8x32, 4, 6, 4
     RET
 
 ;-----------------------------------------------------------------------------
-; void blockcopy_pp_%1x%2(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
+; void blockcopy_pp_8x64(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
-%macro BLOCKCOPY_PP_W8_H8 2
 INIT_XMM sse2
-cglobal blockcopy_pp_%1x%2, 4, 5, 6
-    mov         r4d,       %2/8
+cglobal blockcopy_pp_8x64, 4, 6, 4
 
-.loop:
-     movh    m0,     [r2]
-     movh    m1,     [r2 + r3]
-     lea     r2,     [r2 + 2 * r3]
-     movh    m2,     [r2]
-     movh    m3,     [r2 + r3]
-     lea     r2,     [r2 + 2 * r3]
-     movh    m4,     [r2]
-     movh    m5,     [r2 + r3]
+    lea      r4, [3 * r3]
+    lea      r5, [3 * r1]
 
-     movh    [r0],         m0
-     movh    [r0 + r1],    m1
-     lea     r0,           [r0 + 2 * r1]
-     movh    [r0],         m2
-     movh    [r0 + r1],    m3
-     lea     r0,           [r0 + 2 * r1]
-     movh    [r0],         m4
-     movh    [r0 + r1],    m5
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
 
-     lea     r2,           [r2 + 2 * r3]
-     movh    m4,           [r2]
-     movh    m5,           [r2 + r3]
-     lea     r0,           [r0 + 2 * r1]
-     movh    [r0],         m4
-     movh    [r0 + r1],    m5
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
 
-     dec     r4d
-     lea     r0,           [r0 + 2 * r1]
-     lea     r2,           [r2 + 2 * r3]
-     jnz    .loop
-RET
-%endmacro
+    %rep 15
+    lea      r2, [r2 + 4 * r3]
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
 
-
-BLOCKCOPY_PP_W8_H8 8, 64
+    lea      r0,            [r0 + 4 * r1]
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+    %endrep
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
