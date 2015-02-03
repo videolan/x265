@@ -158,12 +158,16 @@ void determineLevel(const x265_param &param, VPS& vps)
         vps.ptl.minCrForLevel = levels[i].minCompressionRatio;
         vps.ptl.maxLumaSrForLevel = levels[i].maxLumaSamplesPerSecond;
 
-        if (bitrate > levels[i].maxBitrateMain && bitrate <= levels[i].maxBitrateHigh &&
+#define CHECK_RANGE(value, main, high) (value > main && value <= high)
+
+        if (CHECK_RANGE(bitrate, levels[i].maxBitrateMain, levels[i].maxBitrateHigh) &&
+            CHECK_RANGE((uint32_t)param.rc.vbvBufferSize, levels[i].maxCpbSizeMain, levels[i].maxCpbSizeHigh) &&
             levels[i].maxBitrateHigh != MAX_UINT)
             vps.ptl.tierFlag = Level::HIGH;
         else
             vps.ptl.tierFlag = Level::MAIN;
         break;
+#undef CHECK_RANGE
     }
 
     vps.ptl.intraConstraintFlag = false;
@@ -250,7 +254,7 @@ bool enforceLevel(x265_param& param, VPS& vps)
     }
     if ((uint32_t)param.rc.vbvBufferSize > (highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain))
     {
-        param.rc.vbvMaxBitrate = highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain;
+        param.rc.vbvBufferSize = highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain;
         x265_log(&param, X265_LOG_INFO, "lowering VBV buffer size to %dKb\n", param.rc.vbvBufferSize);
     }
 
