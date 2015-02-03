@@ -414,6 +414,40 @@ cglobal blockcopy_pp_8x8, 4, 6, 4
     RET
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_pp_8x16(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_pp_8x16, 4, 6, 4
+
+    lea      r4, [3 * r3]
+    lea      r5, [3 * r1]
+
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+
+    %rep 3
+    lea      r2, [r2 + 4 * r3]
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    lea      r0,            [r0 + 4 * r1]
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+    %endrep
+    RET
+
+;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PP_W8_H8 2
@@ -454,7 +488,6 @@ cglobal blockcopy_pp_%1x%2, 4, 5, 6
 RET
 %endmacro
 
-BLOCKCOPY_PP_W8_H8 8, 16
 BLOCKCOPY_PP_W8_H8 8, 32
 
 BLOCKCOPY_PP_W8_H8 8, 64
