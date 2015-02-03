@@ -7354,47 +7354,57 @@ cglobal interp_8tap_vert_pp_24x32, 4, 11, 15
     jnz             .loopH
     RET
 %endif
-
-%macro FILTER_VER_LUMA_AVX2_32xN 2
+%macro FILTER_VER_LUMA_AVX2_32xN 3
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
-cglobal interp_8tap_vert_pp_%1x%2, 4, 12, 15
+cglobal interp_8tap_vert_%3_%1x%2, 4, 12, 15
     mov             r4d, r4m
     shl             r4d, 7
-
 %ifdef PIC
     lea             r5, [tab_LumaCoeffVer_32]
     add             r5, r4
 %else
     lea             r5, [tab_LumaCoeffVer_32 + r4]
 %endif
-
     lea             r4, [r1 * 3]
     sub             r0, r4
+%ifidn %3,ps
+    add             r3d, r3d
+    vbroadcasti128  m14, [pw_2000]
+%else
+    mova            m14, [pw_512]
+%endif
     lea             r6, [r3 * 3]
     lea             r11, [r1 * 4]
-    mova            m14, [pw_512]
     mov             r9d, %2 / 16
 .loopH:
     mov             r10d, %1 / 16
 .loopW:
-    PROCESS_LUMA_AVX2_W16_16R pp
+    PROCESS_LUMA_AVX2_W16_16R %3
+%ifidn %3,pp
     add             r2, 16
+%else
+    add             r2, 32
+%endif
     add             r0, 16
     dec             r10d
     jnz             .loopW
     sub             r7, r11
     lea             r0, [r7 - 16]
+%ifidn %3,pp
     lea             r2, [r8 + r3 * 4 - 16]
+%else
+    lea             r2, [r8 + r3 * 4 - 32]
+%endif
     dec             r9d
     jnz             .loopH
     RET
 %endif
 %endmacro
-
-FILTER_VER_LUMA_AVX2_32xN 32, 32
-FILTER_VER_LUMA_AVX2_32xN 32, 64
-
+FILTER_VER_LUMA_AVX2_32xN 32, 32, pp
+FILTER_VER_LUMA_AVX2_32xN 32, 64, pp
+FILTER_VER_LUMA_AVX2_32xN 32, 32, ps
+FILTER_VER_LUMA_AVX2_32xN 32, 64, ps
 %macro FILTER_VER_LUMA_AVX2_32x16 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
