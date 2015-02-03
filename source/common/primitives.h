@@ -110,6 +110,21 @@ enum ChromaCU422
     BLOCK_422_32x64
 };
 
+enum ChromaPU444
+{
+    // Square (the first 5 PUs match the CU sizes)
+    CHROMA_444_4x4,   CHROMA_444_8x8,   CHROMA_444_16x16, CHROMA_444_32x32, CHROMA_444_64x64,
+    // Rectangular
+    CHROMA_444_8x4,   CHROMA_444_4x8,
+    CHROMA_444_16x8,  CHROMA_444_8x16,
+    CHROMA_444_32x16, CHROMA_444_16x32,
+    CHROMA_444_64x32, CHROMA_444_32x64,
+    // Asymmetrical (0.75, 0.25)
+    CHROMA_444_16x12, CHROMA_444_12x16, CHROMA_444_16x4,  CHROMA_444_4x16,
+    CHROMA_444_32x24, CHROMA_444_24x32, CHROMA_444_32x8,  CHROMA_444_8x32,
+    CHROMA_444_64x48, CHROMA_444_48x64, CHROMA_444_64x16, CHROMA_444_16x64,
+};
+
 typedef int  (*pixelcmp_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
 typedef int  (*pixelcmp_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
 typedef int  (*pixel_ssd_s_t)(const int16_t* fenc, intptr_t fencstride);
@@ -155,7 +170,8 @@ typedef void (*filter_ps_t) (const pixel* src, intptr_t srcStride, int16_t* dst,
 typedef void (*filter_sp_t) (const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_ss_t) (const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_hv_pp_t) (const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY);
-typedef void (*filter_p2s_t)(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
+typedef void (*filter_p2s_wxh_t)(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
+typedef void (*filter_p2s_t)(const pixel* src, intptr_t srcStride, int16_t* dst);
 
 typedef void (*copy_pp_t)(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride); // dst is aligned
 typedef void (*copy_sp_t)(pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
@@ -207,6 +223,7 @@ struct EncoderPrimitives
         addAvg_t       addAvg;      // bidir motion compensation, uses 16bit values
 
         copy_pp_t      copy_pp;
+        filter_p2s_t   filter_p2s;
     }
     pu[NUM_PU_SIZES];
 
@@ -286,7 +303,7 @@ struct EncoderPrimitives
     weightp_sp_t          weight_sp;
     weightp_pp_t          weight_pp;
 
-    filter_p2s_t          luma_p2s;
+    filter_p2s_wxh_t      luma_p2s;
 
     /* There is one set of chroma primitives per color space. An encoder will
      * have just a single color space and thus it will only ever use one entry
@@ -311,6 +328,8 @@ struct EncoderPrimitives
             filter_hps_t filter_hps;
             addAvg_t     addAvg;
             copy_pp_t    copy_pp;
+            filter_p2s_t chroma_p2s;
+
         }
         pu[NUM_PU_SIZES];
 
@@ -329,7 +348,7 @@ struct EncoderPrimitives
         }
         cu[NUM_CU_SIZES];
 
-        filter_p2s_t p2s; // takes width/height as arguments
+        filter_p2s_wxh_t p2s; // takes width/height as arguments
     }
     chroma[X265_CSP_COUNT];
 };

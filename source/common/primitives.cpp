@@ -98,6 +98,7 @@ void setupAliasPrimitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].pu[i].copy_pp = p.pu[i].copy_pp;
         p.chroma[X265_CSP_I444].pu[i].addAvg  = p.pu[i].addAvg;
         p.chroma[X265_CSP_I444].pu[i].satd    = p.pu[i].satd;
+        p.chroma[X265_CSP_I444].pu[i].chroma_p2s = p.pu[i].filter_p2s;
     }
 
     for (int i = 0; i < NUM_CU_SIZES; i++)
@@ -167,6 +168,36 @@ void setupAliasPrimitives(EncoderPrimitives &p)
 
     p.chroma[X265_CSP_I422].cu[BLOCK_422_2x4].sa8d = NULL;
     p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sa8d = p.pu[LUMA_4x8].satd;
+
+    /* Chroma PU can often use filter_p2s primitives */
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_4x4].chroma_p2s   = p.pu[LUMA_4x4].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_8x8].chroma_p2s   = p.pu[LUMA_8x8].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_16x16].chroma_p2s = p.pu[LUMA_16x16].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_32x32].chroma_p2s = p.pu[LUMA_32x32].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_64x64].chroma_p2s = p.pu[LUMA_64x64].filter_p2s;
+	
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_8x4].chroma_p2s   = p.pu[LUMA_8x4].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_4x8].chroma_p2s   = p.pu[LUMA_4x8].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_16x8].chroma_p2s  = p.pu[LUMA_16x8].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_8x16].chroma_p2s  = p.pu[LUMA_8x16].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_32x16].chroma_p2s = p.pu[LUMA_32x16].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_16x32].chroma_p2s = p.pu[LUMA_16x32].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_64x32].chroma_p2s = p.pu[LUMA_64x32].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_32x64].chroma_p2s = p.pu[LUMA_32x64].filter_p2s;
+
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_16x12].chroma_p2s = p.pu[LUMA_16x12].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_12x16].chroma_p2s = p.pu[LUMA_12x16].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_16x4].chroma_p2s  = p.pu[LUMA_16x4].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_4x16].chroma_p2s  = p.pu[LUMA_4x16].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_32x24].chroma_p2s = p.pu[LUMA_32x24].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_24x32].chroma_p2s = p.pu[LUMA_24x32].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_32x8].chroma_p2s  = p.pu[LUMA_32x8].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_8x32].chroma_p2s  = p.pu[LUMA_8x32].filter_p2s;
+
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_64x48].chroma_p2s = p.pu[LUMA_64x48].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_48x64].chroma_p2s = p.pu[LUMA_48x64].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_64x16].chroma_p2s = p.pu[LUMA_64x16].filter_p2s;
+    p.chroma[X265_CSP_I444].pu[CHROMA_444_16x64].chroma_p2s = p.pu[LUMA_16x64].filter_p2s;
 
     /* alias CU copy_pp from square PU copy_pp */
     for (int i = 0; i < NUM_CU_SIZES; i++)
