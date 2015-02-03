@@ -1671,8 +1671,6 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom)
 
 uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
 {
-    ProfileCUScope(intraMode.cu, intraRDOElapsedTime, countIntraRDO);
-
     CUData& cu = intraMode.cu;
     Yuv& reconYuv = intraMode.reconYuv;
 
