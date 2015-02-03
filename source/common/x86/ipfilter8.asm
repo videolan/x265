@@ -7421,45 +7421,65 @@ cglobal interp_8tap_vert_pp_32x16, 4, 10, 15
     jnz             .loopW
     RET
 %endif
-
+%macro FILTER_VER_LUMA_AVX2_32x24 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
-cglobal interp_8tap_vert_pp_32x24, 4, 10, 15
+cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
     mov             r4d, r4m
     shl             r4d, 7
-
 %ifdef PIC
     lea             r5, [tab_LumaCoeffVer_32]
     add             r5, r4
 %else
     lea             r5, [tab_LumaCoeffVer_32 + r4]
 %endif
-
     lea             r4, [r1 * 3]
     sub             r0, r4
+%ifidn %1,ps
+    add             r3d, r3d
+%endif
     lea             r6, [r3 * 3]
+%ifidn %1,pp
     mova            m14, [pw_512]
+%else
+    vbroadcasti128  m14, [pw_2000]
+%endif
     mov             r9d, 2
 .loopW:
-    PROCESS_LUMA_AVX2_W16_16R pp
+    PROCESS_LUMA_AVX2_W16_16R %1
+%ifidn %1,pp
     add             r2, 16
+%else
+    add             r2, 32
+%endif
     add             r0, 16
     dec             r9d
     jnz             .loopW
     lea             r9, [r1 * 4]
     sub             r7, r9
     lea             r0, [r7 - 16]
+%ifidn %1,pp
     lea             r2, [r8 + r3 * 4 - 16]
+%else
+    lea             r2, [r8 + r3 * 4 - 32]
+%endif
     mov             r9d, 2
 .loop:
-    PROCESS_LUMA_AVX2_W16_8R pp
+    PROCESS_LUMA_AVX2_W16_8R %1
+%ifidn %1,pp
     add             r2, 16
+%else
+    add             r2, 32
+%endif
     add             r0, 16
     dec             r9d
     jnz             .loop
     RET
 %endif
+%endmacro
 
+FILTER_VER_LUMA_AVX2_32x24 pp
+FILTER_VER_LUMA_AVX2_32x24 ps
 %macro FILTER_VER_LUMA_AVX2_32x8 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
