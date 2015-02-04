@@ -141,9 +141,9 @@ struct Mode
  * either of them */
 struct CUStats
 {
-    int64_t  intraRDOElapsedTime;
-    int64_t  interRDOElapsedTime;
-    int64_t  intraAnalysisElapsedTime;    /* in RD > 4, includes RDO cost */
+    int64_t  intraRDOElapsedTime[NUM_CU_DEPTH];
+    int64_t  interRDOElapsedTime[NUM_CU_DEPTH];
+    int64_t  intraAnalysisElapsedTime;
     int64_t  motionEstimationElapsedTime;
     int64_t  loopFilterElapsedTime;
     int64_t  pmeTime;
@@ -152,8 +152,8 @@ struct CUStats
     int64_t  pmodeBlockTime;
     int64_t  totalCTUTime;
 
-    uint64_t countIntraRDO;
-    uint64_t countInterRDO;
+    uint64_t countIntraRDO[NUM_CU_DEPTH];
+    uint64_t countInterRDO[NUM_CU_DEPTH];
     uint64_t countIntraAnalysis;
     uint64_t countMotionEstimate;
     uint64_t countLoopFilter;
@@ -172,8 +172,14 @@ struct CUStats
 
     void accumulate(CUStats& other)
     {
-        intraRDOElapsedTime += other.intraRDOElapsedTime;
-        interRDOElapsedTime += other.interRDOElapsedTime;
+        for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+        {
+            intraRDOElapsedTime[i] += other.intraRDOElapsedTime[i];
+            interRDOElapsedTime[i] += other.interRDOElapsedTime[i];
+            countIntraRDO[i] += other.countIntraRDO[i];
+            countInterRDO[i] += other.countInterRDO[i];
+        }
+
         intraAnalysisElapsedTime += other.intraAnalysisElapsedTime;
         motionEstimationElapsedTime += other.motionEstimationElapsedTime;
         loopFilterElapsedTime += other.loopFilterElapsedTime;
@@ -183,8 +189,6 @@ struct CUStats
         pmodeBlockTime += other.pmodeBlockTime;
         totalCTUTime += other.totalCTUTime;
 
-        countIntraRDO += other.countIntraRDO;
-        countInterRDO += other.countInterRDO;
         countIntraAnalysis += other.countIntraAnalysis;
         countMotionEstimate += other.countMotionEstimate;
         countLoopFilter += other.countLoopFilter;

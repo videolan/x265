@@ -830,6 +830,16 @@ void Encoder::printSummary()
     if (m_param->bDistributeMotionEstimation && cuStats.countPMEMasters)
         totalWorkerTime += cuStats.pmeTime;
 
+    int64_t interRDOTotalTime = 0, intraRDOTotalTime = 0;
+    uint64_t interRDOTotalCount = 0, intraRDOTotalCount = 0;
+    for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+    {
+        interRDOTotalTime += cuStats.interRDOElapsedTime[i];
+        intraRDOTotalTime += cuStats.intraRDOElapsedTime[i];
+        interRDOTotalCount += cuStats.countInterRDO[i];
+        intraRDOTotalCount += cuStats.countIntraRDO[i];
+    }
+
     if (m_param->bDistributeMotionEstimation && cuStats.countPMEMasters)
     {
         x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in motion estimation, averaging %.3lf CU inter modes per CTU\n",
@@ -852,11 +862,11 @@ void Encoder::printSummary()
             100.0 * cuStats.intraAnalysisElapsedTime / totalWorkerTime,
             (double)cuStats.countIntraAnalysis / cuStats.totalCTUs);
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in inter RDO, measuring %.3lf inter/merge predictions per CTU\n",
-            100.0 * cuStats.interRDOElapsedTime / totalWorkerTime,
-            (double)cuStats.countInterRDO / cuStats.totalCTUs);
+            100.0 * interRDOTotalTime / totalWorkerTime,
+            (double)interRDOTotalCount / cuStats.totalCTUs);
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in intra RDO, measuring %.3lf intra predictions per CTU\n",
-            100.0 * cuStats.intraRDOElapsedTime / totalWorkerTime,
-            (double)cuStats.countIntraRDO / cuStats.totalCTUs);
+            100.0 * intraRDOTotalTime / totalWorkerTime,
+            (double)intraRDOTotalCount / cuStats.totalCTUs);
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in loop filters, average %.3lf ms per call\n",
             100.0 * cuStats.loopFilterElapsedTime / totalWorkerTime,
             ELAPSED_MSEC(cuStats.loopFilterElapsedTime) / cuStats.countLoopFilter);
@@ -873,11 +883,32 @@ void Encoder::printSummary()
     int64_t elapsedEncodeTime = x265_mdate() - m_encodeStartTime;
     int64_t unaccounted = totalWorkerTime - cuStats.loopFilterElapsedTime -
                           cuStats.intraAnalysisElapsedTime - cuStats.motionEstimationElapsedTime -
-                          cuStats.interRDOElapsedTime - cuStats.intraRDOElapsedTime -
-                          cuStats.pmeTime - cuStats.pmodeTime;
+                          interRDOTotalTime - intraRDOTotalTime - cuStats.pmeTime - cuStats.pmodeTime;
 
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in other tasks\n",
             100.0 * unaccounted / totalWorkerTime);
+
+    x265_log(m_param, X265_LOG_INFO, "CU: Intra RDO time  per depth %%%05.2lf %%%05.2lf %%%05.2lf %%%05.2lf\n",
+             100.0 * cuStats.intraRDOElapsedTime[0] / intraRDOTotalTime,  // 64
+             100.0 * cuStats.intraRDOElapsedTime[1] / intraRDOTotalTime,  // 32
+             100.0 * cuStats.intraRDOElapsedTime[2] / intraRDOTotalTime,  // 16
+             100.0 * cuStats.intraRDOElapsedTime[3] / intraRDOTotalTime); // 8
+    x265_log(m_param, X265_LOG_INFO, "CU: Intra RDO calls per depth %%%05.2lf %%%05.2lf %%%05.2lf %%%05.2lf\n",
+             100.0 * cuStats.countIntraRDO[0] / intraRDOTotalCount,  // 64
+             100.0 * cuStats.countIntraRDO[1] / intraRDOTotalCount,  // 32
+             100.0 * cuStats.countIntraRDO[2] / intraRDOTotalCount,  // 16
+             100.0 * cuStats.countIntraRDO[3] / intraRDOTotalCount); // 8
+
+    x265_log(m_param, X265_LOG_INFO, "CU: Inter RDO time  per depth %%%05.2lf %%%05.2lf %%%05.2lf %%%05.2lf\n",
+             100.0 * cuStats.interRDOElapsedTime[0] / interRDOTotalTime,  // 64
+             100.0 * cuStats.interRDOElapsedTime[1] / interRDOTotalTime,  // 32
+             100.0 * cuStats.interRDOElapsedTime[2] / interRDOTotalTime,  // 16
+             100.0 * cuStats.interRDOElapsedTime[3] / interRDOTotalTime); // 8
+    x265_log(m_param, X265_LOG_INFO, "CU: Inter RDO calls per depth %%%05.2lf %%%05.2lf %%%05.2lf %%%05.2lf\n",
+             100.0 * cuStats.countInterRDO[0] / interRDOTotalCount,  // 64
+             100.0 * cuStats.countInterRDO[1] / interRDOTotalCount,  // 32
+             100.0 * cuStats.countInterRDO[2] / interRDOTotalCount,  // 16
+             100.0 * cuStats.countInterRDO[3] / interRDOTotalCount); // 8
 
     x265_log(m_param, X265_LOG_INFO, "CU: " X265_LL " %dX%d CTUs compressed in %.3lf seconds, %.3lf CTUs per worker-second\n",
             cuStats.totalCTUs, g_maxCUSize, g_maxCUSize,

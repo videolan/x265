@@ -1348,7 +1348,7 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
 void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 {
-    ProfileCUScope(intraMode.cu, intraRDOElapsedTime, countIntraRDO);
+    ProfileCUScope(intraMode.cu, intraRDOElapsedTime[cuGeom.depth], countIntraRDO[cuGeom.depth]);
 
     CUData& cu = intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
@@ -1553,7 +1553,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
                 if (candCostList[i] == MAX_INT64)
                     break;
 
-                ProfileCUScope(intraMode.cu, intraRDOElapsedTime, countIntraRDO);
+                ProfileCUScope(intraMode.cu, intraRDOElapsedTime[cuGeom.depth], countIntraRDO[cuGeom.depth]);
 
                 m_entropyCoder.load(m_rqt[depth].cur);
                 cu.setLumaIntraDirSubParts(rdModeList[i], absPartIdx, depth + initTuDepth);
@@ -1567,7 +1567,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
             }
         }
 
-        ProfileCUScope(intraMode.cu, intraRDOElapsedTime, countIntraRDO);
+        ProfileCUScope(intraMode.cu, intraRDOElapsedTime[cuGeom.depth], countIntraRDO[cuGeom.depth]);
 
         /* remeasure best mode, allowing TU splits */
         cu.setLumaIntraDirSubParts(bmode, absPartIdx, depth + initTuDepth);
@@ -2499,7 +2499,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
  * Note: this function overwrites the RD cost variables of interMode, but leaves the sa8d cost unharmed */
 void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
 {
-    ProfileCUScope(interMode.cu, interRDOElapsedTime, countInterRDO);
+    ProfileCUScope(interMode.cu, interRDOElapsedTime[cuGeom.depth], countInterRDO[cuGeom.depth]);
 
     CUData& cu = interMode.cu;
     Yuv* reconYuv = &interMode.reconYuv;
