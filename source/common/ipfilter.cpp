@@ -416,7 +416,7 @@ namespace x265 {
     p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].filter_vps = interp_vert_ps_c<4, W, H>;  \
     p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].filter_vsp = interp_vert_sp_c<4, W, H>;  \
     p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].filter_vss = interp_vert_ss_c<4, W, H>; \
-    p.chroma[X265_CSP_I444].pu[CHROMA_444_ ## W ## x ## H].chroma_p2s = pixelToShort_c<MAX_CU_SIZE, W, H>; 
+    p.chroma[X265_CSP_I444].pu[LUMA_ ## W ## x ## H].chroma_p2s = pixelToShort_c<MAX_CU_SIZE, W, H>; 
 
 #define LUMA(W, H) \
     p.pu[LUMA_ ## W ## x ## H].luma_hpp     = interp_horiz_pp_c<8, W, H>; \

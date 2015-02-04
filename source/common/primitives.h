@@ -110,21 +110,6 @@ enum ChromaCU422
     BLOCK_422_32x64
 };
 
-enum ChromaPU444
-{
-    // Square (the first 5 PUs match the CU sizes)
-    CHROMA_444_4x4,   CHROMA_444_8x8,   CHROMA_444_16x16, CHROMA_444_32x32, CHROMA_444_64x64,
-    // Rectangular
-    CHROMA_444_8x4,   CHROMA_444_4x8,
-    CHROMA_444_16x8,  CHROMA_444_8x16,
-    CHROMA_444_32x16, CHROMA_444_16x32,
-    CHROMA_444_64x32, CHROMA_444_32x64,
-    // Asymmetrical (0.75, 0.25)
-    CHROMA_444_16x12, CHROMA_444_12x16, CHROMA_444_16x4,  CHROMA_444_4x16,
-    CHROMA_444_32x24, CHROMA_444_24x32, CHROMA_444_32x8,  CHROMA_444_8x32,
-    CHROMA_444_64x48, CHROMA_444_48x64, CHROMA_444_64x16, CHROMA_444_16x64,
-};
-
 typedef int  (*pixelcmp_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
 typedef int  (*pixelcmp_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
 typedef int  (*pixel_ssd_s_t)(const int16_t* fenc, intptr_t fencstride);
