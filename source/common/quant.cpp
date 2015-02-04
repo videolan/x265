@@ -50,7 +50,7 @@ inline int fastMin(int x, int y)
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
-inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
+inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, const uint32_t absGoRice, const uint32_t maxVlc, uint32_t c1c2Idx)
 {
     X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
     X265_CHECK(absGoRice <= 4, "absGoRice check failure\n");
@@ -72,7 +72,6 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOne
     else
     {
         uint32_t symbol = diffLevel;
-        const uint32_t maxVlc = g_goRiceRange[absGoRice];
         bool expGolomb = (symbol > maxVlc);
 
         if (expGolomb)
@@ -102,6 +101,25 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOne
         if (c1c2Idx == 3)
             rate += levelAbsBits[1];
     }
+    return rate;
+}
+
+inline int getICRateLessVlc(uint32_t absLevel, int32_t diffLevel, const uint32_t absGoRice)
+{
+    X265_CHECK(absGoRice <= 4, "absGoRice check failure\n");
+    if (!absLevel)
+    {
+        X265_CHECK(diffLevel < 0, "diffLevel check failure\n");
+        return 0;
+    }
+    int rate;
+
+    uint32_t symbol = diffLevel;
+    uint32_t prefLen = (symbol >> absGoRice) + 1;
+    uint32_t numBins = fastMin(prefLen + absGoRice, 8 /* g_goRicePrefixLen[absGoRice] + absGoRice */);
+
+    rate = numBins << 15;
+
     return rate;
 }
 
@@ -674,9 +692,43 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 /* record costs for sign-hiding performed at the end */
                 if (level)
                 {
-                    int rateNow = getICRate(level, level - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx);
-                    rateIncUp[blkPos] = getICRate(level + 1, level + 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) - rateNow;
-                    rateIncDown[blkPos] = getICRate(level - 1, level - 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) - rateNow;
+                    const int32_t diff0 = level - 1 - baseLevel;
+                    const int32_t diff2 = level + 1 - baseLevel;
+                    const int32_t maxVlc = g_goRiceRange[goRiceParam];
+                    int rate0, rate1, rate2;
+
+                    if (diff0 < -2)  // prob (92.9, 86.5, 74.5)%
+                    {
+                        // NOTE: Min: L - 1 - {1,2,1,3} < -2 ==> L < {0,1,0,2}
+                        //            additional L > 0, so I got (L > 0 && L < 2) ==> L = 1
+                        X265_CHECK(level == 1, "absLevel check failure\n");
+
+                        const int rateEqual2 = greaterOneBits[1] + levelAbsBits[0];;
+                        const int rateNotEqual2 = greaterOneBits[0];
+
+                        rate0 = 0;
+                        rate2 = rateEqual2;
+                        rate1 = rateNotEqual2;
+
+                        X265_CHECK(rate1 == getICRateNegDiff(level + 0, greaterOneBits, levelAbsBits), "rate1 check failure!\n");
+                        X265_CHECK(rate2 == getICRateNegDiff(level + 1, greaterOneBits, levelAbsBits), "rate1 check failure!\n");
+                        X265_CHECK(rate0 == getICRateNegDiff(level - 1, greaterOneBits, levelAbsBits), "rate1 check failure!\n");
+                    }
+                    else if (diff0 >= 0 && diff2 <= maxVlc)     // prob except from above path (98.6, 97.9, 96.9)%
+                    {
+                        // NOTE: no c1c2 correct rate since all of rate include this factor
+                        rate1 = getICRateLessVlc(level + 0, diff0 + 1, goRiceParam);
+                        rate2 = getICRateLessVlc(level + 1, diff0 + 2, goRiceParam);
+                        rate0 = getICRateLessVlc(level - 1, diff0 + 0, goRiceParam);
+                    }
+                    else
+                    {
+                        rate1 = getICRate(level + 0, diff0 + 1, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Idx);
+                        rate2 = getICRate(level + 1, diff0 + 2, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Idx);
+                        rate0 = getICRate(level - 1, diff0 + 0, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Idx);
+                    }
+                    rateIncUp[blkPos] = rate2 - rate1;
+                    rateIncDown[blkPos] = rate0 - rate1;
                 }
                 else
                 {
