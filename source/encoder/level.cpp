@@ -168,12 +168,12 @@ void determineLevel(const x265_param &param, VPS& vps)
         }
         else
             vps.ptl.tierFlag = Level::MAIN;
-        break;
 #undef CHECK_RANGE
 
         vps.ptl.levelIdc = levels[i].levelEnum;
         vps.ptl.minCrForLevel = levels[i].minCompressionRatio;
         vps.ptl.maxLumaSrForLevel = levels[i].maxLumaSamplesPerSecond;
+        break;
     }
 
     vps.ptl.intraConstraintFlag = false;
