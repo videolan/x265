@@ -57,7 +57,7 @@ public:
         m_maxRefL0 = param->maxNumReferences;
         m_maxRefL1 = param->bBPyramid ? 2 : 1;
         m_bOpenGOP = param->bOpenGOP;
-        m_bTemporalSublayer = param->bEnableTemporalSubLayers;
+        m_bTemporalSublayer = !!param->bEnableTemporalSubLayers;
     }
 
     ~DPB();
