@@ -411,7 +411,10 @@ Profile, Level, Tier
 	If :option:`--level-idc` has been specified, the option adds the
 	intention to support the High tier of that level. If your specified
 	level does not support a High tier, a warning is issued and this
-	modifier flag is ignored.
+	modifier flag is ignored. If :option:`--level-idc` has been specified,
+	but not --high-tier, then the encoder will attempt to encode at the 
+	specified level, main tier first, turning on high tier only if 
+	necessary and available at that level.
 
 .. note::
 	:option:`--profile`, :option:`--level-idc`, and
