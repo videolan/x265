@@ -458,12 +458,8 @@ static double x265_atof(const char *str, bool& bError)
 static int parseName(const char *arg, const char * const * names, bool& bError)
 {
     for (int i = 0; names[i]; i++)
-    {
         if (!strcmp(arg, names[i]))
-        {
             return i;
-        }
-    }
 
     return x265_atoi(arg, bError);
 }
@@ -496,9 +492,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         char *c;
         strcpy(nameBuf, name);
         while ((c = strchr(nameBuf, '_')) != 0)
-        {
             *c = '-';
-        }
 
         name = nameBuf;
     }
@@ -634,8 +628,28 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
     OPT("crqpoffs") p->crQpOffset = atoi(value);
     OPT("rd") p->rdLevel = atoi(value);
-    OPT("psy-rd") p->psyRd = atof(value);
-    OPT("psy-rdoq") p->psyRdoq = atof(value);
+    OPT("psy-rd")
+    {
+        int bval = atobool(value);
+        if (bError || bval)
+        {
+            bError = false;
+            p->psyRd = atof(value);
+        }
+        else
+            p->psyRd = 0.0;
+    }
+    OPT("psy-rdoq")
+    {
+        int bval = atobool(value);
+        if (bError || bval)
+        {
+            bError = false;
+            p->psyRdoq = atof(value);
+        }
+        else
+            p->psyRdoq = 0.0;
+    }
     OPT("signhide") p->bEnableSignHiding = atobool(value);
     OPT("b-intra") p->bIntraInBFrames = atobool(value);
     OPT("lft") p->bEnableLoopFilter = atobool(value); /* DEPRECATED */

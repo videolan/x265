@@ -138,6 +138,8 @@ static const struct option long_options[] =
     { "rd",             required_argument, NULL, 0 },
     { "psy-rd",         required_argument, NULL, 0 },
     { "psy-rdoq",       required_argument, NULL, 0 },
+    { "no-psy-rd",            no_argument, NULL, 0 },
+    { "no-psy-rdoq",          no_argument, NULL, 0 },
     { "scaling-list",   required_argument, NULL, 0 },
     { "lossless",             no_argument, NULL, 0 },
     { "no-lossless",          no_argument, NULL, 0 },
@@ -264,8 +266,8 @@ static void showHelp(x265_param *param)
     H0("   --tu-inter-depth <integer>    Max TU recursive depth for inter CUs. Default %d\n", param->tuQTMaxInterDepth);
     H0("\nAnalysis:\n");
     H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
-    H0("   --psy-rd <0..2.0>             Strength of psycho-visual rate distortion optimization, 0 to disable. Default %.1f\n", param->psyRd);
-    H0("   --psy-rdoq <0..50.0>          Strength of psycho-visual optimization in quantization, 0 to disable. Default %.1f\n", param->psyRdoq);
+    H0("   --[no-]psy-rd <0..2.0>        Strength of psycho-visual rate distortion optimization, 0 to disable. Default %.1f\n", param->psyRd);
+    H0("   --[no-]psy-rdoq <0..50.0>     Strength of psycho-visual optimization in quantization, 0 to disable. Default %.1f\n", param->psyRdoq);
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
     H1("   --[no-]fast-cbf               Enable early outs based on whether residual is coded. Default %s\n", OPT(param->bEnableCbfFastMode));
     H1("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
