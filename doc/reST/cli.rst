@@ -791,8 +791,8 @@ areas of high motion.
 	Influence rate distortion optimizated mode decision to preserve the
 	energy of the source image in the encoded image at the expense of
 	compression efficiency. It only has effect on presets which use
-	RDO-based mode decisions (:option:`--rd` 3 and above).  1.0 is a
-	typical value. Default 1.0
+	RDO-based mode decisions (:option:`--rd` 3 and above). 1.0 is a
+	typical value. Default 0.3
 
 	**Range of values:** 0 .. 2.0
 
