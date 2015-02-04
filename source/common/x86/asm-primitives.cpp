@@ -1201,6 +1201,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
     {
         p.pu[LUMA_4x4].satd = p.cu[BLOCK_4x4].sa8d = x265_pixel_satd_4x4_avx;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].satd = x265_pixel_satd_16x24_avx;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].satd = x265_pixel_satd_32x48_avx;
         ALL_LUMA_PU(satd, pixel_satd, avx);
         ASSIGN_SA8D(avx);
         ASSIGN_SSE_PP(avx);
