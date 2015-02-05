@@ -139,6 +139,24 @@ blurred on block boundaries:
 
     * :option:`--deblock` -2
 
+Fast Decode
+~~~~~~~~~~~
+
+:option:`--tune` fastdecode disables encoder features which tend to be
+bottlenecks for the decoder. It is intended for use with 4K content at
+high bitrates which can cause decoders to struggle. It disables both
+HEVC loop filters, which tend to be process bottlenecks:
+
+    * :option:`--no-deblock`
+    * :option:`--no-sao`
+
+It disables weighted prediction, which tend to be bandwidth bottlenecks:
+
+    * :option:`--no-weightp`
+    * :option:`--no-weightb`
+
+And it disables intra blocks in B frames with :option:`--no-b-intra`
+since intra predicted blocks cause serial dependencies in the decoder.
 
 Zero Latency
 ~~~~~~~~~~~~
