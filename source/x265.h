@@ -791,6 +791,12 @@ typedef struct x265_param
      * CU. */
     int       bCULossless;
 
+    /* Enable Temporal Sub Layers while encoding, signals NAL units of coded slices
+     * with their temporalId. Output bitstreams can be extracted either at the base temporal layer
+     * (layer 0) with roughly half the frame rate or at a higher temporal layer (layer 1)
+     * that decodes all the frames in the sequence. */
+    int       bEnableTemporalSubLayers;
+
     /*== Rate Control ==*/
 
     struct

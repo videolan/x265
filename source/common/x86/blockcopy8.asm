@@ -145,115 +145,130 @@ cglobal blockcopy_pp_4x4, 4, 4, 4
     RET
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_pp_4x8(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_pp_4x8, 4, 6, 4
+
+    lea     r4,    [3 * r1]
+    lea     r5,    [3 * r3]
+
+    movd     m0,     [r2]
+    movd     m1,     [r2 + r3]
+    movd     m2,     [r2 + 2 * r3]
+    movd     m3,     [r2 + r5]
+
+    movd     [r0],          m0
+    movd     [r0 + r1],     m1
+    movd     [r0 + 2 * r1], m2
+    movd     [r0 + r4],     m3
+
+    lea      r2,     [r2 + 4 * r3]
+    movd     m0,     [r2]
+    movd     m1,     [r2 + r3]
+    movd     m2,     [r2 + 2 * r3]
+    movd     m3,     [r2 + r5]
+
+    lea      r0,            [r0 + 4 * r1]
+    movd     [r0],          m0
+    movd     [r0 + r1],     m1
+    movd     [r0 + 2 * r1], m2
+    movd     [r0 + r4],     m3
+    RET
+
+;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PP_W4_H8 2
 INIT_XMM sse2
-cglobal blockcopy_pp_%1x%2, 4, 5, 4
+cglobal blockcopy_pp_%1x%2, 4, 7, 4
     mov    r4d,    %2/8
+    lea    r5,     [3 * r1]
+    lea    r6,     [3 * r3]
+
 .loop:
     movd     m0,     [r2]
     movd     m1,     [r2 + r3]
-    lea      r2,     [r2 + 2 * r3]
-    movd     m2,     [r2]
-    movd     m3,     [r2 + r3]
+    movd     m2,     [r2 + 2 * r3]
+    movd     m3,     [r2 + r6]
 
-    movd     [r0],                m0
-    movd     [r0 + r1],           m1
-    lea      r0,                  [r0 + 2 * r1]
-    movd     [r0],                m2
-    movd     [r0 + r1],           m3
+    movd     [r0],          m0
+    movd     [r0 + r1],     m1
+    movd     [r0 + 2 * r1], m2
+    movd     [r0 + r5],     m3
 
-    lea       r0,     [r0 + 2 * r1]
-    lea       r2,     [r2 + 2 * r3]
+    lea      r2,     [r2 + 4 * r3]
     movd     m0,     [r2]
     movd     m1,     [r2 + r3]
-    lea      r2,     [r2 + 2 * r3]
-    movd     m2,     [r2]
-    movd     m3,     [r2 + r3]
+    movd     m2,     [r2 + 2 * r3]
+    movd     m3,     [r2 + r6]
 
-    movd     [r0],                m0
-    movd     [r0 + r1],           m1
-    lea      r0,                  [r0 + 2 * r1]
-    movd     [r0],                m2
-    movd     [r0 + r1],           m3
+    lea      r0,            [r0 + 4 * r1]
+    movd     [r0],          m0
+    movd     [r0 + r1],     m1
+    movd     [r0 + 2 * r1], m2
+    movd     [r0 + r5],     m3
 
-    lea       r0,                  [r0 + 2 * r1]
-    lea       r2,                  [r2 + 2 * r3]
+    lea       r0,                  [r0 + 4 * r1]
+    lea       r2,                  [r2 + 4 * r3]
 
     dec       r4d
     jnz       .loop
     RET
 %endmacro
 
-BLOCKCOPY_PP_W4_H8 4, 8
 BLOCKCOPY_PP_W4_H8 4, 16
-
 BLOCKCOPY_PP_W4_H8 4, 32
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_6x8(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockcopy_pp_6x8, 4, 7, 8
+cglobal blockcopy_pp_6x8, 4, 7, 3
 
-    movd     m0,     [r2]
-    movd     m1,     [r2 + r3]
-    movd     m2,     [r2 + 2 * r3]
-    lea      r5,     [r2 + 2 * r3]
-    movd     m3,     [r5 + r3]
+    movd     m0,  [r2]
+    mov      r4w, [r2 + 4]
+    movd     m1,  [r2 + r3]
+    mov      r5w, [r2 + r3 + 4]
+    movd     m2,  [r2 + 2 * r3]
+    mov      r6w, [r2 + 2 * r3 + 4]
 
-    movd     m4,     [r5 + 2 * r3]
-    lea      r5,     [r5 + 2 * r3]
-    movd     m5,     [r5 + r3]
-    movd     m6,     [r5 + 2 * r3]
-    lea      r5,     [r5 + 2 * r3]
-    movd     m7,     [r5 + r3]
+    movd     [r0],              m0
+    mov      [r0 + 4],          r4w
+    movd     [r0 + r1],         m1
+    mov      [r0 + r1 + 4],     r5w
+    movd     [r0 + 2 * r1],     m2
+    mov      [r0 + 2 * r1 + 4], r6w
 
-    movd     [r0],                m0
-    movd     [r0 + r1],           m1
-    movd     [r0 + 2 * r1],       m2
-    lea      r6,                  [r0 + 2 * r1]
-    movd     [r6 + r1],           m3
+    lea      r2,  [r2 + 2 * r3]
+    movd     m0,  [r2 + r3]
+    mov      r4w, [r2 + r3 + 4]
+    movd     m1,  [r2 + 2 * r3]
+    mov      r5w, [r2 + 2 * r3 + 4]
+    lea      r2,  [r2 + 2 * r3]
+    movd     m2,  [r2 + r3]
+    mov      r6w, [r2 + r3 + 4]
 
-    movd     [r6 + 2 * r1],        m4
-    lea      r6,                   [r6 + 2 * r1]
-    movd     [r6 + r1],            m5
-    movd     [r6 + 2 * r1],        m6
-    lea      r6,                   [r6 + 2 * r1]
-    movd     [r6 + r1],            m7
+    lea      r0,                [r0 + 2 * r1]
+    movd     [r0 + r1],         m0
+    mov      [r0 + r1 + 4],     r4w
+    movd     [r0 + 2 * r1],     m1
+    mov      [r0 + 2 * r1 + 4], r5w
+    lea      r0,                [r0 + 2 * r1]
+    movd     [r0 + r1],         m2
+    mov      [r0 + r1 + 4],     r6w
 
-    mov     r4w,     [r2 + 4]
-    mov     r5w,     [r2 + r3 + 4]
-    mov     r6w,     [r2 + 2 * r3 + 4]
+    lea      r2,                [r2 + 2 * r3]
+    movd     m0,                [r2]
+    mov      r4w,               [r2 + 4]
+    movd     m1,                [r2 + r3]
+    mov      r5w,               [r2 + r3 + 4]
 
-    mov     [r0 + 4],            r4w
-    mov     [r0 + r1 + 4],       r5w
-    mov     [r0 + 2 * r1 + 4],   r6w
-
-    lea     r0,              [r0 + 2 * r1]
-    lea     r2,              [r2 + 2 * r3]
-
-    mov     r4w,             [r2 + r3 + 4]
-    mov     r5w,             [r2 + 2 * r3 + 4]
-
-    mov     [r0 + r1 + 4],       r4w
-    mov     [r0 + 2 * r1 + 4],   r5w
-
-    lea     r0,              [r0 + 2 * r1]
-    lea     r2,              [r2 + 2 * r3]
-
-    mov     r4w,             [r2 + r3 + 4]
-    mov     r5w,             [r2 + 2 * r3 + 4]
-
-    mov     [r0 + r1 + 4],       r4w
-    mov     [r0 + 2 * r1 + 4],   r5w
-
-    lea     r0,              [r0 + 2 * r1]
-    lea     r2,              [r2 + 2 * r3]
-
-    mov     r4w,             [r2 + r3 + 4]
-    mov     [r0 + r1 + 4],       r4w
+    lea      r0,            [r0 + 2 * r1]
+    movd     [r0],          m0
+    mov      [r0 + 4],      r4w
+    movd     [r0 + r1],     m1
+    mov      [r0 + r1 + 4], r5w
     RET
 
 ;-----------------------------------------------------------------------------
@@ -312,89 +327,193 @@ cglobal blockcopy_pp_8x4, 4, 4, 4
 ; void blockcopy_pp_8x6(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockcopy_pp_8x6, 4, 7, 6
+cglobal blockcopy_pp_8x6, 4, 4, 6
     movh     m0,     [r2]
     movh     m1,     [r2 + r3]
-    movh     m2,     [r2 + 2 * r3]
-    lea      r5,     [r2 + 2 * r3]
-    movh     m3,     [r5 + r3]
-    movh     m4,     [r5 + 2 * r3]
-    lea      r5,     [r5 + 2 * r3]
-    movh     m5,     [r5 + r3]
+    lea      r2,     [r2 + 2 * r3]
+    movh     m2,     [r2]
+    movh     m3,     [r2 + r3]
+    lea      r2,     [r2 + 2 * r3]
+    movh     m4,     [r2]
+    movh     m5,     [r2 + r3]
 
-    movh     [r0],            m0
-    movh     [r0 + r1],       m1
-    movh     [r0 + 2 * r1],   m2
-    lea      r6,              [r0 + 2 * r1]
-    movh     [r6 + r1],       m3
-    movh     [r6 + 2 * r1],   m4
-    lea      r6,              [r6 + 2 * r1]
-    movh     [r6 + r1],       m5
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    lea      r0,            [r0 + 2 * r1]
+    movh     [r0],          m2
+    movh     [r0 + r1],     m3
+    lea      r0,            [r0 + 2 * r1]
+    movh     [r0],          m4
+    movh     [r0 + r1],     m5
     RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_8x12(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockcopy_pp_8x12, 4, 5, 2
-    mov      r4d,       12/2
-.loop:
-    movh     m0,        [r2]
-    movh     m1,        [r2 + r3]
-    movh     [r0],      m0
-    movh     [r0 + r1], m1
-    dec      r4d
-    lea      r0,        [r0 + 2 * r1]
-    lea      r2,        [r2 + 2 * r3]
-    jnz      .loop
+cglobal blockcopy_pp_8x12, 4, 5, 4
+
+    lea      r4, [3 * r3]
+    lea      r5, [3 * r1]
+
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+
+    %rep 2
+    lea      r2, [r2 + 4 * r3]
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    lea      r0,            [r0 + 4 * r1]
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+    %endrep
     RET
 
 ;-----------------------------------------------------------------------------
-; void blockcopy_pp_%1x%2(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
+; void blockcopy_pp_8x8(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
-%macro BLOCKCOPY_PP_W8_H8 2
 INIT_XMM sse2
-cglobal blockcopy_pp_%1x%2, 4, 5, 6
-    mov         r4d,       %2/8
+cglobal blockcopy_pp_8x8, 4, 6, 4
 
-.loop:
-     movh    m0,     [r2]
-     movh    m1,     [r2 + r3]
-     lea     r2,     [r2 + 2 * r3]
-     movh    m2,     [r2]
-     movh    m3,     [r2 + r3]
-     lea     r2,     [r2 + 2 * r3]
-     movh    m4,     [r2]
-     movh    m5,     [r2 + r3]
+    lea      r4, [3 * r3]
+    lea      r5, [3 * r1]
 
-     movh    [r0],         m0
-     movh    [r0 + r1],    m1
-     lea     r0,           [r0 + 2 * r1]
-     movh    [r0],         m2
-     movh    [r0 + r1],    m3
-     lea     r0,           [r0 + 2 * r1]
-     movh    [r0],         m4
-     movh    [r0 + r1],    m5
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
 
-     lea     r2,           [r2 + 2 * r3]
-     movh    m4,           [r2]
-     movh    m5,           [r2 + r3]
-     lea     r0,           [r0 + 2 * r1]
-     movh    [r0],         m4
-     movh    [r0 + r1],    m5
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
 
-     dec     r4d
-     lea     r0,           [r0 + 2 * r1]
-     lea     r2,           [r2 + 2 * r3]
-     jnz    .loop
-RET
-%endmacro
+    lea      r2, [r2 + 4 * r3]
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
 
-BLOCKCOPY_PP_W8_H8 8, 8
-BLOCKCOPY_PP_W8_H8 8, 16
-BLOCKCOPY_PP_W8_H8 8, 32
+    lea      r0,            [r0 + 4 * r1]
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+    RET
 
-BLOCKCOPY_PP_W8_H8 8, 64
+;-----------------------------------------------------------------------------
+; void blockcopy_pp_8x16(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_pp_8x16, 4, 6, 4
+
+    lea      r4, [3 * r3]
+    lea      r5, [3 * r1]
+
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+
+    %rep 3
+    lea      r2, [r2 + 4 * r3]
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    lea      r0,            [r0 + 4 * r1]
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+    %endrep
+    RET
+
+;-----------------------------------------------------------------------------
+; void blockcopy_pp_8x32(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_pp_8x32, 4, 6, 4
+
+    lea      r4, [3 * r3]
+    lea      r5, [3 * r1]
+
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+
+    %rep 7
+    lea      r2, [r2 + 4 * r3]
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    lea      r0,            [r0 + 4 * r1]
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+    %endrep
+    RET
+
+;-----------------------------------------------------------------------------
+; void blockcopy_pp_8x64(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal blockcopy_pp_8x64, 4, 6, 4
+
+    lea      r4, [3 * r3]
+    lea      r5, [3 * r1]
+
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+
+    %rep 15
+    lea      r2, [r2 + 4 * r3]
+    movh     m0, [r2]
+    movh     m1, [r2 + r3]
+    movh     m2, [r2 + 2 * r3]
+    movh     m3, [r2 + r4]
+
+    lea      r0,            [r0 + 4 * r1]
+    movh     [r0],          m0
+    movh     [r0 + r1],     m1
+    movh     [r0 + 2 * r1], m2
+    movh     [r0 + r5],     m3
+    %endrep
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_pp_%1x%2(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)

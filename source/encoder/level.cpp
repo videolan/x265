@@ -60,6 +60,7 @@ LevelSpec levels[] =
 /* determine minimum decoder level required to decode the described video */
 void determineLevel(const x265_param &param, VPS& vps)
 {
+    vps.maxTempSubLayers = param.bEnableTemporalSubLayers ? 2 : 1;
     if (param.bLossless)
         vps.ptl.profileIdc = Profile::NONE;
     else if (param.internalCsp == X265_CSP_I420)
@@ -154,20 +155,26 @@ void determineLevel(const x265_param &param, VPS& vps)
             return;
         }
 
-        vps.ptl.levelIdc = levels[i].levelEnum;
-        vps.ptl.minCrForLevel = levels[i].minCompressionRatio;
-        vps.ptl.maxLumaSrForLevel = levels[i].maxLumaSamplesPerSecond;
-
 #define CHECK_RANGE(value, main, high) (value > main && value <= high)
 
         if (CHECK_RANGE(bitrate, levels[i].maxBitrateMain, levels[i].maxBitrateHigh) &&
             CHECK_RANGE((uint32_t)param.rc.vbvBufferSize, levels[i].maxCpbSizeMain, levels[i].maxCpbSizeHigh) &&
             levels[i].maxBitrateHigh != MAX_UINT)
-            vps.ptl.tierFlag = Level::HIGH;
+        {
+            /* If the user has not enabled high tier, continue looking to see if we can encode at a higher level, main tier */
+            if (!param.bHighTier && (levels[i].levelIdc < param.levelIdc))
+                continue;
+            else
+                vps.ptl.tierFlag = Level::HIGH;
+        }
         else
             vps.ptl.tierFlag = Level::MAIN;
-        break;
 #undef CHECK_RANGE
+
+        vps.ptl.levelIdc = levels[i].levelEnum;
+        vps.ptl.minCrForLevel = levels[i].minCompressionRatio;
+        vps.ptl.maxLumaSrForLevel = levels[i].maxLumaSamplesPerSecond;
+        break;
     }
 
     vps.ptl.intraConstraintFlag = false;

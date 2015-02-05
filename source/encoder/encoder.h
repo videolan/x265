@@ -86,7 +86,7 @@ public:
     int64_t            m_prevReorderedPts[2];
 
     ThreadPool*        m_threadPool;
-    FrameEncoder*      m_frameEncoder;
+    FrameEncoder*      m_frameEncoder[X265_MAX_FRAME_THREADS];
     DPB*               m_dpb;
 
     Frame*             m_exportedPic;
