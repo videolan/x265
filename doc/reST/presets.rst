@@ -139,3 +139,27 @@ blurred on block boundaries:
 
     * :option:`--deblock` -2
 
+
+Zero Latency
+~~~~~~~~~~~~
+
+There are two halves to the latency problem. There is latency at the
+decoder and latency at the encoder. :option:`--tune` zerolatency
+removes latency from both sides. The decoder latency is removed by:
+
+    * :option:`--bframes` 0
+
+Encoder latency is removed by:
+
+    * :option:`--b-adapt` 0
+    * :option:`--rc-lookahead` 0
+    * :option:`--no-scenecut`
+    * :option:`--no-cutree`
+    * :option:`--frame-threads` 1
+
+With all of these settings x265_encoder_encode() will run synchronously,
+the picture passed as pic_in will be encoded and returned as NALs. These
+settings disable frame parallelism, which is an important component for
+x265 performance. If you can tolerate any latency on the encoder, you
+can increase performance by increasing the number of frame threads. Each
+additional frame thread adds one frame of latency.
