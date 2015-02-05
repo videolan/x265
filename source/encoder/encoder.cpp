@@ -822,11 +822,8 @@ void Encoder::printSummary()
 #define ELAPSED_SEC(val)  ((double)(val) / 1000000)
 #define ELAPSED_MSEC(val) ((double)(val) / 1000)
 
-    int64_t totalWorkerTime = cuStats.totalCTUTime + cuStats.loopFilterElapsedTime;
-    if (m_param->bDistributeModeAnalysis && cuStats.countPModeMasters)
-        totalWorkerTime += cuStats.pmodeTime;
-    if (m_param->bDistributeMotionEstimation && cuStats.countPMEMasters)
-        totalWorkerTime += cuStats.pmeTime;
+    int64_t totalWorkerTime = cuStats.totalCTUTime + cuStats.loopFilterElapsedTime + cuStats.pmodeTime + cuStats.pmeTime;
+    int64_t elapsedEncodeTime = x265_mdate() - m_encodeStartTime;
 
     int64_t interRDOTotalTime = 0, intraRDOTotalTime = 0;
     uint64_t interRDOTotalCount = 0, intraRDOTotalCount = 0;
@@ -837,6 +834,9 @@ void Encoder::printSummary()
         interRDOTotalCount += cuStats.countInterRDO[i];
         intraRDOTotalCount += cuStats.countIntraRDO[i];
     }
+
+    int64_t unaccounted = (cuStats.totalCTUTime + cuStats.pmodeTime) -
+                          (cuStats.intraAnalysisElapsedTime + cuStats.motionEstimationElapsedTime + interRDOTotalTime + intraRDOTotalTime);
 
     if (m_param->bDistributeMotionEstimation && cuStats.countPMEMasters)
     {
@@ -877,11 +877,6 @@ void Encoder::printSummary()
                 (double)cuStats.countPModeTasks / cuStats.countPModeMasters, 
                 ELAPSED_MSEC(cuStats.pmodeTime) / cuStats.countPModeTasks);
     }
-
-    int64_t elapsedEncodeTime = x265_mdate() - m_encodeStartTime;
-    int64_t unaccounted = cuStats.totalCTUTime + cuStats.pmeTime + cuStats.pmodeTime -
-                          cuStats.intraAnalysisElapsedTime - cuStats.motionEstimationElapsedTime -
-                          interRDOTotalTime - intraRDOTotalTime;
 
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in other tasks\n",
             100.0 * unaccounted / totalWorkerTime);
