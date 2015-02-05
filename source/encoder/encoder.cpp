@@ -876,9 +876,9 @@ void Encoder::printSummary()
     }
 
     int64_t elapsedEncodeTime = x265_mdate() - m_encodeStartTime;
-    int64_t unaccounted = totalWorkerTime - cuStats.loopFilterElapsedTime -
+    int64_t unaccounted = cuStats.totalCTUTime + cuStats.pmeTime + cuStats.pmodeTime -
                           cuStats.intraAnalysisElapsedTime - cuStats.motionEstimationElapsedTime -
-                          interRDOTotalTime - intraRDOTotalTime - cuStats.pmeTime - cuStats.pmodeTime;
+                          interRDOTotalTime - intraRDOTotalTime;
 
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in other tasks\n",
             100.0 * unaccounted / totalWorkerTime);
