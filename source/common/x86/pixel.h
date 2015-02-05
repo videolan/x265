@@ -103,6 +103,11 @@ DECL_X1(satd, sse4)
 DECL_X1(satd, avx)
 DECL_X1(satd, xop)
 DECL_X1(satd, avx2)
+int x265_pixel_satd_16x24_avx(const pixel*, intptr_t, const pixel*, intptr_t);
+int x265_pixel_satd_32x48_avx(const pixel*, intptr_t, const pixel*, intptr_t);
+int x265_pixel_satd_24x64_avx(const pixel*, intptr_t, const pixel*, intptr_t);
+int x265_pixel_satd_8x64_avx(const pixel*, intptr_t, const pixel*, intptr_t);
+int x265_pixel_satd_8x12_avx(const pixel*, intptr_t, const pixel*, intptr_t);
 int x265_pixel_satd_8x32_sse2(const pixel*, intptr_t, const pixel*, intptr_t);
 int x265_pixel_satd_16x4_sse2(const pixel*, intptr_t, const pixel*, intptr_t);
 int x265_pixel_satd_16x12_sse2(const pixel*, intptr_t, const pixel*, intptr_t);
