@@ -42,7 +42,7 @@ public:
     uint32_t  m_psyRd;
     int       m_qp;
 
-    void setPsyRdScale(double scale)                { m_psyRdBase = (uint32_t)floor(256.0 * scale * 0.33); }
+    void setPsyRdScale(double scale)                { m_psyRdBase = (uint32_t)floor(65536.0 * scale * 0.33); }
 
     void setQP(const Slice& slice, int qp)
     {
@@ -106,7 +106,7 @@ public:
     /* return the RD cost of this prediction, including the effect of psy-rd */
     inline uint64_t calcPsyRdCost(uint32_t distortion, uint32_t bits, uint32_t psycost) const
     {
-        return distortion + ((m_lambda * m_psyRd * psycost) >> 16) + ((bits * m_lambda2) >> 8);
+        return distortion + ((m_lambda * m_psyRd * psycost) >> 24) + ((bits * m_lambda2) >> 8);
     }
 
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits) const

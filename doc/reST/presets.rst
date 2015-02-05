@@ -66,8 +66,6 @@ The presets adjust encoder parameters to affect these trade-offs.
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 | rdLevel      |    2      |     2     |    2     |   2    |  2   |    3   |  4   |   6    |    6     |    6    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
-| deblock      |    0      |     1     |    1     |   1    |  1   |    1   |  1   |   1    |    1     |    1    |
-+--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 | tu-intra     |    1      |     1     |    1     |   1    |  1   |    1   |  1   |   2    |    3     |    4    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 | tu-inter     |    1      |     1     |    1     |   1    |  1   |    1   |  1   |   2    |    3     |    4    |
@@ -111,7 +109,7 @@ after the preset.
 Film Grain Retention
 ~~~~~~~~~~~~~~~~~~~~
 
-:option:`--tune` grain tries to improve the retention of film grain in
+:option:`--tune` *grain* tries to improve the retention of film grain in
 the reconstructed output. It helps rate distortion optimizations select
 modes which preserve high frequency noise:
 
@@ -141,3 +139,45 @@ blurred on block boundaries:
 
     * :option:`--deblock` -2
 
+Fast Decode
+~~~~~~~~~~~
+
+:option:`--tune` *fastdecode* disables encoder features which tend to be
+bottlenecks for the decoder. It is intended for use with 4K content at
+high bitrates which can cause decoders to struggle. It disables both
+HEVC loop filters, which tend to be process bottlenecks:
+
+    * :option:`--no-deblock`
+    * :option:`--no-sao`
+
+It disables weighted prediction, which tend to be bandwidth bottlenecks:
+
+    * :option:`--no-weightp`
+    * :option:`--no-weightb`
+
+And it disables intra blocks in B frames with :option:`--no-b-intra`
+since intra predicted blocks cause serial dependencies in the decoder.
+
+Zero Latency
+~~~~~~~~~~~~
+
+There are two halves to the latency problem. There is latency at the
+decoder and latency at the encoder. :option:`--tune` *zerolatency*
+removes latency from both sides. The decoder latency is removed by:
+
+    * :option:`--bframes` 0
+
+Encoder latency is removed by:
+
+    * :option:`--b-adapt` 0
+    * :option:`--rc-lookahead` 0
+    * :option:`--no-scenecut`
+    * :option:`--no-cutree`
+    * :option:`--frame-threads` 1
+
+With all of these settings x265_encoder_encode() will run synchronously,
+the picture passed as pic_in will be encoded and returned as NALs. These
+settings disable frame parallelism, which is an important component for
+x265 performance. If you can tolerate any latency on the encoder, you
+can increase performance by increasing the number of frame threads. Each
+additional frame thread adds one frame of latency.

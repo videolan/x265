@@ -174,7 +174,7 @@ void x265_param_default(x265_param *param)
     param->cbQpOffset = 0;
     param->crQpOffset = 0;
     param->rdPenalty = 0;
-    param->psyRd = 1.0;
+    param->psyRd = 0.3;
     param->psyRdoq = 1.0;
     param->analysisMode = 0;
     param->analysisFileName = NULL;
@@ -259,7 +259,6 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableWeightedPred = 0;
             param->rdLevel = 2;
             param->maxNumReferences = 1;
-            param->bEnableLoopFilter = 0;
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
             param->rc.cuTree = 0;
@@ -459,12 +458,8 @@ static double x265_atof(const char *str, bool& bError)
 static int parseName(const char *arg, const char * const * names, bool& bError)
 {
     for (int i = 0; names[i]; i++)
-    {
         if (!strcmp(arg, names[i]))
-        {
             return i;
-        }
-    }
 
     return x265_atoi(arg, bError);
 }
@@ -497,9 +492,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
         char *c;
         strcpy(nameBuf, name);
         while ((c = strchr(nameBuf, '_')) != 0)
-        {
             *c = '-';
-        }
 
         name = nameBuf;
     }
@@ -636,8 +629,28 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
     OPT("crqpoffs") p->crQpOffset = atoi(value);
     OPT("rd") p->rdLevel = atoi(value);
-    OPT("psy-rd") p->psyRd = atof(value);
-    OPT("psy-rdoq") p->psyRdoq = atof(value);
+    OPT("psy-rd")
+    {
+        int bval = atobool(value);
+        if (bError || bval)
+        {
+            bError = false;
+            p->psyRd = atof(value);
+        }
+        else
+            p->psyRd = 0.0;
+    }
+    OPT("psy-rdoq")
+    {
+        int bval = atobool(value);
+        if (bError || bval)
+        {
+            bError = false;
+            p->psyRdoq = atof(value);
+        }
+        else
+            p->psyRdoq = 0.0;
+    }
     OPT("signhide") p->bEnableSignHiding = atobool(value);
     OPT("b-intra") p->bIntraInBFrames = atobool(value);
     OPT("lft") p->bEnableLoopFilter = atobool(value); /* DEPRECATED */
