@@ -141,16 +141,16 @@ struct Mode
  * either of them */
 struct CUStats
 {
-    int64_t  intraRDOElapsedTime[NUM_CU_DEPTH];
-    int64_t  interRDOElapsedTime[NUM_CU_DEPTH];
-    int64_t  intraAnalysisElapsedTime;
-    int64_t  motionEstimationElapsedTime;
-    int64_t  loopFilterElapsedTime;
-    int64_t  pmeTime;
-    int64_t  pmeBlockTime;
-    int64_t  pmodeTime;
-    int64_t  pmodeBlockTime;
-    int64_t  totalCTUTime;
+    int64_t  intraRDOElapsedTime[NUM_CU_DEPTH]; // elapsed worker time in intra RDO per CU depth
+    int64_t  interRDOElapsedTime[NUM_CU_DEPTH]; // elapsed worker time in inter RDO per CU depth
+    int64_t  intraAnalysisElapsedTime;          // elapsed worker time in intra sa8d analysis
+    int64_t  motionEstimationElapsedTime;       // elapsed worker time in predInterSearch()
+    int64_t  loopFilterElapsedTime;             // elapsed worker time in deblock and SAO
+    int64_t  pmeTime;                           // elapsed worker time processing ME slave jobs
+    int64_t  pmeBlockTime;                      // elapsed worker time blocked for pme batch completion
+    int64_t  pmodeTime;                         // elapsed worker time processing pmode slave jobs
+    int64_t  pmodeBlockTime;                    // elapsed worker time blocked for pmode batch completion
+    int64_t  totalCTUTime;                      // elapsed worker time in compressCTU (includes pmode master)
 
     uint64_t countIntraRDO[NUM_CU_DEPTH];
     uint64_t countInterRDO[NUM_CU_DEPTH];
