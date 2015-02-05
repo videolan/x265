@@ -47,15 +47,15 @@ INIT_XMM sse2
 cglobal blockcopy_pp_2x4, 4, 7, 0
     mov    r4w,    [r2]
     mov    r5w,    [r2 + r3]
-    lea    r2,     [r2 + r3 * 2]
-    mov    r6w,    [r2]
+    mov    r6w,    [r2 + 2 * r3]
+    lea    r3,     [r3 + 2 * r3]
     mov    r3w,    [r2 + r3]
 
-    mov    [r0],         r4w
-    mov    [r0 + r1],    r5w
-    lea    r0,           [r0 + 2 * r1]
-    mov    [r0],         r6w
-    mov    [r0 + r1],    r3w
+    mov    [r0],          r4w
+    mov    [r0 + r1],     r5w
+    mov    [r0 + 2 * r1], r6w
+    lea    r1,            [r1 + 2 * r1]
+    mov    [r0 + r1],     r3w
 RET
 
 ;-----------------------------------------------------------------------------
