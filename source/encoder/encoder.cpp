@@ -284,9 +284,13 @@ void Encoder::destroy()
 
     for (int i = 0; i < m_param->frameNumThreads; i++)
     {
-        // Ensure frame encoder is idle before destroying it
-        m_frameEncoder[i]->getEncodedPicture(m_nalList);
-        m_frameEncoder[i]->destroy();
+        if (m_frameEncoder[i])
+        {
+            // Ensure frame encoder is idle before destroying it
+            m_frameEncoder[i]->getEncodedPicture(m_nalList);
+            m_frameEncoder[i]->destroy();
+            delete m_frameEncoder[i];
+        }
     }
 
     for (int i = 0; i < m_numThreadLocalData; i++)
