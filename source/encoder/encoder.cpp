@@ -36,7 +36,6 @@
 #include "ratecontrol.h"
 #include "dpb.h"
 #include "nal.h"
-#include "nal.h"
 
 #include "x265.h"
 
