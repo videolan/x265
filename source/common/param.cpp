@@ -1298,6 +1298,7 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableConstrainedIntra, "constrained-intra");
     BOOL(p->bEnableFastIntra, "fast-intra");
     BOOL(p->bOpenGOP, "open-gop");
+    BOOL(p->bEnableTemporalSubLayers, "temporal-layers");
     s += sprintf(s, " interlace=%d", p->interlaceMode);
     s += sprintf(s, " keyint=%d", p->keyframeMax);
     s += sprintf(s, " min-keyint=%d", p->keyframeMin);
