@@ -93,16 +93,30 @@ cglobal blockcopy_pp_2x8, 4, 7, 0
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
 cglobal blockcopy_pp_2x16, 4, 7, 0
-    mov     r6d,    16/2
-.loop:
-    mov     r4w,    [r2]
-    mov     r5w,    [r2 + r3]
-    dec     r6d
-    lea     r2,     [r2 + r3 * 2]
-    mov     [r0],       r4w
-    mov     [r0 + r1],  r5w
-    lea     r0,     [r0 + r1 * 2]
-    jnz     .loop
+    lea     r5,      [3 * r1]
+    lea     r6,      [3 * r3]
+
+    mov     r4w,           [r2]
+    mov     [r0],          r4w
+    mov     r4w,           [r2 + r3]
+    mov     [r0 + r1],     r4w
+    mov     r4w,           [r2 + 2 * r3]
+    mov     [r0 + 2 * r1], r4w
+    mov     r4w,           [r2 + r6]
+    mov     [r0 + r5],     r4w
+
+%rep 3
+    lea     r2,            [r2 + 4 * r3]
+    mov     r4w,           [r2]
+    lea     r0,            [r0 + 4 * r1]
+    mov     [r0],          r4w
+    mov     r4w,           [r2 + r3]
+    mov     [r0 + r1],     r4w
+    mov     r4w,           [r2 + 2 * r3]
+    mov     [r0 + 2 * r1], r4w
+    mov     r4w,           [r2 + r6]
+    mov     [r0 + r5],     r4w
+%endrep
     RET
 
 
