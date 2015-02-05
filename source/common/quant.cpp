@@ -104,6 +104,7 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOne
     return rate;
 }
 
+#if CHECKED_BUILD || _DEBUG
 inline int getICRateNegDiff(uint32_t absLevel, const int* greaterOneBits, const int* levelAbsBits)
 {
     X265_CHECK(absLevel <= 2, "absLevel check failure\n");
@@ -117,6 +118,7 @@ inline int getICRateNegDiff(uint32_t absLevel, const int* greaterOneBits, const 
         rate = greaterOneBits[0];
     return rate;
 }
+#endif
 
 inline int getICRateLessVlc(uint32_t absLevel, int32_t diffLevel, const uint32_t absGoRice)
 {
