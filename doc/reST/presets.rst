@@ -109,7 +109,7 @@ after the preset.
 Film Grain Retention
 ~~~~~~~~~~~~~~~~~~~~
 
-:option:`--tune` grain tries to improve the retention of film grain in
+:option:`--tune` *grain* tries to improve the retention of film grain in
 the reconstructed output. It helps rate distortion optimizations select
 modes which preserve high frequency noise:
 
@@ -142,7 +142,7 @@ blurred on block boundaries:
 Fast Decode
 ~~~~~~~~~~~
 
-:option:`--tune` fastdecode disables encoder features which tend to be
+:option:`--tune` *fastdecode* disables encoder features which tend to be
 bottlenecks for the decoder. It is intended for use with 4K content at
 high bitrates which can cause decoders to struggle. It disables both
 HEVC loop filters, which tend to be process bottlenecks:
@@ -162,7 +162,7 @@ Zero Latency
 ~~~~~~~~~~~~
 
 There are two halves to the latency problem. There is latency at the
-decoder and latency at the encoder. :option:`--tune` zerolatency
+decoder and latency at the encoder. :option:`--tune` *zerolatency*
 removes latency from both sides. The decoder latency is removed by:
 
     * :option:`--bframes` 0
