@@ -248,7 +248,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
     H0("\nProfile, Level, Tier:\n");
     H0("   --profile <string>            Enforce an encode profile: main, main10, mainstillpicture\n");
-    H0("   --level-idc <integer|float>   Force a minumum required decoder level (as '5.0' or '50')\n");
+    H0("   --level-idc <integer|float>   Force a minimum required decoder level (as '5.0' or '50')\n");
     H0("   --[no-]high-tier              If a decoder level is specified, this modifier selects High tier of that level\n");
     H0("\nThreading, performance:\n");
     H0("   --threads <integer>           Number of threads for thread pool (0: detect CPU core count, default)\n");
