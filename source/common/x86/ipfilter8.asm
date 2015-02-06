@@ -6266,25 +6266,26 @@ cglobal interp_8tap_vert_pp_16x8, 4, 7, 15
     movu            [r2 + r6], xm7
     RET
 %endif
-
+%macro FILTER_VER_LUMA_AVX2_16x4 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
-cglobal interp_8tap_vert_pp_16x4, 4, 7, 13
+cglobal interp_8tap_vert_%1_16x4, 4, 6, 13
     mov             r4d, r4m
     shl             r4d, 7
-
 %ifdef PIC
     lea             r5, [tab_LumaCoeffVer_32]
     add             r5, r4
 %else
     lea             r5, [tab_LumaCoeffVer_32 + r4]
 %endif
-
     lea             r4, [r1 * 3]
     sub             r0, r4
-    lea             r6, [r3 * 3]
+%ifidn %1,pp
     mova            m12, [pw_512]
-
+%else
+    add             r3d, r3d
+    vbroadcasti128  m12, [pw_2000]
+%endif
     movu            xm0, [r0]                       ; m0 = row 0
     movu            xm1, [r0 + r1]                  ; m1 = row 1
     punpckhbw       xm2, xm0, xm1
@@ -6356,7 +6357,7 @@ cglobal interp_8tap_vert_pp_16x4, 4, 7, 13
     vinserti128     m9, m9, xm11, 1
     pmaddubsw       m11, m9, [r5 + 3 * mmsize]
     paddw           m3, m11
-
+%ifidn %1,pp
     pmulhrsw        m0, m12                         ; m0 = word: row 0
     pmulhrsw        m1, m12                         ; m1 = word: row 1
     pmulhrsw        m2, m12                         ; m2 = word: row 2
@@ -6370,10 +6371,25 @@ cglobal interp_8tap_vert_pp_16x4, 4, 7, 13
     movu            [r2], xm0
     movu            [r2 + r3], xm1
     movu            [r2 + r3 * 2], xm2
-    movu            [r2 + r6], xm3
+    lea             r4, [r3 * 3]
+    movu            [r2 + r4], xm3
+%else
+    psubw           m0, m12                         ; m0 = word: row 0
+    psubw           m1, m12                         ; m1 = word: row 1
+    psubw           m2, m12                         ; m2 = word: row 2
+    psubw           m3, m12                         ; m3 = word: row 3
+    movu            [r2], m0
+    movu            [r2 + r3], m1
+    movu            [r2 + r3 * 2], m2
+    lea             r4, [r3 * 3]
+    movu            [r2 + r4], m3
+%endif
     RET
 %endif
+%endmacro
 
+FILTER_VER_LUMA_AVX2_16x4 pp
+FILTER_VER_LUMA_AVX2_16x4 ps
 %macro FILTER_VER_LUMA_AVX2_16xN 3
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
