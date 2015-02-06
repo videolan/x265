@@ -1768,6 +1768,8 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
 
     if (cu.isIntra(0))
     {
+        ProfileCUScope(ctu, intraRDOElapsedTime[cuGeom.depth], countIntraRDO[cuGeom.depth]); // not really RDO, but close enough
+        
         uint32_t tuDepthRange[2];
         cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
@@ -1777,6 +1779,8 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
     }
     else // if (cu.isInter(0))
     {
+        ProfileCUScope(ctu, interRDOElapsedTime[cuGeom.depth], countInterRDO[cuGeom.depth]); // not really RDO, but close enough
+
         X265_CHECK(!ctu.isSkipped(absPartIdx), "skip not expected prior to transform\n");
 
         /* Calculate residual for current CU part into depth sized resiYuv */
