@@ -5867,9 +5867,10 @@ cglobal interp_8tap_vert_pp_16x16, 4, 7, 15
     RET
 %endif
 
+%macro FILTER_VER_LUMA_AVX2_16x12 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
-cglobal interp_8tap_vert_pp_16x12, 4, 7, 15
+cglobal interp_8tap_vert_%1_16x12, 4, 7, 15
     mov             r4d, r4m
     shl             r4d, 7
 
@@ -5882,8 +5883,13 @@ cglobal interp_8tap_vert_pp_16x12, 4, 7, 15
 
     lea             r4, [r1 * 3]
     sub             r0, r4
-    lea             r6, [r3 * 3]
+%ifidn %1,pp
     mova            m14, [pw_512]
+%else
+    add             r3d, r3d
+    vbroadcasti128  m14, [pw_2000]
+%endif
+    lea             r6, [r3 * 3]
 
     movu            xm0, [r0]                       ; m0 = row 0
     movu            xm1, [r0 + r1]                  ; m1 = row 1
@@ -5998,6 +6004,7 @@ cglobal interp_8tap_vert_pp_16x12, 4, 7, 15
     paddw           m9, m13
     pmaddubsw       m11, [r5]
 
+%ifidn %1,pp
     pmulhrsw        m0, m14                         ; m0 = word: row 0
     pmulhrsw        m1, m14                         ; m1 = word: row 1
     pmulhrsw        m2, m14                         ; m2 = word: row 2
@@ -6020,6 +6027,21 @@ cglobal interp_8tap_vert_pp_16x12, 4, 7, 15
     lea             r2, [r2 + r3 * 4]
     movu            [r2], xm4
     movu            [r2 + r3], xm5
+%else
+    psubw           m0, m14                         ; m0 = word: row 0
+    psubw           m1, m14                         ; m1 = word: row 1
+    psubw           m2, m14                         ; m2 = word: row 2
+    psubw           m3, m14                         ; m3 = word: row 3
+    psubw           m4, m14                         ; m4 = word: row 4
+    psubw           m5, m14                         ; m5 = word: row 5
+    movu            [r2], m0
+    movu            [r2 + r3], m1
+    movu            [r2 + r3 * 2], m2
+    movu            [r2 + r6], m3
+    lea             r2, [r2 + r3 * 4]
+    movu            [r2], m4
+    movu            [r2 + r3], m5
+%endif
 
     movu            xm13, [r0 + r1]                 ; m13 = row 13
     punpckhbw       xm0, xm12, xm13
@@ -6042,6 +6064,7 @@ cglobal interp_8tap_vert_pp_16x12, 4, 7, 15
     pmaddubsw       m1, m13, [r5 + 1 * mmsize]
     paddw           m11, m1
 
+%ifidn %1,pp
     pmulhrsw        m6, m14                         ; m6 = word: row 6
     pmulhrsw        m7, m14                         ; m7 = word: row 7
     packuswb        m6, m7
@@ -6049,6 +6072,12 @@ cglobal interp_8tap_vert_pp_16x12, 4, 7, 15
     vextracti128    xm7, m6, 1
     movu            [r2 + r3 * 2], xm6
     movu            [r2 + r6], xm7
+%else
+    psubw           m6, m14                         ; m6 = word: row 6
+    psubw           m7, m14                         ; m7 = word: row 7
+    movu            [r2 + r3 * 2], m6
+    movu            [r2 + r6], m7
+%endif
     lea             r2, [r2 + r3 * 4]
 
     movu            xm1, [r0 + r4]                  ; m1 = row 15
@@ -6081,6 +6110,7 @@ cglobal interp_8tap_vert_pp_16x12, 4, 7, 15
     pmaddubsw       m5, m3, [r5 + 3 * mmsize]
     paddw           m11, m5
 
+%ifidn %1,pp
     pmulhrsw        m8, m14                         ; m8 = word: row 8
     pmulhrsw        m9, m14                         ; m9 = word: row 9
     pmulhrsw        m10, m14                        ; m10 = word: row 10
@@ -6095,8 +6125,23 @@ cglobal interp_8tap_vert_pp_16x12, 4, 7, 15
     movu            [r2 + r3], xm9
     movu            [r2 + r3 * 2], xm10
     movu            [r2 + r6], xm11
+%else
+    psubw           m8, m14                         ; m8 = word: row 8
+    psubw           m9, m14                         ; m9 = word: row 9
+    psubw           m10, m14                        ; m10 = word: row 10
+    psubw           m11, m14                        ; m11 = word: row 11
+    movu            [r2], m8
+    movu            [r2 + r3], m9
+    movu            [r2 + r3 * 2], m10
+    movu            [r2 + r6], m11
+%endif
     RET
 %endif
+%endmacro
+
+FILTER_VER_LUMA_AVX2_16x12 pp
+FILTER_VER_LUMA_AVX2_16x12 ps
+
 %macro FILTER_VER_LUMA_AVX2_16x8 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
