@@ -1265,9 +1265,7 @@ CostEstimate::CostEstimate(ThreadPool *p)
 CostEstimate::~CostEstimate()
 {
     for (int i = 0; i < 4; i++)
-    {
-        x265_free(m_wbuffer[i]);
-    }
+        X265_FREE(m_wbuffer[i]);
 
     delete[] m_rows;
 }
@@ -1300,7 +1298,7 @@ void CostEstimate::init(x265_param *_param, Frame *curFrame)
         /* allocate weighted lowres buffers */
         for (int i = 0; i < 4; i++)
         {
-            m_wbuffer[i] = (pixel*)x265_malloc(sizeof(pixel) * (curFrame->m_lowres.lumaStride * m_paddedLines));
+            m_wbuffer[i] = X265_MALLOC(pixel, curFrame->m_lowres.lumaStride * m_paddedLines);
             m_weightedRef.lowresPlane[i] = m_wbuffer[i] + padoffset;
         }
 
