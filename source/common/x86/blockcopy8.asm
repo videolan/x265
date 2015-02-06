@@ -1022,6 +1022,49 @@ BLOCKCOPY_PP_W64_H4 64, 48
 BLOCKCOPY_PP_W64_H4 64, 64
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_pp_%1x%2(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_PP_W64_H4_avx 2
+INIT_YMM avx
+cglobal blockcopy_pp_%1x%2, 4, 7, 6
+    lea    r4,  [3 * r1]
+    lea    r5,  [3 * r3]
+    mov    r6d, %2/4
+
+.loop:
+    movu    m0, [r2]
+    movu    m1, [r2 + 32]
+    movu    m2, [r2 + r3]
+    movu    m3, [r2 + r3 + 32]
+    movu    m4, [r2 + 2 * r3]
+    movu    m5, [r2 + 2 * r3 + 32]
+
+    movu    [r0], m0
+    movu    [r0 + 32], m1
+    movu    [r0 + r1], m2
+    movu    [r0 + r1 + 32], m3
+    movu    [r0 + 2 * r1], m4
+    movu    [r0 + 2 * r1 + 32], m5
+
+    movu    m0, [r2 + r5]
+    movu    m1, [r2 + r5 + 32]
+
+    movu    [r0 + r4], m0
+    movu    [r0 + r4 + 32], m1
+
+    lea     r2, [r2 + 4 * r3]
+    lea     r0, [r0 + 4 * r1]
+    dec     r6d
+    jnz     .loop
+    RET
+%endmacro
+
+BLOCKCOPY_PP_W64_H4_avx 64, 16
+BLOCKCOPY_PP_W64_H4_avx 64, 32
+BLOCKCOPY_PP_W64_H4_avx 64, 48
+BLOCKCOPY_PP_W64_H4_avx 64, 64
+
+;-----------------------------------------------------------------------------
 ; void blockcopy_sp_2x4(pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
