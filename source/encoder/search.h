@@ -145,7 +145,7 @@ struct CUStats
     int64_t  interRDOElapsedTime[NUM_CU_DEPTH]; // elapsed worker time in inter RDO per CU depth
     int64_t  intraAnalysisElapsedTime;          // elapsed worker time in intra sa8d analysis
     int64_t  motionEstimationElapsedTime;       // elapsed worker time in predInterSearch()
-    int64_t  loopFilterElapsedTime;             // elapsed worker time in deblock and SAO
+    int64_t  loopFilterElapsedTime;             // elapsed worker time in deblock and SAO and PSNR/SSIM
     int64_t  pmeTime;                           // elapsed worker time processing ME slave jobs
     int64_t  pmeBlockTime;                      // elapsed worker time blocked for pme batch completion
     int64_t  pmodeTime;                         // elapsed worker time processing pmode slave jobs
