@@ -53,7 +53,7 @@
 #define ATOMIC_AND(ptr, mask)               __sync_fetch_and_and(ptr, mask)
 #define ATOMIC_INC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, 1)
 #define ATOMIC_DEC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, -1)
-#define ATOMIC_ADD(ptr, value)              __sync_add_and_fetch((volatile int32_t*)ptr, value)
+#define ATOMIC_ADD(ptr, value)              __sync_fetch_and_add((volatile int32_t*)ptr, value)
 #define GIVE_UP_TIME()                      usleep(0)
 
 #elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
