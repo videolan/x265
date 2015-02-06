@@ -69,6 +69,11 @@ public:
     int                 m_widthInCU;
     int                 m_heightInCU;
 
+#if DETAILED_CU_STATS
+    int64_t             m_processRowElapsedTime;
+    uint64_t            m_countProcessRow;
+#endif
+
     EstimateRow()
     {
         m_me.setQP(X265_LOOKAHEAD_QP);
@@ -107,6 +112,11 @@ public:
     volatile bool    m_bFrameCompleted;
     int              m_curb, m_curp0, m_curp1;
 
+#if DETAILED_CU_STATS
+    int64_t          m_processRowElapsedTime;
+    uint64_t         m_countProcessRow;
+#endif
+
     void     processRow(int row, int threadId);
     int64_t  estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty);
 
@@ -138,6 +148,12 @@ public:
     int              m_lastKeyframe;
     int              m_histogram[X265_BFRAME_MAX + 1];
 
+#if DETAILED_CU_STATS
+    int64_t          m_slicetypeDecideElapsedTime;
+    uint64_t         m_countSlicetypeDecide;
+    bool             usingWorkerThreads() const { return !!m_pool; }
+#endif
+
     void addPicture(Frame*, int sliceType);
     void flush();
     void stop();
@@ -146,7 +162,6 @@ public:
     void getEstimatedPictureCost(Frame *pic);
 
 protected:
-
 
     Lock  m_inputQueueLock;
     Lock  m_outputQueueLock;
