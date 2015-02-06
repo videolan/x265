@@ -357,7 +357,7 @@ cglobal blockcopy_pp_8x6, 4, 4, 6
 ; void blockcopy_pp_8x12(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal blockcopy_pp_8x12, 4, 5, 4
+cglobal blockcopy_pp_8x12, 4, 6, 4
 
     lea      r4, [3 * r3]
     lea      r5, [3 * r1]
