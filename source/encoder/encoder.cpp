@@ -824,6 +824,7 @@ void Encoder::printSummary()
 
     int64_t lookaheadWorkerTime = m_lookahead->m_slicetypeDecideElapsedTime;
     if (m_lookahead->usingWorkerThreads())
+        /* if the lookahead is not using worker threads, processRow() time is already included in slicetypeDecide time */
         lookaheadWorkerTime += m_lookahead->m_est.m_processRowElapsedTime;
 
     int64_t totalWorkerTime = cuStats.totalCTUTime + cuStats.loopFilterElapsedTime + cuStats.pmodeTime + cuStats.pmeTime + lookaheadWorkerTime;
@@ -839,6 +840,7 @@ void Encoder::printSummary()
         intraRDOTotalCount += cuStats.countIntraRDO[i];
     }
 
+    /* Time within compressCTU() and pmode tasks not captured by ME, Intra mode selection, or RDO (2Nx2N merge, 2Nx2N bidir, etc) */
     int64_t unaccounted = (cuStats.totalCTUTime + cuStats.pmodeTime) -
                           (cuStats.intraAnalysisElapsedTime + cuStats.motionEstimationElapsedTime + interRDOTotalTime + intraRDOTotalTime);
 
