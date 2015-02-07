@@ -919,9 +919,10 @@ void Encoder::printSummary()
              ELAPSED_SEC(totalWorkerTime),
              cuStats.totalCTUs / ELAPSED_SEC(totalWorkerTime));
 
-    x265_log(m_param, X265_LOG_INFO, "CU: %.3lf average worker occupancy, %%%05.2lf of theoretical maximum occupancy\n",
-             (double)totalWorkerTime / elapsedEncodeTime,
-             100.0 * totalWorkerTime / (elapsedEncodeTime * m_threadPool->getThreadCount()));
+    if (m_threadPool)
+        x265_log(m_param, X265_LOG_INFO, "CU: %.3lf average worker occupancy, %%%05.2lf of theoretical maximum occupancy\n",
+                 (double)totalWorkerTime / elapsedEncodeTime,
+                 100.0 * totalWorkerTime / (elapsedEncodeTime * m_threadPool->getThreadCount()));
 
 #undef ELAPSED_SEC
 #undef ELAPSED_MSEC
