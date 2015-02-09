@@ -84,8 +84,8 @@ void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, in
         }
 
 #else
-        ::memset(txt - marginX, txt[0], marginX);
-        ::memset(txt + width, txt[width - 1], marginX);
+        memset(txt - marginX, txt[0], marginX);
+        memset(txt + width, txt[width - 1], marginX);
 #endif
 
         txt += stride;
