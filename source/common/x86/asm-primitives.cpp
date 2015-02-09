@@ -1247,6 +1247,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.pu[LUMA_64x48].copy_pp = x265_blockcopy_pp_64x48_avx;
         p.pu[LUMA_64x64].copy_pp = x265_blockcopy_pp_64x64_avx;
 
+        p.pu[LUMA_48x64].copy_pp = x265_blockcopy_pp_48x64_avx;
+
         p.frameInitLowres = x265_frame_init_lowres_core_avx;
     }
     if (cpuMask & X265_CPU_XOP)
