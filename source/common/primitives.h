@@ -155,7 +155,8 @@ typedef void (*filter_ps_t) (const pixel* src, intptr_t srcStride, int16_t* dst,
 typedef void (*filter_sp_t) (const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_ss_t) (const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_hv_pp_t) (const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY);
-typedef void (*filter_p2s_t)(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
+typedef void (*filter_p2s_wxh_t)(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
+typedef void (*filter_p2s_t)(const pixel* src, intptr_t srcStride, int16_t* dst);
 
 typedef void (*copy_pp_t)(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride); // dst is aligned
 typedef void (*copy_sp_t)(pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
@@ -207,6 +208,7 @@ struct EncoderPrimitives
         addAvg_t       addAvg;      // bidir motion compensation, uses 16bit values
 
         copy_pp_t      copy_pp;
+        filter_p2s_t   filter_p2s;
     }
     pu[NUM_PU_SIZES];
 
@@ -286,7 +288,7 @@ struct EncoderPrimitives
     weightp_sp_t          weight_sp;
     weightp_pp_t          weight_pp;
 
-    filter_p2s_t          luma_p2s;
+    filter_p2s_wxh_t      luma_p2s;
 
     /* There is one set of chroma primitives per color space. An encoder will
      * have just a single color space and thus it will only ever use one entry
@@ -311,6 +313,8 @@ struct EncoderPrimitives
             filter_hps_t filter_hps;
             addAvg_t     addAvg;
             copy_pp_t    copy_pp;
+            filter_p2s_t chroma_p2s;
+
         }
         pu[NUM_PU_SIZES];
 
@@ -329,7 +333,7 @@ struct EncoderPrimitives
         }
         cu[NUM_CU_SIZES];
 
-        filter_p2s_t p2s; // takes width/height as arguments
+        filter_p2s_wxh_t p2s; // takes width/height as arguments
     }
     chroma[X265_CSP_COUNT];
 };

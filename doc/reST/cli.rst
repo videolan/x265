@@ -171,6 +171,8 @@ Performance Options
 	Over-allocation of frame threads will not improve performance, it
 	will generally just increase memory use.
 
+	**Values:** any value between 8 and 16. Default is 0, auto-detect
+
 .. option:: --threads <integer>
 
 	Number of threads to allocate for the worker thread pool  This pool
@@ -409,7 +411,10 @@ Profile, Level, Tier
 	If :option:`--level-idc` has been specified, the option adds the
 	intention to support the High tier of that level. If your specified
 	level does not support a High tier, a warning is issued and this
-	modifier flag is ignored.
+	modifier flag is ignored. If :option:`--level-idc` has been specified,
+	but not --high-tier, then the encoder will attempt to encode at the 
+	specified level, main tier first, turning on high tier only if 
+	necessary and available at that level.
 
 .. note::
 	:option:`--profile`, :option:`--level-idc`, and
@@ -1356,6 +1361,18 @@ Bitstream options
 	parameters are carried by the Buffering Period SEI messages and
 	Picture Timing SEI messages providing timing information to the
 	decoder. Default disabled
+
+.. option:: --temporal-layers,--no-temporal-layers
+
+	Enable a temporal sub layer. All referenced I/P/B frames are in the
+	base layer and all unreferenced B frames are placed in a temporal
+	sublayer. A decoder may chose to drop the sublayer and only decode
+	and display the base layer slices.
+	
+	If used with a fixed GOP (:option:`b-adapt` 0) and :option:`bframes`
+	3 then the two layers evenly split the frame rate, with a cadence of
+	PbBbP. You probably also want :option:`--no-scenecut` and a keyframe
+	interval that is a multiple of 4.
 
 .. option:: --aud, --no-aud
 

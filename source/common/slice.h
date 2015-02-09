@@ -149,8 +149,10 @@ struct TimingInfo
 
 struct VPS
 {
+    uint32_t         maxTempSubLayers;
     uint32_t         numReorderPics;
     uint32_t         maxDecPicBuffering;
+    uint32_t         maxLatencyIncrease;
     HRDInfo          hrdParameters;
     ProfileTierLevel ptl;
 };
@@ -228,9 +230,10 @@ struct SPS
     bool     bUseAMP; // use param
     uint32_t maxAMPDepth;
 
+    uint32_t maxTempSubLayers;   // max number of Temporal Sub layers
     uint32_t maxDecPicBuffering; // these are dups of VPS values
+    uint32_t maxLatencyIncrease;
     int      numReorderPics;
-    int      maxLatencyIncrease;
 
     bool     bUseStrongIntraSmoothing; // use param
     bool     bTemporalMVPEnabled;

@@ -61,7 +61,7 @@ IPFilterHarness::IPFilterHarness()
     }
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma, int csp)
+bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_wxh_t ref, filter_p2s_wxh_t opt, int isChroma, int csp)
 {
     intptr_t rand_srcStride;
     int min_size = isChroma ? 2 : 4;
@@ -512,6 +512,46 @@ bool IPFilterHarness::check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_
     return true;
 }
 
+bool IPFilterHarness::check_IPFilterLumaP2S_primitive(filter_p2s_t ref, filter_p2s_t opt)
+{
+    for (int i = 0; i < ITERS; i++)
+    {
+        intptr_t rand_srcStride = rand() % 100;
+        int index = i % TEST_CASES;
+
+        ref(pixel_test_buff[index] + i, rand_srcStride, IPF_C_output_s);
+
+        checked(opt, pixel_test_buff[index] + i, rand_srcStride, IPF_vec_output_s);
+
+        if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(pixel)))
+            return false;
+
+        reportfail();
+    }
+
+    return true;
+}
+
+bool IPFilterHarness::check_IPFilterChromaP2S_primitive(filter_p2s_t ref, filter_p2s_t opt)
+{
+    for (int i = 0; i < ITERS; i++)
+    {
+        intptr_t rand_srcStride = rand() % 100;
+        int index = i % TEST_CASES;
+
+        ref(pixel_test_buff[index] + i, rand_srcStride, IPF_C_output_s);
+
+        checked(opt, pixel_test_buff[index] + i, rand_srcStride, IPF_vec_output_s);
+
+        if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(pixel)))
+            return false;
+
+        reportfail();
+    }
+
+    return true;
+}
+
 bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.luma_p2s)
@@ -582,6 +622,14 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 return false;
             }
         }
+        if (opt.pu[value].filter_p2s)
+        {
+            if (!check_IPFilterLumaP2S_primitive(ref.pu[value].filter_p2s, opt.pu[value].filter_p2s))
+            {
+                printf("filter_p2s[%s]", lumaPartStr[value]);
+                return false;
+            }
+        }
     }
 
     for (int csp = X265_CSP_I420; csp < X265_CSP_COUNT; csp++)
@@ -641,6 +689,14 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 if (!check_IPFilterChroma_ss_primitive(ref.chroma[csp].pu[value].filter_vss, opt.chroma[csp].pu[value].filter_vss))
                 {
                     printf("chroma_vss[%s]", chromaPartStr[csp][value]);
+                    return false;
+                }
+            }
+            if (opt.chroma[csp].pu[value].chroma_p2s)
+            {
+                if (!check_IPFilterChromaP2S_primitive(ref.chroma[csp].pu[value].chroma_p2s, opt.chroma[csp].pu[value].chroma_p2s))
+                {
+                    printf("chroma_p2s[%s]", chromaPartStr[csp][value]);
                     return false;
                 }
             }
@@ -720,6 +776,13 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             REPORT_SPEEDUP(opt.pu[value].luma_hvpp, ref.pu[value].luma_hvpp,
                            pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, srcStride, 1, 3);
         }
+
+        if (opt.pu[value].filter_p2s)
+        {
+            printf("filter_p2s [%s]\t", lumaPartStr[value]);
+            REPORT_SPEEDUP(opt.pu[value].filter_p2s, ref.pu[value].filter_p2s,
+                           pixel_buff, srcStride, IPF_vec_output_s);
+        }
     }
 
     for (int csp = X265_CSP_I420; csp < X265_CSP_COUNT; csp++)
@@ -772,6 +835,14 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                 REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_vss, ref.chroma[csp].pu[value].filter_vss,
                                short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                                IPF_vec_output_s, dstStride, 1);
+            }
+
+            if (opt.chroma[csp].pu[value].chroma_p2s)
+            {
+                printf("chroma_p2s[%s]\t", chromaPartStr[csp][value]);
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].chroma_p2s, ref.chroma[csp].pu[value].chroma_p2s,
+                               pixel_buff, srcStride,
+                               IPF_vec_output_s);
             }
         }
     }

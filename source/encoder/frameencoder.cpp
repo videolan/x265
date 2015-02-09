@@ -501,13 +501,10 @@ void FrameEncoder::compressFrame()
                 m_nr->count[cat] += nr->count[cat];
             }
         }
-    }
 
-    noiseReductionUpdate();
+        noiseReductionUpdate();
 
-    /* Copy updated NR coefficients back to all worker threads */
-    if (m_nr)
-    {
+        /* Copy updated NR coefficients back to all worker threads */
         for (int i = 0; i < m_top->m_numThreadLocalData; i++)
         {
             NoiseReduction* nr = &m_top->m_threadLocalData[i].analysis.m_quant.m_frameNr[m_frameEncoderID];
@@ -526,6 +523,13 @@ void FrameEncoder::compressFrame()
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
+
+#if DETAILED_CU_STATS
+    /* Accumulate CU statistics from each worker thread, we could report
+     * per-frame stats here, but currently we do not. */
+    for (int i = 0; i < m_top->m_numThreadLocalData; i++)
+        m_cuStats.accumulate(m_top->m_threadLocalData[i].analysis.m_stats[m_frameEncoderID]);
+#endif
 
     m_endFrameTime = x265_mdate();
 }
@@ -1098,9 +1102,6 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
 /* DCT-domain noise reduction / adaptive deadzone from libavcodec */
 void FrameEncoder::noiseReductionUpdate()
 {
-    if (!m_nr)
-        return;
-
     static const uint32_t maxBlocksPerTrSize[4] = {1 << 18, 1 << 16, 1 << 14, 1 << 12};
 
     for (int cat = 0; cat < MAX_NUM_TR_CATEGORIES; cat++)
