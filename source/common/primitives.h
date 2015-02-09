@@ -136,8 +136,7 @@ typedef uint32_t (*quant_t)(const int16_t* coef, const int32_t* quantCoeff, int3
 typedef uint32_t (*nquant_t)(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff);
 typedef void (*dequant_scaling_t)(const int16_t* src, const int32_t* dequantCoef, int16_t* dst, int num, int mcqp_miper, int shift);
 typedef void (*dequant_normal_t)(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
-typedef int  (*count_nonzero_t)(const int16_t* quantCoeff, int numCoeff);
-
+typedef int(*count_nonzero_t)(const int16_t* quantCoeff);
 typedef void (*weightp_pp_t)(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*weightp_sp_t)(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel* dst, const pixel* src, intptr_t stride);
@@ -227,7 +226,7 @@ struct EncoderPrimitives
         pixel_add_ps_t  add_ps;
         blockfill_s_t   blockfill_s;   // block fill, for DC transforms
         copy_cnt_t      copy_cnt;      // copy coeff while counting non-zero
-
+        count_nonzero_t count_nonzero;
         cpy2Dto1D_shl_t cpy2Dto1D_shl;
         cpy2Dto1D_shr_t cpy2Dto1D_shr;
         cpy1Dto2D_shl_t cpy1Dto2D_shl;
@@ -262,9 +261,7 @@ struct EncoderPrimitives
     nquant_t              nquant;
     dequant_scaling_t     dequant_scaling;
     dequant_normal_t      dequant_normal;
-    count_nonzero_t       count_nonzero;
     denoiseDct_t          denoiseDct;
-
     scale_t               scale1D_128to64;
     scale_t               scale2D_64to32;
 
