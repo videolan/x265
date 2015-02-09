@@ -5004,9 +5004,9 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
     RET
 %endmacro
 
-%macro FILTER_VER_LUMA_AVX2_8xN 2
+%macro FILTER_VER_LUMA_AVX2_8xN 3
 INIT_YMM avx2
-cglobal interp_8tap_vert_pp_%1x%2, 4, 7, 8, 0-gprsize
+cglobal interp_8tap_vert_%3_%1x%2, 4, 7, 8, 0-gprsize
     mov             r4d, r4m
     shl             r4d, 7
 
@@ -5019,11 +5019,17 @@ cglobal interp_8tap_vert_pp_%1x%2, 4, 7, 8, 0-gprsize
     lea             r4, [r1 * 3]
     sub             r0, r4
     lea             r6, [r1 * 4]
-    mov             word [rsp], %2 / 8
+%ifidn %3,pp
     mova            m7, [pw_512]
+%else
+    add             r3d, r3d
+    vbroadcasti128  m7, [pw_2000]
+%endif
+    mov             word [rsp], %2 / 8
 
 .loop:
     PROCESS_LUMA_AVX2_W8_8R
+%ifidn %3,pp
     pmulhrsw        m5, m7                          ; m5 = word: row 0, row 1
     pmulhrsw        m2, m7                          ; m2 = word: row 2, row 3
     pmulhrsw        m1, m7                          ; m1 = word: row 4, row 5
@@ -5043,6 +5049,27 @@ cglobal interp_8tap_vert_pp_%1x%2, 4, 7, 8, 0-gprsize
     lea             r2, [r2 + r3 * 2]
     movhps          [r2], xm1
     movhps          [r2 + r3], xm4
+%else
+    psubw           m5, m7                          ; m5 = word: row 0, row 1
+    psubw           m2, m7                          ; m2 = word: row 2, row 3
+    psubw           m1, m7                          ; m1 = word: row 4, row 5
+    psubw           m4, m7                          ; m4 = word: row 6, row 7
+    vextracti128    xm6, m5, 1
+    vextracti128    xm3, m2, 1
+    vextracti128    xm0, m1, 1
+    movu            [r2], xm5
+    movu            [r2 + r3], xm6
+    lea             r2, [r2 + r3 * 2]
+    movu            [r2], xm2
+    movu            [r2 + r3], xm3
+    lea             r2, [r2 + r3 * 2]
+    movu            [r2], xm1
+    movu            [r2 + r3], xm0
+    lea             r2, [r2 + r3 * 2]
+    movu            [r2], xm4
+    vextracti128    xm4, m4, 1
+    movu            [r2 + r3], xm4
+%endif
     lea             r2, [r2 + r3 * 2]
     sub             r0, r6
     dec             word [rsp]
@@ -5174,13 +5201,13 @@ FILTER_VER_LUMA_AVX2_8x8 pp
 ; void interp_8tap_vert_pp_8x16(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
 FILTER_VER_LUMA_8xN 8, 16, pp
-FILTER_VER_LUMA_AVX2_8xN 8, 16
+FILTER_VER_LUMA_AVX2_8xN 8, 16, pp
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_pp_8x32(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
 FILTER_VER_LUMA_8xN 8, 32, pp
-FILTER_VER_LUMA_AVX2_8xN 8, 32
+FILTER_VER_LUMA_AVX2_8xN 8, 32, pp
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_ps_8x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
@@ -5198,11 +5225,13 @@ FILTER_VER_LUMA_AVX2_8x8 ps
 ; void interp_8tap_vert_ps_8x16(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
 FILTER_VER_LUMA_8xN 8, 16, ps
+FILTER_VER_LUMA_AVX2_8xN 8, 16, ps
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_ps_8x32(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
 FILTER_VER_LUMA_8xN 8, 32, ps
+FILTER_VER_LUMA_AVX2_8xN 8, 32, ps
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_%3_12x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
