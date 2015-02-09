@@ -78,6 +78,7 @@ public:
     analysis_intra_data* m_reuseIntraDataCTU;
     analysis_inter_data* m_reuseInterDataCTU;
     int32_t* reuseRef;
+    uint32_t* reuseBestMergeCand;
     Analysis();
     bool create(ThreadLocalData* tld);
     void destroy();
@@ -105,7 +106,7 @@ protected:
 
     /* measure merge and skip */
     void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGeom);
-    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom);
+    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom, bool isSkipMode);
 
     /* measure inter options */
     void checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize);
