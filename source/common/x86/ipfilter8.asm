@@ -5086,8 +5086,9 @@ cglobal interp_8tap_vert_pp_8x8, 4, 6, 7
     movhps          [r2 + r4], xm4
     RET
 
+%macro FILTER_VER_LUMA_AVX2_8x4 1
 INIT_YMM avx2
-cglobal interp_8tap_vert_pp_8x4, 4, 6, 7
+cglobal interp_8tap_vert_%1_8x4, 4, 6, 7
     mov             r4d, r4m
     shl             r4d, 7
 
@@ -5101,8 +5102,14 @@ cglobal interp_8tap_vert_pp_8x4, 4, 6, 7
     lea             r4, [r1 * 3]
     sub             r0, r4
     PROCESS_LUMA_AVX2_W8_4R
-    lea             r4, [r3 * 3]
+%ifidn %1,pp
     mova            m3, [pw_512]
+%else
+    add             r3d, r3d
+    vbroadcasti128  m3, [pw_2000]
+%endif
+    lea             r4, [r3 * 3]
+%ifidn %1,pp
     pmulhrsw        m5, m3                          ; m5 = word: row 0, row 1
     pmulhrsw        m2, m3                          ; m2 = word: row 2, row 3
     packuswb        m5, m2
@@ -5111,12 +5118,24 @@ cglobal interp_8tap_vert_pp_8x4, 4, 6, 7
     movq            [r2 + r3], xm2
     movhps          [r2 + r3 * 2], xm5
     movhps          [r2 + r4], xm2
+%else
+    psubw           m5, m3                          ; m5 = word: row 0, row 1
+    psubw           m2, m3                          ; m2 = word: row 2, row 3
+    movu            [r2], xm5
+    vextracti128    xm5, m5, 1
+    movu            [r2 + r3], xm5
+    movu            [r2 + r3 * 2], xm2
+    vextracti128    xm2, m2, 1
+    movu            [r2 + r4], xm2
+%endif
     RET
+%endmacro
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_pp_8x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
 FILTER_VER_LUMA_8xN 8, 4, pp
+FILTER_VER_LUMA_AVX2_8x4 pp
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_pp_8x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
@@ -5139,6 +5158,7 @@ FILTER_VER_LUMA_AVX2_8xN 8, 32
 ; void interp_8tap_vert_ps_8x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
 FILTER_VER_LUMA_8xN 8, 4, ps
+FILTER_VER_LUMA_AVX2_8x4 ps
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_ps_8x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
