@@ -384,6 +384,7 @@ struct analysis_intra_data
     uint8_t*  depth;
     uint8_t*  modes;
     char*     partSizes;
+    uint8_t*  chromaModes;
 };
 
 enum TextType

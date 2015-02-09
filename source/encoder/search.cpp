@@ -1130,7 +1130,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
     }
 }
 
-void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes)
+void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes, uint8_t* sharedChromaModes)
 {
     CUData& cu = intraMode.cu;
 
@@ -1143,7 +1143,7 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
 
     intraMode.initCosts();
     intraMode.distortion += estIntraPredQT(intraMode, cuGeom, tuDepthRange, sharedModes);
-    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom);
+    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom, sharedChromaModes);
 
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
@@ -1368,7 +1368,7 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     extractIntraResultQT(cu, *reconYuv, 0, 0);
 
     intraMode.distortion = icosts.distortion;
-    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom);
+    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom, NULL);
 
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
@@ -1669,7 +1669,7 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom)
     cu.setChromIntraDirSubParts(bestMode, 0, cuGeom.depth);
 }
 
-uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
+uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom, uint8_t* sharedChromaModes)
 {
     CUData& cu = intraMode.cu;
     Yuv& reconYuv = intraMode.reconYuv;
@@ -1697,7 +1697,14 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
         uint32_t maxMode = NUM_CHROMA_MODE;
         uint32_t modeList[NUM_CHROMA_MODE];
 
-        cu.getAllowedChromaDir(absPartIdxC, modeList);
+        if (sharedChromaModes)
+        {
+            for (uint32_t l = 0; l < NUM_CHROMA_MODE; l++)
+                modeList[l] = sharedChromaModes[0];
+            maxMode = 1;
+        }
+        else
+            cu.getAllowedChromaDir(absPartIdxC, modeList);
 
         // check chroma modes
         for (uint32_t mode = minMode; mode < maxMode; mode++)
