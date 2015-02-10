@@ -213,6 +213,10 @@ void x265_blockcopy_pp_48x64_avx(pixel* a, intptr_t stridea, const pixel* b, int
 
 void x265_blockfill_s_16x16_avx2(int16_t* dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_32x32_avx2(int16_t* dst, intptr_t dstride, int16_t val);
+// copy_sp primitives
+// 16 x N
+void x265_blockcopy_sp_16x16_avx2(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_sp_16x32_avx2(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
 
 // 32 x N
 void x265_blockcopy_sp_32x32_avx2(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
