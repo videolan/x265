@@ -1300,6 +1300,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].copy_sp = x265_blockcopy_sp_32x32_avx2;
         p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].copy_sp = x265_blockcopy_sp_32x64_avx2;
 
+       // 64 X N
+       p.cu[BLOCK_64x64].copy_sp = x265_blockcopy_sp_64x64_avx2;
+
         p.weight_pp = x265_weight_pp_avx2;
 
         p.cu[BLOCK_4x4].dct = x265_dct4_avx2;

@@ -1985,6 +1985,84 @@ BLOCKCOPY_SP_W64_H1 64, 48
 BLOCKCOPY_SP_W64_H1 64, 64
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_sp_%1x%2(pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_SP_W64_H4_avx2 2
+INIT_YMM avx2
+cglobal blockcopy_sp_%1x%2, 4, 7, 4, dst, dstStride, src, srcStride
+    mov    r4d, %2/4
+    add    r3,  r3
+    lea    r5,  [3 * r3]
+    lea    r6,  [3 * r1]
+
+.loop:
+    movu    m0, [r2]
+    movu    m1, [r2 + 32]
+    movu    m2, [r2 + 64]
+    movu    m3, [r2 + 96]
+
+    packuswb    m0, m1
+    packuswb    m2, m3
+
+    vpermq    m0, m0, 11011000b
+    vpermq    m2, m2, 11011000b
+
+    movu    [r0],      m0
+    movu    [r0 + 32], m2
+
+    movu    m0, [r2 + r3]
+    movu    m1, [r2 + r3 + 32]
+    movu    m2, [r2 + r3 + 64]
+    movu    m3, [r2 + r3 + 96]
+
+    packuswb    m0, m1
+    packuswb    m2, m3
+
+    vpermq    m0, m0, 11011000b
+    vpermq    m2, m2, 11011000b
+
+    movu    [r0 + r1],      m0
+    movu    [r0 + r1 + 32], m2
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + 2 * r3 + 32]
+    movu    m2, [r2 + 2 * r3 + 64]
+    movu    m3, [r2 + 2 * r3 + 96]
+
+    packuswb    m0, m1
+    packuswb    m2, m3
+
+    vpermq    m0, m0, 11011000b
+    vpermq    m2, m2, 11011000b
+
+    movu    [r0 + 2 * r1],      m0
+    movu    [r0 + 2 * r1 + 32], m2
+
+    movu    m0, [r2 + r5]
+    movu    m1, [r2 + r5 + 32]
+    movu    m2, [r2 + r5 + 64]
+    movu    m3, [r2 + r5 + 96]
+
+    packuswb    m0, m1
+    packuswb    m2, m3
+
+    vpermq    m0, m0, 11011000b
+    vpermq    m2, m2, 11011000b
+
+    movu    [r0 + r6],      m0
+    movu    [r0 + r6 + 32], m2
+
+    lea    r0, [r0 + 4 * r1]
+    lea    r2, [r2 + 4 * r3]
+
+    dec    r4d
+    jnz    .loop
+    RET
+%endmacro
+
+BLOCKCOPY_SP_W64_H4_avx2 64, 64
+
+;-----------------------------------------------------------------------------
 ; void blockfill_s_4x4(int16_t* dst, intptr_t dstride, int16_t val)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
