@@ -142,9 +142,9 @@ public:
     void codeVPS(const VPS& vps);
     void codeSPS(const SPS& sps, const ScalingList& scalingList, const ProfileTierLevel& ptl);
     void codePPS(const PPS& pps);
-    void codeVUI(const VUI& vui, int maxSubTLayersMinusOne);
+    void codeVUI(const VUI& vui, int maxSubTLayers);
     void codeAUD(const Slice& slice);
-    void codeHrdParameters(const HRDInfo& hrd, int maxSubTLayersMinusOne);
+    void codeHrdParameters(const HRDInfo& hrd, int maxSubTLayers);
 
     void codeSliceHeader(const Slice& slice, FrameData& encData);
     void codeSliceHeaderWPPEntryPoints(const Slice& slice, const uint32_t *substreamSizes, uint32_t maxOffset);
