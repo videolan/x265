@@ -346,26 +346,27 @@ void Entropy::codeScalingList(const ScalingList& scalingList, uint32_t sizeId, u
 
 void Entropy::codeHrdParameters(const HRDInfo& hrd, int maxSubTLayersMinusOne)
 {
-        WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
-        WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
-        WRITE_FLAG(0, "sub_pic_hrd_params_present_flag");
+    WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
+    WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
+    WRITE_FLAG(0, "sub_pic_hrd_params_present_flag");
 
-        WRITE_CODE(hrd.bitRateScale, 4, "bit_rate_scale");
-        WRITE_CODE(hrd.cpbSizeScale, 4, "cpb_size_scale");
+    WRITE_CODE(hrd.bitRateScale, 4, "bit_rate_scale");
+    WRITE_CODE(hrd.cpbSizeScale, 4, "cpb_size_scale");
 
-        WRITE_CODE(hrd.initialCpbRemovalDelayLength - 1, 5, "initial_cpb_removal_delay_length_minus1");
-        WRITE_CODE(hrd.cpbRemovalDelayLength - 1,        5, "au_cpb_removal_delay_length_minus1");
-        WRITE_CODE(hrd.dpbOutputDelayLength - 1,         5, "dpb_output_delay_length_minus1");
-        for (int i = 0; i <= maxSubTLayersMinusOne; i++)
-        {
-            WRITE_FLAG(1, "fixed_pic_rate_general_flag");
-            WRITE_UVLC(0, "elemental_duration_in_tc_minus1");
-            WRITE_UVLC(0, "cpb_cnt_minus1");
+    WRITE_CODE(hrd.initialCpbRemovalDelayLength - 1, 5, "initial_cpb_removal_delay_length_minus1");
+    WRITE_CODE(hrd.cpbRemovalDelayLength - 1,        5, "au_cpb_removal_delay_length_minus1");
+    WRITE_CODE(hrd.dpbOutputDelayLength - 1,         5, "dpb_output_delay_length_minus1");
 
-            WRITE_UVLC(hrd.bitRateValue - 1, "bit_rate_value_minus1");
-            WRITE_UVLC(hrd.cpbSizeValue - 1, "cpb_size_value_minus1");
-            WRITE_FLAG(hrd.cbrFlag, "cbr_flag");
-        }
+    for (int i = 0; i <= maxSubTLayersMinusOne; i++)
+    {
+        WRITE_FLAG(1, "fixed_pic_rate_general_flag");
+        WRITE_UVLC(0, "elemental_duration_in_tc_minus1");
+        WRITE_UVLC(0, "cpb_cnt_minus1");
+
+        WRITE_UVLC(hrd.bitRateValue - 1, "bit_rate_value_minus1");
+        WRITE_UVLC(hrd.cpbSizeValue - 1, "cpb_size_value_minus1");
+        WRITE_FLAG(hrd.cbrFlag, "cbr_flag");
+    }
 }
 
 void Entropy::codeAUD(const Slice& slice)
