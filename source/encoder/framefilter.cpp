@@ -83,6 +83,11 @@ void FrameFilter::processRow(int row)
 {
     ProfileScopeEvent(filterCTURow);
 
+#if DETAILED_CU_STATS
+    ScopedElapsedTime filterPerfScope(m_frameEncoder->m_cuStats.loopFilterElapsedTime);
+    m_frameEncoder->m_cuStats.countLoopFilter++;
+#endif
+
     if (!m_param->bEnableLoopFilter && !m_param->bEnableSAO)
     {
         processRowPost(row);

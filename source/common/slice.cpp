@@ -33,7 +33,7 @@ void Slice::setRefPicList(PicList& picList)
 {
     if (m_sliceType == I_SLICE)
     {
-        ::memset(m_refPicList, 0, sizeof(m_refPicList));
+        memset(m_refPicList, 0, sizeof(m_refPicList));
         m_numRefIdx[1] = m_numRefIdx[0] = 0;
         return;
     }
@@ -112,7 +112,7 @@ void Slice::setRefPicList(PicList& picList)
     if (m_sliceType != B_SLICE)
     {
         m_numRefIdx[1] = 0;
-        ::memset(m_refPicList[1], 0, sizeof(m_refPicList[1]));
+        memset(m_refPicList[1], 0, sizeof(m_refPicList[1]));
     }
     else
     {

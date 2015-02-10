@@ -181,6 +181,7 @@ void x265_param_default(x265_param *param)
     param->bIntraInBFrames = 0;
     param->bLossless = 0;
     param->bCULossless = 0;
+    param->bEnableTemporalSubLayers = 0;
 
     /* Rate control options */
     param->rc.vbvMaxBitrate = 0;
@@ -598,6 +599,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             p->scenecutThreshold = atoi(value);
         }
     }
+    OPT("temporal-layers") p->bEnableTemporalSubLayers = atobool(value);
     OPT("keyint") p->keyframeMax = atoi(value);
     OPT("min-keyint") p->keyframeMin = atoi(value);
     OPT("rc-lookahead") p->lookaheadDepth = atoi(value);
@@ -992,8 +994,8 @@ int x265_check_params(x265_param *param)
           "subme must be less than or equal to X265_MAX_SUBPEL_LEVEL (7)");
     CHECK(param->subpelRefine < 0,
           "subme must be greater than or equal to 0");
-    CHECK(param->frameNumThreads < 0,
-          "frameNumThreads (--frame-threads) must be 0 or higher");
+    CHECK(param->frameNumThreads < 0 || param->frameNumThreads > X265_MAX_FRAME_THREADS,
+          "frameNumThreads (--frame-threads) must be [0 .. X265_MAX_FRAME_THREADS)");
     CHECK(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
     CHECK(param->cbQpOffset >  12, "Max. Chroma Cb QP Offset is  12");
     CHECK(param->crQpOffset < -12, "Min. Chroma Cr QP Offset is -12");
@@ -1309,6 +1311,7 @@ char *x265_param2string(x265_param *p)
     BOOL(p->bEnableConstrainedIntra, "constrained-intra");
     BOOL(p->bEnableFastIntra, "fast-intra");
     BOOL(p->bOpenGOP, "open-gop");
+    BOOL(p->bEnableTemporalSubLayers, "temporal-layers");
     s += sprintf(s, " interlace=%d", p->interlaceMode);
     s += sprintf(s, " keyint=%d", p->keyframeMax);
     s += sprintf(s, " min-keyint=%d", p->keyframeMin);

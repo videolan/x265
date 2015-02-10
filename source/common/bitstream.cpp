@@ -27,7 +27,7 @@ void Bitstream::push_back(uint8_t val)
         uint8_t *temp = X265_MALLOC(uint8_t, m_byteAlloc * 2);
         if (temp)
         {
-            ::memcpy(temp, m_fifo, m_byteOccupancy);
+            memcpy(temp, m_fifo, m_byteOccupancy);
             X265_FREE(m_fifo);
             m_fifo = temp;
             m_byteAlloc *= 2;

@@ -230,6 +230,7 @@ typedef enum
 #define X265_B_ADAPT_TRELLIS    2
 
 #define X265_BFRAME_MAX         16
+#define X265_MAX_FRAME_THREADS  16
 
 #define X265_TYPE_AUTO          0x0000  /* Let x265 choose the right type */
 #define X265_TYPE_IDR           0x0001
@@ -365,17 +366,17 @@ typedef struct x265_param
      * x265 will try to allocate one worker thread per CPU core */
     int       poolNumThreads;
 
-    /* Number of concurrently encoded frames, 0 implies auto-detection. By
-     * default x265 will use a number of frame threads emperically determined to
-     * be optimal for your CPU core count, between 2 and 6.  Using more than one
-     * frame thread causes motion search in the down direction to be clamped but
-     * otherwise encode behavior is unaffected. With CQP rate control the output
-     * bitstream is deterministic for all values of frameNumThreads greater than
-     * 1.  All other forms of rate-control can be negatively impacted by
-     * increases to the number of frame threads because the extra concurrency
-     * adds uncertainty to the bitrate estimations.  There is no limit to the
-     * number of frame threads you use for each encoder, but frame parallelism
-     * is generally limited by the the number of CU rows */
+    /* Number of concurrently encoded frames between 1 and X265_MAX_FRAME_THREADS
+     * or 0 for auto-detection. By default x265 will use a number of frame
+     * threads empirically determined to be optimal for your CPU core count,
+     * between 2 and 6.  Using more than one frame thread causes motion search
+     * in the down direction to be clamped but otherwise encode behavior is
+     * unaffected. With CQP rate control the output bitstream is deterministic
+     * for all values of frameNumThreads greater than 1. All other forms of
+     * rate-control can be negatively impacted by increases to the number of
+     * frame threads because the extra concurrency adds uncertainty to the
+     * bitrate estimations. Frame parallelism is generally limited by the the
+     * number of CTU rows */
     int       frameNumThreads;
 
     /* Use multiple threads to measure CU mode costs. Recommended for many core
@@ -789,6 +790,12 @@ typedef struct x265_param
      * If lossless mode is chosen, the cu-transquant-bypass flag is set for that
      * CU. */
     int       bCULossless;
+
+    /* Enable Temporal Sub Layers while encoding, signals NAL units of coded slices
+     * with their temporalId. Output bitstreams can be extracted either at the base temporal layer
+     * (layer 0) with roughly half the frame rate or at a higher temporal layer (layer 1)
+     * that decodes all the frames in the sequence. */
+    int       bEnableTemporalSubLayers;
 
     /*== Rate Control ==*/
 
