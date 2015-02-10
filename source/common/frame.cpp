@@ -59,9 +59,9 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
         /* initialize right border of m_reconpicYuv as SAO may read beyond the
          * end of the picture accessing uninitialized pixels */
         int maxHeight = sps.numCuInHeight * g_maxCUSize;
-        memset(m_reconPic->m_picOrg[0], 0, m_reconPic->m_stride * maxHeight);
-        memset(m_reconPic->m_picOrg[1], 0, m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
-        memset(m_reconPic->m_picOrg[2], 0, m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
+        memset(m_reconPic->m_picOrg[0], 0, sizeof(pixel) * m_reconPic->m_stride * maxHeight);
+        memset(m_reconPic->m_picOrg[1], 0, sizeof(pixel) * m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
+        memset(m_reconPic->m_picOrg[2], 0, sizeof(pixel) * m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
     }
     return ok;
 }

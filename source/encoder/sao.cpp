@@ -113,8 +113,11 @@ bool SAO::create(x265_param* param)
 
     for (int i = 0; i < 3; i++)
     {
-        CHECKED_MALLOC(m_tmpU1[i], pixel, m_param->sourceWidth);
-        CHECKED_MALLOC(m_tmpU2[i], pixel, m_param->sourceWidth);
+        // SAO asm code will read 1 pixel before and after, so pad by 2
+        CHECKED_MALLOC(m_tmpU1[i], pixel, m_param->sourceWidth + 2);
+        m_tmpU1[i] += 1;
+        CHECKED_MALLOC(m_tmpU2[i], pixel, m_param->sourceWidth + 2);
+        m_tmpU2[i] += 1;
     }
 
     CHECKED_MALLOC(m_count, PerClass, NUM_PLANE);
@@ -150,8 +153,8 @@ void SAO::destroy()
 
     for (int i = 0; i < 3; i++)
     {
-        X265_FREE(m_tmpU1[i]);
-        X265_FREE(m_tmpU2[i]);
+        if (m_tmpU1[i]) X265_FREE(m_tmpU1[i] - 1);
+        if (m_tmpU2[i]) X265_FREE(m_tmpU2[i] - 1);
     }
 
     X265_FREE(m_count);
