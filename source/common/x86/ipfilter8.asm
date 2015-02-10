@@ -4791,7 +4791,8 @@ cglobal interp_8tap_vert_ps_4x4, 4, 6, 5
 
 %macro FILTER_VER_LUMA_AVX2_4xN 3
 INIT_YMM avx2
-cglobal interp_8tap_vert_%3_%1x%2, 4, 7, 8, 0-gprsize
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_vert_%3_%1x%2, 4, 9, 10
     mov             r4d, r4m
     shl             r4d, 7
 
@@ -4811,10 +4812,11 @@ cglobal interp_8tap_vert_%3_%1x%2, 4, 7, 8, 0-gprsize
     add             r3d, r3d
     vbroadcasti128  m6, [pw_2000]
 %endif
+    lea             r8, [r3 * 3]
     mova            m5, [interp4_vpp_shuf]
     mova            m0, [interp4_vpp_shuf1]
     mova            m7, [interp4_vpp_shuf1 + mmsize]
-    mov             word [rsp], %2 / 4
+    mov             r7d, %2 / 8
 .loop:
     movd            xm1, [r0]
     pinsrd          xm1, [r0 + r1], 1
@@ -4829,48 +4831,77 @@ cglobal interp_8tap_vert_%3_%1x%2, 4, 7, 8, 0-gprsize
     lea             r0, [r0 + r1 * 4]
     movd            xm3, [r0]
     pinsrd          xm3, [r0 + r1], 1
-    pinsrd          xm3, [r0 + r1 * 2], 2                   ; m3 = row[x 10 9 8]
-    vinserti128     m2, m2, xm3, 1                          ; m2 = row[x 10 9 8 7 6 5 4]
-    vpermd          m3, m0, m1                              ; m3 = row[4 3 3 2 2 1 1 0]
+    pinsrd          xm3, [r0 + r1 * 2], 2
+    pinsrd          xm3, [r0 + r4], 3                       ; m3 = row[11 10 9 8]
+    vinserti128     m2, m2, xm3, 1                          ; m2 = row[11 10 9 8 7 6 5 4]
+    lea             r0, [r0 + r1 * 4]
+    movd            xm4, [r0]
+    pinsrd          xm4, [r0 + r1], 1
+    pinsrd          xm4, [r0 + r1 * 2], 2                   ; m4 = row[x 14 13 12]
+    vinserti128     m3, m3, xm4, 1                          ; m3 = row[x 14 13 12 11 10 9 8]
+    vpermd          m8, m0, m1                              ; m8 = row[4 3 3 2 2 1 1 0]
     vpermd          m4, m0, m2                              ; m4 = row[8 7 7 6 6 5 5 4]
     vpermd          m1, m7, m1                              ; m1 = row[6 5 5 4 4 3 3 2]
     vpermd          m2, m7, m2                              ; m2 = row[10 9 9 8 8 7 7 6]
+    vpermd          m9, m0, m3                              ; m9 = row[12 11 11 10 10 9 9 8]
+    vpermd          m3, m7, m3                              ; m3 = row[14 13 13 12 12 11 11 10]
 
-    pshufb          m3, m3, m5
+    pshufb          m8, m8, m5
     pshufb          m1, m1, m5
     pshufb          m4, m4, m5
+    pshufb          m9, m9, m5
     pshufb          m2, m2, m5
-    pmaddubsw       m3, [r5]
+    pshufb          m3, m3, m5
+    pmaddubsw       m8, [r5]
     pmaddubsw       m1, [r5 + mmsize]
-    pmaddubsw       m4, [r5 + 2 * mmsize]
-    pmaddubsw       m2, [r5 + 3 * mmsize]
+    pmaddubsw       m9, [r5 + 2 * mmsize]
+    pmaddubsw       m3, [r5 + 3 * mmsize]
+    paddw           m8, m1
+    paddw           m9, m3
+    pmaddubsw       m1, m4, [r5 + 2 * mmsize]
+    pmaddubsw       m3, m2, [r5 + 3 * mmsize]
+    pmaddubsw       m4, [r5]
+    pmaddubsw       m2, [r5 + mmsize]
     paddw           m3, m1
     paddw           m2, m4
-    paddw           m3, m2                                  ; m0 = WORD ROW[3 2 1 0]
+    paddw           m8, m3                                  ; m8 = WORD ROW[3 2 1 0]
+    paddw           m9, m2                                  ; m9 = WORD ROW[7 6 5 4]
 
 %ifidn %3,pp
-    pmulhrsw        m3, m6
-    vextracti128    xm2, m3, 1
-    packuswb        xm3, xm2
-    movd            [r2], xm3
-    pextrd          [r2 + r3], xm3, 1
-    lea             r2, [r2 + r3 * 2]
-    pextrd          [r2], xm3, 2
-    pextrd          [r2 + r3], xm3, 3
+    pmulhrsw        m8, m6
+    pmulhrsw        m9, m6
+    packuswb        m8, m9
+    vextracti128    xm1, m8, 1
+    movd            [r2], xm8
+    pextrd          [r2 + r3], xm8, 1
+    movd            [r2 + r3 * 2], xm1
+    pextrd          [r2 + r8], xm1, 1
+    lea             r2, [r2 + r3 * 4]
+    pextrd          [r2], xm8, 2
+    pextrd          [r2 + r3], xm8, 3
+    pextrd          [r2 + r3 * 2], xm1, 2
+    pextrd          [r2 + r8], xm1, 3
 %else
-    psubw           m3, m6
-    vextracti128    xm2, m3, 1
-    movq            [r2], xm3
-    movhps          [r2 + r3], xm3
-    lea             r2, [r2 + r3 * 2]
-    movq            [r2], xm2
-    movhps          [r2 + r3], xm2
+    psubw           m8, m6
+    psubw           m9, m6
+    vextracti128    xm1, m8, 1
+    vextracti128    xm2, m9, 1
+    movq            [r2], xm8
+    movhps          [r2 + r3], xm8
+    movq            [r2 + r3 * 2], xm1
+    movhps          [r2 + r8], xm1
+    lea             r2, [r2 + r3 * 4]
+    movq            [r2], xm9
+    movhps          [r2 + r3], xm9
+    movq            [r2 + r3 * 2], xm2
+    movhps          [r2 + r8], xm2
 %endif
-    lea             r2, [r2 + r3 * 2]
+    lea             r2, [r2 + r3 * 4]
     sub             r0, r6
-    dec             word [rsp]
+    dec             r7d
     jnz             .loop
     RET
+%endif
 %endmacro
 
 ;-------------------------------------------------------------------------------------------------------------
