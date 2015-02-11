@@ -182,9 +182,7 @@ bool Y4MInput::parseHeader()
         // Skip Y4MPEG string
         int c = ifs->get();
         while (!ifs->eof() && (c != ' ') && (c != '\n'))
-        {
             c = ifs->get();
-        }
 
         while (c == ' ' && !ifs->eof())
         {
@@ -198,15 +196,10 @@ bool Y4MInput::parseHeader()
                     c = ifs->get();
 
                     if (c == ' ' || c == '\n')
-                    {
                         break;
-                    }
                     else
-                    {
                         width = width * 10 + (c - '0');
-                    }
                 }
-
                 break;
 
             case 'H':
@@ -215,15 +208,10 @@ bool Y4MInput::parseHeader()
                 {
                     c = ifs->get();
                     if (c == ' ' || c == '\n')
-                    {
                         break;
-                    }
                     else
-                    {
                         height = height * 10 + (c - '0');
-                    }
                 }
-
                 break;
 
             case 'F':
@@ -239,16 +227,13 @@ bool Y4MInput::parseHeader()
                         {
                             c = ifs->get();
                             if (c == ' ' || c == '\n')
-                            {
                                 break;
-                            }
                             else
                             {
                                 rateNum = rateNum * 10 + (c - '0');
                                 rateDenom = rateDenom * 10;
                             }
                         }
-
                         break;
                     }
                     else if (c == ':')
@@ -257,21 +242,15 @@ bool Y4MInput::parseHeader()
                         {
                             c = ifs->get();
                             if (c == ' ' || c == '\n')
-                            {
                                 break;
-                            }
                             else
                                 rateDenom = rateDenom * 10 + (c - '0');
                         }
-
                         break;
                     }
                     else
-                    {
                         rateNum = rateNum * 10 + (c - '0');
-                    }
                 }
-
                 break;
 
             case 'A':
@@ -286,21 +265,15 @@ bool Y4MInput::parseHeader()
                         {
                             c = ifs->get();
                             if (c == ' ' || c == '\n')
-                            {
                                 break;
-                            }
                             else
                                 sarHeight = sarHeight * 10 + (c - '0');
                         }
-
                         break;
                     }
                     else
-                    {
                         sarWidth = sarWidth * 10 + (c - '0');
-                    }
                 }
-
                 break;
 
             case 'C':
@@ -311,9 +284,7 @@ bool Y4MInput::parseHeader()
                     c = ifs->get();
 
                     if (c <= '9' && c >= '0')
-                    {
                         csp = csp * 10 + (c - '0');
-                    }
                     else if (c == 'p')
                     {
                         // example: C420p16
@@ -345,15 +316,12 @@ bool Y4MInput::parseHeader()
                     if (c == ' ' || c == '\n')
                         break;
                 }
-
                 break;
             }
         }
 
         if (c == '\n')
-        {
             break;
-        }
     }
 
     if (width < MIN_FRAME_WIDTH || width > MAX_FRAME_WIDTH ||
