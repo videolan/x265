@@ -129,6 +129,7 @@ void x265_param_default(x265_param *param)
     param->maxCUSize = 64;
     param->tuQTMaxInterDepth = 1;
     param->tuQTMaxIntraDepth = 1;
+    param->maxTUSize = 32;
 
     /* Coding Structure */
     param->keyframeMin = 0;
@@ -572,6 +573,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("ctu") p->maxCUSize = (uint32_t)atoi(value);
     OPT("tu-intra-depth") p->tuQTMaxIntraDepth = (uint32_t)atoi(value);
     OPT("tu-inter-depth") p->tuQTMaxInterDepth = (uint32_t)atoi(value);
+    OPT("max-tu-size") p->maxTUSize = (uint32_t)atoi(value);
     OPT("subme") p->subpelRefine = atoi(value);
     OPT("merange") p->searchRange = atoi(value);
     OPT("rect") p->bEnableRectInter = atobool(value);
@@ -1012,7 +1014,8 @@ int x265_check_params(x265_param *param)
           "QuadtreeTUMaxDepthIntra must be greater 0 and less than 5");
     CHECK(maxLog2CUSize < tuQTMinLog2Size + param->tuQTMaxIntraDepth - 1,
           "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
-
+    CHECK((param->maxTUSize != 32 && param->maxTUSize != 16 && param->maxTUSize != 8 && param->maxTUSize != 4) || param->maxTUSize > param->maxCUSize,
+          "max TU size must be 4, 8, 16, or 32 and should be less than max CU size");
     CHECK(param->maxNumMergeCand < 1, "MaxNumMergeCand must be 1 or greater.");
     CHECK(param->maxNumMergeCand > 5, "MaxNumMergeCand must be 5 or smaller.");
 
@@ -1194,8 +1197,10 @@ void x265_print_params(x265_param *param)
     if (param->interlaceMode)
         x265_log(param, X265_LOG_INFO, "Interlaced field inputs             : %s\n", x265_interlace_names[param->interlaceMode]);
 
-    x265_log(param, X265_LOG_INFO, "CTU size / RQT depth inter / intra  : %d / %d / %d\n",
-             param->maxCUSize, param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
+    x265_log(param, X265_LOG_INFO, "Coding QT: max CU size, min CU size : %d / %d\n", param->maxCUSize, 8);
+
+    x265_log(param, X265_LOG_INFO, "Residual QT: max TU size, max depth : %d / %d inter / %d intra\n",
+             param->maxTUSize, param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
     x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
              x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
@@ -1291,6 +1296,7 @@ char *x265_param2string(x265_param *p)
     s += sprintf(s, " bitdepth=%d", p->internalBitDepth);
     BOOL(p->bEnableWavefront, "wpp");
     s += sprintf(s, " ctu=%d", p->maxCUSize);
+    s += sprintf(s, " max-tu-size=%d", p->maxTUSize);
     s += sprintf(s, " tu-intra-depth=%d", p->tuQTMaxIntraDepth);
     s += sprintf(s, " tu-inter-depth=%d", p->tuQTMaxInterDepth);
     s += sprintf(s, " me=%d", p->searchMethod);

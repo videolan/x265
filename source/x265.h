@@ -593,6 +593,11 @@ typedef struct x265_param
 
     /*== Residual Quadtree Transform Unit (TU) definitions ==*/
 
+    /* Maxiumum TU width and height in pixels.  The size must be 32, 16, 8 or 4.
+     * The larger the size the more efficiently the residual can be compressed
+     * by the DCT transforms, at the expense of more computation */
+    uint32_t  maxTUSize;
+
     /* The additional depth the residual quadtree is allowed to recurse beyond
      * the coding quadtree, for inter coded blocks. This must be between 1 and
      * 4. The higher the value the more efficiently the residual can be

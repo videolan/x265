@@ -645,6 +645,15 @@ as the residual quad-tree (RQT).
 
 	**Values:** 0:disabled 1:4x cost penalty 2:force splits
 
+.. option:: --max-tu-size <32|16|8|4>
+
+	Maximum TU size (width and height). The residual can be more
+	efficiently compressed by the DCT transform when the max TU size
+	is larger, but at the expense of more computation. Transform unit
+	quad-tree begins at the same depth of the coded tree unit, but if the
+	maximum TU size is smaller than the CU size then transform QT begins 
+	at the depth of the max-tu-size. Default: 32.
+
 Temporal / motion search options
 ================================
 
