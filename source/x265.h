@@ -740,11 +740,6 @@ typedef struct x265_param
      * efficiency at a major cost of performance. Default is no RDO (0) */
     int       rdLevel;
 
-    /* Enable the use of `coded block flags` (flags set to true when a residual
-     * has been coded for a given block) to avoid intra analysis in likely skip
-     * blocks. Only applicable in RD levels 5 and 6. Default is disabled */
-    int       bEnableCbfFastMode;
-
     /* Enable early skip decisions to avoid intra and inter analysis in likely
      * skip blocks. Default is disabled */
     int       bEnableEarlySkip;

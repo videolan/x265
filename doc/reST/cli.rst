@@ -506,14 +506,6 @@ the prediction quad-tree.
 	Measure full CU size (2Nx2N) merge candidates first; if no residual
 	is found the analysis is short circuited. Default disabled
 
-.. option:: --fast-cbf, --no-fast-cbf
-
-	Short circuit analysis if a prediction is found that does not set
-	the coded block flag (aka: no residual was encoded).  It prevents
-	the encoder from perhaps finding other predictions that also have no
-	residual but require less signaling bits or have less distortion.
-	Only applicable for RD levels 5 and 6. Default disabled
-
 .. option:: --fast-intra, --no-fast-intra
 
 	Perform an initial scan of every fifth intra angular mode, then

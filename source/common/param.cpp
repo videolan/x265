@@ -154,7 +154,6 @@ void x265_param_default(x265_param *param)
     param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
     param->bEnableEarlySkip = 0;
-    param->bEnableCbfFastMode = 0;
     param->bEnableAMP = 0;
     param->bEnableRectInter = 0;
     param->rdLevel = 3;
@@ -581,7 +580,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("max-merge") p->maxNumMergeCand = (uint32_t)atoi(value);
     OPT("temporal-mvp") p->bEnableTemporalMvp = atobool(value);
     OPT("early-skip") p->bEnableEarlySkip = atobool(value);
-    OPT("fast-cbf") p->bEnableCbfFastMode = atobool(value);
     OPT("rdpenalty") p->rdPenalty = atoi(value);
     OPT("tskip") p->bEnableTransformSkip = atobool(value);
     OPT("no-tskip-fast") p->bEnableTSkipFast = atobool(value);
@@ -1252,7 +1250,6 @@ void x265_print_params(x265_param *param)
     if (param->psyRdoq > 0.)
         fprintf(stderr, "psy-rdoq=%.2lf ", param->psyRdoq);
     TOOLOPT(param->bEnableEarlySkip, "early-skip");
-    TOOLOPT(param->bEnableCbfFastMode, "fast-cbf");
     if (param->noiseReductionIntra)
         fprintf(stderr, "nr-intra=%d ", param->noiseReductionIntra);
     if (param->noiseReductionInter)
@@ -1307,7 +1304,6 @@ char *x265_param2string(x265_param *p)
     s += sprintf(s, " max-merge=%d", p->maxNumMergeCand);
     BOOL(p->bEnableTemporalMvp, "temporal-mvp");
     BOOL(p->bEnableEarlySkip, "early-skip");
-    BOOL(p->bEnableCbfFastMode, "fast-cbf");
     s += sprintf(s, " rdpenalty=%d", p->rdPenalty);
     BOOL(p->bEnableTransformSkip, "tskip");
     BOOL(p->bEnableTSkipFast, "tskip-fast");
