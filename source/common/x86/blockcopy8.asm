@@ -2903,9 +2903,44 @@ BLOCKCOPY_PS_W16_H4 16, 12
 BLOCKCOPY_PS_W16_H4 16, 16
 BLOCKCOPY_PS_W16_H4 16, 32
 BLOCKCOPY_PS_W16_H4 16, 64
-
 BLOCKCOPY_PS_W16_H4 16, 24
+;-----------------------------------------------------------------------------
+; void blockcopy_ps_%1x%2(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_PS_W16_H4_avx2 2
+INIT_YMM avx2
+cglobal blockcopy_ps_%1x%2, 4, 7, 3
 
+    add     r1, r1
+    mov     r4d, %2/4
+    lea     r5, [3 * r3]
+    lea     r6, [3 * r1]
+    pxor    m0, m0
+
+.loop:
+    movu        xm1, [r2]
+    pmovzxbw    m2, xm1
+    movu        [r0], m2
+    movu        xm1, [r2 + r3]
+    pmovzxbw    m2, xm1
+    movu        [r0 + r1], m2
+    movu        xm1, [r2 + 2 * r3]
+    pmovzxbw    m2, xm1
+    movu        [r0 + 2 * r1], m2
+    movu        xm1, [r2 + r5]
+    pmovzxbw    m2, xm1
+    movu        [r0 + r6], m2
+
+    lea         r0, [r0 + 4 * r1]
+    lea         r2, [r2 + 4 * r3]
+
+    dec         r4d
+    jnz         .loop
+    RET
+%endmacro
+
+BLOCKCOPY_PS_W16_H4_avx2 16, 16
+BLOCKCOPY_PS_W16_H4_avx2 16, 32
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_%1x%2(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 ;-----------------------------------------------------------------------------
