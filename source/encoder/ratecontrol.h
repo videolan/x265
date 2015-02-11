@@ -181,6 +181,11 @@ public:
     int64_t  m_satdCostWindow[50];
     int      m_sliderPos;
     int64_t  m_encodedBitsWindow[50];
+    /* To detect a pattern of low detailed static frames in single pass ABR using satdcosts */
+    bool m_isPatternPresent;
+    int64_t m_lastBsliceSatdCost;
+    int m_numBframesInPattern;
+
     /* a common variable on which rateControlStart, rateControlEnd and rateControUpdateStats waits to
      * sync the calls to these functions. For example
      * -F2:

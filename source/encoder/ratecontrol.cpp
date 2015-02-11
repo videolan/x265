@@ -219,6 +219,7 @@ RateControl::RateControl(x265_param *p)
     m_statFileOut = NULL;
     m_cutreeStatFileOut = m_cutreeStatFileIn = NULL;
     m_rce2Pass = NULL;
+    m_lastBsliceSatdCost = 0;
 
     // vbv initialization
     m_param->rc.vbvBufferSize = x265_clip3(0, 2000000, m_param->rc.vbvBufferSize);
@@ -357,6 +358,8 @@ bool RateControl::init(const SPS *sps)
         m_encodedBitsWindow[i] = 0;
     }
     m_sliderPos = 0;
+    m_isPatternPresent = false;
+    m_numBframesInPattern = 0;
 
     /* 720p videos seem to be a good cutoff for cplxrSum */
     double tuneCplxFactor = (m_param->rc.cuTree && m_ncu > 3600) ? 2.5 : 1;
@@ -1009,6 +1012,26 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
             /* Update rce for use in rate control VBV later */
             rce->lastSatd = m_currentSatd;
             X265_CHECK(rce->lastSatd, "satdcost cannot be zero\n");
+            /* Detect a pattern for B frames with same SATDcost to identify a series of static frames
+             * and the P frame at the end of the series marks a possible case for ABR reset logic */
+            if (m_param->bframes)
+            {
+                if (m_sliceType != B_SLICE && m_numBframesInPattern > m_param->bframes)
+                {
+                    m_isPatternPresent = true;
+                }
+                else if (m_sliceType == B_SLICE && !IS_REFERENCED(curFrame))
+                {
+                    if (m_currentSatd != m_lastBsliceSatdCost && !rce->bLastMiniGopBFrame)
+                    {
+                        m_isPatternPresent = false;
+                        m_lastBsliceSatdCost = m_currentSatd;
+                        m_numBframesInPattern = 0;
+                    }
+                    else if (m_currentSatd == m_lastBsliceSatdCost)
+                        m_numBframesInPattern++;
+                }
+            }
         }
         double q = x265_qScale2qp(rateEstimateQscale(curFrame, rce));
         q = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, q);
@@ -1288,7 +1311,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 slidingWindowCplxSum *= 0.5;
                 if (!m_satdCostWindow[pos])
                     break;
-                slidingWindowCplxSum += m_satdCostWindow[pos] / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);
+                slidingWindowCplxSum += m_satdCostWindow[pos];
             }
             rce->movingAvgSum = slidingWindowCplxSum;
             m_satdCostWindow[m_sliderPos % s_slidingWindowFrames] = rce->lastSatd;
@@ -1563,9 +1586,11 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
     // Check if current Slice is a scene cut that follows low detailed/blank frames
     if (rce->lastSatd > 4 * rce->movingAvgSum)
     {
-        if (!m_isAbrReset && rce->movingAvgSum > 0)
+        if (!m_isAbrReset && rce->movingAvgSum > 0
+            && (m_isPatternPresent || !m_param->bframes))
         {
-            int64_t shrtTermWantedBits = (int64_t) (X265_MIN(m_sliderPos, s_slidingWindowFrames) * m_bitrate * m_frameDuration);
+            int pos = X265_MAX(m_sliderPos - m_param->frameNumThreads, 0);
+            int64_t shrtTermWantedBits = (int64_t) (X265_MIN(pos, s_slidingWindowFrames) * m_bitrate * m_frameDuration);
             int64_t shrtTermTotalBitsSum = 0;
             // Reset ABR if prev frames are blank to prevent further sudden overflows/ high bit rate spikes.
             for (int i = 0; i < s_slidingWindowFrames ; i++)
@@ -1581,7 +1606,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
                 m_lastAbrResetPoc = rce->poc;
             }
         }
-        else
+        else if (m_isAbrReset && isFrameDone)
         {
             // Clear flag to reset ABR and continue as usual.
             m_isAbrReset = false;
