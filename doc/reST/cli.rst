@@ -416,6 +416,13 @@ Profile, Level, Tier
 	specified level, main tier first, turning on high tier only if 
 	necessary and available at that level.
 
+.. option:: --ref <1..16>
+
+	Max number of L0 references to be allowed. This number has a linear
+	multiplier effect on the amount of work performed in motion search,
+	but will generally have a beneficial affect on compression and
+	distortion. Default 3
+
 .. note::
 	:option:`--profile`, :option:`--level-idc`, and
 	:option:`--high-tier` are only intended for use when you are
@@ -531,14 +538,6 @@ the prediction quad-tree.
 	Only effective at RD levels 3 and above, which perform RDO mode
 	decisions.
 
-.. option:: --tskip, --no-tskip
-
-	Enable evaluation of transform skip (bypass DCT but still use
-	quantization) coding for 4x4 TU coded blocks.
-
-	Only effective at RD levels 3 and above, which perform RDO mode
-	decisions. Default disabled
-
 .. option:: --tskip-fast, --no-tskip-fast
 
 	Only evaluate transform skip for NxN intra predictions (4x4 blocks).
@@ -598,8 +597,66 @@ as the residual quad-tree (RQT).
 	partitions, in which case a TU split is implied and thus the
 	residual quad-tree begins one layer below the CU quad-tree.
 
+.. option:: --nr-intra <integer>, --nr-inter <integer>
+
+	Noise reduction - an adaptive deadzone applied after DCT
+	(subtracting from DCT coefficients), before quantization.  It does
+	no pixel-level filtering, doesn't cross DCT block boundaries, has no
+	overlap, The higher the strength value parameter, the more
+	aggressively it will reduce noise.
+
+	Enabling noise reduction will make outputs diverge between different
+	numbers of frame threads. Outputs will be deterministic but the
+	outputs of -F2 will no longer match the outputs of -F3, etc.
+
+	**Values:** any value in range of 0 to 2000. Default 0 (disabled).
+
+.. option:: --tskip, --no-tskip
+
+	Enable evaluation of transform skip (bypass DCT but still use
+	quantization) coding for 4x4 TU coded blocks.
+
+	Only effective at RD levels 3 and above, which perform RDO mode
+	decisions. Default disabled
+
+.. option:: --rdpenalty <0..2>
+
+	When set to 1, transform units of size 32x32 are given a 4x bit cost
+	penalty compared to smaller transform units, in intra coded CUs in P
+	or B slices.
+
+	When set to 2, transform units of size 32x32 are not even attempted,
+	unless otherwise required by the maximum recursion depth.  For this
+	option to be effective with 32x32 intra CUs,
+	:option:`--tu-intra-depth` must be at least 2.  For it to be
+	effective with 64x64 intra CUs, :option:`--tu-intra-depth` must be
+	at least 3.
+
+	Note that in HEVC an intra transform unit (a block of the residual
+	quad-tree) is also a prediction unit, meaning that the intra
+	prediction signal is generated for each TU block, the residual
+	subtracted and then coded. The coding unit simply provides the
+	prediction modes that will be used when predicting all of the
+	transform units within the CU. This means that when you prevent
+	32x32 intra transform units, you are preventing 32x32 intra
+	predictions.
+
+	Default 0, disabled.
+
+	**Values:** 0:disabled 1:4x cost penalty 2:force splits
+
 Temporal / motion search options
 ================================
+
+.. option:: --max-merge <1..5>
+
+	Maximum number of neighbor (spatial and temporal) candidate blocks
+	that the encoder may consider for merging motion predictions. If a
+	merge candidate results in no residual, it is immediately selected
+	as a "skip".  Otherwise the merge candidates are tested as part of
+	motion estimation when searching for the least cost inter option.
+	The max candidate number is encoded in the SPS and determines the
+	bit cost of signaling merge CUs. Default 2
 
 .. option:: --me <integer|string>
 
@@ -663,16 +720,6 @@ Temporal / motion search options
 
 	**Range of values:** an integer from 0 to 32768
 
-.. option:: --max-merge <1..5>
-
-	Maximum number of neighbor (spatial and temporal) candidate blocks
-	that the encoder may consider for merging motion predictions. If a
-	merge candidate results in no residual, it is immediately selected
-	as a "skip".  Otherwise the merge candidates are tested as part of
-	motion estimation when searching for the least cost inter option.
-	The max candidate number is encoded in the SPS and determines the
-	bit cost of signaling merge CUs. Default 2
-
 .. option:: --temporal-mvp, --no-temporal-mvp
 
 	Enable temporal motion vector predictors in P and B slices.
@@ -708,32 +755,6 @@ Spatial/intra options
 	pixels or default values. The general idea is to block the
 	propagation of reference errors that may have resulted from lossy
 	signals. Default disabled
-
-.. option:: --rdpenalty <0..2>
-
-	When set to 1, transform units of size 32x32 are given a 4x bit cost
-	penalty compared to smaller transform units, in intra coded CUs in P
-	or B slices.
-
-	When set to 2, transform units of size 32x32 are not even attempted,
-	unless otherwise required by the maximum recursion depth.  For this
-	option to be effective with 32x32 intra CUs,
-	:option:`--tu-intra-depth` must be at least 2.  For it to be
-	effective with 64x64 intra CUs, :option:`--tu-intra-depth` must be
-	at least 3.
-
-	Note that in HEVC an intra transform unit (a block of the residual
-	quad-tree) is also a prediction unit, meaning that the intra
-	prediction signal is generated for each TU block, the residual
-	subtracted and then coded. The coding unit simply provides the
-	prediction modes that will be used when predicting all of the
-	transform units within the CU. This means that when you prevent
-	32x32 intra transform units, you are preventing 32x32 intra
-	predictions.
-
-	Default 0, disabled.
-
-	**Values:** 0:disabled 1:4x cost penalty 2:force splits
 
 Psycho-visual options
 =====================
@@ -879,13 +900,6 @@ Slice decision options
 
 	Use B-frames as references, when possible. Default enabled
 
-.. option:: --ref <1..16>
-
-	Max number of L0 references to be allowed. This number has a linear
-	multiplier effect on the amount of work performed in motion search,
-	but will generally have a beneficial affect on compression and
-	distortion. Default 3
-
 Quality, rate control and rate distortion options
 =================================================
 
@@ -994,20 +1008,6 @@ Quality, rate control and rate distortion options
 	blocks which are quickly changed and are not referenced are given
 	less bits. This tends to improve detail in the backgrounds of video
 	with less detail in areas of high motion. Default enabled
-
-.. option:: --nr-intra <integer>, --nr-inter <integer>
-
-	Noise reduction - an adaptive deadzone applied after DCT
-	(subtracting from DCT coefficients), before quantization.  It does
-	no pixel-level filtering, doesn't cross DCT block boundaries, has no
-	overlap, The higher the strength value parameter, the more
-	aggressively it will reduce noise.
-
-	Enabling noise reduction will make outputs diverge between different
-	numbers of frame threads. Outputs will be deterministic but the
-	outputs of -F2 will no longer match the outputs of -F3, etc.
-
-	**Values:** any value in range of 0 to 2000. Default 0 (disabled).
 
 .. option:: --pass <integer>
 
@@ -1347,6 +1347,21 @@ Bitstream options
 	to keep the stream headers for you and you want keyframes to be
 	random access points. Default disabled
 
+.. option:: --aud, --no-aud
+
+	Emit an access unit delimiter NAL at the start of each slice access
+	unit. If :option:`--repeat-headers` is not enabled (indicating the
+	user will be writing headers manually at the start of the stream)
+	the very first AUD will be skipped since it cannot be placed at the
+	start of the access unit, where it belongs. Default disabled
+
+.. option:: --hrd, --no-hrd
+
+	Enable the signalling of HRD parameters to the decoder. The HRD
+	parameters are carried by the Buffering Period SEI messages and
+	Picture Timing SEI messages providing timing information to the
+	decoder. Default disabled
+
 .. option:: --info, --no-info
 
 	Emit an informational SEI with the stream headers which describes
@@ -1355,12 +1370,15 @@ Bitstream options
 	build info could make your bitstreams diverge and interfere with
 	regression testing. Default enabled
 
-.. option:: --hrd, --no-hrd
+.. option:: --hash <integer>
 
-	Enable the signalling of HRD parameters to the decoder. The HRD
-	parameters are carried by the Buffering Period SEI messages and
-	Picture Timing SEI messages providing timing information to the
-	decoder. Default disabled
+	Emit decoded picture hash SEI, so the decoder may validate the
+	reconstructed pictures and detect data loss. Also useful as a
+	debug feature to validate the encoder state. Default None
+
+	1. MD5
+	2. CRC
+	3. Checksum
 
 .. option:: --temporal-layers,--no-temporal-layers
 
@@ -1373,24 +1391,6 @@ Bitstream options
 	3 then the two layers evenly split the frame rate, with a cadence of
 	PbBbP. You probably also want :option:`--no-scenecut` and a keyframe
 	interval that is a multiple of 4.
-
-.. option:: --aud, --no-aud
-
-	Emit an access unit delimiter NAL at the start of each slice access
-	unit. If :option:`--repeat-headers` is not enabled (indicating the
-	user will be writing headers manually at the start of the stream)
-	the very first AUD will be skipped since it cannot be placed at the
-	start of the access unit, where it belongs. Default disabled
-
-.. option:: --hash <integer>
-
-	Emit decoded picture hash SEI, so the decoder may validate the
-	reconstructed pictures and detect data loss. Also useful as a
-	debug feature to validate the encoder state. Default None
-
-	1. MD5
-	2. CRC
-	3. Checksum
 
 Debugging options
 =================
