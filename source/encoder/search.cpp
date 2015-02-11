@@ -832,7 +832,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tu
             outDist += m_rdCost.scaleChromaDist(chromaId, primitives.cu[sizeIdxC].sse_pp(reconQt, reconQtStride, fenc, stride));
 
             if (m_rdCost.m_psyRd)
-                psyEnergy += m_rdCost.psyCost(sizeIdxC, fenc, stride, picReconC, picStride);
+                psyEnergy += m_rdCost.psyCost(sizeIdxC, fenc, stride, reconQt, reconQtStride);
 
             primitives.cu[sizeIdxC].copy_pp(picReconC, picStride, reconQt, reconQtStride);
         }

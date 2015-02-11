@@ -136,7 +136,7 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_FLAG(sps.bUseStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
 
     WRITE_FLAG(1, "vui_parameters_present_flag");
-    codeVUI(sps.vuiParameters);
+    codeVUI(sps.vuiParameters, sps.maxTempSubLayers);
 
     WRITE_FLAG(0, "sps_extension_flag");
 }
@@ -239,7 +239,7 @@ void Entropy::codeProfileTier(const ProfileTierLevel& ptl, int maxTempSubLayers)
     }
 }
 
-void Entropy::codeVUI(const VUI& vui)
+void Entropy::codeVUI(const VUI& vui, int maxSubTLayers)
 {
     WRITE_FLAG(vui.aspectRatioInfoPresentFlag,  "aspect_ratio_info_present_flag");
     if (vui.aspectRatioInfoPresentFlag)
@@ -297,7 +297,7 @@ void Entropy::codeVUI(const VUI& vui)
 
     WRITE_FLAG(vui.hrdParametersPresentFlag,  "vui_hrd_parameters_present_flag");
     if (vui.hrdParametersPresentFlag)
-        codeHrdParameters(vui.hrdParameters);
+        codeHrdParameters(vui.hrdParameters, maxSubTLayers);
 
     WRITE_FLAG(0, "bitstream_restriction_flag");
 }
@@ -344,21 +344,21 @@ void Entropy::codeScalingList(const ScalingList& scalingList, uint32_t sizeId, u
     }
 }
 
-void Entropy::codeHrdParameters(const HRDInfo& hrd)
+void Entropy::codeHrdParameters(const HRDInfo& hrd, int maxSubTLayers)
 {
-    for (int i = 0; i <= 1; i++)
+    WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
+    WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
+    WRITE_FLAG(0, "sub_pic_hrd_params_present_flag");
+
+    WRITE_CODE(hrd.bitRateScale, 4, "bit_rate_scale");
+    WRITE_CODE(hrd.cpbSizeScale, 4, "cpb_size_scale");
+
+    WRITE_CODE(hrd.initialCpbRemovalDelayLength - 1, 5, "initial_cpb_removal_delay_length_minus1");
+    WRITE_CODE(hrd.cpbRemovalDelayLength - 1,        5, "au_cpb_removal_delay_length_minus1");
+    WRITE_CODE(hrd.dpbOutputDelayLength - 1,         5, "dpb_output_delay_length_minus1");
+
+    for (int i = 0; i < maxSubTLayers; i++)
     {
-        WRITE_FLAG(1, "nal_hrd_parameters_present_flag");
-        WRITE_FLAG(0, "vcl_hrd_parameters_present_flag");
-        WRITE_FLAG(0, "sub_pic_hrd_params_present_flag");
-
-        WRITE_CODE(hrd.bitRateScale, 4, "bit_rate_scale");
-        WRITE_CODE(hrd.cpbSizeScale, 4, "cpb_size_scale");
-
-        WRITE_CODE(hrd.initialCpbRemovalDelayLength - 1, 5, "initial_cpb_removal_delay_length_minus1");
-        WRITE_CODE(hrd.cpbRemovalDelayLength - 1,        5, "au_cpb_removal_delay_length_minus1");
-        WRITE_CODE(hrd.dpbOutputDelayLength - 1,         5, "dpb_output_delay_length_minus1");
-
         WRITE_FLAG(1, "fixed_pic_rate_general_flag");
         WRITE_UVLC(0, "elemental_duration_in_tc_minus1");
         WRITE_UVLC(0, "cpb_cnt_minus1");

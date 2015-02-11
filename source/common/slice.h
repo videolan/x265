@@ -55,9 +55,9 @@ struct RPS
         , numberOfNegativePictures(0)
         , numberOfPositivePictures(0)
     {
-        ::memset(deltaPOC, 0, sizeof(deltaPOC));
-        ::memset(poc, 0, sizeof(poc));
-        ::memset(bUsed, 0, sizeof(bUsed));
+        memset(deltaPOC, 0, sizeof(deltaPOC));
+        memset(poc, 0, sizeof(poc));
+        memset(bUsed, 0, sizeof(bUsed));
     }
 
     void sortDeltaPOC();
