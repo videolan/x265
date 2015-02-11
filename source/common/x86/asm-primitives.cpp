@@ -894,7 +894,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
 
         p.dst4x4 = x265_dst4_ssse3;
         p.cu[BLOCK_8x8].idct = x265_idct8_ssse3;
-        p.count_nonzero = x265_count_nonzero_ssse3;
         p.frameInitLowres = x265_frame_init_lowres_core_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
@@ -1121,7 +1120,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         p.dst4x4 = x265_dst4_ssse3;
         p.cu[BLOCK_8x8].idct = x265_idct8_ssse3;
-        p.count_nonzero = x265_count_nonzero_ssse3;
 
         p.frameInitLowres = x265_frame_init_lowres_core_ssse3;
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
