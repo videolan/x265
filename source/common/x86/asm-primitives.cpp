@@ -993,8 +993,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_64x64].transpose = x265_transpose64_avx2;
 
         p.pu[LUMA_8x8].luma_vpp = x265_interp_8tap_vert_pp_8x8_avx2;
+        p.pu[LUMA_16x16].luma_vpp = x265_interp_8tap_vert_pp_16x16_avx2;
 
         p.pu[LUMA_8x8].luma_vps = x265_interp_8tap_vert_ps_8x8_avx2;
+        p.pu[LUMA_16x16].luma_vps = x265_interp_8tap_vert_ps_16x16_avx2;
 #else
         p.cu[BLOCK_4x4].dct = x265_dct4_avx2;
 #endif
