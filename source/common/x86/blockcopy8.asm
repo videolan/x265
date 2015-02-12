@@ -3927,6 +3927,45 @@ cglobal blockcopy_ss_%1x%2, 4, 5, 6
 BLOCKCOPY_SS_W24_H4 24, 32
 
 BLOCKCOPY_SS_W24_H4 24, 64
+;-----------------------------------------------------------------------------
+; void blockcopy_ss_%1x%2(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+%macro BLOCKCOPY_SS_W24_H4_avx 2
+INIT_YMM avx
+cglobal blockcopy_ss_%1x%2, 4, 7, 2
+
+    mov    r4d, %2/4
+    add    r1, r1
+    add    r3, r3
+    lea    r5, [3 * r3]
+    lea    r6, [3 * r1]
+
+.loop
+    movu    m0, [r2]
+    movu    xm1, [r2 + 32]
+    movu    [r0], m0
+    movu    [r0 + 32], xm1
+    movu    m0, [r2 + r3]
+    movu    xm1, [r2 + r3 + 32]
+    movu    [r0 + r1], m0
+    movu    [r0 + r1 + 32], xm1
+    movu    m0, [r2 + 2 * r3]
+    movu    xm1, [r2 + 2 * r3 + 32]
+    movu    [r0 + 2 * r1], m0
+    movu    [r0 + 2 * r1 + 32], xm1
+    movu    m0, [r2 + r5]
+    movu    xm1, [r2 + r5 + 32]
+    movu    [r0 + r6], m0
+    movu    [r0 + r6 + 32], xm1
+    dec     r4d
+    lea     r2, [r2 + 4 * r3]
+    lea     r0, [r0 + 4 * r1]
+    jnz     .loop
+    RET
+%endmacro
+
+BLOCKCOPY_SS_W24_H4_avx 24, 32
+BLOCKCOPY_SS_W24_H4_avx 24, 64
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_%1x%2(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)
