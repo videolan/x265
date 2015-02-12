@@ -4124,6 +4124,56 @@ RET
 %endmacro
 
 BLOCKCOPY_SS_W48_H2 48, 64
+;-----------------------------------------------------------------------------
+; void blockcopy_ss_48x64(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_YMM avx
+cglobal blockcopy_ss_48x64, 4, 7, 6
+
+    mov    r4d, 64/4
+    add    r1, r1
+    add    r3, r3
+    lea    r5, [3 * r3]
+    lea    r6, [3 * r1]
+
+.loop:
+    movu    m0, [r2]
+    movu    m1, [r2 + 32]
+    movu    m2, [r2 + 64]
+
+    movu    [r0], m0
+    movu    [r0 + 32], m1
+    movu    [r0 + 64], m2
+
+    movu    m0, [r2 + r3]
+    movu    m1, [r2 + r3 + 32]
+    movu    m2, [r2 + r3 + 64]
+
+    movu    [r0 + r1], m0
+    movu    [r0 + r1 + 32], m1
+    movu    [r0 + r1 + 64], m2
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + 2 * r3 + 32]
+    movu    m2, [r2 + 2 * r3 + 64]
+
+    movu    [r0 + 2 * r1], m0
+    movu    [r0 + 2 * r1 + 32], m1
+    movu    [r0 + 2 * r1 + 64], m2
+
+    movu    m0, [r2 + r5]
+    movu    m1, [r2 + r5 + 32]
+    movu    m2, [r2 + r5 + 64]
+
+    movu    [r0 + r6], m0
+    movu    [r0 + r6 + 32], m1
+    movu    [r0 + r6 + 64], m2
+
+    dec     r4d
+    lea     r2, [r2 + 4 * r3]
+    lea     r0, [r0 + 4 * r1]
+    jnz     .loop
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_%1x%2(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)
