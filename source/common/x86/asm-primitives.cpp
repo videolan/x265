@@ -1021,6 +1021,20 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         // 64 X N
         p.cu[BLOCK_64x64].copy_ps = (copy_ps_t)x265_blockcopy_ss_64x64_avx;
 
+        // copy_sp primitives
+        // 16 X N
+        p.cu[BLOCK_16x16].copy_sp = (copy_sp_t)x265_blockcopy_ss_16x16_avx;
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].copy_sp = (copy_sp_t)x265_blockcopy_ss_16x16_avx;
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].copy_sp = (copy_sp_t)x265_blockcopy_ss_16x32_avx;
+
+        // 32 X N
+        p.cu[BLOCK_32x32].copy_sp = (copy_sp_t)x265_blockcopy_ss_32x32_avx;
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].copy_sp = (copy_sp_t)x265_blockcopy_ss_32x32_avx;
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].copy_sp = (copy_sp_t)x265_blockcopy_ss_32x64_avx;
+
+        // 64 X N
+        p.cu[BLOCK_64x64].copy_sp = (copy_sp_t)x265_blockcopy_ss_64x64_avx;
+
         p.frameInitLowres = x265_frame_init_lowres_core_avx;
     }
     if (cpuMask & X265_CPU_XOP)
