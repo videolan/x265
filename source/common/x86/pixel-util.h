@@ -48,7 +48,15 @@ uint32_t x265_nquant_sse4(const int16_t* coef, const int32_t* quantCoeff, int16_
 uint32_t x265_nquant_avx2(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff);
 void x265_dequant_normal_sse4(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
 void x265_dequant_normal_avx2(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
-int x265_count_nonzero_ssse3(const int16_t* quantCoeff, int numCoeff);
+
+int x265_count_nonzero_4x4_ssse3(const int16_t* quantCoeff);
+int x265_count_nonzero_8x8_ssse3(const int16_t* quantCoeff);
+int x265_count_nonzero_16x16_ssse3(const int16_t* quantCoeff);
+int x265_count_nonzero_32x32_ssse3(const int16_t* quantCoeff);
+int x265_count_nonzero_4x4_avx2(const int16_t* quantCoeff);
+int x265_count_nonzero_8x8_avx2(const int16_t* quantCoeff);
+int x265_count_nonzero_16x16_avx2(const int16_t* quantCoeff);
+int x265_count_nonzero_32x32_avx2(const int16_t* quantCoeff);
 
 void x265_weight_pp_sse4(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
 void x265_weight_pp_avx2(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);

@@ -3,6 +3,7 @@
 ;*
 ;* Authors: Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
 ;*          Nabajit Deka <nabajit@multicorewareinc.com>
+;*          Rajesh Paulraj <rajesh@multicorewareinc.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -63,6 +64,12 @@ cextern pw_pixel_max
 cextern pd_1
 cextern pd_32767
 cextern pd_n32768
+cextern pb_2
+cextern pb_4
+cextern pb_8
+cextern pb_16
+cextern pb_32
+cextern pb_64
 
 ;-----------------------------------------------------------------------------
 ; void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
@@ -829,28 +836,188 @@ cglobal dequant_normal, 5,5,7
 
 
 ;-----------------------------------------------------------------------------
-; int count_nonzero(const int16_t *quantCoeff, int numCoeff);
+; int x265_count_nonzero_4x4_ssse3(const int16_t *quantCoeff);
 ;-----------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal count_nonzero, 2,2,3
-    pxor        m0, m0
-    shr         r1d, 4
-    movd        m1, r1d
-    pshufb      m1, m0
+cglobal count_nonzero_4x4, 1,1,2
+    pxor            m0, m0
 
-.loop:
-    mova        m2, [r0 +  0]
-    packsswb    m2, [r0 + 16]
-    add         r0, 32
-    pcmpeqb     m2, m0
-    paddb       m1, m2
-    dec         r1d
-    jnz         .loop
+    mova            m1, [r0 + 0]
+    packsswb        m1, [r0 + 16]
+    pcmpeqb         m1, m0
+    paddb           m1, [pb_1]
 
-    psadbw      m1, m0
-    pshufd      m0, m1, 2
-    paddd       m0, m1
-    movd        eax, m0
+    psadbw          m1, m0
+    pshufd          m0, m1, 2
+    paddd           m0, m1
+    movd            eax, m0
+    RET
+
+
+;-----------------------------------------------------------------------------
+; int x265_count_nonzero_4x4_avx2(const int16_t *quantCoeff);
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal count_nonzero_4x4, 1,1,2
+    pxor            m0, m0
+
+    mova            m1, [r0 + 0]
+    packsswb        m1, [r0 + 16]
+    pcmpeqb         m1, m0
+    paddb           m1, [pb_1]
+
+    psadbw          m1, m0
+    pshufd          m0, m1, 2
+    paddd           m1, m0
+    movd            eax, xm1
+    RET
+
+
+;-----------------------------------------------------------------------------
+; int x265_count_nonzero_8x8_ssse3(const int16_t *quantCoeff);
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal count_nonzero_8x8, 1,1,3
+    pxor            m0, m0
+    movu            m1, [pb_4]
+
+%rep 4
+    mova            m2, [r0 + 0]
+    packsswb        m2, [r0 + 16]
+    add             r0, 32
+    pcmpeqb         m2, m0
+    paddb           m1, m2
+%endrep
+
+    psadbw          m1, m0
+    pshufd          m0, m1, 2
+    paddd           m0, m1
+    movd            eax, m0
+    RET
+
+
+;-----------------------------------------------------------------------------
+; int x265_count_nonzero_8x8_avx2(const int16_t *quantCoeff);
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal count_nonzero_8x8, 1,1,3
+    pxor            m0, m0
+    movu            m1, [pb_2]
+
+    mova            m2, [r0]
+    packsswb        m2, [r0 + 32]
+    pcmpeqb         m2, m0
+    paddb           m1, m2
+
+    mova            m2, [r0 + 64]
+    packsswb        m2, [r0 + 96]
+    pcmpeqb         m2, m0
+    paddb           m1, m2
+ 
+    psadbw          m1, m0
+    vextracti128    xm0, m1, 1
+    paddd           m0, m1
+    pshufd          m1, m0, 2
+    paddd           m0, m1
+    movd            eax, xm0
+    RET
+
+
+;-----------------------------------------------------------------------------
+; int x265_count_nonzero_16x16_ssse3(const int16_t *quantCoeff);
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal count_nonzero_16x16, 1,1,3
+    pxor            m0, m0
+    movu            m1, [pb_16]
+
+%rep 16
+    mova            m2, [r0 + 0]
+    packsswb        m2, [r0 + 16]
+    add             r0, 32
+    pcmpeqb         m2, m0
+    paddb           m1, m2
+%endrep
+
+    psadbw          m1, m0
+    pshufd          m0, m1, 2
+    paddd           m0, m1
+    movd            eax, m0
+    RET
+
+
+;-----------------------------------------------------------------------------
+; int x265_count_nonzero_16x16_avx2(const int16_t *quantCoeff);
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal count_nonzero_16x16, 1,1,3
+    pxor            m0, m0
+    movu            m1, [pb_8]
+
+%assign x 0
+%rep 8
+    mova            m2, [r0 + x]
+    packsswb        m2, [r0 + x + 32]
+%assign x x+64
+    pcmpeqb         m2, m0
+    paddb           m1, m2
+%endrep 
+
+    psadbw          m1, m0
+    vextracti128    xm0, m1, 1
+    paddd           m0, m1
+    pshufd          m1, m0, 2
+    paddd           m0, m1
+    movd            eax, xm0
+    RET
+
+
+;-----------------------------------------------------------------------------
+; int x265_count_nonzero_32x32_ssse3(const int16_t *quantCoeff);
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal count_nonzero_32x32, 1,1,3
+    pxor            m0, m0
+    movu            m1, [pb_64]
+
+%rep 64 
+    mova            m2, [r0 + 0]
+    packsswb        m2, [r0 + 16]
+    add             r0, 32
+    pcmpeqb         m2, m0
+    paddb           m1, m2
+%endrep
+
+    psadbw          m1, m0
+    pshufd          m0, m1, 2
+    paddd           m0, m1
+    movd            eax, m0
+    RET
+
+
+;-----------------------------------------------------------------------------
+; int x265_count_nonzero_32x32_avx2(const int16_t *quantCoeff);
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal count_nonzero_32x32, 1,1,3
+    pxor            m0, m0
+    movu            m1, [pb_32]
+
+%assign x 0
+%rep 32
+    mova            m2, [r0 + x]
+    packsswb        m2, [r0 + x + 32]
+%assign x x+64
+    pcmpeqb         m2, m0
+    paddb           m1, m2
+%endrep 
+
+    psadbw          m1, m0
+    vextracti128    xm0, m1, 1
+    paddd           m0, m1
+    pshufd          m1, m0, 2
+    paddd           m0, m1
+    movd            eax, xm0
     RET
 
 
