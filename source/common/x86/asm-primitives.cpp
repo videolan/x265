@@ -1015,6 +1015,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_32x32].ssd_s = x265_pixel_ssd_s_32_avx2;
         p.cu[BLOCK_16x16].sse_ss = x265_pixel_ssd_ss_16x16_avx2;
 
+        // Blockfill_s primitives
+        p.cu[BLOCK_16x16].blockfill_s = x265_blockfill_s_16x16_avx2;
+        p.cu[BLOCK_32x32].blockfill_s = x265_blockfill_s_32x32_avx2;
+
         p.pu[LUMA_4x4].luma_vpp = x265_interp_8tap_vert_pp_4x4_avx2;
 
         p.pu[LUMA_4x4].luma_vps = x265_interp_8tap_vert_ps_4x4_avx2;
