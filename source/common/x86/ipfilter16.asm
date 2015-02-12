@@ -3217,10 +3217,10 @@ FILTER_VER_LUMA_AVX2_8x8 ps
     movu            [r8 + r6], xm1
 %endmacro
 
-%macro FILTER_VER_LUMA_AVX2_16x16 1
+%macro FILTER_VER_LUMA_AVX2_Nx16 2
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
-cglobal interp_8tap_vert_%1_16x16, 4, 10, 15
+cglobal interp_8tap_vert_%1_%2x16, 4, 10, 15
     mov             r4d, r4m
     shl             r4d, 7
     add             r1d, r1d
@@ -3241,7 +3241,7 @@ cglobal interp_8tap_vert_%1_16x16, 4, 10, 15
     vbroadcasti128  m14, [pd_n32768]
 %endif
     lea             r6, [r3 * 3]
-    mov             r9d, 2
+    mov             r9d, %2 / 8
 .loopW:
     PROCESS_LUMA_AVX2_W8_16R %1
     add             r2, 16
@@ -3252,8 +3252,12 @@ cglobal interp_8tap_vert_%1_16x16, 4, 10, 15
 %endif
 %endmacro
 
-FILTER_VER_LUMA_AVX2_16x16 pp
-FILTER_VER_LUMA_AVX2_16x16 ps
+FILTER_VER_LUMA_AVX2_Nx16 pp, 16
+FILTER_VER_LUMA_AVX2_Nx16 pp, 32
+FILTER_VER_LUMA_AVX2_Nx16 pp, 64
+FILTER_VER_LUMA_AVX2_Nx16 ps, 16
+FILTER_VER_LUMA_AVX2_Nx16 ps, 32
+FILTER_VER_LUMA_AVX2_Nx16 ps, 64
 
 %macro FILTER_VER_LUMA_AVX2_NxN 3
 INIT_YMM avx2
