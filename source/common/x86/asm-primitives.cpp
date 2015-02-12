@@ -1451,6 +1451,13 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.pu[LUMA_8x8].luma_hps = x265_interp_8tap_horiz_ps_8x8_avx2;
         p.pu[LUMA_8x16].luma_hps = x265_interp_8tap_horiz_ps_8x16_avx2;
         p.pu[LUMA_8x32].luma_hps = x265_interp_8tap_horiz_ps_8x32_avx2;
+
+        p.pu[LUMA_16x8].luma_hps = x265_interp_8tap_horiz_ps_16x8_avx2;
+        p.pu[LUMA_16x16].luma_hps = x265_interp_8tap_horiz_ps_16x16_avx2;
+        p.pu[LUMA_16x12].luma_hps = x265_interp_8tap_horiz_ps_16x12_avx2;
+        p.pu[LUMA_16x4].luma_hps = x265_interp_8tap_horiz_ps_16x4_avx2;
+        p.pu[LUMA_16x32].luma_hps = x265_interp_8tap_horiz_ps_16x32_avx2;
+        p.pu[LUMA_16x64].luma_hps = x265_interp_8tap_horiz_ps_16x64_avx2;
 #endif
         p.pu[LUMA_4x4].luma_hpp = x265_interp_8tap_horiz_pp_4x4_avx2;
 
