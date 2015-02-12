@@ -3255,6 +3255,70 @@ cglobal interp_8tap_vert_%1_16x16, 4, 10, 15
 FILTER_VER_LUMA_AVX2_16x16 pp
 FILTER_VER_LUMA_AVX2_16x16 ps
 
+%macro FILTER_VER_LUMA_AVX2_NxN 3
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_vert_%3_%1x%2, 4, 12, 15
+    mov             r4d, r4m
+    shl             r4d, 7
+    add             r1d, r1d
+    add             r3d, r3d
+
+%ifdef PIC
+    lea             r5, [tab_LumaCoeffVer]
+    add             r5, r4
+%else
+    lea             r5, [tab_LumaCoeffVer + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r4
+
+%ifidn %3,pp
+    vbroadcasti128  m14, [pd_32]
+%else
+    vbroadcasti128  m14, [pd_n32768]
+%endif
+
+    lea             r6, [r3 * 3]
+    lea             r11, [r1 * 4]
+    mov             r9d, %2 / 16
+.loopH:
+    mov             r10d, %1 / 8
+.loopW:
+    PROCESS_LUMA_AVX2_W8_16R %3
+    add             r2, 16
+    add             r0, 16
+    dec             r10d
+    jnz             .loopW
+    sub             r7, r11
+    lea             r0, [r7 - 2 * %1 + 16]
+    lea             r2, [r8 + r3 * 4 - 2 * %1 + 16]
+    dec             r9d
+    jnz             .loopH
+    RET
+%endif
+%endmacro
+
+FILTER_VER_LUMA_AVX2_NxN 16, 32, pp
+FILTER_VER_LUMA_AVX2_NxN 16, 64, pp
+FILTER_VER_LUMA_AVX2_NxN 24, 32, pp
+FILTER_VER_LUMA_AVX2_NxN 32, 32, pp
+FILTER_VER_LUMA_AVX2_NxN 32, 64, pp
+FILTER_VER_LUMA_AVX2_NxN 48, 64, pp
+FILTER_VER_LUMA_AVX2_NxN 64, 32, pp
+FILTER_VER_LUMA_AVX2_NxN 64, 48, pp
+FILTER_VER_LUMA_AVX2_NxN 64, 64, pp
+FILTER_VER_LUMA_AVX2_NxN 16, 32, ps
+FILTER_VER_LUMA_AVX2_NxN 16, 64, ps
+FILTER_VER_LUMA_AVX2_NxN 24, 32, ps
+FILTER_VER_LUMA_AVX2_NxN 32, 32, ps
+FILTER_VER_LUMA_AVX2_NxN 32, 64, ps
+FILTER_VER_LUMA_AVX2_NxN 48, 64, ps
+FILTER_VER_LUMA_AVX2_NxN 64, 32, ps
+FILTER_VER_LUMA_AVX2_NxN 64, 48, ps
+FILTER_VER_LUMA_AVX2_NxN 64, 64, ps
+
 ;---------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_ps_%1x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;---------------------------------------------------------------------------------------------------------------
