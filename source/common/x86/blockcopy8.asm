@@ -3222,6 +3222,80 @@ BLOCKCOPY_PS_W64_H2 64, 16
 BLOCKCOPY_PS_W64_H2 64, 32
 BLOCKCOPY_PS_W64_H2 64, 48
 BLOCKCOPY_PS_W64_H2 64, 64
+;-----------------------------------------------------------------------------
+; void blockcopy_ps_%1x%2(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal blockcopy_ps_64x64, 4, 7, 4
+    add     r1, r1
+    mov     r4d, 64/4
+    lea     r5, [3 * r3]
+    lea     r6, [3 * r1]
+    pxor    m0, m0
+
+.loop:
+    movu          m1, [r2]
+    punpcklbw     m2, m1, m0
+    punpckhbw     m1, m1, m0
+    vperm2i128    m3, m2, m1, 00100000b
+    vperm2i128    m2, m2, m1, 00110001b
+    movu          [r0], m3
+    movu          [r0 + 32], m2
+    movu          m1, [r2 + 32]
+    punpcklbw     m2, m1, m0
+    punpckhbw     m1, m1, m0
+    vperm2i128    m3, m2, m1, 00100000b
+    vperm2i128    m2, m2, m1, 00110001b
+    movu          [r0 + 64], m3
+    movu          [r0 + 96], m2
+    movu          m1, [r2 + r3]
+    punpcklbw     m2, m1, m0
+    punpckhbw     m1, m1, m0
+    vperm2i128    m3, m2, m1, 00100000b
+    vperm2i128    m2, m2, m1, 00110001b
+    movu          [r0 + r1], m3
+    movu          [r0 + r1 + 32], m2
+    movu          m1, [r2 + r3 + 32]
+    punpcklbw     m2, m1, m0
+    punpckhbw     m1, m1, m0
+    vperm2i128    m3, m2, m1, 00100000b
+    vperm2i128    m2, m2, m1, 00110001b
+    movu          [r0 + r1 + 64], m3
+    movu          [r0 + r1 + 96], m2
+    movu          m1, [r2 + 2 * r3]
+    punpcklbw     m2, m1, m0
+    punpckhbw     m1, m1, m0
+    vperm2i128    m3, m2, m1, 00100000b
+    vperm2i128    m2, m2, m1, 00110001b
+    movu          [r0 + 2 * r1], m3
+    movu          [r0 + 2 * r1 + 32], m2
+    movu          m1, [r2 + 2 * r3 + 32]
+    punpcklbw     m2, m1, m0
+    punpckhbw     m1, m1, m0
+    vperm2i128    m3, m2, m1, 00100000b
+    vperm2i128    m2, m2, m1, 00110001b
+    movu          [r0 + 2 * r1 + 64], m3
+    movu          [r0 + 2 * r1 + 96], m2
+    movu          m1, [r2 + r5]
+    punpcklbw     m2, m1, m0
+    punpckhbw     m1, m1, m0
+    vperm2i128    m3, m2, m1, 00100000b
+    vperm2i128    m2, m2, m1, 00110001b
+    movu          [r0 + r6], m3
+    movu          [r0 + r6 + 32], m2
+    movu          m1, [r2 + r5 + 32]
+    punpcklbw     m2, m1, m0
+    punpckhbw     m1, m1, m0
+    vperm2i128    m3, m2, m1, 00100000b
+    vperm2i128    m2, m2, m1, 00110001b
+    movu          [r0 + r6 + 64], m3
+    movu          [r0 + r6 + 96], m2
+
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    dec           r4d
+    jnz           .loop
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ss_2x4(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)
