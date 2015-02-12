@@ -376,6 +376,7 @@ struct analysis_inter_data
     int32_t*    ref;
     uint8_t*    depth;
     uint8_t*    modes;
+    uint32_t*   bestMergeCand;
 };
 
 /* Stores intra analysis data for a single frame. This struct needs better packing */
@@ -384,6 +385,7 @@ struct analysis_intra_data
     uint8_t*  depth;
     uint8_t*  modes;
     char*     partSizes;
+    uint8_t*  chromaModes;
 };
 
 enum TextType

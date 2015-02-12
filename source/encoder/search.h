@@ -247,7 +247,7 @@ public:
     void     invalidateContexts(int fromDepth);
 
     // full RD search of intra modes. if sharedModes is not NULL, it directly uses them
-    void     checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes);
+    void     checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes, uint8_t* sharedChromaModes);
 
     // select best intra mode using only sa8d costs, cannot measure NxN intra
     void     checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
@@ -291,7 +291,7 @@ protected:
     uint32_t estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2], uint8_t* sharedModes);
 
     // RDO select best chroma mode from luma; result is fully encode chroma. chroma distortion is returned
-    uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
+    uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom, uint8_t* sharedChromaModes);
 
     void     codeSubdivCbfQTChroma(const CUData& cu, uint32_t tuDepth, uint32_t absPartIdx);
     void     codeInterSubdivCbfQT(CUData& cu, uint32_t absPartIdx, const uint32_t tuDepth, const uint32_t depthRange[2]);
