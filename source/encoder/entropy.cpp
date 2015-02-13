@@ -557,7 +557,6 @@ void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPart
         return;
     }
 
-    // We need to split, so don't try these modes.
     if (cuSplitFlag) 
         codeSplitFlag(ctu, absPartIdx, depth);
 
@@ -684,78 +683,78 @@ void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth)
     }
 }
 
-void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth, uint32_t log2TrSize,
+void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t curDepth, uint32_t log2CurSize,
                               bool& bCodeDQP, const uint32_t depthRange[2])
 {
-    const bool subdiv = cu.m_tuDepth[absPartIdx] > tuDepth;
+    const bool subdiv = cu.m_tuDepth[absPartIdx] > curDepth;
 
     /* in each of these conditions, the subdiv flag is implied and not signaled,
      * so we have checks to make sure the implied value matches our intentions */
-    if (cu.isIntra(absPartIdx) && cu.m_partSize[absPartIdx] != SIZE_2Nx2N && !tuDepth)
+    if (cu.isIntra(absPartIdx) && cu.m_partSize[absPartIdx] != SIZE_2Nx2N && !curDepth)
     {
         X265_CHECK(subdiv, "intra NxN requires TU depth below CU depth\n");
     }
-    else if (cu.isInter(absPartIdx) && cu.m_partSize[absPartIdx] != SIZE_2Nx2N && !tuDepth &&
-             cu.m_slice->m_sps->quadtreeTUMaxDepthInter == 1)
+    else if (cu.isInter(absPartIdx) && cu.m_partSize[absPartIdx] != SIZE_2Nx2N &&
+             !curDepth && cu.m_slice->m_sps->quadtreeTUMaxDepthInter == 1)
     {
-        X265_CHECK(subdiv, "inter TU must be smaller than CU when not 2Nx2N part size: log2TrSize %d, depthRange[0] %d\n", log2TrSize, depthRange[0]);
+        X265_CHECK(subdiv, "inter TU must be smaller than CU when not 2Nx2N part size: log2CurSize %d, depthRange[0] %d\n", log2CurSize, depthRange[0]);
     }
-    else if (log2TrSize > depthRange[1])
+    else if (log2CurSize > depthRange[1])
     {
         X265_CHECK(subdiv, "TU is larger than the max allowed, it should have been split\n");
     }
-    else if (log2TrSize == cu.m_slice->m_sps->quadtreeTULog2MinSize || log2TrSize == depthRange[0])
+    else if (log2CurSize == cu.m_slice->m_sps->quadtreeTULog2MinSize || log2CurSize == depthRange[0])
     {
         X265_CHECK(!subdiv, "min sized TU cannot be subdivided\n");
     }
     else
     {
-        X265_CHECK(log2TrSize > depthRange[0], "transform size failure\n");
-        codeTransformSubdivFlag(subdiv, 5 - log2TrSize);
+        X265_CHECK(log2CurSize > depthRange[0], "transform size failure\n");
+        codeTransformSubdivFlag(subdiv, 5 - log2CurSize);
     }
 
     uint32_t hChromaShift = cu.m_hChromaShift;
     uint32_t vChromaShift = cu.m_vChromaShift;
-    bool bSmallChroma = (log2TrSize - hChromaShift < 2);
-    if (!tuDepth || !bSmallChroma)
+    bool bSmallChroma = (log2CurSize - hChromaShift) < 2;
+    if (!curDepth || !bSmallChroma)
     {
-        if (!tuDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_U, tuDepth - 1))
-            codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_U, tuDepth, !subdiv);
-        if (!tuDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_V, tuDepth - 1))
-            codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_V, tuDepth, !subdiv);
+        if (!curDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_U, curDepth - 1))
+            codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_U, curDepth, !subdiv);
+        if (!curDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_V, curDepth - 1))
+            codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_V, curDepth, !subdiv);
     }
     else
     {
-        X265_CHECK(cu.getCbf(absPartIdx, TEXT_CHROMA_U, tuDepth) == cu.getCbf(absPartIdx, TEXT_CHROMA_U, tuDepth - 1), "chroma xform size match failure\n");
-        X265_CHECK(cu.getCbf(absPartIdx, TEXT_CHROMA_V, tuDepth) == cu.getCbf(absPartIdx, TEXT_CHROMA_V, tuDepth - 1), "chroma xform size match failure\n");
+        X265_CHECK(cu.getCbf(absPartIdx, TEXT_CHROMA_U, curDepth) == cu.getCbf(absPartIdx, TEXT_CHROMA_U, curDepth - 1), "chroma xform size match failure\n");
+        X265_CHECK(cu.getCbf(absPartIdx, TEXT_CHROMA_V, curDepth) == cu.getCbf(absPartIdx, TEXT_CHROMA_V, curDepth - 1), "chroma xform size match failure\n");
     }
 
     if (subdiv)
     {
-        --log2TrSize;
-        ++tuDepth;
+        --log2CurSize;
+        ++curDepth;
 
-        uint32_t qNumParts = 1 << (log2TrSize - LOG2_UNIT_SIZE) * 2;
+        uint32_t qNumParts = 1 << (log2CurSize - LOG2_UNIT_SIZE) * 2;
 
-        encodeTransform(cu, absPartIdx + 0 * qNumParts, tuDepth, log2TrSize, bCodeDQP, depthRange);
-        encodeTransform(cu, absPartIdx + 1 * qNumParts, tuDepth, log2TrSize, bCodeDQP, depthRange);
-        encodeTransform(cu, absPartIdx + 2 * qNumParts, tuDepth, log2TrSize, bCodeDQP, depthRange);
-        encodeTransform(cu, absPartIdx + 3 * qNumParts, tuDepth, log2TrSize, bCodeDQP, depthRange);
+        encodeTransform(cu, absPartIdx + 0 * qNumParts, curDepth, log2CurSize, bCodeDQP, depthRange);
+        encodeTransform(cu, absPartIdx + 1 * qNumParts, curDepth, log2CurSize, bCodeDQP, depthRange);
+        encodeTransform(cu, absPartIdx + 2 * qNumParts, curDepth, log2CurSize, bCodeDQP, depthRange);
+        encodeTransform(cu, absPartIdx + 3 * qNumParts, curDepth, log2CurSize, bCodeDQP, depthRange);
         return;
     }
 
     uint32_t absPartIdxC = bSmallChroma ? absPartIdx & 0xFC : absPartIdx;
 
-    if (cu.isInter(absPartIdxC) && !tuDepth && !cu.getCbf(absPartIdxC, TEXT_CHROMA_U, 0) && !cu.getCbf(absPartIdxC, TEXT_CHROMA_V, 0))
+    if (cu.isInter(absPartIdxC) && !curDepth && !cu.getCbf(absPartIdxC, TEXT_CHROMA_U, 0) && !cu.getCbf(absPartIdxC, TEXT_CHROMA_V, 0))
     {
         X265_CHECK(cu.getCbf(absPartIdxC, TEXT_LUMA, 0), "CBF should have been set\n");
     }
     else
-        codeQtCbfLuma(cu, absPartIdx, tuDepth);
+        codeQtCbfLuma(cu, absPartIdx, curDepth);
 
-    uint32_t cbfY = cu.getCbf(absPartIdx, TEXT_LUMA, tuDepth);
-    uint32_t cbfU = cu.getCbf(absPartIdxC, TEXT_CHROMA_U, tuDepth);
-    uint32_t cbfV = cu.getCbf(absPartIdxC, TEXT_CHROMA_V, tuDepth);
+    uint32_t cbfY = cu.getCbf(absPartIdx, TEXT_LUMA, curDepth);
+    uint32_t cbfU = cu.getCbf(absPartIdxC, TEXT_CHROMA_U, curDepth);
+    uint32_t cbfV = cu.getCbf(absPartIdxC, TEXT_CHROMA_V, curDepth);
     if (!(cbfY || cbfU || cbfV))
         return;
 
@@ -771,7 +770,7 @@ void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t tu
     if (cbfY)
     {
         uint32_t coeffOffset = absPartIdx << (LOG2_UNIT_SIZE * 2);
-        codeCoeffNxN(cu, cu.m_trCoeff[0] + coeffOffset, absPartIdx, log2TrSize, TEXT_LUMA);
+        codeCoeffNxN(cu, cu.m_trCoeff[0] + coeffOffset, absPartIdx, log2CurSize, TEXT_LUMA);
         if (!(cbfU || cbfV))
             return;
     }
@@ -781,7 +780,7 @@ void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t tu
         if ((absPartIdx & 3) != 3)
             return;
 
-        const uint32_t log2TrSizeC = 2;
+        const uint32_t log2CurSizeC = 2;
         const bool splitIntoSubTUs = (cu.m_chromaFormat == X265_CSP_I422);
         const uint32_t curPartNum = 4;
         uint32_t coeffOffsetC  = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (hChromaShift + vChromaShift));
@@ -791,10 +790,10 @@ void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t tu
             const coeff_t* coeffChroma = cu.m_trCoeff[chromaId];
             do
             {
-                if (cu.getCbf(tuIterator.absPartIdxTURelCU, (TextType)chromaId, tuDepth + splitIntoSubTUs))
+                if (cu.getCbf(tuIterator.absPartIdxTURelCU, (TextType)chromaId, curDepth + splitIntoSubTUs))
                 {
-                    uint32_t subTUOffset = tuIterator.section << (log2TrSizeC * 2);
-                    codeCoeffNxN(cu, coeffChroma + coeffOffsetC + subTUOffset, tuIterator.absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
+                    uint32_t subTUOffset = tuIterator.section << (log2CurSizeC * 2);
+                    codeCoeffNxN(cu, coeffChroma + coeffOffsetC + subTUOffset, tuIterator.absPartIdxTURelCU, log2CurSizeC, (TextType)chromaId);
                 }
             }
             while (tuIterator.isNextSection());
@@ -802,9 +801,9 @@ void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t tu
     }
     else
     {
-        uint32_t log2TrSizeC = log2TrSize - hChromaShift;
+        uint32_t log2CurSizeC = log2CurSize - hChromaShift;
         const bool splitIntoSubTUs = (cu.m_chromaFormat == X265_CSP_I422);
-        uint32_t curPartNum = 1 << (log2TrSize - LOG2_UNIT_SIZE) * 2;
+        uint32_t curPartNum = 1 << (log2CurSize - LOG2_UNIT_SIZE) * 2;
         uint32_t coeffOffsetC  = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (hChromaShift + vChromaShift));
         for (uint32_t chromaId = TEXT_CHROMA_U; chromaId <= TEXT_CHROMA_V; chromaId++)
         {
@@ -812,10 +811,10 @@ void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t tu
             const coeff_t* coeffChroma = cu.m_trCoeff[chromaId];
             do
             {
-                if (cu.getCbf(tuIterator.absPartIdxTURelCU, (TextType)chromaId, tuDepth + splitIntoSubTUs))
+                if (cu.getCbf(tuIterator.absPartIdxTURelCU, (TextType)chromaId, curDepth + splitIntoSubTUs))
                 {
-                    uint32_t subTUOffset = tuIterator.section << (log2TrSizeC * 2);
-                    codeCoeffNxN(cu, coeffChroma + coeffOffsetC + subTUOffset, tuIterator.absPartIdxTURelCU, log2TrSizeC, (TextType)chromaId);
+                    uint32_t subTUOffset = tuIterator.section << (log2CurSizeC * 2);
+                    codeCoeffNxN(cu, coeffChroma + coeffOffsetC + subTUOffset, tuIterator.absPartIdxTURelCU, log2CurSizeC, (TextType)chromaId);
                 }
             }
             while (tuIterator.isNextSection());
