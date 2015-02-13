@@ -1141,8 +1141,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_32x32].blockfill_s = x265_blockfill_s_32x32_avx2;
 
         p.pu[LUMA_4x4].luma_vpp = x265_interp_8tap_vert_pp_4x4_avx2;
+        p.pu[LUMA_16x4].luma_vpp = x265_interp_8tap_vert_pp_16x4_avx2;
 
         p.pu[LUMA_4x4].luma_vps = x265_interp_8tap_vert_ps_4x4_avx2;
+        p.pu[LUMA_16x4].luma_vps = x265_interp_8tap_vert_ps_16x4_avx2;
     }
 }
 #else // if HIGH_BIT_DEPTH
