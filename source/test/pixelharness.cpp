@@ -1475,7 +1475,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             {
                 if (!check_cpy2Dto1D_shl_t(ref.cu[i].cpy2Dto1D_shl, opt.cu[i].cpy2Dto1D_shl))
                 {
-                    printf("cpy2Dto1D_shl failed!\n");
+                    printf("cpy2Dto1D_shl[%dx%d] failed!\n", 4 << i, 4 << i);
                     return false;
                 }
             }

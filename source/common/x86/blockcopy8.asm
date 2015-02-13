@@ -5250,6 +5250,42 @@ cglobal cpy2Dto1D_shl_8, 4, 5, 4
     jnz            .loop
     RET
 
+;--------------------------------------------------------------------------------------
+; void cpy2Dto1D_shl_8(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+;--------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal cpy2Dto1D_shl_8, 4, 5, 2
+    add     r2d, r2d
+    movd    xm0, r3d
+    lea     r4, [3 * r2]
+
+    ; Row 0, 1
+    movu           xm1, [r1]
+    vinserti128    m1, m1, [r1 + r2], 1
+    psllw          m1, xm0
+    movu           [r0], m1
+
+    ; Row 2, 3
+    movu           xm1, [r1 + 2 * r2]
+    vinserti128    m1, m1, [r1 + r4], 1
+    psllw          m1, xm0
+    movu           [r0 + 32], m1
+
+    lea            r1, [r1 + 4 * r2]
+
+    ; Row 4, 5
+    movu           xm1, [r1]
+    vinserti128    m1, m1, [r1 + r2], 1
+    psllw          m1, xm0
+    movu           [r0 + 64], m1
+
+    ; Row 6, 7
+    movu           xm1, [r1 + 2 * r2]
+    vinserti128    m1, m1, [r1 + r4], 1
+    psllw          m1, xm0
+    movu           [r0 + 96], m1
+    RET
+
 
 ;--------------------------------------------------------------------------------------
 ; void cpy2Dto1D_shl(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);

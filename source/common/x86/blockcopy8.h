@@ -48,6 +48,7 @@ void x265_cpy1Dto2D_shr_4_sse2(int16_t* dst, const int16_t* src, intptr_t dstStr
 void x265_cpy1Dto2D_shr_8_sse2(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift);
 void x265_cpy1Dto2D_shr_16_sse2(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift);
 void x265_cpy1Dto2D_shr_32_sse2(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift);
+void x265_cpy2Dto1D_shl_8_avx2(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 uint32_t x265_copy_cnt_4_sse4(int16_t* dst, const int16_t* src, intptr_t srcStride);
 uint32_t x265_copy_cnt_8_sse4(int16_t* dst, const int16_t* src, intptr_t srcStride);
 uint32_t x265_copy_cnt_16_sse4(int16_t* dst, const int16_t* src, intptr_t srcStride);
