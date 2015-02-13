@@ -4106,6 +4106,41 @@ cglobal interp_8tap_vert_%1_16x4, 4, 7, 8, 0 - gprsize
 FILTER_VER_LUMA_AVX2_16x4 pp
 FILTER_VER_LUMA_AVX2_16x4 ps
 
+%macro FILTER_VER_LUMA_AVX2_8x4 1
+INIT_YMM avx2
+cglobal interp_8tap_vert_%1_8x4, 4, 6, 8
+    mov             r4d, r4m
+    shl             r4d, 7
+    add             r1d, r1d
+    add             r3d, r3d
+
+%ifdef PIC
+    lea             r5, [tab_LumaCoeffVer]
+    add             r5, r4
+%else
+    lea             r5, [tab_LumaCoeffVer + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r4
+%ifidn %1,pp
+    vbroadcasti128  m7, [pd_32]
+%else
+    vbroadcasti128  m7, [pd_n32768]
+%endif
+
+    PROCESS_LUMA_AVX2_W8_4R %1
+    movu            [r2], xm0
+    movu            [r2 + r3], xm1
+    movu            [r2 + r3 * 2], xm2
+    lea             r4, [r3 * 3]
+    movu            [r2 + r4], xm3
+    RET
+%endmacro
+
+FILTER_VER_LUMA_AVX2_8x4 pp
+FILTER_VER_LUMA_AVX2_8x4 ps
+
 ;---------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_ps_%1x%2(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;---------------------------------------------------------------------------------------------------------------
