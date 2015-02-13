@@ -5326,6 +5326,38 @@ cglobal cpy2Dto1D_shl_16, 4, 4, 4
     jnz            .loop
     RET
 
+;--------------------------------------------------------------------------------------
+; void cpy2Dto1D_shl_16(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+;--------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal cpy2Dto1D_shl_16, 3, 5, 3
+    add    r2d, r2d
+    movd   xm0, r3m
+    mov    r3d, 16/4
+    lea     r4, [r2 * 3]
+
+.loop:
+    ; Row 0-1
+    movu     m1, [r1]
+    movu     m2, [r1 + r2]
+    psllw    m1, xm0
+    psllw    m2, xm0
+    movu     [r0 + 0 * mmsize], m1
+    movu     [r0 + 1 * mmsize], m2
+
+    ; Row 2-3
+    movu     m1, [r1 + 2 * r2]
+    movu     m2, [r1 + r4]
+    psllw    m1, xm0
+    psllw    m2, xm0
+    movu     [r0 + 2 * mmsize], m1
+    movu     [r0 + 3 * mmsize], m2
+
+    add      r0, 4 * mmsize
+    lea      r1, [r1 + r2 * 4]
+    dec      r3d
+    jnz      .loop
+    RET
 
 ;--------------------------------------------------------------------------------------
 ; void cpy2Dto1D_shl(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
