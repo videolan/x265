@@ -5396,6 +5396,52 @@ cglobal cpy2Dto1D_shl_32, 4, 4, 6
     jnz            .loop
     RET
 
+;--------------------------------------------------------------------------------------
+; void cpy2Dto1D_shl_32(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+;--------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal cpy2Dto1D_shl_32, 3, 5, 5
+    add     r2d, r2d
+    movd    xm0, r3m
+    mov     r3d, 32/4
+    lea     r4, [3 * r2]
+
+.loop:
+    ; Row 0-1
+    movu     m1, [r1]
+    movu     m2, [r1 + 32]
+    movu     m3, [r1 + r2]
+    movu     m4, [r1 + r2 + 32]
+
+    psllw    m1, xm0
+    psllw    m2, xm0
+    psllw    m3, xm0
+    psllw    m4, xm0
+    movu     [r0], m1
+    movu     [r0 + mmsize], m2
+    movu     [r0 + 2 * mmsize], m3
+    movu     [r0 + 3 * mmsize], m4
+
+    ; Row 2-3
+    movu     m1, [r1 + 2 * r2]
+    movu     m2, [r1 + 2 * r2 + 32]
+    movu     m3, [r1 + r4]
+    movu     m4, [r1 + r4 + 32]
+
+    psllw    m1, xm0
+    psllw    m2, xm0
+    psllw    m3, xm0
+    psllw    m4, xm0
+    movu     [r0 + 4 * mmsize], m1
+    movu     [r0 + 5 * mmsize], m2
+    movu     [r0 + 6 * mmsize], m3
+    movu     [r0 + 7 * mmsize], m4
+
+    add      r0, 8 * mmsize
+    lea      r1, [r1 + r2 * 4]
+    dec      r3d
+    jnz      .loop
+    RET
 
 ;--------------------------------------------------------------------------------------
 ; void cpy1Dto2D_shr(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
