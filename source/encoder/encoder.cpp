@@ -365,6 +365,13 @@ void Encoder::updateVbvPlan(RateControl* rc)
  *         negative on malloc error or abort */
 int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 {
+#if CHECKED_BUILD || _DEBUG
+    if (g_checkFailures)
+    {
+        x265_log(m_param, X265_LOG_ERROR, "encoder aborting because of internal error\n");
+        return -1;
+    }
+#endif
     if (m_aborted)
         return -1;
 
