@@ -485,11 +485,11 @@ cglobal quant, 5,6,8
     dec         r4d
     jnz        .loop
 
-    pxor        m0, m0
-    psadbw      m7, m0
-    movhlps     m0, m7
-    paddd       m7, m0
-    movd        eax, m7
+    pshufd      m0, m7, 00001110b
+    paddd       m0, m7
+    pshufd      m1, m0, 00000001b
+    paddd       m0, m1
+    movd        eax, m0
     RET
 
 
