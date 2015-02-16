@@ -1697,7 +1697,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom, uin
         uint32_t maxMode = NUM_CHROMA_MODE;
         uint32_t modeList[NUM_CHROMA_MODE];
 
-        if (sharedChromaModes)
+        if (sharedChromaModes && !initTuDepth)
         {
             for (uint32_t l = 0; l < NUM_CHROMA_MODE; l++)
                 modeList[l] = sharedChromaModes[0];
