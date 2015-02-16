@@ -84,7 +84,7 @@ fail:
  * allocated by the same encoder. */
 bool PicYuv::createOffsets(const SPS& sps)
 {
-    uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
+    uint32_t numPartitions = 1 << (g_unitSizeDepth * 2);
     CHECKED_MALLOC(m_cuOffsetY, intptr_t, sps.numCuInWidth * sps.numCuInHeight);
     CHECKED_MALLOC(m_cuOffsetC, intptr_t, sps.numCuInWidth * sps.numCuInHeight);
     for (uint32_t cuRow = 0; cuRow < sps.numCuInHeight; cuRow++)

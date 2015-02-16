@@ -1174,12 +1174,12 @@ int x265_set_globals(x265_param *param)
 
         // compute actual CU depth with respect to config depth and max transform size
         g_maxCUDepth   = maxLog2CUSize - MIN_LOG2_CU_SIZE;
-        g_maxFullDepth = maxLog2CUSize - LOG2_UNIT_SIZE;
+        g_unitSizeDepth = maxLog2CUSize - LOG2_UNIT_SIZE;
 
         // initialize partition order
         uint32_t* tmp = &g_zscanToRaster[0];
-        initZscanToRaster(g_maxFullDepth, 1, 0, tmp);
-        initRasterToZscan(g_maxFullDepth);
+        initZscanToRaster(g_unitSizeDepth, 1, 0, tmp);
+        initRasterToZscan(g_unitSizeDepth);
     }
     return 0;
 }

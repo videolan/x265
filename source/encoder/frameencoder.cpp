@@ -538,7 +538,7 @@ void FrameEncoder::encodeSlice()
 {
     Slice* slice = m_frame->m_encData->m_slice;
     const uint32_t widthInLCUs = slice->m_sps->numCuInWidth;
-    const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_CU_PARTITIONS - 1) / NUM_CU_PARTITIONS;
+    const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_4x4_PARTITIONS - 1) / NUM_4x4_PARTITIONS;
     const uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : 1;
 
     SAOParam* saoParam = slice->m_sps->bUseSAO ? m_frame->m_encData->m_saoParam : NULL;
