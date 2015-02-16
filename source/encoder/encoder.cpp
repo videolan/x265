@@ -1626,7 +1626,7 @@ void Encoder::configure(x265_param *p)
 
     if (p->maxTUSize > p->maxCUSize)
     {
-        x265_log(p, X265_LOG_WARNING, "Max TU size should be less than or equal to max CU size, setting max TU size = %d", p->maxCUSize);
+        x265_log(p, X265_LOG_WARNING, "Max TU size should be less than or equal to max CU size, setting max TU size = %d\n", p->maxCUSize);
         p->maxTUSize = p->maxCUSize;
     }
 
