@@ -571,6 +571,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("repeat-headers") p->bRepeatHeaders = atobool(value);
     OPT("wpp") p->bEnableWavefront = atobool(value);
     OPT("ctu") p->maxCUSize = (uint32_t)atoi(value);
+    OPT("min-cu-size") p->minCUSize = (uint32_t)atoi(value);
     OPT("tu-intra-depth") p->tuQTMaxIntraDepth = (uint32_t)atoi(value);
     OPT("tu-inter-depth") p->tuQTMaxInterDepth = (uint32_t)atoi(value);
     OPT("max-tu-size") p->maxTUSize = (uint32_t)atoi(value);
@@ -1304,6 +1305,7 @@ char *x265_param2string(x265_param *p)
     s += sprintf(s, " bitdepth=%d", p->internalBitDepth);
     BOOL(p->bEnableWavefront, "wpp");
     s += sprintf(s, " ctu=%d", p->maxCUSize);
+    s += sprintf(s, " min-cu-size=%d", p->minCUSize);
     s += sprintf(s, " max-tu-size=%d", p->maxTUSize);
     s += sprintf(s, " tu-intra-depth=%d", p->tuQTMaxIntraDepth);
     s += sprintf(s, " tu-inter-depth=%d", p->tuQTMaxInterDepth);
