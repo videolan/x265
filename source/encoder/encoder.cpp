@@ -1624,6 +1624,12 @@ void Encoder::configure(x265_param *p)
         p->rc.cuTree = 0;
     }
 
+    if (p->maxTUSize > p->maxCUSize)
+    {
+        x265_log(p, X265_LOG_WARNING, "Max TU size should be less than or equal to max CU size, setting max TU size = %d", p->maxCUSize);
+        p->maxTUSize = p->maxCUSize;
+    }
+
     if (p->rc.aqStrength == 0 && p->rc.cuTree == 0)
         p->rc.aqMode = X265_AQ_NONE;
 

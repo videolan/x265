@@ -1012,8 +1012,8 @@ int x265_check_params(x265_param *param)
           "QuadtreeTUMaxDepthIntra must be greater 0 and less than 5");
     CHECK(maxLog2CUSize < tuQTMinLog2Size + param->tuQTMaxIntraDepth - 1,
           "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
-    CHECK((param->maxTUSize != 32 && param->maxTUSize != 16 && param->maxTUSize != 8 && param->maxTUSize != 4) || param->maxTUSize > param->maxCUSize,
-          "max TU size must be 4, 8, 16, or 32 and should be less than max CU size");
+    CHECK((param->maxTUSize != 32 && param->maxTUSize != 16 && param->maxTUSize != 8 && param->maxTUSize != 4),
+          "max TU size must be 4, 8, 16, or 32");
     CHECK(param->maxNumMergeCand < 1, "MaxNumMergeCand must be 1 or greater.");
     CHECK(param->maxNumMergeCand > 5, "MaxNumMergeCand must be 5 or smaller.");
 
