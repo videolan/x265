@@ -51,6 +51,8 @@ tab_Cm:    db 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3
 
 tab_c_526336:   times 4 dd 8192*64+2048
 
+tab_c1_526336:  times 8 dd 8192*64+2048
+
 tab_ChromaCoeff: db  0, 64,  0,  0
                  db -2, 58, 10, -2
                  db -4, 54, 16, -2
@@ -108,6 +110,27 @@ tab_LumaCoeffV: times 4 dw 0, 0
                 times 4 dw -5, 17
                 times 4 dw 58, -10
                 times 4 dw 4, -1
+
+ALIGN 32
+tab_LumaCoeffVer_w: times 8 dw 0, 0
+                    times 8 dw 0, 64
+                    times 8 dw 0, 0
+                    times 8 dw 0, 0
+
+                    times 8 dw -1, 4
+                    times 8 dw -10, 58
+                    times 8 dw 17, -5
+                    times 8 dw 1, 0
+
+                    times 8 dw -1, 4
+                    times 8 dw -11, 40
+                    times 8 dw 40, -11
+                    times 8 dw 4, -1
+
+                    times 8 dw 0, 1
+                    times 8 dw -5, 17
+                    times 8 dw 58, -10
+                    times 8 dw 4, -1
 
 tab_LumaCoeffVer: times 8 db 0, 0
                   times 8 db 0, 64
@@ -10450,3 +10473,100 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-gprsize
     FILTER_VER_LUMA_SS 48, 64
     FILTER_VER_LUMA_SS 64, 16
     FILTER_VER_LUMA_SS 16, 64
+
+%macro FILTER_VER_LUMA_AVX2_4x4 1
+INIT_YMM avx2
+cglobal interp_8tap_vert_%1_4x4, 4, 6, 7
+    mov             r4d, r4m
+    add             r1d, r1d
+    shl             r4d, 7
+
+%ifdef PIC
+    lea             r5, [tab_LumaCoeffVer_w]
+    add             r5, r4
+%else
+    lea             r5, [tab_LumaCoeffVer_w + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r4
+
+%ifidn %1,sp
+    mova            m6, [tab_c1_526336]
+%else
+    add             r3d, r3d
+%endif
+
+    movq            xm0, [r0]
+    movq            xm1, [r0 + r1]
+    punpcklwd       xm0, xm1
+    movq            xm2, [r0 + r1 * 2]
+    punpcklwd       xm1, xm2
+    vinserti128     m0, m0, xm1, 1                  ; m0 = [2 1 1 0]
+    pmaddwd         m0, [r5]
+    movq            xm3, [r0 + r4]
+    punpcklwd       xm2, xm3
+    lea             r0, [r0 + 4 * r1]
+    movq            xm4, [r0]
+    punpcklwd       xm3, xm4
+    vinserti128     m2, m2, xm3, 1                  ; m2 = [4 3 3 2]
+    pmaddwd         m5, m2, [r5 + 1 * mmsize]
+    pmaddwd         m2, [r5]
+    paddd           m0, m5
+    movq            xm3, [r0 + r1]
+    punpcklwd       xm4, xm3
+    movq            xm1, [r0 + r1 * 2]
+    punpcklwd       xm3, xm1
+    vinserti128     m4, m4, xm3, 1                  ; m4 = [6 5 5 4]
+    pmaddwd         m5, m4, [r5 + 2 * mmsize]
+    pmaddwd         m4, [r5 + 1 * mmsize]
+    paddd           m0, m5
+    paddd           m2, m4
+    movq            xm3, [r0 + r4]
+    punpcklwd       xm1, xm3
+    lea             r0, [r0 + 4 * r1]
+    movq            xm4, [r0]
+    punpcklwd       xm3, xm4
+    vinserti128     m1, m1, xm3, 1                  ; m1 = [8 7 7 6]
+    pmaddwd         m5, m1, [r5 + 3 * mmsize]
+    pmaddwd         m1, [r5 + 2 * mmsize]
+    paddd           m0, m5
+    paddd           m2, m1
+    movq            xm3, [r0 + r1]
+    punpcklwd       xm4, xm3
+    movq            xm1, [r0 + 2 * r1]
+    punpcklwd       xm3, xm1
+    vinserti128     m4, m4, xm3, 1                  ; m4 = [A 9 9 8]
+    pmaddwd         m4, [r5 + 3 * mmsize]
+    paddd           m2, m4
+
+%ifidn %1,sp
+    paddd           m0, m6
+    paddd           m2, m6
+    psrad           m0, 12
+    psrad           m2, 12
+%else
+    psrad           m0, 6
+    psrad           m2, 6
+%endif
+    packssdw        m0, m2
+    vextracti128    xm2, m0, 1
+    lea             r4, [r3 * 3]
+
+%ifidn %1,sp
+    packuswb        xm0, xm2
+    movd            [r2], xm0
+    pextrd          [r2 + r3], xm0, 2
+    pextrd          [r2 + r3 * 2], xm0, 1
+    pextrd          [r2 + r4], xm0, 3
+%else
+    movq            [r2], xm0
+    movq            [r2 + r3], xm2
+    movhps          [r2 + r3 * 2], xm0
+    movhps          [r2 + r4], xm2
+%endif
+    RET
+%endmacro
+
+FILTER_VER_LUMA_AVX2_4x4 sp
+FILTER_VER_LUMA_AVX2_4x4 ss
