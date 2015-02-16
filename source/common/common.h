@@ -114,9 +114,10 @@ extern "C" intptr_t x265_stack_align(void (*func)(), ...);
 /* If compiled with CHECKED_BUILD perform run-time checks and log any that
  * fail, both to stderr and to a file */
 #if CHECKED_BUILD || _DEBUG
+extern int g_checkFailures;
 #define X265_CHECK(expr, ...) if (!(expr)) { \
     x265_log(NULL, X265_LOG_ERROR, __VA_ARGS__); \
-    DEBUG_BREAK(); \
+    DEBUG_BREAK(); g_checkFailures++; \
     FILE *fp = fopen("x265_check_failures.txt", "a"); \
     if (fp) { fprintf(fp, "%s:%d\n", __FILE__, __LINE__); fprintf(fp, __VA_ARGS__); fclose(fp); } \
 }
@@ -376,6 +377,7 @@ struct analysis_inter_data
     int32_t*    ref;
     uint8_t*    depth;
     uint8_t*    modes;
+    uint32_t*   bestMergeCand;
 };
 
 /* Stores intra analysis data for a single frame. This struct needs better packing */
@@ -384,6 +386,7 @@ struct analysis_intra_data
     uint8_t*  depth;
     uint8_t*  modes;
     char*     partSizes;
+    uint8_t*  chromaModes;
 };
 
 enum TextType

@@ -21,7 +21,7 @@ include(CheckSymbolExists)
 include(CheckCXXCompilerFlag)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 43)
+set(X265_BUILD 45)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -240,6 +240,11 @@ if(ENABLE_VTUNE)
     add_subdirectory(profile/vtune)
 endif(ENABLE_VTUNE)
 
+option(DETAILED_CU_STATS "Enable internal profiling of encoder work" OFF)
+if(DETAILED_CU_STATS)
+    add_definitions(-DDETAILED_CU_STATS)
+endif(DETAILED_CU_STATS)
+
 add_subdirectory(encoder)
 add_subdirectory(common)
 
@@ -375,10 +380,10 @@ if(ENABLE_CLI)
 
     if(XCODE)
         # Xcode seems unable to link the CLI with libs, so link as one targget
-        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} x265.cpp x265.h
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} x265.cpp x265.h x265cli.h
                            $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
     else()
-        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} ${X265_RC_FILE} x265.cpp x265.h)
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} ${X265_RC_FILE} x265.cpp x265.h x265cli.h)
         if(WIN32 OR NOT ENABLE_SHARED OR INTEL_CXX)
             # The CLI cannot link to the shared library on Windows, it
             # requires internal APIs not exported from the DLL

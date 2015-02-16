@@ -53,7 +53,7 @@
 #define ATOMIC_AND(ptr, mask)               __sync_fetch_and_and(ptr, mask)
 #define ATOMIC_INC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, 1)
 #define ATOMIC_DEC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, -1)
-#define ATOMIC_ADD(ptr, value)              __sync_add_and_fetch((volatile int32_t*)ptr, value)
+#define ATOMIC_ADD(ptr, value)              __sync_fetch_and_add((volatile int32_t*)ptr, value)
 #define GIVE_UP_TIME()                      usleep(0)
 
 #elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
@@ -406,6 +406,23 @@ protected:
     ScopedLock &operator =(const ScopedLock &);
 
     Lock &inst;
+};
+
+// Utility class which adds elapsed time of the scope of the object into the
+// accumulator provided to the constructor
+struct ScopedElapsedTime
+{
+    ScopedElapsedTime(int64_t& accum) : accumlatedTime(accum) { startTime = x265_mdate(); }
+
+    ~ScopedElapsedTime() { accumlatedTime += x265_mdate() - startTime; }
+
+protected:
+
+    int64_t  startTime;
+    int64_t& accumlatedTime;
+
+    // do not allow assignments
+    ScopedElapsedTime &operator =(const ScopedElapsedTime &);
 };
 
 //< Simplistic portable thread class.  Shutdown signalling left to derived class

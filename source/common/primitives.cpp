@@ -98,6 +98,7 @@ void setupAliasPrimitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].pu[i].copy_pp = p.pu[i].copy_pp;
         p.chroma[X265_CSP_I444].pu[i].addAvg  = p.pu[i].addAvg;
         p.chroma[X265_CSP_I444].pu[i].satd    = p.pu[i].satd;
+        p.chroma[X265_CSP_I444].pu[i].chroma_p2s = p.pu[i].filter_p2s;
     }
 
     for (int i = 0; i < NUM_CU_SIZES; i++)

@@ -67,6 +67,12 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_bFilled = false;
     m_bFlushed = false;
     m_bFlush = false;
+
+#if DETAILED_CU_STATS
+    m_slicetypeDecideElapsedTime = 0;
+    m_countSlicetypeDecide = 0;
+#endif
+
     m_widthInCU = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_heightInCU = ((m_param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_scratch = (int*)x265_malloc(m_widthInCU * sizeof(int));
@@ -334,6 +340,10 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
 void Lookahead::slicetypeDecide()
 {
     ProfileScopeEvent(slicetypeDecideEV);
+#if DETAILED_CU_STATS
+    ScopedElapsedTime filterPerfScope(m_slicetypeDecideElapsedTime);
+    m_countSlicetypeDecide++;
+#endif
 
     Lowres *frames[X265_LOOKAHEAD_MAX];
     Frame *list[X265_LOOKAHEAD_MAX];
@@ -1265,9 +1275,7 @@ CostEstimate::CostEstimate(ThreadPool *p)
 CostEstimate::~CostEstimate()
 {
     for (int i = 0; i < 4; i++)
-    {
-        x265_free(m_wbuffer[i]);
-    }
+        X265_FREE(m_wbuffer[i]);
 
     delete[] m_rows;
 }
@@ -1277,6 +1285,11 @@ void CostEstimate::init(x265_param *_param, Frame *curFrame)
     m_param = _param;
     m_widthInCU = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_heightInCU = ((m_param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+
+#if DETAILED_CU_STATS
+    m_processRowElapsedTime = 0;
+    m_countProcessRow = 0;
+#endif
 
     m_rows = new EstimateRow[m_heightInCU];
     for (int i = 0; i < m_heightInCU; i++)
@@ -1300,7 +1313,7 @@ void CostEstimate::init(x265_param *_param, Frame *curFrame)
         /* allocate weighted lowres buffers */
         for (int i = 0; i < 4; i++)
         {
-            m_wbuffer[i] = (pixel*)x265_malloc(sizeof(pixel) * (curFrame->m_lowres.lumaStride * m_paddedLines));
+            m_wbuffer[i] = X265_MALLOC(pixel, curFrame->m_lowres.lumaStride * m_paddedLines);
             m_weightedRef.lowresPlane[i] = m_wbuffer[i] + padoffset;
         }
 
@@ -1348,6 +1361,10 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
             if (!fenc->bIntraCalculated)
                 fenc->rowSatds[0][0][i] = 0;
             fenc->rowSatds[b - p0][p1 - b][i] = 0;
+#if DETAILED_CU_STATS
+            m_rows[i].m_processRowElapsedTime = 0;
+            m_rows[i].m_countProcessRow = 0;
+#endif
         }
 
         m_bFrameCompleted = false;
@@ -1374,6 +1391,10 @@ int64_t CostEstimate::estimateFrameCost(Lowres **frames, int p0, int p1, int b, 
         // Accumulate cost from each row
         for (int row = 0; row < m_heightInCU; row++)
         {
+#if DETAILED_CU_STATS
+            m_processRowElapsedTime += m_rows[row].m_processRowElapsedTime;
+            m_countProcessRow += m_rows[row].m_countProcessRow;
+#endif
             score += m_rows[row].m_costEst;
             fenc->costEst[0][0] += m_rows[row].m_costIntra;
             if (m_param->rc.aqMode)
@@ -1524,6 +1545,10 @@ void CostEstimate::weightsAnalyse(Lowres **frames, int b, int p0)
 void CostEstimate::processRow(int row, int /*threadId*/)
 {
     ProfileScopeEvent(costEstimateRow);
+#if DETAILED_CU_STATS
+    ScopedElapsedTime filterPerfScope(m_processRowElapsedTime);
+    m_countProcessRow++;
+#endif
 
     int realrow = m_heightInCU - 1 - row;
     Lowres **frames = m_curframes;
