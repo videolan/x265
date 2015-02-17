@@ -1077,6 +1077,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_8x8].cpy2Dto1D_shl = x265_cpy2Dto1D_shl_8_avx2;
         p.cu[BLOCK_16x16].cpy2Dto1D_shl = x265_cpy2Dto1D_shl_16_avx2;
         p.cu[BLOCK_32x32].cpy2Dto1D_shl = x265_cpy2Dto1D_shl_32_avx2;
+        p.cu[BLOCK_8x8].cpy2Dto1D_shr = x265_cpy2Dto1D_shr_8_avx2;
+        p.cu[BLOCK_16x16].cpy2Dto1D_shr = x265_cpy2Dto1D_shr_16_avx2;
+        p.cu[BLOCK_32x32].cpy2Dto1D_shr = x265_cpy2Dto1D_shr_32_avx2;
 
 #if X86_64
         ALL_LUMA_TU_S(dct, dct, avx2);
