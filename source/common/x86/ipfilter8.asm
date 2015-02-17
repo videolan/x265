@@ -12544,3 +12544,51 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
 
 FILTER_VER_LUMA_S_AVX2_16x12 sp
 FILTER_VER_LUMA_S_AVX2_16x12 ss
+
+%macro FILTER_VER_LUMA_S_AVX2_16x4 1
+INIT_YMM avx2
+cglobal interp_8tap_vert_%1_16x4, 4, 7, 8, 0 - gprsize
+    mov             r4d, r4m
+    shl             r4d, 7
+    add             r1d, r1d
+
+%ifdef PIC
+    lea             r5, [pw_LumaCoeffVer]
+    add             r5, r4
+%else
+    lea             r5, [pw_LumaCoeffVer + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r4
+%ifidn %1,sp
+    mova            m7, [pd_526336]
+%else
+    add             r3d, r3d
+%endif
+    mov             dword [rsp], 2
+.loopW:
+    PROCESS_LUMA_S_AVX2_W8_4R %1
+    lea             r6, [r3 * 3]
+%ifidn %1,sp
+    movq            [r2], xm0
+    movhps          [r2 + r3], xm0
+    movq            [r2 + r3 * 2], xm2
+    movhps          [r2 + r6], xm2
+    add             r2, 8
+%else
+    movu            [r2], xm0
+    movu            [r2 + r3], xm1
+    movu            [r2 + r3 * 2], xm2
+    movu            [r2 + r6], xm3
+    add             r2, 16
+%endif
+    lea             r6, [8 * r1 - 16]
+    sub             r0, r6
+    dec             dword [rsp]
+    jnz             .loopW
+    RET
+%endmacro
+
+FILTER_VER_LUMA_S_AVX2_16x4 sp
+FILTER_VER_LUMA_S_AVX2_16x4 ss
