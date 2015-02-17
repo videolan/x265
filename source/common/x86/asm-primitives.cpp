@@ -1456,6 +1456,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         p.cu[BLOCK_8x8].cpy2Dto1D_shr = x265_cpy2Dto1D_shr_8_avx2;
         p.cu[BLOCK_16x16].cpy2Dto1D_shr = x265_cpy2Dto1D_shr_16_avx2;
+        p.cu[BLOCK_32x32].cpy2Dto1D_shr = x265_cpy2Dto1D_shr_32_avx2;
 
         p.denoiseDct = x265_denoise_dct_avx2;
         p.quant = x265_quant_avx2;
