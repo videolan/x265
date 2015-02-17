@@ -12831,3 +12831,64 @@ FILTER_VER_LUMA_AVX2_Nx8 sp, 32
 FILTER_VER_LUMA_AVX2_Nx8 sp, 16
 FILTER_VER_LUMA_AVX2_Nx8 ss, 32
 FILTER_VER_LUMA_AVX2_Nx8 ss, 16
+
+%macro FILTER_VER_LUMA_S_AVX2_32x24 1
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
+    mov             r4d, r4m
+    shl             r4d, 7
+    add             r1d, r1d
+
+%ifdef PIC
+    lea             r5, [pw_LumaCoeffVer]
+    add             r5, r4
+%else
+    lea             r5, [pw_LumaCoeffVer + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r4
+%ifidn %1,sp
+    mova            m14, [pd_526336]
+%else
+    add             r3d, r3d
+%endif
+    lea             r6, [r3 * 3]
+    mov             r9d, 4
+.loopW:
+    PROCESS_LUMA_AVX2_W8_16R %1
+%ifidn %1,sp
+    add             r2, 8
+%else
+    add             r2, 16
+%endif
+    add             r0, 16
+    dec             r9d
+    jnz             .loopW
+    lea             r9, [r1 * 4]
+    sub             r7, r9
+    lea             r0, [r7 - 48]
+%ifidn %1,sp
+    lea             r2, [r8 + r3 * 4 - 24]
+%else
+    lea             r2, [r8 + r3 * 4 - 48]
+%endif
+    mova            m11, m14
+    mov             r9d, 4
+.loop:
+    PROCESS_LUMA_S_AVX2_W8_8R %1
+%ifidn %1,sp
+    add             r2, 8
+%else
+    add             r2, 16
+%endif
+    add             r0, 16
+    dec             r9d
+    jnz             .loop
+    RET
+%endif
+%endmacro
+
+FILTER_VER_LUMA_S_AVX2_32x24 sp
+FILTER_VER_LUMA_S_AVX2_32x24 ss
