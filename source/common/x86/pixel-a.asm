@@ -1716,6 +1716,55 @@ cglobal pixel_satd_12x32, 4,7,8,0-gprsize
 %endif
 %endif
 
+%if HIGH_BIT_DEPTH
+%if WIN64
+cglobal pixel_satd_4x32, 4,8,8   ;if WIN64 && cpuflag(avx)
+    SATD_START_MMX
+    mov r6, r0
+    mov r7, r2
+    pxor m7, m7
+    SATD_4x8_SSE vertical, 0, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    pxor    m1, m1
+    movhlps m1, m7
+    paddd   m7, m1
+    pshufd  m1, m7, 1
+    paddd   m7, m1
+    movd   eax, m7
+    RET
+%else
+cglobal pixel_satd_4x32, 4,7,8,0-gprsize
+    SATD_START_MMX
+    mov r6, r0
+    mov [rsp], r2
+    pxor m7, m7
+    SATD_4x8_SSE vertical, 0, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    lea r0, [r0 + r1*2*SIZEOF_PIXEL]
+    lea r2, [r2 + r3*2*SIZEOF_PIXEL]
+    SATD_4x8_SSE vertical, 1, 4, 5
+    pxor    m1, m1
+    movhlps m1, m7
+    paddd   m7, m1
+    pshufd  m1, m7, 1
+    paddd   m7, m1
+    movd   eax, m7
+    RET
+%endif
+%else
 %if WIN64
 cglobal pixel_satd_4x32, 4,8,8   ;if WIN64 && cpuflag(avx)
     SATD_START_MMX
@@ -1758,6 +1807,7 @@ cglobal pixel_satd_4x32, 4,7,8,0-gprsize
     HADDW m7, m1
     movd eax, m7
     RET
+%endif
 %endif
 
 %if WIN64
