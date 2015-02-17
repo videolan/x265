@@ -4764,7 +4764,7 @@ INIT_XMM sse2
 cglobal cpy1Dto2D_shr_4, 3, 3, 4
     add         r2d, r2d
     movd        m0, r3m
-    pcmpeqw	m1, m1
+    pcmpeqw     m1, m1
     psllw       m1, m0
     psraw       m1, 1
 
@@ -4787,7 +4787,7 @@ INIT_YMM avx2
 cglobal cpy1Dto2D_shr_4, 3, 3, 3
     add         r2d, r2d
     movd        xm0, r3m
-    pcmpeqw	m1, m1
+    pcmpeqw     m1, m1
     psllw       m1, xm0
     psraw       m1, 1
 
@@ -4811,7 +4811,7 @@ INIT_XMM sse2
 cglobal cpy1Dto2D_shr_8, 3, 4, 6
     add         r2d, r2d
     movd        m0, r3m
-    pcmpeqw	m1, m1
+    pcmpeqw     m1, m1
     psllw       m1, m0
     psraw       m1, 1
     lea         r3, [r2 * 3]
@@ -4859,7 +4859,7 @@ INIT_YMM avx2
 cglobal cpy1Dto2D_shr_8, 3, 4, 4
     add         r2d, r2d
     movd        xm0, r3m
-    pcmpeqw	m1, m1
+    pcmpeqw     m1, m1
     psllw       m1, xm0
     psraw       m1, 1
     lea         r3, [r2 * 3]
@@ -4898,7 +4898,7 @@ INIT_XMM sse2
 cglobal cpy1Dto2D_shr_16, 3, 5, 6
     add         r2d, r2d
     movd        m0, r3m
-    pcmpeqw	m1, m1
+    pcmpeqw     m1, m1
     psllw       m1, m0
     psraw       m1, 1
     mov         r3d, 16/4
@@ -4952,7 +4952,7 @@ INIT_YMM avx2
 cglobal cpy1Dto2D_shr_16, 3, 5, 4
     add         r2d, r2d
     movd        xm0, r3m
-    pcmpeqw	m1, m1
+    pcmpeqw     m1, m1
     psllw       m1, xm0
     psraw       m1, 1
     mov         r3d, 16/4
@@ -4993,7 +4993,7 @@ INIT_XMM sse2
 cglobal cpy1Dto2D_shr_32, 3, 4, 6
     add         r2d, r2d
     movd        m0, r3m
-    pcmpeqw	m1, m1
+    pcmpeqw     m1, m1
     psllw       m1, m0
     psraw       m1, 1
     mov         r3d, 32/2
@@ -5046,7 +5046,7 @@ INIT_YMM avx2
 cglobal cpy1Dto2D_shr_32, 3, 4, 6
     add         r2d, r2d
     movd        xm0, r3m
-    pcmpeqw	m1, m1
+    pcmpeqw     m1, m1
     psllw       m1, xm0
     psraw       m1, 1
     mov         r3d, 32/2
