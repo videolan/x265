@@ -709,14 +709,12 @@ uint32_t nquant_c(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef
 
     return numSig;
 }
-
-int  count_nonzero_c(const int16_t* quantCoeff, int numCoeff)
+template<int trSize>
+int  count_nonzero_c(const int16_t* quantCoeff)
 {
     X265_CHECK(((intptr_t)quantCoeff & 15) == 0, "quant buffer not aligned\n");
-    X265_CHECK(numCoeff > 0 && (numCoeff & 15) == 0, "numCoeff invalid %d\n", numCoeff);
-
     int count = 0;
-
+    int numCoeff = trSize * trSize;
     for (int i = 0; i < numCoeff; i++)
     {
         count += quantCoeff[i] != 0;
@@ -775,8 +773,11 @@ void setupDCTPrimitives_c(EncoderPrimitives& p)
     p.cu[BLOCK_8x8].idct   = idct8_c;
     p.cu[BLOCK_16x16].idct = idct16_c;
     p.cu[BLOCK_32x32].idct = idct32_c;
-    p.count_nonzero = count_nonzero_c;
     p.denoiseDct = denoiseDct_c;
+    p.cu[BLOCK_4x4].count_nonzero = count_nonzero_c<4>;
+    p.cu[BLOCK_8x8].count_nonzero = count_nonzero_c<8>;
+    p.cu[BLOCK_16x16].count_nonzero = count_nonzero_c<16>;
+    p.cu[BLOCK_32x32].count_nonzero = count_nonzero_c<32>;
 
     p.cu[BLOCK_4x4].copy_cnt   = copy_count<4>;
     p.cu[BLOCK_8x8].copy_cnt   = copy_count<8>;
