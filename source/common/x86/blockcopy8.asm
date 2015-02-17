@@ -4391,7 +4391,7 @@ INIT_XMM sse2
 cglobal cpy2Dto1D_shr_4, 3, 4, 4
     add             r2d, r2d
     movd            m0, r3m
-    pcmpeqw	    m1, m1
+    pcmpeqw         m1, m1
     psllw           m1, m0
     psraw           m1, 1
 
@@ -4424,7 +4424,7 @@ INIT_XMM sse2
 cglobal cpy2Dto1D_shr_8, 3, 5, 4
     add             r2d, r2d
     movd            m0, r3m
-    pcmpeqw	    m1, m1
+    pcmpeqw         m1, m1
     psllw           m1, m0
     psraw           m1, 1
     mov             r3d, 8/4
@@ -4509,7 +4509,7 @@ INIT_XMM sse2
 cglobal cpy2Dto1D_shr_16, 3, 4, 4
     add             r2d, r2d
     movd            m0, r3m
-    pcmpeqw	    m1, m1
+    pcmpeqw         m1, m1
     psllw           m1, m0
     psraw           m1, 1
     mov             r3d, 16/2
@@ -4615,7 +4615,7 @@ INIT_XMM sse2
 cglobal cpy2Dto1D_shr_32, 3, 4, 6
     add             r2d, r2d
     movd            m0, r3m
-    pcmpeqw	    m1, m1
+    pcmpeqw         m1, m1
     psllw           m1, m0
     psraw           m1, 1
     mov             r3d, 32/1
