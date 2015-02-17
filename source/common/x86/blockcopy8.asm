@@ -4549,6 +4549,64 @@ cglobal cpy2Dto1D_shr_16, 3, 4, 4
     jnz            .loop
     RET
 
+INIT_YMM avx2
+cglobal cpy2Dto1D_shr_16, 4, 5, 4
+    add        r2d, r2d
+    movd       xm0, r3d
+    pcmpeqw    m1, m1
+    psllw      m1, xm0
+    psraw      m1, 1
+    lea        r3, [r2 * 3]
+    mov        r4d, 16/8
+
+.loop:
+    ; Row 0-1
+    movu       m2, [r1]
+    movu       m3, [r1 + r2]
+    psubw      m2, m1
+    psraw      m2, xm0
+    psubw      m3, m1
+    psraw      m3, xm0
+    movu       [r0 + 0 * mmsize], m2
+    movu       [r0 + 1 * mmsize], m3
+
+    ; Row 2-3
+    movu       m2, [r1 + 2 * r2]
+    movu       m3, [r1 + r3]
+    psubw      m2, m1
+    psraw      m2, xm0
+    psubw      m3, m1
+    psraw      m3, xm0
+    movu       [r0 + 2 * mmsize], m2
+    movu       [r0 + 3 * mmsize], m3
+
+    ; Row 4-5
+    lea        r1, [r1 + 4 * r2]
+    movu       m2, [r1]
+    movu       m3, [r1 + r2]
+    psubw      m2, m1
+    psraw      m2, xm0
+    psubw      m3, m1
+    psraw      m3, xm0
+    movu       [r0 + 4 * mmsize], m2
+    movu       [r0 + 5 * mmsize], m3
+
+    ; Row 6-7
+    movu       m2, [r1 + 2 * r2]
+    movu       m3, [r1 + r3]
+    psubw      m2, m1
+    psraw      m2, xm0
+    psubw      m3, m1
+    psraw      m3, xm0
+    movu       [r0 + 6 * mmsize], m2
+    movu       [r0 + 7 * mmsize], m3
+
+    add        r0, 8 * mmsize
+    lea        r1, [r1 + 4 * r2]
+    dec        r4d
+    jnz        .loop
+    RET
+
 
 ;--------------------------------------------------------------------------------------
 ; void cpy2Dto1D_shr(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
