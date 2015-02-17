@@ -12191,3 +12191,42 @@ FILTER_VER_LUMA_AVX2_NxN 48, 64, ss
 FILTER_VER_LUMA_AVX2_NxN 64, 32, ss
 FILTER_VER_LUMA_AVX2_NxN 64, 48, ss
 FILTER_VER_LUMA_AVX2_NxN 64, 64, ss
+
+%macro FILTER_VER_LUMA_S_AVX2_12x16 1
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_vert_%1_12x16, 4, 9, 15
+    mov             r4d, r4m
+    shl             r4d, 7
+    add             r1d, r1d
+
+%ifdef PIC
+    lea             r5, [pw_LumaCoeffVer]
+    add             r5, r4
+%else
+    lea             r5, [pw_LumaCoeffVer + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r4
+%ifidn %1,sp
+    mova            m14, [pd_526336]
+%else
+    add             r3d, r3d
+%endif
+    lea             r6, [r3 * 3]
+    PROCESS_LUMA_AVX2_W8_16R %1
+%ifidn %1,sp
+    add             r2, 8
+%else
+    add             r2, 16
+%endif
+    add             r0, 16
+    mova            m7, m14
+    PROCESS_LUMA_AVX2_W4_16R %1
+    RET
+%endif
+%endmacro
+
+FILTER_VER_LUMA_S_AVX2_12x16 sp
+FILTER_VER_LUMA_S_AVX2_12x16 ss
