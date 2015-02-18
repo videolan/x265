@@ -74,14 +74,11 @@ public:
     bool      m_bTryLossless;
     bool      m_bChromaSa8d;
 
-    /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
-    analysis_intra_data* m_reuseIntraDataCTU;
-    analysis_inter_data* m_reuseInterDataCTU;
-    int32_t* reuseRef;
-    uint32_t* reuseBestMergeCand;
     Analysis();
+
     bool create(ThreadLocalData* tld);
     void destroy();
+
     Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
 
 protected:
@@ -95,6 +92,12 @@ protected:
     bool findJob(int threadId);
     void parallelModeAnalysis(int threadId, int jobId);
     void parallelME(int threadId, int meId);
+
+    /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
+    analysis_intra_data* m_reuseIntraDataCTU;
+    analysis_inter_data* m_reuseInterDataCTU;
+    int32_t*             m_reuseRef;
+    uint32_t*            m_reuseBestMergeCand;
 
     /* full analysis for an I-slice CU */
     void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder);
