@@ -4430,6 +4430,8 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
     sub             r0, r4
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
+%elifidn %1, sp
+    mova            m14, [pd_524800]
 %else
     vbroadcasti128  m14, [pd_n32768]
 %endif
@@ -4549,6 +4551,14 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
     paddd           m9, m13
     pmaddwd         m11, [r5]
 
+%ifidn %1,ss
+    psrad           m0, 6
+    psrad           m1, 6
+    psrad           m2, 6
+    psrad           m3, 6
+    psrad           m4, 6
+    psrad           m5, 6
+%else
     paddd           m0, m14
     paddd           m1, m14
     paddd           m2, m14
@@ -4562,6 +4572,13 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
     psrad           m3, 6
     psrad           m4, 6
     psrad           m5, 6
+%elifidn %1, sp
+    psrad           m0, 10
+    psrad           m1, 10
+    psrad           m2, 10
+    psrad           m3, 10
+    psrad           m4, 10
+    psrad           m5, 10
 %else
     psrad           m0, 2
     psrad           m1, 2
@@ -4570,14 +4587,20 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
     psrad           m4, 2
     psrad           m5, 2
 %endif
+%endif
+
     packssdw        m0, m1
     packssdw        m2, m3
     packssdw        m4, m5
     vpermq          m0, m0, 11011000b
     vpermq          m2, m2, 11011000b
     vpermq          m4, m4, 11011000b
-%ifidn %1,pp
     pxor            m5, m5
+%ifidn %1,pp
+    CLIPW           m0, m5, [pw_pixel_max]
+    CLIPW           m2, m5, [pw_pixel_max]
+    CLIPW           m4, m5, [pw_pixel_max]
+%elifidn %1, sp
     CLIPW           m0, m5, [pw_pixel_max]
     CLIPW           m2, m5, [pw_pixel_max]
     CLIPW           m4, m5, [pw_pixel_max]
@@ -4615,18 +4638,29 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
     pmaddwd         m13, [r5 + 1 * mmsize]
     paddd           m11, m13
 
+%ifidn %1,ss
+    psrad           m6, 6
+    psrad           m7, 6
+%else
     paddd           m6, m14
     paddd           m7, m14
 %ifidn %1,pp
     psrad           m6, 6
     psrad           m7, 6
+%elifidn %1, sp
+    psrad           m6, 10
+    psrad           m7, 10
 %else
     psrad           m6, 2
     psrad           m7, 2
 %endif
+%endif
+
     packssdw        m6, m7
     vpermq          m6, m6, 11011000b
 %ifidn %1,pp
+    CLIPW           m6, m5, [pw_pixel_max]
+%elifidn %1, sp
     CLIPW           m6, m5, [pw_pixel_max]
 %endif
     vextracti128    xm7, m6, 1
@@ -4663,6 +4697,12 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
     pmaddwd         m3, [r5 + 3 * mmsize]
     paddd           m11, m3
 
+%ifidn %1,ss
+    psrad           m8, 6
+    psrad           m9, 6
+    psrad           m10, 6
+    psrad           m11, 6
+%else
     paddd           m8, m14
     paddd           m9, m14
     paddd           m10, m14
@@ -4672,17 +4712,27 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
     psrad           m9, 6
     psrad           m10, 6
     psrad           m11, 6
+%elifidn %1, sp
+    psrad           m8, 10
+    psrad           m9, 10
+    psrad           m10, 10
+    psrad           m11, 10
 %else
     psrad           m8, 2
     psrad           m9, 2
     psrad           m10, 2
     psrad           m11, 2
 %endif
+%endif
+
     packssdw        m8, m9
     packssdw        m10, m11
     vpermq          m8, m8, 11011000b
     vpermq          m10, m10, 11011000b
 %ifidn %1,pp
+    CLIPW           m8, m5, [pw_pixel_max]
+    CLIPW           m10, m5, [pw_pixel_max]
+%elifidn %1, sp
     CLIPW           m8, m5, [pw_pixel_max]
     CLIPW           m10, m5, [pw_pixel_max]
 %endif
@@ -4703,6 +4753,8 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
 
 FILTER_VER_LUMA_AVX2_16x12 pp
 FILTER_VER_LUMA_AVX2_16x12 ps
+FILTER_VER_LUMA_AVX2_16x12 sp
+FILTER_VER_LUMA_AVX2_16x12 ss
 
 %macro FILTER_VER_LUMA_AVX2_4x8 1
 INIT_YMM avx2
@@ -4724,6 +4776,8 @@ cglobal interp_8tap_vert_%1_4x8, 4, 7, 8
 
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
+%elifidn %1, sp
+    mova            m7, [pd_524800]
 %else
     vbroadcasti128  m7, [pd_n32768]
 %endif
@@ -4780,18 +4834,29 @@ cglobal interp_8tap_vert_%1_4x8, 4, 7, 8
     pmaddwd         m6, [r5 + 1 * mmsize]
     paddd           m1, m6
 
+%ifidn %1,ss
+    psrad           m0, 6
+    psrad           m2, 6
+%else
     paddd           m0, m7
     paddd           m2, m7
 %ifidn %1,pp
     psrad           m0, 6
     psrad           m2, 6
+%elifidn %1, sp
+    psrad           m0, 10
+    psrad           m2, 10
 %else
     psrad           m0, 2
     psrad           m2, 2
 %endif
+%endif
+
     packssdw        m0, m2
-%ifidn %1,pp
     pxor            m6, m6
+%ifidn %1,pp
+    CLIPW           m0, m6, [pw_pixel_max]
+%elifidn %1, sp
     CLIPW           m0, m6, [pw_pixel_max]
 %endif
 
@@ -4819,17 +4884,28 @@ cglobal interp_8tap_vert_%1_4x8, 4, 7, 8
     pmaddwd         m0, [r5 + 3 * mmsize]
     paddd           m1, m0
 
+%ifidn %1,ss
+    psrad           m4, 6
+    psrad           m1, 6
+%else
     paddd           m4, m7
     paddd           m1, m7
 %ifidn %1,pp
     psrad           m4, 6
     psrad           m1, 6
+%elifidn %1, sp
+    psrad           m4, 10
+    psrad           m1, 10
 %else
     psrad           m4, 2
     psrad           m1, 2
 %endif
+%endif
+
     packssdw        m4, m1
 %ifidn %1,pp
+    CLIPW           m4, m6, [pw_pixel_max]
+%elifidn %1, sp
     CLIPW           m4, m6, [pw_pixel_max]
 %endif
 
@@ -4844,6 +4920,8 @@ cglobal interp_8tap_vert_%1_4x8, 4, 7, 8
 
 FILTER_VER_LUMA_AVX2_4x8 pp
 FILTER_VER_LUMA_AVX2_4x8 ps
+FILTER_VER_LUMA_AVX2_4x8 sp
+FILTER_VER_LUMA_AVX2_4x8 ss
 
 %macro PROCESS_LUMA_AVX2_W4_16R 1
     movq            xm0, [r0]
