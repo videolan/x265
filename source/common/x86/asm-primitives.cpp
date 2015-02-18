@@ -1145,6 +1145,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.pu[LUMA_64x64].luma_vps = x265_interp_8tap_vert_ps_64x64_avx2;
 
         p.pu[LUMA_8x8].luma_vsp = x265_interp_8tap_vert_sp_8x8_avx2;
+        p.pu[LUMA_8x16].luma_vsp = x265_interp_8tap_vert_sp_8x16_avx2;
+        p.pu[LUMA_8x32].luma_vsp = x265_interp_8tap_vert_sp_8x32_avx2;
 
         p.pu[LUMA_16x16].luma_vsp = x265_interp_8tap_vert_sp_16x16_avx2;
         p.pu[LUMA_16x32].luma_vsp = x265_interp_8tap_vert_sp_16x32_avx2;
@@ -1164,6 +1166,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.pu[LUMA_64x64].luma_vsp = x265_interp_8tap_vert_sp_64x64_avx2;
 
         p.pu[LUMA_8x8].luma_vss = x265_interp_8tap_vert_ss_8x8_avx2;
+        p.pu[LUMA_8x16].luma_vss = x265_interp_8tap_vert_ss_8x16_avx2;
+        p.pu[LUMA_8x32].luma_vss = x265_interp_8tap_vert_ss_8x32_avx2;
 
         p.pu[LUMA_16x16].luma_vss = x265_interp_8tap_vert_ss_16x16_avx2;
         p.pu[LUMA_16x32].luma_vss = x265_interp_8tap_vert_ss_16x32_avx2;
