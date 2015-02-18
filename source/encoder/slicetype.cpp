@@ -580,7 +580,9 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
         curNonB++;
     int nextNonB = keyframe ? prevNonB : curNonB;
     int nextB = prevNonB + 1;
-    int nextBRef = 0;
+    int nextBRef = 0, curBRef = 0;
+    if (m_param->bBPyramid && curNonB - prevNonB > 1)
+        curBRef = (prevNonB + curNonB + 1) / 2;
     int miniGopEnd = keyframe ? prevNonB : curNonB;
     while (curNonB < numFrames + !keyframe)
     {
@@ -597,7 +599,6 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
                 {
                     frames[j]->plannedSatd[frames[j]->indB] = frames[nextNonB]->plannedSatd[idx];
                     frames[j]->plannedType[frames[j]->indB++] = frames[nextNonB]->plannedType[idx];
-                
                 }
             }
             idx++;
@@ -622,19 +623,19 @@ void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
                     satdCost = vbvFrameCost(frames, nextBRef, curNonB, i);
             }
             else
-                satdCost = vbvFrameCost(frames, prevNonB, nextNonB, i);
+                satdCost = vbvFrameCost(frames, prevNonB, curNonB, i);
             frames[nextNonB]->plannedSatd[idx] = satdCost;
             frames[nextNonB]->plannedType[idx] = type;
             /* Save the nextB Cost in each B frame of the current miniGop */
 
             for (int j = nextB; j < miniGopEnd; j++)
             {
-                if (nextBRef && i == nextBRef)
+                if (curBRef && curBRef == i)
                     break;
                 if (j >= i && j !=nextBRef)
                     continue;
                 frames[j]->plannedSatd[frames[j]->indB] = satdCost;
-                frames[j]->plannedType[frames[j]->indB++] = X265_TYPE_B;
+                frames[j]->plannedType[frames[j]->indB++] = type;
             }
         }
         prevNonB = curNonB;
