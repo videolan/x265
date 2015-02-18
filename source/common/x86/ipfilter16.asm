@@ -4174,6 +4174,8 @@ cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
     sub             r0, r4
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
+%elifidn %1, sp
+    mova            m14, [pd_524800]
 %else
     vbroadcasti128  m14, [pd_n32768]
 %endif
@@ -4203,6 +4205,8 @@ cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
 
 FILTER_VER_LUMA_AVX2_32x24 pp
 FILTER_VER_LUMA_AVX2_32x24 ps
+FILTER_VER_LUMA_AVX2_32x24 sp
+FILTER_VER_LUMA_AVX2_32x24 ss
 
 %macro PROCESS_LUMA_AVX2_W8_4R 1
     movu            xm0, [r0]                       ; m0 = row 0
@@ -4277,6 +4281,12 @@ FILTER_VER_LUMA_AVX2_32x24 ps
     pmaddwd         m6, [r5 + 3 * mmsize]
     paddd           m3, m6
 
+%ifidn %1,ss
+    psrad           m0, 6
+    psrad           m1, 6
+    psrad           m2, 6
+    psrad           m3, 6
+%else
     paddd           m0, m7
     paddd           m1, m7
     paddd           m2, m7
@@ -4286,18 +4296,28 @@ FILTER_VER_LUMA_AVX2_32x24 ps
     psrad           m1, 6
     psrad           m2, 6
     psrad           m3, 6
+%elifidn %1, sp
+    psrad           m0, 10
+    psrad           m1, 10
+    psrad           m2, 10
+    psrad           m3, 10
 %else
     psrad           m0, 2
     psrad           m1, 2
     psrad           m2, 2
     psrad           m3, 2
 %endif
+%endif
+
     packssdw        m0, m1
     packssdw        m2, m3
     vpermq          m0, m0, 11011000b
     vpermq          m2, m2, 11011000b
-%ifidn %1,pp
     pxor            m4, m4
+%ifidn %1,pp
+    CLIPW           m0, m4, [pw_pixel_max]
+    CLIPW           m2, m4, [pw_pixel_max]
+%elifidn %1, sp
     CLIPW           m0, m4, [pw_pixel_max]
     CLIPW           m2, m4, [pw_pixel_max]
 %endif
@@ -4325,6 +4345,8 @@ cglobal interp_8tap_vert_%1_16x4, 4, 7, 8, 0 - gprsize
     sub             r0, r4
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
+%elifidn %1, sp
+    mova            m7, [pd_524800]
 %else
     vbroadcasti128  m7, [pd_n32768]
 %endif
@@ -4346,6 +4368,8 @@ cglobal interp_8tap_vert_%1_16x4, 4, 7, 8, 0 - gprsize
 
 FILTER_VER_LUMA_AVX2_16x4 pp
 FILTER_VER_LUMA_AVX2_16x4 ps
+FILTER_VER_LUMA_AVX2_16x4 sp
+FILTER_VER_LUMA_AVX2_16x4 ss
 
 %macro FILTER_VER_LUMA_AVX2_8x4 1
 INIT_YMM avx2
@@ -4366,6 +4390,8 @@ cglobal interp_8tap_vert_%1_8x4, 4, 6, 8
     sub             r0, r4
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
+%elifidn %1, sp
+    mova            m7, [pd_524800]
 %else
     vbroadcasti128  m7, [pd_n32768]
 %endif
@@ -4381,6 +4407,8 @@ cglobal interp_8tap_vert_%1_8x4, 4, 6, 8
 
 FILTER_VER_LUMA_AVX2_8x4 pp
 FILTER_VER_LUMA_AVX2_8x4 ps
+FILTER_VER_LUMA_AVX2_8x4 sp
+FILTER_VER_LUMA_AVX2_8x4 ss
 
 %macro FILTER_VER_LUMA_AVX2_16x12 1
 INIT_YMM avx2
