@@ -2377,6 +2377,46 @@ cglobal pixel_avg_weight_w16
     mova    [t0], xm0
     vextracti128 [t0+t1], m0, 1
     AVG_END
+
+cglobal pixel_avg_weight_w32
+    BIWEIGHT_START
+    AVG_START 5
+.height_loop:
+    movu     m0, [t2]
+    movu     m1, [t4]
+    SBUTTERFLY bw, 0, 1, 2
+    pmaddubsw m0, m3
+    pmaddubsw m1, m3
+    pmulhrsw  m0, m4
+    pmulhrsw  m1, m4
+    packuswb  m0, m1
+    mova    [t0], m0
+    AVG_END
+
+cglobal pixel_avg_weight_w64
+    BIWEIGHT_START
+    AVG_START 5
+.height_loop:
+    movu     m0, [t2]
+    movu     m1, [t4]
+    SBUTTERFLY bw, 0, 1, 2
+    pmaddubsw m0, m3
+    pmaddubsw m1, m3
+    pmulhrsw  m0, m4
+    pmulhrsw  m1, m4
+    packuswb  m0, m1
+    mova    [t0], m0
+    movu     m0, [t2 + 32]
+    movu     m1, [t4 + 32]
+    SBUTTERFLY bw, 0, 1, 2
+    pmaddubsw m0, m3
+    pmaddubsw m1, m3
+    pmulhrsw  m0, m4
+    pmulhrsw  m1, m4
+    packuswb  m0, m1
+    mova    [t0 + 32], m0
+    AVG_END
+
 %endif ;HIGH_BIT_DEPTH
 
 ;=============================================================================
@@ -2982,17 +3022,18 @@ INIT_XMM avx2
 ;AVG_FUNC 24, movdqu, movdqa
 ;AVGH 24, 32
 
-;AVG_FUNC 64, movdqu, movdqa
-;AVGH 64, 64
-;AVGH 64, 48
-;AVGH 64, 16
+AVG_FUNC 64, movdqu, movdqa
+AVGH 64, 64
+AVGH 64, 48
+AVGH 64, 32
+AVGH 64, 16
 
-;AVG_FUNC 32, movdqu, movdqa
-;AVGH 32, 64
-;AVGH 32, 32
-;AVGH 32, 24
-;AVGH 32, 16
-;AVGH 32, 8
+AVG_FUNC 32, movdqu, movdqa
+AVGH 32, 64
+AVGH 32, 32
+AVGH 32, 24
+AVGH 32, 16
+AVGH 32, 8
 AVG_FUNC 16, movdqu, movdqa
 AVGH 16, 16
 AVGH 16,  8
