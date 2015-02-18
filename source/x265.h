@@ -229,6 +229,9 @@ typedef enum
 #define X265_B_ADAPT_FAST       1
 #define X265_B_ADAPT_TRELLIS    2
 
+#define X265_REF_LIMIT_DEPTH    1
+#define X265_REF_LIMIT_CU       2
+
 #define X265_BFRAME_MAX         16
 #define X265_MAX_FRAME_THREADS  16
 
@@ -670,6 +673,15 @@ typedef struct x265_param
      * it can have significant trade-offs. The smaller this number the higher
      * the performance but the less compression efficiency. Default is 3 */
     uint32_t  maxNumMergeCand;
+
+    /* Limit the motion references used for each search based on the results of
+     * previous motion searches already performed for the same CU: If 0 all
+     * references are always searched. If X265_REF_LIMIT_CU all motion searches
+     * will restrict themselves to the references selected by the 2Nx2N search
+     * at the same depth. If X265_REF_LIMIT_DEPTH the 2Nx2N motion search will
+     * only use references that were selected by the best motion searches of the
+     * 4 split CUs at the next lower CU depth.  The two flags may be combined */
+    uint32_t  limitReferences;
 
     /* ME search method (DIA, HEX, UMH, STAR, FULL). The search patterns
      * (methods) are sorted in increasing complexity, with diamond being the
