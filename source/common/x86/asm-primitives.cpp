@@ -1143,6 +1143,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.pu[LUMA_64x32].luma_vps = x265_interp_8tap_vert_ps_64x32_avx2;
         p.pu[LUMA_64x48].luma_vps = x265_interp_8tap_vert_ps_64x48_avx2;
         p.pu[LUMA_64x64].luma_vps = x265_interp_8tap_vert_ps_64x64_avx2;
+
+        p.pu[LUMA_8x8].luma_vsp = x265_interp_8tap_vert_sp_8x8_avx2;
+
+        p.pu[LUMA_8x8].luma_vss = x265_interp_8tap_vert_ss_8x8_avx2;
 #else
         p.cu[BLOCK_4x4].dct = x265_dct4_avx2;
 #endif
@@ -1168,6 +1172,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.pu[LUMA_4x16].luma_vps = x265_interp_8tap_vert_ps_4x16_avx2;
         p.pu[LUMA_8x4].luma_vps = x265_interp_8tap_vert_ps_8x4_avx2;
         p.pu[LUMA_16x4].luma_vps = x265_interp_8tap_vert_ps_16x4_avx2;
+
+        p.pu[LUMA_4x4].luma_vsp = x265_interp_8tap_vert_sp_4x4_avx2;
+
+        p.pu[LUMA_4x4].luma_vss = x265_interp_8tap_vert_ss_4x4_avx2;
     }
 }
 #else // if HIGH_BIT_DEPTH
