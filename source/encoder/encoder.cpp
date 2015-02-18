@@ -948,6 +948,8 @@ void Encoder::printSummary()
         StatisticLog finalLog;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
+            int cuSize = g_maxCUSize >> depth;
+
             for (int i = 0; i < m_param->frameNumThreads; i++)
             {
                 StatisticLog& enclog = m_frameEncoder[i]->m_sliceTypeLog[sliceType];
@@ -961,7 +963,7 @@ void Encoder::printSummary()
                     finalLog.cuInterDistribution[depth][m] += enclog.cuInterDistribution[depth][m];
                 }
 
-                if (depth == g_maxCUDepth)
+                if (cuSize == 8 && m_sps.quadtreeTULog2MinSize < 3)
                     finalLog.cntIntraNxN += enclog.cntIntraNxN;
                 if (sliceType != I_SLICE)
                 {
@@ -1026,7 +1028,6 @@ void Encoder::printSummary()
             }
 
             // print statistics
-            int cuSize = g_maxCUSize >> depth;
             char stats[256] = { 0 };
             int len = 0;
             if (sliceType != I_SLICE)
@@ -1054,14 +1055,14 @@ void Encoder::printSummary()
                                cuIntraDistribution[1], cuIntraDistribution[2]);
                 if (sliceType != I_SLICE)
                 {
-                    if (depth == g_maxCUDepth)
+                    if (cuSize == 8 && m_sps.quadtreeTULog2MinSize < 3)
                         len += sprintf(stats + len, " %dx%d "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
 
                 len += sprintf(stats + len, ")");
                 if (sliceType == I_SLICE)
                 {
-                    if (depth == g_maxCUDepth)
+                    if (cuSize == 8 && m_sps.quadtreeTULog2MinSize < 3)
                         len += sprintf(stats + len, " %dx%d: "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
             }
@@ -1708,10 +1709,10 @@ void Encoder::configure(x265_param *p)
     m_conformanceWindow.leftOffset = 0;
 
     /* set pad size if width is not multiple of the minimum CU size */
-    if (p->sourceWidth & (MIN_CU_SIZE - 1))
+    if (p->sourceWidth & (p->minCUSize - 1))
     {
-        uint32_t rem = p->sourceWidth & (MIN_CU_SIZE - 1);
-        uint32_t padsize = MIN_CU_SIZE - rem;
+        uint32_t rem = p->sourceWidth & (p->minCUSize - 1);
+        uint32_t padsize = p->minCUSize - rem;
         p->sourceWidth += padsize;
 
         m_conformanceWindow.bEnabled = true;
@@ -1719,10 +1720,10 @@ void Encoder::configure(x265_param *p)
     }
 
     /* set pad size if height is not multiple of the minimum CU size */
-    if (p->sourceHeight & (MIN_CU_SIZE - 1))
+    if (p->sourceHeight & (p->minCUSize - 1))
     {
-        uint32_t rem = p->sourceHeight & (MIN_CU_SIZE - 1);
-        uint32_t padsize = MIN_CU_SIZE - rem;
+        uint32_t rem = p->sourceHeight & (p->minCUSize - 1);
+        uint32_t padsize = p->minCUSize - rem;
         p->sourceHeight += padsize;
 
         m_conformanceWindow.bEnabled = true;

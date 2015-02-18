@@ -2066,14 +2066,14 @@ void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uin
 
 #define CU_SET_FLAG(bitfield, flag, value) (bitfield) = ((bitfield) & (~(flag))) | ((~((value) - 1)) & (flag))
 
-void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS])
+void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS])
 {
     // Initialize the coding blocks inside the CTB
-    for (uint32_t log2CUSize = g_log2Size[maxCUSize], rangeCUIdx = 0; log2CUSize >= MIN_LOG2_CU_SIZE; log2CUSize--)
+    for (uint32_t log2CUSize = g_log2Size[maxCUSize], rangeCUIdx = 0; log2CUSize >= g_log2Size[minCUSize]; log2CUSize--)
     {
         uint32_t blockSize = 1 << log2CUSize;
         uint32_t sbWidth   = 1 << (g_log2Size[maxCUSize] - log2CUSize);
-        int32_t lastLevelFlag = log2CUSize == MIN_LOG2_CU_SIZE;
+        int32_t lastLevelFlag = log2CUSize == g_log2Size[minCUSize];
         for (uint32_t sbY = 0; sbY < sbWidth; sbY++)
         {
             for (uint32_t sbX = 0; sbX < sbWidth; sbX++)

@@ -127,6 +127,7 @@ void x265_param_default(x265_param *param)
 
     /* CU definitions */
     param->maxCUSize = 64;
+    param->minCUSize = 8;
     param->tuQTMaxInterDepth = 1;
     param->tuQTMaxIntraDepth = 1;
     param->maxTUSize = 32;
@@ -961,7 +962,7 @@ int x265_check_params(x265_param *param)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
 
     CHECK(param->maxCUSize != 64 && param->maxCUSize != 32 && param->maxCUSize != 16,
-          "max ctu size must be 16, 32, or 64");
+          "max cu size must be 16, 32, or 64");
     if (check_failed == 1)
         return check_failed;
 
@@ -978,6 +979,10 @@ int x265_check_params(x265_param *param)
           "x265 was compiled for 8bit encodes, only 8bit internal depth supported");
 #endif
 
+    CHECK(param->minCUSize != 64 && param->minCUSize != 32 && param->minCUSize != 16 && param->minCUSize != 8,
+          "minimim CU size must be 8, 16, 32, or 64");
+    CHECK(param->minCUSize > param->maxCUSize,
+          "min CU size must be less than or equal to max CU size");
     CHECK(param->rc.qp < -6 * (param->internalBitDepth - 8) || param->rc.qp > QP_MAX_SPEC,
           "QP exceeds supported range (-QpBDOffsety to 51)");
     CHECK(param->fpsNum == 0 || param->fpsDenom == 0,
@@ -1156,24 +1161,30 @@ int x265_set_globals(x265_param *param)
 {
     static int once /* = 0 */;
 
+    uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
+    uint32_t minLog2CUSize = (uint32_t)g_log2Size[param->minCUSize];
+
     if (ATOMIC_INC(&once) > 1)
     {
-        if (param->maxCUSize != g_maxCUSize)
+        if (g_maxCUSize != param->maxCUSize)
         {
             x265_log(param, X265_LOG_ERROR, "maxCUSize must be the same for all encoders in a single process");
+            return -1;
+        }
+        if (g_maxCUDepth != maxLog2CUSize - minLog2CUSize)
+        {
+            x265_log(param, X265_LOG_ERROR, "maxCUDepth must be the same for all encoders in a single process");
             return -1;
         }
     }
     else
     {
-        uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
-
         // set max CU width & height
         g_maxCUSize     = param->maxCUSize;
         g_maxLog2CUSize = maxLog2CUSize;
 
         // compute actual CU depth with respect to config depth and max transform size
-        g_maxCUDepth   = maxLog2CUSize - MIN_LOG2_CU_SIZE;
+        g_maxCUDepth    = maxLog2CUSize - minLog2CUSize;
         g_unitSizeDepth = maxLog2CUSize - LOG2_UNIT_SIZE;
 
         // initialize partition order
@@ -1195,7 +1206,7 @@ void x265_print_params(x265_param *param)
     if (param->interlaceMode)
         x265_log(param, X265_LOG_INFO, "Interlaced field inputs             : %s\n", x265_interlace_names[param->interlaceMode]);
 
-    x265_log(param, X265_LOG_INFO, "Coding QT: max CU size, min CU size : %d / %d\n", param->maxCUSize, 8);
+    x265_log(param, X265_LOG_INFO, "Coding QT: max CU size, min CU size : %d / %d\n", param->maxCUSize, param->minCUSize);
 
     x265_log(param, X265_LOG_INFO, "Residual QT: max TU size, max depth : %d / %d inter / %d intra\n",
              param->maxTUSize, param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);

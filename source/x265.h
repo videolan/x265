@@ -576,8 +576,14 @@ typedef struct x265_param
      * The higher the size, the more efficiently x265 can encode areas of low
      * complexity, greatly improving compression efficiency at large
      * resolutions.  The smaller the size, the more effective wavefront and
-     * frame parallelism will become because of the increase in rows. default 64 */
+     * frame parallelism will become because of the increase in rows. default 64
+     * All encoders within the same process must use the same maxCUSize. */
     uint32_t  maxCUSize;
+
+    /* Miniumum CU width and height in pixels.  The size must be 64, 32, 16, or
+     * 8. Default 8. All encoders within the same process must use the same
+     * minCUSize. */
+    uint32_t  minCUSize;
 
     /* Enable rectangular motion prediction partitions (vertical and
      * horizontal), available at all CU depths from 64x64 to 8x8. Default is

@@ -158,7 +158,7 @@ public:
     CUData();
 
     void     initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, int instance);
-    static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
+    static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
 
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
     void     initSubCU(const CUData& ctu, const CUGeom& cuGeom);
