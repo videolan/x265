@@ -24,6 +24,7 @@
 #ifndef X265_DCT8_H
 #define X265_DCT8_H
 void x265_dct4_sse2(const int16_t* src, int16_t* dst, intptr_t srcStride);
+void x265_dct8_sse2(const int16_t* src, int16_t* dst, intptr_t srcStride);
 void x265_dst4_ssse3(const int16_t* src, int16_t* dst, intptr_t srcStride);
 void x265_dct8_sse4(const int16_t* src, int16_t* dst, intptr_t srcStride);
 void x265_dct4_avx2(const int16_t* src, int16_t* dst, intptr_t srcStride);
