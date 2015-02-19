@@ -229,6 +229,9 @@ typedef enum
 #define X265_B_ADAPT_FAST       1
 #define X265_B_ADAPT_TRELLIS    2
 
+#define X265_REF_LIMIT_DEPTH    1
+#define X265_REF_LIMIT_CU       2
+
 #define X265_BFRAME_MAX         16
 #define X265_MAX_FRAME_THREADS  16
 
@@ -238,13 +241,14 @@ typedef enum
 #define X265_TYPE_P             0x0003
 #define X265_TYPE_BREF          0x0004  /* Non-disposable B-frame */
 #define X265_TYPE_B             0x0005
+#define IS_X265_TYPE_I(x) ((x) == X265_TYPE_I || (x) == X265_TYPE_IDR)
+#define IS_X265_TYPE_B(x) ((x) == X265_TYPE_B || (x) == X265_TYPE_BREF)
+
 #define X265_QP_AUTO                 0
 
 #define X265_AQ_NONE                 0
 #define X265_AQ_VARIANCE             1
 #define X265_AQ_AUTO_VARIANCE        2
-#define IS_X265_TYPE_I(x) ((x) == X265_TYPE_I || (x) == X265_TYPE_IDR)
-#define IS_X265_TYPE_B(x) ((x) == X265_TYPE_B || (x) == X265_TYPE_BREF)
 
 /* NOTE! For this release only X265_CSP_I420 and X265_CSP_I444 are supported */
 
@@ -576,8 +580,14 @@ typedef struct x265_param
      * The higher the size, the more efficiently x265 can encode areas of low
      * complexity, greatly improving compression efficiency at large
      * resolutions.  The smaller the size, the more effective wavefront and
-     * frame parallelism will become because of the increase in rows. default 64 */
+     * frame parallelism will become because of the increase in rows. default 64
+     * All encoders within the same process must use the same maxCUSize. */
     uint32_t  maxCUSize;
+
+    /* Miniumum CU width and height in pixels.  The size must be 64, 32, 16, or
+     * 8. Default 8. All encoders within the same process must use the same
+     * minCUSize. */
+    uint32_t  minCUSize;
 
     /* Enable rectangular motion prediction partitions (vertical and
      * horizontal), available at all CU depths from 64x64 to 8x8. Default is
@@ -663,6 +673,15 @@ typedef struct x265_param
      * it can have significant trade-offs. The smaller this number the higher
      * the performance but the less compression efficiency. Default is 3 */
     uint32_t  maxNumMergeCand;
+
+    /* Limit the motion references used for each search based on the results of
+     * previous motion searches already performed for the same CU: If 0 all
+     * references are always searched. If X265_REF_LIMIT_CU all motion searches
+     * will restrict themselves to the references selected by the 2Nx2N search
+     * at the same depth. If X265_REF_LIMIT_DEPTH the 2Nx2N motion search will
+     * only use references that were selected by the best motion searches of the
+     * 4 split CUs at the next lower CU depth.  The two flags may be combined */
+    uint32_t  limitReferences;
 
     /* ME search method (DIA, HEX, UMH, STAR, FULL). The search patterns
      * (methods) are sorted in increasing complexity, with diamond being the

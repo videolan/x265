@@ -258,7 +258,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define UNIT_SIZE               (1 << LOG2_UNIT_SIZE)       // unit size of CU partition
 
 #define MAX_NUM_PARTITIONS      256
-#define NUM_CU_PARTITIONS       (1U << (g_maxFullDepth << 1))
+#define NUM_4x4_PARTITIONS      (1U << (g_unitSizeDepth << 1)) // number of 4x4 units in max CU size
 
 #define MIN_PU_SIZE             4
 #define MIN_TU_SIZE             4

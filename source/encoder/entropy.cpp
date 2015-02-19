@@ -671,7 +671,7 @@ void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth)
     {
         // Encode slice finish
         bool bTerminateSlice = false;
-        if (cuAddr + (NUM_CU_PARTITIONS >> (depth << 1)) == realEndAddress)
+        if (cuAddr + (NUM_4x4_PARTITIONS >> (depth << 1)) == realEndAddress)
             bTerminateSlice = true;
 
         // The 1-terminating bit is added to all streams, so don't add it here when it's 1.
@@ -856,7 +856,7 @@ void Entropy::codePUWise(const CUData& cu, uint32_t absPartIdx)
     PartSize partSize = (PartSize)cu.m_partSize[absPartIdx];
     uint32_t numPU = (partSize == SIZE_2Nx2N ? 1 : (partSize == SIZE_NxN ? 4 : 2));
     uint32_t depth = cu.m_cuDepth[absPartIdx];
-    uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_maxFullDepth - depth) * 2) >> 4;
+    uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_unitSizeDepth - depth) * 2) >> 4;
 
     for (uint32_t puIdx = 0, subPartIdx = absPartIdx; puIdx < numPU; puIdx++, subPartIdx += puOffset)
     {

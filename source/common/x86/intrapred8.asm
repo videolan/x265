@@ -714,7 +714,7 @@ cglobal intra_pred_planar32, 3,4,8,0-(4*mmsize)
 ; void intraPredAng4(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
 ;-----------------------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal intra_pred_ang4_2, 3,5,4
+cglobal intra_pred_ang4_2, 3,5,3
     lea         r4, [r2 + 2]
     add         r2, 10
     cmp         r3m, byte 34

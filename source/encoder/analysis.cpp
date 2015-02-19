@@ -139,8 +139,8 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         {
             int numPredDir = m_slice->isInterP() ? 1 : 2;
             m_reuseInterDataCTU = (analysis_inter_data *)m_frame->m_analysisData.interData;
-            reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
-            reuseBestMergeCand = &m_reuseInterDataCTU->bestMergeCand[ctu.m_cuAddr * CUGeom::MAX_GEOMS];
+            m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
+            m_reuseBestMergeCand = &m_reuseInterDataCTU->bestMergeCand[ctu.m_cuAddr * CUGeom::MAX_GEOMS];
         }
     }
 
@@ -260,7 +260,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
         checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL, NULL);
         checkBestMode(md.pred[PRED_INTRA], depth);
 
-        if (depth == g_maxCUDepth)
+        if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
         {
             md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
             checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN, NULL, NULL);
@@ -472,7 +472,7 @@ void Analysis::parallelModeAnalysis(int threadId, int jobId)
         {
         case 0:
             slave->checkIntra(md.pred[PRED_INTRA], *m_curGeom, SIZE_2Nx2N, NULL, NULL);
-            if (m_curGeom->depth == g_maxCUDepth && m_curGeom->log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize)
+            if (m_curGeom->log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
                 slave->checkIntra(md.pred[PRED_INTRA_NxN], *m_curGeom, SIZE_NxN, NULL, NULL);
             break;
 
@@ -556,7 +556,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         if (bTryIntra)
         {
             md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
-            if (depth == g_maxCUDepth && cuGeom.log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize)
+            if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
                 md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
         }
 
@@ -704,7 +704,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             if (bTryIntra)
             {
                 checkBestMode(md.pred[PRED_INTRA], depth);
-                if (depth == g_maxCUDepth && cuGeom.log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize)
+                if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
                     checkBestMode(md.pred[PRED_INTRA_NxN], depth);
             }
         }
@@ -1153,7 +1153,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
                     bHor = true;
                 else if (md.bestMode->cu.m_partSize[0] == SIZE_Nx2N)
                     bVer = true;
-                else if (md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N && !md.bestMode->cu.m_mergeFlag[0] && !md.bestMode->cu.isSkipped(0))
+                else if (md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N && !md.bestMode->cu.m_mergeFlag[0])
                 {
                     bHor = true;
                     bVer = true;
@@ -1187,7 +1187,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
                 checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL, NULL);
                 checkBestMode(md.pred[PRED_INTRA], depth);
 
-                if (depth == g_maxCUDepth && cuGeom.log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize)
+                if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
                 {
                     md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
                     checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN, NULL, NULL);
@@ -1388,7 +1388,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD && isSkipMode)
     {
-        uint32_t i = *reuseBestMergeCand;
+        uint32_t i = *m_reuseBestMergeCand;
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;    /* merge candidate ID is stored in L0 MVP idx */
         tempPred->cu.m_interDir[0] = interDirNeighbours[i];
         tempPred->cu.m_mv[0][0] = mvFieldNeighbours[i][0].mv;
@@ -1496,9 +1496,9 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
 
     if (m_param->analysisMode)
     {
-        reuseBestMergeCand++;
+        m_reuseBestMergeCand++;
         if (m_param->analysisMode == X265_ANALYSIS_SAVE)
-            *reuseBestMergeCand = bestPred->cu.m_mvpIdx[0][0];
+            *m_reuseBestMergeCand = bestPred->cu.m_mvpIdx[0][0];
     }
 }
 
@@ -1516,8 +1516,8 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                bestME[i].ref = *reuseRef;
-                reuseRef++;
+                bestME[i].ref = *m_reuseRef;
+                m_reuseRef++;
             }
         }
     }
@@ -1542,8 +1542,8 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
                 MotionData* bestME = interMode.bestME[puIdx];
                 for (int32_t i = 0; i < numPredDir; i++)
                 {
-                    *reuseRef = bestME[i].ref;
-                    reuseRef++;
+                    *m_reuseRef = bestME[i].ref;
+                    m_reuseRef++;
                 }
             }
         }
@@ -1569,8 +1569,8 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                bestME[i].ref = *reuseRef;
-                reuseRef++;
+                bestME[i].ref = *m_reuseRef;
+                m_reuseRef++;
             }
         }
     }
@@ -1586,8 +1586,8 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
                 MotionData* bestME = interMode.bestME[puIdx];
                 for (int32_t i = 0; i < numPredDir; i++)
                 {
-                    *reuseRef = bestME[i].ref;
-                    reuseRef++;
+                    *m_reuseRef = bestME[i].ref;
+                    m_reuseRef++;
                 }
             }
         }

@@ -143,6 +143,7 @@ bool FrameEncoder::initializeGeoms()
 {
     /* Geoms only vary between CTUs in the presence of picture edges */
     int maxCUSize = m_param->maxCUSize;
+    int minCUSize = m_param->minCUSize;
     int heightRem = m_param->sourceHeight & (maxCUSize - 1);
     int widthRem = m_param->sourceWidth & (maxCUSize - 1);
     int allocGeoms = 1; // body
@@ -157,7 +158,7 @@ bool FrameEncoder::initializeGeoms()
         return false;
 
     // body
-    CUData::calcCTUGeoms(maxCUSize, maxCUSize, maxCUSize, m_cuGeoms);
+    CUData::calcCTUGeoms(maxCUSize, maxCUSize, maxCUSize, minCUSize, m_cuGeoms);
     memset(m_ctuGeomMap, 0, sizeof(uint32_t) * m_numRows * m_numCols);
     if (allocGeoms == 1)
         return true;
@@ -166,7 +167,7 @@ bool FrameEncoder::initializeGeoms()
     if (widthRem)
     {
         // right
-        CUData::calcCTUGeoms(widthRem, maxCUSize, maxCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
+        CUData::calcCTUGeoms(widthRem, maxCUSize, maxCUSize, minCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
         for (uint32_t i = 0; i < m_numRows; i++)
         {
             uint32_t ctuAddr = m_numCols * (i + 1) - 1;
@@ -177,7 +178,7 @@ bool FrameEncoder::initializeGeoms()
     if (heightRem)
     {
         // bottom
-        CUData::calcCTUGeoms(maxCUSize, heightRem, maxCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
+        CUData::calcCTUGeoms(maxCUSize, heightRem, maxCUSize, minCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
         for (uint32_t i = 0; i < m_numCols; i++)
         {
             uint32_t ctuAddr = m_numCols * (m_numRows - 1) + i;
@@ -188,7 +189,7 @@ bool FrameEncoder::initializeGeoms()
         if (widthRem)
         {
             // corner
-            CUData::calcCTUGeoms(widthRem, heightRem, maxCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
+            CUData::calcCTUGeoms(widthRem, heightRem, maxCUSize, minCUSize, m_cuGeoms + countGeoms * CUGeom::MAX_GEOMS);
 
             uint32_t ctuAddr = m_numCols * m_numRows - 1;
             m_ctuGeomMap[ctuAddr] = countGeoms * CUGeom::MAX_GEOMS;
@@ -538,7 +539,7 @@ void FrameEncoder::encodeSlice()
 {
     Slice* slice = m_frame->m_encData->m_slice;
     const uint32_t widthInLCUs = slice->m_sps->numCuInWidth;
-    const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_CU_PARTITIONS - 1) / NUM_CU_PARTITIONS;
+    const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_4x4_PARTITIONS - 1) / NUM_4x4_PARTITIONS;
     const uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : 1;
 
     SAOParam* saoParam = slice->m_sps->bUseSAO ? m_frame->m_encData->m_saoParam : NULL;
@@ -1038,7 +1039,7 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
             else if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
             {
                 /* TODO: log intra modes at absPartIdx +0 to +3 */
-                X265_CHECK(depth == g_maxCUDepth, "Intra NxN found at improbable depth\n");
+                X265_CHECK(ctu.m_log2CUSize[absPartIdx] == 3 && ctu.m_slice->m_sps->quadtreeTULog2MinSize < 3, "Intra NxN found at improbable depth\n");
                 log->cntIntraNxN++;
                 log->cntIntra[depth]--;
             }
@@ -1086,7 +1087,7 @@ void FrameEncoder::collectCTUStatistics(CUData& ctu)
 
                 if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
                 {
-                    X265_CHECK(depth == g_maxCUDepth, "Intra NxN found at improbable depth\n");
+                    X265_CHECK(ctu.m_log2CUSize[absPartIdx] == 3 && ctu.m_slice->m_sps->quadtreeTULog2MinSize < 3, "Intra NxN found at improbable depth\n");
                     log->cntIntraNxN++;
                     /* TODO: log intra modes at absPartIdx +0 to +3 */
                 }

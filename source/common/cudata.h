@@ -158,7 +158,7 @@ public:
     CUData();
 
     void     initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, int instance);
-    static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
+    static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
 
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
     void     initSubCU(const CUData& ctu, const CUGeom& cuGeom);
@@ -213,7 +213,7 @@ public:
     void     getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList) const;
     int      getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred) const;
 
-    uint32_t getSCUAddr() const                  { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
+    uint32_t getSCUAddr() const                  { return (m_cuAddr << g_unitSizeDepth * 2) + m_absIdxInCTU; }
     uint32_t getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const;
     uint32_t getCtxSkipFlag(uint32_t absPartIdx) const;
     ScanType getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra) const;
@@ -278,7 +278,7 @@ struct CUDataMemPool
 
     bool create(uint32_t depth, uint32_t csp, uint32_t numInstances)
     {
-        uint32_t numPartition = NUM_CU_PARTITIONS >> (depth * 2);
+        uint32_t numPartition = NUM_4x4_PARTITIONS >> (depth * 2);
         uint32_t cuSize = g_maxCUSize >> depth;
         uint32_t sizeL = cuSize * cuSize;
         uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));

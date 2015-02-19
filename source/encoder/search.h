@@ -41,9 +41,11 @@
     m_stats[cu.m_encData->m_frameEncoderID].count++; \
     ScopedElapsedTime name(m_stats[cu.m_encData->m_frameEncoderID].acc)
 #define ProfileCUScope(cu, acc, count) ProfileCUScopeNamed(timedScope, cu, acc, count)
+#define ProfileCounter(cu, count) m_stats[cu.m_encData->m_frameEncoderID].count++;
 #else
 #define ProfileCUScopeNamed(name, cu, acc, count)
 #define ProfileCUScope(cu, acc, count)
+#define ProfileCounter(cu, count)
 #endif
 
 namespace x265 {

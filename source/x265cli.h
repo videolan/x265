@@ -71,7 +71,8 @@ static const struct option long_options[] =
     { "no-wpp",               no_argument, NULL, 0 },
     { "wpp",                  no_argument, NULL, 0 },
     { "ctu",            required_argument, NULL, 's' },
-    { "max-tu-size",    required_argument, NULL, 's' },
+    { "min-cu-size",    required_argument, NULL, 0 },
+    { "max-tu-size",    required_argument, NULL, 0 },
     { "tu-intra-depth", required_argument, NULL, 0 },
     { "tu-inter-depth", required_argument, NULL, 0 },
     { "me",             required_argument, NULL, 0 },
@@ -265,6 +266,7 @@ static void showHelp(x265_param *param)
     H0("                                 psnr, ssim, grain, zerolatency, fastdecode\n");
     H0("\nQuad-Tree size and depth:\n");
     H0("-s/--ctu <64|32|16>              Maximum CU size (WxH). Default %d\n", param->maxCUSize);
+    H0("   --min-cu-size <64|32|16|8>    Minimum CU size (WxH). Default %d\n", param->minCUSize);
     H0("   --max-tu-size <32|16|8|4>     Maximum TU size (WxH). Default %d\n", param->maxTUSize);
     H0("   --tu-intra-depth <integer>    Max TU recursive depth for intra CUs. Default %d\n", param->tuQTMaxIntraDepth);
     H0("   --tu-inter-depth <integer>    Max TU recursive depth for inter CUs. Default %d\n", param->tuQTMaxInterDepth);

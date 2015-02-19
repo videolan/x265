@@ -159,11 +159,11 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
     m_chromaFormat  = csp;
     m_hChromaShift  = CHROMA_H_SHIFT(csp);
     m_vChromaShift  = CHROMA_V_SHIFT(csp);
-    m_numPartitions = NUM_CU_PARTITIONS >> (depth * 2);
+    m_numPartitions = NUM_4x4_PARTITIONS >> (depth * 2);
 
     if (!s_partSet[0])
     {
-        s_numPartInCUSize = 1 << g_maxFullDepth;
+        s_numPartInCUSize = 1 << g_unitSizeDepth;
         switch (g_maxLog2CUSize)
         {
         case 6:
@@ -272,7 +272,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     m_cuPelX        = (cuAddr % m_slice->m_sps->numCuInWidth) << g_maxLog2CUSize;
     m_cuPelY        = (cuAddr / m_slice->m_sps->numCuInWidth) << g_maxLog2CUSize;
     m_absIdxInCTU   = 0;
-    m_numPartitions = NUM_CU_PARTITIONS;
+    m_numPartitions = NUM_4x4_PARTITIONS;
 
     /* sequential memsets */
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);
@@ -559,7 +559,7 @@ const CUData* CUData::getPUAbove(uint32_t& aPartUnitIdx, uint32_t curPartUnitIdx
         return this;
     }
 
-    aPartUnitIdx = g_rasterToZscan[absPartIdx + NUM_CU_PARTITIONS - s_numPartInCUSize];
+    aPartUnitIdx = g_rasterToZscan[absPartIdx + NUM_4x4_PARTITIONS - s_numPartInCUSize];
     return m_cuAbove;
 }
 
@@ -581,7 +581,7 @@ const CUData* CUData::getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUn
                 return this;
             }
         }
-        alPartUnitIdx = g_rasterToZscan[absPartIdx + NUM_CU_PARTITIONS - s_numPartInCUSize - 1];
+        alPartUnitIdx = g_rasterToZscan[absPartIdx + NUM_4x4_PARTITIONS - s_numPartInCUSize - 1];
         return m_cuAbove;
     }
 
@@ -591,7 +591,7 @@ const CUData* CUData::getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUn
         return m_cuLeft;
     }
 
-    alPartUnitIdx = g_rasterToZscan[NUM_CU_PARTITIONS - 1];
+    alPartUnitIdx = g_rasterToZscan[NUM_4x4_PARTITIONS - 1];
     return m_cuAboveLeft;
 }
 
@@ -620,14 +620,14 @@ const CUData* CUData::getPUAboveRight(uint32_t& arPartUnitIdx, uint32_t curPartU
             }
             return NULL;
         }
-        arPartUnitIdx = g_rasterToZscan[absPartIdxRT + NUM_CU_PARTITIONS - s_numPartInCUSize + 1];
+        arPartUnitIdx = g_rasterToZscan[absPartIdxRT + NUM_4x4_PARTITIONS - s_numPartInCUSize + 1];
         return m_cuAbove;
     }
 
     if (!isZeroRow(absPartIdxRT, s_numPartInCUSize))
         return NULL;
 
-    arPartUnitIdx = g_rasterToZscan[NUM_CU_PARTITIONS - s_numPartInCUSize];
+    arPartUnitIdx = g_rasterToZscan[NUM_4x4_PARTITIONS - s_numPartInCUSize];
     return m_cuAboveRight;
 }
 
@@ -720,21 +720,21 @@ const CUData* CUData::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPa
             }
             return NULL;
         }
-        arPartUnitIdx = g_rasterToZscan[absPartIdxRT + NUM_CU_PARTITIONS - s_numPartInCUSize + partUnitOffset];
+        arPartUnitIdx = g_rasterToZscan[absPartIdxRT + NUM_4x4_PARTITIONS - s_numPartInCUSize + partUnitOffset];
         return m_cuAbove;
     }
 
     if (!isZeroRow(absPartIdxRT, s_numPartInCUSize))
         return NULL;
 
-    arPartUnitIdx = g_rasterToZscan[NUM_CU_PARTITIONS - s_numPartInCUSize + partUnitOffset - 1];
+    arPartUnitIdx = g_rasterToZscan[NUM_4x4_PARTITIONS - s_numPartInCUSize + partUnitOffset - 1];
     return m_cuAboveRight;
 }
 
 /* Get left QpMinCu */
 const CUData* CUData::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxInCTU) const
 {
-    uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
+    uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (g_unitSizeDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
     uint32_t absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
     // check for left CTU boundary
@@ -751,7 +751,7 @@ const CUData* CUData::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxI
 /* Get above QpMinCu */
 const CUData* CUData::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsIdxInCTU) const
 {
-    uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
+    uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (g_unitSizeDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
     uint32_t absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
     // check for top CTU boundary
@@ -790,7 +790,7 @@ int CUData::getLastValidPartIdx(int absPartIdx) const
 
 int8_t CUData::getLastCodedQP(uint32_t absPartIdx) const
 {
-    uint32_t quPartIdxMask = 0xFF << (g_maxFullDepth - m_slice->m_pps->maxCuDQPDepth) * 2;
+    uint32_t quPartIdxMask = 0xFF << (g_unitSizeDepth - m_slice->m_pps->maxCuDQPDepth) * 2;
     int lastValidPartIdx = getLastValidPartIdx(absPartIdx & quPartIdxMask);
 
     if (lastValidPartIdx >= 0)
@@ -800,7 +800,7 @@ int8_t CUData::getLastCodedQP(uint32_t absPartIdx) const
         if (m_absIdxInCTU)
             return m_encData->getPicCTU(m_cuAddr)->getLastCodedQP(m_absIdxInCTU);
         else if (m_cuAddr > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled && !(m_cuAddr % m_slice->m_sps->numCuInWidth)))
-            return m_encData->getPicCTU(m_cuAddr - 1)->getLastCodedQP(NUM_CU_PARTITIONS);
+            return m_encData->getPicCTU(m_cuAddr - 1)->getLastCodedQP(NUM_4x4_PARTITIONS);
         else
             return (int8_t)m_slice->m_sliceQp;
     }
@@ -932,7 +932,7 @@ uint32_t CUData::getCtxSkipFlag(uint32_t absPartIdx) const
 
 bool CUData::setQPSubCUs(int8_t qp, uint32_t absPartIdx, uint32_t depth)
 {
-    uint32_t curPartNumb = NUM_CU_PARTITIONS >> (depth << 1);
+    uint32_t curPartNumb = NUM_4x4_PARTITIONS >> (depth << 1);
     uint32_t curPartNumQ = curPartNumb >> 2;
 
     if (m_cuDepth[absPartIdx] > depth)
@@ -2066,14 +2066,14 @@ void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uin
 
 #define CU_SET_FLAG(bitfield, flag, value) (bitfield) = ((bitfield) & (~(flag))) | ((~((value) - 1)) & (flag))
 
-void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS])
+void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS])
 {
     // Initialize the coding blocks inside the CTB
-    for (uint32_t log2CUSize = g_log2Size[maxCUSize], rangeCUIdx = 0; log2CUSize >= MIN_LOG2_CU_SIZE; log2CUSize--)
+    for (uint32_t log2CUSize = g_log2Size[maxCUSize], rangeCUIdx = 0; log2CUSize >= g_log2Size[minCUSize]; log2CUSize--)
     {
         uint32_t blockSize = 1 << log2CUSize;
         uint32_t sbWidth   = 1 << (g_log2Size[maxCUSize] - log2CUSize);
-        int32_t lastLevelFlag = log2CUSize == MIN_LOG2_CU_SIZE;
+        int32_t lastLevelFlag = log2CUSize == g_log2Size[minCUSize];
         for (uint32_t sbY = 0; sbY < sbWidth; sbY++)
         {
             for (uint32_t sbX = 0; sbX < sbWidth; sbX++)
@@ -2095,7 +2095,7 @@ void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUS
                 cu->log2CUSize = log2CUSize;
                 cu->childOffset = childIdx - cuIdx;
                 cu->encodeIdx = g_depthScanIdx[yOffset][xOffset] * 4;
-                cu->numPartitions = (NUM_CU_PARTITIONS >> ((g_maxLog2CUSize - cu->log2CUSize) * 2));
+                cu->numPartitions = (NUM_4x4_PARTITIONS >> ((g_maxLog2CUSize - cu->log2CUSize) * 2));
                 cu->depth = g_log2Size[maxCUSize] - log2CUSize;
 
                 cu->flags = 0;

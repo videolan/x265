@@ -477,6 +477,23 @@ the prediction quad-tree.
 	and less frame parallelism as well. Because of this the faster
 	presets use a CU size of 32. Default: 64
 
+.. option:: --min-cu-size, <64|32|16|8>
+
+	Minimum CU size (width and height). By using 16 or 32 the encoder
+	will not analyze the cost of CUs below that minimum threshold,
+	saving considerable amounts of compute with a predictable increase
+	in bitrate. This setting has a large effect on performance on the
+	faster presets.
+
+	Default: 8 (minimum 8x8 CU for HEVC, best compression efficiency)
+
+.. note::
+
+	All encoders within a single process must use the same settings for
+	the CU size range. :option:`--ctu` and :option:`--min-cu-size` must
+	be consistent for all of them since the encoder configures several
+	key global data structures based on this range.
+
 .. option:: --rect, --no-rect
 
 	Enable analysis of rectangular motion partitions Nx2N and 2NxN
