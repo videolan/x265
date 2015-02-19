@@ -30,6 +30,9 @@
 #include "entropy.h"
 #include "rdcost.h"
 
+#include "analysis.h"  // TLD
+#include "framedata.h"
+
 using namespace x265;
 
 #if _MSC_VER
@@ -42,7 +45,7 @@ using namespace x265;
 
 ALIGN_VAR_32(const int16_t, Search::zeroShort[MAX_CU_SIZE]) = { 0 };
 
-Search::Search() : JobProvider(NULL)
+Search::Search()
 {
     memset(m_rqt, 0, sizeof(m_rqt));
 
@@ -63,8 +66,6 @@ Search::Search() : JobProvider(NULL)
     m_param = NULL;
     m_slice = NULL;
     m_frame = NULL;
-    m_bJobsQueued = false;
-    m_totalNumME = m_numAcquiredME = m_numCompletedME = 0;
 }
 
 bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
@@ -1865,6 +1866,57 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, Me
     return outCost;
 }
 
+void Search::PME::processTasks(int workerThreadId)
+{
+    ProfileScopeEvent(pme);
+    master.processPME(*this, master.m_tld[workerThreadId].analysis);
+}
+
+void Search::processPME(PME& pme, Search& slave)
+{
+    /* acquire a motion estimation job, else exit early */
+    int meId;
+    pme.m_lock.acquire();
+    if (pme.m_jobTotal > pme.m_jobAcquired)
+    {
+        meId = pme.m_jobAcquired++;
+        pme.m_lock.release();
+    }
+    else
+    {
+        pme.m_lock.release();
+        return;
+    }
+
+    ProfileCUScope(pme.mode.cu, pmeTime, countPMETasks);
+
+    /* Setup slave Search instance for ME for master's CU */
+    if (&slave != this)
+    {
+        slave.setQP(*m_slice, m_rdCost.m_qp);
+        slave.m_slice = m_slice;
+        slave.m_frame = m_frame;
+        slave.m_me.setSourcePU(*pme.mode.fencYuv, pme.mode.cu.m_cuAddr, pme.cuGeom.absPartIdx, m_puAbsPartIdx, m_puWidth, m_puHeight);
+        slave.prepMotionCompensation(pme.mode.cu, pme.cuGeom, pme.puIdx);
+    }
+
+    /* Perform ME, repeat until no more work is available */
+    do
+    {
+        if (meId < m_slice->m_numRefIdx[0])
+            slave.singleMotionEstimation(*this, pme.mode, pme.cuGeom, pme.puIdx, 0, meId);
+        else
+            slave.singleMotionEstimation(*this, pme.mode, pme.cuGeom, pme.puIdx, 1, meId - m_slice->m_numRefIdx[0]);
+
+        meId = -1;
+        pme.m_lock.acquire();
+        if (pme.m_jobTotal > pme.m_jobAcquired)
+            meId = pme.m_jobAcquired++;
+        pme.m_lock.release();
+    }
+    while (meId >= 0);
+}
+
 /* this function assumes the caller has configured its MotionEstimation engine with the
  * correct source plane and source PU, and has called prepMotionCompensation() to set
  * m_puAbsPartIdx, m_puWidth, and m_puHeight */
@@ -1947,7 +1999,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     const int* numRefIdx = slice->m_numRefIdx;
     uint32_t lastMode = 0;
     int      totalmebits = 0;
-    bool     bDistributed = m_param->bDistributeMotionEstimation && (numRefIdx[0] + numRefIdx[1]) > 2;
+    int      numME = numRefIdx[0] + numRefIdx[1];
+    bool     bTryDistributed = m_param->bDistributeMotionEstimation && numME > 2;
     MV       mvzero(0, 0);
     Yuv&     tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
@@ -1994,6 +2047,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         bestME[1].cost = MAX_UINT;
 
         getBlkBits((PartSize)cu.m_partSize[0], slice->isInterP(), puIdx, lastMode, m_listSelBits);
+        bool bDoUnidir = true;
 
         /* Uni-directional prediction */
         if (m_param->analysisMode == X265_ANALYSIS_LOAD)
@@ -2055,62 +2109,30 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     bestME[l].bits = bits;
                 }
             }
+            bDoUnidir = false;
         }
-        else if (bDistributed)
+        else if (bTryDistributed)
         {
-            m_meLock.acquire();
-            m_curInterMode = &interMode;
-            m_curGeom = &cuGeom;
-            m_curPart = puIdx;
-            m_totalNumME = 0;
-            m_numAcquiredME = 1;
-            m_numCompletedME = 0;
-            m_totalNumME = numRefIdx[0] + numRefIdx[1];
-            m_meLock.release();
+            PME pme(*this, interMode, cuGeom, puIdx);
+            pme.m_jobTotal = numME;
+            pme.m_jobAcquired = 1; /* reserve L0-0 */
 
-            if (!m_bJobsQueued)
-                JobProvider::enqueue();
-
-            for (int i = 1; i < m_totalNumME; i++)
-                m_pool->pokeIdleThread();
-
-            do
+            if (pme.tryBondPeers(*m_frame->m_encData->m_jobProvider, numME - 1))
             {
-                m_meLock.acquire();
-                if (m_totalNumME > m_numAcquiredME)
-                {
-                    int id = m_numAcquiredME++;
-                    m_meLock.release();
+                processPME(pme, *this);
 
-                    if (id < numRefIdx[0])
-                        singleMotionEstimation(*this, interMode, cuGeom, puIdx, 0, id);
-                    else
-                        singleMotionEstimation(*this, interMode, cuGeom, puIdx, 1, id - numRefIdx[0]);
+                singleMotionEstimation(*this, interMode, cuGeom, puIdx, 0, 0); /* L0-0 */
 
-                    m_meLock.acquire();
-                    m_numCompletedME++;
-                    m_meLock.release();
-                }
-                else
-                    m_meLock.release();
+                bDoUnidir = false;
+
+                ProfileCUScopeNamed(pmeWaitScope, interMode.cu, pmeBlockTime, countPMEMasters);
+                pme.waitForExit();
             }
-            while (m_totalNumME > m_numAcquiredME);
 
-            if (!m_bJobsQueued)
-                JobProvider::dequeue();
-
-            /* we saved L0-0 for ourselves */
-            singleMotionEstimation(*this, interMode, cuGeom, puIdx, 0, 0);
-
-            m_meLock.acquire();
-            if (++m_numCompletedME == m_totalNumME)
-                m_meCompletionEvent.trigger();
-            m_meLock.release();
-
-            ProfileCUScopeNamed(pmeWaitScope, interMode.cu, pmeBlockTime, countPMEMasters);
-            m_meCompletionEvent.wait();
+            /* if no peer threads were bonded, fall back to doing unidirectional
+             * searches ourselves without overhead of singleMotionEstimation() */
         }
-        else
+        if (bDoUnidir)
         {
             for (int l = 0; l < numPredDir; l++)
             {

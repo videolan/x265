@@ -104,6 +104,68 @@ public:
     static int  getNumaNodeCount();
     static void setThreadNodeAffinity(int node);
 };
+
+/* Any worker thread may enlist the help of idle worker threads from the same
+ * job provider. They must derive from this class and implement the
+ * processTasks() method.  To use, an instance must be instantiated by a worker
+ * thread (referred to as the master thread) and then tryBondPeers() must be
+ * called. If it returns non-zero then some number of slave worker threads are
+ * already in the process of calling your processTasks() function. The master
+ * thread should participate and call processTasks() itself. When
+ * waitForExit() returns, all bonded peer threads are quarunteed to have
+ * exitied processTasks(). Since the thread count is small, it uses explicit
+ * locking instead of atomic counters and bitmasks */
+class BondedTaskGroup
+{
+public:
+
+    Lock              m_lock;
+    ThreadSafeInteger m_exitedPeerCount;
+    int               m_bondedPeerCount;
+    int               m_jobTotal;
+    int               m_jobAcquired;
+
+    BondedTaskGroup()  { m_bondedPeerCount = m_jobTotal = m_jobAcquired = 0; }
+
+    /* Do not allow the instance to be destroyed before all bonded peers have
+     * exited processTasks() */
+    ~BondedTaskGroup() { waitForExit(); }
+
+    /* Try to enlist the help of idle worker threads on most recently associated
+     * with the given job provider and "bond" them to work on your tasks. Up to
+     * maxPeers worker threads will call your processTasks() method. */
+    int tryBondPeers(JobProvider& jp, int maxPeers)
+    {
+        int count = jp.m_pool->tryBondPeers(maxPeers, jp.m_ownerBitmap, *this);
+        m_bondedPeerCount += count;
+        return count;
+    }
+
+    /* Try to enlist the help of any idle worker threads and "bond" them to work
+     * on your tasks. Up to maxPeers worker threads will call your
+     * processTasks() method. */
+    int tryBondPeers(ThreadPool& pool, int maxPeers)
+    {
+        int count = pool.tryBondPeers(maxPeers, ALL_POOL_THREADS, *this);
+        m_bondedPeerCount += count;
+        return count;
+    }
+
+    /* Returns when all bonded peers have exited processTasks(). It does *NOT*
+     * ensure all tasks are completed (but this is generally implied). */
+    void waitForExit()
+    {
+        int exited = m_exitedPeerCount.get();
+        while (m_bondedPeerCount != exited)
+            exited = m_exitedPeerCount.waitForChange(exited);
+    }
+
+    /* Derived classes must define this method. The worker thread ID may be
+     * used to index into thread local data, or ignored.  The ID will be between
+     * 0 and jp.m_numWorkers - 1 */
+    virtual void processTasks(int workerThreadId) = 0;
+};
+
 } // end namespace x265
 
 #endif // ifndef X265_THREADPOOL_H

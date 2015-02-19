@@ -70,6 +70,25 @@ public:
         CUDataMemPool  cuMemPool;
     };
 
+    class PMODE : public BondedTaskGroup
+    {
+    public:
+
+        Analysis&     master;
+        const CUGeom& cuGeom;
+        int           modes[MAX_PRED_TYPES];
+
+        PMODE(Analysis& m, const CUGeom& g) : master(m), cuGeom(g) {}
+
+        void processTasks(int workerThreadId);
+
+    protected:
+
+        PMODE operator=(const PMODE&);
+    };
+
+    void processPmode(PMODE& pmode, Analysis& slave);
+
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
     bool      m_bTryLossless;
     bool      m_bChromaSa8d;
@@ -82,16 +101,6 @@ public:
     Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
 
 protected:
-
-    /* mode analysis distribution */
-    int           m_totalNumJobs;
-    volatile int  m_numAcquiredJobs;
-    volatile int  m_numCompletedJobs;
-    Lock          m_pmodeLock;
-    Event         m_modeCompletionEvent;
-    bool findJob(int threadId);
-    void parallelModeAnalysis(int threadId, int jobId);
-    void parallelME(int threadId, int meId);
 
     /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
     analysis_intra_data* m_reuseIntraDataCTU;

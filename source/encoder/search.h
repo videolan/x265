@@ -210,7 +210,7 @@ inline int getTUBits(int idx, int numIdx)
     return idx + (idx < numIdx - 1);
 }
 
-class Search : public JobProvider, public Predict
+class Search : public Predict
 {
 public:
 
@@ -220,6 +220,7 @@ public:
     Quant           m_quant;
     RDCost          m_rdCost;
     const x265_param* m_param;
+    ThreadPool*     m_pool;
     Frame*          m_frame;
     const Slice*    m_slice;
 
@@ -280,21 +281,34 @@ public:
     // pick be chroma mode from available using just sa8d costs
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
 
+    class PME : public BondedTaskGroup
+    {
+    public:
+
+        Search&       master;
+        Mode&         mode;
+        const CUGeom& cuGeom;
+        int           puIdx;
+
+        PME(Search& s, Mode& m, const CUGeom& g, int p) : master(s), mode(m), cuGeom(g), puIdx(p) {}
+
+        void processTasks(int workerThreadId);
+
+    protected:
+
+        PME operator=(const PME&);
+    };
+
+    void     processPME(PME& pme, Search& slave);
+    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, int part, int list, int ref);
+
 protected:
 
     /* motion estimation distribution */
     ThreadLocalData* m_tld;
-    Mode*         m_curInterMode;
-    const CUGeom* m_curGeom;
-    int           m_curPart;
+
     uint32_t      m_listSelBits[3];
-    int           m_totalNumME;
-    volatile int  m_numAcquiredME;
-    volatile int  m_numCompletedME;
-    Event         m_meCompletionEvent;
     Lock          m_meLock;
-    bool          m_bJobsQueued;
-    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, int part, int list, int ref);
 
     void     saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t tuDepth);
 

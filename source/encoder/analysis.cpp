@@ -71,7 +71,6 @@ using namespace x265;
 
 Analysis::Analysis()
 {
-    m_totalNumJobs = m_numAcquiredJobs = m_numCompletedJobs = 0;
     m_reuseIntraDataCTU = NULL;
     m_reuseInterDataCTU = NULL;
 }
@@ -324,198 +323,159 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.absPartIdx);
 }
 
-bool Analysis::findJob(int threadId)
+void Analysis::PMODE::processTasks(int workerThreadId)
 {
-    /* try to acquire a CU mode to analyze */
-    m_pmodeLock.acquire();
-    if (m_totalNumJobs > m_numAcquiredJobs)
-    {
-        int id = m_numAcquiredJobs++;
-        m_pmodeLock.release();
-
-        {
-            ProfileScopeEvent(pmode);
-            ProfileCUScope(m_modeDepth[m_curGeom->depth].pred[PRED_2Nx2N].cu, pmodeTime, countPModeTasks);
-            parallelModeAnalysis(threadId, id);
-        }
-
-        m_pmodeLock.acquire();
-        if (++m_numCompletedJobs == m_totalNumJobs)
-            m_modeCompletionEvent.trigger();
-        m_pmodeLock.release();
-        return true;
-    }
-    else
-        m_pmodeLock.release();
-
-    m_meLock.acquire();
-    if (m_totalNumME > m_numAcquiredME)
-    {
-        int id = m_numAcquiredME++;
-        m_meLock.release();
-
-        {
-            ProfileScopeEvent(pme);
-            ProfileCUScope(m_curInterMode->cu, pmeTime, countPMETasks);
-            parallelME(threadId, id);
-        }
-
-        m_meLock.acquire();
-        if (++m_numCompletedME == m_totalNumME)
-            m_meCompletionEvent.trigger();
-        m_meLock.release();
-        return true;
-    }
-    else
-        m_meLock.release();
-
-    return false;
+    ProfileScopeEvent(pmode);
+    master.processPmode(*this, master.m_tld[workerThreadId].analysis);
 }
 
-void Analysis::parallelME(int threadId, int meId)
+/* process pmode jobs until none remain; may be called by the master thread or by
+ * a bonded peer (slave) thread via pmodeTasks() */
+void Analysis::processPmode(PMODE& pmode, Analysis& slave)
 {
-    Analysis* slave;
-
-    if (threadId == -1)
-        slave = this;
+    /* acquire a mode task, else exit early */
+    int task;
+    pmode.m_lock.acquire();
+    if (pmode.m_jobTotal > pmode.m_jobAcquired)
+    {
+        task = pmode.m_jobAcquired++;
+        pmode.m_lock.release();
+    }
     else
     {
-        slave = &m_tld[threadId].analysis;
-        slave->setQP(*m_slice, m_rdCost.m_qp);
-        slave->m_slice = m_slice;
-        slave->m_frame = m_frame;
-
-        slave->m_me.setSourcePU(*m_curInterMode->fencYuv, m_curInterMode->cu.m_cuAddr, m_curGeom->absPartIdx, m_puAbsPartIdx, m_puWidth, m_puHeight);
-        slave->prepMotionCompensation(m_curInterMode->cu, *m_curGeom, m_curPart);
+        pmode.m_lock.release();
+        return;
     }
 
-    if (meId < m_slice->m_numRefIdx[0])
-        slave->singleMotionEstimation(*this, *m_curInterMode, *m_curGeom, m_curPart, 0, meId);
-    else
-        slave->singleMotionEstimation(*this, *m_curInterMode, *m_curGeom, m_curPart, 1, meId - m_slice->m_numRefIdx[0]);
-}
+    ModeDepth& md = m_modeDepth[pmode.cuGeom.depth];
+    bool bMergeOnly = pmode.cuGeom.log2CUSize == 6;
 
-void Analysis::parallelModeAnalysis(int threadId, int jobId)
-{
-    Analysis* slave;
+    ProfileCUScope(md.pred[PRED_2Nx2N].cu, pmodeTime, countPModeTasks);
 
-    if (threadId == -1)
-        slave = this;
-    else
+    /* setup slave Analysis */
+    if (&slave != this)
     {
-        slave = &m_tld[threadId].analysis;
-        slave->m_slice = m_slice;
-        slave->m_frame = m_frame;
-        slave->setQP(*m_slice, m_rdCost.m_qp);
-        slave->invalidateContexts(0);
-    }
+        slave.m_slice = m_slice;
+        slave.m_frame = m_frame;
+        slave.setQP(*m_slice, m_rdCost.m_qp);
+        slave.invalidateContexts(0);
 
-    ModeDepth& md = m_modeDepth[m_curGeom->depth];
-
-    if (m_param->rdLevel <= 4)
-    {
-        switch (jobId)
+        if (m_param->rdLevel >= 5)
         {
-        case 0:
-            if (slave != this)
-                slave->m_rqt[m_curGeom->depth].cur.load(m_rqt[m_curGeom->depth].cur);
-            slave->checkIntraInInter(md.pred[PRED_INTRA], *m_curGeom);
-            if (m_param->rdLevel > 2)
-                slave->encodeIntraInInter(md.pred[PRED_INTRA], *m_curGeom);
-            break;
-
-        case 1:
-            slave->checkInter_rd0_4(md.pred[PRED_2Nx2N], *m_curGeom, SIZE_2Nx2N);
-            if (m_slice->m_sliceType == B_SLICE)
-                slave->checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], *m_curGeom);
-            break;
-
-        case 2:
-            slave->checkInter_rd0_4(md.pred[PRED_Nx2N], *m_curGeom, SIZE_Nx2N);
-            break;
-
-        case 3:
-            slave->checkInter_rd0_4(md.pred[PRED_2NxN], *m_curGeom, SIZE_2NxN);
-            break;
-
-        case 4:
-            slave->checkInter_rd0_4(md.pred[PRED_2NxnU], *m_curGeom, SIZE_2NxnU);
-            break;
-
-        case 5:
-            slave->checkInter_rd0_4(md.pred[PRED_2NxnD], *m_curGeom, SIZE_2NxnD);
-            break;
-
-        case 6:
-            slave->checkInter_rd0_4(md.pred[PRED_nLx2N], *m_curGeom, SIZE_nLx2N);
-            break;
-
-        case 7:
-            slave->checkInter_rd0_4(md.pred[PRED_nRx2N], *m_curGeom, SIZE_nRx2N);
-            break;
-
-        default:
-            X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
-            break;
+            slave.m_rqt[pmode.cuGeom.depth].cur.load(m_rqt[pmode.cuGeom.depth].cur);
+            slave.m_quant.setQPforQuant(md.pred[PRED_2Nx2N].cu);
         }
     }
-    else
-    {
-        bool bMergeOnly = m_curGeom->log2CUSize == 6;
-        if (slave != this)
-        {
-            slave->m_rqt[m_curGeom->depth].cur.load(m_rqt[m_curGeom->depth].cur);
-            slave->m_quant.setQPforQuant(md.pred[PRED_2Nx2N].cu);
-        }
-        
-        switch (jobId)
-        {
-        case 0:
-            slave->checkIntra(md.pred[PRED_INTRA], *m_curGeom, SIZE_2Nx2N, NULL, NULL);
-            if (m_curGeom->log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
-                slave->checkIntra(md.pred[PRED_INTRA_NxN], *m_curGeom, SIZE_NxN, NULL, NULL);
-            break;
 
-        case 1:
-            slave->checkInter_rd5_6(md.pred[PRED_2Nx2N], *m_curGeom, SIZE_2Nx2N, false);
-            md.pred[PRED_BIDIR].rdCost = MAX_INT64;
-            if (m_slice->m_sliceType == B_SLICE)
+
+    /* perform Mode task, repeat until no more work is available */
+    do
+    {
+        if (m_param->rdLevel <= 4)
+        {
+            switch (pmode.modes[task])
             {
-                slave->checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], *m_curGeom);
-                if (md.pred[PRED_BIDIR].sa8dCost < MAX_INT64)
-                    slave->encodeResAndCalcRdInterCU(md.pred[PRED_BIDIR], *m_curGeom);
+            case PRED_INTRA:
+                if (&slave != this)
+                    slave.m_rqt[pmode.cuGeom.depth].cur.load(m_rqt[pmode.cuGeom.depth].cur);
+                slave.checkIntraInInter(md.pred[PRED_INTRA], pmode.cuGeom);
+                if (m_param->rdLevel > 2)
+                    slave.encodeIntraInInter(md.pred[PRED_INTRA], pmode.cuGeom);
+                break;
+
+            case PRED_2Nx2N:
+                slave.checkInter_rd0_4(md.pred[PRED_2Nx2N], pmode.cuGeom, SIZE_2Nx2N);
+                if (m_slice->m_sliceType == B_SLICE)
+                    slave.checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], pmode.cuGeom);
+                break;
+
+            case PRED_Nx2N:
+                slave.checkInter_rd0_4(md.pred[PRED_Nx2N], pmode.cuGeom, SIZE_Nx2N);
+                break;
+
+            case PRED_2NxN:
+                slave.checkInter_rd0_4(md.pred[PRED_2NxN], pmode.cuGeom, SIZE_2NxN);
+                break;
+
+            case PRED_2NxnU:
+                slave.checkInter_rd0_4(md.pred[PRED_2NxnU], pmode.cuGeom, SIZE_2NxnU);
+                break;
+
+            case PRED_2NxnD:
+                slave.checkInter_rd0_4(md.pred[PRED_2NxnD], pmode.cuGeom, SIZE_2NxnD);
+                break;
+
+            case PRED_nLx2N:
+                slave.checkInter_rd0_4(md.pred[PRED_nLx2N], pmode.cuGeom, SIZE_nLx2N);
+                break;
+
+            case PRED_nRx2N:
+                slave.checkInter_rd0_4(md.pred[PRED_nRx2N], pmode.cuGeom, SIZE_nRx2N);
+                break;
+
+            default:
+                X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
+                break;
             }
-            break;
-
-        case 2:
-            slave->checkInter_rd5_6(md.pred[PRED_Nx2N], *m_curGeom, SIZE_Nx2N, false);
-            break;
-
-        case 3:
-            slave->checkInter_rd5_6(md.pred[PRED_2NxN], *m_curGeom, SIZE_2NxN, false);
-            break;
-
-        case 4:
-            slave->checkInter_rd5_6(md.pred[PRED_2NxnU], *m_curGeom, SIZE_2NxnU, bMergeOnly);
-            break;
-
-        case 5:
-            slave->checkInter_rd5_6(md.pred[PRED_2NxnD], *m_curGeom, SIZE_2NxnD, bMergeOnly);
-            break;
-
-        case 6:
-            slave->checkInter_rd5_6(md.pred[PRED_nLx2N], *m_curGeom, SIZE_nLx2N, bMergeOnly);
-            break;
-
-        case 7:
-            slave->checkInter_rd5_6(md.pred[PRED_nRx2N], *m_curGeom, SIZE_nRx2N, bMergeOnly);
-            break;
-
-        default:
-            X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
-            break;
         }
+        else
+        {
+            switch (pmode.modes[task])
+            {
+            case PRED_INTRA:
+                slave.checkIntra(md.pred[PRED_INTRA], pmode.cuGeom, SIZE_2Nx2N, NULL, NULL);
+                if (pmode.cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
+                    slave.checkIntra(md.pred[PRED_INTRA_NxN], pmode.cuGeom, SIZE_NxN, NULL, NULL);
+                break;
+
+            case PRED_2Nx2N:
+                slave.checkInter_rd5_6(md.pred[PRED_2Nx2N], pmode.cuGeom, SIZE_2Nx2N, false);
+                md.pred[PRED_BIDIR].rdCost = MAX_INT64;
+                if (m_slice->m_sliceType == B_SLICE)
+                {
+                    slave.checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], pmode.cuGeom);
+                    if (md.pred[PRED_BIDIR].sa8dCost < MAX_INT64)
+                        slave.encodeResAndCalcRdInterCU(md.pred[PRED_BIDIR], pmode.cuGeom);
+                }
+                break;
+
+            case PRED_Nx2N:
+                slave.checkInter_rd5_6(md.pred[PRED_Nx2N], pmode.cuGeom, SIZE_Nx2N, false);
+                break;
+
+            case PRED_2NxN:
+                slave.checkInter_rd5_6(md.pred[PRED_2NxN], pmode.cuGeom, SIZE_2NxN, false);
+                break;
+
+            case PRED_2NxnU:
+                slave.checkInter_rd5_6(md.pred[PRED_2NxnU], pmode.cuGeom, SIZE_2NxnU, bMergeOnly);
+                break;
+
+            case PRED_2NxnD:
+                slave.checkInter_rd5_6(md.pred[PRED_2NxnD], pmode.cuGeom, SIZE_2NxnD, bMergeOnly);
+                break;
+
+            case PRED_nLx2N:
+                slave.checkInter_rd5_6(md.pred[PRED_nLx2N], pmode.cuGeom, SIZE_nLx2N, bMergeOnly);
+                break;
+
+            case PRED_nRx2N:
+                slave.checkInter_rd5_6(md.pred[PRED_nRx2N], pmode.cuGeom, SIZE_nRx2N, bMergeOnly);
+                break;
+
+            default:
+                X265_CHECK(0, "invalid job ID for parallel mode analysis\n");
+                break;
+            }
+        }
+
+        task = -1;
+        pmode.m_lock.acquire();
+        if (pmode.m_jobTotal > pmode.m_jobAcquired)
+            task = pmode.m_jobAcquired++;
+        pmode.m_lock.release();
     }
+    while (task >= 0);
 }
 
 void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom)
@@ -536,59 +496,37 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         int bTryAmp = m_slice->m_sps->maxAMPDepth > depth && (cuGeom.log2CUSize < 6 || m_param->rdLevel > 4);
         int bTryIntra = m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames;
 
+        PMODE pmode(*this, cuGeom);
+
         /* Initialize all prediction CUs based on parentCTU */
-        md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom);
-        md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom);
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom);
         md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom);
-        if (m_param->bEnableRectInter)
-        {
-            md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom);
-            md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom);
-        }
-        if (bTryAmp)
-        {
-            md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom);
-            md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom);
-            md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom);
-            md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom);
-        }
         if (bTryIntra)
         {
             md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
-            if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
+            if (depth == g_maxCUDepth && cuGeom.log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize && m_param->rdLevel >= 5)
                 md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
+            pmode.modes[pmode.m_jobTotal++] = PRED_INTRA;
+        }
+        md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_2Nx2N;
+        md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom);
+        if (m_param->bEnableRectInter)
+        {
+            md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_2NxN;
+            md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_Nx2N;
+        }
+        if (bTryAmp)
+        {
+            md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_2NxnU;
+            md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_2NxnD;
+            md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_nLx2N;
+            md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_nRx2N;
         }
 
-        m_pmodeLock.acquire();
-        m_totalNumJobs = 2 + m_param->bEnableRectInter * 2 + bTryAmp * 4;
-        m_numAcquiredJobs = !bTryIntra;
-        m_numCompletedJobs = m_numAcquiredJobs;
-        m_curGeom = &cuGeom;
-        m_bJobsQueued = true;
-        JobProvider::enqueue();
-        m_pmodeLock.release();
-
-        for (int i = 0; i < m_totalNumJobs - m_numCompletedJobs; i++)
-            m_pool->pokeIdleThread();
+        pmode.tryBondPeers(*m_frame->m_encData->m_jobProvider, pmode.m_jobTotal);
 
         /* participate in processing jobs, until all are distributed */
-        m_pmodeLock.acquire();
-        while (m_totalNumJobs > m_numAcquiredJobs)
-        {
-            int id = m_numAcquiredJobs++;
-            m_pmodeLock.release();
-
-            parallelModeAnalysis(-1, id);
-
-            m_pmodeLock.acquire();
-            if (++m_numCompletedJobs == m_totalNumJobs)
-                m_modeCompletionEvent.trigger();
-        }
-        m_pmodeLock.release();
-
-        JobProvider::dequeue();
-        m_bJobsQueued = false;
+        processPmode(pmode, *this);
 
         /* the master worker thread (this one) does merge analysis. By doing
          * merge after all the other jobs are at least started, we usually avoid
@@ -600,7 +538,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
             {
                 ProfileCUScope(parentCTU, pmodeBlockTime, countPModeMasters);
-                m_modeCompletionEvent.wait();
+                pmode.waitForExit();
             }
 
             /* select best inter mode based on sa8d cost */
@@ -681,7 +619,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom, false);
             {
                 ProfileCUScope(parentCTU, pmodeBlockTime, countPModeMasters);
-                m_modeCompletionEvent.wait();
+                pmode.waitForExit();
             }
 
             checkBestMode(md.pred[PRED_2Nx2N], depth);

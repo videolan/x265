@@ -75,24 +75,35 @@ threading is not disabled, the encoder will change the default frame
 thread count to be higher than if WPP was enabled.  The exact formulas
 are described in the next section.
 
+Bonded Task Groups
+==================
+
+If a worker thread job has work which can be performed in parallel by
+many threads, it may allocate a bonded task group and enlist the help of
+other idle worker threads in the same pool. Those threads will cooperate
+to complete the work of the bonded task group and then return to their
+idle states. The larger and more uniform those tasks are, the better the
+bonded task group will perform.
+
 Parallel Mode Analysis
-======================
+~~~~~~~~~~~~~~~~~~~~~~
 
 When :option:`--pmode` is enabled, each CU (at all depths from 64x64 to
-8x8) will distribute its analysis work to the thread pool. Each analysis
-job will measure the cost of one prediction for the CU: merge, skip,
-intra, inter (2Nx2N, Nx2N, 2NxN, and AMP). At slower presets, the amount
-of increased parallelism is often enough to be able to reduce frame
-parallelism while achieving the same overall CPU utilization. Reducing
-frame threads is often beneficial to ABR and VBV rate control.
+8x8) will distribute its analysis work to the thread pool via a bonded
+task group. Each analysis job will measure the cost of one prediction
+for the CU: merge, skip, intra, inter (2Nx2N, Nx2N, 2NxN, and AMP). At
+slower presets, the amount of increased parallelism is often enough to
+be able to reduce frame parallelism while achieving the same overall CPU
+utilization. Reducing frame threads is often beneficial to ABR and VBV
+rate control.
 
 Parallel Motion Estimation
-==========================
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When :option:`--pme` is enabled all of the analysis functions which
 perform motion searches to reference frames will distribute those motion
-searches as jobs for worker threads (if more than two motion searches
-are required).
+searches as jobs for worker threads via a bonded task group (if more
+than two motion searches are required).
 
 Frame Threading
 ===============
