@@ -145,30 +145,6 @@ inline void copyRceData(RateControlEntry* rce, RateControlEntry* rce2Pass)
 }
 
 }  // end anonymous namespace
-/* Compute variance to derive AC energy of each block */
-static inline uint32_t acEnergyVar(Frame *curFrame, uint64_t sum_ssd, int shift, int i)
-{
-    uint32_t sum = (uint32_t)sum_ssd;
-    uint32_t ssd = (uint32_t)(sum_ssd >> 32);
-
-    curFrame->m_lowres.wp_sum[i] += sum;
-    curFrame->m_lowres.wp_ssd[i] += ssd;
-    return ssd - ((uint64_t)sum * sum >> shift);
-}
-
-/* Find the energy of each block in Y/Cb/Cr plane */
-static inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, intptr_t srcStride, int bChroma, int colorFormat)
-{
-    if ((colorFormat != X265_CSP_I444) && bChroma)
-    {
-        ALIGN_VAR_8(pixel, pix[8 * 8]);
-        primitives.cu[BLOCK_8x8].copy_pp(pix, 8, src, srcStride);
-        return acEnergyVar(curFrame, primitives.cu[BLOCK_8x8].var(pix, 8), 6, bChroma);
-    }
-    else
-        return acEnergyVar(curFrame, primitives.cu[BLOCK_16x16].var(src, srcStride), 8, bChroma);
-}
-
 /* Returns the zone for the current frame */
 x265_zone* RateControl::getZone()
 {
@@ -181,134 +157,6 @@ x265_zone* RateControl::getZone()
     return NULL;
 }
 
-/* Find the total AC energy of each block in all planes */
-uint32_t RateControl::acEnergyCu(Frame* curFrame, uint32_t block_x, uint32_t block_y)
-{
-    intptr_t stride = curFrame->m_fencPic->m_stride;
-    intptr_t cStride = curFrame->m_fencPic->m_strideC;
-    intptr_t blockOffsetLuma = block_x + (block_y * stride);
-    int colorFormat = m_param->internalCsp;
-    int hShift = CHROMA_H_SHIFT(colorFormat);
-    int vShift = CHROMA_V_SHIFT(colorFormat);
-    intptr_t blockOffsetChroma = (block_x >> hShift) + ((block_y >> vShift) * cStride);
-
-    uint32_t var;
-
-    var  = acEnergyPlane(curFrame, curFrame->m_fencPic->m_picOrg[0] + blockOffsetLuma, stride, 0, colorFormat);
-    var += acEnergyPlane(curFrame, curFrame->m_fencPic->m_picOrg[1] + blockOffsetChroma, cStride, 1, colorFormat);
-    var += acEnergyPlane(curFrame, curFrame->m_fencPic->m_picOrg[2] + blockOffsetChroma, cStride, 2, colorFormat);
-    x265_emms();
-    return var;
-}
-
-void RateControl::calcAdaptiveQuantFrame(Frame *curFrame)
-{
-    /* Actual adaptive quantization */
-    int maxCol = curFrame->m_fencPic->m_picWidth;
-    int maxRow = curFrame->m_fencPic->m_picHeight;
-
-    for (int y = 0; y < 3; y++)
-    {
-        curFrame->m_lowres.wp_ssd[y] = 0;
-        curFrame->m_lowres.wp_sum[y] = 0;
-    }
-
-    /* Calculate Qp offset for each 16x16 block in the frame */
-    int block_xy = 0;
-    int block_x = 0, block_y = 0;
-    double strength = 0.f;
-    if (m_param->rc.aqMode == X265_AQ_NONE || m_param->rc.aqStrength == 0)
-    {
-        /* Need to init it anyways for CU tree */
-        int cuWidth = ((maxCol / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-        int cuHeight = ((maxRow / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-        int cuCount = cuWidth * cuHeight;
-
-        if (m_param->rc.aqMode && m_param->rc.aqStrength == 0)
-        {
-            memset(curFrame->m_lowres.qpCuTreeOffset, 0, cuCount * sizeof(double));
-            memset(curFrame->m_lowres.qpAqOffset, 0, cuCount * sizeof(double));
-            for (int cuxy = 0; cuxy < cuCount; cuxy++)
-                curFrame->m_lowres.invQscaleFactor[cuxy] = 256;
-        }
-
-        /* Need variance data for weighted prediction */
-        if (m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred)
-        {
-            for (block_y = 0; block_y < maxRow; block_y += 16)
-                for (block_x = 0; block_x < maxCol; block_x += 16)
-                    acEnergyCu(curFrame, block_x, block_y);
-        }
-    }
-    else
-    {
-        block_xy = 0;
-        double avg_adj_pow2 = 0, avg_adj = 0, qp_adj = 0;
-        if (m_param->rc.aqMode == X265_AQ_AUTO_VARIANCE)
-        {
-            double bit_depth_correction = pow(1 << (X265_DEPTH - 8), 0.5);
-            for (block_y = 0; block_y < maxRow; block_y += 16)
-            {
-                for (block_x = 0; block_x < maxCol; block_x += 16)
-                {
-                    uint32_t energy = acEnergyCu(curFrame, block_x, block_y);
-                    qp_adj = pow(energy + 1, 0.1);
-                    curFrame->m_lowres.qpCuTreeOffset[block_xy] = qp_adj;
-                    avg_adj += qp_adj;
-                    avg_adj_pow2 += qp_adj * qp_adj;
-                    block_xy++;
-                }
-            }
-
-            avg_adj /= m_ncu;
-            avg_adj_pow2 /= m_ncu;
-            strength = m_param->rc.aqStrength * avg_adj / bit_depth_correction;
-            avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - (11.f * bit_depth_correction)) / avg_adj;
-        }
-        else
-            strength = m_param->rc.aqStrength * 1.0397f;
-
-        block_xy = 0;
-        for (block_y = 0; block_y < maxRow; block_y += 16)
-        {
-            for (block_x = 0; block_x < maxCol; block_x += 16)
-            {
-                if (m_param->rc.aqMode == X265_AQ_AUTO_VARIANCE)
-                {
-                    qp_adj = curFrame->m_lowres.qpCuTreeOffset[block_xy];
-                    qp_adj = strength * (qp_adj - avg_adj);
-                }
-                else
-                {
-                    uint32_t energy = acEnergyCu(curFrame, block_x, block_y);
-                    qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (14.427f + 2 * (X265_DEPTH - 8)));
-                }
-                curFrame->m_lowres.qpAqOffset[block_xy] = qp_adj;
-                curFrame->m_lowres.qpCuTreeOffset[block_xy] = qp_adj;
-                curFrame->m_lowres.invQscaleFactor[block_xy] = x265_exp2fix8(qp_adj);
-                block_xy++;
-            }
-        }
-    }
-
-    if (m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred)
-    {
-        int hShift = CHROMA_H_SHIFT(m_param->internalCsp);
-        int vShift = CHROMA_V_SHIFT(m_param->internalCsp);
-        maxCol = ((maxCol + 8) >> 4) << 4;
-        maxRow = ((maxRow + 8) >> 4) << 4;
-        int width[3]  = { maxCol, maxCol >> hShift, maxCol >> hShift };
-        int height[3] = { maxRow, maxRow >> vShift, maxRow >> vShift };
-
-        for (int i = 0; i < 3; i++)
-        {
-            uint64_t sum, ssd;
-            sum = curFrame->m_lowres.wp_sum[i];
-            ssd = curFrame->m_lowres.wp_ssd[i];
-            curFrame->m_lowres.wp_ssd[i] = ssd - (sum * sum + (width[i] * height[i]) / 2) / (width[i] * height[i]);
-        }
-    }
-}
 
 RateControl::RateControl(x265_param *p)
 {
@@ -1352,6 +1200,8 @@ bool RateControl::cuTreeReadFor2Pass(Frame* frame)
 
     if (m_rce2Pass[frame->m_poc].keptAsRef)
     {
+        /* TODO: We don't need pre-lookahead to measure AQ offsets, but there is currently
+         * no way to signal this */
         uint8_t type;
         if (m_cuTreeStats.qpBufPos < 0)
         {
@@ -1380,8 +1230,6 @@ bool RateControl::cuTreeReadFor2Pass(Frame* frame)
         }
         m_cuTreeStats.qpBufPos--;
     }
-    else
-        calcAdaptiveQuantFrame(frame);
     return true;
 
 fail:

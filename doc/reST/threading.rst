@@ -222,13 +222,12 @@ Lookahead
 
 The lookahead module of x265 (the lowres pre-encode which determines
 scene cuts and slice types) uses the thread pool to distribute the
-lowres cost analysis to worker threads. It follows the same wave-front
-pattern as the main encoder except it works in reverse-scan order.
+lowres cost analysis to worker threads. It will use bonded task groups
+to perform batches of frame cost estimates.
 
-The function slicetypeDecide() itself may also be performed by a worker
-thread if your system has enough CPU cores to make this a beneficial
-trade-off, else it runs within the context of the thread which calls the
-x265_encoder_encode().
+The function slicetypeDecide() itself is also be performed by a worker
+thread if your encoder has a thread pool, else it runs within the
+context of the thread which calls the x265_encoder_encode().
 
 SAO
 ===
