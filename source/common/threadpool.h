@@ -25,84 +25,84 @@
 #define X265_THREADPOOL_H
 
 #include "common.h"
+#include "threading.h"
 
 namespace x265 {
 // x265 private namespace
 
 class ThreadPool;
+class WorkerThread;
+class BondedTaskGroup;
 
-int getCpuCount();
+#if X86_64
+typedef uint64_t sleepbitmap_t;
+#else
+typedef uint32_t sleepbitmap_t;
+#endif
 
-// Any class that wants to distribute work to the thread pool must
-// derive from JobProvider and implement FindJob().
+static const sleepbitmap_t ALL_POOL_THREADS = (sleepbitmap_t)-1;
+enum { MAX_POOL_THREADS = sizeof(sleepbitmap_t) * 8 };
+enum { INVALID_SLICE_PRIORITY = 10 }; // a value larger than any X265_TYPE_* macro
+
+// Frame level job providers. FrameEncoder and Lookahead derive from
+// this class and implement findJob()
 class JobProvider
 {
-protected:
-
-    ThreadPool   *m_pool;
-
-    JobProvider  *m_nextProvider;
-    JobProvider  *m_prevProvider;
-
 public:
 
-    JobProvider(ThreadPool *p) : m_pool(p), m_nextProvider(0), m_prevProvider(0) {}
+    ThreadPool*   m_pool;
+    sleepbitmap_t m_ownerBitmap;
+    int           m_jpId;
+    int           m_sliceType;
+    bool          m_helpWanted;
+    bool          m_isFrameEncoder; /* rather ugly hack, but nothing better presents itself */
+
+    JobProvider()
+        : m_pool(NULL)
+        , m_ownerBitmap(0)
+        , m_jpId(-1)
+        , m_sliceType(INVALID_SLICE_PRIORITY)
+        , m_helpWanted(false)
+        , m_isFrameEncoder(false)
+    {}
 
     virtual ~JobProvider() {}
 
-    void setThreadPool(ThreadPool *p) { m_pool = p; }
+    // Worker threads will call this method to perform work
+    virtual void findJob(int workerThreadId) = 0;
 
-    // Register this job provider with the thread pool, jobs are available
-    void enqueue();
-
-    // Remove this job provider from the thread pool, all jobs complete
-    void dequeue();
-
-    // Worker threads will call this method to find a job.  Must return true if
-    // work was completed.  False if no work was available.
-    virtual bool findJob(int threadId) = 0;
-
-    // All derived objects that call Enqueue *MUST* call flush before allowing
-    // their object to be destroyed, otherwise you will see random crashes involving
-    // partially freed vtables and you will be unhappy
-    void flush();
-
-    friend class ThreadPoolImpl;
-    friend class PoolThread;
+    // Will awaken one idle thread, preferring a thread which most recently
+    // performed work for this provider.
+    void tryWakeOne();
 };
 
-// Abstract interface to ThreadPool.  Each encoder instance should call
-// AllocThreadPool() to get a handle to the singleton object and then make
-// it available to their job provider structures (wave-front frame encoders,
-// etc).
 class ThreadPool
 {
-protected:
-
-    // Destructor is inaccessable, force the use of reference counted Release()
-    ~ThreadPool() {}
-
-    virtual void enqueueJobProvider(JobProvider &) = 0;
-
-    virtual void dequeueJobProvider(JobProvider &) = 0;
-
 public:
 
-    // When numthreads == 0, a default thread count is used. A request may grow
-    // an existing pool but it will never shrink.
-    static ThreadPool *allocThreadPool(int numthreads = 0);
+    sleepbitmap_t m_sleepBitmap;
+    int           m_numProviders;
+    int           m_numWorkers;
+    int           m_numaNode;
+    bool          m_isActive;
 
-    static ThreadPool *getThreadPool();
+    JobProvider** m_jpTable;
+    WorkerThread* m_workers;
 
-    virtual void pokeIdleThread() = 0;
+    ThreadPool();
+    ~ThreadPool();
 
-    // The pool is reference counted so all calls to AllocThreadPool() should be
-    // followed by a call to Release()
-    virtual void release() = 0;
+    bool create(int numThreads, int maxProviders, int node);
+    bool start();
+    void setCurrentThreadAffinity();
+    int  tryAcquireSleepingThread(sleepbitmap_t firstTryBitmap, sleepbitmap_t secondTryBitmap);
+    int  tryBondPeers(int maxPeers, sleepbitmap_t peerBitmap, BondedTaskGroup& master);
 
-    virtual int  getThreadCount() const = 0;
+    static ThreadPool* allocThreadPools(x265_param* p, int& numPools);
 
-    friend class JobProvider;
+    static int  getCpuCount();
+    static int  getNumaNodeCount();
+    static void setThreadNodeAffinity(int node);
 };
 } // end namespace x265
 

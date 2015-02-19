@@ -70,7 +70,6 @@ class DPB;
 class Lookahead;
 class RateControl;
 class ThreadPool;
-struct ThreadLocalData;
 
 class Encoder : public x265_encoder
 {
@@ -91,6 +90,7 @@ public:
 
     Frame*             m_exportedPic;
 
+    int                m_numPools;
     int                m_curEncoder;
 
     /* cached PicYuv offset arrays, shared by all instances of
@@ -120,14 +120,12 @@ public:
     PPS                m_pps;
     NALList            m_nalList;
     ScalingList        m_scalingList;      // quantization matrix information
-    int                m_numThreadLocalData;
 
     int                m_lastBPSEI;
     uint32_t           m_numDelayedPic;
 
     x265_param*        m_param;
     RateControl*       m_rateControl;
-    ThreadLocalData*   m_threadLocalData;
     Lookahead*         m_lookahead;
     Window             m_conformanceWindow;
 

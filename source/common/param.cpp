@@ -100,7 +100,6 @@ void x265_param_default(x265_param *param)
     /* Applying default values to all elements in the param structure */
     param->cpuid = x265::cpu_detect();
     param->bEnableWavefront = 1;
-    param->poolNumThreads = 0;
     param->frameNumThreads = 0;
 
     param->logLevel = X265_LOG_INFO;
@@ -545,7 +544,6 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
             }
         }
     }
-    OPT("threads") p->poolNumThreads = atoi(value);
     OPT("frame-threads") p->frameNumThreads = atoi(value);
     OPT("pmode") p->bDistributeModeAnalysis = atobool(value);
     OPT("pme") p->bDistributeMotionEstimation = atobool(value);
@@ -821,6 +819,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("stats") p->rc.statFileName = strdup(value);
     OPT("csv") p->csvfn = strdup(value);
     OPT("scaling-list") p->scalingLists = strdup(value);
+    OPT2("pools", "numa-pools") p->numaPools = strdup(value);
     OPT("lambda-file") p->rc.lambdaFileName = strdup(value);
     OPT("analysis-file") p->analysisFileName = strdup(value);
     else

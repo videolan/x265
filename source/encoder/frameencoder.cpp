@@ -39,13 +39,11 @@ namespace x265 {
 void weightAnalyse(Slice& slice, Frame& frame, x265_param& param);
 
 FrameEncoder::FrameEncoder()
-    : WaveFront(NULL)
-    , m_threadActive(true)
 {
     m_prevOutputTime = x265_mdate();
-    m_totalWorkerElapsedTime = 0;
+    m_isFrameEncoder = true;
+    m_threadActive = true;
     m_slicetypeWaitTime = 0;
-    m_frameEncoderID = 0;
     m_activeWorkerCount = 0;
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
@@ -66,7 +64,22 @@ FrameEncoder::FrameEncoder()
 void FrameEncoder::destroy()
 {
     if (m_pool)
-        JobProvider::flush();  // ensure no worker threads are using this frame
+    {
+        if (!m_jpId)
+        {
+            int numTLD = m_pool->m_numWorkers;
+            if (!m_param->bEnableWavefront)
+                numTLD += m_pool->m_numProviders;
+            for (int i = 0; i < numTLD; i++)
+                m_tld[i].destroy();
+            delete [] m_tld;
+        }
+    }
+    else
+    {
+        m_tld->destroy();
+        delete m_tld;
+    }
 
     m_threadActive = false;
     m_enable.trigger();
@@ -90,7 +103,7 @@ void FrameEncoder::destroy()
     stop();
 }
 
-bool FrameEncoder::init(Encoder *top, int numRows, int numCols, int id)
+bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
 {
     m_top = top;
     m_param = top->m_param;
@@ -99,7 +112,6 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols, int id)
     m_filterRowDelay = (m_param->bEnableSAO && m_param->bSaoNonDeblocked) ?
                         2 : (m_param->bEnableSAO || m_param->bEnableLoopFilter ? 1 : 0);
     m_filterRowDelayCus = m_filterRowDelay * numCols;
-    m_frameEncoderID = id;
     m_rows = new CTURow[m_numRows];
     bool ok = !!m_numRows;
 
@@ -134,7 +146,6 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols, int id)
     else
         m_param->noiseReductionIntra = m_param->noiseReductionInter = 0;
 
-    start();
     return ok;
 }
 
@@ -205,7 +216,9 @@ bool FrameEncoder::startCompressFrame(Frame* curFrame)
 {
     m_slicetypeWaitTime = x265_mdate() - m_prevOutputTime;
     m_frame = curFrame;
-    curFrame->m_encData->m_frameEncoderID = m_frameEncoderID; // Each Frame knows the ID of the FrameEncoder encoding it
+    m_sliceType = curFrame->m_lowres.sliceType;
+    curFrame->m_encData->m_frameEncoderID = m_jpId;
+    curFrame->m_encData->m_jobProvider = this;
     curFrame->m_encData->m_slice->m_mref = m_mref;
 
     if (!m_cuGeoms)
@@ -220,19 +233,61 @@ bool FrameEncoder::startCompressFrame(Frame* curFrame)
 
 void FrameEncoder::threadMain()
 {
-    THREAD_NAME("Frame", m_frameEncoderID);
+    THREAD_NAME("Frame", m_jpId);
 
-    // worker thread routine for FrameEncoder
-    do
+    if (m_pool)
     {
-        m_enable.wait(); // Encoder::encode() triggers this event
-        if (m_threadActive)
+        m_pool->setCurrentThreadAffinity();
+
+        /* the first FE on each NUMA node is responsible for allocating thread
+         * local data for all worker threads in that pool. If WPP is disabled, then
+         * each FE also needs a TLD instance */
+        if (!m_jpId)
         {
-            compressFrame();
-            m_done.trigger(); // FrameEncoder::getEncodedPicture() blocks for this event
+            int numTLD = m_pool->m_numWorkers;
+            if (!m_param->bEnableWavefront)
+                numTLD += m_pool->m_numProviders;
+
+            m_tld = new ThreadLocalData[numTLD];
+            for (int i = 0; i < numTLD; i++)
+            {
+                m_tld[i].analysis.m_pool = m_pool;
+                m_tld[i].analysis.initSearch(*m_param, m_top->m_scalingList);
+                m_tld[i].analysis.create(m_tld);
+            }
+
+            for (int i = 0; i < m_pool->m_numProviders; i++)
+            {
+                if (m_pool->m_jpTable[i]->m_isFrameEncoder) /* ugh; over-allocation and other issues here */
+                {
+                    FrameEncoder *peer = dynamic_cast<FrameEncoder*>(m_pool->m_jpTable[i]);
+                    peer->m_tld = m_tld;
+                }
+            }
         }
+
+        if (m_param->bEnableWavefront)
+            m_localTldIdx = -1; // cause exception if used
+        else
+            m_localTldIdx = m_pool->m_numWorkers + m_jpId;
     }
-    while (m_threadActive);
+    else
+    {
+        m_tld = new ThreadLocalData;
+        m_tld->analysis.m_pool = NULL;
+        m_tld->analysis.initSearch(*m_param, m_top->m_scalingList);
+        m_tld->analysis.create(NULL);
+        m_localTldIdx = 0;
+    }
+
+    m_enable.wait();      /* Encoder::encode() triggers this event */
+
+    while (m_threadActive)
+    {
+        compressFrame();
+        m_done.trigger(); /* FrameEncoder::getEncodedPicture() blocks for this event */
+        m_enable.wait();
+    }
 }
 
 void FrameEncoder::compressFrame()
@@ -488,34 +543,7 @@ void FrameEncoder::compressFrame()
     if (m_top->m_rateControl->rateControlEnd(m_frame, m_accessUnitBits, &m_rce, &m_frameStats) < 0)
         m_top->m_aborted = true;
 
-    /* Accumulate NR statistics from all worker threads */
-    if (m_nr)
-    {
-        for (int i = 0; i < m_top->m_numThreadLocalData; i++)
-        {
-            NoiseReduction* nr = &m_top->m_threadLocalData[i].analysis.m_quant.m_frameNr[m_frameEncoderID];
-            for (int cat = 0; cat < MAX_NUM_TR_CATEGORIES; cat++)
-            {
-                for(int coeff = 0; coeff < MAX_NUM_TR_COEFFS; coeff++)
-                    m_nr->residualSum[cat][coeff] += nr->residualSum[cat][coeff];
-            
-                m_nr->count[cat] += nr->count[cat];
-            }
-        }
-
-        noiseReductionUpdate();
-
-        /* Copy updated NR coefficients back to all worker threads */
-        for (int i = 0; i < m_top->m_numThreadLocalData; i++)
-        {
-            NoiseReduction* nr = &m_top->m_threadLocalData[i].analysis.m_quant.m_frameNr[m_frameEncoderID];
-            memcpy(nr->offsetDenoise, m_nr->offsetDenoise, sizeof(uint16_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
-            memset(nr->count, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES);
-            memset(nr->residualSum, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
-        }
-    }
-
-    // Decrement referenced frame reference counts, allow them to be recycled
+    /* Decrement referenced frame reference counts, allow them to be recycled */
     for (int l = 0; l < numPredDir; l++)
     {
         for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
@@ -525,11 +553,44 @@ void FrameEncoder::compressFrame()
         }
     }
 
+    int numTLD;
+    if (m_pool)
+        numTLD = m_param->bEnableWavefront ? m_pool->m_numWorkers : m_pool->m_numWorkers + m_pool->m_numProviders;
+    else
+        numTLD = 1;
+
+    if (m_nr)
+    {
+        /* Accumulate NR statistics from all worker threads */
+        for (int i = 0; i < numTLD; i++)
+        {
+            NoiseReduction* nr = &m_tld[i].analysis.m_quant.m_frameNr[m_jpId];
+            for (int cat = 0; cat < MAX_NUM_TR_CATEGORIES; cat++)
+            {
+                for (int coeff = 0; coeff < MAX_NUM_TR_COEFFS; coeff++)
+                    m_nr->residualSum[cat][coeff] += nr->residualSum[cat][coeff];
+            
+                m_nr->count[cat] += nr->count[cat];
+            }
+        }
+
+        noiseReductionUpdate();
+
+        /* Copy updated NR coefficients back to all worker threads */
+        for (int i = 0; i < numTLD; i++)
+        {
+            NoiseReduction* nr = &m_tld[i].analysis.m_quant.m_frameNr[m_jpId];
+            memcpy(nr->offsetDenoise, m_nr->offsetDenoise, sizeof(uint16_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
+            memset(nr->count, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES);
+            memset(nr->residualSum, 0, sizeof(uint32_t) * MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS);
+        }
+    }
+
 #if DETAILED_CU_STATS
     /* Accumulate CU statistics from each worker thread, we could report
      * per-frame stats here, but currently we do not. */
-    for (int i = 0; i < m_top->m_numThreadLocalData; i++)
-        m_cuStats.accumulate(m_top->m_threadLocalData[i].analysis.m_stats[m_frameEncoderID]);
+    for (int i = 0; i < numTLD; i++)
+        m_cuStats.accumulate(m_tld[i].analysis.m_stats[m_jpId]);
 #endif
 
     m_endFrameTime = x265_mdate();
@@ -621,10 +682,9 @@ void FrameEncoder::compressCTURows()
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
 
     m_rows[0].active = true;
-    if (m_pool && m_param->bEnableWavefront)
+    if (m_param->bEnableWavefront)
     {
         WaveFront::clearEnabledRowMask();
-        WaveFront::enqueue();
 
         for (uint32_t row = 0; row < m_numRows; row++)
         {
@@ -645,19 +705,17 @@ void FrameEncoder::compressCTURows()
             }
 
             enableRowEncoder(row);
-            if (row)
-                m_pool->pokeIdleThread();
-            else
+            if (!row)
             {
                 m_row0WaitTime = x265_mdate();
                 enqueueRowEncoder(0);
             }
+            tryWakeOne();
         }
 
         m_allRowsAvailableTime = x265_mdate();
+        tryWakeOne(); /* ensure one thread is active or help-wanted flag is set prior to blocking */
         m_completionEvent.wait();
-
-        WaveFront::dequeue();
     }
     else
     {
@@ -687,10 +745,9 @@ void FrameEncoder::compressCTURows()
                     m_row0WaitTime = x265_mdate();
                 else if (i == m_numRows - 1)
                     m_allRowsAvailableTime = x265_mdate();
-                processRowEncoder(i, *m_tld);
+                processRowEncoder(i, m_tld[m_localTldIdx]);
             }
 
-            // Filter
             if (i >= m_filterRowDelay)
                 m_frameFilter.processRow(i - m_filterRowDelay);
         }
@@ -706,10 +763,8 @@ void FrameEncoder::processRow(int row, int threadId)
     const uint32_t realRow = row >> 1;
     const uint32_t typeNum = row & 1;
 
-    ThreadLocalData& tld = threadId >= 0 ? m_top->m_threadLocalData[threadId] : *m_tld;
-    
     if (!typeNum)
-        processRowEncoder(realRow, tld);
+        processRowEncoder(realRow, m_tld[threadId]);
     else
     {
         m_frameFilter.processRow(realRow);
@@ -932,21 +987,21 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             }
         }
 
-        // NOTE: do CU level Filter
+        /* SAO parameter estimation using non-deblocked pixels for CTU bottom and right boundary areas */
         if (m_param->bEnableSAO && m_param->bSaoNonDeblocked)
-            // SAO parameter estimation using non-deblocked pixels for CTU bottom and right boundary areas
             m_frameFilter.m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
 
-        // NOTE: active next row
-        if (curRow.completed >= 2 && row < m_numRows - 1)
+        if (m_param->bEnableWavefront && curRow.completed >= 2 && row < m_numRows - 1 &&
+            (!m_bAllRowsStop || intRow + 1 < m_vbvResetTriggerRow))
         {
+            /* activate next row */
             ScopedLock below(m_rows[row + 1].lock);
             if (m_rows[row + 1].active == false &&
-                m_rows[row + 1].completed + 2 <= curRow.completed &&
-                (!m_bAllRowsStop || intRow + 1 < m_vbvResetTriggerRow))
+                m_rows[row + 1].completed + 2 <= curRow.completed)
             {
                 m_rows[row + 1].active = true;
                 enqueueRowEncoder(row + 1);
+                tryWakeOne(); /* wake up a sleeping thread or set the help wanted flag */
             }
         }
 
@@ -961,11 +1016,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         }
     }
 
-    /* *this row of CTUs has been encoded* */
-
-    /* flush row bitstream (if WPP and no SAO) or flush frame if no WPP and no SAO */
-    if (!m_param->bEnableSAO && (m_param->bEnableWavefront || row == m_numRows - 1))
-        rowCoder.finishSlice();
+    /** this row of CTUs has been compressed **/
 
     /* If encoding with ABR, update update bits and complexity in rate control
      * after a number of rows so the next frame's rateControlStart has more
@@ -994,6 +1045,10 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         m_top->m_rateControl->rateControlUpdateStats(&m_rce);
     }
 
+    /* flush row bitstream (if WPP and no SAO) or flush frame if no WPP and no SAO */
+    if (!m_param->bEnableSAO && (m_param->bEnableWavefront || row == m_numRows - 1))
+        rowCoder.finishSlice();
+
     if (m_param->bEnableWavefront)
     {
         /* trigger row-wise loop filters */
@@ -1004,11 +1059,13 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             /* NOTE: Activate filter if first row (row 0) */
             if (row == m_filterRowDelay)
                 enqueueRowFilter(0);
+            tryWakeOne();
         }
         if (row == m_numRows - 1)
         {
             for (uint32_t i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
                 enableRowFilter(i);
+            tryWakeOne();
         }
     }
 

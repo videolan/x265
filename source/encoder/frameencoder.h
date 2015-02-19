@@ -122,7 +122,7 @@ public:
 
     virtual ~FrameEncoder() {}
 
-    virtual bool init(Encoder *top, int numRows, int numCols, int id);
+    virtual bool init(Encoder *top, int numRows, int numCols);
 
     void destroy();
 
@@ -136,7 +136,7 @@ public:
     Event                    m_done;
     Event                    m_completionEvent;
     bool                     m_threadActive;
-    int                      m_frameEncoderID;
+    int                      m_localTldIdx;
 
     uint32_t                 m_numRows;
     uint32_t                 m_numCols;

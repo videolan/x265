@@ -369,13 +369,53 @@ typedef struct x265_param
      * rate-control can be negatively impacted by increases to the number of
      * frame threads because the extra concurrency adds uncertainty to the
      * bitrate estimations. Frame parallelism is generally limited by the the
-     * number of CTU rows */
+     * is generally limited by the the number of CU rows
+     *
+     * When thread pools are used, each frame thread is assigned to a single
+     * pool and the frame thread itself is given the node affinity of its pool.
+     * But when no thread pools are used no node affinity is assigned. */
     int       frameNumThreads;
 
-    /* Number of threads to allocate for the process global thread pool, if no
-     * thread pool has yet been created. 0 implies auto-detection. By default
-     * x265 will try to allocate one worker thread per CPU core */
-    int       poolNumThreads;
+    /* Comma seperated list of threads per NUMA node. If "none", then no worker
+     * pools are created and only frame parallelism is possible. If NULL or ""
+     * (default) x265 will use all available threads on each NUMA node.
+     *
+     * '+'  is a special value indicating all cores detected on the node
+     * '*'  is a special value indicating all cores detected on the node and all
+     *      remaining nodes.
+     * '-'  is a special value indicating no cores on the node, same as '0'
+     *
+     * example strings for a 4-node system:
+     *   ""        - default, unspecified, all numa nodes are used for thread pools
+     *   "*"       - same as default
+     *   "none"    - no thread pools are created, only frame parallelism possible
+     *   "-"       - same as "none"
+     *   "10"      - allocate one pool, using up to 10 cores on node 0
+     *   "-,+"     - allocate one pool, using all cores on node 1
+     *   "+,-,+"   - allocate two pools, using all cores on nodes 0 and 2
+     *   "+,-,+,-" - allocate two pools, using all cores on nodes 0 and 2
+     *   "-,*"     - allocate three pools, using all cores on nodes 1, 2 and 3
+     *   "8,8,8,8" - allocate four pools with up to 8 threads in each pool
+     *
+     * The total number of threads will be determined by the number of threads
+     * assigned to all nodes. The worker threads will each be given affinity for
+     * their node, they will not be allowed to migrate between nodes, but they
+     * will be allowed to move between CPU cores within their node.
+     *
+     * If the three pool features: bEnableWavefront, bDistributeModeAnalysis and
+     * bDistributeMotionEstimation are all disabled, then numaPools is ignored
+     * and no thread pools are created.
+     *
+     * If "none" is specified, then all three of the thread pool features are
+     * implicitly disabled.
+     *
+     * Multiple thread pools will be allocated for any NUMA node with more than
+     * 64 logical CPU cores. But any given thread pool will always use at most
+     * one NUMA node.
+     *
+     * Frame encoders are distributed between the available thread pools, and
+     * the encoder will never generate more thread pools than frameNumThreads */
+    char*     numaPools;
 
     /* Enable wavefront parallel processing, greatly increases parallelism for
      * less than 1% compression efficiency loss. Requires a thread pool, enabled

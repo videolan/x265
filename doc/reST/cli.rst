@@ -173,19 +173,52 @@ Performance Options
 
 	**Values:** any value between 8 and 16. Default is 0, auto-detect
 
-.. option:: --threads <integer>
+.. option:: --pools <string>, --numa-pools <string>
+
+	Comma seperated list of threads per NUMA node. If "none", then no worker
+	pools are created and only frame parallelism is possible. If NULL or ""
+	(default) x265 will use all available threads on each NUMA node::
+
+	'+'  is a special value indicating all cores detected on the node
+	'*'  is a special value indicating all cores detected on the node and all remaining nodes
+	'-'  is a special value indicating no cores on the node, same as '0'
+
+	example strings for a 4-node system::
+		""        - default, unspecified, all numa nodes are used for thread pools
+		"*"       - same as default
+		"none"    - no thread pools are created, only frame parallelism possible
+		"-"       - same as "none"
+		"10"      - allocate one pool, using up to 10 cores on node 0
+		"-,+"     - allocate one pool, using all cores on node 1
+		"+,-,+"   - allocate two pools, using all cores on nodes 0 and 2
+		"+,-,+,-" - allocate two pools, using all cores on nodes 0 and 2
+		"-,*"     - allocate three pools, using all cores on nodes 1, 2 and 3
+		"8,8,8,8" - allocate four pools with up to 8 threads in each pool
+
+	The total number of threads will be determined by the number of threads
+	assigned to all nodes. The worker threads will each be given affinity for
+	their node, they will not be allowed to migrate between nodes, but they
+	will be allowed to move between CPU cores within their node.
+
+	If the three pool features: :option:`--wpp` :option:`--pmode` and
+	:option:`--pme` are all disabled, then :option:`--pools` is ignored
+	and no thread pools are created.
+
+	If "none" is specified, then all three of the thread pool features are
+	implicitly disabled.
+
+	Multiple thread pools will be allocated for any NUMA node with more than
+	64 logical CPU cores. But any given thread pool will always use at most
+	one NUMA node.
+
+	Frame encoders are distributed between the available thread pools, and
+	the encoder will never generate more thread pools than frameNumThreads
 
 	Number of threads to allocate for the worker thread pool  This pool
 	is used for WPP and for distributed analysis and motion search:
-	:option:`--wpp` :option:`--pmode` and :option:`--pme` respectively.
 
-	If :option:`--threads` 1 is specified, then no thread pool is
-	created. When no thread pool is created, all the thread pool
-	features are implicitly disabled. If all the pool features are
-	disabled by the user, then the pool is implicitly disabled.
-
-	Default 0, one thread is allocated per detected hardware thread
-	(logical CPU cores)
+	Default "", one thread is allocated per detected hardware thread
+	(logical CPU cores) and one thread pool per NUMA node.
 
 .. option:: --wpp, --no-wpp
 

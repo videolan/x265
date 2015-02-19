@@ -2,41 +2,34 @@
 Threading
 *********
 
-Thread Pool
-===========
+Thread Pools
+============
 
-x265 creates a pool of worker threads and shares this thread pool
-with all encoders within the same process (it is process global, aka a
-singleton).  The number of threads within the thread pool is determined
-by the encoder which first allocates the pool, which by definition is
-the first encoder created within each process.
+x265 creates one or more thread pools per encoder, one pool per NUMA
+node (typically a CPU socket). :option:`--pools` specifies the number of
+pools and the number of threads per pool the encoder will allocate. By
+default x265 allocates one thread per (hyperthreaded) CPU core on each
+NUMA node.
 
-:option:`--threads` specifies the number of threads the encoder will
-try to allocate for its thread pool.  If the thread pool was already
-allocated this parameter is ignored.  By default x265 allocates one
-thread per (hyperthreaded) CPU core in your system.
+If you are running multiple encoders on a system with multiple NUMA
+nodes, it is recommended to isolate each of them to a single node in
+order to avoid the NUMA overhead of remote memory access.
 
-Work distribution is job based.  Idle worker threads ask their parent
-pool object for jobs to perform.  When no jobs are available, idle
-worker threads block and consume no CPU cycles.
+Work distribution is job based. Idle worker threads scan the job
+providers assigned to their thread pool for jobs to perform. When no
+jobs are available, the idle worker threads block and consume no CPU
+cycles.
 
 Objects which desire to distribute work to worker threads are known as
-job providers (and they derive from the JobProvider class).  When job
-providers have work they enqueue themselves into the pool's provider
-list (and dequeue themselves when they no longer have work).  The thread
+job providers (and they derive from the JobProvider class).  The thread
 pool has a method to **poke** awake a blocked idle thread, and job
 providers are recommended to call this method when they make new jobs
 available.
 
 Worker jobs are not allowed to block except when abosultely necessary
-for data locking. If a job becomes blocked, the worker thread is
-expected to drop that job and go back to the pool and find more work.
-
-.. note::
-
-	x265_cleanup() frees the process-global thread pool, allowing
-	it to be reallocated if necessary, but only if no encoders are
-	allocated at the time it is called.
+for data locking. If a job becomes blocked, the work function is
+expected to drop that job so the worker thread may go back to the pool
+and find more work.
 
 Wavefront Parallel Processing
 =============================
@@ -138,8 +131,8 @@ The third extenuating circumstance is that when a frame being encoded
 becomes blocked by a reference frame row being available, that frame's
 wave-front becomes completely stalled and when the row becomes available
 again it can take quite some time for the wave to be restarted, if it
-ever does. This makes WPP many times less effective when frame
-parallelism is in use.
+ever does. This makes WPP less effective when frame parallelism is in
+use.
 
 :option:`--merange` can have a negative impact on frame parallelism. If
 the range is too large, more rows of CTU lag must be added to ensure
