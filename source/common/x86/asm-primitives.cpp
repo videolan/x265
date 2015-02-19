@@ -179,6 +179,7 @@ extern "C" {
     p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].prim  = fncdef x265_ ## fname ## _8x32_ ## cpu
 #define ALL_CHROMA_420_4x4_PU(prim, fname, cpu) ALL_CHROMA_420_4x4_PU_TYPED(prim, , fname, cpu)
 
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].filter_vps = x265_interp_4tap_vert_ps_8x8_avx2;
 
 #define ALL_CHROMA_422_CU_TYPED(prim, fncdef, fname, cpu) \
     p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].prim   = fncdef x265_ ## fname ## _4x8_ ## cpu; \
