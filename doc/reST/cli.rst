@@ -477,7 +477,7 @@ the prediction quad-tree.
 	and less frame parallelism as well. Because of this the faster
 	presets use a CU size of 32. Default: 64
 
-.. option:: --min-cu-size, <64|32|16|8>
+.. option:: --min-cu-size <64|32|16|8>
 
 	Minimum CU size (width and height). By using 16 or 32 the encoder
 	will not analyze the cost of CUs below that minimum threshold,
