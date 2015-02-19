@@ -1153,7 +1153,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
                     bHor = true;
                 else if (md.bestMode->cu.m_partSize[0] == SIZE_Nx2N)
                     bVer = true;
-                else if (md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N && !md.bestMode->cu.m_mergeFlag[0] && !md.bestMode->cu.isSkipped(0))
+                else if (md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N && !md.bestMode->cu.m_mergeFlag[0])
                 {
                     bHor = true;
                     bVer = true;
