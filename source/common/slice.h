@@ -288,6 +288,14 @@ struct WeightParam
     }
 };
 
+#define SET_WEIGHT(w, b, s, d, o) \
+    { \
+        (w).inputWeight = (s); \
+        (w).log2WeightDenom = (d); \
+        (w).inputOffset = (o); \
+        (w).bPresentFlag = (b); \
+    }
+
 class Slice
 {
 public:

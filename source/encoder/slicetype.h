@@ -39,14 +39,6 @@ class Frame;
 #define LOWRES_COST_MASK  ((1 << 14) - 1)
 #define LOWRES_COST_SHIFT 14
 
-#define SET_WEIGHT(w, b, s, d, o) \
-    { \
-        (w).inputWeight = (s); \
-        (w).log2WeightDenom = (d); \
-        (w).inputOffset = (o); \
-        (w).bPresentFlag = b; \
-    }
-
 class EstimateRow
 {
 public:
