@@ -1722,6 +1722,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.pu[LUMA_16x4].luma_hps = x265_interp_8tap_horiz_ps_16x4_avx2;
         p.pu[LUMA_16x32].luma_hps = x265_interp_8tap_horiz_ps_16x32_avx2;
         p.pu[LUMA_16x64].luma_hps = x265_interp_8tap_horiz_ps_16x64_avx2;
+
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].filter_vpp = x265_interp_4tap_vert_pp_16x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_vpp = x265_interp_4tap_vert_pp_32x32_avx2;
+
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].filter_vps = x265_interp_4tap_vert_ps_16x16_avx2;
 #endif
         p.pu[LUMA_4x4].luma_hpp = x265_interp_8tap_horiz_pp_4x4_avx2;
 
@@ -1791,11 +1796,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_8x8].cpy2Dto1D_shl = x265_cpy2Dto1D_shl_8_avx2;
         p.cu[BLOCK_16x16].cpy2Dto1D_shl = x265_cpy2Dto1D_shl_16_avx2;
         p.cu[BLOCK_32x32].cpy2Dto1D_shl = x265_cpy2Dto1D_shl_32_avx2;
-
-#if X86_64
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].filter_vpp = x265_interp_4tap_vert_pp_16x16_avx2;
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_vpp = x265_interp_4tap_vert_pp_32x32_avx2;
-#endif
     }
 }
 #endif // if HIGH_BIT_DEPTH
