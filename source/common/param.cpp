@@ -929,9 +929,7 @@ void setParamAspectRatio(x265_param *p, int width, int height)
 void getParamAspectRatio(x265_param *p, int& width, int& height)
 {
     if (!p->vui.aspectRatioIdc)
-    {
         width = height = 0;
-    }
     else if ((size_t)p->vui.aspectRatioIdc <= sizeof(fixedRatios) / sizeof(fixedRatios[0]))
     {
         width  = fixedRatios[p->vui.aspectRatioIdc - 1][0];
@@ -943,9 +941,7 @@ void getParamAspectRatio(x265_param *p, int& width, int& height)
         height = p->vui.sarHeight;
     }
     else
-    {
         width = height = 0;
-    }
 }
 
 static inline int _confirm(x265_param *param, bool bflag, const char* message)
