@@ -176,9 +176,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
         for (int r = 0; r < height; r++)
         {
             for (int c = 0; c < width; c++)
-            {
                 yPixel[c] = (pixel)yChar[c];
-            }
 
             yPixel += m_stride;
             yChar += pic.stride[0] / sizeof(*yChar);
