@@ -569,6 +569,67 @@ cglobal pixel_add_ps_32x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
 
     jnz         .loop
     RET
+
+INIT_YMM avx2
+cglobal pixel_add_ps_32x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, srcStride1
+    mov         r6d,        %2/4
+    add         r5,         r5
+.loop:
+    pmovzxbw    m0,         [r2]                ; first half of row 0 of src0
+    pmovzxbw    m1,         [r2 + 16]           ; second half of row 0 of src0
+    movu        m2,         [r3]                ; first half of row 0 of src1
+    movu        m3,         [r3 + 32]           ; second half of row 0 of src1
+
+    paddw       m0,         m2
+    paddw       m1,         m3
+    packuswb    m0,         m1
+    vpermq      m0, m0, 11011000b
+    movu        [r0],      m0                   ; row 0 of dst
+
+    pmovzxbw    m0,         [r2 + r4]           ; first half of row 1 of src0
+    pmovzxbw    m1,         [r2 + r4 + 16]      ; second half of row 1 of src0
+    movu        m2,         [r3 + r5]           ; first half of row 1 of src1
+    movu        m3,         [r3 + r5 + 32]      ; second half of row 1 of src1
+
+    paddw       m0,         m2
+    paddw       m1,         m3
+    packuswb    m0,         m1
+    vpermq      m0, m0, 11011000b
+    movu        [r0 + r1],      m0              ; row 1 of dst
+
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+
+    pmovzxbw    m0,         [r2]                ; first half of row 2 of src0
+    pmovzxbw    m1,         [r2 + 16]           ; second half of row 2 of src0
+    movu        m2,         [r3]                ; first half of row 2 of src1
+    movu        m3,         [r3 + 32]           ; second half of row 2 of src1
+
+    paddw       m0,         m2
+    paddw       m1,         m3
+    packuswb    m0,         m1
+    vpermq      m0, m0, 11011000b
+    movu        [r0],      m0                   ; row 2 of dst
+
+    pmovzxbw    m0,         [r2 + r4]           ; first half of row 3 of src0
+    pmovzxbw    m1,         [r2 + r4 + 16]      ; second half of row 3 of src0
+    movu        m2,         [r3 + r5]           ; first half of row 3 of src1
+    movu        m3,         [r3 + r5 + 32]      ; second half of row 3 of src1
+
+    paddw       m0,         m2
+    paddw       m1,         m3
+    packuswb    m0,         m1
+    vpermq      m0, m0, 11011000b
+    movu        [r0 + r1],      m0              ; row 3 of dst
+
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+
+    dec         r6d
+    jnz         .loop
+    RET
 %endif
 %endmacro
 
