@@ -1299,6 +1299,14 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
                 return false;
             }
         }
+        if (opt.chroma[i].pu[part].satd)
+        {
+            if (!check_pixelcmp(ref.chroma[i].pu[part].satd, opt.chroma[i].pu[part].satd))
+            {
+                printf("chroma_satd[%s][%s] failed!\n", x265_source_csp_names[i], chromaPartStr[i][part]);
+                return false;
+            }
+        }
         if (part < NUM_CU_SIZES)
         {
             if (opt.chroma[i].cu[part].sub_ps)
@@ -1467,7 +1475,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             {
                 if (!check_cpy2Dto1D_shl_t(ref.cu[i].cpy2Dto1D_shl, opt.cu[i].cpy2Dto1D_shl))
                 {
-                    printf("cpy2Dto1D_shl failed!\n");
+                    printf("cpy2Dto1D_shl[%dx%d] failed!\n", 4 << i, 4 << i);
                     return false;
                 }
             }
@@ -1748,6 +1756,11 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         {
             HEADER("[%s]  addAvg[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
             REPORT_SPEEDUP(opt.chroma[i].pu[part].addAvg, ref.chroma[i].pu[part].addAvg, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+        }
+        if (opt.chroma[i].pu[part].satd)
+        {
+            HEADER("[%s] satd[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
+            REPORT_SPEEDUP(opt.chroma[i].pu[part].satd, ref.chroma[i].pu[part].satd, pbuf1, STRIDE, fref, STRIDE);
         }
         if (part < NUM_CU_SIZES)
         {

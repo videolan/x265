@@ -617,6 +617,8 @@ LUMA_FILTERS(_sse4);
 LUMA_SP_FILTERS(_sse4);
 LUMA_SS_FILTERS(_sse2);
 LUMA_FILTERS(_avx2);
+LUMA_SP_FILTERS(_avx2);
+LUMA_SS_FILTERS(_avx2);
 
 void x265_interp_8tap_hv_pp_8x8_sse4(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY);
 void x265_luma_p2s_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
