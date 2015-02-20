@@ -42,6 +42,7 @@ const pw_1023,     times 8  dw 1023
 const pw_1024,     times 16 dw 1024
 const pw_4096,     times 16 dw 4096
 const pw_00ff,     times 16 dw 0x00ff
+ALIGN 32
 const pw_pixel_max,times 16 dw ((1 << BIT_DEPTH)-1)
 const deinterleave_shufd, dd 0,4,1,5,2,6,3,7
 const pb_unpackbd1, times 2 db 0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3
