@@ -1501,6 +1501,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
     {
         p.cu[BLOCK_16x16].add_ps = x265_pixel_add_ps_16x16_avx2;
         p.cu[BLOCK_32x32].add_ps = x265_pixel_add_ps_32x32_avx2;
+        p.cu[BLOCK_64x64].add_ps = x265_pixel_add_ps_64x64_avx2;
 
         p.pu[LUMA_16x4].pixelavg_pp = x265_pixel_avg_16x4_avx2;
         p.pu[LUMA_16x8].pixelavg_pp = x265_pixel_avg_16x8_avx2;
