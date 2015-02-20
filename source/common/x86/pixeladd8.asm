@@ -398,6 +398,52 @@ cglobal pixel_add_ps_16x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
 
     jnz         .loop
     RET
+
+INIT_YMM avx2
+cglobal pixel_add_ps_16x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, srcStride1
+    mov         r6d,        %2/4
+    add         r5,         r5
+.loop:
+
+    pmovzxbw    m0,         [r2]        ; row 0 of src0
+    pmovzxbw    m1,         [r2 + r4]   ; row 1 of src0
+    movu        m2,        [r3]        ; row 0 of src1
+    movu        m3,        [r3 + r5]   ; row 1 of src1
+    paddw       m0,         m2
+    paddw       m1,         m3
+    packuswb    m0,         m1
+
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+
+    pmovzxbw    m2,         [r2]        ; row 2 of src0
+    pmovzxbw    m3,         [r2 + r4]   ; row 3 of src0
+    movu        m4,        [r3]        ; row 2 of src1
+    movu        m5,        [r3 + r5]   ; row 3 of src1
+    paddw       m2,         m4
+    paddw       m3,         m5
+    packuswb    m2,         m3
+
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+
+    vpermq      m0, m0, 11011000b
+    movu        [r0],      xm0           ; row 0 of dst
+    vextracti128 xm3, m0, 1
+    movu        [r0 + r1], xm3           ; row 1 of dst
+
+    lea         r0,         [r0 + r1 * 2]
+    vpermq      m2, m2, 11011000b
+    movu        [r0],      xm2           ; row 2 of dst
+    vextracti128 xm3, m2, 1
+    movu         [r0 + r1], xm3          ; row 3 of dst
+
+    lea         r0,         [r0 + r1 * 2]
+
+    dec         r6d
+    jnz         .loop
+
+    RET
 %endif
 %endmacro
 
