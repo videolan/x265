@@ -1066,6 +1066,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_32x32].count_nonzero = x265_count_nonzero_32x32_avx2;
         p.scale1D_128to64 = x265_scale1D_128to64_avx2;
         // p.weight_pp = x265_weight_pp_avx2; fails tests
+        p.cu[BLOCK_16x16].calcresidual = x265_getResidual16_avx2;
+        p.cu[BLOCK_32x32].calcresidual = x265_getResidual32_avx2;
 
         ALL_LUMA_TU_S(cpy1Dto2D_shl, cpy1Dto2D_shl_, avx2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, avx2);
@@ -1550,6 +1552,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_8x8].count_nonzero = x265_count_nonzero_8x8_avx2;
         p.cu[BLOCK_16x16].count_nonzero = x265_count_nonzero_16x16_avx2;
         p.cu[BLOCK_32x32].count_nonzero = x265_count_nonzero_32x32_avx2;
+        p.cu[BLOCK_16x16].calcresidual = x265_getResidual16_avx2;
+        p.cu[BLOCK_32x32].calcresidual = x265_getResidual32_avx2;
 
         p.chroma[X265_CSP_I420].cu[CHROMA_420_16x16].copy_ss = x265_blockcopy_ss_16x16_avx;
         p.chroma[X265_CSP_I422].cu[CHROMA_422_16x32].copy_ss = x265_blockcopy_ss_16x32_avx;

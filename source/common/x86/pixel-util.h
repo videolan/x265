@@ -30,6 +30,8 @@ void x265_getResidual16_sse2(const pixel* fenc, const pixel* pred, int16_t* resi
 void x265_getResidual16_sse4(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
 void x265_getResidual32_sse2(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
 void x265_getResidual32_sse4(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
+void x265_getResidual16_avx2(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
+void x265_getResidual32_avx2(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
 
 void x265_transpose4_sse2(pixel* dest, const pixel* src, intptr_t stride);
 void x265_transpose8_sse2(pixel* dest, const pixel* src, intptr_t stride);

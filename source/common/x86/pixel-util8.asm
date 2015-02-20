@@ -102,9 +102,9 @@ cglobal getResidual4, 4,4,4
     punpcklqdq   m0, m1
     punpcklqdq   m2, m3
     psubw        m0, m2
-
     movh        [r2], m0
     movhps      [r2 + r3], m0
+    RET
 %else
 cglobal getResidual4, 4,4,5
     pxor        m0, m0
@@ -137,8 +137,8 @@ cglobal getResidual4, 4,4,5
     psubw       m1, m3
     movh        [r2], m1
     movhps      [r2 + r3 * 2], m1
-%endif
     RET
+%endif
 
 
 INIT_XMM sse2
@@ -164,6 +164,7 @@ cglobal getResidual8, 4,4,4
     lea         r2, [r2 + r3 * 2]
 %endif
 %endrep
+    RET
 %else
 cglobal getResidual8, 4,4,5
     pxor        m0, m0
@@ -190,8 +191,9 @@ cglobal getResidual8, 4,4,5
     lea         r2, [r2 + r3 * 4]
 %endif
 %endrep
-%endif
     RET
+%endif
+
 
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
@@ -245,10 +247,9 @@ cglobal getResidual16, 4,5,6
     lea         r0, [r0 + r3 * 2]
     lea         r1, [r1 + r3 * 2]
     lea         r2, [r2 + r3 * 2]
-
     jnz        .loop
+    RET
 %else
-
 INIT_XMM sse4
 cglobal getResidual16, 4,5,8
     mov         r4d, 16/4
@@ -309,11 +310,70 @@ cglobal getResidual16, 4,5,8
     lea         r0, [r0 + r3 * 2]
     lea         r1, [r1 + r3 * 2]
     lea         r2, [r2 + r3 * 4]
-
     jnz        .loop
+    RET
 %endif
 
+%if HIGH_BIT_DEPTH
+INIT_YMM avx2
+cglobal getResidual16, 4,4,5
+    add         r3, r3
+    pxor        m0, m0
+
+%assign x 0
+%rep 16/2
+    movu        m1, [r0]
+    movu        m2, [r0 + r3]
+    movu        m3, [r1]
+    movu        m4, [r1 + r3]
+
+    psubw       m1, m3
+    psubw       m2, m4
+    movu        [r2], m1
+    movu        [r2 + r3], m2
+%assign x x+1
+%if (x != 8)
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+    lea         r2, [r2 + r3 * 2]
+%endif
+%endrep
     RET
+%else
+INIT_YMM avx2
+cglobal getResidual16, 4,4,9
+    pxor        m0, m0
+    lea         r4, [r3 * 2]
+    add         r4d, r3d
+
+%assign x 0
+%rep 4
+    pmovzxbw    m1, [r0]
+    pmovzxbw    m2, [r0 + r3]
+    pmovzxbw    m3, [r0 + r3 * 2]
+    pmovzxbw    m4, [r0 + r4]
+    pmovzxbw    m5, [r1]
+    pmovzxbw    m6, [r1 + r3]
+    pmovzxbw    m7, [r1 + r3 * 2]
+    pmovzxbw    m8, [r1 + r4]
+    psubw       m1, m5
+    psubw       m2, m6
+    psubw       m3, m7
+    psubw       m4, m8
+    movu        [r2], m1
+    movu        [r2 + r3 * 2], m2
+    movu        [r2 + r3 * 2 * 2], m3
+    movu        [r2 + r4 * 2], m4
+
+%assign x x+1
+%if (x != 4)
+    lea         r0, [r0 + r3 * 2 * 2]
+    lea         r1, [r1 + r3 * 2 * 2]
+    lea         r2, [r2 + r3 * 4 * 2]
+%endif
+%endrep
+    RET
+%endif
 
 %if HIGH_BIT_DEPTH
 INIT_XMM sse2
@@ -364,9 +424,8 @@ cglobal getResidual32, 4,5,6
     lea         r0, [r0 + r3 * 2]
     lea         r1, [r1 + r3 * 2]
     lea         r2, [r2 + r3 * 2]
-
     jnz        .loop
-
+    RET
 %else
 INIT_XMM sse4
 cglobal getResidual32, 4,5,7
@@ -422,12 +481,73 @@ cglobal getResidual32, 4,5,7
     lea         r0, [r0 + r3 * 2]
     lea         r1, [r1 + r3 * 2]
     lea         r2, [r2 + r3 * 4]
-
     jnz        .loop
-%endif
     RET
+%endif
 
 
+%if HIGH_BIT_DEPTH
+INIT_YMM avx2
+cglobal getResidual32, 4,4,5
+    add         r3, r3
+    pxor        m0, m0
+
+%assign x 0
+%rep 32
+    movu        m1, [r0]
+    movu        m2, [r0 + 32]
+    movu        m3, [r1]
+    movu        m4, [r1 + 32]
+
+    psubw       m1, m3
+    psubw       m2, m4
+    movu        [r2], m1
+    movu        [r2 + 32], m2
+%assign x x+1
+%if (x != 32)
+    lea         r0, [r0 + r3]
+    lea         r1, [r1 + r3]
+    lea         r2, [r2 + r3]
+%endif
+%endrep
+    RET
+%else
+INIT_YMM avx2
+cglobal getResidual32, 4,4,9
+    pxor        m0, m0
+    lea         r4, [r3 * 2]
+
+%assign x 0
+%rep 16
+    pmovzxbw    m1, [r0]
+    pmovzxbw    m2, [r0 + 16]
+    pmovzxbw    m3, [r0 + r3]
+    pmovzxbw    m4, [r0 + r3 + 16]
+
+    pmovzxbw    m5, [r1]
+    pmovzxbw    m6, [r1 + 16]
+    pmovzxbw    m7, [r1 + r3]
+    pmovzxbw    m8, [r1 + r3 + 16]
+
+    psubw       m1, m5
+    psubw       m2, m6
+    psubw       m3, m7
+    psubw       m4, m8
+
+    movu        [r2 + 0 ], m1
+    movu        [r2 + 32], m2
+    movu        [r2 + r4 + 0], m3
+    movu        [r2 + r4 + 32], m4
+
+%assign x x+1
+%if (x != 16)
+    lea         r0, [r0 + r3 * 2]
+    lea         r1, [r1 + r3 * 2]
+    lea         r2, [r2 + r3 * 4]
+%endif
+%endrep
+    RET
+%endif
 ;-----------------------------------------------------------------------------
 ; uint32_t quant(int16_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------
