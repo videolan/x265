@@ -179,8 +179,6 @@ extern "C" {
     p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].prim  = fncdef x265_ ## fname ## _8x32_ ## cpu
 #define ALL_CHROMA_420_4x4_PU(prim, fname, cpu) ALL_CHROMA_420_4x4_PU_TYPED(prim, , fname, cpu)
 
-        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].filter_vps = x265_interp_4tap_vert_ps_8x8_avx2;
-
 #define ALL_CHROMA_422_CU_TYPED(prim, fncdef, fname, cpu) \
     p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].prim   = fncdef x265_ ## fname ## _4x8_ ## cpu; \
     p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].prim  = fncdef x265_ ## fname ## _8x16_ ## cpu; \
@@ -1790,6 +1788,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         // color space i420
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x4].filter_vpp = x265_interp_4tap_vert_pp_4x4_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].filter_vpp = x265_interp_4tap_vert_pp_8x8_avx2;
+
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].filter_vps = x265_interp_4tap_vert_ps_8x8_avx2;
 
         // color space i422
         p.chroma[X265_CSP_I422].pu[CHROMA_422_4x4].filter_vpp = x265_interp_4tap_vert_pp_4x4_avx2;
