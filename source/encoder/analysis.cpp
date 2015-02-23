@@ -1521,37 +1521,32 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             }
         }
     }
-    if (predInterSearch(interMode, cuGeom, false, m_bChromaSa8d))
-    {
-        /* predInterSearch sets interMode.sa8dBits */
-        const Yuv& fencYuv = *interMode.fencYuv;
-        Yuv& predYuv = interMode.predYuv;
-        int part = partitionFromLog2Size(cuGeom.log2CUSize);
-        interMode.distortion = primitives.cu[part].sa8d(fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
-        if (m_bChromaSa8d)
-        {
-            interMode.distortion += primitives.chroma[m_csp].cu[part].sa8d(fencYuv.m_buf[1], fencYuv.m_csize, predYuv.m_buf[1], predYuv.m_csize);
-            interMode.distortion += primitives.chroma[m_csp].cu[part].sa8d(fencYuv.m_buf[2], fencYuv.m_csize, predYuv.m_buf[2], predYuv.m_csize);
-        }
-        interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
 
-        if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
+    predInterSearch(interMode, cuGeom, false, m_bChromaSa8d);
+
+    /* predInterSearch sets interMode.sa8dBits */
+    const Yuv& fencYuv = *interMode.fencYuv;
+    Yuv& predYuv = interMode.predYuv;
+    int part = partitionFromLog2Size(cuGeom.log2CUSize);
+    interMode.distortion = primitives.cu[part].sa8d(fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
+    if (m_bChromaSa8d)
+    {
+        interMode.distortion += primitives.chroma[m_csp].cu[part].sa8d(fencYuv.m_buf[1], fencYuv.m_csize, predYuv.m_buf[1], predYuv.m_csize);
+        interMode.distortion += primitives.chroma[m_csp].cu[part].sa8d(fencYuv.m_buf[2], fencYuv.m_csize, predYuv.m_buf[2], predYuv.m_csize);
+    }
+    interMode.sa8dCost = m_rdCost.calcRdSADCost(interMode.distortion, interMode.sa8dBits);
+
+    if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
+    {
+        for (uint32_t puIdx = 0; puIdx < interMode.cu.getNumPartInter(); puIdx++)
         {
-            for (uint32_t puIdx = 0; puIdx < interMode.cu.getNumPartInter(); puIdx++)
+            MotionData* bestME = interMode.bestME[puIdx];
+            for (int32_t i = 0; i < numPredDir; i++)
             {
-                MotionData* bestME = interMode.bestME[puIdx];
-                for (int32_t i = 0; i < numPredDir; i++)
-                {
-                    *m_reuseRef = bestME[i].ref;
-                    m_reuseRef++;
-                }
+                *m_reuseRef = bestME[i].ref;
+                m_reuseRef++;
             }
         }
-    }
-    else
-    {
-        interMode.distortion = MAX_UINT;
-        interMode.sa8dCost = MAX_INT64;
     }
 }
 
@@ -1574,28 +1569,23 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
             }
         }
     }
-    if (predInterSearch(interMode, cuGeom, bMergeOnly, true))
-    {
-        /* predInterSearch sets interMode.sa8dBits, but this is ignored */
-        encodeResAndCalcRdInterCU(interMode, cuGeom);
 
-        if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
+    predInterSearch(interMode, cuGeom, bMergeOnly, true);
+
+    /* predInterSearch sets interMode.sa8dBits, but this is ignored */
+    encodeResAndCalcRdInterCU(interMode, cuGeom);
+
+    if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
+    {
+        for (uint32_t puIdx = 0; puIdx < interMode.cu.getNumPartInter(); puIdx++)
         {
-            for (uint32_t puIdx = 0; puIdx < interMode.cu.getNumPartInter(); puIdx++)
+            MotionData* bestME = interMode.bestME[puIdx];
+            for (int32_t i = 0; i < numPredDir; i++)
             {
-                MotionData* bestME = interMode.bestME[puIdx];
-                for (int32_t i = 0; i < numPredDir; i++)
-                {
-                    *m_reuseRef = bestME[i].ref;
-                    m_reuseRef++;
-                }
+                *m_reuseRef = bestME[i].ref;
+                m_reuseRef++;
             }
         }
-    }
-    else
-    {
-        interMode.distortion = MAX_UINT;
-        interMode.rdCost = MAX_INT64;
     }
 }
 

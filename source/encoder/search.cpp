@@ -1926,9 +1926,8 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
     }
 }
 
-/* search of the best candidate for inter prediction
- * returns true if predYuv was filled with a motion compensated prediction */
-bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChromaSA8D)
+/* find the best inter prediction for each PU of specified mode */
+void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChromaSA8D)
 {
     ProfileCUScope(interMode.cu, motionEstimationElapsedTime, countMotionEstimate);
 
@@ -1969,15 +1968,8 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             merge.height     = m_puHeight;
             mrgCost = mergeEstimation(cu, cuGeom, puIdx, merge);
 
-            if (bMergeOnly)
+            if (bMergeOnly && mrgCost != MAX_UINT)
             {
-                if (mrgCost == MAX_UINT)
-                {
-                    /* No valid merge modes were found, there is no possible way to
-                     * perform a valid motion compensation prediction, so early-exit */
-                    return false;
-                }
-                // set merge result
                 cu.m_mergeFlag[m_puAbsPartIdx] = true;
                 cu.m_mvpIdx[0][m_puAbsPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
                 cu.setPUInterDir(merge.interDir, m_puAbsPartIdx, puIdx);
@@ -2359,7 +2351,6 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     }
 
     interMode.sa8dBits += totalmebits;
-    return true;
 }
 
 void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3])

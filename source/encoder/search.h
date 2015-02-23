@@ -257,7 +257,7 @@ public:
     void     encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
 
     // estimation inter prediction (non-skip)
-    bool     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChroma);
+    void     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChroma);
 
     // encode residual and compute rd-cost for inter mode
     void     encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom);
