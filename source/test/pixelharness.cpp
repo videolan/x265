@@ -1688,7 +1688,7 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
     if (opt.pu[part].copy_pp)
     {
         HEADER("copy_pp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].copy_pp, ref.pu[part].copy_pp, pbuf1, 64, pbuf2, 128);
+        REPORT_SPEEDUP(opt.pu[part].copy_pp, ref.pu[part].copy_pp, pbuf1, 64, pbuf2, 64);
     }
 
     if (opt.pu[part].addAvg)
@@ -1723,7 +1723,7 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         if (opt.cu[part].copy_ss)
         {
             HEADER("copy_ss[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.cu[part].copy_ss, ref.cu[part].copy_ss, sbuf1, 64, sbuf2, 128);
+            REPORT_SPEEDUP(opt.cu[part].copy_ss, ref.cu[part].copy_ss, sbuf1, 128, sbuf2, 128);
         }
         if (opt.cu[part].copy_sp)
         {
@@ -1733,7 +1733,7 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         if (opt.cu[part].copy_ps)
         {
             HEADER("copy_ps[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.cu[part].copy_ps, ref.cu[part].copy_ps, sbuf1, 64, pbuf1, 128);
+            REPORT_SPEEDUP(opt.cu[part].copy_ps, ref.cu[part].copy_ps, sbuf1, 128, pbuf1, 64);
         }
     }
 
