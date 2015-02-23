@@ -872,6 +872,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = (pixelcmp_t)x265_pixel_ssd_ss_32x64_sse2;
 
         p.cu[BLOCK_4x4].dct = x265_dct4_sse2;
+        p.cu[BLOCK_8x8].dct = x265_dct8_sse2;
         p.cu[BLOCK_4x4].idct = x265_idct4_sse2;
 #if X86_64
         p.cu[BLOCK_8x8].idct = x265_idct8_sse2;
@@ -1080,6 +1081,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.ssim_end_4 = x265_pixel_ssim_end4_sse2;
 
         p.cu[BLOCK_4x4].dct = x265_dct4_sse2;
+        p.cu[BLOCK_8x8].dct = x265_dct8_sse2;
         p.cu[BLOCK_4x4].idct = x265_idct4_sse2;
 #if X86_64
         p.cu[BLOCK_8x8].idct = x265_idct8_sse2;

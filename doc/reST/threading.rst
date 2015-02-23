@@ -125,9 +125,14 @@ The second extenuating circumstance is the loop filters. The pixels used
 for motion reference must be processed by the loop filters and the loop
 filters cannot run until a full row has been encoded, and it must run a
 full row behind the encode process so that the pixels below the row
-being filtered are available. When you add up all the row lags each
-frame ends up being 3 CTU rows behind its reference frames (the
-equivalent of 12 macroblock rows for x264)
+being filtered are available. On top of this, HEVC has two loop filters:
+deblocking and SAO, which must be run in series with a row lag between
+them. When you add up all the row lags each frame ends up being 3 CTU
+rows behind its reference frames (the equivalent of 12 macroblock rows
+for x264). And keep in mind the wave-front progression pattern; by the
+time the reference frame finishes the third row of CTUs, nearly half of
+the CTUs in the frame may be compressed (depending on the display aspect
+ratio).
 
 The third extenuating circumstance is that when a frame being encoded
 becomes blocked by a reference frame row being available, that frame's

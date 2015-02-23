@@ -117,7 +117,7 @@ void Predict::initMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int
     m_predSlice = cu.m_slice;
     cu.getPartIndexAndSize(partIdx, m_puAbsPartIdx, m_puWidth, m_puHeight);
     m_ctuAddr = cu.m_cuAddr;
-    m_cuAbsPartIdx = cuGeom.encodeIdx;
+    m_cuAbsPartIdx = cuGeom.absPartIdx;
 }
 
 void Predict::prepMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int partIdx)
@@ -620,7 +620,7 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
     int tuSize = intraNeighbors.tuSize;
     int tuSize2 = tuSize << 1;
 
-    pixel* adiOrigin = cu.m_encData->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    pixel* adiOrigin = cu.m_encData->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
     intptr_t picStride = cu.m_encData->m_reconPic->m_stride;
 
     fillReferenceSamples(adiOrigin, picStride, intraNeighbors, intraNeighbourBuf[0]);
@@ -687,7 +687,7 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
 
 void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, uint32_t chromaId)
 {
-    const pixel* adiOrigin = cu.m_encData->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    const pixel* adiOrigin = cu.m_encData->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
     intptr_t picStride = cu.m_encData->m_reconPic->m_strideC;
 
     fillReferenceSamples(adiOrigin, picStride, intraNeighbors, intraNeighbourBuf[0]);

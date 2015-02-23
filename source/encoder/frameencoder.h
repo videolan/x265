@@ -122,7 +122,7 @@ public:
 
     virtual ~FrameEncoder() {}
 
-    bool init(Encoder *top, int numRows, int numCols, int id);
+    virtual bool init(Encoder *top, int numRows, int numCols, int id);
 
     void destroy();
 
@@ -177,6 +177,9 @@ public:
     int64_t                  m_slicetypeWaitTime;        // total elapsed time waiting for decided frame
     int64_t                  m_totalWorkerElapsedTime;   // total elapsed time spent by worker threads processing CTUs
     int64_t                  m_totalNoWorkerTime;        // total elapsed time without any active worker threads
+#if DETAILED_CU_STATS
+    CUStats                  m_cuStats;
+#endif
 
     Encoder*                 m_top;
     x265_param*              m_param;
@@ -204,7 +207,7 @@ protected:
     void compressFrame();
 
     /* called by compressFrame to perform wave-front compression analysis */
-    void compressCTURows();
+    virtual void compressCTURows();
 
     /* called by compressFrame to generate final per-row bitstreams */
     void encodeSlice();
@@ -215,8 +218,8 @@ protected:
     void noiseReductionUpdate();
 
     /* Called by WaveFront::findJob() */
-    void processRow(int row, int threadId);
-    void processRowEncoder(int row, ThreadLocalData& tld);
+    virtual void processRow(int row, int threadId);
+    virtual void processRowEncoder(int row, ThreadLocalData& tld);
 
     void enqueueRowEncoder(int row) { WaveFront::enqueueRow(row * 2 + 0); }
     void enqueueRowFilter(int row)  { WaveFront::enqueueRow(row * 2 + 1); }

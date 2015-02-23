@@ -27,8 +27,8 @@
 #include "frame.h"
 #include "picyuv.h"
 #include "lowres.h"
+#include "slice.h"
 #include "mv.h"
-#include "slicetype.h"
 #include "bitstream.h"
 
 using namespace x265;

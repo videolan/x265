@@ -527,7 +527,7 @@ void weight_sp_c(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t ds
     X265_CHECK(!((w0 << 6) > 32767), "w0 using more than 16 bits, asm output will mismatch\n");
     X265_CHECK(!(round > 32767), "round using more than 16 bits, asm output will mismatch\n");
     X265_CHECK((shift >= correction), "shift must be include factor correction, please update ASM ABI\n");
-    X265_CHECK(!(round & ((1 << correction) - 1)), "round must be include factor correction, please update ASM ABI\n");
+    X265_CHECK(!(round & ((1 << (correction - 1)) - 1)), "round must be include factor correction, please update ASM ABI\n");
 
     for (y = 0; y <= height - 1; y++)
     {

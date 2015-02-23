@@ -74,13 +74,11 @@ public:
     bool      m_bTryLossless;
     bool      m_bChromaSa8d;
 
-    /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
-    analysis_intra_data* m_reuseIntraDataCTU;
-    analysis_inter_data* m_reuseInterDataCTU;
-    int32_t* reuseRef;
     Analysis();
+
     bool create(ThreadLocalData* tld);
     void destroy();
+
     Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
 
 protected:
@@ -95,6 +93,12 @@ protected:
     void parallelModeAnalysis(int threadId, int jobId);
     void parallelME(int threadId, int meId);
 
+    /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
+    analysis_intra_data* m_reuseIntraDataCTU;
+    analysis_inter_data* m_reuseInterDataCTU;
+    int32_t*             m_reuseRef;
+    uint32_t*            m_reuseBestMergeCand;
+
     /* full analysis for an I-slice CU */
     void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder);
 
@@ -105,7 +109,7 @@ protected:
 
     /* measure merge and skip */
     void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGeom);
-    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom);
+    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom, bool isSkipMode);
 
     /* measure inter options */
     void checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize);
