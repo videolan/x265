@@ -234,6 +234,10 @@ public:
     pixel*          m_intraPred;      /* 32x32 buffer for individual intra predictions */
     pixel*          m_intraPredAngs;  /* allocation for 33 consecutive (all angular) 32x32 intra predictions */
 
+    coeff_t*        m_tsCoeff;        /* transform skip coeff 32x32 */
+    int16_t*        m_tsResidual;     /* transform skip residual 32x32 */
+    pixel*          m_tsRecon;        /* transform skip reconstructed pixels 32x32 */
+
     bool            m_bFrameParallel;
     bool            m_bEnableRDOQ;
     uint32_t        m_numLayers;
