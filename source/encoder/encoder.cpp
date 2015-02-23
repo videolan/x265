@@ -51,7 +51,7 @@ static const char *summaryCSVHeader =
     "B count, B ave-QP, B kpbs, B-PSNR Y, B-PSNR U, B-PSNR V, B-SSIM (dB), "
     "Version\n";
 
-const char* defaultAnalysisFileName = "x265_analysis.dat";
+static const char* defaultAnalysisFileName = "x265_analysis.dat";
 
 using namespace x265;
 
