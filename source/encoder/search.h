@@ -235,7 +235,7 @@ public:
     uint32_t        m_refLagPixels;
 
 #if DETAILED_CU_STATS
-    /* Accumulate CU statistics seperately for each frame encoder */
+    /* Accumulate CU statistics separately for each frame encoder */
     CUStats         m_stats[X265_MAX_FRAME_THREADS];
 #endif
 
