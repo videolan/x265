@@ -43,7 +43,7 @@ namespace x265 {
 const char g_sliceTypeToChar[] = {'B', 'P', 'I'};
 }
 
-static const char *summaryCSVHeader =
+static const char* summaryCSVHeader =
     "Command, Date/Time, Elapsed Time, FPS, Bitrate, "
     "Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), "
     "I count, I ave-QP, I kpbs, I-PSNR Y, I-PSNR U, I-PSNR V, I-SSIM (dB), "
