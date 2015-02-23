@@ -420,7 +420,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
     }
 
     // set reconstruction for next intra prediction blocks if full TU prediction won
-    pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
     intptr_t picStride = m_frame->m_reconPic->m_stride;
     primitives.cu[sizeIdx].copy_pp(picReconY, picStride, reconQt, reconQtStride);
 
@@ -588,7 +588,7 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
     }
 
     // set reconstruction for next intra prediction blocks
-    pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
     intptr_t picStride = m_frame->m_reconPic->m_stride;
     primitives.cu[sizeIdx].copy_pp(picReconY, picStride, reconQt, reconQtStride);
 
@@ -638,7 +638,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
         uint32_t sizeIdx   = log2TrSize - 2;
         primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
 
-        pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+        pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
         intptr_t picStride = m_frame->m_reconPic->m_stride;
 
         uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffY, log2TrSize, TEXT_LUMA, absPartIdx, false);
@@ -798,7 +798,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tu
             coeff_t* coeffC        = m_rqt[qtLayer].coeffRQT[chromaId] + coeffOffsetC;
             pixel*   reconQt       = m_rqt[qtLayer].reconQtYuv.getChromaAddr(chromaId, absPartIdxC);
             uint32_t reconQtStride = m_rqt[qtLayer].reconQtYuv.m_csize;
-            pixel*   picReconC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
+            pixel*   picReconC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + absPartIdxC);
             intptr_t picStride = m_frame->m_reconPic->m_strideC;
 
             uint32_t chromaPredMode = cu.m_chromaIntraDir[absPartIdxC];
@@ -978,7 +978,7 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
             cu.setCbfPartRange(bCbf << tuDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
             cu.setTransformSkipPartRange(bTSkip, ttype, absPartIdxC, tuIterator.absPartIdxStep);
 
-            pixel*   reconPicC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
+            pixel*   reconPicC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + absPartIdxC);
             intptr_t picStride = m_frame->m_reconPic->m_strideC;
             primitives.cu[sizeIdxC].copy_pp(reconPicC, picStride, reconQt, reconQtStride);
 
@@ -1088,7 +1088,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
             int16_t* residual = resiYuv.getChromaAddr(chromaId, absPartIdxC);
             uint32_t coeffOffsetC  = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (m_hChromaShift + m_vChromaShift));
             coeff_t* coeffC        = cu.m_trCoeff[ttype] + coeffOffsetC;
-            pixel*   picReconC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
+            pixel*   picReconC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + absPartIdxC);
             intptr_t picStride = m_frame->m_reconPic->m_strideC;
 
             uint32_t chromaPredMode = cu.m_chromaIntraDir[absPartIdxC];
@@ -1589,7 +1589,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
              * output recon picture, so it cannot proceed in parallel with anything else when doing INTRA_NXN. Also
              * it is not updating m_rdContexts[depth].cur for the later PUs which I suspect is slightly wrong. I think
              * that the contexts should be tracked through each PU */
-            pixel*   dst         = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+            pixel*   dst         = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
             uint32_t dststride   = m_frame->m_reconPic->m_stride;
             const pixel*   src   = reconYuv->getLumaAddr(absPartIdx);
             uint32_t srcstride   = reconYuv->m_size;
@@ -1754,7 +1754,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom, uin
 
         if (!tuIterator.isLastSection())
         {
-            uint32_t zorder    = cuGeom.encodeIdx + absPartIdxC;
+            uint32_t zorder    = cuGeom.absPartIdx + absPartIdxC;
             uint32_t dststride = m_frame->m_reconPic->m_strideC;
             const pixel* src;
             pixel* dst;
@@ -1956,7 +1956,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         /* sets m_puAbsPartIdx, m_puWidth, m_puHeight */
         initMotionCompensation(cu, cuGeom, puIdx);
 
-        m_me.setSourcePU(*interMode.fencYuv, cu.m_cuAddr, cuGeom.encodeIdx, m_puAbsPartIdx, m_puWidth, m_puHeight);
+        m_me.setSourcePU(*interMode.fencYuv, cu.m_cuAddr, cuGeom.absPartIdx, m_puAbsPartIdx, m_puWidth, m_puHeight);
 
         uint32_t mrgCost = MAX_UINT;
 
@@ -2246,8 +2246,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 }
                 else
                 {
-                    const pixel* ref0 = m_slice->m_mref[0][bestME[0].ref].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
-                    const pixel* ref1 = m_slice->m_mref[1][bestME[1].ref].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
+                    const pixel* ref0 = m_slice->m_mref[0][bestME[0].ref].getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + m_puAbsPartIdx);
+                    const pixel* ref1 = m_slice->m_mref[1][bestME[1].ref].getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + m_puAbsPartIdx);
                     intptr_t refStride = slice->m_mref[0][0].lumaStride;
 
                     primitives.pu[m_me.partEnum].pixelavg_pp(tmpPredYuv.m_buf[0], tmpPredYuv.m_size, ref0, refStride, ref1, refStride, 32);

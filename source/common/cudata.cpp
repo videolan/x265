@@ -300,12 +300,12 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
 // initialize Sub partition
 void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom)
 {
-    m_absIdxInCTU   = cuGeom.encodeIdx;
+    m_absIdxInCTU   = cuGeom.absPartIdx;
     m_encData       = ctu.m_encData;
     m_slice         = ctu.m_slice;
     m_cuAddr        = ctu.m_cuAddr;
-    m_cuPelX        = ctu.m_cuPelX + g_zscanToPelX[cuGeom.encodeIdx];
-    m_cuPelY        = ctu.m_cuPelY + g_zscanToPelY[cuGeom.encodeIdx];
+    m_cuPelX        = ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx];
+    m_cuPelY        = ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx];
     m_cuLeft        = ctu.m_cuLeft;
     m_cuAbove       = ctu.m_cuAbove;
     m_cuAboveLeft   = ctu.m_cuAboveLeft;
@@ -392,7 +392,7 @@ void CUData::initLosslessCU(const CUData& cu, const CUGeom& cuGeom)
     m_cuAbove      = cu.m_cuAbove;
     m_cuAboveLeft  = cu.m_cuAboveLeft;
     m_cuAboveRight = cu.m_cuAboveRight;
-    m_absIdxInCTU  = cuGeom.encodeIdx;
+    m_absIdxInCTU  = cuGeom.absPartIdx;
     m_numPartitions = cuGeom.numPartitions;
     memcpy(m_qp, cu.m_qp, BytesPerPartition * m_numPartitions);
     memcpy(m_mv[0],  cu.m_mv[0],  m_numPartitions * sizeof(MV));
@@ -462,9 +462,9 @@ void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom)
     m_encData       = ctu.m_encData;
     m_slice         = ctu.m_slice;
     m_cuAddr        = ctu.m_cuAddr;
-    m_cuPelX        = ctu.m_cuPelX + g_zscanToPelX[cuGeom.encodeIdx];
-    m_cuPelY        = ctu.m_cuPelY + g_zscanToPelY[cuGeom.encodeIdx];
-    m_absIdxInCTU   = cuGeom.encodeIdx;
+    m_cuPelX        = ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx];
+    m_cuPelY        = ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx];
+    m_absIdxInCTU   = cuGeom.absPartIdx;
     m_numPartitions = cuGeom.numPartitions;
 
     /* copy out all prediction info for this part */
@@ -2094,7 +2094,7 @@ void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUS
                 CUGeom *cu = cuDataArray + cuIdx;
                 cu->log2CUSize = log2CUSize;
                 cu->childOffset = childIdx - cuIdx;
-                cu->encodeIdx = g_depthScanIdx[yOffset][xOffset] * 4;
+                cu->absPartIdx = g_depthScanIdx[yOffset][xOffset] * 4;
                 cu->numPartitions = (NUM_4x4_PARTITIONS >> ((g_maxLog2CUSize - cu->log2CUSize) * 2));
                 cu->depth = g_log2Size[maxCUSize] - log2CUSize;
 

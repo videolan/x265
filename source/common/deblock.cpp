@@ -70,7 +70,7 @@ static inline uint8_t bsCuEdge(const CUData* cu, uint32_t absPartIdx, int32_t di
  * param Edge the direction of the edge in block boundary (horizonta/vertical), which is added newly */
 void Deblock::deblockCU(const CUData* cu, const CUGeom& cuGeom, const int32_t dir, uint8_t blockStrength[])
 {
-    uint32_t absPartIdx = cuGeom.encodeIdx;
+    uint32_t absPartIdx = cuGeom.absPartIdx;
     uint32_t depth = cuGeom.depth;
     if (cu->m_predMode[absPartIdx] == MODE_NONE)
         return;
