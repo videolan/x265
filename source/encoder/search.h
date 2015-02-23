@@ -229,6 +229,11 @@ public:
     uint8_t*        m_qtTempCbf[3];
     uint8_t*        m_qtTempTransformSkipFlag[3];
 
+    pixel*          m_fencScaled;     /* 32x32 buffer for down-scaled version of 64x64 CU fenc */
+    pixel*          m_fencTransposed; /* 32x32 buffer for transposed copy of fenc */
+    pixel*          m_intraPred;      /* 32x32 buffer for individual intra predictions */
+    pixel*          m_intraPredAngs;  /* allocation for 33 consecutive (all angular) 32x32 intra predictions */
+
     bool            m_bFrameParallel;
     bool            m_bEnableRDOQ;
     uint32_t        m_numLayers;
