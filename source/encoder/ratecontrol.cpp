@@ -1160,6 +1160,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
             m_currentSatd = curFrame->m_lowres.satdCost >> (X265_DEPTH - 8);
             /* Update rce for use in rate control VBV later */
             rce->lastSatd = m_currentSatd;
+            X265_CHECK(rce->lastSatd, "satdcost cannot be zero\n");
         }
         double q = x265_qScale2qp(rateEstimateQscale(curFrame, rce));
         q = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, q);
