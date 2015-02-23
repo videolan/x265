@@ -1393,6 +1393,8 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
 uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2], uint8_t* sharedModes)
 {
+    ALIGN_VAR_32(pixel, bufScale[32 * 32]);
+
     CUData& cu = intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* predYuv = &intraMode.predYuv;
@@ -1439,7 +1441,6 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
             if (tuSize > 32)
             {
                 // origin is 64x64, we scale to 32x32 and setup required parameters
-                ALIGN_VAR_32(pixel, bufScale[32 * 32]);
                 primitives.scale2D_64to32(bufScale, fenc, stride);
                 fenc = bufScale;
 
