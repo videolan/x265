@@ -35,6 +35,10 @@ ALIGN 32
 const interp4_vpp_shuf, times 2 db 0, 4, 1, 5, 2, 6, 3, 7, 8, 12, 9, 13, 10, 14, 11, 15
 
 ALIGN 32
+const interp_vert_shuf, db 0, 2, 1, 3, 2, 4, 3, 5, 4, 6, 5, 7, 6, 8, 7, 9
+                        db 4, 6, 5, 7, 6, 8, 7, 9, 8, 10, 9, 11, 10, 12, 11, 13
+
+ALIGN 32
 const interp4_vpp_shuf1, dd 0, 1, 1, 2, 2, 3, 3, 4
                          dd 2, 3, 3, 4, 4, 5, 5, 6
 
@@ -2265,6 +2269,60 @@ pextrw      [r2],      m2, 4
 pextrw      [r2 + r3], m2, 6
 
 RET
+
+%macro FILTER_VER_CHROMA_AVX2_2x4 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_2x4, 4, 6, 2
+    mov             r4d, r4m
+    shl             r4d, 5
+    sub             r0, r1
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeff_V]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeff_V + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+
+    pinsrw          xm1, [r0], 0
+    pinsrw          xm1, [r0 + r1], 1
+    pinsrw          xm1, [r0 + r1 * 2], 2
+    pinsrw          xm1, [r0 + r4], 3
+    lea             r0, [r0 + r1 * 4]
+    pinsrw          xm1, [r0], 4
+    pinsrw          xm1, [r0 + r1], 5
+    pinsrw          xm1, [r0 + r1 * 2], 6
+
+    pshufb          xm0, xm1, [interp_vert_shuf]
+    pshufb          xm1, [interp_vert_shuf + 16]
+    vinserti128     m0, m0, xm1, 1
+    pmaddubsw       m0, [r5]
+    vextracti128    xm1, m0, 1
+    paddw           xm0, xm1
+%ifidn %1,pp
+    pmulhrsw        xm0, [pw_512]
+    packuswb        xm0, xm0
+    lea             r4, [r3 * 3]
+    pextrw          [r2], xm0, 0
+    pextrw          [r2 + r3], xm0, 1
+    pextrw          [r2 + r3 * 2], xm0, 2
+    pextrw          [r2 + r4], xm0, 3
+%else
+    add             r3d, r3d
+    lea             r4, [r3 * 3]
+    psubw           xm0, [pw_2000]
+    movd            [r2], xm0
+    pextrd          [r2 + r3], xm0, 1
+    pextrd          [r2 + r3 * 2], xm0, 2
+    pextrd          [r2 + r4], xm0, 3
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_AVX2_2x4 pp
+FILTER_VER_CHROMA_AVX2_2x4 ps
 
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_2x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
