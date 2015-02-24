@@ -504,7 +504,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         if (bTryIntra)
         {
             md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
-            if (depth == g_maxCUDepth && cuGeom.log2CUSize > m_slice->m_sps->quadtreeTULog2MinSize && m_param->rdLevel >= 5)
+            if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3 && m_param->rdLevel >= 5)
                 md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
             pmode.modes[pmode.m_jobTotal++] = PRED_INTRA;
         }
