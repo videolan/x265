@@ -341,30 +341,27 @@ cglobal getResidual16, 4,4,5
     RET
 %else
 INIT_YMM avx2
-cglobal getResidual16, 4,4,9
-    pxor        m0, m0
+cglobal getResidual16, 4,5,8
     lea         r4, [r3 * 2]
     add         r4d, r3d
-
 %assign x 0
 %rep 4
-    pmovzxbw    m1, [r0]
-    pmovzxbw    m2, [r0 + r3]
-    pmovzxbw    m3, [r0 + r3 * 2]
-    pmovzxbw    m4, [r0 + r4]
-    pmovzxbw    m5, [r1]
-    pmovzxbw    m6, [r1 + r3]
-    pmovzxbw    m7, [r1 + r3 * 2]
-    pmovzxbw    m8, [r1 + r4]
+    pmovzxbw    m0, [r0]
+    pmovzxbw    m1, [r0 + r3]
+    pmovzxbw    m2, [r0 + r3 * 2]
+    pmovzxbw    m3, [r0 + r4]
+    pmovzxbw    m4, [r1]
+    pmovzxbw    m5, [r1 + r3]
+    pmovzxbw    m6, [r1 + r3 * 2]
+    pmovzxbw    m7, [r1 + r4]
+    psubw       m0, m4
     psubw       m1, m5
     psubw       m2, m6
     psubw       m3, m7
-    psubw       m4, m8
-    movu        [r2], m1
-    movu        [r2 + r3 * 2], m2
-    movu        [r2 + r3 * 2 * 2], m3
-    movu        [r2 + r4 * 2], m4
-
+    movu        [r2], m0
+    movu        [r2 + r3 * 2], m1
+    movu        [r2 + r3 * 2 * 2], m2
+    movu        [r2 + r4 * 2], m3
 %assign x x+1
 %if (x != 4)
     lea         r0, [r0 + r3 * 2 * 2]
@@ -513,32 +510,29 @@ cglobal getResidual32, 4,4,5
     RET
 %else
 INIT_YMM avx2
-cglobal getResidual32, 4,4,9
-    pxor        m0, m0
+cglobal getResidual32, 4,5,8
     lea         r4, [r3 * 2]
-
 %assign x 0
 %rep 16
-    pmovzxbw    m1, [r0]
-    pmovzxbw    m2, [r0 + 16]
-    pmovzxbw    m3, [r0 + r3]
-    pmovzxbw    m4, [r0 + r3 + 16]
+    pmovzxbw    m0, [r0]
+    pmovzxbw    m1, [r0 + 16]
+    pmovzxbw    m2, [r0 + r3]
+    pmovzxbw    m3, [r0 + r3 + 16]
 
-    pmovzxbw    m5, [r1]
-    pmovzxbw    m6, [r1 + 16]
-    pmovzxbw    m7, [r1 + r3]
-    pmovzxbw    m8, [r1 + r3 + 16]
+    pmovzxbw    m4, [r1]
+    pmovzxbw    m5, [r1 + 16]
+    pmovzxbw    m6, [r1 + r3]
+    pmovzxbw    m7, [r1 + r3 + 16]
 
+    psubw       m0, m4
     psubw       m1, m5
     psubw       m2, m6
     psubw       m3, m7
-    psubw       m4, m8
 
-    movu        [r2 + 0 ], m1
-    movu        [r2 + 32], m2
-    movu        [r2 + r4 + 0], m3
-    movu        [r2 + r4 + 32], m4
-
+    movu        [r2 + 0 ], m0
+    movu        [r2 + 32], m1
+    movu        [r2 + r4 + 0], m2
+    movu        [r2 + r4 + 32], m3
 %assign x x+1
 %if (x != 16)
     lea         r0, [r0 + r3 * 2]
