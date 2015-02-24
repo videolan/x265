@@ -239,7 +239,7 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
 
             memcpy(neighbours[0], pixCur - 1 - fenc.lumaStride, (cuSize + 1) * sizeof(pixel));
             for (int i = 1; i < cuSize + 1; i++)
-                neighbours[0][i + cuSize2] = pixCur[-1 - fenc.lumaStride + i * fenc.lumaStride]; /* todo: fixme */
+                neighbours[0][i + cuSize2] = pixCur[-1 - fenc.lumaStride + i * fenc.lumaStride]; /* TODO: gcc warning */
 
             for (int i = 0; i < cuSize; i++)
             {
@@ -264,7 +264,7 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
             uint32_t ilowmode = 0;
 
             /* DC and planar */
-            primitives.cu[sizeIdx].intra_pred[DC_IDX](prediction, cuSize, neighbours[0], 0, (cuSize <= 16));
+            primitives.cu[sizeIdx].intra_pred[DC_IDX](prediction, cuSize, neighbours[0], 0, cuSize <= 16);
             cost = satd(fencIntra, cuSize, prediction, cuSize);
             COPY2_IF_LT(icost, cost, ilowmode, DC_IDX);
 
