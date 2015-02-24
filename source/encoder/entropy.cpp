@@ -43,6 +43,7 @@ Entropy::Entropy()
 {
     markValid();
     m_fracBits = 0;
+    m_pad = 0;
     X265_CHECK(sizeof(m_contextState) >= sizeof(m_contextState[0]) * MAX_OFF_CTX_MOD, "context state table is too small\n");
 }
 
