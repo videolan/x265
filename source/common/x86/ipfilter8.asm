@@ -2552,11 +2552,10 @@ pextrd      [r2 + r3], m2, 1
 lea         r2,        [r2 + 2 * r3]
 pextrd      [r2],      m2, 2
 pextrd      [r2 + r3], m2, 3
-
 RET
-
+%macro FILTER_VER_CHROMA_AVX2_4x4 1
 INIT_YMM avx2
-cglobal interp_4tap_vert_pp_4x4, 4, 6, 3
+cglobal interp_4tap_vert_%1_4x4, 4, 6, 3
     mov             r4d, r4m
     shl             r4d, 6
     sub             r0, r1
@@ -2590,6 +2589,7 @@ cglobal interp_4tap_vert_pp_4x4, 4, 6, 3
     pmaddubsw       m0, [r5]
     pmaddubsw       m1, [r5 + mmsize]
     paddw           m0, m1                                  ; m0 = WORD ROW[3 2 1 0]
+%ifidn %1,pp
     pmulhrsw        m0, [pw_512]
     vextracti128    xm1, m0, 1
     packuswb        xm0, xm1
@@ -2598,8 +2598,21 @@ cglobal interp_4tap_vert_pp_4x4, 4, 6, 3
     pextrd          [r2 + r3], xm0, 1
     pextrd          [r2 + r3 * 2], xm0, 2
     pextrd          [r2 + r5], xm0, 3
+%else
+    add             r3d, r3d
+    psubw           m0, [pw_2000]
+    vextracti128    xm1, m0, 1
+    lea             r5, [r3 * 3]
+    movq            [r2], xm0
+    movhps          [r2 + r3], xm0
+    movq            [r2 + r3 * 2], xm1
+    movhps          [r2 + r5], xm1
+%endif
     RET
+%endmacro
 
+FILTER_VER_CHROMA_AVX2_4x4 pp
+FILTER_VER_CHROMA_AVX2_4x4 ps
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
