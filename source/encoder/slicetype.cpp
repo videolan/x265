@@ -224,6 +224,9 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
     pixel *planar = (cuSize >= 8) ? neighbours[1] : neighbours[0];
     pixelcmp_t satd = primitives.pu[sizeIdx].satd;
 
+    fenc.costEst[0][0] = 0;
+    fenc.costEstAq[0][0] = 0;
+
     for (int cuY = 0; cuY < heightInCU; cuY++)
     {
         fenc.rowSatds[0][0][cuY] = 0;
@@ -306,8 +309,20 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
             fenc.lowresCosts[0][0][cuXY] = (uint16_t)(X265_MIN(icost, LOWRES_COST_MASK) | (0 << LOWRES_COST_SHIFT));
             fenc.intraCost[cuXY] = icost;
             fenc.intraMode[cuXY] = (uint8_t)ilowmode;
-            fenc.rowSatds[0][0][cuY] += icost;
-            fenc.costEst[0][0] += icost;
+
+            /* do not include edge blocks in the frame cost estimates, they are not very accurate */
+            const bool bFrameScoreCU = (cuX > 0 && cuX < widthInCU - 1 &&
+                                        cuY > 0 && cuY < heightInCU - 1) || widthInCU <= 2 || heightInCU <= 2;
+
+            int icostAq = (bFrameScoreCU && fenc.invQscaleFactor) ? ((icost * fenc.invQscaleFactor[cuXY] + 128) >> 8) : icost;
+
+            if (bFrameScoreCU)
+            {
+                fenc.costEst[0][0] += icost;
+                fenc.costEstAq[0][0] += icostAq;
+            }
+
+            fenc.rowSatds[0][0][cuY] += icostAq;
         }
     }
 }
