@@ -210,7 +210,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
 void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
 {
     ALIGN_VAR_32(pixel, prediction[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
-    ALIGN_VAR_32(pixel, fencIntra[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
+    pixel fencIntra[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
     pixel neighbours[2][X265_LOWRES_CU_SIZE * 4 + 1];
 
     const int lookAheadLambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
