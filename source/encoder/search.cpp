@@ -1811,17 +1811,19 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
 {
     X265_CHECK(cu.m_partSize[0] != SIZE_2Nx2N, "mergeEstimation() called for 2Nx2N\n");
 
-    m.maxNumMergeCand = cu.getInterMergeCandidates(pu.puAbsPartIdx, puIdx, m.mvFieldNeighbours, m.interDirNeighbours);
+    MVField  candMvField[MRG_MAX_NUM_CANDS][2];
+    uint8_t  candDir[MRG_MAX_NUM_CANDS];
+    uint32_t maxNumMergeCand = cu.getInterMergeCandidates(pu.puAbsPartIdx, puIdx, candMvField, candDir);
 
     if (cu.isBipredRestriction())
     {
         /* do not allow bidir merge candidates if PU is smaller than 8x8, drop L1 reference */
-        for (uint32_t mergeCand = 0; mergeCand < m.maxNumMergeCand; ++mergeCand)
+        for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
         {
-            if (m.interDirNeighbours[mergeCand] == 3)
+            if (candDir[mergeCand] == 3)
             {
-                m.interDirNeighbours[mergeCand] = 1;
-                m.mvFieldNeighbours[mergeCand][1].refIdx = REF_NOT_VALID;
+                candDir[mergeCand] = 1;
+                candMvField[mergeCand][1].refIdx = REF_NOT_VALID;
             }
         }
     }
@@ -1829,18 +1831,18 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
     Yuv& tempYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
     uint32_t outCost = MAX_UINT;
-    for (uint32_t mergeCand = 0; mergeCand < m.maxNumMergeCand; ++mergeCand)
+    for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
     {
         /* Prevent TMVP candidates from using unavailable reference pixels */
         if (m_bFrameParallel &&
-            (m.mvFieldNeighbours[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-             m.mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
+            (candMvField[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+             candMvField[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
             continue;
 
-        cu.m_mv[0][pu.puAbsPartIdx] = m.mvFieldNeighbours[mergeCand][0].mv;
-        cu.m_refIdx[0][pu.puAbsPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][0].refIdx;
-        cu.m_mv[1][pu.puAbsPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
-        cu.m_refIdx[1][pu.puAbsPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][1].refIdx;
+        cu.m_mv[0][pu.puAbsPartIdx] = candMvField[mergeCand][0].mv;
+        cu.m_refIdx[0][pu.puAbsPartIdx] = (int8_t)candMvField[mergeCand][0].refIdx;
+        cu.m_mv[1][pu.puAbsPartIdx] = candMvField[mergeCand][1].mv;
+        cu.m_refIdx[1][pu.puAbsPartIdx] = (int8_t)candMvField[mergeCand][1].refIdx;
 
         motionCompensation(cu, pu, tempYuv, true, m_me.bChromaSATD);
 
@@ -1848,7 +1850,7 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
         if (m_me.bChromaSATD)
             costCand += m_me.bufChromaSATD(tempYuv, pu.puAbsPartIdx);
 
-        uint32_t bitsCand = getTUBits(mergeCand, m.maxNumMergeCand);
+        uint32_t bitsCand = getTUBits(mergeCand, maxNumMergeCand);
         costCand = costCand + m_rdCost.getCost(bitsCand);
         if (costCand < outCost)
         {
@@ -1858,9 +1860,9 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
         }
     }
 
-    m.mvField[0] = m.mvFieldNeighbours[m.index][0];
-    m.mvField[1] = m.mvFieldNeighbours[m.index][1];
-    m.interDir = m.interDirNeighbours[m.index];
+    m.mvField[0] = candMvField[m.index][0];
+    m.mvField[1] = candMvField[m.index][1];
+    m.interDir = candDir[m.index];
 
     return outCost;
 }

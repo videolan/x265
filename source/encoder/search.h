@@ -350,11 +350,6 @@ protected:
 
     struct MergeData
     {
-        /* merge candidate data, cached between calls to mergeEstimation */
-        MVField  mvFieldNeighbours[MRG_MAX_NUM_CANDS][2];
-        uint8_t  interDirNeighbours[MRG_MAX_NUM_CANDS];
-        uint32_t maxNumMergeCand;
-
         /* outputs */
         MVField  mvField[2];
         uint32_t interDir;
