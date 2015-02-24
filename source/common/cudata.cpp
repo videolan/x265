@@ -1968,60 +1968,45 @@ uint32_t CUData::deriveCenterIdx(uint32_t puIdx) const
                            + (puWidth  >> (LOG2_UNIT_SIZE + 1))];
 }
 
-ScanType CUData::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra) const
-{
-    uint32_t dirMode;
-
-    if (!bIsIntra)
-        return SCAN_DIAG;
-
-    // check that MDCS can be used for this TU
-    if (bIsLuma)
-    {
-        if (log2TrSize > MDCS_LOG2_MAX_SIZE)
-            return SCAN_DIAG;
-
-        dirMode = m_lumaIntraDir[absPartIdx];
-    }
-    else
-    {
-        if (log2TrSize > (uint32_t)(MDCS_LOG2_MAX_SIZE - m_hChromaShift))
-            return SCAN_DIAG;
-
-        dirMode = m_chromaIntraDir[absPartIdx];
-        if (dirMode == DM_CHROMA_IDX)
-        {
-            dirMode = m_lumaIntraDir[(m_chromaFormat == X265_CSP_I444) ? absPartIdx : absPartIdx & 0xFC];
-            dirMode = (m_chromaFormat == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[dirMode] : dirMode;
-        }
-    }
-
-    if (abs((int)dirMode - VER_IDX) <= MDCS_ANGLE_LIMIT)
-        return SCAN_HOR;
-    else if (abs((int)dirMode - HOR_IDX) <= MDCS_ANGLE_LIMIT)
-        return SCAN_VER;
-    else
-        return SCAN_DIAG;
-}
-
 void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma) const
 {
+    bool bIsIntra = isIntra(absPartIdx);
+
     // set the group layout
     result.log2TrSizeCG = log2TrSize - 2;
 
     // set the scan orders
-    result.scanType = getCoefScanIdx(absPartIdx, log2TrSize, bIsLuma, isIntra(absPartIdx));
+    if (bIsIntra)
+    {
+        uint32_t dirMode;
+
+        if (bIsLuma)
+            dirMode = m_lumaIntraDir[absPartIdx];
+        else
+        {
+            dirMode = m_chromaIntraDir[absPartIdx];
+            if (dirMode == DM_CHROMA_IDX)
+            {
+                dirMode = m_lumaIntraDir[(m_chromaFormat == X265_CSP_I444) ? absPartIdx : absPartIdx & 0xFC];
+                dirMode = (m_chromaFormat == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[dirMode] : dirMode;
+            }
+        }
+
+        if (log2TrSize <= (MDCS_LOG2_MAX_SIZE - m_hChromaShift) || (bIsLuma && log2TrSize == MDCS_LOG2_MAX_SIZE))
+            result.scanType = dirMode >= 22 && dirMode <= 30 ? SCAN_HOR : dirMode >= 6 && dirMode <= 14 ? SCAN_VER : SCAN_DIAG;
+        else
+            result.scanType = SCAN_DIAG;
+    }
+    else
+        result.scanType = SCAN_DIAG;
+
     result.scan     = g_scanOrder[result.scanType][log2TrSize - 2];
     result.scanCG   = g_scanOrderCG[result.scanType][result.log2TrSizeCG];
 
     if (log2TrSize == 2)
         result.firstSignificanceMapContext = 0;
     else if (log2TrSize == 3)
-    {
-        result.firstSignificanceMapContext = 9;
-        if (result.scanType != SCAN_DIAG && bIsLuma)
-            result.firstSignificanceMapContext += 6;
-    }
+        result.firstSignificanceMapContext = (result.scanType != SCAN_DIAG && bIsLuma) ? 15 : 9;
     else
         result.firstSignificanceMapContext = bIsLuma ? 21 : 12;
 }
