@@ -1806,16 +1806,16 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom, uin
     return totalDistortion;
 }
 
-/* estimation of best merge coding of an inter PU (not a merge CU) */
+/* estimation of best merge coding of an inter PU (2Nx2N merge PUs are evaluated as their own mode) */
 uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const PredictionUnit& pu, int puIdx, MergeData& m)
 {
-    X265_CHECK(cu.m_partSize[0] != SIZE_2Nx2N, "merge tested on non-2Nx2N partition\n");
+    X265_CHECK(cu.m_partSize[0] != SIZE_2Nx2N, "mergeEstimation() called for 2Nx2N\n");
 
     m.maxNumMergeCand = cu.getInterMergeCandidates(pu.puAbsPartIdx, puIdx, m.mvFieldNeighbours, m.interDirNeighbours);
 
     if (cu.isBipredRestriction())
     {
-        /* in 8x8 CUs do not allow bidir merge candidates if not 2Nx2N */
+        /* do not allow bidir merge candidates if PU is smaller than 8x8, drop L1 reference */
         for (uint32_t mergeCand = 0; mergeCand < m.maxNumMergeCand; ++mergeCand)
         {
             if (m.interDirNeighbours[mergeCand] == 3)
