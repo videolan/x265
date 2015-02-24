@@ -486,7 +486,23 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_fullQueueSize = m_param->lookaheadDepth;
     m_bAdaptiveQuant = m_param->rc.aqMode || m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred;
 
-    if (m_pool && m_pool->m_numWorkers > 2)
+    /* If we have a thread pool and are using --b-adapt 2, it is generally
+     * preferrable to perform all motion searches for each lowres frame in large
+     * batched; this will create one job per --bframe per lowres frame, and
+     * these jobs are performed by workers bonded to the thread running
+     * slicetypeDecide() */
+    m_bBatchMotionSearch = m_pool && m_param->bFrameAdaptive == X265_B_ADAPT_TRELLIS;
+
+    /* It is also beneficial to pre-calculate all possible frame cost estimates
+     * using worker threads bonded to the worker thread running
+     * slicetypeDecide(). This creates bframes * bframes jobs which take less
+     * time than the motion search batches but there are many of them. This may
+     * do much unnecessary work, some frame cost estimates are not needed, so if
+     * the thread pool is small we disable this feature after the initial burst
+     * of work */
+    m_bBatchFrameCosts = m_bBatchMotionSearch;
+
+    if (m_bBatchMotionSearch && m_pool->m_numWorkers > 12)
     {
         m_numRowsPerSlice = m_heightInCU / (m_pool->m_numWorkers - 1);   // default to numWorkers - 1 slices
         m_numRowsPerSlice = X265_MAX(m_numRowsPerSlice, 10);             // at least 10 rows per slice
@@ -1170,7 +1186,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         return;
     }
 
-    if (m_pool && m_param->bFrameAdaptive == X265_B_ADAPT_TRELLIS && numFrames > 1 && frames[1]->frameNum < m_param->lookaheadDepth)
+    if (m_bBatchMotionSearch)
     {
         /* pre-calculate all motion searches, using many worker threads */
         CostEstimateGroup estGroup(*this, frames);
@@ -1182,9 +1198,11 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
                     estGroup.add(b - i, b + i < numFrames ? b + i : b, b);
             }
         }
+        /* auto-disable after the first batch if pool is small */
+        m_bBatchMotionSearch &= m_pool->m_numWorkers >= 4;
         estGroup.finishBatch();
 
-        if (m_pool->m_numWorkers >= 16)
+        if (m_bBatchFrameCosts)
         {
             /* pre-calculate all frame cost estimates, using many worker threads */
             for (int b = 2; b < numFrames; b++)
@@ -1201,6 +1219,9 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
                     }
                 }
             }
+
+            /* auto-disable after the first batch if the pool is not large */
+            m_bBatchFrameCosts &= m_pool->m_numWorkers > 12;
             estGroup.finishBatch();
         }
     }

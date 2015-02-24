@@ -112,6 +112,8 @@ public:
     bool          m_sliceTypeBusy;
     bool          m_bAdaptiveQuant;
     bool          m_outputSignalRequired;
+    bool          m_bBatchMotionSearch;
+    bool          m_bBatchFrameCosts;
     Lock          m_preLookaheadLock;
     Event         m_outputSignal;
 
