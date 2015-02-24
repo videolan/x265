@@ -348,11 +348,11 @@ protected:
     // reshuffle CBF flags after coding a pair of 4:2:2 chroma blocks
     void     offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t tuDepth, uint32_t absPartIdx);
 
+    /* output of mergeEstimation, best merge candidate */
     struct MergeData
     {
-        /* outputs */
         MVField  mvField[2];
-        uint32_t interDir;
+        uint32_t dir;
         uint32_t index;
         uint32_t bits;
     };

@@ -1375,8 +1375,8 @@ bool CUData::hasEqualMotion(uint32_t absPartIdx, const CUData& candCU, uint32_t 
     return true;
 }
 
-/* Construct list of merging candidates */
-uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField(*mvFieldNeighbours)[2], uint8_t* interDirNeighbours) const
+/* Construct list of merging candidates, returns count */
+uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField(*candMvField)[2], uint8_t* candDir) const
 {
     uint32_t absPartAddr = m_absIdxInCTU + absPartIdx;
     const bool isInterB = m_slice->isInterB();
@@ -1385,10 +1385,10 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
 
     for (uint32_t i = 0; i < maxNumMergeCand; ++i)
     {
-        mvFieldNeighbours[i][0].mv = 0;
-        mvFieldNeighbours[i][1].mv = 0;
-        mvFieldNeighbours[i][0].refIdx = REF_NOT_VALID;
-        mvFieldNeighbours[i][1].refIdx = REF_NOT_VALID;
+        candMvField[i][0].mv = 0;
+        candMvField[i][1].mv = 0;
+        candMvField[i][0].refIdx = REF_NOT_VALID;
+        candMvField[i][1].refIdx = REF_NOT_VALID;
     }
 
     /* calculate the location of upper-left corner pixel and size of the current PU */
@@ -1420,11 +1420,11 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     if (isAvailableA1)
     {
         // get Inter Dir
-        interDirNeighbours[count] = cuLeft->m_interDir[leftPartIdx];
+        candDir[count] = cuLeft->m_interDir[leftPartIdx];
         // get Mv from Left
-        cuLeft->getMvField(cuLeft, leftPartIdx, 0, mvFieldNeighbours[count][0]);
+        cuLeft->getMvField(cuLeft, leftPartIdx, 0, candMvField[count][0]);
         if (isInterB)
-            cuLeft->getMvField(cuLeft, leftPartIdx, 1, mvFieldNeighbours[count][1]);
+            cuLeft->getMvField(cuLeft, leftPartIdx, 1, candMvField[count][1]);
 
         count++;
     
@@ -1444,11 +1444,11 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     if (isAvailableB1 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, *cuAbove, abovePartIdx)))
     {
         // get Inter Dir
-        interDirNeighbours[count] = cuAbove->m_interDir[abovePartIdx];
+        candDir[count] = cuAbove->m_interDir[abovePartIdx];
         // get Mv from Left
-        cuAbove->getMvField(cuAbove, abovePartIdx, 0, mvFieldNeighbours[count][0]);
+        cuAbove->getMvField(cuAbove, abovePartIdx, 0, candMvField[count][0]);
         if (isInterB)
-            cuAbove->getMvField(cuAbove, abovePartIdx, 1, mvFieldNeighbours[count][1]);
+            cuAbove->getMvField(cuAbove, abovePartIdx, 1, candMvField[count][1]);
 
         count++;
    
@@ -1465,11 +1465,11 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     if (isAvailableB0 && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, *cuAboveRight, aboveRightPartIdx)))
     {
         // get Inter Dir
-        interDirNeighbours[count] = cuAboveRight->m_interDir[aboveRightPartIdx];
+        candDir[count] = cuAboveRight->m_interDir[aboveRightPartIdx];
         // get Mv from Left
-        cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, 0, mvFieldNeighbours[count][0]);
+        cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, 0, candMvField[count][0]);
         if (isInterB)
-            cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, 1, mvFieldNeighbours[count][1]);
+            cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, 1, candMvField[count][1]);
 
         count++;
 
@@ -1486,11 +1486,11 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     if (isAvailableA0 && (!isAvailableA1 || !cuLeft->hasEqualMotion(leftPartIdx, *cuLeftBottom, leftBottomPartIdx)))
     {
         // get Inter Dir
-        interDirNeighbours[count] = cuLeftBottom->m_interDir[leftBottomPartIdx];
+        candDir[count] = cuLeftBottom->m_interDir[leftBottomPartIdx];
         // get Mv from Left
-        cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, 0, mvFieldNeighbours[count][0]);
+        cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, 0, candMvField[count][0]);
         if (isInterB)
-            cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, 1, mvFieldNeighbours[count][1]);
+            cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, 1, candMvField[count][1]);
 
         count++;
 
@@ -1510,11 +1510,11 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
             && (!isAvailableB1 || !cuAbove->hasEqualMotion(abovePartIdx, *cuAboveLeft, aboveLeftPartIdx)))
         {
             // get Inter Dir
-            interDirNeighbours[count] = cuAboveLeft->m_interDir[aboveLeftPartIdx];
+            candDir[count] = cuAboveLeft->m_interDir[aboveLeftPartIdx];
             // get Mv from Left
-            cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, 0, mvFieldNeighbours[count][0]);
+            cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, 0, candMvField[count][0]);
             if (isInterB)
-                cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, 1, mvFieldNeighbours[count][1]);
+                cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, 1, candMvField[count][1]);
 
             count++;
 
@@ -1563,8 +1563,8 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         if (bExistMV)
         {
             dir |= 1;
-            mvFieldNeighbours[count][0].mv = colmv;
-            mvFieldNeighbours[count][0].refIdx = refIdx;
+            candMvField[count][0].mv = colmv;
+            candMvField[count][0].refIdx = refIdx;
         }
 
         if (isInterB)
@@ -1576,14 +1576,14 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
             if (bExistMV)
             {
                 dir |= 2;
-                mvFieldNeighbours[count][1].mv = colmv;
-                mvFieldNeighbours[count][1].refIdx = refIdx;
+                candMvField[count][1].mv = colmv;
+                candMvField[count][1].refIdx = refIdx;
             }
         }
 
         if (dir != 0)
         {
-            interDirNeighbours[count] = (uint8_t)dir;
+            candDir[count] = (uint8_t)dir;
 
             count++;
         
@@ -1605,20 +1605,20 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
             priorityList0 >>= 2;
             priorityList1 >>= 2;
 
-            if ((interDirNeighbours[i] & 0x1) && (interDirNeighbours[j] & 0x2))
+            if ((candDir[i] & 0x1) && (candDir[j] & 0x2))
             {
                 // get Mv from cand[i] and cand[j]
-                int refIdxL0 = mvFieldNeighbours[i][0].refIdx;
-                int refIdxL1 = mvFieldNeighbours[j][1].refIdx;
+                int refIdxL0 = candMvField[i][0].refIdx;
+                int refIdxL1 = candMvField[j][1].refIdx;
                 int refPOCL0 = m_slice->m_refPOCList[0][refIdxL0];
                 int refPOCL1 = m_slice->m_refPOCList[1][refIdxL1];
-                if (!(refPOCL0 == refPOCL1 && mvFieldNeighbours[i][0].mv == mvFieldNeighbours[j][1].mv))
+                if (!(refPOCL0 == refPOCL1 && candMvField[i][0].mv == candMvField[j][1].mv))
                 {
-                    mvFieldNeighbours[count][0].mv = mvFieldNeighbours[i][0].mv;
-                    mvFieldNeighbours[count][0].refIdx = refIdxL0;
-                    mvFieldNeighbours[count][1].mv = mvFieldNeighbours[j][1].mv;
-                    mvFieldNeighbours[count][1].refIdx = refIdxL1;
-                    interDirNeighbours[count] = 3;
+                    candMvField[count][0].mv = candMvField[i][0].mv;
+                    candMvField[count][0].refIdx = refIdxL0;
+                    candMvField[count][1].mv = candMvField[j][1].mv;
+                    candMvField[count][1].refIdx = refIdxL1;
+                    candDir[count] = 3;
 
                     count++;
 
@@ -1633,15 +1633,15 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     int refcnt = 0;
     while (count < maxNumMergeCand)
     {
-        interDirNeighbours[count] = 1;
-        mvFieldNeighbours[count][0].mv = 0;
-        mvFieldNeighbours[count][0].refIdx = r;
+        candDir[count] = 1;
+        candMvField[count][0].mv = 0;
+        candMvField[count][0].refIdx = r;
 
         if (isInterB)
         {
-            interDirNeighbours[count] = 3;
-            mvFieldNeighbours[count][1].mv.word = 0;
-            mvFieldNeighbours[count][1].refIdx = r;
+            candDir[count] = 3;
+            candMvField[count][1].mv.word = 0;
+            candMvField[count][1].refIdx = r;
         }
 
         count++;

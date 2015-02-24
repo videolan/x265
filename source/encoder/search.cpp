@@ -1813,12 +1813,12 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
 
     MVField  candMvField[MRG_MAX_NUM_CANDS][2];
     uint8_t  candDir[MRG_MAX_NUM_CANDS];
-    uint32_t maxNumMergeCand = cu.getInterMergeCandidates(pu.puAbsPartIdx, puIdx, candMvField, candDir);
+    uint32_t numMergeCand = cu.getInterMergeCandidates(pu.puAbsPartIdx, puIdx, candMvField, candDir);
 
     if (cu.isBipredRestriction())
     {
         /* do not allow bidir merge candidates if PU is smaller than 8x8, drop L1 reference */
-        for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
+        for (uint32_t mergeCand = 0; mergeCand < numMergeCand; ++mergeCand)
         {
             if (candDir[mergeCand] == 3)
             {
@@ -1831,7 +1831,7 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
     Yuv& tempYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
     uint32_t outCost = MAX_UINT;
-    for (uint32_t mergeCand = 0; mergeCand < maxNumMergeCand; ++mergeCand)
+    for (uint32_t mergeCand = 0; mergeCand < numMergeCand; ++mergeCand)
     {
         /* Prevent TMVP candidates from using unavailable reference pixels */
         if (m_bFrameParallel &&
@@ -1850,7 +1850,7 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
         if (m_me.bChromaSATD)
             costCand += m_me.bufChromaSATD(tempYuv, pu.puAbsPartIdx);
 
-        uint32_t bitsCand = getTUBits(mergeCand, maxNumMergeCand);
+        uint32_t bitsCand = getTUBits(mergeCand, numMergeCand);
         costCand = costCand + m_rdCost.getCost(bitsCand);
         if (costCand < outCost)
         {
@@ -1862,7 +1862,7 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
 
     m.mvField[0] = candMvField[m.index][0];
     m.mvField[1] = candMvField[m.index][1];
-    m.interDir = candDir[m.index];
+    m.dir = candDir[m.index];
 
     return outCost;
 }
@@ -2026,7 +2026,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             {
                 cu.m_mergeFlag[pu.puAbsPartIdx] = true;
                 cu.m_mvpIdx[0][pu.puAbsPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
-                cu.setPUInterDir(merge.interDir, pu.puAbsPartIdx, puIdx);
+                cu.setPUInterDir(merge.dir, pu.puAbsPartIdx, puIdx);
                 cu.setPUMv(0, merge.mvField[0].mv, pu.puAbsPartIdx, puIdx);
                 cu.setPURefIdx(0, merge.mvField[0].refIdx, pu.puAbsPartIdx, puIdx);
                 cu.setPUMv(1, merge.mvField[1].mv, pu.puAbsPartIdx, puIdx);
@@ -2307,7 +2307,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         {
             cu.m_mergeFlag[pu.puAbsPartIdx] = true;
             cu.m_mvpIdx[0][pu.puAbsPartIdx] = merge.index; /* merge candidate ID is stored in L0 MVP idx */
-            cu.setPUInterDir(merge.interDir, pu.puAbsPartIdx, puIdx);
+            cu.setPUInterDir(merge.dir, pu.puAbsPartIdx, puIdx);
             cu.setPUMv(0, merge.mvField[0].mv, pu.puAbsPartIdx, puIdx);
             cu.setPURefIdx(0, merge.mvField[0].refIdx, pu.puAbsPartIdx, puIdx);
             cu.setPUMv(1, merge.mvField[1].mv, pu.puAbsPartIdx, puIdx);
