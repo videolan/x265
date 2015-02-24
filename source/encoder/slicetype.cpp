@@ -1882,8 +1882,7 @@ int64_t CostEstimateGroup::estimateFrameCost(LookaheadTLD& tld, int p0, int p1, 
         fenc->costEst[b - p0][p1 - b] = 0;
         fenc->costEstAq[b - p0][p1 - b] = 0;
 
-        ThreadPool* pool = m_lookahead.m_pool;
-        if (!m_batchMode && pool && pool->m_numWorkers > 2 && ((p1 > b) || bDoSearch[0] || bDoSearch[1]))
+        if (!m_batchMode && m_lookahead.m_numCoopSlices > 1 && ((p1 > b) || bDoSearch[0] || bDoSearch[1]))
         {
             /* Use cooperative mode if a thread pool is available and the cost estimate is
              * going to need motion searches or bidir measurements */
