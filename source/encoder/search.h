@@ -288,9 +288,10 @@ public:
         Search&       master;
         Mode&         mode;
         const CUGeom& cuGeom;
+        const PredictionUnit& pu;
         int           puIdx;
 
-        PME(Search& s, Mode& m, const CUGeom& g, int p) : master(s), mode(m), cuGeom(g), puIdx(p) {}
+        PME(Search& s, Mode& m, const CUGeom& g, const PredictionUnit& u, int p) : master(s), mode(m), cuGeom(g), pu(u), puIdx(p) {}
 
         void processTasks(int workerThreadId);
 
@@ -300,7 +301,7 @@ public:
     };
 
     void     processPME(PME& pme, Search& slave);
-    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, int part, int list, int ref);
+    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, const PredictionUnit& pu, int part, int list, int ref);
 
 protected:
 
