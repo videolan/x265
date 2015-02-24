@@ -355,11 +355,6 @@ protected:
         uint8_t  interDirNeighbours[MRG_MAX_NUM_CANDS];
         uint32_t maxNumMergeCand;
 
-        /* data updated for each partition */
-        uint32_t absPartIdx;
-        int      width;
-        int      height;
-
         /* outputs */
         MVField  mvField[2];
         uint32_t interDir;
@@ -370,8 +365,8 @@ protected:
     /* inter/ME helper functions */
     void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
     void     setSearchRange(const CUData& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
-    uint32_t mergeEstimation(CUData& cu, const CUGeom& cuGeom, int partIdx, MergeData& m);
-    static void getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
+    uint32_t mergeEstimation(CUData& cu, const CUGeom& cuGeom, const PredictionUnit& pu, int puIdx, MergeData& m);
+    static void getBlkBits(PartSize cuMode, bool bPSlice, int puIdx, uint32_t lastMode, uint32_t blockBit[3]);
 
     /* intra helper functions */
     enum { MAX_RD_INTRA_MODES = 16 };

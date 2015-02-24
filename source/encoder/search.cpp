@@ -1807,11 +1807,11 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom, uin
 }
 
 /* estimation of best merge coding of an inter PU (not a merge CU) */
-uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, MergeData& m)
+uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const PredictionUnit& pu, int puIdx, MergeData& m)
 {
     X265_CHECK(cu.m_partSize[0] != SIZE_2Nx2N, "merge tested on non-2Nx2N partition\n");
 
-    m.maxNumMergeCand = cu.getInterMergeCandidates(m.absPartIdx, puIdx, m.mvFieldNeighbours, m.interDirNeighbours);
+    m.maxNumMergeCand = cu.getInterMergeCandidates(pu.puAbsPartIdx, puIdx, m.mvFieldNeighbours, m.interDirNeighbours);
 
     if (cu.isBipredRestriction())
     {
@@ -1827,7 +1827,6 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, Me
     }
 
     Yuv& tempYuv = m_rqt[cuGeom.depth].tmpPredYuv;
-    PredictionUnit pu(cu, cuGeom, puIdx); /* could be passed in */
 
     uint32_t outCost = MAX_UINT;
     for (uint32_t mergeCand = 0; mergeCand < m.maxNumMergeCand; ++mergeCand)
@@ -1838,16 +1837,16 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, Me
              m.mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
             continue;
 
-        cu.m_mv[0][m.absPartIdx] = m.mvFieldNeighbours[mergeCand][0].mv;
-        cu.m_refIdx[0][m.absPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][0].refIdx;
-        cu.m_mv[1][m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
-        cu.m_refIdx[1][m.absPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][1].refIdx;
+        cu.m_mv[0][pu.puAbsPartIdx] = m.mvFieldNeighbours[mergeCand][0].mv;
+        cu.m_refIdx[0][pu.puAbsPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][0].refIdx;
+        cu.m_mv[1][pu.puAbsPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
+        cu.m_refIdx[1][pu.puAbsPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][1].refIdx;
 
         motionCompensation(cu, pu, tempYuv, true, m_me.bChromaSATD);
 
-        uint32_t costCand = m_me.bufSATD(tempYuv.getLumaAddr(m.absPartIdx), tempYuv.m_size);
+        uint32_t costCand = m_me.bufSATD(tempYuv.getLumaAddr(pu.puAbsPartIdx), tempYuv.m_size);
         if (m_me.bChromaSATD)
-            costCand += m_me.bufChromaSATD(tempYuv, m.absPartIdx);
+            costCand += m_me.bufChromaSATD(tempYuv, pu.puAbsPartIdx);
 
         uint32_t bitsCand = getTUBits(mergeCand, m.maxNumMergeCand);
         costCand = costCand + m_rdCost.getCost(bitsCand);
@@ -2006,6 +2005,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     Yuv&     tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
     MergeData merge;
+    uint32_t mrgCost;
     memset(&merge, 0, sizeof(merge));
 
     for (int puIdx = 0; puIdx < numPart; puIdx++)
@@ -2015,15 +2015,10 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
         m_me.setSourcePU(*interMode.fencYuv, pu.ctuAddr, pu.cuAbsPartIdx, pu.puAbsPartIdx, pu.width, pu.height);
 
-        uint32_t mrgCost = MAX_UINT;
-
         /* find best cost merge candidate. note: 2Nx2N merge and bidir are handled as separate modes */
         if (cu.m_partSize[0] != SIZE_2Nx2N)
         {
-            merge.absPartIdx = pu.puAbsPartIdx;
-            merge.width      = pu.width;
-            merge.height     = pu.height;
-            mrgCost = mergeEstimation(cu, cuGeom, puIdx, merge);
+            mrgCost = mergeEstimation(cu, cuGeom, pu, puIdx, merge);
 
             if (bMergeOnly && mrgCost != MAX_UINT)
             {
@@ -2040,6 +2035,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 continue;
             }
         }
+        else
+            mrgCost = MAX_UINT;
 
         bestME[0].cost = MAX_UINT;
         bestME[1].cost = MAX_UINT;
