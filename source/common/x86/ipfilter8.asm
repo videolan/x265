@@ -65,6 +65,30 @@ tab_ChromaCoeff: db  0, 64,  0,  0
                  db -4, 28, 46, -6
                  db -2, 16, 54, -4
                  db -2, 10, 58, -2
+ALIGN 32
+tab_ChromaCoeff_V: times 8 db 0, 64
+                   times 8 db 0,  0
+
+                   times 8 db -2, 58
+                   times 8 db 10, -2
+
+                   times 8 db -4, 54
+                   times 8 db 16, -2
+
+                   times 8 db -6, 46
+                   times 8 db 28, -4
+
+                   times 8 db -4, 36
+                   times 8 db 36, -4
+
+                   times 8 db -4, 28
+                   times 8 db 46, -6
+
+                   times 8 db -2, 16
+                   times 8 db 54, -4
+
+                   times 8 db -2, 10
+                   times 8 db 58, -2
 
 tab_ChromaCoeffV: times 4 dw 0, 64
                   times 4 dw 0, 0
