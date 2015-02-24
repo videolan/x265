@@ -325,6 +325,11 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
 
 void Analysis::PMODE::processTasks(int workerThreadId)
 {
+#if DETAILED_CU_STATS
+    int fe = master.m_modeDepth[cuGeom.depth].pred[PRED_2Nx2N].cu.m_encData->m_frameEncoderID;
+    master.m_stats[fe].countPModeTasks++;
+    ScopedElapsedTime pmodeTime(master.m_stats[fe].pmodeTime);
+#endif
     ProfileScopeEvent(pmode);
     master.processPmode(*this, master.m_tld[workerThreadId].analysis);
 }
@@ -349,8 +354,6 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
 
     ModeDepth& md = m_modeDepth[pmode.cuGeom.depth];
     bool bMergeOnly = pmode.cuGeom.log2CUSize == 6;
-
-    ProfileCUScope(md.pred[PRED_2Nx2N].cu, pmodeTime, countPModeTasks);
 
     /* setup slave Analysis */
     if (&slave != this)

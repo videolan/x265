@@ -1868,6 +1868,11 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, Me
 
 void Search::PME::processTasks(int workerThreadId)
 {
+#if DETAILED_CU_STATS
+    int fe = mode.cu.m_encData->m_frameEncoderID;
+    master.m_stats[fe].countPMETasks++;
+    ScopedElapsedTime pmeTime(master.m_stats[fe].pmeTime);
+#endif
     ProfileScopeEvent(pme);
     master.processPME(*this, master.m_tld[workerThreadId].analysis);
 }
@@ -1887,8 +1892,6 @@ void Search::processPME(PME& pme, Search& slave)
         pme.m_lock.release();
         return;
     }
-
-    ProfileCUScope(pme.mode.cu, pmeTime, countPMETasks);
 
     /* Setup slave Search instance for ME for master's CU */
     if (&slave != this)
