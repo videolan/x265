@@ -1910,7 +1910,8 @@ int64_t CostEstimateGroup::estimateFrameCost(LookaheadTLD& tld, int p0, int p1, 
             {
                 fenc->costEst[b - p0][p1 - b] += m_slice[i].costEst;
                 fenc->costEstAq[b - p0][p1 - b] += m_slice[i].costEstAq;
-                fenc->intraMbs[b - p0] += m_slice[i].intraMbs;
+                if (p1 == b)
+                    fenc->intraMbs[b - p0] += m_slice[i].intraMbs;
             }
         }
         else
@@ -2062,14 +2063,14 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
         {
             fenc->costEst[b - p0][p1 - b] += bcost;
             fenc->costEstAq[b - p0][p1 - b] += bcostAq;
-            if (!listused)
+            if (!listused && !bBidir)
                 fenc->intraMbs[b - p0]++;
         }
         else
         {
             m_slice[slice].costEst += bcost;
             m_slice[slice].costEstAq += bcostAq;
-            if (!listused)
+            if (!listused && !bBidir)
                 m_slice[slice].intraMbs++;
         }
     }
