@@ -358,7 +358,7 @@ static inline void pelFilterChroma(pixel* src, intptr_t srcStep, intptr_t offset
         int16_t m5  = (int16_t)src[offset];
         int16_t m2  = (int16_t)src[-offset * 2];
 
-        int32_t delta = x265_clip3(-tc, tc, ((((m4 - m3) << 2) + m2 - m5 + 4) >> 3));
+        int32_t delta = x265_clip3(-tc, tc, ((((m4 - m3) * 4) + m2 - m5 + 4) >> 3));
         src[-offset] = x265_clip(m3 + (delta & maskP));
         src[0] = x265_clip(m4 - (delta & maskQ));
     }

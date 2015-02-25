@@ -1766,16 +1766,17 @@ int CUData::fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int re
 
 void CUData::clipMv(MV& outMV) const
 {
-    int mvshift = 2;
-    int offset = 8;
-    int xmax = (m_slice->m_sps->picWidthInLumaSamples + offset - m_cuPelX - 1) << mvshift;
-    int xmin = (-(int)g_maxCUSize - offset - (int)m_cuPelX + 1) << mvshift;
+    const uint32_t mvshift = 2;
+    uint32_t offset = 8;
 
-    int ymax = (m_slice->m_sps->picHeightInLumaSamples + offset - m_cuPelY - 1) << mvshift;
-    int ymin = (-(int)g_maxCUSize - offset - (int)m_cuPelY + 1) << mvshift;
+    int16_t xmax = (int16_t)((m_slice->m_sps->picWidthInLumaSamples + offset - m_cuPelX - 1) << mvshift);
+    int16_t xmin = -(int16_t)((g_maxCUSize + offset + m_cuPelX - 1) << mvshift);
 
-    outMV.x = (int16_t)X265_MIN(xmax, X265_MAX(xmin, (int)outMV.x));
-    outMV.y = (int16_t)X265_MIN(ymax, X265_MAX(ymin, (int)outMV.y));
+    int16_t ymax = (int16_t)((m_slice->m_sps->picHeightInLumaSamples + offset - m_cuPelY - 1) << mvshift);
+    int16_t ymin = -(int16_t)((g_maxCUSize + offset + m_cuPelY - 1) << mvshift);
+
+    outMV.x = X265_MIN(xmax, X265_MAX(xmin, outMV.x));
+    outMV.y = X265_MIN(ymax, X265_MAX(ymin, outMV.y));
 }
 
 bool CUData::addMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const
