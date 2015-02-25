@@ -204,7 +204,7 @@ public:
     int64_t singleCost(int p0, int p1, int b, bool intraPenalty = false);
 
     /* Batch cost estimates, using one worker thread per estimateFrameCost() call */
-    enum { MAX_BATCH_SIZE = 2048 };
+    enum { MAX_BATCH_SIZE = 512 };
     struct Estimate
     {
         int  p0, b, p1;
