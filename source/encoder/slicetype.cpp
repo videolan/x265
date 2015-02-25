@@ -1796,7 +1796,7 @@ int64_t CostEstimateGroup::singleCost(int p0, int p1, int b, bool intraPenalty)
     return estimateFrameCost(tld, p0, p1, b, intraPenalty);
 }
 
-void CostEstimateGroup::add(int p0, int p1, int b, bool intraPenalty)
+void CostEstimateGroup::add(int p0, int p1, int b)
 {
     X265_CHECK(m_batchMode || !m_jobTotal, "single CostEstimateGroup instance cannot mix batch modes\n");
     m_batchMode = true;
@@ -1805,7 +1805,6 @@ void CostEstimateGroup::add(int p0, int p1, int b, bool intraPenalty)
     e.p0 = p0;
     e.p1 = p1;
     e.b = b;
-    e.bIntraPenalty = intraPenalty;
 
     if (m_jobTotal == MAX_BATCH_SIZE)
         finishBatch();
@@ -1843,7 +1842,7 @@ void CostEstimateGroup::processTasks(int workerThreadID)
             ProfileScopeEvent(estCostSingle);
             Estimate& e = m_estimates[i];
 
-            estimateFrameCost(tld, e.p0, e.p1, e.b, e.bIntraPenalty);
+            estimateFrameCost(tld, e.p0, e.p1, e.b, false);
         }
         else
         {

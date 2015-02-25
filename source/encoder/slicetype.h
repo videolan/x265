@@ -208,10 +208,9 @@ public:
     struct Estimate
     {
         int  p0, b, p1;
-        bool bIntraPenalty;
     } m_estimates[MAX_BATCH_SIZE];
 
-    void add(int p0, int p1, int b, bool intraPenalty = false);
+    void add(int p0, int p1, int b);
     void finishBatch();
 
 protected:
