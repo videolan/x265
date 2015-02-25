@@ -1105,7 +1105,8 @@ uint32_t Quant::calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX,
 
     const uint32_t trSizeCG = 1 << log2TrSizeCG;
     X265_CHECK(trSizeCG <= 8, "transform CG is too large\n");
-    const uint32_t sigPos = (uint32_t)(sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX));
+    const uint32_t shift = (cgPosY << log2TrSizeCG) + cgPosX + 1;
+    const uint32_t sigPos = (uint32_t)(shift >= 64 ? 0 : sigCoeffGroupFlag64 >> shift);
     const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & (sigPos & 1);
     const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 2)) & 2;
 
