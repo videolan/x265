@@ -1650,10 +1650,10 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     if (!referenced)
         memset(frames[b]->propagateCost, 0, m_widthInCU * sizeof(uint16_t));
 
-    int32_t StrideInCU = m_widthInCU;
+    int32_t strideInCU = m_widthInCU;
     for (uint16_t blocky = 0; blocky < m_heightInCU; blocky++)
     {
-        int cuIndex = blocky * StrideInCU;
+        int cuIndex = blocky * strideInCU;
         primitives.propagateCost(m_scratch, propagateCost,
                                  frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
                                  frames[b]->invQscaleFactor + cuIndex, &fpsFactor, m_widthInCU);
@@ -1691,10 +1691,10 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
                         int32_t y = mvs[list][cuIndex].y;
                         int32_t cux = (x >> 5) + blockx;
                         int32_t cuy = (y >> 5) + blocky;
-                        int32_t idx0 = cux + cuy * StrideInCU;
+                        int32_t idx0 = cux + cuy * strideInCU;
                         int32_t idx1 = idx0 + 1;
-                        int32_t idx2 = idx0 + StrideInCU;
-                        int32_t idx3 = idx0 + StrideInCU + 1;
+                        int32_t idx2 = idx0 + strideInCU;
+                        int32_t idx3 = idx0 + strideInCU + 1;
                         x &= 31;
                         y &= 31;
                         int32_t idx0weight = (32 - y) * (32 - x);
