@@ -242,7 +242,7 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
 
             memcpy(neighbours[0], pixCur - 1 - fenc.lumaStride, (cuSize + 1) * sizeof(pixel));
             for (int i = 1; i < cuSize + 1; i++)
-                neighbours[0][i + cuSize2] = pixCur[-1 - fenc.lumaStride + i * fenc.lumaStride]; /* TODO: gcc warning */
+                neighbours[0][i + cuSize2] = pixCur[(i - 1) * fenc.lumaStride - 1];
 
             for (int i = 0; i < cuSize; i++)
             {
