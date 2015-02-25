@@ -515,7 +515,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
      * do much unnecessary work, some frame cost estimates are not needed, so if
      * the thread pool is small we disable this feature after the initial burst
      * of work */
-    m_bBatchFrameCosts = 0 && m_bBatchMotionSearch; /* temporarily disabled */
+    m_bBatchFrameCosts = m_bBatchMotionSearch;
 
     if (m_bBatchMotionSearch && m_pool->m_numWorkers > 12)
     {
@@ -1049,7 +1049,6 @@ void Lookahead::slicetypeDecide()
             m_outputQueue.pushBack(*list[i]);
         }
     }
-    m_outputLock.release();
 
     bool isKeyFrameAnalyse = (m_param->rc.cuTree || (m_param->rc.vbvBufferSize && m_param->lookaheadDepth)) && !m_param->rc.bStatRead;
     if (isKeyFrameAnalyse && IS_X265_TYPE_I(m_lastNonB->sliceType))
@@ -1068,6 +1067,7 @@ void Lookahead::slicetypeDecide()
         frames[j + 1] = NULL;
         slicetypeAnalyse(frames, true);
     }
+    m_outputLock.release();
 }
 
 void Lookahead::vbvLookahead(Lowres **frames, int numFrames, int keyframe)
