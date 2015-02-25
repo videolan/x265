@@ -2610,9 +2610,96 @@ cglobal interp_4tap_vert_%1_4x4, 4, 6, 3
 %endif
     RET
 %endmacro
-
 FILTER_VER_CHROMA_AVX2_4x4 pp
 FILTER_VER_CHROMA_AVX2_4x4 ps
+
+%macro FILTER_VER_CHROMA_AVX2_4x8 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_4x8, 4, 6, 5
+    mov             r4d, r4m
+    shl             r4d, 6
+    sub             r0, r1
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+
+    movd            xm1, [r0]
+    pinsrd          xm1, [r0 + r1], 1
+    pinsrd          xm1, [r0 + r1 * 2], 2
+    pinsrd          xm1, [r0 + r4], 3                       ; m1 = row[3 2 1 0]
+    lea             r0, [r0 + r1 * 4]
+    movd            xm2, [r0]
+    pinsrd          xm2, [r0 + r1], 1
+    pinsrd          xm2, [r0 + r1 * 2], 2
+    pinsrd          xm2, [r0 + r4], 3                       ; m2 = row[7 6 5 4]
+    vinserti128     m1, m1, xm2, 1                          ; m1 = row[7 6 5 4 3 2 1 0]
+    lea             r0, [r0 + r1 * 4]
+    movd            xm3, [r0]
+    pinsrd          xm3, [r0 + r1], 1
+    pinsrd          xm3, [r0 + r1 * 2], 2                   ; m3 = row[x 10 9 8]
+    vinserti128     m2, m2, xm3, 1                          ; m2 = row[x 10 9 8 7 6 5 4]
+    mova            m3, [interp4_vpp_shuf1]
+    vpermd          m0, m3, m1                              ; m0 = row[4 3 3 2 2 1 1 0]
+    vpermd          m4, m3, m2                              ; m4 = row[8 7 7 6 6 5 5 4]
+    mova            m3, [interp4_vpp_shuf1 + mmsize]
+    vpermd          m1, m3, m1                              ; m1 = row[6 5 5 4 4 3 3 2]
+    vpermd          m2, m3, m2                              ; m2 = row[10 9 9 8 8 7 7 6]
+
+    mova            m3, [interp4_vpp_shuf]
+    pshufb          m0, m0, m3
+    pshufb          m1, m1, m3
+    pshufb          m2, m2, m3
+    pshufb          m4, m4, m3
+    pmaddubsw       m0, [r5]
+    pmaddubsw       m4, [r5]
+    pmaddubsw       m1, [r5 + mmsize]
+    pmaddubsw       m2, [r5 + mmsize]
+    paddw           m0, m1                                  ; m0 = WORD ROW[3 2 1 0]
+    paddw           m4, m2                                  ; m4 = WORD ROW[7 6 5 4]
+%ifidn %1,pp
+    pmulhrsw        m0, [pw_512]
+    pmulhrsw        m4, [pw_512]
+    packuswb        m0, m4
+    vextracti128    xm1, m0, 1
+    lea             r5, [r3 * 3]
+    movd            [r2], xm0
+    pextrd          [r2 + r3], xm0, 1
+    movd            [r2 + r3 * 2], xm1
+    pextrd          [r2 + r5], xm1, 1
+    lea             r2, [r2 + r3 * 4]
+    pextrd          [r2], xm0, 2
+    pextrd          [r2 + r3], xm0, 3
+    pextrd          [r2 + r3 * 2], xm1, 2
+    pextrd          [r2 + r5], xm1, 3
+%else
+    add             r3d, r3d
+    psubw           m0, [pw_2000]
+    psubw           m4, [pw_2000]
+    vextracti128    xm1, m0, 1
+    vextracti128    xm2, m4, 1
+    lea             r5, [r3 * 3]
+    movq            [r2], xm0
+    movhps          [r2 + r3], xm0
+    movq            [r2 + r3 * 2], xm1
+    movhps          [r2 + r5], xm1
+    lea             r2, [r2 + r3 * 4]
+    movq            [r2], xm4
+    movhps          [r2 + r3], xm4
+    movq            [r2 + r3 * 2], xm2
+    movhps          [r2 + r5], xm2
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_AVX2_4x8 pp
+FILTER_VER_CHROMA_AVX2_4x8 ps
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
