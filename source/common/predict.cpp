@@ -110,7 +110,7 @@ void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, 
         // filtering top-left
         fltBuf[0] = ((srcBuf[0] << 1) + srcBuf[1] + srcBuf[tuSize2 + 1] + 2) >> 2;
 
-        //filtering left
+        // filtering left
         fltBuf[tuSize2 + 1] = ((srcBuf[tuSize2 + 1] << 1) + topLeft + srcBuf[tuSize2 + 2] + 2) >> 2;
         for (int i = tuSize2 + 2; i < tuSize2 + tuSize2; i++)
             fltBuf[i] = ((srcBuf[i] << 1) + srcBuf[i - 1] + srcBuf[i + 1] + 2) >> 2;
@@ -644,38 +644,31 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
     if (dirMode == ALL_IDX ? (8 | 16 | 32) & tuSize : g_intraFilterFlags[dirMode] & tuSize)
     {
         // generate filtered intra prediction samples
-        bool bStrongSmoothing = (tuSize == 32 && cu.m_slice->m_sps->bUseStrongIntraSmoothing);
 
-        if (bStrongSmoothing)
+        if (cu.m_slice->m_sps->bUseStrongIntraSmoothing && tuSize == 32)
         {
-            const int trSize = 32;
-            const int trSize2 = trSize << 1;
             const int threshold = 1 << (X265_DEPTH - 5);
 
             pixel topMiddle = refBuf[32], leftMiddle = refBuf[tuSize2 + 32];
 
-            bStrongSmoothing = abs (topLeft + topLast - (topMiddle << 1)) < threshold &&
-                               abs (topLeft + leftLast - (leftMiddle << 1)) < threshold;
-
-            if (bStrongSmoothing)
+            if (abs(topLeft + topLast  - (topMiddle  << 1)) < threshold &&
+                abs(topLeft + leftLast - (leftMiddle << 1)) < threshold)
             {
                 // bilinear interpolation
                 const int shift = 5 + 1;
                 int init = (topLeft << shift) + tuSize;
                 int deltaL, deltaR;
 
-                // TODO: Performance Primitive???
                 deltaL = leftLast - topLeft; deltaR = topLast - topLeft;
 
                 fltBuf[0] = topLeft;
-                for (int i = 1; i < trSize2; i++)
+                for (int i = 1; i < tuSize2; i++)
                 {
                     fltBuf[i + tuSize2] = (pixel)((init + deltaL * i) >> shift); // Left Filtering
                     fltBuf[i] = (pixel)((init + deltaR * i) >> shift);           // Above Filtering
                 }
-                fltBuf[trSize2] = topLast;
-                fltBuf[tuSize2 + trSize2] = leftLast;
-
+                fltBuf[tuSize2] = topLast;
+                fltBuf[tuSize2 + tuSize2] = leftLast;
                 return;
             }
         }
