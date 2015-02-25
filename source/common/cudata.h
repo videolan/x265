@@ -241,7 +241,8 @@ protected:
 
     bool hasEqualMotion(uint32_t absPartIdx, const CUData& candCU, uint32_t candAbsPartIdx) const;
 
-    bool isDiffMER(int xN, int yN, int xP, int yP) const;
+    /* Check whether the current PU and a spatial neighboring PU are in same merge region */
+    bool isDiffMER(int xN, int yN, int xP, int yP) const { return ((xN >> 2) != (xP >> 2)) || ((yN >> 2) != (yP >> 2)); }
 
     // add possible motion vector predictor candidates
     bool addMVPCand(MV& mvp, int picList, int refIdx, uint32_t absPartIdx, MVP_DIR dir) const;

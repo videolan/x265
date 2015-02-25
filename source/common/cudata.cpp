@@ -1426,9 +1426,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         if (isInterB)
             cuLeft->getMvField(cuLeft, leftPartIdx, 1, candMvField[count][1]);
 
-        count++;
-    
-        if (count == maxNumMergeCand)
+        if (++count == maxNumMergeCand)
             return maxNumMergeCand;
     }
 
@@ -1450,9 +1448,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         if (isInterB)
             cuAbove->getMvField(cuAbove, abovePartIdx, 1, candMvField[count][1]);
 
-        count++;
-   
-        if (count == maxNumMergeCand)
+        if (++count == maxNumMergeCand)
             return maxNumMergeCand;
     }
 
@@ -1471,9 +1467,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         if (isInterB)
             cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, 1, candMvField[count][1]);
 
-        count++;
-
-        if (count == maxNumMergeCand)
+        if (++count == maxNumMergeCand)
             return maxNumMergeCand;
     }
 
@@ -1492,9 +1486,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         if (isInterB)
             cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, 1, candMvField[count][1]);
 
-        count++;
-
-        if (count == maxNumMergeCand)
+        if (++count == maxNumMergeCand)
             return maxNumMergeCand;
     }
 
@@ -1516,9 +1508,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
             if (isInterB)
                 cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, 1, candMvField[count][1]);
 
-            count++;
-
-            if (count == maxNumMergeCand)
+            if (++count == maxNumMergeCand)
                 return maxNumMergeCand;
         }
     }
@@ -1553,31 +1543,21 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
                 absPartAddr = 0;
         }
 
-        int refIdx = 0;
-        uint32_t partIdxCenter = deriveCenterIdx(puIdx);
-        uint32_t curCTUIdx = m_cuAddr;
-        int dir = 0;
-        bool bExistMV = ctuIdx >= 0 && getColMVP(colmv, refIdx, 0, ctuIdx, absPartAddr);
-        if (!bExistMV)
-            bExistMV = getColMVP(colmv, refIdx, 0, curCTUIdx, partIdxCenter);
-        if (bExistMV)
+        int maxList = isInterB ? 2 : 1;
+        int dir = 0, refIdx = 0;
+        for (int list = 0; list < maxList; list++)
         {
-            dir |= 1;
-            candMvField[count][0].mv = colmv;
-            candMvField[count][0].refIdx = refIdx;
-        }
-
-        if (isInterB)
-        {
-            bExistMV = ctuIdx >= 0 && getColMVP(colmv, refIdx, 1, ctuIdx, absPartAddr);
+            bool bExistMV = ctuIdx >= 0 && getColMVP(colmv, refIdx, list, ctuIdx, absPartAddr);
             if (!bExistMV)
-                bExistMV = getColMVP(colmv, refIdx, 1, curCTUIdx, partIdxCenter);
-
+            {
+                uint32_t partIdxCenter = deriveCenterIdx(puIdx);
+                bExistMV = getColMVP(colmv, refIdx, list, m_cuAddr, partIdxCenter);
+            }
             if (bExistMV)
             {
-                dir |= 2;
-                candMvField[count][1].mv = colmv;
-                candMvField[count][1].refIdx = refIdx;
+                dir |= (1 << list);
+                candMvField[count][list].mv = colmv;
+                candMvField[count][list].refIdx = refIdx;
             }
         }
 
@@ -1585,9 +1565,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         {
             candDir[count] = (uint8_t)dir;
 
-            count++;
-        
-            if (count == maxNumMergeCand)
+            if (++count == maxNumMergeCand)
                 return maxNumMergeCand;
         }
     }
@@ -1598,12 +1576,10 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         uint32_t priorityList0 = 0xEDC984; // { 0, 1, 0, 2, 1, 2, 0, 3, 1, 3, 2, 3 }
         uint32_t priorityList1 = 0xB73621; // { 1, 0, 2, 0, 2, 1, 3, 0, 3, 1, 3, 2 }
 
-        for (uint32_t idx = 0; idx < cutoff; idx++)
+        for (uint32_t idx = 0; idx < cutoff; idx++, priorityList0 >>= 2, priorityList1 >>= 2)
         {
             int i = priorityList0 & 3;
             int j = priorityList1 & 3;
-            priorityList0 >>= 2;
-            priorityList1 >>= 2;
 
             if ((candDir[i] & 0x1) && (candDir[j] & 0x2))
             {
@@ -1620,9 +1596,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
                     candMvField[count][1].refIdx = refIdxL1;
                     candDir[count] = 3;
 
-                    count++;
-
-                    if (count == maxNumMergeCand)
+                    if (++count == maxNumMergeCand)
                         return maxNumMergeCand;
                 }
             }
@@ -1656,18 +1630,6 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     }
 
     return count;
-}
-
-/* Check whether the current PU and a spatial neighboring PU are in a same ME region */
-bool CUData::isDiffMER(int xN, int yN, int xP, int yP) const
-{
-    uint32_t plevel = 2;
-
-    if ((xN >> plevel) != (xP >> plevel))
-        return true;
-    if ((yN >> plevel) != (yP >> plevel))
-        return true;
-    return false;
 }
 
 /* Constructs a list of candidates for AMVP, and a larger list of motion candidates */
