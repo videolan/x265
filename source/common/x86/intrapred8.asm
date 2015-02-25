@@ -32058,7 +32058,6 @@ cglobal intra_pred_ang8_3, 3,4,5
     pshufb            m1, m0, [c_ang8_src1_9_2_10]
     pshufb            m2, m0, [c_ang8_src3_11_4_12]
     pshufb            m4, m0, [c_ang8_src5_13_5_13]
-    pshufb            m4, m0, [c_ang8_src5_13_5_13]
     pshufb            m0,     [c_ang8_src6_14_7_15]
 
     pmaddubsw         m1, [c_ang8_26_20]
@@ -32103,7 +32102,6 @@ cglobal intra_pred_ang8_33, 3,4,5
 
     pshufb            m1, m0, [c_ang8_src1_9_2_10]
     pshufb            m2, m0, [c_ang8_src3_11_4_12]
-    pshufb            m4, m0, [c_ang8_src5_13_5_13]
     pshufb            m4, m0, [c_ang8_src5_13_5_13]
     pshufb            m0,     [c_ang8_src6_14_7_15]
 
