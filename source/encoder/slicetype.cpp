@@ -210,7 +210,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
 void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
 {
     ALIGN_VAR_32(pixel, prediction[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
-    ALIGN_VAR_32(pixel, fencIntra[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
+    pixel fencIntra[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
     pixel neighbours[2][X265_LOWRES_CU_SIZE * 4 + 1];
 
     const int lookAheadLambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
@@ -223,6 +223,9 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
 
     pixel *planar = (cuSize >= 8) ? neighbours[1] : neighbours[0];
     pixelcmp_t satd = primitives.pu[sizeIdx].satd;
+
+    fenc.costEst[0][0] = 0;
+    fenc.costEstAq[0][0] = 0;
 
     for (int cuY = 0; cuY < heightInCU; cuY++)
     {
@@ -239,7 +242,7 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
 
             memcpy(neighbours[0], pixCur - 1 - fenc.lumaStride, (cuSize + 1) * sizeof(pixel));
             for (int i = 1; i < cuSize + 1; i++)
-                neighbours[0][i + cuSize2] = pixCur[-1 - fenc.lumaStride + i * fenc.lumaStride]; /* todo: fixme */
+                neighbours[0][i + cuSize2] = pixCur[-1 - fenc.lumaStride + i * fenc.lumaStride]; /* TODO: gcc warning */
 
             for (int i = 0; i < cuSize; i++)
             {
@@ -264,7 +267,7 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
             uint32_t ilowmode = 0;
 
             /* DC and planar */
-            primitives.cu[sizeIdx].intra_pred[DC_IDX](prediction, cuSize, neighbours[0], 0, (cuSize <= 16));
+            primitives.cu[sizeIdx].intra_pred[DC_IDX](prediction, cuSize, neighbours[0], 0, cuSize <= 16);
             cost = satd(fencIntra, cuSize, prediction, cuSize);
             COPY2_IF_LT(icost, cost, ilowmode, DC_IDX);
 
@@ -306,8 +309,20 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
             fenc.lowresCosts[0][0][cuXY] = (uint16_t)(X265_MIN(icost, LOWRES_COST_MASK) | (0 << LOWRES_COST_SHIFT));
             fenc.intraCost[cuXY] = icost;
             fenc.intraMode[cuXY] = (uint8_t)ilowmode;
-            fenc.rowSatds[0][0][cuY] += icost;
-            fenc.costEst[0][0] += icost;
+
+            /* do not include edge blocks in the frame cost estimates, they are not very accurate */
+            const bool bFrameScoreCU = (cuX > 0 && cuX < widthInCU - 1 &&
+                                        cuY > 0 && cuY < heightInCU - 1) || widthInCU <= 2 || heightInCU <= 2;
+
+            int icostAq = (bFrameScoreCU && fenc.invQscaleFactor) ? ((icost * fenc.invQscaleFactor[cuXY] + 128) >> 8) : icost;
+
+            if (bFrameScoreCU)
+            {
+                fenc.costEst[0][0] += icost;
+                fenc.costEstAq[0][0] += icostAq;
+            }
+
+            fenc.rowSatds[0][0][cuY] += icostAq;
         }
     }
 }
@@ -500,7 +515,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
      * do much unnecessary work, some frame cost estimates are not needed, so if
      * the thread pool is small we disable this feature after the initial burst
      * of work */
-    m_bBatchFrameCosts = m_bBatchMotionSearch;
+    m_bBatchFrameCosts = 0 && m_bBatchMotionSearch; /* temporarily disabled */
 
     if (m_bBatchMotionSearch && m_pool->m_numWorkers > 12)
     {
@@ -1635,10 +1650,10 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     if (!referenced)
         memset(frames[b]->propagateCost, 0, m_widthInCU * sizeof(uint16_t));
 
-    int32_t StrideInCU = m_widthInCU;
+    int32_t strideInCU = m_widthInCU;
     for (uint16_t blocky = 0; blocky < m_heightInCU; blocky++)
     {
-        int cuIndex = blocky * StrideInCU;
+        int cuIndex = blocky * strideInCU;
         primitives.propagateCost(m_scratch, propagateCost,
                                  frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
                                  frames[b]->invQscaleFactor + cuIndex, &fpsFactor, m_widthInCU);
@@ -1676,10 +1691,10 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
                         int32_t y = mvs[list][cuIndex].y;
                         int32_t cux = (x >> 5) + blockx;
                         int32_t cuy = (y >> 5) + blocky;
-                        int32_t idx0 = cux + cuy * StrideInCU;
+                        int32_t idx0 = cux + cuy * strideInCU;
                         int32_t idx1 = idx0 + 1;
-                        int32_t idx2 = idx0 + StrideInCU;
-                        int32_t idx3 = idx0 + StrideInCU + 1;
+                        int32_t idx2 = idx0 + strideInCU;
+                        int32_t idx3 = idx0 + strideInCU + 1;
                         x &= 31;
                         y &= 31;
                         int32_t idx0weight = (32 - y) * (32 - x);
@@ -1781,7 +1796,7 @@ int64_t CostEstimateGroup::singleCost(int p0, int p1, int b, bool intraPenalty)
     return estimateFrameCost(tld, p0, p1, b, intraPenalty);
 }
 
-void CostEstimateGroup::add(int p0, int p1, int b, bool intraPenalty)
+void CostEstimateGroup::add(int p0, int p1, int b)
 {
     X265_CHECK(m_batchMode || !m_jobTotal, "single CostEstimateGroup instance cannot mix batch modes\n");
     m_batchMode = true;
@@ -1790,7 +1805,6 @@ void CostEstimateGroup::add(int p0, int p1, int b, bool intraPenalty)
     e.p0 = p0;
     e.p1 = p1;
     e.b = b;
-    e.bIntraPenalty = intraPenalty;
 
     if (m_jobTotal == MAX_BATCH_SIZE)
         finishBatch();
@@ -1828,7 +1842,7 @@ void CostEstimateGroup::processTasks(int workerThreadID)
             ProfileScopeEvent(estCostSingle);
             Estimate& e = m_estimates[i];
 
-            estimateFrameCost(tld, e.p0, e.p1, e.b, e.bIntraPenalty);
+            estimateFrameCost(tld, e.p0, e.p1, e.b, false);
         }
         else
         {
@@ -1888,6 +1902,7 @@ int64_t CostEstimateGroup::estimateFrameCost(LookaheadTLD& tld, int p0, int p1, 
              * going to need motion searches or bidir measurements */
 
             memset(&m_slice, 0, sizeof(Slice) * m_lookahead.m_numCoopSlices);
+            memset(fenc->rowSatds, 0, sizeof(fenc->rowSatds[0]) * m_lookahead.m_heightInCU);
 
             m_lock.acquire();
             X265_CHECK(!m_batchMode, "single CostEstimateGroup instance cannot mix batch modes\n");

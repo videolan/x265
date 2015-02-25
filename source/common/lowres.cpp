@@ -56,10 +56,7 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled)
     CHECKED_MALLOC(propagateCost, uint16_t, cuCount);
 
     /* allocate lowres buffers */
-    CHECKED_MALLOC(buffer[0], pixel, 4 * planesize);
-
-    /* initialize the whole buffer to prevent valgrind warnings on right edge */
-    memset(buffer[0], 0, 4 * sizeof(pixel) * planesize);
+    CHECKED_MALLOC_ZERO(buffer[0], pixel, 4 * planesize);
 
     buffer[1] = buffer[0] + planesize;
     buffer[2] = buffer[1] + planesize;

@@ -321,7 +321,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
                 numPools = 0;
                 return NULL;
             }
-            if (bNumaSupport)
+            if (numNumaNodes > 1)
                 x265_log(p, X265_LOG_INFO, "Thread pool %d using %d threads on NUMA node %d\n", i, cores, node);
             else
                 x265_log(p, X265_LOG_INFO, "Thread pool created using %d threads\n", cores);

@@ -288,9 +288,10 @@ public:
         Search&       master;
         Mode&         mode;
         const CUGeom& cuGeom;
+        const PredictionUnit& pu;
         int           puIdx;
 
-        PME(Search& s, Mode& m, const CUGeom& g, int p) : master(s), mode(m), cuGeom(g), puIdx(p) {}
+        PME(Search& s, Mode& m, const CUGeom& g, const PredictionUnit& u, int p) : master(s), mode(m), cuGeom(g), pu(u), puIdx(p) {}
 
         void processTasks(int workerThreadId);
 
@@ -300,7 +301,7 @@ public:
     };
 
     void     processPME(PME& pme, Search& slave);
-    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, int part, int list, int ref);
+    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, const PredictionUnit& pu, int part, int list, int ref);
 
 protected:
 
@@ -347,21 +348,11 @@ protected:
     // reshuffle CBF flags after coding a pair of 4:2:2 chroma blocks
     void     offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t tuDepth, uint32_t absPartIdx);
 
+    /* output of mergeEstimation, best merge candidate */
     struct MergeData
     {
-        /* merge candidate data, cached between calls to mergeEstimation */
-        MVField  mvFieldNeighbours[MRG_MAX_NUM_CANDS][2];
-        uint8_t  interDirNeighbours[MRG_MAX_NUM_CANDS];
-        uint32_t maxNumMergeCand;
-
-        /* data updated for each partition */
-        uint32_t absPartIdx;
-        int      width;
-        int      height;
-
-        /* outputs */
         MVField  mvField[2];
-        uint32_t interDir;
+        uint32_t dir;
         uint32_t index;
         uint32_t bits;
     };
@@ -369,8 +360,8 @@ protected:
     /* inter/ME helper functions */
     void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
     void     setSearchRange(const CUData& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
-    uint32_t mergeEstimation(CUData& cu, const CUGeom& cuGeom, int partIdx, MergeData& m);
-    static void getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
+    uint32_t mergeEstimation(CUData& cu, const CUGeom& cuGeom, const PredictionUnit& pu, int puIdx, MergeData& m);
+    static void getBlkBits(PartSize cuMode, bool bPSlice, int puIdx, uint32_t lastMode, uint32_t blockBit[3]);
 
     /* intra helper functions */
     enum { MAX_RD_INTRA_MODES = 16 };
