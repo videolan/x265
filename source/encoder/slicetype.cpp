@@ -515,7 +515,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
      * do much unnecessary work, some frame cost estimates are not needed, so if
      * the thread pool is small we disable this feature after the initial burst
      * of work */
-    m_bBatchFrameCosts = m_bBatchMotionSearch;
+    m_bBatchFrameCosts = 0 && m_bBatchMotionSearch; /* temporarily disabled */
 
     if (m_bBatchMotionSearch && m_pool->m_numWorkers > 12)
     {
