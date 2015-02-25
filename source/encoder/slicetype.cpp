@@ -1636,8 +1636,8 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     uint16_t *refCosts[2] = { frames[p0]->propagateCost, frames[p1]->propagateCost };
     int32_t distScaleFactor = (((b - p0) << 8) + ((p1 - p0) >> 1)) / (p1 - p0);
     int32_t bipredWeight = m_param->bEnableWeightedBiPred ? 64 - (distScaleFactor >> 2) : 32;
-    MV *mvs[2] = { frames[b]->lowresMvs[0][b - p0 - 1], frames[b]->lowresMvs[1][p1 - b - 1] };
     int32_t bipredWeights[2] = { bipredWeight, 64 - bipredWeight };
+    int listDist[2] = { b - p0 - 1, p1 - b - 1 };
 
     memset(m_scratch, 0, m_widthInCU * sizeof(int));
 
@@ -1680,15 +1680,17 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
                         if (lists_used == 3)
                             listamount = (listamount * bipredWeights[list] + 32) >> 6;
 
+                        MV *mvs = frames[b]->lowresMvs[list][listDist[list]];
+
                         /* Early termination for simple case of mv0. */
-                        if (!mvs[list][cuIndex].word)
+                        if (!mvs[cuIndex].word)
                         {
                             CLIP_ADD(refCosts[list][cuIndex], listamount);
                             continue;
                         }
 
-                        int32_t x = mvs[list][cuIndex].x;
-                        int32_t y = mvs[list][cuIndex].y;
+                        int32_t x = mvs[cuIndex].x;
+                        int32_t y = mvs[cuIndex].y;
                         int32_t cux = (x >> 5) + blockx;
                         int32_t cuy = (y >> 5) + blocky;
                         int32_t idx0 = cux + cuy * strideInCU;
@@ -1978,11 +1980,7 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
     /* A small, arbitrary bias to avoid VBV problems caused by zero-residual lookahead blocks. */
     int lowresPenalty = 4;
-
-    MV(*fencMVs[2]) = { &fenc->lowresMvs[0][b - p0 - 1][cuXY],
-                        &fenc->lowresMvs[1][p1 - b - 1][cuXY] };
-    int(*fencCosts[2]) = { &fenc->lowresMvCosts[0][b - p0 - 1][cuXY],
-                           &fenc->lowresMvCosts[1][p1 - b - 1][cuXY] };
+    int listDist[2] = { b - p0 - 1, p1 - b - 1 };
 
     MV mvmin, mvmax;
     int bcost = tld.me.COST_MAX;
@@ -1996,15 +1994,18 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
     for (int i = 0; i < 1 + bBidir; i++)
     {
+        int& fencCost = fenc->lowresMvCosts[i][listDist[i]][cuXY];
+
         if (!bDoSearch[i])
         {
-            COPY2_IF_LT(bcost, *fencCosts[i], listused, i + 1);
+            COPY2_IF_LT(bcost, fencCost, listused, i + 1);
             continue;
         }
 
         int numc = 0;
         MV mvc[4], mvp;
-        MV *fencMV = fencMVs[i];
+
+        MV* fencMV = &fenc->lowresMvs[i][listDist[i]][cuXY];
 
         /* Reverse-order MV prediction */
         mvc[0] = 0;
@@ -2026,8 +2027,8 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
         else
             median_mv(mvp, mvc[0], mvc[1], mvc[2]);
 
-        *fencCosts[i] = tld.me.motionEstimate(i ? fref1 : wfref0, mvmin, mvmax, mvp, numc, mvc, s_merange, *fencMVs[i]);
-        COPY2_IF_LT(bcost, *fencCosts[i], listused, i + 1);
+        fencCost = tld.me.motionEstimate(i ? fref1 : wfref0, mvmin, mvmax, mvp, numc, mvc, s_merange, *fencMV);
+        COPY2_IF_LT(bcost, fencCost, listused, i + 1);
     }
 
     if (bBidir) /* B, also consider bidir */
@@ -2038,8 +2039,8 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
         ALIGN_VAR_32(pixel, subpelbuf0[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
         ALIGN_VAR_32(pixel, subpelbuf1[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
         intptr_t stride0 = X265_LOWRES_CU_SIZE, stride1 = X265_LOWRES_CU_SIZE;
-        pixel *src0 = fref0->lowresMC(pelOffset, *fencMVs[0], subpelbuf0, stride0);
-        pixel *src1 = fref1->lowresMC(pelOffset, *fencMVs[1], subpelbuf1, stride1);
+        pixel *src0 = fref0->lowresMC(pelOffset, fenc->lowresMvs[0][listDist[0]][cuXY], subpelbuf0, stride0);
+        pixel *src1 = fref1->lowresMC(pelOffset, fenc->lowresMvs[1][listDist[1]][cuXY], subpelbuf1, stride1);
 
         ALIGN_VAR_32(pixel, ref[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
         primitives.pu[LUMA_8x8].pixelavg_pp(ref, X265_LOWRES_CU_SIZE, src0, stride0, src1, stride1, 32);
