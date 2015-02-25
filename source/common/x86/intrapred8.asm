@@ -32087,3 +32087,39 @@ cglobal intra_pred_ang8_3, 3,4,5
     movq              [r0 + 2 * r1], xm2
     movhps            [r0 + r3], xm2
     RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang8_33, 3,4,5
+    movu              m3, [pw_1024]
+    vbroadcasti128    m0, [r2 + 1]
+
+    pshufb            m1, m0, [c_ang8_src1_9_2_10]
+    pshufb            m2, m0, [c_ang8_src3_11_4_12]
+    pshufb            m4, m0, [c_ang8_src5_13_5_13]
+    pshufb            m4, m0, [c_ang8_src5_13_5_13]
+    pshufb            m0,     [c_ang8_src6_14_7_15]
+
+    pmaddubsw         m1, [c_ang8_26_20]
+    pmulhrsw          m1, m3
+    pmaddubsw         m2, [c_ang8_14_8]
+    pmulhrsw          m2, m3
+    pmaddubsw         m4, [c_ang8_2_28]
+    pmulhrsw          m4, m3
+    pmaddubsw         m0, [c_ang8_22_16]
+    pmulhrsw          m0, m3
+    packuswb          m1, m2
+    packuswb          m4, m0
+
+    lea               r3, [3 * r1]
+    movq              [r0], xm1
+    vextracti128      xm2, m1, 1
+    movq              [r0 + r1], xm2
+    movhps            [r0 + 2 * r1], xm1
+    movhps            [r0 + r3], xm2
+    lea               r0, [r0 + 4 * r1]
+    movq              [r0], xm4
+    vextracti128      xm2, m4, 1
+    movq              [r0 + r1], xm2
+    movhps            [r0 + 2 * r1], xm4
+    movhps            [r0 + r3], xm2
+    RET
