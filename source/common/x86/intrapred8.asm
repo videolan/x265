@@ -54,6 +54,15 @@ c_mode16_17:          db  4,  2,  1,  0, 15, 14, 12, 11, 10,  9,  7,  6,  5,  4,
 c_mode16_18:    db 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
 tab_S2:         db 0, 1, 3, 5, 7, 9, 11, 13, 0, 0, 0, 0, 0, 0, 0, 0
 
+c_ang8_src1_9_2_10:   db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9
+c_ang8_26_20:         db 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
+c_ang8_src3_11_4_12:  db 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11
+c_ang8_14_8:          db 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8
+c_ang8_src5_13_5_13:  db 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12
+c_ang8_2_28:          db 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28
+c_ang8_src6_14_7_15:  db 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14
+c_ang8_22_16:         db 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+
 ;; (blkSize - 1 - x)
 pw_planar4_0:         dw 3,  2,  1,  0,  3,  2,  1,  0
 pw_planar4_1:         dw 3,  3,  3,  3,  3,  3,  3,  3
@@ -64,6 +73,8 @@ pw_planar16_1:        dw 15, 15, 15, 15, 15, 15, 15, 15
 pw_planar32_1:        dw 31, 31, 31, 31, 31, 31, 31, 31
 pw_planar32_L:        dw 31, 30, 29, 28, 27, 26, 25, 24
 pw_planar32_H:        dw 23, 22, 21, 20, 19, 18, 17, 16
+
+trans8_shuf: dd 0, 4, 1, 5, 2, 6, 3, 7
 
 const ang_table
 %assign x 0
@@ -32026,4 +32037,53 @@ cglobal all_angs_pred_32x32, 3,7,8, 0-4
     movu       [r0 + 2110 * 16],   m3
     palignr    m4,              m2,       m1,    14
     movu       [r0 + 2111 * 16],   m4
+    RET
+
+;-----------------------------------------------------------------------------------------
+; void intraPredAng8(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
+;-----------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal intra_pred_ang8_3, 3,4,5
+    movu              m3, [pw_1024]
+    vbroadcasti128    m0, [r2 + 17]
+
+    pshufb            m1, m0, [c_ang8_src1_9_2_10]
+    pshufb            m2, m0, [c_ang8_src3_11_4_12]
+    pshufb            m4, m0, [c_ang8_src5_13_5_13]
+    pshufb            m4, m0, [c_ang8_src5_13_5_13]
+    pshufb            m0,     [c_ang8_src6_14_7_15]
+
+    pmaddubsw         m1, [c_ang8_26_20]
+    pmulhrsw          m1, m3
+    pmaddubsw         m2, [c_ang8_14_8]
+    pmulhrsw          m2, m3
+    pmaddubsw         m4, [c_ang8_2_28]
+    pmulhrsw          m4, m3
+    pmaddubsw         m0, [c_ang8_22_16]
+    pmulhrsw          m0, m3
+    packuswb          m1, m2
+    packuswb          m4, m0
+
+    vperm2i128        m2, m1, m4, 00100000b
+    vperm2i128        m1, m1, m4, 00110001b
+    punpcklbw         m4, m2, m1
+    punpckhbw         m2, m1
+    punpcklwd         m1, m4, m2
+    punpckhwd         m4, m2
+    mova              m0, [trans8_shuf]
+    vpermd            m1, m0, m1
+    vpermd            m4, m0, m4
+
+    lea               r3, [3 * r1]
+    movq              [r0], xm1
+    movhps            [r0 + r1], xm1
+    vextracti128      xm2, m1, 1
+    movq              [r0 + 2 * r1], xm2
+    movhps            [r0 + r3], xm2
+    lea               r0, [r0 + 4 * r1]
+    movq              [r0], xm4
+    movhps            [r0 + r1], xm4
+    vextracti128      xm2, m4, 1
+    movq              [r0 + 2 * r1], xm2
+    movhps            [r0 + r3], xm2
     RET
