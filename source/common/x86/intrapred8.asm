@@ -32141,7 +32141,7 @@ cglobal all_angs_pred_32x32, 3,7,8, 0-4
 ;-----------------------------------------------------------------------------------------
 INIT_YMM avx2
 cglobal intra_pred_ang8_3, 3,4,5
-    movu              m3, [pw_1024]
+    mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 17]
 
     pshufb            m1, m0, [c_ang8_src1_9_2_10]
@@ -32186,7 +32186,7 @@ cglobal intra_pred_ang8_3, 3,4,5
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_33, 3,4,5
-    movu              m3, [pw_1024]
+    mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 1]
 
     pshufb            m1, m0, [c_ang8_src1_9_2_10]
@@ -32221,7 +32221,7 @@ cglobal intra_pred_ang8_33, 3,4,5
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_4, 3,4,5
-    movu              m3, [pw_1024]
+    mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 17]
 
     pshufb            m1, m0, [c_ang8_src1_9_2_10]
@@ -32266,7 +32266,7 @@ cglobal intra_pred_ang8_4, 3,4,5
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_32, 3,4,5
-    movu              m3, [pw_1024]
+    mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 1]
 
     pshufb            m1, m0, [c_ang8_src1_9_2_10]
@@ -32302,7 +32302,7 @@ cglobal intra_pred_ang8_32, 3,4,5
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_5, 3, 4, 5
-    movu              m3, [pw_1024]
+    mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 17]
 
     pshufb            m1, m0, [c_ang8_src1_9_2_10]
@@ -32347,7 +32347,7 @@ cglobal intra_pred_ang8_5, 3, 4, 5
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_31, 3, 4, 5
-    movu              m3, [pw_1024]
+    mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 1]
 
     pshufb            m1, m0, [c_ang8_src1_9_2_10]
@@ -32383,7 +32383,7 @@ cglobal intra_pred_ang8_31, 3, 4, 5
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_6, 3, 4, 5
-    movu              m3, [pw_1024]
+    mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 17]
 
     pshufb            m1, m0, [c_ang8_src1_9_1_9]
@@ -32428,7 +32428,7 @@ cglobal intra_pred_ang8_6, 3, 4, 5
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_30, 3, 4, 5
-    movu              m3, [pw_1024]
+    mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 1]
 
     pshufb            m1, m0, [c_ang8_src1_9_1_9]

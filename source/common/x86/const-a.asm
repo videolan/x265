@@ -6,7 +6,7 @@
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Fiona Glaser <fiona@x264.com>
 ;*          Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
-;*
+;*          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
 ;* the Free Software Foundation; either version 2 of the License, or
@@ -40,6 +40,7 @@ const pw_256,      times 16 dw 256
 const pw_257,      times 16 dw 257
 const pw_512,      times 16 dw 512
 const pw_1023,     times 8  dw 1023
+ALIGN 32
 const pw_1024,     times 16 dw 1024
 const pw_4096,     times 16 dw 4096
 const pw_00ff,     times 16 dw 0x00ff
