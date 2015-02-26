@@ -613,6 +613,30 @@ not match.
 Options which affect the transform unit quad-tree, sometimes referred to
 as the residual quad-tree (RQT).
 
+.. option:: --rdoq-level <0|1|2>, --no-rdoq-level
+
+	Specify the amount of rate-distortion analysis to use within
+	quantization::
+
+	At level 0 rate-distortion cost is not considered in quant
+	
+	At level 1 rate-distortion cost is used to find optimal rounding
+	values for each level (and allows psy-rdoq to be effective). It
+	trades-off the signaling cost of the coefficient vs its post-inverse
+	quant distortion from the pre-quant coefficient. When
+	:option:`--psy-rdoq` is enabled, this formula is biased in favor of
+	more energy in the residual (larger coefficient absolute levels)
+	
+	At level 2 rate-distortion cost is used to make decimate decisions
+	on each 4x4 coding group, including the cost of signaling the group
+	within the group bitmap. If the total distortion of not signaling
+	the entire coding group is less than the rate cost, the block is
+	decimated. Next, it applies rate-distortion cost analysis to the
+	last non-zero coefficient, which can result in many (or all) of the
+	coding groups being decimated. Psy-rdoq is less effective at
+	preserving energy when RDOQ is at level 2, since it only has
+	influence over the level distortion costs.
+
 .. option:: --tu-intra-depth <1..4>
 
 	The transform unit (residual) quad-tree begins with the same depth
@@ -829,8 +853,8 @@ of blurred prediction modes, like DC and planar intra and bi-directional
 inter prediction.
 
 :option:`--psy-rdoq` will adjust the distortion cost used in
-rate-distortion optimized quantization (RDO quant), enabled in
-:option:`--rd` 4 and above, favoring the preservation of energy in the
+rate-distortion optimized quantization (RDO quant), enabled by
+:option:`--rdoq-level` 1 or 2, favoring the preservation of energy in the
 reconstructed image.  :option:`--psy-rdoq` prevents RDOQ from blurring
 all of the encoding options which psy-rd has to chose from.  At low
 strength levels, psy-rdoq will influence the quantization level
@@ -878,9 +902,8 @@ areas of high motion.
 	Influence rate distortion optimized quantization by favoring higher
 	energy in the reconstructed image. This generally improves perceived
 	visual quality at the cost of lower quality metric scores.  It only
-	has effect on slower presets which use RDO Quantization
-	(:option:`--rd` 4, 5 and 6). 1.0 is a typical value. High values can 
-	be beneficial in preserving high-frequency detail like film grain. 
+	has effect when :option:`--rdoq-level` is 1 or 2. High values can
+	be beneficial in preserving high-frequency detail like film grain.
 	Default: 1.0
 
 	**Range of values:** 0 .. 50.0

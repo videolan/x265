@@ -320,6 +320,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->bEnableRectInter = 1;
             param->lookaheadDepth = 25;
             param->rdLevel = 4;
+            param->rdoqLevel = 2;
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
@@ -334,6 +335,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->tuQTMaxInterDepth = 2;
             param->tuQTMaxIntraDepth = 2;
             param->rdLevel = 6;
+            param->rdoqLevel = 2;
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
@@ -349,6 +351,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->tuQTMaxInterDepth = 3;
             param->tuQTMaxIntraDepth = 3;
             param->rdLevel = 6;
+            param->rdoqLevel = 2;
             param->subpelRefine = 4;
             param->maxNumMergeCand = 4;
             param->searchMethod = X265_STAR_SEARCH;
@@ -366,6 +369,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->tuQTMaxInterDepth = 4;
             param->tuQTMaxIntraDepth = 4;
             param->rdLevel = 6;
+            param->rdoqLevel = 2;
             param->subpelRefine = 5;
             param->maxNumMergeCand = 5;
             param->searchMethod = X265_STAR_SEARCH;
@@ -416,6 +420,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->deblockingFilterBetaOffset = -2;
             param->deblockingFilterTCOffset = -2;
             param->bIntraInBFrames = 0;
+            param->rdoqLevel = 1;
             param->psyRdoq = 30;
             param->psyRd = 0.5;
             param->rc.ipFactor = 1.1;
@@ -628,6 +633,17 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
     OPT("crqpoffs") p->crQpOffset = atoi(value);
     OPT("rd") p->rdLevel = atoi(value);
+    OPT2("rdoq", "rdoq-level")
+    {
+        int bval = atobool(value);
+        if (bError || bval)
+        {
+            bError = false;
+            p->rdoqLevel = atoi(value);
+        }
+        else
+            p->rdoqLevel = 0;
+    }
     OPT("psy-rd")
     {
         int bval = atobool(value);
@@ -1033,6 +1049,8 @@ int x265_check_params(x265_param *param)
           "Rate control mode is out of range");
     CHECK(param->rdLevel < 0 || param->rdLevel > 6,
           "RD Level is out of range");
+    CHECK(param->rdoqLevel < 0 || param->rdoqLevel > 2,
+        "RDOQ Level is out of range");
     CHECK(param->bframes > param->lookaheadDepth && !param->rc.bStatRead,
           "Lookahead depth must be greater than the max consecutive bframe count");
     CHECK(param->bframes < 0,
@@ -1250,7 +1268,7 @@ void x265_print_params(x265_param *param)
 #define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
-    fprintf(stderr, "rd=%d ", param->rdLevel);
+    fprintf(stderr, "rd=%d rdoq=%d ", param->rdLevel, param->rdoqLevel);
     if (param->psyRd > 0.)
         fprintf(stderr, "psy-rd=%.2lf ", param->psyRd);
     if (param->psyRdoq > 0.)

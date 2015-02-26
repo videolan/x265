@@ -660,6 +660,15 @@ typedef struct x265_param
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxIntraDepth;
 
+    /* Set the amount of rate-distortion analysis to use within quant. 0 implies
+     * no rate-distortion optimization. At level 1 rate-distortion cost is used to
+     * find optimal rounding values for each level (and allows psy-rdoq to be
+     * enabled). At level 2 rate-distortion cost is used to make decimate decisions
+     * on each 4x4 coding group (including the cost of signaling the group within
+     * the group bitmap).  Psy-rdoq is less effective at preserving energy when
+     * RDOQ is at level 2 */
+    int       rdoqLevel;
+
     /* Enable the implicit signaling of the sign bit of the last coefficient of
      * each transform unit. This saves one bit per TU at the expense of figuring
      * out which coefficient can be toggled with the least distortion.

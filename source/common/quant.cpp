@@ -194,12 +194,12 @@ Quant::Quant()
     m_nr           = NULL;
 }
 
-bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList, Entropy& entropy)
+bool Quant::init(int rdoqLevel, double psyScale, const ScalingList& scalingList, Entropy& entropy)
 {
     m_entropyCoder = &entropy;
-    m_useRDOQ = useRDOQ;
+    m_rdoqLevel    = rdoqLevel;
     m_psyRdoqScale = (int64_t)(psyScale * 256.0);
-    m_scalingList = &scalingList;
+    m_scalingList  = &scalingList;
     m_resiDctCoeff = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
     m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
     m_fencShortBuf = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE);
@@ -416,7 +416,7 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
         }
     }
 
-    if (m_useRDOQ)
+    if (m_rdoqLevel)
         return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx, usePsy);
     else
     {
@@ -825,7 +825,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
             costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[sigCtx][1]);
             totalRdCost += costCoeffGroupSig[cgScanPos];  /* add the cost of 1 bit in significant CG bitmap */
 
-            if (costZeroCG < totalRdCost)
+            if (costZeroCG < totalRdCost && m_rdoqLevel > 1)
             {
                 sigCoeffGroupFlag64 &= ~cgBlkPosMask;
                 totalRdCost = costZeroCG;
@@ -933,7 +933,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                     bestLastIdx = scanPos + 1;
                     bestCost = costAsLast;
                 }
-                if (dstCoeff[blkPos] > 1)
+                if (dstCoeff[blkPos] > 1 || m_rdoqLevel == 1)
                 {
                     foundLast = true;
                     break;

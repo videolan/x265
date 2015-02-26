@@ -1583,12 +1583,12 @@ void Encoder::configure(x265_param *p)
     }
     p->keyframeMin = X265_MAX(1, X265_MIN(p->keyframeMin, p->keyframeMax / 2 + 1));
 
-    if (p->bBPyramid && !p->bframes)
+    if (!p->bframes)
         p->bBPyramid = 0;
+    if (!p->rdoqLevel)
+        p->psyRdoq = 0;
 
     /* Disable features which are not supported by the current RD level */
-    if (p->rdLevel < 4)
-        p->psyRdoq = 0;                 /* impossible */
     if (p->rdLevel < 3)
     {
         if (p->bCULossless)             /* impossible */

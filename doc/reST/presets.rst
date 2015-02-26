@@ -66,6 +66,8 @@ The presets adjust encoder parameters to affect these trade-offs.
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 | rdLevel      |    2      |     2     |    2     |   2    |  2   |    3   |  4   |   6    |    6     |    6    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
+| rdoq-level   |    0      |     0     |    0     |   0    |  0   |    0   |  2   |   2    |    2     |    2    |
++--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 | tu-intra     |    1      |     1     |    1     |   1    |  1   |    1   |  1   |   2    |    3     |    4    |
 +--------------+-----------+-----------+----------+--------+------+--------+------+--------+----------+---------+
 | tu-inter     |    1      |     1     |    1     |   1    |  1   |    1   |  1   |   2    |    3     |    4    |
@@ -114,12 +116,8 @@ the reconstructed output. It helps rate distortion optimizations select
 modes which preserve high frequency noise:
 
     * :option:`--psy-rd` 0.5
+    * :option:`--rdoq-level` 1
     * :option:`--psy-rdoq` 30
-
-.. Note::
-
-    --psy-rdoq is only effective when RDOQuant is enabled, which is at
-    RD levels 4, 5, and 6 (presets slow and below).
 
 It lowers the strength of adaptive quantization, so residual energy can
 be more evenly distributed across the (noisy) picture:
