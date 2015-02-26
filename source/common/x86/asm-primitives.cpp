@@ -44,6 +44,11 @@ extern "C" {
     p.cu[BLOCK_16x16].prim = fncdef x265_ ## fname ## _16x16_ ## cpu; \
     p.cu[BLOCK_32x32].prim = fncdef x265_ ## fname ## _32x32_ ## cpu; \
     p.cu[BLOCK_64x64].prim = fncdef x265_ ## fname ## _64x64_ ## cpu
+#define ALL_LUMA_CU_TYPED_S(prim, fncdef, fname, cpu) \
+    p.cu[BLOCK_8x8].prim   = fncdef x265_ ## fname ## 8_ ## cpu; \
+    p.cu[BLOCK_16x16].prim = fncdef x265_ ## fname ## 16_ ## cpu; \
+    p.cu[BLOCK_32x32].prim = fncdef x265_ ## fname ## 32_ ## cpu; \
+    p.cu[BLOCK_64x64].prim = fncdef x265_ ## fname ## 64_ ## cpu
 #define ALL_LUMA_TU_TYPED(prim, fncdef, fname, cpu) \
     p.cu[BLOCK_4x4].prim   = fncdef x265_ ## fname ## _4x4_ ## cpu; \
     p.cu[BLOCK_8x8].prim   = fncdef x265_ ## fname ## _8x8_ ## cpu; \
@@ -61,6 +66,7 @@ extern "C" {
     p.cu[BLOCK_32x32].prim = fncdef x265_ ## fname ## _32x32_ ## cpu; \
     p.cu[BLOCK_64x64].prim = fncdef x265_ ## fname ## _64x64_ ## cpu;
 #define ALL_LUMA_CU(prim, fname, cpu)      ALL_LUMA_CU_TYPED(prim, , fname, cpu)
+#define ALL_LUMA_CU_S(prim, fname, cpu)    ALL_LUMA_CU_TYPED_S(prim, , fname, cpu)
 #define ALL_LUMA_TU(prim, fname, cpu)      ALL_LUMA_TU_TYPED(prim, , fname, cpu)
 #define ALL_LUMA_BLOCKS(prim, fname, cpu)  ALL_LUMA_BLOCKS_TYPED(prim, , fname, cpu)
 #define ALL_LUMA_TU_S(prim, fname, cpu)    ALL_LUMA_TU_TYPED_S(prim, , fname, cpu)
