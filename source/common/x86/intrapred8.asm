@@ -65,8 +65,6 @@ pw_planar32_1:        dw 31, 31, 31, 31, 31, 31, 31, 31
 pw_planar32_L:        dw 31, 30, 29, 28, 27, 26, 25, 24
 pw_planar32_H:        dw 23, 22, 21, 20, 19, 18, 17, 16
 
-pw_257:         times 8 dw 257
-
 const ang_table
 %assign x 0
 %rep 32
@@ -80,6 +78,7 @@ cextern pw_4
 cextern pw_8
 cextern pw_16
 cextern pw_32
+cextern pw_257
 cextern pw_1024
 cextern pb_unpackbd1
 cextern multiL
@@ -144,12 +143,21 @@ cglobal intra_pred_dc4, 5,5,3
     paddw       m2, m1
     psraw       m2, 2
     packuswb    m2, m2
+%if ARCH_X86_64
     movq        r4, m2
     mov         [r0], r4b
     shr         r4, 8
     mov         [r0 + r1], r4b
     shr         r4, 8
     mov         [r0 + r1 * 2], r4b
+%else
+    movd        r2d, m2
+    mov         [r0], r2b
+    shr         r2, 8
+    mov         [r0 + r1], r2b
+    shr         r2, 8
+    mov         [r0 + r1 * 2], r2b
+%endif
 .end:
     RET
 
