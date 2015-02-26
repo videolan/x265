@@ -32472,17 +32472,17 @@ cglobal intra_pred_ang8_29, 3, 4, 5
     vbroadcasti128    m0, [r2 + 1]
 
     pshufb            m1, m0, [c_ang8_src1_9_1_9]
-    pshufb            m2, m0, [c_ang8_src2_10_2_10]
-    pshufb            m4, m0, [c_ang8_src3_11_3_11]
-    pshufb            m0,     [c_ang8_src3_11_4_12]
+    pshufb            m2, m0, [c_ang8_src1_9_2_10]
+    pshufb            m4, m0, [c_ang8_src2_10_2_10]
+    pshufb            m0,     [c_ang8_src2_10_3_11]
 
-    pmaddubsw         m1, [c_ang8_13_26]
+    pmaddubsw         m1, [c_ang8_9_18]
     pmulhrsw          m1, m3
-    pmaddubsw         m2, [c_ang8_7_20]
+    pmaddubsw         m2, [c_ang8_27_4]
     pmulhrsw          m2, m3
-    pmaddubsw         m4, [c_ang8_1_14]
+    pmaddubsw         m4, [c_ang8_13_22]
     pmulhrsw          m4, m3
-    pmaddubsw         m0, [c_ang8_27_8]
+    pmaddubsw         m0, [c_ang8_31_8]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
