@@ -1433,12 +1433,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 {
     uint32_t trSize = 1 << log2TrSize;
     uint32_t tqBypass = cu.m_tqBypass[absPartIdx];
-
     // compute number of significant coefficients
-    uint32_t numSig = primitives.count_nonzero(coeff, (1 << (log2TrSize << 1)));
-
+    uint32_t numSig = primitives.cu[log2TrSize - 2].count_nonzero(coeff);
     X265_CHECK(numSig > 0, "cbf check fail\n");
-
     bool bHideFirstSign = cu.m_slice->m_pps->bSignHideEnabled && !tqBypass;
 
     if (log2TrSize <= MAX_LOG2_TS_SIZE && !tqBypass && cu.m_slice->m_pps->bTransformSkipEnabled)

@@ -488,9 +488,7 @@ void Quant::invtransformNxN(int16_t* residual, uint32_t resiStride, const coeff_
     else
     {
         int useDST = !sizeIdx && ttype == TEXT_LUMA && bIntra;
-
-        X265_CHECK((int)numSig == primitives.count_nonzero(coeff, 1 << (log2TrSize * 2)), "numSig differ\n");
-
+        X265_CHECK((int)numSig == primitives.cu[log2TrSize - 2].count_nonzero(coeff), "numSig differ\n");
         // DC only
         if (numSig == 1 && coeff[0] != 0 && !useDST)
         {
@@ -527,13 +525,10 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     const int32_t* qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
     int numCoeff = 1 << (log2TrSize * 2);
-
     uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, dstCoeff, qbits, add, numCoeff);
-
-    X265_CHECK((int)numSig == primitives.count_nonzero(dstCoeff, 1 << (log2TrSize * 2)), "numSig differ\n");
+    X265_CHECK((int)numSig == primitives.cu[log2TrSize - 2].count_nonzero(dstCoeff), "numSig differ\n");
     if (!numSig)
         return 0;
-
     uint32_t trSize = 1 << log2TrSize;
     int64_t lambda2 = m_qpParam[ttype].lambda2;
     int64_t psyScale = (m_psyRdoqScale * m_qpParam[ttype].lambda);
