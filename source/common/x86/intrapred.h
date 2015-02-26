@@ -164,6 +164,7 @@ void x265_intra_pred_ang8_4_avx2(pixel* dst, intptr_t dstStride, const pixel* sr
 void x265_intra_pred_ang8_32_avx2(pixel* dst, intptr_t dstStride, const pixel* srcPix, int dirMode, int bFilter);
 void x265_intra_pred_ang8_5_avx2(pixel* dst, intptr_t dstStride, const pixel* srcPix, int dirMode, int bFilter);
 void x265_intra_pred_ang8_31_avx2(pixel* dst, intptr_t dstStride, const pixel* srcPix, int dirMode, int bFilter);
+void x265_intra_pred_ang8_6_avx2(pixel* dst, intptr_t dstStride, const pixel* srcPix, int dirMode, int bFilter);
 void x265_intra_pred_ang8_30_avx2(pixel* dst, intptr_t dstStride, const pixel* srcPix, int dirMode, int bFilter);
 void x265_all_angs_pred_4x4_sse4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma);
 void x265_all_angs_pred_8x8_sse4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma);
