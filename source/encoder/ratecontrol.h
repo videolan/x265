@@ -34,8 +34,8 @@ namespace x265 {
 
 class Encoder;
 class Frame;
-struct SPS;
 class SEIBufferingPeriod;
+struct SPS;
 #define BASE_FRAME_DURATION 0.04
 
 /* Arbitrary limitations as a sanity check. */
@@ -228,9 +228,9 @@ public:
                                 * This value is the current position (0 or 1). */
     } m_cuTreeStats;
 
-    RateControl(x265_param* p);
-    bool init(const SPS* sps);
-    void initHRD(SPS* sps);
+    RateControl(x265_param& p);
+    bool init(const SPS& sps);
+    void initHRD(SPS& sps);
 
     void setFinalFrameCount(int count);
     void terminate();          /* un-block all waiting functions so encoder may close */

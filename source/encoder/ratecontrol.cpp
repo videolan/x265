@@ -157,10 +157,9 @@ x265_zone* RateControl::getZone()
     return NULL;
 }
 
-
-RateControl::RateControl(x265_param *p)
+RateControl::RateControl(x265_param& p)
 {
-    m_param = p;
+    m_param = &p;
     int lowresCuWidth = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     int lowresCuHeight = ((m_param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_ncu = lowresCuWidth * lowresCuHeight;
@@ -315,7 +314,7 @@ RateControl::RateControl(x265_param *p)
         m_cuTreeStats.qpBuffer[i] = NULL;
 }
 
-bool RateControl::init(const SPS *sps)
+bool RateControl::init(const SPS& sps)
 {
     if (m_isVbv)
     {
@@ -332,7 +331,7 @@ bool RateControl::init(const SPS *sps)
 
         if (m_param->bEmitHRDSEI)
         {
-            const HRDInfo* hrd = &sps->vuiParameters.hrdParameters;
+            const HRDInfo* hrd = &sps.vuiParameters.hrdParameters;
             vbvBufferSize = hrd->cpbSizeValue << (hrd->cpbSizeScale + CPB_SHIFT);
             vbvMaxBitrate = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
         }
@@ -601,13 +600,13 @@ bool RateControl::init(const SPS *sps)
     return true;
 }
 
-void RateControl::initHRD(SPS *sps)
+void RateControl::initHRD(SPS& sps)
 {
     int vbvBufferSize = m_param->rc.vbvBufferSize * 1000;
     int vbvMaxBitrate = m_param->rc.vbvMaxBitrate * 1000;
 
     // Init HRD
-    HRDInfo* hrd = &sps->vuiParameters.hrdParameters;
+    HRDInfo* hrd = &sps.vuiParameters.hrdParameters;
     hrd->cbrFlag = m_isCbr;
 
     // normalize HRD size and rate to the value / scale notation
@@ -622,9 +621,9 @@ void RateControl::initHRD(SPS *sps)
     // arbitrary
     #define MAX_DURATION 0.5
 
-    TimingInfo *time = &sps->vuiParameters.timingInfo;
+    TimingInfo *time = &sps.vuiParameters.timingInfo;
     int maxCpbOutputDelay = (int)(X265_MIN(m_param->keyframeMax * MAX_DURATION * time->timeScale / time->numUnitsInTick, INT_MAX));
-    int maxDpbOutputDelay = (int)(sps->maxDecPicBuffering * MAX_DURATION * time->timeScale / time->numUnitsInTick);
+    int maxDpbOutputDelay = (int)(sps.maxDecPicBuffering * MAX_DURATION * time->timeScale / time->numUnitsInTick);
     int maxDelay = (int)(90000.0 * cpbSizeUnscale / bitRateUnscale + 0.5);
 
     hrd->initialCpbRemovalDelayLength = 2 + x265_clip3(4, 22, 32 - calcLength(maxDelay));
@@ -1599,7 +1598,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
             const double epsilon = 0.0001f;
             if (underflow < epsilon && !isFrameDone)
             {
-                init(m_curSlice->m_sps);
+                init(*m_curSlice->m_sps);
                 m_shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);
                 m_shortTermCplxCount = 1;
                 m_isAbrReset = true;

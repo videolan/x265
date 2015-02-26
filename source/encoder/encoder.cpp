@@ -193,7 +193,7 @@ void Encoder::create()
     }
 
     m_dpb = new DPB(m_param);
-    m_rateControl = new RateControl(m_param);
+    m_rateControl = new RateControl(*m_param);
 
     initSPS(&m_sps);
     initPPS(&m_pps);
@@ -247,8 +247,8 @@ void Encoder::create()
         m_frameEncoder[i]->start();
     }
     if (m_param->bEmitHRDSEI)
-        m_rateControl->initHRD(&m_sps);
-    if (!m_rateControl->init(&m_sps))
+        m_rateControl->initHRD(m_sps);
+    if (!m_rateControl->init(m_sps))
         m_aborted = true;
     if (!m_lookahead->create())
         m_aborted = true;
