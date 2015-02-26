@@ -1904,7 +1904,6 @@ int64_t CostEstimateGroup::estimateFrameCost(LookaheadTLD& tld, int p0, int p1, 
              * going to need motion searches or bidir measurements */
 
             memset(&m_slice, 0, sizeof(Slice) * m_lookahead.m_numCoopSlices);
-            memset(fenc->rowSatds, 0, sizeof(fenc->rowSatds[0]) * m_lookahead.m_heightInCU);
 
             m_lock.acquire();
             X265_CHECK(!m_batchMode, "single CostEstimateGroup instance cannot mix batch modes\n");
