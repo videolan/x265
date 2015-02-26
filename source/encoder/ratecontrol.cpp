@@ -176,7 +176,7 @@ RateControl::RateControl(x265_param& p)
     m_partialResidualCost = 0;
     m_rateFactorMaxIncrement = 0;
     m_rateFactorMaxDecrement = 0;
-    m_fps = m_param->fpsNum / m_param->fpsDenom;
+    m_fps = (double)m_param->fpsNum / m_param->fpsDenom;
     m_startEndOrder.set(0);
     m_bTerminated = false;
     m_finalFrameCount = 0;
