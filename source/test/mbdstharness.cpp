@@ -284,7 +284,7 @@ bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonz
     for (int i = 0; i < ITERS; i++)
     {
         int index = i % TEST_CASES;
-		int opt_cnt = (int)checked(opt, short_test_buff[index] + j);
+        int opt_cnt = (int)checked(opt, short_test_buff[index] + j);
         int ref_cnt = ref(short_test_buff[index] + j);
         if (ref_cnt != opt_cnt)
             return false;
