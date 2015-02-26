@@ -32553,7 +32553,7 @@ cglobal intra_pred_ang8_29, 3, 4, 5
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_28, 3, 4, 5
+cglobal intra_pred_ang8_28, 3, 4, 6
     mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 1]
     movu              m5, [c_ang8_src1_9_1_9]
