@@ -122,9 +122,9 @@ public:
     uint32_t      m_cuPelY;           // CU position within the picture, in pixels (Y)
     uint32_t      m_numPartitions;    // maximum number of 4x4 partitions within this CU
 
-    int           m_chromaFormat;
-    int           m_hChromaShift;
-    int           m_vChromaShift;
+    uint32_t      m_chromaFormat;
+    uint32_t      m_hChromaShift;
+    uint32_t      m_vChromaShift;
 
     /* Per-part data, stored contiguously */
     int8_t*       m_qp;               // array of QP values
@@ -216,7 +216,6 @@ public:
     uint32_t getSCUAddr() const                  { return (m_cuAddr << g_unitSizeDepth * 2) + m_absIdxInCTU; }
     uint32_t getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const;
     uint32_t getCtxSkipFlag(uint32_t absPartIdx) const;
-    ScanType getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra) const;
     void     getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma) const;
 
     const CUData* getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx) const;
@@ -241,7 +240,8 @@ protected:
 
     bool hasEqualMotion(uint32_t absPartIdx, const CUData& candCU, uint32_t candAbsPartIdx) const;
 
-    bool isDiffMER(int xN, int yN, int xP, int yP) const;
+    /* Check whether the current PU and a spatial neighboring PU are in same merge region */
+    bool isDiffMER(int xN, int yN, int xP, int yP) const { return ((xN >> 2) != (xP >> 2)) || ((yN >> 2) != (yP >> 2)); }
 
     // add possible motion vector predictor candidates
     bool addMVPCand(MV& mvp, int picList, int refIdx, uint32_t absPartIdx, MVP_DIR dir) const;

@@ -37,6 +37,7 @@ const pw_16,       times 16 dw 16
 const pw_32,       times 16 dw 32
 const pw_128,      times 16 dw 128
 const pw_256,      times 16 dw 256
+const pw_257,      times 16 dw 257
 const pw_512,      times 16 dw 512
 const pw_1023,     times 8  dw 1023
 const pw_1024,     times 16 dw 1024

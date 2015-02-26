@@ -38,7 +38,7 @@ namespace {
 void bcast1(uint8_t* dst, uint8_t val)  { dst[0] = val; }
 
 void copy4(uint8_t* dst, uint8_t* src)  { ((uint32_t*)dst)[0] = ((uint32_t*)src)[0]; }
-void bcast4(uint8_t* dst, uint8_t val)  { ((uint32_t*)dst)[0] = 0x01010101 * val; }
+void bcast4(uint8_t* dst, uint8_t val)  { ((uint32_t*)dst)[0] = 0x01010101u * val; }
 
 void copy16(uint8_t* dst, uint8_t* src) { ((uint64_t*)dst)[0] = ((uint64_t*)src)[0]; ((uint64_t*)dst)[1] = ((uint64_t*)src)[1]; }
 void bcast16(uint8_t* dst, uint8_t val) { uint64_t bval = 0x0101010101010101ULL * val; ((uint64_t*)dst)[0] = bval; ((uint64_t*)dst)[1] = bval; }
@@ -1426,9 +1426,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         if (isInterB)
             cuLeft->getMvField(cuLeft, leftPartIdx, 1, candMvField[count][1]);
 
-        count++;
-    
-        if (count == maxNumMergeCand)
+        if (++count == maxNumMergeCand)
             return maxNumMergeCand;
     }
 
@@ -1450,9 +1448,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         if (isInterB)
             cuAbove->getMvField(cuAbove, abovePartIdx, 1, candMvField[count][1]);
 
-        count++;
-   
-        if (count == maxNumMergeCand)
+        if (++count == maxNumMergeCand)
             return maxNumMergeCand;
     }
 
@@ -1471,9 +1467,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         if (isInterB)
             cuAboveRight->getMvField(cuAboveRight, aboveRightPartIdx, 1, candMvField[count][1]);
 
-        count++;
-
-        if (count == maxNumMergeCand)
+        if (++count == maxNumMergeCand)
             return maxNumMergeCand;
     }
 
@@ -1492,9 +1486,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         if (isInterB)
             cuLeftBottom->getMvField(cuLeftBottom, leftBottomPartIdx, 1, candMvField[count][1]);
 
-        count++;
-
-        if (count == maxNumMergeCand)
+        if (++count == maxNumMergeCand)
             return maxNumMergeCand;
     }
 
@@ -1516,9 +1508,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
             if (isInterB)
                 cuAboveLeft->getMvField(cuAboveLeft, aboveLeftPartIdx, 1, candMvField[count][1]);
 
-            count++;
-
-            if (count == maxNumMergeCand)
+            if (++count == maxNumMergeCand)
                 return maxNumMergeCand;
         }
     }
@@ -1553,31 +1543,21 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
                 absPartAddr = 0;
         }
 
-        int refIdx = 0;
-        uint32_t partIdxCenter = deriveCenterIdx(puIdx);
-        uint32_t curCTUIdx = m_cuAddr;
-        int dir = 0;
-        bool bExistMV = ctuIdx >= 0 && getColMVP(colmv, refIdx, 0, ctuIdx, absPartAddr);
-        if (!bExistMV)
-            bExistMV = getColMVP(colmv, refIdx, 0, curCTUIdx, partIdxCenter);
-        if (bExistMV)
+        int maxList = isInterB ? 2 : 1;
+        int dir = 0, refIdx = 0;
+        for (int list = 0; list < maxList; list++)
         {
-            dir |= 1;
-            candMvField[count][0].mv = colmv;
-            candMvField[count][0].refIdx = refIdx;
-        }
-
-        if (isInterB)
-        {
-            bExistMV = ctuIdx >= 0 && getColMVP(colmv, refIdx, 1, ctuIdx, absPartAddr);
+            bool bExistMV = ctuIdx >= 0 && getColMVP(colmv, refIdx, list, ctuIdx, absPartAddr);
             if (!bExistMV)
-                bExistMV = getColMVP(colmv, refIdx, 1, curCTUIdx, partIdxCenter);
-
+            {
+                uint32_t partIdxCenter = deriveCenterIdx(puIdx);
+                bExistMV = getColMVP(colmv, refIdx, list, m_cuAddr, partIdxCenter);
+            }
             if (bExistMV)
             {
-                dir |= 2;
-                candMvField[count][1].mv = colmv;
-                candMvField[count][1].refIdx = refIdx;
+                dir |= (1 << list);
+                candMvField[count][list].mv = colmv;
+                candMvField[count][list].refIdx = refIdx;
             }
         }
 
@@ -1585,9 +1565,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         {
             candDir[count] = (uint8_t)dir;
 
-            count++;
-        
-            if (count == maxNumMergeCand)
+            if (++count == maxNumMergeCand)
                 return maxNumMergeCand;
         }
     }
@@ -1598,12 +1576,10 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
         uint32_t priorityList0 = 0xEDC984; // { 0, 1, 0, 2, 1, 2, 0, 3, 1, 3, 2, 3 }
         uint32_t priorityList1 = 0xB73621; // { 1, 0, 2, 0, 2, 1, 3, 0, 3, 1, 3, 2 }
 
-        for (uint32_t idx = 0; idx < cutoff; idx++)
+        for (uint32_t idx = 0; idx < cutoff; idx++, priorityList0 >>= 2, priorityList1 >>= 2)
         {
             int i = priorityList0 & 3;
             int j = priorityList1 & 3;
-            priorityList0 >>= 2;
-            priorityList1 >>= 2;
 
             if ((candDir[i] & 0x1) && (candDir[j] & 0x2))
             {
@@ -1620,9 +1596,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
                     candMvField[count][1].refIdx = refIdxL1;
                     candDir[count] = 3;
 
-                    count++;
-
-                    if (count == maxNumMergeCand)
+                    if (++count == maxNumMergeCand)
                         return maxNumMergeCand;
                 }
             }
@@ -1656,18 +1630,6 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     }
 
     return count;
-}
-
-/* Check whether the current PU and a spatial neighboring PU are in a same ME region */
-bool CUData::isDiffMER(int xN, int yN, int xP, int yP) const
-{
-    uint32_t plevel = 2;
-
-    if ((xN >> plevel) != (xP >> plevel))
-        return true;
-    if ((yN >> plevel) != (yP >> plevel))
-        return true;
-    return false;
 }
 
 /* Constructs a list of candidates for AMVP, and a larger list of motion candidates */
@@ -1804,16 +1766,17 @@ int CUData::fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int re
 
 void CUData::clipMv(MV& outMV) const
 {
-    int mvshift = 2;
-    int offset = 8;
-    int xmax = (m_slice->m_sps->picWidthInLumaSamples + offset - m_cuPelX - 1) << mvshift;
-    int xmin = (-(int)g_maxCUSize - offset - (int)m_cuPelX + 1) << mvshift;
+    const uint32_t mvshift = 2;
+    uint32_t offset = 8;
 
-    int ymax = (m_slice->m_sps->picHeightInLumaSamples + offset - m_cuPelY - 1) << mvshift;
-    int ymin = (-(int)g_maxCUSize - offset - (int)m_cuPelY + 1) << mvshift;
+    int16_t xmax = (int16_t)((m_slice->m_sps->picWidthInLumaSamples + offset - m_cuPelX - 1) << mvshift);
+    int16_t xmin = -(int16_t)((g_maxCUSize + offset + m_cuPelX - 1) << mvshift);
 
-    outMV.x = (int16_t)X265_MIN(xmax, X265_MAX(xmin, (int)outMV.x));
-    outMV.y = (int16_t)X265_MIN(ymax, X265_MAX(ymin, (int)outMV.y));
+    int16_t ymax = (int16_t)((m_slice->m_sps->picHeightInLumaSamples + offset - m_cuPelY - 1) << mvshift);
+    int16_t ymin = -(int16_t)((g_maxCUSize + offset + m_cuPelY - 1) << mvshift);
+
+    outMV.x = X265_MIN(xmax, X265_MAX(xmin, outMV.x));
+    outMV.y = X265_MIN(ymax, X265_MAX(ymin, outMV.y));
 }
 
 bool CUData::addMVPCand(MV& mvp, int picList, int refIdx, uint32_t partUnitIdx, MVP_DIR dir) const
@@ -2006,60 +1969,45 @@ uint32_t CUData::deriveCenterIdx(uint32_t puIdx) const
                            + (puWidth  >> (LOG2_UNIT_SIZE + 1))];
 }
 
-ScanType CUData::getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra) const
-{
-    uint32_t dirMode;
-
-    if (!bIsIntra)
-        return SCAN_DIAG;
-
-    // check that MDCS can be used for this TU
-    if (bIsLuma)
-    {
-        if (log2TrSize > MDCS_LOG2_MAX_SIZE)
-            return SCAN_DIAG;
-
-        dirMode = m_lumaIntraDir[absPartIdx];
-    }
-    else
-    {
-        if (log2TrSize > (uint32_t)(MDCS_LOG2_MAX_SIZE - m_hChromaShift))
-            return SCAN_DIAG;
-
-        dirMode = m_chromaIntraDir[absPartIdx];
-        if (dirMode == DM_CHROMA_IDX)
-        {
-            dirMode = m_lumaIntraDir[(m_chromaFormat == X265_CSP_I444) ? absPartIdx : absPartIdx & 0xFC];
-            dirMode = (m_chromaFormat == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[dirMode] : dirMode;
-        }
-    }
-
-    if (abs((int)dirMode - VER_IDX) <= MDCS_ANGLE_LIMIT)
-        return SCAN_HOR;
-    else if (abs((int)dirMode - HOR_IDX) <= MDCS_ANGLE_LIMIT)
-        return SCAN_VER;
-    else
-        return SCAN_DIAG;
-}
-
 void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma) const
 {
+    bool bIsIntra = isIntra(absPartIdx);
+
     // set the group layout
     result.log2TrSizeCG = log2TrSize - 2;
 
     // set the scan orders
-    result.scanType = getCoefScanIdx(absPartIdx, log2TrSize, bIsLuma, isIntra(absPartIdx));
+    if (bIsIntra)
+    {
+        uint32_t dirMode;
+
+        if (bIsLuma)
+            dirMode = m_lumaIntraDir[absPartIdx];
+        else
+        {
+            dirMode = m_chromaIntraDir[absPartIdx];
+            if (dirMode == DM_CHROMA_IDX)
+            {
+                dirMode = m_lumaIntraDir[(m_chromaFormat == X265_CSP_I444) ? absPartIdx : absPartIdx & 0xFC];
+                dirMode = (m_chromaFormat == X265_CSP_I422) ? g_chroma422IntraAngleMappingTable[dirMode] : dirMode;
+            }
+        }
+
+        if (log2TrSize <= (MDCS_LOG2_MAX_SIZE - m_hChromaShift) || (bIsLuma && log2TrSize == MDCS_LOG2_MAX_SIZE))
+            result.scanType = dirMode >= 22 && dirMode <= 30 ? SCAN_HOR : dirMode >= 6 && dirMode <= 14 ? SCAN_VER : SCAN_DIAG;
+        else
+            result.scanType = SCAN_DIAG;
+    }
+    else
+        result.scanType = SCAN_DIAG;
+
     result.scan     = g_scanOrder[result.scanType][log2TrSize - 2];
     result.scanCG   = g_scanOrderCG[result.scanType][result.log2TrSizeCG];
 
     if (log2TrSize == 2)
         result.firstSignificanceMapContext = 0;
     else if (log2TrSize == 3)
-    {
-        result.firstSignificanceMapContext = 9;
-        if (result.scanType != SCAN_DIAG && bIsLuma)
-            result.firstSignificanceMapContext += 6;
-    }
+        result.firstSignificanceMapContext = (result.scanType != SCAN_DIAG && bIsLuma) ? 15 : 9;
     else
         result.firstSignificanceMapContext = bIsLuma ? 21 : 12;
 }

@@ -97,6 +97,7 @@ cextern pw_4
 cextern pw_8
 cextern pw_16
 cextern pw_32
+cextern pw_257
 cextern pw_1024
 cextern pb_unpackbd1
 cextern multiL
@@ -104,6 +105,80 @@ cextern multiH
 cextern multiH2
 cextern multiH3
 cextern multi_2Row
+
+;---------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+;---------------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_dc4, 5,5,3
+    inc         r2
+    pxor        m0, m0
+    movu        m1, [r2]
+    pshufd      m1, m1, 0xF8
+    psadbw      m1, m0              ; m1 = sum
+
+    test        r4d, r4d
+
+    paddw       m1, [pw_4]
+    psraw       m1, 3
+    movd        r4d, m1             ; r4d = dc_val
+    pmullw      m1, [pw_257]
+    pshuflw     m1, m1, 0x00
+
+    ; store DC 4x4
+    lea         r3, [r1 * 3]
+    movd        [r0], m1
+    movd        [r0 + r1], m1
+    movd        [r0 + r1 * 2], m1
+    movd        [r0 + r3], m1
+
+    ; do DC filter
+    jz         .end
+    lea         r3d, [r4d * 2 + 2]  ; r3d = DC * 2 + 2
+    add         r4d, r3d            ; r4d = DC * 3 + 2
+    movd        m1, r4d
+    pshuflw     m1, m1, 0           ; m1 = pixDCx3
+
+    ; filter top
+    movd        m2, [r2]
+    punpcklbw   m2, m0
+    paddw       m2, m1
+    psraw       m2, 2
+    packuswb    m2, m2
+    movd        [r0], m2            ; overwrite top-left pixel, we will update it later
+
+    ; filter top-left
+    movzx       r4d, byte [r2 + 8]
+    add         r3d, r4d
+    movzx       r4d, byte [r2]
+    add         r3d, r4d
+    shr         r3d, 2
+    mov         [r0], r3b
+
+    ; filter left
+    add         r0, r1
+    movq        m2, [r2 + 9]
+    punpcklbw   m2, m0
+    paddw       m2, m1
+    psraw       m2, 2
+    packuswb    m2, m2
+%if ARCH_X86_64
+    movq        r4, m2
+    mov         [r0], r4b
+    shr         r4, 8
+    mov         [r0 + r1], r4b
+    shr         r4, 8
+    mov         [r0 + r1 * 2], r4b
+%else
+    movd        r2d, m2
+    mov         [r0], r2b
+    shr         r2, 8
+    mov         [r0 + r1], r2b
+    shr         r2, 8
+    mov         [r0 + r1 * 2], r2b
+%endif
+.end:
+    RET
 
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)

@@ -44,7 +44,7 @@ void Bitstream::push_back(uint8_t val)
 void Bitstream::write(uint32_t val, uint32_t numBits)
 {
     X265_CHECK(numBits <= 32, "numBits out of range\n");
-    X265_CHECK(numBits == 32 || ((val & (~0 << numBits)) == 0), "numBits & val out of range\n");
+    X265_CHECK(numBits == 32 || ((val & (~0u << numBits)) == 0), "numBits & val out of range\n");
 
     uint32_t totalPartialBits = m_partialByteBits + numBits;
     uint32_t nextPartialBits = totalPartialBits & 7;

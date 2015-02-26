@@ -540,15 +540,14 @@ void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPart
 {
     const Slice* slice = ctu.m_slice;
 
-    if (depth <= slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
-        bEncodeDQP = true;
-
     int cuSplitFlag = !(cuGeom.flags & CUGeom::LEAF);
     int cuUnsplitFlag = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
 
     if (!cuUnsplitFlag)
     {
         uint32_t qNumParts = cuGeom.numPartitions >> 2;
+        if (depth == slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
+            bEncodeDQP = true;
         for (uint32_t qIdx = 0; qIdx < 4; ++qIdx, absPartIdx += qNumParts)
         {
             const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + qIdx);
@@ -564,6 +563,8 @@ void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPart
     if (depth < ctu.m_cuDepth[absPartIdx] && depth < g_maxCUDepth)
     {
         uint32_t qNumParts = cuGeom.numPartitions >> 2;
+        if (depth == slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
+            bEncodeDQP = true;
         for (uint32_t qIdx = 0; qIdx < 4; ++qIdx, absPartIdx += qNumParts)
         {
             const CUGeom& childGeom = *(&cuGeom + cuGeom.childOffset + qIdx);
@@ -571,6 +572,9 @@ void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPart
         }
         return;
     }
+
+    if (depth <= slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
+        bEncodeDQP = true;
 
     if (slice->m_pps->bTransquantBypassEnabled)
         codeCUTransquantBypassFlag(ctu.m_tqBypass[absPartIdx]);

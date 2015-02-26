@@ -29,11 +29,6 @@ configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 
-option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
-if(CHECKED_BUILD)
-    add_definitions(-DCHECKED_BUILD=1)
-endif()
-
 # System architecture detection
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSPROC)
 set(X86_ALIASES x86 i386 i686 x86_64 amd64)
@@ -175,6 +170,25 @@ if(YASM_FOUND AND X86)
         message(STATUS "Found Yasm ${YASM_VERSION_STRING} to build assembly primitives")
         option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" ON)
     endif()
+endif()
+
+option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
+if(CHECKED_BUILD)
+    add_definitions(-DCHECKED_BUILD=1)
+    if(GCC)
+        check_cxx_compiler_flag(-fsanitize=address CC_HAS_FSANITIZE)              # clang and gcc
+        check_cxx_compiler_flag(-fsanitize=undefined-trap CC_HAS_CATCH_UNDEFINED) # clang
+        check_cxx_compiler_flag(-ftrapv CC_HAS_FTRAPV)                            # gcc
+        if(CC_HAS_FSANITIZE)
+            add_definitions(-fsanitize=address)
+        endif()
+        if(CC_HAS_FTRAPV)
+            add_definitions(-ftrapv)
+        endif()
+        if(CC_HAS_CATCH_UNDEFINED)
+            add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error)
+        endif()
+    endif(GCC)
 endif()
 
 # Build options
