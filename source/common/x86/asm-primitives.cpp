@@ -1482,7 +1482,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_avx;
         p.ssim_end_4 = x265_pixel_ssim_end4_avx;
+
+        p.cu[BLOCK_16x16].copy_ss = x265_blockcopy_ss_16x16_avx;
         p.cu[BLOCK_64x64].copy_ss = x265_blockcopy_ss_64x64_avx;
+        p.chroma[X265_CSP_I420].cu[CHROMA_420_16x16].copy_ss = x265_blockcopy_ss_16x16_avx;
+        p.chroma[X265_CSP_I422].cu[CHROMA_422_16x32].copy_ss = x265_blockcopy_ss_16x32_avx;
 
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].copy_pp = x265_blockcopy_pp_32x8_avx;
         p.pu[LUMA_32x8].copy_pp = x265_blockcopy_pp_32x8_avx;
@@ -1584,8 +1588,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_16x16].calcresidual = x265_getResidual16_avx2;
         p.cu[BLOCK_32x32].calcresidual = x265_getResidual32_avx2;
 
-        p.chroma[X265_CSP_I420].cu[CHROMA_420_16x16].copy_ss = x265_blockcopy_ss_16x16_avx;
-        p.chroma[X265_CSP_I422].cu[CHROMA_422_16x32].copy_ss = x265_blockcopy_ss_16x32_avx;
         p.scale1D_128to64 = x265_scale1D_128to64_avx2;
         // copy_sp primitives
         p.cu[BLOCK_16x16].copy_sp = x265_blockcopy_sp_16x16_avx2;
