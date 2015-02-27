@@ -2047,7 +2047,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         bool bDoUnidir = true;
 
         /* Uni-directional prediction */
-        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+        if (m_param->analysisMode == X265_ANALYSIS_LOAD && bestME[0].ref >= 0)
         {
             for (int l = 0; l < numPredDir; l++)
             {
