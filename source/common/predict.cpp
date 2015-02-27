@@ -582,11 +582,11 @@ void Predict::addWeightUni(const PredictionUnit& pu, Yuv& predYuv, const ShortYu
 
 void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
 {
-    int sizeIdx = log2TrSize - 2;
     int tuSize = 1 << log2TrSize;
-    int filter = !!(g_intraFilterFlags[dirMode] & tuSize);
+    int sizeIdx = log2TrSize - 2;
     X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
 
+    int filter = !!(g_intraFilterFlags[dirMode] & tuSize);
     bool bFilter = log2TrSize <= 4;
     primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, intraNeighbourBuf[filter], dirMode, bFilter);
 }
@@ -597,15 +597,8 @@ void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, 
     int sizeIdx = log2TrSizeC - 2;
     X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
 
-    pixel* srcBuf = intraNeighbourBuf[0];
-
-    if (chFmt == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize))
-    {
-        primitives.cu[sizeIdx].intra_filter(intraNeighbourBuf[0], intraNeighbourBuf[1]);
-        srcBuf = intraNeighbourBuf[1];
-    }
-
-    primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, srcBuf, dirMode, 0);
+    int filter = !!(chFmt == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize));
+    primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, intraNeighbourBuf[filter], dirMode, 0);
 }
 
 void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t puAbsPartIdx, const IntraNeighbors& intraNeighbors, int dirMode)
@@ -665,6 +658,9 @@ void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint3
     intptr_t picStride = cu.m_encData->m_reconPic->m_strideC;
 
     fillReferenceSamples(adiOrigin, picStride, intraNeighbors, intraNeighbourBuf[0]);
+
+    if (m_csp == X265_CSP_I444)
+        primitives.cu[intraNeighbors.log2TrSize - 2].intra_filter(intraNeighbourBuf[0], intraNeighbourBuf[1]);
 }
 
 void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth, bool isLuma, IntraNeighbors *intraNeighbors)
