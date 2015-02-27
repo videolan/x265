@@ -829,7 +829,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tu
             initAdiPatternChroma(cu, cuGeom, absPartIdxC, intraNeighbors, chromaId);
 
             // get prediction signal
-            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC, m_csp);
+            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC);
             cu.setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
 
             primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
@@ -917,7 +917,7 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
                 chromaPredMode = g_chroma422IntraAngleMappingTable[chromaPredMode];
 
             // get prediction signal
-            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC, m_csp);
+            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC);
 
             uint64_t bCost = MAX_INT64;
             uint32_t bDist = 0;
@@ -1116,7 +1116,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
             initAdiPatternChroma(cu, cuGeom, absPartIdxC, intraNeighbors, chromaId);
 
             // get prediction signal
-            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC, m_csp);
+            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC);
 
             X265_CHECK(!cu.m_transformSkip[ttype][0], "transform skip not supported at low RD levels\n");
 
@@ -1661,7 +1661,7 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom)
             pixel* pred = predYuv->m_buf[chromaId];
             Predict::initAdiPatternChroma(cu, cuGeom, 0, intraNeighbors, chromaId);
             // get prediction signal
-            predIntraChromaAng(chromaPredMode, pred, fencYuv->m_csize, log2TrSizeC, m_csp);
+            predIntraChromaAng(chromaPredMode, pred, fencYuv->m_csize, log2TrSizeC);
             cost += primitives.cu[log2TrSizeC - 2].sa8d(fenc, predYuv->m_csize, pred, fencYuv->m_csize) << costShift;
         }
 
