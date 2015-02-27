@@ -124,7 +124,6 @@ modes which preserve high frequency noise:
 It lowers the strength of adaptive quantization, so residual energy can
 be more evenly distributed across the (noisy) picture:
 
-    * :option:`--aq-mode` 1
     * :option:`--aq-strength` 0.3
 
 And it similarly tunes rate control to prevent the slice QP from
