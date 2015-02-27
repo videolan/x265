@@ -117,6 +117,7 @@ const ang_table
 
 SECTION .text
 
+cextern pw_2
 cextern pw_4
 cextern pw_8
 cextern pw_16
@@ -202,6 +203,92 @@ cglobal intra_pred_dc4, 5,5,3
     shr         r2, 8
     mov         [r0 + r1 * 2], r2b
 %endif
+.end:
+    RET
+
+;---------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+;---------------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_dc8, 5, 7, 3
+    pxor            m0,            m0
+    movh            m1,            [r2 + 1]
+    movh            m2,            [r2 + 17]
+    punpcklqdq      m1,            m2
+    psadbw          m1,            m0
+    pshufd          m2,            m1, 2
+    paddw           m1,            m2
+
+    paddw           m1,            [pw_8]
+    psraw           m1,            4
+    pmullw          m1,            [pw_257]
+    pshuflw         m1,            m1, 0x00       ; m1 = byte [dc_val ...]
+
+    test            r4d,           r4d
+
+    ; store DC 8x8
+    lea             r6,            [r1 + r1 * 2]
+    lea             r5,            [r6 + r1 * 2]
+    movh            [r0],          m1
+    movh            [r0 + r1],     m1
+    movh            [r0 + r1 * 2], m1
+    movh            [r0 + r6],     m1
+    movh            [r0 + r1 * 4], m1
+    movh            [r0 + r5],     m1
+    movh            [r0 + r6 * 2], m1
+    lea             r5,            [r5 + r1 * 2]
+    movh            [r0 + r5],     m1
+
+    ; Do DC Filter
+    jz              .end
+    psrlw           m1,            8
+    movq            m2,            [pw_2]
+    pmullw          m2,            m1
+    paddw           m2,            [pw_2]
+    movd            r4d,           m2             ; r4d = DC * 2 + 2
+    paddw           m1,            m2             ; m1 = DC * 3 + 2
+    pshufd          m1,            m1, 0
+
+    ; filter top
+    movq            m2,            [r2 + 1]
+    punpcklbw       m2,            m0
+    paddw           m2,            m1
+    psraw           m2,            2              ; sum = sum / 16
+    packuswb        m2,            m2
+    movh            [r0],          m2
+
+    ; filter top-left
+    movzx           r3d, byte      [r2 + 17]
+    add             r4d,           r3d
+    movzx           r3d, byte      [r2 + 1]
+    add             r3d,           r4d
+    shr             r3d,           2
+    mov             [r0],          r3b
+
+    ; filter left
+    movq            m2,            [r2 + 18]
+    punpcklbw       m2,            m0
+    paddw           m2,            m1
+    psraw           m2,            2
+    packuswb        m2,            m2
+    movd            r2d,           m2
+    lea             r0,            [r0 + r1]
+    lea             r5,            [r6 + r1 * 2]
+    mov             [r0],          r2b
+    shr             r2,            8
+    mov             [r0 + r1],     r2b
+    shr             r2,            8
+    mov             [r0 + r1 * 2], r2b
+    shr             r2,            8
+    mov             [r0 + r6],     r2b
+    pshufd          m2,            m2, 0x01
+    movd            r2d,           m2
+    mov             [r0 + r1 * 4], r2b
+    shr             r2,            8
+    mov             [r0 + r5],     r2b
+    shr             r2,            8
+    mov             [r0 + r6 * 2], r2b
+
 .end:
     RET
 
