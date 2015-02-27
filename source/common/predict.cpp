@@ -79,35 +79,6 @@ fail:
     return false;
 }
 
-void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
-{
-    int sizeIdx = log2TrSize - 2;
-    int tuSize = 1 << log2TrSize;
-    int filter = !!(g_intraFilterFlags[dirMode] & tuSize);
-    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
-
-    bool bFilter = log2TrSize <= 4;
-    primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, intraNeighbourBuf[filter], dirMode, bFilter);
-}
-
-void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
-{
-    int tuSize = 1 << log2TrSizeC;
-    int sizeIdx = log2TrSizeC - 2;
-    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
-
-    pixel* srcBuf = intraNeighbourBuf[0];
-
-    if (chFmt == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize))
-    {
-        primitives.cu[sizeIdx].intra_filter(intraNeighbourBuf[0], intraNeighbourBuf[1]);
-        srcBuf = intraNeighbourBuf[1];
-    }
-
-    primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, srcBuf, dirMode, 0);
-}
-
-
 void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv& predYuv, bool bLuma, bool bChroma)
 {
     int refIdx0 = cu.m_refIdx[0][pu.puAbsPartIdx];
@@ -607,6 +578,34 @@ void Predict::addWeightUni(const PredictionUnit& pu, Yuv& predYuv, const ShortYu
 
         primitives.weight_sp(srcV0, dstV, srcStride, dstStride, cwidth, cheight, w0, round, shift, offset);
     }
+}
+
+void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
+{
+    int sizeIdx = log2TrSize - 2;
+    int tuSize = 1 << log2TrSize;
+    int filter = !!(g_intraFilterFlags[dirMode] & tuSize);
+    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
+
+    bool bFilter = log2TrSize <= 4;
+    primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, intraNeighbourBuf[filter], dirMode, bFilter);
+}
+
+void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
+{
+    int tuSize = 1 << log2TrSizeC;
+    int sizeIdx = log2TrSizeC - 2;
+    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
+
+    pixel* srcBuf = intraNeighbourBuf[0];
+
+    if (chFmt == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize))
+    {
+        primitives.cu[sizeIdx].intra_filter(intraNeighbourBuf[0], intraNeighbourBuf[1]);
+        srcBuf = intraNeighbourBuf[1];
+    }
+
+    primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, srcBuf, dirMode, 0);
 }
 
 void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t puAbsPartIdx, const IntraNeighbors& intraNeighbors, int dirMode)
