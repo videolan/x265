@@ -183,6 +183,7 @@ if(CHECKED_BUILD)
         check_cxx_compiler_flag(-fsanitize=address CC_HAS_FSANITIZE)              # clang and gcc
         check_cxx_compiler_flag(-fsanitize=undefined-trap CC_HAS_CATCH_UNDEFINED) # clang
         check_cxx_compiler_flag(-ftrapv CC_HAS_FTRAPV)                            # gcc
+        check_cxx_compiler_flag(-fstack-protector CC_HAS_STACK_PROTECT)           # gcc
         if(CC_HAS_FSANITIZE)
             add_definitions(-fsanitize=address)
         endif()
@@ -191,6 +192,9 @@ if(CHECKED_BUILD)
         endif()
         if(CC_HAS_CATCH_UNDEFINED)
             add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error)
+        endif()
+        if(CC_HAS_STACK_PROTECT)
+            add_definitions(-fstack-protector)
         endif()
     endif(GCC)
 endif()
