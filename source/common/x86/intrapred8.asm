@@ -292,6 +292,206 @@ cglobal intra_pred_dc8, 5, 7, 3
 .end:
     RET
 
+;--------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+;--------------------------------------------------------------------------------------------
+INIT_XMM sse2
+%if ARCH_X86_64
+cglobal intra_pred_dc16, 5, 10, 4
+%else
+cglobal intra_pred_dc16, 5, 7, 4
+%endif
+    pxor            m0,            m0
+    movu            m1,            [r2 + 1]
+    movu            m2,            [r2 + 33]
+    psadbw          m1,            m0
+    psadbw          m2,            m0
+    paddw           m1,            m2
+    pshufd          m2,            m1, 2
+    paddw           m1,            m2
+
+    paddw           m1,            [pw_16]
+    psraw           m1,            5
+    pmullw          m1,            [pw_257]
+    pshuflw         m1,            m1, 0x00       ; m1 = byte [dc_val ...]
+    pshufd          m1,            m1, 0x00
+
+
+    test            r4d,           r4d
+
+    ; store DC 16x16
+%if ARCH_X86_64
+    lea             r6,            [r1 + r1 * 2]        ;index 3
+    lea             r7,            [r1 + r1 * 4]        ;index 5
+    lea             r8,            [r6 + r1 * 4]        ;index 7
+    lea             r9,            [r0 + r8]            ;base + 7
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    movu            [r0 + r1 * 2], m1
+    movu            [r0 + r6],     m1
+    movu            [r0 + r1 * 4], m1
+    movu            [r0 + r7],     m1
+    movu            [r0 + r6 * 2], m1
+    movu            [r0 + r8],     m1
+    movu            [r0 + r1 * 8], m1
+    movu            [r9 + r1 * 2], m1
+    movu            [r0 + r7 * 2], m1
+    movu            [r9 + r1 * 4], m1
+    movu            [r0 + r6 * 4], m1
+    movu            [r9 + r6 * 2], m1
+    movu            [r0 + r8 * 2], m1
+    movu            [r9 + r1 * 8], m1
+%else ;32 bit
+    mov             r6,            r0
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+    lea             r0,            [r0 + r1 * 2]
+    movu            [r0],          m1
+    movu            [r0 + r1],     m1
+%endif
+    ; Do DC Filter
+    jz              .end
+    psrlw           m1,            8
+    mova            m2,            [pw_2]
+    pmullw          m2,            m1
+    paddw           m2,            [pw_2]
+    movd            r4d,           m2
+    paddw           m1,            m2
+
+    ; filter top
+    movh            m2,            [r2 + 1]
+    punpcklbw       m2,            m0
+    paddw           m2,            m1
+    psraw           m2,            2
+    packuswb        m2,            m2
+    movh            m3,            [r2 + 9]
+    punpcklbw       m3,            m0
+    paddw           m3,            m1
+    psraw           m3,            2
+    packuswb        m3,            m3
+
+    ; filter top-left
+    movzx           r5d, byte      [r2 + 33]
+    add             r4d,           r5d
+    movzx           r3d, byte      [r2 + 1]
+    add             r3d,           r4d
+    shr             r3d,           2
+
+%if ARCH_X86_64
+    movh            [r0],          m2
+    movh            [r0 + 8],      m3
+    mov             [r0],          r3b
+%else ;32 bit
+    movh            [r6],          m2
+    movh            [r6 + 8],      m3
+    mov             [r6],          r3b
+    add             r6,            r1
+%endif
+
+    ; filter left
+    movh            m2,            [r2 + 34]
+    punpcklbw       m2,            m0
+    paddw           m2,            m1
+    psraw           m2,            2
+    packuswb        m2,            m2
+
+    movh            m3,            [r2 + 42]
+    punpcklbw       m3,            m0
+    paddw           m3,            m1
+    psraw           m3,            2
+    packuswb        m3,            m3
+%if ARCH_X86_64
+    movh            r3,            m2
+    mov             [r0 + r1],     r3b
+    shr             r3,            8
+    mov             [r0 + r1 * 2], r3b
+    shr             r3,            8
+    mov             [r0 + r6],     r3b
+    shr             r3,            8
+    mov             [r0 + r1 * 4], r3b
+    shr             r3,            8
+    mov             [r0 + r7],     r3b
+    shr             r3,            8
+    mov             [r0 + r6 * 2], r3b
+    shr             r3,            8
+    mov             [r0 + r8],     r3b
+    shr             r3,            8
+    mov             [r0 + r1 * 8], r3b
+    movh            r3,            m3
+    mov             [r9 + r1 * 2], r3b
+    shr             r3,            8
+    mov             [r0 + r7 * 2], r3b
+    shr             r3,            8
+    mov             [r9 + r1 * 4], r3b
+    shr             r3,            8
+    mov             [r0 + r6 * 4], r3b
+    shr             r3,            8
+    mov             [r9 + r6 * 2], r3b
+    shr             r3,            8
+    mov             [r0 + r8 * 2], r3b
+    shr             r3,            8
+    mov             [r9 + r1 * 8], r3b
+%else ;32 bit
+    movd            r2d,            m2
+    pshufd          m2,            m2, 0x01
+    mov             [r6],          r2b
+    shr             r2,            8
+    mov             [r6 + r1],     r2b
+    shr             r2,            8
+    mov             [r6 + r1 * 2], r2b
+    lea             r6,            [r6 + r1 * 2]
+    shr             r2,            8
+    mov             [r6 + r1],     r2b
+    movd            r2d,           m2
+    mov             [r6 + r1 * 2], r2b
+    lea             r6,            [r6 + r1 * 2]
+    shr             r2,            8
+    mov             [r6 + r1],     r2b
+    shr             r2,            8
+    mov             [r6 + r1 * 2], r2b
+    lea             r6,            [r6 + r1 * 2]
+    shr             r2,            8
+    mov             [r6 + r1],     r2b
+    movd            r2d,            m3
+    pshufd          m3,             m3, 0x01
+    mov             [r6 + r1 * 2], r2b
+    lea             r6,            [r6 + r1 * 2]
+    shr             r2,            8
+    mov             [r6 + r1],     r2b
+    shr             r2,            8
+    mov             [r6 + r1 * 2], r2b
+    lea             r6,            [r6 + r1 * 2]
+    shr             r2,            8
+    mov             [r6 + r1],     r2b
+    movd            r2d,           m3
+    mov             [r6 + r1 * 2], r2b
+    lea             r6,            [r6 + r1 * 2]
+    shr             r2,            8
+    mov             [r6 + r1],     r2b
+    shr             r2,            8
+    mov             [r6 + r1 * 2], r2b
+%endif
+.end:
+    RET
+
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
