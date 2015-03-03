@@ -685,7 +685,9 @@ void Lookahead::findJob(int workerThreadID)
              * slicetypeDecide() */
             m_inputLock.acquire();
             if (!m_sliceTypeBusy && !m_preTotal && m_inputQueue.size() >= m_fullQueueSize && m_isActive)
-                 doDecide = m_sliceTypeBusy = true;
+                doDecide = m_sliceTypeBusy = true;
+            else
+                m_helpWanted = false;
             m_inputLock.release();
         }
         m_preLookaheadLock.release();
@@ -726,8 +728,6 @@ void Lookahead::findJob(int workerThreadID)
         }
     }
     while (preFrame || doDecide);
-
-    m_helpWanted = false;
 }
 
 /* Called by API thread */
