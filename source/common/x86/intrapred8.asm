@@ -123,6 +123,7 @@ cextern pw_16
 cextern pw_32
 cextern pw_257
 cextern pw_1024
+cextern pw_4096
 cextern pb_unpackbd1
 cextern multiL
 cextern multiH
@@ -218,9 +219,7 @@ cglobal intra_pred_dc4, 5,5,3
 
     test        r4d, r4d
 
-    mov         r4d, 4096
-    movd        m2, r4d
-    pmulhrsw    m1, m2              ; m1 = (sum + 4) / 8
+    pmulhrsw    m1, [pw_4096]       ; m1 = (sum + 4) / 8
     movd        r4d, m1             ; r4d = dc_val
     pshufb      m1, m0              ; m1 = byte [dc_val ...]
 
@@ -237,9 +236,13 @@ cglobal intra_pred_dc4, 5,5,3
     add         r4d, r3d            ; r4d = DC * 3 + 2
     movd        m1, r4d
     pshuflw     m1, m1, 0           ; m1 = pixDCx3
+    pshufd      m1, m1, 0
 
     ; filter top
-    pmovzxbw    m2, [r2]
+    movd        m2, [r2]
+    movd        m0, [r2 + 9]
+    punpckldq   m2, m0
+    pmovzxbw    m2, m2
     paddw       m2, m1
     psraw       m2, 2
     packuswb    m2, m2
@@ -255,13 +258,9 @@ cglobal intra_pred_dc4, 5,5,3
 
     ; filter left
     add         r0, r1
-    pmovzxbw    m2, [r2 + 9]
-    paddw       m2, m1
-    psraw       m2, 2
-    packuswb    m2, m2
-    pextrb      [r0], m2, 0
-    pextrb      [r0 + r1], m2, 1
-    pextrb      [r0 + r1 * 2], m2, 2
+    pextrb      [r0], m2, 4
+    pextrb      [r0 + r1], m2, 5
+    pextrb      [r0 + r1 * 2], m2, 6
 
 .end:
     RET
