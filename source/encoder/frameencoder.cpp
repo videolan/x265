@@ -81,9 +81,6 @@ void FrameEncoder::destroy()
         delete m_tld;
     }
 
-    m_threadActive = false;
-    m_enable.trigger();
-
     delete[] m_rows;
     delete[] m_outStreams;
     X265_FREE(m_cuGeoms);
@@ -98,9 +95,6 @@ void FrameEncoder::destroy()
         delete m_rce.picTimingSEI;
         delete m_rce.hrdTiming;
     }
-
-    // wait for worker thread to exit
-    stop();
 }
 
 bool FrameEncoder::init(Encoder *top, int numRows, int numCols)

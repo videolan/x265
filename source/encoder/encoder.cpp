@@ -246,8 +246,10 @@ void Encoder::create()
             x265_log(m_param, X265_LOG_ERROR, "Unable to initialize frame encoder, aborting\n");
             m_aborted = true;
         }
-        m_frameEncoder[i]->start();
     }
+    for (int i = 0; i < m_param->frameNumThreads; i++)
+        m_frameEncoder[i]->start();
+
     if (m_param->bEmitHRDSEI)
         m_rateControl->initHRD(m_sps);
     if (!m_rateControl->init(m_sps))
@@ -276,6 +278,26 @@ void Encoder::create()
     m_encodeStartTime = x265_mdate();
 }
 
+void Encoder::stop()
+{
+    if (m_rateControl)
+        m_rateControl->terminate(); // unblock all blocked RC calls
+
+    if (m_lookahead)
+        m_lookahead->stop();
+    
+    for (int i = 0; i < m_param->frameNumThreads; i++)
+    {
+        if (m_frameEncoder[i])
+        {
+            m_frameEncoder[i]->getEncodedPicture(m_nalList);
+            m_frameEncoder[i]->m_threadActive = false;
+            m_frameEncoder[i]->m_enable.trigger();
+            m_frameEncoder[i]->stop();
+        }
+    }
+}
+
 void Encoder::destroy()
 {
     if (m_exportedPic)
@@ -284,21 +306,14 @@ void Encoder::destroy()
         m_exportedPic = NULL;
     }
 
-    if (m_rateControl)
-        m_rateControl->terminate(); // unblock all blocked RC calls
-
-    if (m_lookahead)
-        m_lookahead->stop();
-    
     for (int i = 0; i < m_param->frameNumThreads; i++)
-        if (m_frameEncoder[i]) m_frameEncoder[i]->getEncodedPicture(m_nalList);
-		
-    for (int i = 0; i < m_param->frameNumThreads; i++)
+    {
         if (m_frameEncoder[i])
         {
             m_frameEncoder[i]->destroy();
             delete m_frameEncoder[i];
         }
+    }
 
     // thread pools can be cleaned up now that all the JobProviders are
     // known to be shutdown
@@ -324,13 +339,18 @@ void Encoder::destroy()
 
     if (m_analysisFile)
         fclose(m_analysisFile);
-    free(m_param->analysisFileName);
-    free(m_param->csvfn);
     if (m_csvfpt)
         fclose(m_csvfpt);
-    free(m_param->rc.statFileName); // alloc'd by strdup
 
-    X265_FREE(m_param);
+    if (m_param)
+    {
+        free(m_param->rc.statFileName); // allocs by strdup
+        free(m_param->analysisFileName);
+        free(m_param->csvfn);
+        free(m_param->numaPools);
+
+        X265_FREE(m_param);
+    }
 }
 
 void Encoder::updateVbvPlan(RateControl* rc)

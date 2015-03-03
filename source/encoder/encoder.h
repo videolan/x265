@@ -136,6 +136,7 @@ public:
     ~Encoder() {}
 
     void create();
+    void stop();
     void destroy();
 
     int encode(const x265_picture* pic, x265_picture *pic_out);
