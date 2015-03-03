@@ -81,6 +81,8 @@ Encoder::Encoder()
     m_analysisFile = NULL;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
+
+    MotionEstimate::initScales();
 }
 
 void Encoder::create()
