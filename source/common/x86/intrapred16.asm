@@ -160,6 +160,116 @@ cglobal intra_pred_dc4, 5,6,2
 .end:
     RET
 
+;-------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
+;-------------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_dc32, 3, 4, 6
+    lea             r3,                  [r2 + 130]     ;130 = 32*sizeof(pixel)*2 + 1*sizeof(pixel)
+    add             r2,                  2
+    add             r1,                  r1
+    movu            m0,                  [r3]
+    movu            m1,                  [r3 + 16]
+    movu            m2,                  [r3 + 32]
+    movu            m3,                  [r3 + 48]
+    paddw           m0,                  m1
+    paddw           m2,                  m3
+    paddw           m0,                  m2
+    movu            m1,                  [r2]
+    movu            m3,                  [r2 + 16]
+    movu            m4,                  [r2 + 32]
+    movu            m5,                  [r2 + 48]
+    paddw           m1,                  m3
+    paddw           m4,                  m5
+    paddw           m1,                  m4
+    paddw           m0,                  m1
+    movhlps         m1,                  m0
+    paddw           m0,                  m1
+    pshuflw         m1,                  m0, 0x6E
+    paddw           m0,                  m1
+    pmaddwd         m0,                  [pw_1]
+
+    paddd           m0,                  [pd_32]     ; sum = sum + 32
+    psrld           m0,                  6           ; sum = sum / 64
+    pshuflw         m0,                  m0, 0
+    pshufd          m0,                  m0, 0
+
+    lea             r2,                 [r1 * 3]
+    ; store DC 32x32
+%assign x 1
+%rep 8
+    movu            [r0 +  0],          m0
+    movu            [r0 + 16],          m0
+    movu            [r0 + 32],          m0
+    movu            [r0 + 48],          m0
+    movu            [r0 + r1 +  0],     m0
+    movu            [r0 + r1 + 16],     m0
+    movu            [r0 + r1 + 32],     m0
+    movu            [r0 + r1 + 48],     m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + 16], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    movu            [r0 + r1 * 2 + 48], m0
+    movu            [r0 + r2 +  0],     m0
+    movu            [r0 + r2 + 16],     m0
+    movu            [r0 + r2 + 32],     m0
+    movu            [r0 + r2 + 48],     m0
+    %if x < 8
+    lea             r0, [r0 + r1 * 4]
+    %endif
+%assign x x + 1
+%endrep
+    RET
+
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_planar4, 3,3,5
+    movu            m1, [r2 + 2]
+    movu            m2, [r2 + 18]
+    pshufhw         m3, m1, 0               ; topRight
+    pshufd          m3, m3, 0xAA
+    pshufhw         m4, m2, 0               ; bottomLeft
+    pshufd          m4, m4, 0xAA
+
+    pmullw          m3, [multi_2Row]        ; (x + 1) * topRight
+    pmullw          m0, m1, [pw_planar4_1]  ; (blkSize - 1 - y) * above[x]
+
+    paddw           m3, [pw_4]
+    paddw           m3, m4
+    paddw           m3, m0
+    psubw           m4, m1
+
+    pshuflw         m1, m2, 0
+    pmullw          m1, [pw_planar4_0]
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 3
+    movh            [r0], m1
+
+    pshuflw         m1, m2, 01010101b
+    pmullw          m1, [pw_planar4_0]
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 3
+    movh            [r0 + r1 * 2], m1
+    lea             r0, [r0 + 4 * r1]
+
+    pshuflw         m1, m2, 10101010b
+    pmullw          m1, [pw_planar4_0]
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 3
+    movh            [r0], m1
+
+    pshuflw         m1, m2, 11111111b
+    pmullw          m1, [pw_planar4_0]
+    paddw           m1, m3
+    psraw           m1, 3
+    movh            [r0 + r1 * 2], m1
+    RET
+
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
 ;-----------------------------------------------------------------------------------
@@ -378,7 +488,7 @@ cglobal intra_pred_dc16, 5, 7, 4
 ;-------------------------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal intra_pred_dc32, 3, 5, 6
-    lea             r3,                  [r2 + 130]
+    lea             r3,                  [r2 + 130]     ;130 = 32*sizeof(pixel)*2 + 1*sizeof(pixel)
     add             r2,                  2
     add             r1,                  r1
     movu            m0,                  [r3]
