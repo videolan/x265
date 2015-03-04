@@ -162,6 +162,10 @@ if(GCC)
     if(CC_HAS_FNO_EXCEPTIONS_FLAG)
         add_definitions(-fno-exceptions)
     endif()
+    set(FSANITIZE "" CACHE STRING "-fsanitize options for GCC/clang")
+    if(FSANITIZE)
+        add_definitions(-fsanitize=${FSANITIZE})
+    endif()
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CC_VERSION)
 endif(GCC)
 
@@ -180,7 +184,6 @@ option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
 if(CHECKED_BUILD)
     add_definitions(-DCHECKED_BUILD=1)
     if(GCC)
-        check_cxx_compiler_flag(-fsanitize=address CC_HAS_FSANITIZE)              # clang and gcc
         check_cxx_compiler_flag(-fsanitize=undefined-trap CC_HAS_CATCH_UNDEFINED) # clang
         check_cxx_compiler_flag(-ftrapv CC_HAS_FTRAPV)                            # gcc
         check_cxx_compiler_flag(-fstack-protector CC_HAS_STACK_PROTECT)           # gcc
@@ -424,6 +427,13 @@ if(ENABLE_CLI)
         endif()
     endif()
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
+    if(FSANITIZE)
+        # clang and gcc need the sanitize options to be passed at link
+        # time so the appropriate ASAN/TSAN runtime libraries can be
+        # linked. Linking the cli to the static libx265 is usually
+        # required (by setting ENABLE_SHARED to OFF)
+        set_target_properties(cli PROPERTIES LINK_FLAGS "-fsanitize=${FSANITIZE}")
+    endif()
 
     install(TARGETS cli DESTINATION ${BIN_INSTALL_DIR})
 endif(ENABLE_CLI)
