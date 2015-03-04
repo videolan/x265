@@ -145,6 +145,7 @@ public:
     uint32_t                 m_refLagRows;
 
     volatile bool            m_bAllRowsStop;
+    volatile bool            m_bLastRowCompleted;
     volatile int             m_vbvResetTriggerRow;
 
     CTURow*                  m_rows;

@@ -663,6 +663,7 @@ void FrameEncoder::compressCTURows()
 {
     Slice* slice = m_frame->m_encData->m_slice;
 
+    m_bLastRowCompleted = false;
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
 
@@ -769,11 +770,15 @@ void FrameEncoder::processRow(int row, int threadId)
         if (realRow != m_numRows - 1)
             enqueueRowFilter(realRow + 1);
         else
-            m_completionEvent.trigger();
+            m_bLastRowCompleted = true;
     }
 
     if (ATOMIC_DEC(&m_activeWorkerCount) == 0)
+    {
+        if (m_bLastRowCompleted)
+            m_completionEvent.trigger();
         m_stallStartTime = x265_mdate();
+    }
 
     m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
 }
