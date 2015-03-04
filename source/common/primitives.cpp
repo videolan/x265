@@ -258,7 +258,7 @@ void x265_setup_primitives(x265_param *param, int cpuid)
 extern "C" {
 int x265_cpu_cpuid_test(void) { return 0; }
 void x265_cpu_emms(void) {}
-void x265_cpu_cpuid(uint32_t, uint32_t *, uint32_t *, uint32_t *, uint32_t *) {}
+void x265_cpu_cpuid(uint32_t, uint32_t *eax, uint32_t *, uint32_t *, uint32_t *) { *eax = 0; }
 void x265_cpu_xgetbv(uint32_t, uint32_t *, uint32_t *) {}
 }
 #endif
