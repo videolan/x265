@@ -128,8 +128,8 @@ public:
 
     bool timedWait(uint32_t milliseconds)
     {
-        /* returns true if event was signaled */
-        return WaitForSingleObject(this->handle, milliseconds) == WAIT_OBJECT_0;
+        /* returns true if the wait timed out */
+        return WaitForSingleObject(this->handle, milliseconds) == WAIT_TIMEOUT;
     }
 
     void trigger()
