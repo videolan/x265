@@ -4083,6 +4083,96 @@ cglobal interp_4tap_vert_%1_8x8, 4, 6, 7
 
 FILTER_VER_CHROMA_AVX2_8x8 pp
 FILTER_VER_CHROMA_AVX2_8x8 ps
+
+%macro FILTER_VER_CHROMA_AVX2_8x6 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_8x6, 4, 6, 6
+    mov             r4d, r4m
+    shl             r4d, 6
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+
+    movq            xm1, [r0]                       ; m1 = row 0
+    movq            xm2, [r0 + r1]                  ; m2 = row 1
+    punpcklbw       xm1, xm2                        ; m1 = [17 07 16 06 15 05 14 04 13 03 12 02 11 01 10 00]
+    movq            xm3, [r0 + r1 * 2]              ; m3 = row 2
+    punpcklbw       xm2, xm3                        ; m2 = [27 17 26 16 25 15 24 14 23 13 22 12 21 11 20 10]
+    vinserti128     m5, m1, xm2, 1                  ; m5 = [27 17 26 16 25 15 24 14 23 13 22 12 21 11 20 10] - [17 07 16 06 15 05 14 04 13 03 12 02 11 01 10 00]
+    pmaddubsw       m5, [r5]
+    movq            xm4, [r0 + r4]                  ; m4 = row 3
+    punpcklbw       xm3, xm4                        ; m3 = [37 27 36 26 35 25 34 24 33 23 32 22 31 21 30 20]
+    lea             r0, [r0 + r1 * 4]
+    movq            xm1, [r0]                       ; m1 = row 4
+    punpcklbw       xm4, xm1                        ; m4 = [47 37 46 36 45 35 44 34 43 33 42 32 41 31 40 30]
+    vinserti128     m2, m3, xm4, 1                  ; m2 = [47 37 46 36 45 35 44 34 43 33 42 32 41 31 40 30] - [37 27 36 26 35 25 34 24 33 23 32 22 31 21 30 20]
+    pmaddubsw       m0, m2, [r5 + 1 * mmsize]
+    paddw           m5, m0
+    pmaddubsw       m2, [r5]
+    movq            xm3, [r0 + r1]                  ; m3 = row 5
+    punpcklbw       xm1, xm3                        ; m1 = [57 47 56 46 55 45 54 44 53 43 52 42 51 41 50 40]
+    movq            xm4, [r0 + r1 * 2]              ; m4 = row 6
+    punpcklbw       xm3, xm4                        ; m3 = [67 57 66 56 65 55 64 54 63 53 62 52 61 51 60 50]
+    vinserti128     m1, m1, xm3, 1                  ; m1 = [67 57 66 56 65 55 64 54 63 53 62 52 61 51 60 50] - [57 47 56 46 55 45 54 44 53 43 52 42 51 41 50 40]
+    pmaddubsw       m0, m1, [r5 + 1 * mmsize]
+    paddw           m2, m0
+    pmaddubsw       m1, [r5]
+    movq            xm3, [r0 + r4]                  ; m3 = row 7
+    punpcklbw       xm4, xm3                        ; m4 = [77 67 76 66 75 65 74 64 73 63 72 62 71 61 70 60]
+    lea             r0, [r0 + r1 * 4]
+    movq            xm0, [r0]                       ; m0 = row 8
+    punpcklbw       xm3, xm0                        ; m3 = [87 77 86 76 85 75 84 74 83 73 82 72 81 71 80 70]
+    vinserti128     m4, m4, xm3, 1                  ; m4 = [87 77 86 76 85 75 84 74 83 73 82 72 81 71 80 70] - [77 67 76 66 75 65 74 64 73 63 72 62 71 61 70 60]
+    pmaddubsw       m4, [r5 + 1 * mmsize]
+    paddw           m1, m4
+%ifidn %1,pp
+    lea             r4, [r3 * 3]
+    mova            m3, [pw_512]
+    pmulhrsw        m5, m3                          ; m5 = word: row 0, row 1
+    pmulhrsw        m2, m3                          ; m2 = word: row 2, row 3
+    pmulhrsw        m1, m3                          ; m1 = word: row 4, row 5
+    packuswb        m5, m2
+    packuswb        m1, m1
+    vextracti128    xm2, m5, 1
+    vextracti128    xm4, m1, 1
+    movq            [r2], xm5
+    movq            [r2 + r3], xm2
+    movhps          [r2 + r3 * 2], xm5
+    movhps          [r2 + r4], xm2
+    lea             r2, [r2 + r3 * 4]
+    movq            [r2], xm1
+    movq            [r2 + r3], xm4
+%else
+    add             r3d, r3d
+    mova            m3, [pw_2000]
+    lea             r4, [r3 * 3]
+    psubw           m5, m3                          ; m5 = word: row 0, row 1
+    psubw           m2, m3                          ; m2 = word: row 2, row 3
+    psubw           m1, m3                          ; m1 = word: row 4, row 5
+    vextracti128    xm4, m5, 1
+    vextracti128    xm3, m2, 1
+    vextracti128    xm0, m1, 1
+    movu            [r2], xm5
+    movu            [r2 + r3], xm4
+    movu            [r2 + r3 * 2], xm2
+    movu            [r2 + r4], xm3
+    lea             r2, [r2 + r3 * 4]
+    movu            [r2], xm1
+    movu            [r2 + r3], xm0
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_AVX2_8x6 pp
+FILTER_VER_CHROMA_AVX2_8x6 ps
+
 %macro PROCESS_CHROMA_AVX2_W8_16R 1
     movq            xm1, [r0]                       ; m1 = row 0
     movq            xm2, [r0 + r1]                  ; m2 = row 1
