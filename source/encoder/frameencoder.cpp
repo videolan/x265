@@ -719,7 +719,7 @@ void FrameEncoder::compressCTURows()
     }
     else
     {
-        for (uint32_t i = 0; i < this->m_numRows + m_filterRowDelay; i++)
+        for (uint32_t i = 0; i < m_numRows + m_filterRowDelay; i++)
         {
             // Encode
             if (i < m_numRows)
