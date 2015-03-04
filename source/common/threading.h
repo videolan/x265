@@ -263,10 +263,8 @@ public:
 
         /* blocking wait on conditional variable, mutex is atomically released
          * while blocked. When condition is signaled, mutex is re-acquired */
-        while (m_counter == 0)
-        {
+        while (!m_counter)
             pthread_cond_wait(&m_cond, &m_mutex);
-        }
 
         m_counter--;
         pthread_mutex_unlock(&m_mutex);
@@ -277,7 +275,7 @@ public:
         bool bTimedOut = false;
 
         pthread_mutex_lock(&m_mutex);
-        if (m_counter == 0)
+        if (!m_counter)
         {
             struct timeval tv;
             struct timespec ts;
