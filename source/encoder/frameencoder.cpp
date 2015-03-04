@@ -709,7 +709,9 @@ void FrameEncoder::compressCTURows()
 
         m_allRowsAvailableTime = x265_mdate();
         tryWakeOne(); /* ensure one thread is active or help-wanted flag is set prior to blocking */
-        m_completionEvent.wait();
+        static const int block_ms = 250;
+        while (m_completionEvent.timedWait(block_ms))
+            tryWakeOne();
     }
     else
     {
