@@ -2506,6 +2506,55 @@ pextrd      [r2 + r3], m2,  1
 
 RET
 
+%macro FILTER_VER_CHROMA_AVX2_4x2 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_4x2, 4, 6, 4
+    mov             r4d, r4m
+    shl             r4d, 5
+    sub             r0, r1
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeff_V]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeff_V + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+
+    movd            xm1, [r0]
+    movd            xm2, [r0 + r1]
+    punpcklbw       xm1, xm2
+    movd            xm3, [r0 + r1 * 2]
+    punpcklbw       xm2, xm3
+    movlhps         xm1, xm2
+    movd            xm0, [r0 + r4]
+    punpcklbw       xm3, xm0
+    movd            xm2, [r0 + r1 * 4]
+    punpcklbw       xm0, xm2
+    movlhps         xm3, xm0
+    vinserti128     m1, m1, xm3, 1                          ; m1 = row[x x x 4 3 2 1 0]
+
+    pmaddubsw       m1, [r5]
+    vextracti128    xm3, m1, 1
+    paddw           xm1, xm3
+%ifidn %1,pp
+    pmulhrsw        xm1, [pw_512]
+    packuswb        xm1, xm1
+    movd            [r2], xm1
+    pextrd          [r2 + r3], xm1, 1
+%else
+    add             r3d, r3d
+    psubw           xm1, [pw_2000]
+    movq            [r2], xm1
+    movhps          [r2 + r3], xm1
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_AVX2_4x2 pp
+FILTER_VER_CHROMA_AVX2_4x2 ps
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_4x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
@@ -6068,8 +6117,7 @@ cglobal interp_8tap_vert_ps_4x4, 4, 6, 5
     paddw           m0, m4
     paddw           m0, m2                                  ; m0 = WORD ROW[3 2 1 0]
 
-    vbroadcasti128  m3, [pw_2000]
-    psubw           m0, m3
+    psubw           m0, [pw_2000]
     vextracti128    xm2, m0, 1
     lea             r5, [r3 * 3]
     movq            [r2], xm0
