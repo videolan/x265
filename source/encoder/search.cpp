@@ -1233,7 +1233,7 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
         intraNeighbourBuf[1][0] = intraNeighbourBuf[0][0];
         primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1, 0);
 
-        // TODO: primitive
+        // we do not estimate filtering for downscaled samples
         for (int x = 1; x < 65; x++)
         {
             intraNeighbourBuf[0][x] = nScale[x];           // Top pixel

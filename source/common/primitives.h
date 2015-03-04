@@ -119,6 +119,7 @@ typedef void (*blockfill_s_t)(int16_t* dst, intptr_t dstride, int16_t val);
 
 typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, const pixel *srcPix, int dirMode, int bFilter);
 typedef void (*intra_allangs_t)(pixel *dst, pixel *refPix, pixel *filtPix, int bLuma);
+typedef void (*intra_filter_t)(const pixel* references, pixel* filtered);
 
 typedef void (*cpy2Dto1D_shl_t)(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 typedef void (*cpy2Dto1D_shr_t)(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
@@ -247,6 +248,7 @@ struct EncoderPrimitives
 
         transpose_t     transpose;     // transpose pixel block; for use with intra all-angs
         intra_allangs_t intra_pred_allangs;
+        intra_filter_t  intra_filter;
         intra_pred_t    intra_pred[NUM_INTRA_MODE];
     }
     cu[NUM_CU_SIZES];

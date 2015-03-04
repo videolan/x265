@@ -212,6 +212,7 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
     ALIGN_VAR_32(pixel, prediction[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
     pixel fencIntra[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE];
     pixel neighbours[2][X265_LOWRES_CU_SIZE * 4 + 1];
+    pixel* samples = neighbours[0], *filtered = neighbours[1];
 
     const int lookAheadLambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
     const int intraPenalty = 5 * lookAheadLambda;
@@ -221,8 +222,8 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
     const int cuSize2 = cuSize << 1;
     const int sizeIdx = X265_LOWRES_CU_BITS - 2;
 
-    pixel *planar = (cuSize >= 8) ? neighbours[1] : neighbours[0];
     pixelcmp_t satd = primitives.pu[sizeIdx].satd;
+    int planar = !!(cuSize >= 8);
 
     fenc.costEst[0][0] = 0;
     fenc.costEstAq[0][0] = 0;
@@ -235,43 +236,28 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
         {
             const int cuXY = cuX + cuY * widthInCU;
             const intptr_t pelOffset = cuSize * cuX + cuSize * cuY * fenc.lumaStride;
-
-            /* Prep reference pixels */
             pixel *pixCur = fenc.lowresPlane[0] + pelOffset;
+
+            /* copy fenc pixels */
             primitives.cu[sizeIdx].copy_pp(fencIntra, cuSize, pixCur, fenc.lumaStride);
 
-            memcpy(neighbours[0], pixCur - 1 - fenc.lumaStride, (cuSize + 1) * sizeof(pixel));
-            for (int i = 1; i < cuSize + 1; i++)
-                neighbours[0][i + cuSize2] = pixCur[(i - 1) * fenc.lumaStride - 1];
+            /* collect reference sample pixels */
+            pixCur -= fenc.lumaStride + 1;
+            memcpy(samples, pixCur, (2 * cuSize + 1) * sizeof(pixel)); /* top */
+            for (int i = 1; i <= 2 * cuSize; i++)
+                samples[cuSize2 + i] = pixCur[i * fenc.lumaStride];    /* left */
 
-            for (int i = 0; i < cuSize; i++)
-            {
-                neighbours[0][i + cuSize + 1] = neighbours[0][cuSize];                     // Copy above-last pixel
-                neighbours[0][i + cuSize2 + cuSize + 1] = neighbours[0][cuSize2 + cuSize]; // Copy left-last pixel
-            }
-
-            neighbours[1][0]  = neighbours[0][0];                      // Copy top-left pixel 
-            neighbours[1][cuSize2] = neighbours[0][cuSize2];           // Copy top-right pixel
-            neighbours[1][cuSize2 << 1] = neighbours[0][cuSize2 << 1]; // Bottom-left pixel
-
-            // Filter neighbour pixels with [1-2-1]
-            neighbours[1][1]           = (neighbours[0][0] + (neighbours[0][1] << 1)           + neighbours[0][2] + 2)               >> 2;
-            neighbours[1][cuSize2 + 1] = (neighbours[0][0] + (neighbours[0][cuSize2 + 1] << 1) + neighbours[0][cuSize2 + 1 + 1] + 2) >> 2;
-            for (int i = 2; i < cuSize2; i++)
-            {
-                neighbours[1][i]           = (neighbours[0][i - 1]           + (neighbours[0][i] << 1)           + neighbours[0][i + 1]      + 2) >> 2;
-                neighbours[1][cuSize2 + i] = (neighbours[0][cuSize2 + i - 1] + (neighbours[0][cuSize2 + i] << 1) + neighbours[0][cuSize2 + i + 1] + 2) >> 2;
-            }
+            primitives.cu[sizeIdx].intra_filter(samples, filtered);
 
             int cost, icost = me.COST_MAX;
             uint32_t ilowmode = 0;
 
             /* DC and planar */
-            primitives.cu[sizeIdx].intra_pred[DC_IDX](prediction, cuSize, neighbours[0], 0, cuSize <= 16);
+            primitives.cu[sizeIdx].intra_pred[DC_IDX](prediction, cuSize, samples, 0, cuSize <= 16);
             cost = satd(fencIntra, cuSize, prediction, cuSize);
             COPY2_IF_LT(icost, cost, ilowmode, DC_IDX);
 
-            primitives.cu[sizeIdx].intra_pred[PLANAR_IDX](prediction, cuSize, planar, 0, 0);
+            primitives.cu[sizeIdx].intra_pred[PLANAR_IDX](prediction, cuSize, neighbours[planar], 0, 0);
             cost = satd(fencIntra, cuSize, prediction, cuSize);
             COPY2_IF_LT(icost, cost, ilowmode, PLANAR_IDX);
 

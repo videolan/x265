@@ -93,34 +93,17 @@ void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, ui
 void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
 {
     int tuSize = 1 << log2TrSizeC;
-    int tuSize2 = tuSize << 1;
+    int sizeIdx = log2TrSizeC - 2;
+    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
 
     pixel* srcBuf = intraNeighbourBuf[0];
 
     if (chFmt == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize))
     {
-        pixel* fltBuf = intraNeighbourBuf[1];
-        pixel topLeft = srcBuf[0], topLast = srcBuf[tuSize2], leftLast = srcBuf[tuSize2 + tuSize2];
-
-        // filtering top
-        for (int i = 1; i < tuSize2; i++)
-            fltBuf[i] = ((srcBuf[i] << 1) + srcBuf[i - 1] + srcBuf[i + 1] + 2) >> 2;
-        fltBuf[tuSize2] = topLast;
-
-        // filtering top-left
-        fltBuf[0] = ((srcBuf[0] << 1) + srcBuf[1] + srcBuf[tuSize2 + 1] + 2) >> 2;
-
-        // filtering left
-        fltBuf[tuSize2 + 1] = ((srcBuf[tuSize2 + 1] << 1) + topLeft + srcBuf[tuSize2 + 2] + 2) >> 2;
-        for (int i = tuSize2 + 2; i < tuSize2 + tuSize2; i++)
-            fltBuf[i] = ((srcBuf[i] << 1) + srcBuf[i - 1] + srcBuf[i + 1] + 2) >> 2;
-        fltBuf[tuSize2 + tuSize2] = leftLast;
-
+        primitives.cu[sizeIdx].intra_filter(intraNeighbourBuf[0], intraNeighbourBuf[1]);
         srcBuf = intraNeighbourBuf[1];
     }
 
-    int sizeIdx = log2TrSizeC - 2;
-    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
     primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, srcBuf, dirMode, 0);
 }
 
@@ -626,12 +609,12 @@ void Predict::addWeightUni(const PredictionUnit& pu, Yuv& predYuv, const ShortYu
     }
 }
 
-void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, int dirMode)
+void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t puAbsPartIdx, const IntraNeighbors& intraNeighbors, int dirMode)
 {
-    int tuSize = intraNeighbors.tuSize;
+    int tuSize = 1 << intraNeighbors.log2TrSize;
     int tuSize2 = tuSize << 1;
 
-    pixel* adiOrigin = cu.m_encData->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
+    pixel* adiOrigin = cu.m_encData->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + puAbsPartIdx);
     intptr_t picStride = cu.m_encData->m_reconPic->m_stride;
 
     fillReferenceSamples(adiOrigin, picStride, intraNeighbors, intraNeighbourBuf[0]);
@@ -654,7 +637,7 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
             if (abs(topLeft + topLast  - (topMiddle  << 1)) < threshold &&
                 abs(topLeft + leftLast - (leftMiddle << 1)) < threshold)
             {
-                // bilinear interpolation
+                // "strong" bilinear interpolation
                 const int shift = 5 + 1;
                 int init = (topLeft << shift) + tuSize;
                 int deltaL, deltaR;
@@ -673,25 +656,13 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
             }
         }
 
-        // filtering top
-        for (int i = 1; i < tuSize2; i++)
-            fltBuf[i] = ((refBuf[i] << 1) + refBuf[i - 1] + refBuf[i + 1] + 2) >> 2;
-        fltBuf[tuSize2] = topLast;
-
-        // filtering top-left
-        fltBuf[0] = ((topLeft << 1) + refBuf[1] + refBuf[tuSize2 + 1] + 2) >> 2;
-
-        // filtering left
-        fltBuf[tuSize2 + 1] = ((refBuf[tuSize2 + 1] << 1) + topLeft + refBuf[tuSize2 + 2] + 2) >> 2;
-        for (int i = tuSize2 + 2; i < tuSize2 + tuSize2; i++)
-            fltBuf[i] = ((refBuf[i] << 1) + refBuf[i - 1] + refBuf[i + 1] + 2) >> 2;
-        fltBuf[tuSize2 + tuSize2] = leftLast;
+        primitives.cu[intraNeighbors.log2TrSize - 2].intra_filter(refBuf, fltBuf);
     }
 }
 
-void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, uint32_t chromaId)
+void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t puAbsPartIdx, const IntraNeighbors& intraNeighbors, uint32_t chromaId)
 {
-    const pixel* adiOrigin = cu.m_encData->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
+    const pixel* adiOrigin = cu.m_encData->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + puAbsPartIdx);
     intptr_t picStride = cu.m_encData->m_reconPic->m_strideC;
 
     fillReferenceSamples(adiOrigin, picStride, intraNeighbors, intraNeighbourBuf[0]);
@@ -750,7 +721,7 @@ void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t
     intraNeighbors->leftUnits = leftUnits;
     intraNeighbors->unitWidth = 1 << log2UnitWidth;
     intraNeighbors->unitHeight = 1 << log2UnitHeight;
-    intraNeighbors->tuSize = tuSize;
+    intraNeighbors->log2TrSize = log2TrSize;
 }
 
 void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, const IntraNeighbors& intraNeighbors, pixel dst[258])
@@ -758,7 +729,7 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, c
     const pixel dcValue = (pixel)(1 << (X265_DEPTH - 1));
     int numIntraNeighbor = intraNeighbors.numIntraNeighbor;
     int totalUnits = intraNeighbors.totalUnits;
-    uint32_t tuSize = intraNeighbors.tuSize;
+    uint32_t tuSize = 1 << intraNeighbors.log2TrSize;
     uint32_t refSize = tuSize * 2 + 1;
 
     // Nothing is available, perform DC prediction.

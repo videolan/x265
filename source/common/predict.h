@@ -67,7 +67,7 @@ public:
         int      leftUnits;
         int      unitWidth;
         int      unitHeight;
-        int      tuSize;
+        int      log2TrSize;
         bool     bNeighborFlags[4 * MAX_NUM_SPU_W + 1];
     };
 
@@ -102,8 +102,8 @@ public:
     /* Angular Intra */
     void predIntraLumaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSize);
     void predIntraChromaAng(uint32_t dirMode, pixel* pred, intptr_t stride, uint32_t log2TrSizeC, int chFmt);
-    void initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, int dirMode);
-    void initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, uint32_t chromaId);
+    void initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t puAbsPartIdx, const IntraNeighbors& intraNeighbors, int dirMode);
+    void initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t puAbsPartIdx, const IntraNeighbors& intraNeighbors, uint32_t chromaId);
 
     /* Intra prediction helper functions */
     static void initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth, bool isLuma, IntraNeighbors *IntraNeighbors);
