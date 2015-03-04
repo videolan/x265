@@ -43,6 +43,12 @@ const interp4_vpp_shuf1, dd 0, 1, 1, 2, 2, 3, 3, 4
                          dd 2, 3, 3, 4, 4, 5, 5, 6
 
 ALIGN 32
+const pb_8tap_hps_0, times 2 db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
+                     times 2 db 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10
+                     times 2 db 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12
+                     times 2 db 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12,12,13,13,14
+
+ALIGN 32
 tab_Lm:    db 0, 1, 2, 3, 4,  5,  6,  7,  1, 2, 3, 4,  5,  6,  7,  8
            db 2, 3, 4, 5, 6,  7,  8,  9,  3, 4, 5, 6,  7,  8,  9,  10
            db 4, 5, 6, 7, 8,  9,  10, 11, 5, 6, 7, 8,  9,  10, 11, 12
@@ -159,6 +165,26 @@ pw_LumaCoeffVer: times 8 dw 0, 0
                  times 8 dw -5, 17
                  times 8 dw 58, -10
                  times 8 dw 4, -1
+
+pb_LumaCoeffVer: times 16 db 0, 0
+                 times 16 db 0, 64
+                 times 16 db 0, 0
+                 times 16 db 0, 0
+
+                 times 16 db -1, 4
+                 times 16 db -10, 58
+                 times 16 db 17, -5
+                 times 16 db 1, 0
+
+                 times 16 db -1, 4
+                 times 16 db -11, 40
+                 times 16 db 40, -11
+                 times 16 db 4, -1
+
+                 times 16 db 0, 1
+                 times 16 db -5, 17
+                 times 16 db 58, -10
+                 times 16 db 4, -1
 
 tab_LumaCoeffVer: times 8 db 0, 0
                   times 8 db 0, 64
@@ -1829,98 +1855,96 @@ RET
     IPFILTER_LUMA_PS_4x_AVX2 4 , 8
     IPFILTER_LUMA_PS_4x_AVX2 4 , 16
 
-%macro IPFILTER_LUMA_PS_8x_AVX2 2
-INIT_YMM avx2
+%macro IPFILTER_LUMA_PS_8xN_AVX2 1
+; TODO: verify and enable on X86 mode
 %if ARCH_X86_64 == 1
-cglobal interp_8tap_horiz_ps_%1x%2, 6, 10, 7
-    mov                         r5d,               r5m
-    mov                         r4d,               r4m
+; void filter_hps(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
+INIT_YMM avx2
+cglobal interp_8tap_horiz_ps_8x%1, 4,7,6
+    mov                         r5d,        r5m
+    mov                         r4d,        r4m
+    shl                         r4d,        7
 %ifdef PIC
-    lea                         r6,                [tab_LumaCoeff]
-    vpbroadcastq                m0,                [r6 + r4 * 8]
+    lea                         r6,         [pb_LumaCoeffVer]
+    add                         r6,         r4
 %else
-    vpbroadcastq                m0,                [tab_LumaCoeff + r4 * 8]
+    lea                         r6,         [pb_LumaCoeffVer + r4]
 %endif
-    mova                        m6,                [tab_Lm + 32]
-    mova                        m1,                [tab_Lm]
-    mov                         r9d,               %2                           ;height
-    add                         r3d,               r3d
-    vbroadcasti128              m2,                [pw_2000]
+    add                         r3d,        r3d
+    vpbroadcastd                m0,         [pw_2000]
+    sub                         r0,         3
+    lea                         r4,         [pb_8tap_hps_0]
+    vbroadcasti128              m5,         [r4 + 0 * mmsize]
 
-    ; register map
-    ; m0 - interpolate coeff
-    ; m1 , m6 - shuffle order table
-    ; m2 - pw_2000
+    ; check row count extend for interpolateHV
+    test                        r5d,        r5d;
+    mov                         r5d,        %1
+    jz                         .enter_loop
+    lea                         r4,         [r1 * 3]                        ; r8 = (N / 2 - 1) * srcStride
+    sub                         r0,         r4                              ; r0(src)-r8
+    add                         r5d,        8-1-2                           ; blkheight += N - 1  (7 - 3 = 4 ; since the last three rows not in loop)
 
-    xor                         r7,               r7                          ; loop count variable
-    sub                         r0,                3
-    test                        r5d,                r5d;
-    jz                          .label
-    lea                         r8,                [r1 * 3]                     ; r8 = (N / 2 - 1) * srcStride
-    sub                         r0,                r8                           ; r0(src)-r8
-    add                         r9,                6                            ; blkheight += N - 1  (7 - 3 = 4 ; since the last three rows not in loop)
+.enter_loop:
+    lea                         r4,         [pb_8tap_hps_0]
 
-.label
-      add                       r7,               2
+    ; ***** register map *****
+    ; m0 - pw_2000
+    ; r4 - base pointer of shuffle order table
+    ; r5 - count of loop
+    ; r6 - point to LumaCoeff
+.loop:
 
-    ; Row 0
-    vbroadcasti128              m3,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb                      m4,                m3,        m6
-    pshufb                      m3,                m1                           ; shuffled based on the col order tab_Lm
-    pmaddubsw                   m3,                m0
-    pmaddubsw                   m4,                m0
-    phaddw                      m3,                m4                           ; DWORD [R1D R1C R0D R0C R1B R1A R0B R0A]
+    ; Row 0-1
+    movu                        xm1,        [r0]
+    movu                        xm2,        [r0 + r1]
+    vinserti128                 m1,         m1,         xm2, 1
+    pshufb                      m2,         m1,         m5                  ; [0 1 1 2 2 3 3 4 ...]
+    pshufb                      m3,         m1,         [r4 + 1 * mmsize]   ; [2 3 3 4 4 5 5 6 ...]
+    pshufb                      m4,         m1,         [r4 + 2 * mmsize]   ; [4 5 5 6 6 7 7 8 ...]
+    pshufb                      m1,         m1,         [r4 + 3 * mmsize]   ; [6 7 7 8 8 9 9 A ...]
+    pmaddubsw                   m2,         [r6 + 0 * mmsize]
+    pmaddubsw                   m3,         [r6 + 1 * mmsize]
+    pmaddubsw                   m4,         [r6 + 2 * mmsize]
+    pmaddubsw                   m1,         [r6 + 3 * mmsize]
+    paddw                       m2,         m3
+    paddw                       m1,         m4
+    paddw                       m1,         m2
+    psubw                       m1,         m0
 
-    ; Row 1
-    lea                         r0,                [r0 + r1]                ;3rd row(i.e 2nd row)
-    vbroadcasti128              m4,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb                      m5,                m4,         m6
-    pshufb                      m4,                m1
-    pmaddubsw                   m4,                m0
-    pmaddubsw                   m5,                m0
-    phaddw                      m4,                m5                           ; DWORD [R3D R3C R2D R2C R3B R3A R2B R2A]
+    vextracti128                xm2,        m1,         1
+    movu                        [r2],       xm1                             ; row 0
+    movu                        [r2 + r3],  xm2                             ; row 1
 
-    phaddw                      m3,                m4                           ; all rows and col completed.
+    lea                         r0,         [r0 + r1 * 2]                   ; first loop src ->5th row(i.e 4)
+    lea                         r2,         [r2 + r3 * 2]                   ; first loop dst ->5th row(i.e 4)
+    sub                         r5d,        2
+    jg                         .loop
+    jz                         .end             
 
-    mova                        m5,                [interp8_hps_shuf]
-    vpermd                      m3,                m5,               m3
-    psubw                       m3,                m2
-
-    vextracti128                xm4,               m3,               1
-    movu                        [r2],              xm3                          ;row 0
-    movu                        [r2 + r3],         xm4                          ;row 1
-
-    lea                         r0,                [r0 + r1]                ; first loop src ->5th row(i.e 4)
-    lea                         r2,                [r2 + r3 * 2]                ; first loop dst ->5th row(i.e 4)
-    cmp                         r7,                r9
-    jnz                         .label
-    test                        r5d,              r5d
-    jz                          .end             
-
-    ; Row 15
-    vbroadcasti128              m3,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb                      m4,                m3,          m6
-    pshufb                      m3,                m1
-    pmaddubsw                   m3,                m0
-    pmaddubsw                   m4,                m0
-    phaddw                      m3,                m4                           ; DWORD [R1D R1C R0D R0C R1B R1A R0B R0A]
-
-    phaddw                      m3,                m4 
-
-    mova                        m4,                [interp8_hps_shuf]
-    vpermd                      m3,                m4,            m3
-    psubw                       m3,                m2
-
-    movu                        [r2],              xm3
+    ; last row
+    movu                        xm1,        [r0]
+    pshufb                      xm2,        xm1,         xm5                ; [0 1 1 2 2 3 3 4 ...]
+    pshufb                      xm3,        xm1,         [r4 + 1 * mmsize]  ; [2 3 3 4 4 5 5 6 ...]
+    pshufb                      xm4,        xm1,         [r4 + 2 * mmsize]  ; [4 5 5 6 6 7 7 8 ...]
+    pshufb                      xm1,        xm1,         [r4 + 3 * mmsize]  ; [6 7 7 8 8 9 9 A ...]
+    pmaddubsw                   xm2,        [r6 + 0 * mmsize]
+    pmaddubsw                   xm3,        [r6 + 1 * mmsize]
+    pmaddubsw                   xm4,        [r6 + 2 * mmsize]
+    pmaddubsw                   xm1,        [r6 + 3 * mmsize]
+    paddw                       xm2,        xm3
+    paddw                       xm1,        xm4
+    paddw                       xm1,        xm2
+    psubw                       xm1,        xm0
+    movu                        [r2],       xm1                          ;row 0
 .end
-RET
+    RET
 %endif
-%endmacro
+%endmacro ; IPFILTER_LUMA_PS_8xN_AVX2
 
-IPFILTER_LUMA_PS_8x_AVX2 8 , 8
-IPFILTER_LUMA_PS_8x_AVX2 8 , 16
-IPFILTER_LUMA_PS_8x_AVX2 8 , 32
-IPFILTER_LUMA_PS_8x_AVX2 8 , 4
+IPFILTER_LUMA_PS_8xN_AVX2  4
+IPFILTER_LUMA_PS_8xN_AVX2  8
+IPFILTER_LUMA_PS_8xN_AVX2 16
+IPFILTER_LUMA_PS_8xN_AVX2 32
 
 
 %macro IPFILTER_LUMA_PS_16x_AVX2 2
