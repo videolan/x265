@@ -552,6 +552,61 @@ cglobal intra_pred_dc4, 5,5,3
 .end:
     RET
 
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_planar4, 3,3,5
+    pxor            m0, m0
+    movh            m1, [r2 + 1]
+    punpcklbw       m1, m0
+    movh            m2, [r2 + 9]
+    punpcklbw       m2, m0
+    pshufhw         m3, m1, 0               ; topRight
+    pshufd          m3, m3, 0xAA
+    pshufhw         m4, m2, 0               ; bottomLeft
+    pshufd          m4, m4, 0xAA
+
+    pmullw          m3, [multi_2Row]        ; (x + 1) * topRight
+    pmullw          m0, m1, [pw_planar4_1]  ; (blkSize - 1 - y) * above[x]
+    paddw           m3, [pw_4]
+    paddw           m3, m4
+    paddw           m3, m0
+    psubw           m4, m1
+
+    pshuflw         m1, m2, 0
+    pmullw          m1, [pw_planar4_0]
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 3
+    packuswb        m1, m1
+    movd            [r0], m1
+
+    pshuflw         m1, m2, 01010101b
+    pmullw          m1, [pw_planar4_0]
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 3
+    packuswb        m1, m1
+    movd            [r0 + r1], m1
+    lea             r0, [r0 + 2 * r1]
+
+    pshuflw         m1, m2, 10101010b
+    pmullw          m1, [pw_planar4_0]
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 3
+    packuswb        m1, m1
+    movd            [r0], m1
+
+    pshuflw         m1, m2, 11111111b
+    pmullw          m1, [pw_planar4_0]
+    paddw           m1, m3
+    psraw           m1, 3
+    packuswb        m1, m1
+    movd            [r0 + r1], m1
+    RET
+
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
