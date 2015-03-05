@@ -5344,10 +5344,10 @@ FILTER_V4_W32 32, 32
 FILTER_V4_W32 32, 48
 FILTER_V4_W32 32, 64
 
-%macro FILTER_VER_CHROMA_AVX2_32x32 1
+%macro FILTER_VER_CHROMA_AVX2_32xN 2
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
-cglobal interp_4tap_vert_%1_32x32, 4, 7, 13
+cglobal interp_4tap_vert_%1_32x%2, 4, 7, 13
     mov             r4d, r4m
     shl             r4d, 6
 
@@ -5369,7 +5369,7 @@ cglobal interp_4tap_vert_%1_32x32, 4, 7, 13
     vbroadcasti128  m12, [pw_2000]
 %endif
     lea             r5, [r3 * 3]
-    mov             r6d, 8
+    mov             r6d, %2 / 4
 .loopW:
     movu            m0, [r0]                        ; m0 = row 0
     movu            m1, [r0 + r1]                   ; m1 = row 1
@@ -5476,8 +5476,14 @@ cglobal interp_4tap_vert_%1_32x32, 4, 7, 13
 %endif
 %endmacro
 
-FILTER_VER_CHROMA_AVX2_32x32 pp
-FILTER_VER_CHROMA_AVX2_32x32 ps
+FILTER_VER_CHROMA_AVX2_32xN pp, 32
+FILTER_VER_CHROMA_AVX2_32xN pp, 24
+FILTER_VER_CHROMA_AVX2_32xN pp, 16
+FILTER_VER_CHROMA_AVX2_32xN pp, 8
+FILTER_VER_CHROMA_AVX2_32xN ps, 32
+FILTER_VER_CHROMA_AVX2_32xN ps, 24
+FILTER_VER_CHROMA_AVX2_32xN ps, 16
+FILTER_VER_CHROMA_AVX2_32xN ps, 8
 
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)

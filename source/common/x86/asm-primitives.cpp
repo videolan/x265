@@ -1589,9 +1589,15 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].filter_vpp = x265_interp_4tap_vert_pp_16x16_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_vpp = x265_interp_4tap_vert_pp_32x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_vpp = x265_interp_4tap_vert_pp_32x24_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_vpp = x265_interp_4tap_vert_pp_32x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_vpp = x265_interp_4tap_vert_pp_32x8_avx2;
 
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].filter_vps = x265_interp_4tap_vert_ps_16x16_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_vps = x265_interp_4tap_vert_ps_32x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_vps = x265_interp_4tap_vert_ps_32x24_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_vps = x265_interp_4tap_vert_ps_32x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_vps = x265_interp_4tap_vert_ps_32x8_avx2;
 #else
         /* functions with both 64-bit and 32-bit implementations */
         p.cu[BLOCK_4x4].dct = x265_dct4_avx2;
