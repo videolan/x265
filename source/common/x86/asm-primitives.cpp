@@ -869,6 +869,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         ALL_LUMA_TU_S(transpose, transpose, sse2);
 
         p.cu[BLOCK_4x4].intra_pred[DC_IDX] = x265_intra_pred_dc4_sse2;
+        p.cu[BLOCK_8x8].intra_pred[DC_IDX] = x265_intra_pred_dc8_sse2;
 
         p.cu[BLOCK_4x4].intra_pred[PLANAR_IDX] = x265_intra_pred_planar4_sse2;
 
