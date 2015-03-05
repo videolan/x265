@@ -2773,6 +2773,151 @@ cglobal interp_4tap_vert_%1_4x8, 4, 6, 5
 FILTER_VER_CHROMA_AVX2_4x8 pp
 FILTER_VER_CHROMA_AVX2_4x8 ps
 
+%macro FILTER_VER_CHROMA_AVX2_4x16 1
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_4tap_vert_%1_4x16, 4, 6, 9
+    mov             r4d, r4m
+    shl             r4d, 6
+    sub             r0, r1
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+
+    movd            xm1, [r0]
+    pinsrd          xm1, [r0 + r1], 1
+    pinsrd          xm1, [r0 + r1 * 2], 2
+    pinsrd          xm1, [r0 + r4], 3                       ; m1 = row[3 2 1 0]
+    lea             r0, [r0 + r1 * 4]
+    movd            xm2, [r0]
+    pinsrd          xm2, [r0 + r1], 1
+    pinsrd          xm2, [r0 + r1 * 2], 2
+    pinsrd          xm2, [r0 + r4], 3                       ; m2 = row[7 6 5 4]
+    vinserti128     m1, m1, xm2, 1                          ; m1 = row[7 6 5 4 3 2 1 0]
+    lea             r0, [r0 + r1 * 4]
+    movd            xm3, [r0]
+    pinsrd          xm3, [r0 + r1], 1
+    pinsrd          xm3, [r0 + r1 * 2], 2
+    pinsrd          xm3, [r0 + r4], 3                       ; m3 = row[11 10 9 8]
+    vinserti128     m2, m2, xm3, 1                          ; m2 = row[11 10 9 8 7 6 5 4]
+    lea             r0, [r0 + r1 * 4]
+    movd            xm4, [r0]
+    pinsrd          xm4, [r0 + r1], 1
+    pinsrd          xm4, [r0 + r1 * 2], 2
+    pinsrd          xm4, [r0 + r4], 3                       ; m4 = row[15 14 13 12]
+    vinserti128     m3, m3, xm4, 1                          ; m3 = row[15 14 13 12 11 10 9 8]
+    lea             r0, [r0 + r1 * 4]
+    movd            xm5, [r0]
+    pinsrd          xm5, [r0 + r1], 1
+    pinsrd          xm5, [r0 + r1 * 2], 2                   ; m5 = row[x 18 17 16]
+    vinserti128     m4, m4, xm5, 1                          ; m4 = row[x 18 17 16 15 14 13 12]
+    mova            m5, [interp4_vpp_shuf1]
+    vpermd          m0, m5, m1                              ; m0 = row[4 3 3 2 2 1 1 0]
+    vpermd          m6, m5, m2                              ; m6 = row[8 7 7 6 6 5 5 4]
+    vpermd          m7, m5, m3                              ; m7 = row[12 11 11 10 10 9 9 8]
+    vpermd          m8, m5, m4                              ; m8 = row[16 15 15 14 14 13 13 12]
+    mova            m5, [interp4_vpp_shuf1 + mmsize]
+    vpermd          m1, m5, m1                              ; m1 = row[6 5 5 4 4 3 3 2]
+    vpermd          m2, m5, m2                              ; m2 = row[10 9 9 8 8 7 7 6]
+    vpermd          m3, m5, m3                              ; m3 = row[14 13 13 12 12 11 11 10]
+    vpermd          m4, m5, m4                              ; m4 = row[18 17 17 16 16 15 15 14]
+
+    mova            m5, [interp4_vpp_shuf]
+    pshufb          m0, m0, m5
+    pshufb          m1, m1, m5
+    pshufb          m2, m2, m5
+    pshufb          m4, m4, m5
+    pshufb          m3, m3, m5
+    pshufb          m6, m6, m5
+    pshufb          m7, m7, m5
+    pshufb          m8, m8, m5
+    pmaddubsw       m0, [r5]
+    pmaddubsw       m6, [r5]
+    pmaddubsw       m7, [r5]
+    pmaddubsw       m8, [r5]
+    pmaddubsw       m1, [r5 + mmsize]
+    pmaddubsw       m2, [r5 + mmsize]
+    pmaddubsw       m3, [r5 + mmsize]
+    pmaddubsw       m4, [r5 + mmsize]
+    paddw           m0, m1                                  ; m0 = WORD ROW[3 2 1 0]
+    paddw           m6, m2                                  ; m6 = WORD ROW[7 6 5 4]
+    paddw           m7, m3                                  ; m7 = WORD ROW[11 10 9 8]
+    paddw           m8, m4                                  ; m8 = WORD ROW[15 14 13 12]
+%ifidn %1,pp
+    mova            m5, [pw_512]
+    pmulhrsw        m0, m5
+    pmulhrsw        m6, m5
+    pmulhrsw        m7, m5
+    pmulhrsw        m8, m5
+    packuswb        m0, m6
+    packuswb        m7, m8
+    vextracti128    xm1, m0, 1
+    vextracti128    xm2, m7, 1
+    lea             r5, [r3 * 3]
+    movd            [r2], xm0
+    pextrd          [r2 + r3], xm0, 1
+    movd            [r2 + r3 * 2], xm1
+    pextrd          [r2 + r5], xm1, 1
+    lea             r2, [r2 + r3 * 4]
+    pextrd          [r2], xm0, 2
+    pextrd          [r2 + r3], xm0, 3
+    pextrd          [r2 + r3 * 2], xm1, 2
+    pextrd          [r2 + r5], xm1, 3
+    lea             r2, [r2 + r3 * 4]
+    movd            [r2], xm7
+    pextrd          [r2 + r3], xm7, 1
+    movd            [r2 + r3 * 2], xm2
+    pextrd          [r2 + r5], xm2, 1
+    lea             r2, [r2 + r3 * 4]
+    pextrd          [r2], xm7, 2
+    pextrd          [r2 + r3], xm7, 3
+    pextrd          [r2 + r3 * 2], xm2, 2
+    pextrd          [r2 + r5], xm2, 3
+%else
+    add             r3d, r3d
+    mova            m5, [pw_2000]
+    psubw           m0, m5
+    psubw           m6, m5
+    psubw           m7, m5
+    psubw           m8, m5
+    vextracti128    xm1, m0, 1
+    vextracti128    xm2, m6, 1
+    vextracti128    xm3, m7, 1
+    vextracti128    xm4, m8, 1
+    lea             r5, [r3 * 3]
+    movq            [r2], xm0
+    movhps          [r2 + r3], xm0
+    movq            [r2 + r3 * 2], xm1
+    movhps          [r2 + r5], xm1
+    lea             r2, [r2 + r3 * 4]
+    movq            [r2], xm6
+    movhps          [r2 + r3], xm6
+    movq            [r2 + r3 * 2], xm2
+    movhps          [r2 + r5], xm2
+    lea             r2, [r2 + r3 * 4]
+    movq            [r2], xm7
+    movhps          [r2 + r3], xm7
+    movq            [r2 + r3 * 2], xm3
+    movhps          [r2 + r5], xm3
+    lea             r2, [r2 + r3 * 4]
+    movq            [r2], xm8
+    movhps          [r2 + r3], xm8
+    movq            [r2 + r3 * 2], xm4
+    movhps          [r2 + r5], xm4
+%endif
+    RET
+%endif
+%endmacro
+
+FILTER_VER_CHROMA_AVX2_4x16 pp
+FILTER_VER_CHROMA_AVX2_4x16 ps
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
