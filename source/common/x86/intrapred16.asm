@@ -441,6 +441,57 @@ cglobal intra_pred_dc32, 3, 4, 6
 %endrep
     RET
 
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_planar8, 3,3,5
+    movu            m1, [r2 + 2]
+    movu            m2, [r2 + 34]
+
+    movd            m3, [r2 + 18]           ; topRight   = above[8];
+    movd            m4, [r2 + 50]           ; bottomLeft = left[8];
+
+    pshuflw         m3, m3, 0
+    pshuflw         m4, m4, 0
+    pshufd          m3, m3, 0               ; v_topRight
+    pshufd          m4, m4, 0               ; v_bottomLeft
+
+    pmullw          m3, [multiL]            ; (x + 1) * topRight
+    pmullw          m0, m1, [pw_planar8_1]  ; (blkSize - 1 - y) * above[x]
+    paddw           m3, [pw_8]
+    paddw           m3, m4
+    paddw           m3, m0
+    psubw           m4, m1
+
+%macro INTRA_PRED_PLANAR_8 1
+%if (%1 < 4)
+    pshuflw         m1, m2, 0x55 * %1
+    pshufd          m1, m1, 0
+%else
+    pshufhw         m1, m2, 0x55 * (%1 - 4)
+    pshufd          m1, m1, 0xAA
+%endif
+    pmullw          m1, [pw_planar8_0]
+    paddw           m1, m3
+    psraw           m1, 4
+    movu            [r0], m1
+%if (%1 < 7)
+    paddw           m3, m4
+    lea             r0, [r0 + r1 * 2]
+%endif
+%endmacro
+
+    INTRA_PRED_PLANAR_8 0
+    INTRA_PRED_PLANAR_8 1
+    INTRA_PRED_PLANAR_8 2
+    INTRA_PRED_PLANAR_8 3
+    INTRA_PRED_PLANAR_8 4
+    INTRA_PRED_PLANAR_8 5
+    INTRA_PRED_PLANAR_8 6
+    INTRA_PRED_PLANAR_8 7
+    RET
+
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
 ;-----------------------------------------------------------------------------------
