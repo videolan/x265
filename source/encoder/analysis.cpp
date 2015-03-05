@@ -312,10 +312,10 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
             addSplitFlagCost(*splitPred, cuGeom.depth);
         else
             updateModeCost(*splitPred);
+
+        checkDQPForSplitPred(splitPred->cu, cuGeom);
         checkBestMode(*splitPred, depth);
     }
-
-    checkDQP(md.bestMode->cu, cuGeom);
 
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
@@ -711,6 +711,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         else
             updateModeCost(*splitPred);
 
+        checkDQPForSplitPred(splitPred->cu, cuGeom);
         checkBestMode(*splitPred, depth);
     }
 
@@ -723,8 +724,6 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         cuStat.count[depth] += 1;
         cuStat.avgCost[depth] = (temp + md.bestMode->rdCost) / cuStat.count[depth];
     }
-
-    checkDQP(md.bestMode->cu, cuGeom);
 
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
@@ -996,8 +995,9 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
             checkBestMode(*splitPred, cuGeom.depth);
         else if (splitPred->sa8dCost < md.bestMode->sa8dCost)
             md.bestMode = splitPred;
-    }
 
+        checkDQPForSplitPred(md.bestMode->cu, cuGeom);
+    }
     if (mightNotSplit)
     {
         /* early-out statistics */
@@ -1007,8 +1007,6 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
         cuStat.count[depth] += 1;
         cuStat.avgCost[depth] = (temp + md.bestMode->rdCost) / cuStat.count[depth];
     }
-
-    checkDQP(md.bestMode->cu, cuGeom);
 
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
@@ -1184,10 +1182,9 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
         else
             updateModeCost(*splitPred);
 
+        checkDQPForSplitPred(splitPred->cu, cuGeom);
         checkBestMode(*splitPred, depth);
     }
-
-    checkDQP(md.bestMode->cu, cuGeom);
 
     /* Copy best data to encData CTU and recon */
     md.bestMode->cu.copyToPic(depth);
@@ -1296,6 +1293,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     bestPred->cu.setPUMv(1, candMvField[bestSadCand][1].mv, 0, 0);
     bestPred->cu.setPURefIdx(0, (int8_t)candMvField[bestSadCand][0].refIdx, 0, 0);
     bestPred->cu.setPURefIdx(1, (int8_t)candMvField[bestSadCand][1].refIdx, 0, 0);
+    checkDQP(bestPred->cu, cuGeom);
 }
 
 /* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
@@ -1432,6 +1430,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         if (m_param->analysisMode == X265_ANALYSIS_SAVE)
             *m_reuseBestMergeCand = bestPred->cu.m_mvpIdx[0][0];
     }
+    checkDQP(bestPred->cu, cuGeom);
 }
 
 void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize)
@@ -1759,7 +1758,6 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
                                                          predV, predYuv.m_csize);
     }
 
-    checkDQP(cu, cuGeom);
     cu.updatePic(cuGeom.depth);
 }
 
@@ -1785,34 +1783,6 @@ void Analysis::addSplitFlagCost(Mode& mode, uint32_t depth)
         mode.mvBits++;
         mode.totalBits++;
         updateModeCost(mode);
-    }
-}
-
-void Analysis::checkDQP(CUData& cu, const CUGeom& cuGeom)
-{
-    if (m_slice->m_pps->bUseDQP && cuGeom.depth <= m_slice->m_pps->maxCuDQPDepth)
-    {
-        if (cu.m_cuDepth[0] > cuGeom.depth) // detect splits
-        {
-            bool hasResidual = false;
-            for (uint32_t absPartIdx = 0; absPartIdx < cu.m_numPartitions; absPartIdx++)
-            {
-                if (cu.getQtRootCbf(absPartIdx))
-                {
-                    hasResidual = true;
-                    break;
-                }
-            }
-            if (hasResidual)
-                cu.setQPSubCUs(cu.getRefQP(0), 0, cuGeom.depth);
-            else
-                cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
-        }
-        else
-        {
-            if (!cu.getCbf(0, TEXT_LUMA, 0) && !cu.getCbf(0, TEXT_CHROMA_U, 0) && !cu.getCbf(0, TEXT_CHROMA_V, 0))
-                cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
-        }
     }
 }
 

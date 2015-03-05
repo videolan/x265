@@ -1184,8 +1184,8 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
         const Yuv* fencYuv = intraMode.fencYuv;
         intraMode.psyEnergy = m_rdCost.psyCost(cuGeom.log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_size);
     }
-
     updateModeCost(intraMode);
+    checkDQP(cu, cuGeom);
 }
 
 /* Note that this function does not save the best intra prediction, it must
@@ -1404,6 +1404,7 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
     m_entropyCoder.store(intraMode.contexts);
     updateModeCost(intraMode);
+    checkDQP(intraMode.cu, cuGeom);
 }
 
 uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2], uint8_t* sharedModes)
@@ -2627,6 +2628,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     interMode.coeffBits = coeffBits;
     interMode.mvBits = bits - coeffBits;
     updateModeCost(interMode);
+    checkDQP(interMode.cu, cuGeom);
 }
 
 void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, const uint32_t depthRange[2])
@@ -3442,5 +3444,51 @@ void Search::updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint
     {
         candCostList[maxIndex] = cost;
         candModeList[maxIndex] = mode;
+    }
+}
+
+void Search::checkDQP(CUData& cu, const CUGeom& cuGeom)
+{
+    if (cu.m_slice->m_pps->bUseDQP && cuGeom.depth <= cu.m_slice->m_pps->maxCuDQPDepth)
+    {
+        if (cu.getQtRootCbf(0))
+        {
+            /* When analysing RDO with DQP bits, the entropy encoder should add the cost of DQP bits here
+             * i.e Encode QP */
+        }
+        else
+        {
+            cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
+        }
+    }
+}
+
+void Search::checkDQPForSplitPred(CUData& cu, const CUGeom& cuGeom)
+{
+    if ((cuGeom.depth == cu.m_slice->m_pps->maxCuDQPDepth) && cu.m_slice->m_pps->bUseDQP)
+    {
+        bool hasResidual = false;
+
+        /* Check if any sub-CU has a non-zero QP */
+        for (uint32_t blkIdx = 0; blkIdx < cuGeom.numPartitions; blkIdx++)
+        {
+            if (cu.getQtRootCbf(blkIdx))
+            {
+                hasResidual = true;
+                break;
+            }
+        }
+        if (hasResidual)
+        {
+            /* TODO: Encode QP, and recalculate RD cost of splitPred */
+            /* For all zero CBF sub-CUs, reset QP to RefQP (so that deltaQP is not signalled).
+            When the non-zero CBF sub-CU is found, stop */
+            bool ret = false;
+            ret = cu.setQPSubCUs(cu.getRefQP(0), 0, cuGeom.depth);
+            X265_CHECK(ret, "set sub QP CU failed\n");
+        }
+        else
+            /* No residual within this CU or subCU, so reset QP to RefQP */
+            cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
     }
 }

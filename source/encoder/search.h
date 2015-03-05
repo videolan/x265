@@ -285,6 +285,10 @@ public:
     // pick be chroma mode from available using just sa8d costs
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
 
+    /* update CBF flags and QP values to be internally consistent */
+    void checkDQP(CUData& cu, const CUGeom& cuGeom);
+    void checkDQPForSplitPred(CUData& cu, const CUGeom& cuGeom);
+
     class PME : public BondedTaskGroup
     {
     public:

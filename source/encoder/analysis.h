@@ -132,9 +132,6 @@ protected:
     /* add the RD cost of coding a split flag (0 or 1) to the given mode */
     void addSplitFlagCost(Mode& mode, uint32_t depth);
 
-    /* update CBF flags and QP values to be internally consistent */
-    void checkDQP(CUData& cu, const CUGeom& cuGeom);
-
     /* work-avoidance heuristics for RD levels < 5 */
     uint32_t topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom);
     bool recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom, const Mode& bestMode);
