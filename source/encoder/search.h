@@ -152,6 +152,7 @@ struct CUStats
     int64_t  pmeBlockTime;                      // elapsed worker time blocked for pme batch completion
     int64_t  pmodeTime;                         // elapsed worker time processing pmode slave jobs
     int64_t  pmodeBlockTime;                    // elapsed worker time blocked for pmode batch completion
+    int64_t  weightAnalyzeTime;                 // elapsed worker time analyzing reference weights
     int64_t  totalCTUTime;                      // elapsed worker time in compressCTU (includes pmode master)
 
     uint64_t countIntraRDO[NUM_CU_DEPTH];
@@ -163,6 +164,7 @@ struct CUStats
     uint64_t countPMEMasters;
     uint64_t countPModeTasks;
     uint64_t countPModeMasters;
+    uint64_t countWeightAnalyze;
     uint64_t totalCTUs;
 
     CUStats() { clear(); }
@@ -189,6 +191,7 @@ struct CUStats
         pmeBlockTime += other.pmeBlockTime;
         pmodeTime += other.pmodeTime;
         pmodeBlockTime += other.pmodeBlockTime;
+        weightAnalyzeTime += other.weightAnalyzeTime;
         totalCTUTime += other.totalCTUTime;
 
         countIntraAnalysis += other.countIntraAnalysis;
@@ -198,6 +201,7 @@ struct CUStats
         countPMEMasters += other.countPMEMasters;
         countPModeTasks += other.countPModeTasks;
         countPModeMasters += other.countPModeMasters;
+        countWeightAnalyze += other.countWeightAnalyze;
         totalCTUs += other.totalCTUs;
 
         other.clear();

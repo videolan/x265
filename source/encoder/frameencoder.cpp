@@ -284,6 +284,12 @@ void FrameEncoder::threadMain()
     }
 }
 
+void FrameEncoder::WeightAnalysis::processTasks(int /* workerThreadId */)
+{
+    Frame* frame = master.m_frame;
+    weightAnalyse(*frame->m_encData->m_slice, *frame, *master.m_param);
+}
+
 void FrameEncoder::compressFrame()
 {
     ProfileScopeEvent(frameThread);
@@ -316,7 +322,18 @@ void FrameEncoder::compressFrame()
     bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred;
     bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
     if (bUseWeightP || bUseWeightB)
-        weightAnalyse(*slice, *m_frame, *m_param);
+    {
+#if DETAILED_CU_STATS
+        m_cuStats.countWeightAnalyze++;
+        ScopedElapsedTime time(m_cuStats.weightAnalyzeTime);
+#endif
+        WeightAnalysis wa(*this);
+        if (m_pool && wa.tryBondPeers(*this, 1))
+            /* use an idle worker for weight analysis */
+            wa.waitForExit();
+        else
+            weightAnalyse(*slice, *m_frame, *m_param);
+    }
     else
         slice->disableWeights();
 

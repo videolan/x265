@@ -200,6 +200,21 @@ public:
     FrameFilter              m_frameFilter;
     NALList                  m_nalList;
 
+    class WeightAnalysis : public BondedTaskGroup
+    {
+    public:
+
+        FrameEncoder& master;
+
+        WeightAnalysis(FrameEncoder& fe) : master(fe) {}
+
+        void processTasks(int workerThreadId);
+
+    protected:
+
+        WeightAnalysis operator=(const WeightAnalysis&);
+    };
+
 protected:
 
     bool initializeGeoms();

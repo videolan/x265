@@ -848,7 +848,8 @@ void Encoder::printSummary()
     int64_t lookaheadWorkerTime = m_lookahead->m_slicetypeDecideElapsedTime + m_lookahead->m_preLookaheadElapsedTime +
                                   batchElapsedTime + coopSliceElapsedTime;
 
-    int64_t totalWorkerTime = cuStats.totalCTUTime + cuStats.loopFilterElapsedTime + cuStats.pmodeTime + cuStats.pmeTime + lookaheadWorkerTime;
+    int64_t totalWorkerTime = cuStats.totalCTUTime + cuStats.loopFilterElapsedTime + cuStats.pmodeTime +
+                              cuStats.pmeTime + lookaheadWorkerTime + cuStats.weightAnalyzeTime;
     int64_t elapsedEncodeTime = x265_mdate() - m_encodeStartTime;
 
     int64_t interRDOTotalTime = 0, intraRDOTotalTime = 0;
@@ -898,6 +899,12 @@ void Encoder::printSummary()
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in loop filters, average %.3lf ms per call\n",
              100.0 * cuStats.loopFilterElapsedTime / totalWorkerTime,
              ELAPSED_MSEC(cuStats.loopFilterElapsedTime) / cuStats.countLoopFilter);
+    if (cuStats.countWeightAnalyze && cuStats.weightAnalyzeTime)
+    {
+        x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in weight analysis, average %.3lf ms per call\n",
+                 100.0 * cuStats.weightAnalyzeTime / totalWorkerTime,
+                 ELAPSED_MSEC(cuStats.weightAnalyzeTime) / cuStats.countWeightAnalyze);
+    }
     if (m_param->bDistributeModeAnalysis && cuStats.countPModeMasters)
     {
         x265_log(m_param, X265_LOG_INFO, "CU: %.3lf PMODE masters per CTU, each blocked an average of %.3lf ns\n",
