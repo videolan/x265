@@ -29,6 +29,7 @@
 void x265_intra_pred_dc4_sse2(pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
 void x265_intra_pred_dc8_sse2(pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
 void x265_intra_pred_dc16_sse2(pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
+void x265_intra_pred_dc32_sse2(pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
 void x265_intra_pred_dc4_sse4(pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
 void x265_intra_pred_dc8_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int filter);
 void x265_intra_pred_dc16_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int filter);

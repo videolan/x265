@@ -495,6 +495,46 @@ cglobal intra_pred_dc16, 5, 7, 4
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_dc32, 3, 3, 5
+    pxor            m0,            m0
+    movu            m1,            [r2 + 1]
+    movu            m2,            [r2 + 17]
+    movu            m3,            [r2 + 65]
+    movu            m4,            [r2 + 81]
+    psadbw          m1,            m0
+    psadbw          m2,            m0
+    psadbw          m3,            m0
+    psadbw          m4,            m0
+    paddw           m1,            m2
+    paddw           m3,            m4
+    paddw           m1,            m3
+    pshufd          m2,            m1, 2
+    paddw           m1,            m2
+
+    paddw           m1,            [pw_32]
+    psraw           m1,            6
+    pmullw          m1,            [pw_257]
+    pshuflw         m1,            m1, 0x00       ; m1 = byte [dc_val ...]
+    pshufd          m1,            m1, 0x00
+
+%assign x 0
+%rep 16
+    ; store DC 16x16
+    movu            [r0],               m1
+    movu            [r0 + r1],          m1
+    movu            [r0 + 16],          m1
+    movu            [r0 + r1 + 16],     m1
+%if x < 16
+    lea             r0,            [r0 + 2 * r1]
+%endif
+%assign x x+1
+%endrep
+    RET
+
+;---------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+;---------------------------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal intra_pred_dc4, 5,5,3
     inc         r2
