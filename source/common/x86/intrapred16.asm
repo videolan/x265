@@ -241,6 +241,145 @@ cglobal intra_pred_dc8, 5, 8, 2
 .end:
     RET
 
+;-------------------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-------------------------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_dc16, 5, 10, 4
+    lea             r3,                  [r2 + 66]
+    add             r1,                  r1
+    movu            m0,                  [r3]
+    movu            m1,                  [r3 + 16]
+    movu            m2,                  [r2 + 2]
+    movu            m3,                  [r2 + 18]
+
+    paddw           m0,                  m1
+    paddw           m2,                  m3
+    paddw           m0,                  m2
+    movhlps         m1,                  m0
+    paddw           m0,                  m1
+    pshuflw         m1,                  m0, 0x6E
+    paddw           m0,                  m1
+    pmaddwd         m0,                  [pw_1]
+
+    paddw           m0,                  [pw_16]
+    psraw           m0,                  5
+    movd            r5d,                 m0
+    pshuflw         m0,                  m0, 0 ; m0 = word [dc_val ...]
+    pshufd          m0,                  m0, 0
+
+    test            r4d,                 r4d
+
+    ; store DC 16x16
+    lea             r6,                  [r1 + r1 * 2]        ;index 3
+    lea             r7,                  [r1 + r1 * 4]        ;index 5
+    lea             r8,                  [r6 + r1 * 4]        ;index 7
+    lea             r9,                  [r0 + r8]            ;base + 7
+    movu            [r0],                m0
+    movu            [r0 + 16],           m0
+    movu            [r0 + r1],           m0
+    movu            [r0 + 16 + r1],      m0
+    movu            [r0 + r1 * 2],       m0
+    movu            [r0 + r1 * 2 + 16],  m0
+    movu            [r0 + r6],           m0
+    movu            [r0 + r6 + 16],      m0
+    movu            [r0 + r1 * 4],       m0
+    movu            [r0 + r1 * 4 + 16],  m0
+    movu            [r0 + r7],           m0
+    movu            [r0 + r7 + 16],      m0
+    movu            [r0 + r6 * 2],       m0
+    movu            [r0 + r6 * 2 + 16],  m0
+    movu            [r9],                m0
+    movu            [r9 + 16],           m0
+    movu            [r0 + r1 * 8],       m0
+    movu            [r0 + r1 * 8 + 16],  m0
+    movu            [r9 + r1 * 2],       m0
+    movu            [r9 + r1 * 2 + 16],  m0
+    movu            [r0 + r7 * 2],       m0
+    movu            [r0 + r7 * 2 + 16],  m0
+    movu            [r9 + r1 * 4],       m0
+    movu            [r9 + r1 * 4 + 16],  m0
+    movu            [r0 + r6 * 4],       m0
+    movu            [r0 + r6 * 4 + 16],  m0
+    movu            [r9 + r6 * 2],       m0
+    movu            [r9 + r6 * 2 + 16],  m0
+    movu            [r9 + r8],           m0
+    movu            [r9 + r8 + 16],      m0
+    movu            [r9 + r1 * 8],       m0
+    movu            [r9 + r1 * 8 + 16],  m0
+
+    ; Do DC Filter
+    jz              .end
+    mova            m1,                  [pw_2]
+    pmullw          m1,                  m0
+    paddw           m1,                  [pw_2]
+    movd            r4d,                 m1
+    paddw           m1,                  m0
+
+    ; filter top
+    movu            m2,                  [r2 + 2]
+    paddw           m2,                  m1
+    psraw           m2,                  2
+    movu            [r0],                m2
+    movu            m3,                  [r2 + 18]
+    paddw           m3,                  m1
+    psraw           m3,                  2
+    movu            [r0 + 16],           m3
+
+    ; filter top-left
+    movzx           r4d,                 r4w
+    movzx           r5d, word            [r3]
+    add             r4d,                 r5d
+    movzx           r5d, word            [r2 + 2]
+    add             r5d,                 r4d
+    shr             r5d,                 2
+    mov             [r0],                r5w
+
+    ; filter left
+    movu            m2,                  [r3 + 2]
+    paddw           m2,                  m1
+    psraw           m2,                  2
+
+    movq            r2,                  m2
+    pshufd          m2,                  m2, 0xEE
+    mov             [r0 + r1],           r2w
+    shr             r2,                  16
+    mov             [r0 + r1 * 2],       r2w
+    shr             r2,                  16
+    mov             [r0 + r6],           r2w
+    shr             r2,                  16
+    mov             [r0 + r1 * 4],       r2w
+    movq            r2,                  m2
+    mov             [r0 + r7],           r2w
+    shr             r2,                  16
+    mov             [r0 + r6 * 2],       r2w
+    shr             r2,                  16
+    mov             [r9],                r2w
+    shr             r2,                  16
+    mov             [r0 + r1 * 8],       r2w
+
+    movu            m3,                  [r3 + 18]
+    paddw           m3,                  m1
+    psraw           m3,                  2
+
+    movq            r3,                  m3
+    pshufd          m3,                  m3, 0xEE
+    mov             [r9 + r1 * 2],       r3w
+    shr             r3,                  16
+    mov             [r0 + r7 * 2],       r3w
+    shr             r3,                  16
+    mov             [r9 + r1 * 4],       r3w
+    shr             r3,                  16
+    mov             [r0 + r6 * 4],       r3w
+    movq            r3,                  m3
+    mov             [r9 + r6 * 2],       r3w
+    shr             r3,                  16
+    mov             [r9 + r8],           r3w
+    shr             r3,                  16
+    mov             [r9 + r1 * 8],       r3w
+.end:
+    RET
+
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
 ;-----------------------------------------------------------------------------------
