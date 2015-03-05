@@ -4603,6 +4603,55 @@ cglobal interp_4tap_vert_%1_8x4, 4, 6, 5
 FILTER_VER_CHROMA_AVX2_8x4 pp
 FILTER_VER_CHROMA_AVX2_8x4 ps
 
+%macro FILTER_VER_CHROMA_AVX2_8x2 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_8x2, 4, 6, 4
+    mov             r4d, r4m
+    shl             r4d, 6
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+
+    movq            xm1, [r0]                       ; m1 = row 0
+    movq            xm2, [r0 + r1]                  ; m2 = row 1
+    punpcklbw       xm1, xm2                        ; m1 = [17 07 16 06 15 05 14 04 13 03 12 02 11 01 10 00]
+    movq            xm3, [r0 + r1 * 2]              ; m3 = row 2
+    punpcklbw       xm2, xm3                        ; m2 = [27 17 26 16 25 15 24 14 23 13 22 12 21 11 20 10]
+    vinserti128     m1, m1, xm2, 1                  ; m1 = [27 17 26 16 25 15 24 14 23 13 22 12 21 11 20 10] - [17 07 16 06 15 05 14 04 13 03 12 02 11 01 10 00]
+    pmaddubsw       m1, [r5]
+    movq            xm2, [r0 + r4]                  ; m2 = row 3
+    punpcklbw       xm3, xm2                        ; m3 = [37 27 36 26 35 25 34 24 33 23 32 22 31 21 30 20]
+    movq            xm0, [r0 + r1 * 4]              ; m0 = row 4
+    punpcklbw       xm2, xm0                        ; m2 = [47 37 46 36 45 35 44 34 43 33 42 32 41 31 40 30]
+    vinserti128     m3, m3, xm2, 1                  ; m3 = [47 37 46 36 45 35 44 34 43 33 42 32 41 31 40 30] - [37 27 36 26 35 25 34 24 33 23 32 22 31 21 30 20]
+    pmaddubsw       m3, [r5 + 1 * mmsize]
+    paddw           m1, m3
+%ifidn %1,pp
+    pmulhrsw        m1, [pw_512]                    ; m1 = word: row 0, row 1
+    packuswb        m1, m1
+    vextracti128    xm0, m1, 1
+    movq            [r2], xm1
+    movq            [r2 + r3], xm0
+%else
+    add             r3d, r3d
+    psubw           m1, [pw_2000]                   ; m1 = word: row 0, row 1
+    vextracti128    xm0, m1, 1
+    movu            [r2], xm1
+    movu            [r2 + r3], xm0
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_AVX2_8x2 pp
+FILTER_VER_CHROMA_AVX2_8x2 ps
+
 ;-----------------------------------------------------------------------------
 ;void interp_4tap_vert_pp_6x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
