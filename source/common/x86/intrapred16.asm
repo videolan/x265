@@ -82,6 +82,7 @@ const planar32_table1
 SECTION .text
 
 cextern pw_1
+cextern pw_2
 cextern pw_4
 cextern pw_8
 cextern pw_16
@@ -95,6 +96,67 @@ cextern multi_2Row
 cextern pw_swap
 cextern pb_unpackwq1
 cextern pb_unpackwq2
+
+;-----------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
+;-----------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_dc4, 5,6,2
+    movh        m0,             [r2 + 18]          ; sumAbove
+    movh        m1,             [r2 + 2]           ; sumLeft
+
+    paddw       m0,             m1
+    pshuflw     m1,             m0, 0x4E
+    paddw       m0,             m1
+    pshuflw     m1,             m0, 0xB1
+    paddw       m0,             m1
+
+    test        r4d,            r4d
+
+    paddw       m0,             [pw_4]
+    psraw       m0,             3
+
+    ; store DC 4x4
+    movh        [r0],           m0
+    movh        [r0 + r1 * 2],  m0
+    movh        [r0 + r1 * 4],  m0
+    lea         r5,             [r0 + r1 * 4]
+    movh        [r5 + r1 * 2],  m0
+
+    ; do DC filter
+    jz          .end
+    movh        m1,             m0
+    psllw       m1,             1
+    paddw       m1,             [pw_2]
+    movd        r3d,            m1
+    paddw       m0,             m1
+    ; filter top
+    movh        m1,             [r2 + 2]
+    paddw       m1,             m0
+    psraw       m1,             2
+    movh        [r0],           m1             ; overwrite top-left pixel, we will update it later
+
+    ; filter top-left
+    movzx       r3d,            r3w
+    movzx       r4d, word       [r2 + 18]
+    add         r3d,            r4d
+    movzx       r4d, word       [r2 + 2]
+    add         r4d,            r3d
+    shr         r4d,            2
+    mov         [r0],           r4w
+
+    ; filter left
+    movu        m1,             [r2 + 20]
+    paddw       m1,             m0
+    psraw       m1,             2
+    movd        r3d,            m1
+    mov         [r0 + r1 * 2],  r3w
+    shr         r3d,            16
+    mov         [r0 + r1 * 4],  r3w
+    pextrw      r3d,            m1, 2
+    mov         [r5 + r1 * 2],  r3w
+.end:
+    RET
 
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
