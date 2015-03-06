@@ -797,8 +797,7 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
 {
 #if !defined(X86_64)
-    x265_log(NULL, X265_LOG_WARNING, "Assembly not allowed in 32bit high bit-depth builds\n");
-    return;
+#error "Unsupported build configuration (32bit x86 and HIGH_BIT_DEPTH), you must configure ENABLE_ASSEMBLY=OFF"
 #endif
 
     if (cpuMask & X265_CPU_SSE2)
