@@ -187,7 +187,7 @@ if(CHECKED_BUILD)
     if(GCC)
         check_cxx_compiler_flag(-fsanitize=undefined-trap CC_HAS_CATCH_UNDEFINED) # clang
         check_cxx_compiler_flag(-ftrapv CC_HAS_FTRAPV)                            # gcc
-        check_cxx_compiler_flag(-fstack-protector CC_HAS_STACK_PROTECT)           # gcc
+        check_cxx_compiler_flag(-fstack-protector-all CC_HAS_STACK_PROTECT)       # gcc
         if(CC_HAS_FTRAPV)
             add_definitions(-ftrapv)
         endif()
@@ -195,7 +195,7 @@ if(CHECKED_BUILD)
             add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error)
         endif()
         if(CC_HAS_STACK_PROTECT)
-            add_definitions(-fstack-protector)
+            add_definitions(-fstack-protector-all)
             if(MINGW)
                 list(APPEND PLATFORM_LIBS ssp)
             endif()
