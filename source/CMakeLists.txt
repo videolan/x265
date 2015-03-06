@@ -165,6 +165,7 @@ if(GCC)
     set(FSANITIZE "" CACHE STRING "-fsanitize options for GCC/clang")
     if(FSANITIZE)
         add_definitions(-fsanitize=${FSANITIZE})
+        list(APPEND LINKER_OPTIONS "-fsanitize=${FSANITIZE}")
     endif()
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CC_VERSION)
 endif(GCC)
@@ -428,12 +429,12 @@ if(ENABLE_CLI)
         endif()
     endif()
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
-    if(FSANITIZE)
+    if(LINKER_OPTIONS)
         # clang and gcc need the sanitize options to be passed at link
         # time so the appropriate ASAN/TSAN runtime libraries can be
         # linked. Linking the cli to the static libx265 is usually
         # required (by setting ENABLE_SHARED to OFF)
-        set_target_properties(cli PROPERTIES LINK_FLAGS "-fsanitize=${FSANITIZE}")
+        set_target_properties(cli PROPERTIES LINK_FLAGS ${LINKER_OPTIONS})
     endif()
 
     install(TARGETS cli DESTINATION ${BIN_INSTALL_DIR})
