@@ -213,6 +213,7 @@ if(X64)
     # can disable this if(X64) check if you desparately need a 32bit
     # build with 10bit/12bit support, but this violates the "shrink wrap
     # license" so to speak.  If it breaks you get to keep both halves.
+    # You will likely need to compile without assembly
     option(HIGH_BIT_DEPTH "Store pixels as 16bit values" OFF)
 endif(X64)
 if(HIGH_BIT_DEPTH)

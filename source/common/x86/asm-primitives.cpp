@@ -796,6 +796,11 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
 {
+#if !defined(X86_64)
+    x265_log(NULL, X265_LOG_WARNING, "Assembly not allowed in 32bit high bit-depth builds\n");
+    return;
+#endif
+
     if (cpuMask & X265_CPU_SSE2)
     {
         /* We do not differentiate CPUs which support MMX and not SSE2. We only check
@@ -888,9 +893,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_4x4].dct = x265_dct4_sse2;
         p.cu[BLOCK_8x8].dct = x265_dct8_sse2;
         p.cu[BLOCK_4x4].idct = x265_idct4_sse2;
-#if X86_64
         p.cu[BLOCK_8x8].idct = x265_idct8_sse2;
-#endif
+
         p.idst4x4 = x265_idst4_sse2;
 
         LUMA_VSS_FILTERS(sse2);
@@ -951,11 +955,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
 
         // TODO: check POPCNT flag!
         ALL_LUMA_TU_S(copy_cnt, copy_cnt_, sse4);
-
-#if X86_64
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
         ALL_LUMA_CU(psy_cost_ss, psyCost_ss, sse4);
-#endif
     }
     if (cpuMask & X265_CPU_AVX)
     {
@@ -1076,7 +1077,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         LUMA_VAR(xop);
         p.frameInitLowres = x265_frame_init_lowres_core_xop;
     }
-#if X86_64
     if (cpuMask & X265_CPU_AVX2)
     {
         p.cu[BLOCK_32x32].ssd_s = x265_pixel_ssd_s_32_avx2;
@@ -1120,7 +1120,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, avx2);
         ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, avx2);
     }
-#endif
 }
 #else // if HIGH_BIT_DEPTH
 
