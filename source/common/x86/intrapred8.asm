@@ -100,6 +100,11 @@ c_ang8_mode_27:       db 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2,
                          22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, \
                          18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
 
+c_ang8_mode_25:       db 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, \
+                         6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, \
+                         10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, \
+                         14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+
 ;; (blkSize - 1 - x)
 pw_planar4_0:         dw 3,  2,  1,  0,  3,  2,  1,  0
 pw_planar4_1:         dw 3,  3,  3,  3,  3,  3,  3,  3
@@ -33058,6 +33063,40 @@ cglobal intra_pred_ang8_27, 3, 5, 6
     pshufb            m0, m5
 
     lea               r4, [c_ang8_mode_27]
+    pmaddubsw         m1, m0, [r4]
+    pmulhrsw          m1, m3
+    pmaddubsw         m2, m0, [r4 + mmsize]
+    pmulhrsw          m2, m3
+    pmaddubsw         m4, m0, [r4 + 2 * mmsize]
+    pmulhrsw          m4, m3
+    pmaddubsw         m0, [r4 + 3 * mmsize]
+    pmulhrsw          m0, m3
+    packuswb          m1, m2
+    packuswb          m4, m0
+
+    lea               r3, [3 * r1]
+    movq              [r0], xm1
+    vextracti128      xm2, m1, 1
+    movq              [r0 + r1], xm2
+    movhps            [r0 + 2 * r1], xm1
+    movhps            [r0 + r3], xm2
+    lea               r0, [r0 + 4 * r1]
+    movq              [r0], xm4
+    vextracti128      xm2, m4, 1
+    movq              [r0 + r1], xm2
+    movhps            [r0 + 2 * r1], xm4
+    movhps            [r0 + r3], xm2
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang8_25, 3, 5, 6
+    mova              m3, [pw_1024]
+    vbroadcasti128    m0, [r2]
+    movu              m5, [c_ang8_src1_9_1_9]
+
+    pshufb            m0, m5
+
+    lea               r4, [c_ang8_mode_25]
     pmaddubsw         m1, m0, [r4]
     pmulhrsw          m1, m3
     pmaddubsw         m2, m0, [r4 + mmsize]
