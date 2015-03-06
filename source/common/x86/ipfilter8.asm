@@ -4652,6 +4652,86 @@ cglobal interp_4tap_vert_%1_8x2, 4, 6, 4
 FILTER_VER_CHROMA_AVX2_8x2 pp
 FILTER_VER_CHROMA_AVX2_8x2 ps
 
+%macro FILTER_VER_CHROMA_AVX2_6x8 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_6x8, 4, 6, 7
+    mov             r4d, r4m
+    shl             r4d, 6
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+    PROCESS_CHROMA_AVX2_W8_8R
+%ifidn %1,pp
+    lea             r4, [r3 * 3]
+    mova            m3, [pw_512]
+    pmulhrsw        m5, m3                          ; m5 = word: row 0, row 1
+    pmulhrsw        m2, m3                          ; m2 = word: row 2, row 3
+    pmulhrsw        m1, m3                          ; m1 = word: row 4, row 5
+    pmulhrsw        m4, m3                          ; m4 = word: row 6, row 7
+    packuswb        m5, m2
+    packuswb        m1, m4
+    vextracti128    xm2, m5, 1
+    vextracti128    xm4, m1, 1
+    movd            [r2], xm5
+    pextrw          [r2 + 4], xm5, 2
+    movd            [r2 + r3], xm2
+    pextrw          [r2 + r3 + 4], xm2, 2
+    pextrd          [r2 + r3 * 2], xm5, 2
+    pextrw          [r2 + r3 * 2 + 4], xm5, 6
+    pextrd          [r2 + r4], xm2, 2
+    pextrw          [r2 + r4 + 4], xm2, 6
+    lea             r2, [r2 + r3 * 4]
+    movd            [r2], xm1
+    pextrw          [r2 + 4], xm1, 2
+    movd            [r2 + r3], xm4
+    pextrw          [r2 + r3 + 4], xm4, 2
+    pextrd          [r2 + r3 * 2], xm1, 2
+    pextrw          [r2 + r3 * 2 + 4], xm1, 6
+    pextrd          [r2 + r4], xm4, 2
+    pextrw          [r2 + r4 + 4], xm4, 6
+%else
+    add             r3d, r3d
+    vbroadcasti128  m3, [pw_2000]
+    lea             r4, [r3 * 3]
+    psubw           m5, m3                          ; m5 = word: row 0, row 1
+    psubw           m2, m3                          ; m2 = word: row 2, row 3
+    psubw           m1, m3                          ; m1 = word: row 4, row 5
+    psubw           m4, m3                          ; m4 = word: row 6, row 7
+    vextracti128    xm6, m5, 1
+    vextracti128    xm3, m2, 1
+    vextracti128    xm0, m1, 1
+    movq            [r2], xm5
+    pextrd          [r2 + 8], xm5, 2
+    movq            [r2 + r3], xm6
+    pextrd          [r2 + r3 + 8], xm6, 2
+    movq            [r2 + r3 * 2], xm2
+    pextrd          [r2 + r3 * 2 + 8], xm2, 2
+    movq            [r2 + r4], xm3
+    pextrd          [r2 + r4 + 8], xm3, 2
+    lea             r2, [r2 + r3 * 4]
+    movq            [r2], xm1
+    pextrd          [r2 + 8], xm1, 2
+    movq            [r2 + r3], xm0
+    pextrd          [r2 + r3 + 8], xm0, 2
+    movq            [r2 + r3 * 2], xm4
+    pextrd          [r2 + r3 * 2 + 8], xm4, 2
+    vextracti128    xm4, m4, 1
+    movq            [r2 + r4], xm4
+    pextrd          [r2 + r4 + 8], xm4, 2
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_AVX2_6x8 pp
+FILTER_VER_CHROMA_AVX2_6x8 ps
+
 ;-----------------------------------------------------------------------------
 ;void interp_4tap_vert_pp_6x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
