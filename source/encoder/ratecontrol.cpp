@@ -272,7 +272,7 @@ RateControl::RateControl(x265_param& p)
         x265_log(m_param, X265_LOG_WARNING, "strict CBR set without CBR mode, ignored\n");
         m_param->rc.bStrictCbr = 0;
     }
-    if (m_param->totalFrames <= 2 * m_fps && m_param->rc.bStrictCbr) /* Strict CBR segment encode */
+    if (m_param->totalFrames && m_param->totalFrames <= 2 * m_fps && m_param->rc.bStrictCbr) /* Strict CBR segment encode */
     {
         m_amortizeFraction = 0.85;
         m_amortizeFrames = m_param->totalFrames / 2;
