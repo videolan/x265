@@ -1,7 +1,7 @@
 # vim: syntax=cmake
 
 if(ENABLE_ASSEMBLY)
-    set_source_files_properties(primitives.cpp PROPERTIES COMPILE_FLAGS -DENABLE_ASSEMBLY=1)
+    set_source_files_properties(threading.cpp primitives.cpp PROPERTIES COMPILE_FLAGS -DENABLE_ASSEMBLY=1)
 
     set(SSE3  vec/dct-sse3.cpp)
     set(SSSE3 vec/dct-ssse3.cpp)
