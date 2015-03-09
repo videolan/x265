@@ -124,9 +124,9 @@ public:
     
     int           m_histogram[X265_BFRAME_MAX + 1];
     int           m_lastKeyframe;
-    int           m_widthInCU;
-    int           m_heightInCU;
-    int           m_ncu;
+    int           m_8x8Width;
+    int           m_8x8Height;
+    int           m_8x8Blocks;
     int           m_numCoopSlices;
     int           m_numRowsPerSlice;
     bool          m_filled;
