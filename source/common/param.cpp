@@ -1030,7 +1030,7 @@ int x265_check_params(x265_param *param)
           "Rate control mode is out of range");
     CHECK(param->rdLevel < 0 || param->rdLevel > 6,
           "RD Level is out of range");
-    CHECK(param->bframes > param->lookaheadDepth && !param->rc.bStatRead,
+    CHECK(param->bframes >= param->lookaheadDepth && !param->rc.bStatRead,
           "Lookahead depth must be greater than the max consecutive bframe count");
     CHECK(param->bframes < 0,
           "bframe count should be greater than zero");
