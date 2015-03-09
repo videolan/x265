@@ -1051,7 +1051,7 @@ int x265_check_params(x265_param *param)
           "RD Level is out of range");
     CHECK(param->rdoqLevel < 0 || param->rdoqLevel > 2,
         "RDOQ Level is out of range");
-    CHECK(param->bframes > param->lookaheadDepth && !param->rc.bStatRead,
+    CHECK(param->bframes >= param->lookaheadDepth && !param->rc.bStatRead,
           "Lookahead depth must be greater than the max consecutive bframe count");
     CHECK(param->bframes < 0,
           "bframe count should be greater than zero");
