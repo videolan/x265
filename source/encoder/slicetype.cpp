@@ -105,6 +105,9 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
     /* Actual adaptive quantization */
     int maxCol = curFrame->m_fencPic->m_picWidth;
     int maxRow = curFrame->m_fencPic->m_picHeight;
+    int blockWidth = ((param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    int blockHeight = ((param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    int blockCount = blockWidth * blockHeight;
 
     for (int y = 0; y < 3; y++)
     {
@@ -157,8 +160,8 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                 }
             }
 
-            avg_adj /= ncu;
-            avg_adj_pow2 /= ncu;
+            avg_adj /= blockCount;
+            avg_adj_pow2 /= blockCount;
             strength = param->rc.aqStrength * avg_adj / bit_depth_correction;
             avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - (11.f * bit_depth_correction)) / avg_adj;
         }
