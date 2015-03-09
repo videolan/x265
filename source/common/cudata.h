@@ -64,7 +64,8 @@ enum MVP_DIR
     MD_ABOVE,       // MVP of above block
     MD_ABOVE_RIGHT, // MVP of above right block
     MD_BELOW_LEFT,  // MVP of below left block
-    MD_ABOVE_LEFT   // MVP of above left block
+    MD_ABOVE_LEFT,  // MVP of above left block
+    MD_COLLOCATED   // MVP of temporal neighbour
 };
 
 struct CUGeom
@@ -92,6 +93,26 @@ struct MVField
 {
     MV  mv;
     int refIdx;
+};
+
+// Structure that keeps the neighbour's MV information.
+struct InterNeighbourMV
+{
+    // Neighbour MV. The index represents the list.
+    MV mv[2];
+
+    // Collocated right bottom CU addr.
+    uint32_t cuAddr[2];
+
+    // For spatial prediction, this field contains the reference index
+    // in each list (-1 if not available).
+    //
+    // For temporal prediction, the first value is used for the 
+    // prediction with list 0. The second value is used for the prediction 
+    // with list 1. For each value, the first four bits are the reference index 
+    // associated to the PMV, and the fifth bit is the list associated to the PMV.
+    // if both reference indices are -1, then unifiedRef is also -1
+    union { int16_t refIdx[2]; int32_t unifiedRef; };
 };
 
 typedef void(*cucopy_t)(uint8_t* dst, uint8_t* src); // dst and src are aligned to MIN(size, 32)
@@ -197,7 +218,8 @@ public:
     int8_t   getRefQP(uint32_t currAbsIdxInCTU) const;
     uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField (*candMvField)[2], uint8_t* candDir) const;
     void     clipMv(MV& outMV) const;
-    int      fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int refIdx, MV* amvpCand, MV* mvc) const;
+    int      getPMV(InterNeighbourMV *neighbours, uint32_t reference_list, uint32_t refIdx, MV* amvpCand, MV* pmv) const;
+    void     getNeighbourMV(uint32_t puIdx, uint32_t absPartIdx, InterNeighbourMV* neighbours) const;
     void     getIntraTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
     void     getInterTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
 
@@ -244,12 +266,14 @@ protected:
     bool isDiffMER(int xN, int yN, int xP, int yP) const { return ((xN >> 2) != (xP >> 2)) || ((yN >> 2) != (yP >> 2)); }
 
     // add possible motion vector predictor candidates
-    bool addMVPCand(MV& mvp, int picList, int refIdx, uint32_t absPartIdx, MVP_DIR dir) const;
-    bool addMVPCandOrder(MV& mvp, int picList, int refIdx, uint32_t absPartIdx, MVP_DIR dir) const;
+    bool getDirectPMV(MV& pmv, InterNeighbourMV *neighbours, uint32_t picList, uint32_t refIdx) const;
+    bool getIndirectPMV(MV& outMV, InterNeighbourMV *neighbours, uint32_t reference_list, uint32_t refIdx) const;
+    void getInterNeighbourMV(InterNeighbourMV *neighbour, uint32_t partUnitIdx, MVP_DIR dir) const;
 
     bool getColMVP(MV& outMV, int& outRefIdx, int picList, int cuAddr, int absPartIdx) const;
+    bool getCollocatedMV(int cuAddr, int partUnitIdx, InterNeighbourMV *neighbour) const;
 
-    void scaleMvByPOCDist(MV& outMV, const MV& inMV, int curPOC, int curRefPOC, int colPOC, int colRefPOC) const;
+    MV scaleMvByPOCDist(const MV& inMV, int curPOC, int curRefPOC, int colPOC, int colRefPOC) const;
 
     void     deriveLeftRightTopIdx(uint32_t puIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const;
 

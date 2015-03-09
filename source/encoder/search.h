@@ -101,6 +101,10 @@ struct Mode
     MotionData bestME[MAX_INTER_PARTS][2];
     MV         amvpCand[2][MAX_NUM_REF][AMVP_NUM_CANDS];
 
+    // Neighbour MVs of the current partition. 5 spatial candidates and the
+    // temporal candidate.
+    InterNeighbourMV interNeighbours[6];
+
     uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
     uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
     uint32_t   sa8dBits;   // signal bits used in sa8dCost calculation
