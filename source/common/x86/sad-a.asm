@@ -3851,4 +3851,51 @@ cglobal pixel_sad_x3_8x16, 6,6,5
     movd            [r5 + 8], xm1
     RET
 
+INIT_YMM avx2
+cglobal pixel_sad_x4_8x8, 7,7,5
+    xorps           m0, m0
+    xorps           m1, m1
+
+    sub             r2, r1          ; rebase on pointer r1
+    sub             r3, r1
+    sub             r4, r1
+%assign x 0
+%rep 4
+    ; row 0
+    vpbroadcastq   xm2, [r0 + 0 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    movhps         xm4, [r1 + r4]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+    add             r1, r5
+
+    ; row 1
+    vpbroadcastq   xm2, [r0 + 1 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    movhps         xm4, [r1 + r4]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+
+%assign x x+1
+  %if x < 4
+    add             r1, r5
+    add             r0, 2 * FENC_STRIDE
+  %endif
+%endrep
+
+    pshufd          xm0, xm0, q0020
+    pshufd          xm1, xm1, q0020
+    movq            [r6 + 0], xm0
+    movq            [r6 + 8], xm1
+    RET
+
+
 %endif
