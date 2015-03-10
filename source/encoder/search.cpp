@@ -3457,9 +3457,7 @@ void Search::checkDQP(CUData& cu, const CUGeom& cuGeom)
              * i.e Encode QP */
         }
         else
-        {
             cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
-        }
     }
 }
 
@@ -3479,14 +3477,10 @@ void Search::checkDQPForSplitPred(CUData& cu, const CUGeom& cuGeom)
             }
         }
         if (hasResidual)
-        {
             /* TODO: Encode QP, and recalculate RD cost of splitPred */
             /* For all zero CBF sub-CUs, reset QP to RefQP (so that deltaQP is not signalled).
             When the non-zero CBF sub-CU is found, stop */
-            bool ret = false;
-            ret = cu.setQPSubCUs(cu.getRefQP(0), 0, cuGeom.depth);
-            X265_CHECK(ret, "set sub QP CU failed\n");
-        }
+            cu.setQPSubCUs(cu.getRefQP(0), 0, cuGeom.depth);
         else
             /* No residual within this CU or subCU, so reset QP to RefQP */
             cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
