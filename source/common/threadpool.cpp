@@ -380,13 +380,18 @@ void ThreadPool::stop()
         {
             m_workers[i].awaken();
             m_workers[i].stop();
-            m_workers[i].~WorkerThread();
         }
     }
 }
 
 ThreadPool::~ThreadPool()
 {
+    if (m_workers)
+    {
+        for (int i = 0; i < m_numWorkers; i++)
+            m_workers[i].~WorkerThread();
+    }
+
     X265_FREE(m_workers);
     X265_FREE(m_jpTable);
 }
