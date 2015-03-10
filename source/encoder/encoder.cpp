@@ -296,6 +296,8 @@ void Encoder::stop()
             m_frameEncoder[i]->stop();
         }
     }
+
+    m_threadPool->stop();
 }
 
 void Encoder::destroy()

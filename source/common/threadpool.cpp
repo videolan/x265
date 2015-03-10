@@ -371,7 +371,7 @@ bool ThreadPool::start()
     return true;
 }
 
-ThreadPool::~ThreadPool()
+void ThreadPool::stop()
 {
     if (m_workers)
     {
@@ -382,10 +382,12 @@ ThreadPool::~ThreadPool()
             m_workers[i].stop();
             m_workers[i].~WorkerThread();
         }
-
-        X265_FREE(m_workers);
     }
+}
 
+ThreadPool::~ThreadPool()
+{
+    X265_FREE(m_workers);
     X265_FREE(m_jpTable);
 }
 
