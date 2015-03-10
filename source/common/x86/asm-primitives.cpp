@@ -1443,6 +1443,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.pu[LUMA_8x8].satd   = x265_pixel_satd_8x8_avx2;
 
         p.pu[LUMA_8x4].sad_x3 = x265_pixel_sad_x3_8x4_avx2;
+        p.pu[LUMA_8x8].sad_x3 = x265_pixel_sad_x3_8x8_avx2;
 
         p.pu[LUMA_16x8].sad_x4  = x265_pixel_sad_x4_16x8_avx2;
         p.pu[LUMA_16x12].sad_x4 = x265_pixel_sad_x4_16x12_avx2;
