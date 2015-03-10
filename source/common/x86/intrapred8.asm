@@ -26,6 +26,8 @@
 
 SECTION_RODATA 32
 
+intra_pred_shuff_0_8:    times 2 db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
+
 pb_0_8        times 8 db  0,  8
 pb_unpackbw1  times 2 db  1,  8,  2,  8,  3,  8,  4,  8
 pb_swap8:     times 2 db  7,  6,  5,  4,  3,  2,  1,  0
@@ -83,7 +85,6 @@ c_ang8_13_26:         db 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13,
 c_ang8_7_20:          db 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
 c_ang8_1_14:          db 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14
 c_ang8_27_8:          db 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8
-c_ang8_src1_9_1_9:    db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
 c_ang8_src2_10_2_10:  db 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9
 c_ang8_src3_11_3_11:  db 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10
 
@@ -9968,7 +9969,7 @@ cglobal intra_pred_ang8_6, 3, 4, 5
     mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 17]
 
-    pshufb            m1, m0, [c_ang8_src1_9_1_9]
+    pshufb            m1, m0, [intra_pred_shuff_0_8]
     pshufb            m2, m0, [c_ang8_src2_10_2_10]
     pshufb            m4, m0, [c_ang8_src3_11_3_11]
     pshufb            m0,     [c_ang8_src3_11_4_12]
@@ -10013,7 +10014,7 @@ cglobal intra_pred_ang8_30, 3, 4, 5
     mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 1]
 
-    pshufb            m1, m0, [c_ang8_src1_9_1_9]
+    pshufb            m1, m0, [intra_pred_shuff_0_8]
     pshufb            m2, m0, [c_ang8_src2_10_2_10]
     pshufb            m4, m0, [c_ang8_src3_11_3_11]
     pshufb            m0,     [c_ang8_src3_11_4_12]
@@ -10045,12 +10046,11 @@ cglobal intra_pred_ang8_30, 3, 4, 5
 
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_9, 3, 5, 6
+cglobal intra_pred_ang8_9, 3, 5, 5
     mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 17]
-    movu              m5, [c_ang8_src1_9_1_9]
 
-    pshufb            m0, m5
+    pshufb            m0, [intra_pred_shuff_0_8]
 
     lea               r4, [c_ang8_mode_27]
     pmaddubsw         m1, m0, [r4]
@@ -10089,12 +10089,11 @@ cglobal intra_pred_ang8_9, 3, 5, 6
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_27, 3, 5, 6
+cglobal intra_pred_ang8_27, 3, 5, 5
     mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 1]
-    movu              m5, [c_ang8_src1_9_1_9]
 
-    pshufb            m0, m5
+    pshufb            m0, [intra_pred_shuff_0_8]
 
     lea               r4, [c_ang8_mode_27]
     pmaddubsw         m1, m0, [r4]
@@ -10123,12 +10122,11 @@ cglobal intra_pred_ang8_27, 3, 5, 6
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_25, 3, 5, 6
+cglobal intra_pred_ang8_25, 3, 5, 5
     mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2]
-    mova              m5, [c_ang8_src1_9_1_9]
 
-    pshufb            m0, m5
+    pshufb            m0, [intra_pred_shuff_0_8]
 
     lea               r4, [c_ang8_mode_25]
     pmaddubsw         m1, m0, [r4]
@@ -10162,7 +10160,7 @@ cglobal intra_pred_ang8_7, 3, 4, 5
     mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 17]
 
-    pshufb            m1, m0, [c_ang8_src1_9_1_9]
+    pshufb            m1, m0, [intra_pred_shuff_0_8]
     pshufb            m2, m0, [c_ang8_src1_9_2_10]
     pshufb            m4, m0, [c_ang8_src2_10_2_10]
     pshufb            m0,     [c_ang8_src2_10_3_11]
@@ -10207,7 +10205,7 @@ cglobal intra_pred_ang8_29, 3, 4, 5
     mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 1]
 
-    pshufb            m1, m0, [c_ang8_src1_9_1_9]
+    pshufb            m1, m0, [intra_pred_shuff_0_8]
     pshufb            m2, m0, [c_ang8_src1_9_2_10]
     pshufb            m4, m0, [c_ang8_src2_10_2_10]
     pshufb            m0,     [c_ang8_src2_10_3_11]
@@ -10242,7 +10240,7 @@ INIT_YMM avx2
 cglobal intra_pred_ang8_8, 3, 4, 6
     mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 17]
-    movu              m5, [c_ang8_src1_9_1_9]
+    mova              m5, [intra_pred_shuff_0_8]
 
     pshufb            m1, m0, m5
     pshufb            m2, m0, m5
@@ -10288,7 +10286,7 @@ INIT_YMM avx2
 cglobal intra_pred_ang8_28, 3, 4, 6
     mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 1]
-    movu              m5, [c_ang8_src1_9_1_9]
+    mova              m5, [intra_pred_shuff_0_8]
 
     pshufb            m1, m0, m5
     pshufb            m2, m0, m5
