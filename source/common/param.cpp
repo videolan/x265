@@ -157,6 +157,7 @@ void x265_param_default(x265_param *param)
     param->bEnableAMP = 0;
     param->bEnableRectInter = 0;
     param->rdLevel = 3;
+    param->rdoqLevel = 0;
     param->bEnableSignHiding = 1;
     param->bEnableTransformSkip = 0;
     param->bEnableTSkipFast = 0;
