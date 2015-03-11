@@ -297,7 +297,8 @@ void Encoder::stop()
         }
     }
 
-    m_threadPool->stop();
+    if (m_threadPool)
+        m_threadPool->stop();
 }
 
 void Encoder::destroy()
