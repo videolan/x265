@@ -1368,13 +1368,14 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             q += m_pbOffset;
 
         double qScale = x265_qp2qScale(q);
+        double lmin = 0, lmax = 0;
         if (m_isCbr)
         {
             qScale = tuneAbrQScaleFromFeedback(qScale);
             if (!m_isAbrReset)
             {
-                double lmin = m_lastQScaleFor[P_SLICE] / m_lstep;
-                double lmax = m_lastQScaleFor[P_SLICE] * m_lstep;
+                lmin = m_lastQScaleFor[P_SLICE] / m_lstep;
+                lmax = m_lastQScaleFor[P_SLICE] * m_lstep;
                 qScale = x265_clip3(lmin, lmax, qScale);
             }
             q = x265_qScale2qp(qScale);
@@ -1383,6 +1384,10 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
         if (!m_2pass && m_isVbv)
         {
             qScale = clipQscale(curFrame, rce, qScale);
+            /*  clip qp to permissible range after vbv-lookahead estimation to avoid possible 
+             * mispredictions by initial frame size predictors */
+            if (m_pred[m_sliceType].count == 1)
+                qScale = x265_clip3(lmin, lmax, qScale);
             m_lastQScaleFor[m_sliceType] = qScale;
             rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], qScale, (double)m_currentSatd);
         }
@@ -1468,7 +1473,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
              * tolerances, the bit distribution approaches that of 2pass. */
 
             double overflow = 1;
-
+            double lqmin = 0, lqmax = 0;
             m_shortTermCplxSum *= 0.5;
             m_shortTermCplxCount *= 0.5;
             m_shortTermCplxSum += m_currentSatd / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);
@@ -1502,7 +1507,6 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             {
                 if (m_param->rc.rateControlMode != X265_RC_CRF)
                 {
-                    double lqmin = 0, lqmax = 0;
                     lqmin = m_lastQScaleFor[m_sliceType] / m_lstep;
                     lqmax = m_lastQScaleFor[m_sliceType] * m_lstep;
                     if (!m_partialResidualFrames)
@@ -1528,6 +1532,10 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             q = x265_clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
             rce->qpNoVbv = x265_qScale2qp(q);
             q = clipQscale(curFrame, rce, q);
+            /*  clip qp to permissible range after vbv-lookahead estimation to avoid possible
+             * mispredictions by initial frame size predictors */
+            if (m_pred[m_sliceType].count == 1)
+                q = x265_clip3(lqmin, lqmax, q);
         }
         m_lastQScaleFor[m_sliceType] = q;
         if ((m_curSlice->m_poc == 0 || m_lastQScaleFor[P_SLICE] < q) && !(m_2pass && !m_isVbv))
