@@ -1068,6 +1068,14 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         m_qp = (int32_t)(curFrame->m_forceqp + 0.5) - 1;
         m_qp = x265_clip3(QP_MIN, QP_MAX_MAX, m_qp);
         rce->qpaRc = curEncData.m_avgQpRc = curEncData.m_avgQpAq = m_qp;
+        if (m_isAbr)
+        {
+            rce->qpNoVbv = rce->qpaRc;
+            m_lastQScaleFor[m_sliceType] = x265_qp2qScale(rce->qpaRc);
+            if (rce->poc == 0)
+                 m_lastQScaleFor[P_SLICE] = m_lastQScaleFor[m_sliceType] * fabs(m_param->rc.ipFactor);
+            rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], m_qp, (double)m_currentSatd);
+        }
     }
     // Do not increment m_startEndOrder here. Make rateControlEnd of previous thread
     // to wait until rateControlUpdateStats of this frame is called
