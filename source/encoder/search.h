@@ -224,7 +224,6 @@ public:
     Quant           m_quant;
     RDCost          m_rdCost;
     const x265_param* m_param;
-    ThreadPool*     m_pool;
     Frame*          m_frame;
     const Slice*    m_slice;
 

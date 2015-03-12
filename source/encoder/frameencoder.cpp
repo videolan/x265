@@ -245,7 +245,6 @@ void FrameEncoder::threadMain()
             m_tld = new ThreadLocalData[numTLD];
             for (int i = 0; i < numTLD; i++)
             {
-                m_tld[i].analysis.m_pool = m_pool;
                 m_tld[i].analysis.initSearch(*m_param, m_top->m_scalingList);
                 m_tld[i].analysis.create(m_tld);
             }
@@ -268,7 +267,6 @@ void FrameEncoder::threadMain()
     else
     {
         m_tld = new ThreadLocalData;
-        m_tld->analysis.m_pool = NULL;
         m_tld->analysis.initSearch(*m_param, m_top->m_scalingList);
         m_tld->analysis.create(NULL);
         m_localTldIdx = 0;
