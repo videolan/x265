@@ -104,6 +104,8 @@ MotionEstimate::MotionEstimate()
     absPartIdx = -1;
     searchMethod = X265_HEX_SEARCH;
     subpelRefine = 2;
+    blockwidth = blockheight = 0;
+    blockOffset = 0;
     bChromaSATD = false;
     chromaSatd = NULL;
 }
