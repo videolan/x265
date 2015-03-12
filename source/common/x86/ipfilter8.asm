@@ -120,6 +120,31 @@ tab_ChromaCoeffV: times 4 dw 0, 64
                   times 4 dw -2, 10
                   times 4 dw 58, -2
 
+ALIGN 32
+pw_ChromaCoeffV:  times 8 dw 0, 64
+                  times 8 dw 0, 0
+
+                  times 8 dw -2, 58
+                  times 8 dw 10, -2
+
+                  times 8 dw -4, 54
+                  times 8 dw 16, -2
+
+                  times 8 dw -6, 46 
+                  times 8 dw 28, -4
+
+                  times 8 dw -4, 36
+                  times 8 dw 36, -4
+
+                  times 8 dw -4, 28
+                  times 8 dw 46, -6
+
+                  times 8 dw -2, 16
+                  times 8 dw 54, -4
+
+                  times 8 dw -2, 10
+                  times 8 dw 58, -2
+
 tab_LumaCoeff:   db   0, 0,  0,  64,  0,   0,  0,  0
                  db  -1, 4, -10, 58,  17, -5,  1,  0
                  db  -1, 4, -11, 40,  40, -11, 4, -1
@@ -12686,6 +12711,82 @@ cglobal interp_4tap_vert_ss_%1x%2, 5, 7, 6 ,0-gprsize
     FILTER_VER_CHROMA_SS 48, 64
     FILTER_VER_CHROMA_SS 64, 16
 
+%macro FILTER_VER_CHROMA_S_AVX2_4x4 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_4x4, 4, 6, 7
+    mov             r4d, r4m
+    add             r1d, r1d
+    shl             r4d, 6
+    sub             r0, r1
+
+%ifdef PIC
+    lea             r5, [pw_ChromaCoeffV]
+    add             r5, r4
+%else
+    lea             r5, [pw_ChromaCoeffV + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+%ifidn %1,sp
+    mova            m6, [pd_526336]
+%else
+    add             r3d, r3d
+%endif
+
+    movq            xm0, [r0]
+    movq            xm1, [r0 + r1]
+    punpcklwd       xm0, xm1
+    movq            xm2, [r0 + r1 * 2]
+    punpcklwd       xm1, xm2
+    vinserti128     m0, m0, xm1, 1                  ; m0 = [2 1 1 0]
+    pmaddwd         m0, [r5]
+    movq            xm3, [r0 + r4]
+    punpcklwd       xm2, xm3
+    lea             r0, [r0 + 4 * r1]
+    movq            xm4, [r0]
+    punpcklwd       xm3, xm4
+    vinserti128     m2, m2, xm3, 1                  ; m2 = [4 3 3 2]
+    pmaddwd         m5, m2, [r5 + 1 * mmsize]
+    pmaddwd         m2, [r5]
+    paddd           m0, m5
+    movq            xm3, [r0 + r1]
+    punpcklwd       xm4, xm3
+    movq            xm1, [r0 + r1 * 2]
+    punpcklwd       xm3, xm1
+    vinserti128     m4, m4, xm3, 1                  ; m4 = [6 5 5 4]
+    pmaddwd         m4, [r5 + 1 * mmsize]
+    paddd           m2, m4
+
+%ifidn %1,sp
+    paddd           m0, m6
+    paddd           m2, m6
+    psrad           m0, 12
+    psrad           m2, 12
+%else
+    psrad           m0, 6
+    psrad           m2, 6
+%endif
+    packssdw        m0, m2
+    vextracti128    xm2, m0, 1
+    lea             r4, [r3 * 3]
+
+%ifidn %1,sp
+    packuswb        xm0, xm2
+    movd            [r2], xm0
+    pextrd          [r2 + r3], xm0, 2
+    pextrd          [r2 + r3 * 2], xm0, 1
+    pextrd          [r2 + r4], xm0, 3
+%else
+    movq            [r2], xm0
+    movq            [r2 + r3], xm2
+    movhps          [r2 + r3 * 2], xm0
+    movhps          [r2 + r4], xm2
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_S_AVX2_4x4 sp
+FILTER_VER_CHROMA_S_AVX2_4x4 ss
 
 ;---------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vertical_ss_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
