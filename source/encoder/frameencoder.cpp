@@ -57,6 +57,7 @@ FrameEncoder::FrameEncoder()
     m_frame = NULL;
     m_cuGeoms = NULL;
     m_ctuGeomMap = NULL;
+    m_localTldIdx = 0;
     memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(&m_rce, 0, sizeof(RateControlEntry));
 }
