@@ -173,6 +173,12 @@ void Encoder::create()
         for (int i = 0; i < m_numPools; i++)
             m_threadPool[i].start();
     }
+    else
+    {
+        /* CU stats and noise-reduction buffers are indexed by jpId, so it cannot be left as -1 */
+        for (int i = 0; i < m_param->frameNumThreads; i++)
+            m_frameEncoder[i]->m_jpId = 0;
+    }
 
     if (!m_scalingList.init())
     {
