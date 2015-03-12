@@ -139,7 +139,7 @@ struct Mode
 /* This structure is intended for performance debugging and we make no attempt
  * to handle dynamic range overflows. Care should be taken to avoid long encodes
  * if you care about the accuracy of these elapsed times and counters. This
- * profiling is orthoganal to PPA/VTune and can be enabled indepedently from
+ * profiling is orthogonal to PPA/VTune and can be enabled independently from
  * either of them */
 struct CUStats
 {
