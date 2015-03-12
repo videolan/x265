@@ -170,6 +170,27 @@ if(GCC)
         # linked.
         list(APPEND LINKER_OPTIONS "-fsanitize=${FSANITIZE}")
     endif()
+    option(ENABLE_AGGRESSIVE_CHECKS "Enable stack protection and -ftrapv" OFF)
+    if(ENABLE_AGGRESSIVE_CHECKS)
+        # use with care, -ftrapv can cause testbench SIGILL exceptions
+        # since it is testing corner cases of signed integer math
+        add_definitions(-DUSING_FTRAPV=1)
+        check_cxx_compiler_flag(-fsanitize=undefined-trap CC_HAS_CATCH_UNDEFINED) # clang
+        check_cxx_compiler_flag(-ftrapv CC_HAS_FTRAPV)                            # gcc
+        check_cxx_compiler_flag(-fstack-protector-all CC_HAS_STACK_PROTECT)       # gcc
+        if(CC_HAS_FTRAPV)
+            add_definitions(-ftrapv)
+        endif()
+        if(CC_HAS_CATCH_UNDEFINED)
+            add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error)
+        endif()
+        if(CC_HAS_STACK_PROTECT)
+            add_definitions(-fstack-protector-all)
+            if(MINGW)
+                list(APPEND PLATFORM_LIBS ssp)
+            endif()
+        endif()
+    endif(ENABLE_AGGRESSIVE_CHECKS)
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CC_VERSION)
 endif(GCC)
 
@@ -187,23 +208,6 @@ endif()
 option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
 if(CHECKED_BUILD)
     add_definitions(-DCHECKED_BUILD=1)
-    if(GCC)
-        check_cxx_compiler_flag(-fsanitize=undefined-trap CC_HAS_CATCH_UNDEFINED) # clang
-        check_cxx_compiler_flag(-ftrapv CC_HAS_FTRAPV)                            # gcc
-        check_cxx_compiler_flag(-fstack-protector-all CC_HAS_STACK_PROTECT)       # gcc
-        if(CC_HAS_FTRAPV)
-            add_definitions(-ftrapv)
-        endif()
-        if(CC_HAS_CATCH_UNDEFINED)
-            add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error)
-        endif()
-        if(CC_HAS_STACK_PROTECT)
-            add_definitions(-fstack-protector-all)
-            if(MINGW)
-                list(APPEND PLATFORM_LIBS ssp)
-            endif()
-        endif()
-    endif(GCC)
 endif()
 
 # Build options
