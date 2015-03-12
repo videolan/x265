@@ -73,6 +73,8 @@ Analysis::Analysis()
 {
     m_reuseIntraDataCTU = NULL;
     m_reuseInterDataCTU = NULL;
+    m_reuseRef = NULL;
+    m_reuseBestMergeCand = NULL;
 }
 
 bool Analysis::create(ThreadLocalData *tld)
