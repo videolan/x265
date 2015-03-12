@@ -16298,6 +16298,81 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4,7,6
     IPFILTER_CHROMA_PS_16xN_AVX2  16 , 12
     IPFILTER_CHROMA_PS_16xN_AVX2  16 , 8
     IPFILTER_CHROMA_PS_16xN_AVX2  16 , 4
+
+;-----------------------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_ps_32xN(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
+;-----------------------------------------------------------------------------------------------------------------------------
+%macro IPFILTER_CHROMA_PS_32xN_AVX2 2
+INIT_YMM avx2 
+cglobal interp_4tap_horiz_ps_%1x%2, 4,7,6
+    mov                r4d,          r4m
+    mov                r5d,          r5m
+    add                r3d,          r3d
+
+%ifdef PIC
+    lea                r6,           [tab_ChromaCoeff]
+    vpbroadcastd       m0,           [r6 + r4 * 4]
+%else
+    vpbroadcastd       m0,           [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    vbroadcasti128     m2,           [pw_1]
+    vbroadcasti128     m5,           [pw_2000]
+    mova               m1,           [tab_Tm]
+
+    ; register map
+    ; m0 - interpolate coeff
+    ; m1 - shuffle order table
+    ; m2 - constant word 1
+    mov                r6d,          %2
+    dec                r0
+    test               r5d,          r5d
+    je                 .loop
+    sub                r0 ,          r1
+    add                r6d ,         3
+
+.loop
+    ; Row 0
+    vbroadcasti128     m3,           [r0]
+    pshufb             m3,           m1
+    pmaddubsw          m3,           m0
+    pmaddwd            m3,           m2
+    vbroadcasti128     m4,           [r0 + 8]
+    pshufb             m4,           m1
+    pmaddubsw          m4,           m0
+    pmaddwd            m4,           m2
+
+    packssdw           m3,           m4
+    psubw              m3,           m5
+
+    vpermq             m3,           m3,          11011000b
+    movu              [r2],          m3
+
+    vbroadcasti128     m3,           [r0 + 16]
+    pshufb             m3,           m1
+    pmaddubsw          m3,           m0
+    pmaddwd            m3,           m2
+    vbroadcasti128     m4,           [r0 + 24]
+    pshufb             m4,           m1
+    pmaddubsw          m4,           m0
+    pmaddwd            m4,           m2
+
+    packssdw           m3,           m4
+    psubw              m3,           m5
+
+    vpermq             m3,           m3,          11011000b
+    movu               [r2 + 32],    m3
+
+    add                r2,           r3
+    add                r0,           r1
+    dec                r6d
+    jnz                .loop
+    RET
+%endmacro
+
+IPFILTER_CHROMA_PS_32xN_AVX2  32 , 16
+IPFILTER_CHROMA_PS_32xN_AVX2  32 , 24
+IPFILTER_CHROMA_PS_32xN_AVX2  32 , 8
 ;-----------------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_4x4(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------
