@@ -10760,11 +10760,13 @@ cglobal intra_pred_ang16_25, 3, 5, 5
     lea    r0, [r0 + 4 * r1]
     INTRA_PRED_ANG16_MC1 2
 
-    lea    r0, [r0 + 4 * r1]
-    INTRA_PRED_ANG16_MC1 4
+    add           r4, 4 * mmsize
 
     lea    r0, [r0 + 4 * r1]
-    INTRA_PRED_ANG16_MC1 6
+    INTRA_PRED_ANG16_MC1 0
+
+    lea    r0, [r0 + 4 * r1]
+    INTRA_PRED_ANG16_MC1 2
     RET
 
 INIT_YMM avx2
