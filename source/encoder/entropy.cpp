@@ -858,6 +858,7 @@ void Entropy::codePredInfo(const CUData& cu, uint32_t absPartIdx)
 /** encode motion information for every PU block */
 void Entropy::codePUWise(const CUData& cu, uint32_t absPartIdx)
 {
+    X265_CHECK(!cu.isIntra(absPartIdx), "intra block not expected\n");
     PartSize partSize = (PartSize)cu.m_partSize[absPartIdx];
     uint32_t numPU = (partSize == SIZE_2Nx2N ? 1 : (partSize == SIZE_NxN ? 4 : 2));
     uint32_t depth = cu.m_cuDepth[absPartIdx];
