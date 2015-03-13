@@ -247,10 +247,11 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
 
         if (!strcmp(preset, "ultrafast"))
         {
-            param->lookaheadDepth = 10;
+            param->lookaheadDepth = 5;
             param->scenecutThreshold = 0; // disable lookahead
             param->maxCUSize = 32;
-            param->searchRange = 25;
+            param->minCUSize = 16;
+            param->bframes = 3;
             param->bFrameAdaptive = 0;
             param->subpelRefine = 0;
             param->searchMethod = X265_DIA_SEARCH;
@@ -269,7 +270,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
         {
             param->lookaheadDepth = 10;
             param->maxCUSize = 32;
-            param->searchRange = 44;
+            param->bframes = 3;
             param->bFrameAdaptive = 0;
             param->subpelRefine = 1;
             param->bEnableEarlySkip = 1;
