@@ -10795,7 +10795,7 @@ cglobal intra_pred_ang16_28, 3, 5, 6
     INTRA_PRED_ANG16_MC0 r0 + 2 * r1, r0 + r3, 3
 
     lea               r0, [r0 + 4 * r1]
-    lea               r4, [r4 + 4 * mmsize]
+    add               r4, 4 * mmsize
 
     INTRA_PRED_ANG16_MC1 0
 
@@ -10826,7 +10826,7 @@ cglobal intra_pred_ang16_27, 3, 5, 5
     INTRA_PRED_ANG16_MC1 2
 
     lea               r0, [r0 + 4 * r1]
-    lea               r4, [r4 + 4 * mmsize]
+    add               r4, 4 * mmsize
     INTRA_PRED_ANG16_MC1 0
 
     lea               r0, [r0 + 4 * r1]
@@ -10882,7 +10882,7 @@ cglobal intra_pred_ang16_29, 3, 5, 5
     vbroadcasti128    m2, [r2 + 11]
     pshufb            m2, m5
 
-    lea               r4, [r4 + 4 * mmsize]
+    add               r4, 4 * mmsize
     INTRA_PRED_ANG16_MC0 r0 + r3, r0 + 4 * r1, 0
     lea               r0, [r0 + r1 * 4]
 
@@ -10902,7 +10902,7 @@ cglobal intra_pred_ang16_29, 3, 5, 5
     lea               r0, [r0 + r1 * 4]
     INTRA_PRED_ANG16_MC0 r0, r0 + r1, 3
 
-    lea               r4, [r4 + 4 * mmsize]
+    add               r4, 4 * mmsize
     vbroadcasti128    m1, [r2 + 5]
     pshufb            m1, m5
     vbroadcasti128    m2, [r2 + 13]
