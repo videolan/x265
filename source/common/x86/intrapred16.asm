@@ -65,6 +65,10 @@ pw_planar16_0:        dw 15, 14, 13, 12, 11, 10,  9, 8
 pw_planar16_1:        dw 15, 15, 15, 15, 15, 15, 15, 15
 pd_planar32_1:        dd 31, 31, 31, 31
 
+pw_planar32_1:        dw 31, 31, 31, 31, 31, 31, 31, 31
+pw_planar32_L:        dw 31, 30, 29, 28, 27, 26, 25, 24
+pw_planar32_H:        dw 23, 22, 21, 20, 19, 18, 17, 16
+
 const planar32_table
 %assign x 31
 %rep 8
@@ -86,12 +90,15 @@ cextern pw_2
 cextern pw_4
 cextern pw_8
 cextern pw_16
+cextern pw_32
 cextern pw_1023
 cextern pd_16
 cextern pd_32
 cextern pw_4096
 cextern multiL
 cextern multiH
+cextern multiH2
+cextern multiH3
 cextern multi_2Row
 cextern pw_swap
 cextern pb_unpackwq1
@@ -573,6 +580,114 @@ cglobal intra_pred_planar16, 3,3,8
     INTRA_PRED_PLANAR_16 13
     INTRA_PRED_PLANAR_16 14
     INTRA_PRED_PLANAR_16 15
+    RET
+
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_planar32, 3,3,16
+    movd            m3, [r2 + 66]               ; topRight   = above[32]
+
+    pshuflw         m3, m3, 0x00
+    pshufd          m3, m3, 0x44
+
+    pmullw          m0, m3, [multiL]            ; (x + 1) * topRight
+    pmullw          m1, m3, [multiH]            ; (x + 1) * topRight
+    pmullw          m2, m3, [multiH2]           ; (x + 1) * topRight
+    pmullw          m3, [multiH3]               ; (x + 1) * topRight
+
+    movd            m6, [r2 + 194]               ; bottomLeft = left[32]
+    pshuflw         m6, m6, 0x00
+    pshufd          m6, m6, 0x44
+    mova            m5, m6
+    paddw           m5, [pw_32]
+
+    paddw           m0, m5
+    paddw           m1, m5
+    paddw           m2, m5
+    paddw           m3, m5
+    mova            m8, m6
+    mova            m9, m6
+    mova            m10, m6
+
+    mova            m12, [pw_planar32_1]
+    movu            m4, [r2 + 2]
+    psubw           m8, m4
+    pmullw          m4, m12
+    paddw           m0, m4
+
+    movu            m5, [r2 + 18]
+    psubw           m9, m5
+    pmullw          m5, m12
+    paddw           m1, m5
+
+    movu            m4, [r2 + 34]
+    psubw           m10, m4
+    pmullw          m4, m12
+    paddw           m2, m4
+
+    movu            m5, [r2 + 50]
+    psubw           m6, m5
+    pmullw          m5, m12
+    paddw           m3, m5
+
+    mova            m12, [pw_planar32_L]
+    mova            m13, [pw_planar32_H]
+    mova            m14, [pw_planar16_0]
+    mova            m15, [pw_planar8_0]
+    add             r1, r1
+
+%macro PROCESS 1
+    pmullw          m5, %1, m12
+    pmullw          m11, %1, m13
+    paddw           m5, m0
+    paddw           m11, m1
+    psrlw           m5, 6
+    psrlw           m11, 6
+    movu            [r0], m5
+    movu            [r0 + 16], m11
+
+    pmullw          m5, %1, m14
+    pmullw          %1, m15
+    paddw           m5, m2
+    paddw           %1, m3
+    psrlw           m5, 6
+    psrlw           %1, 6
+    movu            [r0 + 32], m5
+    movu            [r0 + 48], %1
+%endmacro
+
+%macro  INCREMENT 0
+    paddw           m2, m10
+    paddw           m3, m6
+    paddw           m0, m8
+    paddw           m1, m9
+    add             r0, r1
+%endmacro
+
+    add             r2, 130             ;130 = 32*sizeof(pixel)*2 + 1*sizeof(pixel)
+%assign x 0
+%rep 4
+    movu            m4, [r2]
+    add             r2, 16
+%assign y 0
+%rep 8
+    %if y < 4
+    pshuflw         m7, m4, 0x55 * y
+    pshufd          m7, m7, 0x44
+    %else
+    pshufhw         m7, m4, 0x55 * (y - 4)
+    pshufd          m7, m7, 0xEE
+    %endif
+        PROCESS m7
+    %if x + y < 10
+    INCREMENT
+    %endif
+%assign y y+1
+%endrep
+%assign x x+1
+%endrep
     RET
 
 ;-----------------------------------------------------------------------------------
