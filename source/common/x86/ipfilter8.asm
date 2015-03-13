@@ -6473,6 +6473,104 @@ cglobal interp_4tap_vert_%1_24x32, 4, 9, 10
 FILTER_VER_CHROMA_AVX2_24x32 pp
 FILTER_VER_CHROMA_AVX2_24x32 ps
 
+%macro FILTER_VER_CHROMA_AVX2_16x4 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_16x4, 4, 6, 8
+    mov             r4d, r4m
+    shl             r4d, 6
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+%ifidn %1,pp
+    mova            m7, [pw_512]
+%else
+    add             r3d, r3d
+    mova            m7, [pw_2000]
+%endif
+
+    movu            xm0, [r0]
+    vinserti128     m0, m0, [r0 + r1 * 2], 1
+    movu            xm1, [r0 + r1]
+    vinserti128     m1, m1, [r0 + r4], 1
+
+    punpcklbw       m2, m0, m1
+    punpckhbw       m3, m0, m1
+    vperm2i128      m4, m2, m3, 0x20
+    vperm2i128      m2, m2, m3, 0x31
+    pmaddubsw       m4, [r5]
+    pmaddubsw       m3, m2, [r5 + mmsize]
+    paddw           m4, m3
+    pmaddubsw       m2, [r5]
+
+    vextracti128    xm0, m0, 1
+    lea             r0, [r0 + r1 * 4]
+    vinserti128     m0, m0, [r0], 1
+
+    punpcklbw       m5, m1, m0
+    punpckhbw       m3, m1, m0
+    vperm2i128      m6, m5, m3, 0x20
+    vperm2i128      m5, m5, m3, 0x31
+    pmaddubsw       m6, [r5]
+    pmaddubsw       m3, m5, [r5 + mmsize]
+    paddw           m6, m3
+    pmaddubsw       m5, [r5]
+%ifidn %1,pp
+    pmulhrsw        m4, m7                          ; m4 = word: row 0
+    pmulhrsw        m6, m7                          ; m6 = word: row 1
+    packuswb        m4, m6
+    vpermq          m4, m4, 11011000b
+    vextracti128    xm6, m4, 1
+    movu            [r2], xm4
+    movu            [r2 + r3], xm6
+%else
+    psubw           m4, m7                          ; m4 = word: row 0
+    psubw           m6, m7                          ; m6 = word: row 1
+    movu            [r2], m4
+    movu            [r2 + r3], m6
+%endif
+    lea             r2, [r2 + r3 * 2]
+
+    movu            xm4, [r0 + r1 * 2]
+    vinserti128     m4, m4, [r0 + r1], 1
+    vextracti128    xm1, m4, 1
+    vinserti128     m0, m0, xm1, 0
+
+    punpcklbw       m6, m0, m4
+    punpckhbw       m1, m0, m4
+    vperm2i128      m0, m6, m1, 0x20
+    vperm2i128      m6, m6, m1, 0x31
+    pmaddubsw       m0, [r5 + mmsize]
+    paddw           m5, m0
+    pmaddubsw       m6, [r5 + mmsize]
+    paddw           m2, m6
+
+%ifidn %1,pp
+    pmulhrsw        m2, m7                          ; m2 = word: row 2
+    pmulhrsw        m5, m7                          ; m5 = word: row 3
+    packuswb        m2, m5
+    vpermq          m2, m2, 11011000b
+    vextracti128    xm5, m2, 1
+    movu            [r2], xm2
+    movu            [r2 + r3], xm5
+%else
+    psubw           m2, m7                          ; m2 = word: row 2
+    psubw           m5, m7                          ; m5 = word: row 3
+    movu            [r2], m2
+    movu            [r2 + r3], m5
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_AVX2_16x4 pp
+FILTER_VER_CHROMA_AVX2_16x4 ps
+
 ;-----------------------------------------------------------------------------
 ;void interp_4tap_vert_pp_24x32(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
