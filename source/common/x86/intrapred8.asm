@@ -2,6 +2,7 @@
 ;* Copyright (C) 2013 x265 project
 ;*
 ;* Authors: Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
+;*          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -133,6 +134,21 @@ c_ang16_mode_28:      db 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5,
                       db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28
                       db 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6
                       db 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+
+
+ALIGN 32
+c_ang16_mode_27:      db 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4
+                      db 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8
+                      db 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
+                      db 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+                      db 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
+                      db 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24
+                      db 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28
+                      db 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30
+                      db 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
+
+ALIGN 32
+intra_pred_shuff_0_15: db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 15
 
 ALIGN 32
 ;; (blkSize - 1 - x)
@@ -10777,4 +10793,41 @@ cglobal intra_pred_ang16_28, 3, 5, 6
     lea               r0, [r0 + 4 * r1]
 
     INTRA_PRED_ANG16_MC1 2
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang16_27, 3, 5, 5
+    mova              m0, [pw_1024]
+    lea               r3, [3 * r1]
+    lea               r4, [c_ang16_mode_27]
+
+    vbroadcasti128    m1, [r2 + 1]
+    pshufb            m1, [intra_pred_shuff_0_8]
+    vbroadcasti128    m2, [r2 + 9]
+    pshufb            m2, [intra_pred_shuff_0_8]
+
+    INTRA_PRED_ANG16_MC1 0
+
+    lea               r0, [r0 + 4 * r1]
+    INTRA_PRED_ANG16_MC1 2
+
+    lea               r0, [r0 + 4 * r1]
+    lea               r4, [r4 + 4 * mmsize]
+    INTRA_PRED_ANG16_MC1 0
+
+    lea               r0, [r0 + 4 * r1]
+    INTRA_PRED_ANG16_MC0 r0, r0 + r1, 2
+
+    vperm2i128        m1, m1, m2, 00100000b
+    pmaddubsw         m3, m1, [r4 + 3 * mmsize]
+    pmulhrsw          m3, m0
+    vbroadcasti128    m2, [r2 + 2]
+    pshufb            m2, [intra_pred_shuff_0_15]
+    pmaddubsw         m2, [r4 + 4 * mmsize]
+    pmulhrsw          m2, m0
+    packuswb          m3, m2
+    vpermq            m3, m3, 11011000b
+    movu              [r0 + 2 * r1], xm3
+    vextracti128      xm4, m3, 1
+    movu              [r0 + r3], xm4
     RET
