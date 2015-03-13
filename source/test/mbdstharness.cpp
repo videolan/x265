@@ -278,42 +278,19 @@ bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
 
     return true;
 }
-
 bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonzero_t opt)
 {
-    ALIGN_VAR_32(int16_t, qcoeff[32 * 32]);
-
-    for (int i = 0; i < 4; i++)
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
     {
-        int log2TrSize = i + 2;
-        int num = 1 << (log2TrSize * 2);
-        int mask = num - 1;
-
-        for (int n = 0; n <= num; n++)
-        {
-            memset(qcoeff, 0, num * sizeof(int16_t));
-
-            for (int j = 0; j < n; j++)
-            {
-                int k = rand() & mask;
-                while (qcoeff[k])
-                {
-                    k = (k + 11) & mask;
-                }
-
-                qcoeff[k] = (int16_t)rand() - RAND_MAX / 2;
-            }
-
-            int refval = ref(qcoeff, num);
-            int optval = (int)checked(opt, qcoeff, num);
-
-            if (refval != optval)
-                return false;
-
-            reportfail();
-        }
+        int index = i % TEST_CASES;
+        int opt_cnt = (int)checked(opt, short_test_buff[index] + j);
+        int ref_cnt = ref(short_test_buff[index] + j);
+        if (ref_cnt != opt_cnt)
+            return false;
+        reportfail();
+        j += INCR;
     }
-
     return true;
 }
 
@@ -437,16 +414,17 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
-
-    if (opt.count_nonzero)
+    for (int i = 0; i < NUM_TR_SIZE; i++)
     {
-        if (!check_count_nonzero_primitive(ref.count_nonzero, opt.count_nonzero))
+        if (opt.cu[i].count_nonzero)
         {
-            printf("count_nonzero: Failed!\n");
-            return false;
+            if (!check_count_nonzero_primitive(ref.cu[i].count_nonzero, opt.cu[i].count_nonzero))
+            {
+                printf("count_nonzero[%dx%d] Failed!\n", 4 << i, 4 << i);
+                return false;
+            }
         }
     }
-
     if (opt.dequant_scaling)
     {
         if (!check_dequant_primitive(ref.dequant_scaling, opt.dequant_scaling))
@@ -523,16 +501,14 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         printf("nquant\t\t");
         REPORT_SPEEDUP(opt.nquant, ref.nquant, short_test_buff[0], int_test_buff[1], mshortbuf2, 23, 23785, 32 * 32);
     }
-
-    if (opt.count_nonzero)
+    for (int value = 0; value < NUM_TR_SIZE; value++)
     {
-        for (int i = 4; i <= 32; i <<= 1)
+        if (opt.cu[value].count_nonzero)
         {
-            printf("count_nonzero[%dx%d]", i, i);
-            REPORT_SPEEDUP(opt.count_nonzero, ref.count_nonzero, mbuf1, i * i)
+            printf("count_nonzero[%dx%d]", 4 << value, 4 << value);
+            REPORT_SPEEDUP(opt.cu[value].count_nonzero, ref.cu[value].count_nonzero, mbuf1);
         }
     }
-
     if (opt.denoiseDct)
     {
         printf("denoiseDct\t");
