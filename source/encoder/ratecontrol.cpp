@@ -1526,7 +1526,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             else if (m_framesDone == 0 && !m_isVbv && m_param->rc.rateControlMode == X265_RC_ABR)
             {
                 /* for ABR alone, clip the first I frame qp */
-                double lqmax = x265_qp2qScale(ABR_INIT_QP_MAX) * m_lstep;
+                lqmax = x265_qp2qScale(ABR_INIT_QP_MAX) * m_lstep;
                 q = X265_MIN(lqmax, q);
             }
             q = x265_clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
@@ -1534,7 +1534,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             q = clipQscale(curFrame, rce, q);
             /*  clip qp to permissible range after vbv-lookahead estimation to avoid possible
              * mispredictions by initial frame size predictors */
-            if (m_pred[m_sliceType].count == 1)
+            if (m_isVbv && m_pred[m_sliceType].count == 1)
                 q = x265_clip3(lqmin, lqmax, q);
         }
         m_lastQScaleFor[m_sliceType] = q;
