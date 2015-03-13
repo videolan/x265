@@ -1,0 +1,12 @@
+# List of command lines to be run by smoke tests, see https://bitbucket.org/sborho/test-harness
+
+RaceHorses_416x240_30_10bit.yuv,--preset=superfast
+RaceHorses_416x240_30_10bit.yuv,--preset=medium
+big_buck_bunny_360p24.y4m,--preset=superfast
+big_buck_bunny_360p24.y4m,--preset=medium
+washdc_422_ntsc.y4m,--preset=superfast
+washdc_422_ntsc.y4m,--preset=medium
+old_town_cross_444_720p50.y4m,--preset=superfast
+old_town_cross_444_720p50.y4m,--preset=medium
+crowd_run_1080p50.y4m,--preset=superfast
+crowd_run_1080p50.y4m,--preset=medium
