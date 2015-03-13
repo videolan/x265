@@ -10710,7 +10710,7 @@ cglobal intra_pred_ang8_24, 3, 5, 5
     movu              [%2], xm4
 %endmacro
 
-%macro INTRA_PRED_ANG16_25 1
+%macro INTRA_PRED_ANG16_MC1 1
     INTRA_PRED_ANG16_MC0 r0, r0 + r1, %1
     INTRA_PRED_ANG16_MC0 r0 + 2 * r1, r0 + r3, (%1 + 1)
 %endmacro
@@ -10727,16 +10727,16 @@ cglobal intra_pred_ang16_25, 3, 5, 5
     lea               r3, [3 * r1]
     lea               r4, [c_ang16_mode_25]
 
-    INTRA_PRED_ANG16_25 0
+    INTRA_PRED_ANG16_MC1 0
 
     lea    r0, [r0 + 4 * r1]
-    INTRA_PRED_ANG16_25 2
+    INTRA_PRED_ANG16_MC1 2
 
     lea    r0, [r0 + 4 * r1]
-    INTRA_PRED_ANG16_25 4
+    INTRA_PRED_ANG16_MC1 4
 
     lea    r0, [r0 + 4 * r1]
-    INTRA_PRED_ANG16_25 6
+    INTRA_PRED_ANG16_MC1 6
     RET
 
 INIT_YMM avx2
