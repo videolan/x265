@@ -762,6 +762,229 @@ cglobal intra_pred_planar16, 3,5,8
     INTRA_PRED_PLANAR_16 15
     RET
 
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_XMM sse2
+%if ARCH_X86_64 == 1
+cglobal intra_pred_planar32, 3,3,16
+    movd            m3, [r2 + 33]               ; topRight   = above[32]
+
+    pxor            m7, m7
+    pand            m3, [pw_00ff]
+    pshuflw         m3, m3, 0x00
+    pshufd          m3, m3, 0x44
+
+    pmullw          m0, m3, [multiL]            ; (x + 1) * topRight
+    pmullw          m1, m3, [multiH]            ; (x + 1) * topRight
+    pmullw          m2, m3, [multiH2]           ; (x + 1) * topRight
+    pmullw          m3, [multiH3]               ; (x + 1) * topRight
+
+    movd            m11, [r2 + 97]               ; bottomLeft = left[32]
+    pand            m11, [pw_00ff]
+    pshuflw         m11, m11, 0x00
+    pshufd          m11, m11, 0x44
+    mova            m5,  m11
+    paddw           m5,  [pw_32]
+
+    paddw           m0, m5
+    paddw           m1, m5
+    paddw           m2, m5
+    paddw           m3, m5
+    mova            m8, m11
+    mova            m9, m11
+    mova            m10, m11
+
+    mova            m12, [pw_planar32_1]
+    movh            m4, [r2 + 1]
+    punpcklbw       m4, m7
+    psubw           m8, m4
+    pmullw          m4, m12
+    paddw           m0, m4
+
+    movh            m4, [r2 + 9]
+    punpcklbw       m4, m7
+    psubw           m9, m4
+    pmullw          m4, m12
+    paddw           m1, m4
+
+    movh            m4, [r2 + 17]
+    punpcklbw       m4, m7
+    psubw           m10, m4
+    pmullw          m4, m12
+    paddw           m2, m4
+
+    movh            m4, [r2 + 25]
+    punpcklbw       m4, m7
+    psubw           m11, m4
+    pmullw          m4, m12
+    paddw           m3, m4
+
+    mova            m12, [pw_planar32_L]
+    mova            m13, [pw_planar32_H]
+    mova            m14, [pw_planar16_0]
+    mova            m15, [pw_planar8_0]
+%macro PROCESS 1
+    pmullw          m5, %1, m12
+    pmullw          m6, %1, m13
+    paddw           m5, m0
+    paddw           m6, m1
+    psraw           m5, 6
+    psraw           m6, 6
+    packuswb        m5, m6
+    movu            [r0], m5
+
+    pmullw          m5, %1, m14
+    pmullw          %1, m15
+    paddw           m5, m2
+    paddw           %1, m3
+    psraw           m5, 6
+    psraw           %1, 6
+    packuswb        m5, %1
+    movu            [r0 + 16], m5
+%endmacro
+
+%macro INCREMENT 0
+    paddw           m2, m10
+    paddw           m3, m11
+    paddw           m0, m8
+    paddw           m1, m9
+    add             r0, r1
+%endmacro
+
+%assign x 0
+%rep 4
+    pxor            m7, m7
+    movq            m4, [r2 + 65 + x * 8]
+    punpcklbw       m4, m7
+%assign y 0
+%rep 8
+    %if y < 4
+    pshuflw         m7, m4, 0x55 * y
+    pshufd          m7, m7, 0x44
+    %else
+    pshufhw         m7, m4, 0x55 * (y - 4)
+    pshufd          m7, m7, 0xEE
+    %endif
+    PROCESS m7
+    %if x + y < 10
+    INCREMENT
+    %endif
+%assign y y+1
+%endrep
+%assign x x+1
+%endrep
+    RET
+
+%else ;end ARCH_X86_64, start ARCH_X86_32
+cglobal intra_pred_planar32, 3,3,8,0-(4*mmsize)
+    movd            m3, [r2 + 33]               ; topRight   = above[32]
+
+    pxor            m7, m7
+    pand            m3, [pw_00ff]
+    pshuflw         m3, m3, 0x00
+    pshufd          m3, m3, 0x44
+
+    pmullw          m0, m3, [multiL]            ; (x + 1) * topRight
+    pmullw          m1, m3, [multiH]            ; (x + 1) * topRight
+    pmullw          m2, m3, [multiH2]           ; (x + 1) * topRight
+    pmullw          m3, [multiH3]               ; (x + 1) * topRight
+
+    movd            m6, [r2 + 97]               ; bottomLeft = left[32]
+    pand            m6, [pw_00ff]
+    pshuflw         m6, m6, 0x00
+    pshufd          m6, m6, 0x44
+    mova            m5, m6
+    paddw           m5, [pw_32]
+
+    paddw           m0, m5
+    paddw           m1, m5
+    paddw           m2, m5
+    paddw           m3, m5
+
+    movh            m4, [r2 + 1]
+    punpcklbw       m4, m7
+    psubw           m5, m6, m4
+    mova            [rsp + 0 * mmsize], m5
+    pmullw          m4, [pw_planar32_1]
+    paddw           m0, m4
+
+    movh            m4, [r2 + 9]
+    punpcklbw       m4, m7
+    psubw           m5, m6, m4
+    mova            [rsp + 1 * mmsize], m5
+    pmullw          m4, [pw_planar32_1]
+    paddw           m1, m4
+
+    movh            m4, [r2 + 17]
+    punpcklbw       m4, m7
+    psubw           m5, m6, m4
+    mova            [rsp + 2 * mmsize], m5
+    pmullw          m4, [pw_planar32_1]
+    paddw           m2, m4
+
+    movh            m4, [r2 + 25]
+    punpcklbw       m4, m7
+    psubw           m5, m6, m4
+    mova            [rsp + 3 * mmsize], m5
+    pmullw          m4, [pw_planar32_1]
+    paddw           m3, m4
+
+%macro PROCESS 1
+    pmullw          m5, %1, [pw_planar32_L]
+    pmullw          m6, %1, [pw_planar32_H]
+    paddw           m5, m0
+    paddw           m6, m1
+    psraw           m5, 6
+    psraw           m6, 6
+    packuswb        m5, m6
+    movu            [r0], m5
+
+    pmullw          m5, %1, [pw_planar16_0]
+    pmullw          %1, [pw_planar8_0]
+    paddw           m5, m2
+    paddw           %1, m3
+    psraw           m5, 6
+    psraw           %1, 6
+    packuswb        m5, %1
+    movu            [r0 + 16], m5
+%endmacro
+
+%macro INCREMENT 0
+    paddw           m0, [rsp + 0 * mmsize]
+    paddw           m1, [rsp + 1 * mmsize]
+    paddw           m2, [rsp + 2 * mmsize]
+    paddw           m3, [rsp + 3 * mmsize]
+    add             r0, r1
+%endmacro
+
+%assign y 0
+%rep 4
+    pxor            m7, m7
+    movq            m4, [r2 + 65 + y * 8]
+    punpcklbw       m4, m7
+%assign x 0
+%rep 8
+    %if x < 4
+    pshuflw         m7, m4, 0x55 * x
+    pshufd          m7, m7, 0x44
+    %else
+    pshufhw         m7, m4, 0x55 * (x - 4)
+    pshufd          m7, m7, 0xEE
+    %endif
+
+    PROCESS m7
+    %if x + y < 10
+    INCREMENT
+    %endif
+%assign x x+1
+%endrep
+%assign y y+1
+%endrep
+    RET
+
+%endif ; end ARCH_X86_32
+
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
