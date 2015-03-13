@@ -139,6 +139,8 @@ protected:
     /* generate residual and recon pixels for an entire CTU recursively (RD0) */
     void encodeResidue(const CUData& parentCTU, const CUGeom& cuGeom);
 
+    int calculateQpforCuSize(CUData& ctu, const CUGeom& cuGeom);
+
     /* check whether current mode is the new best */
     inline void checkBestMode(Mode& mode, uint32_t depth)
     {
