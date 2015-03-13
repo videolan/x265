@@ -142,9 +142,9 @@ public:
     void codeVPS(const VPS& vps);
     void codeSPS(const SPS& sps, const ScalingList& scalingList, const ProfileTierLevel& ptl);
     void codePPS(const PPS& pps);
-    void codeVUI(const VUI& vui);
+    void codeVUI(const VUI& vui, int maxSubTLayers);
     void codeAUD(const Slice& slice);
-    void codeHrdParameters(const HRDInfo& hrd);
+    void codeHrdParameters(const HRDInfo& hrd, int maxSubTLayers);
 
     void codeSliceHeader(const Slice& slice, FrameData& encData);
     void codeSliceHeaderWPPEntryPoints(const Slice& slice, const uint32_t *substreamSizes, uint32_t maxOffset);
@@ -230,7 +230,7 @@ private:
     void writeEpExGolomb(uint32_t symbol, uint32_t count);
     void writeCoefRemainExGolomb(uint32_t symbol, const uint32_t absGoRice);
 
-    void codeProfileTier(const ProfileTierLevel& ptl);
+    void codeProfileTier(const ProfileTierLevel& ptl, int maxTempSubLayers);
     void codeScalingList(const ScalingList&);
     void codeScalingList(const ScalingList& scalingList, uint32_t sizeId, uint32_t listId);
 

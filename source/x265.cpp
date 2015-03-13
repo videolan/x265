@@ -147,6 +147,7 @@ void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
 
     if (!bProgress || !frameNum || (prevUpdateTime && time - prevUpdateTime < UPDATE_INTERVAL))
         return;
+
     int64_t elapsed = time - startTime;
     double fps = elapsed > 0 ? frameNum * 1000000. / elapsed : 0;
     float bitrate = 0.008f * totalbytes * (param->fpsNum / param->fpsDenom) / ((float)frameNum);
@@ -158,9 +159,8 @@ void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
                 eta / 3600, (eta / 60) % 60, eta % 60);
     }
     else
-    {
         sprintf(buf, "x265 %d frames: %.2f fps, %.2f kb/s", frameNum, fps, bitrate);
-    }
+
     fprintf(stderr, "%s  \r", buf + 5);
     SetConsoleTitle(buf);
     fflush(stderr); // needed in windows

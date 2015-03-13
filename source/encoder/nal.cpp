@@ -107,7 +107,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
      * nuh_reserved_zero_6bits  6-bits
      * nuh_temporal_id_plus1    3-bits */
     out[bytes++] = (uint8_t)nalUnitType << 1;
-    out[bytes++] = 1;
+    out[bytes++] = 1 + (nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N);
 
     /* 7.4.1 ...
      * Within the NAL unit, the following three-byte sequences shall not occur at
