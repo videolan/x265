@@ -176,7 +176,7 @@ washdc_422_ntsc.y4m,--preset fast
 washdc_422_ntsc.y4m,--preset faster
 washdc_422_ntsc.y4m,--preset medium --no-weightp
 washdc_422_ntsc.y4m,--preset slow
-washdc_422_ntsc.y4m,--preset slower --psy-rdoq 2.0 --rdoq-level 2
+washdc_422_ntsc.y4m,--preset slower --psy-rdoq 2.0
 washdc_422_ntsc.y4m,--preset superfast --psy-rd 1
 washdc_422_ntsc.y4m,--preset ultrafast --weightp
 washdc_422_ntsc.y4m,--preset veryfast
