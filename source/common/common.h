@@ -98,9 +98,9 @@
 #if _DEBUG && defined(_MSC_VER)
 #define DEBUG_BREAK() __debugbreak()
 #elif __APPLE_CC__
-#define DEBUG_BREAK() __builtin_trap();
+#define DEBUG_BREAK() __builtin_trap()
 #else
-#define DEBUG_BREAK()
+#define DEBUG_BREAK() abort()
 #endif
 
 /* If compiled with CHECKED_BUILD perform run-time checks and log any that
