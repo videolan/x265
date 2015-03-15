@@ -70,7 +70,6 @@ class DPB;
 class Lookahead;
 class RateControl;
 class ThreadPool;
-struct ThreadLocalData;
 
 class Encoder : public x265_encoder
 {
@@ -86,11 +85,12 @@ public:
     int64_t            m_prevReorderedPts[2];
 
     ThreadPool*        m_threadPool;
-    FrameEncoder*      m_frameEncoder;
+    FrameEncoder*      m_frameEncoder[X265_MAX_FRAME_THREADS];
     DPB*               m_dpb;
 
     Frame*             m_exportedPic;
 
+    int                m_numPools;
     int                m_curEncoder;
 
     /* cached PicYuv offset arrays, shared by all instances of
@@ -120,14 +120,12 @@ public:
     PPS                m_pps;
     NALList            m_nalList;
     ScalingList        m_scalingList;      // quantization matrix information
-    int                m_numThreadLocalData;
 
     int                m_lastBPSEI;
     uint32_t           m_numDelayedPic;
 
     x265_param*        m_param;
     RateControl*       m_rateControl;
-    ThreadLocalData*   m_threadLocalData;
     Lookahead*         m_lookahead;
     Window             m_conformanceWindow;
 
@@ -138,6 +136,7 @@ public:
     ~Encoder() {}
 
     void create();
+    void stop();
     void destroy();
 
     int encode(const x265_picture* pic, x265_picture *pic_out);
@@ -153,8 +152,6 @@ public:
     char* statsString(EncStats&, char*);
 
     char* statsCSVString(EncStats& stat, char* buffer);
-
-    void setThreadPool(ThreadPool* p) { m_threadPool = p; }
 
     void configure(x265_param *param);
 
@@ -172,6 +169,7 @@ public:
 
 protected:
 
+    void initVPS(VPS *vps);
     void initSPS(SPS *sps);
     void initPPS(PPS *pps);
 };

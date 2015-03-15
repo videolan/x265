@@ -53,10 +53,9 @@ private:
 
 public:
 
-    WaveFront(ThreadPool *pool)
-        : JobProvider(pool)
-        , m_internalDependencyBitmap(0)
-        , m_externalDependencyBitmap(0)
+    WaveFront()
+        : m_internalDependencyBitmap(NULL)
+        , m_externalDependencyBitmap(NULL)
     {}
 
     virtual ~WaveFront();
@@ -86,8 +85,8 @@ public:
 
     // WaveFront's implementation of JobProvider::findJob. Consults
     // m_queuedBitmap and calls ProcessRow(row) for lowest numbered queued row
-    // or returns false
-    bool findJob(int threadId);
+    // processes available rows and returns when no work remains
+    void findJob(int threadId);
 
     // Start or resume encode processing of this row, must be implemented by
     // derived classes.
