@@ -108,9 +108,9 @@
 #if CHECKED_BUILD || _DEBUG
 #define X265_CHECK(expr, ...) if (!(expr)) { \
     x265_log(NULL, X265_LOG_ERROR, __VA_ARGS__); \
-    DEBUG_BREAK(); \
     FILE *fp = fopen("x265_check_failures.txt", "a"); \
     if (fp) { fprintf(fp, "%s:%d\n", __FILE__, __LINE__); fprintf(fp, __VA_ARGS__); fclose(fp); } \
+    DEBUG_BREAK(); \
 }
 #if _MSC_VER
 #pragma warning(disable: 4127) // some checks have constant conditions
