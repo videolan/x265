@@ -203,6 +203,7 @@ void Encoder::create()
     m_dpb = new DPB(m_param);
     m_rateControl = new RateControl(*m_param);
 
+    initVPS(&m_vps);
     initSPS(&m_sps);
     initPPS(&m_pps);
 
@@ -1466,13 +1467,17 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     }
 }
 
+void Encoder::initVPS(VPS *vps)
+{
+    /* Note that much of the VPS is initialized by determineLevel() */
+    vps->ptl.progressiveSourceFlag = !m_param->interlaceMode;
+    vps->ptl.interlacedSourceFlag = !!m_param->interlaceMode;
+    vps->ptl.nonPackedConstraintFlag = false;
+    vps->ptl.frameOnlyConstraintFlag = !m_param->interlaceMode;
+}
+
 void Encoder::initSPS(SPS *sps)
 {
-    m_vps.ptl.progressiveSourceFlag = !m_param->interlaceMode;
-    m_vps.ptl.interlacedSourceFlag = !!m_param->interlaceMode;
-    m_vps.ptl.nonPackedConstraintFlag = false;
-    m_vps.ptl.frameOnlyConstraintFlag = !m_param->interlaceMode;
-
     sps->conformanceWindow = m_conformanceWindow;
     sps->chromaFormatIdc = m_param->internalCsp;
     sps->picWidthInLumaSamples = m_param->sourceWidth;

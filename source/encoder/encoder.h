@@ -171,6 +171,7 @@ public:
 
 protected:
 
+    void initVPS(VPS *vps);
     void initSPS(SPS *sps);
     void initPPS(PPS *pps);
 };
