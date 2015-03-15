@@ -153,8 +153,6 @@ public:
 
     char* statsCSVString(EncStats& stat, char* buffer);
 
-    void setThreadPool(ThreadPool* p) { m_threadPool = p; }
-
     void configure(x265_param *param);
 
     void updateVbvPlan(RateControl* rc);
