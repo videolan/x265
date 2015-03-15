@@ -428,7 +428,7 @@ template<int size>
 void cpy2Dto1D_shl(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift)
 {
     X265_CHECK(((intptr_t)dst & 15) == 0, "dst alignment error\n");
-    X265_CHECK((((intptr_t)src | srcStride) & 15) == 0 || size == 4, "src alignment error\n");
+    X265_CHECK((((intptr_t)src | (srcStride * sizeof(*src))) & 15) == 0 || size == 4, "src alignment error\n");
     X265_CHECK(shift >= 0, "invalid shift\n");
 
     for (int i = 0; i < size; i++)
@@ -445,7 +445,7 @@ template<int size>
 void cpy2Dto1D_shr(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift)
 {
     X265_CHECK(((intptr_t)dst & 15) == 0, "dst alignment error\n");
-    X265_CHECK((((intptr_t)src | srcStride) & 15) == 0 || size == 4, "src alignment error\n");
+    X265_CHECK((((intptr_t)src | (srcStride * sizeof(*src))) & 15) == 0 || size == 4, "src alignment error\n");
     X265_CHECK(shift > 0, "invalid shift\n");
 
     int16_t round = 1 << (shift - 1);
@@ -462,7 +462,7 @@ void cpy2Dto1D_shr(int16_t* dst, const int16_t* src, intptr_t srcStride, int shi
 template<int size>
 void cpy1Dto2D_shl(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
 {
-    X265_CHECK((((intptr_t)dst | dstStride) & 15) == 0 || size == 4, "dst alignment error\n");
+    X265_CHECK((((intptr_t)dst | (dstStride * sizeof(*dst))) & 15) == 0 || size == 4, "dst alignment error\n");
     X265_CHECK(((intptr_t)src & 15) == 0, "src alignment error\n");
     X265_CHECK(shift >= 0, "invalid shift\n");
 
@@ -479,7 +479,7 @@ void cpy1Dto2D_shl(int16_t* dst, const int16_t* src, intptr_t dstStride, int shi
 template<int size>
 void cpy1Dto2D_shr(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
 {
-    X265_CHECK((((intptr_t)dst | dstStride) & 15) == 0 || size == 4, "dst alignment error\n");
+    X265_CHECK((((intptr_t)dst | (dstStride * sizeof(*dst))) & 15) == 0 || size == 4, "dst alignment error\n");
     X265_CHECK(((intptr_t)src & 15) == 0, "src alignment error\n");
     X265_CHECK(shift > 0, "invalid shift\n");
 

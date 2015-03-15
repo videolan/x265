@@ -295,7 +295,10 @@ public:
             bTimedOut = pthread_cond_timedwait(&m_cond, &m_mutex, &ts) == ETIMEDOUT;
         }
         if (m_counter > 0)
+        {
             m_counter--;
+            bTimedOut = false;
+        }
         pthread_mutex_unlock(&m_mutex);
         return bTimedOut;
     }
