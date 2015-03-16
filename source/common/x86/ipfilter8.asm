@@ -17300,3 +17300,66 @@ cglobal interp_4tap_horiz_pp_%1x%2, 4,6,6
 IPFILTER_CHROMA_PP_8xN_AVX2   8 , 16
 IPFILTER_CHROMA_PP_8xN_AVX2   8 , 32
 IPFILTER_CHROMA_PP_8xN_AVX2   8 , 4
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_4xN(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+%macro IPFILTER_CHROMA_PP_4xN_AVX2 2
+INIT_YMM avx2 
+cglobal interp_4tap_horiz_pp_%1x%2, 4,6,6
+    mov             r4d, r4m
+
+%ifdef PIC
+    lea               r5,           [tab_ChromaCoeff]
+    vpbroadcastd      m0,           [r5 + r4 * 4]
+%else
+    vpbroadcastd      m0,           [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    vpbroadcastd      m2,           [pw_1]
+    vbroadcasti128    m1,           [tab_Tm]
+    mov               r4d,          %2
+    ; register map
+    ; m0 - interpolate coeff
+    ; m1 - shuffle order table
+    ; m2 - constant word 1
+
+    dec                r0
+
+.loop
+    sub               r4d,          4
+    ; Row 0-1
+    movu              xm3,          [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    vinserti128       m3,           m3,      [r0 + r1],     1
+    pshufb            m3,           m1
+    pmaddubsw         m3,           m0
+    pmaddwd           m3,           m2
+
+    ; Row 2-3
+    lea               r0,           [r0 + r1 * 2]
+    movu              xm4,          [r0]                      ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    vinserti128       m4,           m4,      [r0 + r1],     1
+    pshufb            m4,           m1
+    pmaddubsw         m4,           m0
+    pmaddwd           m4,           m2
+
+    packssdw          m3,           m4
+    pmulhrsw          m3,           [pw_512]
+    vextracti128      xm4,          m3,                     1
+    packuswb          xm3,          xm4
+
+    movd              [r2],         xm3
+    pextrd            [r2+r3],      xm3,                    2
+    lea               r2,           [r2 + r3 * 2]
+    pextrd            [r2],         xm3,                    1
+    pextrd            [r2+r3],      xm3,                    3
+
+    lea               r0,           [r0 + r1 * 2]
+    lea               r2,           [r2 + r3 * 2]
+    test              r4d,          r4d
+    jnz               .loop
+    RET
+%endmacro
+
+IPFILTER_CHROMA_PP_4xN_AVX2  4 , 8
+IPFILTER_CHROMA_PP_4xN_AVX2  4 , 16
