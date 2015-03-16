@@ -11145,10 +11145,5 @@ cglobal intra_pred_ang16_33, 3, 5, 6
     add               r4, 4 * mmsize
 
     INTRA_PRED_ANG16_MC2 14
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 1 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0 + r3], xm3
+    INTRA_PRED_ANG16_MC3 r0 + r3, 1
     RET
