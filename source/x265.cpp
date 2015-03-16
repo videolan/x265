@@ -530,7 +530,7 @@ int main(int argc, char **argv)
     while (pic_in && !b_ctrl_c)
     {
         pic_orig.poc = inFrameCount;
-        if (cliopt.qpfile && !param->rc.bStatRead)
+        if (cliopt.qpfile)
         {
             if (!cliopt.parseQPFile(pic_orig))
             {
