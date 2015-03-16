@@ -10803,6 +10803,15 @@ cglobal intra_pred_ang8_24, 3, 5, 5
     pshufb            m2, m5
 %endmacro
 
+%macro INTRA_PRED_ANG16_MC3 2
+    vperm2i128        m1, m1, m2, 00100000b
+    pmaddubsw         m3, m1, [r4 + (%2 * mmsize)]
+    pmulhrsw          m3, m0
+    packuswb          m3, m3
+    vpermq            m3, m3, 11011000b
+    movu              [%1], xm3
+%endmacro
+
 INIT_YMM avx2
 cglobal intra_pred_ang16_25, 3, 5, 5
     mova              m0, [pw_1024]
@@ -10915,13 +10924,7 @@ cglobal intra_pred_ang16_29, 3, 5, 5
 
     INTRA_PRED_ANG16_MC2 1
     INTRA_PRED_ANG16_MC0 r0, r0 + r1, 0
-
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 1 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0 + 2 * r1], xm3
+    INTRA_PRED_ANG16_MC3 r0 + 2 * r1, 1
 
     INTRA_PRED_ANG16_MC2 2
     INTRA_PRED_ANG16_MC0 r0 + r3, r0 + 4 * r1, 2
@@ -10933,13 +10936,7 @@ cglobal intra_pred_ang16_29, 3, 5, 5
     add               r4, 4 * mmsize
     INTRA_PRED_ANG16_MC0 r0 + r3, r0 + 4 * r1, 0
     lea               r0, [r0 + r1 * 4]
-
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 1 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0 + r1], xm3
+    INTRA_PRED_ANG16_MC3 r0 + r1, 1
 
     INTRA_PRED_ANG16_MC2 4
     INTRA_PRED_ANG16_MC0 r0 + 2 * r1, r0 + r3, 2
@@ -10968,13 +10965,7 @@ cglobal intra_pred_ang16_30, 3, 5, 6
     INTRA_PRED_ANG16_MC2 3
     lea               r0, [r0 + 4 * r1]
     INTRA_PRED_ANG16_MC0 r0, r0 + r1, 2
-
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 3 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0 + 2 * r1], xm3
+    INTRA_PRED_ANG16_MC3 r0 + 2 * r1, 3
 
     INTRA_PRED_ANG16_MC2 4
     add               r4, 4 * mmsize
@@ -10983,13 +10974,7 @@ cglobal intra_pred_ang16_30, 3, 5, 6
     INTRA_PRED_ANG16_MC2 5
     lea               r0, [r0 + 4 * r1]
     INTRA_PRED_ANG16_MC0 r0 + r1, r0 + 2 * r1, 1
-
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 2 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0 + r3], xm3
+    INTRA_PRED_ANG16_MC3 r0 + r3 , 2
 
     INTRA_PRED_ANG16_MC2 6
     lea               r0, [r0 + 4 * r1]
@@ -11007,13 +10992,7 @@ cglobal intra_pred_ang16_31, 3, 5, 6
     lea               r4, [c_ang16_mode_31]
 
     INTRA_PRED_ANG16_MC2 1
-
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 0 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0], xm3
+    INTRA_PRED_ANG16_MC3 r0, 0
 
     INTRA_PRED_ANG16_MC2 2
     INTRA_PRED_ANG16_MC0 r0 + r1, r0 + 2 * r1, 1
@@ -11041,13 +11020,7 @@ cglobal intra_pred_ang16_31, 3, 5, 6
     INTRA_PRED_ANG16_MC0 r0 + r1, r0 + 2 * r1, 3
 
     INTRA_PRED_ANG16_MC2 9
-
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 4 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0 + r3], xm3
+    INTRA_PRED_ANG16_MC3 r0 + r3, 4
     RET
 
 INIT_YMM avx2
@@ -11058,25 +11031,13 @@ cglobal intra_pred_ang16_32, 3, 5, 6
     lea               r4, [c_ang16_mode_32]
 
     INTRA_PRED_ANG16_MC2 1
-
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 0 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0], xm3
+    INTRA_PRED_ANG16_MC3 r0, 0
 
     INTRA_PRED_ANG16_MC2 2
     INTRA_PRED_ANG16_MC0 r0 + r1, r0 + 2 * r1, 1
 
     INTRA_PRED_ANG16_MC2 3
-
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 2 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0 + r3], xm3
+    INTRA_PRED_ANG16_MC3 r0 + r3, 2
 
     INTRA_PRED_ANG16_MC2 4
     lea              r0, [r0 + 4 * r1]
@@ -11085,25 +11046,14 @@ cglobal intra_pred_ang16_32, 3, 5, 6
     INTRA_PRED_ANG16_MC2 5
 
     add               r4, 4 * mmsize
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 0 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0 + 2 * r1], xm3
+    INTRA_PRED_ANG16_MC3 r0 + 2 * r1, 0
 
     INTRA_PRED_ANG16_MC2 6
     INTRA_PRED_ANG16_MC0 r0 + r3, r0 + 4 * r1, 1
     INTRA_PRED_ANG16_MC2 7
 
     lea               r0, [r0 + 4 * r1]
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 2 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0 + r1], xm3
-
+    INTRA_PRED_ANG16_MC3 r0 + r1, 2
     INTRA_PRED_ANG16_MC2 8
     INTRA_PRED_ANG16_MC0 r0 + 2 * r1, r0 + r3, 3
     INTRA_PRED_ANG16_MC2 9
@@ -11111,23 +11061,11 @@ cglobal intra_pred_ang16_32, 3, 5, 6
     lea               r0, [r0 + 4 * r1]
     add               r4, 4 * mmsize
 
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 0 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0], xm3
-
+    INTRA_PRED_ANG16_MC3 r0, 0
     INTRA_PRED_ANG16_MC2 10
     INTRA_PRED_ANG16_MC0 r0 + r1, r0 + 2 * r1, 1
     INTRA_PRED_ANG16_MC2 11
-
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 2 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0 + r3], xm3
+    INTRA_PRED_ANG16_MC3 r0 + r3, 2
     RET
 
 INIT_YMM avx2
@@ -11190,12 +11128,7 @@ cglobal intra_pred_ang16_33, 3, 5, 6
 
     INTRA_PRED_ANG16_MC2 8
     lea               r0, [r0 + 4 * r1]
-    vperm2i128        m1, m1, m2, 00100000b
-    pmaddubsw         m3, m1, [r4 + 3 * mmsize]
-    pmulhrsw          m3, m0
-    packuswb          m3, m3
-    vpermq            m3, m3, 11011000b
-    movu              [r0], xm3
+    INTRA_PRED_ANG16_MC3 r0, 3
 
     INTRA_PRED_ANG16_MC2 9
     add              r4, 4 * mmsize
