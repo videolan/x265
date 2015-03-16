@@ -130,6 +130,9 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
         WeightValues wv0[3], wv1[3];
         const WeightParam *pwp0, *pwp1;
 
+        X265_CHECK(refIdx0 < cu.m_slice->m_numRefIdx[0], "bidir refidx0 out of range\n");
+        X265_CHECK(refIdx1 < cu.m_slice->m_numRefIdx[1], "bidir refidx1 out of range\n");
+
         if (cu.m_slice->m_pps->bUseWeightedBiPred)
         {
             pwp0 = refIdx0 >= 0 ? cu.m_slice->m_weightPredTable[0][refIdx0] : NULL;
@@ -174,10 +177,6 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
             cu.clipMv(mv0);
             cu.clipMv(mv1);
 
-            /* Biprediction */
-            X265_CHECK(refIdx0 < cu.m_slice->m_numRefIdx[0], "bidir refidx0 out of range\n");
-            X265_CHECK(refIdx1 < cu.m_slice->m_numRefIdx[1], "bidir refidx1 out of range\n");
-
             if (bLuma)
             {
                 predInterLumaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
@@ -198,9 +197,6 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
         {
             MV mv0 = cu.m_mv[0][pu.puAbsPartIdx];
             cu.clipMv(mv0);
-
-            /* uniprediction to L0 */
-            X265_CHECK(refIdx0 < cu.m_slice->m_numRefIdx[0], "unidir refidx0 out of range\n");
 
             if (pwp0 && pwp0->bPresentFlag)
             {
@@ -228,7 +224,6 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
 
             /* uniprediction to L1 */
             X265_CHECK(refIdx1 >= 0, "refidx1 was not positive\n");
-            X265_CHECK(refIdx1 < cu.m_slice->m_numRefIdx[1], "unidir refidx1 out of range\n");
 
             if (pwp1 && pwp1->bPresentFlag)
             {
