@@ -17127,3 +17127,35 @@ cglobal interp_4tap_horiz_ps_8x8, 4,7,6
     movu             [r2],         xm3
 .end
    RET
+
+INIT_YMM avx2 
+cglobal interp_4tap_horiz_pp_4x2, 4,6,4
+    mov             r4d, r4m
+%ifdef PIC
+    lea               r5,           [tab_ChromaCoeff]
+    vpbroadcastd      m0,           [r5 + r4 * 4]
+%else
+    vpbroadcastd      m0,           [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    vbroadcasti128    m1,           [tab_Tm]
+
+    ; register map
+    ; m0 - interpolate coeff
+    ; m1 - shuffle order table
+
+    ; Row 0-1
+    movu              xm2,          [r0 - 1]
+    vinserti128       m2,           m2,      [r0 + r1 - 1],     1
+    pshufb            m2,           m1
+    pmaddubsw         m2,           m0
+    pmaddwd           m2,           [pw_1]
+
+    packssdw          m2,           m2
+    pmulhrsw          m2,           [pw_512]
+    vextracti128      xm3,          m2,     1
+    packuswb          xm2,          xm3
+
+    movd              [r2],         xm2
+    pextrd            [r2+r3],      xm2,     2
+    RET
