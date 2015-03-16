@@ -81,7 +81,7 @@ protected:
 
     QpParam            m_qpParam[3];
 
-    bool               m_useRDOQ;
+    int                m_rdoqLevel;
     int64_t            m_psyRdoqScale;
     int16_t*           m_resiDctCoeff;
     int16_t*           m_fencDctCoeff;
@@ -99,7 +99,7 @@ public:
     ~Quant();
 
     /* one-time setup */
-    bool init(bool useRDOQ, double psyScale, const ScalingList& scalingList, Entropy& entropy);
+    bool init(int rdoqLevel, double psyScale, const ScalingList& scalingList, Entropy& entropy);
     bool allocNoiseReduction(const x265_param& param);
 
     /* CU setup */

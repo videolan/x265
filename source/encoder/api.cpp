@@ -173,6 +173,7 @@ void x265_encoder_close(x265_encoder *enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
 
+        encoder->stop();
         encoder->printSummary();
         encoder->destroy();
         delete encoder;
@@ -206,7 +207,7 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
 
         uint32_t numCUsInFrame   = widthInCU * heightInCU;
         pic->analysisData.numCUsInFrame = numCUsInFrame;
-        pic->analysisData.numPartitions = NUM_CU_PARTITIONS;
+        pic->analysisData.numPartitions = NUM_4x4_PARTITIONS;
     }
 }
 

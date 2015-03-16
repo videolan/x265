@@ -748,6 +748,368 @@ cglobal idst4, 3, 4, 7
     movhps      [r1 + r2], m1
     RET
 
+;-------------------------------------------------------
+; void dct8(const int16_t* src, int16_t* dst, intptr_t srcStride)
+;-------------------------------------------------------
+INIT_XMM sse2
+cglobal dct8, 3,6,8,0-16*mmsize
+    ;------------------------
+    ; Stack Mapping(dword)
+    ;------------------------
+    ; Row0[0-3] Row1[0-3]
+    ; ...
+    ; Row6[0-3] Row7[0-3]
+    ; Row0[0-3] Row7[0-3]
+    ; ...
+    ; Row6[4-7] Row7[4-7]
+    ;------------------------
+%if BIT_DEPTH == 10
+  %define       DCT_SHIFT1 4
+  %define       DCT_ADD1 [pd_8]
+%elif BIT_DEPTH == 8
+  %define       DCT_SHIFT1 2
+  %define       DCT_ADD1 [pd_2]
+%else
+  %error Unsupported BIT_DEPTH!
+%endif
+%define         DCT_ADD2 [pd_256]
+%define         DCT_SHIFT2 9
+
+    add         r2, r2
+    lea         r3, [r2 * 3]
+    mov         r5, rsp
+%assign x 0
+%rep 2
+    movu        m0, [r0]
+    movu        m1, [r0 + r2]
+    movu        m2, [r0 + r2 * 2]
+    movu        m3, [r0 + r3]
+
+    punpcklwd   m4, m0, m1
+    punpckhwd   m0, m1
+    punpcklwd   m5, m2, m3
+    punpckhwd   m2, m3
+    punpckldq   m1, m4, m5          ; m1 = [1 0]
+    punpckhdq   m4, m5              ; m4 = [3 2]
+    punpckldq   m3, m0, m2
+    punpckhdq   m0, m2
+    pshufd      m2, m3, 0x4E        ; m2 = [4 5]
+    pshufd      m0, m0, 0x4E        ; m0 = [6 7]
+
+    paddw       m3, m1, m0
+    psubw       m1, m0              ; m1 = [d1 d0]
+    paddw       m0, m4, m2
+    psubw       m4, m2              ; m4 = [d3 d2]
+    punpcklqdq  m2, m3, m0          ; m2 = [s2 s0]
+    punpckhqdq  m3, m0
+    pshufd      m3, m3, 0x4E        ; m3 = [s1 s3]
+
+    punpcklwd   m0, m1, m4          ; m0 = [d2/d0]
+    punpckhwd   m1, m4              ; m1 = [d3/d1]
+    punpckldq   m4, m0, m1          ; m4 = [d3 d1 d2 d0]
+    punpckhdq   m0, m1              ; m0 = [d3 d1 d2 d0]
+
+    ; odd
+    lea         r4, [tab_dct8_1]
+    pmaddwd     m1, m4, [r4 + 0*16]
+    pmaddwd     m5, m0, [r4 + 0*16]
+    pshufd      m1, m1, 0xD8
+    pshufd      m5, m5, 0xD8
+    mova        m7, m1
+    punpckhqdq  m7, m5
+    punpcklqdq  m1, m5
+    paddd       m1, m7
+    paddd       m1, DCT_ADD1
+    psrad       m1, DCT_SHIFT1
+  %if x == 1
+    pshufd      m1, m1, 0x1B
+  %endif
+    mova        [r5 + 1*2*mmsize], m1 ; Row 1
+
+    pmaddwd     m1, m4, [r4 + 1*16]
+    pmaddwd     m5, m0, [r4 + 1*16]
+    pshufd      m1, m1, 0xD8
+    pshufd      m5, m5, 0xD8
+    mova        m7, m1
+    punpckhqdq  m7, m5
+    punpcklqdq  m1, m5
+    paddd       m1, m7
+    paddd       m1, DCT_ADD1
+    psrad       m1, DCT_SHIFT1
+  %if x == 1
+    pshufd      m1, m1, 0x1B
+  %endif
+    mova        [r5 + 3*2*mmsize], m1 ; Row 3
+
+    pmaddwd     m1, m4, [r4 + 2*16]
+    pmaddwd     m5, m0, [r4 + 2*16]
+    pshufd      m1, m1, 0xD8
+    pshufd      m5, m5, 0xD8
+    mova        m7, m1
+    punpckhqdq  m7, m5
+    punpcklqdq  m1, m5
+    paddd       m1, m7
+    paddd       m1, DCT_ADD1
+    psrad       m1, DCT_SHIFT1
+  %if x == 1
+    pshufd      m1, m1, 0x1B
+  %endif
+    mova        [r5 + 5*2*mmsize], m1 ; Row 5
+
+    pmaddwd     m4, [r4 + 3*16]
+    pmaddwd     m0, [r4 + 3*16]
+    pshufd      m4, m4, 0xD8
+    pshufd      m0, m0, 0xD8
+    mova        m7, m4
+    punpckhqdq  m7, m0
+    punpcklqdq  m4, m0
+    paddd       m4, m7
+    paddd       m4, DCT_ADD1
+    psrad       m4, DCT_SHIFT1
+  %if x == 1
+    pshufd      m4, m4, 0x1B
+  %endif
+    mova        [r5 + 7*2*mmsize], m4; Row 7
+
+    ; even
+    lea         r4, [tab_dct4]
+    paddw       m0, m2, m3          ; m0 = [EE1 EE0]
+    pshufd      m0, m0, 0xD8
+    pshuflw     m0, m0, 0xD8
+    pshufhw     m0, m0, 0xD8
+    psubw       m2, m3              ; m2 = [EO1 EO0]
+    pmullw      m2, [pw_ppppmmmm]
+    pshufd      m2, m2, 0xD8
+    pshuflw     m2, m2, 0xD8
+    pshufhw     m2, m2, 0xD8
+    pmaddwd     m3, m0, [r4 + 0*16]
+    paddd       m3, DCT_ADD1
+    psrad       m3, DCT_SHIFT1
+  %if x == 1
+    pshufd      m3, m3, 0x1B
+  %endif
+    mova        [r5 + 0*2*mmsize], m3 ; Row 0
+    pmaddwd     m0, [r4 + 2*16]
+    paddd       m0, DCT_ADD1
+    psrad       m0, DCT_SHIFT1
+  %if x == 1
+    pshufd      m0, m0, 0x1B
+  %endif
+    mova        [r5 + 4*2*mmsize], m0 ; Row 4
+    pmaddwd     m3, m2, [r4 + 1*16]
+    paddd       m3, DCT_ADD1
+    psrad       m3, DCT_SHIFT1
+  %if x == 1
+    pshufd      m3, m3, 0x1B
+  %endif
+    mova        [r5 + 2*2*mmsize], m3 ; Row 2
+    pmaddwd     m2, [r4 + 3*16]
+    paddd       m2, DCT_ADD1
+    psrad       m2, DCT_SHIFT1
+  %if x == 1
+    pshufd      m2, m2, 0x1B
+  %endif
+    mova        [r5 + 6*2*mmsize], m2 ; Row 6
+
+  %if x != 1
+    lea         r0, [r0 + r2 * 4]
+    add         r5, mmsize
+  %endif
+%assign x x+1
+%endrep
+
+    mov         r0, rsp                 ; r0 = pointer to Low Part
+    lea         r4, [tab_dct8_2]
+
+%assign x 0
+%rep 4
+    mova        m0, [r0 + 0*2*mmsize]     ; [3 2 1 0]
+    mova        m1, [r0 + 1*2*mmsize]
+    paddd       m2, m0, [r0 + (0*2+1)*mmsize]
+    pshufd      m2, m2, 0x9C            ; m2 = [s2 s1 s3 s0]
+    paddd       m3, m1, [r0 + (1*2+1)*mmsize]
+    pshufd      m3, m3, 0x9C            ; m3 = ^^
+    psubd       m0, [r0 + (0*2+1)*mmsize]     ; m0 = [d3 d2 d1 d0]
+    psubd       m1, [r0 + (1*2+1)*mmsize]     ; m1 = ^^
+
+    ; even
+    pshufd      m4, m2, 0xD8
+    pshufd      m3, m3, 0xD8
+    mova        m7, m4
+    punpckhqdq  m7, m3
+    punpcklqdq  m4, m3
+    mova        m2, m4
+    paddd       m4, m7                  ; m4 = [EE1 EE0 EE1 EE0]
+    psubd       m2, m7                  ; m2 = [EO1 EO0 EO1 EO0]
+
+    pslld       m4, 6                   ; m4 = [64*EE1 64*EE0]
+    mova        m5, m2
+    pmuludq     m5, [r4 + 0*16]
+    pshufd      m7, m2, 0xF5
+    movu        m6, [r4 + 0*16 + 4]
+    pmuludq     m7, m6
+    pshufd      m5, m5, 0x88
+    pshufd      m7, m7, 0x88
+    punpckldq   m5, m7                  ; m5 = [36*EO1 83*EO0]
+    pshufd      m7, m2, 0xF5
+    pmuludq     m2, [r4 + 1*16]
+    movu        m6, [r4 + 1*16 + 4]
+    pmuludq     m7, m6
+    pshufd      m2, m2, 0x88
+    pshufd      m7, m7, 0x88
+    punpckldq   m2, m7                  ; m2 = [83*EO1 36*EO0]
+
+    pshufd      m3, m4, 0xD8
+    pshufd      m5, m5, 0xD8
+    mova        m7, m3
+    punpckhqdq  m7, m5
+    punpcklqdq  m3, m5
+    paddd       m3, m7                  ; m3 = [Row2 Row0]
+    paddd       m3, DCT_ADD2
+    psrad       m3, DCT_SHIFT2
+    pshufd      m4, m4, 0xD8
+    pshufd      m2, m2, 0xD8
+    mova        m7, m4
+    punpckhqdq  m7, m2
+    punpcklqdq  m4, m2
+    psubd       m4, m7                  ; m4 = [Row6 Row4]
+    paddd       m4, DCT_ADD2
+    psrad       m4, DCT_SHIFT2
+
+    packssdw    m3, m3
+    movd        [r1 + 0*mmsize], m3
+    pshufd      m3, m3, 1
+    movd        [r1 + 2*mmsize], m3
+
+    packssdw    m4, m4
+    movd        [r1 + 4*mmsize], m4
+    pshufd      m4, m4, 1
+    movd        [r1 + 6*mmsize], m4
+
+    ; odd
+    mova        m2, m0
+    pmuludq     m2, [r4 + 2*16]
+    pshufd      m7, m0, 0xF5
+    movu        m6, [r4 + 2*16 + 4]
+    pmuludq     m7, m6
+    pshufd      m2, m2, 0x88
+    pshufd      m7, m7, 0x88
+    punpckldq   m2, m7
+    mova        m3, m1
+    pmuludq     m3, [r4 + 2*16]
+    pshufd      m7, m1, 0xF5
+    pmuludq     m7, m6
+    pshufd      m3, m3, 0x88
+    pshufd      m7, m7, 0x88
+    punpckldq   m3, m7
+    mova        m4, m0
+    pmuludq     m4, [r4 + 3*16]
+    pshufd      m7, m0, 0xF5
+    movu        m6, [r4 + 3*16 + 4]
+    pmuludq     m7, m6
+    pshufd      m4, m4, 0x88
+    pshufd      m7, m7, 0x88
+    punpckldq   m4, m7
+    mova        m5, m1
+    pmuludq     m5, [r4 + 3*16]
+    pshufd      m7, m1, 0xF5
+    pmuludq     m7, m6
+    pshufd      m5, m5, 0x88
+    pshufd      m7, m7, 0x88
+    punpckldq   m5, m7
+    pshufd      m2, m2, 0xD8
+    pshufd      m3, m3, 0xD8
+    mova        m7, m2
+    punpckhqdq  m7, m3
+    punpcklqdq  m2, m3
+    paddd       m2, m7
+    pshufd      m4, m4, 0xD8
+    pshufd      m5, m5, 0xD8
+    mova        m7, m4
+    punpckhqdq  m7, m5
+    punpcklqdq  m4, m5
+    paddd       m4, m7
+    pshufd      m2, m2, 0xD8
+    pshufd      m4, m4, 0xD8
+    mova        m7, m2
+    punpckhqdq  m7, m4
+    punpcklqdq  m2, m4
+    paddd       m2, m7                  ; m2 = [Row3 Row1]
+    paddd       m2, DCT_ADD2
+    psrad       m2, DCT_SHIFT2
+
+    packssdw    m2, m2
+    movd        [r1 + 1*mmsize], m2
+    pshufd      m2, m2, 1
+    movd        [r1 + 3*mmsize], m2
+
+    mova        m2, m0
+    pmuludq     m2, [r4 + 4*16]
+    pshufd      m7, m0, 0xF5
+    movu        m6, [r4 + 4*16 + 4]
+    pmuludq     m7, m6
+    pshufd      m2, m2, 0x88
+    pshufd      m7, m7, 0x88
+    punpckldq   m2, m7
+    mova        m3, m1
+    pmuludq     m3, [r4 + 4*16]
+    pshufd      m7, m1, 0xF5
+    pmuludq     m7, m6
+    pshufd      m3, m3, 0x88
+    pshufd      m7, m7, 0x88
+    punpckldq   m3, m7
+    mova        m4, m0
+    pmuludq     m4, [r4 + 5*16]
+    pshufd      m7, m0, 0xF5
+    movu        m6, [r4 + 5*16 + 4]
+    pmuludq     m7, m6
+    pshufd      m4, m4, 0x88
+    pshufd      m7, m7, 0x88
+    punpckldq   m4, m7
+    mova        m5, m1
+    pmuludq     m5, [r4 + 5*16]
+    pshufd      m7, m1, 0xF5
+    pmuludq     m7, m6
+    pshufd      m5, m5, 0x88
+    pshufd      m7, m7, 0x88
+    punpckldq   m5, m7
+    pshufd      m2, m2, 0xD8
+    pshufd      m3, m3, 0xD8
+    mova        m7, m2
+    punpckhqdq  m7, m3
+    punpcklqdq  m2, m3
+    paddd       m2, m7
+    pshufd      m4, m4, 0xD8
+    pshufd      m5, m5, 0xD8
+    mova        m7, m4
+    punpckhqdq  m7, m5
+    punpcklqdq  m4, m5
+    paddd       m4, m7
+    pshufd      m2, m2, 0xD8
+    pshufd      m4, m4, 0xD8
+    mova        m7, m2
+    punpckhqdq  m7, m4
+    punpcklqdq  m2, m4
+    paddd       m2, m7                  ; m2 = [Row7 Row5]
+    paddd       m2, DCT_ADD2
+    psrad       m2, DCT_SHIFT2
+
+    packssdw    m2, m2
+    movd        [r1 + 5*mmsize], m2
+    pshufd      m2, m2, 1
+    movd        [r1 + 7*mmsize], m2
+%if x < 3
+    add         r1, mmsize/4
+    add         r0, 2*2*mmsize
+%endif
+%assign x x+1
+%endrep
+
+    RET
+%undef IDCT_SHIFT1
+%undef IDCT_ADD1
+%undef IDCT_SHIFT2
+%undef IDCT_ADD2
 
 ;-------------------------------------------------------
 ; void dct8(const int16_t* src, int16_t* dst, intptr_t srcStride)
