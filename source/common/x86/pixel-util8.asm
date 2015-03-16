@@ -493,7 +493,6 @@ cglobal quant, 5,6,8
     RET
 
 
-IACA_START
 %if ARCH_X86_64 == 1
 INIT_YMM avx2
 cglobal quant, 5,5,10
@@ -640,7 +639,6 @@ cglobal quant, 5,6,8
     movd            eax, xm7
     RET
 %endif ; ARCH_X86_64 == 1
-IACA_END
 
 
 ;-----------------------------------------------------------------------------
