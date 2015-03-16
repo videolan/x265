@@ -372,12 +372,17 @@ bool RateControl::init(const SPS& sps)
     /* Frame Predictors and Row predictors used in vbv */
     for (int i = 0; i < 4; i++)
     {
-        m_pred[i].coeff = 1.5;
+        m_pred[i].coeff = 1.0;
         m_pred[i].count = 1.0;
         m_pred[i].decay = 0.5;
         m_pred[i].offset = 0.0;
     }
-    m_pred[0].coeff = 1.0;
+    m_pred[0].coeff = m_pred[3].coeff = 0.75;
+    if (m_param->rc.qCompress >= 0.8) // when tuned for grain 
+    {
+        m_pred[1].coeff = 0.75;
+        m_pred[0].coeff = m_pred[3].coeff = 0.50;
+    }
     if (!m_statFileOut && (m_param->rc.bStatWrite || m_param->rc.bStatRead))
     {
         /* If the user hasn't defined the stat filename, use the default value */
@@ -1797,8 +1802,11 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
         double pbits = predictSize(&m_pred[m_predType], q, (double)m_currentSatd);
         if (pbits > rce->frameSizeMaximum)
             q *= pbits / rce->frameSizeMaximum;
-
-        if (!m_isCbr || (m_isAbr && m_currentSatd >= rce->movingAvgSum && q <= q0 / 2))
+        /* To detect frames that are more complex in SATD costs compared to prev window, yet 
+         * lookahead vbv reduces its qscale by half its value. Be on safer side and avoid drastic 
+         * qscale reductions for frames high in complexity */
+        bool mispredCheck = rce->movingAvgSum && m_currentSatd >= rce->movingAvgSum && q <= q0 / 2;
+        if (!m_isCbr || (m_isAbr && mispredCheck))
             q = X265_MAX(q0, q);
 
         if (m_rateFactorMaxIncrement)
