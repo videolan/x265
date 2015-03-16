@@ -1608,7 +1608,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
     while (count < maxNumMergeCand)
     {
         candDir[count] = 1;
-        candMvField[count][0].mv = 0;
+        candMvField[count][0].mv.word = 0;
         candMvField[count][0].refIdx = r;
 
         if (isInterB)
