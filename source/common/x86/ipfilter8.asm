@@ -17224,3 +17224,79 @@ cglobal interp_4tap_horiz_pp_%1x%2, 4,6,7
 IPFILTER_CHROMA_PP_32xN_AVX2 32, 16
 IPFILTER_CHROMA_PP_32xN_AVX2 32, 24
 IPFILTER_CHROMA_PP_32xN_AVX2 32, 8
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_8xN(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+%macro IPFILTER_CHROMA_PP_8xN_AVX2 2
+INIT_YMM avx2
+cglobal interp_4tap_horiz_pp_%1x%2, 4,6,6
+    mov               r4d,    r4m
+
+%ifdef PIC
+    lea               r5,           [tab_ChromaCoeff]
+    vpbroadcastd      m0,           [r5 + r4 * 4]
+%else
+    vpbroadcastd      m0,           [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    movu              m1,           [tab_Tm]
+    vpbroadcastd      m2,           [pw_1]
+    ; register map
+    ; m0 - interpolate coeff
+    ; m1 - shuffle order table
+    ; m2 - constant word 1
+
+    sub               r0,           1
+    mov               r4d,          %2
+
+.loop:
+    sub               r4d,          4
+    ; Row 0
+    vbroadcasti128    m3,           [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m3,           m1
+    pmaddubsw         m3,           m0
+    pmaddwd           m3,           m2
+
+    ; Row 1
+    vbroadcasti128    m4,           [r0 + r1]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m4,           m1
+    pmaddubsw         m4,           m0
+    pmaddwd           m4,           m2
+    packssdw          m3,           m4
+    pmulhrsw          m3,           [pw_512]
+    lea               r0,           [r0 + r1 * 2]
+
+    ; Row 2
+    vbroadcasti128    m4,           [r0 ]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m4,           m1
+    pmaddubsw         m4,           m0
+    pmaddwd           m4,           m2
+
+    ; Row 3
+    vbroadcasti128    m5,           [r0 + r1]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m5,           m1
+    pmaddubsw         m5,           m0
+    pmaddwd           m5,           m2
+    packssdw          m4,           m5
+    pmulhrsw          m4,           [pw_512]
+
+    packuswb          m3,           m4
+    mova              m5,           [interp_4tap_8x8_horiz_shuf]
+    vpermd            m3,           m5,     m3
+    vextracti128      xm4,          m3,     1
+    movq              [r2],         xm3
+    movhps            [r2 + r3],    xm3
+    lea               r2,           [r2 + r3 * 2]
+    movq              [r2],         xm4
+    movhps            [r2 + r3],    xm4
+    lea               r2,           [r2 + r3 * 2]
+    lea               r0,           [r0 + r1*2]
+    test              r4d,          r4d
+    jnz               .loop
+    RET
+%endmacro
+
+IPFILTER_CHROMA_PP_8xN_AVX2   8 , 16
+IPFILTER_CHROMA_PP_8xN_AVX2   8 , 32
+IPFILTER_CHROMA_PP_8xN_AVX2   8 , 4
