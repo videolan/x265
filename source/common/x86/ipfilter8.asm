@@ -13152,6 +13152,76 @@ cglobal interp_4tap_vert_%1_4x2, 4, 6, 6
 FILTER_VER_CHROMA_S_AVX2_4x2 sp
 FILTER_VER_CHROMA_S_AVX2_4x2 ss
 
+%macro FILTER_VER_CHROMA_S_AVX2_2x4 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_2x4, 4, 6, 6
+    mov             r4d, r4m
+    shl             r4d, 6
+    add             r1d, r1d
+    sub             r0, r1
+
+%ifdef PIC
+    lea             r5, [pw_ChromaCoeffV]
+    add             r5, r4
+%else
+    lea             r5, [pw_ChromaCoeffV + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+%ifidn %1,sp
+    mova            m5, [pd_526336]
+%else
+    add             r3d, r3d
+%endif
+    movd            xm0, [r0]
+    movd            xm1, [r0 + r1]
+    punpcklwd       xm0, xm1
+    movd            xm2, [r0 + r1 * 2]
+    punpcklwd       xm1, xm2
+    punpcklqdq      xm0, xm1                        ; m0 = [2 1 1 0]
+    movd            xm3, [r0 + r4]
+    punpcklwd       xm2, xm3
+    lea             r0, [r0 + 4 * r1]
+    movd            xm4, [r0]
+    punpcklwd       xm3, xm4
+    punpcklqdq      xm2, xm3                        ; m2 = [4 3 3 2]
+    vinserti128     m0, m0, xm2, 1                  ; m0 = [4 3 3 2 2 1 1 0]
+    movd            xm1, [r0 + r1]
+    punpcklwd       xm4, xm1
+    movd            xm3, [r0 + r1 * 2]
+    punpcklwd       xm1, xm3
+    punpcklqdq      xm4, xm1                        ; m4 = [6 5 5 4]
+    vinserti128     m2, m2, xm4, 1                  ; m2 = [6 5 5 4 4 3 3 2]
+    pmaddwd         m0, [r5]
+    pmaddwd         m2, [r5 + 1 * mmsize]
+    paddd           m0, m2
+%ifidn %1,sp
+    paddd           m0, m5
+    psrad           m0, 12
+%else
+    psrad           m0, 6
+%endif
+    vextracti128    xm1, m0, 1
+    packssdw        xm0, xm1
+    lea             r4, [r3 * 3]
+%ifidn %1,sp
+    packuswb        xm0, xm0
+    pextrw          [r2], xm0, 0
+    pextrw          [r2 + r3], xm0, 1
+    pextrw          [r2 + 2 * r3], xm0, 2
+    pextrw          [r2 + r4], xm0, 3
+%else
+    movd            [r2], xm0
+    pextrd          [r2 + r3], xm0, 1
+    pextrd          [r2 + 2 * r3], xm0, 2
+    pextrd          [r2 + r4], xm0, 3
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_S_AVX2_2x4 sp
+FILTER_VER_CHROMA_S_AVX2_2x4 ss
+
 %macro FILTER_VER_CHROMA_S_AVX2_8x8 1
 INIT_YMM avx2
 cglobal interp_4tap_vert_%1_8x8, 4, 6, 8
