@@ -1233,6 +1233,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
             continue;
 
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i; // merge candidate ID is stored in L0 MVP idx
+        X265_CHECK(m_slice->m_sliceType == B_SLICE || !(candDir[i] & 0x10), " invalid merge for P slice\n");
         tempPred->cu.m_interDir[0] = candDir[i];
         tempPred->cu.m_mv[0][0] = candMvField[i][0].mv;
         tempPred->cu.m_mv[1][0] = candMvField[i][1].mv;
