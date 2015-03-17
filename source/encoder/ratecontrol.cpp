@@ -1384,17 +1384,14 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             if (!m_2pass)
             {
                 qScale = clipQscale(curFrame, rce, qScale);
-                /*  clip qp to permissible range after vbv-lookahead estimation to avoid possible 
+                /* clip qp to permissible range after vbv-lookahead estimation to avoid possible 
                  * mispredictions by initial frame size predictors */
-       //         if (m_pred[m_sliceType].count == 1)
-        //            qScale = x265_clip3(lmin, lmax, qScale);
                 m_lastQScaleFor[m_sliceType] = qScale;
                 rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], qScale, (double)m_currentSatd);
             }
             else
-            {
                 rce->frameSizePlanned = qScale2bits(rce, qScale);
-            }
+
             /* Limit planned size by MinCR */
             rce->frameSizePlanned = X265_MIN(rce->frameSizePlanned, rce->frameSizeMaximum);
             rce->frameSizeEstimated = rce->frameSizePlanned;

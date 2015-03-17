@@ -106,27 +106,21 @@ void DPB::prepareEncode(Frame *newFrame)
     {
         newFrame->m_encData->m_bHasReferences = false;
 
-        // Adjust NAL type for unreferenced B frames
-        if (m_bTemporalSublayer && !(slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R
-            || slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R))
-            slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_TSA_N;
-        else
+        // Adjust NAL type for unreferenced B frames (change from _R "referenced"
+        // to _N "non-referenced" NAL unit type)
+        switch (slice->m_nalUnitType)
         {
-            // change from _R "referenced" to _N "non-referenced" NAL unit type
-            switch (slice->m_nalUnitType)
-            {
-            case NAL_UNIT_CODED_SLICE_TRAIL_R:
-                slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_TRAIL_N;
-                break;
-            case NAL_UNIT_CODED_SLICE_RADL_R:
-                slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_RADL_N;
-                break;
-            case NAL_UNIT_CODED_SLICE_RASL_R:
-                slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_RASL_N;
-                break;
-            default:
-                break;
-            }
+        case NAL_UNIT_CODED_SLICE_TRAIL_R:
+            slice->m_nalUnitType = m_bTemporalSublayer ? NAL_UNIT_CODED_SLICE_TSA_N : NAL_UNIT_CODED_SLICE_TRAIL_N;
+            break;
+        case NAL_UNIT_CODED_SLICE_RADL_R:
+            slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_RADL_N;
+            break;
+        case NAL_UNIT_CODED_SLICE_RASL_R:
+            slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_RASL_N;
+            break;
+        default:
+            break;
         }
     }
     else
