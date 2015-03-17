@@ -3898,6 +3898,68 @@ cglobal pixel_sad_x4_8x8, 7,7,5
     RET
 
 INIT_YMM avx2
+cglobal pixel_sad_32x8, 4,4,6
+    xorps           m0, m0
+    xorps           m5, m5
+
+    movu           m1, [r0]               ; row 0 of pix0
+    movu           m2, [r2]               ; row 0 of pix1
+    movu           m3, [r0 + r1]          ; row 1 of pix0
+    movu           m4, [r2 + r3]          ; row 1 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; row 2 of pix0
+    movu           m2, [r2]               ; row 2 of pix1
+    movu           m3, [r0 + r1]          ; row 3 of pix0
+    movu           m4, [r2 + r3]          ; row 3 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; row 4 of pix0
+    movu           m2, [r2]               ; row 4 of pix1
+    movu           m3, [r0 + r1]          ; row 5 of pix0
+    movu           m4, [r2 + r3]          ; row 5 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; row 6 of pix0
+    movu           m2, [r2]               ; row 6 of pix1
+    movu           m3, [r0 + r1]          ; row 7 of pix0
+    movu           m4, [r2 + r3]          ; row 7 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    paddd          m0, m5
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd           eax, xm0
+    RET
+
+INIT_YMM avx2
 cglobal pixel_sad_32x32, 4,7,5
     xorps           m0, m0
     mov             r4d, 32/4
