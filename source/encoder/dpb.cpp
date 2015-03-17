@@ -107,7 +107,8 @@ void DPB::prepareEncode(Frame *newFrame)
         newFrame->m_encData->m_bHasReferences = false;
 
         // Adjust NAL type for unreferenced B frames
-        if (m_bTemporalSublayer)
+        if (m_bTemporalSublayer && !(slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R
+            || slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R))
             slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_TSA_N;
         else
         {
