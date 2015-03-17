@@ -1451,9 +1451,6 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     uint8_t coeffNum[MLS_GRP_NUM];      // value range[0, 16]
     uint16_t coeffSign[MLS_GRP_NUM];    // bit mask map for non-zero coeff sign
     uint16_t coeffFlag[MLS_GRP_NUM];    // bit mask map for non-zero coeff
-    memset(coeffNum, 0, sizeof(coeffNum));
-    memset(coeffFlag, 0, sizeof(coeffFlag));
-    memset(coeffSign, 0, sizeof(coeffSign));
 
     //----- encode significance map -----
 
@@ -1464,30 +1461,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     //const uint32_t maskPosXY = ((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1;
     X265_CHECK((uint32_t)((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1) == (((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1), "maskPosXY fault\n");
 
-    do
-    {
-        const uint32_t cgIdx = (uint32_t)scanPosLast >> MLS_CG_SIZE;
+    scanPosLast = primitives.findPosLast(codingParameters.scan, coeff, coeffSign, coeffFlag, coeffNum, numSig);
+    posLast = codingParameters.scan[scanPosLast];
 
-        posLast = codingParameters.scan[scanPosLast++];
-
-        const int curCoeff = coeff[posLast];
-        const uint32_t isNZCoeff = (curCoeff != 0);
-        // get L1 sig map
-        // NOTE: the new algorithm is complicated, so I keep reference code here
-        //uint32_t posy   = posLast >> log2TrSize;
-        //uint32_t posx   = posLast - (posy << log2TrSize);
-        //uint32_t blkIdx0 = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
-        //const uint32_t blkIdx = ((posLast >> (2 * MLS_CG_LOG2_SIZE)) & ~maskPosXY) + ((posLast >> MLS_CG_LOG2_SIZE) & maskPosXY);
-        //sigCoeffGroupFlag64 |= ((uint64_t)isNZCoeff << blkIdx);
-        numSig -= isNZCoeff;
-
-        // TODO: optimize by instruction BTS
-        coeffSign[cgIdx] += (uint16_t)(((uint32_t)curCoeff >> 31) << coeffNum[cgIdx]);
-        coeffFlag[cgIdx] = (coeffFlag[cgIdx] << 1) + (uint16_t)isNZCoeff;
-        coeffNum[cgIdx] += (uint8_t)isNZCoeff;
-    }
-    while (numSig > 0);
-    scanPosLast--;
     const int lastScanSet = scanPosLast >> MLS_CG_SIZE;
 
     // Calculate CG block non-zero mask, the latest CG always flag as non-zero in CG scan loop

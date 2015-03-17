@@ -179,6 +179,8 @@ typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* 
 
 typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
 
+typedef int (*findPosLast_t)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig);
+
 /* Function pointers to optimized encoder primitives. Each pointer can reference
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */
 struct EncoderPrimitives
@@ -288,6 +290,8 @@ struct EncoderPrimitives
     weightp_pp_t          weight_pp;
 
     filter_p2s_wxh_t      luma_p2s;
+
+    findPosLast_t         findPosLast;
 
     /* There is one set of chroma primitives per color space. An encoder will
      * have just a single color space and thus it will only ever use one entry
