@@ -1369,36 +1369,36 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
 
         double qScale = x265_qp2qScale(q);
         double lmin = 0, lmax = 0;
-        if (m_isCbr)
-        {
-            qScale = tuneAbrQScaleFromFeedback(qScale);
-            if (!m_isAbrReset)
-            {
-                lmin = m_lastQScaleFor[P_SLICE] / m_lstep;
-                lmax = m_lastQScaleFor[P_SLICE] * m_lstep;
-                qScale = x265_clip3(lmin, lmax, qScale);
-            }
-            q = x265_qScale2qp(qScale);
-        }
-        rce->qpNoVbv = q;
-        if (!m_2pass && m_isVbv)
-        {
-            qScale = clipQscale(curFrame, rce, qScale);
-            /*  clip qp to permissible range after vbv-lookahead estimation to avoid possible 
-             * mispredictions by initial frame size predictors */
-            if (m_pred[m_sliceType].count == 1)
-                qScale = x265_clip3(lmin, lmax, qScale);
-            m_lastQScaleFor[m_sliceType] = qScale;
-            rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], qScale, (double)m_currentSatd);
-        }
-        else if (m_2pass && m_isVbv)
-        {
-            rce->frameSizePlanned = qScale2bits(rce, qScale);
-        }
-        /* Limit planned size by MinCR */
         if (m_isVbv)
+        {
+            lmin = m_lastQScaleFor[P_SLICE] / m_lstep;
+            lmax = m_lastQScaleFor[P_SLICE] * m_lstep;
+            if (m_isCbr)
+            {
+                qScale = tuneAbrQScaleFromFeedback(qScale);
+                if (!m_isAbrReset)
+                    qScale = x265_clip3(lmin, lmax, qScale);
+                q = x265_qScale2qp(qScale);
+            }
+            rce->qpNoVbv = q;
+            if (!m_2pass)
+            {
+                qScale = clipQscale(curFrame, rce, qScale);
+                /*  clip qp to permissible range after vbv-lookahead estimation to avoid possible 
+                 * mispredictions by initial frame size predictors */
+       //         if (m_pred[m_sliceType].count == 1)
+        //            qScale = x265_clip3(lmin, lmax, qScale);
+                m_lastQScaleFor[m_sliceType] = qScale;
+                rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], qScale, (double)m_currentSatd);
+            }
+            else
+            {
+                rce->frameSizePlanned = qScale2bits(rce, qScale);
+            }
+            /* Limit planned size by MinCR */
             rce->frameSizePlanned = X265_MIN(rce->frameSizePlanned, rce->frameSizeMaximum);
-        rce->frameSizeEstimated = rce->frameSizePlanned;
+            rce->frameSizeEstimated = rce->frameSizePlanned;
+        }
         rce->newQScale = qScale;
         return qScale;
     }
