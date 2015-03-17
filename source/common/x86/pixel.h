@@ -255,6 +255,10 @@ void x265_pixel_add_ps_16x16_avx2(pixel* a, intptr_t dstride, const pixel* b0, c
 void x265_pixel_add_ps_32x32_avx2(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_add_ps_64x64_avx2(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
 
+void x265_pixel_sub_ps_16x16_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_sub_ps_32x32_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_sub_ps_64x64_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
+
 #undef DECL_PIXELS
 #undef DECL_HEVC_SSD
 #undef DECL_X1

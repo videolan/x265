@@ -4335,6 +4335,44 @@ PIXELSUB_PS_W16_H4 16, 32
 
 
 ;-----------------------------------------------------------------------------
+; void pixel_sub_ps_16x16(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal pixel_sub_ps_16x16, 6, 7, 4, dest, deststride, src0, src1, srcstride0, srcstride1
+    add         r1,     r1
+    lea         r6,     [r1 * 3]
+
+%rep 4
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r3]
+    pmovzxbw    m2,     [r2 + r4]
+    pmovzxbw    m3,     [r3 + r5]
+    lea         r2,     [r2 + r4 * 2]
+    lea         r3,     [r3 + r5 * 2]
+
+    psubw       m0,     m1
+    psubw       m2,     m3
+
+    movu        [r0],            m0
+    movu        [r0 + r1],       m2
+
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r3]
+    pmovzxbw    m2,     [r2 + r4]
+    pmovzxbw    m3,     [r3 + r5]
+
+    psubw       m0,     m1
+    psubw       m2,     m3
+
+    movu        [r0 + r1 * 2],   m0
+    movu        [r0 + r6],       m2
+
+    lea         r0,     [r0 + r1 * 4]
+    lea         r2,     [r2 + r4 * 2]
+    lea         r3,     [r3 + r5 * 2]
+%endrep
+    RET
+;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_32x%2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
 %macro PIXELSUB_PS_W32_H2 2
@@ -4468,6 +4506,132 @@ PIXELSUB_PS_W32_H2 32, 64
 %endif
 
 
+;-----------------------------------------------------------------------------
+; void pixel_sub_ps_32x32(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal pixel_sub_ps_32x32, 6, 6, 4, dest, deststride, src0, src1, srcstride0, srcstride1
+     add         r1,    r1
+
+%rep 4
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r2 + 16]
+    pmovzxbw    m2,     [r3]
+    pmovzxbw    m3,     [r3 + 16]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+
+    movu        [r0],            m0
+    movu        [r0 + 32],       m1
+
+    pmovzxbw    m0,     [r2 + r4]
+    pmovzxbw    m1,     [r2 + r4 + 16]
+    pmovzxbw    m2,     [r3 + r5]
+    pmovzxbw    m3,     [r3 + r5 + 16]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+
+    movu        [r0 + r1],       m0
+    movu        [r0 + r1 + 32],  m1
+
+    add         r2,     r4
+    add         r3,     r5
+
+    pmovzxbw    m0,     [r2 + r4]
+    pmovzxbw    m1,     [r2 + r4 + 16]
+    pmovzxbw    m2,     [r3 + r5]
+    pmovzxbw    m3,     [r3 + r5 + 16]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+    lea         r0,     [r0 + r1 * 2]
+
+    movu        [r0 ],           m0
+    movu        [r0 + 32],       m1
+
+    add         r2,     r4
+    add         r3,     r5
+
+    pmovzxbw    m0,     [r2 + r4]
+    pmovzxbw    m1,     [r2 + r4 + 16]
+    pmovzxbw    m2,     [r3 + r5]
+    pmovzxbw    m3,     [r3 + r5 + 16]
+
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+    add         r0,     r1
+
+    movu        [r0 ],           m0
+    movu        [r0 + 32],       m1
+
+    add         r2,     r4
+    add         r3,     r5
+
+    pmovzxbw    m0,     [r2 + r4]
+    pmovzxbw    m1,     [r2 + r4 + 16]
+    pmovzxbw    m2,     [r3 + r5]
+    pmovzxbw    m3,     [r3 + r5 + 16]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+    add         r0,     r1
+
+    movu        [r0 ],           m0
+    movu        [r0 + 32],       m1
+
+    add         r2,     r4
+    add         r3,     r5
+
+    pmovzxbw    m0,     [r2 + r4]
+    pmovzxbw    m1,     [r2 + r4 + 16]
+    pmovzxbw    m2,     [r3 + r5]
+    pmovzxbw    m3,     [r3 + r5 + 16]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+    add         r0,     r1
+
+    movu        [r0 ],           m0
+    movu        [r0 + 32],       m1
+
+    add         r2,     r4
+    add         r3,     r5
+
+    pmovzxbw    m0,     [r2 + r4]
+    pmovzxbw    m1,     [r2 + r4 + 16]
+    pmovzxbw    m2,     [r3 + r5]
+    pmovzxbw    m3,     [r3 + r5 + 16]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+    add         r0,     r1
+
+    movu        [r0 ],           m0
+    movu        [r0 + 32],       m1
+
+    add         r2,     r4
+    add         r3,     r5
+
+    pmovzxbw    m0,     [r2 + r4]
+    pmovzxbw    m1,     [r2 + r4 + 16]
+    pmovzxbw    m2,     [r3 + r5]
+    pmovzxbw    m3,     [r3 + r5 + 16]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+    add         r0,     r1
+
+    movu        [r0 ],           m0
+    movu        [r0 + 32],       m1
+
+    lea         r0,     [r0 + r1]
+    lea         r2,     [r2 + r4 * 2]
+    lea         r3,     [r3 + r5 * 2]
+%endrep
+    RET
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_64x%2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
@@ -4687,6 +4851,111 @@ PIXELSUB_PS_W64_H2 64, 64
 %endif
 
 
+;-----------------------------------------------------------------------------
+; void pixel_sub_ps_64x64(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal pixel_sub_ps_64x64, 6, 6, 8, dest, deststride, src0, src1, srcstride0, srcstride1
+     add        r1,     r1
+
+%rep 16
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r2 + 16]
+    pmovzxbw    m2,     [r2 + 32]
+    pmovzxbw    m3,     [r2 + 48]
+
+    pmovzxbw    m4,     [r3]
+    pmovzxbw    m5,     [r3 + 16]
+    pmovzxbw    m6,     [r3 + 32]
+    pmovzxbw    m7,     [r3 + 48]
+
+    psubw       m0,     m4
+    psubw       m1,     m5
+    psubw       m2,     m6
+    psubw       m3,     m7
+
+    movu        [r0],         m0
+    movu        [r0 + 32],    m1
+    movu        [r0 + 64],    m2
+    movu        [r0 + 96],    m3
+
+    add         r0,     r1
+    add         r2,     r4
+    add         r3,     r5
+
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r2 + 16]
+    pmovzxbw    m2,     [r2 + 32]
+    pmovzxbw    m3,     [r2 + 48]
+
+    pmovzxbw    m4,     [r3]
+    pmovzxbw    m5,     [r3 + 16]
+    pmovzxbw    m6,     [r3 + 32]
+    pmovzxbw    m7,     [r3 + 48]
+
+    psubw       m0,     m4
+    psubw       m1,     m5
+    psubw       m2,     m6
+    psubw       m3,     m7
+
+    movu        [r0],         m0
+    movu        [r0 + 32],    m1
+    movu        [r0 + 64],    m2
+    movu        [r0 + 96],    m3
+
+    add         r0,     r1
+    add         r2,     r4
+    add         r3,     r5
+
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r2 + 16]
+    pmovzxbw    m2,     [r2 + 32]
+    pmovzxbw    m3,     [r2 + 48]
+
+    pmovzxbw    m4,     [r3]
+    pmovzxbw    m5,     [r3 + 16]
+    pmovzxbw    m6,     [r3 + 32]
+    pmovzxbw    m7,     [r3 + 48]
+
+    psubw       m0,     m4
+    psubw       m1,     m5
+    psubw       m2,     m6
+    psubw       m3,     m7
+
+    movu        [r0],         m0
+    movu        [r0 + 32],    m1
+    movu        [r0 + 64],    m2
+    movu        [r0 + 96],    m3
+
+    add         r0,     r1
+    add         r2,     r4
+    add         r3,     r5
+
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r2 + 16]
+    pmovzxbw    m2,     [r2 + 32]
+    pmovzxbw    m3,     [r2 + 48]
+
+    pmovzxbw    m4,     [r3]
+    pmovzxbw    m5,     [r3 + 16]
+    pmovzxbw    m6,     [r3 + 32]
+    pmovzxbw    m7,     [r3 + 48]
+
+    psubw       m0,     m4
+    psubw       m1,     m5
+    psubw       m2,     m6
+    psubw       m3,     m7
+
+    movu        [r0],         m0
+    movu        [r0 + 32],    m1
+    movu        [r0 + 64],    m2
+    movu        [r0 + 96],    m3
+
+    add         r0,     r1
+    add         r2,     r4
+    add         r3,     r5
+%endrep
+    RET
 ;=============================================================================
 ; variance
 ;=============================================================================
