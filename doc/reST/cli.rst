@@ -581,6 +581,30 @@ the prediction quad-tree.
 	be consistent for all of them since the encoder configures several
 	key global data structures based on this range.
 
+.. option:: --limit-refs <0|1|2|3>
+
+	When set to X265_REF_LIMIT_DEPTH (1) x265 will limit the references
+	analyzed at the current depth based on the references used to code
+	the 4 sub-blocks at the next depth.  For example, a 16x16 CU will
+	only use the references used to code its four 8x8 CUs.
+
+	When set to X265_REF_LIMIT_CU (2), the rectangular and asymmetrical
+	partitions will only use references selected by the 2Nx2N motion
+	search (including at the lowest depth which is otherwise unaffected
+	by the depth limit).
+
+	When set to 3 (X265_REF_LIMIT_DEPTH && X265_REF_LIMIT_CU), the 2Nx2N 
+	motion search at each depth will only use references from the split 
+	CUs and the rect/amp motion searches at that depth will only use the 
+	reference(s) selected by 2Nx2N. 
+
+	You can often increase the number of references you are using
+	(within your decoder level limits) if you enable one or
+	both of these flags.
+
+	This feature is EXPERIMENTAL and currently only functional at RD
+	levels 0 through 4
+
 .. option:: --rect, --no-rect
 
 	Enable analysis of rectangular motion partitions Nx2N and 2NxN
