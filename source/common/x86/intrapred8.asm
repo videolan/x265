@@ -11206,6 +11206,15 @@ cglobal intra_pred_ang16_24, 3, 5, 6
     INTRA_PRED_ANG16_MC1 2
     RET
 
+%macro INTRA_PRED_ANG16_MC5 2
+    pslldq            xm6,  xm6, 1
+    pinsrb            xm6, [r2 + %1], 0
+    vinserti128       m1, m6, xm6, 1
+    pshufb            m1, m5
+    vbroadcasti128    m2, [r2 + %2]
+    pshufb            m2, m5
+%endmacro
+
 INIT_YMM avx2
 cglobal intra_pred_ang16_23, 3, 5, 7
     mova              m0, [pw_1024]
@@ -11231,34 +11240,22 @@ cglobal intra_pred_ang16_23, 3, 5, 7
 
     add               r4, 4 * mmsize
 
-    pslldq            xm6,  xm6, 1
-    pinsrb            xm6, [r2 + 39], 0
-    vinserti128       m1, m6, xm6, 1
-    pshufb            m1, m5
-    vbroadcasti128    m2, [r2 + 6]
-    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC5 39, 6
     INTRA_PRED_ANG16_MC0 r0 + r3, r0 + 4 * r1, 0
 
     lea                  r0, [r0 + 4 * r1]
-    INTRA_PRED_ANG16_MC3 r0 + r1, 1
 
-    pslldq            xm6, xm6, 1
-    pinsrb            xm6, [r2 + 43], 0
-    vinserti128       m1, m6, xm6, 1
-    pshufb            m1, m5
-    vbroadcasti128    m2, [r2 + 5]
-    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC3 r0 + r1, 1
+    INTRA_PRED_ANG16_MC5 43, 5
     INTRA_PRED_ANG16_MC0 r0 + 2 * r1, r0 + r3, 2
+
     lea                  r0, [r0 + 4 * r1]
+
     INTRA_PRED_ANG16_MC0 r0, r0 + r1, 3
 
     add               r4, 4 * mmsize
-    pslldq            xm6,  xm6, 1
-    pinsrb            xm6, [r2 + 46], 0
-    vinserti128       m1, m6, xm6, 1
-    pshufb            m1, m5
-    vbroadcasti128    m2, [r2 + 4]
-    pshufb            m2, m5
+
+    INTRA_PRED_ANG16_MC5 46, 4
     INTRA_PRED_ANG16_MC0 r0 + 2 * r1, r0 + r3, 0
     RET
 
@@ -11282,51 +11279,25 @@ cglobal intra_pred_ang16_22, 3, 5, 7
 
     lea               r0, [r0 + 4 * r1]
 
-    pslldq            xm6, xm6, 1
-    pinsrb            xm6, [r2 + 37], 0
-    vinserti128       m1, m6, xm6, 1
-    pshufb            m1, m5
-    vbroadcasti128    m2, [r2 + 6]
-    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC5 37, 6
     INTRA_PRED_ANG16_MC0 r0, r0 + r1, 2
     INTRA_PRED_ANG16_MC3 r0 + 2 * r1, 3
 
     add               r4, 4 * mmsize
 
-    pslldq            xm6, xm6, 1
-    pinsrb            xm6, [r2 + 39], 0
-    vinserti128       m1, m6, xm6, 1
-    pshufb            m1, m5
-    vbroadcasti128    m2, [r2 + 5]
-    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC5 39, 5
     INTRA_PRED_ANG16_MC0 r0 + r3, r0 + 4 * r1, 0
 
     lea               r0, [r0 + 4 * r1]
 
-    pslldq            xm6, xm6, 1
-    pinsrb            xm6, [r2 + 42], 0
-    vinserti128       m1, m6, xm6, 1
-    pshufb            m1, m5
-    vbroadcasti128    m2, [r2 + 4]
-    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC5 42, 4
     INTRA_PRED_ANG16_MC0 r0 + r1, r0 + 2 * r1, 1
     INTRA_PRED_ANG16_MC3 r0 + r3, 2
 
     lea               r0, [r0 + 4 * r1]
 
-    pslldq            xm6, xm6, 1
-    pinsrb            xm6, [r2 + 44], 0
-    vinserti128       m1, m6, xm6, 1
-    pshufb            m1, m5
-    vbroadcasti128    m2, [r2 + 3]
-    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC5 44, 3
     INTRA_PRED_ANG16_MC0 r0, r0 + r1, 3
-
-    pslldq            xm6, xm6, 1
-    pinsrb            xm6, [r2 + 47], 0
-    vinserti128       m1, m6, xm6, 1
-    pshufb            m1, m5
-    vbroadcasti128    m2, [r2 + 2]
-    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC5 47, 2
     INTRA_PRED_ANG16_MC0 r0 + 2 * r1, r0 + r3, 4
     RET
