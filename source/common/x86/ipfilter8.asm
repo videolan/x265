@@ -13883,6 +13883,45 @@ cglobal interp_4tap_vert_%1_8x4, 4, 6, 8
 FILTER_VER_CHROMA_S_AVX2_8x4 sp
 FILTER_VER_CHROMA_S_AVX2_8x4 ss
 
+%macro FILTER_VER_CHROMA_S_AVX2_12x16 1
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_4tap_vert_%1_12x16, 4, 9, 10
+    mov             r4d, r4m
+    shl             r4d, 6
+    add             r1d, r1d
+
+%ifdef PIC
+    lea             r5, [pw_ChromaCoeffV]
+    add             r5, r4
+%else
+    lea             r5, [pw_ChromaCoeffV + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+%ifidn %1,sp
+    mova            m9, [pd_526336]
+%else
+    add             r3d, r3d
+%endif
+    lea             r6, [r3 * 3]
+    PROCESS_CHROMA_S_AVX2_W8_16R %1
+%ifidn %1,sp
+    add             r2, 8
+%else
+    add             r2, 16
+%endif
+    add             r0, 16
+    mova            m7, m9
+    PROCESS_CHROMA_AVX2_W4_16R %1
+    RET
+%endif
+%endmacro
+
+FILTER_VER_CHROMA_S_AVX2_12x16 sp
+FILTER_VER_CHROMA_S_AVX2_12x16 ss
+
 ;---------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vertical_ss_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;---------------------------------------------------------------------------------------------------------------------
