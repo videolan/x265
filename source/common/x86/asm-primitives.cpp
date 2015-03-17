@@ -1527,6 +1527,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_16x16].intra_pred[31] = x265_intra_pred_ang16_31_avx2;
         p.cu[BLOCK_16x16].intra_pred[32] = x265_intra_pred_ang16_32_avx2;
         p.cu[BLOCK_16x16].intra_pred[33] = x265_intra_pred_ang16_33_avx2;
+        p.cu[BLOCK_16x16].intra_pred[24] = x265_intra_pred_ang16_24_avx2;
 
         // copy_sp primitives
         p.cu[BLOCK_16x16].copy_sp = x265_blockcopy_sp_16x16_avx2;
