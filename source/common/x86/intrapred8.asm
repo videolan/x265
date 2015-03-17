@@ -237,6 +237,17 @@ c_ang16_mode_23:     db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 
                      db 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
 
 ALIGN 32
+c_ang16_mode_22:     db 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6
+                     db 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
+                     db 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18
+                     db 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5
+                     db 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11
+                     db 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17
+                     db 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4
+                     db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10
+                     db 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+
+ALIGN 32
 ;; (blkSize - 1 - x)
 pw_planar4_0:         dw 3,  2,  1,  0,  3,  2,  1,  0
 pw_planar4_1:         dw 3,  3,  3,  3,  3,  3,  3,  3
@@ -11249,4 +11260,73 @@ cglobal intra_pred_ang16_23, 3, 5, 7
     vbroadcasti128    m2, [r2 + 4]
     pshufb            m2, m5
     INTRA_PRED_ANG16_MC0 r0 + 2 * r1, r0 + r3, 0
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang16_22, 3, 5, 7
+    mova              m0, [pw_1024]
+    mova              m5, [intra_pred_shuff_0_8]
+    lea               r3, [3 * r1]
+    lea               r4, [c_ang16_mode_22]
+
+    INTRA_PRED_ANG16_MC2 0
+    INTRA_PRED_ANG16_MC0 r0, r0 + r1, 0
+
+    movu              xm6, [r2 - 1]
+    pinsrb            xm6, [r2 + 34], 0
+    vinserti128       m1, m6, xm6, 1
+    pshufb            m1, m5
+    vbroadcasti128    m2, [r2 + 7]
+    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC0 r0 + 2 * r1, r0 + r3, 1
+
+    lea               r0, [r0 + 4 * r1]
+
+    pslldq            xm6, xm6, 1
+    pinsrb            xm6, [r2 + 37], 0
+    vinserti128       m1, m6, xm6, 1
+    pshufb            m1, m5
+    vbroadcasti128    m2, [r2 + 6]
+    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC0 r0, r0 + r1, 2
+    INTRA_PRED_ANG16_MC3 r0 + 2 * r1, 3
+
+    add               r4, 4 * mmsize
+
+    pslldq            xm6, xm6, 1
+    pinsrb            xm6, [r2 + 39], 0
+    vinserti128       m1, m6, xm6, 1
+    pshufb            m1, m5
+    vbroadcasti128    m2, [r2 + 5]
+    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC0 r0 + r3, r0 + 4 * r1, 0
+
+    lea               r0, [r0 + 4 * r1]
+
+    pslldq            xm6, xm6, 1
+    pinsrb            xm6, [r2 + 42], 0
+    vinserti128       m1, m6, xm6, 1
+    pshufb            m1, m5
+    vbroadcasti128    m2, [r2 + 4]
+    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC0 r0 + r1, r0 + 2 * r1, 1
+    INTRA_PRED_ANG16_MC3 r0 + r3, 2
+
+    lea               r0, [r0 + 4 * r1]
+
+    pslldq            xm6, xm6, 1
+    pinsrb            xm6, [r2 + 44], 0
+    vinserti128       m1, m6, xm6, 1
+    pshufb            m1, m5
+    vbroadcasti128    m2, [r2 + 3]
+    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC0 r0, r0 + r1, 3
+
+    pslldq            xm6, xm6, 1
+    pinsrb            xm6, [r2 + 47], 0
+    vinserti128       m1, m6, xm6, 1
+    pshufb            m1, m5
+    vbroadcasti128    m2, [r2 + 2]
+    pshufb            m2, m5
+    INTRA_PRED_ANG16_MC0 r0 + 2 * r1, r0 + r3, 4
     RET
