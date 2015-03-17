@@ -1042,24 +1042,24 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
      * after refLagRows (the number of rows reference frames must have completed
      * before referencees may begin encoding) */
     uint32_t rowCount = 0;
-    if (m_param->rc.rateControlMode == X265_RC_ABR)
+    if (m_param->rc.rateControlMode == X265_RC_ABR || bIsVbv)
     {
         if ((uint32_t)m_rce.encodeOrder <= 2 * (m_param->fpsNum / m_param->fpsDenom))
             rowCount = X265_MIN((m_numRows + 1) / 2, m_numRows - 1);
         else
             rowCount = X265_MIN(m_refLagRows, m_numRows - 1);
-    }
-    if (row == rowCount)
-    {
-        m_rce.rowTotalBits = 0;
-        if (bIsVbv)
-            for (uint32_t i = 0; i < rowCount; i++)
-                m_rce.rowTotalBits += curEncData.m_rowStat[i].encodedBits;
-        else
-            for (uint32_t cuAddr = 0; cuAddr < rowCount * numCols; cuAddr++)
-                m_rce.rowTotalBits += curEncData.m_cuStat[cuAddr].totalBits;
+        if (row == rowCount)
+        {
+            m_rce.rowTotalBits = 0;
+            if (bIsVbv)
+                for (uint32_t i = 0; i < rowCount; i++)
+                    m_rce.rowTotalBits += curEncData.m_rowStat[i].encodedBits;
+            else
+                for (uint32_t cuAddr = 0; cuAddr < rowCount * numCols; cuAddr++)
+                    m_rce.rowTotalBits += curEncData.m_cuStat[cuAddr].totalBits;
 
-        m_top->m_rateControl->rateControlUpdateStats(&m_rce);
+            m_top->m_rateControl->rateControlUpdateStats(&m_rce);
+        }
     }
 
     /* flush row bitstream (if WPP and no SAO) or flush frame if no WPP and no SAO */
