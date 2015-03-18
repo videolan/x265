@@ -52,9 +52,7 @@
  */
 
 #undef strtok_r
-char* strtok_r(char *      str,
-               const char *delim,
-               char **     nextp)
+char* strtok_r(char* str, const char* delim, char** nextp)
 {
     if (!str)
         str = *nextp;
@@ -87,13 +85,13 @@ x265_param *x265_param_alloc()
 }
 
 extern "C"
-void x265_param_free(x265_param *p)
+void x265_param_free(x265_param* p)
 {
     return x265_free(p);
 }
 
 extern "C"
-void x265_param_default(x265_param *param)
+void x265_param_default(x265_param* param)
 {
     memset(param, 0, sizeof(x265_param));
 
@@ -234,7 +232,7 @@ void x265_param_default(x265_param *param)
 }
 
 extern "C"
-int x265_param_default_preset(x265_param *param, const char *preset, const char *tune)
+int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
 {
     x265_param_default(param);
 
@@ -441,7 +439,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
     return 0;
 }
 
-static int x265_atobool(const char *str, bool& bError)
+static int x265_atobool(const char* str, bool& bError)
 {
     if (!strcmp(str, "1") ||
         !strcmp(str, "true") ||
@@ -455,7 +453,7 @@ static int x265_atobool(const char *str, bool& bError)
     return 0;
 }
 
-static double x265_atof(const char *str, bool& bError)
+static double x265_atof(const char* str, bool& bError)
 {
     char *end;
     double v = strtod(str, &end);
@@ -465,7 +463,7 @@ static double x265_atof(const char *str, bool& bError)
     return v;
 }
 
-static int parseName(const char *arg, const char * const * names, bool& bError)
+static int parseName(const char* arg, const char* const* names, bool& bError)
 {
     for (int i = 0; names[i]; i++)
         if (!strcmp(arg, names[i]))
@@ -482,7 +480,7 @@ static int parseName(const char *arg, const char * const * names, bool& bError)
 #define atobool(str) (bNameWasBool = true, x265_atobool(str, bError))
 
 extern "C"
-int x265_param_parse(x265_param *p, const char *name, const char *value)
+int x265_param_parse(x265_param* p, const char* name, const char* value)
 {
     bool bError = false;
     bool bNameWasBool = false;
@@ -857,7 +855,7 @@ int x265_param_parse(x265_param *p, const char *name, const char *value)
 namespace x265 {
 // internal encoder functions
 
-int x265_atoi(const char *str, bool& bError)
+int x265_atoi(const char* str, bool& bError)
 {
     char *end;
     int v = strtol(str, &end, 0);
@@ -872,7 +870,7 @@ int x265_atoi(const char *str, bool& bError)
  *   false || no  - disabled
  *   integer bitmap value
  *   comma separated list of SIMD names, eg: SSE4.1,XOP */
-int parseCpuName(const char *value, bool& bError)
+int parseCpuName(const char* value, bool& bError)
 {
     if (!value)
     {
@@ -931,7 +929,7 @@ static const int fixedRatios[][2] =
     { 2, 1 },
 };
 
-void setParamAspectRatio(x265_param *p, int width, int height)
+void setParamAspectRatio(x265_param* p, int width, int height)
 {
     p->vui.aspectRatioIdc = X265_EXTENDED_SAR;
     p->vui.sarWidth = width;
@@ -946,7 +944,7 @@ void setParamAspectRatio(x265_param *p, int width, int height)
     }
 }
 
-void getParamAspectRatio(x265_param *p, int& width, int& height)
+void getParamAspectRatio(x265_param* p, int& width, int& height)
 {
     if (!p->vui.aspectRatioIdc)
         width = height = 0;
@@ -964,7 +962,7 @@ void getParamAspectRatio(x265_param *p, int& width, int& height)
         width = height = 0;
 }
 
-static inline int _confirm(x265_param *param, bool bflag, const char* message)
+static inline int _confirm(x265_param* param, bool bflag, const char* message)
 {
     if (!bflag)
         return 0;
@@ -973,7 +971,7 @@ static inline int _confirm(x265_param *param, bool bflag, const char* message)
     return 1;
 }
 
-int x265_check_params(x265_param *param)
+int x265_check_params(x265_param* param)
 {
 #define CHECK(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
@@ -1176,7 +1174,7 @@ void x265_param_apply_fastfirstpass(x265_param* param)
     }
 }
 
-int x265_set_globals(x265_param *param)
+int x265_set_globals(x265_param* param)
 {
     static int once /* = 0 */;
 
@@ -1230,7 +1228,7 @@ static void appendtool(x265_param* param, char* buf, size_t size, const char* to
     }
 }
 
-void x265_print_params(x265_param *param)
+void x265_print_params(x265_param* param)
 {
     if (param->logLevel < X265_LOG_INFO)
         return;
@@ -1326,7 +1324,7 @@ void x265_print_params(x265_param *param)
     fflush(stderr);
 }
 
-char *x265_param2string(x265_param *p)
+char *x265_param2string(x265_param* p)
 {
     char *buf, *s;
 
@@ -1422,7 +1420,7 @@ char *x265_param2string(x265_param *p)
     return buf;
 }
 
-bool parseLambdaFile(x265_param *param)
+bool parseLambdaFile(x265_param* param)
 {
     if (!param->rc.lambdaFileName)
         return false;
