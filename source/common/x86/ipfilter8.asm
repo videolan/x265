@@ -6591,6 +6591,320 @@ cglobal interp_4tap_vert_%1_16x4, 4, 6, 8
 FILTER_VER_CHROMA_AVX2_16x4 pp
 FILTER_VER_CHROMA_AVX2_16x4 ps
 
+%macro FILTER_VER_CHROMA_AVX2_12x16 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_12x16, 4, 7, 8
+    mov             r4d, r4m
+    shl             r4d, 6
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer_32 + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+%ifidn %1,pp
+    mova            m7, [pw_512]
+%else
+    add             r3d, r3d
+    vbroadcasti128  m7, [pw_2000]
+%endif
+    lea             r6, [r3 * 3]
+
+    movu            xm0, [r0]                       ; m0 = row 0
+    movu            xm1, [r0 + r1]                  ; m1 = row 1
+    punpckhbw       xm2, xm0, xm1
+    punpcklbw       xm0, xm1
+    vinserti128     m0, m0, xm2, 1
+    pmaddubsw       m0, [r5]
+    movu            xm2, [r0 + r1 * 2]              ; m2 = row 2
+    punpckhbw       xm3, xm1, xm2
+    punpcklbw       xm1, xm2
+    vinserti128     m1, m1, xm3, 1
+    pmaddubsw       m1, [r5]
+    movu            xm3, [r0 + r4]                  ; m3 = row 3
+    punpckhbw       xm4, xm2, xm3
+    punpcklbw       xm2, xm3
+    vinserti128     m2, m2, xm4, 1
+    pmaddubsw       m4, m2, [r5 + 1 * mmsize]
+    paddw           m0, m4
+    pmaddubsw       m2, [r5]
+    lea             r0, [r0 + r1 * 4]
+    movu            xm4, [r0]                       ; m4 = row 4
+    punpckhbw       xm5, xm3, xm4
+    punpcklbw       xm3, xm4
+    vinserti128     m3, m3, xm5, 1
+    pmaddubsw       m5, m3, [r5 + 1 * mmsize]
+    paddw           m1, m5
+    pmaddubsw       m3, [r5]
+%ifidn %1,pp
+    pmulhrsw        m0, m7                          ; m0 = word: row 0
+    pmulhrsw        m1, m7                          ; m1 = word: row 1
+    packuswb        m0, m1
+    vextracti128    xm1, m0, 1
+    movq            [r2], xm0
+    movd            [r2 + 8], xm1
+    movhps          [r2 + r3], xm0
+    pextrd          [r2 + r3 + 8], xm1, 2
+%else
+    psubw           m0, m7                          ; m0 = word: row 0
+    psubw           m1, m7                          ; m1 = word: row 1
+    movu            [r2], xm0
+    vextracti128    xm0, m0, 1
+    movq            [r2 + 16], xm0
+    movu            [r2 + r3], xm1
+    vextracti128    xm1, m1, 1
+    movq            [r2 + r3 + 16], xm1
+%endif
+
+    movu            xm5, [r0 + r1]                  ; m5 = row 5
+    punpckhbw       xm6, xm4, xm5
+    punpcklbw       xm4, xm5
+    vinserti128     m4, m4, xm6, 1
+    pmaddubsw       m6, m4, [r5 + 1 * mmsize]
+    paddw           m2, m6
+    pmaddubsw       m4, [r5]
+    movu            xm6, [r0 + r1 * 2]              ; m6 = row 6
+    punpckhbw       xm0, xm5, xm6
+    punpcklbw       xm5, xm6
+    vinserti128     m5, m5, xm0, 1
+    pmaddubsw       m0, m5, [r5 + 1 * mmsize]
+    paddw           m3, m0
+    pmaddubsw       m5, [r5]
+%ifidn %1,pp
+    pmulhrsw        m2, m7                          ; m2 = word: row 2
+    pmulhrsw        m3, m7                          ; m3 = word: row 3
+    packuswb        m2, m3
+    vextracti128    xm3, m2, 1
+    movq            [r2 + r3 * 2], xm2
+    movd            [r2 + r3 * 2 + 8], xm3
+    movhps          [r2 + r6], xm2
+    pextrd          [r2 + r6 + 8], xm3, 2
+%else
+    psubw           m2, m7                          ; m2 = word: row 2
+    psubw           m3, m7                          ; m3 = word: row 3
+    movu            [r2 + r3 * 2], xm2
+    vextracti128    xm2, m2, 1
+    movq            [r2 + r3 * 2 + 16], xm2
+    movu            [r2 + r6], xm3
+    vextracti128    xm3, m3, 1
+    movq            [r2 + r6 + 16], xm3
+%endif
+    lea             r2, [r2 + r3 * 4]
+
+    movu            xm0, [r0 + r4]                  ; m0 = row 7
+    punpckhbw       xm3, xm6, xm0
+    punpcklbw       xm6, xm0
+    vinserti128     m6, m6, xm3, 1
+    pmaddubsw       m3, m6, [r5 + 1 * mmsize]
+    paddw           m4, m3
+    pmaddubsw       m6, [r5]
+    lea             r0, [r0 + r1 * 4]
+    movu            xm3, [r0]                       ; m3 = row 8
+    punpckhbw       xm1, xm0, xm3
+    punpcklbw       xm0, xm3
+    vinserti128     m0, m0, xm1, 1
+    pmaddubsw       m1, m0, [r5 + 1 * mmsize]
+    paddw           m5, m1
+    pmaddubsw       m0, [r5]
+%ifidn %1,pp
+    pmulhrsw        m4, m7                          ; m4 = word: row 4
+    pmulhrsw        m5, m7                          ; m5 = word: row 5
+    packuswb        m4, m5
+    vextracti128    xm5, m4, 1
+    movq            [r2], xm4
+    movd            [r2 + 8], xm5
+    movhps          [r2 + r3], xm4
+    pextrd          [r2 + r3 + 8], xm5, 2
+%else
+    psubw           m4, m7                          ; m4 = word: row 4
+    psubw           m5, m7                          ; m5 = word: row 5
+    movu            [r2], xm4
+    vextracti128    xm4, m4, 1
+    movq            [r2 + 16], xm4
+    movu            [r2 + r3], xm5
+    vextracti128    xm5, m5, 1
+    movq            [r2 + r3 + 16], xm5
+%endif
+
+    movu            xm1, [r0 + r1]                  ; m1 = row 9
+    punpckhbw       xm2, xm3, xm1
+    punpcklbw       xm3, xm1
+    vinserti128     m3, m3, xm2, 1
+    pmaddubsw       m2, m3, [r5 + 1 * mmsize]
+    paddw           m6, m2
+    pmaddubsw       m3, [r5]
+    movu            xm2, [r0 + r1 * 2]              ; m2 = row 10
+    punpckhbw       xm4, xm1, xm2
+    punpcklbw       xm1, xm2
+    vinserti128     m1, m1, xm4, 1
+    pmaddubsw       m4, m1, [r5 + 1 * mmsize]
+    paddw           m0, m4
+    pmaddubsw       m1, [r5]
+
+%ifidn %1,pp
+    pmulhrsw        m6, m7                          ; m6 = word: row 6
+    pmulhrsw        m0, m7                          ; m0 = word: row 7
+    packuswb        m6, m0
+    vextracti128    xm0, m6, 1
+    movq            [r2 + r3 * 2], xm6
+    movd            [r2 + r3 * 2 + 8], xm0
+    movhps          [r2 + r6], xm6
+    pextrd          [r2 + r6 + 8], xm0, 2
+%else
+    psubw           m6, m7                          ; m6 = word: row 6
+    psubw           m0, m7                          ; m0 = word: row 7
+    movu            [r2 + r3 * 2], xm6
+    vextracti128    xm6, m6, 1
+    movq            [r2 + r3 * 2 + 16], xm6
+    movu            [r2 + r6], xm0
+    vextracti128    xm0, m0, 1
+    movq            [r2 + r6 + 16], xm0
+%endif
+    lea             r2, [r2 + r3 * 4]
+
+    movu            xm4, [r0 + r4]                  ; m4 = row 11
+    punpckhbw       xm6, xm2, xm4
+    punpcklbw       xm2, xm4
+    vinserti128     m2, m2, xm6, 1
+    pmaddubsw       m6, m2, [r5 + 1 * mmsize]
+    paddw           m3, m6
+    pmaddubsw       m2, [r5]
+    lea             r0, [r0 + r1 * 4]
+    movu            xm6, [r0]                       ; m6 = row 12
+    punpckhbw       xm0, xm4, xm6
+    punpcklbw       xm4, xm6
+    vinserti128     m4, m4, xm0, 1
+    pmaddubsw       m0, m4, [r5 + 1 * mmsize]
+    paddw           m1, m0
+    pmaddubsw       m4, [r5]
+%ifidn %1,pp
+    pmulhrsw        m3, m7                          ; m3 = word: row 8
+    pmulhrsw        m1, m7                          ; m1 = word: row 9
+    packuswb        m3, m1
+    vextracti128    xm1, m3, 1
+    movq            [r2], xm3
+    movd            [r2 + 8], xm1
+    movhps          [r2 + r3], xm3
+    pextrd          [r2 + r3 + 8], xm1, 2
+%else
+    psubw           m3, m7                          ; m3 = word: row 8
+    psubw           m1, m7                          ; m1 = word: row 9
+    movu            [r2], xm3
+    vextracti128    xm3, m3, 1
+    movq            [r2 + 16], xm3
+    movu            [r2 + r3], xm1
+    vextracti128    xm1, m1, 1
+    movq            [r2 + r3 + 16], xm1
+%endif
+
+    movu            xm0, [r0 + r1]                  ; m0 = row 13
+    punpckhbw       xm1, xm6, xm0
+    punpcklbw       xm6, xm0
+    vinserti128     m6, m6, xm1, 1
+    pmaddubsw       m1, m6, [r5 + 1 * mmsize]
+    paddw           m2, m1
+    pmaddubsw       m6, [r5]
+    movu            xm1, [r0 + r1 * 2]              ; m1 = row 14
+    punpckhbw       xm5, xm0, xm1
+    punpcklbw       xm0, xm1
+    vinserti128     m0, m0, xm5, 1
+    pmaddubsw       m5, m0, [r5 + 1 * mmsize]
+    paddw           m4, m5
+    pmaddubsw       m0, [r5]
+%ifidn %1,pp
+    pmulhrsw        m2, m7                          ; m2 = word: row 10
+    pmulhrsw        m4, m7                          ; m4 = word: row 11
+    packuswb        m2, m4
+    vextracti128    xm4, m2, 1
+    movq            [r2 + r3 * 2], xm2
+    movd            [r2 + r3 * 2 + 8], xm4
+    movhps          [r2 + r6], xm2
+    pextrd          [r2 + r6 + 8], xm4, 2
+%else
+    psubw           m2, m7                          ; m2 = word: row 10
+    psubw           m4, m7                          ; m4 = word: row 11
+    movu            [r2 + r3 * 2], xm2
+    vextracti128    xm2, m2, 1
+    movq            [r2 + r3 * 2 + 16], xm2
+    movu            [r2 + r6], xm4
+    vextracti128    xm4, m4, 1
+    movq            [r2 + r6 + 16], xm4
+%endif
+    lea             r2, [r2 + r3 * 4]
+
+    movu            xm5, [r0 + r4]                  ; m5 = row 15
+    punpckhbw       xm2, xm1, xm5
+    punpcklbw       xm1, xm5
+    vinserti128     m1, m1, xm2, 1
+    pmaddubsw       m2, m1, [r5 + 1 * mmsize]
+    paddw           m6, m2
+    pmaddubsw       m1, [r5]
+    lea             r0, [r0 + r1 * 4]
+    movu            xm2, [r0]                       ; m2 = row 16
+    punpckhbw       xm3, xm5, xm2
+    punpcklbw       xm5, xm2
+    vinserti128     m5, m5, xm3, 1
+    pmaddubsw       m3, m5, [r5 + 1 * mmsize]
+    paddw           m0, m3
+    pmaddubsw       m5, [r5]
+    movu            xm3, [r0 + r1]                  ; m3 = row 17
+    punpckhbw       xm4, xm2, xm3
+    punpcklbw       xm2, xm3
+    vinserti128     m2, m2, xm4, 1
+    pmaddubsw       m2, [r5 + 1 * mmsize]
+    paddw           m1, m2
+    movu            xm4, [r0 + r1 * 2]              ; m4 = row 18
+    punpckhbw       xm2, xm3, xm4
+    punpcklbw       xm3, xm4
+    vinserti128     m3, m3, xm2, 1
+    pmaddubsw       m3, [r5 + 1 * mmsize]
+    paddw           m5, m3
+
+%ifidn %1,pp
+    pmulhrsw        m6, m7                          ; m6 = word: row 12
+    pmulhrsw        m0, m7                          ; m0 = word: row 13
+    pmulhrsw        m1, m7                          ; m1 = word: row 14
+    pmulhrsw        m5, m7                          ; m5 = word: row 15
+    packuswb        m6, m0
+    packuswb        m1, m5
+    vextracti128    xm0, m6, 1
+    vextracti128    xm5, m1, 1
+    movq            [r2], xm6
+    movd            [r2 + 8], xm0
+    movhps          [r2 + r3], xm6
+    pextrd          [r2 + r3 + 8], xm0, 2
+    movq            [r2 + r3 * 2], xm1
+    movd            [r2 + r3 * 2 + 8], xm5
+    movhps          [r2 + r6], xm1
+    pextrd          [r2 + r6 + 8], xm5, 2
+%else
+    psubw           m6, m7                          ; m6 = word: row 12
+    psubw           m0, m7                          ; m0 = word: row 13
+    psubw           m1, m7                          ; m1 = word: row 14
+    psubw           m5, m7                          ; m5 = word: row 15
+    movu            [r2], xm6
+    vextracti128    xm6, m6, 1
+    movq            [r2 + 16], xm6
+    movu            [r2 + r3], xm0
+    vextracti128    xm0, m0, 1
+    movq            [r2 + r3 + 16], xm0
+    movu            [r2 + r3 * 2], xm1
+    vextracti128    xm1, m1, 1
+    movq            [r2 + r3 * 2 + 16], xm1
+    movu            [r2 + r6], xm5
+    vextracti128    xm5, m5, 1
+    movq            [r2 + r6 + 16], xm5
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_AVX2_12x16 pp
+FILTER_VER_CHROMA_AVX2_12x16 ps
+
 ;-----------------------------------------------------------------------------
 ;void interp_4tap_vert_pp_24x32(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
