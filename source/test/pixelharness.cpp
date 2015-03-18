@@ -2080,7 +2080,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
     if (opt.findPosLast)
     {
-        HEADER("findPosLast");
+        HEADER0("findPosLast");
         coeff_t coefBuf[32 * 32];
         memset(coefBuf, 0, sizeof(coefBuf));
         memset(coefBuf + 32 * 31, 1, 32 * sizeof(coeff_t));
