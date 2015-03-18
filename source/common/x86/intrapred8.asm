@@ -11381,3 +11381,58 @@ cglobal intra_pred_ang32_2, 3, 5,3
     INTRA_PRED_ANG32_ALIGNR_STORE  7
     INTRA_PRED_ANG32_ALIGNR_STORE 11
     RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang32_26, 3, 4, 1
+    lea    r3, [3 * r1]
+
+    movu    m0,           [r2 + 1]
+
+    movu   [r0],          m0
+    movu   [r0 + r1],     m0
+    movu   [r0 + r1 * 2], m0
+    movu   [r0 + r3],     m0
+
+    lea    r0, [r0 + 4 * r1]
+    movu   [r0],          m0
+    movu   [r0 + r1],     m0
+    movu   [r0 + r1 * 2], m0
+    movu   [r0 + r3],     m0
+
+    lea    r0, [r0 + 4 * r1]
+    movu   [r0],          m0
+    movu   [r0 + r1],     m0
+    movu   [r0 + r1 * 2], m0
+    movu   [r0 + r3],     m0
+
+    lea    r0, [r0 + 4 * r1]
+    movu   [r0],          m0
+    movu   [r0 + r1],     m0
+    movu   [r0 + r1 * 2], m0
+    movu   [r0 + r3],     m0
+
+    lea    r0, [r0 + 4 * r1]
+    movu   [r0],          m0
+    movu   [r0 + r1],     m0
+    movu   [r0 + r1 * 2], m0
+    movu   [r0 + r3],     m0
+
+    lea    r0, [r0 + 4 * r1]
+    movu   [r0],          m0
+    movu   [r0 + r1],     m0
+    movu   [r0 + r1 * 2], m0
+    movu   [r0 + r3],     m0
+
+    lea    r0, [r0 + 4 * r1]
+    movu   [r0],          m0
+    movu   [r0 + r1],     m0
+    movu   [r0 + r1 * 2], m0
+    movu   [r0 + r3],     m0
+
+    lea    r0, [r0 + 4 * r1]
+    movu   [r0],          m0
+    movu   [r0 + r1],     m0
+    movu   [r0 + r1 * 2], m0
+    movu   [r0 + r3],     m0
+    RET
+
