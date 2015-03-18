@@ -14729,6 +14729,79 @@ FILTER_VER_CHROMA_S_AVX2_Nx8 sp, 16
 FILTER_VER_CHROMA_S_AVX2_Nx8 ss, 32
 FILTER_VER_CHROMA_S_AVX2_Nx8 ss, 16
 
+%macro FILTER_VER_CHROMA_S_AVX2_8x2 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_8x2, 4, 6, 6
+    mov             r4d, r4m
+    shl             r4d, 6
+    add             r1d, r1d
+
+%ifdef PIC
+    lea             r5, [pw_ChromaCoeffV]
+    add             r5, r4
+%else
+    lea             r5, [pw_ChromaCoeffV + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+%ifidn %1,sp
+    mova            m5, [pd_526336]
+%else
+    add             r3d, r3d
+%endif
+
+    movu            xm0, [r0]                       ; m0 = row 0
+    movu            xm1, [r0 + r1]                  ; m1 = row 1
+    punpckhwd       xm2, xm0, xm1
+    punpcklwd       xm0, xm1
+    vinserti128     m0, m0, xm2, 1
+    pmaddwd         m0, [r5]
+    movu            xm2, [r0 + r1 * 2]              ; m2 = row 2
+    punpckhwd       xm3, xm1, xm2
+    punpcklwd       xm1, xm2
+    vinserti128     m1, m1, xm3, 1
+    pmaddwd         m1, [r5]
+    movu            xm3, [r0 + r4]                  ; m3 = row 3
+    punpckhwd       xm4, xm2, xm3
+    punpcklwd       xm2, xm3
+    vinserti128     m2, m2, xm4, 1
+    pmaddwd         m2, [r5 + 1 * mmsize]
+    paddd           m0, m2
+    movu            xm4, [r0 + r1 * 4]              ; m4 = row 4
+    punpckhwd       xm2, xm3, xm4
+    punpcklwd       xm3, xm4
+    vinserti128     m3, m3, xm2, 1
+    pmaddwd         m3, [r5 + 1 * mmsize]
+    paddd           m1, m3
+%ifidn %1,sp
+    paddd           m0, m5
+    paddd           m1, m5
+    psrad           m0, 12
+    psrad           m1, 12
+%else
+    psrad           m0, 6
+    psrad           m1, 6
+%endif
+    packssdw        m0, m1
+%ifidn %1,sp
+    vextracti128    xm1, m0, 1
+    packuswb        xm0, xm1
+    pshufd          xm0, xm0, 11011000b
+    movq            [r2], xm0
+    movhps          [r2 + r3], xm0
+%else
+    vpermq          m0, m0, 11011000b
+    vextracti128    xm1, m0, 1
+    movu            [r2], xm0
+    movu            [r2 + r3], xm1
+%endif
+    RET
+%endmacro
+
+FILTER_VER_CHROMA_S_AVX2_8x2 sp
+FILTER_VER_CHROMA_S_AVX2_8x2 ss
+
 ;---------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vertical_ss_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;---------------------------------------------------------------------------------------------------------------------
