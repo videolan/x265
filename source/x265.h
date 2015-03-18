@@ -622,7 +622,8 @@ typedef struct x265_param
      * complexity, greatly improving compression efficiency at large
      * resolutions.  The smaller the size, the more effective wavefront and
      * frame parallelism will become because of the increase in rows. default 64
-     * All encoders within the same process must use the same maxCUSize. */
+     * All encoders within the same process must use the same maxCUSize, until
+     * all encoders are closed and x265_cleanup() is called to reset the value. */
     uint32_t  maxCUSize;
 
     /* Miniumum CU width and height in pixels.  The size must be 64, 32, 16, or
@@ -1225,7 +1226,7 @@ void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
 void x265_encoder_close(x265_encoder *);
 
 /***
- * Release library static allocations
+ * Release library static allocations, reset configured CTU size
  */
 void x265_cleanup(void);
 

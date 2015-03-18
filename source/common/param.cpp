@@ -1176,12 +1176,10 @@ void x265_param_apply_fastfirstpass(x265_param* param)
 
 int x265_set_globals(x265_param* param)
 {
-    static int once /* = 0 */;
-
     uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
     uint32_t minLog2CUSize = (uint32_t)g_log2Size[param->minCUSize];
 
-    if (ATOMIC_INC(&once) > 1)
+    if (g_ctuSizeConfigured || ATOMIC_INC(&g_ctuSizeConfigured) > 1)
     {
         if (g_maxCUSize != param->maxCUSize)
         {

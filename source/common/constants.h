@@ -29,6 +29,8 @@
 namespace x265 {
 // private namespace
 
+extern int g_ctuSizeConfigured;
+
 void initZscanToRaster(uint32_t maxFullDepth, uint32_t depth, uint32_t startVal, uint32_t*& curIdx);
 void initRasterToZscan(uint32_t maxFullDepth);
 

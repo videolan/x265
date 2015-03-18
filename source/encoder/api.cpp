@@ -184,6 +184,8 @@ extern "C"
 void x265_cleanup(void)
 {
     BitCost::destroy();
+    CUData::s_partSet[0] = NULL; /* allow CUData to adjust to new CTU size */
+    g_ctuSizeConfigured = 0;
 }
 
 extern "C"
