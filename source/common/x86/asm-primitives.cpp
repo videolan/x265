@@ -1071,7 +1071,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
     }
     if (cpuMask & X265_CPU_XOP)
     {
-        p.pu[LUMA_4x4].satd = p.cu[BLOCK_4x4].sa8d = x265_pixel_satd_4x4_xop;
+        //p.pu[LUMA_4x4].satd = p.cu[BLOCK_4x4].sa8d = x265_pixel_satd_4x4_xop; this one is broken
         ALL_LUMA_PU(satd, pixel_satd, xop);
         ASSIGN_SA8D(xop);
         LUMA_VAR(xop);
