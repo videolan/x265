@@ -176,7 +176,7 @@ void x265_param_default(x265_param *param)
     param->crQpOffset = 0;
     param->rdPenalty = 0;
     param->psyRd = 0.3;
-    param->psyRdoq = 1.0;
+    param->psyRdoq = 0.0;
     param->analysisMode = 0;
     param->analysisFileName = NULL;
     param->bIntraInBFrames = 0;
@@ -323,6 +323,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->lookaheadDepth = 25;
             param->rdLevel = 4;
             param->rdoqLevel = 2;
+            param->psyRdoq = 1.0;
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
@@ -338,6 +339,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->tuQTMaxIntraDepth = 2;
             param->rdLevel = 6;
             param->rdoqLevel = 2;
+            param->psyRdoq = 1.0;
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
@@ -354,6 +356,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->tuQTMaxIntraDepth = 3;
             param->rdLevel = 6;
             param->rdoqLevel = 2;
+            param->psyRdoq = 1.0;
             param->subpelRefine = 4;
             param->maxNumMergeCand = 4;
             param->searchMethod = X265_STAR_SEARCH;
@@ -372,6 +375,7 @@ int x265_param_default_preset(x265_param *param, const char *preset, const char 
             param->tuQTMaxIntraDepth = 4;
             param->rdLevel = 6;
             param->rdoqLevel = 2;
+            param->psyRdoq = 1.0;
             param->subpelRefine = 5;
             param->maxNumMergeCand = 5;
             param->searchMethod = X265_STAR_SEARCH;
