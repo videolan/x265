@@ -11315,7 +11315,7 @@ cglobal intra_pred_ang16_22, 3, 5, 7
 %endmacro
 
 INIT_YMM avx2
-cglobal intra_pred_ang32_34, 3, 5,3
+cglobal intra_pred_ang32_34, 3, 4,3
     lea     r3, [3 * r1]
 
     movu    m0, [r2 + 2]
@@ -11349,7 +11349,7 @@ cglobal intra_pred_ang32_34, 3, 5,3
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang32_2, 3, 5,3
+cglobal intra_pred_ang32_2, 3, 4,3
     lea     r3, [3 * r1]
 
     movu    m0, [r2 + 64 + 2]
