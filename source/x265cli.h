@@ -99,6 +99,8 @@ static const struct option long_options[] =
     { "no-cu-lossless",       no_argument, NULL, 0 },
     { "no-constrained-intra", no_argument, NULL, 0 },
     { "constrained-intra",    no_argument, NULL, 0 },
+    { "cip",                  no_argument, NULL, 0 },
+    { "no-cip",               no_argument, NULL, 0 },
     { "fast-intra",           no_argument, NULL, 0 },
     { "no-fast-intra",        no_argument, NULL, 0 },
     { "no-open-gop",          no_argument, NULL, 0 },

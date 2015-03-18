@@ -595,7 +595,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("strong-intra-smoothing") p->bEnableStrongIntraSmoothing = atobool(value);
     OPT("lossless") p->bLossless = atobool(value);
     OPT("cu-lossless") p->bCULossless = atobool(value);
-    OPT("constrained-intra") p->bEnableConstrainedIntra = atobool(value);
+    OPT2("constrained-intra", "cip") p->bEnableConstrainedIntra = atobool(value);
     OPT("fast-intra") p->bEnableFastIntra = atobool(value);
     OPT("open-gop") p->bOpenGOP = atobool(value);
     OPT("scenecut")
