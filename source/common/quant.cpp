@@ -422,7 +422,7 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
     {
         int deltaU[32 * 32];
 
-        int scalingListType = ttype + (isLuma ? 3 : 0);
+        int scalingListType = (cu.isIntra(absPartIdx) ? 0 : 3) + ttype;
         int rem = m_qpParam[ttype].rem;
         int per = m_qpParam[ttype].per;
         const int32_t* quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
