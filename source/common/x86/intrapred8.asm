@@ -11393,3 +11393,95 @@ cglobal intra_pred_ang32_34, 3, 5,3
     palignr m2, m1, m0, 14
     movu    [r0 + r3], m2
     RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang32_2, 3, 5,3
+    lea     r3, [3 * r1]
+
+    movu    m0, [r2 + 64 + 2]
+    movu    m1, [r2 + 64 + 18]
+
+    movu    [r0], m0
+
+    palignr m2, m1, m0, 1
+    movu    [r0 + r1], m2
+    palignr m2, m1, m0, 2
+    movu    [r0 + 2 * r1], m2
+    palignr m2, m1, m0, 3
+    movu    [r0 + r3], m2
+
+    lea     r0, [r0 + 4 * r1]
+    palignr m2, m1, m0, 4
+    movu    [r0], m2
+    palignr m2, m1, m0, 5
+    movu    [r0 + r1], m2
+    palignr m2, m1, m0, 6
+    movu    [r0 + 2 * r1], m2
+    palignr m2, m1, m0, 7
+    movu    [r0 + r3], m2
+
+    lea     r0, [r0 + 4 * r1]
+    palignr m2, m1, m0, 8
+    movu    [r0], m2
+    palignr m2, m1, m0, 9
+    movu    [r0 + r1], m2
+    palignr m2, m1, m0, 10
+    movu    [r0 + 2 * r1], m2
+    palignr m2, m1, m0, 11
+    movu    [r0 + r3], m2
+
+    lea     r0, [r0 + 4 * r1]
+    palignr m2, m1, m0, 12
+    movu    [r0], m2
+    palignr m2, m1, m0, 13
+    movu    [r0 + r1], m2
+    palignr m2, m1, m0, 14
+    movu    [r0 + 2 * r1], m2
+    palignr m2, m1, m0, 15
+    movu    [r0 + r3], m2
+
+    lea     r0, [r0 + 4 * r1]
+
+    palignr m2, m1, m0, 16
+    movu    [r0], m2
+
+    movu    m0, [r2 + 64 + 19]
+    movu    [r0 + r1], m0
+
+    movu    m1, [r2 + 64 + 35]
+
+    palignr m2, m1, m0, 1
+    movu    [r0 + 2 * r1], m2
+    palignr m2, m1, m0, 2
+    movu    [r0 + r3], m2
+
+    lea     r0, [r0 + 4 * r1]
+    palignr m2, m1, m0, 3
+    movu    [r0], m2
+    palignr m2, m1, m0, 4
+    movu    [r0 + r1], m2
+    palignr m2, m1, m0, 5
+    movu    [r0 + 2 * r1], m2
+    palignr m2, m1, m0, 6
+    movu    [r0 + r3], m2
+
+    lea     r0, [r0 + 4 * r1]
+    palignr m2, m1, m0, 7
+    movu    [r0], m2
+    palignr m2, m1, m0, 8
+    movu    [r0 + r1], m2
+    palignr m2, m1, m0, 9
+    movu    [r0 + 2 * r1], m2
+    palignr m2, m1, m0, 10
+    movu    [r0 + r3], m2
+
+    lea     r0, [r0 + 4 * r1]
+    palignr m2, m1, m0, 11
+    movu    [r0], m2
+    palignr m2, m1, m0, 12
+    movu    [r0 + r1], m2
+    palignr m2, m1, m0, 13
+    movu    [r0 + 2 * r1], m2
+    palignr m2, m1, m0, 14
+    movu    [r0 + r3], m2
+    RET
