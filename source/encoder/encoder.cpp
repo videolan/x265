@@ -1745,6 +1745,10 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
     }
 
+    /* some options make no sense if others are disabled */
+    p->bSaoNonDeblocked &= p->bEnableSAO;
+    p->bEnableTSkipFast &= p->bEnableTransformSkip;
+
     /* initialize the conformance window */
     m_conformanceWindow.bEnabled = false;
     m_conformanceWindow.rightOffset = 0;
