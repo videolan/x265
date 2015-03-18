@@ -1214,6 +1214,22 @@ int x265_set_globals(x265_param *param)
     return 0;
 }
 
+static void appendtool(x265_param* param, char* buf, size_t size, const char* toolstr)
+{
+    static const int overhead = strlen("x265 [info]: tools: ");
+
+    if (strlen(buf) + strlen(toolstr) + overhead >= size)
+    {
+        x265_log(param, X265_LOG_INFO, "tools:%s\n", buf);
+        sprintf(buf, " %s", toolstr);
+    }
+    else
+    {
+        strcat(buf, " ");
+        strcat(buf, toolstr);
+    }
+}
+
 void x265_print_params(x265_param *param)
 {
     if (param->logLevel < X265_LOG_INFO)
@@ -1270,40 +1286,43 @@ void x265_print_params(x265_param *param)
         x265_log(param, X265_LOG_INFO, "VBV/HRD buffer / max-rate / init    : %d / %d / %.3f\n",
                  param->rc.vbvBufferSize, param->rc.vbvMaxBitrate, param->rc.vbvBufferInit);
 
-    x265_log(param, X265_LOG_INFO, "tools: ");
-#define TOOLOPT(FLAG, STR) if (FLAG) fprintf(stderr, "%s ", STR)
+    char buf[80] = { 0 };
+    char tmp[40];
+#define TOOLOPT(FLAG, STR) if (FLAG) appendtool(param, buf, sizeof(buf), STR);
+#define TOOLVAL(VAL, STR)  if (VAL) { sprintf(tmp, STR, VAL); appendtool(param, buf, sizeof(buf), tmp); }
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
-    fprintf(stderr, "rd=%d rdoq=%d ", param->rdLevel, param->rdoqLevel);
-    if (param->psyRd > 0.)
-        fprintf(stderr, "psy-rd=%.2lf ", param->psyRd);
-    if (param->psyRdoq > 0.)
-        fprintf(stderr, "psy-rdoq=%.2lf ", param->psyRdoq);
+    TOOLVAL(param->rdLevel, "rd=%d");
+    TOOLVAL(param->psyRd, "psy-rd=%.2lf");
+    TOOLVAL(param->rdoqLevel, "rdoq=%d");
+    TOOLVAL(param->psyRdoq, "psy-rdoq=%.2lf");
     TOOLOPT(param->bEnableEarlySkip, "early-skip");
-    if (param->noiseReductionIntra)
-        fprintf(stderr, "nr-intra=%d ", param->noiseReductionIntra);
-    if (param->noiseReductionInter)
-        fprintf(stderr, "nr-inter=%d ", param->noiseReductionInter);
-    if (param->bEnableLoopFilter)
-    {
-        if (param->deblockingFilterBetaOffset || param->deblockingFilterTCOffset)
-            fprintf(stderr, "deblock(tC=%d:B=%d) ", param->deblockingFilterTCOffset, param->deblockingFilterBetaOffset);
-        else
-            TOOLOPT(param->bEnableLoopFilter, "deblock");
-    }
-    if (param->bEnableSAO)
-        fprintf(stderr, "sao%s ", param->bSaoNonDeblocked ? "-non-deblock" : "");
+    TOOLVAL(param->noiseReductionIntra, "nr-intra=%d");
+    TOOLVAL(param->noiseReductionInter, "nr-inter=%d");
+    TOOLOPT(param->bEnableTSkipFast, "tskip-fast");
+    TOOLOPT(!param->bEnableTSkipFast && param->bEnableTransformSkip, "tskip");
+    TOOLOPT(param->bCULossless, "cu-lossless");
     TOOLOPT(param->bEnableSignHiding, "signhide");
+    TOOLOPT(param->bEnableTemporalMvp, "tmvp");
     TOOLOPT(param->bEnableConstrainedIntra, "cip");
     TOOLOPT(param->bIntraInBFrames, "b-intra");
     TOOLOPT(param->bEnableFastIntra, "fast-intra");
-    TOOLOPT(param->bEnableTemporalMvp, "tmvp");
-    if (param->bEnableTransformSkip)
-        fprintf(stderr, "tskip%s ", param->bEnableTSkipFast ? "-fast" : "");
-    TOOLOPT(param->bCULossless, "cu-lossless");
+    TOOLOPT(param->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
+    if (param->bEnableLoopFilter)
+    {
+        if (param->deblockingFilterBetaOffset || param->deblockingFilterTCOffset)
+        {
+            sprintf(tmp, "deblock(tC=%d:B=%d)", param->deblockingFilterTCOffset, param->deblockingFilterBetaOffset);
+            appendtool(param, buf, sizeof(buf), tmp);
+        }
+        else
+            TOOLOPT(param->bEnableLoopFilter, "deblock");
+    }
+    TOOLOPT(param->bSaoNonDeblocked, "sao-non-deblock");
+    TOOLOPT(!param->bSaoNonDeblocked && param->bEnableSAO, "sao");
     TOOLOPT(param->rc.bStatWrite, "stats-write");
     TOOLOPT(param->rc.bStatRead,  "stats-read");
-    fprintf(stderr, "\n");
+    x265_log(param, X265_LOG_INFO, "tools:%s\n", buf);
     fflush(stderr);
 }
 
