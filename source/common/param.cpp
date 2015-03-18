@@ -1212,7 +1212,7 @@ int x265_set_globals(x265_param* param)
 
 static void appendtool(x265_param* param, char* buf, size_t size, const char* toolstr)
 {
-    static const int overhead = strlen("x265 [info]: tools: ");
+    static const int overhead = (int)strlen("x265 [info]: tools: ");
 
     if (strlen(buf) + strlen(toolstr) + overhead >= size)
     {
