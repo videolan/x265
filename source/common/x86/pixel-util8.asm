@@ -4510,10 +4510,11 @@ PIXELSUB_PS_W32_H2 32, 64
 ; void pixel_sub_ps_32x32(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
 INIT_YMM avx2
-cglobal pixel_sub_ps_32x32, 6, 6, 4, dest, deststride, src0, src1, srcstride0, srcstride1
-     add         r1,    r1
+cglobal pixel_sub_ps_32x32, 6, 7, 4, dest, deststride, src0, src1, srcstride0, srcstride1
+     mov        r6d,    4
+     add        r1,     r1
 
-%rep 4
+.loop:
     pmovzxbw    m0,     [r2]
     pmovzxbw    m1,     [r2 + 16]
     pmovzxbw    m2,     [r3]
@@ -4630,8 +4631,11 @@ cglobal pixel_sub_ps_32x32, 6, 6, 4, dest, deststride, src0, src1, srcstride0, s
     lea         r0,     [r0 + r1]
     lea         r2,     [r2 + r4 * 2]
     lea         r3,     [r3 + r5 * 2]
-%endrep
+
+    dec         r6d
+    jnz         .loop
     RET
+
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_64x%2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
@@ -4855,10 +4859,11 @@ PIXELSUB_PS_W64_H2 64, 64
 ; void pixel_sub_ps_64x64(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
 INIT_YMM avx2
-cglobal pixel_sub_ps_64x64, 6, 6, 8, dest, deststride, src0, src1, srcstride0, srcstride1
+cglobal pixel_sub_ps_64x64, 6, 7, 8, dest, deststride, src0, src1, srcstride0, srcstride1
+     mov        r6d,    16
      add        r1,     r1
 
-%rep 16
+.loop:
     pmovzxbw    m0,     [r2]
     pmovzxbw    m1,     [r2 + 16]
     pmovzxbw    m2,     [r2 + 32]
@@ -4954,8 +4959,11 @@ cglobal pixel_sub_ps_64x64, 6, 6, 8, dest, deststride, src0, src1, srcstride0, s
     add         r0,     r1
     add         r2,     r4
     add         r3,     r5
-%endrep
+
+    dec         r6d
+    jnz         .loop
     RET
+
 ;=============================================================================
 ; variance
 ;=============================================================================
