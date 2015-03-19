@@ -4152,6 +4152,58 @@ cglobal pixel_sad_32x64, 4,7,5
     RET
 
 INIT_YMM avx2
+cglobal pixel_sad_48x64, 4,7,7
+    xorps           m0, m0
+    mov             r4d, 64/4
+    lea             r5, [r1 * 3]
+    lea             r6, [r3 * 3]
+.loop
+    movu           m1, [r0]               ; row 0 of pix0
+    movu           m2, [r2]               ; row 0 of pix1
+    movu           m3, [r0 + r1]          ; row 1 of pix0
+    movu           m4, [r2 + r3]          ; row 1 of pix1
+    movu           xm5, [r0 +32]          ; last 16 of row 0 of pix0
+    vinserti128    m5, m5, [r0 + r1 + 32], 1
+    movu           xm6, [r2 +32]          ; last 16 of row 0 of pix1
+    vinserti128    m6, m6, [r2 + r3 + 32], 1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    psadbw         m5, m6
+    paddd          m0, m1
+    paddd          m0, m3
+    paddd          m0, m5
+
+    movu           m1, [r0 + 2 * r1]      ; row 2 of pix0
+    movu           m2, [r2 + 2 * r3]      ; row 2 of pix1
+    movu           m3, [r0 + r5]          ; row 3 of pix0
+    movu           m4, [r2 + r6]          ; row 3 of pix1
+    movu           xm5, [r0 +32 + 2 * r1]
+    vinserti128    m5, m5, [r0 + r5 + 32], 1
+    movu           xm6, [r2 +32 + 2 * r3]
+    vinserti128    m6, m6, [r2 + r6 + 32], 1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    psadbw         m5, m6
+    paddd          m0, m1
+    paddd          m0, m3
+    paddd          m0, m5
+
+    lea     r2,     [r2 + 4 * r3]
+    lea     r0,     [r0 + 4 * r1]
+
+    dec         r4d
+    jnz         .loop
+
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd            eax, xm0
+    RET
+
+INIT_YMM avx2
 cglobal pixel_sad_64x16, 4,5,6
     xorps           m0, m0
     xorps           m5, m5
