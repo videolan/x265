@@ -15269,6 +15269,65 @@ FILTER_VER_CHROMA_S_AVX2_8xN sp, 32
 FILTER_VER_CHROMA_S_AVX2_8xN ss, 16
 FILTER_VER_CHROMA_S_AVX2_8xN ss, 32
 
+%macro FILTER_VER_CHROMA_S_AVX2_32x24 1
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_4tap_vert_%1_32x24, 4, 10, 10
+    mov             r4d, r4m
+    shl             r4d, 6
+    add             r1d, r1d
+
+%ifdef PIC
+    lea             r5, [pw_ChromaCoeffV]
+    add             r5, r4
+%else
+    lea             r5, [pw_ChromaCoeffV + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+%ifidn %1,sp
+    mova            m9, [pd_526336]
+%else
+    add             r3d, r3d
+%endif
+    lea             r6, [r3 * 3]
+    mov             r9d, 4
+.loopW:
+    PROCESS_CHROMA_S_AVX2_W8_16R %1
+%ifidn %1,sp
+    add             r2, 8
+%else
+    add             r2, 16
+%endif
+    add             r0, 16
+    dec             r9d
+    jnz             .loopW
+%ifidn %1,sp
+    lea             r2, [r8 + r3 * 4 - 24]
+%else
+    lea             r2, [r8 + r3 * 4 - 48]
+%endif
+    lea             r0, [r7 - 48]
+    mova            m7, m9
+    mov             r9d, 4
+.loop:
+    PROCESS_CHROMA_S_AVX2_W8_8R %1
+%ifidn %1,sp
+    add             r2, 8
+%else
+    add             r2, 16
+%endif
+    add             r0, 16
+    dec             r9d
+    jnz             .loop
+    RET
+%endif
+%endmacro
+
+FILTER_VER_CHROMA_S_AVX2_32x24 sp
+FILTER_VER_CHROMA_S_AVX2_32x24 ss
+
 ;---------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vertical_ss_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;---------------------------------------------------------------------------------------------------------------------
