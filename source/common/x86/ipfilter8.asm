@@ -18679,3 +18679,73 @@ cglobal interp_8tap_horiz_pp_12x16, 4,6,8
     dec               r4d
     jnz              .loop
     RET
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_16xN(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+%macro IPFILTER_CHROMA_PP_16xN_AVX2 2
+INIT_YMM avx2
+cglobal interp_4tap_horiz_pp_%1x%2, 4, 6, 7
+    mov               r4d,          r4m
+
+%ifdef PIC
+    lea               r5,           [tab_ChromaCoeff]
+    vpbroadcastd      m0,           [r5 + r4 * 4]
+%else
+    vpbroadcastd      m0,           [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    mova              m6,           [pw_512]
+    mova              m1,           [interp4_horiz_shuf1]
+    vpbroadcastd      m2,           [pw_1]
+
+    ; register map
+    ; m0 - interpolate coeff
+    ; m1 - shuffle order table
+    ; m2 - constant word 1
+
+    dec               r0
+    mov               r4d,          %2/2
+
+.loop:
+    ; Row 0
+    vbroadcasti128    m3,           [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m3,           m1
+    pmaddubsw         m3,           m0
+    pmaddwd           m3,           m2
+    vbroadcasti128    m4,           [r0 + 4]                    ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m4,           m1
+    pmaddubsw         m4,           m0
+    pmaddwd           m4,           m2
+    packssdw          m3,           m4
+    pmulhrsw          m3,           m6
+
+    ; Row 1
+    vbroadcasti128    m4,           [r0 + r1]                   ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m4,           m1
+    pmaddubsw         m4,           m0
+    pmaddwd           m4,           m2
+    vbroadcasti128    m5,           [r0 + r1 + 4]               ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m5,           m1
+    pmaddubsw         m5,           m0
+    pmaddwd           m5,           m2
+    packssdw          m4,           m5
+    pmulhrsw          m4,           m6
+
+    packuswb          m3,           m4
+    vpermq            m3,           m3,      11011000b
+
+    vextracti128      xm4,          m3,       1
+    movu              [r2],         xm3
+    movu              [r2 + r3],    xm4
+    lea               r2,           [r2 + r3 * 2]
+    lea               r0,           [r0 + r1 * 2]
+    dec               r4d
+    jnz               .loop
+    RET
+%endmacro
+
+IPFILTER_CHROMA_PP_16xN_AVX2 16 , 8
+IPFILTER_CHROMA_PP_16xN_AVX2 16 , 32
+IPFILTER_CHROMA_PP_16xN_AVX2 16 , 12
+IPFILTER_CHROMA_PP_16xN_AVX2 16 , 4
