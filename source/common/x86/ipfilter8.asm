@@ -285,6 +285,8 @@ ALIGN 32
 interp4_horiz_shuf1:    db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
                         db 8, 9, 10, 11, 9, 10, 11, 12, 10, 11, 12, 13, 11, 12, 13, 14
 
+ALIGN 32
+interp4_hpp_shuf: times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 8, 9, 10, 11, 9, 10, 11, 12
 
 ALIGN 32
 interp8_hps_shuf: dd 0, 4, 1, 5, 2, 6, 3, 7
@@ -1559,6 +1561,39 @@ cglobal interp_4tap_horiz_pp_4x4, 4,6,6
     pextrd            [r2+r3],      xm3,     2
     pextrd            [r2+r3*2],    xm3,     1
     pextrd            [r2+r0],      xm3,     3
+    RET
+
+INIT_YMM avx2 
+cglobal interp_4tap_horiz_pp_2x4, 4, 6, 3
+    mov               r4d,           r4m
+
+%ifdef PIC
+    lea               r5,            [tab_ChromaCoeff]
+    vpbroadcastd      m0,            [r5 + r4 * 4]
+%else
+    vpbroadcastd      m0,            [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    dec               r0
+    lea               r4,            [r1 * 3]
+    movq              xm1,           [r0]
+    movhps            xm1,           [r0 + r1]
+    movq              xm2,           [r0 + r1 * 2]
+    movhps            xm2,           [r0 + r4]
+    vinserti128       m1,            m1,          xm2,          1
+    pshufb            m1,            [interp4_hpp_shuf]
+    pmaddubsw         m1,            m0
+    pmaddwd           m1,            [pw_1]
+    vextracti128      xm2,           m1,          1
+    packssdw          xm1,           xm2
+    pmulhrsw          xm1,           [pw_512]
+    packuswb          xm1,           xm1
+
+    lea               r4,            [r3 * 3]
+    pextrw            [r2],          xm1,         0
+    pextrw            [r2 + r3],     xm1,         1
+    pextrw            [r2 + r3 * 2], xm1,         2
+    pextrw            [r2 + r4],     xm1,         3
     RET
 
 INIT_YMM avx2
