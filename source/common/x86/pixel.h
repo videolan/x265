@@ -180,7 +180,8 @@ int x265_pixel_ssd_s_32_sse2(const int16_t*, intptr_t);
 int x265_pixel_ssd_s_32_avx2(const int16_t*, intptr_t);
 
 #define ADDAVG(func)  \
-    void x265_ ## func ## _sse4(const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t);
+    void x265_ ## func ## _sse4(const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t); \
+    void x265_ ## func ## _avx2(const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t);
 ADDAVG(addAvg_2x4)
 ADDAVG(addAvg_2x8)
 ADDAVG(addAvg_4x2);
