@@ -134,10 +134,8 @@ old_town_cross_444_720p50.y4m,--preset superfast --weightp --min-cu 16
 old_town_cross_444_720p50.y4m,--preset ultrafast --weightp --min-cu 32
 old_town_cross_444_720p50.y4m,--preset veryfast
 old_town_cross_444_720p50.y4m,--preset veryslow --crf 4 --cu-lossless
-parkrun_ter_720p50.y4m,--preset medium --no-open-gop --sao-non-deblock
+parkrun_ter_720p50.y4m,--preset medium --no-open-gop --sao-non-deblock --crf 4 --cu-lossless
 parkrun_ter_720p50.y4m,--preset slower --fast-intra
-parkrun_ter_720p50.y4m,--preset superfast --crf 4 --cu-lossless --no-open-gop
-parkrun_ter_720p50.y4m,--preset veryslow --sao-non-deblock
 silent_cif_420.y4m,--preset medium
 silent_cif_420.y4m,--preset slower
 silent_cif_420.y4m,--preset superfast --weightp
