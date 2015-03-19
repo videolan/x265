@@ -26,7 +26,7 @@ big_buck_bunny_360p24.y4m,--preset superfast --crf 6 --vbv-bufsize 1000 --vbv-ma
 
 # multi-pass rate control tests
 big_buck_bunny_360p24.y4m,--preset slow --crf 40 --pass 1,--preset slow --bitrate 200 --pass 2
-big_buck_bunny_360p24.y4m,--preset medium --bitrate 700 -pass 1 -F4 --slow-firstpass,--preset medium --bitrate 700 --vbv-bufsize 900 --vbv-maxrate 700 --pass 2 -F4
+big_buck_bunny_360p24.y4m,--preset medium --bitrate 700 --pass 1 -F4 --slow-firstpass,--preset medium --bitrate 700 --vbv-bufsize 900 --vbv-maxrate 700 --pass 2 -F4
 112_1920x1080_25.yuv,--preset slow --bitrate 1000 --pass 1 -F4,--preset slow --bitrate 1000 --pass 2 -F4
 112_1920x1080_25.yuv,--preset superfast --crf 12 --pass 1,--preset superfast --bitrate 4000 --pass 2 -F4
 RaceHorses_416x240_30_10bit.yuv,--preset veryslow --crf 40 --pass 1, --preset veryslow --bitrate 200 --pass 2 -F4
