@@ -18535,3 +18535,69 @@ cglobal interp_4tap_horiz_pp_%1x%2, 4,6,6
 
 IPFILTER_CHROMA_PP_4xN_AVX2  4 , 8
 IPFILTER_CHROMA_PP_4xN_AVX2  4 , 16
+
+INIT_YMM avx2
+cglobal interp_8tap_horiz_pp_24x32, 4,6,8
+    sub               r0,         3
+    mov               r4d,        r4m
+%ifdef PIC
+    lea               r5,         [tab_LumaCoeff]
+    vpbroadcastd      m0,         [r5 + r4 * 8]
+    vpbroadcastd      m1,         [r5 + r4 * 8 + 4]
+%else
+    vpbroadcastd      m0,         [tab_LumaCoeff + r4 * 8]
+    vpbroadcastd      m1,         [tab_LumaCoeff + r4 * 8 + 4]
+%endif
+    movu              m3,         [tab_Tm + 16]
+    vpbroadcastd      m7,         [pw_1]
+    lea               r5,         [tab_Tm]
+
+    ; register map
+    ; m0 , m1 interpolate coeff
+    ; m2 , m2  shuffle order table
+    ; m7 - pw_1
+
+    mov               r4d,        32
+.loop:
+    ; Row 0
+    vbroadcasti128    m4,         [r0]                        ; [x E D C B A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m5,         m4,     m3
+    pshufb            m4,         [r5]
+    pmaddubsw         m4,         m0
+    pmaddubsw         m5,         m1
+    paddw             m4,         m5
+    pmaddwd           m4,         m7
+
+    vbroadcasti128    m5,         [r0 + 8]
+    pshufb            m6,         m5,     m3
+    pshufb            m5,         [r5]
+    pmaddubsw         m5,         m0
+    pmaddubsw         m6,         m1
+    paddw             m5,         m6
+    pmaddwd           m5,         m7
+    packssdw          m4,         m5                          ; [17 16 15 14 07 06 05 04 13 12 11 10 03 02 01 00]
+    pmulhrsw          m4,         [pw_512]
+
+    vbroadcasti128    m2,         [r0 + 16]
+    pshufb            m5,         m2,     m3
+    pshufb            m2,         [r5]
+    pmaddubsw         m2,         m0
+    pmaddubsw         m5,         m1
+    paddw             m2,         m5
+    pmaddwd           m2,         m7
+
+    packssdw          m2,         m2
+    pmulhrsw          m2,         [pw_512]
+    packuswb          m4,         m2
+    vpermq            m4,         m4,     11011000b
+    vextracti128      xm5,        m4,     1
+    pshufd            xm4,        xm4,    11011000b
+    pshufd            xm5,        xm5,    11011000b
+
+    movu              [r2],       xm4
+    movq              [r2 + 16],  xm5
+    add               r0,         r1
+    add               r2,         r3
+    dec               r4d
+    jnz               .loop
+    RET
