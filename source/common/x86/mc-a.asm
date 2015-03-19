@@ -1762,6 +1762,84 @@ ADDAVG_W16_H4 24
 ; addAvg avx2 code start
 ;-----------------------------------------------------------------------------
 
+INIT_YMM avx2
+cglobal addAvg_8x2, 6,6,4, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+    movu            xm0, [r0]
+    vinserti128     m0, m0, [r0 + 2 * r3], 1
+
+    movu            xm2, [r1]
+    vinserti128     m2, m2, [r1 + 2 * r4], 1
+
+    paddw           m0, m2
+    pmulhrsw        m0, [pw_256]
+    paddw           m0, [pw_128]
+
+    packuswb        m0, m0
+    vextracti128    xm1, m0, 1
+    movq            [r2], xm0
+    movq            [r2 + r5], xm1
+    RET
+
+cglobal addAvg_8x6, 6,6,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
+    mova            m4, [pw_256]
+    mova            m5, [pw_128]
+    add             r3, r3
+    add             r4, r4
+
+    movu            xm0, [r0]
+    vinserti128     m0, m0, [r0 + r3], 1
+
+    movu            xm2, [r1]
+    vinserti128     m2, m2, [r1 + r4], 1
+
+    paddw           m0, m2
+    pmulhrsw        m0, m4
+    paddw           m0, m5
+
+    packuswb        m0, m0
+    vextracti128    xm1, m0, 1
+    movq            [r2], xm0
+    movq            [r2 + r5], xm1
+
+    lea             r2, [r2 + 2 * r5]
+    lea             r0, [r0 + 2 * r3]
+    lea             r1, [r1 + 2 * r4]
+
+    movu            xm0, [r0]
+    vinserti128     m0, m0, [r0+  r3], 1
+
+    movu            xm2, [r1]
+    vinserti128     m2, m2, [r1 + r4], 1
+
+    paddw           m0, m2
+    pmulhrsw        m0, m4
+    paddw           m0, m5
+
+    packuswb        m0, m0
+    vextracti128    xm1, m0, 1
+    movq            [r2], xm0
+    movq            [r2 + r5], xm1
+
+    lea             r2, [r2 + 2 * r5]
+    lea             r0, [r0 + 2 * r3]
+    lea             r1, [r1 + 2 * r4]
+
+    movu            xm0, [r0]
+    vinserti128     m0, m0, [r0 + r3], 1
+
+    movu            xm2, [r1]
+    vinserti128     m2, m2, [r1 + r4], 1
+
+    paddw           m0, m2
+    pmulhrsw        m0, m4
+    paddw           m0, m5
+
+    packuswb        m0, m0
+    vextracti128    xm1, m0, 1
+    movq            [r2], xm0
+    movq            [r2 + r5], xm1
+    RET
+
 %macro ADDAVG_W8_H4_AVX2 1
 INIT_YMM avx2
 cglobal addAvg_8x%1, 6,7,6, pSrc0, src0, src1, dst, src0Stride, src1tride, dstStride
