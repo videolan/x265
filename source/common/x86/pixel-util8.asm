@@ -5387,3 +5387,71 @@ cglobal pixel_var_16x16, 2,4,7
     RET
 %endmacro
 
+;int x265_test_func(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig)
+;{
+;    int scanPosLast = 0;
+;    do
+;    {
+;        const uint32_t cgIdx = (uint32_t)scanPosLast >> MLS_CG_SIZE;
+;
+;        const uint32_t posLast = scan[scanPosLast++];
+;
+;        const int curCoeff = coeff[posLast];
+;        const uint32_t isNZCoeff = (curCoeff != 0);
+;        numSig -= isNZCoeff;
+;
+;        coeffSign[cgIdx] += (uint16_t)(((uint32_t)curCoeff >> 31) << coeffNum[cgIdx]);
+;        coeffFlag[cgIdx] = (coeffFlag[cgIdx] << 1) + (uint16_t)isNZCoeff;
+;        coeffNum[cgIdx] += (uint8_t)isNZCoeff;
+;    }
+;    while (numSig > 0);
+;    return scanPosLast - 1;
+;}
+
+%if ARCH_X86_64 == 1
+INIT_CPUFLAGS
+cglobal findPosLast_x64, 5,12
+    mov         r5d, r5m
+    xor         r11d, r11d                  ; cgIdx
+    xor         r7d, r7d                    ; tmp for non-zero flag
+
+.loop:
+    xor         r8d, r8d                    ; coeffSign[]
+    xor         r9d, r9d                    ; coeffFlag[]
+    xor         r10d, r10d                  ; coeffNum[]
+
+%assign x 0
+%rep 16
+    movzx       r6d, word [r0 + x * 2]
+    movsx       r6d, word [r1 + r6 * 2]
+    test        r6d, r6d
+    setnz       r7b
+    shr         r6d, 31
+    shlx        r6d, r6d, r10d
+    or          r8d, r6d
+    lea         r9, [r9 * 2 + r7]
+    add         r10d, r7d
+%assign x x+1
+%endrep
+
+    ; store latest group data
+    mov         [r2 + r11 * 2], r8w
+    mov         [r3 + r11 * 2], r9w
+    mov         [r4 + r11], r10b
+    inc         r11d
+
+    add         r0, 16 * 2
+    sub         r5d, r10d
+    jnz        .loop
+
+    ; store group data
+    tzcnt       r6d, r9d
+    shrx        r9d, r9d, r6d
+    mov         [r3 + (r11 - 1) * 2], r9w
+
+    ; get posLast
+    shl         r11d, 4
+    sub         r11d, r6d
+    lea         eax, [r11d - 1]
+    RET
+%endif

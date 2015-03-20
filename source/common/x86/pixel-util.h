@@ -77,6 +77,8 @@ void x265_scale1D_128to64_ssse3(pixel*, const pixel*, intptr_t);
 void x265_scale1D_128to64_avx2(pixel*, const pixel*, intptr_t);
 void x265_scale2D_64to32_ssse3(pixel*, const pixel*, intptr_t);
 
+int x265_findPosLast_x64(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig);
+
 #define SETUP_CHROMA_PIXELSUB_PS_FUNC(W, H, cpu) \
     void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t*  dest, intptr_t destride, const pixel* src0, const pixel* src1, intptr_t srcstride0, intptr_t srcstride1); \
     void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel* dest, intptr_t destride, const pixel* src0, const int16_t*  scr1, intptr_t srcStride0, intptr_t srcStride1);
