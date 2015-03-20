@@ -354,8 +354,10 @@ void Encoder::destroy()
 
     if (m_param)
     {
-        free(m_param->rc.statFileName); // allocs by strdup
+        free(m_param->rc.lambdaFileName); // allocs by strdup
+        free(m_param->rc.statFileName);
         free(m_param->analysisFileName);
+        free(m_param->scalingLists);
         free(m_param->csvfn);
         free(m_param->numaPools);
 
