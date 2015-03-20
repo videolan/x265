@@ -1805,7 +1805,7 @@ uint32_t Analysis::topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom
         previousQP = cu.m_qp[0];
         if (!cu.m_cuDepth[cuGeom.absPartIdx])
             return 0;
-        for (uint32_t i = 0; i < cuGeom.numPartitions && minDepth0; i += 4)
+        for (uint32_t i = 0; i < cuGeom.numPartitions; i += 4)
         {
             uint32_t d = cu.m_cuDepth[cuGeom.absPartIdx + i];
             minDepth0 = X265_MIN(d, minDepth0);
