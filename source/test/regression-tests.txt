@@ -164,9 +164,9 @@ test_party_640x360_25fps.y4m,--preset superfast --ctu 16 --nr-intra 500 -F4
 test_party_640x360_25fps.y4m,--preset ultrafast --ctu 16
 test_party_640x360_25fps.y4m,--preset veryfast
 test_party_640x360_25fps.y4m,--preset veryslow
-tos_215to1215_4096x1714_444_10bit_24fps.yuv,--preset medium
-tos_215to1215_4096x1714_444_10bit_24fps.yuv,--preset slower
-tos_215to1215_4096x1714_444_10bit_24fps.yuv,--preset superfast --weightp
+tos_215to1215_4096x1714_24_10bit_444.yuv,--preset medium
+tos_215to1215_4096x1714_24_10bit_444.yuv,--preset slower
+tos_215to1215_4096x1714_24_10bit_444.yuv,--preset superfast --weightp
 vtc1nw_422_ntsc.y4m,--preset medium --scaling-list default
 vtc1nw_422_ntsc.y4m,--preset slower --nr-inter 1000 -F4 --no-wpp
 vtc1nw_422_ntsc.y4m,--preset superfast --weightp --nr-intra 100 -F4
