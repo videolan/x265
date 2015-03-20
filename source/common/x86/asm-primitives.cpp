@@ -1598,6 +1598,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         // missing 4x8, 4x16, 24x32, 12x16 for the fill set of luma PU
         p.pu[LUMA_4x4].luma_hpp = x265_interp_8tap_horiz_pp_4x4_avx2;
+        p.pu[LUMA_4x8].luma_hpp = x265_interp_8tap_horiz_pp_4x8_avx2;
+        p.pu[LUMA_4x16].luma_hpp = x265_interp_8tap_horiz_pp_4x16_avx2;
         p.pu[LUMA_8x4].luma_hpp = x265_interp_8tap_horiz_pp_8x4_avx2;
         p.pu[LUMA_8x8].luma_hpp = x265_interp_8tap_horiz_pp_8x8_avx2;
         p.pu[LUMA_8x16].luma_hpp = x265_interp_8tap_horiz_pp_8x16_avx2;

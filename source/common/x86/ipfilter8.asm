@@ -1021,6 +1021,105 @@ cglobal interp_8tap_horiz_pp_4x4, 4,6,6
     pextrd          [r2+r0], xm3, 3
     RET
 
+%macro FILTER_HORIZ_LUMA_AVX2_4xN 1
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_horiz_pp_4x%1, 4, 6, 9
+    mov             r4d, r4m
+
+%ifdef PIC
+    lea             r5, [tab_LumaCoeff]
+    vpbroadcastq    m0, [r5 + r4 * 8]
+%else
+    vpbroadcastq    m0, [tab_LumaCoeff + r4 * 8]
+%endif
+
+    mova            m1, [tab_Lm]
+    mova            m2, [pw_1]
+    mova            m7, [interp8_hps_shuf]
+    mova            m8, [pw_512]
+
+    ; register map
+    ; m0 - interpolate coeff
+    ; m1 - shuffle order table
+    ; m2 - constant word 1
+    lea             r4, [r1 * 3]
+    lea             r5, [r3 * 3]
+    sub             r0, 3
+%rep %1 / 8
+    ; Row 0-1
+    vbroadcasti128  m3, [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m3, m1
+    pmaddubsw       m3, m0
+    pmaddwd         m3, m2
+    vbroadcasti128  m4, [r0 + r1]                   ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m4, m1
+    pmaddubsw       m4, m0
+    pmaddwd         m4, m2
+    phaddd          m3, m4                          ; DWORD [R1D R1C R0D R0C R1B R1A R0B R0A]
+
+    ; Row 2-3
+    vbroadcasti128  m4, [r0 + r1 * 2]               ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m4, m1
+    pmaddubsw       m4, m0
+    pmaddwd         m4, m2
+    vbroadcasti128  m5, [r0 + r4]                   ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m5, m1
+    pmaddubsw       m5, m0
+    pmaddwd         m5, m2
+    phaddd          m4, m5                          ; DWORD [R3D R3C R2D R2C R3B R3A R2B R2A]
+
+    packssdw        m3, m4                          ; WORD [R3D R3C R2D R2C R1D R1C R0D R0C R3B R3A R2B R2A R1B R1A R0B R0A]
+    lea             r0, [r0 + r1 * 4]
+    ; Row 4-5
+    vbroadcasti128  m5, [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m5, m1
+    pmaddubsw       m5, m0
+    pmaddwd         m5, m2
+    vbroadcasti128  m4, [r0 + r1]                   ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m4, m1
+    pmaddubsw       m4, m0
+    pmaddwd         m4, m2
+    phaddd          m5, m4                          ; DWORD [R5D R5C R4D R4C R5B R5A R4B R4A]
+
+    ; Row 6-7
+    vbroadcasti128  m4, [r0 + r1 * 2]               ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m4, m1
+    pmaddubsw       m4, m0
+    pmaddwd         m4, m2
+    vbroadcasti128  m6, [r0 + r4]                   ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb          m6, m1
+    pmaddubsw       m6, m0
+    pmaddwd         m6, m2
+    phaddd          m4, m6                          ; DWORD [R7D R7C R6D R6C R7B R7A R6B R6A]
+
+    packssdw        m5, m4                          ; WORD [R7D R7C R6D R6C R5D R5C R4D R4C R7B R7A R6B R6A R5B R5A R4B R4A]
+    vpermd          m3, m7, m3
+    vpermd          m5, m7, m5
+    pmulhrsw        m3, m8
+    pmulhrsw        m5, m8
+    packuswb        m3, m5
+    vextracti128    xm5, m3, 1
+
+    movd            [r2], xm3
+    pextrd          [r2 + r3], xm3, 1
+    movd            [r2 + r3 * 2], xm5
+    pextrd          [r2 + r5], xm5, 1
+    lea             r2, [r2 + r3 * 4]
+    pextrd          [r2], xm3, 2
+    pextrd          [r2 + r3], xm3, 3
+    pextrd          [r2 + r3 * 2], xm5, 2
+    pextrd          [r2 + r5], xm5, 3
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+%endrep
+    RET
+%endif
+%endmacro
+
+FILTER_HORIZ_LUMA_AVX2_4xN 8
+FILTER_HORIZ_LUMA_AVX2_4xN 16
+
 INIT_YMM avx2
 cglobal interp_8tap_horiz_pp_8x4, 4, 6, 7
     mov             r4d, r4m
