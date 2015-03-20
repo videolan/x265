@@ -12,6 +12,9 @@ endif()
 if(POLICY CMP0042)
     cmake_policy(SET CMP0042 NEW) # MACOSX_RPATH
 endif()
+if(POLICY CMP0054)
+    cmake_policy(SET CMP0054 OLD) # Only interpret if() arguments as variables or keywords when unquoted
+endif()
 
 project (x265)
 cmake_minimum_required (VERSION 2.8.8) # OBJECT libraries require 2.8.8
