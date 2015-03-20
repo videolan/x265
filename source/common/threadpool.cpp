@@ -149,6 +149,8 @@ void WorkerThread::threadMain()
         SLEEPBITMAP_OR(&m_pool.m_sleepBitmap, idBit);
         m_wakeEvent.wait();
     }
+
+    SLEEPBITMAP_OR(&m_pool.m_sleepBitmap, idBit);
 }
 
 void JobProvider::tryWakeOne()
@@ -378,6 +380,8 @@ void ThreadPool::stop()
         m_isActive = false;
         for (int i = 0; i < m_numWorkers; i++)
         {
+            while (!(m_sleepBitmap & (1 << i)))
+                GIVE_UP_TIME();
             m_workers[i].awaken();
             m_workers[i].stop();
         }
