@@ -97,7 +97,7 @@ void WorkerThread::threadMain()
 
     m_pool.setCurrentThreadAffinity();
 
-    uint32_t idBit = 1 << m_id;
+    sleepbitmap_t idBit = (sleepbitmap_t)1 << m_id;
     m_curJobProvider = m_pool.m_jpTable[0];
     m_bondMaster = NULL;
 
@@ -165,7 +165,7 @@ void JobProvider::tryWakeOne()
     WorkerThread& worker = m_pool->m_workers[id];
     if (worker.m_curJobProvider != this) /* poaching */
     {
-        uint32_t bit = 1 << id;
+        sleepbitmap_t bit = (sleepbitmap_t)1 << id;
         SLEEPBITMAP_AND(&worker.m_curJobProvider->m_ownerBitmap, ~bit);
         worker.m_curJobProvider = this;
         SLEEPBITMAP_OR(&worker.m_curJobProvider->m_ownerBitmap, bit);
@@ -182,7 +182,7 @@ int ThreadPool::tryAcquireSleepingThread(sleepbitmap_t firstTryBitmap, sleepbitm
     {
         SLEEPBITMAP_CTZ(id, masked);
 
-        uint32_t bit = 1 << id;
+        sleepbitmap_t bit = (sleepbitmap_t)1 << id;
         if (SLEEPBITMAP_AND(&m_sleepBitmap, ~bit) & bit)
             return (int)id;
 
@@ -194,7 +194,7 @@ int ThreadPool::tryAcquireSleepingThread(sleepbitmap_t firstTryBitmap, sleepbitm
     {
         SLEEPBITMAP_CTZ(id, masked);
 
-        uint32_t bit = 1 << id;
+        sleepbitmap_t bit = (sleepbitmap_t)1 << id;
         if (SLEEPBITMAP_AND(&m_sleepBitmap, ~bit) & bit)
             return (int)id;
 
