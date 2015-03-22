@@ -52,7 +52,7 @@ DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset slower --no-weightp
 DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset superfast --weightp --nr-intra 1000 -F4
 FourPeople_1280x720_60.y4m,--preset medium --qp 38
 FourPeople_1280x720_60.y4m,--preset slower
-FourPeople_1280x720_60.y4m,--preset superfast --pools 0
+FourPeople_1280x720_60.y4m,--preset superfast --no-wpp
 Keiba_832x480_30.y4m,--preset medium --pmode
 Keiba_832x480_30.y4m,--preset slower --fast-intra --nr-inter 500 -F4
 Keiba_832x480_30.y4m,--preset superfast --no-fast-intra --nr-intra 1000 -F4
