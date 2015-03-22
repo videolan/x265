@@ -222,9 +222,6 @@ protected:
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame();
 
-    /* called by compressFrame to perform wave-front compression analysis */
-    virtual void compressCTURows();
-
     /* called by compressFrame to generate final per-row bitstreams */
     void encodeSlice();
 

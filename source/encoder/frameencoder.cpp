@@ -302,6 +302,15 @@ void FrameEncoder::compressFrame()
     m_allRowsAvailableTime = 0;
     m_stallStartTime = 0;
 
+    m_bLastRowCompleted = false;
+    m_bAllRowsStop = false;
+    m_vbvResetTriggerRow = -1;
+
+    m_SSDY = m_SSDU = m_SSDV = 0;
+    m_ssim = 0;
+    m_ssimCnt = 0;
+    memset(&m_frameStats, 0, sizeof(m_frameStats));
+
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
      * unit) */
@@ -462,10 +471,82 @@ void FrameEncoder::compressFrame()
         m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
 
-    // Analyze CTU rows, most of the hard work is done here
-    // frame is compressed in a wave-front pattern if WPP is enabled. Loop filter runs as a
-    // wave-front behind the CU compression and reconstruction
-    compressCTURows();
+    /* Analyze CTU rows, most of the hard work is done here.  Frame is
+     * compressed in a wave-front pattern if WPP is enabled. Row based loop
+     * filters runs behind the CTU compression and reconstruction */
+
+    m_rows[0].active = true;
+    if (m_param->bEnableWavefront)
+    {
+        for (uint32_t row = 0; row < m_numRows; row++)
+        {
+            // block until all reference frames have reconstructed the rows we need
+            for (int l = 0; l < numPredDir; l++)
+            {
+                for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
+                {
+                    Frame *refpic = slice->m_refPicList[l][ref];
+
+                    uint32_t reconRowCount = refpic->m_reconRowCount.get();
+                    while ((reconRowCount != m_numRows) && (reconRowCount < row + m_refLagRows))
+                        reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
+
+                    if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
+                        m_mref[l][ref].applyWeight(row + m_refLagRows, m_numRows);
+                }
+            }
+
+            enableRowEncoder(row); /* clear external dependency for this row */
+            if (!row)
+            {
+                m_row0WaitTime = x265_mdate();
+                enqueueRowEncoder(0); /* clear internal dependency, start wavefront */
+            }
+            tryWakeOne();
+        }
+
+        m_allRowsAvailableTime = x265_mdate();
+        tryWakeOne(); /* ensure one thread is active or help-wanted flag is set prior to blocking */
+        static const int block_ms = 250;
+        while (m_completionEvent.timedWait(block_ms))
+            tryWakeOne();
+    }
+    else
+    {
+        for (uint32_t i = 0; i < m_numRows + m_filterRowDelay; i++)
+        {
+            // compress
+            if (i < m_numRows)
+            {
+                // block until all reference frames have reconstructed the rows we need
+                for (int l = 0; l < numPredDir; l++)
+                {
+                    int list = l;
+                    for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
+                    {
+                        Frame *refpic = slice->m_refPicList[list][ref];
+
+                        uint32_t reconRowCount = refpic->m_reconRowCount.get();
+                        while ((reconRowCount != m_numRows) && (reconRowCount < i + m_refLagRows))
+                            reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
+
+                        if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
+                            m_mref[list][ref].applyWeight(i + m_refLagRows, m_numRows);
+                    }
+                }
+
+                if (!i)
+                    m_row0WaitTime = x265_mdate();
+                else if (i == m_numRows - 1)
+                    m_allRowsAvailableTime = x265_mdate();
+                processRowEncoder(i, m_tld[m_localTldIdx]);
+            }
+
+            // filter
+            if (i >= m_filterRowDelay)
+                m_frameFilter.processRow(i - m_filterRowDelay);
+        }
+    }
 
     if (m_param->rc.bStatWrite)
     {
@@ -676,96 +757,6 @@ void FrameEncoder::encodeSlice()
     }
     if (!m_param->bEnableWavefront)
         m_entropyCoder.finishSlice();
-}
-
-void FrameEncoder::compressCTURows()
-{
-    Slice* slice = m_frame->m_encData->m_slice;
-
-    m_bLastRowCompleted = false;
-    m_bAllRowsStop = false;
-    m_vbvResetTriggerRow = -1;
-
-    m_SSDY = m_SSDU = m_SSDV = 0;
-    m_ssim = 0;
-    m_ssimCnt = 0;
-    memset(&m_frameStats, 0, sizeof(m_frameStats));
-
-    bool bUseWeightP = slice->m_pps->bUseWeightPred && slice->m_sliceType == P_SLICE;
-    bool bUseWeightB = slice->m_pps->bUseWeightedBiPred && slice->m_sliceType == B_SLICE;
-    int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
-
-    m_rows[0].active = true;
-    if (m_param->bEnableWavefront)
-    {
-        for (uint32_t row = 0; row < m_numRows; row++)
-        {
-            // block until all reference frames have reconstructed the rows we need
-            for (int l = 0; l < numPredDir; l++)
-            {
-                for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
-                {
-                    Frame *refpic = slice->m_refPicList[l][ref];
-
-                    uint32_t reconRowCount = refpic->m_reconRowCount.get();
-                    while ((reconRowCount != m_numRows) && (reconRowCount < row + m_refLagRows))
-                        reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
-
-                    if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
-                        m_mref[l][ref].applyWeight(row + m_refLagRows, m_numRows);
-                }
-            }
-
-            enableRowEncoder(row);
-            if (!row)
-            {
-                m_row0WaitTime = x265_mdate();
-                enqueueRowEncoder(0);
-            }
-            tryWakeOne();
-        }
-
-        m_allRowsAvailableTime = x265_mdate();
-        tryWakeOne(); /* ensure one thread is active or help-wanted flag is set prior to blocking */
-        static const int block_ms = 250;
-        while (m_completionEvent.timedWait(block_ms))
-            tryWakeOne();
-    }
-    else
-    {
-        for (uint32_t i = 0; i < m_numRows + m_filterRowDelay; i++)
-        {
-            // Encode
-            if (i < m_numRows)
-            {
-                // block until all reference frames have reconstructed the rows we need
-                for (int l = 0; l < numPredDir; l++)
-                {
-                    int list = l;
-                    for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
-                    {
-                        Frame *refpic = slice->m_refPicList[list][ref];
-
-                        uint32_t reconRowCount = refpic->m_reconRowCount.get();
-                        while ((reconRowCount != m_numRows) && (reconRowCount < i + m_refLagRows))
-                            reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
-
-                        if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
-                            m_mref[list][ref].applyWeight(i + m_refLagRows, m_numRows);
-                    }
-                }
-
-                if (!i)
-                    m_row0WaitTime = x265_mdate();
-                else if (i == m_numRows - 1)
-                    m_allRowsAvailableTime = x265_mdate();
-                processRowEncoder(i, m_tld[m_localTldIdx]);
-            }
-
-            if (i >= m_filterRowDelay)
-                m_frameFilter.processRow(i - m_filterRowDelay);
-        }
-    }
 }
 
 void FrameEncoder::processRow(int row, int threadId)
