@@ -361,7 +361,10 @@ void FrameEncoder::compressFrame()
 
     m_frameFilter.start(m_frame, m_initSliceContext, qp);
 
-    // reset entropy coders
+    /* ensure all rows are blocked prior to initializing row CTU counters */
+    WaveFront::clearEnabledRowMask();
+
+    /* reset entropy coders */
     m_entropyCoder.load(m_initSliceContext);
     for (uint32_t i = 0; i < m_numRows; i++)
         m_rows[i].init(m_initSliceContext);
@@ -695,8 +698,6 @@ void FrameEncoder::compressCTURows()
     m_rows[0].active = true;
     if (m_param->bEnableWavefront)
     {
-        WaveFront::clearEnabledRowMask();
-
         for (uint32_t row = 0; row < m_numRows; row++)
         {
             // block until all reference frames have reconstructed the rows we need

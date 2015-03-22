@@ -54,6 +54,7 @@ WaveFront::~WaveFront()
 void WaveFront::clearEnabledRowMask()
 {
     memset((void*)m_externalDependencyBitmap, 0, sizeof(uint32_t) * m_numWords);
+    memset((void*)m_internalDependencyBitmap, 0, sizeof(uint32_t) * m_numWords);
 }
 
 void WaveFront::enqueueRow(int row)
