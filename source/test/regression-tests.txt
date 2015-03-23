@@ -117,7 +117,7 @@ ducks_take_off_420_720p50.y4m,--preset superfast --weightp
 ducks_take_off_420_720p50.y4m,--preset ultrafast --constrained-intra
 ducks_take_off_420_720p50.y4m,--preset veryfast --qp 24
 ducks_take_off_420_720p50.y4m,--preset veryslow --constrained-intra
-ducks_take_off_444_720p50.y4m,--preset medium --qp 38 --scaling-list default
+ducks_take_off_444_720p50.y4m,--preset medium --qp 38
 ducks_take_off_444_720p50.y4m,--preset slower
 ducks_take_off_444_720p50.y4m,--preset superfast --weightp
 ducks_take_off_444_720p50.y4m,--preset veryslow --psy-rd 1 --psy-rdoq 2.0 --rdoq-level 1
