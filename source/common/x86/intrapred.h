@@ -50,6 +50,7 @@ void x265_intra_pred_planar32_sse4(pixel* dst, intptr_t dstStride, const pixel* 
 DECL_ANG(4, 2, sse2);
 DECL_ANG(4, 3, sse2);
 DECL_ANG(4, 4, sse2);
+DECL_ANG(4, 5, sse2);
 
 DECL_ANG(4, 2, ssse3);
 DECL_ANG(4, 3, sse4);
