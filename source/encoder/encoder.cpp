@@ -254,8 +254,12 @@ void Encoder::create()
             m_aborted = true;
         }
     }
+
     for (int i = 0; i < m_param->frameNumThreads; i++)
+    {
         m_frameEncoder[i]->start();
+        m_frameEncoder[i]->m_done.wait(); /* wait for thread to initialize */
+    }
 
     if (m_param->bEmitHRDSEI)
         m_rateControl->initHRD(m_sps);
