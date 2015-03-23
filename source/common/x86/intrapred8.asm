@@ -1109,6 +1109,29 @@ cglobal intra_pred_planar32, 3,3,8,0-(4*mmsize)
 
 %endif ; end ARCH_X86_32
 
+;-----------------------------------------------------------------------------------------
+; void intraPredAng4(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
+;-----------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_ang4_2, 3,5,3
+    lea         r4, [r2 + 2]
+    add         r2, 10
+    cmp         r3m, byte 34
+    cmove       r2, r4
+
+    movh        m0, [r2]
+    movd        [r0], m0
+    mova        m1, m0
+    psrldq      m1, 1
+    movd        [r0 + r1], m1
+    mova        m2, m0
+    psrldq      m2, 2
+    movd        [r0 + r1 * 2], m2
+    lea         r1, [r1 * 3]
+    psrldq      m0, 3
+    movd        [r0 + r1], m0
+    RET
+
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------

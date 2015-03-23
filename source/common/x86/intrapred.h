@@ -47,6 +47,8 @@ void x265_intra_pred_planar32_sse4(pixel* dst, intptr_t dstStride, const pixel* 
 #define DECL_ANG(bsize, mode, cpu) \
     void x265_intra_pred_ang ## bsize ## _ ## mode ## _ ## cpu(pixel* dst, intptr_t dstStride, const pixel* srcPix, int dirMode, int bFilter);
 
+DECL_ANG(4, 2, sse2);
+
 DECL_ANG(4, 2, ssse3);
 DECL_ANG(4, 3, sse4);
 DECL_ANG(4, 4, sse4);
