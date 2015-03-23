@@ -38,7 +38,7 @@ hmul_8p:   times 8 db 1
            times 4 db 1, -1
            times 8 db 1
            times 4 db 1, -1
-hmul_4p:   times 2 db 1, 1, 1, 1, 1, -1, 1, -1
+hmul_4p:   times 4 db 1, 1, 1, 1, 1, -1, 1, -1
 mask_10:   times 4 dw 0, -1
 mask_1100: times 2 dd 0, -1
 hmul_8w:   times 4 dw 1
@@ -8145,6 +8145,62 @@ cglobal psyCost_pp_64x64, 4, 9, 15
     RET
 %endif ; HIGH_BIT_DEPTH
 %endif
+
+INIT_YMM avx2
+cglobal psyCost_pp_4x4, 4, 5, 6
+    lea             r4, [3 * r1]
+    movd            xm0, [r0]
+    movd            xm1, [r0 + r1]
+    movd            xm2, [r0 + r1 * 2]
+    movd            xm3, [r0 + r4]
+    vshufps         xm0, xm1, 0
+    vshufps         xm2, xm3, 0
+
+    lea             r4, [3 * r3]
+    movd            xm1, [r2]
+    movd            xm3, [r2 + r3]
+    movd            xm4, [r2 + r3 * 2]
+    movd            xm5, [r2 + r4]
+    vshufps         xm1, xm3, 0
+    vshufps         xm4, xm5, 0
+
+    vinserti128     m0, m0, xm1, 1
+    vinserti128     m2, m2, xm4, 1
+
+    mova            m4, [hmul_4p]
+    pmaddubsw       m0, m4
+    pmaddubsw       m2, m4
+
+    paddw           m5, m0, m2
+    mova            m1, m5
+    psrldq          m4, m5, 8
+    paddw           m5, m4
+    pmaddwd         m5, [pw_1]
+    psrld           m5, 2
+
+    vpsubw          m2, m2, m0
+    vpunpckhqdq     m0, m1, m2
+    vpunpcklqdq     m1, m1, m2
+    vpaddw          m2, m1, m0
+    vpsubw          m0, m0, m1
+    vpblendw        m1, m2, m0, 10101010b
+    vpslld          m0, m0, 10h
+    vpsrld          m2, m2, 10h
+    vpor            m0, m0, m2
+    vpabsw          m1, m1
+    vpabsw          m0, m0
+    vpmaxsw         m1, m1, m0
+    vpmaddwd        m1, m1, [pw_1]
+    psrldq          m2, m1, 8
+    paddd           m1, m2
+    psrldq          m3, m1, 4
+    paddd           m1, m3
+    psubd           m1, m5
+    vextracti128    xm2, m1, 1
+    psubd           m1, m2
+    pabsd           m1, m1
+    movd            eax, xm1
+    RET
 
 %macro PSY_PP_8x8 0
     movddup         m0, [r0 + r1 * 0]
