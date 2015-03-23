@@ -126,6 +126,11 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     m_slice = ctu.m_slice;
     m_frame = &frame;
 
+#if _DEBUG || CHECKED_BUILD
+    for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+        for (uint32_t j = 0; j < MAX_PRED_TYPES; j++)
+            m_modeDepth[i].pred[j].invalidate();
+#endif
     invalidateContexts(0);
     m_quant.setQPforQuant(ctu);
     m_rqt[0].cur.load(initialContext);
@@ -1011,6 +1016,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
     }
 
     /* Copy best data to encData CTU and recon */
+    X265_CHECK(md.bestMode->ok(), "best mode is not ok");
     md.bestMode->cu.copyToPic(depth);
     if (md.bestMode != &md.pred[PRED_SPLIT] && m_param->rdLevel)
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, cuAddr, cuGeom.absPartIdx);

@@ -144,6 +144,8 @@ protected:
     /* check whether current mode is the new best */
     inline void checkBestMode(Mode& mode, uint32_t depth)
     {
+        X265_CHECK(mode.ok(), "mode costs are uninitialized\n");
+
         ModeDepth& md = m_modeDepth[depth];
         if (md.bestMode)
         {
