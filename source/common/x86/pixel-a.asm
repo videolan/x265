@@ -8146,6 +8146,280 @@ cglobal psyCost_pp_64x64, 4, 9, 15
 %endif ; HIGH_BIT_DEPTH
 %endif
 
+%macro PSY_PP_8x8 0
+    movddup         m0, [r0 + r1 * 0]
+    movddup         m1, [r0 + r1 * 1]
+    movddup         m2, [r0 + r1 * 2]
+    movddup         m3, [r0 + r4 * 1]
+
+    lea             r5, [r0 + r1 * 4]
+
+    movddup         m4, [r2 + r3 * 0]
+    movddup         m5, [r2 + r3 * 1]
+    movddup         m6, [r2 + r3 * 2]
+    movddup         m7, [r2 + r7 * 1]
+
+    lea             r6, [r2 + r3 * 4]
+
+    vinserti128     m0, m0, xm4, 1
+    vinserti128     m1, m1, xm5, 1
+    vinserti128     m2, m2, xm6, 1
+    vinserti128     m3, m3, xm7, 1
+
+    movddup         m4, [r5 + r1 * 0]
+    movddup         m5, [r5 + r1 * 1]
+    movddup         m6, [r5 + r1 * 2]
+    movddup         m7, [r5 + r4 * 1]
+
+    movddup         m9, [r6 + r3 * 0]
+    movddup         m10, [r6 + r3 * 1]
+    movddup         m11, [r6 + r3 * 2]
+    movddup         m12, [r6 + r7 * 1]
+
+    vinserti128     m4, m4, xm9, 1
+    vinserti128     m5, m5, xm10, 1
+    vinserti128     m6, m6, xm11, 1
+    vinserti128     m7, m7, xm12, 1
+
+    pmaddubsw       m0, m8
+    pmaddubsw       m1, m8
+    pmaddubsw       m2, m8
+    pmaddubsw       m3, m8
+    pmaddubsw       m4, m8
+    pmaddubsw       m5, m8
+    pmaddubsw       m6, m8
+    pmaddubsw       m7, m8
+
+    paddw           m11, m0, m1
+    paddw           m11, m2
+    paddw           m11, m3
+    paddw           m11, m4
+    paddw           m11, m5
+    paddw           m11, m6
+    paddw           m11, m7
+
+    pmaddwd         m11, [pw_1]
+    psrldq          m10, m11, 4
+    paddd           m11, m10
+    psrld           m11, 2
+
+    mova            m9, m0
+    paddw           m0, m1      ; m0+m1
+    psubw           m1, m9      ; m1-m0
+    mova            m9, m2
+    paddw           m2, m3      ; m2+m3
+    psubw           m3, m9      ; m3-m2
+    mova            m9, m0
+    paddw           m0, m2      ; m0+m1+m2+m3
+    psubw           m2, m9      ; m2+m3-m0+m1
+    mova            m9, m1
+    paddw           m1, m3      ; m1-m0+m3-m2
+    psubw           m3, m9      ; m3-m2-m1-m0
+
+    movdqa          m9, m4
+    paddw           m4, m5      ; m4+m5
+    psubw           m5, m9      ; m5-m4
+    movdqa          m9, m6
+    paddw           m6, m7      ; m6+m7
+    psubw           m7, m9      ; m7-m6
+    movdqa          m9, m4
+    paddw           m4, m6      ; m4+m5+m6+m7
+    psubw           m6, m9      ; m6+m7-m4+m5
+    movdqa          m9, m5
+    paddw           m5, m7      ; m5-m4+m7-m6
+    psubw           m7, m9      ; m7-m6-m5-m4
+
+    movdqa          m9, m0
+    paddw           m0, m4      ; (m0+m1+m2+m3)+(m4+m5+m6+m7)
+    psubw           m4, m9      ; (m4+m5+m6+m7)-(m0+m1+m2+m3)
+    movdqa          m9, m1
+    paddw           m1, m5      ; (m1-m0+m3-m2)+(m5-m4+m7-m6)
+    psubw           m5, m9      ; (m5-m4+m7-m6)-(m1-m0+m3-m2)
+
+    mova            m9, m0
+    vshufps         m9, m9, m4, 11011101b
+    vshufps         m0, m0, m4, 10001000b
+
+    movdqa          m4, m0
+    paddw           m0, m9      ; (a0 + a4) + (a4 - a0)
+    psubw           m9, m4      ; (a0 + a4) - (a4 - a0) == (a0 + a4) + (a0 - a4)
+
+    movaps          m4, m1
+    vshufps         m4, m4, m5, 11011101b
+    vshufps         m1, m1, m5, 10001000b
+
+    movdqa          m5, m1
+    paddw           m1, m4
+    psubw           m4, m5
+    movdqa          m5, m2
+    paddw           m2, m6
+    psubw           m6, m5
+    movdqa          m5, m3
+    paddw           m3, m7
+    psubw           m7, m5
+
+    movaps          m5, m2
+    vshufps         m5, m5, m6, 11011101b
+    vshufps         m2, m2, m6, 10001000b
+
+    movdqa          m6, m2
+    paddw           m2, m5
+    psubw           m5, m6
+    movaps          m6, m3
+
+    vshufps         m6, m6, m7, 11011101b
+    vshufps         m3, m3, m7, 10001000b
+
+    movdqa          m7, m3
+    paddw           m3, m6
+    psubw           m6, m7
+    movdqa          m7, m0
+
+    pblendw         m0, m9, 10101010b
+    pslld           m9, 10h
+    psrld           m7, 10h
+    por             m9, m7
+    pabsw           m0, m0
+    pabsw           m9, m9
+    pmaxsw          m0, m9
+    movdqa          m7, m1
+    pblendw         m1, m4, 10101010b
+    pslld           m4, 10h
+    psrld           m7, 10h
+    por             m4, m7
+    pabsw           m1, m1
+    pabsw           m4, m4
+    pmaxsw          m1, m4
+    movdqa          m7, m2
+    pblendw         m2, m5, 10101010b
+    pslld           m5, 10h
+    psrld           m7, 10h
+    por             m5, m7
+    pabsw           m2, m2
+    pabsw           m5, m5
+    pmaxsw          m2, m5
+    mova            m7, m3
+
+    pblendw         m3, m6, 10101010b
+    pslld           m6, 10h
+    psrld           m7, 10h
+    por             m6, m7
+    pabsw           m3, m3
+    pabsw           m6, m6
+    pmaxsw          m3, m6
+    paddw           m0, m1
+    paddw           m0, m2
+    paddw           m0, m3
+    pmaddwd         m0, [pw_1]
+    psrldq          m1, m0, 8
+    paddd           m0, m1
+
+    pshuflw         m1, m0, 00001110b
+    paddd           m0, m1
+    paddd           m0, [pd_1]
+    psrld           m0, 1
+
+    psubd           m0, m11
+
+    vextracti128    xm1, m0, 1
+    psubd           m0, m1
+    pabsd           m0, m0
+%endmacro
+
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal psyCost_pp_8x8, 4, 8, 13
+    lea             r4, [3 * r1]
+    lea             r7, [3 * r3]
+    mova            m8, [hmul_8p]
+
+    PSY_PP_8x8
+
+    movd            eax, xm0
+    RET
+%endif
+
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal psyCost_pp_16x16, 4, 10, 14
+    lea             r4, [3 * r1]
+    lea             r7, [3 * r3]
+    mova            m8, [hmul_8p]
+    pxor            m13, m13
+
+    mov             r8d, 2
+.loopH:
+    mov             r9d, 2
+.loopW:
+    PSY_PP_8x8
+
+    paddd           m13, m0
+    add             r0, 8
+    add             r2, 8
+    dec             r9d
+    jnz             .loopW
+    lea             r0, [r0 + r1 * 8 - 16]
+    lea             r2, [r2 + r3 * 8 - 16]
+    dec             r8d
+    jnz             .loopH
+    movd            eax, xm13
+    RET
+%endif
+
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal psyCost_pp_32x32, 4, 10, 14
+    lea             r4, [3 * r1]
+    lea             r7, [3 * r3]
+    mova            m8, [hmul_8p]
+    pxor            m13, m13
+
+    mov             r8d, 4
+.loopH:
+    mov             r9d, 4
+.loopW:
+    PSY_PP_8x8
+
+    paddd           m13, m0
+    add             r0, 8
+    add             r2, 8
+    dec             r9d
+    jnz             .loopW
+    lea             r0, [r0 + r1 * 8 - 32]
+    lea             r2, [r2 + r3 * 8 - 32]
+    dec             r8d
+    jnz             .loopH
+    movd            eax, xm13
+    RET
+%endif
+
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal psyCost_pp_64x64, 4, 10, 14
+    lea             r4, [3 * r1]
+    lea             r7, [3 * r3]
+    mova            m8, [hmul_8p]
+    pxor            m13, m13
+
+    mov             r8d, 8
+.loopH:
+    mov             r9d, 8
+.loopW:
+    PSY_PP_8x8
+
+    paddd           m13, m0
+    add             r0, 8
+    add             r2, 8
+    dec             r9d
+    jnz             .loopW
+    lea             r0, [r0 + r1 * 8 - 64]
+    lea             r2, [r2 + r3 * 8 - 64]
+    dec             r8d
+    jnz             .loopH
+    movd            eax, xm13
+    RET
+%endif
+
 ;---------------------------------------------------------------------------------------------------------------------
 ;int psyCost_ss(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride)
 ;---------------------------------------------------------------------------------------------------------------------

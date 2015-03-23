@@ -1426,6 +1426,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 #if X86_64
     if (cpuMask & X265_CPU_AVX2)
     {
+        p.cu[BLOCK_8x8].psy_cost_pp = x265_psyCost_pp_8x8_avx2;
+        p.cu[BLOCK_16x16].psy_cost_pp = x265_psyCost_pp_16x16_avx2;
+        p.cu[BLOCK_32x32].psy_cost_pp = x265_psyCost_pp_32x32_avx2;
+        p.cu[BLOCK_64x64].psy_cost_pp = x265_psyCost_pp_64x64_avx2;
+
         p.pu[LUMA_8x4].addAvg = x265_addAvg_8x4_avx2;
         p.pu[LUMA_8x8].addAvg = x265_addAvg_8x8_avx2;
         p.pu[LUMA_8x16].addAvg = x265_addAvg_8x16_avx2;
