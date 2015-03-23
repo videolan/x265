@@ -267,6 +267,13 @@ const ang_table
 %assign x x+1
 %endrep
 
+const pw_ang_table
+%assign x 0
+%rep 32
+    times 4 dw (32-x), x
+%assign x x+1
+%endrep
+
 SECTION .text
 
 cextern pw_2
@@ -1129,6 +1136,82 @@ cglobal intra_pred_ang4_2, 3,5,3
     movd        [r0 + r1 * 2], m2
     lea         r1, [r1 * 3]
     psrldq      m0, 3
+    movd        [r0 + r1], m0
+    RET
+
+INIT_XMM sse2
+cglobal intra_pred_ang4_3, 3,5,8
+    mov         r4, 1
+    cmp         r3m, byte 33
+    mov         r3, 9
+    cmove       r3, r4
+
+    movh        m0, [r2 + r3]   ; [8 7 6 5 4 3 2 1]
+    mova        m1, m0
+    psrldq      m1, 1           ; [x 8 7 6 5 4 3 2]
+    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    mova        m1, m0
+    psrldq      m1, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
+    mova        m2, m0
+    psrldq      m2, 4           ; [x x x x x x x x 7 6 6 5 5 4 4 3]
+    mova        m3, m0
+    psrldq      m3, 6           ; [x x x x x x x x 8 7 7 6 6 5 5 4]
+    punpcklqdq  m0, m1
+    punpcklqdq  m2, m3
+
+    lea         r3, [pw_ang_table + 20 * 16]
+    mova        m4, [r3 + 6 * 16]   ; [26]
+    mova        m5, [r3]            ; [20]
+    mova        m6, [r3 - 6 * 16]   ; [14]
+    mova        m7, [r3 - 12 * 16]  ; [ 8]
+    jmp        .do_filter4x4
+
+    ; NOTE: share path, input is m0=[1 0], m2=[3 2], m3,m4=coef, flag_z=no_transpose
+ALIGN 16
+.do_filter4x4:
+    pxor        m1, m1
+    pxor        m3, m3
+    punpckhbw   m3, m0
+    psrlw       m3, 8
+    pmaddwd     m3, m5
+    punpcklbw   m0, m1
+    pmaddwd     m0, m4
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    pxor        m3, m3
+    punpckhbw   m3, m2
+    psrlw       m3, 8
+    pmaddwd     m3, m7
+    punpcklbw   m2, m1
+    pmaddwd     m2, m6
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+
+    ; NOTE: mode 33 doesn't reorder, UNSAFE but I don't use any instruction that affect eflag register before
+    jz         .store
+
+    ; transpose 4x4 c_trans_4x4           db  0,  4,  8, 12,  1,  5,  9, 13,  2,  6, 10, 14,  3,  7, 11, 15
+    pshufd      m0, m0, 0xD8
+    pshufd      m1, m2, 0xD8
+    pshuflw     m0, m0, 0xD8
+    pshuflw     m1, m1, 0xD8
+    pshufhw     m0, m0, 0xD8
+    pshufhw     m1, m1, 0xD8
+    mova        m2, m0
+    punpckldq   m0, m1
+    punpckhdq   m2, m1
+
+.store:
+    packuswb    m0, m2
+    movd        [r0], m0
+    pshufd      m0, m0, 0x39
+    movd        [r0 + r1], m0
+    pshufd      m0, m0, 0x39
+    movd        [r0 + r1 * 2], m0
+    lea         r1, [r1 * 3]
+    pshufd      m0, m0, 0x39
     movd        [r0 + r1], m0
     RET
 
