@@ -1356,11 +1356,11 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         md.bestMode = bestPred;
 
     /* broadcast sets of MV field data */
-    bestPred->cu.setPUInterDir(interDirNeighbours[bestSadCand], 0, 0);
-    bestPred->cu.setPUMv(0, mvFieldNeighbours[bestSadCand][0].mv, 0, 0);
-    bestPred->cu.setPURefIdx(0, (int8_t)mvFieldNeighbours[bestSadCand][0].refIdx, 0, 0);
-    bestPred->cu.setPUMv(1, mvFieldNeighbours[bestSadCand][1].mv, 0, 0);
-    bestPred->cu.setPURefIdx(1, (int8_t)mvFieldNeighbours[bestSadCand][1].refIdx, 0, 0);
+    md.bestMode->cu.setPUInterDir(interDirNeighbours[bestSadCand], 0, 0);
+    md.bestMode->cu.setPUMv(0, mvFieldNeighbours[bestSadCand][0].mv, 0, 0);
+    md.bestMode->cu.setPURefIdx(0, (int8_t)mvFieldNeighbours[bestSadCand][0].refIdx, 0, 0);
+    md.bestMode->cu.setPUMv(1, mvFieldNeighbours[bestSadCand][1].mv, 0, 0);
+    md.bestMode->cu.setPURefIdx(1, (int8_t)mvFieldNeighbours[bestSadCand][1].refIdx, 0, 0);
 }
 
 /* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
