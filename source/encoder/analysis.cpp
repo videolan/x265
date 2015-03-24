@@ -206,6 +206,7 @@ void Analysis::tryLossless(const CUGeom& cuGeom)
         return;
     else if (md.bestMode->cu.isIntra(0))
     {
+        md.pred[PRED_LOSSLESS].initCosts();
         md.pred[PRED_LOSSLESS].cu.initLosslessCU(md.bestMode->cu, cuGeom);
         PartSize size = (PartSize)md.pred[PRED_LOSSLESS].cu.m_partSize[0];
         uint8_t* modes = md.pred[PRED_LOSSLESS].cu.m_lumaIntraDir;
@@ -214,6 +215,7 @@ void Analysis::tryLossless(const CUGeom& cuGeom)
     }
     else
     {
+        md.pred[PRED_LOSSLESS].initCosts();
         md.pred[PRED_LOSSLESS].cu.initLosslessCU(md.bestMode->cu, cuGeom);
         md.pred[PRED_LOSSLESS].predYuv.copyFromYuv(md.bestMode->predYuv);
         encodeResAndCalcRdInterCU(md.pred[PRED_LOSSLESS], cuGeom);
