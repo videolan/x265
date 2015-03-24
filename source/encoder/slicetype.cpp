@@ -491,7 +491,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_bAdaptiveQuant = m_param->rc.aqMode || m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred;
 
     /* If we have a thread pool and are using --b-adapt 2, it is generally
-     * preferrable to perform all motion searches for each lowres frame in large
+     * preferable to perform all motion searches for each lowres frame in large
      * batched; this will create one job per --bframe per lowres frame, and
      * these jobs are performed by workers bonded to the thread running
      * slicetypeDecide() */
