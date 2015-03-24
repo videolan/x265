@@ -1753,9 +1753,12 @@ void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Dist
  * re-running lookahead. */
 int64_t Lookahead::frameCostRecalculate(Lowres** frames, int p0, int p1, int b)
 {
+    if (frames[b]->sliceType == X265_TYPE_B)
+        return frames[b]->costEstAq[b - p0][p1 - b];
+
     int64_t score = 0;
     int *rowSatd = frames[b]->rowSatds[b - p0][p1 - b];
-    double *qp_offset = (frames[b]->sliceType == X265_TYPE_B) ? frames[b]->qpAqOffset : frames[b]->qpCuTreeOffset;
+    double *qp_offset = frames[b]->qpCuTreeOffset;
 
     x265_emms();
     for (int cuy = m_8x8Height - 1; cuy >= 0; cuy--)
