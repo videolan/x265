@@ -487,7 +487,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     memset(m_preframes, 0, sizeof(m_preframes));
     m_preTotal = m_preAcquired = m_preCompleted = 0;
     m_sliceTypeBusy = false;
-    m_fullQueueSize = m_param->lookaheadDepth;
+    m_fullQueueSize = X265_MAX(1, m_param->lookaheadDepth);
     m_bAdaptiveQuant = m_param->rc.aqMode || m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred;
 
     /* If we have a thread pool and are using --b-adapt 2, it is generally
