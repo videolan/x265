@@ -932,7 +932,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
     int startOrdinal = rce->encodeOrder * 2;
 
     while (orderValue < startOrdinal && !m_bTerminated)
-       orderValue = m_startEndOrder.waitForChange(orderValue);
+        orderValue = m_startEndOrder.waitForChange(orderValue);
 
     if (!curFrame)
     {
