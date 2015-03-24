@@ -2548,6 +2548,35 @@ cglobal pixel_ssd_s_32, 2,3,5
     movd    eax, m0
     RET
 
+INIT_YMM avx2
+cglobal pixel_ssd_s_16, 2,4,5
+    add     r1, r1
+    lea     r3, [r1 * 3]
+    mov     r2d, 16/4
+    pxor    m0, m0
+.loop:
+    movu    m1, [r0]
+    movu    m2, [r0 + r1]
+    movu    m3, [r0 + 2 * r1]
+    movu    m4, [r0 + r3]
+
+    lea     r0, [r0 + r1 * 4]
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    dec     r2d
+    jnz    .loop
+
+    ; calculate sum and return
+    HADDD   m0, m1
+    movd    eax, xm0
+    RET
 
 INIT_YMM avx2
 cglobal pixel_ssd_s_32, 2,4,5

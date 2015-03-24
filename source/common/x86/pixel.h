@@ -177,6 +177,7 @@ int x265_pixel_ssd_s_4_sse2(const int16_t*, intptr_t);
 int x265_pixel_ssd_s_8_sse2(const int16_t*, intptr_t);
 int x265_pixel_ssd_s_16_sse2(const int16_t*, intptr_t);
 int x265_pixel_ssd_s_32_sse2(const int16_t*, intptr_t);
+int x265_pixel_ssd_s_16_avx2(const int16_t*, intptr_t);
 int x265_pixel_ssd_s_32_avx2(const int16_t*, intptr_t);
 
 #define ADDAVG(func)  \
