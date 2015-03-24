@@ -1437,6 +1437,8 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         bestPred->cu.setPUMv(1, candMvField[bestCand][1].mv, 0, 0);
         bestPred->cu.setPURefIdx(0, (int8_t)candMvField[bestCand][0].refIdx, 0, 0);
         bestPred->cu.setPURefIdx(1, (int8_t)candMvField[bestCand][1].refIdx, 0, 0);
+        checkDQP(bestPred->cu, cuGeom);
+        X265_CHECK(bestPred->ok(), "merge mode is not ok");
     }
 
     if (m_param->analysisMode)
@@ -1445,8 +1447,6 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         if (m_param->analysisMode == X265_ANALYSIS_SAVE)
             *m_reuseBestMergeCand = bestPred->cu.m_mvpIdx[0][0];
     }
-    checkDQP(bestPred->cu, cuGeom);
-    X265_CHECK(m_modeDepth[depth].bestMode->ok(), "merge mode is not ok");
 }
 
 void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize)
