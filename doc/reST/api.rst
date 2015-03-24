@@ -72,6 +72,8 @@ blocking and thus this would be less efficient).
 	process. All of the encoders must use the same maximum CTU size
 	because many global variables are configured based on this size.
 	Encoder allocation will fail if a mis-matched CTU size is attempted.
+	If no encoders are open, **x265_cleanup()** can be called to reset
+	the configured CTU size so a new size can be used.
 
 An encoder is allocated by calling **x265_encoder_open()**::
 
@@ -337,10 +339,12 @@ handle must be discarded::
 	void x265_encoder_close(x265_encoder *);
 
 When the application has completed all encodes, it should call
-**x265_cleanup()** to free process global resources like the thread pool;
-particularly if a memory-leak detection tool is being used::
+**x265_cleanup()** to free process global, particularly if a memory-leak
+detection tool is being used. **x265_cleanup()** also resets the saved
+CTU size so it will be possible to create a new encoder with a different
+CTU size::
 
 	/***
-	 * Release library static allocations
+	 * Release library static allocations, reset configured CTU size
 	 */
 	void x265_cleanup(void);

@@ -261,6 +261,8 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
     int8_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
+    memset(_upBuff1 + MAX_CU_SIZE, 0, 2 * sizeof(int8_t)); /* avoid valgrind uninit warnings */
+
     {
         const pixel* recR = &rec[ctuWidth - 1];
         for (int i = 0; i < ctuHeight + 1; i++)

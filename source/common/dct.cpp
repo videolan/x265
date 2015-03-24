@@ -709,14 +709,12 @@ uint32_t nquant_c(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef
 
     return numSig;
 }
-
-int  count_nonzero_c(const int16_t* quantCoeff, int numCoeff)
+template<int trSize>
+int  count_nonzero_c(const int16_t* quantCoeff)
 {
     X265_CHECK(((intptr_t)quantCoeff & 15) == 0, "quant buffer not aligned\n");
-    X265_CHECK(numCoeff > 0 && (numCoeff & 15) == 0, "numCoeff invalid %d\n", numCoeff);
-
     int count = 0;
-
+    int numCoeff = trSize * trSize;
     for (int i = 0; i < numCoeff; i++)
     {
         count += quantCoeff[i] != 0;
@@ -754,6 +752,39 @@ void denoiseDct_c(int16_t* dctCoef, uint32_t* resSum, const uint16_t* offset, in
     }
 }
 
+int findPosLast_c(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig)
+{
+    memset(coeffNum, 0, MLS_GRP_NUM * sizeof(*coeffNum));
+    memset(coeffFlag, 0, MLS_GRP_NUM * sizeof(*coeffFlag));
+    memset(coeffSign, 0, MLS_GRP_NUM * sizeof(*coeffSign));
+
+    int scanPosLast = 0;
+    do
+    {
+        const uint32_t cgIdx = (uint32_t)scanPosLast >> MLS_CG_SIZE;
+
+        const uint32_t posLast = scan[scanPosLast++];
+
+        const int curCoeff = coeff[posLast];
+        const uint32_t isNZCoeff = (curCoeff != 0);
+        // get L1 sig map
+        // NOTE: the new algorithm is complicated, so I keep reference code here
+        //uint32_t posy   = posLast >> log2TrSize;
+        //uint32_t posx   = posLast - (posy << log2TrSize);
+        //uint32_t blkIdx0 = ((posy >> MLS_CG_LOG2_SIZE) << codingParameters.log2TrSizeCG) + (posx >> MLS_CG_LOG2_SIZE);
+        //const uint32_t blkIdx = ((posLast >> (2 * MLS_CG_LOG2_SIZE)) & ~maskPosXY) + ((posLast >> MLS_CG_LOG2_SIZE) & maskPosXY);
+        //sigCoeffGroupFlag64 |= ((uint64_t)isNZCoeff << blkIdx);
+        numSig -= isNZCoeff;
+
+        // TODO: optimize by instruction BTS
+        coeffSign[cgIdx] += (uint16_t)(((uint32_t)curCoeff >> 31) << coeffNum[cgIdx]);
+        coeffFlag[cgIdx] = (coeffFlag[cgIdx] << 1) + (uint16_t)isNZCoeff;
+        coeffNum[cgIdx] += (uint8_t)isNZCoeff;
+    }
+    while (numSig > 0);
+    return scanPosLast - 1;
+}
+
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -775,12 +806,17 @@ void setupDCTPrimitives_c(EncoderPrimitives& p)
     p.cu[BLOCK_8x8].idct   = idct8_c;
     p.cu[BLOCK_16x16].idct = idct16_c;
     p.cu[BLOCK_32x32].idct = idct32_c;
-    p.count_nonzero = count_nonzero_c;
     p.denoiseDct = denoiseDct_c;
+    p.cu[BLOCK_4x4].count_nonzero = count_nonzero_c<4>;
+    p.cu[BLOCK_8x8].count_nonzero = count_nonzero_c<8>;
+    p.cu[BLOCK_16x16].count_nonzero = count_nonzero_c<16>;
+    p.cu[BLOCK_32x32].count_nonzero = count_nonzero_c<32>;
 
     p.cu[BLOCK_4x4].copy_cnt   = copy_count<4>;
     p.cu[BLOCK_8x8].copy_cnt   = copy_count<8>;
     p.cu[BLOCK_16x16].copy_cnt = copy_count<16>;
     p.cu[BLOCK_32x32].copy_cnt = copy_count<32>;
+
+    p.findPosLast = findPosLast_c;
 }
 }

@@ -122,7 +122,7 @@ public:
 
     virtual ~FrameEncoder() {}
 
-    bool init(Encoder *top, int numRows, int numCols, int id);
+    virtual bool init(Encoder *top, int numRows, int numCols);
 
     void destroy();
 
@@ -136,7 +136,7 @@ public:
     Event                    m_done;
     Event                    m_completionEvent;
     bool                     m_threadActive;
-    int                      m_frameEncoderID;
+    int                      m_localTldIdx;
 
     uint32_t                 m_numRows;
     uint32_t                 m_numCols;
@@ -145,6 +145,7 @@ public:
     uint32_t                 m_refLagRows;
 
     volatile bool            m_bAllRowsStop;
+    volatile bool            m_bLastRowCompleted;
     volatile int             m_vbvResetTriggerRow;
 
     CTURow*                  m_rows;
@@ -177,6 +178,9 @@ public:
     int64_t                  m_slicetypeWaitTime;        // total elapsed time waiting for decided frame
     int64_t                  m_totalWorkerElapsedTime;   // total elapsed time spent by worker threads processing CTUs
     int64_t                  m_totalNoWorkerTime;        // total elapsed time without any active worker threads
+#if DETAILED_CU_STATS
+    CUStats                  m_cuStats;
+#endif
 
     Encoder*                 m_top;
     x265_param*              m_param;
@@ -196,15 +200,27 @@ public:
     FrameFilter              m_frameFilter;
     NALList                  m_nalList;
 
+    class WeightAnalysis : public BondedTaskGroup
+    {
+    public:
+
+        FrameEncoder& master;
+
+        WeightAnalysis(FrameEncoder& fe) : master(fe) {}
+
+        void processTasks(int workerThreadId);
+
+    protected:
+
+        WeightAnalysis operator=(const WeightAnalysis&);
+    };
+
 protected:
 
     bool initializeGeoms();
 
     /* analyze / compress frame, can be run in parallel within reference constraints */
     void compressFrame();
-
-    /* called by compressFrame to perform wave-front compression analysis */
-    void compressCTURows();
 
     /* called by compressFrame to generate final per-row bitstreams */
     void encodeSlice();
@@ -215,8 +231,8 @@ protected:
     void noiseReductionUpdate();
 
     /* Called by WaveFront::findJob() */
-    void processRow(int row, int threadId);
-    void processRowEncoder(int row, ThreadLocalData& tld);
+    virtual void processRow(int row, int threadId);
+    virtual void processRowEncoder(int row, ThreadLocalData& tld);
 
     void enqueueRowEncoder(int row) { WaveFront::enqueueRow(row * 2 + 0); }
     void enqueueRowFilter(int row)  { WaveFront::enqueueRow(row * 2 + 1); }

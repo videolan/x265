@@ -104,11 +104,14 @@ void DPB::prepareEncode(Frame *newFrame)
 
     if (type == X265_TYPE_B)
     {
-        // change from _R "referenced" to _N "non-referenced" NAL unit type
+        newFrame->m_encData->m_bHasReferences = false;
+
+        // Adjust NAL type for unreferenced B frames (change from _R "referenced"
+        // to _N "non-referenced" NAL unit type)
         switch (slice->m_nalUnitType)
         {
         case NAL_UNIT_CODED_SLICE_TRAIL_R:
-            slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_TRAIL_N;
+            slice->m_nalUnitType = m_bTemporalSublayer ? NAL_UNIT_CODED_SLICE_TSA_N : NAL_UNIT_CODED_SLICE_TRAIL_N;
             break;
         case NAL_UNIT_CODED_SLICE_RADL_R:
             slice->m_nalUnitType = NAL_UNIT_CODED_SLICE_RADL_N;
@@ -120,10 +123,12 @@ void DPB::prepareEncode(Frame *newFrame)
             break;
         }
     }
-
-    /* m_bHasReferences starts out as true for non-B pictures, and is set to false
-     * once no more pictures reference it */
-    newFrame->m_encData->m_bHasReferences = IS_REFERENCED(newFrame);
+    else
+    {
+        /* m_bHasReferences starts out as true for non-B pictures, and is set to false
+         * once no more pictures reference it */
+        newFrame->m_encData->m_bHasReferences = true;
+    }
 
     m_picList.pushFront(*newFrame);
 

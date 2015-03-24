@@ -55,9 +55,9 @@ struct RPS
         , numberOfNegativePictures(0)
         , numberOfPositivePictures(0)
     {
-        ::memset(deltaPOC, 0, sizeof(deltaPOC));
-        ::memset(poc, 0, sizeof(poc));
-        ::memset(bUsed, 0, sizeof(bUsed));
+        memset(deltaPOC, 0, sizeof(deltaPOC));
+        memset(poc, 0, sizeof(poc));
+        memset(bUsed, 0, sizeof(bUsed));
     }
 
     void sortDeltaPOC();
@@ -149,8 +149,10 @@ struct TimingInfo
 
 struct VPS
 {
+    uint32_t         maxTempSubLayers;
     uint32_t         numReorderPics;
     uint32_t         maxDecPicBuffering;
+    uint32_t         maxLatencyIncrease;
     HRDInfo          hrdParameters;
     ProfileTierLevel ptl;
 };
@@ -228,9 +230,10 @@ struct SPS
     bool     bUseAMP; // use param
     uint32_t maxAMPDepth;
 
+    uint32_t maxTempSubLayers;   // max number of Temporal Sub layers
     uint32_t maxDecPicBuffering; // these are dups of VPS values
+    uint32_t maxLatencyIncrease;
     int      numReorderPics;
-    int      maxLatencyIncrease;
 
     bool     bUseStrongIntraSmoothing; // use param
     bool     bTemporalMVPEnabled;
@@ -284,6 +287,14 @@ struct WeightParam
         inputWeight = X265_MIN(inputWeight, 127);
     }
 };
+
+#define SET_WEIGHT(w, b, s, d, o) \
+    { \
+        (w).inputWeight = (s); \
+        (w).log2WeightDenom = (d); \
+        (w).inputOffset = (o); \
+        (w).bPresentFlag = (b); \
+    }
 
 class Slice
 {

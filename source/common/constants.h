@@ -29,6 +29,8 @@
 namespace x265 {
 // private namespace
 
+extern int g_ctuSizeConfigured;
+
 void initZscanToRaster(uint32_t maxFullDepth, uint32_t depth, uint32_t startVal, uint32_t*& curIdx);
 void initRasterToZscan(uint32_t maxFullDepth);
 
@@ -55,7 +57,7 @@ extern const uint8_t g_log2Size[MAX_CU_SIZE + 1]; // from size to log2(size)
 extern uint32_t g_maxLog2CUSize;
 extern uint32_t g_maxCUSize;
 extern uint32_t g_maxCUDepth;
-extern uint32_t g_maxFullDepth;
+extern uint32_t g_unitSizeDepth; // Depth at which 4x4 unit occurs from max CU size
 
 extern const int16_t g_t4[4][4];
 extern const int16_t g_t8[8][8];

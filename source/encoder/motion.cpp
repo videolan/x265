@@ -59,38 +59,6 @@ const SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL + 1] =
 int sizeScale[NUM_PU_SIZES];
 #define SAD_THRESH(v) (bcost < (((v >> 4) * sizeScale[partEnum])))
 
-void initScales(void)
-{
-#define SETUP_SCALE(W, H) \
-    sizeScale[LUMA_ ## W ## x ## H] = (H * H) >> 4;
-    SETUP_SCALE(4, 4);
-    SETUP_SCALE(8, 8);
-    SETUP_SCALE(8, 4);
-    SETUP_SCALE(4, 8);
-    SETUP_SCALE(16, 16);
-    SETUP_SCALE(16, 8);
-    SETUP_SCALE(8, 16);
-    SETUP_SCALE(16, 12);
-    SETUP_SCALE(12, 16);
-    SETUP_SCALE(4, 16);
-    SETUP_SCALE(16, 4);
-    SETUP_SCALE(32, 32);
-    SETUP_SCALE(32, 16);
-    SETUP_SCALE(16, 32);
-    SETUP_SCALE(32, 24);
-    SETUP_SCALE(24, 32);
-    SETUP_SCALE(32, 8);
-    SETUP_SCALE(8, 32);
-    SETUP_SCALE(64, 64);
-    SETUP_SCALE(64, 32);
-    SETUP_SCALE(32, 64);
-    SETUP_SCALE(64, 48);
-    SETUP_SCALE(48, 64);
-    SETUP_SCALE(64, 16);
-    SETUP_SCALE(16, 64);
-#undef SETUP_SCALE
-}
-
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */
 const MV hex2[8] = { MV(-1, -2), MV(-2, 0), MV(-1, 2), MV(1, 2), MV(2, 0), MV(1, -2), MV(-1, -2), MV(-2, 0) };
 const uint8_t mod6m1[8] = { 5, 0, 1, 2, 3, 4, 5, 0 };  /* (x-1)%6 */
@@ -136,18 +104,49 @@ MotionEstimate::MotionEstimate()
     absPartIdx = -1;
     searchMethod = X265_HEX_SEARCH;
     subpelRefine = 2;
+    blockwidth = blockheight = 0;
+    blockOffset = 0;
     bChromaSATD = false;
     chromaSatd = NULL;
 }
 
 void MotionEstimate::init(int method, int refine, int csp)
 {
-    if (!sizeScale[0])
-        initScales();
-
     searchMethod = method;
     subpelRefine = refine;
     fencPUYuv.create(FENC_STRIDE, csp);
+}
+
+void MotionEstimate::initScales(void)
+{
+#define SETUP_SCALE(W, H) \
+    sizeScale[LUMA_ ## W ## x ## H] = (H * H) >> 4;
+    SETUP_SCALE(4, 4);
+    SETUP_SCALE(8, 8);
+    SETUP_SCALE(8, 4);
+    SETUP_SCALE(4, 8);
+    SETUP_SCALE(16, 16);
+    SETUP_SCALE(16, 8);
+    SETUP_SCALE(8, 16);
+    SETUP_SCALE(16, 12);
+    SETUP_SCALE(12, 16);
+    SETUP_SCALE(4, 16);
+    SETUP_SCALE(16, 4);
+    SETUP_SCALE(32, 32);
+    SETUP_SCALE(32, 16);
+    SETUP_SCALE(16, 32);
+    SETUP_SCALE(32, 24);
+    SETUP_SCALE(24, 32);
+    SETUP_SCALE(32, 8);
+    SETUP_SCALE(8, 32);
+    SETUP_SCALE(64, 64);
+    SETUP_SCALE(64, 32);
+    SETUP_SCALE(32, 64);
+    SETUP_SCALE(64, 48);
+    SETUP_SCALE(48, 64);
+    SETUP_SCALE(64, 16);
+    SETUP_SCALE(16, 64);
+#undef SETUP_SCALE
 }
 
 MotionEstimate::~MotionEstimate()

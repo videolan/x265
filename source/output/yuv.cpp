@@ -39,9 +39,7 @@ YUVOutput::YUVOutput(const char *filename, int w, int h, uint32_t d, int csp)
     buf = new char[width];
 
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
-    {
         frameSize += (uint32_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
-    }
 }
 
 YUVOutput::~YUVOutput()
@@ -69,9 +67,7 @@ bool YUVOutput::writePicture(const x265_picture& pic)
             for (int h = 0; h < height >> x265_cli_csps[colorSpace].height[i]; h++)
             {
                 for (int w = 0; w < width >> x265_cli_csps[colorSpace].width[i]; w++)
-                {
                     buf[w] = (char)(src[w] >> shift);
-                }
 
                 ofs.write(buf, width >> x265_cli_csps[colorSpace].width[i]);
                 src += pic.stride[i] / sizeof(*src);

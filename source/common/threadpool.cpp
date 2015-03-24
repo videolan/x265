@@ -27,115 +27,65 @@
 
 #include <new>
 
+#if X86_64
+
+#ifdef __GNUC__
+
+#define SLEEPBITMAP_CTZ(id, x)     id = (unsigned long)__builtin_ctzll(x)
+#define SLEEPBITMAP_OR(ptr, mask)  __sync_fetch_and_or(ptr, mask)
+#define SLEEPBITMAP_AND(ptr, mask) __sync_fetch_and_and(ptr, mask)
+
+#elif defined(_MSC_VER)
+
+#define SLEEPBITMAP_CTZ(id, x)     _BitScanForward64(&id, x)
+#define SLEEPBITMAP_OR(ptr, mask)  InterlockedOr64((volatile LONG64*)ptr, (LONG)mask)
+#define SLEEPBITMAP_AND(ptr, mask) InterlockedAnd64((volatile LONG64*)ptr, (LONG)mask)
+
+#endif // ifdef __GNUC__
+
+#else
+
+/* use 32-bit primitives defined in threading.h */
+#define SLEEPBITMAP_CTZ CTZ
+#define SLEEPBITMAP_OR  ATOMIC_OR
+#define SLEEPBITMAP_AND ATOMIC_AND
+
+#endif
+
 #if MACOS
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#endif
+#if HAVE_LIBNUMA
+#include <numa.h>
 #endif
 
 namespace x265 {
 // x265 private namespace
 
-class ThreadPoolImpl;
-
-class PoolThread : public Thread
+class WorkerThread : public Thread
 {
 private:
 
-    ThreadPoolImpl &m_pool;
+    ThreadPool&  m_pool;
+    int          m_id;
+    Event        m_wakeEvent;
 
-    PoolThread& operator =(const PoolThread&);
-
-    int            m_id;
-
-    bool           m_dirty;
-
-    bool           m_exited;
-
-    Event          m_wakeEvent;
+    WorkerThread& operator =(const WorkerThread&);
 
 public:
 
-    PoolThread(ThreadPoolImpl& pool, int id)
-        : m_pool(pool)
-        , m_id(id)
-        , m_dirty(false)
-        , m_exited(false)
-    {
-    }
+    JobProvider*     m_curJobProvider;
+    BondedTaskGroup* m_bondMaster;
 
-    bool isDirty() const  { return m_dirty; }
-
-    void markDirty()      { m_dirty = true; }
-
-    bool isExited() const { return m_exited; }
-
-    void poke()           { m_wakeEvent.trigger(); }
-
-    virtual ~PoolThread() {}
+    WorkerThread(ThreadPool& pool, int id) : m_pool(pool), m_id(id) {}
+    virtual ~WorkerThread() {}
 
     void threadMain();
+    void awaken()           { m_wakeEvent.trigger(); }
 };
 
-class ThreadPoolImpl : public ThreadPool
-{
-private:
-
-    bool         m_ok;
-    int          m_referenceCount;
-    int          m_numThreads;
-    int          m_numSleepMapWords;
-    PoolThread  *m_threads;
-    volatile uint32_t *m_sleepMap;
-
-    /* Lock for write access to the provider lists.  Threads are
-     * always allowed to read m_firstProvider and follow the
-     * linked list.  Providers must zero their m_nextProvider
-     * pointers before removing themselves from this list */
-    Lock         m_writeLock;
-
-public:
-
-    static ThreadPoolImpl *s_instance;
-    static Lock s_createLock;
-
-    JobProvider *m_firstProvider;
-    JobProvider *m_lastProvider;
-
-public:
-
-    ThreadPoolImpl(int numthreads);
-
-    virtual ~ThreadPoolImpl();
-
-    ThreadPoolImpl *AddReference()
-    {
-        m_referenceCount++;
-
-        return this;
-    }
-
-    void markThreadAsleep(int id);
-
-    void waitForAllIdle();
-
-    int getThreadCount() const { return m_numThreads; }
-
-    bool IsValid() const       { return m_ok; }
-
-    void release();
-
-    void Stop();
-
-    void enqueueJobProvider(JobProvider &);
-
-    void dequeueJobProvider(JobProvider &);
-
-    void FlushProviderList();
-
-    void pokeIdleThread();
-};
-
-void PoolThread::threadMain()
+void WorkerThread::threadMain()
 {
     THREAD_NAME("Worker", m_id);
 
@@ -145,286 +95,361 @@ void PoolThread::threadMain()
     __attribute__((unused)) int val = nice(10);
 #endif
 
-    while (m_pool.IsValid())
+    m_pool.setCurrentThreadAffinity();
+
+    sleepbitmap_t idBit = (sleepbitmap_t)1 << m_id;
+    m_curJobProvider = m_pool.m_jpTable[0];
+    m_bondMaster = NULL;
+
+    SLEEPBITMAP_OR(&m_curJobProvider->m_ownerBitmap, idBit);
+    SLEEPBITMAP_OR(&m_pool.m_sleepBitmap, idBit);
+    m_wakeEvent.wait();
+
+    while (m_pool.m_isActive)
     {
-        /* Walk list of job providers, looking for work */
-        JobProvider *cur = m_pool.m_firstProvider;
-        while (cur)
+        if (m_bondMaster)
         {
-            // FindJob() may perform actual work and return true.  If
-            // it does we restart the job search
-            if (cur->findJob(m_id) == true)
-                break;
-
-            cur = cur->m_nextProvider;
+            m_bondMaster->processTasks(m_id);
+            m_bondMaster->m_exitedPeerCount.incr();
+            m_bondMaster = NULL;
         }
 
-        // this thread has reached the end of the provider list
-        m_dirty = false;
-
-        if (cur == NULL)
+        do
         {
-            m_pool.markThreadAsleep(m_id);
-            m_wakeEvent.wait();
+            /* do pending work for current job provider */
+            m_curJobProvider->findJob(m_id);
+
+            /* if the current job provider still wants help, only switch to a
+             * higher priority provider (lower slice type). Else take the first
+             * available job provider with the highest priority */
+            int curPriority = (m_curJobProvider->m_helpWanted) ? m_curJobProvider->m_sliceType :
+                                                                 INVALID_SLICE_PRIORITY + 1;
+            int nextProvider = -1;
+            for (int i = 0; i < m_pool.m_numProviders; i++)
+            {
+                if (m_pool.m_jpTable[i]->m_helpWanted &&
+                    m_pool.m_jpTable[i]->m_sliceType < curPriority)
+                {
+                    nextProvider = i;
+                    curPriority = m_pool.m_jpTable[i]->m_sliceType;
+                }
+            }
+            if (nextProvider != -1 && m_curJobProvider != m_pool.m_jpTable[nextProvider])
+            {
+                SLEEPBITMAP_AND(&m_curJobProvider->m_ownerBitmap, ~idBit);
+                m_curJobProvider = m_pool.m_jpTable[nextProvider];
+                SLEEPBITMAP_OR(&m_curJobProvider->m_ownerBitmap, idBit);
+            }
         }
+        while (m_curJobProvider->m_helpWanted);
+
+        /* While the worker sleeps, a job-provider or bond-group may acquire this
+         * worker's sleep bitmap bit. Once acquired, that thread may modify 
+         * m_bondMaster or m_curJobProvider, then waken the thread */
+        SLEEPBITMAP_OR(&m_pool.m_sleepBitmap, idBit);
+        m_wakeEvent.wait();
     }
 
-    m_exited = true;
+    SLEEPBITMAP_OR(&m_pool.m_sleepBitmap, idBit);
 }
 
-void ThreadPoolImpl::markThreadAsleep(int id)
+void JobProvider::tryWakeOne()
 {
-    int word = id >> 5;
-    uint32_t bit = 1 << (id & 31);
-
-    ATOMIC_OR(&m_sleepMap[word], bit);
-}
-
-void ThreadPoolImpl::pokeIdleThread()
-{
-    /* Find a bit in the sleeping thread bitmap and poke it awake, do
-     * not give up until a thread is awakened or all of them are awake */
-    for (int i = 0; i < m_numSleepMapWords; i++)
+    int id = m_pool->tryAcquireSleepingThread(m_ownerBitmap, ALL_POOL_THREADS);
+    if (id < 0)
     {
-        uint32_t oldval = m_sleepMap[i];
-        while (oldval)
-        {
-            unsigned long id;
-            CTZ(id, oldval);
+        m_helpWanted = true;
+        return;
+    }
 
-            uint32_t bit = 1 << id;
-            if (ATOMIC_AND(&m_sleepMap[i], ~bit) & bit)
+    WorkerThread& worker = m_pool->m_workers[id];
+    if (worker.m_curJobProvider != this) /* poaching */
+    {
+        sleepbitmap_t bit = (sleepbitmap_t)1 << id;
+        SLEEPBITMAP_AND(&worker.m_curJobProvider->m_ownerBitmap, ~bit);
+        worker.m_curJobProvider = this;
+        SLEEPBITMAP_OR(&worker.m_curJobProvider->m_ownerBitmap, bit);
+    }
+    worker.awaken();
+}
+
+int ThreadPool::tryAcquireSleepingThread(sleepbitmap_t firstTryBitmap, sleepbitmap_t secondTryBitmap)
+{
+    unsigned long id;
+
+    sleepbitmap_t masked = m_sleepBitmap & firstTryBitmap;
+    while (masked)
+    {
+        SLEEPBITMAP_CTZ(id, masked);
+
+        sleepbitmap_t bit = (sleepbitmap_t)1 << id;
+        if (SLEEPBITMAP_AND(&m_sleepBitmap, ~bit) & bit)
+            return (int)id;
+
+        masked = m_sleepBitmap & firstTryBitmap;
+    }
+
+    masked = m_sleepBitmap & secondTryBitmap;
+    while (masked)
+    {
+        SLEEPBITMAP_CTZ(id, masked);
+
+        sleepbitmap_t bit = (sleepbitmap_t)1 << id;
+        if (SLEEPBITMAP_AND(&m_sleepBitmap, ~bit) & bit)
+            return (int)id;
+
+        masked = m_sleepBitmap & secondTryBitmap;
+    }
+
+    return -1;
+}
+
+int ThreadPool::tryBondPeers(int maxPeers, sleepbitmap_t peerBitmap, BondedTaskGroup& master)
+{
+    int bondCount = 0;
+    do
+    {
+        int id = tryAcquireSleepingThread(peerBitmap, 0);
+        if (id < 0)
+            return bondCount;
+
+        m_workers[id].m_bondMaster = &master;
+        m_workers[id].awaken();
+        bondCount++;
+    }
+    while (bondCount < maxPeers);
+
+    return bondCount;
+}
+
+ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
+{
+    enum { MAX_NODE_NUM = 127 };
+    int cpusPerNode[MAX_NODE_NUM + 1];
+
+    memset(cpusPerNode, 0, sizeof(cpusPerNode));
+    int numNumaNodes = X265_MIN(getNumaNodeCount(), MAX_NODE_NUM);
+    int cpuCount = getCpuCount();
+    bool bNumaSupport = false;
+
+#if _WIN32_WINNT >= 0x0601
+    bNumaSupport = true;
+#elif HAVE_LIBNUMA
+    bNumaSupport = numa_available() >= 0;
+#endif
+
+
+    for (int i = 0; i < cpuCount; i++)
+    {
+#if _WIN32_WINNT >= 0x0601
+        UCHAR node;
+        if (GetNumaProcessorNode((UCHAR)i, &node))
+            cpusPerNode[X265_MIN(node, MAX_NODE_NUM)]++;
+        else
+#elif HAVE_LIBNUMA
+        if (bNumaSupport >= 0)
+            cpusPerNode[X265_MIN(numa_node_of_cpu(i), MAX_NODE_NUM)]++;
+        else
+#endif
+            cpusPerNode[0]++;
+    }
+
+    if (bNumaSupport && p->logLevel >= X265_LOG_DEBUG)
+        for (int i = 0; i < numNumaNodes; i++)
+            x265_log(p, X265_LOG_DEBUG, "detected NUMA node %d with %d logical cores\n", i, cpusPerNode[i]);
+
+    /* limit nodes based on param->numaPools */
+    if (p->numaPools && *p->numaPools)
+    {
+        char *nodeStr = p->numaPools;
+        for (int i = 0; i < numNumaNodes; i++)
+        {
+            if (!*nodeStr)
             {
-                m_threads[i * 32 + id].poke();
-                return;
+                cpusPerNode[i] = 0;
+                continue;
+            }
+            else if (*nodeStr == '-')
+                cpusPerNode[i] = 0;
+            else if (*nodeStr == '*')
+                break;
+            else if (*nodeStr == '+')
+                ;
+            else
+            {
+                int count = atoi(nodeStr);
+                cpusPerNode[i] = X265_MIN(count, cpusPerNode[i]);
             }
 
-            oldval = m_sleepMap[i];
+            /* consume current node string, comma, and white-space */
+            while (*nodeStr && *nodeStr != ',')
+               ++nodeStr;
+            if (*nodeStr == ',' || *nodeStr == ' ')
+               ++nodeStr;
+        }
+    }
+
+    numPools = 0;
+    for (int i = 0; i < numNumaNodes; i++)
+    {
+        if (bNumaSupport)
+            x265_log(p, X265_LOG_DEBUG, "NUMA node %d may use %d logical cores\n", i, cpusPerNode[i]);
+        if (cpusPerNode[i])
+            numPools += (cpusPerNode[i] + MAX_POOL_THREADS - 1) / MAX_POOL_THREADS;
+    }
+
+    if (!numPools)
+        return NULL;
+
+    if (numPools > p->frameNumThreads)
+    {
+        x265_log(p, X265_LOG_DEBUG, "Reducing number of thread pools for frame thread count\n");
+        numPools = X265_MAX(p->frameNumThreads / 2, 1);
+    }
+
+    ThreadPool *pools = new ThreadPool[numPools];
+    if (pools)
+    {
+        int maxProviders = (p->frameNumThreads + 1 + numPools - 1) / numPools; /* +1 is Lookahead */
+        int node = 0;
+        for (int i = 0; i < numPools; i++)
+        {
+            while (!cpusPerNode[node])
+                node++;
+            int cores = X265_MIN(MAX_POOL_THREADS, cpusPerNode[node]);
+            if (!pools[i].create(cores, maxProviders, node))
+            {
+                X265_FREE(pools);
+                numPools = 0;
+                return NULL;
+            }
+            if (numNumaNodes > 1)
+                x265_log(p, X265_LOG_INFO, "Thread pool %d using %d threads on NUMA node %d\n", i, cores, node);
+            else
+                x265_log(p, X265_LOG_INFO, "Thread pool created using %d threads\n", cores);
+            cpusPerNode[node] -= cores;
+        }
+    }
+    else
+        numPools = 0;
+    return pools;
+}
+
+ThreadPool::ThreadPool()
+{
+    memset(this, 0, sizeof(*this));
+}
+
+bool ThreadPool::create(int numThreads, int maxProviders, int node)
+{
+    X265_CHECK(numThreads <= MAX_POOL_THREADS, "a single thread pool cannot have more than MAX_POOL_THREADS threads\n");
+
+    m_numaNode = node;
+    m_numWorkers = numThreads;
+
+    m_workers = X265_MALLOC(WorkerThread, numThreads);
+    /* placement new initialization */
+    if (m_workers)
+        for (int i = 0; i < numThreads; i++)
+            new (m_workers + i)WorkerThread(*this, i);
+
+    m_jpTable = X265_MALLOC(JobProvider*, maxProviders);
+    m_numProviders = 0;
+
+    return m_workers && m_jpTable;
+}
+
+bool ThreadPool::start()
+{
+    m_isActive = true;
+    for (int i = 0; i < m_numWorkers; i++)
+    {
+        if (!m_workers[i].start())
+        {
+            m_isActive = false;
+            return false;
+        }
+    }
+    return true;
+}
+
+void ThreadPool::stop()
+{
+    if (m_workers)
+    {
+        m_isActive = false;
+        for (int i = 0; i < m_numWorkers; i++)
+        {
+            while (!(m_sleepBitmap & ((sleepbitmap_t)1 << i)))
+                GIVE_UP_TIME();
+            m_workers[i].awaken();
+            m_workers[i].stop();
         }
     }
 }
 
-ThreadPoolImpl *ThreadPoolImpl::s_instance;
-Lock ThreadPoolImpl::s_createLock;
+ThreadPool::~ThreadPool()
+{
+    if (m_workers)
+    {
+        for (int i = 0; i < m_numWorkers; i++)
+            m_workers[i].~WorkerThread();
+    }
+
+    X265_FREE(m_workers);
+    X265_FREE(m_jpTable);
+}
+
+void ThreadPool::setCurrentThreadAffinity()
+{
+    setThreadNodeAffinity(m_numaNode);
+}
 
 /* static */
-ThreadPool *ThreadPool::allocThreadPool(int numthreads)
+void ThreadPool::setThreadNodeAffinity(int numaNode)
 {
-    if (ThreadPoolImpl::s_instance)
-        return ThreadPoolImpl::s_instance->AddReference();
-
-    /* acquire the lock to create the instance */
-    ThreadPoolImpl::s_createLock.acquire();
-
-    if (ThreadPoolImpl::s_instance)
-        /* pool was allocated while we waited for the lock */
-        ThreadPoolImpl::s_instance->AddReference();
-    else
-        ThreadPoolImpl::s_instance = new ThreadPoolImpl(numthreads);
-    ThreadPoolImpl::s_createLock.release();
-
-    return ThreadPoolImpl::s_instance;
-}
-
-ThreadPool *ThreadPool::getThreadPool()
-{
-    X265_CHECK(ThreadPoolImpl::s_instance, "getThreadPool() called prior to allocThreadPool()\n");
-    return ThreadPoolImpl::s_instance;
-}
-
-void ThreadPoolImpl::release()
-{
-    if (--m_referenceCount == 0)
+#if _WIN32_WINNT >= 0x0601
+    GROUP_AFFINITY groupAffinity;
+    if (GetNumaNodeProcessorMaskEx((USHORT)numaNode, &groupAffinity))
     {
-        X265_CHECK(this == ThreadPoolImpl::s_instance, "multiple thread pool instances detected\n");
-        ThreadPoolImpl::s_instance = NULL;
-        this->Stop();
-        delete this;
+        if (SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)groupAffinity.Mask))
+            return;
     }
-}
-
-ThreadPoolImpl::ThreadPoolImpl(int numThreads)
-    : m_ok(false)
-    , m_referenceCount(1)
-    , m_firstProvider(NULL)
-    , m_lastProvider(NULL)
-{
-    m_numSleepMapWords = (numThreads + 31) >> 5;
-    m_sleepMap = X265_MALLOC(uint32_t, m_numSleepMapWords);
-
-    char *buffer = (char*)X265_MALLOC(PoolThread, numThreads);
-    m_threads = reinterpret_cast<PoolThread*>(buffer);
-    m_numThreads = numThreads;
-
-    if (m_threads && m_sleepMap)
+    x265_log(NULL, X265_LOG_ERROR, "unable to set thread affinity to NUMA node %d\n", numaNode);
+#elif HAVE_LIBNUMA
+    if (numa_available() >= 0)
     {
-        for (int i = 0; i < m_numSleepMapWords; i++)
-            m_sleepMap[i] = 0;
-
-        m_ok = true;
-        int i;
-        for (i = 0; i < numThreads; i++)
-        {
-            new (buffer)PoolThread(*this, i);
-            buffer += sizeof(PoolThread);
-            if (!m_threads[i].start())
-            {
-                m_ok = false;
-                break;
-            }
-        }
-
-        if (m_ok)
-            waitForAllIdle();
-        else
-        {
-            // stop threads that did start up
-            for (int j = 0; j < i; j++)
-            {
-                m_threads[j].poke();
-                m_threads[j].stop();
-            }
-        }
-    }
-}
-
-void ThreadPoolImpl::waitForAllIdle()
-{
-    if (!m_ok)
+        numa_run_on_node(numaNode);
+        numa_set_preferred(numaNode);
+        numa_set_localalloc();
         return;
-
-    int id = 0;
-    do
-    {
-        int word = id >> 5;
-        uint32_t bit = 1 << (id & 31);
-        if (m_sleepMap[word] & bit)
-            id++;
-        else
-        {
-            GIVE_UP_TIME();
-        }
     }
-    while (id < m_numThreads);
+    x265_log(NULL, X265_LOG_ERROR, "unable to set thread affinity to NUMA node %d\n", numaNode);
+#else
+    (void)numaNode;
+#endif
 }
 
-void ThreadPoolImpl::Stop()
+/* static */
+int ThreadPool::getNumaNodeCount()
 {
-    if (m_ok)
-    {
-        waitForAllIdle();
-
-        // set invalid flag, then wake them up so they exit their main func
-        m_ok = false;
-        for (int i = 0; i < m_numThreads; i++)
-        {
-            m_threads[i].poke();
-            m_threads[i].stop();
-        }
-    }
-}
-
-ThreadPoolImpl::~ThreadPoolImpl()
-{
-    X265_FREE((void*)m_sleepMap);
-
-    if (m_threads)
-    {
-        // cleanup thread handles
-        for (int i = 0; i < m_numThreads; i++)
-            m_threads[i].~PoolThread();
-
-        X265_FREE(reinterpret_cast<char*>(m_threads));
-    }
-}
-
-void ThreadPoolImpl::enqueueJobProvider(JobProvider &p)
-{
-    // only one list writer at a time
-    ScopedLock l(m_writeLock);
-
-    p.m_nextProvider = NULL;
-    p.m_prevProvider = m_lastProvider;
-    m_lastProvider = &p;
-
-    if (p.m_prevProvider)
-        p.m_prevProvider->m_nextProvider = &p;
+#if _WIN32_WINNT >= 0x0601
+    ULONG num = 1;
+    if (GetNumaHighestNodeNumber(&num))
+        num++;
+    return (int)num;
+#elif HAVE_LIBNUMA
+    if (numa_available() >= 0)
+        return numa_max_node() + 1;
     else
-        m_firstProvider = &p;
+        return 1;
+#else
+    return 1;
+#endif
 }
 
-void ThreadPoolImpl::dequeueJobProvider(JobProvider &p)
-{
-    // only one list writer at a time
-    ScopedLock l(m_writeLock);
-
-    // update pool entry pointers first
-    if (m_firstProvider == &p)
-        m_firstProvider = p.m_nextProvider;
-
-    if (m_lastProvider == &p)
-        m_lastProvider = p.m_prevProvider;
-
-    // extract self from doubly linked lists
-    if (p.m_nextProvider)
-        p.m_nextProvider->m_prevProvider = p.m_prevProvider;
-
-    if (p.m_prevProvider)
-        p.m_prevProvider->m_nextProvider = p.m_nextProvider;
-
-    p.m_nextProvider = NULL;
-    p.m_prevProvider = NULL;
-}
-
-/* Ensure all threads have made a full pass through the provider list, ensuring
- * dequeued providers are safe for deletion. */
-void ThreadPoolImpl::FlushProviderList()
-{
-    for (int i = 0; i < m_numThreads; i++)
-    {
-        m_threads[i].markDirty();
-        m_threads[i].poke();
-    }
-
-    int i;
-    do
-    {
-        for (i = 0; i < m_numThreads; i++)
-        {
-            if (m_threads[i].isDirty())
-            {
-                GIVE_UP_TIME();
-                break;
-            }
-        }
-    }
-    while (i < m_numThreads);
-}
-
-void JobProvider::flush()
-{
-    if (m_nextProvider || m_prevProvider)
-        dequeue();
-    dynamic_cast<ThreadPoolImpl*>(m_pool)->FlushProviderList();
-}
-
-void JobProvider::enqueue()
-{
-    // Add this provider to the end of the thread pool's job provider list
-    X265_CHECK(!m_nextProvider && !m_prevProvider && m_pool, "job provider was already queued\n");
-    m_pool->enqueueJobProvider(*this);
-    m_pool->pokeIdleThread();
-}
-
-void JobProvider::dequeue()
-{
-    // Remove this provider from the thread pool's job provider list
-    m_pool->dequeueJobProvider(*this);
-    // Ensure no jobs were missed while the provider was being removed
-    m_pool->pokeIdleThread();
-}
-
-int getCpuCount()
+/* static */
+int ThreadPool::getCpuCount()
 {
 #if _WIN32
     SYSTEM_INFO sysinfo;
@@ -450,8 +475,9 @@ int getCpuCount()
     }
 
     return count;
-#else // if _WIN32
+#else
     return 2; // default to 2 threads, everywhere else
-#endif // if _WIN32
+#endif
 }
+
 } // end namespace x265

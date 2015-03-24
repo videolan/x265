@@ -46,9 +46,7 @@ Y4MOutput::Y4MOutput(const char *filename, int w, int h, uint32_t fpsNum, uint32
     }
 
     for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
-    {
         frameSize += (uint32_t)((width >> x265_cli_csps[colorSpace].width[i]) * (height >> x265_cli_csps[colorSpace].height[i]));
-    }
 }
 
 Y4MOutput::~Y4MOutput()
@@ -66,14 +64,10 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
 
 #if HIGH_BIT_DEPTH
     if (pic.bitDepth > 8 && pic.poc == 0)
-    {
         x265_log(NULL, X265_LOG_WARNING, "y4m: down-shifting reconstructed pixels to 8 bits\n");
-    }
 #else
     if (pic.bitDepth > 8 && pic.poc == 0)
-    {
         x265_log(NULL, X265_LOG_WARNING, "y4m: forcing reconstructed pixels to 8 bits\n");
-    }
 #endif
 
     X265_CHECK(pic.colorSpace == colorSpace, "invalid color space\n");
@@ -89,9 +83,7 @@ bool Y4MOutput::writePicture(const x265_picture& pic)
         for (int h = 0; h < height >> x265_cli_csps[colorSpace].height[i]; h++)
         {
             for (int w = 0; w < width >> x265_cli_csps[colorSpace].width[i]; w++)
-            {
                 buf[w] = (char)(src[w] >> shift);
-            }
 
             ofs.write(buf, width >> x265_cli_csps[colorSpace].width[i]);
             src += pic.stride[i] / sizeof(*src);

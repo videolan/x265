@@ -39,10 +39,11 @@ public:
 
     int                m_lastIDR;
     int                m_pocCRA;
-    bool               m_bRefreshPending;
     int                m_maxRefL0;
     int                m_maxRefL1;
     int                m_bOpenGOP;
+    bool               m_bRefreshPending;
+    bool               m_bTemporalSublayer;
     PicList            m_picList;
     PicList            m_freeList;
     FrameData*         m_picSymFreeList;
@@ -56,6 +57,7 @@ public:
         m_maxRefL0 = param->maxNumReferences;
         m_maxRefL1 = param->bBPyramid ? 2 : 1;
         m_bOpenGOP = param->bOpenGOP;
+        m_bTemporalSublayer = !!param->bEnableTemporalSubLayers;
     }
 
     ~DPB();

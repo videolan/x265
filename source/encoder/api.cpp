@@ -173,6 +173,7 @@ void x265_encoder_close(x265_encoder *enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
 
+        encoder->stop();
         encoder->printSummary();
         encoder->destroy();
         delete encoder;
@@ -183,6 +184,8 @@ extern "C"
 void x265_cleanup(void)
 {
     BitCost::destroy();
+    CUData::s_partSet[0] = NULL; /* allow CUData to adjust to new CTU size */
+    g_ctuSizeConfigured = 0;
 }
 
 extern "C"
@@ -206,7 +209,7 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
 
         uint32_t numCUsInFrame   = widthInCU * heightInCU;
         pic->analysisData.numCUsInFrame = numCUsInFrame;
-        pic->analysisData.numPartitions = NUM_CU_PARTITIONS;
+        pic->analysisData.numPartitions = NUM_4x4_PARTITIONS;
     }
 }
 

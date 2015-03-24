@@ -48,6 +48,12 @@ void x265_cpy1Dto2D_shr_4_sse2(int16_t* dst, const int16_t* src, intptr_t dstStr
 void x265_cpy1Dto2D_shr_8_sse2(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift);
 void x265_cpy1Dto2D_shr_16_sse2(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift);
 void x265_cpy1Dto2D_shr_32_sse2(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift);
+void x265_cpy2Dto1D_shl_8_avx2(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+void x265_cpy2Dto1D_shl_16_avx2(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+void x265_cpy2Dto1D_shl_32_avx2(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+void x265_cpy2Dto1D_shr_8_avx2(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+void x265_cpy2Dto1D_shr_16_avx2(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+void x265_cpy2Dto1D_shr_32_avx2(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 uint32_t x265_copy_cnt_4_sse4(int16_t* dst, const int16_t* src, intptr_t srcStride);
 uint32_t x265_copy_cnt_8_sse4(int16_t* dst, const int16_t* src, intptr_t srcStride);
 uint32_t x265_copy_cnt_16_sse4(int16_t* dst, const int16_t* src, intptr_t srcStride);
@@ -198,6 +204,15 @@ void x265_blockcopy_ss_64x16_avx(int16_t* dst, intptr_t dstStride, const int16_t
 void x265_blockcopy_ss_64x32_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 void x265_blockcopy_ss_64x48_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 void x265_blockcopy_ss_64x64_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+void x265_blockcopy_ss_32x8_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+void x265_blockcopy_ss_32x16_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+void x265_blockcopy_ss_32x24_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+void x265_blockcopy_ss_32x32_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+void x265_blockcopy_ss_32x48_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+void x265_blockcopy_ss_32x64_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+void x265_blockcopy_ss_48x64_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+void x265_blockcopy_ss_24x32_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+void x265_blockcopy_ss_24x64_avx(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 
 void x265_blockcopy_pp_32x8_avx(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb);
 void x265_blockcopy_pp_32x16_avx(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb);
@@ -205,9 +220,36 @@ void x265_blockcopy_pp_32x24_avx(pixel* a, intptr_t stridea, const pixel* b, int
 void x265_blockcopy_pp_32x32_avx(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb);
 void x265_blockcopy_pp_32x48_avx(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb);
 void x265_blockcopy_pp_32x64_avx(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+void x265_blockcopy_pp_64x16_avx(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+void x265_blockcopy_pp_64x32_avx(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+void x265_blockcopy_pp_64x48_avx(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+void x265_blockcopy_pp_64x64_avx(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+void x265_blockcopy_pp_48x64_avx(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb);
 
 void x265_blockfill_s_16x16_avx2(int16_t* dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_32x32_avx2(int16_t* dst, intptr_t dstride, int16_t val);
+// copy_sp primitives
+// 16 x N
+void x265_blockcopy_sp_16x16_avx2(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_sp_16x32_avx2(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+
+// 32 x N
+void x265_blockcopy_sp_32x32_avx2(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_sp_32x64_avx2(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+
+// 64 x N
+void x265_blockcopy_sp_64x64_avx2(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+// copy_ps primitives
+// 16 x N
+void x265_blockcopy_ps_16x16_avx2(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+void x265_blockcopy_ps_16x32_avx2(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+
+// 32 x N
+void x265_blockcopy_ps_32x32_avx2(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+void x265_blockcopy_ps_32x64_avx2(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+
+// 64 x N
+void x265_blockcopy_ps_64x64_avx2(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strideb);
 
 #undef BLOCKCOPY_COMMON
 #undef BLOCKCOPY_SS_PP

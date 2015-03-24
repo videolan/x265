@@ -34,11 +34,23 @@ using namespace x265;
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
 
+PredictionUnit::PredictionUnit(const CUData& cu, const CUGeom& cuGeom, int puIdx)
+{
+    /* address of CTU */
+    ctuAddr = cu.m_cuAddr;
+
+    /* offset of CU */
+    cuAbsPartIdx = cuGeom.absPartIdx;
+
+    /* offset and dimensions of PU */
+    cu.getPartIndexAndSize(puIdx, puAbsPartIdx, width, height);
+}
+
 namespace
 {
 inline pixel weightBidir(int w0, int16_t P0, int w1, int16_t P1, int round, int shift, int offset)
 {
-    return x265_clip((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset << (shift - 1))) >> shift);
+    return x265_clip((w0 * (P0 + IF_INTERNAL_OFFS) + w1 * (P1 + IF_INTERNAL_OFFS) + round + (offset * (1 << (shift - 1)))) >> shift);
 }
 }
 
@@ -67,82 +79,24 @@ fail:
     return false;
 }
 
-void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
+void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv& predYuv, bool bLuma, bool bChroma)
 {
-    int sizeIdx = log2TrSize - 2;
-    int tuSize = 1 << log2TrSize;
-    int filter = !!(g_intraFilterFlags[dirMode] & tuSize);
-    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
+    int refIdx0 = cu.m_refIdx[0][pu.puAbsPartIdx];
+    int refIdx1 = cu.m_refIdx[1][pu.puAbsPartIdx];
 
-    bool bFilter = log2TrSize <= 4;
-    primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, intraNeighbourBuf[filter], dirMode, bFilter);
-}
-
-void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC, int chFmt)
-{
-    int tuSize = 1 << log2TrSizeC;
-    int tuSize2 = tuSize << 1;
-
-    pixel* srcBuf = intraNeighbourBuf[0];
-
-    if (chFmt == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize))
-    {
-        pixel* fltBuf = intraNeighbourBuf[1];
-        pixel topLeft = srcBuf[0], topLast = srcBuf[tuSize2], leftLast = srcBuf[tuSize2 + tuSize2];
-
-        // filtering top
-        for (int i = 1; i < tuSize2; i++)
-            fltBuf[i] = ((srcBuf[i] << 1) + srcBuf[i - 1] + srcBuf[i + 1] + 2) >> 2;
-        fltBuf[tuSize2] = topLast;
-
-        // filtering top-left
-        fltBuf[0] = ((srcBuf[0] << 1) + srcBuf[1] + srcBuf[tuSize2 + 1] + 2) >> 2;
-
-        //filtering left
-        fltBuf[tuSize2 + 1] = ((srcBuf[tuSize2 + 1] << 1) + topLeft + srcBuf[tuSize2 + 2] + 2) >> 2;
-        for (int i = tuSize2 + 2; i < tuSize2 + tuSize2; i++)
-            fltBuf[i] = ((srcBuf[i] << 1) + srcBuf[i - 1] + srcBuf[i + 1] + 2) >> 2;
-        fltBuf[tuSize2 + tuSize2] = leftLast;
-
-        srcBuf = intraNeighbourBuf[1];
-    }
-
-    int sizeIdx = log2TrSizeC - 2;
-    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
-    primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, srcBuf, dirMode, 0);
-}
-
-void Predict::initMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int partIdx)
-{
-    m_predSlice = cu.m_slice;
-    cu.getPartIndexAndSize(partIdx, m_puAbsPartIdx, m_puWidth, m_puHeight);
-    m_ctuAddr = cu.m_cuAddr;
-    m_cuAbsPartIdx = cuGeom.encodeIdx;
-}
-
-void Predict::prepMotionCompensation(const CUData& cu, const CUGeom& cuGeom, int partIdx)
-{
-    initMotionCompensation(cu, cuGeom, partIdx);
-
-    m_refIdx0      = cu.m_refIdx[0][m_puAbsPartIdx];
-    m_clippedMv[0] = cu.m_mv[0][m_puAbsPartIdx];
-    m_refIdx1      = cu.m_refIdx[1][m_puAbsPartIdx];
-    m_clippedMv[1] = cu.m_mv[1][m_puAbsPartIdx];
-    cu.clipMv(m_clippedMv[0]);
-    cu.clipMv(m_clippedMv[1]);
-}
-
-void Predict::motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma)
-{
-    if (m_predSlice->isInterP())
+    if (cu.m_slice->isInterP())
     {
         /* P Slice */
         WeightValues wv0[3];
-        X265_CHECK(m_refIdx0 >= 0, "invalid P refidx\n");
-        X265_CHECK(m_refIdx0 < m_predSlice->m_numRefIdx[0], "P refidx out of range\n");
-        const WeightParam *wp0 = m_predSlice->m_weightPredTable[0][m_refIdx0];
 
-        if (m_predSlice->m_pps->bUseWeightPred && wp0->bPresentFlag)
+        X265_CHECK(refIdx0 >= 0, "invalid P refidx\n");
+        X265_CHECK(refIdx0 < cu.m_slice->m_numRefIdx[0], "P refidx out of range\n");
+        const WeightParam *wp0 = cu.m_slice->m_weightPredTable[0][refIdx0];
+
+        MV mv0 = cu.m_mv[0][pu.puAbsPartIdx];
+        cu.clipMv(mv0);
+
+        if (cu.m_slice->m_pps->bUseWeightPred && wp0->bPresentFlag)
         {
             for (int plane = 0; plane < 3; plane++)
             {
@@ -155,18 +109,18 @@ void Predict::motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma)
             ShortYuv& shortYuv = m_predShortYuv[0];
 
             if (bLuma)
-                predInterLumaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
+                predInterLumaShort(pu, shortYuv, *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
             if (bChroma)
-                predInterChromaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
+                predInterChromaShort(pu, shortYuv, *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
 
-            addWeightUni(predYuv, shortYuv, wv0, bLuma, bChroma);
+            addWeightUni(pu, predYuv, shortYuv, wv0, bLuma, bChroma);
         }
         else
         {
             if (bLuma)
-                predInterLumaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
+                predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
             if (bChroma)
-                predInterChromaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
+                predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
         }
     }
     else
@@ -176,10 +130,13 @@ void Predict::motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma)
         WeightValues wv0[3], wv1[3];
         const WeightParam *pwp0, *pwp1;
 
-        if (m_predSlice->m_pps->bUseWeightedBiPred)
+        X265_CHECK(refIdx0 < cu.m_slice->m_numRefIdx[0], "bidir refidx0 out of range\n");
+        X265_CHECK(refIdx1 < cu.m_slice->m_numRefIdx[1], "bidir refidx1 out of range\n");
+
+        if (cu.m_slice->m_pps->bUseWeightedBiPred)
         {
-            pwp0 = m_refIdx0 >= 0 ? m_predSlice->m_weightPredTable[0][m_refIdx0] : NULL;
-            pwp1 = m_refIdx1 >= 0 ? m_predSlice->m_weightPredTable[1][m_refIdx1] : NULL;
+            pwp0 = refIdx0 >= 0 ? cu.m_slice->m_weightPredTable[0][refIdx0] : NULL;
+            pwp1 = refIdx1 >= 0 ? cu.m_slice->m_weightPredTable[1][refIdx1] : NULL;
 
             if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
             {
@@ -200,7 +157,7 @@ void Predict::motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma)
             else
             {
                 /* uniprediction weighting, always outputs to wv0 */
-                const WeightParam* pwp = (m_refIdx0 >= 0) ? pwp0 : pwp1;
+                const WeightParam* pwp = (refIdx0 >= 0) ? pwp0 : pwp1;
                 for (int plane = 0; plane < 3; plane++)
                 {
                     wv0[plane].w = pwp[plane].inputWeight;
@@ -213,89 +170,92 @@ void Predict::motionCompensation(Yuv& predYuv, bool bLuma, bool bChroma)
         else
             pwp0 = pwp1 = NULL;
 
-        if (m_refIdx0 >= 0 && m_refIdx1 >= 0)
+        if (refIdx0 >= 0 && refIdx1 >= 0)
         {
-            /* Biprediction */
-            X265_CHECK(m_refIdx0 < m_predSlice->m_numRefIdx[0], "bidir refidx0 out of range\n");
-            X265_CHECK(m_refIdx1 < m_predSlice->m_numRefIdx[1], "bidir refidx1 out of range\n");
+            MV mv0 = cu.m_mv[0][pu.puAbsPartIdx];
+            MV mv1 = cu.m_mv[1][pu.puAbsPartIdx];
+            cu.clipMv(mv0);
+            cu.clipMv(mv1);
 
             if (bLuma)
             {
-                predInterLumaShort(m_predShortYuv[0], *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
-                predInterLumaShort(m_predShortYuv[1], *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
+                predInterLumaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
+                predInterLumaShort(pu, m_predShortYuv[1], *cu.m_slice->m_refPicList[1][refIdx1]->m_reconPic, mv1);
             }
             if (bChroma)
             {
-                predInterChromaShort(m_predShortYuv[0], *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
-                predInterChromaShort(m_predShortYuv[1], *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
+                predInterChromaShort(pu, m_predShortYuv[0], *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
+                predInterChromaShort(pu, m_predShortYuv[1], *cu.m_slice->m_refPicList[1][refIdx1]->m_reconPic, mv1);
             }
 
             if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
-                addWeightBi(predYuv, m_predShortYuv[0], m_predShortYuv[1], wv0, wv1, bLuma, bChroma);
+                addWeightBi(pu, predYuv, m_predShortYuv[0], m_predShortYuv[1], wv0, wv1, bLuma, bChroma);
             else
-                predYuv.addAvg(m_predShortYuv[0], m_predShortYuv[1], m_puAbsPartIdx, m_puWidth, m_puHeight, bLuma, bChroma);
+                predYuv.addAvg(m_predShortYuv[0], m_predShortYuv[1], pu.puAbsPartIdx, pu.width, pu.height, bLuma, bChroma);
         }
-        else if (m_refIdx0 >= 0)
+        else if (refIdx0 >= 0)
         {
-            /* uniprediction to L0 */
-            X265_CHECK(m_refIdx0 < m_predSlice->m_numRefIdx[0], "unidir refidx0 out of range\n");
+            MV mv0 = cu.m_mv[0][pu.puAbsPartIdx];
+            cu.clipMv(mv0);
 
             if (pwp0 && pwp0->bPresentFlag)
             {
                 ShortYuv& shortYuv = m_predShortYuv[0];
 
                 if (bLuma)
-                    predInterLumaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
+                    predInterLumaShort(pu, shortYuv, *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
                 if (bChroma)
-                    predInterChromaShort(shortYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
+                    predInterChromaShort(pu, shortYuv, *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
 
-                addWeightUni(predYuv, shortYuv, wv0, bLuma, bChroma);
+                addWeightUni(pu, predYuv, shortYuv, wv0, bLuma, bChroma);
             }
             else
             {
                 if (bLuma)
-                    predInterLumaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
+                    predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
                 if (bChroma)
-                    predInterChromaPixel(predYuv, *m_predSlice->m_refPicList[0][m_refIdx0]->m_reconPic, m_clippedMv[0]);
+                    predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refPicList[0][refIdx0]->m_reconPic, mv0);
             }
         }
         else
         {
+            MV mv1 = cu.m_mv[1][pu.puAbsPartIdx];
+            cu.clipMv(mv1);
+
             /* uniprediction to L1 */
-            X265_CHECK(m_refIdx1 >= 0, "refidx1 was not positive\n");
-            X265_CHECK(m_refIdx1 < m_predSlice->m_numRefIdx[1], "unidir refidx1 out of range\n");
+            X265_CHECK(refIdx1 >= 0, "refidx1 was not positive\n");
 
             if (pwp1 && pwp1->bPresentFlag)
             {
                 ShortYuv& shortYuv = m_predShortYuv[0];
 
                 if (bLuma)
-                    predInterLumaShort(shortYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
+                    predInterLumaShort(pu, shortYuv, *cu.m_slice->m_refPicList[1][refIdx1]->m_reconPic, mv1);
                 if (bChroma)
-                    predInterChromaShort(shortYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
+                    predInterChromaShort(pu, shortYuv, *cu.m_slice->m_refPicList[1][refIdx1]->m_reconPic, mv1);
 
-                addWeightUni(predYuv, shortYuv, wv0, bLuma, bChroma);
+                addWeightUni(pu, predYuv, shortYuv, wv0, bLuma, bChroma);
             }
             else
             {
                 if (bLuma)
-                    predInterLumaPixel(predYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
+                    predInterLumaPixel(pu, predYuv, *cu.m_slice->m_refPicList[1][refIdx1]->m_reconPic, mv1);
                 if (bChroma)
-                    predInterChromaPixel(predYuv, *m_predSlice->m_refPicList[1][m_refIdx1]->m_reconPic, m_clippedMv[1]);
+                    predInterChromaPixel(pu, predYuv, *cu.m_slice->m_refPicList[1][refIdx1]->m_reconPic, mv1);
             }
         }
     }
 }
 
-void Predict::predInterLumaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& mv) const
+void Predict::predInterLumaPixel(const PredictionUnit& pu, Yuv& dstYuv, const PicYuv& refPic, const MV& mv) const
 {
-    pixel* dst = dstYuv.getLumaAddr(m_puAbsPartIdx);
+    pixel* dst = dstYuv.getLumaAddr(pu.puAbsPartIdx);
     intptr_t dstStride = dstYuv.m_size;
 
     intptr_t srcStride = refPic.m_stride;
     intptr_t srcOffset = (mv.x >> 2) + (mv.y >> 2) * srcStride;
-    int partEnum = partitionFromSizes(m_puWidth, m_puHeight);
-    const pixel* src = refPic.getLumaAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + srcOffset;
+    int partEnum = partitionFromSizes(pu.width, pu.height);
+    const pixel* src = refPic.getLumaAddr(pu.ctuAddr, pu.cuAbsPartIdx + pu.puAbsPartIdx) + srcOffset;
 
     int xFrac = mv.x & 0x3;
     int yFrac = mv.y & 0x3;
@@ -310,32 +270,32 @@ void Predict::predInterLumaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& mv
         primitives.pu[partEnum].luma_hvpp(src, srcStride, dst, dstStride, xFrac, yFrac);
 }
 
-void Predict::predInterLumaShort(ShortYuv& dstSYuv, const PicYuv& refPic, const MV& mv) const
+void Predict::predInterLumaShort(const PredictionUnit& pu, ShortYuv& dstSYuv, const PicYuv& refPic, const MV& mv) const
 {
-    int16_t* dst = dstSYuv.getLumaAddr(m_puAbsPartIdx);
+    int16_t* dst = dstSYuv.getLumaAddr(pu.puAbsPartIdx);
     int dstStride = dstSYuv.m_size;
 
     intptr_t srcStride = refPic.m_stride;
     intptr_t srcOffset = (mv.x >> 2) + (mv.y >> 2) * srcStride;
-    const pixel* src = refPic.getLumaAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + srcOffset;
+    const pixel* src = refPic.getLumaAddr(pu.ctuAddr, pu.cuAbsPartIdx + pu.puAbsPartIdx) + srcOffset;
 
     int xFrac = mv.x & 0x3;
     int yFrac = mv.y & 0x3;
 
-    int partEnum = partitionFromSizes(m_puWidth, m_puHeight);
+    int partEnum = partitionFromSizes(pu.width, pu.height);
 
-    X265_CHECK((m_puWidth % 4) + (m_puHeight % 4) == 0, "width or height not divisible by 4\n");
+    X265_CHECK((pu.width % 4) + (pu.height % 4) == 0, "width or height not divisible by 4\n");
     X265_CHECK(dstStride == MAX_CU_SIZE, "stride expected to be max cu size\n");
 
     if (!(yFrac | xFrac))
-        primitives.luma_p2s(src, srcStride, dst, m_puWidth, m_puHeight);
+        primitives.luma_p2s(src, srcStride, dst, pu.width, pu.height);
     else if (!yFrac)
         primitives.pu[partEnum].luma_hps(src, srcStride, dst, dstStride, xFrac, 0);
     else if (!xFrac)
         primitives.pu[partEnum].luma_vps(src, srcStride, dst, dstStride, yFrac);
     else
     {
-        int tmpStride = m_puWidth;
+        int tmpStride = pu.width;
         int filterSize = NTAPS_LUMA;
         int halfFilterSize = (filterSize >> 1);
         primitives.pu[partEnum].luma_hps(src, srcStride, m_immedVals, tmpStride, xFrac, 1);
@@ -343,7 +303,7 @@ void Predict::predInterLumaShort(ShortYuv& dstSYuv, const PicYuv& refPic, const 
     }
 }
 
-void Predict::predInterChromaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& mv) const
+void Predict::predInterChromaPixel(const PredictionUnit& pu, Yuv& dstYuv, const PicYuv& refPic, const MV& mv) const
 {
     intptr_t dstStride = dstYuv.m_csize;
     intptr_t refStride = refPic.m_strideC;
@@ -353,16 +313,16 @@ void Predict::predInterChromaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& 
 
     intptr_t refOffset = (mv.x >> shiftHor) + (mv.y >> shiftVer) * refStride;
 
-    const pixel* refCb = refPic.getCbAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
-    const pixel* refCr = refPic.getCrAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
+    const pixel* refCb = refPic.getCbAddr(pu.ctuAddr, pu.cuAbsPartIdx + pu.puAbsPartIdx) + refOffset;
+    const pixel* refCr = refPic.getCrAddr(pu.ctuAddr, pu.cuAbsPartIdx + pu.puAbsPartIdx) + refOffset;
 
-    pixel* dstCb = dstYuv.getCbAddr(m_puAbsPartIdx);
-    pixel* dstCr = dstYuv.getCrAddr(m_puAbsPartIdx);
+    pixel* dstCb = dstYuv.getCbAddr(pu.puAbsPartIdx);
+    pixel* dstCr = dstYuv.getCrAddr(pu.puAbsPartIdx);
 
     int xFrac = mv.x & ((1 << shiftHor) - 1);
     int yFrac = mv.y & ((1 << shiftVer) - 1);
 
-    int partEnum = partitionFromSizes(m_puWidth, m_puHeight);
+    int partEnum = partitionFromSizes(pu.width, pu.height);
     
     if (!(yFrac | xFrac))
     {
@@ -381,7 +341,7 @@ void Predict::predInterChromaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& 
     }
     else
     {
-        int extStride = m_puWidth >> m_hChromaShift;
+        int extStride = pu.width >> m_hChromaShift;
         int filterSize = NTAPS_CHROMA;
         int halfFilterSize = (filterSize >> 1);
 
@@ -393,7 +353,7 @@ void Predict::predInterChromaPixel(Yuv& dstYuv, const PicYuv& refPic, const MV& 
     }
 }
 
-void Predict::predInterChromaShort(ShortYuv& dstSYuv, const PicYuv& refPic, const MV& mv) const
+void Predict::predInterChromaShort(const PredictionUnit& pu, ShortYuv& dstSYuv, const PicYuv& refPic, const MV& mv) const
 {
     intptr_t refStride = refPic.m_strideC;
     intptr_t dstStride = dstSYuv.m_csize;
@@ -403,19 +363,19 @@ void Predict::predInterChromaShort(ShortYuv& dstSYuv, const PicYuv& refPic, cons
 
     intptr_t refOffset = (mv.x >> shiftHor) + (mv.y >> shiftVer) * refStride;
 
-    const pixel* refCb = refPic.getCbAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
-    const pixel* refCr = refPic.getCrAddr(m_ctuAddr, m_cuAbsPartIdx + m_puAbsPartIdx) + refOffset;
+    const pixel* refCb = refPic.getCbAddr(pu.ctuAddr, pu.cuAbsPartIdx + pu.puAbsPartIdx) + refOffset;
+    const pixel* refCr = refPic.getCrAddr(pu.ctuAddr, pu.cuAbsPartIdx + pu.puAbsPartIdx) + refOffset;
 
-    int16_t* dstCb = dstSYuv.getCbAddr(m_puAbsPartIdx);
-    int16_t* dstCr = dstSYuv.getCrAddr(m_puAbsPartIdx);
+    int16_t* dstCb = dstSYuv.getCbAddr(pu.puAbsPartIdx);
+    int16_t* dstCr = dstSYuv.getCrAddr(pu.puAbsPartIdx);
 
     int xFrac = mv.x & ((1 << shiftHor) - 1);
     int yFrac = mv.y & ((1 << shiftVer) - 1);
 
-    int partEnum = partitionFromSizes(m_puWidth, m_puHeight);
+    int partEnum = partitionFromSizes(pu.width, pu.height);
     
-    uint32_t cxWidth  = m_puWidth >> m_hChromaShift;
-    uint32_t cxHeight = m_puHeight >> m_vChromaShift;
+    uint32_t cxWidth  = pu.width >> m_hChromaShift;
+    uint32_t cxHeight = pu.height >> m_vChromaShift;
 
     X265_CHECK(((cxWidth | cxHeight) % 2) == 0, "chroma block size expected to be multiple of 2\n");
 
@@ -447,7 +407,7 @@ void Predict::predInterChromaShort(ShortYuv& dstSYuv, const PicYuv& refPic, cons
 }
 
 /* weighted averaging for bi-pred */
-void Predict::addWeightBi(Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, const WeightValues wp0[3], const WeightValues wp1[3], bool bLuma, bool bChroma) const
+void Predict::addWeightBi(const PredictionUnit& pu, Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, const WeightValues wp0[3], const WeightValues wp1[3], bool bLuma, bool bChroma) const
 {
     int x, y;
 
@@ -456,9 +416,9 @@ void Predict::addWeightBi(Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv&
 
     if (bLuma)
     {
-        pixel* dstY = predYuv.getLumaAddr(m_puAbsPartIdx);
-        const int16_t* srcY0 = srcYuv0.getLumaAddr(m_puAbsPartIdx);
-        const int16_t* srcY1 = srcYuv1.getLumaAddr(m_puAbsPartIdx);
+        pixel* dstY = predYuv.getLumaAddr(pu.puAbsPartIdx);
+        const int16_t* srcY0 = srcYuv0.getLumaAddr(pu.puAbsPartIdx);
+        const int16_t* srcY1 = srcYuv1.getLumaAddr(pu.puAbsPartIdx);
 
         // Luma
         w0      = wp0[0].w;
@@ -473,9 +433,9 @@ void Predict::addWeightBi(Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv&
         dststride = predYuv.m_size;
 
         // TODO: can we use weight_sp here?
-        for (y = m_puHeight - 1; y >= 0; y--)
+        for (y = pu.height - 1; y >= 0; y--)
         {
-            for (x = m_puWidth - 1; x >= 0; )
+            for (x = pu.width - 1; x >= 0; )
             {
                 // note: luma min width is 4
                 dstY[x] = weightBidir(w0, srcY0[x], w1, srcY1[x], round, shift, offset);
@@ -496,12 +456,12 @@ void Predict::addWeightBi(Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv&
 
     if (bChroma)
     {
-        pixel* dstU = predYuv.getCbAddr(m_puAbsPartIdx);
-        pixel* dstV = predYuv.getCrAddr(m_puAbsPartIdx);
-        const int16_t* srcU0 = srcYuv0.getCbAddr(m_puAbsPartIdx);
-        const int16_t* srcV0 = srcYuv0.getCrAddr(m_puAbsPartIdx);
-        const int16_t* srcU1 = srcYuv1.getCbAddr(m_puAbsPartIdx);
-        const int16_t* srcV1 = srcYuv1.getCrAddr(m_puAbsPartIdx);
+        pixel* dstU = predYuv.getCbAddr(pu.puAbsPartIdx);
+        pixel* dstV = predYuv.getCrAddr(pu.puAbsPartIdx);
+        const int16_t* srcU0 = srcYuv0.getCbAddr(pu.puAbsPartIdx);
+        const int16_t* srcV0 = srcYuv0.getCrAddr(pu.puAbsPartIdx);
+        const int16_t* srcU1 = srcYuv1.getCbAddr(pu.puAbsPartIdx);
+        const int16_t* srcV1 = srcYuv1.getCrAddr(pu.puAbsPartIdx);
 
         // Chroma U
         w0      = wp0[1].w;
@@ -515,8 +475,8 @@ void Predict::addWeightBi(Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv&
         src1Stride = srcYuv1.m_csize;
         dststride  = predYuv.m_csize;
 
-        uint32_t cwidth = m_puWidth >> srcYuv0.m_hChromaShift;
-        uint32_t cheight = m_puHeight >> srcYuv0.m_vChromaShift;
+        uint32_t cwidth = pu.width >> srcYuv0.m_hChromaShift;
+        uint32_t cheight = pu.height >> srcYuv0.m_vChromaShift;
 
         // TODO: can we use weight_sp here?
         for (y = cheight - 1; y >= 0; y--)
@@ -561,15 +521,15 @@ void Predict::addWeightBi(Yuv& predYuv, const ShortYuv& srcYuv0, const ShortYuv&
 }
 
 /* weighted averaging for uni-pred */
-void Predict::addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightValues wp[3], bool bLuma, bool bChroma) const
+void Predict::addWeightUni(const PredictionUnit& pu, Yuv& predYuv, const ShortYuv& srcYuv, const WeightValues wp[3], bool bLuma, bool bChroma) const
 {
     int w0, offset, shiftNum, shift, round;
     uint32_t srcStride, dstStride;
 
     if (bLuma)
     {
-        pixel* dstY = predYuv.getLumaAddr(m_puAbsPartIdx);
-        const int16_t* srcY0 = srcYuv.getLumaAddr(m_puAbsPartIdx);
+        pixel* dstY = predYuv.getLumaAddr(pu.puAbsPartIdx);
+        const int16_t* srcY0 = srcYuv.getLumaAddr(pu.puAbsPartIdx);
 
         // Luma
         w0      = wp[0].w;
@@ -580,15 +540,15 @@ void Predict::addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightVal
         srcStride = srcYuv.m_size;
         dstStride = predYuv.m_size;
 
-        primitives.weight_sp(srcY0, dstY, srcStride, dstStride, m_puWidth, m_puHeight, w0, round, shift, offset);
+        primitives.weight_sp(srcY0, dstY, srcStride, dstStride, pu.width, pu.height, w0, round, shift, offset);
     }
 
     if (bChroma)
     {
-        pixel* dstU = predYuv.getCbAddr(m_puAbsPartIdx);
-        pixel* dstV = predYuv.getCrAddr(m_puAbsPartIdx);
-        const int16_t* srcU0 = srcYuv.getCbAddr(m_puAbsPartIdx);
-        const int16_t* srcV0 = srcYuv.getCrAddr(m_puAbsPartIdx);
+        pixel* dstU = predYuv.getCbAddr(pu.puAbsPartIdx);
+        pixel* dstV = predYuv.getCrAddr(pu.puAbsPartIdx);
+        const int16_t* srcU0 = srcYuv.getCbAddr(pu.puAbsPartIdx);
+        const int16_t* srcV0 = srcYuv.getCrAddr(pu.puAbsPartIdx);
 
         // Chroma U
         w0      = wp[1].w;
@@ -600,8 +560,8 @@ void Predict::addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightVal
         srcStride = srcYuv.m_csize;
         dstStride = predYuv.m_csize;
 
-        uint32_t cwidth = m_puWidth >> srcYuv.m_hChromaShift;
-        uint32_t cheight = m_puHeight >> srcYuv.m_vChromaShift;
+        uint32_t cwidth = pu.width >> srcYuv.m_hChromaShift;
+        uint32_t cheight = pu.height >> srcYuv.m_vChromaShift;
 
         primitives.weight_sp(srcU0, dstU, srcStride, dstStride, cwidth, cheight, w0, round, shift, offset);
 
@@ -615,12 +575,33 @@ void Predict::addWeightUni(Yuv& predYuv, const ShortYuv& srcYuv, const WeightVal
     }
 }
 
-void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, int dirMode)
+void Predict::predIntraLumaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSize)
 {
-    int tuSize = intraNeighbors.tuSize;
+    int tuSize = 1 << log2TrSize;
+    int sizeIdx = log2TrSize - 2;
+    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
+
+    int filter = !!(g_intraFilterFlags[dirMode] & tuSize);
+    bool bFilter = log2TrSize <= 4;
+    primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, intraNeighbourBuf[filter], dirMode, bFilter);
+}
+
+void Predict::predIntraChromaAng(uint32_t dirMode, pixel* dst, intptr_t stride, uint32_t log2TrSizeC)
+{
+    int tuSize = 1 << log2TrSizeC;
+    int sizeIdx = log2TrSizeC - 2;
+    X265_CHECK(sizeIdx >= 0 && sizeIdx < 4, "intra block size is out of range\n");
+
+    int filter = !!(m_csp == X265_CSP_I444 && (g_intraFilterFlags[dirMode] & tuSize));
+    primitives.cu[sizeIdx].intra_pred[dirMode](dst, stride, intraNeighbourBuf[filter], dirMode, 0);
+}
+
+void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t puAbsPartIdx, const IntraNeighbors& intraNeighbors, int dirMode)
+{
+    int tuSize = 1 << intraNeighbors.log2TrSize;
     int tuSize2 = tuSize << 1;
 
-    pixel* adiOrigin = cu.m_encData->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    pixel* adiOrigin = cu.m_encData->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + puAbsPartIdx);
     intptr_t picStride = cu.m_encData->m_reconPic->m_stride;
 
     fillReferenceSamples(adiOrigin, picStride, intraNeighbors, intraNeighbourBuf[0]);
@@ -633,64 +614,48 @@ void Predict::initAdiPattern(const CUData& cu, const CUGeom& cuGeom, uint32_t ab
     if (dirMode == ALL_IDX ? (8 | 16 | 32) & tuSize : g_intraFilterFlags[dirMode] & tuSize)
     {
         // generate filtered intra prediction samples
-        bool bStrongSmoothing = (tuSize == 32 && cu.m_slice->m_sps->bUseStrongIntraSmoothing);
 
-        if (bStrongSmoothing)
+        if (cu.m_slice->m_sps->bUseStrongIntraSmoothing && tuSize == 32)
         {
-            const int trSize = 32;
-            const int trSize2 = trSize << 1;
             const int threshold = 1 << (X265_DEPTH - 5);
 
             pixel topMiddle = refBuf[32], leftMiddle = refBuf[tuSize2 + 32];
 
-            bStrongSmoothing = abs (topLeft + topLast - (topMiddle << 1)) < threshold &&
-                               abs (topLeft + leftLast - (leftMiddle << 1)) < threshold;
-
-            if (bStrongSmoothing)
+            if (abs(topLeft + topLast  - (topMiddle  << 1)) < threshold &&
+                abs(topLeft + leftLast - (leftMiddle << 1)) < threshold)
             {
-                // bilinear interpolation
+                // "strong" bilinear interpolation
                 const int shift = 5 + 1;
                 int init = (topLeft << shift) + tuSize;
                 int deltaL, deltaR;
 
-                // TODO: Performance Primitive???
                 deltaL = leftLast - topLeft; deltaR = topLast - topLeft;
 
                 fltBuf[0] = topLeft;
-                for (int i = 1; i < trSize2; i++)
+                for (int i = 1; i < tuSize2; i++)
                 {
                     fltBuf[i + tuSize2] = (pixel)((init + deltaL * i) >> shift); // Left Filtering
                     fltBuf[i] = (pixel)((init + deltaR * i) >> shift);           // Above Filtering
                 }
-                fltBuf[trSize2] = topLast;
-                fltBuf[tuSize2 + trSize2] = leftLast;
-
+                fltBuf[tuSize2] = topLast;
+                fltBuf[tuSize2 + tuSize2] = leftLast;
                 return;
             }
         }
 
-        // filtering top
-        for (int i = 1; i < tuSize2; i++)
-            fltBuf[i] = ((refBuf[i] << 1) + refBuf[i - 1] + refBuf[i + 1] + 2) >> 2;
-        fltBuf[tuSize2] = topLast;
-
-        // filtering top-left
-        fltBuf[0] = ((topLeft << 1) + refBuf[1] + refBuf[tuSize2 + 1] + 2) >> 2;
-
-        // filtering left
-        fltBuf[tuSize2 + 1] = ((refBuf[tuSize2 + 1] << 1) + topLeft + refBuf[tuSize2 + 2] + 2) >> 2;
-        for (int i = tuSize2 + 2; i < tuSize2 + tuSize2; i++)
-            fltBuf[i] = ((refBuf[i] << 1) + refBuf[i - 1] + refBuf[i + 1] + 2) >> 2;
-        fltBuf[tuSize2 + tuSize2] = leftLast;
+        primitives.cu[intraNeighbors.log2TrSize - 2].intra_filter(refBuf, fltBuf);
     }
 }
 
-void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t absPartIdx, const IntraNeighbors& intraNeighbors, uint32_t chromaId)
+void Predict::initAdiPatternChroma(const CUData& cu, const CUGeom& cuGeom, uint32_t puAbsPartIdx, const IntraNeighbors& intraNeighbors, uint32_t chromaId)
 {
-    const pixel* adiOrigin = cu.m_encData->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    const pixel* adiOrigin = cu.m_encData->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + puAbsPartIdx);
     intptr_t picStride = cu.m_encData->m_reconPic->m_strideC;
 
     fillReferenceSamples(adiOrigin, picStride, intraNeighbors, intraNeighbourBuf[0]);
+
+    if (m_csp == X265_CSP_I444)
+        primitives.cu[intraNeighbors.log2TrSize - 2].intra_filter(intraNeighbourBuf[0], intraNeighbourBuf[1]);
 }
 
 void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth, bool isLuma, IntraNeighbors *intraNeighbors)
@@ -746,7 +711,7 @@ void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t
     intraNeighbors->leftUnits = leftUnits;
     intraNeighbors->unitWidth = 1 << log2UnitWidth;
     intraNeighbors->unitHeight = 1 << log2UnitHeight;
-    intraNeighbors->tuSize = tuSize;
+    intraNeighbors->log2TrSize = log2TrSize;
 }
 
 void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, const IntraNeighbors& intraNeighbors, pixel dst[258])
@@ -754,7 +719,7 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, c
     const pixel dcValue = (pixel)(1 << (X265_DEPTH - 1));
     int numIntraNeighbor = intraNeighbors.numIntraNeighbor;
     int totalUnits = intraNeighbors.totalUnits;
-    uint32_t tuSize = intraNeighbors.tuSize;
+    uint32_t tuSize = 1 << intraNeighbors.log2TrSize;
     uint32_t refSize = tuSize * 2 + 1;
 
     // Nothing is available, perform DC prediction.

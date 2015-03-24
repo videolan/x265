@@ -3710,3 +3710,749 @@ SAD16_CACHELINE_LOOP_SSSE3 i
 SADX34_CACHELINE_FUNC 16, 16, 64, sse2, ssse3, ssse3
 SADX34_CACHELINE_FUNC 16,  8, 64, sse2, ssse3, ssse3
 
+%if HIGH_BIT_DEPTH==0
+INIT_YMM avx2
+cglobal pixel_sad_x3_8x4, 6,6,5
+    xorps           m0, m0
+    xorps           m1, m1
+
+    sub             r2, r1          ; rebase on pointer r1
+    sub             r3, r1
+
+    ; row 0
+    vpbroadcastq   xm2, [r0 + 0 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+    add             r1, r4
+
+    ; row 1
+    vpbroadcastq   xm2, [r0 + 1 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+    add             r1, r4
+
+    ; row 2
+    vpbroadcastq   xm2, [r0 + 2 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+    add             r1, r4
+
+    ; row 3
+    vpbroadcastq   xm2, [r0 + 3 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+
+    pshufd          xm0, xm0, q0020
+    movq            [r5 + 0], xm0
+    movd            [r5 + 8], xm1
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_x3_8x8, 6,6,5
+    xorps           m0, m0
+    xorps           m1, m1
+
+    sub             r2, r1          ; rebase on pointer r1
+    sub             r3, r1
+%assign x 0
+%rep 4
+    ; row 0
+    vpbroadcastq   xm2, [r0 + 0 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+    add             r1, r4
+
+    ; row 1
+    vpbroadcastq   xm2, [r0 + 1 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+
+%assign x x+1
+  %if x < 4
+    add             r1, r4
+    add             r0, 2 * FENC_STRIDE
+  %endif
+%endrep
+
+    pshufd          xm0, xm0, q0020
+    movq            [r5 + 0], xm0
+    movd            [r5 + 8], xm1
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_x3_8x16, 6,6,5
+    xorps           m0, m0
+    xorps           m1, m1
+
+    sub             r2, r1          ; rebase on pointer r1
+    sub             r3, r1
+%assign x 0
+%rep 8
+    ; row 0
+    vpbroadcastq   xm2, [r0 + 0 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+    add             r1, r4
+
+    ; row 1
+    vpbroadcastq   xm2, [r0 + 1 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+
+%assign x x+1
+  %if x < 8
+    add             r1, r4
+    add             r0, 2 * FENC_STRIDE
+  %endif
+%endrep
+
+    pshufd          xm0, xm0, q0020
+    movq            [r5 + 0], xm0
+    movd            [r5 + 8], xm1
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_x4_8x8, 7,7,5
+    xorps           m0, m0
+    xorps           m1, m1
+
+    sub             r2, r1          ; rebase on pointer r1
+    sub             r3, r1
+    sub             r4, r1
+%assign x 0
+%rep 4
+    ; row 0
+    vpbroadcastq   xm2, [r0 + 0 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    movhps         xm4, [r1 + r4]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+    add             r1, r5
+
+    ; row 1
+    vpbroadcastq   xm2, [r0 + 1 * FENC_STRIDE]
+    movq           xm3, [r1]
+    movhps         xm3, [r1 + r2]
+    movq           xm4, [r1 + r3]
+    movhps         xm4, [r1 + r4]
+    psadbw         xm3, xm2
+    psadbw         xm4, xm2
+    paddd          xm0, xm3
+    paddd          xm1, xm4
+
+%assign x x+1
+  %if x < 4
+    add             r1, r5
+    add             r0, 2 * FENC_STRIDE
+  %endif
+%endrep
+
+    pshufd          xm0, xm0, q0020
+    pshufd          xm1, xm1, q0020
+    movq            [r6 + 0], xm0
+    movq            [r6 + 8], xm1
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_32x8, 4,4,6
+    xorps           m0, m0
+    xorps           m5, m5
+
+    movu           m1, [r0]               ; row 0 of pix0
+    movu           m2, [r2]               ; row 0 of pix1
+    movu           m3, [r0 + r1]          ; row 1 of pix0
+    movu           m4, [r2 + r3]          ; row 1 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; row 2 of pix0
+    movu           m2, [r2]               ; row 2 of pix1
+    movu           m3, [r0 + r1]          ; row 3 of pix0
+    movu           m4, [r2 + r3]          ; row 3 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; row 4 of pix0
+    movu           m2, [r2]               ; row 4 of pix1
+    movu           m3, [r0 + r1]          ; row 5 of pix0
+    movu           m4, [r2 + r3]          ; row 5 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; row 6 of pix0
+    movu           m2, [r2]               ; row 6 of pix1
+    movu           m3, [r0 + r1]          ; row 7 of pix0
+    movu           m4, [r2 + r3]          ; row 7 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    paddd          m0, m5
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd           eax, xm0
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_32x16, 4,5,6
+    xorps           m0, m0
+    xorps           m5, m5
+    mov             r4d, 4
+
+.loop
+    movu           m1, [r0]               ; row 0 of pix0
+    movu           m2, [r2]               ; row 0 of pix1
+    movu           m3, [r0 + r1]          ; row 1 of pix0
+    movu           m4, [r2 + r3]          ; row 1 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; row 2 of pix0
+    movu           m2, [r2]               ; row 2 of pix1
+    movu           m3, [r0 + r1]          ; row 3 of pix0
+    movu           m4, [r2 + r3]          ; row 3 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    dec         r4d
+    jnz         .loop
+
+    paddd          m0, m5
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd           eax, xm0
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_32x24, 4,5,6
+    xorps           m0, m0
+    xorps           m5, m5
+    mov             r4d, 6
+.loop
+    movu           m1, [r0]               ; row 0 of pix0
+    movu           m2, [r2]               ; row 0 of pix1
+    movu           m3, [r0 + r1]          ; row 1 of pix0
+    movu           m4, [r2 + r3]          ; row 1 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; row 2 of pix0
+    movu           m2, [r2]               ; row 2 of pix1
+    movu           m3, [r0 + r1]          ; row 3 of pix0
+    movu           m4, [r2 + r3]          ; row 3 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    dec         r4d
+    jnz         .loop
+
+    paddd          m0, m5
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd           eax, xm0
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_32x32, 4,7,5
+    xorps           m0, m0
+    mov             r4d, 32/4
+    lea             r5, [r1 * 3]
+    lea             r6, [r3 * 3]
+
+.loop
+    movu           m1, [r0]               ; row 0 of pix0
+    movu           m2, [r2]               ; row 0 of pix1
+    movu           m3, [r0 + r1]          ; row 1 of pix0
+    movu           m4, [r2 + r3]          ; row 1 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m0, m3
+
+    movu           m1, [r0 + 2 * r1]      ; row 2 of pix0
+    movu           m2, [r2 + 2 * r3]      ; row 2 of pix1
+    movu           m3, [r0 + r5]          ; row 3 of pix0
+    movu           m4, [r2 + r6]          ; row 3 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m0, m3
+
+    lea            r2,     [r2 + 4 * r3]
+    lea            r0,     [r0 + 4 * r1]
+
+    dec            r4d
+    jnz           .loop
+
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd            eax, xm0
+    RET
+
+ INIT_YMM avx2
+cglobal pixel_sad_32x64, 4,7,5
+    xorps           m0, m0
+    mov             r4d, 64/8
+    lea             r5, [r1 * 3]
+    lea             r6, [r3 * 3]
+
+.loop
+    movu           m1, [r0]               ; row 0 of pix0
+    movu           m2, [r2]               ; row 0 of pix1
+    movu           m3, [r0 + r1]          ; row 1 of pix0
+    movu           m4, [r2 + r3]          ; row 1 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m0, m3
+
+    movu           m1, [r0 + 2 * r1]      ; row 2 of pix0
+    movu           m2, [r2 + 2 * r3]      ; row 2 of pix1
+    movu           m3, [r0 + r5]          ; row 3 of pix0
+    movu           m4, [r2 + r6]          ; row 3 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m0, m3
+
+    lea            r2,     [r2 + 4 * r3]
+    lea            r0,     [r0 + 4 * r1]
+
+    movu           m1, [r0]               ; row 4 of pix0
+    movu           m2, [r2]               ; row 4 of pix1
+    movu           m3, [r0 + r1]          ; row 5 of pix0
+    movu           m4, [r2 + r3]          ; row 5 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m0, m3
+
+    movu           m1, [r0 + 2 * r1]      ; row 6 of pix0
+    movu           m2, [r2 + 2 * r3]      ; row 6 of pix1
+    movu           m3, [r0 + r5]          ; row 7 of pix0
+    movu           m4, [r2 + r6]          ; row 7 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m0, m3
+
+    lea            r2,     [r2 + 4 * r3]
+    lea            r0,     [r0 + 4 * r1]
+
+    dec            r4d
+    jnz           .loop
+
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd            eax, xm0
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_48x64, 4,7,7
+    xorps           m0, m0
+    mov             r4d, 64/4
+    lea             r5, [r1 * 3]
+    lea             r6, [r3 * 3]
+.loop
+    movu           m1, [r0]               ; row 0 of pix0
+    movu           m2, [r2]               ; row 0 of pix1
+    movu           m3, [r0 + r1]          ; row 1 of pix0
+    movu           m4, [r2 + r3]          ; row 1 of pix1
+    movu           xm5, [r0 +32]          ; last 16 of row 0 of pix0
+    vinserti128    m5, m5, [r0 + r1 + 32], 1
+    movu           xm6, [r2 +32]          ; last 16 of row 0 of pix1
+    vinserti128    m6, m6, [r2 + r3 + 32], 1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    psadbw         m5, m6
+    paddd          m0, m1
+    paddd          m0, m3
+    paddd          m0, m5
+
+    movu           m1, [r0 + 2 * r1]      ; row 2 of pix0
+    movu           m2, [r2 + 2 * r3]      ; row 2 of pix1
+    movu           m3, [r0 + r5]          ; row 3 of pix0
+    movu           m4, [r2 + r6]          ; row 3 of pix1
+    movu           xm5, [r0 +32 + 2 * r1]
+    vinserti128    m5, m5, [r0 + r5 + 32], 1
+    movu           xm6, [r2 +32 + 2 * r3]
+    vinserti128    m6, m6, [r2 + r6 + 32], 1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    psadbw         m5, m6
+    paddd          m0, m1
+    paddd          m0, m3
+    paddd          m0, m5
+
+    lea     r2,     [r2 + 4 * r3]
+    lea     r0,     [r0 + 4 * r1]
+
+    dec         r4d
+    jnz         .loop
+
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd            eax, xm0
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_64x16, 4,5,6
+    xorps           m0, m0
+    xorps           m5, m5
+    mov             r4d, 4
+.loop
+    movu           m1, [r0]               ; first 32 of row 0 of pix0
+    movu           m2, [r2]               ; first 32 of row 0 of pix1
+    movu           m3, [r0 + 32]          ; second 32 of row 0 of pix0
+    movu           m4, [r2 + 32]          ; second 32 of row 0 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    movu           m1, [r0 + r1]          ; first 32 of row 1 of pix0
+    movu           m2, [r2 + r3]          ; first 32 of row 1 of pix1
+    movu           m3, [r0 + 32 + r1]     ; second 32 of row 1 of pix0
+    movu           m4, [r2 + 32 + r3]     ; second 32 of row 1 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; first 32 of row 2 of pix0
+    movu           m2, [r2]               ; first 32 of row 2 of pix1
+    movu           m3, [r0 + 32]          ; second 32 of row 2 of pix0
+    movu           m4, [r2 + 32]          ; second 32 of row 2 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    movu           m1, [r0 + r1]          ; first 32 of row 3 of pix0
+    movu           m2, [r2 + r3]          ; first 32 of row 3 of pix1
+    movu           m3, [r0 + 32 + r1]     ; second 32 of row 3 of pix0
+    movu           m4, [r2 + 32 + r3]     ; second 32 of row 3 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    dec         r4d
+    jnz         .loop
+
+    paddd          m0, m5
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd            eax, xm0
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_64x32, 4,5,6
+    xorps           m0, m0
+    xorps           m5, m5
+    mov             r4d, 16
+.loop
+    movu           m1, [r0]               ; first 32 of row 0 of pix0
+    movu           m2, [r2]               ; first 32 of row 0 of pix1
+    movu           m3, [r0 + 32]          ; second 32 of row 0 of pix0
+    movu           m4, [r2 + 32]          ; second 32 of row 0 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    movu           m1, [r0 + r1]          ; first 32 of row 1 of pix0
+    movu           m2, [r2 + r3]          ; first 32 of row 1 of pix1
+    movu           m3, [r0 + 32 + r1]     ; second 32 of row 1 of pix0
+    movu           m4, [r2 + 32 + r3]     ; second 32 of row 1 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    dec         r4d
+    jnz         .loop
+
+    paddd          m0, m5
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd            eax, xm0
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_64x48, 4,5,6
+    xorps           m0, m0
+    xorps           m5, m5
+    mov             r4d, 24
+.loop
+    movu           m1, [r0]               ; first 32 of row 0 of pix0
+    movu           m2, [r2]               ; first 32 of row 0 of pix1
+    movu           m3, [r0 + 32]          ; second 32 of row 0 of pix0
+    movu           m4, [r2 + 32]          ; second 32 of row 0 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    movu           m1, [r0 + r1]          ; first 32 of row 1 of pix0
+    movu           m2, [r2 + r3]          ; first 32 of row 1 of pix1
+    movu           m3, [r0 + 32 + r1]     ; second 32 of row 1 of pix0
+    movu           m4, [r2 + 32 + r3]     ; second 32 of row 1 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    dec         r4d
+    jnz         .loop
+
+    paddd          m0, m5
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd            eax, xm0
+    RET
+
+INIT_YMM avx2
+cglobal pixel_sad_64x64, 4,5,6
+    xorps           m0, m0
+    xorps           m5, m5
+    mov             r4d, 8
+.loop
+    movu           m1, [r0]               ; first 32 of row 0 of pix0
+    movu           m2, [r2]               ; first 32 of row 0 of pix1
+    movu           m3, [r0 + 32]          ; second 32 of row 0 of pix0
+    movu           m4, [r2 + 32]          ; second 32 of row 0 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    movu           m1, [r0 + r1]          ; first 32 of row 1 of pix0
+    movu           m2, [r2 + r3]          ; first 32 of row 1 of pix1
+    movu           m3, [r0 + 32 + r1]     ; second 32 of row 1 of pix0
+    movu           m4, [r2 + 32 + r3]     ; second 32 of row 1 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; first 32 of row 2 of pix0
+    movu           m2, [r2]               ; first 32 of row 2 of pix1
+    movu           m3, [r0 + 32]          ; second 32 of row 2 of pix0
+    movu           m4, [r2 + 32]          ; second 32 of row 2 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    movu           m1, [r0 + r1]          ; first 32 of row 3 of pix0
+    movu           m2, [r2 + r3]          ; first 32 of row 3 of pix1
+    movu           m3, [r0 + 32 + r1]     ; second 32 of row 3 of pix0
+    movu           m4, [r2 + 32 + r3]     ; second 32 of row 3 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; first 32 of row 4 of pix0
+    movu           m2, [r2]               ; first 32 of row 4 of pix1
+    movu           m3, [r0 + 32]          ; second 32 of row 4 of pix0
+    movu           m4, [r2 + 32]          ; second 32 of row 4 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    movu           m1, [r0 + r1]          ; first 32 of row 5 of pix0
+    movu           m2, [r2 + r3]          ; first 32 of row 5 of pix1
+    movu           m3, [r0 + 32 + r1]     ; second 32 of row 5 of pix0
+    movu           m4, [r2 + 32 + r3]     ; second 32 of row 5 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    movu           m1, [r0]               ; first 32 of row 6 of pix0
+    movu           m2, [r2]               ; first 32 of row 6 of pix1
+    movu           m3, [r0 + 32]          ; second 32 of row 6 of pix0
+    movu           m4, [r2 + 32]          ; second 32 of row 6 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    movu           m1, [r0 + r1]          ; first 32 of row 7 of pix0
+    movu           m2, [r2 + r3]          ; first 32 of row 7 of pix1
+    movu           m3, [r0 + 32 + r1]     ; second 32 of row 7 of pix0
+    movu           m4, [r2 + 32 + r3]     ; second 32 of row 7 of pix1
+
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+
+    lea     r2,     [r2 + 2 * r3]
+    lea     r0,     [r0 + 2 * r1]
+
+    dec         r4d
+    jnz         .loop
+
+    paddd          m0, m5
+    vextracti128   xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0,xm1
+    movd            eax, xm0
+    RET
+
+%endif
