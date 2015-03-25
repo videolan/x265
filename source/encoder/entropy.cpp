@@ -1558,128 +1558,170 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             X265_CHECK((log2TrSize != 2) || (log2TrSize == 2 && subSet == 0), "log2TrSize and subSet mistake!\n");
             const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
 
-            if (log2TrSize == 2)
+            static const uint8_t ctxIndMap4x4[16] =
             {
-                uint32_t blkPos, sig, ctxSig;
-                for (; scanPosSigOff >= 0; scanPosSigOff--)
+                0, 1, 4, 5,
+                2, 3, 4, 5,
+                6, 6, 8, 8,
+                7, 7, 8, 8
+            };
+            // NOTE: [patternSigCtx][posXinSubset][posYinSubset]
+            static const uint8_t table_cnt[4][4][4] =
+            {
+                // patternSigCtx = 0
                 {
-                    blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
-                    sig     = scanFlagMask & 1;
-                    scanFlagMask >>= 1;
-                    X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
+                    { 2, 1, 1, 0 },
+                    { 1, 1, 0, 0 },
+                    { 1, 0, 0, 0 },
+                    { 0, 0, 0, 0 },
+                },
+                // patternSigCtx = 1
+                {
+                    { 2, 1, 0, 0 },
+                    { 2, 1, 0, 0 },
+                    { 2, 1, 0, 0 },
+                    { 2, 1, 0, 0 },
+                },
+                // patternSigCtx = 2
+                {
+                    { 2, 2, 2, 2 },
+                    { 1, 1, 1, 1 },
+                    { 0, 0, 0, 0 },
+                    { 0, 0, 0, 0 },
+                },
+                // patternSigCtx = 3
+                {
+                    { 2, 2, 2, 2 },
+                    { 2, 2, 2, 2 },
+                    { 2, 2, 2, 2 },
+                    { 2, 2, 2, 2 },
+                }
+            };
+            if (m_bitIf)
+            {
+                if (log2TrSize == 2)
+                {
+                    uint32_t blkPos, sig, ctxSig;
+                    for (; scanPosSigOff >= 0; scanPosSigOff--)
                     {
-                        static const uint8_t ctxIndMap[16] =
+                        blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
+                        sig     = scanFlagMask & 1;
+                        scanFlagMask >>= 1;
+                        X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
                         {
-                            0, 1, 4, 5,
-                            2, 3, 4, 5,
-                            6, 6, 8, 8,
-                            7, 7, 8, 8
-                        };
-                        ctxSig = ctxIndMap[blkPos];
-                        X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
-                        encodeBin(sig, baseCtx[ctxSig]);
-                    }
-                    absCoeff[numNonZero] = int(abs(coeff[blkPos]));
-                    numNonZero += sig;
-                }
-            }
-            else
-            {
-                X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
-
-                // NOTE: [patternSigCtx][posXinSubset][posYinSubset]
-                static const uint8_t table_cnt[4][4][4] =
-                {
-                    // patternSigCtx = 0
-                    {
-                        { 2, 1, 1, 0 },
-                        { 1, 1, 0, 0 },
-                        { 1, 0, 0, 0 },
-                        { 0, 0, 0, 0 },
-                    },
-                    // patternSigCtx = 1
-                    {
-                        { 2, 1, 0, 0 },
-                        { 2, 1, 0, 0 },
-                        { 2, 1, 0, 0 },
-                        { 2, 1, 0, 0 },
-                    },
-                    // patternSigCtx = 2
-                    {
-                        { 2, 2, 2, 2 },
-                        { 1, 1, 1, 1 },
-                        { 0, 0, 0, 0 },
-                        { 0, 0, 0, 0 },
-                    },
-                    // patternSigCtx = 3
-                    {
-                        { 2, 2, 2, 2 },
-                        { 2, 2, 2, 2 },
-                        { 2, 2, 2, 2 },
-                        { 2, 2, 2, 2 },
-                    }
-                };
-                const uint8_t (*tabSigCtx)[4] = table_cnt[(uint32_t)patternSigCtx];
-                const int offset = codingParameters.firstSignificanceMapContext;
-                const uint32_t lumaMask = bIsLuma ? ~0 : 0;
-                static const uint32_t posXY4Mask[] = {0x024, 0x0CC, 0x39C};
-                const uint32_t posGT4Mask = posXY4Mask[log2TrSize - 3] & lumaMask;
-
-                uint8_t _sigList[16][2];
-                uint8_t (*pSigListEnd)[2] = _sigList;
-                uint32_t blkPos, sig, ctxSig;
-                for (; scanPosSigOff >= 0; scanPosSigOff--)
-                {
-                    blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
-                    X265_CHECK(blkPos || (subPosBase + scanPosSigOff == 0), "blkPos==0 must be at scan[0]\n");
-                    const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
-                    sig     = scanFlagMask & 1;
-                    scanFlagMask >>= 1;
-                    X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
-                    if (scanPosSigOff != 0 || subSet == 0 || numNonZero)
-                    {
-                        const uint32_t posY = blkPos >> log2TrSize;
-                        const uint32_t posOffset = (blkPos & posGT4Mask) ? 3 : 0;
-
-                        const uint32_t posXinSubset = blkPos & 3;
-                        const uint32_t posYinSubset = posY & 3;
-                        const uint32_t cnt = tabSigCtx[posXinSubset][posYinSubset] + offset;
-                        ctxSig = (cnt + posOffset) & posZeroMask;
-
-                        X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
-                        //encodeBin(sig, baseCtx[ctxSig]);
-                        (*pSigListEnd)[0] = (uint8_t)sig;
-                        (*pSigListEnd)[1] = (uint8_t)ctxSig;
-                        pSigListEnd++;
-                    }
-                    absCoeff[numNonZero] = int(abs(coeff[blkPos]));
-                    numNonZero += sig;
-                }
-                X265_CHECK(pSigListEnd <= &_sigList[16], "numSigList must be less or equal to 16\n");
-
-                uint8_t (*pSigScan)[2] = _sigList;
-                if (!m_bitIf)
-                {
-                    while(pSigScan != pSigListEnd)
-                    {
-                        const uint32_t binValue = (*pSigScan)[0];
-                        uint8_t &ctxModel = baseCtx[(*pSigScan)[1]];
-                        pSigScan++;
-                        uint32_t mstate = ctxModel;
-
-                        ctxModel = sbacNext(mstate, binValue);
-                        m_fracBits += sbacGetEntropyBits(mstate, binValue);
+                            ctxSig = ctxIndMap4x4[blkPos];
+                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
+                            encodeBin(sig, baseCtx[ctxSig]);
+                        }
+                        absCoeff[numNonZero] = int(abs(coeff[blkPos]));
+                        numNonZero += sig;
                     }
                 }
                 else
                 {
-                    while(pSigScan != pSigListEnd)
+                    X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
+
+                    const uint8_t (*tabSigCtx)[4] = table_cnt[(uint32_t)patternSigCtx];
+                    const int offset = codingParameters.firstSignificanceMapContext;
+                    const uint32_t lumaMask = bIsLuma ? ~0 : 0;
+                    static const uint32_t posXY4Mask[] = {0x024, 0x0CC, 0x39C};
+                    const uint32_t posGT4Mask = posXY4Mask[log2TrSize - 3] & lumaMask;
+
+                    uint32_t blkPos, sig, ctxSig;
+                    for (; scanPosSigOff >= 0; scanPosSigOff--)
                     {
-                        encodeBin((*pSigScan)[0], baseCtx[(*pSigScan)[1]]);
-                        pSigScan++;
+                        blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
+                        X265_CHECK(blkPos || (subPosBase + scanPosSigOff == 0), "blkPos==0 must be at scan[0]\n");
+                        const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
+                        sig     = scanFlagMask & 1;
+                        scanFlagMask >>= 1;
+                        X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
+                        if (scanPosSigOff != 0 || subSet == 0 || numNonZero)
+                        {
+                            const uint32_t posY = blkPos >> log2TrSize;
+                            const uint32_t posOffset = (blkPos & posGT4Mask) ? 3 : 0;
+
+                            const uint32_t posXinSubset = blkPos & 3;
+                            const uint32_t posYinSubset = posY & 3;
+                            const uint32_t cnt = tabSigCtx[posXinSubset][posYinSubset] + offset;
+                            ctxSig = (cnt + posOffset) & posZeroMask;
+
+                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
+                            encodeBin(sig, baseCtx[ctxSig]);
+                        }
+                        absCoeff[numNonZero] = int(abs(coeff[blkPos]));
+                        numNonZero += sig;
                     }
                 }
             }
+            else // fast RD path
+            {
+                // maximum g_entropyBits are 18-bits and maximum of count are 16, so intermedia of sum are 22-bits
+                uint32_t sum = 0;
+                if (log2TrSize == 2)
+                {
+                    uint32_t blkPos, sig, ctxSig;
+                    for (; scanPosSigOff >= 0; scanPosSigOff--)
+                    {
+                        blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
+                        sig     = scanFlagMask & 1;
+                        scanFlagMask >>= 1;
+                        X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
+                        {
+                            ctxSig = ctxIndMap4x4[blkPos];
+                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
+                            //encodeBin(sig, baseCtx[ctxSig]);
+                            const uint32_t mstate = baseCtx[ctxSig];
+                            baseCtx[ctxSig] = sbacNext(mstate, sig);
+                            sum += sbacGetEntropyBits(mstate, sig);
+                        }
+                        absCoeff[numNonZero] = int(abs(coeff[blkPos]));
+                        numNonZero += sig;
+                    }
+                } // end of 4x4
+                else
+                {
+                    X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
+
+                    const uint8_t (*tabSigCtx)[4] = table_cnt[(uint32_t)patternSigCtx];
+                    const int offset = codingParameters.firstSignificanceMapContext;
+                    const uint32_t lumaMask = bIsLuma ? ~0 : 0;
+                    static const uint32_t posXY4Mask[] = {0x024, 0x0CC, 0x39C};
+                    const uint32_t posGT4Mask = posXY4Mask[log2TrSize - 3] & lumaMask;
+
+                    uint32_t blkPos, sig, ctxSig;
+                    for (; scanPosSigOff >= 0; scanPosSigOff--)
+                    {
+                        blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
+                        X265_CHECK(blkPos || (subPosBase + scanPosSigOff == 0), "blkPos==0 must be at scan[0]\n");
+                        const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
+                        sig     = scanFlagMask & 1;
+                        scanFlagMask >>= 1;
+                        X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
+                        if (scanPosSigOff != 0 || subSet == 0 || numNonZero)
+                        {
+                            const uint32_t posY = blkPos >> log2TrSize;
+                            const uint32_t posOffset = (blkPos & posGT4Mask) ? 3 : 0;
+
+                            const uint32_t posXinSubset = blkPos & 3;
+                            const uint32_t posYinSubset = posY & 3;
+                            const uint32_t cnt = tabSigCtx[posXinSubset][posYinSubset] + offset;
+                            ctxSig = (cnt + posOffset) & posZeroMask;
+
+                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
+                            //encodeBin(sig, baseCtx[ctxSig]);
+                            const uint32_t mstate = baseCtx[ctxSig];
+                            baseCtx[ctxSig] = sbacNext(mstate, sig);
+                            sum += sbacGetEntropyBits(mstate, sig);
+                        }
+                        absCoeff[numNonZero] = int(abs(coeff[blkPos]));
+                        numNonZero += sig;
+                    }
+                } // end of non 4x4 path
+
+                // update RD cost
+                m_fracBits += sum;
+            } // end of fast RD path -- !m_bitIf
         }
         X265_CHECK(coeffNum[subSet] == numNonZero, "coefNum mistake\n");
 
