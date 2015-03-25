@@ -1217,10 +1217,12 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
 
     X265_CHECK(m_slice->m_sliceType != I_SLICE, "Evaluating merge in I slice\n");
 
+    tempPred->initCosts();
     tempPred->cu.setPartSizeSubParts(SIZE_2Nx2N);
     tempPred->cu.setPredModeSubParts(MODE_INTER);
     tempPred->cu.m_mergeFlag[0] = true;
 
+    bestPred->initCosts();
     bestPred->cu.setPartSizeSubParts(SIZE_2Nx2N);
     bestPred->cu.setPredModeSubParts(MODE_INTER);
     bestPred->cu.m_mergeFlag[0] = true;
@@ -1307,6 +1309,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     md.bestMode->cu.setPURefIdx(0, (int8_t)candMvField[bestSadCand][0].refIdx, 0, 0);
     md.bestMode->cu.setPURefIdx(1, (int8_t)candMvField[bestSadCand][1].refIdx, 0, 0);
     checkDQP(md.bestMode->cu, cuGeom);
+    X265_CHECK(md.bestMode->ok(), "Merge mode not ok\n");
 }
 
 /* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
