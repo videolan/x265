@@ -1490,6 +1490,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_16x16].sub_ps = x265_pixel_sub_ps_16x16_avx2;
         p.cu[BLOCK_32x32].sub_ps = x265_pixel_sub_ps_32x32_avx2;
         p.cu[BLOCK_64x64].sub_ps = x265_pixel_sub_ps_64x64_avx2;
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sub_ps = x265_pixel_sub_ps_16x16_avx2;
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sub_ps = x265_pixel_sub_ps_32x32_avx2;
 
         p.pu[LUMA_16x4].pixelavg_pp = x265_pixel_avg_16x4_avx2;
         p.pu[LUMA_16x8].pixelavg_pp = x265_pixel_avg_16x8_avx2;
