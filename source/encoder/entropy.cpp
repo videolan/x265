@@ -1625,6 +1625,8 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 static const uint32_t posXY4Mask[] = {0x024, 0x0CC, 0x39C};
                 const uint32_t posGT4Mask = posXY4Mask[log2TrSize - 3] & lumaMask;
 
+                uint8_t _sigList[16][2];
+                uint8_t (*pSigListEnd)[2] = _sigList;
                 uint32_t blkPos, sig, ctxSig;
                 for (; scanPosSigOff >= 0; scanPosSigOff--)
                 {
@@ -1645,10 +1647,37 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         ctxSig = (cnt + posOffset) & posZeroMask;
 
                         X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
-                        encodeBin(sig, baseCtx[ctxSig]);
+                        //encodeBin(sig, baseCtx[ctxSig]);
+                        (*pSigListEnd)[0] = (uint8_t)sig;
+                        (*pSigListEnd)[1] = (uint8_t)ctxSig;
+                        pSigListEnd++;
                     }
                     absCoeff[numNonZero] = int(abs(coeff[blkPos]));
                     numNonZero += sig;
+                }
+                X265_CHECK(pSigListEnd <= &_sigList[16], "numSigList must be less or equal to 16\n");
+
+                uint8_t (*pSigScan)[2] = _sigList;
+                if (!m_bitIf)
+                {
+                    while(pSigScan != pSigListEnd)
+                    {
+                        const uint32_t binValue = (*pSigScan)[0];
+                        uint8_t &ctxModel = baseCtx[(*pSigScan)[1]];
+                        pSigScan++;
+                        uint32_t mstate = ctxModel;
+
+                        ctxModel = sbacNext(mstate, binValue);
+                        m_fracBits += sbacGetEntropyBits(mstate, binValue);
+                    }
+                }
+                else
+                {
+                    while(pSigScan != pSigListEnd)
+                    {
+                        encodeBin((*pSigScan)[0], baseCtx[(*pSigScan)[1]]);
+                        pSigScan++;
+                    }
                 }
             }
         }
