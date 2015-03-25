@@ -2510,7 +2510,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
     interMode.coeffBits = 0;
     interMode.totalBits = interMode.mvBits;
     if (m_rdCost.m_psyRd)
-        interMode.psyEnergy = m_rdCost.psyCost(cu.m_log2CUSize[0] - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+        interMode.psyEnergy = m_rdCost.psyCost(part, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
 
     updateModeCost(interMode);
     m_entropyCoder.store(interMode.contexts);
@@ -2624,7 +2624,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     bestDist += m_rdCost.scaleChromaDist(1, primitives.chroma[m_csp].cu[sizeIdx].sse_pp(fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
     bestDist += m_rdCost.scaleChromaDist(2, primitives.chroma[m_csp].cu[sizeIdx].sse_pp(fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
     if (m_rdCost.m_psyRd)
-        interMode.psyEnergy = m_rdCost.psyCost(log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+        interMode.psyEnergy = m_rdCost.psyCost(sizeIdx, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
 
     interMode.totalBits = bits;
     interMode.distortion = bestDist;
