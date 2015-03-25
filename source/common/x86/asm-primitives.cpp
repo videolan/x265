@@ -1384,6 +1384,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].satd = x265_pixel_satd_8x32_avx;
         ASSIGN_SA8D(avx);
         ASSIGN_SSE_PP(avx);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sse_pp = x265_pixel_ssd_8x8_avx;
         ASSIGN_SSE_SS(avx);
         LUMA_VAR(avx);
 
@@ -1560,6 +1561,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_16x16_avx2;
         p.cu[BLOCK_32x32].sse_pp = x265_pixel_ssd_32x32_avx2;
         p.cu[BLOCK_64x64].sse_pp = x265_pixel_ssd_64x64_avx2;
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sse_pp = x265_pixel_ssd_16x16_avx2;
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = x265_pixel_ssd_32x32_avx2;
 
         p.cu[BLOCK_16x16].ssd_s = x265_pixel_ssd_s_16_avx2;
         p.cu[BLOCK_32x32].ssd_s = x265_pixel_ssd_s_32_avx2;
