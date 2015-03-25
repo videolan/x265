@@ -787,6 +787,8 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
         return;
     }
 
+    X265_CHECK(curFrame->m_lowres.costEst[b - p0][p1 - b] > 0, "Slice cost not estimated\n")
+
     if (m_param->rc.cuTree && !m_param->rc.bStatRead)
         /* update row satds based on cutree offsets */
         curFrame->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
