@@ -213,6 +213,7 @@ bool FrameEncoder::startCompressFrame(Frame* curFrame)
 {
     m_slicetypeWaitTime = x265_mdate() - m_prevOutputTime;
     m_frame = curFrame;
+    m_param = curFrame->m_param;
     m_sliceType = curFrame->m_lowres.sliceType;
     curFrame->m_encData->m_frameEncoderID = m_jpId;
     curFrame->m_encData->m_jobProvider = this;
@@ -794,6 +795,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     uint32_t row = (uint32_t)intRow;
     CTURow& curRow = m_rows[row];
 
+    tld.analysis.m_param = m_param;
     if (m_param->bEnableWavefront)
     {
         ScopedLock self(curRow.lock);
@@ -1093,6 +1095,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         }
     }
 
+    tld.analysis.m_param = NULL;
     curRow.busy = false;
 
     if (ATOMIC_INC(&m_completionCount) == 2 * (int)m_numRows)

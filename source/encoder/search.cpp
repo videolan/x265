@@ -1921,6 +1921,7 @@ void Search::processPME(PME& pme, Search& slave)
     {
         slave.m_slice = m_slice;
         slave.m_frame = m_frame;
+        slave.m_param = m_param;
         slave.setLambdaFromQP(pme.mode.cu, m_rdCost.m_qp);
         slave.m_me.setSourcePU(*pme.mode.fencYuv, pme.pu.ctuAddr, pme.pu.cuAbsPartIdx, pme.pu.puAbsPartIdx, pme.pu.width, pme.pu.height);
     }
