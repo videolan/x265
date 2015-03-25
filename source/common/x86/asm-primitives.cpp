@@ -1534,6 +1534,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.pu[LUMA_16x32].sad_x4 = x265_pixel_sad_x4_16x32_avx2;
 
         p.cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_16x16_avx2;
+        p.cu[BLOCK_32x32].sse_pp = x265_pixel_ssd_32x32_avx2;
+        p.cu[BLOCK_64x64].sse_pp = x265_pixel_ssd_64x64_avx2;
 
         p.cu[BLOCK_16x16].ssd_s = x265_pixel_ssd_s_16_avx2;
         p.cu[BLOCK_32x32].ssd_s = x265_pixel_ssd_s_32_avx2;

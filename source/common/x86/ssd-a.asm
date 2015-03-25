@@ -1094,6 +1094,8 @@ SSD  8,  4
 INIT_YMM avx2
 SSD 16, 16
 SSD 16,  8
+SSD 32, 32
+SSD 64, 64
 %assign function_align 16
 %endif ; !HIGH_BIT_DEPTH
 
