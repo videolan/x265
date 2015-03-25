@@ -125,6 +125,7 @@ public:
     uint32_t           m_numDelayedPic;
 
     x265_param*        m_param;
+    x265_param*        m_latestParam;
     RateControl*       m_rateControl;
     Lookahead*         m_lookahead;
     Window             m_conformanceWindow;

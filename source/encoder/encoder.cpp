@@ -73,6 +73,7 @@ Encoder::Encoder()
     m_outputCount = 0;
     m_csvfpt = NULL;
     m_param = NULL;
+    m_latestParam = NULL;
     m_cuOffsetY = NULL;
     m_cuOffsetC = NULL;
     m_buOffsetY = NULL;
@@ -377,6 +378,8 @@ void Encoder::destroy()
 
         x265_param_free(m_param);
     }
+
+    x265_param_free(m_latestParam);
 }
 
 void Encoder::updateVbvPlan(RateControl* rc)

@@ -39,9 +39,11 @@ x265_encoder *x265_encoder_open(x265_param *p)
     if (!p)
         return NULL;
 
-    x265_param *param = X265_MALLOC(x265_param, 1);
-    if (!param)
-        return NULL;
+    Encoder* encoder = NULL;
+    x265_param* param = x265_param_alloc();
+    x265_param* latestParam = x265_param_alloc();
+    if (!param || !latestParam)
+        goto fail;
 
     memcpy(param, p, sizeof(x265_param));
     x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", x265_version_str);
@@ -50,24 +52,20 @@ x265_encoder *x265_encoder_open(x265_param *p)
     x265_setup_primitives(param, param->cpuid);
 
     if (x265_check_params(param))
-        return NULL;
+        goto fail;
 
     if (x265_set_globals(param))
-        return NULL;
+        goto fail;
 
-    Encoder *encoder = new Encoder;
+    encoder = new Encoder;
     if (!param->rc.bEnableSlowFirstPass)
         x265_param_apply_fastfirstpass(param);
 
     // may change params for auto-detect, etc
     encoder->configure(param);
-    
     // may change rate control and CPB params
     if (!enforceLevel(*param, encoder->m_vps))
-    {
-        delete encoder;
-        return NULL;
-    }
+        goto fail;
 
     // will detect and set profile/tier/level in VPS
     determineLevel(*param, encoder->m_vps);
@@ -75,20 +73,23 @@ x265_encoder *x265_encoder_open(x265_param *p)
     if (!param->bAllowNonConformance && encoder->m_vps.ptl.profileIdc == Profile::NONE)
     {
         x265_log(param, X265_LOG_INFO, "non-conformant bitstreams not allowed (--allow-non-conformance)\n");
-        delete encoder;
-        return NULL;
+        goto fail;
     }
 
     encoder->create();
+    encoder->m_latestParam = latestParam;
+    memcpy(latestParam, param, sizeof(x265_param));
     if (encoder->m_aborted)
-    {
-        delete encoder;
-        return NULL;
-    }
+        goto fail;
 
     x265_print_params(param);
-
     return encoder;
+
+fail:
+    delete encoder;
+    x265_param_free(param);
+    x265_param_free(latestParam);
+    return NULL;
 }
 
 extern "C"
