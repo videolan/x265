@@ -1381,8 +1381,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.ssim_end_4 = x265_pixel_ssim_end4_avx;
 
         p.cu[BLOCK_16x16].copy_ss = x265_blockcopy_ss_16x16_avx;
+        p.cu[BLOCK_32x32].copy_ss = x265_blockcopy_ss_32x32_avx;
         p.cu[BLOCK_64x64].copy_ss = x265_blockcopy_ss_64x64_avx;
         p.chroma[X265_CSP_I420].cu[CHROMA_420_16x16].copy_ss = x265_blockcopy_ss_16x16_avx;
+        p.chroma[X265_CSP_I420].cu[CHROMA_420_32x32].copy_ss = x265_blockcopy_ss_32x32_avx;
         p.chroma[X265_CSP_I422].cu[CHROMA_422_16x32].copy_ss = x265_blockcopy_ss_16x32_avx;
 
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].copy_pp = x265_blockcopy_pp_32x8_avx;
