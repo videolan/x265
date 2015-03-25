@@ -291,6 +291,9 @@ interp4_hpp_shuf: times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 8, 9, 10, 11, 9, 10, 11, 12
 ALIGN 32
 interp8_hps_shuf: dd 0, 4, 1, 5, 2, 6, 3, 7
 
+ALIGN 32
+interp4_hps_shuf: times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 8, 9, 10, 11, 9, 10, 11, 12
+
 SECTION .text
 
 cextern pb_128
@@ -20223,3 +20226,64 @@ cglobal interp_4tap_horiz_ps_8x%1, 4,7,6
     IPFILTER_CHROMA_PS_8xN_AVX2  16
     IPFILTER_CHROMA_PS_8xN_AVX2  6
     IPFILTER_CHROMA_PS_8xN_AVX2  4
+
+INIT_YMM avx2
+cglobal interp_4tap_horiz_ps_2x4, 4, 7, 3
+    mov                r4d,            r4m
+    mov                r5d,            r5m
+    add                r3d,            r3d
+%ifdef PIC
+    lea                r6,             [tab_ChromaCoeff]
+    vpbroadcastd       m0,             [r6 + r4 * 4]
+%else
+    vpbroadcastd       m0,             [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    mova               xm3,            [pw_2000]
+    dec                r0
+    test               r5d,            r5d
+    jz                 .label
+    sub                r0,             r1
+
+.label
+    lea                r6,             [r1 * 3]
+    movq               xm1,            [r0]
+    movhps             xm1,            [r0 + r1]
+    movq               xm2,            [r0 + r1 * 2]
+    movhps             xm2,            [r0 + r6]
+
+    vinserti128        m1,             m1,          xm2,          1
+    pshufb             m1,             [interp4_hps_shuf]
+    pmaddubsw          m1,             m0
+    pmaddwd            m1,             [pw_1]
+    vextracti128       xm2,            m1,          1
+    packssdw           xm1,            xm2
+    psubw              xm1,            xm3
+
+    lea                r4,             [r3 * 3]
+    movd               [r2],           xm1
+    pextrd             [r2 + r3],      xm1,         1
+    pextrd             [r2 + r3 * 2],  xm1,         2
+    pextrd             [r2 + r4],      xm1,         3
+
+    test               r5d,            r5d
+    jz                .end
+    lea                r2,             [r2 + r3 * 4]
+    lea                r0,             [r0 + r1 * 4]
+
+    movq               xm1,            [r0]
+    movhps             xm1,            [r0 + r1]
+    movq               xm2,            [r0 + r1 * 2]
+    vinserti128        m1,             m1,          xm2,          1
+    pshufb             m1,             [interp4_hps_shuf]
+    pmaddubsw          m1,             m0
+    pmaddwd            m1,             [pw_1]
+    vextracti128       xm2,            m1,          1
+    packssdw           xm1,            xm2
+    psubw              xm1,            xm3
+
+    movd               [r2],           xm1
+    pextrd             [r2 + r3],      xm1,         1
+    pextrd             [r2 + r3 * 2],  xm1,         2
+.end
+    RET
