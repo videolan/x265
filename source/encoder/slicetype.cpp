@@ -517,7 +517,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     if (m_bBatchMotionSearch && m_pool->m_numWorkers > 12)
     {
         m_numRowsPerSlice = m_8x8Height / (m_pool->m_numWorkers - 1);   // default to numWorkers - 1 slices
-        m_numRowsPerSlice = X265_MAX(m_numRowsPerSlice, 10);             // at least 10 rows per slice
+        m_numRowsPerSlice = X265_MAX(m_numRowsPerSlice, 10);            // at least 10 rows per slice
         m_numRowsPerSlice = X265_MIN(m_numRowsPerSlice, m_8x8Height);   // but no more than the full picture
         m_numCoopSlices = m_8x8Height / m_numRowsPerSlice;
     }
