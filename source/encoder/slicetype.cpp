@@ -503,7 +503,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
      * batched; this will create one job per --bframe per lowres frame, and
      * these jobs are performed by workers bonded to the thread running
      * slicetypeDecide() */
-    m_bBatchMotionSearch = m_pool && m_param->bFrameAdaptive == X265_B_ADAPT_TRELLIS;
+    m_bBatchMotionSearch = 0 && m_pool && m_param->bFrameAdaptive == X265_B_ADAPT_TRELLIS;
 
     /* It is also beneficial to pre-calculate all possible frame cost estimates
      * using worker threads bonded to the worker thread running
