@@ -144,7 +144,6 @@ struct Mode
         return !(rdCost >= UINT64_MAX / 2 ||
                  sa8dCost >= UINT64_MAX / 2 ||
                  sa8dBits >= MAX_UINT / 2 ||
-                 psyEnergy >= MAX_UINT / 2 ||
                  distortion >= MAX_UINT / 2 ||
                  totalBits >= MAX_UINT / 2 ||
                  mvBits >= MAX_UINT / 2 ||
