@@ -34,6 +34,12 @@
 #include "motion.h"
 #include "ratecontrol.h"
 
+#if DETAILED_CU_STATS
+#define ProfileLookaheadTime(elapsed, count) ScopedElapsedTime _scope(elapsed); count++
+#else
+#define ProfileLookaheadTime(elapsed, count)
+#endif
+
 using namespace x265;
 
 namespace {
@@ -683,10 +689,7 @@ void Lookahead::findJob(int workerThreadID)
 
         if (preFrame)
         {
-#if DETAILED_CU_STATS
-            ScopedElapsedTime filterPerfScope(m_preLookaheadElapsedTime);
-            m_countPreLookahead++;
-#endif
+            ProfileLookaheadTime(m_preLookaheadElapsedTime, m_countPreLookahead);
             ProfileScopeEvent(prelookahead);
 
             preFrame->m_lowres.init(preFrame->m_fencPic, preFrame->m_poc);
@@ -699,10 +702,7 @@ void Lookahead::findJob(int workerThreadID)
         }
         else if (doDecide)
         {
-#if DETAILED_CU_STATS
-            ScopedElapsedTime filterPerfScope(m_slicetypeDecideElapsedTime);
-            m_countSlicetypeDecide++;
-#endif
+            ProfileLookaheadTime(m_slicetypeDecideElapsedTime, m_countSlicetypeDecide);
             ProfileScopeEvent(slicetypeDecideEV);
 
             slicetypeDecide();
@@ -1831,22 +1831,17 @@ void CostEstimateGroup::processTasks(int workerThreadID)
 
         if (m_batchMode)
         {
-#if DETAILED_CU_STATS
-            ScopedElapsedTime filterPerfScope(tld.batchElapsedTime);
-            tld.countBatches++;
-#endif
+            ProfileLookaheadTime(tld.batchElapsedTime, tld.countBatches);
             ProfileScopeEvent(estCostSingle);
-            Estimate& e = m_estimates[i];
 
+            Estimate& e = m_estimates[i];
             estimateFrameCost(tld, e.p0, e.p1, e.b, false);
         }
         else
         {
-#if DETAILED_CU_STATS
-            ScopedElapsedTime filterPerfScope(tld.coopSliceElapsedTime);
-            tld.countCoopSlices++;
-#endif
+            ProfileLookaheadTime(tld.coopSliceElapsedTime, tld.countCoopSlices);
             ProfileScopeEvent(estCostCoop);
+
             X265_CHECK(i < MAX_COOP_SLICES, "impossible number of coop slices\n");
 
             int firstY = m_lookahead.m_numRowsPerSlice * i;
