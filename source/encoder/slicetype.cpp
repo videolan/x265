@@ -234,8 +234,7 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
     pixelcmp_t satd = primitives.pu[sizeIdx].satd;
     int planar = !!(cuSize >= 8);
 
-    fenc.costEst[0][0] = 0;
-    fenc.costEstAq[0][0] = 0;
+    int costEst = 0, costEstAq = 0;
 
     for (int cuY = 0; cuY < heightInCU; cuY++)
     {
@@ -313,13 +312,16 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc)
 
             if (bFrameScoreCU)
             {
-                fenc.costEst[0][0] += icost;
-                fenc.costEstAq[0][0] += icostAq;
+                costEst += icost;
+                costEstAq += icostAq;
             }
 
             fenc.rowSatds[0][0][cuY] += icostAq;
         }
     }
+
+    fenc.costEst[0][0] = costEst;
+    fenc.costEstAq[0][0] = costEstAq;
 }
 
 uint32_t LookaheadTLD::weightCostLuma(Lowres& fenc, Lowres& ref, WeightParam& wp)
@@ -861,6 +863,7 @@ void Lookahead::slicetypeDecide()
         {
             if (!curFrame) break;
             frames[j + 1] = &curFrame->m_lowres;
+            X265_CHECK(curFrame->m_lowres.costEst[0][0] > 0, "prelookahead not completed for input picture\n");
             curFrame = curFrame->m_next;
         }
 
