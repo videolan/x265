@@ -20287,3 +20287,80 @@ cglobal interp_4tap_horiz_ps_2x4, 4, 7, 3
     pextrd             [r2 + r3 * 2],  xm1,         2
 .end
     RET
+
+INIT_YMM avx2
+cglobal interp_4tap_horiz_ps_2x8, 4, 7, 7
+    mov               r4d,           r4m
+    mov               r5d,           r5m
+    add               r3d,           r3d
+
+%ifdef PIC
+    lea               r6,            [tab_ChromaCoeff]
+    vpbroadcastd      m0,            [r6 + r4 * 4]
+%else
+    vpbroadcastd      m0,            [tab_ChromaCoeff + r4 * 4]
+%endif
+    vbroadcasti128    m6,            [pw_2000]
+    test              r5d,            r5d
+    jz                .label
+    sub               r0,             r1
+
+.label
+    mova              m4,            [interp4_hps_shuf]
+    mova              m5,            [pw_1]
+    dec               r0
+    lea               r4,            [r1 * 3]
+    movq              xm1,           [r0]                                   ;row 0
+    movhps            xm1,           [r0 + r1]
+    movq              xm2,           [r0 + r1 * 2]
+    movhps            xm2,           [r0 + r4]
+    vinserti128       m1,            m1,          xm2,          1
+    lea               r0,            [r0 + r1 * 4]
+    movq              xm3,           [r0]
+    movhps            xm3,           [r0 + r1]
+    movq              xm2,           [r0 + r1 * 2]
+    movhps            xm2,           [r0 + r4]
+    vinserti128       m3,            m3,          xm2,          1
+
+    pshufb            m1,            m4
+    pshufb            m3,            m4
+    pmaddubsw         m1,            m0
+    pmaddubsw         m3,            m0
+    pmaddwd           m1,            m5
+    pmaddwd           m3,            m5
+    packssdw          m1,            m3
+    psubw             m1,            m6
+
+    lea               r4,            [r3 * 3]
+    vextracti128      xm2,           m1,          1
+
+    movd              [r2],          xm1
+    pextrd            [r2 + r3],     xm1,         1
+    movd              [r2 + r3 * 2], xm2
+    pextrd            [r2 + r4],     xm2,         1
+    lea               r2,            [r2 + r3 * 4]
+    pextrd            [r2],          xm1,         2
+    pextrd            [r2 + r3],     xm1,         3
+    pextrd            [r2 + r3 * 2], xm2,         2
+    pextrd            [r2 + r4],     xm2,         3
+    test              r5d,            r5d
+    jz                .end
+
+    lea               r0,            [r0 + r1 * 4]
+    lea               r2,            [r2 + r3 * 4]
+    movq              xm1,           [r0]                                   ;row 0
+    movhps            xm1,           [r0 + r1]
+    movq              xm2,           [r0 + r1 * 2]
+    vinserti128       m1,            m1,          xm2,          1
+    pshufb            m1,            m4
+    pmaddubsw         m1,            m0
+    pmaddwd           m1,            m5
+    packssdw          m1,            m1
+    psubw             m1,            m6
+    vextracti128      xm2,           m1,          1
+
+    movd              [r2],          xm1
+    pextrd            [r2 + r3],     xm1,         1
+    movd              [r2 + r3 * 2], xm2
+.end
+    RET
