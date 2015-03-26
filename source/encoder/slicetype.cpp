@@ -503,7 +503,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
      * batched; this will create one job per --bframe per lowres frame, and
      * these jobs are performed by workers bonded to the thread running
      * slicetypeDecide() */
-    m_bBatchMotionSearch = 0 && m_pool && m_param->bFrameAdaptive == X265_B_ADAPT_TRELLIS;
+    m_bBatchMotionSearch = m_pool && m_param->bFrameAdaptive == X265_B_ADAPT_TRELLIS;
 
     /* It is also beneficial to pre-calculate all possible frame cost estimates
      * using worker threads bonded to the worker thread running
@@ -514,7 +514,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
      * of work */
     m_bBatchFrameCosts = m_bBatchMotionSearch;
 
-    if (m_bBatchMotionSearch && m_pool->m_numWorkers > 12)
+    if (m_bBatchMotionSearch && 0 && m_pool->m_numWorkers > 12)
     {
         m_numRowsPerSlice = m_8x8Height / (m_pool->m_numWorkers - 1);   // default to numWorkers - 1 slices
         m_numRowsPerSlice = X265_MAX(m_numRowsPerSlice, 10);            // at least 10 rows per slice
@@ -1203,8 +1203,20 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         {
             for (int i = 1; i <= m_param->bframes + 1; i++)
             {
-                if (b >= i && frames[b]->lowresMvs[0][i - 1][0].x == 0x7FFF)
-                    estGroup.add(b - i, b + i < numFrames ? b + i : b, b);
+                int p0 = b - i;
+                if (p0 < 0)
+                    continue;
+
+                /* Skip search if already done */
+                if (frames[b]->lowresMvs[0][i - 1][0].x != 0x7FFF)
+                    continue;
+
+                /* perform search to p1 at same distance, if possible */
+                int p1 = b + i;
+                if (p1 >= numFrames || frames[b]->lowresMvs[1][i - 1][0].x != 0x7FFF)
+                    p1 = b;
+
+                estGroup.add(p0, p1, b);
             }
         }
         /* auto-disable after the first batch if pool is small */
@@ -1221,10 +1233,28 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
                     if (b < i)
                         continue;
 
+                    /* only measure frame cost in this pass if motion searches
+                     * are already done */
+                    if (frames[b]->lowresMvs[0][i - 1][0].x == 0x7FFF)
+                        continue;
+
+                    int p0 = b - i;
+
                     for (int j = 0; j <= m_param->bframes; j++)
                     {
-                        if (b + j < numFrames && frames[b]->costEst[i][j] < 0)
-                            estGroup.add(b - i, b + j, b);
+                        int p1 = b + j;
+                        if (p1 >= numFrames)
+                            break;
+
+                        /* ensure P1 search is done */
+                        if (j && frames[b]->lowresMvs[1][j - 1][0].x == 0x7FFF)
+                            continue;
+
+                        /* ensure frame cost is not done */
+                        if (frames[b]->costEst[i][j] >= 0)
+                            continue;
+
+                        estGroup.add(p0, p1, b);
                     }
                 }
             }
