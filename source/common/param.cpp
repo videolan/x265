@@ -138,6 +138,7 @@ void x265_param_default(x265_param* param)
     param->bFrameAdaptive = X265_B_ADAPT_TRELLIS;
     param->bBPyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
+    param->lookaheadSlices = 0;
 
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;

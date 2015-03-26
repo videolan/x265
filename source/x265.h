@@ -611,6 +611,16 @@ typedef struct x265_param
      * cu-tree analysis. Default is 40 frames, maximum is 250 */
     int       lookaheadDepth;
 
+    /* Use multiple worker threads to measure the estimated cost of each frame
+     * within the lookahead. When bFrameAdaptive is 2, most frame cost estimates
+     * will be performed in batch mode, many cost estimates at the same time,
+     * and lookaheadSlices is ignored for batched estimates. The effect on
+     * performance can be quite small.  The higher this parameter, the less
+     * accurate the frame costs will be (since context is lost across slice
+     * boundaries) which will result in less accurate B-frame and scene-cut
+     * decisions. Default is 0 - disabled. 1 is the same as 0. Max 16 */
+    int       lookaheadSlices;
+
     /* An arbitrary threshold which determines how aggressively the lookahead
      * should detect scene cuts. The default (40) is recommended. */
     int       scenecutThreshold;
