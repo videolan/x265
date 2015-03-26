@@ -950,6 +950,24 @@ Slice decision options
 
 	**Range of values:** Between the maximum consecutive bframe count (:option:`--bframes`) and 250
 
+.. option:: --lookahead-slices <0..16>
+
+	Use multiple worker threads to measure the estimated cost of each
+	frame within the lookahead. When :option:`--b-adapt` is 2, most
+	frame cost estimates will be performed in batch mode, many cost
+	estimates at the same time, and lookahead-slices is ignored for
+	batched estimates. The effect on performance can be quite small.
+	The higher this parameter, the less accurate the frame costs will be
+	(since context is lost across slice boundaries) which will result in
+	less accurate B-frame and scene-cut decisions.
+
+	The encoder may internally lower the number of slices to ensure
+	each slice codes at least 10 16x16 rows of lowres blocks. If slices
+	are used in lookahead, the are logged in the list of tools as
+	*lslices*.
+	
+	**Values:** 0 - disabled (default). 1 is the same as 0. Max 16
+
 .. option:: --b-adapt <integer>
 
 	Adaptive B frame scheduling. Default 2
