@@ -1782,6 +1782,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_hps = x265_interp_4tap_horiz_ps_32x8_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_2x4].filter_hps = x265_interp_4tap_horiz_ps_2x4_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_2x8].filter_hps = x265_interp_4tap_horiz_ps_2x8_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_6x8].filter_hps = x265_interp_4tap_horiz_ps_6x8_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].filter_hpp = x265_interp_4tap_horiz_pp_24x32_avx2;
 
         p.chroma[X265_CSP_I422].pu[CHROMA_422_4x4].filter_vpp = x265_interp_4tap_vert_pp_4x4_avx2;
