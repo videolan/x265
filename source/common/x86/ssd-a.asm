@@ -822,10 +822,10 @@ SSD_SS_64xN
 
 %if HIGH_BIT_DEPTH == 0
 %macro SSD_LOAD_FULL 5
-    mova      m1, [t0+%1]
-    mova      m2, [t2+%2]
-    mova      m3, [t0+%3]
-    mova      m4, [t2+%4]
+    movu      m1, [t0+%1]
+    movu      m2, [t2+%2]
+    movu      m3, [t0+%3]
+    movu      m4, [t2+%4]
 %if %5==1
     add       t0, t1
     add       t2, t3
@@ -1094,6 +1094,8 @@ SSD  8,  4
 INIT_YMM avx2
 SSD 16, 16
 SSD 16,  8
+SSD 32, 32
+SSD 64, 64
 %assign function_align 16
 %endif ; !HIGH_BIT_DEPTH
 
@@ -2548,6 +2550,35 @@ cglobal pixel_ssd_s_32, 2,3,5
     movd    eax, m0
     RET
 
+INIT_YMM avx2
+cglobal pixel_ssd_s_16, 2,4,5
+    add     r1, r1
+    lea     r3, [r1 * 3]
+    mov     r2d, 16/4
+    pxor    m0, m0
+.loop:
+    movu    m1, [r0]
+    movu    m2, [r0 + r1]
+    movu    m3, [r0 + 2 * r1]
+    movu    m4, [r0 + r3]
+
+    lea     r0, [r0 + r1 * 4]
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    dec     r2d
+    jnz    .loop
+
+    ; calculate sum and return
+    HADDD   m0, m1
+    movd    eax, xm0
+    RET
 
 INIT_YMM avx2
 cglobal pixel_ssd_s_32, 2,4,5

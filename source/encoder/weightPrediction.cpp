@@ -27,8 +27,8 @@
 #include "frame.h"
 #include "picyuv.h"
 #include "lowres.h"
+#include "slice.h"
 #include "mv.h"
-#include "slicetype.h"
 #include "bitstream.h"
 
 using namespace x265;
@@ -58,6 +58,7 @@ int sliceHeaderCost(WeightParam *w, int lambda, int bChroma)
 void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
 {
     intptr_t stride = ref.lumaStride;
+    const int mvshift = 1 << 2;
     const int cuSize = 8;
     MV mvmin, mvmax;
 
@@ -66,15 +67,15 @@ void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
     for (int y = 0; y < ref.lines; y += cuSize)
     {
         intptr_t pixoff = y * stride;
-        mvmin.y = (int16_t)((-y - 8) << 2);
-        mvmax.y = (int16_t)((ref.lines - y - 1 + 8) << 2);
+        mvmin.y = (int16_t)((-y - 8) * mvshift);
+        mvmax.y = (int16_t)((ref.lines - y - 1 + 8) * mvshift);
 
         for (int x = 0; x < ref.width; x += cuSize, pixoff += cuSize, cu++)
         {
             ALIGN_VAR_16(pixel, buf8x8[8 * 8]);
             intptr_t bstride = 8;
-            mvmin.x = (int16_t)((-x - 8) << 2);
-            mvmax.x = (int16_t)((ref.width - x - 1 + 8) << 2);
+            mvmin.x = (int16_t)((-x - 8) * mvshift);
+            mvmax.x = (int16_t)((ref.width - x - 1 + 8) * mvshift);
 
             /* clip MV to available pixels */
             MV mv = mvs[cu];
@@ -100,6 +101,7 @@ void mcChroma(pixel *      mcout,
     int csp = cache.csp;
     int bw = 16 >> cache.hshift;
     int bh = 16 >> cache.vshift;
+    const int mvshift = 1 << 2;
     MV mvmin, mvmax;
 
     for (int y = 0; y < height; y += bh)
@@ -109,8 +111,8 @@ void mcChroma(pixel *      mcout,
          * into the lowres structures */
         int cu = y * cache.lowresWidthInCU;
         intptr_t pixoff = y * stride;
-        mvmin.y = (int16_t)((-y - 8) << 2);
-        mvmax.y = (int16_t)((height - y - 1 + 8) << 2);
+        mvmin.y = (int16_t)((-y - 8) * mvshift);
+        mvmax.y = (int16_t)((height - y - 1 + 8) * mvshift);
 
         for (int x = 0; x < width; x += bw, cu++, pixoff += bw)
         {
@@ -122,8 +124,8 @@ void mcChroma(pixel *      mcout,
                 mv.y >>= cache.vshift;
 
                 /* clip MV to available pixels */
-                mvmin.x = (int16_t)((-x - 8) << 2);
-                mvmax.x = (int16_t)((width - x - 1 + 8) << 2);
+                mvmin.x = (int16_t)((-x - 8) * mvshift);
+                mvmax.x = (int16_t)((width - x - 1 + 8) * mvshift);
                 mv = mv.clipped(mvmin, mvmax);
 
                 intptr_t fpeloffset = (mv.y >> 2) * stride + (mv.x >> 2);

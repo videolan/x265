@@ -6,7 +6,7 @@
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Fiona Glaser <fiona@x264.com>
 ;*          Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
-;*
+;*          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
 ;* the Free Software Foundation; either version 2 of the License, or
@@ -37,11 +37,14 @@ const pw_16,       times 16 dw 16
 const pw_32,       times 16 dw 32
 const pw_128,      times 16 dw 128
 const pw_256,      times 16 dw 256
+const pw_257,      times 16 dw 257
 const pw_512,      times 16 dw 512
 const pw_1023,     times 8  dw 1023
+ALIGN 32
 const pw_1024,     times 16 dw 1024
 const pw_4096,     times 16 dw 4096
 const pw_00ff,     times 16 dw 0x00ff
+ALIGN 32
 const pw_pixel_max,times 16 dw ((1 << BIT_DEPTH)-1)
 const deinterleave_shufd, dd 0,4,1,5,2,6,3,7
 const pb_unpackbd1, times 2 db 0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3
@@ -50,16 +53,16 @@ const pb_unpackwq1, db 0,1,0,1,0,1,0,1,2,3,2,3,2,3,2,3
 const pb_unpackwq2, db 4,5,4,5,4,5,4,5,6,7,6,7,6,7,6,7
 const pw_swap,      times 2 db 6,7,4,5,2,3,0,1
 
-const pb_2,        times 16 db 2
-const pb_4,        times 16 db 4
-const pb_16,       times 16 db 16
-const pb_64,       times 16 db 64
+const pb_2,        times 32 db 2
+const pb_4,        times 32 db 4
+const pb_16,       times 32 db 16
+const pb_64,       times 32 db 64
 const pb_01,       times  8 db 0,1
 const pb_0,        times 16 db 0
 const pb_a1,       times 16 db 0xa1
 const pb_3,        times 16 db 3
-const pb_8,        times 16 db 8
-const pb_32,       times 16 db 32
+const pb_8,        times 32 db 8
+const pb_32,       times 32 db 32
 const pb_128,      times 16 db 128
 const pb_shuf8x8c, db 0,0,0,0,2,2,2,2,4,4,4,4,6,6,6,6
 
@@ -72,7 +75,7 @@ const pw_64,       times 8 dw 64
 const pw_256,      times 8 dw 256
 const pw_32_0,     times 4 dw 32,
                    times 4 dw 0
-const pw_2000,     times 8 dw 0x2000
+const pw_2000,     times 16 dw 0x2000
 const pw_8000,     times 8 dw 0x8000
 const pw_3fff,     times 8 dw 0x3fff
 const pw_ppppmmmm, dw 1,1,1,1,-1,-1,-1,-1
@@ -80,7 +83,7 @@ const pw_ppmmppmm, dw 1,1,-1,-1,1,1,-1,-1
 const pw_pmpmpmpm, dw 1,-1,1,-1,1,-1,1,-1
 const pw_pmmpzzzz, dw 1,-1,-1,1,0,0,0,0
 const pd_1,        times 8 dd 1
-const pd_2,        times 4 dd 2
+const pd_2,        times 8 dd 2
 const pd_4,        times 4 dd 4
 const pd_8,        times 4 dd 8
 const pd_16,       times 4 dd 16

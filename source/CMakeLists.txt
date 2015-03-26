@@ -12,6 +12,9 @@ endif()
 if(POLICY CMP0042)
     cmake_policy(SET CMP0042 NEW) # MACOSX_RPATH
 endif()
+if(POLICY CMP0054)
+    cmake_policy(SET CMP0054 OLD) # Only interpret if() arguments as variables or keywords when unquoted
+endif()
 
 project (x265)
 cmake_minimum_required (VERSION 2.8.8) # OBJECT libraries require 2.8.8
@@ -21,18 +24,13 @@ include(CheckSymbolExists)
 include(CheckCXXCompilerFlag)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 43)
+set(X265_BUILD 50)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
                "${PROJECT_BINARY_DIR}/x265_config.h")
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
-
-option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
-if(CHECKED_BUILD)
-    add_definitions(-DCHECKED_BUILD=1)
-endif()
 
 # System architecture detection
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSPROC)
@@ -61,6 +59,19 @@ if(UNIX)
     if(LIBRT)
         list(APPEND PLATFORM_LIBS rt)
     endif()
+    find_package(Numa)
+    if(NUMA_FOUND)
+        list(APPEND CMAKE_REQUIRED_LIBRARIES ${NUMA_LIBRARY})
+        check_symbol_exists(numa_node_of_cpu numa.h NUMA_V2)
+        if(NUMA_V2)
+            add_definitions(-DHAVE_LIBNUMA)
+            message(STATUS "libnuma found, building with support for NUMA nodes")
+            list(APPEND PLATFORM_LIBS ${NUMA_LIBRARY})
+            link_directories(${NUMA_LIBRARY_DIR})
+            include_directories(${NUMA_INCLUDE_DIR})
+        endif()
+    endif()
+    mark_as_advanced(LIBRT NUMA_FOUND)
 endif(UNIX)
 
 if(X64 AND NOT WIN32)
@@ -154,6 +165,35 @@ if(GCC)
     if(CC_HAS_FNO_EXCEPTIONS_FLAG)
         add_definitions(-fno-exceptions)
     endif()
+    set(FSANITIZE "" CACHE STRING "-fsanitize options for GCC/clang")
+    if(FSANITIZE)
+        add_definitions(-fsanitize=${FSANITIZE})
+        # clang and gcc need the sanitize options to be passed at link
+        # time so the appropriate ASAN/TSAN runtime libraries can be
+        # linked.
+        list(APPEND LINKER_OPTIONS "-fsanitize=${FSANITIZE}")
+    endif()
+    option(ENABLE_AGGRESSIVE_CHECKS "Enable stack protection and -ftrapv" OFF)
+    if(ENABLE_AGGRESSIVE_CHECKS)
+        # use with care, -ftrapv can cause testbench SIGILL exceptions
+        # since it is testing corner cases of signed integer math
+        add_definitions(-DUSING_FTRAPV=1)
+        check_cxx_compiler_flag(-fsanitize=undefined-trap CC_HAS_CATCH_UNDEFINED) # clang
+        check_cxx_compiler_flag(-ftrapv CC_HAS_FTRAPV)                            # gcc
+        check_cxx_compiler_flag(-fstack-protector-all CC_HAS_STACK_PROTECT)       # gcc
+        if(CC_HAS_FTRAPV)
+            add_definitions(-ftrapv)
+        endif()
+        if(CC_HAS_CATCH_UNDEFINED)
+            add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error)
+        endif()
+        if(CC_HAS_STACK_PROTECT)
+            add_definitions(-fstack-protector-all)
+            if(MINGW)
+                list(APPEND PLATFORM_LIBS ssp)
+            endif()
+        endif()
+    endif(ENABLE_AGGRESSIVE_CHECKS)
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CC_VERSION)
 endif(GCC)
 
@@ -168,6 +208,11 @@ if(YASM_FOUND AND X86)
     endif()
 endif()
 
+option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
+if(CHECKED_BUILD)
+    add_definitions(-DCHECKED_BUILD=1)
+endif()
+
 # Build options
 set(LIB_INSTALL_DIR lib CACHE STRING "Install location of libraries")
 set(BIN_INSTALL_DIR bin CACHE STRING "Install location of executables")
@@ -179,6 +224,7 @@ if(X64)
     # can disable this if(X64) check if you desparately need a 32bit
     # build with 10bit/12bit support, but this violates the "shrink wrap
     # license" so to speak.  If it breaks you get to keep both halves.
+    # You will likely need to compile without assembly
     option(HIGH_BIT_DEPTH "Store pixels as 16bit values" OFF)
 endif(X64)
 if(HIGH_BIT_DEPTH)
@@ -239,6 +285,11 @@ if(ENABLE_VTUNE)
     endif()
     add_subdirectory(profile/vtune)
 endif(ENABLE_VTUNE)
+
+option(DETAILED_CU_STATS "Enable internal profiling of encoder work" OFF)
+if(DETAILED_CU_STATS)
+    add_definitions(-DDETAILED_CU_STATS)
+endif(DETAILED_CU_STATS)
 
 add_subdirectory(encoder)
 add_subdirectory(common)
@@ -321,6 +372,9 @@ if(ENABLE_SHARED)
                 ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
                 RUNTIME DESTINATION ${BIN_INSTALL_DIR})
     endif()
+    if(LINKER_OPTIONS)
+        set_target_properties(x265-shared PROPERTIES LINK_FLAGS ${LINKER_OPTIONS})
+    endif()
 endif()
 
 if(X265_LATEST_TAG)
@@ -375,10 +429,10 @@ if(ENABLE_CLI)
 
     if(XCODE)
         # Xcode seems unable to link the CLI with libs, so link as one targget
-        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} x265.cpp x265.h
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} x265.cpp x265.h x265cli.h
                            $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
     else()
-        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} ${X265_RC_FILE} x265.cpp x265.h)
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} ${X265_RC_FILE} x265.cpp x265.h x265cli.h)
         if(WIN32 OR NOT ENABLE_SHARED OR INTEL_CXX)
             # The CLI cannot link to the shared library on Windows, it
             # requires internal APIs not exported from the DLL
@@ -388,6 +442,9 @@ if(ENABLE_CLI)
         endif()
     endif()
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
+    if(LINKER_OPTIONS)
+        set_target_properties(cli PROPERTIES LINK_FLAGS ${LINKER_OPTIONS})
+    endif()
 
     install(TARGETS cli DESTINATION ${BIN_INSTALL_DIR})
 endif(ENABLE_CLI)

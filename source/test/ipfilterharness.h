@@ -50,7 +50,7 @@ protected:
     pixel   pixel_test_buff[TEST_CASES][TEST_BUF_SIZE];
     int16_t short_test_buff[TEST_CASES][TEST_BUF_SIZE];
 
-    bool check_IPFilter_primitive(filter_p2s_t ref, filter_p2s_t opt, int isChroma, int csp);
+    bool check_IPFilter_primitive(filter_p2s_wxh_t ref, filter_p2s_wxh_t opt, int isChroma, int csp);
     bool check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt);
     bool check_IPFilterChroma_ps_primitive(filter_ps_t ref, filter_ps_t opt);
     bool check_IPFilterChroma_hps_primitive(filter_hps_t ref, filter_hps_t opt);
@@ -62,6 +62,8 @@ protected:
     bool check_IPFilterLuma_sp_primitive(filter_sp_t ref, filter_sp_t opt);
     bool check_IPFilterLuma_ss_primitive(filter_ss_t ref, filter_ss_t opt);
     bool check_IPFilterLumaHV_primitive(filter_hv_pp_t ref, filter_hv_pp_t opt);
+    bool check_IPFilterLumaP2S_primitive(filter_p2s_t ref, filter_p2s_t opt);
+    bool check_IPFilterChromaP2S_primitive(filter_p2s_t ref, filter_p2s_t opt);
 
 public:
 

@@ -2,41 +2,34 @@
 Threading
 *********
 
-Thread Pool
-===========
+Thread Pools
+============
 
-x265 creates a pool of worker threads and shares this thread pool
-with all encoders within the same process (it is process global, aka a
-singleton).  The number of threads within the thread pool is determined
-by the encoder which first allocates the pool, which by definition is
-the first encoder created within each process.
+x265 creates one or more thread pools per encoder, one pool per NUMA
+node (typically a CPU socket). :option:`--pools` specifies the number of
+pools and the number of threads per pool the encoder will allocate. By
+default x265 allocates one thread per (hyperthreaded) CPU core on each
+NUMA node.
 
-:option:`--threads` specifies the number of threads the encoder will
-try to allocate for its thread pool.  If the thread pool was already
-allocated this parameter is ignored.  By default x265 allocates one
-thread per (hyperthreaded) CPU core in your system.
+If you are running multiple encoders on a system with multiple NUMA
+nodes, it is recommended to isolate each of them to a single node in
+order to avoid the NUMA overhead of remote memory access.
 
-Work distribution is job based.  Idle worker threads ask their parent
-pool object for jobs to perform.  When no jobs are available, idle
-worker threads block and consume no CPU cycles.
+Work distribution is job based. Idle worker threads scan the job
+providers assigned to their thread pool for jobs to perform. When no
+jobs are available, the idle worker threads block and consume no CPU
+cycles.
 
 Objects which desire to distribute work to worker threads are known as
-job providers (and they derive from the JobProvider class).  When job
-providers have work they enqueue themselves into the pool's provider
-list (and dequeue themselves when they no longer have work).  The thread
+job providers (and they derive from the JobProvider class).  The thread
 pool has a method to **poke** awake a blocked idle thread, and job
 providers are recommended to call this method when they make new jobs
 available.
 
 Worker jobs are not allowed to block except when abosultely necessary
-for data locking. If a job becomes blocked, the worker thread is
-expected to drop that job and go back to the pool and find more work.
-
-.. note::
-
-	x265_cleanup() frees the process-global thread pool, allowing
-	it to be reallocated if necessary, but only if no encoders are
-	allocated at the time it is called.
+for data locking. If a job becomes blocked, the work function is
+expected to drop that job so the worker thread may go back to the pool
+and find more work.
 
 Wavefront Parallel Processing
 =============================
@@ -82,24 +75,35 @@ threading is not disabled, the encoder will change the default frame
 thread count to be higher than if WPP was enabled.  The exact formulas
 are described in the next section.
 
+Bonded Task Groups
+==================
+
+If a worker thread job has work which can be performed in parallel by
+many threads, it may allocate a bonded task group and enlist the help of
+other idle worker threads in the same pool. Those threads will cooperate
+to complete the work of the bonded task group and then return to their
+idle states. The larger and more uniform those tasks are, the better the
+bonded task group will perform.
+
 Parallel Mode Analysis
-======================
+~~~~~~~~~~~~~~~~~~~~~~
 
 When :option:`--pmode` is enabled, each CU (at all depths from 64x64 to
-8x8) will distribute its analysis work to the thread pool. Each analysis
-job will measure the cost of one prediction for the CU: merge, skip,
-intra, inter (2Nx2N, Nx2N, 2NxN, and AMP). At slower presets, the amount
-of increased parallelism is often enough to be able to reduce frame
-parallelism while achieving the same overall CPU utilization. Reducing
-frame threads is often beneficial to ABR and VBV rate control.
+8x8) will distribute its analysis work to the thread pool via a bonded
+task group. Each analysis job will measure the cost of one prediction
+for the CU: merge, skip, intra, inter (2Nx2N, Nx2N, 2NxN, and AMP). At
+slower presets, the amount of increased parallelism is often enough to
+be able to reduce frame parallelism while achieving the same overall CPU
+utilization. Reducing frame threads is often beneficial to ABR and VBV
+rate control.
 
 Parallel Motion Estimation
-==========================
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When :option:`--pme` is enabled all of the analysis functions which
 perform motion searches to reference frames will distribute those motion
-searches as jobs for worker threads (if more than two motion searches
-are required).
+searches as jobs for worker threads via a bonded task group (if more
+than two motion searches are required).
 
 Frame Threading
 ===============
@@ -125,16 +129,21 @@ The second extenuating circumstance is the loop filters. The pixels used
 for motion reference must be processed by the loop filters and the loop
 filters cannot run until a full row has been encoded, and it must run a
 full row behind the encode process so that the pixels below the row
-being filtered are available. When you add up all the row lags each
-frame ends up being 3 CTU rows behind its reference frames (the
-equivalent of 12 macroblock rows for x264)
+being filtered are available. On top of this, HEVC has two loop filters:
+deblocking and SAO, which must be run in series with a row lag between
+them. When you add up all the row lags each frame ends up being 3 CTU
+rows behind its reference frames (the equivalent of 12 macroblock rows
+for x264). And keep in mind the wave-front progression pattern; by the
+time the reference frame finishes the third row of CTUs, nearly half of
+the CTUs in the frame may be compressed (depending on the display aspect
+ratio).
 
 The third extenuating circumstance is that when a frame being encoded
 becomes blocked by a reference frame row being available, that frame's
 wave-front becomes completely stalled and when the row becomes available
 again it can take quite some time for the wave to be restarted, if it
-ever does. This makes WPP many times less effective when frame
-parallelism is in use.
+ever does. This makes WPP less effective when frame parallelism is in
+use.
 
 :option:`--merange` can have a negative impact on frame parallelism. If
 the range is too large, more rows of CTU lag must be added to ensure
@@ -213,13 +222,13 @@ Lookahead
 
 The lookahead module of x265 (the lowres pre-encode which determines
 scene cuts and slice types) uses the thread pool to distribute the
-lowres cost analysis to worker threads. It follows the same wave-front
-pattern as the main encoder except it works in reverse-scan order.
+lowres cost analysis to worker threads. It will use bonded task groups
+to perform batches of frame cost estimates, and it may optionally use
+bonded task groups to measure single frame cost estimates using slices.
 
-The function slicetypeDecide() itself may also be performed by a worker
-thread if your system has enough CPU cores to make this a beneficial
-trade-off, else it runs within the context of the thread which calls the
-x265_encoder_encode().
+The function slicetypeDecide() itself is also be performed by a worker
+thread if your encoder has a thread pool, else it runs within the
+context of the thread which calls the x265_encoder_encode().
 
 SAO
 ===

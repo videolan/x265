@@ -54,13 +54,13 @@ WaveFront::~WaveFront()
 void WaveFront::clearEnabledRowMask()
 {
     memset((void*)m_externalDependencyBitmap, 0, sizeof(uint32_t) * m_numWords);
+    memset((void*)m_internalDependencyBitmap, 0, sizeof(uint32_t) * m_numWords);
 }
 
 void WaveFront::enqueueRow(int row)
 {
     uint32_t bit = 1 << (row & 31);
     ATOMIC_OR(&m_internalDependencyBitmap[row >> 5], bit);
-    if (m_pool) m_pool->pokeIdleThread();
 }
 
 void WaveFront::enableRow(int row)
@@ -80,11 +80,11 @@ bool WaveFront::dequeueRow(int row)
     return !!(ATOMIC_AND(&m_internalDependencyBitmap[row >> 5], ~bit) & bit);
 }
 
-bool WaveFront::findJob(int threadId)
+void WaveFront::findJob(int threadId)
 {
     unsigned long id;
 
-    // thread safe
+    /* Loop over each word until all available rows are finished */
     for (int w = 0; w < m_numWords; w++)
     {
         uint32_t oldval = m_internalDependencyBitmap[w] & m_externalDependencyBitmap[w];
@@ -97,15 +97,14 @@ bool WaveFront::findJob(int threadId)
             {
                 /* we cleared the bit, we get to process the row */
                 processRow(w * 32 + id, threadId);
-                return true;
+                m_helpWanted = true;
+                return; /* check for a higher priority task */
             }
 
-            // some other thread cleared the bit, try another bit
             oldval = m_internalDependencyBitmap[w] & m_externalDependencyBitmap[w];
         }
     }
 
-    // made it through the bitmap without finding any enqueued rows
-    return false;
+    m_helpWanted = false;
 }
 }

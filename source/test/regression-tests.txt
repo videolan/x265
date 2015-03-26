@@ -13,7 +13,7 @@
 
 BasketballDrive_1920x1080_50.y4m,--preset fast
 BasketballDrive_1920x1080_50.y4m,--preset faster
-BasketballDrive_1920x1080_50.y4m,--preset medium --ctu 16
+BasketballDrive_1920x1080_50.y4m,--preset medium --ctu 16 --max-tu-size 8
 BasketballDrive_1920x1080_50.y4m,--preset medium --keyint -1 --nr-inter 100 -F4
 BasketballDrive_1920x1080_50.y4m,--preset slow --nr-intra 100 -F4
 BasketballDrive_1920x1080_50.y4m,--preset slower --lossless
@@ -22,11 +22,11 @@ BasketballDrive_1920x1080_50.y4m,--preset ultrafast
 BasketballDrive_1920x1080_50.y4m,--preset veryfast
 BasketballDrive_1920x1080_50.y4m,--preset veryslow --crf 4 --cu-lossless --pmode
 BasketballDrive_1920x1080_50.y4m,--preset veryslow --psy-rd 1 --tskip --no-b-intra
-Coastguard-4k.y4m,--preset medium
+Coastguard-4k.y4m,--preset medium --rdoq-level 1
 Coastguard-4k.y4m,--preset slower
 Coastguard-4k.y4m,--preset superfast
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset fast
-CrowdRun_1920x1080_50_10bit_422.yuv,--preset faster
+CrowdRun_1920x1080_50_10bit_422.yuv,--preset faster --max-tu-size 4 --min-cu-size 32
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset medium --no-wpp
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset slow --no-wpp
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset slower
@@ -36,15 +36,15 @@ CrowdRun_1920x1080_50_10bit_422.yuv,--preset veryfast
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset veryslow
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset fast
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset faster
-CrowdRun_1920x1080_50_10bit_444.yuv,--preset medium --dither --keyint -1
+CrowdRun_1920x1080_50_10bit_444.yuv,--preset medium --dither --keyint -1 --rdoq-level 1
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset slow
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset slower --dither --no-wpp
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset superfast --weightp --dither
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset ultrafast --weightp --no-wpp
-CrowdRun_1920x1080_50_10bit_444.yuv,--preset veryfast
+CrowdRun_1920x1080_50_10bit_444.yuv,--preset veryfast --temporal-layers
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset veryslow --tskip --tskip-fast
 DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset medium
-DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset slower
+DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset slower --temporal-layers
 DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset superfast --weightp
 DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset veryslow --tskip
 DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset medium --nr-inter 500 -F4
@@ -52,7 +52,7 @@ DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset slower --no-weightp
 DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset superfast --weightp --nr-intra 1000 -F4
 FourPeople_1280x720_60.y4m,--preset medium --qp 38
 FourPeople_1280x720_60.y4m,--preset slower
-FourPeople_1280x720_60.y4m,--preset superfast --threads 1
+FourPeople_1280x720_60.y4m,--preset superfast --no-wpp
 Keiba_832x480_30.y4m,--preset medium --pmode
 Keiba_832x480_30.y4m,--preset slower --fast-intra --nr-inter 500 -F4
 Keiba_832x480_30.y4m,--preset superfast --no-fast-intra --nr-intra 1000 -F4
@@ -60,8 +60,8 @@ Kimono1_1920x1080_24_10bit_444.yuv,--preset medium
 Kimono1_1920x1080_24_10bit_444.yuv,--preset slower
 Kimono1_1920x1080_24_10bit_444.yuv,--preset superfast --weightp
 KristenAndSara_1280x720_60.y4m,--preset medium
-KristenAndSara_1280x720_60.y4m,--preset slower --pmode
-KristenAndSara_1280x720_60.y4m,--preset superfast
+KristenAndSara_1280x720_60.y4m,--preset slower --pmode --max-tu-size 8
+KristenAndSara_1280x720_60.y4m,--preset superfast --min-cu-size 16
 KristenAndSara_1280x720_60.y4m,--preset ultrafast --strong-intra-smoothing
 NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset medium
 NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset slower
@@ -84,7 +84,7 @@ RaceHorses_416x240_30.y4m,--preset slower
 RaceHorses_416x240_30.y4m,--preset superfast
 RaceHorses_416x240_30.y4m,--preset veryslow --tskip-fast --tskip
 RaceHorses_416x240_30_10bit.yuv,--preset fast
-RaceHorses_416x240_30_10bit.yuv,--preset faster --dither
+RaceHorses_416x240_30_10bit.yuv,--preset faster --rdoq-level 0 --dither
 RaceHorses_416x240_30_10bit.yuv,--preset medium --keyint -1 --no-weightp
 RaceHorses_416x240_30_10bit.yuv,--preset slow
 RaceHorses_416x240_30_10bit.yuv,--preset slower
@@ -102,7 +102,7 @@ big_buck_bunny_360p24.y4m,--preset slower
 big_buck_bunny_360p24.y4m,--preset superfast --psy-rdoq 2.0
 big_buck_bunny_360p24.y4m,--preset ultrafast
 big_buck_bunny_360p24.y4m,--preset veryfast
-big_buck_bunny_360p24.y4m,--preset veryslow --psy-rdoq 1.0
+big_buck_bunny_360p24.y4m,--preset veryslow --psy-rdoq 1.0 --rdoq-level 1
 city_4cif_60fps.y4m,--preset medium --crf 4 --cu-lossless --sao-non-deblock
 city_4cif_60fps.y4m,--preset medium --rdpenalty 1 --tu-intra-depth 2
 city_4cif_60fps.y4m,--preset slower
@@ -117,10 +117,10 @@ ducks_take_off_420_720p50.y4m,--preset superfast --weightp
 ducks_take_off_420_720p50.y4m,--preset ultrafast --constrained-intra
 ducks_take_off_420_720p50.y4m,--preset veryfast --qp 24
 ducks_take_off_420_720p50.y4m,--preset veryslow --constrained-intra
-ducks_take_off_444_720p50.y4m,--preset medium --qp 38 --scaling-list default
+ducks_take_off_444_720p50.y4m,--preset medium --qp 38
 ducks_take_off_444_720p50.y4m,--preset slower
 ducks_take_off_444_720p50.y4m,--preset superfast --weightp
-ducks_take_off_444_720p50.y4m,--preset veryslow --psy-rd 1 --psy-rdoq 2.0
+ducks_take_off_444_720p50.y4m,--preset veryslow --psy-rd 1 --psy-rdoq 2.0 --rdoq-level 1
 mobile_calendar_422_ntsc.y4m,--preset medium
 mobile_calendar_422_ntsc.y4m,--preset slower
 mobile_calendar_422_ntsc.y4m,--preset superfast --weightp
@@ -128,16 +128,14 @@ mobile_calendar_422_ntsc.y4m,--preset veryslow --tskip
 old_town_cross_444_720p50.y4m,--preset fast
 old_town_cross_444_720p50.y4m,--preset faster
 old_town_cross_444_720p50.y4m,--preset medium --keyint -1 --no-weightp
-old_town_cross_444_720p50.y4m,--preset slow
+old_town_cross_444_720p50.y4m,--preset slow --rdoq-level 1
 old_town_cross_444_720p50.y4m,--preset slower
-old_town_cross_444_720p50.y4m,--preset superfast --weightp
-old_town_cross_444_720p50.y4m,--preset ultrafast --weightp
+old_town_cross_444_720p50.y4m,--preset superfast --weightp --min-cu 16
+old_town_cross_444_720p50.y4m,--preset ultrafast --weightp --min-cu 32
 old_town_cross_444_720p50.y4m,--preset veryfast
 old_town_cross_444_720p50.y4m,--preset veryslow --crf 4 --cu-lossless
-parkrun_ter_720p50.y4m,--preset medium --no-open-gop --sao-non-deblock
+parkrun_ter_720p50.y4m,--preset medium --no-open-gop --sao-non-deblock --crf 4 --cu-lossless
 parkrun_ter_720p50.y4m,--preset slower --fast-intra
-parkrun_ter_720p50.y4m,--preset superfast --crf 4 --cu-lossless --no-open-gop
-parkrun_ter_720p50.y4m,--preset veryslow --sao-non-deblock
 silent_cif_420.y4m,--preset medium
 silent_cif_420.y4m,--preset slower
 silent_cif_420.y4m,--preset superfast --weightp
@@ -149,7 +147,7 @@ sintel_trailer_2k_480p24.y4m,--preset fast --weightb
 sintel_trailer_2k_480p24.y4m,--preset faster --weightb
 sintel_trailer_2k_480p24.y4m,--preset medium --no-weightp --weightb --cu-stats
 sintel_trailer_2k_480p24.y4m,--preset slow --weightb
-sintel_trailer_2k_480p24.y4m,--preset slower --cu-stats
+sintel_trailer_2k_480p24.y4m,--preset slower --cu-stats --rdoq-level 0
 sintel_trailer_2k_480p24.y4m,--preset superfast --cu-stats --weightb
 sintel_trailer_2k_480p24.y4m,--preset ultrafast --weightb
 sintel_trailer_2k_480p24.y4m,--preset veryfast --weightb
@@ -160,23 +158,23 @@ tearsofsteel-4k-1000f-s214.y4m,--preset superfast
 test_party_640x360_25fps.y4m,--preset fast
 test_party_640x360_25fps.y4m,--preset faster
 test_party_640x360_25fps.y4m,--preset medium --ctu 16 --nr-inter 1000 -F4
-test_party_640x360_25fps.y4m,--preset slow
+test_party_640x360_25fps.y4m,--preset slow --max-tu-size 16
 test_party_640x360_25fps.y4m,--preset slower
 test_party_640x360_25fps.y4m,--preset superfast --ctu 16 --nr-intra 500 -F4
 test_party_640x360_25fps.y4m,--preset ultrafast --ctu 16
 test_party_640x360_25fps.y4m,--preset veryfast
 test_party_640x360_25fps.y4m,--preset veryslow
-tos_215to1215_4096x1714_444_10bit_24fps.yuv,--preset medium
-tos_215to1215_4096x1714_444_10bit_24fps.yuv,--preset slower
-tos_215to1215_4096x1714_444_10bit_24fps.yuv,--preset superfast --weightp
+tos_215to1215_4096x1714_24_10bit_444.yuv,--preset medium
+tos_215to1215_4096x1714_24_10bit_444.yuv,--preset slower
+tos_215to1215_4096x1714_24_10bit_444.yuv,--preset superfast --weightp
 vtc1nw_422_ntsc.y4m,--preset medium --scaling-list default
 vtc1nw_422_ntsc.y4m,--preset slower --nr-inter 1000 -F4 --no-wpp
 vtc1nw_422_ntsc.y4m,--preset superfast --weightp --nr-intra 100 -F4
 washdc_422_ntsc.y4m,--preset fast
-washdc_422_ntsc.y4m,--preset faster
+washdc_422_ntsc.y4m,--preset faster --rdoq-level 1
 washdc_422_ntsc.y4m,--preset medium --no-weightp
 washdc_422_ntsc.y4m,--preset slow
-washdc_422_ntsc.y4m,--preset slower --psy-rdoq 2.0
+washdc_422_ntsc.y4m,--preset slower --psy-rdoq 2.0 --rdoq-level 2
 washdc_422_ntsc.y4m,--preset superfast --psy-rd 1
 washdc_422_ntsc.y4m,--preset ultrafast --weightp
 washdc_422_ntsc.y4m,--preset veryfast

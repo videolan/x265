@@ -30,6 +30,9 @@
 #include "entropy.h"
 #include "rdcost.h"
 
+#include "analysis.h"  // TLD
+#include "framedata.h"
+
 using namespace x265;
 
 #if _MSC_VER
@@ -40,10 +43,9 @@ using namespace x265;
 
 #define MVP_IDX_BITS 1
 
-ALIGN_VAR_32(const pixel, Search::zeroPixel[MAX_CU_SIZE]) = { 0 };
 ALIGN_VAR_32(const int16_t, Search::zeroShort[MAX_CU_SIZE]) = { 0 };
 
-Search::Search() : JobProvider(NULL)
+Search::Search()
 {
     memset(m_rqt, 0, sizeof(m_rqt));
 
@@ -54,25 +56,30 @@ Search::Search() : JobProvider(NULL)
     }
 
     m_numLayers = 0;
+    m_intraPred = NULL;
+    m_intraPredAngs = NULL;
+    m_fencScaled = NULL;
+    m_fencTransposed = NULL;
+    m_tsCoeff = NULL;
+    m_tsResidual = NULL;
+    m_tsRecon = NULL;
     m_param = NULL;
     m_slice = NULL;
     m_frame = NULL;
-    m_bJobsQueued = false;
-    m_totalNumME = m_numAcquiredME = m_numCompletedME = 0;
 }
 
 bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
 {
     uint32_t maxLog2CUSize = g_log2Size[param.maxCUSize];
     m_param = &param;
-    m_bEnableRDOQ = param.rdLevel >= 4;
+    m_bEnableRDOQ = !!param.rdoqLevel;
     m_bFrameParallel = param.frameNumThreads > 1;
     m_numLayers = g_log2Size[param.maxCUSize] - 2;
 
     m_rdCost.setPsyRdScale(param.psyRd);
     m_me.init(param.searchMethod, param.subpelRefine, param.internalCsp);
 
-    bool ok = m_quant.init(m_bEnableRDOQ, param.psyRdoq, scalingList, m_entropyCoder);
+    bool ok = m_quant.init(param.rdoqLevel, param.psyRdoq, scalingList, m_entropyCoder);
     if (m_param->noiseReductionIntra || m_param->noiseReductionInter)
         ok &= m_quant.allocNoiseReduction(param);
 
@@ -116,6 +123,15 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     m_qtTempTransformSkipFlag[1] = m_qtTempTransformSkipFlag[0] + numPartitions;
     m_qtTempTransformSkipFlag[2] = m_qtTempTransformSkipFlag[0] + numPartitions * 2;
 
+    CHECKED_MALLOC(m_intraPred, pixel, (32 * 32) * (33 + 3));
+    m_fencScaled = m_intraPred + 32 * 32;
+    m_fencTransposed = m_fencScaled + 32 * 32;
+    m_intraPredAngs = m_fencTransposed + 32 * 32;
+
+    CHECKED_MALLOC(m_tsCoeff,    coeff_t, MAX_TS_SIZE * MAX_TS_SIZE);
+    CHECKED_MALLOC(m_tsResidual, int16_t, MAX_TS_SIZE * MAX_TS_SIZE);
+    CHECKED_MALLOC(m_tsRecon,    pixel,   MAX_TS_SIZE * MAX_TS_SIZE);
+
     return ok;
 
 fail:
@@ -141,6 +157,10 @@ Search::~Search()
 
     X265_FREE(m_qtTempCbf[0]);
     X265_FREE(m_qtTempTransformSkipFlag[0]);
+    X265_FREE(m_intraPred);
+    X265_FREE(m_tsCoeff);
+    X265_FREE(m_tsResidual);
+    X265_FREE(m_tsRecon);
 }
 
 void Search::setQP(const Slice& slice, int qp)
@@ -421,7 +441,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
     }
 
     // set reconstruction for next intra prediction blocks if full TU prediction won
-    pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
     intptr_t picStride = m_frame->m_reconPic->m_stride;
     primitives.cu[sizeIdx].copy_pp(picReconY, picStride, reconQt, reconQtStride);
 
@@ -477,17 +497,14 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
     if (m_bEnableRDOQ)
         m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSize, true);
 
-    ALIGN_VAR_32(coeff_t, tsCoeffY[MAX_TS_SIZE * MAX_TS_SIZE]);
-    ALIGN_VAR_32(pixel,   tsReconY[MAX_TS_SIZE * MAX_TS_SIZE]);
-
     int checkTransformSkip = 1;
     for (int useTSkip = 0; useTSkip <= checkTransformSkip; useTSkip++)
     {
         uint64_t tmpCost;
         uint32_t tmpEnergy = 0;
 
-        coeff_t* coeff = (useTSkip ? tsCoeffY : coeffY);
-        pixel*   tmpRecon = (useTSkip ? tsReconY : reconQt);
+        coeff_t* coeff = (useTSkip ? m_tsCoeff : coeffY);
+        pixel*   tmpRecon = (useTSkip ? m_tsRecon : reconQt);
         uint32_t tmpReconStride = (useTSkip ? MAX_TS_SIZE : reconQtStride);
 
         primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
@@ -578,8 +595,8 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
 
     if (bTSkip)
     {
-        memcpy(coeffY, tsCoeffY, sizeof(coeff_t) << (log2TrSize * 2));
-        primitives.cu[sizeIdx].copy_pp(reconQt, reconQtStride, tsReconY, tuSize);
+        memcpy(coeffY, m_tsCoeff, sizeof(coeff_t) << (log2TrSize * 2));
+        primitives.cu[sizeIdx].copy_pp(reconQt, reconQtStride, m_tsRecon, tuSize);
     }
     else if (checkTransformSkip)
     {
@@ -589,7 +606,7 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
     }
 
     // set reconstruction for next intra prediction blocks
-    pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+    pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
     intptr_t picStride = m_frame->m_reconPic->m_stride;
     primitives.cu[sizeIdx].copy_pp(picReconY, picStride, reconQt, reconQtStride);
 
@@ -639,7 +656,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
         uint32_t sizeIdx   = log2TrSize - 2;
         primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
 
-        pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+        pixel*   picReconY = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
         intptr_t picStride = m_frame->m_reconPic->m_stride;
 
         uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffY, log2TrSize, TEXT_LUMA, absPartIdx, false);
@@ -799,7 +816,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tu
             coeff_t* coeffC        = m_rqt[qtLayer].coeffRQT[chromaId] + coeffOffsetC;
             pixel*   reconQt       = m_rqt[qtLayer].reconQtYuv.getChromaAddr(chromaId, absPartIdxC);
             uint32_t reconQtStride = m_rqt[qtLayer].reconQtYuv.m_csize;
-            pixel*   picReconC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
+            pixel*   picReconC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + absPartIdxC);
             intptr_t picStride = m_frame->m_reconPic->m_strideC;
 
             uint32_t chromaPredMode = cu.m_chromaIntraDir[absPartIdxC];
@@ -812,7 +829,7 @@ uint32_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tu
             initAdiPatternChroma(cu, cuGeom, absPartIdxC, intraNeighbors, chromaId);
 
             // get prediction signal
-            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC, m_csp);
+            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC);
             cu.setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
 
             primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
@@ -864,9 +881,6 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
      * condition as it arrived, and to do all bit estimates from the same state. */
     m_entropyCoder.store(m_rqt[fullDepth].rqtRoot);
 
-    ALIGN_VAR_32(coeff_t, tskipCoeffC[MAX_TS_SIZE * MAX_TS_SIZE]);
-    ALIGN_VAR_32(pixel,   tskipReconC[MAX_TS_SIZE * MAX_TS_SIZE]);
-
     uint32_t curPartNum = cuGeom.numPartitions >> tuDepthC * 2;
     const SplitType splitType = (m_csp == X265_CSP_I422) ? VERTICAL_SPLIT : DONT_SPLIT;
 
@@ -903,7 +917,7 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
                 chromaPredMode = g_chroma422IntraAngleMappingTable[chromaPredMode];
 
             // get prediction signal
-            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC, m_csp);
+            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC);
 
             uint64_t bCost = MAX_INT64;
             uint32_t bDist = 0;
@@ -914,8 +928,8 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
             int checkTransformSkip = 1;
             for (int useTSkip = 0; useTSkip <= checkTransformSkip; useTSkip++)
             {
-                coeff_t* coeff = (useTSkip ? tskipCoeffC : coeffC);
-                pixel*   recon = (useTSkip ? tskipReconC : reconQt);
+                coeff_t* coeff = (useTSkip ? m_tsCoeff : coeffC);
+                pixel*   recon = (useTSkip ? m_tsRecon : reconQt);
                 uint32_t reconStride = (useTSkip ? MAX_TS_SIZE : reconQtStride);
 
                 primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
@@ -972,14 +986,14 @@ uint32_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t
 
             if (bTSkip)
             {
-                memcpy(coeffC, tskipCoeffC, sizeof(coeff_t) << (log2TrSizeC * 2));
-                primitives.cu[sizeIdxC].copy_pp(reconQt, reconQtStride, tskipReconC, MAX_TS_SIZE);
+                memcpy(coeffC, m_tsCoeff, sizeof(coeff_t) << (log2TrSizeC * 2));
+                primitives.cu[sizeIdxC].copy_pp(reconQt, reconQtStride, m_tsRecon, MAX_TS_SIZE);
             }
 
             cu.setCbfPartRange(bCbf << tuDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
             cu.setTransformSkipPartRange(bTSkip, ttype, absPartIdxC, tuIterator.absPartIdxStep);
 
-            pixel*   reconPicC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
+            pixel*   reconPicC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + absPartIdxC);
             intptr_t picStride = m_frame->m_reconPic->m_strideC;
             primitives.cu[sizeIdxC].copy_pp(reconPicC, picStride, reconQt, reconQtStride);
 
@@ -1089,7 +1103,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
             int16_t* residual = resiYuv.getChromaAddr(chromaId, absPartIdxC);
             uint32_t coeffOffsetC  = absPartIdxC << (LOG2_UNIT_SIZE * 2 - (m_hChromaShift + m_vChromaShift));
             coeff_t* coeffC        = cu.m_trCoeff[ttype] + coeffOffsetC;
-            pixel*   picReconC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.encodeIdx + absPartIdxC);
+            pixel*   picReconC = m_frame->m_reconPic->getChromaAddr(chromaId, cu.m_cuAddr, cuGeom.absPartIdx + absPartIdxC);
             intptr_t picStride = m_frame->m_reconPic->m_strideC;
 
             uint32_t chromaPredMode = cu.m_chromaIntraDir[absPartIdxC];
@@ -1102,7 +1116,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
             initAdiPatternChroma(cu, cuGeom, absPartIdxC, intraNeighbors, chromaId);
 
             // get prediction signal
-            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC, m_csp);
+            predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC);
 
             X265_CHECK(!cu.m_transformSkip[ttype][0], "transform skip not supported at low RD levels\n");
 
@@ -1131,7 +1145,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
     }
 }
 
-void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes)
+void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes, uint8_t* sharedChromaModes)
 {
     CUData& cu = intraMode.cu;
 
@@ -1144,7 +1158,7 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
 
     intraMode.initCosts();
     intraMode.distortion += estIntraPredQT(intraMode, cuGeom, tuDepthRange, sharedModes);
-    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom);
+    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom, sharedChromaModes);
 
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
@@ -1170,14 +1184,16 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
         const Yuv* fencYuv = intraMode.fencYuv;
         intraMode.psyEnergy = m_rdCost.psyCost(cuGeom.log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_size);
     }
-
     updateModeCost(intraMode);
+    checkDQP(cu, cuGeom);
 }
 
 /* Note that this function does not save the best intra prediction, it must
  * be generated later. It records the best mode in the cu */
 void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 {
+    ProfileCUScope(intraMode.cu, intraAnalysisElapsedTime, countIntraAnalysis);
+
     CUData& cu = intraMode.cu;
     uint32_t depth = cuGeom.depth;
 
@@ -1202,9 +1218,6 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     uint64_t cost, bcost;
 
     // 33 Angle modes once
-    ALIGN_VAR_32(pixel, bufScale[32 * 32]);
-    ALIGN_VAR_32(pixel, bufTrans[32 * 32]);
-    ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
     int scaleTuSize = tuSize;
     int scaleStride = stride;
     int costShift = 0;
@@ -1212,15 +1225,15 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
     if (tuSize > 32)
     {
-        // origin is 64x64, we scale to 32x32 and setup required parameters
-        primitives.scale2D_64to32(bufScale, fenc, stride);
-        fenc = bufScale;
+        // CU is 64x64, we scale to 32x32 and adjust required parameters
+        primitives.scale2D_64to32(m_fencScaled, fenc, stride);
+        fenc = m_fencScaled;
 
         pixel nScale[129];
         intraNeighbourBuf[1][0] = intraNeighbourBuf[0][0];
         primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1, 0);
 
-        //TO DO: primitive
+        // we do not estimate filtering for downscaled samples
         for (int x = 1; x < 65; x++)
         {
             intraNeighbourBuf[0][x] = nScale[x];           // Top pixel
@@ -1245,14 +1258,14 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
      *  pred[1], pred[2] - less probable, slightly more cost
      *  non-mpm modes    - all cost the same (rbits) */
     uint64_t mpms;
-    uint32_t preds[3];
-    uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, preds, mpms);
+    uint32_t mpmModes[3];
+    uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, mpmModes, mpms);
 
     // DC
-    primitives.cu[sizeIdx].intra_pred[DC_IDX](tmp, scaleStride, intraNeighbourBuf[0], 0, (scaleTuSize <= 16));
-    bsad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+    primitives.cu[sizeIdx].intra_pred[DC_IDX](m_intraPredAngs, scaleStride, intraNeighbourBuf[0], 0, (scaleTuSize <= 16));
+    bsad = sa8d(fenc, scaleStride, m_intraPredAngs, scaleStride) << costShift;
     bmode = mode = DC_IDX;
-    bbits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
+    bbits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, mode) : rbits;
     bcost = m_rdCost.calcRdSADCost(bsad, bbits);
 
     // PLANAR
@@ -1260,18 +1273,18 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     if (tuSize & (8 | 16 | 32))
         planar = intraNeighbourBuf[1];
 
-    primitives.cu[sizeIdx].intra_pred[PLANAR_IDX](tmp, scaleStride, planar, 0, 0);
-    sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
+    primitives.cu[sizeIdx].intra_pred[PLANAR_IDX](m_intraPredAngs, scaleStride, planar, 0, 0);
+    sad = sa8d(fenc, scaleStride, m_intraPredAngs, scaleStride) << costShift;
     mode = PLANAR_IDX;
-    bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
+    bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, mode) : rbits;
     cost = m_rdCost.calcRdSADCost(sad, bits);
     COPY4_IF_LT(bcost, cost, bmode, mode, bsad, sad, bbits, bits);
 
     bool allangs = true;
     if (primitives.cu[sizeIdx].intra_pred_allangs)
     {
-        primitives.cu[sizeIdx].transpose(bufTrans, fenc, scaleStride);
-        primitives.cu[sizeIdx].intra_pred_allangs(tmp, intraNeighbourBuf[0], intraNeighbourBuf[1], (scaleTuSize <= 16)); 
+        primitives.cu[sizeIdx].transpose(m_fencTransposed, fenc, scaleStride);
+        primitives.cu[sizeIdx].intra_pred_allangs(m_intraPredAngs, intraNeighbourBuf[0], intraNeighbourBuf[1], (scaleTuSize <= 16)); 
     }
     else
         allangs = false;
@@ -1279,16 +1292,16 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 #define TRY_ANGLE(angle) \
     if (allangs) { \
         if (angle < 18) \
-            sad = sa8d(bufTrans, scaleTuSize, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
+            sad = sa8d(m_fencTransposed, scaleTuSize, &m_intraPredAngs[(angle - 2) * predsize], scaleTuSize) << costShift; \
         else \
-            sad = sa8d(fenc, scaleStride, &tmp[(angle - 2) * predsize], scaleTuSize) << costShift; \
-        bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(preds, angle) : rbits; \
+            sad = sa8d(fenc, scaleStride, &m_intraPredAngs[(angle - 2) * predsize], scaleTuSize) << costShift; \
+        bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, angle) : rbits; \
         cost = m_rdCost.calcRdSADCost(sad, bits); \
     } else { \
         int filter = !!(g_intraFilterFlags[angle] & scaleTuSize); \
-        primitives.cu[sizeIdx].intra_pred[angle](tmp, scaleTuSize, intraNeighbourBuf[filter], angle, scaleTuSize <= 16); \
-        sad = sa8d(fenc, scaleStride, tmp, scaleTuSize) << costShift; \
-        bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(preds, angle) : rbits; \
+        primitives.cu[sizeIdx].intra_pred[angle](m_intraPredAngs, scaleTuSize, intraNeighbourBuf[filter], angle, scaleTuSize <= 16); \
+        sad = sa8d(fenc, scaleStride, m_intraPredAngs, scaleTuSize) << costShift; \
+        bits = (mpms & ((uint64_t)1 << angle)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, angle) : rbits; \
         cost = m_rdCost.calcRdSADCost(sad, bits); \
     }
 
@@ -1343,10 +1356,13 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     intraMode.distortion = bsad;
     intraMode.sa8dCost = bcost;
     intraMode.sa8dBits = bbits;
+    X265_CHECK(intraMode.ok(), "intra mode is not ok");
 }
 
 void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 {
+    ProfileCUScope(intraMode.cu, intraRDOElapsedTime[cuGeom.depth], countIntraRDO[cuGeom.depth]);
+
     CUData& cu = intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
 
@@ -1365,7 +1381,7 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     extractIntraResultQT(cu, *reconYuv, 0, 0);
 
     intraMode.distortion = icosts.distortion;
-    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom);
+    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom, NULL);
 
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
@@ -1389,12 +1405,11 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
     m_entropyCoder.store(intraMode.contexts);
     updateModeCost(intraMode);
+    checkDQP(intraMode.cu, cuGeom);
 }
 
 uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2], uint8_t* sharedModes)
 {
-    ALIGN_VAR_32(pixel, bufScale[32 * 32]);
-
     CUData& cu = intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
     Yuv* predYuv = &intraMode.predYuv;
@@ -1421,122 +1436,123 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
             bmode = sharedModes[puIdx];
         else
         {
-            // Reference sample smoothing
-            IntraNeighbors intraNeighbors;
-            initIntraNeighbors(cu, absPartIdx, initTuDepth, true, &intraNeighbors);
-            initAdiPattern(cu, cuGeom, absPartIdx, intraNeighbors, ALL_IDX);
-
-            // determine set of modes to be tested (using prediction signal only)
-            const pixel* fenc = fencYuv->getLumaAddr(absPartIdx);
-            uint32_t stride = predYuv->m_size;
-
-            // 33 Angle modes once
-            ALIGN_VAR_32(pixel, bufTrans[32 * 32]);
-            ALIGN_VAR_32(pixel, tmp[33 * 32 * 32]);
-
-            int scaleTuSize = tuSize;
-            int scaleStride = stride;
-            int costShift = 0;
-
-            if (tuSize > 32)
-            {
-                // origin is 64x64, we scale to 32x32 and setup required parameters
-                primitives.scale2D_64to32(bufScale, fenc, stride);
-                fenc = bufScale;
-
-                pixel nScale[129];
-                intraNeighbourBuf[1][0] = intraNeighbourBuf[0][0];
-                primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1, 0);
-
-                // TO DO: primitive
-                for (int x = 1; x < 65; x++)
-                {
-                    intraNeighbourBuf[0][x] = nScale[x];           // Top pixel
-                    intraNeighbourBuf[0][x + 64] = nScale[x + 64]; // Left pixel
-                    intraNeighbourBuf[1][x] = nScale[x];           // Top pixel
-                    intraNeighbourBuf[1][x + 64] = nScale[x + 64]; // Left pixel
-                }
-
-                scaleTuSize = 32;
-                scaleStride = 32;
-                costShift = 2;
-                sizeIdx = 5 - 2; // log2(scaleTuSize) - 2
-            }
-
-            m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
-
-            /* there are three cost tiers for intra modes:
-             *  pred[0]          - mode probable, least cost
-             *  pred[1], pred[2] - less probable, slightly more cost
-             *  non-mpm modes    - all cost the same (rbits) */
-            uint64_t mpms;
-            uint32_t preds[3];
-            uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, preds, mpms);
-
-            pixelcmp_t sa8d = primitives.cu[sizeIdx].sa8d;
-            uint64_t modeCosts[35];
-            uint64_t bcost;
-
-            // DC
-            primitives.cu[sizeIdx].intra_pred[DC_IDX](tmp, scaleStride, intraNeighbourBuf[0], 0, (scaleTuSize <= 16));
-            uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? m_entropyCoder.bitsIntraModeMPM(preds, DC_IDX) : rbits;
-            uint32_t sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
-            modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
-
-            // PLANAR
-            pixel* planar = intraNeighbourBuf[0];
-            if (tuSize >= 8 && tuSize <= 32)
-                planar = intraNeighbourBuf[1];
-
-            primitives.cu[sizeIdx].intra_pred[PLANAR_IDX](tmp, scaleStride, planar, 0, 0);
-            bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? m_entropyCoder.bitsIntraModeMPM(preds, PLANAR_IDX) : rbits;
-            sad = sa8d(fenc, scaleStride, tmp, scaleStride) << costShift;
-            modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
-            COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
-
-            // angular predictions
-            if (primitives.cu[sizeIdx].intra_pred_allangs)
-            {
-                primitives.cu[sizeIdx].transpose(bufTrans, fenc, scaleStride);
-                primitives.cu[sizeIdx].intra_pred_allangs(tmp, intraNeighbourBuf[0], intraNeighbourBuf[1], (scaleTuSize <= 16));
-                for (int mode = 2; mode < 35; mode++)
-                {
-                    bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
-                    if (mode < 18)
-                        sad = sa8d(bufTrans, scaleTuSize, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
-                    else
-                        sad = sa8d(fenc, scaleStride, &tmp[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
-                    modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
-                    COPY1_IF_LT(bcost, modeCosts[mode]);
-                }
-            }
-            else
-            {
-                for (int mode = 2; mode < 35; mode++)
-                {
-                    bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(preds, mode) : rbits;
-                    int filter = !!(g_intraFilterFlags[mode] & scaleTuSize);
-                    primitives.cu[sizeIdx].intra_pred[mode](tmp, scaleTuSize, intraNeighbourBuf[filter], mode, scaleTuSize <= 16);
-                    sad = sa8d(fenc, scaleStride, tmp, scaleTuSize) << costShift;
-                    modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
-                    COPY1_IF_LT(bcost, modeCosts[mode]);
-                }
-            }
-
-            /* Find the top maxCandCount candidate modes with cost within 25% of best
-             * or among the most probable modes. maxCandCount is derived from the
-             * rdLevel and depth. In general we want to try more modes at slower RD
-             * levels and at higher depths */
             uint64_t candCostList[MAX_RD_INTRA_MODES];
             uint32_t rdModeList[MAX_RD_INTRA_MODES];
+            uint64_t bcost;
             int maxCandCount = 2 + m_param->rdLevel + ((depth + initTuDepth) >> 1);
-            for (int i = 0; i < maxCandCount; i++)
-                candCostList[i] = MAX_INT64;
 
-            uint64_t paddedBcost = bcost + (bcost >> 3); // 1.12%
-            for (int mode = 0; mode < 35; mode++)
-                if (modeCosts[mode] < paddedBcost || (mpms & ((uint64_t)1 << mode)))
-                    updateCandList(mode, modeCosts[mode], maxCandCount, rdModeList, candCostList);
+            {
+                ProfileCUScope(intraMode.cu, intraAnalysisElapsedTime, countIntraAnalysis);
+
+                // Reference sample smoothing
+                IntraNeighbors intraNeighbors;
+                initIntraNeighbors(cu, absPartIdx, initTuDepth, true, &intraNeighbors);
+                initAdiPattern(cu, cuGeom, absPartIdx, intraNeighbors, ALL_IDX);
+
+                // determine set of modes to be tested (using prediction signal only)
+                const pixel* fenc = fencYuv->getLumaAddr(absPartIdx);
+                uint32_t stride = predYuv->m_size;
+
+                int scaleTuSize = tuSize;
+                int scaleStride = stride;
+                int costShift = 0;
+
+                if (tuSize > 32)
+                {
+                    // origin is 64x64, we scale to 32x32 and setup required parameters
+                    primitives.scale2D_64to32(m_fencScaled, fenc, stride);
+                    fenc = m_fencScaled;
+
+                    pixel nScale[129];
+                    intraNeighbourBuf[1][0] = intraNeighbourBuf[0][0];
+                    primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1, 0);
+
+                    // TO DO: primitive
+                    for (int x = 1; x < 65; x++)
+                    {
+                        intraNeighbourBuf[0][x] = nScale[x];           // Top pixel
+                        intraNeighbourBuf[0][x + 64] = nScale[x + 64]; // Left pixel
+                        intraNeighbourBuf[1][x] = nScale[x];           // Top pixel
+                        intraNeighbourBuf[1][x + 64] = nScale[x + 64]; // Left pixel
+                    }
+
+                    scaleTuSize = 32;
+                    scaleStride = 32;
+                    costShift = 2;
+                    sizeIdx = 5 - 2; // log2(scaleTuSize) - 2
+                }
+
+                m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
+
+                /* there are three cost tiers for intra modes:
+                *  pred[0]          - mode probable, least cost
+                *  pred[1], pred[2] - less probable, slightly more cost
+                *  non-mpm modes    - all cost the same (rbits) */
+                uint64_t mpms;
+                uint32_t mpmModes[3];
+                uint32_t rbits = getIntraRemModeBits(cu, absPartIdx, mpmModes, mpms);
+
+                pixelcmp_t sa8d = primitives.cu[sizeIdx].sa8d;
+                uint64_t modeCosts[35];
+
+                // DC
+                primitives.cu[sizeIdx].intra_pred[DC_IDX](m_intraPred, scaleStride, intraNeighbourBuf[0], 0, (scaleTuSize <= 16));
+                uint32_t bits = (mpms & ((uint64_t)1 << DC_IDX)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, DC_IDX) : rbits;
+                uint32_t sad = sa8d(fenc, scaleStride, m_intraPred, scaleStride) << costShift;
+                modeCosts[DC_IDX] = bcost = m_rdCost.calcRdSADCost(sad, bits);
+
+                // PLANAR
+                pixel* planar = intraNeighbourBuf[0];
+                if (tuSize >= 8 && tuSize <= 32)
+                    planar = intraNeighbourBuf[1];
+
+                primitives.cu[sizeIdx].intra_pred[PLANAR_IDX](m_intraPred, scaleStride, planar, 0, 0);
+                bits = (mpms & ((uint64_t)1 << PLANAR_IDX)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, PLANAR_IDX) : rbits;
+                sad = sa8d(fenc, scaleStride, m_intraPred, scaleStride) << costShift;
+                modeCosts[PLANAR_IDX] = m_rdCost.calcRdSADCost(sad, bits);
+                COPY1_IF_LT(bcost, modeCosts[PLANAR_IDX]);
+
+                // angular predictions
+                if (primitives.cu[sizeIdx].intra_pred_allangs)
+                {
+                    primitives.cu[sizeIdx].transpose(m_fencTransposed, fenc, scaleStride);
+                    primitives.cu[sizeIdx].intra_pred_allangs(m_intraPredAngs, intraNeighbourBuf[0], intraNeighbourBuf[1], (scaleTuSize <= 16));
+                    for (int mode = 2; mode < 35; mode++)
+                    {
+                        bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, mode) : rbits;
+                        if (mode < 18)
+                            sad = sa8d(m_fencTransposed, scaleTuSize, &m_intraPredAngs[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
+                        else
+                            sad = sa8d(fenc, scaleStride, &m_intraPredAngs[(mode - 2) * (scaleTuSize * scaleTuSize)], scaleTuSize) << costShift;
+                        modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
+                        COPY1_IF_LT(bcost, modeCosts[mode]);
+                    }
+                }
+                else
+                {
+                    for (int mode = 2; mode < 35; mode++)
+                    {
+                        bits = (mpms & ((uint64_t)1 << mode)) ? m_entropyCoder.bitsIntraModeMPM(mpmModes, mode) : rbits;
+                        int filter = !!(g_intraFilterFlags[mode] & scaleTuSize);
+                        primitives.cu[sizeIdx].intra_pred[mode](m_intraPred, scaleTuSize, intraNeighbourBuf[filter], mode, scaleTuSize <= 16);
+                        sad = sa8d(fenc, scaleStride, m_intraPred, scaleTuSize) << costShift;
+                        modeCosts[mode] = m_rdCost.calcRdSADCost(sad, bits);
+                        COPY1_IF_LT(bcost, modeCosts[mode]);
+                    }
+                }
+
+                /* Find the top maxCandCount candidate modes with cost within 25% of best
+                * or among the most probable modes. maxCandCount is derived from the
+                * rdLevel and depth. In general we want to try more modes at slower RD
+                * levels and at higher depths */
+                for (int i = 0; i < maxCandCount; i++)
+                    candCostList[i] = MAX_INT64;
+
+                uint64_t paddedBcost = bcost + (bcost >> 3); // 1.12%
+                for (int mode = 0; mode < 35; mode++)
+                    if (modeCosts[mode] < paddedBcost || (mpms & ((uint64_t)1 << mode)))
+                        updateCandList(mode, modeCosts[mode], maxCandCount, rdModeList, candCostList);
+            }
 
             /* measure best candidates using simple RDO (no TU splits) */
             bcost = MAX_INT64;
@@ -1544,6 +1560,9 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
             {
                 if (candCostList[i] == MAX_INT64)
                     break;
+
+                ProfileCUScope(intraMode.cu, intraRDOElapsedTime[cuGeom.depth], countIntraRDO[cuGeom.depth]);
+
                 m_entropyCoder.load(m_rqt[depth].cur);
                 cu.setLumaIntraDirSubParts(rdModeList[i], absPartIdx, depth + initTuDepth);
 
@@ -1555,6 +1574,8 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
                 COPY2_IF_LT(bcost, icosts.rdcost, bmode, rdModeList[i]);
             }
         }
+
+        ProfileCUScope(intraMode.cu, intraRDOElapsedTime[cuGeom.depth], countIntraRDO[cuGeom.depth]);
 
         /* remeasure best mode, allowing TU splits */
         cu.setLumaIntraDirSubParts(bmode, absPartIdx, depth + initTuDepth);
@@ -1576,7 +1597,7 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
              * output recon picture, so it cannot proceed in parallel with anything else when doing INTRA_NXN. Also
              * it is not updating m_rdContexts[depth].cur for the later PUs which I suspect is slightly wrong. I think
              * that the contexts should be tracked through each PU */
-            pixel*   dst         = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + absPartIdx);
+            pixel*   dst         = m_frame->m_reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
             uint32_t dststride   = m_frame->m_reconPic->m_stride;
             const pixel*   src   = reconYuv->getLumaAddr(absPartIdx);
             uint32_t srcstride   = reconYuv->m_size;
@@ -1642,7 +1663,7 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom)
             pixel* pred = predYuv->m_buf[chromaId];
             Predict::initAdiPatternChroma(cu, cuGeom, 0, intraNeighbors, chromaId);
             // get prediction signal
-            predIntraChromaAng(chromaPredMode, pred, fencYuv->m_csize, log2TrSizeC, m_csp);
+            predIntraChromaAng(chromaPredMode, pred, fencYuv->m_csize, log2TrSizeC);
             cost += primitives.cu[log2TrSizeC - 2].sa8d(fenc, predYuv->m_csize, pred, fencYuv->m_csize) << costShift;
         }
 
@@ -1656,7 +1677,7 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom)
     cu.setChromIntraDirSubParts(bestMode, 0, cuGeom.depth);
 }
 
-uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
+uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom, uint8_t* sharedChromaModes)
 {
     CUData& cu = intraMode.cu;
     Yuv& reconYuv = intraMode.reconYuv;
@@ -1684,7 +1705,14 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
         uint32_t maxMode = NUM_CHROMA_MODE;
         uint32_t modeList[NUM_CHROMA_MODE];
 
-        cu.getAllowedChromaDir(absPartIdxC, modeList);
+        if (sharedChromaModes && !initTuDepth)
+        {
+            for (uint32_t l = 0; l < NUM_CHROMA_MODE; l++)
+                modeList[l] = sharedChromaModes[0];
+            maxMode = 1;
+        }
+        else
+            cu.getAllowedChromaDir(absPartIdxC, modeList);
 
         // check chroma modes
         for (uint32_t mode = minMode; mode < maxMode; mode++)
@@ -1734,7 +1762,7 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
 
         if (!tuIterator.isLastSection())
         {
-            uint32_t zorder    = cuGeom.encodeIdx + absPartIdxC;
+            uint32_t zorder    = cuGeom.absPartIdx + absPartIdxC;
             uint32_t dststride = m_frame->m_reconPic->m_strideC;
             const pixel* src;
             pixel* dst;
@@ -1780,22 +1808,24 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
     return totalDistortion;
 }
 
-/* estimation of best merge coding of an inter PU (not a merge CU) */
-uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, MergeData& m)
+/* estimation of best merge coding of an inter PU (2Nx2N merge PUs are evaluated as their own mode) */
+uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const PredictionUnit& pu, int puIdx, MergeData& m)
 {
-    X265_CHECK(cu.m_partSize[0] != SIZE_2Nx2N, "merge tested on non-2Nx2N partition\n");
+    X265_CHECK(cu.m_partSize[0] != SIZE_2Nx2N, "mergeEstimation() called for 2Nx2N\n");
 
-    m.maxNumMergeCand = cu.getInterMergeCandidates(m.absPartIdx, puIdx, m.mvFieldNeighbours, m.interDirNeighbours);
+    MVField  candMvField[MRG_MAX_NUM_CANDS][2];
+    uint8_t  candDir[MRG_MAX_NUM_CANDS];
+    uint32_t numMergeCand = cu.getInterMergeCandidates(pu.puAbsPartIdx, puIdx, candMvField, candDir);
 
     if (cu.isBipredRestriction())
     {
-        /* in 8x8 CUs do not allow bidir merge candidates if not 2Nx2N */
-        for (uint32_t mergeCand = 0; mergeCand < m.maxNumMergeCand; ++mergeCand)
+        /* do not allow bidir merge candidates if PU is smaller than 8x8, drop L1 reference */
+        for (uint32_t mergeCand = 0; mergeCand < numMergeCand; ++mergeCand)
         {
-            if (m.interDirNeighbours[mergeCand] == 3)
+            if (candDir[mergeCand] == 3)
             {
-                m.interDirNeighbours[mergeCand] = 1;
-                m.mvFieldNeighbours[mergeCand][1].refIdx = REF_NOT_VALID;
+                candDir[mergeCand] = 1;
+                candMvField[mergeCand][1].refIdx = REF_NOT_VALID;
             }
         }
     }
@@ -1803,27 +1833,26 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, Me
     Yuv& tempYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
     uint32_t outCost = MAX_UINT;
-    for (uint32_t mergeCand = 0; mergeCand < m.maxNumMergeCand; ++mergeCand)
+    for (uint32_t mergeCand = 0; mergeCand < numMergeCand; ++mergeCand)
     {
         /* Prevent TMVP candidates from using unavailable reference pixels */
         if (m_bFrameParallel &&
-            (m.mvFieldNeighbours[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-             m.mvFieldNeighbours[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
+            (candMvField[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+             candMvField[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
             continue;
 
-        cu.m_mv[0][m.absPartIdx] = m.mvFieldNeighbours[mergeCand][0].mv;
-        cu.m_refIdx[0][m.absPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][0].refIdx;
-        cu.m_mv[1][m.absPartIdx] = m.mvFieldNeighbours[mergeCand][1].mv;
-        cu.m_refIdx[1][m.absPartIdx] = (int8_t)m.mvFieldNeighbours[mergeCand][1].refIdx;
+        cu.m_mv[0][pu.puAbsPartIdx] = candMvField[mergeCand][0].mv;
+        cu.m_refIdx[0][pu.puAbsPartIdx] = (int8_t)candMvField[mergeCand][0].refIdx;
+        cu.m_mv[1][pu.puAbsPartIdx] = candMvField[mergeCand][1].mv;
+        cu.m_refIdx[1][pu.puAbsPartIdx] = (int8_t)candMvField[mergeCand][1].refIdx;
 
-        prepMotionCompensation(cu, cuGeom, puIdx);
-        motionCompensation(tempYuv, true, m_me.bChromaSATD);
+        motionCompensation(cu, pu, tempYuv, true, m_me.bChromaSATD);
 
-        uint32_t costCand = m_me.bufSATD(tempYuv.getLumaAddr(m.absPartIdx), tempYuv.m_size);
+        uint32_t costCand = m_me.bufSATD(tempYuv.getLumaAddr(pu.puAbsPartIdx), tempYuv.m_size);
         if (m_me.bChromaSATD)
-            costCand += m_me.bufChromaSATD(tempYuv, m.absPartIdx);
+            costCand += m_me.bufChromaSATD(tempYuv, pu.puAbsPartIdx);
 
-        uint32_t bitsCand = getTUBits(mergeCand, m.maxNumMergeCand);
+        uint32_t bitsCand = getTUBits(mergeCand, numMergeCand);
         costCand = costCand + m_rdCost.getCost(bitsCand);
         if (costCand < outCost)
         {
@@ -1833,23 +1862,75 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, int puIdx, Me
         }
     }
 
-    m.mvField[0] = m.mvFieldNeighbours[m.index][0];
-    m.mvField[1] = m.mvFieldNeighbours[m.index][1];
-    m.interDir = m.interDirNeighbours[m.index];
+    m.mvField[0] = candMvField[m.index][0];
+    m.mvField[1] = candMvField[m.index][1];
+    m.dir = candDir[m.index];
 
     return outCost;
 }
 
-/* this function assumes the caller has configured its MotionEstimation engine with the
- * correct source plane and source PU, and has called prepMotionCompensation() to set
- * m_puAbsPartIdx, m_puWidth, and m_puHeight */
-void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, int part, int list, int ref)
+void Search::PME::processTasks(int workerThreadId)
+{
+#if DETAILED_CU_STATS
+    int fe = mode.cu.m_encData->m_frameEncoderID;
+    master.m_stats[fe].countPMETasks++;
+    ScopedElapsedTime pmeTime(master.m_stats[fe].pmeTime);
+#endif
+    ProfileScopeEvent(pme);
+    master.processPME(*this, master.m_tld[workerThreadId].analysis);
+}
+
+void Search::processPME(PME& pme, Search& slave)
+{
+    /* acquire a motion estimation job, else exit early */
+    int meId;
+    pme.m_lock.acquire();
+    if (pme.m_jobTotal > pme.m_jobAcquired)
+    {
+        meId = pme.m_jobAcquired++;
+        pme.m_lock.release();
+    }
+    else
+    {
+        pme.m_lock.release();
+        return;
+    }
+
+    /* Setup slave Search instance for ME for master's CU */
+    if (&slave != this)
+    {
+        slave.setQP(*m_slice, m_rdCost.m_qp);
+        slave.m_slice = m_slice;
+        slave.m_frame = m_frame;
+
+        slave.m_me.setSourcePU(*pme.mode.fencYuv, pme.pu.ctuAddr, pme.pu.cuAbsPartIdx, pme.pu.puAbsPartIdx, pme.pu.width, pme.pu.height);
+    }
+
+    /* Perform ME, repeat until no more work is available */
+    do
+    {
+        if (meId < m_slice->m_numRefIdx[0])
+            slave.singleMotionEstimation(*this, pme.mode, pme.cuGeom, pme.pu, pme.puIdx, 0, meId);
+        else
+            slave.singleMotionEstimation(*this, pme.mode, pme.cuGeom, pme.pu, pme.puIdx, 1, meId - m_slice->m_numRefIdx[0]);
+
+        meId = -1;
+        pme.m_lock.acquire();
+        if (pme.m_jobTotal > pme.m_jobAcquired)
+            meId = pme.m_jobAcquired++;
+        pme.m_lock.release();
+    }
+    while (meId >= 0);
+}
+
+void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, const PredictionUnit& pu,
+                                    int part, int list, int ref)
 {
     uint32_t bits = master.m_listSelBits[list] + MVP_IDX_BITS;
     bits += getTUBits(ref, m_slice->m_numRefIdx[list]);
 
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
-    int numMvc = interMode.cu.fillMvpCand(part, m_puAbsPartIdx, list, ref, interMode.amvpCand[list][ref], mvc);
+    int numMvc = interMode.cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
 
     int mvpIdx = 0;
     int merange = m_param->searchRange;
@@ -1869,8 +1950,8 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
             interMode.cu.clipMv(mvCand);
 
             Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
-            predInterLumaPixel(tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPic, mvCand);
-            uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
+            predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPic, mvCand);
+            uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
 
             if (bestCost > cost)
             {
@@ -1906,10 +1987,11 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
     }
 }
 
-/* search of the best candidate for inter prediction
- * returns true if predYuv was filled with a motion compensated prediction */
-bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChromaSA8D)
+/* find the best inter prediction for each PU of specified mode */
+void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChromaSA8D)
 {
+    ProfileCUScope(interMode.cu, motionEstimationElapsedTime, countMotionEstimate);
+
     CUData& cu = interMode.cu;
     Yuv* predYuv = &interMode.predYuv;
 
@@ -1921,90 +2003,82 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     const int* numRefIdx = slice->m_numRefIdx;
     uint32_t lastMode = 0;
     int      totalmebits = 0;
-    bool     bDistributed = m_param->bDistributeMotionEstimation && (numRefIdx[0] + numRefIdx[1]) > 2;
+    int      numME = numRefIdx[0] + numRefIdx[1];
+    bool     bTryDistributed = m_param->bDistributeMotionEstimation && numME > 2;
     MV       mvzero(0, 0);
     Yuv&     tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
     MergeData merge;
+    uint32_t mrgCost;
     memset(&merge, 0, sizeof(merge));
 
     for (int puIdx = 0; puIdx < numPart; puIdx++)
     {
         MotionData* bestME = interMode.bestME[puIdx];
+        PredictionUnit pu(cu, cuGeom, puIdx);
 
-        /* sets m_puAbsPartIdx, m_puWidth, m_puHeight */
-        initMotionCompensation(cu, cuGeom, puIdx);
-
-        m_me.setSourcePU(*interMode.fencYuv, cu.m_cuAddr, cuGeom.encodeIdx, m_puAbsPartIdx, m_puWidth, m_puHeight);
-
-        uint32_t mrgCost = MAX_UINT;
+        m_me.setSourcePU(*interMode.fencYuv, pu.ctuAddr, pu.cuAbsPartIdx, pu.puAbsPartIdx, pu.width, pu.height);
 
         /* find best cost merge candidate. note: 2Nx2N merge and bidir are handled as separate modes */
         if (cu.m_partSize[0] != SIZE_2Nx2N)
         {
-            merge.absPartIdx = m_puAbsPartIdx;
-            merge.width      = m_puWidth;
-            merge.height     = m_puHeight;
-            mrgCost = mergeEstimation(cu, cuGeom, puIdx, merge);
+            mrgCost = mergeEstimation(cu, cuGeom, pu, puIdx, merge);
 
-            if (bMergeOnly)
+            if (bMergeOnly && mrgCost != MAX_UINT)
             {
-                if (mrgCost == MAX_UINT)
-                {
-                    /* No valid merge modes were found, there is no possible way to
-                     * perform a valid motion compensation prediction, so early-exit */
-                    return false;
-                }
-                // set merge result
-                cu.m_mergeFlag[m_puAbsPartIdx] = true;
-                cu.m_mvpIdx[0][m_puAbsPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
-                cu.setPUInterDir(merge.interDir, m_puAbsPartIdx, puIdx);
-                cu.setPUMv(0, merge.mvField[0].mv, m_puAbsPartIdx, puIdx);
-                cu.setPURefIdx(0, merge.mvField[0].refIdx, m_puAbsPartIdx, puIdx);
-                cu.setPUMv(1, merge.mvField[1].mv, m_puAbsPartIdx, puIdx);
-                cu.setPURefIdx(1, merge.mvField[1].refIdx, m_puAbsPartIdx, puIdx);
+                cu.m_mergeFlag[pu.puAbsPartIdx] = true;
+                cu.m_mvpIdx[0][pu.puAbsPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
+                cu.setPUInterDir(merge.dir, pu.puAbsPartIdx, puIdx);
+                cu.setPUMv(0, merge.mvField[0].mv, pu.puAbsPartIdx, puIdx);
+                cu.setPURefIdx(0, merge.mvField[0].refIdx, pu.puAbsPartIdx, puIdx);
+                cu.setPUMv(1, merge.mvField[1].mv, pu.puAbsPartIdx, puIdx);
+                cu.setPURefIdx(1, merge.mvField[1].refIdx, pu.puAbsPartIdx, puIdx);
                 totalmebits += merge.bits;
 
-                prepMotionCompensation(cu, cuGeom, puIdx);
-                motionCompensation(*predYuv, true, bChromaSA8D);
+                motionCompensation(cu, pu, *predYuv, true, bChromaSA8D);
                 continue;
             }
         }
+        else
+            mrgCost = MAX_UINT;
 
         bestME[0].cost = MAX_UINT;
         bestME[1].cost = MAX_UINT;
 
         getBlkBits((PartSize)cu.m_partSize[0], slice->isInterP(), puIdx, lastMode, m_listSelBits);
+        bool bDoUnidir = true;
+
+        cu.getNeighbourMV(puIdx, pu.puAbsPartIdx, interMode.interNeighbours);
 
         /* Uni-directional prediction */
-        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+        if (m_param->analysisMode == X265_ANALYSIS_LOAD && bestME[0].ref >= 0)
         {
-            for (int l = 0; l < numPredDir; l++)
+            for (int list = 0; list < numPredDir; list++)
             {
-                int ref = bestME[l].ref;
-                uint32_t bits = m_listSelBits[l] + MVP_IDX_BITS;
-                bits += getTUBits(ref, numRefIdx[l]);
+                int ref = bestME[list].ref;
+                uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
+                bits += getTUBits(ref, numRefIdx[list]);
 
-                int numMvc = cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, interMode.amvpCand[l][ref], mvc);
+                int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
 
                 // Pick the best possible MVP from AMVP candidates based on least residual
                 int mvpIdx = 0;
                 int merange = m_param->searchRange;
 
-                if (interMode.amvpCand[l][ref][0] != interMode.amvpCand[l][ref][1])
+                if (interMode.amvpCand[list][ref][0] != interMode.amvpCand[list][ref][1])
                 {
                     uint32_t bestCost = MAX_INT;
                     for (int i = 0; i < AMVP_NUM_CANDS; i++)
                     {
-                        MV mvCand = interMode.amvpCand[l][ref][i];
+                        MV mvCand = interMode.amvpCand[list][ref][i];
 
                         // NOTE: skip mvCand if Y is > merange and -FN>1
                         if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
                             continue;
 
                         cu.clipMv(mvCand);
-                        predInterLumaPixel(tmpPredYuv, *slice->m_refPicList[l][ref]->m_reconPic, mvCand);
-                        uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
+                        predInterLumaPixel(pu, tmpPredYuv, *slice->m_refPicList[list][ref]->m_reconPic, mvCand);
+                        uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
 
                         if (bestCost > cost)
                         {
@@ -2014,111 +2088,80 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                     }
                 }
 
-                MV mvmin, mvmax, outmv, mvp = interMode.amvpCand[l][ref][mvpIdx];
+                MV mvmin, mvmax, outmv, mvp = interMode.amvpCand[list][ref][mvpIdx];
 
                 int satdCost;
                 setSearchRange(cu, mvp, merange, mvmin, mvmax);
-                satdCost = m_me.motionEstimate(&slice->m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
+                satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
                 /* Get total cost of partition, but only include MV bit cost once */
                 bits += m_me.bitcost(outmv);
                 uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
 
                 /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
-                checkBestMVP(interMode.amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
+                checkBestMVP(interMode.amvpCand[list][ref], outmv, mvp, mvpIdx, bits, cost);
 
-                if (cost < bestME[l].cost)
+                if (cost < bestME[list].cost)
                 {
-                    bestME[l].mv = outmv;
-                    bestME[l].mvp = mvp;
-                    bestME[l].mvpIdx = mvpIdx;
-                    bestME[l].cost = cost;
-                    bestME[l].bits = bits;
+                    bestME[list].mv = outmv;
+                    bestME[list].mvp = mvp;
+                    bestME[list].mvpIdx = mvpIdx;
+                    bestME[list].cost = cost;
+                    bestME[list].bits = bits;
                 }
             }
+            bDoUnidir = false;
         }
-        else if (bDistributed)
+        else if (bTryDistributed)
         {
-            m_meLock.acquire();
-            m_curInterMode = &interMode;
-            m_curGeom = &cuGeom;
-            m_curPart = puIdx;
-            m_totalNumME = 0;
-            m_numAcquiredME = 1;
-            m_numCompletedME = 0;
-            m_totalNumME = numRefIdx[0] + numRefIdx[1];
-            m_meLock.release();
+            PME pme(*this, interMode, cuGeom, pu, puIdx);
+            pme.m_jobTotal = numME;
+            pme.m_jobAcquired = 1; /* reserve L0-0 */
 
-            if (!m_bJobsQueued)
-                JobProvider::enqueue();
-
-            for (int i = 1; i < m_totalNumME; i++)
-                m_pool->pokeIdleThread();
-
-            do
+            if (pme.tryBondPeers(*m_frame->m_encData->m_jobProvider, numME - 1))
             {
-                m_meLock.acquire();
-                if (m_totalNumME > m_numAcquiredME)
-                {
-                    int id = m_numAcquiredME++;
-                    m_meLock.release();
+                processPME(pme, *this);
 
-                    if (id < numRefIdx[0])
-                        singleMotionEstimation(*this, interMode, cuGeom, puIdx, 0, id);
-                    else
-                        singleMotionEstimation(*this, interMode, cuGeom, puIdx, 1, id - numRefIdx[0]);
+                singleMotionEstimation(*this, interMode, cuGeom, pu, puIdx, 0, 0); /* L0-0 */
 
-                    m_meLock.acquire();
-                    m_numCompletedME++;
-                    m_meLock.release();
-                }
-                else
-                    m_meLock.release();
+                bDoUnidir = false;
+
+                ProfileCUScopeNamed(pmeWaitScope, interMode.cu, pmeBlockTime, countPMEMasters);
+                pme.waitForExit();
             }
-            while (m_totalNumME > m_numAcquiredME);
 
-            if (!m_bJobsQueued)
-                JobProvider::dequeue();
-
-            /* we saved L0-0 for ourselves */
-            singleMotionEstimation(*this, interMode, cuGeom, puIdx, 0, 0);
-
-            m_meLock.acquire();
-            if (++m_numCompletedME == m_totalNumME)
-                m_meCompletionEvent.trigger();
-            m_meLock.release();
-
-            m_meCompletionEvent.wait();
+            /* if no peer threads were bonded, fall back to doing unidirectional
+             * searches ourselves without overhead of singleMotionEstimation() */
         }
-        else
+        if (bDoUnidir)
         {
-            for (int l = 0; l < numPredDir; l++)
+            for (int list = 0; list < numPredDir; list++)
             {
-                for (int ref = 0; ref < numRefIdx[l]; ref++)
+                for (int ref = 0; ref < numRefIdx[list]; ref++)
                 {
-                    uint32_t bits = m_listSelBits[l] + MVP_IDX_BITS;
-                    bits += getTUBits(ref, numRefIdx[l]);
+                    uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
+                    bits += getTUBits(ref, numRefIdx[list]);
 
-                    int numMvc = cu.fillMvpCand(puIdx, m_puAbsPartIdx, l, ref, interMode.amvpCand[l][ref], mvc);
+                    int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
 
                     // Pick the best possible MVP from AMVP candidates based on least residual
                     int mvpIdx = 0;
                     int merange = m_param->searchRange;
 
-                    if (interMode.amvpCand[l][ref][0] != interMode.amvpCand[l][ref][1])
+                    if (interMode.amvpCand[list][ref][0] != interMode.amvpCand[list][ref][1])
                     {
                         uint32_t bestCost = MAX_INT;
                         for (int i = 0; i < AMVP_NUM_CANDS; i++)
                         {
-                            MV mvCand = interMode.amvpCand[l][ref][i];
+                            MV mvCand = interMode.amvpCand[list][ref][i];
 
                             // NOTE: skip mvCand if Y is > merange and -FN>1
                             if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
                                 continue;
 
                             cu.clipMv(mvCand);
-                            predInterLumaPixel(tmpPredYuv, *slice->m_refPicList[l][ref]->m_reconPic, mvCand);
-                            uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size);
+                            predInterLumaPixel(pu, tmpPredYuv, *slice->m_refPicList[list][ref]->m_reconPic, mvCand);
+                            uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
 
                             if (bestCost > cost)
                             {
@@ -2128,26 +2171,26 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                         }
                     }
 
-                    MV mvmin, mvmax, outmv, mvp = interMode.amvpCand[l][ref][mvpIdx];
+                    MV mvmin, mvmax, outmv, mvp = interMode.amvpCand[list][ref][mvpIdx];
 
                     setSearchRange(cu, mvp, merange, mvmin, mvmax);
-                    int satdCost = m_me.motionEstimate(&slice->m_mref[l][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
+                    int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
 
                     /* Get total cost of partition, but only include MV bit cost once */
                     bits += m_me.bitcost(outmv);
                     uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
 
                     /* Refine MVP selection, updates: mvp, mvpIdx, bits, cost */
-                    checkBestMVP(interMode.amvpCand[l][ref], outmv, mvp, mvpIdx, bits, cost);
+                    checkBestMVP(interMode.amvpCand[list][ref], outmv, mvp, mvpIdx, bits, cost);
 
-                    if (cost < bestME[l].cost)
+                    if (cost < bestME[list].cost)
                     {
-                        bestME[l].mv = outmv;
-                        bestME[l].mvp = mvp;
-                        bestME[l].mvpIdx = mvpIdx;
-                        bestME[l].ref = ref;
-                        bestME[l].cost = cost;
-                        bestME[l].bits = bits;
+                        bestME[list].mv = outmv;
+                        bestME[list].mvp = mvp;
+                        bestME[list].mvpIdx = mvpIdx;
+                        bestME[list].ref = ref;
+                        bestME[list].cost = cost;
+                        bestME[list].bits = bits;
                     }
                 }
             }
@@ -2159,7 +2202,7 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         int bidirBits = 0;
 
         if (slice->isInterB() && !cu.isBipredRestriction() &&  /* biprediction is possible for this PU */
-            cu.m_partSize[m_puAbsPartIdx] != SIZE_2Nx2N &&     /* 2Nx2N biprediction is handled elsewhere */
+            cu.m_partSize[pu.puAbsPartIdx] != SIZE_2Nx2N &&    /* 2Nx2N biprediction is handled elsewhere */
             bestME[0].cost != MAX_UINT && bestME[1].cost != MAX_UINT)
         {
             bidir[0] = bestME[0];
@@ -2169,16 +2212,14 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
             if (m_me.bChromaSATD)
             {
-                cu.m_mv[0][m_puAbsPartIdx] = bidir[0].mv;
-                cu.m_refIdx[0][m_puAbsPartIdx] = (int8_t)bidir[0].ref;
-                cu.m_mv[1][m_puAbsPartIdx] = bidir[1].mv;
-                cu.m_refIdx[1][m_puAbsPartIdx] = (int8_t)bidir[1].ref;
+                cu.m_mv[0][pu.puAbsPartIdx] = bidir[0].mv;
+                cu.m_refIdx[0][pu.puAbsPartIdx] = (int8_t)bidir[0].ref;
+                cu.m_mv[1][pu.puAbsPartIdx] = bidir[1].mv;
+                cu.m_refIdx[1][pu.puAbsPartIdx] = (int8_t)bidir[1].ref;
+                motionCompensation(cu, pu, tmpPredYuv, true, true);
 
-                prepMotionCompensation(cu, cuGeom, puIdx);
-                motionCompensation(tmpPredYuv, true, true);
-
-                satdCost = m_me.bufSATD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size) +
-                           m_me.bufChromaSATD(tmpPredYuv, m_puAbsPartIdx);
+                satdCost = m_me.bufSATD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size) +
+                           m_me.bufChromaSATD(tmpPredYuv, pu.puAbsPartIdx);
             }
             else
             {
@@ -2187,11 +2228,11 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 Yuv* bidirYuv = m_rqt[cuGeom.depth].bidirPredYuv;
 
                 /* Generate reference subpels */
-                predInterLumaPixel(bidirYuv[0], *refPic0, bestME[0].mv);
-                predInterLumaPixel(bidirYuv[1], *refPic1, bestME[1].mv);
+                predInterLumaPixel(pu, bidirYuv[0], *refPic0, bestME[0].mv);
+                predInterLumaPixel(pu, bidirYuv[1], *refPic1, bestME[1].mv);
 
-                primitives.pu[m_me.partEnum].pixelavg_pp(tmpPredYuv.m_buf[0], tmpPredYuv.m_size, bidirYuv[0].getLumaAddr(m_puAbsPartIdx), bidirYuv[0].m_size,
-                                                                                              bidirYuv[1].getLumaAddr(m_puAbsPartIdx), bidirYuv[1].m_size, 32);
+                primitives.pu[m_me.partEnum].pixelavg_pp(tmpPredYuv.m_buf[0], tmpPredYuv.m_size, bidirYuv[0].getLumaAddr(pu.puAbsPartIdx), bidirYuv[0].m_size,
+                                                                                                 bidirYuv[1].getLumaAddr(pu.puAbsPartIdx), bidirYuv[1].m_size, 32);
                 satdCost = m_me.bufSATD(tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
             }
 
@@ -2218,21 +2259,19 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
                 /* coincident blocks of the two reference pictures */
                 if (m_me.bChromaSATD)
                 {
-                    cu.m_mv[0][m_puAbsPartIdx] = mvzero;
-                    cu.m_refIdx[0][m_puAbsPartIdx] = (int8_t)bidir[0].ref;
-                    cu.m_mv[1][m_puAbsPartIdx] = mvzero;
-                    cu.m_refIdx[1][m_puAbsPartIdx] = (int8_t)bidir[1].ref;
+                    cu.m_mv[0][pu.puAbsPartIdx] = mvzero;
+                    cu.m_refIdx[0][pu.puAbsPartIdx] = (int8_t)bidir[0].ref;
+                    cu.m_mv[1][pu.puAbsPartIdx] = mvzero;
+                    cu.m_refIdx[1][pu.puAbsPartIdx] = (int8_t)bidir[1].ref;
+                    motionCompensation(cu, pu, tmpPredYuv, true, true);
 
-                    prepMotionCompensation(cu, cuGeom, puIdx);
-                    motionCompensation(tmpPredYuv, true, true);
-
-                    satdCost = m_me.bufSATD(tmpPredYuv.getLumaAddr(m_puAbsPartIdx), tmpPredYuv.m_size) +
-                               m_me.bufChromaSATD(tmpPredYuv, m_puAbsPartIdx);
+                    satdCost = m_me.bufSATD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size) +
+                               m_me.bufChromaSATD(tmpPredYuv, pu.puAbsPartIdx);
                 }
                 else
                 {
-                    const pixel* ref0 = m_slice->m_mref[0][bestME[0].ref].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
-                    const pixel* ref1 = m_slice->m_mref[1][bestME[1].ref].getLumaAddr(cu.m_cuAddr, cuGeom.encodeIdx + m_puAbsPartIdx);
+                    const pixel* ref0 = m_slice->m_mref[0][bestME[0].ref].getLumaAddr(pu.ctuAddr, pu.cuAbsPartIdx + pu.puAbsPartIdx);
+                    const pixel* ref1 = m_slice->m_mref[1][bestME[1].ref].getLumaAddr(pu.ctuAddr, pu.cuAbsPartIdx + pu.puAbsPartIdx);
                     intptr_t refStride = slice->m_mref[0][0].lumaStride;
 
                     primitives.pu[m_me.partEnum].pixelavg_pp(tmpPredYuv.m_buf[0], tmpPredYuv.m_size, ref0, refStride, ref1, refStride, 32);
@@ -2270,13 +2309,13 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         /* select best option and store into CU */
         if (mrgCost < bidirCost && mrgCost < bestME[0].cost && mrgCost < bestME[1].cost)
         {
-            cu.m_mergeFlag[m_puAbsPartIdx] = true;
-            cu.m_mvpIdx[0][m_puAbsPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
-            cu.setPUInterDir(merge.interDir, m_puAbsPartIdx, puIdx);
-            cu.setPUMv(0, merge.mvField[0].mv, m_puAbsPartIdx, puIdx);
-            cu.setPURefIdx(0, merge.mvField[0].refIdx, m_puAbsPartIdx, puIdx);
-            cu.setPUMv(1, merge.mvField[1].mv, m_puAbsPartIdx, puIdx);
-            cu.setPURefIdx(1, merge.mvField[1].refIdx, m_puAbsPartIdx, puIdx);
+            cu.m_mergeFlag[pu.puAbsPartIdx] = true;
+            cu.m_mvpIdx[0][pu.puAbsPartIdx] = merge.index; /* merge candidate ID is stored in L0 MVP idx */
+            cu.setPUInterDir(merge.dir, pu.puAbsPartIdx, puIdx);
+            cu.setPUMv(0, merge.mvField[0].mv, pu.puAbsPartIdx, puIdx);
+            cu.setPURefIdx(0, merge.mvField[0].refIdx, pu.puAbsPartIdx, puIdx);
+            cu.setPUMv(1, merge.mvField[1].mv, pu.puAbsPartIdx, puIdx);
+            cu.setPURefIdx(1, merge.mvField[1].refIdx, pu.puAbsPartIdx, puIdx);
 
             totalmebits += merge.bits;
         }
@@ -2284,17 +2323,17 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         {
             lastMode = 2;
 
-            cu.m_mergeFlag[m_puAbsPartIdx] = false;
-            cu.setPUInterDir(3, m_puAbsPartIdx, puIdx);
-            cu.setPUMv(0, bidir[0].mv, m_puAbsPartIdx, puIdx);
-            cu.setPURefIdx(0, bestME[0].ref, m_puAbsPartIdx, puIdx);
-            cu.m_mvd[0][m_puAbsPartIdx] = bidir[0].mv - bidir[0].mvp;
-            cu.m_mvpIdx[0][m_puAbsPartIdx] = bidir[0].mvpIdx;
+            cu.m_mergeFlag[pu.puAbsPartIdx] = false;
+            cu.setPUInterDir(3, pu.puAbsPartIdx, puIdx);
+            cu.setPUMv(0, bidir[0].mv, pu.puAbsPartIdx, puIdx);
+            cu.setPURefIdx(0, bestME[0].ref, pu.puAbsPartIdx, puIdx);
+            cu.m_mvd[0][pu.puAbsPartIdx] = bidir[0].mv - bidir[0].mvp;
+            cu.m_mvpIdx[0][pu.puAbsPartIdx] = bidir[0].mvpIdx;
 
-            cu.setPUMv(1, bidir[1].mv, m_puAbsPartIdx, puIdx);
-            cu.setPURefIdx(1, bestME[1].ref, m_puAbsPartIdx, puIdx);
-            cu.m_mvd[1][m_puAbsPartIdx] = bidir[1].mv - bidir[1].mvp;
-            cu.m_mvpIdx[1][m_puAbsPartIdx] = bidir[1].mvpIdx;
+            cu.setPUMv(1, bidir[1].mv, pu.puAbsPartIdx, puIdx);
+            cu.setPURefIdx(1, bestME[1].ref, pu.puAbsPartIdx, puIdx);
+            cu.m_mvd[1][pu.puAbsPartIdx] = bidir[1].mv - bidir[1].mvp;
+            cu.m_mvpIdx[1][pu.puAbsPartIdx] = bidir[1].mvpIdx;
 
             totalmebits += bidirBits;
         }
@@ -2302,15 +2341,15 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         {
             lastMode = 0;
 
-            cu.m_mergeFlag[m_puAbsPartIdx] = false;
-            cu.setPUInterDir(1, m_puAbsPartIdx, puIdx);
-            cu.setPUMv(0, bestME[0].mv, m_puAbsPartIdx, puIdx);
-            cu.setPURefIdx(0, bestME[0].ref, m_puAbsPartIdx, puIdx);
-            cu.m_mvd[0][m_puAbsPartIdx] = bestME[0].mv - bestME[0].mvp;
-            cu.m_mvpIdx[0][m_puAbsPartIdx] = bestME[0].mvpIdx;
+            cu.m_mergeFlag[pu.puAbsPartIdx] = false;
+            cu.setPUInterDir(1, pu.puAbsPartIdx, puIdx);
+            cu.setPUMv(0, bestME[0].mv, pu.puAbsPartIdx, puIdx);
+            cu.setPURefIdx(0, bestME[0].ref, pu.puAbsPartIdx, puIdx);
+            cu.m_mvd[0][pu.puAbsPartIdx] = bestME[0].mv - bestME[0].mvp;
+            cu.m_mvpIdx[0][pu.puAbsPartIdx] = bestME[0].mvpIdx;
 
-            cu.setPURefIdx(1, REF_NOT_VALID, m_puAbsPartIdx, puIdx);
-            cu.setPUMv(1, mvzero, m_puAbsPartIdx, puIdx);
+            cu.setPURefIdx(1, REF_NOT_VALID, pu.puAbsPartIdx, puIdx);
+            cu.setPUMv(1, mvzero, pu.puAbsPartIdx, puIdx);
 
             totalmebits += bestME[0].bits;
         }
@@ -2318,25 +2357,23 @@ bool Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         {
             lastMode = 1;
 
-            cu.m_mergeFlag[m_puAbsPartIdx] = false;
-            cu.setPUInterDir(2, m_puAbsPartIdx, puIdx);
-            cu.setPUMv(1, bestME[1].mv, m_puAbsPartIdx, puIdx);
-            cu.setPURefIdx(1, bestME[1].ref, m_puAbsPartIdx, puIdx);
-            cu.m_mvd[1][m_puAbsPartIdx] = bestME[1].mv - bestME[1].mvp;
-            cu.m_mvpIdx[1][m_puAbsPartIdx] = bestME[1].mvpIdx;
+            cu.m_mergeFlag[pu.puAbsPartIdx] = false;
+            cu.setPUInterDir(2, pu.puAbsPartIdx, puIdx);
+            cu.setPUMv(1, bestME[1].mv, pu.puAbsPartIdx, puIdx);
+            cu.setPURefIdx(1, bestME[1].ref, pu.puAbsPartIdx, puIdx);
+            cu.m_mvd[1][pu.puAbsPartIdx] = bestME[1].mv - bestME[1].mvp;
+            cu.m_mvpIdx[1][pu.puAbsPartIdx] = bestME[1].mvpIdx;
 
-            cu.setPURefIdx(0, REF_NOT_VALID, m_puAbsPartIdx, puIdx);
-            cu.setPUMv(0, mvzero, m_puAbsPartIdx, puIdx);
+            cu.setPURefIdx(0, REF_NOT_VALID, pu.puAbsPartIdx, puIdx);
+            cu.setPUMv(0, mvzero, pu.puAbsPartIdx, puIdx);
 
             totalmebits += bestME[1].bits;
         }
 
-        prepMotionCompensation(cu, cuGeom, puIdx);
-        motionCompensation(*predYuv, true, bChromaSA8D);
+        motionCompensation(cu, pu, *predYuv, true, bChromaSA8D);
     }
-
+    X265_CHECK(interMode.ok(), "inter mode is not ok");
     interMode.sa8dBits += totalmebits;
-    return true;
 }
 
 void Search::getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3])
@@ -2473,7 +2510,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
     interMode.coeffBits = 0;
     interMode.totalBits = interMode.mvBits;
     if (m_rdCost.m_psyRd)
-        interMode.psyEnergy = m_rdCost.psyCost(cu.m_log2CUSize[0] - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+        interMode.psyEnergy = m_rdCost.psyCost(part, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
 
     updateModeCost(interMode);
     m_entropyCoder.store(interMode.contexts);
@@ -2483,6 +2520,8 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
  * Note: this function overwrites the RD cost variables of interMode, but leaves the sa8d cost unharmed */
 void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
 {
+    ProfileCUScope(interMode.cu, interRDOElapsedTime[cuGeom.depth], countInterRDO[cuGeom.depth]);
+
     CUData& cu = interMode.cu;
     Yuv* reconYuv = &interMode.reconYuv;
     Yuv* predYuv = &interMode.predYuv;
@@ -2585,13 +2624,14 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     bestDist += m_rdCost.scaleChromaDist(1, primitives.chroma[m_csp].cu[sizeIdx].sse_pp(fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
     bestDist += m_rdCost.scaleChromaDist(2, primitives.chroma[m_csp].cu[sizeIdx].sse_pp(fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
     if (m_rdCost.m_psyRd)
-        interMode.psyEnergy = m_rdCost.psyCost(log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+        interMode.psyEnergy = m_rdCost.psyCost(sizeIdx, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
 
     interMode.totalBits = bits;
     interMode.distortion = bestDist;
     interMode.coeffBits = coeffBits;
     interMode.mvBits = bits - coeffBits;
     updateModeCost(interMode);
+    checkDQP(interMode.cu, cuGeom);
 }
 
 void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, const uint32_t depthRange[2])
@@ -3003,9 +3043,6 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
             uint32_t nonZeroPsyEnergyY = 0;
             uint64_t singleCostY = MAX_INT64;
 
-            ALIGN_VAR_32(coeff_t, tsCoeffY[MAX_TS_SIZE * MAX_TS_SIZE]);
-            ALIGN_VAR_32(int16_t, tsResiY[MAX_TS_SIZE * MAX_TS_SIZE]);
-
             m_entropyCoder.load(m_rqt[depth].rqtRoot);
 
             cu.setTransformSkipSubParts(1, TEXT_LUMA, absPartIdx, depth);
@@ -3015,22 +3052,22 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
             fenc = fencYuv->getLumaAddr(absPartIdx);
             resi = resiYuv.getLumaAddr(absPartIdx);
-            uint32_t numSigTSkipY = m_quant.transformNxN(cu, fenc, fencYuv->m_size, resi, resiYuv.m_size, tsCoeffY, log2TrSize, TEXT_LUMA, absPartIdx, true);
+            uint32_t numSigTSkipY = m_quant.transformNxN(cu, fenc, fencYuv->m_size, resi, resiYuv.m_size, m_tsCoeff, log2TrSize, TEXT_LUMA, absPartIdx, true);
 
             if (numSigTSkipY)
             {
                 m_entropyCoder.resetBits();
                 m_entropyCoder.codeQtCbfLuma(!!numSigTSkipY, tuDepth);
-                m_entropyCoder.codeCoeffNxN(cu, tsCoeffY, absPartIdx, log2TrSize, TEXT_LUMA);
+                m_entropyCoder.codeCoeffNxN(cu, m_tsCoeff, absPartIdx, log2TrSize, TEXT_LUMA);
                 const uint32_t skipSingleBitsY = m_entropyCoder.getNumberOfWrittenBits();
 
-                m_quant.invtransformNxN(tsResiY, trSize, tsCoeffY, log2TrSize, TEXT_LUMA, false, true, numSigTSkipY);
+                m_quant.invtransformNxN(m_tsResidual, trSize, m_tsCoeff, log2TrSize, TEXT_LUMA, false, true, numSigTSkipY);
 
-                nonZeroDistY = primitives.cu[partSize].sse_ss(resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, tsResiY, trSize);
+                nonZeroDistY = primitives.cu[partSize].sse_ss(resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, m_tsResidual, trSize);
 
                 if (m_rdCost.m_psyRd)
                 {
-                    nonZeroPsyEnergyY = m_rdCost.psyCost(partSize, resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, tsResiY, trSize);
+                    nonZeroPsyEnergyY = m_rdCost.psyCost(partSize, resiYuv.getLumaAddr(absPartIdx), resiYuv.m_size, m_tsResidual, trSize);
                     singleCostY = m_rdCost.calcPsyRdCost(nonZeroDistY, skipSingleBitsY, nonZeroPsyEnergyY);
                 }
                 else
@@ -3046,8 +3083,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                 cbfFlag[TEXT_LUMA][0] = !!numSigTSkipY;
                 bestTransformMode[TEXT_LUMA][0] = 1;
                 uint32_t numCoeffY = 1 << (log2TrSize << 1);
-                memcpy(coeffCurY, tsCoeffY, sizeof(coeff_t) * numCoeffY);
-                primitives.cu[partSize].copy_ss(curResiY, strideResiY, tsResiY, trSize);
+                memcpy(coeffCurY, m_tsCoeff, sizeof(coeff_t) * numCoeffY);
+                primitives.cu[partSize].copy_ss(curResiY, strideResiY, m_tsResidual, trSize);
             }
 
             cu.setCbfSubParts(cbfFlag[TEXT_LUMA][0] << tuDepth, TEXT_LUMA, absPartIdx, depth);
@@ -3074,9 +3111,6 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
                     int16_t* curResiC = m_rqt[qtLayer].resiQtYuv.getChromaAddr(chromaId, absPartIdxC);
 
-                    ALIGN_VAR_32(coeff_t, tsCoeffC[MAX_TS_SIZE * MAX_TS_SIZE]);
-                    ALIGN_VAR_32(int16_t, tsResiC[MAX_TS_SIZE * MAX_TS_SIZE]);
-
                     cu.setTransformSkipPartRange(1, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
 
                     if (m_bEnableRDOQ && (chromaId != TEXT_CHROMA_V))
@@ -3084,7 +3118,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
                     fenc = fencYuv->getChromaAddr(chromaId, absPartIdxC);
                     resi = resiYuv.getChromaAddr(chromaId, absPartIdxC);
-                    uint32_t numSigTSkipC = m_quant.transformNxN(cu, fenc, fencYuv->m_csize, resi, resiYuv.m_csize, tsCoeffC, log2TrSizeC, (TextType)chromaId, absPartIdxC, true);
+                    uint32_t numSigTSkipC = m_quant.transformNxN(cu, fenc, fencYuv->m_csize, resi, resiYuv.m_csize, m_tsCoeff, log2TrSizeC, (TextType)chromaId, absPartIdxC, true);
 
                     m_entropyCoder.resetBits();
                     singleBits[chromaId][tuIterator.section] = 0;
@@ -3092,16 +3126,16 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                     if (numSigTSkipC)
                     {
                         m_entropyCoder.codeQtCbfChroma(!!numSigTSkipC, tuDepth);
-                        m_entropyCoder.codeCoeffNxN(cu, tsCoeffC, absPartIdxC, log2TrSizeC, (TextType)chromaId);
+                        m_entropyCoder.codeCoeffNxN(cu, m_tsCoeff, absPartIdxC, log2TrSizeC, (TextType)chromaId);
                         singleBits[chromaId][tuIterator.section] = m_entropyCoder.getNumberOfWrittenBits();
 
-                        m_quant.invtransformNxN(tsResiC, trSizeC, tsCoeffC,
+                        m_quant.invtransformNxN(m_tsResidual, trSizeC, m_tsCoeff,
                                                 log2TrSizeC, (TextType)chromaId, false, true, numSigTSkipC);
-                        uint32_t dist = primitives.cu[partSizeC].sse_ss(resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, tsResiC, trSizeC);
+                        uint32_t dist = primitives.cu[partSizeC].sse_ss(resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, m_tsResidual, trSizeC);
                         nonZeroDistC = m_rdCost.scaleChromaDist(chromaId, dist);
                         if (m_rdCost.m_psyRd)
                         {
-                            nonZeroPsyEnergyC = m_rdCost.psyCost(partSizeC, resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, tsResiC, trSizeC);
+                            nonZeroPsyEnergyC = m_rdCost.psyCost(partSizeC, resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, m_tsResidual, trSizeC);
                             singleCostC = m_rdCost.calcPsyRdCost(nonZeroDistC, singleBits[chromaId][tuIterator.section], nonZeroPsyEnergyC);
                         }
                         else
@@ -3117,8 +3151,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                         cbfFlag[chromaId][tuIterator.section] = !!numSigTSkipC;
                         bestTransformMode[chromaId][tuIterator.section] = 1;
                         uint32_t numCoeffC = 1 << (log2TrSizeC << 1);
-                        memcpy(coeffCurC + subTUOffset, tsCoeffC, sizeof(coeff_t) * numCoeffC);
-                        primitives.cu[partSizeC].copy_ss(curResiC, strideResiC, tsResiC, trSizeC);
+                        memcpy(coeffCurC + subTUOffset, m_tsCoeff, sizeof(coeff_t) * numCoeffC);
+                        primitives.cu[partSizeC].copy_ss(curResiC, strideResiC, m_tsResidual, trSizeC);
                     }
 
                     cu.setCbfPartRange(cbfFlag[chromaId][tuIterator.section] << tuDepth, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
@@ -3382,13 +3416,13 @@ void Search::saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartI
 
 /* returns the number of bits required to signal a non-most-probable mode.
  * on return mpms contains bitmap of most probable modes */
-uint32_t Search::getIntraRemModeBits(CUData& cu, uint32_t absPartIdx, uint32_t preds[3], uint64_t& mpms) const
+uint32_t Search::getIntraRemModeBits(CUData& cu, uint32_t absPartIdx, uint32_t mpmModes[3], uint64_t& mpms) const
 {
-    cu.getIntraDirLumaPredictor(absPartIdx, preds);
+    cu.getIntraDirLumaPredictor(absPartIdx, mpmModes);
 
     mpms = 0;
     for (int i = 0; i < 3; ++i)
-        mpms |= ((uint64_t)1 << preds[i]);
+        mpms |= ((uint64_t)1 << mpmModes[i]);
 
     return m_entropyCoder.bitsIntraModeNonMPM();
 }
@@ -3413,5 +3447,45 @@ void Search::updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint
     {
         candCostList[maxIndex] = cost;
         candModeList[maxIndex] = mode;
+    }
+}
+
+void Search::checkDQP(CUData& cu, const CUGeom& cuGeom)
+{
+    if (cu.m_slice->m_pps->bUseDQP && cuGeom.depth <= cu.m_slice->m_pps->maxCuDQPDepth)
+    {
+        if (cu.getQtRootCbf(0))
+        {
+            /* When analysing RDO with DQP bits, the entropy encoder should add the cost of DQP bits here
+             * i.e Encode QP */
+        }
+        else
+            cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
+    }
+}
+
+void Search::checkDQPForSplitPred(CUData& cu, const CUGeom& cuGeom)
+{
+    if ((cuGeom.depth == cu.m_slice->m_pps->maxCuDQPDepth) && cu.m_slice->m_pps->bUseDQP)
+    {
+        bool hasResidual = false;
+
+        /* Check if any sub-CU has a non-zero QP */
+        for (uint32_t blkIdx = 0; blkIdx < cuGeom.numPartitions; blkIdx++)
+        {
+            if (cu.getQtRootCbf(blkIdx))
+            {
+                hasResidual = true;
+                break;
+            }
+        }
+        if (hasResidual)
+            /* TODO: Encode QP, and recalculate RD cost of splitPred */
+            /* For all zero CBF sub-CUs, reset QP to RefQP (so that deltaQP is not signalled).
+            When the non-zero CBF sub-CU is found, stop */
+            cu.setQPSubCUs(cu.getRefQP(0), 0, cuGeom.depth);
+        else
+            /* No residual within this CU or subCU, so reset QP to RefQP */
+            cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
     }
 }

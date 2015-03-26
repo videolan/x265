@@ -70,7 +70,7 @@ static inline uint8_t bsCuEdge(const CUData* cu, uint32_t absPartIdx, int32_t di
  * param Edge the direction of the edge in block boundary (horizonta/vertical), which is added newly */
 void Deblock::deblockCU(const CUData* cu, const CUGeom& cuGeom, const int32_t dir, uint8_t blockStrength[])
 {
-    uint32_t absPartIdx = cuGeom.encodeIdx;
+    uint32_t absPartIdx = cuGeom.absPartIdx;
     uint32_t depth = cuGeom.depth;
     if (cu->m_predMode[absPartIdx] == MODE_NONE)
         return;
@@ -358,7 +358,7 @@ static inline void pelFilterChroma(pixel* src, intptr_t srcStep, intptr_t offset
         int16_t m5  = (int16_t)src[offset];
         int16_t m2  = (int16_t)src[-offset * 2];
 
-        int32_t delta = x265_clip3(-tc, tc, ((((m4 - m3) << 2) + m2 - m5 + 4) >> 3));
+        int32_t delta = x265_clip3(-tc, tc, ((((m4 - m3) * 4) + m2 - m5 + 4) >> 3));
         src[-offset] = x265_clip(m3 + (delta & maskP));
         src[0] = x265_clip(m4 - (delta & maskQ));
     }

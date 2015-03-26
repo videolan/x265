@@ -32,6 +32,7 @@ namespace x265 {
 // private namespace
 
 class PicYuv;
+class JobProvider;
 
 /* Per-frame data that is used during encodes and referenced while the picture
  * is available for reference. A FrameData instance is attached to a Frame as it
@@ -52,6 +53,7 @@ public:
     PicYuv*        m_reconPic;
     bool           m_bHasReferences;   /* used during DPB/RPS updates */
     int            m_frameEncoderID;   /* the ID of the FrameEncoder encoding this frame */
+    JobProvider*   m_jobProvider;
 
     CUDataMemPool  m_cuMemPool;
     CUData*        m_picCTU;

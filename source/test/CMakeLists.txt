@@ -23,3 +23,6 @@ add_executable(TestBench ${YASM_SRC}
     ipfilterharness.cpp ipfilterharness.h
     intrapredharness.cpp intrapredharness.h)
 target_link_libraries(TestBench x265-static ${PLATFORM_LIBS})
+if(LINKER_OPTIONS)
+    set_target_properties(TestBench PROPERTIES LINK_FLAGS ${LINKER_OPTIONS})
+endif()

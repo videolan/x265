@@ -28,141 +28,135 @@
 #include "slice.h"
 #include "motion.h"
 #include "piclist.h"
-#include "wavefront.h"
+#include "threadpool.h"
 
 namespace x265 {
 // private namespace
 
 struct Lowres;
 class Frame;
+class Lookahead;
 
 #define LOWRES_COST_MASK  ((1 << 14) - 1)
 #define LOWRES_COST_SHIFT 14
 
-#define SET_WEIGHT(w, b, s, d, o) \
-    { \
-        (w).inputWeight = (s); \
-        (w).log2WeightDenom = (d); \
-        (w).inputOffset = (o); \
-        (w).bPresentFlag = b; \
-    }
-
-class EstimateRow
+/* Thread local data for lookahead tasks */
+struct LookaheadTLD
 {
-public:
-    x265_param*         m_param;
-    MotionEstimate      m_me;
-    Lock                m_lock;
+    MotionEstimate  me;
+    ReferencePlanes weightedRef;
+    pixel*          wbuffer[4];
+    int             widthInCU;
+    int             heightInCU;
+    int             ncu;
+    int             paddedLines;
 
-    volatile uint32_t   m_completed;      // Number of CUs in this row for which cost estimation is completed
-    volatile bool       m_active;
+#if DETAILED_CU_STATS
+    int64_t         batchElapsedTime;
+    int64_t         coopSliceElapsedTime;
+    uint64_t        countBatches;
+    uint64_t        countCoopSlices;
+#endif
 
-    uint64_t            m_costEst;        // Estimated cost for all CUs in a row
-    uint64_t            m_costEstAq;      // Estimated weight Aq cost for all CUs in a row
-    uint64_t            m_costIntraAq;    // Estimated weighted Aq Intra cost for all CUs in a row
-    int                 m_intraMbs;       // Number of Intra CUs
-    int                 m_costIntra;      // Estimated Intra cost for all CUs in a row
-
-    int                 m_merange;
-    int                 m_lookAheadLambda;
-
-    int                 m_widthInCU;
-    int                 m_heightInCU;
-
-    EstimateRow()
+    LookaheadTLD()
     {
-        m_me.setQP(X265_LOOKAHEAD_QP);
-        m_me.init(X265_HEX_SEARCH, 1, X265_CSP_I400);
-        m_merange = 16;
-        m_lookAheadLambda = (int)x265_lambda_tab[X265_LOOKAHEAD_QP];
+        me.setQP(X265_LOOKAHEAD_QP);
+        me.init(X265_HEX_SEARCH, 1, X265_CSP_I400);
+        for (int i = 0; i < 4; i++)
+            wbuffer[i] = NULL;
+        widthInCU = heightInCU = ncu = paddedLines = 0;
+
+#if DETAILED_CU_STATS
+        batchElapsedTime = 0;
+        coopSliceElapsedTime = 0;
+        countBatches = 0;
+        countCoopSlices = 0;
+#endif
     }
 
-    void init();
+    void init(int w, int h, int n)
+    {
+        widthInCU = w;
+        heightInCU = h;
+        ncu = n;
+    }
 
-    void estimateCUCost(Lowres * *frames, ReferencePlanes * wfref0, int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2]);
-};
+    ~LookaheadTLD() { X265_FREE(wbuffer[0]); }
 
-/* CostEstimate manages the cost estimation of a single frame, ie:
- * estimateFrameCost() and everything below it in the call graph */
-class CostEstimate : public WaveFront
-{
-public:
-    CostEstimate(ThreadPool *p);
-    ~CostEstimate();
-    void init(x265_param *, Frame *);
+    void calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param);
+    void lowresIntraEstimate(Lowres& fenc);
 
-    x265_param      *m_param;
-    EstimateRow     *m_rows;
-    pixel           *m_wbuffer[4];
-    Lowres         **m_curframes;
-
-    ReferencePlanes  m_weightedRef;
-    WeightParam      m_w;
-
-    int              m_paddedLines;     // number of lines in padded frame
-    int              m_widthInCU;       // width of lowres frame in downscale CUs
-    int              m_heightInCU;      // height of lowres frame in downscale CUs
-
-    bool             m_bDoSearch[2];
-    volatile bool    m_bFrameCompleted;
-    int              m_curb, m_curp0, m_curp1;
-
-    void     processRow(int row, int threadId);
-    int64_t  estimateFrameCost(Lowres **frames, int p0, int p1, int b, bool bIntraPenalty);
+    void weightsAnalyse(Lowres& fenc, Lowres& ref);
 
 protected:
 
-    void     weightsAnalyse(Lowres **frames, int b, int p0);
-    uint32_t weightCostLuma(Lowres **frames, int b, int p0, WeightParam *w);
+    uint32_t acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, int csp);
+    uint32_t weightCostLuma(Lowres& fenc, Lowres& ref, WeightParam& wp);
+    bool     allocWeightedRef(Lowres& fenc);
 };
 
 class Lookahead : public JobProvider
 {
 public:
 
+    PicList       m_inputQueue;      // input pictures in order received
+    PicList       m_outputQueue;     // pictures to be encoded, in encode order
+    Lock          m_inputLock;
+    Lock          m_outputLock;
+
+    /* pre-lookahead */
+    Frame*        m_preframes[X265_LOOKAHEAD_MAX];
+    int           m_preTotal, m_preAcquired, m_preCompleted;
+    int           m_fullQueueSize;
+    bool          m_isActive;
+    bool          m_sliceTypeBusy;
+    bool          m_bAdaptiveQuant;
+    bool          m_outputSignalRequired;
+    bool          m_bBatchMotionSearch;
+    bool          m_bBatchFrameCosts;
+    Lock          m_preLookaheadLock;
+    Event         m_outputSignal;
+
+    LookaheadTLD* m_tld;
+    x265_param*   m_param;
+    Lowres*       m_lastNonB;
+    int*          m_scratch;         // temp buffer for cutree propagate
+    
+    int           m_histogram[X265_BFRAME_MAX + 1];
+    int           m_lastKeyframe;
+    int           m_8x8Width;
+    int           m_8x8Height;
+    int           m_8x8Blocks;
+    int           m_numCoopSlices;
+    int           m_numRowsPerSlice;
+    bool          m_filled;
+
     Lookahead(x265_param *param, ThreadPool *pool);
-    ~Lookahead();
-    void init();
-    void destroy();
 
-    CostEstimate     m_est;             // Frame cost estimator
-    PicList          m_inputQueue;      // input pictures in order received
-    PicList          m_outputQueue;     // pictures to be encoded, in encode order
+#if DETAILED_CU_STATS
+    int64_t       m_slicetypeDecideElapsedTime;
+    int64_t       m_preLookaheadElapsedTime;
+    uint64_t      m_countSlicetypeDecide;
+    uint64_t      m_countPreLookahead;
+    void          getWorkerStats(int64_t& batchElapsedTime, uint64_t& batchCount, int64_t& coopSliceElapsedTime, uint64_t& coopSliceCount);
+#endif
 
-    x265_param      *m_param;
-    Lowres          *m_lastNonB;
-    int             *m_scratch;         // temp buffer
+    bool    create();
+    void    destroy();
+    void    stop();
 
-    int              m_widthInCU;       // width of lowres frame in downscale CUs
-    int              m_heightInCU;      // height of lowres frame in downscale CUs
-    int              m_lastKeyframe;
-    int              m_histogram[X265_BFRAME_MAX + 1];
+    void    addPicture(Frame&, int sliceType);
+    void    flush();
+    Frame*  getDecidedPicture();
 
-    void addPicture(Frame*, int sliceType);
-    void flush();
-    void stop();
-    Frame* getDecidedPicture();
+    void    getEstimatedPictureCost(Frame *pic);
 
-    void getEstimatedPictureCost(Frame *pic);
 
 protected:
 
-
-    Lock  m_inputQueueLock;
-    Lock  m_outputQueueLock;
-    Event m_outputAvailable;
-
-    bool  m_bReady;   /* input lock - slicetypeDecide() can be started */
-    bool  m_bBusy;    /* input lock - slicetypeDecide() is running */
-    bool  m_bFilled;  /* enough frames in lookahead for output to be available */
-    bool  m_bFlushed; /* all frames have been decided, lookahead is finished */
-    bool  m_bFlush;   /* no more frames will be received, empty the input queue */
-
-    bool  findJob(int);
-
-    /* called by addPicture() or flush() to trigger slice decisions */
-    void slicetypeDecide();
-    void slicetypeAnalyse(Lowres **frames, bool bKeyframe);
+    void    findJob(int workerThreadID);
+    void    slicetypeDecide();
+    void    slicetypeAnalyse(Lowres **frames, bool bKeyframe);
 
     /* called by slicetypeAnalyse() to make slice decisions */
     bool    scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
@@ -174,13 +168,63 @@ protected:
 
     /* called by slicetypeAnalyse() to effect cuTree adjustments to adaptive
      * quant offsets */
-    void cuTree(Lowres **frames, int numframes, bool bintra);
-    void estimateCUPropagate(Lowres **frames, double average_duration, int p0, int p1, int b, int referenced);
-    void cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance);
+    void    cuTree(Lowres **frames, int numframes, bool bintra);
+    void    estimateCUPropagate(Lowres **frames, double average_duration, int p0, int p1, int b, int referenced);
+    void    cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance);
 
     /* called by getEstimatedPictureCost() to finalize cuTree costs */
     int64_t frameCostRecalculate(Lowres **frames, int p0, int p1, int b);
 };
+
+class CostEstimateGroup : public BondedTaskGroup
+{
+public:
+
+    Lookahead& m_lookahead;
+    Lowres**   m_frames;
+    bool       m_batchMode;
+
+    CostEstimateGroup(Lookahead& l, Lowres** f) : m_lookahead(l), m_frames(f), m_batchMode(false) {}
+
+    /* Cooperative cost estimate using multiple slices of downscaled frame */
+    struct Coop
+    {
+        int  p0, b, p1;
+        bool bDoSearch[2];
+    } m_coop;
+
+    enum { MAX_COOP_SLICES = 32 };
+    struct Slice
+    {
+        int  costEst;
+        int  costEstAq;
+        int  intraMbs;
+    } m_slice[MAX_COOP_SLICES];
+
+    int64_t singleCost(int p0, int p1, int b, bool intraPenalty = false);
+
+    /* Batch cost estimates, using one worker thread per estimateFrameCost() call */
+    enum { MAX_BATCH_SIZE = 512 };
+    struct Estimate
+    {
+        int  p0, b, p1;
+    } m_estimates[MAX_BATCH_SIZE];
+
+    void add(int p0, int p1, int b);
+    void finishBatch();
+
+protected:
+
+    static const int s_merange = 16;
+
+    void    processTasks(int workerThreadID);
+
+    int64_t estimateFrameCost(LookaheadTLD& tld, int p0, int p1, int b, bool intraPenalty);
+    void    estimateCUCost(LookaheadTLD& tld, int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2], bool lastRow, int slice);
+
+    CostEstimateGroup& operator=(const CostEstimateGroup&);
+};
+
 }
 
 #endif // ifndef X265_SLICETYPE_H

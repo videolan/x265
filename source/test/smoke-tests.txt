@@ -1,23 +1,17 @@
 # List of command lines to be run by smoke tests, see https://bitbucket.org/sborho/test-harness
 
 big_buck_bunny_360p24.y4m,--preset=superfast --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 400 --hrd --aud --repeat-headers
-big_buck_bunny_360p24.y4m,--preset=medium --bitrate 1000
-big_buck_bunny_360p24.y4m,--preset=slower
-washdc_422_ntsc.y4m,--preset=superfast
-washdc_422_ntsc.y4m,--preset=medium
-washdc_422_ntsc.y4m,--preset=slower
-old_town_cross_444_720p50.y4m,--preset=superfast
-old_town_cross_444_720p50.y4m,--preset=medium
-old_town_cross_444_720p50.y4m,--preset=slower
-crowd_run_1080p50.y4m,--preset=superfast
-crowd_run_1080p50.y4m,--preset=medium
-crowd_run_1080p50.y4m,--preset=slower
-RaceHorses_416x240_30_10bit.yuv,--preset=superfast
-RaceHorses_416x240_30_10bit.yuv,--preset=medium
-RaceHorses_416x240_30_10bit.yuv,--preset=slower
-CrowdRun_1920x1080_50_10bit_444.yuv,--preset=superfast
-CrowdRun_1920x1080_50_10bit_444.yuv,--preset=medium
-CrowdRun_1920x1080_50_10bit_444.yuv,--preset=slower
-DucksAndLegs_1920x1080_60_10bit_422.yuv, --preset=superfast
-DucksAndLegs_1920x1080_60_10bit_422.yuv, --preset=medium
-DucksAndLegs_1920x1080_60_10bit_422.yuv, --preset=slower
+big_buck_bunny_360p24.y4m,--preset=medium --bitrate 1000 -F4 --cu-lossless --scaling-list default
+big_buck_bunny_360p24.y4m,--preset=slower --no-weightp --cu-stats --pme
+washdc_422_ntsc.y4m,--preset=faster --no-strong-intra-smoothing --keyint 1
+washdc_422_ntsc.y4m,--preset=medium --qp 40 --nr-inter 400 -F4
+washdc_422_ntsc.y4m,--preset=veryslow --pmode --tskip --rdoq-level 0
+old_town_cross_444_720p50.y4m,--preset=ultrafast --weightp --keyint -1
+old_town_cross_444_720p50.y4m,--preset=fast --keyint 20 --min-cu-size 16
+old_town_cross_444_720p50.y4m,--preset=slow --sao-non-deblock --pmode
+RaceHorses_416x240_30_10bit.yuv,--preset=veryfast --cu-stats --max-tu-size 8
+RaceHorses_416x240_30_10bit.yuv,--preset=slower --bitrate 500 -F4 --rdoq-level 1
+CrowdRun_1920x1080_50_10bit_444.yuv,--preset=ultrafast --constrained-intra --min-keyint 5 --keyint 10
+CrowdRun_1920x1080_50_10bit_444.yuv,--preset=medium --max-tu-size 16
+DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset=veryfast --min-cu 16
+DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset=fast --weightb --interlace bff

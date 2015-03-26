@@ -48,7 +48,7 @@ if(ENABLE_ASSEMBLY)
     if(HIGH_BIT_DEPTH)
         set(A_SRCS ${A_SRCS} sad16-a.asm intrapred16.asm ipfilter16.asm)
     else()
-        set(A_SRCS ${A_SRCS} sad-a.asm intrapred8.asm ipfilter8.asm loopfilter.asm)
+        set(A_SRCS ${A_SRCS} sad-a.asm intrapred8.asm intrapred8_allangs.asm ipfilter8.asm loopfilter.asm)
     endif()
 
     if(NOT X64)

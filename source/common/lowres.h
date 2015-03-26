@@ -114,7 +114,6 @@ struct Lowres : public ReferencePlanes
     int    lines;            // height of lowres frame in pixel lines
     int    leadingBframes;   // number of leading B frames for P or I
 
-    bool   bIntraCalculated;
     bool   bScenecut;        // Set to false if the frame cannot possibly be part of a real scenecut.
     bool   bKeyframe;
     bool   bLastMiniGopBFrame;
@@ -151,7 +150,7 @@ struct Lowres : public ReferencePlanes
 
     bool create(PicYuv *origPic, int _bframes, bool bAqEnabled);
     void destroy();
-    void init(PicYuv *origPic, int poc, int sliceType);
+    void init(PicYuv *origPic, int poc);
 };
 }
 

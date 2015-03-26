@@ -64,7 +64,8 @@ enum MVP_DIR
     MD_ABOVE,       // MVP of above block
     MD_ABOVE_RIGHT, // MVP of above right block
     MD_BELOW_LEFT,  // MVP of below left block
-    MD_ABOVE_LEFT   // MVP of above left block
+    MD_ABOVE_LEFT,  // MVP of above left block
+    MD_COLLOCATED   // MVP of temporal neighbour
 };
 
 struct CUGeom
@@ -82,7 +83,7 @@ struct CUGeom
 
     uint32_t log2CUSize;    // Log of the CU size.
     uint32_t childOffset;   // offset of the first child CU from current CU
-    uint32_t encodeIdx;     // Encoding index of this CU in terms of 4x4 blocks.
+    uint32_t absPartIdx;    // Part index of this CU in terms of 4x4 blocks.
     uint32_t numPartitions; // Number of 4x4 blocks in the CU
     uint32_t depth;         // depth of this CU relative from CTU
     uint32_t flags;         // CU flags.
@@ -92,6 +93,26 @@ struct MVField
 {
     MV  mv;
     int refIdx;
+};
+
+// Structure that keeps the neighbour's MV information.
+struct InterNeighbourMV
+{
+    // Neighbour MV. The index represents the list.
+    MV mv[2];
+
+    // Collocated right bottom CU addr.
+    uint32_t cuAddr[2];
+
+    // For spatial prediction, this field contains the reference index
+    // in each list (-1 if not available).
+    //
+    // For temporal prediction, the first value is used for the 
+    // prediction with list 0. The second value is used for the prediction 
+    // with list 1. For each value, the first four bits are the reference index 
+    // associated to the PMV, and the fifth bit is the list associated to the PMV.
+    // if both reference indices are -1, then unifiedRef is also -1
+    union { int16_t refIdx[2]; int32_t unifiedRef; };
 };
 
 typedef void(*cucopy_t)(uint8_t* dst, uint8_t* src); // dst and src are aligned to MIN(size, 32)
@@ -122,9 +143,9 @@ public:
     uint32_t      m_cuPelY;           // CU position within the picture, in pixels (Y)
     uint32_t      m_numPartitions;    // maximum number of 4x4 partitions within this CU
 
-    int           m_chromaFormat;
-    int           m_hChromaShift;
-    int           m_vChromaShift;
+    uint32_t      m_chromaFormat;
+    uint32_t      m_hChromaShift;
+    uint32_t      m_vChromaShift;
 
     /* Per-part data, stored contiguously */
     int8_t*       m_qp;               // array of QP values
@@ -158,7 +179,7 @@ public:
     CUData();
 
     void     initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, int instance);
-    static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
+    static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
 
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
     void     initSubCU(const CUData& ctu, const CUGeom& cuGeom);
@@ -195,9 +216,10 @@ public:
     uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t tuDepth) const { return (m_cbf[ttype][absPartIdx] >> tuDepth) & 0x1; }
     uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx]; }
     int8_t   getRefQP(uint32_t currAbsIdxInCTU) const;
-    uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField (*mvFieldNeighbours)[2], uint8_t* interDirNeighbours) const;
+    uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField (*candMvField)[2], uint8_t* candDir) const;
     void     clipMv(MV& outMV) const;
-    int      fillMvpCand(uint32_t puIdx, uint32_t absPartIdx, int picList, int refIdx, MV* amvpCand, MV* mvc) const;
+    int      getPMV(InterNeighbourMV *neighbours, uint32_t reference_list, uint32_t refIdx, MV* amvpCand, MV* pmv) const;
+    void     getNeighbourMV(uint32_t puIdx, uint32_t absPartIdx, InterNeighbourMV* neighbours) const;
     void     getIntraTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
     void     getInterTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
 
@@ -213,10 +235,9 @@ public:
     void     getAllowedChromaDir(uint32_t absPartIdx, uint32_t* modeList) const;
     int      getIntraDirLumaPredictor(uint32_t absPartIdx, uint32_t* intraDirPred) const;
 
-    uint32_t getSCUAddr() const                  { return (m_cuAddr << g_maxFullDepth * 2) + m_absIdxInCTU; }
+    uint32_t getSCUAddr() const                  { return (m_cuAddr << g_unitSizeDepth * 2) + m_absIdxInCTU; }
     uint32_t getCtxSplitFlag(uint32_t absPartIdx, uint32_t depth) const;
     uint32_t getCtxSkipFlag(uint32_t absPartIdx) const;
-    ScanType getCoefScanIdx(uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma, bool bIsIntra) const;
     void     getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uint32_t absPartIdx, uint32_t log2TrSize, bool bIsLuma) const;
 
     const CUData* getPULeft(uint32_t& lPartUnitIdx, uint32_t curPartUnitIdx) const;
@@ -241,15 +262,18 @@ protected:
 
     bool hasEqualMotion(uint32_t absPartIdx, const CUData& candCU, uint32_t candAbsPartIdx) const;
 
-    bool isDiffMER(int xN, int yN, int xP, int yP) const;
+    /* Check whether the current PU and a spatial neighboring PU are in same merge region */
+    bool isDiffMER(int xN, int yN, int xP, int yP) const { return ((xN >> 2) != (xP >> 2)) || ((yN >> 2) != (yP >> 2)); }
 
     // add possible motion vector predictor candidates
-    bool addMVPCand(MV& mvp, int picList, int refIdx, uint32_t absPartIdx, MVP_DIR dir) const;
-    bool addMVPCandOrder(MV& mvp, int picList, int refIdx, uint32_t absPartIdx, MVP_DIR dir) const;
+    bool getDirectPMV(MV& pmv, InterNeighbourMV *neighbours, uint32_t picList, uint32_t refIdx) const;
+    bool getIndirectPMV(MV& outMV, InterNeighbourMV *neighbours, uint32_t reference_list, uint32_t refIdx) const;
+    void getInterNeighbourMV(InterNeighbourMV *neighbour, uint32_t partUnitIdx, MVP_DIR dir) const;
 
     bool getColMVP(MV& outMV, int& outRefIdx, int picList, int cuAddr, int absPartIdx) const;
+    bool getCollocatedMV(int cuAddr, int partUnitIdx, InterNeighbourMV *neighbour) const;
 
-    void scaleMvByPOCDist(MV& outMV, const MV& inMV, int curPOC, int curRefPOC, int colPOC, int colRefPOC) const;
+    MV scaleMvByPOCDist(const MV& inMV, int curPOC, int curRefPOC, int colPOC, int colRefPOC) const;
 
     void     deriveLeftRightTopIdx(uint32_t puIdx, uint32_t& partIdxLT, uint32_t& partIdxRT) const;
 
@@ -278,7 +302,7 @@ struct CUDataMemPool
 
     bool create(uint32_t depth, uint32_t csp, uint32_t numInstances)
     {
-        uint32_t numPartition = NUM_CU_PARTITIONS >> (depth * 2);
+        uint32_t numPartition = NUM_4x4_PARTITIONS >> (depth * 2);
         uint32_t cuSize = g_maxCUSize >> depth;
         uint32_t sizeL = cuSize * cuSize;
         uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));

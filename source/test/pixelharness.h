@@ -104,6 +104,7 @@ protected:
     bool check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_psyCost_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
     bool check_calSign(sign_t ref, sign_t opt);
+    bool check_findPosLast(findPosLast_t ref, findPosLast_t opt);
 
 public:
 

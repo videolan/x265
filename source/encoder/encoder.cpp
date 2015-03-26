@@ -43,7 +43,7 @@ namespace x265 {
 const char g_sliceTypeToChar[] = {'B', 'P', 'I'};
 }
 
-static const char *summaryCSVHeader =
+static const char* summaryCSVHeader =
     "Command, Date/Time, Elapsed Time, FPS, Bitrate, "
     "Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), "
     "I count, I ave-QP, I kpbs, I-PSNR Y, I-PSNR U, I-PSNR V, I-SSIM (dB), "
@@ -51,7 +51,7 @@ static const char *summaryCSVHeader =
     "B count, B ave-QP, B kpbs, B-PSNR Y, B-PSNR U, B-PSNR V, B-SSIM (dB), "
     "Version\n";
 
-const char* defaultAnalysisFileName = "x265_analysis.dat";
+static const char* defaultAnalysisFileName = "x265_analysis.dat";
 
 using namespace x265;
 
@@ -66,7 +66,6 @@ Encoder::Encoder()
     m_numLumaWPBiFrames = 0;
     m_numChromaWPBiFrames = 0;
     m_lookahead = NULL;
-    m_frameEncoder = NULL;
     m_rateControl = NULL;
     m_dpb = NULL;
     m_exportedPic = NULL;
@@ -78,9 +77,12 @@ Encoder::Encoder()
     m_cuOffsetC = NULL;
     m_buOffsetY = NULL;
     m_buOffsetC = NULL;
-    m_threadPool = 0;
-    m_numThreadLocalData = 0;
+    m_threadPool = NULL;
     m_analysisFile = NULL;
+    for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
+        m_frameEncoder[i] = NULL;
+
+    MotionEstimate::initScales();
 }
 
 void Encoder::create()
@@ -101,21 +103,35 @@ void Encoder::create()
     if (rows == 1 || cols < 3)
         p->bEnableWavefront = 0;
 
-    int poolThreadCount = p->poolNumThreads ? p->poolNumThreads : getCpuCount();
+    bool allowPools = !p->numaPools || strcmp(p->numaPools, "none");
 
     // Trim the thread pool if --wpp, --pme, and --pmode are disabled
     if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation)
-        poolThreadCount = 0;
+        allowPools = false;
 
-    if (poolThreadCount > 1)
+    if (!p->frameNumThreads)
     {
-        m_threadPool = ThreadPool::allocThreadPool(poolThreadCount);
-        poolThreadCount = m_threadPool->getThreadCount();
+        // auto-detect frame threads
+        int cpuCount = ThreadPool::getCpuCount();
+        if (!p->bEnableWavefront)
+            p->frameNumThreads = X265_MIN3(cpuCount, (rows + 1) / 2, X265_MAX_FRAME_THREADS);
+        else if (cpuCount >= 32)
+            p->frameNumThreads = (p->sourceHeight > 2000) ? 8 : 6; // dual-socket 10-core IvyBridge or higher
+        else if (cpuCount >= 16)
+            p->frameNumThreads = 5; // 8 HT cores, or dual socket
+        else if (cpuCount >= 8)
+            p->frameNumThreads = 3; // 4 HT cores
+        else if (cpuCount >= 4)
+            p->frameNumThreads = 2; // Dual or Quad core
+        else
+            p->frameNumThreads = 1;
     }
-    else
-        poolThreadCount = 0;
 
-    if (!poolThreadCount)
+    m_numPools = 0;
+    if (allowPools)
+        m_threadPool = ThreadPool::allocThreadPools(p, m_numPools);
+
+    if (!m_numPools)
     {
         // issue warnings if any of these features were requested
         if (p->bEnableWavefront)
@@ -129,31 +145,40 @@ void Encoder::create()
         p->bEnableWavefront = p->bDistributeModeAnalysis = p->bDistributeMotionEstimation = 0;
     }
 
-    if (!p->frameNumThreads)
-    {
-        // auto-detect frame threads
-        int cpuCount = getCpuCount();
-        if (!p->bEnableWavefront)
-            p->frameNumThreads = X265_MIN3(cpuCount, (rows + 1) / 2, 16);
-        else if (cpuCount >= 32)
-            p->frameNumThreads = (p->sourceHeight > 2000) ? 8 : 6; // dual-socket 10-core IvyBridge or higher
-        else if (cpuCount >= 16)
-            p->frameNumThreads = 5; // 8 HT cores, or dual socket
-        else if (cpuCount >= 8)
-            p->frameNumThreads = 3; // 4 HT cores
-        else if (cpuCount >= 4)
-            p->frameNumThreads = 2; // Dual or Quad core
-        else
-            p->frameNumThreads = 1;
-    }
+    char buf[128];
+    int len = 0;
+    if (p->bEnableWavefront)
+        len += sprintf(buf + len, "wpp(%d rows)", rows);
+    if (p->bDistributeModeAnalysis)
+        len += sprintf(buf + len, "%spmode", len ? "+" : "");
+    if (p->bDistributeMotionEstimation)
+        len += sprintf(buf + len, "%spme ", len ? "+" : "");
+    if (!len)
+        strcpy(buf, "none");
 
-    x265_log(p, X265_LOG_INFO, "WPP streams / frame threads / pool  : %d / %d / %d%s%s\n", 
-             p->bEnableWavefront ? rows : 0, p->frameNumThreads, poolThreadCount,
-             p->bDistributeMotionEstimation ? " / pme" : "", p->bDistributeModeAnalysis ? " / pmode" : "");
+    x265_log(p, X265_LOG_INFO, "frame threads / pool features       : %d / %s\n", p->frameNumThreads, buf);
 
-    m_frameEncoder = new FrameEncoder[m_param->frameNumThreads];
     for (int i = 0; i < m_param->frameNumThreads; i++)
-        m_frameEncoder[i].setThreadPool(m_threadPool);
+        m_frameEncoder[i] = new FrameEncoder;
+
+    if (m_numPools)
+    {
+        for (int i = 0; i < m_param->frameNumThreads; i++)
+        {
+            int pool = i % m_numPools;
+            m_frameEncoder[i]->m_pool = &m_threadPool[pool];
+            m_frameEncoder[i]->m_jpId = m_threadPool[pool].m_numProviders++;
+            m_threadPool[pool].m_jpTable[m_frameEncoder[i]->m_jpId] = m_frameEncoder[i];
+        }
+        for (int i = 0; i < m_numPools; i++)
+            m_threadPool[i].start();
+    }
+    else
+    {
+        /* CU stats and noise-reduction buffers are indexed by jpId, so it cannot be left as -1 */
+        for (int i = 0; i < m_param->frameNumThreads; i++)
+            m_frameEncoder[i]->m_jpId = 0;
+    }
 
     if (!m_scalingList.init())
     {
@@ -168,27 +193,17 @@ void Encoder::create()
         m_aborted = true;
     m_scalingList.setupQuantMatrices();
 
-    /* Allocate thread local data, one for each thread pool worker and
-     * if --no-wpp, one for each frame encoder */
-    m_numThreadLocalData = poolThreadCount;
-    if (!m_param->bEnableWavefront)
-        m_numThreadLocalData += m_param->frameNumThreads;
-    m_threadLocalData = new ThreadLocalData[m_numThreadLocalData];
-    for (int i = 0; i < m_numThreadLocalData; i++)
+    m_lookahead = new Lookahead(m_param, m_threadPool);
+    if (m_numPools)
     {
-        m_threadLocalData[i].analysis.setThreadPool(m_threadPool);
-        m_threadLocalData[i].analysis.initSearch(*m_param, m_scalingList);
-        m_threadLocalData[i].analysis.create(m_threadLocalData);
+        m_lookahead->m_jpId = m_threadPool[0].m_numProviders++;
+        m_threadPool[0].m_jpTable[m_lookahead->m_jpId] = m_lookahead;
     }
 
-    if (!m_param->bEnableWavefront)
-        for (int i = 0; i < m_param->frameNumThreads; i++)
-            m_frameEncoder[i].m_tld = &m_threadLocalData[poolThreadCount + i];
-
-    m_lookahead = new Lookahead(m_param, m_threadPool);
     m_dpb = new DPB(m_param);
-    m_rateControl = new RateControl(m_param);
+    m_rateControl = new RateControl(*m_param);
 
+    initVPS(&m_vps);
     initSPS(&m_sps);
     initPPS(&m_pps);
 
@@ -229,26 +244,29 @@ void Encoder::create()
         }
     }
 
-    if (m_frameEncoder)
+    int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+    int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
+    for (int i = 0; i < m_param->frameNumThreads; i++)
     {
-        int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
-        int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
-        for (int i = 0; i < m_param->frameNumThreads; i++)
+        if (!m_frameEncoder[i]->init(this, numRows, numCols))
         {
-            if (!m_frameEncoder[i].init(this, numRows, numCols, i))
-            {
-                x265_log(m_param, X265_LOG_ERROR, "Unable to initialize frame encoder, aborting\n");
-                m_aborted = true;
-            }
+            x265_log(m_param, X265_LOG_ERROR, "Unable to initialize frame encoder, aborting\n");
+            m_aborted = true;
         }
     }
 
-    if (m_param->bEmitHRDSEI)
-        m_rateControl->initHRD(&m_sps);
-    if (!m_rateControl->init(&m_sps))
-        m_aborted = true;
+    for (int i = 0; i < m_param->frameNumThreads; i++)
+    {
+        m_frameEncoder[i]->start();
+        m_frameEncoder[i]->m_done.wait(); /* wait for thread to initialize */
+    }
 
-    m_lookahead->init();
+    if (m_param->bEmitHRDSEI)
+        m_rateControl->initHRD(m_sps);
+    if (!m_rateControl->init(m_sps))
+        m_aborted = true;
+    if (!m_lookahead->create())
+        m_aborted = true;
 
     if (m_param->analysisMode)
     {
@@ -271,6 +289,29 @@ void Encoder::create()
     m_encodeStartTime = x265_mdate();
 }
 
+void Encoder::stop()
+{
+    if (m_rateControl)
+        m_rateControl->terminate(); // unblock all blocked RC calls
+
+    if (m_lookahead)
+        m_lookahead->stop();
+    
+    for (int i = 0; i < m_param->frameNumThreads; i++)
+    {
+        if (m_frameEncoder[i])
+        {
+            m_frameEncoder[i]->getEncodedPicture(m_nalList);
+            m_frameEncoder[i]->m_threadActive = false;
+            m_frameEncoder[i]->m_enable.trigger();
+            m_frameEncoder[i]->stop();
+        }
+    }
+
+    if (m_threadPool)
+        m_threadPool->stop();
+}
+
 void Encoder::destroy()
 {
     if (m_exportedPic)
@@ -279,44 +320,30 @@ void Encoder::destroy()
         m_exportedPic = NULL;
     }
 
-    if (m_rateControl)
-        m_rateControl->terminate(); // unblock all blocked RC calls
-
-    if (m_frameEncoder)
+    for (int i = 0; i < m_param->frameNumThreads; i++)
     {
-        for (int i = 0; i < m_param->frameNumThreads; i++)
+        if (m_frameEncoder[i])
         {
-            // Ensure frame encoder is idle before destroying it
-            m_frameEncoder[i].getEncodedPicture(m_nalList);
-            m_frameEncoder[i].destroy();
+            m_frameEncoder[i]->destroy();
+            delete m_frameEncoder[i];
         }
-
-        delete [] m_frameEncoder;
     }
 
-    for (int i = 0; i < m_numThreadLocalData; i++)
-        m_threadLocalData[i].destroy();
-
-    delete [] m_threadLocalData;
+    // thread pools can be cleaned up now that all the JobProviders are
+    // known to be shutdown
+    delete [] m_threadPool;
 
     if (m_lookahead)
-        m_lookahead->stop();
+    {
+        m_lookahead->destroy();
+        delete m_lookahead;
+    }
 
     delete m_dpb;
     if (m_rateControl)
     {
         m_rateControl->destroy();
         delete m_rateControl;
-    }
-
-    // thread pool release should always happen last
-    if (m_threadPool)
-        m_threadPool->release();
-
-    if (m_lookahead)
-    {
-        m_lookahead->destroy();
-        delete m_lookahead;
     }
 
     X265_FREE(m_cuOffsetY);
@@ -326,20 +353,27 @@ void Encoder::destroy()
 
     if (m_analysisFile)
         fclose(m_analysisFile);
-    free(m_param->analysisFileName);
-    free(m_param->csvfn);
     if (m_csvfpt)
         fclose(m_csvfpt);
-    free(m_param->rc.statFileName); // alloc'd by strdup
 
-    X265_FREE(m_param);
+    if (m_param)
+    {
+        free((void*)m_param->rc.lambdaFileName); // allocs by strdup
+        free(m_param->rc.statFileName);
+        free(m_param->analysisFileName);
+        free((void*)m_param->scalingLists);
+        free(m_param->csvfn);
+        free(m_param->numaPools);
+
+        X265_FREE(m_param);
+    }
 }
 
 void Encoder::updateVbvPlan(RateControl* rc)
 {
     for (int i = 0; i < m_param->frameNumThreads; i++)
     {
-        FrameEncoder *encoder = &m_frameEncoder[i];
+        FrameEncoder *encoder = m_frameEncoder[i];
         if (encoder->m_rce.isActive && encoder->m_rce.poc != rc->m_curSlice->m_poc)
         {
             int64_t bits = (int64_t) X265_MAX(encoder->m_rce.frameSizeEstimated, encoder->m_rce.frameSizePlanned);
@@ -366,6 +400,13 @@ void Encoder::updateVbvPlan(RateControl* rc)
  *         negative on malloc error or abort */
 int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 {
+#if CHECKED_BUILD || _DEBUG
+    if (g_checkFailures)
+    {
+        x265_log(m_param, X265_LOG_ERROR, "encoder aborting because of internal error\n");
+        return -1;
+    }
+#endif
     if (m_aborted)
         return -1;
 
@@ -439,9 +480,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inFrame = m_dpb->m_freeList.popBack();
 
         /* Copy input picture into a Frame and PicYuv, send to lookahead */
-        inFrame->m_poc = ++m_pocLast;
         inFrame->m_fencPic->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
 
+        inFrame->m_poc       = ++m_pocLast;
         inFrame->m_userData  = pic_in->userData;
         inFrame->m_pts       = pic_in->pts;
         inFrame->m_forceqp   = pic_in->forceqp;
@@ -453,21 +494,14 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
         /* Encoder holds a reference count until stats collection is finished */
         ATOMIC_INC(&inFrame->m_countRefEncoders);
-        bool bEnableWP = m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred;
-        if (m_param->rc.aqMode || bEnableWP)
+
+        if ((m_param->rc.aqMode || m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred) &&
+            (m_param->rc.cuTree && m_param->rc.bStatRead))
         {
-            if (m_param->rc.cuTree && m_param->rc.bStatRead)
+            if (!m_rateControl->cuTreeReadFor2Pass(inFrame))
             {
-                if (!m_rateControl->cuTreeReadFor2Pass(inFrame))
-                {
-                    m_aborted = 1;
-                    return -1;
-                }
-            }
-            else
-            {
-                ProfileScopeEvent(prelookahead);
-                m_rateControl->calcAdaptiveQuantFrame(inFrame);
+                m_aborted = 1;
+                return -1;
             }
         }
 
@@ -490,13 +524,13 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             sliceType = inputPic->analysisData.sliceType;
         }
 
-        m_lookahead->addPicture(inFrame, sliceType);
+        m_lookahead->addPicture(*inFrame, sliceType);
         m_numDelayedPic++;
     }
     else
         m_lookahead->flush();
 
-    FrameEncoder *curEncoder = &m_frameEncoder[m_curEncoder];
+    FrameEncoder *curEncoder = m_frameEncoder[m_curEncoder];
     m_curEncoder = (m_curEncoder + 1) % m_param->frameNumThreads;
     int ret = 0;
 
@@ -631,7 +665,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 slice->m_sps = &m_sps;
                 slice->m_pps = &m_pps;
                 slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
-                slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_CU_PARTITIONS);
+                slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_4x4_PARTITIONS);
                 frameEnc->m_reconPic->m_cuOffsetC = m_cuOffsetC;
                 frameEnc->m_reconPic->m_cuOffsetY = m_cuOffsetY;
                 frameEnc->m_reconPic->m_buOffsetC = m_buOffsetC;
@@ -661,7 +695,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
                 uint32_t numCUsInFrame   = widthInCU * heightInCU;
                 analysis->numCUsInFrame  = numCUsInFrame;
-                analysis->numPartitions  = NUM_CU_PARTITIONS;
+                analysis->numPartitions  = NUM_4x4_PARTITIONS;
                 allocAnalysis(analysis);
             }
 
@@ -810,6 +844,143 @@ void Encoder::printSummary()
         x265_log(m_param, X265_LOG_INFO, "lossless compression ratio %.2f::1\n", uncompressed / m_analyzeAll.m_accBits);
     }
 
+
+#if DETAILED_CU_STATS
+    /* Summarize stats from all frame encoders */
+    CUStats cuStats;
+    for (int i = 0; i < m_param->frameNumThreads; i++)
+        cuStats.accumulate(m_frameEncoder[i]->m_cuStats);
+
+    if (!cuStats.totalCTUTime)
+        return;
+
+    int totalWorkerCount = 0;
+    for (int i = 0; i < m_numPools; i++)
+        totalWorkerCount += m_threadPool[i].m_numWorkers;
+
+    int64_t  batchElapsedTime, coopSliceElapsedTime;
+    uint64_t batchCount, coopSliceCount;
+    m_lookahead->getWorkerStats(batchElapsedTime, batchCount, coopSliceElapsedTime, coopSliceCount);
+    int64_t lookaheadWorkerTime = m_lookahead->m_slicetypeDecideElapsedTime + m_lookahead->m_preLookaheadElapsedTime +
+                                  batchElapsedTime + coopSliceElapsedTime;
+
+    int64_t totalWorkerTime = cuStats.totalCTUTime + cuStats.loopFilterElapsedTime + cuStats.pmodeTime +
+                              cuStats.pmeTime + lookaheadWorkerTime + cuStats.weightAnalyzeTime;
+    int64_t elapsedEncodeTime = x265_mdate() - m_encodeStartTime;
+
+    int64_t interRDOTotalTime = 0, intraRDOTotalTime = 0;
+    uint64_t interRDOTotalCount = 0, intraRDOTotalCount = 0;
+    for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+    {
+        interRDOTotalTime += cuStats.interRDOElapsedTime[i];
+        intraRDOTotalTime += cuStats.intraRDOElapsedTime[i];
+        interRDOTotalCount += cuStats.countInterRDO[i];
+        intraRDOTotalCount += cuStats.countIntraRDO[i];
+    }
+
+    /* Time within compressCTU() and pmode tasks not captured by ME, Intra mode selection, or RDO (2Nx2N merge, 2Nx2N bidir, etc) */
+    int64_t unaccounted = (cuStats.totalCTUTime + cuStats.pmodeTime) -
+                          (cuStats.intraAnalysisElapsedTime + cuStats.motionEstimationElapsedTime + interRDOTotalTime + intraRDOTotalTime);
+
+#define ELAPSED_SEC(val)  ((double)(val) / 1000000)
+#define ELAPSED_MSEC(val) ((double)(val) / 1000)
+
+    if (m_param->bDistributeMotionEstimation && cuStats.countPMEMasters)
+    {
+        x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in motion estimation, averaging %.3lf CU inter modes per CTU\n",
+                 100.0 * (cuStats.motionEstimationElapsedTime + cuStats.pmeTime) / totalWorkerTime,
+                 (double)cuStats.countMotionEstimate / cuStats.totalCTUs);
+        x265_log(m_param, X265_LOG_INFO, "CU: %.3lf PME masters per inter CU, each blocked an average of %.3lf ns\n",
+                 (double)cuStats.countPMEMasters / cuStats.countMotionEstimate,
+                 (double)cuStats.pmeBlockTime / cuStats.countPMEMasters);
+        x265_log(m_param, X265_LOG_INFO, "CU:       %.3lf slaves per PME master, each took an average of %.3lf ms\n",
+                 (double)cuStats.countPMETasks / cuStats.countPMEMasters,
+                 ELAPSED_MSEC(cuStats.pmeTime) / cuStats.countPMETasks);
+    }
+    else
+    {
+        x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in motion estimation, averaging %.3lf CU inter modes per CTU\n",
+                 100.0 * cuStats.motionEstimationElapsedTime / totalWorkerTime,
+                 (double)cuStats.countMotionEstimate / cuStats.totalCTUs);
+    }
+    x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in intra analysis, averaging %.3lf Intra PUs per CTU\n",
+             100.0 * cuStats.intraAnalysisElapsedTime / totalWorkerTime,
+             (double)cuStats.countIntraAnalysis / cuStats.totalCTUs);
+    x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in inter RDO, measuring %.3lf inter/merge predictions per CTU\n",
+             100.0 * interRDOTotalTime / totalWorkerTime,
+             (double)interRDOTotalCount / cuStats.totalCTUs);
+    x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in intra RDO, measuring %.3lf intra predictions per CTU\n",
+             100.0 * intraRDOTotalTime / totalWorkerTime,
+             (double)intraRDOTotalCount / cuStats.totalCTUs);
+    x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in loop filters, average %.3lf ms per call\n",
+             100.0 * cuStats.loopFilterElapsedTime / totalWorkerTime,
+             ELAPSED_MSEC(cuStats.loopFilterElapsedTime) / cuStats.countLoopFilter);
+    if (cuStats.countWeightAnalyze && cuStats.weightAnalyzeTime)
+    {
+        x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in weight analysis, average %.3lf ms per call\n",
+                 100.0 * cuStats.weightAnalyzeTime / totalWorkerTime,
+                 ELAPSED_MSEC(cuStats.weightAnalyzeTime) / cuStats.countWeightAnalyze);
+    }
+    if (m_param->bDistributeModeAnalysis && cuStats.countPModeMasters)
+    {
+        x265_log(m_param, X265_LOG_INFO, "CU: %.3lf PMODE masters per CTU, each blocked an average of %.3lf ns\n",
+                 (double)cuStats.countPModeMasters / cuStats.totalCTUs,
+                 (double)cuStats.pmodeBlockTime / cuStats.countPModeMasters);
+        x265_log(m_param, X265_LOG_INFO, "CU:       %.3lf slaves per PMODE master, each took average of %.3lf ms\n",
+                 (double)cuStats.countPModeTasks / cuStats.countPModeMasters, 
+                 ELAPSED_MSEC(cuStats.pmodeTime) / cuStats.countPModeTasks);
+    }
+
+    x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in slicetypeDecide (avg %.3lfms) and prelookahead (avg %.3lfms)\n",
+             100.0 * lookaheadWorkerTime / totalWorkerTime,
+             ELAPSED_MSEC(m_lookahead->m_slicetypeDecideElapsedTime) / m_lookahead->m_countSlicetypeDecide,
+             ELAPSED_MSEC(m_lookahead->m_preLookaheadElapsedTime) / m_lookahead->m_countPreLookahead);
+
+    x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in other tasks\n",
+             100.0 * unaccounted / totalWorkerTime);
+
+    if (intraRDOTotalTime && intraRDOTotalCount)
+    {
+        x265_log(m_param, X265_LOG_INFO, "CU: Intra RDO time  per depth %%%05.2lf %%%05.2lf %%%05.2lf %%%05.2lf\n",
+                 100.0 * cuStats.intraRDOElapsedTime[0] / intraRDOTotalTime,  // 64
+                 100.0 * cuStats.intraRDOElapsedTime[1] / intraRDOTotalTime,  // 32
+                 100.0 * cuStats.intraRDOElapsedTime[2] / intraRDOTotalTime,  // 16
+                 100.0 * cuStats.intraRDOElapsedTime[3] / intraRDOTotalTime); // 8
+        x265_log(m_param, X265_LOG_INFO, "CU: Intra RDO calls per depth %%%05.2lf %%%05.2lf %%%05.2lf %%%05.2lf\n",
+                 100.0 * cuStats.countIntraRDO[0] / intraRDOTotalCount,  // 64
+                 100.0 * cuStats.countIntraRDO[1] / intraRDOTotalCount,  // 32
+                 100.0 * cuStats.countIntraRDO[2] / intraRDOTotalCount,  // 16
+                 100.0 * cuStats.countIntraRDO[3] / intraRDOTotalCount); // 8
+    }
+
+    if (interRDOTotalTime && interRDOTotalCount)
+    {
+        x265_log(m_param, X265_LOG_INFO, "CU: Inter RDO time  per depth %%%05.2lf %%%05.2lf %%%05.2lf %%%05.2lf\n",
+                 100.0 * cuStats.interRDOElapsedTime[0] / interRDOTotalTime,  // 64
+                 100.0 * cuStats.interRDOElapsedTime[1] / interRDOTotalTime,  // 32
+                 100.0 * cuStats.interRDOElapsedTime[2] / interRDOTotalTime,  // 16
+                 100.0 * cuStats.interRDOElapsedTime[3] / interRDOTotalTime); // 8
+        x265_log(m_param, X265_LOG_INFO, "CU: Inter RDO calls per depth %%%05.2lf %%%05.2lf %%%05.2lf %%%05.2lf\n",
+                 100.0 * cuStats.countInterRDO[0] / interRDOTotalCount,  // 64
+                 100.0 * cuStats.countInterRDO[1] / interRDOTotalCount,  // 32
+                 100.0 * cuStats.countInterRDO[2] / interRDOTotalCount,  // 16
+                 100.0 * cuStats.countInterRDO[3] / interRDOTotalCount); // 8
+    }
+
+    x265_log(m_param, X265_LOG_INFO, "CU: " X265_LL " %dX%d CTUs compressed in %.3lf seconds, %.3lf CTUs per worker-second\n",
+             cuStats.totalCTUs, g_maxCUSize, g_maxCUSize,
+             ELAPSED_SEC(totalWorkerTime),
+             cuStats.totalCTUs / ELAPSED_SEC(totalWorkerTime));
+
+    if (m_threadPool)
+        x265_log(m_param, X265_LOG_INFO, "CU: %.3lf average worker utilization, %%%05.2lf of theoretical maximum utilization\n",
+                 (double)totalWorkerTime / elapsedEncodeTime,
+                 100.0 * totalWorkerTime / (elapsedEncodeTime * totalWorkerCount));
+
+#undef ELAPSED_SEC
+#undef ELAPSED_MSEC
+#endif
+
     if (!m_param->bLogCuStats)
         return;
 
@@ -823,9 +994,11 @@ void Encoder::printSummary()
         StatisticLog finalLog;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
+            int cuSize = g_maxCUSize >> depth;
+
             for (int i = 0; i < m_param->frameNumThreads; i++)
             {
-                StatisticLog& enclog = m_frameEncoder[i].m_sliceTypeLog[sliceType];
+                StatisticLog& enclog = m_frameEncoder[i]->m_sliceTypeLog[sliceType];
                 if (!depth)
                     finalLog.totalCu += enclog.totalCu;
                 finalLog.cntIntra[depth] += enclog.cntIntra[depth];
@@ -836,7 +1009,7 @@ void Encoder::printSummary()
                     finalLog.cuInterDistribution[depth][m] += enclog.cuInterDistribution[depth][m];
                 }
 
-                if (depth == g_maxCUDepth)
+                if (cuSize == 8 && m_sps.quadtreeTULog2MinSize < 3)
                     finalLog.cntIntraNxN += enclog.cntIntraNxN;
                 if (sliceType != I_SLICE)
                 {
@@ -901,7 +1074,6 @@ void Encoder::printSummary()
             }
 
             // print statistics
-            int cuSize = g_maxCUSize >> depth;
             char stats[256] = { 0 };
             int len = 0;
             if (sliceType != I_SLICE)
@@ -929,14 +1101,14 @@ void Encoder::printSummary()
                                cuIntraDistribution[1], cuIntraDistribution[2]);
                 if (sliceType != I_SLICE)
                 {
-                    if (depth == g_maxCUDepth)
+                    if (cuSize == 8 && m_sps.quadtreeTULog2MinSize < 3)
                         len += sprintf(stats + len, " %dx%d "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
 
                 len += sprintf(stats + len, ")");
                 if (sliceType == I_SLICE)
                 {
-                    if (depth == g_maxCUDepth)
+                    if (cuSize == 8 && m_sps.quadtreeTULog2MinSize < 3)
                         len += sprintf(stats + len, " %dx%d: "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
                 }
             }
@@ -1301,13 +1473,17 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     }
 }
 
+void Encoder::initVPS(VPS *vps)
+{
+    /* Note that much of the VPS is initialized by determineLevel() */
+    vps->ptl.progressiveSourceFlag = !m_param->interlaceMode;
+    vps->ptl.interlacedSourceFlag = !!m_param->interlaceMode;
+    vps->ptl.nonPackedConstraintFlag = false;
+    vps->ptl.frameOnlyConstraintFlag = !m_param->interlaceMode;
+}
+
 void Encoder::initSPS(SPS *sps)
 {
-    m_vps.ptl.progressiveSourceFlag = !m_param->interlaceMode;
-    m_vps.ptl.interlacedSourceFlag = !!m_param->interlaceMode;
-    m_vps.ptl.nonPackedConstraintFlag = false;
-    m_vps.ptl.frameOnlyConstraintFlag = !m_param->interlaceMode;
-
     sps->conformanceWindow = m_conformanceWindow;
     sps->chromaFormatIdc = m_param->internalCsp;
     sps->picWidthInLumaSamples = m_param->sourceWidth;
@@ -1315,13 +1491,13 @@ void Encoder::initSPS(SPS *sps)
     sps->numCuInWidth = (m_param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
     sps->numCuInHeight = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
     sps->numCUsInFrame = sps->numCuInWidth * sps->numCuInHeight;
-    sps->numPartitions = NUM_CU_PARTITIONS;
-    sps->numPartInCUSize = 1 << g_maxFullDepth;
+    sps->numPartitions = NUM_4x4_PARTITIONS;
+    sps->numPartInCUSize = 1 << g_unitSizeDepth;
 
     sps->log2MinCodingBlockSize = g_maxLog2CUSize - g_maxCUDepth;
     sps->log2DiffMaxMinCodingBlockSize = g_maxCUDepth;
-
-    sps->quadtreeTULog2MaxSize = X265_MIN(g_maxLog2CUSize, 5);
+    uint32_t maxLog2TUSize = (uint32_t)g_log2Size[m_param->maxTUSize];
+    sps->quadtreeTULog2MaxSize = X265_MIN(g_maxLog2CUSize, maxLog2TUSize);
     sps->quadtreeTULog2MinSize = 2;
     sps->quadtreeTUMaxDepthInter = m_param->tuQTMaxInterDepth;
     sps->quadtreeTUMaxDepthIntra = m_param->tuQTMaxIntraDepth;
@@ -1331,9 +1507,10 @@ void Encoder::initSPS(SPS *sps)
     sps->bUseAMP = m_param->bEnableAMP;
     sps->maxAMPDepth = m_param->bEnableAMP ? g_maxCUDepth : 0;
 
+    sps->maxTempSubLayers = m_param->bEnableTemporalSubLayers ? 2 : 1;
     sps->maxDecPicBuffering = m_vps.maxDecPicBuffering;
     sps->numReorderPics = m_vps.numReorderPics;
-    sps->maxLatencyIncrease = m_param->bframes;
+    sps->maxLatencyIncrease = m_vps.maxLatencyIncrease = m_param->bframes;
 
     sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
     sps->bTemporalMVPEnabled = m_param->bEnableTemporalMvp;
@@ -1433,18 +1610,12 @@ void Encoder::configure(x265_param *p)
     }
     p->keyframeMin = X265_MAX(1, X265_MIN(p->keyframeMin, p->keyframeMax / 2 + 1));
 
-    if (p->bBPyramid && !p->bframes)
+    if (!p->bframes)
         p->bBPyramid = 0;
+    if (!p->rdoqLevel)
+        p->psyRdoq = 0;
 
     /* Disable features which are not supported by the current RD level */
-    if (p->rdLevel < 5)
-    {
-        if (p->bEnableCbfFastMode)      /* impossible */
-            x265_log(p, X265_LOG_WARNING, "--fast-cbf disabled, requires --rdlevel 5 or higher\n");
-        p->bEnableCbfFastMode = 0;
-    }
-    if (p->rdLevel < 4)
-        p->psyRdoq = 0;                 /* impossible */
     if (p->rdLevel < 3)
     {
         if (p->bCULossless)             /* impossible */
@@ -1504,13 +1675,19 @@ void Encoder::configure(x265_param *p)
         p->rc.cuTree = 0;
     }
 
+    if (p->maxTUSize > p->maxCUSize)
+    {
+        x265_log(p, X265_LOG_WARNING, "Max TU size should be less than or equal to max CU size, setting max TU size = %d\n", p->maxCUSize);
+        p->maxTUSize = p->maxCUSize;
+    }
+
     if (p->rc.aqStrength == 0 && p->rc.cuTree == 0)
         p->rc.aqMode = X265_AQ_NONE;
 
     if (p->rc.aqMode == X265_AQ_NONE && p->rc.cuTree == 0)
         p->rc.aqStrength = 0;
 
-    if (p->totalFrames <= 2 * ((float)p->fpsNum) / p->fpsDenom && p->rc.bStrictCbr)
+    if (p->totalFrames && p->totalFrames <= 2 * ((float)p->fpsNum) / p->fpsDenom && p->rc.bStrictCbr)
         p->lookaheadDepth = p->totalFrames;
 
     if (p->scalingLists && p->internalCsp == X265_CSP_I444)
@@ -1532,6 +1709,12 @@ void Encoder::configure(x265_param *p)
     {
         x265_log(p, X265_LOG_ERROR, "Analysis load/save options incompatible with pmode/pme");
         p->bDistributeMotionEstimation = p->bDistributeModeAnalysis = 0;
+    }
+
+    if (p->bEnableTemporalSubLayers && !p->bframes)
+    {
+        x265_log(p, X265_LOG_WARNING, "B frames not enabled, temporal sublayer disabled\n");
+        p->bEnableTemporalSubLayers = 0;
     }
 
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
@@ -1568,6 +1751,10 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
     }
 
+    /* some options make no sense if others are disabled */
+    p->bSaoNonDeblocked &= p->bEnableSAO;
+    p->bEnableTSkipFast &= p->bEnableTransformSkip;
+
     /* initialize the conformance window */
     m_conformanceWindow.bEnabled = false;
     m_conformanceWindow.rightOffset = 0;
@@ -1576,10 +1763,10 @@ void Encoder::configure(x265_param *p)
     m_conformanceWindow.leftOffset = 0;
 
     /* set pad size if width is not multiple of the minimum CU size */
-    if (p->sourceWidth & (MIN_CU_SIZE - 1))
+    if (p->sourceWidth & (p->minCUSize - 1))
     {
-        uint32_t rem = p->sourceWidth & (MIN_CU_SIZE - 1);
-        uint32_t padsize = MIN_CU_SIZE - rem;
+        uint32_t rem = p->sourceWidth & (p->minCUSize - 1);
+        uint32_t padsize = p->minCUSize - rem;
         p->sourceWidth += padsize;
 
         m_conformanceWindow.bEnabled = true;
@@ -1587,10 +1774,10 @@ void Encoder::configure(x265_param *p)
     }
 
     /* set pad size if height is not multiple of the minimum CU size */
-    if (p->sourceHeight & (MIN_CU_SIZE - 1))
+    if (p->sourceHeight & (p->minCUSize - 1))
     {
-        uint32_t rem = p->sourceHeight & (MIN_CU_SIZE - 1);
-        uint32_t padsize = MIN_CU_SIZE - rem;
+        uint32_t rem = p->sourceHeight & (p->minCUSize - 1);
+        uint32_t padsize = p->minCUSize - rem;
         p->sourceHeight += padsize;
 
         m_conformanceWindow.bEnabled = true;
@@ -1613,6 +1800,7 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
         CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC(intraData->partSizes, char, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC(intraData->chromaModes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         analysis->intraData = intraData;
     }
     else
@@ -1622,6 +1810,7 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
         CHECKED_MALLOC_ZERO(interData->ref, int32_t, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2);
         CHECKED_MALLOC(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+        CHECKED_MALLOC_ZERO(interData->bestMergeCand, uint32_t, analysis->numCUsInFrame * CUGeom::MAX_GEOMS);
         analysis->interData = interData;
     }
     return;
@@ -1638,6 +1827,7 @@ void Encoder::freeAnalysis(x265_analysis_data* analysis)
         X265_FREE(((analysis_intra_data*)analysis->intraData)->depth);
         X265_FREE(((analysis_intra_data*)analysis->intraData)->modes);
         X265_FREE(((analysis_intra_data*)analysis->intraData)->partSizes);
+        X265_FREE(((analysis_intra_data*)analysis->intraData)->chromaModes);
         X265_FREE(analysis->intraData);
     }
     else
@@ -1645,6 +1835,7 @@ void Encoder::freeAnalysis(x265_analysis_data* analysis)
         X265_FREE(((analysis_inter_data*)analysis->interData)->ref);
         X265_FREE(((analysis_inter_data*)analysis->interData)->depth);
         X265_FREE(((analysis_inter_data*)analysis->interData)->modes);
+        X265_FREE(((analysis_inter_data*)analysis->interData)->bestMergeCand);
         X265_FREE(analysis->interData);
     }
 }
@@ -1702,6 +1893,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         X265_FREAD(((analysis_intra_data *)analysis->intraData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FREAD(((analysis_intra_data *)analysis->intraData)->partSizes, sizeof(char), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FREAD(((analysis_intra_data *)analysis->intraData)->chromaModes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         analysis->sliceType = X265_TYPE_I;
         consumedBytes += frameRecordSize;
     }
@@ -1710,6 +1902,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         X265_FREAD(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
         X265_FREAD(((analysis_inter_data *)analysis->interData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FREAD(((analysis_inter_data *)analysis->interData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FREAD(((analysis_inter_data *)analysis->interData)->bestMergeCand, sizeof(uint32_t), analysis->numCUsInFrame * CUGeom::MAX_GEOMS, m_analysisFile);
         consumedBytes += frameRecordSize;
         totalConsumedBytes = consumedBytes;
     }
@@ -1718,6 +1911,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         X265_FREAD(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
         X265_FREAD(((analysis_inter_data *)analysis->interData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FREAD(((analysis_inter_data *)analysis->interData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FREAD(((analysis_inter_data *)analysis->interData)->bestMergeCand, sizeof(uint32_t), analysis->numCUsInFrame * CUGeom::MAX_GEOMS, m_analysisFile);
         consumedBytes += frameRecordSize;
     }
 #undef X265_FREAD
@@ -1739,16 +1933,18 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis)
     analysis->frameRecordSize = sizeof(analysis->frameRecordSize) + sizeof(analysis->poc) + sizeof(analysis->sliceType) +
                       sizeof(analysis->numCUsInFrame) + sizeof(analysis->numPartitions);
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
-        analysis->frameRecordSize += sizeof(uint8_t) * analysis->numCUsInFrame * analysis->numPartitions * 3;
+        analysis->frameRecordSize += sizeof(uint8_t) * analysis->numCUsInFrame * analysis->numPartitions * 4;
     else if (analysis->sliceType == X265_TYPE_P)
     {
         analysis->frameRecordSize += sizeof(int32_t) * analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU;
         analysis->frameRecordSize += sizeof(uint8_t) * analysis->numCUsInFrame * analysis->numPartitions * 2;
+        analysis->frameRecordSize += sizeof(uint32_t) * analysis->numCUsInFrame * CUGeom::MAX_GEOMS;
     }
     else
     {
         analysis->frameRecordSize += sizeof(int32_t) * analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2;
         analysis->frameRecordSize += sizeof(uint8_t) * analysis->numCUsInFrame * analysis->numPartitions * 2;
+        analysis->frameRecordSize += sizeof(uint32_t) * analysis->numCUsInFrame * CUGeom::MAX_GEOMS;
     }
 
     X265_FWRITE(&analysis->frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
@@ -1762,18 +1958,21 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis)
         X265_FWRITE(((analysis_intra_data*)analysis->intraData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FWRITE(((analysis_intra_data*)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FWRITE(((analysis_intra_data*)analysis->intraData)->partSizes, sizeof(char), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FWRITE(((analysis_intra_data*)analysis->intraData)->chromaModes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
     }
     else if (analysis->sliceType == X265_TYPE_P)
     {
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FWRITE(((analysis_inter_data*)analysis->interData)->bestMergeCand, sizeof(uint32_t), analysis->numCUsInFrame * CUGeom::MAX_GEOMS, m_analysisFile);
     }
     else
     {
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FWRITE(((analysis_inter_data*)analysis->interData)->bestMergeCand, sizeof(uint32_t), analysis->numCUsInFrame * CUGeom::MAX_GEOMS, m_analysisFile);
     }
 #undef X265_FWRITE
 }

@@ -174,7 +174,10 @@ int main(int argc, char *argv[])
     for (int i = 0; test_arch[i].flag; i++)
     {
         if (test_arch[i].flag & cpuid)
+        {
             printf("Testing primitives: %s\n", test_arch[i].name);
+            fflush(stdout);
+        }
         else
             continue;
 
@@ -188,6 +191,7 @@ int main(int argc, char *argv[])
                 continue;
             if (!harness[h]->testCorrectness(cprim, vecprim))
             {
+                fflush(stdout);
                 fprintf(stderr, "\nx265: intrinsic primitive has failed. Go and fix that Right Now!\n");
                 return -1;
             }
@@ -204,6 +208,7 @@ int main(int argc, char *argv[])
                 continue;
             if (!harness[h]->testCorrectness(cprim, asmprim))
             {
+                fflush(stdout);
                 fprintf(stderr, "\nx265: asm primitive has failed. Go and fix that Right Now!\n");
                 return -1;
             }
@@ -226,6 +231,7 @@ int main(int argc, char *argv[])
     memcpy(&primitives, &optprim, sizeof(EncoderPrimitives));
 
     printf("\nTest performance improvement with full optimizations\n");
+    fflush(stdout);
 
     for (size_t h = 0; h < sizeof(harness) / sizeof(TestHarness*); h++)
     {

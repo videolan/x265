@@ -15,8 +15,6 @@ RaceHorses_416x240_30_10bit.yuv,--preset veryslow --bitrate 1100 --vbv-bufsize 1
 112_1920x1080_25.yuv,--preset superfast --bitrate 30000 --vbv-maxrate 30000 --vbv-bufsize 30000 --repeat-headers
 112_1920x1080_25.yuv,--preset superfast --bitrate 4000 --vbv-maxrate 6000 --vbv-bufsize 6000 --aud
 112_1920x1080_25.yuv,--preset veryslow --bitrate 1000 --vbv-maxrate 3000 --vbv-bufsize 3000 --repeat-headers
-112_1920x1080_25.yuv,--preset veryslow --bitrate 10000 --vbv-maxrate 15000 --vbv-bufsize 15000 --aud
-112_1920x1080_25.yuv,--preset veryslow --bitrate 4000 --vbv-maxrate 4000 --vbv-bufsize 6000 --hrd
 big_buck_bunny_360p24.y4m,--preset medium --bitrate 1000 --vbv-bufsize 3000 --vbv-maxrate 3000 --repeat-headers
 big_buck_bunny_360p24.y4m,--preset medium --bitrate 3000 --vbv-bufsize 3000 --vbv-maxrate 3000 --hrd
 big_buck_bunny_360p24.y4m,--preset medium --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 600 --aud
@@ -25,18 +23,12 @@ big_buck_bunny_360p24.y4m,--preset superfast --bitrate 1000 --vbv-bufsize 1000 -
 big_buck_bunny_360p24.y4m,--preset superfast --bitrate 3000 --vbv-bufsize 9000 --vbv-maxrate 9000 --repeat-headers
 big_buck_bunny_360p24.y4m,--preset superfast --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 400 --hrd
 big_buck_bunny_360p24.y4m,--preset superfast --crf 6 --vbv-bufsize 1000 --vbv-maxrate 1000 --aud
-big_buck_bunny_360p24.y4m,--preset veryslow --bitrate 1000 --vbv-bufsize 1500 --vbv-maxrate 1000 --hrd
-big_buck_bunny_360p24.y4m,--preset veryslow --bitrate 400 --vbv-bufsize 400 --vbv-maxrate 400 --repeat-headers
-big_buck_bunny_360p24.y4m,--preset veryslow --bitrate 4500 --vbv-bufsize 4500 --vbv-maxrate 4500 --aud
-big_buck_bunny_360p24.y4m,--preset veryslow --crf 12 --vbv-bufsize 400 --vbv-maxrate 400 --hrd
 
 # multi-pass rate control tests
-big_buck_bunny_360p24.y4m,--preset veryslow --crf 40 --pass 1,--preset veryslow --crf 40 --pass 2,--preset veryslow --bitrate 200 --pass 2
-big_buck_bunny_360p24.y4m,--preset superfast --bitrate 30000 --pass 1 -F4,--preset superfast --bitrate 30000 --pass 2 -F4
-big_buck_bunny_360p24.y4m,--preset medium --bitrate 700 --vbv-bufsize 900 --vbv-maxrate 700 --pass 1 -F4 --slow-firstpass,--preset medium --bitrate 700 --vbv-bufsize 900 --vbv-maxrate 700 --pass 2 -F4
-112_1920x1080_25.yuv,--preset veryslow --bitrate 1000 --pass 1 -F4,--preset veryslow --bitrate 1000 --pass 2 -F4
+big_buck_bunny_360p24.y4m,--preset slow --crf 40 --pass 1,--preset slow --bitrate 200 --pass 2
+big_buck_bunny_360p24.y4m,--preset medium --bitrate 700 --pass 1 -F4 --slow-firstpass,--preset medium --bitrate 700 --vbv-bufsize 900 --vbv-maxrate 700 --pass 2 -F4
+112_1920x1080_25.yuv,--preset slow --bitrate 1000 --pass 1 -F4,--preset slow --bitrate 1000 --pass 2 -F4
 112_1920x1080_25.yuv,--preset superfast --crf 12 --pass 1,--preset superfast --bitrate 4000 --pass 2 -F4
 RaceHorses_416x240_30_10bit.yuv,--preset veryslow --crf 40 --pass 1, --preset veryslow --bitrate 200 --pass 2 -F4
 RaceHorses_416x240_30_10bit.yuv,--preset superfast --bitrate 600 --pass 1 -F4 --slow-firstpass,--preset superfast --bitrate 600 --pass 2 -F4
-RaceHorses_416x240_30_10bit.yuv,--preset medium --crf 28 --pass 1,--preset medium --bitrate 750 --pass 2 -F4
-RaceHorses_416x240_30_10bit.yuv,--preset medium --crf 26 --pass 1,--preset medium --bitrate 1000 --pass 3 -F4,--preset medium --bitrate 1000 --pass 2 -F4
+RaceHorses_416x240_30_10bit.yuv,--preset medium --crf 26 --pass 1,--preset medium --bitrate 500 --pass 3 -F4,--preset medium --bitrate 500 --pass 2 -F4

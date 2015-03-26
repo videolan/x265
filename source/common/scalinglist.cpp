@@ -222,7 +222,7 @@ const int32_t* ScalingList::getScalingListDefaultAddress(int sizeId, int listId)
 
 void ScalingList::processDefaultMarix(int sizeId, int listId)
 {
-    ::memcpy(m_scalingListCoef[sizeId][listId], getScalingListDefaultAddress(sizeId, listId), sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, s_numCoefPerSize[sizeId]));
+    memcpy(m_scalingListCoef[sizeId][listId], getScalingListDefaultAddress(sizeId, listId), sizeof(int) * X265_MIN(MAX_MATRIX_COEF_NUM, s_numCoefPerSize[sizeId]));
     m_scalingListDC[sizeId][listId] = SCALING_LIST_DC;
 }
 

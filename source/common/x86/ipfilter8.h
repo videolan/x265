@@ -576,8 +576,12 @@ CHROMA_420_FILTERS(_sse4);
 CHROMA_420_FILTERS(_avx2);
 CHROMA_420_SP_FILTERS(_sse2);
 CHROMA_420_SP_FILTERS_SSE4(_sse4);
+CHROMA_420_SP_FILTERS(_avx2);
+CHROMA_420_SP_FILTERS_SSE4(_avx2);
 CHROMA_420_SS_FILTERS(_sse2);
 CHROMA_420_SS_FILTERS_SSE4(_sse4);
+CHROMA_420_SS_FILTERS(_avx2);
+CHROMA_420_SS_FILTERS_SSE4(_avx2);
 
 CHROMA_422_FILTERS(_sse4);
 CHROMA_422_FILTERS(_avx2);
@@ -617,10 +621,31 @@ LUMA_FILTERS(_sse4);
 LUMA_SP_FILTERS(_sse4);
 LUMA_SS_FILTERS(_sse2);
 LUMA_FILTERS(_avx2);
-
+LUMA_SP_FILTERS(_avx2);
+LUMA_SS_FILTERS(_avx2);
 void x265_interp_8tap_hv_pp_8x8_sse4(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY);
-void x265_luma_p2s_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
-
+void x265_pixelToShort_4x4_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_4x8_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_4x16_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_8x4_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_8x8_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_8x16_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_8x32_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_16x4_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_16x8_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_16x12_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_16x16_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_16x32_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_16x64_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_32x8_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_32x16_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_32x24_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_32x32_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_32x64_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_64x16_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_64x32_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_64x48_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
+void x265_pixelToShort_64x64_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst);
 #undef LUMA_FILTERS
 #undef LUMA_SP_FILTERS
 #undef LUMA_SS_FILTERS

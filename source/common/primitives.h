@@ -119,6 +119,7 @@ typedef void (*blockfill_s_t)(int16_t* dst, intptr_t dstride, int16_t val);
 
 typedef void (*intra_pred_t)(pixel* dst, intptr_t dstStride, const pixel *srcPix, int dirMode, int bFilter);
 typedef void (*intra_allangs_t)(pixel *dst, pixel *refPix, pixel *filtPix, int bLuma);
+typedef void (*intra_filter_t)(const pixel* references, pixel* filtered);
 
 typedef void (*cpy2Dto1D_shl_t)(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 typedef void (*cpy2Dto1D_shr_t)(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
@@ -136,8 +137,7 @@ typedef uint32_t (*quant_t)(const int16_t* coef, const int32_t* quantCoeff, int3
 typedef uint32_t (*nquant_t)(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff);
 typedef void (*dequant_scaling_t)(const int16_t* src, const int32_t* dequantCoef, int16_t* dst, int num, int mcqp_miper, int shift);
 typedef void (*dequant_normal_t)(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
-typedef int  (*count_nonzero_t)(const int16_t* quantCoeff, int numCoeff);
-
+typedef int(*count_nonzero_t)(const int16_t* quantCoeff);
 typedef void (*weightp_pp_t)(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*weightp_sp_t)(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*scale_t)(pixel* dst, const pixel* src, intptr_t stride);
@@ -155,7 +155,8 @@ typedef void (*filter_ps_t) (const pixel* src, intptr_t srcStride, int16_t* dst,
 typedef void (*filter_sp_t) (const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_ss_t) (const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_hv_pp_t) (const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY);
-typedef void (*filter_p2s_t)(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
+typedef void (*filter_p2s_wxh_t)(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
+typedef void (*filter_p2s_t)(const pixel* src, intptr_t srcStride, int16_t* dst);
 
 typedef void (*copy_pp_t)(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride); // dst is aligned
 typedef void (*copy_sp_t)(pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
@@ -177,6 +178,8 @@ typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* d
 typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 
 typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
+
+typedef int (*findPosLast_t)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig);
 
 /* Function pointers to optimized encoder primitives. Each pointer can reference
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */
@@ -207,6 +210,7 @@ struct EncoderPrimitives
         addAvg_t       addAvg;      // bidir motion compensation, uses 16bit values
 
         copy_pp_t      copy_pp;
+        filter_p2s_t   filter_p2s;
     }
     pu[NUM_PU_SIZES];
 
@@ -225,7 +229,7 @@ struct EncoderPrimitives
         pixel_add_ps_t  add_ps;
         blockfill_s_t   blockfill_s;   // block fill, for DC transforms
         copy_cnt_t      copy_cnt;      // copy coeff while counting non-zero
-
+        count_nonzero_t count_nonzero;
         cpy2Dto1D_shl_t cpy2Dto1D_shl;
         cpy2Dto1D_shr_t cpy2Dto1D_shr;
         cpy1Dto2D_shl_t cpy1Dto2D_shl;
@@ -246,6 +250,7 @@ struct EncoderPrimitives
 
         transpose_t     transpose;     // transpose pixel block; for use with intra all-angs
         intra_allangs_t intra_pred_allangs;
+        intra_filter_t  intra_filter;
         intra_pred_t    intra_pred[NUM_INTRA_MODE];
     }
     cu[NUM_CU_SIZES];
@@ -260,9 +265,7 @@ struct EncoderPrimitives
     nquant_t              nquant;
     dequant_scaling_t     dequant_scaling;
     dequant_normal_t      dequant_normal;
-    count_nonzero_t       count_nonzero;
     denoiseDct_t          denoiseDct;
-
     scale_t               scale1D_128to64;
     scale_t               scale2D_64to32;
 
@@ -286,7 +289,9 @@ struct EncoderPrimitives
     weightp_sp_t          weight_sp;
     weightp_pp_t          weight_pp;
 
-    filter_p2s_t          luma_p2s;
+    filter_p2s_wxh_t      luma_p2s;
+
+    findPosLast_t         findPosLast;
 
     /* There is one set of chroma primitives per color space. An encoder will
      * have just a single color space and thus it will only ever use one entry
@@ -311,6 +316,8 @@ struct EncoderPrimitives
             filter_hps_t filter_hps;
             addAvg_t     addAvg;
             copy_pp_t    copy_pp;
+            filter_p2s_t chroma_p2s;
+
         }
         pu[NUM_PU_SIZES];
 
@@ -329,7 +336,7 @@ struct EncoderPrimitives
         }
         cu[NUM_CU_SIZES];
 
-        filter_p2s_t p2s; // takes width/height as arguments
+        filter_p2s_wxh_t p2s; // takes width/height as arguments
     }
     chroma[X265_CSP_COUNT];
 };

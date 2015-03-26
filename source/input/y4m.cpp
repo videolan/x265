@@ -177,147 +177,118 @@ bool Y4MInput::parseHeader()
     int csp = 0;
     int d = 0;
 
-    while (!ifs->eof())
+    while (ifs->good())
     {
         // Skip Y4MPEG string
         int c = ifs->get();
-        while (!ifs->eof() && (c != ' ') && (c != '\n'))
-        {
+        while (ifs->good() && (c != ' ') && (c != '\n'))
             c = ifs->get();
-        }
 
-        while (c == ' ' && !ifs->eof())
+        while (c == ' ' && ifs->good())
         {
             // read parameter identifier
             switch (ifs->get())
             {
             case 'W':
                 width = 0;
-                while (!ifs->eof())
+                while (ifs->good())
                 {
                     c = ifs->get();
 
                     if (c == ' ' || c == '\n')
-                    {
                         break;
-                    }
                     else
-                    {
                         width = width * 10 + (c - '0');
-                    }
                 }
-
                 break;
 
             case 'H':
                 height = 0;
-                while (!ifs->eof())
+                while (ifs->good())
                 {
                     c = ifs->get();
                     if (c == ' ' || c == '\n')
-                    {
                         break;
-                    }
                     else
-                    {
                         height = height * 10 + (c - '0');
-                    }
                 }
-
                 break;
 
             case 'F':
                 rateNum = 0;
                 rateDenom = 0;
-                while (!ifs->eof())
+                while (ifs->good())
                 {
                     c = ifs->get();
                     if (c == '.')
                     {
                         rateDenom = 1;
-                        while (!ifs->eof())
+                        while (ifs->good())
                         {
                             c = ifs->get();
                             if (c == ' ' || c == '\n')
-                            {
                                 break;
-                            }
                             else
                             {
                                 rateNum = rateNum * 10 + (c - '0');
                                 rateDenom = rateDenom * 10;
                             }
                         }
-
                         break;
                     }
                     else if (c == ':')
                     {
-                        while (!ifs->eof())
+                        while (ifs->good())
                         {
                             c = ifs->get();
                             if (c == ' ' || c == '\n')
-                            {
                                 break;
-                            }
                             else
                                 rateDenom = rateDenom * 10 + (c - '0');
                         }
-
                         break;
                     }
                     else
-                    {
                         rateNum = rateNum * 10 + (c - '0');
-                    }
                 }
-
                 break;
 
             case 'A':
                 sarWidth = 0;
                 sarHeight = 0;
-                while (!ifs->eof())
+                while (ifs->good())
                 {
                     c = ifs->get();
                     if (c == ':')
                     {
-                        while (!ifs->eof())
+                        while (ifs->good())
                         {
                             c = ifs->get();
                             if (c == ' ' || c == '\n')
-                            {
                                 break;
-                            }
                             else
                                 sarHeight = sarHeight * 10 + (c - '0');
                         }
-
                         break;
                     }
                     else
-                    {
                         sarWidth = sarWidth * 10 + (c - '0');
-                    }
                 }
-
                 break;
 
             case 'C':
                 csp = 0;
                 d = 0;
-                while (!ifs->eof())
+                while (ifs->good())
                 {
                     c = ifs->get();
 
                     if (c <= '9' && c >= '0')
-                    {
                         csp = csp * 10 + (c - '0');
-                    }
                     else if (c == 'p')
                     {
                         // example: C420p16
-                        while (!ifs->eof())
+                        while (ifs->good())
                         {
                             c = ifs->get();
 
@@ -338,22 +309,19 @@ bool Y4MInput::parseHeader()
                 break;
 
             default:
-                while (!ifs->eof())
+                while (ifs->good())
                 {
                     // consume this unsupported configuration word
                     c = ifs->get();
                     if (c == ' ' || c == '\n')
                         break;
                 }
-
                 break;
             }
         }
 
         if (c == '\n')
-        {
             break;
-        }
     }
 
     if (width < MIN_FRAME_WIDTH || width > MAX_FRAME_WIDTH ||

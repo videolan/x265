@@ -103,6 +103,13 @@ DECL_X1(satd, sse4)
 DECL_X1(satd, avx)
 DECL_X1(satd, xop)
 DECL_X1(satd, avx2)
+int x265_pixel_satd_16x24_avx(const pixel*, intptr_t, const pixel*, intptr_t);
+int x265_pixel_satd_32x48_avx(const pixel*, intptr_t, const pixel*, intptr_t);
+int x265_pixel_satd_24x64_avx(const pixel*, intptr_t, const pixel*, intptr_t);
+int x265_pixel_satd_8x64_avx(const pixel*, intptr_t, const pixel*, intptr_t);
+int x265_pixel_satd_8x12_avx(const pixel*, intptr_t, const pixel*, intptr_t);
+int x265_pixel_satd_12x32_avx(const pixel*, intptr_t, const pixel*, intptr_t);
+int x265_pixel_satd_4x32_avx(const pixel*, intptr_t, const pixel*, intptr_t);
 int x265_pixel_satd_8x32_sse2(const pixel*, intptr_t, const pixel*, intptr_t);
 int x265_pixel_satd_16x4_sse2(const pixel*, intptr_t, const pixel*, intptr_t);
 int x265_pixel_satd_16x12_sse2(const pixel*, intptr_t, const pixel*, intptr_t);
@@ -170,10 +177,12 @@ int x265_pixel_ssd_s_4_sse2(const int16_t*, intptr_t);
 int x265_pixel_ssd_s_8_sse2(const int16_t*, intptr_t);
 int x265_pixel_ssd_s_16_sse2(const int16_t*, intptr_t);
 int x265_pixel_ssd_s_32_sse2(const int16_t*, intptr_t);
+int x265_pixel_ssd_s_16_avx2(const int16_t*, intptr_t);
 int x265_pixel_ssd_s_32_avx2(const int16_t*, intptr_t);
 
 #define ADDAVG(func)  \
-    void x265_ ## func ## _sse4(const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t);
+    void x265_ ## func ## _sse4(const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t); \
+    void x265_ ## func ## _avx2(const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t);
 ADDAVG(addAvg_2x4)
 ADDAVG(addAvg_2x8)
 ADDAVG(addAvg_4x2);
@@ -228,6 +237,41 @@ int x265_psyCost_ss_8x8_sse4(const int16_t* source, intptr_t sstride, const int1
 int x265_psyCost_ss_16x16_sse4(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
 int x265_psyCost_ss_32x32_sse4(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
 int x265_psyCost_ss_64x64_sse4(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
+void x265_pixel_avg_16x4_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_16x8_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_16x12_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_16x16_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_16x32_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_16x64_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_32x64_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_32x32_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_32x24_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_32x16_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_32x8_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_64x64_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_64x48_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_64x32_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+void x265_pixel_avg_64x16_avx2(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int);
+
+void x265_pixel_add_ps_16x16_avx2(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_add_ps_32x32_avx2(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_add_ps_64x64_avx2(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+
+void x265_pixel_sub_ps_16x16_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_sub_ps_32x32_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_sub_ps_64x64_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
+
+int x265_psyCost_pp_4x4_avx2(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
+int x265_psyCost_pp_8x8_avx2(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
+int x265_psyCost_pp_16x16_avx2(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
+int x265_psyCost_pp_32x32_avx2(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
+int x265_psyCost_pp_64x64_avx2(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
+
+int x265_psyCost_ss_4x4_avx2(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
+int x265_psyCost_ss_8x8_avx2(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
+int x265_psyCost_ss_16x16_avx2(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
+int x265_psyCost_ss_32x32_avx2(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
+int x265_psyCost_ss_64x64_avx2(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
 
 #undef DECL_PIXELS
 #undef DECL_HEVC_SSD

@@ -33,6 +33,10 @@
 #include <sys/time.h>
 #endif
 
+#if CHECKED_BUILD || _DEBUG
+int g_checkFailures;
+#endif
+
 int64_t x265_mdate(void)
 {
 #if _WIN32

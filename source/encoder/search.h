@@ -28,12 +28,25 @@
 #include "predict.h"
 #include "quant.h"
 #include "bitcost.h"
+#include "framedata.h"
 #include "yuv.h"
 #include "threadpool.h"
 
 #include "rdcost.h"
 #include "entropy.h"
 #include "motion.h"
+
+#if DETAILED_CU_STATS
+#define ProfileCUScopeNamed(name, cu, acc, count) \
+    m_stats[cu.m_encData->m_frameEncoderID].count++; \
+    ScopedElapsedTime name(m_stats[cu.m_encData->m_frameEncoderID].acc)
+#define ProfileCUScope(cu, acc, count) ProfileCUScopeNamed(timedScope, cu, acc, count)
+#define ProfileCounter(cu, count) m_stats[cu.m_encData->m_frameEncoderID].count++;
+#else
+#define ProfileCUScopeNamed(name, cu, acc, count)
+#define ProfileCUScope(cu, acc, count)
+#define ProfileCounter(cu, count)
+#endif
 
 namespace x265 {
 // private namespace
@@ -88,6 +101,10 @@ struct Mode
     MotionData bestME[MAX_INTER_PARTS][2];
     MV         amvpCand[2][MAX_NUM_REF][AMVP_NUM_CANDS];
 
+    // Neighbour MVs of the current partition. 5 spatial candidates and the
+    // temporal candidate.
+    InterNeighbourMV interNeighbours[6];
+
     uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
     uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
     uint32_t   sa8dBits;   // signal bits used in sa8dCost calculation
@@ -109,8 +126,35 @@ struct Mode
         coeffBits = 0;
     }
 
+    void invalidate()
+    {
+        /* set costs to invalid data, catch uninitialized re-use */
+        rdCost = UINT64_MAX / 2;
+        sa8dCost = UINT64_MAX / 2;
+        sa8dBits = MAX_UINT / 2;
+        psyEnergy = MAX_UINT / 2;
+        distortion = MAX_UINT / 2;
+        totalBits = MAX_UINT / 2;
+        mvBits = MAX_UINT / 2;
+        coeffBits = MAX_UINT / 2;
+    }
+
+    bool ok() const
+    {
+        return !(rdCost >= UINT64_MAX / 2 ||
+                 sa8dCost >= UINT64_MAX / 2 ||
+                 sa8dBits >= MAX_UINT / 2 ||
+                 psyEnergy >= MAX_UINT / 2 ||
+                 distortion >= MAX_UINT / 2 ||
+                 totalBits >= MAX_UINT / 2 ||
+                 mvBits >= MAX_UINT / 2 ||
+                 coeffBits >= MAX_UINT / 2);
+    }
+
     void addSubCosts(const Mode& subMode)
     {
+        X265_CHECK(subMode.ok(), "sub-mode not initialized");
+
         rdCost += subMode.rdCost;
         sa8dCost += subMode.sa8dCost;
         sa8dBits += subMode.sa8dBits;
@@ -122,16 +166,89 @@ struct Mode
     }
 };
 
+#if DETAILED_CU_STATS
+/* This structure is intended for performance debugging and we make no attempt
+ * to handle dynamic range overflows. Care should be taken to avoid long encodes
+ * if you care about the accuracy of these elapsed times and counters. This
+ * profiling is orthogonal to PPA/VTune and can be enabled independently from
+ * either of them */
+struct CUStats
+{
+    int64_t  intraRDOElapsedTime[NUM_CU_DEPTH]; // elapsed worker time in intra RDO per CU depth
+    int64_t  interRDOElapsedTime[NUM_CU_DEPTH]; // elapsed worker time in inter RDO per CU depth
+    int64_t  intraAnalysisElapsedTime;          // elapsed worker time in intra sa8d analysis
+    int64_t  motionEstimationElapsedTime;       // elapsed worker time in predInterSearch()
+    int64_t  loopFilterElapsedTime;             // elapsed worker time in deblock and SAO and PSNR/SSIM
+    int64_t  pmeTime;                           // elapsed worker time processing ME slave jobs
+    int64_t  pmeBlockTime;                      // elapsed worker time blocked for pme batch completion
+    int64_t  pmodeTime;                         // elapsed worker time processing pmode slave jobs
+    int64_t  pmodeBlockTime;                    // elapsed worker time blocked for pmode batch completion
+    int64_t  weightAnalyzeTime;                 // elapsed worker time analyzing reference weights
+    int64_t  totalCTUTime;                      // elapsed worker time in compressCTU (includes pmode master)
+
+    uint64_t countIntraRDO[NUM_CU_DEPTH];
+    uint64_t countInterRDO[NUM_CU_DEPTH];
+    uint64_t countIntraAnalysis;
+    uint64_t countMotionEstimate;
+    uint64_t countLoopFilter;
+    uint64_t countPMETasks;
+    uint64_t countPMEMasters;
+    uint64_t countPModeTasks;
+    uint64_t countPModeMasters;
+    uint64_t countWeightAnalyze;
+    uint64_t totalCTUs;
+
+    CUStats() { clear(); }
+
+    void clear()
+    {
+        memset(this, 0, sizeof(*this));
+    }
+
+    void accumulate(CUStats& other)
+    {
+        for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+        {
+            intraRDOElapsedTime[i] += other.intraRDOElapsedTime[i];
+            interRDOElapsedTime[i] += other.interRDOElapsedTime[i];
+            countIntraRDO[i] += other.countIntraRDO[i];
+            countInterRDO[i] += other.countInterRDO[i];
+        }
+
+        intraAnalysisElapsedTime += other.intraAnalysisElapsedTime;
+        motionEstimationElapsedTime += other.motionEstimationElapsedTime;
+        loopFilterElapsedTime += other.loopFilterElapsedTime;
+        pmeTime += other.pmeTime;
+        pmeBlockTime += other.pmeBlockTime;
+        pmodeTime += other.pmodeTime;
+        pmodeBlockTime += other.pmodeBlockTime;
+        weightAnalyzeTime += other.weightAnalyzeTime;
+        totalCTUTime += other.totalCTUTime;
+
+        countIntraAnalysis += other.countIntraAnalysis;
+        countMotionEstimate += other.countMotionEstimate;
+        countLoopFilter += other.countLoopFilter;
+        countPMETasks += other.countPMETasks;
+        countPMEMasters += other.countPMEMasters;
+        countPModeTasks += other.countPModeTasks;
+        countPModeMasters += other.countPModeMasters;
+        countWeightAnalyze += other.countWeightAnalyze;
+        totalCTUs += other.totalCTUs;
+
+        other.clear();
+    }
+}; 
+#endif
+
 inline int getTUBits(int idx, int numIdx)
 {
     return idx + (idx < numIdx - 1);
 }
 
-class Search : public JobProvider, public Predict
+class Search : public Predict
 {
 public:
 
-    static const pixel   zeroPixel[MAX_CU_SIZE];
     static const int16_t zeroShort[MAX_CU_SIZE];
 
     MotionEstimate  m_me;
@@ -147,10 +264,24 @@ public:
     uint8_t*        m_qtTempCbf[3];
     uint8_t*        m_qtTempTransformSkipFlag[3];
 
+    pixel*          m_fencScaled;     /* 32x32 buffer for down-scaled version of 64x64 CU fenc */
+    pixel*          m_fencTransposed; /* 32x32 buffer for transposed copy of fenc */
+    pixel*          m_intraPred;      /* 32x32 buffer for individual intra predictions */
+    pixel*          m_intraPredAngs;  /* allocation for 33 consecutive (all angular) 32x32 intra predictions */
+
+    coeff_t*        m_tsCoeff;        /* transform skip coeff 32x32 */
+    int16_t*        m_tsResidual;     /* transform skip residual 32x32 */
+    pixel*          m_tsRecon;        /* transform skip reconstructed pixels 32x32 */
+
     bool            m_bFrameParallel;
     bool            m_bEnableRDOQ;
     uint32_t        m_numLayers;
     uint32_t        m_refLagPixels;
+
+#if DETAILED_CU_STATS
+    /* Accumulate CU statistics separately for each frame encoder */
+    CUStats         m_stats[X265_MAX_FRAME_THREADS];
+#endif
 
     Search();
     ~Search();
@@ -162,7 +293,7 @@ public:
     void     invalidateContexts(int fromDepth);
 
     // full RD search of intra modes. if sharedModes is not NULL, it directly uses them
-    void     checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes);
+    void     checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes, uint8_t* sharedChromaModes);
 
     // select best intra mode using only sa8d costs, cannot measure NxN intra
     void     checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
@@ -170,7 +301,7 @@ public:
     void     encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
 
     // estimation inter prediction (non-skip)
-    bool     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChroma);
+    void     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChroma);
 
     // encode residual and compute rd-cost for inter mode
     void     encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom);
@@ -184,21 +315,39 @@ public:
     // pick be chroma mode from available using just sa8d costs
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
 
+    /* update CBF flags and QP values to be internally consistent */
+    void checkDQP(CUData& cu, const CUGeom& cuGeom);
+    void checkDQPForSplitPred(CUData& cu, const CUGeom& cuGeom);
+
+    class PME : public BondedTaskGroup
+    {
+    public:
+
+        Search&       master;
+        Mode&         mode;
+        const CUGeom& cuGeom;
+        const PredictionUnit& pu;
+        int           puIdx;
+
+        PME(Search& s, Mode& m, const CUGeom& g, const PredictionUnit& u, int p) : master(s), mode(m), cuGeom(g), pu(u), puIdx(p) {}
+
+        void processTasks(int workerThreadId);
+
+    protected:
+
+        PME operator=(const PME&);
+    };
+
+    void     processPME(PME& pme, Search& slave);
+    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, const PredictionUnit& pu, int part, int list, int ref);
+
 protected:
 
     /* motion estimation distribution */
     ThreadLocalData* m_tld;
-    Mode*         m_curInterMode;
-    const CUGeom* m_curGeom;
-    int           m_curPart;
+
     uint32_t      m_listSelBits[3];
-    int           m_totalNumME;
-    volatile int  m_numAcquiredME;
-    volatile int  m_numCompletedME;
-    Event         m_meCompletionEvent;
     Lock          m_meLock;
-    bool          m_bJobsQueued;
-    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, int part, int list, int ref);
 
     void     saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t tuDepth);
 
@@ -206,7 +355,7 @@ protected:
     uint32_t estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2], uint8_t* sharedModes);
 
     // RDO select best chroma mode from luma; result is fully encode chroma. chroma distortion is returned
-    uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
+    uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom, uint8_t* sharedChromaModes);
 
     void     codeSubdivCbfQTChroma(const CUData& cu, uint32_t tuDepth, uint32_t absPartIdx);
     void     codeInterSubdivCbfQT(CUData& cu, uint32_t absPartIdx, const uint32_t tuDepth, const uint32_t depthRange[2]);
@@ -237,21 +386,11 @@ protected:
     // reshuffle CBF flags after coding a pair of 4:2:2 chroma blocks
     void     offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t tuDepth, uint32_t absPartIdx);
 
+    /* output of mergeEstimation, best merge candidate */
     struct MergeData
     {
-        /* merge candidate data, cached between calls to mergeEstimation */
-        MVField  mvFieldNeighbours[MRG_MAX_NUM_CANDS][2];
-        uint8_t  interDirNeighbours[MRG_MAX_NUM_CANDS];
-        uint32_t maxNumMergeCand;
-
-        /* data updated for each partition */
-        uint32_t absPartIdx;
-        int      width;
-        int      height;
-
-        /* outputs */
         MVField  mvField[2];
-        uint32_t interDir;
+        uint32_t dir;
         uint32_t index;
         uint32_t bits;
     };
@@ -259,15 +398,15 @@ protected:
     /* inter/ME helper functions */
     void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
     void     setSearchRange(const CUData& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
-    uint32_t mergeEstimation(CUData& cu, const CUGeom& cuGeom, int partIdx, MergeData& m);
-    static void getBlkBits(PartSize cuMode, bool bPSlice, int partIdx, uint32_t lastMode, uint32_t blockBit[3]);
+    uint32_t mergeEstimation(CUData& cu, const CUGeom& cuGeom, const PredictionUnit& pu, int puIdx, MergeData& m);
+    static void getBlkBits(PartSize cuMode, bool bPSlice, int puIdx, uint32_t lastMode, uint32_t blockBit[3]);
 
     /* intra helper functions */
     enum { MAX_RD_INTRA_MODES = 16 };
     static void updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint32_t* candModeList, uint64_t* candCostList);
 
     // get most probable luma modes for CU part, and bit cost of all non mpm modes
-    uint32_t getIntraRemModeBits(CUData & cu, uint32_t absPartIdx, uint32_t preds[3], uint64_t& mpms) const;
+    uint32_t getIntraRemModeBits(CUData & cu, uint32_t absPartIdx, uint32_t mpmModes[3], uint64_t& mpms) const;
 
     void updateModeCost(Mode& m) const { m.rdCost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(m.distortion, m.totalBits, m.psyEnergy) : m_rdCost.calcRdCost(m.distortion, m.totalBits); }
 };

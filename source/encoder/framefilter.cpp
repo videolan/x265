@@ -83,6 +83,11 @@ void FrameFilter::processRow(int row)
 {
     ProfileScopeEvent(filterCTURow);
 
+#if DETAILED_CU_STATS
+    ScopedElapsedTime filterPerfScope(m_frameEncoder->m_cuStats.loopFilterElapsedTime);
+    m_frameEncoder->m_cuStats.countLoopFilter++;
+#endif
+
     if (!m_param->bEnableLoopFilter && !m_param->bEnableSAO)
     {
         processRowPost(row);
@@ -421,7 +426,7 @@ static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absP
 /* Original YUV restoration for CU in lossless coding */
 static void origCUSampleRestoration(const CUData* cu, const CUGeom& cuGeom, Frame& frame)
 {
-    uint32_t absPartIdx = cuGeom.encodeIdx;
+    uint32_t absPartIdx = cuGeom.absPartIdx;
     if (cu->m_cuDepth[absPartIdx] > cuGeom.depth)
     {
         for (int subPartIdx = 0; subPartIdx < 4; subPartIdx++)

@@ -42,32 +42,32 @@
 #include <sys/sysctl.h>
 #endif
 
-#ifdef __GNUC__                         /* GCCs builtin atomics */
+#ifdef __GNUC__               /* GCCs builtin atomics */
 
 #include <sys/time.h>
 #include <unistd.h>
 
-#define CLZ(id, x)                          id = (unsigned long)__builtin_clz(x) ^ 31
-#define CTZ(id, x)                          id = (unsigned long)__builtin_ctz(x)
-#define ATOMIC_OR(ptr, mask)                __sync_fetch_and_or(ptr, mask)
-#define ATOMIC_AND(ptr, mask)               __sync_fetch_and_and(ptr, mask)
-#define ATOMIC_INC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, 1)
-#define ATOMIC_DEC(ptr)                     __sync_add_and_fetch((volatile int32_t*)ptr, -1)
-#define ATOMIC_ADD(ptr, value)              __sync_add_and_fetch((volatile int32_t*)ptr, value)
-#define GIVE_UP_TIME()                      usleep(0)
+#define CLZ(id, x)            id = (unsigned long)__builtin_clz(x) ^ 31
+#define CTZ(id, x)            id = (unsigned long)__builtin_ctz(x)
+#define ATOMIC_OR(ptr, mask)  __sync_fetch_and_or(ptr, mask)
+#define ATOMIC_AND(ptr, mask) __sync_fetch_and_and(ptr, mask)
+#define ATOMIC_INC(ptr)       __sync_add_and_fetch((volatile int32_t*)ptr, 1)
+#define ATOMIC_DEC(ptr)       __sync_add_and_fetch((volatile int32_t*)ptr, -1)
+#define ATOMIC_ADD(ptr, val)  __sync_fetch_and_add((volatile int32_t*)ptr, val)
+#define GIVE_UP_TIME()        usleep(0)
 
-#elif defined(_MSC_VER)                 /* Windows atomic intrinsics */
+#elif defined(_MSC_VER)       /* Windows atomic intrinsics */
 
 #include <intrin.h>
 
-#define CLZ(id, x)                          _BitScanReverse(&id, x)
-#define CTZ(id, x)                          _BitScanForward(&id, x)
-#define ATOMIC_INC(ptr)                     InterlockedIncrement((volatile LONG*)ptr)
-#define ATOMIC_DEC(ptr)                     InterlockedDecrement((volatile LONG*)ptr)
-#define ATOMIC_ADD(ptr, value)              InterlockedExchangeAdd((volatile LONG*)ptr, value)
-#define ATOMIC_OR(ptr, mask)                _InterlockedOr((volatile LONG*)ptr, (LONG)mask)
-#define ATOMIC_AND(ptr, mask)               _InterlockedAnd((volatile LONG*)ptr, (LONG)mask)
-#define GIVE_UP_TIME()                      Sleep(0)
+#define CLZ(id, x)            _BitScanReverse(&id, x)
+#define CTZ(id, x)            _BitScanForward(&id, x)
+#define ATOMIC_INC(ptr)       InterlockedIncrement((volatile LONG*)ptr)
+#define ATOMIC_DEC(ptr)       InterlockedDecrement((volatile LONG*)ptr)
+#define ATOMIC_ADD(ptr, val)  InterlockedExchangeAdd((volatile LONG*)ptr, val)
+#define ATOMIC_OR(ptr, mask)  _InterlockedOr((volatile LONG*)ptr, (LONG)mask)
+#define ATOMIC_AND(ptr, mask) _InterlockedAnd((volatile LONG*)ptr, (LONG)mask)
+#define GIVE_UP_TIME()        Sleep(0)
 
 #endif // ifdef __GNUC__
 
@@ -128,8 +128,8 @@ public:
 
     bool timedWait(uint32_t milliseconds)
     {
-        /* returns true if event was signaled */
-        return WaitForSingleObject(this->handle, milliseconds) == WAIT_OBJECT_0;
+        /* returns true if the wait timed out */
+        return WaitForSingleObject(this->handle, milliseconds) == WAIT_TIMEOUT;
     }
 
     void trigger()
@@ -263,10 +263,8 @@ public:
 
         /* blocking wait on conditional variable, mutex is atomically released
          * while blocked. When condition is signaled, mutex is re-acquired */
-        while (m_counter == 0)
-        {
+        while (!m_counter)
             pthread_cond_wait(&m_cond, &m_mutex);
-        }
 
         m_counter--;
         pthread_mutex_unlock(&m_mutex);
@@ -277,7 +275,7 @@ public:
         bool bTimedOut = false;
 
         pthread_mutex_lock(&m_mutex);
-        if (m_counter == 0)
+        if (!m_counter)
         {
             struct timeval tv;
             struct timespec ts;
@@ -409,6 +407,23 @@ protected:
     ScopedLock &operator =(const ScopedLock &);
 
     Lock &inst;
+};
+
+// Utility class which adds elapsed time of the scope of the object into the
+// accumulator provided to the constructor
+struct ScopedElapsedTime
+{
+    ScopedElapsedTime(int64_t& accum) : accumlatedTime(accum) { startTime = x265_mdate(); }
+
+    ~ScopedElapsedTime() { accumlatedTime += x265_mdate() - startTime; }
+
+protected:
+
+    int64_t  startTime;
+    int64_t& accumlatedTime;
+
+    // do not allow assignments
+    ScopedElapsedTime &operator =(const ScopedElapsedTime &);
 };
 
 //< Simplistic portable thread class.  Shutdown signalling left to derived class

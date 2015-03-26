@@ -27,6 +27,29 @@
 using namespace x265;
 
 namespace {
+
+template<int tuSize>
+void intraFilter(const pixel* samples, pixel* filtered) /* 1:2:1 filtering of left and top reference samples */
+{
+    const int tuSize2 = tuSize << 1;
+
+    pixel topLeft = samples[0], topLast = samples[tuSize2], leftLast = samples[tuSize2 + tuSize2];
+
+    // filtering top
+    for (int i = 1; i < tuSize2; i++)
+        filtered[i] = ((samples[i] << 1) + samples[i - 1] + samples[i + 1] + 2) >> 2;
+    filtered[tuSize2] = topLast;
+    
+    // filtering top-left
+    filtered[0] = ((topLeft << 1) + samples[1] + samples[tuSize2 + 1] + 2) >> 2;
+
+    // filtering left
+    filtered[tuSize2 + 1] = ((samples[tuSize2 + 1] << 1) + topLeft + samples[tuSize2 + 2] + 2) >> 2;
+    for (int i = tuSize2 + 2; i < tuSize2 + tuSize2; i++)
+        filtered[i] = ((samples[i] << 1) + samples[i - 1] + samples[i + 1] + 2) >> 2;
+    filtered[tuSize2 + tuSize2] = leftLast;
+}
+
 void dcPredFilter(const pixel* above, const pixel* left, pixel* dst, intptr_t dststride, int size)
 {
     // boundary pixels processing
@@ -216,6 +239,11 @@ namespace x265 {
 
 void setupIntraPrimitives_c(EncoderPrimitives& p)
 {
+    p.cu[BLOCK_4x4].intra_filter = intraFilter<4>;
+    p.cu[BLOCK_8x8].intra_filter = intraFilter<8>;
+    p.cu[BLOCK_16x16].intra_filter = intraFilter<16>;
+    p.cu[BLOCK_32x32].intra_filter = intraFilter<32>;
+
     p.cu[BLOCK_4x4].intra_pred[PLANAR_IDX] = planar_pred_c<2>;
     p.cu[BLOCK_8x8].intra_pred[PLANAR_IDX] = planar_pred_c<3>;
     p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = planar_pred_c<4>;

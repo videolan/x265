@@ -84,7 +84,7 @@ fail:
  * allocated by the same encoder. */
 bool PicYuv::createOffsets(const SPS& sps)
 {
-    uint32_t numPartitions = 1 << (g_maxFullDepth * 2);
+    uint32_t numPartitions = 1 << (g_unitSizeDepth * 2);
     CHECKED_MALLOC(m_cuOffsetY, intptr_t, sps.numCuInWidth * sps.numCuInHeight);
     CHECKED_MALLOC(m_cuOffsetC, intptr_t, sps.numCuInWidth * sps.numCuInHeight);
     for (uint32_t cuRow = 0; cuRow < sps.numCuInHeight; cuRow++)
@@ -176,9 +176,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
         for (int r = 0; r < height; r++)
         {
             for (int c = 0; c < width; c++)
-            {
                 yPixel[c] = (pixel)yChar[c];
-            }
 
             yPixel += m_stride;
             yChar += pic.stride[0] / sizeof(*yChar);
@@ -229,9 +227,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
         for (int r = 0; r < height; r++)
         {
             for (int x = 0; x < padx; x++)
-            {
                 Y[width + x] = Y[width - 1];
-            }
 
             Y += m_stride;
         }
@@ -257,9 +253,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
         pixel *V = m_picOrg[2] + ((height >> m_vChromaShift) - 1) * m_strideC;
 
         for (int i = 1; i <= pady; i++)
-        {
             memcpy(Y + i * m_stride, Y, (width + padx) * sizeof(pixel));
-        }
 
         for (int j = 1; j <= pady >> m_vChromaShift; j++)
         {

@@ -56,12 +56,11 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled)
     CHECKED_MALLOC(propagateCost, uint16_t, cuCount);
 
     /* allocate lowres buffers */
-    for (int i = 0; i < 4; i++)
-    {
-        CHECKED_MALLOC(buffer[i], pixel, planesize);
-        /* initialize the whole buffer to prevent valgrind warnings on right edge */
-        memset(buffer[i], 0, sizeof(pixel) * planesize);
-    }
+    CHECKED_MALLOC_ZERO(buffer[0], pixel, 4 * planesize);
+
+    buffer[1] = buffer[0] + planesize;
+    buffer[2] = buffer[1] + planesize;
+    buffer[3] = buffer[2] + planesize;
 
     lowresPlane[0] = buffer[0] + padoffset;
     lowresPlane[1] = buffer[1] + padoffset;
@@ -96,9 +95,7 @@ fail:
 
 void Lowres::destroy()
 {
-    for (int i = 0; i < 4; i++)
-        X265_FREE(buffer[i]);
-
+    X265_FREE(buffer[0]);
     X265_FREE(intraCost);
     X265_FREE(intraMode);
 
@@ -126,13 +123,11 @@ void Lowres::destroy()
 }
 
 // (re) initialize lowres state
-void Lowres::init(PicYuv *origPic, int poc, int type)
+void Lowres::init(PicYuv *origPic, int poc)
 {
-    bIntraCalculated = false;
     bLastMiniGopBFrame = false;
     bScenecut = true;  // could be a scene-cut, until ruled out by flash detection
     bKeyframe = false; // Not a keyframe unless identified by lookahead
-    sliceType = type;
     frameNum = poc;
     leadingBframes = 0;
     indB = 0;
@@ -158,8 +153,8 @@ void Lowres::init(PicYuv *origPic, int poc, int type)
 
     /* downscale and generate 4 hpel planes for lookahead */
     primitives.frameInitLowres(origPic->m_picOrg[0],
-                                      lowresPlane[0], lowresPlane[1], lowresPlane[2], lowresPlane[3],
-                                      origPic->m_stride, lumaStride, width, lines);
+                               lowresPlane[0], lowresPlane[1], lowresPlane[2], lowresPlane[3],
+                               origPic->m_stride, lumaStride, width, lines);
 
     /* extend hpel planes for motion search */
     extendPicBorder(lowresPlane[0], lumaStride, width, lines, origPic->m_lumaMarginX, origPic->m_lumaMarginY);

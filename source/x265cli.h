@@ -37,7 +37,8 @@ static const struct option long_options[] =
     { "version",              no_argument, NULL, 'V' },
     { "asm",            required_argument, NULL, 0 },
     { "no-asm",               no_argument, NULL, 0 },
-    { "threads",        required_argument, NULL, 0 },
+    { "pools",          required_argument, NULL, 0 },
+    { "numa-pools",     required_argument, NULL, 0 },
     { "preset",         required_argument, NULL, 'p' },
     { "tune",           required_argument, NULL, 't' },
     { "frame-threads",  required_argument, NULL, 'F' },
@@ -71,6 +72,8 @@ static const struct option long_options[] =
     { "no-wpp",               no_argument, NULL, 0 },
     { "wpp",                  no_argument, NULL, 0 },
     { "ctu",            required_argument, NULL, 's' },
+    { "min-cu-size",    required_argument, NULL, 0 },
+    { "max-tu-size",    required_argument, NULL, 0 },
     { "tu-intra-depth", required_argument, NULL, 0 },
     { "tu-inter-depth", required_argument, NULL, 0 },
     { "me",             required_argument, NULL, 0 },
@@ -96,6 +99,8 @@ static const struct option long_options[] =
     { "no-cu-lossless",       no_argument, NULL, 0 },
     { "no-constrained-intra", no_argument, NULL, 0 },
     { "constrained-intra",    no_argument, NULL, 0 },
+    { "cip",                  no_argument, NULL, 0 },
+    { "no-cip",               no_argument, NULL, 0 },
     { "fast-intra",           no_argument, NULL, 0 },
     { "no-fast-intra",        no_argument, NULL, 0 },
     { "no-open-gop",          no_argument, NULL, 0 },
@@ -105,6 +110,7 @@ static const struct option long_options[] =
     { "scenecut",       required_argument, NULL, 0 },
     { "no-scenecut",          no_argument, NULL, 0 },
     { "rc-lookahead",   required_argument, NULL, 0 },
+    { "lookahead-slices", required_argument, NULL, 0 },
     { "bframes",        required_argument, NULL, 'b' },
     { "bframe-bias",    required_argument, NULL, 0 },
     { "b-adapt",        required_argument, NULL, 0 },
@@ -136,6 +142,8 @@ static const struct option long_options[] =
     { "cbqpoffs",       required_argument, NULL, 0 },
     { "crqpoffs",       required_argument, NULL, 0 },
     { "rd",             required_argument, NULL, 0 },
+    { "rdoq-level",     required_argument, NULL, 0 },
+    { "no-rdoq-level",        no_argument, NULL, 0 },
     { "psy-rd",         required_argument, NULL, 0 },
     { "psy-rdoq",       required_argument, NULL, 0 },
     { "no-psy-rd",            no_argument, NULL, 0 },
@@ -195,6 +203,8 @@ static const struct option long_options[] =
     { "analysis-mode",  required_argument, NULL, 0 },
     { "analysis-file",  required_argument, NULL, 0 },
     { "strict-cbr",           no_argument, NULL, 0 },
+    { "temporal-layers",      no_argument, NULL, 0 },
+    { "no-temporal-layers",   no_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -246,10 +256,11 @@ static void showHelp(x265_param *param)
     H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
     H0("\nProfile, Level, Tier:\n");
     H0("   --profile <string>            Enforce an encode profile: main, main10, mainstillpicture\n");
-    H0("   --level-idc <integer|float>   Force a minumum required decoder level (as '5.0' or '50')\n");
+    H0("   --level-idc <integer|float>   Force a minimum required decoder level (as '5.0' or '50')\n");
     H0("   --[no-]high-tier              If a decoder level is specified, this modifier selects High tier of that level\n");
     H0("\nThreading, performance:\n");
-    H0("   --threads <integer>           Number of threads for thread pool (0: detect CPU core count, default)\n");
+    H0("   --pools <integer,...>         Comma separated thread count per thread pool (pool per NUMA node)\n");
+    H0("                                 '-' implies no threads on node, '+' implies one thread per core on node\n");
     H0("-F/--frame-threads <integer>     Number of concurrently encoded frames. 0: auto-determined by core count\n");
     H0("   --[no-]wpp                    Enable Wavefront Parallel Processing. Default %s\n", OPT(param->bEnableWavefront));
     H0("   --[no-]pmode                  Parallel mode analysis. Default %s\n", OPT(param->bDistributeModeAnalysis));
@@ -262,14 +273,16 @@ static void showHelp(x265_param *param)
     H0("                                 psnr, ssim, grain, zerolatency, fastdecode\n");
     H0("\nQuad-Tree size and depth:\n");
     H0("-s/--ctu <64|32|16>              Maximum CU size (WxH). Default %d\n", param->maxCUSize);
+    H0("   --min-cu-size <64|32|16|8>    Minimum CU size (WxH). Default %d\n", param->minCUSize);
+    H0("   --max-tu-size <32|16|8|4>     Maximum TU size (WxH). Default %d\n", param->maxTUSize);
     H0("   --tu-intra-depth <integer>    Max TU recursive depth for intra CUs. Default %d\n", param->tuQTMaxIntraDepth);
     H0("   --tu-inter-depth <integer>    Max TU recursive depth for inter CUs. Default %d\n", param->tuQTMaxInterDepth);
     H0("\nAnalysis:\n");
-    H0("   --rd <0..6>                   Level of RD in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
+    H0("   --rd <0..6>                   Level of RDO in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --[no-]psy-rd <0..2.0>        Strength of psycho-visual rate distortion optimization, 0 to disable. Default %.1f\n", param->psyRd);
-    H0("   --[no-]psy-rdoq <0..50.0>     Strength of psycho-visual optimization in quantization, 0 to disable. Default %.1f\n", param->psyRdoq);
+    H0("   --[no-]rdoq-level <0|1|2>     Level of RDO in quantization 0:none, 1:levels, 2:levels & coding groups. Default %d\n", param->rdoqLevel);
+    H0("   --[no-]psy-rdoq <0..50.0>     Strength of psycho-visual optimization in RDO quantization, 0 to disable. Default %.1f\n", param->psyRdoq);
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
-    H1("   --[no-]fast-cbf               Enable early outs based on whether residual is coded. Default %s\n", OPT(param->bEnableCbfFastMode));
     H1("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
     H1("   --nr-intra <integer>          An integer value in range of 0 to 2000, which denotes strength of noise reduction in intra CUs. Default 0\n");
     H1("   --nr-inter <integer>          An integer value in range of 0 to 2000, which denotes strength of noise reduction in inter CUs. Default 0\n");
@@ -300,6 +313,7 @@ static void showHelp(x265_param *param)
     H0("   --no-scenecut                 Disable adaptive I-frame decision\n");
     H0("   --scenecut <integer>          How aggressively to insert extra I-frames. Default %d\n", param->scenecutThreshold);
     H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
+    H1("   --lookahead-slices <0..16>    Number of slices to use per lookahead cost estimate. Default %d\n", param->lookaheadSlices);
     H0("   --bframes <integer>           Maximum number of consecutive b-frames (now it only enables B GOP structure) Default %d\n", param->bframes);
     H1("   --bframe-bias <integer>       Bias towards B frame decisions. Default %d\n", param->bFrameBias);
     H0("   --b-adapt <0..2>              0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);
@@ -371,10 +385,11 @@ static void showHelp(x265_param *param)
     H1("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
     H1("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
     H0("\nBitstream options:\n");
-    H0("   --[no-]info                   Emit SEI identifying encoder and parameters. Default %s\n", OPT(param->bEmitInfoSEI));
-    H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
-    H0("   --[no-]hrd                    Enable HRD parameters signaling. Default %s\n", OPT(param->bEmitHRDSEI));
     H0("   --[no-]repeat-headers         Emit SPS and PPS headers at each keyframe. Default %s\n", OPT(param->bRepeatHeaders));
+    H0("   --[no-]info                   Emit SEI identifying encoder and parameters. Default %s\n", OPT(param->bEmitInfoSEI));
+    H0("   --[no-]hrd                    Enable HRD parameters signaling. Default %s\n", OPT(param->bEmitHRDSEI));
+    H0("   --[no-]temporal-layers        Enable a temporal sublayer for unreferenced B frames. Default %s\n", OPT(param->bEnableTemporalSubLayers));
+    H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
     H1("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");

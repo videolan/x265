@@ -67,6 +67,7 @@ public:
     MotionEstimate();
     ~MotionEstimate();
 
+    static void initScales();
     void init(int method, int refine, int csp);
 
     /* Methods called at slice setup */

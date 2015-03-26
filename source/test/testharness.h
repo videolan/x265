@@ -158,7 +158,7 @@ void x265_checkasm_stack_clobber(uint64_t clobber, ...);
                                     m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, m_rand, \
                                     m_rand, m_rand, m_rand, m_rand, m_rand), /* max_args+6 */ \
         x265_checkasm_call_float((float(*)())func, &m_ok, 0, 0, 0, 0, __VA_ARGS__))
-#define reportfail() if (!m_ok) { fprintf(stderr, "stack clobber check failed at %s:%d", __FILE__, __LINE__); abort(); }
+#define reportfail() if (!m_ok) { fflush(stdout); fprintf(stderr, "stack clobber check failed at %s:%d", __FILE__, __LINE__); abort(); }
 #elif ARCH_X86
 #define checked(func, ...) x265_checkasm_call((intptr_t(*)())func, &m_ok, __VA_ARGS__);
 #define checked_float(func, ...) x265_checkasm_call_float((float(*)())func, &m_ok, __VA_ARGS__);

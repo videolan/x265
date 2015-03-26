@@ -70,30 +70,43 @@ public:
         CUDataMemPool  cuMemPool;
     };
 
+    class PMODE : public BondedTaskGroup
+    {
+    public:
+
+        Analysis&     master;
+        const CUGeom& cuGeom;
+        int           modes[MAX_PRED_TYPES];
+
+        PMODE(Analysis& m, const CUGeom& g) : master(m), cuGeom(g) {}
+
+        void processTasks(int workerThreadId);
+
+    protected:
+
+        PMODE operator=(const PMODE&);
+    };
+
+    void processPmode(PMODE& pmode, Analysis& slave);
+
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
     bool      m_bTryLossless;
     bool      m_bChromaSa8d;
 
-    /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
-    analysis_intra_data* m_reuseIntraDataCTU;
-    analysis_inter_data* m_reuseInterDataCTU;
-    int32_t* reuseRef;
     Analysis();
+
     bool create(ThreadLocalData* tld);
     void destroy();
+
     Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
 
 protected:
 
-    /* mode analysis distribution */
-    int           m_totalNumJobs;
-    volatile int  m_numAcquiredJobs;
-    volatile int  m_numCompletedJobs;
-    Lock          m_pmodeLock;
-    Event         m_modeCompletionEvent;
-    bool findJob(int threadId);
-    void parallelModeAnalysis(int threadId, int jobId);
-    void parallelME(int threadId, int meId);
+    /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
+    analysis_intra_data* m_reuseIntraDataCTU;
+    analysis_inter_data* m_reuseInterDataCTU;
+    int32_t*             m_reuseRef;
+    uint32_t*            m_reuseBestMergeCand;
 
     /* full analysis for an I-slice CU */
     void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder);
@@ -105,7 +118,7 @@ protected:
 
     /* measure merge and skip */
     void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGeom);
-    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom);
+    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom, bool isSkipMode);
 
     /* measure inter options */
     void checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize);
@@ -119,9 +132,6 @@ protected:
     /* add the RD cost of coding a split flag (0 or 1) to the given mode */
     void addSplitFlagCost(Mode& mode, uint32_t depth);
 
-    /* update CBF flags and QP values to be internally consistent */
-    void checkDQP(CUData& cu, const CUGeom& cuGeom);
-
     /* work-avoidance heuristics for RD levels < 5 */
     uint32_t topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom);
     bool recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom, const Mode& bestMode);
@@ -129,9 +139,13 @@ protected:
     /* generate residual and recon pixels for an entire CTU recursively (RD0) */
     void encodeResidue(const CUData& parentCTU, const CUGeom& cuGeom);
 
+    int calculateQpforCuSize(CUData& ctu, const CUGeom& cuGeom);
+
     /* check whether current mode is the new best */
     inline void checkBestMode(Mode& mode, uint32_t depth)
     {
+        X265_CHECK(mode.ok(), "mode costs are uninitialized\n");
+
         ModeDepth& md = m_modeDepth[depth];
         if (md.bestMode)
         {

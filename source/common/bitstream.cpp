@@ -27,7 +27,7 @@ void Bitstream::push_back(uint8_t val)
         uint8_t *temp = X265_MALLOC(uint8_t, m_byteAlloc * 2);
         if (temp)
         {
-            ::memcpy(temp, m_fifo, m_byteOccupancy);
+            memcpy(temp, m_fifo, m_byteOccupancy);
             X265_FREE(m_fifo);
             m_fifo = temp;
             m_byteAlloc *= 2;
@@ -44,7 +44,7 @@ void Bitstream::push_back(uint8_t val)
 void Bitstream::write(uint32_t val, uint32_t numBits)
 {
     X265_CHECK(numBits <= 32, "numBits out of range\n");
-    X265_CHECK(numBits == 32 || ((val & (~0 << numBits)) == 0), "numBits & val out of range\n");
+    X265_CHECK(numBits == 32 || ((val & (~0u << numBits)) == 0), "numBits & val out of range\n");
 
     uint32_t totalPartialBits = m_partialByteBits + numBits;
     uint32_t nextPartialBits = totalPartialBits & 7;
@@ -55,7 +55,11 @@ void Bitstream::write(uint32_t val, uint32_t numBits)
     {
         /* topword aligns m_partialByte with the msb of val */
         uint32_t topword = (numBits - nextPartialBits) & ~7;
+#if USING_FTRAPV
+        uint32_t write_bits = (topword < 32 ? m_partialByte << topword : 0) | (val >> nextPartialBits);
+#else
         uint32_t write_bits = (m_partialByte << topword) | (val >> nextPartialBits);
+#endif
 
         switch (writeBytes)
         {

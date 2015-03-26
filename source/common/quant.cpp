@@ -50,7 +50,7 @@ inline int fastMin(int x, int y)
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
-inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
+inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, const uint32_t absGoRice, const uint32_t maxVlc, uint32_t c1c2Idx)
 {
     X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
     X265_CHECK(absGoRice <= 4, "absGoRice check failure\n");
@@ -72,7 +72,6 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOne
     else
     {
         uint32_t symbol = diffLevel;
-        const uint32_t maxVlc = g_goRiceRange[absGoRice];
         bool expGolomb = (symbol > maxVlc);
 
         if (expGolomb)
@@ -102,6 +101,41 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOne
         if (c1c2Idx == 3)
             rate += levelAbsBits[1];
     }
+    return rate;
+}
+
+#if CHECKED_BUILD || _DEBUG
+inline int getICRateNegDiff(uint32_t absLevel, const int* greaterOneBits, const int* levelAbsBits)
+{
+    X265_CHECK(absLevel <= 2, "absLevel check failure\n");
+
+    int rate;
+    if (absLevel == 0)
+        rate = 0;
+    else if (absLevel == 2)
+        rate = greaterOneBits[1] + levelAbsBits[0];
+    else
+        rate = greaterOneBits[0];
+    return rate;
+}
+#endif
+
+inline int getICRateLessVlc(uint32_t absLevel, int32_t diffLevel, const uint32_t absGoRice)
+{
+    X265_CHECK(absGoRice <= 4, "absGoRice check failure\n");
+    if (!absLevel)
+    {
+        X265_CHECK(diffLevel < 0, "diffLevel check failure\n");
+        return 0;
+    }
+    int rate;
+
+    uint32_t symbol = diffLevel;
+    uint32_t prefLen = (symbol >> absGoRice) + 1;
+    uint32_t numBins = fastMin(prefLen + absGoRice, 8 /* g_goRicePrefixLen[absGoRice] + absGoRice */);
+
+    rate = numBins << 15;
+
     return rate;
 }
 
@@ -160,12 +194,12 @@ Quant::Quant()
     m_nr           = NULL;
 }
 
-bool Quant::init(bool useRDOQ, double psyScale, const ScalingList& scalingList, Entropy& entropy)
+bool Quant::init(int rdoqLevel, double psyScale, const ScalingList& scalingList, Entropy& entropy)
 {
     m_entropyCoder = &entropy;
-    m_useRDOQ = useRDOQ;
+    m_rdoqLevel    = rdoqLevel;
     m_psyRdoqScale = (int64_t)(psyScale * 256.0);
-    m_scalingList = &scalingList;
+    m_scalingList  = &scalingList;
     m_resiDctCoeff = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
     m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
     m_fencShortBuf = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE);
@@ -382,13 +416,13 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
         }
     }
 
-    if (m_useRDOQ)
+    if (m_rdoqLevel)
         return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx, usePsy);
     else
     {
         int deltaU[32 * 32];
 
-        int scalingListType = ttype + (isLuma ? 3 : 0);
+        int scalingListType = (cu.isIntra(absPartIdx) ? 0 : 3) + ttype;
         int rem = m_qpParam[ttype].rem;
         int per = m_qpParam[ttype].per;
         const int32_t* quantCoeff = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
@@ -454,9 +488,7 @@ void Quant::invtransformNxN(int16_t* residual, uint32_t resiStride, const coeff_
     else
     {
         int useDST = !sizeIdx && ttype == TEXT_LUMA && bIntra;
-
-        X265_CHECK((int)numSig == primitives.count_nonzero(coeff, 1 << (log2TrSize * 2)), "numSig differ\n");
-
+        X265_CHECK((int)numSig == primitives.cu[log2TrSize - 2].count_nonzero(coeff), "numSig differ\n");
         // DC only
         if (numSig == 1 && coeff[0] != 0 && !useDST)
         {
@@ -493,13 +525,10 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     const int32_t* qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
     int numCoeff = 1 << (log2TrSize * 2);
-
     uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, dstCoeff, qbits, add, numCoeff);
-
-    X265_CHECK((int)numSig == primitives.count_nonzero(dstCoeff, 1 << (log2TrSize * 2)), "numSig differ\n");
+    X265_CHECK((int)numSig == primitives.cu[log2TrSize - 2].count_nonzero(dstCoeff), "numSig differ\n");
     if (!numSig)
         return 0;
-
     uint32_t trSize = 1 << log2TrSize;
     int64_t lambda2 = m_qpParam[ttype].lambda2;
     int64_t psyScale = (m_psyRdoqScale * m_qpParam[ttype].lambda);
@@ -674,9 +703,43 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 /* record costs for sign-hiding performed at the end */
                 if (level)
                 {
-                    int rateNow = getICRate(level, level - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx);
-                    rateIncUp[blkPos] = getICRate(level + 1, level + 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) - rateNow;
-                    rateIncDown[blkPos] = getICRate(level - 1, level - 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) - rateNow;
+                    const int32_t diff0 = level - 1 - baseLevel;
+                    const int32_t diff2 = level + 1 - baseLevel;
+                    const int32_t maxVlc = g_goRiceRange[goRiceParam];
+                    int rate0, rate1, rate2;
+
+                    if (diff0 < -2)  // prob (92.9, 86.5, 74.5)%
+                    {
+                        // NOTE: Min: L - 1 - {1,2,1,3} < -2 ==> L < {0,1,0,2}
+                        //            additional L > 0, so I got (L > 0 && L < 2) ==> L = 1
+                        X265_CHECK(level == 1, "absLevel check failure\n");
+
+                        const int rateEqual2 = greaterOneBits[1] + levelAbsBits[0];;
+                        const int rateNotEqual2 = greaterOneBits[0];
+
+                        rate0 = 0;
+                        rate2 = rateEqual2;
+                        rate1 = rateNotEqual2;
+
+                        X265_CHECK(rate1 == getICRateNegDiff(level + 0, greaterOneBits, levelAbsBits), "rate1 check failure!\n");
+                        X265_CHECK(rate2 == getICRateNegDiff(level + 1, greaterOneBits, levelAbsBits), "rate1 check failure!\n");
+                        X265_CHECK(rate0 == getICRateNegDiff(level - 1, greaterOneBits, levelAbsBits), "rate1 check failure!\n");
+                    }
+                    else if (diff0 >= 0 && diff2 <= maxVlc)     // prob except from above path (98.6, 97.9, 96.9)%
+                    {
+                        // NOTE: no c1c2 correct rate since all of rate include this factor
+                        rate1 = getICRateLessVlc(level + 0, diff0 + 1, goRiceParam);
+                        rate2 = getICRateLessVlc(level + 1, diff0 + 2, goRiceParam);
+                        rate0 = getICRateLessVlc(level - 1, diff0 + 0, goRiceParam);
+                    }
+                    else
+                    {
+                        rate1 = getICRate(level + 0, diff0 + 1, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Idx);
+                        rate2 = getICRate(level + 1, diff0 + 2, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Idx);
+                        rate0 = getICRate(level - 1, diff0 + 0, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Idx);
+                    }
+                    rateIncUp[blkPos] = rate2 - rate1;
+                    rateIncDown[blkPos] = rate0 - rate1;
                 }
                 else
                 {
@@ -762,7 +825,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
             costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[sigCtx][1]);
             totalRdCost += costCoeffGroupSig[cgScanPos];  /* add the cost of 1 bit in significant CG bitmap */
 
-            if (costZeroCG < totalRdCost)
+            if (costZeroCG < totalRdCost && m_rdoqLevel > 1)
             {
                 sigCoeffGroupFlag64 &= ~cgBlkPosMask;
                 totalRdCost = costZeroCG;
@@ -870,7 +933,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                     bestLastIdx = scanPos + 1;
                     bestCost = costAsLast;
                 }
-                if (dstCoeff[blkPos] > 1)
+                if (dstCoeff[blkPos] > 1 || m_rdoqLevel == 1)
                 {
                     foundLast = true;
                     break;
@@ -1037,7 +1100,8 @@ uint32_t Quant::calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX,
 
     const uint32_t trSizeCG = 1 << log2TrSizeCG;
     X265_CHECK(trSizeCG <= 8, "transform CG is too large\n");
-    const uint32_t sigPos = (uint32_t)(sigCoeffGroupFlag64 >> (1 + (cgPosY << log2TrSizeCG) + cgPosX));
+    const uint32_t shift = (cgPosY << log2TrSizeCG) + cgPosX + 1;
+    const uint32_t sigPos = (uint32_t)(shift >= 64 ? 0 : sigCoeffGroupFlag64 >> shift);
     const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & (sigPos & 1);
     const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 2)) & 2;
 

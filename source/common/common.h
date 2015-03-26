@@ -106,11 +106,12 @@
 /* If compiled with CHECKED_BUILD perform run-time checks and log any that
  * fail, both to stderr and to a file */
 #if CHECKED_BUILD || _DEBUG
+extern int g_checkFailures;
 #define X265_CHECK(expr, ...) if (!(expr)) { \
     x265_log(NULL, X265_LOG_ERROR, __VA_ARGS__); \
     FILE *fp = fopen("x265_check_failures.txt", "a"); \
     if (fp) { fprintf(fp, "%s:%d\n", __FILE__, __LINE__); fprintf(fp, __VA_ARGS__); fclose(fp); } \
-    DEBUG_BREAK(); \
+    g_checkFailures++; DEBUG_BREAK(); \
 }
 #if _MSC_VER
 #pragma warning(disable: 4127) // some checks have constant conditions
@@ -249,7 +250,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define UNIT_SIZE               (1 << LOG2_UNIT_SIZE)       // unit size of CU partition
 
 #define MAX_NUM_PARTITIONS      256
-#define NUM_CU_PARTITIONS       (1U << (g_maxFullDepth << 1))
+#define NUM_4x4_PARTITIONS      (1U << (g_unitSizeDepth << 1)) // number of 4x4 units in max CU size
 
 #define MIN_PU_SIZE             4
 #define MIN_TU_SIZE             4
@@ -368,6 +369,7 @@ struct analysis_inter_data
     int32_t*    ref;
     uint8_t*    depth;
     uint8_t*    modes;
+    uint32_t*   bestMergeCand;
 };
 
 /* Stores intra analysis data for a single frame. This struct needs better packing */
@@ -376,6 +378,7 @@ struct analysis_intra_data
     uint8_t*  depth;
     uint8_t*  modes;
     char*     partSizes;
+    uint8_t*  chromaModes;
 };
 
 enum TextType
