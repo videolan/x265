@@ -822,10 +822,10 @@ SSD_SS_64xN
 
 %if HIGH_BIT_DEPTH == 0
 %macro SSD_LOAD_FULL 5
-    mova      m1, [t0+%1]
-    mova      m2, [t2+%2]
-    mova      m3, [t0+%3]
-    mova      m4, [t2+%4]
+    movu      m1, [t0+%1]
+    movu      m2, [t2+%2]
+    movu      m3, [t0+%3]
+    movu      m4, [t2+%4]
 %if %5==1
     add       t0, t1
     add       t2, t3
