@@ -439,7 +439,7 @@ typedef struct x265_param
 
     /*== Logging Features ==*/
 
-    /* Enable analysis and logging distribution of Cus encoded across various
+    /* Enable analysis and logging distribution of CUs encoded across various
      * modes during mode decision. Default disabled */
     int       bLogCuStats;
 
@@ -491,7 +491,7 @@ typedef struct x265_param
      * temporal order */
     int       interlaceMode;
 
-    /* Total Number of frames to be encoded, caclulated from the user input
+    /* Total Number of frames to be encoded, calculated from the user input
      * (--frames) and (--seek). In case, the input is read from a pipe, this can
      * remain as 0. It is later used in 2 pass RateControl, hence storing the
      * value in param */
@@ -533,7 +533,7 @@ typedef struct x265_param
     int       bEnableAccessUnitDelimiters;
 
     /* Enables the buffering period SEI and picture timing SEI to signal the HRD
-     * parameteres. Default is disabled */
+     * parameters. Default is disabled */
     int       bEmitHRDSEI;
 
     /* Enables the emission of a user data SEI with the stream headers which
@@ -558,14 +558,14 @@ typedef struct x265_param
 
     /*== GOP structure and slice type decisions (lookahead) ==*/
 
-    /* Enable open GOP - meaning I slices are not necessariy IDR and thus frames
+    /* Enable open GOP - meaning I slices are not necessarily IDR and thus frames
      * encoded after an I slice may reference frames encoded prior to the I
      * frame which have remained in the decoded picture buffer.  Open GOP
-     * generally has better compression efficiency and negligable encoder
+     * generally has better compression efficiency and negligible encoder
      * performance impact, but the use case may preclude it.  Default true */
     int       bOpenGOP;
 
-    /* Scenecuts closer together than this are coded as I, not IDR. */
+    /* Scene cuts closer together than this are coded as I, not IDR. */
     int       keyframeMin;
 
     /* Maximum keyframe distance or intra period in number of frames. If 0 or 1,
@@ -573,12 +573,12 @@ typedef struct x265_param
      * which effectively makes frame 0 the only I frame. Default is 250 */
     int       keyframeMax;
 
-    /* Maximum consecutive B frames that can be emitted by the lookehead. When
+    /* Maximum consecutive B frames that can be emitted by the lookahead. When
      * b-adapt is 0 and keyframMax is greater than bframes, the lookahead emits
      * a fixed pattern of `bframes` B frames between each P.  With b-adapt 1 the
      * lookahead ignores the value of bframes for the most part.  With b-adapt 2
-     * the value of bframes determines the search (POC) distance performeed in
-     * both directions, quadradically increasing the compute load of the
+     * the value of bframes determines the search (POC) distance performed in
+     * both directions, quadratically increasing the compute load of the
      * lookahead.  The higher the value, the more B frames the lookahead may
      * possibly use consecutively, usually improving compression. Default is 3,
      * maximum is 16 */
@@ -606,18 +606,18 @@ typedef struct x265_param
     /* The number of frames that must be queued in the lookahead before it may
      * make slice decisions. Increasing this value directly increases the encode
      * latency. The longer the queue the more optimally the lookahead may make
-     * slice decisions, particularly with b-adapt 2. When mb-tree is enabled,
+     * slice decisions, particularly with b-adapt 2. When cu-tree is enabled,
      * the length of the queue linearly increases the effectiveness of the
-     * mb-tree analysis. Default is 40 frames, maximum is 250 */
+     * cu-tree analysis. Default is 40 frames, maximum is 250 */
     int       lookaheadDepth;
 
-    /* An arbitrary threshold which determines how agressively the lookahead
+    /* An arbitrary threshold which determines how aggressively the lookahead
      * should detect scene cuts. The default (40) is recommended. */
     int       scenecutThreshold;
 
     /*== Coding Unit (CU) definitions ==*/
 
-    /* Maxiumum CU width and height in pixels.  The size must be 64, 32, or 16.
+    /* Maximum CU width and height in pixels.  The size must be 64, 32, or 16.
      * The higher the size, the more efficiently x265 can encode areas of low
      * complexity, greatly improving compression efficiency at large
      * resolutions.  The smaller the size, the more effective wavefront and
@@ -626,7 +626,7 @@ typedef struct x265_param
      * all encoders are closed and x265_cleanup() is called to reset the value. */
     uint32_t  maxCUSize;
 
-    /* Miniumum CU width and height in pixels.  The size must be 64, 32, 16, or
+    /* Minimum CU width and height in pixels.  The size must be 64, 32, 16, or
      * 8. Default 8. All encoders within the same process must use the same
      * minCUSize. */
     uint32_t  minCUSize;
@@ -645,19 +645,19 @@ typedef struct x265_param
 
     /*== Residual Quadtree Transform Unit (TU) definitions ==*/
 
-    /* Maxiumum TU width and height in pixels.  The size must be 32, 16, 8 or 4.
+    /* Maximum TU width and height in pixels.  The size must be 32, 16, 8 or 4.
      * The larger the size the more efficiently the residual can be compressed
      * by the DCT transforms, at the expense of more computation */
     uint32_t  maxTUSize;
 
-    /* The additional depth the residual quadtree is allowed to recurse beyond
-     * the coding quadtree, for inter coded blocks. This must be between 1 and
+    /* The additional depth the residual quad-tree is allowed to recurse beyond
+     * the coding quad-tree, for inter coded blocks. This must be between 1 and
      * 4. The higher the value the more efficiently the residual can be
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxInterDepth;
 
-    /* The additional depth the residual quadtree is allowed to recurse beyond
-     * the coding quadtree, for intra coded blocks. This must be between 1 and
+    /* The additional depth the residual quad-tree is allowed to recurse beyond
+     * the coding quad-tree, for intra coded blocks. This must be between 1 and
      * 4. The higher the value the more efficiently the residual can be
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxIntraDepth;
@@ -708,7 +708,7 @@ typedef struct x265_param
     /* Enable constrained intra prediction. This causes intra prediction to
      * input samples that were inter predicted. For some use cases this is
      * believed to me more robust to stream errors, but it has a compression
-     * penalty on P and (particularly) B slices. Defaults to diabled */
+     * penalty on P and (particularly) B slices. Defaults to disabled */
     int       bEnableConstrainedIntra;
 
     /* Enable strong intra smoothing for 32x32 blocks where the reference
@@ -740,11 +740,11 @@ typedef struct x265_param
      * adapted from x264 directly. STAR is an adaption of the HEVC reference
      * encoder's three step search, while full is a naive exhaustive search. The
      * default is the star search, it has a good balance of performance and
-     * compression efficiecy */
+     * compression efficiency */
     int       searchMethod;
 
     /* A value between 0 and X265_MAX_SUBPEL_LEVEL which adjusts the amount of
-     * effort performed during subpel refine. Default is 5 */
+     * effort performed during sub-pel refine. Default is 5 */
     int       subpelRefine;
 
     /* The maximum distance from the motion prediction that the full pel motion
@@ -932,7 +932,7 @@ typedef struct x265_param
          * interpreted as the initial fill in kbits. Default is 0.9 */
         double    vbvBufferInit;
 
-        /* Enable CUTree ratecontrol. This keeps track of the CUs that propagate temporally
+        /* Enable CUTree rate-control. This keeps track of the CUs that propagate temporally
          * across frames and assigns more bits to these CUs. Improves encode efficiency.
          * Default: enabled */
         int       cuTree;
@@ -944,7 +944,7 @@ typedef struct x265_param
         double    rfConstantMin;
 
         /* Multi-pass encoding */
-        /* Enable writing the stats in a multipass encode to the stat output file */
+        /* Enable writing the stats in a multi-pass encode to the stat output file */
         int       bStatWrite;
 
         /* Enable loading data from the stat input file in a multi pass encode */
@@ -963,7 +963,7 @@ typedef struct x265_param
         /* Enable slow and a more detailed first pass encode in multi pass rate control */
         int       bEnableSlowFirstPass;
         
-        /* ratecontrol overrides */
+        /* rate-control overrides */
         int        zoneCount;
         x265_zone* zones;
 
