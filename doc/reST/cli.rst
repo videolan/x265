@@ -970,9 +970,16 @@ Slice decision options
 
 .. option:: --b-adapt <integer>
 
-	Adaptive B frame scheduling. Default 2
+	Set the level of effort in determining B frame placement.
 
-	**Values:** 0:none; 1:fast; 2:full(trellis)
+	With b-adapt 0, the GOP structure is fixed based on the values of
+	:option:`--keyint` and :option:`--bframes`.
+	
+	With b-adapt 1 a light lookahead is used to choose B frame placement.
+
+	With b-adapt 2 (trellis) a viterbi B path selection is performed
+
+	**Values:** 0:none; 1:fast; 2:full(trellis) **default**
 
 .. option:: --bframes, -b <0..16>
 
