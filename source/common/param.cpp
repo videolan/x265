@@ -599,6 +599,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT2("constrained-intra", "cip") p->bEnableConstrainedIntra = atobool(value);
     OPT("fast-intra") p->bEnableFastIntra = atobool(value);
     OPT("open-gop") p->bOpenGOP = atobool(value);
+    OPT("lookahead-slices") p->lookaheadSlices = atoi(value);
     OPT("scenecut")
     {
         p->scenecutThreshold = atobool(value);
@@ -1064,6 +1065,8 @@ int x265_check_params(x265_param* param)
           "max consecutive bframe count must be 16 or smaller");
     CHECK(param->lookaheadDepth > X265_LOOKAHEAD_MAX,
           "Lookahead depth must be less than 256");
+    CHECK(param->lookaheadSlices > 16 || param->lookaheadSlices < 0,
+          "Lookahead slices must between 0 and 16");
     CHECK(param->rc.aqMode < X265_AQ_NONE || X265_AQ_AUTO_VARIANCE < param->rc.aqMode,
           "Aq-Mode is out of range");
     CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
@@ -1305,6 +1308,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(param->bIntraInBFrames, "b-intra");
     TOOLOPT(param->bEnableFastIntra, "fast-intra");
     TOOLOPT(param->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
+    TOOLVAL(param->lookaheadSlices, "lslices=%d");
     if (param->bEnableLoopFilter)
     {
         if (param->deblockingFilterBetaOffset || param->deblockingFilterTCOffset)
@@ -1366,6 +1370,7 @@ char *x265_param2string(x265_param* p)
     s += sprintf(s, " min-keyint=%d", p->keyframeMin);
     s += sprintf(s, " scenecut=%d", p->scenecutThreshold);
     s += sprintf(s, " rc-lookahead=%d", p->lookaheadDepth);
+    s += sprintf(s, " lookahead-slices=%d", p->lookaheadSlices);
     s += sprintf(s, " bframes=%d", p->bframes);
     s += sprintf(s, " bframe-bias=%d", p->bFrameBias);
     s += sprintf(s, " b-adapt=%d", p->bFrameAdaptive);
