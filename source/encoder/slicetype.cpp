@@ -1883,6 +1883,13 @@ int64_t CostEstimateGroup::estimateFrameCost(LookaheadTLD& tld, int p0, int p1, 
         bDoSearch[0] = p0 < b && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
         bDoSearch[1] = p1 > b && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFF;
 
+#if CHECKED_BUILD
+        X265_CHECK(!(p0 < b && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFE), "motion search batch duplication L0\n");
+        X265_CHECK(!(p1 > b && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFE), "motion search batch duplication L1\n");
+        if (bDoSearch[0]) fenc->lowresMvs[0][b - p0 - 1][0].x = 0x7FFE;
+        if (bDoSearch[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0x7FFE;
+#endif
+
         tld.weightedRef.isWeighted = false;
         if (param->bEnableWeightedPred && bDoSearch[0])
             tld.weightsAnalyse(*m_frames[b], *m_frames[p0]);
