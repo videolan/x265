@@ -1447,6 +1447,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 #if X86_64
     if (cpuMask & X265_CPU_AVX2)
     {
+        p.scale2D_64to32 = x265_scale2D_64to32_avx2;
+
         p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_avx2;
         p.cu[BLOCK_8x8].psy_cost_ss = x265_psyCost_ss_8x8_avx2;
         p.cu[BLOCK_16x16].psy_cost_ss = x265_psyCost_ss_16x16_avx2;
