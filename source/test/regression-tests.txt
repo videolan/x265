@@ -22,7 +22,7 @@ BasketballDrive_1920x1080_50.y4m,--preset veryfast --tune zerolatency --no-tempo
 BasketballDrive_1920x1080_50.y4m,--preset veryslow --crf 4 --cu-lossless --pmode
 Coastguard-4k.y4m,--preset medium --rdoq-level 1 --tune ssim --no-signhide --me umh
 Coastguard-4k.y4m,--preset slow --tune psnr --cbqpoffs -1 --crqpoffs 1
-Coastguard-4k.y4m,--preset superfast --tune grain --crop-rect 2,4,6,8 --overscan=crop
+Coastguard-4k.y4m,--preset superfast --tune grain --overscan=crop
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset fast --aq-mode 0 --sar 2 --range full
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset faster --max-tu-size 4 --min-cu-size 32
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset medium --no-wpp --no-cutree --no-strong-intra-smoothing
