@@ -2959,8 +2959,6 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                     numSig[chromaId][tuIterator.section] = m_quant.transformNxN(cu, fenc, fencYuv->m_csize, resi, resiYuv.m_csize, coeffCurC + subTUOffset, log2TrSizeC, (TextType)chromaId, absPartIdxC, false);
                     cbfFlag[chromaId][tuIterator.section] = !!numSig[chromaId][tuIterator.section];
 
-                    //Coding cbf flags has been removed from here
-//                    m_entropyCoder.codeQtCbfChroma(cbfFlag[chromaId][tuIterator.section], tuDepth);
                     if (cbfFlag[chromaId][tuIterator.section])
                         m_entropyCoder.codeCoeffNxN(cu, coeffCurC + subTUOffset, absPartIdxC, log2TrSizeC, (TextType)chromaId);
                     uint32_t newBits = m_entropyCoder.getNumberOfWrittenBits();
@@ -3200,8 +3198,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         }
 
         // In split mode, we need only coeffBits. The reason is encoding chroma cbfs is different from luma.
-        // In case of chroma, if any one of the splitted block's cbf is 1, then we need to encode cbf 1, and then for
-        // four splitted block's individual cbf value. This is not known before analysis of four splitted blocks.
+        // In case of chroma, if any one of the split block's cbf is 1, then we need to encode cbf 1, and then for
+        // four split block's individual cbf value. This is not known before analysis of four split blocks.
         // For that reason, I am collecting individual coefficient bits only.
         fullCost.bits = bSplitPresentFlag ? cbfBits + coeffBits : coeffBits;
 
@@ -3231,7 +3229,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         Cost splitCost;
         if (bSplitPresentFlag && (log2TrSize <= depthRange[1] && log2TrSize > depthRange[0]))
         {
-            // Subdiv flag can be encoded at the start of anlysis of splitted blocks.
+            // Subdiv flag can be encoded at the start of analysis of split blocks.
             m_entropyCoder.resetBits();
             m_entropyCoder.codeTransformSubdivFlag(1, 5 - log2TrSize);
             splitCost.bits = m_entropyCoder.getNumberOfWrittenBits();
