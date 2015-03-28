@@ -454,7 +454,20 @@ Profile, Level, Tier
 	Max number of L0 references to be allowed. This number has a linear
 	multiplier effect on the amount of work performed in motion search,
 	but will generally have a beneficial affect on compression and
-	distortion. Default 3
+	distortion.
+	
+	Note that x265 allows up to 16 L0 references but the HEVC
+	specification only allows a maximum of 8 total reference frames. So
+	if you have B frames enabled only 7 L0 refs are valid and if you
+	have :option:`--b-pyramid` enabled (which is enabled by default in
+	all presets), then only 6 L0 refs are the maximum allowed by the
+	HEVC specification.  If x265 detects that the total reference count
+	is greater than 8, it will issue a warning that the resulting stream
+	is non-compliant and it signals the stream as profile NONE and level
+	NONE but still allows the encode to continue.  Compliant HEVC
+	decoders may refuse to decode such streams.
+	
+	Default 3
 
 .. note::
 	:option:`--profile`, :option:`--level-idc`, and

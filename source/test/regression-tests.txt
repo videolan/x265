@@ -98,8 +98,8 @@ mobile_calendar_422_ntsc.y4m,--preset slower --tskip --tskip-fast
 mobile_calendar_422_ntsc.y4m,--preset superfast --weightp --rd 0
 mobile_calendar_422_ntsc.y4m,--preset veryslow --tskip
 old_town_cross_444_720p50.y4m,--preset faster --rd 1 --tune zero-latency
-old_town_cross_444_720p50.y4m,--preset medium --keyint -1 --no-weightp --ref 16
-old_town_cross_444_720p50.y4m,--preset slow --rdoq-level 1 --early-skip
+old_town_cross_444_720p50.y4m,--preset medium --keyint -1 --no-weightp --ref 6
+old_town_cross_444_720p50.y4m,--preset slow --rdoq-level 1 --early-skip --ref 7 --no-b-pyramid
 old_town_cross_444_720p50.y4m,--preset slower --crf 4 --cu-lossless
 old_town_cross_444_720p50.y4m,--preset superfast --weightp --min-cu 16
 old_town_cross_444_720p50.y4m,--preset ultrafast --weightp --min-cu 32
