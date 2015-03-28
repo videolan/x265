@@ -73,8 +73,8 @@ void x265_pixel_ssim_4x4x2_core_avx(const pixel* pix1, intptr_t stride1,
 float x265_pixel_ssim_end4_sse2(int sum0[5][4], int sum1[5][4], int width);
 float x265_pixel_ssim_end4_avx(int sum0[5][4], int sum1[5][4], int width);
 
-void x265_scale1D_128to64_ssse3(pixel*, const pixel*, intptr_t);
-void x265_scale1D_128to64_avx2(pixel*, const pixel*, intptr_t);
+void x265_scale1D_128to64_ssse3(pixel*, const pixel*);
+void x265_scale1D_128to64_avx2(pixel*, const pixel*);
 void x265_scale2D_64to32_ssse3(pixel*, const pixel*, intptr_t);
 void x265_scale2D_64to32_avx2(pixel*, const pixel*, intptr_t);
 

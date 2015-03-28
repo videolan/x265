@@ -666,7 +666,32 @@ bool PixelHarness::check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt)
     return true;
 }
 
-bool PixelHarness::check_scale_pp(scale_t ref, scale_t opt)
+bool PixelHarness::check_scale1D_pp(scale1D_t ref, scale1D_t opt)
+{
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0, sizeof(ref_dest));
+    memset(opt_dest, 0, sizeof(opt_dest));
+
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        checked(opt, opt_dest, pixel_test_buff[index] + j);
+        ref(ref_dest, pixel_test_buff[index] + j);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_scale2D_pp(scale2D_t ref, scale2D_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
@@ -1603,7 +1628,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.scale1D_128to64)
     {
-        if (!check_scale_pp(ref.scale1D_128to64, opt.scale1D_128to64))
+        if (!check_scale1D_pp(ref.scale1D_128to64, opt.scale1D_128to64))
         {
             printf("scale1D_128to64 failed!\n");
             return false;
@@ -1612,7 +1637,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
 
     if (opt.scale2D_64to32)
     {
-        if (!check_scale_pp(ref.scale2D_64to32, opt.scale2D_64to32))
+        if (!check_scale2D_pp(ref.scale2D_64to32, opt.scale2D_64to32))
         {
             printf("scale2D_64to32 failed!\n");
             return false;
@@ -2003,7 +2028,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.scale1D_128to64)
     {
         HEADER0("scale1D_128to64");
-        REPORT_SPEEDUP(opt.scale1D_128to64, ref.scale1D_128to64, pbuf2, pbuf1, 64);
+        REPORT_SPEEDUP(opt.scale1D_128to64, ref.scale1D_128to64, pbuf2, pbuf1);
     }
 
     if (opt.scale2D_64to32)
