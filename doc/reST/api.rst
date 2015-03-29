@@ -171,8 +171,26 @@ changes made to the parameters for auto-detection and other reasons::
 	 *      how x265_encoder_open has changed the parameters.
 	 *      note that the data accessible through pointers in the returned param struct
 	 *      (e.g. filenames) should not be modified by the calling application. */
-	void x265_encoder_parameters(x265_encoder *, x265_param *);                                                                      
+	void x265_encoder_parameters(x265_encoder *, x265_param *);
 
+**x265_encoder_reconfig()** may be used to reconfigure encoder parameters mid-encode::
+
+	/* x265_encoder_reconfig:
+	 *       used to modify encoder parameters.
+	 *      various parameters from x265_param are copied.
+	 *      this takes effect immediately, on whichever frame is encoded next;
+	 *      returns 0 on success, negative on parameter validation error.
+	 *
+	 *      not all parameters can be changed; see the actual function for a
+	 *      detailed breakdown.  since not all parameters can be changed, moving
+	 *      from preset to preset may not always fully copy all relevant parameters,
+	 *      but should still work usably in practice. however, more so than for
+	 *      other presets, many of the speed shortcuts used in ultrafast cannot be
+	 *      switched out of; using reconfig to switch between ultrafast and other
+	 *      presets is not recommended without a more fine-grained breakdown of
+	 *      parameters to take this into account. */
+	int x265_encoder_reconfig(x265_encoder *, x265_param *);
+	
 Pictures
 ========
 

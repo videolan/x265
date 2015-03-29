@@ -120,6 +120,24 @@ void x265_encoder_parameters(x265_encoder *enc, x265_param *out)
 }
 
 extern "C"
+int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
+{
+    if (!enc || !param_in)
+        return -1;
+
+    x265_param save;
+    Encoder* encoder = static_cast<Encoder*>(enc);
+    memcpy(&save, encoder->m_latestParam, sizeof(x265_param));
+    int ret = encoder->reconfigureParam(encoder->m_latestParam, param_in);
+    if (ret)
+        /* reconfigure failed, recover saved param set */
+        memcpy(encoder->m_latestParam, &save, sizeof(x265_param));
+    else
+        encoder->m_reconfigured = true;
+    return ret;
+}
+
+extern "C"
 int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out)
 {
     if (!enc)

@@ -58,6 +58,7 @@ using namespace x265;
 Encoder::Encoder()
 {
     m_aborted = false;
+    m_reconfigured = false;
     m_encodedFrameNum = 0;
     m_pocLast = -1;
     m_curEncoder = 0;
@@ -449,7 +450,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_dpb->m_freeList.empty())
         {
             inFrame = new Frame;
-            if (inFrame->create(m_param))
+            x265_param* p = m_reconfigured? m_latestParam : m_param;
+            if (inFrame->create(p))
             {
                 /* the first PicYuv created is asked to generate the CU and block unit offset
                  * arrays which are then shared with all subsequent PicYuv (orig and recon) 
@@ -502,6 +504,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_userData  = pic_in->userData;
         inFrame->m_pts       = pic_in->pts;
         inFrame->m_forceqp   = pic_in->forceqp;
+        inFrame->m_param     = m_reconfigured ? m_latestParam : m_param;
 
         if (m_pocLast == 0)
             m_firstPts = inFrame->m_pts;
@@ -731,6 +734,34 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     while (m_bZeroLatency && ++pass < 2);
 
     return ret;
+}
+
+int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
+{
+    encParam->maxNumReferences = param->maxNumReferences; // never uses more refs than specified in stream headers
+    encParam->bEnableLoopFilter = param->bEnableLoopFilter;
+    encParam->deblockingFilterTCOffset = param->deblockingFilterTCOffset;
+    encParam->deblockingFilterBetaOffset = param->deblockingFilterBetaOffset; 
+    encParam->bEnableFastIntra = param->bEnableFastIntra;
+    encParam->bEnableEarlySkip = param->bEnableEarlySkip;
+    encParam->bEnableTemporalMvp = param->bEnableTemporalMvp;
+    /* Scratch buffer prevents me_range from being increased for esa/tesa
+    if (param->searchMethod < X265_FULL_SEARCH || param->searchMethod < encParam->searchRange)
+        encParam->searchRange = param->searchRange; */
+    encParam->noiseReductionInter = param->noiseReductionInter;
+    encParam->noiseReductionIntra = param->noiseReductionIntra;
+    /* We can't switch out of subme=0 during encoding. */
+    if (encParam->subpelRefine)
+        encParam->subpelRefine = param->subpelRefine;
+    encParam->rdoqLevel = param->rdoqLevel;
+    encParam->rdLevel = param->rdLevel;
+    encParam->bEnableTSkipFast = param->bEnableTSkipFast;
+    encParam->psyRd = param->psyRd;
+    encParam->psyRdoq = param->psyRdoq;
+    encParam->bEnableSignHiding = param->bEnableSignHiding;
+    encParam->bEnableFastIntra = param->bEnableFastIntra;
+    encParam->maxTUSize = param->maxTUSize;
+    return x265_check_params(encParam);
 }
 
 void EncStats::addPsnr(double psnrY, double psnrU, double psnrV)

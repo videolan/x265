@@ -1245,6 +1245,21 @@ int x265_encoder_headers(x265_encoder *, x265_nal **pp_nal, uint32_t *pi_nal);
  *      Once flushing has begun, all subsequent calls must pass pic_in as NULL. */
 int x265_encoder_encode(x265_encoder *encoder, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out);
 
+/* x265_encoder_reconfig:
+ *      various parameters from x265_param are copied.
+ *      this takes effect immediately, on whichever frame is encoded next;
+ *      returns 0 on success, negative on parameter validation error.
+ *
+ *      not all parameters can be changed; see the actual function for a
+ *      detailed breakdown.  since not all parameters can be changed, moving
+ *      from preset to preset may not always fully copy all relevant parameters,
+ *      but should still work usably in practice. however, more so than for
+ *      other presets, many of the speed shortcuts used in ultrafast cannot be
+ *      switched out of; using reconfig to switch between ultrafast and other
+ *      presets is not recommended without a more fine-grained breakdown of
+ *      parameters to take this into account. */
+int x265_encoder_reconfig(x265_encoder *, x265_param *);
+
 /* x265_encoder_get_stats:
  *       returns encoder statistics */
 void x265_encoder_get_stats(x265_encoder *encoder, x265_stats *, uint32_t statsSizeBytes);
