@@ -54,6 +54,7 @@ static char orgConsoleTitle[CONSOLE_TITLE_SIZE] = "";
 #else
 #define GetConsoleTitle(t, n)
 #define SetConsoleTitle(t)
+#define SetThreadExecutionState(es)
 #endif
 
 using namespace x265;
@@ -467,6 +468,7 @@ int main(int argc, char **argv)
     THREAD_NAME("API", 0);
 
     GetConsoleTitle(orgConsoleTitle, CONSOLE_TITLE_SIZE);
+    SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 
     x265_param *param = x265_param_alloc();
     CLIOptions cliopt;
@@ -640,6 +642,7 @@ fail:
     X265_FREE(errorBuf);
 
     SetConsoleTitle(orgConsoleTitle);
+    SetThreadExecutionState(ES_CONTINUOUS);
 
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);
