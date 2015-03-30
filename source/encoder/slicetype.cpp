@@ -699,7 +699,9 @@ void Lookahead::findJob(int workerThreadID)
             ProfileScopeEvent(prelookahead);
 
             preFrame->m_lowres.init(preFrame->m_fencPic, preFrame->m_poc);
-            if (m_bAdaptiveQuant)
+            if (m_param->rc.bStatRead && m_param->rc.cuTree && IS_REFERENCED(preFrame))
+                /* cu-tree offsets were read from stats file */;
+            else if (m_bAdaptiveQuant)
                 m_tld[tld].calcAdaptiveQuantFrame(preFrame, m_param);
             m_tld[tld].lowresIntraEstimate(preFrame->m_lowres);
 
