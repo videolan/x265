@@ -1286,9 +1286,8 @@ cglobal weight_pp, 6, 7, 6
     mov          r6d, r6m
     shl          r6d, 16
     or           r6d, r5d          ; assuming both (w0<<6) and round are using maximum of 16 bits each.
-    movd         xm0, r6d
-    pshufd       xm0, xm0, 0       ; m0 = [w0<<6, round]
-    vinserti128  m0, m0, xm0, 1    ; document says (pshufd + vinserti128) can be replaced with vpbroadcastd m0, xm0, but having build problem, need to investigate
+
+    vpbroadcastd m0, r6d
 
     movd         xm1, r7m
     vpbroadcastd m2, r8m
