@@ -181,8 +181,6 @@ RateControl::RateControl(x265_param& p)
     m_bTerminated = false;
     m_finalFrameCount = 0;
     m_numEntries = 0;
-    m_amortizeFraction = 0.85;
-    m_amortizeFrames = 75;
     if (m_param->rc.rateControlMode == X265_RC_CRF)
     {
         m_param->rc.qp = (int)m_param->rc.rfConstant;
@@ -272,11 +270,6 @@ RateControl::RateControl(x265_param& p)
         x265_log(m_param, X265_LOG_WARNING, "strict CBR set without CBR mode, ignored\n");
         m_param->rc.bStrictCbr = 0;
     }
-    if (m_param->totalFrames && m_param->totalFrames <= 2 * m_fps && m_param->rc.bStrictCbr) /* Strict CBR segment encode */
-    {
-        m_amortizeFraction = 0.85;
-        m_amortizeFrames = m_param->totalFrames / 2;
-    }
     if(m_param->rc.bStrictCbr)
         m_rateTolerance = 0.7;
 
@@ -351,6 +344,13 @@ bool RateControl::init(const SPS& sps)
     m_framesDone = 0;
     m_residualCost = 0;
     m_partialResidualCost = 0;
+    m_amortizeFraction = 0.85;
+    m_amortizeFrames = 75;
+    if (m_param->totalFrames && m_param->totalFrames <= 2 * m_fps && m_param->rc.bStrictCbr) /* Strict CBR segment encode */
+    {
+        m_amortizeFraction = 0.85;
+        m_amortizeFrames = m_param->totalFrames / 2;
+    }
     for (int i = 0; i < s_slidingWindowFrames; i++)
     {
         m_satdCostWindow[i] = 0;
@@ -1577,9 +1577,23 @@ void RateControl::rateControlUpdateStats(RateControlEntry* rce)
             /* previous I still had a residual; roll it into the new loan */
             if (m_partialResidualFrames)
                 rce->rowTotalBits += m_partialResidualCost * m_partialResidualFrames;
-
-            m_partialResidualFrames = X265_MIN(m_amortizeFrames, m_param->keyframeMax);
-            m_partialResidualCost = (int)((rce->rowTotalBits * m_amortizeFraction) /m_partialResidualFrames);
+            if ((m_param->totalFrames != 0) && (m_amortizeFrames > (m_param->totalFrames - m_framesDone)))
+            {
+                m_amortizeFrames = 0;
+                m_amortizeFraction = 0;
+            }
+            else
+            {
+                double depreciateRate = 1.1;
+                m_amortizeFrames = (int)(m_amortizeFrames / depreciateRate);
+                m_amortizeFraction /= depreciateRate;
+                m_amortizeFrames = X265_MAX(m_amortizeFrames, MIN_AMORTIZE_FRAME);
+                m_amortizeFraction = X265_MAX(m_amortizeFraction, MIN_AMORTIZE_FRACTION);
+            }
+            rce->amortizeFrames = m_amortizeFrames;
+            rce->amortizeFraction = m_amortizeFraction;
+            m_partialResidualFrames = X265_MIN((int)rce->amortizeFrames, m_param->keyframeMax);
+            m_partialResidualCost = (int)((rce->rowTotalBits * rce->amortizeFraction) / m_partialResidualFrames);
             rce->rowTotalBits -= m_partialResidualCost * m_partialResidualFrames;
         }
         else if (m_partialResidualFrames)
@@ -2201,8 +2215,8 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
                 /* previous I still had a residual; roll it into the new loan */
                 if (m_residualFrames)
                     bits += m_residualCost * m_residualFrames;
-                m_residualFrames = X265_MIN(m_amortizeFrames, m_param->keyframeMax);
-                m_residualCost = (int)((bits * m_amortizeFraction) / m_residualFrames);
+                m_residualFrames = X265_MIN((int)rce->amortizeFrames, m_param->keyframeMax);
+                m_residualCost = (int)((bits * rce->amortizeFraction) / m_residualFrames);
                 bits -= m_residualCost * m_residualFrames;
             }
             else if (m_residualFrames)

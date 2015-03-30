@@ -42,6 +42,8 @@ struct SPS;
 #define MAX_FRAME_DURATION 1.00
 #define MIN_FRAME_DURATION 0.01
 
+#define MIN_AMORTIZE_FRAME 10
+#define MIN_AMORTIZE_FRACTION 0.2
 #define CLIP_DURATION(f) x265_clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
 
 /* Current frame stats for 2 pass */
@@ -105,7 +107,8 @@ struct RateControlEntry
     int     encodeOrder;
     bool    bLastMiniGopBFrame;
     bool    isActive;
-
+    double  amortizeFrames;
+    double  amortizeFraction;
     /* Required in 2-pass rate control */
     uint64_t expectedBits; /* total expected bits up to the current frame (current one excluded) */
     double   iCuCount;
