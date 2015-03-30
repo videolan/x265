@@ -976,7 +976,7 @@ Slice decision options
 
 	The encoder may internally lower the number of slices to ensure
 	each slice codes at least 10 16x16 rows of lowres blocks. If slices
-	are used in lookahead, the are logged in the list of tools as
+	are used in lookahead, they are logged in the list of tools as
 	*lslices*.
 	
 	**Values:** 0 - disabled (default). 1 is the same as 0. Max 16
