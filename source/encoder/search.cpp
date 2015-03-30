@@ -1231,16 +1231,11 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
         pixel nScale[129];
         intraNeighbourBuf[1][0] = intraNeighbourBuf[0][0];
-        primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1, 0);
+        primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1);
 
         // we do not estimate filtering for downscaled samples
-        for (int x = 1; x < 65; x++)
-        {
-            intraNeighbourBuf[0][x] = nScale[x];           // Top pixel
-            intraNeighbourBuf[0][x + 64] = nScale[x + 64]; // Left pixel
-            intraNeighbourBuf[1][x] = nScale[x];           // Top pixel
-            intraNeighbourBuf[1][x + 64] = nScale[x + 64]; // Left pixel
-        }
+        memcpy(&intraNeighbourBuf[0][1], &nScale[1], 2 * 64 * sizeof(pixel));   // Top & Left pixels
+        memcpy(&intraNeighbourBuf[1][1], &nScale[1], 2 * 64 * sizeof(pixel));
 
         scaleTuSize = 32;
         scaleStride = 32;
@@ -1465,16 +1460,10 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
 
                     pixel nScale[129];
                     intraNeighbourBuf[1][0] = intraNeighbourBuf[0][0];
-                    primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1, 0);
+                    primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1);
 
-                    // TO DO: primitive
-                    for (int x = 1; x < 65; x++)
-                    {
-                        intraNeighbourBuf[0][x] = nScale[x];           // Top pixel
-                        intraNeighbourBuf[0][x + 64] = nScale[x + 64]; // Left pixel
-                        intraNeighbourBuf[1][x] = nScale[x];           // Top pixel
-                        intraNeighbourBuf[1][x + 64] = nScale[x + 64]; // Left pixel
-                    }
+                    memcpy(&intraNeighbourBuf[0][1], &nScale[1], 2 * 64 * sizeof(pixel));
+                    memcpy(&intraNeighbourBuf[1][1], &nScale[1], 2 * 64 * sizeof(pixel));
 
                     scaleTuSize = 32;
                     scaleStride = 32;
