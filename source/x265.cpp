@@ -47,8 +47,10 @@
 #include <ostream>
 #include <fstream>
 
+#define CONSOLE_TITLE_SIZE 200
 #ifdef _WIN32
 #include <windows.h>
+static char orgConsoleTitle[CONSOLE_TITLE_SIZE] = "";
 #else
 #define GetConsoleTitle(t, n)
 #define SetConsoleTitle(t)
@@ -464,6 +466,8 @@ int main(int argc, char **argv)
     PROFILE_INIT();
     THREAD_NAME("API", 0);
 
+    GetConsoleTitle(orgConsoleTitle, CONSOLE_TITLE_SIZE);
+
     x265_param *param = x265_param_alloc();
     CLIOptions cliopt;
 
@@ -634,6 +638,8 @@ fail:
     x265_param_free(param);
 
     X265_FREE(errorBuf);
+
+    SetConsoleTitle(orgConsoleTitle);
 
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);
