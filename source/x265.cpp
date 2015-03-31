@@ -68,8 +68,8 @@ static void sigint_handler(int)
 
 struct CLIOptions
 {
-    Input*  input;
-    Output* recon;
+    InputFile* input;
+    ReconFile* recon;
     std::fstream bitstreamFile;
     bool bProgress;
     bool bForceY4m;
@@ -335,7 +335,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     info.frameCount = 0;
     getParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
-    this->input = Input::open(info, this->bForceY4m);
+    this->input = InputFile::open(info, this->bForceY4m);
     if (!this->input || this->input->isFail())
     {
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
@@ -393,8 +393,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     {
         if (reconFileBitDepth == 0)
             reconFileBitDepth = param->internalBitDepth;
-        this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth,
-                                   param->fpsNum, param->fpsDenom, param->internalCsp);
+        this->recon = ReconFile::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth,
+                                      param->fpsNum, param->fpsDenom, param->internalCsp);
         if (this->recon->isFail())
         {
             x265_log(param, X265_LOG_WARNING, "unable to write reconstruction file\n");
