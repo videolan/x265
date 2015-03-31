@@ -490,17 +490,6 @@ c_ang32_mode_22: db 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 
                  db 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13
                  db 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
 
-ALIGN 32
-c_mode32_22_shuff:       times 2 db 0, 15, 13, 10, 8, 5, 3, 0
-c_mode32_22_shuff1:      times 2 db 15, 13, 10, 8, 5, 3, 0, 0
-c_mode32_22_shuff2:      times 2 db 13, 10, 8, 5, 3, 0, 0, 0
-c_mode32_22_shuff3:      times 2 db 10, 8, 5, 3, 0, 0, 0, 0
-c_mode32_22_shuff4:      times 2 db 8, 5, 3, 0, 0, 0, 0, 0
-c_mode32_22_shuff5:      times 2 db 0, 0, 15, 13, 10, 8, 5, 3
-c_mode32_22_shuff6:      db 0, 0, 15, 12, 10, 7, 5, 2, 0, 0, 0, 0, 0, 0, 0, 0
-c_mode32_22_shuff7:      db 0, 0, 15, 13, 10, 8, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0
-c_mode32_22_shuff8:      times 4 db 0, 3, 5, 8
-
 
 ALIGN 32
 c_mode32_23_shuff:       times 2 db 0, 0, 0, 14, 10, 7, 3, 0
@@ -14847,15 +14836,15 @@ cglobal intra_pred_ang32_23, 3, 5, 12
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang32_22, 3, 5, 12
+cglobal intra_pred_ang32_22, 3, 5, 13
     mova              m0, [pw_1024]
     mova              m1, [intra_pred_shuff_0_8]
     lea               r3, [3 * r1]
     lea               r4, [c_ang32_mode_22]
 
     ;row[0, 1]
-    vbroadcasti128    m2, [r2 + 0]
-    pshufb            m2, m1
+    vbroadcasti128    m11, [r2 + 0]
+    pshufb            m2, m11, m1
     vbroadcasti128    m3, [r2 + 8]
     pshufb            m3, m1
     vbroadcasti128    m4, [r2 + 16]
@@ -14870,9 +14859,9 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0 + r1], m6
 
     ;row[2, 3]
-    movu              xm2, [r2 - 1]
-    pinsrb            xm2, [r2 + 66], 0
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 66], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
     vbroadcasti128    m3, [r2 + 7]
     pshufb            m3, m1
@@ -14888,10 +14877,9 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0 + r3], m6
 
     ;row[4, 5]
-    movu              xm2, [r2 - 2]
-    pinsrb            xm2, [r2 + 69], 0
-    pinsrb            xm2, [r2 + 66], 1
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 69], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
     vbroadcasti128    m3, [r2 + 6]
     pshufb            m3, m1
@@ -14919,11 +14907,9 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0 + 2 * r1], m6
 
     ;row[7, 8]
-    movu              xm2, [r2 - 3]
-    pinsrb            xm2, [r2 + 71], 0
-    pinsrb            xm2, [r2 + 69], 1
-    pinsrb            xm2, [r2 + 66], 2
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 71], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
     vbroadcasti128    m3, [r2 + 5]
     pshufb            m3, m1
@@ -14941,12 +14927,9 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0], m6
 
     ;row[9, 10]
-    movu              xm11, [r2 + 66]
-    mova              xm2, xm11
-    pshufb            xm2, [c_mode32_22_shuff4]
-    pinsrw            xm2, [r2 + 0], 2
-    pinsrw            xm2, [r2 + 2], 3
-    pinsrb            xm2, [r2 + 4], 8
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 74], 0
+    vinserti128       m2, m11, xm11, 1
     vinserti128       m2, m2, xm2, 1
     pshufb            m2, m1
     vbroadcasti128    m3, [r2 + 4]
@@ -14974,12 +14957,9 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0 + r3], m6
 
     ;row[12, 13]
-    mova              xm2, xm11
-    pshufb            xm2, [c_mode32_22_shuff3]
-    pinsrb            xm2, [r2 + 0], 5
-    pinsrw            xm2, [r2 + 1], 3
-    pinsrb            xm2, [r2 + 3], 8
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 76], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
     vbroadcasti128    m3, [r2 + 3]
     pshufb            m3, m1
@@ -14996,11 +14976,9 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0 + r1], m6
 
     ;row[14, 15]
-    mova              xm2, xm11
-    pshufb            xm2, [c_mode32_22_shuff2]
-    pinsrw            xm2, [r2 + 0], 3
-    pinsrb            xm2, [r2 + 2], 8
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 79], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
     vbroadcasti128    m3, [r2 + 2]
     pshufb            m3, m1
@@ -15029,11 +15007,9 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0], m6
 
     ;row[17, 18]
-    mova              xm2, xm11
-    pshufb            xm2, [c_mode32_22_shuff1]
-    pinsrb            xm2, [r2 + 0], 7
-    pinsrb            xm2, [r2 + 1], 8
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 81], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
     vbroadcasti128    m3, [r2 + 1]
     pshufb            m3, m1
@@ -15049,14 +15025,12 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0 + 2 * r1], m6
 
     ;row[19, 20]
-    mova              xm2, xm11
-    pshufb            xm2, [c_mode32_22_shuff]
-    pinsrb            xm2, [r2 + 84], 0
-    pinsrb            xm2, [r2 + 0], 8
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 84], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
-    vbroadcasti128    m3, [r2 + 0]
-    pshufb            m3, m1
+    vbroadcasti128    m12, [r2 + 0]
+    pshufb            m3, m12, m1
     vbroadcasti128    m4, [r2 + 8]
     pshufb            m4, m1
     vbroadcasti128    m5, [r2 + 16]
@@ -15082,15 +15056,13 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0 + r1], m6
 
     ;row[22, 23]
-    mova              xm2, xm11
-    pshufb            xm2, [c_mode32_22_shuff5]
-    pinsrb            xm2, [r2 + 86], 0
-    pinsrb            xm2, [r2 + 84], 1
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 86], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
-    movu              xm3, [r2 - 1]
-    pinsrb            xm3, [r2 + 66], 0
-    vinserti128       m3, m3, xm3, 1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 66], 0
+    vinserti128       m3, m12, xm12, 1
     pshufb            m3, m1
     vbroadcasti128    m4, [r2 + 7]
     pshufb            m4, m1
@@ -15104,16 +15076,13 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0 + r3], m6
 
     ;row[24, 25]
-    movu              xm2, [r2 + 69]
-    pshufb            xm2, [c_mode32_22_shuff6]
-    pinsrb            xm2, [r2 + 86], 1
-    pinsrb            xm2, [r2 + 89], 0
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 89], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
-    movu              xm3, [r2 - 2]
-    pinsrb            xm3, [r2 + 69], 0
-    pinsrb            xm3, [r2 + 66], 1
-    vinserti128       m3, m3, xm3, 1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 69], 0
+    vinserti128       m3, m12, xm12, 1
     pshufb            m3, m1
     vbroadcasti128    m4, [r2 + 6]
     pshufb            m4, m1
@@ -15139,17 +15108,13 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0 + 2 * r1], m6
 
     ;row[27, 28]
-    movu              xm2, [r2 + 71]
-    pshufb            xm2, [c_mode32_22_shuff7]
-    pinsrb            xm2, [r2 + 89], 1
-    pinsrb            xm2, [r2 + 91], 0
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 91], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
-    movu              xm3, [r2 - 3]
-    pinsrb            xm3, [r2 + 71], 0
-    pinsrb            xm3, [r2 + 69], 1
-    pinsrb            xm3, [r2 + 66], 2
-    vinserti128       m3, m3, xm3, 1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 71], 0
+    vinserti128       m3, m12, xm12, 1
     pshufb            m3, m1
     vbroadcasti128    m4, [r2 + 5]
     pshufb            m4, m1
@@ -15165,19 +15130,13 @@ cglobal intra_pred_ang32_22, 3, 5, 12
     movu              [r0], m6
 
     ;row[29, 30]
-    movu              xm2, [r2 + 74]
-    pshufb            xm2, [c_mode32_22_shuff6]
-    pinsrb            xm2, [r2 + 91], 1
-    pinsrb            xm2, [r2 + 94], 0
-    vinserti128       m2, m2, xm2, 1
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 94], 0
+    vinserti128       m2, m11, xm11, 1
     pshufb            m2, m1
-
-    movu              xm3, [r2 - 4]
-    pinsrb            xm3, [r2 + 74], 0
-    pinsrb            xm3, [r2 + 71], 1
-    pinsrb            xm3, [r2 + 69], 2
-    pinsrb            xm3, [r2 + 66], 3
-    vinserti128       m3, m3, xm3, 1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 74], 0
+    vinserti128       m3, m12, xm12, 1
     pshufb            m3, m1
     vbroadcasti128    m4, [r2 + 4]
     pshufb            m4, m1
