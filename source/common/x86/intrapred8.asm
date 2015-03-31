@@ -13665,12 +13665,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 25]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 0 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 0 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 0 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13686,12 +13685,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 26]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 1 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 1 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 1 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13707,12 +13705,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 27]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 2 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 2 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 2 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13728,12 +13725,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 28]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 3 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 3 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 3 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13767,12 +13763,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 30]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 1 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 1 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 1 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13788,12 +13783,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 31]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 2 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 2 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 2 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13810,12 +13804,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     pshufb            m5, m1
 
     lea               r0, [r0 + 4 * r1]
-    mova              m10, [r4 + 3 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 3 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 3 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13848,12 +13841,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 34]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 1 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 1 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 1 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13870,12 +13862,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     pshufb            m5, m1
 
     lea               r0, [r0 + 4 * r1]
-    mova              m10, [r4 + 2 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 2 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 2 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13891,12 +13882,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 36]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 3 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 3 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 3 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13913,12 +13903,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     pshufb            m5, m1
 
     add               r4, 4 * mmsize
-    mova              m10, [r4 + 0 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 0 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 0 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13951,12 +13940,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 39]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 2 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 2 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 2 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13972,12 +13960,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 40]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 3 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 3 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 3 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -13994,12 +13981,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     pshufb            m5, m1
 
     add               r4, 4 * mmsize
-    mova              m10, [r4 + 0 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 0 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 0 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -14032,12 +14018,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 43]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 2 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 2 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 2 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -14053,12 +14038,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 44]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 3 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 3 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 3 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -14076,12 +14060,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
 
     add               r4, 4 * mmsize
     lea               r0, [r0 + 4 * r1]
-    mova              m10, [r4 + 0 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 0 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 0 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -14113,12 +14096,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 47]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 2 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 2 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 2 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -14135,12 +14117,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     pshufb            m5, m1
 
     lea               r0, [r0 + 4 * r1]
-    mova              m10, [r4 + 3 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 3 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 3 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -14157,12 +14138,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     pshufb            m5, m1
 
     add               r4, 4 * mmsize
-    mova              m10, [r4 + 0 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 0 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 0 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -14178,12 +14158,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 50]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 1 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 1 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 1 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
@@ -14199,12 +14178,11 @@ cglobal intra_pred_ang32_33, 3, 5, 11
     vbroadcasti128    m5, [r2 + 51]
     pshufb            m5, m1
 
-    mova              m10, [r4 + 2 * mmsize]
     vperm2i128        m6, m2, m3, 00100000b
-    pmaddubsw         m6, m10
+    pmaddubsw         m6, [r4 + 2 * mmsize]
     pmulhrsw          m6, m0
     vperm2i128        m7, m4, m5, 00100000b
-    pmaddubsw         m7, m10
+    pmaddubsw         m7, [r4 + 2 * mmsize]
     pmulhrsw          m7, m0
     packuswb          m6, m7
     vpermq            m6, m6, 11011000b
