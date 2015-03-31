@@ -370,7 +370,7 @@ bool RateControl::init(const SPS& sps)
     m_accumPQp = (m_param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN) * m_accumPNorm;
 
     /* Frame Predictors and Row predictors used in vbv */
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 4; i++)
     {
         m_pred[i].coeff = 1.5;
         m_pred[i].count = 1.0;
@@ -945,6 +945,9 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
     m_curSlice = curEncData.m_slice;
     m_sliceType = m_curSlice->m_sliceType;
     rce->sliceType = m_sliceType;
+    if (!m_2pass)
+        rce->keptAsRef = IS_REFERENCED(curFrame);
+    m_predType = m_sliceType == B_SLICE && rce->keptAsRef ? 3 : m_sliceType;
     rce->poc = m_curSlice->m_poc;
     if (m_param->rc.bStatRead)
     {
@@ -1074,7 +1077,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
             m_lastQScaleFor[m_sliceType] = x265_qp2qScale(rce->qpaRc);
             if (rce->poc == 0)
                  m_lastQScaleFor[P_SLICE] = m_lastQScaleFor[m_sliceType] * fabs(m_param->rc.ipFactor);
-            rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], m_qp, (double)m_currentSatd);
+            rce->frameSizePlanned = predictSize(&m_pred[m_predType], m_qp, (double)m_currentSatd);
         }
     }
     m_framesDone++;
@@ -1397,10 +1400,10 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 qScale = clipQscale(curFrame, rce, qScale);
                 /* clip qp to permissible range after vbv-lookahead estimation to avoid possible 
                  * mispredictions by initial frame size predictors */
-                if (m_pred[m_sliceType].count == 1)
+                if (m_pred[m_predType].count == 1)
                     qScale = x265_clip3(lmin, lmax, qScale);
                 m_lastQScaleFor[m_sliceType] = qScale;
-                rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], qScale, (double)m_currentSatd);
+                rce->frameSizePlanned = predictSize(&m_pred[m_predType], qScale, (double)m_currentSatd);
             }
             else
                 rce->frameSizePlanned = qScale2bits(rce, qScale);
@@ -1544,7 +1547,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             q = clipQscale(curFrame, rce, q);
             /*  clip qp to permissible range after vbv-lookahead estimation to avoid possible
              * mispredictions by initial frame size predictors */
-            if (!m_2pass && m_isVbv && m_pred[m_sliceType].count == 1)
+            if (!m_2pass && m_isVbv && m_pred[m_predType].count == 1)
                 q = x265_clip3(lqmin, lqmax, q);
         }
         m_lastQScaleFor[m_sliceType] = q;
@@ -1554,7 +1557,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
         if (m_2pass && m_isVbv)
             rce->frameSizePlanned = qScale2bits(rce, q);
         else
-            rce->frameSizePlanned = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
+            rce->frameSizePlanned = predictSize(&m_pred[m_predType], q, (double)m_currentSatd);
 
         /* Always use up the whole VBV in this case. */
         if (m_singleFrameVbv)
@@ -1707,7 +1710,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
             {
                 double frameQ[3];
                 double curBits;
-                curBits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
+                curBits = predictSize(&m_pred[m_predType], q, (double)m_currentSatd);
                 double bufferFillCur = m_bufferFill - curBits;
                 double targetFill;
                 double totalDuration = m_frameDuration;
@@ -1726,7 +1729,8 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                         bufferFillCur += wantedFrameSize;
                     int64_t satd = curFrame->m_lowres.plannedSatd[j] >> (X265_DEPTH - 8);
                     type = IS_X265_TYPE_I(type) ? I_SLICE : IS_X265_TYPE_B(type) ? B_SLICE : P_SLICE;
-                    curBits = predictSize(&m_pred[type], frameQ[type], (double)satd);
+                    int predType = curFrame->m_lowres.plannedType[j] == X265_TYPE_BREF ? 3 : type;
+                    curBits = predictSize(&m_pred[predType], frameQ[type], (double)satd);
                     bufferFillCur -= curBits;
                 }
 
@@ -1766,7 +1770,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
             }
             // Now a hard threshold to make sure the frame fits in VBV.
             // This one is mostly for I-frames.
-            double bits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
+            double bits = predictSize(&m_pred[m_predType], q, (double)m_currentSatd);
 
             // For small VBVs, allow the frame to use up the entire VBV.
             double maxFillFactor;
@@ -1783,14 +1787,14 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                 bits *= qf;
                 if (bits < m_bufferRate / minFillFactor)
                     q *= bits * minFillFactor / m_bufferRate;
-                bits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
+                bits = predictSize(&m_pred[m_predType], q, (double)m_currentSatd);
             }
 
             q = X265_MAX(q0, q);
         }
 
         /* Apply MinCR restrictions */
-        double pbits = predictSize(&m_pred[m_sliceType], q, (double)m_currentSatd);
+        double pbits = predictSize(&m_pred[m_predType], q, (double)m_currentSatd);
         if (pbits > rce->frameSizeMaximum)
             q *= pbits / rce->frameSizeMaximum;
 
@@ -2099,8 +2103,10 @@ void RateControl::updatePredictor(Predictor *p, double q, double var, double bit
 
 void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 {
+    int predType = rce->sliceType;
+    predType = rce->sliceType == B_SLICE && rce->keptAsRef ? 3 : predType;
     if (rce->lastSatd >= m_ncu)
-        updatePredictor(&m_pred[rce->sliceType], x265_qp2qScale(rce->qpaRc), (double)rce->lastSatd, (double)bits);
+        updatePredictor(&m_pred[predType], x265_qp2qScale(rce->qpaRc), (double)rce->lastSatd, (double)bits);
     if (!m_isVbv)
         return;
 
