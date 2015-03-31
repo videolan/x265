@@ -45,6 +45,7 @@ FrameEncoder::FrameEncoder()
     m_threadActive = true;
     m_slicetypeWaitTime = 0;
     m_activeWorkerCount = 0;
+    m_completionCount = 0;
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
     m_outStreams = NULL;
@@ -303,7 +304,7 @@ void FrameEncoder::compressFrame()
     m_allRowsAvailableTime = 0;
     m_stallStartTime = 0;
 
-    m_bLastRowCompleted = false;
+    m_completionCount = 0;
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
 
@@ -778,16 +779,10 @@ void FrameEncoder::processRow(int row, int threadId)
         // NOTE: Active next row
         if (realRow != m_numRows - 1)
             enqueueRowFilter(realRow + 1);
-        else
-            m_bLastRowCompleted = true;
     }
 
     if (ATOMIC_DEC(&m_activeWorkerCount) == 0)
-    {
-        if (m_bLastRowCompleted)
-            m_completionEvent.trigger();
         m_stallStartTime = x265_mdate();
-    }
 
     m_totalWorkerElapsedTime += x265_mdate() - startTime; // not thread safe, but good enough
 }
@@ -1080,6 +1075,9 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     }
 
     curRow.busy = false;
+
+    if (ATOMIC_INC(&m_completionCount) == 2 * (int)m_numRows)
+        m_completionEvent.trigger();
 }
 
 void FrameEncoder::collectCTUStatistics(CUData& ctu)

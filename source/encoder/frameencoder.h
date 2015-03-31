@@ -135,18 +135,18 @@ public:
     Event                    m_enable;
     Event                    m_done;
     Event                    m_completionEvent;
-    bool                     m_threadActive;
     int                      m_localTldIdx;
+
+    volatile bool            m_threadActive;
+    volatile bool            m_bAllRowsStop;
+    volatile int             m_completionCount;
+    volatile int             m_vbvResetTriggerRow;
 
     uint32_t                 m_numRows;
     uint32_t                 m_numCols;
     uint32_t                 m_filterRowDelay;
     uint32_t                 m_filterRowDelayCus;
     uint32_t                 m_refLagRows;
-
-    volatile bool            m_bAllRowsStop;
-    volatile bool            m_bLastRowCompleted;
-    volatile int             m_vbvResetTriggerRow;
 
     CTURow*                  m_rows;
     RateControlEntry         m_rce;
