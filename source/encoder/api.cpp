@@ -133,7 +133,10 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
         /* reconfigure failed, recover saved param set */
         memcpy(encoder->m_latestParam, &save, sizeof(x265_param));
     else
+    {
         encoder->m_reconfigured = true;
+        x265_print_reconfigured_params(&save, encoder->m_latestParam);
+    }
     return ret;
 }
 
