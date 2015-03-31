@@ -275,6 +275,16 @@ tab_idst4:      times 4 dw 29, +84
                 times 4 dw 84, +55
                 times 4 dw -74, -29
 
+pw_idst4_tab:   times 4 dw  29,  84
+                times 4 dw  55, -29
+                times 4 dw  74,  55
+                times 4 dw  74, -84
+                times 4 dw  74, -74
+                times 4 dw  84,  55
+                times 4 dw  0,   74
+                times 4 dw -74, -29
+pb_idst4_shuf:  times 2 db 0, 1, 8, 9, 2, 3, 10, 11, 4, 5, 12, 13, 6, 7, 14, 15
+
 tab_dct8_1:     times 2 dw 89, 50, 75, 18
                 times 2 dw 75, -89, -18, -50
                 times 2 dw 50, 18, -89, 75
@@ -804,6 +814,81 @@ cglobal idst4, 3, 4, 7
     movlps      [r1 + 2 * r2], m1
     lea         r1, [r1 + 2 * r2]
     movhps      [r1 + r2], m1
+    RET
+
+;-----------------------------------------------------------------
+;void idst4(const int16_t* src, int16_t* dst, intptr_t dstStride)
+;-----------------------------------------------------------------
+INIT_YMM avx2
+cglobal idst4, 3, 4, 6
+%if BIT_DEPTH == 8
+  vpbroadcastd  m4, [pd_2048]
+  %define       IDCT4_SHIFT 12
+%elif BIT_DEPTH == 10
+  vpbroadcastd  m4, [pd_512]
+  %define       IDCT4_SHIFT 10
+%else
+  %error Unsupported BIT_DEPTH!
+%endif
+    add         r2d, r2d
+    lea         r3, [pw_idst4_tab]
+
+    movu        xm0, [r0 + 0 * 16]
+    movu        xm1, [r0 + 1 * 16]
+
+    punpcklwd   m2, m0, m1
+    punpckhwd   m0, m1
+
+    vinserti128 m2, m2, xm2, 1
+    vinserti128 m0, m0, xm0, 1
+
+    vpbroadcastd m5, [pd_64]
+    pmaddwd     m1, m2, [r3 + 0 * 32]
+    pmaddwd     m3, m0, [r3 + 1 * 32]
+    paddd       m1, m3
+    paddd       m1, m5
+    psrad       m1, 7
+    pmaddwd     m3, m2, [r3 + 2 * 32]
+    pmaddwd     m0, [r3 + 3 * 32]
+    paddd       m3, m0
+    paddd       m3, m5
+    psrad       m3, 7
+
+    packssdw    m0, m1, m3
+    pshufb      m0, [pb_idst4_shuf]
+    vpermq      m1, m0, 11101110b
+
+    punpcklwd   m2, m0, m1
+    punpckhwd   m0, m1
+    punpcklwd   m1, m2, m0
+    punpckhwd   m2, m0
+
+    vpermq      m1, m1, 01000100b
+    vpermq      m2, m2, 01000100b
+
+    pmaddwd     m0, m1, [r3 + 0 * 32]
+    pmaddwd     m3, m2, [r3 + 1 * 32]
+    paddd       m0, m3
+    paddd       m0, m4
+    psrad       m0, IDCT4_SHIFT
+    pmaddwd     m3, m1, [r3 + 2 * 32]
+    pmaddwd     m2, m2, [r3 + 3 * 32]
+    paddd       m3, m2
+    paddd       m3, m4
+    psrad       m3, IDCT4_SHIFT
+
+    packssdw    m0, m3
+    pshufb      m1, m0, [pb_idst4_shuf]
+    vpermq      m0, m1, 11101110b
+
+    punpcklwd   m2, m1, m0
+    movq        [r1 + 0 * r2], xm2
+    movhps      [r1 + 1 * r2], xm2
+
+    punpckhwd   m1, m0
+    movq        [r1 + 2 * r2], xm1
+    lea         r1, [r1 + 2 * r2]
+    movhps      [r1 + r2], xm1
     RET
 
 ;-------------------------------------------------------
