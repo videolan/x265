@@ -140,7 +140,8 @@ typedef void (*dequant_normal_t)(const int16_t* quantCoef, int16_t* coef, int nu
 typedef int(*count_nonzero_t)(const int16_t* quantCoeff);
 typedef void (*weightp_pp_t)(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*weightp_sp_t)(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
-typedef void (*scale_t)(pixel* dst, const pixel* src, intptr_t stride);
+typedef void (*scale1D_t)(pixel* dst, const pixel* src);
+typedef void (*scale2D_t)(pixel* dst, const pixel* src, intptr_t stride);
 typedef void (*downscale_t)(const pixel* src0, pixel* dstf, pixel* dsth, pixel* dstv, pixel* dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height);
 typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int height, int marginX);
@@ -266,8 +267,8 @@ struct EncoderPrimitives
     dequant_scaling_t     dequant_scaling;
     dequant_normal_t      dequant_normal;
     denoiseDct_t          denoiseDct;
-    scale_t               scale1D_128to64;
-    scale_t               scale2D_64to32;
+    scale1D_t             scale1D_128to64;
+    scale2D_t             scale2D_64to32;
 
     ssim_4x4x2_core_t     ssim_4x4x2_core;
     ssim_end4_t           ssim_end_4;

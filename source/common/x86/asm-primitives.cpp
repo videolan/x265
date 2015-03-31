@@ -1447,6 +1447,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 #if X86_64
     if (cpuMask & X265_CPU_AVX2)
     {
+        p.scale2D_64to32 = x265_scale2D_64to32_avx2;
+
         p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_avx2;
         p.cu[BLOCK_8x8].psy_cost_ss = x265_psyCost_ss_8x8_avx2;
         p.cu[BLOCK_16x16].psy_cost_ss = x265_psyCost_ss_16x16_avx2;
@@ -1642,6 +1644,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_32x32].intra_pred[30] = x265_intra_pred_ang32_30_avx2;
         p.cu[BLOCK_32x32].intra_pred[31] = x265_intra_pred_ang32_31_avx2;
         p.cu[BLOCK_32x32].intra_pred[32] = x265_intra_pred_ang32_32_avx2;
+        p.cu[BLOCK_32x32].intra_pred[33] = x265_intra_pred_ang32_33_avx2;
+        p.cu[BLOCK_32x32].intra_pred[25] = x265_intra_pred_ang32_25_avx2;
+        p.cu[BLOCK_32x32].intra_pred[24] = x265_intra_pred_ang32_24_avx2;
 
         // copy_sp primitives
         p.cu[BLOCK_16x16].copy_sp = x265_blockcopy_sp_16x16_avx2;

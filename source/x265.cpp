@@ -47,11 +47,14 @@
 #include <ostream>
 #include <fstream>
 
+#define CONSOLE_TITLE_SIZE 200
 #ifdef _WIN32
 #include <windows.h>
+static char orgConsoleTitle[CONSOLE_TITLE_SIZE] = "";
 #else
 #define GetConsoleTitle(t, n)
 #define SetConsoleTitle(t)
+#define SetThreadExecutionState(es)
 #endif
 
 using namespace x265;
@@ -65,8 +68,8 @@ static void sigint_handler(int)
 
 struct CLIOptions
 {
-    Input*  input;
-    Output* recon;
+    InputFile* input;
+    ReconFile* recon;
     std::fstream bitstreamFile;
     bool bProgress;
     bool bForceY4m;
@@ -332,7 +335,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     info.frameCount = 0;
     getParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
-    this->input = Input::open(info, this->bForceY4m);
+    this->input = InputFile::open(info, this->bForceY4m);
     if (!this->input || this->input->isFail())
     {
         x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
@@ -390,8 +393,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     {
         if (reconFileBitDepth == 0)
             reconFileBitDepth = param->internalBitDepth;
-        this->recon = Output::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth,
-                                   param->fpsNum, param->fpsDenom, param->internalCsp);
+        this->recon = ReconFile::open(reconfn, param->sourceWidth, param->sourceHeight, reconFileBitDepth,
+                                      param->fpsNum, param->fpsDenom, param->internalCsp);
         if (this->recon->isFail())
         {
             x265_log(param, X265_LOG_WARNING, "unable to write reconstruction file\n");
@@ -463,6 +466,9 @@ int main(int argc, char **argv)
 #endif
     PROFILE_INIT();
     THREAD_NAME("API", 0);
+
+    GetConsoleTitle(orgConsoleTitle, CONSOLE_TITLE_SIZE);
+    SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 
     x265_param *param = x265_param_alloc();
     CLIOptions cliopt;
@@ -634,6 +640,9 @@ fail:
     x265_param_free(param);
 
     X265_FREE(errorBuf);
+
+    SetConsoleTitle(orgConsoleTitle);
+    SetThreadExecutionState(ES_CONTINUOUS);
 
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);

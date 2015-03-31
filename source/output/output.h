@@ -29,18 +29,18 @@
 namespace x265 {
 // private x265 namespace
 
-class Output
+class ReconFile
 {
 protected:
 
-    virtual ~Output()  {}
+    virtual ~ReconFile()  {}
 
 public:
 
-    Output()           {}
+    ReconFile()           {}
 
-    static Output* open(const char *fname, int width, int height, uint32_t bitdepth,
-                        uint32_t fpsNum, uint32_t fpsDenom, int csp);
+    static ReconFile* open(const char *fname, int width, int height, uint32_t bitdepth,
+                           uint32_t fpsNum, uint32_t fpsDenom, int csp);
 
     virtual bool isFail() const = 0;
 
