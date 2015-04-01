@@ -1703,6 +1703,28 @@ cglobal intra_pred_ang4_26, 3,4,4
 .quit:
     RET
 
+cglobal intra_pred_ang4_11, 3,5,8
+    xor         r4d, r4d
+    cmp         r3m, byte 25
+    mov         r3d, 8
+    cmove       r3d, r4d
+
+    movd        m1, [r2 + r3 + 1]       ;[4 3 2 1]
+    movh        m0, [r2 - 7]            ;[A x x x x x x x]
+    punpcklbw   m1, m1                  ;[4 4 3 3 2 2 1 1]
+    punpcklqdq  m0, m1                  ;[4 4 3 3 2 2 1 1 A x x x x x x x]]
+    psrldq      m0, 7                   ;[x x x x x x x x 4 3 3 2 2 1 1 A]
+    punpcklqdq  m0, m0
+    mova        m2, m0
+
+    lea         r3, [pw_ang_table + 24 * 16]
+
+    mova        m4, [r3 +  6 * 16]  ; [24]
+    mova        m5, [r3 +  4 * 16]  ; [26]
+    mova        m6, [r3 +  2 * 16]  ; [28]
+    mova        m7, [r3 +  0 * 16]  ; [30]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
