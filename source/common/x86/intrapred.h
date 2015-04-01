@@ -55,6 +55,7 @@ DECL_ANG(4, 6, sse2);
 DECL_ANG(4, 7, sse2);
 DECL_ANG(4, 8, sse2);
 DECL_ANG(4, 9, sse2);
+DECL_ANG(4, 10, sse2);
 
 DECL_ANG(4, 2, ssse3);
 DECL_ANG(4, 3, sse4);
