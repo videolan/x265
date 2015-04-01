@@ -1483,22 +1483,21 @@ ALIGN 16
     RET
 
 cglobal intra_pred_ang4_4, 3,5,8
-    xor         r4, r4
-    inc         r4
+    xor         r4d, r4d
+    inc         r4d
     cmp         r3m, byte 32
-    mov         r3, 9
-    cmove       r3, r4
+    mov         r3d, 9
+    cmove       r3d, r4d
 
     movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
+    punpcklbw   m0, m0
+    psrldq      m0, 1
+    mova        m2, m0
+    psrldq      m2, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
     mova        m1, m0
-    psrldq      m1, 1           ; [x 8 7 6 5 4 3 2]
-    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
-    mova        m1, m0
-    psrldq      m1, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
-    mova        m3, m0
-    psrldq      m3, 4           ; [x x x x x x x x 7 6 6 5 5 4 4 3]
-    punpcklqdq  m0, m1
-    punpcklqdq  m2, m1, m3
+    psrldq      m1, 4           ; [x x x x x x x x 7 6 6 5 5 4 4 3]
+    punpcklqdq  m0, m2
+    punpcklqdq  m2, m1
 
     lea         r3, [pw_ang_table + 18 * 16]
     mova        m4, [r3 +  3 * 16]  ; [21]
