@@ -175,8 +175,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
 
         for (int r = 0; r < height; r++)
         {
-            for (int c = 0; c < width; c++)
-                yPixel[c] = (pixel)yChar[c];
+            memcpy(yPixel, yChar, width * sizeof(pixel));
 
             yPixel += m_stride;
             yChar += pic.stride[0] / sizeof(*yChar);
@@ -184,11 +183,8 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
 
         for (int r = 0; r < height >> m_vChromaShift; r++)
         {
-            for (int c = 0; c < width >> m_hChromaShift; c++)
-            {
-                uPixel[c] = (pixel)uChar[c];
-                vPixel[c] = (pixel)vChar[c];
-            }
+            memcpy(uPixel, uChar, (width >> m_hChromaShift) * sizeof(pixel));
+            memcpy(vPixel, vChar, (width >> m_hChromaShift) * sizeof(pixel));
 
             uPixel += m_strideC;
             vPixel += m_strideC;
