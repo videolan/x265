@@ -425,6 +425,8 @@ void*    x265_malloc(size_t size);
 void     x265_free(void *ptr);
 char*    x265_slurp_file(const char *filename);
 
+void     x265_setup_primitives(x265_param* param, int cpu); /* primitives.cpp */
+
 #include "constants.h"
 
 #endif // ifndef X265_COMMON_H

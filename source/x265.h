@@ -1086,12 +1086,6 @@ typedef struct x265_param
     } vui;
 } x265_param;
 
-/***
- * If not called, first encoder allocated will auto-detect the CPU and
- * initialize performance primitives, which are process global.
- * DEPRECATED: use x265_param.cpuid to specify CPU */
-void x265_setup_primitives(x265_param *param, int cpu);
-
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
  *  special in any way, but using this method together with x265_param_free()
