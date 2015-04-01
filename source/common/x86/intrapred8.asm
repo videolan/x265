@@ -1664,6 +1664,45 @@ cglobal intra_pred_ang4_10, 3,5,4
     movd        [r0], m0
     RET
 
+cglobal intra_pred_ang4_26, 3,4,4
+    movd        m0, [r2 + 1]            ; [8 7 6 5 4 3 2 1]
+
+    ; store
+    movd        [r0], m0
+    movd        [r0 + r1], m0
+    movd        [r0 + r1 * 2], m0
+    lea         r3, [r1 * 3]
+    movd        [r0 + r3], m0
+
+    ; filter
+    cmp         r4m, byte 0
+    jz         .quit
+
+    pxor        m3, m3
+    punpcklbw   m0, m3
+    pshuflw     m0, m0, 0x00
+    movd        m2, [r2]
+    punpcklbw   m2, m3
+    pshuflw     m2, m2, 0x00
+    movd        m1, [r2 + 9]
+    punpcklbw   m1, m3
+    psubw       m1, m2
+    psraw       m1, 1
+    paddw       m0, m1
+    packuswb    m0, m0
+
+    movd        r2, m0
+    mov         [r0], r2b
+    shr         r2, 8
+    mov         [r0 + r1], r2b
+    shr         r2, 8
+    mov         [r0 + r1 * 2], r2b
+    shr         r2, 8
+    mov         [r0 + r3], r2b
+
+.quit:
+    RET
+
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
