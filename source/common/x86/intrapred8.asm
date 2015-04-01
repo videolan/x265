@@ -1410,10 +1410,10 @@ cglobal intra_pred_ang4_2, 3,5,1
 
 INIT_XMM sse2
 cglobal intra_pred_ang4_3, 3,5,8
-    mov         r4, 1
+    mov         r4d, 1
     cmp         r3m, byte 33
-    mov         r3, 9
-    cmove       r3, r4
+    mov         r3d, 9
+    cmove       r3d, r4d
 
     movh        m0, [r2 + r3]   ; [8 7 6 5 4 3 2 1]
     mova        m1, m0
@@ -1439,7 +1439,6 @@ cglobal intra_pred_ang4_3, 3,5,8
 ALIGN 16
 .do_filter4x4:
     pxor        m1, m1
-    pxor        m3, m3
     punpckhbw   m3, m0
     psrlw       m3, 8
     pmaddwd     m3, m5
@@ -1448,7 +1447,6 @@ ALIGN 16
     packssdw    m0, m3
     paddw       m0, [pw_16]
     psraw       m0, 5
-    pxor        m3, m3
     punpckhbw   m3, m2
     psrlw       m3, 8
     pmaddwd     m3, m7
@@ -1475,12 +1473,12 @@ ALIGN 16
 .store:
     packuswb    m0, m2
     movd        [r0], m0
-    pshufd      m0, m0, 0x39
+    psrldq      m0, 4
     movd        [r0 + r1], m0
-    pshufd      m0, m0, 0x39
+    psrldq      m0, 4
     movd        [r0 + r1 * 2], m0
     lea         r1, [r1 * 3]
-    pshufd      m0, m0, 0x39
+    psrldq      m0, 4
     movd        [r0 + r1], m0
     RET
 
