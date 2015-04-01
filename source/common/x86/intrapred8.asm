@@ -1775,6 +1775,34 @@ cglobal intra_pred_ang4_13, 3,5,8
     mova        m7, [r3 +  7 * 16]  ; [28]
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
+cglobal intra_pred_ang4_14, 3,5,8
+    xor         r4d, r4d
+    cmp         r3m, byte 22
+    mov         r3d, 8
+    jz          .next
+    xchg        r3d, r4d
+
+.next:
+    movd        m1, [r2 - 1]            ;[x x A x]
+    movd        m0, [r2 + r3 + 1]       ;[x x B x]
+    punpcklbw   m0, m1                  ;[A B x x]
+    movd        m1, [r2 + r4 + 1]       ;[4 3 2 1]
+    punpckldq   m0, m1                  ;[4 3 2 1 A B x x]
+    psrldq      m0, 2                   ;[x x 4 3 2 1 A B]
+    punpcklbw   m0, m0                  ;[x x x x 4 4 3 3 2 2 1 1 A A B B]
+    mova        m2, m0
+    psrldq      m0, 3                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+    psrldq      m2, 1                   ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    punpcklqdq  m0, m0
+    punpcklqdq  m2, m2
+
+    lea         r3, [pw_ang_table + 19 * 16]
+    mova        m4, [r3 +  0 * 16]  ; [19]
+    mova        m5, [r3 - 13 * 16]  ; [ 6]
+    mova        m6, [r3 +  6 * 16]  ; [25]
+    mova        m7, [r3 -  7 * 16]  ; [12]
+    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
