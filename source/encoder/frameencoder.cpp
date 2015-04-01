@@ -111,10 +111,11 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_rows = new CTURow[m_numRows];
     bool ok = !!m_numRows;
 
-    int range  = m_param->searchRange; /* fpel search */
-        range += 1;                    /* diamond search range check lag */
-        range += 2;                    /* subpel refine */
-        range += NTAPS_LUMA / 2;       /* subpel filter half-length */
+    /* determine full motion search range */
+    int range  = m_param->searchRange;       /* fpel search */
+    range += !!(m_param->searchMethod < 2);  /* diamond/hex range check lag */
+    range += NTAPS_LUMA / 2;                 /* subpel filter half-length */
+    range += 2 + MotionEstimate::hpelIterationCount(m_param->subpelRefine) / 2; /* subpel refine steps */
     m_refLagRows = 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue

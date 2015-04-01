@@ -149,6 +149,12 @@ void MotionEstimate::initScales(void)
 #undef SETUP_SCALE
 }
 
+int MotionEstimate::hpelIterationCount(int subme)
+{
+    return workload[subme].hpel_iters +
+           workload[subme].qpel_iters / 2;
+}
+
 MotionEstimate::~MotionEstimate()
 {
     fencPUYuv.destroy();
