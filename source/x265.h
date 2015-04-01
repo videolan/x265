@@ -1104,9 +1104,8 @@ x265_param *x265_param_alloc(void);
  *  allocated by x265_param_alloc() */
 void x265_param_free(x265_param *);
 
-/***
- * Initialize an x265_param structure to default values
- */
+/* x265_param_default:
+ *  Initialize an x265_param structure to default values */
 void x265_param_default(x265_param *param);
 
 /* x265_param_parse:
@@ -1161,11 +1160,11 @@ x265_picture *x265_picture_alloc(void);
  *  Use x265_picture_free() to release storage for an x265_picture instance
  *  allocated by x265_picture_alloc() */
 void x265_picture_free(x265_picture *);
-/***
- * Initialize an x265_picture structure to default values. It sets the pixel
- * depth and color space to the encoder's internal values and sets the slice
- * type to auto - so the lookahead will determine slice type.
- */
+
+/* x265_picture_init:
+ *       Initialize an x265_picture structure to default values. It sets the pixel
+ *       depth and color space to the encoder's internal values and sets the slice
+ *       type to auto - so the lookahead will determine slice type. */
 void x265_picture_init(x265_param *param, x265_picture *pic);
 
 /* x265_max_bit_depth:
@@ -1235,9 +1234,8 @@ void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
  *      close an encoder handler */
 void x265_encoder_close(x265_encoder *);
 
-/***
- * Release library static allocations, reset configured CTU size
- */
+/* x265_cleanup:
+ *       release library static allocations, reset configured CTU size */
 void x265_cleanup(void);
 
 #ifdef __cplusplus
