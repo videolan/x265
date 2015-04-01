@@ -1213,7 +1213,21 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_4x4].intra_pred[16] = x265_intra_pred_ang4_16_sse2;
         p.cu[BLOCK_4x4].intra_pred[17] = x265_intra_pred_ang4_17_sse2;
         p.cu[BLOCK_4x4].intra_pred[18] = x265_intra_pred_ang4_18_sse2;
+        p.cu[BLOCK_4x4].intra_pred[19] = x265_intra_pred_ang4_17_sse2;
+        p.cu[BLOCK_4x4].intra_pred[20] = x265_intra_pred_ang4_16_sse2;
+        p.cu[BLOCK_4x4].intra_pred[21] = x265_intra_pred_ang4_15_sse2;
+        p.cu[BLOCK_4x4].intra_pred[22] = x265_intra_pred_ang4_14_sse2;
+        p.cu[BLOCK_4x4].intra_pred[23] = x265_intra_pred_ang4_13_sse2;
+        p.cu[BLOCK_4x4].intra_pred[24] = x265_intra_pred_ang4_12_sse2;
+        p.cu[BLOCK_4x4].intra_pred[25] = x265_intra_pred_ang4_11_sse2;
         p.cu[BLOCK_4x4].intra_pred[26] = x265_intra_pred_ang4_26_sse2;
+        p.cu[BLOCK_4x4].intra_pred[27] = x265_intra_pred_ang4_9_sse2;
+        p.cu[BLOCK_4x4].intra_pred[28] = x265_intra_pred_ang4_8_sse2;
+        p.cu[BLOCK_4x4].intra_pred[29] = x265_intra_pred_ang4_7_sse2;
+        p.cu[BLOCK_4x4].intra_pred[30] = x265_intra_pred_ang4_6_sse2;
+        p.cu[BLOCK_4x4].intra_pred[31] = x265_intra_pred_ang4_5_sse2;
+        p.cu[BLOCK_4x4].intra_pred[32] = x265_intra_pred_ang4_4_sse2;
+        p.cu[BLOCK_4x4].intra_pred[33] = x265_intra_pred_ang4_3_sse2;
 
         p.cu[BLOCK_4x4].calcresidual = x265_getResidual4_sse2;
         p.cu[BLOCK_8x8].calcresidual = x265_getResidual8_sse2;
