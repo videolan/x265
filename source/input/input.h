@@ -54,17 +54,17 @@ struct InputFileInfo
     const char *filename;
 };
 
-class Input
+class InputFile
 {
 protected:
 
-    virtual ~Input()  {}
+    virtual ~InputFile()  {}
 
 public:
 
-    Input()           {}
+    InputFile()           {}
 
-    static Input* open(InputFileInfo& info, bool bForceY4m);
+    static InputFile* open(InputFileInfo& info, bool bForceY4m);
 
     virtual void startReader() = 0;
 
