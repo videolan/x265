@@ -78,7 +78,7 @@ blocking and thus this would be less efficient).
 An encoder is allocated by calling **x265_encoder_open()**::
 
 	/* x265_encoder_open:
-	*      create a new encoder handler, all parameters from x265_param are copied */
+	 *      create a new encoder handler, all parameters from x265_param are copied */
 	x265_encoder* x265_encoder_open(x265_param *);
 
 The returned pointer is then passed to all of the functions pertaining
@@ -344,7 +344,6 @@ detection tool is being used. **x265_cleanup()** also resets the saved
 CTU size so it will be possible to create a new encoder with a different
 CTU size::
 
-	/***
-	 * Release library static allocations, reset configured CTU size
-	 */
+	/* x265_cleanup:
+	 *     release library static allocations, reset configured CTU size */
 	void x265_cleanup(void);
