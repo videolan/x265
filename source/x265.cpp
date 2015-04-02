@@ -470,28 +470,36 @@ int main(int argc, char **argv)
     GetConsoleTitle(orgConsoleTitle, CONSOLE_TITLE_SIZE);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 
-    x265_param *param = x265_param_alloc();
+    const x265_api* api = x265_api_get(X265_DEPTH); /* prefer what the cli was compiled against */
+    if (!api)
+        api = x265_api_get(0);
+
+    x265_param *param = api->param_alloc();
     CLIOptions cliopt;
 
     if (cliopt.parse(argc, argv, param))
     {
         cliopt.destroy();
-        x265_param_free(param);
+        api->param_free(param);
         exit(1);
     }
 
-    x265_encoder *encoder = x265_encoder_open(param);
+    /* note: we could try to acquire a different libx265 API here based on
+     * the profile found during option parsing, but it must be done before
+     * opening an encoder */
+
+    x265_encoder *encoder = api->encoder_open(param);
     if (!encoder)
     {
         x265_log(param, X265_LOG_ERROR, "failed to open encoder\n");
         cliopt.destroy();
-        x265_param_free(param);
-        x265_cleanup();
+        api->param_free(param);
+        api->cleanup();
         exit(2);
     }
 
     /* get the encoder parameters post-initialization */
-    x265_encoder_parameters(encoder, param);
+    api->encoder_parameters(encoder, param);
 
     /* Control-C handler */
     if (signal(SIGINT, sigint_handler) == SIG_ERR)
@@ -511,7 +519,7 @@ int main(int argc, char **argv)
 
     if (!param->bRepeatHeaders)
     {
-        if (x265_encoder_headers(encoder, &p_nal, &nal) < 0)
+        if (api->encoder_headers(encoder, &p_nal, &nal) < 0)
         {
             x265_log(param, X265_LOG_ERROR, "Failure generating stream headers\n");
             ret = 3;
@@ -521,7 +529,7 @@ int main(int argc, char **argv)
             cliopt.writeNALs(p_nal, nal);
     }
 
-    x265_picture_init(param, pic_in);
+    api->picture_init(param, pic_in);
 
     if (cliopt.bDither)
     {
@@ -562,7 +570,7 @@ int main(int argc, char **argv)
             }
         }
 
-        int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
+        int numEncoded = api->encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
         if (numEncoded < 0)
         {
             b_ctrl_c = 1;
@@ -582,7 +590,7 @@ int main(int argc, char **argv)
     /* Flush the encoder */
     while (!b_ctrl_c)
     {
-        int numEncoded = x265_encoder_encode(encoder, &p_nal, &nal, NULL, pic_recon);
+        int numEncoded = api->encoder_encode(encoder, &p_nal, &nal, NULL, pic_recon);
         if (numEncoded < 0)
         {
             ret = 4;
@@ -605,10 +613,10 @@ int main(int argc, char **argv)
         fprintf(stderr, "%*s\r", 80, " ");
 
 fail:
-    x265_encoder_get_stats(encoder, &stats, sizeof(stats));
+    api->encoder_get_stats(encoder, &stats, sizeof(stats));
     if (param->csvfn && !b_ctrl_c)
-        x265_encoder_log(encoder, argc, argv);
-    x265_encoder_close(encoder);
+        api->encoder_log(encoder, argc, argv);
+    api->encoder_close(encoder);
     cliopt.bitstreamFile.close();
 
     if (b_ctrl_c)
@@ -633,11 +641,11 @@ fail:
         printf("\nencoded 0 frames\n");
     }
 
-    x265_cleanup(); /* Free library singletons */
+    api->cleanup(); /* Free library singletons */
 
     cliopt.destroy();
 
-    x265_param_free(param);
+    api->param_free(param);
 
     X265_FREE(errorBuf);
 
