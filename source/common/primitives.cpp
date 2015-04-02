@@ -191,7 +191,6 @@ using namespace x265;
 
 /* cpuid >= 0 - force CPU type
  * cpuid < 0  - auto-detect if uninitialized */
-extern "C"
 void x265_setup_primitives(x265_param *param, int cpuid)
 {
     if (cpuid < 0)
