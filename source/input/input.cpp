@@ -27,7 +27,7 @@
 
 using namespace x265;
 
-Input* Input::open(InputFileInfo& info, bool bForceY4m)
+InputFile* InputFile::open(InputFileInfo& info, bool bForceY4m)
 {
     const char * s = strrchr(info.filename, '.');
 

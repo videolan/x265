@@ -105,6 +105,9 @@ const multiH,      dw 9, 10, 11, 12, 13, 14, 15, 16
 const multiH2,     dw 17, 18, 19, 20, 21, 22, 23, 24
 const multiH3,     dw 25, 26, 27, 28, 29, 30, 31, 32
 
+ALIGN 32
+const trans8_shuf, dd 0, 4, 1, 5, 2, 6, 3, 7
+
 const popcnt_table
 %assign x 0
 %rep 256

@@ -58,7 +58,6 @@ c_mode16_17:          db  4,  2,  1,  0, 15, 14, 12, 11, 10,  9,  7,  6,  5,  4,
 c_mode16_18:    db 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
 
 ALIGN 32
-trans8_shuf:          dd 0, 4, 1, 5, 2, 6, 3, 7
 c_ang8_src1_9_2_10:   db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9
 c_ang8_26_20:         db 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
 c_ang8_src3_11_4_12:  db 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11
@@ -376,6 +375,148 @@ c_ang32_mode_32:   db 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11
                    db 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11
                    db 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
 
+
+ALIGN 32
+c_ang32_mode_33:   db 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26
+                   db 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
+                   db 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14
+                   db 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8
+                   db 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28
+                   db 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22
+                   db 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+                   db 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10
+                   db 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30
+                   db 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24
+                   db 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18
+                   db 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
+                   db 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6
+                   db 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26
+                   db 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
+                   db 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14
+                   db 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8
+                   db 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28
+                   db 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22
+                   db 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+                   db 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10
+                   db 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30
+                   db 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24
+                   db 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18
+                   db 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
+                   db 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6
+                   db 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
+
+
+
+ALIGN 32
+c_ang32_mode_25:   db 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28
+                   db 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24
+                   db 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
+                   db 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+                   db 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
+                   db 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8
+                   db 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4
+                   db 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
+                   db 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28
+                   db 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24
+                   db 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
+                   db 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+                   db 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
+                   db 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8
+                   db 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4
+                   db 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
+
+
+
+ALIGN 32
+c_ang32_mode_24:   db 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22
+                   db 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
+                   db 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2
+                   db 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24
+                   db 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14
+                   db 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4
+                   db 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26
+                   db 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+                   db 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6
+                   db 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1
+                   db 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23
+                   db 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13
+                   db 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3
+                   db 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25
+                   db 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15
+                   db 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5
+                   db 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
+
+
+ALIGN 32
+c_ang32_mode_23:  db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14
+                  db 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5
+                  db 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19
+                  db 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1
+                  db 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15
+                  db 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6
+                  db 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
+                  db 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2
+                  db 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+                  db 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7
+                  db 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21
+                  db 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3
+                  db 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17
+                  db 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8
+                  db 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22
+                  db 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4
+                  db 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18
+                  db 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
+
+
+ALIGN 32
+c_ang32_mode_22: db 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6
+                 db 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
+                 db 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18
+                 db 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5
+                 db 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11
+                 db 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17
+                 db 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4
+                 db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10
+                 db 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+                 db 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3
+                 db 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9
+                 db 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15
+                 db 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2
+                 db 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8
+                 db 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14
+                 db 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1
+                 db 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7
+                 db 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13
+                 db 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
+
+
+ALIGN 32
+c_mode32_23_shuff:       times 2 db 0, 0, 0, 14, 10, 7, 3, 0
+c_mode32_23_shuff1:      times 2 db 0, 0, 14, 10, 7, 3, 0, 0
+c_mode32_23_shuff2:      times 2 db 0, 14, 10, 7, 3, 0, 0, 0
+c_mode32_23_shuff3:      times 2 db 14, 10, 7, 3, 0, 0, 0
+c_mode32_23_shuff4:      times 2 db 10, 7, 3, 0, 0, 0, 0, 0
+
+
+ALIGN 32
+c_ang32_mode_21: db 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15
+                 db 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13
+                 db 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11
+                 db 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9
+                 db 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7
+                 db 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5
+                 db 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3
+                 db 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1
+                 db 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+                 db 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14
+                 db 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
+                 db 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10
+                 db 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8
+                 db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6
+                 db 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4
+                 db 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2
+                 db 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0, 32, 0
+
 ALIGN 32
 ;; (blkSize - 1 - x)
 pw_planar4_0:         dw 3,  2,  1,  0,  3,  2,  1,  0
@@ -420,6 +561,7 @@ cextern multiH
 cextern multiH2
 cextern multiH3
 cextern multi_2Row
+cextern trans8_shuf
 
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
@@ -1249,7 +1391,7 @@ cglobal intra_pred_planar32, 3,3,8,0-(4*mmsize)
 ; void intraPredAng4(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
 ;-----------------------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal intra_pred_ang4_2, 3,5,3
+cglobal intra_pred_ang4_2, 3,5,1
     lea         r4, [r2 + 2]
     add         r2, 10
     cmp         r3m, byte 34
@@ -1257,23 +1399,21 @@ cglobal intra_pred_ang4_2, 3,5,3
 
     movh        m0, [r2]
     movd        [r0], m0
-    mova        m1, m0
-    psrldq      m1, 1
-    movd        [r0 + r1], m1
-    mova        m2, m0
-    psrldq      m2, 2
-    movd        [r0 + r1 * 2], m2
+    psrldq      m0, 1
+    movd        [r0 + r1], m0
+    psrldq      m0, 1
+    movd        [r0 + r1 * 2], m0
     lea         r1, [r1 * 3]
-    psrldq      m0, 3
+    psrldq      m0, 1
     movd        [r0 + r1], m0
     RET
 
 INIT_XMM sse2
 cglobal intra_pred_ang4_3, 3,5,8
-    mov         r4, 1
+    mov         r4d, 1
     cmp         r3m, byte 33
-    mov         r3, 9
-    cmove       r3, r4
+    mov         r3d, 9
+    cmove       r3d, r4d
 
     movh        m0, [r2 + r3]   ; [8 7 6 5 4 3 2 1]
     mova        m1, m0
@@ -1299,7 +1439,6 @@ cglobal intra_pred_ang4_3, 3,5,8
 ALIGN 16
 .do_filter4x4:
     pxor        m1, m1
-    pxor        m3, m3
     punpckhbw   m3, m0
     psrlw       m3, 8
     pmaddwd     m3, m5
@@ -1308,7 +1447,6 @@ ALIGN 16
     packssdw    m0, m3
     paddw       m0, [pw_16]
     psraw       m0, 5
-    pxor        m3, m3
     punpckhbw   m3, m2
     psrlw       m3, 8
     pmaddwd     m3, m7
@@ -1335,32 +1473,31 @@ ALIGN 16
 .store:
     packuswb    m0, m2
     movd        [r0], m0
-    pshufd      m0, m0, 0x39
+    psrldq      m0, 4
     movd        [r0 + r1], m0
-    pshufd      m0, m0, 0x39
+    psrldq      m0, 4
     movd        [r0 + r1 * 2], m0
     lea         r1, [r1 * 3]
-    pshufd      m0, m0, 0x39
+    psrldq      m0, 4
     movd        [r0 + r1], m0
     RET
 
 cglobal intra_pred_ang4_4, 3,5,8
-    xor         r4, r4
-    inc         r4
+    xor         r4d, r4d
+    inc         r4d
     cmp         r3m, byte 32
-    mov         r3, 9
-    cmove       r3, r4
+    mov         r3d, 9
+    cmove       r3d, r4d
 
     movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
+    punpcklbw   m0, m0
+    psrldq      m0, 1
+    mova        m2, m0
+    psrldq      m2, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
     mova        m1, m0
-    psrldq      m1, 1           ; [x 8 7 6 5 4 3 2]
-    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
-    mova        m1, m0
-    psrldq      m1, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
-    mova        m3, m0
-    psrldq      m3, 4           ; [x x x x x x x x 7 6 6 5 5 4 4 3]
-    punpcklqdq  m0, m1
-    punpcklqdq  m2, m1, m3
+    psrldq      m1, 4           ; [x x x x x x x x 7 6 6 5 5 4 4 3]
+    punpcklqdq  m0, m2
+    punpcklqdq  m2, m1
 
     lea         r3, [pw_ang_table + 18 * 16]
     mova        m4, [r3 +  3 * 16]  ; [21]
@@ -1370,22 +1507,21 @@ cglobal intra_pred_ang4_4, 3,5,8
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
 cglobal intra_pred_ang4_5, 3,5,8
-    xor         r4, r4
-    inc         r4
+    xor         r4d, r4d
+    inc         r4d
     cmp         r3m, byte 31
-    mov         r3, 9
-    cmove       r3, r4
+    mov         r3d, 9
+    cmove       r3d, r4d
 
     movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
-    mova        m1, m0
-    psrldq      m1, 1           ; [x 8 7 6 5 4 3 2]
-    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
-    mova        m1, m0
-    psrldq      m1, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
+    punpcklbw   m0, m0          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    psrldq      m0, 1
+    mova        m2, m0
+    psrldq      m2, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
     mova        m3, m0
     psrldq      m3, 4           ; [x x x x x x x x 7 6 6 5 5 4 4 3]
-    punpcklqdq  m0, m1
-    punpcklqdq  m2, m1, m3
+    punpcklqdq  m0, m2
+    punpcklqdq  m2, m3
 
     lea         r3, [pw_ang_table + 10 * 16]
     mova        m4, [r3 +  7 * 16]  ; [17]
@@ -1395,18 +1531,17 @@ cglobal intra_pred_ang4_5, 3,5,8
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
 cglobal intra_pred_ang4_6, 3,5,8
-    xor         r4, r4
-    inc         r4
+    xor         r4d, r4d
+    inc         r4d
     cmp         r3m, byte 30
-    mov         r3, 9
-    cmove       r3, r4
+    mov         r3d, 9
+    cmove       r3d, r4d
 
     movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
-    mova        m1, m0
-    psrldq      m1, 1           ; [x 8 7 6 5 4 3 2]
-    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    punpcklbw   m0, m0
+    psrldq      m0, 1           ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
     mova        m2, m0
-    psrldq      m2, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
+    psrldq      m2, 2           ; [x x x 8 8 7 7 6 6 5 5 4 4 3 3 2]
     punpcklqdq  m0, m0
     punpcklqdq  m2, m2
 
@@ -1418,20 +1553,20 @@ cglobal intra_pred_ang4_6, 3,5,8
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
 cglobal intra_pred_ang4_7, 3,5,8
-    xor         r4, r4
-    inc         r4
+    xor         r4d, r4d
+    inc         r4d
     cmp         r3m, byte 29
-    mov         r3, 9
-    cmove       r3, r4
+    mov         r3d, 9
+    cmove       r3d, r4d
 
     movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
-    mova        m1, m0
-    psrldq      m1, 1           ; [x 8 7 6 5 4 3 2]
-    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
-    mova        m3, m0
-    psrldq      m3, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
-    punpcklqdq  m2, m0, m3
+    punpcklbw   m0, m0
+    psrldq      m0, 1
+    mova        m2, m0
+    psrldq      m2, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
     punpcklqdq  m0, m0
+    punpcklqdq  m2, m2
+    movhlps     m2, m0
 
     lea         r3, [pw_ang_table + 20 * 16]
     mova        m4, [r3 - 11 * 16]  ; [ 9]
@@ -1441,16 +1576,15 @@ cglobal intra_pred_ang4_7, 3,5,8
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
 cglobal intra_pred_ang4_8, 3,5,8
-    xor         r4, r4
-    inc         r4
+    xor         r4d, r4d
+    inc         r4d
     cmp         r3m, byte 28
-    mov         r3, 9
-    cmove       r3, r4
+    mov         r3d, 9
+    cmove       r3d, r4d
 
     movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
-    mova        m1, m0
-    psrldq      m1, 1           ; [x 8 7 6 5 4 3 2]
-    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    punpcklbw   m0, m0
+    psrldq      m0, 1
     punpcklqdq  m0, m0
     mova        m2, m0
 
@@ -1462,16 +1596,15 @@ cglobal intra_pred_ang4_8, 3,5,8
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
 cglobal intra_pred_ang4_9, 3,5,8
-    xor         r4, r4
-    inc         r4
+    xor         r4d, r4d
+    inc         r4d
     cmp         r3m, byte 27
-    mov         r3, 9
-    cmove       r3, r4
+    mov         r3d, 9
+    cmove       r3d, r4d
 
     movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
-    mova        m1, m0
-    psrldq      m1, 1           ; [x 8 7 6 5 4 3 2]
-    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    punpcklbw   m0, m0
+    psrldq      m0, 1           ; [x 8 7 6 5 4 3 2]
     punpcklqdq  m0, m0
     mova        m2, m0
 
@@ -13514,5 +13647,1853 @@ cglobal intra_pred_ang32_32, 3, 5, 11
     vpermq            m6, m6, 11011000b
     movu              [r0 + r3], m6
     RET
-%endif
 
+INIT_YMM avx2
+cglobal intra_pred_ang32_33, 3, 5, 11
+    mova              m0, [pw_1024]
+    mova              m1, [intra_pred_shuff_0_8]
+    lea               r3, [3 * r1]
+    lea               r4, [c_ang32_mode_33]
+
+    ;row [0]
+    vbroadcasti128    m2, [r2 + 1]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 9]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 17]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 25]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 0 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 0 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0], m6
+
+    ;row [1]
+    vbroadcasti128    m2, [r2 + 2]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 10]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 18]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 26]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 1 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 1 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r1], m6
+
+    ;row [2]
+    vbroadcasti128    m2, [r2 + 3]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 11]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 19]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 27]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 2 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 2 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + 2 * r1], m6
+
+    ;row [3]
+    vbroadcasti128    m2, [r2 + 4]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 12]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 20]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 28]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 3 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 3 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+
+    ;row [4, 5]
+    vbroadcasti128    m2, [r2 + 5]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 13]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 21]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 29]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    lea               r0, [r0 + 4 * r1]
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row [6]
+    vbroadcasti128    m2, [r2 + 6]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 14]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 22]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 30]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 1 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 1 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + 2 * r1], m6
+
+    ;row [7]
+    vbroadcasti128    m2, [r2 + 7]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 15]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 23]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 31]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 2 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 2 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+
+    ;row [8]
+    vbroadcasti128    m2, [r2 + 8]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 16]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 24]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 32]
+    pshufb            m5, m1
+
+    lea               r0, [r0 + 4 * r1]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 3 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 3 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0], m6
+
+    ;row [9, 10]
+    vbroadcasti128    m2, [r2 + 9]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 17]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 25]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 33]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row [11]
+    vbroadcasti128    m2, [r2 + 10]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 18]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 26]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 34]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 1 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 1 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+
+    ;row [12]
+    vbroadcasti128    m2, [r2 + 11]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 19]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 27]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 35]
+    pshufb            m5, m1
+
+    lea               r0, [r0 + 4 * r1]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 2 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 2 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0], m6
+
+    ;row [13]
+    vbroadcasti128    m2, [r2 + 12]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 20]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 28]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 36]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 3 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 3 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r1], m6
+
+    ;row [14]
+    vbroadcasti128    m2, [r2 + 13]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 21]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 29]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 37]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 0 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 0 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + 2 * r1], m6
+
+    ;row [15, 16]
+    vbroadcasti128    m2, [r2 + 14]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 22]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 30]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 38]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row [17]
+    vbroadcasti128    m2, [r2 + 15]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 23]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 31]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 39]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 2 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 2 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r1], m6
+
+    ;row [18]
+    vbroadcasti128    m2, [r2 + 16]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 24]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 32]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 40]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 3 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 3 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + 2 * r1], m6
+
+    ;row [19]
+    vbroadcasti128    m2, [r2 + 17]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 25]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 33]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 41]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 0 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 0 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+
+    ;row [20, 21]
+    vbroadcasti128    m2, [r2 + 18]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 26]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 34]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 42]
+    pshufb            m5, m1
+
+    lea               r0, [r0 + 4 * r1]
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row [22]
+    vbroadcasti128    m2, [r2 + 19]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 27]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 35]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 43]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 2 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 2 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + 2 * r1], m6
+
+    ;row [23]
+    vbroadcasti128    m2, [r2 + 20]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 28]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 36]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 44]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 3 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 3 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+
+    ;row [24]
+    vbroadcasti128    m2, [r2 + 21]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 29]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 37]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 45]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    lea               r0, [r0 + 4 * r1]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 0 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 0 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0], m6
+
+    ;row [25, 26]
+    vbroadcasti128    m2, [r2 + 22]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 30]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 38]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 46]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row [27]
+    vbroadcasti128    m2, [r2 + 23]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 31]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 39]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 47]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 2 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 2 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+
+    ;row [28]
+    vbroadcasti128    m2, [r2 + 24]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 32]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 40]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 48]
+    pshufb            m5, m1
+
+    lea               r0, [r0 + 4 * r1]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 3 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 3 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0], m6
+
+    ;row [29]
+    vbroadcasti128    m2, [r2 + 25]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 33]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 41]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 49]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 0 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 0 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r1], m6
+
+    ;row [30]
+    vbroadcasti128    m2, [r2 + 26]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 34]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 42]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 50]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 1 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 1 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + 2 * r1], m6
+
+    ;row [31]
+    vbroadcasti128    m2, [r2 + 27]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 35]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 43]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 51]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 2 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 2 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang32_25, 3, 5, 11
+    mova              m0, [pw_1024]
+    mova              m1, [intra_pred_shuff_0_8]
+    lea               r3, [3 * r1]
+    lea               r4, [c_ang32_mode_25]
+
+    ;row [0, 1]
+    vbroadcasti128    m2, [r2 + 0]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 8]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 16]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 24]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[2, 3]
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[4, 5]
+    mova              m10, [r4 + 2 * mmsize]
+    lea               r0, [r0 + 4 * r1]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[6, 7]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[8, 9]
+    add               r4, 4 * mmsize
+    lea               r0, [r0 + 4 * r1]
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[10, 11]
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[12, 13]
+    mova              m10, [r4 + 2 * mmsize]
+    lea               r0, [r0 + 4 * r1]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[14, 15]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[16, 17]
+    movu              xm2, [r2 - 1]
+    pinsrb            xm2, [r2 + 80], 0
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 7]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 15]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 23]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    lea               r0, [r0 + 4 * r1]
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[18, 19]
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[20, 21]
+    mova              m10, [r4 + 2 * mmsize]
+    lea               r0, [r0 + 4 * r1]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[22, 23]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[24, 25]
+    add               r4, 4 * mmsize
+    lea               r0, [r0 + 4 * r1]
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[26, 27]
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[28, 29]
+    mova              m10, [r4 + 2 * mmsize]
+    lea               r0, [r0 + 4 * r1]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[30, 31]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang32_24, 3, 5, 11
+    mova              m0, [pw_1024]
+    mova              m1, [intra_pred_shuff_0_8]
+    lea               r3, [3 * r1]
+    lea               r4, [c_ang32_mode_24]
+
+    ;row[0, 1]
+    vbroadcasti128    m2, [r2 + 0]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 8]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 16]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 24]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[2, 3]
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[4, 5]
+    mova              m10, [r4 + 2 * mmsize]
+    lea               r0, [r0 + 4 * r1]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[6, 7]
+    movu              xm2, [r2 - 1]
+    pinsrb            xm2, [r2 + 70], 0
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 7]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 15]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 23]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[8, 9]
+    add               r4, 4 * mmsize
+    lea               r0, [r0 + 4 * r1]
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[10, 11]
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[12, 13]
+    movu              xm2, [r2 - 2]
+    pinsrb            xm2, [r2 + 70], 1
+    pinsrb            xm2, [r2 + 77], 0
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 6]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 14]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 22]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+    lea               r0, [r0 + 4 * r1]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[14, 15]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[16, 17]
+    add               r4, 4 * mmsize
+    lea               r0, [r0 + 4 * r1]
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[18]
+    mova              m10, [r4 + 1 * mmsize]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, m10
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, m10
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + 2 * r1], m6
+
+    ;row[19, 20]
+    movu              xm2, [r2 - 3]
+    pinsrb            xm2, [r2 + 70], 2
+    pinsrb            xm2, [r2 + 77], 1
+    pinsrb            xm2, [r2 + 83], 0
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 5]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 13]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 21]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[21, 22]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[23, 24]
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[25, 26]
+    movu              xm2, [r2 - 4]
+    pinsrb            xm2, [r2 + 70], 3
+    pinsrb            xm2, [r2 + 77], 2
+    pinsrb            xm2, [r2 + 83], 1
+    pinsrb            xm2, [r2 + 90], 0
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 4]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 12]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 20]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[27, 28]
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[29, 30]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;[row 31]
+    mova              m10, [r4 + 4 * mmsize]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, m10
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, m10
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang32_23, 3, 5, 12
+    mova              m0, [pw_1024]
+    mova              m1, [intra_pred_shuff_0_8]
+    lea               r3, [3 * r1]
+    lea               r4, [c_ang32_mode_23]
+
+    ;row[0, 1]
+    vbroadcasti128    m2, [r2 + 0]
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 8]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 16]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 24]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[2]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 1 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 1 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + 2 * r1], m6
+
+    ;row[3, 4]
+    movu              xm2, [r2 - 1]
+    pinsrb            xm2, [r2 + 68], 0
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 7]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 15]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 23]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[5, 6]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[7, 8]
+    movu              xm2, [r2 - 2]
+    pinsrb            xm2, [r2 + 71], 0
+    pinsrb            xm2, [r2 + 68], 1
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 6]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 14]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 22]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[9]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 1 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 1 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r1], m6
+
+    ;row[10, 11]
+    movu              xm2, [r2 - 3]
+    pinsrb            xm2, [r2 + 75], 0
+    pinsrb            xm2, [r2 + 71], 1
+    pinsrb            xm2, [r2 + 68], 2
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 5]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 13]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 21]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[12, 13]
+    lea               r0, [r0 + 4 * r1]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[14, 15]
+    movu              xm11, [r2 + 68]
+    movu              xm2, xm11
+    pshufb            xm2, [c_mode32_23_shuff4]
+    pinsrw            xm2, [r2 +  0], 2
+    pinsrw            xm2, [r2 +  2], 3
+    pinsrb            xm2, [r2 +  4], 8
+
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 4]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 12]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 20]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[16]
+    lea               r0, [r0 + 4 * r1]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 1 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 1 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0], m6
+
+    ;row[17, 18]
+    mova              xm2, xm11
+    pshufb            xm2, [c_mode32_23_shuff3]
+    pinsrb            xm2, [r2 +  0], 5
+    pinsrw            xm2, [r2 +  1], 3
+    pinsrb            xm2, [r2 +  3], 8
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 3]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 11]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 19]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[19, 20]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[21, 22]
+    mova              xm2, xm11
+    pshufb            xm2, [c_mode32_23_shuff2]
+    pinsrb            xm2, [r2 + 85], 0
+    pinsrw            xm2, [r2 +  0], 3
+    pinsrb            xm2, [r2 +  2], 8
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 2]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 10]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 18]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[23]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 1 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 1 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+
+    ;row[24, 25]
+    mova              xm2, xm11
+    pshufb            xm2, [c_mode32_23_shuff1]
+    pinsrb            xm2, [r2 + 89], 0
+    pinsrb            xm2, [r2 + 85], 1
+    pinsrb            xm2, [r2 +  0], 7
+    pinsrb            xm2, [r2 +  1], 8
+
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 1]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 9]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 17]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+    lea               r0, [r0 + 4 * r1]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[26, 27]
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[28, 29]
+    mova              xm2, xm11
+    pshufb            xm2, [c_mode32_23_shuff]
+    pinsrb            xm2, [r2 + 92], 0
+    pinsrb            xm2, [r2 + 89], 1
+    pinsrb            xm2, [r2 + 85], 2
+    pinsrb            xm2, [r2 +  0], 8
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 0]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 8]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 16]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+    lea               r0, [r0 + 4 * r1]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[30, 31]
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang32_22, 3, 5, 13
+    mova              m0, [pw_1024]
+    mova              m1, [intra_pred_shuff_0_8]
+    lea               r3, [3 * r1]
+    lea               r4, [c_ang32_mode_22]
+
+    ;row[0, 1]
+    vbroadcasti128    m11, [r2 + 0]
+    pshufb            m2, m11, m1
+    vbroadcasti128    m3, [r2 + 8]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 16]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 24]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[2, 3]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 66], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 7]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 15]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 23]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[4, 5]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 69], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 6]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 14]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 22]
+    pshufb            m5, m1
+
+    lea               r0, [r0 + 4 * r1]
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[6]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 3 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 3 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + 2 * r1], m6
+
+    ;row[7, 8]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 71], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 5]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 13]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 21]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[9, 10]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 74], 0
+    vinserti128       m2, m11, xm11, 1
+    vinserti128       m2, m2, xm2, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 4]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 12]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 20]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[11]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 2 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 2 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+
+    ;row[12, 13]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 76], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 3]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 11]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 19]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 3 * mmsize]
+    lea               r0, [r0 + 4 * r1]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[14, 15]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 79], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 2]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 10]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 18]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[16]
+    lea               r0, [r0 + 4 * r1]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 1 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 1 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0], m6
+
+    ;row[17, 18]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 81], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 1]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 9]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 17]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[19, 20]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 84], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m12, [r2 + 0]
+    pshufb            m3, m12, m1
+    vbroadcasti128    m4, [r2 + 8]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 16]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[21]
+    add               r4, 4 * mmsize
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 0 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 0 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r1], m6
+
+    ;row[22, 23]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 86], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 66], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 7]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 15]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[24, 25]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 89], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 69], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 6]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 14]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+    lea               r0, [r0 + 4 * r1]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[26]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 3 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 3 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + 2 * r1], m6
+
+    ;row[27, 28]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 91], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 71], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 5]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 13]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[29, 30]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 94], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 74], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 4]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 12]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[31]
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 2 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 2 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang32_21, 3, 5, 13
+    mova              m0, [pw_1024]
+    mova              m1, [intra_pred_shuff_0_8]
+    lea               r3, [3 * r1]
+    lea               r4, [c_ang32_mode_21]
+
+    ;row[0]
+    vbroadcasti128    m11, [r2 + 0]
+    pshufb            m2, m11, m1
+    vbroadcasti128    m3, [r2 + 8]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 16]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 24]
+    pshufb            m5, m1
+
+    vperm2i128        m6, m2, m3, 00100000b
+    pmaddubsw         m6, [r4 + 0 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 0 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0], m6
+
+    ;row[1, 2]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 66], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 7]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 15]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 23]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[3, 4]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 68], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 6]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 14]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 22]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[5, 6]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 70], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 5]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 13]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 21]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[7, 8]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 72], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 4]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 12]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 20]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[9, 10]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 73], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 3]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 11]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 19]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[11, 12]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 75], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 2]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 10]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 18]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r3], m7
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m6
+
+    ;row[13, 14]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 77], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m3, [r2 + 1]
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 9]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 17]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + r1], m7
+    movu              [r0 + 2 * r1], m6
+
+    ;row[15]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 79], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    vbroadcasti128    m12, [r2 + 0]
+    pshufb            m3, m12, m1
+    vbroadcasti128    m4, [r2 + 8]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 16]
+    pshufb            m5, m1
+    vperm2i128        m6, m2, m3, 00100000b
+    add               r4, 4 * mmsize
+    pmaddubsw         m6, [r4 + 0 * mmsize]
+    pmulhrsw          m6, m0
+    vperm2i128        m7, m4, m5, 00100000b
+    pmaddubsw         m7, [r4 + 0 * mmsize]
+    pmulhrsw          m7, m0
+    packuswb          m6, m7
+    vpermq            m6, m6, 11011000b
+    movu              [r0 + r3], m6
+
+    ;row[16, 17]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 81], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 66], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 7]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 15]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[18, 19]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 83], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 68], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 6]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 14]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[20, 21]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 85], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 70], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 5]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 13]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[22, 23]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 87], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 72], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 4]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 12]
+    pshufb            m5, m1
+
+    add               r4, 4 * mmsize
+    mova              m10, [r4 + 0 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[24, 25]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 88], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 73], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 3]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 11]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 1 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[26, 27]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 90], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 75], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 2]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 10]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 2 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+
+    ;row[28, 29]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 92], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 77], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 1]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 9]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 3 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    lea               r0, [r0 + 4 * r1]
+    movu              [r0], m7
+    movu              [r0 + r1], m6
+
+    ;row[30, 31]
+    pslldq            xm11, 1
+    pinsrb            xm11, [r2 + 94], 0
+    vinserti128       m2, m11, xm11, 1
+    pshufb            m2, m1
+    pslldq            xm12, 1
+    pinsrb            xm12, [r2 + 79], 0
+    vinserti128       m3, m12, xm12, 1
+    pshufb            m3, m1
+    vbroadcasti128    m4, [r2 + 0]
+    pshufb            m4, m1
+    vbroadcasti128    m5, [r2 + 8]
+    pshufb            m5, m1
+
+    mova              m10, [r4 + 4 * mmsize]
+
+    INTRA_PRED_ANG32_CAL_ROW
+    movu              [r0 + 2 * r1], m7
+    movu              [r0 + r3], m6
+    RET
+%endif
