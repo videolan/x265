@@ -218,3 +218,36 @@ void x265_picture_free(x265_picture *p)
 {
     return x265_free(p);
 }
+
+static const x265_api libapi =
+{
+    &x265_param_alloc,
+    &x265_param_free,
+    &x265_param_default,
+    &x265_param_parse,
+    &x265_param_apply_profile,
+    &x265_param_default_preset,
+    &x265_picture_alloc,
+    &x265_picture_free,
+    &x265_picture_init,
+    &x265_encoder_open,
+    &x265_encoder_parameters,
+    &x265_encoder_headers,
+    &x265_encoder_encode,
+    &x265_encoder_get_stats,
+    &x265_encoder_log,
+    &x265_encoder_close,
+    &x265_cleanup,
+    x265_version_str,
+    x265_build_info_str,
+    x265_max_bit_depth,
+};
+
+extern "C"
+const x265_api* x265_api_get(int bitDepth)
+{
+    if (bitDepth && bitDepth != X265_DEPTH)
+        return NULL;
+
+    return &libapi;
+}

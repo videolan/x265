@@ -347,3 +347,36 @@ CTU size::
 	/* x265_cleanup:
 	 *     release library static allocations, reset configured CTU size */
 	void x265_cleanup(void);
+
+
+Multi-library Interface
+=======================
+
+If your application might want to make a runtime selection between among
+a number of libx265 libraries (perhaps 8bpp and 16bpp), then you will
+want to use the multi-library interface.
+
+Instead of directly using all of the **x265_** methods documented
+above, you query an x265_api structure from your libx265 and then use
+the function pointers within that structure of the same name, but
+without the **x265_** prefix. So **x265_param_default()** becomes
+**api->param_default()**. The key method is x265_api_get()::
+
+    /* x265_api_get:
+     *   Retrieve the programming interface for a linked x265 library.
+     *   May return NULL if no library is available that supports the
+     *   requested bit depth. If bitDepth is 0, the function is guarunteed
+     *   to return a non-NULL x265_api pointer from the system default
+     *   libx265 */
+    const x265_api* x265_api_get(int bitDepth);
+
+The general idea is to request the API for the bitDepth you would prefer
+the encoder to use (8 or 10), and if that returns NULL you request the
+API for bitDepth=0, which returns the system default libx265.
+
+Note that using this multi-library API in your application is only the
+first step. Next your application must dynamically link to libx265 and
+then you must build and install a multi-lib configuration of libx265,
+which includes 8bpp and 16bpp builds of libx265 and a shim library which
+forwards x265_api_get() calls to the appropriate library using dynamic
+loading and binding.

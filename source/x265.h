@@ -1232,6 +1232,53 @@ void x265_encoder_close(x265_encoder *);
  *       release library static allocations, reset configured CTU size */
 void x265_cleanup(void);
 
+
+/* === Multi-lib API ===
+ * By using this method to gain access to the libx265 interfaces, you allow shim
+ * implementations of x265_api_get() to choose between various available libx265
+ * libraries based on the encoder parameters. The most likely use case is to
+ * choose between 8bpp and 16bpp builds of libx265. */
+
+typedef struct x265_api
+{
+    /* libx265 public API functions, documented above with x265_ prefixes */
+    x265_param*   (*param_alloc)(void);
+    void          (*param_free)(x265_param*);
+    void          (*param_default)(x265_param*);
+    int           (*param_parse)(x265_param*, const char*, const char*);
+    int           (*param_apply_profile)(x265_param*, const char*);
+    int           (*param_default_preset)(x265_param*, const char*, const char *);
+    x265_picture* (*picture_alloc)(void);
+    void          (*picture_free)(x265_picture*);
+    void          (*picture_init)(x265_param*, x265_picture*);
+    x265_encoder* (*encoder_open)(x265_param*);
+    void          (*encoder_parameters)(x265_encoder*, x265_param*);
+    int           (*encoder_headers)(x265_encoder*, x265_nal**, uint32_t*);
+    int           (*encoder_encode)(x265_encoder*, x265_nal**, uint32_t*, x265_picture*, x265_picture*);
+    void          (*encoder_get_stats)(x265_encoder*, x265_stats*, uint32_t);
+    void          (*encoder_log)(x265_encoder*, int, char**);
+    void          (*encoder_close)(x265_encoder*);
+    void          (*cleanup)(void);
+    const char*   version_str;
+    const char*   build_info_str;
+    int           max_bit_depth;
+} x265_api;
+
+/* Force a link error in the case of linking against an incompatible API version.
+ * Glue #defines exist to force correct macro expansion; the final output of the macro
+ * is x265_api_get_##X265_BUILD (for purposes of dlopen). */
+#define x265_api_glue1(x, y) x ## y
+#define x265_api_glue2(x, y) x265_api_glue1(x, y)
+#define x265_api_get x265_api_glue2(x265_api_get_, X265_BUILD)
+
+/* x265_api_get:
+ *   Retrieve the programming interface for a linked x265 library.
+ *   May return NULL if no library is available that supports the
+ *   requested bit depth. If bitDepth is 0 the function is guarunteed
+ *   to return a non-NULL x265_api pointer, from the system default
+ *   libx265 */
+const x265_api* x265_api_get(int bitDepth);
+
 #ifdef __cplusplus
 }
 #endif
