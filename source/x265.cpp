@@ -397,7 +397,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
                                       param->fpsNum, param->fpsDenom, param->internalCsp);
         if (this->recon->isFail())
         {
-            x265_log(param, X265_LOG_WARNING, "unable to write reconstruction file\n");
+            x265_log(param, X265_LOG_WARNING, "unable to write reconstructed outputs file\n");
             this->recon->release();
             this->recon = 0;
         }
