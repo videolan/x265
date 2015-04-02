@@ -1606,6 +1606,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         p.scale1D_128to64 = x265_scale1D_128to64_avx2;
         p.weight_pp = x265_weight_pp_avx2;
+        p.weight_sp = x265_weight_sp_avx2;
 
         // intra_pred functions
         p.cu[BLOCK_4x4].intra_pred[27] = x265_intra_pred_ang4_27_avx2;

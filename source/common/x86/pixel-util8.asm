@@ -1492,6 +1492,84 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
     dec         r5d
     jnz         .loopH
     RET
+
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal weight_sp, 6, 9, 7
+    mov             r7d, r7m
+    shl             r7d, 16
+    or              r7d, r6m
+    vpbroadcastd    m0, r7d            ; m0 = times 8 dw w0, round
+    movd            xm1, r8m            ; m1 = [shift]
+    vpbroadcastd    m2, r9m            ; m2 = times 16 dw offset
+    vpbroadcastw    m3, [pw_1]
+    vpbroadcastw    m4, [pw_2000]
+
+    add             r2d, r2d            ; 2 * srcstride
+
+    mov             r7, r0
+    mov             r8, r1
+.loopH:
+    mov             r6d, r4d            ; width
+
+    ; save old src and dst
+    mov             r0, r7              ; src
+    mov             r1, r8              ; dst
+.loopW:
+    movu            m5, [r0]
+    paddw           m5, m4
+
+    punpcklwd       m6,m5, m3
+    pmaddwd         m6, m0
+    psrad           m6, xm1
+    paddd           m6, m2
+
+    punpckhwd       m5, m3
+    pmaddwd         m5, m0
+    psrad           m5, xm1
+    paddd           m5, m2
+
+    packssdw        m6, m5
+    packuswb        m6, m6
+    vpermq          m6, m6, 10001000b
+
+    sub             r6d, 16
+    jl              .width8
+    movu            [r1], xm6
+    je              .nextH
+    add             r0, 32
+    add             r1, 16
+    jmp             .loopW
+
+.width8:
+    add             r6d, 16
+    cmp             r6d, 8
+    jl              .width4
+    movq            [r1], xm6
+    je              .nextH
+    psrldq          m6, 8
+    sub             r6d, 8
+    add             r1, 8
+
+.width4:
+    cmp             r6d, 4
+    jl              .width2
+    movd            [r1], xm6
+    je              .nextH
+    add             r1, 4
+    pshufd          m6, m6, 1
+
+.width2:
+    pextrw          [r1], xm6, 0
+
+.nextH:
+    lea             r7, [r7 + r2]
+    lea             r8, [r8 + r3]
+
+    dec             r5d
+    jnz             .loopH
+    RET
+%endif
 %endif  ; end of (HIGH_BIT_DEPTH == 0)
     
 
