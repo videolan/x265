@@ -15488,6 +15488,15 @@ cglobal intra_pred_ang32_21, 3, 5, 13
     RET
 %endif
 
+%macro INTRA_PRED_STORE_4x4 0
+    movd              [r0], xm0
+    pextrd            [r0 + r1], xm0, 1
+    vextracti128      xm0, m0, 1
+    lea               r0, [r0 + 2 * r1]
+    movd              [r0], xm0
+    pextrd            [r0 + r1], xm0, 1
+%endmacro
+
 INIT_YMM avx2
 cglobal intra_pred_ang4_27, 3, 3, 1
     vbroadcasti128    m0, [r2 + 1]
@@ -15496,12 +15505,7 @@ cglobal intra_pred_ang4_27, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15512,12 +15516,7 @@ cglobal intra_pred_ang4_28, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15528,12 +15527,7 @@ cglobal intra_pred_ang4_29, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15544,12 +15538,7 @@ cglobal intra_pred_ang4_30, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15560,12 +15549,7 @@ cglobal intra_pred_ang4_31, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15576,12 +15560,7 @@ cglobal intra_pred_ang4_32, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15592,12 +15571,7 @@ cglobal intra_pred_ang4_33, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 
@@ -15609,12 +15583,7 @@ cglobal intra_pred_ang4_19, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15625,12 +15594,7 @@ cglobal intra_pred_ang4_20, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15641,12 +15605,7 @@ cglobal intra_pred_ang4_21, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15657,12 +15616,7 @@ cglobal intra_pred_ang4_22, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15673,12 +15627,7 @@ cglobal intra_pred_ang4_23, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15689,12 +15638,7 @@ cglobal intra_pred_ang4_24, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -15705,10 +15649,5 @@ cglobal intra_pred_ang4_25, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    vextracti128      xm0, m0, 1
-    lea               r0, [r0 + 2 * r1]
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
+    INTRA_PRED_STORE_4x4
     RET
