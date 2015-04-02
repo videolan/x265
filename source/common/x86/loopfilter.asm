@@ -324,9 +324,7 @@ cglobal saoCuOrgB0, 4, 7, 8
 ; void calSign(int8_t *dst, const Pixel *src1, const Pixel *src2, const int endX)
 ;============================================================================================================
 INIT_XMM sse4
-cglobal calSign, 4, 5, 7
-
-    mov         r4,    16
+cglobal calSign, 4, 4, 6
     mova        m1,    [pb_128]
     mova        m0,    [pb_1]
     shr         r3d,   4
@@ -335,17 +333,17 @@ cglobal calSign, 4, 5, 7
     movu        m3,    [r2]        ; m3 = pTmpU[x]
 
     pxor        m4,    m2,    m1
-    pxor        m5,    m3,    m1
-    pcmpgtb     m6,    m4,    m5
-    pcmpgtb     m5,    m4
-    pand        m6,    m0
-    por         m6,    m5
+    pxor        m3,    m1
+    pcmpgtb     m5,    m4,    m3
+    pcmpgtb     m3,    m4
+    pand        m5,    m0
+    por         m5,    m3
 
-    movu        [r0],  m6
+    movu        [r0],  m5
 
-    add         r0,    r4
-    add         r1,    r4
-    add         r2,    r4
+    add         r0,    16
+    add         r1,    16
+    add         r2,    16
     dec         r3d
-    jnz         .loop
+    jnz        .loop
     RET
