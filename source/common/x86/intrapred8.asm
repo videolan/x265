@@ -524,6 +524,7 @@ c_ang4_mode_31:          db 15, 17, 15, 17, 15, 17, 15, 17, 30, 2, 30, 2, 30, 2,
 c_ang4_mode_32:          db 11, 21, 11, 21, 11, 21, 11, 21, 22, 10, 22, 10, 22, 10, 22, 10, 1, 31, 1, 31, 1, 31, 1, 31, 12, 20, 12, 20, 12, 20, 12, 20
 c_ang4_mode_33:          db 6, 26, 6, 26, 6, 26, 6, 26, 12, 20, 12, 20, 12, 20, 12, 20, 18, 14, 18, 14, 18, 14, 18, 14, 24, 8, 24, 8, 24, 8, 24, 8
 c_ang4_mode_24:          db 5, 27, 5, 27, 5, 27, 5, 27, 10, 22, 10, 22, 10, 22, 10, 22, 15, 17, 15, 17, 15, 17, 15, 17, 20, 12, 20, 12, 20, 12, 20, 12
+c_ang4_mode_25:          db 2, 30, 2, 30, 2, 30, 2, 30, 4, 28, 4, 28, 4, 28, 4, 28, 6, 26, 6, 26, 6, 26, 6, 26, 8, 24, 8, 24, 8, 24, 8, 24
 
 ALIGN 32
 ;; (blkSize - 1 - x)
@@ -15594,6 +15595,22 @@ cglobal intra_pred_ang4_24, 3, 3, 1
     vbroadcasti128    m0, [r2]
     pshufb            m0, [intra_pred_shuff_0_4]
     pmaddubsw         m0, [c_ang4_mode_24]
+    pmulhrsw          m0, [pw_1024]
+    packuswb          m0, m0
+
+    movd              [r0], xm0
+    pextrd            [r0 + r1], xm0, 1
+    vextracti128      xm0, m0, 1
+    lea               r0, [r0 + 2 * r1]
+    movd              [r0], xm0
+    pextrd            [r0 + r1], xm0, 1
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang4_25, 3, 3, 1
+    vbroadcasti128    m0, [r2]
+    pshufb            m0, [intra_pred_shuff_0_4]
+    pmaddubsw         m0, [c_ang4_mode_25]
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 

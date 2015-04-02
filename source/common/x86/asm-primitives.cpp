@@ -1610,6 +1610,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         // intra_pred functions
         p.cu[BLOCK_4x4].intra_pred[24] = x265_intra_pred_ang4_24_avx2;
+        p.cu[BLOCK_4x4].intra_pred[25] = x265_intra_pred_ang4_25_avx2;
         p.cu[BLOCK_4x4].intra_pred[27] = x265_intra_pred_ang4_27_avx2;
         p.cu[BLOCK_4x4].intra_pred[28] = x265_intra_pred_ang4_28_avx2;
         p.cu[BLOCK_4x4].intra_pred[29] = x265_intra_pred_ang4_29_avx2;
