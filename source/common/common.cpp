@@ -136,8 +136,7 @@ void general_log(const x265_param* param, const char* caller, int level, const c
     va_start(arg, fmt);
     vsnprintf(buffer + p, bufferSize - p, fmt, arg);
     va_end(arg);
-    if (!(param && level > param->logLevel))
-        fputs(buffer, stderr);
+    fputs(buffer, stderr);
 }
 
 double x265_ssim2dB(double ssim)
