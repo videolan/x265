@@ -384,7 +384,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         else
             sprintf(buf + p, " frames %u - %d of %d", this->seek, this->seek + this->framesToBeEncoded - 1, info.frameCount);
 
-        fprintf(stderr, "%s  [info]: %s\n", input->getName(), buf);
+        general_log(param, input->getName(), X265_LOG_INFO, "%s\n", buf);
     }
 
     this->input->startReader();
@@ -620,25 +620,27 @@ fail:
     cliopt.bitstreamFile.close();
 
     if (b_ctrl_c)
-        fprintf(stderr, "aborted at input frame %d, output frame %d\n",
-                cliopt.seek + inFrameCount, stats.encodedPictureCount);
+        general_log(param, NULL, X265_LOG_INFO, "aborted at input frame %d, output frame %d\n",
+                    cliopt.seek + inFrameCount, stats.encodedPictureCount);
 
     if (stats.encodedPictureCount)
     {
-        printf("\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s", stats.encodedPictureCount,
-               stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
+        char buffer[4096];
+        int p = sprintf(buffer, "\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s", stats.encodedPictureCount,
+                        stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
 
         if (param->bEnablePsnr)
-            printf(", Global PSNR: %.3f", stats.globalPsnr);
+            p += sprintf(buffer + p, ", Global PSNR: %.3f", stats.globalPsnr);
 
         if (param->bEnableSsim)
-            printf(", SSIM Mean Y: %.7f (%6.3f dB)", stats.globalSsim, x265_ssim2dB(stats.globalSsim));
+            p += sprintf(buffer + p, ", SSIM Mean Y: %.7f (%6.3f dB)", stats.globalSsim, x265_ssim2dB(stats.globalSsim));
 
-        printf("\n");
+        sprintf(buffer + p, "\n");
+        general_log(param, NULL, X265_LOG_INFO, buffer);
     }
     else
     {
-        printf("\nencoded 0 frames\n");
+        general_log(param, NULL, X265_LOG_INFO, "\nencoded 0 frames\n");
     }
 
     api->cleanup(); /* Free library singletons */

@@ -413,7 +413,8 @@ void extendPicBorder(pixel* recon, intptr_t stride, int width, int height, int m
 
 /* outside x265 namespace, but prefixed. defined in common.cpp */
 int64_t  x265_mdate(void);
-void     x265_log(const x265_param *param, int level, const char *fmt, ...);
+#define  x265_log(param, ...) general_log(param, "x265", __VA_ARGS__)
+void     general_log(const x265_param* param, const char* caller, int level, const char* fmt, ...);
 int      x265_exp2fix8(double x);
 
 double   x265_ssim2dB(double ssim);
