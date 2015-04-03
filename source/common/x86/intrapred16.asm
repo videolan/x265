@@ -690,6 +690,28 @@ cglobal intra_pred_planar32, 3,3,16
 %endrep
     RET
 
+;-----------------------------------------------------------------------------------------
+; void intraPredAng4(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
+;-----------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal intra_pred_ang4_2, 3,5,4
+    lea         r4,            [r2 + 4]
+    add         r2,            20
+    cmp         r3m,           byte 34
+    cmove       r2,            r4
+
+    add         r1,            r1
+    movu        m0,            [r2]
+    movh        [r0],          m0
+    psrldq      m0,            2
+    movh        [r0 + r1],     m0
+    psrldq      m0,            2
+    movh        [r0 + r1 * 2], m0
+    lea         r1,            [r1 * 3]
+    psrldq      m0,            2
+    movh        [r0 + r1],     m0
+    RET
+
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
 ;-----------------------------------------------------------------------------------
