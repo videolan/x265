@@ -1290,6 +1290,15 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.pu[LUMA_16x16].convert_p2s = x265_filterPixelToShort_16x16_ssse3;
         p.pu[LUMA_16x32].convert_p2s = x265_filterPixelToShort_16x32_ssse3;
         p.pu[LUMA_16x64].convert_p2s = x265_filterPixelToShort_16x64_ssse3;
+        p.pu[LUMA_32x8].convert_p2s = x265_filterPixelToShort_32x8_ssse3;
+        p.pu[LUMA_32x16].convert_p2s = x265_filterPixelToShort_32x16_ssse3;
+        p.pu[LUMA_32x24].convert_p2s = x265_filterPixelToShort_32x24_ssse3;
+        p.pu[LUMA_32x32].convert_p2s = x265_filterPixelToShort_32x32_ssse3;
+        p.pu[LUMA_32x64].convert_p2s = x265_filterPixelToShort_32x64_ssse3;
+        p.pu[LUMA_64x16].convert_p2s = x265_filterPixelToShort_64x16_ssse3;
+        p.pu[LUMA_64x32].convert_p2s = x265_filterPixelToShort_64x32_ssse3;
+        p.pu[LUMA_64x48].convert_p2s = x265_filterPixelToShort_64x48_ssse3;
+        p.pu[LUMA_64x64].convert_p2s = x265_filterPixelToShort_64x64_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
