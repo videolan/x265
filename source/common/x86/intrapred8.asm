@@ -16002,6 +16002,18 @@ cglobal intra_pred_ang32_21, 3, 5, 13
     pextrd            [r0 + r1], xm0, 1
 %endmacro
 
+%macro INTRA_PRED_TRANS_STORE_4x4 0
+    vpermq            m0, m0, 00001000b
+    pshufb            m0, [c_trans_4x4]
+
+    ;store
+    movd              [r0], xm0
+    pextrd            [r0 + r1], xm0, 1
+    lea               r0, [r0 + 2 * r1]
+    pextrd            [r0], xm0, 2
+    pextrd            [r0 + r1], xm0, 3
+%endmacro
+
 INIT_YMM avx2
 cglobal intra_pred_ang4_27, 3, 3, 1
     vbroadcasti128    m0, [r2 + 1]
@@ -16088,15 +16100,7 @@ cglobal intra_pred_ang4_9, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    vpermq            m0, m0, 00001000b
-    pshufb            m0, [c_trans_4x4]
-
-    ;store
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    lea               r0, [r0 + 2 * r1]
-    pextrd            [r0], xm0, 2
-    pextrd            [r0 + r1], xm0, 3
+    INTRA_PRED_TRANS_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -16107,15 +16111,7 @@ cglobal intra_pred_ang4_11, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    vpermq            m0, m0, 00001000b
-    pshufb            m0, [c_trans_4x4]
-
-    ;store
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    lea               r0, [r0 + 2 * r1]
-    pextrd            [r0], xm0, 2
-    pextrd            [r0 + r1], xm0, 3
+    INTRA_PRED_TRANS_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -16126,15 +16122,7 @@ cglobal intra_pred_ang4_12, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    vpermq            m0, m0, 00001000b
-    pshufb            m0, [c_trans_4x4]
-
-    ;store
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    lea               r0, [r0 + 2 * r1]
-    pextrd            [r0], xm0, 2
-    pextrd            [r0 + r1], xm0, 3
+    INTRA_PRED_TRANS_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -16145,15 +16133,7 @@ cglobal intra_pred_ang4_13, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    vpermq            m0, m0, 00001000b
-    pshufb            m0, [c_trans_4x4]
-
-    ;store
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    lea               r0, [r0 + 2 * r1]
-    pextrd            [r0], xm0, 2
-    pextrd            [r0 + r1], xm0, 3
+    INTRA_PRED_TRANS_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -16164,15 +16144,7 @@ cglobal intra_pred_ang4_14, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    vpermq            m0, m0, 00001000b
-    pshufb            m0, [c_trans_4x4]
-
-    ;store
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    lea               r0, [r0 + 2 * r1]
-    pextrd            [r0], xm0, 2
-    pextrd            [r0 + r1], xm0, 3
+    INTRA_PRED_TRANS_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -16183,15 +16155,7 @@ cglobal intra_pred_ang4_15, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    vpermq            m0, m0, 00001000b
-    pshufb            m0, [c_trans_4x4]
-
-    ;store
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    lea               r0, [r0 + 2 * r1]
-    pextrd            [r0], xm0, 2
-    pextrd            [r0 + r1], xm0, 3
+    INTRA_PRED_TRANS_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -16202,15 +16166,7 @@ cglobal intra_pred_ang4_16, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    vpermq            m0, m0, 00001000b
-    pshufb            m0, [c_trans_4x4]
-
-    ;store
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    lea               r0, [r0 + 2 * r1]
-    pextrd            [r0], xm0, 2
-    pextrd            [r0 + r1], xm0, 3
+    INTRA_PRED_TRANS_STORE_4x4
     RET
 
 INIT_YMM avx2
@@ -16221,15 +16177,7 @@ cglobal intra_pred_ang4_17, 3, 3, 1
     pmulhrsw          m0, [pw_1024]
     packuswb          m0, m0
 
-    vpermq            m0, m0, 00001000b
-    pshufb            m0, [c_trans_4x4]
-
-    ;store
-    movd              [r0], xm0
-    pextrd            [r0 + r1], xm0, 1
-    lea               r0, [r0 + 2 * r1]
-    pextrd            [r0], xm0, 2
-    pextrd            [r0 + r1], xm0, 3
+    INTRA_PRED_TRANS_STORE_4x4
     RET
 
 INIT_YMM avx2
