@@ -859,9 +859,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         PIXEL_AVG_W4(mmx2);
         LUMA_VAR(sse2);
 
-        p.luma_p2s = x265_luma_p2s_sse2;
-        p.chroma[X265_CSP_I420].p2s = x265_chroma_p2s_sse2;
-        p.chroma[X265_CSP_I422].p2s = x265_chroma_p2s_sse2;
 
         ALL_LUMA_TU(blockfill_s, blockfill_s, sse2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, sse2);
@@ -1273,31 +1270,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         ASSIGN_SSE_PP(ssse3);
         p.cu[BLOCK_4x4].sse_pp = x265_pixel_ssd_4x4_ssse3;
         p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sse_pp = x265_pixel_ssd_4x8_ssse3;
-        p.pu[LUMA_4x4].filter_p2s = x265_pixelToShort_4x4_ssse3;
-        p.pu[LUMA_4x8].filter_p2s = x265_pixelToShort_4x8_ssse3;
-        p.pu[LUMA_4x16].filter_p2s = x265_pixelToShort_4x16_ssse3;
-        p.pu[LUMA_8x4].filter_p2s = x265_pixelToShort_8x4_ssse3;
-        p.pu[LUMA_8x8].filter_p2s = x265_pixelToShort_8x8_ssse3;
-        p.pu[LUMA_8x16].filter_p2s = x265_pixelToShort_8x16_ssse3;
-        p.pu[LUMA_8x32].filter_p2s = x265_pixelToShort_8x32_ssse3;
-        p.pu[LUMA_16x4].filter_p2s = x265_pixelToShort_16x4_ssse3;
-        p.pu[LUMA_16x8].filter_p2s = x265_pixelToShort_16x8_ssse3;
-        p.pu[LUMA_16x12].filter_p2s = x265_pixelToShort_16x12_ssse3;
-        p.pu[LUMA_16x16].filter_p2s = x265_pixelToShort_16x16_ssse3;
-        p.pu[LUMA_16x32].filter_p2s = x265_pixelToShort_16x32_ssse3;
-        p.pu[LUMA_16x64].filter_p2s = x265_pixelToShort_16x64_ssse3;
-        p.pu[LUMA_32x8].filter_p2s = x265_pixelToShort_32x8_ssse3;
-        p.pu[LUMA_32x16].filter_p2s = x265_pixelToShort_32x16_ssse3;
-        p.pu[LUMA_32x24].filter_p2s = x265_pixelToShort_32x24_ssse3;
-        p.pu[LUMA_32x32].filter_p2s = x265_pixelToShort_32x32_ssse3;
-        p.pu[LUMA_32x64].filter_p2s = x265_pixelToShort_32x64_ssse3;
-        p.pu[LUMA_64x16].filter_p2s = x265_pixelToShort_64x16_ssse3;
-        p.pu[LUMA_64x32].filter_p2s = x265_pixelToShort_64x32_ssse3;
-        p.pu[LUMA_64x48].filter_p2s = x265_pixelToShort_64x48_ssse3;
-        p.pu[LUMA_64x64].filter_p2s = x265_pixelToShort_64x64_ssse3;
-
-        p.chroma[X265_CSP_I420].p2s = x265_chroma_p2s_ssse3;
-        p.chroma[X265_CSP_I422].p2s = x265_chroma_p2s_ssse3;
 
         p.dst4x4 = x265_dst4_ssse3;
         p.cu[BLOCK_8x8].idct = x265_idct8_ssse3;

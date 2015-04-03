@@ -273,7 +273,7 @@ void Predict::predInterLumaPixel(const PredictionUnit& pu, Yuv& dstYuv, const Pi
 void Predict::predInterLumaShort(const PredictionUnit& pu, ShortYuv& dstSYuv, const PicYuv& refPic, const MV& mv) const
 {
     int16_t* dst = dstSYuv.getLumaAddr(pu.puAbsPartIdx);
-    int dstStride = dstSYuv.m_size;
+    intptr_t dstStride = dstSYuv.m_size;
 
     intptr_t srcStride = refPic.m_stride;
     intptr_t srcOffset = (mv.x >> 2) + (mv.y >> 2) * srcStride;
@@ -288,7 +288,7 @@ void Predict::predInterLumaShort(const PredictionUnit& pu, ShortYuv& dstSYuv, co
     X265_CHECK(dstStride == MAX_CU_SIZE, "stride expected to be max cu size\n");
 
     if (!(yFrac | xFrac))
-        primitives.luma_p2s(src, srcStride, dst, pu.width, pu.height);
+        primitives.pu[partEnum].convert_p2s(src, srcStride, dst, dstStride);
     else if (!yFrac)
         primitives.pu[partEnum].luma_hps(src, srcStride, dst, dstStride, xFrac, 0);
     else if (!xFrac)
@@ -375,14 +375,13 @@ void Predict::predInterChromaShort(const PredictionUnit& pu, ShortYuv& dstSYuv, 
     int partEnum = partitionFromSizes(pu.width, pu.height);
     
     uint32_t cxWidth  = pu.width >> m_hChromaShift;
-    uint32_t cxHeight = pu.height >> m_vChromaShift;
 
-    X265_CHECK(((cxWidth | cxHeight) % 2) == 0, "chroma block size expected to be multiple of 2\n");
+    X265_CHECK(((cxWidth | (pu.height >> m_vChromaShift)) % 2) == 0, "chroma block size expected to be multiple of 2\n");
 
     if (!(yFrac | xFrac))
     {
-        primitives.chroma[m_csp].p2s(refCb, refStride, dstCb, cxWidth, cxHeight);
-        primitives.chroma[m_csp].p2s(refCr, refStride, dstCr, cxWidth, cxHeight);
+        primitives.chroma[m_csp].pu[partEnum].p2s(refCb, refStride, dstCb, dstStride);
+        primitives.chroma[m_csp].pu[partEnum].p2s(refCr, refStride, dstCr, dstStride);
     }
     else if (!yFrac)
     {

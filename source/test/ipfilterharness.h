@@ -50,7 +50,6 @@ protected:
     pixel   pixel_test_buff[TEST_CASES][TEST_BUF_SIZE];
     int16_t short_test_buff[TEST_CASES][TEST_BUF_SIZE];
 
-    bool check_IPFilter_primitive(filter_p2s_wxh_t ref, filter_p2s_wxh_t opt, int isChroma, int csp);
     bool check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt);
     bool check_IPFilterChroma_ps_primitive(filter_ps_t ref, filter_ps_t opt);
     bool check_IPFilterChroma_hps_primitive(filter_hps_t ref, filter_hps_t opt);
