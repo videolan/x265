@@ -62,6 +62,7 @@ const pw_4,                 times  8 dw 4
 const pw_8,                 times  8 dw 8
 const pw_16,                times 16 dw 16
 const pw_15,                times 16 dw 15
+const pw_31,                times 16 dw 31
 const pw_32,                times 16 dw 32
 const pw_64,                times  8 dw 64
 const pw_128,               times 16 dw 128
@@ -87,10 +88,11 @@ const pw_pmpmpmpm,          times  1 dw   1,  -1,   1,  -1,   1,  -1,   1,  -1
 const pw_pmmpzzzz,          times  1 dw   1,  -1,  -1,   1,   0,   0,   0,   0
 const multi_2Row,           times  1 dw   1,   2,   3,   4,   1,   2,   3,   4
 const multiH,               times  1 dw   9,  10,  11,  12,  13,  14,  15,  16
-const multiH2,              times  1 dw  17,  18,  19,  20,  21,  22,  23,  24
 const multiH3,              times  1 dw  25,  26,  27,  28,  29,  30,  31,  32
 const multiL,               times  1 dw   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16
+const multiH2,              times  1 dw  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,  32
 const pw_planar16_mul,      times  1 dw  15,  14,  13,  12,  11,  10,   9,   8,   7,   6,   5,   4,   3,   2,   1,   0
+const pw_planar32_mul,      times  1 dw  31,  30,  29,  28,  27,  26,  25,  24,  23,  22,  21,  20,  19,  18,  17,  16
 
 
 ;; 32-bit constants

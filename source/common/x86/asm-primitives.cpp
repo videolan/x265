@@ -1472,6 +1472,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
     if (cpuMask & X265_CPU_AVX2)
     {
         p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = x265_intra_pred_planar16_avx2;
+        p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = x265_intra_pred_planar32_avx2;
 
         p.idst4x4 = x265_idst4_avx2;
         p.dst4x4 = x265_dst4_avx2;

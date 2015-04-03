@@ -570,6 +570,7 @@ cextern pw_4
 cextern pw_8
 cextern pw_16
 cextern pw_15
+cextern pw_31
 cextern pw_32
 cextern pw_257
 cextern pw_1024
@@ -583,6 +584,7 @@ cextern multiH3
 cextern multi_2Row
 cextern trans8_shuf
 cextern pw_planar16_mul
+cextern pw_planar32_mul
 
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
@@ -2594,6 +2596,91 @@ cglobal intra_pred_planar32, 3,4,8,0-(4*mmsize)
     dec             r3
     jnz             .loop
     RET
+
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal intra_pred_planar32, 3,4,11
+    mova            m6, [pw_00ff]
+    vpbroadcastw    m3, [r2 + 33]               ; topRight   = above[32]
+    vpbroadcastw    m2, [r2 + 97]               ; bottomLeft = left[32]
+    pand            m3, m6
+    pand            m2, m6
+
+    pmullw          m0, m3, [multiL]            ; (x + 1) * topRight
+    pmullw          m3, [multiH2]               ; (x + 1) * topRight
+
+    paddw           m0, m2
+    paddw           m3, m2
+    paddw           m0, [pw_32]
+    paddw           m3, [pw_32]
+
+    pmovzxbw        m4, [r2 + 1]
+    pmovzxbw        m1, [r2 + 17]
+    pmullw          m5, m4, [pw_31]
+    paddw           m0, m5
+    psubw           m5, m2, m4
+    psubw           m2, m1
+    pmullw          m1, [pw_31]
+    paddw           m3, m1
+    mova            m1, m5
+
+    add             r2, 65                      ; (2 * blkSize + 1)
+    mova            m9, [pw_planar32_mul]
+    mova            m10, [pw_planar16_mul]
+
+%macro INTRA_PRED_PLANAR32_AVX2 0
+    vpbroadcastw    m4, [r2]
+    vpsrlw          m7, m4, 8
+    pand            m4, m6
+
+    pmullw          m5, m4, m9
+    pmullw          m4, m4, m10
+    paddw           m5, m0
+    paddw           m4, m3
+    paddw           m0, m1
+    paddw           m3, m2
+    psraw           m5, 6
+    psraw           m4, 6
+    packuswb        m5, m4
+    pmullw          m8, m7, m9
+    pmullw          m7, m7, m10
+    vpermq          m5, m5, 11011000b
+    paddw           m8, m0
+    paddw           m7, m3
+    paddw           m0, m1
+    paddw           m3, m2
+    psraw           m8, 6
+    psraw           m7, 6
+    packuswb        m8, m7
+    add             r2, 2
+    vpermq          m8, m8, 11011000b
+
+    movu            [r0], m5
+    movu            [r0 + r1], m8
+    lea             r0, [r0 + r1 * 2]
+%endmacro
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+    INTRA_PRED_PLANAR32_AVX2
+%undef INTRA_PRED_PLANAR32_AVX2
+    RET
+%endif ;; ARCH_X86_64 == 1
 
 ;-----------------------------------------------------------------------------------------
 ; void intraPredAng4(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
