@@ -7784,6 +7784,135 @@ P2S_H_4xN 4
 P2S_H_4xN 8
 P2S_H_4xN 16
 
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_8xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_8x%1, 3, 7, 6
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load height
+    mov         r4d, %1/4
+
+    ; load constant
+    mova        m4, [pb_128]
+    mova        m5, [tab_c_64_n64]
+
+.loop
+    movh        m0, [r0]
+    punpcklbw   m0, m4
+    pmaddubsw   m0, m5
+
+    movh        m1, [r0 + r1]
+    punpcklbw   m1, m4
+    pmaddubsw   m1, m5
+
+    movh        m2, [r0 + r1 * 2]
+    punpcklbw   m2, m4
+    pmaddubsw   m2, m5
+
+    movh        m3, [r0 + r5]
+    punpcklbw   m3, m4
+    pmaddubsw   m3, m5
+
+    movu        [r2 + r3 * 0], m0
+    movu        [r2 + r3 * 1], m1
+    movu        [r2 + r3 * 2], m2
+    movu        [r2 + r6 ], m3
+
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+
+    dec         r4d
+    jnz         .loop
+    RET
+%endmacro
+P2S_H_8xN 8
+P2S_H_8xN 4
+P2S_H_8xN 16
+P2S_H_8xN 32
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_16xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_16x%1, 3, 7, 6
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r4, [r3 * 3]
+    lea         r5, [r1 * 3]
+
+   ; load height
+    mov         r6d, %1/4
+
+    ; load constant
+    mova        m4, [pb_128]
+    mova        m5, [tab_c_64_n64]
+
+.loop:
+    movh        m0, [r0]
+    punpcklbw   m0, m4
+    pmaddubsw   m0, m5
+
+    movh        m1, [r0 + r1]
+    punpcklbw   m1, m4
+    pmaddubsw   m1, m5
+
+    movh        m2, [r0 + r1 * 2]
+    punpcklbw   m2, m4
+    pmaddubsw   m2, m5
+
+    movh        m3, [r0 + r5]
+    punpcklbw   m3, m4
+    pmaddubsw   m3, m5
+
+    movu        [r2 + r3 * 0], m0
+    movu        [r2 + r3 * 1], m1
+    movu        [r2 + r3 * 2], m2
+    movu        [r2 + r4], m3
+
+    lea         r0, [r0 + 8]
+
+    movh        m0, [r0]
+    punpcklbw   m0, m4
+    pmaddubsw   m0, m5
+
+    movh        m1, [r0 + r1]
+    punpcklbw   m1, m4
+    pmaddubsw   m1, m5
+
+    movh        m2, [r0 + r1 * 2]
+    punpcklbw   m2, m4
+    pmaddubsw   m2, m5
+
+    movh        m3, [r0 + r5]
+    punpcklbw   m3, m4
+    pmaddubsw   m3, m5
+
+    movu        [r2 + r3 * 0 + 16], m0
+    movu        [r2 + r3 * 1 + 16], m1
+    movu        [r2 + r3 * 2 + 16], m2
+    movu        [r2 + r4 + 16], m3
+
+    lea         r0, [r0 + r1 * 4 - 8]
+    lea         r2, [r2 + r3 * 4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+P2S_H_16xN 16
+P2S_H_16xN 4
+P2S_H_16xN 8
+P2S_H_16xN 12
+P2S_H_16xN 32
+P2S_H_16xN 64
+
 %macro PROCESS_LUMA_W4_4R 0
     movd        m0, [r0]
     movd        m1, [r0 + r1]
