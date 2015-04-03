@@ -817,7 +817,9 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, c
             const pixel refSample = *pAdiLineNext;
             // Pad unavailable samples with new value
             int nextOrTop = X265_MIN(next, leftUnits);
+
             // fill left column
+#if HIGH_BIT_DEPTH
             while (curr < nextOrTop)
             {
                 for (int i = 0; i < unitHeight; i++)
@@ -836,6 +838,24 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, c
                 adi += unitWidth;
                 curr++;
             }
+#else
+            X265_CHECK(curr <= nextOrTop, "curr must be less than or equal to nextOrTop\n");
+            if (curr < nextOrTop)
+            {
+                const int fillSize = unitHeight * (nextOrTop - curr);
+                memset(adi, refSample, fillSize * sizeof(pixel));
+                curr = nextOrTop;
+                adi += fillSize;
+            }
+
+            if (curr < next)
+            {
+                const int fillSize = unitWidth * (next - curr);
+                memset(adi, refSample, fillSize * sizeof(pixel));
+                curr = next;
+                adi += fillSize;
+            }
+#endif
         }
 
         // pad all other reference samples.
