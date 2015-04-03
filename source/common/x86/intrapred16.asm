@@ -712,6 +712,73 @@ cglobal intra_pred_ang4_2, 3,5,4
     movh        [r0 + r1],     m0
     RET
 
+cglobal intra_pred_ang4_3, 3,5,8
+    mov         r4d, 2
+    cmp         r3m, byte 33
+    mov         r3d, 18
+    cmove       r3d, r4d
+
+    movu        m0, [r2 + r3]   ; [8 7 6 5 4 3 2 1]
+
+    mova        m2, m0
+    psrldq      m0, 2
+    punpcklwd   m2, m0      ; [5 4 4 3 3 2 2 1]
+    mova        m3, m0
+    psrldq      m0, 2
+    punpcklwd   m3, m0      ; [6 5 5 4 4 3 3 2]
+    mova        m4, m0
+    psrldq      m0, 2
+    punpcklwd   m4, m0      ; [7 6 6 5 5 4 4 3]
+    mova        m5, m0
+    psrldq      m0, 2
+    punpcklwd   m5, m0      ; [8 7 7 6 6 5 5 4]
+
+
+    lea         r3, [ang_table + 20 * 16]
+    mova        m0, [r3 + 6 * 16]   ; [26]
+    mova        m1, [r3]            ; [20]
+    mova        m6, [r3 - 6 * 16]   ; [14]
+    mova        m7, [r3 - 12 * 16]  ; [ 8]
+    jmp        .do_filter4x4
+
+
+ALIGN 16
+.do_filter4x4:
+    pmaddwd m2, m0
+    paddd   m2, [pd_16]
+    psrld   m2, 5
+
+    pmaddwd m3, m1
+    paddd   m3, [pd_16]
+    psrld   m3, 5
+    packssdw m2, m3
+
+    pmaddwd m4, m6
+    paddd   m4, [pd_16]
+    psrld   m4, 5
+
+    pmaddwd m5, m7
+    paddd   m5, [pd_16]
+    psrld   m5, 5
+    packssdw m4, m5
+
+    jz         .store
+
+    ; transpose 4x4
+    punpckhwd    m0, m2, m4
+    punpcklwd    m2, m4
+    punpckhwd    m4, m2, m0
+    punpcklwd    m2, m0
+
+.store:
+    add         r1, r1
+    movh        [r0], m2
+    movhps      [r0 + r1], m2
+    movh        [r0 + r1 * 2], m4
+    lea         r1, [r1 * 3]
+    movhps      [r0 + r1], m4
+    RET
+
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
 ;-----------------------------------------------------------------------------------
