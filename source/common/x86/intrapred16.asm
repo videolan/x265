@@ -917,6 +917,35 @@ cglobal intra_pred_ang4_9, 3,5,8
     mova        m7, [r3 +  4 * 16]  ; [ 8]
     jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
 
+cglobal intra_pred_ang4_10, 3,3,3
+    movh        m0,             [r2 + 18]           ; [4 3 2 1]
+
+    punpcklwd   m0,             m0              ;[4 4 3 3 2 2 1 1]
+    pshufd      m1,             m0, 0xFA
+    add         r1,             r1
+    pshufd      m0,             m0, 0x50
+    movhps      [r0 + r1],      m0
+    movh        [r0 + r1 * 2],  m1
+    lea         r1,             [r1 * 3]
+    movhps      [r0 + r1],      m1
+
+    cmp         r4m,            byte 0
+    jz         .quit
+
+    ; filter
+    movd        m2,             [r2]                ; [7 6 5 4 3 2 1 0]
+    pshuflw     m2,             m2, 0x00
+    movh        m1,             [r2 + 2]
+    psubw       m1,             m2
+    psraw       m1,             1
+    paddw       m0,             m1
+    pxor        m1,             m1
+    pmaxsw      m0,             m1
+    pminsw      m0,             [pw_1023]
+.quit:
+    movh        [r0],           m0
+    RET
+
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
 ;-----------------------------------------------------------------------------------
