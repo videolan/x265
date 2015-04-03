@@ -617,7 +617,7 @@ cglobal quant, 5,6,8
 
 %if ARCH_X86_64 == 1
 INIT_YMM avx2
-cglobal quant, 5,5,10
+cglobal quant, 5,6,9
     ; fill qbits
     movd            xm4, r4d            ; m4 = qbits
 
@@ -628,7 +628,7 @@ cglobal quant, 5,5,10
     ; fill offset
     vpbroadcastd    m5, r5m             ; m5 = add
 
-    vpbroadcastw    m9, [pw_1]          ; m9 = word [1]
+    lea             r5, [pw_1]
 
     mov             r4d, r6m
     shr             r4d, 4
@@ -666,7 +666,7 @@ cglobal quant, 5,5,10
 
     ; count non-zero coeff
     ; TODO: popcnt is faster, but some CPU can't support
-    pminuw          m2, m9
+    pminuw          m2, [r5]
     paddw           m7, m2
 
     add             r0, mmsize
