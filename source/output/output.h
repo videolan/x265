@@ -1,7 +1,8 @@
 /*****************************************************************************
- * Copyright (C) 2013 x265 project
+ * Copyright (C) 2013-2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Xinyue Lu <i@7086.in>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +26,7 @@
 #define X265_OUTPUT_H
 
 #include "x265.h"
+#include "input/input.h"
 
 namespace x265 {
 // private x265 namespace
@@ -49,6 +51,35 @@ public:
     virtual bool writePicture(const x265_picture& pic) = 0;
 
     virtual const char *getName() const = 0;
+};
+
+class OutputFile
+{
+protected:
+
+    virtual ~OutputFile() {}
+
+public:
+
+    OutputFile() {}
+
+    static OutputFile* open(const char *fname, InputFileInfo& inputInfo);
+
+    virtual bool isFail() const = 0;
+
+    virtual bool needPTS() const = 0;
+
+    virtual void release() = 0;
+
+    virtual const char *getName() const = 0;
+
+    virtual void setParam(x265_param *param, x265_encoder *encoder) = 0;
+
+    virtual int writeHeaders(const x265_nal* nal, uint32_t nalcount) = 0;
+
+    virtual int writeFrame(const x265_nal* nal, uint32_t nalcount, x265_picture& pic) = 0;
+
+    virtual void closeFile(int64_t largest_pts, int64_t second_largest_pts) = 0;
 };
 }
 

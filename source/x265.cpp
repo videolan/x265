@@ -46,6 +46,7 @@
 #include <string>
 #include <ostream>
 #include <fstream>
+#include <queue>
 
 #define CONSOLE_TITLE_SIZE 200
 #ifdef _WIN32
@@ -70,7 +71,7 @@ struct CLIOptions
 {
     InputFile* input;
     ReconFile* recon;
-    std::fstream bitstreamFile;
+    OutputFile* output;
     bool bProgress;
     bool bForceY4m;
     bool bDither;
@@ -95,6 +96,7 @@ struct CLIOptions
         frameRate = 0.f;
         input = NULL;
         recon = NULL;
+        output = NULL;
         framesToBeEncoded = seek = 0;
         totalbytes = 0;
         bProgress = true;
@@ -109,7 +111,6 @@ struct CLIOptions
     }
 
     void destroy();
-    void writeNALs(const x265_nal* nal, uint32_t nalcount);
     void printStatus(uint32_t frameNum, x265_param *param);
     bool parse(int argc, char **argv, x265_param* param);
     bool parseQPFile(x265_picture &pic_org);
@@ -130,17 +131,9 @@ void CLIOptions::destroy()
     if (analysisFile)
         fclose(analysisFile);
     analysisFile = NULL;
-}
-
-void CLIOptions::writeNALs(const x265_nal* nal, uint32_t nalcount)
-{
-    ProfileScopeEvent(bitstreamWrite);
-    for (uint32_t i = 0; i < nalcount; i++)
-    {
-        bitstreamFile.write((const char*)nal->payload, nal->sizeBytes);
-        totalbytes += nal->sizeBytes;
-        nal++;
-    }
+    if (output)
+        output->release();
+    output = NULL;
 }
 
 void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
@@ -178,7 +171,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     int reconFileBitDepth = 0;
     const char *inputfn = NULL;
     const char *reconfn = NULL;
-    const char *bitstreamfn = NULL;
+    const char *outputfn = NULL;
     const char *preset = NULL;
     const char *tune = NULL;
     const char *profile = NULL;
@@ -264,7 +257,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT2("frame-skip", "seek") this->seek = (uint32_t)x265_atoi(optarg, bError);
             OPT("frames") this->framesToBeEncoded = (uint32_t)x265_atoi(optarg, bError);
             OPT("no-progress") this->bProgress = false;
-            OPT("output") bitstreamfn = optarg;
+            OPT("output") outputfn = optarg;
             OPT("input") inputfn = optarg;
             OPT("recon") reconfn = optarg;
             OPT("input-depth") inputBitDepth = (uint32_t)x265_atoi(optarg, bError);
@@ -298,8 +291,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
 
     if (optind < argc && !inputfn)
         inputfn = argv[optind++];
-    if (optind < argc && !bitstreamfn)
-        bitstreamfn = argv[optind++];
+    if (optind < argc && !outputfn)
+        outputfn = argv[optind++];
     if (optind < argc)
     {
         x265_log(param, X265_LOG_WARNING, "extra unused command arguments given <%s>\n", argv[optind]);
@@ -309,7 +302,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     if (argc <= 1 || help)
         showHelp(param);
 
-    if (inputfn == NULL || bitstreamfn == NULL)
+    if (inputfn == NULL || outputfn == NULL)
     {
         x265_log(param, X265_LOG_ERROR, "input or output file not specified, try -V for help\n");
         return true;
@@ -365,6 +358,10 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         this->framesToBeEncoded = info.frameCount - seek;
     param->totalFrames = this->framesToBeEncoded;
 
+    /* Force CFR until we have support for VFR */
+    info.timebaseNum = info.fpsDenom;
+    info.timebaseDenom = info.fpsNum;
+
     if (x265_param_apply_profile(param, profile))
         return true;
 
@@ -408,12 +405,13 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
                     x265_source_csp_names[param->internalCsp]);
     }
 
-    this->bitstreamFile.open(bitstreamfn, std::fstream::binary | std::fstream::out);
-    if (!this->bitstreamFile)
+    this->output = OutputFile::open(outputfn, info);
+    if (this->output->isFail())
     {
-        x265_log(NULL, X265_LOG_ERROR, "failed to open bitstream file <%s> for writing\n", bitstreamfn);
+        x265_log(NULL, X265_LOG_ERROR, "failed to open output file <%s> for writing\n", outputfn);
         return true;
     }
+    general_log(param, "out", X265_LOG_INFO, "Using %s\n", this->output->getName());
     return false;
 }
 
@@ -509,7 +507,8 @@ int main(int argc, char **argv)
     x265_picture pic_orig, pic_out;
     x265_picture *pic_in = &pic_orig;
     /* Allocate recon picture if analysisMode is enabled */
-    x265_picture *pic_recon = (cliopt.recon || !!param->analysisMode) ? &pic_out : NULL;
+    bool usePTS = cliopt.output->needPTS();
+    x265_picture *pic_recon = (cliopt.recon || !!param->analysisMode || usePTS) ? &pic_out : NULL;
     uint32_t inFrameCount = 0;
     uint32_t outFrameCount = 0;
     x265_nal *p_nal;
@@ -517,6 +516,7 @@ int main(int argc, char **argv)
     uint32_t nal;
     int16_t *errorBuf = NULL;
     int ret = 0;
+    std::priority_queue<int64_t> pts_queue;
 
     if (!param->bRepeatHeaders)
     {
@@ -527,7 +527,10 @@ int main(int argc, char **argv)
             goto fail;
         }
         else
-            cliopt.writeNALs(p_nal, nal);
+        {
+            cliopt.output->setParam(param, encoder);
+            cliopt.totalbytes += cliopt.output->writeHeaders(p_nal, nal);
+        }
     }
 
     api->picture_init(param, pic_in);
@@ -569,6 +572,8 @@ int main(int argc, char **argv)
                 ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, X265_DEPTH);
                 pic_in->bitDepth = X265_DEPTH;
             }
+            /* Overwrite PTS */
+            pic_in->pts = pic_in->poc;
         }
 
         int numEncoded = api->encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
@@ -583,7 +588,15 @@ int main(int argc, char **argv)
         if (numEncoded && pic_recon && cliopt.recon)
             cliopt.recon->writePicture(pic_out);
         if (nal)
-            cliopt.writeNALs(p_nal, nal);
+        {
+            cliopt.totalbytes += cliopt.output->writeFrame(p_nal, nal, pic_out);
+            if (usePTS)
+            {
+                pts_queue.push(-pic_out.pts);
+                if (pts_queue.size() > 2)
+                    pts_queue.pop();
+            }
+        }
 
         cliopt.printStatus(outFrameCount, param);
     }
@@ -601,7 +614,15 @@ int main(int argc, char **argv)
         if (numEncoded && pic_recon && cliopt.recon)
             cliopt.recon->writePicture(pic_out);
         if (nal)
-            cliopt.writeNALs(p_nal, nal);
+        {
+            cliopt.totalbytes += cliopt.output->writeFrame(p_nal, nal, pic_out);
+            if (usePTS)
+            {
+                pts_queue.push(-pic_out.pts);
+                if (pts_queue.size() > 2)
+                    pts_queue.pop();
+            }
+        }
 
         cliopt.printStatus(outFrameCount, param);
 
@@ -618,7 +639,17 @@ fail:
     if (param->csvfn && !b_ctrl_c)
         api->encoder_log(encoder, argc, argv);
     api->encoder_close(encoder);
-    cliopt.bitstreamFile.close();
+
+    int64_t second_largest_pts = 0;
+    int64_t largest_pts = 0;
+    if (usePTS && pts_queue.size() >= 2)
+    {
+        second_largest_pts = -pts_queue.top();
+        pts_queue.pop();
+        largest_pts = -pts_queue.top();
+        pts_queue.pop();
+    }
+    cliopt.output->closeFile(largest_pts, second_largest_pts);
 
     if (b_ctrl_c)
         general_log(param, NULL, X265_LOG_INFO, "aborted at input frame %d, output frame %d\n",

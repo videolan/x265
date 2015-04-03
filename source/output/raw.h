@@ -1,7 +1,8 @@
 /*****************************************************************************
- * Copyright (C) 2013 x265 project
+ * Copyright (C) 2013-2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Xinyue Lu <i@7086.in>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,65 +22,43 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#ifndef X265_INPUT_H
-#define X265_INPUT_H
+#ifndef X265_HEVC_RAW_H
+#define X265_HEVC_RAW_H
 
-#define MIN_FRAME_WIDTH 64
-#define MAX_FRAME_WIDTH 8192
-#define MIN_FRAME_HEIGHT 64
-#define MAX_FRAME_HEIGHT 4320
-#define MIN_FRAME_RATE 1
-#define MAX_FRAME_RATE 300
-
-#include "x265.h"
+#include "output.h"
+#include "common.h"
+#include <fstream>
+#include <iostream>
 
 namespace x265 {
-// private x265 namespace
-
-struct InputFileInfo
-{
-    /* possibly user-supplied, possibly read from file header */
-    int width;
-    int height;
-    int csp;
-    int depth;
-    int fpsNum;
-    int fpsDenom;
-    int sarWidth;
-    int sarHeight;
-    int frameCount;
-    int timebaseNum;
-    int timebaseDenom;
-
-    /* user supplied */
-    int skipFrames;
-    const char *filename;
-};
-
-class InputFile
+class RAWOutput : public OutputFile
 {
 protected:
 
-    virtual ~InputFile()  {}
+    std::ostream *ofs;
+
+    bool b_fail;
 
 public:
 
-    InputFile()           {}
+    RAWOutput(const char *fname, InputFileInfo&);
 
-    static InputFile* open(InputFileInfo& info, bool bForceY4m);
+    bool isFail() const { return b_fail; }
 
-    virtual void startReader() = 0;
+    bool needPTS() const { return false; }
 
-    virtual void release() = 0;
+    void release() { delete this; }
 
-    virtual bool readPicture(x265_picture& pic) = 0;
+    const char *getName() const { return "RAW Bitstream"; }
 
-    virtual bool isEof() const = 0;
+    void setParam(x265_param *param, x265_encoder *);
 
-    virtual bool isFail() = 0;
+    int writeHeaders(const x265_nal* nal, uint32_t nalcount);
 
-    virtual const char *getName() const = 0;
+    int writeFrame(const x265_nal* nal, uint32_t nalcount, x265_picture&);
+
+    void closeFile(int64_t largest_pts, int64_t second_largest_pts);
 };
 }
 
-#endif // ifndef X265_INPUT_H
+#endif // ifndef X265_HEVC_RAW_H
