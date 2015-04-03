@@ -177,15 +177,18 @@ void x265_encoder_close(x265_encoder *enc)
         encoder->printSummary();
         encoder->destroy();
         delete encoder;
+        ATOMIC_DEC(&g_ctuSizeConfigured);
     }
 }
 
 extern "C"
 void x265_cleanup(void)
 {
-    BitCost::destroy();
-    CUData::s_partSet[0] = NULL; /* allow CUData to adjust to new CTU size */
-    g_ctuSizeConfigured = 0;
+    if (!g_ctuSizeConfigured)
+    {
+        BitCost::destroy();
+        CUData::s_partSet[0] = NULL; /* allow CUData to adjust to new CTU size */
+    }
 }
 
 extern "C"

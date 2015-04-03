@@ -1183,7 +1183,7 @@ int x265_set_globals(x265_param* param)
     uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
     uint32_t minLog2CUSize = (uint32_t)g_log2Size[param->minCUSize];
 
-    if (g_ctuSizeConfigured || ATOMIC_INC(&g_ctuSizeConfigured) > 1)
+    if (ATOMIC_INC(&g_ctuSizeConfigured) > 1)
     {
         if (g_maxCUSize != param->maxCUSize)
         {
