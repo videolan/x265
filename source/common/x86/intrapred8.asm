@@ -569,6 +569,7 @@ cextern pw_2
 cextern pw_4
 cextern pw_8
 cextern pw_16
+cextern pw_15
 cextern pw_32
 cextern pw_257
 cextern pw_1024
@@ -581,6 +582,7 @@ cextern multiH2
 cextern multiH3
 cextern multi_2Row
 cextern trans8_shuf
+cextern pw_planar16_mul
 
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
@@ -2433,6 +2435,57 @@ cglobal intra_pred_planar16, 3,3,8
     INTRA_PRED_PLANAR16 13
     INTRA_PRED_PLANAR16 14
     INTRA_PRED_PLANAR16 15
+    RET
+
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal intra_pred_planar16, 3,3,6
+    vpbroadcastw    m3, [r2 + 17]
+    mova            m5, [pw_00ff]
+    vpbroadcastw    m4, [r2 + 49]
+    mova            m0, [pw_planar16_mul]
+    pmovzxbw        m2, [r2 + 1]
+    pand            m3, m5                      ; v_topRight
+    pand            m4, m5                      ; v_bottomLeft
+
+    pmullw          m3, [multiL]                ; (x + 1) * topRight
+    pmullw          m1, m2, [pw_15]             ; (blkSize - 1 - y) * above[x]
+    paddw           m3, [pw_16]
+    paddw           m3, m4
+    paddw           m3, m1
+    psubw           m4, m2
+    add             r2, 33
+
+%macro INTRA_PRED_PLANAR16_AVX2 1
+    vpbroadcastw    m1, [r2 + %1]
+    vpsrlw          m2, m1, 8
+    pand            m1, m5
+
+    pmullw          m1, m0
+    pmullw          m2, m0
+    paddw           m1, m3
+    paddw           m3, m4
+    psraw           m1, 5
+    paddw           m2, m3
+    psraw           m2, 5
+    paddw           m3, m4
+    packuswb        m1, m2
+    vpermq          m1, m1, 11011000b
+    movu            [r0], xm1
+    vextracti128    [r0 + r1], m1, 1
+    lea             r0, [r0 + r1 * 2]
+%endmacro
+    INTRA_PRED_PLANAR16_AVX2 0
+    INTRA_PRED_PLANAR16_AVX2 2
+    INTRA_PRED_PLANAR16_AVX2 4
+    INTRA_PRED_PLANAR16_AVX2 6
+    INTRA_PRED_PLANAR16_AVX2 8
+    INTRA_PRED_PLANAR16_AVX2 10
+    INTRA_PRED_PLANAR16_AVX2 12
+    INTRA_PRED_PLANAR16_AVX2 14
+%undef INTRA_PRED_PLANAR16_AVX2
     RET
 
 ;---------------------------------------------------------------------------------------

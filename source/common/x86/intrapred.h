@@ -43,6 +43,7 @@ void x265_intra_pred_planar4_sse4(pixel* dst, intptr_t dstStride, const pixel* s
 void x265_intra_pred_planar8_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int);
 void x265_intra_pred_planar16_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int);
 void x265_intra_pred_planar32_sse4(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int);
+void x265_intra_pred_planar16_avx2(pixel* dst, intptr_t dstStride, const pixel* srcPix, int, int);
 
 #define DECL_ANG(bsize, mode, cpu) \
     void x265_intra_pred_ang ## bsize ## _ ## mode ## _ ## cpu(pixel* dst, intptr_t dstStride, const pixel* srcPix, int dirMode, int bFilter);
