@@ -12303,63 +12303,49 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-gprsize
     FILTER_VER_LUMA_SP 64, 16
     FILTER_VER_LUMA_SP 16, 64
 
-; TODO: combin of U and V is more performance, but need more register
-; TODO: use two path for height alignment to 4 and otherwise may improvement 10% performance, but code is more complex, so I disable it
-INIT_XMM ssse3
-cglobal chroma_p2s, 3, 7, 4
-
-    ; load width and height
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal filterPixelToShort_4x2, 3, 4, 3
     mov         r3d, r3m
-    mov         r4d, r4m
+    add         r3d, r3d
 
     ; load constant
-    mova        m2, [pb_128]
-    mova        m3, [tab_c_64_n64]
+    mova        m1, [pb_128]
+    mova        m2, [tab_c_64_n64]
 
-.loopH:
+    movd        m0, [r0]
+    pinsrd      m0, [r0 + r1], 1
+    punpcklbw   m0, m1
+    pmaddubsw   m0, m2
 
-    xor         r5d, r5d
-.loopW:
-    lea         r6, [r0 + r5]
+    movq        [r2 + r3 * 0], m0
+    movhps      [r2 + r3 * 1], m0
 
-    movh        m0, [r6]
-    punpcklbw   m0, m2
-    pmaddubsw   m0, m3
+    RET
 
-    movh        m1, [r6 + r1]
-    punpcklbw   m1, m2
-    pmaddubsw   m1, m3
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal filterPixelToShort_8x2, 3, 4, 3
+    mov         r3d, r3m
+    add         r3d, r3d
 
-    add         r5d, 8
-    cmp         r5d, r3d
-    lea         r6, [r2 + r5 * 2]
-    jg          .width4
-    movu        [r6 + FENC_STRIDE / 2 * 0 - 16], m0
-    movu        [r6 + FENC_STRIDE / 2 * 2 - 16], m1
-    je          .nextH
-    jmp         .loopW
+    ; load constant
+    mova        m1, [pb_128]
+    mova        m2, [tab_c_64_n64]
 
-.width4:
-    test        r3d, 4
-    jz          .width2
-    test        r3d, 2
-    movh        [r6 + FENC_STRIDE / 2 * 0 - 16], m0
-    movh        [r6 + FENC_STRIDE / 2 * 2 - 16], m1
-    lea         r6, [r6 + 8]
-    pshufd      m0, m0, 2
-    pshufd      m1, m1, 2
-    jz          .nextH
+    movh        m0, [r0]
+    punpcklbw   m0, m1
+    pmaddubsw   m0, m2
+    movu        [r2 + r3 * 0], m0
 
-.width2:
-    movd        [r6 + FENC_STRIDE / 2 * 0 - 16], m0
-    movd        [r6 + FENC_STRIDE / 2 * 2 - 16], m1
-
-.nextH:
-    lea         r0, [r0 + r1 * 2]
-    add         r2, FENC_STRIDE / 2 * 4
-
-    sub         r4d, 2
-    jnz         .loopH
+    movh        m0, [r0 + r1]
+    punpcklbw   m0, m1
+    pmaddubsw   m0, m2
+    movu        [r2 + r3 * 1], m0
 
     RET
 
