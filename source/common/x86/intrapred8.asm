@@ -573,6 +573,7 @@ cextern pw_15
 cextern pw_31
 cextern pw_32
 cextern pw_257
+cextern pw_512
 cextern pw_1024
 cextern pw_4096
 cextern pw_00ff
@@ -2250,6 +2251,69 @@ cglobal intra_pred_dc32, 3, 5, 5
 %endrep
 
     RET
+
+;---------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+;---------------------------------------------------------------------------------------------
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal intra_pred_dc32, 3, 4, 3
+    lea             r3, [r1 * 3]
+    pxor            m0, m0
+    movu            m1, [r2 + 1]
+    movu            m2, [r2 + 65]
+    psadbw          m1, m0
+    psadbw          m2, m0
+    paddw           m1, m2
+    vextracti128    xm2, m1, 1
+    paddw           m1, m2
+    pshufd          m2, m1, 2
+    paddw           m1, m2
+
+    pmulhrsw        m1, [pw_512]    ; sum = (sum + 32) / 64
+    vpbroadcastb    m1, xm1         ; m1 = byte [dc_val ...]
+
+    movu            [r0 + r1 * 0], m1
+    movu            [r0 + r1 * 1], m1
+    movu            [r0 + r1 * 2], m1
+    movu            [r0 + r3 * 1], m1
+    lea             r0, [r0 + 4 * r1]
+    movu            [r0 + r1 * 0], m1
+    movu            [r0 + r1 * 1], m1
+    movu            [r0 + r1 * 2], m1
+    movu            [r0 + r3 * 1], m1
+    lea             r0, [r0 + 4 * r1]
+    movu            [r0 + r1 * 0], m1
+    movu            [r0 + r1 * 1], m1
+    movu            [r0 + r1 * 2], m1
+    movu            [r0 + r3 * 1], m1
+    lea             r0, [r0 + 4 * r1]
+    movu            [r0 + r1 * 0], m1
+    movu            [r0 + r1 * 1], m1
+    movu            [r0 + r1 * 2], m1
+    movu            [r0 + r3 * 1], m1
+    lea             r0, [r0 + 4 * r1]
+    movu            [r0 + r1 * 0], m1
+    movu            [r0 + r1 * 1], m1
+    movu            [r0 + r1 * 2], m1
+    movu            [r0 + r3 * 1], m1
+    lea             r0, [r0 + 4 * r1]
+    movu            [r0 + r1 * 0], m1
+    movu            [r0 + r1 * 1], m1
+    movu            [r0 + r1 * 2], m1
+    movu            [r0 + r3 * 1], m1
+    lea             r0, [r0 + 4 * r1]
+    movu            [r0 + r1 * 0], m1
+    movu            [r0 + r1 * 1], m1
+    movu            [r0 + r1 * 2], m1
+    movu            [r0 + r3 * 1], m1
+    lea             r0, [r0 + 4 * r1]
+    movu            [r0 + r1 * 0], m1
+    movu            [r0 + r1 * 1], m1
+    movu            [r0 + r1 * 2], m1
+    movu            [r0 + r3 * 1], m1
+    RET
+%endif ;; ARCH_X86_64 == 1
 
 ;---------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
