@@ -870,8 +870,8 @@ bool PixelHarness::check_addAvg(addAvg_t ref, addAvg_t opt)
 
 bool PixelHarness::check_calSign(sign_t ref, sign_t opt)
 {
-    ALIGN_VAR_16(int8_t, ref_dest[64 * 64]);
-    ALIGN_VAR_16(int8_t, opt_dest[64 * 64]);
+    ALIGN_VAR_16(int8_t, ref_dest[64 * 2]);
+    ALIGN_VAR_16(int8_t, opt_dest[64 * 2]);
 
     memset(ref_dest, 0xCD, sizeof(ref_dest));
     memset(opt_dest, 0xCD, sizeof(opt_dest));
@@ -880,12 +880,12 @@ bool PixelHarness::check_calSign(sign_t ref, sign_t opt)
 
     for (int i = 0; i < ITERS; i++)
     {
-        int width = 16 * (rand() % 4 + 1);
+        int width = (rand() % 64) + 1;
 
         ref(ref_dest, pbuf2 + j, pbuf3 + j, width);
         checked(opt, opt_dest, pbuf2 + j, pbuf3 + j, width);
 
-        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int8_t)))
+        if (memcmp(ref_dest, opt_dest, sizeof(ref_dest)))
             return false;
 
         reportfail();

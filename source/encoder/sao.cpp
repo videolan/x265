@@ -783,13 +783,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 rec += stride;
             }
 
-            if (!(ctuWidth & 15))
-                primitives.sign(upBuff1, rec, &rec[- stride], ctuWidth);
-            else
-            {
-                for (x = 0; x < ctuWidth; x++)
-                    upBuff1[x] = signOf(rec[x] - rec[x - stride]);
-            }
+            primitives.sign(upBuff1, rec, &rec[- stride], ctuWidth);
 
             for (y = startY; y < endY; y++)
             {
@@ -832,8 +826,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 rec += stride;
             }
 
-            for (x = startX; x < endX; x++)
-                upBuff1[x] = signOf(rec[x] - rec[x - stride - 1]);
+            primitives.sign(&upBuff1[startX], &rec[startX], &rec[startX - stride - 1], (endX - startX));
 
             for (y = startY; y < endY; y++)
             {
@@ -879,8 +872,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 rec += stride;
             }
 
-            for (x = startX - 1; x < endX; x++)
-                upBuff1[x] = signOf(rec[x] - rec[x - stride + 1]);
+            primitives.sign(&upBuff1[startX - 1], &rec[startX - 1], &rec[startX - 1 - stride + 1], (endX - startX + 1));
 
             for (y = startY; y < endY; y++)
             {

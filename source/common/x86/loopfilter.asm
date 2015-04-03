@@ -36,6 +36,7 @@ cextern pb_1
 cextern pb_128
 cextern pb_2
 cextern pw_2
+cextern pb_movemask
 
 
 ;============================================================================================================
@@ -321,29 +322,55 @@ cglobal saoCuOrgB0, 4, 7, 8
     RET
 
 ;============================================================================================================
-; void calSign(int8_t *dst, const Pixel *src1, const Pixel *src2, const int endX)
+; void calSign(int8_t *dst, const Pixel *src1, const Pixel *src2, const int width)
 ;============================================================================================================
 INIT_XMM sse4
-cglobal calSign, 4, 4, 6
-    mova        m1,    [pb_128]
-    mova        m0,    [pb_1]
-    shr         r3d,   4
-.loop
-    movu        m2,    [r1]        ; m2 = pRec[x]
-    movu        m3,    [r2]        ; m3 = pTmpU[x]
+cglobal calSign, 4,5,6
+    mova        m0,     [pb_128]
+    mova        m1,     [pb_1]
 
-    pxor        m4,    m2,    m1
-    pxor        m3,    m1
-    pcmpgtb     m5,    m4,    m3
-    pcmpgtb     m3,    m4
-    pand        m5,    m0
-    por         m5,    m3
+    sub         r1,     r0
+    sub         r2,     r0
 
-    movu        [r0],  m5
+    mov         r4d,    r3d
+    shr         r3d,    4
+    jz         .next
+.loop:
+    movu        m2,     [r0 + r1]            ; m2 = pRec[x]
+    movu        m3,     [r0 + r2]            ; m3 = pTmpU[x]
+    pxor        m4,     m2,     m0
+    pxor        m3,     m0
+    pcmpgtb     m5,     m4,     m3
+    pcmpgtb     m3,     m4
+    pand        m5,     m1
+    por         m5,     m3
+    movu        [r0],   m5
 
-    add         r0,    16
-    add         r1,    16
-    add         r2,    16
+    add         r0,     16
     dec         r3d
     jnz        .loop
+
+    ; process partial
+.next:
+    and         r4d, 15
+    jz         .end
+
+    movu        m2,     [r0 + r1]            ; m2 = pRec[x]
+    movu        m3,     [r0 + r2]            ; m3 = pTmpU[x]
+    pxor        m4,     m2,     m0
+    pxor        m3,     m0
+    pcmpgtb     m5,     m4,     m3
+    pcmpgtb     m3,     m4
+    pand        m5,     m1
+    por         m5,     m3
+
+    lea         r3,     [pb_movemask + 16]
+    sub         r3,     r4
+    movu        xmm0,   [r3]
+    movu        m3,     [r0]
+    pblendvb    m5,     m5,     m3,     xmm0
+    movu        [r0],   m5
+
+.end:
     RET
+

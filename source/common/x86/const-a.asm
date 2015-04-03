@@ -51,7 +51,8 @@ const pb_unpackbd2,         times  2 db   4,   4,   4,   4,   5,   5,   5,   5, 
 const pb_unpackwq1,         times  1 db   0,   1,   0,   1,   0,   1,   0,   1,   2,   3,   2,   3,   2,   3,   2,   3
 const pb_unpackwq2,         times  1 db   4,   5,   4,   5,   4,   5,   4,   5,   6,   7,   6,   7,   6,   7,   6,   7
 const pb_shuf8x8c,          times  1 db   0,   0,   0,   0,   2,   2,   2,   2,   4,   4,   4,   4,   6,   6,   6,   6
-
+const pb_movemask,          times 16 db 0x00
+                            times 16 db 0xFF
 
 ;; 16-bit constants
 
