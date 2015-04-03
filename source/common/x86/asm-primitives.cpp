@@ -1344,6 +1344,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_4x4].psy_cost_pp = x265_psyCost_pp_4x4_sse4;
         p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_sse4;
 
+        p.pu[LUMA_4x4].convert_p2s = x265_filterPixelToShort_4x4_sse4;
+        p.pu[LUMA_4x8].convert_p2s = x265_filterPixelToShort_4x8_sse4;
+        p.pu[LUMA_4x16].convert_p2s = x265_filterPixelToShort_4x16_sse4;
+
 #if X86_64
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
         ALL_LUMA_CU(psy_cost_ss, psyCost_ss, sse4);

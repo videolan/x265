@@ -7741,6 +7741,49 @@ FILTER_V4_W16n_H2 64, 48
 FILTER_V4_W16n_H2 48, 64
 FILTER_V4_W16n_H2 64, 16
 
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_4xN 1
+INIT_XMM sse4
+cglobal filterPixelToShort_4x%1, 3, 6, 4
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r4, [r3 * 3]
+    lea         r5, [r1 * 3]
+
+    ; load constant
+    mova        m2, [pb_128]
+    mova        m3, [tab_c_64_n64]
+
+%assign x 0
+%rep %1/4
+    movd        m0, [r0]
+    pinsrd      m0, [r0 + r1], 1
+    punpcklbw   m0, m2
+    pmaddubsw   m0, m3
+
+    movd        m1, [r0 + r1 * 2]
+    pinsrd      m1, [r0 + r5], 1
+    punpcklbw   m1, m2
+    pmaddubsw   m1, m3
+
+    movq        [r2 + r3 * 0], m0
+    movq        [r2 + r3 * 2], m1
+    movhps      [r2 + r3 * 1], m0
+    movhps      [r2 + r4], m1
+%assign x x+1
+%if (x != %1/4)
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+%endif
+%endrep
+    RET
+%endmacro
+P2S_H_4xN 4
+P2S_H_4xN 8
+P2S_H_4xN 16
+
 %macro PROCESS_LUMA_W4_4R 0
     movd        m0, [r0]
     movd        m1, [r0 + r1]
