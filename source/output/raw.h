@@ -49,7 +49,7 @@ public:
 
     void release() { delete this; }
 
-    const char *getName() const { return "RAW Bitstream"; }
+    const char *getName() const { return "raw"; }
 
     void setParam(x265_param *param, x265_encoder *);
 

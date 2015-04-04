@@ -408,10 +408,10 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     this->output = OutputFile::open(outputfn, info);
     if (this->output->isFail())
     {
-        x265_log(NULL, X265_LOG_ERROR, "failed to open output file <%s> for writing\n", outputfn);
+        x265_log(param, X265_LOG_ERROR, "failed to open output file <%s> for writing\n", outputfn);
         return true;
     }
-    general_log(param, "out", X265_LOG_INFO, "Using %s\n", this->output->getName());
+    general_log(param, this->output->getName(), X265_LOG_INFO, "output file: %s\n", outputfn);
     return false;
 }
 
