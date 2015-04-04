@@ -201,11 +201,11 @@ Performance Options
 	their node, they will not be allowed to migrate between nodes, but they
 	will be allowed to move between CPU cores within their node.
 
-	If the three pool features: :option:`--wpp` :option:`--pmode` and
-	:option:`--pme` are all disabled, then :option:`--pools` is ignored
-	and no thread pools are created.
+	If the four pool features: :option:`--wpp`, :option:`--pmode`,
+	:option:`--pme` and :option:`--lookahead-slices` are all disabled,
+	then :option:`--pools` is ignored and no thread pools are created.
 
-	If "none" is specified, then all three of the thread pool features are
+	If "none" is specified, then all four of the thread pool features are
 	implicitly disabled.
 
 	Multiple thread pools will be allocated for any NUMA node with more than

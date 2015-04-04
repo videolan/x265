@@ -106,7 +106,7 @@ void Encoder::create()
     bool allowPools = !p->numaPools || strcmp(p->numaPools, "none");
 
     // Trim the thread pool if --wpp, --pme, and --pmode are disabled
-    if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation)
+    if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation && !p->lookaheadSlices)
         allowPools = false;
 
     if (!p->frameNumThreads)
@@ -140,9 +140,11 @@ void Encoder::create()
             x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --pme disabled\n");
         if (p->bDistributeModeAnalysis)
             x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --pmode disabled\n");
+        if (p->lookaheadSlices)
+            x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --lookahead-slices disabled\n");
 
         // disable all pool features if the thread pool is disabled or unusable.
-        p->bEnableWavefront = p->bDistributeModeAnalysis = p->bDistributeMotionEstimation = 0;
+        p->bEnableWavefront = p->bDistributeModeAnalysis = p->bDistributeMotionEstimation = p->lookaheadSlices = 0;
     }
 
     char buf[128];

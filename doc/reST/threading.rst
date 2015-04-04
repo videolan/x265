@@ -225,6 +225,7 @@ scene cuts and slice types) uses the thread pool to distribute the
 lowres cost analysis to worker threads. It will use bonded task groups
 to perform batches of frame cost estimates, and it may optionally use
 bonded task groups to measure single frame cost estimates using slices.
+(see :option:`--lookahead-slices`)
 
 The function slicetypeDecide() itself is also be performed by a worker
 thread if your encoder has a thread pool, else it runs within the
