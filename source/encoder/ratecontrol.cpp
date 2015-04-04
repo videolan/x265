@@ -2301,7 +2301,7 @@ void RateControl::setFinalFrameCount(int count)
 {
     m_finalFrameCount = count;
     /* unblock waiting threads */
-    m_startEndOrder.set(m_startEndOrder.get());
+    m_startEndOrder.poke();
 }
 
 /* called when the encoder is closing, and no more frames will be output.
@@ -2311,7 +2311,7 @@ void RateControl::terminate()
 {
     m_bTerminated = true;
     /* unblock waiting threads */
-    m_startEndOrder.set(m_startEndOrder.get());
+    m_startEndOrder.poke();
 }
 
 void RateControl::destroy()
