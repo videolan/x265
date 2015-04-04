@@ -189,6 +189,14 @@ public:
         LeaveCriticalSection(&m_cs);
     }
 
+    void poke(void)
+    {
+        /* awaken all waiting threads, but make no change */
+        EnterCriticalSection(&m_cs);
+        WakeAllConditionVariable(&m_cv);
+        LeaveCriticalSection(&m_cs);
+    }
+
     void incr()
     {
         EnterCriticalSection(&m_cs);
@@ -366,6 +374,14 @@ public:
     {
         pthread_mutex_lock(&m_mutex);
         m_val = newval;
+        pthread_cond_broadcast(&m_cond);
+        pthread_mutex_unlock(&m_mutex);
+    }
+
+    void poke(void)
+    {
+        /* awaken all waiting threads, but make no change */
+        pthread_mutex_lock(&m_mutex);
         pthread_cond_broadcast(&m_cond);
         pthread_mutex_unlock(&m_mutex);
     }
