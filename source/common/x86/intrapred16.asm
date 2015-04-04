@@ -949,7 +949,7 @@ cglobal intra_pred_ang4_10, 3,3,3
 
 cglobal intra_pred_ang4_26, 3,3,3
     movh        m0,             [r2 + 2]            ; [8 7 6 5 4 3 2 1]
-    add         r1,             r1
+    add         r1d,            r1d
     ; store
     movh        [r0],           m0
     movh        [r0 + r1],      m0
