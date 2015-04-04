@@ -744,21 +744,22 @@ cglobal intra_pred_ang4_3, 3,5,8
 
 ALIGN 16
 .do_filter4x4:
+    lea     r4, [pd_16]
     pmaddwd m2, m0
-    paddd   m2, [pd_16]
+    paddd   m2, [r4]
     psrld   m2, 5
 
     pmaddwd m3, m1
-    paddd   m3, [pd_16]
+    paddd   m3, [r4]
     psrld   m3, 5
     packssdw m2, m3
 
     pmaddwd m4, m6
-    paddd   m4, [pd_16]
+    paddd   m4, [r4]
     psrld   m4, 5
 
     pmaddwd m5, m7
-    paddd   m5, [pd_16]
+    paddd   m5, [r4]
     psrld   m5, 5
     packssdw m4, m5
 
