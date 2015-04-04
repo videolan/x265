@@ -1179,7 +1179,7 @@ cglobal intra_pred_ang4_17, 3,5,8
 cglobal intra_pred_ang4_18, 3,3,1
     movh        m0, [r2 + 16]
     pinsrw      m0, [r2], 0
-    pshuflw     m0, m0, 0x1B
+    pshuflw     m0, m0, q0123
     movhps      m0, [r2 + 2]
     add         r1, r1
     lea         r2, [r1 * 3]
