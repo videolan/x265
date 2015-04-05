@@ -522,6 +522,10 @@ typedef struct x265_param
      * performance. Value must be between 1 and 16, default is 3 */
     int       maxNumReferences;
 
+    /* Allow libx265 to emit HEVC bitstreams which do not meet strict level
+     * requirements. Defaults to false */
+    int       bAllowNonConformance;
+
     /*== Bitstream Options ==*/
 
     /* Flag indicating whether VPS, SPS and PPS headers should be output with

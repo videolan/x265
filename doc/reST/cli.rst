@@ -464,10 +464,21 @@ Profile, Level, Tier
 	HEVC specification.  If x265 detects that the total reference count
 	is greater than 8, it will issue a warning that the resulting stream
 	is non-compliant and it signals the stream as profile NONE and level
-	NONE but still allows the encode to continue.  Compliant HEVC
+	NONE and will abort the encode unless
+	:option:`--allow-non-conformance` it specified.  Compliant HEVC
 	decoders may refuse to decode such streams.
 	
 	Default 3
+
+.. option:: --allow-non-conformance, --no-allow-non-conformance
+
+	Allow libx265 to generate a bitstream with profile and level NONE.
+	By default it will abort any encode which does not meet strict level
+	compliance. The two most likely causes for non-conformance are
+	:option:`--ctu` being too small, :option:`--ref` being too high,
+	or the bitrate or resolution being out of specification.
+
+	Default: disabled
 
 .. note::
 	:option:`--profile`, :option:`--level-idc`, and
@@ -476,7 +487,7 @@ Profile, Level, Tier
 	limitations and must constrain the bitstream within those limits.
 	Specifying a profile or level may lower the encode quality
 	parameters to meet those requirements but it will never raise
-	them.
+	them. It may enable VBV constraints on a CRF encode.
 
 Mode decision / Analysis
 ========================

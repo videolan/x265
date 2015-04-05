@@ -565,6 +565,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->levelIdc = atoi(value);
     }
     OPT("high-tier") p->bHighTier = atobool(value);
+    OPT("allow-non-conformance") p->bAllowNonConformance = atobool(value);
     OPT2("log-level", "log")
     {
         p->logLevel = atoi(value);

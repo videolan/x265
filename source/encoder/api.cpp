@@ -72,6 +72,13 @@ x265_encoder *x265_encoder_open(x265_param *p)
     // will detect and set profile/tier/level in VPS
     determineLevel(*param, encoder->m_vps);
 
+    if (!param->bAllowNonConformance && encoder->m_vps.ptl.profileIdc == Profile::NONE)
+    {
+        x265_log(param, X265_LOG_INFO, "non-conformant bitstreams not allowed (--allow-non-conformance)\n");
+        delete encoder;
+        return NULL;
+    }
+
     encoder->create();
     if (encoder->m_aborted)
     {
