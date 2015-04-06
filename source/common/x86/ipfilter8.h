@@ -570,14 +570,18 @@ CHROMA_444_HORIZ_FILTERS(_sse4);
     SETUP_CHROMA_SS_FUNC_DEF(64, 16, cpu); \
     SETUP_CHROMA_SS_FUNC_DEF(16, 64, cpu);
 
-#define SETUP_CHROMA_420_P2S_FUNC_DEF(W, H, cpu) \
+#define SETUP_CHROMA_P2S_FUNC_DEF(W, H, cpu) \
     void x265_filterPixelToShort_ ## W ## x ## H ## cpu(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 
 #define CHROMA_420_P2S_FILTERS_SSE4(cpu) \
-    SETUP_CHROMA_420_P2S_FUNC_DEF(4, 2, cpu);
+    SETUP_CHROMA_P2S_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_P2S_FUNC_DEF(6, 8, cpu); 
 
 #define CHROMA_420_P2S_FILTERS_SSSE3(cpu) \
-    SETUP_CHROMA_420_P2S_FUNC_DEF(8, 2, cpu);
+    SETUP_CHROMA_P2S_FUNC_DEF(8, 2, cpu);
+
+#define CHROMA_422_P2S_FILTERS_SSE4(cpu) \
+    SETUP_CHROMA_P2S_FUNC_DEF(6, 16, cpu);
 
 CHROMA_420_FILTERS(_sse4);
 CHROMA_420_FILTERS(_avx2);
@@ -598,6 +602,7 @@ CHROMA_422_SP_FILTERS(_sse2);
 CHROMA_422_SP_FILTERS_SSE4(_sse4);
 CHROMA_422_SS_FILTERS(_sse2);
 CHROMA_422_SS_FILTERS_SSE4(_sse4);
+CHROMA_422_P2S_FILTERS_SSE4(_sse4);
 
 CHROMA_444_FILTERS(_sse4);
 CHROMA_444_SP_FILTERS(_sse4);
