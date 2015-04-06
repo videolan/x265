@@ -2015,6 +2015,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_vss = x265_interp_4tap_vert_ss_32x16_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_vss = x265_interp_4tap_vert_ss_32x24_avx2;
 
+        p.pu[LUMA_16x16].luma_hvpp = x265_interp_8tap_hv_pp_16x16_avx2;
+
         if ((cpuMask & X265_CPU_BMI1) && (cpuMask & X265_CPU_BMI2))
             p.findPosLast = x265_findPosLast_x64;
     }

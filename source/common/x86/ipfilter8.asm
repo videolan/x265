@@ -20938,3 +20938,115 @@ cglobal interp_4tap_horiz_ps_24x32, 4,7,6
     dec                r6d
     jnz                .loop
     RET
+
+;-----------------------------------------------------------------------------------------------------------------------
+;macro FILTER_H8_W8_16N_AVX2
+;-----------------------------------------------------------------------------------------------------------------------
+%macro  FILTER_H8_W8_16N_AVX2 0
+    vbroadcasti128              m3,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb                      m4,                m3,             m6           ; row 0 (col 4 to 7)
+    pshufb                      m3,                m1                           ; shuffled based on the col order tab_Lm row 0 (col 0 to 3)
+    pmaddubsw                   m3,                m0
+    pmaddubsw                   m4,                m0
+    pmaddwd                     m3,                m2
+    pmaddwd                     m4,                m2
+    packssdw                    m3,                m4                         ; DWORD [R1D R1C R0D R0C R1B R1A R0B R0A]
+
+    vbroadcasti128              m4,                [r0 + 8]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb                      m5,                m4,            m6            ;row 1 (col 4 to 7)
+    pshufb                      m4,                m1                           ;row 1 (col 0 to 3)
+    pmaddubsw                   m4,                m0
+    pmaddubsw                   m5,                m0
+    pmaddwd                     m4,                m2
+    pmaddwd                     m5,                m2
+    packssdw                    m4,                m5                         ; DWORD [R3D R3C R2D R2C R3B R3A R2B R2A]
+
+    pmaddwd                     m3,                m2
+    pmaddwd                     m4,                m2
+    packssdw                    m3,                m4                         ; all rows and col completed.
+
+    mova                        m5,                [interp8_hps_shuf]
+    vpermd                      m3,                m5,               m3
+    psubw                       m3,                m8
+
+    vextracti128                xm4,               m3,               1
+    mova                        [r4],              xm3
+    mova                        [r4 + 16],         xm4
+    %endmacro
+
+;-----------------------------------------------------------------------------
+; void interp_8tap_hv_pp_16x16(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY)
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_hv_pp_16x16, 4, 10, 15, 0-31*32
+%define stk_buf1    rsp
+    mov                         r4d,               r4m
+    mov                         r5d,               r5m
+%ifdef PIC
+    lea                         r6,                [tab_LumaCoeff]
+    vpbroadcastq                m0,                [r6 + r4 * 8]
+%else
+    vpbroadcastq                m0,                [tab_LumaCoeff + r4 * 8]
+%endif
+
+    xor                         r6,                 r6
+    mov                         r4,                 rsp
+    mova                        m6,                [tab_Lm + 32]
+    mova                        m1,                [tab_Lm]
+    mov                         r8,                16                           ;height
+    vbroadcasti128              m8,                [pw_2000]
+    vbroadcasti128              m2,                [pw_1]
+    sub                         r0,                3
+    lea                         r7,                [r1 * 3]                     ; r7 = (N / 2 - 1) * srcStride
+    sub                         r0,                r7                           ; r0(src)-r7
+    add                         r8,                7
+
+.loopH:
+    FILTER_H8_W8_16N_AVX2
+    add                         r0,                r1
+    add                         r4,                32
+    inc                         r6
+    cmp                         r6,                16+7
+    jnz                        .loopH
+
+; vertical phase
+    xor                         r6,                r6
+    xor                         r1,                r1
+.loopV:
+
+;load necessary variables
+    mov                         r4d,               r5d          ;coeff here for vertical is r5m
+    shl                         r4d,               7
+    mov                         r1d,               16
+    add                         r1d,               r1d
+
+ ; load intermedia buffer
+    mov                         r0,                stk_buf1
+
+    ; register mapping
+    ; r0 - src
+    ; r5 - coeff
+    ; r6 - loop_i
+
+; load coeff table
+%ifdef PIC
+    lea                          r5,                [pw_LumaCoeffVer]
+    add                          r5,                r4
+%else
+    lea                          r5,                [pw_LumaCoeffVer + r4]
+%endif
+
+    lea                          r4,                [r1*3]
+    mova                         m14,               [pd_526336]
+    lea                          r6,                [r3 * 3]
+    mov                          r9d,               16 / 8
+
+.loopW:
+    PROCESS_LUMA_AVX2_W8_16R sp
+    add                          r2,                 8
+    add                          r0,                 16
+    dec                          r9d
+    jnz                          .loopW
+RET
+%endif
