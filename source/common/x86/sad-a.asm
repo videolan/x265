@@ -4004,10 +4004,12 @@ cglobal pixel_sad_32x16, 4,5,6
     RET
 
 INIT_YMM avx2
-cglobal pixel_sad_32x24, 4,5,6
+cglobal pixel_sad_32x24, 4,7,6
     xorps           m0, m0
     xorps           m5, m5
     mov             r4d, 6
+    lea             r5, [r1 * 3]
+    lea             r6, [r3 * 3]
 .loop
     movu           m1, [r0]               ; row 0 of pix0
     movu           m2, [r2]               ; row 0 of pix1
@@ -4019,21 +4021,18 @@ cglobal pixel_sad_32x24, 4,5,6
     paddd          m0, m1
     paddd          m5, m3
 
-    lea     r2,     [r2 + 2 * r3]
-    lea     r0,     [r0 + 2 * r1]
-
-    movu           m1, [r0]               ; row 2 of pix0
-    movu           m2, [r2]               ; row 2 of pix1
-    movu           m3, [r0 + r1]          ; row 3 of pix0
-    movu           m4, [r2 + r3]          ; row 3 of pix1
+    movu           m1, [r0 + 2 * r1]      ; row 2 of pix0
+    movu           m2, [r2 + 2 * r3]      ; row 2 of pix1
+    movu           m3, [r0 + r5]          ; row 3 of pix0
+    movu           m4, [r2 + r6]          ; row 3 of pix1
 
     psadbw         m1, m2
     psadbw         m3, m4
     paddd          m0, m1
     paddd          m5, m3
 
-    lea     r2,     [r2 + 2 * r3]
-    lea     r0,     [r0 + 2 * r1]
+    lea     r2,     [r2 + 4 * r3]
+    lea     r0,     [r0 + 4 * r1]
 
     dec         r4d
     jnz         .loop
