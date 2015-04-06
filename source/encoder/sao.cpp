@@ -258,7 +258,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     pixel* tmpL;
     pixel* tmpU;
 
-    int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
+    int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1, signLeft1[2];
     int8_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
     memset(_upBuff1 + MAX_CU_SIZE, 0, 2 * sizeof(int8_t)); /* avoid valgrind uninit warnings */
@@ -279,7 +279,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     {
     case SAO_EO_0: // dir: -
     {
-        pixel firstPxl = 0, lastPxl = 0;
+        pixel firstPxl = 0, lastPxl = 0, row1FirstPxl = 0, row1LastPxl = 0;
         startX = !lpelx;
         endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
         if (ctuWidth & 15)
@@ -301,25 +301,38 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         }
         else
         {
-            for (y = 0; y < ctuHeight; y++)
+            for (y = 0; y < ctuHeight; y += 2)
             {
-                int signLeft = signOf(rec[startX] - tmpL[y]);
+                signLeft1[0] = signOf(rec[startX] - tmpL[y]);
+                signLeft1[1] = signOf(rec[stride + startX] - tmpL[y + 1]);
 
                 if (!lpelx)
+                {
                     firstPxl = rec[0];
+                    row1FirstPxl = rec[stride];
+                }
 
                 if (rpelx == picWidth)
+                {
                     lastPxl = rec[ctuWidth - 1];
+                    row1LastPxl = rec[stride + ctuWidth - 1];
+                }
 
-                primitives.saoCuOrgE0(rec, m_offsetEo, ctuWidth, (int8_t)signLeft);
+                primitives.saoCuOrgE0(rec, m_offsetEo, ctuWidth, signLeft1, stride);
 
                 if (!lpelx)
+                {
                     rec[0] = firstPxl;
+                    rec[stride] = row1FirstPxl;
+                }
 
                 if (rpelx == picWidth)
+                {
                     rec[ctuWidth - 1] = lastPxl;
+                    rec[stride + ctuWidth - 1] = row1LastPxl;
+                }
 
-                rec += stride;
+                rec += 2 * stride;
             }
         }
         break;

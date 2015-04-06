@@ -908,12 +908,10 @@ bool PixelHarness::check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt)
     for (int i = 0; i < ITERS; i++)
     {
         int width = 16 * (rand() % 4 + 1);
-        int8_t sign = rand() % 3;
-        if (sign == 2)
-            sign = -1;
+        int stride = width + 1;
 
-        ref(ref_dest, psbuf1 + j, width, sign);
-        checked(opt, opt_dest, psbuf1 + j, width, sign);
+        ref(ref_dest, psbuf1 + j, width, psbuf2 + j, stride);
+        checked(opt, opt_dest, psbuf1 + j, width, psbuf5 + j, stride);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
@@ -2058,7 +2056,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.saoCuOrgE0)
     {
         HEADER0("SAO_EO_0");
-        REPORT_SPEEDUP(opt.saoCuOrgE0, ref.saoCuOrgE0, pbuf1, psbuf1, 64, 1);
+        REPORT_SPEEDUP(opt.saoCuOrgE0, ref.saoCuOrgE0, pbuf1, psbuf1, 64, psbuf2, 64);
     }
 
     if (opt.saoCuOrgE1)

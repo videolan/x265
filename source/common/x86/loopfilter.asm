@@ -40,20 +40,25 @@ cextern pb_movemask
 
 
 ;============================================================================================================
-; void saoCuOrgE0(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t signLeft)
+; void saoCuOrgE0(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t* signLeft, intptr_t stride)
 ;============================================================================================================
 INIT_XMM sse4
-cglobal saoCuOrgE0, 4, 4, 8, rec, offsetEo, lcuWidth, signLeft
+cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
 
-    neg         r3                          ; r3 = -signLeft
-    movzx       r3d, r3b
-    movd        m0, r3d
-    mova        m4, [pb_128]                ; m4 = [80]
-    pxor        m5, m5                      ; m5 = 0
-    movu        m6, [r1]                    ; m6 = offsetEo
+    mov         r4d, r4m
+    mova        m4,  [pb_128]                ; m4 = [80]
+    pxor        m5,  m5                      ; m5 = 0
+    movu        m6,  [r1]                    ; m6 = offsetEo
+
+    movzx       r1d, byte [r3]
+    inc         r3
+    neg         r1b
+    movd        m0, r1d
+    lea         r1, [r0 + r4]
+    mov         r4d, r2d
 
 .loop:
-    movu        m7, [r0]                    ; m1 = rec[x]
+    movu        m7, [r0]                    ; m7 = rec[x]
     movu        m2, [r0 + 1]                ; m2 = rec[x+1]
 
     pxor        m1, m7, m4
@@ -70,7 +75,7 @@ cglobal saoCuOrgE0, 4, 4, 8, rec, offsetEo, lcuWidth, signLeft
     pxor        m0, m0
     palignr     m0, m2, 15
     paddb       m2, m3
-    paddb       m2, [pb_2]                  ; m1 = uiEdgeType
+    paddb       m2, [pb_2]                  ; m2 = uiEdgeType
     pshufb      m3, m6, m2
     pmovzxbw    m2, m7                      ; rec
     punpckhbw   m7, m5
@@ -85,6 +90,43 @@ cglobal saoCuOrgE0, 4, 4, 8, rec, offsetEo, lcuWidth, signLeft
     add         r0q, 16
     sub         r2d, 16
     jnz        .loop
+
+    movzx       r3d, byte [r3]
+    neg         r3b
+    movd        m0, r3d
+.loopH:
+    movu        m7, [r1]                    ; m7 = rec[x]
+    movu        m2, [r1 + 1]                ; m2 = rec[x+1]
+
+    pxor        m1, m7, m4
+    pxor        m3, m2, m4
+    pcmpgtb     m2, m1, m3
+    pcmpgtb     m3, m1
+    pand        m2, [pb_1]
+    por         m2, m3
+
+    pslldq      m3, m2, 1
+    por         m3, m0
+
+    psignb      m3, m4                      ; m3 = signLeft
+    pxor        m0, m0
+    palignr     m0, m2, 15
+    paddb       m2, m3
+    paddb       m2, [pb_2]                  ; m2 = uiEdgeType
+    pshufb      m3, m6, m2
+    pmovzxbw    m2, m7                      ; rec
+    punpckhbw   m7, m5
+    pmovsxbw    m1, m3                      ; offsetEo
+    punpckhbw   m3, m3
+    psraw       m3, 8
+    paddw       m2, m1
+    paddw       m7, m3
+    packuswb    m2, m7
+    movu        [r1], m2
+
+    add         r1q, 16
+    sub         r4d, 16
+    jnz        .loopH
     RET
 
 ;==================================================================================================

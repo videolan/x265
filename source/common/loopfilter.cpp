@@ -42,18 +42,23 @@ void calSign(int8_t *dst, const pixel *src1, const pixel *src2, const int endX)
         dst[x] = signOf(src1[x] - src2[x]);
 }
 
-void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t signLeft)
+void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t* signLeft, intptr_t stride)
 {
-    int x;
-    int8_t signRight;
+    int x, y;
+    int8_t signRight, signLeft0;
     int8_t edgeType;
 
-    for (x = 0; x < width; x++)
+    for (y = 0; y < 2; y++)
     {
-        signRight = ((rec[x] - rec[x + 1]) < 0) ? -1 : ((rec[x] - rec[x + 1]) > 0) ? 1 : 0;
-        edgeType = signRight + signLeft + 2;
-        signLeft  = -signRight;
-        rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
+        signLeft0 = signLeft[y];
+        for (x = 0; x < width; x++)
+        {
+            signRight = ((rec[x] - rec[x + 1]) < 0) ? -1 : ((rec[x] - rec[x + 1]) > 0) ? 1 : 0;
+            edgeType = signRight + signLeft0 + 2;
+            signLeft0 = -signRight;
+            rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
+        }
+        rec += stride;
     }
 }
 

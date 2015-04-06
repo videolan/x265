@@ -168,7 +168,7 @@ typedef void (*pixel_add_ps_t)(pixel* a, intptr_t dstride, const pixel* b0, cons
 typedef void (*pixelavg_pp_t)(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int weight);
 typedef void (*addAvg_t)(const int16_t* src0, const int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride);
 
-typedef void (*saoCuOrgE0_t)(pixel* rec, int8_t* offsetEo, int width, int8_t signLeft);
+typedef void (*saoCuOrgE0_t)(pixel* rec, int8_t* offsetEo, int width, int8_t* signLeft, intptr_t stride);
 typedef void (*saoCuOrgE1_t)(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width);
 typedef void (*saoCuOrgE2_t)(pixel* rec, int8_t* pBufft, int8_t* pBuff1, int8_t* offsetEo, int lcuWidth, intptr_t stride);
 typedef void (*saoCuOrgE3_t)(pixel* rec, int8_t* upBuff1, int8_t* m_offsetEo, intptr_t stride, int startX, int endX);
