@@ -601,7 +601,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
         memset(&cgRdStats, 0, sizeof(coeffGroupRDStats));
 
-        const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
+        const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
 
         /* iterate over coefficients in each group in reverse scan order */
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
@@ -824,7 +824,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
              * of the significant coefficient group flag and evaluate whether the RD cost of the
              * coded group is more than the RD cost of the uncoded group */
 
-            uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
+            uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
 
             int64_t costZeroCG = totalRdCost + SIGCOST(estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
             costZeroCG += cgRdStats.uncodedDist;       /* add distortion for resetting non-zero levels to zero levels */
@@ -857,7 +857,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
         else
         {
             /* there were no coded coefficients in this coefficient group */
-            uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
+            uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
             costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[ctxSig][0]);
             totalRdCost += costCoeffGroupSig[cgScanPos];  /* add cost of 0 bit in significant CG bitmap */
             totalRdCost -= cgRdStats.sigCost;             /* remove cost of significant coefficient bitmap */
@@ -918,7 +918,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
              * cost of signaling it as not-significant */
             uint32_t blkPos = codeParams.scan[scanPos];
             if (dstCoeff[blkPos])
-            {                
+            {
                 // Calculates the cost of signaling the last significant coefficient in the block 
                 uint32_t pos[2] = { (blkPos & (trSize - 1)), (blkPos >> log2TrSize) };
                 if (codeParams.scanType == SCAN_VER)
@@ -1101,22 +1101,6 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     return numSig;
 }
 
-/* Pattern decision for context derivation process of significant_coeff_flag */
-uint32_t Quant::calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
-{
-    if (!log2TrSizeCG)
-        return 0;
-
-    const uint32_t trSizeCG = 1 << log2TrSizeCG;
-    X265_CHECK(trSizeCG <= 8, "transform CG is too large\n");
-    const uint32_t shift = (cgPosY << log2TrSizeCG) + cgPosX + 1;
-    const uint32_t sigPos = (uint32_t)(shift >= 64 ? 0 : sigCoeffGroupFlag64 >> shift);
-    const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & (sigPos & 1);
-    const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 2)) & 2;
-
-    return sigRight + sigLower;
-}
-
 /* Context derivation process of coeff_abs_significant_flag */
 uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32_t trSize, uint32_t blkPos, bool bIsLuma,
                              uint32_t firstSignificanceMapContext)
@@ -1184,15 +1168,3 @@ uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32
     return (bIsLuma && (posX | posY) >= 4) ? 3 + offset : offset;
 }
 
-/* Context derivation process of coeff_abs_significant_flag */
-uint32_t Quant::getSigCoeffGroupCtxInc(uint64_t cgGroupMask, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
-{
-    const uint32_t trSizeCG = 1 << log2TrSizeCG;
-
-    const uint32_t shift = (cgPosY << log2TrSizeCG) + cgPosX + 1;
-    const uint32_t sigPos = (uint32_t)(shift >= 64 ? 0 : cgGroupMask >> shift);
-    const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & sigPos;
-    const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 1));
-
-    return (sigRight | sigLower) & 1;
-}
