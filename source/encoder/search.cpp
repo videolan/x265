@@ -1185,7 +1185,7 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
         intraMode.psyEnergy = m_rdCost.psyCost(cuGeom.log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_size);
     }
     updateModeCost(intraMode);
-    checkDQP(cu, cuGeom);
+    checkDQP(intraMode, cuGeom);
 }
 
 /* Note that this function does not save the best intra prediction, it must
@@ -1400,7 +1400,7 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
     m_entropyCoder.store(intraMode.contexts);
     updateModeCost(intraMode);
-    checkDQP(intraMode.cu, cuGeom);
+    checkDQP(intraMode, cuGeom);
 }
 
 uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2], uint8_t* sharedModes)
@@ -2620,7 +2620,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     interMode.coeffBits = coeffBits;
     interMode.mvBits = bits - coeffBits;
     updateModeCost(interMode);
-    checkDQP(interMode.cu, cuGeom);
+    checkDQP(interMode, cuGeom);
 }
 
 void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, const uint32_t depthRange[2])
@@ -3437,22 +3437,29 @@ void Search::updateCandList(uint32_t mode, uint64_t cost, int maxCandCount, uint
     }
 }
 
-void Search::checkDQP(CUData& cu, const CUGeom& cuGeom)
+void Search::checkDQP(Mode& mode, const CUGeom& cuGeom)
 {
+    CUData& cu = mode.cu;
     if (cu.m_slice->m_pps->bUseDQP && cuGeom.depth <= cu.m_slice->m_pps->maxCuDQPDepth)
     {
         if (cu.getQtRootCbf(0))
         {
-            /* When analysing RDO with DQP bits, the entropy encoder should add the cost of DQP bits here
-             * i.e Encode QP */
+            mode.contexts.resetBits();
+            mode.contexts.codeDeltaQP(cu, 0);
+            uint32_t bits = mode.contexts.getNumberOfWrittenBits();
+            mode.mvBits += bits;
+            mode.totalBits += bits;
+            updateModeCost(mode);
         }
         else
             cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
     }
 }
 
-void Search::checkDQPForSplitPred(CUData& cu, const CUGeom& cuGeom)
+void Search::checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom)
 {
+    CUData& cu = mode.cu;
+
     if ((cuGeom.depth == cu.m_slice->m_pps->maxCuDQPDepth) && cu.m_slice->m_pps->bUseDQP)
     {
         bool hasResidual = false;
@@ -3467,10 +3474,17 @@ void Search::checkDQPForSplitPred(CUData& cu, const CUGeom& cuGeom)
             }
         }
         if (hasResidual)
-            /* TODO: Encode QP, and recalculate RD cost of splitPred */
+        {
+            mode.contexts.resetBits();
+            mode.contexts.codeDeltaQP(cu, 0);
+            uint32_t bits = mode.contexts.getNumberOfWrittenBits();
+            mode.mvBits += bits;
+            mode.totalBits += bits;
+            updateModeCost(mode);
             /* For all zero CBF sub-CUs, reset QP to RefQP (so that deltaQP is not signalled).
             When the non-zero CBF sub-CU is found, stop */
             cu.setQPSubCUs(cu.getRefQP(0), 0, cuGeom.depth);
+        }
         else
             /* No residual within this CU or subCU, so reset QP to RefQP */
             cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);

@@ -365,7 +365,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
         else
             updateModeCost(*splitPred);
 
-        checkDQPForSplitPred(splitPred->cu, cuGeom);
+        checkDQPForSplitPred(*splitPred, cuGeom);
         checkBestMode(*splitPred, depth);
     }
 
@@ -771,7 +771,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         else
             updateModeCost(*splitPred);
 
-        checkDQPForSplitPred(splitPred->cu, cuGeom);
+        checkDQPForSplitPred(*splitPred, cuGeom);
         checkBestMode(*splitPred, depth);
     }
 
@@ -1063,7 +1063,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
         else if (splitPred->sa8dCost < md.bestMode->sa8dCost)
             md.bestMode = splitPred;
 
-        checkDQPForSplitPred(md.bestMode->cu, cuGeom);
+        checkDQPForSplitPred(*md.bestMode, cuGeom);
     }
     if (mightNotSplit)
     {
@@ -1257,7 +1257,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
         else
             updateModeCost(*splitPred);
 
-        checkDQPForSplitPred(splitPred->cu, cuGeom);
+        checkDQPForSplitPred(*splitPred, cuGeom);
         checkBestMode(*splitPred, depth);
     }
 
@@ -1372,7 +1372,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     md.bestMode->cu.setPUMv(1, candMvField[bestSadCand][1].mv, 0, 0);
     md.bestMode->cu.setPURefIdx(0, (int8_t)candMvField[bestSadCand][0].refIdx, 0, 0);
     md.bestMode->cu.setPURefIdx(1, (int8_t)candMvField[bestSadCand][1].refIdx, 0, 0);
-    checkDQP(md.bestMode->cu, cuGeom);
+    checkDQP(*md.bestMode, cuGeom);
     X265_CHECK(md.bestMode->ok(), "Merge mode not ok\n");
 }
 
@@ -1504,7 +1504,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         bestPred->cu.setPUMv(1, candMvField[bestCand][1].mv, 0, 0);
         bestPred->cu.setPURefIdx(0, (int8_t)candMvField[bestCand][0].refIdx, 0, 0);
         bestPred->cu.setPURefIdx(1, (int8_t)candMvField[bestCand][1].refIdx, 0, 0);
-        checkDQP(bestPred->cu, cuGeom);
+        checkDQP(*bestPred, cuGeom);
         X265_CHECK(bestPred->ok(), "merge mode is not ok");
     }
 
