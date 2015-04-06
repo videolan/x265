@@ -7783,6 +7783,7 @@ cglobal filterPixelToShort_4x%1, 3, 6, 4
 P2S_H_4xN 4
 P2S_H_4xN 8
 P2S_H_4xN 16
+P2S_H_4xN 32
 
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
@@ -7889,6 +7890,8 @@ P2S_H_8xN 8
 P2S_H_8xN 4
 P2S_H_8xN 16
 P2S_H_8xN 32
+P2S_H_8xN 12
+P2S_H_8xN 64
 
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
@@ -8016,6 +8019,7 @@ P2S_H_16xN 8
 P2S_H_16xN 12
 P2S_H_16xN 32
 P2S_H_16xN 64
+P2S_H_16xN 24
 
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
@@ -8138,6 +8142,7 @@ P2S_H_32xN 8
 P2S_H_32xN 16
 P2S_H_32xN 24
 P2S_H_32xN 64
+P2S_H_32xN 48
 
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)

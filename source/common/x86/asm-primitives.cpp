@@ -1353,14 +1353,20 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].p2s = x265_filterPixelToShort_32x32_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].p2s = x265_filterPixelToShort_8x4_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].p2s = x265_filterPixelToShort_8x8_ssse3;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x12].p2s = x265_filterPixelToShort_8x12_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].p2s = x265_filterPixelToShort_8x16_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x32].p2s = x265_filterPixelToShort_8x32_ssse3;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x64].p2s = x265_filterPixelToShort_8x64_ssse3;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_12x32].p2s = x265_filterPixelToShort_12x32_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].p2s = x265_filterPixelToShort_16x8_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].p2s = x265_filterPixelToShort_16x16_ssse3;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].p2s = x265_filterPixelToShort_16x24_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].p2s = x265_filterPixelToShort_16x32_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].p2s = x265_filterPixelToShort_16x64_ssse3;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].p2s = x265_filterPixelToShort_24x64_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].p2s = x265_filterPixelToShort_32x16_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].p2s = x265_filterPixelToShort_32x32_ssse3;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = x265_filterPixelToShort_32x48_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = x265_filterPixelToShort_32x64_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
@@ -1439,6 +1445,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_4x4].p2s = x265_filterPixelToShort_4x4_sse4;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_4x8].p2s = x265_filterPixelToShort_4x8_sse4;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_4x16].p2s = x265_filterPixelToShort_4x16_sse4;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x32].p2s = x265_filterPixelToShort_4x32_sse4;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_6x16].p2s = x265_filterPixelToShort_6x16_sse4;
 
 #if X86_64
