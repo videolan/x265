@@ -50,6 +50,11 @@ inline int fastMin(int x, int y)
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
+inline int fastMax(int x, int y)
+{
+    return x - ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // max(x, y)
+}
+
 inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, const uint32_t absGoRice, const uint32_t maxVlc, uint32_t c1c2Idx)
 {
     X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
@@ -515,6 +520,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 {
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu.isIntra(absPartIdx) ? 0 : 3) + ttype;
+    const uint32_t usePsyMask = usePsy ? -1 : 0;
 
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
 
@@ -602,7 +608,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
         {
             scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
             uint32_t blkPos      = codeParams.scan[scanPos];
-            uint16_t maxAbsLevel = (int16_t)abs(dstCoeff[blkPos]);             /* abs(quantized coeff) */
+            uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);             /* abs(quantized coeff) */
             int signCoef         = m_resiDctCoeff[blkPos];            /* pre-quantization DCT coeff */
             int predictedCoef    = m_fencDctCoeff[blkPos] - signCoef; /* predicted DCT = source DCT - residual DCT*/
 
@@ -611,8 +617,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
              * FIX15 nature of the CABAC cost tables minus the forward transform scale */
 
             /* cost of not coding this coefficient (all distortion, no signal bits) */
-            costUncoded[scanPos] = (int64_t)(signCoef * signCoef) << scaleBits;
-            if (usePsy && blkPos)
+            costUncoded[scanPos] = ((int64_t)signCoef * signCoef) << scaleBits;
+            if (usePsyMask & blkPos)
                 /* when no residual coefficient is coded, predicted coef == recon coef */
                 costUncoded[scanPos] -= PSYVALUE(predictedCoef);
 
@@ -652,7 +658,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 const int* greaterOneBits = estBitsSbac.greaterOneBits[oneCtx];
                 const int* levelAbsBits = estBitsSbac.levelAbsBits[absCtx];
 
-                uint16_t level = 0;
+                uint32_t level = 0;
                 uint32_t sigCoefBits = 0;
                 costCoeff[scanPos] = MAX_INT64;
 
@@ -672,8 +678,11 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 }
                 if (maxAbsLevel)
                 {
-                    uint16_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1);
-                    for (uint16_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--)
+                    // NOTE: X265_MAX(maxAbsLevel - 1, 1) ==> (X>=2 -> X-1), (X<2 -> 1)  | (0 < X < 2 ==> X=1)
+                    uint32_t minAbsLevel = (maxAbsLevel - 1);
+                    if (maxAbsLevel == 1)
+                        minAbsLevel = 1;
+                    for (uint32_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--)
                     {
                         uint32_t levelBits = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
 
@@ -682,7 +691,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                         int64_t curCost = RDCOST(d, sigCoefBits + levelBits);
 
                         /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame */
-                        if (usePsy && blkPos)
+                        if (usePsyMask & blkPos)
                         {
                             int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
                             curCost -= PSYVALUE(reconCoef);
@@ -697,7 +706,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                     }
                 }
 
-                dstCoeff[blkPos] = level;
+                dstCoeff[blkPos] = (int16_t)level;
                 totalRdCost += costCoeff[scanPos];
 
                 /* record costs for sign-hiding performed at the end */
