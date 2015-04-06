@@ -8248,6 +8248,282 @@ P2S_H_64xN 16
 P2S_H_64xN 32
 P2S_H_64xN 48
 
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel src, intptr_t srcStride, int16_t dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_12xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_12x%1, 3, 7, 6
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r4, [r1 * 3]
+    lea         r6, [r3 * 3]
+    mov         r5d, %1/4
+
+    ; load constant
+    mova        m4, [pb_128]
+    mova        m5, [tab_c_64_n64]
+
+.loop:
+    movu        m0, [r0]
+    punpcklbw   m1, m0, m4
+    punpckhbw   m0, m4
+    pmaddubsw   m0, m5
+    pmaddubsw   m1, m5
+
+    movu        m2, [r0 + r1]
+    punpcklbw   m3, m2, m4
+    punpckhbw   m2, m4
+    pmaddubsw   m2, m5
+    pmaddubsw   m3, m5
+
+    movu        [r2 + r3 * 0], m1
+    movu        [r2 + r3 * 1], m3
+
+    movh        [r2 + r3 * 0 + 16], m0
+    movh        [r2 + r3 * 1 + 16], m2
+
+    movu        m0, [r0 + r1 * 2]
+    punpcklbw   m1, m0, m4
+    punpckhbw   m0, m4
+    pmaddubsw   m0, m5
+    pmaddubsw   m1, m5
+
+    movu        m2, [r0 + r4]
+    punpcklbw   m3, m2, m4
+    punpckhbw   m2, m4
+    pmaddubsw   m2, m5
+    pmaddubsw   m3, m5
+
+    movu        [r2 + r3 * 2], m1
+    movu        [r2 + r6], m3
+
+    movh        [r2 + r3 * 2 + 16], m0
+    movh        [r2 + r6 + 16], m2
+
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+
+    dec         r5d
+    jnz         .loop
+    RET
+%endmacro
+P2S_H_12xN 16
+P2S_H_12xN 32
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_24xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_24x%1, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r4, [r1 * 3]
+    lea         r5, [r3 * 3]
+    mov         r6d, %1/4
+
+    ; load constant
+    mova        m3, [pb_128]
+    mova        m4, [tab_c_64_n64]
+
+.loop:
+    movu        m0, [r0]
+    punpcklbw   m1, m0, m3
+    punpckhbw   m0, m3
+    pmaddubsw   m0, m4
+    pmaddubsw   m1, m4
+
+    movu        m2, [r0 + 16]
+    punpcklbw   m2, m3
+    pmaddubsw   m2, m4
+
+    movu        [r2 +  r3 * 0], m1
+    movu        [r2 +  r3 * 0 + 16], m0
+    movu        [r2 +  r3 * 0 + 32], m2
+
+    movu        m0, [r0 + r1]
+    punpcklbw   m1, m0, m3
+    punpckhbw   m0, m3
+    pmaddubsw   m0, m4
+    pmaddubsw   m1, m4
+
+    movu        m2, [r0 + r1 + 16]
+    punpcklbw   m2, m3
+    pmaddubsw   m2, m4
+
+    movu        [r2 +  r3 * 1], m1
+    movu        [r2 +  r3 * 1 + 16], m0
+    movu        [r2 +  r3 * 1 + 32], m2
+
+    movu        m0, [r0 + r1 * 2]
+    punpcklbw   m1, m0, m3
+    punpckhbw   m0, m3
+    pmaddubsw   m0, m4
+    pmaddubsw   m1, m4
+
+    movu        m2, [r0 + r1 * 2 + 16]
+    punpcklbw   m2, m3
+    pmaddubsw   m2, m4
+
+    movu        [r2 +  r3 * 2], m1
+    movu        [r2 +  r3 * 2 + 16], m0
+    movu        [r2 +  r3 * 2 + 32], m2
+
+    movu        m0, [r0 + r4]
+    punpcklbw   m1, m0, m3
+    punpckhbw   m0, m3
+    pmaddubsw   m0, m4
+    pmaddubsw   m1, m4
+
+    movu        m2, [r0 + r4 + 16]
+    punpcklbw   m2, m3
+    pmaddubsw   m2, m4
+    movu        [r2 +  r5], m1
+    movu        [r2 +  r5 + 16], m0
+    movu        [r2 +  r5 + 32], m2
+
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+P2S_H_24xN 32
+P2S_H_24xN 64
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal filterPixelToShort_48x64, 3, 7, 4
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r4, [r1 * 3]
+    lea         r5, [r3 * 3]
+    mov         r6d, 16
+
+    ; load constant
+    mova        m2, [pb_128]
+    mova        m3, [tab_c_64_n64]
+
+.loop:
+    movu        m0, [r0]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r3 * 0], m1
+    movu        [r2 +  r3 * 0 + 16], m0
+
+    movu        m0, [r0 + 16]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r3 * 0 + 32], m1
+    movu        [r2 +  r3 * 0 + 48], m0
+
+    movu        m0, [r0 + 32]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r3 * 0 + 64], m1
+    movu        [r2 +  r3 * 0 + 80], m0
+
+    movu        m0, [r0 + r1]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r3 * 1], m1
+    movu        [r2 +  r3 * 1 + 16], m0
+
+    movu        m0, [r0 + r1 + 16]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r3 * 1 + 32], m1
+    movu        [r2 +  r3 * 1 + 48], m0
+
+    movu        m0, [r0 + r1 + 32]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r3 * 1 + 64], m1
+    movu        [r2 +  r3 * 1 + 80], m0
+
+    movu        m0, [r0 + r1 * 2]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r3 * 2], m1
+    movu        [r2 +  r3 * 2 + 16], m0
+
+    movu        m0, [r0 + r1 * 2 + 16]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r3 * 2 + 32], m1
+    movu        [r2 +  r3 * 2 + 48], m0
+
+    movu        m0, [r0 + r1 * 2 + 32]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r3 * 2 + 64], m1
+    movu        [r2 +  r3 * 2 + 80], m0
+
+    movu        m0, [r0 + r4]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r5], m1
+    movu        [r2 +  r5 + 16], m0
+
+    movu        m0, [r0 + r4 + 16]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r5 + 32], m1
+    movu        [r2 +  r5 + 48], m0
+
+    movu        m0, [r0 + r4 + 32]
+    punpcklbw   m1, m0, m2
+    punpckhbw   m0, m2
+    pmaddubsw   m0, m3
+    pmaddubsw   m1, m3
+
+    movu        [r2 +  r5 + 64], m1
+    movu        [r2 +  r5 + 80], m0
+
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+
 %macro PROCESS_LUMA_W4_4R 0
     movd        m0, [r0]
     movd        m1, [r0 + r1]
