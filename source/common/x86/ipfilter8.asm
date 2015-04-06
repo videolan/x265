@@ -20799,3 +20799,83 @@ cglobal interp_8tap_horiz_ps_12x16, 6, 7, 8
     dec                         r4d
     jnz                         .loop
     RET
+
+INIT_YMM avx2
+cglobal interp_8tap_horiz_ps_24x32, 4, 7, 8
+    mov                         r5d,               r5m
+    mov                         r4d,               r4m
+%ifdef PIC
+    lea                         r6,                [tab_LumaCoeff]
+    vpbroadcastq                m0,                [r6 + r4 * 8]
+%else
+    vpbroadcastq                m0,                [tab_LumaCoeff + r4 * 8]
+%endif
+    mova                        m6,                [tab_Lm + 32]
+    mova                        m1,                [tab_Lm]
+    mov                         r4d,               32                           ;height
+    add                         r3d,               r3d
+    vbroadcasti128              m2,                [pw_2000]
+    vbroadcasti128              m7,                [pw_1]
+
+    ; register map
+    ; m0      - interpolate coeff
+    ; m1 , m6 - shuffle order table
+    ; m2      - pw_2000
+
+    sub                         r0,                3
+    test                        r5d,               r5d
+    jz                          .label
+    lea                         r6,                [r1 * 3]                     ; r6 = (N / 2 - 1) * srcStride
+    sub                         r0,                r6                           ; r0(src)-r6
+    add                         r4d,               7                            ; blkheight += N - 1  (7 - 1 = 6 ; since the last one row not in loop)
+
+.label
+    lea                         r6,                [interp8_hps_shuf]
+.loop
+    ; Row 0
+    vbroadcasti128              m3,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb                      m4,                m3,             m6           ; row 0 (col 4 to 7)
+    pshufb                      m3,                m1                           ; shuffled based on the col order tab_Lm row 0 (col 0 to 3)
+    pmaddubsw                   m3,                m0
+    pmaddubsw                   m4,                m0
+    pmaddwd                     m3,                m7
+    pmaddwd                     m4,                m7
+    packssdw                    m3,                m4
+
+    vbroadcasti128              m4,                [r0 + 8]                     ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb                      m5,                m4,            m6            ;row 1 (col 4 to 7)
+    pshufb                      m4,                m1                           ;row 1 (col 0 to 3)
+    pmaddubsw                   m4,                m0
+    pmaddubsw                   m5,                m0
+    pmaddwd                     m4,                m7
+    pmaddwd                     m5,                m7
+    packssdw                    m4,                m5
+    pmaddwd                     m3,                m7
+    pmaddwd                     m4,                m7
+    packssdw                    m3,                m4
+    mova                        m5,                [r6]
+    vpermd                      m3,                m5,               m3
+    psubw                       m3,                m2
+    movu                        [r2],              m3                          ;row 0
+
+    vbroadcasti128              m3,                [r0 + 16]
+    pshufb                      m4,                m3,          m6
+    pshufb                      m3,                m1
+    pmaddubsw                   m3,                m0
+    pmaddubsw                   m4,                m0
+    pmaddwd                     m3,                m7
+    pmaddwd                     m4,                m7
+    packssdw                    m3,                m4
+    pmaddwd                     m3,                m7
+    pmaddwd                     m4,                m7
+    packssdw                    m3,                m4
+    mova                        m4,                [r6]
+    vpermd                      m3,                m4,            m3
+    psubw                       m3,                m2
+    movu                        [r2 + 32],         xm3                          ;row 0
+
+    add                         r0,                r1
+    add                         r2,                r3
+    dec                         r4d
+    jnz                         .loop
+    RET
