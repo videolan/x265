@@ -1189,7 +1189,8 @@ uint32_t Quant::getSigCoeffGroupCtxInc(uint64_t cgGroupMask, uint32_t cgPosX, ui
 {
     const uint32_t trSizeCG = 1 << log2TrSizeCG;
 
-    const uint32_t sigPos = (uint32_t)(cgGroupMask >> (1 + (cgPosY << log2TrSizeCG) + cgPosX));
+    const uint32_t shift = (cgPosY << log2TrSizeCG) + cgPosX + 1;
+    const uint32_t sigPos = (uint32_t)(shift >= 64 ? 0 : cgGroupMask >> shift);
     const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & sigPos;
     const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 1));
 
