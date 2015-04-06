@@ -507,8 +507,8 @@ int main(int argc, char **argv)
     x265_picture pic_orig, pic_out;
     x265_picture *pic_in = &pic_orig;
     /* Allocate recon picture if analysisMode is enabled */
-    bool usePTS = cliopt.output->needPTS();
-    x265_picture *pic_recon = (cliopt.recon || !!param->analysisMode || usePTS) ? &pic_out : NULL;
+    std::priority_queue<int64_t>* pts_queue = cliopt.output->needPTS() ? new std::priority_queue<int64_t>() : NULL;
+    x265_picture *pic_recon = (cliopt.recon || !!param->analysisMode || pts_queue) ? &pic_out : NULL;
     uint32_t inFrameCount = 0;
     uint32_t outFrameCount = 0;
     x265_nal *p_nal;
@@ -516,7 +516,6 @@ int main(int argc, char **argv)
     uint32_t nal;
     int16_t *errorBuf = NULL;
     int ret = 0;
-    std::priority_queue<int64_t> pts_queue;
 
     if (!param->bRepeatHeaders)
     {
@@ -590,11 +589,11 @@ int main(int argc, char **argv)
         if (nal)
         {
             cliopt.totalbytes += cliopt.output->writeFrame(p_nal, nal, pic_out);
-            if (usePTS)
+            if (pts_queue)
             {
-                pts_queue.push(-pic_out.pts);
-                if (pts_queue.size() > 2)
-                    pts_queue.pop();
+                pts_queue->push(-pic_out.pts);
+                if (pts_queue->size() > 2)
+                    pts_queue->pop();
             }
         }
 
@@ -616,11 +615,11 @@ int main(int argc, char **argv)
         if (nal)
         {
             cliopt.totalbytes += cliopt.output->writeFrame(p_nal, nal, pic_out);
-            if (usePTS)
+            if (pts_queue)
             {
-                pts_queue.push(-pic_out.pts);
-                if (pts_queue.size() > 2)
-                    pts_queue.pop();
+                pts_queue->push(-pic_out.pts);
+                if (pts_queue->size() > 2)
+                    pts_queue->pop();
             }
         }
 
@@ -642,12 +641,14 @@ fail:
 
     int64_t second_largest_pts = 0;
     int64_t largest_pts = 0;
-    if (usePTS && pts_queue.size() >= 2)
+    if (pts_queue && pts_queue->size() >= 2)
     {
-        second_largest_pts = -pts_queue.top();
-        pts_queue.pop();
-        largest_pts = -pts_queue.top();
-        pts_queue.pop();
+        second_largest_pts = -pts_queue->top();
+        pts_queue->pop();
+        largest_pts = -pts_queue->top();
+        pts_queue->pop();
+        delete pts_queue;
+        pts_queue = NULL;
     }
     cliopt.output->closeFile(largest_pts, second_largest_pts);
 
