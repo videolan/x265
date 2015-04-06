@@ -129,6 +129,60 @@ cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
     jnz        .loopH
     RET
 
+INIT_YMM avx2
+cglobal saoCuOrgE0, 5, 5, 7, rec, offsetEo, lcuWidth, signLeft, stride
+
+    mov                 r4d,        r4m
+    vbroadcasti128      m4,         [pb_128]                   ; m4 = [80]
+    vbroadcasti128      m6,         [r1]                       ; m6 = offsetEo
+    movzx               r1d,        byte [r3]
+    neg                 r1b
+    movd                xm0,        r1d
+    movzx               r1d,        byte [r3 + 1]
+    neg                 r1b
+    movd                xm1,        r1d
+    vinserti128         m0,         m0,        xm1,           1
+
+.loop:
+    movu                xm5,        [r0]                       ; xm5 = rec[x]
+    movu                xm2,        [r0 + 1]                   ; xm2 = rec[x + 1]
+    vinserti128         m5,         m5,        [r0 + r4],     1
+    vinserti128         m2,         m2,        [r0 + r4 + 1], 1
+
+    pxor                m1,         m5,        m4
+    pxor                m3,         m2,        m4
+    pcmpgtb             m2,         m1,        m3
+    pcmpgtb             m3,         m1
+    pand                m2,         [pb_1]
+    por                 m2,         m3
+
+    pslldq              m3,         m2,        1
+    por                 m3,         m0
+
+    psignb              m3,         m4                         ; m3 = signLeft
+    pxor                m0,         m0
+    palignr             m0,         m2,        15
+    paddb               m2,         m3
+    paddb               m2,         [pb_2]                     ; m2 = uiEdgeType
+    pshufb              m3,         m6,        m2
+    pmovzxbw            m2,         xm5                        ; rec
+    vextracti128        xm5,        m5,        1
+    pmovzxbw            m5,         xm5
+    pmovsxbw            m1,         xm3                        ; offsetEo
+    vextracti128        xm3,        m3,        1
+    pmovsxbw            m3,         xm3
+    paddw               m2,         m1
+    paddw               m5,         m3
+    packuswb            m2,         m5
+    vpermq              m2,         m2,        11011000b
+    movu                [r0],       xm2
+    vextracti128        [r0 + r4],  m2,        1
+
+    add                 r0q,        16
+    sub                 r2d,        16
+    jnz                 .loop
+    RET
+
 ;==================================================================================================
 ; void saoCuOrgE1(pixel *pRec, int8_t *m_iUpBuff1, int8_t *m_iOffsetEo, Int iStride, Int iLcuWidth)
 ;==================================================================================================
