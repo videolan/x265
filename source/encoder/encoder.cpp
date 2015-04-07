@@ -1794,12 +1794,12 @@ void Encoder::configure(x265_param *p)
         if (p->rc.qgSize < X265_MAX(16, p->minCUSize))
         {
             p->rc.qgSize = X265_MAX(16, p->minCUSize);
-            x265_log(p, X265_LOG_WARNING, "QGSize should be greater than or equal to 16 and minCUSize, setting QGSize = %d \n", p->rc.qgSize);
+            x265_log(p, X265_LOG_WARNING, "QGSize should be greater than or equal to 16 and minCUSize, setting QGSize = %d\n", p->rc.qgSize);
         }
         if (p->rc.qgSize > p->maxCUSize)
         {
             p->rc.qgSize = p->maxCUSize;
-            x265_log(p, X265_LOG_WARNING, "QGSize should be less than or equal to maxCUSize, setting QGSize = %d \n", p->rc.qgSize);
+            x265_log(p, X265_LOG_WARNING, "QGSize should be less than or equal to maxCUSize, setting QGSize = %d\n", p->rc.qgSize);
         }
     }
 }
