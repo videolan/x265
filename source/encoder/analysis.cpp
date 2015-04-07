@@ -1979,35 +1979,37 @@ bool Analysis::recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom
 
 int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom)
 {
-    uint32_t ctuAddr = ctu.m_cuAddr;
     FrameData& curEncData = *m_frame->m_encData;
-    double qp = curEncData.m_cuStat[ctuAddr].baseQp;
-
-    uint32_t width = m_frame->m_fencPic->m_picWidth;
-    uint32_t height = m_frame->m_fencPic->m_picHeight;
-    uint32_t block_x = ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx];
-    uint32_t block_y = ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx];
-    uint32_t maxCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
-    uint32_t blockSize = g_maxCUSize >> cuGeom.depth;
-    double qp_offset = 0;
-    uint32_t cnt = 0;
-    uint32_t idx;
+    double qp = curEncData.m_cuStat[ctu.m_cuAddr].baseQp;
 
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
     bool isReferenced = IS_REFERENCED(m_frame);
     double *qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
-
-    for (uint32_t block_yy = block_y; block_yy < block_y + blockSize && block_yy < height; block_yy += 16)
+    if (qpoffs)
     {
-        for (uint32_t block_xx = block_x; block_xx < block_x + blockSize && block_xx < width; block_xx += 16)
+        uint32_t width = m_frame->m_fencPic->m_picWidth;
+        uint32_t height = m_frame->m_fencPic->m_picHeight;
+        uint32_t block_x = ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx];
+        uint32_t block_y = ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx];
+        uint32_t maxCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
+        uint32_t blockSize = g_maxCUSize >> cuGeom.depth;
+        double qp_offset = 0;
+        uint32_t cnt = 0;
+        uint32_t idx;
+
+        for (uint32_t block_yy = block_y; block_yy < block_y + blockSize && block_yy < height; block_yy += 16)
         {
-            idx = ((block_yy / 16) * (maxCols)) + (block_xx / 16);
-            qp_offset += qpoffs[idx];
-            cnt++;
+            for (uint32_t block_xx = block_x; block_xx < block_x + blockSize && block_xx < width; block_xx += 16)
+            {
+                idx = ((block_yy / 16) * (maxCols)) + (block_xx / 16);
+                qp_offset += qpoffs[idx];
+                cnt++;
+            }
         }
+
+        qp_offset /= cnt;
+        qp += qp_offset;
     }
 
-    qp_offset /= cnt;
-    qp += qp_offset;
     return x265_clip3(QP_MIN, QP_MAX_MAX, (int)(qp + 0.5));
 }
