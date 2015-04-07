@@ -1559,12 +1559,15 @@ void Encoder::initPPS(PPS *pps)
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
     if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
+    {
         pps->bUseDQP = true;
+        pps->maxCuDQPDepth = 0; /* TODO: make configurable? */
+    }
     else
+    {
         pps->bUseDQP = false;
-
-    pps->maxCuDQPDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
-    X265_CHECK(pps->maxCuDQPDepth <= 2, "max CU DQP depth cannot be greater than 2");
+        pps->maxCuDQPDepth = 0;
+    }
 
     pps->chromaQpOffset[0] = m_param->cbQpOffset;
     pps->chromaQpOffset[1] = m_param->crQpOffset;

@@ -75,8 +75,6 @@ Analysis::Analysis()
     m_reuseInterDataCTU = NULL;
     m_reuseRef = NULL;
     m_reuseBestMergeCand = NULL;
-    for (int i = 0; i < NUM_CU_DEPTH; i++)
-        m_qp[i] = NULL;
 }
 
 bool Analysis::create(ThreadLocalData *tld)
@@ -103,12 +101,9 @@ bool Analysis::create(ThreadLocalData *tld)
             ok &= md.pred[j].reconYuv.create(cuSize, csp);
             md.pred[j].fencYuv = &md.fencYuv;
         }
-        CHECKED_MALLOC(m_qp[depth], int, (size_t)1 << (depth << 1));
     }
 
     return ok;
-fail:
-    return false;
 }
 
 void Analysis::destroy()
@@ -123,7 +118,6 @@ void Analysis::destroy()
             m_modeDepth[i].pred[j].predYuv.destroy();
             m_modeDepth[i].pred[j].reconYuv.destroy();
         }
-        X265_FREE(m_qp[i]);
     }
 }
 
@@ -138,38 +132,6 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             m_modeDepth[i].pred[j].invalidate();
 #endif
     invalidateContexts(0);
-    if (m_slice->m_pps->bUseDQP)
-    {
-        CUGeom *curCUGeom  = (CUGeom *)&cuGeom;
-        CUGeom *parentGeom = (CUGeom *)&cuGeom;
-
-        /* TODO: In future, we should extend this to 8x8 QGs as well, since that's the minimum size 
-        allowed by the HEVC standard. The AQ offset calculation will need to be at 8x8 granularity.
-        And this messy section will need to be reworked */
-
-        m_qp[0][0] = calculateQpforCuSize(ctu, *curCUGeom);
-        curCUGeom = curCUGeom + curCUGeom->childOffset;
-        parentGeom = curCUGeom;
-        if (m_slice->m_pps->maxCuDQPDepth >= 1)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                m_qp[1][i] = calculateQpforCuSize(ctu, *(parentGeom + i));
-                if (m_slice->m_pps->maxCuDQPDepth == 2)
-                {
-                    curCUGeom = parentGeom + i + (parentGeom + i)->childOffset;
-                    for (int j = 0; j < 4; j++)
-                        m_qp[2][i * 4 + j] = calculateQpforCuSize(ctu, *(curCUGeom + j));
-                }
-            }
-        }
-        this->setQP(*m_slice, m_qp[0][0]);
-        m_qp[0][0] = x265_clip3(QP_MIN, QP_MAX_SPEC, m_qp[0][0]);
-        ctu.setQPSubParts((int8_t)m_qp[0][0], 0, 0);
-    }
-    else
-        m_qp[0][0] = m_slice->m_sliceQp;
-
     m_quant.setQPforQuant(ctu);
     m_rqt[0].cur.load(initialContext);
     m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_fencPic, ctu.m_cuAddr, 0);
@@ -193,7 +155,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     uint32_t zOrder = 0;
     if (m_slice->m_sliceType == I_SLICE)
     {
-        compressIntraCU(ctu, cuGeom, zOrder, m_qp[0][0], 0);
+        compressIntraCU(ctu, cuGeom, zOrder);
         if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_analysisData.intraData)
         {
             CUData *bestCU = &m_modeDepth[0].bestMode->cu;
@@ -211,18 +173,18 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             * they are available for intra predictions */
             m_modeDepth[0].fencYuv.copyToPicYuv(*m_frame->m_reconPic, ctu.m_cuAddr, 0);
 
-            compressInterCU_rd0_4(ctu, cuGeom, m_qp[0][0], 0);
+            compressInterCU_rd0_4(ctu, cuGeom);
 
             /* generate residual for entire CTU at once and copy to reconPic */
             encodeResidue(ctu, cuGeom);
         }
         else if (m_param->bDistributeModeAnalysis && m_param->rdLevel >= 2)
-            compressInterCU_dist(ctu, cuGeom, m_qp[0][0], 0);
+            compressInterCU_dist(ctu, cuGeom);
         else if (m_param->rdLevel <= 4)
-            compressInterCU_rd0_4(ctu, cuGeom, m_qp[0][0], 0);
+            compressInterCU_rd0_4(ctu, cuGeom);
         else
         {
-            compressInterCU_rd5_6(ctu, cuGeom, zOrder, m_qp[0][0], 0);
+            compressInterCU_rd5_6(ctu, cuGeom, zOrder);
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_analysisData.interData)
             {
                 CUData *bestCU = &m_modeDepth[0].bestMode->cu;
@@ -261,7 +223,7 @@ void Analysis::tryLossless(const CUGeom& cuGeom)
     }
 }
 
-void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t& zOrder, int32_t qp, uint32_t partIdx)
+void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t& zOrder)
 {
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
@@ -269,13 +231,6 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
 
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
-
-    if (m_slice->m_pps->bUseDQP && depth && depth <= m_slice->m_pps->maxCuDQPDepth)
-    {
-        qp = m_qp[depth][partIdx];
-        this->setQP(*m_slice, qp);
-        qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
-    }
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD)
     {
@@ -286,10 +241,11 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
 
         if (mightNotSplit && depth == reuseDepth[zOrder] && zOrder == cuGeom.absPartIdx)
         {
+            m_quant.setQPforQuant(parentCTU);
+
             PartSize size = (PartSize)reusePartSizes[zOrder];
             Mode& mode = size == SIZE_2Nx2N ? md.pred[PRED_INTRA] : md.pred[PRED_INTRA_NxN];
-            mode.cu.initSubCU(parentCTU, cuGeom, qp);
-            m_quant.setQPforQuant(mode.cu);
+            mode.cu.initSubCU(parentCTU, cuGeom);
             checkIntra(mode, cuGeom, size, &reuseModes[zOrder], &reuseChromaModes[zOrder]);
             checkBestMode(mode, depth);
 
@@ -306,14 +262,15 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
     }
     else if (mightNotSplit)
     {
-        md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
-        m_quant.setQPforQuant(md.pred[PRED_INTRA].cu);
+        m_quant.setQPforQuant(parentCTU);
+
+        md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
         checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL, NULL);
         checkBestMode(md.pred[PRED_INTRA], depth);
 
         if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
         {
-            md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom, qp);
+            md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
             checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN, NULL, NULL);
             checkBestMode(md.pred[PRED_INTRA_NxN], depth);
         }
@@ -330,7 +287,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
         CUData* splitCU = &splitPred->cu;
-        splitCU->initSubCU(parentCTU, cuGeom, qp);
+        splitCU->initSubCU(parentCTU, cuGeom);
 
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
@@ -344,7 +301,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childGeom.absPartIdx);
                 m_rqt[nextDepth].cur.load(*nextContext);
-                compressIntraCU(parentCTU, childGeom, zOrder, qp, partIdx * 4 + subPartIdx);
+                compressIntraCU(parentCTU, childGeom, zOrder);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
@@ -365,7 +322,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
         else
             updateModeCost(*splitPred);
 
-        checkDQPForSplitPred(*splitPred, cuGeom);
+        checkDQPForSplitPred(splitPred->cu, cuGeom);
         checkBestMode(*splitPred, depth);
     }
 
@@ -533,7 +490,7 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
     while (task >= 0);
 }
 
-void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, uint32_t partIdx)
+void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom)
 {
     uint32_t depth = cuGeom.depth;
     uint32_t cuAddr = parentCTU.m_cuAddr;
@@ -546,13 +503,6 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
     X265_CHECK(m_param->rdLevel >= 2, "compressInterCU_dist does not support RD 0 or 1\n");
 
-    if (m_slice->m_pps->bUseDQP && depth && depth <= m_slice->m_pps->maxCuDQPDepth)
-    {
-        qp = m_qp[depth][partIdx];
-        this->setQP(*m_slice, qp);
-        qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
-    }
-
     if (mightNotSplit && depth >= minDepth)
     {
         int bTryAmp = m_slice->m_sps->maxAMPDepth > depth && (cuGeom.log2CUSize < 6 || m_param->rdLevel > 4);
@@ -561,28 +511,28 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         PMODE pmode(*this, cuGeom);
 
         /* Initialize all prediction CUs based on parentCTU */
-        md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
-        md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
+        md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom);
+        md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom);
         if (bTryIntra)
         {
-            md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
+            md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
             if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3 && m_param->rdLevel >= 5)
-                md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
             pmode.modes[pmode.m_jobTotal++] = PRED_INTRA;
         }
-        md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp); pmode.modes[pmode.m_jobTotal++] = PRED_2Nx2N;
-        md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom, qp);
+        md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_2Nx2N;
+        md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom);
         if (m_param->bEnableRectInter)
         {
-            md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom, qp); pmode.modes[pmode.m_jobTotal++] = PRED_2NxN;
-            md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom, qp); pmode.modes[pmode.m_jobTotal++] = PRED_Nx2N;
+            md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_2NxN;
+            md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_Nx2N;
         }
         if (bTryAmp)
         {
-            md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom, qp); pmode.modes[pmode.m_jobTotal++] = PRED_2NxnU;
-            md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom, qp); pmode.modes[pmode.m_jobTotal++] = PRED_2NxnD;
-            md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom, qp); pmode.modes[pmode.m_jobTotal++] = PRED_nLx2N;
-            md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom, qp); pmode.modes[pmode.m_jobTotal++] = PRED_nRx2N;
+            md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_2NxnU;
+            md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_2NxnD;
+            md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_nLx2N;
+            md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom); pmode.modes[pmode.m_jobTotal++] = PRED_nRx2N;
         }
 
         pmode.tryBondPeers(*m_frame->m_encData->m_jobProvider, pmode.m_jobTotal);
@@ -712,7 +662,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
 
         if (md.bestMode->rdCost == MAX_INT64 && !bTryIntra)
         {
-            md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
+            md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
             checkIntraInInter(md.pred[PRED_INTRA], cuGeom);
             encodeIntraInInter(md.pred[PRED_INTRA], cuGeom);
             checkBestMode(md.pred[PRED_INTRA], depth);
@@ -738,7 +688,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
         CUData* splitCU = &splitPred->cu;
-        splitCU->initSubCU(parentCTU, cuGeom, qp);
+        splitCU->initSubCU(parentCTU, cuGeom);
 
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
@@ -752,7 +702,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childGeom.absPartIdx);
                 m_rqt[nextDepth].cur.load(*nextContext);
-                compressInterCU_dist(parentCTU, childGeom, qp, partIdx * 4 + subPartIdx);
+                compressInterCU_dist(parentCTU, childGeom);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
@@ -771,7 +721,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         else
             updateModeCost(*splitPred);
 
-        checkDQPForSplitPred(*splitPred, cuGeom);
+        checkDQPForSplitPred(splitPred->cu, cuGeom);
         checkBestMode(*splitPred, depth);
     }
 
@@ -791,7 +741,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, cuAddr, cuGeom.absPartIdx);
 }
 
-void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, uint32_t partIdx)
+void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom)
 {
     uint32_t depth = cuGeom.depth;
     uint32_t cuAddr = parentCTU.m_cuAddr;
@@ -802,20 +752,13 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
     uint32_t minDepth = topSkipMinDepth(parentCTU, cuGeom);
 
-    if (m_slice->m_pps->bUseDQP && depth && depth <= m_slice->m_pps->maxCuDQPDepth)
-    {
-        qp = m_qp[depth][partIdx];
-        this->setQP(*m_slice, qp);
-        qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
-    }
-
     if (mightNotSplit && depth >= minDepth)
     {
         bool bTryIntra = m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames;
 
         /* Compute Merge Cost */
-        md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
-        md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
+        md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom);
+        md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom);
         checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
         bool earlyskip = false;
@@ -824,24 +767,24 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
 
         if (!earlyskip)
         {
-            md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+            md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom);
             checkInter_rd0_4(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N);
 
             if (m_slice->m_sliceType == B_SLICE)
             {
-                md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom);
                 checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], cuGeom);
             }
 
             Mode *bestInter = &md.pred[PRED_2Nx2N];
             if (m_param->bEnableRectInter)
             {
-                md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom);
                 checkInter_rd0_4(md.pred[PRED_Nx2N], cuGeom, SIZE_Nx2N);
                 if (md.pred[PRED_Nx2N].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_Nx2N];
 
-                md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom);
                 checkInter_rd0_4(md.pred[PRED_2NxN], cuGeom, SIZE_2NxN);
                 if (md.pred[PRED_2NxN].sa8dCost < bestInter->sa8dCost)
                     bestInter = &md.pred[PRED_2NxN];
@@ -863,24 +806,24 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
 
                 if (bHor)
                 {
-                    md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd0_4(md.pred[PRED_2NxnU], cuGeom, SIZE_2NxnU);
                     if (md.pred[PRED_2NxnU].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_2NxnU];
 
-                    md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd0_4(md.pred[PRED_2NxnD], cuGeom, SIZE_2NxnD);
                     if (md.pred[PRED_2NxnD].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_2NxnD];
                 }
                 if (bVer)
                 {
-                    md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd0_4(md.pred[PRED_nLx2N], cuGeom, SIZE_nLx2N);
                     if (md.pred[PRED_nLx2N].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_nLx2N];
 
-                    md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd0_4(md.pred[PRED_nRx2N], cuGeom, SIZE_nRx2N);
                     if (md.pred[PRED_nRx2N].sa8dCost < bestInter->sa8dCost)
                         bestInter = &md.pred[PRED_nRx2N];
@@ -912,7 +855,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                 if ((bTryIntra && md.bestMode->cu.getQtRootCbf(0)) ||
                     md.bestMode->sa8dCost == MAX_INT64)
                 {
-                    md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
                     checkIntraInInter(md.pred[PRED_INTRA], cuGeom);
                     encodeIntraInInter(md.pred[PRED_INTRA], cuGeom);
                     checkBestMode(md.pred[PRED_INTRA], depth);
@@ -930,7 +873,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
 
                 if (bTryIntra || md.bestMode->sa8dCost == MAX_INT64)
                 {
-                    md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
                     checkIntraInInter(md.pred[PRED_INTRA], cuGeom);
                     if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
                         md.bestMode = &md.pred[PRED_INTRA];
@@ -1017,7 +960,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
         CUData* splitCU = &splitPred->cu;
-        splitCU->initSubCU(parentCTU, cuGeom, qp);
+        splitCU->initSubCU(parentCTU, cuGeom);
 
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
@@ -1031,7 +974,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childGeom.absPartIdx);
                 m_rqt[nextDepth].cur.load(*nextContext);
-                compressInterCU_rd0_4(parentCTU, childGeom, qp, partIdx * 4 + subPartIdx);
+                compressInterCU_rd0_4(parentCTU, childGeom);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
@@ -1063,7 +1006,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
         else if (splitPred->sa8dCost < md.bestMode->sa8dCost)
             md.bestMode = splitPred;
 
-        checkDQPForSplitPred(*md.bestMode, cuGeom);
+        checkDQPForSplitPred(md.bestMode->cu, cuGeom);
     }
     if (mightNotSplit)
     {
@@ -1082,7 +1025,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, cuAddr, cuGeom.absPartIdx);
 }
 
-void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qp, uint32_t partIdx)
+void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder)
 {
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
@@ -1091,21 +1034,14 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
 
-    if (m_slice->m_pps->bUseDQP && depth && depth <= m_slice->m_pps->maxCuDQPDepth)
-    {
-        qp = m_qp[depth][partIdx];
-        this->setQP(*m_slice, qp);
-        qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
-    }
-
     if (m_param->analysisMode == X265_ANALYSIS_LOAD)
     {
         uint8_t* reuseDepth  = &m_reuseInterDataCTU->depth[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
         uint8_t* reuseModes  = &m_reuseInterDataCTU->modes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
         if (mightNotSplit && depth == reuseDepth[zOrder] && zOrder == cuGeom.absPartIdx && reuseModes[zOrder] == MODE_SKIP)
         {
-            md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
-            md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
+            md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom);
+            md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom);
             checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom, true);
 
             if (m_bTryLossless)
@@ -1124,20 +1060,20 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
 
     if (mightNotSplit)
     {
-        md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
-        md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
+        md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom);
+        md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom);
         checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom, false);
         bool earlySkip = m_param->bEnableEarlySkip && md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
 
         if (!earlySkip)
         {
-            md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+            md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom);
             checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, false);
             checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
             if (m_slice->m_sliceType == B_SLICE)
             {
-                md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom);
                 checkBidir2Nx2N(md.pred[PRED_2Nx2N], md.pred[PRED_BIDIR], cuGeom);
                 if (md.pred[PRED_BIDIR].sa8dCost < MAX_INT64)
                 {
@@ -1148,11 +1084,11 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
 
             if (m_param->bEnableRectInter)
             {
-                md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom);
                 checkInter_rd5_6(md.pred[PRED_Nx2N], cuGeom, SIZE_Nx2N, false);
                 checkBestMode(md.pred[PRED_Nx2N], cuGeom.depth);
 
-                md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom);
                 checkInter_rd5_6(md.pred[PRED_2NxN], cuGeom, SIZE_2NxN, false);
                 checkBestMode(md.pred[PRED_2NxN], cuGeom.depth);
             }
@@ -1175,21 +1111,21 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
 
                 if (bHor)
                 {
-                    md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd5_6(md.pred[PRED_2NxnU], cuGeom, SIZE_2NxnU, bMergeOnly);
                     checkBestMode(md.pred[PRED_2NxnU], cuGeom.depth);
 
-                    md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd5_6(md.pred[PRED_2NxnD], cuGeom, SIZE_2NxnD, bMergeOnly);
                     checkBestMode(md.pred[PRED_2NxnD], cuGeom.depth);
                 }
                 if (bVer)
                 {
-                    md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd5_6(md.pred[PRED_nLx2N], cuGeom, SIZE_nLx2N, bMergeOnly);
                     checkBestMode(md.pred[PRED_nLx2N], cuGeom.depth);
 
-                    md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom);
                     checkInter_rd5_6(md.pred[PRED_nRx2N], cuGeom, SIZE_nRx2N, bMergeOnly);
                     checkBestMode(md.pred[PRED_nRx2N], cuGeom.depth);
                 }
@@ -1197,13 +1133,13 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
 
             if (m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames)
             {
-                md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom);
                 checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL, NULL);
                 checkBestMode(md.pred[PRED_INTRA], depth);
 
                 if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
                 {
-                    md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom, qp);
+                    md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom);
                     checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN, NULL, NULL);
                     checkBestMode(md.pred[PRED_INTRA_NxN], depth);
                 }
@@ -1223,7 +1159,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
         CUData* splitCU = &splitPred->cu;
-        splitCU->initSubCU(parentCTU, cuGeom, qp);
+        splitCU->initSubCU(parentCTU, cuGeom);
 
         uint32_t nextDepth = depth + 1;
         ModeDepth& nd = m_modeDepth[nextDepth];
@@ -1237,7 +1173,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
             {
                 m_modeDepth[0].fencYuv.copyPartToYuv(nd.fencYuv, childGeom.absPartIdx);
                 m_rqt[nextDepth].cur.load(*nextContext);
-                compressInterCU_rd5_6(parentCTU, childGeom, zOrder, qp, partIdx * 4 + subPartIdx);
+                compressInterCU_rd5_6(parentCTU, childGeom, zOrder);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
@@ -1257,7 +1193,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
         else
             updateModeCost(*splitPred);
 
-        checkDQPForSplitPred(*splitPred, cuGeom);
+        checkDQPForSplitPred(splitPred->cu, cuGeom);
         checkBestMode(*splitPred, depth);
     }
 
@@ -1372,7 +1308,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     md.bestMode->cu.setPUMv(1, candMvField[bestSadCand][1].mv, 0, 0);
     md.bestMode->cu.setPURefIdx(0, (int8_t)candMvField[bestSadCand][0].refIdx, 0, 0);
     md.bestMode->cu.setPURefIdx(1, (int8_t)candMvField[bestSadCand][1].refIdx, 0, 0);
-    checkDQP(*md.bestMode, cuGeom);
+    checkDQP(md.bestMode->cu, cuGeom);
     X265_CHECK(md.bestMode->ok(), "Merge mode not ok\n");
 }
 
@@ -1504,7 +1440,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         bestPred->cu.setPUMv(1, candMvField[bestCand][1].mv, 0, 0);
         bestPred->cu.setPURefIdx(0, (int8_t)candMvField[bestCand][0].refIdx, 0, 0);
         bestPred->cu.setPURefIdx(1, (int8_t)candMvField[bestCand][1].refIdx, 0, 0);
-        checkDQP(*bestPred, cuGeom);
+        checkDQP(bestPred->cu, cuGeom);
         X265_CHECK(bestPred->ok(), "merge mode is not ok");
     }
 

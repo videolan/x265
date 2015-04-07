@@ -182,7 +182,7 @@ public:
     static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
 
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
-    void     initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp);
+    void     initSubCU(const CUData& ctu, const CUGeom& cuGeom);
     void     initLosslessCU(const CUData& cu, const CUGeom& cuGeom);
 
     void     copyPartFrom(const CUData& cu, const CUGeom& childGeom, uint32_t subPartIdx);

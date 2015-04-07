@@ -316,8 +316,8 @@ public:
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
 
     /* update CBF flags and QP values to be internally consistent */
-    void checkDQP(Mode& mode, const CUGeom& cuGeom);
-    void checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom);
+    void checkDQP(CUData& cu, const CUGeom& cuGeom);
+    void checkDQPForSplitPred(CUData& cu, const CUGeom& cuGeom);
 
     class PME : public BondedTaskGroup
     {

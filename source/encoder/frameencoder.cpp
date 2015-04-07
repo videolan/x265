@@ -852,7 +852,9 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         if (m_param->rc.aqMode || bIsVbv)
         {
             int qp = calcQpForCu(cuAddr, curEncData.m_cuStat[cuAddr].baseQp);
+            tld.analysis.setQP(*slice, qp);
             qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
+            ctu->setQPSubParts((int8_t)qp, 0, 0);
             curEncData.m_rowStat[row].sumQpAq += qp;
         }
         else
