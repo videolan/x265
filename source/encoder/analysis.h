@@ -90,6 +90,7 @@ public:
     void processPmode(PMODE& pmode, Analysis& slave);
 
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
+    int*      m_qp[NUM_CU_DEPTH];
     bool      m_bTryLossless;
     bool      m_bChromaSa8d;
 
@@ -109,12 +110,12 @@ protected:
     uint32_t*            m_reuseBestMergeCand;
 
     /* full analysis for an I-slice CU */
-    void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder);
+    void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qpDepth, uint32_t partIdx);
 
     /* full analysis for a P or B slice CU */
-    void compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom);
-    void compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom);
-    void compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder);
+    void compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qpDepth, uint32_t partIdx);
+    void compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qpDepth, uint32_t partIdx);
+    void compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qpDepth, uint32_t partIdx);
 
     /* measure merge and skip */
     void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGeom);
@@ -139,7 +140,7 @@ protected:
     /* generate residual and recon pixels for an entire CTU recursively (RD0) */
     void encodeResidue(const CUData& parentCTU, const CUGeom& cuGeom);
 
-    int calculateQpforCuSize(CUData& ctu, const CUGeom& cuGeom);
+    int calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom);
 
     /* check whether current mode is the new best */
     inline void checkBestMode(Mode& mode, uint32_t depth)

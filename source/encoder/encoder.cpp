@@ -1559,15 +1559,12 @@ void Encoder::initPPS(PPS *pps)
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
     if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
-    {
         pps->bUseDQP = true;
-        pps->maxCuDQPDepth = 0; /* TODO: make configurable? */
-    }
     else
-    {
         pps->bUseDQP = false;
-        pps->maxCuDQPDepth = 0;
-    }
+
+    pps->maxCuDQPDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
+    X265_CHECK(pps->maxCuDQPDepth <= 2, "max CU DQP depth cannot be greater than 2");
 
     pps->chromaQpOffset[0] = m_param->cbQpOffset;
     pps->chromaQpOffset[1] = m_param->crQpOffset;
@@ -1789,6 +1786,21 @@ void Encoder::configure(x265_param *p)
     {
         p->analysisMode = X265_ANALYSIS_OFF;
         x265_log(p, X265_LOG_WARNING, "Analysis save and load mode not supported for distributed mode analysis\n");
+    }
+
+    bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
+    if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
+    {
+        if (p->rc.qgSize < X265_MAX(16, p->minCUSize))
+        {
+            p->rc.qgSize = X265_MAX(16, p->minCUSize);
+            x265_log(p, X265_LOG_WARNING, "QGSize should be greater than or equal to 16 and minCUSize, setting QGSize = %d \n", p->rc.qgSize);
+        }
+        if (p->rc.qgSize > p->maxCUSize)
+        {
+            p->rc.qgSize = p->maxCUSize;
+            x265_log(p, X265_LOG_WARNING, "QGSize should be less than or equal to maxCUSize, setting QGSize = %d \n", p->rc.qgSize);
+        }
     }
 }
 

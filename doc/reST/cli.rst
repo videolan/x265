@@ -1122,6 +1122,13 @@ Quality, rate control and rate distortion options
 
 	**Range of values:** 0.0 to 3.0
 
+.. option:: --qg-size <64|32|16>
+	Enable adaptive quantization for sub-CTUs. This parameter specifies 
+	the minimum CU size at which QP can be adjusted, ie. Quantization Group
+	size. Allowed range of values are 64, 32, 16 provided this falls within 
+	the inclusive range [maxCUSize, minCUSize]. Experimental.
+	Default: same as maxCUSize
+
 .. option:: --cutree, --no-cutree
 
 	Enable the use of lookahead's lowres motion vector fields to

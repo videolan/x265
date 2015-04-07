@@ -992,6 +992,12 @@ typedef struct x265_param
         /* Enable stricter conditions to check bitrate deviations in CBR mode. May compromise 
          * quality to maintain bitrate adherence */
         int bStrictCbr;
+
+        /* Enable adaptive quantization at CU granularity. This parameter specifies 
+         * the minimum CU size at which QP can be adjusted, i.e. Quantization Group 
+         * (QG) size. Allowed values are 64, 32, 16 provided it falls within the 
+         * inclusuve range [maxCUSize, minCUSize]. Experimental, default: maxCUSize*/
+        uint32_t qgSize;
     } rc;
 
     /*== Video Usability Information ==*/

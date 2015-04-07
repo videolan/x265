@@ -207,6 +207,7 @@ static const struct option long_options[] =
     { "strict-cbr",           no_argument, NULL, 0 },
     { "temporal-layers",      no_argument, NULL, 0 },
     { "no-temporal-layers",   no_argument, NULL, 0 },
+    { "qg-size",        required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -355,6 +356,7 @@ static void showHelp(x265_param *param)
     H0("   --analysis-file <filename>    Specify file name used for either dumping or reading analysis data.\n");
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
+    H0("   --qg-size <int>               Specifies the size of the quantization group (64, 32, 16). Default %d\n", param->rc.qgSize);
     H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
     H1("   --ipratio <float>             QP factor between I and P. Default %.2f\n", param->rc.ipFactor);
     H1("   --pbratio <float>             QP factor between P and B. Default %.2f\n", param->rc.pbFactor);
