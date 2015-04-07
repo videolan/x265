@@ -437,7 +437,7 @@ Profile, Level, Tier
 	times 10, for example level **5.1** is specified as "5.1" or "51",
 	and level **5.0** is specified as "5.0" or "50".
 
-	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2
+	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2, 8.5
 
 .. option:: --high-tier, --no-high-tier
 
