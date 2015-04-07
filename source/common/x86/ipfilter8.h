@@ -675,6 +675,11 @@ void x265_filterPixelToShort_64x64_ssse3(const pixel* src, intptr_t srcStride, i
 void x265_filterPixelToShort_12x16_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 void x265_filterPixelToShort_24x32_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 void x265_filterPixelToShort_48x64_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_32x8_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_32x16_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_32x24_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_32x32_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_32x64_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 #undef LUMA_FILTERS
 #undef LUMA_SP_FILTERS
 #undef LUMA_SS_FILTERS

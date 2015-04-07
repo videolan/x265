@@ -2041,6 +2041,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         p.pu[LUMA_16x16].luma_hvpp = x265_interp_8tap_hv_pp_16x16_avx2;
 
+        p.pu[LUMA_32x8].convert_p2s = x265_filterPixelToShort_32x8_avx2;
+        p.pu[LUMA_32x16].convert_p2s = x265_filterPixelToShort_32x16_avx2;
+        p.pu[LUMA_32x24].convert_p2s = x265_filterPixelToShort_32x24_avx2;
+        p.pu[LUMA_32x32].convert_p2s = x265_filterPixelToShort_32x32_avx2;
+        p.pu[LUMA_32x64].convert_p2s = x265_filterPixelToShort_32x64_avx2;
+
         if ((cpuMask & X265_CPU_BMI1) && (cpuMask & X265_CPU_BMI2))
             p.findPosLast = x265_findPosLast_x64;
     }
