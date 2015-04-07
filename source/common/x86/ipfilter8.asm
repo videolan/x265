@@ -8434,6 +8434,127 @@ P2S_H_64xN 32
 P2S_H_64xN 48
 
 ;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_64xN_avx2 1
+INIT_YMM avx2
+cglobal filterPixelToShort_64x%1, 3, 7, 6
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r4, [r3 * 3]
+    lea         r5, [r1 * 3]
+
+    ; load height
+    mov         r6d, %1/4
+
+    ; load constant
+    vbroadcasti128   m4, [pb_128]
+    vbroadcasti128   m5, [tab_c_64_n64]
+
+.loop:
+    movu        m0, [r0]
+    punpcklbw   m1, m0, m4
+    punpckhbw   m2, m0, m4
+    pmaddubsw   m1, m5
+    pmaddubsw   m2, m5
+    vperm2i128  m3, m1, m2, q0301
+    vperm2i128  m2, m1, m2, q0200
+
+    movu        [r2 + r3 * 0], m2
+    movu        [r2 + r3 * 0 + 32], m3
+
+    movu        m0, [r0 + r1]
+    punpcklbw   m1, m0, m4
+    punpckhbw   m2, m0, m4
+    pmaddubsw   m1, m5
+    pmaddubsw   m2, m5
+    vperm2i128  m3, m1, m2, q0301
+    vperm2i128  m2, m1, m2, q0200
+
+    movu        [r2 + r3 * 1], m2
+    movu        [r2 + r3 * 1 + 32], m3
+
+    movu        m0, [r0 + r1 * 2]
+    punpcklbw   m1, m0, m4
+    punpckhbw   m2, m0, m4
+    pmaddubsw   m1, m5
+    pmaddubsw   m2, m5
+    vperm2i128  m3, m1, m2, q0301
+    vperm2i128  m2, m1, m2, q0200
+
+    movu        [r2 + r3 * 2], m2
+    movu        [r2 + r3 * 2 + 32], m3
+
+    movu        m0, [r0 + r5]
+    punpcklbw   m1, m0, m4
+    punpckhbw   m2, m0, m4
+    pmaddubsw   m1, m5
+    pmaddubsw   m2, m5
+    vperm2i128  m3, m1, m2, q0301
+    vperm2i128  m2, m1, m2, q0200
+
+    movu        [r2 + r4], m2
+    movu        [r2 + r4 + 32], m3
+
+    add         r0, 32
+
+    movu        m0, [r0]
+    punpcklbw   m1, m0, m4
+    punpckhbw   m2, m0, m4
+    pmaddubsw   m1, m5
+    pmaddubsw   m2, m5
+    vperm2i128  m3, m1, m2, q0301
+    vperm2i128  m2, m1, m2, q0200
+
+    movu        [r2 + r3 * 0 + 64], m2
+    movu        [r2 + r3 * 0 + 96], m3
+
+    movu        m0, [r0 + r1]
+    punpcklbw   m1, m0, m4
+    punpckhbw   m2, m0, m4
+    pmaddubsw   m1, m5
+    pmaddubsw   m2, m5
+    vperm2i128  m3, m1, m2, q0301
+    vperm2i128  m2, m1, m2, q0200
+
+    movu        [r2 + r3 * 1 + 64], m2
+    movu        [r2 + r3 * 1 + 96], m3
+
+    movu        m0, [r0 + r1 * 2]
+    punpcklbw   m1, m0, m4
+    punpckhbw   m2, m0, m4
+    pmaddubsw   m1, m5
+    pmaddubsw   m2, m5
+    vperm2i128  m3, m1, m2, q0301
+    vperm2i128  m2, m1, m2, q0200
+
+    movu        [r2 + r3 * 2 + 64], m2
+    movu        [r2 + r3 * 2 + 96], m3
+
+    movu        m0, [r0 + r5]
+    punpcklbw   m1, m0, m4
+    punpckhbw   m2, m0, m4
+    pmaddubsw   m1, m5
+    pmaddubsw   m2, m5
+    vperm2i128  m3, m1, m2, q0301
+    vperm2i128  m2, m1, m2, q0200
+
+    movu        [r2 + r4 + 64], m2
+    movu        [r2 + r4 + 96], m3
+
+    lea         r0, [r0 + r1 * 4 - 32]
+    lea         r2, [r2 + r3 * 4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+P2S_H_64xN_avx2 64
+P2S_H_64xN_avx2 16
+P2S_H_64xN_avx2 32
+P2S_H_64xN_avx2 48
+
+;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel src, intptr_t srcStride, int16_t dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
 %macro P2S_H_12xN 1
