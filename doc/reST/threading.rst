@@ -2,6 +2,8 @@
 Threading
 *********
 
+.. _pools:
+
 Thread Pools
 ============
 
@@ -30,6 +32,17 @@ Worker jobs are not allowed to block except when abosultely necessary
 for data locking. If a job becomes blocked, the work function is
 expected to drop that job so the worker thread may go back to the pool
 and find more work.
+
+On Windows, the native APIs offer sufficient functionality to discover
+the NUMA topology and enforce the thread affinity that libx265 needs,
+but on POSIX systems it relies on libnuma for this functionality. If
+your target POSIX system is single socket, then building without libnuma
+is a perfectly reasonable option, as it will have no effect on the
+runtime behavior. On a multiple-socket system, a POSIX build of libx265
+without libnuma will be less work efficient, but will still function
+correctly. You lose the work isolation effect that keeps each frame
+encoder from only using the threads of a single socket and so you incur
+a heavier context switching cost.
 
 Wavefront Parallel Processing
 =============================

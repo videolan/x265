@@ -217,6 +217,15 @@ Performance Options
 	:option:`--frame-threads`.  The pools are used for WPP and for
 	distributed analysis and motion search.
 
+	On Windows, the native APIs offer sufficient functionality to
+	discover the NUMA topology and enforce the thread affinity that
+	libx265 needs, but on POSIX systems it relies on libnuma for this
+	functionality. If your target POSIX system is single socket, then
+	building without libnuma is a perfectly reasonable option, as it
+	will have no effect on the runtime behavior. On a multiple-socket
+	system, a POSIX build of libx265 without libnuma will be less work
+	efficient. See :ref:`thread pools <pools>` for more detail.
+
 	Default "", one thread is allocated per detected hardware thread
 	(logical CPU cores) and one thread pool per NUMA node.
 
