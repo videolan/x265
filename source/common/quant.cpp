@@ -50,11 +50,6 @@ inline int fastMin(int x, int y)
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
-inline int fastMax(int x, int y)
-{
-    return x - ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // max(x, y)
-}
-
 inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, const uint32_t absGoRice, const uint32_t maxVlc, uint32_t c1c2Idx)
 {
     X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
