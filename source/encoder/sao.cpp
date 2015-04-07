@@ -367,11 +367,14 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         {
             primitives.sign(upBuff1, rec, tmpU, ctuWidth);
 
-            for (y = startY; y < endY; y++)
+            int diff = (endY - startY) % 2;
+            for (y = startY; y < endY - diff; y += 2)
             {
-                primitives.saoCuOrgE1(rec, upBuff1, m_offsetEo, stride, ctuWidth);
-                rec += stride;
+                primitives.saoCuOrgE1_2Rows(rec, upBuff1, m_offsetEo, stride, ctuWidth);
+                rec += 2 * stride;
             }
+            if (diff & 1)
+                primitives.saoCuOrgE1(rec, upBuff1, m_offsetEo, stride, ctuWidth);
         }
 
         break;

@@ -1687,6 +1687,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.saoCuOrgE1_2Rows)
+    {
+        if (!check_saoCuOrgE1_t(ref.saoCuOrgE1_2Rows, opt.saoCuOrgE1_2Rows))
+        {
+            printf("SAO_EO_1_2Rows failed\n");
+            return false;
+        }
+    }
+
     if (opt.saoCuOrgE2)
     {
         if (!check_saoCuOrgE2_t(ref.saoCuOrgE2, opt.saoCuOrgE2))
@@ -2063,6 +2072,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("SAO_EO_1");
         REPORT_SPEEDUP(opt.saoCuOrgE1, ref.saoCuOrgE1, pbuf1, psbuf2, psbuf1, 64, 64);
+    }
+
+    if (opt.saoCuOrgE1_2Rows)
+    {
+        HEADER0("SAO_EO_1_2Rows");
+        REPORT_SPEEDUP(opt.saoCuOrgE1_2Rows, ref.saoCuOrgE1_2Rows, pbuf1, psbuf2, psbuf1, 64, 64);
     }
 
     if (opt.saoCuOrgE2)

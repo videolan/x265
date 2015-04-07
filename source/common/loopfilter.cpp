@@ -77,6 +77,25 @@ void processSaoCUE1(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stri
     }
 }
 
+void processSaoCUE1_2Rows(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width)
+{
+    int x, y;
+    int8_t signDown;
+    int edgeType;
+
+    for (y = 0; y < 2; y++)
+    {
+        for (x = 0; x < width; x++)
+        {
+            signDown = signOf(rec[x] - rec[x + stride]);
+            edgeType = signDown + upBuff1[x] + 2;
+            upBuff1[x] = -signDown;
+            rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
+        }
+        rec += stride;
+    }
+}
+
 void processSaoCUE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offsetEo, int width, intptr_t stride)
 {
     int x;
@@ -124,6 +143,7 @@ void setupLoopFilterPrimitives_c(EncoderPrimitives &p)
 {
     p.saoCuOrgE0 = processSaoCUE0;
     p.saoCuOrgE1 = processSaoCUE1;
+    p.saoCuOrgE1_2Rows = processSaoCUE1_2Rows;
     p.saoCuOrgE2 = processSaoCUE2;
     p.saoCuOrgE3 = processSaoCUE3;
     p.saoCuOrgB0 = processSaoCUB0;

@@ -274,7 +274,7 @@ struct EncoderPrimitives
 
     sign_t                sign;
     saoCuOrgE0_t          saoCuOrgE0;
-    saoCuOrgE1_t          saoCuOrgE1;
+    saoCuOrgE1_t          saoCuOrgE1, saoCuOrgE1_2Rows;
     saoCuOrgE2_t          saoCuOrgE2;
     saoCuOrgE3_t          saoCuOrgE3;
     saoCuOrgB0_t          saoCuOrgB0;
