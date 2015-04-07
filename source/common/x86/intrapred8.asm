@@ -12058,20 +12058,21 @@ cglobal intra_pred_ang16_11, 3, 5, 12
 
 
 INIT_YMM avx2
-cglobal intra_pred_ang16_7, 3, 5, 12
+cglobal intra_pred_ang16_7, 3, 6, 12
     mova              m11, [pw_1024]
+    lea               r5, [intra_pred_shuff_0_8]
 
     movu              xm9, [r2 + 1 + 32]
-    pshufb            xm9, [intra_pred_shuff_0_8]
+    pshufb            xm9, [r5]
     movu              xm10, [r2 + 9 + 32]
-    pshufb            xm10, [intra_pred_shuff_0_8]
+    pshufb            xm10, [r5]
 
     movu              xm7, [r2 + 3  + 32]
-    pshufb            xm7, [intra_pred_shuff_0_8]
+    pshufb            xm7, [r5]
     vinserti128       m9, m9, xm7, 1
 
     movu              xm8, [r2 + 11 + 32]
-    pshufb            xm8, [intra_pred_shuff_0_8]
+    pshufb            xm8, [r5]
     vinserti128       m10, m10, xm8, 1
 
     lea               r3, [3 * r1]
@@ -12081,21 +12082,21 @@ cglobal intra_pred_ang16_7, 3, 5, 12
     INTRA_PRED_ANG16_CAL_ROW m1, m2, 1
 
     movu              xm7, [r2 + 4  + 32]
-    pshufb            xm7, [intra_pred_shuff_0_8]
+    pshufb            xm7, [r5]
     vinserti128       m9, m9, xm7, 1
 
     movu              xm8, [r2 + 12 + 32]
-    pshufb            xm8, [intra_pred_shuff_0_8]
+    pshufb            xm8, [r5]
     vinserti128       m10, m10, xm8, 1
 
     INTRA_PRED_ANG16_CAL_ROW m2, m3, 2
 
     movu              xm7, [r2 + 2  + 32]
-    pshufb            xm7, [intra_pred_shuff_0_8]
+    pshufb            xm7, [r5]
     vinserti128       m9, m9, xm7, 0
 
     movu              xm8, [r2 + 10 + 32]
-    pshufb            xm8, [intra_pred_shuff_0_8]
+    pshufb            xm8, [r5]
     vinserti128       m10, m10, xm8, 0
 
     INTRA_PRED_ANG16_CAL_ROW m3, m4, 3
@@ -12106,21 +12107,21 @@ cglobal intra_pred_ang16_7, 3, 5, 12
     INTRA_PRED_ANG16_CAL_ROW m5, m6, 1
 
     movu              xm7, [r2 + 5  + 32]
-    pshufb            xm7, [intra_pred_shuff_0_8]
+    pshufb            xm7, [r5]
     vinserti128       m9, m9, xm7, 1
 
     movu              xm8, [r2 + 13 + 32]
-    pshufb            xm8, [intra_pred_shuff_0_8]
+    pshufb            xm8, [r5]
     vinserti128       m10, m10, xm8, 1
 
     INTRA_PRED_ANG16_CAL_ROW m6, m7, 2
 
     movu              xm7, [r2 + 3  + 32]
-    pshufb            xm7, [intra_pred_shuff_0_8]
+    pshufb            xm7, [r5]
     vinserti128       m9, m9, xm7, 0
 
     movu              xm8, [r2 + 11 + 32]
-    pshufb            xm8, [intra_pred_shuff_0_8]
+    pshufb            xm8, [r5]
     vinserti128       m10, m10, xm8, 0
 
     INTRA_PRED_ANG16_CAL_ROW m7, m8, 3
@@ -12130,20 +12131,21 @@ cglobal intra_pred_ang16_7, 3, 5, 12
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang16_8, 3, 5, 12
+cglobal intra_pred_ang16_8, 3, 6, 12
     mova              m11, [pw_1024]
+    lea               r5, [intra_pred_shuff_0_8]
 
     movu              xm9, [r2 + 1 + 32]
-    pshufb            xm9, [intra_pred_shuff_0_8]
+    pshufb            xm9, [r5]
     movu              xm10, [r2 + 9 + 32]
-    pshufb            xm10, [intra_pred_shuff_0_8]
+    pshufb            xm10, [r5]
 
     movu              xm7, [r2 + 2  + 32]
-    pshufb            xm7, [intra_pred_shuff_0_8]
+    pshufb            xm7, [r5]
     vinserti128       m9, m9, xm7, 1
 
     movu              xm8, [r2 + 10 + 32]
-    pshufb            xm8, [intra_pred_shuff_0_8]
+    pshufb            xm8, [r5]
     vinserti128       m10, m10, xm8, 1
 
     lea               r3, [3 * r1]
@@ -12157,11 +12159,11 @@ cglobal intra_pred_ang16_8, 3, 5, 12
     add               r4, 4 * mmsize
 
     movu              xm4, [r2 + 3  + 32]
-    pshufb            xm4, [intra_pred_shuff_0_8]
+    pshufb            xm4, [r5]
     vinserti128       m9, m9, xm4, 1
 
     movu              xm5, [r2 + 11 + 32]
-    pshufb            xm5, [intra_pred_shuff_0_8]
+    pshufb            xm5, [r5]
     vinserti128       m10, m10, xm5, 1
 
     INTRA_PRED_ANG16_CAL_ROW m4, m5, 0
@@ -12178,13 +12180,14 @@ cglobal intra_pred_ang16_8, 3, 5, 12
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang16_9, 3, 5, 12
+cglobal intra_pred_ang16_9, 3, 6, 12
     mova              m11, [pw_1024]
+    lea               r5, [intra_pred_shuff_0_8]
 
     vbroadcasti128    m9, [r2 + 1 + 32]
-    pshufb            m9, [intra_pred_shuff_0_8]
+    pshufb            m9, [r5]
     vbroadcasti128    m10, [r2 + 9 + 32]
-    pshufb            m10, [intra_pred_shuff_0_8]
+    pshufb            m10, [r5]
 
     lea               r3, [3 * r1]
     lea               r4, [c_ang16_mode_9]
@@ -12201,11 +12204,11 @@ cglobal intra_pred_ang16_9, 3, 5, 12
     INTRA_PRED_ANG16_CAL_ROW m6, m7, 2
 
     movu              xm7, [r2 + 2 + 32]
-    pshufb            xm7, [intra_pred_shuff_0_8]
+    pshufb            xm7, [r5]
     vinserti128       m9, m9, xm7, 1
 
     movu              xm7, [r2 + 10 + 32]
-    pshufb            xm7, [intra_pred_shuff_0_8]
+    pshufb            xm7, [r5]
     vinserti128       m10, m10, xm7, 1
 
     INTRA_PRED_ANG16_CAL_ROW m7, m8, 3
