@@ -103,7 +103,7 @@ bool Analysis::create(ThreadLocalData *tld)
             ok &= md.pred[j].reconYuv.create(cuSize, csp);
             md.pred[j].fencYuv = &md.fencYuv;
         }
-        CHECKED_MALLOC(m_qp[depth], int, 1i64 << (depth << 1));
+        CHECKED_MALLOC(m_qp[depth], int, (size_t)1 << (depth << 1));
     }
 
     return ok;
