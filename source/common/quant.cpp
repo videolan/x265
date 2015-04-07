@@ -580,6 +580,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     TUEntropyCodingParameters codeParams;
     cu.getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, bIsLuma);
     const uint32_t cgNum = 1 << (codeParams.log2TrSizeCG * 2);
+    const uint32_t cgStride = (trSize >> MLS_CG_LOG2_SIZE);
 
     /* TODO: update bit estimates if dirty */
     EstBitsSbac& estBitsSbac = m_entropyCoder->m_estBitsSbac;
@@ -596,7 +597,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
         memset(&cgRdStats, 0, sizeof(coeffGroupRDStats));
 
-        const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
+        const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
 
         /* iterate over coefficients in each group in reverse scan order */
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
@@ -819,7 +820,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
              * of the significant coefficient group flag and evaluate whether the RD cost of the
              * coded group is more than the RD cost of the uncoded group */
 
-            uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
+            uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
 
             int64_t costZeroCG = totalRdCost + SIGCOST(estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
             costZeroCG += cgRdStats.uncodedDist;       /* add distortion for resetting non-zero levels to zero levels */
@@ -836,23 +837,17 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
 
                 /* reset all coeffs to 0. UNCODE THIS COEFF GROUP! */
-                for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
-                {
-                    scanPos = cgScanPos * cgSize + scanPosinCG;
-                    uint32_t blkPos = codeParams.scan[scanPos];
-                    if (dstCoeff[blkPos])
-                    {
-                        costCoeff[scanPos] = costUncoded[scanPos];
-                        costSig[scanPos] = 0;
-                    }
-                    dstCoeff[blkPos] = 0;
-                }
+                const uint32_t blkPos = codeParams.scan[cgScanPos * cgSize];
+                memset(&dstCoeff[blkPos + 0 * trSize], 0, 4 * sizeof(*dstCoeff));
+                memset(&dstCoeff[blkPos + 1 * trSize], 0, 4 * sizeof(*dstCoeff));
+                memset(&dstCoeff[blkPos + 2 * trSize], 0, 4 * sizeof(*dstCoeff));
+                memset(&dstCoeff[blkPos + 3 * trSize], 0, 4 * sizeof(*dstCoeff));
             }
         }
         else
         {
             /* there were no coded coefficients in this coefficient group */
-            uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
+            uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
             costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[ctxSig][0]);
             totalRdCost += costCoeffGroupSig[cgScanPos];  /* add cost of 0 bit in significant CG bitmap */
             totalRdCost -= cgRdStats.sigCost;             /* remove cost of significant coefficient bitmap */
