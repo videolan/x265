@@ -614,7 +614,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
             /* cost of not coding this coefficient (all distortion, no signal bits) */
             costUncoded[scanPos] = ((int64_t)signCoef * signCoef) << scaleBits;
-            if (usePsyMask & blkPos)
+            X265_CHECK((!!scanPos ^ !!blkPos) == 0, "failed on (blkPos=0 && scanPos!=0)\n");
+            if (usePsyMask & scanPos)
                 /* when no residual coefficient is coded, predicted coef == recon coef */
                 costUncoded[scanPos] -= PSYVALUE(predictedCoef);
 
@@ -672,33 +673,65 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                     sigRateDelta[blkPos] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
                     sigCoefBits = estBitsSbac.significantBits[ctxSig][1];
                 }
-                if (maxAbsLevel)
+
+                // NOTE: X265_MAX(maxAbsLevel - 1, 1) ==> (X>=2 -> X-1), (X<2 -> 1)  | (0 < X < 2 ==> X=1)
+                if (maxAbsLevel == 1)
                 {
-                    // NOTE: X265_MAX(maxAbsLevel - 1, 1) ==> (X>=2 -> X-1), (X<2 -> 1)  | (0 < X < 2 ==> X=1)
-                    uint32_t minAbsLevel = (maxAbsLevel - 1);
-                    if (maxAbsLevel == 1)
-                        minAbsLevel = 1;
-                    for (uint32_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--)
+                    uint32_t levelBits = (c1c2Idx & 1) ? greaterOneBits[0] + IEP_RATE : ((1 + goRiceParam) << 15) + IEP_RATE;
+                    X265_CHECK(levelBits == getICRateCost(1, 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE, "levelBits mistake\n");
+
+                    int unquantAbsLevel = UNQUANT(1);
+                    int d = abs(signCoef) - unquantAbsLevel;
+                    int64_t curCost = RDCOST(d, sigCoefBits + levelBits);
+
+                    /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame */
+                    if (usePsyMask & scanPos)
                     {
-                        uint32_t levelBits = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
+                        int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
+                        curCost -= PSYVALUE(reconCoef);
+                    }
 
-                        int unquantAbsLevel = UNQUANT(lvl);
-                        int d = abs(signCoef) - unquantAbsLevel;
-                        int64_t curCost = RDCOST(d, sigCoefBits + levelBits);
+                    if (curCost < costCoeff[scanPos])
+                    {
+                        level = 1;
+                        costCoeff[scanPos] = curCost;
+                        costSig[scanPos] = SIGCOST(sigCoefBits);
+                    }
+                }
+                else if (maxAbsLevel)
+                {
+                    uint32_t levelBits0 = getICRateCost(maxAbsLevel,     maxAbsLevel     - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
+                    uint32_t levelBits1 = getICRateCost(maxAbsLevel - 1, maxAbsLevel - 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
 
-                        /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame */
-                        if (usePsyMask & blkPos)
-                        {
-                            int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
-                            curCost -= PSYVALUE(reconCoef);
-                        }
+                    int unquantAbsLevel0 = UNQUANT(maxAbsLevel);
+                    int d0 = abs(signCoef) - unquantAbsLevel0;
+                    int64_t curCost0 = RDCOST(d0, sigCoefBits + levelBits0);
 
-                        if (curCost < costCoeff[scanPos])
-                        {
-                            level = lvl;
-                            costCoeff[scanPos] = curCost;
-                            costSig[scanPos] = SIGCOST(sigCoefBits);
-                        }
+                    int unquantAbsLevel1 = UNQUANT(maxAbsLevel - 1);
+                    int d1 = abs(signCoef) - unquantAbsLevel1;
+                    int64_t curCost1 = RDCOST(d1, sigCoefBits + levelBits1);
+
+                    /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame */
+                    if (usePsyMask & scanPos)
+                    {
+                        int reconCoef;
+                        reconCoef = abs(unquantAbsLevel0 + SIGN(predictedCoef, signCoef));
+                        curCost0 -= PSYVALUE(reconCoef);
+
+                        reconCoef = abs(unquantAbsLevel1 + SIGN(predictedCoef, signCoef));
+                        curCost1 -= PSYVALUE(reconCoef);
+                    }
+                    if (curCost0 < costCoeff[scanPos])
+                    {
+                        level = maxAbsLevel;
+                        costCoeff[scanPos] = curCost0;
+                        costSig[scanPos] = SIGCOST(sigCoefBits);
+                    }
+                    if (curCost1 < costCoeff[scanPos])
+                    {
+                        level = maxAbsLevel - 1;
+                        costCoeff[scanPos] = curCost1;
+                        costSig[scanPos] = SIGCOST(sigCoefBits);
                     }
                 }
 
