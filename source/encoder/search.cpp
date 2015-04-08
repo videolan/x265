@@ -3444,12 +3444,26 @@ void Search::checkDQP(Mode& mode, const CUGeom& cuGeom)
     {
         if (cu.getQtRootCbf(0))
         {
-            mode.contexts.resetBits();
-            mode.contexts.codeDeltaQP(cu, 0);
-            uint32_t bits = mode.contexts.getNumberOfWrittenBits();
-            mode.mvBits += bits;
-            mode.totalBits += bits;
-            updateModeCost(mode);
+            if (m_param->rdLevel >= 3)
+            {
+                mode.contexts.resetBits();
+                mode.contexts.codeDeltaQP(cu, 0);
+                uint32_t bits = mode.contexts.getNumberOfWrittenBits();
+                mode.mvBits += bits;
+                mode.totalBits += bits;
+                updateModeCost(mode);
+            }
+            else if (m_param->rdLevel <= 1)
+            {
+                mode.sa8dBits++;
+                mode.sa8dCost = m_rdCost.calcRdSADCost(mode.distortion, mode.sa8dBits);
+            }
+            else
+            {
+                mode.mvBits++;
+                mode.totalBits++;
+                updateModeCost(mode);
+            }
         }
         else
             cu.setQPSubParts(cu.getRefQP(0), 0, cuGeom.depth);
@@ -3475,12 +3489,26 @@ void Search::checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom)
         }
         if (hasResidual)
         {
-            mode.contexts.resetBits();
-            mode.contexts.codeDeltaQP(cu, 0);
-            uint32_t bits = mode.contexts.getNumberOfWrittenBits();
-            mode.mvBits += bits;
-            mode.totalBits += bits;
-            updateModeCost(mode);
+            if (m_param->rdLevel >= 3)
+            {
+                mode.contexts.resetBits();
+                mode.contexts.codeDeltaQP(cu, 0);
+                uint32_t bits = mode.contexts.getNumberOfWrittenBits();
+                mode.mvBits += bits;
+                mode.totalBits += bits;
+                updateModeCost(mode);
+            }
+            else if (m_param->rdLevel <= 1)
+            {
+                mode.sa8dBits++;
+                mode.sa8dCost = m_rdCost.calcRdSADCost(mode.distortion, mode.sa8dBits);
+            }
+            else
+            {
+                mode.mvBits++;
+                mode.totalBits++;
+                updateModeCost(mode);
+            }
             /* For all zero CBF sub-CUs, reset QP to RefQP (so that deltaQP is not signalled).
             When the non-zero CBF sub-CU is found, stop */
             cu.setQPSubCUs(cu.getRefQP(0), 0, cuGeom.depth);
