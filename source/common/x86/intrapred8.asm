@@ -232,6 +232,17 @@ c_ang16_mode_31:      db 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17,
                       db 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31
                       db 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
 
+
+ALIGN 32
+c_ang16_mode_5:       db 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25
+                      db 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10
+                      db 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27
+                      db 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
+                      db 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29
+                      db 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14
+                      db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31
+                      db 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+
 ALIGN 32
 c_ang16_mode_32:      db 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21
                       db 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31
@@ -12060,6 +12071,100 @@ cglobal intra_pred_ang16_11, 3, 5, 12
     INTRA_PRED_ANG16_CAL_ROW m4, m5, 0
     INTRA_PRED_ANG16_CAL_ROW m5, m6, 1
     INTRA_PRED_ANG16_CAL_ROW m6, m7, 2
+    INTRA_PRED_ANG16_CAL_ROW m7, m8, 3
+
+    ; transpose and store
+    INTRA_PRED_TRANS_STORE_16x16
+    RET
+
+
+INIT_YMM avx2
+cglobal intra_pred_ang16_5, 3, 6, 12
+    mova              m11, [pw_1024]
+    lea               r5, [intra_pred_shuff_0_8]
+
+    movu              xm9, [r2 + 1 + 32]
+    pshufb            xm9, [r5]
+    movu              xm10, [r2 + 9 + 32]
+    pshufb            xm10, [r5]
+
+    movu              xm7, [r2 + 5 + 32]
+    pshufb            xm7, [r5]
+    vinserti128       m9, m9, xm7, 1
+
+    movu              xm8, [r2 + 13 + 32]
+    pshufb            xm8, [r5]
+    vinserti128       m10, m10, xm8, 1
+
+    lea               r3, [3 * r1]
+    lea               r4, [c_ang16_mode_5]
+
+    INTRA_PRED_ANG16_CAL_ROW m0, m1, 0
+
+    movu              xm9, [r2 + 2 + 32]
+    pshufb            xm9, [r5]
+    movu              xm10, [r2 + 10 + 32]
+    pshufb            xm10, [r5]
+
+    movu              xm7, [r2 + 6 + 32]
+    pshufb            xm7, [r5]
+    vinserti128       m9, m9, xm7, 1
+
+    movu              xm8, [r2 + 14 + 32]
+    pshufb            xm8, [r5]
+    vinserti128       m10, m10, xm8, 1
+
+    INTRA_PRED_ANG16_CAL_ROW m1, m2, 1
+    INTRA_PRED_ANG16_CAL_ROW m2, m3, 2
+
+    movu              xm9, [r2 + 3 + 32]
+    pshufb            xm9, [r5]
+    movu              xm10, [r2 + 11 + 32]
+    pshufb            xm10, [r5]
+
+    movu              xm7, [r2 + 7 + 32]
+    pshufb            xm7, [r5]
+    vinserti128       m9, m9, xm7, 1
+
+    movu              xm8, [r2 + 15 + 32]
+    pshufb            xm8, [r5]
+    vinserti128       m10, m10, xm8, 1
+
+    INTRA_PRED_ANG16_CAL_ROW m3, m4, 3
+
+    add               r4, 4 * mmsize
+
+    INTRA_PRED_ANG16_CAL_ROW m4, m5, 0
+
+    movu              xm9, [r2 + 4 + 32]
+    pshufb            xm9, [r5]
+    movu              xm10, [r2 + 12 + 32]
+    pshufb            xm10, [r5]
+
+    movu              xm7, [r2 + 8 + 32]
+    pshufb            xm7, [r5]
+    vinserti128       m9, m9, xm7, 1
+
+    movu              xm8, [r2 + 16 + 32]
+    pshufb            xm8, [r5]
+    vinserti128       m10, m10, xm8, 1
+
+    INTRA_PRED_ANG16_CAL_ROW m5, m6, 1
+    INTRA_PRED_ANG16_CAL_ROW m6, m7, 2
+
+    movu              xm9, [r2 + 5 + 32]
+    pshufb            xm9, [r5]
+    movu              xm10, [r2 + 13 + 32]
+    pshufb            xm10, [r5]
+
+    movu              xm7, [r2 + 9 + 32]
+    pshufb            xm7, [r5]
+    vinserti128       m9, m9, xm7, 1
+
+    movu              xm8, [r2 + 17 + 32]
+    pshufb            xm8, [r5]
+    vinserti128       m10, m10, xm8, 1
+
     INTRA_PRED_ANG16_CAL_ROW m7, m8, 3
 
     ; transpose and store
