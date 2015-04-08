@@ -114,7 +114,6 @@ public:
     bool          m_outputSignalRequired;
     bool          m_bBatchMotionSearch;
     bool          m_bBatchFrameCosts;
-    Lock          m_preLookaheadLock;
     Event         m_outputSignal;
 
     LookaheadTLD* m_tld;

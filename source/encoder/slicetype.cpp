@@ -572,10 +572,10 @@ void Lookahead::stop()
 {
     if (m_pool && !m_inputQueue.empty())
     {
-        m_preLookaheadLock.acquire();
+        m_inputLock.acquire();
         m_isActive = false;
         bool wait = m_outputSignalRequired = m_sliceTypeBusy;
-        m_preLookaheadLock.release();
+        m_inputLock.release();
 
         if (wait)
             m_outputSignal.wait();
@@ -634,16 +634,13 @@ void Lookahead::addPicture(Frame& curFrame, int sliceType)
             m_filled = true; /* full capacity plus mini-gop lag */
     }
 
-    m_preLookaheadLock.acquire();
-
     m_inputLock.acquire();
-    m_inputQueue.pushBack(curFrame);
-    m_inputLock.release();
 
+    m_inputQueue.pushBack(curFrame);
     m_preframes[m_preTotal++] = &curFrame;
     X265_CHECK(m_preTotal <= X265_LOOKAHEAD_MAX, "prelookahead overflow\n");
-    
-    m_preLookaheadLock.release();
+
+    m_inputLock.release();
 
     if (m_pool)
         tryWakeOne();
@@ -669,7 +666,7 @@ void Lookahead::findJob(int workerThreadID)
     if (workerThreadID < 0)
         tld = m_pool ? m_pool->m_numWorkers : 0;
 
-    m_preLookaheadLock.acquire();
+    m_inputLock.acquire();
     do
     {
         preFrame = NULL;
@@ -684,14 +681,12 @@ void Lookahead::findJob(int workerThreadID)
 
             /* the worker thread that performs the last pre-lookahead will generally get to run
              * slicetypeDecide() */
-            m_inputLock.acquire();
             if (!m_sliceTypeBusy && !m_preTotal && m_inputQueue.size() >= m_fullQueueSize && m_isActive)
                 doDecide = m_sliceTypeBusy = true;
             else
                 m_helpWanted = false;
-            m_inputLock.release();
         }
-        m_preLookaheadLock.release();
+        m_inputLock.release();
 
         if (preFrame)
         {
@@ -705,7 +700,7 @@ void Lookahead::findJob(int workerThreadID)
                 m_tld[tld].calcAdaptiveQuantFrame(preFrame, m_param);
             m_tld[tld].lowresIntraEstimate(preFrame->m_lowres);
 
-            m_preLookaheadLock.acquire(); /* re-acquire for next pass */
+            m_inputLock.acquire();
             m_preCompleted++;
         }
         else if (doDecide)
@@ -715,7 +710,7 @@ void Lookahead::findJob(int workerThreadID)
 
             slicetypeDecide();
 
-            m_preLookaheadLock.acquire(); /* re-acquire for next pass */
+            m_inputLock.acquire();
             if (m_outputSignalRequired)
             {
                 m_outputSignal.trigger();
@@ -743,9 +738,9 @@ Frame* Lookahead::getDecidedPicture()
          * necessary */
         findJob(-1);
 
-        m_preLookaheadLock.acquire();
+        m_inputLock.acquire();
         bool wait = m_outputSignalRequired = m_sliceTypeBusy || m_preTotal;
-        m_preLookaheadLock.release();
+        m_inputLock.release();
 
         if (wait)
             m_outputSignal.wait();
