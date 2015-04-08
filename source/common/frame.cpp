@@ -31,6 +31,7 @@ using namespace x265;
 Frame::Frame()
 {
     m_bChromaExtended = false;
+    m_lowresInit = false;
     m_reconRowCount.set(0);
     m_countRefEncoders = 0;
     m_encData = NULL;

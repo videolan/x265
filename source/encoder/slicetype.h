@@ -105,8 +105,6 @@ public:
     Lock          m_outputLock;
 
     /* pre-lookahead */
-    Frame*        m_preframes[X265_LOOKAHEAD_MAX];
-    int           m_preTotal, m_preAcquired, m_preCompleted;
     int           m_fullQueueSize;
     bool          m_isActive;
     bool          m_sliceTypeBusy;
@@ -114,7 +112,6 @@ public:
     bool          m_outputSignalRequired;
     bool          m_bBatchMotionSearch;
     bool          m_bBatchFrameCosts;
-    Lock          m_preLookaheadLock;
     Event         m_outputSignal;
 
     LookaheadTLD* m_tld;
@@ -174,6 +171,22 @@ protected:
 
     /* called by getEstimatedPictureCost() to finalize cuTree costs */
     int64_t frameCostRecalculate(Lowres **frames, int p0, int p1, int b);
+};
+
+class PreLookaheadGroup : public BondedTaskGroup
+{
+public:
+
+    Frame* m_preframes[X265_LOOKAHEAD_MAX];
+    Lookahead& m_lookahead;
+
+    PreLookaheadGroup(Lookahead& l) : m_lookahead(l) {}
+
+    void processTasks(int workerThreadID);
+
+protected:
+
+    PreLookaheadGroup& operator=(const PreLookaheadGroup&);
 };
 
 class CostEstimateGroup : public BondedTaskGroup

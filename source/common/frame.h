@@ -56,6 +56,7 @@ public:
     void*                  m_userData;           // user provided pointer passed in with this picture
 
     Lowres                 m_lowres;
+    bool                   m_lowresInit;         // lowres init complete (pre-analysis)
     bool                   m_bChromaExtended;    // orig chroma planes motion extended for weight analysis
 
     /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
