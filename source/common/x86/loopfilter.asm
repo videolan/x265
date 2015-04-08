@@ -351,6 +351,55 @@ cglobal saoCuOrgE1_2Rows, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuW
     jnz         .loop
     RET
 
+INIT_YMM avx2
+cglobal saoCuOrgE1_2Rows, 3, 5, 7, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
+    mov             r3d,        r3m
+    mov             r4d,        r4m
+    pxor            m0,         m0                           ; m0 = 0
+    vbroadcasti128  m5,         [pb_128]
+    vbroadcasti128  m6,         [r2]                         ; m6 = m_iOffsetEo
+    shr             r4d,        4
+.loop
+    movu            xm1,        [r0]                         ; m1 = pRec[x]
+    movu            xm2,        [r0 + r3]                    ; m2 = pRec[x + iStride]
+    vinserti128     m1,         m1,       xm2,            1
+    vinserti128     m2,         m2,       [r0 + r3 * 2],  1
+
+    pxor            m3,         m1,       m5
+    pxor            m4,         m2,       m5
+    pcmpgtb         m2,         m3,       m4
+    pcmpgtb         m4,         m3
+    pand            m2,         [pb_1]
+    por             m2,         m4
+
+    movu            xm3,        [r1]                         ; xm3 = m_iUpBuff
+    psubb           m4,         m0,       m2
+    vinserti128     m3,         m3,       xm4,            1
+    paddb           m3,         m2
+    paddb           m3,         [pb_2]
+    pshufb          m2,         m6,       m3
+    vextracti128    [r1],       m4,       1
+
+    pmovzxbw        m4,         xm1
+    vextracti128    xm3,        m1,       1
+    pmovzxbw        m3,         xm3
+    pmovsxbw        m1,         xm2
+    vextracti128    xm2,        m2,       1
+    pmovsxbw        m2,         xm2
+
+    paddw           m4,         m1
+    paddw           m3,         m2
+    packuswb        m4,         m3
+    vpermq          m4,         m4,       11011000b
+    movu            [r0],       xm4
+    vextracti128    [r0 + r3],  m4,       1
+
+    add             r0,         16
+    add             r1,         16
+    dec             r4d
+    jnz             .loop
+    RET
+
 ;======================================================================================================================================================
 ; void saoCuOrgE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offsetEo, int lcuWidth, intptr_t stride)
 ;======================================================================================================================================================
