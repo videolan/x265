@@ -233,6 +233,49 @@ cglobal saoCuOrgE1, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
     jnz         .loop
     RET
 
+INIT_YMM avx2
+cglobal saoCuOrgE1, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
+    mov           r3d,    r3m
+    mov           r4d,    r4m
+    movu          xm0,    [r2]                    ; xm0 = m_iOffsetEo
+    mova          xm6,    [pb_2]                  ; xm6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    mova          xm7,    [pb_128]
+    shr           r4d,    4
+.loop
+    movu          xm1,    [r0]                    ; xm1 = pRec[x]
+    movu          xm2,    [r0 + r3]               ; xm2 = pRec[x + iStride]
+
+    pxor          xm3,    xm1,    xm7
+    pxor          xm4,    xm2,    xm7
+    pcmpgtb       xm2,    xm3,    xm4
+    pcmpgtb       xm4,    xm3
+    pand          xm2,    [pb_1]
+    por           xm2,    xm4
+
+    movu          xm3,    [r1]                    ; xm3 = m_iUpBuff1
+
+    paddb         xm3,    xm2
+    paddb         xm3,    xm6
+
+    pshufb        xm5,    xm0,    xm3
+    pxor          xm4,    xm4
+    psubb         xm3,    xm4,    xm2
+    movu          [r1],   xm3
+
+    pmovzxbw      m2,     xm1
+    pmovsxbw      m3,     xm5
+
+    paddw         m2,     m3
+    vextracti128  xm3,    m2,     1
+    packuswb      xm2,    xm3
+    movu          [r0],   xm2
+
+    add           r0,     16
+    add           r1,     16
+    dec           r4d
+    jnz           .loop
+    RET
+
 ;========================================================================================================
 ; void saoCuOrgE1_2Rows(pixel *pRec, int8_t *m_iUpBuff1, int8_t *m_iOffsetEo, Int iStride, Int iLcuWidth)
 ;========================================================================================================

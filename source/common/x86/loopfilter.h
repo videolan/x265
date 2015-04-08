@@ -28,6 +28,7 @@
 void x265_saoCuOrgE0_sse4(pixel * rec, int8_t * offsetEo, int endX, int8_t* signLeft, intptr_t stride);
 void x265_saoCuOrgE0_avx2(pixel * rec, int8_t * offsetEo, int endX, int8_t* signLeft, intptr_t stride);
 void x265_saoCuOrgE1_sse4(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width);
+void x265_saoCuOrgE1_avx2(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width);
 void x265_saoCuOrgE1_2Rows_sse4(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width);
 void x265_saoCuOrgE2_sse4(pixel* rec, int8_t* pBufft, int8_t* pBuff1, int8_t* offsetEo, int lcuWidth, intptr_t stride);
 void x265_saoCuOrgE3_sse4(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intptr_t stride, int startX, int endX);
