@@ -105,7 +105,7 @@ tab_ChromaCoeffV: times 4 dw 0, 64
                   times 4 dw -4, 54
                   times 4 dw 16, -2
 
-                  times 4 dw -6, 46 
+                  times 4 dw -6, 46
                   times 4 dw 28, -4
 
                   times 4 dw -4, 36
@@ -130,7 +130,7 @@ pw_ChromaCoeffV:  times 8 dw 0, 64
                   times 8 dw -4, 54
                   times 8 dw 16, -2
 
-                  times 8 dw -6, 46 
+                  times 8 dw -6, 46
                   times 8 dw 28, -4
 
                   times 8 dw -4, 36
@@ -918,7 +918,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4,7,8
 %endif
     punpcklqdq  m3, m3
 
-%ifidn %3, pp 
+%ifidn %3, pp
     mova      m2, [pw_512]
 %else
     mova      m2, [pw_2000]
@@ -937,7 +937,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4,7,8
 .loopH:
     xor       r5, r5
 %rep %1 / 8
-  %ifidn %3, pp 
+  %ifidn %3, pp
     FILTER_H8_W8  m0, m1, m4, m5, m3, m2, [r0 - 3 + r5], [r2 + r5]
   %else
     FILTER_H8_W8  m0, m1, m4, m5, m3, UNUSED, [r0 - 3 + r5]
@@ -949,7 +949,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4,7,8
 
 %rep (%1 % 8) / 4
     FILTER_H8_W4  m0, m1
-  %ifidn %3, pp 
+  %ifidn %3, pp
     pmulhrsw  m1, m2
     packuswb  m1, m1
     movd      [r2 + r5], m1
@@ -1306,7 +1306,7 @@ cglobal interp_8tap_horiz_pp_%1x%2, 4,6,8
     pmaddubsw         m5,         m1
     paddw             m4,         m5
     pmaddwd           m4,         m7
-    vbroadcasti128    m5,         [r0 + 8]                    ; second 8 elements in Row0 
+    vbroadcasti128    m5,         [r0 + 8]                    ; second 8 elements in Row0
     pshufb            m6,         m5,     m3
     pshufb            m5,         [tab_Tm]
     pmaddubsw         m5,         m0
@@ -1322,7 +1322,7 @@ cglobal interp_8tap_horiz_pp_%1x%2, 4,6,8
     pmaddubsw         m5,         m1
     paddw             m2,         m5
     pmaddwd           m2,         m7
-    vbroadcasti128    m5,         [r0 + r1 + 8]                    ; second 8 elements in Row0 
+    vbroadcasti128    m5,         [r0 + r1 + 8]                    ; second 8 elements in Row0
     pshufb            m6,         m5,     m3
     pshufb            m5,         [tab_Tm]
     pmaddubsw         m5,         m0
@@ -1617,7 +1617,7 @@ cglobal interp_8tap_horiz_pp_48x64, 4,6,8
     jnz               .loop
     RET
 
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_pp_4x4, 4,6,6
     mov             r4d, r4m
 
@@ -1665,7 +1665,7 @@ cglobal interp_4tap_horiz_pp_4x4, 4,6,6
     pextrd            [r2+r0],      xm3,     3
     RET
 
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_pp_2x4, 4, 6, 3
     mov               r4d,           r4m
 
@@ -1698,7 +1698,7 @@ cglobal interp_4tap_horiz_pp_2x4, 4, 6, 3
     pextrw            [r2 + r4],     xm1,         3
     RET
 
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_pp_2x8, 4, 6, 6
     mov               r4d,           r4m
 
@@ -1941,7 +1941,7 @@ cglobal interp_4tap_horiz_pp_8x8, 4,6,6
 
     IPFILTER_LUMA_AVX2 16, 4
     IPFILTER_LUMA_AVX2 16, 8
-    IPFILTER_LUMA_AVX2 16, 12 
+    IPFILTER_LUMA_AVX2 16, 12
     IPFILTER_LUMA_AVX2 16, 16
     IPFILTER_LUMA_AVX2 16, 32
     IPFILTER_LUMA_AVX2 16, 64
@@ -2230,7 +2230,7 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,7,6
     pshufb                      m4,                m1
     pmaddubsw                   m4,                m0
     phaddw                      m4,                m4                           ; DWORD [R3D R3C R2D R2C R3B R3A R2B R2A]
-    phaddw                      m3,                m4 
+    phaddw                      m3,                m4
 
     vpermd                      m3,                m5,            m3            ; m5 don't broken in above
     psubw                       m3,                m2
@@ -2312,7 +2312,7 @@ cglobal interp_8tap_horiz_ps_8x%1, 4,7,6
     lea                         r2,         [r2 + r3 * 2]                   ; first loop dst ->5th row(i.e 4)
     sub                         r5d,        2
     jg                         .loop
-    jz                         .end             
+    jz                         .end
 
     ; last row
     movu                        xm1,        [r0]
@@ -8830,6 +8830,84 @@ cglobal filterPixelToShort_48x64, 3, 7, 4
     jnz         .loop
     RET
 
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal filterPixelToShort_48x64, 3,7,4
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load height
+    mov         r4d, 64/4
+
+    ; load constant
+    vpbroadcastd m3, [pw_2000]
+
+    ; just unroll(1) because it is best choice for 48x64
+.loop:
+    pmovzxbw    m0, [r0 + 0 * mmsize/2]
+    pmovzxbw    m1, [r0 + 1 * mmsize/2]
+    pmovzxbw    m2, [r0 + 2 * mmsize/2]
+    psllw       m0, 6
+    psllw       m1, 6
+    psllw       m2, 6
+    psubw       m0, m3
+    psubw       m1, m3
+    psubw       m2, m3
+    movu        [r2 + 0 * mmsize], m0
+    movu        [r2 + 1 * mmsize], m1
+    movu        [r2 + 2 * mmsize], m2
+
+    pmovzxbw    m0, [r0 + r1 + 0 * mmsize/2]
+    pmovzxbw    m1, [r0 + r1 + 1 * mmsize/2]
+    pmovzxbw    m2, [r0 + r1 + 2 * mmsize/2]
+    psllw       m0, 6
+    psllw       m1, 6
+    psllw       m2, 6
+    psubw       m0, m3
+    psubw       m1, m3
+    psubw       m2, m3
+    movu        [r2 + r3 + 0 * mmsize], m0
+    movu        [r2 + r3 + 1 * mmsize], m1
+    movu        [r2 + r3 + 2 * mmsize], m2
+
+    pmovzxbw    m0, [r0 + r1 * 2 + 0 * mmsize/2]
+    pmovzxbw    m1, [r0 + r1 * 2 + 1 * mmsize/2]
+    pmovzxbw    m2, [r0 + r1 * 2 + 2 * mmsize/2]
+    psllw       m0, 6
+    psllw       m1, 6
+    psllw       m2, 6
+    psubw       m0, m3
+    psubw       m1, m3
+    psubw       m2, m3
+    movu        [r2 + r3 * 2 + 0 * mmsize], m0
+    movu        [r2 + r3 * 2 + 1 * mmsize], m1
+    movu        [r2 + r3 * 2 + 2 * mmsize], m2
+
+    pmovzxbw    m0, [r0 + r5 + 0 * mmsize/2]
+    pmovzxbw    m1, [r0 + r5 + 1 * mmsize/2]
+    pmovzxbw    m2, [r0 + r5 + 2 * mmsize/2]
+    psllw       m0, 6
+    psllw       m1, 6
+    psllw       m2, 6
+    psubw       m0, m3
+    psubw       m1, m3
+    psubw       m2, m3
+    movu        [r2 + r6 + 0 * mmsize], m0
+    movu        [r2 + r6 + 1 * mmsize], m1
+    movu        [r2 + r6 + 2 * mmsize], m2
+
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+
+    dec         r4d
+    jnz        .loop
+    RET
+
+
 %macro PROCESS_LUMA_W4_4R 0
     movd        m0, [r0]
     movd        m1, [r0 + r1]
@@ -9775,7 +9853,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 5, 7, 8
 
     lea       r5, [8 * r1 - 8]
     sub       r0, r5
-%ifidn %3,pp 
+%ifidn %3,pp
     add       r2, 8
 %else
     add       r2, 16
@@ -12337,7 +12415,7 @@ cglobal interp_8tap_vert_%1_32x16, 4, 10, 15
 
 FILTER_VER_LUMA_AVX2_32x16 pp
 FILTER_VER_LUMA_AVX2_32x16 ps
- 
+
 %macro FILTER_VER_LUMA_AVX2_32x24 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
@@ -19531,7 +19609,7 @@ FILTER_VER_LUMA_S_AVX2_32x24 ss
 ;-----------------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_32x32(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------;
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_ps_32x32, 4,7,6
     mov             r4d, r4m
     mov             r5d, r5m
@@ -19598,7 +19676,7 @@ cglobal interp_4tap_horiz_ps_32x32, 4,7,6
 ;-----------------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_16x16(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------;
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_ps_16x16, 4,7,6
     mov             r4d, r4m
     mov             r5d, r5m
@@ -19652,7 +19730,7 @@ cglobal interp_4tap_horiz_ps_16x16, 4,7,6
 ; void interp_4tap_horiz_ps_16xN(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------
 %macro IPFILTER_CHROMA_PS_16xN_AVX2 2
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_ps_%1x%2, 4,7,6
     mov                    r4d,        r4m
     mov                    r5d,        r5m
@@ -19713,7 +19791,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4,7,6
 ; void interp_4tap_horiz_ps_32xN(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------
 %macro IPFILTER_CHROMA_PS_32xN_AVX2 2
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_ps_%1x%2, 4,7,6
     mov                r4d,          r4m
     mov                r5d,          r5m
@@ -19786,7 +19864,7 @@ IPFILTER_CHROMA_PS_32xN_AVX2  32 , 8
 ;-----------------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_4x4(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_ps_4x4, 4,7,5
     mov             r4d, r4m
     mov             r5d, r5m
@@ -19940,7 +20018,7 @@ cglobal interp_4tap_horiz_ps_4x2, 4,7,5
 ; void interp_4tap_horiz_ps_4xN(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------;
 %macro IPFILTER_CHROMA_PS_4xN_AVX2 2
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_ps_%1x%2, 4,7,5
     mov             r4d, r4m
     mov             r5d, r5m
@@ -20033,7 +20111,7 @@ RET
 ;-----------------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_8x8(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------;
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_ps_8x8, 4,7,6
     mov             r4d, r4m
     mov             r5d, r5m
@@ -20104,7 +20182,7 @@ cglobal interp_4tap_horiz_ps_8x8, 4,7,6
 .end
    RET
 
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_pp_4x2, 4,6,4
     mov             r4d, r4m
 %ifdef PIC
@@ -20281,7 +20359,7 @@ IPFILTER_CHROMA_PP_8xN_AVX2   8 , 4
 ; void interp_4tap_horiz_pp_4xN(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
 ;-------------------------------------------------------------------------------------------------------------
 %macro IPFILTER_CHROMA_PP_4xN_AVX2 2
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_pp_%1x%2, 4,6,6
     mov             r4d, r4m
 
@@ -20914,7 +20992,7 @@ IPFILTER_LUMA_PS_64xN_AVX2 16
 ; void interp_4tap_horiz_ps_8xN(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------
 %macro IPFILTER_CHROMA_PS_8xN_AVX2 1
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_ps_8x%1, 4,7,6
     mov                r4d,             r4m
     mov                r5d,             r5m
@@ -21249,7 +21327,7 @@ cglobal interp_4tap_horiz_pp_24x32, 4,6,7
 ;-----------------------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_ps_6x8(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------;
-INIT_YMM avx2 
+INIT_YMM avx2
 cglobal interp_4tap_horiz_ps_6x8, 4,7,6
     mov                r4d,            r4m
     mov                r5d,            r5m
