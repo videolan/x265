@@ -492,8 +492,6 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_8x8Blocks = m_8x8Width > 2 && m_8x8Height > 2 ? (m_8x8Width - 2) * (m_8x8Height - 2) : m_8x8Width * m_8x8Height;
 
     m_lastKeyframe = -m_param->keyframeMax;
-    memset(m_preframes, 0, sizeof(m_preframes));
-    m_preTotal = m_preAcquired = m_preCompleted = 0;
     m_sliceTypeBusy = false;
     m_fullQueueSize = X265_MAX(1, m_param->lookaheadDepth);
     m_bAdaptiveQuant = m_param->rc.aqMode || m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred;
@@ -635,15 +633,10 @@ void Lookahead::addPicture(Frame& curFrame, int sliceType)
     }
 
     m_inputLock.acquire();
-
     m_inputQueue.pushBack(curFrame);
-    m_preframes[m_preTotal++] = &curFrame;
-    X265_CHECK(m_preTotal <= X265_LOOKAHEAD_MAX, "prelookahead overflow\n");
-
-    m_inputLock.release();
-
-    if (m_pool)
+    if (m_pool && m_inputQueue.size() >= m_fullQueueSize)
         tryWakeOne();
+    m_inputLock.release();
 }
 
 /* Called by API thread */
@@ -654,72 +647,33 @@ void Lookahead::flush()
     m_filled = true;
 }
 
-void Lookahead::findJob(int workerThreadID)
+void Lookahead::findJob(int /*workerThreadID*/)
 {
-    Frame* preFrame;
-    bool   doDecide;
-
-    if (!m_isActive)
-        return;
-
-    int tld = workerThreadID;
-    if (workerThreadID < 0)
-        tld = m_pool ? m_pool->m_numWorkers : 0;
+    bool doDecide;
 
     m_inputLock.acquire();
-    do
+    if (m_inputQueue.size() >= m_fullQueueSize && !m_sliceTypeBusy && m_isActive)
+        doDecide = m_sliceTypeBusy = true;
+    else
+        doDecide = m_helpWanted = false;
+    m_inputLock.release();
+
+    if (!doDecide)
+        return;
+
+    ProfileLookaheadTime(m_slicetypeDecideElapsedTime, m_countSlicetypeDecide);
+    ProfileScopeEvent(slicetypeDecideEV);
+
+    slicetypeDecide();
+
+    m_inputLock.acquire();
+    if (m_outputSignalRequired)
     {
-        preFrame = NULL;
-        doDecide = false;
-
-        if (m_preTotal > m_preAcquired)
-            preFrame = m_preframes[m_preAcquired++];
-        else
-        {
-            if (m_preTotal == m_preCompleted)
-                m_preAcquired = m_preTotal = m_preCompleted = 0;
-
-            /* the worker thread that performs the last pre-lookahead will generally get to run
-             * slicetypeDecide() */
-            if (!m_sliceTypeBusy && !m_preTotal && m_inputQueue.size() >= m_fullQueueSize && m_isActive)
-                doDecide = m_sliceTypeBusy = true;
-            else
-                m_helpWanted = false;
-        }
-        m_inputLock.release();
-
-        if (preFrame)
-        {
-            ProfileLookaheadTime(m_preLookaheadElapsedTime, m_countPreLookahead);
-            ProfileScopeEvent(prelookahead);
-
-            preFrame->m_lowres.init(preFrame->m_fencPic, preFrame->m_poc);
-            if (m_param->rc.bStatRead && m_param->rc.cuTree && IS_REFERENCED(preFrame))
-                /* cu-tree offsets were read from stats file */;
-            else if (m_bAdaptiveQuant)
-                m_tld[tld].calcAdaptiveQuantFrame(preFrame, m_param);
-            m_tld[tld].lowresIntraEstimate(preFrame->m_lowres);
-
-            m_inputLock.acquire();
-            m_preCompleted++;
-        }
-        else if (doDecide)
-        {
-            ProfileLookaheadTime(m_slicetypeDecideElapsedTime, m_countSlicetypeDecide);
-            ProfileScopeEvent(slicetypeDecideEV);
-
-            slicetypeDecide();
-
-            m_inputLock.acquire();
-            if (m_outputSignalRequired)
-            {
-                m_outputSignal.trigger();
-                m_outputSignalRequired = false;
-            }
-            m_sliceTypeBusy = false;
-        }
+        m_outputSignal.trigger();
+        m_outputSignalRequired = false;
     }
-    while (preFrame || doDecide);
+    m_sliceTypeBusy = false;
+    m_inputLock.release();
 }
 
 /* Called by API thread */
@@ -734,12 +688,10 @@ Frame* Lookahead::getDecidedPicture()
         if (out)
             return out;
 
-        /* process all pending pre-lookahead frames and run slicetypeDecide() if
-         * necessary */
-        findJob(-1);
+        findJob(-1); /* run slicetypeDecide() if necessary */
 
         m_inputLock.acquire();
-        bool wait = m_outputSignalRequired = m_sliceTypeBusy || m_preTotal;
+        bool wait = m_outputSignalRequired = m_sliceTypeBusy;
         m_inputLock.release();
 
         if (wait)
@@ -838,17 +790,49 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     }
 }
 
+void PreLookaheadGroup::processTasks(int workerThreadID)
+{
+    if (workerThreadID < 0)
+        workerThreadID = m_lookahead.m_pool ? m_lookahead.m_pool->m_numWorkers : 0;
+    LookaheadTLD& tld = m_lookahead.m_tld[workerThreadID];
+
+    m_lock.acquire();
+    while (m_jobAcquired < m_jobTotal)
+    {
+        Frame* preFrame = m_preframes[m_jobAcquired++];
+        m_lock.release();
+
+        ProfileLookaheadTime(m_preLookaheadElapsedTime, m_countPreLookahead);
+        ProfileScopeEvent(prelookahead);
+
+        preFrame->m_lowres.init(preFrame->m_fencPic, preFrame->m_poc);
+        if (m_lookahead.m_param->rc.bStatRead && m_lookahead.m_param->rc.cuTree && IS_REFERENCED(preFrame))
+            /* cu-tree offsets were read from stats file */;
+        else if (m_lookahead.m_bAdaptiveQuant)
+            tld.calcAdaptiveQuantFrame(preFrame, m_lookahead.m_param);
+        tld.lowresIntraEstimate(preFrame->m_lowres);
+        preFrame->m_lowresInit = true;
+
+        m_lock.acquire();
+    }
+    m_lock.release();
+}
+
 /* called by API thread or worker thread with inputQueueLock acquired */
 void Lookahead::slicetypeDecide()
 {
-    Lowres *frames[X265_LOOKAHEAD_MAX];
-    Frame *list[X265_LOOKAHEAD_MAX];
-    int maxSearch = X265_MIN(m_param->lookaheadDepth, X265_LOOKAHEAD_MAX);
+    PreLookaheadGroup pre(*this);
 
+    Lowres* frames[X265_LOOKAHEAD_MAX + X265_BFRAME_MAX + 4];
+    Frame*  list[X265_BFRAME_MAX + 4];
     memset(frames, 0, sizeof(frames));
     memset(list, 0, sizeof(list));
+    int maxSearch = X265_MIN(m_param->lookaheadDepth, X265_LOOKAHEAD_MAX);
+    maxSearch = X265_MAX(1, maxSearch);
+
     {
         ScopedLock lock(m_inputLock);
+
         Frame *curFrame = m_inputQueue.first();
         int j;
         for (j = 0; j < m_param->bframes + 2; j++)
@@ -864,11 +848,23 @@ void Lookahead::slicetypeDecide()
         {
             if (!curFrame) break;
             frames[j + 1] = &curFrame->m_lowres;
-            X265_CHECK(curFrame->m_lowres.costEst[0][0] > 0, "prelookahead not completed for input picture\n");
+
+            if (!curFrame->m_lowresInit)
+                pre.m_preframes[pre.m_jobTotal++] = curFrame;
+
             curFrame = curFrame->m_next;
         }
 
         maxSearch = j;
+    }
+
+    /* perform pre-analysis on frames which need it, using a bonded task group */
+    if (pre.m_jobTotal)
+    {
+        if (m_pool)
+            pre.tryBondPeers(*m_pool, pre.m_jobTotal);
+        pre.processTasks(-1);
+        pre.waitForExit();
     }
 
     if (m_lastNonB && !m_param->rc.bStatRead &&

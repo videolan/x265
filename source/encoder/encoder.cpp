@@ -477,7 +477,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             }
         }
         else
+        {
             inFrame = m_dpb->m_freeList.popBack();
+            inFrame->m_lowresInit = false;
+        }
 
         /* Copy input picture into a Frame and PicYuv, send to lookahead */
         inFrame->m_fencPic->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
