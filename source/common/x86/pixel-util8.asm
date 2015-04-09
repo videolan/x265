@@ -40,16 +40,17 @@ ssim_c2:   times 4 dd 947556       ; .03*.03*511*511*64*63
 ssim_c1:   times 4 dd 416          ; .01*.01*255*255*64
 ssim_c2:   times 4 dd 235963       ; .03*.03*255*255*64*63
 %endif
-mask_ff:   times 16 db 0xff
-           times 16 db 0
-deinterleave_shuf: db 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
-deinterleave_word_shuf: db 0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15
-hmul_16p:  times 16 db 1
-           times 8 db 1, -1
-hmulw_16p:  times 8 dw 1
-            times 4 dw 1, -1
 
-trans8_shuf: dd 0, 4, 1, 5, 2, 6, 3, 7
+mask_ff:                times 16 db 0xff
+                        times 16 db 0
+deinterleave_shuf:      times  2 db 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
+deinterleave_word_shuf: times  2 db 0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15
+hmul_16p:               times 16 db 1
+                        times  8 db 1, -1
+hmulw_16p:              times  8 dw 1
+                        times  4 dw 1, -1
+
+trans8_shuf:            dd 0, 4, 1, 5, 2, 6, 3, 7
 
 SECTION .text
 
@@ -616,7 +617,7 @@ cglobal quant, 5,6,8
 
 %if ARCH_X86_64 == 1
 INIT_YMM avx2
-cglobal quant, 5,5,10
+cglobal quant, 5,6,9
     ; fill qbits
     movd            xm4, r4d            ; m4 = qbits
 
@@ -627,7 +628,7 @@ cglobal quant, 5,5,10
     ; fill offset
     vpbroadcastd    m5, r5m             ; m5 = add
 
-    vpbroadcastw    m9, [pw_1]          ; m9 = word [1]
+    lea             r5, [pw_1]
 
     mov             r4d, r6m
     shr             r4d, 4
@@ -665,7 +666,7 @@ cglobal quant, 5,5,10
 
     ; count non-zero coeff
     ; TODO: popcnt is faster, but some CPU can't support
-    pminuw          m2, m9
+    pminuw          m2, [r5]
     paddw           m7, m2
 
     add             r0, mmsize
@@ -1285,9 +1286,8 @@ cglobal weight_pp, 6, 7, 6
     mov          r6d, r6m
     shl          r6d, 16
     or           r6d, r5d          ; assuming both (w0<<6) and round are using maximum of 16 bits each.
-    movd         xm0, r6d
-    pshufd       xm0, xm0, 0       ; m0 = [w0<<6, round]
-    vinserti128  m0, m0, xm0, 1    ; document says (pshufd + vinserti128) can be replaced with vpbroadcastd m0, xm0, but having build problem, need to investigate
+
+    vpbroadcastd m0, r6d
 
     movd         xm1, r7m
     vpbroadcastd m2, r8m
@@ -1492,6 +1492,84 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
     dec         r5d
     jnz         .loopH
     RET
+
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal weight_sp, 6, 9, 7
+    mov             r7d, r7m
+    shl             r7d, 16
+    or              r7d, r6m
+    vpbroadcastd    m0, r7d            ; m0 = times 8 dw w0, round
+    movd            xm1, r8m            ; m1 = [shift]
+    vpbroadcastd    m2, r9m            ; m2 = times 16 dw offset
+    vpbroadcastw    m3, [pw_1]
+    vpbroadcastw    m4, [pw_2000]
+
+    add             r2d, r2d            ; 2 * srcstride
+
+    mov             r7, r0
+    mov             r8, r1
+.loopH:
+    mov             r6d, r4d            ; width
+
+    ; save old src and dst
+    mov             r0, r7              ; src
+    mov             r1, r8              ; dst
+.loopW:
+    movu            m5, [r0]
+    paddw           m5, m4
+
+    punpcklwd       m6,m5, m3
+    pmaddwd         m6, m0
+    psrad           m6, xm1
+    paddd           m6, m2
+
+    punpckhwd       m5, m3
+    pmaddwd         m5, m0
+    psrad           m5, xm1
+    paddd           m5, m2
+
+    packssdw        m6, m5
+    packuswb        m6, m6
+    vpermq          m6, m6, 10001000b
+
+    sub             r6d, 16
+    jl              .width8
+    movu            [r1], xm6
+    je              .nextH
+    add             r0, 32
+    add             r1, 16
+    jmp             .loopW
+
+.width8:
+    add             r6d, 16
+    cmp             r6d, 8
+    jl              .width4
+    movq            [r1], xm6
+    je              .nextH
+    psrldq          m6, 8
+    sub             r6d, 8
+    add             r1, 8
+
+.width4:
+    cmp             r6d, 4
+    jl              .width2
+    movd            [r1], xm6
+    je              .nextH
+    add             r1, 4
+    pshufd          m6, m6, 1
+
+.width2:
+    pextrw          [r1], xm6, 0
+
+.nextH:
+    lea             r7, [r7 + r2]
+    lea             r8, [r8 + r3]
+
+    dec             r5d
+    jnz             .loopH
+    RET
+%endif
 %endif  ; end of (HIGH_BIT_DEPTH == 0)
     
 
@@ -3944,6 +4022,105 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     RET
 %endif
 
+INIT_YMM avx2
+cglobal scale2D_64to32, 3, 5, 8, dest, src, stride
+    mov         r3d,     16
+    mova        m7,      [deinterleave_shuf]
+.loop:
+    movu        m0,      [r1]                  ; i
+    lea         r4,      [r1 + r2 * 2]
+    psrlw       m1,      m0, 8                 ; j
+    movu        m2,      [r1 + r2]             ; k
+    psrlw       m3,      m2, 8                 ; l
+
+    pxor        m4,      m0, m1                ; i^j
+    pxor        m5,      m2, m3                ; k^l
+    por         m4,      m5                    ; ij|kl
+
+    pavgb       m0,      m1                    ; s
+    pavgb       m2,      m3                    ; t
+    mova        m5,      m0
+    pavgb       m0,      m2                    ; (s+t+1)/2
+    pxor        m5,      m2                    ; s^t
+    pand        m4,      m5                    ; (ij|kl)&st
+    pand        m4,      [pb_1]
+    psubb       m0,      m4                    ; Result
+
+    movu        m1,      [r1 + 32]             ; i
+    psrlw       m2,      m1, 8                 ; j
+    movu        m3,      [r1 + r2 + 32]        ; k
+    psrlw       m4,      m3, 8                 ; l
+
+    pxor        m5,      m1, m2                ; i^j
+    pxor        m6,      m3, m4                ; k^l
+    por         m5,      m6                    ; ij|kl
+
+    pavgb       m1,      m2                    ; s
+    pavgb       m3,      m4                    ; t
+    mova        m6,      m1
+    pavgb       m1,      m3                    ; (s+t+1)/2
+    pxor        m6,      m3                    ; s^t
+    pand        m5,      m6                    ; (ij|kl)&st
+    pand        m5,      [pb_1]
+    psubb       m1,      m5                    ; Result
+
+    pshufb      m0,      m0, m7
+    pshufb      m1,      m1, m7
+
+    punpcklqdq  m0,      m1
+    vpermq      m0,      m0, 11011000b
+    movu        [r0],    m0
+
+    add         r0,      32
+
+    movu        m0,      [r4]                  ; i
+    psrlw       m1,      m0, 8                 ; j
+    movu        m2,      [r4 + r2]             ; k
+    psrlw       m3,      m2, 8                 ; l
+
+    pxor        m4,      m0, m1                ; i^j
+    pxor        m5,      m2, m3                ; k^l
+    por         m4,      m5                    ; ij|kl
+
+    pavgb       m0,      m1                    ; s
+    pavgb       m2,      m3                    ; t
+    mova        m5,      m0
+    pavgb       m0,      m2                    ; (s+t+1)/2
+    pxor        m5,      m2                    ; s^t
+    pand        m4,      m5                    ; (ij|kl)&st
+    pand        m4,      [pb_1]
+    psubb       m0,      m4                    ; Result
+
+    movu        m1,      [r4 + 32]             ; i
+    psrlw       m2,      m1, 8                 ; j
+    movu        m3,      [r4 + r2 + 32]        ; k
+    psrlw       m4,      m3, 8                 ; l
+
+    pxor        m5,      m1, m2                ; i^j
+    pxor        m6,      m3, m4                ; k^l
+    por         m5,      m6                    ; ij|kl
+
+    pavgb       m1,      m2                    ; s
+    pavgb       m3,      m4                    ; t
+    mova        m6,      m1
+    pavgb       m1,      m3                    ; (s+t+1)/2
+    pxor        m6,      m3                    ; s^t
+    pand        m5,      m6                    ; (ij|kl)&st
+    pand        m5,      [pb_1]
+    psubb       m1,      m5                    ; Result
+
+    pshufb      m0,      m0, m7
+    pshufb      m1,      m1, m7
+
+    punpcklqdq  m0,      m1
+    vpermq      m0,      m0, 11011000b
+    movu        [r0],    m0
+
+    lea         r1,      [r1 + 4 * r2]
+    add         r0,      32
+    dec         r3d
+    jnz         .loop
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_4x4(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);

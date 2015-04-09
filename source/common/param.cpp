@@ -209,6 +209,7 @@ void x265_param_default(x265_param* param)
     param->rc.zones = NULL;
     param->rc.bEnableSlowFirstPass = 0;
     param->rc.bStrictCbr = 0;
+    param->rc.qgSize = 64; /* Same as maxCUSize */
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -263,6 +264,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
             param->rc.cuTree = 0;
+            param->rc.qgSize = 32;
             param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "superfast"))
@@ -279,6 +281,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
             param->rc.cuTree = 0;
+            param->rc.qgSize = 32;
             param->bEnableSAO = 0;
             param->bEnableFastIntra = 1;
         }
@@ -292,6 +295,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->rdLevel = 2;
             param->maxNumReferences = 1;
             param->rc.cuTree = 0;
+            param->rc.qgSize = 32;
             param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "faster"))
@@ -565,6 +569,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             p->levelIdc = atoi(value);
     }
     OPT("high-tier") p->bHighTier = atobool(value);
+    OPT("allow-non-conformance") p->bAllowNonConformance = atobool(value);
     OPT2("log-level", "log")
     {
         p->logLevel = atoi(value);
@@ -843,6 +848,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT2("pools", "numa-pools") p->numaPools = strdup(value);
     OPT("lambda-file") p->rc.lambdaFileName = strdup(value);
     OPT("analysis-file") p->analysisFileName = strdup(value);
+    OPT("qg-size") p->rc.qgSize = atoi(value);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
@@ -1183,7 +1189,7 @@ int x265_set_globals(x265_param* param)
     uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
     uint32_t minLog2CUSize = (uint32_t)g_log2Size[param->minCUSize];
 
-    if (g_ctuSizeConfigured || ATOMIC_INC(&g_ctuSizeConfigured) > 1)
+    if (ATOMIC_INC(&g_ctuSizeConfigured) > 1)
     {
         if (g_maxCUSize != param->maxCUSize)
         {

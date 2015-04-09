@@ -33,7 +33,7 @@
 namespace x265 {
 // x265 private namespace
 
-class Y4MInput : public Input, public Thread
+class Y4MInput : public InputFile, public Thread
 {
 protected:
 

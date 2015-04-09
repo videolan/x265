@@ -26,6 +26,7 @@
 void x265_dct4_sse2(const int16_t* src, int16_t* dst, intptr_t srcStride);
 void x265_dct8_sse2(const int16_t* src, int16_t* dst, intptr_t srcStride);
 void x265_dst4_ssse3(const int16_t* src, int16_t* dst, intptr_t srcStride);
+void x265_dst4_avx2(const int16_t* src, int16_t* dst, intptr_t srcStride);
 void x265_dct8_sse4(const int16_t* src, int16_t* dst, intptr_t srcStride);
 void x265_dct4_avx2(const int16_t* src, int16_t* dst, intptr_t srcStride);
 void x265_dct8_avx2(const int16_t* src, int16_t* dst, intptr_t srcStride);
@@ -33,6 +34,7 @@ void x265_dct16_avx2(const int16_t* src, int16_t* dst, intptr_t srcStride);
 void x265_dct32_avx2(const int16_t* src, int16_t* dst, intptr_t srcStride);
 
 void x265_idst4_sse2(const int16_t* src, int16_t* dst, intptr_t dstStride);
+void x265_idst4_avx2(const int16_t* src, int16_t* dst, intptr_t dstStride);
 void x265_idct4_sse2(const int16_t* src, int16_t* dst, intptr_t dstStride);
 void x265_idct4_avx2(const int16_t* src, int16_t* dst, intptr_t dstStride);
 void x265_idct8_sse2(const int16_t* src, int16_t* dst, intptr_t dstStride);

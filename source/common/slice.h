@@ -98,6 +98,7 @@ namespace Level {
         LEVEL6 = 180,
         LEVEL6_1 = 183,
         LEVEL6_2 = 186,
+        LEVEL8_5 = 255,
     };
 }
 

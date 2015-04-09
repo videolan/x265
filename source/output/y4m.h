@@ -30,7 +30,7 @@
 namespace x265 {
 // private x265 namespace
 
-class Y4MOutput : public Output
+class Y4MOutput : public ReconFile
 {
 protected:
 

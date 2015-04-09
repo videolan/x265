@@ -61,55 +61,6 @@ IPFilterHarness::IPFilterHarness()
     }
 }
 
-bool IPFilterHarness::check_IPFilter_primitive(filter_p2s_wxh_t ref, filter_p2s_wxh_t opt, int isChroma, int csp)
-{
-    intptr_t rand_srcStride;
-    int min_size = isChroma ? 2 : 4;
-    int max_size = isChroma ? (MAX_CU_SIZE >> 1) : MAX_CU_SIZE;
-
-    if (isChroma && (csp == X265_CSP_I444))
-    {
-        min_size = 4;
-        max_size = MAX_CU_SIZE;
-    }
-
-    for (int i = 0; i < ITERS; i++)
-    {
-        int index = i % TEST_CASES;
-        int rand_height = (int16_t)rand() % 100;
-        int rand_width = (int16_t)rand() % 100;
-
-        rand_srcStride = rand_width + rand() % 100;
-        if (rand_srcStride < rand_width)
-            rand_srcStride = rand_width;
-
-        rand_width &= ~(min_size - 1);
-        rand_width = x265_clip3(min_size, max_size, rand_width);
-
-        rand_height &= ~(min_size - 1);
-        rand_height = x265_clip3(min_size, max_size, rand_height);
-
-        ref(pixel_test_buff[index],
-            rand_srcStride,
-            IPF_C_output_s,
-            rand_width,
-            rand_height);
-
-        checked(opt, pixel_test_buff[index],
-                rand_srcStride,
-                IPF_vec_output_s,
-                rand_width,
-                rand_height);
-
-        if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(int16_t)))
-            return false;
-
-        reportfail();
-    }
-
-    return true;
-}
-
 bool IPFilterHarness::check_IPFilterChroma_primitive(filter_pp_t ref, filter_pp_t opt)
 {
     intptr_t rand_srcStride, rand_dstStride;
@@ -518,12 +469,13 @@ bool IPFilterHarness::check_IPFilterLumaP2S_primitive(filter_p2s_t ref, filter_p
     {
         intptr_t rand_srcStride = rand() % 100;
         int index = i % TEST_CASES;
+        intptr_t dstStride = rand() % 100 + 64;
 
-        ref(pixel_test_buff[index] + i, rand_srcStride, IPF_C_output_s);
+        ref(pixel_test_buff[index] + i, rand_srcStride, IPF_C_output_s, dstStride);
 
-        checked(opt, pixel_test_buff[index] + i, rand_srcStride, IPF_vec_output_s);
+        checked(opt, pixel_test_buff[index] + i, rand_srcStride, IPF_vec_output_s, dstStride);
 
-        if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(pixel)))
+        if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(int16_t)))
             return false;
 
         reportfail();
@@ -538,12 +490,13 @@ bool IPFilterHarness::check_IPFilterChromaP2S_primitive(filter_p2s_t ref, filter
     {
         intptr_t rand_srcStride = rand() % 100;
         int index = i % TEST_CASES;
+        intptr_t dstStride = rand() % 100 + 64;
 
-        ref(pixel_test_buff[index] + i, rand_srcStride, IPF_C_output_s);
+        ref(pixel_test_buff[index] + i, rand_srcStride, IPF_C_output_s, dstStride);
 
-        checked(opt, pixel_test_buff[index] + i, rand_srcStride, IPF_vec_output_s);
+        checked(opt, pixel_test_buff[index] + i, rand_srcStride, IPF_vec_output_s, dstStride);
 
-        if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(pixel)))
+        if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(int16_t)))
             return false;
 
         reportfail();
@@ -554,15 +507,6 @@ bool IPFilterHarness::check_IPFilterChromaP2S_primitive(filter_p2s_t ref, filter
 
 bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    if (opt.luma_p2s)
-    {
-        // last parameter does not matter in case of luma
-        if (!check_IPFilter_primitive(ref.luma_p2s, opt.luma_p2s, 0, 1))
-        {
-            printf("luma_p2s failed\n");
-            return false;
-        }
-    }
 
     for (int value = 0; value < NUM_PU_SIZES; value++)
     {
@@ -622,11 +566,11 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 return false;
             }
         }
-        if (opt.pu[value].filter_p2s)
+        if (opt.pu[value].convert_p2s)
         {
-            if (!check_IPFilterLumaP2S_primitive(ref.pu[value].filter_p2s, opt.pu[value].filter_p2s))
+            if (!check_IPFilterLumaP2S_primitive(ref.pu[value].convert_p2s, opt.pu[value].convert_p2s))
             {
-                printf("filter_p2s[%s]", lumaPartStr[value]);
+                printf("convert_p2s[%s]", lumaPartStr[value]);
                 return false;
             }
         }
@@ -634,14 +578,6 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
 
     for (int csp = X265_CSP_I420; csp < X265_CSP_COUNT; csp++)
     {
-        if (opt.chroma[csp].p2s)
-        {
-            if (!check_IPFilter_primitive(ref.chroma[csp].p2s, opt.chroma[csp].p2s, 1, csp))
-            {
-                printf("chroma_p2s[%s]", x265_source_csp_names[csp]);
-                return false;
-            }
-        }
         for (int value = 0; value < NUM_PU_SIZES; value++)
         {
             if (opt.chroma[csp].pu[value].filter_hpp)
@@ -692,9 +628,9 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                     return false;
                 }
             }
-            if (opt.chroma[csp].pu[value].chroma_p2s)
+            if (opt.chroma[csp].pu[value].p2s)
             {
-                if (!check_IPFilterChromaP2S_primitive(ref.chroma[csp].pu[value].chroma_p2s, opt.chroma[csp].pu[value].chroma_p2s))
+                if (!check_IPFilterChromaP2S_primitive(ref.chroma[csp].pu[value].p2s, opt.chroma[csp].pu[value].p2s))
                 {
                     printf("chroma_p2s[%s]", chromaPartStr[csp][value]);
                     return false;
@@ -708,18 +644,9 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
 
 void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    int height = 64;
-    int width = 64;
     int16_t srcStride = 96;
     int16_t dstStride = 96;
     int maxVerticalfilterHalfDistance = 3;
-
-    if (opt.luma_p2s)
-    {
-        printf("luma_p2s\t");
-        REPORT_SPEEDUP(opt.luma_p2s, ref.luma_p2s,
-                       pixel_buff, srcStride, IPF_vec_output_s, width, height);
-    }
 
     for (int value = 0; value < NUM_PU_SIZES; value++)
     {
@@ -777,23 +704,18 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                            pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, srcStride, 1, 3);
         }
 
-        if (opt.pu[value].filter_p2s)
+        if (opt.pu[value].convert_p2s)
         {
-            printf("filter_p2s [%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.pu[value].filter_p2s, ref.pu[value].filter_p2s,
-                           pixel_buff, srcStride, IPF_vec_output_s);
+            printf("convert_p2s[%s]\t", lumaPartStr[value]);
+            REPORT_SPEEDUP(opt.pu[value].convert_p2s, ref.pu[value].convert_p2s,
+                               pixel_buff, srcStride,
+                               IPF_vec_output_s, dstStride);
         }
     }
 
     for (int csp = X265_CSP_I420; csp < X265_CSP_COUNT; csp++)
     {
         printf("= Color Space %s =\n", x265_source_csp_names[csp]);
-        if (opt.chroma[csp].p2s)
-        {
-            printf("chroma_p2s\t");
-            REPORT_SPEEDUP(opt.chroma[csp].p2s, ref.chroma[csp].p2s,
-                           pixel_buff, srcStride, IPF_vec_output_s, width, height);
-        }
         for (int value = 0; value < NUM_PU_SIZES; value++)
         {
             if (opt.chroma[csp].pu[value].filter_hpp)
@@ -836,13 +758,11 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                                short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                                IPF_vec_output_s, dstStride, 1);
             }
-
-            if (opt.chroma[csp].pu[value].chroma_p2s)
+            if (opt.chroma[csp].pu[value].p2s)
             {
                 printf("chroma_p2s[%s]\t", chromaPartStr[csp][value]);
-                REPORT_SPEEDUP(opt.chroma[csp].pu[value].chroma_p2s, ref.chroma[csp].pu[value].chroma_p2s,
-                               pixel_buff, srcStride,
-                               IPF_vec_output_s);
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].p2s, ref.chroma[csp].pu[value].p2s,
+                               pixel_buff, srcStride, IPF_vec_output_s, dstStride);
             }
         }
     }

@@ -106,7 +106,7 @@ void Encoder::create()
     bool allowPools = !p->numaPools || strcmp(p->numaPools, "none");
 
     // Trim the thread pool if --wpp, --pme, and --pmode are disabled
-    if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation)
+    if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation && !p->lookaheadSlices)
         allowPools = false;
 
     if (!p->frameNumThreads)
@@ -140,9 +140,11 @@ void Encoder::create()
             x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --pme disabled\n");
         if (p->bDistributeModeAnalysis)
             x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --pmode disabled\n");
+        if (p->lookaheadSlices)
+            x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --lookahead-slices disabled\n");
 
         // disable all pool features if the thread pool is disabled or unusable.
-        p->bEnableWavefront = p->bDistributeModeAnalysis = p->bDistributeMotionEstimation = 0;
+        p->bEnableWavefront = p->bDistributeModeAnalysis = p->bDistributeMotionEstimation = p->lookaheadSlices = 0;
     }
 
     char buf[128];
@@ -1790,6 +1792,21 @@ void Encoder::configure(x265_param *p)
     {
         p->analysisMode = X265_ANALYSIS_OFF;
         x265_log(p, X265_LOG_WARNING, "Analysis save and load mode not supported for distributed mode analysis\n");
+    }
+
+    bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
+    if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
+    {
+        if (p->rc.qgSize < X265_MAX(16, p->minCUSize))
+        {
+            p->rc.qgSize = X265_MAX(16, p->minCUSize);
+            x265_log(p, X265_LOG_WARNING, "QGSize should be greater than or equal to 16 and minCUSize, setting QGSize = %d\n", p->rc.qgSize);
+        }
+        if (p->rc.qgSize > p->maxCUSize)
+        {
+            p->rc.qgSize = p->maxCUSize;
+            x265_log(p, X265_LOG_WARNING, "QGSize should be less than or equal to maxCUSize, setting QGSize = %d\n", p->rc.qgSize);
+        }
     }
 }
 

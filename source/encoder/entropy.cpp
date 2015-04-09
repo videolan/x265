@@ -1548,7 +1548,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         else
         {
             uint32_t sigCoeffGroup = ((sigCoeffGroupFlag64 & cgBlkPosMask) != 0);
-            uint32_t ctxSig = Quant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+            uint32_t ctxSig = Quant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
             encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
         }
 
@@ -1556,7 +1556,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         if (sigCoeffGroupFlag64 & cgBlkPosMask)
         {
             X265_CHECK((log2TrSize != 2) || (log2TrSize == 2 && subSet == 0), "log2TrSize and subSet mistake!\n");
-            const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+            const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
 
             static const uint8_t ctxIndMap4x4[16] =
             {

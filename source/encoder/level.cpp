@@ -55,15 +55,14 @@ LevelSpec levels[] =
     { 35651584, 1069547520, 60000,    240000,   60000,  240000,   8, Level::LEVEL6,   "6",   60 },
     { 35651584, 2139095040, 120000,   480000,   120000, 480000,   8, Level::LEVEL6_1, "6.1", 61 },
     { 35651584, 4278190080U, 240000,  800000,   240000, 800000,   6, Level::LEVEL6_2, "6.2", 62 },
+    { MAX_UINT, MAX_UINT, MAX_UINT, MAX_UINT, MAX_UINT, MAX_UINT, 1, Level::LEVEL8_5, "8.5", 85 },
 };
 
 /* determine minimum decoder level required to decode the described video */
 void determineLevel(const x265_param &param, VPS& vps)
 {
     vps.maxTempSubLayers = param.bEnableTemporalSubLayers ? 2 : 1;
-    if (param.bLossless)
-        vps.ptl.profileIdc = Profile::NONE;
-    else if (param.internalCsp == X265_CSP_I420)
+    if (param.internalCsp == X265_CSP_I420)
     {
         if (param.internalBitDepth == 8)
         {
@@ -104,7 +103,15 @@ void determineLevel(const x265_param &param, VPS& vps)
 
     const size_t NumLevels = sizeof(levels) / sizeof(levels[0]);
     uint32_t i;
-    for (i = 0; i < NumLevels; i++)
+    if (param.bLossless)
+    {
+        i = 13;
+        vps.ptl.minCrForLevel = 1;
+        vps.ptl.maxLumaSrForLevel = MAX_UINT;
+        vps.ptl.levelIdc = Level::LEVEL8_5;
+        vps.ptl.tierFlag = Level::MAIN;
+    }
+    else for (i = 0; i < NumLevels; i++)
     {
         if (lumaSamples > levels[i].maxLumaSamples)
             continue;

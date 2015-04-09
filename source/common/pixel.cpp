@@ -582,7 +582,7 @@ void pixelavg_pp(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstri
     }
 }
 
-void scale1D_128to64(pixel *dst, const pixel *src, intptr_t /*stride*/)
+void scale1D_128to64(pixel *dst, const pixel *src)
 {
     int x;
     const pixel* src1 = src;

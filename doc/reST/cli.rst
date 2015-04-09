@@ -201,11 +201,11 @@ Performance Options
 	their node, they will not be allowed to migrate between nodes, but they
 	will be allowed to move between CPU cores within their node.
 
-	If the three pool features: :option:`--wpp` :option:`--pmode` and
-	:option:`--pme` are all disabled, then :option:`--pools` is ignored
-	and no thread pools are created.
+	If the four pool features: :option:`--wpp`, :option:`--pmode`,
+	:option:`--pme` and :option:`--lookahead-slices` are all disabled,
+	then :option:`--pools` is ignored and no thread pools are created.
 
-	If "none" is specified, then all three of the thread pool features are
+	If "none" is specified, then all four of the thread pool features are
 	implicitly disabled.
 
 	Multiple thread pools will be allocated for any NUMA node with more than
@@ -216,6 +216,15 @@ Performance Options
 	and the encoder will never generate more thread pools than
 	:option:`--frame-threads`.  The pools are used for WPP and for
 	distributed analysis and motion search.
+
+	On Windows, the native APIs offer sufficient functionality to
+	discover the NUMA topology and enforce the thread affinity that
+	libx265 needs, but on POSIX systems it relies on libnuma for this
+	functionality. If your target POSIX system is single socket, then
+	building without libnuma is a perfectly reasonable option, as it
+	will have no effect on the runtime behavior. On a multiple-socket
+	system, a POSIX build of libx265 without libnuma will be less work
+	efficient. See :ref:`thread pools <pools>` for more detail.
 
 	Default "", one thread is allocated per detected hardware thread
 	(logical CPU cores) and one thread pool per NUMA node.
@@ -437,7 +446,7 @@ Profile, Level, Tier
 	times 10, for example level **5.1** is specified as "5.1" or "51",
 	and level **5.0** is specified as "5.0" or "50".
 
-	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2
+	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2, 8.5
 
 .. option:: --high-tier, --no-high-tier
 
@@ -464,10 +473,21 @@ Profile, Level, Tier
 	HEVC specification.  If x265 detects that the total reference count
 	is greater than 8, it will issue a warning that the resulting stream
 	is non-compliant and it signals the stream as profile NONE and level
-	NONE but still allows the encode to continue.  Compliant HEVC
+	NONE and will abort the encode unless
+	:option:`--allow-non-conformance` it specified.  Compliant HEVC
 	decoders may refuse to decode such streams.
 	
 	Default 3
+
+.. option:: --allow-non-conformance, --no-allow-non-conformance
+
+	Allow libx265 to generate a bitstream with profile and level NONE.
+	By default it will abort any encode which does not meet strict level
+	compliance. The two most likely causes for non-conformance are
+	:option:`--ctu` being too small, :option:`--ref` being too high,
+	or the bitrate or resolution being out of specification.
+
+	Default: disabled
 
 .. note::
 	:option:`--profile`, :option:`--level-idc`, and
@@ -476,7 +496,7 @@ Profile, Level, Tier
 	limitations and must constrain the bitstream within those limits.
 	Specifying a profile or level may lower the encode quality
 	parameters to meet those requirements but it will never raise
-	them.
+	them. It may enable VBV constraints on a CRF encode.
 
 Mode decision / Analysis
 ========================
@@ -1110,6 +1130,13 @@ Quality, rate control and rate distortion options
 	:option:`--aq-strength` to 0 disables AQ. Default 1.0.
 
 	**Range of values:** 0.0 to 3.0
+
+.. option:: --qg-size <64|32|16>
+	Enable adaptive quantization for sub-CTUs. This parameter specifies 
+	the minimum CU size at which QP can be adjusted, ie. Quantization Group
+	size. Allowed range of values are 64, 32, 16 provided this falls within 
+	the inclusive range [maxCUSize, minCUSize]. Experimental.
+	Default: same as maxCUSize
 
 .. option:: --cutree, --no-cutree
 

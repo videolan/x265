@@ -1,34 +1,36 @@
 # List of command lines to be run by rate control regression tests, see https://bitbucket.org/sborho/test-harness
 
+#These tests should yeild deterministic results
 # This test is listed first since it currently reproduces bugs
 big_buck_bunny_360p24.y4m,--preset medium --bitrate 1000 --pass 1 -F4,--preset medium --bitrate 1000 --pass 2 -F4
+fire_1920x1080_30.yuv, --preset slow --bitrate 2000 --tune zero-latency 
+
 
 # VBV tests, non-deterministic so testing for correctness and bitrate
 # fluctuations - up to 1% bitrate fluctuation is allowed between runs
-RaceHorses_416x240_30_10bit.yuv,--preset medium --bitrate 700 --vbv-bufsize 900 --vbv-maxrate 700
-RaceHorses_416x240_30_10bit.yuv,--preset superfast --bitrate 600 --vbv-bufsize 600 --vbv-maxrate 600
-RaceHorses_416x240_30_10bit.yuv,--preset veryslow --bitrate 1100 --vbv-bufsize 1100 --vbv-maxrate 1200
-112_1920x1080_25.yuv,--preset medium --bitrate 1000 --vbv-maxrate 1500 --vbv-bufsize 1500 --aud
-112_1920x1080_25.yuv,--preset medium --bitrate 10000 --vbv-maxrate 10000 --vbv-bufsize 15000 --hrd
-112_1920x1080_25.yuv,--preset medium --bitrate 4000 --vbv-maxrate 12000 --vbv-bufsize 12000 --repeat-headers
-112_1920x1080_25.yuv,--preset superfast --bitrate 1000 --vbv-maxrate 1000 --vbv-bufsize 1500 --hrd --strict-cbr
-112_1920x1080_25.yuv,--preset superfast --bitrate 30000 --vbv-maxrate 30000 --vbv-bufsize 30000 --repeat-headers
-112_1920x1080_25.yuv,--preset superfast --bitrate 4000 --vbv-maxrate 6000 --vbv-bufsize 6000 --aud
-112_1920x1080_25.yuv,--preset veryslow --bitrate 1000 --vbv-maxrate 3000 --vbv-bufsize 3000 --repeat-headers
-big_buck_bunny_360p24.y4m,--preset medium --bitrate 1000 --vbv-bufsize 3000 --vbv-maxrate 3000 --repeat-headers
-big_buck_bunny_360p24.y4m,--preset medium --bitrate 3000 --vbv-bufsize 3000 --vbv-maxrate 3000 --hrd
-big_buck_bunny_360p24.y4m,--preset medium --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 600 --aud
-big_buck_bunny_360p24.y4m,--preset medium --crf 1 --vbv-bufsize 3000 --vbv-maxrate 3000 --hrd
-big_buck_bunny_360p24.y4m,--preset superfast --bitrate 1000 --vbv-bufsize 1000 --vbv-maxrate 1000 --aud --strict-cbr
-big_buck_bunny_360p24.y4m,--preset superfast --bitrate 3000 --vbv-bufsize 9000 --vbv-maxrate 9000 --repeat-headers
-big_buck_bunny_360p24.y4m,--preset superfast --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 400 --hrd
-big_buck_bunny_360p24.y4m,--preset superfast --crf 6 --vbv-bufsize 1000 --vbv-maxrate 1000 --aud
+night_cars_1920x1080_30.yuv,--preset medium --crf 25 --vbv-bufsize 5000 --vbv-maxrate 5000 -F6 --crf-max 34 --crf-min 22
+ducks_take_off_420_720p50.yuv,--preset slow --bitrate 1600 --vbv-bufsize 1600 --vbv-maxrate 1600 --strict-cbr -aq 2 --aq-strength 0.5
+CrowdRun_1920x1080_50_10bit_422.yuv,--preset veryslow --bitrate 4000 --vbv-bufsize 3000 --vbv-maxrate 4000 --tune grain
+fire_1920x1080_30.yuv,--preset medium --bitrate 1000 --vbv-maxrate 1500 --vbv-bufsize 1500 --aud --pmode --tune ssim
+112_1920x1080_25.yuv,--preset ultrafast --bitrate 10000 --vbv-maxrate 10000 --vbv-bufsize 15000 --hrd --strict-cbr
+Traffic_4096x2048_30p.yuv,--preset superfast --bitrate 20000 --vbv-maxrate 20000 --vbv-bufsize 20000 --repeat-headers --strict-cbr
+Traffic_4096x2048_30p.yuv,--preset faster --bitrate 8000 --vbv-maxrate 8000 --vbv-bufsize 6000 --aud --repeat-headers --no-open-gop --hrd --pmode --pme
+News-4k.y4m,--preset veryfast --bitrate 3000 --vbv-maxrate 5000 --vbv-bufsize 5000 --repeat-headers --temporal-layers
+NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset medium --bitrate 18000 --vbv-bufsize 20000 --vbv-maxrate 18000 --strict-cbr
+NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset medium --bitrate 8000 --vbv-bufsize 12000 --vbv-maxrate 10000  --tune grain
+big_buck_bunny_360p24.y4m,--preset medium --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 600 --aud --hrd --tune fast-decode
+sita_1980x1020_30.yuv,--preset superfast --crf 25 --vbv-bufsize 3000 --vbv-maxrate 4000 --vbv-bufsize 5000 --hrd  --crf-max 30
+sita_1980x1020_30.y4m,--preset superfast --bitrate 3000 --vbv-bufsize 3000 --vbv-maxrate 3000 --aud --strict-cbr
+
+
 
 # multi-pass rate control tests
-big_buck_bunny_360p24.y4m,--preset slow --crf 40 --pass 1,--preset slow --bitrate 200 --pass 2
-big_buck_bunny_360p24.y4m,--preset medium --bitrate 700 --pass 1 -F4 --slow-firstpass,--preset medium --bitrate 700 --vbv-bufsize 900 --vbv-maxrate 700 --pass 2 -F4
-112_1920x1080_25.yuv,--preset slow --bitrate 1000 --pass 1 -F4,--preset slow --bitrate 1000 --pass 2 -F4
-112_1920x1080_25.yuv,--preset superfast --crf 12 --pass 1,--preset superfast --bitrate 4000 --pass 2 -F4
-RaceHorses_416x240_30_10bit.yuv,--preset veryslow --crf 40 --pass 1, --preset veryslow --bitrate 200 --pass 2 -F4
-RaceHorses_416x240_30_10bit.yuv,--preset superfast --bitrate 600 --pass 1 -F4 --slow-firstpass,--preset superfast --bitrate 600 --pass 2 -F4
-RaceHorses_416x240_30_10bit.yuv,--preset medium --crf 26 --pass 1,--preset medium --bitrate 500 --pass 3 -F4,--preset medium --bitrate 500 --pass 2 -F4
+big_buck_bunny_360p24.y4m,--preset slow --crf 40 --pass 1 -f 5000,--preset slow --bitrate 200 --pass 2 -f 5000
+big_buck_bunny_360p24.y4m,--preset medium --bitrate 700 --pass 1 -F4 --slow-firstpass -f 5000 ,--preset medium --bitrate 700 --vbv-bufsize 900 --vbv-maxrate 700 --pass 2 -F4 -f 5000
+112_1920x1080_25.yuv,--preset fast --bitrate 1000 --vbv-maxrate 1000 --vbv-bufsize 1000 --strict-cbr --pass 1 -F4,--preset fast --bitrate 1000 --vbv-maxrate 3000 --vbv-bufsize 3000 --pass 2 -F4
+pine_tree_1920x1080_30.yuv,--preset veryfast --crf 12 --pass 1 -F4,--preset slow --bitrate 4000 --pass 2 -F4
+SteamLocomotiveTrain_2560x1600_60_10bit_crop.yuv, --tune grain --preset ultrafast --bitrate 5000 --vbv-maxrate 5000 --vbv-bufsize 8000 --strict-cbr -F4 --pass 1, --tune grain --preset ultrafast --bitrate 8000 --vbv-maxrate 8000 --vbv-bufsize 8000 -F4 --pass 2
+RaceHorses_416x240_30_10bit.yuv,--preset medium --crf 40 --pass 1, --preset faster --bitrate 200 --pass 2 -F4
+CrowdRun_1920x1080_50_10bit_422.yuv,--preset superfast --bitrate 2500 --pass 1 -F4 --slow-firstpass,--preset superfast --bitrate 2500 --pass 2 -F4
+RaceHorses_416x240_30_10bit.yuv,--preset medium --crf 26 --vbv-maxrate 1000 --vbv-bufsize 1000 --pass 1,--preset fast --bitrate 1000  --vbv-maxrate 1000 --vbv-bufsize 700 --pass 3 -F4,--preset slow --bitrate 500 --vbv-maxrate 500  --vbv-bufsize 700 --pass 2 -F4
+
