@@ -12090,7 +12090,7 @@ cglobal intra_pred_ang8_24, 3, 5, 5
 
 
 INIT_YMM avx2
-cglobal intra_pred_ang16_12, 3, 5, 13
+cglobal intra_pred_ang16_12, 3, 6, 13
     mova              m11, [pw_1024]
     lea               r5, [intra_pred_shuff_0_8]
 
@@ -12148,7 +12148,7 @@ cglobal intra_pred_ang16_12, 3, 5, 13
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang16_13, 3, 5, 14
+cglobal intra_pred_ang16_13, 3, 6, 14
     mova              m11, [pw_1024]
     lea               r5, [intra_pred_shuff_0_8]
 
