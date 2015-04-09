@@ -1273,22 +1273,20 @@ void x265_print_params(x265_param* param)
     x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / weightb / refs: %d / %d / %d / %d\n",
              param->bBPyramid, param->bEnableWeightedPred, param->bEnableWeightedBiPred, param->maxNumReferences);
 
+    if (param->rc.aqMode)
+        x265_log(param, X265_LOG_INFO, "AQ: mode / str / qg-size / cu-tree  : %d / %0.1f / %d / %d\n", param->rc.aqMode,
+                 param->rc.aqStrength, param->rc.qgSize, param->rc.cuTree);
+
     if (param->bLossless)
         x265_log(param, X265_LOG_INFO, "Rate Control                        : Lossless\n");
     else switch (param->rc.rateControlMode)
     {
     case X265_RC_ABR:
-        x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : ABR-%d kbps / %0.1f / %d\n", param->rc.bitrate,
-                 param->rc.aqStrength, param->rc.cuTree);
-        break;
+        x265_log(param, X265_LOG_INFO, "Rate Control                        : ABR-%d kbps\n", param->rc.bitrate); break;
     case X265_RC_CQP:
-        x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : CQP-%d / %0.1f / %d\n", param->rc.qp, param->rc.aqStrength,
-                 param->rc.cuTree);
-        break;
+        x265_log(param, X265_LOG_INFO, "Rate Control                        : CQP-%d\n", param->rc.qp);  break;
     case X265_RC_CRF:
-        x265_log(param, X265_LOG_INFO, "Rate Control / AQ-Strength / CUTree : CRF-%0.1f / %0.1f / %d\n", param->rc.rfConstant,
-                 param->rc.aqStrength, param->rc.cuTree);
-        break;
+        x265_log(param, X265_LOG_INFO, "Rate Control                        : CRF-%0.1f\n", param->rc.rfConstant);  break;
     }
 
     if (param->rc.vbvBufferSize)
