@@ -1829,6 +1829,8 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "QGSize should be less than or equal to maxCUSize, setting QGSize = %d\n", p->rc.qgSize);
         }
     }
+    else
+        m_param->rc.qgSize = p->maxCUSize;
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)
