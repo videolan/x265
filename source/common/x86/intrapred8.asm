@@ -144,6 +144,17 @@ c_ang16_mode_12:      db 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27,
                       db 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21
                       db  8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
 
+
+ALIGN 32
+c_ang16_mode_13:      db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15
+                      db 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6
+                      db 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29
+                      db 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
+                      db 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11
+                      db 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2
+                      db 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25, 7, 25
+                      db 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16
+
 ALIGN 32
 c_ang16_mode_28:      db 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10
                       db 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20
@@ -12130,6 +12141,85 @@ cglobal intra_pred_ang16_12, 3, 5, 13
     pshufb            m10, [r5]
 
     INTRA_PRED_ANG16_CAL_ROW m6, m7, 2
+    INTRA_PRED_ANG16_CAL_ROW m7, m8, 3
+
+    ; transpose and store
+    INTRA_PRED_TRANS_STORE_16x16
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang16_13, 3, 5, 14
+    mova              m11, [pw_1024]
+    lea               r5, [intra_pred_shuff_0_8]
+
+    movu              xm13, [r2 + 32]
+    pinsrb            xm13, [r2], 0
+    pslldq            xm7, xm13, 2
+    pinsrb            xm7, [r2 + 7], 0
+    pinsrb            xm7, [r2 + 4], 1
+    vinserti128       m9, m13, xm7, 1
+    pshufb            m9, [r5]
+
+    movu              xm12, [r2 + 4 + 32]
+
+    psrldq            xm10, xm12, 4
+    psrldq            xm8, xm12, 2
+    vinserti128       m10, m10, xm8, 1
+    pshufb            m10, [r5]
+
+    lea               r3, [3 * r1]
+    lea               r4, [c_ang16_mode_13]
+
+    INTRA_PRED_ANG16_CAL_ROW m0, m1, 0
+    INTRA_PRED_ANG16_CAL_ROW m1, m2, 1
+
+    pslldq            xm7, 1
+    pinsrb            xm7, [r2 + 11], 0
+    pshufb            xm2, xm7, [r5]
+    vinserti128       m9, m9, xm2, 1
+
+    psrldq            xm8, xm12, 1
+    pshufb            xm8, [r5]
+    vinserti128       m10, m10, xm8, 1
+
+    INTRA_PRED_ANG16_CAL_ROW m2, m3, 2
+
+    pslldq            xm13, 1
+    pinsrb            xm13, [r2 + 4], 0
+    pshufb            xm3, xm13, [r5]
+    vinserti128       m9, m9, xm3, 0
+
+    psrldq            xm8, xm12, 3
+    pshufb            xm8, [r5]
+    vinserti128       m10, m10, xm8, 0
+
+    INTRA_PRED_ANG16_CAL_ROW m3, m4, 3
+
+    add               r4, 4 * mmsize
+
+    INTRA_PRED_ANG16_CAL_ROW m4, m5, 0
+    INTRA_PRED_ANG16_CAL_ROW m5, m6, 1
+
+    pslldq            xm7, 1
+    pinsrb            xm7, [r2 + 14], 0
+    pshufb            xm7, [r5]
+    vinserti128       m9, m9, xm7, 1
+
+    mova              xm8, xm12
+    pshufb            xm8, [r5]
+    vinserti128       m10, m10, xm8, 1
+
+    INTRA_PRED_ANG16_CAL_ROW m6, m7, 2
+
+    pslldq            xm13, 1
+    pinsrb            xm13, [r2 + 7], 0
+    pshufb            xm13, [r5]
+    vinserti128       m9, m9, xm13, 0
+
+    psrldq            xm12, 2
+    pshufb            xm12, [r5]
+    vinserti128       m10, m10, xm12, 0
+
     INTRA_PRED_ANG16_CAL_ROW m7, m8, 3
 
     ; transpose and store
