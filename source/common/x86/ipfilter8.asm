@@ -7744,6 +7744,37 @@ FILTER_V4_W16n_H2 64, 16
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
+%macro P2S_H_2xN 1
+INIT_XMM sse4
+cglobal filterPixelToShort_2x%1, 3, 4, 3
+    mov         r3d, r3m
+    add         r3d, r3d
+
+    ; load constant
+    mova        m1, [pb_128]
+    mova        m2, [tab_c_64_n64]
+
+%rep %1/2
+    movd        m0, [r0]
+    pinsrd      m0, [r0 + r1], 1
+    punpcklbw   m0, m1
+    pmaddubsw   m0, m2
+
+    movd        [r2 + r3 * 0], m0
+    pextrd      [r2 + r3 * 1], m0, 2
+
+    lea         r0, [r0 + r1 * 2]
+    lea         r2, [r2 + r3 * 2]
+%endrep
+    RET
+%endmacro
+P2S_H_2xN 4
+P2S_H_2xN 8
+P2S_H_2xN 16
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
 %macro P2S_H_4xN 1
 INIT_XMM sse4
 cglobal filterPixelToShort_4x%1, 3, 6, 4
