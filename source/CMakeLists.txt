@@ -467,7 +467,7 @@ endif()
 option(ENABLE_CLI "Build standalone CLI application" ON)
 if(ENABLE_CLI)
     file(GLOB InputFiles input/input.cpp input/yuv.cpp input/y4m.cpp input/*.h)
-    file(GLOB OutputFiles output/output.cpp output/*.h
+    file(GLOB OutputFiles output/output.cpp output/reconplay.cpp output/*.h
                           output/yuv.cpp output/y4m.cpp # recon
                           output/raw.cpp)               # muxers
     file(GLOB FilterFiles filters/*.cpp filters/*.h)

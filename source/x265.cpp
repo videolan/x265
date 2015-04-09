@@ -27,6 +27,7 @@
 
 #include "input/input.h"
 #include "output/output.h"
+#include "output/reconplay.h"
 #include "filters/filters.h"
 #include "common.h"
 #include "param.h"
@@ -73,6 +74,7 @@ struct CLIOptions
     ReconFile* recon;
     OutputFile* output;
     FILE*       qpfile;
+    const char* reconPlayCmd;
     bool bProgress;
     bool bForceY4m;
     bool bDither;
@@ -98,6 +100,7 @@ struct CLIOptions
         prevUpdateTime = 0;
         bDither = false;
         qpfile = NULL;
+        reconPlayCmd = NULL;
     }
 
     void destroy();
@@ -252,6 +255,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("profile") profile = optarg; /* handled last */
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
+            OPT("recon-y4m-exec") reconPlayCmd = optarg;
             OPT("qpfile")
             {
                 this->qpfile = fopen(optarg, "rb");
@@ -458,7 +462,8 @@ int main(int argc, char **argv)
     if (!api)
         api = x265_api_get(0);
 
-    x265_param *param = api->param_alloc();
+    ReconPlay* reconPlay = NULL;
+    x265_param* param = api->param_alloc();
     CLIOptions cliopt;
 
     if (cliopt.parse(argc, argv, param))
@@ -470,6 +475,9 @@ int main(int argc, char **argv)
 
     /* This allow muxers to modify bitstream format */
     cliopt.output->setParam(param);
+
+    if (cliopt.reconPlayCmd)
+        reconPlay = new ReconPlay(cliopt.reconPlayCmd, *param);
 
     /* note: we could try to acquire a different libx265 API here based on
      * the profile found during option parsing, but it must be done before
@@ -496,7 +504,7 @@ int main(int argc, char **argv)
     x265_picture *pic_in = &pic_orig;
     /* Allocate recon picture if analysisMode is enabled */
     std::priority_queue<int64_t>* pts_queue = cliopt.output->needPTS() ? new std::priority_queue<int64_t>() : NULL;
-    x265_picture *pic_recon = (cliopt.recon || !!param->analysisMode || pts_queue) ? &pic_out : NULL;
+    x265_picture *pic_recon = (cliopt.recon || !!param->analysisMode || pts_queue || reconPlay) ? &pic_out : NULL;
     uint32_t inFrameCount = 0;
     uint32_t outFrameCount = 0;
     x265_nal *p_nal;
@@ -567,6 +575,10 @@ int main(int argc, char **argv)
             ret = 4;
             break;
         }
+
+        if (reconPlay && numEncoded)
+            reconPlay->writePicture(*pic_recon);
+
         outFrameCount += numEncoded;
 
         if (numEncoded && pic_recon && cliopt.recon)
@@ -594,6 +606,10 @@ int main(int argc, char **argv)
             ret = 4;
             break;
         }
+
+        if (reconPlay && numEncoded)
+            reconPlay->writePicture(*pic_recon);
+
         outFrameCount += numEncoded;
         if (numEncoded && pic_recon && cliopt.recon)
             cliopt.recon->writePicture(pic_out);
@@ -619,6 +635,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "%*s\r", 80, " ");
 
 fail:
+
+    delete reconPlay;
+
     api->encoder_get_stats(encoder, &stats, sizeof(stats));
     if (param->csvfn && !b_ctrl_c)
         api->encoder_log(encoder, argc, argv);

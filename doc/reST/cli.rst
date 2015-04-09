@@ -1562,4 +1562,20 @@ Debugging options
 
 	**CLI ONLY**
 
+.. option:: --recon-y4m-exec <string>
+
+	If you have an application which can play a Y4MPEG stream received
+	on stdin, the x265 CLI can feed it reconstructed pictures in display
+	order.  The pictures will have no timing info, obviously, so the
+	picture timing will be determined primarily by encoding elapsed time
+	and latencies, but it can be useful to preview the pictures being
+	output by the encoder to validate input settings and rate control
+	parameters.
+
+	Example command for ffplay (assuming it is in your PATH):
+
+	--recon-y4m-exec "ffplay -i pipe:0 -autoexit"
+
+	**CLI ONLY**
+
 .. vim: noet

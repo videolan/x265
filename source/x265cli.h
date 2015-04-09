@@ -208,6 +208,7 @@ static const struct option long_options[] =
     { "temporal-layers",      no_argument, NULL, 0 },
     { "no-temporal-layers",   no_argument, NULL, 0 },
     { "qg-size",        required_argument, NULL, 0 },
+    { "recon-y4m-exec", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -399,6 +400,7 @@ static void showHelp(x265_param *param)
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
+    H1("   --recon-y4m-exec <string>     pipe reconstructed frames to Y4M viewer, ex:\"ffplay -i pipe:0 -autoexit\"\n");
     H1("\nExecutable return codes:\n");
     H1("    0 - encode successful\n");
     H1("    1 - unable to parse command line\n");
