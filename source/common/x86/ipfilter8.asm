@@ -8705,6 +8705,74 @@ P2S_H_24xN 64
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
+%macro P2S_H_24xN_avx2 1
+INIT_YMM avx2
+cglobal filterPixelToShort_24x%1, 3, 7, 4
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r4, [r1 * 3]
+    lea         r5, [r3 * 3]
+    mov         r6d, %1/4
+
+    ; load constant
+    vpbroadcastd m1, [pw_2000]
+    vpbroadcastd m2, [pb_128]
+    vpbroadcastd m3, [tab_c_64_n64]
+
+.loop:
+    pmovzxbw    m0, [r0]
+    psllw       m0, 6
+    psubw       m0, m1
+    movu        [r2], m0
+
+    movu        m0, [r0 + mmsize/2]
+    punpcklbw   m0, m2
+    pmaddubsw   m0, m3
+    movu        [r2 +  r3 * 0 + mmsize], xm0
+
+    pmovzxbw    m0, [r0 + r1]
+    psllw       m0, 6
+    psubw       m0, m1
+    movu        [r2 + r3], m0
+
+    movu        m0, [r0 + r1 + mmsize/2]
+    punpcklbw   m0, m2
+    pmaddubsw   m0, m3
+    movu        [r2 +  r3 * 1 + mmsize], xm0
+
+    pmovzxbw    m0, [r0 + r1 * 2]
+    psllw       m0, 6
+    psubw       m0, m1
+    movu        [r2 + r3 * 2], m0
+
+    movu        m0, [r0 + r1 * 2 + mmsize/2]
+    punpcklbw   m0, m2
+    pmaddubsw   m0, m3
+    movu        [r2 +  r3 * 2 + mmsize], xm0
+
+    pmovzxbw    m0, [r0 + r4]
+    psllw       m0, 6
+    psubw       m0, m1
+    movu        [r2 + r5], m0
+
+    movu        m0, [r0 + r4 + mmsize/2]
+    punpcklbw   m0, m2
+    pmaddubsw   m0, m3
+    movu        [r2 + r5 + mmsize], xm0
+
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+P2S_H_24xN_avx2 32
+P2S_H_24xN_avx2 64
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
 INIT_XMM ssse3
 cglobal filterPixelToShort_48x64, 3, 7, 4
     mov         r3d, r3m
