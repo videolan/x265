@@ -117,6 +117,7 @@ void x265_param_default(x265_param* param)
     param->levelIdc = 0;
     param->bHighTier = 0;
     param->interlaceMode = 0;
+    param->bAnnexB = 1;
     param->bRepeatHeaders = 0;
     param->bEnableAccessUnitDelimiters = 0;
     param->bEmitHRDSEI = 0;
@@ -580,6 +581,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         }
     }
     OPT("cu-stats") p->bLogCuStats = atobool(value);
+    OPT("annexb") p->bAnnexB = atobool(value);
     OPT("repeat-headers") p->bRepeatHeaders = atobool(value);
     OPT("wpp") p->bEnableWavefront = atobool(value);
     OPT("ctu") p->maxCUSize = (uint32_t)atoi(value);

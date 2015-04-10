@@ -532,6 +532,11 @@ typedef struct x265_param
      * each keyframe. Default false */
     int       bRepeatHeaders;
 
+    /* Flag indicating whether the encoder should generate start codes (Annex B
+     * format) or length (file format) before NAL units. Default true, Annex B.
+     * Muxers should set this to the correct value */
+    int       bAnnexB;
+
     /* Flag indicating whether the encoder should emit an Access Unit Delimiter
      * NAL at the start of every access unit. Default false */
     int       bEnableAccessUnitDelimiters;

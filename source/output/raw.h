@@ -35,13 +35,13 @@ class RAWOutput : public OutputFile
 {
 protected:
 
-    std::ostream *ofs;
+    std::ostream* ofs;
 
     bool b_fail;
 
 public:
 
-    RAWOutput(const char *fname, InputFileInfo&);
+    RAWOutput(const char* fname, InputFileInfo&);
 
     bool isFail() const { return b_fail; }
 
@@ -49,9 +49,9 @@ public:
 
     void release() { delete this; }
 
-    const char *getName() const { return "raw"; }
+    const char* getName() const { return "raw"; }
 
-    void setParam(x265_param *param, x265_encoder *);
+    void setParam(x265_param* param);
 
     int writeHeaders(const x265_nal* nal, uint32_t nalcount);
 

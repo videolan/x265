@@ -1481,6 +1481,15 @@ VUI fields must be manually specified.
 Bitstream options
 =================
 
+.. option:: --annexb, --no-annexb
+
+	If enabled, x265 will produce Annex B bitstream format, which places
+	start codes before NAL. If disabled, x265 will produce file format,
+	which places length before NAL. x265 CLI will choose the right option
+	based on output format. Default enabled
+
+	**API ONLY**
+
 .. option:: --repeat-headers, --no-repeat-headers
 
 	If enabled, x265 will emit VPS, SPS, and PPS headers with every

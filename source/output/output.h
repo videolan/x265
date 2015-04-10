@@ -63,7 +63,7 @@ public:
 
     OutputFile() {}
 
-    static OutputFile* open(const char *fname, InputFileInfo& inputInfo);
+    static OutputFile* open(const char* fname, InputFileInfo& inputInfo);
 
     virtual bool isFail() const = 0;
 
@@ -71,9 +71,9 @@ public:
 
     virtual void release() = 0;
 
-    virtual const char *getName() const = 0;
+    virtual const char* getName() const = 0;
 
-    virtual void setParam(x265_param *param, x265_encoder *encoder) = 0;
+    virtual void setParam(x265_param* param) = 0;
 
     virtual int writeHeaders(const x265_nal* nal, uint32_t nalcount) = 0;
 

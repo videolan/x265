@@ -483,6 +483,9 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    /* This allow muxers to modify bitstream format */
+    cliopt.output->setParam(param);
+
     /* note: we could try to acquire a different libx265 API here based on
      * the profile found during option parsing, but it must be done before
      * opening an encoder */
@@ -526,10 +529,7 @@ int main(int argc, char **argv)
             goto fail;
         }
         else
-        {
-            cliopt.output->setParam(param, encoder);
             cliopt.totalbytes += cliopt.output->writeHeaders(p_nal, nal);
-        }
     }
 
     api->picture_init(param, pic_in);

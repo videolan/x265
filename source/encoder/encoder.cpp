@@ -161,7 +161,10 @@ void Encoder::create()
     x265_log(p, X265_LOG_INFO, "frame threads / pool features       : %d / %s\n", p->frameNumThreads, buf);
 
     for (int i = 0; i < m_param->frameNumThreads; i++)
+    {
         m_frameEncoder[i] = new FrameEncoder;
+        m_frameEncoder[i]->m_nalList.m_annexB = m_param->bAnnexB;
+    }
 
     if (m_numPools)
     {
@@ -289,6 +292,8 @@ void Encoder::create()
     m_aborted |= parseLambdaFile(m_param);
 
     m_encodeStartTime = x265_mdate();
+
+    m_nalList.m_annexB = m_param->bAnnexB;
 }
 
 void Encoder::stop()
