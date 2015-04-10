@@ -739,7 +739,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 totalRdCost += costCoeff[scanPos];
 
                 /* record costs for sign-hiding performed at the end */
-                if (level)
+                if ((cu.m_slice->m_pps->bSignHideEnabled ? ~0 : 0) & level)
                 {
                     const int32_t diff0 = level - 1 - baseLevel;
                     const int32_t diff2 = level + 1 - baseLevel;
