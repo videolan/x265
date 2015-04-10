@@ -8241,6 +8241,7 @@ P2S_H_32xN_avx2 8
 P2S_H_32xN_avx2 16
 P2S_H_32xN_avx2 24
 P2S_H_32xN_avx2 64
+P2S_H_32xN_avx2 48
 
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)

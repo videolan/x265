@@ -2074,6 +2074,17 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.pu[LUMA_48x64].convert_p2s = x265_filterPixelToShort_48x64_avx2;
         p.pu[LUMA_24x32].convert_p2s = x265_filterPixelToShort_24x32_avx2;
 
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].p2s = x265_filterPixelToShort_24x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].p2s = x265_filterPixelToShort_32x8_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].p2s = x265_filterPixelToShort_32x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].p2s = x265_filterPixelToShort_32x24_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].p2s = x265_filterPixelToShort_32x32_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].p2s = x265_filterPixelToShort_24x64_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].p2s = x265_filterPixelToShort_32x16_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].p2s = x265_filterPixelToShort_32x32_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = x265_filterPixelToShort_32x48_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = x265_filterPixelToShort_32x64_avx2;
+
         if ((cpuMask & X265_CPU_BMI1) && (cpuMask & X265_CPU_BMI2))
             p.findPosLast = x265_findPosLast_x64;
     }
