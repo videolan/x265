@@ -1018,9 +1018,8 @@ bool PixelHarness::check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt)
 
     memset(ref_dest, 0xCD, sizeof(ref_dest));
     memset(opt_dest, 0xCD, sizeof(opt_dest));
-
-    int width = 16 + rand() % 48;
-    int height = 16 + rand() % 48;
+    int width = 32 + rand() % 32;
+    int height = 32 + rand() % 32;
     intptr_t srcStride = 64;
     intptr_t dstStride = width;
     int j = 0;

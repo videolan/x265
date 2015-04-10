@@ -226,6 +226,7 @@ ADDAVG(addAvg_24x64)
 ADDAVG(addAvg_32x48)
 
 void x265_downShift_16_sse2(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
+void x265_downShift_16_avx2(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 void x265_upShift_8_sse4(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 int x265_psyCost_pp_4x4_sse4(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
 int x265_psyCost_pp_8x8_sse4(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
