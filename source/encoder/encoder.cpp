@@ -163,7 +163,7 @@ void Encoder::create()
     for (int i = 0; i < m_param->frameNumThreads; i++)
     {
         m_frameEncoder[i] = new FrameEncoder;
-        m_frameEncoder[i]->m_nalList.m_annexB = m_param->bAnnexB;
+        m_frameEncoder[i]->m_nalList.m_annexB = !!m_param->bAnnexB;
     }
 
     if (m_numPools)
@@ -293,7 +293,7 @@ void Encoder::create()
 
     m_encodeStartTime = x265_mdate();
 
-    m_nalList.m_annexB = m_param->bAnnexB;
+    m_nalList.m_annexB = !!m_param->bAnnexB;
 }
 
 void Encoder::stop()

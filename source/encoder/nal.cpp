@@ -154,10 +154,10 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
     if (!m_annexB)
     {
         uint32_t dataSize = bytes - 4;
-        out[0] = dataSize >> 24;
-        out[1] = dataSize >> 16;
-        out[2] = dataSize >>  8;
-        out[3] = dataSize;
+        out[0] = (uint8_t)(dataSize >> 24);
+        out[1] = (uint8_t)(dataSize >> 16);
+        out[2] = (uint8_t)(dataSize >> 8);
+        out[3] = (uint8_t)dataSize;
     }
 
     m_occupancy += bytes;
