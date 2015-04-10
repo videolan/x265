@@ -613,13 +613,13 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
              * FIX15 nature of the CABAC cost tables minus the forward transform scale */
 
             /* cost of not coding this coefficient (all distortion, no signal bits) */
-            costUncoded[scanPos] = ((int64_t)signCoef * signCoef) << scaleBits;
+            costUncoded[blkPos] = ((int64_t)signCoef * signCoef) << scaleBits;
             X265_CHECK((!!scanPos ^ !!blkPos) == 0, "failed on (blkPos=0 && scanPos!=0)\n");
             if (usePsyMask & scanPos)
                 /* when no residual coefficient is coded, predicted coef == recon coef */
-                costUncoded[scanPos] -= PSYVALUE(predictedCoef);
+                costUncoded[blkPos] -= PSYVALUE(predictedCoef);
 
-            totalUncodedCost += costUncoded[scanPos];
+            totalUncodedCost += costUncoded[blkPos];
 
             if (maxAbsLevel && lastScanPos < 0)
             {
@@ -638,7 +638,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 /* No non-zero coefficient yet found, but this does not mean
                  * there is no uncoded-cost for this coefficient. Pre-
                  * quantization the coefficient may have been non-zero */
-                totalRdCost += costUncoded[scanPos];
+                totalRdCost += costUncoded[blkPos];
             }
             else
             {
@@ -668,7 +668,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                     {
                         /* set default costs to uncoded costs */
                         costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
-                        costCoeff[scanPos] = costUncoded[scanPos] + costSig[scanPos];
+                        costCoeff[scanPos] = costUncoded[blkPos] + costSig[scanPos];
                     }
                     sigRateDelta[blkPos] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
                     sigCoefBits = estBitsSbac.significantBits[ctxSig][1];
@@ -810,7 +810,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
             {
                 sigCoeffGroupFlag64 |= cgBlkPosMask;
                 cgRdStats.codedLevelAndDist += costCoeff[scanPos] - costSig[scanPos];
-                cgRdStats.uncodedDist += costUncoded[scanPos];
+                cgRdStats.uncodedDist += costUncoded[blkPos];
                 cgRdStats.nnzBeforePos0 += scanPosinCG;
             }
         } /* end for (scanPosinCG) */
@@ -965,7 +965,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 }
 
                 totalRdCost -= costCoeff[scanPos];
-                totalRdCost += costUncoded[scanPos];
+                totalRdCost += costUncoded[blkPos];
             }
             else
                 totalRdCost -= costSig[scanPos];
