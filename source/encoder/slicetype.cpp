@@ -566,7 +566,7 @@ bool Lookahead::create()
     return m_tld && m_scratch;
 }
 
-void Lookahead::stop()
+void Lookahead::stopJobs()
 {
     if (m_pool && !m_inputQueue.empty())
     {

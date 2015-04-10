@@ -373,7 +373,7 @@ bool ThreadPool::start()
     return true;
 }
 
-void ThreadPool::stop()
+void ThreadPool::stopWorkers()
 {
     if (m_workers)
     {

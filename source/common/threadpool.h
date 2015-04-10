@@ -94,7 +94,7 @@ public:
 
     bool create(int numThreads, int maxProviders, int node);
     bool start();
-    void stop();
+    void stopWorkers();
     void setCurrentThreadAffinity();
     int  tryAcquireSleepingThread(sleepbitmap_t firstTryBitmap, sleepbitmap_t secondTryBitmap);
     int  tryBondPeers(int maxPeers, sleepbitmap_t peerBitmap, BondedTaskGroup& master);

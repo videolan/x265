@@ -180,7 +180,7 @@ void x265_encoder_close(x265_encoder *enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
 
-        encoder->stop();
+        encoder->stopJobs();
         encoder->printSummary();
         encoder->destroy();
         delete encoder;

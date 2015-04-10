@@ -296,13 +296,13 @@ void Encoder::create()
     m_nalList.m_annexB = !!m_param->bAnnexB;
 }
 
-void Encoder::stop()
+void Encoder::stopJobs()
 {
     if (m_rateControl)
         m_rateControl->terminate(); // unblock all blocked RC calls
 
     if (m_lookahead)
-        m_lookahead->stop();
+        m_lookahead->stopJobs();
     
     for (int i = 0; i < m_param->frameNumThreads; i++)
     {
@@ -316,7 +316,7 @@ void Encoder::stop()
     }
 
     if (m_threadPool)
-        m_threadPool->stop();
+        m_threadPool->stopWorkers();
 }
 
 void Encoder::destroy()
