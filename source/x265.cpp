@@ -72,28 +72,21 @@ struct CLIOptions
     InputFile* input;
     ReconFile* recon;
     OutputFile* output;
+    FILE*       qpfile;
     bool bProgress;
     bool bForceY4m;
     bool bDither;
-
     uint32_t seek;              // number of frames to skip from the beginning
     uint32_t framesToBeEncoded; // number of frames to encode
     uint64_t totalbytes;
-    size_t   analysisRecordSize; // number of bytes read from or dumped into file
-    int      analysisHeaderSize;
-
     int64_t startTime;
     int64_t prevUpdateTime;
-    float   frameRate;
-    FILE*   qpfile;
-    FILE*   analysisFile;
 
     /* in microseconds */
     static const int UPDATE_INTERVAL = 250000;
 
     CLIOptions()
     {
-        frameRate = 0.f;
         input = NULL;
         recon = NULL;
         output = NULL;
@@ -105,9 +98,6 @@ struct CLIOptions
         prevUpdateTime = 0;
         bDither = false;
         qpfile = NULL;
-        analysisFile = NULL;
-        analysisRecordSize = 0;
-        analysisHeaderSize = 0;
     }
 
     void destroy();
@@ -128,9 +118,6 @@ void CLIOptions::destroy()
     if (qpfile)
         fclose(qpfile);
     qpfile = NULL;
-    if (analysisFile)
-        fclose(analysisFile);
-    analysisFile = NULL;
     if (output)
         output->release();
     output = NULL;
@@ -207,9 +194,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         int long_options_index = -1;
         int c = getopt_long(argc, argv, short_options, long_options, &long_options_index);
         if (c == -1)
-        {
             break;
-        }
 
         switch (c)
         {
@@ -272,7 +257,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
                 this->qpfile = fopen(optarg, "rb");
                 if (!this->qpfile)
                 {
-                    x265_log(param, X265_LOG_ERROR, "%s qpfile not found or error in opening qp file \n", optarg);
+                    x265_log(param, X265_LOG_ERROR, "%s qpfile not found or error in opening qp file\n", optarg);
                     return false;
                 }
             }
