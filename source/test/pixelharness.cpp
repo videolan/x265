@@ -1155,8 +1155,8 @@ bool PixelHarness::check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt)
     for (int i = 0; i < ITERS; i++)
     {
         int width = 16 * (rand() % 4 + 1);
-        int height = rand() % 64 +1;
-        int stride = rand() % 65;
+        int height = rand() % 63 + 2;
+        int stride = width;
 
         ref(ref_dest, psbuf1 + j, width, height, stride);
         checked(opt, opt_dest, psbuf1 + j, width, height, stride);

@@ -28,8 +28,8 @@
 %include "x86inc.asm"
 
 SECTION_RODATA 32
-pb_31:      times 16 db 31
-pb_15:      times 16 db 15
+pb_31:      times 32 db 31
+pb_15:      times 32 db 15
 
 SECTION .text
 cextern pb_1
@@ -582,6 +582,82 @@ cglobal saoCuOrgB0, 4, 7, 8
 
     dec         r3d
     jnz         .loopH
+    RET
+
+INIT_YMM avx2
+cglobal saoCuOrgB0, 4, 7, 8
+
+    mov             r3d,        r3m
+    mov             r4d,        r4m
+    mova            m7,         [pb_31]
+    vbroadcasti128  m3,         [r1 + 0]            ; offset[0-15]
+    vbroadcasti128  m4,         [r1 + 16]           ; offset[16-31]
+    lea             r6,         [r4 * 2]
+    sub             r6d,        r2d
+    shr             r2d,        4
+    mov             r1d,        r3d
+    shr             r3d,        1
+.loopH
+    mov             r5d,        r2d
+.loopW
+    movu            xm2,        [r0]                ; m2 = [rec]
+    vinserti128     m2,         m2,  [r0 + r4],  1
+    psrlw           m1,         m2,  3
+    pand            m1,         m7                  ; m1 = [index]
+    pcmpgtb         m0,         m1,  [pb_15]        ; m0 = [mask]
+
+    pshufb          m6,         m3,  m1
+    pshufb          m5,         m4,  m1
+
+    pblendvb        m6,         m6,  m5,  m0        ; NOTE: don't use 3 parameters style, x264 macro have some bug!
+
+    pmovzxbw        m1,         xm2                 ; rec
+    vextracti128    xm2,        m2,  1
+    pmovzxbw        m2,         xm2
+    pmovsxbw        m0,         xm6                 ; offset
+    vextracti128    xm6,        m6,  1
+    pmovsxbw        m6,         xm6
+
+    paddw           m1,         m0
+    paddw           m2,         m6
+    packuswb        m1,         m2
+    vpermq          m1,         m1,  11011000b
+
+    movu            [r0],       xm1
+    vextracti128    [r0 + r4],  m1,  1
+    add             r0,         16
+    dec             r5d
+    jnz             .loopW
+
+    add             r0,         r6
+    dec             r3d
+    jnz             .loopH
+    test            r1b,        1
+    jz              .end
+    mov             r5d,        r2d
+.loopW1
+    movu            xm2,        [r0]                ; m2 = [rec]
+    psrlw           xm1,        xm2, 3
+    pand            xm1,        xm7                 ; m1 = [index]
+    pcmpgtb         xm0,        xm1, [pb_15]        ; m0 = [mask]
+
+    pshufb          xm6,        xm3, xm1
+    pshufb          xm5,        xm4, xm1
+
+    pblendvb        xm6,        xm6, xm5, xm0       ; NOTE: don't use 3 parameters style, x264 macro have some bug!
+
+    pmovzxbw        m1,         xm2                 ; rec
+    pmovsxbw        m0,         xm6                 ; offset
+
+    paddw           m1,         m0
+    vextracti128    xm0,        m1,  1
+    packuswb        xm1,        xm0
+
+    movu            [r0],       xm1
+    add             r0,         16
+    dec             r5d
+    jnz             .loopW1
+.end
     RET
 
 ;============================================================================================================
