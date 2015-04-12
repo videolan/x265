@@ -301,12 +301,15 @@ if (WIN32)
         list(APPEND PLATFORM_LIBS ${VLD_LIBRARIES})
         link_directories(${VLD_LIBRARY_DIRS})
     endif()
-    option(WINXP_SUPPORT "Make binaries compatible with Windows XP" OFF)
+    option(WINXP_SUPPORT "Make binaries compatible with Windows XP and Vista" OFF)
     if(WINXP_SUPPORT)
         # force use of workarounds for CONDITION_VARIABLE and atomic
         # intrinsics introduced after XP
         add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WINXP)
-    endif()
+    else(WINXP_SUPPORT)
+        # default to targeting Windows 7 for the NUMA APIs
+        add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WIN7)
+    endif(WINXP_SUPPORT)
 endif()
 
 include(version) # determine X265_VERSION and X265_LATEST_TAG

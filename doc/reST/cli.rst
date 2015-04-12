@@ -219,7 +219,8 @@ Performance Options
 
 	On Windows, the native APIs offer sufficient functionality to
 	discover the NUMA topology and enforce the thread affinity that
-	libx265 needs, but on POSIX systems it relies on libnuma for this
+	libx265 needs (so long as you have not chosen to target XP or
+	Vista), but on POSIX systems it relies on libnuma for this
 	functionality. If your target POSIX system is single socket, then
 	building without libnuma is a perfectly reasonable option, as it
 	will have no effect on the runtime behavior. On a multiple-socket
