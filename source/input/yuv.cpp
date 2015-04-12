@@ -44,8 +44,6 @@ YUVInput::YUVInput(InputFileInfo& info)
     for (int i = 0; i < QUEUE_SIZE; i++)
         buf[i] = NULL;
 
-    readCount.set(0);
-    writeCount.set(0);
     depth = info.depth;
     width = info.width;
     height = info.height;
@@ -152,7 +150,7 @@ YUVInput::~YUVInput()
 void YUVInput::release()
 {
     threadActive = false;
-    readCount.set(readCount.get()); // unblock read thread
+    readCount.poke();
     stop();
     delete this;
 }
@@ -175,7 +173,7 @@ void YUVInput::threadMain()
     }
 
     threadActive = false;
-    writeCount.set(writeCount.get()); // unblock readPicture
+    writeCount.poke();
 }
 
 bool YUVInput::populateFrameQueue()
