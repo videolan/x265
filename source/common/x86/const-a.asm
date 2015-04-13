@@ -53,6 +53,10 @@ const pb_unpackwq2,         times  1 db   4,   5,   4,   5,   4,   5,   4,   5, 
 const pb_shuf8x8c,          times  1 db   0,   0,   0,   0,   2,   2,   2,   2,   4,   4,   4,   4,   6,   6,   6,   6
 const pb_movemask,          times 16 db 0x00
                             times 16 db 0xFF
+const pb_0000000000000F0F,  times  2 db 0xff, 0x00
+                            times 12 db 0x00
+const pb_000000000000000F,           db 0xff
+                            times 15 db 0x00
 
 ;; 16-bit constants
 
@@ -94,6 +98,8 @@ const multiL,               times  1 dw   1,   2,   3,   4,   5,   6,   7,   8, 
 const multiH2,              times  1 dw  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,  32
 const pw_planar16_mul,      times  1 dw  15,  14,  13,  12,  11,  10,   9,   8,   7,   6,   5,   4,   3,   2,   1,   0
 const pw_planar32_mul,      times  1 dw  31,  30,  29,  28,  27,  26,  25,  24,  23,  22,  21,  20,  19,  18,  17,  16
+const pw_FFFFFFFFFFFFFFF0,           dw 0x00
+                            times 7  dw 0xff
 
 
 ;; 32-bit constants
