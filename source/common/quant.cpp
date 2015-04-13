@@ -558,7 +558,6 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     int64_t costCoeffGroupSig[MLS_GRP_NUM]; /* lambda * bits of group coding cost */
     uint64_t sigCoeffGroupFlag64 = 0;
 
-    uint32_t ctxSet      = 0;
     int cgLastScanPos    = -1;
     int lastScanPos      = -1;
     const uint32_t cgSize = (1 << MLS_CG_SIZE); /* 4x4 num coef = 16 */
@@ -582,10 +581,12 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
     uint32_t scanPos;
     coeffGroupRDStats cgRdStats;
+    uint32_t c1 = 1;
 
     /* iterate over coding groups in reverse scan order */
     for (int cgScanPos = cgNum - 1; cgScanPos >= 0; cgScanPos--)
     {
+        uint32_t ctxSet = (cgScanPos && bIsLuma) ? 2 : 0;
         const uint32_t cgBlkPos = codeParams.scanCG[cgScanPos];
         const uint32_t cgPosY   = cgBlkPos >> codeParams.log2TrSizeCG;
         const uint32_t cgPosX   = cgBlkPos - (cgPosY << codeParams.log2TrSizeCG);
@@ -594,7 +595,10 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
         const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
 
-        int    c1            = 1;
+        if (c1 == 0)
+            ctxSet++;
+        c1 = 1;
+
         int    c2            = 0;
         uint32_t goRiceParam = 0;
         uint32_t c1Idx       = 0;
@@ -814,13 +818,6 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 cgRdStats.nnzBeforePos0 += scanPosinCG;
             }
         } /* end for (scanPosinCG) */
-
-        /* context set update */
-        {
-            ctxSet = (cgScanPos == 1 || !bIsLuma) ? 0 : 2;
-            X265_CHECK(c1 >= 0, "c1 is negative\n");
-            ctxSet -= ((int32_t)(c1 - 1) >> 31);
-        }
 
         costCoeffGroupSig[cgScanPos] = 0;
 
