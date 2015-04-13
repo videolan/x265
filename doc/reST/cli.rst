@@ -230,6 +230,9 @@ Performance Options
 	Default "", one thread is allocated per detected hardware thread
 	(logical CPU cores) and one thread pool per NUMA node.
 
+	Note that the string value will need to be escaped or quoted to
+	protect against shell expansion on many platforms
+
 .. option:: --wpp, --no-wpp
 
 	Enable Wavefront Parallel Processing. The encoder may begin encoding
