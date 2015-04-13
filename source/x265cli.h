@@ -183,6 +183,7 @@ static const struct option long_options[] =
     { "colormatrix",    required_argument, NULL, 0 },
     { "chromaloc",      required_argument, NULL, 0 },
     { "crop-rect",      required_argument, NULL, 0 },
+    { "master-display", required_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
     { "no-repeat-headers",    no_argument, NULL, 0 },
@@ -390,6 +391,8 @@ static void showHelp(x265_param *param)
     H1("   --colormatrix <string>        Specify color matrix setting from undef, bt709, fcc, bt470bg, smpte170m,\n");
     H1("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
     H1("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
+    H0("   --master-display <string>     SMPTE ST 2086 master display color volume info\n");
+    H0("                                    format: Y(x,y)U(x,y)V(x,y)WP(x,y)L(max,min)\n");
     H0("\nBitstream options:\n");
     H0("   --[no-]repeat-headers         Emit SPS and PPS headers at each keyframe. Default %s\n", OPT(param->bRepeatHeaders));
     H0("   --[no-]info                   Emit SEI identifying encoder and parameters. Default %s\n", OPT(param->bEmitInfoSEI));

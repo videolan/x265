@@ -1099,6 +1099,15 @@ typedef struct x265_param
          * conformance cropping window to further crop the displayed window */
         int defDispWinBottomOffset;
     } vui;
+
+    /* SMPTE ST 2086 mastering display color volume SEI info, specified as a
+     * string which is parsed when the stream header SEI are emitted. The string
+     * format is "Y(%hu,%hu)U(%hu,%hu)V(%hu,%hu)WP(%hu,%hu)L(%u,%u)" where %hu
+     * are unsigned 16bit integers and %u are unsigned 32bit integers. The SEI
+     * includes X,Y display primaries for YUV channels, white point X,Y and
+     * max,min luminance values. */
+    const char* masteringDisplayColorVolume;
+
 } x265_param;
 
 /* x265_param_alloc:
