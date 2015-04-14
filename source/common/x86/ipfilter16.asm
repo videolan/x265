@@ -5692,3 +5692,283 @@ P2S_H_16xN 12
 P2S_H_16xN 32
 P2S_H_16xN 64
 P2S_H_16xN 24
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_32xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_32x%1, 3, 7, 5
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m4, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    movu       m2, [r0 + r1 * 2]
+    movu       m3, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+    movu       [r2 + r3 * 2], m2
+    movu       [r2 + r4], m3
+
+    movu       m0, [r0 + 16]
+    movu       m1, [r0 + r1 + 16]
+    movu       m2, [r0 + r1 * 2 + 16]
+    movu       m3, [r0 + r5 + 16]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 16], m0
+    movu       [r2 + r3 * 1 + 16], m1
+    movu       [r2 + r3 * 2 + 16], m2
+    movu       [r2 + r4 + 16], m3
+
+    movu       m0, [r0 + 32]
+    movu       m1, [r0 + r1 + 32]
+    movu       m2, [r0 + r1 * 2 + 32]
+    movu       m3, [r0 + r5 + 32]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 32], m0
+    movu       [r2 + r3 * 1 + 32], m1
+    movu       [r2 + r3 * 2 + 32], m2
+    movu       [r2 + r4 + 32], m3
+
+    movu       m0, [r0 + 48]
+    movu       m1, [r0 + r1 + 48]
+    movu       m2, [r0 + r1 * 2 + 48]
+    movu       m3, [r0 + r5 + 48]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 48], m0
+    movu       [r2 + r3 * 1 + 48], m1
+    movu       [r2 + r3 * 2 + 48], m2
+    movu       [r2 + r4 + 48], m3
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_32xN 32
+P2S_H_32xN 8
+P2S_H_32xN 16
+P2S_H_32xN 24
+P2S_H_32xN 64
+P2S_H_32xN 48
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_64xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_64x%1, 3, 7, 5
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m4, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    movu       m2, [r0 + r1 * 2]
+    movu       m3, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+    movu       [r2 + r3 * 2], m2
+    movu       [r2 + r4], m3
+
+    movu       m0, [r0 + 16]
+    movu       m1, [r0 + r1 + 16]
+    movu       m2, [r0 + r1 * 2 + 16]
+    movu       m3, [r0 + r5 + 16]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 16], m0
+    movu       [r2 + r3 * 1 + 16], m1
+    movu       [r2 + r3 * 2 + 16], m2
+    movu       [r2 + r4 + 16], m3
+
+    movu       m0, [r0 + 32]
+    movu       m1, [r0 + r1 + 32]
+    movu       m2, [r0 + r1 * 2 + 32]
+    movu       m3, [r0 + r5 + 32]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 32], m0
+    movu       [r2 + r3 * 1 + 32], m1
+    movu       [r2 + r3 * 2 + 32], m2
+    movu       [r2 + r4 + 32], m3
+
+    movu       m0, [r0 + 48]
+    movu       m1, [r0 + r1 + 48]
+    movu       m2, [r0 + r1 * 2 + 48]
+    movu       m3, [r0 + r5 + 48]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 48], m0
+    movu       [r2 + r3 * 1 + 48], m1
+    movu       [r2 + r3 * 2 + 48], m2
+    movu       [r2 + r4 + 48], m3
+
+    movu       m0, [r0 + 64]
+    movu       m1, [r0 + r1 + 64]
+    movu       m2, [r0 + r1 * 2 + 64]
+    movu       m3, [r0 + r5 + 64]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 64], m0
+    movu       [r2 + r3 * 1 + 64], m1
+    movu       [r2 + r3 * 2 + 64], m2
+    movu       [r2 + r4 + 64], m3
+
+    movu       m0, [r0 + 80]
+    movu       m1, [r0 + r1 + 80]
+    movu       m2, [r0 + r1 * 2 + 80]
+    movu       m3, [r0 + r5 + 80]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 80], m0
+    movu       [r2 + r3 * 1 + 80], m1
+    movu       [r2 + r3 * 2 + 80], m2
+    movu       [r2 + r4 + 80], m3
+
+    movu       m0, [r0 + 96]
+    movu       m1, [r0 + r1 + 96]
+    movu       m2, [r0 + r1 * 2 + 96]
+    movu       m3, [r0 + r5 + 96]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 96], m0
+    movu       [r2 + r3 * 1 + 96], m1
+    movu       [r2 + r3 * 2 + 96], m2
+    movu       [r2 + r4 + 96], m3
+
+    movu       m0, [r0 + 112]
+    movu       m1, [r0 + r1 + 112]
+    movu       m2, [r0 + r1 * 2 + 112]
+    movu       m3, [r0 + r5 + 112]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 112], m0
+    movu       [r2 + r3 * 1 + 112], m1
+    movu       [r2 + r3 * 2 + 112], m2
+    movu       [r2 + r4 + 112], m3
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_64xN 64
+P2S_H_64xN 16
+P2S_H_64xN 32
+P2S_H_64xN 48
