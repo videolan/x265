@@ -117,6 +117,7 @@ SECTION .text
 cextern pd_32
 cextern pw_pixel_max
 cextern pd_n32768
+cextern pw_2000
 
 ;------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_horiz_pp_4x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
@@ -5525,65 +5526,42 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-gprsize
     FILTER_VER_LUMA_SS 64, 16
     FILTER_VER_LUMA_SS 16, 64
 
-;--------------------------------------------------------------------------------------------------
-; void filterConvertPelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height)
-;--------------------------------------------------------------------------------------------------
-INIT_XMM sse2
-cglobal luma_p2s, 3, 7, 5
-
-    add         r1, r1
-
-    ; load width and height
-    mov         r3d, r3m
-    mov         r4d, r4m
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_4xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_4x%1, 3, 6, 2
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
 
     ; load constant
-    mova        m4, [tab_c_n8192]
+    mova       m1, [pw_2000]
 
-.loopH:
+%rep %1/4
+    movh       m0, [r0]
+    movhps     m0, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m1
+    movh       [r2 + r3 * 0], m0
+    movhps     [r2 + r3 * 1], m0
 
-    xor         r5d, r5d
-.loopW:
-    lea         r6, [r0 + r5 * 2]
+    movh       m0, [r0 + r1 * 2]
+    movhps     m0, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m1
+    movh       [r2 + r3 * 2], m0
+    movhps     [r2 + r4], m0
 
-    movu        m0, [r6]
-    psllw       m0, 4
-    paddw       m0, m4
-
-    movu        m1, [r6 + r1]
-    psllw       m1, 4
-    paddw       m1, m4
-
-    movu        m2, [r6 + r1 * 2]
-    psllw       m2, 4
-    paddw       m2, m4
-
-    lea         r6, [r6 + r1 * 2]
-    movu        m3, [r6 + r1]
-    psllw       m3, 4
-    paddw       m3, m4
-
-    add         r5, 8
-    cmp         r5, r3
-    jg          .width4
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 0 - 16], m0
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 2 - 16], m1
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 4 - 16], m2
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 6 - 16], m3
-    je          .nextH
-    jmp         .loopW
-
-.width4:
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 0 - 16], m0
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 2 - 16], m1
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 4 - 16], m2
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 6 - 16], m3
-
-.nextH:
-    lea         r0, [r0 + r1 * 4]
-    add         r2, FENC_STRIDE * 8
-
-    sub         r4d, 4
-    jnz         .loopH
-
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+%endrep
     RET
+%endmacro
+P2S_H_4xN 4
+P2S_H_4xN 8
+P2S_H_4xN 16
+P2S_H_4xN 32

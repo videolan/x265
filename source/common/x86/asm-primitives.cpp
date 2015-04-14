@@ -948,6 +948,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_16x16].count_nonzero = x265_count_nonzero_16x16_ssse3;
         p.cu[BLOCK_32x32].count_nonzero = x265_count_nonzero_32x32_ssse3;
         p.frameInitLowres = x265_frame_init_lowres_core_ssse3;
+
+        p.pu[LUMA_4x4].convert_p2s = x265_filterPixelToShort_4x4_ssse3;
+        p.pu[LUMA_4x8].convert_p2s = x265_filterPixelToShort_4x8_ssse3;
+        p.pu[LUMA_4x16].convert_p2s = x265_filterPixelToShort_4x16_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
