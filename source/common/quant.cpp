@@ -996,13 +996,16 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
             int n;
 
+            if (!(sigCoeffGroupFlag64 & (1ULL << codeParams.scanCG[subSet])))
+                continue;
+
             /* measure distance between first and last non-zero coef in this
              * coding group */
             for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
                 if (dstCoeff[codeParams.scan[n + subPos]])
                     break;
-            if (n < 0)
-                continue;
+
+            X265_CHECK(n >= 0, "non-zero coeff scan failuare!\n");
 
             int lastNZPosInCG = n;
 
