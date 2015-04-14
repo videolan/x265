@@ -28,6 +28,7 @@
 SECTION_RODATA 32
 
 intra_pred_shuff_0_8:    times 2 db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
+intra_pred_shuff_15_0:   times 2 db 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
 
 pb_0_8        times 8 db  0,  8
 pb_unpackbw1  times 2 db  1,  8,  2,  8,  3,  8,  4,  8
@@ -10364,6 +10365,99 @@ cglobal intra_pred_ang32_17, 4,7,8
     jnz        .loop
     mov         rsp, [rsp+64]
 
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang32_18, 4, 4, 3
+    movu           m0, [r2]
+    movu           xm1, [r2 + 1 + 64]
+    pshufb         xm1, [intra_pred_shuff_15_0]
+    mova           xm2, xm0
+    vinserti128    m1, m1, xm2, 1
+
+    lea            r3, [r1 * 3]
+
+    movu           [r0], m0
+    palignr        m2, m0, m1, 15
+    movu           [r0 + r1], m2
+    palignr        m2, m0, m1, 14
+    movu           [r0 + r1 * 2], m2
+    palignr        m2, m0, m1, 13
+    movu           [r0 + r3], m2
+
+    lea            r0, [r0 + r1 * 4]
+    palignr        m2, m0, m1, 12
+    movu           [r0], m2
+    palignr        m2, m0, m1, 11
+    movu           [r0 + r1], m2
+    palignr        m2, m0, m1, 10
+    movu           [r0 + r1 * 2], m2
+    palignr        m2, m0, m1, 9
+    movu           [r0 + r3], m2
+
+    lea            r0, [r0 + r1 * 4]
+    palignr        m2, m0, m1, 8
+    movu           [r0], m2
+    palignr        m2, m0, m1, 7
+    movu           [r0 + r1], m2
+    palignr        m2, m0, m1, 6
+    movu           [r0 + r1 * 2], m2
+    palignr        m2, m0, m1, 5
+    movu           [r0 + r3], m2
+
+    lea            r0, [r0 + r1 * 4]
+    palignr        m2, m0, m1, 4
+    movu           [r0], m2
+    palignr        m2, m0, m1, 3
+    movu           [r0 + r1], m2
+    palignr        m2, m0, m1, 2
+    movu           [r0 + r1 * 2], m2
+    palignr        m2, m0, m1, 1
+    movu           [r0 + r3], m2
+
+    lea            r0, [r0 + r1 * 4]
+    movu           [r0], m1
+
+    movu           xm0, [r2 + 64 + 17]
+    pshufb         xm0, [intra_pred_shuff_15_0]
+    vinserti128    m0, m0, xm1, 1
+
+    palignr        m2, m1, m0, 15
+    movu           [r0 + r1], m2
+    palignr        m2, m1, m0, 14
+    movu           [r0 + r1 * 2], m2
+    palignr        m2, m1, m0, 13
+    movu           [r0 + r3], m2
+
+    lea            r0, [r0 + r1 * 4]
+    palignr        m2, m1, m0, 12
+    movu           [r0], m2
+    palignr        m2, m1, m0, 11
+    movu           [r0 + r1], m2
+    palignr        m2, m1, m0, 10
+    movu           [r0 + r1 * 2], m2
+    palignr        m2, m1, m0, 9
+    movu           [r0 + r3], m2
+
+    lea            r0, [r0 + r1 * 4]
+    palignr        m2, m1, m0, 8
+    movu           [r0], m2
+    palignr        m2, m1, m0, 7
+    movu           [r0 + r1], m2
+    palignr        m2, m1, m0,6
+    movu           [r0 + r1 * 2], m2
+    palignr        m2, m1, m0, 5
+    movu           [r0 + r3], m2
+
+    lea            r0, [r0 + r1 * 4]
+    palignr        m2, m1, m0, 4
+    movu           [r0], m2
+    palignr        m2, m1, m0, 3
+    movu           [r0 + r1], m2
+    palignr        m2, m1, m0,2
+    movu           [r0 + r1 * 2], m2
+    palignr        m2, m1, m0, 1
+    movu           [r0 + r3], m2
     RET
 
 INIT_XMM sse4
