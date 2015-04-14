@@ -981,10 +981,20 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
         dstCoeff[blkPos] = (int16_t)((level ^ mask) - mask);
     }
 
-    // TODO: use fast block fill, it is slower in less coeff transform block
+    // Average 49.62 pixels
     /* clean uncoded coefficients */
-    for (int pos = bestLastIdx; pos <= lastScanPos; pos++)
+    for (int pos = bestLastIdx; pos <= fastMin(lastScanPos, (bestLastIdx | (SCAN_SET_SIZE - 1))); pos++)
+    {
         dstCoeff[codeParams.scan[pos]] = 0;
+    }
+    for (int pos = (bestLastIdx & ~(SCAN_SET_SIZE - 1)) + SCAN_SET_SIZE; pos <= lastScanPos; pos += SCAN_SET_SIZE)
+    {
+        const uint32_t blkPos = codeParams.scan[pos];
+        memset(&dstCoeff[blkPos + 0 * trSize], 0, 4 * sizeof(*dstCoeff));
+        memset(&dstCoeff[blkPos + 1 * trSize], 0, 4 * sizeof(*dstCoeff));
+        memset(&dstCoeff[blkPos + 2 * trSize], 0, 4 * sizeof(*dstCoeff));
+        memset(&dstCoeff[blkPos + 3 * trSize], 0, 4 * sizeof(*dstCoeff));
+    }
 
     /* rate-distortion based sign-hiding */
     if (cu.m_slice->m_pps->bSignHideEnabled && numSig >= 2)
