@@ -51,6 +51,8 @@ protected:
     int8_t   psbuf3[BUFFSIZE];
     int8_t   psbuf4[BUFFSIZE];
     int8_t   psbuf5[BUFFSIZE];
+    int8_t   psbuf6[BUFFSIZE];
+    int8_t   psbuf7[BUFFSIZE];
 
     int16_t  sbuf1[BUFFSIZE];
     int16_t  sbuf2[BUFFSIZE];
@@ -98,6 +100,7 @@ protected:
     bool check_saoCuOrgE1_t(saoCuOrgE1_t ref, saoCuOrgE1_t opt);
     bool check_saoCuOrgE2_t(saoCuOrgE2_t ref, saoCuOrgE2_t opt);
     bool check_saoCuOrgE3_t(saoCuOrgE3_t ref, saoCuOrgE3_t opt);
+    bool check_saoCuOrgE3_2Rows_t(saoCuOrgE3_2Rows_t ref, saoCuOrgE3_2Rows_t opt);
     bool check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt);
     bool check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt);
     bool check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt);
