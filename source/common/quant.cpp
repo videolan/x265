@@ -981,6 +981,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
         dstCoeff[blkPos] = (int16_t)((level ^ mask) - mask);
     }
 
+    // TODO: use fast block fill, it is slower in less coeff transform block
     /* clean uncoded coefficients */
     for (int pos = bestLastIdx; pos <= lastScanPos; pos++)
         dstCoeff[codeParams.scan[pos]] = 0;
@@ -988,8 +989,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     /* rate-distortion based sign-hiding */
     if (cu.m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
+        const int realLastScanPos = (bestLastIdx - 1) >> LOG2_SCAN_SET_SIZE;
         int lastCG = true;
-        for (int subSet = cgLastScanPos; subSet >= 0; subSet--)
+        for (int subSet = realLastScanPos; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
             int n;
