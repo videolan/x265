@@ -5565,3 +5565,56 @@ P2S_H_4xN 4
 P2S_H_4xN 8
 P2S_H_4xN 16
 P2S_H_4xN 32
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_8xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_8x%1, 3, 7, 2
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m1, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    psllw      m0, 4
+    psubw      m0, m1
+    movu       [r2 + r3 * 0], m0
+
+    movu       m0, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m1
+    movu       [r2 + r3 * 1], m0
+
+    movu       m0, [r0 + r1 * 2]
+    psllw      m0, 4
+    psubw      m0, m1
+    movu       [r2 + r3 * 2], m0
+
+    movu       m0, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m1
+    movu       [r2 + r4], m0
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_8xN 8
+P2S_H_8xN 4
+P2S_H_8xN 16
+P2S_H_8xN 32
+P2S_H_8xN 12
+P2S_H_8xN 64
