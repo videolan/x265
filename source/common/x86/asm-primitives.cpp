@@ -971,6 +971,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.pu[LUMA_64x32].convert_p2s = x265_filterPixelToShort_64x32_ssse3;
         p.pu[LUMA_64x48].convert_p2s = x265_filterPixelToShort_64x48_ssse3;
         p.pu[LUMA_64x64].convert_p2s = x265_filterPixelToShort_64x64_ssse3;
+        p.pu[LUMA_24x32].convert_p2s = x265_filterPixelToShort_24x32_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
