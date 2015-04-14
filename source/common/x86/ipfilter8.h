@@ -296,6 +296,12 @@ void x265_filterPixelToShort_8x4_ssse3(const pixel* src, intptr_t srcStride, int
 void x265_filterPixelToShort_8x8_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 void x265_filterPixelToShort_8x16_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 void x265_filterPixelToShort_8x32_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x4_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x8_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x12_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x16_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x32_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x64_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 
 CHROMA_420_VERT_FILTERS(_sse2);
 CHROMA_420_HORIZ_FILTERS(_sse4);
