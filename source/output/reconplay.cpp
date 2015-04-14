@@ -39,17 +39,21 @@ using namespace x265;
 
 bool ReconPlay::pipeValid;
 
+#ifndef _WIN32
 static void sigpipe_handler(int)
 {
     if (ReconPlay::pipeValid)
         general_log(NULL, "exec", X265_LOG_ERROR, "pipe closed\n");
     ReconPlay::pipeValid = false;
 }
+#endif
 
 ReconPlay::ReconPlay(const char* commandLine, x265_param& param)
 {
+#ifndef _WIN32
     if (signal(SIGPIPE, sigpipe_handler) == SIG_ERR)
         general_log(&param, "exec", X265_LOG_ERROR, "Unable to register SIGPIPE handler: %s\n", strerror(errno));
+#endif
 
     width = param.sourceWidth;
     height = param.sourceHeight;
