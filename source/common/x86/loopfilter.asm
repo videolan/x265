@@ -456,19 +456,20 @@ cglobal saoCuOrgE2, 5, 7, 8, rec, bufft, buff1, offsetEo, lcuWidth
 ;void saoCuOrgE3(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intptr_t stride, int startX, int endX)
 ;=======================================================================================================
 INIT_XMM sse4
-cglobal saoCuOrgE3, 3, 7, 8
+cglobal saoCuOrgE3, 3,6,8
     mov             r3d, r3m
     mov             r4d, r4m
     mov             r5d, r5m
 
-    mov             r6d, r5d
-    sub             r6d, r4d
+    ; save latest 2 pixels for case startX=1 or left_endX=15
+    movh            m7, [r0 + r5]
+    movhps          m7, [r1 + r5 - 1]
 
+    ; move to startX+1
     inc             r4d
     add             r0, r4
     add             r1, r4
-    movh            m7, [r0 + r6 - 1]
-    mov             r6, [r1 + r6 - 2]
+    sub             r5d, r4d
     pxor            m0, m0                      ; m0 = 0
     movu            m6, [pb_2]                  ; m6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 
@@ -508,30 +509,15 @@ cglobal saoCuOrgE3, 3, 7, 8
     packuswb        m2, m1
     movu            [r0], m2
 
-    sub             r5d, 16
-    jle             .end
+    add             r0, 16
+    add             r1, 16
 
-    lea             r0, [r0 + 16]
-    lea             r1, [r1 + 16]
+    sub             r5, 16
+    jg             .loop
 
-    jnz             .loop
-
-.end:
-    js              .skip
-    sub             r0, r4
-    sub             r1, r4
-    movh            [r0 + 16], m7
-    mov             [r1 + 15], r6
-    jmp             .quit
-
-.skip:
-    sub             r0, r4
-    sub             r1, r4
-    movh            [r0 + 15], m7
-    mov             [r1 + 14], r6
-
-.quit:
-
+    ; restore last pixels (up to 2)
+    movh            [r0 + r5], m7
+    movhps          [r1 + r5 - 1], m7
     RET
 
 ;=====================================================================================
