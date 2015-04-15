@@ -315,9 +315,18 @@ void x265_filterPixelToShort_24x32_ssse3(const pixel* src, intptr_t srcStride, i
 void x265_filterPixelToShort_12x16_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 void x265_filterPixelToShort_48x64_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 
+#define SETUP_CHROMA_P2S_FUNC_DEF(W, H, cpu) \
+    void x265_filterPixelToShort_ ## W ## x ## H ## cpu(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+
+#define CHROMA_420_P2S_FILTERS_SSSE3(cpu) \
+    SETUP_CHROMA_P2S_FUNC_DEF(4, 2, cpu); \
+    SETUP_CHROMA_P2S_FUNC_DEF(8, 2, cpu); \
+    SETUP_CHROMA_P2S_FUNC_DEF(8, 6, cpu);
+
 CHROMA_420_VERT_FILTERS(_sse2);
 CHROMA_420_HORIZ_FILTERS(_sse4);
 CHROMA_420_VERT_FILTERS_SSE4(_sse4);
+CHROMA_420_P2S_FILTERS_SSSE3(_ssse3);
 
 CHROMA_422_VERT_FILTERS(_sse2);
 CHROMA_422_HORIZ_FILTERS(_sse4);
