@@ -13,8 +13,8 @@ ducks_take_off_420_720p50.yuv,--preset slow --bitrate 1600 --vbv-bufsize 1600 --
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset veryslow --bitrate 4000 --vbv-bufsize 3000 --vbv-maxrate 4000 --tune grain
 fire_1920x1080_30.yuv,--preset medium --bitrate 1000 --vbv-maxrate 1500 --vbv-bufsize 1500 --aud --pmode --tune ssim
 112_1920x1080_25.yuv,--preset ultrafast --bitrate 10000 --vbv-maxrate 10000 --vbv-bufsize 15000 --hrd --strict-cbr
-Traffic_4096x2048_30p.yuv,--preset superfast --bitrate 20000 --vbv-maxrate 20000 --vbv-bufsize 20000 --repeat-headers --strict-cbr
-Traffic_4096x2048_30p.yuv,--preset faster --bitrate 8000 --vbv-maxrate 8000 --vbv-bufsize 6000 --aud --repeat-headers --no-open-gop --hrd --pmode --pme
+Traffic_4096x2048_30.yuv,--preset superfast --bitrate 20000 --vbv-maxrate 20000 --vbv-bufsize 20000 --repeat-headers --strict-cbr
+Traffic_4096x2048_30.yuv,--preset faster --bitrate 8000 --vbv-maxrate 8000 --vbv-bufsize 6000 --aud --repeat-headers --no-open-gop --hrd --pmode --pme
 News-4k.y4m,--preset veryfast --bitrate 3000 --vbv-maxrate 5000 --vbv-bufsize 5000 --repeat-headers --temporal-layers
 NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset medium --bitrate 18000 --vbv-bufsize 20000 --vbv-maxrate 18000 --strict-cbr
 NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset medium --bitrate 8000 --vbv-bufsize 12000 --vbv-maxrate 10000  --tune grain
