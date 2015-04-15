@@ -21903,3 +21903,90 @@ cglobal interp_4tap_horiz_pp_24x64, 4,6,7
     jnz               .loop
     RET
 
+
+INIT_YMM avx2
+cglobal interp_4tap_horiz_pp_2x16, 4, 6, 6
+    mov               r4d,           r4m
+
+%ifdef PIC
+    lea               r5,            [tab_ChromaCoeff]
+    vpbroadcastd      m0,            [r5 + r4 * 4]
+%else
+    vpbroadcastd      m0,            [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    mova              m4,            [interp4_hpp_shuf]
+    mova              m5,            [pw_1]
+    dec               r0
+    lea               r4,            [r1 * 3]
+    movq              xm1,           [r0]
+    movhps            xm1,           [r0 + r1]
+    movq              xm2,           [r0 + r1 * 2]
+    movhps            xm2,           [r0 + r4]
+    vinserti128       m1,            m1,          xm2,          1
+    lea               r0,            [r0 + r1 * 4]
+    movq              xm3,           [r0]
+    movhps            xm3,           [r0 + r1]
+    movq              xm2,           [r0 + r1 * 2]
+    movhps            xm2,           [r0 + r4]
+    vinserti128       m3,            m3,          xm2,          1
+
+    pshufb            m1,            m4
+    pshufb            m3,            m4
+    pmaddubsw         m1,            m0
+    pmaddubsw         m3,            m0
+    pmaddwd           m1,            m5
+    pmaddwd           m3,            m5
+    packssdw          m1,            m3
+    pmulhrsw          m1,            [pw_512]
+    vextracti128      xm2,           m1,          1
+    packuswb          xm1,           xm2
+
+    lea               r4,            [r3 * 3]
+    pextrw            [r2],          xm1,         0
+    pextrw            [r2 + r3],     xm1,         1
+    pextrw            [r2 + r3 * 2], xm1,         4
+    pextrw            [r2 + r4],     xm1,         5
+    lea               r2,            [r2 + r3 * 4]
+    pextrw            [r2],          xm1,         2
+    pextrw            [r2 + r3],     xm1,         3
+    pextrw            [r2 + r3 * 2], xm1,         6
+    pextrw            [r2 + r4],     xm1,         7
+    lea               r2,            [r2 + r3 * 4]
+    lea               r0,            [r0 + r1 * 4]
+
+    lea               r4,            [r1 * 3]
+    movq              xm1,           [r0]
+    movhps            xm1,           [r0 + r1]
+    movq              xm2,           [r0 + r1 * 2]
+    movhps            xm2,           [r0 + r4]
+    vinserti128       m1,            m1,          xm2,          1
+    lea               r0,            [r0 + r1 * 4]
+    movq              xm3,           [r0]
+    movhps            xm3,           [r0 + r1]
+    movq              xm2,           [r0 + r1 * 2]
+    movhps            xm2,           [r0 + r4]
+    vinserti128       m3,            m3,          xm2,          1
+
+    pshufb            m1,            m4
+    pshufb            m3,            m4
+    pmaddubsw         m1,            m0
+    pmaddubsw         m3,            m0
+    pmaddwd           m1,            m5
+    pmaddwd           m3,            m5
+    packssdw          m1,            m3
+    pmulhrsw          m1,            [pw_512]
+    vextracti128      xm2,           m1,          1
+    packuswb          xm1,           xm2
+
+    lea               r4,            [r3 * 3]
+    pextrw            [r2],          xm1,         0
+    pextrw            [r2 + r3],     xm1,         1
+    pextrw            [r2 + r3 * 2], xm1,         4
+    pextrw            [r2 + r4],     xm1,         5
+    lea               r2,            [r2 + r3 * 4]
+    pextrw            [r2],          xm1,         2
+    pextrw            [r2 + r3],     xm1,         3
+    pextrw            [r2 + r3 * 2], xm1,         6
+    pextrw            [r2 + r4],     xm1,         7
+    RET
