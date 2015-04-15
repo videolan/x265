@@ -2126,6 +2126,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = x265_filterPixelToShort_32x48_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = x265_filterPixelToShort_32x64_avx2;
 
+        //i422 for chroma_hpp
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_12x32].filter_hpp = x265_interp_4tap_horiz_pp_12x32_avx2;
+
         if ((cpuMask & X265_CPU_BMI1) && (cpuMask & X265_CPU_BMI2))
             p.findPosLast = x265_findPosLast_x64;
     }
