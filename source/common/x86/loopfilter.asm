@@ -520,6 +520,68 @@ cglobal saoCuOrgE3, 3,6,8
     movhps          [r1 + r5 - 1], m7
     RET
 
+INIT_YMM avx2
+cglobal saoCuOrgE3, 3, 6, 8
+    mov             r3d,  r3m
+    mov             r4d,  r4m
+    mov             r5d,  r5m
+
+    ; save latest 2 pixels for case startX=1 or left_endX=15
+    movq            xm7,  [r0 + r5]
+    movhps          xm7,  [r1 + r5 - 1]
+
+    ; move to startX+1
+    inc             r4d
+    add             r0,   r4
+    add             r1,   r4
+    sub             r5d,  r4d
+    pxor            xm0,  xm0                     ; xm0 = 0
+    mova            xm6,  [pb_2]                  ; xm6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    movu            xm5,  [r2]                    ; xm5 = m_iOffsetEo
+
+.loop:
+    movu            xm1,  [r0]                    ; xm1 = pRec[x]
+    movu            xm2,  [r0 + r3]               ; xm2 = pRec[x + iStride]
+
+    psubusb         xm3,  xm2,  xm1
+    psubusb         xm4,  xm1,  xm2
+    pcmpeqb         xm3,  xm0
+    pcmpeqb         xm4,  xm0
+    pcmpeqb         xm2,  xm1
+
+    pabsb           xm3,  xm3
+    por             xm4,  xm3
+    pandn           xm2,  xm4                     ; xm2 = iSignDown
+
+    movu            xm3,  [r1]                    ; xm3 = m_iUpBuff1
+
+    paddb           xm3,  xm2
+    paddb           xm3,  xm6                     ; xm3 = uiEdgeType
+
+    pshufb          xm4,  xm5,  xm3
+
+    psubb           xm3,  xm0,  xm2
+    movu            [r1 - 1],   xm3
+
+    pmovzxbw        m2,   xm1
+    pmovsxbw        m3,   xm4
+
+    paddw           m2,   m3
+    vextracti128    xm3,  m2,   1
+    packuswb        xm2,  xm3
+    movu            [r0], xm2
+
+    add             r0,   16
+    add             r1,   16
+
+    sub             r5,   16
+    jg             .loop
+
+    ; restore last pixels (up to 2)
+    movq            [r0 + r5],     xm7
+    movhps          [r1 + r5 - 1], xm7
+    RET
+
 ;=====================================================================================
 ; void saoCuOrgB0(pixel* rec, const pixel* offset, int lcuWidth, int lcuHeight, int stride)
 ;=====================================================================================
