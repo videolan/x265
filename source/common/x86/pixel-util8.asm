@@ -4514,12 +4514,13 @@ PIXELSUB_PS_W16_H4 16, 32
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_16x16(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
+%macro PIXELSUB_PS_W16_H8_avx2 2
 %if ARCH_X86_64
 INIT_YMM avx2
-cglobal pixel_sub_ps_16x16, 6, 10, 4, dest, deststride, src0, src1, srcstride0, srcstride1
+cglobal pixel_sub_ps_16x%2, 6, 10, 4, dest, deststride, src0, src1, srcstride0, srcstride1
     add         r1,     r1
     lea         r6,     [r1 * 3]
-    mov         r7d,    2
+    mov         r7d,    %2/8
 
     lea         r9,     [r4 * 3]
     lea         r8,     [r5 * 3]
@@ -4581,6 +4582,10 @@ cglobal pixel_sub_ps_16x16, 6, 10, 4, dest, deststride, src0, src1, srcstride0, 
     jnz         .loop
     RET
 %endif
+%endmacro
+
+PIXELSUB_PS_W16_H8_avx2 16, 16
+PIXELSUB_PS_W16_H8_avx2 16, 32
 
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_32x%2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
@@ -4719,10 +4724,11 @@ PIXELSUB_PS_W32_H2 32, 64
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_32x32(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
 ;-----------------------------------------------------------------------------
+%macro PIXELSUB_PS_W32_H8_avx2 2
 %if ARCH_X86_64
 INIT_YMM avx2
-cglobal pixel_sub_ps_32x32, 6, 10, 4, dest, deststride, src0, src1, srcstride0, srcstride1
-    mov        r6d,    4
+cglobal pixel_sub_ps_32x%2, 6, 10, 4, dest, deststride, src0, src1, srcstride0, srcstride1
+    mov        r6d,    %2/8
     add        r1,     r1
     lea         r7,         [r4 * 3]
     lea         r8,         [r5 * 3]
@@ -4830,6 +4836,10 @@ cglobal pixel_sub_ps_32x32, 6, 10, 4, dest, deststride, src0, src1, srcstride0, 
     jnz         .loop
     RET
 %endif
+%endmacro
+
+PIXELSUB_PS_W32_H8_avx2 32, 32
+PIXELSUB_PS_W32_H8_avx2 32, 64
 
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_64x%2(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
