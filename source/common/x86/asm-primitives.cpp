@@ -1018,7 +1018,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
         ALL_LUMA_CU(psy_cost_ss, psyCost_ss, sse4);
 
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_2x4].p2s = x265_filterPixelToShort_2x4_sse4;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_2x8].p2s = x265_filterPixelToShort_2x8_sse4;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_6x8].p2s = x265_filterPixelToShort_6x8_sse4;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_2x16].p2s = x265_filterPixelToShort_2x16_sse4;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_6x16].p2s = x265_filterPixelToShort_6x16_sse4;
     }
     if (cpuMask & X265_CPU_AVX)

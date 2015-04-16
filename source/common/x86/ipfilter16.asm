@@ -5529,6 +5529,47 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-gprsize
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
 ;-----------------------------------------------------------------------------
+%macro P2S_H_2xN 1
+INIT_XMM sse4
+cglobal filterPixelToShort_2x%1, 3, 6, 2
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r1 * 3]
+    lea        r5, [r3 * 3]
+
+    ; load constant
+    mova       m1, [pw_2000]
+
+%rep %1/4
+    movd       m0, [r0]
+    movhps     m0, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m1
+
+    movd       [r2 + r3 * 0], m0
+    pextrd     [r2 + r3 * 1], m0, 2
+
+    movd       m0, [r0 + r1 * 2]
+    movhps     m0, [r0 + r4]
+    psllw      m0, 4
+    psubw      m0, m1
+
+    movd       [r2 + r3 * 2], m0
+    pextrd     [r2 + r5], m0, 2
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+%endrep
+    RET
+%endmacro
+P2S_H_2xN 4
+P2S_H_2xN 8
+P2S_H_2xN 16
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
 %macro P2S_H_4xN 1
 INIT_XMM ssse3
 cglobal filterPixelToShort_4x%1, 3, 6, 2
