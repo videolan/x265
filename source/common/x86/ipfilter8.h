@@ -314,6 +314,12 @@ void x265_filterPixelToShort_64x64_ssse3(const pixel* src, intptr_t srcStride, i
 void x265_filterPixelToShort_24x32_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 void x265_filterPixelToShort_12x16_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 void x265_filterPixelToShort_48x64_ssse3(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x4_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x8_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x12_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x16_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x32_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x64_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 
 #define SETUP_CHROMA_P2S_FUNC_DEF(W, H, cpu) \
     void x265_filterPixelToShort_ ## W ## x ## H ## cpu(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);

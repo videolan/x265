@@ -1223,6 +1223,13 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         ALL_LUMA_PU(luma_vps, interp_8tap_vert_ps, avx2);
         ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, avx2);
         ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, avx2);
+
+        p.pu[LUMA_16x4].convert_p2s = x265_filterPixelToShort_16x4_avx2;
+        p.pu[LUMA_16x8].convert_p2s = x265_filterPixelToShort_16x8_avx2;
+        p.pu[LUMA_16x12].convert_p2s = x265_filterPixelToShort_16x12_avx2;
+        p.pu[LUMA_16x16].convert_p2s = x265_filterPixelToShort_16x16_avx2;
+        p.pu[LUMA_16x32].convert_p2s = x265_filterPixelToShort_16x32_avx2;
+        p.pu[LUMA_16x64].convert_p2s = x265_filterPixelToShort_16x64_avx2;
     }
 }
 #else // if HIGH_BIT_DEPTH
