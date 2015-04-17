@@ -497,6 +497,33 @@ FILTER_H4_w4_2_sse2
 
 RET
 
+;-----------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_4x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+INIT_XMM sse3
+cglobal interp_4tap_horiz_pp_4x8, 4, 6, 8, src, srcstride, dst, dststride
+mov         r4d,        r4m
+mova        m7,         [pw_32]
+
+%ifdef PIC
+lea         r5,         [tabw_ChromaCoeff]
+movddup     m4,         [r5 + r4 * 8]
+%else
+movddup     m4,         [tabw_ChromaCoeff + r4 * 8]
+%endif
+
+%assign x 1
+%rep 4
+FILTER_H4_w4_2_sse2
+%if x < 4
+lea         srcq,       [srcq + srcstrideq * 2]
+lea         dstq,       [dstq + dststrideq * 2]
+%endif
+%assign x x+1
+%endrep
+
+RET
+
 %macro FILTER_H4_w2_2 3
     movh        %2, [srcq - 1]
     pshufb      %2, %2, Tm0
