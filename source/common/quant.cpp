@@ -546,7 +546,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 #define UNQUANT(lvl)    (((lvl) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift)
 #define SIGCOST(bits)   ((lambda2 * (bits)) >> 8)
 #define RDCOST(d, bits) ((((int64_t)d * d) << scaleBits) + SIGCOST(bits))
-#define PSYVALUE(rec)   ((psyScale * (rec)) >> (16 - scaleBits))
+#define PSYVALUE(rec)   ((psyScale * (rec)) >> (2 * transformShift + 1))
 
     int64_t costCoeff[32 * 32];   /* d*d + lambda * bits */
     int64_t costUncoded[32 * 32]; /* d*d + lambda * 0    */
@@ -603,29 +603,59 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     memset(&costSig[(cgLastScanPos + 1) << MLS_CG_SIZE], 0, zeroCG * MLS_CG_BLK_SIZE * sizeof(int64_t));
 
     /* sum zero coeff (uncodec) cost */
-    for (int cgScanPos = cgNum - 1; cgScanPos > cgLastScanPos; cgScanPos--)
+
+    // TODO: does we need these cost?
+    if (usePsyMask)
     {
-        X265_CHECK(coeffNum[cgScanPos] == 0, "count of coeff failure\n");
-
-        // TODO: does we need these cost?
-        for (int scanPosinCG = 0; scanPosinCG < SCAN_SET_SIZE; scanPosinCG++)
+        for (int cgScanPos = cgLastScanPos + 1; cgScanPos < (int)cgNum ; cgScanPos++)
         {
-            scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
-            uint32_t blkPos      = codeParams.scan[scanPos];
+            X265_CHECK(coeffNum[cgScanPos] == 0, "count of coeff failure\n");
 
-            int signCoef         = m_resiDctCoeff[blkPos];            /* pre-quantization DCT coeff */
+            uint32_t scanPosBase = (cgScanPos << MLS_CG_SIZE);
+            uint32_t blkPos      = codeParams.scan[scanPosBase];
 
-            costUncoded[blkPos] = ((int64_t)signCoef * signCoef) << scaleBits;
-            X265_CHECK((!!scanPos ^ !!blkPos) == 0, "failed on (blkPos=0 && scanPos!=0)\n");
-            if (usePsyMask & scanPos)
+            // TODO: we can't SIMD optimize because PSYVALUE need 64-bits multiplication, convert to Double can work faster by FMA
+            for (int y = 0; y < MLS_CG_SIZE; y++)
             {
-                int predictedCoef    = m_fencDctCoeff[blkPos] - signCoef; /* predicted DCT = source DCT - residual DCT*/
-                /* when no residual coefficient is coded, predicted coef == recon coef */
-                costUncoded[blkPos] -= PSYVALUE(predictedCoef);
-            }
+                for (int x = 0; x < MLS_CG_SIZE; x++)
+                {
+                    int signCoef         = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+                    int predictedCoef    = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
 
-            totalUncodedCost += costUncoded[blkPos];
-            totalRdCost += costUncoded[blkPos];
+                    costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
+
+                    /* when no residual coefficient is coded, predicted coef == recon coef */
+                    costUncoded[blkPos + x] -= PSYVALUE(predictedCoef);
+
+                    totalUncodedCost += costUncoded[blkPos + x];
+                    totalRdCost += costUncoded[blkPos + x];
+                }
+                blkPos += trSize;
+            }
+        }
+    }
+    else
+    {
+        // non-psy path
+        for (int cgScanPos = cgLastScanPos + 1; cgScanPos < (int)cgNum ; cgScanPos++)
+        {
+            X265_CHECK(coeffNum[cgScanPos] == 0, "count of coeff failure\n");
+
+            uint32_t scanPosBase = (cgScanPos << MLS_CG_SIZE);
+            uint32_t blkPos      = codeParams.scan[scanPosBase];
+
+            for (int y = 0; y < MLS_CG_SIZE; y++)
+            {
+                for (int x = 0; x < MLS_CG_SIZE; x++)
+                {
+                    int signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+                    costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
+
+                    totalUncodedCost += costUncoded[blkPos + x];
+                    totalRdCost += costUncoded[blkPos + x];
+                }
+                blkPos += trSize;
+            }
         }
     }
 
@@ -660,7 +690,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
                 /* cost of not coding this coefficient (all distortion, no signal bits) */
                 costUncoded[blkPos] = ((int64_t)signCoef * signCoef) << scaleBits;
-                if (usePsyMask & scanPos)
+
+                X265_CHECK(scanPos > 0, "scanPos failure\n");
+                if (usePsyMask)
                     /* when no residual coefficient is coded, predicted coef == recon coef */
                     costUncoded[blkPos] -= PSYVALUE(predictedCoef);
 
