@@ -348,8 +348,8 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     param->totalFrames = this->framesToBeEncoded;
 
     /* Force CFR until we have support for VFR */
-    info.timebaseNum = info.fpsDenom;
-    info.timebaseDenom = info.fpsNum;
+    info.timebaseNum = param->fpsDenom;
+    info.timebaseDenom = param->fpsNum;
 
     if (x265_param_apply_profile(param, profile))
         return true;
