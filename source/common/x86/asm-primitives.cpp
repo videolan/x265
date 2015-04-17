@@ -1396,6 +1396,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
     if (cpuMask & X265_CPU_SSE3)
     {
         p.chroma[X265_CSP_I420].pu[CHROMA_420_2x4].filter_hpp = x265_interp_4tap_horiz_pp_2x4_sse3;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_2x8].filter_hpp = x265_interp_4tap_horiz_pp_2x8_sse3;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_2x8].filter_hpp = x265_interp_4tap_horiz_pp_2x8_sse3;
     }
     if (cpuMask & X265_CPU_SSSE3)
     {

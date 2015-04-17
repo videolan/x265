@@ -807,6 +807,7 @@ void x265_filterPixelToShort_64x64_avx2(const pixel* src, intptr_t srcStride, in
 void x265_filterPixelToShort_48x64_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 void x265_filterPixelToShort_24x32_avx2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 void x265_interp_4tap_horiz_pp_2x4_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_2x8_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 #undef LUMA_FILTERS
 #undef LUMA_SP_FILTERS
 #undef LUMA_SS_FILTERS
