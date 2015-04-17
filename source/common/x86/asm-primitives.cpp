@@ -2266,6 +2266,34 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         
         p.chroma[X265_CSP_I422].pu[CHROMA_422_2x8].filter_hpp = x265_interp_4tap_horiz_pp_2x8_avx2;
 
+        //i444 filters hpp
+
+        p.chroma[X265_CSP_I444].pu[LUMA_4x4].filter_hpp = x265_interp_4tap_horiz_pp_4x4_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_8x8].filter_hpp = x265_interp_4tap_horiz_pp_8x8_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_16x16].filter_hpp = x265_interp_4tap_horiz_pp_16x16_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_32x32].filter_hpp = x265_interp_4tap_horiz_pp_32x32_avx2;
+
+        p.chroma[X265_CSP_I444].pu[LUMA_4x8].filter_hpp = x265_interp_4tap_horiz_pp_4x8_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_4x16].filter_hpp = x265_interp_4tap_horiz_pp_4x16_avx2;
+
+        p.chroma[X265_CSP_I444].pu[LUMA_8x4].filter_hpp = x265_interp_4tap_horiz_pp_8x4_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_8x16].filter_hpp = x265_interp_4tap_horiz_pp_8x16_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_8x32].filter_hpp = x265_interp_4tap_horiz_pp_8x32_avx2;
+
+        p.chroma[X265_CSP_I444].pu[LUMA_16x8].filter_hpp = x265_interp_4tap_horiz_pp_16x8_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_16x32].filter_hpp = x265_interp_4tap_horiz_pp_16x32_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_16x12].filter_hpp = x265_interp_4tap_horiz_pp_16x12_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_16x4].filter_hpp = x265_interp_4tap_horiz_pp_16x4_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_16x64].filter_hpp = x265_interp_4tap_horiz_pp_16x64_avx2;
+
+        p.chroma[X265_CSP_I444].pu[LUMA_12x16].filter_hpp = x265_interp_4tap_horiz_pp_12x16_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_24x32].filter_hpp = x265_interp_4tap_horiz_pp_24x32_avx2;
+
+        p.chroma[X265_CSP_I444].pu[LUMA_32x16].filter_hpp = x265_interp_4tap_horiz_pp_32x16_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_32x64].filter_hpp = x265_interp_4tap_horiz_pp_32x64_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_32x24].filter_hpp = x265_interp_4tap_horiz_pp_32x24_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_32x8].filter_hpp = x265_interp_4tap_horiz_pp_32x8_avx2;
+
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_hpp = x265_interp_4tap_horiz_pp_64x64_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_64x32].filter_hpp = x265_interp_4tap_horiz_pp_64x32_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_hpp = x265_interp_4tap_horiz_pp_64x48_avx2;
