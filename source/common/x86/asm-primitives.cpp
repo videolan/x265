@@ -1393,6 +1393,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         p.planecopy_sp = x265_downShift_16_sse2;
     }
+    if (cpuMask & X265_CPU_SSE3)
+    {
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_2x4].filter_hpp = x265_interp_4tap_horiz_pp_2x4_sse3;
+    }
     if (cpuMask & X265_CPU_SSSE3)
     {
         p.pu[LUMA_8x16].sad_x3 = x265_pixel_sad_x3_8x16_ssse3;

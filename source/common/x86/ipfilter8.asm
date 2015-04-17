@@ -71,6 +71,16 @@ tab_ChromaCoeff: db  0, 64,  0,  0
                  db -4, 28, 46, -6
                  db -2, 16, 54, -4
                  db -2, 10, 58, -2
+
+tabw_ChromaCoeff: dw  0, 64,  0,  0
+                  dw -2, 58, 10, -2
+                  dw -4, 54, 16, -2
+                  dw -6, 46, 28, -4
+                  dw -4, 36, 36, -4
+                  dw -4, 28, 46, -6
+                  dw -2, 16, 54, -4
+                  dw -2, 10, 58, -2
+
 ALIGN 32
 tab_ChromaCoeff_V: times 8 db 0, 64
                    times 8 db 0,  0
@@ -298,8 +308,58 @@ SECTION .text
 
 cextern pb_128
 cextern pw_1
+cextern pw_32
 cextern pw_512
 cextern pw_2000
+
+%macro FILTER_H4_w2_2_sse2 0
+    pxor        m3, m3
+    movd        m0, [srcq - 1]
+    movd        m2, [srcq]
+    punpckldq   m0, m2
+    punpcklbw   m0, m3
+    movd        m1, [srcq + srcstrideq - 1]
+    movd        m2, [srcq + srcstrideq]
+    punpckldq   m1, m2
+    punpcklbw   m1, m3
+    pmaddwd     m0, m4
+    pmaddwd     m1, m4
+    packssdw    m0, m1
+    pshuflw     m1, m0, q2301
+    pshufhw     m1, m1, q2301
+    paddw       m0, m1
+    psrld       m0, 16
+    packssdw    m0, m0
+    paddw       m0, m5
+    psraw       m0, 6
+    packuswb    m0, m0
+    movd        r4, m0
+    mov         [dstq], r4w
+    shr         r4, 16
+    mov         [dstq + dststrideq], r4w
+%endmacro
+
+;-----------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+INIT_XMM sse3
+cglobal interp_4tap_horiz_pp_2x4, 4, 6, 6, src, srcstride, dst, dststride
+mov         r4d,        r4m
+mova        m5,         [pw_32]
+
+%ifdef PIC
+lea         r5,          [tabw_ChromaCoeff]
+movddup     m4,         [r5 + r4 * 8]
+%else
+movddup     m4,         [tabw_ChromaCoeff + r4 * 8]
+%endif
+
+FILTER_H4_w2_2_sse2
+lea         srcq,       [srcq + srcstrideq * 2]
+lea         dstq,       [dstq + dststrideq * 2]
+FILTER_H4_w2_2_sse2
+
+RET
 
 %macro FILTER_H4_w2_2 3
     movh        %2, [srcq - 1]
