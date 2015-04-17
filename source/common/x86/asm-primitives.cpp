@@ -2329,6 +2329,31 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I444].pu[LUMA_64x16].filter_hps = x265_interp_4tap_horiz_ps_64x16_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_hps = x265_interp_4tap_horiz_ps_64x64_avx2;
 
+        p.chroma[X265_CSP_I444].pu[LUMA_4x4].filter_hps = x265_interp_4tap_horiz_ps_4x4_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_8x8].filter_hps = x265_interp_4tap_horiz_ps_8x8_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_16x16].filter_hps = x265_interp_4tap_horiz_ps_16x16_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_32x32].filter_hps = x265_interp_4tap_horiz_ps_32x32_avx2;
+
+        p.chroma[X265_CSP_I444].pu[LUMA_4x8].filter_hps = x265_interp_4tap_horiz_ps_4x8_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_4x16].filter_hps = x265_interp_4tap_horiz_ps_4x16_avx2;
+
+        p.chroma[X265_CSP_I444].pu[LUMA_8x4].filter_hps = x265_interp_4tap_horiz_ps_8x4_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_8x16].filter_hps = x265_interp_4tap_horiz_ps_8x16_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_8x32].filter_hps = x265_interp_4tap_horiz_ps_8x32_avx2;
+
+        p.chroma[X265_CSP_I444].pu[LUMA_16x8].filter_hps = x265_interp_4tap_horiz_ps_16x8_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_16x32].filter_hps = x265_interp_4tap_horiz_ps_16x32_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_16x12].filter_hps = x265_interp_4tap_horiz_ps_16x12_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_16x4].filter_hps = x265_interp_4tap_horiz_ps_16x4_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_16x64].filter_hps = x265_interp_4tap_horiz_ps_16x64_avx2;
+
+        p.chroma[X265_CSP_I444].pu[LUMA_24x32].filter_hps = x265_interp_4tap_horiz_ps_24x32_avx2;
+
+        p.chroma[X265_CSP_I444].pu[LUMA_32x16].filter_hps = x265_interp_4tap_horiz_ps_32x16_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_32x64].filter_hps = x265_interp_4tap_horiz_ps_32x64_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_32x24].filter_hps = x265_interp_4tap_horiz_ps_32x24_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_32x8].filter_hps = x265_interp_4tap_horiz_ps_32x8_avx2;
+
         if ((cpuMask & X265_CPU_BMI1) && (cpuMask & X265_CPU_BMI2))
             p.findPosLast = x265_findPosLast_x64;
     }
