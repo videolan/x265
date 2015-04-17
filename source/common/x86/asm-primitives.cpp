@@ -1239,6 +1239,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.pu[LUMA_64x32].convert_p2s = x265_filterPixelToShort_64x32_avx2;
         p.pu[LUMA_64x48].convert_p2s = x265_filterPixelToShort_64x48_avx2;
         p.pu[LUMA_64x64].convert_p2s = x265_filterPixelToShort_64x64_avx2;
+        p.pu[LUMA_24x32].convert_p2s = x265_filterPixelToShort_24x32_avx2;
+        p.pu[LUMA_48x64].convert_p2s = x265_filterPixelToShort_48x64_avx2;
     }
 }
 #else // if HIGH_BIT_DEPTH

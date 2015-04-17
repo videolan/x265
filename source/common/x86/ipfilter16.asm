@@ -6479,6 +6479,71 @@ P2S_H_24xN 64
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
 ;-----------------------------------------------------------------------------
+%macro P2S_H_24xN_avx2 1
+INIT_YMM avx2
+cglobal filterPixelToShort_24x%1, 3, 7, 3
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m2, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 0 + 32], xm1
+
+    movu       m0, [r0 + r1]
+    movu       m1, [r0 + r1 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+    movu       [r2 + r3 * 1], m0
+    movu       [r2 + r3 * 1 + 32], xm1
+
+    movu       m0, [r0 + r1 * 2]
+    movu       m1, [r0 + r1 * 2 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+    movu       [r2 + r3 * 2], m0
+    movu       [r2 + r3 * 2 + 32], xm1
+
+    movu       m0, [r0 + r5]
+    movu       m1, [r0 + r5 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+    movu       [r2 + r4], m0
+    movu       [r2 + r4 + 32], xm1
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_24xN_avx2 32
+P2S_H_24xN_avx2 64
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
 %macro P2S_H_12xN 1
 INIT_XMM ssse3
 cglobal filterPixelToShort_12x%1, 3, 7, 3
@@ -6666,6 +6731,83 @@ cglobal filterPixelToShort_48x64, 3, 7, 5
     movu       [r2 + r3 * 1 + 80], m1
     movu       [r2 + r3 * 2 + 80], m2
     movu       [r2 + r4 + 80], m3
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal filterPixelToShort_48x64, 3, 7, 4
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, 16
+
+    ; load constant
+    mova       m3, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + 32]
+    movu       m2, [r0 + 64]
+    psllw      m0, 4
+    psubw      m0, m3
+    psllw      m1, 4
+    psubw      m1, m3
+    psllw      m2, 4
+    psubw      m2, m3
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 0 + 32], m1
+    movu       [r2 + r3 * 0 + 64], m2
+
+    movu       m0, [r0 + r1]
+    movu       m1, [r0 + r1 + 32]
+    movu       m2, [r0 + r1 + 64]
+    psllw      m0, 4
+    psubw      m0, m3
+    psllw      m1, 4
+    psubw      m1, m3
+    psllw      m2, 4
+    psubw      m2, m3
+    movu       [r2 + r3 * 1], m0
+    movu       [r2 + r3 * 1 + 32], m1
+    movu       [r2 + r3 * 1 + 64], m2
+
+    movu       m0, [r0 + r1 * 2]
+    movu       m1, [r0 + r1 * 2 + 32]
+    movu       m2, [r0 + r1 * 2 + 64]
+    psllw      m0, 4
+    psubw      m0, m3
+    psllw      m1, 4
+    psubw      m1, m3
+    psllw      m2, 4
+    psubw      m2, m3
+    movu       [r2 + r3 * 2], m0
+    movu       [r2 + r3 * 2 + 32], m1
+    movu       [r2 + r3 * 2 + 64], m2
+
+    movu       m0, [r0 + r5]
+    movu       m1, [r0 + r5 + 32]
+    movu       m2, [r0 + r5 + 64]
+    psllw      m0, 4
+    psubw      m0, m3
+    psllw      m1, 4
+    psubw      m1, m3
+    psllw      m2, 4
+    psubw      m2, m3
+    movu       [r2 + r4], m0
+    movu       [r2 + r4 + 32], m1
+    movu       [r2 + r4 + 64], m2
 
     lea        r0, [r0 + r1 * 4]
     lea        r2, [r2 + r3 * 4]
