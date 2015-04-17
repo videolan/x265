@@ -593,7 +593,6 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     EstBitsSbac& estBitsSbac = m_entropyCoder->m_estBitsSbac;
 
     uint32_t scanPos;
-    coeffGroupRDStats cgRdStats;
     uint32_t c1 = 1;
 
     // process trail all zero Coeff Group
@@ -638,13 +637,52 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
         const uint32_t cgPosY   = cgBlkPos >> codeParams.log2TrSizeCG;
         const uint32_t cgPosX   = cgBlkPos - (cgPosY << codeParams.log2TrSizeCG);
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
-        memset(&cgRdStats, 0, sizeof(coeffGroupRDStats));
-
         const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
 
         if (c1 == 0)
             ctxSet++;
         c1 = 1;
+
+        if (cgScanPos && (coeffNum[cgScanPos] == 0))
+        {
+            // TODO: does we need zero-coeff cost?
+            for (int scanPosinCG = 0; scanPosinCG < SCAN_SET_SIZE; scanPosinCG++)
+            {
+                scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
+                uint32_t blkPos      = codeParams.scan[scanPos];
+
+                // TODO: get 16 of ctxSig
+                const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codeParams.firstSignificanceMapContext);
+
+                /* set default costs to uncoded costs */
+                int signCoef         = m_resiDctCoeff[blkPos];            /* pre-quantization DCT coeff */
+                int predictedCoef    = m_fencDctCoeff[blkPos] - signCoef; /* predicted DCT = source DCT - residual DCT*/
+
+                /* cost of not coding this coefficient (all distortion, no signal bits) */
+                costUncoded[blkPos] = ((int64_t)signCoef * signCoef) << scaleBits;
+                if (usePsyMask & scanPos)
+                    /* when no residual coefficient is coded, predicted coef == recon coef */
+                    costUncoded[blkPos] -= PSYVALUE(predictedCoef);
+
+                totalUncodedCost += costUncoded[blkPos];
+
+                costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
+                costCoeff[scanPos] = costUncoded[blkPos];
+                sigRateDelta[blkPos] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
+                totalRdCost += costCoeff[scanPos];
+            }
+
+            /* there were no coded coefficients in this coefficient group */
+            {
+                uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
+                costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[ctxSig][0]);
+                totalRdCost += costCoeffGroupSig[cgScanPos];  /* add cost of 0 bit in significant CG bitmap */
+            }
+            continue;
+        }
+
+        coeffGroupRDStats cgRdStats;
+        memset(&cgRdStats, 0, sizeof(coeffGroupRDStats));
 
         int    c2            = 0;
         uint32_t goRiceParam = 0;
