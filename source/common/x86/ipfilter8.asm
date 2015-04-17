@@ -415,6 +415,66 @@ lea         dstq,       [dstq + dststrideq * 2]
 
 RET
 
+%macro FILTER_H4_w4_2_sse2 0
+    pxor        m5, m5
+    movd        m0, [srcq - 1]
+    movd        m6, [srcq]
+    punpckldq   m0, m6
+    punpcklbw   m0, m5
+    movd        m1, [srcq + 1]
+    movd        m6, [srcq + 2]
+    punpckldq   m1, m6
+    punpcklbw   m1, m5
+    movd        m2, [srcq + srcstrideq - 1]
+    movd        m6, [srcq + srcstrideq]
+    punpckldq   m2, m6
+    punpcklbw   m2, m5
+    movd        m3, [srcq + srcstrideq + 1]
+    movd        m6, [srcq + srcstrideq + 2]
+    punpckldq   m3, m6
+    punpcklbw   m3, m5
+    pmaddwd     m0, m4
+    pmaddwd     m1, m4
+    pmaddwd     m2, m4
+    pmaddwd     m3, m4
+    packssdw    m0, m1
+    packssdw    m2, m3
+    pshuflw     m1, m0, q2301
+    pshufhw     m1, m1, q2301
+    pshuflw     m3, m2, q2301
+    pshufhw     m3, m3, q2301
+    paddw       m0, m1
+    paddw       m2, m3
+    psrld       m0, 16
+    psrld       m2, 16
+    packssdw    m0, m2
+    paddw       m0, m7
+    psraw       m0, 6
+    packuswb    m0, m2
+    movd        [dstq], m0
+    psrldq      m0, 4
+    movd        [dstq + dststrideq], m0
+%endmacro
+
+;-----------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_4x2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+INIT_XMM sse3
+cglobal interp_4tap_horiz_pp_4x2, 4, 6, 8, src, srcstride, dst, dststride
+mov         r4d,        r4m
+mova        m7,         [pw_32]
+
+%ifdef PIC
+lea         r5,         [tabw_ChromaCoeff]
+movddup     m4,         [r5 + r4 * 8]
+%else
+movddup     m4,         [tabw_ChromaCoeff + r4 * 8]
+%endif
+
+FILTER_H4_w4_2_sse2
+
+RET
+
 %macro FILTER_H4_w2_2 3
     movh        %2, [srcq - 1]
     pshufb      %2, %2, Tm0
