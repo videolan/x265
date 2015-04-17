@@ -812,6 +812,7 @@ void x265_interp_4tap_horiz_pp_2x16_sse3(const pixel *src, intptr_t srcStride, p
 void x265_interp_4tap_horiz_pp_4x2_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 void x265_interp_4tap_horiz_pp_4x4_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 void x265_interp_4tap_horiz_pp_4x8_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_4x16_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 #undef LUMA_FILTERS
 #undef LUMA_SP_FILTERS
 #undef LUMA_SS_FILTERS
