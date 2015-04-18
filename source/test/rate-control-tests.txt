@@ -9,7 +9,7 @@ fire_1920x1080_30.yuv, --preset slow --bitrate 2000 --tune zero-latency
 # VBV tests, non-deterministic so testing for correctness and bitrate
 # fluctuations - up to 1% bitrate fluctuation is allowed between runs
 night_cars_1920x1080_30.yuv,--preset medium --crf 25 --vbv-bufsize 5000 --vbv-maxrate 5000 -F6 --crf-max 34 --crf-min 22
-ducks_take_off_420_720p50.y4m,--preset slow --bitrate 1600 --vbv-bufsize 1600 --vbv-maxrate 1600 --strict-cbr -aq 2 --aq-strength 0.5
+ducks_take_off_420_720p50.y4m,--preset slow --bitrate 1600 --vbv-bufsize 1600 --vbv-maxrate 1600 --strict-cbr --aq-mode 2 --aq-strength 0.5
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset veryslow --bitrate 4000 --vbv-bufsize 3000 --vbv-maxrate 4000 --tune grain
 fire_1920x1080_30.yuv,--preset medium --bitrate 1000 --vbv-maxrate 1500 --vbv-bufsize 1500 --aud --pmode --tune ssim
 112_1920x1080_25.yuv,--preset ultrafast --bitrate 10000 --vbv-maxrate 10000 --vbv-bufsize 15000 --hrd --strict-cbr
