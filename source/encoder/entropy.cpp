@@ -585,7 +585,7 @@ void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPart
         if (ctu.isSkipped(absPartIdx))
         {
             codeMergeIndex(ctu, absPartIdx);
-            finishCU(ctu, absPartIdx, depth);
+            finishCU(ctu, absPartIdx, depth, bEncodeDQP);
             return;
         }
         codePredMode(ctu.m_predMode[absPartIdx]);
@@ -606,7 +606,7 @@ void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPart
     codeCoeff(ctu, absPartIdx, bEncodeDQP, tuDepthRange);
 
     // --- write terminating bit ---
-    finishCU(ctu, absPartIdx, depth);
+    finishCU(ctu, absPartIdx, depth, bEncodeDQP);
 }
 
 /* Return bit count of signaling inter mode */
@@ -658,7 +658,7 @@ uint32_t Entropy::bitsInterMode(const CUData& cu, uint32_t absPartIdx, uint32_t 
 }
 
 /* finish encoding a cu and handle end-of-slice conditions */
-void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth)
+void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth, bool bCodeDQP)
 {
     const Slice* slice = ctu.m_slice;
     uint32_t realEndAddress = slice->m_endCUAddr;
@@ -671,6 +671,9 @@ void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth)
     uint32_t bpely = ctu.m_cuPelY + g_zscanToPelY[absPartIdx] + cuSize;
     bool granularityBoundary = (((rpelx & granularityMask) == 0 || (rpelx == slice->m_sps->picWidthInLumaSamples )) &&
                                 ((bpely & granularityMask) == 0 || (bpely == slice->m_sps->picHeightInLumaSamples)));
+
+    if (slice->m_pps->bUseDQP)
+        const_cast<CUData&>(ctu).setQPSubParts(bCodeDQP ? ctu.getRefQP(absPartIdx) : ctu.m_qp[absPartIdx], absPartIdx, depth);
 
     if (granularityBoundary)
     {

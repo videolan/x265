@@ -221,7 +221,7 @@ private:
     }
 
     void encodeCU(const CUData& ctu, const CUGeom &cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP);
-    void finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth);
+    void finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth, bool bEncodeDQP);
 
     void writeOut();
 
