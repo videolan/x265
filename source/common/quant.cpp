@@ -942,9 +942,10 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
             }
 
             cgRdStats.sigCost += costSig[scanPos];
-            if (!scanPosinCG)
-                cgRdStats.sigCost0 = costSig[scanPos];
         } /* end for (scanPosinCG) */
+
+        X265_CHECK((cgScanPos << MLS_CG_SIZE) == (int)scanPos, "scanPos mistake\n");
+        cgRdStats.sigCost0 = costSig[scanPos];
 
         costCoeffGroupSig[cgScanPos] = 0;
 
