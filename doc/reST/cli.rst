@@ -159,6 +159,13 @@ Performance Options
 	handled implicitly.
 
 	One may also directly supply the CPU capability bitmap as an integer.
+	
+	Note that by specifying this option you are overriding x265's CPU
+	detection and it is possible to do this wrong. You can cause encoder
+	crashes by specifying SIMD architectures which are not supported on
+	your CPU.
+
+	Default: auto-detected SIMD architectures
 
 .. option:: --frame-threads, -F <integer>
 
