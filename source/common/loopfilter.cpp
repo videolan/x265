@@ -122,25 +122,21 @@ void processSaoCUE3(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, intptr_t stri
     }
 }
 
-void processSaoCUE3_2Rows(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, intptr_t stride, int startX, int endX, int8_t* signDown)
+void processSaoCUE3_2Rows(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, intptr_t stride, int startX, int endX, int8_t* upBuff)
 {
-    int8_t signDown1;
+    int8_t signDown;
     int8_t edgeType;
 
     for (int y = 0; y < 2; y++)
     {
-        edgeType = signDown[y] + upBuff1[startX] + 2;
-        upBuff1[startX - 1] = -signDown[y];
-        rec[startX] = x265_clip(rec[startX] + offsetEo[edgeType]);
-
         for (int x = startX + 1; x < endX; x++)
         {
-            signDown1 = signOf(rec[x] - rec[x + stride]);
-            edgeType = signDown1 + upBuff1[x] + 2;
-            upBuff1[x - 1] = -signDown1;
+            signDown = signOf(rec[x] - rec[x + stride]);
+            edgeType = signDown + upBuff1[x] + 2;
+            upBuff1[x - 1] = -signDown;
             rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
         }
-        upBuff1[endX - 1] = signOf(rec[endX - 1 + stride + 1] - rec[endX]);
+        upBuff1[endX - 1] = upBuff[y];
         rec += stride + 1;
     }
 }

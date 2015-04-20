@@ -1507,6 +1507,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.saoCuOrgE1_2Rows = x265_saoCuOrgE1_2Rows_sse4;
         p.saoCuOrgE2 = x265_saoCuOrgE2_sse4;
         p.saoCuOrgE3 = x265_saoCuOrgE3_sse4;
+        p.saoCuOrgE3_2Rows = x265_saoCuOrgE3_2Rows_sse4;
         p.saoCuOrgB0 = x265_saoCuOrgB0_sse4;
 
         LUMA_ADDAVG(sse4);

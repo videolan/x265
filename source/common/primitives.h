@@ -172,7 +172,7 @@ typedef void (*saoCuOrgE0_t)(pixel* rec, int8_t* offsetEo, int width, int8_t* si
 typedef void (*saoCuOrgE1_t)(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width);
 typedef void (*saoCuOrgE2_t)(pixel* rec, int8_t* pBufft, int8_t* pBuff1, int8_t* offsetEo, int lcuWidth, intptr_t stride);
 typedef void (*saoCuOrgE3_t)(pixel* rec, int8_t* upBuff1, int8_t* m_offsetEo, intptr_t stride, int startX, int endX);
-typedef void (*saoCuOrgE3_2Rows_t)(pixel* rec, int8_t* upBuff1, int8_t* m_offsetEo, intptr_t stride, int startX, int endX, int8_t* signDown);
+typedef void (*saoCuOrgE3_2Rows_t)(pixel* rec, int8_t* upBuff1, int8_t* m_offsetEo, intptr_t stride, int startX, int endX, int8_t* upBuff);
 typedef void (*saoCuOrgB0_t)(pixel* rec, const int8_t* offsetBo, int ctuWidth, int ctuHeight, intptr_t stride);
 typedef void (*sign_t)(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
