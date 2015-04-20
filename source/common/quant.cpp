@@ -530,6 +530,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     X265_CHECK((int)numSig == primitives.cu[log2TrSize - 2].count_nonzero(dstCoeff), "numSig differ\n");
     if (!numSig)
         return 0;
+
     uint32_t trSize = 1 << log2TrSize;
     int64_t lambda2 = m_qpParam[ttype].lambda2;
     int64_t psyScale = (m_psyRdoqScale * m_qpParam[ttype].lambda);
@@ -558,8 +559,6 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     int64_t costCoeffGroupSig[MLS_GRP_NUM]; /* lambda * bits of group coding cost */
     uint64_t sigCoeffGroupFlag64 = 0;
 
-    int cgLastScanPos    = -1;
-    int lastScanPos      = -1;
     const uint32_t cgSize = (1 << MLS_CG_SIZE); /* 4x4 num coef = 16 */
     bool bIsLuma = ttype == TEXT_LUMA;
 
@@ -576,6 +575,20 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     const uint32_t cgNum = 1 << (codeParams.log2TrSizeCG * 2);
     const uint32_t cgStride = (trSize >> MLS_CG_LOG2_SIZE);
 
+    uint8_t coeffNum[MLS_GRP_NUM];      // value range[0, 16]
+    uint16_t coeffSign[MLS_GRP_NUM];    // bit mask map for non-zero coeff sign
+    uint16_t coeffFlag[MLS_GRP_NUM];    // bit mask map for non-zero coeff
+
+#if CHECKED_BUILD || _DEBUG
+    // clean output buffer, the asm version of findPosLast Never output anything after latest non-zero coeff group
+    memset(coeffNum, 0, sizeof(coeffNum));
+    memset(coeffSign, 0, sizeof(coeffNum));
+    memset(coeffFlag, 0, sizeof(coeffNum));
+#endif
+    const int lastScanPos = primitives.findPosLast(codeParams.scan, dstCoeff, coeffSign, coeffFlag, coeffNum, numSig);
+    const int cgLastScanPos = (lastScanPos >> LOG2_SCAN_SET_SIZE);
+
+
     /* TODO: update bit estimates if dirty */
     EstBitsSbac& estBitsSbac = m_entropyCoder->m_estBitsSbac;
 
@@ -583,8 +596,42 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     coeffGroupRDStats cgRdStats;
     uint32_t c1 = 1;
 
+    // process trail all zero Coeff Group
+
+    /* coefficients after lastNZ have no distortion signal cost */
+    const int zeroCG = cgNum - 1 - cgLastScanPos;
+    memset(&costCoeff[(cgLastScanPos + 1) << MLS_CG_SIZE], 0, zeroCG * MLS_CG_BLK_SIZE * sizeof(int64_t));
+    memset(&costSig[(cgLastScanPos + 1) << MLS_CG_SIZE], 0, zeroCG * MLS_CG_BLK_SIZE * sizeof(int64_t));
+
+    /* sum zero coeff (uncodec) cost */
+    for (int cgScanPos = cgNum - 1; cgScanPos > cgLastScanPos; cgScanPos--)
+    {
+        X265_CHECK(coeffNum[cgScanPos] == 0, "count of coeff failure\n");
+
+        // TODO: does we need these cost?
+        for (int scanPosinCG = 0; scanPosinCG < SCAN_SET_SIZE; scanPosinCG++)
+        {
+            scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
+            uint32_t blkPos      = codeParams.scan[scanPos];
+
+            int signCoef         = m_resiDctCoeff[blkPos];            /* pre-quantization DCT coeff */
+
+            costUncoded[blkPos] = ((int64_t)signCoef * signCoef) << scaleBits;
+            X265_CHECK((!!scanPos ^ !!blkPos) == 0, "failed on (blkPos=0 && scanPos!=0)\n");
+            if (usePsyMask & scanPos)
+            {
+                int predictedCoef    = m_fencDctCoeff[blkPos] - signCoef; /* predicted DCT = source DCT - residual DCT*/
+                /* when no residual coefficient is coded, predicted coef == recon coef */
+                costUncoded[blkPos] -= PSYVALUE(predictedCoef);
+            }
+
+            totalUncodedCost += costUncoded[blkPos];
+            totalRdCost += costUncoded[blkPos];
+        }
+    }
+
     /* iterate over coding groups in reverse scan order */
-    for (int cgScanPos = cgNum - 1; cgScanPos >= 0; cgScanPos--)
+    for (int cgScanPos = cgLastScanPos; cgScanPos >= 0; cgScanPos--)
     {
         uint32_t ctxSet = (cgScanPos && bIsLuma) ? 2 : 0;
         const uint32_t cgBlkPos = codeParams.scanCG[cgScanPos];
@@ -625,15 +672,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
             totalUncodedCost += costUncoded[blkPos];
 
-            if (maxAbsLevel && lastScanPos < 0)
-            {
-                /* remember the first non-zero coef found in this reverse scan as the last pos */
-                lastScanPos   = scanPos;
-                ctxSet        = (scanPos < SCAN_SET_SIZE || !bIsLuma) ? 0 : 2;
-                cgLastScanPos = cgScanPos;
-            }
-
-            if (lastScanPos < 0)
+            // before find lastest non-zero coeff
+            if (scanPos > (uint32_t)lastScanPos)
             {
                 /* coefficients after lastNZ have no distortion signal cost */
                 costCoeff[scanPos] = 0;
@@ -821,11 +861,10 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
         costCoeffGroupSig[cgScanPos] = 0;
 
-        if (cgLastScanPos < 0)
-        {
-            /* nothing to do at this point */
-        }
-        else if (!cgScanPos || cgScanPos == cgLastScanPos)
+        /* nothing to do at this case */
+        X265_CHECK(cgLastScanPos >= 0, "cgLastScanPos check failure\n");
+
+        if (!cgScanPos || cgScanPos == cgLastScanPos)
         {
             /* coeff group 0 is implied to be present, no signal cost */
             /* coeff group with last NZ is implied to be present, handled below */
