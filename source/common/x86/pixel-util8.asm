@@ -5659,3 +5659,41 @@ cglobal findPosLast_x64, 5,12
     lea         eax, [r11d - 1]
     RET
 %endif
+
+
+;-----------------------------------------------------------------------------
+; uint32_t[last first] findPosFirstAndLast(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16])
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal findPosFirstLast, 3,3,3
+    ; convert stride to int16_t
+    add         r1d, r1d
+
+    ; loading scan table and convert to Byte
+    mova        m0, [r2]
+    packuswb    m0, [r2 + mmsize]
+
+    ; loading 16 of coeff
+    movh        m1, [r0]
+    movhps      m1, [r0 + r1]
+    movh        m2, [r0 + r1 * 2]
+    lea         r1, [r1 * 3]
+    movhps      m2, [r0 + r1]
+    packsswb    m1, m2
+
+    ; get non-zero mask
+    pxor        m2, m2
+    pcmpeqb     m1, m2
+
+    ; reorder by Zigzag scan
+    pshufb      m1, m0
+
+    ; get First and Last pos
+    xor         eax, eax
+    pmovmskb    r0d, m1
+    not         r0w
+    bsr         r1w, r0w
+    bsf          ax, r0w
+    shl         r1d, 16
+    or          eax, r1d
+    RET

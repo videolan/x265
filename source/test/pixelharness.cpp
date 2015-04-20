@@ -1266,6 +1266,53 @@ bool PixelHarness::check_findPosLast(findPosLast_t ref, findPosLast_t opt)
     return true;
 }
 
+bool PixelHarness::check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLast_t opt)
+{
+    ALIGN_VAR_16(coeff_t, ref_src[32 * 32 + ITERS * 2]);
+
+    for (int i = 0; i < 32 * 32; i++)
+    {
+        ref_src[i] = rand() & SHORT_MAX;
+    }
+
+    // extra test area all of 0x1234
+    for (int i = 0; i < ITERS * 2; i++)
+    {
+        ref_src[32 * 32 + i] = 0x1234;
+    }
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int rand_scan_type = rand() % NUM_SCAN_TYPE;
+        int rand_scan_size = (rand() % NUM_SCAN_SIZE) + 2;
+        coeff_t *rand_src = ref_src + i;
+
+        const uint16_t* const scanTbl = g_scan4x4[rand_scan_type];
+
+        int j;
+        for (j = 0; j < SCAN_SET_SIZE; j++)
+        {
+            const uint32_t idxY = j / MLS_CG_SIZE;
+            const uint32_t idxX = j % MLS_CG_SIZE;
+            if (rand_src[idxY * rand_scan_size + idxX]) break;
+        }
+
+        // fill one coeff when all coeff group are zero
+        if (j >= SCAN_SET_SIZE)
+            rand_src[0] = 0x0BAD;
+
+        uint32_t ref_scanPos = ref(rand_src, (1 << rand_scan_size), scanTbl);
+        uint32_t opt_scanPos = (int)checked(opt, rand_src, (1 << rand_scan_size), scanTbl);
+
+        if (ref_scanPos != opt_scanPos)
+            return false;
+
+        reportfail();
+    }
+
+    return true;
+}
+
 bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.pu[part].satd)
@@ -1804,6 +1851,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.findPosFirstLast)
+    {
+        if (!check_findPosFirstLast(ref.findPosFirstLast, opt.findPosFirstLast))
+        {
+            printf("findPosFirstLast failed!\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -2179,5 +2235,18 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         memset(coefBuf, 0, sizeof(coefBuf));
         memset(coefBuf + 32 * 31, 1, 32 * sizeof(coeff_t));
         REPORT_SPEEDUP(opt.findPosLast, ref.findPosLast, g_scanOrder[SCAN_DIAG][NUM_SCAN_SIZE - 1], coefBuf, (uint16_t*)sbuf1, (uint16_t*)sbuf2, (uint8_t*)psbuf1, 32);
+    }
+
+    if (opt.findPosFirstLast)
+    {
+        HEADER0("findPosFirstLast");
+        coeff_t coefBuf[32 * MLS_CG_SIZE];
+        memset(coefBuf, 0, sizeof(coefBuf));
+        // every CG can't be all zeros!
+        coefBuf[3 + 0 * 32] = 0x0BAD;
+        coefBuf[3 + 1 * 32] = 0x0BAD;
+        coefBuf[3 + 2 * 32] = 0x0BAD;
+        coefBuf[3 + 3 * 32] = 0x0BAD;
+        REPORT_SPEEDUP(opt.findPosFirstLast, ref.findPosFirstLast, coefBuf, 32, g_scan4x4[SCAN_DIAG]);
     }
 }

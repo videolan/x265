@@ -1138,19 +1138,10 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
             /* measure distance between first and last non-zero coef in this
              * coding group */
-            for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
-                if (dstCoeff[codeParams.scan[n + subPos]])
-                    break;
+            const uint32_t posFirstLast = primitives.findPosFirstLast(&dstCoeff[codeParams.scan[subPos]], trSize, g_scan4x4[codeParams.scanType]);
+            int firstNZPosInCG = (uint16_t)posFirstLast;
+            int lastNZPosInCG = posFirstLast >> 16;
 
-            X265_CHECK(n >= 0, "non-zero coeff scan failuare!\n");
-
-            int lastNZPosInCG = n;
-
-            for (n = 0;; n++)
-                if (dstCoeff[codeParams.scan[n + subPos]])
-                    break;
-
-            int firstNZPosInCG = n;
 
             if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
             {

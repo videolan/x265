@@ -785,6 +785,37 @@ int findPosLast_c(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSig
     return scanPosLast - 1;
 }
 
+uint32_t findPosFirstLast_c(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16])
+{
+    int n;
+
+    for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
+    {
+        const uint32_t idx = scanTbl[n];
+        const uint32_t idxY = idx / MLS_CG_SIZE;
+        const uint32_t idxX = idx % MLS_CG_SIZE;
+        if (dstCoeff[idxY * trSize + idxX])
+            break;
+    }
+
+    X265_CHECK(n >= 0, "non-zero coeff scan failuare!\n");
+
+    uint32_t lastNZPosInCG = (uint32_t)n;
+
+    for (n = 0;; n++)
+    {
+        const uint32_t idx = scanTbl[n];
+        const uint32_t idxY = idx / MLS_CG_SIZE;
+        const uint32_t idxX = idx % MLS_CG_SIZE;
+        if (dstCoeff[idxY * trSize + idxX])
+            break;
+    }
+
+    uint32_t firstNZPosInCG = (uint32_t)n;
+
+    return ((lastNZPosInCG << 16) | firstNZPosInCG);
+}
+
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -818,5 +849,6 @@ void setupDCTPrimitives_c(EncoderPrimitives& p)
     p.cu[BLOCK_32x32].copy_cnt = copy_count<32>;
 
     p.findPosLast = findPosLast_c;
+    p.findPosFirstLast = findPosFirstLast_c;
 }
 }

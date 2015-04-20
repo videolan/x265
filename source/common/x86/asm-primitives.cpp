@@ -1015,6 +1015,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x2].p2s = x265_filterPixelToShort_4x2_ssse3;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_8x2].p2s = x265_filterPixelToShort_8x2_ssse3;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_8x6].p2s = x265_filterPixelToShort_8x6_ssse3;
+        p.findPosFirstLast = x265_findPosFirstLast_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
@@ -1498,6 +1499,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].p2s = x265_filterPixelToShort_32x32_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = x265_filterPixelToShort_32x48_ssse3;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = x265_filterPixelToShort_32x64_ssse3;
+        p.findPosFirstLast = x265_findPosFirstLast_ssse3;
     }
     if (cpuMask & X265_CPU_SSE4)
     {
