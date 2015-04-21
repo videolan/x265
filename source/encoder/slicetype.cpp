@@ -44,23 +44,6 @@ using namespace x265;
 
 namespace {
 
-inline int16_t median(int16_t a, int16_t b, int16_t c)
-{
-    int16_t t = (a - b) & ((a - b) >> 31);
-
-    a -= t;
-    b += t;
-    b -= (b - c) & ((b - c) >> 31);
-    b += (a - b) & ((a - b) >> 31);
-    return b;
-}
-
-inline void median_mv(MV &dst, MV a, MV b, MV c)
-{
-    dst.x = median(a.x, b.x, c.x);
-    dst.y = median(a.y, b.y, c.y);
-}
-
 /* Compute variance to derive AC energy of each block */
 inline uint32_t acEnergyVar(Frame *curFrame, uint64_t sum_ssd, int shift, int plane)
 {
@@ -2029,12 +2012,10 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
         int numc = 0;
         MV mvc[4], mvp;
-
         MV* fencMV = &fenc->lowresMvs[i][listDist[i]][cuXY];
+        ReferencePlanes* fref = i ? fref1 : wfref0;
 
         /* Reverse-order MV prediction */
-        mvc[0] = 0;
-        mvc[2] = 0;
 #define MVC(mv) mvc[numc++] = mv;
         if (cuX < widthInCU - 1)
             MVC(fencMV[1]);
@@ -2047,12 +2028,29 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
                 MVC(fencMV[widthInCU + 1]);
         }
 #undef MVC
-        if (numc <= 1)
-            mvp = mvc[0];
-        else
-            median_mv(mvp, mvc[0], mvc[1], mvc[2]);
 
-        fencCost = tld.me.motionEstimate(i ? fref1 : wfref0, mvmin, mvmax, mvp, numc, mvc, s_merange, *fencMV);
+        if (!numc)
+            mvp = 0;
+        else
+        {
+            ALIGN_VAR_32(pixel, subpelbuf[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
+            int mvpcost = MotionEstimate::COST_MAX;
+
+            /* measure SATD cost of each neighbor MV (estimating merge analysis)
+             * and use the lowest cost MV as MVP (estimating AMVP). Since all
+             * mvc[] candidates are measured here, none are passed to motionEstimate */
+            for (int idx = 0; idx < numc; idx++)
+            {
+                intptr_t stride = X265_LOWRES_CU_SIZE;
+                pixel *src = fref->lowresMC(pelOffset, mvc[idx], subpelbuf, stride);
+                int cost = tld.me.bufSATD(src, stride);
+                COPY2_IF_LT(mvpcost, cost, mvp, mvc[idx]);
+            }
+        }
+
+        /* ME will never return a cost larger than the cost @MVP, so we do not
+         * have to check that ME cost is more than the estimated merge cost */
+        fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV);
         COPY2_IF_LT(bcost, fencCost, listused, i + 1);
     }
 
