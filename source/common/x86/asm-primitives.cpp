@@ -800,6 +800,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
 #error "Unsupported build configuration (32bit x86 and HIGH_BIT_DEPTH), you must configure ENABLE_ASSEMBLY=OFF"
 #endif
 
+#if X86_64
+    p.findPosLast = x265_findPosLast_x64;
+#endif
+
     if (cpuMask & X265_CPU_SSE2)
     {
         /* We do not differentiate CPUs which support MMX and not SSE2. We only check
@@ -1263,12 +1267,19 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].p2s = x265_filterPixelToShort_32x32_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = x265_filterPixelToShort_32x48_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = x265_filterPixelToShort_32x64_avx2;
+
+        if ((cpuMask & X265_CPU_BMI1) && (cpuMask & X265_CPU_BMI2))
+            p.findPosLast = x265_findPosLast_x64_bmi2;
     }
 }
 #else // if HIGH_BIT_DEPTH
 
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 {
+#if X86_64
+    p.findPosLast = x265_findPosLast_x64;
+#endif
+
     if (cpuMask & X265_CPU_SSE2)
     {
         /* We do not differentiate CPUs which support MMX and not SSE2. We only check
@@ -2376,7 +2387,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I444].pu[LUMA_32x8].filter_hps = x265_interp_4tap_horiz_ps_32x8_avx2;
 
         if ((cpuMask & X265_CPU_BMI1) && (cpuMask & X265_CPU_BMI2))
-            p.findPosLast = x265_findPosLast_x64;
+            p.findPosLast = x265_findPosLast_x64_bmi2;
     }
 #endif
 }

@@ -5613,7 +5613,7 @@ cglobal pixel_var_16x16, 2,4,7
 ;}
 
 %if ARCH_X86_64 == 1
-INIT_CPUFLAGS
+INIT_CPUFLAGS bmi2
 cglobal findPosLast_x64, 5,12
     mov         r5d, r5m
     xor         r11d, r11d                  ; cgIdx
@@ -5658,6 +5658,64 @@ cglobal findPosLast_x64, 5,12
     sub         r11d, r6d
     lea         eax, [r11d - 1]
     RET
+
+
+; t3 must be ecx, since it's used for shift.
+%if WIN64
+    DECLARE_REG_TMP 3,1,2,0
+%elif ARCH_X86_64
+    DECLARE_REG_TMP 0,1,2,3
+%else ; X86_32
+    %error Unsupport platform X86_32
+%endif
+INIT_CPUFLAGS
+cglobal findPosLast_x64, 5,12
+    mov         r10, r3mp
+    movifnidn   t0, r0mp
+    mov         r5d, r5m
+    xor         r11d, r11d                  ; cgIdx
+    xor         r7d, r7d                    ; tmp for non-zero flag
+
+.loop:
+    xor         r8d, r8d                    ; coeffSign[]
+    xor         r9d, r9d                    ; coeffFlag[]
+    xor         t3d, t3d                    ; coeffNum[]
+
+%assign x 0
+%rep 16
+    movzx       r6d, word [t0 + x * 2]
+    movsx       r6d, word [t1 + r6 * 2]
+    test        r6d, r6d
+    setnz       r7b
+    shr         r6d, 31
+    shl         r6d, t3b
+    or          r8d, r6d
+    lea         r9, [r9 * 2 + r7]
+    add         t3d, r7d
+%assign x x+1
+%endrep
+
+    ; store latest group data
+    mov         [t2 + r11 * 2], r8w
+    mov         [r10 + r11 * 2], r9w
+    mov         [r4 + r11], t3b
+    inc         r11d
+
+    add         t0, 16 * 2
+    sub         r5d, t3d
+    jnz        .loop
+
+    ; store group data
+    bsf         t3d, r9d
+    shr         r9d, t3b
+    mov         [r10 + (r11 - 1) * 2], r9w
+
+    ; get posLast
+    shl         r11d, 4
+    sub         r11d, r6d
+    lea         eax, [r11d - 1]
+    RET
+IACA_END
 %endif
 
 
