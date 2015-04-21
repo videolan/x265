@@ -1387,6 +1387,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             q += m_pbOffset;
 
         double qScale = x265_qp2qScale(q);
+        rce->qpNoVbv = q;
         double lmin = 0, lmax = 0;
         if (m_isVbv)
         {
@@ -1399,7 +1400,6 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                     qScale = x265_clip3(lmin, lmax, qScale);
                 q = x265_qScale2qp(qScale);
             }
-            rce->qpNoVbv = q;
             if (!m_2pass)
             {
                 qScale = clipQscale(curFrame, rce, qScale);
@@ -1850,18 +1850,26 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
         if (satdCostForPendingCus  > 0)
         {
             double pred_s = predictSize(rce->rowPred[0], qScale, satdCostForPendingCus);
-            uint32_t refRowSatdCost = 0, refRowBits = 0, intraCost = 0;
+            uint32_t refRowSatdCost = 0, refRowBits = 0, intraCostForPendingCus = 0;
             double refQScale = 0;
 
             if (picType != I_SLICE)
             {
                 FrameData& refEncData = *refFrame->m_encData;
                 uint32_t endCuAddr = maxCols * (row + 1);
-                for (uint32_t cuAddr = curEncData.m_rowStat[row].numEncodedCUs + 1; cuAddr < endCuAddr; cuAddr++)
+                uint32_t startCuAddr = curEncData.m_rowStat[row].numEncodedCUs;
+                if (startCuAddr)
                 {
-                    refRowSatdCost += refEncData.m_cuStat[cuAddr].vbvCost;
-                    refRowBits += refEncData.m_cuStat[cuAddr].totalBits;
-                    intraCost += curEncData.m_cuStat[cuAddr].intraVbvCost;
+                    for (uint32_t cuAddr = startCuAddr + 1 ; cuAddr < endCuAddr; cuAddr++)
+                    {
+                        refRowSatdCost += refEncData.m_cuStat[cuAddr].vbvCost;
+                        refRowBits += refEncData.m_cuStat[cuAddr].totalBits;
+                    }
+                }
+                else
+                {
+                    refRowBits = refEncData.m_rowStat[row].encodedBits;
+                    refRowSatdCost = refEncData.m_rowStat[row].satdForVbv;
                 }
 
                 refRowSatdCost >>= X265_DEPTH - 8;
@@ -1871,7 +1879,7 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
             if (picType == I_SLICE || qScale >= refQScale)
             {
                 if (picType == P_SLICE 
-                    && !refFrame 
+                    && refFrame 
                     && refFrame->m_encData->m_slice->m_sliceType == picType
                     && refQScale > 0
                     && refRowSatdCost > 0)
@@ -1887,8 +1895,9 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
             }
             else if (picType == P_SLICE)
             {
+                intraCostForPendingCus = curEncData.m_rowStat[row].intraSatdForVbv - curEncData.m_rowStat[row].diagIntraSatd;
                 /* Our QP is lower than the reference! */
-                double pred_intra = predictSize(rce->rowPred[1], qScale, intraCost);
+                double pred_intra = predictSize(rce->rowPred[1], qScale, intraCostForPendingCus);
                 /* Sum: better to overestimate than underestimate by using only one of the two predictors. */
                 totalSatdBits += (int32_t)(pred_intra + pred_s);
             }

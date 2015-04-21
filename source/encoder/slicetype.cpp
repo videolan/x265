@@ -756,7 +756,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     {
         /* aggregate lowres row satds to CTU resolution */
         curFrame->m_lowres.lowresCostForRc = curFrame->m_lowres.lowresCosts[b - p0][p1 - b];
-        uint32_t lowresRow = 0, lowresCol = 0, lowresCuIdx = 0, sum = 0;
+        uint32_t lowresRow = 0, lowresCol = 0, lowresCuIdx = 0, sum = 0, intraSum = 0;
         uint32_t scale = m_param->maxCUSize / (2 * X265_LOWRES_CU_SIZE);
         uint32_t numCuInHeight = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
         uint32_t widthInLowresCu = (uint32_t)m_8x8Width, heightInLowresCu = (uint32_t)m_8x8Height;
@@ -770,7 +770,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
             lowresRow = row * scale;
             for (uint32_t cnt = 0; cnt < scale && lowresRow < heightInLowresCu; lowresRow++, cnt++)
             {
-                sum = 0;
+                sum = 0; intraSum = 0;
                 lowresCuIdx = lowresRow * widthInLowresCu;
                 for (lowresCol = 0; lowresCol < widthInLowresCu; lowresCol++, lowresCuIdx++)
                 {
@@ -783,8 +783,10 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
                     }
                     curFrame->m_lowres.lowresCostForRc[lowresCuIdx] = lowresCuCost;
                     sum += lowresCuCost;
+                    intraSum += curFrame->m_lowres.intraCost[lowresCuIdx];
                 }
                 curFrame->m_encData->m_rowStat[row].satdForVbv += sum;
+                curFrame->m_encData->m_rowStat[row].intraSatdForVbv += intraSum;
             }
         }
     }

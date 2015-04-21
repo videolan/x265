@@ -74,6 +74,7 @@ public:
         uint32_t numEncodedCUs; /* ctuAddr of last encoded CTU in row */
         uint32_t encodedBits;   /* sum of 'totalBits' of encoded CTUs */
         uint32_t satdForVbv;    /* sum of lowres (estimated) costs for entire row */
+        uint32_t intraSatdForVbv; /* sum of lowres (estimated) intra costs for entire row */
         uint32_t diagSatd;
         uint32_t diagIntraSatd;
         double   diagQp;
