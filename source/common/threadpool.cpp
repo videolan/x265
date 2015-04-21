@@ -244,7 +244,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
 #if _WIN32_WINNT >= 0x0601
         UCHAR node;
         if (GetNumaProcessorNode((UCHAR)i, &node))
-            cpusPerNode[X265_MIN(node, MAX_NODE_NUM)]++;
+            cpusPerNode[X265_MIN(node, (UCHAR)MAX_NODE_NUM)]++;
         else
 #elif HAVE_LIBNUMA
         if (bNumaSupport >= 0)
