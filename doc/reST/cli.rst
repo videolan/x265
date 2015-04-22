@@ -1209,7 +1209,7 @@ Quality, rate control and rate distortion options
 	lookahead).  Default value is 0.6. Increasing it to 1 will
 	effectively generate CQP
 
-.. option:: --qstep <integer>
+.. option:: --qpstep <integer>
 
 	The maximum single adjustment in QP allowed to rate control. Default
 	4

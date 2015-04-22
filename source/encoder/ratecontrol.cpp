@@ -300,7 +300,7 @@ RateControl::RateControl(x265_param& p)
         }
     }
 
-    /* qstep - value set as encoder specific */
+    /* qpstep - value set as encoder specific */
     m_lstep = pow(2, m_param->rc.qpStep / 6.0);
 
     for (int i = 0; i < 2; i++)
