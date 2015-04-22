@@ -5757,7 +5757,7 @@ cglobal findPosLast_x64, 5,12
 
     ; get posLast
     shl         r11d, 4
-    sub         r11d, r6d
+    sub         r11d, t3d
     lea         eax, [r11d - 1]
     RET
 IACA_END

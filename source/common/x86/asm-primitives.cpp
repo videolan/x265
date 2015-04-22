@@ -801,7 +801,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
 #endif
 
 #if X86_64
-    //p.findPosLast = x265_findPosLast_x64;
+    p.findPosLast = x265_findPosLast_x64;
 #endif
 
     if (cpuMask & X265_CPU_SSE2)
@@ -1278,7 +1278,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 {
 #if X86_64
-    //p.findPosLast = x265_findPosLast_x64;
+    p.findPosLast = x265_findPosLast_x64;
 #endif
 
     if (cpuMask & X265_CPU_SSE2)

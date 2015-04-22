@@ -1211,6 +1211,8 @@ bool PixelHarness::check_findPosLast(findPosLast_t ref, findPosLast_t opt)
     for (int i = 0; i < 32 * 32; i++)
     {
         ref_src[i] = rand() & SHORT_MAX;
+        if (rand() & 1)
+            ref_src[i] *= -1;
         totalCoeffs += (ref_src[i] != 0);
     }
 
