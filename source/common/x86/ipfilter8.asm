@@ -594,6 +594,237 @@ cglobal interp_4tap_horiz_pp_4x32, 4, 6, 8, src, srcstride, dst, dststride
     mov         [dstq + dststrideq], r4w
 %endmacro
 
+%macro FILTER_H4_w6_sse2 0
+    pxor        m4, m4
+    movh        m0, [srcq - 1]
+    movh        m5, [srcq]
+    punpckldq   m0, m5
+    movhlps     m2, m0
+    punpcklbw   m0, m4
+    punpcklbw   m2, m4
+    movd        m1, [srcq + 1]
+    movd        m5, [srcq + 2]
+    punpckldq   m1, m5
+    punpcklbw   m1, m4
+    pmaddwd     m0, m6
+    pmaddwd     m1, m6
+    pmaddwd     m2, m6
+    packssdw    m0, m1
+    packssdw    m2, m2
+    pshuflw     m1, m0, q2301
+    pshufhw     m1, m1, q2301
+    pshuflw     m3, m2, q2301
+    paddw       m0, m1
+    paddw       m2, m3
+    psrld       m0, 16
+    psrld       m2, 16
+    packssdw    m0, m2
+    paddw       m0, m7
+    psraw       m0, 6
+    packuswb    m0, m0
+    movd        [dstq], m0
+    pextrw      r4d, m0, 2
+    mov         [dstq + 4], r4w
+%endmacro
+
+%macro FILH4W8_sse2 1
+    movh        m0, [srcq - 1 + %1]
+    movh        m5, [srcq + %1]
+    punpckldq   m0, m5
+    movhlps     m2, m0
+    punpcklbw   m0, m4
+    punpcklbw   m2, m4
+    movh        m1, [srcq + 1 + %1]
+    movh        m5, [srcq + 2 + %1]
+    punpckldq   m1, m5
+    movhlps     m3, m1
+    punpcklbw   m1, m4
+    punpcklbw   m3, m4
+    pmaddwd     m0, m6
+    pmaddwd     m1, m6
+    pmaddwd     m2, m6
+    pmaddwd     m3, m6
+    packssdw    m0, m1
+    packssdw    m2, m3
+    pshuflw     m1, m0, q2301
+    pshufhw     m1, m1, q2301
+    pshuflw     m3, m2, q2301
+    pshufhw     m3, m3, q2301
+    paddw       m0, m1
+    paddw       m2, m3
+    psrld       m0, 16
+    psrld       m2, 16
+    packssdw    m0, m2
+    paddw       m0, m7
+    psraw       m0, 6
+    packuswb    m0, m0
+    movh        [dstq + %1], m0
+%endmacro
+
+%macro FILTER_H4_w8_sse2 0
+    FILH4W8_sse2 0
+%endmacro
+
+%macro FILTER_H4_w12_sse2 0
+    FILH4W8_sse2 0
+    movd        m1, [srcq - 1 + 8]
+    movd        m3, [srcq + 8]
+    punpckldq   m1, m3
+    punpcklbw   m1, m4
+    movd        m2, [srcq + 1 + 8]
+    movd        m3, [srcq + 2 + 8]
+    punpckldq   m2, m3
+    punpcklbw   m2, m4
+    pmaddwd     m1, m6
+    pmaddwd     m2, m6
+    packssdw    m1, m2
+    pshuflw     m2, m1, q2301
+    pshufhw     m2, m2, q2301
+    paddw       m1, m2
+    psrld       m1, 16
+    packssdw    m1, m1
+    paddw       m1, m7
+    psraw       m1, 6
+    packuswb    m1, m1
+    movd        [dstq + 8], m1
+%endmacro
+
+%macro FILTER_H4_w16_sse2 0
+    FILH4W8_sse2 0
+    FILH4W8_sse2 8
+%endmacro
+
+%macro FILTER_H4_w24_sse2 0
+    FILH4W8_sse2 0
+    FILH4W8_sse2 8
+    FILH4W8_sse2 16
+%endmacro
+
+%macro FILTER_H4_w32_sse2 0
+    FILH4W8_sse2 0
+    FILH4W8_sse2 8
+    FILH4W8_sse2 16
+    FILH4W8_sse2 24
+%endmacro
+
+%macro FILTER_H4_w48_sse2 0
+    FILH4W8_sse2 0
+    FILH4W8_sse2 8
+    FILH4W8_sse2 16
+    FILH4W8_sse2 24
+    FILH4W8_sse2 32
+    FILH4W8_sse2 40
+%endmacro
+
+%macro FILTER_H4_w64_sse2 0
+    FILH4W8_sse2 0
+    FILH4W8_sse2 8
+    FILH4W8_sse2 16
+    FILH4W8_sse2 24
+    FILH4W8_sse2 32
+    FILH4W8_sse2 40
+    FILH4W8_sse2 48
+    FILH4W8_sse2 56
+%endmacro
+
+;-----------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+%macro IPFILTER_CHROMA_sse3 2
+INIT_XMM sse3
+cglobal interp_4tap_horiz_pp_%1x%2, 4, 6, 8, src, srcstride, dst, dststride
+    mov         r4d,        r4m
+    mova        m7,         [pw_32]
+    pxor        m4,         m4
+
+%ifdef PIC
+    lea         r5,          [tabw_ChromaCoeff]
+    movddup     m6,       [r5 + r4 * 8]
+%else
+    movddup     m6,       [tabw_ChromaCoeff + r4 * 8]
+%endif
+
+%assign x 1
+%rep %2
+    FILTER_H4_w%1_sse2
+%if x < %2
+    add         srcq,        srcstrideq
+    add         dstq,        dststrideq
+%endif
+%assign x x+1
+%endrep
+
+    RET
+
+%endmacro
+
+    IPFILTER_CHROMA_sse3 6,   8
+    IPFILTER_CHROMA_sse3 8,   2
+    IPFILTER_CHROMA_sse3 8,   4
+    IPFILTER_CHROMA_sse3 8,   6
+    IPFILTER_CHROMA_sse3 8,   8
+    IPFILTER_CHROMA_sse3 8,  16
+    IPFILTER_CHROMA_sse3 8,  32
+    IPFILTER_CHROMA_sse3 12, 16
+
+    IPFILTER_CHROMA_sse3 6,  16
+    IPFILTER_CHROMA_sse3 8,  12
+    IPFILTER_CHROMA_sse3 8,  64
+    IPFILTER_CHROMA_sse3 12, 32
+
+;-----------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+%macro IPFILTER_CHROMA_W_sse3 2
+INIT_XMM sse3
+cglobal interp_4tap_horiz_pp_%1x%2, 4, 6, 8, src, srcstride, dst, dststride
+    mov         r4d,         r4m
+    mova        m7,         [pw_32]
+    pxor        m4,         m4
+%ifdef PIC
+    lea         r5,          [tabw_ChromaCoeff]
+    movddup     m6,       [r5 + r4 * 8]
+%else
+    movddup     m6,       [tabw_ChromaCoeff + r4 * 8]
+%endif
+
+%assign x 1
+%rep %2
+    FILTER_H4_w%1_sse2
+%if x < %2
+    add         srcq,        srcstrideq
+    add         dstq,        dststrideq
+%endif
+%assign x x+1
+%endrep
+
+    RET
+
+%endmacro
+
+    IPFILTER_CHROMA_W_sse3 16,  4
+    IPFILTER_CHROMA_W_sse3 16,  8
+    IPFILTER_CHROMA_W_sse3 16, 12
+    IPFILTER_CHROMA_W_sse3 16, 16
+    IPFILTER_CHROMA_W_sse3 16, 32
+    IPFILTER_CHROMA_W_sse3 32,  8
+    IPFILTER_CHROMA_W_sse3 32, 16
+    IPFILTER_CHROMA_W_sse3 32, 24
+    IPFILTER_CHROMA_W_sse3 24, 32
+    IPFILTER_CHROMA_W_sse3 32, 32
+
+    IPFILTER_CHROMA_W_sse3 16, 24
+    IPFILTER_CHROMA_W_sse3 16, 64
+    IPFILTER_CHROMA_W_sse3 32, 48
+    IPFILTER_CHROMA_W_sse3 24, 64
+    IPFILTER_CHROMA_W_sse3 32, 64
+
+    IPFILTER_CHROMA_W_sse3 64, 64
+    IPFILTER_CHROMA_W_sse3 64, 32
+    IPFILTER_CHROMA_W_sse3 64, 48
+    IPFILTER_CHROMA_W_sse3 48, 64
+    IPFILTER_CHROMA_W_sse3 64, 16
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------

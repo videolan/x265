@@ -814,6 +814,38 @@ void x265_interp_4tap_horiz_pp_4x4_sse3(const pixel *src, intptr_t srcStride, pi
 void x265_interp_4tap_horiz_pp_4x8_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 void x265_interp_4tap_horiz_pp_4x16_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 void x265_interp_4tap_horiz_pp_4x32_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_6x8_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_6x16_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_8x2_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_8x4_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_8x6_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_8x8_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_8x12_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_8x16_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_8x32_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_8x64_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_12x16_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_12x32_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_16x4_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_16x8_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_16x12_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_16x16_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_16x24_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_16x32_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_16x64_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_24x32_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_24x64_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_32x8_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_32x16_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_32x24_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_32x32_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_32x48_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_32x64_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_48x64_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_64x16_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_64x32_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_64x48_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_horiz_pp_64x64_sse3(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 #undef LUMA_FILTERS
 #undef LUMA_SP_FILTERS
 #undef LUMA_SS_FILTERS
