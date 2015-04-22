@@ -585,7 +585,7 @@ void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPart
         if (ctu.isSkipped(absPartIdx))
         {
             codeMergeIndex(ctu, absPartIdx);
-            finishCU(ctu, absPartIdx, depth);
+            finishCU(ctu, absPartIdx, depth, bEncodeDQP);
             return;
         }
         codePredMode(ctu.m_predMode[absPartIdx]);
@@ -606,7 +606,7 @@ void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPart
     codeCoeff(ctu, absPartIdx, bEncodeDQP, tuDepthRange);
 
     // --- write terminating bit ---
-    finishCU(ctu, absPartIdx, depth);
+    finishCU(ctu, absPartIdx, depth, bEncodeDQP);
 }
 
 /* Return bit count of signaling inter mode */
@@ -658,7 +658,7 @@ uint32_t Entropy::bitsInterMode(const CUData& cu, uint32_t absPartIdx, uint32_t 
 }
 
 /* finish encoding a cu and handle end-of-slice conditions */
-void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth)
+void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth, bool bCodeDQP)
 {
     const Slice* slice = ctu.m_slice;
     uint32_t realEndAddress = slice->m_endCUAddr;
@@ -671,6 +671,9 @@ void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth)
     uint32_t bpely = ctu.m_cuPelY + g_zscanToPelY[absPartIdx] + cuSize;
     bool granularityBoundary = (((rpelx & granularityMask) == 0 || (rpelx == slice->m_sps->picWidthInLumaSamples )) &&
                                 ((bpely & granularityMask) == 0 || (bpely == slice->m_sps->picHeightInLumaSamples)));
+
+    if (slice->m_pps->bUseDQP)
+        const_cast<CUData&>(ctu).setQPSubParts(bCodeDQP ? ctu.getRefQP(absPartIdx) : ctu.m_qp[absPartIdx], absPartIdx, depth);
 
     if (granularityBoundary)
     {
@@ -1461,7 +1464,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     //const uint32_t maskPosXY = ((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1;
     X265_CHECK((uint32_t)((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1) == (((uint32_t)~0 >> (31 - log2TrSize + MLS_CG_LOG2_SIZE)) >> 1), "maskPosXY fault\n");
 
-    scanPosLast = primitives.findPosLast(codingParameters.scan, coeff, coeffSign, coeffFlag, coeffNum, numSig);
+    scanPosLast = primitives.scanPosLast(codingParameters.scan, coeff, coeffSign, coeffFlag, coeffNum, numSig, g_scan4x4[codingParameters.scanType], trSize);
     posLast = codingParameters.scan[scanPosLast];
 
     const int lastScanSet = scanPosLast >> MLS_CG_SIZE;
@@ -1548,7 +1551,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         else
         {
             uint32_t sigCoeffGroup = ((sigCoeffGroupFlag64 & cgBlkPosMask) != 0);
-            uint32_t ctxSig = Quant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+            uint32_t ctxSig = Quant::getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
             encodeBin(sigCoeffGroup, baseCoeffGroupCtx[ctxSig]);
         }
 
@@ -1556,7 +1559,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         if (sigCoeffGroupFlag64 & cgBlkPosMask)
         {
             X265_CHECK((log2TrSize != 2) || (log2TrSize == 2 && subSet == 0), "log2TrSize and subSet mistake!\n");
-            const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codingParameters.log2TrSizeCG);
+            const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
 
             static const uint8_t ctxIndMap4x4[16] =
             {

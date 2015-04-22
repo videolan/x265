@@ -3,7 +3,7 @@ x265 HEVC Encoder
 =================
 
 | **Read:** | Online `documentation <http://x265.readthedocs.org/en/default/>`_ | Developer `wiki <http://bitbucket.org/multicoreware/x265/wiki/>`_
-| **Download:** | `releases <http://bitbucket.org/multicoreware/x265/downloads/>`_ 
+| **Download:** | `releases <http://ftp.videolan.org/pub/videolan/x265/>`_ 
 | **Interact:** | #x265 on freenode.irc.net | `x265-devel@videolan.org <http://mailman.videolan.org/listinfo/x265-devel>`_ | `Report an issue <https://bitbucket.org/multicoreware/x265/issues?status=new&status=open>`_
 
 `x265 <https://www.videolan.org/developers/x265.html>`_ is an open

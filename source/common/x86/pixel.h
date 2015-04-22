@@ -226,6 +226,7 @@ ADDAVG(addAvg_24x64)
 ADDAVG(addAvg_32x48)
 
 void x265_downShift_16_sse2(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
+void x265_downShift_16_avx2(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 void x265_upShift_8_sse4(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 int x265_psyCost_pp_4x4_sse4(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
 int x265_psyCost_pp_8x8_sse4(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
@@ -256,10 +257,14 @@ void x265_pixel_avg_64x16_avx2(pixel* dst, intptr_t dstride, const pixel* src0, 
 void x265_pixel_add_ps_16x16_avx2(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_add_ps_32x32_avx2(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_add_ps_64x64_avx2(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_add_ps_16x32_avx2(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_add_ps_32x64_avx2(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
 
 void x265_pixel_sub_ps_16x16_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_sub_ps_32x32_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_sub_ps_64x64_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_sub_ps_16x32_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_sub_ps_32x64_avx2(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
 
 int x265_psyCost_pp_4x4_avx2(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
 int x265_psyCost_pp_8x8_avx2(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
@@ -272,6 +277,7 @@ int x265_psyCost_ss_8x8_avx2(const int16_t* source, intptr_t sstride, const int1
 int x265_psyCost_ss_16x16_avx2(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
 int x265_psyCost_ss_32x32_avx2(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
 int x265_psyCost_ss_64x64_avx2(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride);
+void x265_weight_sp_avx2(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
 
 #undef DECL_PIXELS
 #undef DECL_HEVC_SSD

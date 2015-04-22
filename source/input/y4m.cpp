@@ -46,9 +46,6 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     for (int i = 0; i < QUEUE_SIZE; i++)
         buf[i] = NULL;
 
-    readCount.set(0);
-    writeCount.set(0);
-
     threadActive = false;
     colorSpace = info.csp;
     sarWidth = info.sarWidth;
@@ -164,7 +161,7 @@ Y4MInput::~Y4MInput()
 void Y4MInput::release()
 {
     threadActive = false;
-    readCount.set(readCount.get()); // unblock file reader
+    readCount.poke();
     stop();
     delete this;
 }
@@ -352,7 +349,7 @@ void Y4MInput::threadMain()
     while (threadActive);
 
     threadActive = false;
-    writeCount.set(writeCount.get()); // unblock readPicture
+    writeCount.poke();
 }
 
 bool Y4MInput::populateFrameQueue()

@@ -33,7 +33,7 @@
 namespace x265 {
 // private x265 namespace
 
-class YUVInput : public Input, public Thread
+class YUVInput : public InputFile, public Thread
 {
 protected:
 

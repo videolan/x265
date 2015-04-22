@@ -27,6 +27,64 @@
 
 SECTION_RODATA 32
 
+all_ang4_shuff: db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6, 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
+                db 0, 1, 1, 2, 2, 3, 3, 4, 1, 2, 2, 3, 3, 4, 4, 5, 2, 3, 3, 4, 4, 5, 5, 6, 3, 4, 4, 5, 5, 6, 6, 7
+                db 0, 1, 1, 2, 2, 3, 3, 4, 1, 2, 2, 3, 3, 4, 4, 5, 1, 2, 2, 3, 3, 4, 4, 5, 2, 3, 3, 4, 4, 5, 5, 6
+                db 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4, 1, 2, 2, 3, 3, 4, 4, 5, 1, 2, 2, 3, 3, 4, 4, 5
+                db 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4, 1, 2, 2, 3, 3, 4, 4, 5
+                db 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4
+                db 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3
+                db 0, 9, 9, 10, 10, 11, 11, 12, 0, 9, 9, 10, 10, 11, 11, 12, 0, 9, 9, 10, 10, 11, 11, 12, 0, 9, 9, 10, 10, 11, 11, 12
+                db 0, 9, 9, 10, 10, 11, 11, 12, 0, 9, 9, 10, 10, 11, 11, 12, 0, 9, 9, 10, 10, 11, 11, 12, 4, 0, 0, 9, 9, 10, 10, 11
+                db 0, 9, 9, 10, 10, 11, 11, 12, 0, 9, 9, 10, 10, 11, 11, 12, 2, 0, 0, 9, 9, 10, 10, 11, 2, 0, 0, 9, 9, 10, 10, 11
+                db 0, 9, 9, 10, 10, 11, 11, 12, 2, 0, 0, 9, 9, 10, 10, 11, 2, 0, 0, 9, 9, 10, 10, 11, 4, 2, 2, 0, 0, 9, 9, 10
+                db 0, 9, 9, 10, 10, 11, 11, 12, 2, 0, 0, 9, 9, 10, 10, 11, 2, 0, 0, 9, 9, 10, 10, 11, 3, 2, 2, 0, 0, 9, 9, 10
+                db 0, 9, 9, 10, 10, 11, 11, 12, 1, 0, 0, 9, 9, 10, 10, 11, 2, 1, 1, 0, 0, 9, 9, 10, 4, 2, 2, 1, 1, 0, 0, 9
+                db 0, 1, 2, 3, 9, 0, 1, 2, 10, 9, 0, 1, 11, 10, 9, 0, 0, 1, 2, 3, 9, 0, 1, 2, 10, 9, 0, 1, 11, 10, 9, 0
+                db 0, 1, 1, 2, 2, 3, 3, 4, 9, 0, 0, 1, 1, 2, 2, 3, 10, 9, 9, 0, 0, 1, 1, 2, 12, 10, 10, 9, 9, 0, 0, 1
+                db 0, 1, 1, 2, 2, 3, 3, 4, 10, 0, 0, 1, 1, 2, 2, 3, 10, 0, 0, 1, 1, 2, 2, 3, 11, 10, 10, 0, 0, 1, 1, 2
+                db 0, 1, 1, 2, 2, 3, 3, 4, 10, 0, 0, 1, 1, 2, 2, 3, 10, 0, 0, 1, 1, 2, 2, 3, 12, 10, 10, 0, 0, 1, 1, 2
+                db 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4, 10, 0, 0, 1, 1, 2, 2, 3, 10, 0, 0, 1, 1, 2, 2, 3
+                db 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4, 12, 0, 0, 1, 1, 2, 2, 3
+                db 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2, 2, 3, 3, 4
+                db 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4
+                db 1, 2, 2, 3, 3, 4, 4, 5, 1, 2, 2, 3, 3, 4, 4, 5, 1, 2, 2, 3, 3, 4, 4, 5, 1, 2, 2, 3, 3, 4, 4, 5
+                db 1, 2, 2, 3, 3, 4, 4, 5, 1, 2, 2, 3, 3, 4, 4, 5, 1, 2, 2, 3, 3, 4, 4, 5, 2, 3, 3, 4, 4, 5, 5, 6
+                db 1, 2, 2, 3, 3, 4, 4, 5, 1, 2, 2, 3, 3, 4, 4, 5, 2, 3, 3, 4, 4, 5, 5, 6, 2, 3, 3, 4, 4, 5, 5, 6
+                db 1, 2, 2, 3, 3, 4, 4, 5, 2, 3, 3, 4, 4, 5, 5, 6, 2, 3, 3, 4, 4, 5, 5, 6, 3, 4, 4, 5, 5, 6, 6, 7
+                db 1, 2, 2, 3, 3, 4, 4, 5, 2, 3, 3, 4, 4, 5, 5, 6, 3, 4, 4, 5, 5, 6, 6, 7, 4, 5, 5, 6, 6, 7, 7, 8
+                db 2, 3, 4, 5, 3, 4, 5, 6, 4, 5, 6, 7, 5, 6, 7, 8, 2, 3, 4, 5, 3, 4, 5, 6, 4, 5, 6, 7, 5, 6, 7, 8
+
+all_ang4: db 6, 26, 6, 26, 6, 26, 6, 26, 12, 20, 12, 20, 12, 20, 12, 20, 18, 14, 18, 14, 18, 14, 18, 14, 24, 8, 24, 8, 24, 8, 24, 8
+          db 11, 21, 11, 21, 11, 21, 11, 21, 22, 10, 22, 10, 22, 10, 22, 10, 1, 31, 1, 31, 1, 31, 1, 31, 12, 20, 12, 20, 12, 20, 12, 20
+          db 15, 17, 15, 17, 15, 17, 15, 17, 30, 2, 30, 2, 30, 2, 30, 2, 13, 19, 13, 19, 13, 19, 13, 19, 28, 4, 28, 4, 28, 4, 28, 4
+          db 19, 13, 19, 13, 19, 13, 19, 13, 6, 26, 6, 26, 6, 26, 6, 26, 25, 7, 25, 7, 25, 7, 25, 7, 12, 20, 12, 20, 12, 20, 12, 20
+          db 23, 9, 23, 9, 23, 9, 23, 9, 14, 18, 14, 18, 14, 18, 14, 18, 5, 27, 5, 27, 5, 27, 5, 27, 28, 4, 28, 4, 28, 4, 28, 4
+          db 27, 5, 27, 5, 27, 5, 27, 5, 22, 10, 22, 10, 22, 10, 22, 10, 17, 15, 17, 15, 17, 15, 17, 15, 12, 20, 12, 20, 12, 20, 12, 20
+          db 30, 2, 30, 2, 30, 2, 30, 2, 28, 4, 28, 4, 28, 4, 28, 4, 26, 6, 26, 6, 26, 6, 26, 6, 24, 8, 24, 8, 24, 8, 24, 8
+          db 2, 30, 2, 30, 2, 30, 2, 30, 4, 28, 4, 28, 4, 28, 4, 28, 6, 26, 6, 26, 6, 26, 6, 26, 8, 24, 8, 24, 8, 24, 8, 24
+          db 5, 27, 5, 27, 5, 27, 5, 27, 10, 22, 10, 22, 10, 22, 10, 22, 15, 17, 15, 17, 15, 17, 15, 17, 20, 12, 20, 12, 20, 12, 20, 12
+          db 9, 23, 9, 23, 9, 23, 9, 23, 18, 14, 18, 14, 18, 14, 18, 14, 27, 5, 27, 5, 27, 5, 27, 5, 4, 28, 4, 28, 4, 28, 4, 28
+          db 13, 19, 13, 19, 13, 19, 13, 19, 26, 6, 26, 6, 26, 6, 26, 6, 7, 25, 7, 25, 7, 25, 7, 25, 20, 12, 20, 12, 20, 12, 20, 12
+          db 17, 15, 17, 15, 17, 15, 17, 15, 2, 30, 2, 30, 2, 30, 2, 30, 19, 13, 19, 13, 19, 13, 19, 13, 4, 28, 4, 28, 4, 28, 4, 28
+          db 21, 11, 21, 11, 21, 11, 21, 11, 10, 22, 10, 22, 10, 22, 10, 22, 31, 1, 31, 1, 31, 1, 31, 1, 20, 12, 20, 12, 20, 12, 20, 12
+          db 26, 6, 26, 6, 26, 6, 26, 6, 20, 12, 20, 12, 20, 12, 20, 12, 14, 18, 14, 18, 14, 18, 14, 18, 8, 24, 8, 24, 8, 24, 8, 24
+          db 26, 6, 26, 6, 26, 6, 26, 6, 20, 12, 20, 12, 20, 12, 20, 12, 14, 18, 14, 18, 14, 18, 14, 18, 8, 24, 8, 24, 8, 24, 8, 24
+          db 21, 11, 21, 11, 21, 11, 21, 11, 10, 22, 10, 22, 10, 22, 10, 22, 31, 1, 31, 1, 31, 1, 31, 1, 20, 12, 20, 12, 20, 12, 20, 12
+          db 17, 15, 17, 15, 17, 15, 17, 15, 2, 30, 2, 30, 2, 30, 2, 30, 19, 13, 19, 13, 19, 13, 19, 13, 4, 28, 4, 28, 4, 28, 4, 28
+          db 13, 19, 13, 19, 13, 19, 13, 19, 26, 6, 26, 6, 26, 6, 26, 6, 7, 25, 7, 25, 7, 25, 7, 25, 20, 12, 20, 12, 20, 12, 20, 12
+          db 9, 23, 9, 23, 9, 23, 9, 23, 18, 14, 18, 14, 18, 14, 18, 14, 27, 5, 27, 5, 27, 5, 27, 5, 4, 28, 4, 28, 4, 28, 4, 28
+          db 5, 27, 5, 27, 5, 27, 5, 27, 10, 22, 10, 22, 10, 22, 10, 22, 15, 17, 15, 17, 15, 17, 15, 17, 20, 12, 20, 12, 20, 12, 20, 12
+          db 2, 30, 2, 30, 2, 30, 2, 30, 4, 28, 4, 28, 4, 28, 4, 28, 6, 26, 6, 26, 6, 26, 6, 26, 8, 24, 8, 24, 8, 24, 8, 24
+          db 30, 2, 30, 2, 30, 2, 30, 2, 28, 4, 28, 4, 28, 4, 28, 4, 26, 6, 26, 6, 26, 6, 26, 6, 24, 8, 24, 8, 24, 8, 24, 8
+          db 27, 5, 27, 5, 27, 5, 27, 5, 22, 10, 22, 10, 22, 10, 22, 10, 17, 15, 17, 15, 17, 15, 17, 15, 12, 20, 12, 20, 12, 20, 12, 20
+          db 23, 9, 23, 9, 23, 9, 23, 9, 14, 18, 14, 18, 14, 18, 14, 18, 5, 27, 5, 27, 5, 27, 5, 27, 28, 4, 28, 4, 28, 4, 28, 4
+          db 19, 13, 19, 13, 19, 13, 19, 13, 6, 26, 6, 26, 6, 26, 6, 26, 25, 7, 25, 7, 25, 7, 25, 7, 12, 20, 12, 20, 12, 20, 12, 20
+          db 15, 17, 15, 17, 15, 17, 15, 17, 30, 2, 30, 2, 30, 2, 30, 2, 13, 19, 13, 19, 13, 19, 13, 19, 28, 4, 28, 4, 28, 4, 28, 4
+          db 11, 21, 11, 21, 11, 21, 11, 21, 22, 10, 22, 10, 22, 10, 22, 10, 1, 31, 1, 31, 1, 31, 1, 31, 12, 20, 12, 20, 12, 20, 12, 20
+          db 6, 26, 6, 26, 6, 26, 6, 26, 12, 20, 12, 20, 12, 20, 12, 20, 18, 14, 18, 14, 18, 14, 18, 14, 24, 8, 24, 8, 24, 8, 24, 8
+
+
 SECTION .text
 
 ; global constant
@@ -34,9 +92,14 @@ cextern pw_1024
 
 ; common constant with intrapred8.asm
 cextern ang_table
+cextern pw_ang_table
 cextern tab_S1
 cextern tab_S2
 cextern tab_Si
+cextern pw_16
+cextern pb_000000000000000F
+cextern pb_0000000000000F0F
+cextern pw_FFFFFFFFFFFFFFF0
 
 
 ;-----------------------------------------------------------------------------
@@ -23006,3 +23069,1098 @@ cglobal all_angs_pred_32x32, 3,7,8, 0-4
     palignr    m4,              m2,       m1,    14
     movu       [r0 + 2111 * 16],   m4
     RET
+
+
+;-----------------------------------------------------------------------------
+; void all_angs_pred_4x4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal all_angs_pred_4x4, 4, 4, 6
+
+    mova           m5, [pw_1024]
+    lea            r2, [all_ang4]
+    lea            r3, [all_ang4_shuff]
+
+; mode 2
+
+    vbroadcasti128 m0, [r1 + 9]
+    mova           xm1, xm0
+    psrldq         xm1, 1
+    pshufb         xm1, [r3]
+    movu           [r0], xm1
+
+; mode 3
+
+    pshufb         m1, m0, [r3 + 1 * mmsize]
+    pmaddubsw      m1, [r2]
+    pmulhrsw       m1, m5
+
+; mode 4
+
+    pshufb         m2, m0, [r3 + 2 * mmsize]
+    pmaddubsw      m2, [r2 + 1 * mmsize]
+    pmulhrsw       m2, m5
+    packuswb       m1, m2
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (3 - 2) * 16], m1
+
+; mode 5
+
+    pshufb         m1, m0, [r3 + 2 * mmsize]
+    pmaddubsw      m1, [r2 + 2 * mmsize]
+    pmulhrsw       m1, m5
+
+; mode 6
+
+    pshufb         m2, m0, [r3 + 3 * mmsize]
+    pmaddubsw      m2, [r2 + 3 * mmsize]
+    pmulhrsw       m2, m5
+    packuswb       m1, m2
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (5 - 2) * 16], m1
+
+    add            r3, 4 * mmsize
+    add            r2, 4 * mmsize
+
+; mode 7
+
+    pshufb         m1, m0, [r3 + 0 * mmsize]
+    pmaddubsw      m1, [r2 + 0 * mmsize]
+    pmulhrsw       m1, m5
+
+; mode 8
+
+    pshufb         m2, m0, [r3 + 1 * mmsize]
+    pmaddubsw      m2, [r2 + 1 * mmsize]
+    pmulhrsw       m2, m5
+    packuswb       m1, m2
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (7 - 2) * 16], m1
+
+; mode 9
+
+    pshufb         m1, m0, [r3 + 1 * mmsize]
+    pmaddubsw      m1, [r2 + 2 * mmsize]
+    pmulhrsw       m1, m5
+    packuswb       m1, m1
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (9 - 2) * 16], xm1
+
+; mode 10
+
+    pshufb         xm1, xm0, [r3 + 2 * mmsize]
+    movu           [r0 + (10 - 2) * 16], xm1
+
+    pxor           xm1, xm1
+    movd           xm2, [r1 + 1]
+    pshufd         xm3, xm2, 0
+    punpcklbw      xm3, xm1
+    pinsrb         xm2, [r1], 0
+    pshufb         xm4, xm2, xm1
+    punpcklbw      xm4, xm1
+    psubw          xm3, xm4
+    psraw          xm3, 1
+    pshufb         xm4, xm0, xm1
+    punpcklbw      xm4, xm1
+    paddw          xm3, xm4
+    packuswb       xm3, xm1
+
+    pextrb         [r0 + 128], xm3, 0
+    pextrb         [r0 + 132], xm3, 1
+    pextrb         [r0 + 136], xm3, 2
+    pextrb         [r0 + 140], xm3, 3
+
+; mode 11
+
+    vbroadcasti128 m0, [r1]
+    pshufb         m1, m0, [r3 + 3 * mmsize]
+    pmaddubsw      m1, [r2 + 3 * mmsize]
+    pmulhrsw       m1, m5
+
+; mode 12
+
+    add            r2, 4 * mmsize
+
+    pshufb         m2, m0, [r3 + 3 * mmsize]
+    pmaddubsw      m2, [r2 + 0 * mmsize]
+    pmulhrsw       m2, m5
+    packuswb       m1, m2
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (11 - 2) * 16], m1
+
+; mode 13
+
+    add            r3, 4 * mmsize
+
+    pshufb         m1, m0, [r3 + 0 * mmsize]
+    pmaddubsw      m1, [r2 + 1 * mmsize]
+    pmulhrsw       m1, m5
+
+; mode 14
+
+    pshufb         m2, m0, [r3 + 1 * mmsize]
+    pmaddubsw      m2, [r2 + 2 * mmsize]
+    pmulhrsw       m2, m5
+    packuswb       m1, m2
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (13 - 2) * 16], m1
+
+; mode 15
+
+    pshufb         m1, m0, [r3 + 2 * mmsize]
+    pmaddubsw      m1, [r2 + 3 * mmsize]
+    pmulhrsw       m1, m5
+
+; mode 16
+
+    add            r2, 4 * mmsize
+
+    pshufb         m2, m0, [r3 + 3 * mmsize]
+    pmaddubsw      m2, [r2 + 0 * mmsize]
+    pmulhrsw       m2, m5
+    packuswb       m1, m2
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (15 - 2) * 16], m1
+
+; mode 17
+
+    add            r3, 4 * mmsize
+
+    pshufb         m1, m0, [r3 + 0 * mmsize]
+    pmaddubsw      m1, [r2 + 1 * mmsize]
+    pmulhrsw       m1, m5
+    packuswb       m1, m1
+    vpermq         m1, m1, 11011000b
+
+; mode 18
+
+    pshufb         m2, m0, [r3 + 1 * mmsize]
+    vinserti128    m1, m1, xm2, 1
+    movu           [r0 + (17 - 2) * 16], m1
+
+; mode 19
+
+    pshufb         m1, m0, [r3 + 2 * mmsize]
+    pmaddubsw      m1, [r2 + 2 * mmsize]
+    pmulhrsw       m1, m5
+
+; mode 20
+
+    pshufb         m2, m0, [r3 + 3 * mmsize]
+    pmaddubsw      m2, [r2 + 3 * mmsize]
+    pmulhrsw       m2, m5
+    packuswb       m1, m2
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (19 - 2) * 16], m1
+
+; mode 21
+
+    add            r2, 4 * mmsize
+    add            r3, 4 * mmsize
+
+    pshufb         m1, m0, [r3 + 0 * mmsize]
+    pmaddubsw      m1, [r2 + 0 * mmsize]
+    pmulhrsw       m1, m5
+
+; mode 22
+
+    pshufb         m2, m0, [r3 + 1 * mmsize]
+    pmaddubsw      m2, [r2 + 1 * mmsize]
+    pmulhrsw       m2, m5
+    packuswb       m1, m2
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (21 - 2) * 16], m1
+
+; mode 23
+
+    pshufb         m1, m0, [r3 + 2 * mmsize]
+    pmaddubsw      m1, [r2 + 2 * mmsize]
+    pmulhrsw       m1, m5
+
+; mode 24
+
+    pshufb         m2, m0, [r3 + 3 * mmsize]
+    pmaddubsw      m2, [r2 + 3 * mmsize]
+    pmulhrsw       m2, m5
+    packuswb       m1, m2
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (23 - 2) * 16], m1
+
+; mode 25
+
+    add            r2, 4 * mmsize
+
+    pshufb         m1, m0, [r3 + 3 * mmsize]
+    pmaddubsw      m1, [r2 + 0 * mmsize]
+    pmulhrsw       m1, m5
+    packuswb       m1, m1
+    vpermq         m1, m1, 11011000b
+    movu           [r0 + (25 - 2) * 16], xm1
+
+; mode 26
+
+    add            r3, 4 * mmsize
+
+    pshufb         xm1, xm0, [r3 + 0 * mmsize]
+    movu           [r0 + (26 - 2) * 16], xm1
+
+    pxor           xm1, xm1
+    movd           xm2, [r1 + 9]
+    pshufd         xm3, xm2, 0
+    punpcklbw      xm3, xm1
+    pinsrb         xm4, [r1 + 0], 0
+    pshufb         xm4, xm1
+    punpcklbw      xm4, xm1
+    psubw          xm3, xm4
+    psraw          xm3, 1
+    psrldq         xm2, xm0, 1
+    pshufb         xm2, xm1
+    punpcklbw      xm2, xm1
+    paddw          xm3, xm2
+    packuswb       xm3, xm1
+
+    pextrb       [r0 + 384], xm3, 0
+    pextrb       [r0 + 388], xm3, 1
+    pextrb       [r0 + 392], xm3, 2
+    pextrb       [r0 + 396], xm3, 3
+
+; mode 27
+
+    pshufb        m1, m0, [r3 + 1 * mmsize]
+    pmaddubsw     m1, [r2 + 1 * mmsize]
+    pmulhrsw      m1, m5
+
+; mode 28
+
+    pshufb        m2, m0, [r3 + 1 * mmsize]
+    pmaddubsw     m2, [r2 + 2 * mmsize]
+    pmulhrsw      m2, m5
+    packuswb      m1, m2
+    vpermq        m1, m1, 11011000b
+    movu          [r0 + (27 - 2) * 16], m1
+
+; mode 29
+
+    pshufb        m1, m0, [r3 + 2 * mmsize]
+    pmaddubsw     m1, [r2 + 3 * mmsize]
+    pmulhrsw      m1, m5
+
+; mode 30
+
+    add           r2, 4 * mmsize
+
+    pshufb        m2, m0, [r3 + 3 * mmsize]
+    pmaddubsw     m2, [r2 + 0 * mmsize]
+    pmulhrsw      m2, m5
+    packuswb      m1, m2
+    vpermq        m1, m1, 11011000b
+    movu          [r0 + (29 - 2) * 16], m1
+
+; mode 31
+
+    add           r3, 4 * mmsize
+
+    pshufb        m1, m0, [r3 + 0 * mmsize]
+    pmaddubsw     m1, [r2 + 1 * mmsize]
+    pmulhrsw      m1, m5
+
+; mode 32
+
+    pshufb        m2, m0, [r3 + 0 * mmsize]
+    pmaddubsw     m2, [r2 + 2 * mmsize]
+    pmulhrsw      m2, m5
+    packuswb      m1, m2
+    vpermq        m1, m1, 11011000b
+    movu          [r0 + (31 - 2) * 16], m1
+
+; mode 33
+
+    pshufb        m1, m0, [r3 + 1 * mmsize]
+    pmaddubsw     m1, [r2 + 3 * mmsize]
+    pmulhrsw      m1, m5
+    packuswb      m1, m2
+    vpermq        m1, m1, 11011000b
+
+; mode 34
+
+    pshufb        m0, [r3 + 2 * mmsize]
+    vinserti128   m1, m1, xm0, 1
+    movu          [r0 + (33 - 2) * 16], m1
+    RET
+
+;-----------------------------------------------------------------------------
+; void all_angs_pred_4x4(pixel *dest, pixel *refPix, pixel *filtPix, int bLuma)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal all_angs_pred_4x4, 4, 4, 8
+
+; mode 2
+
+    movh        m6,             [r1 + 9]
+    mova        m2,             m6
+    psrldq      m2,             1
+    movd        [r0],           m2              ;byte[A, B, C, D]
+    psrldq      m2,             1
+    movd        [r0 + 4],       m2              ;byte[B, C, D, E]
+    psrldq      m2,             1
+    movd        [r0 + 8],       m2              ;byte[C, D, E, F]
+    psrldq      m2,             1
+    movd        [r0 + 12],      m2              ;byte[D, E, F, G]
+
+; mode 10/26
+
+    pxor        m7,             m7
+    pshufd      m5,             m6,        0
+    mova        [r0 + 128],     m5              ;mode 10 byte[9, A, B, C, 9, A, B, C, 9, A, B, C, 9, A, B, C]
+
+    movd        m4,             [r1 + 1]
+    pshufd      m4,             m4,        0
+    mova        [r0 + 384],     m4              ;mode 26 byte[1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
+
+    movd        m1,             [r1]
+    punpcklbw   m1,             m7
+    pshuflw     m1,             m1,     0x00
+    punpcklqdq  m1,             m1              ;m1 = byte[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    punpckldq   m4,             m5
+    punpcklbw   m4,             m7              ;m4 = word[1, 2, 3, 4, 9, A, B, C]
+    pshuflw     m2,             m4,     0x00
+    pshufhw     m2,             m2,     0x00    ;m2 = word[1, 1, 1, 1, 9, 9, 9, 9]
+
+    psubw       m4,             m1
+    psraw       m4,             1
+
+    pshufd      m2,             m2,     q1032   ;m2 = word[9, 9, 9, 9, 1, 1, 1, 1]
+    paddw       m4,             m2
+    packuswb    m4,             m4
+
+%if ARCH_X86_64
+    movq        r2,             m4
+
+    mov         [r0 + 128],     r2b              ;mode 10
+    shr         r2,             8
+    mov         [r0 + 132],     r2b
+    shr         r2,             8
+    mov         [r0 + 136],     r2b
+    shr         r2,             8
+    mov         [r0 + 140],     r2b
+    shr         r2,             8
+    mov         [r0 + 384],     r2b              ;mode 26
+    shr         r2d,            8
+    mov         [r0 + 388],     r2b
+    shr         r2d,            8
+    mov         [r0 + 392],     r2b
+    shr         r2d,            8
+    mov         [r0 + 396],     r2b
+
+%else
+    movd        r2d,             m4
+
+    mov         [r0 + 128],     r2b              ;mode 10
+    shr         r2d,             8
+    mov         [r0 + 132],     r2b
+    shr         r2d,             8
+    mov         [r0 + 136],     r2b
+    shr         r2d,             8
+    mov         [r0 + 140],     r2b
+
+    psrldq      m4,             4
+    movd        r2d,            m4
+
+    mov         [r0 + 384],     r2b              ;mode 26
+    shr         r2d,            8
+    mov         [r0 + 388],     r2b
+    shr         r2d,            8
+    mov         [r0 + 392],     r2b
+    shr         r2d,            8
+    mov         [r0 + 396],     r2b
+%endif
+
+; mode 3
+
+    mova        m2,             [pw_16]
+    lea         r3,             [pw_ang_table + 7 * 16]
+    lea         r2,             [pw_ang_table + 23 * 16]
+    punpcklbw   m6,             m6
+    psrldq      m6,             1
+    movh        m1,             m6
+    psrldq      m6,             2
+    movh        m0,             m6
+    psrldq      m6,             2
+    movh        m3,             m6
+    psrldq      m6,             2
+    punpcklbw   m1,             m7              ;m1 = word[9, A, A, B, B, C, C, D]
+    punpcklbw   m0,             m7              ;m0 = word[A, B, B, C, C, D, D, E]
+    punpcklbw   m3,             m7              ;m3 = word[B, C, C, D, D, E, E, F]
+    punpcklbw   m6,             m7              ;m6 = word[C, D, D, E, E, F, F, G]
+
+    mova        m7,             [r2 - 3 * 16]
+
+    pmaddwd     m5,             m1,     [r2 + 3 * 16]
+    pmaddwd     m4,             m0,     m7
+
+    packssdw    m5,             m4
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    pmaddwd     m4,             m3,     [r3 + 7 * 16]
+    pmaddwd     m6,             [r3 + 1 * 16]
+
+    packssdw    m4,             m6
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m5,             m4
+    mova        [r0 + 16],      m5
+    movd        [r0 + 68],      m5              ;mode 6 row 1
+    psrldq      m5,             4
+    movd        [r0 + 76],      m5              ;mode 6 row 3
+
+; mode 4
+
+    pmaddwd     m4,             m0,     [r2 + 8 * 16]
+    pmaddwd     m6,             m3,     m7
+
+    packssdw    m4,             m6
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    pmaddwd     m5,             m1,     [r2 - 2 * 16]
+    pmaddwd     m6,             m0,     [r3 + 3 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    packuswb    m5,             m4
+    mova        [r0 + 32],      m5
+
+; mode 5
+
+    pmaddwd     m5,             m1,     [r2 - 6 * 16]
+    pmaddwd     m6,             m0,     [r3 - 5 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    pmaddwd     m4,             m0,     [r2 - 4 * 16]
+    pmaddwd     m3,             [r3 - 3 * 16]
+
+    packssdw    m4,             m3
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m5,             m4
+    mova        [r0 + 48],      m5
+
+; mode 6
+
+    pmaddwd     m5,             m1,     [r3 + 6 * 16]
+    pmaddwd     m6,             m0,     [r3 + 0 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    packuswb    m5,             m6
+    movd        [r0 + 64],      m5
+    psrldq      m5,             4
+    movd        [r0 + 72],      m5
+
+; mode 7
+
+    pmaddwd     m5,             m1,     [r3 + 2 * 16]
+    pmaddwd     m6,             m1,     [r2 - 5 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    mova        m3,             [r2 + 4 * 16]
+    pmaddwd     m4,             m1,     m3
+    pmaddwd     m0,             [r3 - 3 * 16]
+
+    packssdw    m4,             m0
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m5,             m4
+    mova        [r0 + 80],      m5
+
+; mode 8
+
+    mova        m0,             [r3 - 2 * 16]
+    pmaddwd     m5,             m1,     m0
+    pmaddwd     m6,             m1,     [r3 + 3 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    pmaddwd     m4,             m1,     [r3 + 8 * 16]
+    pmaddwd     m7,             m1
+
+    packssdw    m4,             m7
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m5,             m4
+    mova        [r0 + 96],      m5
+
+; mode 9
+
+    pmaddwd     m5,             m1,     [r3 - 5 * 16]
+    pmaddwd     m6,             m1,     [r3 - 3 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    pmaddwd     m4,             m1,     [r3 - 1 * 16]
+    pmaddwd     m6,             m1,     [r3 + 1 * 16]
+
+    packssdw    m4,             m6
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m5,             m4
+    mova        [r0 + 112],     m5
+
+; mode 11
+
+    movd        m5,             [r1]
+    punpcklwd   m5,             m1
+    pand        m5,             [pb_0000000000000F0F]
+    pslldq      m1,             4
+    por         m1,             m5              ;m1 = word[0, 9, 9, A, A, B, B, C]
+
+    pmaddwd     m5,             m1,     [r2 + 7 * 16]
+    pmaddwd     m6,             m1,     [r2 + 5 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    pmaddwd     m4,             m1,     [r2 + 3 * 16]
+    pmaddwd     m6,             m1,     [r2 + 1 * 16]
+
+    packssdw    m4,             m6
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m5,             m4
+    mova        [r0 + 144],     m5
+
+; mode 12
+
+    pmaddwd     m3,             m1
+    pmaddwd     m6,             m1,     [r2 - 1 * 16]
+
+    packssdw    m3,             m6
+    paddw       m3,             m2
+    psraw       m3,             5
+
+    pmaddwd     m4,             m1,     [r2 - 6 * 16]
+    pmaddwd     m6,             m1,     [r3 + 5 * 16]
+
+    packssdw    m4,             m6
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m3,             m4
+    mova        [r0 + 160],     m3
+
+; mode 13
+
+    mova        m3,             m1
+    movd        m7,             [r1 + 4]
+    punpcklwd   m7,             m1
+    pand        m7,             [pb_0000000000000F0F]
+    pslldq      m3,             4
+    por         m3,             m7              ;m3 = word[4, 0, 0, 9, 9, A, A, B]
+
+    pmaddwd     m5,             m1,     [r2 + 0 * 16]
+    pmaddwd     m6,             m1,     [r3 + 7 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    pmaddwd     m4,             m1,     m0
+    pmaddwd     m6,             m3,     [r2 + 5 * 16]
+
+    packssdw    m4,             m6
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m5,             m4
+    mova        [r0 + 176],     m5
+
+; mode 14
+
+    pmaddwd     m5,             m1,     [r2 - 4 * 16]
+    pmaddwd     m6,             m1,     [r3 - 1 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    movd        m6,             [r1 + 2]
+    pand        m3,             [pw_FFFFFFFFFFFFFFF0]
+    pand        m6,             [pb_000000000000000F]
+    por         m3,             m6              ;m3 = word[2, 0, 0, 9, 9, A, A, B]
+
+    pmaddwd     m4,             m3,     [r2 + 2 * 16]
+    pmaddwd     m6,             m3,     [r3 + 5 * 16]
+
+    packssdw    m4,             m6
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m5,             m4
+    mova        [r0 + 192],     m5
+    psrldq      m5,             4
+    movd        [r0 + 240],     m5              ;mode 17 row 0
+
+; mode 15
+
+    pmaddwd     m5,             m1,     [r3 + 8 * 16]
+    pmaddwd     m6,             m3,     [r2 + 7 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    pmaddwd     m6,             m3,     [r3 + 6 * 16]
+
+    mova        m0,             m3
+    punpcklwd   m7,             m3
+    pslldq      m0,             4
+    pand        m7,             [pb_0000000000000F0F]
+    por         m0,             m7              ;m0 = word[4, 2, 2, 0, 0, 9, 9, A]
+
+    pmaddwd     m4,             m0,     [r2 + 5 * 16]
+
+    packssdw    m6,             m4
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    packuswb    m5,             m6
+    mova        [r0 + 208],     m5
+
+; mode 16
+
+    pmaddwd     m5,             m1,     [r3 + 4 * 16]
+    pmaddwd     m6,             m3,     [r2 - 1 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    pmaddwd     m3,             [r3 - 6 * 16]
+
+    movd        m6,             [r1 + 3]
+    pand        m0,             [pw_FFFFFFFFFFFFFFF0]
+    pand        m6,             [pb_000000000000000F]
+    por         m0,             m6              ;m0 = word[3, 2, 2, 0, 0, 9, 9, A]
+
+    pmaddwd     m0,             [r3 + 5 * 16]
+    packssdw    m3,             m0
+    paddw       m3,             m2
+    psraw       m3,             5
+
+    packuswb    m5,             m3
+    mova        [r0 + 224],     m5
+
+; mode 17
+
+    movd        m4,             [r1 + 1]
+    punpcklwd   m4,             m1
+    pand        m4,             [pb_0000000000000F0F]
+    pslldq      m1,             4
+    por         m1,             m4              ;m1 = word[1, 0, 0, 9, 9, A, A, B]
+
+    pmaddwd     m6,             m1,     [r3 + 5 * 16]
+
+    packssdw    m6,             m6
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    movd        m5,             [r1 + 2]
+    punpcklwd   m5,             m1
+    pand        m5,             [pb_0000000000000F0F]
+    pslldq      m1,             4
+    por         m1,             m5              ;m1 = word[2, 1, 1, 0, 0, 9, 9, A]
+
+    pmaddwd     m4,             m1,     [r2 - 5 * 16]
+
+    punpcklwd   m7,             m1
+    pand        m7,             [pb_0000000000000F0F]
+    pslldq      m1,             4
+    por         m1,             m7              ;m1 = word[4, 2, 2, 1, 1, 0, 0, 9]
+
+    pmaddwd     m1,             [r2 + 1 * 16]
+    packssdw    m4,             m1
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m6,             m4
+    movd        [r0 + 244],     m6
+    psrldq      m6,             8
+    movh        [r0 + 248],     m6
+
+; mode 18
+
+    movh        m1,             [r1]
+    movd        [r0 + 256],     m1              ;byte[0, 1, 2, 3]
+
+    movh        m3,             [r1 + 2]
+    punpcklqdq  m3,             m1
+    psrldq      m3,             7
+    movd        [r0 + 260],     m3              ;byte[2, 1, 0, 9]
+
+    movh        m4,             [r1 + 3]
+    punpcklqdq  m4,             m3
+    psrldq      m4,             7
+    movd        [r0 + 264],     m4              ;byte[1, 0, 9, A]
+
+    movh        m0,             [r1 + 4]
+    punpcklqdq  m0,             m4
+    psrldq      m0,             7
+    movd        [r0 + 268],     m0              ;byte[0, 9, A, B]
+
+; mode 19
+
+    pxor        m7,             m7
+    punpcklbw   m4,             m3
+    punpcklbw   m3,             m1
+    punpcklbw   m1,             m1
+    punpcklbw   m4,             m7              ;m4 = word[A, 9, 9, 0, 0, 1, 1, 2]
+    punpcklbw   m3,             m7              ;m3 = word[9, 0, 0, 1, 1, 2, 2, 3]
+    psrldq      m1,             1
+    punpcklbw   m1,             m7              ;m1 = word[0, 1, 1, 2, 2, 3, 3, 4]
+
+    pmaddwd     m6,             m1,     [r3 - 1 * 16]
+    pmaddwd     m7,             m3,     [r3 + 5 * 16]
+
+    packssdw    m6,             m7
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    pmaddwd     m5,             m4,     [r2 - 5 * 16]
+
+    movd        m7,             [r1 + 12]
+    punpcklwd   m7,             m4
+    pand        m7,             [pb_0000000000000F0F]
+    pslldq      m4,             4
+    por         m4,             m7              ;m4 = word[C, A, A, 9, 9, 0, 0, 1]
+
+    pmaddwd     m4,             [r2 + 1 * 16]
+    packssdw    m5,             m4
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    packuswb    m6,             m5
+    mova        [r0 + 272],     m6
+    movd        [r0 + 324],     m6              ;mode 22 row 1
+
+; mode 20
+
+    pmaddwd     m5,             m1,     [r3 + 4 * 16]
+
+    movd        m4,             [r1 + 10]
+    pand        m3,             [pw_FFFFFFFFFFFFFFF0]
+    pand        m4,             [pb_000000000000000F]
+    por         m3,             m4              ;m3 = word[A, 0, 0, 1, 1, 2, 2, 3]
+
+    pmaddwd     m6,             m3,     [r2 - 1 * 16]
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    pmaddwd     m4,             m3,     [r3 - 6 * 16]
+
+    punpcklwd   m0,             m3
+    pand        m0,             [pb_0000000000000F0F]
+    mova        m6,             m3
+    pslldq      m6,             4
+    por         m0,             m6              ;m0 = word[B, A, A, 0, 0, 1, 1, 2]
+
+    pmaddwd     m6,             m0,     [r3 + 5 * 16]
+
+    packssdw    m4,             m6
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    packuswb    m5,             m4
+    mova        [r0 + 288],     m5
+
+; mode 21
+
+    pmaddwd     m4,             m1,     [r3 + 8 * 16]
+    pmaddwd     m6,             m3,     [r2 + 7 * 16]
+
+    packssdw    m4,             m6
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    pmaddwd     m5,             m3,     [r3 + 6 * 16]
+
+    pand        m0,             [pw_FFFFFFFFFFFFFFF0]
+    pand        m7,             [pb_000000000000000F]
+    por         m0,             m7              ;m0 = word[C, A, A, 0, 0, 1, 1, 2]
+
+    pmaddwd     m0,             [r2 + 5 * 16]
+    packssdw    m5,             m0
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    packuswb    m4,             m5
+    mova        [r0 + 304],     m4
+
+; mode 22
+
+    pmaddwd     m4,             m1,     [r2 - 4 * 16]
+    packssdw    m4,             m4
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    mova        m0,             [r3 + 5 * 16]
+    pmaddwd     m5,             m3,     [r2 + 2 * 16]
+    pmaddwd     m6,             m3,     m0
+
+    packssdw    m5,             m6
+    paddw       m5,             m2
+    psraw       m5,             5
+
+    packuswb    m4,             m5
+    movd        [r0 + 320],     m4
+    psrldq      m4,             8
+    movh        [r0 + 328],     m4
+
+; mode 23
+
+    pmaddwd     m4,             m1,     [r2 + 0 * 16]
+    pmaddwd     m5,             m1,     [r3 + 7 * 16]
+
+    packssdw    m4,             m5
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    pmaddwd     m6,             m1,     [r3 - 2 * 16]
+
+    pand        m3,             [pw_FFFFFFFFFFFFFFF0]
+    por         m3,             m7              ;m3 = word[C, 0, 0, 1, 1, 2, 2, 3]
+
+    pmaddwd     m3,             [r2 + 5 * 16]
+    packssdw    m6,             m3
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    packuswb    m4,             m6
+    mova        [r0 + 336],     m4
+
+; mode 24
+
+    pmaddwd     m4,             m1,     [r2 + 4 * 16]
+    pmaddwd     m5,             m1,     [r2 - 1 * 16]
+
+    packssdw    m4,             m5
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    pmaddwd     m6,             m1,     [r2 - 6 * 16]
+    pmaddwd     m0,             m1
+
+    packssdw    m6,             m0
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    packuswb    m4,             m6
+    mova        [r0 + 352],     m4
+
+; mode 25
+
+    pmaddwd     m4,             m1,     [r2 + 7 * 16]
+    pmaddwd     m5,             m1,     [r2 + 5 * 16]
+
+    packssdw    m4,             m5
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    pmaddwd     m6,             m1,     [r2 + 3 * 16]
+    pmaddwd     m1,             [r2 + 1 * 16]
+
+    packssdw    m6,             m1
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    packuswb    m4,             m6
+    mova        [r0 + 368],     m4
+
+; mode 27
+
+    movh        m0,             [r1 + 1]
+    pxor        m7,             m7
+    punpcklbw   m0,             m0
+    psrldq      m0,             1
+    movh        m1,             m0
+    psrldq      m0,             2
+    movh        m3,             m0
+    psrldq      m0,             2
+    punpcklbw   m1,             m7              ;m1 = word[1, 2, 2, 3, 3, 4, 4, 5]
+    punpcklbw   m3,             m7              ;m3 = word[2, 3, 3, 4, 4, 5, 5, 6]
+    punpcklbw   m0,             m7              ;m0 = word[3, 4, 4, 5, 5, 6, 6, 7]
+
+    mova        m7,             [r3 - 3 * 16]
+
+    pmaddwd     m4,             m1,     [r3 - 5 * 16]
+    pmaddwd     m5,             m1,     m7
+
+    packssdw    m4,             m5
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    pmaddwd     m6,             m1,     [r3 - 1 * 16]
+    pmaddwd     m5,             m1,     [r3 + 1 * 16]
+
+    packssdw    m6,             m5
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    packuswb    m4,             m6
+    mova        [r0 + 400],     m4
+
+; mode 28
+
+    pmaddwd     m4,             m1,     [r3 - 2 * 16]
+    pmaddwd     m5,             m1,     [r3 + 3 * 16]
+
+    packssdw    m4,             m5
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    pmaddwd     m6,             m1,     [r3 + 8 * 16]
+    pmaddwd     m5,             m1,     [r2 - 3 * 16]
+
+    packssdw    m6,             m5
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    packuswb    m4,             m6
+    mova        [r0 + 416],     m4
+
+; mode 29
+
+    pmaddwd     m4,             m1,     [r3 + 2 * 16]
+    pmaddwd     m6,             m1,     [r2 - 5 * 16]
+
+    packssdw    m4,             m6
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    pmaddwd     m6,             m1,     [r2 + 4 * 16]
+    pmaddwd     m5,             m3,     m7
+
+    packssdw    m6,             m5
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    packuswb    m4,             m6
+    mova        [r0 + 432],     m4
+
+; mode 30
+
+    pmaddwd     m4,             m1,     [r3 + 6 * 16]
+    pmaddwd     m5,             m1,     [r2 + 3 * 16]
+
+    packssdw    m4,             m5
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    pmaddwd     m6,             m3,     [r3 + 0 * 16]
+    pmaddwd     m5,             m3,     [r2 - 3 * 16]
+
+    packssdw    m6,             m5
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    packuswb    m4,             m6
+    mova        [r0 + 448],     m4
+    psrldq      m4,             4
+    movh        [r0 + 496],     m4              ;mode 33 row 0
+    psrldq      m4,             8
+    movd        [r0 + 500],     m4              ;mode 33 row 1
+
+; mode 31
+
+    pmaddwd     m4,             m1,     [r2 - 6 * 16]
+    pmaddwd     m5,             m3,     [r3 - 5 * 16]
+
+    packssdw    m4,             m5
+    paddw       m4,             m2
+    psraw       m4,             5
+
+    pmaddwd     m6,             m3,     [r2 - 4 * 16]
+    pmaddwd     m7,             m0
+
+    packssdw    m6,             m7
+    paddw       m6,             m2
+    psraw       m6,             5
+
+    packuswb    m4,             m6
+    mova        [r0 + 464],     m4
+
+; mode 32
+
+    pmaddwd     m1,             [r2 - 2 * 16]
+    pmaddwd     m5,             m3,     [r3 + 3 * 16]
+
+    packssdw    m1,             m5
+    paddw       m1,             m2
+    psraw       m1,             5
+
+    pmaddwd     m3,             [r2 + 8 * 16]
+    pmaddwd     m5,             m0,     [r2 - 3 * 16]
+    packssdw    m3,             m5
+    paddw       m3,             m2
+    psraw       m3,             5
+
+    packuswb    m1,             m3
+    mova        [r0 + 480],     m1
+
+; mode 33
+
+    pmaddwd     m0,             [r3 + 7 * 16]
+    pxor        m7,             m7
+    movh        m4,             [r1 + 4]
+    punpcklbw   m4,             m4
+    psrldq      m4,             1
+    punpcklbw   m4,             m7
+
+    pmaddwd     m4,             [r3 + 1 * 16]
+
+    packssdw    m0,             m4
+    paddw       m0,             m2
+    psraw       m0,             5
+
+    packuswb    m0,             m0
+    movh        [r0 + 504],     m0
+
+; mode 34
+
+    movh        m7,             [r1 + 2]
+    movd        [r0 + 512],     m7              ;byte[2, 3, 4, 5]
+
+    psrldq      m7,             1
+    movd        [r0 + 516],     m7              ;byte[3, 4, 5, 6]
+
+    psrldq      m7,             1
+    movd        [r0 + 520],     m7              ;byte[4, 5, 6, 7]
+
+    psrldq      m7,             1
+    movd        [r0 + 524],     m7              ;byte[5, 6, 7, 8]
+
+RET

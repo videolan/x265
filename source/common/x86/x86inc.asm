@@ -72,7 +72,7 @@
     %define mangle(x) x
 %endif
 
-%macro SECTION_RODATA 0-1 16
+%macro SECTION_RODATA 0-1 32
     SECTION .rodata align=%1
 %endmacro
 
@@ -715,6 +715,7 @@ BRANCH_INSTR jz, je, jnz, jne, jl, jle, jnl, jnle, jg, jge, jng, jnge, ja, jae, 
     %else
         global %1
     %endif
+    ALIGN 32
     %1: %2
 %endmacro
 

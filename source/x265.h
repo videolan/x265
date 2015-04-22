@@ -522,11 +522,20 @@ typedef struct x265_param
      * performance. Value must be between 1 and 16, default is 3 */
     int       maxNumReferences;
 
+    /* Allow libx265 to emit HEVC bitstreams which do not meet strict level
+     * requirements. Defaults to false */
+    int       bAllowNonConformance;
+
     /*== Bitstream Options ==*/
 
     /* Flag indicating whether VPS, SPS and PPS headers should be output with
      * each keyframe. Default false */
     int       bRepeatHeaders;
+
+    /* Flag indicating whether the encoder should generate start codes (Annex B
+     * format) or length (file format) before NAL units. Default true, Annex B.
+     * Muxers should set this to the correct value */
+    int       bAnnexB;
 
     /* Flag indicating whether the encoder should emit an Access Unit Delimiter
      * NAL at the start of every access unit. Default false */
@@ -988,6 +997,12 @@ typedef struct x265_param
         /* Enable stricter conditions to check bitrate deviations in CBR mode. May compromise 
          * quality to maintain bitrate adherence */
         int bStrictCbr;
+
+        /* Enable adaptive quantization at CU granularity. This parameter specifies 
+         * the minimum CU size at which QP can be adjusted, i.e. Quantization Group 
+         * (QG) size. Allowed values are 64, 32, 16 provided it falls within the 
+         * inclusuve range [maxCUSize, minCUSize]. Experimental, default: maxCUSize*/
+        uint32_t qgSize;
     } rc;
 
     /*== Video Usability Information ==*/
@@ -1084,6 +1099,15 @@ typedef struct x265_param
          * conformance cropping window to further crop the displayed window */
         int defDispWinBottomOffset;
     } vui;
+
+    /* SMPTE ST 2086 mastering display color volume SEI info, specified as a
+     * string which is parsed when the stream header SEI are emitted. The string
+     * format is "Y(%hu,%hu)U(%hu,%hu)V(%hu,%hu)WP(%hu,%hu)L(%u,%u)" where %hu
+     * are unsigned 16bit integers and %u are unsigned 32bit integers. The SEI
+     * includes X,Y display primaries for YUV channels, white point X,Y and
+     * max,min luminance values. */
+    const char* masteringDisplayColorVolume;
+
 } x265_param;
 
 /* x265_param_alloc:

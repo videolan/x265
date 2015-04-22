@@ -106,7 +106,7 @@ void Encoder::create()
     bool allowPools = !p->numaPools || strcmp(p->numaPools, "none");
 
     // Trim the thread pool if --wpp, --pme, and --pmode are disabled
-    if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation)
+    if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation && !p->lookaheadSlices)
         allowPools = false;
 
     if (!p->frameNumThreads)
@@ -140,9 +140,11 @@ void Encoder::create()
             x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --pme disabled\n");
         if (p->bDistributeModeAnalysis)
             x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --pmode disabled\n");
+        if (p->lookaheadSlices)
+            x265_log(p, X265_LOG_WARNING, "No thread pool allocated, --lookahead-slices disabled\n");
 
         // disable all pool features if the thread pool is disabled or unusable.
-        p->bEnableWavefront = p->bDistributeModeAnalysis = p->bDistributeMotionEstimation = 0;
+        p->bEnableWavefront = p->bDistributeModeAnalysis = p->bDistributeMotionEstimation = p->lookaheadSlices = 0;
     }
 
     char buf[128];
@@ -159,7 +161,10 @@ void Encoder::create()
     x265_log(p, X265_LOG_INFO, "frame threads / pool features       : %d / %s\n", p->frameNumThreads, buf);
 
     for (int i = 0; i < m_param->frameNumThreads; i++)
+    {
         m_frameEncoder[i] = new FrameEncoder;
+        m_frameEncoder[i]->m_nalList.m_annexB = !!m_param->bAnnexB;
+    }
 
     if (m_numPools)
     {
@@ -287,15 +292,17 @@ void Encoder::create()
     m_aborted |= parseLambdaFile(m_param);
 
     m_encodeStartTime = x265_mdate();
+
+    m_nalList.m_annexB = !!m_param->bAnnexB;
 }
 
-void Encoder::stop()
+void Encoder::stopJobs()
 {
     if (m_rateControl)
         m_rateControl->terminate(); // unblock all blocked RC calls
 
     if (m_lookahead)
-        m_lookahead->stop();
+        m_lookahead->stopJobs();
     
     for (int i = 0; i < m_param->frameNumThreads; i++)
     {
@@ -309,7 +316,7 @@ void Encoder::stop()
     }
 
     if (m_threadPool)
-        m_threadPool->stop();
+        m_threadPool->stopWorkers();
 }
 
 void Encoder::destroy()
@@ -364,6 +371,7 @@ void Encoder::destroy()
         free((void*)m_param->scalingLists);
         free(m_param->csvfn);
         free(m_param->numaPools);
+        free((void*)m_param->masteringDisplayColorVolume);
 
         X265_FREE(m_param);
     }
@@ -1433,6 +1441,20 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
+    if (m_param->masteringDisplayColorVolume)
+    {
+        SEIMasteringDisplayColorVolume mdsei;
+        if (mdsei.parse(m_param->masteringDisplayColorVolume))
+        {
+            bs.resetBits();
+            mdsei.write(bs, m_sps);
+            bs.writeByteAlignment();
+            list.serialize(NAL_UNIT_PREFIX_SEI, bs);
+        }
+        else
+            x265_log(m_param, X265_LOG_WARNING, "unable to parse mastering display color volume info\n");
+    }
+
     if (m_param->bEmitInfoSEI)
     {
         char *opts = x265_param2string(m_param);
@@ -1562,7 +1584,8 @@ void Encoder::initPPS(PPS *pps)
     if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
     {
         pps->bUseDQP = true;
-        pps->maxCuDQPDepth = 0; /* TODO: make configurable? */
+        pps->maxCuDQPDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
+        X265_CHECK(pps->maxCuDQPDepth <= 2, "max CU DQP depth cannot be greater than 2\n");
     }
     else
     {
@@ -1791,6 +1814,23 @@ void Encoder::configure(x265_param *p)
         p->analysisMode = X265_ANALYSIS_OFF;
         x265_log(p, X265_LOG_WARNING, "Analysis save and load mode not supported for distributed mode analysis\n");
     }
+
+    bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
+    if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
+    {
+        if (p->rc.qgSize < X265_MAX(16, p->minCUSize))
+        {
+            p->rc.qgSize = X265_MAX(16, p->minCUSize);
+            x265_log(p, X265_LOG_WARNING, "QGSize should be greater than or equal to 16 and minCUSize, setting QGSize = %d\n", p->rc.qgSize);
+        }
+        if (p->rc.qgSize > p->maxCUSize)
+        {
+            p->rc.qgSize = p->maxCUSize;
+            x265_log(p, X265_LOG_WARNING, "QGSize should be less than or equal to maxCUSize, setting QGSize = %d\n", p->rc.qgSize);
+        }
+    }
+    else
+        m_param->rc.qgSize = p->maxCUSize;
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)
