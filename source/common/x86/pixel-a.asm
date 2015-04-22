@@ -10915,4 +10915,236 @@ cglobal pixel_satd_32x64, 4,8,10         ; if WIN64 && cpuflag(avx2)
     movd            eax, xm0
     RET
 
+cglobal pixel_satd_48x64, 4,8,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_64x16, 4,8,10         ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_64x32, 4,8,10         ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_64x48, 4,8,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_64x64, 4,8,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
 %endif  ; if ARCH_X86_64 == 1
