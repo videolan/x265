@@ -580,12 +580,12 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     uint16_t coeffFlag[MLS_GRP_NUM];    // bit mask map for non-zero coeff
 
 #if CHECKED_BUILD || _DEBUG
-    // clean output buffer, the asm version of findPosLast Never output anything after latest non-zero coeff group
+    // clean output buffer, the asm version of scanPosLast Never output anything after latest non-zero coeff group
     memset(coeffNum, 0, sizeof(coeffNum));
     memset(coeffSign, 0, sizeof(coeffNum));
     memset(coeffFlag, 0, sizeof(coeffNum));
 #endif
-    const int lastScanPos = primitives.findPosLast(codeParams.scan, dstCoeff, coeffSign, coeffFlag, coeffNum, numSig);
+    const int lastScanPos = primitives.scanPosLast(codeParams.scan, dstCoeff, coeffSign, coeffFlag, coeffNum, numSig, g_scan4x4[codeParams.scanType], trSize);
     const int cgLastScanPos = (lastScanPos >> LOG2_SCAN_SET_SIZE);
 
 

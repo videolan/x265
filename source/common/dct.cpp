@@ -752,7 +752,7 @@ void denoiseDct_c(int16_t* dctCoef, uint32_t* resSum, const uint16_t* offset, in
     }
 }
 
-int findPosLast_c(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig)
+int scanPosLast_c(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* /*scanCG4x4*/, const int /*trSize*/)
 {
     memset(coeffNum, 0, MLS_GRP_NUM * sizeof(*coeffNum));
     memset(coeffFlag, 0, MLS_GRP_NUM * sizeof(*coeffFlag));
@@ -848,7 +848,7 @@ void setupDCTPrimitives_c(EncoderPrimitives& p)
     p.cu[BLOCK_16x16].copy_cnt = copy_count<16>;
     p.cu[BLOCK_32x32].copy_cnt = copy_count<32>;
 
-    p.findPosLast = findPosLast_c;
+    p.scanPosLast = scanPosLast_c;
     p.findPosFirstLast = findPosFirstLast_c;
 }
 }

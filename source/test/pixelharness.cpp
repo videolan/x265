@@ -1200,7 +1200,7 @@ bool PixelHarness::check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt)
     return true;
 }
 
-bool PixelHarness::check_findPosLast(findPosLast_t ref, findPosLast_t opt)
+bool PixelHarness::check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt)
 {
     ALIGN_VAR_16(coeff_t, ref_src[32 * 32 + ITERS * 2]);
     uint8_t ref_coeffNum[MLS_GRP_NUM], opt_coeffNum[MLS_GRP_NUM];      // value range[0, 16]
@@ -1240,10 +1240,12 @@ bool PixelHarness::check_findPosLast(findPosLast_t ref, findPosLast_t opt)
         for (int j = 0; j < 1 << (2 * (rand_scan_size + 2)); j++)
             rand_numCoeff += (ref_src[i + j] != 0);
 
+        const int trSize = (1 << (rand_scan_size + 2));
         const uint16_t* const scanTbl = g_scanOrder[rand_scan_type][rand_scan_size];
+        const uint16_t* const scanTblCG4x4 = g_scan4x4[rand_scan_type];
 
-        int ref_scanPos = ref(scanTbl, ref_src + i, ref_coeffSign, ref_coeffFlag, ref_coeffNum, rand_numCoeff);
-        int opt_scanPos = (int)checked(opt, scanTbl, ref_src + i, opt_coeffSign, opt_coeffFlag, opt_coeffNum, rand_numCoeff);
+        int ref_scanPos = ref(scanTbl, ref_src + i, ref_coeffSign, ref_coeffFlag, ref_coeffNum, rand_numCoeff, scanTblCG4x4, trSize);
+        int opt_scanPos = (int)checked(opt, scanTbl, ref_src + i, opt_coeffSign, opt_coeffFlag, opt_coeffNum, rand_numCoeff, scanTblCG4x4, trSize);
 
         if (ref_scanPos != opt_scanPos)
             return false;
@@ -1844,11 +1846,11 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.findPosLast)
+    if (opt.scanPosLast)
     {
-        if (!check_findPosLast(ref.findPosLast, opt.findPosLast))
+        if (!check_scanPosLast(ref.scanPosLast, opt.scanPosLast))
         {
-            printf("findPosLast failed!\n");
+            printf("scanPosLast failed!\n");
             return false;
         }
     }
@@ -2230,13 +2232,13 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(opt.propagateCost, ref.propagateCost, ibuf1, ushort_test_buff[0], int_test_buff[0], ushort_test_buff[0], int_test_buff[0], double_test_buff[0], 80);
     }
 
-    if (opt.findPosLast)
+    if (opt.scanPosLast)
     {
-        HEADER0("findPosLast");
+        HEADER0("scanPosLast");
         coeff_t coefBuf[32 * 32];
         memset(coefBuf, 0, sizeof(coefBuf));
         memset(coefBuf + 32 * 31, 1, 32 * sizeof(coeff_t));
-        REPORT_SPEEDUP(opt.findPosLast, ref.findPosLast, g_scanOrder[SCAN_DIAG][NUM_SCAN_SIZE - 1], coefBuf, (uint16_t*)sbuf1, (uint16_t*)sbuf2, (uint8_t*)psbuf1, 32);
+        REPORT_SPEEDUP(opt.scanPosLast, ref.scanPosLast, g_scanOrder[SCAN_DIAG][NUM_SCAN_SIZE - 1], coefBuf, (uint16_t*)sbuf1, (uint16_t*)sbuf2, (uint8_t*)psbuf1, 32, g_scan4x4[SCAN_DIAG], 32);
     }
 
     if (opt.findPosFirstLast)

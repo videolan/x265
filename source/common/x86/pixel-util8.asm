@@ -5659,7 +5659,7 @@ cglobal pixel_var_16x16, 2,4,7
 
 %if ARCH_X86_64 == 1
 INIT_CPUFLAGS bmi2
-cglobal findPosLast_x64, 5,12
+cglobal scanPosLast_x64, 5,12
     mov         r5d, r5m
     xor         r11d, r11d                  ; cgIdx
     xor         r7d, r7d                    ; tmp for non-zero flag
@@ -5714,7 +5714,7 @@ cglobal findPosLast_x64, 5,12
     %error Unsupport platform X86_32
 %endif
 INIT_CPUFLAGS
-cglobal findPosLast_x64, 5,12
+cglobal scanPosLast_x64, 5,12
     mov         r10, r3mp
     movifnidn   t0, r0mp
     mov         r5d, r5m

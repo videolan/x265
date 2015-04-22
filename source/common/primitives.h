@@ -179,7 +179,7 @@ typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* 
 
 typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
 
-typedef int (*findPosLast_t)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig);
+typedef int (*scanPosLast_t)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* scanCG4x4, const int trSize);
 typedef uint32_t (*findPosFirstLast_t)(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16]);
 
 /* Function pointers to optimized encoder primitives. Each pointer can reference
@@ -291,7 +291,7 @@ struct EncoderPrimitives
     weightp_pp_t          weight_pp;
 
 
-    findPosLast_t         findPosLast;
+    scanPosLast_t         scanPosLast;
     findPosFirstLast_t    findPosFirstLast;
 
     /* There is one set of chroma primitives per color space. An encoder will
