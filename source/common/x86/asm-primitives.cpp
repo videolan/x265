@@ -873,15 +873,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         ALL_LUMA_TU_S(calcresidual, getResidual, sse2);
         ALL_LUMA_TU_S(transpose, transpose, sse2);
 
-        p.cu[BLOCK_4x4].intra_pred[DC_IDX] = x265_intra_pred_dc4_sse2;
-        p.cu[BLOCK_8x8].intra_pred[DC_IDX] = x265_intra_pred_dc8_sse2;
-        p.cu[BLOCK_16x16].intra_pred[DC_IDX] = x265_intra_pred_dc16_sse2;
-        p.cu[BLOCK_32x32].intra_pred[DC_IDX] = x265_intra_pred_dc32_sse2;
-
-        p.cu[BLOCK_4x4].intra_pred[PLANAR_IDX] = x265_intra_pred_planar4_sse2;
-        p.cu[BLOCK_8x8].intra_pred[PLANAR_IDX] = x265_intra_pred_planar8_sse2;
-        p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = x265_intra_pred_planar16_sse2;
-        p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = x265_intra_pred_planar32_sse2;
+        ALL_LUMA_TU_S(intra_pred[PLANAR_IDX], intra_pred_planar, sse2);
+        ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse2);
 
         p.cu[BLOCK_4x4].intra_pred[2] = x265_intra_pred_ang4_2_sse2;
         p.cu[BLOCK_4x4].intra_pred[3] = x265_intra_pred_ang4_3_sse2;
@@ -1342,15 +1335,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, sse2);
         ALL_LUMA_TU_S(ssd_s, pixel_ssd_s_, sse2);
 
-        p.cu[BLOCK_4x4].intra_pred[DC_IDX] = x265_intra_pred_dc4_sse2;
-        p.cu[BLOCK_8x8].intra_pred[DC_IDX] = x265_intra_pred_dc8_sse2;
-        p.cu[BLOCK_16x16].intra_pred[DC_IDX] = x265_intra_pred_dc16_sse2;
-        p.cu[BLOCK_32x32].intra_pred[DC_IDX] = x265_intra_pred_dc32_sse2;
-
-        p.cu[BLOCK_4x4].intra_pred[PLANAR_IDX] = x265_intra_pred_planar4_sse2;
-        p.cu[BLOCK_8x8].intra_pred[PLANAR_IDX] = x265_intra_pred_planar8_sse2;
-        p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = x265_intra_pred_planar16_sse2;
-        p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = x265_intra_pred_planar32_sse2;
+        ALL_LUMA_TU_S(intra_pred[PLANAR_IDX], intra_pred_planar, sse2);
+        ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse2);
 
         p.cu[BLOCK_4x4].intra_pred[2] = x265_intra_pred_ang4_2_sse2;
         p.cu[BLOCK_4x4].intra_pred[3] = x265_intra_pred_ang4_3_sse2;
