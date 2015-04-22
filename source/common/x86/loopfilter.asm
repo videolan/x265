@@ -582,6 +582,72 @@ cglobal saoCuOrgE3, 3, 6, 8
     movhps          [r1 + r5 - 1], xm7
     RET
 
+INIT_YMM avx2
+cglobal saoCuOrgE3_32, 3, 6, 8
+    mov             r3d,  r3m
+    mov             r4d,  r4m
+    mov             r5d,  r5m
+
+    ; save latest 2 pixels for case startX=1 or left_endX=15
+    movq            xm7,  [r0 + r5]
+    movhps          xm7,  [r1 + r5 - 1]
+
+    ; move to startX+1
+    inc             r4d
+    add             r0,   r4
+    add             r1,   r4
+    sub             r5d,  r4d
+    pxor            m0,   m0                      ; m0 = 0
+    mova            m6,   [pb_2]                  ; m6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    vbroadcasti128  m5,   [r2]                    ; m5 = m_iOffsetEo
+
+.loop:
+    movu            m1,   [r0]                    ; m1 = pRec[x]
+    movu            m2,   [r0 + r3]               ; m2 = pRec[x + iStride]
+
+    psubusb         m3,   m2,   m1
+    psubusb         m4,   m1,   m2
+    pcmpeqb         m3,   m0
+    pcmpeqb         m4,   m0
+    pcmpeqb         m2,   m1
+
+    pabsb           m3,   m3
+    por             m4,   m3
+    pandn           m2,   m4                      ; m2 = iSignDown
+
+    movu            m3,   [r1]                    ; m3 = m_iUpBuff1
+
+    paddb           m3,   m2
+    paddb           m3,   m6                      ; m3 = uiEdgeType
+
+    pshufb          m4,   m5,   m3
+
+    psubb           m3,   m0,   m2
+    movu            [r1 - 1],   m3
+
+    pmovzxbw        m2,   xm1
+    vextracti128    xm1,  m1,   1
+    pmovzxbw        m1,   xm1
+    pmovsxbw        m3,   xm4
+    vextracti128    xm4,  m4,   1
+    pmovsxbw        m4,   xm4
+
+    paddw           m2,   m3
+    paddw           m1,   m4
+    packuswb        m2,   m1
+    vpermq          m2,   m2,   11011000b
+    movu            [r0], m2
+
+    add             r0,   32
+    add             r1,   32
+    sub             r5,   32
+    jg             .loop
+
+    ; restore last pixels (up to 2)
+    movq            [r0 + r5],     xm7
+    movhps          [r1 + r5 - 1], xm7
+    RET
+
 ;=====================================================================================
 ; void saoCuOrgB0(pixel* rec, const pixel* offset, int lcuWidth, int lcuHeight, int stride)
 ;=====================================================================================
