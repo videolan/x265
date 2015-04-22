@@ -4022,6 +4022,50 @@ cglobal scale2D_64to32, 3, 4, 8, dest, src, stride
     RET
 %endif
 
+;-----------------------------------------------------------------
+; void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
+;-----------------------------------------------------------------
+%if HIGH_BIT_DEPTH
+INIT_YMM avx2
+cglobal scale2D_64to32, 3, 4, 5, dest, src, stride
+    mov         r3d,     32
+    add         r2d,     r2d
+    mova        m4,      [pw_2000]
+
+.loop:
+    movu        m0,      [r1]
+    movu        m1,      [r1 + 1 * mmsize]
+    movu        m2,      [r1 + r2]
+    movu        m3,      [r1 + r2 + 1 * mmsize]
+
+    paddw       m0,      m2
+    paddw       m1,      m3
+    phaddw      m0,      m1
+
+    pmulhrsw    m0,      m4
+    vpermq      m0,      m0, q3120
+    movu        [r0],    m0
+
+    movu        m0,      [r1 + 2 * mmsize]
+    movu        m1,      [r1 + 3 * mmsize]
+    movu        m2,      [r1 + r2 + 2 * mmsize]
+    movu        m3,      [r1 + r2 + 3 * mmsize]
+
+    paddw       m0,      m2
+    paddw       m1,      m3
+    phaddw      m0,      m1
+
+    pmulhrsw    m0,      m4
+    vpermq      m0,      m0, q3120
+    movu        [r0 + mmsize], m0
+
+    add         r0,      64
+    lea         r1,      [r1 + 2 * r2]
+    dec         r3d
+    jnz         .loop
+    RET
+%else
+
 INIT_YMM avx2
 cglobal scale2D_64to32, 3, 5, 8, dest, src, stride
     mov         r3d,     16
@@ -4121,6 +4165,7 @@ cglobal scale2D_64to32, 3, 5, 8, dest, src, stride
     dec         r3d
     jnz         .loop
     RET
+%endif
 
 ;-----------------------------------------------------------------------------
 ; void pixel_sub_ps_4x4(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);

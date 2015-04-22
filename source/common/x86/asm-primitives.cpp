@@ -1196,6 +1196,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.dequant_normal  = x265_dequant_normal_avx2;
 
         p.scale1D_128to64 = x265_scale1D_128to64_avx2;
+        p.scale2D_64to32 = x265_scale2D_64to32_avx2;
         // p.weight_pp = x265_weight_pp_avx2; fails tests
 
         p.cu[BLOCK_16x16].calcresidual = x265_getResidual16_avx2;
