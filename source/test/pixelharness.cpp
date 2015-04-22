@@ -1255,7 +1255,7 @@ bool PixelHarness::check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt)
 
         const int trSize = (1 << (rand_scan_size + 2));
         const uint16_t* const scanTbl = g_scanOrder[rand_scan_type][rand_scan_size];
-        const uint16_t* const scanTblCG4x4 = g_scan4x4[rand_scan_type];
+        const uint16_t* const scanTblCG4x4 = g_scan4x4[rand_scan_size <= (MDCS_LOG2_MAX_SIZE - 2) ? rand_scan_type : SCAN_DIAG];
 
         int ref_scanPos = ref(scanTbl, ref_src + i, ref_coeffSign, ref_coeffFlag, ref_coeffNum, rand_numCoeff, scanTblCG4x4, trSize);
         int opt_scanPos = (int)checked(opt, scanTbl, ref_src + i, opt_coeffSign, opt_coeffFlag, opt_coeffNum, rand_numCoeff, scanTblCG4x4, trSize);
