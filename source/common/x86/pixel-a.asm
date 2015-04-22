@@ -10619,6 +10619,146 @@ cglobal calc_satd_16x8    ; function to compute satd cost for 16 columns, 8 rows
     paddd               m9, m0
     ret
 
+cglobal calc_satd_16x4    ; function to compute satd cost for 16 columns, 4 rows
+    pxor                m6, m6
+    vbroadcasti128      m0, [r0]
+    vbroadcasti128      m4, [r2]
+    vbroadcasti128      m1, [r0 + r1]
+    vbroadcasti128      m5, [r2 + r3]
+    pmaddubsw           m4, m7
+    pmaddubsw           m0, m7
+    pmaddubsw           m5, m7
+    pmaddubsw           m1, m7
+    psubw               m0, m4
+    psubw               m1, m5
+    vbroadcasti128      m2, [r0 + r1 * 2]
+    vbroadcasti128      m4, [r2 + r3 * 2]
+    vbroadcasti128      m3, [r0 + r4]
+    vbroadcasti128      m5, [r2 + r5]
+    pmaddubsw           m4, m7
+    pmaddubsw           m2, m7
+    pmaddubsw           m5, m7
+    pmaddubsw           m3, m7
+    psubw               m2, m4
+    psubw               m3, m5
+    paddw               m4, m0, m1
+    psubw               m1, m1, m0
+    paddw               m0, m2, m3
+    psubw               m3, m2
+    paddw               m2, m4, m0
+    psubw               m0, m4
+    paddw               m4, m1, m3
+    psubw               m3, m1
+    pabsw               m2, m2
+    pabsw               m0, m0
+    pabsw               m4, m4
+    pabsw               m3, m3
+    pblendw             m1, m2, m0, 10101010b
+    pslld               m0, 16
+    psrld               m2, 16
+    por                 m0, m2
+    pmaxsw              m1, m0
+    paddw               m6, m1
+    pblendw             m2, m4, m3, 10101010b
+    pslld               m3, 16
+    psrld               m4, 16
+    por                 m3, m4
+    pmaxsw              m2, m3
+    paddw               m6, m2
+    vextracti128        xm0, m6, 1
+    pmovzxwd            m6, xm6
+    pmovzxwd            m0, xm0
+    paddd               m8, m6
+    paddd               m9, m0
+    ret
+
+cglobal pixel_satd_16x4, 4,6,10         ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+
+    call            calc_satd_16x4
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_16x12, 4,6,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+
+    call            calc_satd_16x8
+    call            calc_satd_16x4
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_16x32, 4,6,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_16x64, 4,6,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
 cglobal pixel_satd_32x8, 4,8,10          ; if WIN64 && cpuflag(avx2)
     mova            m7, [hmul_16p]
     lea             r4, [3 * r1]
