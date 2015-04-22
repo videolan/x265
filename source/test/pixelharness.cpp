@@ -1211,7 +1211,13 @@ bool PixelHarness::check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt)
     for (int i = 0; i < 32 * 32; i++)
     {
         ref_src[i] = rand() & SHORT_MAX;
-        if (rand() & 1)
+
+        // more zero coeff
+        if (ref_src[i] < SHORT_MAX * 2 / 3)
+            ref_src[i] = 0;
+
+        // more negtive
+        if ((rand() % 10) < 8)
             ref_src[i] *= -1;
         totalCoeffs += (ref_src[i] != 0);
     }
@@ -1240,6 +1246,13 @@ bool PixelHarness::check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt)
         for (int j = 0; j < 1 << (2 * (rand_scan_size + 2)); j++)
             rand_numCoeff += (ref_src[i + j] != 0);
 
+        // at least one coeff in transform block
+        if (rand_numCoeff == 0)
+        {
+            ref_src[i + (1 << (2 * (rand_scan_size + 2))) - 1] = -1;
+            rand_numCoeff = 1;
+        }
+
         const int trSize = (1 << (rand_scan_size + 2));
         const uint16_t* const scanTbl = g_scanOrder[rand_scan_type][rand_scan_size];
         const uint16_t* const scanTblCG4x4 = g_scan4x4[rand_scan_type];
@@ -1263,6 +1276,9 @@ bool PixelHarness::check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt)
 
             rand_numCoeff -= ref_coeffNum[j];
         }
+
+        if (rand_numCoeff != 0)
+            return false;
 
         reportfail();
     }
