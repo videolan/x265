@@ -68,6 +68,7 @@ cextern pd_n32768
 cextern pb_2
 cextern pb_4
 cextern pb_8
+cextern pb_15
 cextern pb_16
 cextern pb_32
 cextern pb_64
@@ -5636,7 +5637,7 @@ cglobal pixel_var_16x16, 2,4,7
     RET
 %endmacro
 
-;int x265_test_func(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig)
+;int scanPosLast(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* scanCG4x4, const int trSize)
 ;{
 ;    int scanPosLast = 0;
 ;    do
@@ -5658,50 +5659,89 @@ cglobal pixel_var_16x16, 2,4,7
 ;}
 
 %if ARCH_X86_64 == 1
-INIT_CPUFLAGS bmi2
-cglobal scanPosLast_x64, 5,12
-    mov         r5d, r5m
-    xor         r11d, r11d                  ; cgIdx
-    xor         r7d, r7d                    ; tmp for non-zero flag
+INIT_XMM avx2,bmi2
+cglobal scanPosLast, 7,11,6
+    ; convert unit of Stride(trSize) to int16_t
+    mov         r7d, r7m
+    add         r7d, r7d
+
+    ; loading scan table and convert to Byte
+    mova        m0, [r6]
+    packuswb    m0, [r6 + mmsize]
+    pxor        m1, m0, [pb_15]
+
+    ; clear CG count
+    xor         r9d, r9d
+
+    ; m0 - Zigzag scan table
+    ; m1 - revert order scan table
+    ; m4 - zero
+    ; m5 - ones
+
+    pxor        m4, m4
+    pcmpeqb     m5, m5
+    lea         r8d, [r7d * 3]
 
 .loop:
-    xor         r8d, r8d                    ; coeffSign[]
-    xor         r9d, r9d                    ; coeffFlag[]
-    xor         r10d, r10d                  ; coeffNum[]
-
-%assign x 0
-%rep 16
-    movzx       r6d, word [r0 + x * 2]
-    movsx       r6d, word [r1 + r6 * 2]
-    test        r6d, r6d
-    setnz       r7b
-    shr         r6d, 31
-    shlx        r6d, r6d, r10d
-    or          r8d, r6d
-    lea         r9, [r9 * 2 + r7]
-    add         r10d, r7d
-%assign x x+1
-%endrep
-
-    ; store latest group data
-    mov         [r2 + r11 * 2], r8w
-    mov         [r3 + r11 * 2], r9w
-    mov         [r4 + r11], r10b
-    inc         r11d
-
+    ; position of current CG
+    movzx       r6d, word [r0]
+    lea         r6, [r6 * 2 + r1]
     add         r0, 16 * 2
-    sub         r5d, r10d
-    jnz        .loop
 
-    ; store group data
-    tzcnt       r6d, r9d
-    shrx        r9d, r9d, r6d
-    mov         [r3 + (r11 - 1) * 2], r9w
+    ; loading current CG
+    movh        m2, [r6]
+    movhps      m2, [r6 + r7]
+    movh        m3, [r6 + r7 * 2]
+    movhps      m3, [r6 + r8]
+    packsswb    m2, m3
 
-    ; get posLast
-    shl         r11d, 4
-    sub         r11d, r6d
-    lea         eax, [r11d - 1]
+    ; Zigzag
+    pshufb      m3, m2, m0
+    pshufb      m2, m1
+
+    ; get sign
+    pmovmskb    r6d, m3
+    pcmpeqb     m3, m4
+    pmovmskb    r10d, m3
+    not         r10d
+    pext        r6d, r6d, r10d
+    mov         [r2 + r9 * 2], r6w
+
+    ; get non-zero flag
+    ; TODO: reuse above result with reorder
+    pcmpeqb     m2, m4
+    pxor        m2, m5
+    pmovmskb    r6d, m2
+    mov         [r3 + r9 * 2], r6w
+
+    ; get non-zero number, POPCNT is faster
+    pabsb       m2, m2
+    psadbw      m2, m4
+    movhlps     m3, m2
+    paddd       m2, m3
+    movd        r6d, m2
+    mov         [r4 + r9], r6b
+
+    inc         r9d
+    sub         r5d, r6d
+    jg         .loop
+
+    ; fixup last CG non-zero flag
+    dec         r9d
+    movzx       r0d, word [r3 + r9 * 2]
+;%if cpuflag(bmi1)  ; 2uops?
+;    tzcnt       r1d, r0d
+;%else
+    bsf         r1d, r0d
+;%endif
+    shrx        r0d, r0d, r1d
+    mov         [r3 + r9 * 2], r0w
+
+    ; get last pos
+    mov         eax, r9d
+    shl         eax, 4
+    xor         r1d, 15
+    add         eax, r1d
     RET
 
 
@@ -5760,7 +5800,6 @@ cglobal scanPosLast_x64, 5,12
     sub         r11d, t3d
     lea         eax, [r11d - 1]
     RET
-IACA_END
 %endif
 
 

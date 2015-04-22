@@ -37,6 +37,7 @@ const pb_2,                 times 32 db 2
 const pb_3,                 times 16 db 3
 const pb_4,                 times 32 db 4
 const pb_8,                 times 32 db 8
+const pb_15,                times 32 db 15
 const pb_16,                times 32 db 16
 const pb_32,                times 32 db 32
 const pb_64,                times 32 db 64

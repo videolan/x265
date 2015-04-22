@@ -1269,8 +1269,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = x265_filterPixelToShort_32x48_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = x265_filterPixelToShort_32x64_avx2;
 
-        if ((cpuMask & X265_CPU_BMI1) && (cpuMask & X265_CPU_BMI2))
-            p.scanPosLast = x265_scanPosLast_x64_bmi2;
+        if (cpuMask & X265_CPU_BMI2)
+            p.scanPosLast = x265_scanPosLast_avx2_bmi2;
     }
 }
 #else // if HIGH_BIT_DEPTH
@@ -2403,8 +2403,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I444].pu[LUMA_32x24].filter_hps = x265_interp_4tap_horiz_ps_32x24_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_32x8].filter_hps = x265_interp_4tap_horiz_ps_32x8_avx2;
 
-        if ((cpuMask & X265_CPU_BMI1) && (cpuMask & X265_CPU_BMI2))
-            p.scanPosLast = x265_scanPosLast_x64_bmi2;
+        if (cpuMask & X265_CPU_BMI2)
+            p.scanPosLast = x265_scanPosLast_avx2_bmi2;
     }
 #endif
 }
