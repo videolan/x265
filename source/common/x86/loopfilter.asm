@@ -452,6 +452,41 @@ cglobal saoCuOrgE2, 5, 7, 8, rec, bufft, buff1, offsetEo, lcuWidth
          jnz         .loop
     RET
 
+INIT_YMM avx2
+cglobal saoCuOrgE2, 5, 6, 6, rec, bufft, buff1, offsetEo, lcuWidth
+    mov            r5d,   r5m
+    pxor           xm0,   xm0                     ; xm0 = 0
+    mova           xm5,   [pb_128]
+    inc            r1
+
+    movu           xm1,   [r0]                    ; xm1 = rec[x]
+    movu           xm2,   [r0 + r5 + 1]           ; xm2 = rec[x + stride + 1]
+    pxor           xm3,   xm1,   xm5
+    pxor           xm4,   xm2,   xm5
+    pcmpgtb        xm2,   xm3,   xm4
+    pcmpgtb        xm4,   xm3
+    pand           xm2,   [pb_1]
+    por            xm2,   xm4
+    movu           xm3,   [r2]                    ; xm3 = buff1
+
+    paddb          xm3,   xm2
+    paddb          xm3,   [pb_2]                  ; xm3 = edgeType
+
+    movu           xm4,   [r3]                    ; xm4 = offsetEo
+    pshufb         xm4,   xm3
+
+    psubb          xm3,   xm0,   xm2
+    movu           [r1],  xm3
+
+    pmovzxbw       m2,    xm1
+    pmovsxbw       m3,    xm4
+
+    paddw          m2,    m3
+    vextracti128   xm3,   m2,    1
+    packuswb       xm2,   xm3
+    movu           [r0],  xm2
+    RET
+
 ;=======================================================================================================
 ;void saoCuOrgE3(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intptr_t stride, int startX, int endX)
 ;=======================================================================================================
