@@ -1708,6 +1708,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.saoCuOrgE1 = x265_saoCuOrgE1_avx2;
         p.saoCuOrgE1_2Rows = x265_saoCuOrgE1_2Rows_avx2;
         p.saoCuOrgE2[0] = x265_saoCuOrgE2_avx2;
+        p.saoCuOrgE2[1] = x265_saoCuOrgE2_32_avx2;
         p.saoCuOrgE3[0] = x265_saoCuOrgE3_avx2;
         p.saoCuOrgE3[1] = x265_saoCuOrgE3_32_avx2;
         p.saoCuOrgB0 = x265_saoCuOrgB0_avx2;

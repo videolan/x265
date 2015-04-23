@@ -487,6 +487,55 @@ cglobal saoCuOrgE2, 5, 6, 6, rec, bufft, buff1, offsetEo, lcuWidth
     movu           [r0],  xm2
     RET
 
+INIT_YMM avx2
+cglobal saoCuOrgE2_32, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
+    mov             r5d,   r5m
+    pxor            m0,    m0                      ; m0 = 0
+    mova            m6,    [pb_2]                  ; m6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    vbroadcasti128  m7,    [pb_128]
+    vbroadcasti128  m5,    [r3]                    ; m5 = offsetEo
+    shr             r4d,   5
+    inc             r1
+
+.loop:
+    movu            m1,    [r0]                    ; m1 = rec[x]
+    movu            m2,    [r0 + r5 + 1]           ; m2 = rec[x + stride + 1]
+    pxor            m3,    m1,    m7
+    pxor            m4,    m2,    m7
+    pcmpgtb         m2,    m3,    m4
+    pcmpgtb         m4,    m3
+    pand            m2,    [pb_1]
+    por             m2,    m4
+    movu            m3,    [r2]                    ; m3 = buff1
+
+    paddb           m3,    m2
+    paddb           m3,    m6                      ; m3 = edgeType
+
+    pshufb          m4,    m5,    m3
+
+    psubb           m3,    m0,    m2
+    movu            [r1],  m3
+
+    pmovzxbw        m2,    xm1
+    vextracti128    xm1,   m1,    1
+    pmovzxbw        m1,    xm1
+    pmovsxbw        m3,    xm4
+    vextracti128    xm4,   m4,    1
+    pmovsxbw        m4,    xm4
+
+    paddw           m2,    m3
+    paddw           m1,    m4
+    packuswb        m2,    m1
+    vpermq          m2,    m2,    11011000b
+    movu            [r0],  m2
+
+    add             r0,    32
+    add             r1,    32
+    add             r2,    32
+    dec             r4d
+    jnz             .loop
+    RET
+
 ;=======================================================================================================
 ;void saoCuOrgE3(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intptr_t stride, int startX, int endX)
 ;=======================================================================================================
