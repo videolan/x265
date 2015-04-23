@@ -144,7 +144,8 @@ void setupLoopFilterPrimitives_c(EncoderPrimitives &p)
     p.saoCuOrgE0 = processSaoCUE0;
     p.saoCuOrgE1 = processSaoCUE1;
     p.saoCuOrgE1_2Rows = processSaoCUE1_2Rows;
-    p.saoCuOrgE2 = processSaoCUE2;
+    p.saoCuOrgE2[0] = processSaoCUE2;
+    p.saoCuOrgE2[1] = processSaoCUE2;
     p.saoCuOrgE3[0] = processSaoCUE3;
     p.saoCuOrgE3[1] = processSaoCUE3;
     p.saoCuOrgB0 = processSaoCUB0;

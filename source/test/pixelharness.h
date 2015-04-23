@@ -96,7 +96,7 @@ protected:
     bool check_addAvg(addAvg_t, addAvg_t);
     bool check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt);
     bool check_saoCuOrgE1_t(saoCuOrgE1_t ref, saoCuOrgE1_t opt);
-    bool check_saoCuOrgE2_t(saoCuOrgE2_t ref, saoCuOrgE2_t opt);
+    bool check_saoCuOrgE2_t(saoCuOrgE2_t ref[], saoCuOrgE2_t opt[]);
     bool check_saoCuOrgE3_t(saoCuOrgE3_t ref, saoCuOrgE3_t opt);
     bool check_saoCuOrgE3_32_t(saoCuOrgE3_t ref, saoCuOrgE3_t opt);
     bool check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt);

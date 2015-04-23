@@ -442,8 +442,8 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                 int8_t one = upBufft[1];
                 int8_t two = upBufft[endX + 1];
 
-                primitives.saoCuOrgE2(rec, upBufft, upBuff1, m_offsetEo, ctuWidth, stride);
-                if (!lpelx)
+                primitives.saoCuOrgE2[ctuWidth > 16](rec, upBufft, upBuff1, m_offsetEo, ctuWidth, stride);
+                if (startX)
                 {
                     rec[0] = firstPxl;
                     upBufft[1] = one;
