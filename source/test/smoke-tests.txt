@@ -1,5 +1,9 @@
 # List of command lines to be run by smoke tests, see https://bitbucket.org/sborho/test-harness
 
+# consider VBV tests a failure if new bitrate is more than 5% different
+# from the old bitrate
+# vbv-tolerance = 0.05
+
 big_buck_bunny_360p24.y4m,--preset=superfast --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 400 --hrd --aud --repeat-headers
 big_buck_bunny_360p24.y4m,--preset=medium --bitrate 1000 -F4 --cu-lossless --scaling-list default
 big_buck_bunny_360p24.y4m,--preset=slower --no-weightp --cu-stats --pme --qg-size 16
