@@ -1226,6 +1226,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_16x16].add_ps = x265_pixel_add_ps_16x16_avx2;
         p.cu[BLOCK_32x32].add_ps = x265_pixel_add_ps_32x32_avx2;
         p.cu[BLOCK_64x64].add_ps = x265_pixel_add_ps_64x64_avx2;
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].add_ps = x265_pixel_add_ps_16x16_avx2;
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].add_ps = x265_pixel_add_ps_32x32_avx2;
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].add_ps = x265_pixel_add_ps_16x32_avx2;
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].add_ps = x265_pixel_add_ps_32x64_avx2;
 
         p.cu[BLOCK_16x16].sub_ps = x265_pixel_sub_ps_16x16_avx2;
         p.cu[BLOCK_32x32].sub_ps = x265_pixel_sub_ps_32x32_avx2;
