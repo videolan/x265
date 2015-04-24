@@ -437,23 +437,8 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
             for (y = startY; y < endY; y++)
             {
                 int8_t iSignDown2 = signOf(rec[stride + startX] - tmpL[y]);
-                pixel firstPxl = rec[0];  // copy first Pxl
-                pixel lastPxl = rec[ctuWidth - 1];
-                int8_t one = upBufft[1];
-                int8_t two = upBufft[endX + 1];
 
-                primitives.saoCuOrgE2[ctuWidth > 16](rec, upBufft, upBuff1, m_offsetEo, ctuWidth, stride);
-                if (startX)
-                {
-                    rec[0] = firstPxl;
-                    upBufft[1] = one;
-                }
-
-                if (rpelx == picWidth)
-                {
-                    rec[ctuWidth - 1] = lastPxl;
-                    upBufft[endX + 1] = two;
-                }
+                primitives.saoCuOrgE2[endX > 16](rec + startX, upBufft + startX, upBuff1 + startX, m_offsetEo, endX - startX, stride);
 
                 upBufft[startX] = iSignDown2;
 

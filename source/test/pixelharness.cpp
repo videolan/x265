@@ -966,7 +966,7 @@ bool PixelHarness::check_saoCuOrgE2_t(saoCuOrgE2_t ref[2], saoCuOrgE2_t opt[2])
         {
             for (int i = 0; i < ITERS; i++)
             {
-                int width = 16 * (1 << (id * (rand() % 2 + 1)));
+                int width = 16 * (1 << (id * (rand() % 2 + 1))) - (rand() % 2);
                 int stride = width + 1;
 
                 ref[width > 16](ref_dest, psbuf1 + j, psbuf2 + j, psbuf3 + j, width, stride);

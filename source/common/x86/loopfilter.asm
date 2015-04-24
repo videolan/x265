@@ -406,60 +406,66 @@ cglobal saoCuOrgE1_2Rows, 3, 5, 7, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuW
 ; void saoCuOrgE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offsetEo, int lcuWidth, intptr_t stride)
 ;======================================================================================================================================================
 INIT_XMM sse4
-cglobal saoCuOrgE2, 5, 7, 8, rec, bufft, buff1, offsetEo, lcuWidth
-
-    mov         r6,    16
+cglobal saoCuOrgE2, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
+    mov         r4d,   r4m
     mov         r5d,   r5m
     pxor        m0,    m0                      ; m0 = 0
     mova        m6,    [pb_2]                  ; m6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     mova        m7,    [pb_128]
-    shr         r4d,   4
-    inc         r1q
+    inc         r1
+    movh        m5,    [r0 + r4]
+    movhps      m5,    [r1 + r4]
 
-    .loop
-         movu        m1,    [r0]                    ; m1 = rec[x]
-         movu        m2,    [r0 + r5 + 1]           ; m2 = rec[x + stride + 1]
-         pxor        m3,    m1,    m7
-         pxor        m4,    m2,    m7
-         pcmpgtb     m2,    m3,    m4
-         pcmpgtb     m4,    m3
-         pand        m2,    [pb_1]
-         por         m2,    m4
-         movu        m3,    [r2]                    ; m3 = buff1
+.loop
+    movu        m1,    [r0]                    ; m1 = rec[x]
+    movu        m2,    [r0 + r5 + 1]           ; m2 = rec[x + stride + 1]
+    pxor        m3,    m1,    m7
+    pxor        m4,    m2,    m7
+    pcmpgtb     m2,    m3,    m4
+    pcmpgtb     m4,    m3
+    pand        m2,    [pb_1]
+    por         m2,    m4
+    movu        m3,    [r2]                    ; m3 = buff1
 
-         paddb       m3,    m2
-         paddb       m3,    m6                      ; m3 = edgeType
+    paddb       m3,    m2
+    paddb       m3,    m6                      ; m3 = edgeType
 
-         movu        m4,    [r3]                    ; m4 = offsetEo
-         pshufb      m4,    m3
+    movu        m4,    [r3]                    ; m4 = offsetEo
+    pshufb      m4,    m3
 
-         psubb       m3,    m0,    m2
-         movu        [r1],  m3
+    psubb       m3,    m0,    m2
+    movu        [r1],  m3
 
-         pmovzxbw    m2,    m1
-         punpckhbw   m1,    m0
-         pmovsxbw    m3,    m4
-         punpckhbw   m4,    m4
-         psraw       m4,    8
+    pmovzxbw    m2,    m1
+    punpckhbw   m1,    m0
+    pmovsxbw    m3,    m4
+    punpckhbw   m4,    m4
+    psraw       m4,    8
 
-         paddw       m2,    m3
-         paddw       m1,    m4
-         packuswb    m2,    m1
-         movu        [r0],  m2
+    paddw       m2,    m3
+    paddw       m1,    m4
+    packuswb    m2,    m1
+    movu        [r0],  m2
 
-         add         r0,    r6
-         add         r1,    r6
-         add         r2,    r6
-         dec         r4d
-         jnz         .loop
+    add         r0,    16
+    add         r1,    16
+    add         r2,    16
+    sub         r4,    16
+    jg          .loop
+
+    movh        [r0 + r4], m5
+    movhps      [r1 + r4], m5
     RET
 
 INIT_YMM avx2
-cglobal saoCuOrgE2, 5, 6, 6, rec, bufft, buff1, offsetEo, lcuWidth
+cglobal saoCuOrgE2, 5, 6, 7, rec, bufft, buff1, offsetEo, lcuWidth
+    mov            r4d,   r4m
     mov            r5d,   r5m
     pxor           xm0,   xm0                     ; xm0 = 0
     mova           xm5,   [pb_128]
     inc            r1
+    movq           xm6,   [r0 + r4]
+    movhps         xm6,   [r1 + r4]
 
     movu           xm1,   [r0]                    ; xm1 = rec[x]
     movu           xm2,   [r0 + r5 + 1]           ; xm2 = rec[x + stride + 1]
@@ -487,17 +493,21 @@ cglobal saoCuOrgE2, 5, 6, 6, rec, bufft, buff1, offsetEo, lcuWidth
     vextracti128   xm3,   m2,    1
     packuswb       xm2,   xm3
     movu           [r0],  xm2
+
+    movq           [r0 + r4], xm6
+    movhps         [r1 + r4], xm6
     RET
 
 INIT_YMM avx2
 cglobal saoCuOrgE2_32, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
+    mov             r4d,   r4m
     mov             r5d,   r5m
     pxor            m0,    m0                      ; m0 = 0
-    mova            m6,    [pb_2]                  ; m6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     vbroadcasti128  m7,    [pb_128]
     vbroadcasti128  m5,    [r3]                    ; m5 = offsetEo
-    shr             r4d,   5
     inc             r1
+    movq            xm6,   [r0 + r4]
+    movhps          xm6,   [r1 + r4]
 
 .loop:
     movu            m1,    [r0]                    ; m1 = rec[x]
@@ -511,7 +521,7 @@ cglobal saoCuOrgE2_32, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
     movu            m3,    [r2]                    ; m3 = buff1
 
     paddb           m3,    m2
-    paddb           m3,    m6                      ; m3 = edgeType
+    paddb           m3,    [pb_2]                  ; m3 = edgeType
 
     pshufb          m4,    m5,    m3
 
@@ -534,8 +544,11 @@ cglobal saoCuOrgE2_32, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
     add             r0,    32
     add             r1,    32
     add             r2,    32
-    dec             r4d
-    jnz             .loop
+    sub             r4,    32
+    jg              .loop
+
+    movq            [r0 + r4], xm6
+    movhps          [r1 + r4], xm6
     RET
 
 ;=======================================================================================================
