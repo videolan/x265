@@ -398,10 +398,65 @@ cglobal pixel_add_ps_16x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
 
     jnz         .loop
     RET
+%endif
+%endmacro
+PIXEL_ADD_PS_W16_H4 16, 16
+PIXEL_ADD_PS_W16_H4 16, 32
 
+;-----------------------------------------------------------------------------
+; void pixel_add_ps_16x16(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
+;-----------------------------------------------------------------------------
+%macro PIXEL_ADD_PS_W16_H4_avx2 1
+%if HIGH_BIT_DEPTH
+%if ARCH_X86_64
 INIT_YMM avx2
-cglobal pixel_add_ps_16x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, srcStride1
-    mov         r6d,        %2/4
+cglobal pixel_add_ps_16x%1, 6, 10, 4, dest, destride, src0, scr1, srcStride0, srcStride1
+    mova    m3,     [pw_pixel_max]
+    pxor    m2,     m2
+    mov     r6d,    %1/4
+    add     r4d,    r4d
+    add     r5d,    r5d
+    add     r1d,    r1d
+    lea     r7,     [r4 * 3]
+    lea     r8,     [r5 * 3]
+    lea     r9,     [r1 * 3]
+
+.loop:
+    movu    m0,     [r2]
+    movu    m1,     [r3]
+    paddw   m0,     m1
+    CLIPW   m0, m2, m3
+    movu    [r0],              m0
+
+    movu    m0,     [r2 + r4]
+    movu    m1,     [r3 + r5]
+    paddw   m0,     m1
+    CLIPW   m0, m2, m3
+    movu    [r0 + r1],         m0
+
+    movu    m0,     [r2 + r4 * 2]
+    movu    m1,     [r3 + r5 * 2]
+    paddw   m0,     m1
+    CLIPW   m0, m2, m3
+    movu    [r0 + r1 * 2],     m0
+
+    movu    m0,     [r2 + r7]
+    movu    m1,     [r3 + r8]
+    paddw   m0,     m1
+    CLIPW   m0, m2, m3
+    movu    [r0 + r9],         m0
+
+    dec     r6d
+    lea     r0,     [r0 + r1 * 4]
+    lea     r2,     [r2 + r4 * 4]
+    lea     r3,     [r3 + r5 * 4]
+    jnz     .loop
+    RET
+%endif
+%else
+INIT_YMM avx2
+cglobal pixel_add_ps_16x%1, 6, 7, 8, dest, destride, src0, scr1, srcStride0, srcStride1
+    mov         r6d,        %1/4
     add         r5,         r5
 .loop:
 
@@ -447,8 +502,8 @@ cglobal pixel_add_ps_16x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
 %endif
 %endmacro
 
-PIXEL_ADD_PS_W16_H4 16, 16
-PIXEL_ADD_PS_W16_H4 16, 32
+PIXEL_ADD_PS_W16_H4_avx2 16
+PIXEL_ADD_PS_W16_H4_avx2 32
 
 
 ;-----------------------------------------------------------------------------
@@ -569,11 +624,86 @@ cglobal pixel_add_ps_32x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
 
     jnz         .loop
     RET
+%endif
+%endmacro
+PIXEL_ADD_PS_W32_H2 32, 32
+PIXEL_ADD_PS_W32_H2 32, 64
 
+;-----------------------------------------------------------------------------
+; void pixel_add_ps_32x32(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
+;-----------------------------------------------------------------------------
+%macro PIXEL_ADD_PS_W32_H4_avx2 1
+%if HIGH_BIT_DEPTH
 %if ARCH_X86_64
 INIT_YMM avx2
-cglobal pixel_add_ps_32x%2, 6, 10, 8, dest, destride, src0, scr1, srcStride0, srcStride1
-    mov         r6d,        %2/4
+cglobal pixel_add_ps_32x%1, 6, 10, 6, dest, destride, src0, scr1, srcStride0, srcStride1
+    mova    m5,     [pw_pixel_max]
+    pxor    m4,     m4
+    mov     r6d,    %1/4
+    add     r4d,    r4d
+    add     r5d,    r5d
+    add     r1d,    r1d
+    lea     r7,     [r4 * 3]
+    lea     r8,     [r5 * 3]
+    lea     r9,     [r1 * 3]
+
+.loop:
+    movu    m0,     [r2]
+    movu    m2,     [r2 + 32]
+    movu    m1,     [r3]
+    movu    m3,     [r3 + 32]
+    paddw   m0,     m1
+    paddw   m2,     m3
+    CLIPW2  m0, m2, m4, m5
+
+    movu    [r0],               m0
+    movu    [r0 + 32],          m2
+
+    movu    m0,     [r2 + r4]
+    movu    m2,     [r2 + r4 + 32]
+    movu    m1,     [r3 + r5]
+    movu    m3,     [r3 + r5 + 32]
+    paddw   m0,     m1
+    paddw   m2,     m3
+    CLIPW2  m0, m2, m4, m5
+
+    movu    [r0 + r1],          m0
+    movu    [r0 + r1 + 32],     m2
+
+    movu    m0,     [r2 + r4 * 2]
+    movu    m2,     [r2 + r4 * 2 + 32]
+    movu    m1,     [r3 + r5 * 2]
+    movu    m3,     [r3 + r5 * 2 + 32]
+    paddw   m0,     m1
+    paddw   m2,     m3
+    CLIPW2  m0, m2, m4, m5
+
+    movu    [r0 + r1 * 2],      m0
+    movu    [r0 + r1 * 2 + 32], m2
+
+    movu    m0,     [r2 + r7]
+    movu    m2,     [r2 + r7 + 32]
+    movu    m1,     [r3 + r8]
+    movu    m3,     [r3 + r8 + 32]
+    paddw   m0,     m1
+    paddw   m2,     m3
+    CLIPW2  m0, m2, m4, m5
+
+    movu    [r0 + r9],          m0
+    movu    [r0 + r9 + 32],     m2
+
+    dec     r6d
+    lea     r0,     [r0 + r1 * 4]
+    lea     r2,     [r2 + r4 * 4]
+    lea     r3,     [r3 + r5 * 4]
+    jnz     .loop
+    RET
+%endif
+%else
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_add_ps_32x%1, 6, 10, 8, dest, destride, src0, scr1, srcStride0, srcStride1
+    mov         r6d,        %1/4
     add         r5,         r5
     lea         r7,         [r4 * 3]
     lea         r8,         [r5 * 3]
@@ -634,8 +764,8 @@ cglobal pixel_add_ps_32x%2, 6, 10, 8, dest, destride, src0, scr1, srcStride0, sr
 %endif
 %endmacro
 
-PIXEL_ADD_PS_W32_H2 32, 32
-PIXEL_ADD_PS_W32_H2 32, 64
+PIXEL_ADD_PS_W32_H4_avx2 32
+PIXEL_ADD_PS_W32_H4_avx2 64
 
 
 ;-----------------------------------------------------------------------------
@@ -842,10 +972,127 @@ cglobal pixel_add_ps_64x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
 
     jnz         .loop
     RET
+%endif
+%endmacro
+PIXEL_ADD_PS_W64_H2 64, 64
 
+;-----------------------------------------------------------------------------
+; void pixel_add_ps_64x64(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
+;-----------------------------------------------------------------------------
+%if HIGH_BIT_DEPTH
+%if ARCH_X86_64
 INIT_YMM avx2
-cglobal pixel_add_ps_64x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, srcStride1
-    mov         r6d,        %2/2
+cglobal pixel_add_ps_64x64, 6, 10, 6, dest, destride, src0, scr1, srcStride0, srcStride1
+    mova    m5,     [pw_pixel_max]
+    pxor    m4,     m4
+    mov     r6d,    16
+    add     r4d,    r4d
+    add     r5d,    r5d
+    add     r1d,    r1d
+    lea     r7,     [r4 * 3]
+    lea     r8,     [r5 * 3]
+    lea     r9,     [r1 * 3]
+
+.loop:
+    movu    m0,     [r2]
+    movu    m1,     [r2 + 32]
+    movu    m2,     [r3]
+    movu    m3,     [r3 + 32]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    movu    [r0],                m0
+    movu    [r0 + 32],           m1
+
+    movu    m0,     [r2 + 64]
+    movu    m1,     [r2 + 96]
+    movu    m2,     [r3 + 64]
+    movu    m3,     [r3 + 96]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    movu    [r0 + 64],           m0
+    movu    [r0 + 96],           m1
+
+    movu    m0,     [r2 + r4]
+    movu    m1,     [r2 + r4 + 32]
+    movu    m2,     [r3 + r5]
+    movu    m3,     [r3 + r5 + 32]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    movu    [r0 + r1],           m0
+    movu    [r0 + r1 + 32],      m1
+
+    movu    m0,     [r2 + r4 + 64]
+    movu    m1,     [r2 + r4 + 96]
+    movu    m2,     [r3 + r5 + 64]
+    movu    m3,     [r3 + r5 + 96]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    movu    [r0 + r1 + 64],      m0
+    movu    [r0 + r1 + 96],      m1
+
+    movu    m0,     [r2 + r4 * 2]
+    movu    m1,     [r2 + r4 * 2 + 32]
+    movu    m2,     [r3 + r5 * 2]
+    movu    m3,     [r3 + r5 * 2+ 32]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    movu    [r0 + r1 * 2],       m0
+    movu    [r0 + r1 * 2 + 32],  m1
+
+    movu    m0,     [r2 + r4 * 2 + 64]
+    movu    m1,     [r2 + r4 * 2 + 96]
+    movu    m2,     [r3 + r5 * 2 + 64]
+    movu    m3,     [r3 + r5 * 2 + 96]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    movu    [r0 + r1 * 2 + 64],  m0
+    movu    [r0 + r1 * 2 + 96],  m1
+
+    movu    m0,     [r2 + r7]
+    movu    m1,     [r2 + r7 + 32]
+    movu    m2,     [r3 + r8]
+    movu    m3,     [r3 + r8 + 32]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    movu    [r0 + r9],           m0
+    movu    [r0 + r9 + 32],      m1
+
+    movu    m0,     [r2 + r7 + 64]
+    movu    m1,     [r2 + r7 + 96]
+    movu    m2,     [r3 + r8 + 64]
+    movu    m3,     [r3 + r8 + 96]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    movu    [r0 + r9 + 64],      m0
+    movu    [r0 + r9 + 96],      m1
+
+    dec     r6d
+    lea     r0,     [r0 + r1 * 4]
+    lea     r2,     [r2 + r4 * 4]
+    lea     r3,     [r3 + r5 * 4]
+    jnz     .loop
+    RET
+%endif
+%else
+INIT_YMM avx2
+cglobal pixel_add_ps_64x64, 6, 7, 8, dest, destride, src0, scr1, srcStride0, srcStride1
+    mov         r6d,        32
     add         r5,         r5
 .loop:
     pmovzxbw    m0,         [r2]                ; first 16 of row 0 of src0
@@ -897,6 +1144,3 @@ cglobal pixel_add_ps_64x%2, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
     RET
 
 %endif
-%endmacro
-
-PIXEL_ADD_PS_W64_H2 64, 64

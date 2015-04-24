@@ -1223,6 +1223,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, avx2);
         ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, avx2);
 
+        p.cu[BLOCK_16x16].add_ps = x265_pixel_add_ps_16x16_avx2;
+        p.cu[BLOCK_32x32].add_ps = x265_pixel_add_ps_32x32_avx2;
+        p.cu[BLOCK_64x64].add_ps = x265_pixel_add_ps_64x64_avx2;
+
         p.cu[BLOCK_16x16].sub_ps = x265_pixel_sub_ps_16x16_avx2;
         p.cu[BLOCK_32x32].sub_ps = x265_pixel_sub_ps_32x32_avx2;
         p.cu[BLOCK_64x64].sub_ps = x265_pixel_sub_ps_64x64_avx2;
