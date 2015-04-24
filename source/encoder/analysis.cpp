@@ -141,29 +141,26 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
 
     if (m_slice->m_pps->bUseDQP)
     {
-        CUGeom *curCUGeom  = (CUGeom *)&cuGeom;
-        CUGeom *parentGeom = (CUGeom *)&cuGeom;
+        /* TODO: In future, we could extend this to 8x8 QGs as well, since that's the minimum size 
+         * allowed by the HEVC standard. The AQ offset calculation will need to be at 8x8 granularity.
+         * And this messy section will need to be reworked */
+        m_aqQP[0][0] = calculateQpforCuSize(ctu, cuGeom);
 
-        /* TODO: In future, we should extend this to 8x8 QGs as well, since that's the minimum size 
-        allowed by the HEVC standard. The AQ offset calculation will need to be at 8x8 granularity.
-        And this messy section will need to be reworked */
-
-        m_aqQP[0][0] = calculateQpforCuSize(ctu, *curCUGeom);
-        curCUGeom = curCUGeom + curCUGeom->childOffset;
-        parentGeom = curCUGeom;
+        const CUGeom* rootGeom = &cuGeom + 1;
         if (m_slice->m_pps->maxCuDQPDepth >= 1)
         {
-            for (int i = 0; i < 4; i++)
+            for (int d0 = 0; d0 < 4; d0++)
             {
-                m_aqQP[1][i] = calculateQpforCuSize(ctu, *(parentGeom + i));
+                m_aqQP[1][d0] = calculateQpforCuSize(ctu, rootGeom[d0]);
                 if (m_slice->m_pps->maxCuDQPDepth == 2)
                 {
-                    curCUGeom = parentGeom + i + (parentGeom + i)->childOffset;
-                    for (int j = 0; j < 4; j++)
-                        m_aqQP[2][i * 4 + j] = calculateQpforCuSize(ctu, *(curCUGeom + j));
+                    const CUGeom* curGeom = &rootGeom[d0] + rootGeom[d0].childOffset;
+                    for (int d1 = 0; d1 < 4; d1++)
+                        m_aqQP[2][d0 * 4 + d1] = calculateQpforCuSize(ctu, curGeom[d1]);
                 }
             }
         }
+
         setLambdaFromQP(*m_slice, m_aqQP[0][0]);
         m_aqQP[0][0] = x265_clip3(QP_MIN, QP_MAX_SPEC, m_aqQP[0][0]);
         ctu.setQPSubParts((int8_t)m_aqQP[0][0], 0, 0);
