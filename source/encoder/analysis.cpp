@@ -136,8 +136,9 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     for (uint32_t i = 0; i <= g_maxCUDepth; i++)
         for (uint32_t j = 0; j < MAX_PRED_TYPES; j++)
             m_modeDepth[i].pred[j].invalidate();
-#endif
     invalidateContexts(0);
+#endif
+
     if (m_slice->m_pps->bUseDQP)
     {
         CUGeom *curCUGeom  = (CUGeom *)&cuGeom;
@@ -178,11 +179,11 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     if (m_param->analysisMode)
     {
         if (m_slice->m_sliceType == I_SLICE)
-            m_reuseIntraDataCTU = (analysis_intra_data *)m_frame->m_analysisData.intraData;
+            m_reuseIntraDataCTU = (analysis_intra_data*)m_frame->m_analysisData.intraData;
         else
         {
             int numPredDir = m_slice->isInterP() ? 1 : 2;
-            m_reuseInterDataCTU = (analysis_inter_data *)m_frame->m_analysisData.interData;
+            m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
             m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
             m_reuseBestMergeCand = &m_reuseInterDataCTU->bestMergeCand[ctu.m_cuAddr * CUGeom::MAX_GEOMS];
         }
@@ -196,7 +197,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         compressIntraCU(ctu, cuGeom, zOrder, m_qp[0][0], 0);
         if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_analysisData.intraData)
         {
-            CUData *bestCU = &m_modeDepth[0].bestMode->cu;
+            CUData* bestCU = &m_modeDepth[0].bestMode->cu;
             memcpy(&m_reuseIntraDataCTU->depth[ctu.m_cuAddr * numPartition], bestCU->m_cuDepth, sizeof(uint8_t) * numPartition);
             memcpy(&m_reuseIntraDataCTU->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
             memcpy(&m_reuseIntraDataCTU->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSize, sizeof(uint8_t) * numPartition);
@@ -225,7 +226,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             compressInterCU_rd5_6(ctu, cuGeom, zOrder, m_qp[0][0], 0);
             if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_analysisData.interData)
             {
-                CUData *bestCU = &m_modeDepth[0].bestMode->cu;
+                CUData* bestCU = &m_modeDepth[0].bestMode->cu;
                 memcpy(&m_reuseInterDataCTU->depth[ctu.m_cuAddr * numPartition], bestCU->m_cuDepth, sizeof(uint8_t) * numPartition);
                 memcpy(&m_reuseInterDataCTU->modes[ctu.m_cuAddr * numPartition], bestCU->m_predMode, sizeof(uint8_t) * numPartition);
             }
@@ -421,7 +422,6 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
             slave.m_quant.setQPforQuant(md.pred[PRED_2Nx2N].cu);
         }
     }
-
 
     /* perform Mode task, repeat until no more work is available */
     do
