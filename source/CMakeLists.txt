@@ -305,7 +305,7 @@ if (WIN32)
     if(WINXP_SUPPORT)
         # force use of workarounds for CONDITION_VARIABLE and atomic
         # intrinsics introduced after XP
-        add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WINXP)
+        add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WINXP -D_WIN32_WINNT_WIN7=0x0601)
     else(WINXP_SUPPORT)
         # default to targeting Windows 7 for the NUMA APIs
         add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WIN7)
