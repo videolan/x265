@@ -90,7 +90,7 @@ public:
     void processPmode(PMODE& pmode, Analysis& slave);
 
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
-    int*      m_qp[NUM_CU_DEPTH];
+    int*      m_aqQP[NUM_CU_DEPTH];
     bool      m_bTryLossless;
     bool      m_bChromaSa8d;
 
