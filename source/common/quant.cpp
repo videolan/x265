@@ -676,32 +676,57 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
         if (cgScanPos && (coeffNum[cgScanPos] == 0))
         {
             // TODO: does we need zero-coeff cost?
-            for (int scanPosinCG = 0; scanPosinCG < SCAN_SET_SIZE; scanPosinCG++)
+            uint32_t scanPosBase = (cgScanPos << MLS_CG_SIZE);
+            uint32_t blkPos      = codeParams.scan[scanPosBase];
+
+            if (usePsyMask)
             {
-                scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
-                uint32_t blkPos      = codeParams.scan[scanPos];
+                // TODO: we can't SIMD optimize because PSYVALUE need 64-bits multiplication, convert to Double can work faster by FMA
+                for (int y = 0; y < MLS_CG_SIZE; y++)
+                {
+                    for (int x = 0; x < MLS_CG_SIZE; x++)
+                    {
+                        int signCoef         = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+                        int predictedCoef    = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
 
-                // TODO: get 16 of ctxSig
-                const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codeParams.firstSignificanceMapContext);
+                        costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
 
-                /* set default costs to uncoded costs */
-                int signCoef         = m_resiDctCoeff[blkPos];            /* pre-quantization DCT coeff */
-                int predictedCoef    = m_fencDctCoeff[blkPos] - signCoef; /* predicted DCT = source DCT - residual DCT*/
+                        /* when no residual coefficient is coded, predicted coef == recon coef */
+                        costUncoded[blkPos + x] -= PSYVALUE(predictedCoef);
 
-                /* cost of not coding this coefficient (all distortion, no signal bits) */
-                costUncoded[blkPos] = ((int64_t)signCoef * signCoef) << scaleBits;
+                        totalUncodedCost += costUncoded[blkPos + x];
+                        totalRdCost += costUncoded[blkPos + x];
 
-                X265_CHECK(scanPos > 0, "scanPos failure\n");
-                if (usePsyMask)
-                    /* when no residual coefficient is coded, predicted coef == recon coef */
-                    costUncoded[blkPos] -= PSYVALUE(predictedCoef);
+                        scanPos = scanPosBase + y * MLS_CG_SIZE + x;
+                        const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, codeParams.scan[scanPos], bIsLuma, codeParams.firstSignificanceMapContext);
+                        costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
+                        costCoeff[scanPos] = costUncoded[blkPos + x];
+                        sigRateDelta[blkPos + x] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
+                    }
+                    blkPos += trSize;
+                }
+            }
+            else
+            {
+                // non-psy path
+                for (int y = 0; y < MLS_CG_SIZE; y++)
+                {
+                    for (int x = 0; x < MLS_CG_SIZE; x++)
+                    {
+                        int signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+                        costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
 
-                totalUncodedCost += costUncoded[blkPos];
+                        totalUncodedCost += costUncoded[blkPos + x];
+                        totalRdCost += costUncoded[blkPos + x];
 
-                costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
-                costCoeff[scanPos] = costUncoded[blkPos];
-                sigRateDelta[blkPos] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
-                totalRdCost += costCoeff[scanPos];
+                        scanPos = scanPosBase + y * MLS_CG_SIZE + x;
+                        const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, codeParams.scan[scanPos], bIsLuma, codeParams.firstSignificanceMapContext);
+                        costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
+                        costCoeff[scanPos] = costUncoded[blkPos + x];
+                        sigRateDelta[blkPos + x] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
+                    }
+                    blkPos += trSize;
+                }
             }
 
             /* there were no coded coefficients in this coefficient group */
