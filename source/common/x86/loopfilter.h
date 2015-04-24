@@ -40,5 +40,6 @@ void x265_saoCuOrgE3_32_avx2(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, in
 void x265_saoCuOrgB0_sse4(pixel* rec, const int8_t* offsetBo, int ctuWidth, int ctuHeight, intptr_t stride);
 void x265_saoCuOrgB0_avx2(pixel* rec, const int8_t* offsetBo, int ctuWidth, int ctuHeight, intptr_t stride);
 void x265_calSign_sse4(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
+void x265_calSign_avx2(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 
 #endif // ifndef X265_LOOPFILTER_H

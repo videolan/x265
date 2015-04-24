@@ -30,6 +30,8 @@
 SECTION_RODATA 32
 pb_31:      times 32 db 31
 pb_15:      times 32 db 15
+pb_movemask_32:  times 32 db 0x00
+                 times 32 db 0xFF
 
 SECTION .text
 cextern pb_1
@@ -911,3 +913,52 @@ cglobal calSign, 4,5,6
 .end:
     RET
 
+INIT_YMM avx2
+cglobal calSign, 4, 5, 6
+    vbroadcasti128  m0,     [pb_128]
+    mova            m1,     [pb_1]
+
+    sub             r1,     r0
+    sub             r2,     r0
+
+    mov             r4d,    r3d
+    shr             r3d,    5
+    jz              .next
+.loop:
+    movu            m2,     [r0 + r1]            ; m2 = pRec[x]
+    movu            m3,     [r0 + r2]            ; m3 = pTmpU[x]
+    pxor            m4,     m2,     m0
+    pxor            m3,     m0
+    pcmpgtb         m5,     m4,     m3
+    pcmpgtb         m3,     m4
+    pand            m5,     m1
+    por             m5,     m3
+    movu            [r0],   m5
+
+    add             r0,     mmsize
+    dec             r3d
+    jnz             .loop
+
+    ; process partial
+.next:
+    and             r4d,    31
+    jz              .end
+
+    movu            m2,     [r0 + r1]            ; m2 = pRec[x]
+    movu            m3,     [r0 + r2]            ; m3 = pTmpU[x]
+    pxor            m4,     m2,     m0
+    pxor            m3,     m0
+    pcmpgtb         m5,     m4,     m3
+    pcmpgtb         m3,     m4
+    pand            m5,     m1
+    por             m5,     m3
+
+    lea             r3,     [pb_movemask_32 + 32]
+    sub             r3,     r4
+    movu            m0,     [r3]
+    movu            m3,     [r0]
+    pblendvb        m5,     m5,     m3,     m0
+    movu            [r0],   m5
+
+.end:
+    RET
