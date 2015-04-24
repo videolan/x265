@@ -85,8 +85,8 @@ struct CUGeom
     uint32_t childOffset;   // offset of the first child CU from current CU
     uint32_t absPartIdx;    // Part index of this CU in terms of 4x4 blocks.
     uint32_t numPartitions; // Number of 4x4 blocks in the CU
-    uint32_t depth;         // depth of this CU relative from CTU
     uint32_t flags;         // CU flags.
+    uint16_t depth, index;  // depth of this CU relative from CTU, absolute index
 };
 
 struct MVField
