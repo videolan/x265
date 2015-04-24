@@ -164,7 +164,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
                 }
             }
         }
-        this->setQP(*m_slice, m_qp[0][0]);
+        setLambdaFromQP(*m_slice, m_qp[0][0]);
         m_qp[0][0] = x265_clip3(QP_MIN, QP_MAX_SPEC, m_qp[0][0]);
         ctu.setQPSubParts((int8_t)m_qp[0][0], 0, 0);
     }
@@ -274,7 +274,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
     if (m_slice->m_pps->bUseDQP && depth && depth <= m_slice->m_pps->maxCuDQPDepth)
     {
         qp = m_qp[depth][partIdx];
-        this->setQP(*m_slice, qp);
+        setLambdaFromQP(*m_slice, qp);
         qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
     }
 
@@ -413,7 +413,7 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
     {
         slave.m_slice = m_slice;
         slave.m_frame = m_frame;
-        slave.setQP(*m_slice, m_rdCost.m_qp);
+        slave.setLambdaFromQP(*m_slice, m_rdCost.m_qp);
         slave.invalidateContexts(0);
 
         if (m_param->rdLevel >= 5)
@@ -549,7 +549,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
     if (m_slice->m_pps->bUseDQP && depth && depth <= m_slice->m_pps->maxCuDQPDepth)
     {
         qp = m_qp[depth][partIdx];
-        this->setQP(*m_slice, qp);
+        setLambdaFromQP(*m_slice, qp);
         qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
     }
 
@@ -805,7 +805,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
     if (m_slice->m_pps->bUseDQP && depth && depth <= m_slice->m_pps->maxCuDQPDepth)
     {
         qp = m_qp[depth][partIdx];
-        this->setQP(*m_slice, qp);
+        setLambdaFromQP(*m_slice, qp);
         qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
     }
 
@@ -1094,7 +1094,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
     if (m_slice->m_pps->bUseDQP && depth && depth <= m_slice->m_pps->maxCuDQPDepth)
     {
         qp = m_qp[depth][partIdx];
-        this->setQP(*m_slice, qp);
+        setLambdaFromQP(*m_slice, qp);
         qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
     }
 

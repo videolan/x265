@@ -856,7 +856,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             curEncData.m_rowStat[row].sumQpAq += qp;
         }
         else
-            tld.analysis.setQP(*slice, slice->m_sliceQp);
+            tld.analysis.setLambdaFromQP(*slice, slice->m_sliceQp);
 
         if (m_param->bEnableWavefront && !col && row)
         {

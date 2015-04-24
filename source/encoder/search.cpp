@@ -163,7 +163,7 @@ Search::~Search()
     X265_FREE(m_tsRecon);
 }
 
-void Search::setQP(const Slice& slice, int qp)
+void Search::setLambdaFromQP(const Slice& slice, int qp)
 {
     x265_emms(); /* TODO: if the lambda tables were ints, this would not be necessary */
     m_me.setQP(qp);
@@ -1888,7 +1888,7 @@ void Search::processPME(PME& pme, Search& slave)
     /* Setup slave Search instance for ME for master's CU */
     if (&slave != this)
     {
-        slave.setQP(*m_slice, m_rdCost.m_qp);
+        slave.setLambdaFromQP(*m_slice, m_rdCost.m_qp);
         slave.m_slice = m_slice;
         slave.m_frame = m_frame;
 
