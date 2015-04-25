@@ -163,11 +163,16 @@ Search::~Search()
     X265_FREE(m_tsRecon);
 }
 
-void Search::setLambdaFromQP(const Slice& slice, int qp)
+int Search::setLambdaFromQP(const CUData& ctu, int qp)
 {
-    x265_emms(); /* TODO: if the lambda tables were ints, this would not be necessary */
+    X265_CHECK(qp >= QP_MIN && qp <= QP_MAX_MAX, "QP used for lambda is out of range\n");
+
     m_me.setQP(qp);
-    m_rdCost.setQP(slice, qp);
+    m_rdCost.setQP(*m_slice, qp);
+
+    int quantQP = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
+    m_quant.setQPforQuant(ctu, quantQP);
+    return quantQP;
 }
 
 #if CHECKED_BUILD || _DEBUG
@@ -1364,8 +1369,6 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     X265_CHECK(cu.m_partSize[0] == SIZE_2Nx2N, "encodeIntraInInter does not expect NxN intra\n");
     X265_CHECK(!m_slice->isIntra(), "encodeIntraInInter does not expect to be used in I slices\n");
 
-    m_quant.setQPforQuant(cu);
-
     uint32_t tuDepthRange[2];
     cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
@@ -1888,10 +1891,9 @@ void Search::processPME(PME& pme, Search& slave)
     /* Setup slave Search instance for ME for master's CU */
     if (&slave != this)
     {
-        slave.setLambdaFromQP(*m_slice, m_rdCost.m_qp);
         slave.m_slice = m_slice;
         slave.m_frame = m_frame;
-
+        slave.setLambdaFromQP(pme.mode.cu, m_rdCost.m_qp);
         slave.m_me.setSourcePU(*pme.mode.fencYuv, pme.pu.ctuAddr, pme.pu.cuAbsPartIdx, pme.pu.puAbsPartIdx, pme.pu.width, pme.pu.height);
     }
 
@@ -2523,9 +2525,6 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     uint32_t log2CUSize = cuGeom.log2CUSize;
     int sizeIdx = log2CUSize - 2;
 
-    uint32_t tqBypass = cu.m_tqBypass[0];
-    m_quant.setQPforQuant(interMode.cu);
-
     resiYuv->subtract(*fencYuv, *predYuv, log2CUSize);
 
     uint32_t tuDepthRange[2];
@@ -2536,6 +2535,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     Cost costs;
     estimateResidualQT(interMode, cuGeom, 0, 0, *resiYuv, costs, tuDepthRange);
 
+    uint32_t tqBypass = cu.m_tqBypass[0];
     if (!tqBypass)
     {
         uint32_t cbf0Dist = primitives.cu[sizeIdx].sse_pp(fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);

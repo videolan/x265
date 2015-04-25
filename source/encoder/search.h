@@ -287,7 +287,7 @@ public:
     ~Search();
 
     bool     initSearch(const x265_param& param, ScalingList& scalingList);
-    void     setLambdaFromQP(const Slice& slice, int qp);
+    int      setLambdaFromQP(const CUData& ctu, int qp); /* returns real quant QP in valid spec range */
 
     // mark temp RD entropy contexts as uninitialized; useful for finding loads without stores
     void     invalidateContexts(int fromDepth);

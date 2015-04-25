@@ -40,12 +40,13 @@ public:
     uint32_t  m_chromaDistWeight[2];
     uint32_t  m_psyRdBase;
     uint32_t  m_psyRd;
-    int       m_qp;
+    int       m_qp; /* QP used to configure lambda, may be higher than QP_MAX_SPEC but <= QP_MAX_MAX */
 
     void setPsyRdScale(double scale)                { m_psyRdBase = (uint32_t)floor(65536.0 * scale * 0.33); }
 
     void setQP(const Slice& slice, int qp)
     {
+        x265_emms(); /* TODO: if the lambda tables were ints, this would not be necessary */
         m_qp = qp;
 
         /* Scale PSY RD factor by a slice type factor */

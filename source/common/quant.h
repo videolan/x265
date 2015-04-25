@@ -103,7 +103,7 @@ public:
     bool allocNoiseReduction(const x265_param& param);
 
     /* CU setup */
-    void setQPforQuant(const CUData& cu);
+    void setQPforQuant(const CUData& ctu, int qp);
 
     uint32_t transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencStride, const int16_t* residual, uint32_t resiStride, coeff_t* coeff,
                           uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip);

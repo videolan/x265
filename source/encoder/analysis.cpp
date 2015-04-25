@@ -146,18 +146,16 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
 
     if (m_slice->m_pps->bUseDQP)
     {
-        m_aqQP[0] = calculateQpforCuSize(ctu, cuGeom);
-        setLambdaFromQP(*m_slice, m_aqQP[0]);
-        m_aqQP[0] = x265_clip3(QP_MIN, QP_MAX_SPEC, m_aqQP[0]);
-        ctu.setQPSubParts((int8_t)m_aqQP[0], 0, 0);
+        m_aqQP[0] = setLambdaFromQP(ctu, calculateQpforCuSize(ctu, cuGeom));
 
         if (m_slice->m_pps->maxCuDQPDepth)
             initAqQPs(1, ctu, &cuGeom + 1);
     }
     else
-        m_aqQP[0] = m_slice->m_sliceQp;
+        /* adaptive quant disabled, CTU QP is always slice QP, and within spec range */
+        m_aqQP[0] = setLambdaFromQP(ctu, m_slice->m_sliceQp);
 
-    m_quant.setQPforQuant(ctu);
+    ctu.setQPSubParts((int8_t)m_aqQP[0], 0, 0);
     m_rqt[0].cur.load(initialContext);
     m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_fencPic, ctu.m_cuAddr, 0);
 
@@ -231,20 +229,24 @@ void Analysis::tryLossless(const CUGeom& cuGeom)
         return;
     else if (md.bestMode->cu.isIntra(0))
     {
+        m_quant.m_tqBypass = true;
         md.pred[PRED_LOSSLESS].initCosts();
         md.pred[PRED_LOSSLESS].cu.initLosslessCU(md.bestMode->cu, cuGeom);
         PartSize size = (PartSize)md.pred[PRED_LOSSLESS].cu.m_partSize[0];
         uint8_t* modes = md.pred[PRED_LOSSLESS].cu.m_lumaIntraDir;
         checkIntra(md.pred[PRED_LOSSLESS], cuGeom, size, modes, NULL);
         checkBestMode(md.pred[PRED_LOSSLESS], cuGeom.depth);
+        m_quant.m_tqBypass = false;
     }
     else
     {
+        m_quant.m_tqBypass = true;
         md.pred[PRED_LOSSLESS].initCosts();
         md.pred[PRED_LOSSLESS].cu.initLosslessCU(md.bestMode->cu, cuGeom);
         md.pred[PRED_LOSSLESS].predYuv.copyFromYuv(md.bestMode->predYuv);
         encodeResAndCalcRdInterCU(md.pred[PRED_LOSSLESS], cuGeom);
         checkBestMode(md.pred[PRED_LOSSLESS], cuGeom.depth);
+        m_quant.m_tqBypass = false;
     }
 }
 
@@ -269,7 +271,6 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
             PartSize size = (PartSize)reusePartSizes[zOrder];
             Mode& mode = size == SIZE_2Nx2N ? md.pred[PRED_INTRA] : md.pred[PRED_INTRA_NxN];
             mode.cu.initSubCU(parentCTU, cuGeom, qp);
-            m_quant.setQPforQuant(mode.cu);
             checkIntra(mode, cuGeom, size, &reuseModes[zOrder], &reuseChromaModes[zOrder]);
             checkBestMode(mode, depth);
 
@@ -287,7 +288,6 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
     else if (mightNotSplit)
     {
         md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
-        m_quant.setQPforQuant(md.pred[PRED_INTRA].cu);
         checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL, NULL);
         checkBestMode(md.pred[PRED_INTRA], depth);
 
@@ -327,11 +327,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
                 m_rqt[nextDepth].cur.load(*nextContext);
 
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
-                {
-                    nextQP = m_aqQP[childGeom.index];
-                    setLambdaFromQP(*m_slice, nextQP);
-                    nextQP = x265_clip3(QP_MIN, QP_MAX_SPEC, nextQP);
-                }
+                    nextQP = setLambdaFromQP(parentCTU, m_aqQP[childGeom.index]);
 
                 compressIntraCU(parentCTU, childGeom, zOrder, nextQP);
 
@@ -401,14 +397,9 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
     {
         slave.m_slice = m_slice;
         slave.m_frame = m_frame;
-        slave.setLambdaFromQP(*m_slice, m_rdCost.m_qp);
+        slave.setLambdaFromQP(md.pred[PRED_2Nx2N].cu, m_rdCost.m_qp);
         slave.invalidateContexts(0);
-
-        if (m_param->rdLevel >= 5)
-        {
-            slave.m_rqt[pmode.cuGeom.depth].cur.load(m_rqt[pmode.cuGeom.depth].cur);
-            slave.m_quant.setQPforQuant(md.pred[PRED_2Nx2N].cu);
-        }
+        slave.m_rqt[pmode.cuGeom.depth].cur.load(m_rqt[pmode.cuGeom.depth].cur);
     }
 
     /* perform Mode task, repeat until no more work is available */
@@ -419,11 +410,6 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
             switch (pmode.modes[task])
             {
             case PRED_INTRA:
-                if (&slave != this)
-                {
-                    slave.m_rqt[pmode.cuGeom.depth].cur.load(m_rqt[pmode.cuGeom.depth].cur);
-                    slave.m_quant.setQPforQuant(md.pred[PRED_INTRA].cu);
-                }
                 slave.checkIntraInInter(md.pred[PRED_INTRA], pmode.cuGeom);
                 if (m_param->rdLevel > 2)
                     slave.encodeIntraInInter(md.pred[PRED_INTRA], pmode.cuGeom);
@@ -739,11 +725,7 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
                 m_rqt[nextDepth].cur.load(*nextContext);
 
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
-                {
-                    nextQP = m_aqQP[childGeom.index];
-                    setLambdaFromQP(*m_slice, nextQP);
-                    nextQP = x265_clip3(QP_MIN, QP_MAX_SPEC, nextQP);
-                }
+                    nextQP = setLambdaFromQP(parentCTU, m_aqQP[childGeom.index]);
 
                 compressInterCU_dist(parentCTU, childGeom, nextQP);
 
@@ -944,7 +926,6 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                     {
                         /* generate recon pixels with no rate distortion considerations */
                         CUData& cu = md.bestMode->cu;
-                        m_quant.setQPforQuant(cu);
 
                         uint32_t tuDepthRange[2];
                         cu.getInterTUQtDepthRange(tuDepthRange, 0);
@@ -969,7 +950,6 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                     {
                         /* generate recon pixels with no rate distortion considerations */
                         CUData& cu = md.bestMode->cu;
-                        m_quant.setQPforQuant(cu);
 
                         uint32_t tuDepthRange[2];
                         cu.getIntraTUQtDepthRange(tuDepthRange, 0);
@@ -1020,11 +1000,7 @@ void Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGe
                 m_rqt[nextDepth].cur.load(*nextContext);
 
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
-                {
-                    nextQP = m_aqQP[childGeom.index];
-                    setLambdaFromQP(*m_slice, nextQP);
-                    nextQP = x265_clip3(QP_MIN, QP_MAX_SPEC, nextQP);
-                }
+                    nextQP = setLambdaFromQP(parentCTU, m_aqQP[childGeom.index]);
 
                 compressInterCU_rd0_4(parentCTU, childGeom, nextQP);
 
@@ -1228,11 +1204,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
                 m_rqt[nextDepth].cur.load(*nextContext);
 
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
-                {
-                    nextQP = m_aqQP[childGeom.index];
-                    setLambdaFromQP(*m_slice, nextQP);
-                    nextQP = x265_clip3(QP_MIN, QP_MAX_SPEC, nextQP);
-                }
+                    nextQP = setLambdaFromQP(parentCTU, m_aqQP[childGeom.index]);
 
                 compressInterCU_rd5_6(parentCTU, childGeom, zOrder, nextQP);
 
@@ -1758,7 +1730,6 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
     CUData& cu = bestMode->cu;
 
     cu.copyFromPic(ctu, cuGeom);
-    m_quant.setQPforQuant(cu);
 
     Yuv& fencYuv = m_modeDepth[cuGeom.depth].fencYuv;
     if (cuGeom.depth)

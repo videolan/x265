@@ -851,12 +851,11 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
         if (m_param->rc.aqMode || bIsVbv)
         {
+            X265_CHECK(slice->m_pps->bUseDQP, "adaptive quant in use without DQP\n");
             int qp = calcQpForCu(cuAddr, curEncData.m_cuStat[cuAddr].baseQp);
             qp = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
             curEncData.m_rowStat[row].sumQpAq += qp;
         }
-        else
-            tld.analysis.setLambdaFromQP(*slice, slice->m_sliceQp);
 
         if (m_param->bEnableWavefront && !col && row)
         {
