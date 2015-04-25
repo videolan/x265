@@ -420,7 +420,10 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
             {
             case PRED_INTRA:
                 if (&slave != this)
+                {
                     slave.m_rqt[pmode.cuGeom.depth].cur.load(m_rqt[pmode.cuGeom.depth].cur);
+                    slave.m_quant.setQPforQuant(md.pred[PRED_INTRA].cu);
+                }
                 slave.checkIntraInInter(md.pred[PRED_INTRA], pmode.cuGeom);
                 if (m_param->rdLevel > 2)
                     slave.encodeIntraInInter(md.pred[PRED_INTRA], pmode.cuGeom);
