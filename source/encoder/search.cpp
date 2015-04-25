@@ -2006,7 +2006,7 @@ int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[
 }
 
 /* find the best inter prediction for each PU of specified mode */
-void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChromaSA8D)
+void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC)
 {
     ProfileCUScope(interMode.cu, motionEstimationElapsedTime, countMotionEstimate);
 
@@ -2027,7 +2027,6 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
     Yuv&     tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
     MergeData merge;
-    uint32_t mrgCost;
     memset(&merge, 0, sizeof(merge));
 
     for (int puIdx = 0; puIdx < numPart; puIdx++)
@@ -2038,27 +2037,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
         m_me.setSourcePU(*interMode.fencYuv, pu.ctuAddr, pu.cuAbsPartIdx, pu.puAbsPartIdx, pu.width, pu.height);
 
         /* find best cost merge candidate. note: 2Nx2N merge and bidir are handled as separate modes */
-        if (cu.m_partSize[0] != SIZE_2Nx2N)
-        {
-            mrgCost = mergeEstimation(cu, cuGeom, pu, puIdx, merge);
-
-            if (bMergeOnly && mrgCost != MAX_UINT)
-            {
-                cu.m_mergeFlag[pu.puAbsPartIdx] = true;
-                cu.m_mvpIdx[0][pu.puAbsPartIdx] = merge.index; // merge candidate ID is stored in L0 MVP idx
-                cu.setPUInterDir(merge.dir, pu.puAbsPartIdx, puIdx);
-                cu.setPUMv(0, merge.mvField[0].mv, pu.puAbsPartIdx, puIdx);
-                cu.setPURefIdx(0, merge.mvField[0].refIdx, pu.puAbsPartIdx, puIdx);
-                cu.setPUMv(1, merge.mvField[1].mv, pu.puAbsPartIdx, puIdx);
-                cu.setPURefIdx(1, merge.mvField[1].refIdx, pu.puAbsPartIdx, puIdx);
-                totalmebits += merge.bits;
-
-                motionCompensation(cu, pu, *predYuv, true, bChromaSA8D);
-                continue;
-            }
-        }
-        else
-            mrgCost = MAX_UINT;
+        uint32_t mrgCost = numPart == 1 ? MAX_UINT : mergeEstimation(cu, cuGeom, pu, puIdx, merge);
 
         bestME[0].cost = MAX_UINT;
         bestME[1].cost = MAX_UINT;
@@ -2337,7 +2316,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
             totalmebits += bestME[1].bits;
         }
 
-        motionCompensation(cu, pu, *predYuv, true, bChromaSA8D);
+        motionCompensation(cu, pu, *predYuv, true, bChromaMC);
     }
     X265_CHECK(interMode.ok(), "inter mode is not ok");
     interMode.sa8dBits += totalmebits;

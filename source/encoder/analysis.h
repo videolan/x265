@@ -122,7 +122,7 @@ protected:
 
     /* measure inter options */
     void checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize);
-    void checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, bool bMergeOnly);
+    void checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize);
 
     void checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom& cuGeom);
 
