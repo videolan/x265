@@ -2050,8 +2050,7 @@ void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUS
                 cu->childOffset = childIdx - cuIdx;
                 cu->absPartIdx = g_depthScanIdx[yOffset][xOffset] * 4;
                 cu->numPartitions = (NUM_4x4_PARTITIONS >> ((g_maxLog2CUSize - cu->log2CUSize) * 2));
-                cu->depth = (uint16_t)(g_log2Size[maxCUSize] - log2CUSize);
-                cu->index = (uint16_t)cuIdx;
+                cu->depth = g_log2Size[maxCUSize] - log2CUSize;
 
                 cu->flags = 0;
                 CU_SET_FLAG(cu->flags, CUGeom::PRESENT, presentFlag);

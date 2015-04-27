@@ -86,7 +86,7 @@ struct CUGeom
     uint32_t absPartIdx;    // Part index of this CU in terms of 4x4 blocks.
     uint32_t numPartitions; // Number of 4x4 blocks in the CU
     uint32_t flags;         // CU flags.
-    uint16_t depth, index;  // depth of this CU relative from CTU, absolute index
+    uint32_t depth;         // depth of this CU relative from CTU
 };
 
 struct MVField
