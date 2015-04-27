@@ -533,7 +533,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
     uint32_t trSize = 1 << log2TrSize;
     int64_t lambda2 = m_qpParam[ttype].lambda2;
-    int64_t psyScale = (m_psyRdoqScale * m_qpParam[ttype].lambda);
+    const int64_t psyScale = ((int64_t)m_psyRdoqScale * m_qpParam[ttype].lambda);
 
     /* unquant constants for measuring distortion. Scaling list quant coefficients have a (1 << 4)
      * scale applied that must be removed during unquant. Note that in real dequant there is clipping
