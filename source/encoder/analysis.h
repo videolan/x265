@@ -90,7 +90,6 @@ public:
     void processPmode(PMODE& pmode, Analysis& slave);
 
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
-    int       m_aqQP[CUGeom::MAX_GEOMS];
     bool      m_bTryLossless;
     bool      m_bChromaSa8d;
 
@@ -108,8 +107,6 @@ protected:
     analysis_inter_data* m_reuseInterDataCTU;
     int32_t*             m_reuseRef;
     uint32_t*            m_reuseBestMergeCand;
-
-    void initAqQPs(uint32_t depth, const CUData& ctu, const CUGeom* rootGeom);
 
     /* full analysis for an I-slice CU */
     void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qp);
