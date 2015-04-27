@@ -2187,23 +2187,24 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     {
         if (m_isVbv)
         {
+            /* determine avg QP decided by VBV rate control */
             for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
                 curEncData.m_avgQpRc += curEncData.m_rowStat[i].sumQpRc;
 
             curEncData.m_avgQpRc /= slice->m_sps->numCUsInFrame;
             rce->qpaRc = curEncData.m_avgQpRc;
-
-            // copy avg RC qp to m_avgQpAq. To print out the correct qp when aq/cutree is disabled.
-            curEncData.m_avgQpAq = curEncData.m_avgQpRc;
         }
 
         if (m_param->rc.aqMode)
         {
+            /* determine actual avg encoded QP, after AQ/cutree adjustments */
             for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
                 curEncData.m_avgQpAq += curEncData.m_rowStat[i].sumQpAq;
 
-            curEncData.m_avgQpAq /= slice->m_sps->numCUsInFrame;
+            curEncData.m_avgQpAq /= (slice->m_sps->numCUsInFrame * NUM_4x4_PARTITIONS);
         }
+        else
+            curEncData.m_avgQpAq = curEncData.m_avgQpRc;
     }
 
     // Write frame stats into the stats file if 2 pass is enabled.

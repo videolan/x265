@@ -226,8 +226,8 @@ protected:
     void encodeSlice();
 
     void threadMain();
-    int  calcQpForCu(uint32_t cuAddr, double baseQp);
-    void collectCTUStatistics(CUData& ctu);
+    int  collectCTUStatistics(const CUData& ctu);
+    int  calcCTUQP(const CUData& ctu);
     void noiseReductionUpdate();
 
     /* Called by WaveFront::findJob() */
