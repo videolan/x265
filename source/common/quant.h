@@ -82,7 +82,7 @@ protected:
     QpParam            m_qpParam[3];
 
     int                m_rdoqLevel;
-    int64_t            m_psyRdoqScale;
+    int32_t            m_psyRdoqScale;  // dynamic range [0,50] * 256 = 14-bits
     int16_t*           m_resiDctCoeff;
     int16_t*           m_fencDctCoeff;
     int16_t*           m_fencShortBuf;

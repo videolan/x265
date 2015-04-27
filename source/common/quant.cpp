@@ -198,7 +198,8 @@ bool Quant::init(int rdoqLevel, double psyScale, const ScalingList& scalingList,
 {
     m_entropyCoder = &entropy;
     m_rdoqLevel    = rdoqLevel;
-    m_psyRdoqScale = (int64_t)(psyScale * 256.0);
+    m_psyRdoqScale = (int32_t)(psyScale * 256.0);
+    X265_CHECK((psyScale * 256.0) < (double)MAX_INT, "psyScale value too large\n");
     m_scalingList  = &scalingList;
     m_resiDctCoeff = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
     m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
