@@ -287,7 +287,7 @@ public:
     ~Search();
 
     bool     initSearch(const x265_param& param, ScalingList& scalingList);
-    void     setQP(const Slice& slice, int qp);
+    int      setLambdaFromQP(const CUData& ctu, int qp); /* returns real quant QP in valid spec range */
 
     // mark temp RD entropy contexts as uninitialized; useful for finding loads without stores
     void     invalidateContexts(int fromDepth);
@@ -316,8 +316,8 @@ public:
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
 
     /* update CBF flags and QP values to be internally consistent */
-    void checkDQP(CUData& cu, const CUGeom& cuGeom);
-    void checkDQPForSplitPred(CUData& cu, const CUGeom& cuGeom);
+    void checkDQP(Mode& mode, const CUGeom& cuGeom);
+    void checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom);
 
     class PME : public BondedTaskGroup
     {

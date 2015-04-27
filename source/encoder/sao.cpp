@@ -258,7 +258,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     pixel* tmpL;
     pixel* tmpU;
 
-    int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
+    int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1, signLeft1[2];
     int8_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
     memset(_upBuff1 + MAX_CU_SIZE, 0, 2 * sizeof(int8_t)); /* avoid valgrind uninit warnings */
@@ -279,7 +279,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     {
     case SAO_EO_0: // dir: -
     {
-        pixel firstPxl = 0, lastPxl = 0;
+        pixel firstPxl = 0, lastPxl = 0, row1FirstPxl = 0, row1LastPxl = 0;
         startX = !lpelx;
         endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
         if (ctuWidth & 15)
@@ -301,25 +301,38 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         }
         else
         {
-            for (y = 0; y < ctuHeight; y++)
+            for (y = 0; y < ctuHeight; y += 2)
             {
-                int signLeft = signOf(rec[startX] - tmpL[y]);
+                signLeft1[0] = signOf(rec[startX] - tmpL[y]);
+                signLeft1[1] = signOf(rec[stride + startX] - tmpL[y + 1]);
 
                 if (!lpelx)
+                {
                     firstPxl = rec[0];
+                    row1FirstPxl = rec[stride];
+                }
 
                 if (rpelx == picWidth)
+                {
                     lastPxl = rec[ctuWidth - 1];
+                    row1LastPxl = rec[stride + ctuWidth - 1];
+                }
 
-                primitives.saoCuOrgE0(rec, m_offsetEo, ctuWidth, (int8_t)signLeft);
+                primitives.saoCuOrgE0(rec, m_offsetEo, ctuWidth, signLeft1, stride);
 
                 if (!lpelx)
+                {
                     rec[0] = firstPxl;
+                    rec[stride] = row1FirstPxl;
+                }
 
                 if (rpelx == picWidth)
+                {
                     rec[ctuWidth - 1] = lastPxl;
+                    rec[stride + ctuWidth - 1] = row1LastPxl;
+                }
 
-                rec += stride;
+                rec += 2 * stride;
             }
         }
         break;
@@ -354,11 +367,14 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         {
             primitives.sign(upBuff1, rec, tmpU, ctuWidth);
 
-            for (y = startY; y < endY; y++)
+            int diff = (endY - startY) % 2;
+            for (y = startY; y < endY - diff; y += 2)
             {
-                primitives.saoCuOrgE1(rec, upBuff1, m_offsetEo, stride, ctuWidth);
-                rec += stride;
+                primitives.saoCuOrgE1_2Rows(rec, upBuff1, m_offsetEo, stride, ctuWidth);
+                rec += 2 * stride;
             }
+            if (diff & 1)
+                primitives.saoCuOrgE1(rec, upBuff1, m_offsetEo, stride, ctuWidth);
         }
 
         break;
@@ -421,23 +437,8 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
             for (y = startY; y < endY; y++)
             {
                 int8_t iSignDown2 = signOf(rec[stride + startX] - tmpL[y]);
-                pixel firstPxl = rec[0];  // copy first Pxl
-                pixel lastPxl = rec[ctuWidth - 1];
-                int8_t one = upBufft[1];
-                int8_t two = upBufft[endX + 1];
 
-                primitives.saoCuOrgE2(rec, upBufft, upBuff1, m_offsetEo, ctuWidth, stride);
-                if (!lpelx)
-                {
-                    rec[0] = firstPxl;
-                    upBufft[1] = one;
-                }
-
-                if (rpelx == picWidth)
-                {
-                    rec[ctuWidth - 1] = lastPxl;
-                    upBufft[endX + 1] = two;
-                }
+                primitives.saoCuOrgE2[endX > 16](rec + startX, upBufft + startX, upBuff1 + startX, m_offsetEo, endX - startX, stride);
 
                 upBufft[startX] = iSignDown2;
 
@@ -508,7 +509,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                 upBuff1[x - 1] = -signDown;
                 rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
 
-                primitives.saoCuOrgE3(rec, upBuff1, m_offsetEo, stride - 1, startX, endX);
+                primitives.saoCuOrgE3[endX > 16](rec, upBuff1, m_offsetEo, stride - 1, startX, endX);
 
                 upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
 
@@ -783,13 +784,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 rec += stride;
             }
 
-            if (!(ctuWidth & 15))
-                primitives.sign(upBuff1, rec, &rec[- stride], ctuWidth);
-            else
-            {
-                for (x = 0; x < ctuWidth; x++)
-                    upBuff1[x] = signOf(rec[x] - rec[x - stride]);
-            }
+            primitives.sign(upBuff1, rec, &rec[- stride], ctuWidth);
 
             for (y = startY; y < endY; y++)
             {
@@ -832,8 +827,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 rec += stride;
             }
 
-            for (x = startX; x < endX; x++)
-                upBuff1[x] = signOf(rec[x] - rec[x - stride - 1]);
+            primitives.sign(&upBuff1[startX], &rec[startX], &rec[startX - stride - 1], (endX - startX));
 
             for (y = startY; y < endY; y++)
             {
@@ -879,8 +873,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 rec += stride;
             }
 
-            for (x = startX - 1; x < endX; x++)
-                upBuff1[x] = signOf(rec[x] - rec[x - stride + 1]);
+            primitives.sign(&upBuff1[startX - 1], &rec[startX - 1], &rec[startX - 1 - stride + 1], (endX - startX + 1));
 
             for (y = startY; y < endY; y++)
             {

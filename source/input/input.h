@@ -48,23 +48,25 @@ struct InputFileInfo
     int sarWidth;
     int sarHeight;
     int frameCount;
+    int timebaseNum;
+    int timebaseDenom;
 
     /* user supplied */
     int skipFrames;
     const char *filename;
 };
 
-class Input
+class InputFile
 {
 protected:
 
-    virtual ~Input()  {}
+    virtual ~InputFile()  {}
 
 public:
 
-    Input()           {}
+    InputFile()           {}
 
-    static Input* open(InputFileInfo& info, bool bForceY4m);
+    static InputFile* open(InputFileInfo& info, bool bForceY4m);
 
     virtual void startReader() = 0;
 

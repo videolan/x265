@@ -752,7 +752,7 @@ void denoiseDct_c(int16_t* dctCoef, uint32_t* resSum, const uint16_t* offset, in
     }
 }
 
-int findPosLast_c(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig)
+int scanPosLast_c(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* /*scanCG4x4*/, const int /*trSize*/)
 {
     memset(coeffNum, 0, MLS_GRP_NUM * sizeof(*coeffNum));
     memset(coeffFlag, 0, MLS_GRP_NUM * sizeof(*coeffFlag));
@@ -783,6 +783,37 @@ int findPosLast_c(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSig
     }
     while (numSig > 0);
     return scanPosLast - 1;
+}
+
+uint32_t findPosFirstLast_c(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16])
+{
+    int n;
+
+    for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
+    {
+        const uint32_t idx = scanTbl[n];
+        const uint32_t idxY = idx / MLS_CG_SIZE;
+        const uint32_t idxX = idx % MLS_CG_SIZE;
+        if (dstCoeff[idxY * trSize + idxX])
+            break;
+    }
+
+    X265_CHECK(n >= 0, "non-zero coeff scan failuare!\n");
+
+    uint32_t lastNZPosInCG = (uint32_t)n;
+
+    for (n = 0;; n++)
+    {
+        const uint32_t idx = scanTbl[n];
+        const uint32_t idxY = idx / MLS_CG_SIZE;
+        const uint32_t idxX = idx % MLS_CG_SIZE;
+        if (dstCoeff[idxY * trSize + idxX])
+            break;
+    }
+
+    uint32_t firstNZPosInCG = (uint32_t)n;
+
+    return ((lastNZPosInCG << 16) | firstNZPosInCG);
 }
 
 }  // closing - anonymous file-static namespace
@@ -817,6 +848,7 @@ void setupDCTPrimitives_c(EncoderPrimitives& p)
     p.cu[BLOCK_16x16].copy_cnt = copy_count<16>;
     p.cu[BLOCK_32x32].copy_cnt = copy_count<32>;
 
-    p.findPosLast = findPosLast_c;
+    p.scanPosLast = scanPosLast_c;
+    p.findPosFirstLast = findPosFirstLast_c;
 }
 }

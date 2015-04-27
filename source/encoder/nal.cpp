@@ -35,6 +35,7 @@ NALList::NALList()
     , m_extraBuffer(NULL)
     , m_extraOccupancy(0)
     , m_extraAllocSize(0)
+    , m_annexB(true)
 {}
 
 void NALList::takeContents(NALList& other)
@@ -90,7 +91,12 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
     uint8_t *out = m_buffer + m_occupancy;
     uint32_t bytes = 0;
 
-    if (!m_numNal || nalUnitType == NAL_UNIT_VPS || nalUnitType == NAL_UNIT_SPS || nalUnitType == NAL_UNIT_PPS)
+    if (!m_annexB)
+    {
+        /* Will write size later */
+        bytes += 4;
+    }
+    else if (!m_numNal || nalUnitType == NAL_UNIT_VPS || nalUnitType == NAL_UNIT_SPS || nalUnitType == NAL_UNIT_PPS)
     {
         memcpy(out, startCodePrefix, 4);
         bytes += 4;
@@ -144,6 +150,16 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
      * to 0x03 is appended to the end of the data.  */
     if (!out[bytes - 1])
         out[bytes++] = 0x03;
+
+    if (!m_annexB)
+    {
+        uint32_t dataSize = bytes - 4;
+        out[0] = (uint8_t)(dataSize >> 24);
+        out[1] = (uint8_t)(dataSize >> 16);
+        out[2] = (uint8_t)(dataSize >> 8);
+        out[3] = (uint8_t)dataSize;
+    }
+
     m_occupancy += bytes;
 
     X265_CHECK(m_numNal < (uint32_t)MAX_NAL_UNITS, "NAL count overflow\n");

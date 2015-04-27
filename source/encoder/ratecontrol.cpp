@@ -952,7 +952,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
     rce->sliceType = m_sliceType;
     if (!m_2pass)
         rce->keptAsRef = IS_REFERENCED(curFrame);
-    m_predType = m_sliceType == B_SLICE && rce->keptAsRef ? 3 : m_sliceType;
+    m_predType = getPredictorType(curFrame->m_lowres.sliceType, m_sliceType);
     rce->poc = m_curSlice->m_poc;
     if (m_param->rc.bStatRead)
     {
@@ -1111,6 +1111,14 @@ void RateControl::accumPQpUpdate()
         m_accumPQp += m_qp + m_ipOffset;
     else
         m_accumPQp += m_qp;
+}
+
+int RateControl::getPredictorType(int lowresSliceType, int sliceType)
+{
+    /* Use a different predictor for B Ref and B frames for vbv frame size predictions */
+    if (lowresSliceType == X265_TYPE_BREF)
+        return 3;
+    return sliceType;
 }
 
 double RateControl::getDiffLimitedQScale(RateControlEntry *rce, double q)
@@ -1734,7 +1742,7 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                         bufferFillCur += wantedFrameSize;
                     int64_t satd = curFrame->m_lowres.plannedSatd[j] >> (X265_DEPTH - 8);
                     type = IS_X265_TYPE_I(type) ? I_SLICE : IS_X265_TYPE_B(type) ? B_SLICE : P_SLICE;
-                    int predType = curFrame->m_lowres.plannedType[j] == X265_TYPE_BREF ? 3 : type;
+                    int predType = getPredictorType(curFrame->m_lowres.plannedType[j], type);
                     curBits = predictSize(&m_pred[predType], frameQ[type], (double)satd);
                     bufferFillCur -= curBits;
                 }

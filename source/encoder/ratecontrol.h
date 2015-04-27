@@ -265,6 +265,7 @@ protected:
     double tuneAbrQScaleFromFeedback(double qScale);
     void   accumPQpUpdate();
 
+    int    getPredictorType(int lowresSliceType, int sliceType);
     void   updateVbv(int64_t bits, RateControlEntry* rce);
     void   updatePredictor(Predictor *p, double q, double var, double bits);
     double clipQscale(Frame* pic, RateControlEntry* rce, double q);

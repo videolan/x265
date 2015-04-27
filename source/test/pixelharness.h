@@ -76,7 +76,8 @@ protected:
     bool check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt);
     bool check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt);
     bool check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt);
-    bool check_scale_pp(scale_t ref, scale_t opt);
+    bool check_scale1D_pp(scale1D_t ref, scale1D_t opt);
+    bool check_scale2D_pp(scale2D_t ref, scale2D_t opt);
     bool check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt);
     bool check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt);
     bool check_calresidual(calcresidual_t ref, calcresidual_t opt);
@@ -95,8 +96,9 @@ protected:
     bool check_addAvg(addAvg_t, addAvg_t);
     bool check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt);
     bool check_saoCuOrgE1_t(saoCuOrgE1_t ref, saoCuOrgE1_t opt);
-    bool check_saoCuOrgE2_t(saoCuOrgE2_t ref, saoCuOrgE2_t opt);
+    bool check_saoCuOrgE2_t(saoCuOrgE2_t ref[], saoCuOrgE2_t opt[]);
     bool check_saoCuOrgE3_t(saoCuOrgE3_t ref, saoCuOrgE3_t opt);
+    bool check_saoCuOrgE3_32_t(saoCuOrgE3_t ref, saoCuOrgE3_t opt);
     bool check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt);
     bool check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt);
     bool check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt);
@@ -104,7 +106,8 @@ protected:
     bool check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_psyCost_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
     bool check_calSign(sign_t ref, sign_t opt);
-    bool check_findPosLast(findPosLast_t ref, findPosLast_t opt);
+    bool check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt);
+    bool check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLast_t opt);
 
 public:
 

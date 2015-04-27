@@ -140,7 +140,7 @@ public:
 
     bool    create();
     void    destroy();
-    void    stop();
+    void    stopJobs();
 
     void    addPicture(Frame&, int sliceType);
     void    flush();

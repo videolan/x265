@@ -1,7 +1,8 @@
 /*****************************************************************************
- * Copyright (C) 2013 x265 project
+ * Copyright (C) 2013-2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Xinyue Lu <i@7086.in>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,18 +22,43 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "input.h"
-#include "yuv.h"
-#include "y4m.h"
+#ifndef X265_HEVC_RAW_H
+#define X265_HEVC_RAW_H
 
-using namespace x265;
+#include "output.h"
+#include "common.h"
+#include <fstream>
+#include <iostream>
 
-InputFile* InputFile::open(InputFileInfo& info, bool bForceY4m)
+namespace x265 {
+class RAWOutput : public OutputFile
 {
-    const char * s = strrchr(info.filename, '.');
+protected:
 
-    if (bForceY4m || (s && !strcmp(s, ".y4m")))
-        return new Y4MInput(info);
-    else
-        return new YUVInput(info);
+    std::ostream* ofs;
+
+    bool b_fail;
+
+public:
+
+    RAWOutput(const char* fname, InputFileInfo&);
+
+    bool isFail() const { return b_fail; }
+
+    bool needPTS() const { return false; }
+
+    void release() { delete this; }
+
+    const char* getName() const { return "raw"; }
+
+    void setParam(x265_param* param);
+
+    int writeHeaders(const x265_nal* nal, uint32_t nalcount);
+
+    int writeFrame(const x265_nal* nal, uint32_t nalcount, x265_picture&);
+
+    void closeFile(int64_t largest_pts, int64_t second_largest_pts);
+};
 }
+
+#endif // ifndef X265_HEVC_RAW_H

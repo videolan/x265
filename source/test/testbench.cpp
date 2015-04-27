@@ -168,6 +168,7 @@ int main(int argc, char *argv[])
         { "AVX", X265_CPU_AVX },
         { "XOP", X265_CPU_XOP },
         { "AVX2", X265_CPU_AVX2 },
+        { "BMI2", X265_CPU_AVX2 | X265_CPU_BMI1 | X265_CPU_BMI2 },
         { "", 0 },
     };
 
