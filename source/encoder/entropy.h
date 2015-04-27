@@ -87,7 +87,7 @@ struct TURecurse
 struct EstBitsSbac
 {
     int significantCoeffGroupBits[NUM_SIG_CG_FLAG_CTX][2];
-    int significantBits[NUM_SIG_FLAG_CTX][2];
+    int significantBits[2][NUM_SIG_FLAG_CTX];
     int lastBits[2][10];
     int greaterOneBits[NUM_ONE_FLAG_CTX][2];
     int levelAbsBits[NUM_ABS_FLAG_CTX][2];

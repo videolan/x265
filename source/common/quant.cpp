@@ -742,9 +742,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                         X265_CHECK(trSize > 4, "trSize check failure\n");
                         X265_CHECK(ctxSig == getSigCtxInc(patternSigCtx, log2TrSize, trSize, codeParams.scan[scanPosBase + scanPosOffset], bIsLuma, codeParams.firstSignificanceMapContext), "sigCtx check failure\n");
 
-                        costSig[scanPosBase + scanPosOffset] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
+                        costSig[scanPosBase + scanPosOffset] = SIGCOST(estBitsSbac.significantBits[0][ctxSig]);
                         costCoeff[scanPosBase + scanPosOffset] = costUncoded[blkPos + x];
-                        sigRateDelta[blkPos + x] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
+                        sigRateDelta[blkPos + x] = estBitsSbac.significantBits[1][ctxSig] - estBitsSbac.significantBits[0][ctxSig];
                     }
                     blkPos += trSize;
                 }
@@ -767,9 +767,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                         X265_CHECK(trSize > 4, "trSize check failure\n");
                         X265_CHECK(ctxSig == getSigCtxInc(patternSigCtx, log2TrSize, trSize, codeParams.scan[scanPosBase + scanPosOffset], bIsLuma, codeParams.firstSignificanceMapContext), "sigCtx check failure\n");
 
-                        costSig[scanPosBase + scanPosOffset] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
+                        costSig[scanPosBase + scanPosOffset] = SIGCOST(estBitsSbac.significantBits[0][ctxSig]);
                         costCoeff[scanPosBase + scanPosOffset] = costUncoded[blkPos + x];
-                        sigRateDelta[blkPos + x] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
+                        sigRateDelta[blkPos + x] = estBitsSbac.significantBits[1][ctxSig] - estBitsSbac.significantBits[0][ctxSig];
                     }
                     blkPos += trSize;
                 }
@@ -835,9 +835,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
             {
                 // fast zero coeff path
                 /* set default costs to uncoded costs */
-                costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
+                costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[0][ctxSig]);
                 costCoeff[scanPos] = costUncoded[blkPos] + costSig[scanPos];
-                sigRateDelta[blkPos] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
+                sigRateDelta[blkPos] = estBitsSbac.significantBits[1][ctxSig] - estBitsSbac.significantBits[0][ctxSig];
                 totalRdCost += costCoeff[scanPos];
                 rateIncUp[blkPos] = greaterOneBits[0];
 
@@ -868,11 +868,11 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                     if (maxAbsLevel < 3)
                     {
                         /* set default costs to uncoded costs */
-                        costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
+                        costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[0][ctxSig]);
                         costCoeff[scanPos] = costUncoded[blkPos] + costSig[scanPos];
                     }
-                    sigRateDelta[blkPos] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
-                    sigCoefBits = estBitsSbac.significantBits[ctxSig][1];
+                    sigRateDelta[blkPos] = estBitsSbac.significantBits[1][ctxSig] - estBitsSbac.significantBits[0][ctxSig];
+                    sigCoefBits = estBitsSbac.significantBits[1][ctxSig];
                 }
 
                 // NOTE: X265_MAX(maxAbsLevel - 1, 1) ==> (X>=2 -> X-1), (X<2 -> 1)  | (0 < X < 2 ==> X=1)
