@@ -275,8 +275,17 @@ struct EncoderPrimitives
 
     sign_t                sign;
     saoCuOrgE0_t          saoCuOrgE0;
+
+    /* To avoid the overhead in avx2 optimization in handling width=16, SAO_E0_1 is split
+     * into two parts: saoCuOrgE1, saoCuOrgE1_2Rows */
     saoCuOrgE1_t          saoCuOrgE1, saoCuOrgE1_2Rows;
+
+    // saoCuOrgE2[0] is used for width<=16 and saoCuOrgE2[1] is used for width > 16.
     saoCuOrgE2_t          saoCuOrgE2[2];
+
+    /* In avx2 optimization, two rows cannot be handled simultaneously since it requires 
+     * a pixel from the previous row. So, saoCuOrgE3[0] is used for width<=16 and 
+     * saoCuOrgE3[1] is used for width > 16. */
     saoCuOrgE3_t          saoCuOrgE3[2];
     saoCuOrgB0_t          saoCuOrgB0;
 
