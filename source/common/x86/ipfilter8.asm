@@ -17422,10 +17422,10 @@ cglobal interp_4tap_vert_%1_8x%2, 4, 7, 9
     FILTER_VER_CHROMA_S_AVX2_8xN ss, 32
     FILTER_VER_CHROMA_S_AVX2_8xN ss, 64
 
-%macro FILTER_VER_CHROMA_S_AVX2_32x24 1
-INIT_YMM avx2
+%macro FILTER_VER_CHROMA_S_AVX2_Nx24 2
 %if ARCH_X86_64 == 1
-cglobal interp_4tap_vert_%1_32x24, 4, 10, 10
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_%2x24, 4, 10, 10
     mov             r4d, r4m
     shl             r4d, 6
     add             r1d, r1d
@@ -17445,7 +17445,7 @@ cglobal interp_4tap_vert_%1_32x24, 4, 10, 10
     add             r3d, r3d
 %endif
     lea             r6, [r3 * 3]
-    mov             r9d, 4
+    mov             r9d, %2 / 8
 .loopW:
     PROCESS_CHROMA_S_AVX2_W8_16R %1
 %ifidn %1,sp
@@ -17457,13 +17457,13 @@ cglobal interp_4tap_vert_%1_32x24, 4, 10, 10
     dec             r9d
     jnz             .loopW
 %ifidn %1,sp
-    lea             r2, [r8 + r3 * 4 - 24]
+    lea             r2, [r8 + r3 * 4 - %2 + 8]
 %else
-    lea             r2, [r8 + r3 * 4 - 48]
+    lea             r2, [r8 + r3 * 4 - 2 * %2 + 16]
 %endif
-    lea             r0, [r7 - 48]
+    lea             r0, [r7 - 2 * %2 + 16]
     mova            m7, m9
-    mov             r9d, 4
+    mov             r9d, %2 / 8
 .loop:
     PROCESS_CHROMA_S_AVX2_W8_8R %1
 %ifidn %1,sp
@@ -17478,8 +17478,10 @@ cglobal interp_4tap_vert_%1_32x24, 4, 10, 10
 %endif
 %endmacro
 
-    FILTER_VER_CHROMA_S_AVX2_32x24 sp
-    FILTER_VER_CHROMA_S_AVX2_32x24 ss
+    FILTER_VER_CHROMA_S_AVX2_Nx24 sp, 32
+    FILTER_VER_CHROMA_S_AVX2_Nx24 sp, 16
+    FILTER_VER_CHROMA_S_AVX2_Nx24 ss, 32
+    FILTER_VER_CHROMA_S_AVX2_Nx24 ss, 16
 
 %macro FILTER_VER_CHROMA_S_AVX2_2x8 1
 INIT_YMM avx2
