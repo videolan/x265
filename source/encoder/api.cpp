@@ -253,11 +253,64 @@ static const x265_api libapi =
     x265_max_bit_depth,
 };
 
+typedef const x265_api* (*api_get_func)(int bitDepth);
+
+#define xstr(s) str(s)
+#define str(s) #s
+
+#if _WIN32
+#define ext ".dll"
+#elif MACOS
+#include <dlfcn.h>
+#define ext ".dylib"
+#else
+#include <dlfcn.h>
+#define ext ".so"
+#endif
+
 extern "C"
 const x265_api* x265_api_get(int bitDepth)
 {
     if (bitDepth && bitDepth != X265_DEPTH)
+    {
+        const char* libname = NULL;
+        const char* method = "x265_api_get_" xstr(X265_BUILD);
+
+        if (bitDepth == 10)
+            libname = "libx265_main10" ext;
+        else if (bitDepth == 8)
+            libname = "libx265_main" ext;
+        else
+            return NULL;
+
+#if _WIN32
+        HMODULE h = LoadLibraryA(libname);
+        if (h)
+        {
+            api_get_func get = (api_get_func)GetProcAddress(h, method);
+            if (get)
+                return get(bitDepth);
+            else
+                x265_log(NULL, X265_LOG_WARNING, "Unable to bind %s from %s\n", method, libname);
+        }
+        else
+            x265_log(NULL, X265_LOG_WARNING, "Unable to open %s\n", libname);
+#else
+        void* h = dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
+        if (h)
+        {
+            api_get_func get = (api_get_func)dlsym(h, method);
+            if (get)
+                return get(bitDepth);
+            else
+                x265_log(NULL, X265_LOG_WARNING, "Unable to bind %s from %s\n", method, libname);
+        }
+        else
+            x265_log(NULL, X265_LOG_WARNING, "Unable to open %s\n", libname);
+#endif
+
         return NULL;
+    }
 
     return &libapi;
 }
