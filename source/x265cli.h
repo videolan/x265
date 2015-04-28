@@ -30,7 +30,7 @@
 namespace x265 {
 #endif
 
-static const char short_options[] = "o:p:f:F:r:I:i:b:s:t:q:m:hwV?";
+static const char short_options[] = "o:P:p:f:F:r:I:i:b:s:t:q:m:hwV?";
 static const struct option long_options[] =
 {
     { "help",                 no_argument, NULL, 'h' },
@@ -47,7 +47,7 @@ static const struct option long_options[] =
     { "no-pme",               no_argument, NULL, 0 },
     { "pme",                  no_argument, NULL, 0 },
     { "log-level",      required_argument, NULL, 0 },
-    { "profile",        required_argument, NULL, 0 },
+    { "profile",        required_argument, NULL, 'P' },
     { "level-idc",      required_argument, NULL, 0 },
     { "high-tier",            no_argument, NULL, 0 },
     { "no-high-tier",         no_argument, NULL, 0 },
@@ -260,7 +260,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
     H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
     H0("\nProfile, Level, Tier:\n");
-    H0("   --profile <string>            Enforce an encode profile: main, main10, mainstillpicture\n");
+    H0("-P/--profile <string>            Enforce an encode profile: main, main10, mainstillpicture\n");
     H0("   --level-idc <integer|float>   Force a minimum required decoder level (as '5.0' or '50')\n");
     H0("   --[no-]high-tier              If a decoder level is specified, this modifier selects High tier of that level\n");
     H0("   --[no-]allow-non-conformance  Allow the encoder to generate profile NONE bitstreams. Default %s\n", OPT(param->bAllowNonConformance));

@@ -422,7 +422,7 @@ frame counts) are only applicable to the CLI application.
 Profile, Level, Tier
 ====================
 
-.. option:: --profile <string>
+.. option:: --profile, -P <string>
 
 	Enforce the requirements of the specified profile, ensuring the
 	output stream will be decodable by a decoder which supports that
