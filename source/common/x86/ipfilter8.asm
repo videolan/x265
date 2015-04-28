@@ -27,280 +27,266 @@
 %include "x86util.asm"
 
 SECTION_RODATA 32
-tab_Tm:    db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
-           db 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10
-           db 8, 9,10,11, 9,10,11,12,10,11,12,13,11,12,13, 14
+const tab_Tm,    db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
+                 db 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10
+                 db 8, 9,10,11, 9,10,11,12,10,11,12,13,11,12,13, 14
 
-ALIGN 32
 const interp4_vpp_shuf, times 2 db 0, 4, 1, 5, 2, 6, 3, 7, 8, 12, 9, 13, 10, 14, 11, 15
 
-ALIGN 32
 const interp_vert_shuf, times 2 db 0, 2, 1, 3, 2, 4, 3, 5, 4, 6, 5, 7, 6, 8, 7, 9
                         times 2 db 4, 6, 5, 7, 6, 8, 7, 9, 8, 10, 9, 11, 10, 12, 11, 13
 
-ALIGN 32
 const interp4_vpp_shuf1, dd 0, 1, 1, 2, 2, 3, 3, 4
                          dd 2, 3, 3, 4, 4, 5, 5, 6
 
-ALIGN 32
 const pb_8tap_hps_0, times 2 db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
                      times 2 db 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10
                      times 2 db 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12
                      times 2 db 6, 7, 7, 8, 8, 9, 9,10,10,11,11,12,12,13,13,14
 
-ALIGN 32
-tab_Lm:    db 0, 1, 2, 3, 4,  5,  6,  7,  1, 2, 3, 4,  5,  6,  7,  8
-           db 2, 3, 4, 5, 6,  7,  8,  9,  3, 4, 5, 6,  7,  8,  9,  10
-           db 4, 5, 6, 7, 8,  9,  10, 11, 5, 6, 7, 8,  9,  10, 11, 12
-           db 6, 7, 8, 9, 10, 11, 12, 13, 7, 8, 9, 10, 11, 12, 13, 14
+const tab_Lm,    db 0, 1, 2, 3, 4,  5,  6,  7,  1, 2, 3, 4,  5,  6,  7,  8
+                 db 2, 3, 4, 5, 6,  7,  8,  9,  3, 4, 5, 6,  7,  8,  9,  10
+                 db 4, 5, 6, 7, 8,  9,  10, 11, 5, 6, 7, 8,  9,  10, 11, 12
+                 db 6, 7, 8, 9, 10, 11, 12, 13, 7, 8, 9, 10, 11, 12, 13, 14
 
-tab_Vm:    db 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1
-           db 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3
+const tab_Vm,    db 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1
+                 db 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3
 
-tab_Cm:    db 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3
+const tab_Cm,    db 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3
 
-pd_526336:      times 8 dd 8192*64+2048
+const pd_526336, times 8 dd 8192*64+2048
 
-tab_ChromaCoeff: db  0, 64,  0,  0
-                 db -2, 58, 10, -2
-                 db -4, 54, 16, -2
-                 db -6, 46, 28, -4
-                 db -4, 36, 36, -4
-                 db -4, 28, 46, -6
-                 db -2, 16, 54, -4
-                 db -2, 10, 58, -2
+const tab_ChromaCoeff, db  0, 64,  0,  0
+                       db -2, 58, 10, -2
+                       db -4, 54, 16, -2
+                       db -6, 46, 28, -4
+                       db -4, 36, 36, -4
+                       db -4, 28, 46, -6
+                       db -2, 16, 54, -4
+                       db -2, 10, 58, -2
 
-tabw_ChromaCoeff: dw  0, 64,  0,  0
-                  dw -2, 58, 10, -2
-                  dw -4, 54, 16, -2
-                  dw -6, 46, 28, -4
-                  dw -4, 36, 36, -4
-                  dw -4, 28, 46, -6
-                  dw -2, 16, 54, -4
-                  dw -2, 10, 58, -2
+const tabw_ChromaCoeff, dw  0, 64,  0,  0
+                        dw -2, 58, 10, -2
+                        dw -4, 54, 16, -2
+                        dw -6, 46, 28, -4
+                        dw -4, 36, 36, -4
+                        dw -4, 28, 46, -6
+                        dw -2, 16, 54, -4
+                        dw -2, 10, 58, -2
 
-ALIGN 32
-tab_ChromaCoeff_V: times 8 db 0, 64
-                   times 8 db 0,  0
+const tab_ChromaCoeff_V, times 8 db 0, 64
+                         times 8 db 0,  0
 
-                   times 8 db -2, 58
-                   times 8 db 10, -2
+                         times 8 db -2, 58
+                         times 8 db 10, -2
 
-                   times 8 db -4, 54
-                   times 8 db 16, -2
+                         times 8 db -4, 54
+                         times 8 db 16, -2
 
-                   times 8 db -6, 46
-                   times 8 db 28, -4
+                         times 8 db -6, 46
+                         times 8 db 28, -4
 
-                   times 8 db -4, 36
-                   times 8 db 36, -4
+                         times 8 db -4, 36
+                         times 8 db 36, -4
 
-                   times 8 db -4, 28
-                   times 8 db 46, -6
+                         times 8 db -4, 28
+                         times 8 db 46, -6
 
-                   times 8 db -2, 16
-                   times 8 db 54, -4
+                         times 8 db -2, 16
+                         times 8 db 54, -4
 
-                   times 8 db -2, 10
-                   times 8 db 58, -2
+                         times 8 db -2, 10
+                         times 8 db 58, -2
 
-tab_ChromaCoeffV: times 4 dw 0, 64
-                  times 4 dw 0, 0
+const tab_ChromaCoeffV, times 4 dw 0, 64
+                        times 4 dw 0, 0
 
-                  times 4 dw -2, 58
-                  times 4 dw 10, -2
+                        times 4 dw -2, 58
+                        times 4 dw 10, -2
 
-                  times 4 dw -4, 54
-                  times 4 dw 16, -2
+                        times 4 dw -4, 54
+                        times 4 dw 16, -2
 
-                  times 4 dw -6, 46
-                  times 4 dw 28, -4
+                        times 4 dw -6, 46
+                        times 4 dw 28, -4
 
-                  times 4 dw -4, 36
-                  times 4 dw 36, -4
+                        times 4 dw -4, 36
+                        times 4 dw 36, -4
 
-                  times 4 dw -4, 28
-                  times 4 dw 46, -6
+                        times 4 dw -4, 28
+                        times 4 dw 46, -6
 
-                  times 4 dw -2, 16
-                  times 4 dw 54, -4
+                        times 4 dw -2, 16
+                        times 4 dw 54, -4
 
-                  times 4 dw -2, 10
-                  times 4 dw 58, -2
+                        times 4 dw -2, 10
+                        times 4 dw 58, -2
 
-ALIGN 32
-pw_ChromaCoeffV:  times 8 dw 0, 64
-                  times 8 dw 0, 0
+const pw_ChromaCoeffV,  times 8 dw 0, 64
+                        times 8 dw 0, 0
 
-                  times 8 dw -2, 58
-                  times 8 dw 10, -2
+                        times 8 dw -2, 58
+                        times 8 dw 10, -2
 
-                  times 8 dw -4, 54
-                  times 8 dw 16, -2
+                        times 8 dw -4, 54
+                        times 8 dw 16, -2
 
-                  times 8 dw -6, 46
-                  times 8 dw 28, -4
+                        times 8 dw -6, 46
+                        times 8 dw 28, -4
 
-                  times 8 dw -4, 36
-                  times 8 dw 36, -4
+                        times 8 dw -4, 36
+                        times 8 dw 36, -4
 
-                  times 8 dw -4, 28
-                  times 8 dw 46, -6
+                        times 8 dw -4, 28
+                        times 8 dw 46, -6
 
-                  times 8 dw -2, 16
-                  times 8 dw 54, -4
+                        times 8 dw -2, 16
+                        times 8 dw 54, -4
 
-                  times 8 dw -2, 10
-                  times 8 dw 58, -2
+                        times 8 dw -2, 10
+                        times 8 dw 58, -2
 
-tab_LumaCoeff:   db   0, 0,  0,  64,  0,   0,  0,  0
-                 db  -1, 4, -10, 58,  17, -5,  1,  0
-                 db  -1, 4, -11, 40,  40, -11, 4, -1
-                 db   0, 1, -5,  17,  58, -10, 4, -1
+const tab_LumaCoeff,   db   0, 0,  0,  64,  0,   0,  0,  0
+                       db  -1, 4, -10, 58,  17, -5,  1,  0
+                       db  -1, 4, -11, 40,  40, -11, 4, -1
+                       db   0, 1, -5,  17,  58, -10, 4, -1
 
-tab_LumaCoeffV: times 4 dw 0, 0
-                times 4 dw 0, 64
-                times 4 dw 0, 0
-                times 4 dw 0, 0
+const tab_LumaCoeffV,   times 4 dw 0, 0
+                        times 4 dw 0, 64
+                        times 4 dw 0, 0
+                        times 4 dw 0, 0
 
-                times 4 dw -1, 4
-                times 4 dw -10, 58
-                times 4 dw 17, -5
-                times 4 dw 1, 0
+                        times 4 dw -1, 4
+                        times 4 dw -10, 58
+                        times 4 dw 17, -5
+                        times 4 dw 1, 0
 
-                times 4 dw -1, 4
-                times 4 dw -11, 40
-                times 4 dw 40, -11
-                times 4 dw 4, -1
+                        times 4 dw -1, 4
+                        times 4 dw -11, 40
+                        times 4 dw 40, -11
+                        times 4 dw 4, -1
 
-                times 4 dw 0, 1
-                times 4 dw -5, 17
-                times 4 dw 58, -10
-                times 4 dw 4, -1
+                        times 4 dw 0, 1
+                        times 4 dw -5, 17
+                        times 4 dw 58, -10
+                        times 4 dw 4, -1
 
-ALIGN 32
-pw_LumaCoeffVer: times 8 dw 0, 0
-                 times 8 dw 0, 64
-                 times 8 dw 0, 0
-                 times 8 dw 0, 0
+const pw_LumaCoeffVer,  times 8 dw 0, 0
+                        times 8 dw 0, 64
+                        times 8 dw 0, 0
+                        times 8 dw 0, 0
 
-                 times 8 dw -1, 4
-                 times 8 dw -10, 58
-                 times 8 dw 17, -5
-                 times 8 dw 1, 0
+                        times 8 dw -1, 4
+                        times 8 dw -10, 58
+                        times 8 dw 17, -5
+                        times 8 dw 1, 0
 
-                 times 8 dw -1, 4
-                 times 8 dw -11, 40
-                 times 8 dw 40, -11
-                 times 8 dw 4, -1
+                        times 8 dw -1, 4
+                        times 8 dw -11, 40
+                        times 8 dw 40, -11
+                        times 8 dw 4, -1
 
-                 times 8 dw 0, 1
-                 times 8 dw -5, 17
-                 times 8 dw 58, -10
-                 times 8 dw 4, -1
+                        times 8 dw 0, 1
+                        times 8 dw -5, 17
+                        times 8 dw 58, -10
+                        times 8 dw 4, -1
 
-pb_LumaCoeffVer: times 16 db 0, 0
-                 times 16 db 0, 64
-                 times 16 db 0, 0
-                 times 16 db 0, 0
+const pb_LumaCoeffVer,  times 16 db 0, 0
+                        times 16 db 0, 64
+                        times 16 db 0, 0
+                        times 16 db 0, 0
 
-                 times 16 db -1, 4
-                 times 16 db -10, 58
-                 times 16 db 17, -5
-                 times 16 db 1, 0
+                        times 16 db -1, 4
+                        times 16 db -10, 58
+                        times 16 db 17, -5
+                        times 16 db 1, 0
 
-                 times 16 db -1, 4
-                 times 16 db -11, 40
-                 times 16 db 40, -11
-                 times 16 db 4, -1
+                        times 16 db -1, 4
+                        times 16 db -11, 40
+                        times 16 db 40, -11
+                        times 16 db 4, -1
 
-                 times 16 db 0, 1
-                 times 16 db -5, 17
-                 times 16 db 58, -10
-                 times 16 db 4, -1
+                        times 16 db 0, 1
+                        times 16 db -5, 17
+                        times 16 db 58, -10
+                        times 16 db 4, -1
 
-tab_LumaCoeffVer: times 8 db 0, 0
-                  times 8 db 0, 64
-                  times 8 db 0, 0
-                  times 8 db 0, 0
+const tab_LumaCoeffVer, times 8 db 0, 0
+                        times 8 db 0, 64
+                        times 8 db 0, 0
+                        times 8 db 0, 0
 
-                  times 8 db -1, 4
-                  times 8 db -10, 58
-                  times 8 db 17, -5
-                  times 8 db 1, 0
+                        times 8 db -1, 4
+                        times 8 db -10, 58
+                        times 8 db 17, -5
+                        times 8 db 1, 0
 
-                  times 8 db -1, 4
-                  times 8 db -11, 40
-                  times 8 db 40, -11
-                  times 8 db 4, -1
+                        times 8 db -1, 4
+                        times 8 db -11, 40
+                        times 8 db 40, -11
+                        times 8 db 4, -1
 
-                  times 8 db 0, 1
-                  times 8 db -5, 17
-                  times 8 db 58, -10
-                  times 8 db 4, -1
+                        times 8 db 0, 1
+                        times 8 db -5, 17
+                        times 8 db 58, -10
+                        times 8 db 4, -1
 
-ALIGN 32
-tab_LumaCoeffVer_32: times 16 db 0, 0
-                     times 16 db 0, 64
-                     times 16 db 0, 0
-                     times 16 db 0, 0
+const tab_LumaCoeffVer_32,  times 16 db 0, 0
+                            times 16 db 0, 64
+                            times 16 db 0, 0
+                            times 16 db 0, 0
 
-                     times 16 db -1, 4
-                     times 16 db -10, 58
-                     times 16 db 17, -5
-                     times 16 db 1, 0
+                            times 16 db -1, 4
+                            times 16 db -10, 58
+                            times 16 db 17, -5
+                            times 16 db 1, 0
 
-                     times 16 db -1, 4
-                     times 16 db -11, 40
-                     times 16 db 40, -11
-                     times 16 db 4, -1
+                            times 16 db -1, 4
+                            times 16 db -11, 40
+                            times 16 db 40, -11
+                            times 16 db 4, -1
 
-                     times 16 db 0, 1
-                     times 16 db -5, 17
-                     times 16 db 58, -10
-                     times 16 db 4, -1
+                            times 16 db 0, 1
+                            times 16 db -5, 17
+                            times 16 db 58, -10
+                            times 16 db 4, -1
 
-ALIGN 32
-tab_ChromaCoeffVer_32: times 16 db 0, 64
-                       times 16 db 0, 0
+const tab_ChromaCoeffVer_32,    times 16 db 0, 64
+                                times 16 db 0, 0
 
-                       times 16 db -2, 58
-                       times 16 db 10, -2
+                                times 16 db -2, 58
+                                times 16 db 10, -2
 
-                       times 16 db -4, 54
-                       times 16 db 16, -2
+                                times 16 db -4, 54
+                                times 16 db 16, -2
 
-                       times 16 db -6, 46
-                       times 16 db 28, -4
+                                times 16 db -6, 46
+                                times 16 db 28, -4
 
-                       times 16 db -4, 36
-                       times 16 db 36, -4
+                                times 16 db -4, 36
+                                times 16 db 36, -4
 
-                       times 16 db -4, 28
-                       times 16 db 46, -6
+                                times 16 db -4, 28
+                                times 16 db 46, -6
 
-                       times 16 db -2, 16
-                       times 16 db 54, -4
+                                times 16 db -2, 16
+                                times 16 db 54, -4
 
-                       times 16 db -2, 10
-                       times 16 db 58, -2
+                                times 16 db -2, 10
+                                times 16 db 58, -2
 
-tab_c_64_n64:   times 8 db 64, -64
+const tab_c_64_n64, times 8 db 64, -64
 
 const interp4_shuf, times 2 db 0, 1, 8, 9, 4, 5, 12, 13, 2, 3, 10, 11, 6, 7, 14, 15
 
-ALIGN 32
-interp4_horiz_shuf1:    db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
-                        db 8, 9, 10, 11, 9, 10, 11, 12, 10, 11, 12, 13, 11, 12, 13, 14
+const interp4_horiz_shuf1,  db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
+                            db 8, 9, 10, 11, 9, 10, 11, 12, 10, 11, 12, 13, 11, 12, 13, 14
 
-ALIGN 32
-interp4_hpp_shuf: times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 8, 9, 10, 11, 9, 10, 11, 12
+const interp4_hpp_shuf,     times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 8, 9, 10, 11, 9, 10, 11, 12
 
-ALIGN 32
-interp8_hps_shuf: dd 0, 4, 1, 5, 2, 6, 3, 7
+const interp8_hps_shuf,     dd 0, 4, 1, 5, 2, 6, 3, 7
 
-ALIGN 32
-interp4_hps_shuf: times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 8, 9, 10, 11, 9, 10, 11, 12
+const interp4_hps_shuf,     times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 8, 9, 10, 11, 9, 10, 11, 12
 
 SECTION .text
 
