@@ -823,12 +823,14 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     const uint32_t numCols = m_numCols;
     const uint32_t lineStartCUAddr = row * numCols;
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
-    /* These states store the count of inter,intra and skip ctus within quad tree structure of each CU */
-    uint32_t qTreeInterCnt[4];
-    uint32_t qTreeIntraCnt[4];
-    uint32_t qTreeSkipCnt[4];
+
+    /* These store the count of inter, intra and skip cus within quad tree structure of each CTU */
+    uint32_t qTreeInterCnt[NUM_CU_DEPTH];
+    uint32_t qTreeIntraCnt[NUM_CU_DEPTH];
+    uint32_t qTreeSkipCnt[NUM_CU_DEPTH];
     for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         qTreeIntraCnt[depth] = qTreeInterCnt[depth] = qTreeSkipCnt[depth] = 0;
+
     while (curRow.completed < numCols)
     {
         ProfileScopeEvent(encodeCTU);
