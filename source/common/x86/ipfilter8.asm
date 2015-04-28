@@ -286,8 +286,6 @@ const interp4_hpp_shuf,     times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 8, 9, 10, 11, 9, 
 
 const interp8_hps_shuf,     dd 0, 4, 1, 5, 2, 6, 3, 7
 
-const interp4_hps_shuf,     times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 8, 9, 10, 11, 9, 10, 11, 12
-
 SECTION .text
 
 cextern pb_128
@@ -22608,7 +22606,7 @@ cglobal interp_4tap_horiz_ps_2x4, 4, 7, 3
     movhps             xm2,            [r0 + r6]
 
     vinserti128        m1,             m1,          xm2,          1
-    pshufb             m1,             [interp4_hps_shuf]
+    pshufb             m1,             [interp4_hpp_shuf]
     pmaddubsw          m1,             m0
     pmaddwd            m1,             [pw_1]
     vextracti128       xm2,            m1,          1
@@ -22630,7 +22628,7 @@ cglobal interp_4tap_horiz_ps_2x4, 4, 7, 3
     movhps             xm1,            [r0 + r1]
     movq               xm2,            [r0 + r1 * 2]
     vinserti128        m1,             m1,          xm2,          1
-    pshufb             m1,             [interp4_hps_shuf]
+    pshufb             m1,             [interp4_hpp_shuf]
     pmaddubsw          m1,             m0
     pmaddwd            m1,             [pw_1]
     vextracti128       xm2,            m1,          1
@@ -22661,7 +22659,7 @@ cglobal interp_4tap_horiz_ps_2x8, 4, 7, 7
     sub               r0,             r1
 
 .label
-    mova              m4,            [interp4_hps_shuf]
+    mova              m4,            [interp4_hpp_shuf]
     mova              m5,            [pw_1]
     dec               r0
     lea               r4,            [r1 * 3]
