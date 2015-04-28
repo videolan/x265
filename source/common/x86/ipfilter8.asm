@@ -59,8 +59,6 @@ tab_Vm:    db 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1
 
 tab_Cm:    db 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3
 
-tab_c_526336:   times 4 dd 8192*64+2048
-
 pd_526336:      times 8 dd 8192*64+2048
 
 tab_ChromaCoeff: db  0, 64,  0,  0
@@ -3157,10 +3155,10 @@ cglobal interp_8tap_horiz_pp_%1x%2, 4,6,7
 
 ; Round and Saturate
 %macro FILTER_HV8_END 4 ; output in [1, 3]
-    paddd       %1, [tab_c_526336]
-    paddd       %2, [tab_c_526336]
-    paddd       %3, [tab_c_526336]
-    paddd       %4, [tab_c_526336]
+    paddd       %1, [pd_526336]
+    paddd       %2, [pd_526336]
+    paddd       %3, [pd_526336]
+    paddd       %4, [pd_526336]
     psrad       %1, 12
     psrad       %2, 12
     psrad       %3, 12
@@ -13571,7 +13569,7 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-gprsize
     lea       r6, [tab_LumaCoeffV + r4]
 %endif
 
-    mova      m7, [tab_c_526336]
+    mova      m7, [pd_526336]
 
     mov       dword [rsp], %2/4
 .loopH:
@@ -13744,7 +13742,7 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 7, 7 ,0-gprsize
     lea       r6, [tab_ChromaCoeffV + r4]
 %endif
 
-    mova      m6, [tab_c_526336]
+    mova      m6, [pd_526336]
 
     mov       dword [rsp], %2/4
 
@@ -13871,7 +13869,7 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 6, 6
     lea       r5, [tab_ChromaCoeffV + r4]
 %endif
 
-    mova      m5, [tab_c_526336]
+    mova      m5, [pd_526336]
 
     mov       r4d, (%2/4)
 
@@ -13923,7 +13921,7 @@ cglobal interp_4tap_vert_sp_4x2, 5, 6, 5
     lea        r5, [tab_ChromaCoeffV + r4]
 %endif
 
-    mova       m4, [tab_c_526336]
+    mova       m4, [pd_526336]
 
     movq       m0, [r0]
     movq       m1, [r0 + r1]
@@ -13975,7 +13973,7 @@ cglobal interp_4tap_vert_sp_6x%2, 5, 7, 7
     lea       r6, [tab_ChromaCoeffV + r4]
 %endif
 
-    mova      m6, [tab_c_526336]
+    mova      m6, [pd_526336]
 
     mov       r4d, %2/4
 
@@ -14087,7 +14085,7 @@ cglobal interp_4tap_vert_sp_%1x%2, 5, 6, 8
     lea       r5, [tab_ChromaCoeffV + r4]
 %endif
 
-    mova      m7, [tab_c_526336]
+    mova      m7, [pd_526336]
 
     mov       r4d, %2/2
 .loopH:
