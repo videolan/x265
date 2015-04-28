@@ -16138,6 +16138,53 @@ cglobal interp_4tap_vert_%1_12x16, 4, 9, 10
     FILTER_VER_CHROMA_S_AVX2_12x16 sp
     FILTER_VER_CHROMA_S_AVX2_12x16 ss
 
+%macro FILTER_VER_CHROMA_S_AVX2_12x32 1
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_12x32, 4, 9, 10
+    mov             r4d, r4m
+    shl             r4d, 6
+    add             r1d, r1d
+
+%ifdef PIC
+    lea             r5, [pw_ChromaCoeffV]
+    add             r5, r4
+%else
+    lea             r5, [pw_ChromaCoeffV + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+%ifidn %1, sp
+    mova            m9, [pd_526336]
+%else
+    add             r3d, r3d
+%endif
+    lea             r6, [r3 * 3]
+%rep 2
+    PROCESS_CHROMA_S_AVX2_W8_16R %1
+%ifidn %1, sp
+    add             r2, 8
+%else
+    add             r2, 16
+%endif
+    add             r0, 16
+    mova            m7, m9
+    PROCESS_CHROMA_AVX2_W4_16R %1
+    sub             r0, 16
+%ifidn %1, sp
+    lea             r2, [r2 + r3 * 4 - 8]
+%else
+    lea             r2, [r2 + r3 * 4 - 16]
+%endif
+%endrep
+    RET
+%endif
+%endmacro
+
+    FILTER_VER_CHROMA_S_AVX2_12x32 sp
+    FILTER_VER_CHROMA_S_AVX2_12x32 ss
+
 %macro FILTER_VER_CHROMA_S_AVX2_16x12 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
