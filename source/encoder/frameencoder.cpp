@@ -845,6 +845,24 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_cuStat[cuAddr - numCols + 1].baseQp;
             else
                 curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_rowStat[row].diagQp;
+
+            uint32_t maxBlockCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
+            uint32_t maxBlockRows = (m_frame->m_fencPic->m_picHeight + (16 - 1)) / 16;
+            uint32_t noOfBlocks = g_maxCUSize / 16;
+            uint32_t block_y = (cuAddr / curEncData.m_slice->m_sps->numCuInWidth) * noOfBlocks;
+            uint32_t block_x = (cuAddr * noOfBlocks) - block_y * curEncData.m_slice->m_sps->numCuInWidth;
+            
+            curEncData.m_cuStat[cuAddr].vbvCost = 0;
+            curEncData.m_cuStat[cuAddr].intraVbvCost = 0;
+            for (uint32_t h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
+            {
+                for (uint32_t w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++)
+                {
+                    uint32_t idx = block_x + w + (block_y * maxBlockCols);
+                    curEncData.m_cuStat[cuAddr].vbvCost += m_frame->m_lowres.lowresCostForRc[idx] & LOWRES_COST_MASK;
+                    curEncData.m_cuStat[cuAddr].intraVbvCost += m_frame->m_lowres.intraCost[idx];
+                }
+            }
         }
         else
             curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_avgQpRc;
