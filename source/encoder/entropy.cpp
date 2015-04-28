@@ -1560,6 +1560,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         {
             X265_CHECK((log2TrSize != 2) || (log2TrSize == 2 && subSet == 0), "log2TrSize and subSet mistake!\n");
             const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
+            const uint32_t posOffset = (bIsLuma && subSet) ? 3 : 0;
 
             static const uint8_t ctxIndMap4x4[16] =
             {
@@ -1626,9 +1627,6 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                     const uint8_t (*tabSigCtx)[4] = table_cnt[(uint32_t)patternSigCtx];
                     const int offset = codingParameters.firstSignificanceMapContext;
-                    const uint32_t lumaMask = bIsLuma ? ~0 : 0;
-                    static const uint32_t posXY4Mask[] = {0x024, 0x0CC, 0x39C};
-                    const uint32_t posGT4Mask = posXY4Mask[log2TrSize - 3] & lumaMask;
 
                     uint32_t blkPos, sig, ctxSig;
                     for (; scanPosSigOff >= 0; scanPosSigOff--)
@@ -1642,7 +1640,6 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         if (scanPosSigOff != 0 || subSet == 0 || numNonZero)
                         {
                             const uint32_t posY = blkPos >> log2TrSize;
-                            const uint32_t posOffset = (blkPos & posGT4Mask) ? 3 : 0;
 
                             const uint32_t posXinSubset = blkPos & 3;
                             const uint32_t posYinSubset = posY & 3;
@@ -1688,9 +1685,6 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                     const uint8_t (*tabSigCtx)[4] = table_cnt[(uint32_t)patternSigCtx];
                     const int offset = codingParameters.firstSignificanceMapContext;
-                    const uint32_t lumaMask = bIsLuma ? ~0 : 0;
-                    static const uint32_t posXY4Mask[] = {0x024, 0x0CC, 0x39C};
-                    const uint32_t posGT4Mask = posXY4Mask[log2TrSize - 3] & lumaMask;
 
                     uint32_t blkPos, sig, ctxSig;
                     for (; scanPosSigOff >= 0; scanPosSigOff--)
@@ -1704,7 +1698,6 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         if (scanPosSigOff != 0 || subSet == 0 || numNonZero)
                         {
                             const uint32_t posY = blkPos >> log2TrSize;
-                            const uint32_t posOffset = (blkPos & posGT4Mask) ? 3 : 0;
 
                             const uint32_t posXinSubset = blkPos & 3;
                             const uint32_t posYinSubset = posY & 3;
