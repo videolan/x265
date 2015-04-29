@@ -1299,8 +1299,14 @@ typedef struct x265_api
  *   Retrieve the programming interface for a linked x265 library.
  *   May return NULL if no library is available that supports the
  *   requested bit depth. If bitDepth is 0 the function is guarunteed
- *   to return a non-NULL x265_api pointer, from the system default
- *   libx265 */
+ *   to return a non-NULL x265_api pointer, from the linked libx265.
+ *
+ *   If the requested bitDepth is not supported by the linked libx265,
+ *   it will attempt to dynamically bind x265_api_get() from a shared
+ *   library with an appropriate name:
+ *     8bit:  libx265_main.so
+ *     10bit: libx265_main10.so
+ *   Obviously the shared library file extension is platform specific */
 const x265_api* x265_api_get(int bitDepth);
 
 #ifdef __cplusplus

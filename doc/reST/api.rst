@@ -375,8 +375,25 @@ the encoder to use (8 or 10), and if that returns NULL you request the
 API for bitDepth=0, which returns the system default libx265.
 
 Note that using this multi-library API in your application is only the
-first step. Next your application must dynamically link to libx265 and
-then you must build and install a multi-lib configuration of libx265,
-which includes 8bpp and 16bpp builds of libx265 and a shim library which
-forwards x265_api_get() calls to the appropriate library using dynamic
-loading and binding.
+first step.  Your application must link to one build of libx265
+(statically or dynamically) and this linked version of libx265 will
+support one bit-depth (8 or 10 bits). If you request a different
+bit-depth, the linked libx265 will attempt to dynamically bind a shared
+library libx265 with a name appropriate for the requested bit-depth:
+
+    8-bit:  libx265_main.dll
+    10-bit: libx265_main10.dll
+
+    (the shared library extension is obviously platform specific. On
+    Linux it is .so while on Mac it is .dylib)
+
+For example on Windows, one could package together an x265.exe
+statically linked against the 8bpp libx265 together with a
+libx265_main10.dll in the same folder, and this executable would be able
+to encode 10bit bitstreams by specifying -P main10 on the command line.
+
+On Linux, x265 packagers could install 8bpp static and shared libraries
+under the name libx265 (so all applications link against 8bpp libx265)
+and then also install libx265_main10.so (symlinked to its numbered solib).
+Thus applications which use x265_api_get() will be able to generate main
+or main10 bitstreams.
