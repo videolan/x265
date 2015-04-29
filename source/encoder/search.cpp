@@ -2409,10 +2409,8 @@ const MV& Search::checkBestMVP(const MV* amvpCand, const MV& mv, int& mvpIdx, ui
     return amvpCand[mvpIdx];
 }
 
-void Search::setSearchRange(const CUData& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const
+void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mvmin, MV& mvmax) const
 {
-    cu.clipMv(mvp);
-
     MV dist((int16_t)merange << 2, (int16_t)merange << 2);
     mvmin = mvp - dist;
     mvmax = mvp + dist;
