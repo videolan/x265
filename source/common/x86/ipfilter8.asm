@@ -6714,10 +6714,10 @@ cglobal interp_4tap_vert_%1_16x12, 4, 6, 10
     FILTER_VER_CHROMA_AVX2_16x12 pp
     FILTER_VER_CHROMA_AVX2_16x12 ps
 
-%macro FILTER_VER_CHROMA_AVX2_16x32 1
-INIT_YMM avx2
+%macro FILTER_VER_CHROMA_AVX2_16xN 2
 %if ARCH_X86_64 == 1
-cglobal interp_4tap_vert_%1_16x32, 4, 8, 8
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_16x%2, 4, 8, 8
     mov             r4d, r4m
     shl             r4d, 6
 
@@ -6737,7 +6737,7 @@ cglobal interp_4tap_vert_%1_16x32, 4, 8, 8
     mova            m7, [pw_2000]
 %endif
     lea             r6, [r3 * 3]
-    mov             r7d, 2
+    mov             r7d, %2 / 16
 .loopH:
     movu            xm0, [r0]
     vinserti128     m0, m0, [r0 + r1 * 2], 1
@@ -7004,8 +7004,10 @@ cglobal interp_4tap_vert_%1_16x32, 4, 8, 8
 %endif
 %endmacro
 
-    FILTER_VER_CHROMA_AVX2_16x32 pp
-    FILTER_VER_CHROMA_AVX2_16x32 ps
+    FILTER_VER_CHROMA_AVX2_16xN pp, 32
+    FILTER_VER_CHROMA_AVX2_16xN ps, 32
+    FILTER_VER_CHROMA_AVX2_16xN pp, 64
+    FILTER_VER_CHROMA_AVX2_16xN ps, 64
 
 %macro FILTER_VER_CHROMA_AVX2_24x32 1
 INIT_YMM avx2
