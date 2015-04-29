@@ -23540,3 +23540,89 @@ cglobal interp_4tap_horiz_pp_64x%1, 4,6,7
     IPFILTER_CHROMA_PP_64xN_AVX2  32
     IPFILTER_CHROMA_PP_64xN_AVX2  48
     IPFILTER_CHROMA_PP_64xN_AVX2  16
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp_48x64(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal interp_4tap_horiz_pp_48x64, 4,6,7
+    mov             r4d, r4m
+
+%ifdef PIC
+    lea               r5,            [tab_ChromaCoeff]
+    vpbroadcastd      m0,            [r5 + r4 * 4]
+%else
+    vpbroadcastd      m0,            [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    mova              m1,            [interp4_horiz_shuf1]
+    vpbroadcastd      m2,            [pw_1]
+    mova              m6,            [pw_512]
+    ; register map
+    ; m0 - interpolate coeff
+    ; m1 - shuffle order table
+    ; m2 - constant word 1
+
+    dec               r0
+    mov               r4d,           64
+
+.loop:
+    ; Row 0
+    vbroadcasti128    m3,            [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m3,            m1
+    pmaddubsw         m3,            m0
+    pmaddwd           m3,            m2
+    vbroadcasti128    m4,            [r0 + 4]
+    pshufb            m4,            m1
+    pmaddubsw         m4,            m0
+    pmaddwd           m4,            m2
+    packssdw          m3,            m4
+    pmulhrsw          m3,            m6
+
+    vbroadcasti128    m4,            [r0 + 16]
+    pshufb            m4,            m1
+    pmaddubsw         m4,            m0
+    pmaddwd           m4,            m2
+    vbroadcasti128    m5,            [r0 + 20]
+    pshufb            m5,            m1
+    pmaddubsw         m5,            m0
+    pmaddwd           m5,            m2
+    packssdw          m4,            m5
+    pmulhrsw          m4,            m6
+
+    packuswb          m3,            m4
+    vpermq            m3,            m3,      q3120
+
+    movu              [r2],          m3
+
+    vbroadcasti128    m3,            [r0 + mmsize]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    pshufb            m3,            m1
+    pmaddubsw         m3,            m0
+    pmaddwd           m3,            m2
+    vbroadcasti128    m4,            [r0 + mmsize + 4]
+    pshufb            m4,            m1
+    pmaddubsw         m4,            m0
+    pmaddwd           m4,            m2
+    packssdw          m3,            m4
+    pmulhrsw          m3,            m6
+
+    vbroadcasti128    m4,            [r0 + mmsize + 16]
+    pshufb            m4,            m1
+    pmaddubsw         m4,            m0
+    pmaddwd           m4,            m2
+    vbroadcasti128    m5,            [r0 + mmsize + 20]
+    pshufb            m5,            m1
+    pmaddubsw         m5,            m0
+    pmaddwd           m5,            m2
+    packssdw          m4,            m5
+    pmulhrsw          m4,            m6
+
+    packuswb          m3,            m4
+    vpermq            m3,            m3,      q3120
+    movu              [r2 + mmsize], xm3
+
+    add               r2,            r3
+    add               r0,            r1
+    dec               r4d
+    jnz               .loop
+    RET
