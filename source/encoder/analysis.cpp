@@ -1655,8 +1655,8 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
         uint32_t zcost = zsa8d + m_rdCost.getCost(bits0) + m_rdCost.getCost(bits1);
 
         /* refine MVP selection for zero mv, updates: mvp, mvpidx, bits, cost */
-        checkBestMVP(inter2Nx2N.amvpCand[0][ref0], mvzero, mvp0, mvpIdx0, bits0, zcost);
-        checkBestMVP(inter2Nx2N.amvpCand[1][ref1], mvzero, mvp1, mvpIdx1, bits1, zcost);
+        mvp0 = checkBestMVP(inter2Nx2N.amvpCand[0][ref0], mvzero, mvpIdx0, bits0, zcost);
+        mvp1 = checkBestMVP(inter2Nx2N.amvpCand[1][ref1], mvzero, mvpIdx1, bits1, zcost);
 
         uint32_t zbits = bits0 + bits1 + m_listSelBits[2] - (m_listSelBits[0] + m_listSelBits[1]);
         zcost = zsa8d + m_rdCost.getCost(zbits);

@@ -396,7 +396,7 @@ protected:
     };
 
     /* inter/ME helper functions */
-    void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
+    const MV& checkBestMVP(const MV amvpCand[2], const MV& mv, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
     void     setSearchRange(const CUData& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
     uint32_t mergeEstimation(CUData& cu, const CUGeom& cuGeom, const PredictionUnit& pu, int puIdx, MergeData& m);
     static void getBlkBits(PartSize cuMode, bool bPSlice, int puIdx, uint32_t lastMode, uint32_t blockBit[3]);
