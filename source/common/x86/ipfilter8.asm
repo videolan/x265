@@ -8096,8 +8096,8 @@ cglobal interp_4tap_vert_pp_%1x%2, 4, 6, 8
     FILTER_V4_W32 32, 64
 
 %macro FILTER_VER_CHROMA_AVX2_32xN 2
-INIT_YMM avx2
 %if ARCH_X86_64 == 1
+INIT_YMM avx2
 cglobal interp_4tap_vert_%1_32x%2, 4, 7, 13
     mov             r4d, r4m
     shl             r4d, 6
@@ -8227,10 +8227,14 @@ cglobal interp_4tap_vert_%1_32x%2, 4, 7, 13
 %endif
 %endmacro
 
+    FILTER_VER_CHROMA_AVX2_32xN pp, 64
+    FILTER_VER_CHROMA_AVX2_32xN pp, 48
     FILTER_VER_CHROMA_AVX2_32xN pp, 32
     FILTER_VER_CHROMA_AVX2_32xN pp, 24
     FILTER_VER_CHROMA_AVX2_32xN pp, 16
     FILTER_VER_CHROMA_AVX2_32xN pp, 8
+    FILTER_VER_CHROMA_AVX2_32xN ps, 64
+    FILTER_VER_CHROMA_AVX2_32xN ps, 48
     FILTER_VER_CHROMA_AVX2_32xN ps, 32
     FILTER_VER_CHROMA_AVX2_32xN ps, 24
     FILTER_VER_CHROMA_AVX2_32xN ps, 16
