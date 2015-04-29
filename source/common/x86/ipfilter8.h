@@ -739,6 +739,8 @@ CHROMA_422_SS_FILTERS_SSE4(_avx2);
 CHROMA_422_P2S_FILTERS_SSE4(_sse4);
 CHROMA_422_P2S_FILTERS_SSSE3(_ssse3);
 CHROMA_422_P2S_FILTERS_AVX2(_avx2);
+void x265_interp_4tap_vert_ss_2x4_avx2(const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_sp_2x4_avx2(const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
 
 CHROMA_444_FILTERS(_sse4);
 CHROMA_444_SP_FILTERS(_sse4);

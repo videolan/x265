@@ -463,6 +463,7 @@ void setupFilterPrimitives_c(EncoderPrimitives& p)
 
     CHROMA_422(4, 8);
     CHROMA_422(4, 4);
+    CHROMA_422(2, 4);
     CHROMA_422(2, 8);
     CHROMA_422(8,  16);
     CHROMA_422(8,  8);
