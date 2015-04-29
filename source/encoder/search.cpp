@@ -1979,6 +1979,32 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeo
     }
 }
 
+/* Pick between the two AMVP candidates which is the best one to use as
+ * MVP for the motion search, based on SAD cost */
+int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[AMVP_NUM_CANDS], int list, int ref)
+{
+    if (amvp[0] == amvp[1])
+        return 0;
+
+    Yuv& tmpPredYuv = m_rqt[cu.m_cuDepth[0]].tmpPredYuv;
+    uint32_t costs[AMVP_NUM_CANDS];
+
+    for (int i = 0; i < AMVP_NUM_CANDS; i++)
+    {
+        MV mvCand = amvp[i];
+
+        // NOTE: skip mvCand if Y is > merange and -FN>1
+        if (m_bFrameParallel && (mvCand.y >= (m_param->searchRange + 1) * 4))
+            continue;
+
+        cu.clipMv(mvCand);
+        predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPic, mvCand);
+        costs[i] = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
+    }
+
+    return costs[0] <= costs[1] ? 0 : 1;
+}
+
 /* find the best inter prediction for each PU of specified mode */
 void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChromaSA8D)
 {
@@ -2053,39 +2079,12 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
                 int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
 
-                // Pick the best possible MVP from AMVP candidates based on least residual
-                int mvpIdx = 0;
-                int merange = m_param->searchRange;
                 const MV* amvp = interMode.amvpCand[list][ref];
-
-                if (amvp[0] != amvp[1])
-                {
-                    uint32_t bestCost = MAX_INT;
-                    for (int i = 0; i < AMVP_NUM_CANDS; i++)
-                    {
-                        MV mvCand = amvp[i];
-
-                        // NOTE: skip mvCand if Y is > merange and -FN>1
-                        if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
-                            continue;
-
-                        cu.clipMv(mvCand);
-                        predInterLumaPixel(pu, tmpPredYuv, *slice->m_refPicList[list][ref]->m_reconPic, mvCand);
-                        uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
-
-                        if (bestCost > cost)
-                        {
-                            bestCost = cost;
-                            mvpIdx = i;
-                        }
-                    }
-                }
-
+                int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                 MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
 
-                int satdCost;
-                setSearchRange(cu, mvp, merange, mvmin, mvmax);
-                satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
+                setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
+                int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv);
 
                 /* Get total cost of partition, but only include MV bit cost once */
                 bits += m_me.bitcost(outmv);
@@ -2137,38 +2136,12 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeO
 
                     int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
 
-                    // Pick the best possible MVP from AMVP candidates based on least residual
-                    int mvpIdx = 0;
-                    int merange = m_param->searchRange;
                     const MV* amvp = interMode.amvpCand[list][ref];
-
-                    if (amvp[0] != amvp[1])
-                    {
-                        uint32_t bestCost = MAX_INT;
-                        for (int i = 0; i < AMVP_NUM_CANDS; i++)
-                        {
-                            MV mvCand = amvp[i];
-
-                            // NOTE: skip mvCand if Y is > merange and -FN>1
-                            if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
-                                continue;
-
-                            cu.clipMv(mvCand);
-                            predInterLumaPixel(pu, tmpPredYuv, *slice->m_refPicList[list][ref]->m_reconPic, mvCand);
-                            uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
-
-                            if (bestCost > cost)
-                            {
-                                bestCost = cost;
-                                mvpIdx = i;
-                            }
-                        }
-                    }
-
+                    int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                     MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
 
-                    setSearchRange(cu, mvp, merange, mvmin, mvmax);
-                    int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
+                    setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
+                    int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv);
 
                     /* Get total cost of partition, but only include MV bit cost once */
                     bits += m_me.bitcost(outmv);
