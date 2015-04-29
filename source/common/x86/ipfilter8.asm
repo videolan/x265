@@ -5556,9 +5556,9 @@ cglobal interp_4tap_vert_%1_8x16, 4, 7, 8
     FILTER_VER_CHROMA_AVX2_8x16 pp
     FILTER_VER_CHROMA_AVX2_8x16 ps
 
-%macro FILTER_VER_CHROMA_AVX2_8x32 1
+%macro FILTER_VER_CHROMA_AVX2_8xN 2
 INIT_YMM avx2
-cglobal interp_4tap_vert_%1_8x32, 4, 7, 8
+cglobal interp_4tap_vert_%1_8x%2, 4, 7, 8
     mov             r4d, r4m
     shl             r4d, 6
 
@@ -5578,15 +5578,17 @@ cglobal interp_4tap_vert_%1_8x32, 4, 7, 8
     mova            m7, [pw_2000]
 %endif
     lea             r6, [r3 * 3]
-%rep 2
+%rep %2 / 16
     PROCESS_CHROMA_AVX2_W8_16R %1
     lea             r2, [r2 + r3 * 4]
 %endrep
     RET
 %endmacro
 
-    FILTER_VER_CHROMA_AVX2_8x32 pp
-    FILTER_VER_CHROMA_AVX2_8x32 ps
+    FILTER_VER_CHROMA_AVX2_8xN pp, 32
+    FILTER_VER_CHROMA_AVX2_8xN ps, 32
+    FILTER_VER_CHROMA_AVX2_8xN pp, 64
+    FILTER_VER_CHROMA_AVX2_8xN ps, 64
 
 %macro PROCESS_CHROMA_AVX2_W8_4R 0
     movq            xm1, [r0]                       ; m1 = row 0
