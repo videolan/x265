@@ -1570,35 +1570,35 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 7, 7, 8, 8
             };
             // NOTE: [patternSigCtx][posXinSubset][posYinSubset]
-            static const uint8_t table_cnt[4][4][4] =
+            static const uint8_t table_cnt[4][SCAN_SET_SIZE] =
             {
                 // patternSigCtx = 0
                 {
-                    { 2, 1, 1, 0 },
-                    { 1, 1, 0, 0 },
-                    { 1, 0, 0, 0 },
-                    { 0, 0, 0, 0 },
+                    2, 1, 1, 0,
+                    1, 1, 0, 0,
+                    1, 0, 0, 0,
+                    0, 0, 0, 0,
                 },
                 // patternSigCtx = 1
                 {
-                    { 2, 1, 0, 0 },
-                    { 2, 1, 0, 0 },
-                    { 2, 1, 0, 0 },
-                    { 2, 1, 0, 0 },
+                    2, 2, 2, 2,
+                    1, 1, 1, 1,
+                    0, 0, 0, 0,
+                    0, 0, 0, 0,
                 },
                 // patternSigCtx = 2
                 {
-                    { 2, 2, 2, 2 },
-                    { 1, 1, 1, 1 },
-                    { 0, 0, 0, 0 },
-                    { 0, 0, 0, 0 },
+                    2, 1, 0, 0,
+                    2, 1, 0, 0,
+                    2, 1, 0, 0,
+                    2, 1, 0, 0,
                 },
                 // patternSigCtx = 3
                 {
-                    { 2, 2, 2, 2 },
-                    { 2, 2, 2, 2 },
-                    { 2, 2, 2, 2 },
-                    { 2, 2, 2, 2 },
+                    2, 2, 2, 2,
+                    2, 2, 2, 2,
+                    2, 2, 2, 2,
+                    2, 2, 2, 2,
                 }
             };
             if (m_bitIf)
@@ -1625,7 +1625,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 {
                     X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
 
-                    const uint8_t (*tabSigCtx)[4] = table_cnt[(uint32_t)patternSigCtx];
+                    const uint8_t *tabSigCtx = table_cnt[(uint32_t)patternSigCtx];
                     const int offset = codingParameters.firstSignificanceMapContext;
 
                     uint32_t blkPos, sig, ctxSig;
@@ -1643,7 +1643,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                             const uint32_t posXinSubset = blkPos & 3;
                             const uint32_t posYinSubset = posY & 3;
-                            const uint32_t cnt = tabSigCtx[posXinSubset][posYinSubset] + offset;
+                            const uint32_t cnt = tabSigCtx[posYinSubset * 4 + posXinSubset] + offset;
                             ctxSig = (cnt + posOffset) & posZeroMask;
 
                             X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
@@ -1683,7 +1683,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 {
                     X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
 
-                    const uint8_t (*tabSigCtx)[4] = table_cnt[(uint32_t)patternSigCtx];
+                    const uint8_t *tabSigCtx = table_cnt[(uint32_t)patternSigCtx];
                     const int offset = codingParameters.firstSignificanceMapContext;
 
                     uint32_t blkPos, sig, ctxSig;
@@ -1701,7 +1701,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                             const uint32_t posXinSubset = blkPos & 3;
                             const uint32_t posYinSubset = posY & 3;
-                            const uint32_t cnt = tabSigCtx[posXinSubset][posYinSubset] + offset;
+                            const uint32_t cnt = tabSigCtx[posYinSubset * 4 + posXinSubset] + offset;
                             ctxSig = (cnt + posOffset) & posZeroMask;
 
                             X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
