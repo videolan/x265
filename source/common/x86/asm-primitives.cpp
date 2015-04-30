@@ -1347,6 +1347,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.pu[LUMA_4x4].luma_hpp = x265_interp_8tap_horiz_pp_4x4_sse2;
         ALL_LUMA_PU(luma_hps, interp_8tap_horiz_ps, sse2);
         p.pu[LUMA_4x4].luma_hps = x265_interp_8tap_horiz_ps_4x4_sse2;
+        p.pu[LUMA_8x8].luma_hvpp = x265_interp_8tap_hv_pp_8x8_sse3;
 
         //p.frameInitLowres = x265_frame_init_lowres_core_mmx2;
         p.frameInitLowres = x265_frame_init_lowres_core_sse2;

@@ -3464,6 +3464,78 @@ cglobal interp_8tap_hv_pp_8x8, 4, 7, 8, 0-15*16
     RET
 
 ;-----------------------------------------------------------------------------
+; void interp_8tap_hv_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int idxX, int idxY)
+;-----------------------------------------------------------------------------
+INIT_XMM sse3
+cglobal interp_8tap_hv_pp_8x8, 4, 7, 8, 0-15*16
+    mov         r4d,        r4m
+    mov         r5d,        r5m
+    add         r4d,        r4d
+    pxor        m6,         m6
+
+%ifdef PIC
+    lea         r6,         [tabw_LumaCoeff]
+    mova        m3,         [r6 + r4 * 8]
+%else
+    mova        m3,         [tabw_LumaCoeff + r4 * 8]
+%endif
+
+    ; move to row -3
+    lea         r6,         [r1 + r1 * 2]
+    sub         r0,         r6
+
+    mov         r4,         rsp
+
+%assign x 0     ;needed for FILTER_H8_W8_sse2 macro
+%assign y 1
+%rep 15
+    FILTER_H8_W8_sse2
+    psubw       m1,         [pw_2000]
+    mova        [r4],       m1
+
+%if y < 15
+    add         r0,         r1
+    add         r4,         16
+%endif
+%assign y y+1
+%endrep
+
+    ; ready to phase V
+    ; Here all of mN is free
+
+    ; load coeff table
+    shl         r5,         6
+    lea         r6,         [tab_LumaCoeffV]
+    lea         r5,         [r5 + r6]
+
+    ; load intermedia buffer
+    mov         r0,         rsp
+
+    ; register mapping
+    ; r0 - src
+    ; r5 - coeff
+
+    ; let's go
+%assign y 1
+%rep 4
+    FILTER_HV8_START    m1, m2, m3, m4, m0,             0, 0
+    FILTER_HV8_MID      m6, m2, m3, m4, m0, m1, m7, m5, 3, 1
+    FILTER_HV8_MID      m5, m6, m3, m4, m0, m1, m7, m2, 5, 2
+    FILTER_HV8_MID      m6, m5, m3, m4, m0, m1, m7, m2, 7, 3
+    FILTER_HV8_END      m3, m0, m4, m1
+
+    movh        [r2],       m3
+    movhps      [r2 + r3],  m3
+
+%if y < 4
+    lea         r0,         [r0 + 16 * 2]
+    lea         r2,         [r2 + r3 * 2]
+%endif
+%assign y y+1
+%endrep
+    RET
+
+;-----------------------------------------------------------------------------
 ;void interp_4tap_vert_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
