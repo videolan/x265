@@ -1770,13 +1770,16 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             {
                 uint32_t goRiceParam = 0;
                 int firstCoeff2 = 1;
+                uint32_t baseLevelN = 0x5555AAAA; // 2-bits encode format baseLevel
 
                 if (!m_bitIf)
                 {
                     // FastRd path
                     for (int idx = 0; idx < numNonZero; idx++)
                     {
-                        int baseLevel = (idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1;
+                        int baseLevel = (baseLevelN & 3) | firstCoeff2;
+                        X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
+                        baseLevelN >>= 2;
                         int codeNumber = absCoeff[idx] - baseLevel;
 
                         if (codeNumber >= 0)
@@ -1813,7 +1816,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                     // Standard path
                     for (int idx = 0; idx < numNonZero; idx++)
                     {
-                        int baseLevel = (idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1;
+                        int baseLevel = (baseLevelN & 3) | firstCoeff2;
+                        X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
+                        baseLevelN >>= 2;
 
                         if (absCoeff[idx] >= baseLevel)
                         {
