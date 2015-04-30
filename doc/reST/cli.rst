@@ -1559,8 +1559,8 @@ Bitstream options
 
 	Enable a temporal sub layer. All referenced I/P/B frames are in the
 	base layer and all unreferenced B frames are placed in a temporal
-	sublayer. A decoder may chose to drop the sublayer and only decode
-	and display the base layer slices.
+	enhancement layer. A decoder may chose to drop the enhancement layer 
+	and only decode and display the base layer slices.
 	
 	If used with a fixed GOP (:option:`b-adapt` 0) and :option:`bframes`
 	3 then the two layers evenly split the frame rate, with a cadence of
