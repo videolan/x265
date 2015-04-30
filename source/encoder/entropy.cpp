@@ -1518,7 +1518,6 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     uint8_t * const baseCoeffGroupCtx = &m_contextState[OFF_SIG_CG_FLAG_CTX + (bIsLuma ? 0 : NUM_SIG_CG_FLAG_CTX)];
     uint8_t * const baseCtx = bIsLuma ? &m_contextState[OFF_SIG_FLAG_CTX] : &m_contextState[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
     uint32_t c1 = 1;
-    uint32_t goRiceParam = 0;
     int scanPosSigOff = scanPosLast - (lastScanSet << MLS_CG_SIZE) - 1;
     int absCoeff[1 << MLS_CG_SIZE];
     int numNonZero = 1;
@@ -1532,7 +1531,6 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         const uint32_t subCoeffFlag = coeffFlag[subSet];
         uint32_t scanFlagMask = subCoeffFlag;
         int subPosBase = subSet << MLS_CG_SIZE;
-        goRiceParam    = 0;
         
         if (subSet == lastScanSet)
         {
@@ -1768,21 +1766,64 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             const int hiddenShift = (bHideFirstSign && signHidden) ? 1 : 0;
             encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);
 
-            int firstCoeff2 = 1;
             if (!c1 || numNonZero > C1FLAG_NUMBER)
             {
-                for (int idx = 0; idx < numNonZero; idx++)
-                {
-                    int baseLevel = (idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1;
+                uint32_t goRiceParam = 0;
+                int firstCoeff2 = 1;
 
-                    if (absCoeff[idx] >= baseLevel)
+                if (!m_bitIf)
+                {
+                    // FastRd path
+                    for (int idx = 0; idx < numNonZero; idx++)
                     {
-                        writeCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
-                        if (absCoeff[idx] > 3 * (1 << goRiceParam))
-                            goRiceParam = std::min<uint32_t>(goRiceParam + 1, 4);
+                        int baseLevel = (idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1;
+                        int codeNumber = absCoeff[idx] - baseLevel;
+
+                        if (codeNumber >= 0)
+                        {
+                            //writeCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
+                            uint32_t length = 0;
+
+                            if (((uint32_t)codeNumber >> goRiceParam) < COEF_REMAIN_BIN_REDUCTION)
+                            {
+                                length = (uint32_t)codeNumber >> goRiceParam;
+                                m_fracBits += (length + 1 + goRiceParam) << 15;
+                            }
+                            else
+                            {
+                                codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION;
+                                if (codeNumber != 0)
+                                {
+                                    unsigned long cidx;
+                                    CLZ(cidx, codeNumber + 1);
+                                    length = cidx;
+                                }
+                                m_fracBits += (COEF_REMAIN_BIN_REDUCTION + length + 1 + goRiceParam + length) << 15;
+                            }
+
+                            if (absCoeff[idx] > 3 * (1 << goRiceParam))
+                                goRiceParam = std::min<uint32_t>(goRiceParam + 1, 4);
+                        }
+                        if (absCoeff[idx] >= 2)
+                            firstCoeff2 = 0;
                     }
-                    if (absCoeff[idx] >= 2)
-                        firstCoeff2 = 0;
+                }
+                else
+                {
+                    // Standard path
+                    for (int idx = 0; idx < numNonZero; idx++)
+                    {
+                        int baseLevel = (idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1;
+
+                        if (absCoeff[idx] >= baseLevel)
+                        {
+                            writeCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
+                            if (absCoeff[idx] > 3 * (1 << goRiceParam))
+                                goRiceParam = std::min<uint32_t>(goRiceParam + 1, 4);
+                        }
+                        if (absCoeff[idx] >= 2)
+                            firstCoeff2 = 0;
+                    }
                 }
             }
         }
