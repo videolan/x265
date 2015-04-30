@@ -1759,11 +1759,10 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             if (!c1)
             {
                 baseCtxMod = bIsLuma ? &m_contextState[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextState[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
-                if (firstC2FlagIdx != -1)
-                {
-                    uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
-                    encodeBin(symbol, baseCtxMod[0]);
-                }
+
+                X265_CHECK((firstC2FlagIdx != -1), "firstC2FlagIdx check failure\n");
+                uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
+                encodeBin(symbol, baseCtxMod[0]);
             }
 
             const int hiddenShift = (bHideFirstSign && signHidden) ? 1 : 0;
