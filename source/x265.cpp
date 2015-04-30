@@ -458,9 +458,7 @@ int main(int argc, char **argv)
     GetConsoleTitle(orgConsoleTitle, CONSOLE_TITLE_SIZE);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 
-    const x265_api* api = x265_api_get(X265_DEPTH); /* prefer what the cli was compiled against */
-    if (!api)
-        api = x265_api_get(0);
+    const x265_api* api = x265_api_get(X265_DEPTH); /* Use 0 or X265_DEPTH to get what the cli was compiled against */
 
     ReconPlay* reconPlay = NULL;
     x265_param* param = api->param_alloc();
