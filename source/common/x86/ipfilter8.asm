@@ -7560,9 +7560,9 @@ cglobal interp_4tap_vert_%1_16x4, 4, 6, 8
     FILTER_VER_CHROMA_AVX2_16x4 pp
     FILTER_VER_CHROMA_AVX2_16x4 ps
 
-%macro FILTER_VER_CHROMA_AVX2_12x16 1
+%macro FILTER_VER_CHROMA_AVX2_12xN 2
 INIT_YMM avx2
-cglobal interp_4tap_vert_%1_12x16, 4, 7, 8
+cglobal interp_4tap_vert_%1_12x%2, 4, 7, 8
     mov             r4d, r4m
     shl             r4d, 6
 
@@ -7582,7 +7582,7 @@ cglobal interp_4tap_vert_%1_12x16, 4, 7, 8
     vbroadcasti128  m7, [pw_2000]
 %endif
     lea             r6, [r3 * 3]
-
+%rep %2 / 16
     movu            xm0, [r0]                       ; m0 = row 0
     movu            xm1, [r0 + r1]                  ; m1 = row 1
     punpckhbw       xm2, xm0, xm1
@@ -7868,11 +7868,15 @@ cglobal interp_4tap_vert_%1_12x16, 4, 7, 8
     vextracti128    xm5, m5, 1
     movq            [r2 + r6 + 16], xm5
 %endif
+    lea             r2, [r2 + r3 * 4]
+%endrep
     RET
 %endmacro
 
-    FILTER_VER_CHROMA_AVX2_12x16 pp
-    FILTER_VER_CHROMA_AVX2_12x16 ps
+    FILTER_VER_CHROMA_AVX2_12xN pp, 16
+    FILTER_VER_CHROMA_AVX2_12xN ps, 16
+    FILTER_VER_CHROMA_AVX2_12xN pp, 32
+    FILTER_VER_CHROMA_AVX2_12xN ps, 32
 
 ;-----------------------------------------------------------------------------
 ;void interp_4tap_vert_pp_24x32(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
