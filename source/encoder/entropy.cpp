@@ -1601,6 +1601,19 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                     2, 2, 2, 2,
                 }
             };
+
+            const int offset = codingParameters.firstSignificanceMapContext;
+            ALIGN_VAR_32(uint16_t, tmpCoeff[SCAN_SET_SIZE]);
+            // TODO: accelerate by PABSW
+            const uint32_t blkPosBase  = codingParameters.scan[subPosBase];
+            for (int i = 0; i < MLS_CG_SIZE; i++)
+            {
+                tmpCoeff[i * MLS_CG_SIZE + 0] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 0]);
+                tmpCoeff[i * MLS_CG_SIZE + 1] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 1]);
+                tmpCoeff[i * MLS_CG_SIZE + 2] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 2]);
+                tmpCoeff[i * MLS_CG_SIZE + 3] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 3]);
+            }
+
             if (m_bitIf)
             {
                 if (log2TrSize == 2)
@@ -1608,16 +1621,16 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                     uint32_t blkPos, sig, ctxSig;
                     for (; scanPosSigOff >= 0; scanPosSigOff--)
                     {
-                        blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
+                        blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
                         sig     = scanFlagMask & 1;
                         scanFlagMask >>= 1;
-                        X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
+                        X265_CHECK((uint32_t)(tmpCoeff[blkPos] != 0) == sig, "sign bit mistake\n");
                         {
                             ctxSig = ctxIndMap4x4[blkPos];
                             X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
                             encodeBin(sig, baseCtx[ctxSig]);
                         }
-                        absCoeff[numNonZero] = int(abs(coeff[blkPos]));
+                        absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
                     }
                 }
@@ -1626,30 +1639,24 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                     X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
 
                     const uint8_t *tabSigCtx = table_cnt[(uint32_t)patternSigCtx];
-                    const int offset = codingParameters.firstSignificanceMapContext;
 
                     uint32_t blkPos, sig, ctxSig;
                     for (; scanPosSigOff >= 0; scanPosSigOff--)
                     {
-                        blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
-                        X265_CHECK(blkPos || (subPosBase + scanPosSigOff == 0), "blkPos==0 must be at scan[0]\n");
+                        blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
                         const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
                         sig     = scanFlagMask & 1;
                         scanFlagMask >>= 1;
-                        X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
+                        X265_CHECK((uint32_t)(tmpCoeff[blkPos] != 0) == sig, "sign bit mistake\n");
                         if (scanPosSigOff != 0 || subSet == 0 || numNonZero)
                         {
-                            const uint32_t posY = blkPos >> log2TrSize;
-
-                            const uint32_t posXinSubset = blkPos & 3;
-                            const uint32_t posYinSubset = posY & 3;
-                            const uint32_t cnt = tabSigCtx[posYinSubset * 4 + posXinSubset] + offset;
+                            const uint32_t cnt = tabSigCtx[blkPos] + offset;
                             ctxSig = (cnt + posOffset) & posZeroMask;
 
-                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
+                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, codingParameters.scan[subPosBase + scanPosSigOff], bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
                             encodeBin(sig, baseCtx[ctxSig]);
                         }
-                        absCoeff[numNonZero] = int(abs(coeff[blkPos]));
+                        absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
                     }
                 }
@@ -1663,19 +1670,19 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                     uint32_t blkPos, sig, ctxSig;
                     for (; scanPosSigOff >= 0; scanPosSigOff--)
                     {
-                        blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
+                        blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
                         sig     = scanFlagMask & 1;
                         scanFlagMask >>= 1;
-                        X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
+                        X265_CHECK((uint32_t)(tmpCoeff[blkPos] != 0) == sig, "sign bit mistake\n");
                         {
                             ctxSig = ctxIndMap4x4[blkPos];
-                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
+                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, codingParameters.scan[subPosBase + scanPosSigOff], bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
                             //encodeBin(sig, baseCtx[ctxSig]);
                             const uint32_t mstate = baseCtx[ctxSig];
                             baseCtx[ctxSig] = sbacNext(mstate, sig);
                             sum += sbacGetEntropyBits(mstate, sig);
                         }
-                        absCoeff[numNonZero] = int(abs(coeff[blkPos]));
+                        absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
                     }
                 } // end of 4x4
@@ -1684,33 +1691,27 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                     X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
 
                     const uint8_t *tabSigCtx = table_cnt[(uint32_t)patternSigCtx];
-                    const int offset = codingParameters.firstSignificanceMapContext;
 
                     uint32_t blkPos, sig, ctxSig;
                     for (; scanPosSigOff >= 0; scanPosSigOff--)
                     {
-                        blkPos  = codingParameters.scan[subPosBase + scanPosSigOff];
-                        X265_CHECK(blkPos || (subPosBase + scanPosSigOff == 0), "blkPos==0 must be at scan[0]\n");
+                        blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
                         const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
                         sig     = scanFlagMask & 1;
                         scanFlagMask >>= 1;
-                        X265_CHECK((uint32_t)(coeff[blkPos] != 0) == sig, "sign bit mistake\n");
+                        X265_CHECK((uint32_t)(tmpCoeff[blkPos] != 0) == sig, "sign bit mistake\n");
                         if (scanPosSigOff != 0 || subSet == 0 || numNonZero)
                         {
-                            const uint32_t posY = blkPos >> log2TrSize;
-
-                            const uint32_t posXinSubset = blkPos & 3;
-                            const uint32_t posYinSubset = posY & 3;
-                            const uint32_t cnt = tabSigCtx[posYinSubset * 4 + posXinSubset] + offset;
+                            const uint32_t cnt = tabSigCtx[blkPos] + offset;
                             ctxSig = (cnt + posOffset) & posZeroMask;
 
-                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
+                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, codingParameters.scan[subPosBase + scanPosSigOff], bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
                             //encodeBin(sig, baseCtx[ctxSig]);
                             const uint32_t mstate = baseCtx[ctxSig];
                             baseCtx[ctxSig] = sbacNext(mstate, sig);
                             sum += sbacGetEntropyBits(mstate, sig);
                         }
-                        absCoeff[numNonZero] = int(abs(coeff[blkPos]));
+                        absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
                     }
                 } // end of non 4x4 path
