@@ -29,7 +29,6 @@
 #include "output/output.h"
 #include "output/reconplay.h"
 #include "filters/filters.h"
-#include "common.h"
 #include "param.h"
 #include "cpu.h"
 #include "x265.h"
@@ -458,7 +457,8 @@ int main(int argc, char **argv)
     GetConsoleTitle(orgConsoleTitle, CONSOLE_TITLE_SIZE);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 
-    const x265_api* api = x265_api_get(X265_DEPTH); /* Use 0 or X265_DEPTH to get what the cli was compiled against */
+    const x265_api* api = x265_api_get(0); /* Use 0 to indicate native bit depth of the linked libx265 */
+    /* x265_api_get(0) is guaranteed to return a non-null pointer */
 
     ReconPlay* reconPlay = NULL;
     x265_param* param = api->param_alloc();

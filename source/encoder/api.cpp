@@ -281,7 +281,10 @@ const x265_api* x265_api_get(int bitDepth)
         else if (bitDepth == 8)
             libname = "libx265_main" ext;
         else
+        {
+            x265_log(NULL, X265_LOG_WARNING, "bitdepth %d not supported\n", bitDepth);
             return NULL;
+        }
 
 #if _WIN32
         HMODULE h = LoadLibraryA(libname);
@@ -289,7 +292,14 @@ const x265_api* x265_api_get(int bitDepth)
         {
             api_get_func get = (api_get_func)GetProcAddress(h, method);
             if (get)
+            {
+                if (bitDepth != get(bitDepth)->max_bit_depth)
+                {
+                    x265_log(NULL, X265_LOG_WARNING, "Detected build %s does not support requested bitDepth %d", libname, bitDepth);
+                    return NULL;
+                }
                 return get(bitDepth);
+            }
             else
                 x265_log(NULL, X265_LOG_WARNING, "Unable to bind %s from %s\n", method, libname);
         }
@@ -301,7 +311,14 @@ const x265_api* x265_api_get(int bitDepth)
         {
             api_get_func get = (api_get_func)dlsym(h, method);
             if (get)
+            {
+                if (bitDepth != get(bitDepth)->max_bit_depth)
+                {
+                    x265_log(NULL, X265_LOG_WARNING, "Detected build %s does not support requested bitDepth %d", libname, bitDepth);
+                    return NULL;
+                }
                 return get(bitDepth);
+            }
             else
                 x265_log(NULL, X265_LOG_WARNING, "Unable to bind %s from %s\n", method, libname);
         }
