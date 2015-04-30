@@ -1447,6 +1447,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         ALL_LUMA_TU(count_nonzero, count_nonzero, ssse3);
 
+        // MUST be done after LUMA_FILTERS() to overwrite default version
+        p.pu[LUMA_8x8].luma_hvpp = x265_interp_8tap_hv_pp_8x8_ssse3;
+
         p.frameInitLowres = x265_frame_init_lowres_core_ssse3;
         p.scale1D_128to64 = x265_scale1D_128to64_ssse3;
         p.scale2D_64to32 = x265_scale2D_64to32_ssse3;
@@ -1548,7 +1551,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         CHROMA_444_VSP_FILTERS_SSE4(_sse4);
 
         // MUST be done after LUMA_FILTERS() to overwrite default version
-        p.pu[LUMA_8x8].luma_hvpp = x265_interp_8tap_hv_pp_8x8_sse4;
+        p.pu[LUMA_8x8].luma_hvpp = x265_interp_8tap_hv_pp_8x8_ssse3;
 
         LUMA_CU_BLOCKCOPY(ps, sse4);
         CHROMA_420_CU_BLOCKCOPY(ps, sse4);
