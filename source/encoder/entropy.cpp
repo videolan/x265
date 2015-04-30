@@ -1148,9 +1148,9 @@ void Entropy::writeCoefRemainExGolomb(uint32_t codeNumber, uint32_t absGoRice)
             unsigned long idx;
             CLZ(idx, codeNumber + 1);
             length = idx;
+            X265_CHECK((codeNumber != 0) || (length == 0), "length check failure\n");
             codeNumber -= (1 << idx) - 1;
         }
-        X265_CHECK((codeNumber != 0) || (length == 0), "length check failure\n");
         codeNumber = (codeNumber << absGoRice) + codeRemain;
 
         encodeBinsEP((1 << (COEF_REMAIN_BIN_REDUCTION + length + 1)) - 2, COEF_REMAIN_BIN_REDUCTION + length + 1);
