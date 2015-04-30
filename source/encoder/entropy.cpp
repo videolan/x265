@@ -1787,14 +1787,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                             //writeCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
                             uint32_t length = 0;
 
-                            if (((uint32_t)codeNumber >> goRiceParam) < COEF_REMAIN_BIN_REDUCTION)
+                            codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION;
+                            if (codeNumber >= 0)
                             {
-                                length = (uint32_t)codeNumber >> goRiceParam;
-                                m_fracBits += (length + 1 + goRiceParam) << 15;
-                            }
-                            else
-                            {
-                                codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION;
                                 {
                                     unsigned long cidx;
                                     CLZ(cidx, codeNumber + 1);
@@ -1802,8 +1797,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                                 }
                                 X265_CHECK((codeNumber != 0) || (length == 0), "length check failure\n");
 
-                                m_fracBits += (COEF_REMAIN_BIN_REDUCTION + length + 1 + goRiceParam + length) << 15;
+                                codeNumber = (length + length);
                             }
+                            m_fracBits += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber) << 15;
 
                             if (absCoeff[idx] > (COEF_REMAIN_BIN_REDUCTION << goRiceParam))
                                 goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
