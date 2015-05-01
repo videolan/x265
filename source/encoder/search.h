@@ -339,7 +339,7 @@ public:
     };
 
     void     processPME(PME& pme, Search& slave);
-    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, const PredictionUnit& pu, int part, int list, int ref);
+    void     singleMotionEstimation(Search& master, Mode& interMode, const PredictionUnit& pu, int part, int list, int ref);
 
 protected:
 

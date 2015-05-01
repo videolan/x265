@@ -1901,9 +1901,9 @@ void Search::processPME(PME& pme, Search& slave)
     do
     {
         if (meId < m_slice->m_numRefIdx[0])
-            slave.singleMotionEstimation(*this, pme.mode, pme.cuGeom, pme.pu, pme.puIdx, 0, meId);
+            slave.singleMotionEstimation(*this, pme.mode, pme.pu, pme.puIdx, 0, meId);
         else
-            slave.singleMotionEstimation(*this, pme.mode, pme.cuGeom, pme.pu, pme.puIdx, 1, meId - m_slice->m_numRefIdx[0]);
+            slave.singleMotionEstimation(*this, pme.mode, pme.pu, pme.puIdx, 1, meId - m_slice->m_numRefIdx[0]);
 
         meId = -1;
         pme.m_lock.acquire();
@@ -1914,49 +1914,23 @@ void Search::processPME(PME& pme, Search& slave)
     while (meId >= 0);
 }
 
-void Search::singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, const PredictionUnit& pu,
-                                    int part, int list, int ref)
+void Search::singleMotionEstimation(Search& master, Mode& interMode, const PredictionUnit& pu, int part, int list, int ref)
 {
     uint32_t bits = master.m_listSelBits[list] + MVP_IDX_BITS;
     bits += getTUBits(ref, m_slice->m_numRefIdx[list]);
 
-    MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
+    MotionData* bestME = interMode.bestME[part];
+
+    MV  mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
     int numMvc = interMode.cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
 
-    int merange = m_param->searchRange;
-    MotionData* bestME = interMode.bestME[part];
     const MV* amvp = interMode.amvpCand[list][ref];
-    int mvpIdx = 0;
-
-    if (amvp[0] != amvp[1])
-    {
-        uint32_t bestCost = MAX_INT;
-        for (int i = 0; i < AMVP_NUM_CANDS; i++)
-        {
-            MV mvCand = amvp[i];
-
-            // NOTE: skip mvCand if Y is > merange and -FN>1
-            if (m_bFrameParallel && (mvCand.y >= (merange + 1) * 4))
-                continue;
-
-            interMode.cu.clipMv(mvCand);
-
-            Yuv& tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
-            predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPic, mvCand);
-            uint32_t cost = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
-
-            if (bestCost > cost)
-            {
-                bestCost = cost;
-                mvpIdx = i;
-            }
-        }
-    }
-
+    int mvpIdx = selectMVP(interMode.cu, pu, amvp, list, ref);
     MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
-    setSearchRange(interMode.cu, mvp, merange, mvmin, mvmax);
 
-    int satdCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, merange, outmv);
+    setSearchRange(interMode.cu, mvp, m_param->searchRange, mvmin, mvmax);
+
+    int satdCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv);
 
     /* Get total cost of partition, but only include MV bit cost once */
     bits += m_me.bitcost(outmv);
@@ -2095,7 +2069,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
             {
                 processPME(pme, *this);
 
-                singleMotionEstimation(*this, interMode, cuGeom, pu, puIdx, 0, 0); /* L0-0 */
+                singleMotionEstimation(*this, interMode, pu, puIdx, 0, 0); /* L0-0 */
 
                 bDoUnidir = false;
 
