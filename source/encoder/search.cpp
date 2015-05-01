@@ -1995,11 +1995,13 @@ int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[
 
         // NOTE: skip mvCand if Y is > merange and -FN>1
         if (m_bFrameParallel && (mvCand.y >= (m_param->searchRange + 1) * 4))
-            continue;
-
-        cu.clipMv(mvCand);
-        predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPic, mvCand);
-        costs[i] = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
+            costs[i] = m_me.COST_MAX;
+        else
+        {
+            cu.clipMv(mvCand);
+            predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPic, mvCand);
+            costs[i] = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
+        }
     }
 
     return costs[0] <= costs[1] ? 0 : 1;
