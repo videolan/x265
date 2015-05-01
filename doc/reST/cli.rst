@@ -1493,12 +1493,12 @@ VUI fields must be manually specified.
 
 	SMPTE ST 2086 mastering display color volume SEI info, specified as
 	a string which is parsed when the stream header SEI are emitted. The
-	string format is "Y(%hu,%hu)U(%hu,%hu)V(%hu,%hu)WP(%hu,%hu)L(%u,%u)"
+	string format is "G(%hu,%hu)B(%hu,%hu)R(%hu,%hu)WP(%hu,%hu)L(%u,%u)"
 	where %hu are unsigned 16bit integers and %u are unsigned 32bit
-	integers. The SEI includes X,Y display primaries for YUV channels,
+	integers. The SEI includes X,Y display primaries for RGB channels,
 	white point X,Y and max,min luminance values.
 
-	Example: Y(10,12)U(5,13)V(5,13)WP(100,100)L(1000,100)
+	Example: G(10,12)B(5,13)R(5,13)WP(100,100)L(1000,100)
 
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms
