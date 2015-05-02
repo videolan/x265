@@ -1496,14 +1496,28 @@ VUI fields must be manually specified.
 	string format is "G(%hu,%hu)B(%hu,%hu)R(%hu,%hu)WP(%hu,%hu)L(%u,%u)"
 	where %hu are unsigned 16bit integers and %u are unsigned 32bit
 	integers. The SEI includes X,Y display primaries for RGB channels,
-	white point X,Y and max,min luminance values.
+	white point X,Y and max,min luminance values. (HDR)
 
 	Example for P65D3 1000-nits:
 
 		G(13200,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)
 
 	Note that this string value will need to be escaped or quoted to
-	protect against shell expansion on many platforms
+	protect against shell expansion on many platforms. No default.
+
+.. option:: --max-cll <string>
+
+	Maximum content light level and maximum frame average light level as
+	required by the Consumer Electronics Association 861.3 specification.
+
+	Specified as a string which is parsed when the stream header SEI are
+	emitted. The string format is "%hu,%hu" where %hu are unsigned 16bit
+	integers. The first value is the max content light level (or 0 if no
+	maximum is indicated), the second value is the maximum picture
+	average light level (or 0). (HDR)
+
+	Note that this string value will need to be escaped or quoted to
+	protect against shell expansion on many platforms. No default.
 
 Bitstream options
 =================

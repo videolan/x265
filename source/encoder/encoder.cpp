@@ -372,6 +372,7 @@ void Encoder::destroy()
         free(m_param->csvfn);
         free(m_param->numaPools);
         free((void*)m_param->masteringDisplayColorVolume);
+        free((void*)m_param->contentLightLevelInfo);
 
         X265_FREE(m_param);
     }
@@ -1453,6 +1454,20 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         }
         else
             x265_log(m_param, X265_LOG_WARNING, "unable to parse mastering display color volume info\n");
+    }
+
+    if (m_param->contentLightLevelInfo)
+    {
+        SEIContentLightLevel cllsei;
+        if (cllsei.parse(m_param->contentLightLevelInfo))
+        {
+            bs.resetBits();
+            cllsei.write(bs, m_sps);
+            bs.writeByteAlignment();
+            list.serialize(NAL_UNIT_PREFIX_SEI, bs);
+        }
+        else
+            x265_log(m_param, X265_LOG_WARNING, "unable to parse content light level info\n");
     }
 
     if (m_param->bEmitInfoSEI)

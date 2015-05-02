@@ -852,6 +852,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("analysis-file") p->analysisFileName = strdup(value);
     OPT("qg-size") p->rc.qgSize = atoi(value);
     OPT("master-display") p->masteringDisplayColorVolume = strdup(value);
+    OPT("max-cll") p->contentLightLevelInfo = strdup(value);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT

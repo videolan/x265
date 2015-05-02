@@ -72,6 +72,7 @@ protected:
         SCALABLE_NESTING                     = 133,
         REGION_REFRESH_INFO                  = 134,
         MASTERING_DISPLAY_INFO               = 137,
+        CONTENT_LIGHT_LEVEL_INFO             = 144,
     };
 
     virtual PayloadType payloadType() const = 0;
@@ -150,6 +151,32 @@ public:
         WRITE_CODE(whitePointY, 16, "white_point_y");
         WRITE_CODE(maxDisplayMasteringLuminance, 32, "max_display_mastering_luminance");
         WRITE_CODE(minDisplayMasteringLuminance, 32, "min_display_mastering_luminance");
+    }
+};
+
+class SEIContentLightLevel : public SEI
+{
+public:
+
+    uint16_t max_content_light_level;
+    uint16_t max_pic_average_light_level;
+
+    PayloadType payloadType() const { return CONTENT_LIGHT_LEVEL_INFO; }
+
+    bool parse(const char* value)
+    {
+        return sscanf(value, "%hu,%hu",
+                      &max_content_light_level, &max_pic_average_light_level) == 2;
+    }
+
+    void write(Bitstream& bs, const SPS&)
+    {
+        m_bitIf = &bs;
+
+        WRITE_CODE(CONTENT_LIGHT_LEVEL_INFO, 8, "payload_type");
+        WRITE_CODE(4, 8, "payload_size");
+        WRITE_CODE(max_content_light_level,     16, "max_content_light_level");
+        WRITE_CODE(max_pic_average_light_level, 16, "max_pic_average_light_level");
     }
 };
 
