@@ -1830,6 +1830,10 @@ void CUData::getInterNeighbourMV(InterNeighbourMV *neighbour, uint32_t partUnitI
     }
 }
 
+/* Clip motion vector to within slightly padded boundary of picture (the
+ * MV may reference a block that is completely within the padded area).
+ * Note this function is unaware of how much of this picture is actually
+ * available for use (re: frame parallelism) */
 void CUData::clipMv(MV& outMV) const
 {
     const uint32_t mvshift = 2;
