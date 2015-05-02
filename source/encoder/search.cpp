@@ -1861,6 +1861,34 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
     return outCost;
 }
 
+/* Pick between the two AMVP candidates which is the best one to use as
+ * MVP for the motion search, based on SAD cost */
+int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[AMVP_NUM_CANDS], int list, int ref)
+{
+    if (amvp[0] == amvp[1])
+        return 0;
+
+    Yuv& tmpPredYuv = m_rqt[cu.m_cuDepth[0]].tmpPredYuv;
+    uint32_t costs[AMVP_NUM_CANDS];
+
+    for (int i = 0; i < AMVP_NUM_CANDS; i++)
+    {
+        MV mvCand = amvp[i];
+
+        // NOTE: skip mvCand if Y is > merange and -FN>1
+        if (m_bFrameParallel && (mvCand.y >= (m_param->searchRange + 1) * 4))
+            costs[i] = m_me.COST_MAX;
+        else
+        {
+            cu.clipMv(mvCand);
+            predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPic, mvCand);
+            costs[i] = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
+        }
+    }
+
+    return costs[0] <= costs[1] ? 0 : 1;
+}
+
 void Search::PME::processTasks(int workerThreadId)
 {
 #if DETAILED_CU_STATS
@@ -1951,34 +1979,6 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
         bestME[list].cost = cost;
         bestME[list].bits = bits;
     }
-}
-
-/* Pick between the two AMVP candidates which is the best one to use as
- * MVP for the motion search, based on SAD cost */
-int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[AMVP_NUM_CANDS], int list, int ref)
-{
-    if (amvp[0] == amvp[1])
-        return 0;
-
-    Yuv& tmpPredYuv = m_rqt[cu.m_cuDepth[0]].tmpPredYuv;
-    uint32_t costs[AMVP_NUM_CANDS];
-
-    for (int i = 0; i < AMVP_NUM_CANDS; i++)
-    {
-        MV mvCand = amvp[i];
-
-        // NOTE: skip mvCand if Y is > merange and -FN>1
-        if (m_bFrameParallel && (mvCand.y >= (m_param->searchRange + 1) * 4))
-            costs[i] = m_me.COST_MAX;
-        else
-        {
-            cu.clipMv(mvCand);
-            predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refPicList[list][ref]->m_reconPic, mvCand);
-            costs[i] = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
-        }
-    }
-
-    return costs[0] <= costs[1] ? 0 : 1;
 }
 
 /* find the best inter prediction for each PU of specified mode */
