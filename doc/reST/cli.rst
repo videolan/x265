@@ -1498,7 +1498,9 @@ VUI fields must be manually specified.
 	integers. The SEI includes X,Y display primaries for RGB channels,
 	white point X,Y and max,min luminance values.
 
-	Example: G(10,12)B(5,13)R(5,13)WP(100,100)L(1000,100)
+	Example for P65D3 1000-nits:
+
+		G(13200,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)
 
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms
