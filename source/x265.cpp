@@ -472,7 +472,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    /* This allow muxers to modify bitstream format */
+    /* This allows muxers to modify bitstream format */
     cliopt.output->setParam(param);
 
     if (cliopt.reconPlayCmd)
