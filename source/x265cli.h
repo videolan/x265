@@ -365,8 +365,8 @@ static void showHelp(x265_param *param)
     H1("   --pbratio <float>             QP factor between P and B. Default %.2f\n", param->rc.pbFactor);
     H1("   --qcomp <float>               Weight given to predicted complexity. Default %.2f\n", param->rc.qCompress);
     H1("   --qpstep <integer>            The maximum single adjustment in QP allowed to rate control. Default %d\n", param->rc.qpStep);
-    H1("   --cbqpoffs <integer>          Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
-    H1("   --crqpoffs <integer>          Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
+    H1("   --cbqpoffs <integer>          Chroma Cb QP Offset [-12..12]. Default %d\n", param->cbQpOffset);
+    H1("   --crqpoffs <integer>          Chroma Cr QP Offset [-12..12]. Default %d\n", param->crQpOffset);
     H1("   --scaling-list <string>       Specify a file containing HM style quant scaling lists or 'default' or 'off'. Default: off\n");
     H1("   --lambda-file <string>        Specify a file containing replacement values for the lambda tables\n");
     H1("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
