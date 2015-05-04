@@ -262,7 +262,7 @@ extern "C" {
     p.pu[LUMA_16x4].sad  = x265_pixel_sad_16x4_ ## cpu; \
     p.pu[LUMA_16x12].sad = x265_pixel_sad_16x12_ ## cpu; \
     p.pu[LUMA_16x32].sad = x265_pixel_sad_16x32_ ## cpu; \
-    /*p.pu[LUMA_16x64].sad = x265_pixel_sad_16x64_ ## cpu;*/ \
+    p.pu[LUMA_16x64].sad = x265_pixel_sad_16x64_ ## cpu; \
     p.pu[LUMA_32x8].sad  = x265_pixel_sad_32x8_ ## cpu; \
     p.pu[LUMA_32x16].sad = x265_pixel_sad_32x16_ ## cpu; \
     p.pu[LUMA_32x24].sad = x265_pixel_sad_32x24_ ## cpu; \
