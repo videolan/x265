@@ -29,6 +29,7 @@
 #include "output/output.h"
 #include "output/reconplay.h"
 #include "filters/filters.h"
+#include "common.h"
 #include "param.h"
 #include "cpu.h"
 #include "x265.h"
