@@ -276,9 +276,8 @@ SAD_MMX  4,  4, 2
     ABSW2   m3, m4, m3, m4, m7, m5
     paddw   m1, m2
     paddw   m3, m4
-    paddw   m3, m1
-    pmaddwd m3, [pw_1]
-    paddd   m0, m3
+    paddw   m0, m1
+    paddw   m0, m3
 %else
     movu    m1, [r2]
     movu    m2, [r2+2*r3]
@@ -287,9 +286,8 @@ SAD_MMX  4,  4, 2
     ABSW2   m1, m2, m1, m2, m3, m4
     lea     r0, [r0+4*r1]
     lea     r2, [r2+4*r3]
-    paddw   m2, m1
-    pmaddwd m2, [pw_1]
-    paddd   m0, m2
+    paddw   m0, m1
+    paddw   m0, m2
 %endif
 %endmacro
 
@@ -309,8 +307,12 @@ cglobal pixel_sad_%1x%2, 4,5-(%2&4/4),8*(%1/mmsize)
     dec    r4d
     jg .loop
 %endif
-
+%if %2 == 32
+    HADDUWD m0, m1
     HADDD   m0, m1
+%else
+    HADDW   m0, m1
+%endif
     movd    eax, xm0
     RET
 %endmacro
@@ -321,7 +323,6 @@ SAD  16,  8
 SAD  16, 12
 SAD  16, 16
 SAD  16, 32
-SAD  16, 64
 
 INIT_XMM sse2
 SAD  8,  4
