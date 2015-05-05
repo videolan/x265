@@ -87,7 +87,7 @@ x265_param *x265_param_alloc()
 extern "C"
 void x265_param_free(x265_param* p)
 {
-    return x265_free(p);
+    x265_free(p);
 }
 
 extern "C"
