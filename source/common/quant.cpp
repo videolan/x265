@@ -592,7 +592,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     /* TODO: update bit estimates if dirty */
     EstBitsSbac& estBitsSbac = m_entropyCoder->m_estBitsSbac;
 
-    uint32_t scanPos;
+    uint32_t scanPos = 0;
     uint32_t c1 = 1;
 
     // process trail all zero Coeff Group
