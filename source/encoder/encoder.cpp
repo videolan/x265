@@ -365,16 +365,17 @@ void Encoder::destroy()
 
     if (m_param)
     {
-        free((void*)m_param->rc.lambdaFileName); // allocs by strdup
-        free(m_param->rc.statFileName);
-        free(m_param->analysisFileName);
-        free((void*)m_param->scalingLists);
-        free(m_param->csvfn);
-        free(m_param->numaPools);
-        free((void*)m_param->masteringDisplayColorVolume);
-        free((void*)m_param->contentLightLevelInfo);
+        /* release string arguments that were strdup'd */
+        free((char*)m_param->rc.lambdaFileName);
+        free((char*)m_param->rc.statFileName);
+        free((char*)m_param->analysisFileName);
+        free((char*)m_param->scalingLists);
+        free((char*)m_param->csvfn);
+        free((char*)m_param->numaPools);
+        free((char*)m_param->masteringDisplayColorVolume);
+        free((char*)m_param->contentLightLevelInfo);
 
-        X265_FREE(m_param);
+        x265_param_free(m_param);
     }
 }
 

@@ -261,7 +261,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
     /* limit nodes based on param->numaPools */
     if (p->numaPools && *p->numaPools)
     {
-        char *nodeStr = p->numaPools;
+        const char *nodeStr = p->numaPools;
         for (int i = 0; i < numNumaNodes; i++)
         {
             if (!*nodeStr)

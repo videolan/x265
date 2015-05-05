@@ -416,7 +416,7 @@ typedef struct x265_param
      *
      * Frame encoders are distributed between the available thread pools, and
      * the encoder will never generate more thread pools than frameNumThreads */
-    char*     numaPools;
+    const char* numaPools;
 
     /* Enable wavefront parallel processing, greatly increases parallelism for
      * less than 1% compression efficiency loss. Requires a thread pool, enabled
@@ -458,7 +458,7 @@ typedef struct x265_param
      * order. Otherwise the encoder will emit per-stream statistics into the log
      * file when x265_encoder_log is called (presumably at the end of the
      * encode) */
-    char*     csvfn;
+    const char* csvfn;
 
     /*== Internal Picture Specification ==*/
 
@@ -878,7 +878,7 @@ typedef struct x265_param
     int       analysisMode;
 
     /* Filename for analysisMode save/load. Default name is "x265_analysis.dat" */
-    char*     analysisFileName;
+    const char* analysisFileName;
 
     /*== Rate Control ==*/
 
@@ -971,7 +971,7 @@ typedef struct x265_param
 
         /* Filename of the 2pass output/input stats file, if unspecified the
          * encoder will default to using x265_2pass.log */
-        char*     statFileName;
+        const char* statFileName;
 
         /* temporally blur quants */
         double    qblur;
