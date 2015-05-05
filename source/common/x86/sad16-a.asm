@@ -385,6 +385,13 @@ SAD  8,  8
 SAD  8, 16
 SAD  8, 32
 
+INIT_YMM avx2
+SAD  16,  4
+SAD  16,  8
+SAD  16, 12
+SAD  16, 16
+SAD  16, 32
+
 ;------------------------------------------------------------------
 ; int pixel_sad_32xN( uint16_t *, intptr_t, uint16_t *, intptr_t )
 ;------------------------------------------------------------------
@@ -771,58 +778,6 @@ cglobal pixel_vsad, 3,3
     HADDUW    m0, m1
 %endif
     movd     eax, xm0
-    RET
-
-INIT_YMM avx2
-cglobal pixel_sad_16x8, 4,7,7
-    xorps           m0, m0
-    xorps           m6, m6
-    movu            m5, [pw_1]
-    mov             r4d, 8/4
-    add             r1d, r1d
-    add             r3d, r3d
-    lea             r5, [r1 * 3]
-    lea             r6, [r3 * 3]
-.loop
-    movu            m1, [r0]               ; row 0 of pix0
-    movu            m2, [r2]               ; row 0 of pix1
-    movu            m3, [r0 + r1]          ; row 1 of pix0
-    movu            m4, [r2 + r3]          ; row 1 of pix1
-    psubw           m1, m2
-    pabsw           m1, m1
-    pmaddwd         m1, m5
-    psubw           m3, m4
-    pabsw           m3, m3
-    pmaddwd         m3, m5
-    paddd           m0, m1
-    paddd           m6, m3
-
-    movu            m1, [r0 + 2 * r1]      ; row 2 of pix0
-    movu            m2, [r2 + 2 * r3]      ; row 2 of pix1
-    movu            m3, [r0 + r5]          ; row 3 of pix0
-    movu            m4, [r2 + r6]          ; row 3 of pix1
-    psubw           m1, m2
-    pabsw           m1, m1
-    pmaddwd         m1, m5
-    psubw           m3, m4
-    pabsw           m3, m3
-    pmaddwd         m3, m5
-    paddd           m0, m1
-    paddd           m6, m3
-    lea     r2,     [r2 + 4 * r3]
-    lea     r0,     [r0 + 4 * r1]
-
-    dec             r4d
-    jnz             .loop
-
-    paddd           m0, m6
-    vextracti128    xm1, m0, 1
-    paddd           xm0, xm1
-    movhlps         xm1, xm0
-    paddd           xm0, xm1
-    pshufd          xm1, xm0, 1
-    paddd           xm0, xm1
-    movd            eax, xm0
     RET
 ;-----------------------------------------------------------------------------
 ; void pixel_sad_xN_WxH( uint16_t *fenc, uint16_t *pix0, uint16_t *pix1,
