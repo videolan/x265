@@ -1299,6 +1299,7 @@ typedef struct x265_api
     void          (*picture_init)(x265_param*, x265_picture*);
     x265_encoder* (*encoder_open)(x265_param*);
     void          (*encoder_parameters)(x265_encoder*, x265_param*);
+    int           (*encoder_reconfig)(x265_encoder*, x265_param*);
     int           (*encoder_headers)(x265_encoder*, x265_nal**, uint32_t*);
     int           (*encoder_encode)(x265_encoder*, x265_nal**, uint32_t*, x265_picture*, x265_picture*);
     void          (*encoder_get_stats)(x265_encoder*, x265_stats*, uint32_t);

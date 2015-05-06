@@ -264,6 +264,7 @@ static const x265_api libapi =
     &x265_picture_init,
     &x265_encoder_open,
     &x265_encoder_parameters,
+    &x265_encoder_reconfig,
     &x265_encoder_headers,
     &x265_encoder_encode,
     &x265_encoder_get_stats,
