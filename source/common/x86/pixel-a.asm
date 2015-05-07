@@ -11615,6 +11615,58 @@ cglobal pixel_satd_32x64, 4,8,8
     movd            eax, xm6
     RET
 
+cglobal pixel_satd_48x64, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 64]
+    lea             r2, [r7 + 64]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
 cglobal pixel_satd_64x16, 4,8,8
     add             r1d, r1d
     add             r3d, r3d
