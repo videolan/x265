@@ -1285,9 +1285,9 @@ void x265_print_params(x265_param* param)
     case X265_RC_ABR:
         x265_log(param, X265_LOG_INFO, "Rate Control / qCompress            : ABR-%d kbps / %0.2f\n", param->rc.bitrate, param->rc.qCompress); break;
     case X265_RC_CQP:
-        x265_log(param, X265_LOG_INFO, "Rate Control                        : CQP-%d\n", param->rc.qp);  break;
+        x265_log(param, X265_LOG_INFO, "Rate Control                        : CQP-%d\n", param->rc.qp); break;
     case X265_RC_CRF:
-        x265_log(param, X265_LOG_INFO, "Rate Control / qCompress            : CRF-%0.1f / %0.2f\n", param->rc.rfConstant, param->rc.qCompress);  break;
+        x265_log(param, X265_LOG_INFO, "Rate Control / qCompress            : CRF-%0.1f / %0.2f\n", param->rc.rfConstant, param->rc.qCompress); break;
     }
 
     if (param->rc.vbvBufferSize)
