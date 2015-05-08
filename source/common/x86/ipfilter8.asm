@@ -1042,6 +1042,135 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4,6,8
     IPFILTER_LUMA_sse2 64, 16, ps
     IPFILTER_LUMA_sse2 16, 64, ps
 
+%macro  WORD_TO_DOUBLE 1
+%if ARCH_X86_64
+    punpcklbw   %1,     m8
+%else
+    punpcklbw   %1,     %1
+    psrlw       %1,     8
+%endif
+%endmacro
+
+;-----------------------------------------------------------------------------
+; void interp_4tap_vert_pp_2xn(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+%macro FILTER_V4_W2_H4_sse2 1
+INIT_XMM sse2
+%if ARCH_X86_64
+cglobal interp_4tap_vert_pp_2x%1, 4, 6, 9
+    pxor        m8,        m8
+%else
+cglobal interp_4tap_vert_pp_2x%1, 4, 6, 8
+%endif
+    mov         r4d,       r4m
+    sub         r0,        r1
+
+%ifdef PIC
+    lea         r5,        [tabw_ChromaCoeff]
+    movh        m0,        [r5 + r4 * 8]
+%else
+    movh        m0,        [tabw_ChromaCoeff + r4 * 8]
+%endif
+
+    punpcklqdq  m0,        m0
+    mova        m1,        [pw_32]
+    lea         r5,        [3 * r1]
+
+%assign x 1
+%rep %1/4
+    movd        m2,        [r0]
+    movd        m3,        [r0 + r1]
+    movd        m4,        [r0 + 2 * r1]
+    movd        m5,        [r0 + r5]
+
+    punpcklbw   m2,        m3
+    punpcklbw   m6,        m4,        m5
+    punpcklwd   m2,        m6
+
+    WORD_TO_DOUBLE         m2
+    pmaddwd     m2,        m0
+
+    lea         r0,        [r0 + 4 * r1]
+    movd        m6,        [r0]
+
+    punpcklbw   m3,        m4
+    punpcklbw   m7,        m5,        m6
+    punpcklwd   m3,        m7
+
+    WORD_TO_DOUBLE         m3
+    pmaddwd     m3,        m0
+
+    packssdw    m2,        m3
+    pshuflw     m3,        m2,          q2301
+    pshufhw     m3,        m3,          q2301
+    paddw       m2,        m3
+    psrld       m2,        16
+
+    movd        m7,        [r0 + r1]
+
+    punpcklbw   m4,        m5
+    punpcklbw   m3,        m6,        m7
+    punpcklwd   m4,        m3
+
+    WORD_TO_DOUBLE         m4
+    pmaddwd     m4,        m0
+
+    movd        m3,        [r0 + 2 * r1]
+
+    punpcklbw   m5,        m6
+    punpcklbw   m7,        m3
+    punpcklwd   m5,        m7
+
+    WORD_TO_DOUBLE         m5
+    pmaddwd     m5,        m0
+
+    packssdw    m4,        m5
+    pshuflw     m5,        m4,          q2301
+    pshufhw     m5,        m5,          q2301
+    paddw       m4,        m5
+    psrld       m4,        16
+
+    packssdw    m2,        m4
+    paddw       m2,        m1
+    psraw       m2,        6
+    packuswb    m2,        m2
+
+%if ARCH_X86_64
+    movq        r4,        m2
+    mov         [r2],      r4w
+    shr         r4,        16
+    mov         [r2 + r3], r4w
+    lea         r2,        [r2 + 2 * r3]
+    shr         r4,        16
+    mov         [r2],      r4w
+    shr         r4,        16
+    mov         [r2 + r3], r4w
+%else
+    movd        r4,        m2
+    mov         [r2],      r4w
+    shr         r4,        16
+    mov         [r2 + r3], r4w
+    lea         r2,        [r2 + 2 * r3]
+    psrldq      m2,        4
+    movd        r4,        m2
+    mov         [r2],      r4w
+    shr         r4,        16
+    mov         [r2 + r3], r4w
+%endif
+
+%if x < %1/4
+    lea         r2,        [r2 + 2 * r3]
+%endif
+%assign x x+1
+%endrep
+    RET
+
+%endmacro
+
+    FILTER_V4_W2_H4_sse2 4
+    FILTER_V4_W2_H4_sse2 8
+    FILTER_V4_W2_H4_sse2 16
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
