@@ -1143,6 +1143,7 @@ Quality, rate control and rate distortion options
 	**Range of values:** 0.0 to 3.0
 
 .. option:: --qg-size <64|32|16>
+
 	Enable adaptive quantization for sub-CTUs. This parameter specifies 
 	the minimum CU size at which QP can be adjusted, ie. Quantization Group
 	size. Allowed range of values are 64, 32, 16 provided this falls within 
@@ -1200,12 +1201,12 @@ Quality, rate control and rate distortion options
 .. option:: --strict-cbr, --no-strict-cbr
 	
 	Enables stricter conditions to control bitrate deviance from the 
-	target bitrate in CBR mode. Bitrate adherence is prioritised
+	target bitrate in ABR mode. Bit rate adherence is prioritised
 	over quality. Rate tolerance is reduced to 50%. Default disabled.
 	
 	This option is for use-cases which require the final average bitrate 
-	to be within very strict limits of the target - preventing overshoots 
-	completely, and achieve bitrates within 5% of target bitrate, 
+	to be within very strict limits of the target; preventing overshoots, 
+	while keeping the bit rate within 5% of the target setting, 
 	especially in short segment encodes. Typically, the encoder stays 
 	conservative, waiting until there is enough feedback in terms of 
 	encoded frames to control QP. strict-cbr allows the encoder to be 
