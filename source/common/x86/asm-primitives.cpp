@@ -1384,6 +1384,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I444].pu[LUMA_4x4].filter_vpp = x265_interp_4tap_vert_pp_4x4_sse2;
         p.chroma[X265_CSP_I444].pu[LUMA_4x8].filter_vpp = x265_interp_4tap_vert_pp_4x8_sse2;
         p.chroma[X265_CSP_I444].pu[LUMA_4x16].filter_vpp = x265_interp_4tap_vert_pp_4x16_sse2;
+#if X86_64
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_6x8].filter_vpp = x265_interp_4tap_vert_pp_6x8_sse2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_6x16].filter_vpp = x265_interp_4tap_vert_pp_6x16_sse2;
+#endif
 
         ALL_LUMA_PU(luma_hpp, interp_8tap_horiz_pp, sse2);
         p.pu[LUMA_4x4].luma_hpp = x265_interp_8tap_horiz_pp_4x4_sse2;
