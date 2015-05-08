@@ -1239,6 +1239,139 @@ cglobal interp_4tap_vert_pp_4x2, 4, 6, 8
     RET
 
 ;-----------------------------------------------------------------------------
+; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+%macro FILTER_V4_W4_H4_sse2 1
+INIT_XMM sse2
+%if ARCH_X86_64
+cglobal interp_4tap_vert_pp_4x%1, 4, 6, 9
+    pxor        m8,        m8
+%else
+cglobal interp_4tap_vert_pp_4x%1, 4, 6, 8
+%endif
+
+    mov         r4d,       r4m
+    sub         r0,        r1
+
+%ifdef PIC
+    lea         r5,        [tabw_ChromaCoeff]
+    movh        m0,        [r5 + r4 * 8]
+%else
+    movh        m0,        [tabw_ChromaCoeff + r4 * 8]
+%endif
+
+    mova        m1,        [pw_32]
+    lea         r5,        [3 * r1]
+    punpcklqdq  m0,        m0
+
+%assign x 1
+%rep %1/4
+    movd        m2,        [r0]
+    movd        m3,        [r0 + r1]
+    movd        m4,        [r0 + 2 * r1]
+    movd        m5,        [r0 + r5]
+
+    punpcklbw   m2,        m3
+    punpcklbw   m6,        m4,        m5
+    punpcklwd   m2,        m6
+
+    movhlps     m6,        m2
+    WORD_TO_DOUBLE         m2
+    WORD_TO_DOUBLE         m6
+    pmaddwd     m2,        m0
+    pmaddwd     m6,        m0
+    packssdw    m2,        m6
+
+    lea         r0,        [r0 + 4 * r1]
+    movd        m6,        [r0]
+
+    punpcklbw   m3,        m4
+    punpcklbw   m7,        m5,        m6
+    punpcklwd   m3,        m7
+
+    movhlps     m7,        m3
+    WORD_TO_DOUBLE         m3
+    WORD_TO_DOUBLE         m7
+    pmaddwd     m3,        m0
+    pmaddwd     m7,        m0
+    packssdw    m3,        m7
+
+    pshuflw     m7,        m2,        q2301
+    pshufhw     m7,        m7,        q2301
+    paddw       m2,        m7
+    pshuflw     m7,        m3,        q2301
+    pshufhw     m7,        m7,        q2301
+    paddw       m3,        m7
+    psrld       m2,        16
+    psrld       m3,        16
+    packssdw    m2,        m3
+
+    paddw       m2,        m1
+    psraw       m2,        6
+
+    movd        m7,        [r0 + r1]
+
+    punpcklbw   m4,        m5
+    punpcklbw   m3,        m6,        m7
+    punpcklwd   m4,        m3
+
+    movhlps     m3,        m4
+    WORD_TO_DOUBLE         m4
+    WORD_TO_DOUBLE         m3
+    pmaddwd     m4,        m0
+    pmaddwd     m3,        m0
+    packssdw    m4,        m3
+
+    movd        m3,        [r0 + 2 * r1]
+
+    punpcklbw   m5,        m6
+    punpcklbw   m7,        m3
+    punpcklwd   m5,        m7
+
+    movhlps     m3,        m5
+    WORD_TO_DOUBLE         m5
+    WORD_TO_DOUBLE         m3
+    pmaddwd     m5,        m0
+    pmaddwd     m3,        m0
+    packssdw    m5,        m3
+
+    pshuflw     m7,        m4,        q2301
+    pshufhw     m7,        m7,        q2301
+    paddw       m4,        m7
+    pshuflw     m7,        m5,        q2301
+    pshufhw     m7,        m7,        q2301
+    paddw       m5,        m7
+    psrld       m4,        16
+    psrld       m5,        16
+    packssdw    m4,        m5
+
+    paddw       m4,        m1
+    psraw       m4,        6
+    packuswb    m2,        m4
+
+    movd        [r2],      m2
+    psrldq      m2,        4
+    movd        [r2 + r3], m2
+    lea         r2,        [r2 + 2 * r3]
+    psrldq      m2,        4
+    movd        [r2],      m2
+    psrldq      m2,        4
+    movd        [r2 + r3], m2
+
+%if x < %1/4
+    lea         r2,        [r2 + 2 * r3]
+%endif
+%assign x x+1
+%endrep
+    RET
+%endmacro
+
+    FILTER_V4_W4_H4_sse2 4
+    FILTER_V4_W4_H4_sse2 8
+    FILTER_V4_W4_H4_sse2 16
+    FILTER_V4_W4_H4_sse2 32
+
+;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
