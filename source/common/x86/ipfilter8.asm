@@ -1172,6 +1172,73 @@ cglobal interp_4tap_vert_pp_2x%1, 4, 6, 8
     FILTER_V4_W2_H4_sse2 16
 
 ;-----------------------------------------------------------------------------
+; void interp_4tap_vert_pp_4x2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal interp_4tap_vert_pp_4x2, 4, 6, 8
+
+    mov         r4d,       r4m
+    sub         r0,        r1
+    pxor        m7,        m7
+
+%ifdef PIC
+    lea         r5,        [tabw_ChromaCoeff]
+    movh        m0,        [r5 + r4 * 8]
+%else
+    movh        m0,        [tabw_ChromaCoeff + r4 * 8]
+%endif
+
+    lea         r5,        [r0 + 2 * r1]
+    punpcklqdq  m0,        m0
+    movd        m2,        [r0]
+    movd        m3,        [r0 + r1]
+    movd        m4,        [r5]
+    movd        m5,        [r5 + r1]
+
+    punpcklbw   m2,        m3
+    punpcklbw   m1,        m4,        m5
+    punpcklwd   m2,        m1
+
+    movhlps     m6,        m2
+    punpcklbw   m2,        m7
+    punpcklbw   m6,        m7
+    pmaddwd     m2,        m0
+    pmaddwd     m6,        m0
+    packssdw    m2,        m6
+
+    movd        m1,        [r0 + 4 * r1]
+
+    punpcklbw   m3,        m4
+    punpcklbw   m5,        m1
+    punpcklwd   m3,        m5
+
+    movhlps     m6,        m3
+    punpcklbw   m3,        m7
+    punpcklbw   m6,        m7
+    pmaddwd     m3,        m0
+    pmaddwd     m6,        m0
+    packssdw    m3,        m6
+
+    pshuflw     m4,        m2,        q2301
+    pshufhw     m4,        m4,        q2301
+    paddw       m2,        m4
+    pshuflw     m5,        m3,        q2301
+    pshufhw     m5,        m5,        q2301
+    paddw       m3,        m5
+    psrld       m2,        16
+    psrld       m3,        16
+    packssdw    m2,        m3
+
+    paddw       m2,        [pw_32]
+    psraw       m2,        6
+    packuswb    m2,        m2
+
+    movd        [r2],      m2
+    psrldq      m2,        4
+    movd        [r2 + r3], m2
+    RET
+
+;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
