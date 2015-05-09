@@ -42,18 +42,23 @@ void calSign(int8_t *dst, const pixel *src1, const pixel *src2, const int endX)
         dst[x] = signOf(src1[x] - src2[x]);
 }
 
-void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t signLeft)
+void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t* signLeft, intptr_t stride)
 {
-    int x;
-    int8_t signRight;
+    int x, y;
+    int8_t signRight, signLeft0;
     int8_t edgeType;
 
-    for (x = 0; x < width; x++)
+    for (y = 0; y < 2; y++)
     {
-        signRight = ((rec[x] - rec[x + 1]) < 0) ? -1 : ((rec[x] - rec[x + 1]) > 0) ? 1 : 0;
-        edgeType = signRight + signLeft + 2;
-        signLeft  = -signRight;
-        rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
+        signLeft0 = signLeft[y];
+        for (x = 0; x < width; x++)
+        {
+            signRight = ((rec[x] - rec[x + 1]) < 0) ? -1 : ((rec[x] - rec[x + 1]) > 0) ? 1 : 0;
+            edgeType = signRight + signLeft0 + 2;
+            signLeft0 = -signRight;
+            rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
+        }
+        rec += stride;
     }
 }
 
@@ -69,6 +74,25 @@ void processSaoCUE1(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stri
         edgeType = signDown + upBuff1[x] + 2;
         upBuff1[x] = -signDown;
         rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
+    }
+}
+
+void processSaoCUE1_2Rows(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width)
+{
+    int x, y;
+    int8_t signDown;
+    int edgeType;
+
+    for (y = 0; y < 2; y++)
+    {
+        for (x = 0; x < width; x++)
+        {
+            signDown = signOf(rec[x] - rec[x + stride]);
+            edgeType = signDown + upBuff1[x] + 2;
+            upBuff1[x] = -signDown;
+            rec[x] = x265_clip(rec[x] + offsetEo[edgeType]);
+        }
+        rec += stride;
     }
 }
 
@@ -119,8 +143,11 @@ void setupLoopFilterPrimitives_c(EncoderPrimitives &p)
 {
     p.saoCuOrgE0 = processSaoCUE0;
     p.saoCuOrgE1 = processSaoCUE1;
-    p.saoCuOrgE2 = processSaoCUE2;
-    p.saoCuOrgE3 = processSaoCUE3;
+    p.saoCuOrgE1_2Rows = processSaoCUE1_2Rows;
+    p.saoCuOrgE2[0] = processSaoCUE2;
+    p.saoCuOrgE2[1] = processSaoCUE2;
+    p.saoCuOrgE3[0] = processSaoCUE3;
+    p.saoCuOrgE3[1] = processSaoCUE3;
     p.saoCuOrgB0 = processSaoCUB0;
     p.sign = calSign;
 }

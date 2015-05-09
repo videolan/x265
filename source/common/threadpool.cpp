@@ -232,7 +232,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
     int cpuCount = getCpuCount();
     bool bNumaSupport = false;
 
-#if _WIN32_WINNT >= 0x0601
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
     bNumaSupport = true;
 #elif HAVE_LIBNUMA
     bNumaSupport = numa_available() >= 0;
@@ -241,10 +241,10 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
 
     for (int i = 0; i < cpuCount; i++)
     {
-#if _WIN32_WINNT >= 0x0601
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
         UCHAR node;
         if (GetNumaProcessorNode((UCHAR)i, &node))
-            cpusPerNode[X265_MIN(node, MAX_NODE_NUM)]++;
+            cpusPerNode[X265_MIN(node, (UCHAR)MAX_NODE_NUM)]++;
         else
 #elif HAVE_LIBNUMA
         if (bNumaSupport >= 0)
@@ -261,7 +261,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
     /* limit nodes based on param->numaPools */
     if (p->numaPools && *p->numaPools)
     {
-        char *nodeStr = p->numaPools;
+        const char *nodeStr = p->numaPools;
         for (int i = 0; i < numNumaNodes; i++)
         {
             if (!*nodeStr)
@@ -373,7 +373,7 @@ bool ThreadPool::start()
     return true;
 }
 
-void ThreadPool::stop()
+void ThreadPool::stopWorkers()
 {
     if (m_workers)
     {
@@ -408,7 +408,7 @@ void ThreadPool::setCurrentThreadAffinity()
 /* static */
 void ThreadPool::setThreadNodeAffinity(int numaNode)
 {
-#if _WIN32_WINNT >= 0x0601
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
     GROUP_AFFINITY groupAffinity;
     if (GetNumaNodeProcessorMaskEx((USHORT)numaNode, &groupAffinity))
     {
@@ -433,7 +433,7 @@ void ThreadPool::setThreadNodeAffinity(int numaNode)
 /* static */
 int ThreadPool::getNumaNodeCount()
 {
-#if _WIN32_WINNT >= 0x0601
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
     ULONG num = 1;
     if (GetNumaHighestNodeNumber(&num))
         num++;

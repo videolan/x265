@@ -22,25 +22,59 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "output.h"
-#include "yuv.h"
-#include "y4m.h"
-
 #include "raw.h"
 
 using namespace x265;
+using namespace std;
 
-ReconFile* ReconFile::open(const char *fname, int width, int height, uint32_t bitdepth, uint32_t fpsNum, uint32_t fpsDenom, int csp)
+RAWOutput::RAWOutput(const char* fname, InputFileInfo&)
 {
-    const char * s = strrchr(fname, '.');
-
-    if (s && !strcmp(s, ".y4m"))
-        return new Y4MOutput(fname, width, height, fpsNum, fpsDenom, csp);
-    else
-        return new YUVOutput(fname, width, height, bitdepth, csp);
+    b_fail = false;
+    if (!strcmp(fname, "-"))
+    {
+        ofs = &cout;
+        return;
+    }
+    ofs = new ofstream(fname, ios::binary | ios::out);
+    if (ofs->fail())
+        b_fail = true;
 }
 
-OutputFile* OutputFile::open(const char *fname, InputFileInfo& inputInfo)
+void RAWOutput::setParam(x265_param* param)
 {
-    return new RAWOutput(fname, inputInfo);
+    param->bAnnexB = true;
+}
+
+int RAWOutput::writeHeaders(const x265_nal* nal, uint32_t nalcount)
+{
+    uint32_t bytes = 0;
+
+    for (uint32_t i = 0; i < nalcount; i++)
+    {
+        ofs->write((const char*)nal->payload, nal->sizeBytes);
+        bytes += nal->sizeBytes;
+        nal++;
+    }
+
+    return bytes;
+}
+
+int RAWOutput::writeFrame(const x265_nal* nal, uint32_t nalcount, x265_picture&)
+{
+    uint32_t bytes = 0;
+
+    for (uint32_t i = 0; i < nalcount; i++)
+    {
+        ofs->write((const char*)nal->payload, nal->sizeBytes);
+        bytes += nal->sizeBytes;
+        nal++;
+    }
+
+    return bytes;
+}
+
+void RAWOutput::closeFile(int64_t, int64_t)
+{
+    if (ofs != &cout)
+        delete ofs;
 }

@@ -159,6 +159,13 @@ Performance Options
 	handled implicitly.
 
 	One may also directly supply the CPU capability bitmap as an integer.
+	
+	Note that by specifying this option you are overriding x265's CPU
+	detection and it is possible to do this wrong. You can cause encoder
+	crashes by specifying SIMD architectures which are not supported on
+	your CPU.
+
+	Default: auto-detected SIMD architectures
 
 .. option:: --frame-threads, -F <integer>
 
@@ -201,11 +208,11 @@ Performance Options
 	their node, they will not be allowed to migrate between nodes, but they
 	will be allowed to move between CPU cores within their node.
 
-	If the three pool features: :option:`--wpp` :option:`--pmode` and
-	:option:`--pme` are all disabled, then :option:`--pools` is ignored
-	and no thread pools are created.
+	If the four pool features: :option:`--wpp`, :option:`--pmode`,
+	:option:`--pme` and :option:`--lookahead-slices` are all disabled,
+	then :option:`--pools` is ignored and no thread pools are created.
 
-	If "none" is specified, then all three of the thread pool features are
+	If "none" is specified, then all four of the thread pool features are
 	implicitly disabled.
 
 	Multiple thread pools will be allocated for any NUMA node with more than
@@ -217,8 +224,21 @@ Performance Options
 	:option:`--frame-threads`.  The pools are used for WPP and for
 	distributed analysis and motion search.
 
+	On Windows, the native APIs offer sufficient functionality to
+	discover the NUMA topology and enforce the thread affinity that
+	libx265 needs (so long as you have not chosen to target XP or
+	Vista), but on POSIX systems it relies on libnuma for this
+	functionality. If your target POSIX system is single socket, then
+	building without libnuma is a perfectly reasonable option, as it
+	will have no effect on the runtime behavior. On a multiple-socket
+	system, a POSIX build of libx265 without libnuma will be less work
+	efficient. See :ref:`thread pools <pools>` for more detail.
+
 	Default "", one thread is allocated per detected hardware thread
 	(logical CPU cores) and one thread pool per NUMA node.
+
+	Note that the string value will need to be escaped or quoted to
+	protect against shell expansion on many platforms
 
 .. option:: --wpp, --no-wpp
 
@@ -402,7 +422,7 @@ frame counts) are only applicable to the CLI application.
 Profile, Level, Tier
 ====================
 
-.. option:: --profile <string>
+.. option:: --profile, -P <string>
 
 	Enforce the requirements of the specified profile, ensuring the
 	output stream will be decodable by a decoder which supports that
@@ -437,7 +457,7 @@ Profile, Level, Tier
 	times 10, for example level **5.1** is specified as "5.1" or "51",
 	and level **5.0** is specified as "5.0" or "50".
 
-	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2
+	Annex A levels: 1, 2, 2.1, 3, 3.1, 4, 4.1, 5, 5.1, 5.2, 6, 6.1, 6.2, 8.5
 
 .. option:: --high-tier, --no-high-tier
 
@@ -464,10 +484,21 @@ Profile, Level, Tier
 	HEVC specification.  If x265 detects that the total reference count
 	is greater than 8, it will issue a warning that the resulting stream
 	is non-compliant and it signals the stream as profile NONE and level
-	NONE but still allows the encode to continue.  Compliant HEVC
+	NONE and will abort the encode unless
+	:option:`--allow-non-conformance` it specified.  Compliant HEVC
 	decoders may refuse to decode such streams.
 	
 	Default 3
+
+.. option:: --allow-non-conformance, --no-allow-non-conformance
+
+	Allow libx265 to generate a bitstream with profile and level NONE.
+	By default it will abort any encode which does not meet strict level
+	compliance. The two most likely causes for non-conformance are
+	:option:`--ctu` being too small, :option:`--ref` being too high,
+	or the bitrate or resolution being out of specification.
+
+	Default: disabled
 
 .. note::
 	:option:`--profile`, :option:`--level-idc`, and
@@ -476,7 +507,7 @@ Profile, Level, Tier
 	limitations and must constrain the bitstream within those limits.
 	Specifying a profile or level may lower the encode quality
 	parameters to meet those requirements but it will never raise
-	them.
+	them. It may enable VBV constraints on a CRF encode.
 
 Mode decision / Analysis
 ========================
@@ -1111,6 +1142,14 @@ Quality, rate control and rate distortion options
 
 	**Range of values:** 0.0 to 3.0
 
+.. option:: --qg-size <64|32|16>
+
+	Enable adaptive quantization for sub-CTUs. This parameter specifies 
+	the minimum CU size at which QP can be adjusted, ie. Quantization Group
+	size. Allowed range of values are 64, 32, 16 provided this falls within 
+	the inclusive range [maxCUSize, minCUSize]. Experimental.
+	Default: same as maxCUSize
+
 .. option:: --cutree, --no-cutree
 
 	Enable the use of lookahead's lowres motion vector fields to
@@ -1162,12 +1201,12 @@ Quality, rate control and rate distortion options
 .. option:: --strict-cbr, --no-strict-cbr
 	
 	Enables stricter conditions to control bitrate deviance from the 
-	target bitrate in CBR mode. Bitrate adherence is prioritised
+	target bitrate in ABR mode. Bit rate adherence is prioritised
 	over quality. Rate tolerance is reduced to 50%. Default disabled.
 	
 	This option is for use-cases which require the final average bitrate 
-	to be within very strict limits of the target - preventing overshoots 
-	completely, and achieve bitrates within 5% of target bitrate, 
+	to be within very strict limits of the target; preventing overshoots, 
+	while keeping the bit rate within 5% of the target setting, 
 	especially in short segment encodes. Typically, the encoder stays 
 	conservative, waiting until there is enough feedback in terms of 
 	encoded frames to control QP. strict-cbr allows the encoder to be 
@@ -1451,8 +1490,47 @@ VUI fields must be manually specified.
 	specification for a description of these values. Default undefined
 	(not signaled)
 
+.. option:: --master-display <string>
+
+	SMPTE ST 2086 mastering display color volume SEI info, specified as
+	a string which is parsed when the stream header SEI are emitted. The
+	string format is "G(%hu,%hu)B(%hu,%hu)R(%hu,%hu)WP(%hu,%hu)L(%u,%u)"
+	where %hu are unsigned 16bit integers and %u are unsigned 32bit
+	integers. The SEI includes X,Y display primaries for RGB channels,
+	white point X,Y and max,min luminance values. (HDR)
+
+	Example for P65D3 1000-nits:
+
+		G(13200,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)
+
+	Note that this string value will need to be escaped or quoted to
+	protect against shell expansion on many platforms. No default.
+
+.. option:: --max-cll <string>
+
+	Maximum content light level and maximum frame average light level as
+	required by the Consumer Electronics Association 861.3 specification.
+
+	Specified as a string which is parsed when the stream header SEI are
+	emitted. The string format is "%hu,%hu" where %hu are unsigned 16bit
+	integers. The first value is the max content light level (or 0 if no
+	maximum is indicated), the second value is the maximum picture
+	average light level (or 0). (HDR)
+
+	Note that this string value will need to be escaped or quoted to
+	protect against shell expansion on many platforms. No default.
+
 Bitstream options
 =================
+
+.. option:: --annexb, --no-annexb
+
+	If enabled, x265 will produce Annex B bitstream format, which places
+	start codes before NAL. If disabled, x265 will produce file format,
+	which places length before NAL. x265 CLI will choose the right option
+	based on output format. Default enabled
+
+	**API ONLY**
 
 .. option:: --repeat-headers, --no-repeat-headers
 
@@ -1498,8 +1576,8 @@ Bitstream options
 
 	Enable a temporal sub layer. All referenced I/P/B frames are in the
 	base layer and all unreferenced B frames are placed in a temporal
-	sublayer. A decoder may chose to drop the sublayer and only decode
-	and display the base layer slices.
+	enhancement layer. A decoder may chose to drop the enhancement layer 
+	and only decode and display the base layer slices.
 	
 	If used with a fixed GOP (:option:`b-adapt` 0) and :option:`bframes`
 	3 then the two layers evenly split the frame rate, with a cadence of
@@ -1522,6 +1600,22 @@ Debugging options
 
 	Bit-depth of output file. This value defaults to the internal bit
 	depth and currently cannot to be modified.
+
+	**CLI ONLY**
+
+.. option:: --recon-y4m-exec <string>
+
+	If you have an application which can play a Y4MPEG stream received
+	on stdin, the x265 CLI can feed it reconstructed pictures in display
+	order.  The pictures will have no timing info, obviously, so the
+	picture timing will be determined primarily by encoding elapsed time
+	and latencies, but it can be useful to preview the pictures being
+	output by the encoder to validate input settings and rate control
+	parameters.
+
+	Example command for ffplay (assuming it is in your PATH):
+
+	--recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 
 	**CLI ONLY**
 

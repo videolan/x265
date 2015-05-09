@@ -1,14 +1,18 @@
 # List of command lines to be run by smoke tests, see https://bitbucket.org/sborho/test-harness
 
+# consider VBV tests a failure if new bitrate is more than 5% different
+# from the old bitrate
+# vbv-tolerance = 0.05
+
 big_buck_bunny_360p24.y4m,--preset=superfast --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 400 --hrd --aud --repeat-headers
 big_buck_bunny_360p24.y4m,--preset=medium --bitrate 1000 -F4 --cu-lossless --scaling-list default
-big_buck_bunny_360p24.y4m,--preset=slower --no-weightp --cu-stats --pme
-washdc_422_ntsc.y4m,--preset=faster --no-strong-intra-smoothing --keyint 1
+big_buck_bunny_360p24.y4m,--preset=slower --no-weightp --cu-stats --pme --qg-size 16
+washdc_422_ntsc.y4m,--preset=faster --no-strong-intra-smoothing --keyint 1 --qg-size 16
 washdc_422_ntsc.y4m,--preset=medium --qp 40 --nr-inter 400 -F4
 washdc_422_ntsc.y4m,--preset=veryslow --pmode --tskip --rdoq-level 0
 old_town_cross_444_720p50.y4m,--preset=ultrafast --weightp --keyint -1
 old_town_cross_444_720p50.y4m,--preset=fast --keyint 20 --min-cu-size 16
-old_town_cross_444_720p50.y4m,--preset=slow --sao-non-deblock --pmode
+old_town_cross_444_720p50.y4m,--preset=slow --sao-non-deblock --pmode --qg-size 32
 RaceHorses_416x240_30_10bit.yuv,--preset=veryfast --cu-stats --max-tu-size 8
 RaceHorses_416x240_30_10bit.yuv,--preset=slower --bitrate 500 -F4 --rdoq-level 1
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset=ultrafast --constrained-intra --min-keyint 5 --keyint 10

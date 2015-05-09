@@ -276,9 +276,8 @@ SAD_MMX  4,  4, 2
     ABSW2   m3, m4, m3, m4, m7, m5
     paddw   m1, m2
     paddw   m3, m4
-    paddw   m3, m1
-    pmaddwd m3, [pw_1]
-    paddd   m0, m3
+    paddw   m0, m1
+    paddw   m0, m3
 %else
     movu    m1, [r2]
     movu    m2, [r2+2*r3]
@@ -287,15 +286,45 @@ SAD_MMX  4,  4, 2
     ABSW2   m1, m2, m1, m2, m3, m4
     lea     r0, [r0+4*r1]
     lea     r2, [r2+4*r3]
-    paddw   m2, m1
-    pmaddwd m2, [pw_1]
-    paddd   m0, m2
+    paddw   m0, m1
+    paddw   m0, m2
 %endif
 %endmacro
 
-;-----------------------------------------------------------------------------
-; int pixel_sad_NxM( uint16_t *, intptr_t, uint16_t *, intptr_t )
-;-----------------------------------------------------------------------------
+%macro SAD_INC_2ROW_Nx64 1
+%if 2*%1 > mmsize
+    movu    m1, [r2 + 0]
+    movu    m2, [r2 + 16]
+    movu    m3, [r2 + 2 * r3 + 0]
+    movu    m4, [r2 + 2 * r3 + 16]
+    psubw   m1, [r0 + 0]
+    psubw   m2, [r0 + 16]
+    psubw   m3, [r0 + 2 * r1 + 0]
+    psubw   m4, [r0 + 2 * r1 + 16]
+    ABSW2   m1, m2, m1, m2, m5, m6
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    ABSW2   m3, m4, m3, m4, m7, m5
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m0, m1
+    paddw   m8, m3
+%else
+    movu    m1, [r2]
+    movu    m2, [r2 + 2 * r3]
+    psubw   m1, [r0]
+    psubw   m2, [r0 + 2 * r1]
+    ABSW2   m1, m2, m1, m2, m3, m4
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    paddw   m0, m1
+    paddw   m8, m2
+%endif
+%endmacro
+
+; ---------------------------------------------------------------------------- -
+; int pixel_sad_NxM(uint16_t *, intptr_t, uint16_t *, intptr_t)
+; ---------------------------------------------------------------------------- -
 %macro SAD 2
 cglobal pixel_sad_%1x%2, 4,5-(%2&4/4),8*(%1/mmsize)
     pxor    m0, m0
@@ -309,8 +338,35 @@ cglobal pixel_sad_%1x%2, 4,5-(%2&4/4),8*(%1/mmsize)
     dec    r4d
     jg .loop
 %endif
-
+%if %2 == 32
+    HADDUWD m0, m1
     HADDD   m0, m1
+%else
+    HADDW   m0, m1
+%endif
+    movd    eax, xm0
+    RET
+%endmacro
+
+; ---------------------------------------------------------------------------- -
+; int pixel_sad_Nx64(uint16_t *, intptr_t, uint16_t *, intptr_t)
+; ---------------------------------------------------------------------------- -
+%macro SAD_Nx64 1
+cglobal pixel_sad_%1x64, 4,5-(64&4/4), 9
+    pxor    m0, m0
+    pxor    m8, m8
+    mov     r4d, 64 / 2
+.loop:
+    SAD_INC_2ROW_Nx64 %1
+    dec    r4d
+    jg .loop
+
+    HADDUWD m0, m1
+    HADDUWD m8, m1
+    HADDD   m0, m1
+    HADDD   m8, m1
+    paddd   m0, m8
+
     movd    eax, xm0
     RET
 %endmacro
@@ -321,13 +377,20 @@ SAD  16,  8
 SAD  16, 12
 SAD  16, 16
 SAD  16, 32
-SAD  16, 64
+SAD_Nx64  16
 
 INIT_XMM sse2
 SAD  8,  4
 SAD  8,  8
 SAD  8, 16
 SAD  8, 32
+
+INIT_YMM avx2
+SAD  16,  4
+SAD  16,  8
+SAD  16, 12
+SAD  16, 16
+SAD  16, 32
 
 ;------------------------------------------------------------------
 ; int pixel_sad_32xN( uint16_t *, intptr_t, uint16_t *, intptr_t )
@@ -716,7 +779,6 @@ cglobal pixel_vsad, 3,3
 %endif
     movd     eax, xm0
     RET
-
 ;-----------------------------------------------------------------------------
 ; void pixel_sad_xN_WxH( uint16_t *fenc, uint16_t *pix0, uint16_t *pix1,
 ;                        uint16_t *pix2, intptr_t i_stride, int scores[3] )

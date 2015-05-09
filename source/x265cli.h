@@ -30,7 +30,7 @@
 namespace x265 {
 #endif
 
-static const char short_options[] = "o:p:f:F:r:I:i:b:s:t:q:m:hwV?";
+static const char short_options[] = "o:P:p:f:F:r:I:i:b:s:t:q:m:hwV?";
 static const struct option long_options[] =
 {
     { "help",                 no_argument, NULL, 'h' },
@@ -47,10 +47,12 @@ static const struct option long_options[] =
     { "no-pme",               no_argument, NULL, 0 },
     { "pme",                  no_argument, NULL, 0 },
     { "log-level",      required_argument, NULL, 0 },
-    { "profile",        required_argument, NULL, 0 },
+    { "profile",        required_argument, NULL, 'P' },
     { "level-idc",      required_argument, NULL, 0 },
     { "high-tier",            no_argument, NULL, 0 },
     { "no-high-tier",         no_argument, NULL, 0 },
+    { "allow-non-conformance",no_argument, NULL, 0 },
+    { "no-allow-non-conformance",no_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
     { "no-cu-stats",          no_argument, NULL, 0 },
     { "cu-stats",             no_argument, NULL, 0 },
@@ -181,6 +183,8 @@ static const struct option long_options[] =
     { "colormatrix",    required_argument, NULL, 0 },
     { "chromaloc",      required_argument, NULL, 0 },
     { "crop-rect",      required_argument, NULL, 0 },
+    { "master-display", required_argument, NULL, 0 },
+    { "max-cll",        required_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
     { "no-repeat-headers",    no_argument, NULL, 0 },
@@ -205,6 +209,8 @@ static const struct option long_options[] =
     { "strict-cbr",           no_argument, NULL, 0 },
     { "temporal-layers",      no_argument, NULL, 0 },
     { "no-temporal-layers",   no_argument, NULL, 0 },
+    { "qg-size",        required_argument, NULL, 0 },
+    { "recon-y4m-exec", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -255,9 +261,10 @@ static void showHelp(x265_param *param)
     H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
     H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));
     H0("\nProfile, Level, Tier:\n");
-    H0("   --profile <string>            Enforce an encode profile: main, main10, mainstillpicture\n");
+    H0("-P/--profile <string>            Enforce an encode profile: main, main10, mainstillpicture\n");
     H0("   --level-idc <integer|float>   Force a minimum required decoder level (as '5.0' or '50')\n");
     H0("   --[no-]high-tier              If a decoder level is specified, this modifier selects High tier of that level\n");
+    H0("   --[no-]allow-non-conformance  Allow the encoder to generate profile NONE bitstreams. Default %s\n", OPT(param->bAllowNonConformance));
     H0("\nThreading, performance:\n");
     H0("   --pools <integer,...>         Comma separated thread count per thread pool (pool per NUMA node)\n");
     H0("                                 '-' implies no threads on node, '+' implies one thread per core on node\n");
@@ -352,12 +359,14 @@ static void showHelp(x265_param *param)
     H0("   --analysis-file <filename>    Specify file name used for either dumping or reading analysis data.\n");
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
+    H0("   --qg-size <int>               Specifies the size of the quantization group (64, 32, 16). Default %d\n", param->rc.qgSize);
     H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
     H1("   --ipratio <float>             QP factor between I and P. Default %.2f\n", param->rc.ipFactor);
     H1("   --pbratio <float>             QP factor between P and B. Default %.2f\n", param->rc.pbFactor);
     H1("   --qcomp <float>               Weight given to predicted complexity. Default %.2f\n", param->rc.qCompress);
-    H1("   --cbqpoffs <integer>          Chroma Cb QP Offset. Default %d\n", param->cbQpOffset);
-    H1("   --crqpoffs <integer>          Chroma Cr QP Offset. Default %d\n", param->crQpOffset);
+    H1("   --qpstep <integer>            The maximum single adjustment in QP allowed to rate control. Default %d\n", param->rc.qpStep);
+    H1("   --cbqpoffs <integer>          Chroma Cb QP Offset [-12..12]. Default %d\n", param->cbQpOffset);
+    H1("   --crqpoffs <integer>          Chroma Cr QP Offset [-12..12]. Default %d\n", param->crQpOffset);
     H1("   --scaling-list <string>       Specify a file containing HM style quant scaling lists or 'default' or 'off'. Default: off\n");
     H1("   --lambda-file <string>        Specify a file containing replacement values for the lambda tables\n");
     H1("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
@@ -384,6 +393,9 @@ static void showHelp(x265_param *param)
     H1("   --colormatrix <string>        Specify color matrix setting from undef, bt709, fcc, bt470bg, smpte170m,\n");
     H1("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
     H1("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
+    H0("   --master-display <string>     SMPTE ST 2086 master display color volume info SEI (HDR)\n");
+    H0("                                    format: G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)\n");
+    H0("   --max-cll <string>            Emit content light level info SEI as \"cll,fall\" (HDR)\n");
     H0("\nBitstream options:\n");
     H0("   --[no-]repeat-headers         Emit SPS and PPS headers at each keyframe. Default %s\n", OPT(param->bRepeatHeaders));
     H0("   --[no-]info                   Emit SEI identifying encoder and parameters. Default %s\n", OPT(param->bEmitInfoSEI));
@@ -394,6 +406,7 @@ static void showHelp(x265_param *param)
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
+    H1("   --recon-y4m-exec <string>     pipe reconstructed frames to Y4M viewer, ex:\"ffplay -i pipe:0 -autoexit\"\n");
     H1("\nExecutable return codes:\n");
     H1("    0 - encode successful\n");
     H1("    1 - unable to parse command line\n");

@@ -171,8 +171,26 @@ changes made to the parameters for auto-detection and other reasons::
 	 *      how x265_encoder_open has changed the parameters.
 	 *      note that the data accessible through pointers in the returned param struct
 	 *      (e.g. filenames) should not be modified by the calling application. */
-	void x265_encoder_parameters(x265_encoder *, x265_param *);                                                                      
+	void x265_encoder_parameters(x265_encoder *, x265_param *);
 
+**x265_encoder_reconfig()** may be used to reconfigure encoder parameters mid-encode::
+
+	/* x265_encoder_reconfig:
+	 *       used to modify encoder parameters.
+	 *      various parameters from x265_param are copied.
+	 *      this takes effect immediately, on whichever frame is encoded next;
+	 *      returns 0 on success, negative on parameter validation error.
+	 *
+	 *      not all parameters can be changed; see the actual function for a
+	 *      detailed breakdown.  since not all parameters can be changed, moving
+	 *      from preset to preset may not always fully copy all relevant parameters,
+	 *      but should still work usably in practice. however, more so than for
+	 *      other presets, many of the speed shortcuts used in ultrafast cannot be
+	 *      switched out of; using reconfig to switch between ultrafast and other
+	 *      presets is not recommended without a more fine-grained breakdown of
+	 *      parameters to take this into account. */
+	int x265_encoder_reconfig(x265_encoder *, x265_param *);
+	
 Pictures
 ========
 
@@ -352,7 +370,7 @@ CTU size::
 Multi-library Interface
 =======================
 
-If your application might want to make a runtime selection between among
+If your application might want to make a runtime selection between
 a number of libx265 libraries (perhaps 8bpp and 16bpp), then you will
 want to use the multi-library interface.
 
@@ -370,13 +388,34 @@ without the **x265_** prefix. So **x265_param_default()** becomes
      *   libx265 */
     const x265_api* x265_api_get(int bitDepth);
 
-The general idea is to request the API for the bitDepth you would prefer
-the encoder to use (8 or 10), and if that returns NULL you request the
-API for bitDepth=0, which returns the system default libx265.
-
 Note that using this multi-library API in your application is only the
-first step. Next your application must dynamically link to libx265 and
-then you must build and install a multi-lib configuration of libx265,
-which includes 8bpp and 16bpp builds of libx265 and a shim library which
-forwards x265_api_get() calls to the appropriate library using dynamic
-loading and binding.
+first step.
+
+Your application must link to one build of libx265 (statically or 
+dynamically) and this linked version of libx265 will support one 
+bit-depth (8 or 10 bits). 
+
+Your application must now request the API for the bitDepth you would 
+prefer the encoder to use (8 or 10). If the requested bitdepth is zero, 
+or if it matches the bitdepth of the system default libx265 (the 
+currently linked library), then this library will be used for encode.
+If you request a different bit-depth, the linked libx265 will attempt 
+to dynamically bind a shared library with a name appropriate for the 
+requested bit-depth:
+
+    8-bit:  libx265_main.dll
+    10-bit: libx265_main10.dll
+
+    (the shared library extension is obviously platform specific. On
+    Linux it is .so while on Mac it is .dylib)
+
+For example on Windows, one could package together an x265.exe
+statically linked against the 8bpp libx265 together with a
+libx265_main10.dll in the same folder, and this executable would be able
+to encode main and main10 bitstreams.
+
+On Linux, x265 packagers could install 8bpp static and shared libraries
+under the name libx265 (so all applications link against 8bpp libx265)
+and then also install libx265_main10.so (symlinked to its numbered solib).
+Thus applications which use x265_api_get() will be able to generate main
+or main10 bitstreams.

@@ -71,6 +71,8 @@ protected:
         DECODED_PICTURE_HASH                 = 132,
         SCALABLE_NESTING                     = 133,
         REGION_REFRESH_INFO                  = 134,
+        MASTERING_DISPLAY_INFO               = 137,
+        CONTENT_LIGHT_LEVEL_INFO             = 144,
     };
 
     virtual PayloadType payloadType() const = 0;
@@ -108,6 +110,73 @@ public:
 
         for (uint32_t i = 0; i < m_userDataLength; i++)
             WRITE_CODE(m_userData[i], 8, "user_data");
+    }
+};
+
+class SEIMasteringDisplayColorVolume : public SEI
+{
+public:
+
+    uint16_t displayPrimaryX[3];
+    uint16_t displayPrimaryY[3];
+    uint16_t whitePointX, whitePointY;
+    uint32_t maxDisplayMasteringLuminance;
+    uint32_t minDisplayMasteringLuminance;
+
+    PayloadType payloadType() const { return MASTERING_DISPLAY_INFO; }
+
+    bool parse(const char* value)
+    {
+        return sscanf(value, "G(%hu,%hu)B(%hu,%hu)R(%hu,%hu)WP(%hu,%hu)L(%u,%u)",
+                      &displayPrimaryX[0], &displayPrimaryY[0],
+                      &displayPrimaryX[1], &displayPrimaryY[1],
+                      &displayPrimaryX[2], &displayPrimaryY[2],
+                      &whitePointX, &whitePointY,
+                      &maxDisplayMasteringLuminance, &minDisplayMasteringLuminance) == 10;
+    }
+
+    void write(Bitstream& bs, const SPS&)
+    {
+        m_bitIf = &bs;
+
+        WRITE_CODE(MASTERING_DISPLAY_INFO, 8, "payload_type");
+        WRITE_CODE(8 * 2 + 2 * 4, 8, "payload_size");
+
+        for (uint32_t i = 0; i < 3; i++)
+        {
+            WRITE_CODE(displayPrimaryX[i], 16, "display_primaries_x[ c ]");
+            WRITE_CODE(displayPrimaryY[i], 16, "display_primaries_y[ c ]");
+        }
+        WRITE_CODE(whitePointX, 16, "white_point_x");
+        WRITE_CODE(whitePointY, 16, "white_point_y");
+        WRITE_CODE(maxDisplayMasteringLuminance, 32, "max_display_mastering_luminance");
+        WRITE_CODE(minDisplayMasteringLuminance, 32, "min_display_mastering_luminance");
+    }
+};
+
+class SEIContentLightLevel : public SEI
+{
+public:
+
+    uint16_t max_content_light_level;
+    uint16_t max_pic_average_light_level;
+
+    PayloadType payloadType() const { return CONTENT_LIGHT_LEVEL_INFO; }
+
+    bool parse(const char* value)
+    {
+        return sscanf(value, "%hu,%hu",
+                      &max_content_light_level, &max_pic_average_light_level) == 2;
+    }
+
+    void write(Bitstream& bs, const SPS&)
+    {
+        m_bitIf = &bs;
+
+        WRITE_CODE(CONTENT_LIGHT_LEVEL_INFO, 8, "payload_type");
+        WRITE_CODE(4, 8, "payload_size");
+        WRITE_CODE(max_content_light_level,     16, "max_content_light_level");
+        WRITE_CODE(max_pic_average_light_level, 16, "max_pic_average_light_level");
     }
 };
 

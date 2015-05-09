@@ -140,7 +140,8 @@ typedef void (*dequant_normal_t)(const int16_t* quantCoef, int16_t* coef, int nu
 typedef int(*count_nonzero_t)(const int16_t* quantCoeff);
 typedef void (*weightp_pp_t)(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset);
 typedef void (*weightp_sp_t)(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset);
-typedef void (*scale_t)(pixel* dst, const pixel* src, intptr_t stride);
+typedef void (*scale1D_t)(pixel* dst, const pixel* src);
+typedef void (*scale2D_t)(pixel* dst, const pixel* src, intptr_t stride);
 typedef void (*downscale_t)(const pixel* src0, pixel* dstf, pixel* dsth, pixel* dstv, pixel* dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height);
 typedef void (*extendCURowBorder_t)(pixel* txt, intptr_t stride, int width, int height, int marginX);
@@ -155,8 +156,7 @@ typedef void (*filter_ps_t) (const pixel* src, intptr_t srcStride, int16_t* dst,
 typedef void (*filter_sp_t) (const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_ss_t) (const int16_t* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
 typedef void (*filter_hv_pp_t) (const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY);
-typedef void (*filter_p2s_wxh_t)(const pixel* src, intptr_t srcStride, int16_t* dst, int width, int height);
-typedef void (*filter_p2s_t)(const pixel* src, intptr_t srcStride, int16_t* dst);
+typedef void (*filter_p2s_t)(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 
 typedef void (*copy_pp_t)(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride); // dst is aligned
 typedef void (*copy_sp_t)(pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
@@ -168,7 +168,7 @@ typedef void (*pixel_add_ps_t)(pixel* a, intptr_t dstride, const pixel* b0, cons
 typedef void (*pixelavg_pp_t)(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int weight);
 typedef void (*addAvg_t)(const int16_t* src0, const int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride);
 
-typedef void (*saoCuOrgE0_t)(pixel* rec, int8_t* offsetEo, int width, int8_t signLeft);
+typedef void (*saoCuOrgE0_t)(pixel* rec, int8_t* offsetEo, int width, int8_t* signLeft, intptr_t stride);
 typedef void (*saoCuOrgE1_t)(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width);
 typedef void (*saoCuOrgE2_t)(pixel* rec, int8_t* pBufft, int8_t* pBuff1, int8_t* offsetEo, int lcuWidth, intptr_t stride);
 typedef void (*saoCuOrgE3_t)(pixel* rec, int8_t* upBuff1, int8_t* m_offsetEo, intptr_t stride, int startX, int endX);
@@ -179,7 +179,8 @@ typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* 
 
 typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
 
-typedef int (*findPosLast_t)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig);
+typedef int (*scanPosLast_t)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* scanCG4x4, const int trSize);
+typedef uint32_t (*findPosFirstLast_t)(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16]);
 
 /* Function pointers to optimized encoder primitives. Each pointer can reference
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */
@@ -210,7 +211,7 @@ struct EncoderPrimitives
         addAvg_t       addAvg;      // bidir motion compensation, uses 16bit values
 
         copy_pp_t      copy_pp;
-        filter_p2s_t   filter_p2s;
+        filter_p2s_t   convert_p2s;
     }
     pu[NUM_PU_SIZES];
 
@@ -266,17 +267,26 @@ struct EncoderPrimitives
     dequant_scaling_t     dequant_scaling;
     dequant_normal_t      dequant_normal;
     denoiseDct_t          denoiseDct;
-    scale_t               scale1D_128to64;
-    scale_t               scale2D_64to32;
+    scale1D_t             scale1D_128to64;
+    scale2D_t             scale2D_64to32;
 
     ssim_4x4x2_core_t     ssim_4x4x2_core;
     ssim_end4_t           ssim_end_4;
 
     sign_t                sign;
     saoCuOrgE0_t          saoCuOrgE0;
-    saoCuOrgE1_t          saoCuOrgE1;
-    saoCuOrgE2_t          saoCuOrgE2;
-    saoCuOrgE3_t          saoCuOrgE3;
+
+    /* To avoid the overhead in avx2 optimization in handling width=16, SAO_E0_1 is split
+     * into two parts: saoCuOrgE1, saoCuOrgE1_2Rows */
+    saoCuOrgE1_t          saoCuOrgE1, saoCuOrgE1_2Rows;
+
+    // saoCuOrgE2[0] is used for width<=16 and saoCuOrgE2[1] is used for width > 16.
+    saoCuOrgE2_t          saoCuOrgE2[2];
+
+    /* In avx2 optimization, two rows cannot be handled simultaneously since it requires 
+     * a pixel from the previous row. So, saoCuOrgE3[0] is used for width<=16 and 
+     * saoCuOrgE3[1] is used for width > 16. */
+    saoCuOrgE3_t          saoCuOrgE3[2];
     saoCuOrgB0_t          saoCuOrgB0;
 
     downscale_t           frameInitLowres;
@@ -289,9 +299,9 @@ struct EncoderPrimitives
     weightp_sp_t          weight_sp;
     weightp_pp_t          weight_pp;
 
-    filter_p2s_wxh_t      luma_p2s;
 
-    findPosLast_t         findPosLast;
+    scanPosLast_t         scanPosLast;
+    findPosFirstLast_t    findPosFirstLast;
 
     /* There is one set of chroma primitives per color space. An encoder will
      * have just a single color space and thus it will only ever use one entry
@@ -316,7 +326,7 @@ struct EncoderPrimitives
             filter_hps_t filter_hps;
             addAvg_t     addAvg;
             copy_pp_t    copy_pp;
-            filter_p2s_t chroma_p2s;
+            filter_p2s_t p2s;
 
         }
         pu[NUM_PU_SIZES];
@@ -336,7 +346,6 @@ struct EncoderPrimitives
         }
         cu[NUM_CU_SIZES];
 
-        filter_p2s_wxh_t p2s; // takes width/height as arguments
     }
     chroma[X265_CSP_COUNT];
 };

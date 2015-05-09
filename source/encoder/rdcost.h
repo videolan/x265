@@ -40,13 +40,15 @@ public:
     uint32_t  m_chromaDistWeight[2];
     uint32_t  m_psyRdBase;
     uint32_t  m_psyRd;
-    int       m_qp;
+    int       m_qp; /* QP used to configure lambda, may be higher than QP_MAX_SPEC but <= QP_MAX_MAX */
 
     void setPsyRdScale(double scale)                { m_psyRdBase = (uint32_t)floor(65536.0 * scale * 0.33); }
 
     void setQP(const Slice& slice, int qp)
     {
+        x265_emms(); /* TODO: if the lambda tables were ints, this would not be necessary */
         m_qp = qp;
+        setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
 
         /* Scale PSY RD factor by a slice type factor */
         static const uint32_t psyScaleFix8[3] = { 300, 256, 96 }; /* B, P, I */
@@ -60,19 +62,21 @@ public:
         }
 
         int qpCb, qpCr;
-        setLambda(x265_lambda2_tab[qp], x265_lambda_tab[qp]);
         if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
-            qpCb = x265_clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
+        {
+            qpCb = (int)g_chromaScale[x265_clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaQpOffset[0])];
+            qpCr = (int)g_chromaScale[x265_clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaQpOffset[1])];
+        }
         else
-            qpCb = X265_MIN(qp + slice.m_pps->chromaQpOffset[0], QP_MAX_SPEC);
+        {
+            qpCb = x265_clip3(QP_MIN, QP_MAX_SPEC, qp + slice.m_pps->chromaQpOffset[0]);
+            qpCr = x265_clip3(QP_MIN, QP_MAX_SPEC, qp + slice.m_pps->chromaQpOffset[1]);
+        }
+
         int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
         uint16_t lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
         m_chromaDistWeight[0] = lambdaOffset;
 
-        if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
-            qpCr = x265_clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice.m_pps->chromaQpOffset[0]]);
-        else
-            qpCr = X265_MIN(qp + slice.m_pps->chromaQpOffset[0], QP_MAX_SPEC);
         chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
         lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
         m_chromaDistWeight[1] = lambdaOffset;

@@ -106,6 +106,7 @@ namespace x265 {
 // private namespace
 
 extern const uint32_t g_entropyBits[128];
+extern const uint32_t g_entropyStateBits[128];
 extern const uint8_t g_nextState[128][2];
 
 #define sbacGetMps(S)            ((S) & 1)

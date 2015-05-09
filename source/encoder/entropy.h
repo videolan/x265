@@ -87,7 +87,7 @@ struct TURecurse
 struct EstBitsSbac
 {
     int significantCoeffGroupBits[NUM_SIG_CG_FLAG_CTX][2];
-    int significantBits[NUM_SIG_FLAG_CTX][2];
+    int significantBits[2][NUM_SIG_FLAG_CTX];
     int lastBits[2][10];
     int greaterOneBits[NUM_ONE_FLAG_CTX][2];
     int levelAbsBits[NUM_ABS_FLAG_CTX][2];
@@ -179,7 +179,7 @@ public:
     inline void codeQtCbfChroma(uint32_t cbf, uint32_t tuDepth)           { encodeBin(cbf, m_contextState[OFF_QT_CBF_CTX + 2 + tuDepth]); }
     inline void codeQtRootCbf(uint32_t cbf)                               { encodeBin(cbf, m_contextState[OFF_QT_ROOT_CBF_CTX]); }
     inline void codeTransformSkipFlags(uint32_t transformSkip, TextType ttype) { encodeBin(transformSkip, m_contextState[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]); }
-
+    void codeDeltaQP(const CUData& cu, uint32_t absPartIdx);
     void codeSaoOffset(const SaoCtuParam& ctuParam, int plane);
 
     /* RDO functions */
@@ -221,7 +221,7 @@ private:
     }
 
     void encodeCU(const CUData& ctu, const CUGeom &cuGeom, uint32_t absPartIdx, uint32_t depth, bool& bEncodeDQP);
-    void finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth);
+    void finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth, bool bEncodeDQP);
 
     void writeOut();
 
@@ -242,7 +242,6 @@ private:
 
     void codeSaoMaxUvlc(uint32_t code, uint32_t maxSymbol);
 
-    void codeDeltaQP(const CUData& cu, uint32_t absPartIdx);
     void codeLastSignificantXY(uint32_t posx, uint32_t posy, uint32_t log2TrSize, bool bIsLuma, uint32_t scanIdx);
 
     void encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth, uint32_t log2TrSize,

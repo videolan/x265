@@ -7078,6 +7078,117 @@ cglobal downShift_16, 7,7,3
 .end:
     RET
 
+; Input 16bpp, Output 8bpp
+;-------------------------------------------------------------------------------------------------------------------------------------
+;void planecopy_sp(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
+;-------------------------------------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal downShift_16, 6,7,3
+    movd        xm0, r6m        ; m0 = shift
+    add         r1d, r1d
+    dec         r5d
+.loopH:
+    xor         r6, r6
+.loopW:
+    movu        m1, [r0 + r6 * 2 +  0]
+    movu        m2, [r0 + r6 * 2 + 32]
+    vpsrlw      m1, xm0
+    vpsrlw      m2, xm0
+    packuswb    m1, m2
+    vpermq      m1, m1, 11011000b
+    movu        [r2 + r6], m1
+
+    add         r6d, mmsize
+    cmp         r6d, r4d
+    jl          .loopW
+
+    ; move to next row
+    add         r0, r1
+    add         r2, r3
+    dec         r5d
+    jnz         .loopH
+
+; processing last row of every frame [To handle width which not a multiple of 32]
+    mov         r6d, r4d
+    and         r4d, 31
+    shr         r6d, 5
+
+.loop32:
+    movu        m1, [r0]
+    movu        m2, [r0 + 32]
+    psrlw       m1, xm0
+    psrlw       m2, xm0
+    packuswb    m1, m2
+    vpermq      m1, m1, 11011000b
+    movu        [r2], m1
+
+    add         r0, 2*mmsize
+    add         r2, mmsize
+    dec         r6d
+    jnz         .loop32
+
+    cmp         r4d, 16
+    jl          .process8
+    movu        m1, [r0]
+    psrlw       m1, xm0
+    packuswb    m1, m1
+    vpermq      m1, m1, 10001000b
+    movu        [r2], xm1
+
+    add         r0, mmsize
+    add         r2, 16
+    sub         r4d, 16
+    jz          .end
+
+.process8:
+    cmp         r4d, 8
+    jl          .process4
+    movu        m1, [r0]
+    psrlw       m1, xm0
+    packuswb    m1, m1
+    movq        [r2], xm1
+
+    add         r0, 16
+    add         r2, 8
+    sub         r4d, 8
+    jz          .end
+
+.process4:
+    cmp         r4d, 4
+    jl          .process2
+    movq        xm1,[r0]
+    psrlw       m1, xm0
+    packuswb    m1, m1
+    movd        [r2], xm1
+
+    add         r0, 8
+    add         r2, 4
+    sub         r4d, 4
+    jz          .end
+
+.process2:
+    cmp         r4d, 2
+    jl          .process1
+    movd        xm1, [r0]
+    psrlw       m1, xm0
+    packuswb    m1, m1
+    movd        r6d, xm1
+    mov         [r2], r6w
+
+    add         r0, 4
+    add         r2, 2
+    sub         r4d, 2
+    jz          .end
+
+.process1:
+    movd        xm1, [r0]
+    psrlw       m1, xm0
+    packuswb    m1, m1
+    movd        r3d, xm1
+    mov         [r2], r3b
+.end:
+    RET
+
 ; Input 8bpp, Output 16bpp
 ;---------------------------------------------------------------------------------------------------------------------
 ;void planecopy_cp(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift)
@@ -10395,3 +10506,1372 @@ cglobal psyCost_ss_64x64, 4, 9, 15
     mov             rsp, r5
     RET
 %endif
+
+;;---------------------------------------------------------------
+;; SATD AVX2
+;; int pixel_satd(const pixel*, intptr_t, const pixel*, intptr_t)
+;;---------------------------------------------------------------
+;; r0   - pix0
+;; r1   - pix0Stride
+;; r2   - pix1
+;; r3   - pix1Stride
+
+%if ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0
+INIT_YMM avx2
+cglobal calc_satd_16x8    ; function to compute satd cost for 16 columns, 8 rows
+    pxor                m6, m6
+    vbroadcasti128      m0, [r0]
+    vbroadcasti128      m4, [r2]
+    vbroadcasti128      m1, [r0 + r1]
+    vbroadcasti128      m5, [r2 + r3]
+    pmaddubsw           m4, m7
+    pmaddubsw           m0, m7
+    pmaddubsw           m5, m7
+    pmaddubsw           m1, m7
+    psubw               m0, m4
+    psubw               m1, m5
+    vbroadcasti128      m2, [r0 + r1 * 2]
+    vbroadcasti128      m4, [r2 + r3 * 2]
+    vbroadcasti128      m3, [r0 + r4]
+    vbroadcasti128      m5, [r2 + r5]
+    pmaddubsw           m4, m7
+    pmaddubsw           m2, m7
+    pmaddubsw           m5, m7
+    pmaddubsw           m3, m7
+    psubw               m2, m4
+    psubw               m3, m5
+    lea                 r0, [r0 + r1 * 4]
+    lea                 r2, [r2 + r3 * 4]
+    paddw               m4, m0, m1
+    psubw               m1, m1, m0
+    paddw               m0, m2, m3
+    psubw               m3, m2
+    paddw               m2, m4, m0
+    psubw               m0, m4
+    paddw               m4, m1, m3
+    psubw               m3, m1
+    pabsw               m2, m2
+    pabsw               m0, m0
+    pabsw               m4, m4
+    pabsw               m3, m3
+    pblendw             m1, m2, m0, 10101010b
+    pslld               m0, 16
+    psrld               m2, 16
+    por                 m0, m2
+    pmaxsw              m1, m0
+    paddw               m6, m1
+    pblendw             m2, m4, m3, 10101010b
+    pslld               m3, 16
+    psrld               m4, 16
+    por                 m3, m4
+    pmaxsw              m2, m3
+    paddw               m6, m2
+    vbroadcasti128      m1, [r0]
+    vbroadcasti128      m4, [r2]
+    vbroadcasti128      m2, [r0 + r1]
+    vbroadcasti128      m5, [r2 + r3]
+    pmaddubsw           m4, m7
+    pmaddubsw           m1, m7
+    pmaddubsw           m5, m7
+    pmaddubsw           m2, m7
+    psubw               m1, m4
+    psubw               m2, m5
+    vbroadcasti128      m0, [r0 + r1 * 2]
+    vbroadcasti128      m4, [r2 + r3 * 2]
+    vbroadcasti128      m3, [r0 + r4]
+    vbroadcasti128      m5, [r2 + r5]
+    lea                 r0, [r0 + r1 * 4]
+    lea                 r2, [r2 + r3 * 4]
+    pmaddubsw           m4, m7
+    pmaddubsw           m0, m7
+    pmaddubsw           m5, m7
+    pmaddubsw           m3, m7
+    psubw               m0, m4
+    psubw               m3, m5
+    paddw               m4, m1, m2
+    psubw               m2, m1
+    paddw               m1, m0, m3
+    psubw               m3, m0
+    paddw               m0, m4, m1
+    psubw               m1, m4
+    paddw               m4, m2, m3
+    psubw               m3, m2
+    pabsw               m0, m0
+    pabsw               m1, m1
+    pabsw               m4, m4
+    pabsw               m3, m3
+    pblendw             m2, m0, m1, 10101010b
+    pslld               m1, 16
+    psrld               m0, 16
+    por                 m1, m0
+    pmaxsw              m2, m1
+    paddw               m6, m2
+    pblendw             m0, m4, m3, 10101010b
+    pslld               m3, 16
+    psrld               m4, 16
+    por                 m3, m4
+    pmaxsw              m0, m3
+    paddw               m6, m0
+    vextracti128        xm0, m6, 1
+    pmovzxwd            m6, xm6
+    pmovzxwd            m0, xm0
+    paddd               m8, m6
+    paddd               m9, m0
+    ret
+
+cglobal calc_satd_16x4    ; function to compute satd cost for 16 columns, 4 rows
+    pxor                m6, m6
+    vbroadcasti128      m0, [r0]
+    vbroadcasti128      m4, [r2]
+    vbroadcasti128      m1, [r0 + r1]
+    vbroadcasti128      m5, [r2 + r3]
+    pmaddubsw           m4, m7
+    pmaddubsw           m0, m7
+    pmaddubsw           m5, m7
+    pmaddubsw           m1, m7
+    psubw               m0, m4
+    psubw               m1, m5
+    vbroadcasti128      m2, [r0 + r1 * 2]
+    vbroadcasti128      m4, [r2 + r3 * 2]
+    vbroadcasti128      m3, [r0 + r4]
+    vbroadcasti128      m5, [r2 + r5]
+    pmaddubsw           m4, m7
+    pmaddubsw           m2, m7
+    pmaddubsw           m5, m7
+    pmaddubsw           m3, m7
+    psubw               m2, m4
+    psubw               m3, m5
+    paddw               m4, m0, m1
+    psubw               m1, m1, m0
+    paddw               m0, m2, m3
+    psubw               m3, m2
+    paddw               m2, m4, m0
+    psubw               m0, m4
+    paddw               m4, m1, m3
+    psubw               m3, m1
+    pabsw               m2, m2
+    pabsw               m0, m0
+    pabsw               m4, m4
+    pabsw               m3, m3
+    pblendw             m1, m2, m0, 10101010b
+    pslld               m0, 16
+    psrld               m2, 16
+    por                 m0, m2
+    pmaxsw              m1, m0
+    paddw               m6, m1
+    pblendw             m2, m4, m3, 10101010b
+    pslld               m3, 16
+    psrld               m4, 16
+    por                 m3, m4
+    pmaxsw              m2, m3
+    paddw               m6, m2
+    vextracti128        xm0, m6, 1
+    pmovzxwd            m6, xm6
+    pmovzxwd            m0, xm0
+    paddd               m8, m6
+    paddd               m9, m0
+    ret
+
+cglobal pixel_satd_16x4, 4,6,10         ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+
+    call            calc_satd_16x4
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_16x12, 4,6,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+
+    call            calc_satd_16x8
+    call            calc_satd_16x4
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_16x32, 4,6,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_16x64, 4,6,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_32x8, 4,8,10          ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_32x16, 4,8,10         ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_32x24, 4,8,10         ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_32x32, 4,8,10         ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_32x64, 4,8,10         ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_48x64, 4,8,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_64x16, 4,8,10         ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_64x32, 4,8,10         ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_64x48, 4,8,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+
+cglobal pixel_satd_64x64, 4,8,10        ; if WIN64 && cpuflag(avx2)
+    mova            m7, [hmul_16p]
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m8, m8
+    pxor            m9, m9
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    paddd           m8, m9
+    vextracti128    xm0, m8, 1
+    paddd           xm0, xm8
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    pshuflw         xm1, xm0, q0032
+    paddd           xm0, xm1
+    movd            eax, xm0
+    RET
+%endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0
+
+%if ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 1
+INIT_YMM avx2
+cglobal calc_satd_16x8    ; function to compute satd cost for 16 columns, 8 rows
+    ; rows 0-3
+    movu            m0, [r0]
+    movu            m4, [r2]
+    psubw           m0, m4
+    movu            m1, [r0 + r1]
+    movu            m5, [r2 + r3]
+    psubw           m1, m5
+    movu            m2, [r0 + r1 * 2]
+    movu            m4, [r2 + r3 * 2]
+    psubw           m2, m4
+    movu            m3, [r0 + r4]
+    movu            m5, [r2 + r5]
+    psubw           m3, m5
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    paddw           m4, m0, m1
+    psubw           m1, m0
+    paddw           m0, m2, m3
+    psubw           m3, m2
+    punpckhwd       m2, m4, m1
+    punpcklwd       m4, m1
+    punpckhwd       m1, m0, m3
+    punpcklwd       m0, m3
+    paddw           m3, m4, m0
+    psubw           m0, m4
+    paddw           m4, m2, m1
+    psubw           m1, m2
+    punpckhdq       m2, m3, m0
+    punpckldq       m3, m0
+    paddw           m0, m3, m2
+    psubw           m2, m3
+    punpckhdq       m3, m4, m1
+    punpckldq       m4, m1
+    paddw           m1, m4, m3
+    psubw           m3, m4
+    punpckhqdq      m4, m0, m1
+    punpcklqdq      m0, m1
+    pabsw           m0, m0
+    pabsw           m4, m4
+    pmaxsw          m0, m0, m4
+    punpckhqdq      m1, m2, m3
+    punpcklqdq      m2, m3
+    pabsw           m2, m2
+    pabsw           m1, m1
+    pmaxsw          m2, m1
+    pxor            m7, m7
+    mova            m1, m0
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m0
+    punpckhwd       m1, m7
+    paddd           m6, m1
+    pxor            m7, m7
+    mova            m1, m2
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m2
+    punpckhwd       m1, m7
+    paddd           m6, m1
+    ; rows 4-7
+    movu            m0, [r0]
+    movu            m4, [r2]
+    psubw           m0, m4
+    movu            m1, [r0 + r1]
+    movu            m5, [r2 + r3]
+    psubw           m1, m5
+    movu            m2, [r0 + r1 * 2]
+    movu            m4, [r2 + r3 * 2]
+    psubw           m2, m4
+    movu            m3, [r0 + r4]
+    movu            m5, [r2 + r5]
+    psubw           m3, m5
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    paddw           m4, m0, m1
+    psubw           m1, m0
+    paddw           m0, m2, m3
+    psubw           m3, m2
+    punpckhwd       m2, m4, m1
+    punpcklwd       m4, m1
+    punpckhwd       m1, m0, m3
+    punpcklwd       m0, m3
+    paddw           m3, m4, m0
+    psubw           m0, m4
+    paddw           m4, m2, m1
+    psubw           m1, m2
+    punpckhdq       m2, m3, m0
+    punpckldq       m3, m0
+    paddw           m0, m3, m2
+    psubw           m2, m3
+    punpckhdq       m3, m4, m1
+    punpckldq       m4, m1
+    paddw           m1, m4, m3
+    psubw           m3, m4
+    punpckhqdq      m4, m0, m1
+    punpcklqdq      m0, m1
+    pabsw           m0, m0
+    pabsw           m4, m4
+    pmaxsw          m0, m0, m4
+    punpckhqdq      m1, m2, m3
+    punpcklqdq      m2, m3
+    pabsw           m2, m2
+    pabsw           m1, m1
+    pmaxsw          m2, m1
+    pxor            m7, m7
+    mova            m1, m0
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m0
+    punpckhwd       m1, m7
+    paddd           m6, m1
+    pxor            m7, m7
+    mova            m1, m2
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m2
+    punpckhwd       m1, m7
+    paddd           m6, m1
+    ret
+
+cglobal calc_satd_16x4    ; function to compute satd cost for 16 columns, 4 rows
+    ; rows 0-3
+    movu            m0, [r0]
+    movu            m4, [r2]
+    psubw           m0, m4
+    movu            m1, [r0 + r1]
+    movu            m5, [r2 + r3]
+    psubw           m1, m5
+    movu            m2, [r0 + r1 * 2]
+    movu            m4, [r2 + r3 * 2]
+    psubw           m2, m4
+    movu            m3, [r0 + r4]
+    movu            m5, [r2 + r5]
+    psubw           m3, m5
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    paddw           m4, m0, m1
+    psubw           m1, m0
+    paddw           m0, m2, m3
+    psubw           m3, m2
+    punpckhwd       m2, m4, m1
+    punpcklwd       m4, m1
+    punpckhwd       m1, m0, m3
+    punpcklwd       m0, m3
+    paddw           m3, m4, m0
+    psubw           m0, m4
+    paddw           m4, m2, m1
+    psubw           m1, m2
+    punpckhdq       m2, m3, m0
+    punpckldq       m3, m0
+    paddw           m0, m3, m2
+    psubw           m2, m3
+    punpckhdq       m3, m4, m1
+    punpckldq       m4, m1
+    paddw           m1, m4, m3
+    psubw           m3, m4
+    punpckhqdq      m4, m0, m1
+    punpcklqdq      m0, m1
+    pabsw           m0, m0
+    pabsw           m4, m4
+    pmaxsw          m0, m0, m4
+    punpckhqdq      m1, m2, m3
+    punpcklqdq      m2, m3
+    pabsw           m2, m2
+    pabsw           m1, m1
+    pmaxsw          m2, m1
+    pxor            m7, m7
+    mova            m1, m0
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m0
+    punpckhwd       m1, m7
+    paddd           m6, m1
+    pxor            m7, m7
+    mova            m1, m2
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m2
+    punpckhwd       m1, m7
+    paddd           m6, m1
+    ret
+
+cglobal pixel_satd_16x4, 4,6,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+
+    call            calc_satd_16x4
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_16x8, 4,6,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_16x12, 4,6,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+
+    call            calc_satd_16x8
+    call            calc_satd_16x4
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_16x16, 4,6,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_16x32, 4,6,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_16x64, 4,6,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_32x8, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_32x16, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_32x24, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_32x32, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_32x64, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_48x64, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 64]
+    lea             r2, [r7 + 64]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_64x16, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 64]
+    lea             r2, [r7 + 64]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 96]
+    lea             r2, [r7 + 96]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_64x32, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 64]
+    lea             r2, [r7 + 64]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 96]
+    lea             r2, [r7 + 96]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_64x48, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 64]
+    lea             r2, [r7 + 64]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 96]
+    lea             r2, [r7 + 96]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+
+cglobal pixel_satd_64x64, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 64]
+    lea             r2, [r7 + 64]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    lea             r0, [r6 + 96]
+    lea             r2, [r7 + 96]
+
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+    call            calc_satd_16x8
+
+    vextracti128    xm7, m6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+    RET
+%endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 1

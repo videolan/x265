@@ -39,9 +39,11 @@ x265_encoder *x265_encoder_open(x265_param *p)
     if (!p)
         return NULL;
 
-    x265_param *param = X265_MALLOC(x265_param, 1);
-    if (!param)
-        return NULL;
+    Encoder* encoder = NULL;
+    x265_param* param = x265_param_alloc();
+    x265_param* latestParam = x265_param_alloc();
+    if (!param || !latestParam)
+        goto fail;
 
     memcpy(param, p, sizeof(x265_param));
     x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", x265_version_str);
@@ -50,38 +52,44 @@ x265_encoder *x265_encoder_open(x265_param *p)
     x265_setup_primitives(param, param->cpuid);
 
     if (x265_check_params(param))
-        return NULL;
+        goto fail;
 
     if (x265_set_globals(param))
-        return NULL;
+        goto fail;
 
-    Encoder *encoder = new Encoder;
+    encoder = new Encoder;
     if (!param->rc.bEnableSlowFirstPass)
         x265_param_apply_fastfirstpass(param);
 
     // may change params for auto-detect, etc
     encoder->configure(param);
-    
     // may change rate control and CPB params
     if (!enforceLevel(*param, encoder->m_vps))
-    {
-        delete encoder;
-        return NULL;
-    }
+        goto fail;
 
     // will detect and set profile/tier/level in VPS
     determineLevel(*param, encoder->m_vps);
 
-    encoder->create();
-    if (encoder->m_aborted)
+    if (!param->bAllowNonConformance && encoder->m_vps.ptl.profileIdc == Profile::NONE)
     {
-        delete encoder;
-        return NULL;
+        x265_log(param, X265_LOG_INFO, "non-conformant bitstreams not allowed (--allow-non-conformance)\n");
+        goto fail;
     }
 
-    x265_print_params(param);
+    encoder->create();
+    encoder->m_latestParam = latestParam;
+    memcpy(latestParam, param, sizeof(x265_param));
+    if (encoder->m_aborted)
+        goto fail;
 
+    x265_print_params(param);
     return encoder;
+
+fail:
+    delete encoder;
+    x265_param_free(param);
+    x265_param_free(latestParam);
+    return NULL;
 }
 
 extern "C"
@@ -109,6 +117,27 @@ void x265_encoder_parameters(x265_encoder *enc, x265_param *out)
         Encoder *encoder = static_cast<Encoder*>(enc);
         memcpy(out, encoder->m_param, sizeof(x265_param));
     }
+}
+
+extern "C"
+int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
+{
+    if (!enc || !param_in)
+        return -1;
+
+    x265_param save;
+    Encoder* encoder = static_cast<Encoder*>(enc);
+    memcpy(&save, encoder->m_latestParam, sizeof(x265_param));
+    int ret = encoder->reconfigureParam(encoder->m_latestParam, param_in);
+    if (ret)
+        /* reconfigure failed, recover saved param set */
+        memcpy(encoder->m_latestParam, &save, sizeof(x265_param));
+    else
+    {
+        encoder->m_reconfigured = true;
+        x265_print_reconfigured_params(&save, encoder->m_latestParam);
+    }
+    return ret;
 }
 
 extern "C"
@@ -173,19 +202,22 @@ void x265_encoder_close(x265_encoder *enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
 
-        encoder->stop();
+        encoder->stopJobs();
         encoder->printSummary();
         encoder->destroy();
         delete encoder;
+        ATOMIC_DEC(&g_ctuSizeConfigured);
     }
 }
 
 extern "C"
 void x265_cleanup(void)
 {
-    BitCost::destroy();
-    CUData::s_partSet[0] = NULL; /* allow CUData to adjust to new CTU size */
-    g_ctuSizeConfigured = 0;
+    if (!g_ctuSizeConfigured)
+    {
+        BitCost::destroy();
+        CUData::s_partSet[0] = NULL; /* allow CUData to adjust to new CTU size */
+    }
 }
 
 extern "C"
@@ -232,6 +264,7 @@ static const x265_api libapi =
     &x265_picture_init,
     &x265_encoder_open,
     &x265_encoder_parameters,
+    &x265_encoder_reconfig,
     &x265_encoder_headers,
     &x265_encoder_encode,
     &x265_encoder_get_stats,
@@ -243,11 +276,81 @@ static const x265_api libapi =
     x265_max_bit_depth,
 };
 
+typedef const x265_api* (*api_get_func)(int bitDepth);
+
+#define xstr(s) str(s)
+#define str(s) #s
+
+#if _WIN32
+#define ext ".dll"
+#elif MACOS
+#include <dlfcn.h>
+#define ext ".dylib"
+#else
+#include <dlfcn.h>
+#define ext ".so"
+#endif
+
 extern "C"
 const x265_api* x265_api_get(int bitDepth)
 {
     if (bitDepth && bitDepth != X265_DEPTH)
+    {
+        const char* libname = NULL;
+        const char* method = "x265_api_get_" xstr(X265_BUILD);
+
+        if (bitDepth == 10)
+            libname = "libx265_main10" ext;
+        else if (bitDepth == 8)
+            libname = "libx265_main" ext;
+        else
+        {
+            x265_log(NULL, X265_LOG_WARNING, "bitdepth %d not supported\n", bitDepth);
+            return NULL;
+        }
+
+#if _WIN32
+        HMODULE h = LoadLibraryA(libname);
+        if (h)
+        {
+            api_get_func get = (api_get_func)GetProcAddress(h, method);
+            if (get)
+            {
+                if (bitDepth != get(bitDepth)->max_bit_depth)
+                {
+                    x265_log(NULL, X265_LOG_WARNING, "Detected build %s does not support requested bitDepth %d", libname, bitDepth);
+                    return NULL;
+                }
+                return get(bitDepth);
+            }
+            else
+                x265_log(NULL, X265_LOG_WARNING, "Unable to bind %s from %s\n", method, libname);
+        }
+        else
+            x265_log(NULL, X265_LOG_WARNING, "Unable to open %s\n", libname);
+#else
+        void* h = dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
+        if (h)
+        {
+            api_get_func get = (api_get_func)dlsym(h, method);
+            if (get)
+            {
+                if (bitDepth != get(bitDepth)->max_bit_depth)
+                {
+                    x265_log(NULL, X265_LOG_WARNING, "Detected build %s does not support requested bitDepth %d", libname, bitDepth);
+                    return NULL;
+                }
+                return get(bitDepth);
+            }
+            else
+                x265_log(NULL, X265_LOG_WARNING, "Unable to bind %s from %s\n", method, libname);
+        }
+        else
+            x265_log(NULL, X265_LOG_WARNING, "Unable to open %s\n", libname);
+#endif
+
         return NULL;
+    }
 
     return &libapi;
 }

@@ -55,15 +55,14 @@ LevelSpec levels[] =
     { 35651584, 1069547520, 60000,    240000,   60000,  240000,   8, Level::LEVEL6,   "6",   60 },
     { 35651584, 2139095040, 120000,   480000,   120000, 480000,   8, Level::LEVEL6_1, "6.1", 61 },
     { 35651584, 4278190080U, 240000,  800000,   240000, 800000,   6, Level::LEVEL6_2, "6.2", 62 },
+    { MAX_UINT, MAX_UINT, MAX_UINT, MAX_UINT, MAX_UINT, MAX_UINT, 1, Level::LEVEL8_5, "8.5", 85 },
 };
 
 /* determine minimum decoder level required to decode the described video */
 void determineLevel(const x265_param &param, VPS& vps)
 {
     vps.maxTempSubLayers = param.bEnableTemporalSubLayers ? 2 : 1;
-    if (param.bLossless)
-        vps.ptl.profileIdc = Profile::NONE;
-    else if (param.internalCsp == X265_CSP_I420)
+    if (param.internalCsp == X265_CSP_I420)
     {
         if (param.internalBitDepth == 8)
         {
@@ -104,7 +103,15 @@ void determineLevel(const x265_param &param, VPS& vps)
 
     const size_t NumLevels = sizeof(levels) / sizeof(levels[0]);
     uint32_t i;
-    for (i = 0; i < NumLevels; i++)
+    if (param.bLossless)
+    {
+        i = 13;
+        vps.ptl.minCrForLevel = 1;
+        vps.ptl.maxLumaSrForLevel = MAX_UINT;
+        vps.ptl.levelIdc = Level::LEVEL8_5;
+        vps.ptl.tierFlag = Level::MAIN;
+    }
+    else for (i = 0; i < NumLevels; i++)
     {
         if (lumaSamples > levels[i].maxLumaSamples)
             continue;
@@ -337,31 +344,40 @@ bool enforceLevel(x265_param& param, VPS& vps)
 extern "C"
 int x265_param_apply_profile(x265_param *param, const char *profile)
 {
-    if (!profile)
+    if (!param || !profile)
         return 0;
-    if (!strcmp(profile, "main"))
-    {
-        /* SPSs shall have chroma_format_idc equal to 1 only */
-        param->internalCsp = X265_CSP_I420;
 
 #if HIGH_BIT_DEPTH
-        /* SPSs shall have bit_depth_luma_minus8 equal to 0 only */
-        x265_log(param, X265_LOG_ERROR, "Main profile not supported, compiled for Main10.\n");
-        return -1;
-#endif
-    }
-    else if (!strcmp(profile, "main10"))
+    if (!strcmp(profile, "main") || !strcmp(profile, "mainstillpicture") || !strcmp(profile, "msp") || !strcmp(profile, "main444-8"))
     {
-        /* SPSs shall have chroma_format_idc equal to 1 only */
-        param->internalCsp = X265_CSP_I420;
-
-        /* SPSs shall have bit_depth_luma_minus8 in the range of 0 to 2, inclusive 
-         * this covers all builds of x265, currently */
+        x265_log(param, X265_LOG_ERROR, "%s profile not supported, compiled for Main10.\n", profile);
+        return -1;
+    }
+#else
+    if (!strcmp(profile, "main10") || !strcmp(profile, "main422-10") || !strcmp(profile, "main444-10"))
+    {
+        x265_log(param, X265_LOG_ERROR, "%s profile not supported, compiled for Main.\n", profile);
+        return -1;
+    }
+#endif
+    
+    if (!strcmp(profile, "main"))
+    {
+        if (!(param->internalCsp & X265_CSP_I420))
+        {
+            x265_log(param, X265_LOG_ERROR, "%s profile not compatible with %s input color space.\n",
+                     profile, x265_source_csp_names[param->internalCsp]);
+            return -1;
+        }
     }
     else if (!strcmp(profile, "mainstillpicture") || !strcmp(profile, "msp"))
     {
-        /* SPSs shall have chroma_format_idc equal to 1 only */
-        param->internalCsp = X265_CSP_I420;
+        if (!(param->internalCsp & X265_CSP_I420))
+        {
+            x265_log(param, X265_LOG_ERROR, "%s profile not compatible with %s input color space.\n",
+                     profile, x265_source_csp_names[param->internalCsp]);
+            return -1;
+        }
 
         /* SPSs shall have sps_max_dec_pic_buffering_minus1[ sps_max_sub_layers_minus1 ] equal to 0 only */
         param->maxNumReferences = 1;
@@ -378,25 +394,29 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
         param->rc.cuTree = 0;
         param->bEnableWeightedPred = 0;
         param->bEnableWeightedBiPred = 0;
-
-#if HIGH_BIT_DEPTH
-        /* SPSs shall have bit_depth_luma_minus8 equal to 0 only */
-        x265_log(param, X265_LOG_ERROR, "Mainstillpicture profile not supported, compiled for Main10.\n");
-        return -1;
-#endif
+    }
+    else if (!strcmp(profile, "main10"))
+    {
+        if (!(param->internalCsp & X265_CSP_I420))
+        {
+            x265_log(param, X265_LOG_ERROR, "%s profile not compatible with %s input color space.\n",
+                     profile, x265_source_csp_names[param->internalCsp]);
+            return -1;
+        }
     }
     else if (!strcmp(profile, "main422-10"))
-        param->internalCsp = X265_CSP_I422;
-    else if (!strcmp(profile, "main444-8"))
     {
-        param->internalCsp = X265_CSP_I444;
-#if HIGH_BIT_DEPTH
-        x265_log(param, X265_LOG_ERROR, "Main 4:4:4 8 profile not supported, compiled for Main10.\n");
-        return -1;
-#endif
+        if (!(param->internalCsp & (X265_CSP_I420 | X265_CSP_I422)))
+        {
+            x265_log(param, X265_LOG_ERROR, "%s profile not compatible with %s input color space.\n",
+                     profile, x265_source_csp_names[param->internalCsp]);
+            return -1;
+        }
     }
-    else if (!strcmp(profile, "main444-10"))
-        param->internalCsp = X265_CSP_I444;
+    else if (!strcmp(profile, "main444-8") || !strcmp(profile, "main444-10"))
+    {
+        /* any color space allowed */
+    }
     else
     {
         x265_log(param, X265_LOG_ERROR, "unknown profile <%s>\n", profile);

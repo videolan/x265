@@ -125,21 +125,25 @@ public:
     uint32_t           m_numDelayedPic;
 
     x265_param*        m_param;
+    x265_param*        m_latestParam;
     RateControl*       m_rateControl;
     Lookahead*         m_lookahead;
     Window             m_conformanceWindow;
 
     bool               m_bZeroLatency;     // x265_encoder_encode() returns NALs for the input picture, zero lag
     bool               m_aborted;          // fatal error detected
+    bool               m_reconfigured;      // reconfigure of encoder detected
 
     Encoder();
     ~Encoder() {}
 
     void create();
-    void stop();
+    void stopJobs();
     void destroy();
 
     int encode(const x265_picture* pic, x265_picture *pic_out);
+
+    int reconfigureParam(x265_param* encParam, x265_param* param);
 
     void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
 

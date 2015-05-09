@@ -416,7 +416,7 @@ typedef struct x265_param
      *
      * Frame encoders are distributed between the available thread pools, and
      * the encoder will never generate more thread pools than frameNumThreads */
-    char*     numaPools;
+    const char* numaPools;
 
     /* Enable wavefront parallel processing, greatly increases parallelism for
      * less than 1% compression efficiency loss. Requires a thread pool, enabled
@@ -458,7 +458,7 @@ typedef struct x265_param
      * order. Otherwise the encoder will emit per-stream statistics into the log
      * file when x265_encoder_log is called (presumably at the end of the
      * encode) */
-    char*     csvfn;
+    const char* csvfn;
 
     /*== Internal Picture Specification ==*/
 
@@ -522,11 +522,20 @@ typedef struct x265_param
      * performance. Value must be between 1 and 16, default is 3 */
     int       maxNumReferences;
 
+    /* Allow libx265 to emit HEVC bitstreams which do not meet strict level
+     * requirements. Defaults to false */
+    int       bAllowNonConformance;
+
     /*== Bitstream Options ==*/
 
     /* Flag indicating whether VPS, SPS and PPS headers should be output with
      * each keyframe. Default false */
     int       bRepeatHeaders;
+
+    /* Flag indicating whether the encoder should generate start codes (Annex B
+     * format) or length (file format) before NAL units. Default true, Annex B.
+     * Muxers should set this to the correct value */
+    int       bAnnexB;
 
     /* Flag indicating whether the encoder should emit an Access Unit Delimiter
      * NAL at the start of every access unit. Default false */
@@ -869,7 +878,7 @@ typedef struct x265_param
     int       analysisMode;
 
     /* Filename for analysisMode save/load. Default name is "x265_analysis.dat" */
-    char*     analysisFileName;
+    const char* analysisFileName;
 
     /*== Rate Control ==*/
 
@@ -962,7 +971,7 @@ typedef struct x265_param
 
         /* Filename of the 2pass output/input stats file, if unspecified the
          * encoder will default to using x265_2pass.log */
-        char*     statFileName;
+        const char* statFileName;
 
         /* temporally blur quants */
         double    qblur;
@@ -988,6 +997,12 @@ typedef struct x265_param
         /* Enable stricter conditions to check bitrate deviations in CBR mode. May compromise 
          * quality to maintain bitrate adherence */
         int bStrictCbr;
+
+        /* Enable adaptive quantization at CU granularity. This parameter specifies 
+         * the minimum CU size at which QP can be adjusted, i.e. Quantization Group 
+         * (QG) size. Allowed values are 64, 32, 16 provided it falls within the 
+         * inclusuve range [maxCUSize, minCUSize]. Experimental, default: maxCUSize*/
+        uint32_t qgSize;
     } rc;
 
     /*== Video Usability Information ==*/
@@ -1084,6 +1099,22 @@ typedef struct x265_param
          * conformance cropping window to further crop the displayed window */
         int defDispWinBottomOffset;
     } vui;
+
+    /* SMPTE ST 2086 mastering display color volume SEI info, specified as a
+     * string which is parsed when the stream header SEI are emitted. The string
+     * format is "G(%hu,%hu)B(%hu,%hu)R(%hu,%hu)WP(%hu,%hu)L(%u,%u)" where %hu
+     * are unsigned 16bit integers and %u are unsigned 32bit integers. The SEI
+     * includes X,Y display primaries for RGB channels, white point X,Y and
+     * max,min luminance values. */
+    const char* masteringDisplayColorVolume;
+
+    /* Content light level info SEI, specified as a string which is parsed when
+     * the stream header SEI are emitted. The string format is "%hu,%hu" where
+     * %hu are unsigned 16bit integers. The first value is the max content light
+     * level (or 0 if no maximum is indicated), the second value is the maximum
+     * picture average light level (or 0). */
+    const char* contentLightLevelInfo;
+
 } x265_param;
 
 /* x265_param_alloc:
@@ -1214,6 +1245,21 @@ int x265_encoder_headers(x265_encoder *, x265_nal **pp_nal, uint32_t *pi_nal);
  *      Once flushing has begun, all subsequent calls must pass pic_in as NULL. */
 int x265_encoder_encode(x265_encoder *encoder, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out);
 
+/* x265_encoder_reconfig:
+ *      various parameters from x265_param are copied.
+ *      this takes effect immediately, on whichever frame is encoded next;
+ *      returns 0 on success, negative on parameter validation error.
+ *
+ *      not all parameters can be changed; see the actual function for a
+ *      detailed breakdown.  since not all parameters can be changed, moving
+ *      from preset to preset may not always fully copy all relevant parameters,
+ *      but should still work usably in practice. however, more so than for
+ *      other presets, many of the speed shortcuts used in ultrafast cannot be
+ *      switched out of; using reconfig to switch between ultrafast and other
+ *      presets is not recommended without a more fine-grained breakdown of
+ *      parameters to take this into account. */
+int x265_encoder_reconfig(x265_encoder *, x265_param *);
+
 /* x265_encoder_get_stats:
  *       returns encoder statistics */
 void x265_encoder_get_stats(x265_encoder *encoder, x265_stats *, uint32_t statsSizeBytes);
@@ -1253,6 +1299,7 @@ typedef struct x265_api
     void          (*picture_init)(x265_param*, x265_picture*);
     x265_encoder* (*encoder_open)(x265_param*);
     void          (*encoder_parameters)(x265_encoder*, x265_param*);
+    int           (*encoder_reconfig)(x265_encoder*, x265_param*);
     int           (*encoder_headers)(x265_encoder*, x265_nal**, uint32_t*);
     int           (*encoder_encode)(x265_encoder*, x265_nal**, uint32_t*, x265_picture*, x265_picture*);
     void          (*encoder_get_stats)(x265_encoder*, x265_stats*, uint32_t);
@@ -1275,8 +1322,14 @@ typedef struct x265_api
  *   Retrieve the programming interface for a linked x265 library.
  *   May return NULL if no library is available that supports the
  *   requested bit depth. If bitDepth is 0 the function is guarunteed
- *   to return a non-NULL x265_api pointer, from the system default
- *   libx265 */
+ *   to return a non-NULL x265_api pointer, from the linked libx265.
+ *
+ *   If the requested bitDepth is not supported by the linked libx265,
+ *   it will attempt to dynamically bind x265_api_get() from a shared
+ *   library with an appropriate name:
+ *     8bit:  libx265_main.so
+ *     10bit: libx265_main10.so
+ *   Obviously the shared library file extension is platform specific */
 const x265_api* x265_api_get(int bitDepth);
 
 #ifdef __cplusplus

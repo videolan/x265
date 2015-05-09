@@ -234,9 +234,14 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
                pix_base + (m1x) + (m1y) * stride, \
                pix_base + (m2x) + (m2y) * stride, \
                stride, costs); \
-        (costs)[0] += mvcost((bmv + MV(m0x, m0y)) << 2); \
-        (costs)[1] += mvcost((bmv + MV(m1x, m1y)) << 2); \
-        (costs)[2] += mvcost((bmv + MV(m2x, m2y)) << 2); \
+        const uint16_t *base_mvx = &m_cost_mvx[(bmv.x + (m0x)) << 2]; \
+        const uint16_t *base_mvy = &m_cost_mvy[(bmv.y + (m0y)) << 2]; \
+        X265_CHECK(mvcost((bmv + MV(m0x, m0y)) << 2) == (base_mvx[((m0x) - (m0x)) << 2] + base_mvy[((m0y) - (m0y)) << 2]), "mvcost() check failure\n"); \
+        X265_CHECK(mvcost((bmv + MV(m1x, m1y)) << 2) == (base_mvx[((m1x) - (m0x)) << 2] + base_mvy[((m1y) - (m0y)) << 2]), "mvcost() check failure\n"); \
+        X265_CHECK(mvcost((bmv + MV(m2x, m2y)) << 2) == (base_mvx[((m2x) - (m0x)) << 2] + base_mvy[((m2y) - (m0y)) << 2]), "mvcost() check failure\n"); \
+        (costs)[0] += (base_mvx[((m0x) - (m0x)) << 2] + base_mvy[((m0y) - (m0y)) << 2]); \
+        (costs)[1] += (base_mvx[((m1x) - (m0x)) << 2] + base_mvy[((m1y) - (m0y)) << 2]); \
+        (costs)[2] += (base_mvx[((m2x) - (m0x)) << 2] + base_mvy[((m2y) - (m0y)) << 2]); \
     }
 
 #define COST_MV_PT_DIST_X4(m0x, m0y, p0, d0, m1x, m1y, p1, d1, m2x, m2y, p2, d2, m3x, m3y, p3, d3) \
@@ -247,10 +252,10 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
                fref + (m2x) + (m2y) * stride, \
                fref + (m3x) + (m3y) * stride, \
                stride, costs); \
-        costs[0] += mvcost(MV(m0x, m0y) << 2); \
-        costs[1] += mvcost(MV(m1x, m1y) << 2); \
-        costs[2] += mvcost(MV(m2x, m2y) << 2); \
-        costs[3] += mvcost(MV(m3x, m3y) << 2); \
+        (costs)[0] += mvcost(MV(m0x, m0y) << 2); \
+        (costs)[1] += mvcost(MV(m1x, m1y) << 2); \
+        (costs)[2] += mvcost(MV(m2x, m2y) << 2); \
+        (costs)[3] += mvcost(MV(m3x, m3y) << 2); \
         COPY4_IF_LT(bcost, costs[0], bmv, MV(m0x, m0y), bPointNr, p0, bDistance, d0); \
         COPY4_IF_LT(bcost, costs[1], bmv, MV(m1x, m1y), bPointNr, p1, bDistance, d1); \
         COPY4_IF_LT(bcost, costs[2], bmv, MV(m2x, m2y), bPointNr, p2, bDistance, d2); \
@@ -266,10 +271,16 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
                pix_base + (m2x) + (m2y) * stride, \
                pix_base + (m3x) + (m3y) * stride, \
                stride, costs); \
-        costs[0] += mvcost((omv + MV(m0x, m0y)) << 2); \
-        costs[1] += mvcost((omv + MV(m1x, m1y)) << 2); \
-        costs[2] += mvcost((omv + MV(m2x, m2y)) << 2); \
-        costs[3] += mvcost((omv + MV(m3x, m3y)) << 2); \
+        const uint16_t *base_mvx = &m_cost_mvx[(omv.x << 2)]; \
+        const uint16_t *base_mvy = &m_cost_mvy[(omv.y << 2)]; \
+        X265_CHECK(mvcost((omv + MV(m0x, m0y)) << 2) == (base_mvx[(m0x) << 2] + base_mvy[(m0y) << 2]), "mvcost() check failure\n"); \
+        X265_CHECK(mvcost((omv + MV(m1x, m1y)) << 2) == (base_mvx[(m1x) << 2] + base_mvy[(m1y) << 2]), "mvcost() check failure\n"); \
+        X265_CHECK(mvcost((omv + MV(m2x, m2y)) << 2) == (base_mvx[(m2x) << 2] + base_mvy[(m2y) << 2]), "mvcost() check failure\n"); \
+        X265_CHECK(mvcost((omv + MV(m3x, m3y)) << 2) == (base_mvx[(m3x) << 2] + base_mvy[(m3y) << 2]), "mvcost() check failure\n"); \
+        costs[0] += (base_mvx[(m0x) << 2] + base_mvy[(m0y) << 2]); \
+        costs[1] += (base_mvx[(m1x) << 2] + base_mvy[(m1y) << 2]); \
+        costs[2] += (base_mvx[(m2x) << 2] + base_mvy[(m2y) << 2]); \
+        costs[3] += (base_mvx[(m3x) << 2] + base_mvy[(m3y) << 2]); \
         COPY2_IF_LT(bcost, costs[0], bmv, omv + MV(m0x, m0y)); \
         COPY2_IF_LT(bcost, costs[1], bmv, omv + MV(m1x, m1y)); \
         COPY2_IF_LT(bcost, costs[2], bmv, omv + MV(m2x, m2y)); \
@@ -285,10 +296,17 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
                pix_base + (m2x) + (m2y) * stride, \
                pix_base + (m3x) + (m3y) * stride, \
                stride, costs); \
-        (costs)[0] += mvcost((bmv + MV(m0x, m0y)) << 2); \
-        (costs)[1] += mvcost((bmv + MV(m1x, m1y)) << 2); \
-        (costs)[2] += mvcost((bmv + MV(m2x, m2y)) << 2); \
-        (costs)[3] += mvcost((bmv + MV(m3x, m3y)) << 2); \
+        /* TODO: use restrict keyword in ICL */ \
+        const uint16_t *base_mvx = &m_cost_mvx[(bmv.x << 2)]; \
+        const uint16_t *base_mvy = &m_cost_mvy[(bmv.y << 2)]; \
+        X265_CHECK(mvcost((bmv + MV(m0x, m0y)) << 2) == (base_mvx[(m0x) << 2] + base_mvy[(m0y) << 2]), "mvcost() check failure\n"); \
+        X265_CHECK(mvcost((bmv + MV(m1x, m1y)) << 2) == (base_mvx[(m1x) << 2] + base_mvy[(m1y) << 2]), "mvcost() check failure\n"); \
+        X265_CHECK(mvcost((bmv + MV(m2x, m2y)) << 2) == (base_mvx[(m2x) << 2] + base_mvy[(m2y) << 2]), "mvcost() check failure\n"); \
+        X265_CHECK(mvcost((bmv + MV(m3x, m3y)) << 2) == (base_mvx[(m3x) << 2] + base_mvy[(m3y) << 2]), "mvcost() check failure\n"); \
+        (costs)[0] += (base_mvx[(m0x) << 2] + base_mvy[(m0y) << 2]); \
+        (costs)[1] += (base_mvx[(m1x) << 2] + base_mvy[(m1y) << 2]); \
+        (costs)[2] += (base_mvx[(m2x) << 2] + base_mvy[(m2y) << 2]); \
+        (costs)[3] += (base_mvx[(m3x) << 2] + base_mvy[(m3y) << 2]); \
     }
 
 #define DIA1_ITER(mx, my) \

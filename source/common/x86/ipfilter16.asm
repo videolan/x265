@@ -113,10 +113,13 @@ tab_LumaCoeffVer: times 8 dw 0, 0
                   times 8 dw 58, -10
                   times 8 dw 4, -1
 
+const interp8_hps_shuf,     dd 0, 4, 1, 5, 2, 6, 3, 7
+
 SECTION .text
 cextern pd_32
 cextern pw_pixel_max
 cextern pd_n32768
+cextern pw_2000
 
 ;------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_horiz_pp_4x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
@@ -5525,65 +5528,1409 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-gprsize
     FILTER_VER_LUMA_SS 64, 16
     FILTER_VER_LUMA_SS 16, 64
 
-;--------------------------------------------------------------------------------------------------
-; void filterConvertPelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int width, int height)
-;--------------------------------------------------------------------------------------------------
-INIT_XMM sse2
-cglobal luma_p2s, 3, 7, 5
-
-    add         r1, r1
-
-    ; load width and height
-    mov         r3d, r3m
-    mov         r4d, r4m
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_2xN 1
+INIT_XMM sse4
+cglobal filterPixelToShort_2x%1, 3, 6, 2
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r1 * 3]
+    lea        r5, [r3 * 3]
 
     ; load constant
-    mova        m4, [tab_c_n8192]
+    mova       m1, [pw_2000]
 
-.loopH:
+%rep %1/4
+    movd       m0, [r0]
+    movhps     m0, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m1
 
-    xor         r5d, r5d
-.loopW:
-    lea         r6, [r0 + r5 * 2]
+    movd       [r2 + r3 * 0], m0
+    pextrd     [r2 + r3 * 1], m0, 2
 
-    movu        m0, [r6]
-    psllw       m0, 4
-    paddw       m0, m4
+    movd       m0, [r0 + r1 * 2]
+    movhps     m0, [r0 + r4]
+    psllw      m0, 4
+    psubw      m0, m1
 
-    movu        m1, [r6 + r1]
-    psllw       m1, 4
-    paddw       m1, m4
+    movd       [r2 + r3 * 2], m0
+    pextrd     [r2 + r5], m0, 2
 
-    movu        m2, [r6 + r1 * 2]
-    psllw       m2, 4
-    paddw       m2, m4
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+%endrep
+    RET
+%endmacro
+P2S_H_2xN 4
+P2S_H_2xN 8
+P2S_H_2xN 16
 
-    lea         r6, [r6 + r1 * 2]
-    movu        m3, [r6 + r1]
-    psllw       m3, 4
-    paddw       m3, m4
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_4xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_4x%1, 3, 6, 2
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
 
-    add         r5, 8
-    cmp         r5, r3
-    jg          .width4
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 0 - 16], m0
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 2 - 16], m1
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 4 - 16], m2
-    movu        [r2 + r5 * 2 + FENC_STRIDE * 6 - 16], m3
-    je          .nextH
-    jmp         .loopW
+    ; load constant
+    mova       m1, [pw_2000]
 
-.width4:
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 0 - 16], m0
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 2 - 16], m1
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 4 - 16], m2
-    movh        [r2 + r5 * 2 + FENC_STRIDE * 6 - 16], m3
+%rep %1/4
+    movh       m0, [r0]
+    movhps     m0, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m1
+    movh       [r2 + r3 * 0], m0
+    movhps     [r2 + r3 * 1], m0
 
-.nextH:
-    lea         r0, [r0 + r1 * 4]
-    add         r2, FENC_STRIDE * 8
+    movh       m0, [r0 + r1 * 2]
+    movhps     m0, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m1
+    movh       [r2 + r3 * 2], m0
+    movhps     [r2 + r4], m0
 
-    sub         r4d, 4
-    jnz         .loopH
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+%endrep
+    RET
+%endmacro
+P2S_H_4xN 4
+P2S_H_4xN 8
+P2S_H_4xN 16
+P2S_H_4xN 32
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal filterPixelToShort_4x2, 3, 4, 1
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+
+    movh       m0, [r0]
+    movhps     m0, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, [pw_2000]
+    movh       [r2 + r3 * 0], m0
+    movhps     [r2 + r3 * 1], m0
 
     RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_6xN 1
+INIT_XMM sse4
+cglobal filterPixelToShort_6x%1, 3, 7, 3
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m2, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movh       [r2 + r3 * 0], m0
+    pextrd     [r2 + r3 * 0 + 8], m0, 2
+    movh       [r2 + r3 * 1], m1
+    pextrd     [r2 + r3 * 1 + 8], m1, 2
+
+    movu       m0, [r0 + r1 * 2]
+    movu       m1, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movh       [r2 + r3 * 2], m0
+    pextrd     [r2 + r3 * 2 + 8], m0, 2
+    movh       [r2 + r4], m1
+    pextrd     [r2 + r4 + 8], m1, 2
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_6xN 8
+P2S_H_6xN 16
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_8xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_8x%1, 3, 7, 2
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m1, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    psllw      m0, 4
+    psubw      m0, m1
+    movu       [r2 + r3 * 0], m0
+
+    movu       m0, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m1
+    movu       [r2 + r3 * 1], m0
+
+    movu       m0, [r0 + r1 * 2]
+    psllw      m0, 4
+    psubw      m0, m1
+    movu       [r2 + r3 * 2], m0
+
+    movu       m0, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m1
+    movu       [r2 + r4], m0
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_8xN 8
+P2S_H_8xN 4
+P2S_H_8xN 16
+P2S_H_8xN 32
+P2S_H_8xN 12
+P2S_H_8xN 64
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal filterPixelToShort_8x2, 3, 4, 2
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+
+    psllw      m0, 4
+    psubw      m0, [pw_2000]
+    psllw      m1, 4
+    psubw      m1, [pw_2000]
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+
+    RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal filterPixelToShort_8x6, 3, 7, 4
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r1 * 3]
+    lea        r5, [r1 * 5]
+    lea        r6, [r3 * 3]
+
+    ; load constant
+    mova       m3, [pw_2000]
+
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    movu       m2, [r0 + r1 * 2]
+
+    psllw      m0, 4
+    psubw      m0, m3
+    psllw      m1, 4
+    psubw      m1, m3
+    psllw      m2, 4
+    psubw      m2, m3
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+    movu       [r2 + r3 * 2], m2
+
+    movu       m0, [r0 + r4]
+    movu       m1, [r0 + r1 * 4]
+    movu       m2, [r0 + r5 ]
+
+    psllw      m0, 4
+    psubw      m0, m3
+    psllw      m1, 4
+    psubw      m1, m3
+    psllw      m2, 4
+    psubw      m2, m3
+
+    movu       [r2 + r6], m0
+    movu       [r2 + r3 * 4], m1
+    lea        r2, [r2 + r3 * 4]
+    movu       [r2 + r3], m2
+
+    RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_16xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_16x%1, 3, 7, 3
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m2, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+
+    movu       m0, [r0 + r1 * 2]
+    movu       m1, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 2], m0
+    movu       [r2 + r4], m1
+
+    movu       m0, [r0 + 16]
+    movu       m1, [r0 + r1 + 16]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 0 + 16], m0
+    movu       [r2 + r3 * 1 + 16], m1
+
+    movu       m0, [r0 + r1 * 2 + 16]
+    movu       m1, [r0 + r5 + 16]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 2 + 16], m0
+    movu       [r2 + r4 + 16], m1
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_16xN 16
+P2S_H_16xN 4
+P2S_H_16xN 8
+P2S_H_16xN 12
+P2S_H_16xN 32
+P2S_H_16xN 64
+P2S_H_16xN 24
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_16xN_avx2 1
+INIT_YMM avx2
+cglobal filterPixelToShort_16x%1, 3, 7, 3
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m2, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+
+    movu       m0, [r0 + r1 * 2]
+    movu       m1, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 2], m0
+    movu       [r2 + r4], m1
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_16xN_avx2 16
+P2S_H_16xN_avx2 4
+P2S_H_16xN_avx2 8
+P2S_H_16xN_avx2 12
+P2S_H_16xN_avx2 32
+P2S_H_16xN_avx2 64
+P2S_H_16xN_avx2 24
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_32xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_32x%1, 3, 7, 5
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m4, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    movu       m2, [r0 + r1 * 2]
+    movu       m3, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+    movu       [r2 + r3 * 2], m2
+    movu       [r2 + r4], m3
+
+    movu       m0, [r0 + 16]
+    movu       m1, [r0 + r1 + 16]
+    movu       m2, [r0 + r1 * 2 + 16]
+    movu       m3, [r0 + r5 + 16]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 16], m0
+    movu       [r2 + r3 * 1 + 16], m1
+    movu       [r2 + r3 * 2 + 16], m2
+    movu       [r2 + r4 + 16], m3
+
+    movu       m0, [r0 + 32]
+    movu       m1, [r0 + r1 + 32]
+    movu       m2, [r0 + r1 * 2 + 32]
+    movu       m3, [r0 + r5 + 32]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 32], m0
+    movu       [r2 + r3 * 1 + 32], m1
+    movu       [r2 + r3 * 2 + 32], m2
+    movu       [r2 + r4 + 32], m3
+
+    movu       m0, [r0 + 48]
+    movu       m1, [r0 + r1 + 48]
+    movu       m2, [r0 + r1 * 2 + 48]
+    movu       m3, [r0 + r5 + 48]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 48], m0
+    movu       [r2 + r3 * 1 + 48], m1
+    movu       [r2 + r3 * 2 + 48], m2
+    movu       [r2 + r4 + 48], m3
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_32xN 32
+P2S_H_32xN 8
+P2S_H_32xN 16
+P2S_H_32xN 24
+P2S_H_32xN 64
+P2S_H_32xN 48
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_32xN_avx2 1
+INIT_YMM avx2
+cglobal filterPixelToShort_32x%1, 3, 7, 3
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m2, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+
+    movu       m0, [r0 + r1 * 2]
+    movu       m1, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 2], m0
+    movu       [r2 + r4], m1
+
+    movu       m0, [r0 + 32]
+    movu       m1, [r0 + r1 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 0 + 32], m0
+    movu       [r2 + r3 * 1 + 32], m1
+
+    movu       m0, [r0 + r1 * 2 + 32]
+    movu       m1, [r0 + r5 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 2 + 32], m0
+    movu       [r2 + r4 + 32], m1
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_32xN_avx2 32
+P2S_H_32xN_avx2 8
+P2S_H_32xN_avx2 16
+P2S_H_32xN_avx2 24
+P2S_H_32xN_avx2 64
+P2S_H_32xN_avx2 48
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_64xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_64x%1, 3, 7, 5
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m4, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    movu       m2, [r0 + r1 * 2]
+    movu       m3, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+    movu       [r2 + r3 * 2], m2
+    movu       [r2 + r4], m3
+
+    movu       m0, [r0 + 16]
+    movu       m1, [r0 + r1 + 16]
+    movu       m2, [r0 + r1 * 2 + 16]
+    movu       m3, [r0 + r5 + 16]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 16], m0
+    movu       [r2 + r3 * 1 + 16], m1
+    movu       [r2 + r3 * 2 + 16], m2
+    movu       [r2 + r4 + 16], m3
+
+    movu       m0, [r0 + 32]
+    movu       m1, [r0 + r1 + 32]
+    movu       m2, [r0 + r1 * 2 + 32]
+    movu       m3, [r0 + r5 + 32]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 32], m0
+    movu       [r2 + r3 * 1 + 32], m1
+    movu       [r2 + r3 * 2 + 32], m2
+    movu       [r2 + r4 + 32], m3
+
+    movu       m0, [r0 + 48]
+    movu       m1, [r0 + r1 + 48]
+    movu       m2, [r0 + r1 * 2 + 48]
+    movu       m3, [r0 + r5 + 48]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 48], m0
+    movu       [r2 + r3 * 1 + 48], m1
+    movu       [r2 + r3 * 2 + 48], m2
+    movu       [r2 + r4 + 48], m3
+
+    movu       m0, [r0 + 64]
+    movu       m1, [r0 + r1 + 64]
+    movu       m2, [r0 + r1 * 2 + 64]
+    movu       m3, [r0 + r5 + 64]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 64], m0
+    movu       [r2 + r3 * 1 + 64], m1
+    movu       [r2 + r3 * 2 + 64], m2
+    movu       [r2 + r4 + 64], m3
+
+    movu       m0, [r0 + 80]
+    movu       m1, [r0 + r1 + 80]
+    movu       m2, [r0 + r1 * 2 + 80]
+    movu       m3, [r0 + r5 + 80]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 80], m0
+    movu       [r2 + r3 * 1 + 80], m1
+    movu       [r2 + r3 * 2 + 80], m2
+    movu       [r2 + r4 + 80], m3
+
+    movu       m0, [r0 + 96]
+    movu       m1, [r0 + r1 + 96]
+    movu       m2, [r0 + r1 * 2 + 96]
+    movu       m3, [r0 + r5 + 96]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 96], m0
+    movu       [r2 + r3 * 1 + 96], m1
+    movu       [r2 + r3 * 2 + 96], m2
+    movu       [r2 + r4 + 96], m3
+
+    movu       m0, [r0 + 112]
+    movu       m1, [r0 + r1 + 112]
+    movu       m2, [r0 + r1 * 2 + 112]
+    movu       m3, [r0 + r5 + 112]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 112], m0
+    movu       [r2 + r3 * 1 + 112], m1
+    movu       [r2 + r3 * 2 + 112], m2
+    movu       [r2 + r4 + 112], m3
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_64xN 64
+P2S_H_64xN 16
+P2S_H_64xN 32
+P2S_H_64xN 48
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_64xN_avx2 1
+INIT_YMM avx2
+cglobal filterPixelToShort_64x%1, 3, 7, 3
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m2, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+
+    movu       m0, [r0 + r1 * 2]
+    movu       m1, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 2], m0
+    movu       [r2 + r4], m1
+
+    movu       m0, [r0 + 32]
+    movu       m1, [r0 + r1 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 0 + 32], m0
+    movu       [r2 + r3 * 1 + 32], m1
+
+    movu       m0, [r0 + r1 * 2 + 32]
+    movu       m1, [r0 + r5 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 2 + 32], m0
+    movu       [r2 + r4 + 32], m1
+
+    movu       m0, [r0 + 64]
+    movu       m1, [r0 + r1 + 64]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 0 + 64], m0
+    movu       [r2 + r3 * 1 + 64], m1
+
+    movu       m0, [r0 + r1 * 2 + 64]
+    movu       m1, [r0 + r5 + 64]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 2 + 64], m0
+    movu       [r2 + r4 + 64], m1
+
+    movu       m0, [r0 + 96]
+    movu       m1, [r0 + r1 + 96]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 0 + 96], m0
+    movu       [r2 + r3 * 1 + 96], m1
+
+    movu       m0, [r0 + r1 * 2 + 96]
+    movu       m1, [r0 + r5 + 96]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 2 + 96], m0
+    movu       [r2 + r4 + 96], m1
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_64xN_avx2 64
+P2S_H_64xN_avx2 16
+P2S_H_64xN_avx2 32
+P2S_H_64xN_avx2 48
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_24xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_24x%1, 3, 7, 5
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m4, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    movu       m2, [r0 + r1 * 2]
+    movu       m3, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+    movu       [r2 + r3 * 2], m2
+    movu       [r2 + r4], m3
+
+    movu       m0, [r0 + 16]
+    movu       m1, [r0 + r1 + 16]
+    movu       m2, [r0 + r1 * 2 + 16]
+    movu       m3, [r0 + r5 + 16]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 16], m0
+    movu       [r2 + r3 * 1 + 16], m1
+    movu       [r2 + r3 * 2 + 16], m2
+    movu       [r2 + r4 + 16], m3
+
+    movu       m0, [r0 + 32]
+    movu       m1, [r0 + r1 + 32]
+    movu       m2, [r0 + r1 * 2 + 32]
+    movu       m3, [r0 + r5 + 32]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 32], m0
+    movu       [r2 + r3 * 1 + 32], m1
+    movu       [r2 + r3 * 2 + 32], m2
+    movu       [r2 + r4 + 32], m3
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_24xN 32
+P2S_H_24xN 64
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_24xN_avx2 1
+INIT_YMM avx2
+cglobal filterPixelToShort_24x%1, 3, 7, 3
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m2, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 0 + 32], xm1
+
+    movu       m0, [r0 + r1]
+    movu       m1, [r0 + r1 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+    movu       [r2 + r3 * 1], m0
+    movu       [r2 + r3 * 1 + 32], xm1
+
+    movu       m0, [r0 + r1 * 2]
+    movu       m1, [r0 + r1 * 2 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+    movu       [r2 + r3 * 2], m0
+    movu       [r2 + r3 * 2 + 32], xm1
+
+    movu       m0, [r0 + r5]
+    movu       m1, [r0 + r5 + 32]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+    movu       [r2 + r4], m0
+    movu       [r2 + r4 + 32], xm1
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_24xN_avx2 32
+P2S_H_24xN_avx2 64
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_12xN 1
+INIT_XMM ssse3
+cglobal filterPixelToShort_12x%1, 3, 7, 3
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, %1/4
+
+    ; load constant
+    mova       m2, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+
+    movu       m0, [r0 + r1 * 2]
+    movu       m1, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m2
+    psllw      m1, 4
+    psubw      m1, m2
+
+    movu       [r2 + r3 * 2], m0
+    movu       [r2 + r4], m1
+
+    movh       m0, [r0 + 16]
+    movhps     m0, [r0 + r1 + 16]
+    psllw      m0, 4
+    psubw      m0, m2
+
+    movh       [r2 + r3 * 0 + 16], m0
+    movhps     [r2 + r3 * 1 + 16], m0
+
+    movh       m0, [r0 + r1 * 2 + 16]
+    movhps     m0, [r0 + r5 + 16]
+    psllw      m0, 4
+    psubw      m0, m2
+
+    movh       [r2 + r3 * 2 + 16], m0
+    movhps     [r2 + r4 + 16], m0
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+%endmacro
+P2S_H_12xN 16
+P2S_H_12xN 32
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_XMM ssse3
+cglobal filterPixelToShort_48x64, 3, 7, 5
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, 16
+
+    ; load constant
+    mova       m4, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    movu       m2, [r0 + r1 * 2]
+    movu       m3, [r0 + r5]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 1], m1
+    movu       [r2 + r3 * 2], m2
+    movu       [r2 + r4], m3
+
+    movu       m0, [r0 + 16]
+    movu       m1, [r0 + r1 + 16]
+    movu       m2, [r0 + r1 * 2 + 16]
+    movu       m3, [r0 + r5 + 16]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 16], m0
+    movu       [r2 + r3 * 1 + 16], m1
+    movu       [r2 + r3 * 2 + 16], m2
+    movu       [r2 + r4 + 16], m3
+
+    movu       m0, [r0 + 32]
+    movu       m1, [r0 + r1 + 32]
+    movu       m2, [r0 + r1 * 2 + 32]
+    movu       m3, [r0 + r5 + 32]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 32], m0
+    movu       [r2 + r3 * 1 + 32], m1
+    movu       [r2 + r3 * 2 + 32], m2
+    movu       [r2 + r4 + 32], m3
+
+    movu       m0, [r0 + 48]
+    movu       m1, [r0 + r1 + 48]
+    movu       m2, [r0 + r1 * 2 + 48]
+    movu       m3, [r0 + r5 + 48]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 48], m0
+    movu       [r2 + r3 * 1 + 48], m1
+    movu       [r2 + r3 * 2 + 48], m2
+    movu       [r2 + r4 + 48], m3
+
+    movu       m0, [r0 + 64]
+    movu       m1, [r0 + r1 + 64]
+    movu       m2, [r0 + r1 * 2 + 64]
+    movu       m3, [r0 + r5 + 64]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 64], m0
+    movu       [r2 + r3 * 1 + 64], m1
+    movu       [r2 + r3 * 2 + 64], m2
+    movu       [r2 + r4 + 64], m3
+
+    movu       m0, [r0 + 80]
+    movu       m1, [r0 + r1 + 80]
+    movu       m2, [r0 + r1 * 2 + 80]
+    movu       m3, [r0 + r5 + 80]
+    psllw      m0, 4
+    psubw      m0, m4
+    psllw      m1, 4
+    psubw      m1, m4
+    psllw      m2, 4
+    psubw      m2, m4
+    psllw      m3, 4
+    psubw      m3, m4
+
+    movu       [r2 + r3 * 0 + 80], m0
+    movu       [r2 + r3 * 1 + 80], m1
+    movu       [r2 + r3 * 2 + 80], m2
+    movu       [r2 + r4 + 80], m3
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal filterPixelToShort_48x64, 3, 7, 4
+    add        r1d, r1d
+    mov        r3d, r3m
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load height
+    mov        r6d, 16
+
+    ; load constant
+    mova       m3, [pw_2000]
+
+.loop
+    movu       m0, [r0]
+    movu       m1, [r0 + 32]
+    movu       m2, [r0 + 64]
+    psllw      m0, 4
+    psubw      m0, m3
+    psllw      m1, 4
+    psubw      m1, m3
+    psllw      m2, 4
+    psubw      m2, m3
+    movu       [r2 + r3 * 0], m0
+    movu       [r2 + r3 * 0 + 32], m1
+    movu       [r2 + r3 * 0 + 64], m2
+
+    movu       m0, [r0 + r1]
+    movu       m1, [r0 + r1 + 32]
+    movu       m2, [r0 + r1 + 64]
+    psllw      m0, 4
+    psubw      m0, m3
+    psllw      m1, 4
+    psubw      m1, m3
+    psllw      m2, 4
+    psubw      m2, m3
+    movu       [r2 + r3 * 1], m0
+    movu       [r2 + r3 * 1 + 32], m1
+    movu       [r2 + r3 * 1 + 64], m2
+
+    movu       m0, [r0 + r1 * 2]
+    movu       m1, [r0 + r1 * 2 + 32]
+    movu       m2, [r0 + r1 * 2 + 64]
+    psllw      m0, 4
+    psubw      m0, m3
+    psllw      m1, 4
+    psubw      m1, m3
+    psllw      m2, 4
+    psubw      m2, m3
+    movu       [r2 + r3 * 2], m0
+    movu       [r2 + r3 * 2 + 32], m1
+    movu       [r2 + r3 * 2 + 64], m2
+
+    movu       m0, [r0 + r5]
+    movu       m1, [r0 + r5 + 32]
+    movu       m2, [r0 + r5 + 64]
+    psllw      m0, 4
+    psubw      m0, m3
+    psllw      m1, 4
+    psubw      m1, m3
+    psllw      m2, 4
+    psubw      m2, m3
+    movu       [r2 + r4], m0
+    movu       [r2 + r4 + 32], m1
+    movu       [r2 + r4 + 64], m2
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    dec        r6d
+    jnz        .loop
+    RET
+
+
+;-----------------------------------------------------------------------------------------------------------------------------
+;void interp_horiz_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
+;-----------------------------------------------------------------------------------------------------------------------------
+
+%macro IPFILTER_LUMA_PS_4xN_AVX2 1
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_horiz_ps_4x%1, 6,8,7
+    mov                         r5d,               r5m
+    mov                         r4d,               r4m
+    add                         r1d,               r1d
+    add                         r3d,               r3d
+%ifdef PIC
+
+    lea                         r6,                [tab_LumaCoeff]
+    lea                         r4 ,               [r4 * 8]
+    vbroadcasti128              m0,                [r6 + r4 * 2]
+
+%else
+    lea                         r4 ,                [r4 * 8]
+    vbroadcasti128              m0,                [tab_LumaCoeff + r4 * 2]
+%endif
+
+    vbroadcasti128              m2,                [pd_n32768]
+
+    ; register map
+    ; m0 - interpolate coeff
+    ; m1 - shuffle order table
+    ; m2 - pw_2000
+
+    sub                         r0,                6
+    test                        r5d,               r5d
+    mov                         r7d,               %1                                    ; loop count variable - height
+    jz                         .preloop
+    lea                         r6,                [r1 * 3]                              ; r6 = (N / 2 - 1) * srcStride
+    sub                         r0,                r6                                    ; r0(src) - 3 * srcStride
+    add                         r7d,               6                                     ;7 - 1(since last row not in loop)                            ; need extra 7 rows, just set a specially flag here, blkheight += N - 1  (7 - 3 = 4 ; since the last three rows not in loop)
+
+.preloop:
+    lea                         r6,                [r3 * 3]
+.loop
+    ; Row 0
+    movu                        xm3,                [r0]                                 ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    movu                        xm4,                [r0 + 2]                             ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    vinserti128                 m3,                 m3,                xm4,       1
+    movu                        xm4,                [r0 + 4]
+    movu                        xm5,                [r0 + 6]
+    vinserti128                 m4,                 m4,                xm5,       1
+    pmaddwd                     m3,                m0
+    pmaddwd                     m4,                m0
+    phaddd                      m3,                m4                                    ; DWORD [R1D R1C R0D R0C R1B R1A R0B R0A]
+
+    ; Row 1
+    movu                        xm4,                [r0 + r1]                            ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    movu                        xm5,                [r0 + r1 + 2]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
+    vinserti128                 m4,                 m4,                xm5,       1
+    movu                        xm5,                [r0 + r1 + 4]
+    movu                        xm6,                [r0 + r1 + 6]
+    vinserti128                 m5,                 m5,                xm6,       1
+    pmaddwd                     m4,                m0
+    pmaddwd                     m5,                m0
+    phaddd                      m4,                m5                                     ; DWORD [R3D R3C R2D R2C R3B R3A R2B R2A]
+    phaddd                      m3,                m4                                     ; all rows and col completed.
+
+    mova                        m5,                [interp8_hps_shuf]
+    vpermd                      m3,                m5,                  m3
+    paddd                       m3,                m2
+    vextracti128                xm4,               m3,                  1
+    psrad                       xm3,               2
+    psrad                       xm4,               2
+    packssdw                    xm3,               xm3
+    packssdw                    xm4,               xm4
+
+    movq                        [r2],              xm3                                   ;row 0
+    movq                        [r2 + r3],         xm4                                   ;row 1
+    lea                         r0,                [r0 + r1 * 2]                         ; first loop src ->5th row(i.e 4)
+    lea                         r2,                [r2 + r3 * 2]                         ; first loop dst ->5th row(i.e 4)
+
+    sub                         r7d,               2
+    jg                          .loop
+    test                        r5d,               r5d
+    jz                          .end
+
+    ; Row 10
+    movu                        xm3,                [r0]
+    movu                        xm4,                [r0 + 2]
+    vinserti128                 m3,                 m3,                 xm4,      1
+    movu                        xm4,                [r0 + 4]
+    movu                        xm5,                [r0 + 6]
+    vinserti128                 m4,                 m4,                 xm5,      1
+    pmaddwd                     m3,                m0
+    pmaddwd                     m4,                m0
+    phaddd                      m3,                m4
+
+    ; Row11
+    phaddd                      m3,                m4                                    ; all rows and col completed.
+
+    mova                        m5,                [interp8_hps_shuf]
+    vpermd                      m3,                m5,                  m3
+    paddd                       m3,                m2
+    vextracti128                xm4,               m3,                  1
+    psrad                       xm3,               2
+    psrad                       xm4,               2
+    packssdw                    xm3,               xm3
+    packssdw                    xm4,               xm4
+
+    movq                        [r2],              xm3                                   ;row 0
+.end
+    RET
+%endif
+%endmacro
+
+    IPFILTER_LUMA_PS_4xN_AVX2 4
+    IPFILTER_LUMA_PS_4xN_AVX2 8
+    IPFILTER_LUMA_PS_4xN_AVX2 16

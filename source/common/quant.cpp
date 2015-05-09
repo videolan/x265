@@ -198,7 +198,8 @@ bool Quant::init(int rdoqLevel, double psyScale, const ScalingList& scalingList,
 {
     m_entropyCoder = &entropy;
     m_rdoqLevel    = rdoqLevel;
-    m_psyRdoqScale = (int64_t)(psyScale * 256.0);
+    m_psyRdoqScale = (int32_t)(psyScale * 256.0);
+    X265_CHECK((psyScale * 256.0) < (double)MAX_INT, "psyScale value too large\n");
     m_scalingList  = &scalingList;
     m_resiDctCoeff = X265_MALLOC(int16_t, MAX_TR_SIZE * MAX_TR_SIZE * 2);
     m_fencDctCoeff = m_resiDctCoeff + (MAX_TR_SIZE * MAX_TR_SIZE);
@@ -225,16 +226,15 @@ Quant::~Quant()
     X265_FREE(m_fencShortBuf);
 }
 
-void Quant::setQPforQuant(const CUData& cu)
+void Quant::setQPforQuant(const CUData& ctu, int qp)
 {
-    m_tqBypass = !!cu.m_tqBypass[0];
+    m_tqBypass = !!ctu.m_tqBypass[0];
     if (m_tqBypass)
         return;
-    m_nr = m_frameNr ? &m_frameNr[cu.m_encData->m_frameEncoderID] : NULL;
-    int qpy = cu.m_qp[0];
-    m_qpParam[TEXT_LUMA].setQpParam(qpy + QP_BD_OFFSET);
-    setChromaQP(qpy + cu.m_slice->m_pps->chromaQpOffset[0], TEXT_CHROMA_U, cu.m_chromaFormat);
-    setChromaQP(qpy + cu.m_slice->m_pps->chromaQpOffset[1], TEXT_CHROMA_V, cu.m_chromaFormat);
+    m_nr = m_frameNr ? &m_frameNr[ctu.m_encData->m_frameEncoderID] : NULL;
+    m_qpParam[TEXT_LUMA].setQpParam(qp + QP_BD_OFFSET);
+    setChromaQP(qp + ctu.m_slice->m_pps->chromaQpOffset[0], TEXT_CHROMA_U, ctu.m_chromaFormat);
+    setChromaQP(qp + ctu.m_slice->m_pps->chromaQpOffset[1], TEXT_CHROMA_V, ctu.m_chromaFormat);
 }
 
 void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
@@ -515,6 +515,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 {
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu.isIntra(absPartIdx) ? 0 : 3) + ttype;
+    const uint32_t usePsyMask = usePsy ? -1 : 0;
 
     X265_CHECK(scalingListType < 6, "scaling list type out of range\n");
 
@@ -529,9 +530,10 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     X265_CHECK((int)numSig == primitives.cu[log2TrSize - 2].count_nonzero(dstCoeff), "numSig differ\n");
     if (!numSig)
         return 0;
+
     uint32_t trSize = 1 << log2TrSize;
     int64_t lambda2 = m_qpParam[ttype].lambda2;
-    int64_t psyScale = (m_psyRdoqScale * m_qpParam[ttype].lambda);
+    const int64_t psyScale = ((int64_t)m_psyRdoqScale * m_qpParam[ttype].lambda);
 
     /* unquant constants for measuring distortion. Scaling list quant coefficients have a (1 << 4)
      * scale applied that must be removed during unquant. Note that in real dequant there is clipping
@@ -544,7 +546,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 #define UNQUANT(lvl)    (((lvl) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift)
 #define SIGCOST(bits)   ((lambda2 * (bits)) >> 8)
 #define RDCOST(d, bits) ((((int64_t)d * d) << scaleBits) + SIGCOST(bits))
-#define PSYVALUE(rec)   ((psyScale * (rec)) >> (16 - scaleBits))
+#define PSYVALUE(rec)   ((psyScale * (rec)) >> (2 * transformShift + 1))
 
     int64_t costCoeff[32 * 32];   /* d*d + lambda * bits */
     int64_t costUncoded[32 * 32]; /* d*d + lambda * 0    */
@@ -557,14 +559,6 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     int64_t costCoeffGroupSig[MLS_GRP_NUM]; /* lambda * bits of group coding cost */
     uint64_t sigCoeffGroupFlag64 = 0;
 
-    uint32_t ctxSet      = 0;
-    int    c1            = 1;
-    int    c2            = 0;
-    uint32_t goRiceParam = 0;
-    uint32_t c1Idx       = 0;
-    uint32_t c2Idx       = 0;
-    int cgLastScanPos    = -1;
-    int lastScanPos      = -1;
     const uint32_t cgSize = (1 << MLS_CG_SIZE); /* 4x4 num coef = 16 */
     bool bIsLuma = ttype == TEXT_LUMA;
 
@@ -579,30 +573,231 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     TUEntropyCodingParameters codeParams;
     cu.getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, bIsLuma);
     const uint32_t cgNum = 1 << (codeParams.log2TrSizeCG * 2);
+    const uint32_t cgStride = (trSize >> MLS_CG_LOG2_SIZE);
+
+    uint8_t coeffNum[MLS_GRP_NUM];      // value range[0, 16]
+    uint16_t coeffSign[MLS_GRP_NUM];    // bit mask map for non-zero coeff sign
+    uint16_t coeffFlag[MLS_GRP_NUM];    // bit mask map for non-zero coeff
+
+#if CHECKED_BUILD || _DEBUG
+    // clean output buffer, the asm version of scanPosLast Never output anything after latest non-zero coeff group
+    memset(coeffNum, 0, sizeof(coeffNum));
+    memset(coeffSign, 0, sizeof(coeffNum));
+    memset(coeffFlag, 0, sizeof(coeffNum));
+#endif
+    const int lastScanPos = primitives.scanPosLast(codeParams.scan, dstCoeff, coeffSign, coeffFlag, coeffNum, numSig, g_scan4x4[codeParams.scanType], trSize);
+    const int cgLastScanPos = (lastScanPos >> LOG2_SCAN_SET_SIZE);
+
 
     /* TODO: update bit estimates if dirty */
     EstBitsSbac& estBitsSbac = m_entropyCoder->m_estBitsSbac;
 
-    uint32_t scanPos;
-    coeffGroupRDStats cgRdStats;
+    uint32_t scanPos = 0;
+    uint32_t c1 = 1;
+
+    // process trail all zero Coeff Group
+
+    /* coefficients after lastNZ have no distortion signal cost */
+    const int zeroCG = cgNum - 1 - cgLastScanPos;
+    memset(&costCoeff[(cgLastScanPos + 1) << MLS_CG_SIZE], 0, zeroCG * MLS_CG_BLK_SIZE * sizeof(int64_t));
+    memset(&costSig[(cgLastScanPos + 1) << MLS_CG_SIZE], 0, zeroCG * MLS_CG_BLK_SIZE * sizeof(int64_t));
+
+    /* sum zero coeff (uncodec) cost */
+
+    // TODO: does we need these cost?
+    if (usePsyMask)
+    {
+        for (int cgScanPos = cgLastScanPos + 1; cgScanPos < (int)cgNum ; cgScanPos++)
+        {
+            X265_CHECK(coeffNum[cgScanPos] == 0, "count of coeff failure\n");
+
+            uint32_t scanPosBase = (cgScanPos << MLS_CG_SIZE);
+            uint32_t blkPos      = codeParams.scan[scanPosBase];
+
+            // TODO: we can't SIMD optimize because PSYVALUE need 64-bits multiplication, convert to Double can work faster by FMA
+            for (int y = 0; y < MLS_CG_SIZE; y++)
+            {
+                for (int x = 0; x < MLS_CG_SIZE; x++)
+                {
+                    int signCoef         = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+                    int predictedCoef    = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
+
+                    costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
+
+                    /* when no residual coefficient is coded, predicted coef == recon coef */
+                    costUncoded[blkPos + x] -= PSYVALUE(predictedCoef);
+
+                    totalUncodedCost += costUncoded[blkPos + x];
+                    totalRdCost += costUncoded[blkPos + x];
+                }
+                blkPos += trSize;
+            }
+        }
+    }
+    else
+    {
+        // non-psy path
+        for (int cgScanPos = cgLastScanPos + 1; cgScanPos < (int)cgNum ; cgScanPos++)
+        {
+            X265_CHECK(coeffNum[cgScanPos] == 0, "count of coeff failure\n");
+
+            uint32_t scanPosBase = (cgScanPos << MLS_CG_SIZE);
+            uint32_t blkPos      = codeParams.scan[scanPosBase];
+
+            for (int y = 0; y < MLS_CG_SIZE; y++)
+            {
+                for (int x = 0; x < MLS_CG_SIZE; x++)
+                {
+                    int signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+                    costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
+
+                    totalUncodedCost += costUncoded[blkPos + x];
+                    totalRdCost += costUncoded[blkPos + x];
+                }
+                blkPos += trSize;
+            }
+        }
+    }
+
+    static const uint8_t table_cnt[5][SCAN_SET_SIZE] =
+    {
+        // patternSigCtx = 0
+        {
+            2, 1, 1, 0,
+            1, 1, 0, 0,
+            1, 0, 0, 0,
+            0, 0, 0, 0,
+        },
+        // patternSigCtx = 1
+        {
+            2, 2, 2, 2,
+            1, 1, 1, 1,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+        },
+        // patternSigCtx = 2
+        {
+            2, 1, 0, 0,
+            2, 1, 0, 0,
+            2, 1, 0, 0,
+            2, 1, 0, 0,
+        },
+        // patternSigCtx = 3
+        {
+            2, 2, 2, 2,
+            2, 2, 2, 2,
+            2, 2, 2, 2,
+            2, 2, 2, 2,
+        },
+        // 4x4
+        {
+            0, 1, 4, 5,
+            2, 3, 4, 5,
+            6, 6, 8, 8,
+            7, 7, 8, 8
+        }
+    };
 
     /* iterate over coding groups in reverse scan order */
-    for (int cgScanPos = cgNum - 1; cgScanPos >= 0; cgScanPos--)
+    for (int cgScanPos = cgLastScanPos; cgScanPos >= 0; cgScanPos--)
     {
+        uint32_t ctxSet = (cgScanPos && bIsLuma) ? 2 : 0;
         const uint32_t cgBlkPos = codeParams.scanCG[cgScanPos];
         const uint32_t cgPosY   = cgBlkPos >> codeParams.log2TrSizeCG;
         const uint32_t cgPosX   = cgBlkPos - (cgPosY << codeParams.log2TrSizeCG);
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
+        const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
+        const int ctxSigOffset = codeParams.firstSignificanceMapContext + (cgScanPos && bIsLuma ? 3 : 0);
+
+        if (c1 == 0)
+            ctxSet++;
+        c1 = 1;
+
+        if (cgScanPos && (coeffNum[cgScanPos] == 0))
+        {
+            // TODO: does we need zero-coeff cost?
+            const uint32_t scanPosBase = (cgScanPos << MLS_CG_SIZE);
+            uint32_t blkPos = codeParams.scan[scanPosBase];
+
+            if (usePsyMask)
+            {
+                // TODO: we can't SIMD optimize because PSYVALUE need 64-bits multiplication, convert to Double can work faster by FMA
+                for (int y = 0; y < MLS_CG_SIZE; y++)
+                {
+                    for (int x = 0; x < MLS_CG_SIZE; x++)
+                    {
+                        int signCoef         = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+                        int predictedCoef    = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
+
+                        costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
+
+                        /* when no residual coefficient is coded, predicted coef == recon coef */
+                        costUncoded[blkPos + x] -= PSYVALUE(predictedCoef);
+
+                        totalUncodedCost += costUncoded[blkPos + x];
+                        totalRdCost += costUncoded[blkPos + x];
+
+                        const uint32_t scanPosOffset =  y * MLS_CG_SIZE + x;
+                        const uint32_t ctxSig = table_cnt[patternSigCtx][g_scan4x4[codeParams.scanType][scanPosOffset]] + ctxSigOffset;
+                        X265_CHECK(trSize > 4, "trSize check failure\n");
+                        X265_CHECK(ctxSig == getSigCtxInc(patternSigCtx, log2TrSize, trSize, codeParams.scan[scanPosBase + scanPosOffset], bIsLuma, codeParams.firstSignificanceMapContext), "sigCtx check failure\n");
+
+                        costSig[scanPosBase + scanPosOffset] = SIGCOST(estBitsSbac.significantBits[0][ctxSig]);
+                        costCoeff[scanPosBase + scanPosOffset] = costUncoded[blkPos + x];
+                        sigRateDelta[blkPos + x] = estBitsSbac.significantBits[1][ctxSig] - estBitsSbac.significantBits[0][ctxSig];
+                    }
+                    blkPos += trSize;
+                }
+            }
+            else
+            {
+                // non-psy path
+                for (int y = 0; y < MLS_CG_SIZE; y++)
+                {
+                    for (int x = 0; x < MLS_CG_SIZE; x++)
+                    {
+                        int signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+                        costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
+
+                        totalUncodedCost += costUncoded[blkPos + x];
+                        totalRdCost += costUncoded[blkPos + x];
+
+                        const uint32_t scanPosOffset =  y * MLS_CG_SIZE + x;
+                        const uint32_t ctxSig = table_cnt[patternSigCtx][g_scan4x4[codeParams.scanType][scanPosOffset]] + ctxSigOffset;
+                        X265_CHECK(trSize > 4, "trSize check failure\n");
+                        X265_CHECK(ctxSig == getSigCtxInc(patternSigCtx, log2TrSize, trSize, codeParams.scan[scanPosBase + scanPosOffset], bIsLuma, codeParams.firstSignificanceMapContext), "sigCtx check failure\n");
+
+                        costSig[scanPosBase + scanPosOffset] = SIGCOST(estBitsSbac.significantBits[0][ctxSig]);
+                        costCoeff[scanPosBase + scanPosOffset] = costUncoded[blkPos + x];
+                        sigRateDelta[blkPos + x] = estBitsSbac.significantBits[1][ctxSig] - estBitsSbac.significantBits[0][ctxSig];
+                    }
+                    blkPos += trSize;
+                }
+            }
+
+            /* there were no coded coefficients in this coefficient group */
+            {
+                uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
+                costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[ctxSig][0]);
+                totalRdCost += costCoeffGroupSig[cgScanPos];  /* add cost of 0 bit in significant CG bitmap */
+            }
+            continue;
+        }
+
+        coeffGroupRDStats cgRdStats;
         memset(&cgRdStats, 0, sizeof(coeffGroupRDStats));
 
-        const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
-
+        uint32_t subFlagMask = coeffFlag[cgScanPos];
+        int    c2            = 0;
+        uint32_t goRiceParam = 0;
+        uint32_t c1Idx       = 0;
+        uint32_t c2Idx       = 0;
         /* iterate over coefficients in each group in reverse scan order */
         for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
         {
             scanPos              = (cgScanPos << MLS_CG_SIZE) + scanPosinCG;
             uint32_t blkPos      = codeParams.scan[scanPos];
-            uint16_t maxAbsLevel = (int16_t)abs(dstCoeff[blkPos]);             /* abs(quantized coeff) */
+            uint32_t maxAbsLevel = abs(dstCoeff[blkPos]);             /* abs(quantized coeff) */
             int signCoef         = m_resiDctCoeff[blkPos];            /* pre-quantization DCT coeff */
             int predictedCoef    = m_fencDctCoeff[blkPos] - signCoef; /* predicted DCT = source DCT - residual DCT*/
 
@@ -611,22 +806,21 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
              * FIX15 nature of the CABAC cost tables minus the forward transform scale */
 
             /* cost of not coding this coefficient (all distortion, no signal bits) */
-            costUncoded[scanPos] = (int64_t)(signCoef * signCoef) << scaleBits;
-            if (usePsy && blkPos)
+            costUncoded[blkPos] = ((int64_t)signCoef * signCoef) << scaleBits;
+            X265_CHECK((!!scanPos ^ !!blkPos) == 0, "failed on (blkPos=0 && scanPos!=0)\n");
+            if (usePsyMask & scanPos)
                 /* when no residual coefficient is coded, predicted coef == recon coef */
-                costUncoded[scanPos] -= PSYVALUE(predictedCoef);
+                costUncoded[blkPos] -= PSYVALUE(predictedCoef);
 
-            totalUncodedCost += costUncoded[scanPos];
+            totalUncodedCost += costUncoded[blkPos];
 
-            if (maxAbsLevel && lastScanPos < 0)
-            {
-                /* remember the first non-zero coef found in this reverse scan as the last pos */
-                lastScanPos   = scanPos;
-                ctxSet        = (scanPos < SCAN_SET_SIZE || !bIsLuma) ? 0 : 2;
-                cgLastScanPos = cgScanPos;
-            }
+            // coefficient level estimation
+            const int* greaterOneBits = estBitsSbac.greaterOneBits[4 * ctxSet + c1];
+            const uint32_t ctxSig = (blkPos == 0) ? 0 : table_cnt[(trSize == 4) ? 4 : patternSigCtx][g_scan4x4[codeParams.scanType][scanPosinCG]] + ctxSigOffset;
+            X265_CHECK(ctxSig == getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codeParams.firstSignificanceMapContext), "sigCtx check failure\n");
 
-            if (lastScanPos < 0)
+            // before find lastest non-zero coeff
+            if (scanPos > (uint32_t)lastScanPos)
             {
                 /* coefficients after lastNZ have no distortion signal cost */
                 costCoeff[scanPos] = 0;
@@ -635,10 +829,24 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 /* No non-zero coefficient yet found, but this does not mean
                  * there is no uncoded-cost for this coefficient. Pre-
                  * quantization the coefficient may have been non-zero */
-                totalRdCost += costUncoded[scanPos];
+                totalRdCost += costUncoded[blkPos];
+            }
+            else if (!(subFlagMask & 1))
+            {
+                // fast zero coeff path
+                /* set default costs to uncoded costs */
+                costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[0][ctxSig]);
+                costCoeff[scanPos] = costUncoded[blkPos] + costSig[scanPos];
+                sigRateDelta[blkPos] = estBitsSbac.significantBits[1][ctxSig] - estBitsSbac.significantBits[0][ctxSig];
+                totalRdCost += costCoeff[scanPos];
+                rateIncUp[blkPos] = greaterOneBits[0];
+
+                subFlagMask >>= 1;
             }
             else
             {
+                subFlagMask >>= 1;
+
                 const uint32_t c1c2Idx = ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)) + (((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1) * 2;
                 const uint32_t baseLevel = ((uint32_t)0xD9 >> (c1c2Idx * 2)) & 3;  // {1, 2, 1, 3}
 
@@ -647,12 +855,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 X265_CHECK((int)baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1), "scan validation 3\n");
 
                 // coefficient level estimation
-                const uint32_t oneCtx = 4 * ctxSet + c1;
-                const uint32_t absCtx = ctxSet + c2;
-                const int* greaterOneBits = estBitsSbac.greaterOneBits[oneCtx];
-                const int* levelAbsBits = estBitsSbac.levelAbsBits[absCtx];
+                const int* levelAbsBits = estBitsSbac.levelAbsBits[ctxSet + c2];
 
-                uint16_t level = 0;
+                uint32_t level = 0;
                 uint32_t sigCoefBits = 0;
                 costCoeff[scanPos] = MAX_INT64;
 
@@ -660,48 +865,82 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                     sigRateDelta[blkPos] = 0;
                 else
                 {
-                    const uint32_t ctxSig = getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codeParams.firstSignificanceMapContext);
                     if (maxAbsLevel < 3)
                     {
                         /* set default costs to uncoded costs */
-                        costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[ctxSig][0]);
-                        costCoeff[scanPos] = costUncoded[scanPos] + costSig[scanPos];
+                        costSig[scanPos] = SIGCOST(estBitsSbac.significantBits[0][ctxSig]);
+                        costCoeff[scanPos] = costUncoded[blkPos] + costSig[scanPos];
                     }
-                    sigRateDelta[blkPos] = estBitsSbac.significantBits[ctxSig][1] - estBitsSbac.significantBits[ctxSig][0];
-                    sigCoefBits = estBitsSbac.significantBits[ctxSig][1];
+                    sigRateDelta[blkPos] = estBitsSbac.significantBits[1][ctxSig] - estBitsSbac.significantBits[0][ctxSig];
+                    sigCoefBits = estBitsSbac.significantBits[1][ctxSig];
                 }
-                if (maxAbsLevel)
+
+                // NOTE: X265_MAX(maxAbsLevel - 1, 1) ==> (X>=2 -> X-1), (X<2 -> 1)  | (0 < X < 2 ==> X=1)
+                if (maxAbsLevel == 1)
                 {
-                    uint16_t minAbsLevel = X265_MAX(maxAbsLevel - 1, 1);
-                    for (uint16_t lvl = maxAbsLevel; lvl >= minAbsLevel; lvl--)
+                    uint32_t levelBits = (c1c2Idx & 1) ? greaterOneBits[0] + IEP_RATE : ((1 + goRiceParam) << 15) + IEP_RATE;
+                    X265_CHECK(levelBits == getICRateCost(1, 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE, "levelBits mistake\n");
+
+                    int unquantAbsLevel = UNQUANT(1);
+                    int d = abs(signCoef) - unquantAbsLevel;
+                    int64_t curCost = RDCOST(d, sigCoefBits + levelBits);
+
+                    /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame */
+                    if (usePsyMask & scanPos)
                     {
-                        uint32_t levelBits = getICRateCost(lvl, lvl - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
+                        int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
+                        curCost -= PSYVALUE(reconCoef);
+                    }
 
-                        int unquantAbsLevel = UNQUANT(lvl);
-                        int d = abs(signCoef) - unquantAbsLevel;
-                        int64_t curCost = RDCOST(d, sigCoefBits + levelBits);
+                    if (curCost < costCoeff[scanPos])
+                    {
+                        level = 1;
+                        costCoeff[scanPos] = curCost;
+                        costSig[scanPos] = SIGCOST(sigCoefBits);
+                    }
+                }
+                else if (maxAbsLevel)
+                {
+                    uint32_t levelBits0 = getICRateCost(maxAbsLevel,     maxAbsLevel     - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
+                    uint32_t levelBits1 = getICRateCost(maxAbsLevel - 1, maxAbsLevel - 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
 
-                        /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame */
-                        if (usePsy && blkPos)
-                        {
-                            int reconCoef = abs(unquantAbsLevel + SIGN(predictedCoef, signCoef));
-                            curCost -= PSYVALUE(reconCoef);
-                        }
+                    int unquantAbsLevel0 = UNQUANT(maxAbsLevel);
+                    int d0 = abs(signCoef) - unquantAbsLevel0;
+                    int64_t curCost0 = RDCOST(d0, sigCoefBits + levelBits0);
 
-                        if (curCost < costCoeff[scanPos])
-                        {
-                            level = lvl;
-                            costCoeff[scanPos] = curCost;
-                            costSig[scanPos] = SIGCOST(sigCoefBits);
-                        }
+                    int unquantAbsLevel1 = UNQUANT(maxAbsLevel - 1);
+                    int d1 = abs(signCoef) - unquantAbsLevel1;
+                    int64_t curCost1 = RDCOST(d1, sigCoefBits + levelBits1);
+
+                    /* Psy RDOQ: bias in favor of higher AC coefficients in the reconstructed frame */
+                    if (usePsyMask & scanPos)
+                    {
+                        int reconCoef;
+                        reconCoef = abs(unquantAbsLevel0 + SIGN(predictedCoef, signCoef));
+                        curCost0 -= PSYVALUE(reconCoef);
+
+                        reconCoef = abs(unquantAbsLevel1 + SIGN(predictedCoef, signCoef));
+                        curCost1 -= PSYVALUE(reconCoef);
+                    }
+                    if (curCost0 < costCoeff[scanPos])
+                    {
+                        level = maxAbsLevel;
+                        costCoeff[scanPos] = curCost0;
+                        costSig[scanPos] = SIGCOST(sigCoefBits);
+                    }
+                    if (curCost1 < costCoeff[scanPos])
+                    {
+                        level = maxAbsLevel - 1;
+                        costCoeff[scanPos] = curCost1;
+                        costSig[scanPos] = SIGCOST(sigCoefBits);
                     }
                 }
 
-                dstCoeff[blkPos] = level;
+                dstCoeff[blkPos] = (int16_t)level;
                 totalRdCost += costCoeff[scanPos];
 
                 /* record costs for sign-hiding performed at the end */
-                if (level)
+                if ((cu.m_slice->m_pps->bSignHideEnabled ? ~0 : 0) & level)
                 {
                     const int32_t diff0 = level - 1 - baseLevel;
                     const int32_t diff2 = level + 1 - baseLevel;
@@ -763,41 +1002,27 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 else if ((c1 < 3) && (c1 > 0) && level)
                     c1++;
 
-                /* context set update */
-                if (!(scanPos % SCAN_SET_SIZE) && scanPos)
+                if (dstCoeff[blkPos])
                 {
-                    c2 = 0;
-                    goRiceParam = 0;
-
-                    c1Idx = 0;
-                    c2Idx = 0;
-                    ctxSet = (scanPos == SCAN_SET_SIZE || !bIsLuma) ? 0 : 2;
-                    X265_CHECK(c1 >= 0, "c1 is negative\n");
-                    ctxSet -= ((int32_t)(c1 - 1) >> 31);
-                    c1 = 1;
+                    sigCoeffGroupFlag64 |= cgBlkPosMask;
+                    cgRdStats.codedLevelAndDist += costCoeff[scanPos] - costSig[scanPos];
+                    cgRdStats.uncodedDist += costUncoded[blkPos];
+                    cgRdStats.nnzBeforePos0 += scanPosinCG;
                 }
             }
 
             cgRdStats.sigCost += costSig[scanPos];
-            if (!scanPosinCG)
-                cgRdStats.sigCost0 = costSig[scanPos];
-
-            if (dstCoeff[blkPos])
-            {
-                sigCoeffGroupFlag64 |= cgBlkPosMask;
-                cgRdStats.codedLevelAndDist += costCoeff[scanPos] - costSig[scanPos];
-                cgRdStats.uncodedDist += costUncoded[scanPos];
-                cgRdStats.nnzBeforePos0 += scanPosinCG;
-            }
         } /* end for (scanPosinCG) */
+
+        X265_CHECK((cgScanPos << MLS_CG_SIZE) == (int)scanPos, "scanPos mistake\n");
+        cgRdStats.sigCost0 = costSig[scanPos];
 
         costCoeffGroupSig[cgScanPos] = 0;
 
-        if (cgLastScanPos < 0)
-        {
-            /* nothing to do at this point */
-        }
-        else if (!cgScanPos || cgScanPos == cgLastScanPos)
+        /* nothing to do at this case */
+        X265_CHECK(cgLastScanPos >= 0, "cgLastScanPos check failure\n");
+
+        if (!cgScanPos || cgScanPos == cgLastScanPos)
         {
             /* coeff group 0 is implied to be present, no signal cost */
             /* coeff group with last NZ is implied to be present, handled below */
@@ -815,7 +1040,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
              * of the significant coefficient group flag and evaluate whether the RD cost of the
              * coded group is more than the RD cost of the uncoded group */
 
-            uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
+            uint32_t sigCtx = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
 
             int64_t costZeroCG = totalRdCost + SIGCOST(estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
             costZeroCG += cgRdStats.uncodedDist;       /* add distortion for resetting non-zero levels to zero levels */
@@ -832,23 +1057,17 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[sigCtx][0]);
 
                 /* reset all coeffs to 0. UNCODE THIS COEFF GROUP! */
-                for (int scanPosinCG = cgSize - 1; scanPosinCG >= 0; scanPosinCG--)
-                {
-                    scanPos = cgScanPos * cgSize + scanPosinCG;
-                    uint32_t blkPos = codeParams.scan[scanPos];
-                    if (dstCoeff[blkPos])
-                    {
-                        costCoeff[scanPos] = costUncoded[scanPos];
-                        costSig[scanPos] = 0;
-                    }
-                    dstCoeff[blkPos] = 0;
-                }
+                const uint32_t blkPos = codeParams.scan[cgScanPos * cgSize];
+                memset(&dstCoeff[blkPos + 0 * trSize], 0, 4 * sizeof(*dstCoeff));
+                memset(&dstCoeff[blkPos + 1 * trSize], 0, 4 * sizeof(*dstCoeff));
+                memset(&dstCoeff[blkPos + 2 * trSize], 0, 4 * sizeof(*dstCoeff));
+                memset(&dstCoeff[blkPos + 3 * trSize], 0, 4 * sizeof(*dstCoeff));
             }
         }
         else
         {
             /* there were no coded coefficients in this coefficient group */
-            uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, codeParams.log2TrSizeCG);
+            uint32_t ctxSig = getSigCoeffGroupCtxInc(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
             costCoeffGroupSig[cgScanPos] = SIGCOST(estBitsSbac.significantCoeffGroupBits[ctxSig][0]);
             totalRdCost += costCoeffGroupSig[cgScanPos];  /* add cost of 0 bit in significant CG bitmap */
             totalRdCost -= cgRdStats.sigCost;             /* remove cost of significant coefficient bitmap */
@@ -909,7 +1128,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
              * cost of signaling it as not-significant */
             uint32_t blkPos = codeParams.scan[scanPos];
             if (dstCoeff[blkPos])
-            {                
+            {
                 // Calculates the cost of signaling the last significant coefficient in the block 
                 uint32_t pos[2] = { (blkPos & (trSize - 1)), (blkPos >> log2TrSize) };
                 if (codeParams.scanType == SCAN_VER)
@@ -940,7 +1159,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                 }
 
                 totalRdCost -= costCoeff[scanPos];
-                totalRdCost += costUncoded[scanPos];
+                totalRdCost += costUncoded[blkPos];
             }
             else
                 totalRdCost -= costSig[scanPos];
@@ -959,34 +1178,40 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
         dstCoeff[blkPos] = (int16_t)((level ^ mask) - mask);
     }
 
+    // Average 49.62 pixels
     /* clean uncoded coefficients */
-    for (int pos = bestLastIdx; pos <= lastScanPos; pos++)
+    for (int pos = bestLastIdx; pos <= fastMin(lastScanPos, (bestLastIdx | (SCAN_SET_SIZE - 1))); pos++)
+    {
         dstCoeff[codeParams.scan[pos]] = 0;
+    }
+    for (int pos = (bestLastIdx & ~(SCAN_SET_SIZE - 1)) + SCAN_SET_SIZE; pos <= lastScanPos; pos += SCAN_SET_SIZE)
+    {
+        const uint32_t blkPos = codeParams.scan[pos];
+        memset(&dstCoeff[blkPos + 0 * trSize], 0, 4 * sizeof(*dstCoeff));
+        memset(&dstCoeff[blkPos + 1 * trSize], 0, 4 * sizeof(*dstCoeff));
+        memset(&dstCoeff[blkPos + 2 * trSize], 0, 4 * sizeof(*dstCoeff));
+        memset(&dstCoeff[blkPos + 3 * trSize], 0, 4 * sizeof(*dstCoeff));
+    }
 
     /* rate-distortion based sign-hiding */
     if (cu.m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
+        const int realLastScanPos = (bestLastIdx - 1) >> LOG2_SCAN_SET_SIZE;
         int lastCG = true;
-        for (int subSet = cgLastScanPos; subSet >= 0; subSet--)
+        for (int subSet = realLastScanPos; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
             int n;
 
-            /* measure distance between first and last non-zero coef in this
-             * coding group */
-            for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
-                if (dstCoeff[codeParams.scan[n + subPos]])
-                    break;
-            if (n < 0)
+            if (!(sigCoeffGroupFlag64 & (1ULL << codeParams.scanCG[subSet])))
                 continue;
 
-            int lastNZPosInCG = n;
+            /* measure distance between first and last non-zero coef in this
+             * coding group */
+            const uint32_t posFirstLast = primitives.findPosFirstLast(&dstCoeff[codeParams.scan[subPos]], trSize, g_scan4x4[codeParams.scanType]);
+            int firstNZPosInCG = (uint16_t)posFirstLast;
+            int lastNZPosInCG = posFirstLast >> 16;
 
-            for (n = 0;; n++)
-                if (dstCoeff[codeParams.scan[n + subPos]])
-                    break;
-
-            int firstNZPosInCG = n;
 
             if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
             {
@@ -1092,22 +1317,6 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     return numSig;
 }
 
-/* Pattern decision for context derivation process of significant_coeff_flag */
-uint32_t Quant::calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
-{
-    if (!log2TrSizeCG)
-        return 0;
-
-    const uint32_t trSizeCG = 1 << log2TrSizeCG;
-    X265_CHECK(trSizeCG <= 8, "transform CG is too large\n");
-    const uint32_t shift = (cgPosY << log2TrSizeCG) + cgPosX + 1;
-    const uint32_t sigPos = (uint32_t)(shift >= 64 ? 0 : sigCoeffGroupFlag64 >> shift);
-    const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & (sigPos & 1);
-    const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 2)) & 2;
-
-    return sigRight + sigLower;
-}
-
 /* Context derivation process of coeff_abs_significant_flag */
 uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32_t trSize, uint32_t blkPos, bool bIsLuma,
                              uint32_t firstSignificanceMapContext)
@@ -1175,14 +1384,3 @@ uint32_t Quant::getSigCtxInc(uint32_t patternSigCtx, uint32_t log2TrSize, uint32
     return (bIsLuma && (posX | posY) >= 4) ? 3 + offset : offset;
 }
 
-/* Context derivation process of coeff_abs_significant_flag */
-uint32_t Quant::getSigCoeffGroupCtxInc(uint64_t cgGroupMask, uint32_t cgPosX, uint32_t cgPosY, uint32_t log2TrSizeCG)
-{
-    const uint32_t trSizeCG = 1 << log2TrSizeCG;
-
-    const uint32_t sigPos = (uint32_t)(cgGroupMask >> (1 + (cgPosY << log2TrSizeCG) + cgPosX));
-    const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & sigPos;
-    const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 1));
-
-    return (sigRight | sigLower) & 1;
-}

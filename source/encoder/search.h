@@ -287,7 +287,7 @@ public:
     ~Search();
 
     bool     initSearch(const x265_param& param, ScalingList& scalingList);
-    void     setQP(const Slice& slice, int qp);
+    int      setLambdaFromQP(const CUData& ctu, int qp); /* returns real quant QP in valid spec range */
 
     // mark temp RD entropy contexts as uninitialized; useful for finding loads without stores
     void     invalidateContexts(int fromDepth);
@@ -301,7 +301,7 @@ public:
     void     encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
 
     // estimation inter prediction (non-skip)
-    void     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bMergeOnly, bool bChroma);
+    void     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC);
 
     // encode residual and compute rd-cost for inter mode
     void     encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom);
@@ -316,8 +316,8 @@ public:
     void     getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom);
 
     /* update CBF flags and QP values to be internally consistent */
-    void checkDQP(CUData& cu, const CUGeom& cuGeom);
-    void checkDQPForSplitPred(CUData& cu, const CUGeom& cuGeom);
+    void checkDQP(Mode& mode, const CUGeom& cuGeom);
+    void checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom);
 
     class PME : public BondedTaskGroup
     {
@@ -339,7 +339,7 @@ public:
     };
 
     void     processPME(PME& pme, Search& slave);
-    void     singleMotionEstimation(Search& master, Mode& interMode, const CUGeom& cuGeom, const PredictionUnit& pu, int part, int list, int ref);
+    void     singleMotionEstimation(Search& master, Mode& interMode, const PredictionUnit& pu, int part, int list, int ref);
 
 protected:
 
@@ -396,8 +396,9 @@ protected:
     };
 
     /* inter/ME helper functions */
-    void     checkBestMVP(MV* amvpCand, MV cMv, MV& mvPred, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
-    void     setSearchRange(const CUData& cu, MV mvp, int merange, MV& mvmin, MV& mvmax) const;
+    int       selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[AMVP_NUM_CANDS], int list, int ref);
+    const MV& checkBestMVP(const MV amvpCand[2], const MV& mv, int& mvpIdx, uint32_t& outBits, uint32_t& outCost) const;
+    void     setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mvmin, MV& mvmax) const;
     uint32_t mergeEstimation(CUData& cu, const CUGeom& cuGeom, const PredictionUnit& pu, int puIdx, MergeData& m);
     static void getBlkBits(PartSize cuMode, bool bPSlice, int puIdx, uint32_t lastMode, uint32_t blockBit[3]);
 

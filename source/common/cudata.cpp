@@ -298,7 +298,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
 }
 
 // initialize Sub partition
-void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom)
+void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp)
 {
     m_absIdxInCTU   = cuGeom.absPartIdx;
     m_encData       = ctu.m_encData;
@@ -312,8 +312,8 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom)
     m_cuAboveRight  = ctu.m_cuAboveRight;
     X265_CHECK(m_numPartitions == cuGeom.numPartitions, "initSubCU() size mismatch\n");
 
-    /* sequential memsets */
-    m_partSet((uint8_t*)m_qp, (uint8_t)ctu.m_qp[0]);
+    m_partSet((uint8_t*)m_qp, (uint8_t)qp);
+
     m_partSet(m_log2CUSize,   (uint8_t)cuGeom.log2CUSize);
     m_partSet(m_lumaIntraDir, (uint8_t)DC_IDX);
     m_partSet(m_tqBypass,     (uint8_t)m_encData->m_param->bLossless);
@@ -1830,6 +1830,10 @@ void CUData::getInterNeighbourMV(InterNeighbourMV *neighbour, uint32_t partUnitI
     }
 }
 
+/* Clip motion vector to within slightly padded boundary of picture (the
+ * MV may reference a block that is completely within the padded area).
+ * Note this function is unaware of how much of this picture is actually
+ * available for use (re: frame parallelism) */
 void CUData::clipMv(MV& outMV) const
 {
     const uint32_t mvshift = 2;
@@ -2027,6 +2031,7 @@ void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUS
         uint32_t blockSize = 1 << log2CUSize;
         uint32_t sbWidth   = 1 << (g_log2Size[maxCUSize] - log2CUSize);
         int32_t lastLevelFlag = log2CUSize == g_log2Size[minCUSize];
+
         for (uint32_t sbY = 0; sbY < sbWidth; sbY++)
         {
             for (uint32_t sbX = 0; sbX < sbWidth; sbX++)

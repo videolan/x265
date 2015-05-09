@@ -85,8 +85,8 @@ struct CUGeom
     uint32_t childOffset;   // offset of the first child CU from current CU
     uint32_t absPartIdx;    // Part index of this CU in terms of 4x4 blocks.
     uint32_t numPartitions; // Number of 4x4 blocks in the CU
-    uint32_t depth;         // depth of this CU relative from CTU
     uint32_t flags;         // CU flags.
+    uint32_t depth;         // depth of this CU relative from CTU
 };
 
 struct MVField
@@ -182,7 +182,7 @@ public:
     static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
 
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp);
-    void     initSubCU(const CUData& ctu, const CUGeom& cuGeom);
+    void     initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp);
     void     initLosslessCU(const CUData& cu, const CUGeom& cuGeom);
 
     void     copyPartFrom(const CUData& cu, const CUGeom& childGeom, uint32_t subPartIdx);

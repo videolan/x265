@@ -90,7 +90,6 @@ void setupAliasPrimitives(EncoderPrimitives &p)
 
     /* alias chroma 4:4:4 from luma primitives (all but chroma filters) */
 
-    p.chroma[X265_CSP_I444].p2s = p.luma_p2s;
     p.chroma[X265_CSP_I444].cu[BLOCK_4x4].sa8d = NULL;
 
     for (int i = 0; i < NUM_PU_SIZES; i++)
@@ -98,7 +97,7 @@ void setupAliasPrimitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].pu[i].copy_pp = p.pu[i].copy_pp;
         p.chroma[X265_CSP_I444].pu[i].addAvg  = p.pu[i].addAvg;
         p.chroma[X265_CSP_I444].pu[i].satd    = p.pu[i].satd;
-        p.chroma[X265_CSP_I444].pu[i].chroma_p2s = p.pu[i].filter_p2s;
+        p.chroma[X265_CSP_I444].pu[i].p2s     = p.pu[i].convert_p2s;
     }
 
     for (int i = 0; i < NUM_CU_SIZES; i++)
