@@ -1677,8 +1677,15 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                             X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, codingParameters.scan[subPosBase + scanPosSigOff], bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
                             //encodeBin(sig, baseCtx[ctxSig]);
                             const uint32_t mstate = baseCtx[ctxSig];
-                            baseCtx[ctxSig] = sbacNext(mstate, sig);
-                            sum += sbacGetEntropyBits(mstate, sig);
+                            const uint32_t mps = mstate & 1;
+                            const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
+                            uint32_t nextState = (stateBits >> 23) + mps;
+                            if ((mstate ^ sig) == 1)
+                                nextState = sig;
+                            X265_CHECK(sbacNext(mstate, sig) == nextState, "nextState check failure\n");
+                            X265_CHECK(sbacGetEntropyBits(mstate, sig) == (stateBits & 0xFFFFFF), "entropyBits check failure\n");
+                            baseCtx[ctxSig] = (uint8_t)nextState;
+                            sum += stateBits;
                         }
                         absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
@@ -1706,13 +1713,21 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                             X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, codingParameters.scan[subPosBase + scanPosSigOff], bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
                             //encodeBin(sig, baseCtx[ctxSig]);
                             const uint32_t mstate = baseCtx[ctxSig];
-                            baseCtx[ctxSig] = sbacNext(mstate, sig);
-                            sum += sbacGetEntropyBits(mstate, sig);
+                            const uint32_t mps = mstate & 1;
+                            const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
+                            uint32_t nextState = (stateBits >> 23) + mps;
+                            if ((mstate ^ sig) == 1)
+                                nextState = sig;
+                            X265_CHECK(sbacNext(mstate, sig) == nextState, "nextState check failure\n");
+                            X265_CHECK(sbacGetEntropyBits(mstate, sig) == (stateBits & 0xFFFFFF), "entropyBits check failure\n");
+                            baseCtx[ctxSig] = (uint8_t)nextState;
+                            sum += stateBits;
                         }
                         absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
                     }
                 } // end of non 4x4 path
+                sum &= 0xFFFFFF;
 
                 // update RD cost
                 m_fracBits += sum;
@@ -2226,6 +2241,28 @@ const uint32_t g_entropyBits[128] =
     0x00c01, 0x1fef8, 0x00b5f, 0x208b1, 0x00ab6, 0x21362, 0x00a15, 0x21e46, 0x00988, 0x2285d, 0x00934, 0x22ea8, 0x008a8, 0x239b2, 0x0081d, 0x24577,
     0x007c9, 0x24ce6, 0x00763, 0x25663, 0x00710, 0x25e8f, 0x006a0, 0x26a26, 0x00672, 0x26f23, 0x005e8, 0x27ef8, 0x005ba, 0x284b5, 0x0055e, 0x29057,
     0x0050c, 0x29bab, 0x004c1, 0x2a674, 0x004a7, 0x2aa5e, 0x0046f, 0x2b32f, 0x0041f, 0x2c0ad, 0x003e7, 0x2ca8d, 0x003ba, 0x2d323, 0x0010c, 0x3bfbb
+};
+
+// [8 24] --> [stateMPS BitCost], [stateLPS BitCost]
+const uint32_t g_entropyStateBits[128] =
+{
+    // Corrected table, most notably for last state
+    0x01007b23, 0x000085f9, 0x020074a0, 0x00008cbc, 0x03006ee4, 0x01009354, 0x040067f4, 0x02009c1b,
+    0x050060b0, 0x0200a62a, 0x06005a9c, 0x0400af5b, 0x0700548d, 0x0400b955, 0x08004f56, 0x0500c2a9,
+    0x09004a87, 0x0600cbf7, 0x0a0045d6, 0x0700d5c3, 0x0b004144, 0x0800e01b, 0x0c003d88, 0x0900e937,
+    0x0d0039e0, 0x0900f2cd, 0x0e003663, 0x0b00fc9e, 0x0f003347, 0x0b010600, 0x10003050, 0x0c010f95,
+    0x11002d4d, 0x0d011a02, 0x12002ad3, 0x0d012333, 0x1300286e, 0x0f012cad, 0x14002604, 0x0f0136df,
+    0x15002425, 0x10013f48, 0x160021f4, 0x100149c4, 0x1700203e, 0x1201527b, 0x18001e4d, 0x12015d00,
+    0x19001c99, 0x130166de, 0x1a001b18, 0x13017017, 0x1b0019a5, 0x15017988, 0x1c001841, 0x15018327,
+    0x1d0016df, 0x16018d50, 0x1e0015d9, 0x16019547, 0x1f00147c, 0x1701a083, 0x2000138e, 0x1801a8a3,
+    0x21001251, 0x1801b418, 0x22001166, 0x1901bd27, 0x23001068, 0x1a01c77b, 0x24000f7f, 0x1a01d18e,
+    0x25000eda, 0x1b01d91a, 0x26000e19, 0x1b01e254, 0x27000d4f, 0x1c01ec9a, 0x28000c90, 0x1d01f6e0,
+    0x29000c01, 0x1d01fef8, 0x2a000b5f, 0x1e0208b1, 0x2b000ab6, 0x1e021362, 0x2c000a15, 0x1e021e46,
+    0x2d000988, 0x1f02285d, 0x2e000934, 0x20022ea8, 0x2f0008a8, 0x200239b2, 0x3000081d, 0x21024577,
+    0x310007c9, 0x21024ce6, 0x32000763, 0x21025663, 0x33000710, 0x22025e8f, 0x340006a0, 0x22026a26,
+    0x35000672, 0x23026f23, 0x360005e8, 0x23027ef8, 0x370005ba, 0x230284b5, 0x3800055e, 0x24029057,
+    0x3900050c, 0x24029bab, 0x3a0004c1, 0x2402a674, 0x3b0004a7, 0x2502aa5e, 0x3c00046f, 0x2502b32f,
+    0x3d00041f, 0x2502c0ad, 0x3e0003e7, 0x2602ca8d, 0x3e0003ba, 0x2602d323, 0x3f00010c, 0x3f03bfbb,
 };
 
 const uint8_t g_nextState[128][2] =
