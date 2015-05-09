@@ -1734,6 +1734,149 @@ cglobal interp_4tap_vert_pp_8x%1, 4, 7, 12
 %endif
 
 ;-----------------------------------------------------------------------------
+; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+%macro FILTER_V4_W8_H8_H16_H32_sse2 2
+INIT_XMM sse2
+cglobal interp_4tap_vert_pp_%1x%2, 4, 6, 11
+
+    mov         r4d,       r4m
+    sub         r0,        r1
+    shl         r4d,       5
+    pxor        m9,        m9
+
+%ifdef PIC
+    lea         r5,        [tab_ChromaCoeffV]
+    mova        m6,        [r5 + r4]
+    mova        m5,        [r5 + r4 + 16]
+%else
+    mova        m6,        [tab_ChromaCoeff + r4]
+    mova        m5,        [tab_ChromaCoeff + r4 + 16]
+%endif
+
+    mova        m4,        [pw_32]
+    lea         r5,        [r1 * 3]
+
+%assign x 1
+%rep %2/4
+    movq        m0,        [r0]
+    movq        m1,        [r0 + r1]
+    movq        m2,        [r0 + 2 * r1]
+    movq        m3,        [r0 + r5]
+
+    punpcklbw   m0,        m1
+    punpcklbw   m1,        m2
+    punpcklbw   m2,        m3
+
+    movhlps     m7,        m0
+    punpcklbw   m0,        m9
+    punpcklbw   m7,        m9
+    pmaddwd     m0,        m6
+    pmaddwd     m7,        m6
+    packssdw    m0,        m7
+
+    movhlps     m8,        m2
+    movq        m7,        m2
+    punpcklbw   m8,        m9
+    punpcklbw   m7,        m9
+    pmaddwd     m8,        m5
+    pmaddwd     m7,        m5
+    packssdw    m7,        m8
+
+    paddw       m0,        m7
+    paddw       m0,        m4
+    psraw       m0,        6
+
+    lea         r0,        [r0 + 4 * r1]
+    movq        m10,       [r0]
+    punpcklbw   m3,        m10
+
+    movhlps     m8,        m1
+    punpcklbw   m1,        m9
+    punpcklbw   m8,        m9
+    pmaddwd     m1,        m6
+    pmaddwd     m8,        m6
+    packssdw    m1,        m8
+
+    movhlps     m8,        m3
+    movq        m7,        m3
+    punpcklbw   m8,        m9
+    punpcklbw   m7,        m9
+    pmaddwd     m8,        m5
+    pmaddwd     m7,        m5
+    packssdw    m7,        m8
+
+    paddw       m1,        m7
+    paddw       m1,        m4
+    psraw       m1,        6
+
+    packuswb    m0,        m1
+    movh        [r2],      m0
+    movhps      [r2 + r3], m0
+
+    movq        m1,        [r0 + r1]
+    punpcklbw   m10,       m1
+
+    movhlps     m8,        m2
+    punpcklbw   m2,        m9
+    punpcklbw   m8,        m9
+    pmaddwd     m2,        m6
+    pmaddwd     m8,        m6
+    packssdw    m2,        m8
+
+    movhlps     m8,        m10
+    punpcklbw   m10,       m9
+    punpcklbw   m8,        m9
+    pmaddwd     m10,       m5
+    pmaddwd     m8,        m5
+    packssdw    m10,       m8
+
+    paddw       m2,        m10
+    paddw       m2,        m4
+    psraw       m2,        6
+
+    movq        m7,        [r0 + 2 * r1]
+    punpcklbw   m1,        m7
+
+    movhlps     m8,        m3
+    punpcklbw   m3,        m9
+    punpcklbw   m8,        m9
+    pmaddwd     m3,        m6
+    pmaddwd     m8,        m6
+    packssdw    m3,        m8
+
+    movhlps     m8,        m1
+    punpcklbw   m1,        m9
+    punpcklbw   m8,        m9
+    pmaddwd     m1,        m5
+    pmaddwd     m8,        m5
+    packssdw    m1,        m8
+
+    paddw       m3,        m1
+    paddw       m3,        m4
+    psraw       m3,        6
+
+    packuswb    m2,        m3
+    lea         r2,        [r2 + 2 * r3]
+    movh        [r2],      m2
+    movhps      [r2 + r3], m2
+%if x < %2/4
+    lea         r2,        [r2 + 2 * r3]
+%endif
+%endrep
+    RET
+%endmacro
+
+%if ARCH_X86_64
+    FILTER_V4_W8_H8_H16_H32_sse2 8,  8
+    FILTER_V4_W8_H8_H16_H32_sse2 8, 16
+    FILTER_V4_W8_H8_H16_H32_sse2 8, 32
+
+    FILTER_V4_W8_H8_H16_H32_sse2 8, 12
+    FILTER_V4_W8_H8_H16_H32_sse2 8, 64
+%endif
+
+;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
