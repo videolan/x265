@@ -1811,6 +1811,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                 if (!m_bitIf)
                 {
+                    uint32_t sum = 0;
                     // FastRd path
                     idx = 0;
                     do
@@ -1837,7 +1838,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                                 codeNumber = (length + length);
                             }
-                            m_fracBits += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber) << 15;
+                            sum += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber);
 
                             if (absCoeff[idx] > (COEF_REMAIN_BIN_REDUCTION << goRiceParam))
                                 goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
@@ -1848,6 +1849,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         idx++;
                     }
                     while(idx < numNonZero);
+                    m_fracBits += ((uint64_t)sum << 15);
                 }
                 else
                 {
