@@ -330,80 +330,38 @@ cextern pw_2000
 %endmacro
 
 ;-----------------------------------------------------------------------------
-; void interp_4tap_horiz_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+; void interp_4tap_horiz_pp_2xN(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
+%macro FILTER_H4_W2xN_sse3 1
 INIT_XMM sse3
-cglobal interp_4tap_horiz_pp_2x4, 4, 6, 6, src, srcstride, dst, dststride
-    mov         r4d,        r4m
-    mova        m5,         [pw_32]
+cglobal interp_4tap_horiz_pp_2x%1, 4, 6, 6, src, srcstride, dst, dststride
+    mov         r4d,    r4m
+    mova        m5,     [pw_32]
 
 %ifdef PIC
-    lea         r5,          [tabw_ChromaCoeff]
-    movddup     m4,         [r5 + r4 * 8]
+    lea         r5,     [tabw_ChromaCoeff]
+    movddup     m4,     [r5 + r4 * 8]
 %else
-    movddup     m4,         [tabw_ChromaCoeff + r4 * 8]
-%endif
-
-    FILTER_H4_w2_2_sse2
-    lea         srcq,       [srcq + srcstrideq * 2]
-    lea         dstq,       [dstq + dststrideq * 2]
-    FILTER_H4_w2_2_sse2
-
-    RET
-
-;-----------------------------------------------------------------------------
-; void interp_4tap_horiz_pp_2x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
-;-----------------------------------------------------------------------------
-INIT_XMM sse3
-cglobal interp_4tap_horiz_pp_2x8, 4, 6, 6, src, srcstride, dst, dststride
-    mov         r4d,        r4m
-    mova        m5,         [pw_32]
-
-%ifdef PIC
-    lea         r5,          [tabw_ChromaCoeff]
-    movddup     m4,         [r5 + r4 * 8]
-%else
-    movddup     m4,         [tabw_ChromaCoeff + r4 * 8]
+    movddup     m4,     [tabw_ChromaCoeff + r4 * 8]
 %endif
 
 %assign x 1
-%rep 4
+%rep %1/2
     FILTER_H4_w2_2_sse2
-%if x < 4
-    lea         srcq,       [srcq + srcstrideq * 2]
-    lea         dstq,       [dstq + dststrideq * 2]
+%if x < %1/2
+    lea         srcq,   [srcq + srcstrideq * 2]
+    lea         dstq,   [dstq + dststrideq * 2]
 %endif
 %assign x x+1
 %endrep
 
     RET
 
-;-----------------------------------------------------------------------------
-; void interp_4tap_horiz_pp_2x16(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
-;-----------------------------------------------------------------------------
-INIT_XMM sse3
-cglobal interp_4tap_horiz_pp_2x16, 4, 6, 6, src, srcstride, dst, dststride
-    mov         r4d,        r4m
-    mova        m5,         [pw_32]
+%endmacro
 
-%ifdef PIC
-    lea         r5,         [tabw_ChromaCoeff]
-    movddup     m4,         [r5 + r4 * 8]
-%else
-    movddup     m4,         [tabw_ChromaCoeff + r4 * 8]
-%endif
-
-%assign x 1
-%rep 8
-    FILTER_H4_w2_2_sse2
-%if x < 8
-    lea         srcq,       [srcq + srcstrideq * 2]
-    lea         dstq,       [dstq + dststrideq * 2]
-%endif
-%assign x x+1
-%endrep
-
-    RET
+    FILTER_H4_W2xN_sse3 4
+    FILTER_H4_W2xN_sse3 8
+    FILTER_H4_W2xN_sse3 16
 
 %macro FILTER_H4_w4_2_sse2 0
     pxor        m5, m5
@@ -447,142 +405,40 @@ cglobal interp_4tap_horiz_pp_2x16, 4, 6, 6, src, srcstride, dst, dststride
 %endmacro
 
 ;-----------------------------------------------------------------------------
-; void interp_4tap_horiz_pp_4x2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
-;-----------------------------------------------------------------------------
-INIT_XMM sse3
-cglobal interp_4tap_horiz_pp_4x2, 4, 6, 8, src, srcstride, dst, dststride
-    mov         r4d,        r4m
-    mova        m7,         [pw_32]
-
-%ifdef PIC
-    lea         r5,         [tabw_ChromaCoeff]
-    movddup     m4,         [r5 + r4 * 8]
-%else
-    movddup     m4,         [tabw_ChromaCoeff + r4 * 8]
-%endif
-
-    FILTER_H4_w4_2_sse2
-
-    RET
-
-;-----------------------------------------------------------------------------
-; void interp_4tap_horiz_pp_4x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
-;-----------------------------------------------------------------------------
-INIT_XMM sse3
-cglobal interp_4tap_horiz_pp_4x4, 4, 6, 8, src, srcstride, dst, dststride
-    mov         r4d,        r4m
-    mova        m7,         [pw_32]
-
-%ifdef PIC
-    lea         r5,         [tabw_ChromaCoeff]
-    movddup     m4,         [r5 + r4 * 8]
-%else
-    movddup     m4,         [tabw_ChromaCoeff + r4 * 8]
-%endif
-
-    FILTER_H4_w4_2_sse2
-    lea         srcq,       [srcq + srcstrideq * 2]
-    lea         dstq,       [dstq + dststrideq * 2]
-    FILTER_H4_w4_2_sse2
-
-    RET
-
-;-----------------------------------------------------------------------------
-; void interp_4tap_horiz_pp_4x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
-;-----------------------------------------------------------------------------
-INIT_XMM sse3
-cglobal interp_4tap_horiz_pp_4x8, 4, 6, 8, src, srcstride, dst, dststride
-    mov         r4d,        r4m
-    mova        m7,         [pw_32]
-
-%ifdef PIC
-    lea         r5,         [tabw_ChromaCoeff]
-    movddup     m4,         [r5 + r4 * 8]
-%else
-    movddup     m4,         [tabw_ChromaCoeff + r4 * 8]
-%endif
-
-%assign x 1
-%rep 4
-    FILTER_H4_w4_2_sse2
-%if x < 4
-    lea         srcq,       [srcq + srcstrideq * 2]
-    lea         dstq,       [dstq + dststrideq * 2]
-%endif
-%assign x x+1
-%endrep
-
-    RET
-
-;-----------------------------------------------------------------------------
-; void interp_4tap_horiz_pp_4x16(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
-;-----------------------------------------------------------------------------
-INIT_XMM sse3
-cglobal interp_4tap_horiz_pp_4x16, 4, 6, 8, src, srcstride, dst, dststride
-    mov         r4d,        r4m
-    mova        m7,         [pw_32]
-
-%ifdef PIC
-    lea         r5,         [tabw_ChromaCoeff]
-    movddup     m4,         [r5 + r4 * 8]
-%else
-    movddup     m4,         [tabw_ChromaCoeff + r4 * 8]
-%endif
-
-%assign x 1
-%rep 8
-    FILTER_H4_w4_2_sse2
-%if x < 8
-    lea         srcq,       [srcq + srcstrideq * 2]
-    lea         dstq,       [dstq + dststrideq * 2]
-%endif
-%assign x x+1
-%endrep
-
-    RET
-
-;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp_4x32(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
+%macro FILTER_H4_W4xN_sse3 1
 INIT_XMM sse3
-cglobal interp_4tap_horiz_pp_4x32, 4, 6, 8, src, srcstride, dst, dststride
-    mov         r4d,        r4m
-    mova        m7,         [pw_32]
+cglobal interp_4tap_horiz_pp_4x%1, 4, 6, 8, src, srcstride, dst, dststride
+    mov         r4d,    r4m
+    mova        m7,     [pw_32]
 
 %ifdef PIC
-    lea         r5,          [tabw_ChromaCoeff]
-    movddup     m4,       [r5 + r4 * 8]
+    lea         r5,     [tabw_ChromaCoeff]
+    movddup     m4,     [r5 + r4 * 8]
 %else
-    movddup     m4,       [tabw_ChromaCoeff + r4 * 8]
+    movddup     m4,     [tabw_ChromaCoeff + r4 * 8]
 %endif
 
 %assign x 1
-%rep 16
+%rep %1/2
     FILTER_H4_w4_2_sse2
-%if x < 16
-    lea         srcq,       [srcq + srcstrideq * 2]
-    lea         dstq,       [dstq + dststrideq * 2]
+%if x < %1/2
+    lea         srcq,   [srcq + srcstrideq * 2]
+    lea         dstq,   [dstq + dststrideq * 2]
 %endif
 %assign x x+1
 %endrep
 
     RET
 
-%macro FILTER_H4_w2_2 3
-    movh        %2, [srcq - 1]
-    pshufb      %2, %2, Tm0
-    movh        %1, [srcq + srcstrideq - 1]
-    pshufb      %1, %1, Tm0
-    punpcklqdq  %2, %1
-    pmaddubsw   %2, coef2
-    phaddw      %2, %2
-    pmulhrsw    %2, %3
-    packuswb    %2, %2
-    movd        r4, %2
-    mov         [dstq], r4w
-    shr         r4, 16
-    mov         [dstq + dststrideq], r4w
 %endmacro
+
+    FILTER_H4_W4xN_sse3 2
+    FILTER_H4_W4xN_sse3 4
+    FILTER_H4_W4xN_sse3 8
+    FILTER_H4_W4xN_sse3 16
+    FILTER_H4_W4xN_sse3 32
 
 %macro FILTER_H4_w6_sse2 0
     pxor        m4, m4
@@ -762,58 +618,28 @@ cglobal interp_4tap_horiz_pp_%1x%2, 4, 6, 8, src, srcstride, dst, dststride
     IPFILTER_CHROMA_sse3 8,  64
     IPFILTER_CHROMA_sse3 12, 32
 
-;-----------------------------------------------------------------------------
-; void interp_4tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
-;-----------------------------------------------------------------------------
-%macro IPFILTER_CHROMA_W_sse3 2
-INIT_XMM sse3
-cglobal interp_4tap_horiz_pp_%1x%2, 4, 6, 8, src, srcstride, dst, dststride
-    mov         r4d,         r4m
-    mova        m7,         [pw_32]
-    pxor        m4,         m4
-%ifdef PIC
-    lea         r5,          [tabw_ChromaCoeff]
-    movddup     m6,       [r5 + r4 * 8]
-%else
-    movddup     m6,       [tabw_ChromaCoeff + r4 * 8]
-%endif
+    IPFILTER_CHROMA_sse3 16,  4
+    IPFILTER_CHROMA_sse3 16,  8
+    IPFILTER_CHROMA_sse3 16, 12
+    IPFILTER_CHROMA_sse3 16, 16
+    IPFILTER_CHROMA_sse3 16, 32
+    IPFILTER_CHROMA_sse3 32,  8
+    IPFILTER_CHROMA_sse3 32, 16
+    IPFILTER_CHROMA_sse3 32, 24
+    IPFILTER_CHROMA_sse3 24, 32
+    IPFILTER_CHROMA_sse3 32, 32
 
-%assign x 1
-%rep %2
-    FILTER_H4_w%1_sse2
-%if x < %2
-    add         srcq,        srcstrideq
-    add         dstq,        dststrideq
-%endif
-%assign x x+1
-%endrep
+    IPFILTER_CHROMA_sse3 16, 24
+    IPFILTER_CHROMA_sse3 16, 64
+    IPFILTER_CHROMA_sse3 32, 48
+    IPFILTER_CHROMA_sse3 24, 64
+    IPFILTER_CHROMA_sse3 32, 64
 
-    RET
-
-%endmacro
-
-    IPFILTER_CHROMA_W_sse3 16,  4
-    IPFILTER_CHROMA_W_sse3 16,  8
-    IPFILTER_CHROMA_W_sse3 16, 12
-    IPFILTER_CHROMA_W_sse3 16, 16
-    IPFILTER_CHROMA_W_sse3 16, 32
-    IPFILTER_CHROMA_W_sse3 32,  8
-    IPFILTER_CHROMA_W_sse3 32, 16
-    IPFILTER_CHROMA_W_sse3 32, 24
-    IPFILTER_CHROMA_W_sse3 24, 32
-    IPFILTER_CHROMA_W_sse3 32, 32
-
-    IPFILTER_CHROMA_W_sse3 16, 24
-    IPFILTER_CHROMA_W_sse3 16, 64
-    IPFILTER_CHROMA_W_sse3 32, 48
-    IPFILTER_CHROMA_W_sse3 24, 64
-    IPFILTER_CHROMA_W_sse3 32, 64
-
-    IPFILTER_CHROMA_W_sse3 64, 64
-    IPFILTER_CHROMA_W_sse3 64, 32
-    IPFILTER_CHROMA_W_sse3 64, 48
-    IPFILTER_CHROMA_W_sse3 48, 64
-    IPFILTER_CHROMA_W_sse3 64, 16
+    IPFILTER_CHROMA_sse3 64, 64
+    IPFILTER_CHROMA_sse3 64, 32
+    IPFILTER_CHROMA_sse3 64, 48
+    IPFILTER_CHROMA_sse3 48, 64
+    IPFILTER_CHROMA_sse3 64, 16
 
 %macro FILTER_H8_W8_sse2 0
     movh        m1, [r0 + x - 3]
@@ -1875,6 +1701,22 @@ cglobal interp_4tap_vert_pp_%1x%2, 4, 6, 11
     FILTER_V4_W8_H8_H16_H32_sse2 8, 12
     FILTER_V4_W8_H8_H16_H32_sse2 8, 64
 %endif
+
+%macro FILTER_H4_w2_2 3
+    movh        %2, [srcq - 1]
+    pshufb      %2, %2, Tm0
+    movh        %1, [srcq + srcstrideq - 1]
+    pshufb      %1, %1, Tm0
+    punpcklqdq  %2, %1
+    pmaddubsw   %2, coef2
+    phaddw      %2, %2
+    pmulhrsw    %2, %3
+    packuswb    %2, %2
+    movd        r4, %2
+    mov         [dstq], r4w
+    shr         r4, 16
+    mov         [dstq + dststrideq], r4w
+%endmacro
 
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp_2x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
