@@ -1554,7 +1554,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         }
 
         // encode significant_coeff_flag
-        if (sigCoeffGroupFlag64 & cgBlkPosMask)
+        if ((scanPosSigOff >= 0) && (sigCoeffGroupFlag64 & cgBlkPosMask))
         {
             X265_CHECK((log2TrSize != 2) || (log2TrSize == 2 && subSet == 0), "log2TrSize and subSet mistake!\n");
             const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
@@ -1612,6 +1612,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 tmpCoeff[i * MLS_CG_SIZE + 3] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 3]);
             }
 
+            X265_CHECK(scanPosSigOff >= 0, "scanPosSigOff check failure\n");
             if (m_bitIf)
             {
                 if (log2TrSize == 2)
