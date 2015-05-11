@@ -785,10 +785,9 @@ void PreLookaheadGroup::processTasks(int workerThreadID)
     while (m_jobAcquired < m_jobTotal)
     {
         Frame* preFrame = m_preframes[m_jobAcquired++];
-        m_lock.release();
-
-        ProfileLookaheadTime(m_preLookaheadElapsedTime, m_countPreLookahead);
+        ProfileLookaheadTime(m_lookahead.m_preLookaheadElapsedTime, m_lookahead.m_countPreLookahead);
         ProfileScopeEvent(prelookahead);
+        m_lock.release();
 
         preFrame->m_lowres.init(preFrame->m_fencPic, preFrame->m_poc);
         if (m_lookahead.m_param->rc.bStatRead && m_lookahead.m_param->rc.cuTree && IS_REFERENCED(preFrame))
