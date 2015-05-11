@@ -1769,15 +1769,24 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             {
                 uint32_t symbol = absCoeff[idx] > 1;
                 encodeBin(symbol, baseCtxMod[c1]);
+
+                // TODO: VC can't work fine on below style, but ICL can generate branch free code
+#ifdef __INTEL_COMPILER
+                if (symbol)
+                    c1 = 0;
+
+                if ((firstC2FlagIdx < 0) & symbol)
+                    firstC2FlagIdx = (int)idx;
+#else
                 if (symbol)
                 {
                     c1 = 0;
-
-                    if (firstC2FlagIdx == -1)
-                        firstC2FlagIdx = idx;
+                    if (firstC2FlagIdx < 0)
+                        firstC2FlagIdx = (int)idx;
                 }
-                else if ((c1 < 3) && (c1 > 0))
-                    c1++;
+#endif
+                c1 += ((c1 >> 1) ^ c1) & 1;
+                X265_CHECK((c1 >= 0) && (c1 <= 3), "c1 check failure\n");
                 idx++;
             }
             while(idx < numC1Flag);
