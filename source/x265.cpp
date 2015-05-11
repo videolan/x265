@@ -75,6 +75,8 @@ struct CLIOptions
     OutputFile* output;
     FILE*       qpfile;
     const char* reconPlayCmd;
+    const x265_api* api;
+    x265_param* param;
     bool bProgress;
     bool bForceY4m;
     bool bDither;
@@ -92,6 +94,10 @@ struct CLIOptions
         input = NULL;
         recon = NULL;
         output = NULL;
+        qpfile = NULL;
+        reconPlayCmd = NULL;
+        api = NULL;
+        param = NULL;
         framesToBeEncoded = seek = 0;
         totalbytes = 0;
         bProgress = true;
@@ -99,15 +105,12 @@ struct CLIOptions
         startTime = x265_mdate();
         prevUpdateTime = 0;
         bDither = false;
-        qpfile = NULL;
-        reconPlayCmd = NULL;
     }
 
     void destroy();
-    void printStatus(uint32_t frameNum, x265_param *param);
-    bool parse(int argc, char **argv, x265_param* param);
+    void printStatus(uint32_t frameNum);
+    bool parse(int argc, char **argv);
     bool parseQPFile(x265_picture &pic_org);
-    bool validateFanout(x265_param*);
 };
 
 void CLIOptions::destroy()
@@ -126,7 +129,7 @@ void CLIOptions::destroy()
     output = NULL;
 }
 
-void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
+void CLIOptions::printStatus(uint32_t frameNum)
 {
     char buf[200];
     int64_t time = x265_mdate();
@@ -153,11 +156,12 @@ void CLIOptions::printStatus(uint32_t frameNum, x265_param *param)
     prevUpdateTime = time;
 }
 
-bool CLIOptions::parse(int argc, char **argv, x265_param* param)
+bool CLIOptions::parse(int argc, char **argv)
 {
     bool bError = 0;
     int help = 0;
     int inputBitDepth = 8;
+    int outputBitDepth = 0;
     int reconFileBitDepth = 0;
     const char *inputfn = NULL;
     const char *reconfn = NULL;
@@ -178,15 +182,31 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         int c = getopt_long(argc, argv, short_options, long_options, NULL);
         if (c == -1)
             break;
-        if (c == 'p')
+        else if (c == 'p')
             preset = optarg;
-        if (c == 't')
+        else if (c == 't')
             tune = optarg;
+        else if (c == 'D')
+            outputBitDepth = atoi(optarg);
         else if (c == '?')
             showHelp(param);
     }
 
-    if (x265_param_default_preset(param, preset, tune) < 0)
+    api = x265_api_get(outputBitDepth);
+    if (!api)
+    {
+        x265_log(NULL, X265_LOG_WARNING, "falling back to default bit-depth\n");
+        api = x265_api_get(0);
+    }
+
+    param = api->param_alloc();
+    if (!param)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "param alloc failed\n");
+        return true;
+    }
+
+    if (api->param_default_preset(param, preset, tune) < 0)
     {
         x265_log(NULL, X265_LOG_ERROR, "preset or tune unrecognized\n");
         return true;
@@ -255,6 +275,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
             OPT("profile") profile = optarg; /* handled last */
             OPT("preset") /* handled above */;
             OPT("tune")   /* handled above */;
+            OPT("output-depth")   /* handled above */;
             OPT("recon-y4m-exec") reconPlayCmd = optarg;
             OPT("qpfile")
             {
@@ -266,7 +287,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
                 }
             }
             else
-                bError |= !!x265_param_parse(param, long_options[long_options_index].name, optarg);
+                bError |= !!api->param_parse(param, long_options[long_options_index].name, optarg);
 
             if (bError)
             {
@@ -297,9 +318,9 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
         return true;
     }
 
-    if (param->internalBitDepth != x265_max_bit_depth)
+    if (param->internalBitDepth != api->max_bit_depth)
     {
-        x265_log(param, X265_LOG_ERROR, "Only bit depths of %d are supported in this build\n", x265_max_bit_depth);
+        x265_log(param, X265_LOG_ERROR, "Only bit depths of %d are supported in this build\n", api->max_bit_depth);
         return true;
     }
 
@@ -351,7 +372,7 @@ bool CLIOptions::parse(int argc, char **argv, x265_param* param)
     info.timebaseNum = param->fpsDenom;
     info.timebaseDenom = param->fpsNum;
 
-    if (x265_param_apply_profile(param, profile))
+    if (api->param_apply_profile(param, profile))
         return true;
 
     if (param->logLevel >= X265_LOG_INFO)
@@ -458,19 +479,19 @@ int main(int argc, char **argv)
     GetConsoleTitle(orgConsoleTitle, CONSOLE_TITLE_SIZE);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 
-    const x265_api* api = x265_api_get(0); /* Use 0 to indicate native bit depth of the linked libx265 */
-    /* x265_api_get(0) is guaranteed to return a non-null pointer */
-
     ReconPlay* reconPlay = NULL;
-    x265_param* param = api->param_alloc();
     CLIOptions cliopt;
 
-    if (cliopt.parse(argc, argv, param))
+    if (cliopt.parse(argc, argv))
     {
         cliopt.destroy();
-        api->param_free(param);
+        if (cliopt.api)
+            cliopt.api->param_free(cliopt.param);
         exit(1);
     }
+
+    x265_param* param = cliopt.param;
+    const x265_api* api = cliopt.api;
 
     /* This allows muxers to modify bitstream format */
     cliopt.output->setParam(param);
@@ -593,7 +614,7 @@ int main(int argc, char **argv)
             }
         }
 
-        cliopt.printStatus(outFrameCount, param);
+        cliopt.printStatus(outFrameCount);
     }
 
     /* Flush the encoder */
@@ -623,7 +644,7 @@ int main(int argc, char **argv)
             }
         }
 
-        cliopt.printStatus(outFrameCount, param);
+        cliopt.printStatus(outFrameCount);
 
         if (!numEncoded)
             break;

@@ -30,7 +30,7 @@
 namespace x265 {
 #endif
 
-static const char short_options[] = "o:P:p:f:F:r:I:i:b:s:t:q:m:hwV?";
+static const char short_options[] = "o:D:P:p:f:F:r:I:i:b:s:t:q:m:hwV?";
 static const struct option long_options[] =
 {
     { "help",                 no_argument, NULL, 'h' },
@@ -59,6 +59,7 @@ static const struct option long_options[] =
     { "y4m",                  no_argument, NULL, 0 },
     { "no-progress",          no_argument, NULL, 0 },
     { "output",         required_argument, NULL, 'o' },
+    { "output-depth",   required_argument, NULL, 'D' },
     { "input",          required_argument, NULL, 0 },
     { "input-depth",    required_argument, NULL, 0 },
     { "input-res",      required_argument, NULL, 0 },
@@ -242,6 +243,7 @@ static void showHelp(x265_param *param)
     H0("-V/--version                     Show version info and exit\n");
     H0("\nOutput Options:\n");
     H0("-o/--output <filename>           Bitstream output file name\n");
+    H0("-D/--output-depth 8|10           Output bit depth (also internal bit depth). Default %d\n", param->internalBitDepth);
     H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", x265::logLevelNames[param->logLevel + 1]);
     H0("   --no-progress                 Disable CLI progress reports\n");
     H0("   --[no-]cu-stats               Enable logging stats about distribution of cu across all modes. Default %s\n",OPT(param->bLogCuStats));

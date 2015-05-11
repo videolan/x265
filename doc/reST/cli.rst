@@ -419,6 +419,16 @@ frame counts) are only applicable to the CLI application.
 
 	**CLI ONLY**
 
+.. option:: --output-depth, -D 8|10
+
+	Bitdepth of output HEVC bitstream, which is also the internal bit
+	depth of the encoder. If the requested bit depth is not the bit
+	depth of the linked libx265, it will attempt to bind libx265_main
+	for an 8bit encoder, or libx265_main10 for a 10bit encoder, with the
+	same API version as the linked libx265.
+
+	**CLI ONLY**
+
 Profile, Level, Tier
 ====================
 
