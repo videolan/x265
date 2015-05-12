@@ -1702,6 +1702,145 @@ cglobal interp_4tap_vert_pp_%1x%2, 4, 6, 11
     FILTER_V4_W8_H8_H16_H32_sse2 8, 64
 %endif
 
+;-----------------------------------------------------------------------------
+; void interp_4tap_vert_pp_12xN(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------
+%macro FILTER_V4_W12_H2_sse2 1
+INIT_XMM sse2
+cglobal interp_4tap_vert_pp_12x%1, 4, 6, 11
+    mov         r4d,       r4m
+    sub         r0,        r1
+    shl         r4d,       5
+    pxor        m9,        m9
+    mova        m6,        [pw_32]
+
+%ifdef PIC
+    lea         r5,        [tab_ChromaCoeffV]
+    mova        m1,        [r5 + r4]
+    mova        m0,        [r5 + r4 + 16]
+%else
+    mova        m1,        [tab_ChromaCoeffV + r4]
+    mova        m0,        [tab_ChromaCoeffV + r4 + 16]
+%endif
+
+%assign x 1
+%rep %1/2
+    movu        m2,        [r0]
+    movu        m3,        [r0 + r1]
+
+    punpcklbw   m4,        m2,        m3
+    punpckhbw   m2,        m3
+
+    movhlps     m8,        m4
+    punpcklbw   m4,        m9
+    punpcklbw   m8,        m9
+    pmaddwd     m4,        m1
+    pmaddwd     m8,        m1
+    packssdw    m4,        m8
+
+    movhlps     m8,        m2
+    punpcklbw   m2,        m9
+    punpcklbw   m8,        m9
+    pmaddwd     m2,        m1
+    pmaddwd     m8,        m1
+    packssdw    m2,        m8
+
+    lea         r0,        [r0 + 2 * r1]
+    movu        m5,        [r0]
+    movu        m7,        [r0 + r1]
+
+    punpcklbw   m10,       m5,        m7
+    movhlps     m8,        m10
+    punpcklbw   m10,       m9
+    punpcklbw   m8,        m9
+    pmaddwd     m10,       m0
+    pmaddwd     m8,        m0
+    packssdw    m10,       m8
+
+    paddw       m4,        m10
+
+    punpckhbw   m10,       m5,        m7
+    movhlps     m8,        m10
+    punpcklbw   m10,       m9
+    punpcklbw   m8,        m9
+    pmaddwd     m10,       m0
+    pmaddwd     m8,        m0
+    packssdw    m10,       m8
+
+    paddw       m2,        m10
+
+    paddw       m4,        m6
+    psraw       m4,        6
+    paddw       m2,        m6
+    psraw       m2,        6
+
+    packuswb    m4,        m2
+    movh        [r2],      m4
+    psrldq      m4,        8
+    movd        [r2 + 8],  m4
+
+    punpcklbw   m4,        m3,        m5
+    punpckhbw   m3,        m5
+
+    movhlps     m8,        m4
+    punpcklbw   m4,        m9
+    punpcklbw   m8,        m9
+    pmaddwd     m4,        m1
+    pmaddwd     m8,        m1
+    packssdw    m4,        m8
+
+    movhlps     m8,        m4
+    punpcklbw   m3,        m9
+    punpcklbw   m8,        m9
+    pmaddwd     m3,        m1
+    pmaddwd     m8,        m1
+    packssdw    m3,        m8
+
+    movu        m5,        [r0 + 2 * r1]
+    punpcklbw   m2,        m7,        m5
+    punpckhbw   m7,        m5
+
+    movhlps     m8,        m2
+    punpcklbw   m2,        m9
+    punpcklbw   m8,        m9
+    pmaddwd     m2,        m0
+    pmaddwd     m8,        m0
+    packssdw    m2,        m8
+
+    movhlps     m8,        m7
+    punpcklbw   m7,        m9
+    punpcklbw   m8,        m9
+    pmaddwd     m7,        m0
+    pmaddwd     m8,        m0
+    packssdw    m7,        m8
+
+    paddw       m4,        m2
+    paddw       m3,        m7
+
+    paddw       m4,        m6
+    psraw       m4,        6
+    paddw       m3,        m6
+    psraw       m3,        6
+
+    packuswb    m4,        m3
+    movh        [r2 + r3], m4
+    psrldq      m4,        8
+    movd        [r2 + r3 + 8], m4
+
+%if x < %1/2
+    lea         r2,        [r2 + 2 * r3]
+%endif
+%assign x x+1
+%endrep
+    RET
+
+%endmacro
+
+%if ARCH_X86_64
+    FILTER_V4_W12_H2_sse2 16
+    FILTER_V4_W12_H2_sse2 32
+%endif
+
 %macro FILTER_H4_w2_2 3
     movh        %2, [srcq - 1]
     pshufb      %2, %2, Tm0
