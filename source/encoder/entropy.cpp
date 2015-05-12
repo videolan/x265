@@ -1786,7 +1786,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 }
 #endif
                 c1 += ((c1 >> 1) ^ c1) & 1;
-                X265_CHECK((c1 >= 0) && (c1 <= 3), "c1 check failure\n");
+                X265_CHECK(c1 <= 3, "c1 check failure\n");
                 idx++;
             }
             while(idx < numC1Flag);
