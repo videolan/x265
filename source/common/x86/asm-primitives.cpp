@@ -1269,6 +1269,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.pu[LUMA_32x16].sad = x265_pixel_sad_32x16_avx2;
         p.pu[LUMA_32x24].sad = x265_pixel_sad_32x24_avx2;
         p.pu[LUMA_32x32].sad = x265_pixel_sad_32x32_avx2;
+        p.pu[LUMA_32x64].sad = x265_pixel_sad_32x64_avx2;
 
         p.pu[LUMA_16x4].convert_p2s = x265_filterPixelToShort_16x4_avx2;
         p.pu[LUMA_16x8].convert_p2s = x265_filterPixelToShort_16x8_avx2;
