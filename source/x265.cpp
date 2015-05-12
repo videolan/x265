@@ -579,10 +579,10 @@ int main(int argc, char **argv)
 
         if (pic_in)
         {
-            if (pic_in->bitDepth > X265_DEPTH && cliopt.bDither)
+            if (pic_in->bitDepth > param->internalBitDepth && cliopt.bDither)
             {
-                ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, X265_DEPTH);
-                pic_in->bitDepth = X265_DEPTH;
+                ditherImage(*pic_in, param->sourceWidth, param->sourceHeight, errorBuf, param->internalBitDepth);
+                pic_in->bitDepth = param->internalBitDepth;
             }
             /* Overwrite PTS */
             pic_in->pts = pic_in->poc;
