@@ -448,6 +448,118 @@ cglobal intra_pred_dc32, 3, 4, 6
 %endrep
     RET
 
+;-------------------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
+;-------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal intra_pred_dc16, 3, 9, 4
+    mov             r3d,                 r4m
+    add             r1d,                 r1d
+    movu            m0,                  [r2 + 66]
+    movu            m2,                  [r2 +  2]
+    paddw           m0,                  m2
+
+    vextracti128    xm1,                 m0, 1
+    paddw           xm0,                 xm1
+    movhlps         xm1,                 xm0
+    paddw           xm0,                 xm1
+    phaddw          xm0,                 xm0
+    pmaddwd         xm0,                 [pw_1]
+    paddd           xm0,                 [pd_16]
+    psrad           xm0,                 5
+    movd            r5d,                 xm0
+    vpbroadcastw    m0,                  xm0
+
+    test            r3d,                 r3d
+
+    ; store DC 16x16
+    lea             r6,                  [r1 + r1 * 2]        ; index 3
+    lea             r7,                  [r1 + r1 * 4]        ; index 5
+    lea             r8,                  [r6 + r1 * 4]        ; index 7
+    lea             r4,                  [r0 + r8 * 1]        ; base + 7
+
+    movu            [r0],                m0
+    movu            [r0 + r1],           m0
+    movu            [r0 + r1 * 2],       m0
+    movu            [r0 + r6],           m0
+    movu            [r0 + r1 * 4],       m0
+    movu            [r0 + r7],           m0
+    movu            [r0 + r6 * 2],       m0
+    movu            [r4],                m0
+    movu            [r0 + r1 * 8],       m0
+    movu            [r4 + r1 * 2],       m0
+    movu            [r0 + r7 * 2],       m0
+    movu            [r4 + r1 * 4],       m0
+    movu            [r0 + r6 * 4],       m0
+    movu            [r4 + r6 * 2],       m0
+    movu            [r4 + r8],           m0
+    movu            [r4 + r1 * 8],       m0
+
+    ; Do DC Filter
+    jz              .end
+    mova            m1,                  [pw_2]
+    pmullw          m1,                  m0
+    paddw           m1,                  [pw_2]
+    movd            r3d,                 xm1
+    paddw           m1,                  m0
+
+    ; filter top
+    movu            m2,                  [r2 + 2]
+    paddw           m2,                  m1
+    psraw           m2,                  2
+    movu            [r0],                m2
+
+    ; filter top-left
+    movzx           r3d,                 r3w
+    movzx           r5d, word            [r2 + 66]
+    add             r3d,                 r5d
+    movzx           r5d, word            [r2 + 2]
+    add             r5d,                 r3d
+    shr             r5d,                 2
+    mov             [r0],                r5w
+
+    ; filter left
+    movu            m2,                  [r2 + 68]
+    paddw           m2,                  m1
+    psraw           m2,                  2
+    vextracti128    xm3,                 m2, 1
+
+    movq            r3,                  xm2
+    pshufd          xm2,                 xm2, 0xEE
+    mov             [r0 + r1],           r3w
+    shr             r3,                  16
+    mov             [r0 + r1 * 2],       r3w
+    shr             r3,                  16
+    mov             [r0 + r6],           r3w
+    shr             r3,                  16
+    mov             [r0 + r1 * 4],       r3w
+    movq            r3,                  xm2
+    mov             [r0 + r7],           r3w
+    shr             r3,                  16
+    mov             [r0 + r6 * 2],       r3w
+    shr             r3,                  16
+    mov             [r4],                r3w
+    shr             r3,                  16
+    mov             [r0 + r1 * 8],       r3w
+
+    movq            r3,                  xm3
+    pshufd          xm3,                 xm3, 0xEE
+    mov             [r4 + r1 * 2],       r3w
+    shr             r3,                  16
+    mov             [r0 + r7 * 2],       r3w
+    shr             r3,                  16
+    mov             [r4 + r1 * 4],       r3w
+    shr             r3,                  16
+    mov             [r0 + r6 * 4],       r3w
+    movq            r3,                  xm3
+    mov             [r4 + r6 * 2],       r3w
+    shr             r3,                  16
+    mov             [r4 + r8],           r3w
+    shr             r3,                  16
+    mov             [r4 + r1 * 8],       r3w
+.end:
+    RET
+
 ;---------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
