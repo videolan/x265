@@ -91,6 +91,7 @@ cextern pw_4
 cextern pw_8
 cextern pw_15
 cextern pw_16
+cextern pw_31
 cextern pw_32
 cextern pw_1023
 cextern pd_16
@@ -105,6 +106,7 @@ cextern pw_swap
 cextern pb_unpackwq1
 cextern pb_unpackwq2
 cextern pw_planar16_mul
+cextern pw_planar32_mul
 
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
@@ -900,6 +902,69 @@ cglobal intra_pred_planar32, 3,3,16
     %endif
 %assign y y+1
 %endrep
+%assign x x+1
+%endrep
+    RET
+
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal intra_pred_planar32, 3,3,8
+    movu            m1, [r2 + 2]
+    movu            m4, [r2 + 34]
+    lea             r2, [r2 + 66]
+    vpbroadcastw    m3, [r2]                    ; topRight   = above[32]
+    pmullw          m0, m3, [multiL]            ; (x + 1) * topRight
+    pmullw          m2, m3, [multiH2]           ; (x + 1) * topRight
+    vpbroadcastw    m6, [r2 + 128]              ; bottomLeft = left[32]
+    mova            m5, m6
+    paddw           m5, [pw_32]
+
+    paddw           m0, m5
+    paddw           m2, m5
+    mova            m5, m6
+    psubw           m3, m6, m1
+    pmullw          m1, [pw_31]
+    paddw           m0, m1
+    psubw           m5, m4
+    pmullw          m4, [pw_31]
+    paddw           m2, m4
+
+    mova            m6, [pw_planar32_mul]
+    mova            m4, [pw_planar16_mul]
+    add             r1, r1
+
+%macro PROCESS_AVX2 1
+    vpbroadcastw    m7, [r2 + %1 * 2]
+    pmullw          m1, m7, m6
+    pmullw          m7, m4
+    paddw           m1, m0
+    paddw           m7, m2
+    psrlw           m1, 6
+    psrlw           m7, 6
+    movu            [r0], m1
+    movu            [r0 + mmsize], m7
+%endmacro
+
+%macro  INCREMENT_AVX2 0
+    paddw           m2, m5
+    paddw           m0, m3
+    add             r0, r1
+%endmacro
+
+    add             r2, mmsize*2
+%assign x 0
+%rep 4
+%assign y 0
+%rep 8
+    PROCESS_AVX2 y
+%if x + y < 10
+    INCREMENT_AVX2
+%endif
+%assign y y+1
+%endrep
+lea     r2, [r2 + 16]
 %assign x x+1
 %endrep
     RET
