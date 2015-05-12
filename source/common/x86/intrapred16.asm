@@ -448,6 +448,106 @@ cglobal intra_pred_dc32, 3, 4, 6
 %endrep
     RET
 
+;---------------------------------------------------------------------------------------------
+; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
+;---------------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal intra_pred_dc32, 3, 3, 2
+    add              r2, 2
+    add             r1d, r1d
+    movu             m0, [r2]
+    movu             m1, [r2 + 32]
+    add              r2, mmsize*4        ; r2 += 128
+    paddw            m0, m1
+    movu             m1, [r2]
+    paddw            m0, m1
+    movu             m1, [r2 + 32]
+    paddw            m0, m1
+    vextracti128    xm1, m0, 1
+    paddw           xm0, xm1
+    movhlps         xm1, xm0
+    paddw           xm0, xm1
+    phaddw          xm0, xm0
+    pmaddwd         xm0, [pw_1]
+    paddd           xm0, [pd_32]         ; sum = sum + 32
+    psrld           xm0, 6               ; sum = sum / 64
+    vpbroadcastw     m0, xm0
+
+    lea              r2, [r1 * 3]
+    ; store DC 32x32
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 0 + mmsize], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 1 + mmsize], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + mmsize], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    movu            [r0 + r2 * 1 + mmsize], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 0 + mmsize], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 1 + mmsize], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + mmsize], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    movu            [r0 + r2 * 1 + mmsize], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 0 + mmsize], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 1 + mmsize], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + mmsize], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    movu            [r0 + r2 * 1 + mmsize], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 0 + mmsize], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 1 + mmsize], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + mmsize], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    movu            [r0 + r2 * 1 + mmsize], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 0 + mmsize], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 1 + mmsize], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + mmsize], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    movu            [r0 + r2 * 1 + mmsize], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 0 + mmsize], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 1 + mmsize], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + mmsize], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    movu            [r0 + r2 * 1 + mmsize], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 0 + mmsize], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 1 + mmsize], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + mmsize], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    movu            [r0 + r2 * 1 + mmsize], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 0 + mmsize], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 1 + mmsize], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r1 * 2 + mmsize], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    movu            [r0 + r2 * 1 + mmsize], m0
+    RET
+
 ;---------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
 ;---------------------------------------------------------------------------------------
