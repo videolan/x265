@@ -94,7 +94,7 @@ endif(X64 AND NOT WIN32)
 if(CMAKE_GENERATOR STREQUAL "Xcode")
   set(XCODE 1)
 endif()
-if (APPLE)
+if(APPLE)
   add_definitions(-DMACOS)
 endif()
 
@@ -296,7 +296,7 @@ if(WARNINGS_AS_ERRORS)
     endif()
 endif(WARNINGS_AS_ERRORS)
 
-if (WIN32)
+if(WIN32)
     # Visual leak detector
     find_package(VLD QUIET)
     if(VLD_FOUND)
