@@ -84,7 +84,7 @@ uint32_t x265_findPosFirstLast_ssse3(const int16_t *dstCoeff, const intptr_t trS
 
 #define SETUP_CHROMA_PIXELSUB_PS_FUNC(W, H, cpu) \
     void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t*  dest, intptr_t destride, const pixel* src0, const pixel* src1, intptr_t srcstride0, intptr_t srcstride1); \
-    void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel* dest, intptr_t destride, const pixel* src0, const int16_t*  scr1, intptr_t srcStride0, intptr_t srcStride1);
+    void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel* dest, intptr_t destride, const pixel* src0, const int16_t*  src1, intptr_t srcStride0, intptr_t srcStride1);
 
 #define CHROMA_420_PIXELSUB_DEF(cpu) \
     SETUP_CHROMA_PIXELSUB_PS_FUNC(4, 4, cpu); \
@@ -100,7 +100,7 @@ uint32_t x265_findPosFirstLast_ssse3(const int16_t *dstCoeff, const intptr_t trS
 
 #define SETUP_LUMA_PIXELSUB_PS_FUNC(W, H, cpu) \
     void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t*  dest, intptr_t destride, const pixel* src0, const pixel* src1, intptr_t srcstride0, intptr_t srcstride1); \
-    void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel* dest, intptr_t destride, const pixel* src0, const int16_t*  scr1, intptr_t srcStride0, intptr_t srcStride1);
+    void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel* dest, intptr_t destride, const pixel* src0, const int16_t*  src1, intptr_t srcStride0, intptr_t srcStride1);
 
 #define LUMA_PIXELSUB_DEF(cpu) \
     SETUP_LUMA_PIXELSUB_PS_FUNC(8,   8, cpu); \
