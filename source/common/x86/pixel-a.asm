@@ -6982,6 +6982,43 @@ cglobal pixel_sa8d_8x8, 4,6,8
     add   eax, 1
     shr   eax, 1
     RET
+
+cglobal pixel_sa8d_16x16, 4,6,8
+    SATD_START_AVX2 m6, m7, 1
+
+    call pixel_sa8d_8x8_internal ; pix[0]
+
+    sub  r0, r1
+    sub  r0, r1
+    add  r0, 8*SIZEOF_PIXEL
+    sub  r2, r3
+    sub  r2, r3
+    add  r2, 8*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal ; pix[8]
+
+    add  r0, r4
+    add  r0, r1
+    add  r2, r5
+    add  r2, r3
+    call pixel_sa8d_8x8_internal ; pix[8*stride+8]
+
+    sub  r0, r1
+    sub  r0, r1
+    sub  r0, 8*SIZEOF_PIXEL
+    sub  r2, r3
+    sub  r2, r3
+    sub  r2, 8*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal ; pix[8*stride]
+
+    ; TODO: analyze Dynamic Range
+    vextracti128 xm0, m6, 1
+    paddusw xm6, xm0
+    HADDUW xm6, xm0
+    movd  eax, xm6
+    add   eax, 1
+    shr   eax, 1
+    RET
+
 %endif ; HIGH_BIT_DEPTH
 
 ; Input 16bpp, Output 8bpp
