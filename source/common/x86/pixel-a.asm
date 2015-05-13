@@ -8260,6 +8260,76 @@ cglobal psyCost_pp_64x64, 4, 9, 15
 %endif
 
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal psyCost_pp_4x4, 4, 5, 6
+    add             r1d, r1d
+    add             r3d, r3d
+    lea              r4, [r1 * 3]
+    movddup         xm0, [r0]
+    movddup         xm1, [r0 + r1]
+    movddup         xm2, [r0 + r1 * 2]
+    movddup         xm3, [r0 + r4]
+
+    lea              r4, [r3 * 3]
+    movddup         xm4, [r2]
+    movddup         xm5, [r2 + r3]
+    vinserti128      m0, m0, xm4, 1
+    vinserti128      m1, m1, xm5, 1
+    movddup         xm4, [r2 + r3 * 2]
+    movddup         xm5, [r2 + r4]
+    vinserti128      m2, m2, xm4, 1
+    vinserti128      m3, m3, xm5, 1
+
+    mova             m4, [hmul_8w]
+    pmaddwd          m0, m4
+    pmaddwd          m1, m4
+    pmaddwd          m2, m4
+    pmaddwd          m3, m4
+    paddd            m5, m0, m1
+    paddd            m4, m2, m3
+    paddd            m5, m4
+    psrldq           m4, m5, 4
+    paddd            m5, m4
+    psrld            m5, 2
+
+    mova             m4, m0
+    paddd            m0, m1
+    psubd            m1, m4
+    mova             m4, m2
+    paddd            m2, m3
+    psubd            m3, m4
+    mova             m4, m0
+    paddd            m0, m2
+    psubd            m2, m4
+    mova             m4, m1
+    paddd            m1, m3
+    psubd            m3, m4
+    movaps           m4, m0
+    vshufps          m4, m4, m2, 11011101b
+    vshufps          m0, m0, m2, 10001000b
+    movaps           m2, m1
+    vshufps          m2, m2, m3, 11011101b
+    vshufps          m1, m1, m3, 10001000b
+    pabsd            m0, m0
+    pabsd            m4, m4
+    pmaxsd           m0, m4
+    pabsd            m1, m1
+    pabsd            m2, m2
+    pmaxsd           m1, m2
+    paddd            m0, m1
+
+    vpermq           m1, m0, 11110101b
+    paddd            m0, m1
+    psrldq           m1, m0, 4
+    paddd            m0, m1
+    psubd            m0, m5
+
+    vextracti128    xm1, m0, 1
+    psubd           xm1, xm0
+    pabsd           xm1, xm1
+    movd            eax, xm1
+    RET
+%else ; !HIGH_BIT_DEPTH
 cglobal psyCost_pp_4x4, 4, 5, 6
     lea             r4, [3 * r1]
     movd            xm0, [r0]
@@ -8314,6 +8384,7 @@ cglobal psyCost_pp_4x4, 4, 5, 6
     pabsd           m1, m1
     movd            eax, xm1
     RET
+%endif
 
 %macro PSY_PP_8x8 0
     movddup         m0, [r0 + r1 * 0]
