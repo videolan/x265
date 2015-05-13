@@ -42,6 +42,17 @@ inline int8_t signOf(int x)
     return (x >> 31) | ((int)((((uint32_t)-x)) >> 31));
 }
 
+inline int signOf2(const int a, const int b)
+{
+    // NOTE: don't reorder below compare, both ICL, VC, GCC optimize strong depends on order!
+    int r = 0;
+    if (a < b)
+        r = -1;
+    if (a > b)
+        r = 1;
+    return r;
+}
+
 inline int64_t estSaoDist(int32_t count, int offset, int32_t offsetOrg)
 {
     return (count * offset - offsetOrg * 2) * offset;
@@ -756,7 +767,8 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 int signLeft = signOf(rec[startX] - rec[startX - 1]);
                 for (x = startX; x < endX; x++)
                 {
-                    int signRight = signOf(rec[x] - rec[x + 1]);
+                    int signRight = signOf2(rec[x], rec[x + 1]);
+                    X265_CHECK(signRight == signOf(rec[x] - rec[x + 1]), "signDown check failure\n");
                     uint32_t edgeType = signRight + signLeft + 2;
                     signLeft = -signRight;
 
@@ -807,7 +819,8 @@ void SAO::calcSaoStatsCu(int addr, int plane)
             {
                 for (x = 0; x < endX; x++)
                 {
-                    int signDown = signOf(rec[x] - rec[x + stride]);
+                    int signDown = signOf2(rec[x], rec[x + stride]);
+                    X265_CHECK(signDown == signOf(rec[x] - rec[x + stride]), "signDown check failure\n");
                     uint32_t edgeType = signDown + upBuff1[x] + 2;
                     upBuff1[x] = (int8_t)(-signDown);
 
@@ -862,7 +875,8 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 upBufft[startX] = signOf(rec[startX + stride] - rec[startX - 1]);
                 for (x = startX; x < endX; x++)
                 {
-                    int signDown = signOf(rec[x] - rec[x + stride + 1]);
+                    int signDown = signOf2(rec[x], rec[x + stride + 1]);
+                    X265_CHECK(signDown == signOf(rec[x] - rec[x + stride + 1]), "signDown check failure\n");
                     uint32_t edgeType = signDown + upBuff1[x] + 2;
                     upBufft[x + 1] = (int8_t)(-signDown);
                     tmp_stats[edgeType] += (fenc[x] - rec[x]);
@@ -918,7 +932,9 @@ void SAO::calcSaoStatsCu(int addr, int plane)
             {
                 for (x = startX; x < endX; x++)
                 {
-                    int signDown = signOf(rec[x] - rec[x + stride - 1]);
+                    int signDown = signOf2(rec[x], rec[x + stride - 1]);
+                    X265_CHECK(signDown == signOf(rec[x] - rec[x + stride - 1]), "signDown check failure\n");
+
                     uint32_t edgeType = signDown + upBuff1[x] + 2;
                     upBuff1[x - 1] = (int8_t)(-signDown);
                     tmp_stats[edgeType] += (fenc[x] - rec[x]);
