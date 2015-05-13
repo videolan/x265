@@ -696,6 +696,11 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
     int8_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
+    // Dynamic Range: 64x64x14bpp = 24bits
+    int32_t tmp_stats[NUM_EDGETYPE];
+    // TODO: improve by uint64_t, but need Haswell SHLX
+    uint16_t tmp_count[NUM_EDGETYPE];
+
     // SAO_BO:
     {
         const int boShift = X265_DEPTH - SAO_BO_BITS;
@@ -736,29 +741,40 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 skipB = plane ? 1 : 3;
                 skipR = plane ? 3 : 5;
             }
-            stats = m_offsetOrg[plane][SAO_EO_0];
-            count = m_count[plane][SAO_EO_0];
 
             fenc = fenc0;
             rec  = rec0;
 
             startX = !lpelx;
             endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR;
+
+            memset(tmp_stats, 0, sizeof(tmp_stats));
+            memset(tmp_count, 0, sizeof(tmp_count));
+
             for (y = 0; y < ctuHeight - skipB; y++)
             {
                 int signLeft = signOf(rec[startX] - rec[startX - 1]);
                 for (x = startX; x < endX; x++)
                 {
                     int signRight = signOf(rec[x] - rec[x + 1]);
-                    int edgeType = signRight + signLeft + 2;
+                    uint32_t edgeType = signRight + signLeft + 2;
                     signLeft = -signRight;
 
-                    stats[s_eoTable[edgeType]] += (fenc[x] - rec[x]);
-                    count[s_eoTable[edgeType]]++;
+                    X265_CHECK(edgeType <= 4, "edgeType check failure\n");
+                    tmp_stats[edgeType] += (fenc[x] - rec[x]);
+                    tmp_count[edgeType]++;
                 }
 
                 fenc += stride;
                 rec += stride;
+            }
+
+            stats = m_offsetOrg[plane][SAO_EO_0];
+            count = m_count[plane][SAO_EO_0];
+            for (x = 0; x < NUM_EDGETYPE; x++)
+            {
+                stats[s_eoTable[x]] += tmp_stats[x];
+                count[s_eoTable[x]] += tmp_count[x];
             }
         }
 
@@ -769,8 +785,6 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 skipB = plane ? 2 : 4;
                 skipR = plane ? 2 : 4;
             }
-            stats = m_offsetOrg[plane][SAO_EO_1];
-            count = m_count[plane][SAO_EO_1];
 
             fenc = fenc0;
             rec  = rec0;
@@ -786,20 +800,31 @@ void SAO::calcSaoStatsCu(int addr, int plane)
 
             primitives.sign(upBuff1, rec, &rec[- stride], ctuWidth);
 
+            memset(tmp_stats, 0, sizeof(tmp_stats));
+            memset(tmp_count, 0, sizeof(tmp_count));
+
             for (y = startY; y < endY; y++)
             {
                 for (x = 0; x < endX; x++)
                 {
-                    int8_t signDown = signOf(rec[x] - rec[x + stride]);
-                    int edgeType = signDown + upBuff1[x] + 2;
-                    upBuff1[x] = -signDown;
+                    int signDown = signOf(rec[x] - rec[x + stride]);
+                    uint32_t edgeType = signDown + upBuff1[x] + 2;
+                    upBuff1[x] = (int8_t)(-signDown);
 
-                    stats[s_eoTable[edgeType]] += (fenc[x] - rec[x]);
-                    count[s_eoTable[edgeType]]++;
+                    tmp_stats[edgeType] += (fenc[x] - rec[x]);
+                    tmp_count[edgeType]++;
                 }
 
                 fenc += stride;
                 rec += stride;
+            }
+
+            stats = m_offsetOrg[plane][SAO_EO_1];
+            count = m_count[plane][SAO_EO_1];
+            for (x = 0; x < NUM_EDGETYPE; x++)
+            {
+                stats[s_eoTable[x]] += tmp_stats[x];
+                count[s_eoTable[x]] += tmp_count[x];
             }
         }
 
@@ -829,22 +854,33 @@ void SAO::calcSaoStatsCu(int addr, int plane)
 
             primitives.sign(&upBuff1[startX], &rec[startX], &rec[startX - stride - 1], (endX - startX));
 
+            memset(tmp_stats, 0, sizeof(tmp_stats));
+            memset(tmp_count, 0, sizeof(tmp_count));
+
             for (y = startY; y < endY; y++)
             {
                 upBufft[startX] = signOf(rec[startX + stride] - rec[startX - 1]);
                 for (x = startX; x < endX; x++)
                 {
-                    int8_t signDown = signOf(rec[x] - rec[x + stride + 1]);
-                    int edgeType = signDown + upBuff1[x] + 2;
-                    upBufft[x + 1] = -signDown;
-                    stats[s_eoTable[edgeType]] += (fenc[x] - rec[x]);
-                    count[s_eoTable[edgeType]]++;
+                    int signDown = signOf(rec[x] - rec[x + stride + 1]);
+                    uint32_t edgeType = signDown + upBuff1[x] + 2;
+                    upBufft[x + 1] = (int8_t)(-signDown);
+                    tmp_stats[edgeType] += (fenc[x] - rec[x]);
+                    tmp_count[edgeType]++;
                 }
 
                 std::swap(upBuff1, upBufft);
 
                 rec += stride;
                 fenc += stride;
+            }
+
+            stats = m_offsetOrg[plane][SAO_EO_2];
+            count = m_count[plane][SAO_EO_2];
+            for (x = 0; x < NUM_EDGETYPE; x++)
+            {
+                stats[s_eoTable[x]] += tmp_stats[x];
+                count[s_eoTable[x]] += tmp_count[x];
             }
         }
 
@@ -875,21 +911,32 @@ void SAO::calcSaoStatsCu(int addr, int plane)
 
             primitives.sign(&upBuff1[startX - 1], &rec[startX - 1], &rec[startX - 1 - stride + 1], (endX - startX + 1));
 
+            memset(tmp_stats, 0, sizeof(tmp_stats));
+            memset(tmp_count, 0, sizeof(tmp_count));
+
             for (y = startY; y < endY; y++)
             {
                 for (x = startX; x < endX; x++)
                 {
-                    int8_t signDown = signOf(rec[x] - rec[x + stride - 1]);
-                    int edgeType = signDown + upBuff1[x] + 2;
-                    upBuff1[x - 1] = -signDown;
-                    stats[s_eoTable[edgeType]] += (fenc[x] - rec[x]);
-                    count[s_eoTable[edgeType]]++;
+                    int signDown = signOf(rec[x] - rec[x + stride - 1]);
+                    uint32_t edgeType = signDown + upBuff1[x] + 2;
+                    upBuff1[x - 1] = (int8_t)(-signDown);
+                    tmp_stats[edgeType] += (fenc[x] - rec[x]);
+                    tmp_count[edgeType]++;
                 }
 
                 upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
 
                 rec += stride;
                 fenc += stride;
+            }
+
+            stats = m_offsetOrg[plane][SAO_EO_3];
+            count = m_count[plane][SAO_EO_3];
+            for (x = 0; x < NUM_EDGETYPE; x++)
+            {
+                stats[s_eoTable[x]] += tmp_stats[x];
+                count[s_eoTable[x]] += tmp_count[x];
             }
         }
     }
