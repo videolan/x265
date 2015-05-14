@@ -1022,6 +1022,83 @@ ADDAVG_W64_H1 64
 ; avx2 asm for addAvg high_bit_depth
 ;------------------------------------------------------------------------------
 INIT_YMM avx2
+cglobal addAvg_8x2, 6,6,2, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    movu        xm0,         [r0]
+    vinserti128 m0,          m0, [r0 + r3 * 2], 1
+    movu        xm1,         [r1]
+    vinserti128 m1,          m1, [r1 + r4 * 2], 1
+
+    paddw       m0,          m1
+    pxor        m1,          m1
+    pmulhrsw    m0,          [pw_1024]
+    paddw       m0,          [pw_512]
+    pmaxsw      m0,          m1
+    pminsw      m0,          [pw_1023]
+    vextracti128 xm1,        m0, 1
+    movu        [r2],        xm0
+    movu        [r2 + r5 * 2], xm1
+    RET
+
+cglobal addAvg_8x6, 6,6,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,          [pw_512]
+    mova        m5,          [pw_1023]
+    mova        m3,          [pw_1024]
+    pxor        m1,          m1
+    add         r3d,         r3d
+    add         r4d,         r4d
+    add         r5d,         r5d
+
+    movu        xm0,         [r0]
+    vinserti128 m0,          m0, [r0 + r3], 1
+    movu        xm2,         [r1]
+    vinserti128 m2,          m2, [r1 + r4], 1
+
+    paddw       m0,          m2
+    pmulhrsw    m0,          m3
+    paddw       m0,          m4
+    pmaxsw      m0,          m1
+    pminsw      m0,          m5
+    vextracti128 xm2,        m0, 1
+    movu        [r2],        xm0
+    movu        [r2 + r5],   xm2
+
+    lea         r2,          [r2 + 2 * r5]
+    lea         r0,          [r0 + 2 * r3]
+    lea         r1,          [r1 + 2 * r4]
+
+    movu        xm0,         [r0]
+    vinserti128 m0,          m0, [r0 + r3], 1
+    movu        xm2,         [r1]
+    vinserti128 m2,          m2, [r1 + r4], 1
+
+    paddw       m0,          m2
+    pmulhrsw    m0,          m3
+    paddw       m0,          m4
+    pmaxsw      m0,          m1
+    pminsw      m0,          m5
+    vextracti128 xm2,        m0, 1
+    movu        [r2],        xm0
+    movu        [r2 + r5],   xm2
+
+    lea         r2,          [r2 + 2 * r5]
+    lea         r0,          [r0 + 2 * r3]
+    lea         r1,          [r1 + 2 * r4]
+
+    movu        xm0,         [r0]
+    vinserti128 m0,          m0, [r0 + r3], 1
+    movu        xm2,         [r1]
+    vinserti128 m2,          m2, [r1 + r4], 1
+
+    paddw       m0,          m2
+    pmulhrsw    m0,          m3
+    paddw       m0,          m4
+    pmaxsw      m0,          m1
+    pminsw      m0,          m5
+    vextracti128 xm2,        m0, 1
+    movu        [r2],        xm0
+    movu        [r2 + r5],   xm2
+    RET
+
 %macro ADDAVG_W8_H4_AVX2 1
 cglobal addAvg_8x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     mova        m4,          [pw_512]
