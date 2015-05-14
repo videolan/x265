@@ -1181,6 +1181,29 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
     }
     if (cpuMask & X265_CPU_AVX2)
     {
+        p.pu[LUMA_8x4].addAvg   = x265_addAvg_8x4_avx2;
+        p.pu[LUMA_8x8].addAvg   = x265_addAvg_8x8_avx2;
+        p.pu[LUMA_8x16].addAvg  = x265_addAvg_8x16_avx2;
+        p.pu[LUMA_8x32].addAvg  = x265_addAvg_8x32_avx2;
+        p.pu[LUMA_12x16].addAvg = x265_addAvg_12x16_avx2;
+        p.pu[LUMA_16x4].addAvg  = x265_addAvg_16x4_avx2;
+        p.pu[LUMA_16x8].addAvg  = x265_addAvg_16x8_avx2;
+        p.pu[LUMA_16x12].addAvg = x265_addAvg_16x12_avx2;
+        p.pu[LUMA_16x16].addAvg = x265_addAvg_16x16_avx2;
+        p.pu[LUMA_16x32].addAvg = x265_addAvg_16x32_avx2;
+        p.pu[LUMA_16x64].addAvg = x265_addAvg_16x64_avx2;
+        p.pu[LUMA_24x32].addAvg = x265_addAvg_24x32_avx2;
+        p.pu[LUMA_32x8].addAvg  = x265_addAvg_32x8_avx2;
+        p.pu[LUMA_32x16].addAvg = x265_addAvg_32x16_avx2;
+        p.pu[LUMA_32x24].addAvg = x265_addAvg_32x24_avx2;
+        p.pu[LUMA_32x32].addAvg = x265_addAvg_32x32_avx2;
+        p.pu[LUMA_32x64].addAvg = x265_addAvg_32x64_avx2;
+        p.pu[LUMA_48x64].addAvg = x265_addAvg_48x64_avx2;
+        p.pu[LUMA_64x16].addAvg = x265_addAvg_64x16_avx2;
+        p.pu[LUMA_64x32].addAvg = x265_addAvg_64x32_avx2;
+        p.pu[LUMA_64x48].addAvg = x265_addAvg_64x48_avx2;
+        p.pu[LUMA_64x64].addAvg = x265_addAvg_64x64_avx2;
+
         p.cu[BLOCK_4x4].psy_cost_ss = x265_psyCost_ss_4x4_avx2;
         p.cu[BLOCK_8x8].psy_cost_ss = x265_psyCost_ss_8x8_avx2;
         p.cu[BLOCK_16x16].psy_cost_ss = x265_psyCost_ss_16x16_avx2;
