@@ -813,6 +813,61 @@ cglobal pixel_sad_64x16, 4, 5, 5
     movd    eax, xm0
     RET
 
+INIT_YMM avx2
+cglobal pixel_sad_64x32, 4, 5, 6
+    pxor    m0, m0
+    pxor    m5, m5
+    mov     r4d, 32 / 2
+    add     r3d, r3d
+    add     r1d, r1d
+.loop:
+    movu    m1, [r2 + 0]
+    movu    m2, [r2 + 32]
+    movu    m3, [r2 + 2 * 32]
+    movu    m4, [r2 + 3 * 32]
+    psubw   m1, [r0 + 0]
+    psubw   m2, [r0 + 32]
+    psubw   m3, [r0 + 2 * 32]
+    psubw   m4, [r0 + 3 * 32]
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    pabsw   m4, m4
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m0, m1
+    paddw   m5, m3
+
+    movu    m1, [r2 + r3]
+    movu    m2, [r2 + r3 + 32]
+    movu    m3, [r2 + r3 + 64]
+    movu    m4, [r2 + r3 + 96]
+    psubw   m1, [r0 + r1]
+    psubw   m2, [r0 + r1 + 32]
+    psubw   m3, [r0 + r1 + 64]
+    psubw   m4, [r0 + r1 + 96]
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    pabsw   m4, m4
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m0, m1
+    paddw   m5, m3
+    lea     r0, [r0 + 2 * r1]
+    lea     r2, [r2 + 2 * r3]
+
+    dec    r4d
+    jg     .loop
+
+    HADDUWD m0, m1
+    HADDUWD m5, m1
+    paddd   m0, m5
+    HADDD   m0, m1
+    
+    movd    eax, xm0
+    RET
+
 ;------------------------------------------------------------------
 ; int pixel_sad_32xN( uint16_t *, intptr_t, uint16_t *, intptr_t )
 ;------------------------------------------------------------------
