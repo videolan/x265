@@ -9851,6 +9851,149 @@ cglobal interp_4tap_vert_%1_24x32, 4, 9, 10
     FILTER_VER_CHROMA_AVX2_24x32 pp
     FILTER_VER_CHROMA_AVX2_24x32 ps
 
+%macro FILTER_VER_CHROMA_AVX2_24x64 1
+%if ARCH_X86_64 == 1
+INIT_YMM avx2
+cglobal interp_4tap_vert_%1_24x64, 4, 7, 13
+    mov             r4d, r4m
+    shl             r4d, 6
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer_32]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer_32 + r4]
+%endif
+
+    mova            m10, [r5]
+    mova            m11, [r5 + mmsize]
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+%ifidn %1,pp
+    mova            m12, [pw_512]
+%else
+    add             r3d, r3d
+    vbroadcasti128  m12, [pw_2000]
+%endif
+    lea             r5, [r3 * 3]
+    mov             r6d, 16
+.loopH:
+    movu            m0, [r0]                        ; m0 = row 0
+    movu            m1, [r0 + r1]                   ; m1 = row 1
+    punpcklbw       m2, m0, m1
+    punpckhbw       m3, m0, m1
+    pmaddubsw       m2, m10
+    pmaddubsw       m3, m10
+    movu            m0, [r0 + r1 * 2]               ; m0 = row 2
+    punpcklbw       m4, m1, m0
+    punpckhbw       m5, m1, m0
+    pmaddubsw       m4, m10
+    pmaddubsw       m5, m10
+    movu            m1, [r0 + r4]                   ; m1 = row 3
+    punpcklbw       m6, m0, m1
+    punpckhbw       m7, m0, m1
+    pmaddubsw       m8, m6, m11
+    pmaddubsw       m9, m7, m11
+    pmaddubsw       m6, m10
+    pmaddubsw       m7, m10
+    paddw           m2, m8
+    paddw           m3, m9
+%ifidn %1,pp
+    pmulhrsw        m2, m12
+    pmulhrsw        m3, m12
+    packuswb        m2, m3
+    movu            [r2], xm2
+    vextracti128    xm2, m2, 1
+    movq            [r2 + 16], xm2
+%else
+    psubw           m2, m12
+    psubw           m3, m12
+    vperm2i128      m0, m2, m3, 0x20
+    vperm2i128      m2, m2, m3, 0x31
+    movu            [r2], m0
+    movu            [r2 + mmsize], xm2
+%endif
+    lea             r0, [r0 + r1 * 4]
+    movu            m0, [r0]                        ; m0 = row 4
+    punpcklbw       m2, m1, m0
+    punpckhbw       m3, m1, m0
+    pmaddubsw       m8, m2, m11
+    pmaddubsw       m9, m3, m11
+    pmaddubsw       m2, m10
+    pmaddubsw       m3, m10
+    paddw           m4, m8
+    paddw           m5, m9
+%ifidn %1,pp
+    pmulhrsw        m4, m12
+    pmulhrsw        m5, m12
+    packuswb        m4, m5
+    movu            [r2 + r3], xm4
+    vextracti128    xm4, m4, 1
+    movq            [r2 + r3 + 16], xm4
+%else
+    psubw           m4, m12
+    psubw           m5, m12
+    vperm2i128      m1, m4, m5, 0x20
+    vperm2i128      m4, m4, m5, 0x31
+    movu            [r2 + r3], m1
+    movu            [r2 + r3 + mmsize], xm4
+%endif
+
+    movu            m1, [r0 + r1]                   ; m1 = row 5
+    punpcklbw       m4, m0, m1
+    punpckhbw       m5, m0, m1
+    pmaddubsw       m4, m11
+    pmaddubsw       m5, m11
+    paddw           m6, m4
+    paddw           m7, m5
+%ifidn %1,pp
+    pmulhrsw        m6, m12
+    pmulhrsw        m7, m12
+    packuswb        m6, m7
+    movu            [r2 + r3 * 2], xm6
+    vextracti128    xm6, m6, 1
+    movq            [r2 + r3 * 2 + 16], xm6
+%else
+    psubw           m6, m12
+    psubw           m7, m12
+    vperm2i128      m0, m6, m7, 0x20
+    vperm2i128      m6, m6, m7, 0x31
+    movu            [r2 + r3 * 2], m0
+    movu            [r2 + r3 * 2 + mmsize], xm6
+%endif
+
+    movu            m0, [r0 + r1 * 2]               ; m0 = row 6
+    punpcklbw       m6, m1, m0
+    punpckhbw       m7, m1, m0
+    pmaddubsw       m6, m11
+    pmaddubsw       m7, m11
+    paddw           m2, m6
+    paddw           m3, m7
+%ifidn %1,pp
+    pmulhrsw        m2, m12
+    pmulhrsw        m3, m12
+    packuswb        m2, m3
+    movu            [r2 + r5], xm2
+    vextracti128    xm2, m2, 1
+    movq            [r2 + r5 + 16], xm2
+%else
+    psubw           m2, m12
+    psubw           m3, m12
+    vperm2i128      m0, m2, m3, 0x20
+    vperm2i128      m2, m2, m3, 0x31
+    movu            [r2 + r5], m0
+    movu            [r2 + r5 + mmsize], xm2
+%endif
+    lea             r2, [r2 + r3 * 4]
+    dec             r6d
+    jnz             .loopH
+    RET
+%endif
+%endmacro
+
+    FILTER_VER_CHROMA_AVX2_24x64 pp
+    FILTER_VER_CHROMA_AVX2_24x64 ps
+
 %macro FILTER_VER_CHROMA_AVX2_16x4 1
 INIT_YMM avx2
 cglobal interp_4tap_vert_%1_16x4, 4, 6, 8
