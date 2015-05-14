@@ -1278,15 +1278,28 @@ void x265_encoder_close(x265_encoder *);
  *       release library static allocations, reset configured CTU size */
 void x265_cleanup(void);
 
+#define X265_MAJOR_VERSION 1
 
 /* === Multi-lib API ===
- * By using this method to gain access to the libx265 interfaces, you allow shim
- * implementations of x265_api_get() to choose between various available libx265
- * libraries based on the encoder parameters. The most likely use case is to
- * choose between 8bpp and 16bpp builds of libx265. */
+ * By using this method to gain access to the libx265 interfaces, you allow run-
+ * time selection between various available libx265 libraries based on the
+ * encoder parameters. The most likely use case is to choose between 8bpp and
+ * 16bpp builds of libx265. */
 
 typedef struct x265_api
 {
+    int           api_major_version;    /* X265_MAJOR_VERSION */
+    int           api_build_number;     /* X265_BUILD (soname) */
+    int           sizeof_param;         /* sizeof(x265_param) */
+    int           sizeof_picture;       /* sizeof(x265_picture) */
+    int           sizeof_analysis_data; /* sizeof(x265_analysis_data) */
+    int           sizeof_zone;          /* sizeof(x265_zone) */
+    int           sizeof_stats;         /* sizeof(x265_stats) */
+
+    int           bit_depth;
+    const char*   version_str;
+    const char*   build_info_str;
+
     /* libx265 public API functions, documented above with x265_ prefixes */
     x265_param*   (*param_alloc)(void);
     void          (*param_free)(x265_param*);
@@ -1306,9 +1319,7 @@ typedef struct x265_api
     void          (*encoder_log)(x265_encoder*, int, char**);
     void          (*encoder_close)(x265_encoder*);
     void          (*cleanup)(void);
-    const char*   version_str;
-    const char*   build_info_str;
-    int           max_bit_depth;
+    /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 
 /* Force a link error in the case of linking against an incompatible API version.
@@ -1331,6 +1342,43 @@ typedef struct x265_api
  *     10bit: libx265_main10.so
  *   Obviously the shared library file extension is platform specific */
 const x265_api* x265_api_get(int bitDepth);
+
+/* x265_api_query:
+ *   Retrieve the programming interface for a linked x265 library, like
+ *   x265_api_get(), except this function accepts X265_BUILD as the second
+ *   argument rather than using the build number as part of the function name.
+ *   Applications which dynamically link to libx265 can use this interface to
+ *   query the library API and achieve a relative amount of version skew
+ *   flexibility. The function may return NULL if the library determines that
+ *   the apiVersion that your application was compiled against is not compatible
+ *   with the library you have linked with.
+ *
+ *   api_major_version will be incremented any time non-backward compatible
+ *   changes are made to any public structures or functions. If
+ *   api_major_version does not match X265_MAJOR_VERSION from the x265.h your
+ *   application compiled against, your application must not use the returned
+ *   x265_api pointer.
+ *
+ *   Users of this API *must* also validate the sizes of any structures which
+ *   are not treated as opaque in application code. For instance, if your
+ *   application dereferences a x265_param pointer, then it must check that
+ *   api->sizeof_param matches the sizeof(x265_param) that your application
+ *   compiled with. */
+const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
+
+#define X265_API_QUERY_ERR_NONE           0 /* returned API pointer is non-NULL */
+#define X265_API_QUERY_ERR_VER_REFUSED    1 /* incompatible version skew        */
+#define X265_API_QUERY_ERR_LIB_NOT_FOUND  2 /* libx265_main10 not found, for ex */
+#define X265_API_QUERY_ERR_FUNC_NOT_FOUND 3 /* unable to bind x265_api_query    */
+#define X265_API_QUERY_ERR_WRONG_BITDEPTH 4 /* libx265_main10 not 10bit, for ex */
+
+static const char * const x265_api_query_errnames[] = {
+    "api queried from libx265",
+    "libx265 version is not compatible with this application",
+    "unable to bind a libx265 with requested bit depth",
+    "unable to bind x265_api_query from libx265",
+    "libx265 has an invalid bitdepth"
+};
 
 #ifdef __cplusplus
 }

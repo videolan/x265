@@ -253,6 +253,18 @@ void x265_picture_free(x265_picture *p)
 
 static const x265_api libapi =
 {
+    X265_MAJOR_VERSION,
+    X265_BUILD,
+    sizeof(x265_param),
+    sizeof(x265_picture),
+    sizeof(x265_analysis_data),
+    sizeof(x265_zone),
+    sizeof(x265_stats),
+
+    x265_max_bit_depth,
+    x265_version_str,
+    x265_build_info_str,
+
     &x265_param_alloc,
     &x265_param_free,
     &x265_param_default,
@@ -271,9 +283,6 @@ static const x265_api libapi =
     &x265_encoder_log,
     &x265_encoder_close,
     &x265_cleanup,
-    x265_version_str,
-    x265_build_info_str,
-    x265_max_bit_depth,
 };
 
 typedef const x265_api* (*api_get_func)(int bitDepth);
@@ -337,7 +346,7 @@ const x265_api* x265_api_get(int bitDepth)
             x265_log(NULL, X265_LOG_WARNING, "Unable to open %s\n", libname);
 #endif
 
-        if (api && bitDepth != api->max_bit_depth)
+        if (api && bitDepth != api->bit_depth)
         {
             x265_log(NULL, X265_LOG_WARNING, "%s does not support requested bitDepth %d\n", libname, bitDepth);
             return NULL;
@@ -346,5 +355,69 @@ const x265_api* x265_api_get(int bitDepth)
         return api;
     }
 
+    return &libapi;
+}
+
+const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
+{
+    if (apiVersion < 51)
+    {
+        /* builds before 1.6 had re-ordered public structs */
+        if (err) *err = X265_API_QUERY_ERR_VER_REFUSED;
+        return NULL;
+    }
+
+    if (bitDepth && bitDepth != X265_DEPTH)
+    {
+        const char* libname = NULL;
+        const char* method = "x265_api_query";
+
+        if (bitDepth == 12)
+            libname = "libx265_main12" ext;
+        else if (bitDepth == 10)
+            libname = "libx265_main10" ext;
+        else if (bitDepth == 8)
+            libname = "libx265_main" ext;
+        else
+        {
+            if (err) *err = X265_API_QUERY_ERR_LIB_NOT_FOUND;
+            return NULL;
+        }
+
+        const x265_api* api = NULL;
+        int e = X265_API_QUERY_ERR_LIB_NOT_FOUND;
+
+#if _WIN32
+        HMODULE h = LoadLibraryA(libname);
+        if (h)
+        {
+            e = X265_API_QUERY_ERR_FUNC_NOT_FOUND;
+            api_get_func get = (api_get_func)GetProcAddress(h, method);
+            if (get)
+                api = get(0);
+        }
+#else
+        void* h = dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
+        if (h)
+        {
+            e = X265_API_QUERY_ERR_FUNC_NOT_FOUND;
+            api_get_func get = (api_get_func)dlsym(h, method);
+            if (get)
+                api = get(0);
+        }
+#endif
+
+        if (api && bitDepth != api->bit_depth)
+        {
+            x265_log(NULL, X265_LOG_WARNING, "%s does not support requested bitDepth %d\n", libname, bitDepth);
+            if (err) *err = X265_API_QUERY_ERR_WRONG_BITDEPTH;
+            return NULL;
+        }
+
+        if (err) *err = api ? X265_API_QUERY_ERR_NONE : e;
+        return api;
+    }
+
+    if (err) *err = X265_API_QUERY_ERR_NONE;
     return &libapi;
 }
