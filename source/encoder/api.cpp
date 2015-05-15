@@ -299,15 +299,14 @@ const x265_api* x265_api_get(int bitDepth)
         const char* libname = NULL;
         const char* method = "x265_api_get_" xstr(X265_BUILD);
 
-        if (bitDepth == 10)
+        if (bitDepth == 12)
+            libname = "libx265_main12" ext;
+        else if (bitDepth == 10)
             libname = "libx265_main10" ext;
         else if (bitDepth == 8)
             libname = "libx265_main" ext;
         else
-        {
-            x265_log(NULL, X265_LOG_WARNING, "bitdepth %d not supported\n", bitDepth);
             return NULL;
-        }
 
         const x265_api* api = NULL;
 
@@ -318,11 +317,7 @@ const x265_api* x265_api_get(int bitDepth)
             api_get_func get = (api_get_func)GetProcAddress(h, method);
             if (get)
                 api = get(0);
-            else
-                x265_log(NULL, X265_LOG_WARNING, "Unable to bind %s from %s\n", method, libname);
         }
-        else
-            x265_log(NULL, X265_LOG_WARNING, "Unable to open %s\n", libname);
 #else
         void* h = dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
         if (h)
@@ -330,11 +325,7 @@ const x265_api* x265_api_get(int bitDepth)
             api_get_func get = (api_get_func)dlsym(h, method);
             if (get)
                 api = get(0);
-            else
-                x265_log(NULL, X265_LOG_WARNING, "Unable to bind %s from %s\n", method, libname);
         }
-        else
-            x265_log(NULL, X265_LOG_WARNING, "Unable to open %s\n", libname);
 #endif
 
         if (api && bitDepth != api->max_bit_depth)
