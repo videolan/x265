@@ -255,7 +255,6 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
 {
     uint32_t trSize = 1 << log2TrSize;
     const uint16_t* scan = codeParams.scan;
-    bool lastCG = true;
 
     uint8_t coeffNum[MLS_GRP_NUM];      // value range[0, 16]
     uint16_t coeffSign[MLS_GRP_NUM];    // bit mask map for non-zero coeff sign
@@ -323,7 +322,7 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                 int minCostInc = MAX_INT,  minPos = -1, curCost = MAX_INT;
                 int16_t finalChange = 0, curChange = 0;
 
-                for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
+                for (n = (cg == cgLastScanPos ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                 {
                     uint32_t blkPos = scan[n + cgStartPos];
                     if (coeff[blkPos])
@@ -387,8 +386,6 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                     coeff[minPos] -= finalChange;
             }
         }
-
-        lastCG = false;
     }
 
     return numSig;
