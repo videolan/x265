@@ -321,11 +321,16 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
             {
                 int minCostInc = MAX_INT,  minPos = -1, curCost = MAX_INT;
                 int16_t finalChange = 0, curChange = 0;
+                uint32_t cgFlags = coeffFlag[cg];
+                if (cg == cgLastScanPos)
+                    cgFlags >>= correctOffset;
 
                 for (n = (cg == cgLastScanPos ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                 {
                     uint32_t blkPos = scan[n + cgStartPos];
-                    if (coeff[blkPos])
+                    X265_CHECK(!!coeff[blkPos] == (cgFlags & 1), "non zero coeff check failure\n");
+
+                    if (cgFlags & 1)
                     {
                         if (deltaU[blkPos] > 0)
                         {
@@ -334,8 +339,11 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                         }
                         else
                         {
-                            if (n == firstNZPosInCG && abs(coeff[blkPos]) == 1)
+                            if ((cgFlags == 1) && (abs(coeff[blkPos]) == 1))
+                            {
+                                X265_CHECK(n == firstNZPosInCG, "firstNZPosInCG position check failure\n");
                                 curCost = MAX_INT;
+                            }
                             else
                             {
                                 curCost = deltaU[blkPos];
@@ -345,8 +353,9 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                     }
                     else
                     {
-                        if (n < firstNZPosInCG)
+                        if (cgFlags == 0)
                         {
+                            X265_CHECK(n < firstNZPosInCG, "firstNZPosInCG position check failure\n");
                             uint32_t thisSignBit = m_resiDctCoeff[blkPos] >= 0 ? 0 : 1;
                             if (thisSignBit != signbit)
                                 curCost = MAX_INT;
@@ -369,6 +378,7 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                         finalChange = curChange;
                         minPos = blkPos;
                     }
+                    cgFlags>>=1;
                 }
 
                 /* do not allow change to violate coeff clamp */
