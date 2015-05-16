@@ -269,13 +269,17 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
 #endif
     const int lastScanPos = primitives.scanPosLast(codeParams.scan, coeff, coeffSign, coeffFlag, coeffNum, numSig, g_scan4x4[codeParams.scanType], trSize);
     const int cgLastScanPos = (lastScanPos >> LOG2_SCAN_SET_SIZE);
+    unsigned long tmp;
+
+    // first CG need specially processing
+    const uint32_t correctOffset = 0x0F & (lastScanPos ^ 0xF);
+    coeffFlag[cgLastScanPos] <<= correctOffset;
 
     for (int cg = cgLastScanPos; cg >= 0; cg--)
     {
         int cgStartPos = cg << LOG2_SCAN_SET_SIZE;
         int n;
 
-        const uint32_t posFirstLast = primitives.findPosFirstLast(&coeff[codeParams.scan[cgStartPos]], trSize, g_scan4x4[codeParams.scanType]);
 #if CHECKED_BUILD || _DEBUG
         for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
             if (coeff[scan[n + cgStartPos]])
@@ -288,8 +292,6 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
             X265_CHECK(lastNZPosInCG0 < 0, "all zero block check failure\n");
             continue;
         }
-        int firstNZPosInCG = (uint16_t)posFirstLast;
-        int lastNZPosInCG = posFirstLast >> 16;
 
 #if CHECKED_BUILD || _DEBUG
         for (n = 0;; n++)
@@ -297,10 +299,16 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                 break;
 
         int firstNZPosInCG0 = n;
+#endif
+
+        CLZ(tmp, coeffFlag[cg]);
+        const int firstNZPosInCG = (15 ^ tmp);
+
+        CTZ(tmp, coeffFlag[cg]);
+        const int lastNZPosInCG = (15 ^ tmp);
 
         X265_CHECK(firstNZPosInCG0 == firstNZPosInCG, "firstNZPosInCG0 check failure\n");
         X265_CHECK(lastNZPosInCG0 == lastNZPosInCG, "lastNZPosInCG0 check failure\n");
-#endif
 
         if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
         {
