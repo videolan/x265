@@ -320,7 +320,7 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
             if (signbit != (absSum & 0x1)) // compare signbit with sum_parity
             {
                 int minCostInc = MAX_INT,  minPos = -1, curCost = MAX_INT;
-                int16_t finalChange = 0, curChange = 0;
+                int32_t finalChange = 0, curChange = 0;
                 uint32_t cgFlags = coeffFlag[cg];
                 if (cg == cgLastScanPos)
                     cgFlags >>= correctOffset;
@@ -328,7 +328,7 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                 for (n = (cg == cgLastScanPos ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                 {
                     uint32_t blkPos = scan[n + cgStartPos];
-                    X265_CHECK(!!coeff[blkPos] == (cgFlags & 1), "non zero coeff check failure\n");
+                    X265_CHECK(!!coeff[blkPos] == !!(cgFlags & 1), "non zero coeff check failure\n");
 
                     if (cgFlags & 1)
                     {
@@ -390,10 +390,10 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                 else if (finalChange == -1 && abs(coeff[minPos]) == 1)
                     numSig--;
 
-                if (m_resiDctCoeff[minPos] >= 0)
-                    coeff[minPos] += finalChange;
-                else
-                    coeff[minPos] -= finalChange;
+                {
+                    const int16_t sigMask = ((int16_t)m_resiDctCoeff[minPos]) >> 15;
+                    coeff[minPos] += ((int16_t)finalChange ^ sigMask) - sigMask;
+                }
             }
         }
     }
