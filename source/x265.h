@@ -1193,12 +1193,10 @@ void x265_picture_free(x265_picture *);
 void x265_picture_init(x265_param *param, x265_picture *pic);
 
 /* x265_max_bit_depth:
- *      Specifies the maximum number of bits per pixel that x265 can input. This
- *      is also the max bit depth that x265 encodes in.  When x265_max_bit_depth
- *      is 8, the internal and input bit depths must be 8.  When
- *      x265_max_bit_depth is 12, the internal and input bit depths can be
- *      either 8, 10, or 12. Note that the internal bit depth must be the same
- *      for all encoders allocated in the same process. */
+ *      Specifies the numer of bits per pixel that x265 uses internally to
+ *      represent a pixel, and the bit depth of the output bitstream.
+ *      param->internalBitDepth must be set to this value. x265_max_bit_depth
+ *      will be 8 for default builds, 10 for HIGH_BIT_DEPTH builds. */
 X265_API extern const int x265_max_bit_depth;
 
 /* x265_version_str:
