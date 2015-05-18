@@ -151,6 +151,7 @@ void x265_param_default(x265_param* param)
     param->subpelRefine = 2;
     param->searchRange = 57;
     param->maxNumMergeCand = 2;
+    param->limitReferences = 0;
     param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
     param->bEnableEarlySkip = 0;
@@ -641,6 +642,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         }
     }
     OPT("ref") p->maxNumReferences = atoi(value);
+    OPT("limit-refs") p->limitReferences = atoi(value);
     OPT("weightp") p->bEnableWeightedPred = atobool(value);
     OPT("weightb") p->bEnableWeightedBiPred = atobool(value);
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
@@ -1026,6 +1028,8 @@ int x265_check_params(x265_param* param)
           "subme must be less than or equal to X265_MAX_SUBPEL_LEVEL (7)");
     CHECK(param->subpelRefine < 0,
           "subme must be greater than or equal to 0");
+    CHECK(param->limitReferences > 3,
+          "limitReferences must be 0, 1, 2 or 3");
     CHECK(param->frameNumThreads < 0 || param->frameNumThreads > X265_MAX_FRAME_THREADS,
           "frameNumThreads (--frame-threads) must be [0 .. X265_MAX_FRAME_THREADS)");
     CHECK(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
@@ -1277,6 +1281,8 @@ void x265_print_params(x265_param* param)
     if (param->rc.aqMode)
         x265_log(param, X265_LOG_INFO, "AQ: mode / str / qg-size / cu-tree  : %d / %0.1f / %d / %d\n", param->rc.aqMode,
                  param->rc.aqStrength, param->rc.qgSize, param->rc.cuTree);
+    x265_log(param, X265_LOG_INFO, "References / ref-limit  cu / depth  : %d / %d / %d\n",
+             param->maxNumReferences, !!(param->limitReferences & X265_REF_LIMIT_CU), !!(param->limitReferences & X265_REF_LIMIT_DEPTH));
 
     if (param->bLossless)
         x265_log(param, X265_LOG_INFO, "Rate Control                        : Lossless\n");
@@ -1420,6 +1426,7 @@ char *x265_param2string(x265_param* p)
     s += sprintf(s, " bframe-bias=%d", p->bFrameBias);
     s += sprintf(s, " b-adapt=%d", p->bFrameAdaptive);
     s += sprintf(s, " ref=%d", p->maxNumReferences);
+    s += sprintf(s, " limit-refs=%d", p->limitReferences);
     BOOL(p->bEnableWeightedPred, "weightp");
     BOOL(p->bEnableWeightedBiPred, "weightb");
     s += sprintf(s, " aq-mode=%d", p->rc.aqMode);
