@@ -2122,8 +2122,13 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
             {
                 for (int ref = 0; ref < numRefIdx[list]; ref++)
                 {
+                    ProfileCounter(interMode.cu, totalMotionReferences[cuGeom.depth]);
+
                     if (!(refMask & (1 << ref)))
+                    {
+                        ProfileCounter(interMode.cu, skippedMotionReferences[cuGeom.depth]);
                         continue;
+                    }
 
                     uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
                     bits += getTUBits(ref, numRefIdx[list]);

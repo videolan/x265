@@ -949,6 +949,12 @@ void Encoder::printSummary()
         x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in motion estimation, averaging %.3lf CU inter modes per CTU\n",
                  100.0 * cuStats.motionEstimationElapsedTime / totalWorkerTime,
                  (double)cuStats.countMotionEstimate / cuStats.totalCTUs);
+
+        if (cuStats.skippedMotionReferences[0] || cuStats.skippedMotionReferences[1] || cuStats.skippedMotionReferences[2])
+            x265_log(m_param, X265_LOG_INFO, "CU: Skipped motion searches per depth %%%.2lf %%%.2lf %%%.2lf\n",
+                     100.0 * cuStats.skippedMotionReferences[0] / cuStats.totalMotionReferences[0],
+                     100.0 * cuStats.skippedMotionReferences[1] / cuStats.totalMotionReferences[1],
+                     100.0 * cuStats.skippedMotionReferences[2] / cuStats.totalMotionReferences[2]);
     }
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in intra analysis, averaging %.3lf Intra PUs per CTU\n",
              100.0 * cuStats.intraAnalysisElapsedTime / totalWorkerTime,
