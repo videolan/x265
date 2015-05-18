@@ -1485,8 +1485,12 @@ SAD_X 4,  8,  8
 SAD_X 4,  8,  4
 INIT_YMM avx2
 %define XMM_REGS 7
-SAD_X 3, 16, 16
+SAD_X 3, 16,  4
 SAD_X 3, 16,  8
+SAD_X 3, 16,  12
+SAD_X 3, 16,  16
+SAD_X 3, 16,  32
+SAD_X 3, 16,  64
 %define XMM_REGS 9
 SAD_X 4, 16, 16
 SAD_X 4, 16,  8

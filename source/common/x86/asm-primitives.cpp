@@ -1329,6 +1329,13 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.pu[LUMA_64x48].sad = x265_pixel_sad_64x48_avx2;
         p.pu[LUMA_64x64].sad = x265_pixel_sad_64x64_avx2;
 
+        p.pu[LUMA_16x4].sad_x3 = x265_pixel_sad_x3_16x4_avx2;
+        p.pu[LUMA_16x8].sad_x3 = x265_pixel_sad_x3_16x8_avx2;
+        p.pu[LUMA_16x12].sad_x3 = x265_pixel_sad_x3_16x12_avx2;
+        p.pu[LUMA_16x16].sad_x3 = x265_pixel_sad_x3_16x16_avx2;
+        p.pu[LUMA_16x32].sad_x3 = x265_pixel_sad_x3_16x32_avx2;
+        p.pu[LUMA_16x64].sad_x3 = x265_pixel_sad_x3_16x64_avx2;
+
         p.pu[LUMA_16x4].convert_p2s = x265_filterPixelToShort_16x4_avx2;
         p.pu[LUMA_16x8].convert_p2s = x265_filterPixelToShort_16x8_avx2;
         p.pu[LUMA_16x12].convert_p2s = x265_filterPixelToShort_16x12_avx2;
