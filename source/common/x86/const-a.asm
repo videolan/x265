@@ -62,7 +62,7 @@ const pb_000000000000000F,           db 0xff
 ;; 16-bit constants
 
 const pw_1,                 times 16 dw 1
-const pw_2,                 times  8 dw 2
+const pw_2,                 times 16 dw 2
 const pw_m2,                times  8 dw -2
 const pw_4,                 times  8 dw 4
 const pw_8,                 times  8 dw 8
@@ -75,7 +75,7 @@ const pw_128,               times 16 dw 128
 const pw_256,               times 16 dw 256
 const pw_257,               times 16 dw 257
 const pw_512,               times 16 dw 512
-const pw_1023,              times  8 dw 1023
+const pw_1023,              times 16 dw 1023
 const pw_1024,              times 16 dw 1024
 const pw_4096,              times 16 dw 4096
 const pw_00ff,              times 16 dw 0x00ff

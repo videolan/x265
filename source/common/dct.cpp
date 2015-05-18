@@ -798,11 +798,11 @@ uint32_t findPosFirstLast_c(const int16_t *dstCoeff, const intptr_t trSize, cons
             break;
     }
 
-    X265_CHECK(n >= 0, "non-zero coeff scan failuare!\n");
+    X265_CHECK(n >= -1, "non-zero coeff scan failuare!\n");
 
     uint32_t lastNZPosInCG = (uint32_t)n;
 
-    for (n = 0;; n++)
+    for (n = 0; n < SCAN_SET_SIZE; n++)
     {
         const uint32_t idx = scanTbl[n];
         const uint32_t idxY = idx / MLS_CG_SIZE;
@@ -813,6 +813,7 @@ uint32_t findPosFirstLast_c(const int16_t *dstCoeff, const intptr_t trSize, cons
 
     uint32_t firstNZPosInCG = (uint32_t)n;
 
+    // NOTE: when coeff block all ZERO, the lastNZPosInCG is undefined and firstNZPosInCG is 16
     return ((lastNZPosInCG << 16) | firstNZPosInCG);
 }
 

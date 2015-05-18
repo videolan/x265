@@ -318,9 +318,9 @@ bool CLIOptions::parse(int argc, char **argv)
         return true;
     }
 
-    if (param->internalBitDepth != api->max_bit_depth)
+    if (param->internalBitDepth != api->bit_depth)
     {
-        x265_log(param, X265_LOG_ERROR, "Only bit depths of %d are supported in this build\n", api->max_bit_depth);
+        x265_log(param, X265_LOG_ERROR, "Only bit depths of %d are supported in this build\n", api->bit_depth);
         return true;
     }
 

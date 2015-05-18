@@ -419,3 +419,57 @@ under the name libx265 (so all applications link against 8bpp libx265)
 and then also install libx265_main10.so (symlinked to its numbered solib).
 Thus applications which use x265_api_get() will be able to generate main
 or main10 bitstreams.
+
+There is a second bit-depth introspection method that is designed for
+applications which need more flexibility in API versioning.  If you use
+the public API described at the top of this page or x265_api_get() then
+your application must be recompiled each time x265 changes its public
+API and bumps its build number (X265_BUILD, which is also the SONAME on
+POSIX systems).  But if you use **x265_api_query** and dynamically link to
+libx265 (use dlopen() on POSIX or LoadLibrary() on Windows) your
+application is no longer directly tied to the API version of x265.h that
+it was compiled against.
+
+	/* x265_api_query:
+	 *   Retrieve the programming interface for a linked x265 library, like
+	 *   x265_api_get(), except this function accepts X265_BUILD as the second
+	 *   argument rather than using the build number as part of the function name.
+	 *   Applications which dynamically link to libx265 can use this interface to
+	 *   query the library API and achieve a relative amount of version skew
+	 *   flexibility. The function may return NULL if the library determines that
+	 *   the apiVersion that your application was compiled against is not compatible
+	 *   with the library you have linked with.
+	 *
+	 *   api_major_version will be incremented any time non-backward compatible
+	 *   changes are made to any public structures or functions. If
+	 *   api_major_version does not match X265_MAJOR_VERSION from the x265.h your
+	 *   application compiled against, your application must not use the returned
+	 *   x265_api pointer.
+	 *
+	 *   Users of this API *must* also validate the sizes of any structures which
+	 *   are not treated as opaque in application code. For instance, if your
+	 *   application dereferences a x265_param pointer, then it must check that
+	 *   api->sizeof_param matches the sizeof(x265_param) that your application
+	 *   compiled with. */
+	const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
+
+A number of validations must be performed on the returned API structure
+in order to determine if it is safe for use by your application. If you
+do not perform these checks, your application is liable to crash.
+
+	if (api->api_major_version != X265_MAJOR_VERSION) /* do not use */
+	if (api->sizeof_param != sizeof(x265_param))      /* do not use */
+	if (api->sizeof_picture != sizeof(x265_picture))  /* do not use */
+	if (api->sizeof_stats != sizeof(x265_stats))      /* do not use */
+	if (api->sizeof_zone != sizeof(x265_zone))        /* do not use */
+	etc.
+
+Note that if your application does not directly allocate or dereference
+one of these structures, if it treats the structure as opaque or does
+not use it at all, then it can skip the size check for that structure.
+
+In particular, if your application uses api->param_alloc(),
+api->param_free(), api->param_parse(), etc and never directly accesses
+any x265_param fields, then it can skip the check on the
+sizeof(x265_parm) and thereby ignore changes to that structure (which
+account for a large percentage of X265_BUILD bumps).

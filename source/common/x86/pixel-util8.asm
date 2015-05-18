@@ -6046,11 +6046,10 @@ cglobal findPosFirstLast, 3,3,3
     pshufb      m1, m0
 
     ; get First and Last pos
-    xor         eax, eax
     pmovmskb    r0d, m1
-    not         r0w
+    not         r0d
     bsr         r1w, r0w
-    bsf          ax, r0w
+    bsf         eax, r0d    ; side effect: clear AH to Zero
     shl         r1d, 16
     or          eax, r1d
     RET

@@ -1520,7 +1520,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     uint32_t c1 = 1;
     int scanPosSigOff = scanPosLast - (lastScanSet << MLS_CG_SIZE) - 1;
     int absCoeff[1 << MLS_CG_SIZE];
-    int numNonZero = 1;
+    uint32_t numNonZero = 1;
     unsigned long lastNZPosInCG;
     unsigned long firstNZPosInCG;
 
@@ -1554,7 +1554,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         }
 
         // encode significant_coeff_flag
-        if (sigCoeffGroupFlag64 & cgBlkPosMask)
+        if ((scanPosSigOff >= 0) && (sigCoeffGroupFlag64 & cgBlkPosMask))
         {
             X265_CHECK((log2TrSize != 2) || (log2TrSize == 2 && subSet == 0), "log2TrSize and subSet mistake!\n");
             const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
@@ -1612,13 +1612,14 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 tmpCoeff[i * MLS_CG_SIZE + 3] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 3]);
             }
 
+            X265_CHECK(scanPosSigOff >= 0, "scanPosSigOff check failure\n");
             if (m_bitIf)
             {
                 if (log2TrSize == 2)
                 {
-                    uint32_t blkPos, sig, ctxSig;
-                    for (; scanPosSigOff >= 0; scanPosSigOff--)
+                    do
                     {
+                        uint32_t blkPos, sig, ctxSig;
                         blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
                         sig     = scanFlagMask & 1;
                         scanFlagMask >>= 1;
@@ -1630,17 +1631,18 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         }
                         absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
+                        scanPosSigOff--;
                     }
+                    while(scanPosSigOff >= 0);
                 }
                 else
                 {
                     X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
 
                     const uint8_t *tabSigCtx = table_cnt[(uint32_t)patternSigCtx];
-
-                    uint32_t blkPos, sig, ctxSig;
-                    for (; scanPosSigOff >= 0; scanPosSigOff--)
+                    do
                     {
+                        uint32_t blkPos, sig, ctxSig;
                         blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
                         const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
                         sig     = scanFlagMask & 1;
@@ -1656,7 +1658,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         }
                         absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
+                        scanPosSigOff--;
                     }
+                    while(scanPosSigOff >= 0);
                 }
             }
             else // fast RD path
@@ -1665,9 +1669,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 uint32_t sum = 0;
                 if (log2TrSize == 2)
                 {
-                    uint32_t blkPos, sig, ctxSig;
-                    for (; scanPosSigOff >= 0; scanPosSigOff--)
+                    do
                     {
+                        uint32_t blkPos, sig, ctxSig;
                         blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
                         sig     = scanFlagMask & 1;
                         scanFlagMask >>= 1;
@@ -1689,17 +1693,18 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         }
                         absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
+                        scanPosSigOff--;
                     }
+                    while(scanPosSigOff >= 0);
                 } // end of 4x4
                 else
                 {
                     X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
 
                     const uint8_t *tabSigCtx = table_cnt[(uint32_t)patternSigCtx];
-
-                    uint32_t blkPos, sig, ctxSig;
-                    for (; scanPosSigOff >= 0; scanPosSigOff--)
+                    do
                     {
+                        uint32_t blkPos, sig, ctxSig;
                         blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
                         const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
                         sig     = scanFlagMask & 1;
@@ -1725,7 +1730,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         }
                         absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
+                        scanPosSigOff--;
                     }
+                    while(scanPosSigOff >= 0);
                 } // end of non 4x4 path
                 sum &= 0xFFFFFF;
 
@@ -1739,6 +1746,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         numNonZero = coeffNum[subSet];
         if (numNonZero > 0)
         {
+            uint32_t idx;
             X265_CHECK(subCoeffFlag > 0, "subCoeffFlag is zero\n");
             CLZ(lastNZPosInCG, subCoeffFlag);
             CTZ(firstNZPosInCG, subCoeffFlag);
@@ -1752,22 +1760,36 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             c1 = 1;
             uint8_t *baseCtxMod = bIsLuma ? &m_contextState[OFF_ONE_FLAG_CTX + 4 * ctxSet] : &m_contextState[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA + 4 * ctxSet];
 
-            int numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
+            uint32_t numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
             int firstC2FlagIdx = -1;
-            for (int idx = 0; idx < numC1Flag; idx++)
+
+            X265_CHECK(numC1Flag > 0, "numC1Flag check failure\n");
+            idx = 0;
+            do
             {
                 uint32_t symbol = absCoeff[idx] > 1;
                 encodeBin(symbol, baseCtxMod[c1]);
+
+                // TODO: VC can't work fine on below style, but ICL can generate branch free code
+#ifdef __INTEL_COMPILER
+                if (symbol)
+                    c1 = 0;
+
+                if ((firstC2FlagIdx < 0) & symbol)
+                    firstC2FlagIdx = (int)idx;
+#else
                 if (symbol)
                 {
                     c1 = 0;
-
-                    if (firstC2FlagIdx == -1)
-                        firstC2FlagIdx = idx;
+                    if (firstC2FlagIdx < 0)
+                        firstC2FlagIdx = (int)idx;
                 }
-                else if ((c1 < 3) && (c1 > 0))
-                    c1++;
+#endif
+                c1 += ((c1 >> 1) ^ c1) & 1;
+                X265_CHECK(c1 <= 3, "c1 check failure\n");
+                idx++;
             }
+            while(idx < numC1Flag);
 
             if (!c1)
             {
@@ -1789,8 +1811,10 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                 if (!m_bitIf)
                 {
+                    uint32_t sum = 0;
                     // FastRd path
-                    for (int idx = 0; idx < numNonZero; idx++)
+                    idx = 0;
+                    do
                     {
                         int baseLevel = (baseLevelN & 3) | firstCoeff2;
                         X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
@@ -1814,7 +1838,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                                 codeNumber = (length + length);
                             }
-                            m_fracBits += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber) << 15;
+                            sum += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber);
 
                             if (absCoeff[idx] > (COEF_REMAIN_BIN_REDUCTION << goRiceParam))
                                 goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
@@ -1822,12 +1846,16 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         }
                         if (absCoeff[idx] >= 2)
                             firstCoeff2 = 0;
+                        idx++;
                     }
+                    while(idx < numNonZero);
+                    m_fracBits += ((uint64_t)sum << 15);
                 }
                 else
                 {
                     // Standard path
-                    for (int idx = 0; idx < numNonZero; idx++)
+                    idx = 0;
+                    do
                     {
                         int baseLevel = (baseLevelN & 3) | firstCoeff2;
                         X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
@@ -1842,7 +1870,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         }
                         if (absCoeff[idx] >= 2)
                             firstCoeff2 = 0;
+                        idx++;
                     }
+                    while(idx < numNonZero);
                 }
             }
         }
