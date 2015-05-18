@@ -981,6 +981,11 @@ void x265_interp_4tap_vert_ps_32x24_sse2(const pixel* src, intptr_t srcStride, i
 void x265_interp_4tap_vert_ps_32x32_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
 void x265_interp_4tap_vert_ps_32x48_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
 void x265_interp_4tap_vert_ps_32x64_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_ps_48x64_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_ps_64x16_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_ps_64x32_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_ps_64x48_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_ps_64x64_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
 #endif
 #undef LUMA_FILTERS
 #undef LUMA_SP_FILTERS
