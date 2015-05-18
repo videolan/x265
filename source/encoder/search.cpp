@@ -2011,7 +2011,7 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
 }
 
 /* find the best inter prediction for each PU of specified mode */
-void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC)
+void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC, uint32_t refMasks[2])
 {
     ProfileCUScope(interMode.cu, motionEstimationElapsedTime, countMotionEstimate);
 
@@ -2116,10 +2116,15 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
         }
         if (bDoUnidir)
         {
+            uint32_t refMask = refMasks[puIdx] ? refMasks[puIdx] : (uint32_t)-1;
+
             for (int list = 0; list < numPredDir; list++)
             {
                 for (int ref = 0; ref < numRefIdx[list]; ref++)
                 {
+                    if (!(refMask & (1 << ref)))
+                        continue;
+
                     uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
                     bits += getTUBits(ref, numRefIdx[list]);
 
@@ -2153,6 +2158,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                         bestME[list].bits = bits;
                     }
                 }
+                /* the second list ref bits start at bit 16 */
+                refMask >>= 16;
             }
         }
 
