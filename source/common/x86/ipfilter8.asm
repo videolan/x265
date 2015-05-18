@@ -2061,16 +2061,22 @@ cglobal interp_4tap_vert_%1_12x%2, 4, 6, 11
 %endif
 
 ;-----------------------------------------------------------------------------
-; void interp_4tap_vert_pp_16xN(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+; void interp_4tap_vert_%1_16x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
-%macro FILTER_V4_W16_H2_sse2 1
+%macro FILTER_V4_W16_H2_sse2 2
 INIT_XMM sse2
-cglobal interp_4tap_vert_pp_16x%1, 4, 6, 11
+cglobal interp_4tap_vert_%1_16x%2, 4, 6, 11
     mov         r4d,       r4m
     sub         r0,        r1
     shl         r4d,       5
     pxor        m9,        m9
+
+%ifidn %1,pp
     mova        m6,        [pw_32]
+%elifidn %1,ps
+    mova        m6,        [pw_2000]
+    add         r3d,       r3d
+%endif
 
 %ifdef PIC
     lea         r5,        [tab_ChromaCoeffV]
@@ -2082,7 +2088,7 @@ cglobal interp_4tap_vert_pp_16x%1, 4, 6, 11
 %endif
 
 %assign x 1
-%rep %1/2
+%rep %2/2
     movu        m2,        [r0]
     movu        m3,        [r0 + r1]
 
@@ -2125,6 +2131,7 @@ cglobal interp_4tap_vert_pp_16x%1, 4, 6, 11
     packssdw    m7,        m8
     paddw       m4,        m7
 
+%ifidn %1,pp
     paddw       m4,        m6
     psraw       m4,        6
     paddw       m2,        m6
@@ -2132,6 +2139,12 @@ cglobal interp_4tap_vert_pp_16x%1, 4, 6, 11
 
     packuswb    m4,        m2
     movu        [r2],      m4
+%elifidn %1,ps
+    psubw       m4,        m6
+    psubw       m2,        m6
+    movu        [r2],      m4
+    movu        [r2 + 16], m2
+%endif
 
     punpcklbw   m4,        m3,        m5
     punpckhbw   m3,        m5
@@ -2172,15 +2185,22 @@ cglobal interp_4tap_vert_pp_16x%1, 4, 6, 11
     paddw       m4,        m2
     paddw       m3,        m10
 
+%ifidn %1,pp
     paddw       m4,        m6
     psraw       m4,        6
     paddw       m3,        m6
     psraw       m3,        6
 
     packuswb    m4,        m3
-
     movu        [r2 + r3], m4
-%if x < %1/2
+%elifidn %1,ps
+    psubw       m4,        m6
+    psubw       m3,        m6
+    movu        [r2 + r3], m4
+    movu        [r2 + r3 + 16], m3
+%endif
+
+%if x < %2/2
     lea         r2,        [r2 + 2 * r3]
 %endif
 %assign x x+1
@@ -2190,14 +2210,23 @@ cglobal interp_4tap_vert_pp_16x%1, 4, 6, 11
 %endmacro
 
 %if ARCH_X86_64
-    FILTER_V4_W16_H2_sse2  4
-    FILTER_V4_W16_H2_sse2  8
-    FILTER_V4_W16_H2_sse2 12
-    FILTER_V4_W16_H2_sse2 16
-    FILTER_V4_W16_H2_sse2 32
+    FILTER_V4_W16_H2_sse2 pp, 4
+    FILTER_V4_W16_H2_sse2 pp, 8
+    FILTER_V4_W16_H2_sse2 pp, 12
+    FILTER_V4_W16_H2_sse2 pp, 16
+    FILTER_V4_W16_H2_sse2 pp, 32
 
-    FILTER_V4_W16_H2_sse2 24
-    FILTER_V4_W16_H2_sse2 64
+    FILTER_V4_W16_H2_sse2 pp, 24
+    FILTER_V4_W16_H2_sse2 pp, 64
+
+    FILTER_V4_W16_H2_sse2 ps, 4
+    FILTER_V4_W16_H2_sse2 ps, 8
+    FILTER_V4_W16_H2_sse2 ps, 12
+    FILTER_V4_W16_H2_sse2 ps, 16
+    FILTER_V4_W16_H2_sse2 ps, 32
+
+    FILTER_V4_W16_H2_sse2 ps, 24
+    FILTER_V4_W16_H2_sse2 ps, 64
 %endif
 
 ;-----------------------------------------------------------------------------
