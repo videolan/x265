@@ -1491,6 +1491,11 @@ SAD_X 3, 16,  12
 SAD_X 3, 16,  16
 SAD_X 3, 16,  32
 SAD_X 3, 16,  64
+SAD_X 3, 32,  8
+SAD_X 3, 32, 16
+SAD_X 3, 32, 24
+SAD_X 3, 32, 32
+SAD_X 3, 32, 64
 %define XMM_REGS 9
 SAD_X 4, 16, 16
 SAD_X 4, 16,  8
