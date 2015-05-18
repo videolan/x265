@@ -917,6 +917,10 @@ void x265_interp_4tap_vert_ps_2x4_sse2(const pixel* src, intptr_t srcStride, int
 void x265_interp_4tap_vert_ps_2x8_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
 void x265_interp_4tap_vert_ps_2x16_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
 void x265_interp_4tap_vert_ps_4x2_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_ps_4x4_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_ps_4x8_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_ps_4x16_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_4tap_vert_ps_4x32_sse2(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx);
 #ifdef X86_64
 void x265_interp_4tap_vert_pp_6x8_sse2(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
 void x265_interp_4tap_vert_pp_6x16_sse2(const pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx);
