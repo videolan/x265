@@ -1293,23 +1293,22 @@ bool PixelHarness::check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt)
 
 bool PixelHarness::check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLast_t opt)
 {
-    ALIGN_VAR_16(coeff_t, ref_src[32 * 32 + ITERS * 2]);
+    ALIGN_VAR_16(coeff_t, ref_src[4 * 32 + ITERS * 2]);
+    memset(ref_src, 0, sizeof(ref_src));
 
-    for (int i = 0; i < 32 * 32; i++)
+    // minus ITERS for keep probability to generate all zeros block
+    for (int i = 0; i < 4 * 32 - ITERS; i++)
     {
         ref_src[i] = rand() & SHORT_MAX;
     }
 
-    // extra test area all of 0x1234
-    for (int i = 0; i < ITERS * 2; i++)
-    {
-        ref_src[32 * 32 + i] = 0x1234;
-    }
+    // extra test area all of Zeros
 
     for (int i = 0; i < ITERS; i++)
     {
         int rand_scan_type = rand() % NUM_SCAN_TYPE;
         int rand_scan_size = (rand() % NUM_SCAN_SIZE) + 2;
+        const int trSize = (1 << rand_scan_size);
         coeff_t *rand_src = ref_src + i;
 
         const uint16_t* const scanTbl = g_scan4x4[rand_scan_type];
@@ -1319,17 +1318,20 @@ bool PixelHarness::check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLa
         {
             const uint32_t idxY = j / MLS_CG_SIZE;
             const uint32_t idxX = j % MLS_CG_SIZE;
-            if (rand_src[idxY * rand_scan_size + idxX]) break;
+            if (rand_src[idxY * trSize + idxX]) break;
         }
 
-        // fill one coeff when all coeff group are zero
+        uint32_t ref_scanPos = ref(rand_src, trSize, scanTbl);
+        uint32_t opt_scanPos = (int)checked(opt, rand_src, trSize, scanTbl);
+
+        // specially case: all coeff group are zero
         if (j >= SCAN_SET_SIZE)
-            rand_src[0] = 0x0BAD;
-
-        uint32_t ref_scanPos = ref(rand_src, (1 << rand_scan_size), scanTbl);
-        uint32_t opt_scanPos = (int)checked(opt, rand_src, (1 << rand_scan_size), scanTbl);
-
-        if (ref_scanPos != opt_scanPos)
+        {
+            // all zero block the high 16-bits undefined
+            if ((uint16_t)ref_scanPos != (uint16_t)opt_scanPos)
+                return false;
+        }
+        else if (ref_scanPos != opt_scanPos)
             return false;
 
         reportfail();
