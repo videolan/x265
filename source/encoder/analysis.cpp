@@ -944,13 +944,21 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
                     checkBestMode(md.pred[PRED_BIDIR], depth);
                 }
 
-                if (((bTryIntra && md.bestMode->cu.getQtRootCbf(0)) ||
-                    md.bestMode->sa8dCost == MAX_INT64) && splitIntra)
+                if ((bTryIntra && md.bestMode->cu.getQtRootCbf(0)) ||
+                    md.bestMode->sa8dCost == MAX_INT64)
                 {
-                    md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
-                    checkIntraInInter(md.pred[PRED_INTRA], cuGeom);
-                    encodeIntraInInter(md.pred[PRED_INTRA], cuGeom);
-                    checkBestMode(md.pred[PRED_INTRA], depth);
+                    if (splitIntra)
+                    {
+                        ProfileCounter(parentCTU, totalIntraCU[cuGeom.depth]);
+                        md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
+                        checkIntraInInter(md.pred[PRED_INTRA], cuGeom);
+                        encodeIntraInInter(md.pred[PRED_INTRA], cuGeom);
+                        checkBestMode(md.pred[PRED_INTRA], depth);
+                    }
+                    else
+                    {
+                        ProfileCounter(parentCTU, skippedIntraCU[cuGeom.depth]);
+                    }
                 }
             }
             else
@@ -963,12 +971,20 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
                     md.pred[PRED_BIDIR].sa8dCost < md.bestMode->sa8dCost)
                     md.bestMode = &md.pred[PRED_BIDIR];
 
-                if ((bTryIntra || md.bestMode->sa8dCost == MAX_INT64) && splitIntra)
+                if (bTryIntra || md.bestMode->sa8dCost == MAX_INT64)
                 {
-                    md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
-                    checkIntraInInter(md.pred[PRED_INTRA], cuGeom);
-                    if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
-                        md.bestMode = &md.pred[PRED_INTRA];
+                    if (splitIntra)
+                    {
+                        ProfileCounter(parentCTU, totalIntraCU[cuGeom.depth]);
+                        md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
+                        checkIntraInInter(md.pred[PRED_INTRA], cuGeom);
+                        if (md.pred[PRED_INTRA].sa8dCost < md.bestMode->sa8dCost)
+                            md.bestMode = &md.pred[PRED_INTRA];
+                    }
+                    else
+                    {
+                        ProfileCounter(parentCTU, skippedIntraCU[cuGeom.depth]);
+                    }
                 }
 
                 /* finally code the best mode selected by SA8D costs:

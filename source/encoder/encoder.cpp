@@ -959,6 +959,11 @@ void Encoder::printSummary()
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in intra analysis, averaging %.3lf Intra PUs per CTU\n",
              100.0 * cuStats.intraAnalysisElapsedTime / totalWorkerTime,
              (double)cuStats.countIntraAnalysis / cuStats.totalCTUs);
+    if (cuStats.skippedIntraCU[0] || cuStats.skippedIntraCU[1] || cuStats.skippedIntraCU[2])
+        x265_log(m_param, X265_LOG_INFO, "CU: Skipped intra CUs at depth %%%.2lf %%%.2lf %%%.2lf\n",
+                 100.0 * cuStats.skippedIntraCU[0] / cuStats.totalIntraCU[0],
+                 100.0 * cuStats.skippedIntraCU[1] / cuStats.totalIntraCU[1],
+                 100.0 * cuStats.skippedIntraCU[2] / cuStats.totalIntraCU[2]);
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in inter RDO, measuring %.3lf inter/merge predictions per CTU\n",
              100.0 * interRDOTotalTime / totalWorkerTime,
              (double)interRDOTotalCount / cuStats.totalCTUs);

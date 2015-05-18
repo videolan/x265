@@ -188,6 +188,8 @@ struct CUStats
 
     uint32_t skippedMotionReferences[NUM_CU_DEPTH];
     uint32_t totalMotionReferences[NUM_CU_DEPTH];
+    uint32_t skippedIntraCU[NUM_CU_DEPTH];
+    uint32_t totalIntraCU[NUM_CU_DEPTH];
 
     uint64_t countIntraRDO[NUM_CU_DEPTH];
     uint64_t countInterRDO[NUM_CU_DEPTH];
@@ -218,6 +220,8 @@ struct CUStats
             countInterRDO[i] += other.countInterRDO[i];
             skippedMotionReferences[i] += other.skippedMotionReferences[i];
             totalMotionReferences[i] += other.totalMotionReferences[i];
+            skippedIntraCU[i] += other.skippedIntraCU[i];
+            totalIntraCU[i] += other.totalIntraCU[i];
         }
 
         intraAnalysisElapsedTime += other.intraAnalysisElapsedTime;
