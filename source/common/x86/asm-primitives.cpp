@@ -1533,6 +1533,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].filter_vps = x265_interp_4tap_vert_ps_16x12_sse2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].filter_vps = x265_interp_4tap_vert_ps_16x16_sse2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].filter_vps = x265_interp_4tap_vert_ps_16x32_sse2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].filter_vps = x265_interp_4tap_vert_ps_24x32_sse2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_6x16].filter_vps = x265_interp_4tap_vert_ps_6x16_sse2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].filter_vps = x265_interp_4tap_vert_ps_8x8_sse2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x12].filter_vps = x265_interp_4tap_vert_ps_8x12_sse2;
@@ -1545,6 +1546,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].filter_vps = x265_interp_4tap_vert_ps_16x24_sse2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].filter_vps = x265_interp_4tap_vert_ps_16x32_sse2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].filter_vps = x265_interp_4tap_vert_ps_16x64_sse2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].filter_vps = x265_interp_4tap_vert_ps_24x64_sse2;
         p.chroma[X265_CSP_I444].pu[LUMA_8x4].filter_vps = x265_interp_4tap_vert_ps_8x4_sse2;
         p.chroma[X265_CSP_I444].pu[LUMA_8x8].filter_vps = x265_interp_4tap_vert_ps_8x8_sse2;
         p.chroma[X265_CSP_I444].pu[LUMA_8x16].filter_vps = x265_interp_4tap_vert_ps_8x16_sse2;
@@ -1556,6 +1558,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I444].pu[LUMA_16x16].filter_vps = x265_interp_4tap_vert_ps_16x16_sse2;
         p.chroma[X265_CSP_I444].pu[LUMA_16x32].filter_vps = x265_interp_4tap_vert_ps_16x32_sse2;
         p.chroma[X265_CSP_I444].pu[LUMA_16x64].filter_vps = x265_interp_4tap_vert_ps_16x64_sse2;
+        p.chroma[X265_CSP_I444].pu[LUMA_24x32].filter_vps = x265_interp_4tap_vert_ps_24x32_sse2;
 #endif
 
         ALL_LUMA_PU(luma_hpp, interp_8tap_horiz_pp, sse2);
