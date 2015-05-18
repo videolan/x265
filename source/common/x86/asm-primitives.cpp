@@ -1226,9 +1226,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_16x16].psy_cost_ss = x265_psyCost_ss_16x16_avx2;
         p.cu[BLOCK_32x32].psy_cost_ss = x265_psyCost_ss_32x32_avx2;
         p.cu[BLOCK_64x64].psy_cost_ss = x265_psyCost_ss_64x64_avx2;
-
         p.cu[BLOCK_4x4].psy_cost_pp = x265_psyCost_pp_4x4_avx2;
-
+        p.cu[BLOCK_8x8].psy_cost_pp = x265_psyCost_pp_8x8_avx2;
+        p.cu[BLOCK_16x16].psy_cost_pp = x265_psyCost_pp_16x16_avx2;
+        p.cu[BLOCK_32x32].psy_cost_pp = x265_psyCost_pp_32x32_avx2;
+        p.cu[BLOCK_64x64].psy_cost_pp = x265_psyCost_pp_64x64_avx2;
         p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = x265_intra_pred_planar16_avx2;
         p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = x265_intra_pred_planar32_avx2;
 

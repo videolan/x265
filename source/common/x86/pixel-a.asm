@@ -8603,7 +8603,149 @@ cglobal psyCost_pp_4x4, 4, 5, 6
     pabsd           m0, m0
 %endmacro
 
+%macro PSY_PP_8x8_AVX2 0
+    lea             r4, [r1 * 3]
+    movu           xm0, [r0]
+    movu           xm1, [r0 + r1]
+    movu           xm2, [r0 + r1 * 2]
+    movu           xm3, [r0 + r4]
+    lea             r5, [r0 + r1 * 4]
+    movu           xm4, [r5]
+    movu           xm5, [r5 + r1]
+    movu           xm6, [r5 + r1 * 2]
+    movu           xm7, [r5 + r4]
+
+    lea             r4, [r3 * 3]
+    vinserti128     m0, m0, [r2], 1
+    vinserti128     m1, m1, [r2 + r3], 1
+    vinserti128     m2, m2, [r2 + r3 * 2], 1
+    vinserti128     m3, m3, [r2 + r4], 1
+    lea             r5, [r2 + r3 * 4]
+    vinserti128     m4, m4, [r5], 1
+    vinserti128     m5, m5, [r5 + r3], 1
+    vinserti128     m6, m6, [r5 + r3 * 2], 1
+    vinserti128     m7, m7, [r5 + r4], 1
+
+    paddw           m8, m0, m1
+    paddw           m8, m2
+    paddw           m8, m3
+    paddw           m8, m4
+    paddw           m8, m5
+    paddw           m8, m6
+    paddw           m8, m7
+    pmaddwd         m8, [pw_1]
+
+    psrldq          m9, m8, 8
+    paddd           m8, m9
+    psrldq          m9, m8, 4
+    paddd           m8, m9
+    psrld           m8, 2
+
+    psubw           m9, m1, m0
+    paddw           m0, m1
+    psubw           m1, m3, m2
+    paddw           m2, m3
+    punpckhwd       m3, m0, m9
+    punpcklwd       m0, m9
+    psubw           m9, m3, m0
+    paddw           m0, m3
+    punpckhwd       m3, m2, m1
+    punpcklwd       m2, m1
+    psubw           m10, m3, m2
+    paddw           m2, m3
+    psubw           m3, m5, m4
+    paddw           m4, m5
+    psubw           m5, m7, m6
+    paddw           m6, m7
+    punpckhwd       m1, m4, m3
+    punpcklwd       m4, m3
+    psubw           m7, m1, m4
+    paddw           m4, m1
+    punpckhwd       m3, m6, m5
+    punpcklwd       m6, m5
+    psubw           m1, m3, m6
+    paddw           m6, m3
+    psubw           m3, m2, m0
+    paddw           m0, m2
+    psubw           m2, m10, m9
+    paddw           m9, m10
+    punpckhdq       m5, m0, m3
+    punpckldq       m0, m3
+    psubw           m10, m5, m0
+    paddw           m0, m5
+    punpckhdq       m3, m9, m2
+    punpckldq       m9, m2
+    psubw           m5, m3, m9
+    paddw           m9, m3
+    psubw           m3, m6, m4
+    paddw           m4, m6
+    psubw           m6, m1, m7
+    paddw           m7, m1
+    punpckhdq       m2, m4, m3
+    punpckldq       m4, m3
+    psubw           m1, m2, m4
+    paddw           m4, m2
+    punpckhdq       m3, m7, m6
+    punpckldq       m7, m6
+    psubw           m2, m3, m7
+    paddw           m7, m3
+    psubw           m3, m4, m0
+    paddw           m0, m4
+    psubw           m4, m1, m10
+    paddw           m10, m1
+    punpckhqdq      m6, m0, m3
+    punpcklqdq      m0, m3
+    pabsw           m0, m0
+    pabsw           m6, m6
+    pmaxsw          m0, m6
+    punpckhqdq      m3, m10, m4
+    punpcklqdq      m10, m4
+    pabsw           m10, m10
+    pabsw           m3, m3
+    pmaxsw          m10, m3
+    psubw           m3, m7, m9
+    paddw           m9, m7
+    psubw           m7, m2, m5
+    paddw           m5, m2
+    punpckhqdq      m4, m9, m3
+    punpcklqdq      m9, m3
+    pabsw           m9, m9
+    pabsw           m4, m4
+    pmaxsw          m9, m4
+    punpckhqdq      m3, m5, m7
+    punpcklqdq      m5, m7
+    pabsw           m5, m5
+    pabsw           m3, m3
+    pmaxsw          m5, m3
+    paddd           m0, m9
+    paddd           m0, m10
+    paddd           m0, m5
+    psrld           m9, m0, 16
+    pslld           m0, 16
+    psrld           m0, 16
+    paddd           m0, m9
+    psrldq          m9, m0, 8
+    paddd           m0, m9
+    psrldq          m9, m0, 4
+    paddd           m0, m9
+    paddd           m0, [pd_1]
+    psrld           m0, 1
+    psubd           m0, m8
+
+    vextracti128   xm1, m0, 1
+    psubd          xm1, xm0
+    pabsd          xm1, xm1
+%endmacro
+
 %if ARCH_X86_64
+%if HIGH_BIT_DEPTH
+cglobal psyCost_pp_8x8, 4, 8, 11
+    add            r1d, r1d
+    add            r3d, r3d
+    PSY_PP_8x8_AVX2
+    movd           eax, xm1
+    RET
+%else ; !HIGH_BIT_DEPTH
 INIT_YMM avx2
 cglobal psyCost_pp_8x8, 4, 8, 13
     lea             r4, [3 * r1]
@@ -8615,9 +8757,33 @@ cglobal psyCost_pp_8x8, 4, 8, 13
     movd            eax, xm0
     RET
 %endif
-
+%endif
 %if ARCH_X86_64
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal psyCost_pp_16x16, 4, 10, 12
+    add            r1d, r1d
+    add            r3d, r3d
+    pxor           m11, m11
+
+    mov            r8d, 2
+.loopH:
+    mov            r9d, 2
+.loopW:
+    PSY_PP_8x8_AVX2
+
+    paddd         xm11, xm1
+    add             r0, 16
+    add             r2, 16
+    dec            r9d
+    jnz            .loopW
+    lea             r0, [r0 + r1 * 8 - 32]
+    lea             r2, [r2 + r3 * 8 - 32]
+    dec            r8d
+    jnz            .loopH
+    movd           eax, xm11
+    RET
+%else ; !HIGH_BIT_DEPTH
 cglobal psyCost_pp_16x16, 4, 10, 14
     lea             r4, [3 * r1]
     lea             r7, [3 * r3]
@@ -8642,9 +8808,33 @@ cglobal psyCost_pp_16x16, 4, 10, 14
     movd            eax, xm13
     RET
 %endif
-
+%endif
 %if ARCH_X86_64
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal psyCost_pp_32x32, 4, 10, 12
+    add            r1d, r1d
+    add            r3d, r3d
+    pxor           m11, m11
+
+    mov            r8d, 4
+.loopH:
+    mov            r9d, 4
+.loopW:
+    PSY_PP_8x8_AVX2
+
+    paddd         xm11, xm1
+    add             r0, 16
+    add             r2, 16
+    dec            r9d
+    jnz            .loopW
+    lea             r0, [r0 + r1 * 8 - 64]
+    lea             r2, [r2 + r3 * 8 - 64]
+    dec            r8d
+    jnz            .loopH
+    movd           eax, xm11
+    RET
+%else ; !HIGH_BIT_DEPTH
 cglobal psyCost_pp_32x32, 4, 10, 14
     lea             r4, [3 * r1]
     lea             r7, [3 * r3]
@@ -8669,9 +8859,33 @@ cglobal psyCost_pp_32x32, 4, 10, 14
     movd            eax, xm13
     RET
 %endif
-
+%endif
 %if ARCH_X86_64
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal psyCost_pp_64x64, 4, 10, 12
+    add            r1d, r1d
+    add            r3d, r3d
+    pxor           m11, m11
+
+    mov            r8d, 8
+.loopH:
+    mov            r9d, 8
+.loopW:
+    PSY_PP_8x8_AVX2
+
+    paddd         xm11, xm1
+    add             r0, 16
+    add             r2, 16
+    dec            r9d
+    jnz            .loopW
+    lea             r0, [r0 + r1 * 8 - 128]
+    lea             r2, [r2 + r3 * 8 - 128]
+    dec            r8d
+    jnz            .loopH
+    movd           eax, xm11
+    RET
+%else ; !HIGH_BIT_DEPTH
 cglobal psyCost_pp_64x64, 4, 10, 14
     lea             r4, [3 * r1]
     lea             r7, [3 * r3]
@@ -8695,6 +8909,7 @@ cglobal psyCost_pp_64x64, 4, 10, 14
     jnz             .loopH
     movd            eax, xm13
     RET
+%endif
 %endif
 
 ;---------------------------------------------------------------------------------------------------------------------
