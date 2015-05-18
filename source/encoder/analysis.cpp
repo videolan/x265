@@ -759,6 +759,7 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
     uint32_t minDepth = topSkipMinDepth(parentCTU, cuGeom);
     bool earlyskip = false;
+    bool splitIntra = true;
     uint32_t splitRefs[4] = { 0, 0, 0, 0 };
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
     if (mightNotSplit && depth >= minDepth)
@@ -792,6 +793,7 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
         invalidateContexts(nextDepth);
         Entropy* nextContext = &m_rqt[depth].cur;
         int nextQP = qp;
+        splitIntra = false;
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
@@ -807,6 +809,7 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
                 splitRefs[subPartIdx] = compressInterCU_rd0_4(parentCTU, childGeom, nextQP);
 
                 // Save best CU and pred data for this sub CU
+                splitIntra |= nd.bestMode->cu.isIntra(0);
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
 
@@ -941,8 +944,8 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
                     checkBestMode(md.pred[PRED_BIDIR], depth);
                 }
 
-                if ((bTryIntra && md.bestMode->cu.getQtRootCbf(0)) ||
-                    md.bestMode->sa8dCost == MAX_INT64)
+                if (((bTryIntra && md.bestMode->cu.getQtRootCbf(0)) ||
+                    md.bestMode->sa8dCost == MAX_INT64) && splitIntra)
                 {
                     md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
                     checkIntraInInter(md.pred[PRED_INTRA], cuGeom);
@@ -960,7 +963,7 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
                     md.pred[PRED_BIDIR].sa8dCost < md.bestMode->sa8dCost)
                     md.bestMode = &md.pred[PRED_BIDIR];
 
-                if (bTryIntra || md.bestMode->sa8dCost == MAX_INT64)
+                if ((bTryIntra || md.bestMode->sa8dCost == MAX_INT64) && splitIntra)
                 {
                     md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
                     checkIntraInInter(md.pred[PRED_INTRA], cuGeom);
