@@ -1025,11 +1025,11 @@ cglobal interp_4tap_vert_%1_2x%2, 4, 6, 8
     FILTER_V4_W2_H4_sse2 ps, 16
 
 ;-----------------------------------------------------------------------------
-; void interp_4tap_vert_pp_4x2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+; void interp_4tap_vert_%1_4x2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
+%macro  FILTER_V2_W4_H4_sse2 1
 INIT_XMM sse2
-cglobal interp_4tap_vert_pp_4x2, 4, 6, 8
-
+cglobal interp_4tap_vert_%1_4x2, 4, 6, 8
     mov         r4d,       r4m
     sub         r0,        r1
     pxor        m7,        m7
@@ -1078,6 +1078,8 @@ cglobal interp_4tap_vert_pp_4x2, 4, 6, 8
     pshuflw     m5,        m3,        q2301
     pshufhw     m5,        m5,        q2301
     paddw       m3,        m5
+
+%ifidn %1, pp
     psrld       m2,        16
     psrld       m3,        16
     packssdw    m2,        m3
@@ -1089,7 +1091,24 @@ cglobal interp_4tap_vert_pp_4x2, 4, 6, 8
     movd        [r2],      m2
     psrldq      m2,        4
     movd        [r2 + r3], m2
+%elifidn %1, ps
+    psrldq      m2,        2
+    psrldq      m3,        2
+    pshufd      m2,        m2, q3120
+    pshufd      m3,        m3, q3120
+    punpcklqdq  m2, m3
+
+    add         r3d,       r3d
+    psubw       m2,        [pw_2000]
+    movh        [r2],      m2
+    movhps      [r2 + r3], m2
+%endif
     RET
+
+%endmacro
+
+    FILTER_V2_W4_H4_sse2 pp
+    FILTER_V2_W4_H4_sse2 ps
 
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_vert_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
