@@ -1282,12 +1282,11 @@ cglobal interp_4tap_vert_%1_4x%2, 4, 6, 8
     FILTER_V4_W4_H4_sse2 ps, 32
 
 ;-----------------------------------------------------------------------------
-;void interp_4tap_vert_pp_6x8(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;void interp_4tap_vert_%1_6x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
-%macro FILTER_V4_W6_H4_sse2 1
+%macro FILTER_V4_W6_H4_sse2 2
 INIT_XMM sse2
-cglobal interp_4tap_vert_pp_6x%1, 4, 7, 10
-
+cglobal interp_4tap_vert_%1_6x%2, 4, 7, 10
     mov         r4d,       r4m
     sub         r0,        r1
     shl         r4d,       5
@@ -1302,11 +1301,16 @@ cglobal interp_4tap_vert_pp_6x%1, 4, 7, 10
     mova        m5,        [tab_ChromaCoeffV + r4 + 16]
 %endif
 
+%ifidn %1,pp
     mova        m4,        [pw_32]
+%elifidn %1,ps
+    mova        m4,        [pw_2000]
+    add         r3d,       r3d
+%endif
     lea         r5,        [3 * r1]
 
 %assign x 1
-%rep %1/4
+%rep %2/4
     movq        m0,        [r0]
     movq        m1,        [r0 + r1]
     movq        m2,        [r0 + 2 * r1]
@@ -1333,12 +1337,20 @@ cglobal interp_4tap_vert_pp_6x%1, 4, 7, 10
 
     paddw       m0,        m7
 
+%ifidn %1,pp
     paddw       m0,        m4
     psraw       m0,        6
     packuswb    m0,        m0
+
     movd        [r2],      m0
     pextrw      r6d,       m0,        2
     mov         [r2 + 4],  r6w
+%elifidn %1,ps
+    psubw       m0,        m4
+    movh        [r2],      m0
+    pshufd      m0,        m0,        2
+    movd        [r2 + 8],  m0
+%endif
 
     lea         r0,        [r0 + 4 * r1]
 
@@ -1362,12 +1374,21 @@ cglobal interp_4tap_vert_pp_6x%1, 4, 7, 10
 
     paddw       m1,        m7
 
+%ifidn %1,pp
     paddw       m1,        m4
     psraw       m1,        6
     packuswb    m1,        m1
+
     movd        [r2 + r3], m1
     pextrw      r6d,       m1,        2
     mov         [r2 + r3 + 4], r6w
+%elifidn %1,ps
+    psubw       m1,        m4
+    movh        [r2 + r3], m1
+    pshufd      m1,        m1,        2
+    movd        [r2 + r3 + 8],  m1
+%endif
+
     movq        m1,        [r0 + r1]
     punpcklbw   m7,        m0,        m1
 
@@ -1386,14 +1407,21 @@ cglobal interp_4tap_vert_pp_6x%1, 4, 7, 10
     packssdw    m7,        m8
 
     paddw       m2,        m7
+    lea         r2,        [r2 + 2 * r3]
 
+%ifidn %1,pp
     paddw       m2,        m4
     psraw       m2,        6
     packuswb    m2,        m2
-    lea         r2,        [r2 + 2 * r3]
     movd        [r2],      m2
     pextrw      r6d,       m2,    2
     mov         [r2 + 4],  r6w
+%elifidn %1,ps
+    psubw       m2,        m4
+    movh        [r2],      m2
+    pshufd      m2,        m2,        2
+    movd        [r2 + 8],  m2
+%endif
 
     movq        m2,        [r0 + 2 * r1]
     punpcklbw   m1,        m2
@@ -1414,17 +1442,25 @@ cglobal interp_4tap_vert_pp_6x%1, 4, 7, 10
 
     paddw       m3,        m1
 
+%ifidn %1,pp
     paddw       m3,        m4
     psraw       m3,        6
     packuswb    m3,        m3
 
     movd        [r2 + r3], m3
-    pextrw      r6d,    m3,    2
+    pextrw      r6d,       m3,    2
     mov         [r2 + r3 + 4], r6w
+%elifidn %1,ps
+    psubw       m3,        m4
+    movh        [r2 + r3], m3
+    pshufd      m3,        m3,        2
+    movd        [r2 + r3 + 8],  m3
+%endif
 
-%if x < %1/4
+%if x < %2/4
     lea         r2,        [r2 + 2 * r3]
 %endif
+
 %assign x x+1
 %endrep
     RET
@@ -1432,8 +1468,10 @@ cglobal interp_4tap_vert_pp_6x%1, 4, 7, 10
 %endmacro
 
 %if ARCH_X86_64
-    FILTER_V4_W6_H4_sse2 8
-    FILTER_V4_W6_H4_sse2 16
+    FILTER_V4_W6_H4_sse2 pp, 8
+    FILTER_V4_W6_H4_sse2 pp, 16
+    FILTER_V4_W6_H4_sse2 ps, 8
+    FILTER_V4_W6_H4_sse2 ps, 16
 %endif
 
 ;-----------------------------------------------------------------------------
