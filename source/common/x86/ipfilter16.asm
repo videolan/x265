@@ -1056,6 +1056,112 @@ FILTER_HOR_LUMA_W16 16
 FILTER_HOR_LUMA_W16 32
 FILTER_HOR_LUMA_W16 64
 
+;-------------------------------------------------------------------------------------------------------------
+; void interp_8tap_horiz_pp(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+%macro FILTER_HOR_LUMA_W32 2
+INIT_YMM avx2
+cglobal interp_8tap_horiz_pp_%1x%2, 4,6,8
+    add              r1d, r1d
+    add              r3d, r3d
+    sub              r0, 6
+    mov              r4d, r4m
+    shl              r4d, 4
+%ifdef PIC
+    lea              r5, [tab_LumaCoeff]
+    vpbroadcastq     m0, [r5 + r4]
+    vpbroadcastq     m1, [r5 + r4 + 8]
+%else
+    vpbroadcastq     m0, [tab_LumaCoeff + r4]
+    vpbroadcastq     m1, [tab_LumaCoeff + r4 + 8]
+%endif
+    mova             m3, [interp8_hpp_shuf]
+    mova             m7, [pd_32]
+    pxor             m2, m2
+
+    ; register map
+    ; m0 , m1 interpolate coeff
+
+    mov              r4d, %2
+
+.loop:
+%assign x 0
+%rep %1/16
+    vbroadcasti128   m4, [r0 + x]
+    vbroadcasti128   m5, [r0 + 8 + x]
+    pshufb           m4, m3
+    pshufb           m5, m3
+
+    pmaddwd          m4, m0
+    pmaddwd          m5, m1
+    paddd            m4, m5
+
+    vbroadcasti128   m5, [r0 + 8 + x]
+    vbroadcasti128   m6, [r0 + 16 + x]
+    pshufb           m5, m3
+    pshufb           m6, m3
+
+    pmaddwd          m5, m0
+    pmaddwd          m6, m1
+    paddd            m5, m6
+
+    phaddd           m4, m5
+    vpermq           m4, m4, q3120
+    paddd            m4, m7
+    psrad            m4, 6
+
+    packusdw         m4, m4
+    vpermq           m4, m4, q2020
+    CLIPW            m4, m2, [pw_pixel_max]
+    movu             [r2 + x], xm4
+
+    vbroadcasti128   m4, [r0 + 16 + x]
+    vbroadcasti128   m5, [r0 + 24 + x]
+    pshufb           m4, m3
+    pshufb           m5, m3
+
+    pmaddwd          m4, m0
+    pmaddwd          m5, m1
+    paddd            m4, m5
+
+    vbroadcasti128   m5, [r0 + 24 + x]
+    vbroadcasti128   m6, [r0 + 32 + x]
+    pshufb           m5, m3
+    pshufb           m6, m3
+
+    pmaddwd          m5, m0
+    pmaddwd          m6, m1
+    paddd            m5, m6
+
+    phaddd           m4, m5
+    vpermq           m4, m4, q3120
+    paddd            m4, m7
+    psrad            m4, 6
+
+    packusdw         m4, m4
+    vpermq           m4, m4, q2020
+    CLIPW            m4, m2, [pw_pixel_max]
+    movu             [r2 + 16 + x], xm4
+
+%assign x x+32
+%endrep
+
+    add              r2, r3
+    add              r0, r1
+    dec              r4d
+    jnz              .loop
+    RET
+%endmacro
+FILTER_HOR_LUMA_W32 32, 8
+FILTER_HOR_LUMA_W32 32, 16
+FILTER_HOR_LUMA_W32 32, 24
+FILTER_HOR_LUMA_W32 32, 32
+FILTER_HOR_LUMA_W32 32, 64
+FILTER_HOR_LUMA_W32 64, 16
+FILTER_HOR_LUMA_W32 64, 32
+FILTER_HOR_LUMA_W32 64, 48
+FILTER_HOR_LUMA_W32 64, 64
+
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_%3_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
