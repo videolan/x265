@@ -319,6 +319,8 @@ public:
     void checkDQP(Mode& mode, const CUGeom& cuGeom);
     void checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom);
 
+    MV getLowresMV(const CUData& cu, const PredictionUnit& pu, int list, int ref);
+
     class PME : public BondedTaskGroup
     {
     public:

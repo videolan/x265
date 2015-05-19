@@ -1861,6 +1861,29 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
     return outCost;
 }
 
+/* find the lowres motion vector from lookahead in middle of current PU */
+MV Search::getLowresMV(const CUData& cu, const PredictionUnit& pu, int list, int ref)
+{
+    int diffPoc = abs(m_slice->m_poc - m_slice->m_refPicList[list][ref]->m_poc);
+    if (diffPoc > m_param->bframes + 1)
+        /* poc difference is out of range for lookahead */
+        return 0;
+
+    MV* mvs = m_frame->m_lowres.lowresMvs[list][diffPoc - 1];
+    if (mvs[0].x == 0x7FFF)
+        /* this motion search was not estimated by lookahead */
+        return 0;
+
+    uint32_t block_x = (cu.m_cuPelX + g_zscanToPelX[pu.puAbsPartIdx] + pu.width / 2) >> 4;
+    uint32_t block_y = (cu.m_cuPelY + g_zscanToPelY[pu.puAbsPartIdx] + pu.height / 2) >> 4;
+    uint32_t idx = block_y * m_frame->m_lowres.maxBlocksInRow + block_x;
+
+    X265_CHECK(block_x < m_frame->m_lowres.maxBlocksInRow, "block_x is too high\n");
+    X265_CHECK(block_y < m_frame->m_lowres.maxBlocksInCol, "block_y is too high\n");
+
+    return mvs[idx] << 1; /* scale up lowres mv */
+}
+
 /* Pick between the two AMVP candidates which is the best one to use as
  * MVP for the motion search, based on SAD cost */
 int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[AMVP_NUM_CANDS], int list, int ref)
@@ -1950,12 +1973,17 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
 
     MotionData* bestME = interMode.bestME[part];
 
-    MV  mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
+    // 12 mv candidates including lowresMV
+    MV  mvc[(MD_ABOVE_LEFT + 1) * 2 + 2];
     int numMvc = interMode.cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
 
     const MV* amvp = interMode.amvpCand[list][ref];
     int mvpIdx = selectMVP(interMode.cu, pu, amvp, list, ref);
     MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
+
+    MV lmv = getLowresMV(interMode.cu, pu, list, ref);
+    if (lmv.notZero())
+        mvc[numMvc++] = lmv;
 
     setSearchRange(interMode.cu, mvp, m_param->searchRange, mvmin, mvmax);
 
@@ -1990,7 +2018,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
     CUData& cu = interMode.cu;
     Yuv* predYuv = &interMode.predYuv;
 
-    MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 1];
+    // 12 mv candidates including lowresMV
+    MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 2];
 
     const Slice *slice = m_slice;
     int numPart     = cu.getNumPartInter();
@@ -2038,6 +2067,10 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 const MV* amvp = interMode.amvpCand[list][ref];
                 int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                 MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
+
+                MV lmv = getLowresMV(cu, pu, list, ref);
+                if (lmv.notZero())
+                    mvc[numMvc++] = lmv;
 
                 setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
                 int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv);
@@ -2095,6 +2128,10 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     const MV* amvp = interMode.amvpCand[list][ref];
                     int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                     MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
+
+                    MV lmv = getLowresMV(cu, pu, list, ref);
+                    if (lmv.notZero())
+                        mvc[numMvc++] = lmv;
 
                     setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
                     int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv);
