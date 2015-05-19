@@ -45,12 +45,8 @@ mask_ff:                times 16 db 0xff
                         times 16 db 0
 deinterleave_shuf:      times  2 db 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
 deinterleave_word_shuf: times  2 db 0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15
-hmul_16p:               times 16 db 1
-                        times  8 db 1, -1
 hmulw_16p:              times  8 dw 1
                         times  4 dw 1, -1
-
-trans8_shuf:            dd 0, 4, 1, 5, 2, 6, 3, 7
 
 SECTION .text
 
@@ -72,6 +68,8 @@ cextern pb_15
 cextern pb_16
 cextern pb_32
 cextern pb_64
+cextern hmul_16p
+cextern trans8_shuf
 
 ;-----------------------------------------------------------------------------
 ; void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)

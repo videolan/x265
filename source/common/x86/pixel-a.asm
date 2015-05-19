@@ -32,8 +32,6 @@
 %include "x86util.asm"
 
 SECTION_RODATA 32
-hmul_16p:  times 16 db 1
-           times 8 db 1, -1
 hmul_8p:   times 8 db 1
            times 4 db 1, -1
            times 8 db 1
@@ -45,16 +43,13 @@ hmul_8w:   times 4 dw 1
            times 2 dw 1, -1
            times 4 dw 1
            times 2 dw 1, -1
-ALIGN 32
-hmul_w:    times 2 dw 1, -1, 1, -1, 1, -1, 1, -1
+
 ALIGN 32
 transd_shuf1: SHUFFLE_MASK_W 0, 8, 2, 10, 4, 12, 6, 14
 transd_shuf2: SHUFFLE_MASK_W 1, 9, 3, 11, 5, 13, 7, 15
 
 sw_f0:     dq 0xfff0, 0
 pd_f0:     times 4 dd 0xffff0000
-
-pw_76543210: dw 0, 1, 2, 3, 4, 5, 6, 7
 
 SECTION .text
 
@@ -72,6 +67,7 @@ cextern pw_pmmpzzzz
 cextern pd_1
 cextern popcnt_table
 cextern pd_2
+cextern hmul_16p
 
 ;=============================================================================
 ; SATD
@@ -9070,7 +9066,7 @@ cglobal psyCost_ss_4x4, 4, 5, 8
 INIT_XMM sse4
 cglobal psyCost_ss_8x8, 4, 6, 15
 
-    mova            m13, [hmul_w]
+    mova            m13, [pw_pmpmpmpm]
     mova            m14, [pw_1]
     add             r1, r1
     add             r3, r3
@@ -10220,7 +10216,7 @@ cglobal psyCost_ss_8x8, 4, 6, 15
 INIT_XMM sse4
 cglobal psyCost_ss_16x16, 4, 9, 16
 
-    mova            m13, [hmul_w]
+    mova            m13, [pw_pmpmpmpm]
     mova            m14, [pw_1]
     add             r1, r1
     add             r3, r3
@@ -10248,7 +10244,7 @@ cglobal psyCost_ss_16x16, 4, 9, 16
 INIT_XMM sse4
 cglobal psyCost_ss_32x32, 4, 9, 16
 
-    mova            m13, [hmul_w]
+    mova            m13, [pw_pmpmpmpm]
     mova            m14, [pw_1]
     add             r1, r1
     add             r3, r3
@@ -10276,7 +10272,7 @@ cglobal psyCost_ss_32x32, 4, 9, 16
 INIT_XMM sse4
 cglobal psyCost_ss_64x64, 4, 9, 16
 
-    mova            m13, [hmul_w]
+    mova            m13, [pw_pmpmpmpm]
     mova            m14, [pw_1]
     add             r1, r1
     add             r3, r3
@@ -10717,7 +10713,7 @@ cglobal psyCost_ss_8x8, 4, 7, 14
     and             rsp, ~63
 
     mova            m12, [pw_1]
-    mova            m13, [hmul_w]
+    mova            m13, [pw_pmpmpmpm]
     add             r1, r1
     add             r3, r3
 
@@ -10737,7 +10733,7 @@ cglobal psyCost_ss_16x16, 4, 9, 15
     and             rsp, ~63
 
     mova            m12, [pw_1]
-    mova            m13, [hmul_w]
+    mova            m13, [pw_pmpmpmpm]
     add             r1, r1
     add             r3, r3
     pxor            m14, m14
@@ -10771,7 +10767,7 @@ cglobal psyCost_ss_32x32, 4, 9, 15
     and             rsp, ~63
 
     mova            m12, [pw_1]
-    mova            m13, [hmul_w]
+    mova            m13, [pw_pmpmpmpm]
     add             r1, r1
     add             r3, r3
     pxor            m14, m14
@@ -10805,7 +10801,7 @@ cglobal psyCost_ss_64x64, 4, 9, 15
     and             rsp, ~63
 
     mova            m12, [pw_1]
-    mova            m13, [hmul_w]
+    mova            m13, [pw_pmpmpmpm]
     add             r1, r1
     add             r3, r3
     pxor            m14, m14

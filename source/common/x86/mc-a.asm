@@ -58,7 +58,6 @@ cextern pw_00ff
 cextern pw_pixel_max
 cextern sw_64
 cextern pd_32
-cextern deinterleave_shufd
 
 ;====================================================================================================================
 ;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)

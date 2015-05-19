@@ -90,7 +90,7 @@ const pw_pixel_max,         times 16 dw ((1 << BIT_DEPTH)-1)
 const pw_0_15,              times  2 dw   0,   1,   2,   3,   4,   5,   6,   7
 const pw_ppppmmmm,          times  1 dw   1,   1,   1,   1,  -1,  -1,  -1,  -1
 const pw_ppmmppmm,          times  1 dw   1,   1,  -1,  -1,   1,   1,  -1,  -1
-const pw_pmpmpmpm,          times  1 dw   1,  -1,   1,  -1,   1,  -1,   1,  -1
+const pw_pmpmpmpm,          times 16 dw   1,  -1,   1,  -1,   1,  -1,   1,  -1
 const pw_pmmpzzzz,          times  1 dw   1,  -1,  -1,   1,   0,   0,   0,   0
 const multi_2Row,           times  1 dw   1,   2,   3,   4,   1,   2,   3,   4
 const multiH,               times  1 dw   9,  10,  11,  12,  13,  14,  15,  16
@@ -100,7 +100,9 @@ const multiH2,              times  1 dw  17,  18,  19,  20,  21,  22,  23,  24, 
 const pw_planar16_mul,      times  1 dw  15,  14,  13,  12,  11,  10,   9,   8,   7,   6,   5,   4,   3,   2,   1,   0
 const pw_planar32_mul,      times  1 dw  31,  30,  29,  28,  27,  26,  25,  24,  23,  22,  21,  20,  19,  18,  17,  16
 const pw_FFFFFFFFFFFFFFF0,           dw 0x00
-                            times 7  dw 0xff
+                            times  7 dw 0xff
+const hmul_16p,             times 16 db   1
+                            times  8 db   1,  -1
 
 
 ;; 32-bit constants
@@ -122,7 +124,6 @@ const pd_32767,             times  4 dd 32767
 const pd_n32768,            times  4 dd 0xffff8000
 
 const trans8_shuf,          times  1 dd   0,   4,   1,   5,   2,   6,   3,   7
-const deinterleave_shufd,   times  1 dd   0,   4,   1,   5,   2,   6,   3,   7
 
 const popcnt_table
 %assign x 0
