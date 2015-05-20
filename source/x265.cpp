@@ -158,8 +158,8 @@ void CLIOptions::printStatus(uint32_t frameNum)
 
 bool CLIOptions::parse(int argc, char **argv)
 {
-    bool bError = 0;
-    int help = 0;
+    bool bError = false;
+    int bShowHelp = false;
     int inputBitDepth = 8;
     int outputBitDepth = 0;
     int reconFileBitDepth = 0;
@@ -189,7 +189,7 @@ bool CLIOptions::parse(int argc, char **argv)
         else if (c == 'D')
             outputBitDepth = atoi(optarg);
         else if (c == '?')
-            showHelp(param);
+            bShowHelp = true;
     }
 
     api = x265_api_get(outputBitDepth);
@@ -211,6 +211,9 @@ bool CLIOptions::parse(int argc, char **argv)
         x265_log(NULL, X265_LOG_ERROR, "preset or tune unrecognized\n");
         return true;
     }
+
+    if (bShowHelp)
+        showHelp(param);
 
     for (optind = 0;; )
     {
@@ -309,7 +312,7 @@ bool CLIOptions::parse(int argc, char **argv)
         return true;
     }
 
-    if (argc <= 1 || help)
+    if (argc <= 1)
         showHelp(param);
 
     if (inputfn == NULL || outputfn == NULL)
