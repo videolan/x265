@@ -63,6 +63,8 @@ const pb_000000000000000F,           db 0xff
 
 const pw_1,                 times 16 dw 1
 const pw_2,                 times 16 dw 2
+const pw_3,                 times 16 dw 3
+const pw_7,                 times 16 dw 7
 const pw_m2,                times  8 dw -2
 const pw_4,                 times  8 dw 4
 const pw_8,                 times  8 dw 8
@@ -112,6 +114,7 @@ const pd_2,                 times  8 dd 2
 const pd_4,                 times  4 dd 4
 const pd_8,                 times  4 dd 8
 const pd_16,                times  4 dd 16
+const pd_31,                times  4 dd 31
 const pd_32,                times  8 dd 32
 const pd_64,                times  4 dd 64
 const pd_128,               times  4 dd 128
