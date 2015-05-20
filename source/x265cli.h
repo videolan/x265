@@ -121,6 +121,7 @@ static const struct option long_options[] =
     { "no-b-pyramid",         no_argument, NULL, 0 },
     { "b-pyramid",            no_argument, NULL, 0 },
     { "ref",            required_argument, NULL, 0 },
+    { "limit-refs",     required_argument, NULL, 0 },
     { "no-weightp",           no_argument, NULL, 0 },
     { "weightp",              no_argument, NULL, 'w' },
     { "no-weightb",           no_argument, NULL, 0 },
@@ -302,10 +303,12 @@ static void showHelp(x265_param *param)
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));
     H1("   --[no-]tskip                  Enable intra 4x4 transform skipping. Default %s\n", OPT(param->bEnableTransformSkip));
     H0("\nTemporal / motion search options:\n");
+    H0("   --max-merge <1..5>            Maximum number of merge candidates. Default %d\n", param->maxNumMergeCand);
+    H0("   --ref <integer>               max number of L0 references to be allowed (1 .. 16) Default %d\n", param->maxNumReferences);
+    H0("   --limit-refs <0|1|2|3>        limit references per depth (1) or CU (2) or both (3). Default %d\n", param->limitReferences);
     H0("   --me <string>                 Motion search method dia hex umh star full. Default %d\n", param->searchMethod);
     H0("-m/--subme <integer>             Amount of subpel refinement to perform (0:least .. 7:most). Default %d \n", param->subpelRefine);
     H0("   --merange <integer>           Motion search range. Default %d\n", param->searchRange);
-    H0("   --max-merge <1..5>            Maximum number of merge candidates. Default %d\n", param->maxNumMergeCand);
     H0("   --[no-]rect                   Enable rectangular motion partitions Nx2N and 2NxN. Default %s\n", OPT(param->bEnableRectInter));
     H0("   --[no-]amp                    Enable asymmetric motion partitions, requires --rect. Default %s\n", OPT(param->bEnableAMP));
     H1("   --[no-]temporal-mvp           Enable temporal MV predictors. Default %s\n", OPT(param->bEnableTemporalMvp));
@@ -327,7 +330,6 @@ static void showHelp(x265_param *param)
     H1("   --bframe-bias <integer>       Bias towards B frame decisions. Default %d\n", param->bFrameBias);
     H0("   --b-adapt <0..2>              0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);
     H0("   --[no-]b-pyramid              Use B-frames as references. Default %s\n", OPT(param->bBPyramid));
-    H0("   --ref <integer>               max number of L0 references to be allowed (1 .. 16) Default %d\n", param->maxNumReferences);
     H1("   --zones <zone0>/<zone1>/...   Tweak the bitrate of regions of the video\n");
     H1("                                 Each zone is of the form\n");
     H1("                                   <start frame>,<end frame>,<option>\n");

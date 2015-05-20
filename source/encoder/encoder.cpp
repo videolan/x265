@@ -949,10 +949,22 @@ void Encoder::printSummary()
         x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in motion estimation, averaging %.3lf CU inter modes per CTU\n",
                  100.0 * cuStats.motionEstimationElapsedTime / totalWorkerTime,
                  (double)cuStats.countMotionEstimate / cuStats.totalCTUs);
+
+        if (cuStats.skippedMotionReferences[0] || cuStats.skippedMotionReferences[1] || cuStats.skippedMotionReferences[2])
+            x265_log(m_param, X265_LOG_INFO, "CU: Skipped motion searches per depth %%%.2lf %%%.2lf %%%.2lf %%%.2lf\n",
+                     100.0 * cuStats.skippedMotionReferences[0] / cuStats.totalMotionReferences[0],
+                     100.0 * cuStats.skippedMotionReferences[1] / cuStats.totalMotionReferences[1],
+                     100.0 * cuStats.skippedMotionReferences[2] / cuStats.totalMotionReferences[2],
+                     100.0 * cuStats.skippedMotionReferences[3] / cuStats.totalMotionReferences[3]);
     }
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in intra analysis, averaging %.3lf Intra PUs per CTU\n",
              100.0 * cuStats.intraAnalysisElapsedTime / totalWorkerTime,
              (double)cuStats.countIntraAnalysis / cuStats.totalCTUs);
+    if (cuStats.skippedIntraCU[0] || cuStats.skippedIntraCU[1] || cuStats.skippedIntraCU[2])
+        x265_log(m_param, X265_LOG_INFO, "CU: Skipped intra CUs at depth %%%.2lf %%%.2lf %%%.2lf\n",
+                 100.0 * cuStats.skippedIntraCU[0] / cuStats.totalIntraCU[0],
+                 100.0 * cuStats.skippedIntraCU[1] / cuStats.totalIntraCU[1],
+                 100.0 * cuStats.skippedIntraCU[2] / cuStats.totalIntraCU[2]);
     x265_log(m_param, X265_LOG_INFO, "CU: %%%05.2lf time spent in inter RDO, measuring %.3lf inter/merge predictions per CTU\n",
              100.0 * interRDOTotalTime / totalWorkerTime,
              (double)interRDOTotalCount / cuStats.totalCTUs);

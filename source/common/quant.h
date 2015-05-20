@@ -150,7 +150,7 @@ protected:
 
     void setChromaQP(int qpin, TextType ttype, int chFmt);
 
-    uint32_t signBitHidingHDQ(int16_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
+    uint32_t signBitHidingHDQ(int16_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters, uint32_t log2TrSize);
 
     uint32_t rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
 };

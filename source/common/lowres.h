@@ -130,6 +130,8 @@ struct Lowres : public ReferencePlanes
     uint16_t(*lowresCosts[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2]);
     int32_t*  lowresMvCosts[2][X265_BFRAME_MAX + 1];
     MV*       lowresMvs[2][X265_BFRAME_MAX + 1];
+    uint32_t  maxBlocksInRow;
+    uint32_t  maxBlocksInCol;
 
     /* used for vbvLookahead */
     int       plannedType[X265_LOOKAHEAD_MAX + 1];

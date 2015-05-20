@@ -186,6 +186,11 @@ struct CUStats
     int64_t  weightAnalyzeTime;                 // elapsed worker time analyzing reference weights
     int64_t  totalCTUTime;                      // elapsed worker time in compressCTU (includes pmode master)
 
+    uint32_t skippedMotionReferences[NUM_CU_DEPTH];
+    uint32_t totalMotionReferences[NUM_CU_DEPTH];
+    uint32_t skippedIntraCU[NUM_CU_DEPTH];
+    uint32_t totalIntraCU[NUM_CU_DEPTH];
+
     uint64_t countIntraRDO[NUM_CU_DEPTH];
     uint64_t countInterRDO[NUM_CU_DEPTH];
     uint64_t countIntraAnalysis;
@@ -213,6 +218,10 @@ struct CUStats
             interRDOElapsedTime[i] += other.interRDOElapsedTime[i];
             countIntraRDO[i] += other.countIntraRDO[i];
             countInterRDO[i] += other.countInterRDO[i];
+            skippedMotionReferences[i] += other.skippedMotionReferences[i];
+            totalMotionReferences[i] += other.totalMotionReferences[i];
+            skippedIntraCU[i] += other.skippedIntraCU[i];
+            totalIntraCU[i] += other.totalIntraCU[i];
         }
 
         intraAnalysisElapsedTime += other.intraAnalysisElapsedTime;
@@ -301,7 +310,7 @@ public:
     void     encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom);
 
     // estimation inter prediction (non-skip)
-    void     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC);
+    void     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC, uint32_t masks[2]);
 
     // encode residual and compute rd-cost for inter mode
     void     encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom);
@@ -318,6 +327,8 @@ public:
     /* update CBF flags and QP values to be internally consistent */
     void checkDQP(Mode& mode, const CUGeom& cuGeom);
     void checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom);
+
+    MV getLowresMV(const CUData& cu, const PredictionUnit& pu, int list, int ref);
 
     class PME : public BondedTaskGroup
     {
