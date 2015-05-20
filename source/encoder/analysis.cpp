@@ -1073,16 +1073,6 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
             addSplitFlagCost(*md.bestMode, cuGeom.depth);
     }
 
-    if (mightNotSplit && md.bestMode)
-    {
-        /* early-out statistics */
-        FrameData& curEncData = *m_frame->m_encData;
-        FrameData::RCStatCU& cuStat = curEncData.m_cuStat[parentCTU.m_cuAddr];
-        uint64_t temp = cuStat.avgCost[depth] * cuStat.count[depth];
-        cuStat.count[depth] += 1;
-        cuStat.avgCost[depth] = (temp + md.bestMode->rdCost) / cuStat.count[depth];
-    }
-
     if (mightSplit && !bNoSplit)
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
@@ -1127,6 +1117,16 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
                 break;
             }
         }
+    }
+    
+    if (mightNotSplit)
+    {
+        /* early-out statistics */
+        FrameData& curEncData = *m_frame->m_encData;
+        FrameData::RCStatCU& cuStat = curEncData.m_cuStat[parentCTU.m_cuAddr];
+        uint64_t temp = cuStat.avgCost[depth] * cuStat.count[depth];
+        cuStat.count[depth] += 1;
+        cuStat.avgCost[depth] = (temp + md.bestMode->rdCost) / cuStat.count[depth];
     }
 
     /* Copy best data to encData CTU and recon */
