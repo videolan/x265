@@ -455,7 +455,7 @@ it was compiled against.
 
 A number of validations must be performed on the returned API structure
 in order to determine if it is safe for use by your application. If you
-do not perform these checks, your application is liable to crash.
+do not perform these checks, your application is liable to crash::
 
 	if (api->api_major_version != X265_MAJOR_VERSION) /* do not use */
 	if (api->sizeof_param != sizeof(x265_param))      /* do not use */
