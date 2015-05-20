@@ -1140,6 +1140,7 @@ cglobal interp_4tap_vert_%1_4x%2, 4, 6, 8
 %endif
 
     lea         r5,        [3 * r1]
+    lea         r4,        [3 * r3]
     punpcklqdq  m0,        m0
 
 %assign x 1
@@ -1244,11 +1245,10 @@ cglobal interp_4tap_vert_%1_4x%2, 4, 6, 8
     movd        [r2],      m2
     psrldq      m2,        4
     movd        [r2 + r3], m2
-    lea         r2,        [r2 + 2 * r3]
     psrldq      m2,        4
-    movd        [r2],      m2
+    movd        [r2 + 2 * r3],      m2
     psrldq      m2,        4
-    movd        [r2 + r3], m2
+    movd        [r2 + r4], m2
 %elifidn %1,ps
     psrldq      m4,        2
     psrldq      m5,        2
@@ -1256,13 +1256,12 @@ cglobal interp_4tap_vert_%1_4x%2, 4, 6, 8
     pshufd      m5,        m5, q3120
     punpcklqdq  m4,        m5
     psubw       m4,        m1
-    lea         r2,        [r2 + 2 * r3]
-    movh        [r2],      m4
-    movhps      [r2 + r3], m4
+    movh        [r2 + 2 * r3],      m4
+    movhps      [r2 + r4], m4
 %endif
 
 %if x < %2/4
-    lea         r2,        [r2 + 2 * r3]
+    lea         r2,        [r2 + 4 * r3]
 %endif
 
 %assign x x+1
