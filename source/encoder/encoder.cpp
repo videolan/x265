@@ -1795,7 +1795,7 @@ void Encoder::configure(x265_param *p)
 
     if (p->analysisMode && (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation))
     {
-        x265_log(p, X265_LOG_ERROR, "Analysis load/save options incompatible with pmode/pme");
+        x265_log(p, X265_LOG_WARNING, "Analysis load/save options incompatible with pmode/pme Disabling pmod/pme\n");
         p->bDistributeMotionEstimation = p->bDistributeModeAnalysis = 0;
     }
 
