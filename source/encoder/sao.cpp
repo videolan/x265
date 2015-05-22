@@ -1644,6 +1644,9 @@ void SAO::sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addr
 // NOTE: must put in namespace x265 since we need class SAO
 void saoCuStatsE3_c(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count)
 {
+    X265_CHECK(endX < MAX_CU_SIZE, "endX check failure\n");
+    X265_CHECK(endY < MAX_CU_SIZE, "endY check failure\n");
+
     int x, y;
     int32_t tmp_stats[SAO::NUM_EDGETYPE];
     int32_t tmp_count[SAO::NUM_EDGETYPE];
@@ -1657,6 +1660,7 @@ void saoCuStatsE3_c(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t
         {
             int signDown = signOf2(rec[x], rec[x + stride - 1]);
             X265_CHECK(signDown == signOf(rec[x] - rec[x + stride - 1]), "signDown check failure\n");
+            X265_CHECK(abs(upBuff1[x]) <= 1, "upBuffer1 check failure\n");
 
             uint32_t edgeType = signDown + upBuff1[x] + 2;
             upBuff1[x - 1] = (int8_t)(-signDown);
