@@ -7785,3 +7785,115 @@ cglobal interp_8tap_horiz_ps_24x32, 4, 6, 8
     jnz                 .loop0
     RET
 %endif
+
+
+%macro IPFILTER_LUMA_PS_32_64_AVX2 2
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_horiz_ps_%1x%2, 4, 6, 8
+
+    add                 r1d, r1d
+    add                 r3d, r3d
+    mov                 r4d, r4m
+    mov                 r5d, r5m
+    shl                 r4d, 4
+%ifdef PIC
+    lea                 r6, [tab_LumaCoeff]
+    vpbroadcastq        m0, [r6 + r4]
+    vpbroadcastq        m1, [r6 + r4 + 8]
+%else
+    vpbroadcastq        m0, [tab_LumaCoeff + r4]
+    vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
+%endif
+    mova                m3, [pb_shuf]
+    vbroadcasti128      m2, [pd_n32768]
+
+    ; register map
+    ; m0 , m1 interpolate coeff
+
+    sub                 r0, 6
+    test                r5d, r5d
+    mov                 r4d, %2
+    jz                  .loop0
+    lea                 r6, [r1*3]
+    sub                 r0, r6
+    add                 r4d, 7
+
+.loop0:
+%assign x 0
+%rep %1/16
+    vbroadcasti128      m4, [r0 + x]
+    vbroadcasti128      m5, [r0 + 8 + x]
+    pshufb              m4, m3
+    pshufb              m7, m5, m3
+
+    pmaddwd             m4, m0
+    pmaddwd             m7, m1
+    paddd               m4, m7
+
+    vbroadcasti128      m6, [r0 + 16 + x]
+    pshufb              m5, m3
+    pshufb              m7, m6, m3
+
+    pmaddwd             m5, m0
+    pmaddwd             m7, m1
+    paddd               m5, m7
+
+    phaddd              m4, m5
+    vpermq              m4, m4, q3120
+    paddd               m4, m2
+    vextracti128        xm5,m4, 1
+    psrad               xm4, 2
+    psrad               xm5, 2
+    packssdw            xm4, xm5
+
+    movu                [r2 + x], xm4
+
+    vbroadcasti128      m5, [r0 + 24 + x]
+    pshufb              m6, m3
+    pshufb              m7, m5, m3
+
+    pmaddwd             m6, m0
+    pmaddwd             m7, m1
+    paddd               m6, m7
+
+    vbroadcasti128      m7, [r0 + 32 + x]
+    pshufb              m5, m3
+    pshufb              m7, m3
+
+    pmaddwd             m5, m0
+    pmaddwd             m7, m1
+    paddd               m5, m7
+
+    phaddd              m6, m5
+    vpermq              m6, m6, q3120
+    paddd               m6, m2
+    vextracti128        xm5,m6, 1
+    psrad               xm6, 2
+    psrad               xm5, 2
+    packssdw            xm6, xm5
+
+    movu                [r2 + 16 + x], xm6
+    %assign x x+32
+    %endrep
+
+    add                 r2, r3
+    add                 r0, r1
+    dec                 r4d
+    jnz                 .loop0
+    RET
+%endif
+%endmacro
+
+    IPFILTER_LUMA_PS_32_64_AVX2 32, 8
+    IPFILTER_LUMA_PS_32_64_AVX2 32, 16
+    IPFILTER_LUMA_PS_32_64_AVX2 32, 24
+    IPFILTER_LUMA_PS_32_64_AVX2 32, 32
+    IPFILTER_LUMA_PS_32_64_AVX2 32, 64
+
+    IPFILTER_LUMA_PS_32_64_AVX2 64, 16
+    IPFILTER_LUMA_PS_32_64_AVX2 64, 32
+    IPFILTER_LUMA_PS_32_64_AVX2 64, 48
+    IPFILTER_LUMA_PS_32_64_AVX2 64, 64
+
+    IPFILTER_LUMA_PS_32_64_AVX2 48, 64

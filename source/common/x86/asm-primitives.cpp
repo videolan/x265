@@ -1415,6 +1415,16 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.pu[LUMA_8x4].luma_hps = x265_interp_8tap_horiz_ps_8x4_avx2;
         p.pu[LUMA_8x16].luma_hps = x265_interp_8tap_horiz_ps_8x16_avx2;
         p.pu[LUMA_8x32].luma_hps = x265_interp_8tap_horiz_ps_8x32_avx2;
+        p.pu[LUMA_32x8].luma_hps = x265_interp_8tap_horiz_ps_32x8_avx2;
+        p.pu[LUMA_32x16].luma_hps = x265_interp_8tap_horiz_ps_32x16_avx2;
+        p.pu[LUMA_32x32].luma_hps = x265_interp_8tap_horiz_ps_32x32_avx2;
+        p.pu[LUMA_32x24].luma_hps = x265_interp_8tap_horiz_ps_32x24_avx2;
+        p.pu[LUMA_32x64].luma_hps = x265_interp_8tap_horiz_ps_32x64_avx2;
+        p.pu[LUMA_64x64].luma_hps = x265_interp_8tap_horiz_ps_64x64_avx2;
+        p.pu[LUMA_64x16].luma_hps = x265_interp_8tap_horiz_ps_64x16_avx2;
+        p.pu[LUMA_64x32].luma_hps = x265_interp_8tap_horiz_ps_64x32_avx2;
+        p.pu[LUMA_64x48].luma_hps = x265_interp_8tap_horiz_ps_64x48_avx2;
+        p.pu[LUMA_48x64].luma_hps = x265_interp_8tap_horiz_ps_48x64_avx2;
         p.pu[LUMA_24x32].luma_hps = x265_interp_8tap_horiz_ps_24x32_avx2;
 
         p.pu[LUMA_4x4].luma_hpp = x265_interp_8tap_horiz_pp_4x4_avx2;
