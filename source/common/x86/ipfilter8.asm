@@ -641,6 +641,123 @@ cglobal interp_4tap_horiz_pp_%1x%2, 4, 6, 8, src, srcstride, dst, dststride
     IPFILTER_CHROMA_sse3 48, 64
     IPFILTER_CHROMA_sse3 64, 16
 
+%macro FILTER_2 2
+    movd        m3,     [srcq + %1]
+    movd        m4,     [srcq + 1 + %1]
+    punpckldq   m3,     m4
+    punpcklbw   m3,     m0
+    pmaddwd     m3,     m1
+    packssdw    m3,     m3
+    pshuflw     m4,     m3, q2301
+    paddw       m3,     m4
+    psrldq      m3,     2
+    psubw       m3,     m2
+    movd        [dstq + %2], m3
+%endmacro
+
+%macro FILTER_4 2
+    movd        m3,     [srcq + %1]
+    movd        m4,     [srcq + 1 + %1]
+    punpckldq   m3,     m4
+    punpcklbw   m3,     m0
+    pmaddwd     m3,     m1
+    movd        m4,     [srcq + 2 + %1]
+    movd        m5,     [srcq + 3 + %1]
+    punpckldq   m4,     m5
+    punpcklbw   m4,     m0
+    pmaddwd     m4,     m1
+    packssdw    m3,     m4
+    pshuflw     m4,     m3, q2301
+    pshufhw     m4,     m4, q2301
+    paddw       m3,     m4
+    psrldq      m3,     2
+    pshufd      m3,     m3,     q3120
+    psubw       m3,     m2
+    movh        [dstq + %2], m3
+%endmacro
+
+%macro FILTER_4TAP_HPS_sse3 2
+INIT_XMM sse3
+cglobal interp_4tap_horiz_ps_%1x%2, 4, 7, 6, src, srcstride, dst, dststride
+    mov         r4d,    r4m
+    add         dststrided, dststrided
+    mova        m2,     [pw_2000]
+    pxor        m0,     m0
+
+%ifdef PIC
+    lea         r6,     [tabw_ChromaCoeff]
+    movddup     m1,     [r6 + r4 * 8]
+%else
+    movddup     m1,     [tabw_ChromaCoeff + r4 * 8]
+%endif
+
+    mov        r4d,     %2
+    cmp        r5m,     byte 0
+    je         .loopH
+    sub        srcq,    srcstrideq
+    add        r4d,     3
+
+.loopH:
+%assign x -1
+%assign y 0
+%rep %1/4
+    FILTER_4 x,y
+%assign x x+4
+%assign y y+8
+%endrep
+%rep (%1 % 4)/2
+    FILTER_2 x,y
+%endrep
+    add         srcq,   srcstrideq
+    add         dstq,   dststrideq
+
+    dec         r4d
+    jnz         .loopH
+    RET
+
+%endmacro
+
+    FILTER_4TAP_HPS_sse3 2, 4
+    FILTER_4TAP_HPS_sse3 2, 8
+    FILTER_4TAP_HPS_sse3 2, 16
+    FILTER_4TAP_HPS_sse3 4, 2
+    FILTER_4TAP_HPS_sse3 4, 4
+    FILTER_4TAP_HPS_sse3 4, 8
+    FILTER_4TAP_HPS_sse3 4, 16
+    FILTER_4TAP_HPS_sse3 4, 32
+    FILTER_4TAP_HPS_sse3 6, 8
+    FILTER_4TAP_HPS_sse3 6, 16
+    FILTER_4TAP_HPS_sse3 8, 2
+    FILTER_4TAP_HPS_sse3 8, 4
+    FILTER_4TAP_HPS_sse3 8, 6
+    FILTER_4TAP_HPS_sse3 8, 8
+    FILTER_4TAP_HPS_sse3 8, 12
+    FILTER_4TAP_HPS_sse3 8, 16
+    FILTER_4TAP_HPS_sse3 8, 32
+    FILTER_4TAP_HPS_sse3 8, 64
+    FILTER_4TAP_HPS_sse3 12, 16
+    FILTER_4TAP_HPS_sse3 12, 32
+    FILTER_4TAP_HPS_sse3 16, 4
+    FILTER_4TAP_HPS_sse3 16, 8
+    FILTER_4TAP_HPS_sse3 16, 12
+    FILTER_4TAP_HPS_sse3 16, 16
+    FILTER_4TAP_HPS_sse3 16, 24
+    FILTER_4TAP_HPS_sse3 16, 32
+    FILTER_4TAP_HPS_sse3 16, 64
+    FILTER_4TAP_HPS_sse3 24, 32
+    FILTER_4TAP_HPS_sse3 24, 64
+    FILTER_4TAP_HPS_sse3 32,  8
+    FILTER_4TAP_HPS_sse3 32, 16
+    FILTER_4TAP_HPS_sse3 32, 24
+    FILTER_4TAP_HPS_sse3 32, 32
+    FILTER_4TAP_HPS_sse3 32, 48
+    FILTER_4TAP_HPS_sse3 32, 64
+    FILTER_4TAP_HPS_sse3 48, 64
+    FILTER_4TAP_HPS_sse3 64, 16
+    FILTER_4TAP_HPS_sse3 64, 32
+    FILTER_4TAP_HPS_sse3 64, 48
+    FILTER_4TAP_HPS_sse3 64, 64
+
 %macro FILTER_H8_W8_sse2 0
     movh        m1, [r0 + x - 3]
     movh        m4, [r0 + x - 2]

@@ -1614,6 +1614,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         ALL_CHROMA_420_PU(filter_hpp, interp_4tap_horiz_pp, sse3);
         ALL_CHROMA_422_PU(filter_hpp, interp_4tap_horiz_pp, sse3);
         ALL_CHROMA_444_PU(filter_hpp, interp_4tap_horiz_pp, sse3);
+        ALL_CHROMA_420_PU(filter_hps, interp_4tap_horiz_ps, sse3);
+        ALL_CHROMA_422_PU(filter_hps, interp_4tap_horiz_ps, sse3);
+        ALL_CHROMA_444_PU(filter_hps, interp_4tap_horiz_ps, sse3);
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
