@@ -118,6 +118,9 @@ const interp8_hps_shuf,     dd 0, 4, 1, 5, 2, 6, 3, 7
 const interp8_hpp_shuf,     db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
                             db 4, 5, 6, 7, 8, 9, 10, 11, 6, 7, 8, 9, 10, 11, 12, 13
 
+const pb_shuf,  db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
+                db 4, 5, 6, 7, 8, 9, 10, 11, 6, 7, 8, 9, 10, 11, 12, 13
+
 SECTION .text
 cextern pd_32
 cextern pw_pixel_max
@@ -7646,3 +7649,72 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,8,7
     IPFILTER_LUMA_PS_4xN_AVX2 4
     IPFILTER_LUMA_PS_4xN_AVX2 8
     IPFILTER_LUMA_PS_4xN_AVX2 16
+
+%macro IPFILTER_LUMA_PS_8xN_AVX2 1
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_horiz_ps_8x%1, 4, 6, 8
+    add                 r1d, r1d
+    add                 r3d, r3d
+    mov                 r4d, r4m
+    mov                 r5d, r5m
+    shl                 r4d, 4
+%ifdef PIC
+    lea                 r6, [tab_LumaCoeff]
+    vpbroadcastq        m0, [r6 + r4]
+    vpbroadcastq        m1, [r6 + r4 + 8]
+%else
+    vpbroadcastq        m0, [tab_LumaCoeff + r4]
+    vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
+%endif
+    mova                m3, [pb_shuf]
+    vbroadcasti128      m2, [pd_n32768]
+
+    ; register map
+    ; m0 , m1 interpolate coeff
+
+    sub                 r0, 6
+    test                r5d, r5d
+    mov                 r4d, %1
+    jz                  .loop0
+    lea                 r6, [r1*3]
+    sub                 r0, r6
+    add                 r4d, 7
+
+.loop0:
+    vbroadcasti128      m4, [r0]
+    vbroadcasti128      m5, [r0 + 8]
+    pshufb              m4, m3
+    pshufb              m7, m5, m3
+    pmaddwd             m4, m0
+    pmaddwd             m7, m1
+    paddd               m4, m7
+
+    vbroadcasti128      m6, [r0 + 16]
+    pshufb              m5, m3
+    pshufb              m6, m3
+    pmaddwd             m5, m0
+    pmaddwd             m6, m1
+    paddd               m5, m6
+
+    phaddd              m4, m5
+    vpermq              m4, m4, q3120
+    paddd               m4, m2
+    vextracti128        xm5,m4, 1
+    psrad               xm4, 2
+    psrad               xm5, 2
+    packssdw            xm4, xm5
+
+    movu                [r2], xm4
+    add                 r2, r3
+    add                 r0, r1
+    dec                 r4d
+    jnz                 .loop0
+    RET
+%endif
+%endmacro
+
+    IPFILTER_LUMA_PS_8xN_AVX2 4
+    IPFILTER_LUMA_PS_8xN_AVX2 8
+    IPFILTER_LUMA_PS_8xN_AVX2 16
+    IPFILTER_LUMA_PS_8xN_AVX2 32
