@@ -52,7 +52,7 @@ enum SAOType
 
 class SAO
 {
-protected:
+public:
 
     enum { SAO_MAX_DEPTH = 4 };
     enum { SAO_BO_BITS  = 5 };
@@ -67,6 +67,8 @@ protected:
 
     typedef int32_t (PerClass[MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]);
     typedef int32_t (PerPlane[NUM_PLANE][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]);
+
+protected:
 
     /* allocated per part */
     PerClass*   m_count;

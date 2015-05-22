@@ -173,6 +173,9 @@ typedef void (*saoCuOrgE1_t)(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intp
 typedef void (*saoCuOrgE2_t)(pixel* rec, int8_t* pBufft, int8_t* pBuff1, int8_t* offsetEo, int lcuWidth, intptr_t stride);
 typedef void (*saoCuOrgE3_t)(pixel* rec, int8_t* upBuff1, int8_t* m_offsetEo, intptr_t stride, int startX, int endX);
 typedef void (*saoCuOrgB0_t)(pixel* rec, const int8_t* offsetBo, int ctuWidth, int ctuHeight, intptr_t stride);
+
+typedef void (*saoCuStatsE3_t)(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count);
+
 typedef void (*sign_t)(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
@@ -288,6 +291,8 @@ struct EncoderPrimitives
      * saoCuOrgE3[1] is used for width > 16. */
     saoCuOrgE3_t          saoCuOrgE3[2];
     saoCuOrgB0_t          saoCuOrgB0;
+
+    saoCuStatsE3_t        saoCuStatsE3;
 
     downscale_t           frameInitLowres;
     cutree_propagate_cost propagateCost;

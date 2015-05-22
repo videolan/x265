@@ -57,7 +57,6 @@ inline int64_t estSaoDist(int32_t count, int offset, int32_t offsetOrg)
 {
     return (count * offset - offsetOrg * 2) * offset;
 }
-
 } // end anonymous namespace
 
 
@@ -925,35 +924,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
 
             primitives.sign(&upBuff1[startX - 1], &rec[startX - 1], &rec[startX - 1 - stride + 1], (endX - startX + 1));
 
-            memset(tmp_stats, 0, sizeof(tmp_stats));
-            memset(tmp_count, 0, sizeof(tmp_count));
-
-            for (y = startY; y < endY; y++)
-            {
-                for (x = startX; x < endX; x++)
-                {
-                    int signDown = signOf2(rec[x], rec[x + stride - 1]);
-                    X265_CHECK(signDown == signOf(rec[x] - rec[x + stride - 1]), "signDown check failure\n");
-
-                    uint32_t edgeType = signDown + upBuff1[x] + 2;
-                    upBuff1[x - 1] = (int8_t)(-signDown);
-                    tmp_stats[edgeType] += (fenc[x] - rec[x]);
-                    tmp_count[edgeType]++;
-                }
-
-                upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
-
-                rec += stride;
-                fenc += stride;
-            }
-
-            stats = m_offsetOrg[plane][SAO_EO_3];
-            count = m_count[plane][SAO_EO_3];
-            for (x = 0; x < NUM_EDGETYPE; x++)
-            {
-                stats[s_eoTable[x]] += tmp_stats[x];
-                count[s_eoTable[x]] += tmp_count[x];
-            }
+            primitives.saoCuStatsE3(fenc0 + startX + startY * stride, rec0  + startX + startY * stride, stride, upBuff1 + startX, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_3], m_count[plane][SAO_EO_3]);
         }
     }
 }
@@ -1669,4 +1640,47 @@ void SAO::sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addr
         }
     }
 }
+
+// NOTE: must put in namespace x265 since we need class SAO
+void saoCuStatsE3_c(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count)
+{
+    int x, y;
+    int32_t tmp_stats[SAO::NUM_EDGETYPE];
+    int32_t tmp_count[SAO::NUM_EDGETYPE];
+
+    memset(tmp_stats, 0, sizeof(tmp_stats));
+    memset(tmp_count, 0, sizeof(tmp_count));
+
+    for (y = 0; y < endY; y++)
+    {
+        for (x = 0; x < endX; x++)
+        {
+            int signDown = signOf2(rec[x], rec[x + stride - 1]);
+            X265_CHECK(signDown == signOf(rec[x] - rec[x + stride - 1]), "signDown check failure\n");
+
+            uint32_t edgeType = signDown + upBuff1[x] + 2;
+            upBuff1[x - 1] = (int8_t)(-signDown);
+            tmp_stats[edgeType] += (fenc[x] - rec[x]);
+            tmp_count[edgeType]++;
+        }
+
+        upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
+
+        rec += stride;
+        fenc += stride;
+    }
+
+    for (x = 0; x < SAO::NUM_EDGETYPE; x++)
+    {
+        stats[SAO::s_eoTable[x]] += tmp_stats[x];
+        count[SAO::s_eoTable[x]] += tmp_count[x];
+    }
 }
+
+void setupSaoPrimitives_c(EncoderPrimitives &p)
+{
+    // TODO: move other sao functions to here
+    p.saoCuStatsE3 = saoCuStatsE3_c;
+}
+}
+

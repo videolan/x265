@@ -1841,6 +1841,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_6x16].p2s = x265_filterPixelToShort_6x16_sse4;
 
 #if X86_64
+        p.saoCuStatsE3 = x265_saoCuStatsE3_sse4;
+
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
         ALL_LUMA_CU(psy_cost_ss, psyCost_ss, sse4);
 #endif

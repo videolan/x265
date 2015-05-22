@@ -39,6 +39,7 @@ void x265_saoCuOrgE3_avx2(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intpt
 void x265_saoCuOrgE3_32_avx2(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intptr_t stride, int startX, int endX);
 void x265_saoCuOrgB0_sse4(pixel* rec, const int8_t* offsetBo, int ctuWidth, int ctuHeight, intptr_t stride);
 void x265_saoCuOrgB0_avx2(pixel* rec, const int8_t* offsetBo, int ctuWidth, int ctuHeight, intptr_t stride);
+void x265_saoCuStatsE3_sse4(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count);
 void x265_calSign_sse4(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 void x265_calSign_avx2(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 
