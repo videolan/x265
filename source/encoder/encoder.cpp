@@ -103,7 +103,10 @@ void Encoder::create()
 
     // Do not allow WPP if only one row or fewer than 3 columns, it is pointless and unstable
     if (rows == 1 || cols < 3)
+    {
+        x265_log(p, X265_LOG_WARNING, "Too few rows/columns, --wpp disabled\n");
         p->bEnableWavefront = 0;
+    }
 
     bool allowPools = !p->numaPools || strcmp(p->numaPools, "none");
 
