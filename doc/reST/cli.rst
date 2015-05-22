@@ -479,6 +479,9 @@ Profile, Level, Tier
 	specified level, main tier first, turning on high tier only if 
 	necessary and available at that level.
 
+	If :option:`--level-idc` has not been specified, this argument is
+	ignored.
+
 .. option:: --ref <1..16>
 
 	Max number of L0 references to be allowed. This number has a linear
@@ -511,6 +514,7 @@ Profile, Level, Tier
 	Default: disabled
 
 .. note::
+
 	:option:`--profile`, :option:`--level-idc`, and
 	:option:`--high-tier` are only intended for use when you are
 	targeting a particular decoder (or decoders) with fixed resource
@@ -518,6 +522,19 @@ Profile, Level, Tier
 	Specifying a profile or level may lower the encode quality
 	parameters to meet those requirements but it will never raise
 	them. It may enable VBV constraints on a CRF encode.
+
+	Also note that x265 determines the decoder requirement level in
+	three steps.  First, the user configures an x265_param structure
+	with their suggested encoder options and then optionally calls
+	x265_param_apply_profile() to enforce a specific profile (main,
+	main10, etc). Second, an encoder is created from this x265_param
+	instance and the :option:`--level-idc` and :option:`--high-tier`
+	parameters are used to reduce bitrate or other features in order to
+	enforce the target level. Finally, the encoder re-examines the final
+	set of parameters and detects the actual minimum decoder requirement
+	level and this is what is signaled in the bitstream headers. The
+	detected decoder level will only use High tier if the user specified
+	a High tier level.
 
 Mode decision / Analysis
 ========================
