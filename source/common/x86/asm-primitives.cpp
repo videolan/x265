@@ -1072,6 +1072,14 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_4x32].satd = x265_pixel_satd_4x32_avx;
 
         ALL_LUMA_PU(satd, pixel_satd, avx);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].satd = x265_pixel_satd_8x8_avx;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x4].satd = x265_pixel_satd_8x4_avx;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x16].satd = x265_pixel_satd_8x16_avx;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].satd = x265_pixel_satd_8x32_avx;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].satd = x265_pixel_satd_12x16_avx;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].satd = x265_pixel_satd_24x32_avx;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x16].satd = x265_pixel_satd_4x16_avx;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x8].satd = x265_pixel_satd_4x8_avx;
         ASSIGN_SA8D(avx);
         LUMA_VAR(avx);
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_avx;
@@ -1256,6 +1264,15 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.pu[LUMA_16x16].satd = x265_pixel_satd_16x16_avx2;
         p.pu[LUMA_16x32].satd = x265_pixel_satd_16x32_avx2;
         p.pu[LUMA_16x64].satd = x265_pixel_satd_16x64_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].satd = x265_pixel_satd_16x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].satd = x265_pixel_satd_16x8_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].satd = x265_pixel_satd_16x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].satd = x265_pixel_satd_16x12_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].satd = x265_pixel_satd_16x4_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].satd = x265_pixel_satd_32x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].satd = x265_pixel_satd_32x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].satd = x265_pixel_satd_32x24_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].satd = x265_pixel_satd_32x8_avx2;
 
         p.cu[BLOCK_16x16].ssd_s = x265_pixel_ssd_s_16_avx2;
         p.cu[BLOCK_32x32].ssd_s = x265_pixel_ssd_s_32_avx2;
