@@ -7992,3 +7992,79 @@ cglobal interp_8tap_horiz_ps_16x%1, 4, 6, 8
     IPFILTER_LUMA_PS_16xN_AVX2 16
     IPFILTER_LUMA_PS_16xN_AVX2 32
     IPFILTER_LUMA_PS_16xN_AVX2 64
+
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_8tap_horiz_ps_12x16, 4, 6, 8
+    add                 r1d, r1d
+    add                 r3d, r3d
+    mov                 r4d, r4m
+    mov                 r5d, r5m
+    shl                 r4d, 4
+%ifdef PIC
+    lea                 r6, [tab_LumaCoeff]
+    vpbroadcastq        m0, [r6 + r4]
+    vpbroadcastq        m1, [r6 + r4 + 8]
+%else
+    vpbroadcastq        m0, [tab_LumaCoeff + r4]
+    vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
+%endif
+    mova                m3, [pb_shuf]
+    vbroadcasti128      m2, [pd_n32768]
+
+    ; register map
+    ; m0 , m1 interpolate coeff
+
+    sub                 r0, 6
+    test                r5d, r5d
+    mov                 r4d, 16
+    jz                  .loop0
+    lea                 r6, [r1*3]
+    sub                 r0, r6
+    add                 r4d, 7
+
+.loop0:
+    vbroadcasti128      m4, [r0]
+    vbroadcasti128      m5, [r0 + 8]
+    pshufb              m4, m3
+    pshufb              m7, m5, m3
+    pmaddwd             m4, m0
+    pmaddwd             m7, m1
+    paddd               m4, m7
+
+    vbroadcasti128      m6, [r0 + 16]
+    pshufb              m5, m3
+    pshufb              m7, m6, m3
+    pmaddwd             m5, m0
+    pmaddwd             m7, m1
+    paddd               m5, m7
+
+    phaddd              m4, m5
+    vpermq              m4, m4, q3120
+    paddd               m4, m2
+    vextracti128        xm5,m4, 1
+    psrad               xm4, 2
+    psrad               xm5, 2
+    packssdw            xm4, xm5
+    movu                [r2], xm4
+
+    vbroadcasti128      m5, [r0 + 24]
+    pshufb              m6, m3
+    pshufb              m5, m3
+    pmaddwd             m6, m0
+    pmaddwd             m5, m1
+    paddd               m6, m5
+   
+    phaddd              m6, m6
+    vpermq              m6, m6, q3120
+    paddd               xm6, xm2
+    psrad               xm6, 2
+    packssdw            xm6, xm6
+    movq                [r2 + 16], xm6
+
+    add                 r2, r3
+    add                 r0, r1
+    dec                 r4d
+    jnz                 .loop0
+    RET
+%endif
