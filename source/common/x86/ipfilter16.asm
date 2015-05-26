@@ -8273,6 +8273,66 @@ cglobal interp_4tap_horiz_ps_24x32, 4, 7, 6
     jnz                 .loop0
     RET
 %endif
+
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_4tap_horiz_ps_12x16, 4, 7, 6
+    add                 r1d, r1d
+    add                 r3d, r3d
+    mov                 r4d, r4m
+    mov                 r5d, r5m
+
+%ifdef PIC
+    lea                 r6, [tab_ChromaCoeff]
+    vpbroadcastq        m0, [r6 + r4 * 8]
+%else
+    vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
+%endif
+    mova                m3, [pb_shuf]
+    vbroadcasti128      m2, [pd_n32768]
+
+    ; register map
+    ; m0 , m1 interpolate coeff
+
+    sub                 r0, 2
+    test                r5d, r5d
+    mov                 r4d, 16
+    jz                  .loop0
+    sub                 r0, r1
+    add                 r4d, 3
+
+.loop0:
+    vbroadcasti128      m4, [r0]
+    vbroadcasti128      m5, [r0 + 8]
+    pshufb              m4, m3
+    pshufb              m5, m3
+    pmaddwd             m4, m0
+    pmaddwd             m5, m0
+    phaddd              m4, m5
+    paddd               m4, m2
+    vpermq              m4, m4, q3120
+    psrad               m4, 2
+    vextracti128        xm5, m4, 1
+    packssdw            xm4, xm5
+    movu                [r2], xm4
+
+    vbroadcasti128      m4, [r0 + 16]
+    pshufb              m4, m3
+    pmaddwd             m4, m0
+    phaddd              m4, m4
+    paddd               m4, m2
+    vpermq              m4, m4, q3120
+    psrad               m4, 2
+    vextracti128        xm5, m4, 1
+    packssdw            xm4, xm5
+    movq                [r2 + 16], xm4
+
+    add                 r2, r3
+    add                 r0, r1
+    dec                 r4d
+    jnz                 .loop0
+    RET
+%endif
 %macro IPFILTER_CHROMA_PS_32xN_AVX2 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
