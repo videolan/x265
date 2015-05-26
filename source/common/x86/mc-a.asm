@@ -1200,6 +1200,48 @@ cglobal addAvg_12x16, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     jnz            .loop
     RET
 
+cglobal addAvg_12x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova           m4,             [pw_512]
+    mova           m5,             [pw_1023]
+    paddw          m3,             m4,  m4
+    pxor           m1,             m1
+    add            r3,             r3
+    add            r4,             r4
+    add            r5,             r5
+    mov            r6d,            8
+
+.loop:
+%rep 2
+    movu           m0,             [r0]
+    movu           m2,             [r1]
+    paddw          m0,             m2
+    pmulhrsw       m0,             m3
+    paddw          m0,             m4
+    pmaxsw         m0,             m1
+    pminsw         m0,             m5
+    vextracti128   xm2,            m0, 1
+    movu           [r2],           xm0
+    movq           [r2 + 16],      xm2
+
+    movu           m0,             [r0 + r3]
+    movu           m2,             [r1 + r4]
+    paddw          m0,             m2
+    pmulhrsw       m0,             m3
+    paddw          m0,             m4
+    pmaxsw         m0,             m1
+    pminsw         m0,             m5
+    vextracti128   xm2,            m0, 1
+    movu           [r2 + r5],      xm0
+    movq           [r2 + r5 + 16], xm2
+
+    lea            r2,             [r2 + 2 * r5]
+    lea            r0,             [r0 + 2 * r3]
+    lea            r1,             [r1 + 2 * r4]
+%endrep
+    dec            r6d
+    jnz            .loop
+    RET
+
 %macro ADDAVG_W16_H4_AVX2 1
 cglobal addAvg_16x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     mova        m4,              [pw_512]
