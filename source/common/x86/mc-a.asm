@@ -1304,6 +1304,62 @@ cglobal addAvg_24x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     jnz         .loop
     RET
 
+cglobal addAvg_24x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,              [pw_512]
+    mova        m5,              [pw_1023]
+    paddw       m3,              m4,  m4
+    pxor        m1,              m1
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+
+    mov         r6d,             32
+
+.loop:
+    movu        m0,              [r0]
+    movu        m2,              [r1]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m1
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        xm0,             [r0 + 32]
+    movu        xm2,             [r1 + 32]
+    paddw       xm0,             xm2
+    pmulhrsw    xm0,             xm3
+    paddw       xm0,             xm4
+    pmaxsw      xm0,             xm1
+    pminsw      xm0,             xm5
+    movu        [r2 + 32],       xm0
+
+    movu        m0,              [r0 + r3]
+    movu        m2,              [r1 + r4]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m1
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        xm2,             [r0 + r3 + 32]
+    movu        xm0,             [r1 + r4 + 32]
+    paddw       xm2,             xm0
+    pmulhrsw    xm2,             xm3
+    paddw       xm2,             xm4
+    pmaxsw      xm2,             xm1
+    pminsw      xm2,             xm5
+    movu        [r2 + r5 + 32],  xm2
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+
 %macro ADDAVG_W32_H2_AVX2 1
 cglobal addAvg_32x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     mova        m4,              [pw_512]
