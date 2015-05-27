@@ -1549,6 +1549,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].filter_hpp = x265_interp_4tap_horiz_pp_8x8_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_8x16].filter_hpp = x265_interp_4tap_horiz_pp_8x16_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].filter_hpp = x265_interp_4tap_horiz_pp_8x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].filter_hpp = x265_interp_4tap_horiz_pp_16x4_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].filter_hpp = x265_interp_4tap_horiz_pp_16x8_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].filter_hpp = x265_interp_4tap_horiz_pp_16x12_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].filter_hpp = x265_interp_4tap_horiz_pp_16x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].filter_hpp = x265_interp_4tap_horiz_pp_16x32_avx2;
 
         if (cpuMask & X265_CPU_BMI2)
             p.scanPosLast = x265_scanPosLast_avx2_bmi2;
