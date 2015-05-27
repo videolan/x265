@@ -2592,6 +2592,80 @@ IPFILTER_CHROMA_avx2_16xN 12
 IPFILTER_CHROMA_avx2_16xN 16
 IPFILTER_CHROMA_avx2_16xN 32
 
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+%macro IPFILTER_CHROMA_avx2_32xN 1
+%if ARCH_X86_64
+cglobal interp_4tap_horiz_pp_32x%1, 5,6,9
+    add             r1d, r1d
+    add             r3d, r3d
+    sub             r0, 2
+    mov             r4d, r4m
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeff]
+    vpbroadcastq    m0, [r5 + r4 * 8]
+%else
+    vpbroadcastq    m0, [tab_ChromaCoeff + r4 * 8]
+%endif
+    mova            m1, [interp8_hpp_shuf]
+    vpbroadcastd    m2, [pd_32]
+    pxor            m5, m5
+    mova            m6, [idct8_shuf2]
+    mova            m7, [pw_pixel_max]
+
+    mov             r6d, %1
+.loop:
+%assign x 0
+%rep 2
+    vbroadcasti128  m3, [r0 + x]
+    vbroadcasti128  m4, [r0 + 8 + x]
+    pshufb          m3, m1
+    pshufb          m4, m1
+
+    pmaddwd         m3, m0
+    pmaddwd         m4, m0
+    phaddd          m3, m4
+    paddd           m3, m2
+    psrad           m3, 6                       ; m3 = DWORD[7 6 3 2 5 4 1 0]
+
+    packusdw        m3, m3
+    vpermq          m3, m3, q2020
+    pshufb          xm3, xm6                     ; m3 = WORD[7 6 5 4 3 2 1 0]
+
+    vbroadcasti128  m4, [r0 + 16 + x]
+    vbroadcasti128  m8, [r0 + 24 + x]
+    pshufb          m4, m1
+    pshufb          m8, m1
+
+    pmaddwd         m4, m0
+    pmaddwd         m8, m0
+    phaddd          m4, m8
+    paddd           m4, m2
+    psrad           m4, 6                       ; m3 = DWORD[7 6 3 2 5 4 1 0]
+
+    packusdw        m4, m4
+    vpermq          m4, m4, q2020
+    pshufb          xm4, xm6                    ; m3 = WORD[7 6 5 4 3 2 1 0]
+    vinserti128     m3, m3, xm4, 1
+    CLIPW           m3, m5, m7
+    movu            [r2 + x], m3
+    %assign x x+32
+    %endrep
+
+    add             r0, r1
+    add             r2, r3
+    dec             r6d
+    jnz             .loop
+    RET
+%endif
+%endmacro
+IPFILTER_CHROMA_avx2_32xN 8
+IPFILTER_CHROMA_avx2_32xN 16
+IPFILTER_CHROMA_avx2_32xN 24
+IPFILTER_CHROMA_avx2_32xN 32
+
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_%3_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------------------------------------------
