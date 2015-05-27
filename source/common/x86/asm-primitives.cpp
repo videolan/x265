@@ -857,6 +857,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         CHROMA_422_VERT_FILTERS(_sse2);
         CHROMA_444_VERT_FILTERS(sse2);
 
+        ALL_LUMA_PU(luma_hpp, interp_8tap_horiz_pp, sse2);
+        p.pu[LUMA_4x4].luma_hpp = x265_interp_8tap_horiz_pp_4x4_sse2;
+        ALL_LUMA_PU(luma_hps, interp_8tap_horiz_ps, sse2);
+        p.pu[LUMA_4x4].luma_hps = x265_interp_8tap_horiz_ps_4x4_sse2;
+
         p.ssim_4x4x2_core = x265_pixel_ssim_4x4x2_core_sse2;
         p.ssim_end_4 = x265_pixel_ssim_end4_sse2;
         PIXEL_AVG(sse2);

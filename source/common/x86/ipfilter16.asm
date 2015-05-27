@@ -128,6 +128,247 @@ cextern pd_n32768
 cextern pw_2000
 cextern idct8_shuf2
 
+%macro FILTER_LUMA_HOR_4_sse2 1
+    movu        m4,     [r0 + %1]       ; m4 = src[0-7]
+    movu        m5,     [r0 + %1 + 2]   ; m5 = src[1-8]
+    pmaddwd     m4,     m0
+    pmaddwd     m5,     m0
+    pshufd      m2,     m4,     q2301
+    paddd       m4,     m2
+    pshufd      m2,     m5,     q2301
+    paddd       m5,     m2
+    pshufd      m4,     m4,     q3120
+    pshufd      m5,     m5,     q3120
+    punpcklqdq  m4,     m5
+
+    movu        m5,     [r0 + %1 + 4]   ; m5 = src[2-9]
+    movu        m3,     [r0 + %1 + 6]   ; m3 = src[3-10]
+    pmaddwd     m5,     m0
+    pmaddwd     m3,     m0
+    pshufd      m2,     m5,     q2301
+    paddd       m5,     m2
+    pshufd      m2,     m3,     q2301
+    paddd       m3,     m2
+    pshufd      m5,     m5,     q3120
+    pshufd      m3,     m3,     q3120
+    punpcklqdq  m5,     m3
+
+    pshufd      m2,     m4,     q2301
+    paddd       m4,     m2
+    pshufd      m2,     m5,     q2301
+    paddd       m5,     m2
+    pshufd      m4,     m4,     q3120
+    pshufd      m5,     m5,     q3120
+    punpcklqdq  m4,     m5
+    paddd       m4,     m1
+%endmacro
+
+%macro FILTER_LUMA_HOR_8_sse2 1
+    movu        m4,     [r0 + %1]       ; m4 = src[0-7]
+    movu        m5,     [r0 + %1 + 2]   ; m5 = src[1-8]
+    pmaddwd     m4,     m0
+    pmaddwd     m5,     m0
+    pshufd      m2,     m4,     q2301
+    paddd       m4,     m2
+    pshufd      m2,     m5,     q2301
+    paddd       m5,     m2
+    pshufd      m4,     m4,     q3120
+    pshufd      m5,     m5,     q3120
+    punpcklqdq  m4,     m5
+
+    movu        m5,     [r0 + %1 + 4]   ; m5 = src[2-9]
+    movu        m3,     [r0 + %1 + 6]   ; m3 = src[3-10]
+    pmaddwd     m5,     m0
+    pmaddwd     m3,     m0
+    pshufd      m2,     m5,     q2301
+    paddd       m5,     m2
+    pshufd      m2,     m3,     q2301
+    paddd       m3,     m2
+    pshufd      m5,     m5,     q3120
+    pshufd      m3,     m3,     q3120
+    punpcklqdq  m5,     m3
+
+    pshufd      m2,     m4,     q2301
+    paddd       m4,     m2
+    pshufd      m2,     m5,     q2301
+    paddd       m5,     m2
+    pshufd      m4,     m4,     q3120
+    pshufd      m5,     m5,     q3120
+    punpcklqdq  m4,     m5
+    paddd       m4,     m1
+
+    movu        m5,     [r0 + %1 + 8]   ; m5 = src[4-11]
+    movu        m6,     [r0 + %1 + 10]  ; m6 = src[5-12]
+    pmaddwd     m5,     m0
+    pmaddwd     m6,     m0
+    pshufd      m2,     m5,     q2301
+    paddd       m5,     m2
+    pshufd      m2,     m6,     q2301
+    paddd       m6,     m2
+    pshufd      m5,     m5,     q3120
+    pshufd      m6,     m6,     q3120
+    punpcklqdq  m5,     m6
+
+    movu        m6,     [r0 + %1 + 12]  ; m6 = src[6-13]
+    movu        m3,     [r0 + %1 + 14]  ; m3 = src[7-14]
+    pmaddwd     m6,     m0
+    pmaddwd     m3,     m0
+    pshufd      m2,     m6,     q2301
+    paddd       m6,     m2
+    pshufd      m2,     m3,     q2301
+    paddd       m3,     m2
+    pshufd      m6,     m6,     q3120
+    pshufd      m3,     m3,     q3120
+    punpcklqdq  m6,     m3
+
+    pshufd      m2,     m5,     q2301
+    paddd       m5,     m2
+    pshufd      m2,     m6,     q2301
+    paddd       m6,     m2
+    pshufd      m5,     m5,     q3120
+    pshufd      m6,     m6,     q3120
+    punpcklqdq  m5,     m6
+    paddd       m5,     m1
+%endmacro
+
+;------------------------------------------------------------------------------------------------------------
+; void interp_8tap_horiz_p%3_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;------------------------------------------------------------------------------------------------------------
+%macro FILTER_HOR_LUMA_sse2 3
+INIT_XMM sse2
+cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
+
+    mov         r4d,    r4m
+    sub         r0,     6
+    shl         r4d,    4
+    add         r1d,    r1d
+    add         r3d,    r3d
+
+%ifdef PIC
+    lea         r6,     [tab_LumaCoeff]
+    mova        m0,     [r6 + r4]
+%else
+    mova        m0,     [tab_LumaCoeff + r4]
+%endif
+
+%ifidn %3, pp
+    mova        m1,     [pd_32]
+    pxor        m7,     m7
+%else
+    mova        m1,     [pd_n32768]
+%endif
+
+    mov         r4d,    %2
+%ifidn %3, ps
+    cmp         r5m,    byte 0
+    je          .loopH
+    lea         r6,     [r1 + 2 * r1]
+    sub         r0,     r6
+    add         r4d,    7
+%endif
+
+.loopH:
+%assign x 0
+%rep %1/8
+    FILTER_LUMA_HOR_8_sse2 x
+
+%ifidn %3, pp
+    psrad       m4,     6
+    psrad       m5,     6
+    packssdw    m4,     m5
+    CLIPW       m4,     m7,     [pw_pixel_max]
+%else
+    psrad       m4,     2
+    psrad       m5,     2
+    packssdw    m4,     m5
+%endif
+
+    movu        [r2 + x], m4
+%assign x x+16
+%endrep
+
+%rep (%1 % 8)/4
+    FILTER_LUMA_HOR_4_sse2 x
+
+%ifidn %3, pp
+    psrad       m4,     6
+    packssdw    m4,     m4
+    CLIPW       m4,     m7,     [pw_pixel_max]
+%else
+    psrad       m4,     2
+    packssdw    m4,     m4
+%endif
+
+    movh        [r2 + x], m4
+%endrep
+
+    add         r0,     r1
+    add         r2,     r3
+
+    dec         r4d
+    jnz         .loopH
+    RET
+
+%endmacro
+
+;------------------------------------------------------------------------------------------------------------
+; void interp_8tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx
+;------------------------------------------------------------------------------------------------------------
+    FILTER_HOR_LUMA_sse2 4, 4, pp
+    FILTER_HOR_LUMA_sse2 4, 8, pp
+    FILTER_HOR_LUMA_sse2 4, 16, pp
+    FILTER_HOR_LUMA_sse2 8, 4, pp
+    FILTER_HOR_LUMA_sse2 8, 8, pp
+    FILTER_HOR_LUMA_sse2 8, 16, pp
+    FILTER_HOR_LUMA_sse2 8, 32, pp
+    FILTER_HOR_LUMA_sse2 12, 16, pp
+    FILTER_HOR_LUMA_sse2 16, 4, pp
+    FILTER_HOR_LUMA_sse2 16, 8, pp
+    FILTER_HOR_LUMA_sse2 16, 12, pp
+    FILTER_HOR_LUMA_sse2 16, 16, pp
+    FILTER_HOR_LUMA_sse2 16, 32, pp
+    FILTER_HOR_LUMA_sse2 16, 64, pp
+    FILTER_HOR_LUMA_sse2 24, 32, pp
+    FILTER_HOR_LUMA_sse2 32, 8, pp
+    FILTER_HOR_LUMA_sse2 32, 16, pp
+    FILTER_HOR_LUMA_sse2 32, 24, pp
+    FILTER_HOR_LUMA_sse2 32, 32, pp
+    FILTER_HOR_LUMA_sse2 32, 64, pp
+    FILTER_HOR_LUMA_sse2 48, 64, pp
+    FILTER_HOR_LUMA_sse2 64, 16, pp
+    FILTER_HOR_LUMA_sse2 64, 32, pp
+    FILTER_HOR_LUMA_sse2 64, 48, pp
+    FILTER_HOR_LUMA_sse2 64, 64, pp
+
+;---------------------------------------------------------------------------------------------------------------------------
+; void interp_8tap_horiz_ps_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
+;---------------------------------------------------------------------------------------------------------------------------
+    FILTER_HOR_LUMA_sse2 4, 4, ps
+    FILTER_HOR_LUMA_sse2 4, 8, ps
+    FILTER_HOR_LUMA_sse2 4, 16, ps
+    FILTER_HOR_LUMA_sse2 8, 4, ps
+    FILTER_HOR_LUMA_sse2 8, 8, ps
+    FILTER_HOR_LUMA_sse2 8, 16, ps
+    FILTER_HOR_LUMA_sse2 8, 32, ps
+    FILTER_HOR_LUMA_sse2 12, 16, ps
+    FILTER_HOR_LUMA_sse2 16, 4, ps
+    FILTER_HOR_LUMA_sse2 16, 8, ps
+    FILTER_HOR_LUMA_sse2 16, 12, ps
+    FILTER_HOR_LUMA_sse2 16, 16, ps
+    FILTER_HOR_LUMA_sse2 16, 32, ps
+    FILTER_HOR_LUMA_sse2 16, 64, ps
+    FILTER_HOR_LUMA_sse2 24, 32, ps
+    FILTER_HOR_LUMA_sse2 32, 8, ps
+    FILTER_HOR_LUMA_sse2 32, 16, ps
+    FILTER_HOR_LUMA_sse2 32, 24, ps
+    FILTER_HOR_LUMA_sse2 32, 32, ps
+    FILTER_HOR_LUMA_sse2 32, 64, ps
+    FILTER_HOR_LUMA_sse2 48, 64, ps
+    FILTER_HOR_LUMA_sse2 64, 16, ps
+    FILTER_HOR_LUMA_sse2 64, 32, ps
+    FILTER_HOR_LUMA_sse2 64, 48, ps
+    FILTER_HOR_LUMA_sse2 64, 64, ps
+
 ;------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_horiz_pp_4x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;------------------------------------------------------------------------------------------------------------
