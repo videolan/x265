@@ -1527,6 +1527,22 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].filter_hps = x265_interp_4tap_horiz_ps_24x32_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].filter_hps = x265_interp_4tap_horiz_ps_12x16_avx2;
 
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].filter_hps = x265_interp_4tap_horiz_ps_8x8_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].filter_hps = x265_interp_4tap_horiz_ps_8x16_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x32].filter_hps = x265_interp_4tap_horiz_ps_8x32_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x12].filter_hps = x265_interp_4tap_horiz_ps_8x12_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x64].filter_hps = x265_interp_4tap_horiz_ps_8x64_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].filter_hps = x265_interp_4tap_horiz_ps_8x4_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].filter_hps = x265_interp_4tap_horiz_ps_16x32_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].filter_hps = x265_interp_4tap_horiz_ps_16x16_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].filter_hps = x265_interp_4tap_horiz_ps_16x64_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].filter_hps = x265_interp_4tap_horiz_ps_16x24_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].filter_hps = x265_interp_4tap_horiz_ps_16x8_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].filter_hps = x265_interp_4tap_horiz_ps_32x64_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].filter_hps = x265_interp_4tap_horiz_ps_32x32_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].filter_hps = x265_interp_4tap_horiz_ps_32x48_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].filter_hps = x265_interp_4tap_horiz_ps_32x16_avx2;
+
         if (cpuMask & X265_CPU_BMI2)
             p.scanPosLast = x265_scanPosLast_avx2_bmi2;
     }
