@@ -126,6 +126,7 @@ cextern pd_32
 cextern pw_pixel_max
 cextern pd_n32768
 cextern pw_2000
+cextern idct8_shuf2
 
 ;------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_horiz_pp_4x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
@@ -2331,6 +2332,192 @@ IPFILTER_CHROMA 64, 16, ps, 6, 7, 6
     pmaddwd    m5, [r6 + 1 * 16]
     paddd      m3, m5                          ;m3=[3+4+5+6]     Row4
 %endmacro
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal interp_4tap_horiz_pp_8x2, 5,6,8
+    add             r1d, r1d
+    add             r3d, r3d
+    sub             r0, 2
+    mov             r4d, r4m
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeff]
+    vpbroadcastq    m0, [r5 + r4 * 8]
+%else
+    vpbroadcastq    m0, [tab_ChromaCoeff + r4 * 8]
+%endif
+    mova            m1, [interp8_hpp_shuf]
+    vpbroadcastd    m2, [pd_32]
+    pxor            m5, m5
+    mova            m6, [idct8_shuf2]
+    mova            m7, [pw_pixel_max]
+
+    vbroadcasti128  m3, [r0]
+    vbroadcasti128  m4, [r0 + 8]
+    pshufb          m3, m1
+    pshufb          m4, m1
+
+    pmaddwd         m3, m0
+    pmaddwd         m4, m0
+    phaddd          m3, m4
+    paddd           m3, m2
+    psrad           m3, 6                       ; m3 = DWORD[7 6 3 2 5 4 1 0]
+
+    packusdw        m3, m3
+    vpermq          m3, m3,q2020
+    pshufb          xm3, xm6                     ; m3 = WORD[7 6 5 4 3 2 1 0]
+    CLIPW           xm3, xm5, xm7
+    movu            [r2], xm3
+
+    vbroadcasti128  m3, [r0 + r1]
+    vbroadcasti128  m4, [r0 + r1 + 8]
+    pshufb          m3, m1
+    pshufb          m4, m1
+
+    pmaddwd         m3, m0
+    pmaddwd         m4, m0
+    phaddd          m3, m4
+    paddd           m3, m2
+    psrad           m3, 6                       ; m3 = DWORD[7 6 3 2 5 4 1 0]
+
+    packusdw        m3, m3
+    vpermq          m3, m3,q2020
+    pshufb          xm3, xm6                      ; m3 = WORD[7 6 5 4 3 2 1 0]
+    CLIPW           xm3, xm5, xm7
+    movu            [r2 + r3], xm3
+    RET
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal interp_4tap_horiz_pp_8x4, 5,6,8
+    add             r1d, r1d
+    add             r3d, r3d
+    sub             r0, 2
+    mov             r4d, r4m
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeff]
+    vpbroadcastq    m0, [r5 + r4 * 8]
+%else
+    vpbroadcastq    m0, [tab_ChromaCoeff + r4 * 8]
+%endif
+    mova            m1, [interp8_hpp_shuf]
+    vpbroadcastd    m2, [pd_32]
+    pxor            m5, m5
+    mova            m6, [idct8_shuf2]
+    mova            m7, [pw_pixel_max]
+
+%rep 2
+    vbroadcasti128  m3, [r0]
+    vbroadcasti128  m4, [r0 + 8]
+    pshufb          m3, m1
+    pshufb          m4, m1
+
+    pmaddwd         m3, m0
+    pmaddwd         m4, m0
+    phaddd          m3, m4
+    paddd           m3, m2
+    psrad           m3, 6                       ; m3 = DWORD[7 6 3 2 5 4 1 0]
+
+    packusdw        m3, m3
+    vpermq          m3, m3,q2020
+    pshufb          xm3, xm6                    ; m3 = WORD[7 6 5 4 3 2 1 0]
+    CLIPW           xm3, xm5, xm7
+    movu            [r2], xm3
+
+    vbroadcasti128  m3, [r0 + r1]
+    vbroadcasti128  m4, [r0 + r1 + 8]
+    pshufb          m3, m1
+    pshufb          m4, m1
+
+    pmaddwd         m3, m0
+    pmaddwd         m4, m0
+    phaddd          m3, m4
+    paddd           m3, m2
+    psrad           m3, 6                       ; m3 = DWORD[7 6 3 2 5 4 1 0]
+
+    packusdw        m3, m3
+    vpermq          m3, m3,q2020
+    pshufb          xm3, xm6                    ; m3 = WORD[7 6 5 4 3 2 1 0]
+    CLIPW           xm3, xm5, xm7
+    movu            [r2 + r3], xm3
+
+    lea             r0, [r0 + r1 * 2]
+    lea             r2, [r2 + r3 * 2]
+%endrep
+    RET
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+%macro IPFILTER_CHROMA_avx2_8xN 1
+cglobal interp_4tap_horiz_pp_8x%1, 5,6,8
+    add             r1d, r1d
+    add             r3d, r3d
+    sub             r0, 2
+    mov             r4d, r4m
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeff]
+    vpbroadcastq    m0, [r5 + r4 * 8]
+%else
+    vpbroadcastq    m0, [tab_ChromaCoeff + r4 * 8]
+%endif
+    mova            m1, [interp8_hpp_shuf]
+    vpbroadcastd    m2, [pd_32]
+    pxor            m5, m5
+    mova            m6, [idct8_shuf2]
+    mova            m7, [pw_pixel_max]
+
+    mov             r4d, %1/2
+.loop:
+    vbroadcasti128  m3, [r0]
+    vbroadcasti128  m4, [r0 + 8]
+    pshufb          m3, m1
+    pshufb          m4, m1
+
+    pmaddwd         m3, m0
+    pmaddwd         m4, m0
+    phaddd          m3, m4
+    paddd           m3, m2
+    psrad           m3, 6                         ; m3 = DWORD[7 6 3 2 5 4 1 0]
+
+    packusdw        m3, m3
+    vpermq          m3, m3, q2020
+    pshufb          xm3, xm6                      ; m3 = WORD[7 6 5 4 3 2 1 0]
+    CLIPW           xm3, xm5, xm7
+    movu            [r2], xm3
+
+    vbroadcasti128  m3, [r0 + r1]
+    vbroadcasti128  m4, [r0 + r1 + 8]
+    pshufb          m3, m1
+    pshufb          m4, m1
+
+    pmaddwd         m3, m0
+    pmaddwd         m4, m0
+    phaddd          m3, m4
+    paddd           m3, m2
+    psrad           m3, 6                         ; m3 = DWORD[7 6 3 2 5 4 1 0]
+
+    packusdw        m3, m3
+    vpermq          m3, m3, q2020
+    pshufb          xm3, xm6                      ; m3 = WORD[7 6 5 4 3 2 1 0]
+    CLIPW           xm3, xm5, xm7
+    movu            [r2 + r3], xm3
+
+    lea             r0, [r0 + r1 * 2]
+    lea             r2, [r2 + r3 * 2]
+    dec             r4d
+    jnz             .loop
+    RET
+%endmacro
+IPFILTER_CHROMA_avx2_8xN 6
+IPFILTER_CHROMA_avx2_8xN 8
+IPFILTER_CHROMA_avx2_8xN 16
+IPFILTER_CHROMA_avx2_8xN 32
 
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_%3_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
