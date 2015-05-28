@@ -1608,6 +1608,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I444].pu[LUMA_64x32].filter_hpp = x265_interp_4tap_horiz_pp_64x32_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_hpp = x265_interp_4tap_horiz_pp_64x48_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_hpp = x265_interp_4tap_horiz_pp_64x64_avx2;
+        p.chroma[X265_CSP_I444].pu[LUMA_48x64].filter_hpp = x265_interp_4tap_horiz_pp_48x64_avx2;
 
         if (cpuMask & X265_CPU_BMI2)
             p.scanPosLast = x265_scanPosLast_avx2_bmi2;

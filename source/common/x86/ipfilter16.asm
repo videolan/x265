@@ -3194,6 +3194,69 @@ IPFILTER_CHROMA_avx2_64xN 32
 IPFILTER_CHROMA_avx2_64xN 48
 IPFILTER_CHROMA_avx2_64xN 64
 
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+%if ARCH_X86_64
+cglobal interp_4tap_horiz_pp_48x64, 5,6,9
+    add             r1d, r1d
+    add             r3d, r3d
+    sub             r0, 2
+    mov             r4d, r4m
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeff]
+    vpbroadcastq    m0, [r5 + r4 * 8]
+%else
+    vpbroadcastq    m0, [tab_ChromaCoeff + r4 * 8]
+%endif
+    mova            m1, [interp8_hpp_shuf]
+    vpbroadcastd    m2, [pd_32]
+    pxor            m5, m5
+    mova            m6, [idct8_shuf2]
+    mova            m7, [pw_pixel_max]
+
+    mov             r4d, 64
+.loop:
+%assign x 0
+%rep 3
+    vbroadcasti128  m3, [r0 + x]
+    vbroadcasti128  m4, [r0 + 8 + x]
+    pshufb          m3, m1
+    pshufb          m4, m1
+
+    pmaddwd         m3, m0
+    pmaddwd         m4, m0
+    phaddd          m3, m4
+    paddd           m3, m2
+    psrad           m3, 6
+
+    vbroadcasti128  m4, [r0 + 16 + x]
+    vbroadcasti128  m8, [r0 + 24 + x]
+    pshufb          m4, m1
+    pshufb          m8, m1
+
+    pmaddwd         m4, m0
+    pmaddwd         m8, m0
+    phaddd          m4, m8
+    paddd           m4, m2
+    psrad           m4, 6
+
+    packusdw        m3, m4
+    vpermq          m3, m3, q3120
+    pshufb          m3, m6
+    CLIPW           m3, m5, m7
+    movu            [r2 + x], m3
+%assign x x+32
+%endrep
+
+    add             r0, r1
+    add             r2, r3
+    dec             r4d
+    jnz             .loop
+    RET
+%endif
+
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert_%3_%1x%2(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------------------------------------------
