@@ -764,6 +764,56 @@ cglobal pixel_sad_32x64, 4,7,6
     RET
 
 INIT_YMM avx2
+cglobal pixel_sad_48x64, 4, 5, 7
+    pxor    m0, m0
+    pxor    m5, m5
+    pxor    m6, m6
+    mov     r4d, 64/2
+    add     r3d, r3d
+    add     r1d, r1d
+.loop:
+    movu    m1, [r2 + 0 * mmsize]
+    movu    m2, [r2 + 1 * mmsize]
+    movu    m3, [r2 + 2 * mmsize]
+    psubw   m1, [r0 + 0 * mmsize]
+    psubw   m2, [r0 + 1 * mmsize]
+    psubw   m3, [r0 + 2 * mmsize]
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    paddw   m0, m1
+    paddw   m5, m2
+    paddw   m6, m3
+
+    movu    m1, [r2 + r3 + 0 * mmsize]
+    movu    m2, [r2 + r3 + 1 * mmsize]
+    movu    m3, [r2 + r3 + 2 * mmsize]
+    psubw   m1, [r0 + r1 + 0 * mmsize]
+    psubw   m2, [r0 + r1 + 1 * mmsize]
+    psubw   m3, [r0 + r1 + 2 * mmsize]
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    paddw   m0, m1
+    paddw   m5, m2
+    paddw   m6, m3
+
+    lea     r0, [r0 + 2 * r1]
+    lea     r2, [r2 + 2 * r3]
+
+    dec     r4d
+    jg      .loop
+
+    HADDUWD m0, m1
+    HADDUWD m5, m1
+    HADDUWD m6, m1
+    paddd   m0, m5
+    paddd   m0, m6
+    HADDD   m0, m1
+    movd    eax, xm0
+    RET
+
+INIT_YMM avx2
 cglobal pixel_sad_64x16, 4, 5, 5
     pxor    m0, m0
     mov     r4d, 16 / 2
