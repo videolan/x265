@@ -2578,6 +2578,75 @@ IPFILTER_CHROMA 64, 16, ps, 6, 7, 6
 ; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
 ;-------------------------------------------------------------------------------------------------------------
 INIT_YMM avx2
+%macro IPFILTER_CHROMA_avx2_6xN 1
+cglobal interp_4tap_horiz_pp_6x%1, 5,6,8
+    add             r1d, r1d
+    add             r3d, r3d
+    sub             r0, 2
+    mov             r4d, r4m
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeff]
+    vpbroadcastq    m0, [r5 + r4 * 8]
+%else
+    vpbroadcastq    m0, [tab_ChromaCoeff + r4 * 8]
+%endif
+    mova            m1, [interp8_hpp_shuf]
+    vpbroadcastd    m2, [pd_32]
+    pxor            m5, m5
+    mova            m6, [idct8_shuf2]
+    mova            m7, [pw_pixel_max]
+
+    mov             r4d, %1/2
+.loop:
+    vbroadcasti128  m3, [r0]
+    vbroadcasti128  m4, [r0 + 8]
+    pshufb          m3, m1
+    pshufb          m4, m1
+
+    pmaddwd         m3, m0
+    pmaddwd         m4, m0
+    phaddd          m3, m4
+    paddd           m3, m2
+    psrad           m3, 6                         ; m3 = DWORD[7 6 3 2 5 4 1 0]
+
+    packusdw        m3, m3
+    vpermq          m3, m3, q2020
+    pshufb          xm3, xm6                      ; m3 = WORD[7 6 5 4 3 2 1 0]
+    CLIPW           xm3, xm5, xm7
+    movq            [r2], xm3
+    pextrd          [r2 + 8], xm3, 2
+
+    vbroadcasti128  m3, [r0 + r1]
+    vbroadcasti128  m4, [r0 + r1 + 8]
+    pshufb          m3, m1
+    pshufb          m4, m1
+
+    pmaddwd         m3, m0
+    pmaddwd         m4, m0
+    phaddd          m3, m4
+    paddd           m3, m2
+    psrad           m3, 6                         ; m3 = DWORD[7 6 3 2 5 4 1 0]
+
+    packusdw        m3, m3
+    vpermq          m3, m3, q2020
+    pshufb          xm3, xm6                      ; m3 = WORD[7 6 5 4 3 2 1 0]
+    CLIPW           xm3, xm5, xm7
+    movq            [r2 + r3], xm3
+    pextrd          [r2 + r3 + 8], xm3, 2
+
+    lea             r0, [r0 + r1 * 2]
+    lea             r2, [r2 + r3 * 2]
+    dec             r4d
+    jnz             .loop
+    RET
+%endmacro
+IPFILTER_CHROMA_avx2_6xN 8
+IPFILTER_CHROMA_avx2_6xN 16
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
 cglobal interp_4tap_horiz_pp_8x2, 5,6,8
     add             r1d, r1d
     add             r3d, r3d
