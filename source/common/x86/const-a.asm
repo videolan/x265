@@ -113,7 +113,7 @@ const pd_1,                 times  8 dd 1
 const pd_2,                 times  8 dd 2
 const pd_4,                 times  4 dd 4
 const pd_8,                 times  4 dd 8
-const pd_16,                times  4 dd 16
+const pd_16,                times  8 dd 16
 const pd_31,                times  4 dd 31
 const pd_32,                times  8 dd 32
 const pd_64,                times  4 dd 64
