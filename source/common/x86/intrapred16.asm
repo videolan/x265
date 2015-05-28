@@ -10182,6 +10182,63 @@ cglobal intra_pred_ang16_26, 3,6,4
 .quit:
     RET
 
+;-------------------------------------------------------------------------------------------------------
+; avx2 code for intra_pred_ang16 mode 2 to 34 start
+;-------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal intra_pred_ang16_2, 3,5,3
+    lea         r4,                 [r2]
+    add         r2,                 64
+    cmp         r3m,                byte 34
+    cmove       r2,                 r4
+    add         r1d,                 r1d
+    lea         r3,                 [r1 * 3]
+    movu        m0,                 [r2 + 4]
+    movu        m1,                 [r2 + 20]
+
+    movu        [r0],               m0
+    palignr     m2,                 m1, m0, 2
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m1, m0, 4
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m1, m0, 6
+    movu        [r0 + r3],          m2
+
+    lea         r0,                 [r0 + r1 * 4]
+    palignr     m2,                 m1, m0, 8
+    movu        [r0],               m2
+    palignr     m2,                 m1, m0, 10
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m1, m0, 12
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m1, m0, 14
+    movu        [r0 + r3],          m2
+
+    movu        m0,                 [r2 + 36]
+    lea         r0,                 [r0 + r1 * 4]
+    movu        [r0],               m1
+    palignr     m2,                 m0, m1, 2
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m0, m1, 4
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m0, m1, 6
+    movu        [r0 + r3],          m2
+
+    lea         r0,                 [r0 + r1 * 4]
+    palignr     m2,                 m0, m1, 8
+    movu        [r0],               m2
+    palignr     m2,                 m0, m1, 10
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m0, m1, 12
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m0, m1, 14
+    movu        [r0 + r3],          m2
+    RET
+
+;-------------------------------------------------------------------------------------------------------
+; end of avx2 code for intra_pred_ang16 mode 2 to 34
+;-------------------------------------------------------------------------------------------------------
+
 %macro MODE_2_34 0
     movu            m0, [r2 + 4]
     movu            m1, [r2 + 20]
