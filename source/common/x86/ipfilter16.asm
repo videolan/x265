@@ -2826,8 +2826,10 @@ cglobal interp_4tap_horiz_pp_8x%1, 5,6,8
 %endmacro
 IPFILTER_CHROMA_avx2_8xN 6
 IPFILTER_CHROMA_avx2_8xN 8
+IPFILTER_CHROMA_avx2_8xN 12
 IPFILTER_CHROMA_avx2_8xN 16
 IPFILTER_CHROMA_avx2_8xN 32
+IPFILTER_CHROMA_avx2_8xN 64
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
@@ -2900,7 +2902,9 @@ IPFILTER_CHROMA_avx2_16xN 4
 IPFILTER_CHROMA_avx2_16xN 8
 IPFILTER_CHROMA_avx2_16xN 12
 IPFILTER_CHROMA_avx2_16xN 16
+IPFILTER_CHROMA_avx2_16xN 24
 IPFILTER_CHROMA_avx2_16xN 32
+IPFILTER_CHROMA_avx2_16xN 64
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
@@ -2975,6 +2979,8 @@ IPFILTER_CHROMA_avx2_32xN 8
 IPFILTER_CHROMA_avx2_32xN 16
 IPFILTER_CHROMA_avx2_32xN 24
 IPFILTER_CHROMA_avx2_32xN 32
+IPFILTER_CHROMA_avx2_32xN 48
+IPFILTER_CHROMA_avx2_32xN 64
 
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
