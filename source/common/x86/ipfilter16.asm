@@ -9132,9 +9132,10 @@ IPFILTER_CHROMA_PS_16xN_AVX2 4
 IPFILTER_CHROMA_PS_16xN_AVX2 64
 IPFILTER_CHROMA_PS_16xN_AVX2 24
 
+%macro IPFILTER_CHROMA_PS_24xN_AVX2 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
-cglobal interp_4tap_horiz_ps_24x32, 4, 7, 6
+cglobal interp_4tap_horiz_ps_24x%1, 4, 7, 6
     add                 r1d, r1d
     add                 r3d, r3d
     mov                 r4d, r4m
@@ -9154,7 +9155,7 @@ cglobal interp_4tap_horiz_ps_24x32, 4, 7, 6
 
     sub                 r0, 2
     test                r5d, r5d
-    mov                 r4d, 32
+    mov                 r4d, %1
     jz                  .loop0
     sub                 r0, r1
     add                 r4d, 3
@@ -9208,10 +9209,15 @@ cglobal interp_4tap_horiz_ps_24x32, 4, 7, 6
     jnz                 .loop0
     RET
 %endif
+%endmacro
 
+IPFILTER_CHROMA_PS_24xN_AVX2 32
+IPFILTER_CHROMA_PS_24xN_AVX2 64
+
+%macro IPFILTER_CHROMA_PS_12xN_AVX2 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
-cglobal interp_4tap_horiz_ps_12x16, 4, 7, 6
+cglobal interp_4tap_horiz_ps_12x%1, 4, 7, 6
     add                 r1d, r1d
     add                 r3d, r3d
     mov                 r4d, r4m
@@ -9231,7 +9237,7 @@ cglobal interp_4tap_horiz_ps_12x16, 4, 7, 6
 
     sub                 r0, 2
     test                r5d, r5d
-    mov                 r4d, 16
+    mov                 r4d, %1
     jz                  .loop0
     sub                 r0, r1
     add                 r4d, 3
@@ -9268,6 +9274,11 @@ cglobal interp_4tap_horiz_ps_12x16, 4, 7, 6
     jnz                 .loop0
     RET
 %endif
+%endmacro
+
+IPFILTER_CHROMA_PS_12xN_AVX2 16
+IPFILTER_CHROMA_PS_12xN_AVX2 32
+
 %macro IPFILTER_CHROMA_PS_32xN_AVX2 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1

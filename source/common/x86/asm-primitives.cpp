@@ -1585,6 +1585,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].filter_hps = x265_interp_4tap_horiz_ps_32x32_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].filter_hps = x265_interp_4tap_horiz_ps_32x48_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].filter_hps = x265_interp_4tap_horiz_ps_32x16_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_12x32].filter_hps = x265_interp_4tap_horiz_ps_12x32_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].filter_hps = x265_interp_4tap_horiz_ps_24x64_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_hps = x265_interp_4tap_horiz_ps_64x64_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_hps = x265_interp_4tap_horiz_ps_64x48_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_64x32].filter_hps = x265_interp_4tap_horiz_ps_64x32_avx2;
