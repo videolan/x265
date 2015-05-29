@@ -369,6 +369,201 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     FILTER_HOR_LUMA_sse2 64, 48, ps
     FILTER_HOR_LUMA_sse2 64, 64, ps
 
+%macro PROCESS_LUMA_VER_W4_4R_sse2 0
+    movq       m0, [r0]
+    movq       m1, [r0 + r1]
+    punpcklwd  m0, m1                          ;m0=[0 1]
+    pmaddwd    m0, [r6 + 0 *16]                ;m0=[0+1]  Row1
+
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
+    punpcklwd  m1, m4                          ;m1=[1 2]
+    pmaddwd    m1, [r6 + 0 *16]                ;m1=[1+2]  Row2
+
+    movq       m5, [r0 + r1]
+    punpcklwd  m4, m5                          ;m4=[2 3]
+    pmaddwd    m2, m4, [r6 + 0 *16]            ;m2=[2+3]  Row3
+    pmaddwd    m4, [r6 + 1 * 16]
+    paddd      m0, m4                          ;m0=[0+1+2+3]  Row1
+
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
+    punpcklwd  m5, m4                          ;m5=[3 4]
+    pmaddwd    m3, m5, [r6 + 0 *16]            ;m3=[3+4]  Row4
+    pmaddwd    m5, [r6 + 1 * 16]
+    paddd      m1, m5                          ;m1 = [1+2+3+4]  Row2
+
+    movq       m5, [r0 + r1]
+    punpcklwd  m4, m5                          ;m4=[4 5]
+    pmaddwd    m6, m4, [r6 + 1 * 16]
+    paddd      m2, m6                          ;m2=[2+3+4+5]  Row3
+    pmaddwd    m4, [r6 + 2 * 16]
+    paddd      m0, m4                          ;m0=[0+1+2+3+4+5]  Row1
+
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
+    punpcklwd  m5, m4                          ;m5=[5 6]
+    pmaddwd    m6, m5, [r6 + 1 * 16]
+    paddd      m3, m6                          ;m3=[3+4+5+6]  Row4
+    pmaddwd    m5, [r6 + 2 * 16]
+    paddd      m1, m5                          ;m1=[1+2+3+4+5+6]  Row2
+
+    movq       m5, [r0 + r1]
+    punpcklwd  m4, m5                          ;m4=[6 7]
+    pmaddwd    m6, m4, [r6 + 2 * 16]
+    paddd      m2, m6                          ;m2=[2+3+4+5+6+7]  Row3
+    pmaddwd    m4, [r6 + 3 * 16]
+    paddd      m0, m4                          ;m0=[0+1+2+3+4+5+6+7]  Row1 end
+
+    lea        r0, [r0 + 2 * r1]
+    movq       m4, [r0]
+    punpcklwd  m5, m4                          ;m5=[7 8]
+    pmaddwd    m6, m5, [r6 + 2 * 16]
+    paddd      m3, m6                          ;m3=[3+4+5+6+7+8]  Row4
+    pmaddwd    m5, [r6 + 3 * 16]
+    paddd      m1, m5                          ;m1=[1+2+3+4+5+6+7+8]  Row2 end
+
+    movq       m5, [r0 + r1]
+    punpcklwd  m4, m5                          ;m4=[8 9]
+    pmaddwd    m4, [r6 + 3 * 16]
+    paddd      m2, m4                          ;m2=[2+3+4+5+6+7+8+9]  Row3 end
+
+    movq       m4, [r0 + 2 * r1]
+    punpcklwd  m5, m4                          ;m5=[9 10]
+    pmaddwd    m5, [r6 + 3 * 16]
+    paddd      m3, m5                          ;m3=[3+4+5+6+7+8+9+10]  Row4 end
+%endmacro
+
+;--------------------------------------------------------------------------------------------------------------
+; void interp_8tap_vert_%1_%2x%3(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;--------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_LUMA_sse2 3
+INIT_XMM sse2
+cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
+
+    add       r1d, r1d
+    add       r3d, r3d
+    lea       r5, [r1 + 2 * r1]
+    sub       r0, r5
+    shl       r4d, 6
+
+%ifdef PIC
+    lea       r5, [tab_LumaCoeffV]
+    lea       r6, [r5 + r4]
+%else
+    lea       r6, [tab_LumaCoeffV + r4]
+%endif
+
+%ifidn %1,pp
+    mova      m7, [pd_32]
+%define SHIFT 6
+%elifidn %1,ps
+    mova      m7, [pd_n32768]
+%define SHIFT 2
+%endif
+
+    mov         r4d, %3/4
+.loopH:
+%assign x 0
+%rep %2/4
+    PROCESS_LUMA_VER_W4_4R_sse2
+
+    paddd     m0, m7
+    paddd     m1, m7
+    paddd     m2, m7
+    paddd     m3, m7
+
+    psrad     m0, SHIFT
+    psrad     m1, SHIFT
+    psrad     m2, SHIFT
+    psrad     m3, SHIFT
+
+    packssdw  m0, m1
+    packssdw  m2, m3
+
+%ifidn %1,pp
+    pxor      m1, m1
+    CLIPW2    m0, m2, m1, [pw_pixel_max]
+%endif
+
+    movh      [r2 + x], m0
+    movhps    [r2 + r3 + x], m0
+    lea       r5, [r2 + 2 * r3]
+    movh      [r5 + x], m2
+    movhps    [r5 + r3 + x], m2
+
+    lea       r5, [8 * r1 - 2 * 4]
+    sub       r0, r5
+%assign x x+8
+%endrep
+
+    lea       r0, [r0 + 4 * r1 - 2 * %2]
+    lea       r2, [r2 + 4 * r3]
+
+    dec         r4d
+    jnz       .loopH
+
+    RET
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_8tap_vert_pp_%2x%3(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-------------------------------------------------------------------------------------------------------------
+    FILTER_VER_LUMA_sse2 pp, 4, 4
+    FILTER_VER_LUMA_sse2 pp, 8, 8
+    FILTER_VER_LUMA_sse2 pp, 8, 4
+    FILTER_VER_LUMA_sse2 pp, 4, 8
+    FILTER_VER_LUMA_sse2 pp, 16, 16
+    FILTER_VER_LUMA_sse2 pp, 16, 8
+    FILTER_VER_LUMA_sse2 pp, 8, 16
+    FILTER_VER_LUMA_sse2 pp, 16, 12
+    FILTER_VER_LUMA_sse2 pp, 12, 16
+    FILTER_VER_LUMA_sse2 pp, 16, 4
+    FILTER_VER_LUMA_sse2 pp, 4, 16
+    FILTER_VER_LUMA_sse2 pp, 32, 32
+    FILTER_VER_LUMA_sse2 pp, 32, 16
+    FILTER_VER_LUMA_sse2 pp, 16, 32
+    FILTER_VER_LUMA_sse2 pp, 32, 24
+    FILTER_VER_LUMA_sse2 pp, 24, 32
+    FILTER_VER_LUMA_sse2 pp, 32, 8
+    FILTER_VER_LUMA_sse2 pp, 8, 32
+    FILTER_VER_LUMA_sse2 pp, 64, 64
+    FILTER_VER_LUMA_sse2 pp, 64, 32
+    FILTER_VER_LUMA_sse2 pp, 32, 64
+    FILTER_VER_LUMA_sse2 pp, 64, 48
+    FILTER_VER_LUMA_sse2 pp, 48, 64
+    FILTER_VER_LUMA_sse2 pp, 64, 16
+    FILTER_VER_LUMA_sse2 pp, 16, 64
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_8tap_vert_ps_%2x%3(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
+;-------------------------------------------------------------------------------------------------------------
+    FILTER_VER_LUMA_sse2 ps, 4, 4
+    FILTER_VER_LUMA_sse2 ps, 8, 8
+    FILTER_VER_LUMA_sse2 ps, 8, 4
+    FILTER_VER_LUMA_sse2 ps, 4, 8
+    FILTER_VER_LUMA_sse2 ps, 16, 16
+    FILTER_VER_LUMA_sse2 ps, 16, 8
+    FILTER_VER_LUMA_sse2 ps, 8, 16
+    FILTER_VER_LUMA_sse2 ps, 16, 12
+    FILTER_VER_LUMA_sse2 ps, 12, 16
+    FILTER_VER_LUMA_sse2 ps, 16, 4
+    FILTER_VER_LUMA_sse2 ps, 4, 16
+    FILTER_VER_LUMA_sse2 ps, 32, 32
+    FILTER_VER_LUMA_sse2 ps, 32, 16
+    FILTER_VER_LUMA_sse2 ps, 16, 32
+    FILTER_VER_LUMA_sse2 ps, 32, 24
+    FILTER_VER_LUMA_sse2 ps, 24, 32
+    FILTER_VER_LUMA_sse2 ps, 32, 8
+    FILTER_VER_LUMA_sse2 ps, 8, 32
+    FILTER_VER_LUMA_sse2 ps, 64, 64
+    FILTER_VER_LUMA_sse2 ps, 64, 32
+    FILTER_VER_LUMA_sse2 ps, 32, 64
+    FILTER_VER_LUMA_sse2 ps, 64, 48
+    FILTER_VER_LUMA_sse2 ps, 48, 64
+    FILTER_VER_LUMA_sse2 ps, 64, 16
+    FILTER_VER_LUMA_sse2 ps, 16, 64
+
 ;------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_horiz_pp_4x4(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;------------------------------------------------------------------------------------------------------------
