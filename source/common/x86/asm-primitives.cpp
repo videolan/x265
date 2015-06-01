@@ -1357,6 +1357,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_32x32].sse_ss = x265_pixel_ssd_ss_32x32_avx2;
         p.cu[BLOCK_64x64].sse_ss = x265_pixel_ssd_ss_64x64_avx2;
 
+        p.cu[BLOCK_16x16].sse_pp = x265_pixel_ssd_16x16_avx2;
+        p.cu[BLOCK_32x32].sse_pp = x265_pixel_ssd_32x32_avx2;
+        p.cu[BLOCK_64x64].sse_pp = x265_pixel_ssd_64x64_avx2;
+
         p.quant = x265_quant_avx2;
         p.nquant = x265_nquant_avx2;
         p.dequant_normal  = x265_dequant_normal_avx2;
