@@ -286,6 +286,7 @@ static const x265_api libapi =
 };
 
 typedef const x265_api* (*api_get_func)(int bitDepth);
+typedef const x265_api* (*api_query_func)(int bitDepth, int apiVersion, int* err);
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -383,18 +384,18 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
         if (h)
         {
             e = X265_API_QUERY_ERR_FUNC_NOT_FOUND;
-            api_get_func get = (api_get_func)GetProcAddress(h, method);
-            if (get)
-                api = get(0);
+            api_query_func query = (api_query_func)GetProcAddress(h, method);
+            if (query)
+                api = query(bitDepth,apiVersion,err);
         }
 #else
         void* h = dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
         if (h)
         {
             e = X265_API_QUERY_ERR_FUNC_NOT_FOUND;
-            api_get_func get = (api_get_func)dlsym(h, method);
-            if (get)
-                api = get(0);
+            api_query_func query = (api_query_func)dlsym(h, method);
+            if (query)
+                api = query(bitDepth,apiVersion,err);
         }
 #endif
 
