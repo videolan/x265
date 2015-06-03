@@ -44,29 +44,29 @@ tab_ChromaCoeff:  dw  0, 64,  0,  0
                   dw -2, 16, 54, -4
                   dw -2, 10, 58, -2
 
-tab_ChromaCoeffV: times 4 dw 0, 64
-                  times 4 dw 0, 0
+const tab_ChromaCoeffV,  times 8 dw 0, 64
+                         times 8 dw 0, 0
 
-                  times 4 dw -2, 58
-                  times 4 dw 10, -2
+                         times 8 dw -2, 58
+                         times 8 dw 10, -2
 
-                  times 4 dw -4, 54
-                  times 4 dw 16, -2
+                         times 8 dw -4, 54
+                         times 8 dw 16, -2
 
-                  times 4 dw -6, 46 
-                  times 4 dw 28, -4
+                         times 8 dw -6, 46 
+                         times 8 dw 28, -4
 
-                  times 4 dw -4, 36
-                  times 4 dw 36, -4
+                         times 8 dw -4, 36
+                         times 8 dw 36, -4
 
-                  times 4 dw -4, 28
-                  times 4 dw 46, -6
+                         times 8 dw -4, 28
+                         times 8 dw 46, -6
 
-                  times 4 dw -2, 16
-                  times 4 dw 54, -4
+                         times 8 dw -2, 16
+                         times 8 dw 54, -4
 
-                  times 4 dw -2, 10
-                  times 4 dw 58, -2
+                         times 8 dw -2, 10
+                         times 8 dw 58, -2
 
 tab_LumaCoeff:    dw   0, 0,  0,  64,  0,   0,  0,  0
                   dw  -1, 4, -10, 58,  17, -5,  1,  0
@@ -3292,34 +3292,34 @@ IPFILTER_CHROMA 64, 16, ps, 6, 7, 6
     movq       m0, [r0]
     movq       m1, [r0 + r1]
     punpcklwd  m0, m1                          ;m0=[0 1]
-    pmaddwd    m0, [r6 + 0 *16]                ;m0=[0+1]         Row1
+    pmaddwd    m0, [r6 + 0 *32]                ;m0=[0+1]         Row1
 
     lea        r0, [r0 + 2 * r1]
     movq       m4, [r0]
     punpcklwd  m1, m4                          ;m1=[1 2]
-    pmaddwd    m1, [r6 + 0 *16]                ;m1=[1+2]         Row2
+    pmaddwd    m1, [r6 + 0 *32]                ;m1=[1+2]         Row2
 
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[2 3]
-    pmaddwd    m2, m4, [r6 + 0 *16]            ;m2=[2+3]         Row3
-    pmaddwd    m4, [r6 + 1 * 16]
+    pmaddwd    m2, m4, [r6 + 0 *32]            ;m2=[2+3]         Row3
+    pmaddwd    m4, [r6 + 1 * 32]
     paddd      m0, m4                          ;m0=[0+1+2+3]     Row1 done
 
     lea        r0, [r0 + 2 * r1]
     movq       m4, [r0]
     punpcklwd  m5, m4                          ;m5=[3 4]
-    pmaddwd    m3, m5, [r6 + 0 *16]            ;m3=[3+4]         Row4
-    pmaddwd    m5, [r6 + 1 * 16]
+    pmaddwd    m3, m5, [r6 + 0 *32]            ;m3=[3+4]         Row4
+    pmaddwd    m5, [r6 + 1 * 32]
     paddd      m1, m5                          ;m1 = [1+2+3+4]   Row2
 
     movq       m5, [r0 + r1]
     punpcklwd  m4, m5                          ;m4=[4 5]
-    pmaddwd    m4, [r6 + 1 * 16]
+    pmaddwd    m4, [r6 + 1 * 32]
     paddd      m2, m4                          ;m2=[2+3+4+5]     Row3
 
     movq       m4, [r0 + 2 * r1]
     punpcklwd  m5, m4                          ;m5=[5 6]
-    pmaddwd    m5, [r6 + 1 * 16]
+    pmaddwd    m5, [r6 + 1 * 32]
     paddd      m3, m5                          ;m3=[3+4+5+6]     Row4
 %endmacro
 
@@ -4022,7 +4022,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
     add       r1d, r1d
     add       r3d, r3d
     sub       r0, r1
-    shl       r4d, 5
+    shl       r4d, 6
 
 %ifdef PIC
     lea       r5, [tab_ChromaCoeffV]
@@ -4243,7 +4243,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
     movd       m2, [r0]
     punpcklwd  m1, m2                          ;m1=[1 2]
     punpcklqdq m0, m1                          ;m0=[0 1 1 2]
-    pmaddwd    m0, [%1 + 0 *16]                ;m0=[0+1 1+2] Row 1-2
+    pmaddwd    m0, [%1 + 0 *32]                ;m0=[0+1 1+2] Row 1-2
 
     movd       m1, [r0 + r1]
     punpcklwd  m2, m1                          ;m2=[2 3]
@@ -4253,8 +4253,8 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
     punpcklwd  m1, m3                          ;m2=[3 4]
     punpcklqdq m2, m1                          ;m2=[2 3 3 4]
 
-    pmaddwd    m4, m2, [%1 + 1 * 16]           ;m4=[2+3 3+4] Row 1-2
-    pmaddwd    m2, [%1 + 0 * 16]               ;m2=[2+3 3+4] Row 3-4
+    pmaddwd    m4, m2, [%1 + 1 * 32]           ;m4=[2+3 3+4] Row 1-2
+    pmaddwd    m2, [%1 + 0 * 32]               ;m2=[2+3 3+4] Row 3-4
     paddd      m0, m4                          ;m0=[0+1+2+3 1+2+3+4] Row 1-2
 
     movd       m1, [r0 + r1]
@@ -4263,7 +4263,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
     movd       m4, [r0 + 2 * r1]
     punpcklwd  m1, m4                          ;m1=[5 6]
     punpcklqdq m3, m1                          ;m2=[4 5 5 6]
-    pmaddwd    m3, [%1 + 1 * 16]               ;m3=[4+5 5+6] Row 3-4
+    pmaddwd    m3, [%1 + 1 * 32]               ;m3=[4+5 5+6] Row 3-4
     paddd      m2, m3                          ;m2=[2+3+4+5 3+4+5+6] Row 3-4
 %endmacro
 
@@ -4277,7 +4277,7 @@ cglobal interp_4tap_vert_%2_2x%1, 5, 6, %3
     add       r1d, r1d
     add       r3d, r3d
     sub       r0, r1
-    shl       r4d, 5
+    shl       r4d, 6
 
 %ifdef PIC
     lea       r5, [tab_ChromaCoeffV]
@@ -4369,7 +4369,7 @@ cglobal interp_4tap_vert_%2_4x%1, 5, 6, %3
     add        r1d, r1d
     add        r3d, r3d
     sub        r0, r1
-    shl        r4d, 5
+    shl        r4d, 6
 
 %ifdef PIC
     lea        r5, [tab_ChromaCoeffV]
@@ -4403,21 +4403,21 @@ cglobal interp_4tap_vert_%2_4x%1, 5, 6, %3
     movh       m0, [r0]
     movh       m1, [r0 + r1]
     punpcklwd  m0, m1                          ;m0=[0 1]
-    pmaddwd    m0, [r5 + 0 *16]                ;m0=[0+1]  Row1
+    pmaddwd    m0, [r5 + 0 *32]                ;m0=[0+1]  Row1
 
     lea        r0, [r0 + 2 * r1]
     movh       m2, [r0]
     punpcklwd  m1, m2                          ;m1=[1 2]
-    pmaddwd    m1, [r5 + 0 *16]                ;m1=[1+2]  Row2
+    pmaddwd    m1, [r5 + 0 *32]                ;m1=[1+2]  Row2
 
     movh       m3, [r0 + r1]
     punpcklwd  m2, m3                          ;m4=[2 3]
-    pmaddwd    m2, [r5 + 1 * 16]
+    pmaddwd    m2, [r5 + 1 * 32]
     paddd      m0, m2                          ;m0=[0+1+2+3]  Row1 done
 
     movh       m2, [r0 + 2 * r1]
     punpcklwd  m3, m2                          ;m5=[3 4]
-    pmaddwd    m3, [r5 + 1 * 16]
+    pmaddwd    m3, [r5 + 1 * 32]
     paddd      m1, m3                          ;m1=[1+2+3+4]  Row2 done
 
 %ifidn %2, ss
@@ -4476,7 +4476,7 @@ cglobal interp_4tap_vert_%2_6x%1, 5, 7, %3
     add       r1d, r1d
     add       r3d, r3d
     sub       r0, r1
-    shl       r4d, 5
+    shl       r4d, 6
 
 %ifdef PIC
     lea       r5, [tab_ChromaCoeffV]
@@ -4610,31 +4610,31 @@ FILTER_VER_CHROMA_W6 16, pp, 8
     movu       m1, [r0]
     movu       m3, [r0 + r1]
     punpcklwd  m0, m1, m3
-    pmaddwd    m0, [r5 + 0 * 16]                ;m0 = [0l+1l]  Row1l
+    pmaddwd    m0, [r5 + 0 * 32]                ;m0 = [0l+1l]  Row1l
     punpckhwd  m1, m3
-    pmaddwd    m1, [r5 + 0 * 16]                ;m1 = [0h+1h]  Row1h
+    pmaddwd    m1, [r5 + 0 * 32]                ;m1 = [0h+1h]  Row1h
 
     movu       m4, [r0 + 2 * r1]
     punpcklwd  m2, m3, m4
-    pmaddwd    m2, [r5 + 0 * 16]                ;m2 = [1l+2l]  Row2l
+    pmaddwd    m2, [r5 + 0 * 32]                ;m2 = [1l+2l]  Row2l
     punpckhwd  m3, m4
-    pmaddwd    m3, [r5 + 0 * 16]                ;m3 = [1h+2h]  Row2h
+    pmaddwd    m3, [r5 + 0 * 32]                ;m3 = [1h+2h]  Row2h
 
     lea        r0, [r0 + 2 * r1]
     movu       m5, [r0 + r1]
     punpcklwd  m6, m4, m5
-    pmaddwd    m6, [r5 + 1 * 16]                ;m6 = [2l+3l]  Row1l
+    pmaddwd    m6, [r5 + 1 * 32]                ;m6 = [2l+3l]  Row1l
     paddd      m0, m6                           ;m0 = [0l+1l+2l+3l]  Row1l sum
     punpckhwd  m4, m5
-    pmaddwd    m4, [r5 + 1 * 16]                ;m6 = [2h+3h]  Row1h
+    pmaddwd    m4, [r5 + 1 * 32]                ;m6 = [2h+3h]  Row1h
     paddd      m1, m4                           ;m1 = [0h+1h+2h+3h]  Row1h sum
 
     movu       m4, [r0 + 2 * r1]
     punpcklwd  m6, m5, m4
-    pmaddwd    m6, [r5 + 1 * 16]                ;m6 = [3l+4l]  Row2l
+    pmaddwd    m6, [r5 + 1 * 32]                ;m6 = [3l+4l]  Row2l
     paddd      m2, m6                           ;m2 = [1l+2l+3l+4l]  Row2l sum
     punpckhwd  m5, m4
-    pmaddwd    m5, [r5 + 1 * 16]                ;m1 = [3h+4h]  Row2h
+    pmaddwd    m5, [r5 + 1 * 32]                ;m1 = [3h+4h]  Row2h
     paddd      m3, m5                           ;m3 = [1h+2h+3h+4h]  Row2h sum
 %endmacro
 
@@ -4648,7 +4648,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
     add       r1d, r1d
     add       r3d, r3d
     sub       r0, r1
-    shl       r4d, 5
+    shl       r4d, 6
 
 %ifdef PIC
     lea       r5, [tab_ChromaCoeffV]
