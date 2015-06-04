@@ -1582,6 +1582,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_hps = x265_interp_4tap_horiz_ps_32x8_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].filter_hps = x265_interp_4tap_horiz_ps_24x32_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].filter_hps = x265_interp_4tap_horiz_ps_12x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_6x8].filter_hps = x265_interp_4tap_horiz_ps_6x8_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].filter_hps = x265_interp_4tap_horiz_ps_8x8_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].filter_hps = x265_interp_4tap_horiz_ps_8x16_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x32].filter_hps = x265_interp_4tap_horiz_ps_8x32_avx2;
@@ -1599,6 +1600,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].filter_hps = x265_interp_4tap_horiz_ps_32x16_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_12x32].filter_hps = x265_interp_4tap_horiz_ps_12x32_avx2;
         p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].filter_hps = x265_interp_4tap_horiz_ps_24x64_avx2;
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_6x16].filter_hps = x265_interp_4tap_horiz_ps_6x16_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_8x8].filter_hps = x265_interp_4tap_horiz_ps_8x8_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_8x4].filter_hps = x265_interp_4tap_horiz_ps_8x4_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_8x16].filter_hps = x265_interp_4tap_horiz_ps_8x16_avx2;
@@ -1680,6 +1682,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_hpp = x265_interp_4tap_horiz_pp_64x48_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_hpp = x265_interp_4tap_horiz_pp_64x64_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_48x64].filter_hpp = x265_interp_4tap_horiz_pp_48x64_avx2;
+
 
         if (cpuMask & X265_CPU_BMI2)
             p.scanPosLast = x265_scanPosLast_avx2_bmi2;
