@@ -1368,6 +1368,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.dequant_normal  = x265_dequant_normal_avx2;
         p.dst4x4 = x265_dst4_avx2;
         p.idst4x4 = x265_idst4_avx2;
+        p.denoiseDct = x265_denoise_dct_avx2;
 
         p.scale1D_128to64 = x265_scale1D_128to64_avx2;
         p.scale2D_64to32 = x265_scale2D_64to32_avx2;
