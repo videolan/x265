@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 
     for (int i = 0; test_arch[i].flag; i++)
     {
-        if (test_arch[i].flag & cpuid)
+        if ((test_arch[i].flag & cpuid) == test_arch[i].flag)
         {
             printf("Testing primitives: %s\n", test_arch[i].name);
             fflush(stdout);
