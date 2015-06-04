@@ -1665,24 +1665,12 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             else // fast RD path
             {
                 // maximum g_entropyBits are 18-bits and maximum of count are 16, so intermedia of sum are 22-bits
-                uint32_t sum = 0;
-                if (log2TrSize == 2)
-                {
-                    sum = primitives.costCoeffNxN(g_scan4x4[codingParameters.scanType], &coeff[blkPosBase], (intptr_t)trSize, absCoeff + numNonZero, table_cnt[4], scanFlagMask, baseCtx, offset + posOffset, scanPosSigOff, 0);
-                } // end of 4x4
-                else
-                {
-                    X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
-                    const uint8_t *tabSigCtx = table_cnt[(uint32_t)patternSigCtx];
-
-                    sum = primitives.costCoeffNxN(g_scan4x4[codingParameters.scanType], &coeff[blkPosBase], (intptr_t)trSize, absCoeff + numNonZero, tabSigCtx, scanFlagMask, baseCtx, offset + posOffset, scanPosSigOff, subPosBase);
+                const uint8_t *tabSigCtx = table_cnt[(log2TrSize == 2) ? 4 : (uint32_t)patternSigCtx];
+                uint32_t sum = primitives.costCoeffNxN(g_scan4x4[codingParameters.scanType], &coeff[blkPosBase], (intptr_t)trSize, absCoeff + numNonZero, tabSigCtx, scanFlagMask, baseCtx, offset + posOffset, scanPosSigOff, subPosBase);
 
 #if CHECKED_BUILD || _DEBUG
-                    numNonZero = coeffNum[subSet];
+                numNonZero = coeffNum[subSet];
 #endif
-                } // end of non 4x4 path
-                sum &= 0xFFFFFF;
-
                 // update RD cost
                 m_fracBits += sum;
             } // end of fast RD path -- !m_bitIf
