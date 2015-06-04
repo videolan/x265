@@ -967,7 +967,7 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
                 if ((bTryIntra && md.bestMode->cu.getQtRootCbf(0)) ||
                     md.bestMode->sa8dCost == MAX_INT64)
                 {
-                    if (splitIntra)
+                    if (!m_param->limitReferences || splitIntra)
                     {
                         ProfileCounter(parentCTU, totalIntraCU[cuGeom.depth]);
                         md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -993,7 +993,7 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
 
                 if (bTryIntra || md.bestMode->sa8dCost == MAX_INT64)
                 {
-                    if (splitIntra)
+                    if (!m_param->limitReferences || splitIntra)
                     {
                         ProfileCounter(parentCTU, totalIntraCU[cuGeom.depth]);
                         md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
