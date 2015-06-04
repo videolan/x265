@@ -9,6 +9,7 @@
 ;*          Alex Izvorski <aizvorksi@gmail.com>
 ;*          Fiona Glaser <fiona@x264.com>
 ;*          Oskar Arvidsson <oskar@irock.se>
+;*          Min Chen <chenm003@163.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -7015,6 +7016,77 @@ cglobal pixel_sa8d_16x16, 4,6,8
     shr   eax, 1
     RET
 
+cglobal pixel_sa8d_16x16_internal
+    call pixel_sa8d_8x8_internal ; pix[0]
+
+    sub  r0, r1
+    sub  r0, r1
+    add  r0, 8*SIZEOF_PIXEL
+    sub  r2, r3
+    sub  r2, r3
+    add  r2, 8*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal ; pix[8]
+
+    add  r0, r4
+    add  r0, r1
+    add  r2, r5
+    add  r2, r3
+    call pixel_sa8d_8x8_internal ; pix[8*stride+8]
+
+    sub  r0, r1
+    sub  r0, r1
+    sub  r0, 8*SIZEOF_PIXEL
+    sub  r2, r3
+    sub  r2, r3
+    sub  r2, 8*SIZEOF_PIXEL
+    call pixel_sa8d_8x8_internal ; pix[8*stride]
+
+    ; TODO: analyze Dynamic Range
+    vextracti128 xm0, m6, 1
+    paddusw xm6, xm0
+    HADDUW xm6, xm0
+    movd  eax, xm6
+    add   eax, 1
+    shr   eax, 1
+    ret
+
+%if ARCH_X86_64
+cglobal pixel_sa8d_32x32, 4,8,8
+    ; TODO: R6 is RAX on x64 platform, so we use it directly
+
+    SATD_START_AVX2 m6, m7, 1
+    xor     r7d, r7d
+
+    call    pixel_sa8d_16x16_internal   ; [0]
+    pxor    m6, m6
+    add     r7d, eax
+
+    add     r0, r4
+    add     r0, r1
+    add     r2, r5
+    add     r2, r3
+    call    pixel_sa8d_16x16_internal   ; [2]
+    pxor    m6, m6
+    add     r7d, eax
+
+    lea     eax, [r4 * 5 - 16]
+    sub     r0, rax
+    sub     r0, r1
+    lea     eax, [r5 * 5 - 16]
+    sub     r2, rax
+    sub     r2, r3
+    call    pixel_sa8d_16x16_internal   ; [1]
+    pxor    m6, m6
+    add     r7d, eax
+
+    add     r0, r4
+    add     r0, r1
+    add     r2, r5
+    add     r2, r3
+    call    pixel_sa8d_16x16_internal   ; [3]
+    add     eax, r7d
+    RET
+%endif ; ARCH_X86_64=1
 %endif ; HIGH_BIT_DEPTH
 
 ; Input 16bpp, Output 8bpp
