@@ -1599,12 +1599,13 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             };
 
             const int offset = codingParameters.firstSignificanceMapContext;
-            ALIGN_VAR_32(uint16_t, tmpCoeff[SCAN_SET_SIZE]);
             const uint32_t blkPosBase  = codingParameters.scan[subPosBase];
 
             X265_CHECK(scanPosSigOff >= 0, "scanPosSigOff check failure\n");
             if (m_bitIf)
             {
+                ALIGN_VAR_32(uint16_t, tmpCoeff[SCAN_SET_SIZE]);
+
                 // TODO: accelerate by PABSW
                 for (int i = 0; i < MLS_CG_SIZE; i++)
                 {
