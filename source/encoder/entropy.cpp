@@ -1558,15 +1558,8 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
             const uint32_t posOffset = (bIsLuma && subSet) ? 3 : 0;
 
-            static const uint8_t ctxIndMap4x4[16] =
-            {
-                0, 1, 4, 5,
-                2, 3, 4, 5,
-                6, 6, 8, 8,
-                7, 7, 8, 8
-            };
             // NOTE: [patternSigCtx][posXinSubset][posYinSubset]
-            static const uint8_t table_cnt[4][SCAN_SET_SIZE] =
+            static const uint8_t table_cnt[5][SCAN_SET_SIZE] =
             {
                 // patternSigCtx = 0
                 {
@@ -1595,6 +1588,13 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                     2, 2, 2, 2,
                     2, 2, 2, 2,
                     2, 2, 2, 2,
+                },
+                // 4x4
+                {
+                    0, 1, 4, 5,
+                    2, 3, 4, 5,
+                    6, 6, 8, 8,
+                    7, 7, 8, 8
                 }
             };
 
@@ -1624,7 +1624,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         scanFlagMask >>= 1;
                         X265_CHECK((uint32_t)(tmpCoeff[blkPos] != 0) == sig, "sign bit mistake\n");
                         {
-                            ctxSig = ctxIndMap4x4[blkPos];
+                            ctxSig = table_cnt[4][blkPos];
                             X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
                             encodeBin(sig, baseCtx[ctxSig]);
                         }
@@ -1668,7 +1668,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 uint32_t sum = 0;
                 if (log2TrSize == 2)
                 {
-                    sum = primitives.costCoeffNxN(g_scan4x4[codingParameters.scanType], &coeff[blkPosBase], (intptr_t)trSize, absCoeff + numNonZero, ctxIndMap4x4, scanFlagMask, baseCtx, offset + posOffset, scanPosSigOff, 0);
+                    sum = primitives.costCoeffNxN(g_scan4x4[codingParameters.scanType], &coeff[blkPosBase], (intptr_t)trSize, absCoeff + numNonZero, table_cnt[4], scanFlagMask, baseCtx, offset + posOffset, scanPosSigOff, 0);
                 } // end of 4x4
                 else
                 {
