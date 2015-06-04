@@ -1602,6 +1602,14 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
         }
         if (part < NUM_CU_SIZES)
         {
+            if (opt.chroma[i].cu[part].sse_pp)
+            {
+                if (!check_pixelcmp(ref.chroma[i].cu[part].sse_pp, opt.chroma[i].cu[part].sse_pp))
+                {
+                    printf("chroma_sse_pp[%s][%s]: failed!\n", x265_source_csp_names[i], chromaPartStr[part]);
+                    return false;
+                }
+            }
             if (opt.chroma[i].cu[part].sub_ps)
             {
                 if (!check_pixel_sub_ps(ref.chroma[i].cu[part].sub_ps, opt.chroma[i].cu[part].sub_ps))
@@ -2136,6 +2144,11 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             {
                 HEADER("[%s] copy_sp[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
                 REPORT_SPEEDUP(opt.chroma[i].cu[part].copy_sp, ref.chroma[i].cu[part].copy_sp, pbuf1, 64, sbuf3, 128);
+            }
+            if (opt.chroma[i].cu[part].sse_pp)
+            {
+                HEADER("[%s] sse_pp[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
+                REPORT_SPEEDUP(opt.chroma[i].cu[part].sse_pp, ref.chroma[i].cu[part].sse_pp, pbuf1, STRIDE, fref, STRIDE);
             }
             if (opt.chroma[i].cu[part].sub_ps)
             {
