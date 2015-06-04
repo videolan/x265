@@ -1668,42 +1668,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 uint32_t sum = 0;
                 if (log2TrSize == 2)
                 {
-                    // TODO: accelerate by PABSW
-                    for (int i = 0; i < MLS_CG_SIZE; i++)
-                    {
-                        tmpCoeff[i * MLS_CG_SIZE + 0] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 0]);
-                        tmpCoeff[i * MLS_CG_SIZE + 1] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 1]);
-                        tmpCoeff[i * MLS_CG_SIZE + 2] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 2]);
-                        tmpCoeff[i * MLS_CG_SIZE + 3] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 3]);
-                    }
-
-                    do
-                    {
-                        uint32_t blkPos, sig, ctxSig;
-                        blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
-                        sig     = scanFlagMask & 1;
-                        scanFlagMask >>= 1;
-                        X265_CHECK((uint32_t)(tmpCoeff[blkPos] != 0) == sig, "sign bit mistake\n");
-                        {
-                            ctxSig = ctxIndMap4x4[blkPos];
-                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, codingParameters.scan[subPosBase + scanPosSigOff], bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
-                            //encodeBin(sig, baseCtx[ctxSig]);
-                            const uint32_t mstate = baseCtx[ctxSig];
-                            const uint32_t mps = mstate & 1;
-                            const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
-                            uint32_t nextState = (stateBits >> 24) + mps;
-                            if ((mstate ^ sig) == 1)
-                                nextState = sig;
-                            X265_CHECK(sbacNext(mstate, sig) == nextState, "nextState check failure\n");
-                            X265_CHECK(sbacGetEntropyBits(mstate, sig) == (stateBits & 0xFFFFFF), "entropyBits check failure\n");
-                            baseCtx[ctxSig] = (uint8_t)nextState;
-                            sum += stateBits;
-                        }
-                        absCoeff[numNonZero] = tmpCoeff[blkPos];
-                        numNonZero += sig;
-                        scanPosSigOff--;
-                    }
-                    while(scanPosSigOff >= 0);
+                    sum = primitives.costCoeffNxN(g_scan4x4[codingParameters.scanType], &coeff[blkPosBase], (intptr_t)trSize, absCoeff + numNonZero, ctxIndMap4x4, scanFlagMask, baseCtx, offset + posOffset, scanPosSigOff, 0);
                 } // end of 4x4
                 else
                 {
