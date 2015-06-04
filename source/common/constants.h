@@ -83,7 +83,7 @@ extern const int16_t g_chromaFilter[8][NTAPS_CHROMA];  // Chroma filter taps
 extern const uint16_t* const g_scanOrder[NUM_SCAN_TYPE][NUM_SCAN_SIZE];
 extern const uint16_t* const g_scanOrderCG[NUM_SCAN_TYPE][NUM_SCAN_SIZE];
 extern const uint16_t g_scan8x8diag[8 * 8];
-extern const uint16_t g_scan4x4[NUM_SCAN_TYPE][4 * 4];
+extern const uint16_t g_scan4x4[NUM_SCAN_TYPE + 1][4 * 4];  // +1 for safe buffer area for codeCoeffNxN assembly optimize, there have up to 15 bytes beyond bound read
 
 extern const uint8_t g_lastCoeffTable[32];
 extern const uint8_t g_goRiceRange[5]; // maximum value coded with Rice codes

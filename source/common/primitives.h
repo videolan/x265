@@ -186,6 +186,8 @@ typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, co
 typedef int (*scanPosLast_t)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* scanCG4x4, const int trSize);
 typedef uint32_t (*findPosFirstLast_t)(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16]);
 
+typedef uint32_t (*costCoeffNxN_t)(const uint16_t *scan, const coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, const uint8_t *tabSigCtx, uint32_t scanFlagMask, uint8_t *baseCtx, int offset, int scanPosSigOff, int subPosBase);
+
 /* Function pointers to optimized encoder primitives. Each pointer can reference
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */
 struct EncoderPrimitives
@@ -309,6 +311,8 @@ struct EncoderPrimitives
 
     scanPosLast_t         scanPosLast;
     findPosFirstLast_t    findPosFirstLast;
+
+    costCoeffNxN_t        costCoeffNxN;
 
     /* There is one set of chroma primitives per color space. An encoder will
      * have just a single color space and thus it will only ever use one entry

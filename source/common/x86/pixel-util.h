@@ -82,6 +82,9 @@ int x265_scanPosLast_x64(const uint16_t *scan, const coeff_t *coeff, uint16_t *c
 int x265_scanPosLast_avx2_bmi2(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* scanCG4x4, const int trSize);
 uint32_t x265_findPosFirstLast_ssse3(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16]);
 
+uint32_t x265_costCoeffNxN_sse4(const uint16_t *scan, const coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, const uint8_t *tabSigCtx, uint32_t scanFlagMask, uint8_t *baseCtx, int offset, int scanPosSigOff, int subPosBase);
+
+
 #define SETUP_CHROMA_PIXELSUB_PS_FUNC(W, H, cpu) \
     void x265_pixel_sub_ps_ ## W ## x ## H ## cpu(int16_t*  dest, intptr_t destride, const pixel* src0, const pixel* src1, intptr_t srcstride0, intptr_t srcstride1); \
     void x265_pixel_add_ps_ ## W ## x ## H ## cpu(pixel* dest, intptr_t destride, const pixel* src0, const int16_t*  src1, intptr_t srcStride0, intptr_t srcStride1);

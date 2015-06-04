@@ -29,6 +29,7 @@
 
 #include "common.h"
 #include "primitives.h"
+#include "contexts.h"   // costCoeffNxN_c
 
 using namespace x265;
 
@@ -817,6 +818,61 @@ uint32_t findPosFirstLast_c(const int16_t *dstCoeff, const intptr_t trSize, cons
     return ((lastNZPosInCG << 16) | firstNZPosInCG);
 }
 
+
+uint32_t costCoeffNxN_c(const uint16_t *scan, const coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, const uint8_t *tabSigCtx, uint32_t scanFlagMask, uint8_t *baseCtx, int offset, int scanPosSigOff, int subPosBase)
+{
+    ALIGN_VAR_32(uint16_t, tmpCoeff[SCAN_SET_SIZE]);
+    uint32_t numNonZero = (scanPosSigOff < (SCAN_SET_SIZE - 1) ? 1 : 0);
+    uint32_t sum = 0;
+
+    // correct offset to match assembly
+    absCoeff -= numNonZero;
+
+    for (int i = 0; i < MLS_CG_SIZE; i++)
+    {
+        tmpCoeff[i * MLS_CG_SIZE + 0] = (uint16_t)abs(coeff[i * trSize + 0]);
+        tmpCoeff[i * MLS_CG_SIZE + 1] = (uint16_t)abs(coeff[i * trSize + 1]);
+        tmpCoeff[i * MLS_CG_SIZE + 2] = (uint16_t)abs(coeff[i * trSize + 2]);
+        tmpCoeff[i * MLS_CG_SIZE + 3] = (uint16_t)abs(coeff[i * trSize + 3]);
+    }
+
+    do
+    {
+        uint32_t blkPos, sig, ctxSig;
+        blkPos = scan[scanPosSigOff];
+        const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
+        sig     = scanFlagMask & 1;
+        scanFlagMask >>= 1;
+        X265_CHECK((uint32_t)(tmpCoeff[blkPos] != 0) == sig, "sign bit mistake\n");
+        if ((scanPosSigOff != 0) || (subPosBase == 0) || numNonZero)
+        {
+            const uint32_t cnt = tabSigCtx[blkPos] + offset;
+            ctxSig = cnt & posZeroMask;
+
+            //X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, codingParameters.scan[subPosBase + scanPosSigOff], bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
+            //encodeBin(sig, baseCtx[ctxSig]);
+            const uint32_t mstate = baseCtx[ctxSig];
+            const uint32_t mps = mstate & 1;
+            const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
+            uint32_t nextState = (stateBits >> 24) + mps;
+            if ((mstate ^ sig) == 1)
+                nextState = sig;
+            X265_CHECK(sbacNext(mstate, sig) == nextState, "nextState check failure\n");
+            X265_CHECK(sbacGetEntropyBits(mstate, sig) == (stateBits & 0xFFFFFF), "entropyBits check failure\n");
+            baseCtx[ctxSig] = (uint8_t)nextState;
+            sum += stateBits;
+        }
+        assert(numNonZero <= 15);
+        assert(blkPos <= 15);
+        absCoeff[numNonZero] = tmpCoeff[blkPos];
+        numNonZero += sig;
+        scanPosSigOff--;
+    }
+    while(scanPosSigOff >= 0);
+
+    return (sum & 0xFFFFFF);
+}
+
 }  // closing - anonymous file-static namespace
 
 namespace x265 {
@@ -851,5 +907,6 @@ void setupDCTPrimitives_c(EncoderPrimitives& p)
 
     p.scanPosLast = scanPosLast_c;
     p.findPosFirstLast = findPosFirstLast_c;
+    p.costCoeffNxN = costCoeffNxN_c;
 }
 }

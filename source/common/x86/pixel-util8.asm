@@ -71,6 +71,7 @@ cextern pb_32
 cextern pb_64
 cextern hmul_16p
 cextern trans8_shuf
+cextern_naked g_entropyStateBits
 
 ;-----------------------------------------------------------------------------
 ; void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
@@ -6360,5 +6361,180 @@ cglobal saoCuStatsE3, 4,9,8,0-32    ; Stack: 5 of stats and 5 of count
     add         [r1 + 3 * 4], r6d
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
     add         [r1 + 4 * 4], r6d
+    RET
+%endif ; ARCH_X86_64
+
+
+; uint32_t costCoeffNxN(uint16_t *scan, coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, uint8_t *tabSigCtx, uint16_t scanFlagMask, uint8_t *baseCtx, int offset, int subPosBase)
+;for (int i = 0; i < MLS_CG_SIZE; i++)
+;{
+;    tmpCoeff[i * MLS_CG_SIZE + 0] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 0]);
+;    tmpCoeff[i * MLS_CG_SIZE + 1] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 1]);
+;    tmpCoeff[i * MLS_CG_SIZE + 2] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 2]);
+;    tmpCoeff[i * MLS_CG_SIZE + 3] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 3]);
+;}
+;do
+;{
+;    uint32_t blkPos, sig, ctxSig;
+;    blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
+;    const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
+;    sig     = scanFlagMask & 1;
+;    scanFlagMask >>= 1;
+;    if (scanPosSigOff + (subSet == 0) + numNonZero)
+;    {
+;        const uint32_t cnt = tabSigCtx[blkPos] + offset + posOffset;
+;        ctxSig = cnt & posZeroMask;
+;
+;        const uint32_t mstate = baseCtx[ctxSig];
+;        const uint32_t mps = mstate & 1;
+;        const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
+;        uint32_t nextState = (stateBits >> 24) + mps;
+;        if ((mstate ^ sig) == 1)
+;            nextState = sig;
+;        baseCtx[ctxSig] = (uint8_t)nextState;
+;        sum += stateBits;
+;    }
+;    absCoeff[numNonZero] = tmpCoeff[blkPos];
+;    numNonZero += sig;
+;    scanPosSigOff--;
+;}
+;while(scanPosSigOff >= 0);
+; sum &= 0xFFFFFF
+
+%if ARCH_X86_64
+; uint32_t costCoeffNxN(uint16_t *scan, coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, uint8_t *tabSigCtx, uint16_t scanFlagMask, uint8_t *baseCtx, int offset, int scanPosSigOff, int subPosBase)
+INIT_XMM sse4
+cglobal costCoeffNxN, 6,11,5
+    add         r2d, r2d
+
+    ; abs(coeff)
+    movh        m1, [r1]
+    movhps      m1, [r1 + r2]
+    movh        m2, [r1 + r2 * 2]
+    lea         r2, [r2 * 3]
+    movhps      m2, [r1 + r2]
+    pabsw       m1, m1
+    pabsw       m2, m2
+    ; r[1-2] free here
+
+    ; WARNING: beyond-bound read here!
+    ; loading scan table
+    mov         r2d, r8m
+    xor         r2d, 15
+    movu        m0, [r0 + r2 * 2]
+    movu        m3, [r0 + r2 * 2 + mmsize]
+    packuswb    m0, m3
+    pxor        m0, [pb_15]
+    xchg        r2d, r8m
+    ; r[0-1] free here
+
+    ; reorder coeff
+    mova        m3, [deinterleave_shuf]
+    pshufb      m1, m3
+    pshufb      m2, m3
+    punpcklqdq  m3, m1, m2
+    punpckhqdq  m1, m2
+    pshufb      m3, m0
+    pshufb      m1, m0
+    punpcklbw   m2, m3, m1
+    punpckhbw   m3, m1
+    ; r[0-1], m[1] free here
+
+    ; loading tabSigCtx (+offset)
+    mova        m1, [r4]
+    pshufb      m1, m0
+    movd        m4, r7m
+    pxor        m5, m5
+    pshufb      m4, m5
+    paddb       m1, m4
+
+    ; register mapping
+    ; m0 - Zigzag
+    ; m1 - sigCtx
+    ; {m3,m2} - abs(coeff)
+    ; r0 - g_entropyStateBits
+    ; r1 - baseCtx
+    ; r2 - scanPosSigOff
+    ; r3 - absCoeff
+    ; r4 - nonZero
+    ; r5 - scanFlagMask
+    ; r6 - sum
+    lea         r0, [g_entropyStateBits]
+    mov         r1, r6mp
+    xor         r6d, r6d
+    xor         r4d, r4d
+    xor         r8d, r8d
+
+    test        r2d, r2d
+    jz         .idx_zero
+
+.loop:
+;   {
+;        const uint32_t cnt = tabSigCtx[blkPos] + offset + posOffset;
+;        ctxSig = cnt & posZeroMask;
+;        const uint32_t mstate = baseCtx[ctxSig];
+;        const uint32_t mps = mstate & 1;
+;        const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
+;        uint32_t nextState = (stateBits >> 24) + mps;
+;        if ((mstate ^ sig) == 1)
+;            nextState = sig;
+;        baseCtx[ctxSig] = (uint8_t)nextState;
+;        sum += stateBits;
+;    }
+;    absCoeff[numNonZero] = tmpCoeff[blkPos];
+;    numNonZero += sig;
+;    scanPosSigOff--;
+
+    pextrw      [r3 + r4 * 2], m2, 0            ; absCoeff[numNonZero] = tmpCoeff[blkPos]
+    shr         r5d, 1
+    setc        r8b                             ; r8 = sig
+    add         r4d, r8d                        ; numNonZero += sig
+    palignr     m4, m3, m2, 2
+    psrldq      m3, 2
+    mova        m2, m4
+    movd        r7d, m1                         ; r7 = ctxSig
+    movzx       r7d, r7b
+    psrldq      m1, 1
+    movzx       r9d, byte [r1 + r7]             ; mstate = baseCtx[ctxSig]
+    mov         r10d, r9d
+    and         r10d, 1                         ; mps = mstate & 1
+    xor         r9d, r8d                        ; r9 = mstate ^ sig
+    add         r6d, [r0 + r9 * 4]              ; sum += g_entropyStateBits[mstate ^ sig]
+    add         r10b, byte [r0 + r9 * 4 + 3]    ; nextState = (stateBits >> 24) + mps
+    cmp         r9b, 1
+    cmove       r10d, r8d
+    mov    byte [r1 + r7], r10b
+
+    dec         r2d
+    jg         .loop
+
+.idx_zero:
+    pextrw      [r3 + r4 * 2], m2, 0            ; absCoeff[numNonZero] = tmpCoeff[blkPos]
+    add         r4b, r8m
+    xor         r2d, r2d
+    cmp    word r9m, 0
+    sete        r2b
+    add         r4b, r2b
+    jz         .exit
+
+    dec         r2b
+    movd        r3d, m1
+    and         r2d, r3d
+
+    movzx       r3d, byte [r1 + r2]             ; mstate = baseCtx[ctxSig]
+    mov         r4d, r5d
+    xor         r5d, r3d                        ; r0 = mstate ^ sig
+    and         r3d, 1                          ; mps = mstate & 1
+    add         r6d, [r0 + r5 * 4]              ; sum += g_entropyStateBits[mstate ^ sig]
+    add         r3b, [r0 + r5 * 4 + 3]          ; nextState = (stateBits >> 24) + mps
+    cmp         r5b, 1
+    cmove       r3d, r4d
+    mov    byte [r1 + r2], r3b
+
+.exit:
+%ifnidn eax,r6d
+    mov         eax, r6d
+%endif
+    and         eax, 0xFFFFFF
     RET
 %endif ; ARCH_X86_64
