@@ -31,7 +31,7 @@
 #include "primitives.h"
 #include "contexts.h"   // costCoeffNxN_c
 
-using namespace x265;
+using namespace X265_NS;
 
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
@@ -875,7 +875,7 @@ uint32_t costCoeffNxN_c(const uint16_t *scan, const coeff_t *coeff, intptr_t trS
 
 }  // closing - anonymous file-static namespace
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 void setupDCTPrimitives_c(EncoderPrimitives& p)

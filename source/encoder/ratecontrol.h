@@ -29,7 +29,7 @@
 #include "common.h"
 #include "sei.h"
 
-namespace x265 {
+namespace X265_NS {
 // encoder namespace
 
 class Encoder;

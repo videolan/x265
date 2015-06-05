@@ -30,7 +30,7 @@
 #include "cudata.h"
 #include "contexts.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 #define SIGN(x,y) ((x^(y >> 31))-(y >> 31))
 

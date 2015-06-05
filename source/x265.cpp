@@ -59,7 +59,7 @@ static char orgConsoleTitle[CONSOLE_TITLE_SIZE] = "";
 #define SetThreadExecutionState(es)
 #endif
 
-using namespace x265;
+using namespace X265_NS;
 
 /* Ctrl-C handler */
 static volatile sig_atomic_t b_ctrl_c /* = 0 */;

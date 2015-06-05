@@ -25,7 +25,7 @@
 #include "lowres.h"
 #include "mv.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled)
 {

@@ -41,7 +41,7 @@
 #include "reference.h"
 #include "nal.h"
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 class ThreadPool;

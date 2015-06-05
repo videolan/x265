@@ -104,7 +104,7 @@
 
 extern "C" const uint32_t g_entropyStateBits[128];
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 extern const uint32_t g_entropyBits[128];

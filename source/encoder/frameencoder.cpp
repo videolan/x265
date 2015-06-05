@@ -35,7 +35,7 @@
 #include "slicetype.h"
 #include "nal.h"
 
-namespace x265 {
+namespace X265_NS {
 void weightAnalyse(Slice& slice, Frame& frame, x265_param& param);
 
 FrameEncoder::FrameEncoder()

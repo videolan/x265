@@ -28,7 +28,7 @@
 #include "slice.h"
 #include "cudata.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 class PicYuv;

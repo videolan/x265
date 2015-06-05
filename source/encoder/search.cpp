@@ -33,7 +33,7 @@
 #include "analysis.h"  // TLD
 #include "framedata.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 #if _MSC_VER
 #pragma warning(disable: 4800) // 'uint8_t' : forcing value to bool 'true' or 'false' (performance warning)

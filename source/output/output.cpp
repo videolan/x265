@@ -28,7 +28,7 @@
 
 #include "raw.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 ReconFile* ReconFile::open(const char *fname, int width, int height, uint32_t bitdepth, uint32_t fpsNum, uint32_t fpsDenom, int csp)
 {

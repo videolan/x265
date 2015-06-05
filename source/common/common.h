@@ -313,7 +313,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define CHROMA_V_SHIFT(x) (x == X265_CSP_I420)
 #define X265_MAX_PRED_MODE_PER_CTU 85 * 2 * 8
 
-namespace x265 {
+namespace X265_NS {
 
 enum { SAO_NUM_OFFSET = 4 };
 

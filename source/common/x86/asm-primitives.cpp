@@ -778,7 +778,7 @@ extern "C" {
     ALL_CHROMA_444_PU(filter_hpp, interp_4tap_horiz_pp, cpu); \
     ALL_CHROMA_444_PU(filter_hps, interp_4tap_horiz_ps, cpu);
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 template<int size>
@@ -788,8 +788,8 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
     const int filterSize = NTAPS_LUMA;
     const int halfFilterSize = filterSize >> 1;
 
-    x265::primitives.pu[size].luma_hps(src, srcStride, immed, MAX_CU_SIZE, idxX, 1);
-    x265::primitives.pu[size].luma_vsp(immed + (halfFilterSize - 1) * MAX_CU_SIZE, MAX_CU_SIZE, dst, dstStride, idxY);
+    primitives.pu[size].luma_hps(src, srcStride, immed, MAX_CU_SIZE, idxX, 1);
+    primitives.pu[size].luma_vsp(immed + (halfFilterSize - 1) * MAX_CU_SIZE, MAX_CU_SIZE, dst, dstStride, idxY);
 }
 
 #if HIGH_BIT_DEPTH
@@ -3158,7 +3158,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 }
 #endif // if HIGH_BIT_DEPTH
 
-} // namespace x265
+} // namespace X265_NS
 
 extern "C" {
 #ifdef __INTEL_COMPILER

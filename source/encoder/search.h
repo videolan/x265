@@ -48,7 +48,7 @@
 #define ProfileCounter(cu, count)
 #endif
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 class Entropy;

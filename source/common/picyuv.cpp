@@ -26,7 +26,7 @@
 #include "slice.h"
 #include "primitives.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 PicYuv::PicYuv()
 {
@@ -259,7 +259,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
     }
 }
 
-namespace x265 {
+namespace X265_NS {
 
 template<uint32_t OUTPUT_BITDEPTH_DIV8>
 static void md5_block(MD5Context& md5, const pixel* plane, uint32_t n)

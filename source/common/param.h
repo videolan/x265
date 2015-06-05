@@ -24,7 +24,8 @@
 #ifndef X265_PARAM_H
 #define X265_PARAM_H
 
-namespace x265 {
+namespace X265_NS {
+
 int   x265_check_params(x265_param *param);
 int   x265_set_globals(x265_param *param);
 void  x265_print_params(x265_param *param);

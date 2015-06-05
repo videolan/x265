@@ -24,7 +24,7 @@
 #include "common.h"
 #include "primitives.h"
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 extern const uint8_t lumaPartitionMapTable[] =
@@ -188,14 +188,14 @@ void setupAliasPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I422].cu[BLOCK_422_2x4].sse_pp = NULL;
 }
 }
-using namespace x265;
+using namespace X265_NS;
 
 /* cpuid >= 0 - force CPU type
  * cpuid < 0  - auto-detect if uninitialized */
 void x265_setup_primitives(x265_param *param, int cpuid)
 {
     if (cpuid < 0)
-        cpuid = x265::cpu_detect();
+        cpuid = X265_NS::cpu_detect();
 
     // initialize global variables
     if (!primitives.pu[0].sad)
@@ -223,26 +223,26 @@ void x265_setup_primitives(x265_param *param, int cpuid)
         char buf[1000];
         char *p = buf + sprintf(buf, "using cpu capabilities:");
         char *none = p;
-        for (int i = 0; x265::cpu_names[i].flags; i++)
+        for (int i = 0; X265_NS::cpu_names[i].flags; i++)
         {
-            if (!strcmp(x265::cpu_names[i].name, "SSE")
+            if (!strcmp(X265_NS::cpu_names[i].name, "SSE")
                 && (cpuid & X265_CPU_SSE2))
                 continue;
-            if (!strcmp(x265::cpu_names[i].name, "SSE2")
+            if (!strcmp(X265_NS::cpu_names[i].name, "SSE2")
                 && (cpuid & (X265_CPU_SSE2_IS_FAST | X265_CPU_SSE2_IS_SLOW)))
                 continue;
-            if (!strcmp(x265::cpu_names[i].name, "SSE3")
+            if (!strcmp(X265_NS::cpu_names[i].name, "SSE3")
                 && (cpuid & X265_CPU_SSSE3 || !(cpuid & X265_CPU_CACHELINE_64)))
                 continue;
-            if (!strcmp(x265::cpu_names[i].name, "SSE4.1")
+            if (!strcmp(X265_NS::cpu_names[i].name, "SSE4.1")
                 && (cpuid & X265_CPU_SSE42))
                 continue;
-            if (!strcmp(x265::cpu_names[i].name, "BMI1")
+            if (!strcmp(X265_NS::cpu_names[i].name, "BMI1")
                 && (cpuid & X265_CPU_BMI2))
                 continue;
-            if ((cpuid & x265::cpu_names[i].flags) == x265::cpu_names[i].flags
-                && (!i || x265::cpu_names[i].flags != x265::cpu_names[i - 1].flags))
-                p += sprintf(p, " %s", x265::cpu_names[i].name);
+            if ((cpuid & X265_NS::cpu_names[i].flags) == X265_NS::cpu_names[i].flags
+                && (!i || X265_NS::cpu_names[i].flags != X265_NS::cpu_names[i - 1].flags))
+                p += sprintf(p, " %s", X265_NS::cpu_names[i].name);
         }
 
         if (p == none)

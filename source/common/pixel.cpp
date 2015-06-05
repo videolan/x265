@@ -30,7 +30,7 @@
 
 #include <cstdlib> // abs()
 
-using namespace x265;
+using namespace X265_NS;
 
 namespace {
 // place functions in anonymous namespace (file static)
@@ -962,7 +962,7 @@ void estimateCUPropagateCost(int* dst, const uint16_t* propagateIn, const int32_
 }
 }  // end anonymous namespace
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 /* Extend the edges of a picture so that it may safely be used for motion

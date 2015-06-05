@@ -33,7 +33,7 @@
 #include "rdcost.h"
 #include "encoder.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 /* An explanation of rate distortion levels (--rd-level)
  * 

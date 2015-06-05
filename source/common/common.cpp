@@ -50,7 +50,7 @@ int64_t x265_mdate(void)
 #endif
 }
 
-using namespace x265;
+using namespace X265_NS;
 
 #define X265_ALIGNBYTES 32
 

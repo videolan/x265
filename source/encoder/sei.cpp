@@ -26,7 +26,7 @@
 #include "slice.h"
 #include "sei.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 /* x265's identifying GUID */
 const uint8_t SEIuserDataUnregistered::m_uuid_iso_iec_11578[16] = {

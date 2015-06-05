@@ -33,7 +33,7 @@
 #include "common.h"
 #include "cpu.h"
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 enum LumaPU

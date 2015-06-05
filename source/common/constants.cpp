@@ -25,7 +25,7 @@
 #include "constants.h"
 #include "threading.h"
 
-namespace x265 {
+namespace X265_NS {
 
 #if HIGH_BIT_DEPTH
 // lambda = pow(2, (double)q / 6 - 2) * (1 << (X265_DEPTH - 8));

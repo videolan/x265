@@ -27,7 +27,7 @@
 #include <getopt.h>
 
 #ifdef __cplusplus
-namespace x265 {
+namespace X265_NS {
 #endif
 
 static const char short_options[] = "o:D:P:p:f:F:r:I:i:b:s:t:q:m:hwV?";
@@ -244,7 +244,7 @@ static void showHelp(x265_param *param)
     H0("\nOutput Options:\n");
     H0("-o/--output <filename>           Bitstream output file name\n");
     H0("-D/--output-depth 8|10           Output bit depth (also internal bit depth). Default %d\n", param->internalBitDepth);
-    H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", x265::logLevelNames[param->logLevel + 1]);
+    H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", X265_NS::logLevelNames[param->logLevel + 1]);
     H0("   --no-progress                 Disable CLI progress reports\n");
     H1("   --csv <filename>              Comma separated log file, log level >= 3 frame log, else one line per run\n");
     H0("\nInput Options:\n");

@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 extern int g_ctuSizeConfigured;

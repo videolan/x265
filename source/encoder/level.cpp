@@ -25,7 +25,7 @@
 #include "slice.h"
 #include "level.h"
 
-namespace x265 {
+namespace X265_NS {
 typedef struct
 {
     uint32_t maxLumaSamples;

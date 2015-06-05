@@ -32,7 +32,7 @@
 #include "param.h"
 #include "cpu.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 const char* lumaPartStr[NUM_PU_SIZES] =
 {

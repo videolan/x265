@@ -27,7 +27,7 @@
 #include "picyuv.h"
 #include "slice.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 void Slice::setRefPicList(PicList& picList)
 {

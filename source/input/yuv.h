@@ -30,7 +30,7 @@
 
 #define QUEUE_SIZE 5
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 class YUVInput : public InputFile, public Thread

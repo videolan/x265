@@ -57,7 +57,7 @@ static void sigill_handler(int sig)
 
 #endif // if X265_ARCH_ARM
 
-namespace x265 {
+namespace X265_NS {
 const cpu_name_t cpu_names[] =
 {
 #if X265_ARCH_X86

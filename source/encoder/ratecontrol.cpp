@@ -37,7 +37,7 @@
 #define BR_SHIFT  6
 #define CPB_SHIFT 4
 
-using namespace x265;
+using namespace X265_NS;
 
 /* Amortize the partial cost of I frames over the next N frames */
 

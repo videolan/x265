@@ -25,7 +25,7 @@
 #include "common.h"
 #include "md5.h"
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 #ifndef ARCH_BIG_ENDIAN

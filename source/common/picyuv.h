@@ -28,7 +28,7 @@
 #include "md5.h"
 #include "x265.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 class ShortYuv;

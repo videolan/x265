@@ -32,7 +32,7 @@
 
 struct x265_encoder {};
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 extern const char g_sliceTypeToChar[3];
 

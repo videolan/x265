@@ -30,7 +30,7 @@
 #include "frame.h"
 #include "entropy.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 enum SAOTypeLen

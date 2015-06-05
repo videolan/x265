@@ -36,7 +36,7 @@ const char *stringNames[] =
 
 }
 
-namespace x265 {
+namespace X265_NS {
 
 __itt_domain* domain;
 __itt_string_handle* taskHandle[NUM_VTUNE_TASKS];

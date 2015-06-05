@@ -31,9 +31,19 @@
 #include "nal.h"
 #include "bitcost.h"
 
-using namespace x265;
+#if EXPORT_C_API
 
-extern "C"
+/* these functions are exported as C functions (default) */
+using namespace X265_NS;
+extern "C" {
+
+#else
+
+/* these functions exist within private namespace (multilib) */
+namespace X265_NS {
+
+#endif
+
 x265_encoder *x265_encoder_open(x265_param *p)
 {
     if (!p)
@@ -92,7 +102,6 @@ fail:
     return NULL;
 }
 
-extern "C"
 int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
 {
     if (pp_nal && enc)
@@ -109,7 +118,6 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
     return -1;
 }
 
-extern "C"
 void x265_encoder_parameters(x265_encoder *enc, x265_param *out)
 {
     if (enc && out)
@@ -119,7 +127,6 @@ void x265_encoder_parameters(x265_encoder *enc, x265_param *out)
     }
 }
 
-extern "C"
 int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
 {
     if (!enc || !param_in)
@@ -140,7 +147,6 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
     return ret;
 }
 
-extern "C"
 int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out)
 {
     if (!enc)
@@ -175,7 +181,6 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     return numEncoded;
 }
 
-extern "C"
 void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t statsSizeBytes)
 {
     if (enc && outputStats)
@@ -185,7 +190,6 @@ void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t
     }
 }
 
-extern "C"
 void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
 {
     if (enc)
@@ -195,7 +199,6 @@ void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
     }
 }
 
-extern "C"
 void x265_encoder_close(x265_encoder *enc)
 {
     if (enc)
@@ -210,7 +213,6 @@ void x265_encoder_close(x265_encoder *enc)
     }
 }
 
-extern "C"
 void x265_cleanup(void)
 {
     if (!g_ctuSizeConfigured)
@@ -220,13 +222,11 @@ void x265_cleanup(void)
     }
 }
 
-extern "C"
 x265_picture *x265_picture_alloc()
 {
     return (x265_picture*)x265_malloc(sizeof(x265_picture));
 }
 
-extern "C"
 void x265_picture_init(x265_param *param, x265_picture *pic)
 {
     memset(pic, 0, sizeof(x265_picture));
@@ -245,7 +245,6 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
     }
 }
 
-extern "C"
 void x265_picture_free(x265_picture *p)
 {
     return x265_free(p);
@@ -301,7 +300,6 @@ typedef const x265_api* (*api_query_func)(int bitDepth, int apiVersion, int* err
 #define ext ".so"
 #endif
 
-extern "C"
 const x265_api* x265_api_get(int bitDepth)
 {
     if (bitDepth && bitDepth != X265_DEPTH)
@@ -413,3 +411,5 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
     if (err) *err = X265_API_QUERY_ERR_NONE;
     return &libapi;
 }
+
+} /* end namespace or extern "C" */

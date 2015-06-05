@@ -29,7 +29,7 @@
 #include "threading.h"
 #include <cstdio>
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 class ReconPlay : public Thread

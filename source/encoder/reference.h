@@ -29,7 +29,7 @@
 #include "lowres.h"
 #include "mv.h"
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 struct WeightParam;

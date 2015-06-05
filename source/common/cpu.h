@@ -44,7 +44,7 @@ extern "C" void x265_safe_intel_cpu_indicator_init(void);
 #define x265_emms() x265_cpu_emms()
 #endif
 
-namespace x265 {
+namespace X265_NS {
 uint32_t cpu_detect(void);
 
 struct cpu_name_t

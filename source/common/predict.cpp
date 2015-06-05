@@ -28,7 +28,7 @@
 #include "predict.h"
 #include "primitives.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant

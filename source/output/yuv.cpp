@@ -25,7 +25,7 @@
 #include "output.h"
 #include "yuv.h"
 
-using namespace x265;
+using namespace X265_NS;
 using namespace std;
 
 YUVOutput::YUVOutput(const char *filename, int w, int h, uint32_t d, int csp)

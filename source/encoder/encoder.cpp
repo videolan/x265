@@ -39,7 +39,7 @@
 
 #include "x265.h"
 
-namespace x265 {
+namespace X265_NS {
 const char g_sliceTypeToChar[] = {'B', 'P', 'I'};
 }
 
@@ -53,7 +53,7 @@ static const char* summaryCSVHeader =
 
 static const char* defaultAnalysisFileName = "x265_analysis.dat";
 
-using namespace x265;
+using namespace X265_NS;
 
 Encoder::Encoder()
 {

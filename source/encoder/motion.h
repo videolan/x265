@@ -30,7 +30,7 @@
 #include "bitcost.h"
 #include "yuv.h"
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 class MotionEstimate : public BitCost

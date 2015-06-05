@@ -76,27 +76,35 @@ char* strtok_r(char* str, const char* delim, char** nextp)
 
 #endif // if !defined(HAVE_STRTOK_R)
 
-using namespace x265;
+#if EXPORT_C_API
 
-extern "C"
+/* these functions are exported as C functions (default) */
+using namespace X265_NS;
+extern "C" {
+
+#else
+
+/* these functions exist within private namespace (multilib) */
+namespace X265_NS {
+
+#endif
+
 x265_param *x265_param_alloc()
 {
     return (x265_param*)x265_malloc(sizeof(x265_param));
 }
 
-extern "C"
 void x265_param_free(x265_param* p)
 {
     x265_free(p);
 }
 
-extern "C"
 void x265_param_default(x265_param* param)
 {
     memset(param, 0, sizeof(x265_param));
 
     /* Applying default values to all elements in the param structure */
-    param->cpuid = x265::cpu_detect();
+    param->cpuid = X265_NS::cpu_detect();
     param->bEnableWavefront = 1;
     param->frameNumThreads = 0;
 
@@ -235,10 +243,13 @@ void x265_param_default(x265_param* param)
     param->vui.defDispWinBottomOffset = 0;
 }
 
-extern "C"
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
 {
-    x265_param_default(param);
+#if EXPORT_C_API
+    ::x265_param_default(param);
+#else
+    X265_NS::x265_param_default(param);
+#endif
 
     if (preset)
     {
@@ -486,7 +497,6 @@ static int parseName(const char* arg, const char* const* names, bool& bError)
 #define atof(str) x265_atof(str, bError)
 #define atobool(str) (bNameWasBool = true, x265_atobool(str, bError))
 
-extern "C"
 int x265_param_parse(x265_param* p, const char* name, const char* value)
 {
     bool bError = false;
@@ -866,7 +876,9 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     return bError ? X265_PARAM_BAD_VALUE : 0;
 }
 
-namespace x265 {
+} /* end extern "C" or namespace */
+
+namespace X265_NS {
 // internal encoder functions
 
 int x265_atoi(const char* str, bool& bError)
@@ -895,7 +907,7 @@ int parseCpuName(const char* value, bool& bError)
     if (isdigit(value[0]))
         cpu = x265_atoi(value, bError);
     else
-        cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? x265::cpu_detect() : 0;
+        cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? X265_NS::cpu_detect() : 0;
 
     if (bError)
     {
@@ -906,12 +918,12 @@ int parseCpuName(const char* value, bool& bError)
         for (init = buf; (tok = strtok_r(init, ",", &saveptr)); init = NULL)
         {
             int i;
-            for (i = 0; x265::cpu_names[i].flags && strcasecmp(tok, x265::cpu_names[i].name); i++)
+            for (i = 0; X265_NS::cpu_names[i].flags && strcasecmp(tok, X265_NS::cpu_names[i].name); i++)
             {
             }
 
-            cpu |= x265::cpu_names[i].flags;
-            if (!x265::cpu_names[i].flags)
+            cpu |= X265_NS::cpu_names[i].flags;
+            if (!X265_NS::cpu_names[i].flags)
                 bError = 1;
         }
 

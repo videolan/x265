@@ -31,7 +31,7 @@
 #pragma warning(disable: 4127) // conditional  expression is constant (macros use this construct)
 #endif
 
-using namespace x265;
+using namespace X265_NS;
 
 namespace {
 

@@ -287,6 +287,22 @@ else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0)
 endif(HIGH_BIT_DEPTH)
 
+# this option can only be used when linking multiple libx265 libraries
+# together, and some alternate API access method is implemented.
+option(EXPORT_C_API "Implement public C programming interface" ON)
+mark_as_advanced(EXPORT_C_API)
+if(EXPORT_C_API)
+    set(X265_NS x265)
+    add_definitions(-DEXPORT_C_API=1)
+elseif(HIGH_BIT_DEPTH)
+    set(X265_NS x265_10bpp)
+    add_definitions(-DEXPORT_C_API=0)
+else()
+    set(X265_NS x265_8bpp)
+    add_definitions(-DEXPORT_C_API=0)
+endif()
+add_definitions(-DX265_NS=${X265_NS})
+
 option(WARNINGS_AS_ERRORS "Stop compiles on first warning" OFF)
 if(WARNINGS_AS_ERRORS)
     if(GCC)

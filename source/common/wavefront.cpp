@@ -26,7 +26,7 @@
 #include "wavefront.h"
 #include "common.h"
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 bool WaveFront::init(int numRows)

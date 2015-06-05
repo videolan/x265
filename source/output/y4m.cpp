@@ -25,7 +25,7 @@
 #include "output.h"
 #include "y4m.h"
 
-using namespace x265;
+using namespace X265_NS;
 using namespace std;
 
 Y4MOutput::Y4MOutput(const char *filename, int w, int h, uint32_t fpsNum, uint32_t fpsDenom, int csp)

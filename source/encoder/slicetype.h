@@ -30,7 +30,7 @@
 #include "piclist.h"
 #include "threadpool.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 struct Lowres;

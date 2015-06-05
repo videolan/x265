@@ -40,7 +40,7 @@
 #define ProfileLookaheadTime(elapsed, count)
 #endif
 
-using namespace x265;
+using namespace X265_NS;
 
 namespace {
 

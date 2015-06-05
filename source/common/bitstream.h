@@ -24,7 +24,7 @@
 #ifndef X265_BITSTREAM_H
 #define X265_BITSTREAM_H 1
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 class BitInterface

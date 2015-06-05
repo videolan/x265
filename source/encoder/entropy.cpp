@@ -35,7 +35,7 @@
 #define CU_DQP_EG_k    0 // exp-golomb order
 #define START_VALUE    8 // start value for dpcm mode
 
-namespace x265 {
+namespace X265_NS {
 
 Entropy::Entropy()
 {

@@ -60,7 +60,7 @@ inline int64_t estSaoDist(int32_t count, int offset, int32_t offsetOrg)
 } // end anonymous namespace
 
 
-namespace x265 {
+namespace X265_NS {
 
 const uint32_t SAO::s_eoTable[NUM_EDGETYPE] =
 {
@@ -1613,7 +1613,7 @@ void SAO::sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addr
     }
 }
 
-// NOTE: must put in namespace x265 since we need class SAO
+// NOTE: must put in namespace X265_NS since we need class SAO
 void saoCuStatsE2_c(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int8_t *upBufft, int endX, int endY, int32_t *stats, int32_t *count)
 {
     X265_CHECK(endX < MAX_CU_SIZE, "endX check failure\n");
