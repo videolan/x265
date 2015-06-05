@@ -50,8 +50,8 @@ x265_encoder *x265_encoder_open(x265_param *p)
         return NULL;
 
     Encoder* encoder = NULL;
-    x265_param* param = x265_param_alloc();
-    x265_param* latestParam = x265_param_alloc();
+    x265_param* param = PARAM_NS::x265_param_alloc();
+    x265_param* latestParam = PARAM_NS::x265_param_alloc();
     if (!param || !latestParam)
         goto fail;
 
@@ -69,7 +69,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
 
     encoder = new Encoder;
     if (!param->rc.bEnableSlowFirstPass)
-        x265_param_apply_fastfirstpass(param);
+        PARAM_NS::x265_param_apply_fastfirstpass(param);
 
     // may change params for auto-detect, etc
     encoder->configure(param);
@@ -97,8 +97,8 @@ x265_encoder *x265_encoder_open(x265_param *p)
 
 fail:
     delete encoder;
-    x265_param_free(param);
-    x265_param_free(latestParam);
+    PARAM_NS::x265_param_free(param);
+    PARAM_NS::x265_param_free(latestParam);
     return NULL;
 }
 
@@ -264,12 +264,12 @@ static const x265_api libapi =
     x265_version_str,
     x265_build_info_str,
 
-    &x265_param_alloc,
-    &x265_param_free,
-    &x265_param_default,
-    &x265_param_parse,
-    &x265_param_apply_profile,
-    &x265_param_default_preset,
+    &PARAM_NS::x265_param_alloc,
+    &PARAM_NS::x265_param_free,
+    &PARAM_NS::x265_param_default,
+    &PARAM_NS::x265_param_parse,
+    &PARAM_NS::x265_param_apply_profile,
+    &PARAM_NS::x265_param_default_preset,
     &x265_picture_alloc,
     &x265_picture_free,
     &x265_picture_init,

@@ -342,8 +342,21 @@ bool enforceLevel(x265_param& param, VPS& vps)
 
     return true;
 }
+}
 
-extern "C"
+#if EXPORT_C_API
+
+/* these functions are exported as C functions (default) */
+using namespace X265_NS;
+extern "C" {
+
+#else
+
+/* these functions exist within private namespace (multilib) */
+namespace X265_NS {
+
+#endif
+
 int x265_param_apply_profile(x265_param *param, const char *profile)
 {
     if (!param || !profile)

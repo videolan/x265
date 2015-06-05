@@ -41,6 +41,19 @@ bool  parseLambdaFile(x265_param *param);
 /* this table is kept internal to avoid confusion, since log level indices start at -1 */
 static const char * const logLevelNames[] = { "none", "error", "warning", "info", "frame", "debug", "full", 0 };
 
+#if EXPORT_C_API
+#define PARAM_NS
+#else
+/* declare param functions within private namespace */
+void x265_param_free(x265_param *);
+x265_param* x265_param_alloc();
+void x265_param_default(x265_param *param);
+int x265_param_default_preset(x265_param *, const char *preset, const char *tune);
+int x265_param_apply_profile(x265_param *, const char *profile);
+int x265_param_parse(x265_param *p, const char *name, const char *value);
+#define PARAM_NS X265_NS
+#endif
+
 #define MAXPARAMSIZE 2000
 }
 

@@ -386,10 +386,10 @@ void Encoder::destroy()
         free((char*)m_param->masteringDisplayColorVolume);
         free((char*)m_param->contentLightLevelInfo);
 
-        x265_param_free(m_param);
+        PARAM_NS::x265_param_free(m_param);
     }
 
-    x265_param_free(m_latestParam);
+    PARAM_NS::x265_param_free(m_latestParam);
 }
 
 void Encoder::updateVbvPlan(RateControl* rc)
