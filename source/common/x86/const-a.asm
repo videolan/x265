@@ -80,6 +80,7 @@ const pw_512,               times 16 dw 512
 const pw_1023,              times 16 dw 1023
 const pw_1024,              times 16 dw 1024
 const pw_4096,              times 16 dw 4096
+const pw_8192,              times  8 dw 8192
 const pw_00ff,              times 16 dw 0x00ff
 const pw_ff00,              times  8 dw 0xff00
 const pw_2000,              times 16 dw 0x2000
