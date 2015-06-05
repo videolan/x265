@@ -229,7 +229,6 @@ static void printVersion(x265_param *param)
 static void showHelp(x265_param *param)
 {
     int level = param->logLevel;
-    x265_param_default(param);
     printVersion(param);
 
 #define OPT(value) (value ? "enabled" : "disabled")

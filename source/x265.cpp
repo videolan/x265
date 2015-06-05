@@ -213,7 +213,10 @@ bool CLIOptions::parse(int argc, char **argv)
     }
 
     if (bShowHelp)
+    {
+        api->param_default(param);
         showHelp(param);
+    }
 
     for (optind = 0;; )
     {
@@ -225,6 +228,7 @@ bool CLIOptions::parse(int argc, char **argv)
         switch (c)
         {
         case 'h':
+            api->param_default(param);
             showHelp(param);
             break;
 
@@ -313,7 +317,10 @@ bool CLIOptions::parse(int argc, char **argv)
     }
 
     if (argc <= 1)
+    {
+        api->param_default(param);
         showHelp(param);
+    }
 
     if (inputfn == NULL || outputfn == NULL)
     {
