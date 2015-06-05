@@ -27,8 +27,8 @@
 
 SECTION_RODATA 32
 
-tab_c_32:         times 4 dd 32
-tab_c_n32768:     times 4 dd -32768
+tab_c_32:         times 8 dd 32
+tab_c_n32768:     times 8 dd -32768
 tab_c_524800:     times 4 dd 524800
 tab_c_n8192:      times 8 dw -8192
 pd_524800:        times 8 dd 524800
@@ -4761,6 +4761,140 @@ FILTER_VER_CHROMA_W8 8, 64, ps, 8
 FILTER_VER_CHROMA_W8 8, 12, pp, 8
 FILTER_VER_CHROMA_W8 8, 64, pp, 8
 
+%macro PROCESS_CHROMA_VERT_W16_2R 0
+    movu       m1, [r0]
+    movu       m3, [r0 + r1]
+    punpcklwd  m0, m1, m3
+    pmaddwd    m0, [r5 + 0 * 32]
+    punpckhwd  m1, m3
+    pmaddwd    m1, [r5 + 0 * 32]
+
+    movu       m4, [r0 + 2 * r1]
+    punpcklwd  m2, m3, m4
+    pmaddwd    m2, [r5 + 0 * 32]
+    punpckhwd  m3, m4
+    pmaddwd    m3, [r5 + 0 * 32]
+
+    lea        r0, [r0 + 2 * r1]
+    movu       m5, [r0 + r1]
+    punpcklwd  m6, m4, m5
+    pmaddwd    m6, [r5 + 1 * 32]
+    paddd      m0, m6
+    punpckhwd  m4, m5
+    pmaddwd    m4, [r5 + 1 * 32]
+    paddd      m1, m4
+
+    movu       m4, [r0 + 2 * r1]
+    punpcklwd  m6, m5, m4
+    pmaddwd    m6, [r5 + 1 * 32]
+    paddd      m2, m6
+    punpckhwd  m5, m4
+    pmaddwd    m5, [r5 + 1 * 32]
+    paddd      m3, m5
+%endmacro
+
+;-----------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_CHROMA_W16_16xN_avx2 3
+INIT_YMM avx2
+cglobal interp_4tap_vert_%2_16x%1, 5, 6, %3
+    add       r1d, r1d
+    add       r3d, r3d
+    sub       r0, r1
+    shl       r4d, 6
+
+%ifdef PIC
+    lea       r5, [tab_ChromaCoeffV]
+    lea       r5, [r5 + r4]
+%else
+    lea       r5, [tab_ChromaCoeffV + r4]
+%endif
+
+    mov       r4d, %1/2
+
+%ifidn %2, pp
+    mova      m7, [tab_c_32]
+%elifidn %2, sp
+    mova      m7, [pd_524800]
+%elifidn %2, ps
+    mova      m7, [tab_c_n32768]
+%endif
+
+.loopH:
+    PROCESS_CHROMA_VERT_W16_2R
+%ifidn %2, ss
+    psrad     m0, 6
+    psrad     m1, 6
+    psrad     m2, 6
+    psrad     m3, 6
+
+    packssdw  m0, m1
+    packssdw  m2, m3
+%elifidn %2, ps
+    paddd     m0, m7
+    paddd     m1, m7
+    paddd     m2, m7
+    paddd     m3, m7
+    psrad     m0, 2
+    psrad     m1, 2
+    psrad     m2, 2
+    psrad     m3, 2
+
+    packssdw  m0, m1
+    packssdw  m2, m3
+%else
+    paddd     m0, m7
+    paddd     m1, m7
+    paddd     m2, m7
+    paddd     m3, m7
+ %ifidn %2, pp
+    psrad     m0, 6
+    psrad     m1, 6
+    psrad     m2, 6
+    psrad     m3, 6
+%else
+    psrad     m0, 10
+    psrad     m1, 10
+    psrad     m2, 10
+    psrad     m3, 10
+%endif
+    packssdw  m0, m1
+    packssdw  m2, m3
+    pxor      m5, m5
+    CLIPW2    m0, m2, m5, [pw_pixel_max]
+%endif
+
+    movu      [r2], m0
+    movu      [r2 + r3], m2
+    lea       r2, [r2 + 2 * r3]
+    dec       r4d
+    jnz       .loopH
+    RET
+%endmacro
+    FILTER_VER_CHROMA_W16_16xN_avx2 4, pp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 8, pp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 12, pp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 16, pp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 32, pp, 8
+
+    FILTER_VER_CHROMA_W16_16xN_avx2 4, ps, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 8, ps, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 12, ps, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 16, ps, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 32, ps, 8
+
+    FILTER_VER_CHROMA_W16_16xN_avx2 4, ss, 7
+    FILTER_VER_CHROMA_W16_16xN_avx2 8, ss, 7
+    FILTER_VER_CHROMA_W16_16xN_avx2 12, ss, 7
+    FILTER_VER_CHROMA_W16_16xN_avx2 16, ss, 7
+    FILTER_VER_CHROMA_W16_16xN_avx2 32, ss, 7
+
+    FILTER_VER_CHROMA_W16_16xN_avx2 4, sp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 8, sp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 12, sp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 16, sp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 32, sp, 8
 
 INIT_XMM sse2
 cglobal chroma_p2s, 3, 7, 3
