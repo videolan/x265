@@ -1048,143 +1048,6 @@ void Encoder::printSummary()
 #undef ELAPSED_SEC
 #undef ELAPSED_MSEC
 #endif
-
-    if (!m_param->bLogCuStats)
-        return;
-
-    for (int sliceType = 2; sliceType >= 0; sliceType--)
-    {
-        if (sliceType == P_SLICE && !m_analyzeP.m_numPics)
-            continue;
-        if (sliceType == B_SLICE && !m_analyzeB.m_numPics)
-            continue;
-
-        StatisticLog finalLog;
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-        {
-            int cuSize = g_maxCUSize >> depth;
-
-            for (int i = 0; i < m_param->frameNumThreads; i++)
-            {
-                StatisticLog& enclog = m_frameEncoder[i]->m_sliceTypeLog[sliceType];
-                if (!depth)
-                    finalLog.totalCu += enclog.totalCu;
-                finalLog.cntIntra[depth] += enclog.cntIntra[depth];
-                for (int m = 0; m < INTER_MODES; m++)
-                {
-                    if (m < INTRA_MODES)
-                        finalLog.cuIntraDistribution[depth][m] += enclog.cuIntraDistribution[depth][m];
-                    finalLog.cuInterDistribution[depth][m] += enclog.cuInterDistribution[depth][m];
-                }
-
-                if (cuSize == 8 && m_sps.quadtreeTULog2MinSize < 3)
-                    finalLog.cntIntraNxN += enclog.cntIntraNxN;
-                if (sliceType != I_SLICE)
-                {
-                    finalLog.cntTotalCu[depth] += enclog.cntTotalCu[depth];
-                    finalLog.cntInter[depth] += enclog.cntInter[depth];
-                    finalLog.cntSkipCu[depth] += enclog.cntSkipCu[depth];
-                }
-            }
-
-            uint64_t cntInter, cntSkipCu, cntIntra = 0, cntIntraNxN = 0, encCu = 0;
-            uint64_t cuInterDistribution[INTER_MODES], cuIntraDistribution[INTRA_MODES];
-
-            // check for 0/0, if true assign 0 else calculate percentage
-            for (int n = 0; n < INTER_MODES; n++)
-            {
-                if (!finalLog.cntInter[depth])
-                    cuInterDistribution[n] = 0;
-                else
-                    cuInterDistribution[n] = (finalLog.cuInterDistribution[depth][n] * 100) / finalLog.cntInter[depth];
-
-                if (n < INTRA_MODES)
-                {
-                    if (!finalLog.cntIntra[depth])
-                    {
-                        cntIntraNxN = 0;
-                        cuIntraDistribution[n] = 0;
-                    }
-                    else
-                    {
-                        cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.cntIntra[depth];
-                        cuIntraDistribution[n] = (finalLog.cuIntraDistribution[depth][n] * 100) / finalLog.cntIntra[depth];
-                    }
-                }
-            }
-
-            if (!finalLog.totalCu)
-                encCu = 0;
-            else if (sliceType == I_SLICE)
-            {
-                cntIntra = (finalLog.cntIntra[depth] * 100) / finalLog.totalCu;
-                cntIntraNxN = (finalLog.cntIntraNxN * 100) / finalLog.totalCu;
-            }
-            else
-                encCu = ((finalLog.cntIntra[depth] + finalLog.cntInter[depth]) * 100) / finalLog.totalCu;
-
-            if (sliceType == I_SLICE)
-            {
-                cntInter = 0;
-                cntSkipCu = 0;
-            }
-            else if (!finalLog.cntTotalCu[depth])
-            {
-                cntInter = 0;
-                cntIntra = 0;
-                cntSkipCu = 0;
-            }
-            else
-            {
-                cntInter = (finalLog.cntInter[depth] * 100) / finalLog.cntTotalCu[depth];
-                cntIntra = (finalLog.cntIntra[depth] * 100) / finalLog.cntTotalCu[depth];
-                cntSkipCu = (finalLog.cntSkipCu[depth] * 100) / finalLog.cntTotalCu[depth];
-            }
-
-            // print statistics
-            char stats[256] = { 0 };
-            int len = 0;
-            if (sliceType != I_SLICE)
-                len += sprintf(stats + len, " EncCU "X265_LL "%% Merge "X265_LL "%%", encCu, cntSkipCu);
-
-            if (cntInter)
-            {
-                len += sprintf(stats + len, " Inter "X265_LL "%%", cntInter);
-                if (m_param->bEnableAMP)
-                    len += sprintf(stats + len, "(%dx%d "X265_LL "%% %dx%d "X265_LL "%% %dx%d "X265_LL "%% AMP "X265_LL "%%)",
-                                   cuSize, cuSize, cuInterDistribution[0],
-                                   cuSize / 2, cuSize, cuInterDistribution[2],
-                                   cuSize, cuSize / 2, cuInterDistribution[1],
-                                   cuInterDistribution[3]);
-                else if (m_param->bEnableRectInter)
-                    len += sprintf(stats + len, "(%dx%d "X265_LL "%% %dx%d "X265_LL "%% %dx%d "X265_LL "%%)",
-                                   cuSize, cuSize, cuInterDistribution[0],
-                                   cuSize / 2, cuSize, cuInterDistribution[2],
-                                   cuSize, cuSize / 2, cuInterDistribution[1]);
-            }
-            if (cntIntra)
-            {
-                len += sprintf(stats + len, " Intra "X265_LL "%%(DC "X265_LL "%% P "X265_LL "%% Ang "X265_LL "%%",
-                               cntIntra, cuIntraDistribution[0],
-                               cuIntraDistribution[1], cuIntraDistribution[2]);
-                if (sliceType != I_SLICE)
-                {
-                    if (cuSize == 8 && m_sps.quadtreeTULog2MinSize < 3)
-                        len += sprintf(stats + len, " %dx%d "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
-                }
-
-                len += sprintf(stats + len, ")");
-                if (sliceType == I_SLICE)
-                {
-                    if (cuSize == 8 && m_sps.quadtreeTULog2MinSize < 3)
-                        len += sprintf(stats + len, " %dx%d: "X265_LL "%%", cuSize / 2, cuSize / 2, cntIntraNxN);
-                }
-            }
-            const char slicechars[] = "BPI";
-            if (stats[0])
-                x265_log(m_param, X265_LOG_INFO, "%c%-2d:%s\n", slicechars[sliceType], cuSize, stats);
-        }
-    }
 }
 
 void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
@@ -1902,6 +1765,9 @@ void Encoder::configure(x265_param *p)
     }
     else
         m_param->rc.qgSize = p->maxCUSize;
+
+    if (p->bLogCuStats)
+        x265_log(p, X265_LOG_WARNING, "--cu-stats option is now deprecated\n");
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)

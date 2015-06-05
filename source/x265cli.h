@@ -247,7 +247,6 @@ static void showHelp(x265_param *param)
     H0("-D/--output-depth 8|10           Output bit depth (also internal bit depth). Default %d\n", param->internalBitDepth);
     H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", x265::logLevelNames[param->logLevel + 1]);
     H0("   --no-progress                 Disable CLI progress reports\n");
-    H0("   --[no-]cu-stats               Enable logging stats about distribution of cu across all modes. Default %s\n",OPT(param->bLogCuStats));
     H1("   --csv <filename>              Comma separated log file, log level >= 3 frame log, else one line per run\n");
     H0("\nInput Options:\n");
     H0("   --input <filename>            Raw YUV or Y4M input file name. `-` for stdin\n");

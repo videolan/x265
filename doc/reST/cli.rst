@@ -124,13 +124,6 @@ Logging/Statistic Options
 	is more of a problem for P frames where some blocks are much more
 	expensive than others.
 
-
-.. option:: --cu-stats, --no-cu-stats
-
-	Records statistics on how each CU was coded (split depths and other
-	mode decisions) and reports those statistics at the end of the
-	encode. Default disabled
-
 .. option:: --ssim, --no-ssim
 
 	Calculate and report Structural Similarity values. It is

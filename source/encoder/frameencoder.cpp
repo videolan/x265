@@ -904,7 +904,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         // Completed CU processing
         curRow.completed++;
 
-        if (m_param->bLogCuStats || m_param->rc.bStatWrite)
+        if (m_param->rc.bStatWrite)
             curEncData.m_rowStat[row].sumQpAq += collectCTUStatistics(*ctu, qTreeInterCnt, qTreeIntraCnt, qTreeSkipCnt);
         else if (m_param->rc.aqMode)
             curEncData.m_rowStat[row].sumQpAq += calcCTUQP(*ctu);
