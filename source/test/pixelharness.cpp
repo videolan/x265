@@ -1606,7 +1606,7 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
             {
                 if (!check_pixelcmp(ref.chroma[i].cu[part].sse_pp, opt.chroma[i].cu[part].sse_pp))
                 {
-                    printf("chroma_sse_pp[%s][%s]: failed!\n", x265_source_csp_names[i], chromaPartStr[part]);
+                    printf("chroma_sse_pp[%s][%s]: failed!\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                     return false;
                 }
             }
