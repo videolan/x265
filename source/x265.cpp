@@ -403,6 +403,7 @@ bool CLIOptions::parse(int argc, char **argv)
     if (bShowHelp)
     {
         api->param_default(param);
+        printVersion(param, api);
         showHelp(param);
     }
 
@@ -417,11 +418,12 @@ bool CLIOptions::parse(int argc, char **argv)
         {
         case 'h':
             api->param_default(param);
+            printVersion(param, api);
             showHelp(param);
             break;
 
         case 'V':
-            printVersion(param);
+            printVersion(param, api);
             x265_setup_primitives(param, -1);
             exit(0);
 
@@ -509,6 +511,7 @@ bool CLIOptions::parse(int argc, char **argv)
     if (argc <= 1)
     {
         api->param_default(param);
+        printVersion(param, api);
         showHelp(param);
     }
 
