@@ -270,6 +270,8 @@ endif()
 # Build options
 set(LIB_INSTALL_DIR lib CACHE STRING "Install location of libraries")
 set(BIN_INSTALL_DIR bin CACHE STRING "Install location of executables")
+set(EXTRA_LIB "" CACHE STRING "Extra libraries to link against")
+mark_as_advanced(EXTRA_LIB)
 
 if(X64)
     # NOTE: We only officially support 16bit-per-pixel compiles of x265
@@ -390,6 +392,11 @@ source_group(ASM FILES ${YASM_SRCS})
 add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
 if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
+endif()
+if(EXTRA_LIB)
+    # ugly link path hack
+    link_directories(${CMAKE_BINARY_DIR}/../10bit)
+    target_link_libraries(x265-static ${EXTRA_LIB})
 endif()
 install(TARGETS x265-static
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
