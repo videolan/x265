@@ -187,8 +187,6 @@ void setupAliasPrimitives(EncoderPrimitives &p)
 
     p.chroma[X265_CSP_I422].cu[BLOCK_422_2x4].sse_pp = NULL;
 }
-}
-using namespace X265_NS;
 
 /* cpuid >= 0 - force CPU type
  * cpuid < 0  - auto-detect if uninitialized */
@@ -249,6 +247,7 @@ void x265_setup_primitives(x265_param *param, int cpuid)
             sprintf(p, " none!");
         x265_log(param, X265_LOG_INFO, "%s\n", buf);
     }
+}
 }
 
 #if ENABLE_ASSEMBLY

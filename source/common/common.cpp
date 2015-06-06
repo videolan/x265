@@ -37,6 +37,8 @@
 int g_checkFailures;
 #endif
 
+namespace X265_NS {
+
 int64_t x265_mdate(void)
 {
 #if _WIN32
@@ -49,8 +51,6 @@ int64_t x265_mdate(void)
     return (int64_t)tv_date.tv_sec * 1000000 + (int64_t)tv_date.tv_usec;
 #endif
 }
-
-using namespace X265_NS;
 
 #define X265_ALIGNBYTES 32
 
@@ -214,4 +214,6 @@ char* x265_slurp_file(const char *filename)
 error:
     fclose(fh);
     return NULL;
+}
+
 }

@@ -409,8 +409,6 @@ enum SignificanceMapContextType
 /* located in pixel.cpp */
 void extendPicBorder(pixel* recon, intptr_t stride, int width, int height, int marginX, int marginY);
 
-}
-
 /* outside x265 namespace, but prefixed. defined in common.cpp */
 int64_t  x265_mdate(void);
 #define  x265_log(param, ...) general_log(param, "x265", __VA_ARGS__)
@@ -427,6 +425,7 @@ void     x265_free(void *ptr);
 char*    x265_slurp_file(const char *filename);
 
 void     x265_setup_primitives(x265_param* param, int cpu); /* primitives.cpp */
+}
 
 #include "constants.h"
 
