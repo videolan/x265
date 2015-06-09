@@ -6538,3 +6538,114 @@ cglobal costCoeffNxN, 6,11,5
     and         eax, 0xFFFFFF
     RET
 %endif ; ARCH_X86_64
+
+
+;uint32_t goRiceParam = 0;
+;int firstCoeff2 = 1;
+;uint32_t baseLevelN = 0x5555AAAA; // 2-bits encode format baseLevel
+;idx = 0;
+;do
+;{
+;    int baseLevel = (baseLevelN & 3) | firstCoeff2;
+;    baseLevelN >>= 2;
+;    int codeNumber = absCoeff[idx] - baseLevel;
+;    if (codeNumber >= 0)
+;    {
+;        uint32_t length = 0;
+;        codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION;
+;        if (codeNumber >= 0)
+;        {
+;            {
+;                unsigned long cidx;
+;                CLZ(cidx, codeNumber + 1);
+;                length = cidx;
+;            }
+;            codeNumber = (length + length);
+;        }
+;        sum += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber);
+;        if (absCoeff[idx] > (COEF_REMAIN_BIN_REDUCTION << goRiceParam))
+;            goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
+;    }
+;    if (absCoeff[idx] >= 2)
+;        firstCoeff2 = 0;
+;    idx++;
+;}
+;while(idx < numNonZero);
+
+; uint32_t costCoeffRemain(uint16_t *absCoeff, int numNonZero)
+INIT_XMM sse4
+cglobal costCoeffRemain, 0,7,1
+    ; assign RCX to R3
+    ; RAX always in R6 and free
+  %if WIN64
+    DECLARE_REG_TMP 3,1,2,0
+    mov         t0, r0
+  %elif ARCH_X86_64
+    ; *nix x64 didn't do anything
+    DECLARE_REG_TMP 0,1,2,3
+  %else ; X86_32
+    DECLARE_REG_TMP 6,3,2,1
+    mov         t0, r0m
+  %endif
+
+    mova        m0, [t0]
+    packsswb    m0, [t0 + mmsize]
+    pcmpgtb     m0, [pb_1]
+    pmovmskb    r2d, m0
+    bsf         r2d, r2d
+    lea         r2d, [r2 * 2 + 1]
+    xor         r4d, r4d
+    bts         r4d, r2d
+    dec         r4d
+    and         r4d, 0x55555555
+    or          r4d, 0x5555AAAA
+
+    xor         t3d, t3d
+    xor         r5d, r5d
+
+    ; register mapping
+    ; r4d - baseLevelN
+    ; r2  - tmp
+    ; t3  - goRiceParam
+    ; eax - tmp - absCoeff[idx]
+    ; r5  - sum
+
+.loop:
+    movzx       eax, word [t0]
+    add         t0, 2
+    mov         r2d, r4d
+    and         r2d, 3
+    shr         r4d, 2
+    sub         eax, r2d                ; codeNumber = absCoeff[idx] - baseLevel
+    jl         .next
+
+    shr         eax, t3b                ; codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION
+
+    lea         r2d, [eax - 3 + 1]      ; CLZ(cidx, codeNumber + 1);
+    bsr         r2d, r2d
+    add         r2d, r2d                ; codeNumber = (length + length)
+
+    sub         eax, 3
+    cmovge      eax, r2d
+
+    lea         eax, [3 + 1 + t3 + rax] ; sum += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber)
+    add         r5d, eax
+
+    ; if (absCoeff[idx] > (COEF_REMAIN_BIN_REDUCTION << goRiceParam))
+    ;     goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
+    cmp         t3d, 4
+    setl        al
+
+    mov         r2d, 3
+    shl         r2d, t3b
+    cmp         word [t0 - 2], r2w
+    setg        r2b
+    and         al, r2b
+    add         t3b, al
+
+.next:
+    dec   dword r1m
+    jnz        .loop
+
+    mov         eax, r5d
+    RET

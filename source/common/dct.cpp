@@ -30,6 +30,7 @@
 #include "common.h"
 #include "primitives.h"
 #include "contexts.h"   // costCoeffNxN_c
+#include "threading.h"  // CLZ
 
 using namespace X265_NS;
 
@@ -873,6 +874,53 @@ uint32_t costCoeffNxN_c(const uint16_t *scan, const coeff_t *coeff, intptr_t trS
     return (sum & 0xFFFFFF);
 }
 
+uint32_t costCoeffRemain_c(uint16_t *absCoeff, int numNonZero)
+{
+    uint32_t goRiceParam = 0;
+    int firstCoeff2 = 1;
+    uint32_t baseLevelN = 0x5555AAAA; // 2-bits encode format baseLevel
+
+    uint32_t sum = 0;
+    int idx = 0;
+    do
+    {
+        int baseLevel = (baseLevelN & 3) | firstCoeff2;
+        X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
+        baseLevelN >>= 2;
+        int codeNumber = absCoeff[idx] - baseLevel;
+
+        if (codeNumber >= 0)
+        {
+            //writeCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
+            uint32_t length = 0;
+
+            codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION;
+            if (codeNumber >= 0)
+            {
+                {
+                    unsigned long cidx;
+                    CLZ(cidx, codeNumber + 1);
+                    length = cidx;
+                }
+                X265_CHECK((codeNumber != 0) || (length == 0), "length check failure\n");
+
+                codeNumber = (length + length);
+            }
+            sum += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber);
+
+            if (absCoeff[idx] > (COEF_REMAIN_BIN_REDUCTION << goRiceParam))
+                goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
+            X265_CHECK(goRiceParam <= 4, "goRiceParam check failure\n");
+        }
+        if (absCoeff[idx] >= 2)
+            firstCoeff2 = 0;
+        idx++;
+    }
+    while(idx < numNonZero);
+
+    return sum;
+}
+
 }  // closing - anonymous file-static namespace
 
 namespace X265_NS {
@@ -908,5 +956,6 @@ void setupDCTPrimitives_c(EncoderPrimitives& p)
     p.scanPosLast = scanPosLast_c;
     p.findPosFirstLast = findPosFirstLast_c;
     p.costCoeffNxN = costCoeffNxN_c;
+    p.costCoeffRemain = costCoeffRemain_c;
 }
 }

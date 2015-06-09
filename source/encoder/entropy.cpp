@@ -1747,44 +1747,8 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                 if (!m_bitIf)
                 {
-                    uint32_t sum = 0;
-                    // FastRd path
-                    idx = 0;
-                    do
-                    {
-                        int baseLevel = (baseLevelN & 3) | firstCoeff2;
-                        X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
-                        baseLevelN >>= 2;
-                        int codeNumber = absCoeff[idx] - baseLevel;
-
-                        if (codeNumber >= 0)
-                        {
-                            //writeCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
-                            uint32_t length = 0;
-
-                            codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION;
-                            if (codeNumber >= 0)
-                            {
-                                {
-                                    unsigned long cidx;
-                                    CLZ(cidx, codeNumber + 1);
-                                    length = cidx;
-                                }
-                                X265_CHECK((codeNumber != 0) || (length == 0), "length check failure\n");
-
-                                codeNumber = (length + length);
-                            }
-                            sum += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber);
-
-                            if (absCoeff[idx] > (COEF_REMAIN_BIN_REDUCTION << goRiceParam))
-                                goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
-                            X265_CHECK(goRiceParam <= 4, "goRiceParam check failure\n");
-                        }
-                        if (absCoeff[idx] >= 2)
-                            firstCoeff2 = 0;
-                        idx++;
-                    }
-                    while(idx < numNonZero);
+                    // Fast RD path
+                    uint32_t sum = primitives.costCoeffRemain(absCoeff, numNonZero);
                     m_fracBits += ((uint64_t)sum << 15);
                 }
                 else

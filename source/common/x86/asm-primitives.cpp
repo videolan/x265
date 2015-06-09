@@ -2244,6 +2244,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         // TODO: it is passed smoke test, but we need testbench, so temporary disable
         //p.costCoeffNxN = x265_costCoeffNxN_sse4;
 #endif
+        // TODO: it is passed smoke test, but we need testbench to active it, so temporary disable
+        p.costCoeffRemain = x265_costCoeffRemain_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {
