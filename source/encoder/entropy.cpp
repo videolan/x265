@@ -1438,7 +1438,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     // compute number of significant coefficients
     uint32_t numSig = primitives.cu[log2TrSize - 2].count_nonzero(coeff);
     X265_CHECK(numSig > 0, "cbf check fail\n");
-    bool bHideFirstSign = cu.m_slice->m_pps->bSignHideEnabled && !tqBypass;
+    bool bHideFirstSign = cu.m_slice->m_pps->bSignHideEnabled & !tqBypass;
 
     if (log2TrSize <= MAX_LOG2_TS_SIZE && !tqBypass && cu.m_slice->m_pps->bTransformSkipEnabled)
         codeTransformSkipFlags(cu.m_transformSkip[ttype][absPartIdx], ttype);
@@ -1487,9 +1487,11 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         if (codingParameters.scanType == SCAN_VER)
             std::swap(pos[0], pos[1]);
 
-        int ctxIdx = bIsLuma ? (3 * (log2TrSize - 2) + ((log2TrSize - 1) >> 2)) : NUM_CTX_LAST_FLAG_XY_LUMA;
-        int ctxShift = bIsLuma ? ((log2TrSize + 1) >> 2) : log2TrSize - 2;
+        int ctxIdx = bIsLuma ? (3 * (log2TrSize - 2) + (log2TrSize == 5)) : NUM_CTX_LAST_FLAG_XY_LUMA;
+        int ctxShift = (bIsLuma ? (log2TrSize > 2) : (log2TrSize - 2));
         uint32_t maxGroupIdx = (log2TrSize << 1) - 1;
+        X265_CHECK(((log2TrSize - 1) >> 2) == (uint32_t)(log2TrSize == 5), "ctxIdx check failure\n");
+        X265_CHECK((uint32_t)ctxShift == (bIsLuma ? ((log2TrSize + 1) >> 2) : log2TrSize - 2), "ctxShift check failure\n");
 
         uint8_t *ctx = &m_contextState[OFF_CTX_LAST_FLAG_X];
         for (uint32_t i = 0; i < 2; i++, ctxIdx += NUM_CTX_LAST_FLAG_XY)
