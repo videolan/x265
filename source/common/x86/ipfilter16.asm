@@ -4899,26 +4899,34 @@ cglobal interp_4tap_vert_%2_16x%1, 5, 6, %3
     FILTER_VER_CHROMA_W16_16xN_avx2 4, pp, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 8, pp, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 12, pp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 24, pp, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 16, pp, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 32, pp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 64, pp, 8
 
     FILTER_VER_CHROMA_W16_16xN_avx2 4, ps, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 8, ps, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 12, ps, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 24, ps, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 16, ps, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 32, ps, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 64, ps, 8
 
     FILTER_VER_CHROMA_W16_16xN_avx2 4, ss, 7
     FILTER_VER_CHROMA_W16_16xN_avx2 8, ss, 7
     FILTER_VER_CHROMA_W16_16xN_avx2 12, ss, 7
+    FILTER_VER_CHROMA_W16_16xN_avx2 24, ss, 7
     FILTER_VER_CHROMA_W16_16xN_avx2 16, ss, 7
     FILTER_VER_CHROMA_W16_16xN_avx2 32, ss, 7
+    FILTER_VER_CHROMA_W16_16xN_avx2 64, ss, 7
 
     FILTER_VER_CHROMA_W16_16xN_avx2 4, sp, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 8, sp, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 12, sp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 24, sp, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 16, sp, 8
     FILTER_VER_CHROMA_W16_16xN_avx2 32, sp, 8
+    FILTER_VER_CHROMA_W16_16xN_avx2 64, sp, 8
 
 %macro PROCESS_CHROMA_VERT_W32_2R 0
     movu       m1, [r0]
@@ -5100,21 +5108,29 @@ cglobal interp_4tap_vert_%2_32x%1, 5, 7, %3
     FILTER_VER_CHROMA_W16_32xN_avx2 16, pp, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 24, pp, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 32, pp, 15
+    FILTER_VER_CHROMA_W16_32xN_avx2 48, pp, 15
+    FILTER_VER_CHROMA_W16_32xN_avx2 64, pp, 15
 
     FILTER_VER_CHROMA_W16_32xN_avx2 8, ps, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 16, ps, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 24, ps, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 32, ps, 15
+    FILTER_VER_CHROMA_W16_32xN_avx2 48, ps, 15
+    FILTER_VER_CHROMA_W16_32xN_avx2 64, ps, 15
 
     FILTER_VER_CHROMA_W16_32xN_avx2 8, ss, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 16, ss, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 24, ss, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 32, ss, 15
+    FILTER_VER_CHROMA_W16_32xN_avx2 48, ss, 15
+    FILTER_VER_CHROMA_W16_32xN_avx2 64, ss, 15
 
     FILTER_VER_CHROMA_W16_32xN_avx2 8, sp, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 16, sp, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 24, sp, 15
     FILTER_VER_CHROMA_W16_32xN_avx2 32, sp, 15
+    FILTER_VER_CHROMA_W16_32xN_avx2 48, sp, 15
+    FILTER_VER_CHROMA_W16_32xN_avx2 64, sp, 15
 
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
@@ -5202,6 +5218,10 @@ cglobal interp_4tap_vert_%2_12x%1, 5, 8, %3
     FILTER_VER_CHROMA_W16_12xN_avx2 16, sp, 8
     FILTER_VER_CHROMA_W16_12xN_avx2 16, ps, 8
     FILTER_VER_CHROMA_W16_12xN_avx2 16, pp, 8
+    FILTER_VER_CHROMA_W16_12xN_avx2 32, ss, 7
+    FILTER_VER_CHROMA_W16_12xN_avx2 32, sp, 8
+    FILTER_VER_CHROMA_W16_12xN_avx2 32, ps, 8
+    FILTER_VER_CHROMA_W16_12xN_avx2 32, pp, 8
 
 %macro PROCESS_CHROMA_VERT_W24_2R 0
     movu       m1, [r0]
@@ -5383,6 +5403,10 @@ cglobal interp_4tap_vert_%2_24x%1, 5, 7, %3
     FILTER_VER_CHROMA_W16_24xN_avx2 32, sp, 15
     FILTER_VER_CHROMA_W16_24xN_avx2 32, ps, 15
     FILTER_VER_CHROMA_W16_24xN_avx2 32, pp, 15
+    FILTER_VER_CHROMA_W16_24xN_avx2 64, ss, 15
+    FILTER_VER_CHROMA_W16_24xN_avx2 64, sp, 15
+    FILTER_VER_CHROMA_W16_24xN_avx2 64, ps, 15
+    FILTER_VER_CHROMA_W16_24xN_avx2 64, pp, 15
 
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
