@@ -1719,6 +1719,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x64].filter_vss = x265_interp_4tap_vert_ss_8x64_avx2;
 
 
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].filter_vpp = x265_interp_4tap_vert_pp_12x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].filter_vps = x265_interp_4tap_vert_ps_12x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].filter_vss = x265_interp_4tap_vert_ss_12x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].filter_vsp = x265_interp_4tap_vert_sp_12x16_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].filter_vpp = x265_interp_4tap_vert_pp_16x4_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].filter_vpp = x265_interp_4tap_vert_pp_16x8_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].filter_vpp = x265_interp_4tap_vert_pp_16x12_avx2;
@@ -1739,6 +1743,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].filter_vsp = x265_interp_4tap_vert_sp_16x12_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].filter_vsp = x265_interp_4tap_vert_sp_16x16_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].filter_vsp = x265_interp_4tap_vert_sp_16x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].filter_vpp = x265_interp_4tap_vert_pp_24x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].filter_vps = x265_interp_4tap_vert_ps_24x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].filter_vss = x265_interp_4tap_vert_ss_24x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].filter_vsp = x265_interp_4tap_vert_sp_24x32_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_vpp = x265_interp_4tap_vert_pp_32x8_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_vpp = x265_interp_4tap_vert_pp_32x16_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_vpp = x265_interp_4tap_vert_pp_32x24_avx2;
