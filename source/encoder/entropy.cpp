@@ -1741,10 +1741,6 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
             if (!c1 || numNonZero > C1FLAG_NUMBER)
             {
-                uint32_t goRiceParam = 0;
-                int firstCoeff2 = 1;
-                uint32_t baseLevelN = 0x5555AAAA; // 2-bits encode format baseLevel
-
                 if (!m_bitIf)
                 {
                     // Fast RD path
@@ -1754,6 +1750,10 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 else
                 {
                     // Standard path
+                    uint32_t goRiceParam = 0;
+                    int firstCoeff2 = 1;
+                    uint32_t baseLevelN = 0x5555AAAA; // 2-bits encode format baseLevel
+
                     idx = 0;
                     do
                     {
