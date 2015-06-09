@@ -12578,16 +12578,6 @@ cglobal intra_pred_ang16_3, 3,7,13
     call        ang16_mode_3_33
     RET
 
-cglobal intra_pred_ang32_3, 3,7,13
-    add         r2,        128
-    xor         r6d,       r6d
-    lea         r3,        [ang_table_avx2 + 16 * 32]
-    add         r1d,       r1d
-    lea         r4,        [r1 * 3]
-
-    call        ang16_mode_3_33
-    RET
-
 cglobal intra_pred_ang16_33, 3,7,13
     xor         r6d,       r6d
     inc         r6d
@@ -13144,6 +13134,218 @@ cglobal intra_pred_ang16_18, 3,5,4
 
 ;-------------------------------------------------------------------------------------------------------
 ; end of avx2 code for intra_pred_ang16 mode 2 to 34
+;-------------------------------------------------------------------------------------------------------
+
+;-------------------------------------------------------------------------------------------------------
+; avx2 code for intra_pred_ang32 mode 2 to 34 start
+;-------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal intra_pred_ang32_2, 3,5,6
+    lea         r4,                 [r2]
+    add         r2,                 128
+    cmp         r3m,                byte 34
+    cmove       r2,                 r4
+    add         r1d,                 r1d
+    lea         r3,                 [r1 * 3]
+    movu        m0,                 [r2 + 4]
+    movu        m1,                 [r2 + 20]
+    movu        m3,                 [r2 + 36]
+    movu        m4,                 [r2 + 52]
+
+    movu        [r0],               m0
+    movu        [r0 + 32],          m3
+    palignr     m2,                 m1, m0, 2
+    palignr     m5,                 m4, m3, 2
+    movu        [r0 + r1],          m2
+    movu        [r0 + r1 + 32],     m5
+    palignr     m2,                 m1, m0, 4
+    palignr     m5,                 m4, m3, 4
+    movu        [r0 + r1 * 2],      m2
+    movu        [r0 + r1 * 2 + 32], m5
+    palignr     m2,                 m1, m0, 6
+    palignr     m5,                 m4, m3, 6
+    movu        [r0 + r3],          m2
+    movu        [r0 + r3 + 32],     m5
+
+    lea         r0,                 [r0 + r1 * 4]
+    palignr     m2,                 m1, m0, 8
+    palignr     m5,                 m4, m3, 8
+    movu        [r0],               m2
+    movu        [r0 + 32],          m5
+    palignr     m2,                 m1, m0, 10
+    palignr     m5,                 m4, m3, 10
+    movu        [r0 + r1],          m2
+    movu        [r0 + r1 + 32],     m5
+    palignr     m2,                 m1, m0, 12
+    palignr     m5,                 m4, m3, 12
+    movu        [r0 + r1 * 2],      m2
+    movu        [r0 + r1 * 2 + 32], m5
+    palignr     m2,                 m1, m0, 14
+    palignr     m5,                 m4, m3, 14
+    movu        [r0 + r3],          m2
+    movu        [r0 + r3 + 32],     m5
+
+    movu        m0,                 [r2 + 36]
+    movu        m3,                 [r2 + 68]
+    lea         r0,                 [r0 + r1 * 4]
+    movu        [r0],               m1
+    movu        [r0 + 32],          m4
+    palignr     m2,                 m0, m1, 2
+    palignr     m5,                 m3, m4, 2
+    movu        [r0 + r1],          m2
+    movu        [r0 + r1 + 32],     m5
+    palignr     m2,                 m0, m1, 4
+    palignr     m5,                 m3, m4, 4
+    movu        [r0 + r1 * 2],      m2
+    movu        [r0 + r1 * 2 + 32], m5
+    palignr     m2,                 m0, m1, 6
+    palignr     m5,                 m3, m4, 6
+    movu        [r0 + r3],          m2
+    movu        [r0 + r3 + 32],     m5
+
+    lea         r0,                 [r0 + r1 * 4]
+    palignr     m2,                 m0, m1, 8
+    palignr     m5,                 m3, m4, 8
+    movu        [r0],               m2
+    movu        [r0 + 32],          m5
+    palignr     m2,                 m0, m1, 10
+    palignr     m5,                 m3, m4, 10
+    movu        [r0 + r1],          m2
+    movu        [r0 + r1 + 32],     m5
+    palignr     m2,                 m0, m1, 12
+    palignr     m5,                 m3, m4, 12
+    movu        [r0 + r1 * 2],      m2
+    movu        [r0 + r1 * 2 + 32], m5
+    palignr     m2,                 m0, m1, 14
+    palignr     m5,                 m3, m4, 14
+    movu        [r0 + r3],          m2
+    movu        [r0 + r3 + 32],     m5
+
+    lea         r0,                 [r0 + r1 * 4]
+    movu        m1,                 [r2 + 52]
+    movu        m4,                 [r2 + 84]
+
+    movu        [r0],               m0
+    movu        [r0 + 32],          m3
+    palignr     m2,                 m1, m0, 2
+    palignr     m5,                 m4, m3, 2
+    movu        [r0 + r1],          m2
+    movu        [r0 + r1 + 32],     m5
+    palignr     m2,                 m1, m0, 4
+    palignr     m5,                 m4, m3, 4
+    movu        [r0 + r1 * 2],      m2
+    movu        [r0 + r1 * 2 + 32], m5
+    palignr     m2,                 m1, m0, 6
+    palignr     m5,                 m4, m3, 6
+    movu        [r0 + r3],          m2
+    movu        [r0 + r3 + 32],     m5
+
+    lea         r0,                 [r0 + r1 * 4]
+    palignr     m2,                 m1, m0, 8
+    palignr     m5,                 m4, m3, 8
+    movu        [r0],               m2
+    movu        [r0 + 32],          m5
+    palignr     m2,                 m1, m0, 10
+    palignr     m5,                 m4, m3, 10
+    movu        [r0 + r1],          m2
+    movu        [r0 + r1 + 32],     m5
+    palignr     m2,                 m1, m0, 12
+    palignr     m5,                 m4, m3, 12
+    movu        [r0 + r1 * 2],      m2
+    movu        [r0 + r1 * 2 + 32], m5
+    palignr     m2,                 m1, m0, 14
+    palignr     m5,                 m4, m3, 14
+    movu        [r0 + r3],          m2
+    movu        [r0 + r3 + 32],     m5
+
+    movu        m0,                 [r2 + 68]
+    movu        m3,                 [r2 + 100]
+    lea         r0,                 [r0 + r1 * 4]
+    movu        [r0],               m1
+    movu        [r0 + 32],          m4
+    palignr     m2,                 m0, m1, 2
+    palignr     m5,                 m3, m4, 2
+    movu        [r0 + r1],          m2
+    movu        [r0 + r1 + 32],     m5
+    palignr     m2,                 m0, m1, 4
+    palignr     m5,                 m3, m4, 4
+    movu        [r0 + r1 * 2],      m2
+    movu        [r0 + r1 * 2 + 32], m5
+    palignr     m2,                 m0, m1, 6
+    palignr     m5,                 m3, m4, 6
+    movu        [r0 + r3],          m2
+    movu        [r0 + r3 + 32],     m5
+
+    lea         r0,                 [r0 + r1 * 4]
+    palignr     m2,                 m0, m1, 8
+    palignr     m5,                 m3, m4, 8
+    movu        [r0],               m2
+    movu        [r0 + 32],          m5
+    palignr     m2,                 m0, m1, 10
+    palignr     m5,                 m3, m4, 10
+    movu        [r0 + r1],          m2
+    movu        [r0 + r1 + 32],     m5
+    palignr     m2,                 m0, m1, 12
+    palignr     m5,                 m3, m4, 12
+    movu        [r0 + r1 * 2],      m2
+    movu        [r0 + r1 * 2 + 32], m5
+    palignr     m2,                 m0, m1, 14
+    palignr     m5,                 m3, m4, 14
+    movu        [r0 + r3],          m2
+    movu        [r0 + r3 + 32],     m5
+    RET
+
+cglobal intra_pred_ang32_3, 3,8,13
+    add         r2,        128
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r7,        [r0 + 8 * r1]
+
+    call        ang16_mode_3_33
+
+    add         r2,        26
+    lea         r0,        [r0 + 32]
+
+    call        ang16_mode_3_33
+
+    add         r2,        6
+    lea         r0,        [r7 + 8 * r1]
+
+    call        ang16_mode_3_33
+
+    add         r2,        26
+    lea         r0,        [r0 + 32]
+
+    call        ang16_mode_3_33
+    RET
+
+cglobal intra_pred_ang32_33, 3,7,13
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r5,        [r0 + 32]
+
+    call        ang16_mode_3_33
+
+    add         r2,        26
+
+    call        ang16_mode_3_33
+
+    add         r2,        6
+    mov         r0,        r5
+
+    call        ang16_mode_3_33
+
+    add         r2,        26
+
+    call        ang16_mode_3_33
+    RET
+;-------------------------------------------------------------------------------------------------------
+; end of avx2 code for intra_pred_ang32 mode 2 to 34
 ;-------------------------------------------------------------------------------------------------------
 
 %macro MODE_2_34 0

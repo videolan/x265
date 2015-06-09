@@ -1256,6 +1256,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_16x16].intra_pred[33]    = x265_intra_pred_ang16_33_avx2;
         p.cu[BLOCK_16x16].intra_pred[34]    = x265_intra_pred_ang16_2_avx2;
 
+        p.cu[BLOCK_32x32].intra_pred[2]     = x265_intra_pred_ang32_2_avx2;
+        p.cu[BLOCK_32x32].intra_pred[3]     = x265_intra_pred_ang32_3_avx2;
+        p.cu[BLOCK_32x32].intra_pred[33]    = x265_intra_pred_ang32_33_avx2;
+        p.cu[BLOCK_32x32].intra_pred[34]    = x265_intra_pred_ang32_2_avx2;
+
         p.pu[LUMA_8x4].addAvg   = x265_addAvg_8x4_avx2;
         p.pu[LUMA_8x8].addAvg   = x265_addAvg_8x8_avx2;
         p.pu[LUMA_8x16].addAvg  = x265_addAvg_8x16_avx2;
