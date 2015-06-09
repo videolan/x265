@@ -83,7 +83,7 @@ int x265_scanPosLast_avx2_bmi2(const uint16_t *scan, const coeff_t *coeff, uint1
 uint32_t x265_findPosFirstLast_ssse3(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16]);
 
 uint32_t x265_costCoeffNxN_sse4(const uint16_t *scan, const coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, const uint8_t *tabSigCtx, uint32_t scanFlagMask, uint8_t *baseCtx, int offset, int scanPosSigOff, int subPosBase);
-uint32_t x265_costCoeffRemain_sse4(uint16_t *absCoeff, int numNonZero);
+uint32_t x265_costCoeffRemain_sse4(uint16_t *absCoeff, int numNonZero, int idx);
 
 
 #define SETUP_CHROMA_PIXELSUB_PS_FUNC(W, H, cpu) \

@@ -1431,6 +1431,55 @@ void Entropy::codeQtCbfChroma(const CUData& cu, uint32_t absPartIdx, TextType tt
         encodeBin(cu.getCbf(absPartIdx, ttype, lowestTUDepth), m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
+#if CHECKED_BUILD || _DEBUG
+uint32_t costCoeffRemain_c0(uint16_t *absCoeff, int numNonZero)
+{
+    uint32_t goRiceParam = 0;
+    int firstCoeff2 = 1;
+    uint32_t baseLevelN = 0x5555AAAA; // 2-bits encode format baseLevel
+
+    uint32_t sum = 0;
+    int idx = 0;
+    do
+    {
+        int baseLevel = (baseLevelN & 3) | firstCoeff2;
+        X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
+        baseLevelN >>= 2;
+        int codeNumber = absCoeff[idx] - baseLevel;
+
+        if (codeNumber >= 0)
+        {
+            //writeCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
+            uint32_t length = 0;
+
+            codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION;
+            if (codeNumber >= 0)
+            {
+                {
+                    unsigned long cidx;
+                    CLZ(cidx, codeNumber + 1);
+                    length = cidx;
+                }
+                X265_CHECK((codeNumber != 0) || (length == 0), "length check failure\n");
+
+                codeNumber = (length + length);
+            }
+            sum += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber);
+
+            if (absCoeff[idx] > (COEF_REMAIN_BIN_REDUCTION << goRiceParam))
+                goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
+            X265_CHECK(goRiceParam <= 4, "goRiceParam check failure\n");
+        }
+        if (absCoeff[idx] >= 2)
+            firstCoeff2 = 0;
+        idx++;
+    }
+    while(idx < numNonZero);
+
+    return sum;
+}
+#endif // debug only code
+
 void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
 {
     uint32_t trSize = 1 << log2TrSize;
@@ -1519,7 +1568,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     uint8_t * const baseCtx = bIsLuma ? &m_contextState[OFF_SIG_FLAG_CTX] : &m_contextState[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
     uint32_t c1 = 1;
     int scanPosSigOff = scanPosLast - (lastScanSet << MLS_CG_SIZE) - 1;
-    ALIGN_VAR_32(uint16_t, absCoeff[1 << MLS_CG_SIZE]);
+    ALIGN_VAR_32(uint16_t, absCoeff[(1 << MLS_CG_SIZE)]);
     uint32_t numNonZero = 1;
     unsigned long lastNZPosInCG;
     unsigned long firstNZPosInCG;
@@ -1700,6 +1749,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             uint32_t numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
             X265_CHECK(numC1Flag > 0, "numC1Flag check failure\n");
 
+            uint32_t firstC2Idx = 8;
             uint32_t firstC2Flag = 2;
             uint32_t c1Next = 0xFFFFFFFE;
             if (!m_bitIf)
@@ -1720,8 +1770,12 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                     if (symbol1)
                         c1Next = 0;
+
                     if (symbol1 + firstC2Flag == 3)
                         firstC2Flag = symbol2;
+
+                    if (symbol1 + firstC2Idx == 9)
+                        firstC2Idx  = idx;
 
                     c1 = (c1Next & 3);
                     c1Next >>= 2;
@@ -1749,9 +1803,10 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 //encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);
                 m_fracBits += (numNonZero - hiddenShift) << 15;
 
-                if (!c1 || numNonZero > C1FLAG_NUMBER)
+                if (numNonZero > firstC2Idx)
                 {
-                    uint32_t sum = primitives.costCoeffRemain(absCoeff, numNonZero);
+                    sum = primitives.costCoeffRemain(absCoeff, numNonZero, firstC2Idx);
+                    X265_CHECK(sum == costCoeffRemain_c0(absCoeff, numNonZero), "costCoeffRemain check failure\n");
                     m_fracBits += ((uint64_t)sum << 15);
                 }
             }
@@ -1770,6 +1825,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
                     if (symbol1 + firstC2Flag == 3)
                         firstC2Flag = symbol2;
+
+                    if (symbol1 + firstC2Idx == 9)
+                        firstC2Idx  = idx;
 
                     c1 = (c1Next & 3);
                     c1Next >>= 2;
@@ -1793,15 +1851,17 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 {
                     // Standard path
                     uint32_t goRiceParam = 0;
+                    int baseLevel = 3;
+#if CHECKED_BUILD || _DEBUG
                     int firstCoeff2 = 1;
-                    uint32_t baseLevelN = 0x5555AAAA; // 2-bits encode format baseLevel
-
-                    idx = 0;
+#endif
+                    idx = firstC2Idx;
                     do
                     {
-                        int baseLevel = (baseLevelN & 3) | firstCoeff2;
+                        if (idx >= C1FLAG_NUMBER)
+                            baseLevel = 1;
+                        // TODO: fast algorithm maybe broken this check logic
                         X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
-                        baseLevelN >>= 2;
 
                         if (absCoeff[idx] >= baseLevel)
                         {
@@ -1810,8 +1870,10 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                                 goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
                             X265_CHECK(goRiceParam <= 4, "goRiceParam check failure\n");
                         }
-                        if (absCoeff[idx] >= 2)
-                            firstCoeff2 = 0;
+#if CHECKED_BUILD || _DEBUG
+                        firstCoeff2 = 0;
+#endif
+                        baseLevel = 2;
                         idx++;
                     }
                     while(idx < numNonZero);

@@ -6572,7 +6572,7 @@ cglobal costCoeffNxN, 6,11,5
 ;}
 ;while(idx < numNonZero);
 
-; uint32_t costCoeffRemain(uint16_t *absCoeff, int numNonZero)
+; uint32_t costCoeffRemain(uint16_t *absCoeff, int numNonZero, int idx)
 INIT_XMM sse4
 cglobal costCoeffRemain, 0,7,1
     ; assign RCX to R3
@@ -6580,48 +6580,43 @@ cglobal costCoeffRemain, 0,7,1
   %if WIN64
     DECLARE_REG_TMP 3,1,2,0
     mov         t0, r0
+    mov         r4d, r2d
   %elif ARCH_X86_64
     ; *nix x64 didn't do anything
     DECLARE_REG_TMP 0,1,2,3
+    mov         r4d, r2d
   %else ; X86_32
     DECLARE_REG_TMP 6,3,2,1
     mov         t0, r0m
+    mov         r4d, r2m
   %endif
-
-    mova        m0, [t0]
-    packsswb    m0, [t0 + mmsize]
-    pcmpgtb     m0, [pb_1]
-    pmovmskb    r2d, m0
-    bsf         r2d, r2d
-    lea         r2d, [r2 * 2 + 1]
-    xor         r4d, r4d
-    bts         r4d, r2d
-    dec         r4d
-    and         r4d, 0x55555555
-    or          r4d, 0x5555AAAA
 
     xor         t3d, t3d
     xor         r5d, r5d
 
+    lea         t0, [t0 + r4 * 2]
+    mov         r2d, 3
+
     ; register mapping
-    ; r4d - baseLevelN
-    ; r2  - tmp
+    ; r2d - baseLevel & tmp
+    ; r4d - idx
     ; t3  - goRiceParam
-    ; eax - tmp - absCoeff[idx]
+    ; eax - absCoeff[idx] & tmp
     ; r5  - sum
 
 .loop:
+    mov         eax, 1
+    cmp         r4d, 8
+    cmovge      r2d, eax
+
     movzx       eax, word [t0]
     add         t0, 2
-    mov         r2d, r4d
-    and         r2d, 3
-    shr         r4d, 2
     sub         eax, r2d                ; codeNumber = absCoeff[idx] - baseLevel
     jl         .next
 
     shr         eax, t3b                ; codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION
 
-    lea         r2d, [eax - 3 + 1]      ; CLZ(cidx, codeNumber + 1);
+    lea         r2d, [rax - 3 + 1]      ; CLZ(cidx, codeNumber + 1);
     bsr         r2d, r2d
     add         r2d, r2d                ; codeNumber = (length + length)
 
@@ -6644,8 +6639,10 @@ cglobal costCoeffRemain, 0,7,1
     add         t3b, al
 
 .next:
-    dec   dword r1m
-    jnz        .loop
+    inc         r4d
+    mov         r2d, 2
+    cmp         r4d, r1m
+    jl         .loop
 
     mov         eax, r5d
     RET
