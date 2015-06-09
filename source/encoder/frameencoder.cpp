@@ -562,14 +562,14 @@ void FrameEncoder::compressFrame()
             m_frameStats.mvBits    += m_rows[i].rowStats.mvBits;
             m_frameStats.coeffBits += m_rows[i].rowStats.coeffBits;
             m_frameStats.miscBits  += m_rows[i].rowStats.miscBits;
-            totalI                 += m_rows[i].rowStats.iCuCnt;
-            totalP                 += m_rows[i].rowStats.pCuCnt;
-            totalSkip              += m_rows[i].rowStats.skipCuCnt;
+            totalI                 += m_rows[i].rowStats.intra8x8Cnt;
+            totalP                 += m_rows[i].rowStats.inter8x8Cnt;
+            totalSkip              += m_rows[i].rowStats.skip8x8Cnt;
         }
         int totalCuCount = totalI + totalP + totalSkip;
-        m_frameStats.percentIntra = (double)totalI / totalCuCount;
-        m_frameStats.percentInter = (double)totalP / totalCuCount;
-        m_frameStats.percentSkip  = (double)totalSkip / totalCuCount;
+        m_frameStats.percent8x8Intra = (double)totalI / totalCuCount;
+        m_frameStats.percent8x8Inter = (double)totalP / totalCuCount;
+        m_frameStats.percent8x8Skip  = (double)totalSkip / totalCuCount;
     }
 
     m_bs.resetBits();
@@ -920,9 +920,9 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             {
                 /* 1 << shift == number of 8x8 blocks at current depth */
                 int shift = 2 * (g_maxCUDepth - depth);
-                curRow.rowStats.iCuCnt += qTreeIntraCnt[depth] << shift;
-                curRow.rowStats.pCuCnt += qTreeInterCnt[depth] << shift;
-                curRow.rowStats.skipCuCnt += qTreeSkipCnt[depth] << shift;
+                curRow.rowStats.intra8x8Cnt += qTreeIntraCnt[depth] << shift;
+                curRow.rowStats.inter8x8Cnt += qTreeInterCnt[depth] << shift;
+                curRow.rowStats.skip8x8Cnt  += qTreeSkipCnt[depth] << shift;
 
                 // clear the row cu data from thread local object
                 qTreeIntraCnt[depth] = qTreeInterCnt[depth] = qTreeSkipCnt[depth] = 0;

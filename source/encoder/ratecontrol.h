@@ -53,14 +53,14 @@ struct FrameStats
     int         coeffBits; /* Texture bits (DCT coefs) */
     int         miscBits;
 
-    int         iCuCnt;
-    int         pCuCnt;
-    int         skipCuCnt;
+    int         intra8x8Cnt;
+    int         inter8x8Cnt;
+    int         skip8x8Cnt;
     
     /* CU type counts stored as percentage */
-    double      percentIntra;
-    double      percentInter;
-    double      percentSkip;
+    double      percent8x8Intra;
+    double      percent8x8Inter;
+    double      percent8x8Skip;
 };
 
 struct Predictor
