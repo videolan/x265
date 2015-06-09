@@ -1690,66 +1690,106 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             CTZ(firstNZPosInCG, subCoeffFlag);
 
             bool signHidden = (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD);
-            uint32_t ctxSet = (subSet > 0 && bIsLuma) ? 2 : 0;
+            uint32_t ctxSet = ((subSet > 0) & bIsLuma) ? 2 : 0;
 
-            if (c1 == 0)
-                ctxSet++;
+            ctxSet += (c1 == 0);
 
             c1 = 1;
-            uint8_t *baseCtxMod = bIsLuma ? &m_contextState[OFF_ONE_FLAG_CTX + 4 * ctxSet] : &m_contextState[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA + 4 * ctxSet];
+            uint8_t *baseCtxMod = &m_contextState[(bIsLuma ? 0 : NUM_ONE_FLAG_CTX_LUMA) + OFF_ONE_FLAG_CTX + 4 * ctxSet];
 
             uint32_t numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
-            int firstC2FlagIdx = -1;
-
             X265_CHECK(numC1Flag > 0, "numC1Flag check failure\n");
-            idx = 0;
-            do
+
+            uint32_t firstC2Flag = 2;
+            uint32_t c1Next = 0xFFFFFFFE;
+            if (!m_bitIf)
             {
-                uint32_t symbol = absCoeff[idx] > 1;
-                encodeBin(symbol, baseCtxMod[c1]);
-
-                // TODO: VC can't work fine on below style, but ICL can generate branch free code
-#ifdef __INTEL_COMPILER
-                if (symbol)
-                    c1 = 0;
-
-                if ((firstC2FlagIdx < 0) & symbol)
-                    firstC2FlagIdx = (int)idx;
-#else
-                if (symbol)
+                uint32_t sum = 0;
+                // Fast RD path
+                idx = 0;
+                do
                 {
-                    c1 = 0;
-                    if (firstC2FlagIdx < 0)
-                        firstC2FlagIdx = (int)idx;
+                    uint32_t symbol1 = absCoeff[idx] > 1;
+                    uint32_t symbol2 = absCoeff[idx] > 2;
+                    //encodeBin(symbol1, baseCtxMod[c1]);
+                    {
+                        const uint32_t mstate = baseCtxMod[c1];
+                        baseCtxMod[c1] = sbacNext(mstate, symbol1);
+                        sum += sbacGetEntropyBits(mstate, symbol1);
+                    }
+
+                    if (symbol1)
+                        c1Next = 0;
+                    if (symbol1 + firstC2Flag == 3)
+                        firstC2Flag = symbol2;
+
+                    c1 = (c1Next & 3);
+                    c1Next >>= 2;
+                    X265_CHECK(c1 <= 3, "c1 check failure\n");
+                    idx++;
                 }
-#endif
-                c1 += ((c1 >> 1) ^ c1) & 1;
-                X265_CHECK(c1 <= 3, "c1 check failure\n");
-                idx++;
-            }
-            while(idx < numC1Flag);
+                while(idx < numC1Flag);
 
-            if (!c1)
-            {
-                baseCtxMod = bIsLuma ? &m_contextState[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextState[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
-
-                X265_CHECK((firstC2FlagIdx != -1), "firstC2FlagIdx check failure\n");
-                uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
-                encodeBin(symbol, baseCtxMod[0]);
-            }
-
-            const int hiddenShift = (bHideFirstSign && signHidden) ? 1 : 0;
-            encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);
-
-            if (!c1 || numNonZero > C1FLAG_NUMBER)
-            {
-                if (!m_bitIf)
+                if (!c1)
                 {
-                    // Fast RD path
+                    X265_CHECK((firstC2Flag <= 1), "firstC2FlagIdx check failure\n");
+
+                    baseCtxMod = &m_contextState[(bIsLuma ? 0 : NUM_ABS_FLAG_CTX_LUMA) + OFF_ABS_FLAG_CTX + ctxSet];
+
+                    //encodeBin(firstC2Flag, baseCtxMod[0]);
+                    {
+                        const uint32_t mstate = baseCtxMod[0];
+                        baseCtxMod[0] = sbacNext(mstate, firstC2Flag);
+                        sum += sbacGetEntropyBits(mstate, firstC2Flag);
+                    }
+                }
+                m_fracBits += (sum & 0xFFFFFF);
+
+                const int hiddenShift = (bHideFirstSign & signHidden) ? 1 : 0;
+                //encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);
+                m_fracBits += (numNonZero - hiddenShift) << 15;
+
+                if (!c1 || numNonZero > C1FLAG_NUMBER)
+                {
                     uint32_t sum = primitives.costCoeffRemain(absCoeff, numNonZero);
                     m_fracBits += ((uint64_t)sum << 15);
                 }
-                else
+            }
+            // Standard path
+            else
+            {
+                idx = 0;
+                do
+                {
+                    uint32_t symbol1 = absCoeff[idx] > 1;
+                    uint32_t symbol2 = absCoeff[idx] > 2;
+                    encodeBin(symbol1, baseCtxMod[c1]);
+
+                    if (symbol1)
+                        c1Next = 0;
+
+                    if (symbol1 + firstC2Flag == 3)
+                        firstC2Flag = symbol2;
+
+                    c1 = (c1Next & 3);
+                    c1Next >>= 2;
+                    X265_CHECK(c1 <= 3, "c1 check failure\n");
+                    idx++;
+                }
+                while(idx < numC1Flag);
+
+                if (!c1)
+                {
+                    baseCtxMod = &m_contextState[(bIsLuma ? 0 : NUM_ABS_FLAG_CTX_LUMA) + OFF_ABS_FLAG_CTX + ctxSet];
+
+                    X265_CHECK((firstC2Flag <= 1), "firstC2FlagIdx check failure\n");
+                    encodeBin(firstC2Flag, baseCtxMod[0]);
+                }
+
+                const int hiddenShift = (bHideFirstSign && signHidden) ? 1 : 0;
+                encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);
+
+                if (!c1 || numNonZero > C1FLAG_NUMBER)
                 {
                     // Standard path
                     uint32_t goRiceParam = 0;
@@ -1776,8 +1816,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                     }
                     while(idx < numNonZero);
                 }
-            }
-        }
+            } // end of !bitIf
+        } // end of (numNonZero > 0)
+
         // Initialize value for next loop
         numNonZero = 0;
         scanPosSigOff = (1 << MLS_CG_SIZE) - 1;
