@@ -1739,6 +1739,22 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].filter_vsp = x265_interp_4tap_vert_sp_16x12_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].filter_vsp = x265_interp_4tap_vert_sp_16x16_avx2;
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].filter_vsp = x265_interp_4tap_vert_sp_16x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_vpp = x265_interp_4tap_vert_pp_32x8_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_vpp = x265_interp_4tap_vert_pp_32x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_vpp = x265_interp_4tap_vert_pp_32x24_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_vpp = x265_interp_4tap_vert_pp_32x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_vps = x265_interp_4tap_vert_ps_32x8_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_vps = x265_interp_4tap_vert_ps_32x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_vps = x265_interp_4tap_vert_ps_32x24_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_vps = x265_interp_4tap_vert_ps_32x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_vss = x265_interp_4tap_vert_ss_32x8_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_vss = x265_interp_4tap_vert_ss_32x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_vss = x265_interp_4tap_vert_ss_32x24_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_vss = x265_interp_4tap_vert_ss_32x32_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_vsp = x265_interp_4tap_vert_sp_32x8_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_vsp = x265_interp_4tap_vert_sp_32x16_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_vsp = x265_interp_4tap_vert_sp_32x24_avx2;
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_vsp = x265_interp_4tap_vert_sp_32x32_avx2;
 
         if (cpuMask & X265_CPU_BMI2)
             p.scanPosLast = x265_scanPosLast_avx2_bmi2;
