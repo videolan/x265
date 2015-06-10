@@ -939,6 +939,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         ALL_CHROMA_422_PU(p2s, filterPixelToShort, sse2);
         ALL_CHROMA_444_PU(p2s, filterPixelToShort, sse2);
         ALL_LUMA_PU(convert_p2s, filterPixelToShort, sse2);
+        ALL_LUMA_TU(count_nonzero, count_nonzero, sse2);
     }
     if (cpuMask & X265_CPU_SSE3)
     {
@@ -961,10 +962,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
 
         p.dst4x4 = x265_dst4_ssse3;
         p.cu[BLOCK_8x8].idct = x265_idct8_ssse3;
-        p.cu[BLOCK_4x4].count_nonzero = x265_count_nonzero_4x4_ssse3;
-        p.cu[BLOCK_8x8].count_nonzero = x265_count_nonzero_8x8_ssse3;
-        p.cu[BLOCK_16x16].count_nonzero = x265_count_nonzero_16x16_ssse3;
-        p.cu[BLOCK_32x32].count_nonzero = x265_count_nonzero_32x32_ssse3;
         p.frameInitLowres = x265_frame_init_lowres_core_ssse3;
 
         p.pu[LUMA_4x4].convert_p2s = x265_filterPixelToShort_4x4_ssse3;
@@ -2083,6 +2080,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         ALL_CHROMA_422_PU(p2s, filterPixelToShort, sse2);
         ALL_CHROMA_444_PU(p2s, filterPixelToShort, sse2);
         ALL_LUMA_PU(convert_p2s, filterPixelToShort, sse2);
+        ALL_LUMA_TU(count_nonzero, count_nonzero, sse2);
     }
     if (cpuMask & X265_CPU_SSE3)
     {
@@ -2121,8 +2119,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
 
         p.dst4x4 = x265_dst4_ssse3;
         p.cu[BLOCK_8x8].idct = x265_idct8_ssse3;
-
-        ALL_LUMA_TU(count_nonzero, count_nonzero, ssse3);
 
         // MUST be done after LUMA_FILTERS() to overwrite default version
         p.pu[LUMA_8x8].luma_hvpp = x265_interp_8tap_hv_pp_8x8_ssse3;

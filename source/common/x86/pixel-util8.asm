@@ -948,11 +948,11 @@ cglobal dequant_normal, 5,5,7
     jnz            .loop
     RET
 
-
+z
 ;-----------------------------------------------------------------------------
-; int x265_count_nonzero_4x4_ssse3(const int16_t *quantCoeff);
+; int x265_count_nonzero_4x4_sse2(const int16_t *quantCoeff);
 ;-----------------------------------------------------------------------------
-INIT_XMM ssse3
+INIT_XMM sse2
 cglobal count_nonzero_4x4, 1,1,2
     pxor            m0, m0
 
@@ -988,9 +988,9 @@ cglobal count_nonzero_4x4, 1,1,2
 
 
 ;-----------------------------------------------------------------------------
-; int x265_count_nonzero_8x8_ssse3(const int16_t *quantCoeff);
+; int x265_count_nonzero_8x8_sse2(const int16_t *quantCoeff);
 ;-----------------------------------------------------------------------------
-INIT_XMM ssse3
+INIT_XMM sse2
 cglobal count_nonzero_8x8, 1,1,3
     pxor            m0, m0
     movu            m1, [pb_4]
@@ -1038,9 +1038,9 @@ cglobal count_nonzero_8x8, 1,1,3
 
 
 ;-----------------------------------------------------------------------------
-; int x265_count_nonzero_16x16_ssse3(const int16_t *quantCoeff);
+; int x265_count_nonzero_16x16_sse2(const int16_t *quantCoeff);
 ;-----------------------------------------------------------------------------
-INIT_XMM ssse3
+INIT_XMM sse2
 cglobal count_nonzero_16x16, 1,1,3
     pxor            m0, m0
     movu            m1, [pb_16]
@@ -1087,9 +1087,9 @@ cglobal count_nonzero_16x16, 1,1,3
 
 
 ;-----------------------------------------------------------------------------
-; int x265_count_nonzero_32x32_ssse3(const int16_t *quantCoeff);
+; int x265_count_nonzero_32x32_sse2(const int16_t *quantCoeff);
 ;-----------------------------------------------------------------------------
-INIT_XMM ssse3
+INIT_XMM sse2
 cglobal count_nonzero_32x32, 1,1,3
     pxor            m0, m0
     movu            m1, [pb_64]

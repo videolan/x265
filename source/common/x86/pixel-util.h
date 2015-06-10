@@ -51,10 +51,10 @@ uint32_t x265_nquant_avx2(const int16_t* coef, const int32_t* quantCoeff, int16_
 void x265_dequant_normal_sse4(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
 void x265_dequant_normal_avx2(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
 
-int x265_count_nonzero_4x4_ssse3(const int16_t* quantCoeff);
-int x265_count_nonzero_8x8_ssse3(const int16_t* quantCoeff);
-int x265_count_nonzero_16x16_ssse3(const int16_t* quantCoeff);
-int x265_count_nonzero_32x32_ssse3(const int16_t* quantCoeff);
+int x265_count_nonzero_4x4_sse2(const int16_t* quantCoeff);
+int x265_count_nonzero_8x8_sse2(const int16_t* quantCoeff);
+int x265_count_nonzero_16x16_sse2(const int16_t* quantCoeff);
+int x265_count_nonzero_32x32_sse2(const int16_t* quantCoeff);
 int x265_count_nonzero_4x4_avx2(const int16_t* quantCoeff);
 int x265_count_nonzero_8x8_avx2(const int16_t* quantCoeff);
 int x265_count_nonzero_16x16_avx2(const int16_t* quantCoeff);
