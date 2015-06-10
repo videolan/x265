@@ -302,20 +302,35 @@ typedef enum
     X265_RC_CRF
 } X265_RC_METHODS;
 
+/* slice type statistics */
+typedef struct x265_sliceType_stats
+{
+    double        avgQp;
+    double        bitrate;
+    double        psnrY;
+    double        psnrU;
+    double        psnrV;
+    double        ssim;
+    uint32_t      numPics;
+} x265_sliceType_stats;
+
 /* Output statistics from encoder */
 typedef struct x265_stats
 {
-    double    globalPsnrY;
-    double    globalPsnrU;
-    double    globalPsnrV;
-    double    globalPsnr;
-    double    globalSsim;
-    double    elapsedEncodeTime;    /* wall time since encoder was opened */
-    double    elapsedVideoTime;     /* encoded picture count / frame rate */
-    double    bitrate;              /* accBits / elapsed video time */
-    uint64_t  accBits;              /* total bits output thus far */
-    uint32_t  encodedPictureCount;  /* number of output pictures thus far */
-    uint32_t  totalWPFrames;        /* number of uni-directional weighted frames used */
+    double                globalPsnrY;
+    double                globalPsnrU;
+    double                globalPsnrV;
+    double                globalPsnr;
+    double                globalSsim;
+    double                elapsedEncodeTime;    /* wall time since encoder was opened */
+    double                elapsedVideoTime;     /* encoded picture count / frame rate */
+    double                bitrate;              /* accBits / elapsed video time */
+    uint64_t              accBits;              /* total bits output thus far */
+    uint32_t              encodedPictureCount;  /* number of output pictures thus far */
+    uint32_t              totalWPFrames;        /* number of uni-directional weighted frames used */
+    x265_sliceType_stats  statsI;               /* statistics of I slice */
+    x265_sliceType_stats  statsP;               /* statistics of P slice */
+    x265_sliceType_stats  statsB;               /* statistics of B slice */
 } x265_stats;
 
 /* String values accepted by x265_param_parse() (and CLI) for various parameters */
@@ -439,8 +454,7 @@ typedef struct x265_param
 
     /*== Logging Features ==*/
 
-    /* Enable analysis and logging distribution of CUs encoded across various
-     * modes during mode decision. Default disabled */
+    /* Enable analysis and logging distribution of CUs. Now deprecated */
     int       bLogCuStats;
 
     /* Enable the measurement and reporting of PSNR. Default is enabled */
@@ -453,11 +467,7 @@ typedef struct x265_param
      * X265_LOG_FULL, default is X265_LOG_INFO */
     int       logLevel;
 
-    /* filename of CSV log. If logLevel greater than or equal to X265_LOG_FRAME,
-     * the encoder will emit per-slice statistics to this log file in encode
-     * order. Otherwise the encoder will emit per-stream statistics into the log
-     * file when x265_encoder_log is called (presumably at the end of the
-     * encode) */
+    /* Filename of CSV log. Now deprecated */
     const char* csvfn;
 
     /*== Internal Picture Specification ==*/
@@ -1263,9 +1273,7 @@ int x265_encoder_reconfig(x265_encoder *, x265_param *);
 void x265_encoder_get_stats(x265_encoder *encoder, x265_stats *, uint32_t statsSizeBytes);
 
 /* x265_encoder_log:
- *       write a line to the configured CSV file.  If a CSV filename was not
- *       configured, or file open failed, or the log level indicated frame level
- *       logging, this function will perform no write. */
+ *       This function is deprecated */
 void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
 
 /* x265_encoder_close:

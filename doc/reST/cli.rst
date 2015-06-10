@@ -52,6 +52,7 @@ Command line executable return codes::
 	2. unable to open encoder
 	3. unable to generate stream headers
 	4. encoder abort
+	5. unable to open csv file
 
 Logging/Statistic Options
 =========================
@@ -123,6 +124,8 @@ Logging/Statistic Options
 	enough ahead for the necessary reference data to be available. This
 	is more of a problem for P frames where some blocks are much more
 	expensive than others.
+	
+	**CLI ONLY**
 
 .. option:: --ssim, --no-ssim
 

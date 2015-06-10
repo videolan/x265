@@ -857,7 +857,6 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         p->rc.bStatRead = pass & 2;
     }
     OPT("stats") p->rc.statFileName = strdup(value);
-    OPT("csv") p->csvfn = strdup(value);
     OPT("scaling-list") p->scalingLists = strdup(value);
     OPT2("pools", "numa-pools") p->numaPools = strdup(value);
     OPT("lambda-file") p->rc.lambdaFileName = strdup(value);

@@ -105,7 +105,6 @@ public:
     EncStats           m_analyzeI;
     EncStats           m_analyzeP;
     EncStats           m_analyzeB;
-    FILE*              m_csvfpt;
     int64_t            m_encodeStartTime;
 
     // weighted prediction
@@ -149,13 +148,9 @@ public:
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
 
-    void writeLog(int argc, char **argv);
-
     void printSummary();
 
     char* statsString(EncStats&, char*);
-
-    char* statsCSVString(EncStats& stat, char* buffer);
 
     void configure(x265_param *param);
 

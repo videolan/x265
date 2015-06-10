@@ -190,12 +190,12 @@ void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t
     }
 }
 
-void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
+void x265_encoder_log(x265_encoder* enc, int, char **)
 {
     if (enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-        encoder->writeLog(argc, argv);
+        x265_log(encoder->m_param, X265_LOG_WARNING, "x265_encoder_log is now deprecated\n");
     }
 }
 
