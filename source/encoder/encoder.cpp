@@ -530,6 +530,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (outFrame)
         {
             Slice *slice = outFrame->m_encData->m_slice;
+            x265_frame_stats* frameData = NULL;
 
             /* Free up pic_in->analysisData since it has already been used */
             if (m_param->analysisMode == X265_ANALYSIS_LOAD)
@@ -542,6 +543,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 pic_out->bitDepth = X265_DEPTH;
                 pic_out->userData = outFrame->m_userData;
                 pic_out->colorSpace = m_param->internalCsp;
+                frameData = &(pic_out->frameData);
 
                 pic_out->pts = outFrame->m_pts;
                 pic_out->dts = outFrame->m_dts;
@@ -608,7 +610,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (m_aborted)
                 return -1;
 
-            finishFrameStats(outFrame, curEncoder, curEncoder->m_accessUnitBits);
+            finishFrameStats(outFrame, curEncoder, curEncoder->m_accessUnitBits, frameData);
 
             /* Allow this frame to be recycled if no frame encoders are using it for reference */
             if (!pic_out)
@@ -1054,7 +1056,7 @@ static const char*digestToString(const unsigned char digest[3][16], int numChar)
     return string;
 }
 
-void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64_t bits)
+void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64_t bits, x265_frame_stats* frameStats)
 {
     PicYuv* reconPic = curFrame->m_reconPic;
 
@@ -1124,6 +1126,53 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
     int poc = slice->m_poc;
     if (!IS_REFERENCED(curFrame))
         c += 32; // lower case if unreferenced
+
+    if (frameStats)
+    {
+        frameStats->encoderOrder = m_outputCount++;
+        frameStats->sliceType = c;
+        frameStats->poc = poc;
+        frameStats->qp = curEncData.m_avgQpAq;
+        frameStats->bits = bits;
+        if (m_param->rc.rateControlMode == X265_RC_CRF)
+            frameStats->rateFactor = curEncData.m_rateFactor;
+        frameStats->psnrY = psnrY;
+        frameStats->psnrU = psnrU;
+        frameStats->psnrV = psnrV;
+        double psnr = (psnrY * 6 + psnrU + psnrV) / 8;
+        frameStats->psnr = psnr;
+        frameStats->ssim = ssim;
+        if (!slice->isIntra())
+        {
+            for (int ref = 0, p = 0; ref < slice->m_numRefIdx[0]; ref++, p++)
+            {
+                int k = slice->m_refPOCList[0][ref] - slice->m_lastIDR;
+                frameStats->list0POC[p] = k;
+            }
+            if (!slice->isInterP())
+            {
+                for (int ref = 0, p = 0; ref < slice->m_numRefIdx[1]; ref++, p++)
+                {
+                    int k = slice->m_refPOCList[1][ref] - slice->m_lastIDR;
+                    frameStats->list1POC[p] = k;
+                }
+            }
+        }
+
+#define ELAPSED_MSEC(start, end) (((double)(end) - (start)) / 1000)
+
+        frameStats->decideWaitTime = ELAPSED_MSEC(0, curEncoder->m_slicetypeWaitTime);
+        frameStats->row0WaitTime = ELAPSED_MSEC(curEncoder->m_startCompressTime, curEncoder->m_row0WaitTime);
+        frameStats->wallTime = ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_endCompressTime);
+        frameStats->refWaitWallTime = ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_allRowsAvailableTime);
+        frameStats->totalCTUTime = ELAPSED_MSEC(0, curEncoder->m_totalWorkerElapsedTime);
+        frameStats->stallTime = ELAPSED_MSEC(0, curEncoder->m_totalNoWorkerTime);
+        if (curEncoder->m_totalActiveWorkerCount)
+            frameStats->avgWPP = (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples;
+        else
+            frameStats->avgWPP = 1;
+        frameStats->countRowBlocks = curEncoder->m_countRowBlocks;
+    }
 
     // if debug log level is enabled, per frame console logging is performed
     if (m_param->logLevel >= X265_LOG_DEBUG)

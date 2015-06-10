@@ -282,6 +282,8 @@ static const x265_api libapi =
     &x265_encoder_log,
     &x265_encoder_close,
     &x265_cleanup,
+
+    sizeof(x265_frame_stats),
 };
 
 typedef const x265_api* (*api_get_func)(int bitDepth);

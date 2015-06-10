@@ -164,7 +164,7 @@ public:
 
     void writeAnalysisFile(x265_analysis_data* pic);
 
-    void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits);
+    void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, uint64_t bits, x265_frame_stats* frameStats);
 
 protected:
 

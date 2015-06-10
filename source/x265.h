@@ -100,6 +100,32 @@ typedef struct x265_analysis_data
     uint32_t         numPartitions;
 } x265_analysis_data;
 
+/* Frame level statistics*/
+typedef struct x265_frame_stats
+{
+    double           qp;
+    double           rateFactor;
+    double           psnrY;
+    double           psnrU;
+    double           psnrV;
+    double           psnr;
+    double           ssim;
+    double           decideWaitTime;
+    double           row0WaitTime;
+    double           wallTime;
+    double           refWaitWallTime;
+    double           totalCTUTime;
+    double           stallTime;
+    double           avgWPP;
+    uint64_t         bits;
+    int              encoderOrder;
+    int              poc;
+    int              countRowBlocks;
+    int              list0POC[16];
+    int              list1POC[16];
+    char             sliceType;
+} x265_frame_stats;
+
 /* Used to pass pictures into the encoder, and to get picture data back out of
  * the encoder.  The input and output semantics are different */
 typedef struct x265_picture
@@ -160,6 +186,9 @@ typedef struct x265_picture
      * member pointers are valid, the encoder will write output analysis into
      * this data structure */
     x265_analysis_data analysisData;
+
+    /* Frame level statistics*/
+    x265_frame_stats frameData;
 
 } x265_picture;
 
@@ -1325,6 +1354,8 @@ typedef struct x265_api
     void          (*encoder_log)(x265_encoder*, int, char**);
     void          (*encoder_close)(x265_encoder*);
     void          (*cleanup)(void);
+
+    int           sizeof_frame_stats;   /* sizeof(x265_frame_stats) */
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 
