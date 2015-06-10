@@ -1144,18 +1144,13 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
         frameStats->ssim = ssim;
         if (!slice->isIntra())
         {
-            for (int ref = 0, p = 0; ref < slice->m_numRefIdx[0]; ref++, p++)
-            {
-                int k = slice->m_refPOCList[0][ref] - slice->m_lastIDR;
-                frameStats->list0POC[p] = k;
-            }
+            for (int ref = 0; ref < 16; ref++)
+                frameStats->list0POC[ref] = ref < slice->m_numRefIdx[0] ? slice->m_refPOCList[0][ref] - slice->m_lastIDR : -1;
+
             if (!slice->isInterP())
             {
-                for (int ref = 0, p = 0; ref < slice->m_numRefIdx[1]; ref++, p++)
-                {
-                    int k = slice->m_refPOCList[1][ref] - slice->m_lastIDR;
-                    frameStats->list1POC[p] = k;
-                }
+                for (int ref = 0; ref < 16; ref++)
+                    frameStats->list1POC[ref] = ref < slice->m_numRefIdx[1] ? slice->m_refPOCList[1][ref] - slice->m_lastIDR : -1;
             }
         }
 

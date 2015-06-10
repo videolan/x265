@@ -124,6 +124,7 @@ struct CLIOptions
     void destroy();
     bool parseCSVFile();
     void writeLog(int argc, char **argv, x265_stats* stats);
+    void writeFrameLog(x265_frame_stats* frameStats);
     void printStatus(uint32_t frameNum);
     bool parse(int argc, char **argv);
     bool parseQPFile(x265_picture &pic_org);
@@ -162,7 +163,19 @@ bool CLIOptions::parseCSVFile()
         /* new CSV file, write header */
         csvfpt = fopen(csvfn, "wb");
         if (csvfpt)
-            fputs(summaryCSVHeader, csvfpt);
+        {
+            if (csvLogLevel)
+            {
+                fprintf(csvfpt, "Encode Order, Type, POC, QP, Bits, ");
+                if (param->rc.rateControlMode == X265_RC_CRF)
+                    fprintf(csvfpt, "RateFactor, ");
+                fprintf(csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB),  List 0, List 1");
+                /* detailed performance statistics */
+                fprintf(csvfpt, ", DecideWait (ms), Row0Wait (ms), Wall time (ms), Ref Wait Wall (ms), Total CTU time (ms), Stall Time (ms), Avg WPP, Row Blocks\n");
+            }
+            else
+                fputs(summaryCSVHeader, csvfpt);
+        }
     }
 
     if (!csvfpt)
@@ -177,6 +190,12 @@ void CLIOptions::writeLog(int argc, char **argv, x265_stats* stats)
 {
     if (csvfpt)
     {
+        if (csvLogLevel)
+        {
+            // adding summary to a per-frame csv log file needs a summary header
+            fprintf(csvfpt, "\nSummary\n");
+            fputs(summaryCSVHeader, csvfpt);
+        }
         // CLI arguments or other
         for (int i = 1; i < argc; i++)
         {
@@ -254,6 +273,47 @@ void CLIOptions::writeLog(int argc, char **argv, x265_stats* stats)
             fprintf(csvfpt, " -, -, -, -, -, -, -,");
 
         fprintf(csvfpt, " %s\n", x265_version_str);
+    }
+}
+
+void CLIOptions::writeFrameLog(x265_frame_stats* frameStats)
+{
+    if (csvfpt)
+    {
+        // per frame CSV logging if the file handle is valid
+        fprintf(csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", frameStats->encoderOrder, frameStats->sliceType, frameStats->poc, frameStats->qp, (int)frameStats->bits);
+        if (param->rc.rateControlMode == X265_RC_CRF)
+            fprintf(csvfpt, "%.3lf,", frameStats->rateFactor);
+        if (param->bEnablePsnr)
+            fprintf(csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", frameStats->psnrY, frameStats->psnrU, frameStats->psnrV, frameStats->psnr);
+        else
+            fputs(" -, -, -, -,", csvfpt);
+        if (param->bEnableSsim)
+            fprintf(csvfpt, " %.6f, %6.3f,", frameStats->ssim, x265_ssim2dB(frameStats->ssim));
+        else
+            fputs(" -, -,", csvfpt);
+        if (frameStats->sliceType == 'I')
+            fputs(" -, -,", csvfpt);
+        else
+        {
+            int i = 0;
+            while (frameStats->list0POC[i] != -1)
+                fprintf(csvfpt, "%d ", frameStats->list0POC[i++]);
+            fprintf(csvfpt, ",");
+            if (frameStats->sliceType != 'P')
+            {
+                int i = 0;
+                while (frameStats->list1POC[i] != -1)
+                    fprintf(csvfpt, "%d ", frameStats->list1POC[i++]);
+                fprintf(csvfpt, ",");
+            }
+            else
+                fputs(" -,", csvfpt);
+        }
+        fprintf(csvfpt, " %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf,", frameStats->decideWaitTime, frameStats->row0WaitTime, frameStats->wallTime, frameStats->refWaitWallTime, frameStats->totalCTUTime, frameStats->stallTime);
+        fprintf(csvfpt, " %.3lf, %d", frameStats->avgWPP, frameStats->countRowBlocks);
+        fprintf(csvfpt, "\n");
+        fflush(stderr);
     }
 }
 
@@ -767,6 +827,8 @@ int main(int argc, char **argv)
         }
 
         cliopt.printStatus(outFrameCount);
+        if (numEncoded && cliopt.csvLogLevel)
+            cliopt.writeFrameLog(&(pic_recon->frameData));
     }
 
     /* Flush the encoder */
@@ -797,6 +859,8 @@ int main(int argc, char **argv)
         }
 
         cliopt.printStatus(outFrameCount);
+        if (numEncoded && cliopt.csvLogLevel)
+            cliopt.writeFrameLog(&(pic_recon->frameData));
 
         if (!numEncoded)
             break;
