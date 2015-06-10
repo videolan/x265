@@ -157,7 +157,6 @@ public:
     uint32_t                 m_crc[3];
     uint32_t                 m_checksum[3];
     StatisticLog             m_sliceTypeLog[3];     // per-slice type CU statistics
-    FrameStats               m_frameStats;          // stats of current frame for multi-pass encodes
 
     volatile int             m_activeWorkerCount;        // count of workers currently encoding or filtering CTUs
     volatile int             m_totalActiveWorkerCount;   // sum of m_activeWorkerCount sampled at end of each CTU

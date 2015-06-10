@@ -46,23 +46,6 @@ struct SPS;
 #define MIN_AMORTIZE_FRACTION 0.2
 #define CLIP_DURATION(f) x265_clip3(MIN_FRAME_DURATION, MAX_FRAME_DURATION, f)
 
-/* Current frame stats for 2 pass */
-struct FrameStats
-{
-    int         mvBits;    /* MV bits (MV+Ref+Block Type) */
-    int         coeffBits; /* Texture bits (DCT coefs) */
-    int         miscBits;
-
-    int         intra8x8Cnt;
-    int         inter8x8Cnt;
-    int         skip8x8Cnt;
-    
-    /* CU type counts stored as percentage */
-    double      percent8x8Intra;
-    double      percent8x8Inter;
-    double      percent8x8Skip;
-};
-
 struct Predictor
 {
     double coeff;
@@ -241,7 +224,7 @@ public:
     // to be called for each curFrame to process RateControl and set QP
     int  rateControlStart(Frame* curFrame, RateControlEntry* rce, Encoder* enc);
     void rateControlUpdateStats(RateControlEntry* rce);
-    int  rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce, FrameStats* stats);
+    int  rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce);
     int  rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv);
     int  rateControlSliceType(int frameNum);
     bool cuTreeReadFor2Pass(Frame* curFrame);

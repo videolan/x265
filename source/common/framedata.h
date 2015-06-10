@@ -34,6 +34,23 @@ namespace X265_NS {
 class PicYuv;
 class JobProvider;
 
+/* Current frame stats for 2 pass */
+struct FrameStats
+{
+    int         mvBits;    /* MV bits (MV+Ref+Block Type) */
+    int         coeffBits; /* Texture bits (DCT coefs) */
+    int         miscBits;
+
+    int         intra8x8Cnt;
+    int         inter8x8Cnt;
+    int         skip8x8Cnt;
+
+    /* CU type counts stored as percentage */
+    double      percent8x8Intra;
+    double      percent8x8Inter;
+    double      percent8x8Skip;
+};
+
 /* Per-frame data that is used during encodes and referenced while the picture
  * is available for reference. A FrameData instance is attached to a Frame as it
  * comes out of the lookahead. Frames which are not being encoded do not have a
@@ -85,6 +102,7 @@ public:
 
     RCStatCU*      m_cuStat;
     RCStatRow*     m_rowStat;
+    FrameStats     m_frameStats; // stats of current frame for multi-pass encodes
 
     double         m_avgQpRc;    /* avg QP as decided by rate-control */
     double         m_avgQpAq;    /* avg QP as decided by AQ in addition to rate-control */

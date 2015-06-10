@@ -2146,7 +2146,7 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 }
 
 /* After encoding one frame, update rate control state */
-int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce, FrameStats* stats)
+int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce)
 {
     int orderValue = m_startEndOrder.get();
     int endOrdinal = (rce->encodeOrder + m_param->frameNumThreads) * 2 - 1;
@@ -2217,12 +2217,12 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
                     "in:%d out:%d type:%c q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
                     rce->poc, rce->encodeOrder,
                     cType, curEncData.m_avgQpRc, curEncData.m_avgQpAq,
-                    stats->coeffBits,
-                    stats->mvBits,
-                    stats->miscBits,
-                    stats->percent8x8Intra * m_ncu,
-                    stats->percent8x8Inter * m_ncu,
-                    stats->percent8x8Skip  * m_ncu) < 0)
+                    curFrame->m_encData->m_frameStats.coeffBits,
+                    curFrame->m_encData->m_frameStats.mvBits,
+                    curFrame->m_encData->m_frameStats.miscBits,
+                    curFrame->m_encData->m_frameStats.percent8x8Intra * m_ncu,
+                    curFrame->m_encData->m_frameStats.percent8x8Inter * m_ncu,
+                    curFrame->m_encData->m_frameStats.percent8x8Skip  * m_ncu) < 0)
             goto writeFailure;
         /* Don't re-write the data in multi-pass mode. */
         if (m_param->rc.cuTree && IS_REFERENCED(curFrame) && !m_param->rc.bStatRead)
