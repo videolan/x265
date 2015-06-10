@@ -90,6 +90,7 @@ struct CLIOptions
     bool bProgress;
     bool bForceY4m;
     bool bDither;
+    int csvLogLevel;
     uint32_t seek;              // number of frames to skip from the beginning
     uint32_t framesToBeEncoded; // number of frames to encode
     uint64_t totalbytes;
@@ -117,6 +118,7 @@ struct CLIOptions
         startTime = x265_mdate();
         prevUpdateTime = 0;
         bDither = false;
+        csvLogLevel = 0;
     }
 
     void destroy();
@@ -398,6 +400,7 @@ bool CLIOptions::parse(int argc, char **argv)
             OPT2("frame-skip", "seek") this->seek = (uint32_t)x265_atoi(optarg, bError);
             OPT("frames") this->framesToBeEncoded = (uint32_t)x265_atoi(optarg, bError);
             OPT("csv") this->csvfn = optarg;
+            OPT("csv-log-level") this->csvLogLevel = x265_atoi(optarg, bError);
             OPT("no-progress") this->bProgress = false;
             OPT("output") outputfn = optarg;
             OPT("input") inputfn = optarg;

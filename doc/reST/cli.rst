@@ -81,9 +81,9 @@ Logging/Statistic Options
 .. option:: --csv <filename>
 
 	Writes encoding results to a comma separated value log file. Creates
-	the file if it doesnt already exist, else adds one line per run.  if
-	:option:`--log-level` is frame or above, it writes one line per
-	frame. Default none
+	the file if it doesnt already exist. If :option:`--csv-log-level` is 0, 
+	it adds one line per run. If :option:`--csv-log-level` is greater than
+	0, it writes one line per frame. Default none
 
 	When frame level logging is enabled, several frame performance
 	statistics are listed:
@@ -126,6 +126,15 @@ Logging/Statistic Options
 	expensive than others.
 	
 	**CLI ONLY**
+
+.. option:: --csv-log-level <integer>
+
+        CSV logging level. Default 0
+        0. summary
+        1. frame level logging
+        2. frame level logging with performance statistics
+
+        **CLI ONLY**
 
 .. option:: --ssim, --no-ssim
 
