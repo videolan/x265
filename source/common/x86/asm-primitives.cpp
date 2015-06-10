@@ -930,6 +930,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.cu[BLOCK_8x8].idct = x265_idct8_sse2;
 
         p.idst4x4 = x265_idst4_sse2;
+        p.dst4x4 = x265_dst4_sse2;
 
         LUMA_VSS_FILTERS(sse2);
 
@@ -2166,6 +2167,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_8x8].idct = x265_idct8_sse2;
 #endif
         p.idst4x4 = x265_idst4_sse2;
+        p.dst4x4 = x265_dst4_sse2;
 
         p.planecopy_sp = x265_downShift_16_sse2;
         ALL_CHROMA_420_PU(p2s, filterPixelToShort, sse2);

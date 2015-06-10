@@ -582,6 +582,146 @@ cglobal idct4, 3, 4, 7
 ;------------------------------------------------------
 ;void dst4(const int16_t* src, int16_t* dst, intptr_t srcStride)
 ;------------------------------------------------------
+INIT_XMM sse2
+%if ARCH_X86_64
+cglobal dst4, 3, 4, 8+4
+  %define       coef0   m8
+  %define       coef1   m9
+  %define       coef2   m10
+  %define       coef3   m11
+%else ; ARCH_X86_64 = 0
+cglobal dst4, 3, 4, 8
+  %define       coef0   [r3 + 0 * 16]
+  %define       coef1   [r3 + 1 * 16]
+  %define       coef2   [r3 + 2 * 16]
+  %define       coef3   [r3 + 3 * 16]
+%endif ; ARCH_X86_64
+
+%if BIT_DEPTH == 8
+  %define       DST_SHIFT 1
+  mova          m5, [pd_1]
+%elif BIT_DEPTH == 10
+  %define       DST_SHIFT 3
+  mova          m5, [pd_4]
+%endif
+    add         r2d, r2d
+    lea         r3, [tab_dst4]
+%if ARCH_X86_64
+    mova        coef0, [r3 + 0 * 16]
+    mova        coef1, [r3 + 1 * 16]
+    mova        coef2, [r3 + 2 * 16]
+    mova        coef3, [r3 + 3 * 16]
+%endif
+    movh        m0, [r0 + 0 * r2]            ; load
+    movhps      m0, [r0 + 1 * r2]
+    lea         r0, [r0 + 2 * r2]
+    movh        m1, [r0]
+    movhps      m1, [r0 + r2]
+    pmaddwd     m2, m0, coef0                ; DST1
+    pmaddwd     m3, m1, coef0
+    pshufd      m6, m2, q2301
+    pshufd      m7, m3, q2301
+    paddd       m2, m6
+    paddd       m3, m7
+    pshufd      m2, m2, q3120
+    pshufd      m3, m3, q3120
+    punpcklqdq  m2, m3
+    paddd       m2, m5
+    psrad       m2, DST_SHIFT
+    pmaddwd     m3, m0, coef1
+    pmaddwd     m4, m1, coef1
+    pshufd      m6, m4, q2301
+    pshufd      m7, m3, q2301
+    paddd       m4, m6
+    paddd       m3, m7
+    pshufd      m4, m4, q3120
+    pshufd      m3, m3, q3120
+    punpcklqdq  m3, m4
+    paddd       m3, m5
+    psrad       m3, DST_SHIFT
+    packssdw    m2, m3                       ; m2 = T70
+    pmaddwd     m3, m0, coef2
+    pmaddwd     m4, m1, coef2
+    pshufd      m6, m4, q2301
+    pshufd      m7, m3, q2301
+    paddd       m4, m6
+    paddd       m3, m7
+    pshufd      m4, m4, q3120
+    pshufd      m3, m3, q3120
+    punpcklqdq  m3, m4
+    paddd       m3, m5
+    psrad       m3, DST_SHIFT
+    pmaddwd     m0, coef3
+    pmaddwd     m1, coef3
+    pshufd      m6, m0, q2301
+    pshufd      m7, m1, q2301
+    paddd       m0, m6
+    paddd       m1, m7
+    pshufd      m0, m0, q3120
+    pshufd      m1, m1, q3120
+    punpcklqdq  m0, m1
+    paddd       m0, m5
+    psrad       m0, DST_SHIFT
+    packssdw    m3, m0                       ; m3 = T71
+    mova        m5, [pd_128]
+
+    pmaddwd     m0, m2, coef0                ; DST2
+    pmaddwd     m1, m3, coef0
+    pshufd      m6, m0, q2301
+    pshufd      m7, m1, q2301
+    paddd       m0, m6
+    paddd       m1, m7
+    pshufd      m0, m0, q3120
+    pshufd      m1, m1, q3120
+    punpcklqdq  m0, m1
+    paddd       m0, m5
+    psrad       m0, 8
+
+    pmaddwd     m4, m2, coef1
+    pmaddwd     m1, m3, coef1
+    pshufd      m6, m4, q2301
+    pshufd      m7, m1, q2301
+    paddd       m4, m6
+    paddd       m1, m7
+    pshufd      m4, m4, q3120
+    pshufd      m1, m1, q3120
+    punpcklqdq  m4, m1
+    paddd       m4, m5
+    psrad       m4, 8
+    packssdw    m0, m4
+    movu        [r1 + 0 * 16], m0
+
+    pmaddwd     m0, m2, coef2
+    pmaddwd     m1, m3, coef2
+    pshufd      m6, m0, q2301
+    pshufd      m7, m1, q2301
+    paddd       m0, m6
+    paddd       m1, m7
+    pshufd      m0, m0, q3120
+    pshufd      m1, m1, q3120
+    punpcklqdq  m0, m1
+    paddd       m0, m5
+    psrad       m0, 8
+
+    pmaddwd     m2, coef3
+    pmaddwd     m3, coef3
+    pshufd      m6, m2, q2301
+    pshufd      m7, m3, q2301
+    paddd       m2, m6
+    paddd       m3, m7
+    pshufd      m2, m2, q3120
+    pshufd      m3, m3, q3120
+    punpcklqdq  m2, m3
+    paddd       m2, m5
+    psrad       m2, 8
+    packssdw    m0, m2
+    movu        [r1 + 1 * 16], m0
+
+    RET
+
+;------------------------------------------------------
+;void dst4(const int16_t* src, int16_t* dst, intptr_t srcStride)
+;------------------------------------------------------
 INIT_XMM ssse3
 %if ARCH_X86_64
 cglobal dst4, 3, 4, 8+2
