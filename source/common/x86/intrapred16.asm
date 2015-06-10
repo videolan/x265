@@ -14390,6 +14390,259 @@ cglobal intra_pred_ang32_28, 3,7,13
 
     call        ang32_mode_8_28
     RET
+
+cglobal intra_pred_ang32_9, 3,8,13
+    add         r2,        128
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r7,        [r0 + 8 * r1]
+
+    call        ang16_mode_9_27
+
+    add         r2,        2
+    lea         r0,        [r0 + 32]
+
+    call        ang16_mode_9_27
+
+    add         r2,        30
+    lea         r0,        [r7 + 8 * r1]
+
+    call        ang16_mode_9_27
+
+    add         r2,        2
+    lea         r0,        [r0 + 32]
+
+    call        ang16_mode_9_27
+    RET
+
+cglobal intra_pred_ang32_27, 3,7,13
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r5,        [r0 + 32]
+
+    call        ang16_mode_9_27
+
+    add         r2,        2
+
+    call        ang16_mode_9_27
+
+    add         r2,        30
+    mov         r0,        r5
+
+    call        ang16_mode_9_27
+
+    add         r2,        2
+
+    call        ang16_mode_9_27
+    RET
+
+cglobal intra_pred_ang32_10, 3,4,2
+    add             r2, mmsize*4
+    add             r1d, r1d
+    lea             r3, [r1 * 3]
+
+    vpbroadcastw    m0, [r2 + 2]       ; [1...]
+    movu            [r0], m0
+    movu            [r0 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 2]   ; [2...]
+    movu            [r0 + r1], m1
+    movu            [r0 + r1 + 32], m1
+    vpbroadcastw    m0, [r2 + 2 + 4]   ; [3...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 6]   ; [4...]
+    movu            [r0 + r3], m1
+    movu            [r0 + r3 + 32], m1
+
+    lea             r0, [r0 + r1 * 4]
+    vpbroadcastw    m0, [r2 + 2 + 8]   ; [5...]
+    movu            [r0], m0
+    movu            [r0 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 10]  ; [6...]
+    movu            [r0 + r1], m1
+    movu            [r0 + r1 + 32], m1
+    vpbroadcastw    m0, [r2 + 2 + 12]  ; [7...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 14]  ; [8...]
+    movu            [r0 + r3], m1
+    movu            [r0 + r3 + 32], m1
+
+    lea             r0, [r0 + r1 *4]
+    vpbroadcastw    m0, [r2 + 2 + 16]  ; [9...]
+    movu            [r0], m0
+    movu            [r0 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 18]  ; [10...]
+    movu            [r0 + r1], m1
+    movu            [r0 + r1 + 32], m1
+    vpbroadcastw    m0, [r2 + 2 + 20]  ; [11...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 22]  ; [12...]
+    movu            [r0 + r3], m1
+    movu            [r0 + r3 + 32], m1
+
+    lea             r0, [r0 + r1 *4]
+    vpbroadcastw    m0, [r2 + 2 + 24]  ; [13...]
+    movu            [r0], m0
+    movu            [r0 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 26]  ; [14...]
+    movu            [r0 + r1], m1
+    movu            [r0 + r1 + 32], m1
+    vpbroadcastw    m0, [r2 + 2 + 28]  ; [15...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 30]  ; [16...]
+    movu            [r0 + r3], m1
+    movu            [r0 + r3 + 32], m1
+
+    lea             r0, [r0 + r1 *4]
+    vpbroadcastw    m0, [r2 + 2 + 32]  ; [17...]
+    movu            [r0], m0
+    movu            [r0 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 34]  ; [18...]
+    movu            [r0 + r1], m1
+    movu            [r0 + r1 + 32], m1
+    vpbroadcastw    m0, [r2 + 2 + 36]  ; [19...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 38]  ; [20...]
+    movu            [r0 + r3], m1
+    movu            [r0 + r3 + 32], m1
+
+    lea             r0, [r0 + r1 *4]
+    vpbroadcastw    m0, [r2 + 2 + 40]  ; [21...]
+    movu            [r0], m0
+    movu            [r0 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 42]  ; [22...]
+    movu            [r0 + r1], m1
+    movu            [r0 + r1 + 32], m1
+    vpbroadcastw    m0, [r2 + 2 + 44]  ; [23...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 46]  ; [24...]
+    movu            [r0 + r3], m1
+    movu            [r0 + r3 + 32], m1
+
+    lea             r0, [r0 + r1 *4]
+    vpbroadcastw    m0, [r2 + 2 + 48]  ; [25...]
+    movu            [r0], m0
+    movu            [r0 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 50]  ; [26...]
+    movu            [r0 + r1], m1
+    movu            [r0 + r1 + 32], m1
+    vpbroadcastw    m0, [r2 + 2 + 52]  ; [27...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 54]  ; [28...]
+    movu            [r0 + r3], m1
+    movu            [r0 + r3 + 32], m1
+
+    lea             r0, [r0 + r1 *4]
+    vpbroadcastw    m0, [r2 + 2 + 56]  ; [29...]
+    movu            [r0], m0
+    movu            [r0 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 58]  ; [30...]
+    movu            [r0 + r1], m1
+    movu            [r0 + r1 + 32], m1
+    vpbroadcastw    m0, [r2 + 2 + 60]  ; [31...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r1 * 2 + 32], m0
+    vpbroadcastw    m1, [r2 + 2 + 62]  ; [32...]
+    movu            [r0 + r3], m1
+    movu            [r0 + r3 + 32], m1
+    RET
+
+cglobal intra_pred_ang32_26, 3,3,2
+    movu        m0,                 [r2 + 2]
+    movu        m1,                 [r2 + 34]
+    add         r1d,                r1d
+    lea         r2,                 [r1 * 3]
+
+    movu        [r0],               m0
+    movu        [r0 + 32],          m1
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 + 32],     m1
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r1 * 2 + 32], m1
+    movu        [r0 + r2],          m0
+    movu        [r0 + r2 + 32],     m1
+
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + 32],          m1
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 + 32],     m1
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r1 * 2 + 32], m1
+    movu        [r0 + r2],          m0
+    movu        [r0 + r2 + 32],     m1
+
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + 32],          m1
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 + 32],     m1
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r1 * 2 + 32], m1
+    movu        [r0 + r2],          m0
+    movu        [r0 + r2 + 32],     m1
+
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + 32],          m1
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 + 32],     m1
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r1 * 2 + 32], m1
+    movu        [r0 + r2],          m0
+    movu        [r0 + r2 + 32],     m1
+
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + 32],          m1
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 + 32],     m1
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r1 * 2 + 32], m1
+    movu        [r0 + r2],          m0
+    movu        [r0 + r2 + 32],     m1
+
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + 32],          m1
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 + 32],     m1
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r1 * 2 + 32], m1
+    movu        [r0 + r2],          m0
+    movu        [r0 + r2 + 32],     m1
+
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + 32],          m1
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 + 32],     m1
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r1 * 2 + 32], m1
+    movu        [r0 + r2],          m0
+    movu        [r0 + r2 + 32],     m1
+
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + 32],          m1
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 + 32],     m1
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r1 * 2 + 32], m1
+    movu        [r0 + r2],          m0
+    movu        [r0 + r2 + 32],     m1
+    RET
 ;-------------------------------------------------------------------------------------------------------
 ; end of avx2 code for intra_pred_ang32 mode 2 to 34
 ;-------------------------------------------------------------------------------------------------------
