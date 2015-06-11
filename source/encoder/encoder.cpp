@@ -1030,32 +1030,6 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
      * future safety) */
 }
 
-/**
- * Produce an ascii(hex) representation of picture digest.
- *
- * Returns: a statically allocated null-terminated string.  DO NOT FREE.
- */
-static const char*digestToString(const unsigned char digest[3][16], int numChar)
-{
-    const char* hex = "0123456789abcdef";
-    static char string[99];
-    int cnt = 0;
-
-    for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
-    {
-        for (int i = 0; i < numChar; i++)
-        {
-            string[cnt++] = hex[digest[yuvIdx][i] >> 4];
-            string[cnt++] = hex[digest[yuvIdx][i] & 0xf];
-        }
-
-        string[cnt++] = ',';
-    }
-
-    string[cnt - 1] = '\0';
-    return string;
-}
-
 void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64_t bits, x265_frame_stats* frameStats)
 {
     PicYuv* reconPic = curFrame->m_reconPic;
@@ -1167,58 +1141,6 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
         else
             frameStats->avgWPP = 1;
         frameStats->countRowBlocks = curEncoder->m_countRowBlocks;
-    }
-
-    // if debug log level is enabled, per frame console logging is performed
-    if (m_param->logLevel >= X265_LOG_DEBUG)
-    {
-        char buf[1024];
-        int p;
-        p = sprintf(buf, "POC:%d %c QP %2.2lf(%d) %10d bits", poc, c, curEncData.m_avgQpAq, slice->m_sliceQp, (int)bits);
-        if (m_param->rc.rateControlMode == X265_RC_CRF)
-            p += sprintf(buf + p, " RF:%.3lf", curEncData.m_rateFactor);
-        if (m_param->bEnablePsnr)
-            p += sprintf(buf + p, " [Y:%6.2lf U:%6.2lf V:%6.2lf]", psnrY, psnrU, psnrV);
-        if (m_param->bEnableSsim)
-            p += sprintf(buf + p, " [SSIM: %.3lfdB]", x265_ssim2dB(ssim));
-
-        if (!slice->isIntra())
-        {
-            int numLists = slice->isInterP() ? 1 : 2;
-            for (int list = 0; list < numLists; list++)
-            {
-                p += sprintf(buf + p, " [L%d ", list);
-                for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
-                {
-                    int k = slice->m_refPOCList[list][ref] - slice->m_lastIDR;
-                    p += sprintf(buf + p, "%d ", k);
-                }
-
-                p += sprintf(buf + p, "]");
-            }
-        }
-
-        if (m_param->decodedPictureHashSEI && m_param->logLevel >= X265_LOG_FULL)
-        {
-            const char* digestStr = NULL;
-            if (m_param->decodedPictureHashSEI == 1)
-            {
-                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.m_digest, 16);
-                p += sprintf(buf + p, " [MD5:%s]", digestStr);
-            }
-            else if (m_param->decodedPictureHashSEI == 2)
-            {
-                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.m_digest, 2);
-                p += sprintf(buf + p, " [CRC:%s]", digestStr);
-            }
-            else if (m_param->decodedPictureHashSEI == 3)
-            {
-                digestStr = digestToString(curEncoder->m_seiReconPictureDigest.m_digest, 4);
-                p += sprintf(buf + p, " [Checksum:%s]", digestStr);
-            }
-        }
-
-        x265_log(m_param, X265_LOG_DEBUG, "%s\n", buf);
     }
 }
 
