@@ -14643,6 +14643,80 @@ cglobal intra_pred_ang32_26, 3,3,2
     movu        [r0 + r2],          m0
     movu        [r0 + r2 + 32],     m1
     RET
+
+cglobal intra_pred_ang32_11, 3,8,12, 0-8
+    movzx       r5d,        word [r2 + 128]  ; [0]
+    movzx       r6d,        word [r2]
+    mov         [rsp],      r5w
+    mov         [r2 + 128], r6w
+
+    movzx       r5d,        word [r2 + 126]  ; [16]
+    movzx       r6d,        word [r2 + 32]
+    mov         [rsp + 4],  r5w
+    mov         [r2 + 126], r6w
+
+    add         r2,         128
+    xor         r6d,        r6d
+    lea         r3,         [ang_table_avx2 + 16 * 32]
+    add         r1d,        r1d
+    lea         r4,         [r1 * 3]
+    lea         r7,         [r0 + 8 * r1]
+
+    call        ang16_mode_11_25
+
+    sub         r2,         2
+    lea         r0,         [r0 + 32]
+
+    call        ang16_mode_11_25
+
+    add         r2,         34
+    lea         r0,         [r7 + 8 * r1]
+
+    call        ang16_mode_11_25
+
+    sub         r2,         2
+    lea         r0,         [r0 + 32]
+
+    call        ang16_mode_11_25
+
+    mov         r6d,        [rsp]
+    mov         [r2 - 30], r6w
+    mov         r6d,       [rsp + 4]
+    mov         [r2 - 32], r6w
+    RET
+
+cglobal intra_pred_ang32_25, 3,7,12, 0-4
+    xor         r6d,        r6d
+    inc         r6d
+    lea         r3,         [ang_table_avx2 + 16 * 32]
+    add         r1d,        r1d
+
+    movzx       r4d,        word [r2 - 2]
+    movzx       r5d,        word [r2 + 160]     ; [16]
+    mov         [rsp],      r4w
+    mov         [r2 - 2],   r5w
+
+    lea         r4,         [r1 * 3]
+    lea         r5,         [r0 + 32]
+
+    call        ang16_mode_11_25
+
+    sub         r2,         2
+
+    call        ang16_mode_11_25
+
+    add         r2,         34
+    mov         r0,         r5
+
+    call        ang16_mode_11_25
+
+    sub         r2,         2
+
+    call        ang16_mode_11_25
+
+    mov         r5d,        [rsp]
+    mov         [r2 - 32],  r5w
+    RET
 ;-------------------------------------------------------------------------------------------------------
 ; end of avx2 code for intra_pred_ang32 mode 2 to 34
 ;-------------------------------------------------------------------------------------------------------
