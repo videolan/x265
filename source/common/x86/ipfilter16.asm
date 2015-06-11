@@ -11763,7 +11763,7 @@ FILTER_VER_CHROMA_AVX2_8xN ss, 64
     vpermq          m0, m0, q3120
     pxor            m4, m4
 
-%ifidn %2,doClip
+%if %2
     CLIPW           m0, m4, [pw_pixel_max]
 %endif
     vextracti128    xm1, m0, 1
@@ -11801,9 +11801,9 @@ cglobal interp_4tap_vert_%1_8x2, 4, 6, 8
     RET
 %endmacro
 
-FILTER_VER_CHROMA_AVX2_8x2 pp, doClip, 6
+FILTER_VER_CHROMA_AVX2_8x2 pp, 1, 6
 FILTER_VER_CHROMA_AVX2_8x2 ps, 0, 2
-FILTER_VER_CHROMA_AVX2_8x2 sp, doClip, 10
+FILTER_VER_CHROMA_AVX2_8x2 sp, 1, 10
 FILTER_VER_CHROMA_AVX2_8x2 ss, 0, 6
 
 %macro FILTER_VER_CHROMA_AVX2_4x2 3
@@ -11857,7 +11857,7 @@ cglobal interp_4tap_vert_%1_4x2, 4, 6, 7
     packssdw        m0, m0
     pxor            m1, m1
 
-%ifidn %2, doClip
+%if %2
     CLIPW           m0, m1, [pw_pixel_max]
 %endif
 
@@ -11868,9 +11868,9 @@ cglobal interp_4tap_vert_%1_4x2, 4, 6, 7
     RET
 %endmacro
 
-FILTER_VER_CHROMA_AVX2_4x2 pp, doClip, 6
+FILTER_VER_CHROMA_AVX2_4x2 pp, 1, 6
 FILTER_VER_CHROMA_AVX2_4x2 ps, 0, 2
-FILTER_VER_CHROMA_AVX2_4x2 sp, doClip, 10
+FILTER_VER_CHROMA_AVX2_4x2 sp, 1, 10
 FILTER_VER_CHROMA_AVX2_4x2 ss, 0, 6
 
 %macro FILTER_VER_CHROMA_AVX2_4x4 3
@@ -11934,7 +11934,7 @@ cglobal interp_4tap_vert_%1_4x4, 4, 6, 7
 
     packssdw        m0, m2
     pxor            m1, m1
-%ifidn %2, doClip
+%if %2
     CLIPW           m0, m1, [pw_pixel_max]
 %endif
 
@@ -11947,7 +11947,7 @@ cglobal interp_4tap_vert_%1_4x4, 4, 6, 7
     RET
 %endmacro
 
-FILTER_VER_CHROMA_AVX2_4x4 pp, doClip, 6
+FILTER_VER_CHROMA_AVX2_4x4 pp, 1, 6
 FILTER_VER_CHROMA_AVX2_4x4 ps, 0, 2 
-FILTER_VER_CHROMA_AVX2_4x4 sp, doClip, 10
+FILTER_VER_CHROMA_AVX2_4x4 sp, 1, 10
 FILTER_VER_CHROMA_AVX2_4x4 ss, 0, 6
