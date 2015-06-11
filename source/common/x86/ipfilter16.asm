@@ -4820,6 +4820,152 @@ FILTER_VER_CHROMA_W8 8, 64, pp, 8
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_CHROMA_AVX2_6xN 2
+INIT_YMM avx2
+%if ARCH_X86_64
+cglobal interp_4tap_vert_%2_6x%1, 4, 7, 10
+    mov             r4d, r4m
+    add             r1d, r1d
+    add             r3d, r3d
+    shl             r4d, 6
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffV]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffV + r4]
+%endif
+
+    sub             r0, r1
+    mov             r6d, %1/4
+
+%ifidn %2,pp
+    vbroadcasti128  m8, [pd_32]
+%elifidn %2, sp
+    mova            m8, [pd_524800]
+%else
+    vbroadcasti128  m8, [tab_c_n32768]
+%endif
+
+.loopH:
+    movu            xm0, [r0]
+    movu            xm1, [r0 + r1]
+    punpckhwd       xm2, xm0, xm1
+    punpcklwd       xm0, xm1
+    vinserti128     m0, m0, xm2, 1
+    pmaddwd         m0, [r5]
+
+    movu            xm2, [r0 + r1 * 2]
+    punpckhwd       xm3, xm1, xm2
+    punpcklwd       xm1, xm2
+    vinserti128     m1, m1, xm3, 1
+    pmaddwd         m1, [r5]
+
+    lea             r4, [r1 * 3]
+    movu            xm3, [r0 + r4]
+    punpckhwd       xm4, xm2, xm3
+    punpcklwd       xm2, xm3
+    vinserti128     m2, m2, xm4, 1
+    pmaddwd         m4, m2, [r5 + 1 * mmsize]
+    pmaddwd         m2, [r5]
+    paddd           m0, m4
+
+    lea             r0, [r0 + r1 * 4]
+    movu            xm4, [r0]
+    punpckhwd       xm5, xm3, xm4
+    punpcklwd       xm3, xm4
+    vinserti128     m3, m3, xm5, 1
+    pmaddwd         m5, m3, [r5 + 1 * mmsize]
+    pmaddwd         m3, [r5]
+    paddd           m1, m5
+
+    movu            xm5, [r0 + r1]
+    punpckhwd       xm6, xm4, xm5
+    punpcklwd       xm4, xm5
+    vinserti128     m4, m4, xm6, 1
+    pmaddwd         m6, m4, [r5 + 1 * mmsize]
+    pmaddwd         m4, [r5]
+    paddd           m2, m6
+
+    movu            xm6, [r0 + r1 * 2]
+    punpckhwd       xm7, xm5, xm6
+    punpcklwd       xm5, xm6
+    vinserti128     m5, m5, xm7, 1
+    pmaddwd         m7, m5, [r5 + 1 * mmsize]
+    pmaddwd         m5, [r5]
+    paddd           m3, m7
+    lea             r4, [r3 * 3]
+%ifidn %2,ss
+    psrad           m0, 6
+    psrad           m1, 6
+    psrad           m2, 6
+    psrad           m3, 6
+%else
+    paddd           m0, m8
+    paddd           m1, m8
+    paddd           m2, m8
+    paddd           m3, m8
+%ifidn %2,pp
+    psrad           m0, 6
+    psrad           m1, 6
+    psrad           m2, 6
+    psrad           m3, 6
+%elifidn %2, sp
+    psrad           m0, 10
+    psrad           m1, 10
+    psrad           m2, 10
+    psrad           m3, 10
+%else
+    psrad           m0, 2
+    psrad           m1, 2
+    psrad           m2, 2
+    psrad           m3, 2
+%endif
+%endif
+
+    packssdw        m0, m1
+    packssdw        m2, m3
+    vpermq          m0, m0, q3120
+    vpermq          m2, m2, q3120
+    pxor            m5, m5
+    mova            m9, [pw_pixel_max]
+%ifidn %2,pp
+    CLIPW           m0, m5, m9
+    CLIPW           m2, m5, m9
+%elifidn %2, sp
+    CLIPW           m0, m5, m9
+    CLIPW           m2, m5, m9
+%endif
+
+    vextracti128    xm1, m0, 1
+    vextracti128    xm3, m2, 1
+    movq            [r2], xm0
+    pextrd          [r2 + 8], xm0, 2
+    movq            [r2 + r3], xm1
+    pextrd          [r2 + r3 + 8], xm1, 2
+    movq            [r2 + r3 * 2], xm2
+    pextrd          [r2 + r3 * 2 + 8], xm2, 2
+    movq            [r2 + r4], xm3
+    pextrd          [r2 + r4 + 8], xm3, 2
+
+    lea             r2, [r2 + r3 * 4]
+    dec r6d
+    jnz .loopH
+    RET
+%endif
+%endmacro
+FILTER_VER_CHROMA_AVX2_6xN 8, pp
+FILTER_VER_CHROMA_AVX2_6xN 8, ps
+FILTER_VER_CHROMA_AVX2_6xN 8, ss
+FILTER_VER_CHROMA_AVX2_6xN 8, sp
+FILTER_VER_CHROMA_AVX2_6xN 16, pp
+FILTER_VER_CHROMA_AVX2_6xN 16, ps
+FILTER_VER_CHROMA_AVX2_6xN 16, ss
+FILTER_VER_CHROMA_AVX2_6xN 16, sp
+
+;-----------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_CHROMA_W16_16xN_avx2 3
 INIT_YMM avx2
 cglobal interp_4tap_vert_%2_16x%1, 5, 6, %3
