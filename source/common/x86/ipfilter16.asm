@@ -12408,3 +12408,134 @@ FILTER_VER_CHROMA_AVX2_8x8 pp, 1, 6
 FILTER_VER_CHROMA_AVX2_8x8 ps, 0, 2
 FILTER_VER_CHROMA_AVX2_8x8 sp, 1, 10
 FILTER_VER_CHROMA_AVX2_8x8 ss, 0, 6
+
+%macro FILTER_VER_CHROMA_AVX2_8x6 3
+INIT_YMM avx2
+%if ARCH_X86_64 == 1
+cglobal interp_4tap_vert_%1_8x6, 4, 6, 12
+    mov             r4d, r4m
+    add             r1d, r1d
+    add             r3d, r3d
+    shl             r4d, 6
+
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeffVer]
+    add             r5, r4
+%else
+    lea             r5, [tab_ChromaCoeffVer + r4]
+%endif
+
+    lea             r4, [r1 * 3]
+    sub             r0, r1
+
+%ifidn %1,pp
+    vbroadcasti128  m11, [pd_32]
+%elifidn %1, sp
+    mova            m11, [pd_524800]
+%else
+    vbroadcasti128  m11, [pd_n32768]
+%endif
+
+    movu            xm0, [r0]                       ; m0 = row 0
+    movu            xm1, [r0 + r1]                  ; m1 = row 1
+    punpckhwd       xm2, xm0, xm1
+    punpcklwd       xm0, xm1
+    vinserti128     m0, m0, xm2, 1
+    pmaddwd         m0, [r5]
+    movu            xm2, [r0 + r1 * 2]              ; m2 = row 2
+    punpckhwd       xm3, xm1, xm2
+    punpcklwd       xm1, xm2
+    vinserti128     m1, m1, xm3, 1
+    pmaddwd         m1, [r5]
+    movu            xm3, [r0 + r4]                  ; m3 = row 3
+    punpckhwd       xm4, xm2, xm3
+    punpcklwd       xm2, xm3
+    vinserti128     m2, m2, xm4, 1
+    pmaddwd         m4, m2, [r5 + 1 * mmsize]
+    pmaddwd         m2, [r5]
+    paddd           m0, m4                          ; r0 done(0,1,2,3)
+    lea             r0, [r0 + r1 * 4]
+    movu            xm4, [r0]                       ; m4 = row 4
+    punpckhwd       xm5, xm3, xm4
+    punpcklwd       xm3, xm4
+    vinserti128     m3, m3, xm5, 1
+    pmaddwd         m5, m3, [r5 + 1 * mmsize]
+    pmaddwd         m3, [r5]
+    paddd           m1, m5                          ;r1 done(1, 2, 3, 4)
+    movu            xm5, [r0 + r1]                  ; m5 = row 5
+    punpckhwd       xm6, xm4, xm5
+    punpcklwd       xm4, xm5
+    vinserti128     m4, m4, xm6, 1
+    pmaddwd         m6, m4, [r5 + 1 * mmsize]
+    pmaddwd         m4, [r5]
+    paddd           m2, m6                          ;r2 done(2,3,4,5)
+    movu            xm6, [r0 + r1 * 2]              ; m6 = row 6
+    punpckhwd       xm7, xm5, xm6
+    punpcklwd       xm5, xm6
+    vinserti128     m5, m5, xm7, 1
+    pmaddwd         m7, m5, [r5 + 1 * mmsize]
+    pmaddwd         m5, [r5]
+    paddd           m3, m7                          ;r3 done(3,4,5,6)
+    movu            xm7, [r0 + r4]                  ; m7 = row 7
+    punpckhwd       xm8, xm6, xm7
+    punpcklwd       xm6, xm7
+    vinserti128     m6, m6, xm8, 1
+    pmaddwd         m8, m6, [r5 + 1 * mmsize]
+    paddd           m4, m8                          ;r4 done(4,5,6,7)
+    lea             r0, [r0 + r1 * 4]
+    movu            xm8, [r0]                       ; m8 = row 8
+    punpckhwd       xm9, xm7, xm8
+    punpcklwd       xm7, xm8
+    vinserti128     m7, m7, xm9, 1
+    pmaddwd         m7, m7, [r5 + 1 * mmsize]
+    paddd           m5, m7                          ;r5 done(5,6,7,8)
+    lea             r4, [r3 * 3]
+%ifnidn %1,ss
+    paddd           m0, m11
+    paddd           m1, m11
+    paddd           m2, m11
+    paddd           m3, m11
+%endif
+    psrad           m0, %3
+    psrad           m1, %3
+    psrad           m2, %3
+    psrad           m3, %3
+    packssdw        m0, m1
+    packssdw        m2, m3
+    vpermq          m0, m0, q3120
+    vpermq          m2, m2, q3120
+    pxor            m10, m10
+    mova            m9, [pw_pixel_max]
+%if %2
+    CLIPW           m0, m10, m9
+    CLIPW           m2, m10, m9
+%endif
+    vextracti128    xm1, m0, 1
+    vextracti128    xm3, m2, 1
+    movu            [r2], xm0
+    movu            [r2 + r3], xm1
+    movu            [r2 + r3 * 2], xm2
+    movu            [r2 + r4], xm3
+%ifnidn %1,ss
+    paddd           m4, m11
+    paddd           m5, m11
+%endif
+    psrad           m4, %3
+    psrad           m5, %3
+    packssdw        m4, m5
+    vpermq          m4, m4, 11011000b
+%if %2
+    CLIPW           m4, m10, m9
+%endif
+    vextracti128    xm5, m4, 1
+    lea             r2, [r2 + r3 * 4]
+    movu            [r2], xm4
+    movu            [r2 + r3], xm5
+    RET
+%endif
+%endmacro
+
+FILTER_VER_CHROMA_AVX2_8x6 pp, 1, 6
+FILTER_VER_CHROMA_AVX2_8x6 ps, 0, 2
+FILTER_VER_CHROMA_AVX2_8x6 sp, 1, 10
+FILTER_VER_CHROMA_AVX2_8x6 ss, 0, 6
