@@ -302,7 +302,7 @@ void CLIOptions::writeFrameLog(x265_frame_stats* frameStats)
             fprintf(csvfpt, ",");
             if (frameStats->sliceType != 'P')
             {
-                int i = 0;
+                i = 0;
                 while (frameStats->list1POC[i] != -1)
                     fprintf(csvfpt, "%d ", frameStats->list1POC[i++]);
                 fprintf(csvfpt, ",");
