@@ -1753,14 +1753,11 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             memcpy(baseCtxModX0, m_contextState, sizeof(m_contextState));
             memcpy(baseCtxModX1, m_contextState, sizeof(m_contextState));
 
-            uint32_t firstC2Idx = 8;
-            uint32_t firstC2Flag = 2;
-            uint32_t c1Next = 0xFFFFFFFE;
             if (!m_bitIf)
             {
                 uint32_t sum = primitives.costC1C2Flag(absCoeff, numC1Flag, baseCtxMod, (bIsLuma ? 0 : NUM_ABS_FLAG_CTX_LUMA - NUM_ONE_FLAG_CTX_LUMA) + (OFF_ABS_FLAG_CTX - OFF_ONE_FLAG_CTX) - 3 * ctxSet);
+                uint32_t firstC2Idx = (sum >> 28);
                 c1 = ((sum >> 26) & 3);
-                firstC2Idx = (sum >> 28);
                 m_fracBits += sum & 0x00FFFFFF;
 
                 const int hiddenShift = (bHideFirstSign & signHidden) ? 1 : 0;
@@ -1777,6 +1774,10 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             // Standard path
             else
             {
+                uint32_t firstC2Idx = 8;
+                uint32_t firstC2Flag = 2;
+                uint32_t c1Next = 0xFFFFFFFE;
+
                 idx = 0;
                 do
                 {
