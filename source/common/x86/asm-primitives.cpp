@@ -2839,6 +2839,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         ALL_LUMA_PU(luma_vps, interp_8tap_vert_ps, avx2);
         ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, avx2);
         ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, avx2);
+        p.pu[LUMA_4x4].luma_vsp = x265_interp_8tap_vert_sp_4x4_avx2;
 
         // missing 4x8, 4x16, 24x32, 12x16 for the fill set of luma PU
         p.pu[LUMA_4x4].luma_hpp = x265_interp_8tap_horiz_pp_4x4_avx2;
@@ -3110,7 +3111,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I444].pu[LUMA_64x16].filter_vss = x265_interp_4tap_vert_ss_64x16_avx2;
         p.chroma[X265_CSP_I444].pu[LUMA_16x64].filter_vss = x265_interp_4tap_vert_ss_16x64_avx2;
 
-        p.pu[LUMA_16x16].luma_hvpp = x265_interp_8tap_hv_pp_16x16_avx2;
+        //p.pu[LUMA_16x16].luma_hvpp = x265_interp_8tap_hv_pp_16x16_avx2;
+        ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu);
+        p.pu[LUMA_4x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_4x4>;
 
         p.pu[LUMA_32x8].convert_p2s = x265_filterPixelToShort_32x8_avx2;
         p.pu[LUMA_32x16].convert_p2s = x265_filterPixelToShort_32x16_avx2;
