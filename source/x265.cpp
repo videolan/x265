@@ -896,26 +896,6 @@ fail:
         general_log(param, NULL, X265_LOG_INFO, "aborted at input frame %d, output frame %d\n",
                     cliopt.seek + inFrameCount, stats.encodedPictureCount);
 
-    if (stats.encodedPictureCount)
-    {
-        char buffer[4096];
-        int p = sprintf(buffer, "\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s", stats.encodedPictureCount,
-                        stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
-
-        if (param->bEnablePsnr)
-            p += sprintf(buffer + p, ", Global PSNR: %.3f", stats.globalPsnr);
-
-        if (param->bEnableSsim)
-            p += sprintf(buffer + p, ", SSIM Mean Y: %.7f (%6.3f dB)", stats.globalSsim, x265_ssim2dB(stats.globalSsim));
-
-        sprintf(buffer + p, "\n");
-        general_log(param, NULL, X265_LOG_INFO, buffer);
-    }
-    else
-    {
-        general_log(param, NULL, X265_LOG_INFO, "\nencoded 0 frames\n");
-    }
-
     api->cleanup(); /* Free library singletons */
 
     cliopt.destroy();

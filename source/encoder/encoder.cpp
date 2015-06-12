@@ -786,8 +786,6 @@ void Encoder::printSummary()
         x265_log(m_param, X265_LOG_INFO, "frame P: %s\n", statsString(m_analyzeP, buffer));
     if (m_analyzeB.m_numPics)
         x265_log(m_param, X265_LOG_INFO, "frame B: %s\n", statsString(m_analyzeB, buffer));
-    if (m_analyzeAll.m_numPics)
-        x265_log(m_param, X265_LOG_INFO, "global : %s\n", statsString(m_analyzeAll, buffer));
     if (m_param->bEnableWeightedPred && m_analyzeP.m_numPics)
     {
         x265_log(m_param, X265_LOG_INFO, "Weighted P-Frames: Y:%.1f%% UV:%.1f%%\n",
@@ -821,6 +819,30 @@ void Encoder::printSummary()
         x265_log(m_param, X265_LOG_INFO, "lossless compression ratio %.2f::1\n", uncompressed / m_analyzeAll.m_accBits);
     }
 
+    if (m_analyzeAll.m_numPics)
+    {
+        int p = 0;
+        double elapsedEncodeTime = (double)(x265_mdate() - m_encodeStartTime) / 1000000;
+        double elapsedVideoTime = (double)m_analyzeAll.m_numPics * m_param->fpsDenom / m_param->fpsNum;
+        double bitrate = (0.001f * m_analyzeAll.m_accBits) / elapsedVideoTime;
+
+        p += sprintf(buffer + p, "\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s, Avg QP:%2.2lf", m_analyzeAll.m_numPics,
+                     elapsedEncodeTime, m_analyzeAll.m_numPics / elapsedEncodeTime, bitrate, m_analyzeAll.m_totalQp / (double)m_analyzeAll.m_numPics);
+
+        if (m_param->bEnablePsnr)
+        {
+            double globalPsnr = (m_analyzeAll.m_psnrSumY * 6 + m_analyzeAll.m_psnrSumU + m_analyzeAll.m_psnrSumV) / (8 * m_analyzeAll.m_numPics);
+            p += sprintf(buffer + p, ", Global PSNR: %.3f", globalPsnr);
+        }
+
+        if (m_param->bEnableSsim)
+            p += sprintf(buffer + p, ", SSIM Mean Y: %.7f (%6.3f dB)", m_analyzeAll.m_globalSsim / m_analyzeAll.m_numPics, x265_ssim2dB(m_analyzeAll.m_globalSsim / m_analyzeAll.m_numPics));
+
+        sprintf(buffer + p, "\n");
+        general_log(m_param, NULL, X265_LOG_INFO, buffer);
+    }
+    else
+        general_log(m_param, NULL, X265_LOG_INFO, "\nencoded 0 frames\n");
 
 #if DETAILED_CU_STATS
     /* Summarize stats from all frame encoders */
