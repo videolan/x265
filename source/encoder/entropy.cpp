@@ -1741,7 +1741,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             bool signHidden = (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD);
             uint32_t ctxSet = ((subSet > 0) & bIsLuma) ? 2 : 0;
 
-            ctxSet += (c1 == 0);
+            ctxSet += !(c1 & 3);
 
             c1 = 1;
             uint8_t *baseCtxMod = &m_contextState[(bIsLuma ? 0 : NUM_ONE_FLAG_CTX_LUMA) + OFF_ONE_FLAG_CTX + 4 * ctxSet];
@@ -1749,55 +1749,19 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             uint32_t numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
             X265_CHECK(numC1Flag > 0, "numC1Flag check failure\n");
 
+            uint8_t baseCtxModX0[160], baseCtxModX1[160];
+            memcpy(baseCtxModX0, m_contextState, sizeof(m_contextState));
+            memcpy(baseCtxModX1, m_contextState, sizeof(m_contextState));
+
             uint32_t firstC2Idx = 8;
             uint32_t firstC2Flag = 2;
             uint32_t c1Next = 0xFFFFFFFE;
             if (!m_bitIf)
             {
-                uint32_t sum = 0;
-                // Fast RD path
-                idx = 0;
-                do
-                {
-                    uint32_t symbol1 = absCoeff[idx] > 1;
-                    uint32_t symbol2 = absCoeff[idx] > 2;
-                    //encodeBin(symbol1, baseCtxMod[c1]);
-                    {
-                        const uint32_t mstate = baseCtxMod[c1];
-                        baseCtxMod[c1] = sbacNext(mstate, symbol1);
-                        sum += sbacGetEntropyBits(mstate, symbol1);
-                    }
-
-                    if (symbol1)
-                        c1Next = 0;
-
-                    if (symbol1 + firstC2Flag == 3)
-                        firstC2Flag = symbol2;
-
-                    if (symbol1 + firstC2Idx == 9)
-                        firstC2Idx  = idx;
-
-                    c1 = (c1Next & 3);
-                    c1Next >>= 2;
-                    X265_CHECK(c1 <= 3, "c1 check failure\n");
-                    idx++;
-                }
-                while(idx < numC1Flag);
-
-                if (!c1)
-                {
-                    X265_CHECK((firstC2Flag <= 1), "firstC2FlagIdx check failure\n");
-
-                    baseCtxMod = &m_contextState[(bIsLuma ? 0 : NUM_ABS_FLAG_CTX_LUMA) + OFF_ABS_FLAG_CTX + ctxSet];
-
-                    //encodeBin(firstC2Flag, baseCtxMod[0]);
-                    {
-                        const uint32_t mstate = baseCtxMod[0];
-                        baseCtxMod[0] = sbacNext(mstate, firstC2Flag);
-                        sum += sbacGetEntropyBits(mstate, firstC2Flag);
-                    }
-                }
-                m_fracBits += (sum & 0xFFFFFF);
+                uint32_t sum = primitives.costC1C2Flag(absCoeff, numC1Flag, baseCtxMod, (bIsLuma ? 0 : NUM_ABS_FLAG_CTX_LUMA - NUM_ONE_FLAG_CTX_LUMA) + (OFF_ABS_FLAG_CTX - OFF_ONE_FLAG_CTX) - 3 * ctxSet);
+                c1 = ((sum >> 26) & 3);
+                firstC2Idx = (sum >> 28);
+                m_fracBits += sum & 0x00FFFFFF;
 
                 const int hiddenShift = (bHideFirstSign & signHidden) ? 1 : 0;
                 //encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);

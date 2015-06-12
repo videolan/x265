@@ -72,6 +72,7 @@ cextern pb_64
 cextern hmul_16p
 cextern trans8_shuf
 cextern_naked g_entropyStateBits
+cextern pb_movemask
 
 ;-----------------------------------------------------------------------------
 ; void getResidual(pixel *fenc, pixel *pred, int16_t *residual, intptr_t stride)
@@ -6646,3 +6647,136 @@ cglobal costCoeffRemain, 0,7,1
 
     mov         eax, r5d
     RET
+
+
+; uint32_t costC1C2Flag(uint16_t *absCoeff, intptr_t numC1Flag, uint8_t *baseCtxMod, intptr_t ctxOffset)
+;idx = 0;
+;do
+;{
+;    uint32_t symbol1 = absCoeff[idx] > 1;
+;    uint32_t symbol2 = absCoeff[idx] > 2;
+;    {
+;        const uint32_t mstate = baseCtxMod[c1];
+;        baseCtxMod[c1] = sbacNext(mstate, symbol1);
+;        sum += sbacGetEntropyBits(mstate, symbol1);
+;    }
+;    if (symbol1)
+;        c1Next = 0;
+;    if (symbol1 + firstC2Flag == 3)
+;        firstC2Flag = symbol2;
+;    if (symbol1 + firstC2Idx == 9)
+;        firstC2Idx  = idx;
+;    c1 = (c1Next & 3);
+;    c1Next >>= 2;
+;    idx++;
+;}
+;while(idx < numC1Flag);
+;if (!c1)
+;{
+;    baseCtxMod = &m_contextState[(bIsLuma ? 0 : NUM_ABS_FLAG_CTX_LUMA) + OFF_ABS_FLAG_CTX + ctxSet];
+;    {
+;        const uint32_t mstate = baseCtxMod[0];
+;        baseCtxMod[0] = sbacNext(mstate, firstC2Flag);
+;        sum += sbacGetEntropyBits(mstate, firstC2Flag);
+;    }
+;}
+;m_fracBits += (sum & 0xFFFFFF);
+
+
+; TODO: we need more register, so I writen code as x64 only, but it is easy to portab to x86 platform
+%if ARCH_X86_64
+INIT_XMM sse2
+cglobal costC1C2Flag, 4,12,2
+
+    mova        m0, [r0]
+    packsswb    m0, m0
+
+    pcmpgtb     m1, m0, [pb_1]
+    pcmpgtb     m0, [pb_2]
+
+    ; get mask for 'X>1'
+    pmovmskb    r0d, m1
+    mov         r11d, r0d
+
+    ; clear unavailable coeff flags
+    xor         r6d, r6d
+    bts         r6d, r1d
+    dec         r6d
+    and         r11d, r6d
+
+    ; calculate firstC2Idx
+    or          r11d, 0x100                     ; default value setting to 8
+    bsf         r11d, r11d
+
+    lea         r5, [g_entropyStateBits]
+    xor         r6d, r6d
+    mov         r4d, 0xFFFFFFF9
+
+    ; register mapping
+    ; r4d       - nextC1
+    ; r5        - g_entropyStateBits
+    ; r6d       - sum
+    ; r[7-10]   - tmp
+    ; r11d      - firstC2Idx (not use in loop)
+
+    ; process c1 flag
+.loop:
+    ; const uint32_t mstate = baseCtx[ctxSig];
+    ; const uint32_t mps = mstate & 1;
+    ; const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
+    ; uint32_t nextState = (stateBits >> 24) + mps;
+    ; if ((mstate ^ sig) == 1)
+    ;     nextState = sig;
+    mov         r10d, r4d                       ; c1
+    and         r10d, 3
+    shr         r4d, 2
+
+    xor         r7d, r7d
+    shr         r0d, 1
+    cmovc       r4d, r7d                        ; c1 <- 0 when C1Flag=1
+    setc        r7b                             ; symbol1
+
+    movzx       r8d, byte [r2 + r10]            ; mstate = baseCtx[c1]
+    mov         r9d, r7d                        ; sig = symbol1
+    xor         r7d, r8d                        ; mstate ^ sig
+    and         r8d, 1                          ; mps = mstate & 1
+    add         r6d, [r5 + r7 * 4]              ; sum += g_entropyStateBits[mstate ^ sig]
+    add         r8b, [r5 + r7 * 4 + 3]          ; nextState = (stateBits >> 24) + mps
+    cmp         r7b, 1                          ; if ((mstate ^ sig) == 1) nextState = sig;
+    cmove       r8d, r9d
+    mov    byte [r2 + r10], r8b
+
+    dec         r1d
+    jg         .loop
+
+    ; check and generate c1 flag
+    shl         r4d, 30
+    jnz        .quit
+
+    ; move to c2 ctx
+    add         r2, r3
+
+    ; process c2 flag
+    pmovmskb    r8d, m0
+    bt          r8d, r11d
+    setc        r7b
+
+    movzx       r8d, byte [r2]                  ; mstate = baseCtx[c1]
+    mov         r1d, r7d                        ; sig = symbol1
+    xor         r7d, r8d                        ; mstate ^ sig
+    and         r8d, 1                          ; mps = mstate & 1
+    add         r6d, [r5 + r7 * 4]              ; sum += g_entropyStateBits[mstate ^ sig]
+    add         r8b, [r5 + r7 * 4 + 3]          ; nextState = (stateBits >> 24) + mps
+    cmp         r7b, 1                          ; if ((mstate ^ sig) == 1) nextState = sig;
+    cmove       r8d, r1d
+    mov    byte [r2], r8b
+
+.quit:
+    shrd        r4d, r11d, 4
+%ifnidn r6d,eax
+    mov         eax, r6d
+%endif
+    and         eax, 0x00FFFFFF
+    or          eax, r4d
+    RET
+%endif ; ARCH_X86_64

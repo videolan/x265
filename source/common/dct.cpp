@@ -920,6 +920,60 @@ uint32_t costCoeffRemain_c(uint16_t *absCoeff, int numNonZero, int idx)
     return sum;
 }
 
+
+uint32_t costC1C2Flag_c(uint16_t *absCoeff, intptr_t numC1Flag, uint8_t *baseCtxMod, intptr_t ctxOffset)
+{
+    uint32_t sum = 0;
+    uint32_t c1 = 1;
+    uint32_t firstC2Idx = 8;
+    uint32_t firstC2Flag = 2;
+    uint32_t c1Next = 0xFFFFFFFE;
+
+    int idx = 0;
+    do
+    {
+        uint32_t symbol1 = absCoeff[idx] > 1;
+        uint32_t symbol2 = absCoeff[idx] > 2;
+        //encodeBin(symbol1, baseCtxMod[c1]);
+        {
+            const uint32_t mstate = baseCtxMod[c1];
+            baseCtxMod[c1] = sbacNext(mstate, symbol1);
+            sum += sbacGetEntropyBits(mstate, symbol1);
+        }
+
+        if (symbol1)
+            c1Next = 0;
+
+        if (symbol1 + firstC2Flag == 3)
+            firstC2Flag = symbol2;
+
+        if (symbol1 + firstC2Idx == 9)
+            firstC2Idx  = idx;
+
+        c1 = (c1Next & 3);
+        c1Next >>= 2;
+        X265_CHECK(c1 <= 3, "c1 check failure\n");
+        idx++;
+    }
+    while(idx < numC1Flag);
+
+    if (!c1)
+    {
+        X265_CHECK((firstC2Flag <= 1), "firstC2FlagIdx check failure\n");
+
+        baseCtxMod += ctxOffset;
+
+        //encodeBin(firstC2Flag, baseCtxMod[0]);
+        {
+            const uint32_t mstate = baseCtxMod[0];
+            baseCtxMod[0] = sbacNext(mstate, firstC2Flag);
+            sum += sbacGetEntropyBits(mstate, firstC2Flag);
+        }
+    }
+
+    return (sum & 0x00FFFFFF) + (c1 << 26) + (firstC2Idx << 28);
+}
+
 }  // closing - anonymous file-static namespace
 
 namespace X265_NS {
@@ -956,5 +1010,6 @@ void setupDCTPrimitives_c(EncoderPrimitives& p)
     p.findPosFirstLast = findPosFirstLast_c;
     p.costCoeffNxN = costCoeffNxN_c;
     p.costCoeffRemain = costCoeffRemain_c;
+    p.costC1C2Flag = costC1C2Flag_c;
 }
 }

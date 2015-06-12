@@ -2169,6 +2169,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.cu[BLOCK_4x4].idct = x265_idct4_sse2;
 #if X86_64
         p.cu[BLOCK_8x8].idct = x265_idct8_sse2;
+
+        // TODO: it is passed smoke test, but we need testbench, so temporary disable
+        //p.costC1C2Flag = x265_costC1C2Flag_sse2;
 #endif
         p.idst4x4 = x265_idst4_sse2;
         p.dst4x4 = x265_dst4_sse2;

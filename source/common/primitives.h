@@ -188,6 +188,7 @@ typedef uint32_t (*findPosFirstLast_t)(const int16_t *dstCoeff, const intptr_t t
 
 typedef uint32_t (*costCoeffNxN_t)(const uint16_t *scan, const coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, const uint8_t *tabSigCtx, uint32_t scanFlagMask, uint8_t *baseCtx, int offset, int scanPosSigOff, int subPosBase);
 typedef uint32_t (*costCoeffRemain_t)(uint16_t *absCoeff, int numNonZero, int idx);
+typedef uint32_t (*costC1C2Flag_t)(uint16_t *absCoeff, intptr_t numC1Flag, uint8_t *baseCtxMod, intptr_t ctxOffset);
 
 /* Function pointers to optimized encoder primitives. Each pointer can reference
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */
@@ -315,6 +316,8 @@ struct EncoderPrimitives
 
     costCoeffNxN_t        costCoeffNxN;
     costCoeffRemain_t     costCoeffRemain;
+    costC1C2Flag_t        costC1C2Flag;
+
 
     /* There is one set of chroma primitives per color space. An encoder will
      * have just a single color space and thus it will only ever use one entry
