@@ -1749,10 +1749,6 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             uint32_t numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
             X265_CHECK(numC1Flag > 0, "numC1Flag check failure\n");
 
-            uint8_t baseCtxModX0[160], baseCtxModX1[160];
-            memcpy(baseCtxModX0, m_contextState, sizeof(m_contextState));
-            memcpy(baseCtxModX1, m_contextState, sizeof(m_contextState));
-
             if (!m_bitIf)
             {
                 uint32_t sum = primitives.costC1C2Flag(absCoeff, numC1Flag, baseCtxMod, (bIsLuma ? 0 : NUM_ABS_FLAG_CTX_LUMA - NUM_ONE_FLAG_CTX_LUMA) + (OFF_ABS_FLAG_CTX - OFF_ONE_FLAG_CTX) - 3 * ctxSet);
