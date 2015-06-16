@@ -32,12 +32,13 @@
 #define HAVE_SSE4
 #define HAVE_AVX2
 #elif defined(__GNUC__)
-#if __clang__ || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
+#define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+#if __clang__ || GCC_VERSION >= 40300 /* gcc_version >= gcc-4.3.0 */
 #define HAVE_SSE3
 #define HAVE_SSSE3
 #define HAVE_SSE4
 #endif
-#if __clang__ || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 7)
+#if __clang__ || GCC_VERSION >= 40700 /* gcc_version >= gcc-4.7.0 */
 #define HAVE_AVX2
 #endif
 #elif defined(_MSC_VER)
