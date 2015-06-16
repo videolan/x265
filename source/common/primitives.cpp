@@ -256,9 +256,9 @@ void x265_setup_primitives(x265_param *param, int cpuid)
  * compiled, they are unnecessary and can be NOPs */
 #else
 extern "C" {
-int x265_cpu_cpuid_test(void) { return 0; }
-void x265_cpu_emms(void) {}
-void x265_cpu_cpuid(uint32_t, uint32_t *eax, uint32_t *, uint32_t *, uint32_t *) { *eax = 0; }
-void x265_cpu_xgetbv(uint32_t, uint32_t *, uint32_t *) {}
+int PFX(cpu_cpuid_test)(void) { return 0; }
+void PFX(cpu_emms)(void) {}
+void PFX(cpu_cpuid)(uint32_t, uint32_t *eax, uint32_t *, uint32_t *, uint32_t *) { *eax = 0; }
+void PFX(cpu_xgetbv)(uint32_t, uint32_t *, uint32_t *) {}
 }
 #endif

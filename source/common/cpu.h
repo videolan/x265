@@ -27,21 +27,26 @@
 
 #include "common.h"
 
+/* All assembly functions are prefixed with X265_NS (macro expanded) */
+#define PFX3(prefix, name) prefix ## _ ## name
+#define PFX2(prefix, name) PFX3(prefix, name)
+#define PFX(name)          PFX2(X265_NS, name)
+
 // from cpu-a.asm, if ASM primitives are compiled, else primitives.cpp
-extern "C" void x265_cpu_emms(void);
-extern "C" void x265_safe_intel_cpu_indicator_init(void);
+extern "C" void PFX(cpu_emms)(void);
+extern "C" void PFX(safe_intel_cpu_indicator_init)(void);
 
 #if _MSC_VER && _WIN64
-#define x265_emms() x265_cpu_emms()
+#define x265_emms() PFX(cpu_emms)()
 #elif _MSC_VER
 #include <mmintrin.h>
 #define x265_emms() _mm_empty()
 #elif __GNUC__
 // Cannot use _mm_empty() directly without compiling all the source with
 // a fixed CPU arch, which we would like to avoid at the moment
-#define x265_emms() x265_cpu_emms()
+#define x265_emms() PFX(cpu_emms)()
 #else
-#define x265_emms() x265_cpu_emms()
+#define x265_emms() PFX(cpu_emms)()
 #endif
 
 namespace X265_NS {

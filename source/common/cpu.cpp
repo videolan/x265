@@ -107,9 +107,9 @@ const cpu_name_t cpu_names[] =
 
 extern "C" {
 /* cpu-a.asm */
-int x265_cpu_cpuid_test(void);
-void x265_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx);
-void x265_cpu_xgetbv(uint32_t op, uint32_t *eax, uint32_t *edx);
+int PFX(cpu_cpuid_test)(void);
+void PFX(cpu_cpuid)(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx);
+void PFX(cpu_xgetbv)(uint32_t op, uint32_t *eax, uint32_t *edx);
 }
 
 #if defined(_MSC_VER)
@@ -129,12 +129,12 @@ uint32_t cpu_detect(void)
         return 0;
 #endif
 
-    x265_cpu_cpuid(0, &eax, vendor + 0, vendor + 2, vendor + 1);
+    PFX(cpu_cpuid)(0, &eax, vendor + 0, vendor + 2, vendor + 1);
     max_basic_cap = eax;
     if (max_basic_cap == 0)
         return 0;
 
-    x265_cpu_cpuid(1, &eax, &ebx, &ecx, &edx);
+    PFX(cpu_cpuid)(1, &eax, &ebx, &ecx, &edx);
     if (edx & 0x00800000)
         cpu |= X265_CPU_MMX;
     else
@@ -159,7 +159,7 @@ uint32_t cpu_detect(void)
     if ((ecx & 0x18000000) == 0x18000000)
     {
         /* Check for OS support */
-        x265_cpu_xgetbv(0, &eax, &edx);
+        PFX(cpu_xgetbv)(0, &eax, &edx);
         if ((eax & 0x6) == 0x6)
         {
             cpu |= X265_CPU_AVX;
@@ -170,7 +170,7 @@ uint32_t cpu_detect(void)
 
     if (max_basic_cap >= 7)
     {
-        x265_cpu_cpuid(7, &eax, &ebx, &ecx, &edx);
+        PFX(cpu_cpuid)(7, &eax, &ebx, &ecx, &edx);
         /* AVX2 requires OS support, but BMI1/2 don't. */
         if ((cpu & X265_CPU_AVX) && (ebx & 0x00000020))
             cpu |= X265_CPU_AVX2;
@@ -185,12 +185,12 @@ uint32_t cpu_detect(void)
     if (cpu & X265_CPU_SSSE3)
         cpu |= X265_CPU_SSE2_IS_FAST;
 
-    x265_cpu_cpuid(0x80000000, &eax, &ebx, &ecx, &edx);
+    PFX(cpu_cpuid)(0x80000000, &eax, &ebx, &ecx, &edx);
     max_extended_cap = eax;
 
     if (max_extended_cap >= 0x80000001)
     {
-        x265_cpu_cpuid(0x80000001, &eax, &ebx, &ecx, &edx);
+        PFX(cpu_cpuid)(0x80000001, &eax, &ebx, &ecx, &edx);
 
         if (ecx & 0x00000020)
             cpu |= X265_CPU_LZCNT; /* Supported by Intel chips starting with Haswell */
@@ -233,7 +233,7 @@ uint32_t cpu_detect(void)
 
     if (!strcmp((char*)vendor, "GenuineIntel"))
     {
-        x265_cpu_cpuid(1, &eax, &ebx, &ecx, &edx);
+        PFX(cpu_cpuid)(1, &eax, &ebx, &ecx, &edx);
         int family = ((eax >> 8) & 0xf) + ((eax >> 20) & 0xff);
         int model  = ((eax >> 4) & 0xf) + ((eax >> 12) & 0xf0);
         if (family == 6)
@@ -264,11 +264,11 @@ uint32_t cpu_detect(void)
     if ((!strcmp((char*)vendor, "GenuineIntel") || !strcmp((char*)vendor, "CyrixInstead")) && !(cpu & X265_CPU_SSE42))
     {
         /* cacheline size is specified in 3 places, any of which may be missing */
-        x265_cpu_cpuid(1, &eax, &ebx, &ecx, &edx);
+        PFX(cpu_cpuid)(1, &eax, &ebx, &ecx, &edx);
         int cache = (ebx & 0xff00) >> 5; // cflush size
         if (!cache && max_extended_cap >= 0x80000006)
         {
-            x265_cpu_cpuid(0x80000006, &eax, &ebx, &ecx, &edx);
+            PFX(cpu_cpuid)(0x80000006, &eax, &ebx, &ecx, &edx);
             cache = ecx & 0xff; // cacheline size
         }
         if (!cache && max_basic_cap >= 2)
@@ -281,7 +281,7 @@ uint32_t cpu_detect(void)
             int max, i = 0;
             do
             {
-                x265_cpu_cpuid(2, buf + 0, buf + 1, buf + 2, buf + 3);
+                PFX(cpu_cpuid)(2, buf + 0, buf + 1, buf + 2, buf + 3);
                 max = buf[0] & 0xff;
                 buf[0] &= ~0xff;
                 for (int j = 0; j < 4; j++)
