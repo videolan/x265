@@ -1777,18 +1777,15 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 idx = 0;
                 do
                 {
-                    uint32_t symbol1 = absCoeff[idx] > 1;
-                    uint32_t symbol2 = absCoeff[idx] > 2;
+                    const uint32_t symbol1 = absCoeff[idx] > 1;
+                    const uint32_t symbol2 = absCoeff[idx] > 2;
                     encodeBin(symbol1, baseCtxMod[c1]);
 
                     if (symbol1)
                         c1Next = 0;
 
-                    if (symbol1 + firstC2Flag == 3)
-                        firstC2Flag = symbol2;
-
-                    if (symbol1 + firstC2Idx == 9)
-                        firstC2Idx  = idx;
+                    firstC2Flag = (symbol1 + firstC2Flag == 3) ? symbol2 : firstC2Flag;
+                    firstC2Idx  = (symbol1 + firstC2Idx == 9) ? idx : firstC2Idx;
 
                     c1 = (c1Next & 3);
                     c1Next >>= 2;
