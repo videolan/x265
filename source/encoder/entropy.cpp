@@ -1756,9 +1756,9 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                 c1 = ((sum >> 26) & 3);
                 m_fracBits += sum & 0x00FFFFFF;
 
-                const int hiddenShift = (bHideFirstSign & signHidden) ? 1 : 0;
+                const int hiddenShift = (bHideFirstSign & signHidden) ? -1 : 0;
                 //encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);
-                m_fracBits += (numNonZero - hiddenShift) << 15;
+                m_fracBits += (numNonZero + hiddenShift) << 15;
 
                 if (numNonZero > firstC2Idx)
                 {
