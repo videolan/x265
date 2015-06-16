@@ -1589,7 +1589,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
         // encode significant_coeffgroup_flag
         const int cgBlkPos = codingParameters.scanCG[subSet];
-        const int cgPosY   = cgBlkPos >> (log2TrSize - MLS_CG_LOG2_SIZE);
+        const int cgPosY   = (uint32_t)cgBlkPos >> (log2TrSize - MLS_CG_LOG2_SIZE);
         const int cgPosX   = cgBlkPos & ((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1);
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
 
