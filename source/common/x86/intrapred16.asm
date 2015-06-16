@@ -53,6 +53,7 @@ const pw_ang32_13_23,               db  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 1
 const pw_ang32_14_22,               db  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 10, 11,  6,  7,  0,  1
 const pw_ang32_15_21,               db  0,  0,  0,  0,  0,  0,  0,  0, 12, 13,  8,  9,  4,  5,  0,  1
 const pw_ang32_16_20,               db  0,  0,  0,  0,  0,  0,  0,  0,  8,  9,  6,  7,  2,  3,  0,  1
+const pw_ang32_17_19_0,             db  0,  0,  0,  0, 12, 13, 10, 11,  8,  9,  6,  7,  2,  3,  0,  1
 
 const shuf_mode_13_23,              db  0,  0, 14, 15,  6,  7,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0
 const shuf_mode_14_22,              db 14, 15, 10, 11,  4,  5,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0
@@ -16918,6 +16919,298 @@ cglobal intra_pred_ang32_20, 3,8,14
     lea         r0, [r0 + 8 * r1]
 
     call        ang32_mode_16_20_rows_16_31
+
+    mov         rsp, [rsp+5*mmsize]
+    RET
+
+;; angle 32, modes 17 and 19, row 0 to 15
+cglobal ang32_mode_17_19_rows_0_15
+    test            r6d, r6d
+
+    movu            m0, [r2 - 24]
+    movu            m1, [r2 - 22]
+
+    punpcklwd       m3, m0, m1
+    punpckhwd       m0, m1
+
+    movu            m1, [r2 - 8]
+    movu            m4, [r2 - 6]
+    punpcklwd       m2, m1, m4
+    punpckhwd       m1, m4
+
+    pmaddwd         m4, m3, [r3 - 16 * 32]              ; [0]
+    paddd           m4, [pd_16]
+    psrld           m4, 5
+    pmaddwd         m5, m0, [r3 - 16 * 32]
+    paddd           m5, [pd_16]
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    pmaddwd         m5, m3, [r3 + 10 * 32]              ; [26]
+    paddd           m5, [pd_16]
+    psrld           m5, 5
+    pmaddwd         m8, m0, [r3 + 10 * 32]
+    paddd           m8, [pd_16]
+    psrld           m8, 5
+    packusdw        m5, m8
+
+    palignr         m6, m0, m3, 4
+    palignr         m8, m2, m0, 4
+    pmaddwd         m6, [r3 + 4 * 32]                   ; [20]
+    paddd           m6, [pd_16]
+    psrld           m6, 5
+    pmaddwd         m8, [r3 + 4 * 32]
+    paddd           m8, [pd_16]
+    psrld           m8, 5
+    packusdw        m6, m8
+
+    palignr         m7, m0, m3, 8
+    palignr         m9, m2, m0, 8
+    pmaddwd         m7, [r3 - 2 * 32]                   ; [14]
+    paddd           m7, [pd_16]
+    psrld           m7, 5
+    pmaddwd         m9, [r3 - 2 * 32]
+    paddd           m9, [pd_16]
+    psrld           m9, 5
+    packusdw        m7, m9
+
+    palignr         m8, m0, m3, 12
+    palignr         m10, m2, m0, 12
+    pmaddwd         m8, [r3 - 8 * 32]                   ; [8]
+    paddd           m8, [pd_16]
+    psrld           m8, 5
+    pmaddwd         m10, [r3 - 8 * 32]
+    paddd           m10, [pd_16]
+    psrld           m10, 5
+    packusdw        m8, m10
+
+    pmaddwd         m9, m0, [r3 - 14 * 32]              ; [2]
+    paddd           m9, [pd_16]
+    psrld           m9, 5
+    pmaddwd         m12, m2, [r3 - 14 * 32]
+    paddd           m12, [pd_16]
+    psrld           m12, 5
+    packusdw        m9, m12
+
+    pmaddwd         m10, m0, [r3 + 12 * 32]             ; [28]
+    paddd           m10, [pd_16]
+    psrld           m10, 5
+    pmaddwd         m11, m2, [r3 + 12 * 32]
+    paddd           m11, [pd_16]
+    psrld           m11, 5
+    packusdw        m10, m11
+
+    palignr         m11, m2, m0, 4
+    palignr         m12, m1, m2, 4
+    pmaddwd         m11, [r3 + 6 * 32]                  ; [22]
+    paddd           m11, [pd_16]
+    psrld           m11, 5
+    pmaddwd         m12, [r3 + 6 * 32]
+    paddd           m12, [pd_16]
+    psrld           m12, 5
+    packusdw        m11, m12
+
+    TRANSPOSE_STORE_AVX2_STACK 11, 10, 9, 8, 7, 6, 5, 4, 12, 13, 16
+
+    palignr         m4, m2, m0, 8
+    palignr         m5, m1, m2, 8
+    pmaddwd         m4, [r3]                            ; [16]
+    paddd           m4, [pd_16]
+    psrld           m4, 5
+    pmaddwd         m5, [r3]
+    paddd           m5, [pd_16]
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    palignr         m5, m2, m0, 12
+    palignr         m3, m1, m2, 12
+    pmaddwd         m5, [r3 - 6 * 32]                   ; [10]
+    paddd           m5, [pd_16]
+    psrld           m5, 5
+    pmaddwd         m3, [r3 - 6 * 32]
+    paddd           m3, [pd_16]
+    psrld           m3, 5
+    packusdw        m5, m3
+
+    pmaddwd         m6, m2, [r3 - 12 * 32]              ; [4]
+    paddd           m6, [pd_16]
+    psrld           m6, 5
+    pmaddwd         m8, m1, [r3 - 12 * 32]
+    paddd           m8, [pd_16]
+    psrld           m8, 5
+    packusdw        m6, m8
+
+    pmaddwd         m7, m2, [r3 + 14 * 32]              ; [30]
+    paddd           m7, [pd_16]
+    psrld           m7, 5
+    pmaddwd         m3, m1, [r3 + 14 * 32]
+    paddd           m3, [pd_16]
+    psrld           m3, 5
+    packusdw        m7, m3
+
+    movu            m0, [r2 - 6]
+    movu            m1, [r2 - 4]
+
+    punpcklwd       m3, m0, m1
+    punpckhwd       m0, m1
+
+    movu            m2, [r2 + 10]
+    movu            m1, [r2 + 12]
+    punpcklwd       m2, m1
+
+    pmaddwd         m8, m3, [r3 + 8 * 32]               ; [24]
+    paddd           m8, [pd_16]
+    psrld           m8, 5
+    pmaddwd         m9, m0, [r3 + 8 * 32]
+    paddd           m9, [pd_16]
+    psrld           m9, 5
+    packusdw        m8, m9
+
+    palignr         m9, m0, m3, 4
+    palignr         m10, m2, m0, 4
+    pmaddwd         m9, [r3 + 2 * 32]                   ; [18]
+    paddd           m9, [pd_16]
+    psrld           m9, 5
+    pmaddwd         m10, [r3 + 2 * 32]
+    paddd           m10, [pd_16]
+    psrld           m10, 5
+    packusdw        m9, m10
+
+    palignr         m10, m0, m3, 8
+    palignr         m11, m2, m0, 8
+    pmaddwd         m10, [r3 - 4 * 32]                  ; [12]
+    paddd           m10, [pd_16]
+    psrld           m10, 5
+    pmaddwd         m11, [r3 - 4 * 32]
+    paddd           m11, [pd_16]
+    psrld           m11, 5
+    packusdw        m10, m11
+
+    palignr         m2, m0, 12
+    palignr         m0, m3, 12
+    pmaddwd         m0, [r3 - 10 * 32]                  ; [6]
+    paddd           m0, [pd_16]
+    psrld           m0, 5
+    pmaddwd         m2, [r3 - 10 * 32]
+    paddd           m2, [pd_16]
+    psrld           m2, 5
+    packusdw        m0, m2
+    TRANSPOSE_STORE_AVX2_STACK 0, 10, 9, 8, 7, 6, 5, 4, 2, 1, 0
+    ret
+
+cglobal intra_pred_ang32_17, 3,8,14
+    mov         r6, rsp
+    sub         rsp, 5*mmsize+gprsize
+    and         rsp, ~63
+    mov         [rsp+5*mmsize], r6
+
+    movu        m0, [r2 + 128]
+    movu        m1, [r2 + 160]
+    movd        xm2, [r2 + 192]
+
+    mova        [rsp + 2*mmsize], m0
+    mova        [rsp + 3*mmsize], m1
+    movd        [rsp + 4*mmsize], xm2
+
+    add         r1d, r1d
+    lea         r4, [r1 * 3]
+    lea         r3, [ang_table_avx2 + 16 * 32]
+
+    movu        xm1, [r2 + 2]
+    movu        xm2, [r2 + 18]
+    movu        xm3, [r2 + 34]
+    movu        xm4, [r2 + 50]
+    pshufb      xm1, [pw_ang32_17_19_0]
+    pshufb      xm2, [shuf_mode_17_19]
+    pshufb      xm3, [pw_ang32_17_19_0]
+    pshufb      xm4, [shuf_mode_17_19]
+
+    movzx       r6d, word [r2]
+    mov         [rsp + 2*mmsize], r6w
+    movu        [rsp + 48], xm1
+    movu        [rsp + 36], xm2
+    movu        [rsp + 22], xm3
+    movu        [rsp + 10], xm4
+
+    xor         r6d, r6d
+    lea         r2, [rsp + 2*mmsize]
+    lea         r7, [r0 + 8 * r1]
+
+    call        ang32_mode_17_19_rows_0_15
+
+    sub         r2, 26
+    lea         r0, [r0 + 32]
+
+    call        ang32_mode_17_19_rows_0_15
+
+    add         r2, 58
+    lea         r0, [r7 + 8 * r1]
+
+    call        ang32_mode_17_19_rows_0_15
+
+    sub         r2, 26
+    lea         r0, [r0 + 32]
+
+    call        ang32_mode_17_19_rows_0_15
+
+    mov         rsp, [rsp+5*mmsize]
+    RET
+
+cglobal intra_pred_ang32_19, 3,8,14
+    mov         r6, rsp
+    sub         rsp, 5*mmsize+gprsize
+    and         rsp, ~63
+    mov         [rsp+5*mmsize], r6
+
+    movu        m0, [r2]
+    movu        m1, [r2 + 32]
+    movd        xm2, [r2 + 64]
+
+    mova        [rsp + 2*mmsize], m0
+    mova        [rsp + 3*mmsize], m1
+    movd        [rsp + 4*mmsize], xm2
+
+    add         r1d, r1d
+    lea         r4, [r1 * 3]
+    lea         r3, [ang_table_avx2 + 16 * 32]
+
+    movu        xm1, [r2 + 130]
+    movu        xm2, [r2 + 146]
+    movu        xm3, [r2 + 162]
+    movu        xm4, [r2 + 178]
+    pshufb      xm1, [pw_ang32_17_19_0]
+    pshufb      xm2, [shuf_mode_17_19]
+    pshufb      xm3, [pw_ang32_17_19_0]
+    pshufb      xm4, [shuf_mode_17_19]
+
+    movu        [rsp + 48], xm1
+    movu        [rsp + 36], xm2
+    movu        [rsp + 22], xm3
+    movu        [rsp + 10], xm4
+
+    xor         r6d, r6d
+    inc         r6d
+    lea         r2, [rsp + 2*mmsize]
+    lea         r5, [r0 + 32]
+
+    call        ang32_mode_17_19_rows_0_15
+
+    sub         r2, 26
+    lea         r0, [r0 + 8 * r1]
+    lea         r0, [r0 + 8 * r1]
+
+    call        ang32_mode_17_19_rows_0_15
+
+    add         r2, 58
+    mov         r0, r5
+
+    call        ang32_mode_17_19_rows_0_15
+
+    sub         r2, 26
+    lea         r0, [r0 + 8 * r1]
+    lea         r0, [r0 + 8 * r1]
+
+    call        ang32_mode_17_19_rows_0_15
 
     mov         rsp, [rsp+5*mmsize]
     RET
