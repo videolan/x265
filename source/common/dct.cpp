@@ -854,7 +854,7 @@ uint32_t costCoeffNxN_c(const uint16_t *scan, const coeff_t *coeff, intptr_t trS
             //encodeBin(sig, baseCtx[ctxSig]);
             const uint32_t mstate = baseCtx[ctxSig];
             const uint32_t mps = mstate & 1;
-            const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
+            const uint32_t stateBits = PFX(entropyStateBits)[mstate ^ sig];
             uint32_t nextState = (stateBits >> 24) + mps;
             if ((mstate ^ sig) == 1)
                 nextState = sig;

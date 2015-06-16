@@ -71,7 +71,7 @@ cextern pb_32
 cextern pb_64
 cextern hmul_16p
 cextern trans8_shuf
-cextern_naked g_entropyStateBits
+cextern_naked private_prefix %+ _entropyStateBits
 cextern pb_movemask
 
 ;-----------------------------------------------------------------------------
@@ -6388,7 +6388,7 @@ cglobal saoCuStatsE3, 4,9,8,0-32    ; Stack: 5 of stats and 5 of count
 ;
 ;        const uint32_t mstate = baseCtx[ctxSig];
 ;        const uint32_t mps = mstate & 1;
-;        const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
+;        const uint32_t stateBits = x265_entropyStateBits[mstate ^ sig];
 ;        uint32_t nextState = (stateBits >> 24) + mps;
 ;        if ((mstate ^ sig) == 1)
 ;            nextState = sig;
@@ -6453,14 +6453,14 @@ cglobal costCoeffNxN, 6,11,5
     ; m0 - Zigzag
     ; m1 - sigCtx
     ; {m3,m2} - abs(coeff)
-    ; r0 - g_entropyStateBits
+    ; r0 - x265_entropyStateBits
     ; r1 - baseCtx
     ; r2 - scanPosSigOff
     ; r3 - absCoeff
     ; r4 - nonZero
     ; r5 - scanFlagMask
     ; r6 - sum
-    lea         r0, [g_entropyStateBits]
+    lea         r0, [private_prefix %+ _entropyStateBits]
     mov         r1, r6mp
     xor         r6d, r6d
     xor         r4d, r4d
@@ -6475,7 +6475,7 @@ cglobal costCoeffNxN, 6,11,5
 ;        ctxSig = cnt & posZeroMask;
 ;        const uint32_t mstate = baseCtx[ctxSig];
 ;        const uint32_t mps = mstate & 1;
-;        const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
+;        const uint32_t stateBits = x265_entropyStateBits[mstate ^ sig];
 ;        uint32_t nextState = (stateBits >> 24) + mps;
 ;        if ((mstate ^ sig) == 1)
 ;            nextState = sig;
@@ -6500,7 +6500,7 @@ cglobal costCoeffNxN, 6,11,5
     mov         r10d, r9d
     and         r10d, 1                         ; mps = mstate & 1
     xor         r9d, r8d                        ; r9 = mstate ^ sig
-    add         r6d, [r0 + r9 * 4]              ; sum += g_entropyStateBits[mstate ^ sig]
+    add         r6d, [r0 + r9 * 4]              ; sum += x265_entropyStateBits[mstate ^ sig]
     add         r10b, byte [r0 + r9 * 4 + 3]    ; nextState = (stateBits >> 24) + mps
     cmp         r9b, 1
     cmove       r10d, r8d
@@ -6526,7 +6526,7 @@ cglobal costCoeffNxN, 6,11,5
     mov         r4d, r5d
     xor         r5d, r3d                        ; r0 = mstate ^ sig
     and         r3d, 1                          ; mps = mstate & 1
-    add         r6d, [r0 + r5 * 4]              ; sum += g_entropyStateBits[mstate ^ sig]
+    add         r6d, [r0 + r5 * 4]              ; sum += x265_entropyStateBits[mstate ^ sig]
     add         r3b, [r0 + r5 * 4 + 3]          ; nextState = (stateBits >> 24) + mps
     cmp         r5b, 1
     cmove       r3d, r4d
@@ -6708,13 +6708,13 @@ cglobal costC1C2Flag, 4,12,2
     or          r11d, 0x100                     ; default value setting to 8
     bsf         r11d, r11d
 
-    lea         r5, [g_entropyStateBits]
+    lea         r5, [private_prefix %+ _entropyStateBits]
     xor         r6d, r6d
     mov         r4d, 0xFFFFFFF9
 
     ; register mapping
     ; r4d       - nextC1
-    ; r5        - g_entropyStateBits
+    ; r5        - x265_entropyStateBits
     ; r6d       - sum
     ; r[7-10]   - tmp
     ; r11d      - firstC2Idx (not use in loop)
@@ -6723,7 +6723,7 @@ cglobal costC1C2Flag, 4,12,2
 .loop:
     ; const uint32_t mstate = baseCtx[ctxSig];
     ; const uint32_t mps = mstate & 1;
-    ; const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
+    ; const uint32_t stateBits = x265_entropyStateBits[mstate ^ sig];
     ; uint32_t nextState = (stateBits >> 24) + mps;
     ; if ((mstate ^ sig) == 1)
     ;     nextState = sig;
@@ -6740,7 +6740,7 @@ cglobal costC1C2Flag, 4,12,2
     mov         r9d, r7d                        ; sig = symbol1
     xor         r7d, r8d                        ; mstate ^ sig
     and         r8d, 1                          ; mps = mstate & 1
-    add         r6d, [r5 + r7 * 4]              ; sum += g_entropyStateBits[mstate ^ sig]
+    add         r6d, [r5 + r7 * 4]              ; sum += x265_entropyStateBits[mstate ^ sig]
     add         r8b, [r5 + r7 * 4 + 3]          ; nextState = (stateBits >> 24) + mps
     cmp         r7b, 1                          ; if ((mstate ^ sig) == 1) nextState = sig;
     cmove       r8d, r9d
@@ -6765,7 +6765,7 @@ cglobal costC1C2Flag, 4,12,2
     mov         r1d, r7d                        ; sig = symbol1
     xor         r7d, r8d                        ; mstate ^ sig
     and         r8d, 1                          ; mps = mstate & 1
-    add         r6d, [r5 + r7 * 4]              ; sum += g_entropyStateBits[mstate ^ sig]
+    add         r6d, [r5 + r7 * 4]              ; sum += x265_entropyStateBits[mstate ^ sig]
     add         r8b, [r5 + r7 * 4 + 3]          ; nextState = (stateBits >> 24) + mps
     cmp         r7b, 1                          ; if ((mstate ^ sig) == 1) nextState = sig;
     cmove       r8d, r1d

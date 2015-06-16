@@ -102,7 +102,7 @@
 #define OFF_TQUANT_BYPASS_FLAG_CTX (OFF_TRANSFORMSKIP_FLAG_CTX + 2 * NUM_TRANSFORMSKIP_FLAG_CTX)
 #define MAX_OFF_CTX_MOD            (OFF_TQUANT_BYPASS_FLAG_CTX +     NUM_TQUANT_BYPASS_FLAG_CTX)
 
-extern "C" const uint32_t g_entropyStateBits[128];
+extern "C" const uint32_t PFX(entropyStateBits)[128];
 
 namespace X265_NS {
 // private namespace

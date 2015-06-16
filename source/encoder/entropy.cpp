@@ -2266,7 +2266,7 @@ const uint8_t g_nextState[128][2] =
 }
 
 // [8 24] --> [stateMPS BitCost], [stateLPS BitCost]
-extern "C" const uint32_t g_entropyStateBits[128] =
+extern "C" const uint32_t PFX(entropyStateBits)[128] =
 {
     // Corrected table, most notably for last state
     0x02007B23, 0x000085F9, 0x040074A0, 0x00008CBC, 0x06006EE4, 0x02009354, 0x080067F4, 0x04009C1B,
