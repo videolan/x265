@@ -393,4 +393,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAliasPrimitives(EncoderPrimitives &p);
 }
 
+#if !EXPORT_C_API
+extern const int   PFX(max_bit_depth);
+extern const char* PFX(version_str);
+extern const char* PFX(build_info_str);
+#endif
+
 #endif // ifndef X265_PRIMITIVES_H

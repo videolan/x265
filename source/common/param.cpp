@@ -119,7 +119,7 @@ void x265_param_default(x265_param* param)
     param->bEnableSsim = 0;
 
     /* Source specifications */
-    param->internalBitDepth = x265_max_bit_depth;
+    param->internalBitDepth = X265_DEPTH;
     param->internalCsp = X265_CSP_I420;
 
     param->levelIdc = 0;

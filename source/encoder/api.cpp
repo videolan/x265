@@ -56,8 +56,8 @@ x265_encoder *x265_encoder_open(x265_param *p)
         goto fail;
 
     memcpy(param, p, sizeof(x265_param));
-    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", x265_version_str);
-    x265_log(param, X265_LOG_INFO, "build info %s\n", x265_build_info_str);
+    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", PFX(version_str));
+    x265_log(param, X265_LOG_INFO, "build info %s\n", PFX(build_info_str));
 
     x265_setup_primitives(param, param->cpuid);
 
@@ -260,9 +260,9 @@ static const x265_api libapi =
     sizeof(x265_zone),
     sizeof(x265_stats),
 
-    x265_max_bit_depth,
-    x265_version_str,
-    x265_build_info_str,
+    PFX(max_bit_depth),
+    PFX(version_str),
+    PFX(build_info_str),
 
     &PARAM_NS::x265_param_alloc,
     &PARAM_NS::x265_param_free,
