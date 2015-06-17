@@ -1041,8 +1041,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.dst4x4 = PFX(dst4_ssse3);
         p.cu[BLOCK_8x8].idct = PFX(idct8_ssse3);
 
-        ALL_LUMA_TU(count_nonzero, count_nonzero, avx2);
-
         p.frameInitLowres = PFX(frame_init_lowres_core_ssse3);
 
         ALL_LUMA_PU(convert_p2s, filterPixelToShort, ssse3);
