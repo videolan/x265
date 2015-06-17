@@ -1476,7 +1476,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
 
         p.scale1D_128to64 = PFX(scale1D_128to64_avx2);
         p.scale2D_64to32 = PFX(scale2D_64to32_avx2);
-        // p.weight_pp = PFX(weight_pp_avx2); fails tests
+        p.weight_pp = PFX(weight_pp_avx2);
 
         p.cu[BLOCK_16x16].calcresidual = PFX(getResidual16_avx2);
         p.cu[BLOCK_32x32].calcresidual = PFX(getResidual32_avx2);

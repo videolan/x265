@@ -1280,7 +1280,57 @@ cglobal weight_pp, 6,7,6
 %endif  ; end of (HIGH_BIT_DEPTH == 0)
 
 
+%if HIGH_BIT_DEPTH
+INIT_YMM avx2
+cglobal weight_pp, 6, 7, 7
+    shl          r5d, 4            ; m0 = [w0<<4]
+    mov          r6d, r6m
+    shl          r6d, 16
+    or           r6d, r5d          ; assuming both (w0<<4) and round are using maximum of 16 bits each.
 
+    vpbroadcastd m0, r6d
+
+    movd         xm1, r7m
+    vpbroadcastd m2, r8m
+    mova         m5, [pw_1]
+    mova         m6, [pw_1023]
+    add         r2d, r2d
+    add         r3d, r3d
+    sub          r2d, r3d
+    shr          r3d, 5
+
+.loopH:
+    mov          r5d, r3d
+
+.loopW:
+    movu        m4, [r0]
+    punpcklwd   m3, m4, m5
+    pmaddwd     m3, m0
+    psrad       m3, xm1
+    paddd       m3, m2
+
+    punpckhwd   m4, m5
+    pmaddwd     m4, m0
+    psrad       m4, xm1
+    paddd       m4, m2
+
+    packusdw    m3, m4
+    pminuw      m3, m6
+    movu        [r1], m3
+
+    add         r0, 32
+    add         r1, 32
+
+    dec         r5d
+    jnz         .loopW
+
+    lea         r0, [r0 + r2]
+    lea         r1, [r1 + r2]
+
+    dec         r4d
+    jnz         .loopH
+    RET
+%else
 INIT_YMM avx2
 cglobal weight_pp, 6, 7, 6
 
@@ -1329,7 +1379,7 @@ cglobal weight_pp, 6, 7, 6
     dec         r4d
     jnz         .loopH
     RET
-
+%endif
 ;-------------------------------------------------------------------------------------------------------------------------------------------------
 ;void weight_sp(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 ;-------------------------------------------------------------------------------------------------------------------------------------------------
