@@ -904,6 +904,70 @@ cglobal dequant_normal, 5,5,5
     jnz        .loop
     RET
 
+;----------------------------------------------------------------------------------------------------------------------
+;void dequant_scaling(const int16_t* src, const int32_t* dequantCoef, int16_t* dst, int num, int mcqp_miper, int shift)
+;----------------------------------------------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal dequant_scaling, 6,6,6
+    add         r5d, 4
+    shr         r3d, 3          ; num/8
+    cmp         r5d, r4d
+    jle         .skip
+    sub         r5d, r4d
+    mova        m0, [pd_1]
+    movd        m1, r5d         ; shift - per
+    dec         r5d
+    movd        m2, r5d         ; shift - per - 1
+    pslld       m0, m2          ; 1 << shift - per - 1
+
+.part0:
+    pmovsxwd    m2, [r0]
+    pmovsxwd    m4, [r0 + 8]
+    movu        m3, [r1]
+    movu        m5, [r1 + 16]
+    pmulld      m2, m3
+    pmulld      m4, m5
+    paddd       m2, m0
+    paddd       m4, m0
+    psrad       m2, m1
+    psrad       m4, m1
+    packssdw    m2, m4
+    movu        [r2], m2
+
+    add         r0, 16
+    add         r1, 32
+    add         r2, 16
+    dec         r3d
+    jnz         .part0
+    jmp         .end
+
+.skip:
+    sub         r4d, r5d        ; per - shift
+    movd        m0, r4d
+
+.part1:
+    pmovsxwd    m2, [r0]
+    pmovsxwd    m4, [r0 + 8]
+    movu        m3, [r1]
+    movu        m5, [r1 + 16]
+    pmulld      m2, m3
+    pmulld      m4, m5
+    packssdw    m2, m4
+    pmovsxwd    m1, m2
+    psrldq      m2, 8
+    pmovsxwd    m2, m2
+    pslld       m1, m0
+    pslld       m2, m0
+    packssdw    m1, m2
+    movu        [r2], m1
+
+    add         r0, 16
+    add         r1, 32
+    add         r2, 16
+    dec         r3d
+    jnz         .part1
+.end:
+    RET
 
 INIT_YMM avx2
 cglobal dequant_normal, 5,5,7

@@ -1104,6 +1104,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
         p.quant = PFX(quant_sse4);
         p.nquant = PFX(nquant_sse4);
         p.dequant_normal = PFX(dequant_normal_sse4);
+        p.dequant_scaling = PFX(dequant_scaling_sse4);
 
         // p.pu[LUMA_4x4].satd = p.cu[BLOCK_4x4].sa8d = PFX(pixel_satd_4x4_sse4); fails tests
         ALL_LUMA_PU(satd, pixel_satd, sse4);
@@ -2407,6 +2408,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.quant = PFX(quant_sse4);
         p.nquant = PFX(nquant_sse4);
         p.dequant_normal = PFX(dequant_normal_sse4);
+        p.dequant_scaling = PFX(dequant_scaling_sse4);
 
         p.weight_pp = PFX(weight_pp_sse4);
         p.weight_sp = PFX(weight_sp_sse4);

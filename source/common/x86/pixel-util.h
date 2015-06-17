@@ -31,6 +31,7 @@
     uint32_t PFX(quant_ ## cpu(const int16_t* coef, const int32_t* quantCoeff, int32_t* deltaU, int16_t* qCoef, int qBits, int add, int numCoeff)); \
     uint32_t PFX(nquant_ ## cpu(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff)); \
     void PFX(dequant_normal_ ## cpu(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift)); \
+    void PFX(dequant_scaling_## cpu(const int16_t* src, const int32_t* dequantCoef, int16_t* dst, int num, int mcqp_miper, int shift)); \
     void PFX(weight_pp_ ## cpu(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)); \
     void PFX(weight_sp_ ## cpu(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)); \
     void PFX(scale1D_128to64_ ## cpu(pixel*, const pixel*)); \
