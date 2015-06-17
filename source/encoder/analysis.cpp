@@ -1324,7 +1324,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
 }
 
 /* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
-void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom, bool isSkipMode)
+void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom, bool isShareMergeCand)
 {
     uint32_t depth = cuGeom.depth;
 
@@ -1352,91 +1352,82 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     bool triedPZero = false, triedBZero = false;
     bestPred->rdCost = MAX_INT64;
 
-    if (isSkipMode)
+    uint32_t first = 0, last = numMergeCand;
+    if (isShareMergeCand)
     {
-        uint32_t i = *m_reuseBestMergeCand;
-        bestPred->cu.m_mvpIdx[0][0] = (uint8_t)i;
-        bestPred->cu.m_interDir[0] = candDir[i];
-        bestPred->cu.m_mv[0][0] = candMvField[i][0].mv;
-        bestPred->cu.m_mv[1][0] = candMvField[i][1].mv;
-        bestPred->cu.m_refIdx[0][0] = (int8_t)candMvField[i][0].refIdx;
-        bestPred->cu.m_refIdx[1][0] = (int8_t)candMvField[i][1].refIdx;
-
-        motionCompensation(bestPred->cu, pu, bestPred->predYuv, true, true);
-        encodeResAndCalcRdSkipCU(*bestPred);
+        first = *m_reuseBestMergeCand;
+        last = first + 1;
     }
-    else
+
+    for (uint32_t i = first; i < last; i++)
     {
-        for (uint32_t i = 0; i < numMergeCand; i++)
+        if (m_bFrameParallel &&
+            (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+            candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4))
+            continue;
+
+        /* the merge candidate list is packed with MV(0,0) ref 0 when it is not full */
+        if (candDir[i] == 1 && !candMvField[i][0].mv.word && !candMvField[i][0].refIdx)
         {
-            if (m_bFrameParallel &&
-                (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-                candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4))
+            if (triedPZero)
                 continue;
+            triedPZero = true;
+        }
+        else if (candDir[i] == 3 &&
+            !candMvField[i][0].mv.word && !candMvField[i][0].refIdx &&
+            !candMvField[i][1].mv.word && !candMvField[i][1].refIdx)
+        {
+            if (triedBZero)
+                continue;
+            triedBZero = true;
+        }
 
-            /* the merge candidate list is packed with MV(0,0) ref 0 when it is not full */
-            if (candDir[i] == 1 && !candMvField[i][0].mv.word && !candMvField[i][0].refIdx)
+        tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;    /* merge candidate ID is stored in L0 MVP idx */
+        tempPred->cu.m_interDir[0] = candDir[i];
+        tempPred->cu.m_mv[0][0] = candMvField[i][0].mv;
+        tempPred->cu.m_mv[1][0] = candMvField[i][1].mv;
+        tempPred->cu.m_refIdx[0][0] = (int8_t)candMvField[i][0].refIdx;
+        tempPred->cu.m_refIdx[1][0] = (int8_t)candMvField[i][1].refIdx;
+        tempPred->cu.setPredModeSubParts(MODE_INTER); /* must be cleared between encode iterations */
+
+        motionCompensation(tempPred->cu, pu, tempPred->predYuv, true, true);
+
+        uint8_t hasCbf = true;
+        bool swapped = false;
+        if (!foundCbf0Merge)
+        {
+            /* if the best prediction has CBF (not a skip) then try merge with residual */
+
+            encodeResAndCalcRdInterCU(*tempPred, cuGeom);
+            hasCbf = tempPred->cu.getQtRootCbf(0);
+            foundCbf0Merge = !hasCbf;
+
+            if (tempPred->rdCost < bestPred->rdCost)
             {
-                if (triedPZero)
-                    continue;
-                triedPZero = true;
+                std::swap(tempPred, bestPred);
+                swapped = true;
             }
-            else if (candDir[i] == 3 &&
-                !candMvField[i][0].mv.word && !candMvField[i][0].refIdx &&
-                !candMvField[i][1].mv.word && !candMvField[i][1].refIdx)
+        }
+        if (!m_param->bLossless && hasCbf)
+        {
+            /* try merge without residual (skip), if not lossless coding */
+
+            if (swapped)
             {
-                if (triedBZero)
-                    continue;
-                triedBZero = true;
+                tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;
+                tempPred->cu.m_interDir[0] = candDir[i];
+                tempPred->cu.m_mv[0][0] = candMvField[i][0].mv;
+                tempPred->cu.m_mv[1][0] = candMvField[i][1].mv;
+                tempPred->cu.m_refIdx[0][0] = (int8_t)candMvField[i][0].refIdx;
+                tempPred->cu.m_refIdx[1][0] = (int8_t)candMvField[i][1].refIdx;
+                tempPred->cu.setPredModeSubParts(MODE_INTER);
+                tempPred->predYuv.copyFromYuv(bestPred->predYuv);
             }
 
-            tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;    /* merge candidate ID is stored in L0 MVP idx */
-            tempPred->cu.m_interDir[0] = candDir[i];
-            tempPred->cu.m_mv[0][0] = candMvField[i][0].mv;
-            tempPred->cu.m_mv[1][0] = candMvField[i][1].mv;
-            tempPred->cu.m_refIdx[0][0] = (int8_t)candMvField[i][0].refIdx;
-            tempPred->cu.m_refIdx[1][0] = (int8_t)candMvField[i][1].refIdx;
-            tempPred->cu.setPredModeSubParts(MODE_INTER); /* must be cleared between encode iterations */
+            encodeResAndCalcRdSkipCU(*tempPred);
 
-            motionCompensation(tempPred->cu, pu, tempPred->predYuv, true, true);
-
-            uint8_t hasCbf = true;
-            bool swapped = false;
-            if (!foundCbf0Merge)
-            {
-                /* if the best prediction has CBF (not a skip) then try merge with residual */
-
-                encodeResAndCalcRdInterCU(*tempPred, cuGeom);
-                hasCbf = tempPred->cu.getQtRootCbf(0);
-                foundCbf0Merge = !hasCbf;
-
-                if (tempPred->rdCost < bestPred->rdCost)
-                {
-                    std::swap(tempPred, bestPred);
-                    swapped = true;
-                }
-            }
-            if (!m_param->bLossless && hasCbf)
-            {
-                /* try merge without residual (skip), if not lossless coding */
-
-                if (swapped)
-                {
-                    tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;
-                    tempPred->cu.m_interDir[0] = candDir[i];
-                    tempPred->cu.m_mv[0][0] = candMvField[i][0].mv;
-                    tempPred->cu.m_mv[1][0] = candMvField[i][1].mv;
-                    tempPred->cu.m_refIdx[0][0] = (int8_t)candMvField[i][0].refIdx;
-                    tempPred->cu.m_refIdx[1][0] = (int8_t)candMvField[i][1].refIdx;
-                    tempPred->cu.setPredModeSubParts(MODE_INTER);
-                    tempPred->predYuv.copyFromYuv(bestPred->predYuv);
-                }
-
-                encodeResAndCalcRdSkipCU(*tempPred);
-
-                if (tempPred->rdCost < bestPred->rdCost)
-                    std::swap(tempPred, bestPred);
-            }
+            if (tempPred->rdCost < bestPred->rdCost)
+                std::swap(tempPred, bestPred);
         }
     }
 
