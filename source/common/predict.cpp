@@ -776,30 +776,17 @@ void Predict::fillReferenceSamples(const pixel* adiOrigin, intptr_t picStride, c
         // Fill left & below-left samples
         adiTemp += picStride;
         adi--;
-        pNeighborFlags--;
-        for (int j = 0; j < leftUnits; j++)
+        // NOTE: over copy here, but reduce condition operators
+        for (int j = 0; j < leftUnits * unitHeight; j++)
         {
-            if (*pNeighborFlags)
-                for (int i = 0; i < unitHeight; i++)
-                    adi[-i] = adiTemp[i * picStride];
-
-            adiTemp += unitHeight * picStride;
-            adi -= unitHeight;
-            pNeighborFlags--;
+            adi[-j] = adiTemp[j * picStride];
         }
 
         // Fill above & above-right samples
         adiTemp = adiOrigin - picStride;
         adi = adiLineBuffer + (leftUnits * unitHeight) + unitWidth;
-        pNeighborFlags = bNeighborFlags + leftUnits + 1;
-        for (int j = 0; j < aboveUnits; j++)
-        {
-            if (*pNeighborFlags)
-                memcpy(adi, adiTemp, unitWidth * sizeof(*adiTemp));
-            adiTemp += unitWidth;
-            adi += unitWidth;
-            pNeighborFlags++;
-        }
+        // NOTE: over copy here, but reduce condition operators
+        memcpy(adi, adiTemp, aboveUnits * unitWidth * sizeof(*adiTemp));
 
         // Pad reference samples when necessary
         int curr = 0;
