@@ -1233,7 +1233,7 @@ Quality, rate control and rate distortion options
 	ignored. Slower presets will generally achieve better compression
 	efficiency (and generate smaller bitstreams). Default disabled.
 
-.. option:: --aq-mode <0|1|2>
+.. option:: --aq-mode <0|1|2|3>
 
 	Adaptive Quantization operating mode. Raise or lower per-block
 	quantization based on complexity analysis of the source image. The
@@ -1244,6 +1244,7 @@ Quality, rate control and rate distortion options
 	0. disabled
 	1. AQ enabled **(default)**
 	2. AQ enabled with auto-variance
+	3. AQ enabled with auto-variance and bias to dark scenes
 
 .. option:: --aq-strength <float>
 
