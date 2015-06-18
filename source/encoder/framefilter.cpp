@@ -30,7 +30,7 @@
 #include "frameencoder.h"
 #include "wavefront.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height);
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, uint32_t width, uint32_t height, void *buf, uint32_t& cnt);

@@ -27,7 +27,7 @@
 #include "common.h"
 #include "threading.h"
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 class ThreadPool;
@@ -167,6 +167,6 @@ public:
     virtual void processTasks(int workerThreadId) = 0;
 };
 
-} // end namespace x265
+} // end namespace X265_NS
 
 #endif // ifndef X265_THREADPOOL_H

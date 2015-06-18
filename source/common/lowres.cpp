@@ -25,7 +25,7 @@
 #include "lowres.h"
 #include "mv.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled)
 {
@@ -36,13 +36,13 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled)
     lumaStride = width + 2 * origPic->m_lumaMarginX;
     if (lumaStride & 31)
         lumaStride += 32 - (lumaStride & 31);
-    int cuWidth = (width + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-    int cuHeight = (lines + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-    int cuCount = cuWidth * cuHeight;
+    maxBlocksInRow = (width + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    maxBlocksInCol = (lines + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    int cuCount = maxBlocksInRow * maxBlocksInCol;
 
     /* rounding the width to multiple of lowres CU size */
-    width = cuWidth * X265_LOWRES_CU_SIZE;
-    lines = cuHeight * X265_LOWRES_CU_SIZE;
+    width = maxBlocksInRow * X265_LOWRES_CU_SIZE;
+    lines = maxBlocksInCol * X265_LOWRES_CU_SIZE;
 
     size_t planesize = lumaStride * (lines + 2 * origPic->m_lumaMarginY);
     size_t padoffset = lumaStride * origPic->m_lumaMarginY + origPic->m_lumaMarginX;
@@ -74,7 +74,7 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled)
     {
         for (int j = 0; j < bframes + 2; j++)
         {
-            CHECKED_MALLOC(rowSatds[i][j], int32_t, cuHeight);
+            CHECKED_MALLOC(rowSatds[i][j], int32_t, maxBlocksInCol);
             CHECKED_MALLOC(lowresCosts[i][j], uint16_t, cuCount);
         }
     }

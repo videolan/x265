@@ -31,23 +31,33 @@
 #include "nal.h"
 #include "bitcost.h"
 
-using namespace x265;
+#if EXPORT_C_API
 
-extern "C"
+/* these functions are exported as C functions (default) */
+using namespace X265_NS;
+extern "C" {
+
+#else
+
+/* these functions exist within private namespace (multilib) */
+namespace X265_NS {
+
+#endif
+
 x265_encoder *x265_encoder_open(x265_param *p)
 {
     if (!p)
         return NULL;
 
     Encoder* encoder = NULL;
-    x265_param* param = x265_param_alloc();
-    x265_param* latestParam = x265_param_alloc();
+    x265_param* param = PARAM_NS::x265_param_alloc();
+    x265_param* latestParam = PARAM_NS::x265_param_alloc();
     if (!param || !latestParam)
         goto fail;
 
     memcpy(param, p, sizeof(x265_param));
-    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", x265_version_str);
-    x265_log(param, X265_LOG_INFO, "build info %s\n", x265_build_info_str);
+    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", PFX(version_str));
+    x265_log(param, X265_LOG_INFO, "build info %s\n", PFX(build_info_str));
 
     x265_setup_primitives(param, param->cpuid);
 
@@ -59,7 +69,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
 
     encoder = new Encoder;
     if (!param->rc.bEnableSlowFirstPass)
-        x265_param_apply_fastfirstpass(param);
+        PARAM_NS::x265_param_apply_fastfirstpass(param);
 
     // may change params for auto-detect, etc
     encoder->configure(param);
@@ -87,12 +97,11 @@ x265_encoder *x265_encoder_open(x265_param *p)
 
 fail:
     delete encoder;
-    x265_param_free(param);
-    x265_param_free(latestParam);
+    PARAM_NS::x265_param_free(param);
+    PARAM_NS::x265_param_free(latestParam);
     return NULL;
 }
 
-extern "C"
 int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
 {
     if (pp_nal && enc)
@@ -109,7 +118,6 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
     return -1;
 }
 
-extern "C"
 void x265_encoder_parameters(x265_encoder *enc, x265_param *out)
 {
     if (enc && out)
@@ -119,7 +127,6 @@ void x265_encoder_parameters(x265_encoder *enc, x265_param *out)
     }
 }
 
-extern "C"
 int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
 {
     if (!enc || !param_in)
@@ -140,7 +147,6 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
     return ret;
 }
 
-extern "C"
 int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, x265_picture *pic_in, x265_picture *pic_out)
 {
     if (!enc)
@@ -175,7 +181,6 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     return numEncoded;
 }
 
-extern "C"
 void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t statsSizeBytes)
 {
     if (enc && outputStats)
@@ -185,17 +190,15 @@ void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t
     }
 }
 
-extern "C"
-void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
+void x265_encoder_log(x265_encoder* enc, int, char **)
 {
     if (enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-        encoder->writeLog(argc, argv);
+        x265_log(encoder->m_param, X265_LOG_WARNING, "x265_encoder_log is now deprecated\n");
     }
 }
 
-extern "C"
 void x265_encoder_close(x265_encoder *enc)
 {
     if (enc)
@@ -210,7 +213,6 @@ void x265_encoder_close(x265_encoder *enc)
     }
 }
 
-extern "C"
 void x265_cleanup(void)
 {
     if (!g_ctuSizeConfigured)
@@ -220,13 +222,11 @@ void x265_cleanup(void)
     }
 }
 
-extern "C"
 x265_picture *x265_picture_alloc()
 {
     return (x265_picture*)x265_malloc(sizeof(x265_picture));
 }
 
-extern "C"
 void x265_picture_init(x265_param *param, x265_picture *pic)
 {
     memset(pic, 0, sizeof(x265_picture));
@@ -245,7 +245,6 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
     }
 }
 
-extern "C"
 void x265_picture_free(x265_picture *p)
 {
     return x265_free(p);
@@ -253,12 +252,24 @@ void x265_picture_free(x265_picture *p)
 
 static const x265_api libapi =
 {
-    &x265_param_alloc,
-    &x265_param_free,
-    &x265_param_default,
-    &x265_param_parse,
-    &x265_param_apply_profile,
-    &x265_param_default_preset,
+    X265_MAJOR_VERSION,
+    X265_BUILD,
+    sizeof(x265_param),
+    sizeof(x265_picture),
+    sizeof(x265_analysis_data),
+    sizeof(x265_zone),
+    sizeof(x265_stats),
+
+    PFX(max_bit_depth),
+    PFX(version_str),
+    PFX(build_info_str),
+
+    &PARAM_NS::x265_param_alloc,
+    &PARAM_NS::x265_param_free,
+    &PARAM_NS::x265_param_default,
+    &PARAM_NS::x265_param_parse,
+    &PARAM_NS::x265_param_apply_profile,
+    &PARAM_NS::x265_param_default_preset,
     &x265_picture_alloc,
     &x265_picture_free,
     &x265_picture_init,
@@ -271,12 +282,12 @@ static const x265_api libapi =
     &x265_encoder_log,
     &x265_encoder_close,
     &x265_cleanup,
-    x265_version_str,
-    x265_build_info_str,
-    x265_max_bit_depth,
+
+    sizeof(x265_frame_stats),
 };
 
 typedef const x265_api* (*api_get_func)(int bitDepth);
+typedef const x265_api* (*api_query_func)(int bitDepth, int apiVersion, int* err);
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -291,7 +302,6 @@ typedef const x265_api* (*api_get_func)(int bitDepth);
 #define ext ".so"
 #endif
 
-extern "C"
 const x265_api* x265_api_get(int bitDepth)
 {
     if (bitDepth && bitDepth != X265_DEPTH)
@@ -328,7 +338,7 @@ const x265_api* x265_api_get(int bitDepth)
         }
 #endif
 
-        if (api && bitDepth != api->max_bit_depth)
+        if (api && bitDepth != api->bit_depth)
         {
             x265_log(NULL, X265_LOG_WARNING, "%s does not support requested bitDepth %d\n", libname, bitDepth);
             return NULL;
@@ -339,3 +349,99 @@ const x265_api* x265_api_get(int bitDepth)
 
     return &libapi;
 }
+
+const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
+{
+    if (apiVersion < 51)
+    {
+        /* builds before 1.6 had re-ordered public structs */
+        if (err) *err = X265_API_QUERY_ERR_VER_REFUSED;
+        return NULL;
+    }
+
+    if (bitDepth && bitDepth != X265_DEPTH)
+    {
+        const char* libname = NULL;
+        const char* method = "x265_api_query";
+
+        if (bitDepth == 12)
+            libname = "libx265_main12" ext;
+        else if (bitDepth == 10)
+            libname = "libx265_main10" ext;
+        else if (bitDepth == 8)
+            libname = "libx265_main" ext;
+        else
+        {
+            if (err) *err = X265_API_QUERY_ERR_LIB_NOT_FOUND;
+            return NULL;
+        }
+
+        const x265_api* api = NULL;
+        int e = X265_API_QUERY_ERR_LIB_NOT_FOUND;
+
+#if _WIN32
+        HMODULE h = LoadLibraryA(libname);
+        if (h)
+        {
+            e = X265_API_QUERY_ERR_FUNC_NOT_FOUND;
+            api_query_func query = (api_query_func)GetProcAddress(h, method);
+            if (query)
+                api = query(bitDepth,apiVersion,err);
+        }
+#else
+        void* h = dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
+        if (h)
+        {
+            e = X265_API_QUERY_ERR_FUNC_NOT_FOUND;
+            api_query_func query = (api_query_func)dlsym(h, method);
+            if (query)
+                api = query(bitDepth,apiVersion,err);
+        }
+#endif
+
+        if (api && bitDepth != api->bit_depth)
+        {
+            x265_log(NULL, X265_LOG_WARNING, "%s does not support requested bitDepth %d\n", libname, bitDepth);
+            if (err) *err = X265_API_QUERY_ERR_WRONG_BITDEPTH;
+            return NULL;
+        }
+
+        if (err) *err = api ? X265_API_QUERY_ERR_NONE : e;
+        return api;
+    }
+
+    if (err) *err = X265_API_QUERY_ERR_NONE;
+    return &libapi;
+}
+
+} /* end namespace or extern "C" */
+
+
+/* multilib namespace reflectors */
+#if X265_DEPTH == 8 && !EXPORT_C_API
+
+namespace x265_10bpp {
+const x265_api* x265_api_get(int bitDepth);
+const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
+}
+
+extern "C"
+const x265_api* x265_api_get(int bitDepth)
+{
+    if (!bitDepth || bitDepth == 8)
+        return x265_8bpp::x265_api_get(0);
+    else if (bitDepth == 10)
+        return x265_10bpp::x265_api_get(0);
+    return NULL;
+}
+
+extern "C"
+const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
+{
+    if (!bitDepth || bitDepth == 8)
+        return x265_8bpp::x265_api_query(0, apiVersion, err);
+    else if (bitDepth == 10)
+        return x265_10bpp::x265_api_query(0, apiVersion, err);
+    return NULL;
+}
+#endif

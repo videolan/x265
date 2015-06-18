@@ -664,15 +664,6 @@ c_ang4_mode_25:          db 2, 30, 2, 30, 2, 30, 2, 30, 4, 28, 4, 28, 4, 28, 4, 
 ALIGN 32
 ;; (blkSize - 1 - x)
 pw_planar4_0:         dw 3,  2,  1,  0,  3,  2,  1,  0
-pw_planar4_1:         dw 3,  3,  3,  3,  3,  3,  3,  3
-pw_planar8_0:         dw 7,  6,  5,  4,  3,  2,  1,  0
-pw_planar8_1:         dw 7,  7,  7,  7,  7,  7,  7,  7
-pw_planar16_0:        dw 15, 14, 13, 12, 11, 10, 9,  8
-pw_planar16_1:        dw 15, 15, 15, 15, 15, 15, 15, 15
-pw_planar32_1:        dw 31, 31, 31, 31, 31, 31, 31, 31
-pw_planar32_L:        dw 31, 30, 29, 28, 27, 26, 25, 24
-pw_planar32_H:        dw 23, 22, 21, 20, 19, 18, 17, 16
-
 ALIGN 32
 c_ang8_mode_13:       db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14, 18, 14
                       db 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 27, 5, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28
@@ -712,9 +703,10 @@ const pw_ang_table
 %endrep
 
 SECTION .text
-
 cextern pw_2
+cextern pw_3
 cextern pw_4
+cextern pw_7
 cextern pw_8
 cextern pw_16
 cextern pw_15
@@ -1149,9 +1141,8 @@ cglobal intra_pred_planar4, 3,3,5
     pshufd          m3, m3, 0xAA
     pshufhw         m4, m2, 0               ; bottomLeft
     pshufd          m4, m4, 0xAA
-
     pmullw          m3, [multi_2Row]        ; (x + 1) * topRight
-    pmullw          m0, m1, [pw_planar4_1]  ; (blkSize - 1 - y) * above[x]
+    pmullw          m0, m1, [pw_3]          ; (blkSize - 1 - y) * above[x]
     paddw           m3, [pw_4]
     paddw           m3, m4
     paddw           m3, m0
@@ -1210,9 +1201,8 @@ cglobal intra_pred_planar8, 3,3,6
     pshuflw         m4, m4, 0x00
     pshufd          m3, m3, 0x44
     pshufd          m4, m4, 0x44
-
     pmullw          m3, [multiL]            ; (x + 1) * topRight
-    pmullw          m0, m1, [pw_planar8_1]  ; (blkSize - 1 - y) * above[x]
+    pmullw          m0, m1, [pw_7]          ; (blkSize - 1 - y) * above[x]
     paddw           m3, [pw_8]
     paddw           m3, m4
     paddw           m3, m0
@@ -1226,7 +1216,7 @@ cglobal intra_pred_planar8, 3,3,6
     pshufhw         m5, m2, 0x55 * (%1 - 4)
     pshufd          m5, m5, 0xAA
 %endif
-    pmullw          m5, [pw_planar8_0]
+    pmullw          m5, [pw_planar16_mul + mmsize]
     paddw           m5, m3
     psraw           m5, 4
     packuswb        m5, m5
@@ -1266,11 +1256,10 @@ cglobal intra_pred_planar16, 3,5,8
     pshuflw         m6, m6, 0x00
     pshufd          m3, m3, 0x44                ; v_topRight
     pshufd          m6, m6, 0x44                ; v_bottomLeft
-
     pmullw          m4, m3, [multiH]            ; (x + 1) * topRight
     pmullw          m3, [multiL]                ; (x + 1) * topRight
-    pmullw          m1, m2, [pw_planar16_1]     ; (blkSize - 1 - y) * above[x]
-    pmullw          m5, m7, [pw_planar16_1]     ; (blkSize - 1 - y) * above[x]
+    pmullw          m1, m2, [pw_15]             ; (blkSize - 1 - y) * above[x]
+    pmullw          m5, m7, [pw_15]             ; (blkSize - 1 - y) * above[x]
     paddw           m4, [pw_16]
     paddw           m3, [pw_16]
     paddw           m4, m6
@@ -1308,8 +1297,8 @@ cglobal intra_pred_planar16, 3,5,8
     paddw           m4, m1
     lea             r0, [r0 + r1]
 %endif
-    pmullw          m0, m5, [pw_planar8_0]
-    pmullw          m5, [pw_planar16_0]
+    pmullw          m0, m5, [pw_planar16_mul + mmsize]
+    pmullw          m5, [pw_planar16_mul]
     paddw           m0, m4
     paddw           m5, m3
     psraw           m5, 5
@@ -1368,8 +1357,7 @@ cglobal intra_pred_planar32, 3,3,16
     mova            m8, m11
     mova            m9, m11
     mova            m10, m11
-
-    mova            m12, [pw_planar32_1]
+    mova            m12, [pw_31]
     movh            m4, [r2 + 1]
     punpcklbw       m4, m7
     psubw           m8, m4
@@ -1393,11 +1381,10 @@ cglobal intra_pred_planar32, 3,3,16
     psubw           m11, m4
     pmullw          m4, m12
     paddw           m3, m4
-
-    mova            m12, [pw_planar32_L]
-    mova            m13, [pw_planar32_H]
-    mova            m14, [pw_planar16_0]
-    mova            m15, [pw_planar8_0]
+    mova            m12, [pw_planar32_mul]
+    mova            m13, [pw_planar32_mul + mmsize]
+    mova            m14, [pw_planar16_mul]
+    mova            m15, [pw_planar16_mul + mmsize]
 %macro PROCESS 1
     pmullw          m5, %1, m12
     pmullw          m6, %1, m13
@@ -1480,42 +1467,37 @@ cglobal intra_pred_planar32, 3,3,8,0-(4*mmsize)
     punpcklbw       m4, m7
     psubw           m5, m6, m4
     mova            [rsp + 0 * mmsize], m5
-    pmullw          m4, [pw_planar32_1]
+    pmullw          m4, [pw_31]
     paddw           m0, m4
-
     movh            m4, [r2 + 9]
     punpcklbw       m4, m7
     psubw           m5, m6, m4
     mova            [rsp + 1 * mmsize], m5
-    pmullw          m4, [pw_planar32_1]
+    pmullw          m4, [pw_31]
     paddw           m1, m4
-
     movh            m4, [r2 + 17]
     punpcklbw       m4, m7
     psubw           m5, m6, m4
     mova            [rsp + 2 * mmsize], m5
-    pmullw          m4, [pw_planar32_1]
+    pmullw          m4, [pw_31]
     paddw           m2, m4
-
     movh            m4, [r2 + 25]
     punpcklbw       m4, m7
     psubw           m5, m6, m4
     mova            [rsp + 3 * mmsize], m5
-    pmullw          m4, [pw_planar32_1]
+    pmullw          m4, [pw_31]
     paddw           m3, m4
-
 %macro PROCESS 1
-    pmullw          m5, %1, [pw_planar32_L]
-    pmullw          m6, %1, [pw_planar32_H]
+    pmullw          m5, %1, [pw_planar32_mul]
+    pmullw          m6, %1, [pw_planar32_mul + mmsize]
     paddw           m5, m0
     paddw           m6, m1
     psraw           m5, 6
     psraw           m6, 6
     packuswb        m5, m6
     movu            [r0], m5
-
-    pmullw          m5, %1, [pw_planar16_0]
-    pmullw          %1, [pw_planar8_0]
+    pmullw          m5, %1, [pw_planar16_mul]
+    pmullw          %1, [pw_planar16_mul + mmsize]
     paddw           m5, m2
     paddw           %1, m3
     psraw           m5, 6
@@ -2474,9 +2456,8 @@ cglobal intra_pred_planar4, 3,3,7
     pshufd          m3, m3, 0xAA
     pshufhw         m4, m2, 0               ; bottomLeft
     pshufd          m4, m4, 0xAA
-
     pmullw          m3, [multi_2Row]        ; (x + 1) * topRight
-    pmullw          m0, m1, [pw_planar4_1]  ; (blkSize - 1 - y) * above[x]
+    pmullw          m0, m1, [pw_3]          ; (blkSize - 1 - y) * above[x]
     mova            m6, [pw_planar4_0]
     paddw           m3, [pw_4]
     paddw           m3, m4
@@ -2533,10 +2514,9 @@ cglobal intra_pred_planar8, 3,3,7
     pshufb          m4, m0
     punpcklbw       m3, m0                  ; v_topRight
     punpcklbw       m4, m0                  ; v_bottomLeft
-
     pmullw          m3, [multiL]            ; (x + 1) * topRight
-    pmullw          m0, m1, [pw_planar8_1]  ; (blkSize - 1 - y) * above[x]
-    mova            m6, [pw_planar8_0]
+    pmullw          m0, m1, [pw_7]          ; (blkSize - 1 - y) * above[x]
+    mova            m6, [pw_planar16_mul + mmsize]
     paddw           m3, [pw_8]
     paddw           m3, m4
     paddw           m3, m0
@@ -2585,11 +2565,10 @@ cglobal intra_pred_planar16, 3,3,8
     pshufb          m6, m0
     punpcklbw       m3, m0                      ; v_topRight
     punpcklbw       m6, m0                      ; v_bottomLeft
-
     pmullw          m4, m3, [multiH]            ; (x + 1) * topRight
     pmullw          m3, [multiL]                ; (x + 1) * topRight
-    pmullw          m1, m2, [pw_planar16_1]     ; (blkSize - 1 - y) * above[x]
-    pmullw          m5, m7, [pw_planar16_1]     ; (blkSize - 1 - y) * above[x]
+    pmullw          m1, m2, [pw_15]             ; (blkSize - 1 - y) * above[x]
+    pmullw          m5, m7, [pw_15]             ; (blkSize - 1 - y) * above[x]
     paddw           m4, [pw_16]
     paddw           m3, [pw_16]
     paddw           m4, m6
@@ -2620,8 +2599,8 @@ cglobal intra_pred_planar16, 3,3,8
 %endif
 %endif
 %endif
-    pmullw          m0, m5, [pw_planar8_0]
-    pmullw          m5, [pw_planar16_0]
+    pmullw          m0, m5, [pw_planar16_mul + mmsize]
+    pmullw          m5, [pw_planar16_mul]
     paddw           m0, m4
     paddw           m5, m3
     paddw           m3, m6
@@ -2738,27 +2717,23 @@ cglobal intra_pred_planar32, 3,4,8,0-(4*mmsize)
     paddw           m1, [pw_32]
     paddw           m2, [pw_32]
     paddw           m3, [pw_32]
-
     pmovzxbw        m4, [r2 + 1]
-    pmullw          m5, m4, [pw_planar32_1]
+    pmullw          m5, m4, [pw_31]
     paddw           m0, m5
     psubw           m5, m6, m4
     mova            m8, m5
-
     pmovzxbw        m4, [r2 + 9]
-    pmullw          m5, m4, [pw_planar32_1]
+    pmullw          m5, m4, [pw_31]
     paddw           m1, m5
     psubw           m5, m6, m4
     mova            m9, m5
-
     pmovzxbw        m4, [r2 + 17]
-    pmullw          m5, m4, [pw_planar32_1]
+    pmullw          m5, m4, [pw_31]
     paddw           m2, m5
     psubw           m5, m6, m4
     mova            m10, m5
-
     pmovzxbw        m4, [r2 + 25]
-    pmullw          m5, m4, [pw_planar32_1]
+    pmullw          m5, m4, [pw_31]
     paddw           m3, m5
     psubw           m5, m6, m4
     mova            m11, m5
@@ -2768,9 +2743,8 @@ cglobal intra_pred_planar32, 3,4,8,0-(4*mmsize)
     movd            m4, [r2]
     pshufb          m4, m7
     punpcklbw       m4, m7
-
-    pmullw          m5, m4, [pw_planar32_L]
-    pmullw          m6, m4, [pw_planar32_H]
+    pmullw          m5, m4, [pw_planar32_mul]
+    pmullw          m6, m4, [pw_planar32_mul + mmsize]
     paddw           m5, m0
     paddw           m6, m1
     paddw           m0, m8
@@ -2779,9 +2753,8 @@ cglobal intra_pred_planar32, 3,4,8,0-(4*mmsize)
     psraw           m6, 6
     packuswb        m5, m6
     movu            [r0], m5
-
-    pmullw          m5, m4, [pw_planar16_0]
-    pmullw          m4, [pw_planar8_0]
+    pmullw          m5, m4, [pw_planar16_mul]
+    pmullw          m4, [pw_planar16_mul + mmsize]
     paddw           m5, m2
     paddw           m4, m3
     paddw           m2, m10

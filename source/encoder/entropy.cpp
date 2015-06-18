@@ -35,9 +35,7 @@
 #define CU_DQP_EG_k    0 // exp-golomb order
 #define START_VALUE    8 // start value for dpcm mode
 
-static const uint32_t g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
-
-namespace x265 {
+namespace X265_NS {
 
 Entropy::Entropy()
 {
@@ -1433,6 +1431,55 @@ void Entropy::codeQtCbfChroma(const CUData& cu, uint32_t absPartIdx, TextType tt
         encodeBin(cu.getCbf(absPartIdx, ttype, lowestTUDepth), m_contextState[OFF_QT_CBF_CTX + ctx]);
 }
 
+#if CHECKED_BUILD || _DEBUG
+uint32_t costCoeffRemain_c0(uint16_t *absCoeff, int numNonZero)
+{
+    uint32_t goRiceParam = 0;
+    int firstCoeff2 = 1;
+    uint32_t baseLevelN = 0x5555AAAA; // 2-bits encode format baseLevel
+
+    uint32_t sum = 0;
+    int idx = 0;
+    do
+    {
+        int baseLevel = (baseLevelN & 3) | firstCoeff2;
+        X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
+        baseLevelN >>= 2;
+        int codeNumber = absCoeff[idx] - baseLevel;
+
+        if (codeNumber >= 0)
+        {
+            //writeCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
+            uint32_t length = 0;
+
+            codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION;
+            if (codeNumber >= 0)
+            {
+                {
+                    unsigned long cidx;
+                    CLZ(cidx, codeNumber + 1);
+                    length = cidx;
+                }
+                X265_CHECK((codeNumber != 0) || (length == 0), "length check failure\n");
+
+                codeNumber = (length + length);
+            }
+            sum += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber);
+
+            if (absCoeff[idx] > (COEF_REMAIN_BIN_REDUCTION << goRiceParam))
+                goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
+            X265_CHECK(goRiceParam <= 4, "goRiceParam check failure\n");
+        }
+        if (absCoeff[idx] >= 2)
+            firstCoeff2 = 0;
+        idx++;
+    }
+    while(idx < numNonZero);
+
+    return sum;
+}
+#endif // debug only code
+
 void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype)
 {
     uint32_t trSize = 1 << log2TrSize;
@@ -1440,7 +1487,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     // compute number of significant coefficients
     uint32_t numSig = primitives.cu[log2TrSize - 2].count_nonzero(coeff);
     X265_CHECK(numSig > 0, "cbf check fail\n");
-    bool bHideFirstSign = cu.m_slice->m_pps->bSignHideEnabled && !tqBypass;
+    bool bHideFirstSign = cu.m_slice->m_pps->bSignHideEnabled & !tqBypass;
 
     if (log2TrSize <= MAX_LOG2_TS_SIZE && !tqBypass && cu.m_slice->m_pps->bTransformSkipEnabled)
         codeTransformSkipFlags(cu.m_transformSkip[ttype][absPartIdx], ttype);
@@ -1489,9 +1536,11 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         if (codingParameters.scanType == SCAN_VER)
             std::swap(pos[0], pos[1]);
 
-        int ctxIdx = bIsLuma ? (3 * (log2TrSize - 2) + ((log2TrSize - 1) >> 2)) : NUM_CTX_LAST_FLAG_XY_LUMA;
-        int ctxShift = bIsLuma ? ((log2TrSize + 1) >> 2) : log2TrSize - 2;
+        int ctxIdx = bIsLuma ? (3 * (log2TrSize - 2) + (log2TrSize == 5)) : NUM_CTX_LAST_FLAG_XY_LUMA;
+        int ctxShift = (bIsLuma ? (log2TrSize > 2) : (log2TrSize - 2));
         uint32_t maxGroupIdx = (log2TrSize << 1) - 1;
+        X265_CHECK(((log2TrSize - 1) >> 2) == (uint32_t)(log2TrSize == 5), "ctxIdx check failure\n");
+        X265_CHECK((uint32_t)ctxShift == (bIsLuma ? ((log2TrSize + 1) >> 2) : log2TrSize - 2), "ctxShift check failure\n");
 
         uint8_t *ctx = &m_contextState[OFF_CTX_LAST_FLAG_X];
         for (uint32_t i = 0; i < 2; i++, ctxIdx += NUM_CTX_LAST_FLAG_XY)
@@ -1519,12 +1568,12 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     uint8_t * const baseCtx = bIsLuma ? &m_contextState[OFF_SIG_FLAG_CTX] : &m_contextState[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
     uint32_t c1 = 1;
     int scanPosSigOff = scanPosLast - (lastScanSet << MLS_CG_SIZE) - 1;
-    int absCoeff[1 << MLS_CG_SIZE];
-    int numNonZero = 1;
+    ALIGN_VAR_32(uint16_t, absCoeff[(1 << MLS_CG_SIZE)]);
+    uint32_t numNonZero = 1;
     unsigned long lastNZPosInCG;
     unsigned long firstNZPosInCG;
 
-    absCoeff[0] = int(abs(coeff[posLast]));
+    absCoeff[0] = (uint16_t)abs(coeff[posLast]);
 
     for (int subSet = lastScanSet; subSet >= 0; subSet--)
     {
@@ -1540,7 +1589,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
 
         // encode significant_coeffgroup_flag
         const int cgBlkPos = codingParameters.scanCG[subSet];
-        const int cgPosY   = cgBlkPos >> (log2TrSize - MLS_CG_LOG2_SIZE);
+        const int cgPosY   = (uint32_t)cgBlkPos >> (log2TrSize - MLS_CG_LOG2_SIZE);
         const int cgPosX   = cgBlkPos & ((1 << (log2TrSize - MLS_CG_LOG2_SIZE)) - 1);
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
 
@@ -1554,21 +1603,14 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         }
 
         // encode significant_coeff_flag
-        if (sigCoeffGroupFlag64 & cgBlkPosMask)
+        if ((scanPosSigOff >= 0) && (sigCoeffGroupFlag64 & cgBlkPosMask))
         {
             X265_CHECK((log2TrSize != 2) || (log2TrSize == 2 && subSet == 0), "log2TrSize and subSet mistake!\n");
             const int patternSigCtx = Quant::calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, (trSize >> MLS_CG_LOG2_SIZE));
             const uint32_t posOffset = (bIsLuma && subSet) ? 3 : 0;
 
-            static const uint8_t ctxIndMap4x4[16] =
-            {
-                0, 1, 4, 5,
-                2, 3, 4, 5,
-                6, 6, 8, 8,
-                7, 7, 8, 8
-            };
             // NOTE: [patternSigCtx][posXinSubset][posYinSubset]
-            static const uint8_t table_cnt[4][SCAN_SET_SIZE] =
+            static const uint8_t table_cnt[5][SCAN_SET_SIZE] =
             {
                 // patternSigCtx = 0
                 {
@@ -1597,50 +1639,61 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                     2, 2, 2, 2,
                     2, 2, 2, 2,
                     2, 2, 2, 2,
+                },
+                // 4x4
+                {
+                    0, 1, 4, 5,
+                    2, 3, 4, 5,
+                    6, 6, 8, 8,
+                    7, 7, 8, 8
                 }
             };
 
             const int offset = codingParameters.firstSignificanceMapContext;
-            ALIGN_VAR_32(uint16_t, tmpCoeff[SCAN_SET_SIZE]);
-            // TODO: accelerate by PABSW
             const uint32_t blkPosBase  = codingParameters.scan[subPosBase];
-            for (int i = 0; i < MLS_CG_SIZE; i++)
-            {
-                tmpCoeff[i * MLS_CG_SIZE + 0] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 0]);
-                tmpCoeff[i * MLS_CG_SIZE + 1] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 1]);
-                tmpCoeff[i * MLS_CG_SIZE + 2] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 2]);
-                tmpCoeff[i * MLS_CG_SIZE + 3] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 3]);
-            }
 
+            X265_CHECK(scanPosSigOff >= 0, "scanPosSigOff check failure\n");
             if (m_bitIf)
             {
+                ALIGN_VAR_32(uint16_t, tmpCoeff[SCAN_SET_SIZE]);
+
+                // TODO: accelerate by PABSW
+                for (int i = 0; i < MLS_CG_SIZE; i++)
+                {
+                    tmpCoeff[i * MLS_CG_SIZE + 0] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 0]);
+                    tmpCoeff[i * MLS_CG_SIZE + 1] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 1]);
+                    tmpCoeff[i * MLS_CG_SIZE + 2] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 2]);
+                    tmpCoeff[i * MLS_CG_SIZE + 3] = (uint16_t)abs(coeff[blkPosBase + i * trSize + 3]);
+                }
+
                 if (log2TrSize == 2)
                 {
-                    uint32_t blkPos, sig, ctxSig;
-                    for (; scanPosSigOff >= 0; scanPosSigOff--)
+                    do
                     {
+                        uint32_t blkPos, sig, ctxSig;
                         blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
                         sig     = scanFlagMask & 1;
                         scanFlagMask >>= 1;
                         X265_CHECK((uint32_t)(tmpCoeff[blkPos] != 0) == sig, "sign bit mistake\n");
                         {
-                            ctxSig = ctxIndMap4x4[blkPos];
+                            ctxSig = table_cnt[4][blkPos];
                             X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
                             encodeBin(sig, baseCtx[ctxSig]);
                         }
                         absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
+                        scanPosSigOff--;
                     }
+                    while(scanPosSigOff >= 0);
                 }
                 else
                 {
                     X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
 
                     const uint8_t *tabSigCtx = table_cnt[(uint32_t)patternSigCtx];
-
-                    uint32_t blkPos, sig, ctxSig;
-                    for (; scanPosSigOff >= 0; scanPosSigOff--)
+                    do
                     {
+                        uint32_t blkPos, sig, ctxSig;
                         blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
                         const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
                         sig     = scanFlagMask & 1;
@@ -1656,79 +1709,20 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                         }
                         absCoeff[numNonZero] = tmpCoeff[blkPos];
                         numNonZero += sig;
+                        scanPosSigOff--;
                     }
+                    while(scanPosSigOff >= 0);
                 }
             }
             else // fast RD path
             {
                 // maximum g_entropyBits are 18-bits and maximum of count are 16, so intermedia of sum are 22-bits
-                uint32_t sum = 0;
-                if (log2TrSize == 2)
-                {
-                    uint32_t blkPos, sig, ctxSig;
-                    for (; scanPosSigOff >= 0; scanPosSigOff--)
-                    {
-                        blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
-                        sig     = scanFlagMask & 1;
-                        scanFlagMask >>= 1;
-                        X265_CHECK((uint32_t)(tmpCoeff[blkPos] != 0) == sig, "sign bit mistake\n");
-                        {
-                            ctxSig = ctxIndMap4x4[blkPos];
-                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, codingParameters.scan[subPosBase + scanPosSigOff], bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
-                            //encodeBin(sig, baseCtx[ctxSig]);
-                            const uint32_t mstate = baseCtx[ctxSig];
-                            const uint32_t mps = mstate & 1;
-                            const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
-                            uint32_t nextState = (stateBits >> 23) + mps;
-                            if ((mstate ^ sig) == 1)
-                                nextState = sig;
-                            X265_CHECK(sbacNext(mstate, sig) == nextState, "nextState check failure\n");
-                            X265_CHECK(sbacGetEntropyBits(mstate, sig) == (stateBits & 0xFFFFFF), "entropyBits check failure\n");
-                            baseCtx[ctxSig] = (uint8_t)nextState;
-                            sum += stateBits;
-                        }
-                        absCoeff[numNonZero] = tmpCoeff[blkPos];
-                        numNonZero += sig;
-                    }
-                } // end of 4x4
-                else
-                {
-                    X265_CHECK((log2TrSize > 2), "log2TrSize must be more than 2 in this path!\n");
+                const uint8_t *tabSigCtx = table_cnt[(log2TrSize == 2) ? 4 : (uint32_t)patternSigCtx];
+                uint32_t sum = primitives.costCoeffNxN(g_scan4x4[codingParameters.scanType], &coeff[blkPosBase], (intptr_t)trSize, absCoeff + numNonZero, tabSigCtx, scanFlagMask, baseCtx, offset + posOffset, scanPosSigOff, subPosBase);
 
-                    const uint8_t *tabSigCtx = table_cnt[(uint32_t)patternSigCtx];
-
-                    uint32_t blkPos, sig, ctxSig;
-                    for (; scanPosSigOff >= 0; scanPosSigOff--)
-                    {
-                        blkPos = g_scan4x4[codingParameters.scanType][scanPosSigOff];
-                        const uint32_t posZeroMask = (subPosBase + scanPosSigOff) ? ~0 : 0;
-                        sig     = scanFlagMask & 1;
-                        scanFlagMask >>= 1;
-                        X265_CHECK((uint32_t)(tmpCoeff[blkPos] != 0) == sig, "sign bit mistake\n");
-                        if (scanPosSigOff != 0 || subSet == 0 || numNonZero)
-                        {
-                            const uint32_t cnt = tabSigCtx[blkPos] + offset;
-                            ctxSig = (cnt + posOffset) & posZeroMask;
-
-                            X265_CHECK(ctxSig == Quant::getSigCtxInc(patternSigCtx, log2TrSize, trSize, codingParameters.scan[subPosBase + scanPosSigOff], bIsLuma, codingParameters.firstSignificanceMapContext), "sigCtx mistake!\n");;
-                            //encodeBin(sig, baseCtx[ctxSig]);
-                            const uint32_t mstate = baseCtx[ctxSig];
-                            const uint32_t mps = mstate & 1;
-                            const uint32_t stateBits = g_entropyStateBits[mstate ^ sig];
-                            uint32_t nextState = (stateBits >> 23) + mps;
-                            if ((mstate ^ sig) == 1)
-                                nextState = sig;
-                            X265_CHECK(sbacNext(mstate, sig) == nextState, "nextState check failure\n");
-                            X265_CHECK(sbacGetEntropyBits(mstate, sig) == (stateBits & 0xFFFFFF), "entropyBits check failure\n");
-                            baseCtx[ctxSig] = (uint8_t)nextState;
-                            sum += stateBits;
-                        }
-                        absCoeff[numNonZero] = tmpCoeff[blkPos];
-                        numNonZero += sig;
-                    }
-                } // end of non 4x4 path
-                sum &= 0xFFFFFF;
-
+#if CHECKED_BUILD || _DEBUG
+                numNonZero = coeffNum[subSet];
+#endif
                 // update RD cost
                 m_fracBits += sum;
             } // end of fast RD path -- !m_bitIf
@@ -1739,99 +1733,93 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
         numNonZero = coeffNum[subSet];
         if (numNonZero > 0)
         {
+            uint32_t idx;
             X265_CHECK(subCoeffFlag > 0, "subCoeffFlag is zero\n");
             CLZ(lastNZPosInCG, subCoeffFlag);
             CTZ(firstNZPosInCG, subCoeffFlag);
 
             bool signHidden = (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD);
-            uint32_t ctxSet = (subSet > 0 && bIsLuma) ? 2 : 0;
+            uint32_t ctxSet = ((subSet > 0) & bIsLuma) ? 2 : 0;
 
-            if (c1 == 0)
-                ctxSet++;
+            ctxSet += !(c1 & 3);
 
             c1 = 1;
-            uint8_t *baseCtxMod = bIsLuma ? &m_contextState[OFF_ONE_FLAG_CTX + 4 * ctxSet] : &m_contextState[OFF_ONE_FLAG_CTX + NUM_ONE_FLAG_CTX_LUMA + 4 * ctxSet];
+            uint8_t *baseCtxMod = &m_contextState[(bIsLuma ? 0 : NUM_ONE_FLAG_CTX_LUMA) + OFF_ONE_FLAG_CTX + 4 * ctxSet];
 
-            int numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
-            int firstC2FlagIdx = -1;
-            for (int idx = 0; idx < numC1Flag; idx++)
+            uint32_t numC1Flag = X265_MIN(numNonZero, C1FLAG_NUMBER);
+            X265_CHECK(numC1Flag > 0, "numC1Flag check failure\n");
+
+            if (!m_bitIf)
             {
-                uint32_t symbol = absCoeff[idx] > 1;
-                encodeBin(symbol, baseCtxMod[c1]);
-                if (symbol)
+                uint32_t sum = primitives.costC1C2Flag(absCoeff, numC1Flag, baseCtxMod, (bIsLuma ? 0 : NUM_ABS_FLAG_CTX_LUMA - NUM_ONE_FLAG_CTX_LUMA) + (OFF_ABS_FLAG_CTX - OFF_ONE_FLAG_CTX) - 3 * ctxSet);
+                uint32_t firstC2Idx = (sum >> 28);
+                c1 = ((sum >> 26) & 3);
+                m_fracBits += sum & 0x00FFFFFF;
+
+                const int hiddenShift = (bHideFirstSign & signHidden) ? -1 : 0;
+                //encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);
+                m_fracBits += (numNonZero + hiddenShift) << 15;
+
+                if (numNonZero > firstC2Idx)
                 {
-                    c1 = 0;
-
-                    if (firstC2FlagIdx == -1)
-                        firstC2FlagIdx = idx;
+                    sum = primitives.costCoeffRemain(absCoeff, numNonZero, firstC2Idx);
+                    X265_CHECK(sum == costCoeffRemain_c0(absCoeff, numNonZero), "costCoeffRemain check failure\n");
+                    m_fracBits += ((uint64_t)sum << 15);
                 }
-                else if ((c1 < 3) && (c1 > 0))
-                    c1++;
             }
-
-            if (!c1)
+            // Standard path
+            else
             {
-                baseCtxMod = bIsLuma ? &m_contextState[OFF_ABS_FLAG_CTX + ctxSet] : &m_contextState[OFF_ABS_FLAG_CTX + NUM_ABS_FLAG_CTX_LUMA + ctxSet];
+                uint32_t firstC2Idx = 8;
+                uint32_t firstC2Flag = 2;
+                uint32_t c1Next = 0xFFFFFFFE;
 
-                X265_CHECK((firstC2FlagIdx != -1), "firstC2FlagIdx check failure\n");
-                uint32_t symbol = absCoeff[firstC2FlagIdx] > 2;
-                encodeBin(symbol, baseCtxMod[0]);
-            }
-
-            const int hiddenShift = (bHideFirstSign && signHidden) ? 1 : 0;
-            encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);
-
-            if (!c1 || numNonZero > C1FLAG_NUMBER)
-            {
-                uint32_t goRiceParam = 0;
-                int firstCoeff2 = 1;
-                uint32_t baseLevelN = 0x5555AAAA; // 2-bits encode format baseLevel
-
-                if (!m_bitIf)
+                idx = 0;
+                do
                 {
-                    // FastRd path
-                    for (int idx = 0; idx < numNonZero; idx++)
-                    {
-                        int baseLevel = (baseLevelN & 3) | firstCoeff2;
-                        X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
-                        baseLevelN >>= 2;
-                        int codeNumber = absCoeff[idx] - baseLevel;
+                    const uint32_t symbol1 = absCoeff[idx] > 1;
+                    const uint32_t symbol2 = absCoeff[idx] > 2;
+                    encodeBin(symbol1, baseCtxMod[c1]);
 
-                        if (codeNumber >= 0)
-                        {
-                            //writeCoefRemainExGolomb(absCoeff[idx] - baseLevel, goRiceParam);
-                            uint32_t length = 0;
+                    if (symbol1)
+                        c1Next = 0;
 
-                            codeNumber = ((uint32_t)codeNumber >> goRiceParam) - COEF_REMAIN_BIN_REDUCTION;
-                            if (codeNumber >= 0)
-                            {
-                                {
-                                    unsigned long cidx;
-                                    CLZ(cidx, codeNumber + 1);
-                                    length = cidx;
-                                }
-                                X265_CHECK((codeNumber != 0) || (length == 0), "length check failure\n");
+                    firstC2Flag = (symbol1 + firstC2Flag == 3) ? symbol2 : firstC2Flag;
+                    firstC2Idx  = (symbol1 + firstC2Idx == 9) ? idx : firstC2Idx;
 
-                                codeNumber = (length + length);
-                            }
-                            m_fracBits += (COEF_REMAIN_BIN_REDUCTION + 1 + goRiceParam + codeNumber) << 15;
-
-                            if (absCoeff[idx] > (COEF_REMAIN_BIN_REDUCTION << goRiceParam))
-                                goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
-                            X265_CHECK(goRiceParam <= 4, "goRiceParam check failure\n");
-                        }
-                        if (absCoeff[idx] >= 2)
-                            firstCoeff2 = 0;
-                    }
+                    c1 = (c1Next & 3);
+                    c1Next >>= 2;
+                    X265_CHECK(c1 <= 3, "c1 check failure\n");
+                    idx++;
                 }
-                else
+                while(idx < numC1Flag);
+
+                if (!c1)
+                {
+                    baseCtxMod = &m_contextState[(bIsLuma ? 0 : NUM_ABS_FLAG_CTX_LUMA) + OFF_ABS_FLAG_CTX + ctxSet];
+
+                    X265_CHECK((firstC2Flag <= 1), "firstC2FlagIdx check failure\n");
+                    encodeBin(firstC2Flag, baseCtxMod[0]);
+                }
+
+                const int hiddenShift = (bHideFirstSign && signHidden) ? 1 : 0;
+                encodeBinsEP((coeffSigns >> hiddenShift), numNonZero - hiddenShift);
+
+                if (!c1 || numNonZero > C1FLAG_NUMBER)
                 {
                     // Standard path
-                    for (int idx = 0; idx < numNonZero; idx++)
+                    uint32_t goRiceParam = 0;
+                    int baseLevel = 3;
+#if CHECKED_BUILD || _DEBUG
+                    int firstCoeff2 = 1;
+#endif
+                    idx = firstC2Idx;
+                    do
                     {
-                        int baseLevel = (baseLevelN & 3) | firstCoeff2;
+                        if (idx >= C1FLAG_NUMBER)
+                            baseLevel = 1;
+                        // TODO: fast algorithm maybe broken this check logic
                         X265_CHECK(baseLevel == ((idx < C1FLAG_NUMBER) ? (2 + firstCoeff2) : 1), "baseLevel check failurr\n");
-                        baseLevelN >>= 2;
 
                         if (absCoeff[idx] >= baseLevel)
                         {
@@ -1840,12 +1828,17 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
                                 goRiceParam = (goRiceParam + 1) - (goRiceParam >> 2);
                             X265_CHECK(goRiceParam <= 4, "goRiceParam check failure\n");
                         }
-                        if (absCoeff[idx] >= 2)
-                            firstCoeff2 = 0;
+#if CHECKED_BUILD || _DEBUG
+                        firstCoeff2 = 0;
+#endif
+                        baseLevel = 2;
+                        idx++;
                     }
+                    while(idx < numNonZero);
                 }
-            }
-        }
+            } // end of !bitIf
+        } // end of (numNonZero > 0)
+
         // Initialize value for next loop
         numNonZero = 0;
         scanPosSigOff = (1 << MLS_CG_SIZE) - 1;
@@ -2243,28 +2236,6 @@ const uint32_t g_entropyBits[128] =
     0x0050c, 0x29bab, 0x004c1, 0x2a674, 0x004a7, 0x2aa5e, 0x0046f, 0x2b32f, 0x0041f, 0x2c0ad, 0x003e7, 0x2ca8d, 0x003ba, 0x2d323, 0x0010c, 0x3bfbb
 };
 
-// [8 24] --> [stateMPS BitCost], [stateLPS BitCost]
-const uint32_t g_entropyStateBits[128] =
-{
-    // Corrected table, most notably for last state
-    0x01007b23, 0x000085f9, 0x020074a0, 0x00008cbc, 0x03006ee4, 0x01009354, 0x040067f4, 0x02009c1b,
-    0x050060b0, 0x0200a62a, 0x06005a9c, 0x0400af5b, 0x0700548d, 0x0400b955, 0x08004f56, 0x0500c2a9,
-    0x09004a87, 0x0600cbf7, 0x0a0045d6, 0x0700d5c3, 0x0b004144, 0x0800e01b, 0x0c003d88, 0x0900e937,
-    0x0d0039e0, 0x0900f2cd, 0x0e003663, 0x0b00fc9e, 0x0f003347, 0x0b010600, 0x10003050, 0x0c010f95,
-    0x11002d4d, 0x0d011a02, 0x12002ad3, 0x0d012333, 0x1300286e, 0x0f012cad, 0x14002604, 0x0f0136df,
-    0x15002425, 0x10013f48, 0x160021f4, 0x100149c4, 0x1700203e, 0x1201527b, 0x18001e4d, 0x12015d00,
-    0x19001c99, 0x130166de, 0x1a001b18, 0x13017017, 0x1b0019a5, 0x15017988, 0x1c001841, 0x15018327,
-    0x1d0016df, 0x16018d50, 0x1e0015d9, 0x16019547, 0x1f00147c, 0x1701a083, 0x2000138e, 0x1801a8a3,
-    0x21001251, 0x1801b418, 0x22001166, 0x1901bd27, 0x23001068, 0x1a01c77b, 0x24000f7f, 0x1a01d18e,
-    0x25000eda, 0x1b01d91a, 0x26000e19, 0x1b01e254, 0x27000d4f, 0x1c01ec9a, 0x28000c90, 0x1d01f6e0,
-    0x29000c01, 0x1d01fef8, 0x2a000b5f, 0x1e0208b1, 0x2b000ab6, 0x1e021362, 0x2c000a15, 0x1e021e46,
-    0x2d000988, 0x1f02285d, 0x2e000934, 0x20022ea8, 0x2f0008a8, 0x200239b2, 0x3000081d, 0x21024577,
-    0x310007c9, 0x21024ce6, 0x32000763, 0x21025663, 0x33000710, 0x22025e8f, 0x340006a0, 0x22026a26,
-    0x35000672, 0x23026f23, 0x360005e8, 0x23027ef8, 0x370005ba, 0x230284b5, 0x3800055e, 0x24029057,
-    0x3900050c, 0x24029bab, 0x3a0004c1, 0x2402a674, 0x3b0004a7, 0x2502aa5e, 0x3c00046f, 0x2502b32f,
-    0x3d00041f, 0x2502c0ad, 0x3e0003e7, 0x2602ca8d, 0x3e0003ba, 0x2602d323, 0x3f00010c, 0x3f03bfbb,
-};
-
 const uint8_t g_nextState[128][2] =
 {
     { 2, 1 }, { 0, 3 }, { 4, 0 }, { 1, 5 }, { 6, 2 }, { 3, 7 }, { 8, 4 }, { 5, 9 },
@@ -2286,3 +2257,26 @@ const uint8_t g_nextState[128][2] =
 };
 
 }
+
+// [8 24] --> [stateMPS BitCost], [stateLPS BitCost]
+extern "C" const uint32_t PFX(entropyStateBits)[128] =
+{
+    // Corrected table, most notably for last state
+    0x02007B23, 0x000085F9, 0x040074A0, 0x00008CBC, 0x06006EE4, 0x02009354, 0x080067F4, 0x04009C1B,
+    0x0A0060B0, 0x0400A62A, 0x0C005A9C, 0x0800AF5B, 0x0E00548D, 0x0800B955, 0x10004F56, 0x0A00C2A9,
+    0x12004A87, 0x0C00CBF7, 0x140045D6, 0x0E00D5C3, 0x16004144, 0x1000E01B, 0x18003D88, 0x1200E937,
+    0x1A0039E0, 0x1200F2CD, 0x1C003663, 0x1600FC9E, 0x1E003347, 0x16010600, 0x20003050, 0x18010F95,
+    0x22002D4D, 0x1A011A02, 0x24002AD3, 0x1A012333, 0x2600286E, 0x1E012CAD, 0x28002604, 0x1E0136DF,
+    0x2A002425, 0x20013F48, 0x2C0021F4, 0x200149C4, 0x2E00203E, 0x2401527B, 0x30001E4D, 0x24015D00,
+    0x32001C99, 0x260166DE, 0x34001B18, 0x26017017, 0x360019A5, 0x2A017988, 0x38001841, 0x2A018327,
+    0x3A0016DF, 0x2C018D50, 0x3C0015D9, 0x2C019547, 0x3E00147C, 0x2E01A083, 0x4000138E, 0x3001A8A3,
+    0x42001251, 0x3001B418, 0x44001166, 0x3201BD27, 0x46001068, 0x3401C77B, 0x48000F7F, 0x3401D18E,
+    0x4A000EDA, 0x3601D91A, 0x4C000E19, 0x3601E254, 0x4E000D4F, 0x3801EC9A, 0x50000C90, 0x3A01F6E0,
+    0x52000C01, 0x3A01FEF8, 0x54000B5F, 0x3C0208B1, 0x56000AB6, 0x3C021362, 0x58000A15, 0x3C021E46,
+    0x5A000988, 0x3E02285D, 0x5C000934, 0x40022EA8, 0x5E0008A8, 0x400239B2, 0x6000081D, 0x42024577,
+    0x620007C9, 0x42024CE6, 0x64000763, 0x42025663, 0x66000710, 0x44025E8F, 0x680006A0, 0x44026A26,
+    0x6A000672, 0x46026F23, 0x6C0005E8, 0x46027EF8, 0x6E0005BA, 0x460284B5, 0x7000055E, 0x48029057,
+    0x7200050C, 0x48029BAB, 0x740004C1, 0x4802A674, 0x760004A7, 0x4A02AA5E, 0x7800046F, 0x4A02B32F,
+    0x7A00041F, 0x4A02C0AD, 0x7C0003E7, 0x4C02CA8D, 0x7C0003BA, 0x4C02D323, 0x7E00010C, 0x7E03BFBB,
+};
+

@@ -26,7 +26,7 @@
 #include "picyuv.h"
 #include "framedata.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 Frame::Frame()
 {

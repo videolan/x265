@@ -28,7 +28,7 @@
 
 #include "common.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 class Yuv;

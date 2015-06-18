@@ -28,7 +28,7 @@
 #include "lowres.h"
 #include "threading.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 class FrameData;

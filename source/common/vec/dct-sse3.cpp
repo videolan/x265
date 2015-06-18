@@ -33,7 +33,7 @@
 #include <xmmintrin.h> // SSE
 #include <pmmintrin.h> // SSE3
 
-using namespace x265;
+using namespace X265_NS;
 
 namespace {
 #define SHIFT1  7
@@ -1420,7 +1420,7 @@ void idct32(const int16_t *src, int16_t *dst, intptr_t stride)
 
 }
 
-namespace x265 {
+namespace X265_NS {
 void setupIntrinsicDCT_sse3(EncoderPrimitives &p)
 {
     /* Note: We have AVX2 assembly for these functions, but since AVX2 is still

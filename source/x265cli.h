@@ -27,7 +27,7 @@
 #include <getopt.h>
 
 #ifdef __cplusplus
-namespace x265 {
+namespace X265_NS {
 #endif
 
 static const char short_options[] = "o:D:P:p:f:F:r:I:i:b:s:t:q:m:hwV?";
@@ -54,6 +54,7 @@ static const struct option long_options[] =
     { "allow-non-conformance",no_argument, NULL, 0 },
     { "no-allow-non-conformance",no_argument, NULL, 0 },
     { "csv",            required_argument, NULL, 0 },
+    { "csv-log-level",  required_argument, NULL, 0 },
     { "no-cu-stats",          no_argument, NULL, 0 },
     { "cu-stats",             no_argument, NULL, 0 },
     { "y4m",                  no_argument, NULL, 0 },
@@ -121,6 +122,7 @@ static const struct option long_options[] =
     { "no-b-pyramid",         no_argument, NULL, 0 },
     { "b-pyramid",            no_argument, NULL, 0 },
     { "ref",            required_argument, NULL, 0 },
+    { "limit-refs",     required_argument, NULL, 0 },
     { "no-weightp",           no_argument, NULL, 0 },
     { "weightp",              no_argument, NULL, 'w' },
     { "no-weightb",           no_argument, NULL, 0 },
@@ -219,17 +221,15 @@ static const struct option long_options[] =
     { 0, 0, 0, 0 }
 };
 
-static void printVersion(x265_param *param)
+static void printVersion(x265_param *param, const x265_api* api)
 {
-    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", x265_version_str);
-    x265_log(param, X265_LOG_INFO, "build info %s\n", x265_build_info_str);
+    x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", api->version_str);
+    x265_log(param, X265_LOG_INFO, "build info %s\n", api->build_info_str);
 }
 
 static void showHelp(x265_param *param)
 {
     int level = param->logLevel;
-    x265_param_default(param);
-    printVersion(param);
 
 #define OPT(value) (value ? "enabled" : "disabled")
 #define H0 printf
@@ -244,10 +244,10 @@ static void showHelp(x265_param *param)
     H0("\nOutput Options:\n");
     H0("-o/--output <filename>           Bitstream output file name\n");
     H0("-D/--output-depth 8|10           Output bit depth (also internal bit depth). Default %d\n", param->internalBitDepth);
-    H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", x265::logLevelNames[param->logLevel + 1]);
+    H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", X265_NS::logLevelNames[param->logLevel + 1]);
     H0("   --no-progress                 Disable CLI progress reports\n");
-    H0("   --[no-]cu-stats               Enable logging stats about distribution of cu across all modes. Default %s\n",OPT(param->bLogCuStats));
-    H1("   --csv <filename>              Comma separated log file, log level >= 3 frame log, else one line per run\n");
+    H0("   --csv <filename>              Comma separated log file, if csv-log-level > 0 frame level statistics, else one line per run\n");
+    H0("   --csv-log-level               Level of csv logging, if csv-log-level > 0 frame level statistics, else one line per run: 0-2\n");
     H0("\nInput Options:\n");
     H0("   --input <filename>            Raw YUV or Y4M input file name. `-` for stdin\n");
     H1("   --y4m                         Force parsing of input stream as YUV4MPEG2 regardless of file extension\n");
@@ -302,10 +302,12 @@ static void showHelp(x265_param *param)
     H0("   --[no-]signhide               Hide sign bit of one coeff per TU (rdo). Default %s\n", OPT(param->bEnableSignHiding));
     H1("   --[no-]tskip                  Enable intra 4x4 transform skipping. Default %s\n", OPT(param->bEnableTransformSkip));
     H0("\nTemporal / motion search options:\n");
+    H0("   --max-merge <1..5>            Maximum number of merge candidates. Default %d\n", param->maxNumMergeCand);
+    H0("   --ref <integer>               max number of L0 references to be allowed (1 .. 16) Default %d\n", param->maxNumReferences);
+    H0("   --limit-refs <0|1|2|3>        limit references per depth (1) or CU (2) or both (3). Default %d\n", param->limitReferences);
     H0("   --me <string>                 Motion search method dia hex umh star full. Default %d\n", param->searchMethod);
     H0("-m/--subme <integer>             Amount of subpel refinement to perform (0:least .. 7:most). Default %d \n", param->subpelRefine);
     H0("   --merange <integer>           Motion search range. Default %d\n", param->searchRange);
-    H0("   --max-merge <1..5>            Maximum number of merge candidates. Default %d\n", param->maxNumMergeCand);
     H0("   --[no-]rect                   Enable rectangular motion partitions Nx2N and 2NxN. Default %s\n", OPT(param->bEnableRectInter));
     H0("   --[no-]amp                    Enable asymmetric motion partitions, requires --rect. Default %s\n", OPT(param->bEnableAMP));
     H1("   --[no-]temporal-mvp           Enable temporal MV predictors. Default %s\n", OPT(param->bEnableTemporalMvp));
@@ -327,7 +329,6 @@ static void showHelp(x265_param *param)
     H1("   --bframe-bias <integer>       Bias towards B frame decisions. Default %d\n", param->bFrameBias);
     H0("   --b-adapt <0..2>              0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);
     H0("   --[no-]b-pyramid              Use B-frames as references. Default %s\n", OPT(param->bBPyramid));
-    H0("   --ref <integer>               max number of L0 references to be allowed (1 .. 16) Default %d\n", param->maxNumReferences);
     H1("   --zones <zone0>/<zone1>/...   Tweak the bitrate of regions of the video\n");
     H1("                                 Each zone is of the form\n");
     H1("                                   <start frame>,<end frame>,<option>\n");

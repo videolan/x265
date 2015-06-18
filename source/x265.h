@@ -100,6 +100,32 @@ typedef struct x265_analysis_data
     uint32_t         numPartitions;
 } x265_analysis_data;
 
+/* Frame level statistics*/
+typedef struct x265_frame_stats
+{
+    double           qp;
+    double           rateFactor;
+    double           psnrY;
+    double           psnrU;
+    double           psnrV;
+    double           psnr;
+    double           ssim;
+    double           decideWaitTime;
+    double           row0WaitTime;
+    double           wallTime;
+    double           refWaitWallTime;
+    double           totalCTUTime;
+    double           stallTime;
+    double           avgWPP;
+    uint64_t         bits;
+    int              encoderOrder;
+    int              poc;
+    int              countRowBlocks;
+    int              list0POC[16];
+    int              list1POC[16];
+    char             sliceType;
+} x265_frame_stats;
+
 /* Used to pass pictures into the encoder, and to get picture data back out of
  * the encoder.  The input and output semantics are different */
 typedef struct x265_picture
@@ -160,6 +186,9 @@ typedef struct x265_picture
      * member pointers are valid, the encoder will write output analysis into
      * this data structure */
     x265_analysis_data analysisData;
+
+    /* Frame level statistics*/
+    x265_frame_stats frameData;
 
 } x265_picture;
 
@@ -302,20 +331,35 @@ typedef enum
     X265_RC_CRF
 } X265_RC_METHODS;
 
+/* slice type statistics */
+typedef struct x265_sliceType_stats
+{
+    double        avgQp;
+    double        bitrate;
+    double        psnrY;
+    double        psnrU;
+    double        psnrV;
+    double        ssim;
+    uint32_t      numPics;
+} x265_sliceType_stats;
+
 /* Output statistics from encoder */
 typedef struct x265_stats
 {
-    double    globalPsnrY;
-    double    globalPsnrU;
-    double    globalPsnrV;
-    double    globalPsnr;
-    double    globalSsim;
-    double    elapsedEncodeTime;    /* wall time since encoder was opened */
-    double    elapsedVideoTime;     /* encoded picture count / frame rate */
-    double    bitrate;              /* accBits / elapsed video time */
-    uint64_t  accBits;              /* total bits output thus far */
-    uint32_t  encodedPictureCount;  /* number of output pictures thus far */
-    uint32_t  totalWPFrames;        /* number of uni-directional weighted frames used */
+    double                globalPsnrY;
+    double                globalPsnrU;
+    double                globalPsnrV;
+    double                globalPsnr;
+    double                globalSsim;
+    double                elapsedEncodeTime;    /* wall time since encoder was opened */
+    double                elapsedVideoTime;     /* encoded picture count / frame rate */
+    double                bitrate;              /* accBits / elapsed video time */
+    uint64_t              accBits;              /* total bits output thus far */
+    uint32_t              encodedPictureCount;  /* number of output pictures thus far */
+    uint32_t              totalWPFrames;        /* number of uni-directional weighted frames used */
+    x265_sliceType_stats  statsI;               /* statistics of I slice */
+    x265_sliceType_stats  statsP;               /* statistics of P slice */
+    x265_sliceType_stats  statsB;               /* statistics of B slice */
 } x265_stats;
 
 /* String values accepted by x265_param_parse() (and CLI) for various parameters */
@@ -439,8 +483,7 @@ typedef struct x265_param
 
     /*== Logging Features ==*/
 
-    /* Enable analysis and logging distribution of CUs encoded across various
-     * modes during mode decision. Default disabled */
+    /* Enable analysis and logging distribution of CUs. Now deprecated */
     int       bLogCuStats;
 
     /* Enable the measurement and reporting of PSNR. Default is enabled */
@@ -453,11 +496,7 @@ typedef struct x265_param
      * X265_LOG_FULL, default is X265_LOG_INFO */
     int       logLevel;
 
-    /* filename of CSV log. If logLevel greater than or equal to X265_LOG_FRAME,
-     * the encoder will emit per-slice statistics to this log file in encode
-     * order. Otherwise the encoder will emit per-stream statistics into the log
-     * file when x265_encoder_log is called (presumably at the end of the
-     * encode) */
+    /* Filename of CSV log. Now deprecated */
     const char* csvfn;
 
     /*== Internal Picture Specification ==*/
@@ -1263,9 +1302,7 @@ int x265_encoder_reconfig(x265_encoder *, x265_param *);
 void x265_encoder_get_stats(x265_encoder *encoder, x265_stats *, uint32_t statsSizeBytes);
 
 /* x265_encoder_log:
- *       write a line to the configured CSV file.  If a CSV filename was not
- *       configured, or file open failed, or the log level indicated frame level
- *       logging, this function will perform no write. */
+ *       This function is deprecated */
 void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
 
 /* x265_encoder_close:
@@ -1276,15 +1313,28 @@ void x265_encoder_close(x265_encoder *);
  *       release library static allocations, reset configured CTU size */
 void x265_cleanup(void);
 
+#define X265_MAJOR_VERSION 1
 
 /* === Multi-lib API ===
- * By using this method to gain access to the libx265 interfaces, you allow shim
- * implementations of x265_api_get() to choose between various available libx265
- * libraries based on the encoder parameters. The most likely use case is to
- * choose between 8bpp and 16bpp builds of libx265. */
+ * By using this method to gain access to the libx265 interfaces, you allow run-
+ * time selection between various available libx265 libraries based on the
+ * encoder parameters. The most likely use case is to choose between 8bpp and
+ * 16bpp builds of libx265. */
 
 typedef struct x265_api
 {
+    int           api_major_version;    /* X265_MAJOR_VERSION */
+    int           api_build_number;     /* X265_BUILD (soname) */
+    int           sizeof_param;         /* sizeof(x265_param) */
+    int           sizeof_picture;       /* sizeof(x265_picture) */
+    int           sizeof_analysis_data; /* sizeof(x265_analysis_data) */
+    int           sizeof_zone;          /* sizeof(x265_zone) */
+    int           sizeof_stats;         /* sizeof(x265_stats) */
+
+    int           bit_depth;
+    const char*   version_str;
+    const char*   build_info_str;
+
     /* libx265 public API functions, documented above with x265_ prefixes */
     x265_param*   (*param_alloc)(void);
     void          (*param_free)(x265_param*);
@@ -1304,9 +1354,9 @@ typedef struct x265_api
     void          (*encoder_log)(x265_encoder*, int, char**);
     void          (*encoder_close)(x265_encoder*);
     void          (*cleanup)(void);
-    const char*   version_str;
-    const char*   build_info_str;
-    int           max_bit_depth;
+
+    int           sizeof_frame_stats;   /* sizeof(x265_frame_stats) */
+    /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 
 /* Force a link error in the case of linking against an incompatible API version.
@@ -1329,6 +1379,43 @@ typedef struct x265_api
  *     10bit: libx265_main10.so
  *   Obviously the shared library file extension is platform specific */
 const x265_api* x265_api_get(int bitDepth);
+
+/* x265_api_query:
+ *   Retrieve the programming interface for a linked x265 library, like
+ *   x265_api_get(), except this function accepts X265_BUILD as the second
+ *   argument rather than using the build number as part of the function name.
+ *   Applications which dynamically link to libx265 can use this interface to
+ *   query the library API and achieve a relative amount of version skew
+ *   flexibility. The function may return NULL if the library determines that
+ *   the apiVersion that your application was compiled against is not compatible
+ *   with the library you have linked with.
+ *
+ *   api_major_version will be incremented any time non-backward compatible
+ *   changes are made to any public structures or functions. If
+ *   api_major_version does not match X265_MAJOR_VERSION from the x265.h your
+ *   application compiled against, your application must not use the returned
+ *   x265_api pointer.
+ *
+ *   Users of this API *must* also validate the sizes of any structures which
+ *   are not treated as opaque in application code. For instance, if your
+ *   application dereferences a x265_param pointer, then it must check that
+ *   api->sizeof_param matches the sizeof(x265_param) that your application
+ *   compiled with. */
+const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
+
+#define X265_API_QUERY_ERR_NONE           0 /* returned API pointer is non-NULL */
+#define X265_API_QUERY_ERR_VER_REFUSED    1 /* incompatible version skew        */
+#define X265_API_QUERY_ERR_LIB_NOT_FOUND  2 /* libx265_main10 not found, for ex */
+#define X265_API_QUERY_ERR_FUNC_NOT_FOUND 3 /* unable to bind x265_api_query    */
+#define X265_API_QUERY_ERR_WRONG_BITDEPTH 4 /* libx265_main10 not 10bit, for ex */
+
+static const char * const x265_api_query_errnames[] = {
+    "api queried from libx265",
+    "libx265 version is not compatible with this application",
+    "unable to bind a libx265 with requested bit depth",
+    "unable to bind x265_api_query from libx265",
+    "libx265 has an invalid bitdepth"
+};
 
 #ifdef __cplusplus
 }

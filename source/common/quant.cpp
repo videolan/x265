@@ -30,7 +30,7 @@
 #include "cudata.h"
 #include "contexts.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 #define SIGN(x,y) ((x^(y >> 31))-(y >> 31))
 
@@ -251,30 +251,63 @@ void Quant::setChromaQP(int qpin, TextType ttype, int chFmt)
 }
 
 /* To minimize the distortion only. No rate is considered */
-uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codeParams)
+uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codeParams, uint32_t log2TrSize)
 {
-    const uint32_t log2TrSizeCG = codeParams.log2TrSizeCG;
+    uint32_t trSize = 1 << log2TrSize;
     const uint16_t* scan = codeParams.scan;
-    bool lastCG = true;
 
-    for (int cg = (1 << (log2TrSizeCG * 2)) - 1; cg >= 0; cg--)
+    uint8_t coeffNum[MLS_GRP_NUM];      // value range[0, 16]
+    uint16_t coeffSign[MLS_GRP_NUM];    // bit mask map for non-zero coeff sign
+    uint16_t coeffFlag[MLS_GRP_NUM];    // bit mask map for non-zero coeff
+
+#if CHECKED_BUILD || _DEBUG
+    // clean output buffer, the asm version of scanPosLast Never output anything after latest non-zero coeff group
+    memset(coeffNum, 0, sizeof(coeffNum));
+    memset(coeffSign, 0, sizeof(coeffNum));
+    memset(coeffFlag, 0, sizeof(coeffNum));
+#endif
+    const int lastScanPos = primitives.scanPosLast(codeParams.scan, coeff, coeffSign, coeffFlag, coeffNum, numSig, g_scan4x4[codeParams.scanType], trSize);
+    const int cgLastScanPos = (lastScanPos >> LOG2_SCAN_SET_SIZE);
+    unsigned long tmp;
+
+    // first CG need specially processing
+    const uint32_t correctOffset = 0x0F & (lastScanPos ^ 0xF);
+    coeffFlag[cgLastScanPos] <<= correctOffset;
+
+    for (int cg = cgLastScanPos; cg >= 0; cg--)
     {
         int cgStartPos = cg << LOG2_SCAN_SET_SIZE;
         int n;
 
+#if CHECKED_BUILD || _DEBUG
         for (n = SCAN_SET_SIZE - 1; n >= 0; --n)
             if (coeff[scan[n + cgStartPos]])
                 break;
-        if (n < 0)
+        int lastNZPosInCG0 = n;
+#endif
+
+        if (coeffNum[cg] == 0)
+        {
+            X265_CHECK(lastNZPosInCG0 < 0, "all zero block check failure\n");
             continue;
+        }
 
-        int lastNZPosInCG = n;
-
+#if CHECKED_BUILD || _DEBUG
         for (n = 0;; n++)
             if (coeff[scan[n + cgStartPos]])
                 break;
 
-        int firstNZPosInCG = n;
+        int firstNZPosInCG0 = n;
+#endif
+
+        CLZ(tmp, coeffFlag[cg]);
+        const int firstNZPosInCG = (15 ^ tmp);
+
+        CTZ(tmp, coeffFlag[cg]);
+        const int lastNZPosInCG = (15 ^ tmp);
+
+        X265_CHECK(firstNZPosInCG0 == firstNZPosInCG, "firstNZPosInCG0 check failure\n");
+        X265_CHECK(lastNZPosInCG0 == lastNZPosInCG, "lastNZPosInCG0 check failure\n");
 
         if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
         {
@@ -287,12 +320,17 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
             if (signbit != (absSum & 0x1)) // compare signbit with sum_parity
             {
                 int minCostInc = MAX_INT,  minPos = -1, curCost = MAX_INT;
-                int16_t finalChange = 0, curChange = 0;
+                int32_t finalChange = 0, curChange = 0;
+                uint32_t cgFlags = coeffFlag[cg];
+                if (cg == cgLastScanPos)
+                    cgFlags >>= correctOffset;
 
-                for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
+                for (n = (cg == cgLastScanPos ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                 {
                     uint32_t blkPos = scan[n + cgStartPos];
-                    if (coeff[blkPos])
+                    X265_CHECK(!!coeff[blkPos] == !!(cgFlags & 1), "non zero coeff check failure\n");
+
+                    if (cgFlags & 1)
                     {
                         if (deltaU[blkPos] > 0)
                         {
@@ -301,8 +339,11 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                         }
                         else
                         {
-                            if (n == firstNZPosInCG && abs(coeff[blkPos]) == 1)
+                            if ((cgFlags == 1) && (abs(coeff[blkPos]) == 1))
+                            {
+                                X265_CHECK(n == firstNZPosInCG, "firstNZPosInCG position check failure\n");
                                 curCost = MAX_INT;
+                            }
                             else
                             {
                                 curCost = deltaU[blkPos];
@@ -312,8 +353,9 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                     }
                     else
                     {
-                        if (n < firstNZPosInCG)
+                        if (cgFlags == 0)
                         {
+                            X265_CHECK(n < firstNZPosInCG, "firstNZPosInCG position check failure\n");
                             uint32_t thisSignBit = m_resiDctCoeff[blkPos] >= 0 ? 0 : 1;
                             if (thisSignBit != signbit)
                                 curCost = MAX_INT;
@@ -336,6 +378,7 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                         finalChange = curChange;
                         minPos = blkPos;
                     }
+                    cgFlags>>=1;
                 }
 
                 /* do not allow change to violate coeff clamp */
@@ -347,14 +390,12 @@ uint32_t Quant::signBitHidingHDQ(int16_t* coeff, int32_t* deltaU, uint32_t numSi
                 else if (finalChange == -1 && abs(coeff[minPos]) == 1)
                     numSig--;
 
-                if (m_resiDctCoeff[minPos] >= 0)
-                    coeff[minPos] += finalChange;
-                else
-                    coeff[minPos] -= finalChange;
+                {
+                    const int16_t sigMask = ((int16_t)m_resiDctCoeff[minPos]) >> 15;
+                    coeff[minPos] += ((int16_t)finalChange ^ sigMask) - sigMask;
+                }
             }
         }
-
-        lastCG = false;
     }
 
     return numSig;
@@ -437,7 +478,7 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
         {
             TUEntropyCodingParameters codeParams;
             cu.getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, isLuma);
-            return signBitHidingHDQ(coeff, deltaU, numSig, codeParams);
+            return signBitHidingHDQ(coeff, deltaU, numSig, codeParams, log2TrSize);
         }
         else
             return numSig;

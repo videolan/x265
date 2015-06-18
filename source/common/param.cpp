@@ -76,27 +76,35 @@ char* strtok_r(char* str, const char* delim, char** nextp)
 
 #endif // if !defined(HAVE_STRTOK_R)
 
-using namespace x265;
+#if EXPORT_C_API
 
-extern "C"
+/* these functions are exported as C functions (default) */
+using namespace X265_NS;
+extern "C" {
+
+#else
+
+/* these functions exist within private namespace (multilib) */
+namespace X265_NS {
+
+#endif
+
 x265_param *x265_param_alloc()
 {
     return (x265_param*)x265_malloc(sizeof(x265_param));
 }
 
-extern "C"
 void x265_param_free(x265_param* p)
 {
     x265_free(p);
 }
 
-extern "C"
 void x265_param_default(x265_param* param)
 {
     memset(param, 0, sizeof(x265_param));
 
     /* Applying default values to all elements in the param structure */
-    param->cpuid = x265::cpu_detect();
+    param->cpuid = X265_NS::cpu_detect();
     param->bEnableWavefront = 1;
     param->frameNumThreads = 0;
 
@@ -111,7 +119,7 @@ void x265_param_default(x265_param* param)
     param->bEnableSsim = 0;
 
     /* Source specifications */
-    param->internalBitDepth = x265_max_bit_depth;
+    param->internalBitDepth = X265_DEPTH;
     param->internalCsp = X265_CSP_I420;
 
     param->levelIdc = 0;
@@ -151,6 +159,7 @@ void x265_param_default(x265_param* param)
     param->subpelRefine = 2;
     param->searchRange = 57;
     param->maxNumMergeCand = 2;
+    param->limitReferences = 0;
     param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
     param->bEnableEarlySkip = 0;
@@ -234,10 +243,13 @@ void x265_param_default(x265_param* param)
     param->vui.defDispWinBottomOffset = 0;
 }
 
-extern "C"
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
 {
-    x265_param_default(param);
+#if EXPORT_C_API
+    ::x265_param_default(param);
+#else
+    X265_NS::x265_param_default(param);
+#endif
 
     if (preset)
     {
@@ -430,8 +442,8 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->deblockingFilterBetaOffset = -2;
             param->deblockingFilterTCOffset = -2;
             param->bIntraInBFrames = 0;
-            param->rdoqLevel = 1;
-            param->psyRdoq = 30;
+            param->rdoqLevel = 0;
+            param->psyRdoq = 0;
             param->psyRd = 0.5;
             param->rc.ipFactor = 1.1;
             param->rc.pbFactor = 1.1;
@@ -485,7 +497,6 @@ static int parseName(const char* arg, const char* const* names, bool& bError)
 #define atof(str) x265_atof(str, bError)
 #define atobool(str) (bNameWasBool = true, x265_atobool(str, bError))
 
-extern "C"
 int x265_param_parse(x265_param* p, const char* name, const char* value)
 {
     bool bError = false;
@@ -641,6 +652,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         }
     }
     OPT("ref") p->maxNumReferences = atoi(value);
+    OPT("limit-refs") p->limitReferences = atoi(value);
     OPT("weightp") p->bEnableWeightedPred = atobool(value);
     OPT("weightb") p->bEnableWeightedBiPred = atobool(value);
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
@@ -845,7 +857,6 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         p->rc.bStatRead = pass & 2;
     }
     OPT("stats") p->rc.statFileName = strdup(value);
-    OPT("csv") p->csvfn = strdup(value);
     OPT("scaling-list") p->scalingLists = strdup(value);
     OPT2("pools", "numa-pools") p->numaPools = strdup(value);
     OPT("lambda-file") p->rc.lambdaFileName = strdup(value);
@@ -864,7 +875,9 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     return bError ? X265_PARAM_BAD_VALUE : 0;
 }
 
-namespace x265 {
+} /* end extern "C" or namespace */
+
+namespace X265_NS {
 // internal encoder functions
 
 int x265_atoi(const char* str, bool& bError)
@@ -893,7 +906,7 @@ int parseCpuName(const char* value, bool& bError)
     if (isdigit(value[0]))
         cpu = x265_atoi(value, bError);
     else
-        cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? x265::cpu_detect() : 0;
+        cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? X265_NS::cpu_detect() : 0;
 
     if (bError)
     {
@@ -904,12 +917,12 @@ int parseCpuName(const char* value, bool& bError)
         for (init = buf; (tok = strtok_r(init, ",", &saveptr)); init = NULL)
         {
             int i;
-            for (i = 0; x265::cpu_names[i].flags && strcasecmp(tok, x265::cpu_names[i].name); i++)
+            for (i = 0; X265_NS::cpu_names[i].flags && strcasecmp(tok, X265_NS::cpu_names[i].name); i++)
             {
             }
 
-            cpu |= x265::cpu_names[i].flags;
-            if (!x265::cpu_names[i].flags)
+            cpu |= X265_NS::cpu_names[i].flags;
+            if (!X265_NS::cpu_names[i].flags)
                 bError = 1;
         }
 
@@ -1026,6 +1039,8 @@ int x265_check_params(x265_param* param)
           "subme must be less than or equal to X265_MAX_SUBPEL_LEVEL (7)");
     CHECK(param->subpelRefine < 0,
           "subme must be greater than or equal to 0");
+    CHECK(param->limitReferences > 3,
+          "limitReferences must be 0, 1, 2 or 3");
     CHECK(param->frameNumThreads < 0 || param->frameNumThreads > X265_MAX_FRAME_THREADS,
           "frameNumThreads (--frame-threads) must be [0 .. X265_MAX_FRAME_THREADS)");
     CHECK(param->cbQpOffset < -12, "Min. Chroma Cb QP Offset is -12");
@@ -1088,7 +1103,6 @@ int x265_check_params(x265_param* param)
     CHECK(param->psyRd < 0 || 2.0 < param->psyRd, "Psy-rd strength must be between 0 and 2.0");
     CHECK(param->psyRdoq < 0 || 50.0 < param->psyRdoq, "Psy-rdoq strength must be between 0 and 50.0");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
-    CHECK(!param->bEnableWavefront && param->rc.vbvBufferSize, "VBV requires wave-front parallelism (--wpp)");
     CHECK((param->vui.aspectRatioIdc < 0
            || param->vui.aspectRatioIdc > 16)
           && param->vui.aspectRatioIdc != X265_EXTENDED_SAR,
@@ -1271,8 +1285,10 @@ void x265_print_params(x265_param* param)
         x265_log(param, X265_LOG_INFO, "Intra 32x32 TU penalty type         : %d\n", param->rdPenalty);
 
     x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt        : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
-    x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / weightb / refs: %d / %d / %d / %d\n",
-             param->bBPyramid, param->bEnableWeightedPred, param->bEnableWeightedBiPred, param->maxNumReferences);
+    x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / weightb       : %d / %d / %d\n",
+             param->bBPyramid, param->bEnableWeightedPred, param->bEnableWeightedBiPred);
+    x265_log(param, X265_LOG_INFO, "References / ref-limit  cu / depth  : %d / %d / %d\n",
+             param->maxNumReferences, !!(param->limitReferences & X265_REF_LIMIT_CU), !!(param->limitReferences & X265_REF_LIMIT_DEPTH));
 
     if (param->rc.aqMode)
         x265_log(param, X265_LOG_INFO, "AQ: mode / str / qg-size / cu-tree  : %d / %0.1f / %d / %d\n", param->rc.aqMode,
@@ -1420,6 +1436,7 @@ char *x265_param2string(x265_param* p)
     s += sprintf(s, " bframe-bias=%d", p->bFrameBias);
     s += sprintf(s, " b-adapt=%d", p->bFrameAdaptive);
     s += sprintf(s, " ref=%d", p->maxNumReferences);
+    s += sprintf(s, " limit-refs=%d", p->limitReferences);
     BOOL(p->bEnableWeightedPred, "weightp");
     BOOL(p->bEnableWeightedBiPred, "weightb");
     s += sprintf(s, " aq-mode=%d", p->rc.aqMode);

@@ -30,7 +30,7 @@
 #include "shortyuv.h"
 #include "yuv.h"
 
-namespace x265 {
+namespace X265_NS {
 
 class CUData;
 class Slice;

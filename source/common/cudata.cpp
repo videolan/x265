@@ -28,7 +28,7 @@
 #include "mv.h"
 #include "cudata.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 namespace {
 // file private namespace

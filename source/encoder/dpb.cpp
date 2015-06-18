@@ -29,7 +29,7 @@
 
 #include "dpb.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 DPB::~DPB()
 {

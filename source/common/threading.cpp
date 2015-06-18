@@ -23,7 +23,7 @@
 
 #include "threading.h"
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 #if X265_ARCH_X86 && !defined(X86_64) && ENABLE_ASSEMBLY && defined(__GNUC__)

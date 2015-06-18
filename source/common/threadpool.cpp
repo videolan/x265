@@ -60,7 +60,7 @@
 #include <numa.h>
 #endif
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 class WorkerThread : public Thread
@@ -480,4 +480,4 @@ int ThreadPool::getCpuCount()
 #endif
 }
 
-} // end namespace x265
+} // end namespace X265_NS

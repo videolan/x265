@@ -30,7 +30,7 @@
 #include <intrin.h> // _InterlockedCompareExchange64
 #endif
 
-namespace x265 {
+namespace X265_NS {
 /* non-native condition variable */
 typedef struct
 {
@@ -56,7 +56,7 @@ void cond_destroy(ConditionVariable *cond);
 #define WakeAllConditionVariable    x265::cond_broadcast
 #define XP_CONDITION_VAR_FREE       x265::cond_destroy
 
-} // namespace x265
+} // namespace X265_NS
 
 #else // if defined(_WIN32) && (_WIN32_WINNT < 0x0600)
 

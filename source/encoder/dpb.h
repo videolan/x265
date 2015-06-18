@@ -26,7 +26,7 @@
 
 #include "piclist.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace for x265
 
 class Frame;

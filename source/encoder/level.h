@@ -27,7 +27,7 @@
 #include "common.h"
 #include "x265.h"
 
-namespace x265 {
+namespace X265_NS {
 // encoder private namespace
 
 struct VPS;

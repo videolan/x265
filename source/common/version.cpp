@@ -23,6 +23,7 @@
 
 #include "x265.h"
 #include "common.h"
+#include "primitives.h"
 
 #define XSTR(x) STR(x)
 #define STR(x) #x
@@ -83,11 +84,11 @@
 
 #if HIGH_BIT_DEPTH
 #define BITDEPTH "16bpp"
-const int x265_max_bit_depth = 10;
+const int PFX(max_bit_depth) = 10;
 #else
 #define BITDEPTH "8bpp"
-const int x265_max_bit_depth = 8;
+const int PFX(max_bit_depth) = 8;
 #endif
 
-const char *x265_version_str = XSTR(X265_VERSION);
-const char *x265_build_info_str = NVM_ONOS NVM_COMPILEDBY NVM_BITS CHECKED BITDEPTH;
+const char* PFX(version_str) = XSTR(X265_VERSION);
+const char* PFX(build_info_str) = NVM_ONOS NVM_COMPILEDBY NVM_BITS CHECKED BITDEPTH;

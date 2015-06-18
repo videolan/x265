@@ -30,7 +30,7 @@
 #include "deblock.h"
 #include "sao.h"
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 class Encoder;

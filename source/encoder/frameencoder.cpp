@@ -35,7 +35,7 @@
 #include "slicetype.h"
 #include "nal.h"
 
-namespace x265 {
+namespace X265_NS {
 void weightAnalyse(Slice& slice, Frame& frame, x265_param& param);
 
 FrameEncoder::FrameEncoder()
@@ -59,7 +59,6 @@ FrameEncoder::FrameEncoder()
     m_cuGeoms = NULL;
     m_ctuGeomMap = NULL;
     m_localTldIdx = 0;
-    memset(&m_frameStats, 0, sizeof(m_frameStats));
     memset(&m_rce, 0, sizeof(RateControlEntry));
 }
 
@@ -313,7 +312,7 @@ void FrameEncoder::compressFrame()
     m_SSDY = m_SSDU = m_SSDV = 0;
     m_ssim = 0;
     m_ssimCnt = 0;
-    memset(&m_frameStats, 0, sizeof(m_frameStats));
+    memset(&(m_frame->m_encData->m_frameStats), 0, sizeof(m_frame->m_encData->m_frameStats));
 
     /* Emit access unit delimiter unless this is the first frame and the user is
      * not repeating headers (since AUD is supposed to be the first NAL in the access
@@ -559,17 +558,17 @@ void FrameEncoder::compressFrame()
         // accumulate intra,inter,skip cu count per frame for 2 pass
         for (uint32_t i = 0; i < m_numRows; i++)
         {
-            m_frameStats.mvBits    += m_rows[i].rowStats.mvBits;
-            m_frameStats.coeffBits += m_rows[i].rowStats.coeffBits;
-            m_frameStats.miscBits  += m_rows[i].rowStats.miscBits;
-            totalI                 += m_rows[i].rowStats.iCuCnt;
-            totalP                 += m_rows[i].rowStats.pCuCnt;
-            totalSkip              += m_rows[i].rowStats.skipCuCnt;
+            m_frame->m_encData->m_frameStats.mvBits    += m_rows[i].rowStats.mvBits;
+            m_frame->m_encData->m_frameStats.coeffBits += m_rows[i].rowStats.coeffBits;
+            m_frame->m_encData->m_frameStats.miscBits  += m_rows[i].rowStats.miscBits;
+            totalI                                     += m_rows[i].rowStats.intra8x8Cnt;
+            totalP                                     += m_rows[i].rowStats.inter8x8Cnt;
+            totalSkip                                  += m_rows[i].rowStats.skip8x8Cnt;
         }
         int totalCuCount = totalI + totalP + totalSkip;
-        m_frameStats.percentIntra = (double)totalI / totalCuCount;
-        m_frameStats.percentInter = (double)totalP / totalCuCount;
-        m_frameStats.percentSkip  = (double)totalSkip / totalCuCount;
+        m_frame->m_encData->m_frameStats.percent8x8Intra = (double)totalI / totalCuCount;
+        m_frame->m_encData->m_frameStats.percent8x8Inter = (double)totalP / totalCuCount;
+        m_frame->m_encData->m_frameStats.percent8x8Skip  = (double)totalSkip / totalCuCount;
     }
 
     m_bs.resetBits();
@@ -638,7 +637,7 @@ void FrameEncoder::compressFrame()
     m_endCompressTime = x265_mdate();
 
     /* rateControlEnd may also block for earlier frames to call rateControlUpdateStats */
-    if (m_top->m_rateControl->rateControlEnd(m_frame, m_accessUnitBits, &m_rce, &m_frameStats) < 0)
+    if (m_top->m_rateControl->rateControlEnd(m_frame, m_accessUnitBits, &m_rce) < 0)
         m_top->m_aborted = true;
 
     /* Decrement referenced frame reference counts, allow them to be recycled */
@@ -904,7 +903,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         // Completed CU processing
         curRow.completed++;
 
-        if (m_param->bLogCuStats || m_param->rc.bStatWrite)
+        if (m_param->rc.bStatWrite)
             curEncData.m_rowStat[row].sumQpAq += collectCTUStatistics(*ctu, qTreeInterCnt, qTreeIntraCnt, qTreeSkipCnt);
         else if (m_param->rc.aqMode)
             curEncData.m_rowStat[row].sumQpAq += calcCTUQP(*ctu);
@@ -920,9 +919,9 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             {
                 /* 1 << shift == number of 8x8 blocks at current depth */
                 int shift = 2 * (g_maxCUDepth - depth);
-                curRow.rowStats.iCuCnt += qTreeIntraCnt[depth] << shift;
-                curRow.rowStats.pCuCnt += qTreeInterCnt[depth] << shift;
-                curRow.rowStats.skipCuCnt += qTreeSkipCnt[depth] << shift;
+                curRow.rowStats.intra8x8Cnt += qTreeIntraCnt[depth] << shift;
+                curRow.rowStats.inter8x8Cnt += qTreeInterCnt[depth] << shift;
+                curRow.rowStats.skip8x8Cnt  += qTreeSkipCnt[depth] << shift;
 
                 // clear the row cu data from thread local object
                 qTreeIntraCnt[depth] = qTreeInterCnt[depth] = qTreeSkipCnt[depth] = 0;

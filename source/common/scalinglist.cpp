@@ -114,7 +114,7 @@ int quantInterDefault8x8[64] =
 
 }
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 const int     ScalingList::s_numCoefPerSize[NUM_SIZES] = { 16, 64, 256, 1024 };

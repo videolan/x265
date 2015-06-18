@@ -26,7 +26,7 @@
 
 #include "ittnotify.h"
 
-namespace x265 {
+namespace X265_NS {
 
 #define CPU_EVENT(x) x,
 enum VTuneTasksEnum

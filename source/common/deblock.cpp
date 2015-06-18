@@ -28,7 +28,7 @@
 #include "slice.h"
 #include "mv.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 #define DEBLOCK_SMALLEST_BLOCK  8
 #define DEFAULT_INTRA_TC_OFFSET 2

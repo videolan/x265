@@ -31,12 +31,14 @@
 #include "contexts.h"
 #include "slice.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 struct SaoCtuParam;
 struct EstBitsSbac;
 class ScalingList;
+
+static const uint32_t g_puOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5 };
 
 enum SplitType
 {
