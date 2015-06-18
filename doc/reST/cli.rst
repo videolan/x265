@@ -874,7 +874,11 @@ Spatial/intra options
 
 .. option:: --strong-intra-smoothing, --no-strong-intra-smoothing
 
-	Enable strong intra smoothing for 32x32 intra blocks. Default enabled
+	Enable strong intra smoothing for 32x32 intra blocks. This flag 
+	performs bi-linear interpolation of the corner reference samples 
+	for a strong smoothing effect. The purpose is to prevent blocking 
+	or banding artifacts in regions with few/zero AC coefficients. 
+	Default enabled
 
 .. option:: --constrained-intra, --no-constrained-intra
 
