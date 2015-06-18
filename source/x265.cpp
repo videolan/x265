@@ -272,7 +272,7 @@ void CLIOptions::writeLog(int argc, char **argv, x265_stats* stats)
         else
             fprintf(csvfpt, " -, -, -, -, -, -, -,");
 
-        fprintf(csvfpt, " %s\n", x265_version_str);
+        fprintf(csvfpt, " %s\n", api->version_str);
     }
 }
 
