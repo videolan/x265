@@ -969,6 +969,72 @@ cglobal dequant_scaling, 6,6,6
 .end:
     RET
 
+;----------------------------------------------------------------------------------------------------------------------
+;void dequant_scaling(const int16_t* src, const int32_t* dequantCoef, int16_t* dst, int num, int mcqp_miper, int shift)
+;----------------------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal dequant_scaling, 6,6,6
+    add         r5d, 4
+    shr         r3d, 4          ; num/16
+    cmp         r5d, r4d
+    jle         .skip
+    sub         r5d, r4d
+    mova        m0, [pd_1]
+    movd        xm1, r5d         ; shift - per
+    dec         r5d
+    movd        xm2, r5d         ; shift - per - 1
+    pslld       m0, xm2          ; 1 << shift - per - 1
+
+.part0:
+    pmovsxwd    m2, [r0]
+    pmovsxwd    m4, [r0 + 16]
+    movu        m3, [r1]
+    movu        m5, [r1 + 32]
+    pmulld      m2, m3
+    pmulld      m4, m5
+    paddd       m2, m0
+    paddd       m4, m0
+    psrad       m2, xm1
+    psrad       m4, xm1
+    packssdw    m2, m4
+    vpermq      m2, m2, 11011000b
+    movu        [r2], m2
+
+    add         r0, 32
+    add         r1, 64
+    add         r2, 32
+    dec         r3d
+    jnz         .part0
+    jmp         .end
+
+.skip:
+    sub         r4d, r5d        ; per - shift
+    movd        xm0, r4d
+
+.part1:
+    pmovsxwd    m2, [r0]
+    pmovsxwd    m4, [r0 + 16]
+    movu        m3, [r1]
+    movu        m5, [r1 + 32]
+    pmulld      m2, m3
+    pmulld      m4, m5
+    packssdw    m2, m4
+    vextracti128 xm4, m2, 1
+    pmovsxwd    m1, xm2
+    pmovsxwd    m2, xm4
+    pslld       m1, xm0
+    pslld       m2, xm0
+    packssdw    m1, m2
+    movu        [r2], m1
+
+    add         r0, 32
+    add         r1, 64
+    add         r2, 32
+    dec         r3d
+    jnz         .part1
+.end:
+    RET
+
 INIT_YMM avx2
 cglobal dequant_normal, 5,5,7
     vpbroadcastd    m2, [pw_1]          ; m2 = word [1]
