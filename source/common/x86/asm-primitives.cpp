@@ -3288,14 +3288,14 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].filter_hps = PFX(interp_4tap_horiz_ps_8x8_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].filter_hps = PFX(interp_4tap_horiz_ps_8x16_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x32].filter_hps = PFX(interp_4tap_horiz_ps_8x32_avx2);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x64].filter_hps = PFX(interp_4tap_horiz_ps_8x64_avx2); //adding macro call
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x12].filter_hps = PFX(interp_4tap_horiz_ps_8x12_avx2); //adding macro call
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x64].filter_hps = PFX(interp_4tap_horiz_ps_8x64_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x12].filter_hps = PFX(interp_4tap_horiz_ps_8x12_avx2);
 
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].filter_hps = PFX(interp_4tap_horiz_ps_16x8_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].filter_hps = PFX(interp_4tap_horiz_ps_16x16_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].filter_hps = PFX(interp_4tap_horiz_ps_16x32_avx2);
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].filter_hps = PFX(interp_4tap_horiz_ps_16x64_avx2);//adding macro call
-        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].filter_hps = PFX(interp_4tap_horiz_ps_16x24_avx2);//adding macro call
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].filter_hps = PFX(interp_4tap_horiz_ps_16x64_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].filter_hps = PFX(interp_4tap_horiz_ps_16x24_avx2);
 
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].filter_hps = PFX(interp_4tap_horiz_ps_32x16_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].filter_hps = PFX(interp_4tap_horiz_ps_32x32_avx2);
