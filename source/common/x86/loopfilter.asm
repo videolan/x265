@@ -38,6 +38,7 @@ cextern pb_1
 cextern pb_128
 cextern pb_2
 cextern pw_2
+cextern pw_1023
 cextern pb_movemask
 
 
@@ -45,6 +46,107 @@ cextern pb_movemask
 ; void saoCuOrgE0(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t* signLeft, intptr_t stride)
 ;============================================================================================================
 INIT_XMM sse4
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgE0, 4,5,9
+    mov         r4d, r4m
+    movh        m6,  [r1]
+    movzx       r1d, byte [r3]
+    pxor        m5, m5
+    neg         r1b
+    movd        m0, r1d
+    lea         r1, [r0 + r4 * 2]
+    mov         r4d, r2d
+
+.loop:
+    movu        m7, [r0]
+    movu        m8, [r0 + 16]
+    movu        m2, [r0 + 2]
+    movu        m1, [r0 + 18]
+
+    pcmpgtw     m3, m7, m2
+    pcmpgtw     m2, m7
+    pcmpgtw     m4, m8, m1
+    pcmpgtw     m1, m8 
+
+    packsswb    m3, m4
+    packsswb    m2, m1
+
+    pand        m3, [pb_1]
+    por         m3, m2
+
+    palignr     m2, m3, m5, 15
+    por         m2, m0
+
+    mova        m4, [pw_1023]
+    psignb      m2, [pb_128]                ; m2 = signLeft
+    pxor        m0, m0
+    palignr     m0, m3, 15
+    paddb       m3, m2
+    paddb       m3, [pb_2]                  ; m2 = uiEdgeType
+    pshufb      m2, m6, m3
+    pmovsxbw    m3, m2                      ; offsetEo
+    punpckhbw   m2, m2
+    psraw       m2, 8
+    paddw       m7, m3
+    paddw       m8, m2
+    pmaxsw      m7, m5
+    pmaxsw      m8, m5
+    pminsw      m7, m4
+    pminsw      m8, m4
+    movu        [r0], m7
+    movu        [r0 + 16], m8
+
+    add         r0q, 32
+    sub         r2d, 16
+    jnz        .loop
+
+    movzx       r3d, byte [r3 + 1]
+    neg         r3b
+    movd        m0, r3d
+.loopH:
+    movu        m7, [r1]
+    movu        m8, [r1 + 16]
+    movu        m2, [r1 + 2]
+    movu        m1, [r1 + 18]
+
+    pcmpgtw     m3, m7, m2
+    pcmpgtw     m2, m7
+    pcmpgtw     m4, m8, m1
+    pcmpgtw     m1, m8 
+
+    packsswb    m3, m4
+    packsswb    m2, m1
+
+    pand        m3, [pb_1]
+    por         m3, m2
+
+    palignr     m2, m3, m5, 15
+    por         m2, m0
+
+    mova        m4, [pw_1023]
+    psignb      m2, [pb_128]                ; m2 = signLeft
+    pxor        m0, m0
+    palignr     m0, m3, 15
+    paddb       m3, m2
+    paddb       m3, [pb_2]                  ; m2 = uiEdgeType
+    pshufb      m2, m6, m3
+    pmovsxbw    m3, m2                      ; offsetEo
+    punpckhbw   m2, m2
+    psraw       m2, 8
+    paddw       m7, m3
+    paddw       m8, m2
+    pmaxsw      m7, m5
+    pmaxsw      m8, m5
+    pminsw      m7, m4
+    pminsw      m8, m4
+    movu        [r1], m7
+    movu        [r1 + 16], m8
+
+    add         r1q, 32
+    sub         r4d, 16
+    jnz        .loopH
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
 
     mov         r4d, r4m
@@ -130,6 +232,7 @@ cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
     sub         r4d, 16
     jnz        .loopH
     RET
+%endif
 
 INIT_YMM avx2
 cglobal saoCuOrgE0, 5, 5, 7, rec, offsetEo, lcuWidth, signLeft, stride

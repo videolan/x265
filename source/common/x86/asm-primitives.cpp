@@ -1089,6 +1089,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     }
     if (cpuMask & X265_CPU_SSE4)
     {
+        p.saoCuOrgE0 = PFX(saoCuOrgE0_sse4);
+
         LUMA_ADDAVG(sse4);
         CHROMA_420_ADDAVG(sse4);
         CHROMA_422_ADDAVG(sse4);
