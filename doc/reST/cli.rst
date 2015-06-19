@@ -620,6 +620,10 @@ the prediction quad-tree.
 	CUs and the rect/amp motion searches at that depth will only use the 
 	reference(s) selected by 2Nx2N. 
 
+	For all non-zero values of limit-refs, the current depth will evaluate
+	intra mode (in inter slices), only if intra mode was chosen as the best
+	mode for atleast one of the 4 sub-blocks.
+
 	You can often increase the number of references you are using
 	(within your decoder level limits) if you enable one or
 	both of these flags.
