@@ -471,16 +471,6 @@ static int x265_atobool(const char* str, bool& bError)
     return 0;
 }
 
-static double x265_atof(const char* str, bool& bError)
-{
-    char *end;
-    double v = strtod(str, &end);
-
-    if (end == str || *end != '\0')
-        bError = true;
-    return v;
-}
-
 static int parseName(const char* arg, const char* const* names, bool& bError)
 {
     for (int i = 0; names[i]; i++)
@@ -884,6 +874,16 @@ int x265_atoi(const char* str, bool& bError)
 {
     char *end;
     int v = strtol(str, &end, 0);
+
+    if (end == str || *end != '\0')
+        bError = true;
+    return v;
+}
+
+double x265_atof(const char* str, bool& bError)
+{
+    char *end;
+    double v = strtod(str, &end);
 
     if (end == str || *end != '\0')
         bError = true;
