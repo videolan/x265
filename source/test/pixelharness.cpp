@@ -23,6 +23,7 @@
 
 #include "pixelharness.h"
 #include "primitives.h"
+#include "entropy.h"
 
 using namespace X265_NS;
 
@@ -1443,6 +1444,143 @@ bool PixelHarness::check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLa
     return true;
 }
 
+bool PixelHarness::check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt)
+{
+    ALIGN_VAR_16(coeff_t, ref_src[32 * 32 + ITERS * 3]);
+    ALIGN_VAR_32(uint16_t, ref_absCoeff[1 << MLS_CG_SIZE]);
+    ALIGN_VAR_32(uint16_t, opt_absCoeff[1 << MLS_CG_SIZE]);
+
+    memset(ref_absCoeff, 0xCD, sizeof(ref_absCoeff));
+    memset(opt_absCoeff, 0xCD, sizeof(opt_absCoeff));
+
+    int totalCoeffs = 0;
+    for (int i = 0; i < 32 * 32; i++)
+    {
+        ref_src[i] = rand() & SHORT_MAX;
+
+        // more zero coeff
+        if (ref_src[i] < SHORT_MAX * 2 / 3)
+            ref_src[i] = 0;
+
+        // more negtive
+        if ((rand() % 10) < 8)
+            ref_src[i] *= -1;
+        totalCoeffs += (ref_src[i] != 0);
+    }
+
+    // extra test area all of 0x1234
+    for (int i = 0; i < ITERS * 3; i++)
+    {
+        ref_src[32 * 32 + i] = 0x1234;
+    }
+
+    // generate CABAC context table
+    uint8_t m_contextState_ref[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
+    uint8_t m_contextState_opt[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
+    for (int k = 0; k < (OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA); k++)
+    {
+        m_contextState_ref[k] = (rand() % (125 - 2)) + 2;
+        m_contextState_opt[k] = m_contextState_ref[k];
+    }
+    uint8_t *const ref_baseCtx = m_contextState_ref;
+    uint8_t *const opt_baseCtx = m_contextState_opt;
+
+    for (int i = 0; i < ITERS * 2; i++)
+    {
+        int rand_scan_type = rand() % NUM_SCAN_TYPE;
+        int rand_scanPosSigOff = rand() % 16; //rand_scanPosSigOff range is [1,15]
+        int rand_patternSigCtx = rand() % 4; //range [0,3]
+        int rand_scan_size = rand() % NUM_SCAN_SIZE;
+        int offset; // the value have a exact range, details in CoeffNxN()
+        if (rand_scan_size == 2)
+            offset = 0;
+        else if (rand_scan_size == 3)
+            offset = 9;
+        else
+            offset = 12;
+
+        const int trSize = (1 << (rand_scan_size + 2));
+        ALIGN_VAR_32(static const uint8_t, table_cnt[5][SCAN_SET_SIZE]) =
+        {
+            // patternSigCtx = 0
+            {
+                2, 1, 1, 0,
+                1, 1, 0, 0,
+                1, 0, 0, 0,
+                0, 0, 0, 0,
+            },
+            // patternSigCtx = 1
+            {
+                2, 2, 2, 2,
+                1, 1, 1, 1,
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+            },
+            // patternSigCtx = 2
+            {
+                2, 1, 0, 0,
+                2, 1, 0, 0,
+                2, 1, 0, 0,
+                2, 1, 0, 0,
+            },
+            // patternSigCtx = 3
+            {
+                2, 2, 2, 2,
+                2, 2, 2, 2,
+                2, 2, 2, 2,
+                2, 2, 2, 2,
+            },
+            // 4x4
+            {
+                0, 1, 4, 5,
+                2, 3, 4, 5,
+                6, 6, 8, 8,
+                7, 7, 8, 8
+            }
+        };
+        const uint8_t *rand_tabSigCtx = table_cnt[(rand_scan_size == 2) ? 4 : (uint32_t)rand_patternSigCtx];
+        const uint16_t* const scanTbl = g_scanOrder[rand_scan_type][rand_scan_size];
+        const uint16_t* const scanTblCG4x4 = g_scan4x4[rand_scan_size <= (MDCS_LOG2_MAX_SIZE - 2) ? rand_scan_type : SCAN_DIAG];
+
+        int rand_scanPosCG = rand() % (trSize * trSize / MLS_CG_BLK_SIZE);
+        int subPosBase = rand_scanPosCG * MLS_CG_BLK_SIZE;
+        int rand_numCoeff = 0;
+        uint32_t scanFlagMask = 0;
+        const int numNonZero = (rand_scanPosSigOff < (MLS_CG_BLK_SIZE - 1)) ? 1 : 0;
+
+        for(int k = 0; k <= rand_scanPosSigOff; k++)
+        {
+            uint32_t pos = scanTbl[subPosBase + k];
+            coeff_t tmp_coeff = ref_src[i + pos];
+            if (tmp_coeff != 0)
+            {
+                rand_numCoeff++;
+            }
+            scanFlagMask = scanFlagMask * 2 + (tmp_coeff != 0);
+        }
+
+        // can't process all zeros block
+        if (rand_numCoeff == 0)
+            continue;
+
+        const uint32_t blkPosBase = scanTbl[subPosBase];
+        uint32_t ref_sum = ref(scanTblCG4x4, &ref_src[blkPosBase + i], trSize, ref_absCoeff + numNonZero, rand_tabSigCtx, scanFlagMask, (uint8_t*)ref_baseCtx, offset, rand_scanPosSigOff, subPosBase);
+        uint32_t opt_sum = (uint32_t)checked(opt, scanTblCG4x4, &ref_src[blkPosBase + i], trSize, opt_absCoeff + numNonZero, rand_tabSigCtx, scanFlagMask, (uint8_t*)opt_baseCtx, offset, rand_scanPosSigOff, subPosBase);
+
+        if (ref_sum != opt_sum)
+            return false;
+        if (memcmp(ref_baseCtx, opt_baseCtx, sizeof(m_contextState_ref)))
+            return false;
+
+        // NOTE: just first rand_numCoeff valid, but I check full buffer for confirm no overwrite bug
+        if (memcmp(ref_absCoeff, opt_absCoeff, sizeof(ref_absCoeff)))
+            return false;
+
+        reportfail();
+    }
+    return true;
+}
+
 bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.pu[part].satd)
@@ -2018,6 +2156,14 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
+    if (opt.costCoeffNxN)
+    {
+        if (!check_costCoeffNxN(ref.costCoeffNxN, opt.costCoeffNxN))
+        {
+            printf("costCoeffNxN failed!\n");
+            return false;
+        }
+    }
 
     return true;
 }
@@ -2438,5 +2584,23 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         coefBuf[3 + 2 * 32] = 0x0BAD;
         coefBuf[3 + 3 * 32] = 0x0BAD;
         REPORT_SPEEDUP(opt.findPosFirstLast, ref.findPosFirstLast, coefBuf, 32, g_scan4x4[SCAN_DIAG]);
+    }
+    if (opt.costCoeffNxN)
+    {
+        HEADER0("costCoeffNxN");
+        coeff_t coefBuf[32 * 32];
+        uint16_t tmpOut[16];
+        memset(coefBuf, 1, sizeof(coefBuf));
+        ALIGN_VAR_32(static uint8_t const, ctxSig[]) =
+        {
+            0, 1, 4, 5,
+            2, 3, 4, 5,
+            6, 6, 8, 8,
+            7, 7, 8, 8
+        };
+        uint8_t ctx[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
+        memset(ctx, 120, sizeof(ctx));
+
+        REPORT_SPEEDUP(opt.costCoeffNxN, ref.costCoeffNxN, g_scan4x4[SCAN_DIAG], coefBuf, 32, tmpOut, ctxSig, 0xFFFF, ctx, 1, 15, 32);
     }
 }

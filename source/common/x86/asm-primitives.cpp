@@ -2451,7 +2451,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
         ALL_LUMA_CU(psy_cost_ss, psyCost_ss, sse4);
 
         // TODO: it is passed smoke test, but we need testbench, so temporary disable
-        //p.costCoeffNxN = PFX(costCoeffNxN_sse4);
+        p.costCoeffNxN = PFX(costCoeffNxN_sse4);
 #endif
         // TODO: it is passed smoke test, but we need testbench to active it, so temporary disable
         //p.costCoeffRemain = x265_costCoeffRemain_sse4;

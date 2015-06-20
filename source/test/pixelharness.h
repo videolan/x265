@@ -110,6 +110,8 @@ protected:
     bool check_calSign(sign_t ref, sign_t opt);
     bool check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt);
     bool check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLast_t opt);
+    bool check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt);
+
 
 public:
 
