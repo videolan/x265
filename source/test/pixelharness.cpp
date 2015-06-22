@@ -929,8 +929,8 @@ bool PixelHarness::check_saoCuOrgE1_t(saoCuOrgE1_t ref, saoCuOrgE1_t opt)
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
 
-    memset(ref_dest, 0xCD, sizeof(ref_dest));
-    memset(opt_dest, 0xCD, sizeof(opt_dest));
+    for (int i = 0; i < 64 * 64; i++)
+        ref_dest[i] = opt_dest[i] = rand() % (PIXEL_MAX);
 
     int j = 0;
 
