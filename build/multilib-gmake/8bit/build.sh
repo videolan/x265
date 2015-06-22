@@ -1,2 +1,0 @@
-cmake ../../../source -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=ON -DEXTRA_LIB=x265.a
-make

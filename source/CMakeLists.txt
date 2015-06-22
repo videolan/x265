@@ -395,8 +395,6 @@ if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
 endif()
 if(EXTRA_LIB)
-    # ugly link path hack
-    link_directories(${CMAKE_BINARY_DIR}/../10bit)
     target_link_libraries(x265-static ${EXTRA_LIB})
 endif()
 if(EXTRA_LINK_FLAGS)
