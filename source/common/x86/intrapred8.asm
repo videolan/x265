@@ -1541,6 +1541,30 @@ cglobal intra_pred_planar32, 3,3,8,0-(4*mmsize)
 
 %endif ; end ARCH_X86_32
 
+%macro STORE_4x4 0
+    movd        [r0], m0
+    psrldq      m0, 4
+    movd        [r0 + r1], m0
+    psrldq      m0, 4
+    movd        [r0 + r1 * 2], m0
+    lea         r1, [r1 * 3]
+    psrldq      m0, 4
+    movd        [r0 + r1], m0
+%endmacro
+
+%macro TRANSPOSE_4x4 0
+    pshufd      m0, m0, 0xD8
+    pshufd      m1, m2, 0xD8
+    pshuflw     m0, m0, 0xD8
+    pshuflw     m1, m1, 0xD8
+    pshufhw     m0, m0, 0xD8
+    pshufhw     m1, m1, 0xD8
+    mova        m2, m0
+    punpckldq   m0, m1
+    punpckhdq   m2, m1
+    packuswb    m0, m2
+%endmacro
+
 ;-----------------------------------------------------------------------------------------
 ; void intraPredAng4(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
 ;-----------------------------------------------------------------------------------------
@@ -1563,214 +1587,208 @@ cglobal intra_pred_ang4_2, 3,5,1
     RET
 
 INIT_XMM sse2
-cglobal intra_pred_ang4_3, 3,5,8
-    mov         r4d, 1
-    cmp         r3m, byte 33
-    mov         r3d, 9
-    cmove       r3d, r4d
+cglobal intra_pred_ang4_3, 3,3,5
+    movh        m3, [r2 + 9]   ; [8 7 6 5 4 3 2 1]
+    punpcklbw   m3, m3
+    psrldq      m3, 1
+    movh        m0, m3                  ;[x x x x x x x x 5 4 4 3 3 2 2 1]
+    psrldq      m3, 2
+    movh        m1, m3                  ;[x x x x x x x x 6 5 5 4 4 3 3 2]
+    psrldq      m3, 2
+    movh        m2, m3                  ;[x x x x x x x x 7 6 6 5 5 4 4 3]
+    psrldq      m3, 2                   ;[x x x x x x x x 8 7 7 6 6 5 5 4]
 
-    movh        m0, [r2 + r3]   ; [8 7 6 5 4 3 2 1]
-    mova        m1, m0
-    psrldq      m1, 1           ; [x 8 7 6 5 4 3 2]
-    punpcklbw   m0, m1          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
-    mova        m1, m0
-    psrldq      m1, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
-    mova        m2, m0
-    psrldq      m2, 4           ; [x x x x x x x x 7 6 6 5 5 4 4 3]
-    mova        m3, m0
-    psrldq      m3, 6           ; [x x x x x x x x 8 7 7 6 6 5 5 4]
-    punpcklqdq  m0, m1
-    punpcklqdq  m2, m3
-
-    lea         r3, [pw_ang_table + 20 * 16]
-    mova        m4, [r3 + 6 * 16]   ; [26]
-    mova        m5, [r3]            ; [20]
-    mova        m6, [r3 - 6 * 16]   ; [14]
-    mova        m7, [r3 - 12 * 16]  ; [ 8]
-    jmp        .do_filter4x4
-
-    ; NOTE: share path, input is m0=[1 0], m2=[3 2], m3,m4=coef, flag_z=no_transpose
-ALIGN 16
-.do_filter4x4:
-    pxor        m1, m1
-    punpckhbw   m3, m0
-    psrlw       m3, 8
-    pmaddwd     m3, m5
-    punpcklbw   m0, m1
-    pmaddwd     m0, m4
-    packssdw    m0, m3
+    pxor        m4, m4
+    punpcklbw   m1, m4
+    pmaddwd     m1, [pw_ang_table + 20 * 16]
+    punpcklbw   m0, m4
+    pmaddwd     m0, [pw_ang_table + 26 * 16]
+    packssdw    m0, m1
     paddw       m0, [pw_16]
     psraw       m0, 5
-    punpckhbw   m3, m2
-    psrlw       m3, 8
-    pmaddwd     m3, m7
-    punpcklbw   m2, m1
-    pmaddwd     m2, m6
+    punpcklbw   m3, m4
+    pmaddwd     m3, [pw_ang_table + 8 * 16]
+    punpcklbw   m2, m4
+    pmaddwd     m2, [pw_ang_table + 14 * 16]
     packssdw    m2, m3
     paddw       m2, [pw_16]
     psraw       m2, 5
 
-    ; NOTE: mode 33 doesn't reorder, UNSAFE but I don't use any instruction that affect eflag register before
-    jz         .store
+    TRANSPOSE_4x4
 
-    ; transpose 4x4 c_trans_4x4           db  0,  4,  8, 12,  1,  5,  9, 13,  2,  6, 10, 14,  3,  7, 11, 15
-    pshufd      m0, m0, 0xD8
-    pshufd      m1, m2, 0xD8
-    pshuflw     m0, m0, 0xD8
-    pshuflw     m1, m1, 0xD8
-    pshufhw     m0, m0, 0xD8
-    pshufhw     m1, m1, 0xD8
-    mova        m2, m0
-    punpckldq   m0, m1
-    punpckhdq   m2, m1
-
-.store:
-    packuswb    m0, m2
-    movd        [r0], m0
-    psrldq      m0, 4
-    movd        [r0 + r1], m0
-    psrldq      m0, 4
-    movd        [r0 + r1 * 2], m0
-    lea         r1, [r1 * 3]
-    psrldq      m0, 4
-    movd        [r0 + r1], m0
+    STORE_4x4
     RET
 
-cglobal intra_pred_ang4_4, 3,5,8
-    xor         r4d, r4d
-    inc         r4d
-    cmp         r3m, byte 32
-    mov         r3d, 9
-    cmove       r3d, r4d
+cglobal intra_pred_ang4_4, 3,3,5
+    movh        m1, [r2 + 9]            ;[8 7 6 5 4 3 2 1]
+    punpcklbw   m1, m1
+    psrldq      m1, 1
+    movh        m0, m1                  ;[x x x x x x x x 5 4 4 3 3 2 2 1]
+    psrldq      m1, 2
+    movh        m2, m1                  ;[x x x x x x x x 6 5 5 4 4 3 3 2]
+    psrldq      m1, 2                   ;[x x x x x x x x 7 6 6 5 5 4 4 3]
 
-    movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
-    punpcklbw   m0, m0
-    psrldq      m0, 1
-    mova        m2, m0
-    psrldq      m2, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
-    mova        m1, m0
-    psrldq      m1, 4           ; [x x x x x x x x 7 6 6 5 5 4 4 3]
-    punpcklqdq  m0, m2
-    punpcklqdq  m2, m1
+    pxor        m4, m4
+    punpcklbw   m2, m4
+    mova        m3, m2
+    pmaddwd     m3, [pw_ang_table + 10 * 16]
+    punpcklbw   m0, m4
+    pmaddwd     m0, [pw_ang_table + 21 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m1, m4
+    pmaddwd     m1, [pw_ang_table + 20 * 16]
+    pmaddwd     m2, [pw_ang_table + 31 * 16]
+    packssdw    m2, m1
+    paddw       m2, [pw_16]
+    psraw       m2, 5
 
-    lea         r3, [pw_ang_table + 18 * 16]
-    mova        m4, [r3 +  3 * 16]  ; [21]
-    mova        m5, [r3 -  8 * 16]  ; [10]
-    mova        m6, [r3 + 13 * 16]  ; [31]
-    mova        m7, [r3 +  2 * 16]  ; [20]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+    TRANSPOSE_4x4
 
-cglobal intra_pred_ang4_5, 3,5,8
-    xor         r4d, r4d
-    inc         r4d
-    cmp         r3m, byte 31
-    mov         r3d, 9
-    cmove       r3d, r4d
+    STORE_4x4
+    RET
 
-    movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
-    punpcklbw   m0, m0          ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
-    psrldq      m0, 1
-    mova        m2, m0
-    psrldq      m2, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
+cglobal intra_pred_ang4_5, 3,3,5
+    movh        m3, [r2 + 9]            ;[8 7 6 5 4 3 2 1]
+    punpcklbw   m3, m3
+    psrldq      m3, 1
+    mova        m0, m3                  ;[x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    psrldq      m3, 2
+    mova        m2, m3                  ;[x x x x x x x x 6 5 5 4 4 3 3 2]
+    psrldq      m3, 2                   ;[x x x x x x x x 7 6 6 5 5 4 4 3]
+
+    pxor        m1, m1
+    punpcklbw   m2, m1
+    mova        m4, m2
+    pmaddwd     m4, [pw_ang_table + 2 * 16]
+    punpcklbw   m0, m1
+    pmaddwd     m0, [pw_ang_table + 17 * 16]
+    packssdw    m0, m4
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m3, m1
+    pmaddwd     m3, [pw_ang_table + 4 * 16]
+    pmaddwd     m2, [pw_ang_table + 19 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+
+    TRANSPOSE_4x4
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_6, 3,3,4
+    movh        m2, [r2 + 9]            ;[8 7 6 5 4 3 2 1]
+    punpcklbw   m2, m2
+    psrldq      m2, 1
+    movh        m0, m2                  ;[x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    psrldq      m2, 2                   ;[x x x 8 8 7 7 6 6 5 5 4 4 3 3 2]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
     mova        m3, m0
-    psrldq      m3, 4           ; [x x x x x x x x 7 6 6 5 5 4 4 3]
-    punpcklqdq  m0, m2
-    punpcklqdq  m2, m3
+    pmaddwd     m3, [pw_ang_table + 26 * 16]
+    pmaddwd     m0, [pw_ang_table + 13 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m2, m1
+    mova        m3, m2
+    pmaddwd     m3, [pw_ang_table + 20 * 16]
+    pmaddwd     m2, [pw_ang_table + 7 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
 
-    lea         r3, [pw_ang_table + 10 * 16]
-    mova        m4, [r3 +  7 * 16]  ; [17]
-    mova        m5, [r3 -  8 * 16]  ; [ 2]
-    mova        m6, [r3 +  9 * 16]  ; [19]
-    mova        m7, [r3 -  6 * 16]  ; [ 4]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+    TRANSPOSE_4x4
 
-cglobal intra_pred_ang4_6, 3,5,8
-    xor         r4d, r4d
-    inc         r4d
-    cmp         r3m, byte 30
-    mov         r3d, 9
-    cmove       r3d, r4d
+    STORE_4x4
+    RET
 
-    movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
-    punpcklbw   m0, m0
-    psrldq      m0, 1           ; [x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+cglobal intra_pred_ang4_7, 3,3,5
+    movh        m3, [r2 + 9]            ;[8 7 6 5 4 3 2 1]
+    punpcklbw   m3, m3
+    psrldq      m3, 1
+    movh        m0, m3                  ;[x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    psrldq      m3, 2                   ;[x x x x x x x x 6 5 5 4 4 3 3 2]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m4, m0
     mova        m2, m0
-    psrldq      m2, 2           ; [x x x 8 8 7 7 6 6 5 5 4 4 3 3 2]
-    punpcklqdq  m0, m0
-    punpcklqdq  m2, m2
+    pmaddwd     m4, [pw_ang_table + 18 * 16]
+    pmaddwd     m0, [pw_ang_table + 9 * 16]
+    packssdw    m0, m4
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m3, m1
+    pmaddwd     m3, [pw_ang_table + 4 * 16]
+    pmaddwd     m2, [pw_ang_table + 27 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
 
-    lea         r3, [pw_ang_table + 19 * 16]
-    mova        m4, [r3 -  6 * 16]  ; [13]
-    mova        m5, [r3 +  7 * 16]  ; [26]
-    mova        m6, [r3 - 12 * 16]  ; [ 7]
-    mova        m7, [r3 +  1 * 16]  ; [20]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+    TRANSPOSE_4x4
 
-cglobal intra_pred_ang4_7, 3,5,8
-    xor         r4d, r4d
-    inc         r4d
-    cmp         r3m, byte 29
-    mov         r3d, 9
-    cmove       r3d, r4d
+    STORE_4x4
+    RET
 
-    movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
+cglobal intra_pred_ang4_8, 3,3,5
+    movh        m0, [r2 + 9]            ;[8 7 6 5 4 3 2 1]
     punpcklbw   m0, m0
-    psrldq      m0, 1
+    psrldq      m0, 1                   ;[x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
     mova        m2, m0
-    psrldq      m2, 2           ; [x x x x x x x x 6 5 5 4 4 3 3 2]
-    punpcklqdq  m0, m0
-    punpcklqdq  m2, m2
-    movhlps     m2, m0
+    mova        m3, m0
+    mova        m4, m2
+    pmaddwd     m3, [pw_ang_table + 10 * 16]
+    pmaddwd     m0, [pw_ang_table + 5 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    pmaddwd     m4, [pw_ang_table + 20 * 16]
+    pmaddwd     m2, [pw_ang_table + 15 * 16]
+    packssdw    m2, m4
+    paddw       m2, [pw_16]
+    psraw       m2, 5
 
-    lea         r3, [pw_ang_table + 20 * 16]
-    mova        m4, [r3 - 11 * 16]  ; [ 9]
-    mova        m5, [r3 -  2 * 16]  ; [18]
-    mova        m6, [r3 +  7 * 16]  ; [27]
-    mova        m7, [r3 - 16 * 16]  ; [ 4]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+    TRANSPOSE_4x4
 
-cglobal intra_pred_ang4_8, 3,5,8
-    xor         r4d, r4d
-    inc         r4d
-    cmp         r3m, byte 28
-    mov         r3d, 9
-    cmove       r3d, r4d
+    STORE_4x4
+    RET
 
-    movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
+cglobal intra_pred_ang4_9, 3,3,5
+    movh        m0, [r2 + 9]            ;[8 7 6 5 4 3 2 1]
     punpcklbw   m0, m0
-    psrldq      m0, 1
-    punpcklqdq  m0, m0
+    psrldq      m0, 1                   ;[x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
     mova        m2, m0
+    mova        m3, m0
+    mova        m4, m2
+    pmaddwd     m3, [pw_ang_table + 4 * 16]
+    pmaddwd     m0, [pw_ang_table + 2 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    pmaddwd     m4, [pw_ang_table + 8 * 16]
+    pmaddwd     m2, [pw_ang_table + 6 * 16]
+    packssdw    m2, m4
+    paddw       m2, [pw_16]
+    psraw       m2, 5
 
-    lea         r3, [pw_ang_table + 13 * 16]
-    mova        m4, [r3 -  8 * 16]  ; [ 5]
-    mova        m5, [r3 -  3 * 16]  ; [10]
-    mova        m6, [r3 +  2 * 16]  ; [15]
-    mova        m7, [r3 +  7 * 16]  ; [20]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+    TRANSPOSE_4x4
 
-cglobal intra_pred_ang4_9, 3,5,8
-    xor         r4d, r4d
-    inc         r4d
-    cmp         r3m, byte 27
-    mov         r3d, 9
-    cmove       r3d, r4d
-
-    movh        m0, [r2 + r3]    ; [8 7 6 5 4 3 2 1]
-    punpcklbw   m0, m0
-    psrldq      m0, 1           ; [x 8 7 6 5 4 3 2]
-    punpcklqdq  m0, m0
-    mova        m2, m0
-
-    lea         r3, [pw_ang_table + 4 * 16]
-    mova        m4, [r3 -  2 * 16]  ; [ 2]
-    mova        m5, [r3 -  0 * 16]  ; [ 4]
-    mova        m6, [r3 +  2 * 16]  ; [ 6]
-    mova        m7, [r3 +  4 * 16]  ; [ 8]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+    STORE_4x4
+    RET
 
 cglobal intra_pred_ang4_10, 3,5,4
-    movd        m0, [r2 + 9]            ; [8 7 6 5 4 3 2 1]
+    movd        m0, [r2 + 9]            ;[8 7 6 5 4 3 2 1]
     punpcklbw   m0, m0
     punpcklwd   m0, m0
     pshufd      m1, m0, 1
@@ -1786,7 +1804,7 @@ cglobal intra_pred_ang4_10, 3,5,4
     ; filter
     pxor        m3, m3
     punpcklbw   m0, m3
-    movh        m1, [r2]                ; [4 3 2 1 0]
+    movh        m1, [r2]                ;[4 3 2 1 0]
     punpcklbw   m1, m3
     pshuflw     m2, m1, 0x00
     psrldq      m1, 2
@@ -1799,8 +1817,491 @@ cglobal intra_pred_ang4_10, 3,5,4
     movd        [r0], m0
     RET
 
+cglobal intra_pred_ang4_11, 3,3,5
+    movd        m1, [r2 + 9]            ;[4 3 2 1]
+    movh        m0, [r2 - 7]            ;[A x x x x x x x]
+    punpcklbw   m1, m1                  ;[4 4 3 3 2 2 1 1]
+    punpcklqdq  m0, m1                  ;[4 4 3 3 2 2 1 1 A x x x x x x x]]
+    psrldq      m0, 7                   ;[x x x x x x x x 4 3 3 2 2 1 1 A]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m2, m0
+    mova        m3, m0
+    mova        m4, m2
+    pmaddwd     m3, [pw_ang_table + 28 * 16]
+    pmaddwd     m0, [pw_ang_table + 30 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    pmaddwd     m4, [pw_ang_table + 24 * 16]
+    pmaddwd     m2, [pw_ang_table + 26 * 16]
+    packssdw    m2, m4
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+
+    TRANSPOSE_4x4
+
+    STORE_4x4
+    RET
+
+    cglobal intra_pred_ang4_12, 3,3,5
+    movd        m1, [r2 + 9]            ;[4 3 2 1]
+    movh        m0, [r2 - 7]            ;[A x x x x x x x]
+    punpcklbw   m1, m1                  ;[4 4 3 3 2 2 1 1]
+    punpcklqdq  m0, m1                  ;[4 4 3 3 2 2 1 1 A x x x x x x x]
+    psrldq      m0, 7                   ;[x x x x x x x x 4 3 3 2 2 1 1 A]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m2, m0
+    mova        m3, m0
+    mova        m4, m2
+    pmaddwd     m3, [pw_ang_table + 22 * 16]
+    pmaddwd     m0, [pw_ang_table + 27 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    pmaddwd     m4, [pw_ang_table + 12 * 16]
+    pmaddwd     m2, [pw_ang_table + 17 * 16]
+    packssdw    m2, m4
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+
+    TRANSPOSE_4x4
+
+    STORE_4x4
+    RET
+
+    cglobal intra_pred_ang4_24, 3,3,5
+    movd        m1, [r2 + 1]            ;[4 3 2 1]
+    movh        m0, [r2 - 7]            ;[A x x x x x x x]
+    punpcklbw   m1, m1                  ;[4 4 3 3 2 2 1 1]
+    punpcklqdq  m0, m1                  ;[4 4 3 3 2 2 1 1 A x x x x x x x]
+    psrldq      m0, 7                   ;[x x x x x x x x 4 3 3 2 2 1 1 A]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m2, m0
+    mova        m3, m0
+    mova        m4, m2
+    pmaddwd     m3, [pw_ang_table + 22 * 16]
+    pmaddwd     m0, [pw_ang_table + 27 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    pmaddwd     m4, [pw_ang_table + 12 * 16]
+    pmaddwd     m2, [pw_ang_table + 17 * 16]
+    packssdw    m2, m4
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_13, 3,3,5
+    movd        m1, [r2 - 1]            ;[x x A x]
+    movd        m2, [r2 + 9]           ;[4 3 2 1]
+    movd        m0, [r2 + 3]            ;[x x B x]
+    punpcklbw   m0, m1                  ;[x x x x A B x x]
+    punpckldq   m0, m2                  ;[4 3 2 1 A B x x]
+    psrldq      m0, 2                   ;[x x 4 3 2 1 A B]
+    punpcklbw   m0, m0
+    psrldq      m0, 1
+    movh        m3, m0                  ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    psrldq      m0, 2                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m4, m0
+    mova        m2, m0
+    pmaddwd     m4, [pw_ang_table + 14 * 16]
+    pmaddwd     m0, [pw_ang_table + 23 * 16]
+    packssdw    m0, m4
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m3, m1
+    pmaddwd     m3, [pw_ang_table + 28 * 16]
+    pmaddwd     m2, [pw_ang_table + 5 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+
+    TRANSPOSE_4x4
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_14, 3,3,4
+    movd        m1, [r2 - 1]            ;[x x A x]
+    movd        m0, [r2 + 1]            ;[x x B x]
+    punpcklbw   m0, m1                  ;[A B x x]
+    movd        m1, [r2 + 9]            ;[4 3 2 1]
+    punpckldq   m0, m1                  ;[4 3 2 1 A B x x]
+    psrldq      m0, 2                   ;[x x 4 3 2 1 A B]
+    punpcklbw   m0, m0                  ;[x x x x 4 4 3 3 2 2 1 1 A A B B]
+    psrldq      m0, 1
+    movh        m2, m0                  ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    psrldq      m0, 2                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m3, m0
+    pmaddwd     m3, [pw_ang_table + 6 * 16]
+    pmaddwd     m0, [pw_ang_table + 19 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m2, m1
+    mova        m3, m2
+    pmaddwd     m3, [pw_ang_table + 12 * 16]
+    pmaddwd     m2, [pw_ang_table + 25 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+
+    TRANSPOSE_4x4
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_15, 3,3,5
+    movd        m0, [r2]                ;[x x x A]
+    movd        m1, [r2 + 2]            ;[x x x B]
+    punpcklbw   m1, m0                  ;[x x A B]
+    movd        m0, [r2 + 3]            ;[x x C x]
+    punpcklwd   m0, m1                  ;[A B C x]
+    movd        m1, [r2 + 9]            ;[4 3 2 1]
+    punpckldq   m0, m1                  ;[4 3 2 1 A B C x]
+    psrldq      m0, 1                   ;[x 4 3 2 1 A B C]
+    punpcklbw   m0, m0                  ;[x x 4 4 3 3 2 2 1 1 A A B B C C]
+    psrldq      m0, 1
+    movh        m1, m0                  ;[x x x 4 4 3 3 2 2 1 1 A A B B C]
+    psrldq      m0, 2
+    movh        m2, m0                  ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    psrldq      m0, 2                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+
+    pxor        m4, m4
+    punpcklbw   m2, m4
+    mova        m3, m2
+    pmaddwd     m3, [pw_ang_table + 30 * 16]
+    punpcklbw   m0, m4
+    pmaddwd     m0, [pw_ang_table + 15 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m1, m4
+    pmaddwd     m1, [pw_ang_table + 28 * 16]
+    pmaddwd     m2, [pw_ang_table + 13 * 16]
+    packssdw    m2, m1
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+
+    TRANSPOSE_4x4
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_16, 3,3,5
+    movd        m2, [r2]                ;[x x x A]
+    movd        m1, [r2 + 2]            ;[x x x B]
+    punpcklbw   m1, m2                  ;[x x A B]
+    movd        m0, [r2 + 2]            ;[x x C x]
+    punpcklwd   m0, m1                  ;[A B C x]
+    movd        m1, [r2 + 9]            ;[4 3 2 1]
+    punpckldq   m0, m1                  ;[4 3 2 1 A B C x]
+    psrldq      m0, 1                   ;[x 4 3 2 1 A B C]
+    punpcklbw   m0, m0                  ;[x x 4 4 3 3 2 2 1 1 A A B B C C]
+    psrldq      m0, 1
+    movh        m1, m0                  ;[x x x 4 4 3 3 2 2 1 1 A A B B C]
+    psrldq      m0, 2
+    movh        m2, m0                  ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    psrldq      m0, 2                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+
+    pxor        m4, m4
+    punpcklbw   m2, m4
+    mova        m3, m2
+    pmaddwd     m3, [pw_ang_table + 22 * 16]
+    punpcklbw   m0, m4
+    pmaddwd     m0, [pw_ang_table + 11 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m1, m4
+    pmaddwd     m1, [pw_ang_table + 12 * 16]
+    pmaddwd     m2, [pw_ang_table + 1 * 16]
+    packssdw    m2, m1
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+
+    TRANSPOSE_4x4
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_17, 3,3,5
+    movd        m2, [r2]                ;[x x x A]
+    movd        m3, [r2 + 1]            ;[x x x B]
+    movd        m4, [r2 + 2]            ;[x x x C]
+    movd        m0, [r2 + 4]            ;[x x x D]
+    punpcklbw   m3, m2                  ;[x x A B]
+    punpcklbw   m0, m4                  ;[x x C D]
+    punpcklwd   m0, m3                  ;[A B C D]
+    movd        m1, [r2 + 9]            ;[4 3 2 1]
+    punpckldq   m0, m1                  ;[4 3 2 1 A B C D]
+    punpcklbw   m0, m0                  ;[4 4 3 3 2 2 1 1 A A B B C C D D]
+    psrldq      m0, 1
+    movh        m1, m0                  ;[x 4 4 3 3 2 2 1 1 A A B B C C D]
+    psrldq      m0, 2
+    movh        m2, m0                  ;[x x x 4 4 3 3 2 2 1 1 A A B B C]
+    psrldq      m0, 2
+    movh        m3, m0                  ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    psrldq      m0, 2                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+
+    pxor        m4, m4
+    punpcklbw   m3, m4
+    pmaddwd     m3, [pw_ang_table + 12 * 16]
+    punpcklbw   m0, m4
+    pmaddwd     m0, [pw_ang_table + 6 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m1, m4
+    pmaddwd     m1, [pw_ang_table + 24 * 16]
+    punpcklbw   m2, m4
+    pmaddwd     m2, [pw_ang_table + 18 * 16]
+    packssdw    m2, m1
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+
+    TRANSPOSE_4x4
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_18, 3,4,2
+    mov         r3d, [r2 + 8]
+    mov         r3b, byte [r2]
+    bswap       r3d
+    movd        m0, r3d
+
+    movd        m1, [r2 + 1]
+    punpckldq   m0, m1
+    lea         r3, [r1 * 3]
+    movd        [r0 + r3], m0
+    psrldq      m0, 1
+    movd        [r0 + r1 * 2], m0
+    psrldq      m0, 1
+    movd        [r0 + r1], m0
+    psrldq      m0, 1
+    movd        [r0], m0
+    RET
+
+cglobal intra_pred_ang4_19, 3,3,5
+    movd        m2, [r2]                ;[x x x A]
+    movd        m3, [r2 + 9]            ;[x x x B]
+    movd        m4, [r2 + 10]           ;[x x x C]
+    movd        m0, [r2 + 12]           ;[x x x D]
+    punpcklbw   m3, m2                  ;[x x A B]
+    punpcklbw   m0, m4                  ;[x x C D]
+    punpcklwd   m0, m3                  ;[A B C D]
+    movd        m1, [r2 + 1]            ;[4 3 2 1]
+    punpckldq   m0, m1                  ;[4 3 2 1 A B C D]
+    punpcklbw   m0, m0                  ;[4 4 3 3 2 2 1 1 A A B B C C D D]
+    psrldq      m0, 1
+    movh        m1, m0                  ;[x 4 4 3 3 2 2 1 1 A A B B C C D]
+    psrldq      m0, 2
+    movh        m2, m0                  ;[x x x 4 4 3 3 2 2 1 1 A A B B C]
+    psrldq      m0, 2
+    movh        m3, m0                  ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    psrldq      m0, 2                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+
+    pxor        m4, m4
+    punpcklbw   m3, m4
+    pmaddwd     m3, [pw_ang_table + 12 * 16]
+    punpcklbw   m0, m4
+    pmaddwd     m0, [pw_ang_table + 6 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m1, m4
+    pmaddwd     m1, [pw_ang_table + 24 * 16]
+    punpcklbw   m2, m4
+    pmaddwd     m2, [pw_ang_table + 18 * 16]
+    packssdw    m2, m1
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_20, 3,3,5
+    movd        m2, [r2]                ;[x x x A]
+    movd        m1, [r2 + 10]           ;[x x x B]
+    punpcklbw   m1, m2                  ;[x x A B]
+    movd        m0, [r2 + 10]           ;[x x C x]
+    punpcklwd   m0, m1                  ;[A B C x]
+    movd        m1, [r2 + 1]            ;[4 3 2 1]
+    punpckldq   m0, m1                  ;[4 3 2 1 A B C x]
+    psrldq      m0, 1                   ;[x 4 3 2 1 A B C]
+    punpcklbw   m0, m0                  ;[x x 4 4 3 3 2 2 1 1 A A B B C C]
+    psrldq      m0, 1
+    movh        m1, m0                  ;[x x x 4 4 3 3 2 2 1 1 A A B B C]
+    psrldq      m0, 2
+    movh        m2, m0                  ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    psrldq      m0, 2                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+
+    pxor        m4, m4
+    punpcklbw   m2, m4
+    mova        m3, m2
+    pmaddwd     m3, [pw_ang_table + 22 * 16]
+    punpcklbw   m0, m4
+    pmaddwd     m0, [pw_ang_table + 11 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m1, m4
+    pmaddwd     m1, [pw_ang_table + 12 * 16]
+    pmaddwd     m2, [pw_ang_table + 1 * 16]
+    packssdw    m2, m1
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_21, 3,3,5
+    movd        m0, [r2]                ;[x x x A]
+    movd        m1, [r2 + 10]           ;[x x x B]
+    punpcklbw   m1, m0                  ;[x x A B]
+    movd        m0, [r2 + 11]           ;[x x C x]
+    punpcklwd   m0, m1                  ;[A B C x]
+    movd        m1, [r2 + 1]            ;[4 3 2 1]
+    punpckldq   m0, m1                  ;[4 3 2 1 A B C x]
+    psrldq      m0, 1                   ;[x 4 3 2 1 A B C]
+    punpcklbw   m0, m0                  ;[x x 4 4 3 3 2 2 1 1 A A B B C C]
+    psrldq      m0, 1
+    movh        m1, m0                  ;[x x x 4 4 3 3 2 2 1 1 A A B B C]
+    psrldq      m0, 2
+    movh        m2, m0                  ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    psrldq      m0, 2                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+
+    pxor        m4, m4
+    punpcklbw   m2, m4
+    mova        m3, m2
+    pmaddwd     m3, [pw_ang_table + 30 * 16]
+    punpcklbw   m0, m4
+    pmaddwd     m0, [pw_ang_table + 15 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m1, m4
+    pmaddwd     m1, [pw_ang_table + 28 * 16]
+    pmaddwd     m2, [pw_ang_table + 13 * 16]
+    packssdw    m2, m1
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_22, 3,3,4
+    movd        m1, [r2 - 1]            ;[x x A x]
+    movd        m0, [r2 + 9]            ;[x x B x]
+    punpcklbw   m0, m1                  ;[A B x x]
+    movd        m1, [r2 + 1]            ;[4 3 2 1]
+    punpckldq   m0, m1                  ;[4 3 2 1 A B x x]
+    psrldq      m0, 2                   ;[x x 4 3 2 1 A B]
+    punpcklbw   m0, m0                  ;[x x x x 4 4 3 3 2 2 1 1 A A B B]
+    psrldq      m0, 1
+    movh        m2, m0                  ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    psrldq      m0, 2                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m3, m0
+    pmaddwd     m3, [pw_ang_table + 6 * 16]
+    pmaddwd     m0, [pw_ang_table + 19 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m2, m1
+    mova        m3, m2
+    pmaddwd     m3, [pw_ang_table + 12 * 16]
+    pmaddwd     m2, [pw_ang_table + 25 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_23, 3,3,5
+    movd        m1, [r2 - 1]            ;[x x A x]
+    movd        m2, [r2 + 1]            ;[4 3 2 1]
+    movd        m0, [r2 + 11]           ;[x x B x]
+    punpcklbw   m0, m1                  ;[x x x x A B x x]
+    punpckldq   m0, m2                  ;[4 3 2 1 A B x x]
+    psrldq      m0, 2                   ;[x x 4 3 2 1 A B]
+    punpcklbw   m0, m0
+    psrldq      m0, 1
+    mova        m3, m0                  ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
+    psrldq      m0, 2                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m4, m0
+    mova        m2, m0
+    pmaddwd     m4, [pw_ang_table + 14 * 16]
+    pmaddwd     m0, [pw_ang_table + 23 * 16]
+    packssdw    m0, m4
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m3, m1
+    pmaddwd     m3, [pw_ang_table + 28 * 16]
+    pmaddwd     m2, [pw_ang_table + 5 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_25, 3,3,5
+    movd        m1, [r2 + 1]            ;[4 3 2 1]
+    movh        m0, [r2 - 7]            ;[A x x x x x x x]
+    punpcklbw   m1, m1                  ;[4 4 3 3 2 2 1 1]
+    punpcklqdq  m0, m1                  ;[4 4 3 3 2 2 1 1 A x x x x x x x]
+    psrldq      m0, 7                   ;[x x x x x x x x 4 3 3 2 2 1 1 A]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m2, m0
+    mova        m3, m0
+    mova        m4, m2
+    pmaddwd     m3, [pw_ang_table + 28 * 16]
+    pmaddwd     m0, [pw_ang_table + 30 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    pmaddwd     m4, [pw_ang_table + 24 * 16]
+    pmaddwd     m2, [pw_ang_table + 26 * 16]
+    packssdw    m2, m4
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
+
+    STORE_4x4
+    RET
+
 cglobal intra_pred_ang4_26, 3,4,4
-    movd        m0, [r2 + 1]            ; [8 7 6 5 4 3 2 1]
+    movd        m0, [r2 + 1]            ;[8 7 6 5 4 3 2 1]
 
     ; store
     movd        [r0], m0
@@ -1838,221 +2339,197 @@ cglobal intra_pred_ang4_26, 3,4,4
 .quit:
     RET
 
-cglobal intra_pred_ang4_11, 3,5,8
-    xor         r4d, r4d
-    cmp         r3m, byte 25
-    mov         r3d, 8
-    cmove       r3d, r4d
+cglobal intra_pred_ang4_27, 3,3,5
+    movh        m0, [r2 + 1]            ;[8 7 6 5 4 3 2 1]
+    punpcklbw   m0, m0
+    psrldq      m0, 1                   ;[x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
 
-    movd        m1, [r2 + r3 + 1]       ;[4 3 2 1]
-    movh        m0, [r2 - 7]            ;[A x x x x x x x]
-    punpcklbw   m1, m1                  ;[4 4 3 3 2 2 1 1]
-    punpcklqdq  m0, m1                  ;[4 4 3 3 2 2 1 1 A x x x x x x x]]
-    psrldq      m0, 7                   ;[x x x x x x x x 4 3 3 2 2 1 1 A]
-    punpcklqdq  m0, m0
+    pxor        m1, m1
+    punpcklbw   m0, m1
     mova        m2, m0
+    mova        m3, m0
+    mova        m4, m2
+    pmaddwd     m3, [pw_ang_table + 4 * 16]
+    pmaddwd     m0, [pw_ang_table + 2 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    pmaddwd     m4, [pw_ang_table + 8 * 16]
+    pmaddwd     m2, [pw_ang_table + 6 * 16]
+    packssdw    m2, m4
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
 
-    lea         r3, [pw_ang_table + 24 * 16]
+    STORE_4x4
+    RET
 
-    mova        m4, [r3 +  6 * 16]  ; [24]
-    mova        m5, [r3 +  4 * 16]  ; [26]
-    mova        m6, [r3 +  2 * 16]  ; [28]
-    mova        m7, [r3 +  0 * 16]  ; [30]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+cglobal intra_pred_ang4_28, 3,3,5
+    movh        m0, [r2 + 1]            ;[8 7 6 5 4 3 2 1]
+    punpcklbw   m0, m0
+    psrldq      m0, 1                   ;[x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
 
-cglobal intra_pred_ang4_12, 3,5,8
-    xor         r4d, r4d
-    cmp         r3m, byte 24
-    mov         r3d, 8
-    cmove       r3d, r4d
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m2, m0
+    mova        m3, m0
+    mova        m4, m2
+    pmaddwd     m3, [pw_ang_table + 10 * 16]
+    pmaddwd     m0, [pw_ang_table + 5 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    pmaddwd     m4, [pw_ang_table + 20 * 16]
+    pmaddwd     m2, [pw_ang_table + 15 * 16]
+    packssdw    m2, m4
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
 
-    movd        m1, [r2 + r3 + 1]
-    movh        m0, [r2 - 7]
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_29, 3,3,5
+    movh        m3, [r2 + 1]            ;[8 7 6 5 4 3 2 1]
+    punpcklbw   m3, m3
+    psrldq      m3, 1
+    movh        m0, m3                  ;[x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    psrldq      m3, 2                   ;[x x x x x x x x 6 5 5 4 4 3 3 2]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m4, m0
+    mova        m2, m0
+    pmaddwd     m4, [pw_ang_table + 18 * 16]
+    pmaddwd     m0, [pw_ang_table + 9 * 16]
+    packssdw    m0, m4
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m3, m1
+    pmaddwd     m3, [pw_ang_table + 4 * 16]
+    pmaddwd     m2, [pw_ang_table + 27 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_30, 3,3,4
+    movh        m2, [r2 + 1]            ;[8 7 6 5 4 3 2 1]
+    punpcklbw   m2, m2
+    psrldq      m2, 1
+    movh        m0, m2                  ;[x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    psrldq      m2, 2                   ;[x x x 8 8 7 7 6 6 5 5 4 4 3 3 2]
+
+    pxor        m1, m1
+    punpcklbw   m0, m1
+    mova        m3, m0
+    pmaddwd     m3, [pw_ang_table + 26 * 16]
+    pmaddwd     m0, [pw_ang_table + 13 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m2, m1
+    mova        m3, m2
+    pmaddwd     m3, [pw_ang_table + 20 * 16]
+    pmaddwd     m2, [pw_ang_table + 7 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_31, 3,3,5
+    movh        m3, [r2 + 1]            ;[8 7 6 5 4 3 2 1]
+    punpcklbw   m3, m3
+    psrldq      m3, 1
+    mova        m0, m3                  ;[x 8 8 7 7 6 6 5 5 4 4 3 3 2 2 1]
+    psrldq      m3, 2
+    mova        m2, m3                  ;[x x x x x x x x 6 5 5 4 4 3 3 2]
+    psrldq      m3, 2                   ;[x x x x x x x x 7 6 6 5 5 4 4 3]
+
+    pxor        m1, m1
+    punpcklbw   m2, m1
+    mova        m4, m2
+    pmaddwd     m4, [pw_ang_table + 2 * 16]
+    punpcklbw   m0, m1
+    pmaddwd     m0, [pw_ang_table + 17 * 16]
+    packssdw    m0, m4
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m3, m1
+    pmaddwd     m3, [pw_ang_table + 4 * 16]
+    pmaddwd     m2, [pw_ang_table + 19 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
+
+    STORE_4x4
+    RET
+
+cglobal intra_pred_ang4_32, 3,3,5
+    movh        m1, [r2 + 1]            ;[8 7 6 5 4 3 2 1]
     punpcklbw   m1, m1
-    punpcklqdq  m0, m1
-    psrldq      m0, 7
-    punpcklqdq  m0, m0
-    mova        m2, m0
+    psrldq      m1, 1
+    movh        m0, m1                  ;[x x x x x x x x 5 4 4 3 3 2 2 1]
+    psrldq      m1, 2
+    movh        m2, m1                  ;[x x x x x x x x 6 5 5 4 4 3 3 2]
+    psrldq      m1, 2                   ;[x x x x x x x x 7 6 6 5 5 4 4 3]
 
-    lea         r3, [pw_ang_table + 20 * 16]
-    mova        m4, [r3 +  7 * 16]  ; [27]
-    mova        m5, [r3 +  2 * 16]  ; [22]
-    mova        m6, [r3 -  3 * 16]  ; [17]
-    mova        m7, [r3 -  8 * 16]  ; [12]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+    pxor        m4, m4
+    punpcklbw   m2, m4
+    mova        m3, m2
+    pmaddwd     m3, [pw_ang_table + 10 * 16]
+    punpcklbw   m0, m4
+    pmaddwd     m0, [pw_ang_table + 21 * 16]
+    packssdw    m0, m3
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m1, m4
+    pmaddwd     m1, [pw_ang_table + 20 * 16]
+    pmaddwd     m2, [pw_ang_table + 31 * 16]
+    packssdw    m2, m1
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
 
-cglobal intra_pred_ang4_13, 3,5,8
-    xor         r4d, r4d
-    cmp         r3m, byte 23
-    mov         r3d, 8
-    jz          .next
-    xchg        r3d, r4d
+    STORE_4x4
+    RET
 
-.next:
-    movd        m1, [r2 - 1]            ;[x x A x]
-    movd        m2, [r2 + r4 + 1]       ;[4 3 2 1]
-    movd        m0, [r2 + r3 + 3]       ;[x x B x]
-    punpcklbw   m0, m1                  ;[x x x x A B x x]
-    punpckldq   m0, m2                  ;[4 3 2 1 A B x x]
-    psrldq      m0, 2                   ;[x x 4 3 2 1 A B]
-    punpcklbw   m0, m0                  ;[x x x x 4 4 3 3 2 2 1 1 A A B B]
-    mova        m1, m0
-    psrldq      m0, 3                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
-    psrldq      m1, 1                   ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
-    movh        m2, m0
-    punpcklqdq  m0, m0
-    punpcklqdq  m2, m1
+cglobal intra_pred_ang4_33, 3,3,5
+    movh        m3, [r2 + 1]   ; [8 7 6 5 4 3 2 1]
+    punpcklbw   m3, m3
+    psrldq      m3, 1
+    movh        m0, m3                  ;[x x x x x x x x 5 4 4 3 3 2 2 1]
+    psrldq      m3, 2
+    movh        m1, m3                  ;[x x x x x x x x 6 5 5 4 4 3 3 2]
+    psrldq      m3, 2
+    movh        m2, m3                  ;[x x x x x x x x 7 6 6 5 5 4 4 3]
+    psrldq      m3, 2                   ;[x x x x x x x x 8 7 7 6 6 5 5 4]
 
-    lea         r3, [pw_ang_table + 21 * 16]
-    mova        m4, [r3 +  2 * 16]  ; [23]
-    mova        m5, [r3 -  7 * 16]  ; [14]
-    mova        m6, [r3 - 16 * 16]  ; [ 5]
-    mova        m7, [r3 +  7 * 16]  ; [28]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
+    pxor        m4, m4
+    punpcklbw   m1, m4
+    pmaddwd     m1, [pw_ang_table + 20 * 16]
+    punpcklbw   m0, m4
+    pmaddwd     m0, [pw_ang_table + 26 * 16]
+    packssdw    m0, m1
+    paddw       m0, [pw_16]
+    psraw       m0, 5
+    punpcklbw   m3, m4
+    pmaddwd     m3, [pw_ang_table + 8 * 16]
+    punpcklbw   m2, m4
+    pmaddwd     m2, [pw_ang_table + 14 * 16]
+    packssdw    m2, m3
+    paddw       m2, [pw_16]
+    psraw       m2, 5
+    packuswb    m0, m2
 
-cglobal intra_pred_ang4_14, 3,5,8
-    xor         r4d, r4d
-    cmp         r3m, byte 22
-    mov         r3d, 8
-    jz          .next
-    xchg        r3d, r4d
-
-.next:
-    movd        m1, [r2 - 1]            ;[x x A x]
-    movd        m0, [r2 + r3 + 1]       ;[x x B x]
-    punpcklbw   m0, m1                  ;[A B x x]
-    movd        m1, [r2 + r4 + 1]       ;[4 3 2 1]
-    punpckldq   m0, m1                  ;[4 3 2 1 A B x x]
-    psrldq      m0, 2                   ;[x x 4 3 2 1 A B]
-    punpcklbw   m0, m0                  ;[x x x x 4 4 3 3 2 2 1 1 A A B B]
-    mova        m2, m0
-    psrldq      m0, 3                   ;[x x x x x x x 4 4 3 3 2 2 1 1 A]
-    psrldq      m2, 1                   ;[x x x x x 4 4 3 3 2 2 1 1 A A B]
-    punpcklqdq  m0, m0
-    punpcklqdq  m2, m2
-
-    lea         r3, [pw_ang_table + 19 * 16]
-    mova        m4, [r3 +  0 * 16]  ; [19]
-    mova        m5, [r3 - 13 * 16]  ; [ 6]
-    mova        m6, [r3 +  6 * 16]  ; [25]
-    mova        m7, [r3 -  7 * 16]  ; [12]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
-
-cglobal intra_pred_ang4_15, 3,5,8
-    xor         r4d, r4d
-    cmp         r3m, byte 21
-    mov         r3d, 8
-    jz          .next
-    xchg        r3d, r4d
-
-.next:
-    movd        m0, [r2]                ;[x x x A]
-    movd        m1, [r2 + r3 + 2]       ;[x x x B]
-    punpcklbw   m1, m0                  ;[x x A B]
-    movd        m0, [r2 + r3 + 3]       ;[x x C x]
-    punpcklwd   m0, m1                  ;[A B C x]
-    movd        m1, [r2 + r4 + 1]       ;[4 3 2 1]
-    punpckldq   m0, m1                  ;[4 3 2 1 A B C x]
-    psrldq      m0, 1                   ;[x 4 3 2 1 A B C]
-    punpcklbw   m0, m0                  ;[x x 4 4 3 3 2 2 1 1 A A B B C C]
-    psrldq      m0, 1
-    movh        m1, m0
-    psrldq      m0, 2
-    movh        m2, m0
-    psrldq      m0, 2
-    punpcklqdq  m0, m2
-    punpcklqdq  m2, m1
-
-    lea         r3, [pw_ang_table + 23 * 16]
-    mova        m4, [r3 -  8 * 16]  ; [15]
-    mova        m5, [r3 +  7 * 16]  ; [30]
-    mova        m6, [r3 - 10 * 16]  ; [13]
-    mova        m7, [r3 +  5 * 16]  ; [28]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
-
-cglobal intra_pred_ang4_16, 3,5,8
-    xor         r4d, r4d
-    cmp         r3m, byte 20
-    mov         r3d, 8
-    jz          .next
-    xchg        r3d, r4d
-
-.next:
-    movd        m2, [r2]                ;[x x x A]
-    movd        m1, [r2 + r3 + 2]       ;[x x x B]
-    punpcklbw   m1, m2                  ;[x x A B]
-    movh        m0, [r2 + r3 + 2]       ;[x x C x]
-    punpcklwd   m0, m1                  ;[A B C x]
-    movd        m1, [r2 + r4 + 1]       ;[4 3 2 1]
-    punpckldq   m0, m1                  ;[4 3 2 1 A B C x]
-    psrldq      m0, 1                   ;[x 4 3 2 1 A B C]
-    punpcklbw   m0, m0                  ;[x x 4 4 3 3 2 2 1 1 A A B B C C]
-    psrldq      m0, 1
-    movh        m1, m0
-    psrldq      m0, 2
-    movh        m2, m0
-    psrldq      m0, 2
-    punpcklqdq  m0, m2
-    punpcklqdq  m2, m1
-
-    lea         r3, [pw_ang_table + 19 * 16]
-    mova        m4, [r3 -  8 * 16]  ; [11]
-    mova        m5, [r3 +  3 * 16]  ; [22]
-    mova        m6, [r3 - 18 * 16]  ; [ 1]
-    mova        m7, [r3 -  7 * 16]  ; [12]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
-
-cglobal intra_pred_ang4_17, 3,5,8
-    xor         r4d, r4d
-    cmp         r3m, byte 19
-    mov         r3d, 8
-    jz          .next
-    xchg        r3d, r4d
-
-.next:
-    movd        m2, [r2]                ;[x x x A]
-    movd        m3, [r2 + r3 + 1]       ;[x x x B]
-    movd        m4, [r2 + r3 + 2]       ;[x x x C]
-    movd        m0, [r2 + r3 + 4]       ;[x x x D]
-    punpcklbw   m3, m2                  ;[x x A B]
-    punpcklbw   m0, m4                  ;[x x C D]
-    punpcklwd   m0, m3                  ;[A B C D]
-    movd        m1, [r2 + r4 + 1]       ;[4 3 2 1]
-    punpckldq   m0, m1                  ;[4 3 2 1 A B C D]
-    punpcklbw   m0, m0                  ;[4 4 3 3 2 2 1 1 A A B B C C D D]
-    psrldq      m0, 1
-    movh        m1, m0
-    psrldq      m0, 2
-    movh        m2, m0
-    punpcklqdq  m2, m1
-    psrldq      m0, 2
-    movh        m1, m0
-    psrldq      m0, 2
-    punpcklqdq  m0, m1
-
-    lea         r3, [pw_ang_table + 14 * 16]
-    mova        m4, [r3 -  8 * 16]  ; [ 6]
-    mova        m5, [r3 -  2 * 16]  ; [12]
-    mova        m6, [r3 +  4 * 16]  ; [18]
-    mova        m7, [r3 + 10 * 16]  ; [24]
-    jmp         mangle(private_prefix %+ _ %+ intra_pred_ang4_3 %+ SUFFIX %+ .do_filter4x4)
-
-cglobal intra_pred_ang4_18, 3,4,2
-    mov         r3d, [r2 + 8]
-    mov         r3b, byte [r2]
-    bswap       r3d
-    movd        m0, r3d
-
-    movd        m1, [r2 + 1]
-    punpckldq   m0, m1
-    lea         r3, [r1 * 3]
-    movd        [r0 + r3], m0
-    psrldq      m0, 1
-    movd        [r0 + r1 * 2], m0
-    psrldq      m0, 1
-    movd        [r0 + r1], m0
-    psrldq      m0, 1
-    movd        [r0], m0
+    STORE_4x4
     RET
 
 ;---------------------------------------------------------------------------------------------
