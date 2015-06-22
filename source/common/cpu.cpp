@@ -125,7 +125,7 @@ uint32_t cpu_detect(void)
     uint32_t max_extended_cap, max_basic_cap;
 
 #if !X86_64
-    if (!x265_cpu_cpuid_test())
+    if (!PFX(cpu_cpuid_test)())
         return 0;
 #endif
 
@@ -318,8 +318,8 @@ uint32_t cpu_detect(void)
 #elif X265_ARCH_ARM
 
 extern "C" {
-void x265_cpu_neon_test(void);
-int x265_cpu_fast_neon_mrc_test(void);
+void PFX(cpu_neon_test)(void);
+int PFX(cpu_fast_neon_mrc_test)(void);
 }
 
 uint32_t cpu_detect(void)
@@ -340,7 +340,7 @@ uint32_t cpu_detect(void)
     }
 
     canjump = 1;
-    x265_cpu_neon_test();
+    PFX(cpu_neon_test)();
     canjump = 0;
     signal(SIGILL, oldsig);
 #endif // if !HAVE_NEON
@@ -356,7 +356,7 @@ uint32_t cpu_detect(void)
     // which may result in incorrect detection and the counters stuck enabled.
     // right now Apple does not seem to support performance counters for this test
 #ifndef __MACH__
-    flags |= x265_cpu_fast_neon_mrc_test() ? X265_CPU_FAST_NEON_MRC : 0;
+    flags |= PFX(cpu_fast_neon_mrc_test)() ? X265_CPU_FAST_NEON_MRC : 0;
 #endif
     // TODO: write dual issue test? currently it's A8 (dual issue) vs. A9 (fast mrc)
 #endif // if HAVE_ARMV6
