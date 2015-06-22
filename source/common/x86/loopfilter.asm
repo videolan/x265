@@ -672,6 +672,64 @@ cglobal saoCuOrgE1_2Rows, 3, 5, 7, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuW
 ; void saoCuOrgE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offsetEo, int lcuWidth, intptr_t stride)
 ;======================================================================================================================================================
 INIT_XMM sse4
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgE2, 6,6,8
+    mov         r4d, r4m
+    add         r5d, r5d
+    pxor        m0, m0
+    inc         r1
+    movh        m6, [r0 + r4 * 2]
+    movhps      m6, [r1 + r4]
+
+.loop
+    movu        m7, [r0]
+    movu        m5, [r0 + 16]
+    movu        m3, [r0 + r5 + 2]
+    movu        m1, [r0 + r5 + 18]
+
+    pcmpgtw     m2, m7, m3
+    pcmpgtw     m3, m7
+    pcmpgtw     m4, m5, m1
+    pcmpgtw     m1, m5
+    packsswb    m2, m4
+    packsswb    m3, m1
+    pand        m2, [pb_1]
+    por         m2, m3
+
+    movu        m3, [r2]
+
+    paddb       m3, m2
+    paddb       m3, [pb_2]
+
+    movu        m4, [r3]
+    pshufb      m4, m3
+
+    psubb       m3, m0, m2
+    movu        [r1], m3
+
+    pmovsxbw    m3, m4
+    punpckhbw   m4, m4
+    psraw       m4, 8
+
+    paddw       m7, m3
+    paddw       m5, m4
+    pmaxsw      m7, m0
+    pmaxsw      m5, m0
+    pminsw      m7, [pw_1023]
+    pminsw      m5, [pw_1023]
+    movu        [r0], m7
+    movu        [r0 + 16], m5
+
+    add         r0, 32
+    add         r1, 16
+    add         r2, 16
+    sub         r4, 16
+    jg          .loop
+
+    movh        [r0 + r4 * 2], m6
+    movhps      [r1 + r4], m6
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE2, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
     mov         r4d,   r4m
     mov         r5d,   r5m
@@ -722,6 +780,7 @@ cglobal saoCuOrgE2, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
     movh        [r0 + r4], m5
     movhps      [r1 + r4], m5
     RET
+%endif
 
 INIT_YMM avx2
 cglobal saoCuOrgE2, 5, 6, 7, rec, bufft, buff1, offsetEo, lcuWidth
