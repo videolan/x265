@@ -1094,6 +1094,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.saoCuOrgE1_2Rows = PFX(saoCuOrgE1_2Rows_sse4);
         p.saoCuOrgE2[0] = PFX(saoCuOrgE2_sse4);
         p.saoCuOrgE2[1] = PFX(saoCuOrgE2_sse4);
+        p.saoCuOrgE3[0] = PFX(saoCuOrgE3_sse4);
+        p.saoCuOrgE3[1] = PFX(saoCuOrgE3_sse4);
 
         LUMA_ADDAVG(sse4);
         CHROMA_420_ADDAVG(sse4);

@@ -880,6 +880,73 @@ cglobal saoCuOrgE2_32, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
 ;void saoCuOrgE3(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intptr_t stride, int startX, int endX)
 ;=======================================================================================================
 INIT_XMM sse4
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgE3, 4,6,8
+    add             r3d, r3d
+    mov             r4d, r4m
+    mov             r5d, r5m
+
+    ; save latest 2 pixels for case startX=1 or left_endX=15
+    movh            m6, [r0 + r5 * 2]
+    movhps          m6, [r1 + r5 - 1]
+
+    ; move to startX+1
+    inc             r4d
+    lea             r0, [r0 + r4 * 2]           ; x = startX + 1
+    add             r1, r4
+    sub             r5d, r4d
+    pxor            m0, m0
+
+.loop:
+    movu            m7, [r0]
+    movu            m5, [r0 + 16]
+    movu            m3, [r0 + r3]
+    movu            m1, [r0 + r3 + 16]
+
+    pcmpgtw         m2, m7, m3
+    pcmpgtw         m3, m7
+    pcmpgtw         m4, m5, m1
+    pcmpgtw         m1, m5
+    packsswb        m2, m4
+    packsswb        m3, m1
+    pand            m2, [pb_1]
+    por             m2, m3
+
+    movu            m3, [r1]                    ; m3 = m_iUpBuff1
+
+    paddb           m3, m2
+    paddb           m3, [pb_2]                  ; m3 = uiEdgeType
+
+    movu            m4, [r2]                    ; m4 = m_iOffsetEo
+    pshufb          m4, m3
+
+    psubb           m3, m0, m2
+    movu            [r1 - 1], m3
+
+    pmovsxbw        m3, m4
+    punpckhbw       m4, m4
+    psraw           m4, 8
+
+    paddw           m7, m3
+    paddw           m5, m4
+    pmaxsw          m7, m0
+    pmaxsw          m5, m0
+    pminsw          m7, [pw_1023]
+    pminsw          m5, [pw_1023]
+    movu            [r0], m7
+    movu            [r0 + 16], m5
+
+    add             r0, 32
+    add             r1, 16
+
+    sub             r5, 16
+    jg             .loop
+
+    ; restore last pixels (up to 2)
+    movh            [r0 + r5 * 2], m6
+    movhps          [r1 + r5 - 1], m6
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE3, 3,6,8
     mov             r3d, r3m
     mov             r4d, r4m
@@ -943,6 +1010,7 @@ cglobal saoCuOrgE3, 3,6,8
     movh            [r0 + r5], m7
     movhps          [r1 + r5 - 1], m7
     RET
+%endif
 
 INIT_YMM avx2
 cglobal saoCuOrgE3, 3, 6, 8
