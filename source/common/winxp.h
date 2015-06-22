@@ -49,12 +49,12 @@ BOOL WINAPI cond_wait(ConditionVariable *cond, CRITICAL_SECTION *mutex, DWORD wa
 void cond_destroy(ConditionVariable *cond);
 
 /* map missing API symbols to our structure and functions */
-#define CONDITION_VARIABLE          x265_NS::ConditionVariable
-#define InitializeConditionVariable x265_NS::cond_init
-#define SleepConditionVariableCS    x265_NS::cond_wait
-#define WakeConditionVariable       x265_NS::cond_signal
-#define WakeAllConditionVariable    x265_NS::cond_broadcast
-#define XP_CONDITION_VAR_FREE       x265_NS::cond_destroy
+#define CONDITION_VARIABLE          X265_NS::ConditionVariable
+#define InitializeConditionVariable X265_NS::cond_init
+#define SleepConditionVariableCS    X265_NS::cond_wait
+#define WakeConditionVariable       X265_NS::cond_signal
+#define WakeAllConditionVariable    X265_NS::cond_broadcast
+#define XP_CONDITION_VAR_FREE       X265_NS::cond_destroy
 
 } // namespace X265_NS
 
