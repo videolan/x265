@@ -1144,6 +1144,56 @@ cglobal saoCuOrgE3_32, 3, 6, 8
 ; void saoCuOrgB0(pixel* rec, const pixel* offset, int lcuWidth, int lcuHeight, int stride)
 ;=====================================================================================
 INIT_XMM sse4
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgB0, 5,7,8
+    add         r4d, r4d
+
+    shr         r2d, 4
+    movu        m3, [r1]            ; offset[0-15]
+    movu        m4, [r1 + 16]       ; offset[16-31]
+    pxor        m7, m7
+
+.loopH
+    mov         r5d, r2d
+    xor         r6,  r6
+
+.loopW
+    movu        m2, [r0 + r6]
+    movu        m5, [r0 + r6 + 16]
+    psrlw       m0, m2, 5
+    psrlw       m6, m5, 5
+    packuswb    m0, m6
+    pand        m0, [pb_31]         ; m0 = [index]
+
+    pshufb      m6, m3, m0
+    pshufb      m1, m4, m0
+    pcmpgtb     m0, [pb_15]         ; m0 = [mask]
+
+    pblendvb    m6, m6, m1, m0      ; NOTE: don't use 3 parameters style, x264 macro have some bug!
+
+    pmovsxbw    m0, m6              ; offset
+    punpckhbw   m6, m6
+    psraw       m6, 8
+
+    paddw       m2, m0
+    paddw       m5, m6
+    pmaxsw      m2, m7
+    pmaxsw      m5, m7
+    pminsw      m2, [pw_1023]
+    pminsw      m5, [pw_1023]
+
+    movu        [r0 + r6], m2
+    movu        [r0 + r6 + 16], m5
+    add         r6d, 32
+    dec         r5d
+    jnz         .loopW
+
+    lea         r0, [r0 + r4]
+
+    dec         r3d
+    jnz         .loopH
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgB0, 4, 7, 8
 
     mov         r3d, r3m
@@ -1189,6 +1239,7 @@ cglobal saoCuOrgB0, 4, 7, 8
     dec         r3d
     jnz         .loopH
     RET
+%endif
 
 INIT_YMM avx2
 cglobal saoCuOrgB0, 4, 7, 8
