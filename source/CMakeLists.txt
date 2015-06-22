@@ -271,7 +271,8 @@ endif()
 set(LIB_INSTALL_DIR lib CACHE STRING "Install location of libraries")
 set(BIN_INSTALL_DIR bin CACHE STRING "Install location of executables")
 set(EXTRA_LIB "" CACHE STRING "Extra libraries to link against")
-mark_as_advanced(EXTRA_LIB)
+set(EXTRA_LINK_FLAGS "" CACHE STRING "Extra link flags")
+mark_as_advanced(EXTRA_LIB EXTRA_LINK_FLAGS)
 
 if(X64)
     # NOTE: We only officially support 16bit-per-pixel compiles of x265
@@ -397,6 +398,9 @@ if(EXTRA_LIB)
     # ugly link path hack
     link_directories(${CMAKE_BINARY_DIR}/../10bit)
     target_link_libraries(x265-static ${EXTRA_LIB})
+endif()
+if(EXTRA_LINK_FLAGS)
+    list(APPEND LINKER_OPTIONS ${EXTRA_LINK_FLAGS})
 endif()
 install(TARGETS x265-static
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
