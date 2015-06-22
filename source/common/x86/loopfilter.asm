@@ -442,6 +442,111 @@ cglobal saoCuOrgE1, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
 ; void saoCuOrgE1_2Rows(pixel *pRec, int8_t *m_iUpBuff1, int8_t *m_iOffsetEo, Int iStride, Int iLcuWidth)
 ;========================================================================================================
 INIT_XMM sse4
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgE1_2Rows, 4,7,8
+    add         r3d, r3d
+    mov         r4d, r4m
+    pxor        m0, m0                      ; m0 = 0
+    mova        m6, [pw_1023]
+    mov         r5d, r4d
+    shr         r4d, 4
+    mov         r6, r0
+.loop
+    movu        m7, [r0]
+    movu        m5, [r0 + 16]
+    movu        m3, [r0 + r3]
+    movu        m1, [r0 + r3 + 16]
+
+    pcmpgtw     m2, m7, m3
+    pcmpgtw     m3, m7
+    pcmpgtw     m4, m5, m1
+    pcmpgtw     m1, m5
+    packsswb    m2, m4
+    packsswb    m3, m1
+    pand        m2, [pb_1]
+    por         m2, m3
+
+    movu        m3, [r1]                    ; m3 = m_iUpBuff1
+
+    paddb       m3, m2
+    paddb       m3, [pb_2]
+
+    movu        m4, [r2]                    ; m4 = m_iOffsetEo
+    pshufb      m1, m4, m3
+
+    psubb       m3, m0, m2
+    movu        [r1], m3
+
+    pmovsxbw    m3, m1
+    punpckhbw   m1, m1
+    psraw       m1, 8
+
+    paddw       m7, m3
+    paddw       m5, m1
+
+    pmaxsw      m7, m0
+    pmaxsw      m5, m0
+    pminsw      m7, m6
+    pminsw      m5, m6
+
+    movu        [r0], m7
+    movu        [r0 + 16],  m5
+
+    add         r0, 32
+    add         r1, 16
+    dec         r4d
+    jnz         .loop
+
+    sub         r1, r5
+    shr         r5d, 4
+    lea         r0, [r6 + r3]
+.loopH:
+    movu        m7, [r0]
+    movu        m5, [r0 + 16]
+    movu        m3, [r0 + r3]
+    movu        m1, [r0 + r3 + 16]
+
+    pcmpgtw     m2, m7, m3
+    pcmpgtw     m3, m7
+    pcmpgtw     m4, m5, m1
+    pcmpgtw     m1, m5
+    packsswb    m2, m4
+    packsswb    m3, m1
+    pand        m2, [pb_1]
+    por         m2, m3
+
+    movu        m3, [r1]                    ; m3 = m_iUpBuff1
+
+    paddb       m3, m2
+    paddb       m3, [pb_2]
+
+    movu        m4, [r2]                    ; m4 = m_iOffsetEo
+    pshufb      m1, m4, m3
+
+    psubb       m3, m0, m2
+    movu        [r1], m3
+
+    pmovsxbw    m3, m1
+    punpckhbw   m1, m1
+    psraw       m1, 8
+
+    paddw       m7, m3
+    paddw       m5, m1
+
+    pmaxsw      m7, m0
+    pmaxsw      m5, m0
+    pminsw      m7, m6
+    pminsw      m5, m6
+
+    movu        [r0], m7
+    movu        [r0 + 16],  m5
+
+    add         r0, 32
+    add         r1, 16
+    dec         r5d
+    jnz         .loopH
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE1_2Rows, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
     mov         r3d,        r3m
     mov         r4d,        r4m
@@ -512,6 +617,7 @@ cglobal saoCuOrgE1_2Rows, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuW
     dec         r4d
     jnz         .loop
     RET
+%endif
 
 INIT_YMM avx2
 cglobal saoCuOrgE1_2Rows, 3, 5, 7, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
