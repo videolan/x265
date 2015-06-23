@@ -406,7 +406,7 @@ The second bit-depth introspection method is designed for applications
 which need more flexibility in API versioning.  If you use
 **x265_api_query()** and dynamically link to libx265 at runtime (using
 dlopen() on POSIX or LoadLibrary() on Windows) your application is no
-longer directly tied to the API version that it was compiled against.
+longer directly tied to the API version that it was compiled against::
 
 	/* x265_api_query:
 	 *   Retrieve the programming interface for a linked x265 library, like
