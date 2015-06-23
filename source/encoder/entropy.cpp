@@ -1739,9 +1739,8 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             CTZ(firstNZPosInCG, subCoeffFlag);
 
             bool signHidden = (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD);
-            uint32_t ctxSet = ((subSet > 0) & bIsLuma) ? 2 : 0;
-
-            ctxSet += !(c1 & 3);
+            const uint8_t ctxSet = (((subSet > 0) + bIsLuma) & 2) + !(c1 & 3);
+            X265_CHECK((((subSet > 0) & bIsLuma) ? 2 : 0) + !(c1 & 3) == ctxSet, "ctxSet check failure\n");
 
             c1 = 1;
             uint8_t *baseCtxMod = &m_contextState[(bIsLuma ? 0 : NUM_ONE_FLAG_CTX_LUMA) + OFF_ONE_FLAG_CTX + 4 * ctxSet];
