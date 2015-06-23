@@ -365,8 +365,8 @@ CTU size::
 Multi-library Interface
 =======================
 
-If your application might want to make a runtime selection between
-a number of libx265 libraries (perhaps 8bpp and 16bpp), then you will
+If your application might want to make a runtime selection between a
+number of libx265 libraries (perhaps main and main10), then you will
 want to use the multi-library interface.
 
 Instead of directly using all of the **x265_** methods documented
@@ -405,12 +405,12 @@ requested bit-depth:
     Linux it is .so while on Mac it is .dylib)
 
 For example on Windows, one could package together an x265.exe
-statically linked against the 8bpp libx265 together with a
+statically linked against the 8bit libx265 together with a
 libx265_main10.dll in the same folder, and this executable would be able
 to encode main and main10 bitstreams.
 
-On Linux, x265 packagers could install 8bpp static and shared libraries
-under the name libx265 (so all applications link against 8bpp libx265)
+On Linux, x265 packagers could install 8bit static and shared libraries
+under the name libx265 (so all applications link against 8bit libx265)
 and then also install libx265_main10.so (symlinked to its numbered solib).
 Thus applications which use x265_api_get() will be able to generate main
 or main10 bitstreams.
