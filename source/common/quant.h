@@ -41,7 +41,7 @@ struct QpParam
     int per;
     int qp;
     int64_t lambda2; /* FIX8 */
-    int32_t lambda;  /* FIX8, dynamic range is 18-bits in 8bpp and 20-bits in 16bpp */
+    int32_t lambda;  /* FIX8, dynamic range is 18-bits in Main and 20-bits in Main10 */
 
     QpParam() : qp(MAX_INT) {}
 

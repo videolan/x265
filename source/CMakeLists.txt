@@ -276,7 +276,7 @@ mark_as_advanced(EXTRA_LIB EXTRA_LINK_FLAGS)
 
 if(X64)
     # NOTE: We only officially support 16bit-per-pixel compiles of x265
-    # on 64bit architectures. 16bpp plus large resolution plus slow
+    # on 64bit architectures. Main10 plus large resolution plus slow
     # preset plus 32bit address space usually means malloc failure.  You
     # can disable this if(X64) check if you desparately need a 32bit
     # build with 10bit/12bit support, but this violates the "shrink wrap

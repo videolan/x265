@@ -1318,8 +1318,8 @@ void x265_cleanup(void);
 /* === Multi-lib API ===
  * By using this method to gain access to the libx265 interfaces, you allow run-
  * time selection between various available libx265 libraries based on the
- * encoder parameters. The most likely use case is to choose between 8bpp and
- * 16bpp builds of libx265. */
+ * encoder parameters. The most likely use case is to choose between Main and
+ * Main10 builds of libx265. */
 
 typedef struct x265_api
 {

@@ -871,7 +871,7 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 
 #if HIGH_BIT_DEPTH
 
-void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
+void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 {
 #if !defined(X86_64)
 #error "Unsupported build configuration (32bit x86 and HIGH_BIT_DEPTH), you must configure ENABLE_ASSEMBLY=OFF"
@@ -2077,7 +2077,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 16bpp
 }
 #else // if HIGH_BIT_DEPTH
 
-void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // 8bpp
+void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
 {
 #if X86_64
     p.scanPosLast = PFX(scanPosLast_x64);

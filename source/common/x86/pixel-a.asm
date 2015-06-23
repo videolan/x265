@@ -7089,7 +7089,7 @@ cglobal pixel_sa8d_32x32, 4,8,8
 %endif ; ARCH_X86_64=1
 %endif ; HIGH_BIT_DEPTH
 
-; Input 16bpp, Output 8bpp
+; Input 10bit, Output 8bit
 ;------------------------------------------------------------------------------------------------------------------------
 ;void planecopy_sp(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
 ;------------------------------------------------------------------------------------------------------------------------
@@ -7183,7 +7183,7 @@ cglobal downShift_16, 7,7,3
 .end:
     RET
 
-; Input 16bpp, Output 8bpp
+; Input 10bit, Output 8bit
 ;-------------------------------------------------------------------------------------------------------------------------------------
 ;void planecopy_sp(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
 ;-------------------------------------------------------------------------------------------------------------------------------------
@@ -7294,7 +7294,7 @@ cglobal downShift_16, 6,7,3
 .end:
     RET
 
-; Input 8bpp, Output 16bpp
+; Input 8bit, Output 10bit
 ;---------------------------------------------------------------------------------------------------------------------
 ;void planecopy_cp(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift)
 ;---------------------------------------------------------------------------------------------------------------------
