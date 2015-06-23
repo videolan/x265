@@ -1083,11 +1083,9 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
     {
         /* use best merge/inter mode, in case of intra use 2Nx2N inter references */
         CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : md.bestMode->cu;
-        PartSize partSize = (PartSize)cu.m_partSize[0];
-        uint32_t numPU = (partSize == SIZE_2Nx2N) ? 1 : 2;
-        uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_unitSizeDepth - cu.m_cuDepth[0]) * 2) >> 4;
+        uint32_t numPU = cu.getNumPartInter();
         refMask = 0;
-        for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += puOffset)
+        for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += cu.getPUOffset(puIdx, 0))
             refMask |= cu.getBestRefIdx(subPartIdx);
     }
     
@@ -1344,11 +1342,9 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
     {
         /* use best merge/inter mode, in case of intra use 2Nx2N inter references */
         CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : md.bestMode->cu;
-        PartSize partSize = (PartSize)cu.m_partSize[0];
-        uint32_t numPU = (partSize == SIZE_2Nx2N) ? 1 : 2;
-        uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_unitSizeDepth - cu.m_cuDepth[0]) * 2) >> 4;
+        uint32_t numPU = cu.getNumPartInter();
         refMask = 0;
-        for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += puOffset)
+        for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += cu.getPUOffset(puIdx, 0))
             refMask |= cu.getBestRefIdx(subPartIdx);
     }
 
