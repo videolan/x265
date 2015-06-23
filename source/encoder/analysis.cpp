@@ -385,10 +385,10 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
     /* perform Mode task, repeat until no more work is available */
     do
     {
+        uint32_t refMasks[2] = { 0, 0 };
+
         if (m_param->rdLevel <= 4)
         {
-            uint32_t refMasks[2] = { 0, 0 };
-
             switch (pmode.modes[task])
             {
             case PRED_INTRA:
@@ -443,7 +443,7 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
                 break;
 
             case PRED_2Nx2N:
-                slave.checkInter_rd5_6(md.pred[PRED_2Nx2N], pmode.cuGeom, SIZE_2Nx2N);
+                slave.checkInter_rd5_6(md.pred[PRED_2Nx2N], pmode.cuGeom, SIZE_2Nx2N, refMasks);
                 md.pred[PRED_BIDIR].rdCost = MAX_INT64;
                 if (m_slice->m_sliceType == B_SLICE)
                 {
@@ -454,27 +454,27 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
                 break;
 
             case PRED_Nx2N:
-                slave.checkInter_rd5_6(md.pred[PRED_Nx2N], pmode.cuGeom, SIZE_Nx2N);
+                slave.checkInter_rd5_6(md.pred[PRED_Nx2N], pmode.cuGeom, SIZE_Nx2N, refMasks);
                 break;
 
             case PRED_2NxN:
-                slave.checkInter_rd5_6(md.pred[PRED_2NxN], pmode.cuGeom, SIZE_2NxN);
+                slave.checkInter_rd5_6(md.pred[PRED_2NxN], pmode.cuGeom, SIZE_2NxN, refMasks);
                 break;
 
             case PRED_2NxnU:
-                slave.checkInter_rd5_6(md.pred[PRED_2NxnU], pmode.cuGeom, SIZE_2NxnU);
+                slave.checkInter_rd5_6(md.pred[PRED_2NxnU], pmode.cuGeom, SIZE_2NxnU, refMasks);
                 break;
 
             case PRED_2NxnD:
-                slave.checkInter_rd5_6(md.pred[PRED_2NxnD], pmode.cuGeom, SIZE_2NxnD);
+                slave.checkInter_rd5_6(md.pred[PRED_2NxnD], pmode.cuGeom, SIZE_2NxnD, refMasks);
                 break;
 
             case PRED_nLx2N:
-                slave.checkInter_rd5_6(md.pred[PRED_nLx2N], pmode.cuGeom, SIZE_nLx2N);
+                slave.checkInter_rd5_6(md.pred[PRED_nLx2N], pmode.cuGeom, SIZE_nLx2N, refMasks);
                 break;
 
             case PRED_nRx2N:
-                slave.checkInter_rd5_6(md.pred[PRED_nRx2N], pmode.cuGeom, SIZE_nRx2N);
+                slave.checkInter_rd5_6(md.pred[PRED_nRx2N], pmode.cuGeom, SIZE_nRx2N, refMasks);
                 break;
 
             default:
@@ -1137,7 +1137,7 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
     return refMask;
 }
 
-void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qp)
+uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qp)
 {
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
@@ -1171,6 +1171,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
     }
 
     bool foundSkip = false;
+    uint32_t splitRefs[4] = { 0, 0, 0, 0 };
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
     if (mightNotSplit)
     {
@@ -1206,7 +1207,7 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
                     nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
 
-                compressInterCU_rd5_6(parentCTU, childGeom, zOrder, nextQP);
+                splitRefs[subPartIdx] = compressInterCU_rd5_6(parentCTU, childGeom, zOrder, nextQP);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
@@ -1229,6 +1230,10 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
         checkDQPForSplitPred(*splitPred, cuGeom);
     }
 
+    /* Split CUs
+     *   0  1
+     *   2  3 */
+    uint32_t allSplitRefs = splitRefs[0] | splitRefs[1] | splitRefs[2] | splitRefs[3];
     /* Step 3. Evaluate ME (2Nx2N, rect, amp) and intra modes at current depth */
     if (mightNotSplit)
     {
@@ -1237,8 +1242,10 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
 
         if (!(foundSkip && m_param->bEnableEarlySkip))
         {
+            uint32_t refMasks[2];
+            refMasks[0] = allSplitRefs;
             md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
-            checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N);
+            checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
             checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
             if (m_slice->m_sliceType == B_SLICE)
@@ -1254,12 +1261,16 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
 
             if (m_param->bEnableRectInter)
             {
+                refMasks[0] = splitRefs[0] | splitRefs[2]; /* left */
+                refMasks[1] = splitRefs[1] | splitRefs[3]; /* right */
                 md.pred[PRED_Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
-                checkInter_rd5_6(md.pred[PRED_Nx2N], cuGeom, SIZE_Nx2N);
+                checkInter_rd5_6(md.pred[PRED_Nx2N], cuGeom, SIZE_Nx2N, refMasks);
                 checkBestMode(md.pred[PRED_Nx2N], cuGeom.depth);
 
+                refMasks[0] = splitRefs[0] | splitRefs[1]; /* top */
+                refMasks[1] = splitRefs[2] | splitRefs[3]; /* bot */
                 md.pred[PRED_2NxN].cu.initSubCU(parentCTU, cuGeom, qp);
-                checkInter_rd5_6(md.pred[PRED_2NxN], cuGeom, SIZE_2NxN);
+                checkInter_rd5_6(md.pred[PRED_2NxN], cuGeom, SIZE_2NxN, refMasks);
                 checkBestMode(md.pred[PRED_2NxN], cuGeom.depth);
             }
 
@@ -1279,22 +1290,30 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
 
                 if (bHor)
                 {
+                    refMasks[0] = splitRefs[0] | splitRefs[1]; /* 25% top */
+                    refMasks[1] = allSplitRefs;                /* 75% bot */
                     md.pred[PRED_2NxnU].cu.initSubCU(parentCTU, cuGeom, qp);
-                    checkInter_rd5_6(md.pred[PRED_2NxnU], cuGeom, SIZE_2NxnU);
+                    checkInter_rd5_6(md.pred[PRED_2NxnU], cuGeom, SIZE_2NxnU, refMasks);
                     checkBestMode(md.pred[PRED_2NxnU], cuGeom.depth);
 
+                    refMasks[0] = allSplitRefs;                /* 75% top */
+                    refMasks[1] = splitRefs[2] | splitRefs[3]; /* 25% bot */
                     md.pred[PRED_2NxnD].cu.initSubCU(parentCTU, cuGeom, qp);
-                    checkInter_rd5_6(md.pred[PRED_2NxnD], cuGeom, SIZE_2NxnD);
+                    checkInter_rd5_6(md.pred[PRED_2NxnD], cuGeom, SIZE_2NxnD, refMasks);
                     checkBestMode(md.pred[PRED_2NxnD], cuGeom.depth);
                 }
                 if (bVer)
                 {
+                    refMasks[0] = splitRefs[0] | splitRefs[2]; /* 25% left */
+                    refMasks[1] = allSplitRefs;                /* 75% right */
                     md.pred[PRED_nLx2N].cu.initSubCU(parentCTU, cuGeom, qp);
-                    checkInter_rd5_6(md.pred[PRED_nLx2N], cuGeom, SIZE_nLx2N);
+                    checkInter_rd5_6(md.pred[PRED_nLx2N], cuGeom, SIZE_nLx2N, refMasks);
                     checkBestMode(md.pred[PRED_nLx2N], cuGeom.depth);
 
+                    refMasks[0] = allSplitRefs;                /* 75% left */
+                    refMasks[1] = splitRefs[1] | splitRefs[3]; /* 25% right */
                     md.pred[PRED_nRx2N].cu.initSubCU(parentCTU, cuGeom, qp);
-                    checkInter_rd5_6(md.pred[PRED_nRx2N], cuGeom, SIZE_nRx2N);
+                    checkInter_rd5_6(md.pred[PRED_nRx2N], cuGeom, SIZE_nRx2N, refMasks);
                     checkBestMode(md.pred[PRED_nRx2N], cuGeom.depth);
                 }
             }
@@ -1325,9 +1344,43 @@ void Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGe
     if (mightSplit && !foundSkip)
         checkBestMode(md.pred[PRED_SPLIT], depth);
 
+       /* determine which motion references the parent CU should search */
+    uint32_t refMask;
+    if (md.bestMode == &md.pred[PRED_SPLIT])
+        refMask = allSplitRefs;
+    else
+    {
+        /* use best merge/inter mode, in case of intra use 2Nx2N inter references */
+        CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : md.bestMode->cu;
+        PartSize partSize = (PartSize)cu.m_partSize[0];
+        uint32_t numPU = (partSize == SIZE_2Nx2N) ? 1 : 2;
+        uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_unitSizeDepth - cu.m_cuDepth[0]) * 2) >> 4;
+        refMask = 0;
+        for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += puOffset)
+        {
+            uint32_t interDir = cu.m_interDir[subPartIdx];
+            switch (interDir)
+            {
+            case 1:
+                refMask |= 1 << cu.m_refIdx[0][subPartIdx];
+                break;
+            case 2:
+                refMask |= 1 << (cu.m_refIdx[1][subPartIdx] + 16);
+                break;
+            case 3:
+                refMask |= 1 << cu.m_refIdx[0][subPartIdx];
+                refMask |= 1 << (cu.m_refIdx[1][subPartIdx] + 16);
+                break;
+            }
+        }
+    }
+
     /* Copy best data to encData CTU and recon */
+    X265_CHECK(md.bestMode->ok(), "best mode is not ok");
     md.bestMode->cu.copyToPic(depth);
     md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.absPartIdx);
+
+    return refMask;
 }
 
 /* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
@@ -1618,7 +1671,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
     }
 }
 
-void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize)
+void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, uint32_t refMask[2])
 {
     interMode.initCosts();
     interMode.cu.setPartSizeSubParts(partSize);
@@ -1638,7 +1691,6 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
         }
     }
 
-    uint32_t refMask[2] = { 0, 0 };
     predInterSearch(interMode, cuGeom, true, refMask);
 
     /* predInterSearch sets interMode.sa8dBits, but this is ignored */
