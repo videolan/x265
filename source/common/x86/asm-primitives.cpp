@@ -2763,6 +2763,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_16x12].sad_x4 = PFX(pixel_sad_x4_16x12_avx2);
         p.pu[LUMA_16x16].sad_x4 = PFX(pixel_sad_x4_16x16_avx2);
         p.pu[LUMA_16x32].sad_x4 = PFX(pixel_sad_x4_16x32_avx2);
+        p.pu[LUMA_32x32].sad_x4 = PFX(pixel_sad_x4_32x32_avx2);
+        p.pu[LUMA_32x16].sad_x4 = PFX(pixel_sad_x4_32x16_avx2);
+        p.pu[LUMA_32x64].sad_x4 = PFX(pixel_sad_x4_32x64_avx2);
+        p.pu[LUMA_32x24].sad_x4 = PFX(pixel_sad_x4_32x24_avx2);
+        p.pu[LUMA_32x8].sad_x4 = PFX(pixel_sad_x4_32x8_avx2);
 
         p.cu[BLOCK_16x16].sse_pp = PFX(pixel_ssd_16x16_avx2);
         p.cu[BLOCK_32x32].sse_pp = PFX(pixel_ssd_32x32_avx2);

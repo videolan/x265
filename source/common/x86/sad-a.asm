@@ -2784,6 +2784,103 @@ SAD_X 4,  4,  4
 %endif
 %endmacro
 
+%macro SAD_X4_START_2x32P_AVX2 0
+    vbroadcasti128 m4, [r0]
+    vbroadcasti128 m5, [r0+FENC_STRIDE]
+    movu   xm0, [r1]
+    movu   xm1, [r2]
+    movu   xm2, [r1+r5]
+    movu   xm3, [r2+r5]
+    vinserti128 m0, m0, [r3], 1
+    vinserti128 m1, m1, [r4], 1
+    vinserti128 m2, m2, [r3+r5], 1
+    vinserti128 m3, m3, [r4+r5], 1
+    psadbw  m0, m4
+    psadbw  m1, m4
+    psadbw  m2, m5
+    psadbw  m3, m5
+    paddw   m0, m2
+    paddw   m1, m3
+
+    vbroadcasti128 m6, [r0+16]
+    vbroadcasti128 m7, [r0+FENC_STRIDE+16]
+    movu   xm2, [r1+16]
+    movu   xm3, [r2+16]
+    movu   xm4, [r1+r5+16]
+    movu   xm5, [r2+r5+16]
+    vinserti128 m2, m2, [r3+16], 1
+    vinserti128 m3, m3, [r4+16], 1
+    vinserti128 m4, m4, [r3+r5+16], 1
+    vinserti128 m5, m5, [r4+r5+16], 1
+    psadbw  m2, m6
+    psadbw  m3, m6
+    psadbw  m4, m7
+    psadbw  m5, m7
+    paddd   m0, m2
+    paddd   m1, m3
+    paddd   m0, m4
+    paddd   m1, m5
+%endmacro
+
+%macro SAD_X4_2x32P_AVX2 4
+    vbroadcasti128 m6, [r0+%1]
+    vbroadcasti128 m7, [r0+%3]
+    movu   xm2, [r1+%2]
+    movu   xm3, [r2+%2]
+    movu   xm4, [r1+%4]
+    movu   xm5, [r2+%4]
+    vinserti128 m2, m2, [r3+%2], 1
+    vinserti128 m3, m3, [r4+%2], 1
+    vinserti128 m4, m4, [r3+%4], 1
+    vinserti128 m5, m5, [r4+%4], 1
+    psadbw  m2, m6
+    psadbw  m3, m6
+    psadbw  m4, m7
+    psadbw  m5, m7
+    paddd   m0, m2
+    paddd   m1, m3
+    paddd   m0, m4
+    paddd   m1, m5
+
+    vbroadcasti128 m6, [r0+%1+16]
+    vbroadcasti128 m7, [r0+%3+16]
+    movu   xm2, [r1+%2+16]
+    movu   xm3, [r2+%2+16]
+    movu   xm4, [r1+%4+16]
+    movu   xm5, [r2+%4+16]
+    vinserti128 m2, m2, [r3+%2+16], 1
+    vinserti128 m3, m3, [r4+%2+16], 1
+    vinserti128 m4, m4, [r3+%4+16], 1
+    vinserti128 m5, m5, [r4+%4+16], 1
+    psadbw  m2, m6
+    psadbw  m3, m6
+    psadbw  m4, m7
+    psadbw  m5, m7
+    paddd   m0, m2
+    paddd   m1, m3
+    paddd   m0, m4
+    paddd   m1, m5
+%endmacro
+
+%macro SAD_X4_4x32P_AVX2 2
+%if %1==0
+    lea  r6, [r5*3]
+    SAD_X4_START_2x32P_AVX2
+%else
+    SAD_X4_2x32P_AVX2 FENC_STRIDE*(0+(%1&1)*4), r5*0, FENC_STRIDE*(1+(%1&1)*4), r5*1
+%endif
+    SAD_X4_2x32P_AVX2 FENC_STRIDE*(2+(%1&1)*4), r5*2, FENC_STRIDE*(3+(%1&1)*4), r6
+%if %1 != %2-1
+%if (%1&1) != 0
+    add  r0, 8*FENC_STRIDE
+%endif
+    lea  r1, [r1+4*r5]
+    lea  r2, [r2+4*r5]
+    lea  r3, [r3+4*r5]
+    lea  r4, [r4+4*r5]
+%endif
+%endmacro
+
 %macro SAD_X3_END_AVX2 0
     movifnidn r5, r5mp
     packssdw  m0, m1        ; 0 0 1 1 0 0 1 1
@@ -3332,6 +3429,12 @@ SAD_X_AVX2 4, 16, 32, 8
 SAD_X_AVX2 4, 16, 16, 8
 SAD_X_AVX2 4, 16, 12, 8
 SAD_X_AVX2 4, 16,  8, 8
+
+SAD_X_AVX2 4, 32,  8, 8
+SAD_X_AVX2 4, 32, 16, 8
+SAD_X_AVX2 4, 32, 24, 8
+SAD_X_AVX2 4, 32, 32, 8
+SAD_X_AVX2 4, 32, 64, 8
 
 ;=============================================================================
 ; SAD cacheline split
