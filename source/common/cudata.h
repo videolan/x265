@@ -258,7 +258,7 @@ public:
                                                               (((m_interDir[subPartIdx] >> 1) & 1) << (m_refIdx[1][subPartIdx] + 16)); }
     uint32_t getPUOffset(uint32_t puIdx, uint32_t absPartIdx) const { return (partAddrTable[(int)m_partSize[absPartIdx]][puIdx] << (g_unitSizeDepth - m_cuDepth[absPartIdx]) * 2) >> 4; }
 
-    uint32_t getNumPartInter() const              { return nbPartsTable[(int)m_partSize[0]]; }
+    uint32_t getNumPartInter(uint32_t absPartIdx) const              { return nbPartsTable[(int)m_partSize[absPartIdx]]; }
     bool     isIntra(uint32_t absPartIdx) const   { return m_predMode[absPartIdx] == MODE_INTRA; }
     bool     isInter(uint32_t absPartIdx) const   { return !!(m_predMode[absPartIdx] & MODE_INTER); }
     bool     isSkipped(uint32_t absPartIdx) const { return m_predMode[absPartIdx] == MODE_SKIP; }

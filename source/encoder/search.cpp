@@ -2022,7 +2022,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
     MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 2];
 
     const Slice *slice = m_slice;
-    int numPart     = cu.getNumPartInter();
+    int numPart     = cu.getNumPartInter(0);
     int numPredDir  = slice->isInterP() ? 1 : 2;
     const int* numRefIdx = slice->m_numRefIdx;
     uint32_t lastMode = 0;

@@ -860,12 +860,9 @@ void Entropy::codePredInfo(const CUData& cu, uint32_t absPartIdx)
 void Entropy::codePUWise(const CUData& cu, uint32_t absPartIdx)
 {
     X265_CHECK(!cu.isIntra(absPartIdx), "intra block not expected\n");
-    PartSize partSize = (PartSize)cu.m_partSize[absPartIdx];
-    uint32_t numPU = (partSize == SIZE_2Nx2N ? 1 : (partSize == SIZE_NxN ? 4 : 2));
-    uint32_t depth = cu.m_cuDepth[absPartIdx];
-    uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_unitSizeDepth - depth) * 2) >> 4;
+    uint32_t numPU = cu.getNumPartInter(absPartIdx);
 
-    for (uint32_t puIdx = 0, subPartIdx = absPartIdx; puIdx < numPU; puIdx++, subPartIdx += puOffset)
+    for (uint32_t puIdx = 0, subPartIdx = absPartIdx; puIdx < numPU; puIdx++, subPartIdx += cu.getPUOffset(puIdx, absPartIdx))
     {
         codeMergeFlag(cu, subPartIdx);
         if (cu.m_mergeFlag[subPartIdx])

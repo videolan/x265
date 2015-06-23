@@ -583,7 +583,8 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
                 /* RD selection between merge, inter, bidir and intra */
                 if (!m_bChromaSa8d) /* When m_bChromaSa8d is enabled, chroma MC has already been done */
                 {
-                    for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
+                    uint32_t numPU = bestInter->cu.getNumPartInter(0);
+                    for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
                     {
                         PredictionUnit pu(bestInter->cu, cuGeom, puIdx);
                         motionCompensation(bestInter->cu, pu, bestInter->predYuv, false, true);
@@ -619,7 +620,8 @@ void Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeo
                 else if (!md.bestMode->cu.m_mergeFlag[0])
                 {
                     /* finally code the best mode selected from SA8D costs */
-                    for (uint32_t puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
+                    uint32_t numPU = md.bestMode->cu.getNumPartInter(0);
+                    for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
                     {
                         PredictionUnit pu(md.bestMode->cu, cuGeom, puIdx);
                         motionCompensation(md.bestMode->cu, pu, md.bestMode->predYuv, false, true);
@@ -934,7 +936,8 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
                 /* Calculate RD cost of best inter option */
                 if (!m_bChromaSa8d) /* When m_bChromaSa8d is enabled, chroma MC has already been done */
                 {
-                    for (uint32_t puIdx = 0; puIdx < bestInter->cu.getNumPartInter(); puIdx++)
+                    uint32_t numPU = bestInter->cu.getNumPartInter(0);
+                    for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
                     {
                         PredictionUnit pu(bestInter->cu, cuGeom, puIdx);
                         motionCompensation(bestInter->cu, pu, bestInter->predYuv, false, true);
@@ -1005,7 +1008,8 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
                 }
                 else if (md.bestMode->cu.isInter(0))
                 {
-                    for (uint32_t puIdx = 0; puIdx < md.bestMode->cu.getNumPartInter(); puIdx++)
+                    uint32_t numPU = md.bestMode->cu.getNumPartInter(0);
+                    for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
                     {
                         PredictionUnit pu(md.bestMode->cu, cuGeom, puIdx);
                         motionCompensation(md.bestMode->cu, pu, md.bestMode->predYuv, false, true);
@@ -1083,7 +1087,7 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
     {
         /* use best merge/inter mode, in case of intra use 2Nx2N inter references */
         CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : md.bestMode->cu;
-        uint32_t numPU = cu.getNumPartInter();
+        uint32_t numPU = cu.getNumPartInter(0);
         refMask = 0;
         for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += cu.getPUOffset(puIdx, 0))
             refMask |= cu.getBestRefIdx(subPartIdx);
@@ -1342,7 +1346,7 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
     {
         /* use best merge/inter mode, in case of intra use 2Nx2N inter references */
         CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : md.bestMode->cu;
-        uint32_t numPU = cu.getNumPartInter();
+        uint32_t numPU = cu.getNumPartInter(0);
         refMask = 0;
         for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += cu.getPUOffset(puIdx, 0))
             refMask |= cu.getBestRefIdx(subPartIdx);
@@ -1605,7 +1609,8 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU)
     {
-        for (uint32_t part = 0; part < interMode.cu.getNumPartInter(); part++)
+        uint32_t numPU = interMode.cu.getNumPartInter(0);
+        for (uint32_t part = 0; part < numPU; part++)
         {
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
@@ -1632,7 +1637,8 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
     {
-        for (uint32_t puIdx = 0; puIdx < interMode.cu.getNumPartInter(); puIdx++)
+        uint32_t numPU = interMode.cu.getNumPartInter(0);
+        for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
         {
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
@@ -1653,7 +1659,8 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU)
     {
-        for (uint32_t puIdx = 0; puIdx < interMode.cu.getNumPartInter(); puIdx++)
+        uint32_t numPU = interMode.cu.getNumPartInter(0);
+        for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
         {
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
@@ -1671,7 +1678,8 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
     {
-        for (uint32_t puIdx = 0; puIdx < interMode.cu.getNumPartInter(); puIdx++)
+        uint32_t numPU = interMode.cu.getNumPartInter(0);
+        for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
         {
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
