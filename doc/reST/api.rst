@@ -190,7 +190,7 @@ changes made to the parameters for auto-detection and other reasons::
 	 *      presets is not recommended without a more fine-grained breakdown of
 	 *      parameters to take this into account. */
 	int x265_encoder_reconfig(x265_encoder *, x265_param *);
-	
+
 Pictures
 ========
 
