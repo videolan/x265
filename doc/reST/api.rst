@@ -41,9 +41,9 @@ string identifying the compiler and build options.
 x265 will accept input pixels of any depth between 8 and 16 bits
 regardless of the depth of its internal pixels (8 or 10).  It will shift
 and mask input pixels as required to reach the internal depth. If
-downshifting is being performed using our CLI application, the
-:option:`--dither` option may be enabled to reduce banding. This feature
-is not available through the C interface.
+downshifting is being performed using our CLI application (to 8 bits),
+the :option:`--dither` option may be enabled to reduce banding. This
+feature is not available through the C interface.
 
 Encoder
 =======
