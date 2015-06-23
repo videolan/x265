@@ -83,10 +83,10 @@
 #endif
 
 #if HIGH_BIT_DEPTH
-#define BITDEPTH "16bpp"
+#define BITDEPTH "10bit"
 const int PFX(max_bit_depth) = 10;
 #else
-#define BITDEPTH "8bpp"
+#define BITDEPTH "8bit"
 const int PFX(max_bit_depth) = 8;
 #endif
 
