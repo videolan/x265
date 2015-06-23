@@ -1325,6 +1325,7 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
             {
                 if (!m_param->limitReferences || splitIntra)
                 {
+                    ProfileCounter(parentCTU, totalIntraCU[cuGeom.depth]);
                     md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
                     checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL, NULL);
                     checkBestMode(md.pred[PRED_INTRA], depth);
@@ -1335,6 +1336,10 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
                         checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN, NULL, NULL);
                         checkBestMode(md.pred[PRED_INTRA_NxN], depth);
                     }
+                }
+                else
+                {
+                    ProfileCounter(parentCTU, skippedIntraCU[cuGeom.depth]);
                 }
             }
         }
