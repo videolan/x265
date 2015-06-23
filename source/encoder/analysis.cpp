@@ -1251,6 +1251,26 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
             checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
             checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
+            if (m_param->limitReferences & X265_REF_LIMIT_CU)
+            {
+                CUData& cu = md.pred[PRED_2Nx2N].cu;
+                int refMask;
+                switch (cu.m_interDir[0])
+                {
+                case 1:
+                    refMask = 1 << cu.m_refIdx[0][0];
+                    break;
+                case 2:
+                    refMask = 1 << (cu.m_refIdx[1][0] + 16);
+                    break;
+                case 3:
+                    refMask = 1 << cu.m_refIdx[0][0];
+                    refMask |= 1 << (cu.m_refIdx[1][0] + 16);
+                    break;
+                }
+                allSplitRefs = splitRefs[0] = splitRefs[1] = splitRefs[2] = splitRefs[3] = refMask;
+            }
+
             if (m_slice->m_sliceType == B_SLICE)
             {
                 md.pred[PRED_BIDIR].cu.initSubCU(parentCTU, cuGeom, qp);
