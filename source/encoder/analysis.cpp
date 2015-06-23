@@ -1357,7 +1357,9 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
 
        /* determine which motion references the parent CU should search */
     uint32_t refMask;
-    if (md.bestMode == &md.pred[PRED_SPLIT])
+    if (!(m_param->limitReferences & X265_REF_LIMIT_DEPTH))
+        refMask = 0;
+    else if (md.bestMode == &md.pred[PRED_SPLIT])
         refMask = allSplitRefs;
     else
     {
