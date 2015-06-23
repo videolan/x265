@@ -2785,81 +2785,61 @@ SAD_X 4,  4,  4
 %endmacro
 
 %macro SAD_X4_START_2x32P_AVX2 0
-    vbroadcasti128 m4, [r0]
-    vbroadcasti128 m5, [r0+FENC_STRIDE]
-    movu   xm0, [r1]
-    movu   xm1, [r2]
-    movu   xm2, [r1+r5]
-    movu   xm3, [r2+r5]
-    vinserti128 m0, m0, [r3], 1
-    vinserti128 m1, m1, [r4], 1
-    vinserti128 m2, m2, [r3+r5], 1
-    vinserti128 m3, m3, [r4+r5], 1
-    psadbw  m0, m4
-    psadbw  m1, m4
-    psadbw  m2, m5
-    psadbw  m3, m5
-    paddw   m0, m2
-    paddw   m1, m3
+    mova        m4, [r0]
+    movu        m0, [r1]
+    movu        m2, [r2]
+    movu        m1, [r3]
+    movu        m3, [r4]
+    psadbw      m0, m4
+    psadbw      m2, m4
+    psadbw      m1, m4
+    psadbw      m3, m4
+    packusdw    m0, m2
+    packusdw    m1, m3
 
-    vbroadcasti128 m6, [r0+16]
-    vbroadcasti128 m7, [r0+FENC_STRIDE+16]
-    movu   xm2, [r1+16]
-    movu   xm3, [r2+16]
-    movu   xm4, [r1+r5+16]
-    movu   xm5, [r2+r5+16]
-    vinserti128 m2, m2, [r3+16], 1
-    vinserti128 m3, m3, [r4+16], 1
-    vinserti128 m4, m4, [r3+r5+16], 1
-    vinserti128 m5, m5, [r4+r5+16], 1
-    psadbw  m2, m6
-    psadbw  m3, m6
-    psadbw  m4, m7
-    psadbw  m5, m7
-    paddd   m0, m2
-    paddd   m1, m3
-    paddd   m0, m4
-    paddd   m1, m5
+    mova        m6, [r0+FENC_STRIDE]
+    movu        m2, [r1+r5]
+    movu        m4, [r2+r5]
+    movu        m3, [r3+r5]
+    movu        m5, [r4+r5]
+    psadbw      m2, m6
+    psadbw      m4, m6
+    psadbw      m3, m6
+    psadbw      m5, m6
+    packusdw    m2, m4
+    packusdw    m3, m5
+    paddd       m0, m2
+    paddd       m1, m3
 %endmacro
 
 %macro SAD_X4_2x32P_AVX2 4
-    vbroadcasti128 m6, [r0+%1]
-    vbroadcasti128 m7, [r0+%3]
-    movu   xm2, [r1+%2]
-    movu   xm3, [r2+%2]
-    movu   xm4, [r1+%4]
-    movu   xm5, [r2+%4]
-    vinserti128 m2, m2, [r3+%2], 1
-    vinserti128 m3, m3, [r4+%2], 1
-    vinserti128 m4, m4, [r3+%4], 1
-    vinserti128 m5, m5, [r4+%4], 1
-    psadbw  m2, m6
-    psadbw  m3, m6
-    psadbw  m4, m7
-    psadbw  m5, m7
-    paddd   m0, m2
-    paddd   m1, m3
-    paddd   m0, m4
-    paddd   m1, m5
+    mova        m6, [r0+%1]
+    movu        m2, [r1+%2]
+    movu        m4, [r2+%2]
+    movu        m3, [r3+%2]
+    movu        m5, [r4+%2]
+    psadbw      m2, m6
+    psadbw      m4, m6
+    psadbw      m3, m6
+    psadbw      m5, m6
+    packusdw    m2, m4
+    packusdw    m3, m5
+    paddd       m0, m2
+    paddd       m1, m3
 
-    vbroadcasti128 m6, [r0+%1+16]
-    vbroadcasti128 m7, [r0+%3+16]
-    movu   xm2, [r1+%2+16]
-    movu   xm3, [r2+%2+16]
-    movu   xm4, [r1+%4+16]
-    movu   xm5, [r2+%4+16]
-    vinserti128 m2, m2, [r3+%2+16], 1
-    vinserti128 m3, m3, [r4+%2+16], 1
-    vinserti128 m4, m4, [r3+%4+16], 1
-    vinserti128 m5, m5, [r4+%4+16], 1
-    psadbw  m2, m6
-    psadbw  m3, m6
-    psadbw  m4, m7
-    psadbw  m5, m7
-    paddd   m0, m2
-    paddd   m1, m3
-    paddd   m0, m4
-    paddd   m1, m5
+    mova        m6, [r0+%3]
+    movu        m2, [r1+%4]
+    movu        m4, [r2+%4]
+    movu        m3, [r3+%4]
+    movu        m5, [r4+%4]
+    psadbw      m2, m6
+    psadbw      m4, m6
+    psadbw      m3, m6
+    psadbw      m5, m6
+    packusdw    m2, m4
+    packusdw    m3, m5
+    paddd       m0, m2
+    paddd       m1, m3
 %endmacro
 
 %macro SAD_X4_4x32P_AVX2 2
@@ -2902,6 +2882,17 @@ SAD_X 4,  4,  4
     punpcklqdq   xm2, xm3
     phaddd   xm0, xm2       ; 0 1 2 3
     mova    [r0], xm0
+    RET
+%endmacro
+
+%macro SAD_X4_32P_END_AVX2 0
+    mov          r0, r6mp
+    vextracti128 xm2, m0, 1
+    vextracti128 xm3, m1, 1
+    paddd        xm0, xm2
+    paddd        xm1, xm3
+    phaddd       xm0, xm1
+    mova         [r0], xm0
     RET
 %endmacro
 
@@ -3417,7 +3408,12 @@ cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,%4
     SAD_X%1_4x%2P_AVX2 x, %3/4
 %assign x x+1
 %endrep
+
+  %if (%1==4) && (%2==32)
+    SAD_X%1_32P_END_AVX2
+  %else
     SAD_X%1_END_AVX2
+  %endif
 %endmacro
 
 INIT_YMM avx2
