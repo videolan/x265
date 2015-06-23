@@ -1171,6 +1171,7 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
     }
 
     bool foundSkip = false;
+    bool splitIntra = true;
     uint32_t splitRefs[4] = { 0, 0, 0, 0 };
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
     if (mightNotSplit)
@@ -1195,6 +1196,7 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
         invalidateContexts(nextDepth);
         Entropy* nextContext = &m_rqt[depth].cur;
         int nextQP = qp;
+        splitIntra = false;
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
@@ -1210,6 +1212,7 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
                 splitRefs[subPartIdx] = compressInterCU_rd5_6(parentCTU, childGeom, zOrder, nextQP);
 
                 // Save best CU and pred data for this sub CU
+                splitIntra |= nd.bestMode->cu.isIntra(0);
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
                 nd.bestMode->reconYuv.copyToPartYuv(splitPred->reconYuv, childGeom.numPartitions * subPartIdx);
@@ -1320,15 +1323,18 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
 
             if (m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames)
             {
-                md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
-                checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL, NULL);
-                checkBestMode(md.pred[PRED_INTRA], depth);
-
-                if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
+                if (!m_param->limitReferences || splitIntra)
                 {
-                    md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom, qp);
-                    checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN, NULL, NULL);
-                    checkBestMode(md.pred[PRED_INTRA_NxN], depth);
+                    md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
+                    checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL, NULL);
+                    checkBestMode(md.pred[PRED_INTRA], depth);
+
+                    if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
+                    {
+                        md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom, qp);
+                        checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN, NULL, NULL);
+                        checkBestMode(md.pred[PRED_INTRA_NxN], depth);
+                    }
                 }
             }
         }
