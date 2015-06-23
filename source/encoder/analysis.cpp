@@ -853,20 +853,7 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
             if (m_param->limitReferences & X265_REF_LIMIT_CU)
             {
                 CUData& cu = md.pred[PRED_2Nx2N].cu;
-                int refMask;
-                switch (cu.m_interDir[0])
-                {
-                case 1:
-                    refMask = 1 << cu.m_refIdx[0][0];
-                    break;
-                case 2:
-                    refMask = 1 << (cu.m_refIdx[1][0] + 16);
-                    break;
-                case 3:
-                    refMask = 1 << cu.m_refIdx[0][0];
-                    refMask |= 1 << (cu.m_refIdx[1][0] + 16);
-                    break;
-                }
+                uint32_t refMask = cu.getBestRefIdx(0);
                 allSplitRefs = splitRefs[0] = splitRefs[1] = splitRefs[2] = splitRefs[3] = refMask;
             }
 
@@ -1101,22 +1088,7 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
         uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_unitSizeDepth - cu.m_cuDepth[0]) * 2) >> 4;
         refMask = 0;
         for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += puOffset)
-        {
-            uint32_t interDir = cu.m_interDir[subPartIdx];
-            switch (interDir)
-            {
-            case 1:
-                refMask |= 1 << cu.m_refIdx[0][subPartIdx];
-                break;
-            case 2:
-                refMask |= 1 << (cu.m_refIdx[1][subPartIdx] + 16);
-                break;
-            case 3:
-                refMask |= 1 << cu.m_refIdx[0][subPartIdx];
-                refMask |= 1 << (cu.m_refIdx[1][subPartIdx] + 16);
-                break;
-            }
-        }
+            refMask |= cu.getBestRefIdx(subPartIdx);
     }
     
     if (mightNotSplit)
@@ -1254,20 +1226,7 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
             if (m_param->limitReferences & X265_REF_LIMIT_CU)
             {
                 CUData& cu = md.pred[PRED_2Nx2N].cu;
-                int refMask;
-                switch (cu.m_interDir[0])
-                {
-                case 1:
-                    refMask = 1 << cu.m_refIdx[0][0];
-                    break;
-                case 2:
-                    refMask = 1 << (cu.m_refIdx[1][0] + 16);
-                    break;
-                case 3:
-                    refMask = 1 << cu.m_refIdx[0][0];
-                    refMask |= 1 << (cu.m_refIdx[1][0] + 16);
-                    break;
-                }
+                uint32_t refMask = cu.getBestRefIdx(0);
                 allSplitRefs = splitRefs[0] = splitRefs[1] = splitRefs[2] = splitRefs[3] = refMask;
             }
 
@@ -1390,22 +1349,7 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
         uint32_t puOffset = (g_puOffset[uint32_t(partSize)] << (g_unitSizeDepth - cu.m_cuDepth[0]) * 2) >> 4;
         refMask = 0;
         for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += puOffset)
-        {
-            uint32_t interDir = cu.m_interDir[subPartIdx];
-            switch (interDir)
-            {
-            case 1:
-                refMask |= 1 << cu.m_refIdx[0][subPartIdx];
-                break;
-            case 2:
-                refMask |= 1 << (cu.m_refIdx[1][subPartIdx] + 16);
-                break;
-            case 3:
-                refMask |= 1 << cu.m_refIdx[0][subPartIdx];
-                refMask |= 1 << (cu.m_refIdx[1][subPartIdx] + 16);
-                break;
-            }
-        }
+            refMask |= cu.getBestRefIdx(subPartIdx);
     }
 
     /* Copy best data to encData CTU and recon */

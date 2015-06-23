@@ -222,6 +222,8 @@ public:
     void     getNeighbourMV(uint32_t puIdx, uint32_t absPartIdx, InterNeighbourMV* neighbours) const;
     void     getIntraTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
     void     getInterTUQtDepthRange(uint32_t tuDepthRange[2], uint32_t absPartIdx) const;
+    uint32_t getBestRefIdx(uint32_t subPartIdx) const { return ((m_interDir[subPartIdx] & 1) << m_refIdx[0][subPartIdx]) |
+                                                              (((m_interDir[subPartIdx] >> 1) & 1) << (m_refIdx[1][subPartIdx] + 16)); }
 
     uint32_t getNumPartInter() const              { return nbPartsTable[(int)m_partSize[0]]; }
     bool     isIntra(uint32_t absPartIdx) const   { return m_predMode[absPartIdx] == MODE_INTRA; }
