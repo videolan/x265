@@ -52,7 +52,7 @@
  */
 
 #undef strtok_r
-char* strtok_r(char* str, const char* delim, char** nextp)
+static char* strtok_r(char* str, const char* delim, char** nextp)
 {
     if (!str)
         str = *nextp;
