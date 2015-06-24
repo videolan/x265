@@ -1352,12 +1352,14 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_32x32].intra_pred[33]    = PFX(intra_pred_ang32_33_avx2);
         p.cu[BLOCK_32x32].intra_pred[34]    = PFX(intra_pred_ang32_2_avx2);
 
+        p.pu[LUMA_12x16].pixelavg_pp = PFX(pixel_avg_12x16_avx2);
         p.pu[LUMA_16x4].pixelavg_pp = PFX(pixel_avg_16x4_avx2);
         p.pu[LUMA_16x8].pixelavg_pp = PFX(pixel_avg_16x8_avx2);
         p.pu[LUMA_16x12].pixelavg_pp = PFX(pixel_avg_16x12_avx2);
         p.pu[LUMA_16x16].pixelavg_pp = PFX(pixel_avg_16x16_avx2);
         p.pu[LUMA_16x32].pixelavg_pp = PFX(pixel_avg_16x32_avx2);
         p.pu[LUMA_16x64].pixelavg_pp = PFX(pixel_avg_16x64_avx2);
+        p.pu[LUMA_24x32].pixelavg_pp = PFX(pixel_avg_24x32_avx2);
         p.pu[LUMA_32x8].pixelavg_pp = PFX(pixel_avg_32x8_avx2);
         p.pu[LUMA_32x16].pixelavg_pp = PFX(pixel_avg_32x16_avx2);
         p.pu[LUMA_32x24].pixelavg_pp = PFX(pixel_avg_32x24_avx2);

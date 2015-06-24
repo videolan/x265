@@ -4439,6 +4439,57 @@ PIXEL_AVG_W18
 INIT_YMM avx2
 PIXEL_AVG_W18
 
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_12x16, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 4
+
+.loop
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], xm0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], xm2
+
+    vextracti128 xm0, m0, 1
+    vextracti128 xm2, m2, 1
+    movq    [r0 + 16], xm0
+    movq    [r0 + r1 + 16], xm2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], xm0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], xm2
+
+    vextracti128 xm0, m0, 1
+    vextracti128 xm2, m2, 1
+    movq    [r0 + r1 * 2 + 16], xm0
+    movq    [r0 + r8 + 16], xm2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+    dec     r9d
+    jnz     .loop
+    RET
+%endif
+
 %macro  pixel_avg_H4 0
     movu    m0, [r2]
     movu    m1, [r4]
@@ -4575,6 +4626,65 @@ cglobal pixel_avg_16x64, 6,10,4
     pixel_avg_H16
     dec r9d
     jnz .loop
+    RET
+%endif
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_24x32, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 8
+
+.loop
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    xm0, [r2 + 32]
+    movu    xm1, [r4 + 32]
+    pavgw   xm0, xm1
+    movu    [r0 + 32], xm0
+    movu    xm2, [r2 + r3 + 32]
+    movu    xm3, [r4 + r5 + 32]
+    pavgw   xm2, xm3
+    movu    [r0 + r1 + 32], xm2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    movu    xm0, [r2 + r3 * 2 + 32]
+    movu    xm1, [r4 + r5 * 2 + 32]
+    pavgw   xm0, xm1
+    movu    [r0 + r1 * 2 + 32], xm0
+    movu    xm2, [r2 + r6 + 32]
+    movu    xm3, [r4 + r7 + 32]
+    pavgw   xm2, xm3
+    movu    [r0 + r8 + 32], xm2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+    dec     r9d
+    jnz     .loop
     RET
 %endif
 
