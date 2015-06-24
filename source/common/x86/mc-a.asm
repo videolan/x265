@@ -4578,6 +4578,341 @@ cglobal pixel_avg_16x64, 6,10,4
     RET
 %endif
 
+%macro  pixel_avg_W32 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + 32]
+    movu    m1, [r4 + 32]
+    pavgw   m0, m1
+    movu    [r0 + 32], m0
+    movu    m2, [r2 + r3 + 32]
+    movu    m3, [r4 + r5 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 32], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    movu    m0, [r2 + r3 * 2 + 32]
+    movu    m1, [r4 + r5 * 2 + 32]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 32], m0
+    movu    m2, [r2 + r6 + 32]
+    movu    m3, [r4 + r7 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 32], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_32x8, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 2
+.loop
+    pixel_avg_W32
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_32x16, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 4
+.loop
+    pixel_avg_W32
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_32x24, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 6
+.loop
+    pixel_avg_W32
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_32x32, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 8
+.loop
+    pixel_avg_W32
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_32x64, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 16
+.loop
+    pixel_avg_W32
+    dec     r9d
+    jnz     .loop
+    RET
+%endif
+
+%macro  pixel_avg_W64 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + 32]
+    movu    m1, [r4 + 32]
+    pavgw   m0, m1
+    movu    [r0 + 32], m0
+    movu    m2, [r2 + r3 + 32]
+    movu    m3, [r4 + r5 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 32], m2
+
+    movu    m0, [r2 + 64]
+    movu    m1, [r4 + 64]
+    pavgw   m0, m1
+    movu    [r0 + 64], m0
+    movu    m2, [r2 + r3 + 64]
+    movu    m3, [r4 + r5 + 64]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 64], m2
+
+    movu    m0, [r2 + 96]
+    movu    m1, [r4 + 96]
+    pavgw   m0, m1
+    movu    [r0 + 96], m0
+    movu    m2, [r2 + r3 + 96]
+    movu    m3, [r4 + r5 + 96]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 96], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    movu    m0, [r2 + r3 * 2 + 32]
+    movu    m1, [r4 + r5 * 2 + 32]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 32], m0
+    movu    m2, [r2 + r6 + 32]
+    movu    m3, [r4 + r7 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 32], m2
+
+    movu    m0, [r2 + r3 * 2 + 64]
+    movu    m1, [r4 + r5 * 2 + 64]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 64], m0
+    movu    m2, [r2 + r6 + 64]
+    movu    m3, [r4 + r7 + 64]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 64], m2
+
+    movu    m0, [r2 + r3 * 2 + 96]
+    movu    m1, [r4 + r5 * 2 + 96]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 96], m0
+    movu    m2, [r2 + r6 + 96]
+    movu    m3, [r4 + r7 + 96]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 96], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_64x16, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 4
+.loop
+    pixel_avg_W64
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_64x32, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 8
+.loop
+    pixel_avg_W64
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_64x48, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 12
+.loop
+    pixel_avg_W64
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_64x64, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 16
+.loop
+    pixel_avg_W64
+    dec     r9d
+    jnz     .loop
+    RET
+%endif
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_48x64, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 16
+
+.loop
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + 32]
+    movu    m1, [r4 + 32]
+    pavgw   m0, m1
+    movu    [r0 + 32], m0
+    movu    m2, [r2 + r3 + 32]
+    movu    m3, [r4 + r5 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 32], m2
+
+    movu    m0, [r2 + 64]
+    movu    m1, [r4 + 64]
+    pavgw   m0, m1
+    movu    [r0 + 64], m0
+    movu    m2, [r2 + r3 + 64]
+    movu    m3, [r4 + r5 + 64]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 64], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    movu    m0, [r2 + r3 * 2 + 32]
+    movu    m1, [r4 + r5 * 2 + 32]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 32], m0
+    movu    m2, [r2 + r6 + 32]
+    movu    m3, [r4 + r7 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 32], m2
+
+    movu    m0, [r2 + r3 * 2 + 64]
+    movu    m1, [r4 + r5 * 2 + 64]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 64], m0
+    movu    m2, [r2 + r6 + 64]
+    movu    m3, [r4 + r7 + 64]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 64], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+    dec     r9d
+    jnz     .loop
+    RET
+%endif
+
 %endif ; HIGH_BIT_DEPTH
 
 %if HIGH_BIT_DEPTH == 0
