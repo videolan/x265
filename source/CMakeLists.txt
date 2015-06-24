@@ -275,14 +275,14 @@ set(EXTRA_LINK_FLAGS "" CACHE STRING "Extra link flags")
 mark_as_advanced(EXTRA_LIB EXTRA_LINK_FLAGS)
 
 if(X64)
-    # NOTE: We only officially support 16bit-per-pixel compiles of x265
+    # NOTE: We only officially support high-bit-depth compiles of x265
     # on 64bit architectures. Main10 plus large resolution plus slow
     # preset plus 32bit address space usually means malloc failure.  You
     # can disable this if(X64) check if you desparately need a 32bit
     # build with 10bit/12bit support, but this violates the "shrink wrap
     # license" so to speak.  If it breaks you get to keep both halves.
-    # You will likely need to compile without assembly
-    option(HIGH_BIT_DEPTH "Store pixels as 16bit values" OFF)
+    # You will need to disable assembly manually.
+    option(HIGH_BIT_DEPTH "Store pixel samples as 16bit values (Main10)" OFF)
 endif(X64)
 if(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=1)
