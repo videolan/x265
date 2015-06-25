@@ -1286,6 +1286,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     {
         p.saoCuOrgE0 = PFX(saoCuOrgE0_avx2);
         p.saoCuOrgE1 = PFX(saoCuOrgE1_avx2);
+        p.saoCuOrgE1_2Rows = PFX(saoCuOrgE1_2Rows_avx2);
 
         p.cu[BLOCK_16x16].intra_pred[2]     = PFX(intra_pred_ang16_2_avx2);
         p.cu[BLOCK_16x16].intra_pred[3]     = PFX(intra_pred_ang16_3_avx2);
