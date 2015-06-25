@@ -1290,6 +1290,61 @@ cglobal saoCuOrgE3, 3,6,8
 %endif
 
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgE3, 4,6,6
+    add             r3d, r3d
+    mov             r4d, r4m
+    mov             r5d, r5m
+
+    ; save latest 2 pixels for case startX=1 or left_endX=15
+    movq            xm5, [r0 + r5 * 2]
+    movhps          xm5, [r1 + r5 - 1]
+
+    ; move to startX+1
+    inc             r4d
+    lea             r0, [r0 + r4 * 2]           ; x = startX + 1
+    add             r1, r4
+    sub             r5d, r4d
+    movu            xm4, [r2]
+
+.loop:
+    movu            m1, [r0]
+    movu            m0, [r0 + r3]
+
+    pcmpgtw         m2, m1, m0
+    pcmpgtw         m0, m1
+    packsswb        m2, m0
+    vpermq          m0, m2, 11011101b
+    vpermq          m2, m2, 10001000b
+    pand            m2, [pb_1]
+    por             m2, m0
+
+    movu            xm0, [r1]
+    paddb           xm0, xm2
+    paddb           xm0, [pb_2]
+
+    pshufb          xm3, xm4, xm0
+    pmovsxbw        m3, xm3
+
+    paddw           m1, m3
+    pxor            m0, m0
+    pmaxsw          m1, m0
+    pminsw          m1, [pw_1023]
+    movu            [r0], m1
+
+    psubb           xm0, xm2
+    movu            [r1 - 1], xm0
+
+    add             r0, 32
+    add             r1, 16
+    sub             r5, 16
+    jg             .loop
+
+    ; restore last pixels (up to 2)
+    movq            [r0 + r5 * 2], xm5
+    movhps          [r1 + r5 - 1], xm5
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE3, 3, 6, 8
     mov             r3d,  r3m
     mov             r4d,  r4m
@@ -1350,8 +1405,76 @@ cglobal saoCuOrgE3, 3, 6, 8
     movq            [r0 + r5],     xm7
     movhps          [r1 + r5 - 1], xm7
     RET
+%endif
 
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgE3_32, 3,6,8
+    add             r3d, r3d
+    mov             r4d, r4m
+    mov             r5d, r5m
+
+    ; save latest 2 pixels for case startX=1 or left_endX=15
+    movq            xm5, [r0 + r5 * 2]
+    movhps          xm5, [r1 + r5 - 1]
+
+    ; move to startX+1
+    inc             r4d
+    lea             r0, [r0 + r4 * 2]           ; x = startX + 1
+    add             r1, r4
+    sub             r5d, r4d
+    vbroadcasti128  m4, [r2]
+
+.loop:
+    movu            m1, [r0]
+    movu            m7, [r0 + 32]
+    movu            m0, [r0 + r3]
+    movu            m6, [r0 + r3 + 32]
+
+    pcmpgtw         m2, m1, m0
+    pcmpgtw         m3, m7, m6
+    pcmpgtw         m0, m1
+    pcmpgtw         m6, m7
+
+    packsswb        m2, m3
+    packsswb        m0, m6
+    vpermq          m2, m2, 11011000b
+    vpermq          m0, m0, 11011000b
+    pand            m2, [pb_1]
+    por             m2, m0
+
+    movu            m0, [r1]
+    paddb           m0, m2
+    paddb           m0, [pb_2]
+
+    pshufb          m3, m4, m0
+    vextracti128    xm6, m3, 1
+    pmovsxbw        m3, xm3
+    pmovsxbw        m6, xm6
+
+    paddw           m1, m3
+    paddw           m7, m6
+    pxor            m0, m0
+    pmaxsw          m1, m0
+    pmaxsw          m7, m0
+    pminsw          m1, [pw_1023]
+    pminsw          m7, [pw_1023]
+    movu            [r0], m1
+    movu            [r0 + 32], m7
+
+    psubb           m0, m2
+    movu            [r1 - 1], m0
+
+    add             r0, 64
+    add             r1, 32
+    sub             r5, 32
+    jg             .loop
+
+    ; restore last pixels (up to 2)
+    movq            [r0 + r5 * 2], xm5
+    movhps          [r1 + r5 - 1], xm5
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE3_32, 3, 6, 8
     mov             r3d,  r3m
     mov             r4d,  r4m
@@ -1416,6 +1539,7 @@ cglobal saoCuOrgE3_32, 3, 6, 8
     movq            [r0 + r5],     xm7
     movhps          [r1 + r5 - 1], xm7
     RET
+%endif
 
 ;=====================================================================================
 ; void saoCuOrgB0(pixel* rec, const pixel* offset, int lcuWidth, int lcuHeight, int stride)
