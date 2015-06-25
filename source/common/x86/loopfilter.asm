@@ -1643,6 +1643,89 @@ cglobal saoCuOrgB0, 4, 7, 8
 %endif
 
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgB0, 5,7,8
+    vbroadcasti128  m3, [r1]
+    vbroadcasti128  m4, [r1 + 16]
+    add             r4d, r4d
+    lea             r1, [r4 * 2]
+    sub             r1d, r2d
+    sub             r1d, r2d
+    shr             r2d, 4
+    mova            m7, [pw_1023]
+
+    mov             r6d, r3d
+    shr             r3d, 1
+
+.loopH
+    mov             r5d, r2d
+.loopW
+    movu            m2, [r0]
+    movu            m5, [r0 + r4]
+    psrlw           m0, m2, 5
+    psrlw           m6, m5, 5
+    packuswb        m0, m6
+    vpermq          m0, m0, 11011000b
+    pand            m0, [pb_31]         ; m0 = [index]
+
+    pshufb          m6, m3, m0
+    pshufb          m1, m4, m0
+    pcmpgtb         m0, [pb_15]         ; m0 = [mask]
+
+    pblendvb        m6, m6, m1, m0      ; NOTE: don't use 3 parameters style, x264 macro have some bug!
+
+    pmovsxbw        m0, xm6
+    vextracti128    xm6, m6, 1
+    pmovsxbw        m6, xm6
+
+    paddw           m2, m0
+    paddw           m5, m6
+    pxor            m1, m1
+    pmaxsw          m2, m1
+    pmaxsw          m5, m1
+    pminsw          m2, m7
+    pminsw          m5, m7
+
+    movu            [r0], m2
+    movu            [r0 + r4], m5
+
+    add             r0, 32
+    dec             r5d
+    jnz             .loopW
+
+    add             r0, r1
+    dec             r3d
+    jnz             .loopH
+
+    test            r6b, 1
+    jz              .end
+    xor             r1, r1
+.loopW1:
+    movu            m2, [r0 + r1]
+    psrlw           m0, m2, 5
+    packuswb        m0, m0
+    vpermq          m0, m0, 10001000b
+    pand            m0, [pb_31]         ; m0 = [index]
+
+    pshufb          m6, m3, m0
+    pshufb          m1, m4, m0
+    pcmpgtb         m0, [pb_15]         ; m0 = [mask]
+
+    pblendvb        m6, m6, m1, m0      ; NOTE: don't use 3 parameters style, x264 macro have some bug!
+    pmovsxbw        m0, xm6             ; offset
+
+    paddw           m2, m0
+    pxor            m0, m0
+    pmaxsw          m2, m0
+    pminsw          m2, m7
+
+    movu            [r0 + r1], m2
+    add             r1d, 32
+    dec             r2d
+    jnz             .loopW1
+.end:
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgB0, 4, 7, 8
 
     mov             r3d,        r3m
@@ -1717,6 +1800,7 @@ cglobal saoCuOrgB0, 4, 7, 8
     jnz             .loopW1
 .end
     RET
+%endif
 
 ;============================================================================================================
 ; void calSign(int8_t *dst, const Pixel *src1, const Pixel *src2, const int width)
