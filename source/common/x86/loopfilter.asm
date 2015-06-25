@@ -1856,6 +1856,41 @@ cglobal calSign, 4,5,6
     RET
 
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal calSign, 4, 7, 5
+    mova            m0, [pw_1]
+    mov             r4d, r3d
+    shr             r3d, 4
+    add             r3d, 1
+    mov             r5, r0
+    movu            m4, [r0 + r4]
+
+.loop
+    movu            m1, [r1]        ; m2 = pRec[x]
+    movu            m2, [r2]        ; m3 = pTmpU[x]
+
+    pcmpgtw         m3, m1, m2
+    pcmpgtw         m2, m1
+
+    pand            m3, m0
+    por             m3, m2
+    packsswb        m3, m3
+    vpermq          m3, m3, q3220
+    movu            [r0 ], xm3
+
+    add             r0, 16
+    add             r1, 32
+    add             r2, 32
+    dec             r3d
+    jnz             .loop
+
+    mov             r6, r0
+    sub             r6, r5
+    sub             r4, r6
+    movu            [r0 + r4], m4
+    RET
+%else ; HIGH_BIT_DEPTH
+
 cglobal calSign, 4, 5, 6
     vbroadcasti128  m0,     [pb_128]
     mova            m1,     [pb_1]
@@ -1904,3 +1939,4 @@ cglobal calSign, 4, 5, 6
 
 .end:
     RET
+%endif
