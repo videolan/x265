@@ -458,6 +458,51 @@ cglobal saoCuOrgE1, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
 %endif
 
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgE1, 4,5,6
+    add         r3d, r3d
+    mov         r4d, r4m
+    mova        m4, [pb_2]
+    shr         r4d, 4
+    mova        m0, [pw_1023]
+.loop
+    movu        m5, [r0]
+    movu        m3, [r0 + r3]
+
+    pcmpgtw     m2, m5, m3
+    pcmpgtw     m3, m5
+
+    packsswb    m2, m3
+    vpermq      m3, m2, 11011101b
+    vpermq      m2, m2, 10001000b
+
+    pand        xm2, [pb_1]
+    por         xm2, xm3
+
+    movu        xm3, [r1]       ; m3 = m_iUpBuff1
+
+    paddb       xm3, xm2
+    paddb       xm3, xm4
+
+    movu        xm1, [r2]       ; m1 = m_iOffsetEo
+    pshufb      xm1, xm3
+    pmovsxbw    m3, xm1
+
+    paddw       m5, m3
+    pxor        m3, m3
+    pmaxsw      m5, m3
+    pminsw      m5, m0
+    movu        [r0], m5
+
+    psubb       xm3, xm2
+    movu        [r1], xm3
+
+    add         r0, 32
+    add         r1, 16
+    dec         r4d
+    jnz         .loop
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE1, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
     mov           r3d,    r3m
     mov           r4d,    r4m
@@ -499,6 +544,7 @@ cglobal saoCuOrgE1, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
     dec           r4d
     jnz           .loop
     RET
+%endif
 
 ;========================================================================================================
 ; void saoCuOrgE1_2Rows(pixel *pRec, int8_t *m_iUpBuff1, int8_t *m_iOffsetEo, Int iStride, Int iLcuWidth)
