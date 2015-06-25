@@ -9,7 +9,7 @@ if "%VS90COMNTOOLS%" == "" (
 
 @cd 10bit
 if not exist x265.sln (
-  cmake  -G "Visual Studio 9 2008 Win64" ../../../source -DHIGH_BIT_DEPTH=ON -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=OFF -DWINXP_SUPPORT=ON
+  cmake  -G "Visual Studio 9 2008 Win64" ../../../source -DHIGH_BIT_DEPTH=ON -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=OFF
 )
 if exist x265.sln (
   call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat"
@@ -24,7 +24,7 @@ if not exist x265-static-main10.lib (
   exit 1
 )
 if not exist x265.sln (
-  cmake  -G "Visual Studio 9 2008 Win64" ../../../source -DHIGH_BIT_DEPTH=OFF -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=ON -DWINXP_SUPPORT=ON -DEXTRA_LIB=x265-static-main10.lib -DEXTRA_LINK_FLAGS="/FORCE:MULTIPLE"
+  cmake  -G "Visual Studio 9 2008 Win64" ../../../source -DHIGH_BIT_DEPTH=OFF -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=ON -DEXTRA_LIB=x265-static-main10.lib -DEXTRA_LINK_FLAGS="/FORCE:MULTIPLE"
 )
 if exist x265.sln (
   call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat"
