@@ -41,7 +41,7 @@ const pb_15,                times 32 db 15
 const pb_16,                times 32 db 16
 const pb_32,                times 32 db 32
 const pb_64,                times 32 db 64
-const pb_128,               times 16 db 128
+const pb_128,               times 32 db 128
 const pb_a1,                times 16 db 0xa1
 
 const pb_01,                times  8 db   0,   1

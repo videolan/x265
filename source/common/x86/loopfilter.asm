@@ -235,6 +235,67 @@ cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
 %endif
 
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgE0, 4,4,9
+    vbroadcasti128  m6, [r1]
+    movzx           r1d, byte [r3]
+    neg             r1b
+    movd            xm0, r1d
+    movzx           r1d, byte [r3 + 1]
+    neg             r1b
+    movd            xm1, r1d
+    vinserti128     m0, m0, xm1, 1
+    mova            m5, [pw_1023]
+    mov             r1, r4m
+    add             r1d, r1d
+    shr             r2d, 4
+
+.loop:
+    movu            m7, [r0]
+    movu            m8, [r0 + r1]
+    movu            m2, [r0 + 2]
+    movu            m1, [r0 + r1 + 2]
+
+    pcmpgtw         m3, m7, m2
+    pcmpgtw         m2, m7
+    pcmpgtw         m4, m8, m1
+    pcmpgtw         m1, m8
+
+    packsswb        m3, m4
+    packsswb        m2, m1
+    vpermq          m3, m3, 11011000b
+    vpermq          m2, m2, 11011000b
+
+    pand            m3, [pb_1]
+    por             m3, m2
+
+    pslldq          m2, m3, 1
+    por             m2, m0
+
+    psignb          m2, [pb_128]                ; m2 = signLeft
+    pxor            m0, m0
+    palignr         m0, m3, 15
+    paddb           m3, m2
+    paddb           m3, [pb_2]                  ; m3 = uiEdgeType
+    pshufb          m2, m6, m3
+    pmovsxbw        m3, xm2                     ; offsetEo
+    vextracti128    xm2, m2, 1
+    pmovsxbw        m2, xm2
+    pxor            m4, m4
+    paddw           m7, m3
+    paddw           m8, m2
+    pmaxsw          m7, m4
+    pmaxsw          m8, m4
+    pminsw          m7, m5
+    pminsw          m8, m5
+    movu            [r0], m7
+    movu            [r0 + r1], m8
+
+    add             r0q, 32
+    dec             r2d
+    jnz             .loop
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE0, 5, 5, 7, rec, offsetEo, lcuWidth, signLeft, stride
 
     mov                 r4d,        r4m
@@ -287,6 +348,7 @@ cglobal saoCuOrgE0, 5, 5, 7, rec, offsetEo, lcuWidth, signLeft, stride
     sub                 r2d,        16
     jnz                 .loop
     RET
+%endif
 
 ;==================================================================================================
 ; void saoCuOrgE1(pixel *pRec, int8_t *m_iUpBuff1, int8_t *m_iOffsetEo, Int iStride, Int iLcuWidth)
