@@ -948,6 +948,55 @@ cglobal saoCuOrgE2, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
 %endif
 
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgE2, 6,6,7
+    mov             r4d, r4m
+    add             r5d, r5d
+    inc             r1
+    movq            xm4, [r0 + r4 * 2]
+    movhps          xm4, [r1 + r4]
+    vbroadcasti128  m5, [r3]
+    mova            m6, [pw_1023]
+.loop
+    movu            m1, [r0]
+    movu            m3, [r0 + r5 + 2]
+
+    pcmpgtw         m2, m1, m3
+    pcmpgtw         m3, m1
+
+    packsswb        m2, m3
+    vpermq          m3, m2, 11011101b
+    vpermq          m2, m2, 10001000b
+
+    pand            xm2, [pb_1]
+    por             xm2, xm3
+
+    movu            xm3, [r2]
+
+    paddb           xm3, xm2
+    paddb           xm3, [pb_2]
+    pshufb          xm0, xm5, xm3
+    pmovsxbw        m3, xm0
+
+    pxor            m0, m0
+    paddw           m1, m3
+    pmaxsw          m1, m0
+    pminsw          m1, m6
+    movu            [r0], m1
+
+    psubb           xm0, xm2
+    movu            [r1], xm0
+
+    add             r0, 32
+    add             r1, 16
+    add             r2, 16
+    sub             r4, 16
+    jg              .loop
+
+    movq            [r0 + r4 * 2], xm4
+    movhps          [r1 + r4], xm4
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE2, 5, 6, 7, rec, bufft, buff1, offsetEo, lcuWidth
     mov            r4d,   r4m
     mov            r5d,   r5m
@@ -987,8 +1036,70 @@ cglobal saoCuOrgE2, 5, 6, 7, rec, bufft, buff1, offsetEo, lcuWidth
     movq           [r0 + r4], xm6
     movhps         [r1 + r4], xm6
     RET
+%endif
 
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal saoCuOrgE2_32, 6,6,8
+    mov             r4d, r4m
+    add             r5d, r5d
+    inc             r1
+    movq            xm4, [r0 + r4 * 2]
+    movhps          xm4, [r1 + r4]
+    vbroadcasti128  m5, [r3]
+
+.loop
+    movu            m1, [r0]
+    movu            m7, [r0 + 32]
+    movu            m3, [r0 + r5 + 2]
+    movu            m6, [r0 + r5 + 34]
+
+    pcmpgtw         m2, m1, m3
+    pcmpgtw         m0, m7, m6
+    pcmpgtw         m3, m1
+    pcmpgtw         m6, m7
+
+    packsswb        m2, m0
+    packsswb        m3, m6
+    vpermq          m3, m3, 11011000b
+    vpermq          m2, m2, 11011000b
+
+    pand            m2, [pb_1]
+    por             m2, m3
+
+    movu            m3, [r2]
+
+    paddb           m3, m2
+    paddb           m3, [pb_2]
+    pshufb          m0, m5, m3
+
+    pmovsxbw        m3, xm0
+    vextracti128    xm0, m0, 1
+    pmovsxbw        m6, xm0
+
+    pxor            m0, m0
+    paddw           m1, m3
+    paddw           m7, m6
+    pmaxsw          m1, m0
+    pmaxsw          m7, m0
+    pminsw          m1, [pw_1023]
+    pminsw          m7, [pw_1023]
+    movu            [r0], m1
+    movu            [r0 + 32], m7
+
+    psubb           m0, m2
+    movu            [r1], m0
+
+    add             r0, 64
+    add             r1, 32
+    add             r2, 32
+    sub             r4, 32
+    jg              .loop
+
+    movq            [r0 + r4 * 2], xm4
+    movhps          [r1 + r4], xm4
+    RET
+%else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE2_32, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
     mov             r4d,   r4m
     mov             r5d,   r5m
@@ -1040,6 +1151,7 @@ cglobal saoCuOrgE2_32, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
     movq            [r0 + r4], xm6
     movhps          [r1 + r4], xm6
     RET
+%endif
 
 ;=======================================================================================================
 ;void saoCuOrgE3(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intptr_t stride, int startX, int endX)
