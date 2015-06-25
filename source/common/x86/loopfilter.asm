@@ -40,6 +40,7 @@ cextern pb_2
 cextern pw_2
 cextern pw_1023
 cextern pb_movemask
+cextern pw_1
 
 
 ;============================================================================================================
@@ -1806,6 +1807,48 @@ cglobal saoCuOrgB0, 4, 7, 8
 ; void calSign(int8_t *dst, const Pixel *src1, const Pixel *src2, const int width)
 ;============================================================================================================
 INIT_XMM sse4
+%if HIGH_BIT_DEPTH
+cglobal calSign, 4, 7, 5
+    mova            m0, [pw_1]
+    mov             r4d, r3d
+    shr             r3d, 4
+    add             r3d, 1
+    mov             r5, r0
+    movu            m4, [r0 + r4]
+.loop
+    movu            m1, [r1]        ; m2 = pRec[x]
+    movu            m2, [r2]        ; m3 = pTmpU[x]
+
+    pcmpgtw         m3, m1, m2
+    pcmpgtw         m2, m1
+    pand            m3, m0
+    por             m3, m2
+    packsswb        m3, m3
+    movh            [r0], xm3
+
+    movu            m1, [r1 + 16]   ; m2 = pRec[x]
+    movu            m2, [r2 + 16]   ; m3 = pTmpU[x]
+
+    pcmpgtw         m3, m1, m2
+    pcmpgtw         m2, m1
+    pand            m3, m0
+    por             m3, m2
+    packsswb        m3, m3
+    movh            [r0 + 8], xm3
+
+    add             r0, 16
+    add             r1, 32
+    add             r2, 32
+    dec             r3d
+    jnz             .loop
+
+    mov             r6, r0
+    sub             r6, r5
+    sub             r4, r6
+    movu            [r0 + r4], m4
+    RET
+%else ; HIGH_BIT_DEPTH
+
 cglobal calSign, 4,5,6
     mova        m0,     [pb_128]
     mova        m1,     [pb_1]
@@ -1854,6 +1897,7 @@ cglobal calSign, 4,5,6
 
 .end:
     RET
+%endif
 
 INIT_YMM avx2
 %if HIGH_BIT_DEPTH
