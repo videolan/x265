@@ -1087,18 +1087,6 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
     }
     m_framesDone++;
 
-    /* CQP and CRF (without capped VBV) doesn't use mid-frame statistics to 
-     * tune RateControl parameters for other frames.
-     * Hence, for these modes, update m_startEndOrder and unlock RC for previous threads waiting in
-     * RateControlEnd here.those modes here. For the rest - ABR
-     * and VBV, unlock only after rateControlUpdateStats of this frame is called */
-    if (m_param->rc.rateControlMode != X265_RC_ABR && !m_isVbv)
-    {
-        m_startEndOrder.incr();
-
-        if (rce->encodeOrder < m_param->frameNumThreads - 1)
-            m_startEndOrder.incr(); // faked rateControlEnd calls for negative frames
-    }
     return m_qp;
 }
 

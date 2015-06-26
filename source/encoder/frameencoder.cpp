@@ -474,6 +474,19 @@ void FrameEncoder::compressFrame()
         m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
 
+    /* CQP and CRF (without capped VBV) doesn't use mid-frame statistics to 
+     * tune RateControl parameters for other frames.
+     * Hence, for these modes, update m_startEndOrder and unlock RC for previous threads waiting in
+     * RateControlEnd here, after the slicecontexts are initialized. For the rest - ABR
+     * and VBV, unlock only after rateControlUpdateStats of this frame is called */
+    if (m_param->rc.rateControlMode != X265_RC_ABR && !m_top->m_rateControl->m_isVbv)
+    {
+        m_top->m_rateControl->m_startEndOrder.incr();
+
+        if (m_rce.encodeOrder < m_param->frameNumThreads - 1)
+            m_top->m_rateControl->m_startEndOrder.incr(); // faked rateControlEnd calls for negative frames
+    }
+
     /* Analyze CTU rows, most of the hard work is done here.  Frame is
      * compressed in a wave-front pattern if WPP is enabled. Row based loop
      * filters runs behind the CTU compression and reconstruction */
