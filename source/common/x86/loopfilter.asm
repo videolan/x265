@@ -246,7 +246,7 @@ cglobal saoCuOrgE0, 4,4,9
     movd            xm1, r1d
     vinserti128     m0, m0, xm1, 1
     mova            m5, [pw_1023]
-    mov             r1, r4m
+    mov             r1d, r4m
     add             r1d, r1d
     shr             r2d, 4
 
