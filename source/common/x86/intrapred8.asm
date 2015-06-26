@@ -18380,3 +18380,108 @@ cglobal intra_filter_8x8, 2,4,6
     mov             [r1 + 16], r2b                  ; topLast
     mov             [r1 + 32], r3b                  ; LeftLast
     RET
+
+INIT_XMM sse4
+cglobal intra_filter_16x16, 2,4,6
+    mov             r2b, byte [r0 + 32]             ; topLast
+    mov             r3b, byte [r0 + 64]             ; LeftLast
+
+    ; filtering top
+    pmovzxbw        m0, [r0 +  0]
+    pmovzxbw        m1, [r0 +  8]
+    pmovzxbw        m2, [r0 + 16]
+
+    pshufb          m4, m0, [intra_filter4_shuf0]   ; [6 5 4 3 2 1 0 1] samples[i - 1]
+    palignr         m5, m1, m0, 2
+    pinsrb          m5, [r0 + 33], 0                ; [8 7 6 5 4 3 2 9] samples[i + 1]
+
+    palignr         m3, m1, m0, 14
+    psllw           m0, 1
+    paddw           m4, m5
+    paddw           m0, m4
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+
+    palignr         m4, m2, m1, 2
+    psllw           m5, m1, 1
+    paddw           m4, m3
+    paddw           m5, m4
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+    packuswb        m0, m5
+    movu            [r1], m0
+
+    pmovzxbw        m0, [r0 + 24]
+    pmovzxbw        m5, [r0 + 32]
+
+    palignr         m3, m2, m1, 14
+    palignr         m4, m0, m2, 2
+
+    psllw           m1, m2, 1
+    paddw           m3, m4
+    paddw           m1, m3
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+
+    palignr         m3, m0, m2, 14
+    palignr         m4, m5, m0, 2
+
+    psllw           m0, 1
+    paddw           m4, m3
+    paddw           m0, m4
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+    packuswb        m1, m0
+    movu            [r1 + 16], m1
+
+    ; filtering left
+    pmovzxbw        m1, [r0 + 40]
+    pmovzxbw        m2, [r0 + 48]
+
+    palignr         m4, m5, m5, 14
+    pinsrb          m4, [r0], 2
+    palignr         m0, m1, m5, 2
+
+    psllw           m3, m5, 1
+    paddw           m4, m0
+    paddw           m3, m4
+    paddw           m3, [pw_2]
+    psrlw           m3, 2
+
+    palignr         m0, m1, m5, 14
+    palignr         m4, m2, m1, 2
+
+    psllw           m5, m1, 1
+    paddw           m4, m0
+    paddw           m5, m4
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+    packuswb        m3, m5
+    movu            [r1 + 32], m3
+
+    pmovzxbw        m5, [r0 + 56]
+    pmovzxbw        m0, [r0 + 64]
+
+    palignr         m3, m2, m1, 14
+    palignr         m4, m5, m2, 2
+
+    psllw           m1, m2, 1
+    paddw           m3, m4
+    paddw           m1, m3
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+
+    palignr         m3, m5, m2, 14
+    palignr         m4, m0, m5, 2
+
+    psllw           m5, 1
+    paddw           m4, m3
+    paddw           m5, m4
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+    packuswb        m1, m5
+    movu            [r1 + 48], m1
+
+    mov             [r1 + 32], r2b                  ; topLast
+    mov             [r1 + 64], r3b                  ; LeftLast
+    RET
