@@ -639,36 +639,18 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
         }
     }
 
+    X265_CHECK(!(ref->isLowres && numCandidates), "lowres motion candidates not allowed\n")
     // measure SAD cost at each QPEL motion vector candidate
-    if (ref->isLowres)
+    for (int i = 0; i < numCandidates; i++)
     {
-        for (int i = 0; i < numCandidates; i++)
+        MV m = mvc[i].clipped(qmvmin, qmvmax);
+        if (m.notZero() && m != pmv && m != bestpre) // check already measured
         {
-            MV m = mvc[i].clipped(qmvmin, qmvmax);
-            if (m.notZero() && m != pmv && m != bestpre) // check already measured
+            int cost = subpelCompare(ref, m, sad) + mvcost(m);
+            if (cost < bprecost)
             {
-                int cost = ref->lowresQPelCost(fenc, blockOffset, m, sad) + mvcost(m);
-                if (cost < bprecost)
-                {
-                    bprecost = cost;
-                    bestpre = m;
-                }
-            }
-        }
-    }
-    else
-    {
-        for (int i = 0; i < numCandidates; i++)
-        {
-            MV m = mvc[i].clipped(qmvmin, qmvmax);
-            if (m.notZero() && m != pmv && m != bestpre) // check already measured
-            {
-                int cost = subpelCompare(ref, m, sad) + mvcost(m);
-                if (cost < bprecost)
-                {
-                    bprecost = cost;
-                    bestpre = m;
-                }
+                bprecost = cost;
+                bestpre = m;
             }
         }
     }
