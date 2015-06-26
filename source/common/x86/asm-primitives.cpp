@@ -1518,6 +1518,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.scale2D_64to32 = PFX(scale2D_64to32_avx2);
         p.weight_pp = PFX(weight_pp_avx2);
         p.sign = PFX(calSign_avx2);
+        p.planecopy_cp = PFX(upShift_8_avx2);
 
         p.cu[BLOCK_16x16].calcresidual = PFX(getResidual16_avx2);
         p.cu[BLOCK_32x32].calcresidual = PFX(getResidual32_avx2);

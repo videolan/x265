@@ -7388,6 +7388,96 @@ cglobal upShift_8, 7,7,3
 .end:
     RET
 
+;---------------------------------------------------------------------------------------------------------------------
+;void planecopy_cp(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift)
+;---------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal upShift_8, 7,8,3
+    movd        xm2, r6d
+    add         r3, r3
+
+.loopH:
+    xor         r7, r7
+    mov         r6d, r4d
+.loopW:
+    pmovzxbw    m0,[r0 + r7]
+    pmovzxbw    m1,[r0 + r7 + 16]
+    psllw       m0, xm2
+    psllw       m1, xm2
+    movu        [r2 + r7 * 2], m0
+    movu        [r2 + r7 * 2 + 32], m1
+
+    add         r7d, 32
+    sub         r6d, 32
+    jg          .loopW
+
+    ; move to next row
+    add         r0, r1
+    add         r2, r3
+    dec         r5d
+    jnz         .loopH
+
+;processing last row of every frame [To handle width which not a multiple of 16]
+
+.loop16:
+    pmovzxbw    m0,[r0]
+    psllw       m0, xm2
+    movu        [r2], m0
+
+    add         r0, mmsize
+    add         r2, 2 * mmsize
+    sub         r4d, 16
+    jg          .loop16
+    jz          .end
+
+    cmp         r4d, 8
+    jl          .process4
+    pmovzxbw    m0,[r0]
+    psllw       m0, xm2
+    movu        [r2], m0
+
+    add         r0, 8
+    add         r2, mmsize
+    sub         r4d, 8
+    jz          .end
+
+.process4:
+    cmp         r4d, 4
+    jl          .process2
+    movq        xm0,[r0]
+    pmovzxbw    m0,xm0
+    psllw       xm0, xm2
+    movq        [r2], xm0
+
+    add         r0, 4
+    add         r2, 8
+    sub         r4d, 4
+    jz          .end
+
+.process2:
+    cmp         r4d, 2
+    jl          .process1
+    movzx       r3d, byte [r0]
+    shl         r3d, 2
+    mov         [r2], r3w
+    movzx       r3d, byte [r0 + 1]
+    shl         r3d, 2
+    mov         [r2 + 2], r3w
+
+    add         r0, 2
+    add         r2, 4
+    sub         r4d, 2
+    jz          .end
+
+.process1:
+    movzx       r3d, byte [r0]
+    shl         r3d, 2
+    mov         [r2], r3w
+.end:
+    RET
+%endif
+
 %macro ABSD2 6 ; dst1, dst2, src1, src2, tmp, tmp
 %if cpuflag(ssse3)
     pabsd   %1, %3
