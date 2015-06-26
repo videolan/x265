@@ -2453,6 +2453,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.weight_pp = PFX(weight_pp_sse4);
         p.weight_sp = PFX(weight_sp_sse4);
 
+        p.cu[BLOCK_4x4].intra_filter = PFX(intra_filter_4x4_sse4);
+
         ALL_LUMA_TU_S(intra_pred[PLANAR_IDX], intra_pred_planar, sse4);
         ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse4);
         ALL_LUMA_TU(intra_pred_allangs, all_angs_pred, sse4);

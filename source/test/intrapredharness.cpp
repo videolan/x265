@@ -31,6 +31,16 @@ IntraPredHarness::IntraPredHarness()
 {
     for (int i = 0; i < INPUT_SIZE; i++)
         pixel_buff[i] = rand() % PIXEL_MAX;
+
+    /* [0] --- Random values
+     * [1] --- Minimum
+     * [2] --- Maximum */
+    for (int i = 0; i < BUFFSIZE; i++)
+    {
+        pixel_test_buff[0][i]   = rand() % PIXEL_MAX;
+        pixel_test_buff[1][i]   = PIXEL_MIN;
+        pixel_test_buff[2][i]   = PIXEL_MAX;
+    }
 }
 
 bool IntraPredHarness::check_dc_primitive(intra_pred_t ref, intra_pred_t opt, int width)
@@ -177,6 +187,27 @@ bool IntraPredHarness::check_allangs_primitive(const intra_allangs_t ref, const 
     return true;
 }
 
+bool IntraPredHarness::check_intra_filter_primitive(const intra_filter_t ref, const intra_filter_t opt)
+{
+    memset(pixel_out_c, 0, 64 * 64 * sizeof(pixel));
+    memset(pixel_out_vec, 0, 64 * 64 * sizeof(pixel));
+    int j = 0;
+
+    for (int i = 0; i < 100; i++)
+    {
+        int index = rand() % TEST_CASES;
+
+        ref(pixel_test_buff[index] + j, pixel_out_c);
+        checked(opt, pixel_test_buff[index] + j, pixel_out_vec);
+
+        if (memcmp(pixel_out_c, pixel_out_vec, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        reportfail();
+        j += FENC_STRIDE;
+    }
+    return true;
+}
 bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     for (int i = BLOCK_4x4; i <= BLOCK_32x32; i++)
@@ -210,6 +241,14 @@ bool IntraPredHarness::testCorrectness(const EncoderPrimitives& ref, const Encod
             if (!check_allangs_primitive(ref.cu[i].intra_pred_allangs, opt.cu[i].intra_pred_allangs, i))
             {
                 printf("intra_allangs failed\n");
+                return false;
+            }
+        }
+        if (opt.cu[i].intra_filter)
+        {
+            if (!check_intra_filter_primitive(ref.cu[i].intra_filter, opt.cu[i].intra_filter))
+            {
+                printf("intra_filter_%dx%d failed\n", size, size);
                 return false;
             }
         }
@@ -267,6 +306,11 @@ void IntraPredHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderP
                 REPORT_SPEEDUP(opt.cu[i].intra_pred[mode], ref.cu[i].intra_pred[mode],
                                pixel_out_vec, FENC_STRIDE, pixel_buff + srcStride, mode, bFilter);
             }
+        }
+        if (opt.cu[i].intra_filter)
+        {
+            printf("intra_filter_%dx%d", size, size);
+            REPORT_SPEEDUP(opt.cu[i].intra_filter, ref.cu[i].intra_filter, pixel_buff, pixel_out_c);
         }
     }
 }

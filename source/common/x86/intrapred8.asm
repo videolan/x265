@@ -30,6 +30,9 @@ SECTION_RODATA 32
 intra_pred_shuff_0_8:    times 2 db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
 intra_pred_shuff_15_0:   times 2 db 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
 
+intra_filter4_shuf0:  db 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ,11, 12, 13
+intra_filter4_shuf1:  db 14,15,0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ,11, 12, 13
+
 pb_0_8        times 8 db  0,  8
 pb_unpackbw1  times 2 db  1,  8,  2,  8,  3,  8,  4,  8
 pb_swap8:     times 2 db  7,  6,  5,  4,  3,  2,  1,  0
@@ -18275,4 +18278,45 @@ cglobal intra_pred_ang4_25, 3, 3, 1
     packuswb          m0, m0
 
     INTRA_PRED_STORE_4x4
+    RET
+
+;-----------------------------------------------------------------------------------
+; void intra_filter_NxN(const pixel* references, pixel* filtered)
+;-----------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_filter_4x4, 2,4,5
+    mov             r2b, byte [r0 +  8]             ; topLast
+    mov             r3b, byte [r0 + 16]             ; LeftLast
+
+    ; filtering top
+    pmovzxbw        m0, [r0 +  0]
+    pmovzxbw        m1, [r0 +  8]
+    pmovzxbw        m2, [r0 + 16]
+
+    pshufb          m4, m0, [intra_filter4_shuf0]   ; [6 5 4 3 2 1 0 1] samples[i - 1]
+    palignr         m3, m1, m0, 4
+    pshufb          m3, [intra_filter4_shuf1]       ; [8 7 6 5 4 3 2 9] samples[i + 1]
+
+    psllw           m0, 1
+    paddw           m4, m3
+    paddw           m0, m4
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+
+    ; filtering left
+    palignr         m4, m1, m1, 14                  ; [14 13 12 11 10 9 8 15] samples[i - 1]
+    pinsrb          m4, [r0], 2                     ; [14 13 12 11 10 9 0 15] samples[i + 1]
+    palignr         m3, m2, m1, 4
+    pshufb          m3, [intra_filter4_shuf1]
+
+    psllw           m1, 1
+    paddw           m4, m3
+    paddw           m1, m4
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+    packuswb        m0, m1
+
+    movu            [r1], m0
+    mov             [r1 +  8], r2b                  ; topLast
+    mov             [r1 + 16], r3b                  ; LeftLast
     RET

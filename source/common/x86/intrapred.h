@@ -66,6 +66,7 @@
 
 #define DECL_ALL(cpu) \
     FUNCDEF_TU(void, all_angs_pred, cpu, pixel *dest, pixel *refPix, pixel *filtPix, int bLuma); \
+    FUNCDEF_TU(void, intra_filter, cpu, const pixel *samples, pixel *filtered); \
     DECL_ANGS(4, cpu); \
     DECL_ANGS(8, cpu); \
     DECL_ANGS(16, cpu); \

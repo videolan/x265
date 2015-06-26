@@ -34,7 +34,15 @@ protected:
     enum { INPUT_SIZE = 4 * 65 * 65 * 100 };
     enum { OUTPUT_SIZE = 64 * FENC_STRIDE };
     enum { OUTPUT_SIZE_33 = 33 * OUTPUT_SIZE };
+    enum { TEST_CASES = 3 };
+    enum { INCR = 32 };
+    enum { STRIDE = 64 };
+    enum { ITERS = 100 };
+    enum { MAX_HEIGHT = 64 };
+    enum { PAD_ROWS = 64 };
+    enum { BUFFSIZE = STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS };
 
+    pixel    pixel_test_buff[TEST_CASES][BUFFSIZE];
     ALIGN_VAR_16(pixel, pixel_buff[INPUT_SIZE]);
     pixel pixel_out_c[OUTPUT_SIZE];
     pixel pixel_out_vec[OUTPUT_SIZE];
@@ -45,6 +53,7 @@ protected:
     bool check_planar_primitive(intra_pred_t ref, intra_pred_t opt, int width);
     bool check_angular_primitive(const intra_pred_t ref[], const intra_pred_t opt[], int size);
     bool check_allangs_primitive(const intra_allangs_t ref, const intra_allangs_t opt, int size);
+    bool check_intra_filter_primitive(const intra_filter_t ref, const intra_filter_t opt);
 
 public:
 
