@@ -7,6 +7,7 @@
 ;*          Fiona Glaser <fiona@x264.com>
 ;*          Laurent Aimar <fenrir@via.ecp.fr>
 ;*          Alex Izvorski <aizvorksi@gmail.com>
+;*          Min Chen <chenm003@163.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -32,15 +33,13 @@
 SECTION_RODATA 32
 
 MSK:                  db 255,255,255,255,255,255,255,255,255,255,255,255,0,0,0,0
-pb_shuf8x8c2: times 2 db 0,0,0,0,8,8,8,8,-1,-1,-1,-1,-1,-1,-1,-1
-hpred_shuf:           db 0,0,2,2,8,8,10,10,1,1,3,3,9,9,11,11
 
 SECTION .text
 
 cextern pb_3
 cextern pb_shuf8x8c
 cextern pw_8
-cextern sw_64
+cextern pd_64
 
 ;=============================================================================
 ; SAD MMX
@@ -3539,7 +3538,7 @@ cglobal pixel_sad_16x%2_cache64_%1
     jle pixel_sad_%1x%2_mmx2
     and    eax, 7
     shl    eax, 3
-    movd   mm6, [sw_64]
+    movd   mm6, [pd_64]
     movd   mm7, eax
     psubw  mm6, mm7
     PROLOGUE 4,5

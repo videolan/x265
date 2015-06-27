@@ -56,8 +56,8 @@ cextern pw_1023
 cextern pw_1024
 cextern pw_00ff
 cextern pw_pixel_max
-cextern sw_64
 cextern pd_32
+cextern pd_64
 
 ;====================================================================================================================
 ;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
@@ -5179,7 +5179,7 @@ cglobal pixel_avg2_w20, 6,7
 %macro INIT_SHIFT 2
     and    eax, 7
     shl    eax, 3
-    movd   %1, [sw_64]
+    movd   %1, [pd_64]
     movd   %2, eax
     psubw  %1, %2
 %endmacro

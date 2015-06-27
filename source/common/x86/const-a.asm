@@ -136,5 +136,3 @@ const popcnt_table
 db ((x>>0)&1)+((x>>1)&1)+((x>>2)&1)+((x>>3)&1)+((x>>4)&1)+((x>>5)&1)+((x>>6)&1)+((x>>7)&1)
 %assign x x+1
 %endrep
-
-const sw_64,       dd 64
