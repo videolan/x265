@@ -1674,8 +1674,128 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
     dec         r5d
     jnz         .loopH
     RET
+%endif
 
-%if ARCH_X86_64
+
+%if HIGH_BIT_DEPTH
+INIT_YMM avx2
+cglobal weight_sp, 6,7,9
+    mova                      m1, [pw_1023]
+    mova                      m2, [pw_1]
+    mov                       r6d, r7m
+    shl                       r6d, 16
+    or                        r6d, r6m
+    vpbroadcastd              m3, r6d      ; m3 = [round w0]
+    movd                      xm4, r8m     ; m4 = [shift]
+    vpbroadcastd              m5, r9m      ; m5 = [offset]
+
+    ; correct row stride
+    add                       r3d, r3d
+    add                       r2d, r2d
+    mov                       r6d, r4d
+    and                       r6d, ~(mmsize / SIZEOF_PIXEL - 1)
+    sub                       r3d, r6d
+    sub                       r3d, r6d
+    sub                       r2d, r6d
+    sub                       r2d, r6d
+
+    ; generate partial width mask (MUST BE IN YMM0)
+    mov                       r6d, r4d
+    and                       r6d, (mmsize / SIZEOF_PIXEL - 1)
+    movd                      xm0, r6d
+    pshuflw                   m0, m0, 0
+    punpcklqdq                m0, m0
+    vinserti128               m0, m0, xm0, 1
+    pcmpgtw                   m0, [pw_0_15]
+
+.loopH:
+    mov                       r6d, r4d
+
+.loopW:
+    movu                      m6, [r0]
+    paddw                     m6, [pw_2000]
+
+    punpcklwd                 m7, m6, m2
+    pmaddwd                   m7, m3       ;(round w0)
+    psrad                     m7, xm4      ;(shift)
+    paddd                     m7, m5       ;(offset)
+
+    punpckhwd                 m6, m2
+    pmaddwd                   m6, m3
+    psrad                     m6, xm4
+    paddd                     m6, m5
+
+    packusdw                  m7, m6
+    pminuw                    m7, m1
+
+    sub                       r6d, (mmsize / SIZEOF_PIXEL)
+    jl                        .width14
+    movu                      [r1], m7
+    lea                       r0, [r0 + mmsize]
+    lea                       r1, [r1 + mmsize]
+    je                        .nextH
+    jmp                       .loopW
+
+.width14:
+    add                       r6d, 16
+    cmp                       r6d, 14
+    jl                        .width12
+    movu                      [r1], xm7
+    vextracti128              xm8, m7, 1
+    movq                      [r1 + 16], xm8
+    pextrd                    [r1 + 24], xm8, 2
+    je                        .nextH
+
+.width12:
+    cmp                       r6d, 12
+    jl                        .width10
+    movu                      [r1], xm7
+    vextracti128              xm8, m7, 1
+    movq                      [r1 + 16], xm8
+    je                        .nextH
+
+.width10:
+    cmp                       r6d, 10
+    jl                        .width8
+    movu                      [r1], xm7
+    vextracti128              xm8, m7, 1
+    movd                      [r1 + 16], xm8
+    je                        .nextH
+
+.width8:
+    cmp                       r6d, 8
+    jl                        .width6
+    movu                      [r1], xm7
+    je                        .nextH
+
+.width6
+    cmp                       r6d, 6
+    jl                        .width4
+    movq                      [r1], xm7
+    pextrd                    [r1 + 8], xm7, 2
+    je                        .nextH
+
+.width4:
+    cmp                       r6d, 4
+    jl                        .width2
+    movq                      [r1], xm7
+    je                        .nextH
+    add                       r1, 4
+    pshufd                    m6, m6, 1
+    je                        .nextH
+
+.width2:
+    movd                      [r1], xm7
+
+.nextH:
+    add                       r0, r2
+    add                       r1, r3
+
+    dec                       r5d
+    jnz                       .loopH
+    RET
+
+%else
 INIT_YMM avx2
 cglobal weight_sp, 6, 9, 7
     mov             r7d, r7m
@@ -1752,8 +1872,6 @@ cglobal weight_sp, 6, 9, 7
     jnz             .loopH
     RET
 %endif
-%endif  ; end of (HIGH_BIT_DEPTH == 0)
-    
 
 ;-----------------------------------------------------------------
 ; void transpose_4x4(pixel *dst, pixel *src, intptr_t stride)
