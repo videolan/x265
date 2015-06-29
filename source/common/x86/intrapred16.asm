@@ -75,6 +75,9 @@ const pw_swap16,            times 2 db 14, 15, 12, 13, 10, 11,  8,  9,  6,  7,  
 const pw_ang16_13,                  db 14, 15,  8,  9,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 const pw_ang16_16,                  db  0,  0,  0,  0,  0,  0, 10, 11,  8,  9,  6,  7,  2,  3,  0,  1
 
+intra_filter4_shuf0:                db  2,  3,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10 ,11, 12, 13
+intra_filter4_shuf1:                db 14, 15,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10 ,11, 12, 13
+
 ;; (blkSize - 1 - x)
 pw_planar4_0:                       dw  3,  2,  1,  0,  3,  2,  1,  0
 
@@ -21633,4 +21636,414 @@ cglobal intra_pred_ang32_33, 3,7,8
     add    r2, 8
     dec    r4
     jnz    .loop
+    RET
+
+;-----------------------------------------------------------------------------------
+; void intra_filter_NxN(const pixel* references, pixel* filtered)
+;-----------------------------------------------------------------------------------
+INIT_XMM sse4
+cglobal intra_filter_4x4, 2,4,5
+    mov             r2w, word [r0 + 16]             ; topLast
+    mov             r3w, word [r0 + 32]             ; LeftLast
+
+    ; filtering top
+    movu            m0, [r0 +  0]
+    movu            m1, [r0 + 16]
+    movu            m2, [r0 + 32]
+
+    pshufb          m4, m0, [intra_filter4_shuf0]   ; [6 5 4 3 2 1 0 1] samples[i - 1]
+    palignr         m3, m1, m0, 4
+    pshufb          m3, [intra_filter4_shuf1]       ; [8 7 6 5 4 3 2 9] samples[i + 1]
+
+    psllw           m0, 1
+    paddw           m4, m3
+    paddw           m0, m4
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+
+    ; filtering left
+    palignr         m4, m1, m1, 14
+    pinsrw          m4, [r0], 1
+    palignr         m3, m2, m1, 4
+    pshufb          m3, [intra_filter4_shuf1]
+
+    psllw           m1, 1
+    paddw           m4, m3
+    paddw           m1, m4
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+
+    movu            [r1], m0
+    movu            [r1 + 16], m1
+    mov             [r1 + 16], r2w                  ; topLast
+    mov             [r1 + 32], r3w                  ; LeftLast
+    RET
+
+INIT_XMM sse4
+cglobal intra_filter_8x8, 2,4,6
+    mov             r2w, word [r0 + 32]             ; topLast
+    mov             r3w, word [r0 + 64]             ; LeftLast
+
+    ; filtering top
+    movu            m0, [r0]
+    movu            m1, [r0 + 16]
+    movu            m2, [r0 + 32]
+
+    pshufb          m4, m0, [intra_filter4_shuf0]
+    palignr         m5, m1, m0, 2
+    pinsrw          m5, [r0 + 34], 0
+
+    palignr         m3, m1, m0, 14
+    psllw           m0, 1
+    paddw           m4, m5
+    paddw           m0, m4
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+
+    palignr         m4, m2, m1, 2
+    psllw           m1, 1
+    paddw           m4, m3
+    paddw           m1, m4
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+    movu            [r1], m0
+    movu            [r1 + 16], m1
+
+    ; filtering left
+    movu            m1, [r0 + 48]
+    movu            m0, [r0 + 64]
+
+    palignr         m4, m2, m2, 14
+    pinsrw          m4, [r0], 1
+    palignr         m5, m1, m2, 2
+
+    palignr         m3, m1, m2, 14
+    palignr         m0, m1, 2
+
+    psllw           m2, 1
+    paddw           m4, m5
+    paddw           m2, m4
+    paddw           m2, [pw_2]
+    psrlw           m2, 2
+
+    psllw           m1, 1
+    paddw           m0, m3
+    paddw           m1, m0
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+
+    movu            [r1 + 32], m2
+    movu            [r1 + 48], m1
+    mov             [r1 + 32], r2w                  ; topLast
+    mov             [r1 + 64], r3w                  ; LeftLast
+    RET
+
+INIT_XMM sse4
+cglobal intra_filter_16x16, 2,4,6
+    mov             r2w, word [r0 +  64]            ; topLast
+    mov             r3w, word [r0 + 128]            ; LeftLast
+
+    ; filtering top
+    movu            m0, [r0]
+    movu            m1, [r0 + 16]
+    movu            m2, [r0 + 32]
+
+    pshufb          m4, m0, [intra_filter4_shuf0]
+    palignr         m5, m1, m0, 2
+    pinsrw          m5, [r0 + 66], 0
+
+    palignr         m3, m1, m0, 14
+    psllw           m0, 1
+    paddw           m4, m5
+    paddw           m0, m4
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+
+    palignr         m4, m2, m1, 2
+    psllw           m5, m1, 1
+    paddw           m4, m3
+    paddw           m5, m4
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+    movu            [r1], m0
+    movu            [r1 + 16], m5
+
+    movu            m0, [r0 + 48]
+    movu            m5, [r0 + 64]
+
+    palignr         m3, m2, m1, 14
+    palignr         m4, m0, m2, 2
+
+    psllw           m1, m2, 1
+    paddw           m3, m4
+    paddw           m1, m3
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+
+    palignr         m3, m0, m2, 14
+    palignr         m4, m5, m0, 2
+
+    psllw           m0, 1
+    paddw           m4, m3
+    paddw           m0, m4
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+    movu            [r1 + 32], m1
+    movu            [r1 + 48], m0
+
+    ; filtering left
+    movu            m1, [r0 + 80]
+    movu            m2, [r0 + 96]
+
+    palignr         m4, m5, m5, 14
+    pinsrw          m4, [r0], 1
+    palignr         m0, m1, m5, 2
+
+    psllw           m3, m5, 1
+    paddw           m4, m0
+    paddw           m3, m4
+    paddw           m3, [pw_2]
+    psrlw           m3, 2
+
+    palignr         m0, m1, m5, 14
+    palignr         m4, m2, m1, 2
+
+    psllw           m5, m1, 1
+    paddw           m4, m0
+    paddw           m5, m4
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+    movu            [r1 + 64], m3
+    movu            [r1 + 80], m5
+
+    movu            m5, [r0 + 112]
+    movu            m0, [r0 + 128]
+
+    palignr         m3, m2, m1, 14
+    palignr         m4, m5, m2, 2
+
+    psllw           m1, m2, 1
+    paddw           m3, m4
+    paddw           m1, m3
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+
+    palignr         m3, m5, m2, 14
+    palignr         m4, m0, m5, 2
+
+    psllw           m5, 1
+    paddw           m4, m3
+    paddw           m5, m4
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+    movu            [r1 +  96], m1
+    movu            [r1 + 112], m5
+
+    mov             [r1 +  64], r2w                 ; topLast
+    mov             [r1 + 128], r3w                 ; LeftLast
+    RET
+
+INIT_XMM sse4
+cglobal intra_filter_32x32, 2,4,6
+    mov             r2w, word [r0 + 128]            ; topLast
+    mov             r3w, word [r0 + 256]            ; LeftLast
+
+    ; filtering top
+    ; 0 to 15
+    movu            m0, [r0 +  0]
+    movu            m1, [r0 + 16]
+    movu            m2, [r0 + 32]
+
+    pshufb          m4, m0, [intra_filter4_shuf0]
+    palignr         m5, m1, m0, 2
+    pinsrw          m5, [r0 + 130], 0
+
+    palignr         m3, m1, m0, 14
+    psllw           m0, 1
+    paddw           m4, m5
+    paddw           m0, m4
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+
+    palignr         m4, m2, m1, 2
+    psllw           m5, m1, 1
+    paddw           m4, m3
+    paddw           m5, m4
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+    movu            [r1], m0
+    movu            [r1 + 16], m5
+
+    ; 16 to 31
+    movu            m0, [r0 + 48]
+    movu            m5, [r0 + 64]
+
+    palignr         m3, m2, m1, 14
+    palignr         m4, m0, m2, 2
+
+    psllw           m1, m2, 1
+    paddw           m3, m4
+    paddw           m1, m3
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+
+    palignr         m3, m0, m2, 14
+    palignr         m4, m5, m0, 2
+
+    psllw           m2, m0, 1
+    paddw           m4, m3
+    paddw           m2, m4
+    paddw           m2, [pw_2]
+    psrlw           m2, 2
+    movu            [r1 + 32], m1
+    movu            [r1 + 48], m2
+
+    ; 32 to 47
+    movu            m1, [r0 + 80]
+    movu            m2, [r0 + 96]
+
+    palignr         m3, m5, m0, 14
+    palignr         m4, m1, m5, 2
+
+    psllw           m0, m5, 1
+    paddw           m3, m4
+    paddw           m0, m3
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+
+    palignr         m3, m1, m5, 14
+    palignr         m4, m2, m1, 2
+
+    psllw           m5, m1, 1
+    paddw           m4, m3
+    paddw           m5, m4
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+    movu            [r1 + 64], m0
+    movu            [r1 + 80], m5
+
+    ; 48 to 63
+    movu            m0, [r0 + 112]
+    movu            m5, [r0 + 128]
+
+    palignr         m3, m2, m1, 14
+    palignr         m4, m0, m2, 2
+
+    psllw           m1, m2, 1
+    paddw           m3, m4
+    paddw           m1, m3
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+
+    palignr         m3, m0, m2, 14
+    palignr         m4, m5, m0, 2
+
+    psllw           m0, 1
+    paddw           m4, m3
+    paddw           m0, m4
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+    movu            [r1 +  96], m1
+    movu            [r1 + 112], m0
+
+    ; filtering left
+    ; 64 to 79
+    movu            m1, [r0 + 144]
+    movu            m2, [r0 + 160]
+
+    palignr         m4, m5, m5, 14
+    pinsrw          m4, [r0], 1
+    palignr         m0, m1, m5, 2
+
+    psllw           m3, m5, 1
+    paddw           m4, m0
+    paddw           m3, m4
+    paddw           m3, [pw_2]
+    psrlw           m3, 2
+
+    palignr         m0, m1, m5, 14
+    palignr         m4, m2, m1, 2
+
+    psllw           m5, m1, 1
+    paddw           m4, m0
+    paddw           m5, m4
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+    movu            [r1 + 128], m3
+    movu            [r1 + 144], m5
+
+    ; 80 to 95
+    movu            m5, [r0 + 176]
+    movu            m0, [r0 + 192]
+
+    palignr         m3, m2, m1, 14
+    palignr         m4, m5, m2, 2
+
+    psllw           m1, m2, 1
+    paddw           m3, m4
+    paddw           m1, m3
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+
+    palignr         m3, m5, m2, 14
+    palignr         m4, m0, m5, 2
+
+    psllw           m2, m5, 1
+    paddw           m4, m3
+    paddw           m2, m4
+    paddw           m2, [pw_2]
+    psrlw           m2, 2
+    movu            [r1 + 160], m1
+    movu            [r1 + 176], m2
+
+    ; 96 to 111
+    movu            m1, [r0 + 208]
+    movu            m2, [r0 + 224]
+
+    palignr         m3, m0, m5, 14
+    palignr         m4, m1, m0, 2
+
+    psllw           m5, m0, 1
+    paddw           m3, m4
+    paddw           m5, m3
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+
+    palignr         m3, m1, m0, 14
+    palignr         m4, m2, m1, 2
+
+    psllw           m0, m1, 1
+    paddw           m4, m3
+    paddw           m0, m4
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+    movu            [r1 + 192], m5
+    movu            [r1 + 208], m0
+
+    ; 112 to 127
+    movu            m5, [r0 + 240]
+    movu            m0, [r0 + 256]
+
+    palignr         m3, m2, m1, 14
+    palignr         m4, m5, m2, 2
+
+    psllw           m1, m2, 1
+    paddw           m3, m4
+    paddw           m1, m3
+    paddw           m1, [pw_2]
+    psrlw           m1, 2
+
+    palignr         m3, m5, m2, 14
+    palignr         m4, m0, m5, 2
+
+    psllw           m5, 1
+    paddw           m4, m3
+    paddw           m5, m4
+    paddw           m5, [pw_2]
+    psrlw           m5, 2
+    movu            [r1 + 224], m1
+    movu            [r1 + 240], m5
+
+    mov             [r1 + 128], r2w                 ; topLast
+    mov             [r1 + 256], r3w                 ; LeftLast
     RET

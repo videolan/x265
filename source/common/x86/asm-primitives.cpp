@@ -1120,6 +1120,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_LUMA_PU(satd, pixel_satd, sse4);
         ASSIGN_SA8D(sse4);
 
+        p.cu[BLOCK_4x4].intra_filter = PFX(intra_filter_4x4_sse4);
+        p.cu[BLOCK_8x8].intra_filter = PFX(intra_filter_8x8_sse4);
+        p.cu[BLOCK_16x16].intra_filter = PFX(intra_filter_16x16_sse4);
+        p.cu[BLOCK_32x32].intra_filter = PFX(intra_filter_32x32_sse4);
+
         ALL_LUMA_TU_S(intra_pred[PLANAR_IDX], intra_pred_planar, sse4);
         ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse4);
         INTRA_ANG_SSE4_COMMON(sse4);
