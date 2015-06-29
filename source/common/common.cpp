@@ -33,11 +33,11 @@
 #include <sys/time.h>
 #endif
 
+namespace X265_NS {
+
 #if CHECKED_BUILD || _DEBUG
 int g_checkFailures;
 #endif
-
-namespace X265_NS {
 
 int64_t x265_mdate(void)
 {

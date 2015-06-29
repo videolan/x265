@@ -106,7 +106,7 @@
 /* If compiled with CHECKED_BUILD perform run-time checks and log any that
  * fail, both to stderr and to a file */
 #if CHECKED_BUILD || _DEBUG
-extern int g_checkFailures;
+namespace X265_NS { extern int g_checkFailures; }
 #define X265_CHECK(expr, ...) if (!(expr)) { \
     x265_log(NULL, X265_LOG_ERROR, __VA_ARGS__); \
     FILE *fp = fopen("x265_check_failures.txt", "a"); \
