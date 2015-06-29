@@ -1079,7 +1079,7 @@ cglobal dequant_normal, 5,5,7
     jnz            .loop
     RET
 
-z
+
 ;-----------------------------------------------------------------------------
 ; int x265_count_nonzero_4x4_sse2(const int16_t *quantCoeff);
 ;-----------------------------------------------------------------------------
@@ -1105,18 +1105,13 @@ cglobal count_nonzero_4x4, 1,1,2
 INIT_YMM avx2
 cglobal count_nonzero_4x4, 1,1,2
     pxor            m0, m0
-
-    mova            m1, [r0 + 0]
-    packsswb        m1, [r0 + 16]
-    pcmpeqb         m1, m0
-    paddb           m1, [pb_1]
-
-    psadbw          m1, m0
-    pshufd          m0, m1, 2
-    paddd           m1, m0
-    movd            eax, xm1
+    movu            m1, [r0]
+    pcmpeqw         m1, m0
+    pmovmskb        eax, m1
+    not             eax
+    popcnt          eax, eax
+    shr             eax, 1
     RET
-
 
 ;-----------------------------------------------------------------------------
 ; int x265_count_nonzero_8x8_sse2(const int16_t *quantCoeff);
