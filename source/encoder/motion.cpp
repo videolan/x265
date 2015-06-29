@@ -56,7 +56,7 @@ const SubpelWorkload workload[X265_MAX_SUBPEL_LEVEL + 1] =
     { 2, 8, 2, 8, true },  // 2x8 SATD HPEL + 2x8 SATD QPEL
 };
 
-int sizeScale[NUM_PU_SIZES];
+static int sizeScale[NUM_PU_SIZES];
 #define SAD_THRESH(v) (bcost < (((v >> 4) * sizeScale[partEnum])))
 
 /* radius 2 hexagon. repeated entries are to avoid having to compute mod6 every time. */

@@ -34,6 +34,8 @@ using namespace X265_NS;
 #endif
 
 namespace {
+// file local namespace
+
 template<int width, int height>
 void filterPixelToShort_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride)
 {
@@ -53,7 +55,7 @@ void filterPixelToShort_c(const pixel* src, intptr_t srcStride, int16_t* dst, in
     }
 }
 
-void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, int marginX)
+static void extendCURowColBorder(pixel* txt, intptr_t stride, int width, int height, int marginX)
 {
     for (int y = 0; y < height; y++)
     {

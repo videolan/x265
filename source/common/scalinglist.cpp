@@ -80,7 +80,7 @@ const char MatrixType_DC[4][12][22] =
     },
 };
 
-int quantTSDefault4x4[16] =
+static int quantTSDefault4x4[16] =
 {
     16, 16, 16, 16,
     16, 16, 16, 16,
@@ -88,7 +88,7 @@ int quantTSDefault4x4[16] =
     16, 16, 16, 16
 };
 
-int quantIntraDefault8x8[64] =
+static int quantIntraDefault8x8[64] =
 {
     16, 16, 16, 16, 17, 18, 21, 24,
     16, 16, 16, 16, 17, 19, 22, 25,
@@ -100,7 +100,7 @@ int quantIntraDefault8x8[64] =
     24, 25, 29, 36, 47, 65, 88, 115
 };
 
-int quantInterDefault8x8[64] =
+static int quantInterDefault8x8[64] =
 {
     16, 16, 16, 16, 17, 18, 20, 24,
     16, 16, 16, 17, 18, 20, 24, 25,

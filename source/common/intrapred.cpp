@@ -50,7 +50,7 @@ void intraFilter(const pixel* samples, pixel* filtered) /* 1:2:1 filtering of le
     filtered[tuSize2 + tuSize2] = leftLast;
 }
 
-void dcPredFilter(const pixel* above, const pixel* left, pixel* dst, intptr_t dststride, int size)
+static void dcPredFilter(const pixel* above, const pixel* left, pixel* dst, intptr_t dststride, int size)
 {
     // boundary pixels processing
     dst[0] = (pixel)((above[0] + left[0] + 2 * dst[0] + 2) >> 2);

@@ -35,8 +35,7 @@
 
 using namespace X265_NS;
 
-namespace {
-void dequant_scaling(const int16_t* quantCoef, const int32_t *deQuantCoef, int16_t* coef, int num, int per, int shift)
+static void dequant_scaling(const int16_t* quantCoef, const int32_t *deQuantCoef, int16_t* coef, int num, int per, int shift)
 {
     X265_CHECK(num <= 32 * 32, "dequant num too large\n");
 
@@ -99,7 +98,6 @@ void dequant_scaling(const int16_t* quantCoef, const int32_t *deQuantCoef, int16
             _mm_storeu_si128((__m128i*)(coef + n), quantCoef12);
         }
     }
-}
 }
 
 namespace X265_NS {

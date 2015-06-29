@@ -159,7 +159,7 @@ inline sum2_t abs2(sum2_t a)
     return (a + s) ^ s;
 }
 
-int satd_4x4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
+static int satd_4x4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
 {
     sum2_t tmp[4][2];
     sum2_t a0, a1, a2, a3, b0, b1;
@@ -219,7 +219,7 @@ static int satd_4x4(const int16_t* pix1, intptr_t stride_pix1)
 }
 
 // x264's SWAR version of satd 8x4, performs two 4x4 SATDs at once
-int satd_8x4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
+static int satd_8x4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
 {
     sum2_t tmp[4][4];
     sum2_t a0, a1, a2, a3;
@@ -308,7 +308,7 @@ inline int _sa8d_8x8(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intp
     return (int)sum;
 }
 
-int sa8d_8x8(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
+inline int sa8d_8x8(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
 {
     return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
@@ -359,12 +359,12 @@ inline int _sa8d_8x8(const int16_t* pix1, intptr_t i_pix1)
     return (int)sum;
 }
 
-int sa8d_8x8(const int16_t* pix1, intptr_t i_pix1)
+static int sa8d_8x8(const int16_t* pix1, intptr_t i_pix1)
 {
     return (int)((_sa8d_8x8(pix1, i_pix1) + 2) >> 2);
 }
 
-int sa8d_16x16(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
+static int sa8d_16x16(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
 {
     int sum = _sa8d_8x8(pix1, i_pix1, pix2, i_pix2)
         + _sa8d_8x8(pix1 + 8, i_pix1, pix2 + 8, i_pix2)
@@ -516,7 +516,7 @@ void transpose(pixel* dst, const pixel* src, intptr_t stride)
             dst[k * blockSize + l] = src[l * stride + k];
 }
 
-void weight_sp_c(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
+static void weight_sp_c(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
 
@@ -541,7 +541,7 @@ void weight_sp_c(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t ds
     }
 }
 
-void weight_pp_c(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
+static void weight_pp_c(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
 {
     int x, y;
 
@@ -582,7 +582,7 @@ void pixelavg_pp(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstri
     }
 }
 
-void scale1D_128to64(pixel *dst, const pixel *src)
+static void scale1D_128to64(pixel *dst, const pixel *src)
 {
     int x;
     const pixel* src1 = src;
@@ -608,7 +608,7 @@ void scale1D_128to64(pixel *dst, const pixel *src)
     }
 }
 
-void scale2D_64to32(pixel* dst, const pixel* src, intptr_t stride)
+static void scale2D_64to32(pixel* dst, const pixel* src, intptr_t stride)
 {
     uint32_t x, y;
 
@@ -627,6 +627,7 @@ void scale2D_64to32(pixel* dst, const pixel* src, intptr_t stride)
     }
 }
 
+static
 void frame_init_lowres_core(const pixel* src0, pixel* dst0, pixel* dsth, pixel* dstv, pixel* dstc,
                             intptr_t src_stride, intptr_t dst_stride, int width, int height)
 {
@@ -653,7 +654,7 @@ void frame_init_lowres_core(const pixel* src0, pixel* dst0, pixel* dsth, pixel* 
 }
 
 /* structural similarity metric */
-void ssim_4x4x2_core(const pixel* pix1, intptr_t stride1, const pixel* pix2, intptr_t stride2, int sums[2][4])
+static void ssim_4x4x2_core(const pixel* pix1, intptr_t stride1, const pixel* pix2, intptr_t stride2, int sums[2][4])
 {
     for (int z = 0; z < 2; z++)
     {
@@ -681,7 +682,7 @@ void ssim_4x4x2_core(const pixel* pix1, intptr_t stride1, const pixel* pix2, int
     }
 }
 
-float ssim_end_1(int s1, int s2, int ss, int s12)
+static float ssim_end_1(int s1, int s2, int ss, int s12)
 {
 /* Maximum value for 10-bit is: ss*64 = (2^10-1)^2*16*4*64 = 4286582784, which will overflow in some cases.
  * s1*s1, s2*s2, and s1*s2 also obtain this value for edge cases: ((2^10-1)*16*4)^2 = 4286582784.
@@ -711,7 +712,7 @@ float ssim_end_1(int s1, int s2, int ss, int s12)
 #undef PIXEL_MAX
 }
 
-float ssim_end_4(int sum0[5][4], int sum1[5][4], int width)
+static float ssim_end_4(int sum0[5][4], int sum1[5][4], int width)
 {
     float ssim = 0.0;
 
@@ -920,7 +921,7 @@ void addAvg(const int16_t* src0, const int16_t* src1, pixel* dst, intptr_t src0S
     }
 }
 
-void planecopy_cp_c(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift)
+static void planecopy_cp_c(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift)
 {
     for (int r = 0; r < height; r++)
     {
@@ -932,7 +933,7 @@ void planecopy_cp_c(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t
     }
 }
 
-void planecopy_sp_c(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
+static void planecopy_sp_c(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
 {
     for (int r = 0; r < height; r++)
     {
@@ -946,7 +947,7 @@ void planecopy_sp_c(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_
 
 /* Estimate the total amount of influence on future quality that could be had if we
  * were to improve the reference samples used to inter predict any given CU. */
-void estimateCUPropagateCost(int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts,
+static void estimateCUPropagateCost(int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts,
                              const int32_t* invQscales, const double* fpsFactor, int len)
 {
     double fps = *fpsFactor / 256;

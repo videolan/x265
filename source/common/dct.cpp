@@ -38,12 +38,9 @@ using namespace X265_NS;
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
 #endif
 
-namespace {
-// anonymous file-static namespace
-
 // Fast DST Algorithm. Full matrix multiplication for DST and Fast DST algorithm
 // give identical results
-void fastForwardDst(const int16_t* block, int16_t* coeff, int shift)  // input block, output coeff
+static void fastForwardDst(const int16_t* block, int16_t* coeff, int shift)  // input block, output coeff
 {
     int c[4];
     int rnd_factor = 1 << (shift - 1);
@@ -63,7 +60,7 @@ void fastForwardDst(const int16_t* block, int16_t* coeff, int shift)  // input b
     }
 }
 
-void inversedst(const int16_t* tmp, int16_t* block, int shift)  // input tmp, output block
+static void inversedst(const int16_t* tmp, int16_t* block, int shift)  // input tmp, output block
 {
     int i, c[4];
     int rnd_factor = 1 << (shift - 1);
@@ -83,7 +80,7 @@ void inversedst(const int16_t* tmp, int16_t* block, int shift)  // input tmp, ou
     }
 }
 
-void partialButterfly16(const int16_t* src, int16_t* dst, int shift, int line)
+static void partialButterfly16(const int16_t* src, int16_t* dst, int shift, int line)
 {
     int j, k;
     int E[8], O[8];
@@ -136,7 +133,7 @@ void partialButterfly16(const int16_t* src, int16_t* dst, int shift, int line)
     }
 }
 
-void partialButterfly32(const int16_t* src, int16_t* dst, int shift, int line)
+static void partialButterfly32(const int16_t* src, int16_t* dst, int shift, int line)
 {
     int j, k;
     int E[16], O[16];
@@ -205,7 +202,7 @@ void partialButterfly32(const int16_t* src, int16_t* dst, int shift, int line)
     }
 }
 
-void partialButterfly8(const int16_t* src, int16_t* dst, int shift, int line)
+static void partialButterfly8(const int16_t* src, int16_t* dst, int shift, int line)
 {
     int j, k;
     int E[4], O[4];
@@ -242,7 +239,7 @@ void partialButterfly8(const int16_t* src, int16_t* dst, int shift, int line)
     }
 }
 
-void partialButterflyInverse4(const int16_t* src, int16_t* dst, int shift, int line)
+static void partialButterflyInverse4(const int16_t* src, int16_t* dst, int shift, int line)
 {
     int j;
     int E[2], O[2];
@@ -267,7 +264,7 @@ void partialButterflyInverse4(const int16_t* src, int16_t* dst, int shift, int l
     }
 }
 
-void partialButterflyInverse8(const int16_t* src, int16_t* dst, int shift, int line)
+static void partialButterflyInverse8(const int16_t* src, int16_t* dst, int shift, int line)
 {
     int j, k;
     int E[4], O[4];
@@ -303,7 +300,7 @@ void partialButterflyInverse8(const int16_t* src, int16_t* dst, int shift, int l
     }
 }
 
-void partialButterflyInverse16(const int16_t* src, int16_t* dst, int shift, int line)
+static void partialButterflyInverse16(const int16_t* src, int16_t* dst, int shift, int line)
 {
     int j, k;
     int E[8], O[8];
@@ -354,7 +351,7 @@ void partialButterflyInverse16(const int16_t* src, int16_t* dst, int shift, int 
     }
 }
 
-void partialButterflyInverse32(const int16_t* src, int16_t* dst, int shift, int line)
+static void partialButterflyInverse32(const int16_t* src, int16_t* dst, int shift, int line)
 {
     int j, k;
     int E[16], O[16];
@@ -418,7 +415,7 @@ void partialButterflyInverse32(const int16_t* src, int16_t* dst, int shift, int 
     }
 }
 
-void partialButterfly4(const int16_t* src, int16_t* dst, int shift, int line)
+static void partialButterfly4(const int16_t* src, int16_t* dst, int shift, int line)
 {
     int j;
     int E[2], O[2];
@@ -442,7 +439,7 @@ void partialButterfly4(const int16_t* src, int16_t* dst, int shift, int line)
     }
 }
 
-void dst4_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
+static void dst4_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 {
     const int shift_1st = 1 + X265_DEPTH - 8;
     const int shift_2nd = 8;
@@ -459,7 +456,7 @@ void dst4_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
     fastForwardDst(coef, dst, shift_2nd);
 }
 
-void dct4_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
+static void dct4_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 {
     const int shift_1st = 1 + X265_DEPTH - 8;
     const int shift_2nd = 8;
@@ -476,7 +473,7 @@ void dct4_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
     partialButterfly4(coef, dst, shift_2nd, 4);
 }
 
-void dct8_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
+static void dct8_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 {
     const int shift_1st = 2 + X265_DEPTH - 8;
     const int shift_2nd = 9;
@@ -493,7 +490,7 @@ void dct8_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
     partialButterfly8(coef, dst, shift_2nd, 8);
 }
 
-void dct16_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
+static void dct16_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 {
     const int shift_1st = 3 + X265_DEPTH - 8;
     const int shift_2nd = 10;
@@ -510,7 +507,7 @@ void dct16_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
     partialButterfly16(coef, dst, shift_2nd, 16);
 }
 
-void dct32_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
+static void dct32_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 {
     const int shift_1st = 4 + X265_DEPTH - 8;
     const int shift_2nd = 11;
@@ -527,7 +524,7 @@ void dct32_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
     partialButterfly32(coef, dst, shift_2nd, 32);
 }
 
-void idst4_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
+static void idst4_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -544,7 +541,7 @@ void idst4_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
     }
 }
 
-void idct4_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
+static void idct4_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -561,7 +558,7 @@ void idct4_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
     }
 }
 
-void idct8_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
+static void idct8_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -578,7 +575,7 @@ void idct8_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
     }
 }
 
-void idct16_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
+static void idct16_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -595,7 +592,7 @@ void idct16_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
     }
 }
 
-void idct32_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
+static void idct32_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 {
     const int shift_1st = 7;
     const int shift_2nd = 12 - (X265_DEPTH - 8);
@@ -612,7 +609,7 @@ void idct32_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
     }
 }
 
-void dequant_normal_c(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift)
+static void dequant_normal_c(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift)
 {
 #if HIGH_BIT_DEPTH
     X265_CHECK(scale < 32768 || ((scale & 3) == 0 && shift > 2), "dequant invalid scale %d\n", scale);
@@ -636,7 +633,7 @@ void dequant_normal_c(const int16_t* quantCoef, int16_t* coef, int num, int scal
     }
 }
 
-void dequant_scaling_c(const int16_t* quantCoef, const int32_t* deQuantCoef, int16_t* coef, int num, int per, int shift)
+static void dequant_scaling_c(const int16_t* quantCoef, const int32_t* deQuantCoef, int16_t* coef, int num, int per, int shift)
 {
     X265_CHECK(num <= 32 * 32, "dequant num %d too large\n", num);
 
@@ -664,7 +661,7 @@ void dequant_scaling_c(const int16_t* quantCoef, const int32_t* deQuantCoef, int
     }
 }
 
-uint32_t quant_c(const int16_t* coef, const int32_t* quantCoeff, int32_t* deltaU, int16_t* qCoef, int qBits, int add, int numCoeff)
+static uint32_t quant_c(const int16_t* coef, const int32_t* quantCoeff, int32_t* deltaU, int16_t* qCoef, int qBits, int add, int numCoeff)
 {
     X265_CHECK(qBits >= 8, "qBits less than 8\n");
     X265_CHECK((numCoeff % 16) == 0, "numCoeff must be multiple of 16\n");
@@ -688,7 +685,7 @@ uint32_t quant_c(const int16_t* coef, const int32_t* quantCoeff, int32_t* deltaU
     return numSig;
 }
 
-uint32_t nquant_c(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff)
+static uint32_t nquant_c(const int16_t* coef, const int32_t* quantCoeff, int16_t* qCoef, int qBits, int add, int numCoeff)
 {
     X265_CHECK((numCoeff % 16) == 0, "number of quant coeff is not multiple of 4x4\n");
     X265_CHECK((uint32_t)add < ((uint32_t)1 << qBits), "2 ^ qBits less than add\n");
@@ -741,7 +738,7 @@ uint32_t copy_count(int16_t* coeff, const int16_t* residual, intptr_t resiStride
     return numSig;
 }
 
-void denoiseDct_c(int16_t* dctCoef, uint32_t* resSum, const uint16_t* offset, int numCoeff)
+static void denoiseDct_c(int16_t* dctCoef, uint32_t* resSum, const uint16_t* offset, int numCoeff)
 {
     for (int i = 0; i < numCoeff; i++)
     {
@@ -754,7 +751,7 @@ void denoiseDct_c(int16_t* dctCoef, uint32_t* resSum, const uint16_t* offset, in
     }
 }
 
-int scanPosLast_c(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* /*scanCG4x4*/, const int /*trSize*/)
+static int scanPosLast_c(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* /*scanCG4x4*/, const int /*trSize*/)
 {
     memset(coeffNum, 0, MLS_GRP_NUM * sizeof(*coeffNum));
     memset(coeffFlag, 0, MLS_GRP_NUM * sizeof(*coeffFlag));
@@ -787,7 +784,7 @@ int scanPosLast_c(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSig
     return scanPosLast - 1;
 }
 
-uint32_t findPosFirstLast_c(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16])
+static uint32_t findPosFirstLast_c(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16])
 {
     int n;
 
@@ -820,7 +817,7 @@ uint32_t findPosFirstLast_c(const int16_t *dstCoeff, const intptr_t trSize, cons
 }
 
 
-uint32_t costCoeffNxN_c(const uint16_t *scan, const coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, const uint8_t *tabSigCtx, uint32_t scanFlagMask, uint8_t *baseCtx, int offset, int scanPosSigOff, int subPosBase)
+static uint32_t costCoeffNxN_c(const uint16_t *scan, const coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, const uint8_t *tabSigCtx, uint32_t scanFlagMask, uint8_t *baseCtx, int offset, int scanPosSigOff, int subPosBase)
 {
     ALIGN_VAR_32(uint16_t, tmpCoeff[SCAN_SET_SIZE]);
     uint32_t numNonZero = (scanPosSigOff < (SCAN_SET_SIZE - 1) ? 1 : 0);
@@ -874,7 +871,7 @@ uint32_t costCoeffNxN_c(const uint16_t *scan, const coeff_t *coeff, intptr_t trS
     return (sum & 0xFFFFFF);
 }
 
-uint32_t costCoeffRemain_c(uint16_t *absCoeff, int numNonZero, int idx)
+static uint32_t costCoeffRemain_c(uint16_t *absCoeff, int numNonZero, int idx)
 {
     uint32_t goRiceParam = 0;
 
@@ -921,7 +918,7 @@ uint32_t costCoeffRemain_c(uint16_t *absCoeff, int numNonZero, int idx)
 }
 
 
-uint32_t costC1C2Flag_c(uint16_t *absCoeff, intptr_t numC1Flag, uint8_t *baseCtxMod, intptr_t ctxOffset)
+static uint32_t costC1C2Flag_c(uint16_t *absCoeff, intptr_t numC1Flag, uint8_t *baseCtxMod, intptr_t ctxOffset)
 {
     uint32_t sum = 0;
     uint32_t c1 = 1;
@@ -973,8 +970,6 @@ uint32_t costC1C2Flag_c(uint16_t *absCoeff, intptr_t numC1Flag, uint8_t *baseCtx
 
     return (sum & 0x00FFFFFF) + (c1 << 26) + (firstC2Idx << 28);
 }
-
-}  // closing - anonymous file-static namespace
 
 namespace X265_NS {
 // x265 private namespace

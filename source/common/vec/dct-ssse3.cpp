@@ -36,7 +36,6 @@
 
 using namespace X265_NS;
 
-namespace {
 ALIGN_VAR_32(static const int16_t, tab_dct_8[][8]) =
 {
     { 0x0100, 0x0F0E, 0x0706, 0x0908, 0x0302, 0x0D0C, 0x0504, 0x0B0A },
@@ -99,7 +98,7 @@ ALIGN_VAR_32(static const int16_t, tab_dct_16_1[][8]) =
 #undef MAKE_COEF
 };
 
-void dct16(const int16_t *src, int16_t *dst, intptr_t stride)
+static void dct16(const int16_t *src, int16_t *dst, intptr_t stride)
 {
 #if HIGH_BIT_DEPTH
 #define SHIFT1  5
@@ -680,7 +679,7 @@ ALIGN_VAR_32(static const int16_t, tab_dct_32_1[][8]) =
 #undef MAKE_COEF16
 };
 
-void dct32(const int16_t *src, int16_t *dst, intptr_t stride)
+static void dct32(const int16_t *src, int16_t *dst, intptr_t stride)
 {
 #if HIGH_BIT_DEPTH
 #define SHIFT1  6
@@ -1129,7 +1128,6 @@ void dct32(const int16_t *src, int16_t *dst, intptr_t stride)
 #undef ADD1
 #undef SHIFT2
 #undef ADD2
-}
 }
 
 namespace X265_NS {

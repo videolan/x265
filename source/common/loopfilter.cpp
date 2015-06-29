@@ -36,13 +36,13 @@ inline int8_t signOf(int x)
     return (x >> 31) | ((int)((((uint32_t)-x)) >> 31));
 }
 
-void calSign(int8_t *dst, const pixel *src1, const pixel *src2, const int endX)
+static void calSign(int8_t *dst, const pixel *src1, const pixel *src2, const int endX)
 {
     for (int x = 0; x < endX; x++)
         dst[x] = signOf(src1[x] - src2[x]);
 }
 
-void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t* signLeft, intptr_t stride)
+static void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t* signLeft, intptr_t stride)
 {
     int x, y;
     int8_t signRight, signLeft0;
@@ -62,7 +62,7 @@ void processSaoCUE0(pixel * rec, int8_t * offsetEo, int width, int8_t* signLeft,
     }
 }
 
-void processSaoCUE1(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width)
+static void processSaoCUE1(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width)
 {
     int x;
     int8_t signDown;
@@ -77,7 +77,7 @@ void processSaoCUE1(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stri
     }
 }
 
-void processSaoCUE1_2Rows(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width)
+static void processSaoCUE1_2Rows(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_t stride, int width)
 {
     int x, y;
     int8_t signDown;
@@ -96,7 +96,7 @@ void processSaoCUE1_2Rows(pixel* rec, int8_t* upBuff1, int8_t* offsetEo, intptr_
     }
 }
 
-void processSaoCUE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offsetEo, int width, intptr_t stride)
+static void processSaoCUE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offsetEo, int width, intptr_t stride)
 {
     int x;
     for (x = 0; x < width; x++)
@@ -108,7 +108,7 @@ void processSaoCUE2(pixel * rec, int8_t * bufft, int8_t * buff1, int8_t * offset
     }
 }
 
-void processSaoCUE3(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, intptr_t stride, int startX, int endX)
+static void processSaoCUE3(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, intptr_t stride, int startX, int endX)
 {
     int8_t signDown;
     int8_t edgeType;
@@ -122,7 +122,7 @@ void processSaoCUE3(pixel *rec, int8_t *upBuff1, int8_t *offsetEo, intptr_t stri
     }
 }
 
-void processSaoCUB0(pixel* rec, const int8_t* offset, int ctuWidth, int ctuHeight, intptr_t stride)
+static void processSaoCUB0(pixel* rec, const int8_t* offset, int ctuWidth, int ctuHeight, intptr_t stride)
 {
     #define SAO_BO_BITS 5
     const int boShift = X265_DEPTH - SAO_BO_BITS;
