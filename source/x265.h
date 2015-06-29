@@ -100,7 +100,7 @@ typedef struct x265_analysis_data
     uint32_t         numPartitions;
 } x265_analysis_data;
 
-/* Frame level statistics*/
+/* Frame level statistics */
 typedef struct x265_frame_stats
 {
     double           qp;
@@ -187,7 +187,7 @@ typedef struct x265_picture
      * this data structure */
     x265_analysis_data analysisData;
 
-    /* Frame level statistics*/
+    /* Frame level statistics */
     x265_frame_stats frameData;
 
 } x265_picture;
