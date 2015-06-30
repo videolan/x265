@@ -240,8 +240,6 @@ void x265_setup_primitives(x265_param *param)
 #if ENABLE_ASSEMBLY
         setupInstrinsicPrimitives(primitives, param->cpuid);
         setupAssemblyPrimitives(primitives, param->cpuid);
-#else
-        x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
 #endif
 
         setupAliasPrimitives(primitives);

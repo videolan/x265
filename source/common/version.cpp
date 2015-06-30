@@ -75,6 +75,12 @@
 #else
 #define NVM_BITS        "[32 bit]"
 #endif
+ 
+#if defined(ENABLE_ASSEMBLY)
+#define ASM     ""
+#else
+#define ASM     "[noasm]"
+#endif
 
 #if CHECKED_BUILD
 #define CHECKED         "[CHECKED] "
@@ -91,4 +97,4 @@ const int PFX(max_bit_depth) = 8;
 #endif
 
 const char* PFX(version_str) = XSTR(X265_VERSION);
-const char* PFX(build_info_str) = NVM_ONOS NVM_COMPILEDBY NVM_BITS CHECKED BITDEPTH;
+const char* PFX(build_info_str) = NVM_ONOS NVM_COMPILEDBY NVM_BITS ASM CHECKED BITDEPTH;

@@ -2,6 +2,8 @@
 
 if(ENABLE_ASSEMBLY)
     set_source_files_properties(threading.cpp primitives.cpp PROPERTIES COMPILE_FLAGS -DENABLE_ASSEMBLY=1)
+    set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS
+                                "-DX265_VERSION=${X265_VERSION} -DENABLE_ASSEMBLY=1")
 
     set(SSE3  vec/dct-sse3.cpp)
     set(SSSE3 vec/dct-ssse3.cpp)
@@ -67,6 +69,8 @@ if(ENABLE_ASSEMBLY)
         set(ASM_PRIMITIVES ${ASM_PRIMITIVES} x86/${SRC})
     endforeach()
     source_group(Assembly FILES ${ASM_PRIMITIVES})
+else(ENABLE_ASSEMBLY)
+    set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 endif(ENABLE_ASSEMBLY)
 
 check_symbol_exists(strtok_r "string.h" HAVE_STRTOK_R)
@@ -80,8 +84,6 @@ endif()
 if(WIN32)
     set(WINXP winxp.h winxp.cpp)
 endif(WIN32)
-
-set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
 
 add_library(common OBJECT
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
