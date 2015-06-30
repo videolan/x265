@@ -86,8 +86,7 @@ if(WIN32)
 endif(WIN32)
 
 add_library(common OBJECT
-    ${ASM_PRIMITIVES} ${VEC_PRIMITIVES}
-    ${LIBCOMMON_SRC} ${LIBCOMMON_HDR} ${WINXP}
+    ${ASM_PRIMITIVES} ${VEC_PRIMITIVES} ${WINXP}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp loopfilter.cpp
     constants.cpp constants.h
