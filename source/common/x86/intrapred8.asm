@@ -30,8 +30,9 @@ SECTION_RODATA 32
 intra_pred_shuff_0_8:    times 2 db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
 intra_pred_shuff_15_0:   times 2 db 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
 
-intra_filter4_shuf0:  db 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ,11, 12, 13
-intra_filter4_shuf1:  db 14,15,0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ,11, 12, 13
+intra_filter4_shuf0:  times 2 db  2,  3,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13
+intra_filter4_shuf1:  times 2 db 14, 15,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13
+intra_filter4_shuf2:  times 2 db  4,  5,  0,  1,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15
 
 pb_0_8        times 8 db  0,  8
 pb_unpackbw1  times 2 db  1,  8,  2,  8,  3,  8,  4,  8
@@ -18689,4 +18690,33 @@ cglobal intra_filter_32x32, 2,4,6
 
     mov             [r1 +  64], r2b                 ; topLast
     mov             [r1 + 128], r3b                 ; LeftLast
+    RET
+
+INIT_YMM avx2
+cglobal intra_filter_4x4, 2,4,4
+    mov             r2b, byte [r0 +  8]         ; topLast
+    mov             r3b, byte [r0 + 16]         ; LeftLast
+
+    ; filtering top
+    pmovzxbw        m0, [r0]
+    vpbroadcastw    m2, xm0
+    pmovzxbw        m1, [r0 + 8]
+
+    palignr         m3, m0, m2, 14              ; [6 5 4 3 2 1 0 0] [14 13 12 11 10 9 8 0]
+    pshufb          m3, [intra_filter4_shuf2]   ; [6 5 4 3 2 1 0 1] [14 13 12 11 10 9 0 9] samples[i - 1]
+    palignr         m1, m0, 4                   ; [9 8 7 6 5 4 3 2]
+    palignr         m1, m1, 14                  ; [9 8 7 6 5 4 3 2]
+
+    psllw           m0, 1
+    paddw           m3, m1
+    paddw           m0, m3
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+
+    packuswb        m0, m0
+    vpermq          m0, m0, 10001000b
+
+    movu            [r1], xm0
+    mov             [r1 +  8], r2b              ; topLast
+    mov             [r1 + 16], r3b              ; LeftLast
     RET

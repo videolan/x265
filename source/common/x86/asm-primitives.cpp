@@ -1290,6 +1290,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     }
     if (cpuMask & X265_CPU_AVX2)
     {
+        p.cu[BLOCK_4x4].intra_filter = PFX(intra_filter_4x4_avx2);
+
         p.saoCuOrgE0 = PFX(saoCuOrgE0_avx2);
         p.saoCuOrgE1 = PFX(saoCuOrgE1_avx2);
         p.saoCuOrgE1_2Rows = PFX(saoCuOrgE1_2Rows_avx2);
@@ -2619,6 +2621,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
 #if X86_64
     if (cpuMask & X265_CPU_AVX2)
     {
+        p.cu[BLOCK_4x4].intra_filter = PFX(intra_filter_4x4_avx2);
+
         p.planecopy_sp = PFX(downShift_16_avx2);
 
         p.cu[BLOCK_32x32].intra_pred[DC_IDX] = PFX(intra_pred_dc32_avx2);

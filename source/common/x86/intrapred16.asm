@@ -77,6 +77,7 @@ const pw_ang16_16,                  db  0,  0,  0,  0,  0,  0, 10, 11,  8,  9,  
 
 intra_filter4_shuf0:                db  2,  3,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10 ,11, 12, 13
 intra_filter4_shuf1:                db 14, 15,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10 ,11, 12, 13
+intra_filter4_shuf2:        times 2 db  4,  5,  0,  1,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15
 
 ;; (blkSize - 1 - x)
 pw_planar4_0:                       dw  3,  2,  1,  0,  3,  2,  1,  0
@@ -22046,4 +22047,30 @@ cglobal intra_filter_32x32, 2,4,6
 
     mov             [r1 + 128], r2w                 ; topLast
     mov             [r1 + 256], r3w                 ; LeftLast
+    RET
+
+INIT_YMM avx2
+cglobal intra_filter_4x4, 2,4,4
+    mov             r2w, word [r0 + 16]         ; topLast
+    mov             r3w, word [r0 + 32]         ; LeftLast
+
+    ; filtering top
+    movu            m0, [r0]
+    vpbroadcastw    m2, xm0
+    movu            m1, [r0 + 16]
+
+    palignr         m3, m0, m2, 14              ; [6 5 4 3 2 1 0 0] [14 13 12 11 10 9 8 0]
+    pshufb          m3, [intra_filter4_shuf2]   ; [6 5 4 3 2 1 0 1] [14 13 12 11 10 9 0 9] samples[i - 1]
+    palignr         m1, m0, 4                   ; [9 8 7 6 5 4 3 2]
+    palignr         m1, m1, 14                  ; [9 8 7 6 5 4 3 2]
+
+    psllw           m0, 1
+    paddw           m3, m1
+    paddw           m0, m3
+    paddw           m0, [pw_2]
+    psrlw           m0, 2
+
+    movu            [r1], m0
+    mov             [r1 + 16], r2w              ; topLast
+    mov             [r1 + 32], r3w              ; LeftLast
     RET
