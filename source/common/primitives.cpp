@@ -188,12 +188,9 @@ void setupAliasPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I422].cu[BLOCK_422_2x4].sse_pp = NULL;
 }
 
-/* cpuid >= 0 - force CPU type
- * cpuid < 0  - auto-detect if uninitialized */
-void x265_setup_primitives(x265_param *param, int cpuid)
+void x265_setup_primitives(x265_param *param)
 {
-    if (cpuid < 0)
-        cpuid = X265_NS::cpu_detect();
+    int cpuid = param->cpuid;
 
     // initialize global variables
     if (!primitives.pu[0].sad)
