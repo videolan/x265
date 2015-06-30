@@ -424,7 +424,7 @@ bool CLIOptions::parse(int argc, char **argv)
 
         case 'V':
             printVersion(param, api);
-            x265_setup_primitives(param, -1);
+            x265_setup_primitives(param, param->cpuid);
             exit(0);
 
         default:
