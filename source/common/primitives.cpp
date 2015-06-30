@@ -188,33 +188,12 @@ void setupAliasPrimitives(EncoderPrimitives &p)
     p.chroma[X265_CSP_I422].cu[BLOCK_422_2x4].sse_pp = NULL;
 }
 
-void x265_setup_primitives(x265_param *param)
+void x265_report_simd(x265_param* param)
 {
-    int cpuid = param->cpuid;
-
-    // initialize global variables
-    if (!primitives.pu[0].sad)
-    {
-        setupCPrimitives(primitives);
-
-        /* We do not want the encoder to use the un-optimized intra all-angles
-         * C references. It is better to call the individual angle functions
-         * instead. We must check for NULL before using this primitive */
-        for (int i = 0; i < NUM_TR_SIZE; i++)
-            primitives.cu[i].intra_pred_allangs = NULL;
-
-#if ENABLE_ASSEMBLY
-        setupInstrinsicPrimitives(primitives, cpuid);
-        setupAssemblyPrimitives(primitives, cpuid);
-#else
-        x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
-#endif
-
-        setupAliasPrimitives(primitives);
-    }
-
     if (param->logLevel >= X265_LOG_INFO)
     {
+        int cpuid = param->cpuid;
+
         char buf[1000];
         char *p = buf + sprintf(buf, "using cpu capabilities:");
         char *none = p;
@@ -244,6 +223,31 @@ void x265_setup_primitives(x265_param *param)
             sprintf(p, " none!");
         x265_log(param, X265_LOG_INFO, "%s\n", buf);
     }
+}
+
+void x265_setup_primitives(x265_param *param)
+{
+    if (!primitives.pu[0].sad)
+    {
+        setupCPrimitives(primitives);
+
+        /* We do not want the encoder to use the un-optimized intra all-angles
+         * C references. It is better to call the individual angle functions
+         * instead. We must check for NULL before using this primitive */
+        for (int i = 0; i < NUM_TR_SIZE; i++)
+            primitives.cu[i].intra_pred_allangs = NULL;
+
+#if ENABLE_ASSEMBLY
+        setupInstrinsicPrimitives(primitives, param->cpuid);
+        setupAssemblyPrimitives(primitives, param->cpuid);
+#else
+        x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
+#endif
+
+        setupAliasPrimitives(primitives);
+    }
+
+    x265_report_simd(param);
 }
 }
 
