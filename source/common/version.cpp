@@ -29,63 +29,63 @@
 #define STR(x) #x
 
 #if defined(__clang__)
-#define NVM_COMPILEDBY  "[clang " XSTR(__clang_major__) "." XSTR(__clang_minor__) "." XSTR(__clang_patchlevel__) "]"
+#define COMPILEDBY  "[clang " XSTR(__clang_major__) "." XSTR(__clang_minor__) "." XSTR(__clang_patchlevel__) "]"
 #ifdef __IA64__
-#define NVM_ONARCH    "[on 64-bit] "
+#define ONARCH    "[on 64-bit] "
 #else
-#define NVM_ONARCH    "[on 32-bit] "
+#define ONARCH    "[on 32-bit] "
 #endif
 #endif
 
 #if defined(__GNUC__) && !defined(__INTEL_COMPILER) && !defined(__clang__)
-#define NVM_COMPILEDBY  "[GCC " XSTR(__GNUC__) "." XSTR(__GNUC_MINOR__) "." XSTR(__GNUC_PATCHLEVEL__) "]"
+#define COMPILEDBY  "[GCC " XSTR(__GNUC__) "." XSTR(__GNUC_MINOR__) "." XSTR(__GNUC_PATCHLEVEL__) "]"
 #ifdef __IA64__
-#define NVM_ONARCH    "[on 64-bit] "
+#define ONARCH    "[on 64-bit] "
 #else
-#define NVM_ONARCH    "[on 32-bit] "
+#define ONARCH    "[on 32-bit] "
 #endif
 #endif
 
 #ifdef __INTEL_COMPILER
-#define NVM_COMPILEDBY  "[ICC " XSTR(__INTEL_COMPILER) "]"
+#define COMPILEDBY "[ICC " XSTR(__INTEL_COMPILER) "]"
 #elif  _MSC_VER
-#define NVM_COMPILEDBY  "[MSVC " XSTR(_MSC_VER) "]"
+#define COMPILEDBY "[MSVC " XSTR(_MSC_VER) "]"
 #endif
 
-#ifndef NVM_COMPILEDBY
-#define NVM_COMPILEDBY "[Unk-CXX]"
+#ifndef COMPILEDBY
+#define COMPILEDBY "[Unk-CXX]"
 #endif
 
 #ifdef _WIN32
-#define NVM_ONOS        "[Windows]"
+#define ONOS    "[Windows]"
 #elif  __linux
-#define NVM_ONOS        "[Linux]"
+#define ONOS    "[Linux]"
 #elif __OpenBSD__
-#define NVM_ONOS        "[OpenBSD]"
+#define ONOS    "[OpenBSD]"
 #elif  __CYGWIN__
-#define NVM_ONOS        "[Cygwin]"
+#define ONOS    "[Cygwin]"
 #elif __APPLE__
-#define NVM_ONOS        "[Mac OS X]"
+#define ONOS    "[Mac OS X]"
 #else
-#define NVM_ONOS "[Unk-OS]"
+#define ONOS    "[Unk-OS]"
 #endif
 
 #if X86_64
-#define NVM_BITS        "[64 bit]"
+#define BITS    "[64 bit]"
 #else
-#define NVM_BITS        "[32 bit]"
+#define BITS    "[32 bit]"
 #endif
- 
+
 #if defined(ENABLE_ASSEMBLY)
 #define ASM     ""
 #else
 #define ASM     "[noasm]"
 #endif
-
+ 
 #if CHECKED_BUILD
-#define CHECKED         "[CHECKED] "
+#define CHECKED "[CHECKED] "
 #else
-#define CHECKED         " "
+#define CHECKED " "
 #endif
 
 #if HIGH_BIT_DEPTH
@@ -97,4 +97,4 @@ const int PFX(max_bit_depth) = 8;
 #endif
 
 const char* PFX(version_str) = XSTR(X265_VERSION);
-const char* PFX(build_info_str) = NVM_ONOS NVM_COMPILEDBY NVM_BITS ASM CHECKED BITDEPTH;
+const char* PFX(build_info_str) = ONOS COMPILEDBY BITS ASM CHECKED BITDEPTH;
