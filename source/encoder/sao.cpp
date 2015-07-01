@@ -671,7 +671,6 @@ void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, const SaoCtuParam* saoUnitSrc)
 /* Calculate SAO statistics for current CTU without non-crossing slice */
 void SAO::calcSaoStatsCu(int addr, int plane)
 {
-    int x, y;
     const CUData* cu = m_frame->m_encData->getPicCTU(addr);
     const pixel* fenc0 = m_frame->m_fencPic->getPlaneAddr(plane, addr);
     const pixel* rec0  = m_frame->m_reconPic->getPlaneAddr(plane, addr);
@@ -702,8 +701,6 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     int startY;
     int endX;
     int endY;
-    int32_t* stats;
-    int32_t* count;
 
     int skipB = plane ? 2 : 4;
     int skipR = plane ? 3 : 5;
@@ -713,34 +710,16 @@ void SAO::calcSaoStatsCu(int addr, int plane)
 
     // SAO_BO:
     {
-        const int boShift = X265_DEPTH - SAO_BO_BITS;
-
         if (m_param->bSaoNonDeblocked)
         {
             skipB = plane ? 1 : 3;
             skipR = plane ? 2 : 4;
         }
-        stats = m_offsetOrg[plane][SAO_BO];
-        count = m_count[plane][SAO_BO];
-
-        fenc = fenc0;
-        rec  = rec0;
 
         endX = (rpelx == picWidth) ? ctuWidth : ctuWidth - skipR;
         endY = (bpely == picHeight) ? ctuHeight : ctuHeight - skipB;
 
-        for (y = 0; y < endY; y++)
-        {
-            for (x = 0; x < endX; x++)
-            {
-                int classIdx = 1 + (rec[x] >> boShift);
-                stats[classIdx] += (fenc[x] - rec[x]);
-                count[classIdx]++;
-            }
-
-            fenc += stride;
-            rec += stride;
-        }
+        primitives.saoCuStatsBO(fenc0, rec0, stride, endX, endY, m_offsetOrg[plane][SAO_BO], m_count[plane][SAO_BO]);
     }
 
     {
@@ -790,8 +769,6 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 skipB = plane ? 2 : 4;
                 skipR = plane ? 3 : 5;
             }
-            stats = m_offsetOrg[plane][SAO_EO_2];
-            count = m_count[plane][SAO_EO_2];
 
             fenc = fenc0;
             rec  = rec0;
@@ -819,8 +796,6 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 skipB = plane ? 2 : 4;
                 skipR = plane ? 3 : 5;
             }
-            stats = m_offsetOrg[plane][SAO_EO_3];
-            count = m_count[plane][SAO_EO_3];
 
             fenc = fenc0;
             rec  = rec0;
@@ -1544,6 +1519,25 @@ void SAO::sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addr
 }
 
 // NOTE: must put in namespace X265_NS since we need class SAO
+void saoCuStatsBO_c(const pixel *fenc, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
+{
+    int x, y;
+    const int boShift = X265_DEPTH - SAO_BO_BITS;
+
+    for (y = 0; y < endY; y++)
+    {
+        for (x = 0; x < endX; x++)
+        {
+            int classIdx = 1 + (rec[x] >> boShift);
+            stats[classIdx] += (fenc[x] - rec[x]);
+            count[classIdx]++;
+        }
+
+        fenc += stride;
+        rec += stride;
+    }
+}
+
 void saoCuStatsE0_c(const pixel *fenc, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
 {
     int x, y;
@@ -1694,6 +1688,7 @@ void saoCuStatsE3_c(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t
 void setupSaoPrimitives_c(EncoderPrimitives &p)
 {
     // TODO: move other sao functions to here
+    p.saoCuStatsBO = saoCuStatsBO_c;
     p.saoCuStatsE0 = saoCuStatsE0_c;
     p.saoCuStatsE1 = saoCuStatsE1_c;
     p.saoCuStatsE2 = saoCuStatsE2_c;
