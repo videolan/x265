@@ -4,8 +4,20 @@ if "%VS100COMNTOOLS%" == "" (
   exit 1
 )
 
+@mkdir 12bit
 @mkdir 10bit
 @mkdir 8bit
+
+@cd 12bit
+if not exist x265.sln (
+  cmake  -G "Visual Studio 10 Win64" ../../../source -DHIGH_BIT_DEPTH=ON -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=OFF -DMAIN12=ON
+)
+if exist x265.sln (
+  call "%VS100COMNTOOLS%\..\..\VC\vcvarsall.bat"
+  MSBuild /property:Configuration="Release" x265.sln
+  copy/y Release\x265-static.lib ..\8bit\x265-static-main12.lib
+)
+@cd ..
 
 @cd 10bit
 if not exist x265.sln (
@@ -24,7 +36,7 @@ if not exist x265-static-main10.lib (
   exit 1
 )
 if not exist x265.sln (
-  cmake  -G "Visual Studio 10 Win64" ../../../source -DHIGH_BIT_DEPTH=OFF -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=ON -DEXTRA_LIB=x265-static-main10.lib -DEXTRA_LINK_FLAGS="/FORCE:MULTIPLE"
+  cmake  -G "Visual Studio 10 Win64" ../../../source -DHIGH_BIT_DEPTH=OFF -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=ON -DEXTRA_LIB="x265-static-main10.lib;x265-static-main12.lib" -DEXTRA_LINK_FLAGS="/FORCE:MULTIPLE"
 )
 if exist x265.sln (
   call "%VS100COMNTOOLS%\..\..\VC\vcvarsall.bat"

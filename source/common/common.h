@@ -126,14 +126,12 @@ typedef uint32_t sum_t;
 typedef uint64_t sum2_t;
 typedef uint64_t pixel4;
 typedef int64_t  ssum2_t;
-#define X265_DEPTH 10          // compile time configurable bit depth
 #else
 typedef uint8_t  pixel;
 typedef uint16_t sum_t;
 typedef uint32_t sum2_t;
 typedef uint32_t pixel4;
-typedef int32_t  ssum2_t;      //Signed sum
-#define X265_DEPTH 8           // compile time configurable bit depth
+typedef int32_t  ssum2_t; // Signed sum
 #endif // if HIGH_BIT_DEPTH
 
 #ifndef NULL

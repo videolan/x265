@@ -49,6 +49,20 @@ x265_encoder *x265_encoder_open(x265_param *p)
     if (!p)
         return NULL;
 
+#if _MSC_VER
+#pragma warning(disable: 4127) // conditional expression is constant, yes I know
+#endif
+
+#if HIGH_BIT_DEPTH
+    if (X265_DEPTH != 10 && X265_DEPTH != 12)
+#else
+    if (X265_DEPTH != 8)
+#endif
+    {
+        x265_log(p, X265_LOG_ERROR, "Build error, internal bit depth mismatch\n");
+        return NULL;
+    }
+
     Encoder* encoder = NULL;
     x265_param* param = PARAM_NS::x265_param_alloc();
     x265_param* latestParam = PARAM_NS::x265_param_alloc();
@@ -424,6 +438,10 @@ namespace x265_10bit {
 const x265_api* x265_api_get(int bitDepth);
 const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
 }
+namespace x265_12bit {
+const x265_api* x265_api_get(int bitDepth);
+const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
+}
 
 extern "C"
 const x265_api* x265_api_get(int bitDepth)
@@ -432,16 +450,22 @@ const x265_api* x265_api_get(int bitDepth)
         return x265_8bit::x265_api_get(0);
     else if (bitDepth == 10)
         return x265_10bit::x265_api_get(0);
+    else if (bitDepth == 12)
+        return x265_12bit::x265_api_get(0);
     return NULL;
 }
 
 extern "C"
 const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
 {
+    if (err) *err = X265_API_QUERY_ERR_NONE;
     if (!bitDepth || bitDepth == 8)
         return x265_8bit::x265_api_query(0, apiVersion, err);
     else if (bitDepth == 10)
         return x265_10bit::x265_api_query(0, apiVersion, err);
+    else if (bitDepth == 12)
+        return x265_12bit::x265_api_query(0, apiVersion, err);
+    if (err) *err = X265_API_QUERY_ERR_LIB_NOT_FOUND;
     return NULL;
 }
 #endif

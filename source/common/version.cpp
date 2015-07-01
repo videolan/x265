@@ -88,12 +88,21 @@
 #define CHECKED " "
 #endif
 
-#if HIGH_BIT_DEPTH
+#if X265_DEPTH == 12
+
+#define BITDEPTH "12bit"
+const int PFX(max_bit_depth) = 12;
+
+#elif X265_DEPTH == 10
+
 #define BITDEPTH "10bit"
 const int PFX(max_bit_depth) = 10;
-#else
+
+#elif X265_DEPTH == 8
+
 #define BITDEPTH "8bit"
 const int PFX(max_bit_depth) = 8;
+
 #endif
 
 const char* PFX(version_str) = XSTR(X265_VERSION);
