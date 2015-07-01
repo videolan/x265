@@ -4009,6 +4009,87 @@ cglobal pixel_avg_w%1
     AVG_END
 %endmacro
 
+%macro  pixel_avg_W8 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if HIGH_BIT_DEPTH
+%if ARCH_X86_64
+INIT_XMM sse2
+cglobal pixel_avg_8x4, 6,9,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    pixel_avg_W8
+    RET
+
+cglobal pixel_avg_8x8, 6,9,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    pixel_avg_W8
+    pixel_avg_W8
+    RET
+
+cglobal pixel_avg_8x16, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 4
+.loop
+    pixel_avg_W8
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_8x32, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 8
+.loop
+    pixel_avg_W8
+    dec     r9d
+    jnz     .loop
+    RET
+%endif
+%endif
+
 %if HIGH_BIT_DEPTH
 
 INIT_MMX mmx2
@@ -4060,11 +4141,6 @@ AVGH  4, 8
 AVGH  4, 4
 AVGH  4, 2
 
-AVG_FUNC 8, movdqu, movdqa
-AVGH  8, 32
-AVGH  8, 16
-AVGH  8,  8
-AVGH  8,  4
 
 AVG_FUNC 16, movdqu, movdqa
 AVGH  16, 64
