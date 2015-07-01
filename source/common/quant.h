@@ -28,7 +28,7 @@
 #include "scalinglist.h"
 #include "contexts.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 class CUData;
@@ -41,7 +41,7 @@ struct QpParam
     int per;
     int qp;
     int64_t lambda2; /* FIX8 */
-    int32_t lambda;  /* FIX8, dynamic range is 18-bits in 8bpp and 20-bits in 16bpp */
+    int32_t lambda;  /* FIX8, dynamic range is 18-bits in Main and 20-bits in Main10 */
 
     QpParam() : qp(MAX_INT) {}
 
@@ -126,9 +126,9 @@ public:
         const uint32_t sigPos = (uint32_t)(sigCoeffGroupFlag64 >> (cgBlkPos + 1)); // just need lowest 7-bits valid
 
         // TODO: instruction BT is faster, but _bittest64 still generate instruction 'BT m, r' in VS2012
-        const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & (sigPos & 1);
-        const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 2)) & 2;
-        return sigRight + sigLower;
+        const uint32_t sigRight = ((uint32_t)(cgPosX - (trSizeCG - 1)) >> 31) & sigPos;
+        const uint32_t sigLower = ((uint32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 1));
+        return sigRight + sigLower * 2;
     }
 
     /* Context derivation process of coeff_abs_significant_flag */
@@ -137,10 +137,10 @@ public:
         X265_CHECK(cgBlkPos < 64, "cgBlkPos is too large\n");
         // NOTE: unsafe shift operator, see NOTE in calcPatternSigCtx
         const uint32_t sigPos = (uint32_t)(cgGroupMask >> (cgBlkPos + 1)); // just need lowest 8-bits valid
-        const uint32_t sigRight = ((int32_t)(cgPosX - (trSizeCG - 1)) >> 31) & sigPos;
-        const uint32_t sigLower = ((int32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 1));
+        const uint32_t sigRight = ((uint32_t)(cgPosX - (trSizeCG - 1)) >> 31) & sigPos;
+        const uint32_t sigLower = ((uint32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 1));
 
-        return (sigRight | sigLower) & 1;
+        return (sigRight | sigLower);
     }
 
     /* static methods shared with entropy.cpp */
@@ -150,7 +150,7 @@ protected:
 
     void setChromaQP(int qpin, TextType ttype, int chFmt);
 
-    uint32_t signBitHidingHDQ(int16_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters);
+    uint32_t signBitHidingHDQ(int16_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters, uint32_t log2TrSize);
 
     uint32_t rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
 };

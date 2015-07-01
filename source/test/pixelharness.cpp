@@ -23,8 +23,9 @@
 
 #include "pixelharness.h"
 #include "primitives.h"
+#include "entropy.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 PixelHarness::PixelHarness()
 {
@@ -900,8 +901,8 @@ bool PixelHarness::check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt)
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
 
-    memset(ref_dest, 0xCD, sizeof(ref_dest));
-    memset(opt_dest, 0xCD, sizeof(opt_dest));
+    for (int i = 0; i < 64 * 64; i++)
+        ref_dest[i] = opt_dest[i] = rand() % (PIXEL_MAX);
 
     int j = 0;
 
@@ -928,8 +929,8 @@ bool PixelHarness::check_saoCuOrgE1_t(saoCuOrgE1_t ref, saoCuOrgE1_t opt)
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
 
-    memset(ref_dest, 0xCD, sizeof(ref_dest));
-    memset(opt_dest, 0xCD, sizeof(opt_dest));
+    for (int i = 0; i < 64 * 64; i++)
+        ref_dest[i] = opt_dest[i] = rand() % (PIXEL_MAX);
 
     int j = 0;
 
@@ -956,8 +957,8 @@ bool PixelHarness::check_saoCuOrgE2_t(saoCuOrgE2_t ref[2], saoCuOrgE2_t opt[2])
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
 
-    memset(ref_dest, 0xCD, sizeof(ref_dest));
-    memset(opt_dest, 0xCD, sizeof(opt_dest));
+    for (int i = 0; i < 64 * 64; i++)
+        ref_dest[i] = opt_dest[i] = rand() % (PIXEL_MAX);
 
     for (int id = 0; id < 2; id++)
     {
@@ -992,8 +993,8 @@ bool PixelHarness::check_saoCuOrgE3_t(saoCuOrgE3_t ref, saoCuOrgE3_t opt)
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
 
-    memset(ref_dest, 0xCD, sizeof(ref_dest));
-    memset(opt_dest, 0xCD, sizeof(opt_dest));
+    for (int i = 0; i < 64 * 64; i++)
+        ref_dest[i] = opt_dest[i] = rand() % (PIXEL_MAX);
 
     int j = 0;
 
@@ -1016,13 +1017,116 @@ bool PixelHarness::check_saoCuOrgE3_t(saoCuOrgE3_t ref, saoCuOrgE3_t opt)
     return true;
 }
 
+bool PixelHarness::check_saoCuStatsE2_t(saoCuStatsE2_t ref, saoCuStatsE2_t opt)
+{
+    enum { NUM_EDGETYPE = 5 };
+    int32_t stats_ref[NUM_EDGETYPE];
+    int32_t stats_vec[NUM_EDGETYPE];
+
+    int32_t count_ref[NUM_EDGETYPE];
+    int32_t count_vec[NUM_EDGETYPE];
+
+    int8_t _upBuff1_ref[MAX_CU_SIZE + 2], *upBuff1_ref = _upBuff1_ref + 1;
+    int8_t _upBufft_ref[MAX_CU_SIZE + 2], *upBufft_ref = _upBufft_ref + 1;
+    int8_t _upBuff1_vec[MAX_CU_SIZE + 2], *upBuff1_vec = _upBuff1_vec + 1;
+    int8_t _upBufft_vec[MAX_CU_SIZE + 2], *upBufft_vec = _upBufft_vec + 1;
+
+    int j = 0;
+
+    // NOTE: verify more times since our asm is NOT exact match to C, the output of upBuff* will be DIFFERENT
+    for (int i = 0; i < ITERS * 10; i++)
+    {
+        // initialize input data to random, the dynamic range wrong but good to verify our asm code
+        for (int x = 0; x < NUM_EDGETYPE; x++)
+        {
+            stats_ref[x] = stats_vec[x] = rand();
+            count_ref[x] = count_vec[x] = rand();
+        }
+
+        // initial sign
+        for (int x = 0; x < MAX_CU_SIZE + 2; x++)
+        {
+            _upBuff1_ref[x] = _upBuff1_vec[x] = (rand() % 3) - 1;
+            _upBufft_ref[x] = _upBufft_vec[x] = (rand() % 3) - 1;
+        }
+
+        intptr_t stride = 16 * (rand() % 4 + 1);
+        int endX = MAX_CU_SIZE - (rand() % 5) - 1;
+        int endY = MAX_CU_SIZE - (rand() % 4) - 1;
+
+        ref(pbuf2 + 1, pbuf3 + 1, stride, upBuff1_ref, upBufft_ref, endX, endY, stats_ref, count_ref);
+        checked(opt, pbuf2 + 1, pbuf3 + 1, stride, upBuff1_vec, upBufft_vec, endX, endY, stats_vec, count_vec);
+
+        // TODO: don't check upBuff*, the latest output pixels different, and can move into stack temporary buffer in future
+        if (   memcmp(_upBuff1_ref, _upBuff1_vec, sizeof(_upBuff1_ref))
+            || memcmp(_upBufft_ref, _upBufft_vec, sizeof(_upBufft_ref))
+            || memcmp(stats_ref, stats_vec, sizeof(stats_ref))
+            || memcmp(count_ref, count_vec, sizeof(count_ref)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_saoCuStatsE3_t(saoCuStatsE3_t ref, saoCuStatsE3_t opt)
+{
+    enum { NUM_EDGETYPE = 5 };
+    int32_t stats_ref[NUM_EDGETYPE];
+    int32_t stats_vec[NUM_EDGETYPE];
+
+    int32_t count_ref[NUM_EDGETYPE];
+    int32_t count_vec[NUM_EDGETYPE];
+
+    int8_t _upBuff1_ref[MAX_CU_SIZE + 2], *upBuff1_ref = _upBuff1_ref + 1;
+    int8_t _upBuff1_vec[MAX_CU_SIZE + 2], *upBuff1_vec = _upBuff1_vec + 1;
+
+    int j = 0;
+
+    // (const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count)
+    for (int i = 0; i < ITERS; i++)
+    {
+        // initialize input data to random, the dynamic range wrong but good to verify our asm code
+        for (int x = 0; x < NUM_EDGETYPE; x++)
+        {
+            stats_ref[x] = stats_vec[x] = rand();
+            count_ref[x] = count_vec[x] = rand();
+        }
+
+        // initial sign
+        for (int x = 0; x < (int)sizeof(_upBuff1_ref); x++)
+        {
+            _upBuff1_ref[x] = _upBuff1_vec[x] = (rand() % 3) - 1;
+        }
+
+        intptr_t stride = 16 * (rand() % 4 + 1);
+        int endX = MAX_CU_SIZE - (rand() % 5) - 1;
+        int endY = MAX_CU_SIZE - (rand() % 4) - 1;
+
+        ref(pbuf2, pbuf3, stride, upBuff1_ref, endX, endY, stats_ref, count_ref);
+        checked(opt, pbuf2, pbuf3, stride, upBuff1_vec, endX, endY, stats_vec, count_vec);
+
+        if (   memcmp(_upBuff1_ref, _upBuff1_vec, sizeof(_upBuff1_ref))
+            || memcmp(stats_ref, stats_vec, sizeof(stats_ref))
+            || memcmp(count_ref, count_vec, sizeof(count_ref)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_saoCuOrgE3_32_t(saoCuOrgE3_t ref, saoCuOrgE3_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
 
-    memset(ref_dest, 0xCD, sizeof(ref_dest));
-    memset(opt_dest, 0xCD, sizeof(opt_dest));
+    for (int i = 0; i < 64 * 64; i++)
+        ref_dest[i] = opt_dest[i] = rand() % (PIXEL_MAX);
 
     int j = 0;
 
@@ -1181,8 +1285,8 @@ bool PixelHarness::check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt)
     ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
     ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
 
-    memset(ref_dest, 0xCD, sizeof(ref_dest));
-    memset(opt_dest, 0xCD, sizeof(opt_dest));
+    for (int i = 0; i < 64 * 64; i++)
+        ref_dest[i] = opt_dest[i] = rand() % (PIXEL_MAX);
 
     int j = 0;
 
@@ -1293,23 +1397,22 @@ bool PixelHarness::check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt)
 
 bool PixelHarness::check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLast_t opt)
 {
-    ALIGN_VAR_16(coeff_t, ref_src[32 * 32 + ITERS * 2]);
+    ALIGN_VAR_16(coeff_t, ref_src[4 * 32 + ITERS * 2]);
+    memset(ref_src, 0, sizeof(ref_src));
 
-    for (int i = 0; i < 32 * 32; i++)
+    // minus ITERS for keep probability to generate all zeros block
+    for (int i = 0; i < 4 * 32 - ITERS; i++)
     {
         ref_src[i] = rand() & SHORT_MAX;
     }
 
-    // extra test area all of 0x1234
-    for (int i = 0; i < ITERS * 2; i++)
-    {
-        ref_src[32 * 32 + i] = 0x1234;
-    }
+    // extra test area all of Zeros
 
     for (int i = 0; i < ITERS; i++)
     {
         int rand_scan_type = rand() % NUM_SCAN_TYPE;
         int rand_scan_size = (rand() % NUM_SCAN_SIZE) + 2;
+        const int trSize = (1 << rand_scan_size);
         coeff_t *rand_src = ref_src + i;
 
         const uint16_t* const scanTbl = g_scan4x4[rand_scan_type];
@@ -1319,22 +1422,162 @@ bool PixelHarness::check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLa
         {
             const uint32_t idxY = j / MLS_CG_SIZE;
             const uint32_t idxX = j % MLS_CG_SIZE;
-            if (rand_src[idxY * rand_scan_size + idxX]) break;
+            if (rand_src[idxY * trSize + idxX]) break;
         }
 
-        // fill one coeff when all coeff group are zero
+        uint32_t ref_scanPos = ref(rand_src, trSize, scanTbl);
+        uint32_t opt_scanPos = (int)checked(opt, rand_src, trSize, scanTbl);
+
+        // specially case: all coeff group are zero
         if (j >= SCAN_SET_SIZE)
-            rand_src[0] = 0x0BAD;
-
-        uint32_t ref_scanPos = ref(rand_src, (1 << rand_scan_size), scanTbl);
-        uint32_t opt_scanPos = (int)checked(opt, rand_src, (1 << rand_scan_size), scanTbl);
-
-        if (ref_scanPos != opt_scanPos)
+        {
+            // all zero block the high 16-bits undefined
+            if ((uint16_t)ref_scanPos != (uint16_t)opt_scanPos)
+                return false;
+        }
+        else if (ref_scanPos != opt_scanPos)
             return false;
 
         reportfail();
     }
 
+    return true;
+}
+
+bool PixelHarness::check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt)
+{
+    ALIGN_VAR_16(coeff_t, ref_src[32 * 32 + ITERS * 3]);
+    ALIGN_VAR_32(uint16_t, ref_absCoeff[1 << MLS_CG_SIZE]);
+    ALIGN_VAR_32(uint16_t, opt_absCoeff[1 << MLS_CG_SIZE]);
+
+    memset(ref_absCoeff, 0xCD, sizeof(ref_absCoeff));
+    memset(opt_absCoeff, 0xCD, sizeof(opt_absCoeff));
+
+    int totalCoeffs = 0;
+    for (int i = 0; i < 32 * 32; i++)
+    {
+        ref_src[i] = rand() & SHORT_MAX;
+
+        // more zero coeff
+        if (ref_src[i] < SHORT_MAX * 2 / 3)
+            ref_src[i] = 0;
+
+        // more negtive
+        if ((rand() % 10) < 8)
+            ref_src[i] *= -1;
+        totalCoeffs += (ref_src[i] != 0);
+    }
+
+    // extra test area all of 0x1234
+    for (int i = 0; i < ITERS * 3; i++)
+    {
+        ref_src[32 * 32 + i] = 0x1234;
+    }
+
+    // generate CABAC context table
+    uint8_t m_contextState_ref[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
+    uint8_t m_contextState_opt[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
+    for (int k = 0; k < (OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA); k++)
+    {
+        m_contextState_ref[k] = (rand() % (125 - 2)) + 2;
+        m_contextState_opt[k] = m_contextState_ref[k];
+    }
+    uint8_t *const ref_baseCtx = m_contextState_ref;
+    uint8_t *const opt_baseCtx = m_contextState_opt;
+
+    for (int i = 0; i < ITERS * 2; i++)
+    {
+        int rand_scan_type = rand() % NUM_SCAN_TYPE;
+        int rand_scanPosSigOff = rand() % 16; //rand_scanPosSigOff range is [1,15]
+        int rand_patternSigCtx = rand() % 4; //range [0,3]
+        int rand_scan_size = rand() % NUM_SCAN_SIZE;
+        int offset; // the value have a exact range, details in CoeffNxN()
+        if (rand_scan_size == 2)
+            offset = 0;
+        else if (rand_scan_size == 3)
+            offset = 9;
+        else
+            offset = 12;
+
+        const int trSize = (1 << (rand_scan_size + 2));
+        ALIGN_VAR_32(static const uint8_t, table_cnt[5][SCAN_SET_SIZE]) =
+        {
+            // patternSigCtx = 0
+            {
+                2, 1, 1, 0,
+                1, 1, 0, 0,
+                1, 0, 0, 0,
+                0, 0, 0, 0,
+            },
+            // patternSigCtx = 1
+            {
+                2, 2, 2, 2,
+                1, 1, 1, 1,
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+            },
+            // patternSigCtx = 2
+            {
+                2, 1, 0, 0,
+                2, 1, 0, 0,
+                2, 1, 0, 0,
+                2, 1, 0, 0,
+            },
+            // patternSigCtx = 3
+            {
+                2, 2, 2, 2,
+                2, 2, 2, 2,
+                2, 2, 2, 2,
+                2, 2, 2, 2,
+            },
+            // 4x4
+            {
+                0, 1, 4, 5,
+                2, 3, 4, 5,
+                6, 6, 8, 8,
+                7, 7, 8, 8
+            }
+        };
+        const uint8_t *rand_tabSigCtx = table_cnt[(rand_scan_size == 2) ? 4 : (uint32_t)rand_patternSigCtx];
+        const uint16_t* const scanTbl = g_scanOrder[rand_scan_type][rand_scan_size];
+        const uint16_t* const scanTblCG4x4 = g_scan4x4[rand_scan_size <= (MDCS_LOG2_MAX_SIZE - 2) ? rand_scan_type : SCAN_DIAG];
+
+        int rand_scanPosCG = rand() % (trSize * trSize / MLS_CG_BLK_SIZE);
+        int subPosBase = rand_scanPosCG * MLS_CG_BLK_SIZE;
+        int rand_numCoeff = 0;
+        uint32_t scanFlagMask = 0;
+        const int numNonZero = (rand_scanPosSigOff < (MLS_CG_BLK_SIZE - 1)) ? 1 : 0;
+
+        for(int k = 0; k <= rand_scanPosSigOff; k++)
+        {
+            uint32_t pos = scanTbl[subPosBase + k];
+            coeff_t tmp_coeff = ref_src[i + pos];
+            if (tmp_coeff != 0)
+            {
+                rand_numCoeff++;
+            }
+            scanFlagMask = scanFlagMask * 2 + (tmp_coeff != 0);
+        }
+
+        // can't process all zeros block
+        if (rand_numCoeff == 0)
+            continue;
+
+        const uint32_t blkPosBase = scanTbl[subPosBase];
+        uint32_t ref_sum = ref(scanTblCG4x4, &ref_src[blkPosBase + i], trSize, ref_absCoeff + numNonZero, rand_tabSigCtx, scanFlagMask, (uint8_t*)ref_baseCtx, offset, rand_scanPosSigOff, subPosBase);
+        uint32_t opt_sum = (uint32_t)checked(opt, scanTblCG4x4, &ref_src[blkPosBase + i], trSize, opt_absCoeff + numNonZero, rand_tabSigCtx, scanFlagMask, (uint8_t*)opt_baseCtx, offset, rand_scanPosSigOff, subPosBase);
+
+        if (ref_sum != opt_sum)
+            return false;
+        if (memcmp(ref_baseCtx, opt_baseCtx, sizeof(m_contextState_ref)))
+            return false;
+
+        // NOTE: just first rand_numCoeff valid, but I check full buffer for confirm no overwrite bug
+        if (memcmp(ref_absCoeff, opt_absCoeff, sizeof(ref_absCoeff)))
+            return false;
+
+        reportfail();
+    }
     return true;
 }
 
@@ -1497,6 +1740,14 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
         }
         if (part < NUM_CU_SIZES)
         {
+            if (opt.chroma[i].cu[part].sse_pp)
+            {
+                if (!check_pixelcmp(ref.chroma[i].cu[part].sse_pp, opt.chroma[i].cu[part].sse_pp))
+                {
+                    printf("chroma_sse_pp[%s][%s]: failed!\n", x265_source_csp_names[i], chromaPartStr[i][part]);
+                    return false;
+                }
+            }
             if (opt.chroma[i].cu[part].sub_ps)
             {
                 if (!check_pixel_sub_ps(ref.chroma[i].cu[part].sub_ps, opt.chroma[i].cu[part].sub_ps))
@@ -1843,6 +2094,24 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.saoCuStatsE2)
+    {
+        if (!check_saoCuStatsE2_t(ref.saoCuStatsE2, opt.saoCuStatsE2))
+        {
+            printf("saoCuStatsE2 failed\n");
+            return false;
+        }
+    }
+
+    if (opt.saoCuStatsE3)
+    {
+        if (!check_saoCuStatsE3_t(ref.saoCuStatsE3, opt.saoCuStatsE3))
+        {
+            printf("saoCuStatsE3 failed\n");
+            return false;
+        }
+    }
+
     if (opt.planecopy_sp)
     {
         if (!check_planecopy_sp(ref.planecopy_sp, opt.planecopy_sp))
@@ -1884,6 +2153,14 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         if (!check_findPosFirstLast(ref.findPosFirstLast, opt.findPosFirstLast))
         {
             printf("findPosFirstLast failed!\n");
+            return false;
+        }
+    }
+    if (opt.costCoeffNxN)
+    {
+        if (!check_costCoeffNxN(ref.costCoeffNxN, opt.costCoeffNxN))
+        {
+            printf("costCoeffNxN failed!\n");
             return false;
         }
     }
@@ -2013,6 +2290,11 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             {
                 HEADER("[%s] copy_sp[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
                 REPORT_SPEEDUP(opt.chroma[i].cu[part].copy_sp, ref.chroma[i].cu[part].copy_sp, pbuf1, 64, sbuf3, 128);
+            }
+            if (opt.chroma[i].cu[part].sse_pp)
+            {
+                HEADER("[%s] sse_pp[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
+                REPORT_SPEEDUP(opt.chroma[i].cu[part].sse_pp, ref.chroma[i].cu[part].sse_pp, pbuf1, STRIDE, fref, STRIDE);
             }
             if (opt.chroma[i].cu[part].sub_ps)
             {
@@ -2244,6 +2526,26 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(opt.saoCuOrgB0, ref.saoCuOrgB0, pbuf1, psbuf1, 64, 64, 64);
     }
 
+    if (opt.saoCuStatsE2)
+    {
+        int32_t stats[5], count[5];
+        int8_t upBuff1[MAX_CU_SIZE + 2];
+        int8_t upBufft[MAX_CU_SIZE + 2];
+        memset(upBuff1, 1, sizeof(upBuff1));
+        memset(upBufft, -1, sizeof(upBufft));
+        HEADER0("saoCuStatsE2");
+        REPORT_SPEEDUP(opt.saoCuStatsE2, ref.saoCuStatsE2, pbuf2, pbuf3, 64, upBuff1 + 1, upBufft + 1, 60, 61, stats, count);
+    }
+
+    if (opt.saoCuStatsE3)
+    {
+        int8_t upBuff1[MAX_CU_SIZE + 2];
+        int32_t stats[5], count[5];
+        memset(upBuff1, 1, sizeof(upBuff1));
+        HEADER0("saoCuStatsE3");
+        REPORT_SPEEDUP(opt.saoCuStatsE3, ref.saoCuStatsE3, pbuf2, pbuf3, 64, upBuff1 + 1, 60, 61, stats, count);
+    }
+
     if (opt.planecopy_sp)
     {
         HEADER0("planecopy_sp");
@@ -2282,5 +2584,23 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         coefBuf[3 + 2 * 32] = 0x0BAD;
         coefBuf[3 + 3 * 32] = 0x0BAD;
         REPORT_SPEEDUP(opt.findPosFirstLast, ref.findPosFirstLast, coefBuf, 32, g_scan4x4[SCAN_DIAG]);
+    }
+    if (opt.costCoeffNxN)
+    {
+        HEADER0("costCoeffNxN");
+        coeff_t coefBuf[32 * 32];
+        uint16_t tmpOut[16];
+        memset(coefBuf, 1, sizeof(coefBuf));
+        ALIGN_VAR_32(static uint8_t const, ctxSig[]) =
+        {
+            0, 1, 4, 5,
+            2, 3, 4, 5,
+            6, 6, 8, 8,
+            7, 7, 8, 8
+        };
+        uint8_t ctx[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
+        memset(ctx, 120, sizeof(ctx));
+
+        REPORT_SPEEDUP(opt.costCoeffNxN, ref.costCoeffNxN, g_scan4x4[SCAN_DIAG], coefBuf, 32, tmpOut, ctxSig, 0xFFFF, ctx, 1, 15, 32);
     }
 }

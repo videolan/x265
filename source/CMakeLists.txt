@@ -30,7 +30,7 @@ option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
 mark_as_advanced(FPROFILE_USE FPROFILE_GENERATE NATIVE_BUILD)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 59)
+set(X265_BUILD 63)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -270,22 +270,41 @@ endif()
 # Build options
 set(LIB_INSTALL_DIR lib CACHE STRING "Install location of libraries")
 set(BIN_INSTALL_DIR bin CACHE STRING "Install location of executables")
+set(EXTRA_LIB "" CACHE STRING "Extra libraries to link against")
+set(EXTRA_LINK_FLAGS "" CACHE STRING "Extra link flags")
+mark_as_advanced(EXTRA_LIB EXTRA_LINK_FLAGS)
 
 if(X64)
-    # NOTE: We only officially support 16bit-per-pixel compiles of x265
-    # on 64bit architectures. 16bpp plus large resolution plus slow
+    # NOTE: We only officially support high-bit-depth compiles of x265
+    # on 64bit architectures. Main10 plus large resolution plus slow
     # preset plus 32bit address space usually means malloc failure.  You
     # can disable this if(X64) check if you desparately need a 32bit
     # build with 10bit/12bit support, but this violates the "shrink wrap
     # license" so to speak.  If it breaks you get to keep both halves.
-    # You will likely need to compile without assembly
-    option(HIGH_BIT_DEPTH "Store pixels as 16bit values" OFF)
+    # You will need to disable assembly manually.
+    option(HIGH_BIT_DEPTH "Store pixel samples as 16bit values (Main10)" OFF)
 endif(X64)
 if(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=1)
 else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0)
 endif(HIGH_BIT_DEPTH)
+
+# this option can only be used when linking multiple libx265 libraries
+# together, and some alternate API access method is implemented.
+option(EXPORT_C_API "Implement public C programming interface" ON)
+mark_as_advanced(EXPORT_C_API)
+if(EXPORT_C_API)
+    set(X265_NS x265)
+    add_definitions(-DEXPORT_C_API=1)
+elseif(HIGH_BIT_DEPTH)
+    set(X265_NS x265_10bit)
+    add_definitions(-DEXPORT_C_API=0)
+else()
+    set(X265_NS x265_8bit)
+    add_definitions(-DEXPORT_C_API=0)
+endif()
+add_definitions(-DX265_NS=${X265_NS})
 
 option(WARNINGS_AS_ERRORS "Stop compiles on first warning" OFF)
 if(WARNINGS_AS_ERRORS)
@@ -374,6 +393,9 @@ source_group(ASM FILES ${YASM_SRCS})
 add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
 if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
+endif()
+if(EXTRA_LINK_FLAGS)
+    list(APPEND LINKER_OPTIONS ${EXTRA_LINK_FLAGS})
 endif()
 install(TARGETS x265-static
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
@@ -468,7 +490,7 @@ if(NOT WIN32)
 endif()
 
 # Main CLI application
-option(ENABLE_CLI "Build standalone CLI application" ON)
+set(ENABLE_CLI ON CACHE BOOL "Build standalone CLI application")
 if(ENABLE_CLI)
     file(GLOB InputFiles input/input.cpp input/yuv.cpp input/y4m.cpp input/*.h)
     file(GLOB OutputFiles output/output.cpp output/reconplay.cpp output/*.h
@@ -503,6 +525,9 @@ if(ENABLE_CLI)
         endif()
     endif()
     set_target_properties(cli PROPERTIES OUTPUT_NAME x265)
+    if(EXTRA_LIB)
+        target_link_libraries(cli ${EXTRA_LIB})
+    endif()
     if(LINKER_OPTIONS)
         # set_target_properties can't do list expansion
         string(REPLACE ";" " " LINKER_OPTION_STR "${LINKER_OPTIONS}")

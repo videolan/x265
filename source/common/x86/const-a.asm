@@ -41,7 +41,7 @@ const pb_15,                times 32 db 15
 const pb_16,                times 32 db 16
 const pb_32,                times 32 db 32
 const pb_64,                times 32 db 64
-const pb_128,               times 16 db 128
+const pb_128,               times 32 db 128
 const pb_a1,                times 16 db 0xa1
 
 const pb_01,                times  8 db   0,   1
@@ -62,7 +62,9 @@ const pb_000000000000000F,           db 0xff
 ;; 16-bit constants
 
 const pw_1,                 times 16 dw 1
-const pw_2,                 times  8 dw 2
+const pw_2,                 times 16 dw 2
+const pw_3,                 times 16 dw 3
+const pw_7,                 times 16 dw 7
 const pw_m2,                times  8 dw -2
 const pw_4,                 times  8 dw 4
 const pw_8,                 times  8 dw 8
@@ -75,9 +77,10 @@ const pw_128,               times 16 dw 128
 const pw_256,               times 16 dw 256
 const pw_257,               times 16 dw 257
 const pw_512,               times 16 dw 512
-const pw_1023,              times  8 dw 1023
+const pw_1023,              times 16 dw 1023
 const pw_1024,              times 16 dw 1024
 const pw_4096,              times 16 dw 4096
+const pw_8192,              times  8 dw 8192
 const pw_00ff,              times 16 dw 0x00ff
 const pw_ff00,              times  8 dw 0xff00
 const pw_2000,              times 16 dw 0x2000
@@ -90,7 +93,7 @@ const pw_pixel_max,         times 16 dw ((1 << BIT_DEPTH)-1)
 const pw_0_15,              times  2 dw   0,   1,   2,   3,   4,   5,   6,   7
 const pw_ppppmmmm,          times  1 dw   1,   1,   1,   1,  -1,  -1,  -1,  -1
 const pw_ppmmppmm,          times  1 dw   1,   1,  -1,  -1,   1,   1,  -1,  -1
-const pw_pmpmpmpm,          times  1 dw   1,  -1,   1,  -1,   1,  -1,   1,  -1
+const pw_pmpmpmpm,          times 16 dw   1,  -1,   1,  -1,   1,  -1,   1,  -1
 const pw_pmmpzzzz,          times  1 dw   1,  -1,  -1,   1,   0,   0,   0,   0
 const multi_2Row,           times  1 dw   1,   2,   3,   4,   1,   2,   3,   4
 const multiH,               times  1 dw   9,  10,  11,  12,  13,  14,  15,  16
@@ -100,7 +103,9 @@ const multiH2,              times  1 dw  17,  18,  19,  20,  21,  22,  23,  24, 
 const pw_planar16_mul,      times  1 dw  15,  14,  13,  12,  11,  10,   9,   8,   7,   6,   5,   4,   3,   2,   1,   0
 const pw_planar32_mul,      times  1 dw  31,  30,  29,  28,  27,  26,  25,  24,  23,  22,  21,  20,  19,  18,  17,  16
 const pw_FFFFFFFFFFFFFFF0,           dw 0x00
-                            times 7  dw 0xff
+                            times  7 dw 0xff
+const hmul_16p,             times 16 db   1
+                            times  8 db   1,  -1
 
 
 ;; 32-bit constants
@@ -109,8 +114,9 @@ const pd_1,                 times  8 dd 1
 const pd_2,                 times  8 dd 2
 const pd_4,                 times  4 dd 4
 const pd_8,                 times  4 dd 8
-const pd_16,                times  4 dd 16
-const pd_32,                times  4 dd 32
+const pd_16,                times  8 dd 16
+const pd_31,                times  4 dd 31
+const pd_32,                times  8 dd 32
 const pd_64,                times  4 dd 64
 const pd_128,               times  4 dd 128
 const pd_256,               times  4 dd 256
@@ -122,7 +128,6 @@ const pd_32767,             times  4 dd 32767
 const pd_n32768,            times  4 dd 0xffff8000
 
 const trans8_shuf,          times  1 dd   0,   4,   1,   5,   2,   6,   3,   7
-const deinterleave_shufd,   times  1 dd   0,   4,   1,   5,   2,   6,   3,   7
 
 const popcnt_table
 %assign x 0
@@ -131,5 +136,3 @@ const popcnt_table
 db ((x>>0)&1)+((x>>1)&1)+((x>>2)&1)+((x>>3)&1)+((x>>4)&1)+((x>>5)&1)+((x>>6)&1)+((x>>7)&1)
 %assign x x+1
 %endrep
-
-const sw_64,       dd 64

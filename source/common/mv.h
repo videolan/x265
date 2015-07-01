@@ -27,7 +27,7 @@
 #include "common.h"
 #include "primitives.h"
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 #if _MSC_VER

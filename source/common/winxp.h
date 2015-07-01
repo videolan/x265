@@ -30,7 +30,7 @@
 #include <intrin.h> // _InterlockedCompareExchange64
 #endif
 
-namespace x265 {
+namespace X265_NS {
 /* non-native condition variable */
 typedef struct
 {
@@ -49,14 +49,14 @@ BOOL WINAPI cond_wait(ConditionVariable *cond, CRITICAL_SECTION *mutex, DWORD wa
 void cond_destroy(ConditionVariable *cond);
 
 /* map missing API symbols to our structure and functions */
-#define CONDITION_VARIABLE          x265::ConditionVariable
-#define InitializeConditionVariable x265::cond_init
-#define SleepConditionVariableCS    x265::cond_wait
-#define WakeConditionVariable       x265::cond_signal
-#define WakeAllConditionVariable    x265::cond_broadcast
-#define XP_CONDITION_VAR_FREE       x265::cond_destroy
+#define CONDITION_VARIABLE          X265_NS::ConditionVariable
+#define InitializeConditionVariable X265_NS::cond_init
+#define SleepConditionVariableCS    X265_NS::cond_wait
+#define WakeConditionVariable       X265_NS::cond_signal
+#define WakeAllConditionVariable    X265_NS::cond_broadcast
+#define XP_CONDITION_VAR_FREE       X265_NS::cond_destroy
 
-} // namespace x265
+} // namespace X265_NS
 
 #else // if defined(_WIN32) && (_WIN32_WINNT < 0x0600)
 

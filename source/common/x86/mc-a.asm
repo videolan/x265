@@ -56,9 +56,8 @@ cextern pw_1023
 cextern pw_1024
 cextern pw_00ff
 cextern pw_pixel_max
-cextern sw_64
 cextern pd_32
-cextern deinterleave_shufd
+cextern pd_64
 
 ;====================================================================================================================
 ;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
@@ -1017,6 +1016,629 @@ ADDAVG_W64_H1 16
 ADDAVG_W64_H1 32
 ADDAVG_W64_H1 48
 ADDAVG_W64_H1 64
+
+;------------------------------------------------------------------------------
+; avx2 asm for addAvg high_bit_depth
+;------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal addAvg_8x2, 6,6,2, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    movu        xm0,         [r0]
+    vinserti128 m0,          m0, [r0 + r3 * 2], 1
+    movu        xm1,         [r1]
+    vinserti128 m1,          m1, [r1 + r4 * 2], 1
+
+    paddw       m0,          m1
+    pxor        m1,          m1
+    pmulhrsw    m0,          [pw_1024]
+    paddw       m0,          [pw_512]
+    pmaxsw      m0,          m1
+    pminsw      m0,          [pw_1023]
+    vextracti128 xm1,        m0, 1
+    movu        [r2],        xm0
+    movu        [r2 + r5 * 2], xm1
+    RET
+
+cglobal addAvg_8x6, 6,6,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,          [pw_512]
+    mova        m5,          [pw_1023]
+    mova        m3,          [pw_1024]
+    pxor        m1,          m1
+    add         r3d,         r3d
+    add         r4d,         r4d
+    add         r5d,         r5d
+
+    movu        xm0,         [r0]
+    vinserti128 m0,          m0, [r0 + r3], 1
+    movu        xm2,         [r1]
+    vinserti128 m2,          m2, [r1 + r4], 1
+
+    paddw       m0,          m2
+    pmulhrsw    m0,          m3
+    paddw       m0,          m4
+    pmaxsw      m0,          m1
+    pminsw      m0,          m5
+    vextracti128 xm2,        m0, 1
+    movu        [r2],        xm0
+    movu        [r2 + r5],   xm2
+
+    lea         r2,          [r2 + 2 * r5]
+    lea         r0,          [r0 + 2 * r3]
+    lea         r1,          [r1 + 2 * r4]
+
+    movu        xm0,         [r0]
+    vinserti128 m0,          m0, [r0 + r3], 1
+    movu        xm2,         [r1]
+    vinserti128 m2,          m2, [r1 + r4], 1
+
+    paddw       m0,          m2
+    pmulhrsw    m0,          m3
+    paddw       m0,          m4
+    pmaxsw      m0,          m1
+    pminsw      m0,          m5
+    vextracti128 xm2,        m0, 1
+    movu        [r2],        xm0
+    movu        [r2 + r5],   xm2
+
+    lea         r2,          [r2 + 2 * r5]
+    lea         r0,          [r0 + 2 * r3]
+    lea         r1,          [r1 + 2 * r4]
+
+    movu        xm0,         [r0]
+    vinserti128 m0,          m0, [r0 + r3], 1
+    movu        xm2,         [r1]
+    vinserti128 m2,          m2, [r1 + r4], 1
+
+    paddw       m0,          m2
+    pmulhrsw    m0,          m3
+    paddw       m0,          m4
+    pmaxsw      m0,          m1
+    pminsw      m0,          m5
+    vextracti128 xm2,        m0, 1
+    movu        [r2],        xm0
+    movu        [r2 + r5],   xm2
+    RET
+
+%macro ADDAVG_W8_H4_AVX2 1
+cglobal addAvg_8x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,          [pw_512]
+    mova        m5,          [pw_1023]
+    mova        m3,          [pw_1024]
+    pxor        m1,          m1
+    add         r3d,         r3d
+    add         r4d,         r4d
+    add         r5d,         r5d
+    mov         r6d,         %1/4
+
+.loop:
+    movu        m0,          [r0]
+    vinserti128 m0,          m0, [r0 + r3], 1
+    movu        m2,          [r1]
+    vinserti128 m2,          m2, [r1 + r4], 1
+
+    paddw       m0,          m2
+    pmulhrsw    m0,          m3
+    paddw       m0,          m4
+    pmaxsw      m0,          m1
+    pminsw      m0,          m5
+    vextracti128 xm2,        m0, 1
+    movu        [r2],        xm0
+    movu        [r2 + r5],   xm2
+
+    lea         r2,          [r2 + 2 * r5]
+    lea         r0,          [r0 + 2 * r3]
+    lea         r1,          [r1 + 2 * r4]
+
+    movu        m0,          [r0]
+    vinserti128 m0,          m0, [r0 + r3], 1
+    movu        m2,          [r1]
+    vinserti128 m2,          m2, [r1 + r4], 1
+
+    paddw       m0,          m2
+    pmulhrsw    m0,          m3
+    paddw       m0,          m4
+    pmaxsw      m0,          m1
+    pminsw      m0,          m5
+    vextracti128 xm2,        m0, 1
+    movu        [r2],        xm0
+    movu        [r2 + r5],   xm2
+
+    lea         r2,          [r2 + 2 * r5]
+    lea         r0,          [r0 + 2 * r3]
+    lea         r1,          [r1 + 2 * r4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+
+ADDAVG_W8_H4_AVX2 4
+ADDAVG_W8_H4_AVX2 8
+ADDAVG_W8_H4_AVX2 12
+ADDAVG_W8_H4_AVX2 16
+ADDAVG_W8_H4_AVX2 32
+ADDAVG_W8_H4_AVX2 64
+
+cglobal addAvg_12x16, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova           m4,             [pw_512]
+    mova           m5,             [pw_1023]
+    mova           m3,             [pw_1024]
+    pxor           m1,             m1
+    add            r3,             r3
+    add            r4,             r4
+    add            r5,             r5
+    mov            r6d,            4
+
+.loop:
+%rep 2
+    movu           m0,             [r0]
+    movu           m2,             [r1]
+    paddw          m0,             m2
+    pmulhrsw       m0,             m3
+    paddw          m0,             m4
+    pmaxsw         m0,             m1
+    pminsw         m0,             m5
+    vextracti128   xm2,            m0, 1
+    movu           [r2],           xm0
+    movq           [r2 + 16],      xm2
+
+    movu           m0,             [r0 + r3]
+    movu           m2,             [r1 + r4]
+    paddw          m0,             m2
+    pmulhrsw       m0,             m3
+    paddw          m0,             m4
+    pmaxsw         m0,             m1
+    pminsw         m0,             m5
+    vextracti128   xm2,            m0, 1
+    movu           [r2 + r5],      xm0
+    movq           [r2 + r5 + 16], xm2
+
+    lea            r2,             [r2 + 2 * r5]
+    lea            r0,             [r0 + 2 * r3]
+    lea            r1,             [r1 + 2 * r4]
+%endrep
+    dec            r6d
+    jnz            .loop
+    RET
+
+cglobal addAvg_12x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova           m4,             [pw_512]
+    mova           m5,             [pw_1023]
+    paddw          m3,             m4,  m4
+    pxor           m1,             m1
+    add            r3,             r3
+    add            r4,             r4
+    add            r5,             r5
+    mov            r6d,            8
+
+.loop:
+%rep 2
+    movu           m0,             [r0]
+    movu           m2,             [r1]
+    paddw          m0,             m2
+    pmulhrsw       m0,             m3
+    paddw          m0,             m4
+    pmaxsw         m0,             m1
+    pminsw         m0,             m5
+    vextracti128   xm2,            m0, 1
+    movu           [r2],           xm0
+    movq           [r2 + 16],      xm2
+
+    movu           m0,             [r0 + r3]
+    movu           m2,             [r1 + r4]
+    paddw          m0,             m2
+    pmulhrsw       m0,             m3
+    paddw          m0,             m4
+    pmaxsw         m0,             m1
+    pminsw         m0,             m5
+    vextracti128   xm2,            m0, 1
+    movu           [r2 + r5],      xm0
+    movq           [r2 + r5 + 16], xm2
+
+    lea            r2,             [r2 + 2 * r5]
+    lea            r0,             [r0 + 2 * r3]
+    lea            r1,             [r1 + 2 * r4]
+%endrep
+    dec            r6d
+    jnz            .loop
+    RET
+
+%macro ADDAVG_W16_H4_AVX2 1
+cglobal addAvg_16x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,              [pw_512]
+    mova        m5,              [pw_1023]
+    mova        m3,              [pw_1024]
+    pxor        m2,              m2
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+    mov         r6d,             %1/4
+
+.loop:
+%rep 2
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+%endrep
+    dec         r6d
+    jnz         .loop
+    RET
+%endmacro
+
+ADDAVG_W16_H4_AVX2 4
+ADDAVG_W16_H4_AVX2 8
+ADDAVG_W16_H4_AVX2 12
+ADDAVG_W16_H4_AVX2 16
+ADDAVG_W16_H4_AVX2 24
+ADDAVG_W16_H4_AVX2 32
+ADDAVG_W16_H4_AVX2 64
+
+cglobal addAvg_24x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,              [pw_512]
+    mova        m5,              [pw_1023]
+    mova        m3,              [pw_1024]
+    pxor        m1,              m1
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+
+    mov         r6d,             16
+
+.loop:
+    movu        m0,              [r0]
+    movu        m2,              [r1]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m1
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        xm0,             [r0 + 32]
+    movu        xm2,             [r1 + 32]
+    paddw       xm0,             xm2
+    pmulhrsw    xm0,             xm3
+    paddw       xm0,             xm4
+    pmaxsw      xm0,             xm1
+    pminsw      xm0,             xm5
+    movu        [r2 + 32],       xm0
+
+    movu        m0,              [r0 + r3]
+    movu        m2,              [r1 + r4]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m1
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        xm2,             [r0 + r3 + 32]
+    movu        xm0,             [r1 + r4 + 32]
+    paddw       xm2,             xm0
+    pmulhrsw    xm2,             xm3
+    paddw       xm2,             xm4
+    pmaxsw      xm2,             xm1
+    pminsw      xm2,             xm5
+    movu        [r2 + r5 + 32],  xm2
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+
+cglobal addAvg_24x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,              [pw_512]
+    mova        m5,              [pw_1023]
+    paddw       m3,              m4,  m4
+    pxor        m1,              m1
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+
+    mov         r6d,             32
+
+.loop:
+    movu        m0,              [r0]
+    movu        m2,              [r1]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m1
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        xm0,             [r0 + 32]
+    movu        xm2,             [r1 + 32]
+    paddw       xm0,             xm2
+    pmulhrsw    xm0,             xm3
+    paddw       xm0,             xm4
+    pmaxsw      xm0,             xm1
+    pminsw      xm0,             xm5
+    movu        [r2 + 32],       xm0
+
+    movu        m0,              [r0 + r3]
+    movu        m2,              [r1 + r4]
+    paddw       m0,              m2
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m1
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        xm2,             [r0 + r3 + 32]
+    movu        xm0,             [r1 + r4 + 32]
+    paddw       xm2,             xm0
+    pmulhrsw    xm2,             xm3
+    paddw       xm2,             xm4
+    pmaxsw      xm2,             xm1
+    pminsw      xm2,             xm5
+    movu        [r2 + r5 + 32],  xm2
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    dec         r6d
+    jnz         .loop
+    RET
+
+%macro ADDAVG_W32_H2_AVX2 1
+cglobal addAvg_32x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,              [pw_512]
+    mova        m5,              [pw_1023]
+    mova        m3,              [pw_1024]
+    pxor        m2,              m2
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+
+    mov         r6d,             %1/2
+
+.loop:
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + 32]
+    movu        m1,              [r1 + 32]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 32],       m0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        m0,              [r0 + r3 + 32]
+    movu        m1,              [r1 + r4 + 32]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5 + 32],  m0
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    dec         r6d
+    jnz        .loop
+    RET
+%endmacro
+
+ADDAVG_W32_H2_AVX2 8
+ADDAVG_W32_H2_AVX2 16
+ADDAVG_W32_H2_AVX2 24
+ADDAVG_W32_H2_AVX2 32
+ADDAVG_W32_H2_AVX2 48
+ADDAVG_W32_H2_AVX2 64
+
+cglobal addAvg_48x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,              [pw_512]
+    mova        m5,              [pw_1023]
+    mova        m3,              [pw_1024]
+    pxor        m2,              m2
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+
+    mov         r6d,             32
+
+.loop:
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + 32]
+    movu        m1,              [r1 + 32]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 32],       m0
+
+    movu        m0,              [r0 + 64]
+    movu        m1,              [r1 + 64]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 64],       m0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        m0,              [r0 + r3 + 32]
+    movu        m1,              [r1 + r4 + 32]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5 + 32],  m0
+
+    movu        m0,              [r0 + r3 + 64]
+    movu        m1,              [r1 + r4 + 64]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5 + 64],  m0
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    dec         r6d
+    jnz        .loop
+    RET
+
+%macro ADDAVG_W64_H1_AVX2 1
+cglobal addAvg_64x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
+    mova        m4,              [pw_512]
+    mova        m5,              [pw_1023]
+    mova        m3,              [pw_1024]
+    pxor        m2,              m2
+    add         r3d,             r3d
+    add         r4d,             r4d
+    add         r5d,             r5d
+
+    mov         r6d,             %1/2
+
+.loop:
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + 32]
+    movu        m1,              [r1 + 32]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 32],       m0
+
+    movu        m0,              [r0 + 64]
+    movu        m1,              [r1 + 64]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 64],       m0
+
+    movu        m0,              [r0 + 96]
+    movu        m1,              [r1 + 96]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 96],       m0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        m0,              [r0 + r3 + 32]
+    movu        m1,              [r1 + r4 + 32]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5 + 32],  m0
+
+    movu        m0,              [r0 + r3 + 64]
+    movu        m1,              [r1 + r4 + 64]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5 + 64],  m0
+
+    movu        m0,              [r0 + r3 + 96]
+    movu        m1,              [r1 + r4 + 96]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5 + 96],  m0
+
+    lea         r2,              [r2 + 2 * r5]
+    lea         r0,              [r0 + 2 * r3]
+    lea         r1,              [r1 + 2 * r4]
+
+    dec         r6d
+    jnz        .loop
+    RET
+%endmacro
+
+ADDAVG_W64_H1_AVX2 16
+ADDAVG_W64_H1_AVX2 32
+ADDAVG_W64_H1_AVX2 48
+ADDAVG_W64_H1_AVX2 64
 ;-----------------------------------------------------------------------------
 %else ; !HIGH_BIT_DEPTH
 ;-----------------------------------------------------------------------------
@@ -3817,6 +4439,590 @@ PIXEL_AVG_W18
 INIT_YMM avx2
 PIXEL_AVG_W18
 
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_12x16, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 4
+
+.loop
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], xm0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], xm2
+
+    vextracti128 xm0, m0, 1
+    vextracti128 xm2, m2, 1
+    movq    [r0 + 16], xm0
+    movq    [r0 + r1 + 16], xm2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], xm0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], xm2
+
+    vextracti128 xm0, m0, 1
+    vextracti128 xm2, m2, 1
+    movq    [r0 + r1 * 2 + 16], xm0
+    movq    [r0 + r8 + 16], xm2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+    dec     r9d
+    jnz     .loop
+    RET
+%endif
+
+%macro  pixel_avg_H4 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_16x4, 6,9,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    pixel_avg_H4
+    RET
+
+cglobal pixel_avg_16x8, 6,9,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    pixel_avg_H4
+    pixel_avg_H4
+    RET
+
+cglobal pixel_avg_16x12, 6,9,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    pixel_avg_H4
+    pixel_avg_H4
+    pixel_avg_H4
+    RET
+%endif
+
+%macro  pixel_avg_H16 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_16x16, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 4
+.loop
+    pixel_avg_H16
+    dec r9d
+    jnz .loop
+    RET
+
+cglobal pixel_avg_16x32, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 4
+.loop
+    pixel_avg_H16
+    pixel_avg_H16
+    dec r9d
+    jnz .loop
+    RET
+
+cglobal pixel_avg_16x64, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 4
+.loop
+    pixel_avg_H16
+    pixel_avg_H16
+    pixel_avg_H16
+    pixel_avg_H16
+    dec r9d
+    jnz .loop
+    RET
+%endif
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_24x32, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 8
+
+.loop
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    xm0, [r2 + 32]
+    movu    xm1, [r4 + 32]
+    pavgw   xm0, xm1
+    movu    [r0 + 32], xm0
+    movu    xm2, [r2 + r3 + 32]
+    movu    xm3, [r4 + r5 + 32]
+    pavgw   xm2, xm3
+    movu    [r0 + r1 + 32], xm2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    movu    xm0, [r2 + r3 * 2 + 32]
+    movu    xm1, [r4 + r5 * 2 + 32]
+    pavgw   xm0, xm1
+    movu    [r0 + r1 * 2 + 32], xm0
+    movu    xm2, [r2 + r6 + 32]
+    movu    xm3, [r4 + r7 + 32]
+    pavgw   xm2, xm3
+    movu    [r0 + r8 + 32], xm2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+    dec     r9d
+    jnz     .loop
+    RET
+%endif
+
+%macro  pixel_avg_W32 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + 32]
+    movu    m1, [r4 + 32]
+    pavgw   m0, m1
+    movu    [r0 + 32], m0
+    movu    m2, [r2 + r3 + 32]
+    movu    m3, [r4 + r5 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 32], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    movu    m0, [r2 + r3 * 2 + 32]
+    movu    m1, [r4 + r5 * 2 + 32]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 32], m0
+    movu    m2, [r2 + r6 + 32]
+    movu    m3, [r4 + r7 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 32], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_32x8, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 2
+.loop
+    pixel_avg_W32
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_32x16, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 4
+.loop
+    pixel_avg_W32
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_32x24, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 6
+.loop
+    pixel_avg_W32
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_32x32, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 8
+.loop
+    pixel_avg_W32
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_32x64, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 16
+.loop
+    pixel_avg_W32
+    dec     r9d
+    jnz     .loop
+    RET
+%endif
+
+%macro  pixel_avg_W64 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + 32]
+    movu    m1, [r4 + 32]
+    pavgw   m0, m1
+    movu    [r0 + 32], m0
+    movu    m2, [r2 + r3 + 32]
+    movu    m3, [r4 + r5 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 32], m2
+
+    movu    m0, [r2 + 64]
+    movu    m1, [r4 + 64]
+    pavgw   m0, m1
+    movu    [r0 + 64], m0
+    movu    m2, [r2 + r3 + 64]
+    movu    m3, [r4 + r5 + 64]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 64], m2
+
+    movu    m0, [r2 + 96]
+    movu    m1, [r4 + 96]
+    pavgw   m0, m1
+    movu    [r0 + 96], m0
+    movu    m2, [r2 + r3 + 96]
+    movu    m3, [r4 + r5 + 96]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 96], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    movu    m0, [r2 + r3 * 2 + 32]
+    movu    m1, [r4 + r5 * 2 + 32]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 32], m0
+    movu    m2, [r2 + r6 + 32]
+    movu    m3, [r4 + r7 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 32], m2
+
+    movu    m0, [r2 + r3 * 2 + 64]
+    movu    m1, [r4 + r5 * 2 + 64]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 64], m0
+    movu    m2, [r2 + r6 + 64]
+    movu    m3, [r4 + r7 + 64]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 64], m2
+
+    movu    m0, [r2 + r3 * 2 + 96]
+    movu    m1, [r4 + r5 * 2 + 96]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 96], m0
+    movu    m2, [r2 + r6 + 96]
+    movu    m3, [r4 + r7 + 96]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 96], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_64x16, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 4
+.loop
+    pixel_avg_W64
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_64x32, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 8
+.loop
+    pixel_avg_W64
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_64x48, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 12
+.loop
+    pixel_avg_W64
+    dec     r9d
+    jnz     .loop
+    RET
+
+cglobal pixel_avg_64x64, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 16
+.loop
+    pixel_avg_W64
+    dec     r9d
+    jnz     .loop
+    RET
+%endif
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_YMM avx2
+cglobal pixel_avg_48x64, 6,10,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+    mov     r9d, 16
+
+.loop
+    movu    m0, [r2]
+    movu    m1, [r4]
+    pavgw   m0, m1
+    movu    [r0], m0
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m2, m3
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + 32]
+    movu    m1, [r4 + 32]
+    pavgw   m0, m1
+    movu    [r0 + 32], m0
+    movu    m2, [r2 + r3 + 32]
+    movu    m3, [r4 + r5 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 32], m2
+
+    movu    m0, [r2 + 64]
+    movu    m1, [r4 + 64]
+    pavgw   m0, m1
+    movu    [r0 + 64], m0
+    movu    m2, [r2 + r3 + 64]
+    movu    m3, [r4 + r5 + 64]
+    pavgw   m2, m3
+    movu    [r0 + r1 + 64], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2], m0
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m2, m3
+    movu    [r0 + r8], m2
+
+    movu    m0, [r2 + r3 * 2 + 32]
+    movu    m1, [r4 + r5 * 2 + 32]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 32], m0
+    movu    m2, [r2 + r6 + 32]
+    movu    m3, [r4 + r7 + 32]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 32], m2
+
+    movu    m0, [r2 + r3 * 2 + 64]
+    movu    m1, [r4 + r5 * 2 + 64]
+    pavgw   m0, m1
+    movu    [r0 + r1 * 2 + 64], m0
+    movu    m2, [r2 + r6 + 64]
+    movu    m3, [r4 + r7 + 64]
+    pavgw   m2, m3
+    movu    [r0 + r8 + 64], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+    dec     r9d
+    jnz     .loop
+    RET
+%endif
+
 %endif ; HIGH_BIT_DEPTH
 
 %if HIGH_BIT_DEPTH == 0
@@ -3973,7 +5179,7 @@ cglobal pixel_avg2_w20, 6,7
 %macro INIT_SHIFT 2
     and    eax, 7
     shl    eax, 3
-    movd   %1, [sw_64]
+    movd   %1, [pd_64]
     movd   %2, eax
     psubw  %1, %2
 %endmacro

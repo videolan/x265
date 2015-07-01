@@ -25,7 +25,7 @@
 #include "slice.h"
 #include "level.h"
 
-namespace x265 {
+namespace X265_NS {
 typedef struct
 {
     uint32_t maxLumaSamples;
@@ -162,17 +162,19 @@ void determineLevel(const x265_param &param, VPS& vps)
             return;
         }
 
-#define CHECK_RANGE(value, main, high) (value > main && value <= high)
+#define CHECK_RANGE(value, main, high) (high != MAX_UINT && value > main && value <= high)
 
-        if (CHECK_RANGE(bitrate, levels[i].maxBitrateMain, levels[i].maxBitrateHigh) &&
-            CHECK_RANGE((uint32_t)param.rc.vbvBufferSize, levels[i].maxCpbSizeMain, levels[i].maxCpbSizeHigh) &&
-            levels[i].maxBitrateHigh != MAX_UINT)
+        if (CHECK_RANGE(bitrate, levels[i].maxBitrateMain, levels[i].maxBitrateHigh) ||
+            CHECK_RANGE((uint32_t)param.rc.vbvBufferSize, levels[i].maxCpbSizeMain, levels[i].maxCpbSizeHigh))
         {
-            /* If the user has not enabled high tier, continue looking to see if we can encode at a higher level, main tier */
-            if (!param.bHighTier && (levels[i].levelIdc < param.levelIdc))
-                continue;
-            else
+            /* The bitrate or buffer size are out of range for Main tier, but in
+             * range for High tier. If the user requested High tier then give
+             * them High tier at this level.  Otherwise allow the loop to
+             * progress to the Main tier of the next level */
+            if (param.bHighTier)
                 vps.ptl.tierFlag = Level::HIGH;
+            else
+                continue;
         }
         else
             vps.ptl.tierFlag = Level::MAIN;
@@ -340,8 +342,21 @@ bool enforceLevel(x265_param& param, VPS& vps)
 
     return true;
 }
+}
 
-extern "C"
+#if EXPORT_C_API
+
+/* these functions are exported as C functions (default) */
+using namespace X265_NS;
+extern "C" {
+
+#else
+
+/* these functions exist within private namespace (multilib) */
+namespace X265_NS {
+
+#endif
+
 int x265_param_apply_profile(x265_param *param, const char *profile)
 {
     if (!param || !profile)

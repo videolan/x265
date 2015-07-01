@@ -31,7 +31,7 @@
 #include "mv.h"
 #include "bitstream.h"
 
-using namespace x265;
+using namespace X265_NS;
 namespace {
 struct Cache
 {
@@ -217,7 +217,7 @@ uint32_t weightCost(pixel *         fenc,
 }
 }
 
-namespace x265 {
+namespace X265_NS {
 void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
 {
     WeightParam wp[2][MAX_NUM_REF][3];

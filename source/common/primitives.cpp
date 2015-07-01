@@ -24,7 +24,7 @@
 #include "common.h"
 #include "primitives.h"
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 extern const uint8_t lumaPartitionMapTable[] =
@@ -56,6 +56,7 @@ void setupDCTPrimitives_c(EncoderPrimitives &p);
 void setupFilterPrimitives_c(EncoderPrimitives &p);
 void setupIntraPrimitives_c(EncoderPrimitives &p);
 void setupLoopFilterPrimitives_c(EncoderPrimitives &p);
+void setupSaoPrimitives_c(EncoderPrimitives &p);
 
 void setupCPrimitives(EncoderPrimitives &p)
 {
@@ -64,6 +65,7 @@ void setupCPrimitives(EncoderPrimitives &p)
     setupFilterPrimitives_c(p);     // ipfilter.cpp
     setupIntraPrimitives_c(p);      // intrapred.cpp
     setupLoopFilterPrimitives_c(p); // loopfilter.cpp
+    setupSaoPrimitives_c(p);        // sao.cpp
 }
 
 void setupAliasPrimitives(EncoderPrimitives &p)
@@ -185,17 +187,46 @@ void setupAliasPrimitives(EncoderPrimitives &p)
 
     p.chroma[X265_CSP_I422].cu[BLOCK_422_2x4].sse_pp = NULL;
 }
-}
-using namespace x265;
 
-/* cpuid >= 0 - force CPU type
- * cpuid < 0  - auto-detect if uninitialized */
-void x265_setup_primitives(x265_param *param, int cpuid)
+void x265_report_simd(x265_param* param)
 {
-    if (cpuid < 0)
-        cpuid = x265::cpu_detect();
+    if (param->logLevel >= X265_LOG_INFO)
+    {
+        int cpuid = param->cpuid;
 
-    // initialize global variables
+        char buf[1000];
+        char *p = buf + sprintf(buf, "using cpu capabilities:");
+        char *none = p;
+        for (int i = 0; X265_NS::cpu_names[i].flags; i++)
+        {
+            if (!strcmp(X265_NS::cpu_names[i].name, "SSE")
+                && (cpuid & X265_CPU_SSE2))
+                continue;
+            if (!strcmp(X265_NS::cpu_names[i].name, "SSE2")
+                && (cpuid & (X265_CPU_SSE2_IS_FAST | X265_CPU_SSE2_IS_SLOW)))
+                continue;
+            if (!strcmp(X265_NS::cpu_names[i].name, "SSE3")
+                && (cpuid & X265_CPU_SSSE3 || !(cpuid & X265_CPU_CACHELINE_64)))
+                continue;
+            if (!strcmp(X265_NS::cpu_names[i].name, "SSE4.1")
+                && (cpuid & X265_CPU_SSE42))
+                continue;
+            if (!strcmp(X265_NS::cpu_names[i].name, "BMI1")
+                && (cpuid & X265_CPU_BMI2))
+                continue;
+            if ((cpuid & X265_NS::cpu_names[i].flags) == X265_NS::cpu_names[i].flags
+                && (!i || X265_NS::cpu_names[i].flags != X265_NS::cpu_names[i - 1].flags))
+                p += sprintf(p, " %s", X265_NS::cpu_names[i].name);
+        }
+
+        if (p == none)
+            sprintf(p, " none!");
+        x265_log(param, X265_LOG_INFO, "%s\n", buf);
+    }
+}
+
+void x265_setup_primitives(x265_param *param)
+{
     if (!primitives.pu[0].sad)
     {
         setupCPrimitives(primitives);
@@ -207,46 +238,15 @@ void x265_setup_primitives(x265_param *param, int cpuid)
             primitives.cu[i].intra_pred_allangs = NULL;
 
 #if ENABLE_ASSEMBLY
-        setupInstrinsicPrimitives(primitives, cpuid);
-        setupAssemblyPrimitives(primitives, cpuid);
-#else
-        x265_log(param, X265_LOG_WARNING, "Assembly not supported in this binary\n");
+        setupInstrinsicPrimitives(primitives, param->cpuid);
+        setupAssemblyPrimitives(primitives, param->cpuid);
 #endif
 
         setupAliasPrimitives(primitives);
     }
 
-    if (param->logLevel >= X265_LOG_INFO)
-    {
-        char buf[1000];
-        char *p = buf + sprintf(buf, "using cpu capabilities:");
-        char *none = p;
-        for (int i = 0; x265::cpu_names[i].flags; i++)
-        {
-            if (!strcmp(x265::cpu_names[i].name, "SSE")
-                && (cpuid & X265_CPU_SSE2))
-                continue;
-            if (!strcmp(x265::cpu_names[i].name, "SSE2")
-                && (cpuid & (X265_CPU_SSE2_IS_FAST | X265_CPU_SSE2_IS_SLOW)))
-                continue;
-            if (!strcmp(x265::cpu_names[i].name, "SSE3")
-                && (cpuid & X265_CPU_SSSE3 || !(cpuid & X265_CPU_CACHELINE_64)))
-                continue;
-            if (!strcmp(x265::cpu_names[i].name, "SSE4.1")
-                && (cpuid & X265_CPU_SSE42))
-                continue;
-            if (!strcmp(x265::cpu_names[i].name, "BMI1")
-                && (cpuid & X265_CPU_BMI2))
-                continue;
-            if ((cpuid & x265::cpu_names[i].flags) == x265::cpu_names[i].flags
-                && (!i || x265::cpu_names[i].flags != x265::cpu_names[i - 1].flags))
-                p += sprintf(p, " %s", x265::cpu_names[i].name);
-        }
-
-        if (p == none)
-            sprintf(p, " none!");
-        x265_log(param, X265_LOG_INFO, "%s\n", buf);
-    }
+    x265_report_simd(param);
+}
 }
 
 #if ENABLE_ASSEMBLY
@@ -254,9 +254,9 @@ void x265_setup_primitives(x265_param *param, int cpuid)
  * compiled, they are unnecessary and can be NOPs */
 #else
 extern "C" {
-int x265_cpu_cpuid_test(void) { return 0; }
-void x265_cpu_emms(void) {}
-void x265_cpu_cpuid(uint32_t, uint32_t *eax, uint32_t *, uint32_t *, uint32_t *) { *eax = 0; }
-void x265_cpu_xgetbv(uint32_t, uint32_t *, uint32_t *) {}
+int PFX(cpu_cpuid_test)(void) { return 0; }
+void PFX(cpu_emms)(void) {}
+void PFX(cpu_cpuid)(uint32_t, uint32_t *eax, uint32_t *, uint32_t *, uint32_t *) { *eax = 0; }
+void PFX(cpu_xgetbv)(uint32_t, uint32_t *, uint32_t *) {}
 }
 #endif

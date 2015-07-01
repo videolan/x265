@@ -27,7 +27,7 @@
 #include "common.h"
 #include "slice.h"
 
-namespace x265 {
+namespace X265_NS {
 // private namespace
 
 class RDCost

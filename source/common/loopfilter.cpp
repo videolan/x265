@@ -138,7 +138,7 @@ void processSaoCUB0(pixel* rec, const int8_t* offset, int ctuWidth, int ctuHeigh
 }
 }
 
-namespace x265 {
+namespace X265_NS {
 void setupLoopFilterPrimitives_c(EncoderPrimitives &p)
 {
     p.saoCuOrgE0 = processSaoCUE0;

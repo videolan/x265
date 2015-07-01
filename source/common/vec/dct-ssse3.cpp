@@ -34,7 +34,7 @@
 #include <pmmintrin.h> // SSE3
 #include <tmmintrin.h> // SSSE3
 
-using namespace x265;
+using namespace X265_NS;
 
 namespace {
 ALIGN_VAR_32(static const int16_t, tab_dct_8[][8]) =
@@ -1132,7 +1132,7 @@ void dct32(const int16_t *src, int16_t *dst, intptr_t stride)
 }
 }
 
-namespace x265 {
+namespace X265_NS {
 void setupIntrinsicDCT_ssse3(EncoderPrimitives &p)
 {
     /* Note: We have AVX2 assembly for these two functions, but since AVX2 is

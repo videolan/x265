@@ -28,7 +28,7 @@
 #include "x265.h"
 #include "input/input.h"
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 class ReconFile

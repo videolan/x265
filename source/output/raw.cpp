@@ -24,7 +24,7 @@
 
 #include "raw.h"
 
-using namespace x265;
+using namespace X265_NS;
 using namespace std;
 
 RAWOutput::RAWOutput(const char* fname, InputFileInfo&)

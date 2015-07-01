@@ -27,7 +27,7 @@
 #include "primitives.h"
 #include "x265.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 #if _MSC_VER
 #pragma warning(disable: 4127) // conditional expression is constant, typical for templated functions
@@ -369,7 +369,7 @@ void interp_hv_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t d
 }
 }
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 #define CHROMA_420(W, H) \

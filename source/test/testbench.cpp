@@ -32,7 +32,7 @@
 #include "param.h"
 #include "cpu.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 const char* lumaPartStr[NUM_PU_SIZES] =
 {
@@ -137,8 +137,8 @@ int main(int argc, char *argv[])
     }
 
     int seed = (int)time(NULL);
-    const char *bpp[] = { "8bpp", "16bpp" };
-    printf("Using random seed %X %s\n", seed, bpp[HIGH_BIT_DEPTH]);
+    const char *bitstr[] = { "8bit", "10bit" };
+    printf("Using random seed %X %s\n", seed, bitstr[HIGH_BIT_DEPTH]);
     srand(seed);
 
     // To disable classes of tests, simply comment them out in this list
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 
     for (int i = 0; test_arch[i].flag; i++)
     {
-        if (test_arch[i].flag & cpuid)
+        if ((test_arch[i].flag & cpuid) == test_arch[i].flag)
         {
             printf("Testing primitives: %s\n", test_arch[i].name);
             fflush(stdout);

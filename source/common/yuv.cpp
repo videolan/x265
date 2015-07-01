@@ -28,7 +28,7 @@
 #include "picyuv.h"
 #include "primitives.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 Yuv::Yuv()
 {

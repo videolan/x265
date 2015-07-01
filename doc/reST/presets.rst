@@ -114,12 +114,12 @@ Film Grain Retention
 ~~~~~~~~~~~~~~~~~~~~
 
 :option:`--tune` *grain* tries to improve the retention of film grain in
-the reconstructed output. It helps rate distortion optimizations select
-modes which preserve high frequency noise:
+the reconstructed output. It disables rate distortion optimizations in
+quantization, and increases the default psy-rd.
 
     * :option:`--psy-rd` 0.5
-    * :option:`--rdoq-level` 1
-    * :option:`--psy-rdoq` 30
+    * :option:`--rdoq-level` 0
+    * :option:`--psy-rdoq` 0
 
 It lowers the strength of adaptive quantization, so residual energy can
 be more evenly distributed across the (noisy) picture:

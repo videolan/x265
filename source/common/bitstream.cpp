@@ -1,7 +1,7 @@
 #include "common.h"
 #include "bitstream.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 #if defined(_MSC_VER)
 #pragma warning(disable: 4244)

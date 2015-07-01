@@ -27,7 +27,7 @@
 
 #include <signal.h>
 
-using namespace x265;
+using namespace X265_NS;
 
 #if _WIN32
 #define popen  _popen

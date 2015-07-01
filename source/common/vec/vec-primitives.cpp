@@ -51,7 +51,7 @@
 #endif // compiler checks
 #endif // if X265_ARCH_X86
 
-namespace x265 {
+namespace X265_NS {
 // private x265 namespace
 
 void setupIntrinsicDCT_sse3(EncoderPrimitives&);

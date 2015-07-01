@@ -59,7 +59,7 @@ static char orgConsoleTitle[CONSOLE_TITLE_SIZE] = "";
 #define SetThreadExecutionState(es)
 #endif
 
-using namespace x265;
+using namespace X265_NS;
 
 /* Ctrl-C handler */
 static volatile sig_atomic_t b_ctrl_c /* = 0 */;
@@ -68,18 +68,29 @@ static void sigint_handler(int)
     b_ctrl_c = 1;
 }
 
+static const char* summaryCSVHeader =
+    "Command, Date/Time, Elapsed Time, FPS, Bitrate, "
+    "Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), "
+    "I count, I ave-QP, I kbps, I-PSNR Y, I-PSNR U, I-PSNR V, I-SSIM (dB), "
+    "P count, P ave-QP, P kbps, P-PSNR Y, P-PSNR U, P-PSNR V, P-SSIM (dB), "
+    "B count, B ave-QP, B kbps, B-PSNR Y, B-PSNR U, B-PSNR V, B-SSIM (dB), "
+    "Version\n";
+
 struct CLIOptions
 {
     InputFile* input;
     ReconFile* recon;
     OutputFile* output;
     FILE*       qpfile;
+    FILE*       csvfpt;
+    const char* csvfn;
     const char* reconPlayCmd;
     const x265_api* api;
     x265_param* param;
     bool bProgress;
     bool bForceY4m;
     bool bDither;
+    int csvLogLevel;
     uint32_t seek;              // number of frames to skip from the beginning
     uint32_t framesToBeEncoded; // number of frames to encode
     uint64_t totalbytes;
@@ -95,6 +106,8 @@ struct CLIOptions
         recon = NULL;
         output = NULL;
         qpfile = NULL;
+        csvfpt = NULL;
+        csvfn = NULL;
         reconPlayCmd = NULL;
         api = NULL;
         param = NULL;
@@ -105,9 +118,13 @@ struct CLIOptions
         startTime = x265_mdate();
         prevUpdateTime = 0;
         bDither = false;
+        csvLogLevel = 0;
     }
 
     void destroy();
+    bool parseCSVFile();
+    void writeLog(int argc, char **argv, x265_stats* stats);
+    void writeFrameLog(x265_frame_stats* frameStats);
     void printStatus(uint32_t frameNum);
     bool parse(int argc, char **argv);
     bool parseQPFile(x265_picture &pic_org);
@@ -124,9 +141,180 @@ void CLIOptions::destroy()
     if (qpfile)
         fclose(qpfile);
     qpfile = NULL;
+    if (csvfpt)
+        fclose(csvfpt);
+    csvfpt = NULL;
     if (output)
         output->release();
     output = NULL;
+}
+
+bool CLIOptions::parseCSVFile()
+{
+    csvfpt = fopen(csvfn, "r");
+    if (csvfpt)
+    {
+        /* file already exists, re-open for append */
+        fclose(csvfpt);
+        csvfpt = fopen(csvfn, "ab");
+    }
+    else
+    {
+        /* new CSV file, write header */
+        csvfpt = fopen(csvfn, "wb");
+        if (csvfpt)
+        {
+            if (csvLogLevel)
+            {
+                fprintf(csvfpt, "Encode Order, Type, POC, QP, Bits, ");
+                if (param->rc.rateControlMode == X265_RC_CRF)
+                    fprintf(csvfpt, "RateFactor, ");
+                fprintf(csvfpt, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB),  List 0, List 1");
+                /* detailed performance statistics */
+                fprintf(csvfpt, ", DecideWait (ms), Row0Wait (ms), Wall time (ms), Ref Wait Wall (ms), Total CTU time (ms), Stall Time (ms), Avg WPP, Row Blocks\n");
+            }
+            else
+                fputs(summaryCSVHeader, csvfpt);
+        }
+    }
+
+    if (!csvfpt)
+    {
+        x265_log(param, X265_LOG_ERROR, "Unable to open CSV log file <%s>, aborting\n", csvfn);
+        return true;
+    }
+    return false;
+}
+
+void CLIOptions::writeLog(int argc, char **argv, x265_stats* stats)
+{
+    if (csvfpt)
+    {
+        if (csvLogLevel)
+        {
+            // adding summary to a per-frame csv log file needs a summary header
+            fprintf(csvfpt, "\nSummary\n");
+            fputs(summaryCSVHeader, csvfpt);
+        }
+        // CLI arguments or other
+        for (int i = 1; i < argc; i++)
+        {
+            if (i) fputc(' ', csvfpt);
+            fputs(argv[i], csvfpt);
+        }
+
+        // current date and time
+        time_t now;
+        struct tm* timeinfo;
+        time(&now);
+        timeinfo = localtime(&now);
+        char buffer[200];
+        strftime(buffer, 128, "%c", timeinfo);
+        fprintf(csvfpt, ", %s, ", buffer);
+
+        // elapsed time, fps, bitrate
+        fprintf(csvfpt, "%.2f, %.2f, %.2f,",
+            stats->elapsedEncodeTime, stats->encodedPictureCount / stats->elapsedEncodeTime, stats->bitrate);
+
+        if (param->bEnablePsnr)
+            fprintf(csvfpt, " %.3lf, %.3lf, %.3lf, %.3lf,",
+            stats->globalPsnrY / stats->encodedPictureCount, stats->globalPsnrU / stats->encodedPictureCount,
+            stats->globalPsnrV / stats->encodedPictureCount, stats->globalPsnr);
+        else
+            fprintf(csvfpt, " -, -, -, -,");
+        if (param->bEnableSsim)
+            fprintf(csvfpt, " %.6f, %6.3f,", stats->globalSsim, x265_ssim2dB(stats->globalSsim));
+        else
+            fprintf(csvfpt, " -, -,");
+
+        if (stats->statsI.numPics)
+        {
+            fprintf(csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsI.numPics, stats->statsI.avgQp, stats->statsI.bitrate);
+            if (param->bEnablePsnr)
+                fprintf(csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsI.psnrY, stats->statsI.psnrU, stats->statsI.psnrV);
+            else
+                fprintf(csvfpt, " -, -, -,");
+            if (param->bEnableSsim)
+                fprintf(csvfpt, " %.3lf,", stats->statsI.ssim);
+            else
+                fprintf(csvfpt, " -,");
+        }
+        else
+            fprintf(csvfpt, " -, -, -, -, -, -, -,");
+
+        if (stats->statsP.numPics)
+        {
+            fprintf(csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsP.numPics, stats->statsP.avgQp, stats->statsP.bitrate);
+            if (param->bEnablePsnr)
+                fprintf(csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsP.psnrY, stats->statsP.psnrU, stats->statsP.psnrV);
+            else
+                fprintf(csvfpt, " -, -, -,");
+            if (param->bEnableSsim)
+                fprintf(csvfpt, " %.3lf,", stats->statsP.ssim);
+            else
+                fprintf(csvfpt, " -,");
+        }
+        else
+            fprintf(csvfpt, " -, -, -, -, -, -, -,");
+
+        if (stats->statsB.numPics)
+        {
+            fprintf(csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsB.numPics, stats->statsB.avgQp, stats->statsB.bitrate);
+            if (param->bEnablePsnr)
+                fprintf(csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsB.psnrY, stats->statsB.psnrU, stats->statsB.psnrV);
+            else
+                fprintf(csvfpt, " -, -, -,");
+            if (param->bEnableSsim)
+                fprintf(csvfpt, " %.3lf,", stats->statsB.ssim);
+            else
+                fprintf(csvfpt, " -,");
+        }
+        else
+            fprintf(csvfpt, " -, -, -, -, -, -, -,");
+
+        fprintf(csvfpt, " %s\n", api->version_str);
+    }
+}
+
+void CLIOptions::writeFrameLog(x265_frame_stats* frameStats)
+{
+    if (csvfpt)
+    {
+        // per frame CSV logging if the file handle is valid
+        fprintf(csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d,", frameStats->encoderOrder, frameStats->sliceType, frameStats->poc, frameStats->qp, (int)frameStats->bits);
+        if (param->rc.rateControlMode == X265_RC_CRF)
+            fprintf(csvfpt, "%.3lf,", frameStats->rateFactor);
+        if (param->bEnablePsnr)
+            fprintf(csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", frameStats->psnrY, frameStats->psnrU, frameStats->psnrV, frameStats->psnr);
+        else
+            fputs(" -, -, -, -,", csvfpt);
+        if (param->bEnableSsim)
+            fprintf(csvfpt, " %.6f, %6.3f,", frameStats->ssim, x265_ssim2dB(frameStats->ssim));
+        else
+            fputs(" -, -,", csvfpt);
+        if (frameStats->sliceType == 'I')
+            fputs(" -, -,", csvfpt);
+        else
+        {
+            int i = 0;
+            while (frameStats->list0POC[i] != -1)
+                fprintf(csvfpt, "%d ", frameStats->list0POC[i++]);
+            fprintf(csvfpt, ",");
+            if (frameStats->sliceType != 'P')
+            {
+                i = 0;
+                while (frameStats->list1POC[i] != -1)
+                    fprintf(csvfpt, "%d ", frameStats->list1POC[i++]);
+                fprintf(csvfpt, ",");
+            }
+            else
+                fputs(" -,", csvfpt);
+        }
+        fprintf(csvfpt, " %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf,", frameStats->decideWaitTime, frameStats->row0WaitTime, frameStats->wallTime, frameStats->refWaitWallTime, frameStats->totalCTUTime, frameStats->stallTime);
+        fprintf(csvfpt, " %.3lf, %d", frameStats->avgWPP, frameStats->countRowBlocks);
+        fprintf(csvfpt, "\n");
+        fflush(stderr);
+    }
 }
 
 void CLIOptions::printStatus(uint32_t frameNum)
@@ -213,7 +401,11 @@ bool CLIOptions::parse(int argc, char **argv)
     }
 
     if (bShowHelp)
+    {
+        api->param_default(param);
+        printVersion(param, api);
         showHelp(param);
+    }
 
     for (optind = 0;; )
     {
@@ -225,12 +417,14 @@ bool CLIOptions::parse(int argc, char **argv)
         switch (c)
         {
         case 'h':
+            api->param_default(param);
+            printVersion(param, api);
             showHelp(param);
             break;
 
         case 'V':
-            printVersion(param);
-            x265_setup_primitives(param, -1);
+            printVersion(param, api);
+            x265_report_simd(param);
             exit(0);
 
         default:
@@ -267,6 +461,8 @@ bool CLIOptions::parse(int argc, char **argv)
             if (0) ;
             OPT2("frame-skip", "seek") this->seek = (uint32_t)x265_atoi(optarg, bError);
             OPT("frames") this->framesToBeEncoded = (uint32_t)x265_atoi(optarg, bError);
+            OPT("csv") this->csvfn = optarg;
+            OPT("csv-log-level") this->csvLogLevel = x265_atoi(optarg, bError);
             OPT("no-progress") this->bProgress = false;
             OPT("output") outputfn = optarg;
             OPT("input") inputfn = optarg;
@@ -313,7 +509,11 @@ bool CLIOptions::parse(int argc, char **argv)
     }
 
     if (argc <= 1)
+    {
+        api->param_default(param);
+        printVersion(param, api);
         showHelp(param);
+    }
 
     if (inputfn == NULL || outputfn == NULL)
     {
@@ -321,9 +521,9 @@ bool CLIOptions::parse(int argc, char **argv)
         return true;
     }
 
-    if (param->internalBitDepth != api->max_bit_depth)
+    if (param->internalBitDepth != api->bit_depth)
     {
-        x265_log(param, X265_LOG_ERROR, "Only bit depths of %d are supported in this build\n", api->max_bit_depth);
+        x265_log(param, X265_LOG_ERROR, "Only bit depths of %d are supported in this build\n", api->bit_depth);
         return true;
     }
 
@@ -468,7 +668,8 @@ bool CLIOptions::parseQPFile(x265_picture &pic_org)
  * 1 - unable to parse command line
  * 2 - unable to open encoder
  * 3 - unable to generate stream headers
- * 4 - encoder abort */
+ * 4 - encoder abort
+ * 5 - unable to open csv file */
 
 int main(int argc, char **argv)
 {
@@ -502,6 +703,17 @@ int main(int argc, char **argv)
     if (cliopt.reconPlayCmd)
         reconPlay = new ReconPlay(cliopt.reconPlayCmd, *param);
 
+    if (cliopt.csvfn)
+    {
+        if (cliopt.parseCSVFile())
+        {
+            cliopt.destroy();
+            if (cliopt.api)
+                cliopt.api->param_free(cliopt.param);
+            exit(5);
+        }
+    }
+
     /* note: we could try to acquire a different libx265 API here based on
      * the profile found during option parsing, but it must be done before
      * opening an encoder */
@@ -527,7 +739,7 @@ int main(int argc, char **argv)
     x265_picture *pic_in = &pic_orig;
     /* Allocate recon picture if analysisMode is enabled */
     std::priority_queue<int64_t>* pts_queue = cliopt.output->needPTS() ? new std::priority_queue<int64_t>() : NULL;
-    x265_picture *pic_recon = (cliopt.recon || !!param->analysisMode || pts_queue || reconPlay) ? &pic_out : NULL;
+    x265_picture *pic_recon = (cliopt.recon || !!param->analysisMode || pts_queue || reconPlay || cliopt.csvLogLevel) ? &pic_out : NULL;
     uint32_t inFrameCount = 0;
     uint32_t outFrameCount = 0;
     x265_nal *p_nal;
@@ -618,6 +830,8 @@ int main(int argc, char **argv)
         }
 
         cliopt.printStatus(outFrameCount);
+        if (numEncoded && cliopt.csvLogLevel)
+            cliopt.writeFrameLog(&(pic_recon->frameData));
     }
 
     /* Flush the encoder */
@@ -648,6 +862,8 @@ int main(int argc, char **argv)
         }
 
         cliopt.printStatus(outFrameCount);
+        if (numEncoded && cliopt.csvLogLevel)
+            cliopt.writeFrameLog(&(pic_recon->frameData));
 
         if (!numEncoded)
             break;
@@ -662,8 +878,8 @@ fail:
     delete reconPlay;
 
     api->encoder_get_stats(encoder, &stats, sizeof(stats));
-    if (param->csvfn && !b_ctrl_c)
-        api->encoder_log(encoder, argc, argv);
+    if (cliopt.csvfn && !b_ctrl_c)
+        cliopt.writeLog(argc, argv, &stats);
     api->encoder_close(encoder);
 
     int64_t second_largest_pts = 0;
@@ -682,26 +898,6 @@ fail:
     if (b_ctrl_c)
         general_log(param, NULL, X265_LOG_INFO, "aborted at input frame %d, output frame %d\n",
                     cliopt.seek + inFrameCount, stats.encodedPictureCount);
-
-    if (stats.encodedPictureCount)
-    {
-        char buffer[4096];
-        int p = sprintf(buffer, "\nencoded %d frames in %.2fs (%.2f fps), %.2f kb/s", stats.encodedPictureCount,
-                        stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
-
-        if (param->bEnablePsnr)
-            p += sprintf(buffer + p, ", Global PSNR: %.3f", stats.globalPsnr);
-
-        if (param->bEnableSsim)
-            p += sprintf(buffer + p, ", SSIM Mean Y: %.7f (%6.3f dB)", stats.globalSsim, x265_ssim2dB(stats.globalSsim));
-
-        sprintf(buffer + p, "\n");
-        general_log(param, NULL, X265_LOG_INFO, buffer);
-    }
-    else
-    {
-        general_log(param, NULL, X265_LOG_INFO, "\nencoded 0 frames\n");
-    }
 
     api->cleanup(); /* Free library singletons */
 

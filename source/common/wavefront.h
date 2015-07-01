@@ -27,7 +27,7 @@
 #include "common.h"
 #include "threadpool.h"
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 // Generic wave-front scheduler, manages busy-state of CU rows as a priority
@@ -92,6 +92,6 @@ public:
     // derived classes.
     virtual void processRow(int row, int threadId) = 0;
 };
-} // end namespace x265
+} // end namespace X265_NS
 
 #endif // ifndef X265_WAVEFRONT_H

@@ -30,7 +30,7 @@
 #include <fstream>
 #include <iostream>
 
-namespace x265 {
+namespace X265_NS {
 class RAWOutput : public OutputFile
 {
 protected:

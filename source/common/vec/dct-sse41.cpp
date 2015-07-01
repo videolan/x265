@@ -33,7 +33,7 @@
 #include <xmmintrin.h> // SSE
 #include <smmintrin.h> // SSE4.1
 
-using namespace x265;
+using namespace X265_NS;
 
 namespace {
 void dequant_scaling(const int16_t* quantCoef, const int32_t *deQuantCoef, int16_t* coef, int num, int per, int shift)
@@ -102,7 +102,7 @@ void dequant_scaling(const int16_t* quantCoef, const int32_t *deQuantCoef, int16
 }
 }
 
-namespace x265 {
+namespace X265_NS {
 void setupIntrinsicDCT_sse41(EncoderPrimitives &p)
 {
     p.dequant_scaling = dequant_scaling;

@@ -52,6 +52,7 @@ Command line executable return codes::
 	2. unable to open encoder
 	3. unable to generate stream headers
 	4. encoder abort
+	5. unable to open csv file
 
 Logging/Statistic Options
 =========================
@@ -80,9 +81,9 @@ Logging/Statistic Options
 .. option:: --csv <filename>
 
 	Writes encoding results to a comma separated value log file. Creates
-	the file if it doesnt already exist, else adds one line per run.  if
-	:option:`--log-level` is frame or above, it writes one line per
-	frame. Default none
+	the file if it doesnt already exist. If :option:`--csv-log-level` is 0, 
+	it adds one line per run. If :option:`--csv-log-level` is greater than
+	0, it writes one line per frame. Default none
 
 	When frame level logging is enabled, several frame performance
 	statistics are listed:
@@ -123,13 +124,17 @@ Logging/Statistic Options
 	enough ahead for the necessary reference data to be available. This
 	is more of a problem for P frames where some blocks are much more
 	expensive than others.
+	
+	**CLI ONLY**
 
+.. option:: --csv-log-level <integer>
 
-.. option:: --cu-stats, --no-cu-stats
+        CSV logging level. Default 0
+        0. summary
+        1. frame level logging
+        2. frame level logging with performance statistics
 
-	Records statistics on how each CU was coded (split depths and other
-	mode decisions) and reports those statistics at the end of the
-	encode. Default disabled
+        **CLI ONLY**
 
 .. option:: --ssim, --no-ssim
 
@@ -479,6 +484,9 @@ Profile, Level, Tier
 	specified level, main tier first, turning on high tier only if 
 	necessary and available at that level.
 
+	If :option:`--level-idc` has not been specified, this argument is
+	ignored.
+
 .. option:: --ref <1..16>
 
 	Max number of L0 references to be allowed. This number has a linear
@@ -511,6 +519,7 @@ Profile, Level, Tier
 	Default: disabled
 
 .. note::
+
 	:option:`--profile`, :option:`--level-idc`, and
 	:option:`--high-tier` are only intended for use when you are
 	targeting a particular decoder (or decoders) with fixed resource
@@ -518,6 +527,19 @@ Profile, Level, Tier
 	Specifying a profile or level may lower the encode quality
 	parameters to meet those requirements but it will never raise
 	them. It may enable VBV constraints on a CRF encode.
+
+	Also note that x265 determines the decoder requirement level in
+	three steps.  First, the user configures an x265_param structure
+	with their suggested encoder options and then optionally calls
+	x265_param_apply_profile() to enforce a specific profile (main,
+	main10, etc). Second, an encoder is created from this x265_param
+	instance and the :option:`--level-idc` and :option:`--high-tier`
+	parameters are used to reduce bitrate or other features in order to
+	enforce the target level. Finally, the encoder re-examines the final
+	set of parameters and detects the actual minimum decoder requirement
+	level and this is what is signaled in the bitstream headers. The
+	detected decoder level will only use High tier if the user specified
+	a High tier level.
 
 Mode decision / Analysis
 ========================
@@ -580,6 +602,34 @@ the prediction quad-tree.
 	the CU size range. :option:`--ctu` and :option:`--min-cu-size` must
 	be consistent for all of them since the encoder configures several
 	key global data structures based on this range.
+
+.. option:: --limit-refs <0|1|2|3>
+
+	When set to X265_REF_LIMIT_DEPTH (1) x265 will limit the references
+	analyzed at the current depth based on the references used to code
+	the 4 sub-blocks at the next depth.  For example, a 16x16 CU will
+	only use the references used to code its four 8x8 CUs.
+
+	When set to X265_REF_LIMIT_CU (2), the rectangular and asymmetrical
+	partitions will only use references selected by the 2Nx2N motion
+	search (including at the lowest depth which is otherwise unaffected
+	by the depth limit).
+
+	When set to 3 (X265_REF_LIMIT_DEPTH && X265_REF_LIMIT_CU), the 2Nx2N 
+	motion search at each depth will only use references from the split 
+	CUs and the rect/amp motion searches at that depth will only use the 
+	reference(s) selected by 2Nx2N. 
+
+	For all non-zero values of limit-refs, the current depth will evaluate
+	intra mode (in inter slices), only if intra mode was chosen as the best
+	mode for atleast one of the 4 sub-blocks.
+
+	You can often increase the number of references you are using
+	(within your decoder level limits) if you enable one or
+	both of these flags.
+
+	This feature is EXPERIMENTAL and currently only functional at RD
+	levels 0 through 4
 
 .. option:: --rect, --no-rect
 

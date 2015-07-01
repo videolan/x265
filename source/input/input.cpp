@@ -25,7 +25,7 @@
 #include "yuv.h"
 #include "y4m.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 InputFile* InputFile::open(InputFileInfo& info, bool bForceY4m)
 {

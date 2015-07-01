@@ -41,9 +41,9 @@ string identifying the compiler and build options.
 x265 will accept input pixels of any depth between 8 and 16 bits
 regardless of the depth of its internal pixels (8 or 10).  It will shift
 and mask input pixels as required to reach the internal depth. If
-downshifting is being performed using our CLI application, the
-:option:`--dither` option may be enabled to reduce banding. This feature
-is not available through the C interface.
+downshifting is being performed using our CLI application (to 8 bits),
+the :option:`--dither` option may be enabled to reduce banding. This
+feature is not available through the C interface.
 
 Encoder
 =======
@@ -190,7 +190,7 @@ changes made to the parameters for auto-detection and other reasons::
 	 *      presets is not recommended without a more fine-grained breakdown of
 	 *      parameters to take this into account. */
 	int x265_encoder_reconfig(x265_encoder *, x265_param *);
-	
+
 Pictures
 ========
 
@@ -338,13 +338,8 @@ statistics from the encoder::
 Cleanup
 =======
 
-At the end of the encode, the application will want to trigger logging
-of the final encode statistics, if :option:`--csv` had been specified::
-
 	/* x265_encoder_log:
-	 *       write a line to the configured CSV file.  If a CSV filename was not
-	 *       configured, or file open failed, or the log level indicated frame level
-	 *       logging, this function will perform no write. */
+	 *       This function is now deprecated */
 	void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
 
 Finally, the encoder must be closed in order to free all of its
@@ -370,52 +365,163 @@ CTU size::
 Multi-library Interface
 =======================
 
-If your application might want to make a runtime selection between
-a number of libx265 libraries (perhaps 8bpp and 16bpp), then you will
-want to use the multi-library interface.
+If your application might want to make a runtime selection between a
+number of (static or dynamically linked) libx265 libraries, then you
+will want to use one of these bit-depth introspection interfaces.
 
-Instead of directly using all of the **x265_** methods documented
-above, you query an x265_api structure from your libx265 and then use
-the function pointers within that structure of the same name, but
-without the **x265_** prefix. So **x265_param_default()** becomes
-**api->param_default()**. The key method is x265_api_get()::
+Instead of directly using all of the **x265_** methods documented above,
+you query an x265_api structure from your libx265 and then use the
+function pointers of the same name (minus the **x265_** prefix) within
+that structure.  For instance **x265_param_default()** becomes
+**api->param_default()**.
 
-    /* x265_api_get:
-     *   Retrieve the programming interface for a linked x265 library.
-     *   May return NULL if no library is available that supports the
-     *   requested bit depth. If bitDepth is 0, the function is guarunteed
-     *   to return a non-NULL x265_api pointer from the system default
-     *   libx265 */
-    const x265_api* x265_api_get(int bitDepth);
+x265_api_get
+------------
 
-Note that using this multi-library API in your application is only the
-first step.
+The first bit-depth instrospecton method is x265_api_get(). It designed
+for applications that might statically link with libx265, or will at
+least be tied to a particular SONAME or API version::
 
-Your application must link to one build of libx265 (statically or 
-dynamically) and this linked version of libx265 will support one 
-bit-depth (8 or 10 bits). 
+	/* x265_api_get:
+	 *   Retrieve the programming interface for a linked x265 library.
+	 *   May return NULL if no library is available that supports the
+	 *   requested bit depth. If bitDepth is 0, the function is guarunteed
+	 *   to return a non-NULL x265_api pointer from the system default
+	 *   libx265 */
+	const x265_api* x265_api_get(int bitDepth);
 
-Your application must now request the API for the bitDepth you would 
-prefer the encoder to use (8 or 10). If the requested bitdepth is zero, 
-or if it matches the bitdepth of the system default libx265 (the 
-currently linked library), then this library will be used for encode.
-If you request a different bit-depth, the linked libx265 will attempt 
-to dynamically bind a shared library with a name appropriate for the 
-requested bit-depth:
+Like **x265_encoder_encode()**, this function has the build number
+automatically appended to the function name via macros. This ties your
+application to a particular binary API version of libx265 (the one you
+compile against). If you attempt to link with a libx265 with a different
+API version number, the link will fail.
 
-    8-bit:  libx265_main.dll
-    10-bit: libx265_main10.dll
+Obviously this has no meaningful effect on applications which statically
+link to libx265.
 
-    (the shared library extension is obviously platform specific. On
-    Linux it is .so while on Mac it is .dylib)
+x265_api_query
+--------------
+
+The second bit-depth introspection method is designed for applications
+which need more flexibility in API versioning.  If you use
+**x265_api_query()** and dynamically link to libx265 at runtime (using
+dlopen() on POSIX or LoadLibrary() on Windows) your application is no
+longer directly tied to the API version that it was compiled against::
+
+	/* x265_api_query:
+	 *   Retrieve the programming interface for a linked x265 library, like
+	 *   x265_api_get(), except this function accepts X265_BUILD as the second
+	 *   argument rather than using the build number as part of the function name.
+	 *   Applications which dynamically link to libx265 can use this interface to
+	 *   query the library API and achieve a relative amount of version skew
+	 *   flexibility. The function may return NULL if the library determines that
+	 *   the apiVersion that your application was compiled against is not compatible
+	 *   with the library you have linked with.
+	 *
+	 *   api_major_version will be incremented any time non-backward compatible
+	 *   changes are made to any public structures or functions. If
+	 *   api_major_version does not match X265_MAJOR_VERSION from the x265.h your
+	 *   application compiled against, your application must not use the returned
+	 *   x265_api pointer.
+	 *
+	 *   Users of this API *must* also validate the sizes of any structures which
+	 *   are not treated as opaque in application code. For instance, if your
+	 *   application dereferences a x265_param pointer, then it must check that
+	 *   api->sizeof_param matches the sizeof(x265_param) that your application
+	 *   compiled with. */
+	const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
+
+A number of validations must be performed on the returned API structure
+in order to determine if it is safe for use by your application. If you
+do not perform these checks, your application is liable to crash::
+
+	if (api->api_major_version != X265_MAJOR_VERSION) /* do not use */
+	if (api->sizeof_param != sizeof(x265_param))      /* do not use */
+	if (api->sizeof_picture != sizeof(x265_picture))  /* do not use */
+	if (api->sizeof_stats != sizeof(x265_stats))      /* do not use */
+	if (api->sizeof_zone != sizeof(x265_zone))        /* do not use */
+	etc.
+
+Note that if your application does not directly allocate or dereference
+one of these structures, if it treats the structure as opaque or does
+not use it at all, then it can skip the size check for that structure.
+
+In particular, if your application uses api->param_alloc(),
+api->param_free(), api->param_parse(), etc and never directly accesses
+any x265_param fields, then it can skip the check on the
+sizeof(x265_parm) and thereby ignore changes to that structure (which
+account for a large percentage of X265_BUILD bumps).
+
+Static Linking Implications
+---------------------------
+
+By default libx265 will place all of its internal C++ classes and
+functions within an x265 namespace and export all of the C functions
+documented in this file. Obviously this prevents 8bit and 10bit builds
+of libx265 from being statically linked into a single application, all
+of those symbols would collide.
+
+However, if you set the EXPORT_C_API cmake option to OFF, then libx265
+will use an x265_8bit or x265_10bit namespace for its C++ classes and
+functions (and use the same name as a prefix for its assembly functions)
+and only exports the two bit-depth introspection C functions from the
+8bit library and no C functions from the 10bit library. Thus
+applications which use one of the introspection functions (and no other
+exported C functions) may link with both 8bit and 10bit static libraries
+compiled with EXPORT_C_API=OFF.
+
+.. Note::
+
+	When libx265 is compiled with EXPORT_C_API=OFF, the two
+	bit-depth introspection functions will *not* attempt to dynamically
+	bind a shared library if the requested bit-depth is not found. It is
+	assuming that all necessary libraries will be statically linked.
+
+Dynamic Linking Implications
+----------------------------
+
+If your application is linking to a shared libx265 library, then again
+you have a choice of using the exported C functions or one of the
+bit-depth introspection functions. If your application uses the exported C
+functions, then it will always use the libx265 library which it links
+with.
+
+If instead your application uses one of the bit-depth introspection
+methods, your application may request the API for the bit-depth you
+would prefer to use (8 or 10). If the requested bit-depth is zero, or if
+it matches the bit-depth of the linked library, the linked library will
+be used for encode.  If you request a different bit-depth, the linked
+libx265 will attempt to dynamically bind a shared library with a name
+appropriate for the requested bit-depth:
+
+    8-bit:  libx265_main
+    10-bit: libx265_main10
+
+Packaging and Distribution
+--------------------------
+
+Packagers have a plethora of build choices for x265.
 
 For example on Windows, one could package together an x265.exe
-statically linked against the 8bpp libx265 together with a
-libx265_main10.dll in the same folder, and this executable would be able
-to encode main and main10 bitstreams.
+statically linked against the 8bit libx265 and a libx265_main10.dll in
+the same folder. This executable would be able to encode Main and Main10
+bitstreams. Or they may simply link the x265 CLI with both static
+libraries into a single executable file.
 
-On Linux, x265 packagers could install 8bpp static and shared libraries
-under the name libx265 (so all applications link against 8bpp libx265)
-and then also install libx265_main10.so (symlinked to its numbered solib).
-Thus applications which use x265_api_get() will be able to generate main
-or main10 bitstreams.
+.. Note::
+
+	Windows packagers might want to build libx265 with WINXP_SUPPORT
+	enabled. This makes the resulting binaries functional on XP and
+	Vista. Without this flag, the minimum supported host O/S is Windows
+	7. Also note that binaries built with WINXP_SUPPORT will *not* have
+	NUMA support and they will have slightly less performance.
+
+	STATIC_LINK_CRT is also recommended so end-users will not need to
+	install any additional MSVC C runtime libraries.
+
+On Linux, x265 packagers could install 8bit static and shared libraries
+under the name libx265 (so all applications link against 8bit libx265)
+and then also install libx265_main10.so (symlinked to its numbered
+solib). Thus applications which use **x265_api_get()** or
+**x265_api_query()** will be able to select Main or Main10 encodes at
+runtime.

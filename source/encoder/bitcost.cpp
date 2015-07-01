@@ -25,7 +25,7 @@
 #include "primitives.h"
 #include "bitcost.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 void BitCost::setQP(unsigned int qp)
 {

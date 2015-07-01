@@ -42,7 +42,7 @@
 #define SHORT_MIN -32767
 #define UNSIGNED_SHORT_MAX 65535
 
-using namespace x265;
+using namespace X265_NS;
 
 extern const char* lumaPartStr[NUM_PU_SIZES];
 extern const char* const* chromaPartStr[X265_CSP_COUNT];

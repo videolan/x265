@@ -25,7 +25,7 @@
 #include "bitstream.h"
 #include "nal.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 NALList::NALList()
     : m_numNal(0)

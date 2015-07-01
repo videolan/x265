@@ -27,7 +27,7 @@
 #include "common.h"
 #include "mbdstharness.h"
 
-using namespace x265;
+using namespace X265_NS;
 
 struct DctConf
 {

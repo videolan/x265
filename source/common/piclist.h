@@ -24,9 +24,10 @@
 #ifndef X265_PICLIST_H
 #define X265_PICLIST_H
 
-#include <cstdlib>
+#include "common.h"
 
-namespace x265 {
+namespace X265_NS {
+
 class Frame;
 
 class PicList

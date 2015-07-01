@@ -7,6 +7,7 @@
 ;*          Fiona Glaser <fiona@x264.com>
 ;*          Laurent Aimar <fenrir@via.ecp.fr>
 ;*          Alex Izvorski <aizvorksi@gmail.com>
+;*          Min Chen <chenm003@163.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -32,15 +33,13 @@
 SECTION_RODATA 32
 
 MSK:                  db 255,255,255,255,255,255,255,255,255,255,255,255,0,0,0,0
-pb_shuf8x8c2: times 2 db 0,0,0,0,8,8,8,8,-1,-1,-1,-1,-1,-1,-1,-1
-hpred_shuf:           db 0,0,2,2,8,8,10,10,1,1,3,3,9,9,11,11
 
 SECTION .text
 
 cextern pb_3
 cextern pb_shuf8x8c
 cextern pw_8
-cextern sw_64
+cextern pd_64
 
 ;=============================================================================
 ; SAD MMX
@@ -2784,6 +2783,83 @@ SAD_X 4,  4,  4
 %endif
 %endmacro
 
+%macro SAD_X4_START_2x32P_AVX2 0
+    mova        m4, [r0]
+    movu        m0, [r1]
+    movu        m2, [r2]
+    movu        m1, [r3]
+    movu        m3, [r4]
+    psadbw      m0, m4
+    psadbw      m2, m4
+    psadbw      m1, m4
+    psadbw      m3, m4
+    packusdw    m0, m2
+    packusdw    m1, m3
+
+    mova        m6, [r0+FENC_STRIDE]
+    movu        m2, [r1+r5]
+    movu        m4, [r2+r5]
+    movu        m3, [r3+r5]
+    movu        m5, [r4+r5]
+    psadbw      m2, m6
+    psadbw      m4, m6
+    psadbw      m3, m6
+    psadbw      m5, m6
+    packusdw    m2, m4
+    packusdw    m3, m5
+    paddd       m0, m2
+    paddd       m1, m3
+%endmacro
+
+%macro SAD_X4_2x32P_AVX2 4
+    mova        m6, [r0+%1]
+    movu        m2, [r1+%2]
+    movu        m4, [r2+%2]
+    movu        m3, [r3+%2]
+    movu        m5, [r4+%2]
+    psadbw      m2, m6
+    psadbw      m4, m6
+    psadbw      m3, m6
+    psadbw      m5, m6
+    packusdw    m2, m4
+    packusdw    m3, m5
+    paddd       m0, m2
+    paddd       m1, m3
+
+    mova        m6, [r0+%3]
+    movu        m2, [r1+%4]
+    movu        m4, [r2+%4]
+    movu        m3, [r3+%4]
+    movu        m5, [r4+%4]
+    psadbw      m2, m6
+    psadbw      m4, m6
+    psadbw      m3, m6
+    psadbw      m5, m6
+    packusdw    m2, m4
+    packusdw    m3, m5
+    paddd       m0, m2
+    paddd       m1, m3
+%endmacro
+
+%macro SAD_X4_4x32P_AVX2 2
+%if %1==0
+    lea  r6, [r5*3]
+    SAD_X4_START_2x32P_AVX2
+%else
+    SAD_X4_2x32P_AVX2 FENC_STRIDE*(0+(%1&1)*4), r5*0, FENC_STRIDE*(1+(%1&1)*4), r5*1
+%endif
+    SAD_X4_2x32P_AVX2 FENC_STRIDE*(2+(%1&1)*4), r5*2, FENC_STRIDE*(3+(%1&1)*4), r6
+%if %1 != %2-1
+%if (%1&1) != 0
+    add  r0, 8*FENC_STRIDE
+%endif
+    lea  r1, [r1+4*r5]
+    lea  r2, [r2+4*r5]
+    lea  r3, [r3+4*r5]
+    lea  r4, [r4+4*r5]
+%endif
+%endmacro
+
 %macro SAD_X3_END_AVX2 0
     movifnidn r5, r5mp
     packssdw  m0, m1        ; 0 0 1 1 0 0 1 1
@@ -2805,6 +2881,17 @@ SAD_X 4,  4,  4
     punpcklqdq   xm2, xm3
     phaddd   xm0, xm2       ; 0 1 2 3
     mova    [r0], xm0
+    RET
+%endmacro
+
+%macro SAD_X4_32P_END_AVX2 0
+    mov          r0, r6mp
+    vextracti128 xm2, m0, 1
+    vextracti128 xm3, m1, 1
+    paddd        xm0, xm2
+    paddd        xm1, xm3
+    phaddd       xm0, xm1
+    mova         [r0], xm0
     RET
 %endmacro
 
@@ -3320,7 +3407,12 @@ cglobal pixel_sad_x%1_%2x%3, 2+%1,3+%1,%4
     SAD_X%1_4x%2P_AVX2 x, %3/4
 %assign x x+1
 %endrep
+
+  %if (%1==4) && (%2==32)
+    SAD_X%1_32P_END_AVX2
+  %else
     SAD_X%1_END_AVX2
+  %endif
 %endmacro
 
 INIT_YMM avx2
@@ -3332,6 +3424,12 @@ SAD_X_AVX2 4, 16, 32, 8
 SAD_X_AVX2 4, 16, 16, 8
 SAD_X_AVX2 4, 16, 12, 8
 SAD_X_AVX2 4, 16,  8, 8
+
+SAD_X_AVX2 4, 32,  8, 8
+SAD_X_AVX2 4, 32, 16, 8
+SAD_X_AVX2 4, 32, 24, 8
+SAD_X_AVX2 4, 32, 32, 8
+SAD_X_AVX2 4, 32, 64, 8
 
 ;=============================================================================
 ; SAD cacheline split
@@ -3440,7 +3538,7 @@ cglobal pixel_sad_16x%2_cache64_%1
     jle pixel_sad_%1x%2_mmx2
     and    eax, 7
     shl    eax, 3
-    movd   mm6, [sw_64]
+    movd   mm6, [pd_64]
     movd   mm7, eax
     psubw  mm6, mm7
     PROLOGUE 4,5

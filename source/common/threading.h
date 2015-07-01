@@ -71,7 +71,7 @@
 
 #endif // ifdef __GNUC__
 
-namespace x265 {
+namespace X265_NS {
 // x265 private namespace
 
 #ifdef _WIN32
@@ -463,6 +463,6 @@ public:
 
     void stop();
 };
-} // end namespace x265
+} // end namespace X265_NS
 
 #endif // ifndef X265_THREADING_H
