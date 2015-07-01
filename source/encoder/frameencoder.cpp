@@ -583,6 +583,33 @@ void FrameEncoder::compressFrame()
         m_frame->m_encData->m_frameStats.percent8x8Inter = (double)totalP / totalCuCount;
         m_frame->m_encData->m_frameStats.percent8x8Skip  = (double)totalSkip / totalCuCount;
     }
+    for (uint32_t i = 0; i < m_numRows; i++)
+    {
+        m_frame->m_encData->m_frameStats.cntIntraNxN += m_rows[i].rowStats.cntIntraNxN;
+        m_frame->m_encData->m_frameStats.totalCu     += m_rows[i].rowStats.totalCu;
+        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        {
+            m_frame->m_encData->m_frameStats.cntSkipCu[depth] += m_rows[i].rowStats.cntSkipCu[depth];
+            m_frame->m_encData->m_frameStats.cntMergeCu[depth] += m_rows[i].rowStats.cntMergeCu[depth];
+            for (int m = 0; m < INTER_MODES; m++)
+                m_frame->m_encData->m_frameStats.cuInterDistribution[depth][m] += m_rows[i].rowStats.cuInterDistribution[depth][m];
+            for (int n = 0; n < INTRA_MODES; n++)
+                m_frame->m_encData->m_frameStats.cuIntraDistribution[depth][n] += m_rows[i].rowStats.cuIntraDistribution[depth][n];
+        }
+    }
+    m_frame->m_encData->m_frameStats.percentIntraNxN = (double)(m_frame->m_encData->m_frameStats.cntIntraNxN * 100) / m_frame->m_encData->m_frameStats.totalCu;
+    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+    {
+        m_frame->m_encData->m_frameStats.percentSkipCu[depth]  = (double)(m_frame->m_encData->m_frameStats.cntSkipCu[depth] * 100) / m_frame->m_encData->m_frameStats.totalCu;
+        m_frame->m_encData->m_frameStats.percentMergeCu[depth] = (double)(m_frame->m_encData->m_frameStats.cntMergeCu[depth] * 100) / m_frame->m_encData->m_frameStats.totalCu;
+        for (int n = 0; n < INTRA_MODES; n++)
+            m_frame->m_encData->m_frameStats.percentIntraDistribution[depth][n] = (double)(m_frame->m_encData->m_frameStats.cuIntraDistribution[depth][n] * 100) / m_frame->m_encData->m_frameStats.totalCu;
+        uint64_t cuInterRectCnt = 0; // sum of Nx2N, 2NxN counts
+        cuInterRectCnt += m_frame->m_encData->m_frameStats.cuInterDistribution[depth][1] + m_frame->m_encData->m_frameStats.cuInterDistribution[depth][2];
+        m_frame->m_encData->m_frameStats.percentInterDistribution[depth][0] = (double)(m_frame->m_encData->m_frameStats.cuInterDistribution[depth][0] * 100) / m_frame->m_encData->m_frameStats.totalCu;
+        m_frame->m_encData->m_frameStats.percentInterDistribution[depth][1] = (double)(cuInterRectCnt * 100) / m_frame->m_encData->m_frameStats.totalCu;
+        m_frame->m_encData->m_frameStats.percentInterDistribution[depth][2] = (double)(m_frame->m_encData->m_frameStats.cuInterDistribution[depth][3] * 100) / m_frame->m_encData->m_frameStats.totalCu;
+    }
 
     m_bs.resetBits();
     m_entropyCoder.load(m_initSliceContext);
@@ -838,13 +865,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     const uint32_t lineStartCUAddr = row * numCols;
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
-    /* These store the count of inter, intra and skip cus within quad tree structure of each CTU */
-    uint32_t qTreeInterCnt[NUM_CU_DEPTH];
-    uint32_t qTreeIntraCnt[NUM_CU_DEPTH];
-    uint32_t qTreeSkipCnt[NUM_CU_DEPTH];
-    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-        qTreeIntraCnt[depth] = qTreeInterCnt[depth] = qTreeSkipCnt[depth] = 0;
-
     while (curRow.completed < numCols)
     {
         ProfileScopeEvent(encodeCTU);
@@ -916,29 +936,41 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         // Completed CU processing
         curRow.completed++;
 
-        if (m_param->rc.bStatWrite)
-            curEncData.m_rowStat[row].sumQpAq += collectCTUStatistics(*ctu, qTreeInterCnt, qTreeIntraCnt, qTreeSkipCnt);
-        else if (m_param->rc.aqMode)
-            curEncData.m_rowStat[row].sumQpAq += calcCTUQP(*ctu);
+        FrameStats frameLog;
+        curEncData.m_rowStat[row].sumQpAq += collectCTUStatistics(*ctu, &frameLog);
 
         // copy no. of intra, inter Cu cnt per row into frame stats for 2 pass
         if (m_param->rc.bStatWrite)
         {
-            curRow.rowStats.mvBits += best.mvBits;
+            curRow.rowStats.mvBits    += best.mvBits;
             curRow.rowStats.coeffBits += best.coeffBits;
-            curRow.rowStats.miscBits += best.totalBits - (best.mvBits + best.coeffBits);
+            curRow.rowStats.miscBits  += best.totalBits - (best.mvBits + best.coeffBits);
 
             for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
             {
                 /* 1 << shift == number of 8x8 blocks at current depth */
                 int shift = 2 * (g_maxCUDepth - depth);
-                curRow.rowStats.intra8x8Cnt += qTreeIntraCnt[depth] << shift;
-                curRow.rowStats.inter8x8Cnt += qTreeInterCnt[depth] << shift;
-                curRow.rowStats.skip8x8Cnt  += qTreeSkipCnt[depth] << shift;
+                int cuSize = g_maxCUSize >> depth;
 
-                // clear the row cu data from thread local object
-                qTreeIntraCnt[depth] = qTreeInterCnt[depth] = qTreeSkipCnt[depth] = 0;
+                if (cuSize == 8)
+                    curRow.rowStats.intra8x8Cnt += (int)(frameLog.cntIntra[depth] + frameLog.cntIntraNxN);
+                else
+                    curRow.rowStats.intra8x8Cnt += (int)(frameLog.cntIntra[depth] << shift);
+
+                curRow.rowStats.inter8x8Cnt += (int)(frameLog.cntInter[depth] << shift);
+                curRow.rowStats.skip8x8Cnt  += (int)(frameLog.cntSkipCu[depth] << shift);
             }
+        }
+        curRow.rowStats.cntIntraNxN += frameLog.cntIntraNxN;
+        curRow.rowStats.totalCu     += frameLog.totalCu;
+        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        {
+            curRow.rowStats.cntSkipCu[depth] += frameLog.cntSkipCu[depth];
+            curRow.rowStats.cntMergeCu[depth] += frameLog.cntMergeCu[depth];
+            for (int m = 0; m < INTER_MODES; m++)
+                curRow.rowStats.cuInterDistribution[depth][m] += frameLog.cuInterDistribution[depth][m];
+            for (int n = 0; n < INTRA_MODES; n++)
+                curRow.rowStats.cuIntraDistribution[depth][n] += frameLog.cuIntraDistribution[depth][n];
         }
 
         curEncData.m_cuStat[cuAddr].totalBits = best.totalBits;
@@ -1115,11 +1147,9 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 }
 
 /* collect statistics about CU coding decisions, return total QP */
-int FrameEncoder::collectCTUStatistics(const CUData& ctu, uint32_t* qtreeInterCnt, uint32_t* qtreeIntraCnt, uint32_t* qtreeSkipCnt)
+int FrameEncoder::collectCTUStatistics(const CUData& ctu, FrameStats* log)
 {
-    StatisticLog* log = &m_sliceTypeLog[ctu.m_slice->m_sliceType];
     int totQP = 0;
-
     if (ctu.m_slice->m_sliceType == I_SLICE)
     {
         uint32_t depth = 0;
@@ -1129,14 +1159,12 @@ int FrameEncoder::collectCTUStatistics(const CUData& ctu, uint32_t* qtreeInterCn
 
             log->totalCu++;
             log->cntIntra[depth]++;
-            qtreeIntraCnt[depth]++;
             totQP += ctu.m_qp[absPartIdx] * (ctu.m_numPartitions >> (depth * 2));
 
             if (ctu.m_predMode[absPartIdx] == MODE_NONE)
             {
                 log->totalCu--;
                 log->cntIntra[depth]--;
-                qtreeIntraCnt[depth]--;
             }
             else if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
             {
@@ -1159,24 +1187,20 @@ int FrameEncoder::collectCTUStatistics(const CUData& ctu, uint32_t* qtreeInterCn
             depth = ctu.m_cuDepth[absPartIdx];
 
             log->totalCu++;
-            log->cntTotalCu[depth]++;
             totQP += ctu.m_qp[absPartIdx] * (ctu.m_numPartitions >> (depth * 2));
 
             if (ctu.m_predMode[absPartIdx] == MODE_NONE)
-            {
                 log->totalCu--;
-                log->cntTotalCu[depth]--;
-            }
             else if (ctu.isSkipped(absPartIdx))
             {
-                log->totalCu--;
-                log->cntSkipCu[depth]++;
-                qtreeSkipCnt[depth]++;
+                if (ctu.m_mergeFlag[0])
+                    log->cntMergeCu[depth]++;
+                else
+                    log->cntSkipCu[depth]++;
             }
             else if (ctu.isInter(absPartIdx))
             {
                 log->cntInter[depth]++;
-                qtreeInterCnt[depth]++;
 
                 if (ctu.m_partSize[absPartIdx] < AMP_ID)
                     log->cuInterDistribution[depth][ctu.m_partSize[absPartIdx]]++;
@@ -1186,7 +1210,6 @@ int FrameEncoder::collectCTUStatistics(const CUData& ctu, uint32_t* qtreeInterCn
             else if (ctu.isIntra(absPartIdx))
             {
                 log->cntIntra[depth]++;
-                qtreeIntraCnt[depth]++;
 
                 if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
                 {
@@ -1203,21 +1226,6 @@ int FrameEncoder::collectCTUStatistics(const CUData& ctu, uint32_t* qtreeInterCn
         }
     }
 
-    return totQP;
-}
-
-/* iterate over coded CUs and determine total QP */
-int FrameEncoder::calcCTUQP(const CUData& ctu)
-{
-    int totQP = 0;
-    uint32_t depth = 0, numParts = ctu.m_numPartitions;
-
-    for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += numParts)
-    {
-        depth = ctu.m_cuDepth[absPartIdx];
-        numParts = ctu.m_numPartitions >> (depth * 2);
-        totQP += ctu.m_qp[absPartIdx] * numParts;
-    }
     return totQP;
 }
 

@@ -339,10 +339,6 @@ statistics from the encoder::
 Cleanup
 =======
 
-	/* x265_encoder_log:
-	 *       This function is now deprecated */
-	void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
-
 Finally, the encoder must be closed in order to free all of its
 resources. An encoder that has been flushed cannot be restarted and
 reused. Once **x265_encoder_close()** has been called, the encoder

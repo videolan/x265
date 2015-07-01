@@ -524,19 +524,6 @@ int main(int argc, char **argv)
     if (cliopt.reconPlayCmd)
         reconPlay = new ReconPlay(cliopt.reconPlayCmd, *param);
 
-    if (cliopt.csvfn)
-    {
-        cliopt.csvfpt = x265_csvlog_open(*api, *param, cliopt.csvfn, cliopt.csvLogLevel);
-        if (!cliopt.csvfpt)
-        {
-            x265_log(param, X265_LOG_ERROR, "Unable to open CSV log file <%s>, aborting\n", cliopt.csvfn);
-            cliopt.destroy();
-            if (cliopt.api)
-                cliopt.api->param_free(cliopt.param);
-            exit(5);
-        }
-    }
-
     /* note: we could try to acquire a different libx265 API here based on
      * the profile found during option parsing, but it must be done before
      * opening an encoder */
@@ -553,6 +540,19 @@ int main(int argc, char **argv)
 
     /* get the encoder parameters post-initialization */
     api->encoder_parameters(encoder, param);
+
+    if (cliopt.csvfn)
+    {
+        cliopt.csvfpt = x265_csvlog_open(*api, *param, cliopt.csvfn, cliopt.csvLogLevel);
+        if (!cliopt.csvfpt)
+        {
+            x265_log(param, X265_LOG_ERROR, "Unable to open CSV log file <%s>, aborting\n", cliopt.csvfn);
+            cliopt.destroy();
+            if (cliopt.api)
+                cliopt.api->param_free(cliopt.param);
+            exit(5);
+        }
+    }
 
     /* Control-C handler */
     if (signal(SIGINT, sigint_handler) == SIG_ERR)
@@ -654,7 +654,7 @@ int main(int argc, char **argv)
 
         cliopt.printStatus(outFrameCount);
         if (numEncoded && cliopt.csvLogLevel)
-            x265_csvlog_frame(cliopt.csvfpt, *param, *pic_recon);
+            x265_csvlog_frame(cliopt.csvfpt, *param, *pic_recon, cliopt.csvLogLevel);
     }
 
     /* Flush the encoder */
@@ -686,7 +686,7 @@ int main(int argc, char **argv)
 
         cliopt.printStatus(outFrameCount);
         if (numEncoded && cliopt.csvLogLevel)
-            x265_csvlog_frame(cliopt.csvfpt, *param, *pic_recon);
+            x265_csvlog_frame(cliopt.csvfpt, *param, *pic_recon, cliopt.csvLogLevel);
 
         if (!numEncoded)
             break;

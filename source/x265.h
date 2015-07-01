@@ -100,6 +100,18 @@ typedef struct x265_analysis_data
     uint32_t         numPartitions;
 } x265_analysis_data;
 
+/* cu statistics */
+typedef struct x265_cu_stats
+{
+    double      percentSkipCu[4];                // Percentage of skip cu in all depths
+    double      percentMergeCu[4];               // Percentage of merge cu in all depths
+    double      percentIntraDistribution[4][3];  // Percentage of DC, Planar, Angular intra modes in all depths
+    double      percentInterDistribution[4][3];  // Percentage of 2Nx2N inter, rect and amp in all depths
+    double      percentIntraNxN;                 // Percentage of 4x4 cu
+
+    /* All the above values will add up to 100%. */
+} x265_cu_stats;
+
 /* Frame level statistics */
 typedef struct x265_frame_stats
 {
@@ -124,6 +136,7 @@ typedef struct x265_frame_stats
     int              list0POC[16];
     int              list1POC[16];
     char             sliceType;
+    x265_cu_stats    cuStats;
 } x265_frame_stats;
 
 /* Used to pass pictures into the encoder, and to get picture data back out of

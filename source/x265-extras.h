@@ -48,7 +48,7 @@ LIBAPI FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, cons
 
 /* Log frame statistics to the CSV file handle. level should have been non-zero
  * in the call to x265_csvlog_open() if this function is called. */
-LIBAPI void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture& pic);
+LIBAPI void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture& pic, int level);
 
 /* Log final encode statistics to the CSV file handle. 'argc' and 'argv' are
  * intended to be command line arguments passed to the encoder. Encode
