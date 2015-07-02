@@ -28,7 +28,12 @@
 
 SECTION_RODATA 32
 
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+ssim_c1:   times 4 dd 107321.76    ; .01*.01*4095*4095*64
+ssim_c2:   times 4 dd 60851437.92  ; .03*.03*4095*4095*64*63
+pf_64:     times 4 dd 64.0
+pf_128:    times 4 dd 128.0
+%elif BIT_DEPTH == 10
 ssim_c1:   times 4 dd 6697.7856    ; .01*.01*1023*1023*64
 ssim_c2:   times 4 dd 3797644.4352 ; .03*.03*1023*1023*64*63
 pf_64:     times 4 dd 64.0
@@ -3506,7 +3511,7 @@ cglobal pixel_ssim_end4, 2,3
     TRANSPOSE4x4D  0, 1, 2, 3, 4
 
 ;   s1=m0, s2=m1, ss=m2, s12=m3
-%if BIT_DEPTH == 10
+%if BIT_DEPTH >= 10
     cvtdq2ps  m0, m0
     cvtdq2ps  m1, m1
     cvtdq2ps  m2, m2
