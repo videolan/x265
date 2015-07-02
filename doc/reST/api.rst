@@ -492,10 +492,11 @@ would prefer to use (8 or 10). If the requested bit-depth is zero, or if
 it matches the bit-depth of the linked library, the linked library will
 be used for encode.  If you request a different bit-depth, the linked
 libx265 will attempt to dynamically bind a shared library with a name
-appropriate for the requested bit-depth:
+appropriate for the requested bit-depth::
 
     8-bit:  libx265_main
     10-bit: libx265_main10
+    12-bit: libx265_main12
 
 Packaging and Distribution
 --------------------------

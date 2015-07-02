@@ -424,12 +424,13 @@ frame counts) are only applicable to the CLI application.
 
 	**CLI ONLY**
 
-.. option:: --output-depth, -D 8|10
+.. option:: --output-depth, -D 8|10|12
 
 	Bitdepth of output HEVC bitstream, which is also the internal bit
 	depth of the encoder. If the requested bit depth is not the bit
 	depth of the linked libx265, it will attempt to bind libx265_main
-	for an 8bit encoder, or libx265_main10 for a 10bit encoder, with the
+	for an 8bit encoder, libx265_main10 for a 10bit encoder, or
+	libx265_main12 for a 12bit encoder (EXPERIMENTAL), with the
 	same API version as the linked libx265.
 
 	**CLI ONLY**
@@ -547,6 +548,15 @@ Profile, Level, Tier
 	level and this is what is signaled in the bitstream headers. The
 	detected decoder level will only use High tier if the user specified
 	a High tier level.
+
+	Lastly, x265 will signal an all-intra encode using the appropriate
+	range extension intra profile, unless it knows that the encode will
+	be a single frame in which case it will signal a Still Picture
+	profile if one is appropriate. However, it makes this determination
+	based on param.totalFrames but this parameter is not always set.
+	Particularly when the CLI is used in stdin streaming mode or when
+	used by third-party applications.
+
 
 Mode decision / Analysis
 ========================
