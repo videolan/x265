@@ -3,6 +3,7 @@
 ;*
 ;* Authors: Nabajit Deka <nabajit@multicorewareinc.com>
 ;*          Murugan Vairavel <murugan@multicorewareinc.com>
+;*          Min Chen <chenm003@163.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -149,6 +150,7 @@ SECTION .text
 cextern pd_32
 cextern pw_pixel_max
 cextern pd_n32768
+cextern pd_n131072
 cextern pw_2000
 cextern idct8_shuf2
 
@@ -261,7 +263,6 @@ cextern idct8_shuf2
 %macro FILTER_HOR_LUMA_sse2 3
 INIT_XMM sse2
 cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
-
     mov         r4d,    r4m
     sub         r0,     6
     shl         r4d,    4
@@ -279,7 +280,11 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     mova        m1,     [pd_32]
     pxor        m7,     m7
 %else
+  %if BIT_DEPTH == 10
     mova        m1,     [pd_n32768]
+  %elif BIT_DEPTH == 12
+    mova        m1,     [pd_n131072]
+  %endif
 %endif
 
     mov         r4d,    %2
@@ -302,8 +307,13 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     packssdw    m4,     m5
     CLIPW       m4,     m7,     [pw_pixel_max]
 %else
+  %if BIT_DEPTH == 10
     psrad       m4,     2
     psrad       m5,     2
+  %elif BIT_DEPTH == 12
+    psrad       m4,     4
+    psrad       m5,     4
+  %endif
     packssdw    m4,     m5
 %endif
 
@@ -319,7 +329,11 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     packssdw    m4,     m4
     CLIPW       m4,     m7,     [pw_pixel_max]
 %else
+  %if BIT_DEPTH == 10
     psrad       m4,     2
+  %elif BIT_DEPTH == 12
+    psrad       m4,     4
+  %endif
     packssdw    m4,     m4
 %endif
 

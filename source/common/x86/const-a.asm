@@ -126,6 +126,7 @@ const pd_2048,              times  4 dd 2048
 const pd_ffff,              times  4 dd 0xffff
 const pd_32767,             times  4 dd 32767
 const pd_n32768,            times  4 dd 0xffff8000
+const pd_n131072,           times  4 dd 0xfffe0000
 
 const trans8_shuf,          times  1 dd   0,   4,   1,   5,   2,   6,   3,   7
 
