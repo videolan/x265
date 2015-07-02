@@ -1389,9 +1389,23 @@ void Encoder::configure(x265_param *p)
     }
     else if (p->keyframeMax <= 1)
     {
+        p->keyframeMax = 1;
+
         // disable lookahead for all-intra encodes
         p->bFrameAdaptive = 0;
         p->bframes = 0;
+        p->bOpenGOP = 0;
+        p->bRepeatHeaders = 1;
+        p->lookaheadDepth = 0;
+        p->bframes = 0;
+        p->scenecutThreshold = 0;
+        p->bFrameAdaptive = 0;
+        p->rc.cuTree = 0;
+        p->bEnableWeightedPred = 0;
+        p->bEnableWeightedBiPred = 0;
+
+        /* SPSs shall have sps_max_dec_pic_buffering_minus1[ sps_max_sub_layers_minus1 ] equal to 0 only */
+        p->maxNumReferences = 1;
     }
     if (!p->keyframeMin)
     {

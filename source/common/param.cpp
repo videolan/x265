@@ -1010,15 +1010,8 @@ int x265_check_params(x265_param* param)
     uint32_t tuQTMaxLog2Size = X265_MIN(maxLog2CUSize, 5);
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
-    /* These checks might be temporary */
-#if HIGH_BIT_DEPTH
-    CHECK(param->internalBitDepth != 10,
-          "x265 was compiled for 10bit encodes, only 10bit internal depth supported");
-#else
-    CHECK(param->internalBitDepth != 8,
-          "x265 was compiled for 8bit encodes, only 8bit internal depth supported");
-#endif
-
+    CHECK(param->internalBitDepth != X265_DEPTH,
+          "internalBitDepth must match compiled bit depth");
     CHECK(param->minCUSize != 64 && param->minCUSize != 32 && param->minCUSize != 16 && param->minCUSize != 8,
           "minimim CU size must be 8, 16, 32, or 64");
     CHECK(param->minCUSize > param->maxCUSize,

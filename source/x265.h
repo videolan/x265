@@ -1182,11 +1182,31 @@ void x265_param_default(x265_param *param);
 #define X265_PARAM_BAD_VALUE (-2)
 int x265_param_parse(x265_param *p, const char *name, const char *value);
 
-/* x265_param_apply_profile:
- *      Applies the restrictions of the given profile. (one of below) */
-static const char * const x265_profile_names[] = { "main", "main10", "mainstillpicture", 0 };
+static const char * const x265_profile_names[] = {
+    /* HEVC v1 */
+    "main", "main10", "mainstillpicture", /* alias */ "msp",
 
-/*      (can be NULL, in which case the function will do nothing)
+    /* HEVC v2 (Range Extensions) */
+    "main-intra", "main10-intra",
+    "main444-8",  "main444-intra", "main444-stillpicture",
+
+    "main422-10", "main422-10-intra",
+    "main444-10", "main444-10-intra",
+
+    "main12",     "main12-intra",                  /* Highly Experimental */
+    "main422-12", "main422-12-intra",
+    "main444-12", "main444-12-intra",
+
+    "main444-16-intra", "main444-16-stillpicture", /* Not Supported! */
+    0
+};
+
+/* x265_param_apply_profile:
+ *      Applies the restrictions of the given profile. (one of x265_profile_names)
+ *      (can be NULL, in which case the function will do nothing)
+ *      Note: the detected profile can be lower than the one specified to this
+ *      function. This function will force the encoder parameters to fit within
+ *      the specified profile, or fail if that is impossible.
  *      returns 0 on success, negative on failure (e.g. invalid profile name). */
 int x265_param_apply_profile(x265_param *, const char *profile);
 

@@ -444,13 +444,20 @@ Profile, Level, Tier
 	profile.  May abort the encode if the specified profile is
 	impossible to be supported by the compile options chosen for the
 	encoder (a high bit depth encoder will be unable to output
-	bitstreams compliant with Main or Mainstillpicture).
+	bitstreams compliant with Main or Mains-Still-Picture).
+
+	Note: Main12 presets are extremely unstable, do not use them yet.
+	      And Main16 is not supported at all.
 
 	API users must use x265_param_apply_profile() after configuring
 	their param structure. Any changes made to the param structure after
 	this call might make the encode non-compliant.
 
-	**Values:** main, main10, mainstillpicture, main422-8, main422-10, main444-8, main444-10
+	**Values:** main, main10, mainstillpicture, msp
+				main-intra main10-intra main444-8 main444-intra main444-stillpicture
+				main422-10 main422-10-intra main444-10 main444-10-intra main12 main12-intra
+				main422-12 main422-12-intra main444-12 main444-12-intra
+				main444-16-intra main444-16-stillpicture
 
 	**CLI ONLY**
 
