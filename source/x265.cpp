@@ -515,7 +515,7 @@ bool CLIOptions::parse(int argc, char **argv)
         showHelp(param);
     }
 
-    if (inputfn == NULL || outputfn == NULL)
+    if (!inputfn || !outputfn)
     {
         x265_log(param, X265_LOG_ERROR, "input or output file not specified, try --help for help\n");
         return true;
