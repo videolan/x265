@@ -337,7 +337,10 @@ cextern trans8_shuf
 ;------------------------------------------------------
 INIT_XMM sse2
 cglobal dct4, 3, 4, 8
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+  %define       DCT_SHIFT 5
+  mova          m7, [pd_16]
+%elif BIT_DEPTH == 10
   %define       DCT_SHIFT 3
   mova          m7, [pd_4]
 %elif BIT_DEPTH == 8
@@ -431,7 +434,10 @@ cglobal dct4, 3, 4, 8
 ; - r2:     source stride
 INIT_YMM avx2
 cglobal dct4, 3, 4, 8, src, dst, srcStride
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    %define DCT_SHIFT 5
+    vbroadcasti128 m7, [pd_16]
+%elif BIT_DEPTH == 10
     %define DCT_SHIFT 3
     vbroadcasti128 m7, [pd_4]
 %elif BIT_DEPTH == 8
@@ -494,12 +500,15 @@ cglobal dct4, 3, 4, 8, src, dst, srcStride
 ;-------------------------------------------------------
 INIT_XMM sse2
 cglobal idct4, 3, 4, 7
-%if BIT_DEPTH == 8
-  %define IDCT4_OFFSET  [pd_2048]
-  %define IDCT4_SHIFT   12
+%if BIT_DEPTH == 12
+  %define IDCT4_OFFSET  [pd_128]
+  %define IDCT4_SHIFT   8
 %elif BIT_DEPTH == 10
   %define IDCT4_OFFSET  [pd_512]
   %define IDCT4_SHIFT   10
+%elif BIT_DEPTH == 8
+  %define IDCT4_OFFSET  [pd_2048]
+  %define IDCT4_SHIFT   12
 %else
   %error Unsupported BIT_DEPTH!
 %endif
@@ -597,12 +606,17 @@ cglobal dst4, 3, 4, 8
   %define       coef3   [r3 + 3 * 16]
 %endif ; ARCH_X86_64
 
-%if BIT_DEPTH == 8
-  %define       DST_SHIFT 1
-  mova          m5, [pd_1]
+%if BIT_DEPTH == 12
+    %define       DST_SHIFT 5
+    mova          m5, [pd_16]
 %elif BIT_DEPTH == 10
-  %define       DST_SHIFT 3
-  mova          m5, [pd_4]
+    %define       DST_SHIFT 3
+    mova          m5, [pd_4]
+%elif BIT_DEPTH == 8
+    %define       DST_SHIFT 1
+    mova          m5, [pd_1]
+%else
+    %error Unsupported BIT_DEPTH!
 %endif
     add         r2d, r2d
     lea         r3, [tab_dst4]
@@ -869,12 +883,15 @@ cglobal dst4, 3, 4, 6
 ;-------------------------------------------------------
 INIT_XMM sse2
 cglobal idst4, 3, 4, 7
-%if BIT_DEPTH == 8
-  mova m6, [pd_2048]
-  %define IDCT4_SHIFT 12
+%if BIT_DEPTH == 12
+    mova m6,            [pd_128]
+  %define IDCT4_SHIFT   8
 %elif BIT_DEPTH == 10
-  mova m6, [pd_512]
-  %define IDCT4_SHIFT 10
+    mova m6,            [pd_512]
+  %define IDCT4_SHIFT   10
+%elif BIT_DEPTH == 8
+    mova m6,            [pd_2048]
+  %define IDCT4_SHIFT   12
 %else
   %error Unsupported BIT_DEPTH!
 %endif
@@ -961,12 +978,15 @@ cglobal idst4, 3, 4, 7
 ;-----------------------------------------------------------------
 INIT_YMM avx2
 cglobal idst4, 3, 4, 6
-%if BIT_DEPTH == 8
-  vpbroadcastd  m4, [pd_2048]
-  %define       IDCT4_SHIFT 12
+%if BIT_DEPTH == 12
+    vpbroadcastd    m4,     [pd_256]
+    %define IDCT4_SHIFT     8
 %elif BIT_DEPTH == 10
-  vpbroadcastd  m4, [pd_512]
-  %define       IDCT4_SHIFT 10
+    vpbroadcastd    m4,     [pd_512]
+    %define IDCT4_SHIFT     10
+%elif BIT_DEPTH == 8
+    vpbroadcastd    m4,     [pd_2048]
+    %define IDCT4_SHIFT     12
 %else
   %error Unsupported BIT_DEPTH!
 %endif
@@ -1046,7 +1066,10 @@ cglobal dct8, 3,6,8,0-16*mmsize
     ; ...
     ; Row6[4-7] Row7[4-7]
     ;------------------------
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+  %define       DCT_SHIFT1 6
+  %define       DCT_ADD1 [pd_32]
+%elif BIT_DEPTH == 10
   %define       DCT_SHIFT1 4
   %define       DCT_ADD1 [pd_8]
 %elif BIT_DEPTH == 8
@@ -1409,7 +1432,10 @@ cglobal dct8, 3,6,7,0-16*mmsize
     ; ...
     ; Row6[4-7] Row7[4-7]
     ;------------------------
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+  %define       DCT_SHIFT 6
+  mova          m6, [pd_16]
+%elif BIT_DEPTH == 10
   %define       DCT_SHIFT 4
   mova          m6, [pd_8]
 %elif BIT_DEPTH == 8
@@ -1623,7 +1649,10 @@ cglobal dct8, 3,6,7,0-16*mmsize
 ;-------------------------------------------------------
 %if ARCH_X86_64
 INIT_XMM sse2
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    %define     IDCT_SHIFT 8
+    %define     IDCT_ADD pd_128
+%elif BIT_DEPTH == 10
     %define     IDCT_SHIFT 10
     %define     IDCT_ADD pd_512
 %elif BIT_DEPTH == 8
@@ -2090,7 +2119,9 @@ cglobal patial_butterfly_inverse_internal_pass1
     ret
 
 %macro PARTIAL_BUTTERFLY_PROCESS_ROW 1
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    %define     IDCT_SHIFT 8
+%elif BIT_DEPTH == 10
     %define     IDCT_SHIFT 10
 %elif BIT_DEPTH == 8
     %define     IDCT_SHIFT 12
@@ -2159,7 +2190,9 @@ cglobal idct8, 3,7,8 ;,0-16*mmsize
 
     call        patial_butterfly_inverse_internal_pass1
 
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    mova        m6, [pd_256]
+%elif BIT_DEPTH == 10
     mova        m6, [pd_512]
 %elif BIT_DEPTH == 8
     mova        m6, [pd_2048]
@@ -2290,7 +2323,10 @@ cglobal denoise_dct, 4, 4, 6
 
 INIT_YMM avx2
 cglobal dct8, 3, 7, 11, 0-8*16
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    %define         DCT_SHIFT          6
+    vbroadcasti128  m5,                [pd_16]
+%elif BIT_DEPTH == 10
     %define         DCT_SHIFT          4
     vbroadcasti128  m5,                [pd_8]
 %elif BIT_DEPTH == 8
@@ -2456,7 +2492,10 @@ cglobal dct8, 3, 7, 11, 0-8*16
 %endmacro
 INIT_YMM avx2
 cglobal dct16, 3, 9, 16, 0-16*mmsize
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    %define         DCT_SHIFT          7
+    vbroadcasti128  m9,                [pd_64]
+%elif BIT_DEPTH == 10
     %define         DCT_SHIFT          5
     vbroadcasti128  m9,                [pd_16]
 %elif BIT_DEPTH == 8
@@ -2679,7 +2718,10 @@ cglobal dct16, 3, 9, 16, 0-16*mmsize
 
 INIT_YMM avx2
 cglobal dct32, 3, 9, 16, 0-64*mmsize
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    %define         DCT_SHIFT          8
+    vpbroadcastq    m9,                [pd_128]
+%elif BIT_DEPTH == 10
     %define         DCT_SHIFT          6
     vpbroadcastq    m9,                [pd_32]
 %elif BIT_DEPTH == 8
@@ -2973,7 +3015,10 @@ cglobal dct32, 3, 9, 16, 0-64*mmsize
 
 INIT_YMM avx2
 cglobal idct8, 3, 7, 13, 0-8*16
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    %define         IDCT_SHIFT2        8
+    vpbroadcastd    m12,                [pd_256]
+%elif BIT_DEPTH == 10
     %define         IDCT_SHIFT2        10
     vpbroadcastd    m12,                [pd_512]
 %elif BIT_DEPTH == 8
@@ -3131,7 +3176,10 @@ cglobal idct8, 3, 7, 13, 0-8*16
 ;-------------------------------------------------------
 INIT_YMM avx2
 cglobal idct16, 3, 7, 16, 0-16*mmsize
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    %define         IDCT_SHIFT2        8
+    vpbroadcastd    m15,                [pd_256]
+%elif BIT_DEPTH == 10
     %define         IDCT_SHIFT2        10
     vpbroadcastd    m15,                [pd_512]
 %elif BIT_DEPTH == 8
@@ -3550,7 +3598,10 @@ cglobal idct32, 3, 6, 16, 0-32*64
     dec             r5d
     jnz             .pass1
 
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    %define         IDCT_SHIFT2        8
+    vpbroadcastd    m15,                [pd_256]
+%elif BIT_DEPTH == 10
     %define         IDCT_SHIFT2        10
     vpbroadcastd    m15,                [pd_512]
 %elif BIT_DEPTH == 8
@@ -3711,7 +3762,10 @@ INIT_YMM avx2
 cglobal idct4, 3, 4, 6
 
 %define             IDCT_SHIFT1         7
-%if BIT_DEPTH == 10
+%if BIT_DEPTH == 12
+    %define         IDCT_SHIFT2        8
+    vpbroadcastd    m5,                [pd_256]
+%elif BIT_DEPTH == 10
     %define         IDCT_SHIFT2        10
     vpbroadcastd    m5,                [pd_512]
 %elif BIT_DEPTH == 8
