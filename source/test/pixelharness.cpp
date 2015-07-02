@@ -1180,8 +1180,8 @@ bool PixelHarness::check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt)
 
 bool PixelHarness::check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt)
 {
-    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+    ALIGN_VAR_16(pixel, ref_dest[64 * 64 * 2]);
+    ALIGN_VAR_16(pixel, opt_dest[64 * 64 * 2]);
 
     memset(ref_dest, 0xCD, sizeof(ref_dest));
     memset(opt_dest, 0xCD, sizeof(opt_dest));
@@ -1198,7 +1198,7 @@ bool PixelHarness::check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt)
         checked(opt, uchar_test_buff[index] + j, srcStride, opt_dest, dstStride, width, height, (int)2);
         ref(uchar_test_buff[index] + j, srcStride, ref_dest, dstStride, width, height, (int)2);
 
-        if (memcmp(ref_dest, opt_dest, width * height * sizeof(pixel)))
+        if (memcmp(ref_dest, opt_dest, sizeof(ref_dest)))
             return false;
 
         reportfail();
