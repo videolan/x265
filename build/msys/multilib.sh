@@ -13,5 +13,5 @@ make ${MAKEFLAGS}
 cp libx265.a ../8bit/libx265_main10.a
 
 cd ../8bit
-cmake -G "MSYS Makefiles" ../../../source -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=ON -DEXTRA_LIB="x265_main10.a x265_main12.a" -DEXTRA_LINK_FLAGS=-L.
+cmake -G "MSYS Makefiles" ../../../source -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=ON -DEXTRA_LIB="x265_main10.a;x265_main12.a" -DEXTRA_LINK_FLAGS=-L.
 make ${MAKEFLAGS}
