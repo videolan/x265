@@ -61,23 +61,25 @@ LevelSpec levels[] =
 /* determine minimum decoder level required to decode the described video */
 void determineLevel(const x265_param &param, VPS& vps)
 {
-    vps.maxTempSubLayers = param.bEnableTemporalSubLayers ? 2 : 1;
     if (param.internalCsp == X265_CSP_I420 && param.internalBitDepth <= 10)
     {
-        if (param.internalBitDepth == 8)
+        /* Probably an HEVC v1 profile, but must check to be sure */
+        if (param.internalBitDepth <= 8)
         {
-            if (param.keyframeMax <= 1)
-            {
-                if (param.totalFrames == 1)
-                    vps.ptl.profileIdc = Profile::MAINSTILLPICTURE;
-                else
-                    vps.ptl.profileIdc = Profile::MAINREXT; /* Main Intra */
-            }
+            if (param.totalFrames == 1)
+                vps.ptl.profileIdc = Profile::MAINSTILLPICTURE;
+            else if (param.keyframeMax <= 1)
+                vps.ptl.profileIdc = Profile::MAINREXT; /* Main Intra */
             else 
                 vps.ptl.profileIdc = Profile::MAIN;
         }
-        else if (param.internalBitDepth == 10)
-            vps.ptl.profileIdc = Profile::MAIN10;
+        else if (param.internalBitDepth <= 10)
+        {
+            if (param.keyframeMax <= 1)
+                vps.ptl.profileIdc = Profile::MAINREXT; /* Main10 Intra */
+            else
+                vps.ptl.profileIdc = Profile::MAIN10;
+        }
     }
     else
         vps.ptl.profileIdc = Profile::MAINREXT;
@@ -86,6 +88,7 @@ void determineLevel(const x265_param &param, VPS& vps)
 
     memset(vps.ptl.profileCompatibilityFlag, 0, sizeof(vps.ptl.profileCompatibilityFlag));
     vps.ptl.profileCompatibilityFlag[vps.ptl.profileIdc] = true;
+    vps.maxTempSubLayers = param.bEnableTemporalSubLayers ? 2 : 1;
     if (vps.ptl.profileIdc == Profile::MAIN10 && param.internalBitDepth == 8)
         vps.ptl.profileCompatibilityFlag[Profile::MAIN] = true;
     else if (vps.ptl.profileIdc == Profile::MAIN)
@@ -205,8 +208,19 @@ void determineLevel(const x265_param &param, VPS& vps)
     bool bStillPicture = false;
     if (vps.ptl.profileIdc == Profile::MAINREXT)
     {
-        if (param.internalCsp == X265_CSP_I422)
+        if (vps.ptl.bitDepthConstraint > 12 && vps.ptl.intraConstraintFlag)
         {
+            if (param.totalFrames == 1)
+            {
+                strcpy(profbuf, "Main 4:4:4 16 Still Picture");
+                bStillPicture = true;
+            }
+            else
+                strcpy(profbuf, "Main 4:4:4 16");
+        }
+        else if (param.internalCsp == X265_CSP_I422)
+        {
+            /* there is no Main 4:2:2 profile, so it must be signaled as Main10 4:2:2 */
             if (param.internalBitDepth <= 10)
                 strcpy(profbuf, "Main 4:2:2 10");
             else if (vps.ptl.bitDepthConstraint <= 12)
@@ -228,16 +242,6 @@ void determineLevel(const x265_param &param, VPS& vps)
                 strcpy(profbuf, "Main 4:4:4 10");
             else if (vps.ptl.bitDepthConstraint <= 12)
                 strcpy(profbuf, "Main 4:4:4 12");
-            else
-            {
-                if (vps.ptl.intraConstraintFlag && param.totalFrames == 1)
-                {
-                    strcpy(profbuf, "Main 4:4:4 16 Still Picture");
-                    bStillPicture = true;
-                }
-                else
-                    strcpy(profbuf, "Main 4:4:4 16");
-            }
         }
         else if (vps.ptl.bitDepthConstraint <= 12)
             strcpy(profbuf, "Main 12");
