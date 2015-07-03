@@ -452,22 +452,45 @@ Profile, Level, Tier
 	profile.  May abort the encode if the specified profile is
 	impossible to be supported by the compile options chosen for the
 	encoder (a high bit depth encoder will be unable to output
-	bitstreams compliant with Main or Mains-Still-Picture).
+	bitstreams compliant with Main or MainStillPicture).
 
-	Note: Main12 presets are extremely unstable, do not use them yet.
-	      And Main16 is not supported at all.
+	The first version of the HEVC specification only described Main,
+	Main10, and MainStillPicture. All other profiles were added by the
+	Range Extensions additions in HEVC version two.
 
-	API users must use x265_param_apply_profile() after configuring
+	8bit profiles::
+
+	main, main-intra, mainstillpicture (or msp for short)
+	main444-8 main444-intra main444-stillpicture
+
+	10bit profiles::
+
+	main10, main10-intra
+	main422-10, main422-10-intra
+	main444-10, main444-10-intra
+
+	12bit profiles::
+
+	main12, main12-intra
+	main422-12, main422-12-intra
+	main444-12, main444-12-intra
+
+	16bit profiles::
+
+	main444-16-intra main444-16-stillpicture
+
+	**CLI ONLY**
+
+	API users must call x265_param_apply_profile() after configuring
 	their param structure. Any changes made to the param structure after
 	this call might make the encode non-compliant.
 
-	**Values:** main, main10, mainstillpicture, msp
-				main-intra main10-intra main444-8 main444-intra main444-stillpicture
-				main422-10 main422-10-intra main444-10 main444-10-intra main12 main12-intra
-				main422-12 main422-12-intra main444-12 main444-12-intra
-				main444-16-intra main444-16-stillpicture
+.. note::
 
-	**CLI ONLY**
+	All 12bit presets are extremely unstable, do not use them yet.
+	16bit is not supported at all, but those profiles are included
+	because it is possible for libx265 to make bitstreams compatible
+	with them.
 
 .. option:: --level-idc <integer|float>
 
@@ -543,26 +566,27 @@ Profile, Level, Tier
 	parameters to meet those requirements but it will never raise
 	them. It may enable VBV constraints on a CRF encode.
 
-	Also note that x265 determines the decoder requirement level in
-	three steps.  First, the user configures an x265_param structure
-	with their suggested encoder options and then optionally calls
-	x265_param_apply_profile() to enforce a specific profile (main,
-	main10, etc). Second, an encoder is created from this x265_param
-	instance and the :option:`--level-idc` and :option:`--high-tier`
-	parameters are used to reduce bitrate or other features in order to
-	enforce the target level. Finally, the encoder re-examines the final
-	set of parameters and detects the actual minimum decoder requirement
-	level and this is what is signaled in the bitstream headers. The
-	detected decoder level will only use High tier if the user specified
-	a High tier level.
+	Also note that x265 determines the decoder requirement profile and
+	level in three steps.  First, the user configures an x265_param
+	structure with their suggested encoder options and then optionally
+	calls x265_param_apply_profile() to enforce a specific profile
+	(main, main10, etc). Second, an encoder is created from this
+	x265_param instance and the :option:`--level-idc` and
+	:option:`--high-tier` parameters are used to reduce bitrate or other
+	features in order to enforce the target level. Finally, the encoder
+	re-examines the final set of parameters and detects the actual
+	minimum decoder requirement level and this is what is signaled in
+	the bitstream headers. The detected decoder level will only use High
+	tier if the user specified a High tier level.
 
-	Lastly, x265 will signal an all-intra encode using the appropriate
-	range extension intra profile, unless it knows that the encode will
-	be a single frame in which case it will signal a Still Picture
-	profile if one is appropriate. However, it makes this determination
-	based on param.totalFrames but this parameter is not always set.
-	Particularly when the CLI is used in stdin streaming mode or when
-	used by third-party applications.
+	The signaled profile will be determined by the encoder's internal
+	bitdepth and input color space. If :option:`--keyint` is 0 or 1,
+	then an intra variant of the profile will be signaled.
+
+	If :option:`--total-frames` is 1, then a stillpicture variant will
+	be signaled, but this parameter is not always set by applications,
+	particularly not when the CLI uses stdin streaming or when libx265
+	is used by third-party applications.
 
 
 Mode decision / Analysis
