@@ -354,6 +354,13 @@ frame counts) are only applicable to the CLI application.
 
 	**CLI ONLY**
 
+.. option:: --total-frames <integer>
+
+	The number of frames intended to be encoded.  It may be left
+	unspecified, but when it is specified rate control can make use of
+	this information. It is also used to determine if an encode is
+	actually a stillpicture profile encode (single frame)
+
 .. option:: --dither
 
 	Enable high quality downscaling. Dithering is based on the diffusion

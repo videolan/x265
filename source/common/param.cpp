@@ -582,6 +582,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         }
     }
     OPT("cu-stats") p->bLogCuStats = atobool(value);
+    OPT("total-frames") p->totalFrames = atoi(value);
     OPT("annexb") p->bAnnexB = atobool(value);
     OPT("repeat-headers") p->bRepeatHeaders = atobool(value);
     OPT("wpp") p->bEnableWavefront = atobool(value);
