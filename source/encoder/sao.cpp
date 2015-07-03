@@ -223,14 +223,19 @@ void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
         frame->m_encData->m_saoParam = saoParam;
     }
 
-    rdoSaoUnitRowInit(saoParam);
+    saoParam->bSaoFlag[0] = true;
+    saoParam->bSaoFlag[1] = true;
 
-    // NOTE: Disable SAO automatic turn-off when frame parallelism is
-    // enabled for output exact independent of frame thread count
-    if (m_param->frameNumThreads > 1)
+    m_numNoSao[0] = 0; // Luma
+    m_numNoSao[1] = 0; // Chroma
+
+    // NOTE: Allow SAO automatic turn-off only when frame parallelism is disabled.
+    if (m_param->frameNumThreads == 1)
     {
-        saoParam->bSaoFlag[0] = true;
-        saoParam->bSaoFlag[1] = true;
+        if (m_refDepth > 0 && m_depthSaoRate[0][m_refDepth - 1] > SAO_ENCODING_RATE)
+            saoParam->bSaoFlag[0] = false;
+        if (m_refDepth > 0 && m_depthSaoRate[1][m_refDepth - 1] > SAO_ENCODING_RATE_CHROMA)
+            saoParam->bSaoFlag[1] = false;
     }
 }
 
@@ -1174,19 +1179,6 @@ void SAO::resetStats()
     memset(m_count, 0, sizeof(PerClass) * NUM_PLANE);
     memset(m_offset, 0, sizeof(PerClass) * NUM_PLANE);
     memset(m_offsetOrg, 0, sizeof(PerClass) * NUM_PLANE);
-}
-
-void SAO::rdoSaoUnitRowInit(SAOParam* saoParam)
-{
-    saoParam->bSaoFlag[0] = true;
-    saoParam->bSaoFlag[1] = true;
-
-    m_numNoSao[0] = 0; // Luma
-    m_numNoSao[1] = 0; // Chroma
-    if (m_refDepth > 0 && m_depthSaoRate[0][m_refDepth - 1] > SAO_ENCODING_RATE)
-        saoParam->bSaoFlag[0] = false;
-    if (m_refDepth > 0 && m_depthSaoRate[1][m_refDepth - 1] > SAO_ENCODING_RATE_CHROMA)
-        saoParam->bSaoFlag[1] = false;
 }
 
 void SAO::rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus)

@@ -144,7 +144,6 @@ public:
                              int32_t* currentDistortionTableBo, double* currentRdCostTableBo);
     inline int64_t estSaoTypeDist(int plane, int typeIdx, double lambda, int32_t* currentDistortionTableBo, double* currentRdCostTableBo);
 
-    void rdoSaoUnitRowInit(SAOParam* saoParam);
     void rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus);
     void rdoSaoUnitRow(SAOParam* saoParam, int idxY);
 };
