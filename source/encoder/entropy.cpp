@@ -214,7 +214,7 @@ void Entropy::codeProfileTier(const ProfileTierLevel& ptl, int maxTempSubLayers)
         WRITE_FLAG(csp == X265_CSP_I420 || csp == X265_CSP_I400,                         "general_max_420chroma_constraint_flag");
         WRITE_FLAG(csp == X265_CSP_I400,                                                 "general_max_monochrome_constraint_flag");
         WRITE_FLAG(ptl.intraConstraintFlag,        "general_intra_constraint_flag");
-        WRITE_FLAG(0,                              "general_one_picture_only_constraint_flag");
+        WRITE_FLAG(ptl.onePictureOnlyConstraintFlag,"general_one_picture_only_constraint_flag");
         WRITE_FLAG(ptl.lowerBitRateConstraintFlag, "general_lower_bit_rate_constraint_flag");
         WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[0..15]");
         WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[16..31]");

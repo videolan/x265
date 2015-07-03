@@ -61,21 +61,33 @@ LevelSpec levels[] =
 /* determine minimum decoder level required to decode the described video */
 void determineLevel(const x265_param &param, VPS& vps)
 {
+    vps.ptl.onePictureOnlyConstraintFlag = param.totalFrames == 1;
+    vps.ptl.intraConstraintFlag = param.keyframeMax <= 1 || vps.ptl.onePictureOnlyConstraintFlag;
+    vps.ptl.bitDepthConstraint = param.internalBitDepth;
+    vps.ptl.chromaFormatConstraint = param.internalCsp;
+
+    /* TODO: figure out HighThroughput signaling, aka: HbrFactor in section A.4.2, only available
+     * for intra-only profiles (vps.ptl.intraConstraintFlag) */
+    vps.ptl.lowerBitRateConstraintFlag = true;
+
+    vps.maxTempSubLayers = param.bEnableTemporalSubLayers ? 2 : 1;
+    
     if (param.internalCsp == X265_CSP_I420 && param.internalBitDepth <= 10)
     {
         /* Probably an HEVC v1 profile, but must check to be sure */
         if (param.internalBitDepth <= 8)
         {
-            if (param.totalFrames == 1)
+            if (vps.ptl.onePictureOnlyConstraintFlag)
                 vps.ptl.profileIdc = Profile::MAINSTILLPICTURE;
-            else if (param.keyframeMax <= 1)
+            else if (vps.ptl.intraConstraintFlag)
                 vps.ptl.profileIdc = Profile::MAINREXT; /* Main Intra */
             else 
                 vps.ptl.profileIdc = Profile::MAIN;
         }
         else if (param.internalBitDepth <= 10)
         {
-            if (param.keyframeMax <= 1)
+            /* note there is no 10bit still picture profile */
+            if (vps.ptl.intraConstraintFlag)
                 vps.ptl.profileIdc = Profile::MAINREXT; /* Main10 Intra */
             else
                 vps.ptl.profileIdc = Profile::MAIN10;
@@ -88,7 +100,6 @@ void determineLevel(const x265_param &param, VPS& vps)
 
     memset(vps.ptl.profileCompatibilityFlag, 0, sizeof(vps.ptl.profileCompatibilityFlag));
     vps.ptl.profileCompatibilityFlag[vps.ptl.profileIdc] = true;
-    vps.maxTempSubLayers = param.bEnableTemporalSubLayers ? 2 : 1;
     if (vps.ptl.profileIdc == Profile::MAIN10 && param.internalBitDepth == 8)
         vps.ptl.profileCompatibilityFlag[Profile::MAIN] = true;
     else if (vps.ptl.profileIdc == Profile::MAIN)
@@ -194,11 +205,6 @@ void determineLevel(const x265_param &param, VPS& vps)
         break;
     }
 
-    vps.ptl.intraConstraintFlag = param.keyframeMax == 1;
-    vps.ptl.lowerBitRateConstraintFlag = true;
-    vps.ptl.bitDepthConstraint = param.internalBitDepth;
-    vps.ptl.chromaFormatConstraint = param.internalCsp;
-    
     static const char *profiles[] = { "None", "Main", "Main 10", "Main Still Picture", "RExt" };
     static const char *tiers[]    = { "Main", "High" };
 
@@ -210,13 +216,23 @@ void determineLevel(const x265_param &param, VPS& vps)
     {
         if (vps.ptl.bitDepthConstraint > 12 && vps.ptl.intraConstraintFlag)
         {
-            if (param.totalFrames == 1)
+            if (vps.ptl.onePictureOnlyConstraintFlag)
             {
                 strcpy(profbuf, "Main 4:4:4 16 Still Picture");
                 bStillPicture = true;
             }
             else
                 strcpy(profbuf, "Main 4:4:4 16");
+        }
+        else if (param.internalCsp == X265_CSP_I420)
+        {
+            X265_CHECK(vps.ptl.intraConstraintFlag || vps.ptl.bitDepthConstraint > 10, "rext fail\n");
+            if (vps.ptl.bitDepthConstraint <= 8)
+                strcpy(profbuf, "Main");
+            else if (vps.ptl.bitDepthConstraint <= 10)
+                strcpy(profbuf, "Main 10");
+            else if (vps.ptl.bitDepthConstraint <= 12)
+                strcpy(profbuf, "Main 12");
         }
         else if (param.internalCsp == X265_CSP_I422)
         {
@@ -230,21 +246,19 @@ void determineLevel(const x265_param &param, VPS& vps)
         {
             if (vps.ptl.bitDepthConstraint <= 8)
             {
-                if (vps.ptl.intraConstraintFlag && param.totalFrames == 1)
+                if (vps.ptl.onePictureOnlyConstraintFlag)
                 {
                     strcpy(profbuf, "Main 4:4:4 Still Picture");
                     bStillPicture = true;
                 }
                 else
-                    strcpy(profbuf, "Main 4:4:4 8");
+                    strcpy(profbuf, "Main 4:4:4");
             }
             else if (vps.ptl.bitDepthConstraint <= 10)
                 strcpy(profbuf, "Main 4:4:4 10");
             else if (vps.ptl.bitDepthConstraint <= 12)
                 strcpy(profbuf, "Main 4:4:4 12");
         }
-        else if (vps.ptl.bitDepthConstraint <= 12)
-            strcpy(profbuf, "Main 12");
         else
             strcpy(profbuf, "Unknown");
 

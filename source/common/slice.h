@@ -111,6 +111,7 @@ struct ProfileTierLevel
     bool     frameOnlyConstraintFlag;
     bool     profileCompatibilityFlag[32];
     bool     intraConstraintFlag;
+    bool     onePictureOnlyConstraintFlag;
     bool     lowerBitRateConstraintFlag;
     int      profileIdc;
     int      levelIdc;
