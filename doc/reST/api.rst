@@ -365,9 +365,10 @@ CTU size::
 Multi-library Interface
 =======================
 
-If your application might want to make a runtime selection between a
-number of (static or dynamically linked) libx265 libraries, then you
-will want to use one of these bit-depth introspection interfaces.
+If your application might want to make a runtime bit-depth selection, it
+will need to use one of these bit-depth introspection interfaces which
+returns an API structure containing the public function entry points and
+constants.
 
 Instead of directly using all of the **x265_** methods documented above,
 you query an x265_api structure from your libx265 and then use the
@@ -452,62 +453,50 @@ any x265_param fields, then it can skip the check on the
 sizeof(x265_parm) and thereby ignore changes to that structure (which
 account for a large percentage of X265_BUILD bumps).
 
-Static Linking Implications
----------------------------
+Build Implications
+------------------
 
 By default libx265 will place all of its internal C++ classes and
 functions within an x265 namespace and export all of the C functions
 documented in this file. Obviously this prevents 8bit and 10bit builds
-of libx265 from being statically linked into a single application, all
-of those symbols would collide.
+of libx265 from being statically linked into a single binary, all of
+those symbols would collide.
 
-However, if you set the EXPORT_C_API cmake option to OFF, then libx265
-will use an x265_8bit or x265_10bit namespace for its C++ classes and
-functions (and use the same name as a prefix for its assembly functions)
-and only exports the two bit-depth introspection C functions from the
-8bit library and no C functions from the 10bit library. Thus
-applications which use one of the introspection functions (and no other
-exported C functions) may link with both 8bit and 10bit static libraries
-compiled with EXPORT_C_API=OFF.
+However, if you set the EXPORT_C_API cmake option to OFF then libx265
+will use a bit-depth specific namespace and prefix for its assembly
+functions (x265_8bit, x265_10bit or x265_12bit) and export no C
+functions.
+
+In this way you can build one or more libx265 libraries without any
+exported C interface and link them into libx265 build that does export a
+C interface. In this way, the build which exported the C functions
+becomes the *default* bit depth for the combined library, and the other
+bit depths are only available via the introspection methods.
 
 .. Note::
 
-	When libx265 is compiled with EXPORT_C_API=OFF, the two
-	bit-depth introspection functions will *not* attempt to dynamically
-	bind a shared library if the requested bit-depth is not found. It is
-	assuming that all necessary libraries will be statically linked.
+	When setting EXPORT_C_API cmake option to OFF, it is recommended to
+	also set ENABLE_SHARED and ENABLE_CLI to OFF to prevent build
+	problems.  We only need the static library from these builds.
 
-Dynamic Linking Implications
-----------------------------
+If an application requests a bit-depth that is not supported by the
+default library or any of the additionally linked libraries, the
+introspection method will fall-back to an attempt to dynamically bind a
+shared library with a name appropriate for the requested bit-depth::
 
-If your application is linking to a shared libx265 library, then again
-you have a choice of using the exported C functions or one of the
-bit-depth introspection functions. If your application uses the exported C
-functions, then it will always use the libx265 library which it links
-with.
-
-If instead your application uses one of the bit-depth introspection
-methods, your application may request the API for the bit-depth you
-would prefer to use (8 or 10). If the requested bit-depth is zero, or if
-it matches the bit-depth of the linked library, the linked library will
-be used for encode.  If you request a different bit-depth, the linked
-libx265 will attempt to dynamically bind a shared library with a name
-appropriate for the requested bit-depth::
-
-    8-bit:  libx265_main
-    10-bit: libx265_main10
-    12-bit: libx265_main12
+	8-bit:  libx265_main
+	10-bit: libx265_main10
+	12-bit: libx265_main12
 
 Packaging and Distribution
 --------------------------
 
-Packagers have a plethora of build choices for x265.
-
-For example on Windows, one could package together an x265.exe
-statically linked against the 8bit libx265 and a libx265_main10.dll in
-the same folder. This executable would be able to encode Main and Main10
-bitstreams. Or they may simply link the x265 CLI with both static
-libraries into a single executable file.
+We recommend that packagers distribute a single combined shared/static
+library build which includes all the bit depth libraries linked
+together. See the multilib scripts in our :file:`build/` subdirectories
+for examples of how to affect these combined library builds. It is the
+packager's discretion which bit-depth exports the public C functions and
+thus becomes the default bit-depth for the combined library.
 
 .. Note::
 
@@ -519,10 +508,3 @@ libraries into a single executable file.
 
 	STATIC_LINK_CRT is also recommended so end-users will not need to
 	install any additional MSVC C runtime libraries.
-
-On Linux, x265 packagers could install 8bit static and shared libraries
-under the name libx265 (so all applications link against 8bit libx265)
-and then also install libx265_main10.so (symlinked to its numbered
-solib). Thus applications which use **x265_api_get()** or
-**x265_api_query()** will be able to select Main or Main10 encodes at
-runtime.

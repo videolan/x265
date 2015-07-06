@@ -11,6 +11,21 @@ if(MSVC)
    add_definitions(/wd4701) # potentially uninitialized local variable 'foo' used
 endif()
 
+if(EXTRA_LIB)
+    option(LINKED_8BIT  "8bit libx265 is being linked with this library" OFF)
+    option(LINKED_10BIT "10bit libx265 is being linked with this library" OFF)
+    option(LINKED_12BIT "12bit libx265 is being linked with this library" OFF)
+    if(LINKED_8BIT)
+        add_definitions(-DLINKED_8BIT=1)
+    endif(LINKED_8BIT)
+    if(LINKED_10BIT)
+        add_definitions(-DLINKED_10BIT=1)
+    endif(LINKED_10BIT)
+    if(LINKED_12BIT)
+        add_definitions(-DLINKED_12BIT=1)
+    endif(LINKED_12BIT)
+endif(EXTRA_LIB)
+
 add_library(encoder OBJECT ../x265.h
     analysis.cpp analysis.h
     search.cpp search.h

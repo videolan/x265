@@ -33,7 +33,7 @@ if not exist x265-static-main12.lib (
   msg "%username%" "12bit build failed"
   exit 1
 )
-cmake -G "Visual Studio 9 2008 Win64" ../../../source -DHIGH_BIT_DEPTH=OFF -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DENABLE_CLI=ON -DEXTRA_LIB="x265-static-main10.lib;x265-static-main12.lib"
+cmake -G "Visual Studio 9 2008 Win64" ../../../source -DEXTRA_LIB="x265-static-main10.lib;x265-static-main12.lib" -DLINKED_10BIT=ON -DLINKED_12BIT=ON
 if exist x265.sln (
   MSBuild /property:Configuration="Release" x265.sln
 )

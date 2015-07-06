@@ -31,6 +31,28 @@
 #include "nal.h"
 #include "bitcost.h"
 
+/* multilib namespace reflectors */
+#if LINKED_8BIT
+namespace x265_8bit {
+const x265_api* x265_api_get(int bitDepth);
+const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
+}
+#endif
+
+#if LINKED_10BIT
+namespace x265_10bit {
+const x265_api* x265_api_get(int bitDepth);
+const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
+}
+#endif
+
+#if LINKED_12BIT
+namespace x265_12bit {
+const x265_api* x265_api_get(int bitDepth);
+const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
+}
+#endif
+
 #if EXPORT_C_API
 
 /* these functions are exported as C functions (default) */
@@ -322,6 +344,16 @@ const x265_api* x265_api_get(int bitDepth)
 {
     if (bitDepth && bitDepth != X265_DEPTH)
     {
+#if LINKED_8BIT
+        if (bitDepth == 8) return x265_8bit::x265_api_get(0);
+#endif
+#if LINKED_10BIT
+        if (bitDepth == 10) return x265_10bit::x265_api_get(0);
+#endif
+#if LINKED_12BIT
+        if (bitDepth == 12) return x265_12bit::x265_api_get(0);
+#endif
+
         const char* libname = NULL;
         const char* method = "x265_api_get_" xstr(X265_BUILD);
 
@@ -375,8 +407,20 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
         return NULL;
     }
 
+    if (err) *err = X265_API_QUERY_ERR_NONE;
+
     if (bitDepth && bitDepth != X265_DEPTH)
     {
+#if LINKED_8BIT
+        if (bitDepth == 8) return x265_8bit::x265_api_query(0, apiVersion, err);
+#endif
+#if LINKED_10BIT
+        if (bitDepth == 10) return x265_10bit::x265_api_query(0, apiVersion, err);
+#endif
+#if LINKED_12BIT
+        if (bitDepth == 12) return x265_12bit::x265_api_query(0, apiVersion, err);
+#endif
+
         const char* libname = NULL;
         const char* method = "x265_api_query";
 
@@ -426,48 +470,7 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
         return api;
     }
 
-    if (err) *err = X265_API_QUERY_ERR_NONE;
     return &libapi;
 }
 
 } /* end namespace or extern "C" */
-
-
-/* multilib namespace reflectors */
-#if X265_DEPTH == 8 && !EXPORT_C_API
-
-namespace x265_10bit {
-const x265_api* x265_api_get(int bitDepth);
-const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
-}
-namespace x265_12bit {
-const x265_api* x265_api_get(int bitDepth);
-const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
-}
-
-extern "C"
-const x265_api* x265_api_get(int bitDepth)
-{
-    if (!bitDepth || bitDepth == 8)
-        return x265_8bit::x265_api_get(0);
-    else if (bitDepth == 10)
-        return x265_10bit::x265_api_get(0);
-    else if (bitDepth == 12)
-        return x265_12bit::x265_api_get(0);
-    return NULL;
-}
-
-extern "C"
-const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
-{
-    if (err) *err = X265_API_QUERY_ERR_NONE;
-    if (!bitDepth || bitDepth == 8)
-        return x265_8bit::x265_api_query(0, apiVersion, err);
-    else if (bitDepth == 10)
-        return x265_10bit::x265_api_query(0, apiVersion, err);
-    else if (bitDepth == 12)
-        return x265_12bit::x265_api_query(0, apiVersion, err);
-    if (err) *err = X265_API_QUERY_ERR_LIB_NOT_FOUND;
-    return NULL;
-}
-#endif
