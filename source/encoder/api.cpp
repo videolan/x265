@@ -54,16 +54,12 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err);
 #endif
 
 #if EXPORT_C_API
-
 /* these functions are exported as C functions (default) */
 using namespace X265_NS;
 extern "C" {
-
 #else
-
 /* these functions exist within private namespace (multilib) */
 namespace X265_NS {
-
 #endif
 
 x265_encoder *x265_encoder_open(x265_param *p)
