@@ -1677,6 +1677,7 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
 %endif
 
 
+%if ARCH_X86_64 == 1
 %if HIGH_BIT_DEPTH
 INIT_YMM avx2
 cglobal weight_sp, 6,7,9
@@ -1871,6 +1872,7 @@ cglobal weight_sp, 6, 9, 7
     dec             r5d
     jnz             .loopH
     RET
+%endif
 %endif
 
 ;-----------------------------------------------------------------
