@@ -1235,7 +1235,7 @@ inline int64_t SAO::estSaoTypeDist(int plane, int typeIdx, double lambda, int32_
         }
         if (count)
         {
-            int offset = roundIBDI(offsetOrg, count << SAO_BIT_INC);
+            int offset = roundIBDI(offsetOrg << (X265_DEPTH - 8), count);
             offset = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offset);
             if (typeIdx < SAO_BO)
             {
