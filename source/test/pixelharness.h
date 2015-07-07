@@ -102,6 +102,7 @@ protected:
     bool check_saoCuOrgB0_t(saoCuOrgB0_t ref, saoCuOrgB0_t opt);
     bool check_saoCuStatsBO_t(saoCuStatsBO_t ref, saoCuStatsBO_t opt);
     bool check_saoCuStatsE0_t(saoCuStatsE0_t ref, saoCuStatsE0_t opt);
+    bool check_saoCuStatsE1_t(saoCuStatsE1_t ref, saoCuStatsE1_t opt);
     bool check_saoCuStatsE2_t(saoCuStatsE2_t ref, saoCuStatsE2_t opt);
     bool check_saoCuStatsE3_t(saoCuStatsE3_t ref, saoCuStatsE3_t opt);
     bool check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt);

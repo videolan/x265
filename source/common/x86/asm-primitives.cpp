@@ -2499,6 +2499,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
 #if X86_64
         p.saoCuStatsBO = PFX(saoCuStatsBO_sse4);
         p.saoCuStatsE0 = PFX(saoCuStatsE0_sse4);
+        p.saoCuStatsE1 = PFX(saoCuStatsE1_sse4);
         p.saoCuStatsE2 = PFX(saoCuStatsE2_sse4);
         p.saoCuStatsE3 = PFX(saoCuStatsE3_sse4);
 

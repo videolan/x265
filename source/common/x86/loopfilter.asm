@@ -2159,3 +2159,122 @@ cglobal saoCuStatsE0, 5,8,8, 0-32
     add         [r1 + 4 * 4], r6d
     RET
 %endif
+
+;-------------------------------------------------------------------------------------------------------------------------------------------
+; saoCuStatsE1_c(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count)
+;-------------------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_XMM sse4
+cglobal saoCuStatsE1, 4,11,9,0-32    ; Stack: 5 of stats and 5 of count
+    mov         r4d, r4m
+    mov         r5d, r5m
+
+    ; clear internal temporary buffer
+    pxor        m0, m0
+    mova        [rsp], m0
+    mova        [rsp + mmsize], m0
+    mova        m0, [pb_128]
+    mova        m5, [pb_1]
+    mova        m6, [pb_2]
+    mova        m8, [hmul_16p + 16]
+    movh        m7, [r3 + r4]
+
+.loopH:
+    mov         r6d, r4d
+    mov         r9, r0
+    mov         r10, r1
+    mov         r5, r3
+
+.loopW:
+    movu        m1, [r10]
+    movu        m2, [r10 + r2]
+
+    ; signDown
+    pxor        m1, m0
+    pxor        m2, m0
+    pcmpgtb     m3, m1, m2
+    pand        m3, m5
+    pcmpgtb     m2, m1
+    por         m2, m3
+    pxor        m3, m3
+    psubb       m3, m2      ; -signDown
+
+    ; edgeType
+    movu        m4, [r5]
+    paddb       m4, m6
+    paddb       m2, m4
+
+    ; update upBuff1
+    movu        [r5], m3
+
+    ; stats[edgeType]
+    pxor        m1, m0
+    movu        m3, [r9]
+    punpckhbw   m4, m3, m1
+    punpcklbw   m3, m1
+    pmaddubsw   m3, m8
+    pmaddubsw   m4, m8
+
+    ; 16 pixels
+%assign x 0
+%rep 16
+    pextrb      r7d, m2, x
+    inc         word [rsp + r7 * 2]
+
+  %if (x < 8)
+    pextrw      r8d, m3, (x % 8)
+  %else
+    pextrw      r8d, m4, (x % 8)
+  %endif
+    movsx       r8d, r8w
+    add         [rsp + 5 * 2 + r7 * 4], r8d
+
+    dec         r6d
+    jz         .next
+%assign x x+1
+%endrep
+
+    add         r9, 16
+    add         r10, 16
+    add         r5, 16
+    jmp         .loopW
+
+.next:
+    ; restore pointer upBuff1
+    add         r0, r2
+    add         r1, r2
+
+    dec         byte r5m
+    jg         .loopH
+
+    ; restore unavailable pixels
+    movh        [r3 + r4], m7
+
+    ; sum to global buffer
+    mov         r1, r6m
+    mov         r0, r7m
+
+    ; s_eoTable = {1,2,0,3,4}
+    movzx       r6d, word [rsp + 0 * 2]
+    add         [r0 + 1 * 4], r6d
+    movzx       r6d, word [rsp + 1 * 2]
+    add         [r0 + 2 * 4], r6d
+    movzx       r6d, word [rsp + 2 * 2]
+    add         [r0 + 0 * 4], r6d
+    movzx       r6d, word [rsp + 3 * 2]
+    add         [r0 + 3 * 4], r6d
+    movzx       r6d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r6d
+
+    mov         r6d, [rsp + 5 * 2 + 0 * 4]
+    add         [r1 + 1 * 4], r6d
+    mov         r6d, [rsp + 5 * 2 + 1 * 4]
+    add         [r1 + 2 * 4], r6d
+    mov         r6d, [rsp + 5 * 2 + 2 * 4]
+    add         [r1 + 0 * 4], r6d
+    mov         r6d, [rsp + 5 * 2 + 3 * 4]
+    add         [r1 + 3 * 4], r6d
+    mov         r6d, [rsp + 5 * 2 + 4 * 4]
+    add         [r1 + 4 * 4], r6d
+    RET
+%endif ; ARCH_X86_64

@@ -1089,6 +1089,52 @@ bool PixelHarness::check_saoCuStatsE0_t(saoCuStatsE0_t ref, saoCuStatsE0_t opt)
     return true;
 }
 
+bool PixelHarness::check_saoCuStatsE1_t(saoCuStatsE1_t ref, saoCuStatsE1_t opt)
+{
+    enum { NUM_EDGETYPE = 5 };
+    int32_t stats_ref[NUM_EDGETYPE];
+    int32_t stats_vec[NUM_EDGETYPE];
+
+    int32_t count_ref[NUM_EDGETYPE];
+    int32_t count_vec[NUM_EDGETYPE];
+
+    int8_t _upBuff1_ref[MAX_CU_SIZE + 2], *upBuff1_ref = _upBuff1_ref + 1;
+    int8_t _upBuff1_vec[MAX_CU_SIZE + 2], *upBuff1_vec = _upBuff1_vec + 1;
+
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        // initialize input data to random, the dynamic range wrong but good to verify our asm code
+        for (int x = 0; x < NUM_EDGETYPE; x++)
+        {
+            stats_ref[x] = stats_vec[x] = rand();
+            count_ref[x] = count_vec[x] = rand();
+        }
+
+        // initial sign
+        for (int x = 0; x < MAX_CU_SIZE + 2; x++)
+            _upBuff1_ref[x] = _upBuff1_vec[x] = (rand() % 3) - 1;
+
+        intptr_t stride = 16 * (rand() % 4 + 1);
+        int endX = MAX_CU_SIZE - (rand() % 5);
+        int endY = MAX_CU_SIZE - (rand() % 4) - 1;
+
+        ref(pbuf2 + 1, pbuf3 + 1, stride, upBuff1_ref, endX, endY, stats_ref, count_ref);
+        checked(opt, pbuf2 + 1, pbuf3 + 1, stride, upBuff1_vec, endX, endY, stats_vec, count_vec);
+
+        if (   memcmp(_upBuff1_ref, _upBuff1_vec, sizeof(_upBuff1_ref))
+            || memcmp(stats_ref, stats_vec, sizeof(stats_ref))
+            || memcmp(count_ref, count_vec, sizeof(count_ref)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_saoCuStatsE2_t(saoCuStatsE2_t ref, saoCuStatsE2_t opt)
 {
     enum { NUM_EDGETYPE = 5 };
@@ -2184,6 +2230,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.saoCuStatsE1)
+    {
+        if (!check_saoCuStatsE1_t(ref.saoCuStatsE1, opt.saoCuStatsE1))
+        {
+            printf("saoCuStatsE1 failed\n");
+            return false;
+        }
+    }
+
     if (opt.saoCuStatsE2)
     {
         if (!check_saoCuStatsE2_t(ref.saoCuStatsE2, opt.saoCuStatsE2))
@@ -2628,6 +2683,15 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         int32_t stats[33], count[33];
         HEADER0("saoCuStatsE0");
         REPORT_SPEEDUP(opt.saoCuStatsE0, ref.saoCuStatsE0, pbuf2, pbuf3, 64, 60, 61, stats, count);
+    }
+
+    if (opt.saoCuStatsE1)
+    {
+        int32_t stats[5], count[5];
+        int8_t upBuff1[MAX_CU_SIZE + 2];
+        memset(upBuff1, 1, sizeof(upBuff1));
+        HEADER0("saoCuStatsE1");
+        REPORT_SPEEDUP(opt.saoCuStatsE1, ref.saoCuStatsE1, pbuf2, pbuf3, 64, upBuff1 + 1,60, 61, stats, count);
     }
 
     if (opt.saoCuStatsE2)
