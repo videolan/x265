@@ -2043,3 +2043,119 @@ cglobal saoCuStatsBO, 7,12,6
     jnz         .loopH
     RET
 %endif
+
+;-----------------------------------------------------------------------------------------------------------------------
+; saoCuStatsE0(const pixel *fenc, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
+;-----------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_XMM sse4
+cglobal saoCuStatsE0, 5,8,8, 0-32
+    mov         r3d, r3m
+
+    ; clear internal temporary buffer
+    pxor        m0, m0
+    mova        [rsp], m0
+    mova        [rsp + mmsize], m0
+    mova        m4, [pb_128]
+    mova        m5, [hmul_16p + 16]
+    mova        m6, [pb_2]
+    xor         r7d, r7d
+
+.loopH:
+    mov         r5d, r3d
+
+    ; calculate signLeft
+    mov         r7b, [r1]
+    sub         r7b, [r1 - 1]
+    seta        r7b
+    setb        r6b
+    sub         r7b, r6b
+    neg         r7b
+    pinsrb      m0, r7d, 15
+
+.loopL:
+    movu        m7, [r1]
+    movu        m2, [r1 + 1]
+
+    pxor        m1, m7, m4
+    pxor        m3, m2, m4
+    pcmpgtb     m2, m1, m3
+    pcmpgtb     m3, m1
+    pand        m2, [pb_1]
+    por         m2, m3              ; signRight
+
+    palignr     m3, m2, m0, 15
+    psignb      m3, m4              ; signLeft
+
+    mova        m0, m2
+    paddb       m2, m3
+    paddb       m2, m6              ; edgeType
+
+    ; stats[edgeType]
+    movu        m3, [r0]            ; fenc[0-15]
+    punpckhbw   m1, m3, m7
+    punpcklbw   m3, m7
+    pmaddubsw   m1, m5
+    pmaddubsw   m3, m5
+
+%assign x 0
+%rep 16
+    pextrb      r7d, m2, x
+
+%if (x < 8)
+    pextrw      r6d, m3, (x % 8)
+%else
+    pextrw      r6d, m1, (x % 8)
+%endif
+    movsx       r6d, r6w
+    inc         word [rsp + r7 * 2]             ; tmp_count[edgeType]++
+    add         [rsp + 5 * 2 + r7 * 4], r6d     ; tmp_stats[edgeType] += (fenc[x] - rec[x])
+    dec         r5d
+    jz          .next
+%assign x x+1
+%endrep
+
+    add         r0q, 16
+    add         r1q, 16
+    jmp         .loopL
+
+.next:
+    mov         r6d, r3d
+    and         r6d, 15
+
+    sub         r6, r3
+    add         r6, r2
+    add         r0, r6
+    add         r1, r6
+
+    dec         r4d
+    jnz         .loopH
+
+    ; sum to global buffer
+    mov         r1, r5m
+    mov         r0, r6m
+
+    ; s_eoTable = {1, 2, 0, 3, 4}
+    movzx       r5d, word [rsp + 0 * 2]
+    add         [r0 + 1 * 4], r5d
+    movzx       r6d, word [rsp + 1 * 2]
+    add         [r0 + 2 * 4], r6d
+    movzx       r5d, word [rsp + 2 * 2]
+    add         [r0 + 0 * 4], r5d
+    movzx       r6d, word [rsp + 3 * 2]
+    add         [r0 + 3 * 4], r6d
+    movzx       r5d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r5d
+
+    mov         r6d, [rsp + 5 * 2 + 0 * 4]
+    add         [r1 + 1 * 4], r6d
+    mov         r5d, [rsp + 5 * 2 + 1 * 4]
+    add         [r1 + 2 * 4], r5d
+    mov         r6d, [rsp + 5 * 2 + 2 * 4]
+    add         [r1 + 0 * 4], r6d
+    mov         r5d, [rsp + 5 * 2 + 3 * 4]
+    add         [r1 + 3 * 4], r5d
+    mov         r6d, [rsp + 5 * 2 + 4 * 4]
+    add         [r1 + 4 * 4], r6d
+    RET
+%endif

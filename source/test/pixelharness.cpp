@@ -1053,6 +1053,42 @@ bool PixelHarness::check_saoCuStatsBO_t(saoCuStatsBO_t ref, saoCuStatsBO_t opt)
     return true;
 }
 
+bool PixelHarness::check_saoCuStatsE0_t(saoCuStatsE0_t ref, saoCuStatsE0_t opt)
+{
+    enum { NUM_EDGETYPE = 5 };
+    int32_t stats_ref[NUM_EDGETYPE];
+    int32_t stats_vec[NUM_EDGETYPE];
+
+    int32_t count_ref[NUM_EDGETYPE];
+    int32_t count_vec[NUM_EDGETYPE];
+
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        // initialize input data to random, the dynamic range wrong but good to verify our asm code
+        for (int x = 0; x < NUM_EDGETYPE; x++)
+        {
+            stats_ref[x] = stats_vec[x] = rand();
+            count_ref[x] = count_vec[x] = rand();
+        }
+
+        intptr_t stride = 16 * (rand() % 4 + 1);
+        int endX = MAX_CU_SIZE - (rand() % 5) - 1;
+        int endY = MAX_CU_SIZE - (rand() % 4) - 1;
+
+        ref(pbuf2 + j + 1, pbuf3 + j + 1, stride, endX, endY, stats_ref, count_ref);
+        checked(opt, pbuf2 + j + 1, pbuf3 + j + 1, stride, endX, endY, stats_vec, count_vec);
+
+        if (memcmp(stats_ref, stats_vec, sizeof(stats_ref)) || memcmp(count_ref, count_vec, sizeof(count_ref)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_saoCuStatsE2_t(saoCuStatsE2_t ref, saoCuStatsE2_t opt)
 {
     enum { NUM_EDGETYPE = 5 };
@@ -2139,6 +2175,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.saoCuStatsE0)
+    {
+        if (!check_saoCuStatsE0_t(ref.saoCuStatsE0, opt.saoCuStatsE0))
+        {
+            printf("saoCuStatsE0 failed\n");
+            return false;
+        }
+    }
+
     if (opt.saoCuStatsE2)
     {
         if (!check_saoCuStatsE2_t(ref.saoCuStatsE2, opt.saoCuStatsE2))
@@ -2576,6 +2621,13 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         int32_t stats[33], count[33];
         HEADER0("saoCuStatsBO");
         REPORT_SPEEDUP(opt.saoCuStatsBO, ref.saoCuStatsBO, pbuf2, pbuf3, 64, 60, 61, stats, count);
+    }
+
+    if (opt.saoCuStatsE0)
+    {
+        int32_t stats[33], count[33];
+        HEADER0("saoCuStatsE0");
+        REPORT_SPEEDUP(opt.saoCuStatsE0, ref.saoCuStatsE0, pbuf2, pbuf3, 64, 60, 61, stats, count);
     }
 
     if (opt.saoCuStatsE2)
