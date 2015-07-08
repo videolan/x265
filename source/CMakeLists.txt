@@ -524,9 +524,9 @@ if(ENABLE_CLI)
         include_directories(compat/getopt)
         set(GETOPT compat/getopt/getopt.c compat/getopt/getopt.h)
     endif(NOT HAVE_GETOPT_H)
-    if(MSVC)
+    if(WIN32)
         set(ExportDefs "${PROJECT_BINARY_DIR}/x265.def")
-    endif(MSVC)
+    endif(WIN32)
 
     if(XCODE)
         # Xcode seems unable to link the CLI with libs, so link as one targget
