@@ -692,7 +692,7 @@ cglobal integral_init4v, 3,5
 %endmacro
 
 %macro FILT32x4U 4
-    mova      m1, [r0+r5]
+    movu      m1, [r0+r5]
     pavgb     m0, m1, [r0]
     movu      m3, [r0+r5+1]
     pavgb     m2, m3, [r0+1]
@@ -701,7 +701,7 @@ cglobal integral_init4v, 3,5
     pavgb     m0, m2
     pavgb     m1, m3
 
-    mova      m3, [r0+r5+mmsize]
+    movu      m3, [r0+r5+mmsize]
     pavgb     m2, m3, [r0+mmsize]
     movu      m5, [r0+r5+1+mmsize]
     pavgb     m4, m5, [r0+1+mmsize]
@@ -722,10 +722,10 @@ cglobal integral_init4v, 3,5
     vpermq    m1, m4, q3120
     vpermq    m2, m2, q3120
     vpermq    m3, m5, q3120
-    mova    [%1], m0
-    mova    [%2], m1
-    mova    [%3], m2
-    mova    [%4], m3
+    movu    [%1], m0
+    movu    [%2], m1
+    movu    [%3], m2
+    movu    [%4], m3
 %endmacro
 
 %macro FILT16x2 4
@@ -796,8 +796,8 @@ cglobal integral_init4v, 3,5
 %endmacro
 
 %macro FILT8xA 4
-    mova      m3, [r0+%4+mmsize]
-    mova      m2, [r0+%4]
+    movu      m3, [r0+%4+mmsize]
+    movu      m2, [r0+%4]
     pavgw     m3, [r0+%4+r5+mmsize]
     pavgw     m2, [r0+%4+r5]
     PALIGNR   %1, m3, 2, m6
@@ -815,9 +815,13 @@ cglobal integral_init4v, 3,5
     packssdw  m3, %1
     packssdw  m5, m4
 %endif
-    mova    [%2], m3
-    mova    [%3], m5
-    mova      %1, m2
+%if cpuflag(avx2)
+    vpermq     m3, m3, q3120
+    vpermq     m5, m5, q3120
+%endif
+    movu    [%2], m3
+    movu    [%3], m5
+    movu      %1, m2
 %endmacro
 
 ;-----------------------------------------------------------------------------
@@ -871,8 +875,8 @@ cglobal frame_init_lowres_core, 6,7,(12-4*(BIT_DEPTH/9)) ; 8 for HIGH_BIT_DEPTH,
 .vloop:
     mov      r6d, r7m
 %ifnidn cpuname, mmx2
-    mova      m0, [r0]
-    mova      m1, [r0+r5]
+    movu      m0, [r0]
+    movu      m1, [r0+r5]
     pavgw     m0, m1
     pavgw     m1, [r0+r5*2]
 %endif
@@ -977,7 +981,7 @@ INIT_XMM avx
 FRAME_INIT_LOWRES
 INIT_XMM xop
 FRAME_INIT_LOWRES
-%if HIGH_BIT_DEPTH==0
+%if ARCH_X86_64 == 1
 INIT_YMM avx2
 FRAME_INIT_LOWRES
 %endif

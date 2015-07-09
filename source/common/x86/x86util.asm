@@ -358,11 +358,11 @@
 %if sizeof%1==32
                                  ; %3 = abcdefgh ijklmnop (lower address)
                                  ; %2 = ABCDEFGH IJKLMNOP (higher address)
-;   vperm2i128 %5, %2, %3, q0003 ; %5 = ijklmnop ABCDEFGH
-%if %4 < 16
-    palignr    %1, %5, %3, %4    ; %1 = bcdefghi jklmnopA
+    vperm2i128 %4, %1, %2, q0003 ; %4 = ijklmnop ABCDEFGH
+%if %3 < 16
+    palignr    %1, %4, %2, %3    ; %1 = bcdefghi jklmnopA
 %else
-    palignr    %1, %2, %5, %4-16 ; %1 = pABCDEFG HIJKLMNO
+    palignr    %1, %2, %4, %3-16 ; %1 = pABCDEFG HIJKLMNO
 %endif
 %elif cpuflag(ssse3)
     %if %0==5

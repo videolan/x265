@@ -31,6 +31,7 @@ LOWRES(mmx2)
 LOWRES(sse2)
 LOWRES(ssse3)
 LOWRES(avx)
+LOWRES(avx2)
 LOWRES(xop)
 
 #undef LOWRES
