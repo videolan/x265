@@ -36,6 +36,9 @@ if not exist x265-static-main12.lib (
 cmake -G "Visual Studio 11 Win64" ../../../source -DEXTRA_LIB="x265-static-main10.lib;x265-static-main12.lib" -DLINKED_10BIT=ON -DLINKED_12BIT=ON
 if exist x265.sln (
   MSBuild /property:Configuration="Release" x265.sln
+  :: combine static libraries (ignore warnings caused by winxp.cpp hacks)
+  move Release\x265-static.lib x265-static-main.lib
+  LIB.EXE /ignore:4006 /ignore:4221 /OUT:Release\x265-static.lib x265-static-main.lib x265-static-main10.lib x265-static-main12.lib
 )
 
 pause
