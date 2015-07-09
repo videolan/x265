@@ -159,7 +159,8 @@ After the encoder has been created, you may release the param structure::
 	helps future-proof your code in many ways, but the x265 API is
 	versioned in such a way that we prevent linkage against a build of
 	x265 that does not match the version of the header you are compiling
-	against. This is function of the X265_BUILD macro.
+	against (unless you use x265_api_query() to acquire the library's
+	interfaces). This is function of the X265_BUILD macro.
 
 **x265_encoder_parameters()** may be used to get a copy of the param
 structure from the encoder after it has been opened, in order to see the
@@ -468,10 +469,10 @@ functions (x265_8bit, x265_10bit or x265_12bit) and export no C
 functions.
 
 In this way you can build one or more libx265 libraries without any
-exported C interface and link them into libx265 build that does export a
-C interface. In this way, the build which exported the C functions
-becomes the *default* bit depth for the combined library, and the other
-bit depths are only available via the introspection methods.
+exported C interface and link them into a libx265 build that does export
+a C interface. The build which exported the C functions becomes the
+*default* bit depth for the combined library, and the other bit depths
+are available via the bit-depth introspection methods.
 
 .. Note::
 
