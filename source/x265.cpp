@@ -402,7 +402,6 @@ bool CLIOptions::parse(int argc, char **argv)
 
     if (bShowHelp)
     {
-        api->param_default(param);
         printVersion(param, api);
         showHelp(param);
     }
@@ -417,7 +416,6 @@ bool CLIOptions::parse(int argc, char **argv)
         switch (c)
         {
         case 'h':
-            api->param_default(param);
             printVersion(param, api);
             showHelp(param);
             break;
