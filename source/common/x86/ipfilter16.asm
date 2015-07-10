@@ -145,6 +145,14 @@ const interp8_hpp_shuf,     db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
 const pb_shuf,  db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
                 db 4, 5, 6, 7, 8, 9, 10, 11, 6, 7, 8, 9, 10, 11, 12, 13
 
+%if BIT_DEPTH == 10
+    %define INTERP_OFFSET_PS        pd_n32768
+%elif BIT_DEPTH == 12
+    %define INTERP_OFFSET_PS        pd_n131072
+%else
+%error Unsupport bit depth!
+%endif
+
 SECTION .text
 cextern pd_32
 cextern pw_pixel_max
@@ -279,11 +287,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     mova        m1,     [pd_32]
     pxor        m7,     m7
 %else
-  %if BIT_DEPTH == 10
-    mova        m1,     [pd_n32768]
-  %elif BIT_DEPTH == 12
-    mova        m1,     [pd_n131072]
-  %endif
+    mova        m1,     [INTERP_OFFSET_PS]
 %endif
 
     mov         r4d,    %2
@@ -495,11 +499,10 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
     mova      m7, [pd_32]
 %define SHIFT 6
 %elifidn %1,ps
+    mova      m7, [INTERP_OFFSET_PS]
   %if BIT_DEPTH == 10
-    mova      m7, [pd_n32768]
     %define SHIFT 2
   %elif BIT_DEPTH == 12
-    mova      m7, [pd_n131072]
     %define SHIFT 4
   %endif
 %endif
@@ -818,7 +821,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, 7, 8
 %endif
 
 %ifidn %3, ps
-    mova        m1,     [pd_n32768]
+    mova        m1,     [INTERP_OFFSET_PS]
     cmp         r5m,    byte 0
 %if %1 <= 6
     lea         r4,     [r1 * 3]
@@ -1185,7 +1188,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     pxor        m6, m6
     mova        m7, [pw_pixel_max]
 %else
-    mova        m1, [pd_n32768]
+    mova        m1, [INTERP_OFFSET_PS]
 %endif
 
     mov         r4d, %2
@@ -1271,7 +1274,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     mova        m1, [pd_32]
     pxor        m7, m7
 %else
-    mova        m1, [pd_n32768]
+    mova        m1, [INTERP_OFFSET_PS]
 %endif
 
     mov         r4d, %2
@@ -1372,7 +1375,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
 %ifidn %3, pp 
     mova        m1, [pd_32]
 %else
-    mova        m1, [pd_n32768]
+    mova        m1, [INTERP_OFFSET_PS]
 %endif
 
     mov         r4d, %2
@@ -1495,7 +1498,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
 %ifidn %3, pp 
     mova        m1, [pd_32]
 %else
-    mova        m1, [pd_n32768]
+    mova        m1, [INTERP_OFFSET_PS]
 %endif
 
     mov         r4d, %2
@@ -1690,7 +1693,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
 %ifidn %3, pp 
     mova        m1, [pd_32]
 %else
-    mova        m1, [pd_n32768]
+    mova        m1, [INTERP_OFFSET_PS]
 %endif
 
     mov         r4d, %2
@@ -2631,7 +2634,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, %4, %5
     mova        m2,       [tab_Tm16]
 
 %ifidn %3, ps
-    mova        m1,       [pd_n32768]
+    mova        m1,       [INTERP_OFFSET_PS]
     cmp         r5m, byte 0
     je          .skip
     sub         r0, r1
@@ -3233,7 +3236,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, %5, %6
     mova        m2,       [tab_Tm16]
 
 %ifidn %3, ps
-    mova        m1,       [pd_n32768]
+    mova        m1,       [INTERP_OFFSET_PS]
     cmp         r5m, byte 0
     je          .skip
     sub         r0, r1
@@ -4084,7 +4087,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
             mova      m6, [tab_c_524800]
         %endif
     %else
-        mova      m6, [pd_n32768]
+        mova      m6, [INTERP_OFFSET_PS]
     %endif
 %endif
 
@@ -4339,7 +4342,7 @@ cglobal interp_4tap_vert_%2_2x%1, 5, 6, %3
             mova      m5, [tab_c_524800]
         %endif
     %else
-        mova      m5, [pd_n32768]
+        mova      m5, [INTERP_OFFSET_PS]
     %endif
 %endif
 
@@ -4434,7 +4437,7 @@ cglobal interp_4tap_vert_%2_4x%1, 5, 6, %3
             mova      m4, [tab_c_524800]
         %endif
     %else
-        mova      m4, [pd_n32768]
+        mova      m4, [INTERP_OFFSET_PS]
     %endif
 %endif
 
@@ -4538,7 +4541,7 @@ cglobal interp_4tap_vert_%2_6x%1, 5, 7, %3
             mova      m6, [tab_c_524800]
         %endif
     %else
-        mova      m6, [pd_n32768]
+        mova      m6, [INTERP_OFFSET_PS]
     %endif
 %endif
 
@@ -4706,7 +4709,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
 %elifidn %3, sp
     mova      m7, [tab_c_524800]
 %elifidn %3, ps
-    mova      m7, [pd_n32768]
+    mova      m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -4862,7 +4865,7 @@ cglobal interp_4tap_vert_%2_6x%1, 4, 7, 10
 %elifidn %2, sp
     mova            m8, [pd_524800]
 %else
-    vbroadcasti128  m8, [pd_n32768]
+    vbroadcasti128  m8, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5006,7 +5009,7 @@ cglobal interp_4tap_vert_%2_16x%1, 5, 6, %3
 %elifidn %2, sp
     mova      m7, [pd_524800]
 %elifidn %2, ps
-    mova      m7, [pd_n32768]
+    mova      m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5178,7 +5181,7 @@ cglobal interp_4tap_vert_%2_32x%1, 5, 7, %3
 %elifidn %2, sp
     mova      m7, [pd_524800]
 %elifidn %2, ps
-    mova      m7, [pd_n32768]
+    mova      m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5320,7 +5323,7 @@ cglobal interp_4tap_vert_%2_64x%1, 5, 7, %3
 %elifidn %2, sp
     mova      m7, [pd_524800]
 %elifidn %2, ps
-    mova      m7, [pd_n32768]
+    mova      m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5451,7 +5454,7 @@ cglobal interp_4tap_vert_%2_12x%1, 5, 8, %3
 %elifidn %2, sp
     mova      m7, [pd_524800]
 %elifidn %2, ps
-    mova      m7, [pd_n32768]
+    mova      m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5604,7 +5607,7 @@ cglobal interp_4tap_vert_%2_24x%1, 5, 7, %3
 %elifidn %2, sp
     mova      m7, [pd_524800]
 %elifidn %2, ps
-    mova      m7, [pd_n32768]
+    mova      m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5727,7 +5730,7 @@ cglobal interp_4tap_vert_%1_48x64, 5, 7, %2
 %elifidn %1, sp
     mova      m7, [pd_524800]
 %elifidn %1, ps
-    mova      m7, [pd_n32768]
+    mova      m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -6063,7 +6066,7 @@ cglobal interp_8tap_vert_%1_4x4, 4, 6, 7
 %elifidn %1, sp
     mova            m6, [pd_524800]
 %else
-    vbroadcasti128  m6, [pd_n32768]
+    vbroadcasti128  m6, [INTERP_OFFSET_PS]
 %endif
 
     movq            xm0, [r0]
@@ -6173,7 +6176,7 @@ cglobal interp_8tap_vert_%1_8x8, 4, 6, 12
 %elifidn %1, sp
     mova            m11, [pd_524800]
 %else
-    vbroadcasti128  m11, [pd_n32768]
+    vbroadcasti128  m11, [INTERP_OFFSET_PS]
 %endif
 
     movu            xm0, [r0]                       ; m0 = row 0
@@ -6811,7 +6814,7 @@ cglobal interp_8tap_vert_%1_%2x16, 4, 10, 15
 %elifidn %1, sp
     mova            m14, [pd_524800]
 %else
-    vbroadcasti128  m14, [pd_n32768]
+    vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
     lea             r6, [r3 * 3]
     mov             r9d, %2 / 8
@@ -6862,7 +6865,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 4, 12, 15
 %elifidn %3, sp
     mova            m14, [pd_524800]
 %else
-    vbroadcasti128  m14, [pd_n32768]
+    vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
 
     lea             r6, [r3 * 3]
@@ -6945,7 +6948,7 @@ cglobal interp_8tap_vert_%1_8x%2, 4, 9, 15
 %elifidn %1, sp
     mova            m14, [pd_524800]
 %else
-    vbroadcasti128  m14, [pd_n32768]
+    vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
     lea             r6, [r3 * 3]
     lea             r7, [r1 * 4]
@@ -7592,7 +7595,7 @@ cglobal interp_8tap_vert_%1_%2x8, 4, 10, 13
 %elifidn %1, sp
     mova            m11, [pd_524800]
 %else
-    vbroadcasti128  m11, [pd_n32768]
+    vbroadcasti128  m11, [INTERP_OFFSET_PS]
 %endif
     mova            m12, [pw_pixel_max]
     lea             r6, [r3 * 3]
@@ -7639,7 +7642,7 @@ cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
 %elifidn %1, sp
     mova            m14, [pd_524800]
 %else
-    vbroadcasti128  m14, [pd_n32768]
+    vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
     lea             r6, [r3 * 3]
     mov             r9d, 4
@@ -7811,7 +7814,7 @@ cglobal interp_8tap_vert_%1_16x4, 4, 7, 8, 0 - gprsize
 %elifidn %1, sp
     mova            m7, [pd_524800]
 %else
-    vbroadcasti128  m7, [pd_n32768]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
     mov             dword [rsp], 2
 .loopW:
@@ -7856,7 +7859,7 @@ cglobal interp_8tap_vert_%1_8x4, 4, 6, 8
 %elifidn %1, sp
     mova            m7, [pd_524800]
 %else
-    vbroadcasti128  m7, [pd_n32768]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
 
     PROCESS_LUMA_AVX2_W8_4R %1
@@ -7896,7 +7899,7 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
 %elifidn %1, sp
     mova            m14, [pd_524800]
 %else
-    vbroadcasti128  m14, [pd_n32768]
+    vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
     mova            m13, [pw_pixel_max]
     pxor            m12, m12
@@ -8243,7 +8246,7 @@ cglobal interp_8tap_vert_%1_4x8, 4, 7, 8
 %elifidn %1, sp
     mova            m7, [pd_524800]
 %else
-    vbroadcasti128  m7, [pd_n32768]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
     lea             r6, [r3 * 3]
 
@@ -8663,7 +8666,7 @@ cglobal interp_8tap_vert_%1_4x16, 4, 7, 8
 %elifidn %1, sp
     mova            m7, [pd_524800]
 %else
-    vbroadcasti128  m7, [pd_n32768]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
     lea             r6, [r3 * 3]
     PROCESS_LUMA_AVX2_W4_16R %1
@@ -8698,7 +8701,7 @@ cglobal interp_8tap_vert_%1_12x16, 4, 9, 15
 %elifidn %1, sp
     mova            m14, [pd_524800]
 %else
-    vbroadcasti128  m14, [pd_n32768]
+    vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
     lea             r6, [r3 * 3]
     PROCESS_LUMA_AVX2_W8_16R %1
@@ -8735,7 +8738,7 @@ cglobal interp_8tap_vert_ps_%1x%2, 5, 7, 8 ,0-gprsize
     lea       r6, [tab_LumaCoeffV + r4]
 %endif
 
-    mova      m7, [pd_n32768]
+    mova      m7, [INTERP_OFFSET_PS]
 
     mov       dword [rsp], %2/4
 .loopH:
@@ -10297,7 +10300,7 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,8,7
     vbroadcasti128              m0,                [tab_LumaCoeff + r4 * 2]
 %endif
 
-    vbroadcasti128              m2,                [pd_n32768]
+    vbroadcasti128              m2,                [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 - interpolate coeff
@@ -10408,7 +10411,7 @@ cglobal interp_8tap_horiz_ps_8x%1, 4, 6, 8
     vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -10476,7 +10479,7 @@ cglobal interp_8tap_horiz_ps_24x32, 4, 6, 8
     vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -10546,7 +10549,7 @@ cglobal interp_8tap_horiz_ps_%1x%2, 4, 6, 8
     vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -10657,7 +10660,7 @@ cglobal interp_8tap_horiz_ps_16x%1, 4, 6, 8
     vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -10750,7 +10753,7 @@ cglobal interp_8tap_horiz_ps_12x16, 4, 6, 8
     vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -10825,7 +10828,7 @@ cglobal interp_4tap_horiz_ps_8x%1, 4, 7, 6
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -10884,7 +10887,7 @@ cglobal interp_4tap_horiz_ps_16x%1, 4, 7, 6
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -10957,7 +10960,7 @@ cglobal interp_4tap_horiz_ps_24x%1, 4, 7, 6
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -11039,7 +11042,7 @@ cglobal interp_4tap_horiz_ps_12x%1, 4, 7, 6
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -11104,7 +11107,7 @@ cglobal interp_4tap_horiz_ps_32x%1, 4, 7, 6
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -11205,7 +11208,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4, 7, 6
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -11358,7 +11361,7 @@ cglobal interp_4tap_horiz_ps_48x64, 4, 7, 6
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -11478,7 +11481,7 @@ cglobal interp_4tap_horiz_ps_6x%1, 4, 7, 6
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
     mova                m3, [pb_shuf]
-    vbroadcasti128      m2, [pd_n32768]
+    vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -11539,7 +11542,7 @@ cglobal interp_4tap_vert_%1_8x%2, 4, 9, 15
 %elifidn %1, sp
     mova            m14, [pd_524800]
 %else
-    vbroadcasti128  m14, [pd_n32768]
+    vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
     lea             r6, [r3 * 3]
     lea             r7, [r1 * 4]
@@ -11956,7 +11959,7 @@ cglobal interp_4tap_vert_%1_8x2, 4, 6, 8
 %elifidn %1, sp
     mova            m7, [pd_524800]
 %else
-    vbroadcasti128  m7, [pd_n32768]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
 
     PROCESS_CHROMA_AVX2_8x2 %1, %2, %3
@@ -11993,7 +11996,7 @@ cglobal interp_4tap_vert_%1_4x2, 4, 6, 7
 %elifidn %1, sp
     mova            m6, [pd_524800]
 %else
-    vbroadcasti128  m6, [pd_n32768]
+    vbroadcasti128  m6, [INTERP_OFFSET_PS]
 %endif
 
     movq            xm0, [r0]                       ; row 0
@@ -12060,7 +12063,7 @@ cglobal interp_4tap_vert_%1_4x4, 4, 6, 7
 %elifidn %1, sp
     mova            m6, [pd_524800]
 %else
-    vbroadcasti128  m6, [pd_n32768]
+    vbroadcasti128  m6, [INTERP_OFFSET_PS]
 %endif
     movq            xm0, [r0]                       ; row 0
     movq            xm1, [r0 + r1]                  ; row 1
@@ -12140,7 +12143,7 @@ cglobal interp_4tap_vert_%1_4x8, 4, 7, 8
 %elifidn %1, sp
     mova            m7, [pd_524800]
 %else
-    vbroadcasti128  m7, [pd_n32768]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
     lea             r6, [r3 * 3]
 
@@ -12398,7 +12401,7 @@ cglobal interp_4tap_vert_%1_4x%2, 4, 8, 8
 %elifidn %1, sp
     mova            m7, [pd_524800]
 %else
-    vbroadcasti128  m7, [pd_n32768]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
     lea             r6, [r3 * 3]
 .loopH:
@@ -12442,7 +12445,7 @@ cglobal interp_4tap_vert_%1_8x8, 4, 6, 12
 %elifidn %1, sp
     mova            m11, [pd_524800]
 %else
-    vbroadcasti128  m11, [pd_n32768]
+    vbroadcasti128  m11, [INTERP_OFFSET_PS]
 %endif
 
     movu            xm0, [r0]                       ; m0 = row 0
@@ -12597,7 +12600,7 @@ cglobal interp_4tap_vert_%1_8x6, 4, 6, 12
 %elifidn %1, sp
     mova            m11, [pd_524800]
 %else
-    vbroadcasti128  m11, [pd_n32768]
+    vbroadcasti128  m11, [INTERP_OFFSET_PS]
 %endif
 
     movu            xm0, [r0]                       ; m0 = row 0
@@ -12787,7 +12790,7 @@ cglobal interp_4tap_vert_%1_8x4, 4, 6, 8
 %elifidn %1, sp
     mova            m7, [pd_524800]
 %else
-    vbroadcasti128  m7, [pd_n32768]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
     PROCESS_CHROMA_AVX2 %1, %2, %3
     movu            [r2], xm0
@@ -12826,7 +12829,7 @@ cglobal interp_4tap_vert_%1_8x12, 4, 7, 15
 %elifidn %1, sp
     mova            m14, [pd_524800]
 %else
-    vbroadcasti128  m14, [pd_n32768]
+    vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
     lea             r6, [r3 * 3]
     movu            xm0, [r0]                       ; m0 = row 0
