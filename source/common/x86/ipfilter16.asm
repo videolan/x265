@@ -29,7 +29,6 @@
 SECTION_RODATA 32
 
 tab_c_32:         times 8 dd 32
-tab_c_n32768:     times 8 dd -32768
 tab_c_524800:     times 4 dd 524800
 tab_c_n8192:      times 8 dw -8192
 pd_524800:        times 8 dd 524800
@@ -819,7 +818,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, 7, 8
 %endif
 
 %ifidn %3, ps
-    mova        m1,     [tab_c_n32768]
+    mova        m1,     [pd_n32768]
     cmp         r5m,    byte 0
 %if %1 <= 6
     lea         r4,     [r1 * 3]
@@ -1001,8 +1000,8 @@ FILTER_HOR_CHROMA_sse3 64, 64, ps
     movd        m2,     [r0 + r1 * 2 + %1]
     movhps      m0,     [r0 + r1 + %1]
     movhps      m2,     [r0 + r4 + %1]
-    psllw       m0,     4
-    psllw       m2,     4
+    psllw       m0,     (14 - BIT_DEPTH)
+    psllw       m2,     (14 - BIT_DEPTH)
     psubw       m0,     m1
     psubw       m2,     m1
 
@@ -1017,14 +1016,14 @@ FILTER_HOR_CHROMA_sse3 64, 64, ps
 %macro FILTER_P2S_4_4_sse2 1
     movh        m0,     [r0 + %1]
     movhps      m0,     [r0 + r1 + %1]
-    psllw       m0,     4
+    psllw       m0,     (14 - BIT_DEPTH)
     psubw       m0,     m1
     movh        [r2 + r3 * 0 + %1], m0
     movhps      [r2 + r3 * 1 + %1], m0
 
     movh        m2,     [r0 + r1 * 2 + %1]
     movhps      m2,     [r0 + r4 + %1]
-    psllw       m2,     4
+    psllw       m2,     (14 - BIT_DEPTH)
     psubw       m2,     m1
     movh        [r2 + r3 * 2 + %1], m2
     movhps      [r2 + r5 + %1], m2
@@ -1033,7 +1032,7 @@ FILTER_HOR_CHROMA_sse3 64, 64, ps
 %macro FILTER_P2S_4_2_sse2 0
     movh        m0,     [r0]
     movhps      m0,     [r0 + r1 * 2]
-    psllw       m0,     4
+    psllw       m0,     (14 - BIT_DEPTH)
     psubw       m0,     [pw_2000]
     movh        [r2 + r3 * 0], m0
     movhps      [r2 + r3 * 2], m0
@@ -1042,8 +1041,8 @@ FILTER_HOR_CHROMA_sse3 64, 64, ps
 %macro FILTER_P2S_8_4_sse2 1
     movu        m0,     [r0 + %1]
     movu        m2,     [r0 + r1 + %1]
-    psllw       m0,     4
-    psllw       m2,     4
+    psllw       m0,     (14 - BIT_DEPTH)
+    psllw       m2,     (14 - BIT_DEPTH)
     psubw       m0,     m1
     psubw       m2,     m1
     movu        [r2 + r3 * 0 + %1], m0
@@ -1051,8 +1050,8 @@ FILTER_HOR_CHROMA_sse3 64, 64, ps
 
     movu        m3,     [r0 + r1 * 2 + %1]
     movu        m4,     [r0 + r4 + %1]
-    psllw       m3,     4
-    psllw       m4,     4
+    psllw       m3,     (14 - BIT_DEPTH)
+    psllw       m4,     (14 - BIT_DEPTH)
     psubw       m3,     m1
     psubw       m4,     m1
     movu        [r2 + r3 * 2 + %1], m3
@@ -1062,8 +1061,8 @@ FILTER_HOR_CHROMA_sse3 64, 64, ps
 %macro FILTER_P2S_8_2_sse2 1
     movu        m0,     [r0 + %1]
     movu        m2,     [r0 + r1 + %1]
-    psllw       m0,     4
-    psllw       m2,     4
+    psllw       m0,     (14 - BIT_DEPTH)
+    psllw       m2,     (14 - BIT_DEPTH)
     psubw       m0,     m1
     psubw       m2,     m1
     movu        [r2 + r3 * 0 + %1], m0
@@ -2632,7 +2631,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, %4, %5
     mova        m2,       [tab_Tm16]
 
 %ifidn %3, ps
-    mova        m1,       [tab_c_n32768]
+    mova        m1,       [pd_n32768]
     cmp         r5m, byte 0
     je          .skip
     sub         r0, r1
@@ -3234,7 +3233,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, %5, %6
     mova        m2,       [tab_Tm16]
 
 %ifidn %3, ps
-    mova        m1,       [tab_c_n32768]
+    mova        m1,       [pd_n32768]
     cmp         r5m, byte 0
     je          .skip
     sub         r0, r1
@@ -4085,7 +4084,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
             mova      m6, [tab_c_524800]
         %endif
     %else
-        mova      m6, [tab_c_n32768]
+        mova      m6, [pd_n32768]
     %endif
 %endif
 
@@ -4340,7 +4339,7 @@ cglobal interp_4tap_vert_%2_2x%1, 5, 6, %3
             mova      m5, [tab_c_524800]
         %endif
     %else
-        mova      m5, [tab_c_n32768]
+        mova      m5, [pd_n32768]
     %endif
 %endif
 
@@ -4435,7 +4434,7 @@ cglobal interp_4tap_vert_%2_4x%1, 5, 6, %3
             mova      m4, [tab_c_524800]
         %endif
     %else
-        mova      m4, [tab_c_n32768]
+        mova      m4, [pd_n32768]
     %endif
 %endif
 
@@ -4539,7 +4538,7 @@ cglobal interp_4tap_vert_%2_6x%1, 5, 7, %3
             mova      m6, [tab_c_524800]
         %endif
     %else
-        mova      m6, [tab_c_n32768]
+        mova      m6, [pd_n32768]
     %endif
 %endif
 
@@ -4707,7 +4706,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
 %elifidn %3, sp
     mova      m7, [tab_c_524800]
 %elifidn %3, ps
-    mova      m7, [tab_c_n32768]
+    mova      m7, [pd_n32768]
 %endif
 
 .loopH:
@@ -4863,7 +4862,7 @@ cglobal interp_4tap_vert_%2_6x%1, 4, 7, 10
 %elifidn %2, sp
     mova            m8, [pd_524800]
 %else
-    vbroadcasti128  m8, [tab_c_n32768]
+    vbroadcasti128  m8, [pd_n32768]
 %endif
 
 .loopH:
@@ -5007,7 +5006,7 @@ cglobal interp_4tap_vert_%2_16x%1, 5, 6, %3
 %elifidn %2, sp
     mova      m7, [pd_524800]
 %elifidn %2, ps
-    mova      m7, [tab_c_n32768]
+    mova      m7, [pd_n32768]
 %endif
 
 .loopH:
@@ -5179,7 +5178,7 @@ cglobal interp_4tap_vert_%2_32x%1, 5, 7, %3
 %elifidn %2, sp
     mova      m7, [pd_524800]
 %elifidn %2, ps
-    mova      m7, [tab_c_n32768]
+    mova      m7, [pd_n32768]
 %endif
 
 .loopH:
@@ -5321,7 +5320,7 @@ cglobal interp_4tap_vert_%2_64x%1, 5, 7, %3
 %elifidn %2, sp
     mova      m7, [pd_524800]
 %elifidn %2, ps
-    mova      m7, [tab_c_n32768]
+    mova      m7, [pd_n32768]
 %endif
 
 .loopH:
@@ -5452,7 +5451,7 @@ cglobal interp_4tap_vert_%2_12x%1, 5, 8, %3
 %elifidn %2, sp
     mova      m7, [pd_524800]
 %elifidn %2, ps
-    mova      m7, [tab_c_n32768]
+    mova      m7, [pd_n32768]
 %endif
 
 .loopH:
@@ -5605,7 +5604,7 @@ cglobal interp_4tap_vert_%2_24x%1, 5, 7, %3
 %elifidn %2, sp
     mova      m7, [pd_524800]
 %elifidn %2, ps
-    mova      m7, [tab_c_n32768]
+    mova      m7, [pd_n32768]
 %endif
 
 .loopH:
@@ -5728,7 +5727,7 @@ cglobal interp_4tap_vert_%1_48x64, 5, 7, %2
 %elifidn %1, sp
     mova      m7, [pd_524800]
 %elifidn %1, ps
-    mova      m7, [tab_c_n32768]
+    mova      m7, [pd_n32768]
 %endif
 
 .loopH:

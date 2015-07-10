@@ -122,7 +122,14 @@ bool IPFilterHarness::check_IPFilterChroma_ps_primitive(filter_ps_t ref, filter_
                     coeffIdx);
 
             if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(int16_t)))
+            {
+            ref(pixel_test_buff[index] + 3 * rand_srcStride,
+                rand_srcStride,
+                IPF_C_output_s,
+                rand_dstStride,
+                coeffIdx);
                 return false;
+            }
 
             reportfail();
         }
