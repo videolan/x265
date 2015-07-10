@@ -329,12 +329,6 @@ static void showHelp(x265_param *param)
     H1("   --bframe-bias <integer>       Bias towards B frame decisions. Default %d\n", param->bFrameBias);
     H0("   --b-adapt <0..2>              0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);
     H0("   --[no-]b-pyramid              Use B-frames as references. Default %s\n", OPT(param->bBPyramid));
-    H1("   --zones <zone0>/<zone1>/...   Tweak the bitrate of regions of the video\n");
-    H1("                                 Each zone is of the form\n");
-    H1("                                   <start frame>,<end frame>,<option>\n");
-    H1("                                   where <option> is either\n");
-    H1("                                       q=<integer> (force QP)\n");
-    H1("                                   or  b=<float> (bitrate multiplier)\n");
     H1("   --qpfile <string>             Force frametypes and QPs for some or all frames\n");
     H1("                                 Format of each line: framenumber frametype QP\n");
     H1("                                 QP is optional (none lets x265 choose). Frametypes: I,i,P,B,b.\n");
@@ -371,6 +365,12 @@ static void showHelp(x265_param *param)
     H1("   --cbqpoffs <integer>          Chroma Cb QP Offset [-12..12]. Default %d\n", param->cbQpOffset);
     H1("   --crqpoffs <integer>          Chroma Cr QP Offset [-12..12]. Default %d\n", param->crQpOffset);
     H1("   --scaling-list <string>       Specify a file containing HM style quant scaling lists or 'default' or 'off'. Default: off\n");
+    H1("   --zones <zone0>/<zone1>/...   Tweak the bitrate of regions of the video\n");
+    H1("                                 Each zone is of the form\n");
+    H1("                                   <start frame>,<end frame>,<option>\n");
+    H1("                                   where <option> is either\n");
+    H1("                                       q=<integer> (force QP)\n");
+    H1("                                   or  b=<float> (bitrate multiplier)\n");
     H1("   --lambda-file <string>        Specify a file containing replacement values for the lambda tables\n");
     H1("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
     H1("                                 Blank lines and lines starting with hash(#) are ignored\n");
