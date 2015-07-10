@@ -830,7 +830,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         p->vui.chromaSampleLocTypeTopField = atoi(value);
         p->vui.chromaSampleLocTypeBottomField = p->vui.chromaSampleLocTypeTopField;
     }
-    OPT("crop-rect")
+    OPT2("display-window", "crop-rect")
     {
         p->vui.bEnableDefaultDisplayWindowFlag = 1;
         bError |= sscanf(value, "%d,%d,%d,%d",

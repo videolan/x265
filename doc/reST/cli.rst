@@ -1512,13 +1512,19 @@ VUI fields must be manually specified.
 	15. 3:2
 	16. 2:1
 
-.. option:: --crop-rect <left,top,right,bottom>
+.. option:: --display-window <left,top,right,bottom>
 
 	Define the (overscan) region of the image that does not contain
 	information because it was added to achieve certain resolution or
-	aspect ratio. The decoder may be directed to crop away this region
-	before displaying the images via the :option:`--overscan` option.
-	Default undefined (not signaled)
+	aspect ratio (the areas are typically black bars). The decoder may
+	be directed to crop away this region before displaying the images
+	via the :option:`--overscan` option.  Default undefined (not
+	signaled).
+
+	Note that this has nothing to do with padding added internally by
+	the encoder to ensure the pictures size is a multiple of the minimum
+	coding unit (4x4). That padding is signaled in a separate
+	"conformance window" and is not user-configurable.
 
 .. option:: --overscan <show|crop>
 

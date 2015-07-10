@@ -185,7 +185,8 @@ static const struct option long_options[] =
     { "transfer",       required_argument, NULL, 0 },
     { "colormatrix",    required_argument, NULL, 0 },
     { "chromaloc",      required_argument, NULL, 0 },
-    { "crop-rect",      required_argument, NULL, 0 },
+    { "display-window", required_argument, NULL, 0 },
+    { "crop-rect",      required_argument, NULL, 0 }, /* DEPRECATED */
     { "master-display", required_argument, NULL, 0 },
     { "max-cll",        required_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
@@ -384,7 +385,7 @@ static void showHelp(x265_param *param)
     H0("                                 Choose from 0=undef, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");
     H0("                                 5=40:33, 6=24:11, 7=20:11, 8=32:11, 9=80:33, 10=18:11, 11=15:11,\n");
     H0("                                 12=64:33, 13=160:99, 14=4:3, 15=3:2, 16=2:1 or custom ratio of <int:int>. Default %d\n", param->vui.aspectRatioIdc);
-    H1("   --crop-rect <string>          Add 'left,top,right,bottom' to the bitstream-level cropping rectangle\n");
+    H1("   --display-window <string>     Describe overscan cropping region as 'left,top,right,bottom' in pixels\n");
     H1("   --overscan <string>           Specify whether it is appropriate for decoder to show cropped region: undef, show or crop. Default undef\n");
     H0("   --videoformat <string>        Specify video format from undef, component, pal, ntsc, secam, mac. Default undef\n");
     H0("   --range <string>              Specify black level and range of luma and chroma signals as full or limited Default limited\n");
