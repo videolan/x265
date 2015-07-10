@@ -626,7 +626,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
     for (int i = 0; i < numCandidates; i++)
     {
         MV m = mvc[i].clipped(qmvmin, qmvmax);
-        if (m.notZero() && m != pmv && m != bestpre) // check already measured
+        if (m.notZero() & (m != pmv ? 1 : 0) & (m != bestpre ? 1 : 0)) // check already measured
         {
             int cost = subpelCompare(ref, m, sad) + mvcost(m);
             if (cost < bprecost)
