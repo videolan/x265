@@ -496,8 +496,13 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
     mova      m7, [pd_32]
 %define SHIFT 6
 %elifidn %1,ps
+  %if BIT_DEPTH == 10
     mova      m7, [pd_n32768]
-%define SHIFT 2
+    %define SHIFT 2
+  %elif BIT_DEPTH == 12
+    mova      m7, [pd_n131072]
+    %define SHIFT 4
+  %endif
 %endif
 
     mov         r4d, %3/4
