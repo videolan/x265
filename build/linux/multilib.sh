@@ -20,7 +20,7 @@ make ${MAKEFLAGS}
 mv libx265.a libx265_main.a
 
 uname=`uname`
-if [[ "$uname" == "Linux" ]];
+if [ "$uname" = "Linux" ]
 then
 
 # On Linux, we use GNU ar to combine the static libraries together
