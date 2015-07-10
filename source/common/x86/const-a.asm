@@ -125,6 +125,7 @@ const pd_1024,              times  4 dd 1024
 const pd_2048,              times  4 dd 2048
 const pd_ffff,              times  4 dd 0xffff
 const pd_32767,             times  4 dd 32767
+const pd_524416,            times  4 dd 524416
 const pd_n32768,            times  8 dd 0xffff8000
 const pd_n131072,           times  4 dd 0xfffe0000
 

@@ -53,7 +53,7 @@ const tab_ChromaCoeffV,  times 8 dw 0, 64
                          times 8 dw -4, 54
                          times 8 dw 16, -2
 
-                         times 8 dw -6, 46 
+                         times 8 dw -6, 46
                          times 8 dw 28, -4
 
                          times 8 dw -4, 36
@@ -147,15 +147,22 @@ const pb_shuf,  db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
 
 %if BIT_DEPTH == 10
     %define INTERP_OFFSET_PS        pd_n32768
+    %define INTERP_SHIFT_PS         2
+    %define INTERP_OFFSET_SP        pd_524800
+    %define INTERP_SHIFT_SP         10
 %elif BIT_DEPTH == 12
     %define INTERP_OFFSET_PS        pd_n131072
+    %define INTERP_SHIFT_PS         4
+    %define INTERP_OFFSET_SP        pd_524416
+    %define INTERP_SHIFT_SP         8
 %else
-%error Unsupport bit depth!
+    %error Unsupport bit depth!
 %endif
 
 SECTION .text
 cextern pd_32
 cextern pw_pixel_max
+cextern pd_524416
 cextern pd_n32768
 cextern pd_n131072
 cextern pw_2000
@@ -644,8 +651,8 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
     packssdw    m3,     m5
     CLIPW       m3,     m7,     m6
 %else
-    psrad       m3,     2
-    psrad       m5,     2
+    psrad       m3,     INTERP_SHIFT_PS
+    psrad       m5,     INTERP_SHIFT_PS
     packssdw    m3,     m5
 %endif
     movd        [r2 + %1], m3
@@ -682,8 +689,8 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
     pshufd      m5,     m5,     q3120
     paddd       m5,     m1
 
-    psrad       m3,     2
-    psrad       m5,     2
+    psrad       m3,     INTERP_SHIFT_PS
+    psrad       m5,     INTERP_SHIFT_PS
     packssdw    m3,     m5
 
     movd        [r2 + %1], m3
@@ -729,8 +736,8 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
     packssdw    m3,     m5
     CLIPW       m3,     m7,     m6
 %else
-    psrad       m3,     2
-    psrad       m5,     2
+    psrad       m3,     INTERP_SHIFT_PS
+    psrad       m5,     INTERP_SHIFT_PS
     packssdw    m3,     m5
 %endif
     movh        [r2 + %1], m3
@@ -753,7 +760,7 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
     punpcklqdq  m3,     m4
     paddd       m3,     m1
 
-    psrad       m3,     2
+    psrad       m3,     INTERP_SHIFT_PS
     packssdw    m3,     m3
     movh        [r2 + r3 * 2 + %1], m3
 %endmacro
@@ -794,8 +801,8 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
     packssdw    m3,     m5
     CLIPW       m3,     m7,     m6
 %else
-    psrad       m3,     2
-    psrad       m5,     2
+    psrad       m3,     INTERP_SHIFT_PS
+    psrad       m5,     INTERP_SHIFT_PS
     packssdw    m3,     m5
 %endif
     movdqu      [r2 + %1], m3
@@ -905,7 +912,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, 7, 8
 %endif ;z < y
 %endrep
 
-RET
+    RET
 %endmacro
 
 ;-----------------------------------------------------------------------------
@@ -1183,7 +1190,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     mova        m0, [tab_LumaCoeff + r4]
 %endif
 
-%ifidn %3, pp 
+%ifidn %3, pp
     mova        m1, [pd_32]
     pxor        m6, m6
     mova        m7, [pw_pixel_max]
@@ -1270,7 +1277,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     mova        m0, [tab_LumaCoeff + r4]
 %endif
 
-%ifidn %3, pp 
+%ifidn %3, pp
     mova        m1, [pd_32]
     pxor        m7, m7
 %else
@@ -1316,7 +1323,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m6, m3
     phaddd      m5, m6
     paddd       m5, m1
-%ifidn %3, pp 
+%ifidn %3, pp
     psrad       m4, 6
     psrad       m5, 6
     packusdw    m4, m5
@@ -1372,7 +1379,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
 %else
     mova        m0, [tab_LumaCoeff + r4]
 %endif
-%ifidn %3, pp 
+%ifidn %3, pp
     mova        m1, [pd_32]
 %else
     mova        m1, [INTERP_OFFSET_PS]
@@ -1417,7 +1424,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m6, m7
     phaddd      m5, m6
     paddd       m5, m1
-%ifidn %3, pp 
+%ifidn %3, pp
     psrad       m4, 6
     psrad       m5, 6
     packusdw    m4, m5
@@ -1445,7 +1452,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m5, m2
     phaddd      m4, m5
     paddd       m4, m1
-%ifidn %3, pp 
+%ifidn %3, pp
     psrad       m4, 6
     packusdw    m4, m4
     pxor        m5, m5
@@ -1495,7 +1502,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     mova        m0, [tab_LumaCoeff + r4]
 %endif
 
-%ifidn %3, pp 
+%ifidn %3, pp
     mova        m1, [pd_32]
 %else
     mova        m1, [INTERP_OFFSET_PS]
@@ -1583,7 +1590,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m6, m2
     phaddd      m5, m6
     paddd       m5, m1
-%ifidn %3, pp 
+%ifidn %3, pp
     psrad       m4, 6
     psrad       m5, 6
     packusdw    m4, m5
@@ -1690,7 +1697,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
 %else
     mova        m0, [tab_LumaCoeff + r4]
 %endif
-%ifidn %3, pp 
+%ifidn %3, pp
     mova        m1, [pd_32]
 %else
     mova        m1, [INTERP_OFFSET_PS]
@@ -1735,7 +1742,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m6, m7
     phaddd      m5, m6
     paddd       m5, m1
-%ifidn %3, pp 
+%ifidn %3, pp
     psrad       m4, 6
     psrad       m5, 6
     packusdw    m4, m5
@@ -1776,7 +1783,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m6, m7
     phaddd      m5, m6
     paddd       m5, m1
-%ifidn %3, pp 
+%ifidn %3, pp
     psrad       m4, 6
     psrad       m5, 6
     packusdw    m4, m5
@@ -1817,7 +1824,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m6, m7
     phaddd      m5, m6
     paddd       m5, m1
-%ifidn %3, pp 
+%ifidn %3, pp
     psrad       m4, 6
     psrad       m5, 6
     packusdw    m4, m5
@@ -2652,7 +2659,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, %4, %5
     %endif
 
     paddd       m3,         m1
-    psrad       m3,         2
+    psrad       m3,         INTERP_SHIFT_PS
     packssdw    m3,         m3
 
     %if %1 == 2
@@ -2683,7 +2690,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, %4, %5
     FILTER_W%1_2 %3
 %endrep
 
-RET
+    RET
 %endmacro
 
 FILTER_CHROMA_H 2, 4, pp, 6, 8, 5
@@ -4084,7 +4091,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
         %ifidn %3, pp
             mova      m6, [tab_c_32]
         %else
-            mova      m6, [tab_c_524800]
+            mova      m6, [INTERP_OFFSET_SP]
         %endif
     %else
         mova      m6, [INTERP_OFFSET_PS]
@@ -4109,10 +4116,10 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
     paddd     m1, m6
     paddd     m2, m6
     paddd     m3, m6
-    psrad     m0, 2
-    psrad     m1, 2
-    psrad     m2, 2
-    psrad     m3, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
+    psrad     m3, INTERP_SHIFT_PS
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -4127,10 +4134,10 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
         psrad     m2, 6
         psrad     m3, 6
     %else
-        psrad     m0, 10
-        psrad     m1, 10
-        psrad     m2, 10
-        psrad     m3, 10
+        psrad     m0, INTERP_SHIFT_SP
+        psrad     m1, INTERP_SHIFT_SP
+        psrad     m2, INTERP_SHIFT_SP
+        psrad     m3, INTERP_SHIFT_SP
     %endif
     packssdw  m0, m1
     packssdw  m2, m3
@@ -4707,7 +4714,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
 %ifidn %3, pp
     mova      m7, [tab_c_32]
 %elifidn %3, sp
-    mova      m7, [tab_c_524800]
+    mova      m7, [INTERP_OFFSET_SP]
 %elifidn %3, ps
     mova      m7, [INTERP_OFFSET_PS]
 %endif
@@ -4728,10 +4735,10 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
     paddd     m1, m7
     paddd     m2, m7
     paddd     m3, m7
-    psrad     m0, 2
-    psrad     m1, 2
-    psrad     m2, 2
-    psrad     m3, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
+    psrad     m3, INTERP_SHIFT_PS
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -4746,10 +4753,10 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
         psrad     m2, 6
         psrad     m3, 6
     %else
-        psrad     m0, 10
-        psrad     m1, 10
-        psrad     m2, 10
-        psrad     m3, 10
+        psrad     m0, INTERP_SHIFT_SP
+        psrad     m1, INTERP_SHIFT_SP
+        psrad     m2, INTERP_SHIFT_SP
+        psrad     m3, INTERP_SHIFT_SP
     %endif
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5587,7 +5594,7 @@ cglobal interp_4tap_vert_%2_12x%1, 5, 8, %3
 ;-----------------------------------------------------------------------------------------------------------------
 %macro FILTER_VER_CHROMA_W16_24xN_avx2 3
 INIT_YMM avx2
-%if ARCH_X86_64 
+%if ARCH_X86_64
 cglobal interp_4tap_vert_%2_24x%1, 5, 7, %3
     add       r1d, r1d
     add       r3d, r3d
@@ -8628,7 +8635,7 @@ FILTER_VER_LUMA_AVX2_4x8 ss
     psrad           m3, 2
 %endif
 %endif
-  
+
     packssdw        m0, m3
 %ifidn %1,pp
     CLIPW           m0, m1, [pw_pixel_max]
@@ -9045,14 +9052,14 @@ cglobal filterPixelToShort_4x%1, 3, 6, 2
 %rep %1/4
     movh       m0, [r0]
     movhps     m0, [r0 + r1]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m1
     movh       [r2 + r3 * 0], m0
     movhps     [r2 + r3 * 1], m0
 
     movh       m0, [r0 + r1 * 2]
     movhps     m0, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m1
     movh       [r2 + r3 * 2], m0
     movhps     [r2 + r4], m0
@@ -9078,11 +9085,10 @@ cglobal filterPixelToShort_4x2, 3, 4, 1
 
     movh       m0, [r0]
     movhps     m0, [r0 + r1]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, [pw_2000]
     movh       [r2 + r3 * 0], m0
     movhps     [r2 + r3 * 1], m0
-
     RET
 
 ;-----------------------------------------------------------------------------
@@ -9106,9 +9112,9 @@ cglobal filterPixelToShort_6x%1, 3, 7, 3
 .loop
     movu       m0, [r0]
     movu       m1, [r0 + r1]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movh       [r2 + r3 * 0], m0
@@ -9118,9 +9124,9 @@ cglobal filterPixelToShort_6x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2]
     movu       m1, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movh       [r2 + r3 * 2], m0
@@ -9158,22 +9164,22 @@ cglobal filterPixelToShort_8x%1, 3, 7, 2
 
 .loop
     movu       m0, [r0]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m1
     movu       [r2 + r3 * 0], m0
 
     movu       m0, [r0 + r1]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m1
     movu       [r2 + r3 * 1], m0
 
     movu       m0, [r0 + r1 * 2]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m1
     movu       [r2 + r3 * 2], m0
 
     movu       m0, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m1
     movu       [r2 + r4], m0
 
@@ -9203,14 +9209,13 @@ cglobal filterPixelToShort_8x2, 3, 4, 2
     movu       m0, [r0]
     movu       m1, [r0 + r1]
 
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, [pw_2000]
-    psllw      m1, 4
     psubw      m1, [pw_2000]
 
     movu       [r2 + r3 * 0], m0
     movu       [r2 + r3 * 1], m1
-
     RET
 
 ;-----------------------------------------------------------------------------
@@ -9232,11 +9237,11 @@ cglobal filterPixelToShort_8x6, 3, 7, 4
     movu       m1, [r0 + r1]
     movu       m2, [r0 + r1 * 2]
 
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m3
-    psllw      m1, 4
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m1, m3
-    psllw      m2, 4
+    psllw      m2, (14 - BIT_DEPTH)
     psubw      m2, m3
 
     movu       [r2 + r3 * 0], m0
@@ -9247,18 +9252,17 @@ cglobal filterPixelToShort_8x6, 3, 7, 4
     movu       m1, [r0 + r1 * 4]
     movu       m2, [r0 + r5 ]
 
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m3
-    psllw      m1, 4
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m1, m3
-    psllw      m2, 4
+    psllw      m2, (14 - BIT_DEPTH)
     psubw      m2, m3
 
     movu       [r2 + r6], m0
     movu       [r2 + r3 * 4], m1
     lea        r2, [r2 + r3 * 4]
     movu       [r2 + r3], m2
-
     RET
 
 ;-----------------------------------------------------------------------------
@@ -9282,9 +9286,9 @@ cglobal filterPixelToShort_16x%1, 3, 7, 3
 .loop
     movu       m0, [r0]
     movu       m1, [r0 + r1]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m1, m2
 
     movu       [r2 + r3 * 0], m0
@@ -9292,9 +9296,9 @@ cglobal filterPixelToShort_16x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2]
     movu       m1, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m1, m2
 
     movu       [r2 + r3 * 2], m0
@@ -9302,9 +9306,9 @@ cglobal filterPixelToShort_16x%1, 3, 7, 3
 
     movu       m0, [r0 + 16]
     movu       m1, [r0 + r1 + 16]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m1, m2
 
     movu       [r2 + r3 * 0 + 16], m0
@@ -9312,9 +9316,9 @@ cglobal filterPixelToShort_16x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2 + 16]
     movu       m1, [r0 + r5 + 16]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m1, m2
 
     movu       [r2 + r3 * 2 + 16], m0
@@ -9356,9 +9360,9 @@ cglobal filterPixelToShort_16x%1, 3, 7, 3
 .loop
     movu       m0, [r0]
     movu       m1, [r0 + r1]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m1, m2
 
     movu       [r2 + r3 * 0], m0
@@ -9366,9 +9370,9 @@ cglobal filterPixelToShort_16x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2]
     movu       m1, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m1, m2
 
     movu       [r2 + r3 * 2], m0
@@ -9412,13 +9416,13 @@ cglobal filterPixelToShort_32x%1, 3, 7, 5
     movu       m1, [r0 + r1]
     movu       m2, [r0 + r1 * 2]
     movu       m3, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0], m0
@@ -9430,13 +9434,13 @@ cglobal filterPixelToShort_32x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 16]
     movu       m2, [r0 + r1 * 2 + 16]
     movu       m3, [r0 + r5 + 16]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 16], m0
@@ -9448,13 +9452,13 @@ cglobal filterPixelToShort_32x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 32]
     movu       m2, [r0 + r1 * 2 + 32]
     movu       m3, [r0 + r5 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 32], m0
@@ -9466,13 +9470,13 @@ cglobal filterPixelToShort_32x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 48]
     movu       m2, [r0 + r1 * 2 + 48]
     movu       m3, [r0 + r5 + 48]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 48], m0
@@ -9515,9 +9519,9 @@ cglobal filterPixelToShort_32x%1, 3, 7, 3
 .loop
     movu       m0, [r0]
     movu       m1, [r0 + r1]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m1, m2
 
     movu       [r2 + r3 * 0], m0
@@ -9525,9 +9529,9 @@ cglobal filterPixelToShort_32x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2]
     movu       m1, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 2], m0
@@ -9535,9 +9539,9 @@ cglobal filterPixelToShort_32x%1, 3, 7, 3
 
     movu       m0, [r0 + 32]
     movu       m1, [r0 + r1 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 0 + 32], m0
@@ -9545,9 +9549,9 @@ cglobal filterPixelToShort_32x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2 + 32]
     movu       m1, [r0 + r5 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 2 + 32], m0
@@ -9590,13 +9594,13 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     movu       m1, [r0 + r1]
     movu       m2, [r0 + r1 * 2]
     movu       m3, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0], m0
@@ -9608,13 +9612,13 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 16]
     movu       m2, [r0 + r1 * 2 + 16]
     movu       m3, [r0 + r5 + 16]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 16], m0
@@ -9626,13 +9630,13 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 32]
     movu       m2, [r0 + r1 * 2 + 32]
     movu       m3, [r0 + r5 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 32], m0
@@ -9644,13 +9648,13 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 48]
     movu       m2, [r0 + r1 * 2 + 48]
     movu       m3, [r0 + r5 + 48]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 48], m0
@@ -9662,13 +9666,13 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 64]
     movu       m2, [r0 + r1 * 2 + 64]
     movu       m3, [r0 + r5 + 64]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 64], m0
@@ -9680,13 +9684,13 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 80]
     movu       m2, [r0 + r1 * 2 + 80]
     movu       m3, [r0 + r5 + 80]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 80], m0
@@ -9698,13 +9702,13 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 96]
     movu       m2, [r0 + r1 * 2 + 96]
     movu       m3, [r0 + r5 + 96]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 96], m0
@@ -9716,13 +9720,13 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 112]
     movu       m2, [r0 + r1 * 2 + 112]
     movu       m3, [r0 + r5 + 112]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 112], m0
@@ -9763,9 +9767,9 @@ cglobal filterPixelToShort_64x%1, 3, 7, 3
 .loop
     movu       m0, [r0]
     movu       m1, [r0 + r1]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 0], m0
@@ -9773,9 +9777,9 @@ cglobal filterPixelToShort_64x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2]
     movu       m1, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 2], m0
@@ -9783,9 +9787,9 @@ cglobal filterPixelToShort_64x%1, 3, 7, 3
 
     movu       m0, [r0 + 32]
     movu       m1, [r0 + r1 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 0 + 32], m0
@@ -9793,9 +9797,9 @@ cglobal filterPixelToShort_64x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2 + 32]
     movu       m1, [r0 + r5 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 2 + 32], m0
@@ -9803,9 +9807,9 @@ cglobal filterPixelToShort_64x%1, 3, 7, 3
 
     movu       m0, [r0 + 64]
     movu       m1, [r0 + r1 + 64]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 0 + 64], m0
@@ -9813,9 +9817,9 @@ cglobal filterPixelToShort_64x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2 + 64]
     movu       m1, [r0 + r5 + 64]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 2 + 64], m0
@@ -9823,9 +9827,9 @@ cglobal filterPixelToShort_64x%1, 3, 7, 3
 
     movu       m0, [r0 + 96]
     movu       m1, [r0 + r1 + 96]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 0 + 96], m0
@@ -9833,9 +9837,9 @@ cglobal filterPixelToShort_64x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2 + 96]
     movu       m1, [r0 + r5 + 96]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 2 + 96], m0
@@ -9876,13 +9880,13 @@ cglobal filterPixelToShort_24x%1, 3, 7, 5
     movu       m1, [r0 + r1]
     movu       m2, [r0 + r1 * 2]
     movu       m3, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0], m0
@@ -9894,13 +9898,13 @@ cglobal filterPixelToShort_24x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 16]
     movu       m2, [r0 + r1 * 2 + 16]
     movu       m3, [r0 + r5 + 16]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 16], m0
@@ -9912,13 +9916,13 @@ cglobal filterPixelToShort_24x%1, 3, 7, 5
     movu       m1, [r0 + r1 + 32]
     movu       m2, [r0 + r1 * 2 + 32]
     movu       m3, [r0 + r5 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 32], m0
@@ -9957,36 +9961,36 @@ cglobal filterPixelToShort_24x%1, 3, 7, 3
 .loop
     movu       m0, [r0]
     movu       m1, [r0 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
     movu       [r2 + r3 * 0], m0
     movu       [r2 + r3 * 0 + 32], xm1
 
     movu       m0, [r0 + r1]
     movu       m1, [r0 + r1 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
     movu       [r2 + r3 * 1], m0
     movu       [r2 + r3 * 1 + 32], xm1
 
     movu       m0, [r0 + r1 * 2]
     movu       m1, [r0 + r1 * 2 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
     movu       [r2 + r3 * 2], m0
     movu       [r2 + r3 * 2 + 32], xm1
 
     movu       m0, [r0 + r5]
     movu       m1, [r0 + r5 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
     movu       [r2 + r4], m0
     movu       [r2 + r4 + 32], xm1
@@ -10022,9 +10026,9 @@ cglobal filterPixelToShort_12x%1, 3, 7, 3
 .loop
     movu       m0, [r0]
     movu       m1, [r0 + r1]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 0], m0
@@ -10032,9 +10036,9 @@ cglobal filterPixelToShort_12x%1, 3, 7, 3
 
     movu       m0, [r0 + r1 * 2]
     movu       m1, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
     psubw      m0, m2
-    psllw      m1, 4
     psubw      m1, m2
 
     movu       [r2 + r3 * 2], m0
@@ -10042,7 +10046,7 @@ cglobal filterPixelToShort_12x%1, 3, 7, 3
 
     movh       m0, [r0 + 16]
     movhps     m0, [r0 + r1 + 16]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m2
 
     movh       [r2 + r3 * 0 + 16], m0
@@ -10050,7 +10054,7 @@ cglobal filterPixelToShort_12x%1, 3, 7, 3
 
     movh       m0, [r0 + r1 * 2 + 16]
     movhps     m0, [r0 + r5 + 16]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m2
 
     movh       [r2 + r3 * 2 + 16], m0
@@ -10088,13 +10092,13 @@ cglobal filterPixelToShort_48x64, 3, 7, 5
     movu       m1, [r0 + r1]
     movu       m2, [r0 + r1 * 2]
     movu       m3, [r0 + r5]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0], m0
@@ -10106,13 +10110,13 @@ cglobal filterPixelToShort_48x64, 3, 7, 5
     movu       m1, [r0 + r1 + 16]
     movu       m2, [r0 + r1 * 2 + 16]
     movu       m3, [r0 + r5 + 16]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 16], m0
@@ -10124,13 +10128,13 @@ cglobal filterPixelToShort_48x64, 3, 7, 5
     movu       m1, [r0 + r1 + 32]
     movu       m2, [r0 + r1 * 2 + 32]
     movu       m3, [r0 + r5 + 32]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 32], m0
@@ -10142,13 +10146,13 @@ cglobal filterPixelToShort_48x64, 3, 7, 5
     movu       m1, [r0 + r1 + 48]
     movu       m2, [r0 + r1 * 2 + 48]
     movu       m3, [r0 + r5 + 48]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 48], m0
@@ -10160,13 +10164,13 @@ cglobal filterPixelToShort_48x64, 3, 7, 5
     movu       m1, [r0 + r1 + 64]
     movu       m2, [r0 + r1 * 2 + 64]
     movu       m3, [r0 + r5 + 64]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 64], m0
@@ -10178,13 +10182,13 @@ cglobal filterPixelToShort_48x64, 3, 7, 5
     movu       m1, [r0 + r1 + 80]
     movu       m2, [r0 + r1 * 2 + 80]
     movu       m3, [r0 + r5 + 80]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
     psubw      m0, m4
-    psllw      m1, 4
     psubw      m1, m4
-    psllw      m2, 4
     psubw      m2, m4
-    psllw      m3, 4
     psubw      m3, m4
 
     movu       [r2 + r3 * 0 + 80], m0
@@ -10220,11 +10224,11 @@ cglobal filterPixelToShort_48x64, 3, 7, 4
     movu       m0, [r0]
     movu       m1, [r0 + 32]
     movu       m2, [r0 + 64]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
     psubw      m0, m3
-    psllw      m1, 4
     psubw      m1, m3
-    psllw      m2, 4
     psubw      m2, m3
     movu       [r2 + r3 * 0], m0
     movu       [r2 + r3 * 0 + 32], m1
@@ -10233,11 +10237,11 @@ cglobal filterPixelToShort_48x64, 3, 7, 4
     movu       m0, [r0 + r1]
     movu       m1, [r0 + r1 + 32]
     movu       m2, [r0 + r1 + 64]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
     psubw      m0, m3
-    psllw      m1, 4
     psubw      m1, m3
-    psllw      m2, 4
     psubw      m2, m3
     movu       [r2 + r3 * 1], m0
     movu       [r2 + r3 * 1 + 32], m1
@@ -10246,11 +10250,11 @@ cglobal filterPixelToShort_48x64, 3, 7, 4
     movu       m0, [r0 + r1 * 2]
     movu       m1, [r0 + r1 * 2 + 32]
     movu       m2, [r0 + r1 * 2 + 64]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
     psubw      m0, m3
-    psllw      m1, 4
     psubw      m1, m3
-    psllw      m2, 4
     psubw      m2, m3
     movu       [r2 + r3 * 2], m0
     movu       [r2 + r3 * 2 + 32], m1
@@ -10259,11 +10263,11 @@ cglobal filterPixelToShort_48x64, 3, 7, 4
     movu       m0, [r0 + r5]
     movu       m1, [r0 + r5 + 32]
     movu       m2, [r0 + r5 + 64]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
     psubw      m0, m3
-    psllw      m1, 4
     psubw      m1, m3
-    psllw      m2, 4
     psubw      m2, m3
     movu       [r2 + r4], m0
     movu       [r2 + r4 + 32], m1
@@ -10797,7 +10801,7 @@ cglobal interp_8tap_horiz_ps_12x16, 4, 6, 8
     pmaddwd             m6, m0
     pmaddwd             m5, m1
     paddd               m6, m5
-   
+
     phaddd              m6, m6
     vpermq              m6, m6, q3120
     paddd               xm6, xm2
@@ -12115,7 +12119,7 @@ cglobal interp_4tap_vert_%1_4x4, 4, 6, 7
 %endmacro
 
 FILTER_VER_CHROMA_AVX2_4x4 pp, 1, 6
-FILTER_VER_CHROMA_AVX2_4x4 ps, 0, 2 
+FILTER_VER_CHROMA_AVX2_4x4 ps, 0, 2
 FILTER_VER_CHROMA_AVX2_4x4 sp, 1, 10
 FILTER_VER_CHROMA_AVX2_4x4 ss, 0, 6
 

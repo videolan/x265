@@ -38,13 +38,8 @@ using namespace X265_NS;
 #define SHIFT1  7
 #define ADD1    64
 
-#if HIGH_BIT_DEPTH
-#define SHIFT2  10
-#define ADD2    512
-#else
-#define SHIFT2  12
-#define ADD2    2048
-#endif
+#define SHIFT2  (12 - (X265_DEPTH - 8))
+#define ADD2    (1 << ((SHIFT2) - 1))
 
 ALIGN_VAR_32(static const int16_t, tab_idct_8x8[12][8]) =
 {

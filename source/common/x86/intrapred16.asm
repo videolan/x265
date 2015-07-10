@@ -109,11 +109,11 @@ cextern pw_15
 cextern pw_16
 cextern pw_31
 cextern pw_32
-cextern pw_1023
 cextern pd_16
 cextern pd_31
 cextern pd_32
 cextern pw_4096
+cextern pw_pixel_max
 cextern multiL
 cextern multiH
 cextern multiH2
@@ -1228,11 +1228,11 @@ cglobal intra_pred_ang4_10, 3,3,3
 
     punpcklwd   m0,             m0      ;[4 4 3 3 2 2 1 1]
     pshufd      m1,             m0, 0xFA
-    add         r1,             r1
+    add         r1d,            r1d
     pshufd      m0,             m0, 0x50
     movhps      [r0 + r1],      m0
     movh        [r0 + r1 * 2],  m1
-    lea         r1,             [r1 * 3]
+    lea         r1d,            [r1 * 3]
     movhps      [r0 + r1],      m1
 
     cmp         r4m,            byte 0
@@ -1247,7 +1247,7 @@ cglobal intra_pred_ang4_10, 3,3,3
     paddw       m0,             m1
     pxor        m1,             m1
     pmaxsw      m0,             m1
-    pminsw      m0,             [pw_1023]
+    pminsw      m0,             [pw_pixel_max]
 .quit:
     movh        [r0],           m0
     RET
@@ -1583,7 +1583,7 @@ cglobal intra_pred_ang4_26, 3,3,3
     paddw       m0,             m1
     pxor        m1,             m1
     pmaxsw      m0,             m1
-    pminsw      m0,             [pw_1023]
+    pminsw      m0,             [pw_pixel_max]
 
     movh        r2,             m0
     mov         [r0],           r2w
@@ -2756,7 +2756,7 @@ cglobal intra_pred_ang4_10, 3,3,4
     paddw       m0,             m1
     pxor        m1,             m1
     pmaxsw      m0,             m1
-    pminsw      m0,             [pw_1023]
+    pminsw      m0,             [pw_pixel_max]
 .quit:
     movh        [r0],           m0
     RET
@@ -2785,7 +2785,7 @@ cglobal intra_pred_ang4_26, 3,4,3
     paddw       m0,             m1
     pxor        m1,             m1
     pmaxsw      m0,             m1
-    pminsw      m0,             [pw_1023]
+    pminsw      m0,             [pw_pixel_max]
 
     pextrw      [r0],           m0, 0
     pextrw      [r0 + r1],      m0, 1
@@ -4002,7 +4002,7 @@ cglobal intra_pred_ang8_10, 3,6,3
     paddw       m0,             m1
     pxor        m1,             m1
     pmaxsw      m0,             m1
-    pminsw      m0,             [pw_1023]
+    pminsw      m0,             [pw_pixel_max]
 .quit:
     movu        [r0],           m0
     RET
@@ -5874,7 +5874,7 @@ cglobal intra_pred_ang8_26, 3,6,3
     paddw       m0,             m1
     pxor        m1,             m1
     pmaxsw      m0,             m1
-    pminsw      m0,             [pw_1023]
+    pminsw      m0,             [pw_pixel_max]
     pextrw      [r0],          m0, 0
     pextrw      [r0 + r1],     m0, 1
     pextrw      [r0 + r1 * 2], m0, 2
@@ -10287,9 +10287,9 @@ cglobal intra_pred_ang16_10, 3,6,4
     paddw       m0,                     m1
     pxor        m1,                     m1
     pmaxsw      m0,                     m1
-    pminsw      m0,                     [pw_1023]
+    pminsw      m0,                     [pw_pixel_max]
     pmaxsw      m3,                     m1
-    pminsw      m3,                     [pw_1023]
+    pminsw      m3,                     [pw_pixel_max]
 .quit:
     movu        [r0],                   m0
     movu        [r0 + 16],              m3
@@ -10359,9 +10359,9 @@ cglobal intra_pred_ang16_26, 3,6,4
     paddw       m0,                 m1
     pxor        m1,                 m1
     pmaxsw      m0,                 m1
-    pminsw      m0,                 [pw_1023]
+    pminsw      m0,                 [pw_pixel_max]
     pmaxsw      m3,                 m1
-    pminsw      m3,                 [pw_1023]
+    pminsw      m3,                 [pw_pixel_max]
     pextrw      [r0],               m0, 0
     pextrw      [r0 + r1],          m0, 1
     pextrw      [r0 + r1 * 2],      m0, 2
@@ -12952,7 +12952,7 @@ cglobal intra_pred_ang16_10, 3,6,3
     paddw           m0, m1
     pxor            m1, m1
     pmaxsw          m0, m1
-    pminsw          m0, [pw_1023]
+    pminsw          m0, [pw_pixel_max]
 .quit:
     movu            [r0], m0
     RET
@@ -12999,7 +12999,7 @@ cglobal intra_pred_ang16_26, 3,6,4
     paddw       m0,                 m1
     pxor        m1,                 m1
     pmaxsw      m0,                 m1
-    pminsw      m0,                 [pw_1023]
+    pminsw      m0,                 [pw_pixel_max]
     pextrw      [r0],               xm0, 0
     pextrw      [r0 + r1],          xm0, 1
     pextrw      [r0 + r1 * 2],      xm0, 2
