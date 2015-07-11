@@ -148,52 +148,62 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
     padx++;
     pady++;
 
-    if (pic.bitDepth < X265_DEPTH)
+    X265_CHECK(pic.bitDepth >= 8, "pic.bitDepth check failure");
+
+    if (pic.bitDepth == 8)
     {
-        pixel *yPixel = m_picOrg[0];
-        pixel *uPixel = m_picOrg[1];
-        pixel *vPixel = m_picOrg[2];
-
-        uint8_t *yChar = (uint8_t*)pic.planes[0];
-        uint8_t *uChar = (uint8_t*)pic.planes[1];
-        uint8_t *vChar = (uint8_t*)pic.planes[2];
-        int shift = X265_MAX(0, X265_DEPTH - pic.bitDepth);
-
-        primitives.planecopy_cp(yChar, pic.stride[0] / sizeof(*yChar), yPixel, m_stride, width, height, shift);
-        primitives.planecopy_cp(uChar, pic.stride[1] / sizeof(*uChar), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift);
-        primitives.planecopy_cp(vChar, pic.stride[2] / sizeof(*vChar), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift);
-    }
-    else if (pic.bitDepth == 8)
-    {
-        pixel *yPixel = m_picOrg[0];
-        pixel *uPixel = m_picOrg[1];
-        pixel *vPixel = m_picOrg[2];
-
-        uint8_t *yChar = (uint8_t*)pic.planes[0];
-        uint8_t *uChar = (uint8_t*)pic.planes[1];
-        uint8_t *vChar = (uint8_t*)pic.planes[2];
-
-        for (int r = 0; r < height; r++)
+#if (X265_DEPTH > 8)
         {
-            memcpy(yPixel, yChar, width * sizeof(pixel));
+            pixel *yPixel = m_picOrg[0];
+            pixel *uPixel = m_picOrg[1];
+            pixel *vPixel = m_picOrg[2];
 
-            yPixel += m_stride;
-            yChar += pic.stride[0] / sizeof(*yChar);
+            uint8_t *yChar = (uint8_t*)pic.planes[0];
+            uint8_t *uChar = (uint8_t*)pic.planes[1];
+            uint8_t *vChar = (uint8_t*)pic.planes[2];
+            int shift = (X265_DEPTH - 8);
+
+            primitives.planecopy_cp(yChar, pic.stride[0] / sizeof(*yChar), yPixel, m_stride, width, height, shift);
+            primitives.planecopy_cp(uChar, pic.stride[1] / sizeof(*uChar), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift);
+            primitives.planecopy_cp(vChar, pic.stride[2] / sizeof(*vChar), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift);
         }
-
-        for (int r = 0; r < height >> m_vChromaShift; r++)
+#else /* Case for (X265_DEPTH == 8) */
+        // TODO: Does we need this path? may merge into above in future
         {
-            memcpy(uPixel, uChar, (width >> m_hChromaShift) * sizeof(pixel));
-            memcpy(vPixel, vChar, (width >> m_hChromaShift) * sizeof(pixel));
+            pixel *yPixel = m_picOrg[0];
+            pixel *uPixel = m_picOrg[1];
+            pixel *vPixel = m_picOrg[2];
 
-            uPixel += m_strideC;
-            vPixel += m_strideC;
-            uChar += pic.stride[1] / sizeof(*uChar);
-            vChar += pic.stride[2] / sizeof(*vChar);
+            uint8_t *yChar = (uint8_t*)pic.planes[0];
+            uint8_t *uChar = (uint8_t*)pic.planes[1];
+            uint8_t *vChar = (uint8_t*)pic.planes[2];
+
+            for (int r = 0; r < height; r++)
+            {
+                memcpy(yPixel, yChar, width * sizeof(pixel));
+
+                yPixel += m_stride;
+                yChar += pic.stride[0] / sizeof(*yChar);
+            }
+
+            for (int r = 0; r < height >> m_vChromaShift; r++)
+            {
+                memcpy(uPixel, uChar, (width >> m_hChromaShift) * sizeof(pixel));
+                memcpy(vPixel, vChar, (width >> m_hChromaShift) * sizeof(pixel));
+
+                uPixel += m_strideC;
+                vPixel += m_strideC;
+                uChar += pic.stride[1] / sizeof(*uChar);
+                vChar += pic.stride[2] / sizeof(*vChar);
+            }
         }
+#endif /* (X265_DEPTH > 8) */
     }
     else /* pic.bitDepth > 8 */
     {
+        /* defensive programming, mask off bits that are supposed to be zero */
+        uint16_t mask = (1 << X265_DEPTH) - 1;
+        int shift = abs(pic.bitDepth - X265_DEPTH);
         pixel *yPixel = m_picOrg[0];
         pixel *uPixel = m_picOrg[1];
         pixel *vPixel = m_picOrg[2];
@@ -202,15 +212,20 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
         uint16_t *uShort = (uint16_t*)pic.planes[1];
         uint16_t *vShort = (uint16_t*)pic.planes[2];
 
-        /* defensive programming, mask off bits that are supposed to be zero */
-        uint16_t mask = (1 << X265_DEPTH) - 1;
-        int shift = X265_MAX(0, pic.bitDepth - X265_DEPTH);
-
-        /* shift and mask pixels to final size */
-
-        primitives.planecopy_sp(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
-        primitives.planecopy_sp(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
-        primitives.planecopy_sp(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+        if (pic.bitDepth > X265_DEPTH)
+        {
+            /* shift right and mask pixels to final size */
+            primitives.planecopy_sp(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
+            primitives.planecopy_sp(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+            primitives.planecopy_sp(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+        }
+        else /* Case for (pic.bitDepth <= X265_DEPTH) */
+        {
+            /* shift left and mask pixels to final size */
+            primitives.planecopy_sp_shl(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
+            primitives.planecopy_sp_shl(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+            primitives.planecopy_sp_shl(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+        }
     }
 
     /* extend the right edge if width was not multiple of the minimum CU size */

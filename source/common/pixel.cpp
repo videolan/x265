@@ -945,6 +945,18 @@ static void planecopy_sp_c(const uint16_t* src, intptr_t srcStride, pixel* dst, 
     }
 }
 
+static void planecopy_sp_shl_c(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
+{
+    for (int r = 0; r < height; r++)
+    {
+        for (int c = 0; c < width; c++)
+            dst[c] = (pixel)((src[c] << shift) & mask);
+
+        dst += dstStride;
+        src += srcStride;
+    }
+}
+
 /* Estimate the total amount of influence on future quality that could be had if we
  * were to improve the reference samples used to inter predict any given CU. */
 static void estimateCUPropagateCost(int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts,
@@ -1245,6 +1257,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
 
     p.planecopy_cp = planecopy_cp_c;
     p.planecopy_sp = planecopy_sp_c;
+    p.planecopy_sp_shl = planecopy_sp_shl_c;
     p.propagateCost = estimateCUPropagateCost;
 }
 }

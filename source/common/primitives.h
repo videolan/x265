@@ -312,6 +312,7 @@ struct EncoderPrimitives
     extendCURowBorder_t   extendRowBorder;
     planecopy_cp_t        planecopy_cp;
     planecopy_sp_t        planecopy_sp;
+    planecopy_sp_t        planecopy_sp_shl;
 
     weightp_sp_t          weight_sp;
     weightp_pp_t          weight_pp;
