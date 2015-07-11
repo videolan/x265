@@ -137,8 +137,7 @@ int main(int argc, char *argv[])
     }
 
     int seed = (int)time(NULL);
-    const char *bitstr[] = { "8bit", "10bit" };
-    printf("Using random seed %X %s\n", seed, bitstr[HIGH_BIT_DEPTH]);
+    printf("Using random seed %X %dbit\n", seed, X265_DEPTH);
     srand(seed);
 
     // To disable classes of tests, simply comment them out in this list
