@@ -53,7 +53,7 @@ const DctConf idctInfo[] =
 
 MBDstHarness::MBDstHarness()
 {
-    const int idct_max = (1 << (BIT_DEPTH + 4)) - 1;
+    const int idct_max = (1 << (X265_DEPTH + 4)) - 1;
 
     /* [0] --- Random values
      * [1] --- Minimum

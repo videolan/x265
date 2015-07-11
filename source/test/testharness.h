@@ -31,12 +31,7 @@
 #pragma warning(disable: 4324) // structure was padded due to __declspec(align())
 #endif
 
-#if HIGH_BIT_DEPTH
-#define BIT_DEPTH 10
-#else
-#define BIT_DEPTH 8
-#endif
-#define PIXEL_MAX ((1 << BIT_DEPTH) - 1)
+#define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 #define PIXEL_MIN 0
 #define SHORT_MAX  32767
 #define SHORT_MIN -32767
