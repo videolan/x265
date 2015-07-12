@@ -511,7 +511,6 @@ if(ENABLE_CLI)
     file(GLOB OutputFiles output/output.cpp output/reconplay.cpp output/*.h
                           output/yuv.cpp output/y4m.cpp # recon
                           output/raw.cpp)               # muxers
-    file(GLOB FilterFiles filters/*.cpp filters/*.h)
     source_group(input FILES ${InputFiles})
     source_group(output FILES ${OutputFiles})
     source_group(filters FILES ${FilterFiles})
@@ -530,11 +529,12 @@ if(ENABLE_CLI)
 
     if(XCODE)
         # Xcode seems unable to link the CLI with libs, so link as one targget
-        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} x265.cpp x265.h x265cli.h
-                           $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
+        add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT}
+                       x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp
+                       $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
     else()
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${FilterFiles} ${GETOPT} ${X265_RC_FILE}
-                       ${ExportDefs} x265.cpp x265.h x265cli.h)
+                       ${ExportDefs} x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp)
         if(WIN32 OR NOT ENABLE_SHARED OR INTEL_CXX)
             # The CLI cannot link to the shared library on Windows, it
             # requires internal APIs not exported from the DLL

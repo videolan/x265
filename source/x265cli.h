@@ -24,6 +24,9 @@
 #ifndef X265CLI_H
 #define X265CLI_H 1
 
+#include "common.h"
+#include "param.h"
+
 #include <getopt.h>
 
 #ifdef __cplusplus
