@@ -1,3 +1,4 @@
+# vim: syntax=cmake
 enable_language(ASM_YASM)
 
 if(MSVC_IDE)
@@ -24,5 +25,9 @@ add_executable(TestBench ${YASM_SRC}
     intrapredharness.cpp intrapredharness.h)
 target_link_libraries(TestBench x265-static ${PLATFORM_LIBS})
 if(LINKER_OPTIONS)
-    set_target_properties(TestBench PROPERTIES LINK_FLAGS ${LINKER_OPTIONS})
+    if(EXTRA_LIB)
+        list(APPEND LINKER_OPTIONS "-L..")
+    endif(EXTRA_LIB)
+    string(REPLACE ";" " " LINKER_OPTION_STR "${LINKER_OPTIONS}")
+    set_target_properties(TestBench PROPERTIES LINK_FLAGS "${LINKER_OPTION_STR}")
 endif()
