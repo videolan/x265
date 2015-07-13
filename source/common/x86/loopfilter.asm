@@ -2166,6 +2166,7 @@ cglobal saoCuStatsE0, 5,8,8, 0-32
 %if ARCH_X86_64
 INIT_XMM sse4
 cglobal saoCuStatsE1, 4,12,9,0-32    ; Stack: 5 of stats and 5 of count
+    mov         r5d, r5m
     mov         r4d, r4m
     mov         r11d, r5d
 
