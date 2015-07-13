@@ -2132,8 +2132,8 @@ cglobal saoCuStatsE0, 5,8,8, 0-32
     jnz         .loopH
 
     ; sum to global buffer
-    mov         r1, r5m
-    mov         r0, r6m
+    mov         r1, r5mp
+    mov         r0, r6mp
 
     ; s_eoTable = {1, 2, 0, 3, 4}
     movzx       r5d, word [rsp + 0 * 2]
@@ -2165,9 +2165,9 @@ cglobal saoCuStatsE0, 5,8,8, 0-32
 ;-------------------------------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
 INIT_XMM sse4
-cglobal saoCuStatsE1, 4,11,9,0-32    ; Stack: 5 of stats and 5 of count
+cglobal saoCuStatsE1, 4,12,9,0-32    ; Stack: 5 of stats and 5 of count
     mov         r4d, r4m
-    mov         r5d, r5m
+    mov         r11d, r5d
 
     ; clear internal temporary buffer
     pxor        m0, m0
@@ -2183,7 +2183,7 @@ cglobal saoCuStatsE1, 4,11,9,0-32    ; Stack: 5 of stats and 5 of count
     mov         r6d, r4d
     mov         r9, r0
     mov         r10, r1
-    mov         r5, r3
+    mov         r11, r3
 
 .loopW:
     movu        m1, [r10]
@@ -2200,12 +2200,12 @@ cglobal saoCuStatsE1, 4,11,9,0-32    ; Stack: 5 of stats and 5 of count
     psubb       m3, m2      ; -signDown
 
     ; edgeType
-    movu        m4, [r5]
+    movu        m4, [r11]
     paddb       m4, m6
     paddb       m2, m4
 
     ; update upBuff1
-    movu        [r5], m3
+    movu        [r11], m3
 
     ; stats[edgeType]
     pxor        m1, m0
@@ -2236,7 +2236,7 @@ cglobal saoCuStatsE1, 4,11,9,0-32    ; Stack: 5 of stats and 5 of count
 
     add         r9, 16
     add         r10, 16
-    add         r5, 16
+    add         r11, 16
     jmp         .loopW
 
 .next:
@@ -2244,7 +2244,7 @@ cglobal saoCuStatsE1, 4,11,9,0-32    ; Stack: 5 of stats and 5 of count
     add         r0, r2
     add         r1, r2
 
-    dec         byte r5m
+    dec         r5d
     jg         .loopH
 
     ; restore unavailable pixels
