@@ -41,7 +41,7 @@ void  getParamAspectRatio(x265_param *p, int& width, int& height);
 bool  parseLambdaFile(x265_param *param);
 
 /* this table is kept internal to avoid confusion, since log level indices start at -1 */
-static const char * const logLevelNames[] = { "none", "error", "warning", "info", "frame", "debug", "full", 0 };
+static const char * const logLevelNames[] = { "none", "error", "warning", "info", "debug", "full", 0 };
 
 #if EXPORT_C_API
 #define PARAM_NS

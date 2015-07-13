@@ -28,7 +28,7 @@ consider this an error and abort.
 
 Generally, when an option expects a string value from a list of strings
 the user may specify the integer ordinal of the value they desire. ie:
-:option:`--log-level` 4 is equivalent to :option:`--log-level` debug.
+:option:`--log-level` 3 is equivalent to :option:`--log-level` debug.
 
 Executable Options
 ==================
@@ -68,9 +68,8 @@ Logging/Statistic Options
 	0. error
 	1. warning
 	2. info **(default)**
-	3. frame
-	4. debug
-	5. full
+	3. debug
+	4. full
 
 .. option:: --no-progress
 
