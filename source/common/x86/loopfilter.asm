@@ -2049,8 +2049,9 @@ cglobal saoCuStatsBO, 7,12,6
 ;-----------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
 INIT_XMM sse4
-cglobal saoCuStatsE0, 5,8,8, 0-32
+cglobal saoCuStatsE0, 5,9,8, 0-32
     mov         r3d, r3m
+    mov         r8, r5mp
 
     ; clear internal temporary buffer
     pxor        m0, m0
@@ -2132,7 +2133,6 @@ cglobal saoCuStatsE0, 5,8,8, 0-32
     jnz         .loopH
 
     ; sum to global buffer
-    mov         r1, r5mp
     mov         r0, r6mp
 
     ; s_eoTable = {1, 2, 0, 3, 4}
@@ -2148,15 +2148,15 @@ cglobal saoCuStatsE0, 5,8,8, 0-32
     add         [r0 + 4 * 4], r5d
 
     mov         r6d, [rsp + 5 * 2 + 0 * 4]
-    add         [r1 + 1 * 4], r6d
+    add         [r8 + 1 * 4], r6d
     mov         r5d, [rsp + 5 * 2 + 1 * 4]
-    add         [r1 + 2 * 4], r5d
+    add         [r8 + 2 * 4], r5d
     mov         r6d, [rsp + 5 * 2 + 2 * 4]
-    add         [r1 + 0 * 4], r6d
+    add         [r8 + 0 * 4], r6d
     mov         r5d, [rsp + 5 * 2 + 3 * 4]
-    add         [r1 + 3 * 4], r5d
+    add         [r8 + 3 * 4], r5d
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
-    add         [r1 + 4 * 4], r6d
+    add         [r8 + 4 * 4], r6d
     RET
 %endif
 
