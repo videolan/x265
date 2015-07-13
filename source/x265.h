@@ -250,9 +250,8 @@ typedef enum
 #define X265_LOG_ERROR          0
 #define X265_LOG_WARNING        1
 #define X265_LOG_INFO           2
-#define X265_LOG_FRAME          3
-#define X265_LOG_DEBUG          4
-#define X265_LOG_FULL           5
+#define X265_LOG_DEBUG          3
+#define X265_LOG_FULL           4
 
 #define X265_B_ADAPT_NONE       0
 #define X265_B_ADAPT_FAST       1
