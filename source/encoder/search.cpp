@@ -1162,8 +1162,9 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
     cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
     intraMode.initCosts();
-    intraMode.distortion += estIntraPredQT(intraMode, cuGeom, tuDepthRange, sharedModes);
-    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom, sharedChromaModes);
+    intraMode.lumaDistortion += estIntraPredQT(intraMode, cuGeom, tuDepthRange, sharedModes);
+    intraMode.chromaDistortion += estIntraPredChromaQT(intraMode, cuGeom, sharedChromaModes);
+    intraMode.distortion += intraMode.lumaDistortion + intraMode.chromaDistortion;
 
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
@@ -1378,8 +1379,9 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     codeIntraLumaQT(intraMode, cuGeom, 0, 0, false, icosts, tuDepthRange);
     extractIntraResultQT(cu, *reconYuv, 0, 0);
 
-    intraMode.distortion = icosts.distortion;
-    intraMode.distortion += estIntraPredChromaQT(intraMode, cuGeom, NULL);
+    intraMode.lumaDistortion = icosts.distortion;
+    intraMode.chromaDistortion = estIntraPredChromaQT(intraMode, cuGeom, NULL);
+    intraMode.distortion = intraMode.lumaDistortion + intraMode.chromaDistortion;
 
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
@@ -2460,10 +2462,11 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
 
     // Luma
     int part = partitionFromLog2Size(cu.m_log2CUSize[0]);
-    interMode.distortion = primitives.cu[part].sse_pp(fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+    interMode.lumaDistortion = primitives.cu[part].sse_pp(fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
     // Chroma
-    interMode.distortion += m_rdCost.scaleChromaDist(1, primitives.chroma[m_csp].cu[part].sse_pp(fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
-    interMode.distortion += m_rdCost.scaleChromaDist(2, primitives.chroma[m_csp].cu[part].sse_pp(fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
+    interMode.chromaDistortion = m_rdCost.scaleChromaDist(1, primitives.chroma[m_csp].cu[part].sse_pp(fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
+    interMode.chromaDistortion += m_rdCost.scaleChromaDist(2, primitives.chroma[m_csp].cu[part].sse_pp(fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
+    interMode.distortion = interMode.lumaDistortion + interMode.chromaDistortion;
 
     m_entropyCoder.load(m_rqt[depth].cur);
     m_entropyCoder.resetBits();
@@ -2584,14 +2587,16 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
         reconYuv->copyFromYuv(*predYuv);
 
     // update with clipped distortion and cost (qp estimation loop uses unclipped values)
-    uint32_t bestDist = primitives.cu[sizeIdx].sse_pp(fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
-    bestDist += m_rdCost.scaleChromaDist(1, primitives.chroma[m_csp].cu[sizeIdx].sse_pp(fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
-    bestDist += m_rdCost.scaleChromaDist(2, primitives.chroma[m_csp].cu[sizeIdx].sse_pp(fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
+    uint32_t bestLumaDist = primitives.cu[sizeIdx].sse_pp(fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
+    uint32_t bestChromaDist = m_rdCost.scaleChromaDist(1, primitives.chroma[m_csp].cu[sizeIdx].sse_pp(fencYuv->m_buf[1], fencYuv->m_csize, reconYuv->m_buf[1], reconYuv->m_csize));
+    bestChromaDist += m_rdCost.scaleChromaDist(2, primitives.chroma[m_csp].cu[sizeIdx].sse_pp(fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
     if (m_rdCost.m_psyRd)
         interMode.psyEnergy = m_rdCost.psyCost(sizeIdx, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
 
     interMode.totalBits = bits;
-    interMode.distortion = bestDist;
+    interMode.lumaDistortion = bestLumaDist;
+    interMode.chromaDistortion = bestChromaDist;
+    interMode.distortion = bestLumaDist + bestChromaDist;
     interMode.coeffBits = coeffBits;
     interMode.mvBits = bits - coeffBits;
     updateModeCost(interMode);

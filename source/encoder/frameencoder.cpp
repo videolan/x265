@@ -585,8 +585,11 @@ void FrameEncoder::compressFrame()
     }
     for (uint32_t i = 0; i < m_numRows; i++)
     {
-        m_frame->m_encData->m_frameStats.cntIntraNxN += m_rows[i].rowStats.cntIntraNxN;
-        m_frame->m_encData->m_frameStats.totalCu     += m_rows[i].rowStats.totalCu;
+        m_frame->m_encData->m_frameStats.cntIntraNxN      += m_rows[i].rowStats.cntIntraNxN;
+        m_frame->m_encData->m_frameStats.totalCu          += m_rows[i].rowStats.totalCu;
+        m_frame->m_encData->m_frameStats.totalCtu         += m_rows[i].rowStats.totalCtu;
+        m_frame->m_encData->m_frameStats.lumaDistortion   += m_rows[i].rowStats.lumaDistortion;
+        m_frame->m_encData->m_frameStats.chromaDistortion += m_rows[i].rowStats.chromaDistortion;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
             m_frame->m_encData->m_frameStats.cntSkipCu[depth] += m_rows[i].rowStats.cntSkipCu[depth];
@@ -597,7 +600,9 @@ void FrameEncoder::compressFrame()
                 m_frame->m_encData->m_frameStats.cuIntraDistribution[depth][n] += m_rows[i].rowStats.cuIntraDistribution[depth][n];
         }
     }
-    m_frame->m_encData->m_frameStats.percentIntraNxN = (double)(m_frame->m_encData->m_frameStats.cntIntraNxN * 100) / m_frame->m_encData->m_frameStats.totalCu;
+    m_frame->m_encData->m_frameStats.avgLumaDistortion   = (double)(m_frame->m_encData->m_frameStats.lumaDistortion / m_frame->m_encData->m_frameStats.totalCtu);
+    m_frame->m_encData->m_frameStats.avgChromaDistortion = (double)(m_frame->m_encData->m_frameStats.chromaDistortion / m_frame->m_encData->m_frameStats.totalCtu);
+    m_frame->m_encData->m_frameStats.percentIntraNxN     = (double)(m_frame->m_encData->m_frameStats.cntIntraNxN * 100) / m_frame->m_encData->m_frameStats.totalCu;
     for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
     {
         m_frame->m_encData->m_frameStats.percentSkipCu[depth]  = (double)(m_frame->m_encData->m_frameStats.cntSkipCu[depth] * 100) / m_frame->m_encData->m_frameStats.totalCu;
@@ -961,8 +966,11 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 curRow.rowStats.skip8x8Cnt += (int)((frameLog.cntSkipCu[depth] + frameLog.cntMergeCu[depth]) << shift);
             }
         }
-        curRow.rowStats.cntIntraNxN += frameLog.cntIntraNxN;
-        curRow.rowStats.totalCu     += frameLog.totalCu;
+        curRow.rowStats.totalCtu++;
+        curRow.rowStats.lumaDistortion   += best.lumaDistortion;
+        curRow.rowStats.chromaDistortion += best.chromaDistortion;
+        curRow.rowStats.cntIntraNxN      += frameLog.cntIntraNxN;
+        curRow.rowStats.totalCu          += frameLog.totalCu;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
             curRow.rowStats.cntSkipCu[depth] += frameLog.cntSkipCu[depth];

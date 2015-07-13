@@ -107,6 +107,7 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
                         fprintf(csvfp, ", Merge %dx%d", size, size);
                         size /= 2;
                     }
+                    fprintf(csvfp, ", Avg Luma Distortion, Avg Chroma Distortion");
                 }
                 fprintf(csvfp, "\n");
             }
@@ -178,6 +179,7 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
             fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentSkipCu[depth]);
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
             fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentMergeCu[depth]);
+        fprintf(csvfp, ", %.2lf, %.2lf", frameStats->avgLumaDistortion, frameStats->avgChromaDistortion);
     }
     fprintf(csvfp, "\n");
     fflush(stderr);
