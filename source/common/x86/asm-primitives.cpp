@@ -1012,6 +1012,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         LUMA_VSS_FILTERS(sse2);
 
         p.frameInitLowres = PFX(frame_init_lowres_core_sse2);
+        // TODO: the planecopy_sp is really planecopy_SC now, must be fix it 
+        //p.planecopy_sp = PFX(downShift_16_sse2);
+        p.planecopy_sp_shl = PFX(upShift_16_sse2);
 
         ALL_CHROMA_420_PU(p2s, filterPixelToShort, sse2);
         ALL_CHROMA_422_PU(p2s, filterPixelToShort, sse2);
@@ -1291,6 +1294,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     if (cpuMask & X265_CPU_AVX2)
     {
         p.cu[BLOCK_4x4].intra_filter = PFX(intra_filter_4x4_avx2);
+
+        // TODO: the planecopy_sp is really planecopy_SC now, must be fix it
+        //p.planecopy_sp = PFX(downShift_16_avx2);
+        p.planecopy_sp_shl = PFX(upShift_16_avx2);
 
         p.saoCuOrgE0 = PFX(saoCuOrgE0_avx2);
         p.saoCuOrgE1 = PFX(saoCuOrgE1_avx2);

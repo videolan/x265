@@ -70,6 +70,7 @@ cextern popcnt_table
 cextern pd_2
 cextern hmul_16p
 cextern pb_movemask
+cextern pw_pixel_max
 
 ;=============================================================================
 ; SATD
@@ -7092,7 +7093,7 @@ cglobal pixel_sa8d_32x32, 4,8,8
 
 ; Input 10bit, Output 8bit
 ;------------------------------------------------------------------------------------------------------------------------
-;void planecopy_sp(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
+;void planecopy_sc(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
 ;------------------------------------------------------------------------------------------------------------------------
 INIT_XMM sse2
 cglobal downShift_16, 7,7,3
@@ -7465,6 +7466,219 @@ cglobal upShift_8, 6,7,4
     pmaxsd  %2, %4
 %endif
 %endmacro
+
+
+; Input 10bit, Output 12bit
+;------------------------------------------------------------------------------------------------------------------------
+;void planecopy_sp_shl(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
+;------------------------------------------------------------------------------------------------------------------------
+INIT_XMM sse2
+cglobal upShift_16, 6,7,4
+    movd        m0, r6m        ; m0 = shift
+    mova        m3, [pw_pixel_max]
+    FIX_STRIDES r1d, r3d
+    dec         r5d
+.loopH:
+    xor         r6d, r6d
+.loopW:
+    movu        m1, [r0 + r6 * SIZEOF_PIXEL]
+    movu        m2, [r0 + r6 * SIZEOF_PIXEL + mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    ; TODO: if input always valid, we can remove below 2 instructions.
+    pand        m1, m3
+    pand        m2, m3
+    movu        [r2 + r6 * SIZEOF_PIXEL], m1
+    movu        [r2 + r6 * SIZEOF_PIXEL + mmsize], m2
+
+    add         r6, mmsize * 2 / SIZEOF_PIXEL
+    cmp         r6d, r4d
+    jl         .loopW
+
+    ; move to next row
+    add         r0, r1
+    add         r2, r3
+    dec         r5d
+    jnz        .loopH
+
+;processing last row of every frame [To handle width which not a multiple of 16]
+
+.loop16:
+    movu        m1, [r0]
+    movu        m2, [r0 + mmsize]
+    psllw       m1, m0
+    psllw       m2, m0
+    pand        m1, m3
+    pand        m2, m3
+    movu        [r2], m1
+    movu        [r2 + mmsize], m2
+
+    add         r0, 2 * mmsize
+    add         r2, 2 * mmsize
+    sub         r4d, 16
+    jz         .end
+    jg         .loop16
+
+    cmp         r4d, 8
+    jl         .process4
+    movu        m1, [r0]
+    psrlw       m1, m0
+    pand        m1, m3
+    movu        [r2], m1
+
+    add         r0, mmsize
+    add         r2, mmsize
+    sub         r4d, 8
+    jz          .end
+
+.process4:
+    cmp         r4d, 4
+    jl         .process2
+    movh        m1,[r0]
+    psllw       m1, m0
+    pand        m1, m3
+    movh        [r2], m1
+
+    add         r0, 8
+    add         r2, 8
+    sub         r4d, 4
+    jz         .end
+
+.process2:
+    cmp         r4d, 2
+    jl         .process1
+    movd        m1, [r0]
+    psllw       m1, m0
+    pand        m1, m3
+    movd        [r2], m1
+
+    add         r0, 4
+    add         r2, 4
+    sub         r4d, 2
+    jz         .end
+
+.process1:
+    movd        m1, [r0]
+    psllw       m1, m0
+    pand        m1, m3
+    movd        r3, m1
+    mov         [r2], r3w
+.end:
+    RET
+
+; Input 10bit, Output 12bit
+;-------------------------------------------------------------------------------------------------------------------------------------
+;void planecopy_sp_shl(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
+;-------------------------------------------------------------------------------------------------------------------------------------
+; TODO: NO TEST CODE!
+INIT_YMM avx2
+cglobal upShift_16, 6,7,4
+    movd        xm0, r6m        ; m0 = shift
+    vbroadcasti128 m3, [pw_pixel_max]
+    FIX_STRIDES r1d, r3d
+    dec         r5d
+.loopH:
+    xor         r6d, r6d
+.loopW:
+    movu        m1, [r0 + r6 * SIZEOF_PIXEL]
+    movu        m2, [r0 + r6 * SIZEOF_PIXEL + mmsize]
+    psllw       m1, xm0
+    psllw       m2, xm0
+    pand        m1, m3
+    pand        m2, m3
+    movu        [r2 + r6 * SIZEOF_PIXEL], m1
+    movu        [r2 + r6 * SIZEOF_PIXEL + mmsize], m2
+
+    add         r6, mmsize * 2 / SIZEOF_PIXEL
+    cmp         r6d, r4d
+    jl         .loopW
+
+    ; move to next row
+    add         r0, r1
+    add         r2, r3
+    dec         r5d
+    jnz        .loopH
+
+; processing last row of every frame [To handle width which not a multiple of 32]
+    mov         r6d, r4d
+    and         r4d, 31
+    shr         r6d, 5
+
+.loop32:
+    movu        m1, [r0]
+    movu        m2, [r0 + mmsize]
+    psllw       m1, xm0
+    psllw       m2, xm0
+    pand        m1, m3
+    pand        m2, m3
+    movu        [r2], m1
+    movu        [r2 + mmsize], m2
+
+    add         r0, 2*mmsize
+    add         r2, 2*mmsize
+    dec         r6d
+    jnz        .loop32
+
+    cmp         r4d, 16
+    jl         .process8
+    movu        m1, [r0]
+    psllw       m1, xm0
+    pand        m1, m3
+    movu        [r2], m1
+
+    add         r0, mmsize
+    add         r2, mmsize
+    sub         r4d, 16
+    jz         .end
+
+.process8:
+    cmp         r4d, 8
+    jl         .process4
+    movu        xm1, [r0]
+    psllw       xm1, xm0
+    pand        xm1, xm3
+    movu        [r2], xm1
+
+    add         r0, 16
+    add         r2, 16
+    sub         r4d, 8
+    jz         .end
+
+.process4:
+    cmp         r4d, 4
+    jl          .process2
+    movq        xm1,[r0]
+    psllw       xm1, xm0
+    pand        xm1, xm3
+    movq        [r2], xm1
+
+    add         r0, 8
+    add         r2, 8
+    sub         r4d, 4
+    jz         .end
+
+.process2:
+    cmp         r4d, 2
+    jl         .process1
+    movd        xm1, [r0]
+    psllw       xm1, xm0
+    pand        xm1, xm3
+    movd        [r2], xm1
+
+    add         r0, 4
+    add         r2, 4
+    sub         r4d, 2
+    jz         .end
+
+.process1:
+    movd        xm1, [r0]
+    psllw       xm1, xm0
+    pand        xm1, xm3
+    movd        r3d, xm1
+    mov         [r2], r3w
+.end:
+    RET
+
 
 ;---------------------------------------------------------------------------------------------------------------------
 ;int psyCost_pp(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride)

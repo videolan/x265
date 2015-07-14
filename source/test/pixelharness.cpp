@@ -1283,8 +1283,8 @@ bool PixelHarness::check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt)
     for (int i = 0; i < ITERS; i++)
     {
         int index = i % TEST_CASES;
-        checked(opt, ushort_test_buff[index] + j, srcStride, opt_dest, dstStride, width, height, (int)8, (uint16_t)255);
-        ref(ushort_test_buff[index] + j, srcStride, ref_dest, dstStride, width, height, (int)8, (uint16_t)255);
+        checked(opt, ushort_test_buff[index] + j, srcStride, opt_dest, dstStride, width, height, (int)8, (uint16_t)((1 << X265_DEPTH) - 1));
+        ref(ushort_test_buff[index] + j, srcStride, ref_dest, dstStride, width, height, (int)8, (uint16_t)((1 << X265_DEPTH) - 1));
 
         if (memcmp(ref_dest, opt_dest, width * height * sizeof(pixel)))
             return false;
@@ -2262,6 +2262,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         if (!check_planecopy_sp(ref.planecopy_sp, opt.planecopy_sp))
         {
             printf("planecopy_sp failed\n");
+            return false;
+        }
+    }
+
+    if (opt.planecopy_sp_shl)
+    {
+        if (!check_planecopy_sp(ref.planecopy_sp_shl, opt.planecopy_sp_shl))
+        {
+            printf("planecopy_sp_shl failed\n");
             return false;
         }
     }
