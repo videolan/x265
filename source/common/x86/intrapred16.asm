@@ -142,7 +142,7 @@ cglobal intra_pred_dc4, 5,6,2
     test        r4d,            r4d
 
     paddw       m0,             [pw_4]
-    psraw       m0,             3
+    psrlw       m0,             3
 
     ; store DC 4x4
     movh        [r0],           m0
@@ -161,7 +161,7 @@ cglobal intra_pred_dc4, 5,6,2
     ; filter top
     movh        m1,             [r2 + 2]
     paddw       m1,             m0
-    psraw       m1,             2
+    psrlw       m1,             2
     movh        [r0],           m1             ; overwrite top-left pixel, we will update it later
 
     ; filter top-left
@@ -176,7 +176,7 @@ cglobal intra_pred_dc4, 5,6,2
     ; filter left
     movu        m1,             [r2 + 20]
     paddw       m1,             m0
-    psraw       m1,             2
+    psrlw       m1,             2
     movd        r3d,            m1
     mov         [r0 + r1 * 2],  r3w
     shr         r3d,            16
@@ -202,7 +202,7 @@ cglobal intra_pred_dc8, 5, 8, 2
     pmaddwd         m0,            [pw_1]
 
     paddw           m0,            [pw_8]
-    psraw           m0,            4              ; sum = sum / 16
+    psrlw           m0,            4              ; sum = sum / 16
     pshuflw         m0,            m0, 0
     pshufd          m0,            m0, 0          ; m0 = word [dc_val ...]
 
@@ -235,7 +235,7 @@ cglobal intra_pred_dc8, 5, 8, 2
     ; filter top
     movu            m0,            [r2 + 2]
     paddw           m0,            m1
-    psraw           m0,            2
+    psrlw           m0,            2
     movu            [r0],          m0
 
     ; filter top-left
@@ -250,7 +250,7 @@ cglobal intra_pred_dc8, 5, 8, 2
     ; filter left
     movu            m0,            [r2 + 36]
     paddw           m0,            m1
-    psraw           m0,            2
+    psrlw           m0,            2
     movh            r3,            m0
     mov             [r0 + r1 * 2], r3w
     shr             r3,            16
@@ -284,14 +284,10 @@ cglobal intra_pred_dc16, 5, 10, 4
     paddw           m0,                  m1
     paddw           m2,                  m3
     paddw           m0,                  m2
-    movhlps         m1,                  m0
-    paddw           m0,                  m1
-    pshuflw         m1,                  m0, 0x6E
-    paddw           m0,                  m1
-    pmaddwd         m0,                  [pw_1]
+    HADDUW          m0,                  m1
+    paddd           m0,                  [pd_16]
+    psrld           m0,                  5
 
-    paddw           m0,                  [pw_16]
-    psraw           m0,                  5
     movd            r5d,                 m0
     pshuflw         m0,                  m0, 0 ; m0 = word [dc_val ...]
     pshufd          m0,                  m0, 0
@@ -347,11 +343,11 @@ cglobal intra_pred_dc16, 5, 10, 4
     ; filter top
     movu            m2,                  [r2 + 2]
     paddw           m2,                  m1
-    psraw           m2,                  2
+    psrlw           m2,                  2
     movu            [r0],                m2
     movu            m3,                  [r2 + 18]
     paddw           m3,                  m1
-    psraw           m3,                  2
+    psrlw           m3,                  2
     movu            [r0 + 16],           m3
 
     ; filter top-left
@@ -366,7 +362,7 @@ cglobal intra_pred_dc16, 5, 10, 4
     ; filter left
     movu            m2,                  [r3 + 2]
     paddw           m2,                  m1
-    psraw           m2,                  2
+    psrlw           m2,                  2
 
     movq            r2,                  m2
     pshufd          m2,                  m2, 0xEE
@@ -388,7 +384,7 @@ cglobal intra_pred_dc16, 5, 10, 4
 
     movu            m3,                  [r3 + 18]
     paddw           m3,                  m1
-    psraw           m3,                  2
+    psrlw           m3,                  2
 
     movq            r3,                  m3
     pshufd          m3,                  m3, 0xEE
@@ -423,20 +419,19 @@ cglobal intra_pred_dc32, 3, 4, 6
     paddw           m0,                  m1
     paddw           m2,                  m3
     paddw           m0,                  m2
-    movu            m1,                  [r2]
-    movu            m3,                  [r2 + 16]
-    movu            m4,                  [r2 + 32]
-    movu            m5,                  [r2 + 48]
-    paddw           m1,                  m3
-    paddw           m4,                  m5
-    paddw           m1,                  m4
-    paddw           m0,                  m1
-    movhlps         m1,                  m0
-    paddw           m0,                  m1
-    pshuflw         m1,                  m0, 0x6E
-    paddw           m0,                  m1
-    pmaddwd         m0,                  [pw_1]
+    HADDUWD         m0,                  m1
 
+    movu            m1,                  [r2]
+    movu            m2,                  [r2 + 16]
+    movu            m3,                  [r2 + 32]
+    movu            m4,                  [r2 + 48]
+    paddw           m1,                  m2
+    paddw           m3,                  m4
+    paddw           m1,                  m3
+    HADDUWD         m1,                  m2
+
+    paddd           m0,                  m1
+    HADDD           m0,                  m1
     paddd           m0,                  [pd_32]     ; sum = sum + 32
     psrld           m0,                  6           ; sum = sum / 64
     pshuflw         m0,                  m0, 0
@@ -487,7 +482,7 @@ cglobal intra_pred_dc16, 3, 9, 4
     phaddw          xm0,                 xm0
     pmaddwd         xm0,                 [pw_1]
     paddd           xm0,                 [pd_16]
-    psrad           xm0,                 5
+    psrld           xm0,                 5
     movd            r5d,                 xm0
     vpbroadcastw    m0,                  xm0
 
@@ -527,7 +522,7 @@ cglobal intra_pred_dc16, 3, 9, 4
     ; filter top
     movu            m2,                  [r2 + 2]
     paddw           m2,                  m1
-    psraw           m2,                  2
+    psrlw           m2,                  2
     movu            [r0],                m2
 
     ; filter top-left
@@ -542,7 +537,7 @@ cglobal intra_pred_dc16, 3, 9, 4
     ; filter left
     movu            m2,                  [r2 + 68]
     paddw           m2,                  m1
-    psraw           m2,                  2
+    psrlw           m2,                  2
     vextracti128    xm3,                 m2, 1
 
     movq            r3,                  xm2
