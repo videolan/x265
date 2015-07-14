@@ -6,6 +6,7 @@
 ;* Authors: Oskar Arvidsson <oskar@irock.se>
 ;*          Henrik Gramner <henrik@gramner.com>
 ;*          Dnyaneshwar Gorade <dnyaneshwar@multicorewareinc.com>
+;*          Min Chen <chenm003@163.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -51,8 +52,14 @@ cextern pw_1
     lea     r2, [r2+2*r3]
     paddw   m1, m2
     paddw   m3, m4
+  %if BIT_DEPTH <= 10
     paddw   m0, m1
     paddw   m0, m3
+  %else
+    paddw   m1, m3
+    pmaddwd m1, [pw_1]
+    paddd   m0, m1
+  %endif
 %endmacro
 
 %macro SAD_INC_2x8P_MMX 0
@@ -70,8 +77,14 @@ cextern pw_1
     lea     r2, [r2+4*r3]
     paddw   m1, m2
     paddw   m3, m4
+  %if BIT_DEPTH <= 10
     paddw   m0, m1
     paddw   m0, m3
+  %else
+    paddw   m1, m3
+    pmaddwd m1, [pw_1]
+    paddd   m0, m1
+  %endif
 %endmacro
 
 %macro SAD_INC_2x4P_MMX 0
@@ -82,8 +95,14 @@ cextern pw_1
     ABSW2   m1, m2, m1, m2, m3, m4
     lea     r0, [r0+4*r1]
     lea     r2, [r2+4*r3]
+  %if BIT_DEPTH <= 10
     paddw   m0, m1
     paddw   m0, m2
+  %else
+    paddw   m1, m2
+    pmaddwd m1, [pw_1]
+    paddd   m0, m1
+  %endif
 %endmacro
 
 ;-----------------------------------------------------------------------------
@@ -103,9 +122,17 @@ cglobal pixel_sad_%1x%2, 4,5-(%2&4/4)
     jg .loop
 %endif
 %if %1*%2 == 256
+  %if BIT_DEPTH <= 10
     HADDUW  m0, m1
+  %else
+    HADDD  m0, m1
+  %endif
 %else
+  %if BIT_DEPTH <= 10
     HADDW   m0, m1
+  %else
+    HADDD  m0, m1
+  %endif
 %endif
     movd   eax, m0
     RET
@@ -276,8 +303,9 @@ SAD_MMX  4,  4, 2
     ABSW2   m3, m4, m3, m4, m7, m5
     paddw   m1, m2
     paddw   m3, m4
-    paddw   m0, m1
-    paddw   m0, m3
+    paddw   m1, m3
+    pmaddwd m1, [pw_1]
+    paddd   m0, m1
 %else
     movu    m1, [r2]
     movu    m2, [r2+2*r3]
@@ -286,8 +314,9 @@ SAD_MMX  4,  4, 2
     ABSW2   m1, m2, m1, m2, m3, m4
     lea     r0, [r0+4*r1]
     lea     r2, [r2+4*r3]
-    paddw   m0, m1
-    paddw   m0, m2
+    paddw   m1, m2
+    pmaddwd m1, [pw_1]
+    paddd   m0, m1
 %endif
 %endmacro
 
@@ -307,8 +336,9 @@ SAD_MMX  4,  4, 2
     ABSW2   m3, m4, m3, m4, m7, m5
     paddw   m1, m2
     paddw   m3, m4
-    paddw   m0, m1
-    paddw   m8, m3
+    paddw   m1, m3
+    pmaddwd m1, [pw_1]
+    paddd   m0, m1
 %else
     movu    m1, [r2]
     movu    m2, [r2 + 2 * r3]
@@ -317,8 +347,9 @@ SAD_MMX  4,  4, 2
     ABSW2   m1, m2, m1, m2, m3, m4
     lea     r0, [r0 + 4 * r1]
     lea     r2, [r2 + 4 * r3]
-    paddw   m0, m1
-    paddw   m8, m2
+    paddw   m1, m2
+    pmaddwd m1, [pw_1]
+    paddd   m0, m1
 %endif
 %endmacro
 
@@ -326,7 +357,7 @@ SAD_MMX  4,  4, 2
 ; int pixel_sad_NxM(uint16_t *, intptr_t, uint16_t *, intptr_t)
 ; ---------------------------------------------------------------------------- -
 %macro SAD 2
-cglobal pixel_sad_%1x%2, 4,5-(%2&4/4),8*(%1/mmsize)
+cglobal pixel_sad_%1x%2, 4,5,8
     pxor    m0, m0
 %if %2 == 4
     SAD_INC_2ROW %1
@@ -338,12 +369,7 @@ cglobal pixel_sad_%1x%2, 4,5-(%2&4/4),8*(%1/mmsize)
     dec    r4d
     jg .loop
 %endif
-%if %2 == 32
-    HADDUWD m0, m1
     HADDD   m0, m1
-%else
-    HADDW   m0, m1
-%endif
     movd    eax, xm0
     RET
 %endmacro
@@ -352,21 +378,15 @@ cglobal pixel_sad_%1x%2, 4,5-(%2&4/4),8*(%1/mmsize)
 ; int pixel_sad_Nx64(uint16_t *, intptr_t, uint16_t *, intptr_t)
 ; ---------------------------------------------------------------------------- -
 %macro SAD_Nx64 1
-cglobal pixel_sad_%1x64, 4,5-(64&4/4), 9
+cglobal pixel_sad_%1x64, 4,5, 8
     pxor    m0, m0
-    pxor    m8, m8
     mov     r4d, 64 / 2
 .loop:
     SAD_INC_2ROW_Nx64 %1
     dec    r4d
     jg .loop
 
-    HADDUWD m0, m1
-    HADDUWD m8, m1
     HADDD   m0, m1
-    HADDD   m8, m1
-    paddd   m0, m8
-
     movd    eax, xm0
     RET
 %endmacro
