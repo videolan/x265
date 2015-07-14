@@ -889,6 +889,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         p.pu[LUMA_16x16].sad = PFX(pixel_sad_16x16_sse2);
         p.pu[LUMA_16x8].sad  = PFX(pixel_sad_16x8_sse2);
+        p.pu[LUMA_8x16].sad  = PFX(pixel_sad_8x16_sse2);
         HEVC_SAD(sse2);
 
         p.pu[LUMA_4x4].sad_x3   = PFX(pixel_sad_x3_4x4_mmx2);
