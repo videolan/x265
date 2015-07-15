@@ -305,9 +305,9 @@ void x265_dither_image(const x265_api& api, x265_picture& picIn, int picWidth, i
         return;
     }
 
-    if (bitDepth <= 8)
+    if (picIn.bitDepth <= 8)
     {
-        fprintf(stderr, "extras [error]: dither only support for input bitdepth > 8\n");
+        fprintf(stderr, "extras [error]: dither support enabled only for input bitdepth > 8\n");
         return;
     }
 
