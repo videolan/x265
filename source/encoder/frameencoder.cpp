@@ -958,7 +958,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                     curRow.rowStats.intra8x8Cnt += (int)(frameLog.cntIntra[depth] << shift);
 
                 curRow.rowStats.inter8x8Cnt += (int)(frameLog.cntInter[depth] << shift);
-                curRow.rowStats.skip8x8Cnt  += (int)(frameLog.cntSkipCu[depth] << shift);
+                curRow.rowStats.skip8x8Cnt += (int)((frameLog.cntSkipCu[depth] + frameLog.cntMergeCu[depth]) << shift);
             }
         }
         curRow.rowStats.cntIntraNxN += frameLog.cntIntraNxN;
