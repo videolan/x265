@@ -643,7 +643,7 @@ cglobal pixel_satd_4x16, 4, 6, 8
     lea r0, [r0+r1*2*SIZEOF_PIXEL]
     lea r2, [r2+r3*2*SIZEOF_PIXEL]
     SATD_4x8_SSE vertical, 1, add
-    HADDW m7, m1
+    HADDUW m7, m1
     movd eax, m7
     RET
 

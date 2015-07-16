@@ -915,9 +915,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         HEVC_SAD_X4(sse2);
 
         p.pu[LUMA_4x4].satd = p.cu[BLOCK_4x4].sa8d = PFX(pixel_satd_4x4_mmx2);
-#if X265_DEPTH <= 10
         ALL_LUMA_PU(satd, pixel_satd, sse2);
 
+#if X265_DEPTH <= 10
         ASSIGN_SA8D(sse2);
 #endif /* X265_DEPTH <= 10 */
         LUMA_PIXELSUB(sse2);
