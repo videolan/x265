@@ -915,9 +915,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         HEVC_SAD_X4(sse2);
 
         p.pu[LUMA_4x4].satd = p.cu[BLOCK_4x4].sa8d = PFX(pixel_satd_4x4_mmx2);
+#if X265_DEPTH <= 10
         ALL_LUMA_PU(satd, pixel_satd, sse2);
 
         ASSIGN_SA8D(sse2);
+#endif /* X265_DEPTH <= 10 */
         LUMA_PIXELSUB(sse2);
         CHROMA_420_PIXELSUB_PS(sse2);
         CHROMA_422_PIXELSUB_PS(sse2);
@@ -958,7 +960,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_LUMA_TU_S(calcresidual, getResidual, sse2);
         ALL_LUMA_TU_S(transpose, transpose, sse2);
 
+#if X265_DEPTH <= 10
         ALL_LUMA_TU_S(intra_pred[PLANAR_IDX], intra_pred_planar, sse2);
+#endif /* X265_DEPTH <= 10 */
         ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse2);
 
         p.cu[BLOCK_4x4].intra_pred[2] = PFX(intra_pred_ang4_2_sse2);
