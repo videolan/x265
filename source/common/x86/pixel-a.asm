@@ -7394,7 +7394,7 @@ cglobal upShift_8, 6,7,3
 ;---------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
 INIT_YMM avx2
-cglobal upShift_8, 6,7,4
+cglobal upShift_8, 6,7,3
     movd        xm2, r6m
     add         r3d, r3d
     dec         r5d
@@ -7420,29 +7420,25 @@ cglobal upShift_8, 6,7,4
     jg         .loopH
 
     ; processing last row of every frame [To handle width which not a multiple of 32]
-    lea         r3, [pb_movemask + 16]
-    mov         r5d, 15
-    and         r5d, r4d
-    sub         r3, r5
-    pmovsxbw    m3, [r3]
+    mov         r1d, 15
+    and         r1d, r4d
+    sub         r1, mmsize/2
 
     ; NOTE: Width MUST BE more than or equal to 16
-    shr         r4d, 4
-.loopW2:
+    shr         r4d, 4          ; log2(mmsize)
+.loopW16:
     pmovzxbw    m0,[r0]
     psllw       m0, xm2
     movu        [r2], m0
     add         r0, mmsize/2
     add         r2, mmsize
     dec         r4d
-    jg         .loopW2
+    jg         .loopW16
 
-.nextW2:
-    ; process partial of 16
-    pmovzxbw    m0,[r0]
+    ; Mac OS X can't read beyond array bound, so rollback some bytes
+    pmovzxbw    m0,[r0 + r1]
     psllw       m0, xm2
-    vpblendvb   m0, m0, [r2], m3
-    movu        [r2], m0
+    movu        [r2 + r1 * 2], m0
     RET
 %endif
 
