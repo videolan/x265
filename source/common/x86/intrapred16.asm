@@ -1748,7 +1748,7 @@ cglobal intra_pred_dc4, 5,6,2
     ; filter top
     movu        m1,             [r2]
     paddw       m1,             m0
-    psraw       m1,             2
+    psrlw       m1,             2
     movh        [r0],           m1             ; overwrite top-left pixel, we will update it later
 
     ; filter top-left
@@ -1763,7 +1763,7 @@ cglobal intra_pred_dc4, 5,6,2
     lea         r0,             [r0 + r1 * 2]
     movu        m1,             [r3 + 2]
     paddw       m1,             m0
-    psraw       m1,             2
+    psrlw       m1,             2
     movd        r3d,            m1
     mov         [r0],           r3w
     shr         r3d,            16
@@ -1872,7 +1872,7 @@ cglobal intra_pred_dc8, 5, 7, 2
     ; filter top
     movu            m0,            [r2]
     paddw           m0,            m1
-    psraw           m0,            2
+    psrlw           m0,            2
     movu            [r6],          m0
 
     ; filter top-left
@@ -1887,7 +1887,7 @@ cglobal intra_pred_dc8, 5, 7, 2
     add             r6,            r1
     movu            m0,            [r3 + 2]
     paddw           m0,            m1
-    psraw           m0,            2
+    psrlw           m0,            2
     pextrw          [r6],          m0, 0
     pextrw          [r6 + r1],     m0, 1
     pextrw          [r6 + r1 * 2], m0, 2
@@ -1913,13 +1913,13 @@ cglobal intra_pred_dc16, 5, 7, 4
     movu            m2,                  [r2]
     movu            m3,                  [r2 + 16]
 
-    paddw           m0,                  m1
+    paddw           m0,                  m1                     ; dynamic range 13 bits
     paddw           m2,                  m3
-    paddw           m0,                  m2
-    movhlps         m1,                  m0
-    paddw           m0,                  m1
-    phaddw          m0,                  m0
+    paddw           m0,                  m2                     ; dynamic range 14 bits
+    movhlps         m1,                  m0                     ; dynamic range 15 bits
+    paddw           m0,                  m1                     ; dynamic range 16 bits
     pmaddwd         m0,                  [pw_1]
+    phaddd          m0,                  m0
 
     movd            r5d,                 m0
     add             r5d,                 16
@@ -1983,11 +1983,11 @@ cglobal intra_pred_dc16, 5, 7, 4
     ; filter top
     movu            m2,                  [r2]
     paddw           m2,                  m1
-    psraw           m2,                  2
+    psrlw           m2,                  2
     movu            [r6],                m2
     movu            m3,                  [r2 + 16]
     paddw           m3,                  m1
-    psraw           m3,                  2
+    psrlw           m3,                  2
     movu            [r6 + 16],           m3
 
     ; filter top-left
@@ -2002,7 +2002,7 @@ cglobal intra_pred_dc16, 5, 7, 4
     add             r6,                  r1
     movu            m2,                  [r3 + 2]
     paddw           m2,                  m1
-    psraw           m2,                  2
+    psrlw           m2,                  2
 
     pextrw          [r6],                m2, 0
     pextrw          [r6 + r1],           m2, 1
@@ -2019,7 +2019,7 @@ cglobal intra_pred_dc16, 5, 7, 4
     lea             r6,                  [r6 + r1 * 2]
     movu            m3,                  [r3 + 18]
     paddw           m3,                  m1
-    psraw           m3,                  2
+    psrlw           m3,                  2
 
     pextrw          [r6],                m3, 0
     pextrw          [r6 + r1],           m3, 1
@@ -2046,21 +2046,21 @@ cglobal intra_pred_dc32, 3, 5, 6
     movu            m1,                  [r3 + 16]
     movu            m2,                  [r3 + 32]
     movu            m3,                  [r3 + 48]
-    paddw           m0,                  m1
+    paddw           m0,                  m1             ; dynamic range 13 bits
     paddw           m2,                  m3
-    paddw           m0,                  m2
+    paddw           m0,                  m2             ; dynamic range 14 bits
     movu            m1,                  [r2]
     movu            m3,                  [r2 + 16]
     movu            m4,                  [r2 + 32]
     movu            m5,                  [r2 + 48]
-    paddw           m1,                  m3
+    paddw           m1,                  m3             ; dynamic range 13 bits
     paddw           m4,                  m5
-    paddw           m1,                  m4
-    paddw           m0,                  m1
-    movhlps         m1,                  m0
-    paddw           m0,                  m1
-    phaddw          m0,                  m0
+    paddw           m1,                  m4             ; dynamic range 14 bits
+    paddw           m0,                  m1             ; dynamic range 15 bits
     pmaddwd         m0,                  [pw_1]
+    movhlps         m1,                  m0
+    paddd           m0,                  m1
+    phaddd          m0,                  m0
 
     paddd           m0,                  [pd_32]     ; sum = sum + 32
     psrld           m0,                  6           ; sum = sum / 64

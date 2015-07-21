@@ -39,7 +39,7 @@ cextern pb_1
 cextern pb_128
 cextern pb_2
 cextern pw_2
-cextern pw_1023
+cextern pw_pixel_max
 cextern pb_movemask
 cextern pw_1
 cextern hmul_16p
@@ -81,7 +81,7 @@ cglobal saoCuOrgE0, 4,5,9
     palignr     m2, m3, m5, 15
     por         m2, m0
 
-    mova        m4, [pw_1023]
+    mova        m4, [pw_pixel_max]
     psignb      m2, [pb_128]                ; m2 = signLeft
     pxor        m0, m0
     palignr     m0, m3, 15
@@ -127,7 +127,7 @@ cglobal saoCuOrgE0, 4,5,9
     palignr     m2, m3, m5, 15
     por         m2, m0
 
-    mova        m4, [pw_1023]
+    mova        m4, [pw_pixel_max]
     psignb      m2, [pb_128]                ; m2 = signLeft
     pxor        m0, m0
     palignr     m0, m3, 15
@@ -249,7 +249,7 @@ cglobal saoCuOrgE0, 4,4,9
     neg             r1b
     movd            xm1, r1d
     vinserti128     m0, m0, xm1, 1
-    mova            m5, [pw_1023]
+    mova            m5, [pw_pixel_max]
     mov             r1d, r4m
     add             r1d, r1d
     shr             r2d, 4
@@ -402,8 +402,8 @@ cglobal saoCuOrgE1, 4,5,8
 
     pmaxsw      m7, m0
     pmaxsw      m5, m0
-    pminsw      m7, [pw_1023]
-    pminsw      m5, [pw_1023]
+    pminsw      m7, [pw_pixel_max]
+    pminsw      m5, [pw_pixel_max]
 
     movu        [r0], m7
     movu        [r0 + 16],  m5
@@ -468,7 +468,7 @@ cglobal saoCuOrgE1, 4,5,6
     mov         r4d, r4m
     mova        m4, [pb_2]
     shr         r4d, 4
-    mova        m0, [pw_1023]
+    mova        m0, [pw_pixel_max]
 .loop
     movu        m5, [r0]
     movu        m3, [r0 + r3]
@@ -559,7 +559,7 @@ cglobal saoCuOrgE1_2Rows, 4,7,8
     add         r3d, r3d
     mov         r4d, r4m
     pxor        m0, m0                      ; m0 = 0
-    mova        m6, [pw_1023]
+    mova        m6, [pw_pixel_max]
     mov         r5d, r4d
     shr         r4d, 4
     mov         r6, r0
@@ -736,7 +736,7 @@ INIT_YMM avx2
 cglobal saoCuOrgE1_2Rows, 4,5,8
     add             r3d, r3d
     mov             r4d, r4m
-    mova            m4, [pw_1023]
+    mova            m4, [pw_pixel_max]
     vbroadcasti128  m6, [r2]                ; m6 = m_iOffsetEo
     shr             r4d, 4
 .loop
@@ -884,8 +884,8 @@ cglobal saoCuOrgE2, 6,6,8
     paddw       m5, m4
     pmaxsw      m7, m0
     pmaxsw      m5, m0
-    pminsw      m7, [pw_1023]
-    pminsw      m5, [pw_1023]
+    pminsw      m7, [pw_pixel_max]
+    pminsw      m5, [pw_pixel_max]
     movu        [r0], m7
     movu        [r0 + 16], m5
 
@@ -960,7 +960,7 @@ cglobal saoCuOrgE2, 6,6,7
     movq            xm4, [r0 + r4 * 2]
     movhps          xm4, [r1 + r4]
     vbroadcasti128  m5, [r3]
-    mova            m6, [pw_1023]
+    mova            m6, [pw_pixel_max]
 .loop
     movu            m1, [r0]
     movu            m3, [r0 + r5 + 2]
@@ -1086,8 +1086,8 @@ cglobal saoCuOrgE2_32, 6,6,8
     paddw           m7, m6
     pmaxsw          m1, m0
     pmaxsw          m7, m0
-    pminsw          m1, [pw_1023]
-    pminsw          m7, [pw_1023]
+    pminsw          m1, [pw_pixel_max]
+    pminsw          m7, [pw_pixel_max]
     movu            [r0], m1
     movu            [r0 + 32], m7
 
@@ -1212,8 +1212,8 @@ cglobal saoCuOrgE3, 4,6,8
     paddw           m5, m4
     pmaxsw          m7, m0
     pmaxsw          m5, m0
-    pminsw          m7, [pw_1023]
-    pminsw          m5, [pw_1023]
+    pminsw          m7, [pw_pixel_max]
+    pminsw          m5, [pw_pixel_max]
     movu            [r0], m7
     movu            [r0 + 16], m5
 
@@ -1333,7 +1333,7 @@ cglobal saoCuOrgE3, 4,6,6
     paddw           m1, m3
     pxor            m0, m0
     pmaxsw          m1, m0
-    pminsw          m1, [pw_1023]
+    pminsw          m1, [pw_pixel_max]
     movu            [r0], m1
 
     psubb           xm0, xm2
@@ -1461,8 +1461,8 @@ cglobal saoCuOrgE3_32, 3,6,8
     pxor            m0, m0
     pmaxsw          m1, m0
     pmaxsw          m7, m0
-    pminsw          m1, [pw_1023]
-    pminsw          m7, [pw_1023]
+    pminsw          m1, [pw_pixel_max]
+    pminsw          m7, [pw_pixel_max]
     movu            [r0], m1
     movu            [r0 + 32], m7
 
@@ -1565,8 +1565,8 @@ cglobal saoCuOrgB0, 5,7,8
 .loopW
     movu        m2, [r0 + r6]
     movu        m5, [r0 + r6 + 16]
-    psrlw       m0, m2, 5
-    psrlw       m6, m5, 5
+    psrlw       m0, m2, (BIT_DEPTH - 5)
+    psrlw       m6, m5, (BIT_DEPTH - 5)
     packuswb    m0, m6
     pand        m0, [pb_31]         ; m0 = [index]
 
@@ -1584,8 +1584,8 @@ cglobal saoCuOrgB0, 5,7,8
     paddw       m5, m6
     pmaxsw      m2, m7
     pmaxsw      m5, m7
-    pminsw      m2, [pw_1023]
-    pminsw      m5, [pw_1023]
+    pminsw      m2, [pw_pixel_max]
+    pminsw      m5, [pw_pixel_max]
 
     movu        [r0 + r6], m2
     movu        [r0 + r6 + 16], m5
@@ -1656,7 +1656,7 @@ cglobal saoCuOrgB0, 5,7,8
     sub             r1d, r2d
     sub             r1d, r2d
     shr             r2d, 4
-    mova            m7, [pw_1023]
+    mova            m7, [pw_pixel_max]
 
     mov             r6d, r3d
     shr             r3d, 1

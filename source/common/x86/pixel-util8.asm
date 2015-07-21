@@ -879,8 +879,8 @@ cglobal dequant_normal, 5,5,5
 %if HIGH_BIT_DEPTH
     cmp         r3d, 32767
     jle         .skip
-    shr         r3d, 2
-    sub         r4d, 2
+    shr         r3d, (BIT_DEPTH - 8)
+    sub         r4d, (BIT_DEPTH - 8)
 .skip:
 %endif
     movd        m0, r4d             ; m0 = shift
@@ -1273,13 +1273,7 @@ cglobal count_nonzero_32x32, 1,1,3
 INIT_XMM sse4
 cglobal weight_pp, 4,7,7
 %define correction      (14 - BIT_DEPTH)
-%if BIT_DEPTH == 10
-    mova        m6, [pw_1023]
-%elif BIT_DEPTH == 12
-    mova        m6, [pw_3fff]
-%else
-  %error Unsupported BIT_DEPTH!
-%endif
+    mova        m6, [pw_pixel_max]
     mov         r6d, r6m
     mov         r4d, r4m
     mov         r5d, r5m
@@ -1423,7 +1417,7 @@ cglobal weight_pp, 6, 7, 7
     movd         xm1, r7m
     vpbroadcastd m2, r8m
     mova         m5, [pw_1]
-    mova         m6, [pw_1023]
+    mova         m6, [pw_pixel_max]
     add         r2d, r2d
     add         r3d, r3d
     sub          r2d, r3d
@@ -1516,13 +1510,7 @@ cglobal weight_pp, 6, 7, 6
 %if HIGH_BIT_DEPTH
 INIT_XMM sse4
 cglobal weight_sp, 6,7,8
-%if BIT_DEPTH == 10
-    mova        m1, [pw_1023]
-%elif BIT_DEPTH == 12
-    mova        m1, [pw_3fff]
-%else
-  %error Unsupported BIT_DEPTH!
-%endif
+    mova        m1, [pw_pixel_max]
     mova        m2, [pw_1]
     mov         r6d, r7m
     shl         r6d, 16
@@ -1681,7 +1669,7 @@ cglobal weight_sp, 6, 7, 7, 0-(2*4)
 %if HIGH_BIT_DEPTH
 INIT_YMM avx2
 cglobal weight_sp, 6,7,9
-    mova                      m1, [pw_1023]
+    mova                      m1, [pw_pixel_max]
     mova                      m2, [pw_1]
     mov                       r6d, r7m
     shl                       r6d, 16

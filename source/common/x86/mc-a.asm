@@ -32,6 +32,19 @@
 %include "x86inc.asm"
 %include "x86util.asm"
 
+%if BIT_DEPTH==8
+    %define ADDAVG_FACTOR       256
+    %define ADDAVG_ROUND        128
+%elif BIT_DEPTH==10
+    %define ADDAVG_FACTOR       1024
+    %define ADDAVG_ROUND        512
+%elif BIT_DEPTH==12
+    %define ADDAVG_FACTOR       4096
+    %define ADDAVG_ROUND        2048
+%else
+    %error Unsupport bit depth!
+%endif
+
 SECTION_RODATA 32
 
 ch_shuf: times 2 db 0,2,2,4,4,6,6,8,1,3,3,5,5,7,7,9
@@ -54,6 +67,8 @@ cextern pw_256
 cextern pw_512
 cextern pw_1023
 cextern pw_1024
+cextern pw_2048
+cextern pw_4096
 cextern pw_00ff
 cextern pw_pixel_max
 cextern pd_32
@@ -92,23 +107,24 @@ cglobal addAvg_2x4, 6,6,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     punpcklqdq    m1,          m2
     punpcklqdq    m3,          m5
     paddw         m1,          m3
-    pmulhrsw      m1,          [pw_1024]
-    paddw         m1,          [pw_512]
+    pmulhrsw      m1,          [pw_ %+ ADDAVG_FACTOR]
+    paddw         m1,          [pw_ %+ ADDAVG_ROUND]
 
     pxor          m0,          m0
     pmaxsw        m1,          m0
-    pminsw        m1,          [pw_1023]
+    pminsw        m1,          [pw_pixel_max]
     movd          [r2],        m1
     pextrd        [r2 + r5],   m1, 1
     lea           r2,          [r2 + 2 * r5]
     pextrd        [r2],        m1, 2
     pextrd        [r2 + r5],   m1, 3
-
     RET
+
+
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal addAvg_2x8, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova          m0,          [pw_512]
+    mova          m0,          [pw_ %+ ADDAVG_ROUND]
     pxor          m7,          m7
     add           r3,          r3
     add           r4,          r4
@@ -136,11 +152,11 @@ cglobal addAvg_2x8, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     punpcklqdq    m1,          m2
     punpcklqdq    m3,          m5
     paddw         m1,          m3
-    pmulhrsw      m1,          [pw_1024]
+    pmulhrsw      m1,          [pw_ %+ ADDAVG_FACTOR]
     paddw         m1,          m0
 
     pmaxsw        m1,          m7
-    pminsw        m1,          [pw_1023]
+    pminsw        m1,          [pw_pixel_max]
     movd          [r2],        m1
     pextrd        [r2 + r5],   m1, 1
     lea           r2,          [r2 + 2 * r5]
@@ -156,8 +172,8 @@ cglobal addAvg_2x8, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal addAvg_2x16, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m6,         [pw_1023]
-    mova        m7,         [pw_1024]
+    mova        m6,         [pw_pixel_max]
+    mova        m7,         [pw_ %+ ADDAVG_FACTOR]
     mov         r6d,        16/4
     add         r3,         r3
     add         r4,         r4
@@ -183,7 +199,7 @@ cglobal addAvg_2x16, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     punpcklqdq  m3,         m5
     paddw       m1,         m3
     pmulhrsw    m1,         m7
-    paddw       m1,         [pw_512]
+    paddw       m1,         [pw_ %+ ADDAVG_ROUND]
     pxor        m0,         m0
     pmaxsw      m1,         m0
     pminsw      m1,         m6
@@ -213,21 +229,21 @@ cglobal addAvg_4x2, 6,6,7, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     punpcklqdq     m0,          m1
     punpcklqdq     m2,          m3
     paddw          m0,          m2
-    pmulhrsw       m0,          [pw_1024]
-    paddw          m0,          [pw_512]
+    pmulhrsw       m0,          [pw_ %+ ADDAVG_FACTOR]
+    paddw          m0,          [pw_ %+ ADDAVG_ROUND]
 
     pxor           m6,          m6
     pmaxsw         m0,          m6
-    pminsw         m0,          [pw_1023]
+    pminsw         m0,          [pw_pixel_max]
     movh           [r2],        m0
     movhps         [r2 + r5],   m0
     RET
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal addAvg_6x8, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,             [pw_512]
-    mova        m5,             [pw_1023]
-    mova        m7,             [pw_1024]
+    mova        m4,             [pw_ %+ ADDAVG_ROUND]
+    mova        m5,             [pw_pixel_max]
+    mova        m7,             [pw_ %+ ADDAVG_FACTOR]
     pxor        m6,             m6
     add         r3,             r3
     add         r4,             r4
@@ -264,9 +280,9 @@ cglobal addAvg_6x8, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal addAvg_6x16, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,             [pw_512]
-    mova        m5,             [pw_1023]
-    mova        m7,             [pw_1024]
+    mova        m4,             [pw_ %+ ADDAVG_ROUND]
+    mova        m5,             [pw_pixel_max]
+    mova        m7,             [pw_ %+ ADDAVG_FACTOR]
     pxor        m6,             m6
     mov         r6d,            16/2
     add         r3,             r3
@@ -300,9 +316,9 @@ cglobal addAvg_6x16, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal addAvg_8x2, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,          [pw_512]
-    mova        m5,          [pw_1023]
-    mova        m7,          [pw_1024]
+    mova        m4,          [pw_ %+ ADDAVG_ROUND]
+    mova        m5,          [pw_pixel_max]
+    mova        m7,          [pw_ %+ ADDAVG_FACTOR]
     pxor        m6,          m6
     add         r3,          r3
     add         r4,          r4
@@ -331,9 +347,9 @@ cglobal addAvg_8x2, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 ;-----------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal addAvg_8x6, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,          [pw_512]
-    mova        m5,          [pw_1023]
-    mova        m7,          [pw_1024]
+    mova        m4,          [pw_ %+ ADDAVG_ROUND]
+    mova        m5,          [pw_pixel_max]
+    mova        m7,          [pw_ %+ ADDAVG_FACTOR]
     pxor        m6,          m6
     add         r3,          r3
     add         r4,          r4
@@ -370,9 +386,9 @@ cglobal addAvg_8x6, 6,6,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 %macro ADDAVG_W4_H4 1
 INIT_XMM sse4
 cglobal addAvg_4x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova           m4,          [pw_512]
-    mova           m5,          [pw_1023]
-    mova           m7,          [pw_1024]
+    mova           m4,          [pw_ %+ ADDAVG_ROUND]
+    mova           m5,          [pw_pixel_max]
+    mova           m7,          [pw_ %+ ADDAVG_FACTOR]
     pxor           m6,          m6
     add            r3,          r3
     add            r4,          r4
@@ -420,9 +436,9 @@ ADDAVG_W4_H4 32
 %macro ADDAVG_W8_H4 1
 INIT_XMM sse4
 cglobal addAvg_8x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,          [pw_512]
-    mova        m5,          [pw_1023]
-    mova        m7,          [pw_1024]
+    mova        m4,          [pw_ %+ ADDAVG_ROUND]
+    mova        m5,          [pw_pixel_max]
+    mova        m7,          [pw_ %+ ADDAVG_FACTOR]
     pxor        m6,          m6
     add         r3,          r3
     add         r4,          r4
@@ -470,9 +486,9 @@ ADDAVG_W8_H4 64
 %macro ADDAVG_W12_H4 1
 INIT_XMM sse4
 cglobal addAvg_12x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova           m4,             [pw_512]
-    mova           m5,             [pw_1023]
-    mova           m7,             [pw_1024]
+    mova           m4,             [pw_ %+ ADDAVG_ROUND]
+    mova           m5,             [pw_pixel_max]
+    mova           m7,             [pw_ %+ ADDAVG_FACTOR]
     pxor           m6,             m6
     add            r3,             r3
     add            r4,             r4
@@ -532,9 +548,9 @@ ADDAVG_W12_H4 32
 %macro ADDAVG_W16_H4 1
 INIT_XMM sse4
 cglobal addAvg_16x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
-    mova        m7,              [pw_1024]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
+    mova        m7,              [pw_ %+ ADDAVG_FACTOR]
     pxor        m6,              m6
     add         r3,              r3
     add         r4,              r4
@@ -601,9 +617,9 @@ ADDAVG_W16_H4 24
 %macro ADDAVG_W24_H2 2
 INIT_XMM sse4
 cglobal addAvg_%1x%2, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
-    mova        m7,              [pw_1024]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
+    mova        m7,              [pw_ %+ ADDAVG_FACTOR]
     pxor        m6,              m6
     add         r3,              r3
     add         r4,              r4
@@ -683,9 +699,9 @@ ADDAVG_W24_H2 24, 64
 %macro ADDAVG_W32_H2 1
 INIT_XMM sse4
 cglobal addAvg_32x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
-    mova        m7,              [pw_1024]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
+    mova        m7,              [pw_ %+ ADDAVG_FACTOR]
     pxor        m6,              m6
     add         r3,              r3
     add         r4,              r4
@@ -787,9 +803,9 @@ ADDAVG_W32_H2 48
 %macro ADDAVG_W48_H2 1
 INIT_XMM sse4
 cglobal addAvg_48x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
-    mova        m7,              [pw_1024]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
+    mova        m7,              [pw_ %+ ADDAVG_FACTOR]
     pxor        m6,              m6
     add         r3,              r3
     add         r4,              r4
@@ -921,9 +937,9 @@ ADDAVG_W48_H2 64
 %macro ADDAVG_W64_H1 1
 INIT_XMM sse4
 cglobal addAvg_64x%1, 6,7,8, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
-    mova        m7,              [pw_1024]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
+    mova        m7,              [pw_ %+ ADDAVG_FACTOR]
     pxor        m6,              m6
     add         r3,              r3
     add         r4,              r4
@@ -1029,19 +1045,19 @@ cglobal addAvg_8x2, 6,6,2, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 
     paddw       m0,          m1
     pxor        m1,          m1
-    pmulhrsw    m0,          [pw_1024]
-    paddw       m0,          [pw_512]
+    pmulhrsw    m0,          [pw_ %+ ADDAVG_FACTOR]
+    paddw       m0,          [pw_ %+ ADDAVG_ROUND]
     pmaxsw      m0,          m1
-    pminsw      m0,          [pw_1023]
+    pminsw      m0,          [pw_pixel_max]
     vextracti128 xm1,        m0, 1
     movu        [r2],        xm0
     movu        [r2 + r5 * 2], xm1
     RET
 
 cglobal addAvg_8x6, 6,6,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,          [pw_512]
-    mova        m5,          [pw_1023]
-    mova        m3,          [pw_1024]
+    mova        m4,          [pw_ %+ ADDAVG_ROUND]
+    mova        m5,          [pw_pixel_max]
+    mova        m3,          [pw_ %+ ADDAVG_FACTOR]
     pxor        m1,          m1
     add         r3d,         r3d
     add         r4d,         r4d
@@ -1100,9 +1116,9 @@ cglobal addAvg_8x6, 6,6,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 
 %macro ADDAVG_W8_H4_AVX2 1
 cglobal addAvg_8x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,          [pw_512]
-    mova        m5,          [pw_1023]
-    mova        m3,          [pw_1024]
+    mova        m4,          [pw_ %+ ADDAVG_ROUND]
+    mova        m5,          [pw_pixel_max]
+    mova        m3,          [pw_ %+ ADDAVG_FACTOR]
     pxor        m1,          m1
     add         r3d,         r3d
     add         r4d,         r4d
@@ -1159,9 +1175,9 @@ ADDAVG_W8_H4_AVX2 32
 ADDAVG_W8_H4_AVX2 64
 
 cglobal addAvg_12x16, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova           m4,             [pw_512]
-    mova           m5,             [pw_1023]
-    mova           m3,             [pw_1024]
+    mova           m4,             [pw_ %+ ADDAVG_ROUND]
+    mova           m5,             [pw_pixel_max]
+    mova           m3,             [pw_ %+ ADDAVG_FACTOR]
     pxor           m1,             m1
     add            r3,             r3
     add            r4,             r4
@@ -1201,8 +1217,8 @@ cglobal addAvg_12x16, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 
 cglobal addAvg_12x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova           m4,             [pw_512]
-    mova           m5,             [pw_1023]
+    mova           m4,             [pw_ %+ ADDAVG_ROUND]
+    mova           m5,             [pw_pixel_max]
     paddw          m3,             m4,  m4
     pxor           m1,             m1
     add            r3,             r3
@@ -1244,9 +1260,9 @@ cglobal addAvg_12x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 
 %macro ADDAVG_W16_H4_AVX2 1
 cglobal addAvg_16x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
-    mova        m3,              [pw_1024]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
+    mova        m3,              [pw_ %+ ADDAVG_FACTOR]
     pxor        m2,              m2
     add         r3,              r3
     add         r4,              r4
@@ -1291,9 +1307,9 @@ ADDAVG_W16_H4_AVX2 32
 ADDAVG_W16_H4_AVX2 64
 
 cglobal addAvg_24x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
-    mova        m3,              [pw_1024]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
+    mova        m3,              [pw_ %+ ADDAVG_FACTOR]
     pxor        m1,              m1
     add         r3,              r3
     add         r4,              r4
@@ -1347,8 +1363,8 @@ cglobal addAvg_24x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 
 cglobal addAvg_24x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
     paddw       m3,              m4,  m4
     pxor        m1,              m1
     add         r3,              r3
@@ -1404,9 +1420,9 @@ cglobal addAvg_24x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 
 %macro ADDAVG_W32_H2_AVX2 1
 cglobal addAvg_32x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
-    mova        m3,              [pw_1024]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
+    mova        m3,              [pw_ %+ ADDAVG_FACTOR]
     pxor        m2,              m2
     add         r3,              r3
     add         r4,              r4
@@ -1468,9 +1484,9 @@ ADDAVG_W32_H2_AVX2 48
 ADDAVG_W32_H2_AVX2 64
 
 cglobal addAvg_48x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
-    mova        m3,              [pw_1024]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
+    mova        m3,              [pw_ %+ ADDAVG_FACTOR]
     pxor        m2,              m2
     add         r3,              r3
     add         r4,              r4
@@ -1543,9 +1559,9 @@ cglobal addAvg_48x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
 
 %macro ADDAVG_W64_H1_AVX2 1
 cglobal addAvg_64x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
-    mova        m4,              [pw_512]
-    mova        m5,              [pw_1023]
-    mova        m3,              [pw_1024]
+    mova        m4,              [pw_ %+ ADDAVG_ROUND]
+    mova        m5,              [pw_pixel_max]
+    mova        m3,              [pw_ %+ ADDAVG_FACTOR]
     pxor        m2,              m2
     add         r3d,             r3d
     add         r4d,             r4d

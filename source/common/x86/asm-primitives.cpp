@@ -1043,7 +1043,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         // p.pu[LUMA_4x4].satd = p.cu[BLOCK_4x4].sa8d = PFX(pixel_satd_4x4_ssse3); this one is broken
         ALL_LUMA_PU(satd, pixel_satd, ssse3);
+#if X265_DEPTH <= 10
         ASSIGN_SA8D(ssse3);
+#endif
         INTRA_ANG_SSSE3(ssse3);
 
         p.dst4x4 = PFX(dst4_ssse3);
@@ -1126,14 +1128,18 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         // p.pu[LUMA_4x4].satd = p.cu[BLOCK_4x4].sa8d = PFX(pixel_satd_4x4_sse4); fails tests
         ALL_LUMA_PU(satd, pixel_satd, sse4);
+#if X265_DEPTH <= 10
         ASSIGN_SA8D(sse4);
+#endif
 
         p.cu[BLOCK_4x4].intra_filter = PFX(intra_filter_4x4_sse4);
         p.cu[BLOCK_8x8].intra_filter = PFX(intra_filter_8x8_sse4);
         p.cu[BLOCK_16x16].intra_filter = PFX(intra_filter_16x16_sse4);
         p.cu[BLOCK_32x32].intra_filter = PFX(intra_filter_32x32_sse4);
 
+#if X265_DEPTH <= 10
         ALL_LUMA_TU_S(intra_pred[PLANAR_IDX], intra_pred_planar, sse4);
+#endif
         ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse4);
         INTRA_ANG_SSE4_COMMON(sse4);
         INTRA_ANG_SSE4_HIGH(sse4);
@@ -1147,7 +1153,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         // TODO: check POPCNT flag!
         ALL_LUMA_TU_S(copy_cnt, copy_cnt_, sse4);
+#if X265_DEPTH <= 10
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
+#endif
         ALL_LUMA_CU(psy_cost_ss, psyCost_ss, sse4);
 
         p.chroma[X265_CSP_I420].pu[CHROMA_420_2x4].p2s = PFX(filterPixelToShort_2x4_sse4);
@@ -1184,7 +1192,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].satd = PFX(pixel_satd_24x32_avx);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x16].satd = PFX(pixel_satd_4x16_avx);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x8].satd = PFX(pixel_satd_4x8_avx);
+#if X265_DEPTH <= 10
         ASSIGN_SA8D(avx);
+#endif
         p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sa8d = PFX(pixel_sa8d_8x8_avx);
         p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sa8d = PFX(pixel_sa8d_16x16_avx);
         p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sa8d = PFX(pixel_sa8d_32x32_avx);
@@ -1292,7 +1302,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     {
         //p.pu[LUMA_4x4].satd = p.cu[BLOCK_4x4].sa8d = PFX(pixel_satd_4x4_xop); this one is broken
         ALL_LUMA_PU(satd, pixel_satd, xop);
+#if X265_DEPTH <= 10
         ASSIGN_SA8D(xop);
+#endif
         LUMA_VAR(xop);
         p.frameInitLowres = PFX(frame_init_lowres_core_xop);
     }

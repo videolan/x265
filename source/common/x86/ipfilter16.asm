@@ -26,6 +26,25 @@
 %include "x86inc.asm"
 %include "x86util.asm"
 
+
+%define INTERP_OFFSET_PP        pd_32
+%define INTERP_SHIFT_PP         6
+
+%if BIT_DEPTH == 10
+    %define INTERP_SHIFT_PS         2
+    %define INTERP_OFFSET_PS        pd_n32768
+    %define INTERP_SHIFT_SP         10
+    %define INTERP_OFFSET_SP        pd_524800
+%elif BIT_DEPTH == 12
+    %define INTERP_SHIFT_PS         4
+    %define INTERP_OFFSET_PS        pd_n131072
+    %define INTERP_SHIFT_SP         8
+    %define INTERP_OFFSET_SP        pd_524416
+%else
+    %error Unsupport bit depth!
+%endif
+
+
 SECTION_RODATA 32
 
 tab_c_32:         times 8 dd 32
@@ -145,21 +164,9 @@ const interp8_hpp_shuf,     db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
 const pb_shuf,  db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
                 db 4, 5, 6, 7, 8, 9, 10, 11, 6, 7, 8, 9, 10, 11, 12, 13
 
-%if BIT_DEPTH == 10
-    %define INTERP_OFFSET_PS        pd_n32768
-    %define INTERP_SHIFT_PS         2
-    %define INTERP_OFFSET_SP        pd_524800
-    %define INTERP_SHIFT_SP         10
-%elif BIT_DEPTH == 12
-    %define INTERP_OFFSET_PS        pd_n131072
-    %define INTERP_SHIFT_PS         4
-    %define INTERP_OFFSET_SP        pd_524416
-    %define INTERP_SHIFT_SP         8
-%else
-    %error Unsupport bit depth!
-%endif
 
 SECTION .text
+cextern pd_8
 cextern pd_32
 cextern pw_pixel_max
 cextern pd_524416
@@ -503,7 +510,7 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
 %endif
 
 %ifidn %1,pp
-    mova      m7, [pd_32]
+    mova      m7, [INTERP_OFFSET_PP]
 %define SHIFT 6
 %elifidn %1,ps
     mova      m7, [INTERP_OFFSET_PS]
@@ -1176,7 +1183,6 @@ RET
 %macro FILTER_HOR_LUMA_W4 3
 INIT_XMM sse4
 cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
-
     mov         r4d, r4m
     sub         r0, 6
     shl         r4d, 4
@@ -1229,7 +1235,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     packusdw    m4, m4
     CLIPW       m4, m6, m7
 %else
-    psrad       m4, 2
+    psrad       m4, INTERP_SHIFT_PS
     packssdw    m4, m4
 %endif
 
@@ -1287,7 +1293,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     mov         r4d, %2
 %ifidn %3, ps
     cmp         r5m, byte 0
-    je          .loopH
+    je         .loopH
     lea         r6, [r1 + 2 * r1]
     sub         r0, r6
     add         r4d, 7
@@ -1329,8 +1335,8 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     packusdw    m4, m5
     CLIPW       m4, m7, [pw_pixel_max]
 %else
-    psrad       m4, 2
-    psrad       m5, 2
+    psrad       m4, INTERP_SHIFT_PS
+    psrad       m5, INTERP_SHIFT_PS
     packssdw    m4, m5
 %endif
 
@@ -1340,7 +1346,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     add         r2, r3
 
     dec         r4d
-    jnz         .loopH
+    jnz        .loopH
     RET
 %endmacro
 
@@ -1380,7 +1386,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     mova        m0, [tab_LumaCoeff + r4]
 %endif
 %ifidn %3, pp
-    mova        m1, [pd_32]
+    mova        m1, [INTERP_OFFSET_PP]
 %else
     mova        m1, [INTERP_OFFSET_PS]
 %endif
@@ -1425,14 +1431,14 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m5, m6
     paddd       m5, m1
 %ifidn %3, pp
-    psrad       m4, 6
-    psrad       m5, 6
+    psrad       m4, INTERP_SHIFT_PP
+    psrad       m5, INTERP_SHIFT_PP
     packusdw    m4, m5
     pxor        m5, m5
     CLIPW       m4, m5, [pw_pixel_max]
 %else
-    psrad       m4, 2
-    psrad       m5, 2
+    psrad       m4, INTERP_SHIFT_PS
+    psrad       m5, INTERP_SHIFT_PS
     packssdw    m4, m5
 %endif
 
@@ -1453,12 +1459,12 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m4, m5
     paddd       m4, m1
 %ifidn %3, pp
-    psrad       m4, 6
+    psrad       m4, INTERP_SHIFT_PP
     packusdw    m4, m4
     pxor        m5, m5
     CLIPW       m4, m5, [pw_pixel_max]
 %else
-    psrad       m4, 2
+    psrad       m4, INTERP_SHIFT_PS
     packssdw    m4, m4
 %endif
 
@@ -1550,14 +1556,14 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m5, m6
     paddd       m5, m1
 %ifidn %3, pp
-    psrad       m4, 6
-    psrad       m5, 6
+    psrad       m4, INTERP_SHIFT_PP
+    psrad       m5, INTERP_SHIFT_PP
     packusdw    m4, m5
     pxor        m5, m5
     CLIPW       m4, m5, [pw_pixel_max]
 %else
-    psrad       m4, 2
-    psrad       m5, 2
+    psrad       m4, INTERP_SHIFT_PS
+    psrad       m5, INTERP_SHIFT_PS
     packssdw    m4, m5
 %endif
     movu        [r2 + x], m4
@@ -1591,14 +1597,14 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m5, m6
     paddd       m5, m1
 %ifidn %3, pp
-    psrad       m4, 6
-    psrad       m5, 6
+    psrad       m4, INTERP_SHIFT_PP
+    psrad       m5, INTERP_SHIFT_PP
     packusdw    m4, m5
     pxor        m5, m5
     CLIPW       m4, m5, [pw_pixel_max]
 %else
-    psrad       m4, 2
-    psrad       m5, 2
+    psrad       m4, INTERP_SHIFT_PS
+    psrad       m5, INTERP_SHIFT_PS
     packssdw    m4, m5
 %endif
     movu        [r2 + 16 + x], m4
@@ -1743,14 +1749,14 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m5, m6
     paddd       m5, m1
 %ifidn %3, pp
-    psrad       m4, 6
-    psrad       m5, 6
+    psrad       m4, INTERP_SHIFT_PP
+    psrad       m5, INTERP_SHIFT_PP
     packusdw    m4, m5
     pxor        m5, m5
     CLIPW       m4, m5, [pw_pixel_max]
 %else
-    psrad       m4, 2
-    psrad       m5, 2
+    psrad       m4, INTERP_SHIFT_PS
+    psrad       m5, INTERP_SHIFT_PS
     packssdw    m4, m5
 %endif
     movu        [r2], m4
@@ -1784,14 +1790,14 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m5, m6
     paddd       m5, m1
 %ifidn %3, pp
-    psrad       m4, 6
-    psrad       m5, 6
+    psrad       m4, INTERP_SHIFT_PP
+    psrad       m5, INTERP_SHIFT_PP
     packusdw    m4, m5
     pxor        m5, m5
     CLIPW       m4, m5, [pw_pixel_max]
 %else
-    psrad       m4, 2
-    psrad       m5, 2
+    psrad       m4, INTERP_SHIFT_PS
+    psrad       m5, INTERP_SHIFT_PS
     packssdw    m4, m5
 %endif
     movu        [r2 + 16], m4
@@ -1825,14 +1831,14 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     phaddd      m5, m6
     paddd       m5, m1
 %ifidn %3, pp
-    psrad       m4, 6
-    psrad       m5, 6
+    psrad       m4, INTERP_SHIFT_PP
+    psrad       m5, INTERP_SHIFT_PP
     packusdw    m4, m5
     pxor        m5, m5
     CLIPW       m4, m5, [pw_pixel_max]
 %else
-    psrad       m4, 2
-    psrad       m5, 2
+    psrad       m4, INTERP_SHIFT_PS
+    psrad       m5, INTERP_SHIFT_PS
     packssdw    m4, m5
 %endif
     movu        [r2 + 32], m4
@@ -1865,11 +1871,11 @@ FILTER_HOR_LUMA_W24 24, 32, ps
     phaddd      m3,         m4
     paddd       m3,         m1
 %ifidn %1, pp
-    psrad       m3,         6
+    psrad       m3,         INTERP_SHIFT_PP
     packusdw    m3,         m3
     CLIPW       m3,         m7,    m6
 %else
-    psrad       m3,         2
+    psrad       m3,         INTERP_SHIFT_PS
     packssdw    m3,         m3
 %endif
     movd        [r2],       m3
@@ -1895,13 +1901,13 @@ FILTER_HOR_LUMA_W24 24, 32, ps
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m7,    m6
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2],       m3
@@ -1950,7 +1956,7 @@ cglobal interp_8tap_horiz_pp_4x%1, 4,7,7
     phaddd           m4, m4
     vpermq           m4, m4, q3120
     paddd            m4, m6
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -1969,7 +1975,7 @@ cglobal interp_8tap_horiz_pp_4x%1, 4,7,7
     phaddd           m4, m4
     vpermq           m4, m4, q3120
     paddd            m4, m6
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2036,7 +2042,7 @@ cglobal interp_8tap_horiz_pp_8x%1, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2064,7 +2070,7 @@ cglobal interp_8tap_horiz_pp_8x%1, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2132,7 +2138,7 @@ cglobal interp_8tap_horiz_pp_16x%1, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2160,7 +2166,7 @@ cglobal interp_8tap_horiz_pp_16x%1, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2232,7 +2238,7 @@ cglobal interp_8tap_horiz_pp_%1x%2, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2260,7 +2266,7 @@ cglobal interp_8tap_horiz_pp_%1x%2, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2335,7 +2341,7 @@ cglobal interp_8tap_horiz_pp_12x16, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2363,7 +2369,7 @@ cglobal interp_8tap_horiz_pp_12x16, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2425,7 +2431,7 @@ cglobal interp_8tap_horiz_pp_24x32, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2453,7 +2459,7 @@ cglobal interp_8tap_horiz_pp_24x32, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2481,7 +2487,7 @@ cglobal interp_8tap_horiz_pp_24x32, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2545,7 +2551,7 @@ cglobal interp_8tap_horiz_pp_48x64, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2573,7 +2579,7 @@ cglobal interp_8tap_horiz_pp_48x64, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2601,7 +2607,7 @@ cglobal interp_8tap_horiz_pp_48x64, 4,6,8
     phaddd           m4, m5
     vpermq           m4, m4, q3120
     paddd            m4, m7
-    psrad            m4, 6
+    psrad            m4, INTERP_SHIFT_PP
 
     packusdw         m4, m4
     vpermq           m4, m4, q2020
@@ -2644,32 +2650,32 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, %4, %5
     mova        m1,       [INTERP_OFFSET_PS]
     cmp         r5m, byte 0
     je          .skip
-    sub         r0, r1
-    movu        m3,         [r0]
-    pshufb      m3,         m3, m2
-    pmaddwd     m3,         m0
+    sub         r0,       r1
+    movu        m3,       [r0]
+    pshufb      m3,       m3, m2
+    pmaddwd     m3,       m0
 
-    %if %1 == 4
-        movu        m4,         [r0 + 4]
-        pshufb      m4,         m4, m2
-        pmaddwd     m4,         m0
-        phaddd      m3,         m4
-    %else
-        phaddd      m3,         m3
-    %endif
+  %if %1 == 4
+    movu        m4,       [r0 + 4]
+    pshufb      m4,       m4, m2
+    pmaddwd     m4,       m0
+    phaddd      m3,       m4
+  %else
+    phaddd      m3,       m3
+  %endif
 
-    paddd       m3,         m1
-    psrad       m3,         INTERP_SHIFT_PS
-    packssdw    m3,         m3
+    paddd       m3,       m1
+    psrad       m3,       INTERP_SHIFT_PS
+    packssdw    m3,       m3
 
-    %if %1 == 2
-        movd        [r2],       m3
-    %else
-        movh        [r2],       m3
-    %endif
+  %if %1 == 2
+    movd        [r2],     m3
+  %else
+    movh        [r2],     m3
+  %endif
 
-    add         r0, r1
-    add         r2, r3
+    add         r0,       r1
+    add         r2,       r3
     FILTER_W%1_2 %3
     lea         r0,       [r0 + 2 * r1]
     lea         r2,       [r2 + 2 * r3]
@@ -2689,7 +2695,6 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, %4, %5
     lea         r2,       [r2 + 2 * r3]
     FILTER_W%1_2 %3
 %endrep
-
     RET
 %endmacro
 
@@ -2729,13 +2734,13 @@ FILTER_CHROMA_H 4, 32, ps, 7, 6, 6
     phaddd      m4,         m4
     paddd       m4,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m4,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m4,         INTERP_SHIFT_PP
     packusdw    m3,         m4
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m4,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m4,         INTERP_SHIFT_PS
     packssdw    m3,         m4
 %endif
     movh        [r2],       m3
@@ -2769,13 +2774,13 @@ cglobal chroma_filter_ps_6x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2],       m3
@@ -2809,13 +2814,13 @@ cglobal chroma_filter_ps_8x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2],       m3
@@ -2831,11 +2836,11 @@ cglobal chroma_filter_ps_8x1_internal
     paddd       m3,         m1
 
 %ifidn %1, pp
-    psrad       m3,         6
+    psrad       m3,         INTERP_SHIFT_PP
     packusdw    m3,         m3
     CLIPW       m3,         m6, m7
 %else
-    psrad       m3,         2
+    psrad       m3,         INTERP_SHIFT_PS
     packssdw    m3,         m3
 %endif
     movh        [r2 + 16],  m3
@@ -2868,13 +2873,13 @@ cglobal chroma_filter_ps_12x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2],       m3
@@ -2898,13 +2903,13 @@ cglobal chroma_filter_ps_12x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2 + 16],  m3
@@ -2938,13 +2943,13 @@ cglobal chroma_filter_ps_16x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2],       m3
@@ -2968,13 +2973,13 @@ cglobal chroma_filter_ps_16x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2 + 16],  m3
@@ -2998,13 +3003,13 @@ cglobal chroma_filter_ps_16x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2 + 32],  m3
@@ -3038,13 +3043,13 @@ cglobal chroma_filter_ps_24x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2],       m3
@@ -3068,13 +3073,13 @@ cglobal chroma_filter_ps_24x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2 + 16],  m3
@@ -3098,13 +3103,13 @@ cglobal chroma_filter_ps_24x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2 + 32],  m3
@@ -3128,13 +3133,13 @@ cglobal chroma_filter_ps_24x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2 + 48],  m3
@@ -3168,13 +3173,13 @@ cglobal chroma_filter_ps_32x1_internal
     phaddd      m5,         m4
     paddd       m5,         m1
 %ifidn %1, pp
-    psrad       m3,         6
-    psrad       m5,         6
+    psrad       m3,         INTERP_SHIFT_PP
+    psrad       m5,         INTERP_SHIFT_PP
     packusdw    m3,         m5
     CLIPW       m3,         m6,    m7
 %else
-    psrad       m3,         2
-    psrad       m5,         2
+    psrad       m3,         INTERP_SHIFT_PS
+    psrad       m5,         INTERP_SHIFT_PS
     packssdw    m3,         m5
 %endif
     movh        [r2 + %2],       m3
@@ -3408,7 +3413,7 @@ cglobal interp_4tap_horiz_pp_6x%1, 5,6,8
     pmaddwd         m4, m0
     phaddd          m3, m4
     paddd           m3, m2
-    psrad           m3, 6                         ; m3 = DWORD[7 6 3 2 5 4 1 0]
+    psrad           m3, INTERP_SHIFT_PP           ; m3 = DWORD[7 6 3 2 5 4 1 0]
 
     packusdw        m3, m3
     vpermq          m3, m3, q2020
@@ -3426,7 +3431,7 @@ cglobal interp_4tap_horiz_pp_6x%1, 5,6,8
     pmaddwd         m4, m0
     phaddd          m3, m4
     paddd           m3, m2
-    psrad           m3, 6                         ; m3 = DWORD[7 6 3 2 5 4 1 0]
+    psrad           m3, INTERP_SHIFT_PP           ; m3 = DWORD[7 6 3 2 5 4 1 0]
 
     packusdw        m3, m3
     vpermq          m3, m3, q2020
@@ -3474,7 +3479,7 @@ cglobal interp_4tap_horiz_pp_8x2, 5,6,8
     pmaddwd         m4, m0
     phaddd          m3, m4
     paddd           m3, m2
-    psrad           m3, 6                       ; m3 = DWORD[7 6 3 2 5 4 1 0]
+    psrad           m3, INTERP_SHIFT_PP          ; m3 = DWORD[7 6 3 2 5 4 1 0]
 
     packusdw        m3, m3
     vpermq          m3, m3,q2020
@@ -3491,7 +3496,7 @@ cglobal interp_4tap_horiz_pp_8x2, 5,6,8
     pmaddwd         m4, m0
     phaddd          m3, m4
     paddd           m3, m2
-    psrad           m3, 6                       ; m3 = DWORD[7 6 3 2 5 4 1 0]
+    psrad           m3, INTERP_SHIFT_PP           ; m3 = DWORD[7 6 3 2 5 4 1 0]
 
     packusdw        m3, m3
     vpermq          m3, m3,q2020
@@ -4089,7 +4094,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
     %ifnidn %3, ps
         mova      m7, [pw_pixel_max]
         %ifidn %3, pp
-            mova      m6, [tab_c_32]
+            mova      m6, [INTERP_OFFSET_PP]
         %else
             mova      m6, [INTERP_OFFSET_SP]
         %endif
@@ -4129,10 +4134,10 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 7, %4 ,0-gprsize
     paddd     m2, m6
     paddd     m3, m6
     %ifidn %3, pp
-        psrad     m0, 6
-        psrad     m1, 6
-        psrad     m2, 6
-        psrad     m3, 6
+        psrad     m0, INTERP_SHIFT_PP
+        psrad     m1, INTERP_SHIFT_PP
+        psrad     m2, INTERP_SHIFT_PP
+        psrad     m3, INTERP_SHIFT_PP
     %else
         psrad     m0, INTERP_SHIFT_SP
         psrad     m1, INTERP_SHIFT_SP
@@ -4344,9 +4349,9 @@ cglobal interp_4tap_vert_%2_2x%1, 5, 6, %3
         pxor      m7, m7
         mova      m6, [pw_pixel_max]
         %ifidn %2, pp
-            mova      m5, [tab_c_32]
+            mova      m5, [INTERP_OFFSET_PP]
         %else
-            mova      m5, [tab_c_524800]
+            mova      m5, [INTERP_OFFSET_SP]
         %endif
     %else
         mova      m5, [INTERP_OFFSET_PS]
@@ -4362,18 +4367,18 @@ cglobal interp_4tap_vert_%2_2x%1, 5, 6, %3
 %elifidn %2, ps
     paddd     m0, m5
     paddd     m2, m5
-    psrad     m0, 2
-    psrad     m2, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
     packssdw  m0, m2
 %else
     paddd     m0, m5
     paddd     m2, m5
     %ifidn %2, pp
-        psrad     m0, 6
-        psrad     m2, 6
+        psrad     m0, INTERP_SHIFT_PP
+        psrad     m2, INTERP_SHIFT_PP
     %else
-        psrad     m0, 10
-        psrad     m2, 10
+        psrad     m0, INTERP_SHIFT_SP
+        psrad     m2, INTERP_SHIFT_SP
     %endif
     packusdw  m0, m2
     CLIPW     m0, m7,    m6
@@ -4389,7 +4394,6 @@ cglobal interp_4tap_vert_%2_2x%1, 5, 6, %3
 
     dec       r4d
     jnz       .loopH
-
     RET
 %endmacro
 
@@ -4417,7 +4421,6 @@ FILTER_VER_CHROMA_W2 16, sp, 8
 %macro FILTER_VER_CHROMA_W4 3
 INIT_XMM sse4
 cglobal interp_4tap_vert_%2_4x%1, 5, 6, %3
-
     add        r1d, r1d
     add        r3d, r3d
     sub        r0, r1
@@ -4439,9 +4442,9 @@ cglobal interp_4tap_vert_%2_4x%1, 5, 6, %3
         pxor      m6, m6
         mova      m5, [pw_pixel_max]
         %ifidn %2, pp
-            mova      m4, [tab_c_32]
+            mova      m4, [INTERP_OFFSET_PP]
         %else
-            mova      m4, [tab_c_524800]
+            mova      m4, [INTERP_OFFSET_SP]
         %endif
     %else
         mova      m4, [INTERP_OFFSET_PS]
@@ -4479,18 +4482,18 @@ cglobal interp_4tap_vert_%2_4x%1, 5, 6, %3
 %elifidn %2, ps
     paddd     m0, m4
     paddd     m1, m4
-    psrad     m0, 2
-    psrad     m1, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
     packssdw  m0, m1
 %else
     paddd     m0, m4
     paddd     m1, m4
     %ifidn %2, pp
-        psrad     m0, 6
-        psrad     m1, 6
+        psrad     m0, INTERP_SHIFT_PP
+        psrad     m1, INTERP_SHIFT_PP
     %else
-        psrad     m0, 10
-        psrad     m1, 10
+        psrad     m0, INTERP_SHIFT_SP
+        psrad     m1, INTERP_SHIFT_SP
     %endif
     packusdw  m0, m1
     CLIPW     m0, m6,    m5
@@ -4504,7 +4507,6 @@ cglobal interp_4tap_vert_%2_4x%1, 5, 6, %3
     dec        r4d
     jnz        .loop
 %endif
-
     RET
 %endmacro
 
@@ -4524,7 +4526,6 @@ FILTER_VER_CHROMA_W4 4, sp, 7
 %macro FILTER_VER_CHROMA_W6 3
 INIT_XMM sse4
 cglobal interp_4tap_vert_%2_6x%1, 5, 7, %3
-
     add       r1d, r1d
     add       r3d, r3d
     sub       r0, r1
@@ -4543,9 +4544,9 @@ cglobal interp_4tap_vert_%2_6x%1, 5, 7, %3
     %ifnidn %2, ps
         mova      m7, [pw_pixel_max]
         %ifidn %2, pp
-            mova      m6, [tab_c_32]
+            mova      m6, [INTERP_OFFSET_PP]
         %else
-            mova      m6, [tab_c_524800]
+            mova      m6, [INTERP_OFFSET_SP]
         %endif
     %else
         mova      m6, [INTERP_OFFSET_PS]
@@ -4568,10 +4569,10 @@ cglobal interp_4tap_vert_%2_6x%1, 5, 7, %3
     paddd     m1, m6
     paddd     m2, m6
     paddd     m3, m6
-    psrad     m0, 2
-    psrad     m1, 2
-    psrad     m2, 2
-    psrad     m3, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
+    psrad     m3, INTERP_SHIFT_PS
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -4581,15 +4582,15 @@ cglobal interp_4tap_vert_%2_6x%1, 5, 7, %3
     paddd     m2, m6
     paddd     m3, m6
     %ifidn %2, pp
-        psrad     m0, 6
-        psrad     m1, 6
-        psrad     m2, 6
-        psrad     m3, 6
+        psrad     m0, INTERP_SHIFT_PP
+        psrad     m1, INTERP_SHIFT_PP
+        psrad     m2, INTERP_SHIFT_PP
+        psrad     m3, INTERP_SHIFT_PP
     %else
-        psrad     m0, 10
-        psrad     m1, 10
-        psrad     m2, 10
-        psrad     m3, 10
+        psrad     m0, INTERP_SHIFT_SP
+        psrad     m1, INTERP_SHIFT_SP
+        psrad     m2, INTERP_SHIFT_SP
+        psrad     m3, INTERP_SHIFT_SP
     %endif
     packssdw  m0, m1
     packssdw  m2, m3
@@ -4616,18 +4617,18 @@ cglobal interp_4tap_vert_%2_6x%1, 5, 7, %3
 %elifidn %2, ps
     paddd     m0, m6
     paddd     m2, m6
-    psrad     m0, 2
-    psrad     m2, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
     packssdw  m0, m2
 %else
     paddd     m0, m6
     paddd     m2, m6
     %ifidn %2, pp
-        psrad     m0, 6
-        psrad     m2, 6
+        psrad     m0, INTERP_SHIFT_PP
+        psrad     m2, INTERP_SHIFT_PP
     %else
-        psrad     m0, 10
-        psrad     m2, 10
+        psrad     m0, INTERP_SHIFT_SP
+        psrad     m2, INTERP_SHIFT_SP
     %endif
     packusdw  m0, m2
     CLIPW     m0, m5,    m7
@@ -4644,7 +4645,6 @@ cglobal interp_4tap_vert_%2_6x%1, 5, 7, %3
 
     dec       r4d
     jnz       .loopH
-
     RET
 %endmacro
 
@@ -4712,7 +4712,7 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
     mov       r4d, %2/2
 
 %ifidn %3, pp
-    mova      m7, [tab_c_32]
+    mova      m7, [INTERP_OFFSET_PP]
 %elifidn %3, sp
     mova      m7, [INTERP_OFFSET_SP]
 %elifidn %3, ps
@@ -4748,10 +4748,10 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
     paddd     m2, m7
     paddd     m3, m7
     %ifidn %3, pp
-        psrad     m0, 6
-        psrad     m1, 6
-        psrad     m2, 6
-        psrad     m3, 6
+        psrad     m0, INTERP_SHIFT_PP
+        psrad     m1, INTERP_SHIFT_PP
+        psrad     m2, INTERP_SHIFT_PP
+        psrad     m3, INTERP_SHIFT_PP
     %else
         psrad     m0, INTERP_SHIFT_SP
         psrad     m1, INTERP_SHIFT_SP
@@ -4772,7 +4772,6 @@ cglobal interp_4tap_vert_%3_%1x%2, 5, 6, %4
 
     dec       r4d
     jnz       .loopH
-
     RET
 %endmacro
 
@@ -4868,9 +4867,9 @@ cglobal interp_4tap_vert_%2_6x%1, 4, 7, 10
     mov             r6d, %1/4
 
 %ifidn %2,pp
-    vbroadcasti128  m8, [pd_32]
+    vbroadcasti128  m8, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova            m8, [pd_524800]
+    mova            m8, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m8, [INTERP_OFFSET_PS]
 %endif
@@ -4934,20 +4933,20 @@ cglobal interp_4tap_vert_%2_6x%1, 4, 7, 10
     paddd           m2, m8
     paddd           m3, m8
 %ifidn %2,pp
-    psrad           m0, 6
-    psrad           m1, 6
-    psrad           m2, 6
-    psrad           m3, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
+    psrad           m2, INTERP_SHIFT_PP
+    psrad           m3, INTERP_SHIFT_PP
 %elifidn %2, sp
-    psrad           m0, 10
-    psrad           m1, 10
-    psrad           m2, 10
-    psrad           m3, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
+    psrad           m3, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m1, 2
-    psrad           m2, 2
-    psrad           m3, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
+    psrad           m3, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -5012,9 +5011,9 @@ cglobal interp_4tap_vert_%2_16x%1, 5, 6, %3
     mov       r4d, %1/2
 
 %ifidn %2, pp
-    mova      m7, [tab_c_32]
+    mova      m7, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova      m7, [pd_524800]
+    mova      m7, [INTERP_OFFSET_SP]
 %elifidn %2, ps
     mova      m7, [INTERP_OFFSET_PS]
 %endif
@@ -5034,10 +5033,10 @@ cglobal interp_4tap_vert_%2_16x%1, 5, 6, %3
     paddd     m1, m7
     paddd     m2, m7
     paddd     m3, m7
-    psrad     m0, 2
-    psrad     m1, 2
-    psrad     m2, 2
-    psrad     m3, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
+    psrad     m3, INTERP_SHIFT_PS
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5047,15 +5046,15 @@ cglobal interp_4tap_vert_%2_16x%1, 5, 6, %3
     paddd     m2, m7
     paddd     m3, m7
  %ifidn %2, pp
-    psrad     m0, 6
-    psrad     m1, 6
-    psrad     m2, 6
-    psrad     m3, 6
+    psrad     m0, INTERP_SHIFT_PP
+    psrad     m1, INTERP_SHIFT_PP
+    psrad     m2, INTERP_SHIFT_PP
+    psrad     m3, INTERP_SHIFT_PP
 %else
-    psrad     m0, 10
-    psrad     m1, 10
-    psrad     m2, 10
-    psrad     m3, 10
+    psrad     m0, INTERP_SHIFT_SP
+    psrad     m1, INTERP_SHIFT_SP
+    psrad     m2, INTERP_SHIFT_SP
+    psrad     m3, INTERP_SHIFT_SP
 %endif
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5184,9 +5183,9 @@ cglobal interp_4tap_vert_%2_32x%1, 5, 7, %3
     mov       r4d, %1/2
 
 %ifidn %2, pp
-    mova      m7, [tab_c_32]
+    mova      m7, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova      m7, [pd_524800]
+    mova      m7, [INTERP_OFFSET_SP]
 %elifidn %2, ps
     mova      m7, [INTERP_OFFSET_PS]
 %endif
@@ -5213,18 +5212,18 @@ cglobal interp_4tap_vert_%2_32x%1, 5, 7, %3
     paddd     m1, m7
     paddd     m2, m7
     paddd     m3, m7
-    psrad     m0, 2
-    psrad     m1, 2
-    psrad     m2, 2
-    psrad     m3, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
+    psrad     m3, INTERP_SHIFT_PS
     paddd     m8, m7
     paddd     m9, m7
     paddd     m10, m7
     paddd     m11, m7
-    psrad     m8, 2
-    psrad     m9, 2
-    psrad     m10, 2
-    psrad     m11, 2
+    psrad     m8, INTERP_SHIFT_PS
+    psrad     m9, INTERP_SHIFT_PS
+    psrad     m10, INTERP_SHIFT_PS
+    psrad     m11, INTERP_SHIFT_PS
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5240,23 +5239,23 @@ cglobal interp_4tap_vert_%2_32x%1, 5, 7, %3
     paddd     m10, m7
     paddd     m11, m7
  %ifidn %2, pp
-    psrad     m0, 6
-    psrad     m1, 6
-    psrad     m2, 6
-    psrad     m3, 6
-    psrad     m8, 6
-    psrad     m9, 6
-    psrad     m10, 6
-    psrad     m11, 6
+    psrad     m0, INTERP_SHIFT_PP
+    psrad     m1, INTERP_SHIFT_PP
+    psrad     m2, INTERP_SHIFT_PP
+    psrad     m3, INTERP_SHIFT_PP
+    psrad     m8, INTERP_SHIFT_PP
+    psrad     m9, INTERP_SHIFT_PP
+    psrad     m10, INTERP_SHIFT_PP
+    psrad     m11, INTERP_SHIFT_PP
 %else
-    psrad     m0, 10
-    psrad     m1, 10
-    psrad     m2, 10
-    psrad     m3, 10
-    psrad     m8, 10
-    psrad     m9, 10
-    psrad     m10, 10
-    psrad     m11, 10
+    psrad     m0, INTERP_SHIFT_SP
+    psrad     m1, INTERP_SHIFT_SP
+    psrad     m2, INTERP_SHIFT_SP
+    psrad     m3, INTERP_SHIFT_SP
+    psrad     m8, INTERP_SHIFT_SP
+    psrad     m9, INTERP_SHIFT_SP
+    psrad     m10, INTERP_SHIFT_SP
+    psrad     m11, INTERP_SHIFT_SP
 %endif
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5326,9 +5325,9 @@ cglobal interp_4tap_vert_%2_64x%1, 5, 7, %3
     mov       r4d, %1/2
 
 %ifidn %2, pp
-    mova      m7, [tab_c_32]
+    mova      m7, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova      m7, [pd_524800]
+    mova      m7, [INTERP_OFFSET_SP]
 %elifidn %2, ps
     mova      m7, [INTERP_OFFSET_PS]
 %endif
@@ -5380,10 +5379,10 @@ cglobal interp_4tap_vert_%2_64x%1, 5, 7, %3
     paddd     m1, m7
     paddd     m2, m7
     paddd     m3, m7
-    psrad     m0, 2
-    psrad     m1, 2
-    psrad     m2, 2
-    psrad     m3, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
+    psrad     m3, INTERP_SHIFT_PS
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5393,15 +5392,15 @@ cglobal interp_4tap_vert_%2_64x%1, 5, 7, %3
     paddd     m2, m7
     paddd     m3, m7
 %ifidn %2, pp
-    psrad     m0, 6
-    psrad     m1, 6
-    psrad     m2, 6
-    psrad     m3, 6
+    psrad     m0, INTERP_SHIFT_PP
+    psrad     m1, INTERP_SHIFT_PP
+    psrad     m2, INTERP_SHIFT_PP
+    psrad     m3, INTERP_SHIFT_PP
 %else
-    psrad     m0, 10
-    psrad     m1, 10
-    psrad     m2, 10
-    psrad     m3, 10
+    psrad     m0, INTERP_SHIFT_SP
+    psrad     m1, INTERP_SHIFT_SP
+    psrad     m2, INTERP_SHIFT_SP
+    psrad     m3, INTERP_SHIFT_SP
 %endif
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5457,9 +5456,9 @@ cglobal interp_4tap_vert_%2_12x%1, 5, 8, %3
     mov       r4d, %1/2
 
 %ifidn %2, pp
-    mova      m7, [tab_c_32]
+    mova      m7, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova      m7, [pd_524800]
+    mova      m7, [INTERP_OFFSET_SP]
 %elifidn %2, ps
     mova      m7, [INTERP_OFFSET_PS]
 %endif
@@ -5479,10 +5478,10 @@ cglobal interp_4tap_vert_%2_12x%1, 5, 8, %3
     paddd     m1, m7
     paddd     m2, m7
     paddd     m3, m7
-    psrad     m0, 2
-    psrad     m1, 2
-    psrad     m2, 2
-    psrad     m3, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
+    psrad     m3, INTERP_SHIFT_PS
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5492,15 +5491,15 @@ cglobal interp_4tap_vert_%2_12x%1, 5, 8, %3
     paddd     m2, m7
     paddd     m3, m7
  %ifidn %2, pp
-    psrad     m0, 6
-    psrad     m1, 6
-    psrad     m2, 6
-    psrad     m3, 6
+    psrad     m0, INTERP_SHIFT_PP
+    psrad     m1, INTERP_SHIFT_PP
+    psrad     m2, INTERP_SHIFT_PP
+    psrad     m3, INTERP_SHIFT_PP
 %else
-    psrad     m0, 10
-    psrad     m1, 10
-    psrad     m2, 10
-    psrad     m3, 10
+    psrad     m0, INTERP_SHIFT_SP
+    psrad     m1, INTERP_SHIFT_SP
+    psrad     m2, INTERP_SHIFT_SP
+    psrad     m3, INTERP_SHIFT_SP
 %endif
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5610,9 +5609,9 @@ cglobal interp_4tap_vert_%2_24x%1, 5, 7, %3
     mov       r4d, %1/2
 
 %ifidn %2, pp
-    mova      m7, [tab_c_32]
+    mova      m7, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova      m7, [pd_524800]
+    mova      m7, [INTERP_OFFSET_SP]
 %elifidn %2, ps
     mova      m7, [INTERP_OFFSET_PS]
 %endif
@@ -5639,18 +5638,18 @@ cglobal interp_4tap_vert_%2_24x%1, 5, 7, %3
     paddd     m1, m7
     paddd     m2, m7
     paddd     m3, m7
-    psrad     m0, 2
-    psrad     m1, 2
-    psrad     m2, 2
-    psrad     m3, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
+    psrad     m3, INTERP_SHIFT_PS
     paddd     m8, m7
     paddd     m9, m7
     paddd     m10, m7
     paddd     m11, m7
-    psrad     m8, 2
-    psrad     m9, 2
-    psrad     m10, 2
-    psrad     m11, 2
+    psrad     m8, INTERP_SHIFT_PS
+    psrad     m9, INTERP_SHIFT_PS
+    psrad     m10, INTERP_SHIFT_PS
+    psrad     m11, INTERP_SHIFT_PS
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5666,23 +5665,23 @@ cglobal interp_4tap_vert_%2_24x%1, 5, 7, %3
     paddd     m10, m7
     paddd     m11, m7
  %ifidn %2, pp
-    psrad     m0, 6
-    psrad     m1, 6
-    psrad     m2, 6
-    psrad     m3, 6
-    psrad     m8, 6
-    psrad     m9, 6
-    psrad     m10, 6
-    psrad     m11, 6
+    psrad     m0, INTERP_SHIFT_PP
+    psrad     m1, INTERP_SHIFT_PP
+    psrad     m2, INTERP_SHIFT_PP
+    psrad     m3, INTERP_SHIFT_PP
+    psrad     m8, INTERP_SHIFT_PP
+    psrad     m9, INTERP_SHIFT_PP
+    psrad     m10, INTERP_SHIFT_PP
+    psrad     m11, INTERP_SHIFT_PP
 %else
-    psrad     m0, 10
-    psrad     m1, 10
-    psrad     m2, 10
-    psrad     m3, 10
-    psrad     m8, 10
-    psrad     m9, 10
-    psrad     m10, 10
-    psrad     m11, 10
+    psrad     m0, INTERP_SHIFT_SP
+    psrad     m1, INTERP_SHIFT_SP
+    psrad     m2, INTERP_SHIFT_SP
+    psrad     m3, INTERP_SHIFT_SP
+    psrad     m8, INTERP_SHIFT_SP
+    psrad     m9, INTERP_SHIFT_SP
+    psrad     m10, INTERP_SHIFT_SP
+    psrad     m11, INTERP_SHIFT_SP
 %endif
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5733,9 +5732,9 @@ cglobal interp_4tap_vert_%1_48x64, 5, 7, %2
     mov       r4d, 32
 
 %ifidn %1, pp
-    mova      m7, [tab_c_32]
+    mova      m7, [INTERP_OFFSET_PP]
 %elifidn %1, sp
-    mova      m7, [pd_524800]
+    mova      m7, [INTERP_OFFSET_SP]
 %elifidn %1, ps
     mova      m7, [INTERP_OFFSET_PS]
 %endif
@@ -5787,10 +5786,10 @@ cglobal interp_4tap_vert_%1_48x64, 5, 7, %2
     paddd     m1, m7
     paddd     m2, m7
     paddd     m3, m7
-    psrad     m0, 2
-    psrad     m1, 2
-    psrad     m2, 2
-    psrad     m3, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
+    psrad     m3, INTERP_SHIFT_PS
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5800,15 +5799,15 @@ cglobal interp_4tap_vert_%1_48x64, 5, 7, %2
     paddd     m2, m7
     paddd     m3, m7
 %ifidn %1, pp
-    psrad     m0, 6
-    psrad     m1, 6
-    psrad     m2, 6
-    psrad     m3, 6
+    psrad     m0, INTERP_SHIFT_PP
+    psrad     m1, INTERP_SHIFT_PP
+    psrad     m2, INTERP_SHIFT_PP
+    psrad     m3, INTERP_SHIFT_PP
 %else
-    psrad     m0, 10
-    psrad     m1, 10
-    psrad     m2, 10
-    psrad     m3, 10
+    psrad     m0, INTERP_SHIFT_SP
+    psrad     m1, INTERP_SHIFT_SP
+    psrad     m2, INTERP_SHIFT_SP
+    psrad     m3, INTERP_SHIFT_SP
 %endif
     packssdw  m0, m1
     packssdw  m2, m3
@@ -5827,6 +5826,7 @@ cglobal interp_4tap_vert_%1_48x64, 5, 7, %2
     jnz       .loopH
     RET
 %endmacro
+
     FILTER_VER_CHROMA_W16_48x64_avx2 pp, 8
     FILTER_VER_CHROMA_W16_48x64_avx2 ps, 8
     FILTER_VER_CHROMA_W16_48x64_avx2 ss, 7
@@ -5834,7 +5834,6 @@ cglobal interp_4tap_vert_%1_48x64, 5, 7, %2
 
 INIT_XMM sse2
 cglobal chroma_p2s, 3, 7, 3
-
     ; load width and height
     mov         r3d, r3m
     mov         r4d, r4m
@@ -5850,11 +5849,11 @@ cglobal chroma_p2s, 3, 7, 3
     lea         r6, [r0 + r5 * 2]
 
     movu        m0, [r6]
-    psllw       m0, 4
+    psllw       m0, (14 - BIT_DEPTH)
     paddw       m0, m2
 
     movu        m1, [r6 + r1]
-    psllw       m1, 4
+    psllw       m1, (14 - BIT_DEPTH)
     paddw       m1, m2
 
     add         r5d, 8
@@ -5887,7 +5886,6 @@ cglobal chroma_p2s, 3, 7, 3
 
     sub         r4d, 2
     jnz         .loopH
-
     RET
 
 %macro PROCESS_LUMA_VER_W4_4R 0
@@ -5975,7 +5973,7 @@ cglobal interp_8tap_vert_pp_%1x%2, 5, 7, 8 ,0-gprsize
     lea       r6, [tab_LumaCoeffV + r4]
 %endif
 
-    mova      m7, [pd_32]
+    mova      m7, [INTERP_OFFSET_PP]
 
     mov       dword [rsp], %2/4
 .loopH:
@@ -5988,10 +5986,10 @@ cglobal interp_8tap_vert_pp_%1x%2, 5, 7, 8 ,0-gprsize
     paddd     m2, m7
     paddd     m3, m7
 
-    psrad     m0, 6
-    psrad     m1, 6
-    psrad     m2, 6
-    psrad     m3, 6
+    psrad     m0, INTERP_SHIFT_PP
+    psrad     m1, INTERP_SHIFT_PP
+    psrad     m2, INTERP_SHIFT_PP
+    psrad     m3, INTERP_SHIFT_PP
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -6017,7 +6015,6 @@ cglobal interp_8tap_vert_pp_%1x%2, 5, 7, 8 ,0-gprsize
 
     dec       dword [rsp]
     jnz       .loopH
-
     RET
 %endmacro
 
@@ -6126,14 +6123,14 @@ cglobal interp_8tap_vert_%1_4x4, 4, 6, 7
     paddd           m0, m6
     paddd           m2, m6
 %ifidn %1,pp
-    psrad           m0, 6
-    psrad           m2, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m2, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m2, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m2, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -6294,20 +6291,20 @@ cglobal interp_8tap_vert_%1_8x8, 4, 6, 12
     paddd           m2, m11
     paddd           m3, m11
 %ifidn %1,pp
-    psrad           m0, 6
-    psrad           m1, 6
-    psrad           m2, 6
-    psrad           m3, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
+    psrad           m2, INTERP_SHIFT_PP
+    psrad           m3, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m1, 10
-    psrad           m2, 10
-    psrad           m3, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
+    psrad           m3, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m1, 2
-    psrad           m2, 2
-    psrad           m3, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
+    psrad           m3, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -6365,20 +6362,20 @@ cglobal interp_8tap_vert_%1_8x8, 4, 6, 12
     paddd           m6, m11
     paddd           m7, m11
 %ifidn %1,pp
-    psrad           m4, 6
-    psrad           m5, 6
-    psrad           m6, 6
-    psrad           m7, 6
+    psrad           m4, INTERP_SHIFT_PP
+    psrad           m5, INTERP_SHIFT_PP
+    psrad           m6, INTERP_SHIFT_PP
+    psrad           m7, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m4, 10
-    psrad           m5, 10
-    psrad           m6, 10
-    psrad           m7, 10
+    psrad           m4, INTERP_SHIFT_SP
+    psrad           m5, INTERP_SHIFT_SP
+    psrad           m6, INTERP_SHIFT_SP
+    psrad           m7, INTERP_SHIFT_SP
 %else
-    psrad           m4, 2
-    psrad           m5, 2
-    psrad           m6, 2
-    psrad           m7, 2
+    psrad           m4, INTERP_SHIFT_PS
+    psrad           m5, INTERP_SHIFT_PS
+    psrad           m6, INTERP_SHIFT_PS
+    psrad           m7, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -6538,26 +6535,26 @@ FILTER_VER_LUMA_AVX2_8x8 ss
     paddd           m4, m14
     paddd           m5, m14
 %ifidn %1,pp
-    psrad           m0, 6
-    psrad           m1, 6
-    psrad           m2, 6
-    psrad           m3, 6
-    psrad           m4, 6
-    psrad           m5, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
+    psrad           m2, INTERP_SHIFT_PP
+    psrad           m3, INTERP_SHIFT_PP
+    psrad           m4, INTERP_SHIFT_PP
+    psrad           m5, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m1, 10
-    psrad           m2, 10
-    psrad           m3, 10
-    psrad           m4, 10
-    psrad           m5, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
+    psrad           m3, INTERP_SHIFT_SP
+    psrad           m4, INTERP_SHIFT_SP
+    psrad           m5, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m1, 2
-    psrad           m2, 2
-    psrad           m3, 2
-    psrad           m4, 2
-    psrad           m5, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
+    psrad           m3, INTERP_SHIFT_PS
+    psrad           m4, INTERP_SHIFT_PS
+    psrad           m5, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -6620,14 +6617,14 @@ FILTER_VER_LUMA_AVX2_8x8 ss
     paddd           m6, m14
     paddd           m7, m14
 %ifidn %1,pp
-    psrad           m6, 6
-    psrad           m7, 6
+    psrad           m6, INTERP_SHIFT_PP
+    psrad           m7, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m6, 10
-    psrad           m7, 10
+    psrad           m6, INTERP_SHIFT_SP
+    psrad           m7, INTERP_SHIFT_SP
 %else
-    psrad           m6, 2
-    psrad           m7, 2
+    psrad           m6, INTERP_SHIFT_PS
+    psrad           m7, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -6734,32 +6731,32 @@ FILTER_VER_LUMA_AVX2_8x8 ss
     paddd           m0, m14
     paddd           m1, m14
 %ifidn %1,pp
-    psrad           m8, 6
-    psrad           m9, 6
-    psrad           m10, 6
-    psrad           m11, 6
-    psrad           m12, 6
-    psrad           m13, 6
-    psrad           m0, 6
-    psrad           m1, 6
+    psrad           m8, INTERP_SHIFT_PP
+    psrad           m9, INTERP_SHIFT_PP
+    psrad           m10, INTERP_SHIFT_PP
+    psrad           m11, INTERP_SHIFT_PP
+    psrad           m12, INTERP_SHIFT_PP
+    psrad           m13, INTERP_SHIFT_PP
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m8, 10
-    psrad           m9, 10
-    psrad           m10, 10
-    psrad           m11, 10
-    psrad           m12, 10
-    psrad           m13, 10
-    psrad           m0, 10
-    psrad           m1, 10
+    psrad           m8, INTERP_SHIFT_SP
+    psrad           m9, INTERP_SHIFT_SP
+    psrad           m10, INTERP_SHIFT_SP
+    psrad           m11, INTERP_SHIFT_SP
+    psrad           m12, INTERP_SHIFT_SP
+    psrad           m13, INTERP_SHIFT_SP
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
 %else
-    psrad           m8, 2
-    psrad           m9, 2
-    psrad           m10, 2
-    psrad           m11, 2
-    psrad           m12, 2
-    psrad           m13, 2
-    psrad           m0, 2
-    psrad           m1, 2
+    psrad           m8, INTERP_SHIFT_PS
+    psrad           m9, INTERP_SHIFT_PS
+    psrad           m10, INTERP_SHIFT_PS
+    psrad           m11, INTERP_SHIFT_PS
+    psrad           m12, INTERP_SHIFT_PS
+    psrad           m13, INTERP_SHIFT_PS
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -6819,7 +6816,7 @@ cglobal interp_8tap_vert_%1_%2x16, 4, 10, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [pd_524800]
+    mova            m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -6870,7 +6867,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 4, 12, 15
 %ifidn %3,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %3, sp
-    mova            m14, [pd_524800]
+    mova            m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -6953,7 +6950,7 @@ cglobal interp_8tap_vert_%1_8x%2, 4, 9, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [pd_524800]
+    mova            m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -7089,26 +7086,26 @@ cglobal interp_8tap_vert_%1_8x%2, 4, 9, 15
     paddd           m4, m14
     paddd           m5, m14
 %ifidn %1,pp
-    psrad           m0, 6
-    psrad           m1, 6
-    psrad           m2, 6
-    psrad           m3, 6
-    psrad           m4, 6
-    psrad           m5, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
+    psrad           m2, INTERP_SHIFT_PP
+    psrad           m3, INTERP_SHIFT_PP
+    psrad           m4, INTERP_SHIFT_PP
+    psrad           m5, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m1, 10
-    psrad           m2, 10
-    psrad           m3, 10
-    psrad           m4, 10
-    psrad           m5, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
+    psrad           m3, INTERP_SHIFT_SP
+    psrad           m4, INTERP_SHIFT_SP
+    psrad           m5, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m1, 2
-    psrad           m2, 2
-    psrad           m3, 2
-    psrad           m4, 2
-    psrad           m5, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
+    psrad           m3, INTERP_SHIFT_PS
+    psrad           m4, INTERP_SHIFT_PS
+    psrad           m5, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -7171,14 +7168,14 @@ cglobal interp_8tap_vert_%1_8x%2, 4, 9, 15
     paddd           m6, m14
     paddd           m7, m14
 %ifidn %1,pp
-    psrad           m6, 6
-    psrad           m7, 6
+    psrad           m6, INTERP_SHIFT_PP
+    psrad           m7, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m6, 10
-    psrad           m7, 10
+    psrad           m6, INTERP_SHIFT_SP
+    psrad           m7, INTERP_SHIFT_SP
 %else
-    psrad           m6, 2
-    psrad           m7, 2
+    psrad           m6, INTERP_SHIFT_PS
+    psrad           m7, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -7285,32 +7282,32 @@ cglobal interp_8tap_vert_%1_8x%2, 4, 9, 15
     paddd           m0, m14
     paddd           m1, m14
 %ifidn %1,pp
-    psrad           m8, 6
-    psrad           m9, 6
-    psrad           m10, 6
-    psrad           m11, 6
-    psrad           m12, 6
-    psrad           m13, 6
-    psrad           m0, 6
-    psrad           m1, 6
+    psrad           m8, INTERP_SHIFT_PP
+    psrad           m9, INTERP_SHIFT_PP
+    psrad           m10, INTERP_SHIFT_PP
+    psrad           m11, INTERP_SHIFT_PP
+    psrad           m12, INTERP_SHIFT_PP
+    psrad           m13, INTERP_SHIFT_PP
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m8, 10
-    psrad           m9, 10
-    psrad           m10, 10
-    psrad           m11, 10
-    psrad           m12, 10
-    psrad           m13, 10
-    psrad           m0, 10
-    psrad           m1, 10
+    psrad           m8, INTERP_SHIFT_SP
+    psrad           m9, INTERP_SHIFT_SP
+    psrad           m10, INTERP_SHIFT_SP
+    psrad           m11, INTERP_SHIFT_SP
+    psrad           m12, INTERP_SHIFT_SP
+    psrad           m13, INTERP_SHIFT_SP
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
 %else
-    psrad           m8, 2
-    psrad           m9, 2
-    psrad           m10, 2
-    psrad           m11, 2
-    psrad           m12, 2
-    psrad           m13, 2
-    psrad           m0, 2
-    psrad           m1, 2
+    psrad           m8, INTERP_SHIFT_PS
+    psrad           m9, INTERP_SHIFT_PS
+    psrad           m10, INTERP_SHIFT_PS
+    psrad           m11, INTERP_SHIFT_PS
+    psrad           m12, INTERP_SHIFT_PS
+    psrad           m13, INTERP_SHIFT_PS
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -7485,26 +7482,26 @@ FILTER_VER_LUMA_AVX2_8xN ss, 32
     paddd           m4, m11
     paddd           m5, m11
 %ifidn %1,pp
-    psrad           m0, 6
-    psrad           m1, 6
-    psrad           m2, 6
-    psrad           m3, 6
-    psrad           m4, 6
-    psrad           m5, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
+    psrad           m2, INTERP_SHIFT_PP
+    psrad           m3, INTERP_SHIFT_PP
+    psrad           m4, INTERP_SHIFT_PP
+    psrad           m5, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m1, 10
-    psrad           m2, 10
-    psrad           m3, 10
-    psrad           m4, 10
-    psrad           m5, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
+    psrad           m3, INTERP_SHIFT_SP
+    psrad           m4, INTERP_SHIFT_SP
+    psrad           m5, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m1, 2
-    psrad           m2, 2
-    psrad           m3, 2
-    psrad           m4, 2
-    psrad           m5, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
+    psrad           m3, INTERP_SHIFT_PS
+    psrad           m4, INTERP_SHIFT_PS
+    psrad           m5, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -7556,14 +7553,14 @@ FILTER_VER_LUMA_AVX2_8xN ss, 32
     paddd           m6, m11
     paddd           m7, m11
 %ifidn %1,pp
-    psrad           m6, 6
-    psrad           m7, 6
+    psrad           m6, INTERP_SHIFT_PP
+    psrad           m7, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m6, 10
-    psrad           m7, 10
+    psrad           m6, INTERP_SHIFT_SP
+    psrad           m7, INTERP_SHIFT_SP
 %else
-    psrad           m6, 2
-    psrad           m7, 2
+    psrad           m6, INTERP_SHIFT_PS
+    psrad           m7, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -7600,7 +7597,7 @@ cglobal interp_8tap_vert_%1_%2x8, 4, 10, 13
 %ifidn %1,pp
     vbroadcasti128  m11, [pd_32]
 %elifidn %1, sp
-    mova            m11, [pd_524800]
+    mova            m11, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m11, [INTERP_OFFSET_PS]
 %endif
@@ -7647,7 +7644,7 @@ cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [pd_524800]
+    mova            m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -7765,20 +7762,20 @@ FILTER_VER_LUMA_AVX2_32x24 ss
     paddd           m2, m7
     paddd           m3, m7
 %ifidn %1,pp
-    psrad           m0, 6
-    psrad           m1, 6
-    psrad           m2, 6
-    psrad           m3, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
+    psrad           m2, INTERP_SHIFT_PP
+    psrad           m3, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m1, 10
-    psrad           m2, 10
-    psrad           m3, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
+    psrad           m3, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m1, 2
-    psrad           m2, 2
-    psrad           m3, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
+    psrad           m3, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -7801,7 +7798,7 @@ FILTER_VER_LUMA_AVX2_32x24 ss
 
 %macro FILTER_VER_LUMA_AVX2_16x4 1
 INIT_YMM avx2
-cglobal interp_8tap_vert_%1_16x4, 4, 7, 8, 0 - gprsize
+cglobal interp_8tap_vert_%1_16x4, 4, 7, 8, 0-gprsize
     mov             r4d, r4m
     shl             r4d, 7
     add             r1d, r1d
@@ -7819,7 +7816,7 @@ cglobal interp_8tap_vert_%1_16x4, 4, 7, 8, 0 - gprsize
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [pd_524800]
+    mova            m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -7864,7 +7861,7 @@ cglobal interp_8tap_vert_%1_8x4, 4, 6, 8
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [pd_524800]
+    mova            m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -7904,7 +7901,7 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [pd_524800]
+    mova            m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -8014,20 +8011,20 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
     paddd           m2, m14
     paddd           m3, m14
 %ifidn %1,pp
-    psrad           m0, 6
-    psrad           m1, 6
-    psrad           m2, 6
-    psrad           m3, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
+    psrad           m2, INTERP_SHIFT_PP
+    psrad           m3, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m1, 10
-    psrad           m2, 10
-    psrad           m3, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
+    psrad           m3, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m1, 2
-    psrad           m2, 2
-    psrad           m3, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
+    psrad           m3, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -8105,20 +8102,20 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
     paddd           m6, m14
     paddd           m7, m14
 %ifidn %1,pp
-    psrad           m4, 6
-    psrad           m5, 6
-    psrad           m6, 6
-    psrad           m7, 6
+    psrad           m4, INTERP_SHIFT_PP
+    psrad           m5, INTERP_SHIFT_PP
+    psrad           m6, INTERP_SHIFT_PP
+    psrad           m7, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m4, 10
-    psrad           m5, 10
-    psrad           m6, 10
-    psrad           m7, 10
+    psrad           m4, INTERP_SHIFT_SP
+    psrad           m5, INTERP_SHIFT_SP
+    psrad           m6, INTERP_SHIFT_SP
+    psrad           m7, INTERP_SHIFT_SP
 %else
-    psrad           m4, 2
-    psrad           m5, 2
-    psrad           m6, 2
-    psrad           m7, 2
+    psrad           m4, INTERP_SHIFT_PS
+    psrad           m5, INTERP_SHIFT_PS
+    psrad           m6, INTERP_SHIFT_PS
+    psrad           m7, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -8182,20 +8179,20 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
     paddd           m10, m14
     paddd           m11, m14
 %ifidn %1,pp
-    psrad           m8, 6
-    psrad           m9, 6
-    psrad           m10, 6
-    psrad           m11, 6
+    psrad           m8, INTERP_SHIFT_PP
+    psrad           m9, INTERP_SHIFT_PP
+    psrad           m10, INTERP_SHIFT_PP
+    psrad           m11, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m8, 10
-    psrad           m9, 10
-    psrad           m10, 10
-    psrad           m11, 10
+    psrad           m8, INTERP_SHIFT_SP
+    psrad           m9, INTERP_SHIFT_SP
+    psrad           m10, INTERP_SHIFT_SP
+    psrad           m11, INTERP_SHIFT_SP
 %else
-    psrad           m8, 2
-    psrad           m9, 2
-    psrad           m10, 2
-    psrad           m11, 2
+    psrad           m8, INTERP_SHIFT_PS
+    psrad           m9, INTERP_SHIFT_PS
+    psrad           m10, INTERP_SHIFT_PS
+    psrad           m11, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -8251,7 +8248,7 @@ cglobal interp_8tap_vert_%1_4x8, 4, 7, 8
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [pd_524800]
+    mova            m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -8315,14 +8312,14 @@ cglobal interp_8tap_vert_%1_4x8, 4, 7, 8
     paddd           m0, m7
     paddd           m2, m7
 %ifidn %1,pp
-    psrad           m0, 6
-    psrad           m2, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m2, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m2, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m2, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -8366,14 +8363,14 @@ cglobal interp_8tap_vert_%1_4x8, 4, 7, 8
     paddd           m4, m7
     paddd           m1, m7
 %ifidn %1,pp
-    psrad           m4, 6
-    psrad           m1, 6
+    psrad           m4, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m4, 10
-    psrad           m1, 10
+    psrad           m4, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
 %else
-    psrad           m4, 2
-    psrad           m1, 2
+    psrad           m4, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -8458,14 +8455,14 @@ FILTER_VER_LUMA_AVX2_4x8 ss
     paddd           m0, m7
     paddd           m2, m7
 %ifidn %1,pp
-    psrad           m0, 6
-    psrad           m2, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m2, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m2, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m2, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -8516,14 +8513,14 @@ FILTER_VER_LUMA_AVX2_4x8 ss
     paddd           m4, m7
     paddd           m1, m7
 %ifidn %1,pp
-    psrad           m4, 6
-    psrad           m1, 6
+    psrad           m4, INTERP_SHIFT_PP
+    psrad           m1, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m4, 10
-    psrad           m1, 10
+    psrad           m4, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
 %else
-    psrad           m4, 2
-    psrad           m1, 2
+    psrad           m4, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -8574,14 +8571,14 @@ FILTER_VER_LUMA_AVX2_4x8 ss
     paddd           m6, m7
     paddd           m5, m7
 %ifidn %1,pp
-    psrad           m6, 6
-    psrad           m5, 6
+    psrad           m6, INTERP_SHIFT_PP
+    psrad           m5, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m6, 10
-    psrad           m5, 10
+    psrad           m6, INTERP_SHIFT_SP
+    psrad           m5, INTERP_SHIFT_SP
 %else
-    psrad           m6, 2
-    psrad           m5, 2
+    psrad           m6, INTERP_SHIFT_PS
+    psrad           m5, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -8625,14 +8622,14 @@ FILTER_VER_LUMA_AVX2_4x8 ss
     paddd           m0, m7
     paddd           m3, m7
 %ifidn %1,pp
-    psrad           m0, 6
-    psrad           m3, 6
+    psrad           m0, INTERP_SHIFT_PP
+    psrad           m3, INTERP_SHIFT_PP
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m3, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m3, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m3, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m3, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -8671,7 +8668,7 @@ cglobal interp_8tap_vert_%1_4x16, 4, 7, 8
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [pd_524800]
+    mova            m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -8706,7 +8703,7 @@ cglobal interp_8tap_vert_%1_12x16, 4, 9, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [pd_524800]
+    mova            m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -8758,10 +8755,10 @@ cglobal interp_8tap_vert_ps_%1x%2, 5, 7, 8 ,0-gprsize
     paddd     m2, m7
     paddd     m3, m7
 
-    psrad     m0, 2
-    psrad     m1, 2
-    psrad     m2, 2
-    psrad     m3, 2
+    psrad     m0, INTERP_SHIFT_PS
+    psrad     m1, INTERP_SHIFT_PS
+    psrad     m2, INTERP_SHIFT_PS
+    psrad     m3, INTERP_SHIFT_PS
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -8784,7 +8781,6 @@ cglobal interp_8tap_vert_ps_%1x%2, 5, 7, 8 ,0-gprsize
 
     dec       dword [rsp]
     jnz       .loopH
-
     RET
 %endmacro
 
@@ -8837,7 +8833,7 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-gprsize
     lea       r6, [tab_LumaCoeffV + r4]
 %endif
 
-    mova      m7, [tab_c_524800]
+    mova      m7, [INTERP_OFFSET_SP]
 
     mov       dword [rsp], %2/4
 .loopH:
@@ -8850,10 +8846,10 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-gprsize
     paddd     m2, m7
     paddd     m3, m7
 
-    psrad     m0, 10
-    psrad     m1, 10
-    psrad     m2, 10
-    psrad     m3, 10
+    psrad     m0, INTERP_SHIFT_SP
+    psrad     m1, INTERP_SHIFT_SP
+    psrad     m2, INTERP_SHIFT_SP
+    psrad     m3, INTERP_SHIFT_SP
 
     packssdw  m0, m1
     packssdw  m2, m3
@@ -8879,7 +8875,6 @@ cglobal interp_8tap_vert_sp_%1x%2, 5, 7, 8 ,0-gprsize
 
     dec       dword [rsp]
     jnz       .loopH
-
     RET
 %endmacro
 
@@ -8963,7 +8958,6 @@ cglobal interp_8tap_vert_ss_%1x%2, 5, 7, 7 ,0-gprsize
 
     dec        dword [rsp]
     jnz        .loopH
-
     RET
 %endmacro
 
@@ -9011,7 +9005,7 @@ cglobal filterPixelToShort_2x%1, 3, 6, 2
 %rep %1/4
     movd       m0, [r0]
     movhps     m0, [r0 + r1]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m1
 
     movd       [r2 + r3 * 0], m0
@@ -9019,7 +9013,7 @@ cglobal filterPixelToShort_2x%1, 3, 6, 2
 
     movd       m0, [r0 + r1 * 2]
     movhps     m0, [r0 + r4]
-    psllw      m0, 4
+    psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m1
 
     movd       [r2 + r3 * 2], m0
@@ -10293,14 +10287,13 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,8,7
     mov                         r4d,               r4m
     add                         r1d,               r1d
     add                         r3d,               r3d
+
 %ifdef PIC
-
     lea                         r6,                [tab_LumaCoeff]
-    lea                         r4 ,               [r4 * 8]
+    lea                         r4,                [r4 * 8]
     vbroadcasti128              m0,                [r6 + r4 * 2]
-
 %else
-    lea                         r4 ,                [r4 * 8]
+    lea                         r4,                [r4 * 8]
     vbroadcasti128              m0,                [tab_LumaCoeff + r4 * 2]
 %endif
 
