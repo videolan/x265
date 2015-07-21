@@ -127,7 +127,7 @@ public:
     int           m_numCoopSlices;
     int           m_numRowsPerSlice;
     bool          m_filled;
-
+    bool          m_isSceneTransition;
     Lookahead(x265_param *param, ThreadPool *pool);
 
 #if DETAILED_CU_STATS
@@ -156,7 +156,7 @@ protected:
     void    slicetypeAnalyse(Lowres **frames, bool bKeyframe);
 
     /* called by slicetypeAnalyse() to make slice decisions */
-    bool    scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames, int maxSearch);
+    bool    scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, int numFrames);
     bool    scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScenecut);
     void    slicetypePath(Lowres **frames, int length, char(*best_paths)[X265_LOOKAHEAD_MAX + 1]);
     int64_t slicetypePathCost(Lowres **frames, char *path, int64_t threshold);

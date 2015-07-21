@@ -126,7 +126,7 @@ void Lowres::destroy()
 void Lowres::init(PicYuv *origPic, int poc)
 {
     bLastMiniGopBFrame = false;
-    bScenecut = true;  // could be a scene-cut, until ruled out by flash detection
+    bScenecut = false;  // could be a scene-cut, until ruled out by flash detection
     bKeyframe = false; // Not a keyframe unless identified by lookahead
     frameNum = poc;
     leadingBframes = 0;
