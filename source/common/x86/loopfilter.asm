@@ -1666,8 +1666,8 @@ cglobal saoCuOrgB0, 5,7,8
 .loopW
     movu            m2, [r0]
     movu            m5, [r0 + r4]
-    psrlw           m0, m2, 5
-    psrlw           m6, m5, 5
+    psrlw           m0, m2, (BIT_DEPTH - 5)
+    psrlw           m6, m5, (BIT_DEPTH - 5)
     packuswb        m0, m6
     vpermq          m0, m0, 11011000b
     pand            m0, [pb_31]         ; m0 = [index]
@@ -1706,7 +1706,7 @@ cglobal saoCuOrgB0, 5,7,8
     xor             r1, r1
 .loopW1:
     movu            m2, [r0 + r1]
-    psrlw           m0, m2, 5
+    psrlw           m0, m2, (BIT_DEPTH - 5)
     packuswb        m0, m0
     vpermq          m0, m0, 10001000b
     pand            m0, [pb_31]         ; m0 = [index]

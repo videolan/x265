@@ -1323,9 +1323,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.saoCuOrgE2[1] = PFX(saoCuOrgE2_32_avx2);
         p.saoCuOrgE3[0] = PFX(saoCuOrgE3_avx2);
         p.saoCuOrgE3[1] = PFX(saoCuOrgE3_32_avx2);
-#if X265_DEPTH <= 10
         p.saoCuOrgB0 = PFX(saoCuOrgB0_avx2);
-#endif
 
         p.cu[BLOCK_16x16].intra_pred[2]     = PFX(intra_pred_ang16_2_avx2);
         p.cu[BLOCK_16x16].intra_pred[3]     = PFX(intra_pred_ang16_3_avx2);
