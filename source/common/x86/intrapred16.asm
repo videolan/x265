@@ -473,14 +473,14 @@ cglobal intra_pred_dc16, 3, 9, 4
     add             r1d,                 r1d
     movu            m0,                  [r2 + 66]
     movu            m2,                  [r2 +  2]
-    paddw           m0,                  m2
+    paddw           m0,                  m2                 ; dynamic range 13 bits
 
     vextracti128    xm1,                 m0, 1
-    paddw           xm0,                 xm1
+    paddw           xm0,                 xm1                ; dynamic range 14 bits
     movhlps         xm1,                 xm0
-    paddw           xm0,                 xm1
-    phaddw          xm0,                 xm0
+    paddw           xm0,                 xm1                ; dynamic range 15 bits
     pmaddwd         xm0,                 [pw_1]
+    phaddd          xm0,                 xm0
     paddd           xm0,                 [pd_16]
     psrld           xm0,                 5
     movd            r5d,                 xm0
@@ -580,25 +580,25 @@ cglobal intra_pred_dc16, 3, 9, 4
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel *srcPix, int dirMode, int bFilter)
 ;---------------------------------------------------------------------------------------------
 INIT_YMM avx2
-cglobal intra_pred_dc32, 3, 3, 2
+cglobal intra_pred_dc32, 3,3,3
     add              r2, 2
     add             r1d, r1d
     movu             m0, [r2]
     movu             m1, [r2 + 32]
-    add              r2, mmsize*4        ; r2 += 128
-    paddw            m0, m1
+    add              r2, mmsize*4                       ; r2 += 128
+    paddw            m0, m1                             ; dynamic range 13 bits
     movu             m1, [r2]
-    paddw            m0, m1
-    movu             m1, [r2 + 32]
-    paddw            m0, m1
+    movu             m2, [r2 + 32]
+    paddw            m1, m2                             ; dynamic range 13 bits
+    paddw            m0, m1                             ; dynamic range 14 bits
     vextracti128    xm1, m0, 1
-    paddw           xm0, xm1
-    movhlps         xm1, xm0
-    paddw           xm0, xm1
-    phaddw          xm0, xm0
+    paddw           xm0, xm1                            ; dynamic range 15 bits
     pmaddwd         xm0, [pw_1]
-    paddd           xm0, [pd_32]         ; sum = sum + 32
-    psrld           xm0, 6               ; sum = sum / 64
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    phaddd          xm0, xm0
+    paddd           xm0, [pd_32]                        ; sum = sum + 32
+    psrld           xm0, 6                              ; sum = sum / 64
     vpbroadcastw     m0, xm0
 
     lea              r2, [r1 * 3]

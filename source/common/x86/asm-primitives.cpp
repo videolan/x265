@@ -1485,10 +1485,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_64x64].psy_cost_pp = PFX(psyCost_pp_64x64_avx2);
         p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar16_avx2);
         p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar32_avx2);
+#endif
 
         p.cu[BLOCK_16x16].intra_pred[DC_IDX] = PFX(intra_pred_dc16_avx2);
         p.cu[BLOCK_32x32].intra_pred[DC_IDX] = PFX(intra_pred_dc32_avx2);
-#endif
 
         p.pu[LUMA_48x64].satd = PFX(pixel_satd_48x64_avx2);
 
