@@ -1323,7 +1323,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.saoCuOrgE2[1] = PFX(saoCuOrgE2_32_avx2);
         p.saoCuOrgE3[0] = PFX(saoCuOrgE3_avx2);
         p.saoCuOrgE3[1] = PFX(saoCuOrgE3_32_avx2);
+#if X265_DEPTH <= 10
         p.saoCuOrgB0 = PFX(saoCuOrgB0_avx2);
+#endif
 
         p.cu[BLOCK_16x16].intra_pred[2]     = PFX(intra_pred_ang16_2_avx2);
         p.cu[BLOCK_16x16].intra_pred[3]     = PFX(intra_pred_ang16_3_avx2);
@@ -1476,6 +1478,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_32x32].psy_cost_ss = PFX(psyCost_ss_32x32_avx2);
         p.cu[BLOCK_64x64].psy_cost_ss = PFX(psyCost_ss_64x64_avx2);
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_pp_4x4_avx2);
+#if X265_DEPTH <= 10
         p.cu[BLOCK_8x8].psy_cost_pp = PFX(psyCost_pp_8x8_avx2);
         p.cu[BLOCK_16x16].psy_cost_pp = PFX(psyCost_pp_16x16_avx2);
         p.cu[BLOCK_32x32].psy_cost_pp = PFX(psyCost_pp_32x32_avx2);
@@ -1485,6 +1488,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         p.cu[BLOCK_16x16].intra_pred[DC_IDX] = PFX(intra_pred_dc16_avx2);
         p.cu[BLOCK_32x32].intra_pred[DC_IDX] = PFX(intra_pred_dc32_avx2);
+#endif
 
         p.pu[LUMA_48x64].satd = PFX(pixel_satd_48x64_avx2);
 
@@ -1539,15 +1543,19 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         p.quant = PFX(quant_avx2);
         p.nquant = PFX(nquant_avx2);
+#if X265_DEPTH <= 10
         p.dequant_normal  = PFX(dequant_normal_avx2);
         p.dequant_scaling = PFX(dequant_scaling_avx2);
+#endif
         p.dst4x4 = PFX(dst4_avx2);
         p.idst4x4 = PFX(idst4_avx2);
         p.denoiseDct = PFX(denoise_dct_avx2);
 
         p.scale1D_128to64 = PFX(scale1D_128to64_avx2);
         p.scale2D_64to32 = PFX(scale2D_64to32_avx2);
+#if X265_DEPTH <= 10
         p.weight_pp = PFX(weight_pp_avx2);
+#endif
         p.weight_sp = PFX(weight_sp_avx2);
         p.sign = PFX(calSign_avx2);
         p.planecopy_cp = PFX(upShift_8_avx2);
@@ -1574,15 +1582,21 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_16x16].cpy2Dto1D_shr = PFX(cpy2Dto1D_shr_16_avx2);
         p.cu[BLOCK_32x32].cpy2Dto1D_shr = PFX(cpy2Dto1D_shr_32_avx2);
 
+#if X265_DEPTH <= 10
         ALL_LUMA_TU_S(dct, dct, avx2);
         ALL_LUMA_TU_S(idct, idct, avx2);
+#endif
         ALL_LUMA_CU_S(transpose, transpose, avx2);
 
         ALL_LUMA_PU(luma_vpp, interp_8tap_vert_pp, avx2);
         ALL_LUMA_PU(luma_vps, interp_8tap_vert_ps, avx2);
+#if X265_DEPTH <= 10
         ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, avx2);
+#endif
         ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, avx2);
+#if X265_DEPTH <= 10
         p.pu[LUMA_4x4].luma_vsp = PFX(interp_8tap_vert_sp_4x4_avx2);               // since ALL_LUMA_PU didn't declare 4x4 size, calling separately luma_vsp function to use 
+#endif
 
         p.cu[BLOCK_16x16].add_ps = PFX(pixel_add_ps_16x16_avx2);
         p.cu[BLOCK_32x32].add_ps = PFX(pixel_add_ps_32x32_avx2);
@@ -1605,6 +1619,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_16x12].sad = PFX(pixel_sad_16x12_avx2);
         p.pu[LUMA_16x16].sad = PFX(pixel_sad_16x16_avx2);
         p.pu[LUMA_16x32].sad = PFX(pixel_sad_16x32_avx2);
+#if X265_DEPTH <= 10
         p.pu[LUMA_16x64].sad = PFX(pixel_sad_16x64_avx2);
         p.pu[LUMA_32x8].sad = PFX(pixel_sad_32x8_avx2);
         p.pu[LUMA_32x16].sad = PFX(pixel_sad_32x16_avx2);
@@ -1616,6 +1631,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_64x32].sad = PFX(pixel_sad_64x32_avx2);
         p.pu[LUMA_64x48].sad = PFX(pixel_sad_64x48_avx2);
         p.pu[LUMA_64x64].sad = PFX(pixel_sad_64x64_avx2);
+#endif
 
         p.pu[LUMA_16x4].sad_x3 = PFX(pixel_sad_x3_16x4_avx2);
         p.pu[LUMA_16x8].sad_x3 = PFX(pixel_sad_x3_16x8_avx2);
@@ -1690,6 +1706,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = PFX(filterPixelToShort_32x48_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = PFX(filterPixelToShort_32x64_avx2);
 
+#if X265_DEPTH <= 10
         p.pu[LUMA_4x4].luma_hps = PFX(interp_8tap_horiz_ps_4x4_avx2);
         p.pu[LUMA_4x8].luma_hps = PFX(interp_8tap_horiz_ps_4x8_avx2);
         p.pu[LUMA_4x16].luma_hps = PFX(interp_8tap_horiz_ps_4x16_avx2);
@@ -1715,6 +1732,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_48x64].luma_hps = PFX(interp_8tap_horiz_ps_48x64_avx2);
         p.pu[LUMA_24x32].luma_hps = PFX(interp_8tap_horiz_ps_24x32_avx2);
         p.pu[LUMA_12x16].luma_hps = PFX(interp_8tap_horiz_ps_12x16_avx2);
+#endif
 
         p.pu[LUMA_4x4].luma_hpp = PFX(interp_8tap_horiz_pp_4x4_avx2);
         p.pu[LUMA_4x8].luma_hpp = PFX(interp_8tap_horiz_pp_4x8_avx2);
@@ -1742,6 +1760,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_24x32].luma_hpp = PFX(interp_8tap_horiz_pp_24x32_avx2);
         p.pu[LUMA_48x64].luma_hpp = PFX(interp_8tap_horiz_pp_48x64_avx2);
 
+#if X265_DEPTH <= 10
         p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].filter_hps = PFX(interp_4tap_horiz_ps_8x8_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_8x4].filter_hps = PFX(interp_4tap_horiz_ps_8x4_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_8x16].filter_hps = PFX(interp_4tap_horiz_ps_8x16_avx2);
@@ -2139,11 +2158,15 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I444].pu[LUMA_64x32].filter_vsp = PFX(interp_4tap_vert_sp_64x32_avx2);
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_vsp = PFX(interp_4tap_vert_sp_64x48_avx2);
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_vsp = PFX(interp_4tap_vert_sp_64x64_avx2);
+#endif
 
         p.frameInitLowres = PFX(frame_init_lowres_core_avx2);
 
+#if X265_DEPTH <= 10
+        // TODO: depends on hps and vsp
         ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu);                        // calling luma_hvpp for all sizes
         p.pu[LUMA_4x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_4x4>;             // ALL_LUMA_PU_T has declared all sizes except 4x4, hence calling luma_hvpp[4x4] 
+#endif
 
         if (cpuMask & X265_CPU_BMI2)
             p.scanPosLast = PFX(scanPosLast_avx2_bmi2);

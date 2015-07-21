@@ -2544,7 +2544,8 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         if ((i < BLOCK_64x64) && opt.cu[i].cpy2Dto1D_shl)
         {
             HEADER("cpy2Dto1D_shl[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cu[i].cpy2Dto1D_shl, ref.cu[i].cpy2Dto1D_shl, sbuf1, sbuf2, STRIDE, MAX_TR_DYNAMIC_RANGE - X265_DEPTH - (i + 2));
+            const int shift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - (i + 2);
+            REPORT_SPEEDUP(opt.cu[i].cpy2Dto1D_shl, ref.cu[i].cpy2Dto1D_shl, sbuf1, sbuf2, STRIDE, X265_MAX(0, shift));
         }
 
         if ((i < BLOCK_64x64) && opt.cu[i].cpy2Dto1D_shr)
