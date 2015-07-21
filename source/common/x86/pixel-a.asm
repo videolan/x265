@@ -7302,7 +7302,7 @@ cglobal downShift_16, 6,7,3
 ;---------------------------------------------------------------------------------------------------------------------
 INIT_XMM sse4
 cglobal upShift_8, 6,7,3
-    movd        m2, r6m        ; m0 = shift
+    movd        xm2, r6m
     add         r3d, r3d
     dec         r5d
 
@@ -7310,84 +7310,44 @@ cglobal upShift_8, 6,7,3
     xor         r6, r6
 .loopW:
     pmovzxbw    m0,[r0 + r6]
-    pmovzxbw    m1,[r0 + r6 + 8]
+    pmovzxbw    m1,[r0 + r6 + mmsize/2]
     psllw       m0, m2
     psllw       m1, m2
     movu        [r2 + r6 * 2], m0
-    movu        [r2 + r6 * 2 + 16], m1
+    movu        [r2 + r6 * 2 + mmsize], m1
 
-    add         r6, 16
+    add         r6d, mmsize
     cmp         r6d, r4d
-    jl          .loopW
+    jl         .loopW
 
     ; move to next row
     add         r0, r1
     add         r2, r3
     dec         r5d
-    jnz         .loopH
+    jg         .loopH
 
-;processing last row of every frame [To handle width which not a multiple of 16]
+    ; processing last row of every frame [To handle width which not a multiple of 16]
+    mov         r1d, (mmsize/2 - 1)
+    and         r1d, r4d
+    sub         r1, mmsize/2
 
-.loop16:
-    pmovzxbw    m0,[r0]
-    pmovzxbw    m1,[r0 + 8]
-    psllw       m0, m2
-    psllw       m1, m2
-    movu        [r2], m0
-    movu        [r2 + 16], m1
-
-    add         r0, mmsize
-    add         r2, 2 * mmsize
-    sub         r4d, 16
-    jz          .end
-    cmp         r4d, 15
-    jg          .loop16
-
-    cmp         r4d, 8
-    jl          .process4
+    ; NOTE: Width MUST BE more than or equal to 8
+    shr         r4d, 3          ; log2(mmsize)
+.loopW8:
     pmovzxbw    m0,[r0]
     psllw       m0, m2
     movu        [r2], m0
-
-    add         r0, 8
+    add         r0, mmsize/2
     add         r2, mmsize
-    sub         r4d, 8
-    jz          .end
+    dec         r4d
+    jg         .loopW8
 
-.process4:
-    cmp         r4d, 4
-    jl          .process2
-    movd        m0,[r0]
-    pmovzxbw    m0,m0
+    ; Mac OS X can't read beyond array bound, so rollback some bytes
+    pmovzxbw    m0,[r0 + r1]
     psllw       m0, m2
-    movh        [r2], m0
-
-    add         r0, 4
-    add         r2, 8
-    sub         r4d, 4
-    jz          .end
-
-.process2:
-    cmp         r4d, 2
-    jl          .process1
-    movzx       r3d, byte [r0]
-    shl         r3d, 2
-    mov         [r2], r3w
-    movzx       r3d, byte [r0 + 1]
-    shl         r3d, 2
-    mov         [r2 + 2], r3w
-
-    add         r0, 2
-    add         r2, 4
-    sub         r4d, 2
-    jz          .end
-
-.process1:
-    movzx       r3d, byte [r0]
-    shl         r3d, 2
-    mov         [r2], r3w
-.end:
+    movu        [r2 + r1 * 2], m0
     RET
+
 
 ;---------------------------------------------------------------------------------------------------------------------
 ;void planecopy_cp(uint8_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift)
@@ -7420,7 +7380,7 @@ cglobal upShift_8, 6,7,3
     jg         .loopH
 
     ; processing last row of every frame [To handle width which not a multiple of 32]
-    mov         r1d, 15
+    mov         r1d, (mmsize/2 - 1)
     and         r1d, r4d
     sub         r1, mmsize/2
 
