@@ -590,6 +590,7 @@ void FrameEncoder::compressFrame()
         m_frame->m_encData->m_frameStats.totalCtu         += m_rows[i].rowStats.totalCtu;
         m_frame->m_encData->m_frameStats.lumaDistortion   += m_rows[i].rowStats.lumaDistortion;
         m_frame->m_encData->m_frameStats.chromaDistortion += m_rows[i].rowStats.chromaDistortion;
+        m_frame->m_encData->m_frameStats.psyEnergy        += m_rows[i].rowStats.psyEnergy;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
             m_frame->m_encData->m_frameStats.cntSkipCu[depth] += m_rows[i].rowStats.cntSkipCu[depth];
@@ -602,6 +603,7 @@ void FrameEncoder::compressFrame()
     }
     m_frame->m_encData->m_frameStats.avgLumaDistortion   = (double)(m_frame->m_encData->m_frameStats.lumaDistortion / m_frame->m_encData->m_frameStats.totalCtu);
     m_frame->m_encData->m_frameStats.avgChromaDistortion = (double)(m_frame->m_encData->m_frameStats.chromaDistortion / m_frame->m_encData->m_frameStats.totalCtu);
+    m_frame->m_encData->m_frameStats.avgPsyEnergy        = (double)(m_frame->m_encData->m_frameStats.psyEnergy / m_frame->m_encData->m_frameStats.totalCtu);
     m_frame->m_encData->m_frameStats.percentIntraNxN     = (double)(m_frame->m_encData->m_frameStats.cntIntraNxN * 100) / m_frame->m_encData->m_frameStats.totalCu;
     for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
     {
@@ -969,6 +971,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         curRow.rowStats.totalCtu++;
         curRow.rowStats.lumaDistortion   += best.lumaDistortion;
         curRow.rowStats.chromaDistortion += best.chromaDistortion;
+        curRow.rowStats.psyEnergy        += best.psyEnergy;
         curRow.rowStats.cntIntraNxN      += frameLog.cntIntraNxN;
         curRow.rowStats.totalCu          += frameLog.totalCu;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)

@@ -131,6 +131,7 @@ typedef struct x265_frame_stats
     double           avgWPP;
     double           avgLumaDistortion;
     double           avgChromaDistortion;
+    double           avgPsyEnergy;
     uint64_t         bits;
     int              encoderOrder;
     int              poc;
