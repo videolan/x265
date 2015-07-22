@@ -119,6 +119,10 @@ washdc_422_ntsc.y4m,--preset superfast --psy-rd 1 --tune zerolatency
 washdc_422_ntsc.y4m,--preset ultrafast --weightp --tu-intra-depth 4
 washdc_422_ntsc.y4m,--preset veryfast --tu-inter-depth 4
 washdc_422_ntsc.y4m,--preset veryslow --crf 4 --cu-lossless --limit-refs 3
+BasketballDrive_1920x1080_50.y4m,--preset medium --no-cutree --analysis-mode=save --bitrate 15000,--preset medium --no-cutree --analysis-mode=load --bitrate 13000,--preset medium --no-cutree --analysis-mode=load --bitrate 11000,--preset medium --no-cutree --analysis-mode=load --bitrate 9000,--preset medium --no-cutree --analysis-mode=load --bitrate 7000
+NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset slow --no-cutree --analysis-mode=save --bitrate 15000,--preset slow --no-cutree --analysis-mode=load --bitrate 13000,--preset slow --no-cutree --analysis-mode=load --bitrate 11000,--preset slow --no-cutree --analysis-mode=load --bitrate 9000,--preset slow --no-cutree --analysis-mode=load --bitrate 7000
+old_town_cross_444_720p50.y4m,--preset veryslow --no-cutree --analysis-mode=save --bitrate 15000 --early-skip,--preset veryslow --no-cutree --analysis-mode=load --bitrate 13000 --early-skip,--preset veryslow --no-cutree --analysis-mode=load --bitrate 11000 --early-skip,--preset veryslow --no-cutree --analysis-mode=load --bitrate 9000 --early-skip,--preset veryslow --no-cutree --analysis-mode=load --bitrate 7000 --early-skip
+Johnny_1280x720_60.y4m,--preset medium --no-cutree --analysis-mode=save --bitrate 15000 --tskip-fast,--preset medium --no-cutree --analysis-mode=load --bitrate 13000  --tskip-fast,--preset medium --no-cutree --analysis-mode=load --bitrate 11000  --tskip-fast,--preset medium --no-cutree --analysis-mode=load --bitrate 9000  --tskip-fast,--preset medium --no-cutree --analysis-mode=load --bitrate 7000  --tskip-fast
 
 # interlace test, even though input YUV is not field seperated
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset fast --interlace bff
