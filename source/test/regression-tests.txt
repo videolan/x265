@@ -123,6 +123,9 @@ BasketballDrive_1920x1080_50.y4m,--preset medium --no-cutree --analysis-mode=sav
 NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset slow --no-cutree --analysis-mode=save --bitrate 15000,--preset slow --no-cutree --analysis-mode=load --bitrate 13000,--preset slow --no-cutree --analysis-mode=load --bitrate 11000,--preset slow --no-cutree --analysis-mode=load --bitrate 9000,--preset slow --no-cutree --analysis-mode=load --bitrate 7000
 old_town_cross_444_720p50.y4m,--preset veryslow --no-cutree --analysis-mode=save --bitrate 15000 --early-skip,--preset veryslow --no-cutree --analysis-mode=load --bitrate 13000 --early-skip,--preset veryslow --no-cutree --analysis-mode=load --bitrate 11000 --early-skip,--preset veryslow --no-cutree --analysis-mode=load --bitrate 9000 --early-skip,--preset veryslow --no-cutree --analysis-mode=load --bitrate 7000 --early-skip
 Johnny_1280x720_60.y4m,--preset medium --no-cutree --analysis-mode=save --bitrate 15000 --tskip-fast,--preset medium --no-cutree --analysis-mode=load --bitrate 13000  --tskip-fast,--preset medium --no-cutree --analysis-mode=load --bitrate 11000  --tskip-fast,--preset medium --no-cutree --analysis-mode=load --bitrate 9000  --tskip-fast,--preset medium --no-cutree --analysis-mode=load --bitrate 7000  --tskip-fast
+BasketballDrive_1920x1080_50.y4m,--preset medium --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
+FourPeople_1280x720_60.y4m,--preset ultrafast --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
+FourPeople_1280x720_60.y4m,--preset veryslow --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 
 # interlace test, even though input YUV is not field seperated
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset fast --interlace bff
