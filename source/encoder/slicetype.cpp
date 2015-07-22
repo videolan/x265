@@ -162,7 +162,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
         {
             for (blockX = 0; blockX < maxCol; blockX += 16)
             {
-                if(param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
+                if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
                 {
                     qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
                     qp_adj = strength * (qp_adj - avg_adj) + bias_strength * (1.f - 11.f / (qp_adj * qp_adj));
