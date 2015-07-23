@@ -2557,7 +2557,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.costCoeffNxN = PFX(costCoeffNxN_sse4);
 #endif
         // TODO: it is passed smoke test, but we need testbench to active it, so temporary disable
-        //p.costCoeffRemain = x265_costCoeffRemain_sse4;
+        p.costCoeffRemain = x265_costCoeffRemain_sse4;
     }
     if (cpuMask & X265_CPU_AVX)
     {

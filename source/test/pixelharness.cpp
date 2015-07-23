@@ -1698,6 +1698,37 @@ bool PixelHarness::check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt)
     }
     return true;
 }
+bool PixelHarness::check_costCoeffRemain(costCoeffRemain_t ref, costCoeffRemain_t opt)
+{
+    ALIGN_VAR_32(uint16_t, absCoeff[1 << MLS_CG_SIZE]);
+
+    for (int i = 0; i < (1 << MLS_CG_SIZE); i++)
+    {
+        absCoeff[i] = rand() & SHORT_MAX;
+        // more coeff with value one
+        if (absCoeff[i] < SHORT_MAX * 2 / 3)
+            absCoeff[i] = 1;
+    }
+    for (int i = 0; i < ITERS; i++)
+    {
+        uint32_t firstC2Idx = 0;
+        int k = 0;
+        int numNonZero = rand() % 17; //can be random, range[1, 16]
+        for (k = 0; k < C1FLAG_NUMBER; k++)
+        {
+            if (absCoeff[k] >= 2)
+            {
+                break;
+            }
+        }
+        firstC2Idx = k; // it is index of exact first coeff that value more than 2
+        int ref_sum = ref(absCoeff, numNonZero, firstC2Idx);
+        int opt_sum = (int)checked(opt, absCoeff, numNonZero, firstC2Idx);
+        if (ref_sum != opt_sum)
+            return false;
+    }
+    return true;
+}
 
 bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
@@ -2318,6 +2349,14 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
+    if (opt.costCoeffRemain)
+    {
+        if (!check_costCoeffRemain(ref.costCoeffRemain, opt.costCoeffRemain))
+        {
+            printf("costCoeffRemain failed!\n");
+            return false;
+        }
+    }
 
     return true;
 }
@@ -2780,5 +2819,13 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         memset(ctx, 120, sizeof(ctx));
 
         REPORT_SPEEDUP(opt.costCoeffNxN, ref.costCoeffNxN, g_scan4x4[SCAN_DIAG], coefBuf, 32, tmpOut, ctxSig, 0xFFFF, ctx, 1, 15, 32);
+    }
+    if (opt.costCoeffRemain)
+    {
+        HEADER0("costCoeffRemain");
+        uint16_t abscoefBuf[32 * 32];
+        memset(abscoefBuf, 0, sizeof(abscoefBuf));
+        memset(abscoefBuf + 32 * 31, 1, 32 * sizeof(uint16_t));
+        REPORT_SPEEDUP(opt.costCoeffRemain, ref.costCoeffRemain, abscoefBuf, 16, 3);
     }
 }

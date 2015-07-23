@@ -114,7 +114,7 @@ protected:
     bool check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt);
     bool check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLast_t opt);
     bool check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt);
-
+    bool check_costCoeffRemain(costCoeffRemain_t ref, costCoeffRemain_t opt);
 
 public:
 
