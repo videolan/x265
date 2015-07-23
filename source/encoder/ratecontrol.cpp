@@ -2151,25 +2151,6 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     FrameData& curEncData = *curFrame->m_encData;
     int64_t actualBits = bits;
     Slice *slice = curEncData.m_slice;
-    if (m_isAbr)
-    {
-        if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead)
-            checkAndResetABR(rce, true);
-
-        if (m_param->rc.rateControlMode == X265_RC_CRF)
-        {
-            if (int(curEncData.m_avgQpRc + 0.5) == slice->m_sliceQp)
-                curEncData.m_rateFactor = m_rateFactorConstant;
-            else
-            {
-                /* If vbv changed the frame QP recalculate the rate-factor */
-                double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
-                double mbtree_offset = m_param->rc.cuTree ? (1.0 - m_param->rc.qCompress) * 13.5 : 0;
-                curEncData.m_rateFactor = pow(baseCplx, 1 - m_qCompress) /
-                    x265_qp2qScale(int(curEncData.m_avgQpRc + 0.5) + mbtree_offset);
-            }
-        }
-    }
 
     if (m_param->rc.aqMode || m_isVbv)
     {
@@ -2193,6 +2174,26 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
         }
         else
             curEncData.m_avgQpAq = curEncData.m_avgQpRc;
+    }
+
+    if (m_isAbr)
+    {
+        if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead)
+            checkAndResetABR(rce, true);
+
+        if (m_param->rc.rateControlMode == X265_RC_CRF)
+        {
+            if (int(curEncData.m_avgQpRc + 0.5) == slice->m_sliceQp)
+                curEncData.m_rateFactor = m_rateFactorConstant;
+            else
+            {
+                /* If vbv changed the frame QP recalculate the rate-factor */
+                double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
+                double mbtree_offset = m_param->rc.cuTree ? (1.0 - m_param->rc.qCompress) * 13.5 : 0;
+                curEncData.m_rateFactor = pow(baseCplx, 1 - m_qCompress) /
+                    x265_qp2qScale(int(curEncData.m_avgQpRc + 0.5) + mbtree_offset);
+            }
+        }
     }
 
     // Write frame stats into the stats file if 2 pass is enabled.
