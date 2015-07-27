@@ -132,12 +132,14 @@ typedef struct x265_frame_stats
     double           avgLumaDistortion;
     double           avgChromaDistortion;
     double           avgPsyEnergy;
+    double           avgLumaLevel;
     uint64_t         bits;
     int              encoderOrder;
     int              poc;
     int              countRowBlocks;
     int              list0POC[16];
     int              list1POC[16];
+    uint16_t         maxLumaLevel;
     char             sliceType;
     x265_cu_stats    cuStats;
 } x265_frame_stats;

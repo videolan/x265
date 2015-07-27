@@ -1168,6 +1168,8 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
         frameStats->avgChromaDistortion     = curFrame->m_encData->m_frameStats.avgChromaDistortion;
         frameStats->avgLumaDistortion       = curFrame->m_encData->m_frameStats.avgLumaDistortion;
         frameStats->avgPsyEnergy            = curFrame->m_encData->m_frameStats.avgPsyEnergy;
+        frameStats->avgLumaLevel            = curFrame->m_encData->m_frameStats.avgLumaLevel;
+        frameStats->maxLumaLevel            = curFrame->m_encData->m_frameStats.maxLumaLevel;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
             frameStats->cuStats.percentSkipCu[depth]  = curFrame->m_encData->m_frameStats.percentSkipCu[depth];
