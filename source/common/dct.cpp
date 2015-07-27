@@ -612,7 +612,7 @@ static void idct32_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 static void dequant_normal_c(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift)
 {
 #if HIGH_BIT_DEPTH
-    X265_CHECK(scale < 32768 || ((scale & 3) == 0 && shift > 2), "dequant invalid scale %d\n", scale);
+    X265_CHECK(scale < 32768 || ((scale & 3) == 0 && shift > (X265_DEPTH - 8)), "dequant invalid scale %d\n", scale);
 #else
     // NOTE: maximum of scale is (72 * 256)
     X265_CHECK(scale < 32768, "dequant invalid scale %d\n", scale);
