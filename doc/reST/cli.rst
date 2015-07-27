@@ -1616,7 +1616,7 @@ VUI fields must be manually specified.
 	integers. The SEI includes X,Y display primaries for RGB channels,
 	white point X,Y and max,min luminance values. (HDR)
 
-	Example for P65D3 1000-nits:
+	Example for D65P3 1000-nits:
 
 		G(13200,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)
 
