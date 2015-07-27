@@ -1048,8 +1048,8 @@ cglobal dequant_normal, 5,5,7
 %if HIGH_BIT_DEPTH
     cmp             r3d, 32767
     jle            .skip
-    shr             r3d, 2
-    sub             r4d, 2
+    shr             r3d, (BIT_DEPTH - 8)
+    sub             r4d, (BIT_DEPTH - 8)
 .skip:
 %endif
     movd            xm0, r4d            ; m0 = shift

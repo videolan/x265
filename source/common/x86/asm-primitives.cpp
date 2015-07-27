@@ -1541,10 +1541,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         p.quant = PFX(quant_avx2);
         p.nquant = PFX(nquant_avx2);
-#if X265_DEPTH <= 10
         p.dequant_normal  = PFX(dequant_normal_avx2);
         p.dequant_scaling = PFX(dequant_scaling_avx2);
-#endif
         p.dst4x4 = PFX(dst4_avx2);
         p.idst4x4 = PFX(idst4_avx2);
         p.denoiseDct = PFX(denoise_dct_avx2);
