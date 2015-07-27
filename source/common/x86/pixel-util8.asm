@@ -1407,14 +1407,16 @@ cglobal weight_pp, 6,7,6
 %if HIGH_BIT_DEPTH
 INIT_YMM avx2
 cglobal weight_pp, 6, 7, 7
-    shl          r5d, 4            ; m0 = [w0<<4]
+%define correction      (14 - BIT_DEPTH)
     mov          r6d, r6m
-    shl          r6d, 16
-    or           r6d, r5d          ; assuming both (w0<<4) and round are using maximum of 16 bits each.
+    shl          r6d, 16 - correction
+    or           r6d, r5d          ; assuming both w0 and round are using maximum of 16 bits each.
 
     vpbroadcastd m0, r6d
 
-    movd         xm1, r7m
+    mov          r5d, r7m
+    sub          r5d, correction
+    movd         xm1, r5d
     vpbroadcastd m2, r8m
     mova         m5, [pw_1]
     mova         m6, [pw_pixel_max]
@@ -1453,6 +1455,7 @@ cglobal weight_pp, 6, 7, 7
 
     dec         r4d
     jnz         .loopH
+%undef correction
     RET
 %else
 INIT_YMM avx2
