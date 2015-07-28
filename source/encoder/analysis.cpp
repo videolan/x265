@@ -1106,7 +1106,8 @@ uint32_t Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& 
     /* Copy best data to encData CTU and recon */
     X265_CHECK(md.bestMode->ok(), "best mode is not ok");
     md.bestMode->cu.copyToPic(depth);
-    md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, cuAddr, cuGeom.absPartIdx);
+    if (m_param->rdLevel)
+        md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, cuAddr, cuGeom.absPartIdx);
 
     return refMask;
 }
