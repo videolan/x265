@@ -592,7 +592,6 @@ void FrameEncoder::compressFrame()
         m_frame->m_encData->m_frameStats.chromaDistortion += m_rows[i].rowStats.chromaDistortion;
         m_frame->m_encData->m_frameStats.psyEnergy        += m_rows[i].rowStats.psyEnergy;
         m_frame->m_encData->m_frameStats.lumaLevel        += m_rows[i].rowStats.lumaLevel;
-        m_frame->m_encData->m_frameStats.noOfPixels       += m_rows[i].rowStats.noOfPixels;
 
         if (m_rows[i].rowStats.maxLumaLevel > m_frame->m_encData->m_frameStats.maxLumaLevel)
             m_frame->m_encData->m_frameStats.maxLumaLevel = m_rows[i].rowStats.maxLumaLevel;
@@ -609,7 +608,7 @@ void FrameEncoder::compressFrame()
     m_frame->m_encData->m_frameStats.avgLumaDistortion   = (double)(m_frame->m_encData->m_frameStats.lumaDistortion / m_frame->m_encData->m_frameStats.totalCtu);
     m_frame->m_encData->m_frameStats.avgChromaDistortion = (double)(m_frame->m_encData->m_frameStats.chromaDistortion / m_frame->m_encData->m_frameStats.totalCtu);
     m_frame->m_encData->m_frameStats.avgPsyEnergy        = (double)(m_frame->m_encData->m_frameStats.psyEnergy / m_frame->m_encData->m_frameStats.totalCtu);
-    m_frame->m_encData->m_frameStats.avgLumaLevel        = (double)(m_frame->m_encData->m_frameStats.lumaLevel / m_frame->m_encData->m_frameStats.noOfPixels);
+    m_frame->m_encData->m_frameStats.avgLumaLevel        = (double)(m_frame->m_encData->m_frameStats.lumaLevel / m_frame->m_encData->m_frameStats.totalCtu);
     m_frame->m_encData->m_frameStats.percentIntraNxN     = (double)(m_frame->m_encData->m_frameStats.cntIntraNxN * 100) / m_frame->m_encData->m_frameStats.totalCu;
     for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
     {
@@ -989,13 +988,16 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             for (int n = 0; n < INTRA_MODES; n++)
                 curRow.rowStats.cuIntraDistribution[depth][n] += frameLog.cuIntraDistribution[depth][n];
         }
+        uint64_t ctuLumaLevel = 0;
+        uint64_t ctuNoOfPixels = 0;
         for (uint32_t i = 0; i < (best.reconYuv.m_size * best.reconYuv.m_size); i++)
         {
-            curRow.rowStats.lumaLevel += *(best.reconYuv.m_buf[0] + i);
-            curRow.rowStats.noOfPixels++;
+            ctuLumaLevel += *(best.reconYuv.m_buf[0] + i);
+            ctuNoOfPixels++;
             if ((*(best.reconYuv.m_buf[0] + i)) > curRow.rowStats.maxLumaLevel)
                 curRow.rowStats.maxLumaLevel = *(best.reconYuv.m_buf[0] + i);
         }
+        curRow.rowStats.lumaLevel += (double)(ctuLumaLevel / ctuNoOfPixels);
 
         curEncData.m_cuStat[cuAddr].totalBits = best.totalBits;
         x265_emms();
