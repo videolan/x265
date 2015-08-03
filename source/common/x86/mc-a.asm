@@ -4300,23 +4300,11 @@ AVGH  4, 16
 AVGH  4,  8
 AVGH  4,  4
 AVGH  4,  2
+
 INIT_XMM avx2
 ; TODO: active AVX2 after debug
 ;AVG_FUNC 24, movdqu, movdqa
 ;AVGH 24, 32
-
-AVG_FUNC 64, movdqu, movdqa
-AVGH 64, 64
-AVGH 64, 48
-AVGH 64, 32
-AVGH 64, 16
-
-AVG_FUNC 32, movdqu, movdqa
-AVGH 32, 64
-AVGH 32, 32
-AVGH 32, 24
-AVGH 32, 16
-AVGH 32, 8
 
 AVG_FUNC 16, movdqu, movdqa
 AVGH 16, 64
@@ -4328,7 +4316,109 @@ AVGH 16, 4
 
 %endif ;HIGH_BIT_DEPTH
 
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64 && BIT_DEPTH == 8
+INIT_YMM avx2
+cglobal pixel_avg_8x32
+%rep 4
+    movu        m0, [r2]
+    movu        m2, [r2 + r3]
+    movu        m1, [r4]
+    movu        m3, [r4 + r5]
+    pavgb       m0, m1
+    pavgb       m2, m3
+    movu        [r0], m0
+    movu        [r0 + r1], m2
 
+    lea         r2, [r2 + r3 * 2]
+    lea         r4, [r4 + r5 * 2]
+    lea         r0, [r0 + r1 * 2]
+%endrep
+    ret
+
+cglobal pixel_avg_16x64_8bit
+%rep 8
+    movu        m0, [r2]
+    movu        m2, [r2 + mmsize]
+    movu        m1, [r4]
+    movu        m3, [r4 + mmsize]
+    pavgb       m0, m1
+    pavgb       m2, m3
+    movu        [r0], m0
+    movu        [r0 + mmsize], m2
+
+    movu        m0, [r2 + r3]
+    movu        m2, [r2 + r3 + mmsize]
+    movu        m1, [r4 + r5]
+    movu        m3, [r4 + r5 + mmsize]
+    pavgb       m0, m1
+    pavgb       m2, m3
+    movu        [r0 + r1], m0
+    movu        [r0 + r1 + mmsize], m2
+
+    lea         r2, [r2 + r3 * 2]
+    lea         r4, [r4 + r5 * 2]
+    lea         r0, [r0 + r1 * 2]
+%endrep
+    ret
+
+cglobal pixel_avg_32x8, 6,6,4
+    call pixel_avg_8x32
+    RET
+
+cglobal pixel_avg_32x16, 6,6,4
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    RET
+
+cglobal pixel_avg_32x24, 6,6,4
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    RET
+
+cglobal pixel_avg_32x32, 6,6,4
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    RET
+
+cglobal pixel_avg_32x64, 6,6,4
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    call pixel_avg_8x32
+    RET
+
+cglobal pixel_avg_64x16, 6,6,4
+    call pixel_avg_16x64_8bit
+    RET
+
+cglobal pixel_avg_64x32, 6,6,4
+    call pixel_avg_16x64_8bit
+    call pixel_avg_16x64_8bit
+    RET
+
+cglobal pixel_avg_64x48, 6,6,4
+    call pixel_avg_16x64_8bit
+    call pixel_avg_16x64_8bit
+    call pixel_avg_16x64_8bit
+    RET
+
+cglobal pixel_avg_64x64, 6,6,4
+    call pixel_avg_16x64_8bit
+    call pixel_avg_16x64_8bit
+    call pixel_avg_16x64_8bit
+    call pixel_avg_16x64_8bit
+    RET
+%endif
 
 ;=============================================================================
 ; pixel avg2
