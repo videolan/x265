@@ -1431,6 +1431,7 @@ char *x265_param2string(x265_param* p)
     BOOL(p->bEnableWeightedPred, "weightp");
     BOOL(p->bEnableWeightedBiPred, "weightb");
     s += sprintf(s, " aq-mode=%d", p->rc.aqMode);
+    s += sprintf(s, " qg-size=%d", p->rc.qgSize);
     s += sprintf(s, " aq-strength=%.2f", p->rc.aqStrength);
     s += sprintf(s, " cbqpoffs=%d", p->cbQpOffset);
     s += sprintf(s, " crqpoffs=%d", p->crQpOffset);
