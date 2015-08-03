@@ -1583,6 +1583,7 @@ VUI fields must be manually specified.
 	15. bt2020-12
 	16. smpte-st-2084
 	17. smpte-st-428
+	18. std-b67
 
 .. option:: --colormatrix <integer|string>
 

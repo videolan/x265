@@ -1114,7 +1114,7 @@ int x265_check_params(x265_param* param)
           "Color Primaries must be undef, bt709, bt470m,"
           " bt470bg, smpte170m, smpte240m, film or bt2020");
     CHECK(param->vui.transferCharacteristics < 0
-          || param->vui.transferCharacteristics > 17
+          || param->vui.transferCharacteristics > 18
           || param->vui.transferCharacteristics == 3,
           "Transfer Characteristics must be undef, bt709, bt470m, bt470bg,"
           " smpte170m, smpte240m, linear, log100, log316, iec61966-2-4, bt1361e,"
