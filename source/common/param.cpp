@@ -206,6 +206,7 @@ void x265_param_default(x265_param* param)
     param->rc.rateControlMode = X265_RC_CRF;
     param->rc.qp = 32;
     param->rc.aqMode = X265_AQ_VARIANCE;
+    param->rc.qgSize = 32;
     param->rc.aqStrength = 1.0;
     param->rc.cuTree = 1;
     param->rc.rfConstantMax = 0;
@@ -219,7 +220,6 @@ void x265_param_default(x265_param* param)
     param->rc.zones = NULL;
     param->rc.bEnableSlowFirstPass = 0;
     param->rc.bStrictCbr = 0;
-    param->rc.qgSize = 64; /* Same as maxCUSize */
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
