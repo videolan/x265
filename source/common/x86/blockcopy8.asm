@@ -3043,43 +3043,31 @@ BLOCKCOPY_PS_W32_H2 32, 48
 ;-----------------------------------------------------------------------------
 %macro BLOCKCOPY_PS_W32_H4_avx2 2
 INIT_YMM avx2
-cglobal blockcopy_ps_%1x%2, 4, 7, 3
+cglobal blockcopy_ps_%1x%2, 4, 7, 2
     add     r1, r1
     mov     r4d, %2/4
     lea     r5, [3 * r3]
     lea     r6, [3 * r1]
-    pxor    m0, m0
-
 .loop:
-    movu          m1, [r2]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0], m3
-    movu          [r0 + 32], m2
-    movu          m1, [r2 + r3]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0 + r1], m3
-    movu          [r0 + r1 + 32], m2
-    movu          m1, [r2 + 2 * r3]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0 + 2 * r1], m3
-    movu          [r0 + 2 * r1 + 32], m2
-    movu          m1, [r2 + r5]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0 + r6], m3
-    movu          [r0 + r6 + 32], m2
+    pmovzxbw      m0, [r2 +  0]
+    pmovzxbw      m1, [r2 + 16]
+    movu          [r0 +  0], m0
+    movu          [r0 + 32], m1
 
+    pmovzxbw      m0, [r2 + r3 +  0]
+    pmovzxbw      m1, [r2 + r3 + 16]
+    movu          [r0 + r1 +  0], m0
+    movu          [r0 + r1 + 32], m1
+
+    pmovzxbw      m0, [r2 + r3 * 2 +  0]
+    pmovzxbw      m1, [r2 + r3 * 2 + 16]
+    movu          [r0 + r1 * 2 +  0], m0
+    movu          [r0 + r1 * 2 + 32], m1
+
+    pmovzxbw      m0, [r2 + r5 +  0]
+    pmovzxbw      m1, [r2 + r5 + 16]
+    movu          [r0 + r6 +  0], m0
+    movu          [r0 + r6 + 32], m1
     lea           r0, [r0 + 4 * r1]
     lea           r2, [r2 + 4 * r3]
     dec           r4d
@@ -3228,71 +3216,49 @@ BLOCKCOPY_PS_W64_H2 64, 64
 INIT_YMM avx2
 cglobal blockcopy_ps_64x64, 4, 7, 4
     add     r1, r1
-    mov     r4d, 64/4
+    mov     r4d, 64/8
     lea     r5, [3 * r3]
     lea     r6, [3 * r1]
-    pxor    m0, m0
-
 .loop:
-    movu          m1, [r2]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0], m3
-    movu          [r0 + 32], m2
-    movu          m1, [r2 + 32]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0 + 64], m3
-    movu          [r0 + 96], m2
-    movu          m1, [r2 + r3]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0 + r1], m3
-    movu          [r0 + r1 + 32], m2
-    movu          m1, [r2 + r3 + 32]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0 + r1 + 64], m3
-    movu          [r0 + r1 + 96], m2
-    movu          m1, [r2 + 2 * r3]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0 + 2 * r1], m3
-    movu          [r0 + 2 * r1 + 32], m2
-    movu          m1, [r2 + 2 * r3 + 32]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0 + 2 * r1 + 64], m3
-    movu          [r0 + 2 * r1 + 96], m2
-    movu          m1, [r2 + r5]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0 + r6], m3
-    movu          [r0 + r6 + 32], m2
-    movu          m1, [r2 + r5 + 32]
-    punpcklbw     m2, m1, m0
-    punpckhbw     m1, m1, m0
-    vperm2i128    m3, m2, m1, 00100000b
-    vperm2i128    m2, m2, m1, 00110001b
-    movu          [r0 + r6 + 64], m3
-    movu          [r0 + r6 + 96], m2
+%rep 2
+    pmovzxbw      m0, [r2 +  0]
+    pmovzxbw      m1, [r2 + 16]
+    pmovzxbw      m2, [r2 + 32]
+    pmovzxbw      m3, [r2 + 48]
+    movu          [r0 +  0], m0
+    movu          [r0 + 32], m1
+    movu          [r0 + 64], m2
+    movu          [r0 + 96], m3
 
+    pmovzxbw      m0, [r2 + r3 +  0]
+    pmovzxbw      m1, [r2 + r3 + 16]
+    pmovzxbw      m2, [r2 + r3 + 32]
+    pmovzxbw      m3, [r2 + r3 + 48]
+    movu          [r0 + r1 +  0], m0
+    movu          [r0 + r1 + 32], m1
+    movu          [r0 + r1 + 64], m2
+    movu          [r0 + r1 + 96], m3
+
+    pmovzxbw      m0, [r2 + r3 * 2 +  0]
+    pmovzxbw      m1, [r2 + r3 * 2 + 16]
+    pmovzxbw      m2, [r2 + r3 * 2 + 32]
+    pmovzxbw      m3, [r2 + r3 * 2 + 48]
+    movu          [r0 + r1 * 2 +  0], m0
+    movu          [r0 + r1 * 2 + 32], m1
+    movu          [r0 + r1 * 2 + 64], m2
+    movu          [r0 + r1 * 2 + 96], m3
+
+    pmovzxbw      m0, [r2 + r5 +  0]
+    pmovzxbw      m1, [r2 + r5 + 16]
+    pmovzxbw      m2, [r2 + r5 + 32]
+    pmovzxbw      m3, [r2 + r5 + 48]
+    movu          [r0 + r6 +  0], m0
+    movu          [r0 + r6 + 32], m1
+    movu          [r0 + r6 + 64], m2
+    movu          [r0 + r6 + 96], m3
     lea           r0, [r0 + 4 * r1]
     lea           r2, [r2 + 4 * r3]
+%endrep
     dec           r4d
     jnz           .loop
     RET

@@ -3622,6 +3622,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         if (cpuMask & X265_CPU_BMI2)
             p.scanPosLast = PFX(scanPosLast_avx2_bmi2);
 
+        p.cu[BLOCK_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx2);
+        p.chroma[X265_CSP_I420].cu[CHROMA_420_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx2);
+        p.chroma[X265_CSP_I422].cu[CHROMA_422_32x64].copy_ps = PFX(blockcopy_ps_32x64_avx2);
+        p.cu[BLOCK_64x64].copy_ps = PFX(blockcopy_ps_64x64_avx2);
+
         /* The following primitives have been disabled since performance compared to SSE is negligible/negative */
 #if 0
         p.pu[LUMA_8x4].addAvg = PFX(addAvg_8x4_avx2);
@@ -3652,10 +3657,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_16x16].copy_sp = PFX(blockcopy_sp_16x16_avx2);
         p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].copy_sp = PFX(blockcopy_sp_16x16_avx2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].copy_sp = PFX(blockcopy_sp_16x32_avx2);
-        p.cu[BLOCK_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx2);
-        p.chroma[X265_CSP_I420].cu[CHROMA_420_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx2);
-        p.chroma[X265_CSP_I422].cu[CHROMA_422_32x64].copy_ps = PFX(blockcopy_ps_32x64_avx2);
-        p.cu[BLOCK_64x64].copy_ps = PFX(blockcopy_ps_64x64_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x8].filter_hpp = PFX(interp_4tap_horiz_pp_4x8_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x16].filter_hpp = PFX(interp_4tap_horiz_pp_4x16_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].filter_vpp = PFX(interp_4tap_vert_pp_16x4_avx2);
