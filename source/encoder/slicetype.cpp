@@ -96,6 +96,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
     int maxRow = curFrame->m_fencPic->m_picHeight;
     int blockCount = curFrame->m_lowres.maxBlocksInRow * curFrame->m_lowres.maxBlocksInCol;
 
+    float* quantOffsets = curFrame->m_quantOffsets;
     for (int y = 0; y < 3; y++)
     {
         curFrame->m_lowres.wp_ssd[y] = 0;
@@ -113,10 +114,21 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
 
         if (param->rc.aqMode && param->rc.aqStrength == 0)
         {
-            memset(curFrame->m_lowres.qpCuTreeOffset, 0, cuCount * sizeof(double));
-            memset(curFrame->m_lowres.qpAqOffset, 0, cuCount * sizeof(double));
-            for (int cuxy = 0; cuxy < cuCount; cuxy++)
-                curFrame->m_lowres.invQscaleFactor[cuxy] = 256;
+            if (quantOffsets)
+            {
+                for (int cuxy = 0; cuxy < cuCount; cuxy++)
+                {
+                    curFrame->m_lowres.qpCuTreeOffset[cuxy] = curFrame->m_lowres.qpAqOffset[cuxy] = quantOffsets[cuxy];
+                    curFrame->m_lowres.invQscaleFactor[cuxy] = x265_exp2fix8(curFrame->m_lowres.qpCuTreeOffset[cuxy]);
+                }
+            }
+            else
+            {
+                memset(curFrame->m_lowres.qpCuTreeOffset, 0, cuCount * sizeof(double));
+                memset(curFrame->m_lowres.qpAqOffset, 0, cuCount * sizeof(double));
+                for (int cuxy = 0; cuxy < cuCount; cuxy++)
+                    curFrame->m_lowres.invQscaleFactor[cuxy] = 256;
+            }
         }
 
         /* Need variance data for weighted prediction */
@@ -177,6 +189,8 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                     uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp);
                     qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (14.427f + 2 * (X265_DEPTH - 8)));
                 }
+                if (quantOffsets != NULL)
+                    qp_adj += quantOffsets[blockXY];
                 curFrame->m_lowres.qpAqOffset[blockXY] = qp_adj;
                 curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
                 curFrame->m_lowres.invQscaleFactor[blockXY] = x265_exp2fix8(qp_adj);

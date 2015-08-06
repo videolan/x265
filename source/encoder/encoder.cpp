@@ -407,6 +407,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         }
 
         Frame *inFrame;
+        int cuCount;
         if (m_dpb->m_freeList.empty())
         {
             inFrame = new Frame;
@@ -441,6 +442,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                         m_buOffsetY = inFrame->m_fencPic->m_buOffsetY;
                     }
                 }
+                if (pic_in->quantOffsets != NULL)
+                {
+                    cuCount = inFrame->m_lowres.maxBlocksInRow * inFrame->m_lowres.maxBlocksInCol;
+                    inFrame->m_quantOffsets = new float[cuCount];
+                }
             }
             else
             {
@@ -465,6 +471,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_pts       = pic_in->pts;
         inFrame->m_forceqp   = pic_in->forceqp;
         inFrame->m_param     = m_reconfigured ? m_latestParam : m_param;
+        if (pic_in->quantOffsets != NULL)
+            memcpy(inFrame->m_quantOffsets, pic_in->quantOffsets, cuCount * sizeof(float));
 
         if (m_pocLast == 0)
             m_firstPts = inFrame->m_pts;
