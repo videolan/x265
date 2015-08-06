@@ -988,16 +988,17 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             for (int n = 0; n < INTRA_MODES; n++)
                 curRow.rowStats.cuIntraDistribution[depth][n] += frameLog.cuIntraDistribution[depth][n];
         }
-        uint64_t ctuLumaLevel = 0;
-        uint64_t ctuNoOfPixels = 0;
-        for (uint32_t i = 0; i < (best.reconYuv.m_size * best.reconYuv.m_size); i++)
+
+        /* calculate maximum and average luma levels */
+        uint32_t ctuLumaLevel = 0;
+        uint32_t ctuNoOfPixels = best.fencYuv->m_size * best.fencYuv->m_size;
+        for (uint32_t i = 0; i < ctuNoOfPixels; i++)
         {
-            ctuLumaLevel += *(best.reconYuv.m_buf[0] + i);
-            ctuNoOfPixels++;
-            if ((*(best.reconYuv.m_buf[0] + i)) > curRow.rowStats.maxLumaLevel)
-                curRow.rowStats.maxLumaLevel = *(best.reconYuv.m_buf[0] + i);
+            pixel p = best.fencYuv->m_buf[0][i];
+            ctuLumaLevel += p;
+            curRow.rowStats.maxLumaLevel = X265_MAX(p, curRow.rowStats.maxLumaLevel);
         }
-        curRow.rowStats.lumaLevel += (double)(ctuLumaLevel / ctuNoOfPixels);
+        curRow.rowStats.lumaLevel += (double)(ctuLumaLevel) / ctuNoOfPixels;
 
         curEncData.m_cuStat[cuAddr].totalBits = best.totalBits;
         x265_emms();
