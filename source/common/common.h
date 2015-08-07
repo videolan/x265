@@ -134,6 +134,12 @@ typedef uint32_t pixel4;
 typedef int32_t  ssum2_t; // Signed sum
 #endif // if HIGH_BIT_DEPTH
 
+#if X265_DEPTH <= 10
+typedef uint32_t sse_ret_t;
+#else
+typedef uint64_t sse_ret_t;
+#endif
+
 #ifndef NULL
 #define NULL 0
 #endif

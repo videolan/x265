@@ -94,7 +94,7 @@ bool PixelHarness::check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt)
     return true;
 }
 
-bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
+bool PixelHarness::check_pixel_sse(pixel_sse_t ref, pixel_sse_t opt)
 {
     int j = 0;
     intptr_t stride = STRIDE;
@@ -103,8 +103,29 @@ bool PixelHarness::check_pixelcmp_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt)
     {
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        int vres = (int)checked(opt, short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
-        int cres = ref(short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
+        sse_ret_t vres = (sse_ret_t)checked(opt, pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
+        sse_ret_t cres = ref(pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
+        if (vres != cres)
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_pixel_sse_ss(pixel_sse_ss_t ref, pixel_sse_ss_t opt)
+{
+    int j = 0;
+    intptr_t stride = STRIDE;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index1 = rand() % TEST_CASES;
+        int index2 = rand() % TEST_CASES;
+        sse_ret_t vres = (sse_ret_t)checked(opt, short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
+        sse_ret_t cres = ref(short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
         if (vres != cres)
             return false;
 
@@ -1799,7 +1820,7 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
     {
         if (opt.cu[part].sse_pp)
         {
-            if (!check_pixelcmp(ref.cu[part].sse_pp, opt.cu[part].sse_pp))
+            if (!check_pixel_sse(ref.cu[part].sse_pp, opt.cu[part].sse_pp))
             {
                 printf("sse_pp[%s]: failed!\n", lumaPartStr[part]);
                 return false;
@@ -1808,7 +1829,7 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
 
         if (opt.cu[part].sse_ss)
         {
-            if (!check_pixelcmp_ss(ref.cu[part].sse_ss, opt.cu[part].sse_ss))
+            if (!check_pixel_sse_ss(ref.cu[part].sse_ss, opt.cu[part].sse_ss))
             {
                 printf("sse_ss[%s]: failed!\n", lumaPartStr[part]);
                 return false;
@@ -1891,7 +1912,7 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
         {
             if (opt.chroma[i].cu[part].sse_pp)
             {
-                if (!check_pixelcmp(ref.chroma[i].cu[part].sse_pp, opt.chroma[i].cu[part].sse_pp))
+                if (!check_pixel_sse(ref.chroma[i].cu[part].sse_pp, opt.chroma[i].cu[part].sse_pp))
                 {
                     printf("chroma_sse_pp[%s][%s]: failed!\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                     return false;

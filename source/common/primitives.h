@@ -112,6 +112,8 @@ enum ChromaCU422
 
 typedef int  (*pixelcmp_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
 typedef int  (*pixelcmp_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
+typedef sse_ret_t (*pixel_sse_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
+typedef sse_ret_t (*pixel_sse_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
 typedef int  (*pixel_ssd_s_t)(const int16_t* fenc, intptr_t fencstride);
 typedef void (*pixelcmp_x4_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, const pixel* fref3, intptr_t frefstride, int32_t* res);
 typedef void (*pixelcmp_x3_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, intptr_t frefstride, int32_t* res);
@@ -253,8 +255,9 @@ struct EncoderPrimitives
         copy_pp_t       copy_pp;       // alias to pu[].copy_pp
 
         var_t           var;           // block internal variance
-        pixelcmp_t      sse_pp;        // Sum of Square Error (pixel, pixel) fenc alignment not assumed
-        pixelcmp_ss_t   sse_ss;        // Sum of Square Error (short, short) fenc alignment not assumed
+
+        pixel_sse_t     sse_pp;        // Sum of Square Error (pixel, pixel) fenc alignment not assumed
+        pixel_sse_ss_t  sse_ss;        // Sum of Square Error (short, short) fenc alignment not assumed
         pixelcmp_t      psy_cost_pp;   // difference in AC energy between two pixel blocks
         pixelcmp_ss_t   psy_cost_ss;   // difference in AC energy between two signed residual blocks
         pixel_ssd_s_t   ssd_s;         // Sum of Square Error (residual coeff to self)
@@ -358,7 +361,7 @@ struct EncoderPrimitives
         struct CUChroma
         {
             pixelcmp_t     sa8d;    // if chroma CU is not multiple of 8x8, will use satd
-            pixelcmp_t     sse_pp;
+            pixel_sse_t    sse_pp;
             pixel_sub_ps_t sub_ps;
             pixel_add_ps_t add_ps;
 

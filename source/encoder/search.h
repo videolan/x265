@@ -109,9 +109,9 @@ struct Mode
     uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
     uint32_t   sa8dBits;   // signal bits used in sa8dCost calculation
     uint32_t   psyEnergy;  // sum of partition psycho-visual energy difference
-    uint32_t   lumaDistortion;
-    uint32_t   chromaDistortion;
-    uint32_t   distortion; // sum of partition SSE distortion
+    sse_ret_t  lumaDistortion;
+    sse_ret_t  chromaDistortion;
+    sse_ret_t  distortion; // sum of partition SSE distortion
     uint32_t   totalBits;  // sum of partition bits (mv + coeff)
     uint32_t   mvBits;     // Mv bits + Ref + block type (or intra mode)
     uint32_t   coeffBits;  // Texture bits (DCT Coeffs)
@@ -137,9 +137,15 @@ struct Mode
         sa8dCost = UINT64_MAX / 2;
         sa8dBits = MAX_UINT / 2;
         psyEnergy = MAX_UINT / 2;
+#if X265_DEPTH <= 10
         lumaDistortion = MAX_UINT / 2;
         chromaDistortion = MAX_UINT / 2;
         distortion = MAX_UINT / 2;
+#else
+        lumaDistortion = UINT64_MAX / 2;
+        chromaDistortion = UINT64_MAX / 2;
+        distortion = UINT64_MAX / 2;
+#endif
         totalBits = MAX_UINT / 2;
         mvBits = MAX_UINT / 2;
         coeffBits = MAX_UINT / 2;
@@ -147,16 +153,29 @@ struct Mode
 
     bool ok() const
     {
+#if X265_DEPTH <= 10
+        return !(rdCost >= UINT64_MAX / 2 ||
+            sa8dCost >= UINT64_MAX / 2 ||
+            sa8dBits >= MAX_UINT / 2 ||
+            psyEnergy >= MAX_UINT / 2 ||
+            lumaDistortion >= MAX_UINT / 2 ||
+            chromaDistortion >= MAX_UINT / 2 ||
+            distortion >= MAX_UINT / 2 ||
+            totalBits >= MAX_UINT / 2 ||
+            mvBits >= MAX_UINT / 2 ||
+            coeffBits >= MAX_UINT / 2);
+#else
         return !(rdCost >= UINT64_MAX / 2 ||
                  sa8dCost >= UINT64_MAX / 2 ||
                  sa8dBits >= MAX_UINT / 2 ||
                  psyEnergy >= MAX_UINT / 2 ||
-                 lumaDistortion >= MAX_UINT / 2 ||
-                 chromaDistortion >= MAX_UINT / 2 ||
-                 distortion >= MAX_UINT / 2 ||
+                 lumaDistortion >= UINT64_MAX / 2 ||
+                 chromaDistortion >= UINT64_MAX / 2 ||
+                 distortion >= UINT64_MAX / 2 ||
                  totalBits >= MAX_UINT / 2 ||
                  mvBits >= MAX_UINT / 2 ||
                  coeffBits >= MAX_UINT / 2);
+#endif
     }
 
     void addSubCosts(const Mode& subMode)

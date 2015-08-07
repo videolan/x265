@@ -998,13 +998,15 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_4x4].intra_pred[32] = PFX(intra_pred_ang4_32_sse2);
         p.cu[BLOCK_4x4].intra_pred[33] = PFX(intra_pred_ang4_33_sse2);
 
+#if X265_DEPTH <= 10
         p.cu[BLOCK_4x4].sse_ss = PFX(pixel_ssd_ss_4x4_mmx2);
         ALL_LUMA_CU(sse_ss, pixel_ssd_ss, sse2);
 
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sse_pp = (pixelcmp_t)PFX(pixel_ssd_ss_4x8_mmx2);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sse_pp = (pixelcmp_t)PFX(pixel_ssd_ss_8x16_sse2);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sse_pp = (pixelcmp_t)PFX(pixel_ssd_ss_16x32_sse2);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = (pixelcmp_t)PFX(pixel_ssd_ss_32x64_sse2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_4x8_mmx2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_8x16_sse2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_16x32_sse2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_32x64_sse2);
+#endif
 
         p.cu[BLOCK_4x4].dct = PFX(dct4_sse2);
         p.cu[BLOCK_8x8].dct = PFX(dct8_sse2);
@@ -1527,6 +1529,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_16x16].ssd_s = PFX(pixel_ssd_s_16_avx2);
         p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx2);
 
+#if X265_DEPTH <= 10
         p.cu[BLOCK_16x16].sse_ss = PFX(pixel_ssd_ss_16x16_avx2);
         p.cu[BLOCK_32x32].sse_ss = PFX(pixel_ssd_ss_32x32_avx2);
         p.cu[BLOCK_64x64].sse_ss = PFX(pixel_ssd_ss_64x64_avx2);
@@ -1536,8 +1539,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_64x64].sse_pp = PFX(pixel_ssd_64x64_avx2);
         p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sse_pp = PFX(pixel_ssd_16x16_avx2);
         p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = PFX(pixel_ssd_32x32_avx2);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sse_pp = (pixelcmp_t)PFX(pixel_ssd_ss_16x32_avx2);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = (pixelcmp_t)PFX(pixel_ssd_ss_32x64_avx2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_16x32_avx2);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_32x64_avx2);
+#endif
 
         p.quant = PFX(quant_avx2);
         p.nquant = PFX(nquant_avx2);

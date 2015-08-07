@@ -3436,7 +3436,7 @@ void Search::checkDQP(Mode& mode, const CUGeom& cuGeom)
             else if (m_param->rdLevel <= 1)
             {
                 mode.sa8dBits++;
-                mode.sa8dCost = m_rdCost.calcRdSADCost(mode.distortion, mode.sa8dBits);
+                mode.sa8dCost = m_rdCost.calcRdSADCost((uint32_t)mode.distortion, mode.sa8dBits);
             }
             else
             {
@@ -3481,7 +3481,7 @@ void Search::checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom)
             else if (m_param->rdLevel <= 1)
             {
                 mode.sa8dBits++;
-                mode.sa8dCost = m_rdCost.calcRdSADCost(mode.distortion, mode.sa8dBits);
+                mode.sa8dCost = m_rdCost.calcRdSADCost((uint32_t)mode.distortion, mode.sa8dBits);
             }
             else
             {
