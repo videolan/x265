@@ -13722,6 +13722,7 @@ cglobal intra_pred_ang16_11, 3, 5, 12
     INTRA_PRED_TRANS_STORE_16x16
     RET
 
+
 ; transpose 8x32 to 16x16, used for intra_ang16x16 avx2 asm
 %if ARCH_X86_64 == 1
 INIT_YMM avx2
@@ -13773,21 +13774,21 @@ INIT_YMM avx2
     movu            [r0 + r1 * 2], xm%2
     movu            [r0 + r5 * 1], xm%11
 
-    lea             r0, [r0 + r6]
+    add             r0, r6
 
     movu            [r0 + r1 * 0], xm%7
     movu            [r0 + r1 * 1], xm%8
     movu            [r0 + r1 * 2], xm%4
     movu            [r0 + r5 * 1], xm%9
 
-    lea             r0, [r0 + r6]
+    add             r0, r6
 
     vextracti128    [r0 + r1 * 0], m%5, 1
     vextracti128    [r0 + r1 * 1], m%6, 1
     vextracti128    [r0 + r1 * 2], m%2, 1
     vextracti128    [r0 + r5 * 1], m%11, 1
 
-    lea             r0, [r0 + r6]
+    add             r0, r6
 
     vextracti128    [r0 + r1 * 0], m%7, 1
     vextracti128    [r0 + r1 * 1], m%8, 1
@@ -13810,21 +13811,21 @@ INIT_YMM avx2
     movu            [r0 + r1 * 2], xm%3
     movu            [r0 + r5 * 1], xm%4
 
-    lea             r0, [r0 + r6]
+    add             r0, r6
 
     movu            [r0 + r1 * 0], xm%5
     movu            [r0 + r1 * 1], xm%6
     movu            [r0 + r1 * 2], xm%7
     movu            [r0 + r5 * 1], xm%8
 
-    lea             r0, [r0 + r6]
+    add             r0, r6
 
     vextracti128    [r0 + r1 * 0], m%1, 1
     vextracti128    [r0 + r1 * 1], m%2, 1
     vextracti128    [r0 + r1 * 2], m%3, 1
     vextracti128    [r0 + r5 * 1], m%4, 1
 
-    lea             r0, [r0 + r6]
+    add             r0, r6
 
     vextracti128    [r0 + r1 * 0], m%5, 1
     vextracti128    [r0 + r1 * 1], m%6, 1
