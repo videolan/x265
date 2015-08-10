@@ -541,6 +541,9 @@ c_ang8_mode_20:       db 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11,
                       db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2
                       db 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24
 
+const angHor_tab_11, db (32-30), 30, (32-28), 28, (32-26), 26, (32-24), 24, (32-22), 22, (32-20), 20, (32-18), 18, (32-16), 16
+                     db (32-14), 14, (32-12), 12, (32-10), 10, (32- 8),  8, (32- 6),  6, (32- 4),  4, (32- 2),  2, (32- 0),  0
+
 const ang_table
 %assign x 0
 %rep 32
@@ -13691,36 +13694,129 @@ cglobal intra_pred_ang16_13, 3, 6, 14
     INTRA_PRED_TRANS_STORE_16x16
     RET
 
+
 INIT_YMM avx2
-cglobal intra_pred_ang16_11, 3, 5, 12
-    mova              m11, [pw_1024]
+cglobal intra_pred_ang16_11, 3,4,5
+    mova                m0, [angHor_tab_11]
+    mova                m1, [pw_1024]
+    lea                 r3, [r1 * 3]
 
-    movu              xm9, [r2 + 32]
-    pinsrb            xm9, [r2], 0
-    pshufb            xm9, [intra_pred_shuff_0_8]
-    vinserti128       m9, m9, xm9, 1
+    ; prepare for [0 -1 -2 ...]
+    movu               xm2, [r2 + 32]
+    ; TODO: input reference pixel buffer need a duplicate of pixel_lt to avoid reduce instruction in every mode
+    pinsrb             xm2, [r2], 0
+    pshufb             xm2, [intra_pred_shuff_0_8]      ; [0 1 1 2 2 3 3 4 4 5 5 6 6 7 7 8]
 
-    vbroadcasti128    m10, [r2 + 8 + 32]
-    pshufb            m10, [intra_pred_shuff_0_8]
 
-    lea               r3, [3 * r1]
-    lea               r4, [c_ang16_mode_11]
+    vpbroadcastw        m3, xm2                         ; word [1 0]
+    psrldq             xm2, 2
+    vpbroadcastw        m4, xm2                         ; word [2 1]
+    psrldq             xm2, 2
+    pmaddubsw           m3, m0
+    pmaddubsw           m4, m0
+    pmulhrsw            m3, m1
+    pmulhrsw            m4, m1
+    packuswb            m3, m4
+    vpermq              m3, m3, q3120
+    movu                [r0], xm3
+    vextracti128        [r0 + r1], m3, 1
 
-    INTRA_PRED_ANG16_CAL_ROW m0, m1, 0
-    INTRA_PRED_ANG16_CAL_ROW m1, m2, 1
-    INTRA_PRED_ANG16_CAL_ROW m2, m3, 2
-    INTRA_PRED_ANG16_CAL_ROW m3, m4, 3
+    vpbroadcastw        m3, xm2                         ; word [3 2]
+    psrldq             xm2, 2
+    vpbroadcastw        m4, xm2                         ; word [4 3]
+    psrldq             xm2, 2
+    pmaddubsw           m3, m0
+    pmaddubsw           m4, m0
+    pmulhrsw            m3, m1
+    pmulhrsw            m4, m1
+    packuswb            m3, m4
+    vpermq              m3, m3, q3120
+    movu                [r0 + r1 * 2], xm3
+    vextracti128        [r0 + r3], m3, 1
+    lea                 r0, [r0 + r1 * 4]
 
-    add               r4, 4 * mmsize
+    vpbroadcastw        m3, xm2                         ; word [5 4]
+    psrldq             xm2, 2
+    vpbroadcastw        m4, xm2                         ; word [6 5]
+    psrldq             xm2, 2
+    pmaddubsw           m3, m0
+    pmaddubsw           m4, m0
+    pmulhrsw            m3, m1
+    pmulhrsw            m4, m1
+    packuswb            m3, m4
+    vpermq              m3, m3, q3120
+    movu                [r0], xm3
+    vextracti128        [r0 + r1], m3, 1
 
-    INTRA_PRED_ANG16_CAL_ROW m4, m5, 0
-    INTRA_PRED_ANG16_CAL_ROW m5, m6, 1
-    INTRA_PRED_ANG16_CAL_ROW m6, m7, 2
-    INTRA_PRED_ANG16_CAL_ROW m7, m8, 3
+    vpbroadcastw        m3, xm2                         ; word [7 6]
+    psrldq             xm2, 2
+    vpbroadcastw        m4, xm2                         ; word [8 7]
+    pmaddubsw           m3, m0
+    pmaddubsw           m4, m0
+    pmulhrsw            m3, m1
+    pmulhrsw            m4, m1
+    packuswb            m3, m4
+    vpermq              m3, m3, q3120
+    movu                [r0 + r1 * 2], xm3
+    vextracti128        [r0 + r3], m3, 1
+    lea                 r0, [r0 + r1 * 4]
 
-    ; transpose and store
-    INTRA_PRED_TRANS_STORE_16x16
-    RET
+    ; loading new reference pixels
+    movu               xm2, [r2 + 32 + 8]
+    pshufb             xm2, [intra_pred_shuff_0_8]      ; [8 9 9 A A B B C C D D E E F F 10]
+
+    vpbroadcastw        m3, xm2                         ; word [9 8]
+    psrldq             xm2, 2
+    vpbroadcastw        m4, xm2                         ; word [A 9]
+    psrldq             xm2, 2
+    pmaddubsw           m3, m0
+    pmaddubsw           m4, m0
+    pmulhrsw            m3, m1
+    pmulhrsw            m4, m1
+    packuswb            m3, m4
+    vpermq              m3, m3, q3120
+    movu                [r0], xm3
+    vextracti128        [r0 + r1], m3, 1
+
+    vpbroadcastw        m3, xm2                         ; word [B A]
+    psrldq             xm2, 2
+    vpbroadcastw        m4, xm2                         ; word [C B]
+    psrldq             xm2, 2
+    pmaddubsw           m3, m0
+    pmaddubsw           m4, m0
+    pmulhrsw            m3, m1
+    pmulhrsw            m4, m1
+    packuswb            m3, m4
+    vpermq              m3, m3, q3120
+    movu                [r0 + r1 * 2], xm3
+    vextracti128        [r0 + r3], m3, 1
+    lea                 r0, [r0 + r1 * 4]
+
+    vpbroadcastw        m3, xm2                         ; word [D C]
+    psrldq             xm2, 2
+    vpbroadcastw        m4, xm2                         ; word [E D]
+    psrldq             xm2, 2
+    pmaddubsw           m3, m0
+    pmaddubsw           m4, m0
+    pmulhrsw            m3, m1
+    pmulhrsw            m4, m1
+    packuswb            m3, m4
+    vpermq              m3, m3, q3120
+    movu                [r0], xm3
+    vextracti128        [r0 + r1], m3, 1
+
+    vpbroadcastw        m3, xm2                         ; word [F E]
+    psrldq             xm2, 2
+    vpbroadcastw        m4, xm2                         ; word [10 F]
+    pmaddubsw           m3, m0
+    pmaddubsw           m4, m0
+    pmulhrsw            m3, m1
+    pmulhrsw            m4, m1
+    packuswb            m3, m4
+    vpermq              m3, m3, q3120
+    movu                [r0 + r1 * 2], xm3
+    vextracti128        [r0 + r3], m3, 1
+    RET    
 
 
 ; transpose 8x32 to 16x16, used for intra_ang16x16 avx2 asm
