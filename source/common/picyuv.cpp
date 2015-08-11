@@ -121,7 +121,7 @@ void PicYuv::destroy()
 
 /* Copy pixels from an x265_picture into internal PicYuv instance.
  * Shift pixels as necessary, mask off bits above X265_DEPTH for safety. */
-void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
+void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, int padx, int pady)
 {
     /* m_picWidth is the width that is being encoded, padx indicates how many
      * of those pixels are padding to reach multiple of MinCU(4) size.
@@ -237,6 +237,10 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
 
         for (int r = 0; r < height; r++)
         {
+            /* Clip luma of source picture to max and min values before extending edges of picYuv */
+            for (int c = 0; c < m_stride; c++)
+                Y[c] = x265_clip3((pixel)param.minLuma, (pixel)param.maxLuma, Y[c]);
+
             for (int x = 0; x < padx; x++)
                 Y[width + x] = Y[width - 1];
 

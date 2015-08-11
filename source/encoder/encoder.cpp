@@ -458,7 +458,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         }
 
         /* Copy input picture into a Frame and PicYuv, send to lookahead */
-        inFrame->m_fencPic->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
+        inFrame->m_fencPic->copyFromPicture(*pic_in, *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
 
         inFrame->m_poc       = ++m_pocLast;
         inFrame->m_userData  = pic_in->userData;

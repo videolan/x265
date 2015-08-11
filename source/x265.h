@@ -1172,6 +1172,16 @@ typedef struct x265_param
      * picture average light level (or 0). */
     const char* contentLightLevelInfo;
 
+    /* Minimum luma level of input source picture, specified as a integer which
+     * would automatically increase any luma values below the specified --min-luma
+     * value to that value. */
+    uint16_t minLuma;
+
+    /* Maximum luma level of input source picture, specified as a integer which
+     * would automatically decrease any luma values above the specified --max-luma
+     * value to that value. */
+    uint16_t maxLuma;
+
 } x265_param;
 
 /* x265_param_alloc:
