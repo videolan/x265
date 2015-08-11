@@ -66,7 +66,7 @@ public:
     bool  createOffsets(const SPS& sps);
     void  destroy();
 
-    void  copyFromPicture(const x265_picture&, int padx, int pady);
+    void  copyFromPicture(const x265_picture&, const x265_param& param, int padx, int pady);
 
     intptr_t getChromaAddrOffset(uint32_t ctuAddr, uint32_t absPartIdx) const { return m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
 

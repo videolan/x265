@@ -36,6 +36,7 @@ Frame::Frame()
     m_countRefEncoders = 0;
     m_encData = NULL;
     m_reconPic = NULL;
+    m_quantOffsets = NULL;
     m_next = NULL;
     m_prev = NULL;
     m_param = NULL;
@@ -98,6 +99,11 @@ void Frame::destroy()
         m_reconPic->destroy();
         delete m_reconPic;
         m_reconPic = NULL;
+    }
+
+    if (m_quantOffsets)
+    {
+        delete[] m_quantOffsets;
     }
 
     m_lowres.destroy();

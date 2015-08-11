@@ -59,6 +59,8 @@ public:
     bool                   m_lowresInit;         // lowres init complete (pre-analysis)
     bool                   m_bChromaExtended;    // orig chroma planes motion extended for weight analysis
 
+    float*                 m_quantOffsets;       // points to quantOffsets in x265_picture
+
     /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
     ThreadSafeInteger      m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
     volatile uint32_t      m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount

@@ -1638,6 +1638,16 @@ VUI fields must be manually specified.
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
 
+.. option:: --min-luma <integer>
+
+	Increase any luma values of source picture that are below the specified
+	min-luma value to that value. No default.
+
+.. option:: --max-luma <integer>
+
+	Decrease any luma values of source picture that are above the specified
+	max-luma value to that value. No default.
+
 Bitstream options
 =================
 
