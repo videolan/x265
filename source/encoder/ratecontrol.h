@@ -147,7 +147,6 @@ public:
     double  m_pbOffset;
     int64_t m_bframeBits;
     int64_t m_currentSatd;
-    int     m_leadingBframes;
     int     m_qpConstant[3];
     int     m_lastNonBPictType;
     int     m_framesDone;        /* # of frames passed through RateCotrol already */
@@ -173,6 +172,7 @@ public:
     int64_t m_lastBsliceSatdCost;
     int     m_numBframesInPattern;
     bool    m_isPatternPresent;
+    bool    m_isSceneTransition;
 
     /* a common variable on which rateControlStart, rateControlEnd and rateControUpdateStats waits to
      * sync the calls to these functions. For example
