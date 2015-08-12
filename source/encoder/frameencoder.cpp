@@ -878,6 +878,10 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     const uint32_t lineStartCUAddr = row * numCols;
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
+    uint32_t maxBlockCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
+    uint32_t maxBlockRows = (m_frame->m_fencPic->m_picHeight + (16 - 1)) / 16;
+    uint32_t noOfBlocks = g_maxCUSize / 16;
+
     while (curRow.completed < numCols)
     {
         ProfileScopeEvent(encodeCTU);
@@ -902,11 +906,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 cuStat.baseQp = curEncData.m_rowStat[row].diagQp;
 
             /* TODO: use defines from slicetype.h for lowres block size */
-            uint32_t maxBlockCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
-            uint32_t maxBlockRows = (m_frame->m_fencPic->m_picHeight + (16 - 1)) / 16;
-            uint32_t noOfBlocks = g_maxCUSize / 16;
-            uint32_t block_y = (cuAddr / curEncData.m_slice->m_sps->numCuInWidth) * noOfBlocks;
-            uint32_t block_x = (cuAddr * noOfBlocks) - block_y * curEncData.m_slice->m_sps->numCuInWidth;
+            uint32_t block_y = (ctu->m_cuPelY >> g_maxLog2CUSize) * noOfBlocks;
+            uint32_t block_x = (ctu->m_cuPelX >> g_maxLog2CUSize) * noOfBlocks;
             
             cuStat.vbvCost = 0;
             cuStat.intraVbvCost = 0;
