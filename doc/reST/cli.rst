@@ -1640,13 +1640,13 @@ VUI fields must be manually specified.
 
 .. option:: --min-luma <integer>
 
-	Increase any luma values of source picture that are below the specified
-	min-luma value to that value. No default.
+	Minimum luma value allowed for input pictures. Any values below min-luma
+	are clipped. Experimental. No default.
 
 .. option:: --max-luma <integer>
 
-	Decrease any luma values of source picture that are above the specified
-	max-luma value to that value. No default.
+	Maximum luma value allowed for input pictures. Any values above max-luma
+	are clipped. Experimental. No default.
 
 Bitstream options
 =================
