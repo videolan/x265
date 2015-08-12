@@ -57,7 +57,7 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
     m_encData = new FrameData;
     m_reconPic = new PicYuv;
     m_encData->m_reconPic = m_reconPic;
-    bool ok = m_encData->create(param, sps) && m_reconPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
+    bool ok = m_encData->create(*param, sps) && m_reconPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     if (ok)
     {
         /* initialize right border of m_reconpicYuv as SAO may read beyond the
@@ -66,6 +66,12 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
         memset(m_reconPic->m_picOrg[0], 0, sizeof(pixel) * m_reconPic->m_stride * maxHeight);
         memset(m_reconPic->m_picOrg[1], 0, sizeof(pixel) * m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
         memset(m_reconPic->m_picOrg[2], 0, sizeof(pixel) * m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
+
+        /* use pre-calculated cu/pu offsets cached in the SPS structure */
+        m_reconPic->m_cuOffsetC = sps.cuOffsetC;
+        m_reconPic->m_cuOffsetY = sps.cuOffsetY;
+        m_reconPic->m_buOffsetC = sps.buOffsetC;
+        m_reconPic->m_buOffsetY = sps.buOffsetY;
     }
     return ok;
 }

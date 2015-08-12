@@ -728,16 +728,16 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
 
     case P_SLICE:
         b = p1 = poc - l0poc;
-        frames[p0] = &slice->m_refPicList[0][0]->m_lowres;
+        frames[p0] = &slice->m_refFrameList[0][0]->m_lowres;
         frames[b] = &curFrame->m_lowres;
         break;
 
     case B_SLICE:
         b = poc - l0poc;
         p1 = b + l1poc - poc;
-        frames[p0] = &slice->m_refPicList[0][0]->m_lowres;
+        frames[p0] = &slice->m_refFrameList[0][0]->m_lowres;
         frames[b] = &curFrame->m_lowres;
-        frames[p1] = &slice->m_refPicList[1][0]->m_lowres;
+        frames[p1] = &slice->m_refFrameList[1][0]->m_lowres;
         break;
 
     default:

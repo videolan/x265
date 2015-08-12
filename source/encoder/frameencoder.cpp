@@ -357,7 +357,8 @@ void FrameEncoder::compressFrame()
             WeightParam *w = NULL;
             if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
                 w = slice->m_weightPredTable[l][ref];
-            m_mref[l][ref].init(slice->m_refPicList[l][ref]->m_reconPic, w, *m_param);
+            slice->m_refReconPicList[l][ref] = slice->m_refFrameList[l][ref]->m_reconPic;
+            m_mref[l][ref].init(slice->m_refReconPicList[l][ref], w, *m_param);
         }
     }
 
@@ -477,7 +478,7 @@ void FrameEncoder::compressFrame()
     /* CQP and CRF (without capped VBV) doesn't use mid-frame statistics to 
      * tune RateControl parameters for other frames.
      * Hence, for these modes, update m_startEndOrder and unlock RC for previous threads waiting in
-     * RateControlEnd here, after the slicecontexts are initialized. For the rest - ABR
+     * RateControlEnd here, after the slice contexts are initialized. For the rest - ABR
      * and VBV, unlock only after rateControlUpdateStats of this frame is called */
     if (m_param->rc.rateControlMode != X265_RC_ABR && !m_top->m_rateControl->m_isVbv)
     {
@@ -501,7 +502,7 @@ void FrameEncoder::compressFrame()
             {
                 for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
                 {
-                    Frame *refpic = slice->m_refPicList[l][ref];
+                    Frame *refpic = slice->m_refFrameList[l][ref];
 
                     uint32_t reconRowCount = refpic->m_reconRowCount.get();
                     while ((reconRowCount != m_numRows) && (reconRowCount < row + m_refLagRows))
@@ -540,7 +541,7 @@ void FrameEncoder::compressFrame()
                     int list = l;
                     for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
                     {
-                        Frame *refpic = slice->m_refPicList[list][ref];
+                        Frame *refpic = slice->m_refFrameList[list][ref];
 
                         uint32_t reconRowCount = refpic->m_reconRowCount.get();
                         while ((reconRowCount != m_numRows) && (reconRowCount < i + m_refLagRows))
@@ -697,7 +698,7 @@ void FrameEncoder::compressFrame()
     {
         for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
         {
-            Frame *refpic = slice->m_refPicList[l][ref];
+            Frame *refpic = slice->m_refFrameList[l][ref];
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }

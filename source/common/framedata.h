@@ -96,7 +96,7 @@ public:
 
     Slice*         m_slice;
     SAOParam*      m_saoParam;
-    x265_param*    m_param;
+    const x265_param* m_param;
 
     FrameData*     m_freeListNext;
     PicYuv*        m_reconPic;
@@ -142,11 +142,11 @@ public:
 
     FrameData();
 
-    bool create(x265_param *param, const SPS& sps);
+    bool create(const x265_param& param, const SPS& sps);
     void reinit(const SPS& sps);
     void destroy();
 
-    CUData* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }
+    inline CUData* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }
 };
 }
 
