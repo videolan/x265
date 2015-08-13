@@ -42,6 +42,9 @@ PicYuv::PicYuv()
     m_cuOffsetC = NULL;
     m_buOffsetY = NULL;
     m_buOffsetC = NULL;
+
+    m_maxLumaLevel = 0;
+    m_avgLumaLevel = 0;
 }
 
 bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
@@ -235,17 +238,25 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
         pixel *U = m_picOrg[1];
         pixel *V = m_picOrg[2];
 
+        uint64_t sumLuma = 0;
         for (int r = 0; r < height; r++)
         {
-            /* Clip luma of source picture to max and min values before extending edges of picYuv */
-            for (int c = 0; c < m_stride; c++)
+            for (int c = 0; c < width; c++)
+            {
+                /* Clip luma of source picture to max and min values before extending edges of picYuv */
                 Y[c] = x265_clip3((pixel)param.minLuma, (pixel)param.maxLuma, Y[c]);
+
+                /* Determine maximum and average luma level in a picture */
+                m_maxLumaLevel = X265_MAX(Y[c], m_maxLumaLevel);
+                sumLuma += Y[c];
+            }
 
             for (int x = 0; x < padx; x++)
                 Y[width + x] = Y[width - 1];
 
             Y += m_stride;
         }
+        m_avgLumaLevel = (double)(sumLuma) / (m_picHeight * m_picWidth);
 
         for (int r = 0; r < height >> m_vChromaShift; r++)
         {

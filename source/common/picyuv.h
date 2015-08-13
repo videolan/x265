@@ -60,6 +60,9 @@ public:
     uint32_t m_chromaMarginX;
     uint32_t m_chromaMarginY;
 
+    uint16_t m_maxLumaLevel;
+    double   m_avgLumaLevel;
+
     PicYuv();
 
     bool  create(uint32_t picWidth, uint32_t picHeight, uint32_t csp);

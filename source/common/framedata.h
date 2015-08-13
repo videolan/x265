@@ -55,8 +55,6 @@ struct FrameStats
     double      avgLumaDistortion;
     double      avgChromaDistortion;
     double      avgPsyEnergy;
-    double      avgLumaLevel;
-    double      lumaLevel;
     double      percentIntraNxN;
     double      percentSkipCu[NUM_CU_DEPTH];
     double      percentMergeCu[NUM_CU_DEPTH];
@@ -75,7 +73,6 @@ struct FrameStats
     uint64_t    cntIntra[NUM_CU_DEPTH];
     uint64_t    cuInterDistribution[NUM_CU_DEPTH][INTER_MODES];
     uint64_t    cuIntraDistribution[NUM_CU_DEPTH][INTRA_MODES];
-    uint16_t    maxLumaLevel;
 
     FrameStats()
     {
