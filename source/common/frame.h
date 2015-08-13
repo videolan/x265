@@ -71,7 +71,7 @@ public:
     x265_analysis_data     m_analysisData;
     Frame();
 
-    bool create(x265_param *param);
+    bool create(x265_param *param, float* quantOffsets);
     bool allocEncodeData(x265_param *param, const SPS& sps);
     void reinit(const SPS& sps);
     void destroy();

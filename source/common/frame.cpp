@@ -43,13 +43,22 @@ Frame::Frame()
     memset(&m_lowres, 0, sizeof(m_lowres));
 }
 
-bool Frame::create(x265_param *param)
+bool Frame::create(x265_param *param, float* quantOffsets)
 {
     m_fencPic = new PicYuv;
     m_param = param;
 
-    return m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
-           m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode);
+    if (m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
+        m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode))
+    {
+        if (quantOffsets)
+        {
+            int32_t cuCount = m_lowres.maxBlocksInRow * m_lowres.maxBlocksInCol;
+            m_quantOffsets = new float[cuCount];
+        }
+        return true;
+    }
+    return false;
 }
 
 bool Frame::allocEncodeData(x265_param *param, const SPS& sps)

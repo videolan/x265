@@ -403,7 +403,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         {
             inFrame = new Frame;
             x265_param* p = m_reconfigured? m_latestParam : m_param;
-            if (inFrame->create(p))
+            if (inFrame->create(p, pic_in->quantOffsets))
             {
                 /* the first PicYuv created is asked to generate the CU and block unit offset
                  * arrays which are then shared with all subsequent PicYuv (orig and recon) 
@@ -432,11 +432,6 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                         m_sps.buOffsetC = inFrame->m_fencPic->m_buOffsetC;
                         m_sps.buOffsetY = inFrame->m_fencPic->m_buOffsetY;
                     }
-                }
-                if (pic_in->quantOffsets != NULL)
-                {
-                    cuCount = inFrame->m_lowres.maxBlocksInRow * inFrame->m_lowres.maxBlocksInCol;
-                    inFrame->m_quantOffsets = new float[cuCount];
                 }
             }
             else
