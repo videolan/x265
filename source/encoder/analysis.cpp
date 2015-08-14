@@ -559,6 +559,7 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
     }
 
     bool bNoSplit = false;
+    bool splitIntra = true;
     if (md.bestMode)
     {
         bNoSplit = md.bestMode->cu.isSkipped(0);
@@ -578,6 +579,7 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
         invalidateContexts(nextDepth);
         Entropy* nextContext = &m_rqt[depth].cur;
         int nextQP = qp;
+        splitIntra = false;
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
@@ -593,6 +595,7 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
                 splitRefs[subPartIdx] = compressInterCU_dist(parentCTU, childGeom, nextQP);
 
                 // Save best CU and pred data for this sub CU
+                splitIntra |= nd.bestMode->cu.isIntra(0);
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
                 splitPred->addSubCosts(*nd.bestMode);
 
@@ -615,7 +618,7 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
     if (mightNotSplit && depth >= minDepth)
     {
         int bTryAmp = m_slice->m_sps->maxAMPDepth > depth;
-        int bTryIntra = m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames;
+        int bTryIntra = (m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) && (!m_param->limitReferences || splitIntra);
 
         if (m_slice->m_pps->bUseDQP && depth <= m_slice->m_pps->maxCuDQPDepth && m_slice->m_pps->maxCuDQPDepth != 0)
             setLambdaFromQP(parentCTU, qp);
