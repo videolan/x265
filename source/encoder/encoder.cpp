@@ -1525,6 +1525,12 @@ void Encoder::configure(x265_param *p)
         p->bDistributeMotionEstimation = p->bDistributeModeAnalysis = 0;
     }
 
+    if (p->bDistributeModeAnalysis && (p->limitReferences >> 1) && 1)
+    {
+        x265_log(p, X265_LOG_WARNING, "Limit reference options 2 and 3 are not supported with pmode. Disabling limit reference\n");
+        p->limitReferences = 0;
+    }
+
     if (p->bEnableTemporalSubLayers && !p->bframes)
     {
         x265_log(p, X265_LOG_WARNING, "B frames not enabled, temporal sublayer disabled\n");
