@@ -442,7 +442,7 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
             e = X265_API_QUERY_ERR_FUNC_NOT_FOUND;
             api_query_func query = (api_query_func)GetProcAddress(h, method);
             if (query)
-                api = query(bitDepth,apiVersion,err);
+                api = query(bitDepth, apiVersion, err);
         }
 #else
         void* h = dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
@@ -451,7 +451,7 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
             e = X265_API_QUERY_ERR_FUNC_NOT_FOUND;
             api_query_func query = (api_query_func)dlsym(h, method);
             if (query)
-                api = query(bitDepth,apiVersion,err);
+                api = query(bitDepth, apiVersion, err);
         }
 #endif
 
