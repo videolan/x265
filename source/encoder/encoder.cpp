@@ -66,10 +66,6 @@ Encoder::Encoder()
     m_outputCount = 0;
     m_param = NULL;
     m_latestParam = NULL;
-    m_cuOffsetY = NULL;
-    m_cuOffsetC = NULL;
-    m_buOffsetY = NULL;
-    m_buOffsetC = NULL;
     m_threadPool = NULL;
     m_analysisFile = NULL;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
@@ -318,11 +314,6 @@ void Encoder::destroy()
         delete m_rateControl;
     }
 
-    X265_FREE(m_cuOffsetY);
-    X265_FREE(m_cuOffsetC);
-    X265_FREE(m_buOffsetY);
-    X265_FREE(m_buOffsetC);
-
     if (m_analysisFile)
         fclose(m_analysisFile);
 
@@ -411,17 +402,17 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         {
             inFrame = new Frame;
             x265_param* p = m_reconfigured? m_latestParam : m_param;
-            if (inFrame->create(p))
+            if (inFrame->create(p, pic_in->quantOffsets))
             {
                 /* the first PicYuv created is asked to generate the CU and block unit offset
                  * arrays which are then shared with all subsequent PicYuv (orig and recon) 
                  * allocated by this top level encoder */
-                if (m_cuOffsetY)
+                if (m_sps.cuOffsetY)
                 {
-                    inFrame->m_fencPic->m_cuOffsetC = m_cuOffsetC;
-                    inFrame->m_fencPic->m_cuOffsetY = m_cuOffsetY;
-                    inFrame->m_fencPic->m_buOffsetC = m_buOffsetC;
-                    inFrame->m_fencPic->m_buOffsetY = m_buOffsetY;
+                    inFrame->m_fencPic->m_cuOffsetC = m_sps.cuOffsetC;
+                    inFrame->m_fencPic->m_cuOffsetY = m_sps.cuOffsetY;
+                    inFrame->m_fencPic->m_buOffsetC = m_sps.buOffsetC;
+                    inFrame->m_fencPic->m_buOffsetY = m_sps.buOffsetY;
                 }
                 else
                 {
@@ -435,10 +426,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     }
                     else
                     {
-                        m_cuOffsetC = inFrame->m_fencPic->m_cuOffsetC;
-                        m_cuOffsetY = inFrame->m_fencPic->m_cuOffsetY;
-                        m_buOffsetC = inFrame->m_fencPic->m_buOffsetC;
-                        m_buOffsetY = inFrame->m_fencPic->m_buOffsetY;
+                        m_sps.cuOffsetC = inFrame->m_fencPic->m_cuOffsetC;
+                        m_sps.cuOffsetY = inFrame->m_fencPic->m_cuOffsetY;
+                        m_sps.buOffsetC = inFrame->m_fencPic->m_buOffsetC;
+                        m_sps.buOffsetY = inFrame->m_fencPic->m_buOffsetY;
                     }
                 }
             }
@@ -458,13 +449,19 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         }
 
         /* Copy input picture into a Frame and PicYuv, send to lookahead */
-        inFrame->m_fencPic->copyFromPicture(*pic_in, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
+        inFrame->m_fencPic->copyFromPicture(*pic_in, *m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
 
         inFrame->m_poc       = ++m_pocLast;
         inFrame->m_userData  = pic_in->userData;
         inFrame->m_pts       = pic_in->pts;
         inFrame->m_forceqp   = pic_in->forceqp;
         inFrame->m_param     = m_reconfigured ? m_latestParam : m_param;
+        
+        if (pic_in->quantOffsets != NULL)
+        {
+            int cuCount = inFrame->m_lowres.maxBlocksInRow * inFrame->m_lowres.maxBlocksInCol;
+            memcpy(inFrame->m_quantOffsets, pic_in->quantOffsets, cuCount * sizeof(float));
+        }
 
         if (m_pocLast == 0)
             m_firstPts = inFrame->m_pts;
@@ -633,10 +630,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (frameEnc && !pass)
         {
             /* give this frame a FrameData instance before encoding */
-            if (m_dpb->m_picSymFreeList)
+            if (m_dpb->m_frameDataFreeList)
             {
-                frameEnc->m_encData = m_dpb->m_picSymFreeList;
-                m_dpb->m_picSymFreeList = m_dpb->m_picSymFreeList->m_freeListNext;
+                frameEnc->m_encData = m_dpb->m_frameDataFreeList;
+                m_dpb->m_frameDataFreeList = m_dpb->m_frameDataFreeList->m_freeListNext;
                 frameEnc->reinit(m_sps);
             }
             else
@@ -647,10 +644,6 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 slice->m_pps = &m_pps;
                 slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
                 slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_4x4_PARTITIONS);
-                frameEnc->m_reconPic->m_cuOffsetC = m_cuOffsetC;
-                frameEnc->m_reconPic->m_cuOffsetY = m_cuOffsetY;
-                frameEnc->m_reconPic->m_buOffsetC = m_buOffsetC;
-                frameEnc->m_reconPic->m_buOffsetY = m_buOffsetY;
             }
 
             curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
@@ -1168,8 +1161,8 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
         frameStats->avgChromaDistortion     = curFrame->m_encData->m_frameStats.avgChromaDistortion;
         frameStats->avgLumaDistortion       = curFrame->m_encData->m_frameStats.avgLumaDistortion;
         frameStats->avgPsyEnergy            = curFrame->m_encData->m_frameStats.avgPsyEnergy;
-        frameStats->avgLumaLevel            = curFrame->m_encData->m_frameStats.avgLumaLevel;
-        frameStats->maxLumaLevel            = curFrame->m_encData->m_frameStats.maxLumaLevel;
+        frameStats->avgLumaLevel            = curFrame->m_fencPic->m_avgLumaLevel;
+        frameStats->maxLumaLevel            = curFrame->m_fencPic->m_maxLumaLevel;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
             frameStats->cuStats.percentSkipCu[depth]  = curFrame->m_encData->m_frameStats.percentSkipCu[depth];

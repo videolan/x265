@@ -93,13 +93,6 @@ public:
     int                m_numPools;
     int                m_curEncoder;
 
-    /* cached PicYuv offset arrays, shared by all instances of
-     * PicYuv created by this encoder */
-    intptr_t*          m_cuOffsetY;
-    intptr_t*          m_cuOffsetC;
-    intptr_t*          m_buOffsetY;
-    intptr_t*          m_buOffsetC;
-
     /* Collect statistics globally */
     EncStats           m_analyzeAll;
     EncStats           m_analyzeI;

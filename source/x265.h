@@ -205,6 +205,13 @@ typedef struct x265_picture
      * this data structure */
     x265_analysis_data analysisData;
 
+    /* An array of quantizer offsets to be applied to this image during encoding.
+     * These are added on top of the decisions made by rateControl.
+     * Adaptive quantization must be enabled to use this feature. These quantizer 
+     * offsets should be given for each 16x16 block. Behavior if quant
+     * offsets differ between encoding passes is undefined. */
+    float            *quantOffsets;
+
     /* Frame level statistics */
     x265_frame_stats frameData;
 
@@ -1171,6 +1178,16 @@ typedef struct x265_param
      * level (or 0 if no maximum is indicated), the second value is the maximum
      * picture average light level (or 0). */
     const char* contentLightLevelInfo;
+
+    /* Minimum luma level of input source picture, specified as a integer which
+     * would automatically increase any luma values below the specified --min-luma
+     * value to that value. */
+    uint16_t minLuma;
+
+    /* Maximum luma level of input source picture, specified as a integer which
+     * would automatically decrease any luma values above the specified --max-luma
+     * value to that value. */
+    uint16_t maxLuma;
 
 } x265_param;
 
