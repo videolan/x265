@@ -28,7 +28,7 @@ pool has a method to **poke** awake a blocked idle thread, and job
 providers are recommended to call this method when they make new jobs
 available.
 
-Worker jobs are not allowed to block except when abosultely necessary
+Worker jobs are not allowed to block except when absolutely necessary
 for data locking. If a job becomes blocked, the work function is
 expected to drop that job so the worker thread may go back to the pool
 and find more work.
@@ -94,10 +94,10 @@ Bonded Task Groups
 
 If a worker thread job has work which can be performed in parallel by
 many threads, it may allocate a bonded task group and enlist the help of
-other idle worker threads in the same pool. Those threads will cooperate
-to complete the work of the bonded task group and then return to their
-idle states. The larger and more uniform those tasks are, the better the
-bonded task group will perform.
+other idle worker threads from the same thread pool. Those threads will
+cooperate to complete the work of the bonded task group and then return
+to their idle states. The larger and more uniform those tasks are, the
+better the bonded task group will perform.
 
 Parallel Mode Analysis
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -105,19 +105,20 @@ Parallel Mode Analysis
 When :option:`--pmode` is enabled, each CU (at all depths from 64x64 to
 8x8) will distribute its analysis work to the thread pool via a bonded
 task group. Each analysis job will measure the cost of one prediction
-for the CU: merge, skip, intra, inter (2Nx2N, Nx2N, 2NxN, and AMP). At
-slower presets, the amount of increased parallelism is often enough to
-be able to reduce frame parallelism while achieving the same overall CPU
-utilization. Reducing frame threads is often beneficial to ABR and VBV
-rate control.
+for the CU: merge, skip, intra, inter (2Nx2N, Nx2N, 2NxN, and AMP).
+
+At slower presets, the amount of increased parallelism from pmode is
+often enough to be able to reduce or disable frame parallelism while
+achieving the same overall CPU utilization. Reducing frame threads is
+often beneficial to ABR and VBV rate control.
 
 Parallel Motion Estimation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When :option:`--pme` is enabled all of the analysis functions which
 perform motion searches to reference frames will distribute those motion
-searches as jobs for worker threads via a bonded task group (if more
-than two motion searches are required).
+searches to other worker threads via a bonded task group (if more than
+two motion searches are required).
 
 Frame Threading
 ===============
@@ -241,7 +242,7 @@ to perform batches of frame cost estimates, and it may optionally use
 bonded task groups to measure single frame cost estimates using slices.
 (see :option:`--lookahead-slices`)
 
-The function slicetypeDecide() itself is also be performed by a worker
+The main slicetypeDecide() function itself is also performed by a worker
 thread if your encoder has a thread pool, else it runs within the
 context of the thread which calls the x265_encoder_encode().
 
