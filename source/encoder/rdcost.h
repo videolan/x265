@@ -90,8 +90,13 @@ public:
 
     inline uint64_t calcRdCost(sse_ret_t distortion, uint32_t bits) const
     {
+#if X265_DEPTH <= 10
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda2,
                    "calcRdCost wrap detected dist: %u, bits %u, lambda: "X265_LL"\n", distortion, bits, m_lambda2);
+#else
+        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda2,
+            "calcRdCost wrap detected dist: "X265_LL", bits %u, lambda: "X265_LL"\n", distortion, bits, m_lambda2);
+#endif
         return distortion + ((bits * m_lambda2 + 128) >> 8);
     }
 
