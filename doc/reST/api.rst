@@ -485,6 +485,10 @@ shared library with a name appropriate for the requested bit-depth::
 	10-bit: libx265_main10
 	12-bit: libx265_main12
 
+If the profile-named library is not found, it will then try to bind a
+generic libx265 in the hopes that it is a multilib library with all bit
+depths.
+
 Packaging and Distribution
 --------------------------
 

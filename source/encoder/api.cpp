@@ -353,6 +353,7 @@ const x265_api* x265_api_get(int bitDepth)
 
         const char* libname = NULL;
         const char* method = "x265_api_get_" xstr(X265_BUILD);
+        const char* multilibname = "libx265" ext;
 
         if (bitDepth == 12)
             libname = "libx265_main12" ext;
@@ -364,22 +365,33 @@ const x265_api* x265_api_get(int bitDepth)
             return NULL;
 
         const x265_api* api = NULL;
+        int reqDepth = 0;
 
 #if _WIN32
         HMODULE h = LoadLibraryA(libname);
+        if (!h)
+        {
+            h = LoadLibraryA(multilibname);
+            reqDepth = bitDepth;
+        }
         if (h)
         {
             api_get_func get = (api_get_func)GetProcAddress(h, method);
             if (get)
-                api = get(0);
+                api = get(reqDepth);
         }
 #else
         void* h = dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
+        if (!h)
+        {
+            h = dlopen(multilibname, RTLD_LAZY | RTLD_LOCAL);
+            reqDepth = bitDepth;
+        }
         if (h)
         {
             api_get_func get = (api_get_func)dlsym(h, method);
             if (get)
-                api = get(0);
+                api = get(reqDepth);
         }
 #endif
 
@@ -420,6 +432,7 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
 
         const char* libname = NULL;
         const char* method = "x265_api_query";
+        const char* multilibname = "libx265" ext;
 
         if (bitDepth == 12)
             libname = "libx265_main12" ext;
@@ -434,25 +447,36 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
         }
 
         const x265_api* api = NULL;
+        int reqDepth = 0;
         int e = X265_API_QUERY_ERR_LIB_NOT_FOUND;
 
 #if _WIN32
         HMODULE h = LoadLibraryA(libname);
+        if (!h)
+        {
+            h = LoadLibraryA(multilibname);
+            reqDepth = bitDepth;
+        }
         if (h)
         {
             e = X265_API_QUERY_ERR_FUNC_NOT_FOUND;
             api_query_func query = (api_query_func)GetProcAddress(h, method);
             if (query)
-                api = query(bitDepth,apiVersion,err);
+                api = query(reqDepth, apiVersion, err);
         }
 #else
         void* h = dlopen(libname, RTLD_LAZY | RTLD_LOCAL);
+        if (!h)
+        {
+            h = dlopen(multilibname, RTLD_LAZY | RTLD_LOCAL);
+            reqDepth = bitDepth;
+        }
         if (h)
         {
             e = X265_API_QUERY_ERR_FUNC_NOT_FOUND;
             api_query_func query = (api_query_func)dlsym(h, method);
             if (query)
-                api = query(bitDepth,apiVersion,err);
+                api = query(reqDepth, apiVersion, err);
         }
 #endif
 
