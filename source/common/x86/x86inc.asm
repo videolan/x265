@@ -1483,13 +1483,3 @@ FMA4_INSTR fnmsubss, fnmsub132ss, fnmsub213ss, fnmsub231ss
 %endif
 %endmacro
 %endif
-
-; workaround: vpbroadcastd with register, the yasm will generate wrong code
-%macro vpbroadcastd 2
-  %ifid %2
-    movd         %1 %+ xmm, %2
-    vpbroadcastd %1, %1 %+ xmm
-  %else
-    vpbroadcastd %1, %2
-  %endif
-%endmacro

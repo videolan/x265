@@ -633,7 +633,12 @@ cglobal quant, 5,6,9
     movd            xm6, r4d            ; m6 = qbits8
 
     ; fill offset
+%if UNIX64 == 0
     vpbroadcastd    m5, r5m             ; m5 = add
+%else ; Mac
+    movd           xm5, r5m
+    vpbroadcastd    m5, xm5             ; m5 = add
+%endif
 
     lea             r5, [pw_1]
 
@@ -705,7 +710,12 @@ cglobal quant, 5,6,8
     movd            xm6, r4d        ; m6 = qbits8
 
     ; fill offset
-    vpbroadcastd    m5, r5m         ; m5 = ad
+%if UNIX64 == 0
+    vpbroadcastd    m5, r5m         ; m5 = add
+%else ; Mac
+    movd           xm5, r5m
+    vpbroadcastd    m5, xm5         ; m5 = add
+%endif
 
     lea             r5, [pd_1]
 
@@ -823,7 +833,12 @@ cglobal nquant, 3,5,8
 
 INIT_YMM avx2
 cglobal nquant, 3,5,7
+%if UNIX64 == 0
     vpbroadcastd m4, r4m
+%else ; Mac
+    movd         xm4, r4m
+    vpbroadcastd m4, xm4
+%endif
     vpbroadcastd m6, [pw_1]
     mov         r4d, r5m
     pxor        m5, m5              ; m7 = numZero
@@ -1055,7 +1070,9 @@ cglobal dequant_normal, 5,5,7
     movd            xm0, r4d            ; m0 = shift
     add             r4d, -1+16
     bts             r3d, r4d
-    vpbroadcastd    m1, r3d             ; m1 = dword [add scale]
+
+    movd            xm1, r3d
+    vpbroadcastd    m1, xm1             ; m1 = dword [add scale]
 
     ; m0 = shift
     ; m1 = scale
@@ -1412,7 +1429,8 @@ cglobal weight_pp, 6, 7, 7
     shl          r6d, 16 - correction
     or           r6d, r5d          ; assuming both w0 and round are using maximum of 16 bits each.
 
-    vpbroadcastd m0, r6d
+    movd         xm0, r6d
+    vpbroadcastd m0, xm0
 
     mov          r5d, r7m
     sub          r5d, correction
@@ -1466,7 +1484,8 @@ cglobal weight_pp, 6, 7, 6
     shl          r6d, 16
     or           r6d, r5d          ; assuming both (w0<<6) and round are using maximum of 16 bits each.
 
-    vpbroadcastd m0, r6d
+    movd         xm0, r6d
+    vpbroadcastd m0, xm0
 
     movd         xm1, r7m
     vpbroadcastd m2, r8m
@@ -1677,7 +1696,8 @@ cglobal weight_sp, 6,7,9
     mov                       r6d, r7m
     shl                       r6d, 16
     or                        r6d, r6m
-    vpbroadcastd              m3, r6d      ; m3 = [round w0]
+    movd                      xm3, r6d
+    vpbroadcastd              m3, xm3      ; m3 = [round w0]
     movd                      xm4, r8m     ; m4 = [shift]
     vpbroadcastd              m5, r9m      ; m5 = [offset]
 
@@ -1793,8 +1813,9 @@ cglobal weight_sp, 6, 9, 7
     mov             r7d, r7m
     shl             r7d, 16
     or              r7d, r6m
-    vpbroadcastd    m0, r7d            ; m0 = times 8 dw w0, round
-    movd            xm1, r8m            ; m1 = [shift]
+    movd            xm0, r7d
+    vpbroadcastd    m0, xm0            ; m0 = times 8 dw w0, round
+    movd            xm1, r8m           ; m1 = [shift]
     vpbroadcastd    m2, r9m            ; m2 = times 16 dw offset
     vpbroadcastw    m3, [pw_1]
     vpbroadcastw    m4, [pw_2000]
