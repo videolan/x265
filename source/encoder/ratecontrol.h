@@ -229,7 +229,7 @@ public:
     int  rateControlSliceType(int frameNum);
     bool cuTreeReadFor2Pass(Frame* curFrame);
     void hrdFullness(SEIBufferingPeriod* sei);
-
+    int writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce);
 protected:
 
     static const int   s_slidingWindowFrames;

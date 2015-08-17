@@ -689,9 +689,13 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             /* Allow FrameEncoder::compressFrame() to start in the frame encoder thread */
             if (!curEncoder->startCompressFrame(frameEnc))
                 m_aborted = true;
+            /* Write RateControl Frame level stats in multipass encodes */
+            if (m_param->rc.bStatWrite)
+                if (m_rateControl->writeRateControlFrameStats(frameEnc, &curEncoder->m_rce))
+                    m_aborted = true;
         }
         else if (m_encodedFrameNum)
-            m_rateControl->setFinalFrameCount(m_encodedFrameNum);
+            m_rateControl->setFinalFrameCount(m_encodedFrameNum); 
     }
     while (m_bZeroLatency && ++pass < 2);
 

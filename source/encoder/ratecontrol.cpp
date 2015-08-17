@@ -2227,35 +2227,6 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
         }
     }
 
-    // Write frame stats into the stats file if 2 pass is enabled.
-    if (m_param->rc.bStatWrite)
-    {
-        char cType = rce->sliceType == I_SLICE ? (rce->poc > 0 && m_param->bOpenGOP ? 'i' : 'I')
-            : rce->sliceType == P_SLICE ? 'P'
-            : IS_REFERENCED(curFrame) ? 'B' : 'b';
-        if (fprintf(m_statFileOut,
-                    "in:%d out:%d type:%c q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
-                    rce->poc, rce->encodeOrder,
-                    cType, curEncData.m_avgQpRc, curEncData.m_avgQpAq,
-                    curFrame->m_encData->m_frameStats.coeffBits,
-                    curFrame->m_encData->m_frameStats.mvBits,
-                    curFrame->m_encData->m_frameStats.miscBits,
-                    curFrame->m_encData->m_frameStats.percent8x8Intra * m_ncu,
-                    curFrame->m_encData->m_frameStats.percent8x8Inter * m_ncu,
-                    curFrame->m_encData->m_frameStats.percent8x8Skip  * m_ncu) < 0)
-            goto writeFailure;
-        /* Don't re-write the data in multi-pass mode. */
-        if (m_param->rc.cuTree && IS_REFERENCED(curFrame) && !m_param->rc.bStatRead)
-        {
-            uint8_t sliceType = (uint8_t)rce->sliceType;
-            for (int i = 0; i < m_ncu; i++)
-                    m_cuTreeStats.qpBuffer[0][i] = (uint16_t)(curFrame->m_lowres.qpCuTreeOffset[i] * 256.0);
-            if (fwrite(&sliceType, 1, 1, m_cutreeStatFileOut) < 1)
-                goto writeFailure;
-            if (fwrite(m_cuTreeStats.qpBuffer[0], sizeof(uint16_t), m_ncu, m_cutreeStatFileOut) < (size_t)m_ncu)
-                goto writeFailure;
-        }
-    }
     if (m_isAbr && !m_isAbrReset)
     {
         /* amortize part of each I slice over the next several frames, up to
@@ -2337,12 +2308,43 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     // Allow rateControlStart of next frame only when rateControlEnd of previous frame is over
     m_startEndOrder.incr();
     return 0;
+}
 
-writeFailure:
+/* called to write out the rate control frame stats info in multipass encodes */
+int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce)
+{
+    FrameData& curEncData = *curFrame->m_encData;
+    char cType = rce->sliceType == I_SLICE ? (rce->poc > 0 && m_param->bOpenGOP ? 'i' : 'I')
+        : rce->sliceType == P_SLICE ? 'P'
+        : IS_REFERENCED(curFrame) ? 'B' : 'b';
+    if (fprintf(m_statFileOut,
+                "in:%d out:%d type:%c q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
+                rce->poc, rce->encodeOrder,
+                cType, curEncData.m_avgQpRc, curEncData.m_avgQpAq,
+                curFrame->m_encData->m_frameStats.coeffBits,
+                curFrame->m_encData->m_frameStats.mvBits,
+                curFrame->m_encData->m_frameStats.miscBits,
+                curFrame->m_encData->m_frameStats.percent8x8Intra * m_ncu,
+                curFrame->m_encData->m_frameStats.percent8x8Inter * m_ncu,
+                curFrame->m_encData->m_frameStats.percent8x8Skip  * m_ncu) < 0)
+        goto writeFailure;
+    /* Don't re-write the data in multi-pass mode. */
+    if (m_param->rc.cuTree && IS_REFERENCED(curFrame) && !m_param->rc.bStatRead)
+    {
+        uint8_t sliceType = (uint8_t)rce->sliceType;
+        for (int i = 0; i < m_ncu; i++)
+                m_cuTreeStats.qpBuffer[0][i] = (uint16_t)(curFrame->m_lowres.qpCuTreeOffset[i] * 256.0);
+        if (fwrite(&sliceType, 1, 1, m_cutreeStatFileOut) < 1)
+            goto writeFailure;
+        if (fwrite(m_cuTreeStats.qpBuffer[0], sizeof(uint16_t), m_ncu, m_cutreeStatFileOut) < (size_t)m_ncu)
+            goto writeFailure;
+    }
+    return 0;
+
+    writeFailure:
     x265_log(m_param, X265_LOG_ERROR, "RatecontrolEnd: stats file write failure\n");
     return 1;
 }
-
 #if defined(_MSC_VER)
 #pragma warning(disable: 4996) // POSIX function names are just fine, thank you
 #endif
