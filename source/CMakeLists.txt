@@ -266,6 +266,8 @@ if(YASM_FOUND AND X86)
         message(STATUS "Found Yasm ${YASM_VERSION_STRING} to build assembly primitives")
         option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" ON)
     endif()
+else()
+    option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
 endif()
 
 option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
