@@ -385,6 +385,8 @@ typedef struct x265_stats
     x265_sliceType_stats  statsI;               /* statistics of I slice */
     x265_sliceType_stats  statsP;               /* statistics of P slice */
     x265_sliceType_stats  statsB;               /* statistics of B slice */
+    uint16_t              maxCLL;               /* maximum content light level */
+    uint16_t              maxFALL;              /* maximum frame average light level */
 } x265_stats;
 
 /* String values accepted by x265_param_parse() (and CLI) for various parameters */

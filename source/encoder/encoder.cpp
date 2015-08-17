@@ -1038,6 +1038,9 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
         stats->statsB.psnrU   = m_analyzeB.m_psnrSumU / (double)m_analyzeB.m_numPics;
         stats->statsB.psnrV   = m_analyzeB.m_psnrSumV / (double)m_analyzeB.m_numPics;
         stats->statsB.ssim    = x265_ssim2dB(m_analyzeB.m_globalSsim / (double)m_analyzeB.m_numPics);
+
+        stats->maxCLL         = m_analyzeAll.m_maxCLL;
+        stats->maxFALL        = (uint16_t)(m_analyzeAll.m_maxFALL / m_analyzeAll.m_numPics);
     }
 
     /* If new statistics are added to x265_stats, we must check here whether the
@@ -1110,6 +1113,9 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
         if (m_param->bEnableSsim)
             m_analyzeB.addSsim(ssim);
     }
+
+    m_analyzeAll.m_maxFALL += curFrame->m_fencPic->m_avgLumaLevel;
+    m_analyzeAll.m_maxCLL = X265_MAX(m_analyzeAll.m_maxCLL, curFrame->m_fencPic->m_maxLumaLevel);
 
     char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
     int poc = slice->m_poc;

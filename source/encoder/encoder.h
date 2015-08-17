@@ -47,6 +47,8 @@ struct EncStats
     double        m_totalQp;
     uint64_t      m_accBits;
     uint32_t      m_numPics;
+    uint16_t      m_maxCLL;
+    double        m_maxFALL;
 
     EncStats()
     {
@@ -54,6 +56,8 @@ struct EncStats
         m_accBits = 0;
         m_numPics = 0;
         m_totalQp = 0;
+        m_maxCLL = 0;
+        m_maxFALL = 0;
     }
 
     void addQP(double aveQp);
