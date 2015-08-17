@@ -12,7 +12,7 @@
 # not auto-detected.
 
 BasketballDrive_1920x1080_50.y4m,--preset faster --aq-strength 2 --merange 190
-BasketballDrive_1920x1080_50.y4m,--preset medium --ctu 16 --max-tu-size 8 --subme 7 --qg-size 32
+BasketballDrive_1920x1080_50.y4m,--preset medium --ctu 16 --max-tu-size 8 --subme 7 --qg-size 16 --cu-lossless
 BasketballDrive_1920x1080_50.y4m,--preset medium --keyint -1 --nr-inter 100 -F4 --no-sao
 BasketballDrive_1920x1080_50.y4m,--preset slow --nr-intra 100 -F4 --aq-strength 3 --qg-size 16 --limit-refs 1
 BasketballDrive_1920x1080_50.y4m,--preset slower --lossless --chromaloc 3 --subme 0
@@ -37,7 +37,7 @@ CrowdRun_1920x1080_50_10bit_444.yuv,--preset ultrafast --weightp --no-wpp --no-o
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset veryfast --temporal-layers --repeat-headers --limit-refs 2
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset veryslow --tskip --tskip-fast --no-scenecut
 DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset medium --tune psnr --bframes 16
-DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset slow --temporal-layers --no-psy-rd --qg-size 32 --limit-refs 0
+DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset slow --temporal-layers --no-psy-rd --qg-size 32 --limit-refs 0 --cu-lossless
 DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset superfast --weightp --qg-size 16
 DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset medium --nr-inter 500 -F4 --no-psy-rdoq
 DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset slower --no-weightp --rdoq-level 0 --limit-refs 3
@@ -55,7 +55,7 @@ KristenAndSara_1280x720_60.y4m,--preset superfast --min-cu-size 16 --qg-size 16 
 KristenAndSara_1280x720_60.y4m,--preset ultrafast --strong-intra-smoothing
 NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset medium --tune grain --limit-refs 2
 NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset superfast --tune psnr
-News-4k.y4m,--preset medium --tune ssim --no-sao --qg-size 32
+News-4k.y4m,--preset medium --tune ssim --no-sao --qg-size 16
 News-4k.y4m,--preset superfast --lookahead-slices 6 --aq-mode 0
 OldTownCross_1920x1080_50_10bit_422.yuv,--preset medium --no-weightp
 OldTownCross_1920x1080_50_10bit_422.yuv,--preset slower --tune fastdecode
