@@ -259,7 +259,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
     for (int list = 0; list < cache.numPredDir; list++)
     {
         WeightParam *weights = wp[list][0];
-        Frame *refFrame = slice.m_refPicList[list][0];
+        Frame *refFrame = slice.m_refFrameList[list][0];
         Lowres& refLowres = refFrame->m_lowres;
         int diffPoc = abs(curPoc - refFrame->m_poc);
 

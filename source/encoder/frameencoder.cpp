@@ -357,7 +357,8 @@ void FrameEncoder::compressFrame()
             WeightParam *w = NULL;
             if ((bUseWeightP || bUseWeightB) && slice->m_weightPredTable[l][ref][0].bPresentFlag)
                 w = slice->m_weightPredTable[l][ref];
-            m_mref[l][ref].init(slice->m_refPicList[l][ref]->m_reconPic, w, *m_param);
+            slice->m_refReconPicList[l][ref] = slice->m_refFrameList[l][ref]->m_reconPic;
+            m_mref[l][ref].init(slice->m_refReconPicList[l][ref], w, *m_param);
         }
     }
 
@@ -477,7 +478,7 @@ void FrameEncoder::compressFrame()
     /* CQP and CRF (without capped VBV) doesn't use mid-frame statistics to 
      * tune RateControl parameters for other frames.
      * Hence, for these modes, update m_startEndOrder and unlock RC for previous threads waiting in
-     * RateControlEnd here, after the slicecontexts are initialized. For the rest - ABR
+     * RateControlEnd here, after the slice contexts are initialized. For the rest - ABR
      * and VBV, unlock only after rateControlUpdateStats of this frame is called */
     if (m_param->rc.rateControlMode != X265_RC_ABR && !m_top->m_rateControl->m_isVbv)
     {
@@ -501,7 +502,7 @@ void FrameEncoder::compressFrame()
             {
                 for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
                 {
-                    Frame *refpic = slice->m_refPicList[l][ref];
+                    Frame *refpic = slice->m_refFrameList[l][ref];
 
                     uint32_t reconRowCount = refpic->m_reconRowCount.get();
                     while ((reconRowCount != m_numRows) && (reconRowCount < row + m_refLagRows))
@@ -540,7 +541,7 @@ void FrameEncoder::compressFrame()
                     int list = l;
                     for (int ref = 0; ref < slice->m_numRefIdx[list]; ref++)
                     {
-                        Frame *refpic = slice->m_refPicList[list][ref];
+                        Frame *refpic = slice->m_refFrameList[list][ref];
 
                         uint32_t reconRowCount = refpic->m_reconRowCount.get();
                         while ((reconRowCount != m_numRows) && (reconRowCount < i + m_refLagRows))
@@ -591,10 +592,7 @@ void FrameEncoder::compressFrame()
         m_frame->m_encData->m_frameStats.lumaDistortion   += m_rows[i].rowStats.lumaDistortion;
         m_frame->m_encData->m_frameStats.chromaDistortion += m_rows[i].rowStats.chromaDistortion;
         m_frame->m_encData->m_frameStats.psyEnergy        += m_rows[i].rowStats.psyEnergy;
-        m_frame->m_encData->m_frameStats.lumaLevel        += m_rows[i].rowStats.lumaLevel;
 
-        if (m_rows[i].rowStats.maxLumaLevel > m_frame->m_encData->m_frameStats.maxLumaLevel)
-            m_frame->m_encData->m_frameStats.maxLumaLevel = m_rows[i].rowStats.maxLumaLevel;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
             m_frame->m_encData->m_frameStats.cntSkipCu[depth] += m_rows[i].rowStats.cntSkipCu[depth];
@@ -608,7 +606,6 @@ void FrameEncoder::compressFrame()
     m_frame->m_encData->m_frameStats.avgLumaDistortion   = (double)(m_frame->m_encData->m_frameStats.lumaDistortion) / m_frame->m_encData->m_frameStats.totalCtu;
     m_frame->m_encData->m_frameStats.avgChromaDistortion = (double)(m_frame->m_encData->m_frameStats.chromaDistortion) / m_frame->m_encData->m_frameStats.totalCtu;
     m_frame->m_encData->m_frameStats.avgPsyEnergy        = (double)(m_frame->m_encData->m_frameStats.psyEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
-    m_frame->m_encData->m_frameStats.avgLumaLevel        = m_frame->m_encData->m_frameStats.lumaLevel / m_frame->m_encData->m_frameStats.totalCtu;
     m_frame->m_encData->m_frameStats.percentIntraNxN     = (double)(m_frame->m_encData->m_frameStats.cntIntraNxN * 100) / m_frame->m_encData->m_frameStats.totalCu;
     for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
     {
@@ -697,7 +694,7 @@ void FrameEncoder::compressFrame()
     {
         for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
         {
-            Frame *refpic = slice->m_refPicList[l][ref];
+            Frame *refpic = slice->m_refFrameList[l][ref];
             ATOMIC_DEC(&refpic->m_countRefEncoders);
         }
     }
@@ -877,6 +874,10 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     const uint32_t lineStartCUAddr = row * numCols;
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
+    uint32_t maxBlockCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
+    uint32_t maxBlockRows = (m_frame->m_fencPic->m_picHeight + (16 - 1)) / 16;
+    uint32_t noOfBlocks = g_maxCUSize / 16;
+
     while (curRow.completed < numCols)
     {
         ProfileScopeEvent(encodeCTU);
@@ -901,11 +902,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 cuStat.baseQp = curEncData.m_rowStat[row].diagQp;
 
             /* TODO: use defines from slicetype.h for lowres block size */
-            uint32_t maxBlockCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
-            uint32_t maxBlockRows = (m_frame->m_fencPic->m_picHeight + (16 - 1)) / 16;
-            uint32_t noOfBlocks = g_maxCUSize / 16;
-            uint32_t block_y = (cuAddr / curEncData.m_slice->m_sps->numCuInWidth) * noOfBlocks;
-            uint32_t block_x = (cuAddr * noOfBlocks) - block_y * curEncData.m_slice->m_sps->numCuInWidth;
+            uint32_t block_y = (ctu->m_cuPelY >> g_maxLog2CUSize) * noOfBlocks;
+            uint32_t block_x = (ctu->m_cuPelX >> g_maxLog2CUSize) * noOfBlocks;
             
             cuStat.vbvCost = 0;
             cuStat.intraVbvCost = 0;
@@ -988,17 +986,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             for (int n = 0; n < INTRA_MODES; n++)
                 curRow.rowStats.cuIntraDistribution[depth][n] += frameLog.cuIntraDistribution[depth][n];
         }
-
-        /* calculate maximum and average luma levels */
-        uint32_t ctuLumaLevel = 0;
-        uint32_t ctuNoOfPixels = best.fencYuv->m_size * best.fencYuv->m_size;
-        for (uint32_t i = 0; i < ctuNoOfPixels; i++)
-        {
-            pixel p = best.fencYuv->m_buf[0][i];
-            ctuLumaLevel += p;
-            curRow.rowStats.maxLumaLevel = X265_MAX(p, curRow.rowStats.maxLumaLevel);
-        }
-        curRow.rowStats.lumaLevel += (double)(ctuLumaLevel) / ctuNoOfPixels;
 
         curEncData.m_cuStat[cuAddr].totalBits = best.totalBits;
         x265_emms();
