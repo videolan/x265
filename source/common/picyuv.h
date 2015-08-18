@@ -60,13 +60,16 @@ public:
     uint32_t m_chromaMarginX;
     uint32_t m_chromaMarginY;
 
+    uint16_t m_maxLumaLevel;
+    double   m_avgLumaLevel;
+
     PicYuv();
 
     bool  create(uint32_t picWidth, uint32_t picHeight, uint32_t csp);
     bool  createOffsets(const SPS& sps);
     void  destroy();
 
-    void  copyFromPicture(const x265_picture&, int padx, int pady);
+    void  copyFromPicture(const x265_picture&, const x265_param& param, int padx, int pady);
 
     intptr_t getChromaAddrOffset(uint32_t ctuAddr, uint32_t absPartIdx) const { return m_cuOffsetC[ctuAddr] + m_buOffsetC[absPartIdx]; }
 

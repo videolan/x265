@@ -1638,6 +1638,16 @@ VUI fields must be manually specified.
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
 
+.. option:: --min-luma <integer>
+
+	Minimum luma value allowed for input pictures. Any values below min-luma
+	are clipped. Experimental. No default.
+
+.. option:: --max-luma <integer>
+
+	Maximum luma value allowed for input pictures. Any values above max-luma
+	are clipped. Experimental. No default.
+
 Bitstream options
 =================
 

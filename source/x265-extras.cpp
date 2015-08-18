@@ -36,7 +36,7 @@ static const char* summaryCSVHeader =
     "I count, I ave-QP, I kbps, I-PSNR Y, I-PSNR U, I-PSNR V, I-SSIM (dB), "
     "P count, P ave-QP, P kbps, P-PSNR Y, P-PSNR U, P-PSNR V, P-SSIM (dB), "
     "B count, B ave-QP, B kbps, B-PSNR Y, B-PSNR U, B-PSNR V, B-SSIM (dB), "
-    "Version\n";
+    "MaxCLL, MaxFALL, Version\n";
 
 FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char* fname, int level)
 {
@@ -273,7 +273,7 @@ void x265_csvlog_encode(FILE* csvfp, const x265_api& api, const x265_param& para
     else
         fprintf(csvfp, " -, -, -, -, -, -, -,");
 
-    fprintf(csvfp, " %s\n", api.version_str);
+    fprintf(csvfp, " %-6u, %-6u, %s\n", stats.maxCLL, stats.maxFALL, api.version_str);
 }
 
 /* The dithering algorithm is based on Sierra-2-4A error diffusion. */

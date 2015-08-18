@@ -33,7 +33,9 @@ void Slice::setRefPicList(PicList& picList)
 {
     if (m_sliceType == I_SLICE)
     {
-        memset(m_refPicList, 0, sizeof(m_refPicList));
+        memset(m_refFrameList, 0, sizeof(m_refFrameList));
+        memset(m_refReconPicList, 0, sizeof(m_refReconPicList));
+        memset(m_refPOCList, 0, sizeof(m_refPOCList));
         m_numRefIdx[1] = m_numRefIdx[0] = 0;
         return;
     }
@@ -106,13 +108,13 @@ void Slice::setRefPicList(PicList& picList)
     {
         cIdx = rIdx % numPocTotalCurr;
         X265_CHECK(cIdx >= 0 && cIdx < numPocTotalCurr, "RPS index check fail\n");
-        m_refPicList[0][rIdx] = rpsCurrList0[cIdx];
+        m_refFrameList[0][rIdx] = rpsCurrList0[cIdx];
     }
 
     if (m_sliceType != B_SLICE)
     {
         m_numRefIdx[1] = 0;
-        memset(m_refPicList[1], 0, sizeof(m_refPicList[1]));
+        memset(m_refFrameList[1], 0, sizeof(m_refFrameList[1]));
     }
     else
     {
@@ -120,13 +122,13 @@ void Slice::setRefPicList(PicList& picList)
         {
             cIdx = rIdx % numPocTotalCurr;
             X265_CHECK(cIdx >= 0 && cIdx < numPocTotalCurr, "RPS index check fail\n");
-            m_refPicList[1][rIdx] = rpsCurrList1[cIdx];
+            m_refFrameList[1][rIdx] = rpsCurrList1[cIdx];
         }
     }
 
     for (int dir = 0; dir < 2; dir++)
         for (int numRefIdx = 0; numRefIdx < m_numRefIdx[dir]; numRefIdx++)
-            m_refPOCList[dir][numRefIdx] = m_refPicList[dir][numRefIdx]->m_poc;
+            m_refPOCList[dir][numRefIdx] = m_refFrameList[dir][numRefIdx]->m_poc;
 }
 
 void Slice::disableWeights()

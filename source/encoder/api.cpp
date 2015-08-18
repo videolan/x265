@@ -268,6 +268,7 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
     pic->bitDepth = param->internalBitDepth;
     pic->colorSpace = param->internalCsp;
     pic->forceqp = X265_QP_AUTO;
+    pic->quantOffsets = NULL;
     if (param->analysisMode)
     {
         uint32_t widthInCU       = (param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
