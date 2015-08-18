@@ -64,51 +64,54 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
                 fprintf(csvfp, "Encode Order, Type, POC, QP, Bits, ");
                 if (param.rc.rateControlMode == X265_RC_CRF)
                     fprintf(csvfp, "RateFactor, ");
-                fprintf(csvfp, "Y PSNR, U PSNR, V PSNR, YUV PSNR, SSIM, SSIM (dB),  List 0, List 1");
-                /* detailed performance statistics */
-                fprintf(csvfp, ", DecideWait (ms), Row0Wait (ms), Wall time (ms), Ref Wait Wall (ms), Total CTU time (ms), Stall Time (ms), Avg WPP, Row Blocks");
-                if (level >= 2)
+                if (param.bEnablePsnr)
+                    fprintf(csvfp, "Y PSNR, U PSNR, V PSNR, YUV PSNR, ");
+                if (param.bEnableSsim)
+                    fprintf(csvfp, "SSIM, SSIM(dB),");
+                fprintf(csvfp, "List 0, List 1");
+                uint32_t size = param.maxCUSize;
+                for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
                 {
-                    uint32_t size = param.maxCUSize;
-                    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-                    {
-                        fprintf(csvfp, ", Intra %dx%d DC, Intra %dx%d Planar, Intra %dx%d Ang", size, size, size, size, size, size);
-                        size /= 2;
-                    }
-                    fprintf(csvfp, ", 4x4");
-                    size = param.maxCUSize;
-                    if (param.bEnableRectInter)
-                    {
-                        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-                        {
-                            fprintf(csvfp, ", Inter %dx%d, Inter %dx%d (Rect)", size, size, size, size);
-                            if (param.bEnableAMP)
-                                fprintf(csvfp, ", Inter %dx%d (Amp)", size, size);
-                            size /= 2;
-                        }
-                    }
-                    else
-                    {
-                        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-                        {
-                            fprintf(csvfp, ", Inter %dx%d", size, size);
-                            size /= 2;
-                        }
-                    }
-                    size = param.maxCUSize;
-                    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-                    {
-                        fprintf(csvfp, ", Skip %dx%d", size, size);
-                        size /= 2;
-                    }
-                    size = param.maxCUSize;
-                    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-                    {
-                        fprintf(csvfp, ", Merge %dx%d", size, size);
-                        size /= 2;
-                    }
-                    fprintf(csvfp, ", Avg Luma Distortion, Avg Chroma Distortion, Avg psyEnergy, Avg Luma Level, Max Luma Level");
+                    fprintf(csvfp, ", Intra %dx%d DC, Intra %dx%d Planar, Intra %dx%d Ang", size, size, size, size, size, size);
+                    size /= 2;
                 }
+                fprintf(csvfp, ", 4x4");
+                size = param.maxCUSize;
+                if (param.bEnableRectInter)
+                {
+                    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                    {
+                        fprintf(csvfp, ", Inter %dx%d, Inter %dx%d (Rect)", size, size, size, size);
+                        if (param.bEnableAMP)
+                            fprintf(csvfp, ", Inter %dx%d (Amp)", size, size);
+                        size /= 2;
+                    }
+                }
+                else
+                {
+                    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                    {
+                        fprintf(csvfp, ", Inter %dx%d", size, size);
+                        size /= 2;
+                    }
+                }
+                size = param.maxCUSize;
+                for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                {
+                    fprintf(csvfp, ", Skip %dx%d", size, size);
+                    size /= 2;
+                }
+                size = param.maxCUSize;
+                for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                {
+                    fprintf(csvfp, ", Merge %dx%d", size, size);
+                    size /= 2;
+                }
+                fprintf(csvfp, ", Avg Luma Distortion, Avg Chroma Distortion, Avg psyEnergy, Avg Luma Level, Max Luma Level");
+
+                /* detailed performance statistics */
+                if (level >= 2)
+                    fprintf(csvfp, ", DecideWait (ms), Row0Wait (ms), Wall time (ms), Ref Wait Wall (ms), Total CTU time (ms), Stall Time (ms), Avg WPP, Row Blocks");
                 fprintf(csvfp, "\n");
             }
             else
@@ -130,12 +133,8 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
         fprintf(csvfp, "%.3lf,", frameStats->rateFactor);
     if (param.bEnablePsnr)
         fprintf(csvfp, "%.3lf, %.3lf, %.3lf, %.3lf,", frameStats->psnrY, frameStats->psnrU, frameStats->psnrV, frameStats->psnr);
-    else
-        fputs(" -, -, -, -,", csvfp);
     if (param.bEnableSsim)
         fprintf(csvfp, " %.6f, %6.3f,", frameStats->ssim, x265_ssim2dB(frameStats->ssim));
-    else
-        fputs(" -, -,", csvfp);
     if (frameStats->sliceType == 'I')
         fputs(" -, -,", csvfp);
     else
@@ -154,32 +153,33 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
         else
             fputs(" -,", csvfp);
     }
-    fprintf(csvfp, " %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf,", frameStats->decideWaitTime, frameStats->row0WaitTime, frameStats->wallTime, frameStats->refWaitWallTime, frameStats->totalCTUTime, frameStats->stallTime);
-    fprintf(csvfp, " %.3lf, %d", frameStats->avgWPP, frameStats->countRowBlocks);
-    if (level >= 2)
+    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        fprintf(csvfp, "%5.2lf%%, %5.2lf%%, %5.2lf%%,", frameStats->cuStats.percentIntraDistribution[depth][0], frameStats->cuStats.percentIntraDistribution[depth][1], frameStats->cuStats.percentIntraDistribution[depth][2]);
+    fprintf(csvfp, "%5.2lf%%", frameStats->cuStats.percentIntraNxN);
+    if (param.bEnableRectInter)
     {
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-            fprintf(csvfp, ", %5.2lf%%, %5.2lf%%, %5.2lf%%", frameStats->cuStats.percentIntraDistribution[depth][0], frameStats->cuStats.percentIntraDistribution[depth][1], frameStats->cuStats.percentIntraDistribution[depth][2]);
-        fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentIntraNxN);
-        if (param.bEnableRectInter)
         {
-            for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-            {
-                fprintf(csvfp, ", %5.2lf%%, %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0], frameStats->cuStats.percentInterDistribution[depth][1]);
-                if (param.bEnableAMP)
-                    fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][2]);
-            }
+            fprintf(csvfp, ", %5.2lf%%, %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0], frameStats->cuStats.percentInterDistribution[depth][1]);
+            if (param.bEnableAMP)
+                fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][2]);
         }
-        else
-        {
-            for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-                fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0]);
-        }
+    }
+    else
+    {
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-            fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentSkipCu[depth]);
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-            fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentMergeCu[depth]);
-        fprintf(csvfp, ", %.2lf, %.2lf, %.2lf, %.2lf, %d", frameStats->avgLumaDistortion, frameStats->avgChromaDistortion, frameStats->avgPsyEnergy, frameStats->avgLumaLevel, frameStats->maxLumaLevel);
+            fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0]);
+    }
+    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentSkipCu[depth]);
+    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentMergeCu[depth]);
+    fprintf(csvfp, ", %.2lf, %.2lf, %.2lf, %.2lf, %d", frameStats->avgLumaDistortion, frameStats->avgChromaDistortion, frameStats->avgPsyEnergy, frameStats->avgLumaLevel, frameStats->maxLumaLevel);
+
+    if (level >= 2)
+    {
+        fprintf(csvfp, ", %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf,", frameStats->decideWaitTime, frameStats->row0WaitTime, frameStats->wallTime, frameStats->refWaitWallTime, frameStats->totalCTUTime, frameStats->stallTime);
+        fprintf(csvfp, " %.3lf, %d", frameStats->avgWPP, frameStats->countRowBlocks);
     }
     fprintf(csvfp, "\n");
     fflush(stderr);
