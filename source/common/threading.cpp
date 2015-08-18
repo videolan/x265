@@ -35,6 +35,55 @@ extern "C" intptr_t PFX(stack_align)(void (*func)(), ...);
 #define STACK_ALIGN(func, ...) func(__VA_ARGS__)
 #endif
 
+#if NO_ATOMICS
+pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+int no_atomic_or(int* ptr, int mask)
+{ 
+    pthread_mutex_lock(&g_mutex);
+    int ret = *ptr;
+    *ptr |= mask;
+    pthread_mutex_unlock(&g_mutex);
+    return ret;
+}
+
+int no_atomic_and(int* ptr, int mask)
+{
+    pthread_mutex_lock(&g_mutex);
+    int ret = *ptr;
+    *ptr &= mask;
+    pthread_mutex_unlock(&g_mutex);
+    return ret;
+}
+
+int no_atomic_inc(int* ptr)
+{
+    pthread_mutex_lock(&g_mutex);
+    *ptr += 1;
+    int ret = *ptr;
+    pthread_mutex_unlock(&g_mutex);
+    return ret;
+}
+
+int no_atomic_dec(int* ptr)
+{
+    pthread_mutex_lock(&g_mutex);
+    *ptr -= 1;
+    int ret = *ptr;
+    pthread_mutex_unlock(&g_mutex);
+    return ret;
+}
+
+int no_atomic_add(int* ptr, int val)
+{
+    pthread_mutex_lock(&g_mutex);
+    *ptr += val;
+    int ret = *ptr;
+    pthread_mutex_unlock(&g_mutex);
+    return ret;
+}
+#endif
+
 /* C shim for forced stack alignment */
 static void stackAlignMain(Thread *instance)
 {

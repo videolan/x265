@@ -82,6 +82,12 @@
 #define ASM     "[noasm]"
 #endif
  
+#if NO_ATOMICS
+#define ATOMICS "[no-atomics]"
+#else
+#define ATOMICS ""
+#endif
+
 #if CHECKED_BUILD
 #define CHECKED "[CHECKED] "
 #else
@@ -106,4 +112,4 @@ const int PFX(max_bit_depth) = 8;
 #endif
 
 const char* PFX(version_str) = XSTR(X265_VERSION);
-const char* PFX(build_info_str) = ONOS COMPILEDBY BITS ASM CHECKED BITDEPTH;
+const char* PFX(build_info_str) = ONOS COMPILEDBY BITS ASM ATOMICS CHECKED BITDEPTH;
