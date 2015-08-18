@@ -336,10 +336,17 @@ typedef const x265_api* (*api_query_func)(int bitDepth, int apiVersion, int* err
 #define ext ".so"
 #endif
 
+static int g_recursion /* = 0 */;
+
 const x265_api* x265_api_get(int bitDepth)
 {
     if (bitDepth && bitDepth != X265_DEPTH)
     {
+        if (g_recursion)
+            return NULL;
+        else
+            g_recursion = 1;
+
 #if LINKED_8BIT
         if (bitDepth == 8) return x265_8bit::x265_api_get(0);
 #endif
@@ -414,6 +421,14 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
         if (err) *err = X265_API_QUERY_ERR_VER_REFUSED;
         return NULL;
     }
+
+    if (g_recursion)
+    {
+        if (err) *err = X265_API_QUERY_ERR_LIB_NOT_FOUND;
+        return NULL;
+    }
+    else
+        g_recursion = 1;
 
     if (err) *err = X265_API_QUERY_ERR_NONE;
 
