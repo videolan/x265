@@ -72,9 +72,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
 #endif
 
 #if HIGH_BIT_DEPTH
-    if (X265_DEPTH == 12)
-        x265_log(p, X265_LOG_WARNING, "Main12 is HIGHLY experimental, do not use!\n");
-    else if (X265_DEPTH != 10 && X265_DEPTH != 12)
+    if (X265_DEPTH != 10 && X265_DEPTH != 12)
 #else
     if (X265_DEPTH != 8)
 #endif

@@ -1230,7 +1230,7 @@ static const char * const x265_profile_names[] = {
     "main422-10", "main422-10-intra",
     "main444-10", "main444-10-intra",
 
-    "main12",     "main12-intra",                  /* Highly Experimental */
+    "main12",     "main12-intra",
     "main422-12", "main422-12-intra",
     "main444-12", "main444-12-intra",
 

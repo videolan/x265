@@ -436,8 +436,8 @@ frame counts) are only applicable to the CLI application.
 	depth of the encoder. If the requested bit depth is not the bit
 	depth of the linked libx265, it will attempt to bind libx265_main
 	for an 8bit encoder, libx265_main10 for a 10bit encoder, or
-	libx265_main12 for a 12bit encoder (EXPERIMENTAL), with the
-	same API version as the linked libx265.
+	libx265_main12 for a 12bit encoder, with the same API version as the
+	linked libx265.
 
 	**CLI ONLY**
 
@@ -483,13 +483,6 @@ Profile, Level, Tier
 	API users must call x265_param_apply_profile() after configuring
 	their param structure. Any changes made to the param structure after
 	this call might make the encode non-compliant.
-
-.. note::
-
-	All 12bit presets are extremely unstable, do not use them yet.
-	16bit is not supported at all, but those profiles are included
-	because it is possible for libx265 to make bitstreams compatible
-	with them.
 
 .. option:: --level-idc <integer|float>
 
