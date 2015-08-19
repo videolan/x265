@@ -237,25 +237,17 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
     pixel *U = m_picOrg[1];
     pixel *V = m_picOrg[2];
 
-    uint64_t sumLuma = 0;
+    uint64_t sumLuma;
+    m_maxLumaLevel = primitives.planeClipAndMax(Y, m_stride, width, height, &sumLuma, (pixel)param.minLuma, (pixel)param.maxLuma);
+    m_avgLumaLevel = (double)(sumLuma) / (m_picHeight * m_picWidth);
+
     for (int r = 0; r < height; r++)
     {
-        for (int c = 0; c < width; c++)
-        {
-            /* Clip luma of source picture to max and min values before extending edges of picYuv */
-            Y[c] = x265_clip3((pixel)param.minLuma, (pixel)param.maxLuma, Y[c]);
-
-            /* Determine maximum and average luma level in a picture */
-            m_maxLumaLevel = X265_MAX(Y[c], m_maxLumaLevel);
-            sumLuma += Y[c];
-        }
-
         for (int x = 0; x < padx; x++)
             Y[width + x] = Y[width - 1];
 
         Y += m_stride;
     }
-    m_avgLumaLevel = (double)(sumLuma) / (m_picHeight * m_picWidth);
 
     for (int r = 0; r < height >> m_vChromaShift; r++)
     {
