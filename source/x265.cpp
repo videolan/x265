@@ -199,8 +199,21 @@ bool CLIOptions::parse(int argc, char **argv)
             tune = optarg;
         else if (c == 'D')
             outputBitDepth = atoi(optarg);
+        else if (c == 'P')
+            profile = optarg;
         else if (c == '?')
             bShowHelp = true;
+    }
+
+    if (!outputBitDepth && profile)
+    {
+        /* try to derive the output bit depth from the requested profile */
+        if (strstr(profile, "10"))
+            outputBitDepth = 10;
+        else if (strstr(profile, "12"))
+            outputBitDepth = 12;
+        else
+            outputBitDepth = 8;
     }
 
     api = x265_api_get(outputBitDepth);
@@ -292,9 +305,9 @@ bool CLIOptions::parse(int argc, char **argv)
             OPT("dither") this->bDither = true;
             OPT("recon-depth") reconFileBitDepth = (uint32_t)x265_atoi(optarg, bError);
             OPT("y4m") this->bForceY4m = true;
-            OPT("profile") profile = optarg; /* handled last */
-            OPT("preset") /* handled above */;
-            OPT("tune")   /* handled above */;
+            OPT("profile") /* handled above */;
+            OPT("preset")  /* handled above */;
+            OPT("tune")    /* handled above */;
             OPT("output-depth")   /* handled above */;
             OPT("recon-y4m-exec") reconPlayCmd = optarg;
             OPT("qpfile")
