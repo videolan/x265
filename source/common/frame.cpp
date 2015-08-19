@@ -36,19 +36,29 @@ Frame::Frame()
     m_countRefEncoders = 0;
     m_encData = NULL;
     m_reconPic = NULL;
+    m_quantOffsets = NULL;
     m_next = NULL;
     m_prev = NULL;
     m_param = NULL;
     memset(&m_lowres, 0, sizeof(m_lowres));
 }
 
-bool Frame::create(x265_param *param)
+bool Frame::create(x265_param *param, float* quantOffsets)
 {
     m_fencPic = new PicYuv;
     m_param = param;
 
-    return m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
-           m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode);
+    if (m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
+        m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode))
+    {
+        if (quantOffsets)
+        {
+            int32_t cuCount = m_lowres.maxBlocksInRow * m_lowres.maxBlocksInCol;
+            m_quantOffsets = new float[cuCount];
+        }
+        return true;
+    }
+    return false;
 }
 
 bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
@@ -56,7 +66,7 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
     m_encData = new FrameData;
     m_reconPic = new PicYuv;
     m_encData->m_reconPic = m_reconPic;
-    bool ok = m_encData->create(param, sps) && m_reconPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
+    bool ok = m_encData->create(*param, sps) && m_reconPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     if (ok)
     {
         /* initialize right border of m_reconpicYuv as SAO may read beyond the
@@ -65,6 +75,12 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
         memset(m_reconPic->m_picOrg[0], 0, sizeof(pixel) * m_reconPic->m_stride * maxHeight);
         memset(m_reconPic->m_picOrg[1], 0, sizeof(pixel) * m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
         memset(m_reconPic->m_picOrg[2], 0, sizeof(pixel) * m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
+
+        /* use pre-calculated cu/pu offsets cached in the SPS structure */
+        m_reconPic->m_cuOffsetC = sps.cuOffsetC;
+        m_reconPic->m_cuOffsetY = sps.cuOffsetY;
+        m_reconPic->m_buOffsetC = sps.buOffsetC;
+        m_reconPic->m_buOffsetY = sps.buOffsetY;
     }
     return ok;
 }
@@ -98,6 +114,11 @@ void Frame::destroy()
         m_reconPic->destroy();
         delete m_reconPic;
         m_reconPic = NULL;
+    }
+
+    if (m_quantOffsets)
+    {
+        delete[] m_quantOffsets;
     }
 
     m_lowres.destroy();

@@ -233,10 +233,10 @@ void FrameFilter::processRowPost(int row)
     }
     if (m_param->bEnableSsim && m_ssimBuf)
     {
-        pixel *rec = m_frame->m_reconPic->m_picOrg[0];
+        pixel *rec = reconPic->m_picOrg[0];
         pixel *fenc = m_frame->m_fencPic->m_picOrg[0];
-        intptr_t stride1 = m_frame->m_fencPic->m_stride;
-        intptr_t stride2 = m_frame->m_reconPic->m_stride;
+        intptr_t stride1 = reconPic->m_stride;
+        intptr_t stride2 = m_frame->m_fencPic->m_stride;
         uint32_t bEnd = ((row + 1) == (this->m_numRows - 1));
         uint32_t bStart = (row == 0);
         uint32_t minPixY = row * g_maxCUSize - 4 * !bStart;

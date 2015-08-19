@@ -1676,7 +1676,7 @@ int CUData::getPMV(InterNeighbourMV *neighbours, uint32_t picList, uint32_t refI
         if (tempRefIdx != -1)
         {
             uint32_t cuAddr = neighbours[MD_COLLOCATED].cuAddr[picList];
-            const Frame* colPic = m_slice->m_refPicList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
+            const Frame* colPic = m_slice->m_refFrameList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
             const CUData* colCU = colPic->m_encData->getPicCTU(cuAddr);
 
             // Scale the vector
@@ -1857,7 +1857,7 @@ bool CUData::getIndirectPMV(MV& outMV, InterNeighbourMV *neighbours, uint32_t pi
 
 bool CUData::getColMVP(MV& outMV, int& outRefIdx, int picList, int cuAddr, int partUnitIdx) const
 {
-    const Frame* colPic = m_slice->m_refPicList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
+    const Frame* colPic = m_slice->m_refFrameList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
     const CUData* colCU = colPic->m_encData->getPicCTU(cuAddr);
 
     uint32_t absPartAddr = partUnitIdx & TMVP_UNIT_MASK;
@@ -1892,7 +1892,7 @@ bool CUData::getColMVP(MV& outMV, int& outRefIdx, int picList, int cuAddr, int p
 // Cache the collocated MV.
 bool CUData::getCollocatedMV(int cuAddr, int partUnitIdx, InterNeighbourMV *neighbour) const
 {
-    const Frame* colPic = m_slice->m_refPicList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
+    const Frame* colPic = m_slice->m_refFrameList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
     const CUData* colCU = colPic->m_encData->getPicCTU(cuAddr);
 
     uint32_t absPartAddr = partUnitIdx & TMVP_UNIT_MASK;

@@ -436,8 +436,8 @@ frame counts) are only applicable to the CLI application.
 	depth of the encoder. If the requested bit depth is not the bit
 	depth of the linked libx265, it will attempt to bind libx265_main
 	for an 8bit encoder, libx265_main10 for a 10bit encoder, or
-	libx265_main12 for a 12bit encoder (EXPERIMENTAL), with the
-	same API version as the linked libx265.
+	libx265_main12 for a 12bit encoder, with the same API version as the
+	linked libx265.
 
 	If the output depth is not specified but :option:`--profile` is
 	specified, the output depth will be derived from the profile name.
@@ -489,13 +489,6 @@ Profile, Level, Tier
 
 	The CLI application will derive the output bit depth from the
 	profile name if :option:`--output-depth` is not specified.
-
-.. note::
-
-	All 12bit presets are extremely unstable, do not use them yet.
-	16bit is not supported at all, but those profiles are included
-	because it is possible for libx265 to make bitstreams compatible
-	with them.
 
 .. option:: --level-idc <integer|float>
 
@@ -1643,6 +1636,16 @@ VUI fields must be manually specified.
 
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
+
+.. option:: --min-luma <integer>
+
+	Minimum luma value allowed for input pictures. Any values below min-luma
+	are clipped. Experimental. No default.
+
+.. option:: --max-luma <integer>
+
+	Maximum luma value allowed for input pictures. Any values above max-luma
+	are clipped. Experimental. No default.
 
 Bitstream options
 =================

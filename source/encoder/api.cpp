@@ -72,9 +72,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
 #endif
 
 #if HIGH_BIT_DEPTH
-    if (X265_DEPTH == 12)
-        x265_log(p, X265_LOG_WARNING, "Main12 is HIGHLY experimental, do not use!\n");
-    else if (X265_DEPTH != 10 && X265_DEPTH != 12)
+    if (X265_DEPTH != 10 && X265_DEPTH != 12)
 #else
     if (X265_DEPTH != 8)
 #endif
@@ -268,6 +266,7 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
     pic->bitDepth = param->internalBitDepth;
     pic->colorSpace = param->internalCsp;
     pic->forceqp = X265_QP_AUTO;
+    pic->quantOffsets = NULL;
     if (param->analysisMode)
     {
         uint32_t widthInCU       = (param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
