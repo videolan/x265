@@ -1435,19 +1435,18 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
             avgSatdCost += frames[cp1]->costEst[cp1 - p0][0];
             cnt++;
         }
+
         /* Identify possible scene fluctuations by comparing the satd cost of the frames.
          * This could denote the beginning or ending of scene transitions.
          * During a scene transition(fade in/fade outs), if fluctuate remains false,
-         * then the scene had completed its transition or stabilized. 
-         */
-
+         * then the scene had completed its transition or stabilized */
         if (noScenecuts)
         {
             fluctuate = false;
             avgSatdCost /= cnt;
             for (int i= p1 ; i <= maxp1; i++)
             {
-                if (abs(frames[i]->costEst[i - p0][0] - avgSatdCost)  > 0.1 * avgSatdCost)
+                if (fabs((double)(frames[i]->costEst[i - p0][0] - avgSatdCost)) > 0.1 * avgSatdCost)
                 {
                     fluctuate = true;
                     if (!m_isSceneTransition && frames[i]->bScenecut)
@@ -1455,26 +1454,18 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
                         m_isSceneTransition = true;
                         /* just mark the first scenechange in the scene transition as a scenecut. */
                         for (int j = i + 1; j <= maxp1; j++)
-                        {
                             frames[j]->bScenecut = false;
-                        }
                         break;
                     }
                 }
-                if (frames[i]->bScenecut)
-                {
-                    frames[i]->bScenecut = false;
-                }
+                frames[i]->bScenecut = false;
             }
         }
         if (!fluctuate && !noScenecuts)
-        {
-            /* Signal end of scene transitioning */
-            m_isSceneTransition = false;
-        }
+            m_isSceneTransition = false; /* Signal end of scene transitioning */
     }
 
-    /* Ignore frames that are part of a flash, i.e. cannot be real scenecuts. */
+    /* Ignore frames that are part of a flash, i.e. cannot be real scenecuts */
     if (!frames[p1]->bScenecut)
         return false;
     return scenecutInternal(frames, p0, p1, bRealScenecut);
