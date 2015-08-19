@@ -395,7 +395,7 @@ frame counts) are only applicable to the CLI application.
 
 	**Range of values:** positive int or float, or num/denom
 
-.. option:: --interlaceMode <false|tff|bff>, --no-interlaceMode
+.. option:: --interlace <false|tff|bff>, --no-interlace
 
 	0. progressive pictures **(default)**
 	1. top field first 
