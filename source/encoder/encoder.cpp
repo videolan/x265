@@ -612,6 +612,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
             finishFrameStats(outFrame, curEncoder, curEncoder->m_accessUnitBits, frameData);
 
+            /* Write RateControl Frame level stats in multipass encodes */
+            if (m_param->rc.bStatWrite)
+                if (m_rateControl->writeRateControlFrameStats(outFrame, &curEncoder->m_rce))
+                    m_aborted = true;
+
             /* Allow this frame to be recycled if no frame encoders are using it for reference */
             if (!pic_out)
             {
@@ -689,10 +694,6 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             /* Allow FrameEncoder::compressFrame() to start in the frame encoder thread */
             if (!curEncoder->startCompressFrame(frameEnc))
                 m_aborted = true;
-            /* Write RateControl Frame level stats in multipass encodes */
-            if (m_param->rc.bStatWrite)
-                if (m_rateControl->writeRateControlFrameStats(frameEnc, &curEncoder->m_rce))
-                    m_aborted = true;
         }
         else if (m_encodedFrameNum)
             m_rateControl->setFinalFrameCount(m_encodedFrameNum); 
