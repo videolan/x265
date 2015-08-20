@@ -342,11 +342,6 @@ const x265_api* x265_api_get(int bitDepth)
 {
     if (bitDepth && bitDepth != X265_DEPTH)
     {
-        if (g_recursion)
-            return NULL;
-        else
-            g_recursion = 1;
-
 #if LINKED_8BIT
         if (bitDepth == 8) return x265_8bit::x265_api_get(0);
 #endif
@@ -372,6 +367,11 @@ const x265_api* x265_api_get(int bitDepth)
 
         const x265_api* api = NULL;
         int reqDepth = 0;
+
+        if (g_recursion > 1)
+            return NULL;
+        else
+            g_recursion++;
 
 #if _WIN32
         HMODULE h = LoadLibraryA(libname);
@@ -401,6 +401,8 @@ const x265_api* x265_api_get(int bitDepth)
         }
 #endif
 
+        g_recursion--;
+
         if (api && bitDepth != api->bit_depth)
         {
             x265_log(NULL, X265_LOG_WARNING, "%s does not support requested bitDepth %d\n", libname, bitDepth);
@@ -421,14 +423,6 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
         if (err) *err = X265_API_QUERY_ERR_VER_REFUSED;
         return NULL;
     }
-
-    if (g_recursion)
-    {
-        if (err) *err = X265_API_QUERY_ERR_LIB_NOT_FOUND;
-        return NULL;
-    }
-    else
-        g_recursion = 1;
 
     if (err) *err = X265_API_QUERY_ERR_NONE;
 
@@ -464,6 +458,14 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
         int reqDepth = 0;
         int e = X265_API_QUERY_ERR_LIB_NOT_FOUND;
 
+        if (g_recursion > 1)
+        {
+            if (err) *err = X265_API_QUERY_ERR_LIB_NOT_FOUND;
+            return NULL;
+        }
+        else
+            g_recursion++;
+
 #if _WIN32
         HMODULE h = LoadLibraryA(libname);
         if (!h)
@@ -493,6 +495,8 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
                 api = query(reqDepth, apiVersion, err);
         }
 #endif
+
+        g_recursion--;
 
         if (api && bitDepth != api->bit_depth)
         {
