@@ -1195,6 +1195,13 @@ Quality, rate control and rate distortion options
 	is also non-zero. Both vbv-bufsize and vbv-maxrate are required to
 	enable VBV in CRF mode. Default 0 (disabled)
 
+	Note that when VBV is enabled (with a valid :option:`--vbv-bufsize`),
+	VBV emergency denoising is turned on. This will turn on aggressive 
+	denoising at the frame level when frame QP > QP_MAX_SPEC (51), drastically
+	reducing bitrate and allowing ratecontrol to assign lower QPs for
+	the following frames. The visual effect is blurring, but removes 
+	significant blocking/displacement artifacts.
+
 .. option:: --vbv-init <float>
 
 	Initial buffer occupancy. The portion of the decode buffer which
