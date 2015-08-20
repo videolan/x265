@@ -84,8 +84,8 @@ Logging/Statistic Options
 	it adds one line per run. If :option:`--csv-log-level` is greater than
 	0, it writes one line per frame. Default none
 
-	When frame level logging is enabled, several frame performance
-	statistics are listed:
+	Several frame performance statistics are available when 
+	:option:`--csv-log-level` is greater than or equal to 2:
 
 	**DecideWait ms** number of milliseconds the frame encoder had to
 	wait, since the previous frame was retrieved by the API thread,
