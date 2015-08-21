@@ -152,10 +152,12 @@ cglobal checkasm_call, 2,15,16,max_args*8+8
 
     jz .ok
     mov  r9, rax
+    mov r10, rdx
     lea  r0, [error_message]
     call puts
     mov  r1, [rsp+max_args*8]
     mov  dword [r1], 0
+    mov  rdx, r10
     mov  rax, r9
 .ok:
     RET
@@ -191,12 +193,14 @@ cglobal checkasm_call, 1,7
     or   r3, r5
     jz .ok
     mov  r3, eax
+    mov  r4, edx
     lea  r1, [error_message]
     push r1
     call puts
     add  esp, 4
     mov  r1, r1m
     mov  dword [r1], 0
+    mov  edx, r4
     mov  eax, r3
 .ok:
     REP_RET
