@@ -2974,6 +2974,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_16x16].intra_pred[12] = PFX(intra_pred_ang16_12_avx2);
         p.cu[BLOCK_16x16].intra_pred[11] = PFX(intra_pred_ang16_11_avx2);
         p.cu[BLOCK_16x16].intra_pred[13] = PFX(intra_pred_ang16_13_avx2);
+        p.cu[BLOCK_16x16].intra_pred[14] = PFX(intra_pred_ang16_14_avx2);
         p.cu[BLOCK_16x16].intra_pred[25] = PFX(intra_pred_ang16_25_avx2);
         p.cu[BLOCK_16x16].intra_pred[28] = PFX(intra_pred_ang16_28_avx2);
         p.cu[BLOCK_16x16].intra_pred[27] = PFX(intra_pred_ang16_27_avx2);

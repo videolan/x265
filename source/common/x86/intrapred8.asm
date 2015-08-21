@@ -479,6 +479,13 @@ const ang16_shuf_mode13,   db 4, 5, 4, 5, 4, 5, 3, 4, 3, 4, 3, 4, 3, 4, 2, 3, 5,
 const angHor_tab_13, db (32-23), 23, (32-14), 14, (32-5), 5, (32-28), 28, (32-19), 19, (32-10), 10, (32-1), 1, (32-24), 24
                      db (32-15), 15, (32-6), 6, (32-29), 29, (32-20), 20, (32-11), 11, (32-2), 2, (32-25), 25, (32-16), 16
 
+const ang16_shuf_mode14,   db 6, 7, 6, 7, 5, 6, 5, 6, 4, 5, 4, 5, 4, 5, 3, 4, 7, 8, 7, 8, 6, 7, 6, 7, 5, 6, 5, 6, 5, 6, 4, 5
+                           db 3, 4, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2, 0, 1, 0, 1, 4, 5, 3, 4, 3, 4, 3, 4, 2, 3, 2, 3, 1, 2, 1, 2
+                           db 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 12, 10, 7, 5, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 12, 10, 7, 5, 2, 0
+
+const angHor_tab_14, db (32-19), 19, (32-6), 6, (32-25), 25, (32-12), 12, (32-31), 31, (32-18), 18, (32-5), 5, (32-24), 24
+                     db (32-11), 11, (32-30), 30, (32-17), 17, (32-4), 4, (32-23), 23, (32-10), 10, (32-29), 29, (32-16), 16
+
 const ang_table
 %assign x 0
 %rep 32
@@ -14834,6 +14841,118 @@ cglobal intra_pred_ang16_13, 3,4,9
     vextracti128      [r0 + r3], m4, 1
     RET
 
+INIT_YMM avx2
+cglobal intra_pred_ang16_14, 3,4,9
+    vbroadcasti128    m0, [angHor_tab_14]
+    vbroadcasti128    m1, [angHor_tab_14 + mmsize/2]
+    mova              m2, [pw_1024]
+    mova              m7, [ang16_shuf_mode14]
+    mova              m8, [ang16_shuf_mode14 + mmsize]
+    lea               r3, [r1 * 3]
+
+    vbroadcasti128    m3, [r2 + mmsize + 1]
+    vbroadcasti128    m4, [r2]
+    pshufb            m4, [ang16_shuf_mode14 + mmsize * 2]
+    palignr           m3, m4, 9
+    vbroadcasti128    m6, [r2 + mmsize + 10]
+
+    pshufb            m4, m3, m7
+    pshufb            m5, m3, m8
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
+
+    palignr           m5, m6, m3, 2
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    lea               r0, [r0 + r1 * 4]
+
+    palignr           m5, m6, m3, 4
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
+
+    palignr           m5, m6, m3, 6
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    lea               r0, [r0 + r1 * 4]
+
+    palignr           m5, m6, m3, 8
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
+
+    palignr           m5, m6, m3, 10
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    lea               r0, [r0 + r1 * 4]
+
+    palignr           m5, m6, m3, 12
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
+
+    palignr           m5, m6, m3, 14
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    RET
 
 INIT_YMM avx2
 cglobal intra_pred_ang16_11, 3,4,5
