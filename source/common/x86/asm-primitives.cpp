@@ -2983,6 +2983,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_16x16].intra_pred[33] = PFX(intra_pred_ang16_33_avx2);
         p.cu[BLOCK_16x16].intra_pred[24] = PFX(intra_pred_ang16_24_avx2);
         p.cu[BLOCK_16x16].intra_pred[23] = PFX(intra_pred_ang16_23_avx2);
+        p.cu[BLOCK_32x32].intra_pred[4]  = PFX(intra_pred_ang32_4_avx2);
+        p.cu[BLOCK_32x32].intra_pred[5]  = PFX(intra_pred_ang32_5_avx2);
+        p.cu[BLOCK_32x32].intra_pred[6]  = PFX(intra_pred_ang32_6_avx2);
+        p.cu[BLOCK_32x32].intra_pred[7]  = PFX(intra_pred_ang32_7_avx2);
+        p.cu[BLOCK_32x32].intra_pred[8]  = PFX(intra_pred_ang32_8_avx2);
         p.cu[BLOCK_32x32].intra_pred[34] = PFX(intra_pred_ang32_34_avx2);
         p.cu[BLOCK_32x32].intra_pred[2] = PFX(intra_pred_ang32_2_avx2);
         p.cu[BLOCK_32x32].intra_pred[26] = PFX(intra_pred_ang32_26_avx2);
@@ -3540,6 +3545,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I420].cu[CHROMA_420_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx2);
         p.chroma[X265_CSP_I422].cu[CHROMA_422_32x64].copy_ps = PFX(blockcopy_ps_32x64_avx2);
         p.cu[BLOCK_64x64].copy_ps = PFX(blockcopy_ps_64x64_avx2);
+        p.planeClipAndMax = PFX(planeClipAndMax_avx2);
 
         /* The following primitives have been disabled since performance compared to SSE is negligible/negative */
 #if 0

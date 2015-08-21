@@ -47,6 +47,8 @@ struct EncStats
     double        m_totalQp;
     uint64_t      m_accBits;
     uint32_t      m_numPics;
+    uint16_t      m_maxCLL;
+    double        m_maxFALL;
 
     EncStats()
     {
@@ -54,6 +56,8 @@ struct EncStats
         m_accBits = 0;
         m_numPics = 0;
         m_totalQp = 0;
+        m_maxCLL = 0;
+        m_maxFALL = 0;
     }
 
     void addQP(double aveQp);
@@ -92,13 +96,6 @@ public:
 
     int                m_numPools;
     int                m_curEncoder;
-
-    /* cached PicYuv offset arrays, shared by all instances of
-     * PicYuv created by this encoder */
-    intptr_t*          m_cuOffsetY;
-    intptr_t*          m_cuOffsetC;
-    intptr_t*          m_buOffsetY;
-    intptr_t*          m_buOffsetC;
 
     /* Collect statistics globally */
     EncStats           m_analyzeAll;

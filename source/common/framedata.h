@@ -55,8 +55,6 @@ struct FrameStats
     double      avgLumaDistortion;
     double      avgChromaDistortion;
     double      avgPsyEnergy;
-    double      avgLumaLevel;
-    double      lumaLevel;
     double      percentIntraNxN;
     double      percentSkipCu[NUM_CU_DEPTH];
     double      percentMergeCu[NUM_CU_DEPTH];
@@ -75,7 +73,6 @@ struct FrameStats
     uint64_t    cntIntra[NUM_CU_DEPTH];
     uint64_t    cuInterDistribution[NUM_CU_DEPTH][INTER_MODES];
     uint64_t    cuIntraDistribution[NUM_CU_DEPTH][INTRA_MODES];
-    uint16_t    maxLumaLevel;
 
     FrameStats()
     {
@@ -96,7 +93,7 @@ public:
 
     Slice*         m_slice;
     SAOParam*      m_saoParam;
-    x265_param*    m_param;
+    const x265_param* m_param;
 
     FrameData*     m_freeListNext;
     PicYuv*        m_reconPic;
@@ -142,11 +139,11 @@ public:
 
     FrameData();
 
-    bool create(x265_param *param, const SPS& sps);
+    bool create(const x265_param& param, const SPS& sps);
     void reinit(const SPS& sps);
     void destroy();
 
-    CUData* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }
+    inline CUData* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }
 };
 }
 

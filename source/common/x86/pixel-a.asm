@@ -70,6 +70,7 @@ cextern popcnt_table
 cextern pd_2
 cextern hmul_16p
 cextern pb_movemask
+cextern pb_movemask_32
 cextern pw_pixel_max
 
 ;=============================================================================
@@ -12493,3 +12494,80 @@ cglobal pixel_satd_64x64, 4,8,8
     movd            eax, xm6
     RET
 %endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 1
+
+
+;-------------------------------------------------------------------------------------------------------------------------------------
+; pixel planeClipAndMax(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, const pixel minPix, const pixel maxPix)
+;-------------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0
+INIT_YMM avx2
+cglobal planeClipAndMax, 5,7,8
+    movd            xm0, r5m
+    vpbroadcastb    m0, xm0                 ; m0 = [min]
+    vpbroadcastb    m1, r6m                 ; m1 = [max]
+    pxor            m2, m2                  ; m2 = sumLuma
+    pxor            m3, m3                  ; m3 = maxLumaLevel
+    pxor            m4, m4                  ; m4 = zero
+
+    ; get mask to partial register pixels
+    mov             r5d, r2d
+    and             r2d, ~(mmsize - 1)
+    sub             r5d, r2d
+    lea             r6, [pb_movemask_32 + mmsize]
+    sub             r6, r5
+    movu            m5, [r6]                ; m5 = mask for last couple column
+
+.loopH:
+    lea             r5d, [r2 - mmsize]
+
+.loopW:
+    movu            m6, [r0 + r5]
+    pmaxub          m6, m0
+    pminub          m6, m1
+    movu            [r0 + r5], m6           ; store back
+    pmaxub          m3, m6                  ; update maxLumaLevel
+    psadbw          m6, m4
+    paddq           m2, m6
+
+    sub             r5d, mmsize
+    jge            .loopW
+
+    ; partial pixels
+    movu            m7, [r0 + r2]
+    pmaxub          m6, m7, m0
+    pminub          m6, m1
+
+    pand            m7, m5                  ; get invalid/unchange pixel
+    pandn           m6, m5, m6              ; clear invalid pixels
+    por             m7, m6                  ; combin valid & invalid pixels
+    movu            [r0 + r2], m7           ; store back
+    pmaxub          m3, m6                  ; update maxLumaLevel
+    psadbw          m6, m4
+    paddq           m2, m6
+
+.next:
+    add             r0, r1
+    dec             r3d
+    jg             .loopH
+
+    ; sumLuma
+    vextracti128    xm0, m2, 1
+    paddq           xm0, xm2
+    movhlps         xm1, xm0
+    paddq           xm0, xm1
+    movq            [r4], xm0
+
+    ; maxLumaLevel
+    vextracti128    xm0, m3, 1
+    pmaxub          xm0, xm3
+    movhlps         xm3, xm0
+    pmaxub          xm0, xm3
+    pmovzxbw        xm0, xm0
+    pxor            xm0, [pb_movemask + 16]
+    phminposuw      xm0, xm0
+
+    movd            eax, xm0
+    not             al
+    movzx           eax, al
+    RET
+%endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0

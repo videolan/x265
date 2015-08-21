@@ -46,14 +46,14 @@ public:
     bool               m_bTemporalSublayer;
     PicList            m_picList;
     PicList            m_freeList;
-    FrameData*         m_picSymFreeList;
+    FrameData*         m_frameDataFreeList;
 
     DPB(x265_param *param)
     {
         m_lastIDR = 0;
         m_pocCRA = 0;
         m_bRefreshPending = false;
-        m_picSymFreeList = NULL;
+        m_frameDataFreeList = NULL;
         m_maxRefL0 = param->maxNumReferences;
         m_maxRefL1 = param->bBPyramid ? 2 : 1;
         m_bOpenGOP = param->bOpenGOP;
