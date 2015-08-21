@@ -472,6 +472,13 @@ const ang16_shuf_mode12,   db 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2, 3,
 const angHor_tab_12, db (32-27), 27, (32-22), 22, (32-17), 17, (32-12), 12, (32-7), 7, (32-2), 2, (32-29), 29, (32-24), 24
                      db (32-19), 19, (32-14), 14, (32-9), 9, (32-4), 4, (32-31), 31, (32-26),  26, (32-21), 21, (32-16), 16
 
+const ang16_shuf_mode13,   db 4, 5, 4, 5, 4, 5, 3, 4, 3, 4, 3, 4, 3, 4, 2, 3, 5, 6, 5, 6, 5, 6, 4, 5, 4, 5, 4, 5, 4, 5, 3, 4
+                           db 2, 3, 2, 3, 1, 2, 1, 2, 1, 2, 1, 2, 0, 1, 0, 1, 3, 4, 3, 4, 2, 3, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2
+                           db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 11, 7, 4, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 11, 7, 4, 0
+
+const angHor_tab_13, db (32-23), 23, (32-14), 14, (32-5), 5, (32-28), 28, (32-19), 19, (32-10), 10, (32-1), 1, (32-24), 24
+                     db (32-15), 15, (32-6), 6, (32-29), 29, (32-20), 20, (32-11), 11, (32-2), 2, (32-25), 25, (32-16), 16
+
 const ang_table
 %assign x 0
 %rep 32
@@ -14714,82 +14721,117 @@ cglobal intra_pred_ang16_12, 3,4,9
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang16_13, 3, 6, 14
-    mova              m11, [pw_1024]
-    lea               r5, [intra_pred_shuff_0_8]
+cglobal intra_pred_ang16_13, 3,4,9
+    vbroadcasti128    m0, [angHor_tab_13]
+    vbroadcasti128    m1, [angHor_tab_13 + mmsize/2]
+    mova              m2, [pw_1024]
+    mova              m7, [ang16_shuf_mode13]
+    mova              m8, [ang16_shuf_mode13 + mmsize]
+    lea               r3, [r1 * 3]
 
-    movu              xm13, [r2 + 32]
-    pinsrb            xm13, [r2], 0
-    pslldq            xm7, xm13, 2
-    pinsrb            xm7, [r2 + 7], 0
-    pinsrb            xm7, [r2 + 4], 1
-    vinserti128       m9, m13, xm7, 1
-    pshufb            m9, [r5]
+    vbroadcasti128    m3, [r2 + mmsize + 1]
+    vbroadcasti128    m4, [r2]
+    pshufb            m4, [ang16_shuf_mode13 + mmsize * 2]
 
-    movu              xm12, [r2 + 4 + 32]
+    palignr           m3, m4, 11
+    vbroadcasti128    m6, [r2 + mmsize + 12]
 
-    psrldq            xm10, xm12, 4
-    psrldq            xm8, xm12, 2
-    vinserti128       m10, m10, xm8, 1
-    pshufb            m10, [r5]
+    pshufb            m4, m3, m7
+    pshufb            m5, m3, m8
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
 
-    lea               r3, [3 * r1]
-    lea               r4, [c_ang16_mode_13]
+    palignr           m5, m6, m3, 2
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
 
-    INTRA_PRED_ANG16_CAL_ROW m0, m1, 0
-    INTRA_PRED_ANG16_CAL_ROW m1, m2, 1
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    lea               r0, [r0 + r1 * 4]
 
-    pslldq            xm7, 1
-    pinsrb            xm7, [r2 + 11], 0
-    pshufb            xm2, xm7, [r5]
-    vinserti128       m9, m9, xm2, 1
+    palignr           m5, m6, m3, 4
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
 
-    psrldq            xm8, xm12, 1
-    pshufb            xm8, [r5]
-    vinserti128       m10, m10, xm8, 1
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
 
-    INTRA_PRED_ANG16_CAL_ROW m2, m3, 2
+    palignr           m5, m6, m3, 6
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
 
-    pslldq            xm13, 1
-    pinsrb            xm13, [r2 + 4], 0
-    pshufb            xm3, xm13, [r5]
-    vinserti128       m9, m9, xm3, 0
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    lea               r0, [r0 + r1 * 4]
 
-    psrldq            xm8, xm12, 3
-    pshufb            xm8, [r5]
-    vinserti128       m10, m10, xm8, 0
+    palignr           m5, m6, m3, 8
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
 
-    INTRA_PRED_ANG16_CAL_ROW m3, m4, 3
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
 
-    add               r4, 4 * mmsize
+    palignr           m5, m6, m3, 10
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
 
-    INTRA_PRED_ANG16_CAL_ROW m4, m5, 0
-    INTRA_PRED_ANG16_CAL_ROW m5, m6, 1
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    lea               r0, [r0 + r1 * 4]
 
-    pslldq            xm7, 1
-    pinsrb            xm7, [r2 + 14], 0
-    pshufb            xm7, [r5]
-    vinserti128       m9, m9, xm7, 1
+    palignr           m5, m6, m3, 12
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
 
-    mova              xm8, xm12
-    pshufb            xm8, [r5]
-    vinserti128       m10, m10, xm8, 1
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
 
-    INTRA_PRED_ANG16_CAL_ROW m6, m7, 2
+    palignr           m5, m6, m3, 14
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
 
-    pslldq            xm13, 1
-    pinsrb            xm13, [r2 + 7], 0
-    pshufb            xm13, [r5]
-    vinserti128       m9, m9, xm13, 0
-
-    psrldq            xm12, 2
-    pshufb            xm12, [r5]
-    vinserti128       m10, m10, xm12, 0
-
-    INTRA_PRED_ANG16_CAL_ROW m7, m8, 3
-
-    ; transpose and store
-    INTRA_PRED_TRANS_STORE_16x16
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
     RET
 
 
