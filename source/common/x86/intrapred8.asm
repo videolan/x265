@@ -54,13 +54,13 @@ c_mode32_18_0:        db 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,
 c_shuf8_0:            db  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6,  7,  7,  8
 c_deinterval8:        db  0,  8,  1,  9,  2, 10,  3, 11,  4, 12,  5, 13,  6, 14,  7, 15
 pb_unpackbq:          db  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  1
-c_mode16_12:    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 6
-c_mode16_13:    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 11, 7, 4
-c_mode16_14:    db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 12, 10, 7, 5, 2
+c_mode16_12:          db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 6
+c_mode16_13:          db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 11, 7, 4
+c_mode16_14:          db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 12, 10, 7, 5, 2
 c_mode16_15:          db  0,  0,  0,  0,  0,  0,  0,  0, 15, 13, 11,  9,  8,  6,  4,  2
 c_mode16_16:          db  8,  6,  5,  3,  2,  0, 15, 14, 12, 11,  9,  8,  6,  5,  3,  2
 c_mode16_17:          db  4,  2,  1,  0, 15, 14, 12, 11, 10,  9,  7,  6,  5,  4,  2,  1
-c_mode16_18:    db 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+c_mode16_18:          db 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
 
 ALIGN 32
 c_ang8_src1_9_2_10:   db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9
@@ -450,6 +450,16 @@ c_ang8_mode_15:       db 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15, 17, 15,
                       db 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28, 4, 28
                       db 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26, 6, 26
                       db 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24
+
+const c_ang8_mode_16,       db 8, 7, 6, 5, 4, 3, 2, 1, 0, 9, 10, 12, 13, 15, 0, 0
+
+const intra_pred8_shuff16,  db 0, 1, 1, 2, 3, 3, 4, 5
+                            db 1, 2, 2, 3, 4, 4, 5, 6
+                            db 2, 3, 3, 4, 5, 5, 6, 7
+                            db 3, 4, 4, 5, 6, 6, 7, 8
+                            db 4, 5, 5, 6, 7, 7, 8, 9
+
+const angHor8_tab_16,       db (32-11), 11, (32-22), 22, (32-1 ),  1, (32-12), 12, (32-23), 23, (32- 2),  2, (32-13), 13, (32-24), 24
 
 ALIGN 32
 c_ang8_mode_20:       db 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22
@@ -14032,68 +14042,56 @@ cglobal intra_pred_ang8_15, 3, 6, 6
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_16, 3, 6, 6
-    mova              m3, [pw_1024]
-    movu              xm5, [r2 + 16]
-    pinsrb            xm5, [r2], 0
-    lea               r5, [intra_pred_shuff_0_8]
-    mova              xm0, xm5
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 2], 0
-    vinserti128       m0, m0, xm5, 1
-    pshufb            m0, [r5]
+cglobal intra_pred_ang8_16, 3,4,7
+    lea                 r0, [r0 + r1 * 8]
+    sub                 r0, r1
+    neg                 r1
+    lea                 r3, [r1 * 3]
+    vbroadcasti128      m0, [angHor8_tab_16]            ; m0 = factor
+    mova                m1, [intra_pred8_shuff16]       ; m1 = 4 of Row shuffle
+    movu                m2, [intra_pred8_shuff16 + 8]   ; m1 = 4 of Row shuffle
 
-    lea               r4, [c_ang8_mode_20]
-    pmaddubsw         m1, m0, [r4]
-    pmulhrsw          m1, m3
-    mova              xm0, xm5
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 3], 0
-    vinserti128       m0, m0, xm5, 1
-    pshufb            m0, [r5]
-    pmaddubsw         m2, m0, [r4 + mmsize]
-    pmulhrsw          m2, m3
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 5], 0
-    vinserti128       m0, m5, xm5, 1
-    pshufb            m0, [r5]
-    pmaddubsw         m4, m0, [r4 + 2 * mmsize]
-    pmulhrsw          m4, m3
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 6], 0
-    mova              xm0, xm5
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 8], 0
-    vinserti128       m0, m0, xm5, 1
-    pshufb            m0, [r5]
-    pmaddubsw         m0, [r4 + 3 * mmsize]
-    pmulhrsw          m0, m3
+    ; prepare reference pixel
+    movq                xm3, [r2 + 16 + 1]              ; m3 = [-1 -2 -3 -4 -5 -6 -7 -8 x x x x x x x x]
+    movhps              xm3, [r2 + 2]                   ; m3 = [-1 -2 -3 -4 -5 -6 -7 -8 2 3 x 5 6 x 8 x]
+    pslldq              xm3, 1
+    pinsrb              xm3, [r2], 0                    ; m3 = [ 0 -1 -2 -3 -4 -5 -6 -7 -8 2 3 x 5 6 x 8]
+    pshufb              xm3, [c_ang8_mode_16]
+    vinserti128         m3, m3, xm3, 1                  ; m3 = [-8 -7 -6 -5 -4 -3 -2 -1  0 2 3 5 6 8]
 
-    packuswb          m1, m2
-    packuswb          m4, m0
+    ; process 4 rows
+    pshufb              m4, m3, m1
+    pshufb              m5, m3, m2
+    psrldq              m3, 4
+    punpcklbw           m6, m5, m4
+    punpckhbw           m5, m4
+    pmaddubsw           m6, m0
+    pmulhrsw            m6, [pw_1024]
+    pmaddubsw           m5, m0
+    pmulhrsw            m5, [pw_1024]
+    packuswb            m6, m5
+    vextracti128        xm5, m6, 1
+    movq                [r0], xm6
+    movhps              [r0 + r1], xm6
+    movq                [r0 + r1 * 2], xm5
+    movhps              [r0 + r3], xm5
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ; process 4 rows
+    lea                 r0, [r0 + r1 * 4]
+    pshufb              m4, m3, m1
+    pshufb              m5, m3, m2
+    punpcklbw           m6, m5, m4
+    punpckhbw           m5, m4
+    pmaddubsw           m6, m0
+    pmulhrsw            m6, [pw_1024]
+    pmaddubsw           m5, m0
+    pmulhrsw            m5, [pw_1024]
+    packuswb            m6, m5
+    vextracti128        xm5, m6, 1
+    movq                [r0], xm6
+    movhps              [r0 + r1], xm6
+    movq                [r0 + r1 * 2], xm5
+    movhps              [r0 + r3], xm5
     RET
 
 INIT_YMM avx2
