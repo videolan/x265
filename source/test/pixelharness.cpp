@@ -1751,6 +1751,34 @@ bool PixelHarness::check_costCoeffRemain(costCoeffRemain_t ref, costCoeffRemain_
     return true;
 }
 
+bool PixelHarness::check_planeClipAndMax(planeClipAndMax_t ref, planeClipAndMax_t opt)
+{
+    for (int i = 0; i < ITERS; i++)
+    {
+        intptr_t rand_stride = rand() % STRIDE;
+        int rand_width = (rand() % (STRIDE * 2)) + 1;
+        const int rand_height = (rand() % MAX_HEIGHT) + 1;
+        const pixel rand_min = rand() % 32;
+        const pixel rand_max = PIXEL_MAX - (rand() % 32);
+        uint64_t ref_sum, opt_sum;
+
+        // video width must be more than or equal to 32
+        if (rand_width < 32)
+            rand_width = 32;
+
+        // stride must be more than or equal to width
+        if (rand_stride < rand_width)
+            rand_stride = rand_width;
+
+        pixel ref_max = ref(pbuf1, rand_stride, rand_width, rand_height, &ref_sum, rand_min, rand_max);
+        pixel opt_max = (pixel)checked(opt, pbuf1, rand_stride, rand_width, rand_height, &opt_sum, rand_min, rand_max);
+
+        if (ref_max != opt_max)
+            return false;
+    }
+    return true;
+}
+
 bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.pu[part].satd)
@@ -2379,6 +2407,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.planeClipAndMax)
+    {
+        if (!check_planeClipAndMax(ref.planeClipAndMax, opt.planeClipAndMax))
+        {
+            printf("planeClipAndMax failed!\n");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -2848,5 +2885,11 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         memset(abscoefBuf, 0, sizeof(abscoefBuf));
         memset(abscoefBuf + 32 * 31, 1, 32 * sizeof(uint16_t));
         REPORT_SPEEDUP(opt.costCoeffRemain, ref.costCoeffRemain, abscoefBuf, 16, 3);
+    }
+    if (opt.planeClipAndMax)
+    {
+        HEADER0("planeClipAndMax");
+        uint64_t dummy;
+        REPORT_SPEEDUP(opt.planeClipAndMax, ref.planeClipAndMax, pbuf1, 128, 63, 62, &dummy, 1, PIXEL_MAX - 1);
     }
 }

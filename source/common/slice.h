@@ -31,6 +31,7 @@ namespace X265_NS {
 
 class Frame;
 class PicList;
+class PicYuv;
 class MotionReference;
 
 enum SliceType
@@ -209,6 +210,13 @@ struct VUI
 
 struct SPS
 {
+    /* cached PicYuv offset arrays, shared by all instances of
+     * PicYuv created by this encoder */
+    intptr_t* cuOffsetY;
+    intptr_t* cuOffsetC;
+    intptr_t* buOffsetY;
+    intptr_t* buOffsetC;
+
     int      chromaFormatIdc;        // use param
     uint32_t picWidthInLumaSamples;  // use param
     uint32_t picHeightInLumaSamples; // use param
@@ -242,6 +250,19 @@ struct SPS
 
     Window   conformanceWindow;
     VUI      vuiParameters;
+
+    SPS()
+    {
+        memset(this, 0, sizeof(*this));
+    }
+
+    ~SPS()
+    {
+        X265_FREE(cuOffsetY);
+        X265_FREE(cuOffsetC);
+        X265_FREE(buOffsetY);
+        X265_FREE(buOffsetC);
+    }
 };
 
 struct PPS
@@ -321,7 +342,8 @@ public:
     uint32_t    m_colRefIdx;       // never modified
     
     int         m_numRefIdx[2];
-    Frame*      m_refPicList[2][MAX_NUM_REF + 1];
+    Frame*      m_refFrameList[2][MAX_NUM_REF + 1];
+    PicYuv*     m_refReconPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
 
     uint32_t    m_maxNumMergeCand; // use param
@@ -332,22 +354,15 @@ public:
         m_lastIDR = 0;
         m_sLFaseFlag = true;
         m_numRefIdx[0] = m_numRefIdx[1] = 0;
-        for (int i = 0; i < MAX_NUM_REF; i++)
-        {
-            m_refPicList[0][i] = NULL;
-            m_refPicList[1][i] = NULL;
-            m_refPOCList[0][i] = 0;
-            m_refPOCList[1][i] = 0;
-        }
-
+        memset(m_refFrameList, 0, sizeof(m_refFrameList));
+        memset(m_refReconPicList, 0, sizeof(m_refReconPicList));
+        memset(m_refPOCList, 0, sizeof(m_refPOCList));
         disableWeights();
     }
 
     void disableWeights();
 
     void setRefPicList(PicList& picList);
-
-    const Frame* getRefPic(int list, int refIdx) const { return refIdx >= 0 ? m_refPicList[list][refIdx] : NULL; }
 
     bool getRapPicFlag() const
     {

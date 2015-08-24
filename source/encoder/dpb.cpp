@@ -47,16 +47,16 @@ DPB::~DPB()
         delete curFrame;
     }
 
-    while (m_picSymFreeList)
+    while (m_frameDataFreeList)
     {
-        FrameData* next = m_picSymFreeList->m_freeListNext;
-        m_picSymFreeList->destroy();
+        FrameData* next = m_frameDataFreeList->m_freeListNext;
+        m_frameDataFreeList->destroy();
 
-        m_picSymFreeList->m_reconPic->destroy();
-        delete m_picSymFreeList->m_reconPic;
+        m_frameDataFreeList->m_reconPic->destroy();
+        delete m_frameDataFreeList->m_reconPic;
 
-        delete m_picSymFreeList;
-        m_picSymFreeList = next;
+        delete m_frameDataFreeList;
+        m_frameDataFreeList = next;
     }
 }
 
@@ -79,8 +79,8 @@ void DPB::recycleUnreferenced()
             iterFrame = m_picList.first();
 
             m_freeList.pushBack(*curFrame);
-            curFrame->m_encData->m_freeListNext = m_picSymFreeList;
-            m_picSymFreeList = curFrame->m_encData;
+            curFrame->m_encData->m_freeListNext = m_frameDataFreeList;
+            m_frameDataFreeList = curFrame->m_encData;
             curFrame->m_encData = NULL;
             curFrame->m_reconPic = NULL;
         }
@@ -171,7 +171,7 @@ void DPB::prepareEncode(Frame *newFrame)
     {
         for (int ref = 0; ref < slice->m_numRefIdx[l]; ref++)
         {
-            Frame *refpic = slice->m_refPicList[l][ref];
+            Frame *refpic = slice->m_refFrameList[l][ref];
             ATOMIC_INC(&refpic->m_countRefEncoders);
         }
     }

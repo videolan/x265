@@ -42,6 +42,9 @@ PicYuv::PicYuv()
     m_cuOffsetC = NULL;
     m_buOffsetY = NULL;
     m_buOffsetC = NULL;
+
+    m_maxLumaLevel = 0;
+    m_avgLumaLevel = 0;
 }
 
 bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
@@ -121,7 +124,7 @@ void PicYuv::destroy()
 
 /* Copy pixels from an x265_picture into internal PicYuv instance.
  * Shift pixels as necessary, mask off bits above X265_DEPTH for safety. */
-void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
+void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, int padx, int pady)
 {
     /* m_picWidth is the width that is being encoded, padx indicates how many
      * of those pixels are padding to reach multiple of MinCU(4) size.
@@ -229,48 +232,47 @@ void PicYuv::copyFromPicture(const x265_picture& pic, int padx, int pady)
     }
 
     /* extend the right edge if width was not multiple of the minimum CU size */
-    if (padx)
+
+    pixel *Y = m_picOrg[0];
+    pixel *U = m_picOrg[1];
+    pixel *V = m_picOrg[2];
+
+    uint64_t sumLuma;
+    m_maxLumaLevel = primitives.planeClipAndMax(Y, m_stride, width, height, &sumLuma, (pixel)param.minLuma, (pixel)param.maxLuma);
+    m_avgLumaLevel = (double)(sumLuma) / (m_picHeight * m_picWidth);
+
+    for (int r = 0; r < height; r++)
     {
-        pixel *Y = m_picOrg[0];
-        pixel *U = m_picOrg[1];
-        pixel *V = m_picOrg[2];
+        for (int x = 0; x < padx; x++)
+            Y[width + x] = Y[width - 1];
 
-        for (int r = 0; r < height; r++)
+        Y += m_stride;
+    }
+
+    for (int r = 0; r < height >> m_vChromaShift; r++)
+    {
+        for (int x = 0; x < padx >> m_hChromaShift; x++)
         {
-            for (int x = 0; x < padx; x++)
-                Y[width + x] = Y[width - 1];
-
-            Y += m_stride;
+            U[(width >> m_hChromaShift) + x] = U[(width >> m_hChromaShift) - 1];
+            V[(width >> m_hChromaShift) + x] = V[(width >> m_hChromaShift) - 1];
         }
 
-        for (int r = 0; r < height >> m_vChromaShift; r++)
-        {
-            for (int x = 0; x < padx >> m_hChromaShift; x++)
-            {
-                U[(width >> m_hChromaShift) + x] = U[(width >> m_hChromaShift) - 1];
-                V[(width >> m_hChromaShift) + x] = V[(width >> m_hChromaShift) - 1];
-            }
-
-            U += m_strideC;
-            V += m_strideC;
-        }
+        U += m_strideC;
+        V += m_strideC;
     }
 
     /* extend the bottom if height was not multiple of the minimum CU size */
-    if (pady)
+    Y = m_picOrg[0] + (height - 1) * m_stride;
+    U = m_picOrg[1] + ((height >> m_vChromaShift) - 1) * m_strideC;
+    V = m_picOrg[2] + ((height >> m_vChromaShift) - 1) * m_strideC;
+
+    for (int i = 1; i <= pady; i++)
+        memcpy(Y + i * m_stride, Y, (width + padx) * sizeof(pixel));
+
+    for (int j = 1; j <= pady >> m_vChromaShift; j++)
     {
-        pixel *Y = m_picOrg[0] + (height - 1) * m_stride;
-        pixel *U = m_picOrg[1] + ((height >> m_vChromaShift) - 1) * m_strideC;
-        pixel *V = m_picOrg[2] + ((height >> m_vChromaShift) - 1) * m_strideC;
-
-        for (int i = 1; i <= pady; i++)
-            memcpy(Y + i * m_stride, Y, (width + padx) * sizeof(pixel));
-
-        for (int j = 1; j <= pady >> m_vChromaShift; j++)
-        {
-            memcpy(U + j * m_strideC, U, ((width + padx) >> m_hChromaShift) * sizeof(pixel));
-            memcpy(V + j * m_strideC, V, ((width + padx) >> m_hChromaShift) * sizeof(pixel));
-        }
+        memcpy(U + j * m_strideC, U, ((width + padx) >> m_hChromaShift) * sizeof(pixel));
+        memcpy(V + j * m_strideC, V, ((width + padx) >> m_hChromaShift) * sizeof(pixel));
     }
 }
 
