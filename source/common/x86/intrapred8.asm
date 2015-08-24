@@ -16055,9 +16055,8 @@ cglobal intra_pred_ang16_9, 3,4,8
     lea             r3, [r1 * 3]
     mova            m7, [ang16_shuf_mode9]
 
-    movu            xm3, [r2 + mmsize + 1]
     vbroadcasti128  m6, [r2 + mmsize + 17]
-    vinserti128     m3, m3, xm3, 1
+    vbroadcasti128  m3, [r2 + mmsize + 1]
 
     pshufb          m5, m3, m7
     pmaddubsw       m4, m5, m0
