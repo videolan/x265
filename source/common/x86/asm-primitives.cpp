@@ -2943,29 +2943,31 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_4x4].intra_pred[32] = PFX(intra_pred_ang4_32_avx2);
         p.cu[BLOCK_4x4].intra_pred[33] = PFX(intra_pred_ang4_33_avx2);
         p.cu[BLOCK_8x8].intra_pred[3] = PFX(intra_pred_ang8_3_avx2);
-        p.cu[BLOCK_8x8].intra_pred[33] = PFX(intra_pred_ang8_33_avx2);
         p.cu[BLOCK_8x8].intra_pred[4] = PFX(intra_pred_ang8_4_avx2);
-        p.cu[BLOCK_8x8].intra_pred[32] = PFX(intra_pred_ang8_32_avx2);
         p.cu[BLOCK_8x8].intra_pred[5] = PFX(intra_pred_ang8_5_avx2);
-        p.cu[BLOCK_8x8].intra_pred[31] = PFX(intra_pred_ang8_31_avx2);
-        p.cu[BLOCK_8x8].intra_pred[30] = PFX(intra_pred_ang8_30_avx2);
         p.cu[BLOCK_8x8].intra_pred[6] = PFX(intra_pred_ang8_6_avx2);
         p.cu[BLOCK_8x8].intra_pred[7] = PFX(intra_pred_ang8_7_avx2);
-        p.cu[BLOCK_8x8].intra_pred[29] = PFX(intra_pred_ang8_29_avx2);
         p.cu[BLOCK_8x8].intra_pred[8] = PFX(intra_pred_ang8_8_avx2);
-        p.cu[BLOCK_8x8].intra_pred[28] = PFX(intra_pred_ang8_28_avx2);
         p.cu[BLOCK_8x8].intra_pred[9] = PFX(intra_pred_ang8_9_avx2);
-        p.cu[BLOCK_8x8].intra_pred[27] = PFX(intra_pred_ang8_27_avx2);
-        p.cu[BLOCK_8x8].intra_pred[25] = PFX(intra_pred_ang8_25_avx2);
-        p.cu[BLOCK_8x8].intra_pred[12] = PFX(intra_pred_ang8_12_avx2);
-        p.cu[BLOCK_8x8].intra_pred[24] = PFX(intra_pred_ang8_24_avx2);
         p.cu[BLOCK_8x8].intra_pred[11] = PFX(intra_pred_ang8_11_avx2);
+        p.cu[BLOCK_8x8].intra_pred[12] = PFX(intra_pred_ang8_12_avx2);
         p.cu[BLOCK_8x8].intra_pred[13] = PFX(intra_pred_ang8_13_avx2);
-        p.cu[BLOCK_8x8].intra_pred[22] = PFX(intra_pred_ang8_22_avx2);
-        p.cu[BLOCK_8x8].intra_pred[23] = PFX(intra_pred_ang8_23_avx2);
         p.cu[BLOCK_8x8].intra_pred[14] = PFX(intra_pred_ang8_14_avx2);
         p.cu[BLOCK_8x8].intra_pred[15] = PFX(intra_pred_ang8_15_avx2);
         p.cu[BLOCK_8x8].intra_pred[16] = PFX(intra_pred_ang8_16_avx2);
+        p.cu[BLOCK_8x8].intra_pred[20] = PFX(intra_pred_ang8_20_avx2);
+        p.cu[BLOCK_8x8].intra_pred[21] = PFX(intra_pred_ang8_21_avx2);
+        p.cu[BLOCK_8x8].intra_pred[22] = PFX(intra_pred_ang8_22_avx2);
+        p.cu[BLOCK_8x8].intra_pred[23] = PFX(intra_pred_ang8_23_avx2);
+        p.cu[BLOCK_8x8].intra_pred[24] = PFX(intra_pred_ang8_24_avx2);
+        p.cu[BLOCK_8x8].intra_pred[25] = PFX(intra_pred_ang8_25_avx2);
+        p.cu[BLOCK_8x8].intra_pred[27] = PFX(intra_pred_ang8_27_avx2);
+        p.cu[BLOCK_8x8].intra_pred[28] = PFX(intra_pred_ang8_28_avx2);
+        p.cu[BLOCK_8x8].intra_pred[29] = PFX(intra_pred_ang8_29_avx2);
+        p.cu[BLOCK_8x8].intra_pred[30] = PFX(intra_pred_ang8_30_avx2);
+        p.cu[BLOCK_8x8].intra_pred[31] = PFX(intra_pred_ang8_31_avx2);
+        p.cu[BLOCK_8x8].intra_pred[32] = PFX(intra_pred_ang8_32_avx2);
+        p.cu[BLOCK_8x8].intra_pred[33] = PFX(intra_pred_ang8_33_avx2);
         p.cu[BLOCK_16x16].intra_pred[3] = PFX(intra_pred_ang16_3_avx2);
         p.cu[BLOCK_16x16].intra_pred[4] = PFX(intra_pred_ang16_4_avx2);
         p.cu[BLOCK_16x16].intra_pred[5] = PFX(intra_pred_ang16_5_avx2);
@@ -3554,7 +3556,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.planeClipAndMax = PFX(planeClipAndMax_avx2);
 
         /* The following primitives have been disabled since performance compared to SSE is negligible/negative */
-        p.cu[BLOCK_8x8].intra_pred[20] = PFX(intra_pred_ang8_20_avx2);
 #if 0
         p.pu[LUMA_8x4].addAvg = PFX(addAvg_8x4_avx2);
         p.pu[LUMA_8x8].addAvg = PFX(addAvg_8x8_avx2);
