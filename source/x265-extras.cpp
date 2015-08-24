@@ -107,7 +107,7 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
                     fprintf(csvfp, ", Merge %dx%d", size, size);
                     size /= 2;
                 }
-                fprintf(csvfp, ", Avg Luma Distortion, Avg Chroma Distortion, Avg psyEnergy, Avg Luma Level, Max Luma Level");
+                fprintf(csvfp, ", Avg Luma Distortion, Avg Chroma Distortion, Avg psyEnergy, Avg Luma Level, Max Luma Level, Avg Residual Energy");
 
                 /* detailed performance statistics */
                 if (level >= 2)
@@ -174,7 +174,7 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
         fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentSkipCu[depth]);
     for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentMergeCu[depth]);
-    fprintf(csvfp, ", %.2lf, %.2lf, %.2lf, %.2lf, %d", frameStats->avgLumaDistortion, frameStats->avgChromaDistortion, frameStats->avgPsyEnergy, frameStats->avgLumaLevel, frameStats->maxLumaLevel);
+    fprintf(csvfp, ", %.2lf, %.2lf, %.2lf, %.2lf, %d, %.2lf", frameStats->avgLumaDistortion, frameStats->avgChromaDistortion, frameStats->avgPsyEnergy, frameStats->avgLumaLevel, frameStats->maxLumaLevel, frameStats->avgResEnergy);
 
     if (level >= 2)
     {

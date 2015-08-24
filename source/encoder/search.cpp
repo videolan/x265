@@ -1196,6 +1196,8 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
         const Yuv* fencYuv = intraMode.fencYuv;
         intraMode.psyEnergy = m_rdCost.psyCost(cuGeom.log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, intraMode.reconYuv.m_buf[0], intraMode.reconYuv.m_size);
     }
+    intraMode.resEnergy = primitives.cu[cuGeom.log2CUSize - 2].sse_pp(intraMode.fencYuv->m_buf[0], intraMode.fencYuv->m_size, intraMode.predYuv.m_buf[0], intraMode.predYuv.m_size);
+
     updateModeCost(intraMode);
     checkDQP(intraMode, cuGeom);
 }
@@ -1408,7 +1410,7 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
         const Yuv* fencYuv = intraMode.fencYuv;
         intraMode.psyEnergy = m_rdCost.psyCost(cuGeom.log2CUSize - 2, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
     }
-
+    intraMode.resEnergy = primitives.cu[cuGeom.log2CUSize - 2].sse_pp(intraMode.fencYuv->m_buf[0], intraMode.fencYuv->m_size, intraMode.predYuv.m_buf[0], intraMode.predYuv.m_size);
     m_entropyCoder.store(intraMode.contexts);
     updateModeCost(intraMode);
     checkDQP(intraMode, cuGeom);
@@ -2455,9 +2457,8 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
     CUData& cu = interMode.cu;
     Yuv* reconYuv = &interMode.reconYuv;
     const Yuv* fencYuv = interMode.fencYuv;
-
+    Yuv* predYuv = &interMode.predYuv;
     X265_CHECK(!cu.isIntra(0), "intra CU not expected\n");
-
     uint32_t depth  = cu.m_cuDepth[0];
 
     // No residual coding : SKIP mode
@@ -2488,7 +2489,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
     interMode.totalBits = interMode.mvBits;
     if (m_rdCost.m_psyRd)
         interMode.psyEnergy = m_rdCost.psyCost(part, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
-
+    interMode.resEnergy = primitives.cu[part].sse_pp(fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
     updateModeCost(interMode);
     m_entropyCoder.store(interMode.contexts);
 }
@@ -2600,7 +2601,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     bestChromaDist += m_rdCost.scaleChromaDist(2, primitives.chroma[m_csp].cu[sizeIdx].sse_pp(fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
     if (m_rdCost.m_psyRd)
         interMode.psyEnergy = m_rdCost.psyCost(sizeIdx, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
-
+    interMode.resEnergy = primitives.cu[sizeIdx].sse_pp(fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
     interMode.totalBits = bits;
     interMode.lumaDistortion = bestLumaDist;
     interMode.chromaDistortion = bestChromaDist;
