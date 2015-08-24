@@ -3554,6 +3554,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.planeClipAndMax = PFX(planeClipAndMax_avx2);
 
         /* The following primitives have been disabled since performance compared to SSE is negligible/negative */
+        p.cu[BLOCK_8x8].intra_pred[20] = PFX(intra_pred_ang8_20_avx2);
 #if 0
         p.pu[LUMA_8x4].addAvg = PFX(addAvg_8x4_avx2);
         p.pu[LUMA_8x8].addAvg = PFX(addAvg_8x8_avx2);
@@ -3577,7 +3578,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_4x4].cpy1Dto2D_shl = PFX(cpy1Dto2D_shl_4_avx2);
         p.cu[BLOCK_4x4].cpy1Dto2D_shr = PFX(cpy1Dto2D_shr_4_avx2);
         p.cu[BLOCK_4x4].count_nonzero = PFX(count_nonzero_4x4_avx2);
-        p.cu[BLOCK_8x8].intra_pred[20] = PFX(intra_pred_ang8_20_avx2);
         p.cu[BLOCK_16x16].intra_pred[13] = PFX(intra_pred_ang16_13_avx2);
         p.cu[BLOCK_16x16].copy_sp = PFX(blockcopy_sp_16x16_avx2);
         p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].copy_sp = PFX(blockcopy_sp_16x16_avx2);

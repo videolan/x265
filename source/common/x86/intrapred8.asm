@@ -27,7 +27,9 @@
 
 SECTION_RODATA 32
 
-intra_pred_shuff_0_8:    times 2 db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
+const intra_pred_shuff_0_8,     times 2 db 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
+                                        db 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9
+
 intra_pred_shuff_15_0:   times 2 db 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
 
 intra_filter4_shuf0:  times 2 db  2,  3,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13
@@ -461,11 +463,17 @@ const intra_pred8_shuff16,  db 0, 1, 1, 2, 3, 3, 4, 5
 
 const angHor8_tab_16,       db (32-11), 11, (32-22), 22, (32-1 ),  1, (32-12), 12, (32-23), 23, (32- 2),  2, (32-13), 13, (32-24), 24
 
-ALIGN 32
-c_ang8_mode_20:       db 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 21, 11, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22, 10, 22
-                      db 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 31, 1, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12, 20, 12
-                      db 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 9, 23, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2, 30, 2
-                      db 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 19, 13, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24, 8, 24
+const c_ang8_mode_20,       db 15, 13, 12, 10, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 0
+
+; NOTE: this big table improve speed ~10%, if we have broadcast instruction work on high-128bits infuture, we can remove the table
+const angHor8_tab_20,       times 8 db (32-24), 24
+                            times 8 db (32-13), 13
+                            times 8 db (32- 2),  2
+                            times 8 db (32-23), 23
+                            times 8 db (32-12), 12
+                            times 8 db (32- 1),  1
+                            times 8 db (32-22), 22
+                            times 8 db (32-11), 11
 
 const ang16_shuf_mode9,    times 8 db 0, 1
                            times 8 db 1, 2
@@ -14049,7 +14057,7 @@ cglobal intra_pred_ang8_16, 3,4,7
     lea                 r3, [r1 * 3]
     vbroadcasti128      m0, [angHor8_tab_16]            ; m0 = factor
     mova                m1, [intra_pred8_shuff16]       ; m1 = 4 of Row shuffle
-    movu                m2, [intra_pred8_shuff16 + 8]   ; m1 = 4 of Row shuffle
+    movu                m2, [intra_pred8_shuff16 + 8]   ; m2 = 4 of Row shuffle
 
     ; prepare reference pixel
     movq                xm3, [r2 + 16 + 1]              ; m3 = [-1 -2 -3 -4 -5 -6 -7 -8 x x x x x x x x]
@@ -14094,6 +14102,61 @@ cglobal intra_pred_ang8_16, 3,4,7
     movhps              [r0 + r3], xm5
     RET
 
+%if 1
+INIT_YMM avx2
+cglobal intra_pred_ang8_20, 3,5,6
+    lea                 r0, [r0 + r1 * 8]
+    sub                 r0, r1
+    neg                 r1
+    lea                 r3, [angHor8_tab_20]
+    lea                 r4, [r1 * 3]
+    movu                m5, [intra_pred_shuff_0_8 + 16]
+
+    ; prepare reference pixel
+    movq                xm1, [r2 + 1]                   ; m3 = [ 1  2  3  4  5  6  7  8  x  x x  x  x  x  x  x]
+    movhps              xm1, [r2 + 16 + 2]              ; m3 = [ 1  2  3  4  5  6  7  8 -2 -3 x -5 -6  x -8  x]
+    palignr             xm1, xm1, [r2 - 15], 15         ; m3 = [ 0  1  2  3  4  5  6  7  8 -2 -3 x -5 -6  x -8]
+    pshufb              xm1, [c_ang8_mode_20]
+    vinserti128         m1, m1, xm1, 1
+
+    ; process 4 rows
+    pshufb              m3, m1, m5
+    psrldq              m1, 2
+    pmaddubsw           m3, [r3 + 0 * 16]
+    pmulhrsw            m3, [pw_1024]
+
+    pshufb              m4, m1, [intra_pred_shuff_0_8]
+    psrldq              m1, 1
+    pmaddubsw           m4, [r3 + 2 * 16]
+    pmulhrsw            m4, [pw_1024]
+
+    packuswb            m3, m4
+    vextracti128        xm4, m3, 1
+    movq                [r0], xm3
+    movq                [r0 + r1], xm4
+    movhps              [r0 + r1 * 2], xm3
+    movhps              [r0 + r4], xm4
+
+    ; process 4 rows
+    lea                 r0, [r0 + r1 * 4]
+    pshufb              m3, m1, m5
+    psrldq              m1, 1
+    pmaddubsw           m3, [r3 + 4 * 16]
+    pmulhrsw            m3, [pw_1024]
+
+    pshufb              m4, m1, m5
+    pmaddubsw           m4, [r3 + 6 * 16]
+    pmulhrsw            m4, [pw_1024]
+
+    packuswb            m3, m4
+    vextracti128        xm4, m3, 1
+    movq                [r0], xm3
+    movq                [r0 + r1], xm4
+    movhps              [r0 + r1 * 2], xm3
+    movhps              [r0 + r4], xm4
+    RET
+
+%else
 INIT_YMM avx2
 cglobal intra_pred_ang8_20, 3, 6, 6
     mova              m3, [pw_1024]
@@ -14147,6 +14210,7 @@ cglobal intra_pred_ang8_20, 3, 6, 6
     movhps            [r0 + 2 * r1], xm4
     movhps            [r0 + r3], xm2
     RET
+%endif
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_21, 3, 6, 6
