@@ -518,6 +518,13 @@ const ang16_shuf_mode16,   db 10, 11, 9, 10, 9, 10, 8, 9, 7, 8, 7, 8, 6, 7, 5, 6
 const angHor_tab_16, db (32-11), 11, (32-22), 22, (32-1), 1, (32-12), 12, (32-23), 23, (32-2), 2, (32-13), 13, (32-24), 24
                      db (32-3), 3, (32-14), 14, (32-25), 25, (32-4), 4, (32-15), 15, (32-26), 26, (32-5), 5, (32-16), 16
 
+const ang16_shuf_mode17,   db 12, 13, 11, 12, 10, 11, 9, 10, 8, 9, 8, 9, 7, 8, 6, 7, 13, 14, 12, 13, 11, 12, 10, 11, 9, 10, 9, 10, 8, 9, 7, 8
+                           db 5, 6, 4, 5, 4, 5, 3, 4, 2, 3, 1, 2, 0, 1, 0, 1, 6, 7, 5, 6, 5, 6, 4, 5, 3, 4, 2, 3, 1, 2, 1, 2
+                           db 0, 0, 0, 15, 14, 12, 11, 10, 9, 7, 6, 5, 4, 2, 1, 0, 0, 0, 0, 15, 14, 12, 11, 10, 9, 7, 6, 5, 4, 2, 1, 0
+
+const angHor_tab_17, db (32- 6),  6, (32-12), 12, (32-18), 18, (32-24), 24, (32-30), 30, (32- 4),  4, (32-10), 10, (32-16), 16
+                     db (32-22), 22, (32-28), 28, (32- 2),  2, (32- 8),  8, (32-14), 14, (32-20), 20, (32-26), 26, (32- 0),  0
+
 const ang_table
 %assign x 0
 %rep 32
@@ -15157,6 +15164,119 @@ cglobal intra_pred_ang16_16, 3,4,9
     pshufb            m4, [ang16_shuf_mode16 + mmsize * 2]
     palignr           m3, m4, 5
     vbroadcasti128    m6, [r2 + mmsize + 6]
+
+    pshufb            m4, m3, m7
+    pshufb            m5, m3, m8
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
+
+    palignr           m5, m6, m3, 2
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    lea               r0, [r0 + r1 * 4]
+
+    palignr           m5, m6, m3, 4
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
+
+    palignr           m5, m6, m3, 6
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    lea               r0, [r0 + r1 * 4]
+
+    palignr           m5, m6, m3, 8
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
+
+    palignr           m5, m6, m3, 10
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    lea               r0, [r0 + r1 * 4]
+
+    palignr           m5, m6, m3, 12
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0], xm4
+    vextracti128      [r0 + r1], m4, 1
+
+    palignr           m5, m6, m3, 14
+    pshufb            m4, m5, m7
+    pshufb            m5, m8
+
+    pmaddubsw         m4, m0
+    pmaddubsw         m5, m1
+    pmulhrsw          m4, m2
+    pmulhrsw          m5, m2
+    packuswb          m4, m5
+    movu              [r0 + r1 * 2], xm4
+    vextracti128      [r0 + r3], m4, 1
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang16_17, 3,4,9
+    vbroadcasti128    m0, [angHor_tab_17]
+    vbroadcasti128    m1, [angHor_tab_17 + mmsize/2]
+    mova              m2, [pw_1024]
+    mova              m7, [ang16_shuf_mode17]
+    mova              m8, [ang16_shuf_mode17 + mmsize]
+    lea               r3, [r1 * 3]
+
+    vbroadcasti128    m3, [r2 + mmsize + 1]
+    vbroadcasti128    m4, [r2]
+    pshufb            m4, [ang16_shuf_mode17 + mmsize * 2]
+    palignr           m3, m4, 3
+    vbroadcasti128    m6, [r2 + mmsize + 4]
 
     pshufb            m4, m3, m7
     pshufb            m5, m3, m8
