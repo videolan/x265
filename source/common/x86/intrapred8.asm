@@ -16610,127 +16610,105 @@ cglobal intra_pred_ang16_17, 3,4,9
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang16_11, 3,4,5
-    mova                m0, [angHor_tab_11]
-    mova                m1, [pw_1024]
+cglobal intra_pred_ang16_11, 3,4,8
+    vbroadcasti128      m0, [angHor_tab_11]
+    vbroadcasti128      m1, [angHor_tab_11 + mmsize/2]
+    mova                m2, [pw_1024]
+    mova                m7, [ang32_shuf_mode9]
     lea                 r3, [r1 * 3]
 
-    ; prepare for [0 -1 -2 ...]
-    movu               xm2, [r2 + 32]
-    ; TODO: input reference pixel buffer need a duplicate of pixel_lt to avoid reduce instruction in every mode
-    pinsrb             xm2, [r2], 0
-    pshufb             xm2, [intra_pred_shuff_0_8]      ; [0 1 1 2 2 3 3 4 4 5 5 6 6 7 7 8]
+    ; prepare for [0 -1 -2...]
 
+    movu               xm3, [r2 + mmsize]
+    pinsrb             xm3, [r2], 0
+    vbroadcasti128      m6, [r2 + mmsize + 16]
+    vinserti128         m3, m3, xm3, 1
 
-    vpbroadcastw        m3, xm2                         ; word [1 0]
-    psrldq             xm2, 2
-    vpbroadcastw        m4, xm2                         ; word [2 1]
-    psrldq             xm2, 2
-    pmaddubsw           m3, m0
-    pmaddubsw           m4, m0
-    pmulhrsw            m3, m1
-    pmulhrsw            m4, m1
-    packuswb            m3, m4
-    vpermq              m3, m3, q3120
-    movu                [r0], xm3
-    vextracti128        [r0 + r1], m3, 1
+    pshufb              m5, m3, m7              ; [ 0  1  0  1  0  1  0  1  0  1  0  1  0  1  0  1  1  2  1  2  1  2  1  2  1  2  1  2  1  2  1  2]
+    pmaddubsw           m4, m5, m0
+    pmaddubsw           m5, m1
+    pmulhrsw            m4, m2
+    pmulhrsw            m5, m2
+    packuswb            m4, m5
+    movu                [r0], xm4
+    vextracti128        [r0 + r1], m4, 1
 
-    vpbroadcastw        m3, xm2                         ; word [3 2]
-    psrldq             xm2, 2
-    vpbroadcastw        m4, xm2                         ; word [4 3]
-    psrldq             xm2, 2
-    pmaddubsw           m3, m0
-    pmaddubsw           m4, m0
-    pmulhrsw            m3, m1
-    pmulhrsw            m4, m1
-    packuswb            m3, m4
-    vpermq              m3, m3, q3120
-    movu                [r0 + r1 * 2], xm3
-    vextracti128        [r0 + r3], m3, 1
+    palignr             m5, m6, m3, 2
+    pshufb              m5, m7
+    pmaddubsw           m4, m5, m0
+    pmaddubsw           m5, m1
+    pmulhrsw            m4, m2
+    pmulhrsw            m5, m2
+    packuswb            m4, m5
+    movu                [r0 + r1 * 2], xm4
+    vextracti128        [r0 + r3], m4, 1
+
     lea                 r0, [r0 + r1 * 4]
 
-    vpbroadcastw        m3, xm2                         ; word [5 4]
-    psrldq             xm2, 2
-    vpbroadcastw        m4, xm2                         ; word [6 5]
-    psrldq             xm2, 2
-    pmaddubsw           m3, m0
-    pmaddubsw           m4, m0
-    pmulhrsw            m3, m1
-    pmulhrsw            m4, m1
-    packuswb            m3, m4
-    vpermq              m3, m3, q3120
-    movu                [r0], xm3
-    vextracti128        [r0 + r1], m3, 1
+    palignr             m5, m6, m3, 4
+    pshufb              m5, m7
+    pmaddubsw           m4, m5, m0
+    pmaddubsw           m5, m1
+    pmulhrsw            m4, m2
+    pmulhrsw            m5, m2
+    packuswb            m4, m5
+    movu                [r0], xm4
+    vextracti128        [r0 + r1], m4, 1
 
-    vpbroadcastw        m3, xm2                         ; word [7 6]
-    psrldq             xm2, 2
-    vpbroadcastw        m4, xm2                         ; word [8 7]
-    pmaddubsw           m3, m0
-    pmaddubsw           m4, m0
-    pmulhrsw            m3, m1
-    pmulhrsw            m4, m1
-    packuswb            m3, m4
-    vpermq              m3, m3, q3120
-    movu                [r0 + r1 * 2], xm3
-    vextracti128        [r0 + r3], m3, 1
+    palignr             m5, m6, m3, 6
+    pshufb              m5, m7
+    pmaddubsw           m4, m5, m0
+    pmaddubsw           m5, m1
+    pmulhrsw            m4, m2
+    pmulhrsw            m5, m2
+    packuswb            m4, m5
+    movu                [r0 + r1 * 2], xm4
+    vextracti128        [r0 + r3], m4, 1
+
     lea                 r0, [r0 + r1 * 4]
 
-    ; loading new reference pixels
-    movu               xm2, [r2 + 32 + 8]
-    pshufb             xm2, [intra_pred_shuff_0_8]      ; [8 9 9 A A B B C C D D E E F F 10]
+    palignr             m5, m6, m3, 8
+    pshufb              m5, m7
+    pmaddubsw           m4, m5, m0
+    pmaddubsw           m5, m1
+    pmulhrsw            m4, m2
+    pmulhrsw            m5, m2
+    packuswb            m4, m5
+    movu                [r0], xm4
+    vextracti128        [r0 + r1], m4, 1
 
-    vpbroadcastw        m3, xm2                         ; word [9 8]
-    psrldq             xm2, 2
-    vpbroadcastw        m4, xm2                         ; word [A 9]
-    psrldq             xm2, 2
-    pmaddubsw           m3, m0
-    pmaddubsw           m4, m0
-    pmulhrsw            m3, m1
-    pmulhrsw            m4, m1
-    packuswb            m3, m4
-    vpermq              m3, m3, q3120
-    movu                [r0], xm3
-    vextracti128        [r0 + r1], m3, 1
+    palignr             m5, m6, m3, 10
+    pshufb              m5, m7
+    pmaddubsw           m4, m5, m0
+    pmaddubsw           m5, m1
+    pmulhrsw            m4, m2
+    pmulhrsw            m5, m2
+    packuswb            m4, m5
+    movu                [r0 + r1 * 2], xm4
+    vextracti128        [r0 + r3], m4, 1
 
-    vpbroadcastw        m3, xm2                         ; word [B A]
-    psrldq             xm2, 2
-    vpbroadcastw        m4, xm2                         ; word [C B]
-    psrldq             xm2, 2
-    pmaddubsw           m3, m0
-    pmaddubsw           m4, m0
-    pmulhrsw            m3, m1
-    pmulhrsw            m4, m1
-    packuswb            m3, m4
-    vpermq              m3, m3, q3120
-    movu                [r0 + r1 * 2], xm3
-    vextracti128        [r0 + r3], m3, 1
     lea                 r0, [r0 + r1 * 4]
 
-    vpbroadcastw        m3, xm2                         ; word [D C]
-    psrldq             xm2, 2
-    vpbroadcastw        m4, xm2                         ; word [E D]
-    psrldq             xm2, 2
-    pmaddubsw           m3, m0
-    pmaddubsw           m4, m0
-    pmulhrsw            m3, m1
-    pmulhrsw            m4, m1
-    packuswb            m3, m4
-    vpermq              m3, m3, q3120
-    movu                [r0], xm3
-    vextracti128        [r0 + r1], m3, 1
+    palignr             m5, m6, m3, 12
+    pshufb              m5, m7
+    pmaddubsw           m4, m5, m0
+    pmaddubsw           m5, m1
+    pmulhrsw            m4, m2
+    pmulhrsw            m5, m2
+    packuswb            m4, m5
+    movu                [r0], xm4
+    vextracti128        [r0 + r1], m4, 1
 
-    vpbroadcastw        m3, xm2                         ; word [F E]
-    psrldq             xm2, 2
-    vpbroadcastw        m4, xm2                         ; word [10 F]
-    pmaddubsw           m3, m0
-    pmaddubsw           m4, m0
-    pmulhrsw            m3, m1
-    pmulhrsw            m4, m1
-    packuswb            m3, m4
-    vpermq              m3, m3, q3120
-    movu                [r0 + r1 * 2], xm3
-    vextracti128        [r0 + r3], m3, 1
-    RET    
+    palignr             m5, m6, m3, 14
+    pshufb              m5, m7
+    pmaddubsw           m4, m5, m0
+    pmaddubsw           m5, m1
+    pmulhrsw            m4, m2
+    pmulhrsw            m5, m2
+    packuswb            m4, m5
+    movu                [r0 + r1 * 2], xm4
+    vextracti128        [r0 + r3], m4, 1
+    RET
 
 
 ; transpose 8x32 to 16x16, used for intra_ang16x16 avx2 asm
