@@ -531,6 +531,7 @@ const pw_ang_table
 %endrep
 
 SECTION .text
+cextern pb_1
 cextern pw_2
 cextern pw_3
 cextern pw_4
@@ -13891,6 +13892,132 @@ cglobal intra_pred_ang32_27, 3,5,6
 
     movu                m1, [r2 + 3]            ; [0]
     movu                [r0 + r4], m1
+    RET
+
+cglobal intra_pred_ang32_10, 5,5,4
+    pxor                m0, m0
+    mova                m1, [pb_1]
+    lea                 r4, [r1 * 3]
+
+    vbroadcasti128      m2, [r2 + mmsize*2 + 1]
+
+    pshufb              m3, m2, m0
+    movu                [r0], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1 * 2], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r4], m3
+
+    lea                 r0, [r0 + r1 * 4]
+
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1 * 2], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r4], m3
+
+    lea                 r0, [r0 + r1 * 4]
+
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1 * 2], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r4], m3
+
+    lea                 r0, [r0 + r1 * 4]
+
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1 * 2], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r4], m3
+
+    lea                 r0, [r0 + r1 * 4]
+    pxor                m0, m0
+    vbroadcasti128      m2, [r2 + mmsize*2 + mmsize/2 + 1]
+
+    pshufb              m3, m2, m0
+    movu                [r0], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1 * 2], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r4], m3
+
+    lea                 r0, [r0 + r1 * 4]
+
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1 * 2], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r4], m3
+
+    lea                 r0, [r0 + r1 * 4]
+
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1 * 2], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r4], m3
+
+    lea                 r0, [r0 + r1 * 4]
+
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r1 * 2], m3
+    paddb               m0, m1
+    pshufb              m3, m2, m0
+    movu                [r0 + r4], m3
     RET
 
 %endif  ; ARCH_X86_64
