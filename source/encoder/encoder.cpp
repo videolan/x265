@@ -39,6 +39,10 @@
 
 #include "x265.h"
 
+#if _MSC_VER
+#pragma warning(disable: 4996) // POSIX functions are just fine, thanks
+#endif
+
 namespace X265_NS {
 const char g_sliceTypeToChar[] = {'B', 'P', 'I'};
 }
@@ -1046,6 +1050,14 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
 
         stats->maxCLL         = m_analyzeAll.m_maxCLL;
         stats->maxFALL        = (uint16_t)(m_analyzeAll.m_maxFALL / m_analyzeAll.m_numPics);
+        if (m_param->contentLightLevelInfo)
+        {
+            free((char*)m_param->contentLightLevelInfo);
+
+            char value[16];
+            sprintf(value, "%hu,%hu", stats->maxCLL, stats->maxFALL);
+            m_param->contentLightLevelInfo = strdup(value);
+        }
     }
 
     /* If new statistics are added to x265_stats, we must check here whether the
