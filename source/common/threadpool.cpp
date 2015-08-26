@@ -289,6 +289,14 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
         }
     }
 
+    // In the case that numa is disabled and we have more CPUs than 64,
+    // spawn the last pool only if the # threads in that pool is > 1/2 max (heuristic)
+    if ((numNumaNodes == 1) && (cpusPerNode[0] % MAX_POOL_THREADS < (MAX_POOL_THREADS / 2)))
+    {
+        cpusPerNode[0] -= (cpusPerNode[0] % MAX_POOL_THREADS);
+        x265_log(p, X265_LOG_DEBUG, "Creating only %d worker threads to prevent asymmetry in pools; may not use all HW contexts\n", cpusPerNode[0]);
+    }
+
     numPools = 0;
     for (int i = 0; i < numNumaNodes; i++)
     {
