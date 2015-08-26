@@ -1719,11 +1719,12 @@ bool PixelHarness::check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt)
     }
     return true;
 }
+
 bool PixelHarness::check_costCoeffRemain(costCoeffRemain_t ref, costCoeffRemain_t opt)
 {
-    ALIGN_VAR_32(uint16_t, absCoeff[1 << MLS_CG_SIZE]);
+    ALIGN_VAR_32(uint16_t, absCoeff[(1 << MLS_CG_SIZE) + ITERS]);
 
-    for (int i = 0; i < (1 << MLS_CG_SIZE); i++)
+    for (int i = 0; i < (1 << MLS_CG_SIZE) + ITERS; i++)
     {
         absCoeff[i] = rand() & SHORT_MAX;
         // more coeff with value one
@@ -1737,14 +1738,14 @@ bool PixelHarness::check_costCoeffRemain(costCoeffRemain_t ref, costCoeffRemain_
         int numNonZero = rand() % 17; //can be random, range[1, 16]
         for (k = 0; k < C1FLAG_NUMBER; k++)
         {
-            if (absCoeff[k] >= 2)
+            if (absCoeff[i + k] >= 2)
             {
                 break;
             }
         }
         firstC2Idx = k; // it is index of exact first coeff that value more than 2
-        int ref_sum = ref(absCoeff, numNonZero, firstC2Idx);
-        int opt_sum = (int)checked(opt, absCoeff, numNonZero, firstC2Idx);
+        int ref_sum = ref(absCoeff + i, numNonZero, firstC2Idx);
+        int opt_sum = (int)checked(opt, absCoeff + i, numNonZero, firstC2Idx);
         if (ref_sum != opt_sum)
             return false;
     }
