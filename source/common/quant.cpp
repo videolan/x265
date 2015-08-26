@@ -444,12 +444,12 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
             primitives.cu[sizeIdx].dct(m_fencShortBuf, m_fencDctCoeff, trSize);
         }
 
-        if (m_nr)
+        if (m_nr && m_nr->offset)
         {
             /* denoise is not applied to intra residual, so DST can be ignored */
             int cat = sizeIdx + 4 * !isLuma + 8 * !isIntra;
             int numCoeff = 1 << (log2TrSize * 2);
-            primitives.denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offsetDenoise[cat], numCoeff);
+            primitives.denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offset[cat], numCoeff);
             m_nr->count[cat]++;
         }
     }

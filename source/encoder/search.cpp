@@ -80,7 +80,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     m_me.init(param.searchMethod, param.subpelRefine, param.internalCsp);
 
     bool ok = m_quant.init(param.rdoqLevel, param.psyRdoq, scalingList, m_entropyCoder);
-    if (m_param->noiseReductionIntra || m_param->noiseReductionInter)
+    if (m_param->noiseReductionIntra || m_param->noiseReductionInter || m_param->rc.vbvBufferSize)
         ok &= m_quant.allocNoiseReduction(param);
 
     ok &= Predict::allocBuffers(param.internalCsp); /* sets m_hChromaShift & m_vChromaShift */

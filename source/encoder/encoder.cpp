@@ -72,6 +72,7 @@ Encoder::Encoder()
     m_latestParam = NULL;
     m_threadPool = NULL;
     m_analysisFile = NULL;
+    m_offsetEmergency = NULL;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
 
@@ -191,6 +192,7 @@ void Encoder::create()
     {
         x265_log(m_param, X265_LOG_ERROR, "Unable to allocate scaling list arrays\n");
         m_aborted = true;
+        return;
     }
     else if (!m_param->scalingLists || !strcmp(m_param->scalingLists, "off"))
         m_scalingList.m_bEnabled = false;
@@ -198,7 +200,6 @@ void Encoder::create()
         m_scalingList.setDefaultScalingList();
     else if (m_scalingList.parseScalingList(m_param->scalingLists))
         m_aborted = true;
-    m_scalingList.setupQuantMatrices();
 
     m_lookahead = new Lookahead(m_param, m_threadPool);
     if (m_numPools)
@@ -213,6 +214,83 @@ void Encoder::create()
     initVPS(&m_vps);
     initSPS(&m_sps);
     initPPS(&m_pps);
+   
+    if (m_param->rc.vbvBufferSize)
+    {
+        m_offsetEmergency = (uint16_t(*)[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS])X265_MALLOC(uint16_t, MAX_NUM_TR_CATEGORIES * MAX_NUM_TR_COEFFS * (QP_MAX_MAX - QP_MAX_SPEC));
+        if (!m_offsetEmergency)
+        {
+            x265_log(m_param, X265_LOG_ERROR, "Unable to allocate memory\n");
+            m_aborted = true;
+            return;
+        }
+
+        bool scalingEnabled = m_scalingList.m_bEnabled;
+        if (!scalingEnabled)
+        {
+            m_scalingList.setDefaultScalingList();
+            m_scalingList.setupQuantMatrices();
+        }
+        else
+            m_scalingList.setupQuantMatrices();
+
+        for (int q = 0; q < QP_MAX_MAX - QP_MAX_SPEC; q++)
+        {
+            for (int cat = 0; cat < MAX_NUM_TR_CATEGORIES; cat++)
+            {
+                uint16_t *nrOffset = m_offsetEmergency[q][cat];
+
+                int trSize = cat & 3;
+
+                int coefCount = 1 << ((trSize + 2) * 2);
+
+                /* Denoise chroma first then luma, then DC. */
+                int dcThreshold = (QP_MAX_MAX - QP_MAX_SPEC) * 2 / 3;
+                int lumaThreshold = (QP_MAX_MAX - QP_MAX_SPEC) * 2 / 3;
+                int chromaThreshold = 0;
+
+                int thresh = (cat < 4 || (cat >= 8 && cat < 12)) ? lumaThreshold : chromaThreshold;
+
+                double quantF = (double)(1ULL << (q / 6 + 16 + 8));
+
+                for (int i = 0; i < coefCount; i++)
+                {
+                    uint16_t max = (1 << (7 + X265_DEPTH)) - 1;
+                    /* True "emergency mode": remove all DCT coefficients */
+                    if (q == QP_MAX_MAX - QP_MAX_SPEC - 1)
+                    {
+                        nrOffset[i] = max;
+                        continue;
+                    }
+
+                    int iThresh = i == 0 ? dcThreshold : thresh;
+                    if (q < iThresh)
+                    {
+                        nrOffset[i] = 0;
+                        continue;
+                    }
+
+                    int numList = (cat >= 8) * 3 + ((int)!iThresh);
+
+                    double pos = (double)(q - iThresh + 1) / (QP_MAX_MAX - QP_MAX_SPEC - iThresh);
+                    double start = quantF / (m_scalingList.m_quantCoef[trSize][numList][QP_MAX_SPEC % 6][i]);
+
+                    // Formula chosen as an exponential scale to vaguely mimic the effects of a higher quantizer.
+                    double bias = (pow(2, pos * (QP_MAX_MAX - QP_MAX_SPEC)) * 0.003 - 0.003) * start;
+                    nrOffset[i] = (uint16_t)X265_MIN(bias + 0.5, max);
+                }
+            }
+        }
+
+        if (!scalingEnabled)
+        {
+            m_scalingList.m_bEnabled = false;
+            m_scalingList.m_bDataPresent = false;
+            m_scalingList.setupQuantMatrices();
+        }
+    }
+    else
+        m_scalingList.setupQuantMatrices();
 
     int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
     int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
@@ -317,6 +395,8 @@ void Encoder::destroy()
         m_rateControl->destroy();
         delete m_rateControl;
     }
+
+    X265_FREE(m_offsetEmergency);
 
     if (m_analysisFile)
         fclose(m_analysisFile);

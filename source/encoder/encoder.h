@@ -130,6 +130,10 @@ public:
     bool               m_aborted;          // fatal error detected
     bool               m_reconfigured;      // reconfigure of encoder detected
 
+    uint32_t           m_residualSumEmergency[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    uint16_t           (*m_offsetEmergency)[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    uint32_t           m_countEmergency[MAX_NUM_TR_CATEGORIES];
+
     Encoder();
     ~Encoder() {}
 
