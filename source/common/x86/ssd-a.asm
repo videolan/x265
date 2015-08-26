@@ -105,8 +105,20 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
     dec    r4d
     jg .loop
 %endif
+
+%if BIT_DEPTH == 12 && mmsize == 16
+    movu        m5, m0
+    pxor        m6, m6
+    punpckldq   m0, m6
+    punpckhdq   m5, m6
+    paddq       m0, m5
+    movhlps     m5, m0
+    paddq       m0, m5
+    movq        r6, xm0
+%else 
     HADDD   m0, m5
-    movd   eax, xm0
+    movd    eax,xm0
+%endif
 %ifidn movu,movq ; detect MMX
     EMMS
 %endif
