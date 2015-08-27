@@ -2363,7 +2363,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_8x8].idct = PFX(idct8_sse2);
 
         // TODO: it is passed smoke test, but we need testbench, so temporary disable
-        //p.costC1C2Flag = x265_costC1C2Flag_sse2;
+        p.costC1C2Flag = x265_costC1C2Flag_sse2;
 #endif
         p.idst4x4 = PFX(idst4_sse2);
         p.dst4x4 = PFX(dst4_sse2);

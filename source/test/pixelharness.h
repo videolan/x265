@@ -116,6 +116,7 @@ protected:
     bool check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLast_t opt);
     bool check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt);
     bool check_costCoeffRemain(costCoeffRemain_t ref, costCoeffRemain_t opt);
+    bool check_costC1C2Flag(costC1C2Flag_t ref, costC1C2Flag_t opt);
     bool check_planeClipAndMax(planeClipAndMax_t ref, planeClipAndMax_t opt);
 
 public:

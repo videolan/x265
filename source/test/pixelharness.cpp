@@ -1752,6 +1752,55 @@ bool PixelHarness::check_costCoeffRemain(costCoeffRemain_t ref, costCoeffRemain_
     return true;
 }
 
+bool PixelHarness::check_costC1C2Flag(costC1C2Flag_t ref, costC1C2Flag_t opt)
+{
+    ALIGN_VAR_32(uint16_t, absCoeff[(1 << MLS_CG_SIZE)]);
+
+    // generate CABAC context table
+    uint8_t ref_baseCtx[8];
+    uint8_t opt_baseCtx[8];
+    for (int k = 0; k < 8; k++)
+    {
+        ref_baseCtx[k] =
+        opt_baseCtx[k] = (rand() % (125 - 2)) + 2;
+    }
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int rand_offset = rand() % 4;
+        int numNonZero = 0;
+
+        // generate test data, all are Absolute value and Aligned
+        for (int k = 0; k < C1FLAG_NUMBER; k++)
+        {
+            int value = rand() & SHORT_MAX;
+            // more coeff with value [0,2]
+            if (value < SHORT_MAX * 1 / 3)
+                value = 0;
+            else if (value < SHORT_MAX * 2 / 3)
+                value = 1;
+            else if (value < SHORT_MAX * 3 / 4)
+                value = 2;
+
+            if (value)
+            {
+                absCoeff[numNonZero] = (uint16_t)value;
+                numNonZero++;
+            }
+        }
+
+        int ref_sum = ref(absCoeff, (intptr_t)numNonZero, ref_baseCtx, (intptr_t)rand_offset);
+        int opt_sum = (int)checked(opt, absCoeff, (intptr_t)numNonZero, opt_baseCtx, (intptr_t)rand_offset);
+        if (ref_sum != opt_sum)
+        {
+            ref_sum = ref(absCoeff, (intptr_t)numNonZero, ref_baseCtx, (intptr_t)rand_offset);
+            opt_sum = opt(absCoeff, (intptr_t)numNonZero, opt_baseCtx, (intptr_t)rand_offset);
+            return false;
+        }
+    }
+    return true;
+}
+
 bool PixelHarness::check_planeClipAndMax(planeClipAndMax_t ref, planeClipAndMax_t opt)
 {
     for (int i = 0; i < ITERS; i++)
@@ -2391,6 +2440,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
+
     if (opt.costCoeffNxN)
     {
         if (!check_costCoeffNxN(ref.costCoeffNxN, opt.costCoeffNxN))
@@ -2399,6 +2449,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
+
     if (opt.costCoeffRemain)
     {
         if (!check_costCoeffRemain(ref.costCoeffRemain, opt.costCoeffRemain))
@@ -2407,6 +2458,16 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
+
+    if (opt.costC1C2Flag)
+    {
+        if (!check_costC1C2Flag(ref.costC1C2Flag, opt.costC1C2Flag))
+        {
+            printf("costC1C2Flag failed!\n");
+            return false;
+        }
+    }
+    
 
     if (opt.planeClipAndMax)
     {
@@ -2861,6 +2922,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         coefBuf[3 + 3 * 32] = 0x0BAD;
         REPORT_SPEEDUP(opt.findPosFirstLast, ref.findPosFirstLast, coefBuf, 32, g_scan4x4[SCAN_DIAG]);
     }
+
     if (opt.costCoeffNxN)
     {
         HEADER0("costCoeffNxN");
@@ -2879,6 +2941,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
 
         REPORT_SPEEDUP(opt.costCoeffNxN, ref.costCoeffNxN, g_scan4x4[SCAN_DIAG], coefBuf, 32, tmpOut, ctxSig, 0xFFFF, ctx, 1, 15, 32);
     }
+
     if (opt.costCoeffRemain)
     {
         HEADER0("costCoeffRemain");
@@ -2887,6 +2950,17 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         memset(abscoefBuf + 32 * 31, 1, 32 * sizeof(uint16_t));
         REPORT_SPEEDUP(opt.costCoeffRemain, ref.costCoeffRemain, abscoefBuf, 16, 3);
     }
+
+    if (opt.costC1C2Flag)
+    {
+        HEADER0("costC1C2Flag");
+        ALIGN_VAR_32(uint16_t, abscoefBuf[C1FLAG_NUMBER]);
+        memset(abscoefBuf, 1, sizeof(abscoefBuf));
+        abscoefBuf[C1FLAG_NUMBER - 2] = 2;
+        abscoefBuf[C1FLAG_NUMBER - 1] = 3;
+        REPORT_SPEEDUP(opt.costC1C2Flag, ref.costC1C2Flag, abscoefBuf, C1FLAG_NUMBER, (uint8_t*)psbuf1, 1);
+    }
+
     if (opt.planeClipAndMax)
     {
         HEADER0("planeClipAndMax");
