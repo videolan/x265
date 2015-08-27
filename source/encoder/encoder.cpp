@@ -1226,6 +1226,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64
         frameStats->poc = poc;
         frameStats->qp = curEncData.m_avgQpAq;
         frameStats->bits = bits;
+        frameStats->bScenecut = curFrame->m_lowres.bScenecut;
         if (m_param->rc.rateControlMode == X265_RC_CRF)
             frameStats->rateFactor = curEncData.m_rateFactor;
         frameStats->psnrY = psnrY;
