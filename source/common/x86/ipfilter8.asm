@@ -25016,67 +25016,57 @@ cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
 ; void interp_4tap_horiz_ps_32x32(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------;
 INIT_YMM avx2
-cglobal interp_4tap_horiz_ps_32x32, 4,7,6
+cglobal interp_4tap_horiz_ps_32x32, 4,6,8
     mov             r4d, r4m
-    mov             r5d, r5m
     add             r3d, r3d
+    dec             r0
 
-%ifdef PIC
-    lea               r6,           [tab_ChromaCoeff]
-    vpbroadcastd      m0,           [r6 + r4 * 4]
-%else
-    vpbroadcastd      m0,           [tab_ChromaCoeff + r4 * 4]
-%endif
+    ; check isRowExt
+    cmp             r5m, byte 0
 
-    vbroadcasti128     m2,           [pw_1]
-    vbroadcasti128     m5,           [pw_2000]
-    mova               m1,           [tab_Tm]
+    lea             r5, [tab_ChromaCoeff]
+    vpbroadcastw    m0, [r5 + r4 * 4 + 0]
+    vpbroadcastw    m1, [r5 + r4 * 4 + 2]
+    mova            m7, [pw_2000]
 
     ; register map
-    ; m0 - interpolate coeff
-    ; m1 - shuffle order table
-    ; m2 - constant word 1
-    mov                r6d,         32
-    dec                r0
-    test                r5d,      r5d
-    je                 .loop
-    sub                r0 ,         r1
-    add                r6d ,        3
+    ; m0 - interpolate coeff Low
+    ; m1 - interpolate coeff High
+    ; m7 - constant pw_2000
+    mov             r4d, 32
+    je             .loop
+    sub             r0, r1
+    add             r4d, 3
 
 .loop
     ; Row 0
-    vbroadcasti128    m3,           [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb            m3,           m1
-    pmaddubsw         m3,           m0
-    pmaddwd           m3,           m2
-    vbroadcasti128    m4,           [r0 + 8]                      ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb            m4,           m1
-    pmaddubsw         m4,           m0
-    pmaddwd           m4,           m2
+    movu            m2, [r0]
+    movu            m3, [r0 + 1]
+    punpckhbw       m4, m2, m3
+    punpcklbw       m2, m3
+    pmaddubsw       m4, m0
+    pmaddubsw       m2, m0
 
-    packssdw          m3,           m4
-    psubw             m3,           m5
-    vpermq            m3,           m3,          11011000b
-    movu             [r2],         m3
+    movu            m3, [r0 + 2]
+    movu            m5, [r0 + 3]
+    punpckhbw       m6, m3, m5
+    punpcklbw       m3, m5
+    pmaddubsw       m6, m1
+    pmaddubsw       m3, m1
 
-    vbroadcasti128    m3,           [r0 + 16]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb            m3,           m1
-    pmaddubsw         m3,           m0
-    pmaddwd           m3,           m2
-    vbroadcasti128    m4,           [r0 + 24]                      ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb            m4,           m1
-    pmaddubsw         m4,           m0
-    pmaddwd           m4,           m2
+    paddw           m4, m6
+    paddw           m2, m3
+    psubw           m4, m7
+    psubw           m2, m7
+    vperm2i128      m3, m2, m4, 0x20
+    vperm2i128      m5, m2, m4, 0x31
+    movu            [r2], m3
+    movu            [r2 + mmsize], m5
 
-    packssdw          m3,           m4
-    psubw             m3,           m5
-    vpermq            m3,              m3,          11011000b
-    movu             [r2 + 32],         m3
-
-    add                r2,           r3
-    add                r0,           r1
-    dec               r6d
-    jnz                .loop
+    add             r2, r3
+    add             r0, r1
+    dec             r4d
+    jnz            .loop
     RET
 
 ;-----------------------------------------------------------------------------------------------------------------------------
