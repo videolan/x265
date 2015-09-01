@@ -255,11 +255,10 @@ void Encoder::create()
 
                 for (int i = 0; i < coefCount; i++)
                 {
-                    uint16_t max = (1 << (7 + X265_DEPTH)) - 1;
                     /* True "emergency mode": remove all DCT coefficients */
                     if (q == QP_MAX_MAX - QP_MAX_SPEC - 1)
                     {
-                        nrOffset[i] = max;
+                        nrOffset[i] = INT16_MAX;
                         continue;
                     }
 
@@ -277,7 +276,7 @@ void Encoder::create()
 
                     // Formula chosen as an exponential scale to vaguely mimic the effects of a higher quantizer.
                     double bias = (pow(2, pos * (QP_MAX_MAX - QP_MAX_SPEC)) * 0.003 - 0.003) * start;
-                    nrOffset[i] = (uint16_t)X265_MIN(bias + 0.5, max);
+                    nrOffset[i] = (uint16_t)X265_MIN(bias + 0.5, INT16_MAX);
                 }
             }
         }
