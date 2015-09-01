@@ -142,7 +142,7 @@ typedef struct x265_frame_stats
     int              list1POC[16];
     uint16_t         maxLumaLevel;
     char             sliceType;
-    bool             bScenecut;
+    int              bScenecut;
     x265_cu_stats    cuStats;
 } x265_frame_stats;
 
