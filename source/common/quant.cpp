@@ -228,6 +228,8 @@ Quant::~Quant()
 
 void Quant::setQPforQuant(const CUData& ctu, int qp)
 {
+    m_tqBypass = !!ctu.m_tqBypass[0];
+
     m_nr = m_frameNr ? &m_frameNr[ctu.m_encData->m_frameEncoderID] : NULL;
     m_qpParam[TEXT_LUMA].setQpParam(qp + QP_BD_OFFSET);
     setChromaQP(qp + ctu.m_slice->m_pps->chromaQpOffset[0], TEXT_CHROMA_U, ctu.m_chromaFormat);
