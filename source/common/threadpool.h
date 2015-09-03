@@ -83,7 +83,10 @@ public:
     sleepbitmap_t m_sleepBitmap;
     int           m_numProviders;
     int           m_numWorkers;
-    int           m_numaNode;
+    void*         m_numaNodeMask;
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
+    DWORD         m_winNodemask;
+#endif
     bool          m_isActive;
 
     JobProvider** m_jpTable;
@@ -92,7 +95,7 @@ public:
     ThreadPool();
     ~ThreadPool();
 
-    bool create(int numThreads, int maxProviders, int node);
+    bool create(int numThreads, int maxProviders, uint32_t nodeMask);
     bool start();
     void stopWorkers();
     void setCurrentThreadAffinity();
@@ -103,7 +106,7 @@ public:
 
     static int  getCpuCount();
     static int  getNumaNodeCount();
-    static void setThreadNodeAffinity(int node);
+    static void setThreadNodeAffinity(void *numaNodeMask);
 };
 
 /* Any worker thread may enlist the help of idle worker threads from the same
