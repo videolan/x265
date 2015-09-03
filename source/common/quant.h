@@ -95,7 +95,6 @@ public:
 
     NoiseReduction*    m_nr;
     NoiseReduction*    m_frameNr; // Array of NR structures, one for each frameEncoder
-    bool               m_tqBypass;
 
     Quant();
     ~Quant();
@@ -110,7 +109,7 @@ public:
     uint32_t transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencStride, const int16_t* residual, uint32_t resiStride, coeff_t* coeff,
                           uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool useTransformSkip);
 
-    void invtransformNxN(int16_t* residual, uint32_t resiStride, const coeff_t* coeff,
+    void invtransformNxN(const CUData& cu, int16_t* residual, uint32_t resiStride, const coeff_t* coeff,
                          uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
 
     /* Pattern decision for context derivation process of significant_coeff_flag */
