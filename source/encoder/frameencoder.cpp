@@ -418,25 +418,6 @@ void FrameEncoder::compressFrame()
 
             m_top->m_lastBPSEI = m_rce.encodeOrder;
         }
-
-        // The recovery point SEI message assists a decoder in determining when the decoding
-        // process will produce acceptable pictures for display after the decoder initiates
-        // random access. The m_recoveryPocCnt is in units of POC(picture order count) which
-        // means pictures encoded after the CRA but precede it in display order(leading) are
-        // implicitly discarded after a random access seek regardless of the value of
-        // m_recoveryPocCnt. Our encoder does not use references prior to the most recent CRA,
-        // so all pictures following the CRA in POC order are guaranteed to be displayable,
-        // so m_recoveryPocCnt is always 0.
-        SEIRecoveryPoint sei_recovery_point;
-        sei_recovery_point.m_recoveryPocCnt = 0;
-        sei_recovery_point.m_exactMatchingFlag = true;
-        sei_recovery_point.m_brokenLinkFlag = false;
-
-        m_bs.resetBits();
-        sei_recovery_point.write(m_bs, *slice->m_sps);
-        m_bs.writeByteAlignment();
-
-        m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
 
     if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
