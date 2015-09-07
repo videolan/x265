@@ -612,6 +612,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT2("constrained-intra", "cip") p->bEnableConstrainedIntra = atobool(value);
     OPT("fast-intra") p->bEnableFastIntra = atobool(value);
     OPT("open-gop") p->bOpenGOP = atobool(value);
+    OPT("intra-refresh") p->bIntraRefresh = atobool(value);
     OPT("lookahead-slices") p->lookaheadSlices = atoi(value);
     OPT("scenecut")
     {
@@ -1453,6 +1454,7 @@ char *x265_param2string(x265_param* p)
     BOOL(p->bSaoNonDeblocked, "sao-non-deblock");
     BOOL(p->bBPyramid, "b-pyramid");
     BOOL(p->rc.cuTree, "cutree");
+    BOOL(p->bIntraRefresh, "intra-refresh");
     s += sprintf(s, " rc=%s", p->rc.rateControlMode == X265_RC_ABR ? (
          p->rc.bStatRead ? "2 pass" : p->rc.bitrate == p->rc.vbvMaxBitrate ? "cbr" : "abr")
          : p->rc.rateControlMode == X265_RC_CRF ? "crf" : "cqp");

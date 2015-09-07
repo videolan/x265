@@ -1083,7 +1083,8 @@ Slice decision options
 
 	Max intra period in frames. A special case of infinite-gop (single
 	keyframe at the beginning of the stream) can be triggered with
-	argument -1. Use 1 to force all-intra. Default 250
+	argument -1. Use 1 to force all-intra. When intra-refresh is enabled
+	it specifies the interval between which refresh sweeps happen. Default 250
 
 .. option:: --min-keyint, -i <integer>
 
@@ -1101,6 +1102,14 @@ Slice decision options
 	threshold value, the more aggressive the I-frame placement.
 	:option:`--scenecut` 0 or :option:`--no-scenecut` disables adaptive
 	I frame placement. Default 40
+
+.. option:: --intra-refresh
+
+	Enables Periodic Intra Refresh(PIR) instead of keyframe insertion.
+	PIR can replace keyframes by inserting a column of intra blocks in 
+	non-keyframes, that move across the video from one side to the other
+	and thereby refresh the image but over a period of multiple 
+	frames instead of a single keyframe.
 
 .. option:: --rc-lookahead <integer>
 
