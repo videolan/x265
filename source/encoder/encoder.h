@@ -117,6 +117,7 @@ public:
     NALList            m_nalList;
     ScalingList        m_scalingList;      // quantization matrix information
 
+    bool               m_emitCLLSEI;
     int                m_lastBPSEI;
     uint32_t           m_numDelayedPic;
 

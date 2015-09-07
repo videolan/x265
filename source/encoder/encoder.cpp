@@ -336,6 +336,8 @@ void Encoder::create()
     m_encodeStartTime = x265_mdate();
 
     m_nalList.m_annexB = !!m_param->bAnnexB;
+
+    m_emitCLLSEI = p->maxCLL || p->maxFALL;
 }
 
 void Encoder::stopJobs()
@@ -409,7 +411,6 @@ void Encoder::destroy()
         free((char*)m_param->scalingLists);
         free((char*)m_param->numaPools);
         free((char*)m_param->masteringDisplayColorVolume);
-        free((char*)m_param->contentLightLevelInfo);
 
         PARAM_NS::x265_param_free(m_param);
     }
@@ -1129,13 +1130,11 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
 
         stats->maxCLL         = m_analyzeAll.m_maxCLL;
         stats->maxFALL        = (uint16_t)(m_analyzeAll.m_maxFALL / m_analyzeAll.m_numPics);
-        if (m_param->contentLightLevelInfo)
-        {
-            free((char*)m_param->contentLightLevelInfo);
 
-            char value[16];
-            sprintf(value, "%hu,%hu", stats->maxCLL, stats->maxFALL);
-            m_param->contentLightLevelInfo = strdup(value);
+        if (m_emitCLLSEI)
+        {
+            m_param->maxCLL = stats->maxCLL;
+            m_param->maxFALL = stats->maxFALL;
         }
     }
 
@@ -1319,18 +1318,15 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
             x265_log(m_param, X265_LOG_WARNING, "unable to parse mastering display color volume info\n");
     }
 
-    if (m_param->contentLightLevelInfo)
+    if (m_emitCLLSEI)
     {
         SEIContentLightLevel cllsei;
-        if (cllsei.parse(m_param->contentLightLevelInfo))
-        {
-            bs.resetBits();
-            cllsei.write(bs, m_sps);
-            bs.writeByteAlignment();
-            list.serialize(NAL_UNIT_PREFIX_SEI, bs);
-        }
-        else
-            x265_log(m_param, X265_LOG_WARNING, "unable to parse content light level info\n");
+        cllsei.max_content_light_level = m_param->maxCLL;
+        cllsei.max_pic_average_light_level = m_param->maxFALL;
+        bs.resetBits();
+        cllsei.write(bs, m_sps);
+        bs.writeByteAlignment();
+        list.serialize(NAL_UNIT_PREFIX_SEI, bs);
     }
 
     if (m_param->bEmitInfoSEI)

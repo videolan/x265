@@ -1176,12 +1176,17 @@ typedef struct x265_param
      * max,min luminance values. */
     const char* masteringDisplayColorVolume;
 
-    /* Content light level info SEI, specified as a string which is parsed when
-     * the stream header SEI are emitted. The string format is "%hu,%hu" where
-     * %hu are unsigned 16bit integers. The first value is the max content light
-     * level (or 0 if no maximum is indicated), the second value is the maximum
-     * picture average light level (or 0). */
-    const char* contentLightLevelInfo;
+    /* Maximum Content light level(MaxCLL), specified as integer that indicates the
+     * maximum pixel intensity level in units of 1 candela per square metre of the
+     * bitstream. x265 will also calculate MaxCLL programmatically from the input
+     * pixel values and set in the Content light level info SEI */
+    uint16_t maxCLL;
+
+    /* Maximum Frame Average Light Level(MaxFALL), specified as integer that indicates
+     * the maximum frame average intensity level in units of 1 candela per square
+     * metre of the bitstream. x265 will also calculate MaxFALL programmatically
+     * from the input pixel values and set in the Content light level info SEI */
+    uint16_t maxFALL;
 
     /* Minimum luma level of input source picture, specified as a integer which
      * would automatically increase any luma values below the specified --min-luma

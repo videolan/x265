@@ -163,12 +163,6 @@ public:
 
     PayloadType payloadType() const { return CONTENT_LIGHT_LEVEL_INFO; }
 
-    bool parse(const char* value)
-    {
-        return sscanf(value, "%hu,%hu",
-                      &max_content_light_level, &max_pic_average_light_level) == 2;
-    }
-
     void write(Bitstream& bs, const SPS&)
     {
         m_bitIf = &bs;
