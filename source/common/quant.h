@@ -68,9 +68,9 @@ struct NoiseReduction
     /* 0 = luma 4x4,   1 = luma 8x8,   2 = luma 16x16,   3 = luma 32x32
      * 4 = chroma 4x4, 5 = chroma 8x8, 6 = chroma 16x16, 7 = chroma 32x32
      * Intra 0..7 - Inter 8..15 */
-    uint16_t offsetDenoise[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
-    uint32_t residualSum[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    ALIGN_VAR_16(uint32_t, residualSum[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS]);
     uint32_t count[MAX_NUM_TR_CATEGORIES];
+    uint16_t offsetDenoise[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
 };
 
 class Quant
