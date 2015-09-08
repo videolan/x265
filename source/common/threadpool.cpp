@@ -378,8 +378,16 @@ bool ThreadPool::create(int numThreads, int maxProviders, uint32_t nodeMask)
     X265_CHECK(numThreads <= MAX_POOL_THREADS, "a single thread pool cannot have more than MAX_POOL_THREADS threads\n");
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
-    m_winNodemask = nodeMask & ~(0x1 << getNumaNodeCount());
-    m_numaNodeMask = &m_winNodemask;
+    m_winCpuMask = 0x0;
+    GROUP_AFFINITY groupAffinity;
+    for (int i = 0; i < getNumaNodeCount(); i++)
+    {
+        int numaNode = ((nodeMask >> i) & 0x1U) ? i : -1;
+        if (numaNode != -1)
+            if (GetNumaNodeProcessorMaskEx((USHORT)numaNode, &groupAffinity))
+                m_winCpuMask |= groupAffinity.Mask;
+    }
+    m_numaMask = &m_winCpuMask;
 #elif HAVE_LIBNUMA
     if (numa_available() >= 0)
     {
@@ -387,11 +395,13 @@ bool ThreadPool::create(int numThreads, int maxProviders, uint32_t nodeMask)
         if (nodemask)
         {
             *(nodemask->maskp) = nodeMask;
-            m_numaNodeMask = nodemask;
+            m_numaMask = nodemask;
         }
         else
             x265_log(NULL, X265_LOG_ERROR, "unable to get NUMA node mask for %lx\n", nodeMask);
     }
+#else
+    (void)nodeMask;
 #endif
 
     m_numWorkers = numThreads;
@@ -449,33 +459,35 @@ ThreadPool::~ThreadPool()
     X265_FREE(m_jpTable);
 
 #if HAVE_LIBNUMA
-    if(m_numaNodeMask)
-        numa_free_nodemask((struct bitmask*)m_numaNodeMask);
+    if(m_numaMask)
+        numa_free_nodemask((struct bitmask*)m_numaMask);
 #endif
 }
 
 void ThreadPool::setCurrentThreadAffinity()
 {
-    setThreadNodeAffinity(m_numaNodeMask);
+    setThreadNodeAffinity(m_numaMask);
 }
 
 /* static */
-void ThreadPool::setThreadNodeAffinity(void *numaNodeMask)
+void ThreadPool::setThreadNodeAffinity(void *numaMask)
 {
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
-    if (SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)(*((DWORD*)numaNodeMask))))
+    if (SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)(*((DWORD*)numaMask))))
         return;
     else
         x265_log(NULL, X265_LOG_ERROR, "unable to set thread affinity for NUMA node mask\n");
 #elif HAVE_LIBNUMA
     if (numa_available() >= 0)
     {
-        numa_run_on_node_mask((struct bitmask*)numaNodeMask);
-        numa_set_interleave_mask((struct bitmask*)numaNodeMask);
+        numa_run_on_node_mask((struct bitmask*)numaMask);
+        numa_set_interleave_mask((struct bitmask*)numaMask);
         numa_set_localalloc();
         return;
     }
     x265_log(NULL, X265_LOG_ERROR, "unable to set thread affinity for NUMA node mask\n");
+#else
+    (void)numaMask;
 #endif
     return;
 }

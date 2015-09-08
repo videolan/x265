@@ -83,9 +83,9 @@ public:
     sleepbitmap_t m_sleepBitmap;
     int           m_numProviders;
     int           m_numWorkers;
-    void*         m_numaNodeMask;
+    void*         m_numaMask; // node mask in linux, cpu mask in windows
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
-    DWORD         m_winNodemask;
+    DWORD         m_winCpuMask;
 #endif
     bool          m_isActive;
 
@@ -106,7 +106,7 @@ public:
 
     static int  getCpuCount();
     static int  getNumaNodeCount();
-    static void setThreadNodeAffinity(void *numaNodeMask);
+    static void setThreadNodeAffinity(void *numaMask);
 };
 
 /* Any worker thread may enlist the help of idle worker threads from the same
