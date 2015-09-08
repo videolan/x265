@@ -2727,6 +2727,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
 #if X86_64
     if (cpuMask & X265_CPU_AVX2)
     {
+        p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_avx2);
+        p.cu[BLOCK_32x32].var = PFX(pixel_var_32x32_avx2);
+        p.cu[BLOCK_64x64].var = PFX(pixel_var_64x64_avx2);
+
         p.cu[BLOCK_4x4].intra_filter = PFX(intra_filter_4x4_avx2);
 
         p.planecopy_sp = PFX(downShift_16_avx2);
