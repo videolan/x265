@@ -556,7 +556,7 @@ void Quant::invtransformNxN(const CUData& cu, int16_t* residual, uint32_t resiSt
 template<uint32_t log2TrSize>
 uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
-    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
+    const int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu.isIntra(absPartIdx) ? 0 : 3) + ttype;
     const uint32_t usePsyMask = usePsy ? -1 : 0;
 
@@ -568,7 +568,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
     int add = (1 << (qbits - 1));
     const int32_t* qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
-    int numCoeff = 1 << (log2TrSize * 2);
+    const int numCoeff = 1 << (log2TrSize * 2);
     uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, dstCoeff, qbits, add, numCoeff);
     X265_CHECK((int)numSig == primitives.cu[log2TrSize - 2].count_nonzero(dstCoeff), "numSig differ\n");
     if (!numSig)
@@ -584,7 +584,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
     const int32_t* unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift + (m_scalingList->m_bEnabled ? 4 : 0);
     int unquantRound = (unquantShift > per) ? 1 << (unquantShift - per - 1) : 0;
-    int scaleBits = SCALE_BITS - 2 * transformShift;
+    const int scaleBits = SCALE_BITS - 2 * transformShift;
 
 #define UNQUANT(lvl)    (((lvl) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift)
 #define SIGCOST(bits)   ((lambda2 * (bits)) >> 8)
@@ -1047,7 +1047,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                     c2 += (uint32_t)(c2 - 2) >> 31;
                     c2Idx++;
                 }
-                else if ((c1 < 3) && (c1 > 0) && level)
+                else if (((c1 == 1) | (c1 == 2)) && level)
                     c1++;
 
                 if (dstCoeff[blkPos])
@@ -1277,7 +1277,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
 
                     int64_t minCostInc = MAX_INT64, curCost = MAX_INT64;
                     int minPos = -1;
-                    int16_t finalChange = 0, curChange = 0;
+                    int8_t finalChange = 0, curChange = 0;
 
                     for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                     {
@@ -1286,21 +1286,21 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                         int absLevel    = abs(dstCoeff[blkPos]);
 
                         int d = abs(signCoef) - UNQUANT(absLevel);
-                        int64_t origDist = (((int64_t)d * d)) << scaleBits;
+                        const int64_t origDist = (((int64_t)d * d));
 
-#define DELTARDCOST(d, deltabits) ((((int64_t)d * d) << scaleBits) - origDist + ((lambda2 * (int64_t)(deltabits)) >> 8))
+#define DELTARDCOST(d0, d, deltabits) ((((int64_t)d * d - d0) << scaleBits) + ((lambda2 * (int64_t)(deltabits)) >> 8))
 
                         if (dstCoeff[blkPos])
                         {
                             d = abs(signCoef) - UNQUANT(absLevel + 1);
-                            int64_t costUp = DELTARDCOST(d, rateIncUp[blkPos]);
+                            int64_t costUp = DELTARDCOST(origDist, d, rateIncUp[blkPos]);
 
                             /* if decrementing would make the coeff 0, we can include the
                              * significant coeff flag cost savings */
                             d = abs(signCoef) - UNQUANT(absLevel - 1);
                             int isOne = (abs(dstCoeff[blkPos]) == 1);
                             int downBits = rateIncDown[blkPos] - (isOne ? (IEP_RATE + sigRateDelta[blkPos]) : 0);
-                            int64_t costDown = DELTARDCOST(d, downBits);
+                            int64_t costDown = DELTARDCOST(origDist, d, downBits);
 
                             costDown -= (lastCG & (n == lastNZPosInCG) & isOne) * 4 * IEP_RATE;
                             curCost = ((n == firstNZPosInCG) & isOne) ? MAX_INT64 : costDown;
@@ -1309,8 +1309,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                             if (costUp < costDown)
                                 curCost = costUp;
                         }
-                        //else if ((n < firstNZPosInCG) & (signbit != ((uint32_t)signCoef >> 31)))
-                        else if (n < firstNZPosInCG && signbit != (signCoef >= 0 ? 0 : 1U))
+                        else if ((n < firstNZPosInCG) & (signbit != ((uint32_t)signCoef >> 31)))
                         {
                             /* don't try to make a new coded coeff before the first coeff if its
                              * sign would be different than the first coeff, the inferred sign would
@@ -1321,7 +1320,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                         {
                             /* evaluate changing an uncoded coeff 0 to a coded coeff +/-1 */
                             d = abs(signCoef) - UNQUANT(1);
-                            curCost = DELTARDCOST(d, rateIncUp[blkPos] + IEP_RATE + sigRateDelta[blkPos]);
+                            curCost = DELTARDCOST(origDist, d, rateIncUp[blkPos] + IEP_RATE + sigRateDelta[blkPos]);
                             curChange = 1;
                         }
 
@@ -1333,19 +1332,26 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                         }
                     }
 
-                    if (dstCoeff[minPos] == 32767 || dstCoeff[minPos] == -32768)
+                    // if (dstCoeff[minPos] == 32767 || dstCoeff[minPos] == -32768)
+                    if (((uint16_t)dstCoeff[minPos] + 1 == (uint16_t)0x8000) | ((uint16_t)dstCoeff[minPos] == (uint16_t)0x8000))
                         /* don't allow sign hiding to violate the SPEC range */
                         finalChange = -1;
 
-                    if (dstCoeff[minPos] == 0)
-                        numSig++;
-                    else if (finalChange == -1 && abs(dstCoeff[minPos]) == 1)
-                        numSig--;
+                    // NOTE: Reference code
+                    //if (dstCoeff[minPos] == 0)
+                    //    numSig++;
+                    //else if (finalChange == -1 && abs(dstCoeff[minPos]) == 1)
+                    //    numSig--;
+                    numSig += (dstCoeff[minPos] == 0) - ((finalChange == -1) & (abs(dstCoeff[minPos]) == 1));
 
-                    if (m_resiDctCoeff[minPos] >= 0)
-                        dstCoeff[minPos] += finalChange;
-                    else
-                        dstCoeff[minPos] -= finalChange;
+
+                    // NOTE: Reference code
+                    //if (m_resiDctCoeff[minPos] >= 0)
+                    //    dstCoeff[minPos] += finalChange;
+                    //else
+                    //    dstCoeff[minPos] -= finalChange;
+                    const int16_t resiCoeffSign = ((int16_t)m_resiDctCoeff[minPos] >> 16);
+                    dstCoeff[minPos] += (((int16_t)finalChange ^ resiCoeffSign) - resiCoeffSign);
                 }
             }
 
