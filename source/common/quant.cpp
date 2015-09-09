@@ -1245,7 +1245,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
     if (cu.m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
         const int realLastScanPos = (bestLastIdx - 1) >> LOG2_SCAN_SET_SIZE;
-        int lastCG = true;
+        int lastCG = 1;
         for (int subSet = realLastScanPos; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
@@ -1298,27 +1298,18 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                             /* if decrementing would make the coeff 0, we can include the
                              * significant coeff flag cost savings */
                             d = abs(signCoef) - UNQUANT(absLevel - 1);
-                            bool isOne = abs(dstCoeff[blkPos]) == 1;
+                            int isOne = (abs(dstCoeff[blkPos]) == 1);
                             int downBits = rateIncDown[blkPos] - (isOne ? (IEP_RATE + sigRateDelta[blkPos]) : 0);
                             int64_t costDown = DELTARDCOST(d, downBits);
 
-                            if (lastCG && lastNZPosInCG == n && isOne)
-                                costDown -= 4 * IEP_RATE;
+                            costDown -= (lastCG & (n == lastNZPosInCG) & isOne) * 4 * IEP_RATE;
+                            curCost = ((n == firstNZPosInCG) & isOne) ? MAX_INT64 : costDown;
+                            curChange = 2 * (costUp < costDown) - 1;
 
                             if (costUp < costDown)
-                            {
                                 curCost = costUp;
-                                curChange =  1;
-                            }
-                            else
-                            {
-                                curChange = -1;
-                                if (n == firstNZPosInCG && isOne)
-                                    curCost = MAX_INT64;
-                                else
-                                    curCost = costDown;
-                            }
                         }
+                        //else if ((n < firstNZPosInCG) & (signbit != ((uint32_t)signCoef >> 31)))
                         else if (n < firstNZPosInCG && signbit != (signCoef >= 0 ? 0 : 1U))
                         {
                             /* don't try to make a new coded coeff before the first coeff if its
@@ -1358,7 +1349,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                 }
             }
 
-            lastCG = false;
+            lastCG = 0;
         }
     }
 
