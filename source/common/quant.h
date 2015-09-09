@@ -152,7 +152,14 @@ protected:
 
     uint32_t signBitHidingHDQ(int16_t* qcoeff, int32_t* deltaU, uint32_t numSig, const TUEntropyCodingParameters &codingParameters, uint32_t log2TrSize);
 
-    uint32_t rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy);
+    template<uint32_t log2TrSize>
+    uint32_t rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, uint32_t absPartIdx, bool usePsy);
+
+public:
+    typedef uint32_t (Quant::*rdoQuant_t)(const CUData& cu, int16_t* dstCoeff, TextType ttype, uint32_t absPartIdx, bool usePsy);
+
+private:
+    static rdoQuant_t rdoQuant_func[NUM_CU_DEPTH];
 };
 }
 

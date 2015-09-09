@@ -186,6 +186,8 @@ inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int* g
 
 }
 
+Quant::rdoQuant_t Quant::rdoQuant_func[NUM_CU_DEPTH] = {&Quant::rdoQuant<2>, &Quant::rdoQuant<3>, &Quant::rdoQuant<4>, &Quant::rdoQuant<5>};
+
 Quant::Quant()
 {
     m_resiDctCoeff = NULL;
@@ -456,7 +458,7 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
     }
 
     if (m_rdoqLevel)
-        return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx, usePsy);
+        return (this->*rdoQuant_func[log2TrSize - 2])(cu, coeff, ttype, absPartIdx, usePsy);
     else
     {
         int deltaU[32 * 32];
@@ -551,7 +553,8 @@ void Quant::invtransformNxN(const CUData& cu, int16_t* residual, uint32_t resiSt
 
 /* Rate distortion optimized quantization for entropy coding engines using
  * probability models like CABAC */
-uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
+template<uint32_t log2TrSize>
+uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
     int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu.isIntra(absPartIdx) ? 0 : 3) + ttype;
