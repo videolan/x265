@@ -1515,6 +1515,7 @@ void Encoder::configure(x265_param *p)
         p->rc.cuTree = 0;
         p->bEnableWeightedPred = 0;
         p->bEnableWeightedBiPred = 0;
+        p->bIntraRefresh = 0;
 
         /* SPSs shall have sps_max_dec_pic_buffering_minus1[ sps_max_sub_layers_minus1 ] equal to 0 only */
         p->maxNumReferences = 1;
@@ -1605,6 +1606,34 @@ void Encoder::configure(x265_param *p)
 
     if (p->totalFrames && p->totalFrames <= 2 * ((float)p->fpsNum) / p->fpsDenom && p->rc.bStrictCbr)
         p->lookaheadDepth = p->totalFrames;
+    if (p->bIntraRefresh)
+    {
+        int numCuInWidth = (m_param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
+        if (p->maxNumReferences > 1)
+        {
+            x265_log(p,  X265_LOG_WARNING, "Max References > 1 + intra-refresh is not supported , setting max num references = 1\n");
+            p->maxNumReferences = 1;
+        }
+
+        if (p->bBPyramid && p->bframes)
+            x265_log(p,  X265_LOG_WARNING, "B pyramid cannot be enabled when max references is 1, Disabling B pyramid\n");
+        p->bBPyramid = 0;
+
+
+        if (p->bOpenGOP)
+        {
+            x265_log(p,  X265_LOG_WARNING, "Open Gop disabled, Intra Refresh is not compatible with openGop\n");
+            p->bOpenGOP = 0;
+        }
+
+        x265_log(p,  X265_LOG_WARNING, "Scenecut is disabled when Intra Refresh is enabled\n");
+
+        if (((float)numCuInWidth - 1) / m_param->keyframeMax > 1)
+            x265_log(p,  X265_LOG_WARNING, "Keyint value is very low.It leads to frequent intra refreshes, can be almost every frame."
+                     "Prefered use case would be high keyint value or an API call to refresh when necessary\n");
+
+    }
+
 
     if (p->scalingLists && p->internalCsp == X265_CSP_I444)
     {

@@ -134,7 +134,16 @@ public:
     RCStatCU*      m_cuStat;
     RCStatRow*     m_rowStat;
     FrameStats     m_frameStats; // stats of current frame for multi-pass encodes
+    /* data needed for periodic intra refresh */
+    struct PeriodicIR
+    {
+        double     position;
+        uint32_t   pirStartCol;
+        uint32_t   pirEndCol;
+        int        framesSinceLastPir;
+    };
 
+    PeriodicIR     m_pir;
     double         m_avgQpRc;    /* avg QP as decided by rate-control */
     double         m_avgQpAq;    /* avg QP as decided by AQ in addition to rate-control */
     double         m_rateFactor; /* calculated based on the Frame QP */

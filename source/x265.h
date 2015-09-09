@@ -703,6 +703,11 @@ typedef struct x265_param
      * should detect scene cuts. The default (40) is recommended. */
     int       scenecutThreshold;
 
+    /* Replace keyframes by using a column of intra blocks that move across the video
+     * from one side to the other, thereby "refreshing" the image. In effect, instead of a
+     * big keyframe, the keyframe is "spread" over many frames. */
+    int       bIntraRefresh;
+
     /*== Coding Unit (CU) definitions ==*/
 
     /* Maximum CU width and height in pixels.  The size must be 64, 32, or 16.
