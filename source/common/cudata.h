@@ -323,7 +323,6 @@ struct TUEntropyCodingParameters
     const uint16_t *scan;
     const uint16_t *scanCG;
     ScanType        scanType;
-    uint32_t        log2TrSizeCG;
     uint32_t        firstSignificanceMapContext;
 };
 

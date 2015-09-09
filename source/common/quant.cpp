@@ -574,7 +574,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
     if (!numSig)
         return 0;
 
-    uint32_t trSize = 1 << log2TrSize;
+    const uint32_t trSize = 1 << log2TrSize;
     int64_t lambda2 = m_qpParam[ttype].lambda2;
     const int64_t psyScale = ((int64_t)m_psyRdoqScale * m_qpParam[ttype].lambda);
 
@@ -591,13 +591,13 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
 #define RDCOST(d, bits) ((((int64_t)d * d) << scaleBits) + SIGCOST(bits))
 #define PSYVALUE(rec)   ((psyScale * (rec)) >> (2 * transformShift + 1))
 
-    int64_t costCoeff[32 * 32];   /* d*d + lambda * bits */
-    int64_t costUncoded[32 * 32]; /* d*d + lambda * 0    */
-    int64_t costSig[32 * 32];     /* lambda * bits       */
+    int64_t costCoeff[trSize * trSize];   /* d*d + lambda * bits */
+    int64_t costUncoded[trSize * trSize]; /* d*d + lambda * 0    */
+    int64_t costSig[trSize * trSize];     /* lambda * bits       */
 
-    int rateIncUp[32 * 32];      /* signal overhead of increasing level */
-    int rateIncDown[32 * 32];    /* signal overhead of decreasing level */
-    int sigRateDelta[32 * 32];   /* signal difference between zero and non-zero */
+    int rateIncUp[trSize * trSize];      /* signal overhead of increasing level */
+    int rateIncDown[trSize * trSize];    /* signal overhead of decreasing level */
+    int sigRateDelta[trSize * trSize];   /* signal difference between zero and non-zero */
 
     int64_t costCoeffGroupSig[MLS_GRP_NUM]; /* lambda * bits of group coding cost */
     uint64_t sigCoeffGroupFlag64 = 0;
@@ -615,7 +615,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
 
     TUEntropyCodingParameters codeParams;
     cu.getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, bIsLuma);
-    const uint32_t cgNum = 1 << (codeParams.log2TrSizeCG * 2);
+    const uint32_t log2TrSizeCG = log2TrSize - 2;
+    const uint32_t cgNum = 1 << (log2TrSizeCG * 2);
     const uint32_t cgStride = (trSize >> MLS_CG_LOG2_SIZE);
 
     uint8_t coeffNum[MLS_GRP_NUM];      // value range[0, 16]
@@ -746,8 +747,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
     {
         uint32_t ctxSet = (cgScanPos && bIsLuma) ? 2 : 0;
         const uint32_t cgBlkPos = codeParams.scanCG[cgScanPos];
-        const uint32_t cgPosY   = cgBlkPos >> codeParams.log2TrSizeCG;
-        const uint32_t cgPosX   = cgBlkPos - (cgPosY << codeParams.log2TrSizeCG);
+        const uint32_t cgPosY   = cgBlkPos >> log2TrSizeCG;
+        const uint32_t cgPosX   = cgBlkPos - (cgPosY << log2TrSizeCG);
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
         const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
         const int ctxSigOffset = codeParams.firstSignificanceMapContext + (cgScanPos && bIsLuma ? 3 : 0);
@@ -861,9 +862,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
             const int* greaterOneBits = estBitsSbac.greaterOneBits[4 * ctxSet + c1];
             //const uint32_t ctxSig = (blkPos == 0) ? 0 : table_cnt[(trSize == 4) ? 4 : patternSigCtx][g_scan4x4[codeParams.scanType][scanPosinCG]] + ctxSigOffset;
             static const uint64_t table_cnt64[4] = {0x0000000100110112ULL, 0x0000000011112222ULL, 0x0012001200120012ULL, 0x2222222222222222ULL};
-            uint64_t ctxCnt = table_cnt64[patternSigCtx];
-            if (trSize == 4)
-                ctxCnt = 0x8877886654325410ULL;
+            uint64_t ctxCnt = (trSize == 4) ? 0x8877886654325410ULL : table_cnt64[patternSigCtx];
             const uint32_t ctxSig = (blkPos == 0) ? 0 : ((ctxCnt >> (4 * g_scan4x4[codeParams.scanType][scanPosinCG])) & 0xF) + ctxSigOffset;
             // NOTE: above equal to 'table_cnt[(trSize == 4) ? 4 : patternSigCtx][g_scan4x4[codeParams.scanType][scanPosinCG]] + ctxSigOffset'
             X265_CHECK(ctxSig == getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codeParams.firstSignificanceMapContext), "sigCtx check failure\n");

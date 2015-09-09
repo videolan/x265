@@ -1952,7 +1952,7 @@ void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uin
     bool bIsIntra = isIntra(absPartIdx);
 
     // set the group layout
-    result.log2TrSizeCG = log2TrSize - 2;
+    const uint32_t log2TrSizeCG = log2TrSize - 2;
 
     // set the scan orders
     if (bIsIntra)
@@ -1980,7 +1980,7 @@ void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uin
         result.scanType = SCAN_DIAG;
 
     result.scan     = g_scanOrder[result.scanType][log2TrSize - 2];
-    result.scanCG   = g_scanOrderCG[result.scanType][result.log2TrSizeCG];
+    result.scanCG   = g_scanOrderCG[result.scanType][log2TrSizeCG];
 
     if (log2TrSize == 2)
         result.firstSignificanceMapContext = 0;
