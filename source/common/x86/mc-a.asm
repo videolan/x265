@@ -4419,6 +4419,37 @@ cglobal pixel_avg_64x64, 6,6,4
     call pixel_avg_16x64_8bit
     call pixel_avg_16x64_8bit
     RET
+
+cglobal pixel_avg_48x64, 6,7,4
+   mov          r6d, 4
+.loop:
+%rep 8
+    movu        m0, [r2]
+    movu        xm2, [r2 + mmsize]
+    movu        m1, [r4]
+    movu        xm3, [r4 + mmsize]
+    pavgb       m0, m1
+    pavgb       xm2, xm3
+    movu        [r0], m0
+    movu        [r0 + mmsize], xm2
+
+    movu        m0, [r2 + r3]
+    movu        xm2, [r2 + r3 + mmsize]
+    movu        m1, [r4 + r5]
+    movu        xm3, [r4 + r5 + mmsize]
+    pavgb       m0, m1
+    pavgb       xm2, xm3
+    movu        [r0 + r1], m0
+    movu        [r0 + r1 + mmsize], xm2
+
+    lea         r2, [r2 + r3 * 2]
+    lea         r4, [r4 + r5 * 2]
+    lea         r0, [r0 + r1 * 2]
+%endrep
+
+    dec         r6d
+    jnz         .loop
+    RET
 %endif
 
 ;=============================================================================
