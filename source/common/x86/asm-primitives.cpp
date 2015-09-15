@@ -3285,6 +3285,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu);
         p.pu[LUMA_4x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_4x4>;
 
+        p.pu[LUMA_16x4].convert_p2s = PFX(filterPixelToShort_16x4_avx2);
+        p.pu[LUMA_16x8].convert_p2s = PFX(filterPixelToShort_16x8_avx2);
+        p.pu[LUMA_16x12].convert_p2s = PFX(filterPixelToShort_16x12_avx2);
+        p.pu[LUMA_16x16].convert_p2s = PFX(filterPixelToShort_16x16_avx2);
+        p.pu[LUMA_16x32].convert_p2s = PFX(filterPixelToShort_16x32_avx2);
+        p.pu[LUMA_16x64].convert_p2s = PFX(filterPixelToShort_16x64_avx2);
         p.pu[LUMA_32x8].convert_p2s = PFX(filterPixelToShort_32x8_avx2);
         p.pu[LUMA_32x16].convert_p2s = PFX(filterPixelToShort_32x16_avx2);
         p.pu[LUMA_32x24].convert_p2s = PFX(filterPixelToShort_32x24_avx2);
