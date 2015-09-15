@@ -12816,6 +12816,70 @@ cglobal filterPixelToShort_16x16, 3, 6, 2
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal filterPixelToShort_16x24, 3, 7, 2
+    mov             r3d, r3m
+    add             r3d, r3d
+    lea             r4, [r1 * 3]
+    lea             r5, [r3 * 3]
+    mov             r6d, 3
+
+    ; load constant
+    vbroadcasti128  m1, [pw_2000]
+.loop:
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    dec             r6d
+    jnz             .loop
+    RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
 %macro P2S_H_16xN_avx2 1
 INIT_YMM avx2
 cglobal filterPixelToShort_16x%1, 3, 7, 2

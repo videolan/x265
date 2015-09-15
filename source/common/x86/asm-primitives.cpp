@@ -3303,11 +3303,21 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_48x64].convert_p2s = PFX(filterPixelToShort_48x64_avx2);
         p.pu[LUMA_24x32].convert_p2s = PFX(filterPixelToShort_24x32_avx2);
 
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].p2s = PFX(filterPixelToShort_16x4_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].p2s = PFX(filterPixelToShort_16x8_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].p2s = PFX(filterPixelToShort_16x12_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].p2s = PFX(filterPixelToShort_16x16_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].p2s = PFX(filterPixelToShort_16x32_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].p2s = PFX(filterPixelToShort_24x32_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].p2s = PFX(filterPixelToShort_32x8_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].p2s = PFX(filterPixelToShort_32x16_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].p2s = PFX(filterPixelToShort_32x24_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].p2s = PFX(filterPixelToShort_32x32_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].p2s = PFX(filterPixelToShort_16x8_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].p2s = PFX(filterPixelToShort_16x16_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].p2s = PFX(filterPixelToShort_16x24_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].p2s = PFX(filterPixelToShort_16x32_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].p2s = PFX(filterPixelToShort_16x64_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].p2s = PFX(filterPixelToShort_24x64_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].p2s = PFX(filterPixelToShort_32x16_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].p2s = PFX(filterPixelToShort_32x32_avx2);
