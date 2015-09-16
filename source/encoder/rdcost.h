@@ -125,11 +125,11 @@ public:
         return sadCost + ((bits * m_lambda + 128) >> 8);
     }
 
-    inline uint32_t scaleChromaDist(uint32_t plane, uint32_t dist) const
+    inline sse_ret_t scaleChromaDist(uint32_t plane, sse_ret_t dist) const
     {
         X265_CHECK(dist <= (UINT64_MAX - 128) / m_chromaDistWeight[plane - 1],
                    "scaleChromaDist wrap detected dist: %u, lambda: %u\n", dist, m_chromaDistWeight[plane - 1]);
-        return (uint32_t)((dist * (uint64_t)m_chromaDistWeight[plane - 1] + 128) >> 8);
+        return (sse_ret_t)((dist * (uint64_t)m_chromaDistWeight[plane - 1] + 128) >> 8);
     }
 
     inline uint32_t getCost(uint32_t bits) const
