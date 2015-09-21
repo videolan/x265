@@ -85,7 +85,7 @@ public:
     int           m_numWorkers;
     void*         m_numaMask; // node mask in linux, cpu mask in windows
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
-    DWORD         m_winCpuMask;
+    DWORD_PTR     m_winCpuMask;
 #endif
     bool          m_isActive;
 
@@ -95,7 +95,7 @@ public:
     ThreadPool();
     ~ThreadPool();
 
-    bool create(int numThreads, int maxProviders, uint32_t nodeMask);
+    bool create(int numThreads, int maxProviders, uint64_t nodeMask);
     bool start();
     void stopWorkers();
     void setCurrentThreadAffinity();
