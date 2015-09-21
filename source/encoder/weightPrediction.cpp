@@ -4,6 +4,7 @@
  * Author: Shazeb Nawaz Khan <shazeb@multicorewareinc.com>
  *         Steve Borho <steve@borho.org>
  *         Kavitha Sampas <kavitha@multicorewareinc.com>
+ *         Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

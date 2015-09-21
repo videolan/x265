@@ -2,11 +2,13 @@
 ;* ssd-a.asm: x86 ssd functions
 ;*****************************************************************************
 ;* Copyright (C) 2003-2013 x264 project
+;* Copyright (C) 2013-2015 x265 project
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Fiona Glaser <fiona@x264.com>
 ;*          Laurent Aimar <fenrir@via.ecp.fr>
 ;*          Alex Izvorski <aizvorksi@gmail.com>
+;*          Min Chen <chenm003@163.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
