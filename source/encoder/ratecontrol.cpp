@@ -182,6 +182,7 @@ RateControl::RateControl(x265_param& p)
     m_finalFrameCount = 0;
     m_numEntries = 0;
     m_isSceneTransition = false;
+    m_lastPredictorReset = 0;
     if (m_param->rc.rateControlMode == X265_RC_CRF)
     {
         m_param->rc.qp = (int)m_param->rc.rfConstant;
@@ -370,20 +371,8 @@ bool RateControl::init(const SPS& sps)
     m_accumPNorm = .01;
     m_accumPQp = (m_param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN) * m_accumPNorm;
 
-    /* Frame Predictors and Row predictors used in vbv */
-    for (int i = 0; i < 4; i++)
-    {
-        m_pred[i].coeff = 1.0;
-        m_pred[i].count = 1.0;
-        m_pred[i].decay = 0.5;
-        m_pred[i].offset = 0.0;
-    }
-    m_pred[0].coeff = m_pred[3].coeff = 0.75;
-    if (m_param->rc.qCompress >= 0.8) // when tuned for grain 
-    {
-        m_pred[1].coeff = 0.75;
-        m_pred[0].coeff = m_pred[3].coeff = 0.50;
-    }
+    /* Frame Predictors used in vbv */
+    initFramePredictors();
     if (!m_statFileOut && (m_param->rc.bStatWrite || m_param->rc.bStatRead))
     {
         /* If the user hasn't defined the stat filename, use the default value */
@@ -932,6 +921,24 @@ int RateControl::rateControlSliceType(int frameNum)
         return X265_TYPE_AUTO;
 }
 
+void RateControl::initFramePredictors()
+{
+    /* Frame Predictors used in vbv */
+    for (int i = 0; i < 4; i++)
+    {
+        m_pred[i].coeff = 1.0;
+        m_pred[i].count = 1.0;
+        m_pred[i].decay = 0.5;
+        m_pred[i].offset = 0.0;
+    }
+    m_pred[0].coeff = m_pred[3].coeff = 0.75;
+    if (m_param->rc.qCompress >= 0.8) // when tuned for grain 
+    {
+        m_pred[1].coeff = 0.75;
+        m_pred[0].coeff = m_pred[3].coeff = 0.50;
+    }
+}
+
 int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encoder* enc)
 {
     int orderValue = m_startEndOrder.get();
@@ -961,22 +968,20 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         copyRceData(rce, &m_rce2Pass[rce->poc]);
     }
     rce->isActive = true;
-    bool isframeAfterKeyframe = m_sliceType != I_SLICE && m_curSlice->m_refPicList[0][0]->m_encData->m_slice->m_sliceType == I_SLICE;
+    bool isRefFrameScenecut = m_sliceType!= I_SLICE && m_curSlice->m_refPicList[0][0]->m_lowres.bScenecut == 1;
     if (curFrame->m_lowres.bScenecut)
     {
         m_isSceneTransition = true;
-        /* Frame Predictors and Row predictors used in vbv */
-        for (int i = 0; i < 4; i++)
-        {
-            m_pred[i].coeff = 1.0;
-            m_pred[i].count = 1.0;
-            m_pred[i].decay = 0.5;
-            m_pred[i].offset = 0.0;
-        }
-        m_pred[0].coeff = m_pred[3].coeff = 0.75;
+        m_lastPredictorReset = rce->encodeOrder;
+        initFramePredictors();
     }
-    else if (m_sliceType != B_SLICE && !isframeAfterKeyframe)
+    else if (m_sliceType != B_SLICE && !isRefFrameScenecut)
         m_isSceneTransition = false;
+
+    if (rce->encodeOrder < m_lastPredictorReset + m_param->frameNumThreads)
+    {
+        rce->rowPreds[0][0].count = 0;
+    }
 
     rce->bLastMiniGopBFrame = curFrame->m_lowres.bLastMiniGopBFrame;
     rce->bufferRate = m_bufferRate;
@@ -2151,7 +2156,7 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 {
     int predType = rce->sliceType;
     predType = rce->sliceType == B_SLICE && rce->keptAsRef ? 3 : predType;
-    if (rce->lastSatd >= m_ncu)
+    if (rce->lastSatd >= m_ncu && rce->encodeOrder >= m_lastPredictorReset)
         updatePredictor(&m_pred[predType], x265_qp2qScale(rce->qpaRc), (double)rce->lastSatd, (double)bits);
     if (!m_isVbv)
         return;
