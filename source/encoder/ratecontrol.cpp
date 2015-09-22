@@ -1924,6 +1924,7 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
             else if (picType == P_SLICE)
             {
                 intraCostForPendingCus = curEncData.m_rowStat[row].intraSatdForVbv - curEncData.m_rowStat[row].diagIntraSatd;
+                intraCostForPendingCus >>= X265_DEPTH - 8;
                 /* Our QP is lower than the reference! */
                 double pred_intra = predictSize(rce->rowPred[1], qScale, intraCostForPendingCus);
                 /* Sum: better to overestimate than underestimate by using only one of the two predictors. */
@@ -1959,7 +1960,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
             uint64_t intraRowSatdCost = curEncData.m_rowStat[row].diagIntraSatd;
             if (row == 1)
                 intraRowSatdCost += curEncData.m_rowStat[0].diagIntraSatd;
-
+            intraRowSatdCost >>= X265_DEPTH - 8;
             updatePredictor(rce->rowPred[1], qScaleVbv, (double)intraRowSatdCost, encodedBits);
         }
     }
