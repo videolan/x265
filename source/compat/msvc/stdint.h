@@ -8,6 +8,7 @@
 #if !defined(UINT64_MAX)
 #include <limits.h>
 #define UINT64_MAX _UI64_MAX
+#define INT16_MAX  _I16_MAX
 #endif
 
 /* a minimal set of C99 types for use with MSVC (VC9) */
