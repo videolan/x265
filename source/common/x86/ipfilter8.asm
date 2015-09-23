@@ -12541,6 +12541,459 @@ cglobal filterPixelToShort_16x%1, 3, 7, 6
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal filterPixelToShort_16x4, 3, 4, 2
+    mov             r3d, r3m
+    add             r3d, r3d
+
+    ; load constant
+    vbroadcasti128  m1, [pw_2000]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    lea             r1, [r1 * 3]
+    lea             r3, [r3 * 3]
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+    RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal filterPixelToShort_16x8, 3, 6, 2
+    mov             r3d, r3m
+    add             r3d, r3d
+    lea             r4, [r1 * 3]
+    lea             r5, [r3 * 3]
+
+    ; load constant
+    vbroadcasti128  m1, [pw_2000]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+    RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal filterPixelToShort_16x12, 3, 6, 2
+    mov             r3d, r3m
+    add             r3d, r3d
+    lea             r4, [r1 * 3]
+    lea             r5, [r3 * 3]
+
+    ; load constant
+    vbroadcasti128  m1, [pw_2000]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+    RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal filterPixelToShort_16x16, 3, 6, 2
+    mov             r3d, r3m
+    add             r3d, r3d
+    lea             r4, [r1 * 3]
+    lea             r5, [r3 * 3]
+
+    ; load constant
+    vbroadcasti128  m1, [pw_2000]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+    RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal filterPixelToShort_16x24, 3, 7, 2
+    mov             r3d, r3m
+    add             r3d, r3d
+    lea             r4, [r1 * 3]
+    lea             r5, [r3 * 3]
+    mov             r6d, 3
+
+    ; load constant
+    vbroadcasti128  m1, [pw_2000]
+.loop:
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    dec             r6d
+    jnz             .loop
+    RET
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+%macro P2S_H_16xN_avx2 1
+INIT_YMM avx2
+cglobal filterPixelToShort_16x%1, 3, 7, 2
+    mov             r3d, r3m
+    add             r3d, r3d
+    lea             r4, [r1 * 3]
+    lea             r5, [r3 * 3]
+    mov             r6d, %1/16
+
+    ; load constant
+    vbroadcasti128  m1, [pw_2000]
+.loop:
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxbw        m0, [r0]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2], m0
+
+    pmovzxbw        m0, [r0 + r1]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3], m0
+
+    pmovzxbw        m0, [r0 + r1 * 2]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r3 * 2], m0
+
+    pmovzxbw        m0, [r0 + r4]
+    psllw           m0, 6
+    psubw           m0, m1
+    movu            [r2 + r5], m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    dec             r6d
+    jnz             .loop
+    RET
+%endmacro
+P2S_H_16xN_avx2 32
+P2S_H_16xN_avx2 64
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
 %macro P2S_H_32xN 1
 INIT_XMM ssse3
 cglobal filterPixelToShort_32x%1, 3, 7, 6
@@ -25016,67 +25469,57 @@ cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
 ; void interp_4tap_horiz_ps_32x32(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-----------------------------------------------------------------------------------------------------------------------------;
 INIT_YMM avx2
-cglobal interp_4tap_horiz_ps_32x32, 4,7,6
+cglobal interp_4tap_horiz_ps_32x32, 4,6,8
     mov             r4d, r4m
-    mov             r5d, r5m
     add             r3d, r3d
+    dec             r0
 
-%ifdef PIC
-    lea               r6,           [tab_ChromaCoeff]
-    vpbroadcastd      m0,           [r6 + r4 * 4]
-%else
-    vpbroadcastd      m0,           [tab_ChromaCoeff + r4 * 4]
-%endif
+    ; check isRowExt
+    cmp             r5m, byte 0
 
-    vbroadcasti128     m2,           [pw_1]
-    vbroadcasti128     m5,           [pw_2000]
-    mova               m1,           [tab_Tm]
+    lea             r5, [tab_ChromaCoeff]
+    vpbroadcastw    m0, [r5 + r4 * 4 + 0]
+    vpbroadcastw    m1, [r5 + r4 * 4 + 2]
+    mova            m7, [pw_2000]
 
     ; register map
-    ; m0 - interpolate coeff
-    ; m1 - shuffle order table
-    ; m2 - constant word 1
-    mov                r6d,         32
-    dec                r0
-    test                r5d,      r5d
-    je                 .loop
-    sub                r0 ,         r1
-    add                r6d ,        3
+    ; m0 - interpolate coeff Low
+    ; m1 - interpolate coeff High
+    ; m7 - constant pw_2000
+    mov             r4d, 32
+    je             .loop
+    sub             r0, r1
+    add             r4d, 3
 
 .loop
     ; Row 0
-    vbroadcasti128    m3,           [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb            m3,           m1
-    pmaddubsw         m3,           m0
-    pmaddwd           m3,           m2
-    vbroadcasti128    m4,           [r0 + 8]                      ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb            m4,           m1
-    pmaddubsw         m4,           m0
-    pmaddwd           m4,           m2
+    movu            m2, [r0]
+    movu            m3, [r0 + 1]
+    punpckhbw       m4, m2, m3
+    punpcklbw       m2, m3
+    pmaddubsw       m4, m0
+    pmaddubsw       m2, m0
 
-    packssdw          m3,           m4
-    psubw             m3,           m5
-    vpermq            m3,           m3,          11011000b
-    movu             [r2],         m3
+    movu            m3, [r0 + 2]
+    movu            m5, [r0 + 3]
+    punpckhbw       m6, m3, m5
+    punpcklbw       m3, m5
+    pmaddubsw       m6, m1
+    pmaddubsw       m3, m1
 
-    vbroadcasti128    m3,           [r0 + 16]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb            m3,           m1
-    pmaddubsw         m3,           m0
-    pmaddwd           m3,           m2
-    vbroadcasti128    m4,           [r0 + 24]                      ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
-    pshufb            m4,           m1
-    pmaddubsw         m4,           m0
-    pmaddwd           m4,           m2
+    paddw           m4, m6
+    paddw           m2, m3
+    psubw           m4, m7
+    psubw           m2, m7
+    vperm2i128      m3, m2, m4, 0x20
+    vperm2i128      m5, m2, m4, 0x31
+    movu            [r2], m3
+    movu            [r2 + mmsize], m5
 
-    packssdw          m3,           m4
-    psubw             m3,           m5
-    vpermq            m3,              m3,          11011000b
-    movu             [r2 + 32],         m3
-
-    add                r2,           r3
-    add                r0,           r1
-    dec               r6d
-    jnz                .loop
+    add             r2, r3
+    add             r0, r1
+    dec             r4d
+    jnz            .loop
     RET
 
 ;-----------------------------------------------------------------------------------------------------------------------------

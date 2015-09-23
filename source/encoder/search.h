@@ -2,6 +2,7 @@
 * Copyright (C) 2013 x265 project
 *
 * Authors: Steve Borho <steve@borho.org>
+*          Min Chen <chenm003@163.com>
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -109,6 +110,7 @@ struct Mode
     uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
     uint32_t   sa8dBits;   // signal bits used in sa8dCost calculation
     uint32_t   psyEnergy;  // sum of partition psycho-visual energy difference
+    sse_ret_t  resEnergy;  // sum of partition residual energy after motion prediction
     sse_ret_t  lumaDistortion;
     sse_ret_t  chromaDistortion;
     sse_ret_t  distortion; // sum of partition SSE distortion
@@ -122,6 +124,7 @@ struct Mode
         sa8dCost = 0;
         sa8dBits = 0;
         psyEnergy = 0;
+        resEnergy = 0;
         lumaDistortion = 0;
         chromaDistortion = 0;
         distortion = 0;
@@ -138,10 +141,12 @@ struct Mode
         sa8dBits = MAX_UINT / 2;
         psyEnergy = MAX_UINT / 2;
 #if X265_DEPTH <= 10
+        resEnergy = MAX_UINT / 2;
         lumaDistortion = MAX_UINT / 2;
         chromaDistortion = MAX_UINT / 2;
         distortion = MAX_UINT / 2;
 #else
+        resEnergy = UINT64_MAX / 2;
         lumaDistortion = UINT64_MAX / 2;
         chromaDistortion = UINT64_MAX / 2;
         distortion = UINT64_MAX / 2;
@@ -158,6 +163,7 @@ struct Mode
             sa8dCost >= UINT64_MAX / 2 ||
             sa8dBits >= MAX_UINT / 2 ||
             psyEnergy >= MAX_UINT / 2 ||
+            resEnergy >= MAX_UINT / 2 ||
             lumaDistortion >= MAX_UINT / 2 ||
             chromaDistortion >= MAX_UINT / 2 ||
             distortion >= MAX_UINT / 2 ||
@@ -169,6 +175,7 @@ struct Mode
                  sa8dCost >= UINT64_MAX / 2 ||
                  sa8dBits >= MAX_UINT / 2 ||
                  psyEnergy >= MAX_UINT / 2 ||
+                 resEnergy >= UINT64_MAX / 2 ||
                  lumaDistortion >= UINT64_MAX / 2 ||
                  chromaDistortion >= UINT64_MAX / 2 ||
                  distortion >= UINT64_MAX / 2 ||
@@ -186,6 +193,7 @@ struct Mode
         sa8dCost += subMode.sa8dCost;
         sa8dBits += subMode.sa8dBits;
         psyEnergy += subMode.psyEnergy;
+        resEnergy += subMode.resEnergy;
         lumaDistortion += subMode.lumaDistortion;
         chromaDistortion += subMode.chromaDistortion;
         distortion += subMode.distortion;
@@ -369,6 +377,11 @@ public:
         const PredictionUnit& pu;
         int           puIdx;
 
+        struct {
+            int ref[2][MAX_NUM_REF];
+            int refCnt[2];
+        } m_jobs;
+
         PME(Search& s, Mode& m, const CUGeom& g, const PredictionUnit& u, int p) : master(s), mode(m), cuGeom(g), pu(u), puIdx(p) {}
 
         void processTasks(int workerThreadId);
@@ -405,7 +418,7 @@ protected:
     {
         uint64_t rdcost;
         uint32_t bits;
-        uint32_t distortion;
+        sse_ret_t distortion;
         uint32_t energy;
         Cost() { rdcost = 0; bits = 0; distortion = 0; energy = 0; }
     };

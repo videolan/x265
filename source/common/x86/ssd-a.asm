@@ -2,11 +2,13 @@
 ;* ssd-a.asm: x86 ssd functions
 ;*****************************************************************************
 ;* Copyright (C) 2003-2013 x264 project
+;* Copyright (C) 2013-2015 x265 project
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Fiona Glaser <fiona@x264.com>
 ;*          Laurent Aimar <fenrir@via.ecp.fr>
 ;*          Alex Izvorski <aizvorksi@gmail.com>
+;*          Min Chen <chenm003@163.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -105,11 +107,79 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
     dec    r4d
     jg .loop
 %endif
+
+%if BIT_DEPTH == 12 && mmsize == 16
+    movu        m5, m0
+    pxor        m6, m6
+    punpckldq   m0, m6
+    punpckhdq   m5, m6
+    paddq       m0, m5
+    movhlps     m5, m0
+    paddq       m0, m5
+    movq        r6, xm0
+%else 
     HADDD   m0, m5
-    movd   eax, xm0
+    movd    eax,xm0
+%endif
 %ifidn movu,movq ; detect MMX
     EMMS
 %endif
+    RET
+%endmacro
+
+; Function to find ssd for 32x16 block, sse2, 12 bit depth
+; Defined sepeartely to be called from SSD_ONE_32 macro
+INIT_XMM sse2
+cglobal ssd_ss_32x16
+    pxor        m8, m8
+    mov         r4d, 16
+.loop:
+    movu        m0, [r0]
+    movu        m1, [r0+mmsize]
+    movu        m2, [r0+2*mmsize]
+    movu        m3, [r0+3*mmsize]
+    movu        m4, [r2]
+    movu        m5, [r2+mmsize]
+    movu        m6, [r2+2*mmsize]
+    movu        m7, [r2+3*mmsize]
+    psubw       m0, m4
+    psubw       m1, m5
+    psubw       m2, m6
+    psubw       m3, m7
+    add         r0, r1
+    add         r2, r3
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    pmaddwd     m2, m2
+    pmaddwd     m3, m3
+    paddd       m2, m3
+    paddd       m0, m1
+    paddd       m0, m2
+    paddd       m8, m0
+    dec         r4d
+    jnz         .loop
+
+    mova        m4, m8
+    pxor        m5, m5
+    punpckldq   m8, m5
+    punpckhdq   m4, m5
+    paddq       m4, m8
+    movhlps     m5, m4
+    paddq       m4, m5
+    paddq       m9, m4
+    ret
+
+%macro SSD_ONE_32 0
+cglobal pixel_ssd_ss_32x64, 4,7,10
+    add         r1d, r1d
+    add         r3d, r3d
+    pxor        m9, m9
+    xor         r4, r4
+    call        ssd_ss_32x16
+    call        ssd_ss_32x16
+    call        ssd_ss_32x16
+    call        ssd_ss_32x16
+    movq        rax, m9
     RET
 %endmacro
 
@@ -456,7 +526,13 @@ SSD_ONE    32,  8
 SSD_ONE    32, 16
 SSD_ONE    32, 24
 SSD_ONE    32, 32
-SSD_ONE    32, 64
+
+%if BIT_DEPTH <= 10
+    SSD_ONE    32, 64
+%else
+    SSD_ONE_32
+%endif
+
 SSD_TWO    48, 64
 SSD_TWO    64, 16
 SSD_TWO    64, 32

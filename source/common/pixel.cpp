@@ -973,6 +973,31 @@ static void estimateCUPropagateCost(int* dst, const uint16_t* propagateIn, const
         dst[i] = (int)(propagateAmount * propagateNum / propagateDenom + 0.5);
     }
 }
+
+static pixel planeClipAndMax_c(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, const pixel minPix, const pixel maxPix)
+{
+    pixel maxLumaLevel = 0;
+    uint64_t sumLuma = 0;
+
+    for (int r = 0; r < height; r++)
+    {
+        for (int c = 0; c < width; c++)
+        {
+            /* Clip luma of source picture to max and min values before extending edges of picYuv */
+            src[c] = x265_clip3((pixel)minPix, (pixel)maxPix, src[c]);
+
+            /* Determine maximum and average luma level in a picture */
+            maxLumaLevel = X265_MAX(src[c], maxLumaLevel);
+            sumLuma += src[c];
+        }
+
+        src += stride;
+    }
+
+    *outsum = sumLuma;
+    return maxLumaLevel;
+}
+
 }  // end anonymous namespace
 
 namespace X265_NS {
@@ -1258,6 +1283,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.planecopy_cp = planecopy_cp_c;
     p.planecopy_sp = planecopy_sp_c;
     p.planecopy_sp_shl = planecopy_sp_shl_c;
+    p.planeClipAndMax = planeClipAndMax_c;
     p.propagateCost = estimateCUPropagateCost;
 }
 }

@@ -130,6 +130,8 @@ bool IntraPredHarness::check_angular_primitive(const intra_pred_t ref[], const i
                 if (memcmp(pixel_out_vec + k * FENC_STRIDE, pixel_out_c + k * FENC_STRIDE, width * sizeof(pixel)))
                 {
                     printf("ang_%dx%d, Mode = %d, Row = %d failed !!\n", width, width, pmode, k);
+                    ref[pmode](pixel_out_c, stride, pixel_buff + j, pmode, bFilter);
+                    opt[pmode](pixel_out_vec, stride, pixel_buff + j, pmode, bFilter);
                     return false;
                 }
             }

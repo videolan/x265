@@ -2,10 +2,12 @@
  * pixel.h: x86 pixel metrics
  *****************************************************************************
  * Copyright (C) 2003-2013 x264 project
+ * Copyright (C) 2013-2015 x265 project
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
  *          Fiona Glaser <fiona@x264.com>
+;*          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +36,7 @@ void PFX(upShift_16_sse2)(const uint16_t* src, intptr_t srcStride, pixel* dst, i
 void PFX(upShift_16_avx2)(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 void PFX(upShift_8_sse4)(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 void PFX(upShift_8_avx2)(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
+pixel PFX(planeClipAndMax_avx2)(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, const pixel minPix, const pixel maxPix);
 
 #define DECL_PIXELS(cpu) \
     FUNCDEF_PU(uint32_t, pixel_ssd, cpu, const pixel*, intptr_t, const pixel*, intptr_t); \
