@@ -228,7 +228,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
     enum { MAX_NODE_NUM = 127 };
     int cpusPerNode[MAX_NODE_NUM + 1];
     int threadsPerPool[MAX_NODE_NUM + 2];
-    uint64_t nodeMaskPerPool[MAX_NODE_NUM +2];
+    uint64_t nodeMaskPerPool[MAX_NODE_NUM + 2];
 
     memset(cpusPerNode, 0, sizeof(cpusPerNode));
     memset(threadsPerPool, 0, sizeof(threadsPerPool));
