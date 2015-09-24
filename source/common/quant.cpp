@@ -916,13 +916,15 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                     sigCoefBits = estBitsSbac.significantBits[1][ctxSig];
                 }
 
+                const uint32_t unQuantLevel = (maxAbsLevel * (unquantScale[blkPos] << per) + unquantRound);
                 // NOTE: X265_MAX(maxAbsLevel - 1, 1) ==> (X>=2 -> X-1), (X<2 -> 1)  | (0 < X < 2 ==> X=1)
                 if (maxAbsLevel == 1)
                 {
                     uint32_t levelBits = (c1c2idx & 1) ? greaterOneBits[0] + IEP_RATE : ((1 + goRiceParam) << 15) + IEP_RATE;
                     X265_CHECK(levelBits == getICRateCost(1, 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Rate) + IEP_RATE, "levelBits mistake\n");
 
-                    int unquantAbsLevel = UNQUANT(1);
+                    int unquantAbsLevel = unQuantLevel >> unquantShift;
+                    X265_CHECK(UNQUANT(1) == unquantAbsLevel, "DQuant check failed\n");
                     int d = abs(signCoef) - unquantAbsLevel;
                     int64_t curCost = RDCOST(d, sigCoefBits + levelBits);
 
@@ -945,11 +947,15 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                     uint32_t levelBits0 = getICRateCost(maxAbsLevel,     maxAbsLevel     - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Rate) + IEP_RATE;
                     uint32_t levelBits1 = getICRateCost(maxAbsLevel - 1, maxAbsLevel - 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Rate) + IEP_RATE;
 
-                    int unquantAbsLevel0 = UNQUANT(maxAbsLevel);
+                    const uint32_t preDQuantLevelDiff = (unquantScale[blkPos] << per);
+
+                    const int unquantAbsLevel0 = unQuantLevel >> unquantShift;
+                    X265_CHECK(UNQUANT(maxAbsLevel) == (uint32_t)unquantAbsLevel0, "DQuant check failed\n");
                     int d0 = abs(signCoef) - unquantAbsLevel0;
                     int64_t curCost0 = RDCOST(d0, sigCoefBits + levelBits0);
 
-                    int unquantAbsLevel1 = UNQUANT(maxAbsLevel - 1);
+                    const int unquantAbsLevel1 = (unQuantLevel - preDQuantLevelDiff) >> unquantShift;
+                    X265_CHECK(UNQUANT(maxAbsLevel - 1) == (uint32_t)unquantAbsLevel1, "DQuant check failed\n");
                     int d1 = abs(signCoef) - unquantAbsLevel1;
                     int64_t curCost1 = RDCOST(d1, sigCoefBits + levelBits1);
 
@@ -1239,6 +1245,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
     {
         const int realLastScanPos = (bestLastIdx - 1) >> LOG2_SCAN_SET_SIZE;
         int lastCG = 1;
+
         for (int subSet = realLastScanPos; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
@@ -1274,23 +1281,30 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
 
                     for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                     {
-                        uint32_t blkPos = codeParams.scan[n + subPos];
-                        int signCoef    = m_resiDctCoeff[blkPos]; /* pre-quantization DCT coeff */
-                        int absLevel    = abs(dstCoeff[blkPos]);
+                        const uint32_t blkPos = codeParams.scan[n + subPos];
+                        const int signCoef    = m_resiDctCoeff[blkPos]; /* pre-quantization DCT coeff */
+                        const int absLevel    = abs(dstCoeff[blkPos]);
+                        // TODO: this is constant in non-scaling mode
+                        const int preDQuantLevelDiff = (unquantScale[blkPos] << per);
+                        const int unQuantLevel = (absLevel * (unquantScale[blkPos] << per) + unquantRound);
 
-                        int d = abs(signCoef) - UNQUANT(absLevel);
+                        int d = abs(signCoef) - (unQuantLevel >> unquantShift);
+                        X265_CHECK(UNQUANT(absLevel) == (unQuantLevel >> unquantShift), "dquant check failed\n");
+
                         const int64_t origDist = (((int64_t)d * d));
 
 #define DELTARDCOST(d0, d, deltabits) ((((int64_t)d * d - d0) << scaleBits) + ((lambda2 * (int64_t)(deltabits)) >> 8))
 
                         if (dstCoeff[blkPos])
                         {
-                            d = abs(signCoef) - UNQUANT(absLevel + 1);
+                            d = abs(signCoef) - ((unQuantLevel + preDQuantLevelDiff) >> unquantShift);
+                            X265_CHECK(UNQUANT(absLevel + 1) == ((unQuantLevel + preDQuantLevelDiff) >> unquantShift), "dquant check failed\n");
                             int64_t costUp = DELTARDCOST(origDist, d, rateIncUp[blkPos]);
 
                             /* if decrementing would make the coeff 0, we can include the
                              * significant coeff flag cost savings */
-                            d = abs(signCoef) - UNQUANT(absLevel - 1);
+                            d = abs(signCoef) - ((unQuantLevel - preDQuantLevelDiff) >> unquantShift);
+                            X265_CHECK(UNQUANT(absLevel - 1) == ((unQuantLevel - preDQuantLevelDiff) >> unquantShift), "dquant check failed\n");
                             int isOne = (abs(dstCoeff[blkPos]) == 1);
                             int downBits = rateIncDown[blkPos] - (isOne ? (IEP_RATE + sigRateDelta[blkPos]) : 0);
                             int64_t costDown = DELTARDCOST(origDist, d, downBits);
@@ -1312,7 +1326,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                         else
                         {
                             /* evaluate changing an uncoded coeff 0 to a coded coeff +/-1 */
-                            d = abs(signCoef) - UNQUANT(1);
+                            d = abs(signCoef) - ((preDQuantLevelDiff + unquantRound) >> unquantShift);
+                            X265_CHECK(UNQUANT(1) == ((preDQuantLevelDiff + unquantRound) >> unquantShift), "dquant check failed\n");
                             curCost = DELTARDCOST(origDist, d, rateIncUp[blkPos] + IEP_RATE + sigRateDelta[blkPos]);
                             curChange = 1;
                         }
