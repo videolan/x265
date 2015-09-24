@@ -113,7 +113,7 @@ public:
  * called. If it returns non-zero then some number of slave worker threads are
  * already in the process of calling your processTasks() function. The master
  * thread should participate and call processTasks() itself. When
- * waitForExit() returns, all bonded peer threads are quarunteed to have
+ * waitForExit() returns, all bonded peer threads are guaranteed to have
  * exitied processTasks(). Since the thread count is small, it uses explicit
  * locking instead of atomic counters and bitmasks */
 class BondedTaskGroup
