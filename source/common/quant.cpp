@@ -51,9 +51,8 @@ inline int fastMin(int x, int y)
     return y + ((x - y) & ((x - y) >> (sizeof(int) * CHAR_BIT - 1))); // min(x, y)
 }
 
-inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, const uint32_t absGoRice, const uint32_t maxVlc, uint32_t c1c2Idx)
+inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, const uint32_t absGoRice, const uint32_t maxVlc, const uint32_t c1c2Rate)
 {
-    X265_CHECK(c1c2Idx <= 3, "c1c2Idx check failure\n");
     X265_CHECK(absGoRice <= 4, "absGoRice check failure\n");
     if (!absLevel)
     {
@@ -95,12 +94,7 @@ inline int getICRate(uint32_t absLevel, int32_t diffLevel, const int* greaterOne
         uint32_t numBins = fastMin(prefLen + absGoRice, 8 /* g_goRicePrefixLen[absGoRice] + absGoRice */);
 
         rate += numBins << 15;
-
-        if (c1c2Idx & 1)
-            rate += greaterOneBits[1];
-
-        if (c1c2Idx == 3)
-            rate += levelAbsBits[1];
+        rate += c1c2Rate;
     }
     return rate;
 }
@@ -141,7 +135,7 @@ inline int getICRateLessVlc(uint32_t absLevel, int32_t diffLevel, const uint32_t
 }
 
 /* Calculates the cost for specific absolute transform level */
-inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, uint32_t absGoRice, uint32_t c1c2Idx)
+inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int* greaterOneBits, const int* levelAbsBits, uint32_t absGoRice, const uint32_t c1c2Rate)
 {
     X265_CHECK(absLevel, "absLevel should not be zero\n");
 
@@ -176,10 +170,7 @@ inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int* g
 
             rate = (COEF_REMAIN_BIN_REDUCTION + length + absGoRice + 1 + length) << 15;
         }
-        if (c1c2Idx & 1)
-            rate += greaterOneBits[1];
-        if (c1c2Idx == 3)
-            rate += levelAbsBits[1];
+        rate += c1c2Rate;
         return rate;
     }
 }
@@ -895,15 +886,17 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
             {
                 subFlagMask >>= 1;
 
-                const uint32_t c1c2Idx = ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)) + (((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1) * 2;
-                const uint32_t baseLevel = ((uint32_t)0xD9 >> (c1c2Idx * 2)) & 3;  // {1, 2, 1, 3}
+                const uint32_t c1c2idx = ((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)) + (((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1) * 2;
+                const uint32_t baseLevel = ((uint32_t)0xD9 >> (c1c2idx * 2)) & 3;  // {1, 2, 1, 3}
 
                 X265_CHECK(!!((int)c1Idx < C1FLAG_NUMBER) == (int)((c1Idx - 8) >> (sizeof(int) * CHAR_BIT - 1)), "scan validation 1\n");
                 X265_CHECK(!!(c2Idx == 0) == ((-(int)c2Idx) >> (sizeof(int) * CHAR_BIT - 1)) + 1, "scan validation 2\n");
                 X265_CHECK((int)baseLevel == ((c1Idx < C1FLAG_NUMBER) ? (2 + (c2Idx == 0)) : 1), "scan validation 3\n");
+                X265_CHECK(c1c2idx <= 3, "c1c2Idx check failure\n");
 
                 // coefficient level estimation
                 const int* levelAbsBits = estBitsSbac.levelAbsBits[ctxSet + c2];
+                const uint32_t c1c2Rate = ((c1c2idx & 1) ?  greaterOneBits[1] : 0) + ((c1c2idx == 3) ? levelAbsBits[1] : 0);
 
                 uint32_t level = 0;
                 uint32_t sigCoefBits = 0;
@@ -926,8 +919,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                 // NOTE: X265_MAX(maxAbsLevel - 1, 1) ==> (X>=2 -> X-1), (X<2 -> 1)  | (0 < X < 2 ==> X=1)
                 if (maxAbsLevel == 1)
                 {
-                    uint32_t levelBits = (c1c2Idx & 1) ? greaterOneBits[0] + IEP_RATE : ((1 + goRiceParam) << 15) + IEP_RATE;
-                    X265_CHECK(levelBits == getICRateCost(1, 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE, "levelBits mistake\n");
+                    uint32_t levelBits = (c1c2idx & 1) ? greaterOneBits[0] + IEP_RATE : ((1 + goRiceParam) << 15) + IEP_RATE;
+                    X265_CHECK(levelBits == getICRateCost(1, 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Rate) + IEP_RATE, "levelBits mistake\n");
 
                     int unquantAbsLevel = UNQUANT(1);
                     int d = abs(signCoef) - unquantAbsLevel;
@@ -949,8 +942,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                 }
                 else if (maxAbsLevel)
                 {
-                    uint32_t levelBits0 = getICRateCost(maxAbsLevel,     maxAbsLevel     - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
-                    uint32_t levelBits1 = getICRateCost(maxAbsLevel - 1, maxAbsLevel - 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Idx) + IEP_RATE;
+                    uint32_t levelBits0 = getICRateCost(maxAbsLevel,     maxAbsLevel     - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Rate) + IEP_RATE;
+                    uint32_t levelBits1 = getICRateCost(maxAbsLevel - 1, maxAbsLevel - 1 - baseLevel, greaterOneBits, levelAbsBits, goRiceParam, c1c2Rate) + IEP_RATE;
 
                     int unquantAbsLevel0 = UNQUANT(maxAbsLevel);
                     int d0 = abs(signCoef) - unquantAbsLevel0;
@@ -1021,9 +1014,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                     }
                     else
                     {
-                        rate1 = getICRate(level + 0, diff0 + 1, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Idx);
-                        rate2 = getICRate(level + 1, diff0 + 2, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Idx);
-                        rate0 = getICRate(level - 1, diff0 + 0, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Idx);
+                        rate1 = getICRate(level + 0, diff0 + 1, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Rate);
+                        rate2 = getICRate(level + 1, diff0 + 2, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Rate);
+                        rate0 = getICRate(level - 1, diff0 + 0, greaterOneBits, levelAbsBits, goRiceParam, maxVlc, c1c2Rate);
                     }
                     rateIncUp[blkPos] = rate2 - rate1;
                     rateIncDown[blkPos] = rate0 - rate1;
