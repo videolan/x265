@@ -703,7 +703,10 @@ static uint32_t nquant_c(const int16_t* coef, const int32_t* quantCoeff, int16_t
         if (level)
             ++numSig;
         level *= sign;
-        qCoef[blockpos] = (int16_t)x265_clip3(-32768, 32767, level);
+
+        // TODO: when we limit range to [-32767, 32767], we can get more performance with output change
+        //       But nquant is a little percent in rdoQuant, so I keep old dynamic range for compatible
+        qCoef[blockpos] = (int16_t)abs(x265_clip3(-32768, 32767, level));
     }
 
     return numSig;

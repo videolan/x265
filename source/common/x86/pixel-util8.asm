@@ -792,6 +792,7 @@ cglobal nquant, 3,5,8
     pshufd      m6, m6, 0       ; m6 = add
     mov         r3d, r4d        ; r3 = numCoeff
     shr         r4d, 3
+    pxor        m4, m4
 
 .loop:
     pmovsxwd    m0, [r0]        ; m0 = level
@@ -810,13 +811,13 @@ cglobal nquant, 3,5,8
     psignd      m3, m1
 
     packssdw    m2, m3
+    pabsw       m2, m2
 
     movu        [r2], m2
     add         r0, 16
     add         r1, 32
     add         r2, 16
 
-    pxor        m4, m4
     pcmpeqw     m2, m4
     psubw       m7, m2
 
@@ -862,9 +863,11 @@ cglobal nquant, 3,5,7
     psignd      m2, m0
 
     packssdw    m1, m2
-    vpermq      m2, m1, q3120
+    pabsw       m1, m1
 
+    vpermq      m2, m1, q3120
     movu        [r2], m2
+
     add         r0, mmsize
     add         r1, mmsize * 2
     add         r2, mmsize
