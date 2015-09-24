@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1787,6 +1788,11 @@ bool PixelHarness::check_costC1C2Flag(costC1C2Flag_t ref, costC1C2Flag_t opt)
                 absCoeff[numNonZero] = (uint16_t)value;
                 numNonZero++;
             }
+        }
+        if (numNonZero == 0)
+        {
+            numNonZero = 1;
+            absCoeff[0] = 1;
         }
 
         int ref_sum = ref(absCoeff, (intptr_t)numNonZero, ref_baseCtx, (intptr_t)rand_offset);
