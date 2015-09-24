@@ -585,7 +585,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 #define UNQUANT(lvl)    (((lvl) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift)
 #define SIGCOST(bits)   ((lambda2 * (bits)) >> 8)
 #define RDCOST(d, bits) ((((int64_t)d * d) << scaleBits) + SIGCOST(bits))
-#define PSYVALUE(rec)   ((psyScale * (rec)) >> (2 * transformShift + 1))
+#define PSYVALUE(rec)   ((psyScale * (rec)) >> X265_MAX(0, (2 * transformShift + 1)))
 
     int64_t costCoeff[32 * 32];   /* d*d + lambda * bits */
     int64_t costUncoded[32 * 32]; /* d*d + lambda * 0    */
