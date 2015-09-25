@@ -2,6 +2,7 @@
  * Copyright (C) 2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -184,6 +185,8 @@ inline uint32_t getICRateCost(uint32_t absLevel, int32_t diffLevel, const int* g
 }
 
 }
+
+Quant::rdoQuant_t Quant::rdoQuant_func[NUM_CU_DEPTH] = {&Quant::rdoQuant<2>, &Quant::rdoQuant<3>, &Quant::rdoQuant<4>, &Quant::rdoQuant<5>};
 
 Quant::Quant()
 {
@@ -444,18 +447,18 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
             primitives.cu[sizeIdx].dct(m_fencShortBuf, m_fencDctCoeff, trSize);
         }
 
-        if (m_nr)
+        if (m_nr && m_nr->offset)
         {
             /* denoise is not applied to intra residual, so DST can be ignored */
             int cat = sizeIdx + 4 * !isLuma + 8 * !isIntra;
             int numCoeff = 1 << (log2TrSize * 2);
-            primitives.denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offsetDenoise[cat], numCoeff);
+            primitives.denoiseDct(m_resiDctCoeff, m_nr->residualSum[cat], m_nr->offset[cat], numCoeff);
             m_nr->count[cat]++;
         }
     }
 
     if (m_rdoqLevel)
-        return rdoQuant(cu, coeff, log2TrSize, ttype, absPartIdx, usePsy);
+        return (this->*rdoQuant_func[log2TrSize - 2])(cu, coeff, ttype, absPartIdx, usePsy);
     else
     {
         int deltaU[32 * 32];
@@ -550,9 +553,10 @@ void Quant::invtransformNxN(const CUData& cu, int16_t* residual, uint32_t resiSt
 
 /* Rate distortion optimized quantization for entropy coding engines using
  * probability models like CABAC */
-uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx, bool usePsy)
+template<uint32_t log2TrSize>
+uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, uint32_t absPartIdx, bool usePsy)
 {
-    int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
+    const int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
     int scalingListType = (cu.isIntra(absPartIdx) ? 0 : 3) + ttype;
     const uint32_t usePsyMask = usePsy ? -1 : 0;
 
@@ -564,13 +568,13 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     int add = (1 << (qbits - 1));
     const int32_t* qCoef = m_scalingList->m_quantCoef[log2TrSize - 2][scalingListType][rem];
 
-    int numCoeff = 1 << (log2TrSize * 2);
+    const int numCoeff = 1 << (log2TrSize * 2);
     uint32_t numSig = primitives.nquant(m_resiDctCoeff, qCoef, dstCoeff, qbits, add, numCoeff);
     X265_CHECK((int)numSig == primitives.cu[log2TrSize - 2].count_nonzero(dstCoeff), "numSig differ\n");
     if (!numSig)
         return 0;
 
-    uint32_t trSize = 1 << log2TrSize;
+    const uint32_t trSize = 1 << log2TrSize;
     int64_t lambda2 = m_qpParam[ttype].lambda2;
     const int64_t psyScale = ((int64_t)m_psyRdoqScale * m_qpParam[ttype].lambda);
 
@@ -580,20 +584,20 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     const int32_t* unquantScale = m_scalingList->m_dequantCoef[log2TrSize - 2][scalingListType][rem];
     int unquantShift = QUANT_IQUANT_SHIFT - QUANT_SHIFT - transformShift + (m_scalingList->m_bEnabled ? 4 : 0);
     int unquantRound = (unquantShift > per) ? 1 << (unquantShift - per - 1) : 0;
-    int scaleBits = SCALE_BITS - 2 * transformShift;
+    const int scaleBits = SCALE_BITS - 2 * transformShift;
 
 #define UNQUANT(lvl)    (((lvl) * (unquantScale[blkPos] << per) + unquantRound) >> unquantShift)
 #define SIGCOST(bits)   ((lambda2 * (bits)) >> 8)
 #define RDCOST(d, bits) ((((int64_t)d * d) << scaleBits) + SIGCOST(bits))
 #define PSYVALUE(rec)   ((psyScale * (rec)) >> X265_MAX(0, (2 * transformShift + 1)))
 
-    int64_t costCoeff[32 * 32];   /* d*d + lambda * bits */
-    int64_t costUncoded[32 * 32]; /* d*d + lambda * 0    */
-    int64_t costSig[32 * 32];     /* lambda * bits       */
+    int64_t costCoeff[trSize * trSize];   /* d*d + lambda * bits */
+    int64_t costUncoded[trSize * trSize]; /* d*d + lambda * 0    */
+    int64_t costSig[trSize * trSize];     /* lambda * bits       */
 
-    int rateIncUp[32 * 32];      /* signal overhead of increasing level */
-    int rateIncDown[32 * 32];    /* signal overhead of decreasing level */
-    int sigRateDelta[32 * 32];   /* signal difference between zero and non-zero */
+    int rateIncUp[trSize * trSize];      /* signal overhead of increasing level */
+    int rateIncDown[trSize * trSize];    /* signal overhead of decreasing level */
+    int sigRateDelta[trSize * trSize];   /* signal difference between zero and non-zero */
 
     int64_t costCoeffGroupSig[MLS_GRP_NUM]; /* lambda * bits of group coding cost */
     uint64_t sigCoeffGroupFlag64 = 0;
@@ -611,7 +615,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
     TUEntropyCodingParameters codeParams;
     cu.getTUEntropyCodingParameters(codeParams, absPartIdx, log2TrSize, bIsLuma);
-    const uint32_t cgNum = 1 << (codeParams.log2TrSizeCG * 2);
+    const uint32_t log2TrSizeCG = log2TrSize - 2;
+    const uint32_t cgNum = 1 << (log2TrSizeCG * 2);
     const uint32_t cgStride = (trSize >> MLS_CG_LOG2_SIZE);
 
     uint8_t coeffNum[MLS_GRP_NUM];      // value range[0, 16]
@@ -742,8 +747,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     {
         uint32_t ctxSet = (cgScanPos && bIsLuma) ? 2 : 0;
         const uint32_t cgBlkPos = codeParams.scanCG[cgScanPos];
-        const uint32_t cgPosY   = cgBlkPos >> codeParams.log2TrSizeCG;
-        const uint32_t cgPosX   = cgBlkPos - (cgPosY << codeParams.log2TrSizeCG);
+        const uint32_t cgPosY   = cgBlkPos >> log2TrSizeCG;
+        const uint32_t cgPosX   = cgBlkPos - (cgPosY << log2TrSizeCG);
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
         const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
         const int ctxSigOffset = codeParams.firstSignificanceMapContext + (cgScanPos && bIsLuma ? 3 : 0);
@@ -855,7 +860,11 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
             // coefficient level estimation
             const int* greaterOneBits = estBitsSbac.greaterOneBits[4 * ctxSet + c1];
-            const uint32_t ctxSig = (blkPos == 0) ? 0 : table_cnt[(trSize == 4) ? 4 : patternSigCtx][g_scan4x4[codeParams.scanType][scanPosinCG]] + ctxSigOffset;
+            //const uint32_t ctxSig = (blkPos == 0) ? 0 : table_cnt[(trSize == 4) ? 4 : patternSigCtx][g_scan4x4[codeParams.scanType][scanPosinCG]] + ctxSigOffset;
+            static const uint64_t table_cnt64[4] = {0x0000000100110112ULL, 0x0000000011112222ULL, 0x0012001200120012ULL, 0x2222222222222222ULL};
+            uint64_t ctxCnt = (trSize == 4) ? 0x8877886654325410ULL : table_cnt64[patternSigCtx];
+            const uint32_t ctxSig = (blkPos == 0) ? 0 : ((ctxCnt >> (4 * g_scan4x4[codeParams.scanType][scanPosinCG])) & 0xF) + ctxSigOffset;
+            // NOTE: above equal to 'table_cnt[(trSize == 4) ? 4 : patternSigCtx][g_scan4x4[codeParams.scanType][scanPosinCG]] + ctxSigOffset'
             X265_CHECK(ctxSig == getSigCtxInc(patternSigCtx, log2TrSize, trSize, blkPos, bIsLuma, codeParams.firstSignificanceMapContext), "sigCtx check failure\n");
 
             // before find lastest non-zero coeff
@@ -1038,7 +1047,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                     c2 += (uint32_t)(c2 - 2) >> 31;
                     c2Idx++;
                 }
-                else if ((c1 < 3) && (c1 > 0) && level)
+                else if (((c1 == 1) | (c1 == 2)) && level)
                     c1++;
 
                 if (dstCoeff[blkPos])
@@ -1236,7 +1245,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
     if (cu.m_slice->m_pps->bSignHideEnabled && numSig >= 2)
     {
         const int realLastScanPos = (bestLastIdx - 1) >> LOG2_SCAN_SET_SIZE;
-        int lastCG = true;
+        int lastCG = 1;
         for (int subSet = realLastScanPos; subSet >= 0; subSet--)
         {
             int subPos = subSet << LOG2_SCAN_SET_SIZE;
@@ -1268,7 +1277,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
 
                     int64_t minCostInc = MAX_INT64, curCost = MAX_INT64;
                     int minPos = -1;
-                    int16_t finalChange = 0, curChange = 0;
+                    int8_t finalChange = 0, curChange = 0;
 
                     for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                     {
@@ -1277,40 +1286,30 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                         int absLevel    = abs(dstCoeff[blkPos]);
 
                         int d = abs(signCoef) - UNQUANT(absLevel);
-                        int64_t origDist = (((int64_t)d * d)) << scaleBits;
+                        const int64_t origDist = (((int64_t)d * d));
 
-#define DELTARDCOST(d, deltabits) ((((int64_t)d * d) << scaleBits) - origDist + ((lambda2 * (int64_t)(deltabits)) >> 8))
+#define DELTARDCOST(d0, d, deltabits) ((((int64_t)d * d - d0) << scaleBits) + ((lambda2 * (int64_t)(deltabits)) >> 8))
 
                         if (dstCoeff[blkPos])
                         {
                             d = abs(signCoef) - UNQUANT(absLevel + 1);
-                            int64_t costUp = DELTARDCOST(d, rateIncUp[blkPos]);
+                            int64_t costUp = DELTARDCOST(origDist, d, rateIncUp[blkPos]);
 
                             /* if decrementing would make the coeff 0, we can include the
                              * significant coeff flag cost savings */
                             d = abs(signCoef) - UNQUANT(absLevel - 1);
-                            bool isOne = abs(dstCoeff[blkPos]) == 1;
+                            int isOne = (abs(dstCoeff[blkPos]) == 1);
                             int downBits = rateIncDown[blkPos] - (isOne ? (IEP_RATE + sigRateDelta[blkPos]) : 0);
-                            int64_t costDown = DELTARDCOST(d, downBits);
+                            int64_t costDown = DELTARDCOST(origDist, d, downBits);
 
-                            if (lastCG && lastNZPosInCG == n && isOne)
-                                costDown -= 4 * IEP_RATE;
+                            costDown -= (lastCG & (n == lastNZPosInCG) & isOne) * 4 * IEP_RATE;
+                            curCost = ((n == firstNZPosInCG) & isOne) ? MAX_INT64 : costDown;
+                            curChange = 2 * (costUp < costDown) - 1;
 
                             if (costUp < costDown)
-                            {
                                 curCost = costUp;
-                                curChange =  1;
-                            }
-                            else
-                            {
-                                curChange = -1;
-                                if (n == firstNZPosInCG && isOne)
-                                    curCost = MAX_INT64;
-                                else
-                                    curCost = costDown;
-                            }
                         }
-                        else if (n < firstNZPosInCG && signbit != (signCoef >= 0 ? 0 : 1U))
+                        else if ((n < firstNZPosInCG) & (signbit != ((uint32_t)signCoef >> 31)))
                         {
                             /* don't try to make a new coded coeff before the first coeff if its
                              * sign would be different than the first coeff, the inferred sign would
@@ -1321,7 +1320,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                         {
                             /* evaluate changing an uncoded coeff 0 to a coded coeff +/-1 */
                             d = abs(signCoef) - UNQUANT(1);
-                            curCost = DELTARDCOST(d, rateIncUp[blkPos] + IEP_RATE + sigRateDelta[blkPos]);
+                            curCost = DELTARDCOST(origDist, d, rateIncUp[blkPos] + IEP_RATE + sigRateDelta[blkPos]);
                             curChange = 1;
                         }
 
@@ -1333,23 +1332,30 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, uint32_t log2TrSiz
                         }
                     }
 
-                    if (dstCoeff[minPos] == 32767 || dstCoeff[minPos] == -32768)
+                    // if (dstCoeff[minPos] == 32767 || dstCoeff[minPos] == -32768)
+                    if (((uint16_t)dstCoeff[minPos] + 1 == (uint16_t)0x8000) | ((uint16_t)dstCoeff[minPos] == (uint16_t)0x8000))
                         /* don't allow sign hiding to violate the SPEC range */
                         finalChange = -1;
 
-                    if (dstCoeff[minPos] == 0)
-                        numSig++;
-                    else if (finalChange == -1 && abs(dstCoeff[minPos]) == 1)
-                        numSig--;
+                    // NOTE: Reference code
+                    //if (dstCoeff[minPos] == 0)
+                    //    numSig++;
+                    //else if (finalChange == -1 && abs(dstCoeff[minPos]) == 1)
+                    //    numSig--;
+                    numSig += (dstCoeff[minPos] == 0) - ((finalChange == -1) & (abs(dstCoeff[minPos]) == 1));
 
-                    if (m_resiDctCoeff[minPos] >= 0)
-                        dstCoeff[minPos] += finalChange;
-                    else
-                        dstCoeff[minPos] -= finalChange;
+
+                    // NOTE: Reference code
+                    //if (m_resiDctCoeff[minPos] >= 0)
+                    //    dstCoeff[minPos] += finalChange;
+                    //else
+                    //    dstCoeff[minPos] -= finalChange;
+                    const int16_t resiCoeffSign = ((int16_t)m_resiDctCoeff[minPos] >> 16);
+                    dstCoeff[minPos] += (((int16_t)finalChange ^ resiCoeffSign) - resiCoeffSign);
                 }
             }
 
-            lastCG = false;
+            lastCG = 0;
         }
     }
 

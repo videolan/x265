@@ -4,6 +4,7 @@
  * Author: Shazeb Nawaz Khan <shazeb@multicorewareinc.com>
  *         Steve Borho <steve@borho.org>
  *         Kavitha Sampas <kavitha@multicorewareinc.com>
+ *         Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -259,7 +260,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
     for (int list = 0; list < cache.numPredDir; list++)
     {
         WeightParam *weights = wp[list][0];
-        Frame *refFrame = slice.m_refPicList[list][0];
+        Frame *refFrame = slice.m_refFrameList[list][0];
         Lowres& refLowres = refFrame->m_lowres;
         int diffPoc = abs(curPoc - refFrame->m_poc);
 

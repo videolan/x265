@@ -84,8 +84,8 @@ Logging/Statistic Options
 	it adds one line per run. If :option:`--csv-log-level` is greater than
 	0, it writes one line per frame. Default none
 
-	When frame level logging is enabled, several frame performance
-	statistics are listed:
+	Several frame performance statistics are available when 
+	:option:`--csv-log-level` is greater than or equal to 2:
 
 	**DecideWait ms** number of milliseconds the frame encoder had to
 	wait, since the previous frame was retrieved by the API thread,
@@ -202,15 +202,29 @@ Performance Options
 	"-"       - same as "none"
 	"10"      - allocate one pool, using up to 10 cores on node 0
 	"-,+"     - allocate one pool, using all cores on node 1
-	"+,-,+"   - allocate two pools, using all cores on nodes 0 and 2
-	"+,-,+,-" - allocate two pools, using all cores on nodes 0 and 2
-	"-,*"     - allocate three pools, using all cores on nodes 1, 2 and 3
+	"+,-,+"   - allocate one pool, using only cores on nodes 0 and 2
+	"+,-,+,-" - allocate one pool, using only cores on nodes 0 and 2
+	"-,*"     - allocate one pool, using all cores on nodes 1, 2 and 3
 	"8,8,8,8" - allocate four pools with up to 8 threads in each pool
+	"8,+,+,+" - allocate two pools, the first with 8 threads on node 0, and the second with all cores on node 1,2,3
 
-	The total number of threads will be determined by the number of threads
-	assigned to all nodes. The worker threads will each be given affinity for
-	their node, they will not be allowed to migrate between nodes, but they
-	will be allowed to move between CPU cores within their node.
+	A thread pool dedicated to a given NUMA node is enabled only when the
+	number of threads to be created on that NUMA node is explicitly mentioned
+	in that corresponding position with the --pools option. Else, all threads
+	are spawned from a single pool. The total number of threads will be
+	determined by the number of threads assigned to the enabled NUMA nodes for
+	that pool. The worker threads are be given affinity to all the enabled
+	NUMA nodes for that pool and may migrate between them, unless explicitly
+	specified as described above.
+
+	In the case that any threadpool has more than 64 threads, the threadpool
+	may be broken down into multiple pools of 64 threads each; on 32-bit
+	machines, this number is 32. All pools are given affinity to the NUMA
+	nodes on which the original pool had affinity. For performance reasons,
+	the last thread pool is spawned only if it has more than 32 threads for
+	64-bit machines, or 16 for 32-bit machines. If the total number of threads
+	in the system doesn't obey this constraint, we may spawn fewer threads
+	than cores which has been emperically shown to be better for performance. 
 
 	If the four pool features: :option:`--wpp`, :option:`--pmode`,
 	:option:`--pme` and :option:`--lookahead-slices` are all disabled,
@@ -218,10 +232,6 @@ Performance Options
 
 	If "none" is specified, then all four of the thread pool features are
 	implicitly disabled.
-
-	Multiple thread pools will be allocated for any NUMA node with more than
-	64 logical CPU cores. But any given thread pool will always use at most
-	one NUMA node.
 
 	Frame encoders are distributed between the available thread pools,
 	and the encoder will never generate more thread pools than
@@ -238,8 +248,12 @@ Performance Options
 	system, a POSIX build of libx265 without libnuma will be less work
 	efficient. See :ref:`thread pools <pools>` for more detail.
 
-	Default "", one thread is allocated per detected hardware thread
-	(logical CPU cores) and one thread pool per NUMA node.
+	Default "", one pool is created across all available NUMA nodes, with
+	one thread allocated per detected hardware thread
+	(logical CPU cores). In the case that the total number of threads is more
+	than the maximum size that ATOMIC operations can handle (32 for 32-bit
+	compiles, and 64 for 64-bit compiles), multiple thread pools may be
+	spawned subject to the performance constraint described above.
 
 	Note that the string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms
@@ -436,8 +450,8 @@ frame counts) are only applicable to the CLI application.
 	depth of the encoder. If the requested bit depth is not the bit
 	depth of the linked libx265, it will attempt to bind libx265_main
 	for an 8bit encoder, libx265_main10 for a 10bit encoder, or
-	libx265_main12 for a 12bit encoder (EXPERIMENTAL), with the
-	same API version as the linked libx265.
+	libx265_main12 for a 12bit encoder, with the same API version as the
+	linked libx265.
 
 	If the output depth is not specified but :option:`--profile` is
 	specified, the output depth will be derived from the profile name.
@@ -489,13 +503,6 @@ Profile, Level, Tier
 
 	The CLI application will derive the output bit depth from the
 	profile name if :option:`--output-depth` is not specified.
-
-.. note::
-
-	All 12bit presets are extremely unstable, do not use them yet.
-	16bit is not supported at all, but those profiles are included
-	because it is possible for libx265 to make bitstreams compatible
-	with them.
 
 .. option:: --level-idc <integer|float>
 
@@ -1202,6 +1209,13 @@ Quality, rate control and rate distortion options
 	is also non-zero. Both vbv-bufsize and vbv-maxrate are required to
 	enable VBV in CRF mode. Default 0 (disabled)
 
+	Note that when VBV is enabled (with a valid :option:`--vbv-bufsize`),
+	VBV emergency denoising is turned on. This will turn on aggressive 
+	denoising at the frame level when frame QP > QP_MAX_SPEC (51), drastically
+	reducing bitrate and allowing ratecontrol to assign lower QPs for
+	the following frames. The visual effect is blurring, but removes 
+	significant blocking/displacement artifacts.
+
 .. option:: --vbv-init <float>
 
 	Initial buffer occupancy. The portion of the decode buffer which
@@ -1643,6 +1657,16 @@ VUI fields must be manually specified.
 
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
+
+.. option:: --min-luma <integer>
+
+	Minimum luma value allowed for input pictures. Any values below min-luma
+	are clipped. Experimental. No default.
+
+.. option:: --max-luma <integer>
+
+	Maximum luma value allowed for input pictures. Any values above max-luma
+	are clipped. Experimental. No default.
 
 Bitstream options
 =================

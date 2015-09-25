@@ -2,6 +2,7 @@
  * Copyright (C) 2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1676,7 +1677,7 @@ int CUData::getPMV(InterNeighbourMV *neighbours, uint32_t picList, uint32_t refI
         if (tempRefIdx != -1)
         {
             uint32_t cuAddr = neighbours[MD_COLLOCATED].cuAddr[picList];
-            const Frame* colPic = m_slice->m_refPicList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
+            const Frame* colPic = m_slice->m_refFrameList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
             const CUData* colCU = colPic->m_encData->getPicCTU(cuAddr);
 
             // Scale the vector
@@ -1857,7 +1858,7 @@ bool CUData::getIndirectPMV(MV& outMV, InterNeighbourMV *neighbours, uint32_t pi
 
 bool CUData::getColMVP(MV& outMV, int& outRefIdx, int picList, int cuAddr, int partUnitIdx) const
 {
-    const Frame* colPic = m_slice->m_refPicList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
+    const Frame* colPic = m_slice->m_refFrameList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
     const CUData* colCU = colPic->m_encData->getPicCTU(cuAddr);
 
     uint32_t absPartAddr = partUnitIdx & TMVP_UNIT_MASK;
@@ -1892,7 +1893,7 @@ bool CUData::getColMVP(MV& outMV, int& outRefIdx, int picList, int cuAddr, int p
 // Cache the collocated MV.
 bool CUData::getCollocatedMV(int cuAddr, int partUnitIdx, InterNeighbourMV *neighbour) const
 {
-    const Frame* colPic = m_slice->m_refPicList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
+    const Frame* colPic = m_slice->m_refFrameList[m_slice->isInterB() && !m_slice->m_colFromL0Flag][m_slice->m_colRefIdx];
     const CUData* colCU = colPic->m_encData->getPicCTU(cuAddr);
 
     uint32_t absPartAddr = partUnitIdx & TMVP_UNIT_MASK;
@@ -1951,7 +1952,7 @@ void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uin
     bool bIsIntra = isIntra(absPartIdx);
 
     // set the group layout
-    result.log2TrSizeCG = log2TrSize - 2;
+    const uint32_t log2TrSizeCG = log2TrSize - 2;
 
     // set the scan orders
     if (bIsIntra)
@@ -1979,7 +1980,7 @@ void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uin
         result.scanType = SCAN_DIAG;
 
     result.scan     = g_scanOrder[result.scanType][log2TrSize - 2];
-    result.scanCG   = g_scanOrderCG[result.scanType][result.log2TrSizeCG];
+    result.scanCG   = g_scanOrderCG[result.scanType][log2TrSizeCG];
 
     if (log2TrSize == 2)
         result.firstSignificanceMapContext = 0;

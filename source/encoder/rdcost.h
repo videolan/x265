@@ -2,6 +2,7 @@
 * Copyright (C) 2013 x265 project
 *
 * Authors: Steve Borho <steve@borho.org>
+*          Min Chen <chenm003@163.com>
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -92,10 +93,12 @@ public:
     {
 #if X265_DEPTH <= 10
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda2,
-                   "calcRdCost wrap detected dist: %u, bits %u, lambda: "X265_LL"\n", distortion, bits, m_lambda2);
+                   "calcRdCost wrap detected dist: %u, bits %u, lambda: " X265_LL "\n",
+                   distortion, bits, m_lambda2);
 #else
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda2,
-            "calcRdCost wrap detected dist: "X265_LL", bits %u, lambda: "X265_LL"\n", distortion, bits, m_lambda2);
+                   "calcRdCost wrap detected dist: " X265_LL ", bits %u, lambda: " X265_LL "\n",
+                   distortion, bits, m_lambda2);
 #endif
         return distortion + ((bits * m_lambda2 + 128) >> 8);
     }
@@ -121,15 +124,22 @@ public:
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits) const
     {
         X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda,
-                   "calcRdSADCost wrap detected dist: %u, bits %u, lambda: "X265_LL"\n", sadCost, bits, m_lambda);
+                   "calcRdSADCost wrap detected dist: %u, bits %u, lambda: " X265_LL "\n", sadCost, bits, m_lambda);
         return sadCost + ((bits * m_lambda + 128) >> 8);
     }
 
-    inline uint32_t scaleChromaDist(uint32_t plane, uint32_t dist) const
+    inline sse_ret_t scaleChromaDist(uint32_t plane, sse_ret_t dist) const
     {
+#if X265_DEPTH <= 10
         X265_CHECK(dist <= (UINT64_MAX - 128) / m_chromaDistWeight[plane - 1],
-                   "scaleChromaDist wrap detected dist: %u, lambda: %u\n", dist, m_chromaDistWeight[plane - 1]);
-        return (uint32_t)((dist * (uint64_t)m_chromaDistWeight[plane - 1] + 128) >> 8);
+                   "scaleChromaDist wrap detected dist: %u, lambda: %u\n",
+                   dist, m_chromaDistWeight[plane - 1]);
+#else
+        X265_CHECK(dist <= (UINT64_MAX - 128) / m_chromaDistWeight[plane - 1],
+                   "scaleChromaDist wrap detected dist: " X265_LL " lambda: %u\n",
+                   dist, m_chromaDistWeight[plane - 1]);
+#endif
+        return (sse_ret_t)((dist * (uint64_t)m_chromaDistWeight[plane - 1] + 128) >> 8);
     }
 
     inline uint32_t getCost(uint32_t bits) const
