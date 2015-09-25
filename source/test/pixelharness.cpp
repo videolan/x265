@@ -2,7 +2,6 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
- *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1826,11 +1825,6 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
                 printf("sse_pp[%s]: failed!\n", lumaPartStr[part]);
                 return false;
             }
-        }
-        if (numNonZero == 0)
-        {
-            numNonZero = 1;
-            absCoeff[0] = 1;
         }
 
         if (opt.cu[part].sse_ss)
