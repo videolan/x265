@@ -3591,6 +3591,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_64x64].copy_ps = PFX(blockcopy_ps_64x64_avx2);
         p.planeClipAndMax = PFX(planeClipAndMax_avx2);
 
+        p.pu[LUMA_32x8].sad_x3 = PFX(pixel_sad_x3_32x8_avx2);
+        p.pu[LUMA_32x16].sad_x3 = PFX(pixel_sad_x3_32x16_avx2);
+        p.pu[LUMA_32x24].sad_x3 = PFX(pixel_sad_x3_32x24_avx2);
+        p.pu[LUMA_32x32].sad_x3 = PFX(pixel_sad_x3_32x32_avx2);
+        p.pu[LUMA_32x64].sad_x3 = PFX(pixel_sad_x3_32x64_avx2);
+
         /* The following primitives have been disabled since performance compared to SSE is negligible/negative */
 #if 0
         p.pu[LUMA_8x4].addAvg = PFX(addAvg_8x4_avx2);
