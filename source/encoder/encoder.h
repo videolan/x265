@@ -47,6 +47,8 @@ struct EncStats
     double        m_totalQp;
     uint64_t      m_accBits;
     uint32_t      m_numPics;
+    uint16_t      m_maxCLL;
+    double        m_maxFALL;
 
     EncStats()
     {
@@ -54,6 +56,8 @@ struct EncStats
         m_accBits = 0;
         m_numPics = 0;
         m_totalQp = 0;
+        m_maxCLL = 0;
+        m_maxFALL = 0;
     }
 
     void addQP(double aveQp);
@@ -93,13 +97,6 @@ public:
     int                m_numPools;
     int                m_curEncoder;
 
-    /* cached PicYuv offset arrays, shared by all instances of
-     * PicYuv created by this encoder */
-    intptr_t*          m_cuOffsetY;
-    intptr_t*          m_cuOffsetC;
-    intptr_t*          m_buOffsetY;
-    intptr_t*          m_buOffsetC;
-
     /* Collect statistics globally */
     EncStats           m_analyzeAll;
     EncStats           m_analyzeI;
@@ -120,6 +117,7 @@ public:
     NALList            m_nalList;
     ScalingList        m_scalingList;      // quantization matrix information
 
+    bool               m_emitCLLSEI;
     int                m_lastBPSEI;
     uint32_t           m_numDelayedPic;
 
@@ -132,6 +130,10 @@ public:
     bool               m_bZeroLatency;     // x265_encoder_encode() returns NALs for the input picture, zero lag
     bool               m_aborted;          // fatal error detected
     bool               m_reconfigured;      // reconfigure of encoder detected
+
+    uint32_t           m_residualSumEmergency[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    uint16_t           (*m_offsetEmergency)[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
+    uint32_t           m_countEmergency[MAX_NUM_TR_CATEGORIES];
 
     Encoder();
     ~Encoder() {}
