@@ -960,8 +960,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_LUMA_TU_S(calcresidual, getResidual, sse2);
         ALL_LUMA_TU_S(transpose, transpose, sse2);
 
+        p.cu[BLOCK_4x4].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar4_sse2);
+        p.cu[BLOCK_8x8].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar8_sse2);
+
 #if X265_DEPTH <= 10
-        ALL_LUMA_TU_S(intra_pred[PLANAR_IDX], intra_pred_planar, sse2);
+        p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar16_sse2);
+        p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar32_sse2);
 #endif /* X265_DEPTH <= 10 */
         ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse2);
 
@@ -1139,8 +1143,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_16x16].intra_filter = PFX(intra_filter_16x16_sse4);
         p.cu[BLOCK_32x32].intra_filter = PFX(intra_filter_32x32_sse4);
 
+        p.cu[BLOCK_4x4].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar4_sse4);
+        p.cu[BLOCK_8x8].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar8_sse4);
+
 #if X265_DEPTH <= 10
-        ALL_LUMA_TU_S(intra_pred[PLANAR_IDX], intra_pred_planar, sse4);
+        p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar16_sse4);
+        p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar32_sse4);
 #endif
         ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse4);
         INTRA_ANG_SSE4_COMMON(sse4);

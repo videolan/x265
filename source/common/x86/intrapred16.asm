@@ -709,7 +709,7 @@ cglobal intra_pred_planar8, 3,3,5
 %endif
     pmullw          m1, [pw_planar16_mul + mmsize]
     paddw           m1, m3
-    psraw           m1, 4
+    psrlw           m1, 4
     movu            [r0], m1
 %if (%1 < 7)
     paddw           m3, m4
@@ -2197,7 +2197,7 @@ cglobal intra_pred_planar8, 3,3,5
     pmullw          m1, m0
     paddw           m1, m3
     paddw           m3, m4
-    psraw           m1, 4
+    psrlw           m1, 4
     movu            [r0], m1
     lea             r0, [r0 + r1]
 %endmacro
