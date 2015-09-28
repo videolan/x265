@@ -105,6 +105,12 @@ namespace Level {
 
 struct ProfileTierLevel
 {
+    int      profileIdc;
+    int      levelIdc;
+    uint32_t minCrForLevel;
+    uint32_t maxLumaSrForLevel;
+    uint32_t bitDepthConstraint;
+    int      chromaFormatConstraint;
     bool     tierFlag;
     bool     progressiveSourceFlag;
     bool     interlacedSourceFlag;
@@ -114,12 +120,6 @@ struct ProfileTierLevel
     bool     intraConstraintFlag;
     bool     onePictureOnlyConstraintFlag;
     bool     lowerBitRateConstraintFlag;
-    int      profileIdc;
-    int      levelIdc;
-    uint32_t minCrForLevel;
-    uint32_t maxLumaSrForLevel;
-    uint32_t bitDepthConstraint;
-    int      chromaFormatConstraint;
 };
 
 struct HRDInfo
@@ -152,21 +152,21 @@ struct TimingInfo
 
 struct VPS
 {
+    HRDInfo          hrdParameters;
+    ProfileTierLevel ptl;
     uint32_t         maxTempSubLayers;
     uint32_t         numReorderPics;
     uint32_t         maxDecPicBuffering;
     uint32_t         maxLatencyIncrease;
-    HRDInfo          hrdParameters;
-    ProfileTierLevel ptl;
 };
 
 struct Window
 {
-    bool bEnabled;
     int  leftOffset;
     int  rightOffset;
     int  topOffset;
     int  bottomOffset;
+    bool bEnabled;
 
     Window()
     {
@@ -176,35 +176,29 @@ struct Window
 
 struct VUI
 {
-    bool       aspectRatioInfoPresentFlag;
     int        aspectRatioIdc;
     int        sarWidth;
     int        sarHeight;
-
-    bool       overscanInfoPresentFlag;
-    bool       overscanAppropriateFlag;
-
-    bool       videoSignalTypePresentFlag;
     int        videoFormat;
-    bool       videoFullRangeFlag;
-
-    bool       colourDescriptionPresentFlag;
     int        colourPrimaries;
     int        transferCharacteristics;
     int        matrixCoefficients;
-
-    bool       chromaLocInfoPresentFlag;
     int        chromaSampleLocTypeTopField;
     int        chromaSampleLocTypeBottomField;
 
-    Window     defaultDisplayWindow;
-
+    bool       aspectRatioInfoPresentFlag;
+    bool       overscanInfoPresentFlag;
+    bool       overscanAppropriateFlag;
+    bool       videoSignalTypePresentFlag;
+    bool       videoFullRangeFlag;
+    bool       colourDescriptionPresentFlag;
+    bool       chromaLocInfoPresentFlag;
     bool       frameFieldInfoPresentFlag;
     bool       fieldSeqFlag;
-
     bool       hrdParametersPresentFlag;
-    HRDInfo    hrdParameters;
 
+    HRDInfo    hrdParameters;
+    Window     defaultDisplayWindow;
     TimingInfo timingInfo;
 };
 
@@ -236,8 +230,6 @@ struct SPS
     uint32_t quadtreeTUMaxDepthInter; // use param
     uint32_t quadtreeTUMaxDepthIntra; // use param
 
-    bool     bUseSAO; // use param
-    bool     bUseAMP; // use param
     uint32_t maxAMPDepth;
 
     uint32_t maxTempSubLayers;   // max number of Temporal Sub layers
@@ -245,6 +237,8 @@ struct SPS
     uint32_t maxLatencyIncrease;
     int      numReorderPics;
 
+    bool     bUseSAO; // use param
+    bool     bUseAMP; // use param
     bool     bUseStrongIntraSmoothing; // use param
     bool     bTemporalMVPEnabled;
 
@@ -270,6 +264,8 @@ struct PPS
     uint32_t maxCuDQPDepth;
 
     int      chromaQpOffset[2];      // use param
+    int      deblockingFilterBetaOffsetDiv2;
+    int      deblockingFilterTcOffsetDiv2;
 
     bool     bUseWeightPred;         // use param
     bool     bUseWeightedBiPred;     // use param
@@ -283,17 +279,15 @@ struct PPS
 
     bool     bDeblockingFilterControlPresent;
     bool     bPicDisableDeblockingFilter;
-    int      deblockingFilterBetaOffsetDiv2;
-    int      deblockingFilterTcOffsetDiv2;
 };
 
 struct WeightParam
 {
     // Explicit weighted prediction parameters parsed in slice header,
-    bool     bPresentFlag;
     uint32_t log2WeightDenom;
     int      inputWeight;
     int      inputOffset;
+    bool     bPresentFlag;
 
     /* makes a non-h265 weight (i.e. fix7), into an h265 weight */
     void setFromWeightAndOffset(int w, int o, int denom, bool bNormalize)
@@ -325,6 +319,9 @@ public:
 
     const SPS*  m_sps;
     const PPS*  m_pps;
+    Frame*      m_refFrameList[2][MAX_NUM_REF + 1];
+    PicYuv*     m_refReconPicList[2][MAX_NUM_REF + 1];
+
     WeightParam m_weightPredTable[2][MAX_NUM_REF][3]; // [list][refIdx][0:Y, 1:U, 2:V]
     MotionReference (*m_mref)[MAX_NUM_REF + 1];
     RPS         m_rps;
@@ -333,21 +330,19 @@ public:
     SliceType   m_sliceType;
     int         m_sliceQp;
     int         m_poc;
-    
     int         m_lastIDR;
 
-    bool        m_bCheckLDC;       // TODO: is this necessary?
-    bool        m_sLFaseFlag;      // loop filter boundary flag
-    bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
     uint32_t    m_colRefIdx;       // never modified
-    
+
     int         m_numRefIdx[2];
-    Frame*      m_refFrameList[2][MAX_NUM_REF + 1];
-    PicYuv*     m_refReconPicList[2][MAX_NUM_REF + 1];
     int         m_refPOCList[2][MAX_NUM_REF + 1];
 
     uint32_t    m_maxNumMergeCand; // use param
     uint32_t    m_endCUAddr;
+
+    bool        m_bCheckLDC;       // TODO: is this necessary?
+    bool        m_sLFaseFlag;      // loop filter boundary flag
+    bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
 
     Slice()
     {

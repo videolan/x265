@@ -45,10 +45,10 @@ struct EncStats
     double        m_psnrSumV;
     double        m_globalSsim;
     double        m_totalQp;
+    double        m_maxFALL;
     uint64_t      m_accBits;
     uint32_t      m_numPics;
     uint16_t      m_maxCLL;
-    double        m_maxFALL;
 
     EncStats()
     {
@@ -79,61 +79,57 @@ class Encoder : public x265_encoder
 {
 public:
 
-    int                m_pocLast;         // time index (POC)
-    int                m_encodedFrameNum;
-    int                m_outputCount;
+    ALIGN_VAR_16(uint32_t, m_residualSumEmergency[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS]);
+    uint32_t           m_countEmergency[MAX_NUM_TR_CATEGORIES];
+    uint16_t           (*m_offsetEmergency)[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
 
-    int                m_bframeDelay;
     int64_t            m_firstPts;
     int64_t            m_bframeDelayTime;
     int64_t            m_prevReorderedPts[2];
+    int64_t            m_encodeStartTime;
 
-    ThreadPool*        m_threadPool;
-    FrameEncoder*      m_frameEncoder[X265_MAX_FRAME_THREADS];
-    DPB*               m_dpb;
-
-    Frame*             m_exportedPic;
-
+    int                m_pocLast;         // time index (POC)
+    int                m_encodedFrameNum;
+    int                m_outputCount;
+    int                m_bframeDelay;
     int                m_numPools;
     int                m_curEncoder;
-
-    /* Collect statistics globally */
-    EncStats           m_analyzeAll;
-    EncStats           m_analyzeI;
-    EncStats           m_analyzeP;
-    EncStats           m_analyzeB;
-    int64_t            m_encodeStartTime;
 
     // weighted prediction
     int                m_numLumaWPFrames;    // number of P frames with weighted luma reference
     int                m_numChromaWPFrames;  // number of P frames with weighted chroma reference
     int                m_numLumaWPBiFrames;  // number of B frames with weighted luma reference
     int                m_numChromaWPBiFrames; // number of B frames with weighted chroma reference
-    FILE*              m_analysisFile;
     int                m_conformanceMode;
+    int                m_lastBPSEI;
+    uint32_t           m_numDelayedPic;
+
+    ThreadPool*        m_threadPool;
+    FrameEncoder*      m_frameEncoder[X265_MAX_FRAME_THREADS];
+    DPB*               m_dpb;
+    Frame*             m_exportedPic;
+    FILE*              m_analysisFile;
+    x265_param*        m_param;
+    x265_param*        m_latestParam;
+    RateControl*       m_rateControl;
+    Lookahead*         m_lookahead;
+
+    /* Collect statistics globally */
+    EncStats           m_analyzeAll;
+    EncStats           m_analyzeI;
+    EncStats           m_analyzeP;
+    EncStats           m_analyzeB;
     VPS                m_vps;
     SPS                m_sps;
     PPS                m_pps;
     NALList            m_nalList;
     ScalingList        m_scalingList;      // quantization matrix information
-
-    bool               m_emitCLLSEI;
-    int                m_lastBPSEI;
-    uint32_t           m_numDelayedPic;
-
-    x265_param*        m_param;
-    x265_param*        m_latestParam;
-    RateControl*       m_rateControl;
-    Lookahead*         m_lookahead;
     Window             m_conformanceWindow;
 
+    bool               m_emitCLLSEI;
     bool               m_bZeroLatency;     // x265_encoder_encode() returns NALs for the input picture, zero lag
     bool               m_aborted;          // fatal error detected
     bool               m_reconfigured;      // reconfigure of encoder detected
-
-    uint32_t           m_residualSumEmergency[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
-    uint16_t           (*m_offsetEmergency)[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
-    uint32_t           m_countEmergency[MAX_NUM_TR_CATEGORIES];
 
     Encoder();
     ~Encoder() {}
