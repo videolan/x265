@@ -1002,10 +1002,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_4x4].intra_pred[32] = PFX(intra_pred_ang4_32_sse2);
         p.cu[BLOCK_4x4].intra_pred[33] = PFX(intra_pred_ang4_33_sse2);
 
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_32x64_sse2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_4x8_mmx2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_8x16_sse2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_16x32_sse2);
-        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_32x64_sse2);
 #if X265_DEPTH <= 10
         p.cu[BLOCK_4x4].sse_ss = PFX(pixel_ssd_ss_4x4_mmx2);
         ALL_LUMA_CU(sse_ss, pixel_ssd_ss, sse2);
