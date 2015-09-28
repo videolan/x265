@@ -405,7 +405,7 @@ protected:
     {
         uint64_t rdcost;
         uint32_t bits;
-        uint32_t distortion;
+        sse_ret_t distortion;
         uint32_t energy;
         Cost() { rdcost = 0; bits = 0; distortion = 0; energy = 0; }
     };
