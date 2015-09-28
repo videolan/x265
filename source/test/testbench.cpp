@@ -4,6 +4,7 @@
  * Authors: Gopu Govindaswamy <gopu@govindaswamy.org>
  *          Mandar Gurav <mandar@multicorewareinc.com>
  *          Mahesh Pittala <mahesh@multicorewareinc.com>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

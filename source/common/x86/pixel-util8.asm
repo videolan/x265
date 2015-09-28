@@ -792,6 +792,7 @@ cglobal nquant, 3,5,8
     pshufd      m6, m6, 0       ; m6 = add
     mov         r3d, r4d        ; r3 = numCoeff
     shr         r4d, 3
+    pxor        m4, m4
 
 .loop:
     pmovsxwd    m0, [r0]        ; m0 = level
@@ -810,13 +811,13 @@ cglobal nquant, 3,5,8
     psignd      m3, m1
 
     packssdw    m2, m3
+    pabsw       m2, m2
 
     movu        [r2], m2
     add         r0, 16
     add         r1, 32
     add         r2, 16
 
-    pxor        m4, m4
     pcmpeqw     m2, m4
     psubw       m7, m2
 
@@ -862,9 +863,11 @@ cglobal nquant, 3,5,7
     psignd      m2, m0
 
     packssdw    m1, m2
-    vpermq      m2, m1, q3120
+    pabsw       m1, m1
 
+    vpermq      m2, m1, q3120
     movu        [r2], m2
+
     add         r0, mmsize
     add         r1, mmsize * 2
     add         r2, mmsize
@@ -6395,6 +6398,78 @@ cglobal pixel_var_16x16, 2,4,7
 %else
     movd   eax, xm5
     movd   edx, xm6
+%endif
+    RET
+
+INIT_YMM avx2
+cglobal pixel_var_32x32, 2,4,7
+    VAR_START 0
+    mov             r2d, 16
+
+.loop:
+    pmovzxbw        m0, [r0]
+    pmovzxbw        m3, [r0 + 16]
+    pmovzxbw        m1, [r0 + r1]
+    pmovzxbw        m4, [r0 + r1 + 16]
+
+    lea             r0, [r0 + r1 * 2]
+
+    VAR_CORE
+
+    dec             r2d
+    jg              .loop
+
+    vextracti128   xm0, m5, 1
+    vextracti128   xm1, m6, 1
+    paddw          xm5, xm0
+    paddd          xm6, xm1
+    HADDW          xm5, xm2
+    HADDD          xm6, xm1
+
+%if ARCH_X86_64
+    punpckldq      xm5, xm6
+    movq           rax, xm5
+%else
+    movd           eax, xm5
+    movd           edx, xm6
+%endif
+    RET
+
+INIT_YMM avx2
+cglobal pixel_var_64x64, 2,4,7
+    VAR_START 0
+    mov             r2d, 64
+
+.loop:
+    pmovzxbw        m0, [r0]
+    pmovzxbw        m3, [r0 + 16]
+    pmovzxbw        m1, [r0 + mmsize]
+    pmovzxbw        m4, [r0 + mmsize + 16]
+
+    lea             r0, [r0 + r1]
+
+    VAR_CORE
+
+    dec             r2d
+    jg              .loop
+
+    pxor            m1, m1
+    punpcklwd       m0, m5, m1
+    punpckhwd       m5, m1
+    paddd           m5, m0
+    vextracti128   xm2, m5, 1
+    vextracti128   xm1, m6, 1
+    paddd          xm5, xm2
+    paddd          xm6, xm1
+    HADDD          xm5, xm2
+    HADDD          xm6, xm1
+
+%if ARCH_X86_64
+    punpckldq      xm5, xm6
+    movq           rax, xm5
+%else
+    movd           eax, xm5
+    movd           edx, xm6
 %endif
     RET
 %endif ; !HIGH_BIT_DEPTH

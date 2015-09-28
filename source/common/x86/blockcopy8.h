@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+;*          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

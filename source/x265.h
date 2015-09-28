@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -132,6 +133,7 @@ typedef struct x265_frame_stats
     double           avgLumaDistortion;
     double           avgChromaDistortion;
     double           avgPsyEnergy;
+    double           avgResEnergy;
     double           avgLumaLevel;
     uint64_t         bits;
     int              encoderOrder;
@@ -141,6 +143,7 @@ typedef struct x265_frame_stats
     int              list1POC[16];
     uint16_t         maxLumaLevel;
     char             sliceType;
+    int              bScenecut;
     x265_cu_stats    cuStats;
 } x265_frame_stats;
 
@@ -204,6 +207,13 @@ typedef struct x265_picture
      * member pointers are valid, the encoder will write output analysis into
      * this data structure */
     x265_analysis_data analysisData;
+
+    /* An array of quantizer offsets to be applied to this image during encoding.
+     * These are added on top of the decisions made by rateControl.
+     * Adaptive quantization must be enabled to use this feature. These quantizer 
+     * offsets should be given for each 16x16 block. Behavior if quant
+     * offsets differ between encoding passes is undefined. */
+    float            *quantOffsets;
 
     /* Frame level statistics */
     x265_frame_stats frameData;
@@ -378,6 +388,8 @@ typedef struct x265_stats
     x265_sliceType_stats  statsI;               /* statistics of I slice */
     x265_sliceType_stats  statsP;               /* statistics of P slice */
     x265_sliceType_stats  statsB;               /* statistics of B slice */
+    uint16_t              maxCLL;               /* maximum content light level */
+    uint16_t              maxFALL;              /* maximum frame average light level */
 } x265_stats;
 
 /* String values accepted by x265_param_parse() (and CLI) for various parameters */
@@ -1165,12 +1177,27 @@ typedef struct x265_param
      * max,min luminance values. */
     const char* masteringDisplayColorVolume;
 
-    /* Content light level info SEI, specified as a string which is parsed when
-     * the stream header SEI are emitted. The string format is "%hu,%hu" where
-     * %hu are unsigned 16bit integers. The first value is the max content light
-     * level (or 0 if no maximum is indicated), the second value is the maximum
-     * picture average light level (or 0). */
-    const char* contentLightLevelInfo;
+    /* Maximum Content light level(MaxCLL), specified as integer that indicates the
+     * maximum pixel intensity level in units of 1 candela per square metre of the
+     * bitstream. x265 will also calculate MaxCLL programmatically from the input
+     * pixel values and set in the Content light level info SEI */
+    uint16_t maxCLL;
+
+    /* Maximum Frame Average Light Level(MaxFALL), specified as integer that indicates
+     * the maximum frame average intensity level in units of 1 candela per square
+     * metre of the bitstream. x265 will also calculate MaxFALL programmatically
+     * from the input pixel values and set in the Content light level info SEI */
+    uint16_t maxFALL;
+
+    /* Minimum luma level of input source picture, specified as a integer which
+     * would automatically increase any luma values below the specified --min-luma
+     * value to that value. */
+    uint16_t minLuma;
+
+    /* Maximum luma level of input source picture, specified as a integer which
+     * would automatically decrease any luma values above the specified --max-luma
+     * value to that value. */
+    uint16_t maxLuma;
 
 } x265_param;
 
@@ -1211,7 +1238,7 @@ static const char * const x265_profile_names[] = {
     "main422-10", "main422-10-intra",
     "main444-10", "main444-10-intra",
 
-    "main12",     "main12-intra",                  /* Highly Experimental */
+    "main12",     "main12-intra",
     "main422-12", "main422-12-intra",
     "main444-12", "main444-12-intra",
 

@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -226,8 +227,13 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
 {
     enum { MAX_NODE_NUM = 127 };
     int cpusPerNode[MAX_NODE_NUM + 1];
+    int threadsPerPool[MAX_NODE_NUM + 2];
+    uint64_t nodeMaskPerPool[MAX_NODE_NUM + 2];
 
     memset(cpusPerNode, 0, sizeof(cpusPerNode));
+    memset(threadsPerPool, 0, sizeof(threadsPerPool));
+    memset(nodeMaskPerPool, 0, sizeof(nodeMaskPerPool));
+
     int numNumaNodes = X265_MIN(getNumaNodeCount(), MAX_NODE_NUM);
     int cpuCount = getCpuCount();
     bool bNumaSupport = false;
@@ -258,7 +264,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
         for (int i = 0; i < numNumaNodes; i++)
             x265_log(p, X265_LOG_DEBUG, "detected NUMA node %d with %d logical cores\n", i, cpusPerNode[i]);
 
-    /* limit nodes based on param->numaPools */
+    /* limit threads based on param->numaPools */
     if (p->numaPools && *p->numaPools)
     {
         const char *nodeStr = p->numaPools;
@@ -266,19 +272,30 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
         {
             if (!*nodeStr)
             {
-                cpusPerNode[i] = 0;
+                threadsPerPool[i] = 0;
                 continue;
             }
             else if (*nodeStr == '-')
-                cpusPerNode[i] = 0;
+                threadsPerPool[i] = 0;
             else if (*nodeStr == '*')
+            {
+                for (int j = i; j < numNumaNodes; j++)
+                {
+                    threadsPerPool[numNumaNodes] += cpusPerNode[j];
+                    nodeMaskPerPool[numNumaNodes] |= ((uint64_t)1 << j);
+                }
                 break;
+            }
             else if (*nodeStr == '+')
-                ;
+            {
+                threadsPerPool[numNumaNodes] += cpusPerNode[i];
+                nodeMaskPerPool[numNumaNodes] |= ((uint64_t)1 << i);
+            }
             else
             {
                 int count = atoi(nodeStr);
-                cpusPerNode[i] = X265_MIN(count, cpusPerNode[i]);
+                threadsPerPool[i] = X265_MIN(count, cpusPerNode[i]);
+                nodeMaskPerPool[i] = ((uint64_t)1 << i);
             }
 
             /* consume current node string, comma, and white-space */
@@ -288,14 +305,31 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
                ++nodeStr;
         }
     }
+    else
+    {
+        for (int i = 0; i < numNumaNodes; i++)
+        {
+            threadsPerPool[numNumaNodes]  += cpusPerNode[i];
+            nodeMaskPerPool[numNumaNodes] |= ((uint64_t)1 << i);
+        }
+    }
+ 
+    // If the last pool size is > MAX_POOL_THREADS, clip it to spawn thread pools only of size >= 1/2 max (heuristic)
+    if ((threadsPerPool[numNumaNodes] > MAX_POOL_THREADS) &&
+        ((threadsPerPool[numNumaNodes] % MAX_POOL_THREADS) < (MAX_POOL_THREADS / 2)))
+    {
+        threadsPerPool[numNumaNodes] -= (threadsPerPool[numNumaNodes] % MAX_POOL_THREADS);
+        x265_log(p, X265_LOG_DEBUG,
+                 "Creating only %d worker threads beyond specified numbers with --pools (if specified) to prevent asymmetry in pools; may not use all HW contexts\n", threadsPerPool[numNumaNodes]);
+    }
 
     numPools = 0;
-    for (int i = 0; i < numNumaNodes; i++)
+    for (int i = 0; i < numNumaNodes + 1; i++)
     {
         if (bNumaSupport)
             x265_log(p, X265_LOG_DEBUG, "NUMA node %d may use %d logical cores\n", i, cpusPerNode[i]);
-        if (cpusPerNode[i])
-            numPools += (cpusPerNode[i] + MAX_POOL_THREADS - 1) / MAX_POOL_THREADS;
+        if (threadsPerPool[i])
+            numPools += (threadsPerPool[i] + MAX_POOL_THREADS - 1) / MAX_POOL_THREADS;
     }
 
     if (!numPools)
@@ -314,20 +348,27 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
         int node = 0;
         for (int i = 0; i < numPools; i++)
         {
-            while (!cpusPerNode[node])
+            while (!threadsPerPool[node])
                 node++;
-            int cores = X265_MIN(MAX_POOL_THREADS, cpusPerNode[node]);
-            if (!pools[i].create(cores, maxProviders, node))
+            int numThreads = X265_MIN(MAX_POOL_THREADS, threadsPerPool[node]);
+            if (!pools[i].create(numThreads, maxProviders, nodeMaskPerPool[node]))
             {
                 X265_FREE(pools);
                 numPools = 0;
                 return NULL;
             }
             if (numNumaNodes > 1)
-                x265_log(p, X265_LOG_INFO, "Thread pool %d using %d threads on NUMA node %d\n", i, cores, node);
+            {
+                char *nodesstr = new char[64 * strlen(",63") + 1];
+                int len = 0;
+                for (int j = 0; j < 64; j++)
+                    if ((nodeMaskPerPool[node] >> j) & 1)
+                        len += sprintf(nodesstr + len, ",%d", j);
+                x265_log(p, X265_LOG_INFO, "Thread pool %d using %d threads on numa nodes %s\n", i, numThreads, nodesstr + 1);
+            }
             else
-                x265_log(p, X265_LOG_INFO, "Thread pool created using %d threads\n", cores);
-            cpusPerNode[node] -= cores;
+                x265_log(p, X265_LOG_INFO, "Thread pool created using %d threads\n", numThreads);
+            threadsPerPool[node] -= numThreads;
         }
     }
     else
@@ -340,11 +381,37 @@ ThreadPool::ThreadPool()
     memset(this, 0, sizeof(*this));
 }
 
-bool ThreadPool::create(int numThreads, int maxProviders, int node)
+bool ThreadPool::create(int numThreads, int maxProviders, uint64_t nodeMask)
 {
     X265_CHECK(numThreads <= MAX_POOL_THREADS, "a single thread pool cannot have more than MAX_POOL_THREADS threads\n");
 
-    m_numaNode = node;
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
+    m_winCpuMask = 0x0;
+    GROUP_AFFINITY groupAffinity;
+    for (int i = 0; i < getNumaNodeCount(); i++)
+    {
+        int numaNode = ((nodeMask >> i) & 0x1U) ? i : -1;
+        if (numaNode != -1)
+            if (GetNumaNodeProcessorMaskEx((USHORT)numaNode, &groupAffinity))
+                m_winCpuMask |= groupAffinity.Mask;
+    }
+    m_numaMask = &m_winCpuMask;
+#elif HAVE_LIBNUMA
+    if (numa_available() >= 0)
+    {
+        struct bitmask* nodemask = numa_allocate_nodemask();
+        if (nodemask)
+        {
+            *(nodemask->maskp) = nodeMask;
+            m_numaMask = nodemask;
+        }
+        else
+            x265_log(NULL, X265_LOG_ERROR, "unable to get NUMA node mask for %lx\n", nodeMask);
+    }
+#else
+    (void)nodeMask;
+#endif
+
     m_numWorkers = numThreads;
 
     m_workers = X265_MALLOC(WorkerThread, numThreads);
@@ -398,36 +465,39 @@ ThreadPool::~ThreadPool()
 
     X265_FREE(m_workers);
     X265_FREE(m_jpTable);
+
+#if HAVE_LIBNUMA
+    if(m_numaMask)
+        numa_free_nodemask((struct bitmask*)m_numaMask);
+#endif
 }
 
 void ThreadPool::setCurrentThreadAffinity()
 {
-    setThreadNodeAffinity(m_numaNode);
+    setThreadNodeAffinity(m_numaMask);
 }
 
 /* static */
-void ThreadPool::setThreadNodeAffinity(int numaNode)
+void ThreadPool::setThreadNodeAffinity(void *numaMask)
 {
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
-    GROUP_AFFINITY groupAffinity;
-    if (GetNumaNodeProcessorMaskEx((USHORT)numaNode, &groupAffinity))
-    {
-        if (SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)groupAffinity.Mask))
-            return;
-    }
-    x265_log(NULL, X265_LOG_ERROR, "unable to set thread affinity to NUMA node %d\n", numaNode);
+    if (SetThreadAffinityMask(GetCurrentThread(), *((DWORD_PTR*)numaMask)))
+        return;
+    else
+        x265_log(NULL, X265_LOG_ERROR, "unable to set thread affinity for NUMA node mask\n");
 #elif HAVE_LIBNUMA
     if (numa_available() >= 0)
     {
-        numa_run_on_node(numaNode);
-        numa_set_preferred(numaNode);
+        numa_run_on_node_mask((struct bitmask*)numaMask);
+        numa_set_interleave_mask((struct bitmask*)numaMask);
         numa_set_localalloc();
         return;
     }
-    x265_log(NULL, X265_LOG_ERROR, "unable to set thread affinity to NUMA node %d\n", numaNode);
+    x265_log(NULL, X265_LOG_ERROR, "unable to set thread affinity for NUMA node mask\n");
 #else
-    (void)numaNode;
+    (void)numaMask;
 #endif
+    return;
 }
 
 /* static */
