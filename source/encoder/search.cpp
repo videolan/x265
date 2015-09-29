@@ -1953,10 +1953,16 @@ void Search::processPME(PME& pme, Search& slave)
     /* Perform ME, repeat until no more work is available */
     do
     {
-        if (meId < m_slice->m_numRefIdx[0])
-            slave.singleMotionEstimation(*this, pme.mode, pme.pu, pme.puIdx, 0, meId);
+        if (meId < pme.m_jobs.refCnt[0])
+        {
+            int refIdx = pme.m_jobs.ref[0][meId]; //L0
+            slave.singleMotionEstimation(*this, pme.mode, pme.pu, pme.puIdx, 0, refIdx);
+        }
         else
-            slave.singleMotionEstimation(*this, pme.mode, pme.pu, pme.puIdx, 1, meId - m_slice->m_numRefIdx[0]);
+        {
+            int refIdx = pme.m_jobs.ref[1][meId - pme.m_jobs.refCnt[0]]; //L1
+            slave.singleMotionEstimation(*this, pme.mode, pme.pu, pme.puIdx, 1, refIdx);
+        }
 
         meId = -1;
         pme.m_lock.acquire();
@@ -2028,8 +2034,6 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
     const int* numRefIdx = slice->m_numRefIdx;
     uint32_t lastMode = 0;
     int      totalmebits = 0;
-    int      numME = numRefIdx[0] + numRefIdx[1];
-    bool     bTryDistributed = m_param->bDistributeMotionEstimation && numME > 2;
     MV       mvzero(0, 0);
     Yuv&     tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
 
@@ -2094,17 +2098,38 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
             }
             bDoUnidir = false;
         }
-        else if (bTryDistributed)
+        else if (m_param->bDistributeMotionEstimation)
         {
             PME pme(*this, interMode, cuGeom, pu, puIdx);
-            pme.m_jobTotal = numME;
-            pme.m_jobAcquired = 1; /* reserve L0-0 */
+            pme.m_jobTotal = 0;
+            pme.m_jobAcquired = 1; /* reserve L0-0 or L1-0 */
 
-            if (pme.tryBondPeers(*m_frame->m_encData->m_jobProvider, numME - 1))
+            uint32_t refMask = refMasks[puIdx] ? refMasks[puIdx] : (uint32_t)-1;
+            for (int list = 0; list < numPredDir; list++)
             {
+                int idx = 0;
+                for (int ref = 0; ref < numRefIdx[list]; ref++)
+                {
+                    if (!(refMask & (1 << ref)))
+                        continue;
+
+                    pme.m_jobs.ref[list][idx++]  = ref;
+                    pme.m_jobTotal++;
+                }
+                pme.m_jobs.refCnt[list] = idx;
+
+                /* the second list ref bits start at bit 16 */
+                refMask >>= 16;
+            }
+
+            if (pme.m_jobTotal > 2)
+            {
+                pme.tryBondPeers(*m_frame->m_encData->m_jobProvider, pme.m_jobTotal - 1);
+
                 processPME(pme, *this);
 
-                singleMotionEstimation(*this, interMode, pu, puIdx, 0, 0); /* L0-0 */
+                int ref = pme.m_jobs.refCnt[0] ? pme.m_jobs.ref[0][0] : pme.m_jobs.ref[1][0];
+                singleMotionEstimation(*this, interMode, pu, puIdx, 0, ref); /* L0-0 or L1-0 */
 
                 bDoUnidir = false;
 

@@ -369,6 +369,11 @@ public:
         const PredictionUnit& pu;
         int           puIdx;
 
+        struct {
+            int ref[2][MAX_NUM_REF];
+            int refCnt[2];
+        } m_jobs;
+
         PME(Search& s, Mode& m, const CUGeom& g, const PredictionUnit& u, int p) : master(s), mode(m), cuGeom(g), pu(u), puIdx(p) {}
 
         void processTasks(int workerThreadId);
