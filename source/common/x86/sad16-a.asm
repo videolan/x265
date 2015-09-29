@@ -413,66 +413,38 @@ SAD  16, 16
 SAD  16, 32
 
 INIT_YMM avx2
-cglobal pixel_sad_16x64, 4,7,4
+cglobal pixel_sad_16x64, 4,5,5
     pxor    m0, m0
-    pxor    m3, m3
-    mov     r4d, 64 / 8
-    add     r3d, r3d
-    add     r1d, r1d
-    lea     r5,     [r1 * 3]
-    lea     r6,     [r3 * 3]
+    mov     r4d, 16
+    mova    m4, [pw_1]
 .loop:
     movu    m1, [r2]
-    movu    m2, [r2 + r3]
+    movu    m2, [r2 + r3 * 2]
     psubw   m1, [r0]
-    psubw   m2, [r0 + r1]
+    psubw   m2, [r0 + r1 * 2]
     pabsw   m1, m1
     pabsw   m2, m2
-    paddw   m0, m1
-    paddw   m3, m2
-
-    movu    m1, [r2 + 2 * r3]
-    movu    m2, [r2 + r6]
-    psubw   m1, [r0 + 2 * r1]
-    psubw   m2, [r0 + r5]
-    pabsw   m1, m1
-    pabsw   m2, m2
-    paddw   m0, m1
-    paddw   m3, m2
-
+    paddw   m3, m1, m2
     lea     r0, [r0 + 4 * r1]
     lea     r2, [r2 + 4 * r3]
 
     movu    m1, [r2]
-    movu    m2, [r2 + r3]
+    movu    m2, [r2 + r3 * 2]
     psubw   m1, [r0]
-    psubw   m2, [r0 + r1]
+    psubw   m2, [r0 + r1 * 2]
     pabsw   m1, m1
     pabsw   m2, m2
-    paddw   m0, m1
-    paddw   m3, m2
-
-    movu    m1, [r2 + 2 * r3]
-    movu    m2, [r2 + r6]
-    psubw   m1, [r0 + 2 * r1]
-    psubw   m2, [r0 + r5]
-    pabsw   m1, m1
-    pabsw   m2, m2
-    paddw   m0, m1
-    paddw   m3, m2
-
-    lea     r0, [r0 + 4 * r1]
-    lea     r2, [r2 + 4 * r3]
-
-    dec    r4d
-    jg .loop
-
-    HADDUWD m0, m1
-    HADDUWD m3, m1
-    HADDD   m0, m1
-    HADDD   m3, m1
+    paddw   m1, m2
+    pmaddwd m3, m4
     paddd   m0, m3
+    pmaddwd m1, m4
+    paddd   m0, m1
+    lea     r0, [r0+4*r1]
+    lea     r2, [r2+4*r3]
+    dec     r4d
+    jg      .loop
 
+    HADDD   m0, m1
     movd    eax, xm0
     RET
 

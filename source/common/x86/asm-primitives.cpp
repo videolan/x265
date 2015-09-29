@@ -1624,8 +1624,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_16x12].sad = PFX(pixel_sad_16x12_avx2);
         p.pu[LUMA_16x16].sad = PFX(pixel_sad_16x16_avx2);
         p.pu[LUMA_16x32].sad = PFX(pixel_sad_16x32_avx2);
-#if X265_DEPTH <= 10
         p.pu[LUMA_16x64].sad = PFX(pixel_sad_16x64_avx2);
+#if X265_DEPTH <= 10
         p.pu[LUMA_32x8].sad = PFX(pixel_sad_32x8_avx2);
         p.pu[LUMA_32x16].sad = PFX(pixel_sad_32x16_avx2);
         p.pu[LUMA_32x24].sad = PFX(pixel_sad_32x24_avx2);
