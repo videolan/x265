@@ -813,9 +813,10 @@ cglobal pixel_sad_48x64, 4, 5, 7
     RET
 
 INIT_YMM avx2
-cglobal pixel_sad_64x16, 4, 5, 5
+cglobal pixel_sad_64x16, 4, 5, 7
     pxor    m0, m0
     mov     r4d, 16 / 2
+    mova    m6, [pw_1]
     add     r3d, r3d
     add     r1d, r1d
 .loop:
@@ -833,8 +834,8 @@ cglobal pixel_sad_64x16, 4, 5, 5
     pabsw   m4, m4
     paddw   m1, m2
     paddw   m3, m4
-    paddw   m0, m1
-    paddw   m0, m3
+    paddw   m5, m1, m3
+
     movu    m1, [r2 + r3]
     movu    m2, [r2 + r3 + 32]
     movu    m3, [r2 + r3 + 64]
@@ -849,24 +850,28 @@ cglobal pixel_sad_64x16, 4, 5, 5
     pabsw   m4, m4
     paddw   m1, m2
     paddw   m3, m4
-    paddw   m0, m1
-    paddw   m0, m3
+    paddw   m1, m3
+
+    pmaddwd m5, m6
+    paddd   m0, m5
+    pmaddwd m1, m6
+    paddd   m0, m1
+
     lea     r0, [r0 + 2 * r1]
     lea     r2, [r2 + 2 * r3]
 
-    dec    r4d
-    jg     .loop
+    dec     r4d
+    jg      .loop
 
-    HADDUWD m0, m1
     HADDD   m0, m1
     movd    eax, xm0
     RET
 
 INIT_YMM avx2
-cglobal pixel_sad_64x32, 4, 5, 6
+cglobal pixel_sad_64x32, 4, 5, 7
     pxor    m0, m0
-    pxor    m5, m5
     mov     r4d, 32 / 2
+    mova    m6, [pw_1]
     add     r3d, r3d
     add     r1d, r1d
 .loop:
@@ -884,8 +889,7 @@ cglobal pixel_sad_64x32, 4, 5, 6
     pabsw   m4, m4
     paddw   m1, m2
     paddw   m3, m4
-    paddw   m0, m1
-    paddw   m5, m3
+    paddw   m5, m1, m3
 
     movu    m1, [r2 + r3]
     movu    m2, [r2 + r3 + 32]
@@ -901,29 +905,27 @@ cglobal pixel_sad_64x32, 4, 5, 6
     pabsw   m4, m4
     paddw   m1, m2
     paddw   m3, m4
-    paddw   m0, m1
-    paddw   m5, m3
+    paddw   m1, m3
+
+    pmaddwd m5, m6
+    paddd   m0, m5
+    pmaddwd m1, m6
+    paddd   m0, m1
     lea     r0, [r0 + 2 * r1]
     lea     r2, [r2 + 2 * r3]
 
-    dec    r4d
-    jg     .loop
+    dec     r4d
+    jg      .loop
 
-    HADDUWD m0, m1
-    HADDUWD m5, m1
-    paddd   m0, m5
     HADDD   m0, m1
-    
     movd    eax, xm0
     RET
 
 INIT_YMM avx2
-cglobal pixel_sad_64x48, 4, 5, 8
+cglobal pixel_sad_64x48, 4, 5, 7
     pxor    m0, m0
-    pxor    m5, m5
-    pxor    m6, m6
-    pxor    m7, m7
     mov     r4d, 48 / 2
+    mova    m6, [pw_1]
     add     r3d, r3d
     add     r1d, r1d
 .loop:
@@ -939,10 +941,9 @@ cglobal pixel_sad_64x48, 4, 5, 8
     pabsw   m2, m2
     pabsw   m3, m3
     pabsw   m4, m4
-    paddw   m0, m1
-    paddw   m5, m2
-    paddw   m6, m3
-    paddw   m7, m4
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m5, m1, m3
 
     movu    m1, [r2 + r3]
     movu    m2, [r2 + r3 + 32]
@@ -956,35 +957,30 @@ cglobal pixel_sad_64x48, 4, 5, 8
     pabsw   m2, m2
     pabsw   m3, m3
     pabsw   m4, m4
-    paddw   m0, m1
-    paddw   m5, m2
-    paddw   m6, m3
-    paddw   m7, m4
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m1, m3
+
+    pmaddwd m5, m6
+    paddd   m0, m5
+    pmaddwd m1, m6
+    paddd   m0, m1
 
     lea     r0, [r0 + 2 * r1]
     lea     r2, [r2 + 2 * r3]
 
-    dec    r4d
-    jg     .loop
+    dec     r4d
+    jg      .loop
 
-    HADDUWD m0, m1
-    HADDUWD m5, m1
-    HADDUWD m6, m1
-    HADDUWD m7, m1
-    paddd   m0, m5
-    paddd   m0, m6
-    paddd   m0, m7
     HADDD   m0, m1
     movd    eax, xm0
     RET
 
 INIT_YMM avx2
-cglobal pixel_sad_64x64, 4, 5, 8
+cglobal pixel_sad_64x64, 4, 5, 7
     pxor    m0, m0
-    pxor    m5, m5
-    pxor    m6, m6
-    pxor    m7, m7
     mov     r4d, 64 / 2
+    mova    m6, [pw_1]
     add     r3d, r3d
     add     r1d, r1d
 .loop:
@@ -1000,10 +996,9 @@ cglobal pixel_sad_64x64, 4, 5, 8
     pabsw   m2, m2
     pabsw   m3, m3
     pabsw   m4, m4
-    paddw   m0, m1
-    paddw   m5, m2
-    paddw   m6, m3
-    paddw   m7, m4
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m5, m1, m3
 
     movu    m1, [r2 + r3]
     movu    m2, [r2 + r3 + 32]
@@ -1017,25 +1012,22 @@ cglobal pixel_sad_64x64, 4, 5, 8
     pabsw   m2, m2
     pabsw   m3, m3
     pabsw   m4, m4
-    paddw   m0, m1
-    paddw   m5, m2
-    paddw   m6, m3
-    paddw   m7, m4
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m1, m3
+
+    pmaddwd m5, m6
+    paddd   m0, m5
+    pmaddwd m1, m6
+    paddd   m0, m1
 
     lea     r0, [r0 + 2 * r1]
     lea     r2, [r2 + 2 * r3]
 
-    dec    r4d
-    jg     .loop
+    dec     r4d
+    jg      .loop
 
-    HADDUWD m0, m1
-    HADDUWD m5, m1
-    HADDUWD m6, m1
-    HADDUWD m7, m1
-    paddd   m0, m5
-    paddd   m0, m6
-    paddd   m0, m7
-    HADDD   m0, m1    
+    HADDD   m0, m1
     movd    eax, xm0
     RET
 
