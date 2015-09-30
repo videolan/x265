@@ -107,8 +107,8 @@ bool PixelHarness::check_pixel_sse(pixel_sse_t ref, pixel_sse_t opt)
     {
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        sse_ret_t vres = (sse_ret_t)checked(opt, pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
-        sse_ret_t cres = ref(pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
+        sse_t vres = (sse_t)checked(opt, pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
+        sse_t cres = ref(pixel_test_buff[index1], stride, pixel_test_buff[index2] + j, stride);
         if (vres != cres)
             return false;
 
@@ -128,8 +128,8 @@ bool PixelHarness::check_pixel_sse_ss(pixel_sse_ss_t ref, pixel_sse_ss_t opt)
     {
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        sse_ret_t vres = (sse_ret_t)checked(opt, residual_test_buff[index1], stride, residual_test_buff[index2] + j, stride);
-        sse_ret_t cres = ref(residual_test_buff[index1], stride, residual_test_buff[index2] + j, stride);
+        sse_t vres = (sse_t)checked(opt, residual_test_buff[index1], stride, residual_test_buff[index2] + j, stride);
+        sse_t cres = ref(residual_test_buff[index1], stride, residual_test_buff[index2] + j, stride);
         if (vres != cres)
             return false;
 

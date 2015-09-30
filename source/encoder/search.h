@@ -106,17 +106,17 @@ struct Mode
     // temporal candidate.
     InterNeighbourMV interNeighbours[6];
 
-    uint64_t   rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
-    uint64_t   sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
-    uint32_t   sa8dBits;   // signal bits used in sa8dCost calculation
-    uint32_t   psyEnergy;  // sum of partition psycho-visual energy difference
-    sse_ret_t  resEnergy;  // sum of partition residual energy after motion prediction
-    sse_ret_t  lumaDistortion;
-    sse_ret_t  chromaDistortion;
-    sse_ret_t  distortion; // sum of partition SSE distortion
-    uint32_t   totalBits;  // sum of partition bits (mv + coeff)
-    uint32_t   mvBits;     // Mv bits + Ref + block type (or intra mode)
-    uint32_t   coeffBits;  // Texture bits (DCT Coeffs)
+    uint64_t    rdCost;     // sum of partition (psy) RD costs          (sse(fenc, recon) + lambda2 * bits)
+    uint64_t    sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
+    uint32_t    sa8dBits;   // signal bits used in sa8dCost calculation
+    uint32_t    psyEnergy;  // sum of partition psycho-visual energy difference
+    sse_t   resEnergy;  // sum of partition residual energy after motion prediction
+    sse_t   lumaDistortion;
+    sse_t   chromaDistortion;
+    sse_t  distortion; // sum of partition SSE distortion
+    uint32_t    totalBits;  // sum of partition bits (mv + coeff)
+    uint32_t    mvBits;     // Mv bits + Ref + block type (or intra mode)
+    uint32_t    coeffBits;  // Texture bits (DCT Coeffs)
 
     void initCosts()
     {
@@ -351,10 +351,10 @@ protected:
     void     saveResidualQTData(CUData& cu, ShortYuv& resiYuv, uint32_t absPartIdx, uint32_t tuDepth);
 
     // RDO search of luma intra modes; result is fully encoded luma. luma distortion is returned
-    uint32_t estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2]);
+    sse_t estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2]);
 
     // RDO select best chroma mode from luma; result is fully encode chroma. chroma distortion is returned
-    uint32_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
+    sse_t estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom);
 
     void     codeSubdivCbfQTChroma(const CUData& cu, uint32_t tuDepth, uint32_t absPartIdx);
     void     codeInterSubdivCbfQT(CUData& cu, uint32_t absPartIdx, const uint32_t tuDepth, const uint32_t depthRange[2]);
@@ -364,12 +364,12 @@ protected:
     {
         uint64_t rdcost;
         uint32_t bits;
-        sse_ret_t distortion;
+        sse_t distortion;
         uint32_t energy;
         Cost() { rdcost = 0; bits = 0; distortion = 0; energy = 0; }
     };
 
-    uint64_t estimateNullCbfCost(uint32_t &dist, uint32_t &psyEnergy, uint32_t tuDepth, TextType compId);
+    uint64_t estimateNullCbfCost(sse_t &dist, uint32_t &psyEnergy, uint32_t tuDepth, TextType compId);
     void     estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& costs, const uint32_t depthRange[2]);
 
     // generate prediction, generate residual and recon. if bAllowSplit, find optimal RQT splits
@@ -378,8 +378,8 @@ protected:
     void     extractIntraResultQT(CUData& cu, Yuv& reconYuv, uint32_t tuDepth, uint32_t absPartIdx);
 
     // generate chroma prediction, generate residual and recon
-    uint32_t codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, uint32_t& psyEnergy);
-    uint32_t codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t tuDepthC, uint32_t absPartIdx, uint32_t& psyEnergy);
+    sse_t codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, uint32_t& psyEnergy);
+    sse_t codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t tuDepthC, uint32_t absPartIdx, uint32_t& psyEnergy);
     void     extractIntraResultChromaQT(CUData& cu, Yuv& reconYuv, uint32_t absPartIdx, uint32_t tuDepth);
 
     // reshuffle CBF flags after coding a pair of 4:2:2 chroma blocks

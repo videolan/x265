@@ -118,9 +118,9 @@ void sad_x4(const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel
 }
 
 template<int lx, int ly, class T1, class T2>
-sse_ret_t sse(const T1* pix1, intptr_t stride_pix1, const T2* pix2, intptr_t stride_pix2)
+sse_t sse(const T1* pix1, intptr_t stride_pix1, const T2* pix2, intptr_t stride_pix2)
 {
-    sse_ret_t sum = 0;
+    sse_t sum = 0;
     int tmp;
 
     for (int y = 0; y < ly; y++)
