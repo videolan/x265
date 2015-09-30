@@ -133,62 +133,8 @@ struct Mode
         coeffBits = 0;
     }
 
-    void invalidate()
-    {
-        /* set costs to invalid data, catch uninitialized re-use */
-        rdCost = UINT64_MAX / 2;
-        sa8dCost = UINT64_MAX / 2;
-        sa8dBits = MAX_UINT / 2;
-        psyEnergy = MAX_UINT / 2;
-#if X265_DEPTH <= 10
-        resEnergy = MAX_UINT / 2;
-        lumaDistortion = MAX_UINT / 2;
-        chromaDistortion = MAX_UINT / 2;
-        distortion = MAX_UINT / 2;
-#else
-        resEnergy = UINT64_MAX / 2;
-        lumaDistortion = UINT64_MAX / 2;
-        chromaDistortion = UINT64_MAX / 2;
-        distortion = UINT64_MAX / 2;
-#endif
-        totalBits = MAX_UINT / 2;
-        mvBits = MAX_UINT / 2;
-        coeffBits = MAX_UINT / 2;
-    }
-
-    bool ok() const
-    {
-#if X265_DEPTH <= 10
-        return !(rdCost >= UINT64_MAX / 2 ||
-            sa8dCost >= UINT64_MAX / 2 ||
-            sa8dBits >= MAX_UINT / 2 ||
-            psyEnergy >= MAX_UINT / 2 ||
-            resEnergy >= MAX_UINT / 2 ||
-            lumaDistortion >= MAX_UINT / 2 ||
-            chromaDistortion >= MAX_UINT / 2 ||
-            distortion >= MAX_UINT / 2 ||
-            totalBits >= MAX_UINT / 2 ||
-            mvBits >= MAX_UINT / 2 ||
-            coeffBits >= MAX_UINT / 2);
-#else
-        return !(rdCost >= UINT64_MAX / 2 ||
-                 sa8dCost >= UINT64_MAX / 2 ||
-                 sa8dBits >= MAX_UINT / 2 ||
-                 psyEnergy >= MAX_UINT / 2 ||
-                 resEnergy >= UINT64_MAX / 2 ||
-                 lumaDistortion >= UINT64_MAX / 2 ||
-                 chromaDistortion >= UINT64_MAX / 2 ||
-                 distortion >= UINT64_MAX / 2 ||
-                 totalBits >= MAX_UINT / 2 ||
-                 mvBits >= MAX_UINT / 2 ||
-                 coeffBits >= MAX_UINT / 2);
-#endif
-    }
-
     void addSubCosts(const Mode& subMode)
     {
-        X265_CHECK(subMode.ok(), "sub-mode not initialized");
-
         rdCost += subMode.rdCost;
         sa8dCost += subMode.sa8dCost;
         sa8dBits += subMode.sa8dBits;

@@ -1365,7 +1365,6 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     intraMode.distortion = bsad;
     intraMode.sa8dCost = bcost;
     intraMode.sa8dBits = bbits;
-    X265_CHECK(intraMode.ok(), "intra mode is not ok");
 }
 
 void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
@@ -2383,7 +2382,6 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
 
         motionCompensation(cu, pu, *predYuv, true, bChromaMC);
     }
-    X265_CHECK(interMode.ok(), "inter mode is not ok");
     interMode.sa8dBits += totalmebits;
 }
 
