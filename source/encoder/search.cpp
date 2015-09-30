@@ -2133,6 +2133,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 refMask >>= 16;
             }
 
+
+
             if (pme.m_jobTotal > 2)
             {
                 pme.tryBondPeers(*m_frame->m_encData->m_jobProvider, pme.m_jobTotal - 1);

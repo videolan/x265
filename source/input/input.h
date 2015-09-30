@@ -79,6 +79,10 @@ public:
     virtual bool isFail() = 0;
 
     virtual const char *getName() const = 0;
+
+    virtual int getWidth() const = 0;
+
+    virtual int getHeight() const = 0;
 };
 }
 

@@ -88,6 +88,10 @@ public:
     bool readPicture(x265_picture&);
 
     const char *getName() const   { return "y4m"; }
+
+    int getWidth() const                          { return width; }
+
+    int getHeight() const                         { return height; }
 };
 }
 
