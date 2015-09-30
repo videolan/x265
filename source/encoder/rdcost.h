@@ -118,6 +118,15 @@ public:
     /* return the RD cost of this prediction, including the effect of psy-rd */
     inline uint64_t calcPsyRdCost(sse_ret_t distortion, uint32_t bits, uint32_t psycost) const
     {
+#if X265_DEPTH < 10
+        X265_CHECK((bits <= (UINT64_MAX / m_lambda2)) && (psycost <= UINT64_MAX / (m_lambda * m_psyRd)),
+                   "calcPsyRdCost wrap detected dist: %u, bits: %u, lambda: " X265_LL ", lambda2: " X265_LL "\n",
+                   distortion, bits, m_lambda, m_lambda2);
+#else
+        X265_CHECK((bits <= (UINT64_MAX / m_lambda2)) && (psycost <= UINT64_MAX / (m_lambda * m_psyRd)),
+                   "calcPsyRdCost wrap detected dist: " X265_LL ", bits: %u, lambda: " X265_LL ", lambda2: " X265_LL "\n",
+                   distortion, bits, m_lambda, m_lambda2);
+#endif
         return distortion + ((m_lambda * m_psyRd * psycost) >> 24) + ((bits * m_lambda2) >> 8);
     }
 
@@ -144,6 +153,8 @@ public:
 
     inline uint32_t getCost(uint32_t bits) const
     {
+        X265_CHECK(bits <= (UINT64_MAX - 128) / m_lambda,
+                   "getCost wrap detected bits: %u, lambda: " X265_LL "\n", bits, m_lambda);
         return (uint32_t)((bits * m_lambda + 128) >> 8);
     }
 };
