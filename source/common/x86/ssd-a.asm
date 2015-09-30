@@ -1039,6 +1039,172 @@ SSD_SS_24
 SSD_SS_32xN
 SSD_SS_48
 SSD_SS_64xN
+
+INIT_YMM avx2
+cglobal pixel_ssd_ss_16x16, 4,6,4
+    add         r1d, r1d
+    add         r3d, r3d
+    pxor        m2, m2
+    pxor        m3, m3
+    lea         r4, [3 * r1]
+    lea         r5, [3 * r3]
+
+    movu        m0, [r0]
+    movu        m1, [r0 + r1]
+    psubw       m0, [r2]
+    psubw       m1, [r2 + r3]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+
+    movu        m0, [r0 + 2 * r1]
+    movu        m1, [r0 + r4]
+    psubw       m0, [r2 + 2 * r3]
+    psubw       m1, [r2 + r5]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+
+    lea         r0, [r0 + 4 * r1]
+    lea         r2, [r2 + 4 * r3]
+
+    movu        m0, [r0]
+    movu        m1, [r0 + r1]
+    psubw       m0, [r2]
+    psubw       m1, [r2 + r3]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+
+    movu        m0, [r0 + 2 * r1]
+    movu        m1, [r0 + r4]
+    psubw       m0, [r2 + 2 * r3]
+    psubw       m1, [r2 + r5]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+
+    lea         r0, [r0 + 4 * r1]
+    lea         r2, [r2 + 4 * r3]
+
+    movu        m0, [r0]
+    movu        m1, [r0 + r1]
+    psubw       m0, [r2]
+    psubw       m1, [r2 + r3]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+
+    movu        m0, [r0 + 2 * r1]
+    movu        m1, [r0 + r4]
+    psubw       m0, [r2 + 2 * r3]
+    psubw       m1, [r2 + r5]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+
+    lea         r0, [r0 + 4 * r1]
+    lea         r2, [r2 + 4 * r3]
+
+    movu        m0, [r0]
+    movu        m1, [r0 + r1]
+    psubw       m0, [r2]
+    psubw       m1, [r2 + r3]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+
+    movu        m0, [r0 + 2 * r1]
+    movu        m1, [r0 + r4]
+    psubw       m0, [r2 + 2 * r3]
+    psubw       m1, [r2 + r5]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+
+    paddd       m2, m3
+    HADDD       m2, m0
+    movd        eax, xm2
+    RET
+
+INIT_YMM avx2
+cglobal pixel_ssd_ss_32x32, 4,5,4
+    add         r1d, r1d
+    add         r3d, r3d
+    pxor        m2, m2
+    pxor        m3, m3
+    mov         r4d, 16
+.loop:
+    movu        m0, [r0]
+    movu        m1, [r0 + mmsize] 
+    psubw       m0, [r2]
+    psubw       m1, [r2 + mmsize]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+    movu        m0, [r0 + r1]
+    movu        m1, [r0 + r1 + mmsize]
+    psubw       m0, [r2 + r3]
+    psubw       m1, [r2 + r3 + mmsize]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+    lea         r0, [r0 + 2 * r1]
+    lea         r2, [r2 + 2 * r3]
+    dec         r4d
+    jne         .loop
+
+    paddd       m2, m3
+    HADDD       m2, m0
+    movd        eax, xm2
+    RET
+
+INIT_YMM avx2
+cglobal pixel_ssd_ss_64x64, 4,5,4
+    add         r1d, r1d
+    add         r3d, r3d
+    pxor        m2, m2
+    pxor        m3, m3
+    mov         r4d,64
+.loop:
+    movu        m0, [r0]
+    movu        m1, [r0 + mmsize]
+    psubw       m0, [r2]
+    psubw       m1, [r2 + mmsize]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+    movu        m0, [r0 + 2 * mmsize]
+    movu        m1, [r0 + 3 * mmsize]
+    psubw       m0, [r2 + 2 * mmsize]
+    psubw       m1, [r2 + 3 * mmsize]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m2, m0
+    paddd       m3, m1
+
+    add         r0, r1
+    add         r2, r3
+
+    dec         r4d
+    jne         .loop
+
+    paddd       m2, m3
+    HADDD       m2, m0
+    movd        eax, xm2
+    RET
+
 %endif ; !HIGH_BIT_DEPTH
 
 %if HIGH_BIT_DEPTH == 0
