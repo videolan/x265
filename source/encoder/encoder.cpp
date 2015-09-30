@@ -692,7 +692,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (m_aborted)
                 return -1;
 
-            finishFrameStats(outFrame, curEncoder, curEncoder->m_accessUnitBits, frameData);
+            finishFrameStats(outFrame, curEncoder, frameData);
 
             /* Write RateControl Frame level stats in multipass encodes */
             if (m_param->rc.bStatWrite)
@@ -1144,9 +1144,10 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
      * future safety) */
 }
 
-void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, uint64_t bits, x265_frame_stats* frameStats)
+void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_frame_stats* frameStats)
 {
     PicYuv* reconPic = curFrame->m_reconPic;
+    uint64_t bits = curEncoder->m_accessUnitBits;
 
     //===== calculate PSNR =====
     int width  = reconPic->m_picWidth - m_sps.conformanceWindow.rightOffset;
