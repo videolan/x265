@@ -1705,7 +1705,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = PFX(filterPixelToShort_32x48_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = PFX(filterPixelToShort_32x64_avx2);
 
-#if X265_DEPTH <= 10
         p.pu[LUMA_4x4].luma_hps = PFX(interp_8tap_horiz_ps_4x4_avx2);
         p.pu[LUMA_4x8].luma_hps = PFX(interp_8tap_horiz_ps_4x8_avx2);
         p.pu[LUMA_4x16].luma_hps = PFX(interp_8tap_horiz_ps_4x16_avx2);
@@ -1731,7 +1730,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_48x64].luma_hps = PFX(interp_8tap_horiz_ps_48x64_avx2);
         p.pu[LUMA_24x32].luma_hps = PFX(interp_8tap_horiz_ps_24x32_avx2);
         p.pu[LUMA_12x16].luma_hps = PFX(interp_8tap_horiz_ps_12x16_avx2);
-#endif
 
         p.pu[LUMA_4x4].luma_hpp = PFX(interp_8tap_horiz_pp_4x4_avx2);
         p.pu[LUMA_4x8].luma_hpp = PFX(interp_8tap_horiz_pp_4x8_avx2);

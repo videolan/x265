@@ -10342,8 +10342,8 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,8,7
     vpermd                      m3,                m5,                  m3
     paddd                       m3,                m2
     vextracti128                xm4,               m3,                  1
-    psrad                       xm3,               2
-    psrad                       xm4,               2
+    psrad                       xm3,               INTERP_SHIFT_PS
+    psrad                       xm4,               INTERP_SHIFT_PS
     packssdw                    xm3,               xm3
     packssdw                    xm4,               xm4
 
@@ -10375,8 +10375,8 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,8,7
     vpermd                      m3,                m5,                  m3
     paddd                       m3,                m2
     vextracti128                xm4,               m3,                  1
-    psrad                       xm3,               2
-    psrad                       xm4,               2
+    psrad                       xm3,               INTERP_SHIFT_PS
+    psrad                       xm4,               INTERP_SHIFT_PS
     packssdw                    xm3,               xm3
     packssdw                    xm4,               xm4
 
@@ -10441,8 +10441,8 @@ cglobal interp_8tap_horiz_ps_8x%1, 4, 6, 8
     vpermq              m4, m4, q3120
     paddd               m4, m2
     vextracti128        xm5,m4, 1
-    psrad               xm4, 2
-    psrad               xm5, 2
+    psrad               xm4, INTERP_SHIFT_PS
+    psrad               xm5, INTERP_SHIFT_PS
     packssdw            xm4, xm5
 
     movu                [r2], xm4
@@ -10511,8 +10511,8 @@ cglobal interp_8tap_horiz_ps_24x32, 4, 6, 8
     vpermq              m4, m4, q3120
     paddd               m4, m2
     vextracti128        xm5,m4, 1
-    psrad               xm4, 2
-    psrad               xm5, 2
+    psrad               xm4, INTERP_SHIFT_PS
+    psrad               xm5, INTERP_SHIFT_PS
     packssdw            xm4, xm5
 
     movu                [r2 + x], xm4
@@ -10583,8 +10583,8 @@ cglobal interp_8tap_horiz_ps_%1x%2, 4, 6, 8
     vpermq              m4, m4, q3120
     paddd               m4, m2
     vextracti128        xm5,m4, 1
-    psrad               xm4, 2
-    psrad               xm5, 2
+    psrad               xm4, INTERP_SHIFT_PS
+    psrad               xm5, INTERP_SHIFT_PS
     packssdw            xm4, xm5
 
     movu                [r2 + x], xm4
@@ -10609,8 +10609,8 @@ cglobal interp_8tap_horiz_ps_%1x%2, 4, 6, 8
     vpermq              m6, m6, q3120
     paddd               m6, m2
     vextracti128        xm5,m6, 1
-    psrad               xm6, 2
-    psrad               xm5, 2
+    psrad               xm6, INTERP_SHIFT_PS
+    psrad               xm5, INTERP_SHIFT_PS
     packssdw            xm6, xm5
 
     movu                [r2 + 16 + x], xm6
@@ -10690,8 +10690,8 @@ cglobal interp_8tap_horiz_ps_16x%1, 4, 6, 8
     vpermq              m4, m4, q3120
     paddd               m4, m2
     vextracti128        xm5, m4, 1
-    psrad               xm4, 2
-    psrad               xm5, 2
+    psrad               xm4, INTERP_SHIFT_PS
+    psrad               xm5, INTERP_SHIFT_PS
     packssdw            xm4, xm5
     movu                [r2], xm4
 
@@ -10713,8 +10713,8 @@ cglobal interp_8tap_horiz_ps_16x%1, 4, 6, 8
     vpermq              m6, m6, q3120
     paddd               m6, m2
     vextracti128        xm5,m6, 1
-    psrad               xm6, 2
-    psrad               xm5, 2
+    psrad               xm6, INTERP_SHIFT_PS
+    psrad               xm5, INTERP_SHIFT_PS
     packssdw            xm6, xm5
     movu                [r2 + 16], xm6
 
@@ -10783,8 +10783,8 @@ cglobal interp_8tap_horiz_ps_12x16, 4, 6, 8
     vpermq              m4, m4, q3120
     paddd               m4, m2
     vextracti128        xm5,m4, 1
-    psrad               xm4, 2
-    psrad               xm5, 2
+    psrad               xm4, INTERP_SHIFT_PS
+    psrad               xm5, INTERP_SHIFT_PS
     packssdw            xm4, xm5
     movu                [r2], xm4
 
@@ -10798,7 +10798,7 @@ cglobal interp_8tap_horiz_ps_12x16, 4, 6, 8
     phaddd              m6, m6
     vpermq              m6, m6, q3120
     paddd               xm6, xm2
-    psrad               xm6, 2
+    psrad               xm6, INTERP_SHIFT_PS
     packssdw            xm6, xm6
     movq                [r2 + 16], xm6
 
