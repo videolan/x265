@@ -10847,7 +10847,7 @@ cglobal interp_4tap_horiz_ps_8x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2], xm4
@@ -10906,7 +10906,7 @@ cglobal interp_4tap_horiz_ps_16x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2], xm4
@@ -10920,7 +10920,7 @@ cglobal interp_4tap_horiz_ps_16x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 16], xm4
@@ -10979,7 +10979,7 @@ cglobal interp_4tap_horiz_ps_24x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2], xm4
@@ -10993,7 +10993,7 @@ cglobal interp_4tap_horiz_ps_24x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 16], xm4
@@ -11007,7 +11007,7 @@ cglobal interp_4tap_horiz_ps_24x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 32], xm4
@@ -11061,7 +11061,7 @@ cglobal interp_4tap_horiz_ps_12x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2], xm4
@@ -11072,7 +11072,7 @@ cglobal interp_4tap_horiz_ps_12x%1, 4, 7, 6
     phaddd              m4, m4
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movq                [r2 + 16], xm4
@@ -11126,7 +11126,7 @@ cglobal interp_4tap_horiz_ps_32x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2], xm4
@@ -11140,7 +11140,7 @@ cglobal interp_4tap_horiz_ps_32x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 16], xm4
@@ -11154,7 +11154,7 @@ cglobal interp_4tap_horiz_ps_32x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 32], xm4
@@ -11168,7 +11168,7 @@ cglobal interp_4tap_horiz_ps_32x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 48], xm4
@@ -11227,7 +11227,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2], xm4
@@ -11241,7 +11241,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 16], xm4
@@ -11255,7 +11255,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 32], xm4
@@ -11269,7 +11269,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 48], xm4
@@ -11283,7 +11283,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 64], xm4
@@ -11297,7 +11297,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 80], xm4
@@ -11311,7 +11311,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 96], xm4
@@ -11325,7 +11325,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 112], xm4
@@ -11380,7 +11380,7 @@ cglobal interp_4tap_horiz_ps_48x64, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2], xm4
@@ -11394,7 +11394,7 @@ cglobal interp_4tap_horiz_ps_48x64, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 16], xm4
@@ -11408,7 +11408,7 @@ cglobal interp_4tap_horiz_ps_48x64, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 32], xm4
@@ -11422,7 +11422,7 @@ cglobal interp_4tap_horiz_ps_48x64, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 48], xm4
@@ -11436,7 +11436,7 @@ cglobal interp_4tap_horiz_ps_48x64, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 64], xm4
@@ -11450,7 +11450,7 @@ cglobal interp_4tap_horiz_ps_48x64, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movu                [r2 + 80], xm4
@@ -11500,7 +11500,7 @@ cglobal interp_4tap_horiz_ps_6x%1, 4, 7, 6
     phaddd              m4, m5
     paddd               m4, m2
     vpermq              m4, m4, q3120
-    psrad               m4, 2
+    psrad               m4, INTERP_SHIFT_PS
     vextracti128        xm5, m4, 1
     packssdw            xm4, xm5
     movq                [r2], xm4
