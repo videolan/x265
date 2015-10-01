@@ -1578,8 +1578,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             rce->qpNoVbv = x265_qScale2qp(q);
             q = clipQscale(curFrame, rce, q);
             /*  clip qp to permissible range after vbv-lookahead estimation to avoid possible
-             * mispredictions by initial frame size predictors */
-            if (!m_2pass && m_isVbv && m_pred[m_predType].count == 1)
+             * mispredictions by initial frame size predictors, after each scenecut */
+            bool isFrameAfterScenecut = m_sliceType!= I_SLICE && m_curSlice->m_refPicList[0][0]->m_lowres.bScenecut;
+            if (!m_2pass && m_isVbv && isFrameAfterScenecut)
                 q = x265_clip3(lqmin, lqmax, q);
         }
         m_lastQScaleFor[m_sliceType] = q;
