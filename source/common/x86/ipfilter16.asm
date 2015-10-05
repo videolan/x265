@@ -4869,7 +4869,7 @@ cglobal interp_4tap_vert_%2_6x%1, 4, 7, 10
 %ifidn %2,pp
     vbroadcasti128  m8, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova            m8, [INTERP_OFFSET_SP]
+    vbroadcasti128  m8, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m8, [INTERP_OFFSET_PS]
 %endif
@@ -5011,11 +5011,11 @@ cglobal interp_4tap_vert_%2_16x%1, 5, 6, %3
     mov       r4d, %1/2
 
 %ifidn %2, pp
-    mova      m7, [INTERP_OFFSET_PP]
+    vbroadcasti128  m7, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova      m7, [INTERP_OFFSET_SP]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %elifidn %2, ps
-    mova      m7, [INTERP_OFFSET_PS]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5183,11 +5183,11 @@ cglobal interp_4tap_vert_%2_32x%1, 5, 7, %3
     mov       r4d, %1/2
 
 %ifidn %2, pp
-    mova      m7, [INTERP_OFFSET_PP]
+    vbroadcasti128  m7, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova      m7, [INTERP_OFFSET_SP]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %elifidn %2, ps
-    mova      m7, [INTERP_OFFSET_PS]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5325,11 +5325,11 @@ cglobal interp_4tap_vert_%2_64x%1, 5, 7, %3
     mov       r4d, %1/2
 
 %ifidn %2, pp
-    mova      m7, [INTERP_OFFSET_PP]
+    vbroadcasti128  m7, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova      m7, [INTERP_OFFSET_SP]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %elifidn %2, ps
-    mova      m7, [INTERP_OFFSET_PS]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5456,11 +5456,11 @@ cglobal interp_4tap_vert_%2_12x%1, 5, 8, %3
     mov       r4d, %1/2
 
 %ifidn %2, pp
-    mova      m7, [INTERP_OFFSET_PP]
+    vbroadcasti128  m7, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova      m7, [INTERP_OFFSET_SP]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %elifidn %2, ps
-    mova      m7, [INTERP_OFFSET_PS]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5609,11 +5609,11 @@ cglobal interp_4tap_vert_%2_24x%1, 5, 7, %3
     mov       r4d, %1/2
 
 %ifidn %2, pp
-    mova      m7, [INTERP_OFFSET_PP]
+    vbroadcasti128  m7, [INTERP_OFFSET_PP]
 %elifidn %2, sp
-    mova      m7, [INTERP_OFFSET_SP]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %elifidn %2, ps
-    mova      m7, [INTERP_OFFSET_PS]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -5732,11 +5732,11 @@ cglobal interp_4tap_vert_%1_48x64, 5, 7, %2
     mov       r4d, 32
 
 %ifidn %1, pp
-    mova      m7, [INTERP_OFFSET_PP]
+    vbroadcasti128  m7, [INTERP_OFFSET_PP]
 %elifidn %1, sp
-    mova      m7, [INTERP_OFFSET_SP]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %elifidn %1, ps
-    mova      m7, [INTERP_OFFSET_PS]
+    vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
 
 .loopH:
@@ -11537,7 +11537,7 @@ cglobal interp_4tap_vert_%1_8x%2, 4, 9, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [pd_524800]
+    vbroadcasti128  m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -11665,19 +11665,19 @@ cglobal interp_4tap_vert_%1_8x%2, 4, 9, 15
     psrad           m4, 6
     psrad           m5, 6
 %elifidn %1, sp
-    psrad           m0, 10
-    psrad           m1, 10
-    psrad           m2, 10
-    psrad           m3, 10
-    psrad           m4, 10
-    psrad           m5, 10
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
+    psrad           m2, INTERP_SHIFT_SP
+    psrad           m3, INTERP_SHIFT_SP
+    psrad           m4, INTERP_SHIFT_SP
+    psrad           m5, INTERP_SHIFT_SP
 %else
-    psrad           m0, 2
-    psrad           m1, 2
-    psrad           m2, 2
-    psrad           m3, 2
-    psrad           m4, 2
-    psrad           m5, 2
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
+    psrad           m2, INTERP_SHIFT_PS
+    psrad           m3, INTERP_SHIFT_PS
+    psrad           m4, INTERP_SHIFT_PS
+    psrad           m5, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -11736,11 +11736,11 @@ cglobal interp_4tap_vert_%1_8x%2, 4, 9, 15
     psrad           m6, 6
     psrad           m7, 6
 %elifidn %1, sp
-    psrad           m6, 10
-    psrad           m7, 10
+    psrad           m6, INTERP_SHIFT_SP
+    psrad           m7, INTERP_SHIFT_SP
 %else
-    psrad           m6, 2
-    psrad           m7, 2
+    psrad           m6, INTERP_SHIFT_PS
+    psrad           m7, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -11814,23 +11814,23 @@ cglobal interp_4tap_vert_%1_8x%2, 4, 9, 15
     psrad           m0, 6
     psrad           m1, 6
 %elifidn %1, sp
-    psrad           m8, 10
-    psrad           m9, 10
-    psrad           m10, 10
-    psrad           m11, 10
-    psrad           m12, 10
-    psrad           m13, 10
-    psrad           m0, 10
-    psrad           m1, 10
+    psrad           m8, INTERP_SHIFT_SP
+    psrad           m9, INTERP_SHIFT_SP
+    psrad           m10, INTERP_SHIFT_SP
+    psrad           m11, INTERP_SHIFT_SP
+    psrad           m12, INTERP_SHIFT_SP
+    psrad           m13, INTERP_SHIFT_SP
+    psrad           m0, INTERP_SHIFT_SP
+    psrad           m1, INTERP_SHIFT_SP
 %else
-    psrad           m8, 2
-    psrad           m9, 2
-    psrad           m10, 2
-    psrad           m11, 2
-    psrad           m12, 2
-    psrad           m13, 2
-    psrad           m0, 2
-    psrad           m1, 2
+    psrad           m8, INTERP_SHIFT_PS
+    psrad           m9, INTERP_SHIFT_PS
+    psrad           m10, INTERP_SHIFT_PS
+    psrad           m11, INTERP_SHIFT_PS
+    psrad           m12, INTERP_SHIFT_PS
+    psrad           m13, INTERP_SHIFT_PS
+    psrad           m0, INTERP_SHIFT_PS
+    psrad           m1, INTERP_SHIFT_PS
 %endif
 %endif
 
@@ -11954,7 +11954,7 @@ cglobal interp_4tap_vert_%1_8x2, 4, 6, 8
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [pd_524800]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -11966,8 +11966,8 @@ cglobal interp_4tap_vert_%1_8x2, 4, 6, 8
 %endmacro
 
 FILTER_VER_CHROMA_AVX2_8x2 pp, 1, 6
-FILTER_VER_CHROMA_AVX2_8x2 ps, 0, 2
-FILTER_VER_CHROMA_AVX2_8x2 sp, 1, 10
+FILTER_VER_CHROMA_AVX2_8x2 ps, 0, INTERP_SHIFT_PS
+FILTER_VER_CHROMA_AVX2_8x2 sp, 1, INTERP_SHIFT_SP
 FILTER_VER_CHROMA_AVX2_8x2 ss, 0, 6
 
 %macro FILTER_VER_CHROMA_AVX2_4x2 3
@@ -11991,7 +11991,7 @@ cglobal interp_4tap_vert_%1_4x2, 4, 6, 7
 %ifidn %1,pp
     vbroadcasti128  m6, [pd_32]
 %elifidn %1, sp
-    mova            m6, [pd_524800]
+    vbroadcasti128  m6, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m6, [INTERP_OFFSET_PS]
 %endif
@@ -12033,8 +12033,8 @@ cglobal interp_4tap_vert_%1_4x2, 4, 6, 7
 %endmacro
 
 FILTER_VER_CHROMA_AVX2_4x2 pp, 1, 6
-FILTER_VER_CHROMA_AVX2_4x2 ps, 0, 2
-FILTER_VER_CHROMA_AVX2_4x2 sp, 1, 10
+FILTER_VER_CHROMA_AVX2_4x2 ps, 0, INTERP_SHIFT_PS
+FILTER_VER_CHROMA_AVX2_4x2 sp, 1, INTERP_SHIFT_SP
 FILTER_VER_CHROMA_AVX2_4x2 ss, 0, 6
 
 %macro FILTER_VER_CHROMA_AVX2_4x4 3
@@ -12058,7 +12058,7 @@ cglobal interp_4tap_vert_%1_4x4, 4, 6, 7
 %ifidn %1,pp
    vbroadcasti128  m6, [pd_32]
 %elifidn %1, sp
-    mova            m6, [pd_524800]
+   vbroadcasti128  m6, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m6, [INTERP_OFFSET_PS]
 %endif
@@ -12112,8 +12112,8 @@ cglobal interp_4tap_vert_%1_4x4, 4, 6, 7
 %endmacro
 
 FILTER_VER_CHROMA_AVX2_4x4 pp, 1, 6
-FILTER_VER_CHROMA_AVX2_4x4 ps, 0, 2
-FILTER_VER_CHROMA_AVX2_4x4 sp, 1, 10
+FILTER_VER_CHROMA_AVX2_4x4 ps, 0, INTERP_SHIFT_PS
+FILTER_VER_CHROMA_AVX2_4x4 sp, 1, INTERP_SHIFT_SP
 FILTER_VER_CHROMA_AVX2_4x4 ss, 0, 6
 
 
@@ -12138,7 +12138,7 @@ cglobal interp_4tap_vert_%1_4x8, 4, 7, 8
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [pd_524800]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -12225,8 +12225,8 @@ cglobal interp_4tap_vert_%1_4x8, 4, 7, 8
 %endmacro
 
 FILTER_VER_CHROMA_AVX2_4x8 pp, 1, 6
-FILTER_VER_CHROMA_AVX2_4x8 ps, 0, 2
-FILTER_VER_CHROMA_AVX2_4x8 sp, 1, 10
+FILTER_VER_CHROMA_AVX2_4x8 ps, 0, INTERP_SHIFT_PS
+FILTER_VER_CHROMA_AVX2_4x8 sp, 1, INTERP_SHIFT_SP
 FILTER_VER_CHROMA_AVX2_4x8 ss, 0 , 6
 
 %macro PROCESS_LUMA_AVX2_W4_16R_4TAP 3
@@ -12396,7 +12396,7 @@ cglobal interp_4tap_vert_%1_4x%2, 4, 8, 8
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [pd_524800]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -12410,12 +12410,12 @@ cglobal interp_4tap_vert_%1_4x%2, 4, 8, 8
 %endmacro
 
 FILTER_VER_CHROMA_AVX2_4xN pp, 16, 1, 6
-FILTER_VER_CHROMA_AVX2_4xN ps, 16, 0, 2
-FILTER_VER_CHROMA_AVX2_4xN sp, 16, 1, 10
+FILTER_VER_CHROMA_AVX2_4xN ps, 16, 0, INTERP_SHIFT_PS
+FILTER_VER_CHROMA_AVX2_4xN sp, 16, 1, INTERP_SHIFT_SP
 FILTER_VER_CHROMA_AVX2_4xN ss, 16, 0, 6
 FILTER_VER_CHROMA_AVX2_4xN pp, 32, 1, 6
-FILTER_VER_CHROMA_AVX2_4xN ps, 32, 0, 2
-FILTER_VER_CHROMA_AVX2_4xN sp, 32, 1, 10
+FILTER_VER_CHROMA_AVX2_4xN ps, 32, 0, INTERP_SHIFT_PS
+FILTER_VER_CHROMA_AVX2_4xN sp, 32, 1, INTERP_SHIFT_SP
 FILTER_VER_CHROMA_AVX2_4xN ss, 32, 0, 6
 
 %macro FILTER_VER_CHROMA_AVX2_8x8 3
@@ -12429,7 +12429,7 @@ cglobal interp_4tap_vert_%1_8x8, 4, 6, 12
 
 %ifdef PIC
     lea             r5, [tab_ChromaCoeffVer]
-   add             r5, r4
+    add             r5, r4
 %else
     lea             r5, [tab_ChromaCoeffVer + r4]
 %endif
@@ -12440,7 +12440,7 @@ cglobal interp_4tap_vert_%1_8x8, 4, 6, 12
 %ifidn %1,pp
     vbroadcasti128  m11, [pd_32]
 %elifidn %1, sp
-    mova            m11, [pd_524800]
+    vbroadcasti128  m11, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m11, [INTERP_OFFSET_PS]
 %endif
@@ -12569,8 +12569,8 @@ cglobal interp_4tap_vert_%1_8x8, 4, 6, 12
 %endmacro
 
 FILTER_VER_CHROMA_AVX2_8x8 pp, 1, 6
-FILTER_VER_CHROMA_AVX2_8x8 ps, 0, 2
-FILTER_VER_CHROMA_AVX2_8x8 sp, 1, 10
+FILTER_VER_CHROMA_AVX2_8x8 ps, 0, INTERP_SHIFT_PS
+FILTER_VER_CHROMA_AVX2_8x8 sp, 1, INTERP_SHIFT_SP
 FILTER_VER_CHROMA_AVX2_8x8 ss, 0, 6
 
 %macro FILTER_VER_CHROMA_AVX2_8x6 3
@@ -12595,7 +12595,7 @@ cglobal interp_4tap_vert_%1_8x6, 4, 6, 12
 %ifidn %1,pp
     vbroadcasti128  m11, [pd_32]
 %elifidn %1, sp
-    mova            m11, [pd_524800]
+    vbroadcasti128  m11, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m11, [INTERP_OFFSET_PS]
 %endif
@@ -12700,8 +12700,8 @@ cglobal interp_4tap_vert_%1_8x6, 4, 6, 12
 %endmacro
 
 FILTER_VER_CHROMA_AVX2_8x6 pp, 1, 6
-FILTER_VER_CHROMA_AVX2_8x6 ps, 0, 2
-FILTER_VER_CHROMA_AVX2_8x6 sp, 1, 10
+FILTER_VER_CHROMA_AVX2_8x6 ps, 0, INTERP_SHIFT_PS
+FILTER_VER_CHROMA_AVX2_8x6 sp, 1, INTERP_SHIFT_SP
 FILTER_VER_CHROMA_AVX2_8x6 ss, 0, 6
 
 %macro PROCESS_CHROMA_AVX2 3
@@ -12785,7 +12785,7 @@ cglobal interp_4tap_vert_%1_8x4, 4, 6, 8
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [pd_524800]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -12799,8 +12799,8 @@ cglobal interp_4tap_vert_%1_8x4, 4, 6, 8
 %endmacro
 
 FILTER_VER_CHROMA_AVX2_8x4 pp, 1, 6
-FILTER_VER_CHROMA_AVX2_8x4 ps, 0, 2
-FILTER_VER_CHROMA_AVX2_8x4 sp, 1, 10
+FILTER_VER_CHROMA_AVX2_8x4 ps, 0, INTERP_SHIFT_PS
+FILTER_VER_CHROMA_AVX2_8x4 sp, 1, INTERP_SHIFT_SP
 FILTER_VER_CHROMA_AVX2_8x4 ss, 0, 6
 
 %macro FILTER_VER_CHROMA_AVX2_8x12 3
@@ -12824,7 +12824,7 @@ cglobal interp_4tap_vert_%1_8x12, 4, 7, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [pd_524800]
+    vbroadcasti128  m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -13002,6 +13002,6 @@ cglobal interp_4tap_vert_%1_8x12, 4, 7, 15
 %endmacro
 
 FILTER_VER_CHROMA_AVX2_8x12 pp, 1, 6
-FILTER_VER_CHROMA_AVX2_8x12 ps, 0, 2
-FILTER_VER_CHROMA_AVX2_8x12 sp, 1, 10
+FILTER_VER_CHROMA_AVX2_8x12 ps, 0, INTERP_SHIFT_PS
+FILTER_VER_CHROMA_AVX2_8x12 sp, 1, INTERP_SHIFT_SP
 FILTER_VER_CHROMA_AVX2_8x12 ss, 0, 6

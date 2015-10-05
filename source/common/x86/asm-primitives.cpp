@@ -1881,7 +1881,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_hpp = PFX(interp_4tap_horiz_pp_64x64_avx2);
         p.chroma[X265_CSP_I444].pu[LUMA_48x64].filter_hpp = PFX(interp_4tap_horiz_pp_48x64_avx2);
 
-#if X265_DEPTH <= 10
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x2].filter_vpp = PFX(interp_4tap_vert_pp_4x2_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x2].filter_vps = PFX(interp_4tap_vert_ps_4x2_avx2);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_4x2].filter_vsp = PFX(interp_4tap_vert_sp_4x2_avx2);
@@ -2161,7 +2160,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I444].pu[LUMA_64x32].filter_vsp = PFX(interp_4tap_vert_sp_64x32_avx2);
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_vsp = PFX(interp_4tap_vert_sp_64x48_avx2);
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_vsp = PFX(interp_4tap_vert_sp_64x64_avx2);
-#endif
 
         p.frameInitLowres = PFX(frame_init_lowres_core_avx2);
 
