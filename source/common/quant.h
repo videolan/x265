@@ -126,8 +126,8 @@ public:
         const uint32_t sigPos = (uint32_t)(sigCoeffGroupFlag64 >> (cgBlkPos + 1)); // just need lowest 7-bits valid
 
         // TODO: instruction BT is faster, but _bittest64 still generate instruction 'BT m, r' in VS2012
-        const uint32_t sigRight = ((uint32_t)(cgPosX - (trSizeCG - 1)) >> 31) & sigPos;
-        const uint32_t sigLower = ((uint32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 1));
+        const uint32_t sigRight = (cgPosX != (trSizeCG - 1)) & sigPos;
+        const uint32_t sigLower = (cgPosY != (trSizeCG - 1)) & (sigPos >> (trSizeCG - 1));
         return sigRight + sigLower * 2;
     }
 
@@ -137,8 +137,8 @@ public:
         X265_CHECK(cgBlkPos < 64, "cgBlkPos is too large\n");
         // NOTE: unsafe shift operator, see NOTE in calcPatternSigCtx
         const uint32_t sigPos = (uint32_t)(cgGroupMask >> (cgBlkPos + 1)); // just need lowest 8-bits valid
-        const uint32_t sigRight = ((uint32_t)(cgPosX - (trSizeCG - 1)) >> 31) & sigPos;
-        const uint32_t sigLower = ((uint32_t)(cgPosY - (trSizeCG - 1)) >> 31) & (sigPos >> (trSizeCG - 1));
+        const uint32_t sigRight = (cgPosX != (trSizeCG - 1)) & sigPos;
+        const uint32_t sigLower = (cgPosY != (trSizeCG - 1)) & (sigPos >> (trSizeCG - 1));
 
         return (sigRight | sigLower);
     }

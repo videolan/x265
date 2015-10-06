@@ -739,7 +739,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
         uint32_t ctxSet = (cgScanPos && bIsLuma) ? 2 : 0;
         const uint32_t cgBlkPos = codeParams.scanCG[cgScanPos];
         const uint32_t cgPosY   = cgBlkPos >> log2TrSizeCG;
-        const uint32_t cgPosX   = cgBlkPos - (cgPosY << log2TrSizeCG);
+        const uint32_t cgPosX   = cgBlkPos & ((1 << log2TrSizeCG) - 1);
         const uint64_t cgBlkPosMask = ((uint64_t)1 << cgBlkPos);
         const int patternSigCtx = calcPatternSigCtx(sigCoeffGroupFlag64, cgPosX, cgPosY, cgBlkPos, cgStride);
         const int ctxSigOffset = codeParams.firstSignificanceMapContext + (cgScanPos && bIsLuma ? 3 : 0);
