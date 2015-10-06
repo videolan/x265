@@ -52,7 +52,8 @@ int64_t x265_mdate(void)
 #endif
 }
 
-#define X265_ALIGNBYTES 32
+#define X265_ALIGNBYTES (32)
+#define PAGE_SIZE       (4096)
 
 #if _WIN32
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
@@ -63,7 +64,7 @@ int64_t x265_mdate(void)
 
 void *x265_malloc(size_t size)
 {
-    return _aligned_malloc(size, X265_ALIGNBYTES);
+    return _aligned_malloc(size, (size <= 2 * PAGE_SIZE ? X265_ALIGNBYTES : PAGE_SIZE));
 }
 
 void x265_free(void *ptr)
