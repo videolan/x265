@@ -705,8 +705,9 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     int endX;
     int endY;
 
-    int skipB = plane ? 2 : 4;
-    int skipR = plane ? 3 : 5;
+    const int plane_offset = plane ? 2 : 0;
+    int skipB = 4;
+    int skipR = 5;
 
     int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
     int8_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
@@ -715,12 +716,12 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     {
         if (m_param->bSaoNonDeblocked)
         {
-            skipB = plane ? 1 : 3;
-            skipR = plane ? 2 : 4;
+            skipB = 3;
+            skipR = 4;
         }
 
-        endX = (rpelx == picWidth) ? ctuWidth : ctuWidth - skipR;
-        endY = (bpely == picHeight) ? ctuHeight : ctuHeight - skipB;
+        endX = (rpelx == picWidth) ? ctuWidth : ctuWidth - skipR + plane_offset;
+        endY = (bpely == picHeight) ? ctuHeight : ctuHeight - skipB + plane_offset;
 
         primitives.saoCuStatsBO(fenc0, rec0, stride, endX, endY, m_offsetOrg[plane][SAO_BO], m_count[plane][SAO_BO]);
     }
@@ -730,30 +731,30 @@ void SAO::calcSaoStatsCu(int addr, int plane)
         {
             if (m_param->bSaoNonDeblocked)
             {
-                skipB = plane ? 1 : 3;
-                skipR = plane ? 3 : 5;
+                skipB = 3;
+                skipR = 5;
             }
 
             startX = !lpelx;
-            endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR;
+            endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
 
-            primitives.saoCuStatsE0(fenc0 + startX, rec0 + startX, stride, endX - startX, ctuHeight - skipB, m_offsetOrg[plane][SAO_EO_0], m_count[plane][SAO_EO_0]);
+            primitives.saoCuStatsE0(fenc0 + startX, rec0 + startX, stride, endX - startX, ctuHeight - skipB + plane_offset, m_offsetOrg[plane][SAO_EO_0], m_count[plane][SAO_EO_0]);
         }
 
         // SAO_EO_1: // dir: |
         {
             if (m_param->bSaoNonDeblocked)
             {
-                skipB = plane ? 2 : 4;
-                skipR = plane ? 2 : 4;
+                skipB = 4;
+                skipR = 4;
             }
 
             fenc = fenc0;
             rec  = rec0;
 
             startY = !tpely;
-            endX   = (rpelx == picWidth) ? ctuWidth : ctuWidth - skipR;
-            endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB;
+            endX   = (rpelx == picWidth) ? ctuWidth : ctuWidth - skipR + plane_offset;
+            endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
             if (!tpely)
             {
                 fenc += stride;
@@ -769,18 +770,18 @@ void SAO::calcSaoStatsCu(int addr, int plane)
         {
             if (m_param->bSaoNonDeblocked)
             {
-                skipB = plane ? 2 : 4;
-                skipR = plane ? 3 : 5;
+                skipB = 4;
+                skipR = 5;
             }
 
             fenc = fenc0;
             rec  = rec0;
 
             startX = !lpelx;
-            endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR;
+            endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
 
             startY = !tpely;
-            endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB;
+            endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
             if (!tpely)
             {
                 fenc += stride;
@@ -796,18 +797,18 @@ void SAO::calcSaoStatsCu(int addr, int plane)
         {
             if (m_param->bSaoNonDeblocked)
             {
-                skipB = plane ? 2 : 4;
-                skipR = plane ? 3 : 5;
+                skipB = 4;
+                skipR = 5;
             }
 
             fenc = fenc0;
             rec  = rec0;
 
             startX = !lpelx;
-            endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR;
+            endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
 
             startY = !tpely;
-            endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB;
+            endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
 
             if (!tpely)
             {
@@ -861,6 +862,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     memset(m_countPreDblk[addr], 0, sizeof(PerPlane));
     memset(m_offsetOrgPreDblk[addr], 0, sizeof(PerPlane));
 
+    int plane_offset = 0;
     for (int plane = 0; plane < NUM_PLANE; plane++)
     {
         if (plane == 1)
@@ -878,8 +880,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
 
         // SAO_BO:
 
-        skipB = plane ? 1 : 3;
-        skipR = plane ? 2 : 4;
+        skipB = 3 - plane_offset;
+        skipR = 4 - plane_offset;
 
         stats = m_offsetOrgPreDblk[addr][plane][SAO_BO];
         count = m_countPreDblk[addr][plane][SAO_BO];
@@ -907,8 +909,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
 
         // SAO_EO_0: // dir: -
         {
-            skipB = plane ? 1 : 3;
-            skipR = plane ? 3 : 5;
+            skipB = 3 - plane_offset;
+            skipR = 5 - plane_offset;
 
             stats = m_offsetOrgPreDblk[addr][plane][SAO_EO_0];
             count = m_countPreDblk[addr][plane][SAO_EO_0];
@@ -943,8 +945,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
 
         // SAO_EO_1: // dir: |
         {
-            skipB = plane ? 2 : 4;
-            skipR = plane ? 2 : 4;
+            skipB = 4 - plane_offset;
+            skipR = 4 - plane_offset;
 
             stats = m_offsetOrgPreDblk[addr][plane][SAO_EO_1];
             count = m_countPreDblk[addr][plane][SAO_EO_1];
@@ -988,8 +990,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
 
         // SAO_EO_2: // dir: 135
         {
-            skipB = plane ? 2 : 4;
-            skipR = plane ? 3 : 5;
+            skipB = 4 - plane_offset;
+            skipR = 5 - plane_offset;
 
             stats = m_offsetOrgPreDblk[addr][plane][SAO_EO_2];
             count = m_countPreDblk[addr][plane][SAO_EO_2];
@@ -1040,8 +1042,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
 
         // SAO_EO_3: // dir: 45
         {
-            skipB = plane ? 2 : 4;
-            skipR = plane ? 3 : 5;
+            skipB = 4 - plane_offset;
+            skipR = 5 - plane_offset;
 
             stats = m_offsetOrgPreDblk[addr][plane][SAO_EO_3];
             count = m_countPreDblk[addr][plane][SAO_EO_3];
@@ -1087,6 +1089,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
                 fenc += stride;
             }
         }
+        plane_offset = 2;
     }
 }
 
