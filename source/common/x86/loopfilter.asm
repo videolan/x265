@@ -26,6 +26,7 @@
 ;*****************************************************************************/
 
 %include "x86inc.asm"
+%include "x86util.asm"
 
 SECTION_RODATA 32
 pb_31:      times 32 db 31
@@ -2030,22 +2031,28 @@ cglobal saoCuStatsBO, 7,12,2
 %endif
 
 ;-----------------------------------------------------------------------------------------------------------------------
-; saoCuStatsE0(const pixel *fenc, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
+; saoCuStatsE0(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
 ;-----------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
 INIT_XMM sse4
-cglobal saoCuStatsE0, 5,9,8, 0-32
+cglobal saoCuStatsE0, 3,10,6, 0-32
     mov         r3d, r3m
-    mov         r8, r5mp
+    mov         r4d, r4m
+    mov         r9, r5mp
 
     ; clear internal temporary buffer
     pxor        m0, m0
     mova        [rsp], m0
     mova        [rsp + mmsize], m0
     mova        m4, [pb_128]
-    mova        m5, [hmul_16p + 16]
-    mova        m6, [pb_2]
+    mova        m5, [pb_2]
     xor         r7d, r7d
+
+    ; correct stride for diff[] and rec
+    mov         r6d, r3d
+    and         r6d, ~15
+    sub         r2, r6
+    lea         r8, [(r6 - 64) * 2]             ; 64 = MAX_CU_SIZE
 
 .loopH:
     mov         r5d, r3d
@@ -2060,62 +2067,46 @@ cglobal saoCuStatsE0, 5,9,8, 0-32
     pinsrb      m0, r7d, 15
 
 .loopL:
-    movu        m7, [r1]
+    movu        m3, [r1]
     movu        m2, [r1 + 1]
 
-    pxor        m1, m7, m4
-    pxor        m3, m2, m4
-    pcmpgtb     m2, m1, m3
-    pcmpgtb     m3, m1
-    pand        m2, [pb_1]
-    por         m2, m3              ; signRight
+    pxor        m1, m3, m4
+    pxor        m2, m4
+    pcmpgtb     m3, m1, m2
+    pcmpgtb     m2, m1
+    pand        m3, [pb_1]
+    por         m2, m3                          ; signRight
 
     palignr     m3, m2, m0, 15
-    psignb      m3, m4              ; signLeft
+    psignb      m3, m4                          ; signLeft
 
     mova        m0, m2
     paddb       m2, m3
-    paddb       m2, m6              ; edgeType
+    paddb       m2, m5                          ; edgeType
 
     ; stats[edgeType]
-    movu        m3, [r0]            ; fenc[0-15]
-    punpckhbw   m1, m3, m7
-    punpcklbw   m3, m7
-    pmaddubsw   m1, m5
-    pmaddubsw   m3, m5
-
 %assign x 0
 %rep 16
     pextrb      r7d, m2, x
 
-%if (x < 8)
-    pextrw      r6d, m3, (x % 8)
-%else
-    pextrw      r6d, m1, (x % 8)
-%endif
-    movsx       r6d, r6w
+    movsx       r6d, word [r0 + x * 2]
     inc         word [rsp + r7 * 2]             ; tmp_count[edgeType]++
     add         [rsp + 5 * 2 + r7 * 4], r6d     ; tmp_stats[edgeType] += (fenc[x] - rec[x])
     dec         r5d
-    jz          .next
+    jz         .next
 %assign x x+1
 %endrep
 
-    add         r0q, 16
-    add         r1q, 16
-    jmp         .loopL
+    add         r0, 16*2
+    add         r1, 16
+    jmp        .loopL
 
 .next:
-    mov         r6d, r3d
-    and         r6d, 15
-
-    sub         r6, r3
-    add         r6, r2
-    add         r0, r6
-    add         r1, r6
+    sub         r0, r8
+    add         r1, r2
 
     dec         r4d
-    jnz         .loopH
+    jnz        .loopH
 
     ; sum to global buffer
     mov         r0, r6mp
@@ -2133,15 +2124,15 @@ cglobal saoCuStatsE0, 5,9,8, 0-32
     add         [r0 + 4 * 4], r5d
 
     mov         r6d, [rsp + 5 * 2 + 0 * 4]
-    add         [r8 + 1 * 4], r6d
+    add         [r9 + 1 * 4], r6d
     mov         r5d, [rsp + 5 * 2 + 1 * 4]
-    add         [r8 + 2 * 4], r5d
+    add         [r9 + 2 * 4], r5d
     mov         r6d, [rsp + 5 * 2 + 2 * 4]
-    add         [r8 + 0 * 4], r6d
+    add         [r9 + 0 * 4], r6d
     mov         r5d, [rsp + 5 * 2 + 3 * 4]
-    add         [r8 + 3 * 4], r5d
+    add         [r9 + 3 * 4], r5d
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
-    add         [r8 + 4 * 4], r6d
+    add         [r9 + 4 * 4], r6d
     RET
 %endif
 

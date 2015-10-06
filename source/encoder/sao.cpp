@@ -752,7 +752,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
             startX = !lpelx;
             endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
 
-            primitives.saoCuStatsE0(fenc0 + startX, rec0 + startX, stride, endX - startX, ctuHeight - skipB + plane_offset, m_offsetOrg[plane][SAO_EO_0], m_count[plane][SAO_EO_0]);
+            primitives.saoCuStatsE0(diff + startX, rec0 + startX, stride, endX - startX, ctuHeight - skipB + plane_offset, m_offsetOrg[plane][SAO_EO_0], m_count[plane][SAO_EO_0]);
         }
 
         // SAO_EO_1: // dir: |
@@ -1559,11 +1559,13 @@ void saoCuStatsBO_c(const int16_t *diff, const pixel *rec, intptr_t stride, int 
     }
 }
 
-void saoCuStatsE0_c(const pixel *fenc, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
+void saoCuStatsE0_c(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
 {
     int x, y;
     int32_t tmp_stats[SAO::NUM_EDGETYPE];
     int32_t tmp_count[SAO::NUM_EDGETYPE];
+
+    X265_CHECK(endX <= MAX_CU_SIZE, "endX too big\n");
 
     memset(tmp_stats, 0, sizeof(tmp_stats));
     memset(tmp_count, 0, sizeof(tmp_count));
@@ -1579,11 +1581,11 @@ void saoCuStatsE0_c(const pixel *fenc, const pixel *rec, intptr_t stride, int en
             signLeft = -signRight;
 
             X265_CHECK(edgeType <= 4, "edgeType check failure\n");
-            tmp_stats[edgeType] += (fenc[x] - rec[x]);
+            tmp_stats[edgeType] += diff[x];
             tmp_count[edgeType]++;
         }
 
-        fenc += stride;
+        diff += MAX_CU_SIZE;
         rec += stride;
     }
 
