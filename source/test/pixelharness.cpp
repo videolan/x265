@@ -2259,7 +2259,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     {
         if (!check_ssim_4x4x2_core(ref.ssim_4x4x2_core, opt.ssim_4x4x2_core))
         {
-            printf("ssim_end_4 failed!\n");
+            printf("ssim_4x4x2_core failed!\n");
             return false;
         }
     }
