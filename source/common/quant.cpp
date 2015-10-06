@@ -825,6 +825,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
         uint32_t subFlagMask = coeffFlag[cgScanPos];
         int    c2            = 0;
         uint32_t goRiceParam = 0;
+        uint32_t levelThreshold = 3;
         uint32_t c1Idx       = 0;
         uint32_t c2Idx       = 0;
         /* iterate over coefficients in each group in reverse scan order */
@@ -1034,10 +1035,14 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                 }
 
                 /* Update CABAC estimation state */
-                if (level >= baseLevel && goRiceParam < 4 && level > (3U << goRiceParam))
+                if ((level >= baseLevel) && (goRiceParam < 4) && (level > levelThreshold))
+                {
                     goRiceParam++;
+                    levelThreshold <<= 1;
+                }
 
-                c1Idx -= (-(int32_t)level) >> 31;
+                const uint32_t isNonZero = (uint32_t)(-(int32_t)level) >> 31;
+                c1Idx += isNonZero;
 
                 /* update bin model */
                 if (level > 1)
@@ -1046,7 +1051,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                     c2 += (uint32_t)(c2 - 2) >> 31;
                     c2Idx++;
                 }
-                else if (((c1 == 1) | (c1 == 2)) && level)
+                else if (((c1 == 1) | (c1 == 2)) & isNonZero)
                     c1++;
 
                 if (dstCoeff[blkPos])
