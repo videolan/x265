@@ -83,6 +83,7 @@ protected:
     int8_t      m_offsetBo[SAO_NUM_BO_CLASSES];
     int8_t      m_offsetEo[NUM_EDGETYPE];
 
+    int         m_chromaFormat;
     int         m_numCuInWidth;
     int         m_numCuInHeight;
     int         m_hChromaShift;

@@ -106,6 +106,7 @@ SAO::SAO()
 bool SAO::create(x265_param* param)
 {
     m_param = param;
+    m_chromaFormat = param->internalCsp;
     m_hChromaShift = CHROMA_H_SHIFT(param->internalCsp);
     m_vChromaShift = CHROMA_V_SHIFT(param->internalCsp);
 
@@ -715,14 +716,24 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     ALIGN_VAR_32(int16_t, diff[MAX_CU_SIZE * MAX_CU_SIZE]);
 
     // Calculate (fenc - frec) and put into diff[]
-    // WARNING: *) May read beyond bound on video than width or height is NOT multiple of cuSize
-    //          *) MUST BE handle ColorSpace other than 420 yourself!
-    //primitives.cu[g_maxLog2CUSize - 2 - (plane != 0)].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
-    for(int y = 0; y < ctuHeight; y++)
+    if ((lpelx + ctuWidth <  picWidth) & (tpely + ctuHeight < picHeight))
     {
-        for(int x = 0; x < ctuWidth; x++)
+        // WARNING: *) May read beyond bound on video than ctuWidth or ctuHeight is NOT multiple of cuSize
+        X265_CHECK((ctuWidth == ctuHeight) || (m_chromaFormat != X265_CSP_I420), "video size check failure\n");
+        if (plane)
+            primitives.chroma[m_chromaFormat].cu[g_maxLog2CUSize - 2].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
+        else
+           primitives.cu[g_maxLog2CUSize - 2].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
+    }
+    else
+    {
+        // path for non-square area (most in edge)
+        for(int y = 0; y < ctuHeight; y++)
         {
-            diff[y * MAX_CU_SIZE + x] = (fenc0[y * stride + x] - rec0[y * stride + x]);
+            for(int x = 0; x < ctuWidth; x++)
+            {
+                diff[y * MAX_CU_SIZE + x] = (fenc0[y * stride + x] - rec0[y * stride + x]);
+            }
         }
     }
 
