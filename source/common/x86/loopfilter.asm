@@ -2137,11 +2137,11 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
 %endif
 
 ;-------------------------------------------------------------------------------------------------------------------------------------------
-; saoCuStatsE1_c(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count)
+; saoCuStatsE1_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count)
 ;-------------------------------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
 INIT_XMM sse4
-cglobal saoCuStatsE1, 4,12,9,0-32    ; Stack: 5 of stats and 5 of count
+cglobal saoCuStatsE1, 4,12,8,0-32    ; Stack: 5 of stats and 5 of count
     mov         r5d, r5m
     mov         r4d, r4m
     mov         r11d, r5d
@@ -2153,7 +2153,6 @@ cglobal saoCuStatsE1, 4,12,9,0-32    ; Stack: 5 of stats and 5 of count
     mova        m0, [pb_128]
     mova        m5, [pb_1]
     mova        m6, [pb_2]
-    mova        m8, [hmul_16p + 16]
     movh        m7, [r3 + r4]
 
 .loopH:
@@ -2170,11 +2169,11 @@ cglobal saoCuStatsE1, 4,12,9,0-32    ; Stack: 5 of stats and 5 of count
     pxor        m1, m0
     pxor        m2, m0
     pcmpgtb     m3, m1, m2
-    pand        m3, m5
     pcmpgtb     m2, m1
+    pand        m3, m5
     por         m2, m3
     pxor        m3, m3
-    psubb       m3, m2      ; -signDown
+    psubb       m3, m2                          ; -signDown
 
     ; edgeType
     movu        m4, [r11]
@@ -2184,26 +2183,14 @@ cglobal saoCuStatsE1, 4,12,9,0-32    ; Stack: 5 of stats and 5 of count
     ; update upBuff1
     movu        [r11], m3
 
-    ; stats[edgeType]
-    pxor        m1, m0
-    movu        m3, [r9]
-    punpckhbw   m4, m3, m1
-    punpcklbw   m3, m1
-    pmaddubsw   m3, m8
-    pmaddubsw   m4, m8
-
     ; 16 pixels
 %assign x 0
 %rep 16
     pextrb      r7d, m2, x
     inc         word [rsp + r7 * 2]
 
-  %if (x < 8)
-    pextrw      r8d, m3, (x % 8)
-  %else
-    pextrw      r8d, m4, (x % 8)
-  %endif
-    movsx       r8d, r8w
+    ; stats[edgeType]
+    movsx       r8d, word [r9 + x * 2]
     add         [rsp + 5 * 2 + r7 * 4], r8d
 
     dec         r6d
@@ -2211,14 +2198,14 @@ cglobal saoCuStatsE1, 4,12,9,0-32    ; Stack: 5 of stats and 5 of count
 %assign x x+1
 %endrep
 
-    add         r9, 16
+    add         r9, 16*2
     add         r10, 16
     add         r11, 16
-    jmp         .loopW
+    jmp        .loopW
 
 .next:
     ; restore pointer upBuff1
-    add         r0, r2
+    add         r0, 64*2                        ; MAX_CU_SIZE
     add         r1, r2
 
     dec         r5d
