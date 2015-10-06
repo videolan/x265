@@ -2112,25 +2112,19 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
     mov         r0, r6mp
 
     ; s_eoTable = {1, 2, 0, 3, 4}
-    movzx       r5d, word [rsp + 0 * 2]
-    add         [r0 + 1 * 4], r5d
-    movzx       r6d, word [rsp + 1 * 2]
-    add         [r0 + 2 * 4], r6d
-    movzx       r5d, word [rsp + 2 * 2]
-    add         [r0 + 0 * 4], r5d
-    movzx       r6d, word [rsp + 3 * 2]
-    add         [r0 + 3 * 4], r6d
+    pmovzxwd    m0, [rsp + 0 * 2]
+    pshufd      m0, m0, q3102
+    movu        m1, [r0]
+    paddd       m0, m1
+    movu        [r0], m0
     movzx       r5d, word [rsp + 4 * 2]
     add         [r0 + 4 * 4], r5d
 
-    mov         r6d, [rsp + 5 * 2 + 0 * 4]
-    add         [r9 + 1 * 4], r6d
-    mov         r5d, [rsp + 5 * 2 + 1 * 4]
-    add         [r9 + 2 * 4], r5d
-    mov         r6d, [rsp + 5 * 2 + 2 * 4]
-    add         [r9 + 0 * 4], r6d
-    mov         r5d, [rsp + 5 * 2 + 3 * 4]
-    add         [r9 + 3 * 4], r5d
+    movu        m0, [rsp + 5 * 2 + 0 * 4]
+    pshufd      m0, m0, q3102
+    movu        m1, [r9]
+    paddd       m0, m1
+    movu        [r9], m0
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
     add         [r9 + 4 * 4], r6d
     RET
@@ -2219,25 +2213,19 @@ cglobal saoCuStatsE1, 4,12,8,0-32    ; Stack: 5 of stats and 5 of count
     mov         r0, r7m
 
     ; s_eoTable = {1,2,0,3,4}
-    movzx       r6d, word [rsp + 0 * 2]
-    add         [r0 + 1 * 4], r6d
-    movzx       r6d, word [rsp + 1 * 2]
-    add         [r0 + 2 * 4], r6d
-    movzx       r6d, word [rsp + 2 * 2]
-    add         [r0 + 0 * 4], r6d
-    movzx       r6d, word [rsp + 3 * 2]
-    add         [r0 + 3 * 4], r6d
-    movzx       r6d, word [rsp + 4 * 2]
-    add         [r0 + 4 * 4], r6d
+    pmovzxwd    m0, [rsp + 0 * 2]
+    pshufd      m0, m0, q3102
+    movu        m1, [r0]
+    paddd       m0, m1
+    movu        [r0], m0
+    movzx       r5d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r5d
 
-    mov         r6d, [rsp + 5 * 2 + 0 * 4]
-    add         [r1 + 1 * 4], r6d
-    mov         r6d, [rsp + 5 * 2 + 1 * 4]
-    add         [r1 + 2 * 4], r6d
-    mov         r6d, [rsp + 5 * 2 + 2 * 4]
-    add         [r1 + 0 * 4], r6d
-    mov         r6d, [rsp + 5 * 2 + 3 * 4]
-    add         [r1 + 3 * 4], r6d
+    movu        m0, [rsp + 5 * 2 + 0 * 4]
+    pshufd      m0, m0, q3102
+    movu        m1, [r1]
+    paddd       m0, m1
+    movu        [r1], m0
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
     add         [r1 + 4 * 4], r6d
     RET
@@ -2379,31 +2367,23 @@ cglobal saoCuStatsE2, 5,9,8,0-32    ; Stack: 5 of stats and 5 of count
     mov         r0, r8m
 
     ; s_eoTable = {1,2,0,3,4}
-    movzx       r6d, word [rsp + 0 * 2]
-    add         [r0 + 1 * 4], r6d
-    movzx       r6d, word [rsp + 1 * 2]
-    add         [r0 + 2 * 4], r6d
-    movzx       r6d, word [rsp + 2 * 2]
-    add         [r0 + 0 * 4], r6d
-    movzx       r6d, word [rsp + 3 * 2]
-    add         [r0 + 3 * 4], r6d
-    movzx       r6d, word [rsp + 4 * 2]
-    add         [r0 + 4 * 4], r6d
+    pmovzxwd    m0, [rsp + 0 * 2]
+    pshufd      m0, m0, q3102
+    movu        m1, [r0]
+    paddd       m0, m1
+    movu        [r0], m0
+    movzx       r5d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r5d
 
-    mov         r6d, [rsp + 5 * 2 + 0 * 4]
-    add         [r1 + 1 * 4], r6d
-    mov         r6d, [rsp + 5 * 2 + 1 * 4]
-    add         [r1 + 2 * 4], r6d
-    mov         r6d, [rsp + 5 * 2 + 2 * 4]
-    add         [r1 + 0 * 4], r6d
-    mov         r6d, [rsp + 5 * 2 + 3 * 4]
-    add         [r1 + 3 * 4], r6d
+    movu        m0, [rsp + 5 * 2 + 0 * 4]
+    pshufd      m0, m0, q3102
+    movu        m1, [r1]
+    paddd       m0, m1
+    movu        [r1], m0
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
     add         [r1 + 4 * 4], r6d
     RET
 %endif ; ARCH_X86_64
-
-
 
 
 ;void saoStatE3(const int16_t *diff, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count);
@@ -2520,25 +2500,19 @@ cglobal saoCuStatsE3, 4,9,8,0-32    ; Stack: 5 of stats and 5 of count
     mov         r0, r7m
 
     ; s_eoTable = {1,2,0,3,4}
-    movzx       r6d, word [rsp + 0 * 2]
-    add         [r0 + 1 * 4], r6d
-    movzx       r6d, word [rsp + 1 * 2]
-    add         [r0 + 2 * 4], r6d
-    movzx       r6d, word [rsp + 2 * 2]
-    add         [r0 + 0 * 4], r6d
-    movzx       r6d, word [rsp + 3 * 2]
-    add         [r0 + 3 * 4], r6d
-    movzx       r6d, word [rsp + 4 * 2]
-    add         [r0 + 4 * 4], r6d
+    pmovzxwd    m0, [rsp + 0 * 2]
+    pshufd      m0, m0, q3102
+    movu        m1, [r0]
+    paddd       m0, m1
+    movu        [r0], m0
+    movzx       r5d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r5d
 
-    mov         r6d, [rsp + 5 * 2 + 0 * 4]
-    add         [r1 + 1 * 4], r6d
-    mov         r6d, [rsp + 5 * 2 + 1 * 4]
-    add         [r1 + 2 * 4], r6d
-    mov         r6d, [rsp + 5 * 2 + 2 * 4]
-    add         [r1 + 0 * 4], r6d
-    mov         r6d, [rsp + 5 * 2 + 3 * 4]
-    add         [r1 + 3 * 4], r6d
+    movu        m0, [rsp + 5 * 2 + 0 * 4]
+    pshufd      m0, m0, q3102
+    movu        m1, [r1]
+    paddd       m0, m1
+    movu        [r1], m0
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
     add         [r1 + 4 * 4], r6d
     RET
