@@ -1268,10 +1268,10 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
 
             if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
             {
-                uint32_t signbit = (dstCoeff[codeParams.scan[subPos + firstNZPosInCG]] > 0 ? 0 : 1);
-                int absSum = 0;
+                int absSum = dstCoeff[codeParams.scan[subPos + firstNZPosInCG]];
+                const uint32_t signbit = ((uint32_t)absSum >> 31);
 
-                for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
+                for (n = firstNZPosInCG + 1; n <= lastNZPosInCG; n++)
                     absSum += dstCoeff[codeParams.scan[n + subPos]];
 
                 if (signbit != (absSum & 1U))
@@ -1282,7 +1282,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
 
                     int64_t minCostInc = MAX_INT64, curCost = MAX_INT64;
                     uint32_t minPos = 0;
-                    int8_t finalChange = 0, curChange = 0;
+                    int8_t finalChange = 0;
+                    int curChange = 0;
+                    uint32_t lastCoeff = lastCG;
 
                     for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                     {
@@ -1300,6 +1302,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
 
 #define DELTARDCOST(d0, d, deltabits) ((((int64_t)d * d - d0) << scaleBits) + ((lambda2 * (int64_t)(deltabits)) >> 8))
 
+                        const uint32_t isOne = (absLevel == 1);
                         if (dstCoeff[blkPos])
                         {
                             d = abs(signCoef) - ((unQuantLevel + preDQuantLevelDiff) >> unquantShift);
@@ -1310,16 +1313,14 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                              * significant coeff flag cost savings */
                             d = abs(signCoef) - ((unQuantLevel - preDQuantLevelDiff) >> unquantShift);
                             X265_CHECK((uint32_t)UNQUANT(absLevel - 1) == ((unQuantLevel - preDQuantLevelDiff) >> unquantShift), "dquant check failed\n");
-                            int isOne = (abs(dstCoeff[blkPos]) == 1);
                             int downBits = rateIncDown[blkPos] - (isOne ? (IEP_RATE + sigRateDelta[blkPos]) : 0);
                             int64_t costDown = DELTARDCOST(origDist, d, downBits);
 
-                            costDown -= (lastCG & (n == lastNZPosInCG) & isOne) * 4 * IEP_RATE;
+                            costDown -= (lastCoeff & isOne) * 4 * IEP_RATE;
                             curCost = ((n == firstNZPosInCG) & isOne) ? MAX_INT64 : costDown;
-                            curChange = 2 * (costUp < costDown) - 1;
 
-                            if (costUp < costDown)
-                                curCost = costUp;
+                            curChange = 2 * (costUp < costDown) - 1;
+                            curCost = (costUp < costDown) ? costUp : curCost;
                         }
                         else if ((n < firstNZPosInCG) & (signbit != ((uint32_t)signCoef >> 31)))
                         {
@@ -1340,9 +1341,10 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                         if (curCost < minCostInc)
                         {
                             minCostInc = curCost;
-                            finalChange = curChange;
+                            finalChange = (int8_t)curChange;
                             minPos = blkPos + (absLevel << 16);
                         }
+                        lastCoeff = 0;
                     }
 
                     const int absInMinPos = (minPos >> 16);
