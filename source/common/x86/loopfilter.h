@@ -36,7 +36,7 @@
     void PFX(saoCuOrgE3_ ## cpu)(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intptr_t stride, int startX, int endX); \
     void PFX(saoCuOrgE3_32_ ## cpu)(pixel *rec, int8_t *upBuff1, int8_t *m_offsetEo, intptr_t stride, int startX, int endX); \
     void PFX(saoCuOrgB0_ ## cpu)(pixel* rec, const int8_t* offsetBo, int ctuWidth, int ctuHeight, intptr_t stride); \
-    void PFX(saoCuStatsBO_ ## cpu)(const pixel *fenc, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count); \
+    void PFX(saoCuStatsBO_ ## cpu)(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count); \
     void PFX(saoCuStatsE0_ ## cpu)(const pixel *fenc, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count); \
     void PFX(saoCuStatsE1_ ## cpu)(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count); \
     void PFX(saoCuStatsE2_ ## cpu)(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int8_t *upBufft, int endX, int endY, int32_t *stats, int32_t *count); \

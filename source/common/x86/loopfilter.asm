@@ -1989,14 +1989,12 @@ cglobal calSign, 4, 5, 6
 %endif
 
 ;--------------------------------------------------------------------------------------------------------------------------
-; saoCuStatsBO_c(const pixel *fenc, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
+; saoCuStatsBO_c(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
 ;--------------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
 INIT_XMM sse4
-cglobal saoCuStatsBO, 7,12,6
-    mova        m3, [hmul_16p + 16]
-    mova        m4, [pb_124]
-    mova        m5, [pb_4]
+cglobal saoCuStatsBO, 7,12,2
+    mova        m0, [pb_124]
     xor         r7d, r7d
 
 .loopH:
@@ -2005,42 +2003,29 @@ cglobal saoCuStatsBO, 7,12,6
     mov         r9d, r3d
 .loopL:
     movu        m1, [r11]
-    movu        m0, [r10]
-
-    punpckhbw   m2, m0, m1
-    punpcklbw   m0, m1
-    psrlw       m1, 1               ; rec[x] >> boShift
-    pmaddubsw   m2, m3
-    pmaddubsw   m0, m3
-    pand        m1, m4
-    paddb       m1, m5
+    psrlw       m1, 1                   ; rec[x] >> boShift
+    pand        m1, m0
 
 %assign x 0
 %rep 16
     pextrb      r7d, m1, x
-
-%if (x < 8)
-    pextrw      r8d, m0, (x % 8)
-%else
-    pextrw      r8d, m2, (x % 8)
-%endif
-    movsx       r8d, r8w
-    inc         dword  [r6 + r7]    ; count[classIdx]++
-    add         [r5 + r7], r8d      ; stats[classIdx] += (fenc[x] - rec[x]);
+    movsx       r8d, word [r10 + x*2]   ; diff[x]
+    inc         dword  [r6 + r7 + 4]    ; count[classIdx]++
+    add         [r5 + r7 + 4], r8d      ; stats[classIdx] += (fenc[x] - rec[x]);
     dec         r9d
     jz          .next
 %assign x x+1
 %endrep
 
-    add         r10, 16
+    add         r10, 16*2
     add         r11, 16
     jmp         .loopL
 
 .next:
-    add         r0, r2
+    add         r0, 64*2                ; MAX_CU_SIZE
     add         r1, r2
     dec         r4d
-    jnz         .loopH
+    jnz        .loopH
     RET
 %endif
 

@@ -712,6 +712,20 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
     int8_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
+    ALIGN_VAR_32(int16_t, diff[MAX_CU_SIZE * MAX_CU_SIZE]);
+
+    // Calculate (fenc - frec) and put into diff[]
+    // WARNING: *) May read beyond bound on video than width or height is NOT multiple of cuSize
+    //          *) MUST BE handle ColorSpace other than 420 yourself!
+    //primitives.cu[g_maxLog2CUSize - 2 - (plane != 0)].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
+    for(int y = 0; y < ctuHeight; y++)
+    {
+        for(int x = 0; x < ctuWidth; x++)
+        {
+            diff[y * MAX_CU_SIZE + x] = (fenc0[y * stride + x] - rec0[y * stride + x]);
+        }
+    }
+
     // SAO_BO:
     {
         if (m_param->bSaoNonDeblocked)
@@ -723,7 +737,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
         endX = (rpelx == picWidth) ? ctuWidth : ctuWidth - skipR + plane_offset;
         endY = (bpely == picHeight) ? ctuHeight : ctuHeight - skipB + plane_offset;
 
-        primitives.saoCuStatsBO(fenc0, rec0, stride, endX, endY, m_offsetOrg[plane][SAO_BO], m_count[plane][SAO_BO]);
+        primitives.saoCuStatsBO(diff, rec0, stride, endX, endY, m_offsetOrg[plane][SAO_BO], m_count[plane][SAO_BO]);
     }
 
     {
@@ -1526,7 +1540,7 @@ void SAO::sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addr
 }
 
 // NOTE: must put in namespace X265_NS since we need class SAO
-void saoCuStatsBO_c(const pixel *fenc, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
+void saoCuStatsBO_c(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
 {
     int x, y;
     const int boShift = X265_DEPTH - SAO_BO_BITS;
@@ -1536,11 +1550,11 @@ void saoCuStatsBO_c(const pixel *fenc, const pixel *rec, intptr_t stride, int en
         for (x = 0; x < endX; x++)
         {
             int classIdx = 1 + (rec[x] >> boShift);
-            stats[classIdx] += (fenc[x] - rec[x]);
+            stats[classIdx] += diff[x];
             count[classIdx]++;
         }
 
-        fenc += stride;
+        diff += MAX_CU_SIZE;
         rec += stride;
     }
 }
