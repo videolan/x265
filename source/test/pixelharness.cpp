@@ -1194,8 +1194,8 @@ bool PixelHarness::check_saoCuStatsE2_t(saoCuStatsE2_t ref, saoCuStatsE2_t opt)
         int endX = MAX_CU_SIZE - (rand() % 5) - 1;
         int endY = MAX_CU_SIZE - (rand() % 4) - 1;
 
-        ref(pbuf2 + 1, pbuf3 + 1, stride, upBuff1_ref, upBufft_ref, endX, endY, stats_ref, count_ref);
-        checked(opt, pbuf2 + 1, pbuf3 + 1, stride, upBuff1_vec, upBufft_vec, endX, endY, stats_vec, count_vec);
+        ref(sbuf2 + 1, pbuf3 + 1, stride, upBuff1_ref, upBufft_ref, endX, endY, stats_ref, count_ref);
+        checked(opt, sbuf2 + 1, pbuf3 + 1, stride, upBuff1_vec, upBufft_vec, endX, endY, stats_vec, count_vec);
 
         // TODO: don't check upBuff*, the latest output pixels different, and can move into stack temporary buffer in future
         if (   memcmp(_upBuff1_ref, _upBuff1_vec, sizeof(_upBuff1_ref))
@@ -2877,7 +2877,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         memset(upBuff1, 1, sizeof(upBuff1));
         memset(upBufft, -1, sizeof(upBufft));
         HEADER0("saoCuStatsE2");
-        REPORT_SPEEDUP(opt.saoCuStatsE2, ref.saoCuStatsE2, pbuf2, pbuf3, 64, upBuff1 + 1, upBufft + 1, 60, 61, stats, count);
+        REPORT_SPEEDUP(opt.saoCuStatsE2, ref.saoCuStatsE2, sbuf2, pbuf3, 64, upBuff1 + 1, upBufft + 1, 60, 61, stats, count);
     }
 
     if (opt.saoCuStatsE3)

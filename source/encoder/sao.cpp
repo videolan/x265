@@ -802,7 +802,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
 
             primitives.sign(&upBuff1[startX], &rec[startX], &rec[startX - stride - 1], (endX - startX));
 
-            primitives.saoCuStatsE2(fenc0 + startX + startY * stride, rec0  + startX + startY * stride, stride, upBuff1 + startX, upBufft + startX, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_2], m_count[plane][SAO_EO_2]);
+            primitives.saoCuStatsE2(diff + startX + startY * MAX_CU_SIZE, rec0  + startX + startY * stride, stride, upBuff1 + startX, upBufft + startX, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_2], m_count[plane][SAO_EO_2]);
         }
 
         // SAO_EO_3: // dir: 45
@@ -1629,7 +1629,7 @@ void saoCuStatsE1_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8
     }
 }
 
-void saoCuStatsE2_c(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int8_t *upBufft, int endX, int endY, int32_t *stats, int32_t *count)
+void saoCuStatsE2_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8_t *upBuff1, int8_t *upBufft, int endX, int endY, int32_t *stats, int32_t *count)
 {
     X265_CHECK(endX < MAX_CU_SIZE, "endX check failure\n");
     X265_CHECK(endY < MAX_CU_SIZE, "endY check failure\n");
@@ -1650,14 +1650,14 @@ void saoCuStatsE2_c(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t
             X265_CHECK(signDown == signOf(rec[x] - rec[x + stride + 1]), "signDown check failure\n");
             uint32_t edgeType = signDown + upBuff1[x] + 2;
             upBufft[x + 1] = (int8_t)(-signDown);
-            tmp_stats[edgeType] += (fenc[x] - rec[x]);
+            tmp_stats[edgeType] += diff[x];
             tmp_count[edgeType]++;
         }
 
         std::swap(upBuff1, upBufft);
 
         rec += stride;
-        fenc += stride;
+        diff += MAX_CU_SIZE;
     }
 
     for (x = 0; x < SAO::NUM_EDGETYPE; x++)
