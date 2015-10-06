@@ -40,7 +40,7 @@
     void PFX(saoCuStatsE0_ ## cpu)(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count); \
     void PFX(saoCuStatsE1_ ## cpu)(const int16_t *diff, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count); \
     void PFX(saoCuStatsE2_ ## cpu)(const int16_t *diff, const pixel *rec, intptr_t stride, int8_t *upBuff1, int8_t *upBufft, int endX, int endY, int32_t *stats, int32_t *count); \
-    void PFX(saoCuStatsE3_ ## cpu)(const pixel *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count); \
+    void PFX(saoCuStatsE3_ ## cpu)(const int16_t *diff, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count); \
     void PFX(calSign_ ## cpu)(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 
 DECL_SAO(sse4);

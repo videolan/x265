@@ -1245,8 +1245,8 @@ bool PixelHarness::check_saoCuStatsE3_t(saoCuStatsE3_t ref, saoCuStatsE3_t opt)
         int endX = MAX_CU_SIZE - (rand() % 5) - 1;
         int endY = MAX_CU_SIZE - (rand() % 4) - 1;
 
-        ref(pbuf2, pbuf3, stride, upBuff1_ref, endX, endY, stats_ref, count_ref);
-        checked(opt, pbuf2, pbuf3, stride, upBuff1_vec, endX, endY, stats_vec, count_vec);
+        ref(sbuf2, pbuf3, stride, upBuff1_ref, endX, endY, stats_ref, count_ref);
+        checked(opt, sbuf2, pbuf3, stride, upBuff1_vec, endX, endY, stats_vec, count_vec);
 
         if (   memcmp(_upBuff1_ref, _upBuff1_vec, sizeof(_upBuff1_ref))
             || memcmp(stats_ref, stats_vec, sizeof(stats_ref))
@@ -2886,7 +2886,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         int32_t stats[5], count[5];
         memset(upBuff1, 1, sizeof(upBuff1));
         HEADER0("saoCuStatsE3");
-        REPORT_SPEEDUP(opt.saoCuStatsE3, ref.saoCuStatsE3, pbuf2, pbuf3, 64, upBuff1 + 1, 60, 61, stats, count);
+        REPORT_SPEEDUP(opt.saoCuStatsE3, ref.saoCuStatsE3, sbuf2, pbuf3, 64, upBuff1 + 1, 60, 61, stats, count);
     }
 
     if (opt.planecopy_sp)
