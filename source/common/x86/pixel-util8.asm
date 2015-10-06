@@ -6653,10 +6653,10 @@ cglobal scanPosLast_x64, 5,12
 
 
 ;-----------------------------------------------------------------------------
-; uint32_t[last first] findPosFirstAndLast(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16])
+; uint32_t[sumSign last first] findPosFirstLast(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16], uint32_t *absSum)
 ;-----------------------------------------------------------------------------
 INIT_XMM ssse3
-cglobal findPosFirstLast, 3,3,3
+cglobal findPosFirstLast, 3,3,4
     ; convert stride to int16_t
     add         r1d, r1d
 
@@ -6668,9 +6668,21 @@ cglobal findPosFirstLast, 3,3,3
     movh        m1, [r0]
     movhps      m1, [r0 + r1]
     movh        m2, [r0 + r1 * 2]
-    lea         r1, [r1 * 3]
+    lea         r1d, [r1 * 3]
     movhps      m2, [r0 + r1]
+    pxor        m3, m1, m2
     packsswb    m1, m2
+
+    ; get absSum
+    movhlps     m2, m3
+    pxor        m3, m2
+    pshufd      m2, m3, q2301
+    pxor        m3, m2
+    movd        r0d, m3
+    mov         r2d, r0d
+    shr         r2d, 16
+    xor         r2d, r0d
+    shl         r2d, 31
 
     ; get non-zero mask
     pxor        m2, m2
@@ -6684,8 +6696,9 @@ cglobal findPosFirstLast, 3,3,3
     not         r0d
     bsr         r1w, r0w
     bsf         eax, r0d    ; side effect: clear AH to Zero
-    shl         r1d, 16
-    or          eax, r1d
+    shl         r1d, 8
+    or          eax, r2d    ; merge absSumSign
+    or          eax, r1d    ; merge lastNZPosInCG
     RET
 
 

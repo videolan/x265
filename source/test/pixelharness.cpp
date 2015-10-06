@@ -1571,8 +1571,8 @@ bool PixelHarness::check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLa
         // specially case: all coeff group are zero
         if (j >= SCAN_SET_SIZE)
         {
-            // all zero block the high 16-bits undefined
-            if ((uint16_t)ref_scanPos != (uint16_t)opt_scanPos)
+            // all zero block the high 24-bits undefined
+            if ((uint8_t)ref_scanPos != (uint8_t)opt_scanPos)
                 return false;
         }
         else if (ref_scanPos != opt_scanPos)

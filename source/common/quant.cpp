@@ -1232,7 +1232,8 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
 
     // Average 49.62 pixels
     /* clean uncoded coefficients */
-    for (int pos = bestLastIdx; pos <= fastMin(lastScanPos, (bestLastIdx | (SCAN_SET_SIZE - 1))); pos++)
+    X265_CHECK((uint32_t)(fastMin(lastScanPos, bestLastIdx) | (SCAN_SET_SIZE - 1)) < trSize * trSize, "array beyond bound\n");
+    for (int pos = bestLastIdx; pos <= (fastMin(lastScanPos, bestLastIdx) | (SCAN_SET_SIZE - 1)); pos++)
     {
         dstCoeff[codeParams.scan[pos]] = 0;
     }
@@ -1262,19 +1263,23 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
             /* measure distance between first and last non-zero coef in this
              * coding group */
             const uint32_t posFirstLast = primitives.findPosFirstLast(&dstCoeff[codeParams.scan[subPos]], trSize, g_scan4x4[codeParams.scanType]);
-            int firstNZPosInCG = (uint16_t)posFirstLast;
-            int lastNZPosInCG = posFirstLast >> 16;
-
+            const int firstNZPosInCG = (uint8_t)posFirstLast;
+            const int lastNZPosInCG = (int8_t)(posFirstLast >> 8);
+            const uint32_t absSumSign = posFirstLast;
 
             if (lastNZPosInCG - firstNZPosInCG >= SBH_THRESHOLD)
             {
-                int absSum = dstCoeff[codeParams.scan[subPos + firstNZPosInCG]];
-                const uint32_t signbit = ((uint32_t)absSum >> 31);
+                const int32_t signbit = ((int32_t)dstCoeff[codeParams.scan[subPos + firstNZPosInCG]]);
 
-                for (n = firstNZPosInCG + 1; n <= lastNZPosInCG; n++)
-                    absSum += dstCoeff[codeParams.scan[n + subPos]];
+#if CHECKED_BUILD || _DEBUG
+                int32_t absSum_dummy = 0;
+                for (n = firstNZPosInCG; n <= lastNZPosInCG; n++)
+                    absSum_dummy += dstCoeff[codeParams.scan[n + subPos]];
+                X265_CHECK(((uint32_t)absSum_dummy & 1) == (absSumSign >> 31), "absSumSign check failure\n");
+#endif
 
-                if (signbit != (absSum & 1U))
+                //if (signbit != absSumSign)
+                if (((int32_t)(signbit ^ absSumSign)) < 0)
                 {
                     /* We must find a coeff to toggle up or down so the sign bit of the first non-zero coeff
                      * is properly implied. Note dstCoeff[] are signed by this point but curChange and
@@ -1284,13 +1289,13 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                     uint32_t minPos = 0;
                     int8_t finalChange = 0;
                     int curChange = 0;
-                    uint32_t lastCoeff = lastCG;
+                    uint32_t lastCoeffAdjust = (lastCG & (abs(dstCoeff[codeParams.scan[lastNZPosInCG + subPos]]) == 1)) * 4 * IEP_RATE;
 
                     for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
                     {
                         const uint32_t blkPos = codeParams.scan[n + subPos];
-                        const int signCoef    = m_resiDctCoeff[blkPos]; /* pre-quantization DCT coeff */
-                        const int absLevel    = abs(dstCoeff[blkPos]);
+                        const int32_t signCoef = m_resiDctCoeff[blkPos]; /* pre-quantization DCT coeff */
+                        const int absLevel = abs(dstCoeff[blkPos]);
                         // TODO: this is constant in non-scaling mode
                         const uint32_t preDQuantLevelDiff = (unquantScale[blkPos] << per);
                         const uint32_t unQuantLevel = (absLevel * (unquantScale[blkPos] << per) + unquantRound);
@@ -1316,13 +1321,14 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                             int downBits = rateIncDown[blkPos] - (isOne ? (IEP_RATE + sigRateDelta[blkPos]) : 0);
                             int64_t costDown = DELTARDCOST(origDist, d, downBits);
 
-                            costDown -= (lastCoeff & isOne) * 4 * IEP_RATE;
+                            costDown -= lastCoeffAdjust;
                             curCost = ((n == firstNZPosInCG) & isOne) ? MAX_INT64 : costDown;
 
                             curChange = 2 * (costUp < costDown) - 1;
                             curCost = (costUp < costDown) ? costUp : curCost;
                         }
-                        else if ((n < firstNZPosInCG) & (signbit != ((uint32_t)signCoef >> 31)))
+                        //else if ((n < firstNZPosInCG) & (signbit != ((uint32_t)signCoef >> 31)))
+                        else if ((n < firstNZPosInCG) & ((signbit ^ signCoef) < 0))
                         {
                             /* don't try to make a new coded coeff before the first coeff if its
                              * sign would be different than the first coeff, the inferred sign would
@@ -1344,7 +1350,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                             finalChange = (int8_t)curChange;
                             minPos = blkPos + (absLevel << 16);
                         }
-                        lastCoeff = 0;
+                        lastCoeffAdjust = 0;
                     }
 
                     const int absInMinPos = (minPos >> 16);
