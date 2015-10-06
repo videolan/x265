@@ -1276,7 +1276,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                      * finalChange imply absolute levels (+1 is away from zero, -1 is towards zero) */
 
                     int64_t minCostInc = MAX_INT64, curCost = MAX_INT64;
-                    int minPos = -1;
+                    uint32_t minPos = 0;
                     int8_t finalChange = 0, curChange = 0;
 
                     for (n = (lastCG ? lastNZPosInCG : SCAN_SET_SIZE - 1); n >= 0; --n)
@@ -1285,11 +1285,11 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                         const int signCoef    = m_resiDctCoeff[blkPos]; /* pre-quantization DCT coeff */
                         const int absLevel    = abs(dstCoeff[blkPos]);
                         // TODO: this is constant in non-scaling mode
-                        const int preDQuantLevelDiff = (unquantScale[blkPos] << per);
-                        const int unQuantLevel = (absLevel * (unquantScale[blkPos] << per) + unquantRound);
+                        const uint32_t preDQuantLevelDiff = (unquantScale[blkPos] << per);
+                        const uint32_t unQuantLevel = (absLevel * (unquantScale[blkPos] << per) + unquantRound);
 
                         int d = abs(signCoef) - (unQuantLevel >> unquantShift);
-                        X265_CHECK(UNQUANT(absLevel) == (unQuantLevel >> unquantShift), "dquant check failed\n");
+                        X265_CHECK((uint32_t)UNQUANT(absLevel) == (unQuantLevel >> unquantShift), "dquant check failed\n");
 
                         const int64_t origDist = (((int64_t)d * d));
 
@@ -1298,13 +1298,13 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                         if (dstCoeff[blkPos])
                         {
                             d = abs(signCoef) - ((unQuantLevel + preDQuantLevelDiff) >> unquantShift);
-                            X265_CHECK(UNQUANT(absLevel + 1) == ((unQuantLevel + preDQuantLevelDiff) >> unquantShift), "dquant check failed\n");
+                            X265_CHECK((uint32_t)UNQUANT(absLevel + 1) == ((unQuantLevel + preDQuantLevelDiff) >> unquantShift), "dquant check failed\n");
                             int64_t costUp = DELTARDCOST(origDist, d, rateIncUp[blkPos]);
 
                             /* if decrementing would make the coeff 0, we can include the
                              * significant coeff flag cost savings */
                             d = abs(signCoef) - ((unQuantLevel - preDQuantLevelDiff) >> unquantShift);
-                            X265_CHECK(UNQUANT(absLevel - 1) == ((unQuantLevel - preDQuantLevelDiff) >> unquantShift), "dquant check failed\n");
+                            X265_CHECK((uint32_t)UNQUANT(absLevel - 1) == ((unQuantLevel - preDQuantLevelDiff) >> unquantShift), "dquant check failed\n");
                             int isOne = (abs(dstCoeff[blkPos]) == 1);
                             int downBits = rateIncDown[blkPos] - (isOne ? (IEP_RATE + sigRateDelta[blkPos]) : 0);
                             int64_t costDown = DELTARDCOST(origDist, d, downBits);
@@ -1327,7 +1327,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                         {
                             /* evaluate changing an uncoded coeff 0 to a coded coeff +/-1 */
                             d = abs(signCoef) - ((preDQuantLevelDiff + unquantRound) >> unquantShift);
-                            X265_CHECK(UNQUANT(1) == ((preDQuantLevelDiff + unquantRound) >> unquantShift), "dquant check failed\n");
+                            X265_CHECK((uint32_t)UNQUANT(1) == ((preDQuantLevelDiff + unquantRound) >> unquantShift), "dquant check failed\n");
                             curCost = DELTARDCOST(origDist, d, rateIncUp[blkPos] + IEP_RATE + sigRateDelta[blkPos]);
                             curChange = 1;
                         }
@@ -1336,12 +1336,15 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                         {
                             minCostInc = curCost;
                             finalChange = curChange;
-                            minPos = blkPos;
+                            minPos = blkPos + (absLevel << 16);
                         }
                     }
 
+                    const int absInMinPos = (minPos >> 16);
+                    minPos = (uint16_t)minPos;
+
                     // if (dstCoeff[minPos] == 32767 || dstCoeff[minPos] == -32768)
-                    if (((uint16_t)dstCoeff[minPos] + 1 == (uint16_t)0x8000) | ((uint16_t)dstCoeff[minPos] == (uint16_t)0x8000))
+                    if (absInMinPos >= 32767)
                         /* don't allow sign hiding to violate the SPEC range */
                         finalChange = -1;
 
@@ -1350,7 +1353,7 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                     //    numSig++;
                     //else if (finalChange == -1 && abs(dstCoeff[minPos]) == 1)
                     //    numSig--;
-                    numSig += (dstCoeff[minPos] == 0) - ((finalChange == -1) & (abs(dstCoeff[minPos]) == 1));
+                    numSig += (absInMinPos == 0) - ((finalChange == -1) & (absInMinPos == 1));
 
 
                     // NOTE: Reference code
