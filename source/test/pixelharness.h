@@ -41,6 +41,8 @@ protected:
     enum { TEST_CASES = 3 };
     enum { SMAX = 1 << 12 };
     enum { SMIN = -1 << 12 };
+    enum { RMAX = PIXEL_MAX - PIXEL_MIN }; //The maximum value obtained by subtracting pixel values (residual max)
+    enum { RMIN = PIXEL_MIN - PIXEL_MAX }; //The minimum value obtained by subtracting pixel values (residual min)
 
     ALIGN_VAR_32(pixel, pbuf1[BUFFSIZE]);
     pixel    pbuf2[BUFFSIZE];
@@ -65,6 +67,7 @@ protected:
     uint16_t ushort_test_buff[TEST_CASES][BUFFSIZE];
     uint8_t  uchar_test_buff[TEST_CASES][BUFFSIZE];
     double   double_test_buff[TEST_CASES][BUFFSIZE];
+    int16_t  residual_test_buff[TEST_CASES][BUFFSIZE];
 
     bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_pixel_sse(pixel_sse_t ref, pixel_sse_t opt);

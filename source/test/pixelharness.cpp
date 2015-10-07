@@ -42,6 +42,7 @@ PixelHarness::PixelHarness()
         int_test_buff[0][i]     = rand() % SHORT_MAX;
         ushort_test_buff[0][i]  = rand() % ((1 << 16) - 1);
         uchar_test_buff[0][i]   = rand() % ((1 << 8) - 1);
+        residual_test_buff[0][i] = (rand() % (2 * RMAX + 1)) - RMAX - 1;// For sse_ss only
 
         pixel_test_buff[1][i]   = PIXEL_MIN;
         short_test_buff[1][i]   = SMIN;
@@ -50,6 +51,7 @@ PixelHarness::PixelHarness()
         int_test_buff[1][i]     = SHORT_MIN;
         ushort_test_buff[1][i]  = PIXEL_MIN;
         uchar_test_buff[1][i]   = PIXEL_MIN;
+        residual_test_buff[1][i] = RMIN;
 
         pixel_test_buff[2][i]   = PIXEL_MAX;
         short_test_buff[2][i]   = SMAX;
@@ -58,6 +60,7 @@ PixelHarness::PixelHarness()
         int_test_buff[2][i]     = SHORT_MAX;
         ushort_test_buff[2][i]  = ((1 << 16) - 1);
         uchar_test_buff[2][i]   = 255;
+        residual_test_buff[2][i] = RMAX;
 
         pbuf1[i] = rand() & PIXEL_MAX;
         pbuf2[i] = rand() & PIXEL_MAX;
@@ -125,8 +128,8 @@ bool PixelHarness::check_pixel_sse_ss(pixel_sse_ss_t ref, pixel_sse_ss_t opt)
     {
         int index1 = rand() % TEST_CASES;
         int index2 = rand() % TEST_CASES;
-        sse_ret_t vres = (sse_ret_t)checked(opt, short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
-        sse_ret_t cres = ref(short_test_buff[index1], stride, short_test_buff[index2] + j, stride);
+        sse_ret_t vres = (sse_ret_t)checked(opt, residual_test_buff[index1], stride, residual_test_buff[index2] + j, stride);
+        sse_ret_t cres = ref(residual_test_buff[index1], stride, residual_test_buff[index2] + j, stride);
         if (vres != cres)
             return false;
 
