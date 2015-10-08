@@ -119,6 +119,8 @@ protected:
     bool check_costCoeffRemain(costCoeffRemain_t ref, costCoeffRemain_t opt);
     bool check_costC1C2Flag(costC1C2Flag_t ref, costC1C2Flag_t opt);
     bool check_planeClipAndMax(planeClipAndMax_t ref, planeClipAndMax_t opt);
+    bool check_pelFilterLumaStrong_V(pelFilterLumaStrong_t ref, pelFilterLumaStrong_t opt);
+    bool check_pelFilterLumaStrong_H(pelFilterLumaStrong_t ref, pelFilterLumaStrong_t opt);
 
 public:
 

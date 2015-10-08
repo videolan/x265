@@ -37,6 +37,7 @@ pb_movemask_32:  times 32 db 0x00
 
 SECTION .text
 cextern pb_1
+cextern pb_01
 cextern pb_128
 cextern pb_2
 cextern pw_2
@@ -45,6 +46,8 @@ cextern pb_movemask
 cextern pw_1
 cextern hmul_16p
 cextern pb_4
+cextern pw_4
+cextern pw_n1
 
 
 ;============================================================================================================
@@ -2230,6 +2233,248 @@ cglobal saoCuStatsE1, 4,12,8,0-32    ; Stack: 5 of stats and 5 of count
     add         [r1 + 4 * 4], r6d
     RET
 %endif ; ARCH_X86_64
+
+%if ARCH_X86_64
+;; argument registers used -
+; r0    - src
+; r1    - srcStep
+; r2    - offset
+; r3    - tcP
+; r4    - tcQ
+
+INIT_XMM sse4
+cglobal pelFilterLumaStrong_H, 5,7,10
+    mov             r1, r2
+    neg             r3d
+    neg             r4d
+    neg             r1
+
+    lea             r5, [r2 * 3]
+    lea             r6, [r1 * 3]
+
+    pmovzxbw        m4, [r0]                ; src[0]
+    pmovzxbw        m3, [r0 + r1]           ; src[-offset]
+    pmovzxbw        m2, [r0 + r1 * 2]       ; src[-offset * 2]
+    pmovzxbw        m1, [r0 + r6]           ; src[-offset * 3]
+    pmovzxbw        m0, [r0 + r1 * 4]       ; src[-offset * 4]
+    pmovzxbw        m5, [r0 + r2]           ; src[offset]
+    pmovzxbw        m6, [r0 + r2 * 2]       ; src[offset * 2]
+    pmovzxbw        m7, [r0 + r5]           ; src[offset * 3]
+
+    paddw           m0, m0                  ; m0*2
+    mova            m8, m2
+    paddw           m8, m3                  ; m2 + m3
+    paddw           m8, m4                  ; m2 + m3 + m4
+    mova            m9, m8
+    paddw           m9, m9                  ; 2*m2 + 2*m3 + 2*m4
+    paddw           m8, m1                  ; m2 + m3 + m4 + m1
+    paddw           m0, m8                  ; 2*m0 + m2+ m3 + m4 + m1
+    paddw           m9, m1
+    paddw           m0, m1
+    paddw           m9, m5                  ; m1 + 2*m2 + 2*m3 + 2*m4 + m5
+    paddw           m0, m1                  ; 2*m0 + 3*m1 + m2 + m3 + m4
+
+    punpcklqdq      m0, m9
+    punpcklqdq      m1, m3
+
+    paddw           m3, m4
+    mova            m9, m5
+    paddw           m9, m6
+    paddw           m7, m7                  ; 2*m7
+    paddw           m9, m3                  ; m3 + m4 + m5 + m6
+    mova            m3, m9
+    paddw           m3, m3                  ; 2*m3 + 2*m4 + 2*m5 + 2*m6
+    paddw           m7, m9                  ; 2*m7 + m3 + m4 + m5 + m6
+    paddw           m7, m6
+    psubw           m3, m6                  ; 2*m3 + 2*m4 + 2*m5 + m6
+    paddw           m7, m6                  ; m3 + m4 + m5 + 3*m6 + 2*m7
+    paddw           m3, m2                  ; m2 + 2*m3 + 2*m4 + 2*m5 + m6
+
+    punpcklqdq      m9, m8
+    punpcklqdq      m3, m7
+    punpcklqdq      m5, m2
+    punpcklqdq      m4, m6
+
+    movd            m7, r3d                 ; -tcP
+    movd            m2, r4d                 ; -tcQ
+    pshufb          m7, [pb_01]
+    pshufb          m2, [pb_01]
+    mova            m6, m2
+    punpcklqdq      m6, m7
+
+    paddw           m0, [pw_4]
+    paddw           m3, [pw_4]
+    paddw           m9, [pw_2]
+
+    psraw           m0, 3
+    psraw           m3, 3
+    psraw           m9, 2
+
+    psubw           m0, m1
+    psubw           m3, m4
+    psubw           m9, m5
+
+    pmaxsw          m0, m7
+    pmaxsw          m3, m2
+    pmaxsw          m9, m6
+    psignw          m7, [pw_n1]
+    psignw          m2, [pw_n1]
+    psignw          m6, [pw_n1]
+    pminsw          m0, m7
+    pminsw          m3, m2
+    pminsw          m9, m6
+
+    paddw           m0, m1
+    paddw           m3, m4
+    paddw           m9, m5
+    packuswb        m0, m0
+    packuswb        m3, m9
+
+    movd            [r0 + r6], m0
+    pextrd          [r0 + r1], m0, 1
+    movd            [r0], m3
+    pextrd          [r0 + r2 * 2], m3, 1
+    pextrd          [r0 + r2 * 1], m3, 2
+    pextrd          [r0 + r1 * 2], m3, 3
+    RET
+
+INIT_XMM sse4
+cglobal pelFilterLumaStrong_V, 5,5,10
+    neg             r3d
+    neg             r4d
+    lea             r2, [r1 * 3]
+
+    movh            m0, [r0 - 4]            ; src[-offset * 4] row 0
+    movh            m1, [r0 + r1 * 1 - 4]   ; src[-offset * 4] row 1
+    movh            m2, [r0 + r1 * 2 - 4]   ; src[-offset * 4] row 2
+    movh            m3, [r0 + r2 * 1 - 4]   ; src[-offset * 4] row 3
+
+    punpcklbw       m0, m1
+    punpcklbw       m2, m3
+    mova            m4, m0
+    punpcklwd       m0, m2
+    punpckhwd       m4, m2
+    mova            m1, m0
+    mova            m2, m0
+    mova            m3, m0
+    pshufd          m0, m0, 0
+    pshufd          m1, m1, 1
+    pshufd          m2, m2, 2
+    pshufd          m3, m3, 3
+    mova            m5, m4
+    mova            m6, m4
+    mova            m7, m4
+    pshufd          m4, m4, 0
+    pshufd          m5, m5, 1
+    pshufd          m6, m6, 2
+    pshufd          m7, m7, 3
+    pmovzxbw        m0, m0
+    pmovzxbw        m1, m1
+    pmovzxbw        m2, m2
+    pmovzxbw        m3, m3
+    pmovzxbw        m4, m4
+    pmovzxbw        m5, m5
+    pmovzxbw        m6, m6
+    pmovzxbw        m7, m7
+
+    paddw           m0, m0                  ; m0*2
+    mova            m8, m2
+    paddw           m8, m3                  ; m2 + m3
+    paddw           m8, m4                  ; m2 + m3 + m4
+    mova            m9, m8
+    paddw           m9, m9                  ; 2*m2 + 2*m3 + 2*m4
+    paddw           m8, m1                  ; m2 + m3 + m4 + m1
+    paddw           m0, m8                  ; 2*m0 + m2+ m3 + m4 + m1
+    paddw           m9, m1
+    paddw           m0, m1
+    paddw           m9, m5                  ; m1 + 2*m2 + 2*m3 + 2*m4 + m5
+    paddw           m0, m1                  ; 2*m0 + 3*m1 + m2 + m3 + m4
+
+    punpcklqdq      m0, m9
+    punpcklqdq      m1, m3
+
+    paddw           m3, m4
+    mova            m9, m5
+    paddw           m9, m6
+    paddw           m7, m7                  ; 2*m7
+    paddw           m9, m3                  ; m3 + m4 + m5 + m6
+    mova            m3, m9
+    paddw           m3, m3                  ; 2*m3 + 2*m4 + 2*m5 + 2*m6
+    paddw           m7, m9                  ; 2*m7 + m3 + m4 + m5 + m6
+    paddw           m7, m6
+    psubw           m3, m6                  ; 2*m3 + 2*m4 + 2*m5 + m6
+    paddw           m7, m6                  ; m3 + m4 + m5 + 3*m6 + 2*m7
+    paddw           m3, m2                  ; m2 + 2*m3 + 2*m4 + 2*m5 + m6
+
+    punpcklqdq      m9, m8
+    punpcklqdq      m3, m7
+    punpcklqdq      m5, m2
+    punpcklqdq      m4, m6
+
+    movd            m7, r3d                 ; -tcP
+    movd            m2, r4d                 ; -tcQ
+    pshufb          m7, [pb_01]
+    pshufb          m2, [pb_01]
+    mova            m6, m2
+    punpcklqdq      m6, m7
+
+    paddw           m0, [pw_4]
+    paddw           m3, [pw_4]
+    paddw           m9, [pw_2]
+
+    psraw           m0, 3
+    psraw           m3, 3
+    psraw           m9, 2
+
+    psubw           m0, m1
+    psubw           m3, m4
+    psubw           m9, m5
+
+    pmaxsw          m0, m7
+    pmaxsw          m3, m2
+    pmaxsw          m9, m6
+    psignw          m7, [pw_n1]
+    psignw          m2, [pw_n1]
+    psignw          m6, [pw_n1]
+    pminsw          m0, m7
+    pminsw          m3, m2
+    pminsw          m9, m6
+
+    paddw           m0, m1
+    paddw           m3, m4
+    paddw           m9, m5
+    packuswb        m0, m0
+    packuswb        m3, m9
+
+    ; 4x6 output rows -
+    ; m0 - col 0
+    ; m3 - col 3
+    mova            m1, m0
+    mova            m2, m3
+    mova            m4, m3
+    mova            m5, m3
+    pshufd          m1, m1, 1               ; col 2
+    pshufd          m2, m2, 1               ; col 5
+    pshufd          m4, m4, 2               ; col 4
+    pshufd          m5, m5, 3               ; col 1
+
+    ; transpose 4x6 to 6x4
+    punpcklbw       m0, m5
+    punpcklbw       m1, m3
+    punpcklbw       m4, m2
+    punpcklwd       m0, m1
+
+    movd            [r0 + r1 * 0 - 3], m0
+    pextrd          [r0 + r1 * 1 - 3], m0, 1
+    pextrd          [r0 + r1 * 2 - 3], m0, 2
+    pextrd          [r0 + r2 * 1 - 3], m0, 3
+    pextrw          [r0 + r1 * 0 + 1], m4, 0
+    pextrw          [r0 + r1 * 1 + 1], m4, 1
+    pextrw          [r0 + r1 * 2 + 1], m4, 2
+    pextrw          [r0 + r2 * 1 + 1], m4, 3
+    RET
+%endif ; ARCH_X86_64
+
 
 
 ;void saoCuStatsE2_c(const int16_t *fenc, const pixel *rec, intptr_t stride, int8_t *upBuff1, int8_t *upBufft, int endX, int endY, int32_t *stats, int32_t *count)

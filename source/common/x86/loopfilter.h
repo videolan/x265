@@ -46,4 +46,7 @@
 DECL_SAO(sse4);
 DECL_SAO(avx2);
 
+void PFX(pelFilterLumaStrong_V_sse4)(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tcP, int32_t tcQ);
+void PFX(pelFilterLumaStrong_H_sse4)(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tcP, int32_t tcQ);
+
 #endif // ifndef X265_LOOPFILTER_H
