@@ -456,15 +456,14 @@ Profile, Level, Tier
 	encoder (a high bit depth encoder will be unable to output
 	bitstreams compliant with Main or MainStillPicture).
 
-	The first version of the HEVC specification only described Main,
-	Main10, and MainStillPicture. All other profiles were added by the
-	Range Extensions additions in HEVC version two.
+	The following profiles are supported in x265.
 
 	8bit profiles::
 
 	main, main-intra, mainstillpicture (or msp for short)
 	main444-8 main444-intra main444-stillpicture
-
+	See note below on signaling intra and stillpicture profiles.
+	
 	10bit profiles::
 
 	main10, main10-intra
@@ -477,9 +476,6 @@ Profile, Level, Tier
 	main422-12, main422-12-intra
 	main444-12, main444-12-intra
 
-	16bit profiles::
-
-	main444-16-intra main444-16-stillpicture
 
 	**CLI ONLY**
 
