@@ -173,6 +173,7 @@ public:
     int     m_numBframesInPattern;
     bool    m_isPatternPresent;
     bool    m_isSceneTransition;
+    int     m_lastPredictorReset;
 
     /* a common variable on which rateControlStart, rateControlEnd and rateControUpdateStats waits to
      * sync the calls to these functions. For example
@@ -257,6 +258,7 @@ protected:
     void   checkAndResetABR(RateControlEntry* rce, bool isFrameDone);
     double predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double qpm, int32_t& encodedBits);
     bool   initPass2();
+    void   initFramePredictors();
     double getDiffLimitedQScale(RateControlEntry *rce, double q);
     double countExpectedBits();
     bool   vbv2Pass(uint64_t allAvailableBits);

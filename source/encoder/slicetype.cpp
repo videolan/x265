@@ -1268,16 +1268,12 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 
     int numBFrames = 0;
     int numAnalyzed = numFrames;
-
-    if (m_param->bFrameAdaptive)
+    bool isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
+    /* When scenecut threshold is set, use scenecut detection for I frame placements */
+    if (m_param->scenecutThreshold && isScenecut)
     {
-        bool isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
-        /* When scenecut threshold is set, use scenecut detection for I frame placements */
-        if (!m_param->scenecutThreshold && isScenecut)
-        {
-            frames[1]->sliceType = X265_TYPE_I;
-            return;
-        }
+        frames[1]->sliceType = X265_TYPE_I;
+        return;
     }
 
     if (m_param->bframes)
@@ -1364,7 +1360,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         /* Check scenecut on the first minigop. */
         for (int j = 1; j < numBFrames + 1; j++)
         {
-            if (scenecut(frames, j - 1, j, false, origNumFrames))
+            if (scenecut(frames, j, j + 1, false, origNumFrames))
             {
                 frames[j]->sliceType = X265_TYPE_P;
                 numAnalyzed = j;
@@ -1458,9 +1454,12 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
         {
             fluctuate = false;
             avgSatdCost /= cnt;
-            for (int i= p1 ; i <= maxp1; i++)
+            for (int i = p1; i <= maxp1; i++)
             {
-                if (fabs((double)(frames[i]->costEst[i - p0][0] - avgSatdCost)) > 0.1 * avgSatdCost)
+                int64_t curCost  = frames[i]->costEst[i - p0][0];
+                int64_t prevCost = frames[i - 1]->costEst[i - 1 - p0][0];
+                if (fabs((double)(curCost - avgSatdCost)) > 0.1 * avgSatdCost || 
+                    fabs((double)(curCost - prevCost)) > 0.1 * prevCost)
                 {
                     fluctuate = true;
                     if (!m_isSceneTransition && frames[i]->bScenecut)
@@ -1479,7 +1478,11 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
             m_isSceneTransition = false; /* Signal end of scene transitioning */
     }
 
-    /* Ignore frames that are part of a flash, i.e. cannot be real scenecuts */
+    /* A frame is always analysed with bRealScenecut = true first, and then bRealScenecut = false,
+       the former for I decisions and the latter for P/B decisions. It's possible that the first 
+       analysis detected scenecuts which were later nulled due to scene transitioning, in which 
+       case do not return a true scenecut for this frame */
+
     if (!frames[p1]->bScenecut)
         return false;
     return scenecutInternal(frames, p0, p1, bRealScenecut);

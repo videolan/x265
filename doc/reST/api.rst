@@ -321,7 +321,8 @@ block until the next output picture is complete.
 	provided, the encoder will fill it with data pertaining to the
 	output picture corresponding to the output NALs, including the
 	recontructed image, POC and decode timestamp. These pictures will be
-	in encode (or decode) order.
+	in encode (or decode) order. The encoder will also write corresponding 
+	frame encode statistics into **x265_frame_stats**.
 
 When the last of the raw input pictures has been sent to the encoder,
 **x265_encoder_encode()** must still be called repeatedly with a
