@@ -710,8 +710,7 @@ void SAO::calcSaoStatsCu(int addr, int plane)
     int skipB = 4;
     int skipR = 5;
 
-    int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1;
-    int8_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
+    int8_t _upBuff[2 * (MAX_CU_SIZE + 16 + 16)], *upBuff1 = _upBuff + 16, *upBufft = upBuff1 + (MAX_CU_SIZE + 16 + 16);
 
     ALIGN_VAR_32(int16_t, diff[MAX_CU_SIZE * MAX_CU_SIZE]);
 
@@ -811,9 +810,9 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 rec += stride;
             }
 
-            primitives.sign(&upBuff1[startX], &rec[startX], &rec[startX - stride - 1], (endX - startX));
+            primitives.sign(upBuff1, &rec[startX], &rec[startX - stride - 1], (endX - startX));
 
-            primitives.saoCuStatsE2(diff + startX + startY * MAX_CU_SIZE, rec0  + startX + startY * stride, stride, upBuff1 + startX, upBufft + startX, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_2], m_count[plane][SAO_EO_2]);
+            primitives.saoCuStatsE2(diff + startX + startY * MAX_CU_SIZE, rec0  + startX + startY * stride, stride, upBuff1, upBufft, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_2], m_count[plane][SAO_EO_2]);
         }
 
         // SAO_EO_3: // dir: 45
@@ -839,9 +838,9 @@ void SAO::calcSaoStatsCu(int addr, int plane)
                 rec += stride;
             }
 
-            primitives.sign(&upBuff1[startX - 1], &rec[startX - 1], &rec[startX - 1 - stride + 1], (endX - startX + 1));
+            primitives.sign(upBuff1, &rec[startX - 1], &rec[startX - 1 - stride + 1], (endX - startX + 1));
 
-            primitives.saoCuStatsE3(diff + startX + startY * MAX_CU_SIZE, rec0  + startX + startY * stride, stride, upBuff1 + startX, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_3], m_count[plane][SAO_EO_3]);
+            primitives.saoCuStatsE3(diff + startX + startY * MAX_CU_SIZE, rec0  + startX + startY * stride, stride, upBuff1 + 1, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_3], m_count[plane][SAO_EO_3]);
         }
     }
 }
