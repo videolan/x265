@@ -6068,7 +6068,7 @@ cglobal interp_8tap_vert_%1_4x4, 4, 6, 7
 %ifidn %1,pp
     vbroadcasti128  m6, [pd_32]
 %elifidn %1, sp
-    mova            m6, [pd_524800]
+    vbroadcasti128  m6, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m6, [INTERP_OFFSET_PS]
 %endif
@@ -6178,7 +6178,7 @@ cglobal interp_8tap_vert_%1_8x8, 4, 6, 12
 %ifidn %1,pp
     vbroadcasti128  m11, [pd_32]
 %elifidn %1, sp
-    mova            m11, [pd_524800]
+    vbroadcasti128  m11, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m11, [INTERP_OFFSET_PS]
 %endif
@@ -6816,7 +6816,7 @@ cglobal interp_8tap_vert_%1_%2x16, 4, 10, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [INTERP_OFFSET_SP]
+    vbroadcasti128  m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -6867,7 +6867,7 @@ cglobal interp_8tap_vert_%3_%1x%2, 4, 12, 15
 %ifidn %3,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %3, sp
-    mova            m14, [INTERP_OFFSET_SP]
+    vbroadcasti128  m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -6950,7 +6950,7 @@ cglobal interp_8tap_vert_%1_8x%2, 4, 9, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [INTERP_OFFSET_SP]
+    vbroadcasti128  m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -7597,7 +7597,7 @@ cglobal interp_8tap_vert_%1_%2x8, 4, 10, 13
 %ifidn %1,pp
     vbroadcasti128  m11, [pd_32]
 %elifidn %1, sp
-    mova            m11, [INTERP_OFFSET_SP]
+    vbroadcasti128  m11, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m11, [INTERP_OFFSET_PS]
 %endif
@@ -7644,7 +7644,7 @@ cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [INTERP_OFFSET_SP]
+    vbroadcasti128  m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -7816,7 +7816,7 @@ cglobal interp_8tap_vert_%1_16x4, 4, 7, 8, 0-gprsize
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [INTERP_OFFSET_SP]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -7861,7 +7861,7 @@ cglobal interp_8tap_vert_%1_8x4, 4, 6, 8
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [INTERP_OFFSET_SP]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -7901,7 +7901,7 @@ cglobal interp_8tap_vert_%1_16x12, 4, 10, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [INTERP_OFFSET_SP]
+    vbroadcasti128  m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif
@@ -8248,7 +8248,7 @@ cglobal interp_8tap_vert_%1_4x8, 4, 7, 8
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [INTERP_OFFSET_SP]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -8668,7 +8668,7 @@ cglobal interp_8tap_vert_%1_4x16, 4, 7, 8
 %ifidn %1,pp
     vbroadcasti128  m7, [pd_32]
 %elifidn %1, sp
-    mova            m7, [INTERP_OFFSET_SP]
+    vbroadcasti128  m7, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m7, [INTERP_OFFSET_PS]
 %endif
@@ -8703,7 +8703,7 @@ cglobal interp_8tap_vert_%1_12x16, 4, 9, 15
 %ifidn %1,pp
     vbroadcasti128  m14, [pd_32]
 %elifidn %1, sp
-    mova            m14, [INTERP_OFFSET_SP]
+    vbroadcasti128  m14, [INTERP_OFFSET_SP]
 %else
     vbroadcasti128  m14, [INTERP_OFFSET_PS]
 %endif

@@ -1595,13 +1595,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         ALL_LUMA_PU(luma_vpp, interp_8tap_vert_pp, avx2);
         ALL_LUMA_PU(luma_vps, interp_8tap_vert_ps, avx2);
-#if X265_DEPTH <= 10
         ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, avx2);
-#endif
         ALL_LUMA_PU(luma_vss, interp_8tap_vert_ss, avx2);
-#if X265_DEPTH <= 10
         p.pu[LUMA_4x4].luma_vsp = PFX(interp_8tap_vert_sp_4x4_avx2);               // since ALL_LUMA_PU didn't declare 4x4 size, calling separately luma_vsp function to use 
-#endif
 
         p.cu[BLOCK_16x16].add_ps = PFX(pixel_add_ps_16x16_avx2);
         p.cu[BLOCK_32x32].add_ps = PFX(pixel_add_ps_32x32_avx2);
@@ -2163,11 +2159,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         p.frameInitLowres = PFX(frame_init_lowres_core_avx2);
 
-#if X265_DEPTH <= 10
         // TODO: depends on hps and vsp
         ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu);                        // calling luma_hvpp for all sizes
         p.pu[LUMA_4x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_4x4>;             // ALL_LUMA_PU_T has declared all sizes except 4x4, hence calling luma_hvpp[4x4] 
-#endif
 
         if (cpuMask & X265_CPU_BMI2)
             p.scanPosLast = PFX(scanPosLast_avx2_bmi2);
