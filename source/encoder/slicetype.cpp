@@ -1350,7 +1350,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         /* Check scenecut on the first minigop. */
         for (int j = 1; j < numBFrames + 1; j++)
         {
-            if (scenecut(frames, j - 1, j, false, origNumFrames))
+            if (scenecut(frames, j, j + 1, false, origNumFrames))
             {
                 frames[j]->sliceType = X265_TYPE_P;
                 numAnalyzed = j;
