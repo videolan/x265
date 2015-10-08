@@ -36,4 +36,13 @@ LOWRES(xop)
 
 #undef LOWRES
 
+#define PROPAGATE_COST(cpu) \
+    void PFX(mbtree_propagate_cost_ ## cpu)(int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, \
+                                              const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
+
+PROPAGATE_COST(sse2)
+PROPAGATE_COST(avx)
+
+#undef PROPAGATE_COST
+
 #endif // ifndef X265_MC_H

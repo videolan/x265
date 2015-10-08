@@ -1030,6 +1030,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_CHROMA_444_PU(p2s, filterPixelToShort, sse2);
         ALL_LUMA_PU(convert_p2s, filterPixelToShort, sse2);
         ALL_LUMA_TU(count_nonzero, count_nonzero, sse2);
+        p.propagateCost = PFX(mbtree_propagate_cost_sse2);
     }
     if (cpuMask & X265_CPU_SSE3)
     {
@@ -2343,6 +2344,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         ALL_CHROMA_444_PU(p2s, filterPixelToShort, sse2);
         ALL_LUMA_PU(convert_p2s, filterPixelToShort, sse2);
         ALL_LUMA_TU(count_nonzero, count_nonzero, sse2);
+        p.propagateCost = PFX(mbtree_propagate_cost_sse2);
     }
     if (cpuMask & X265_CPU_SSE3)
     {

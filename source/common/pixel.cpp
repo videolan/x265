@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 #include "common.h"
+#include "slicetype.h"      // LOWRES_COST_MASK
 #include "primitives.h"
 #include "x265.h"
 
@@ -960,17 +961,30 @@ static void planecopy_sp_shl_c(const uint16_t* src, intptr_t srcStride, pixel* d
 /* Estimate the total amount of influence on future quality that could be had if we
  * were to improve the reference samples used to inter predict any given CU. */
 static void estimateCUPropagateCost(int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts,
-                             const int32_t* invQscales, const double* fpsFactor, int len)
+                                    const int32_t* invQscales, const double* fpsFactor, int len)
 {
-    double fps = *fpsFactor / 256;
+    double fps = *fpsFactor / 256;  // range[0.01, 1.00]
 
     for (int i = 0; i < len; i++)
     {
-        double intraCost       = intraCosts[i] * invQscales[i];
-        double propagateAmount = (double)propagateIn[i] + intraCost * fps;
-        double propagateNum    = (double)intraCosts[i] - (interCosts[i] & ((1 << 14) - 1));
-        double propagateDenom  = (double)intraCosts[i];
+        int intraCost = intraCosts[i];
+        int interCost = X265_MIN(intraCosts[i], interCosts[i] & LOWRES_COST_MASK);
+        double propagateIntra  = intraCost * invQscales[i]; // Q16 x Q8.8 = Q24.8
+        double propagateAmount = (double)propagateIn[i] + propagateIntra * fps; // Q16.0 + Q24.8 x Q0.x = Q25.0
+        double propagateNum    = (double)(intraCost - interCost); // Q32 - Q32 = Q33.0
+
+#if 0
+        // algorithm that output match to asm
+        float intraRcp = (float)1.0f / intraCost;   // VC can't mapping this into RCPPS
+        float intraRcpError1 = (float)intraCost * (float)intraRcp;
+        intraRcpError1 *= (float)intraRcp;
+        float intraRcpError2 = intraRcp + intraRcp;
+        float propagateDenom = intraRcpError2 - intraRcpError1;
+        dst[i] = (int)(propagateAmount * propagateNum * (double)propagateDenom + 0.5);
+#else
+        double propagateDenom  = (double)intraCost;             // Q32
         dst[i] = (int)(propagateAmount * propagateNum / propagateDenom + 0.5);
+#endif
     }
 }
 
