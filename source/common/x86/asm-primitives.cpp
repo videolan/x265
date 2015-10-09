@@ -1306,6 +1306,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_64x32].copy_pp = (copy_pp_t)PFX(blockcopy_ss_64x32_avx);
         p.pu[LUMA_64x48].copy_pp = (copy_pp_t)PFX(blockcopy_ss_64x48_avx);
         p.pu[LUMA_64x64].copy_pp = (copy_pp_t)PFX(blockcopy_ss_64x64_avx);
+        p.propagateCost = PFX(mbtree_propagate_cost_avx);
     }
     if (cpuMask & X265_CPU_XOP)
     {
@@ -2157,6 +2158,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_vsp = PFX(interp_4tap_vert_sp_64x64_avx2);
 
         p.frameInitLowres = PFX(frame_init_lowres_core_avx2);
+        p.propagateCost = PFX(mbtree_propagate_cost_avx2);
 
         // TODO: depends on hps and vsp
         ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu);                        // calling luma_hvpp for all sizes
@@ -2656,6 +2658,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_48x64].copy_pp = PFX(blockcopy_pp_48x64_avx);
 
         p.frameInitLowres = PFX(frame_init_lowres_core_avx);
+        p.propagateCost = PFX(mbtree_propagate_cost_avx);
     }
     if (cpuMask & X265_CPU_XOP)
     {
@@ -3652,6 +3655,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I444].pu[LUMA_64x16].filter_vpp = PFX(interp_4tap_vert_pp_64x16_avx2);
 
         p.frameInitLowres = PFX(frame_init_lowres_core_avx2);
+        p.propagateCost = PFX(mbtree_propagate_cost_avx2);
 
         if (cpuMask & X265_CPU_BMI2)
             p.scanPosLast = PFX(scanPosLast_avx2_bmi2);
