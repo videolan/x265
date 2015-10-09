@@ -118,7 +118,7 @@ public:
     /* return the RD cost of this prediction, including the effect of psy-rd */
     inline uint64_t calcPsyRdCost(sse_ret_t distortion, uint32_t bits, uint32_t psycost) const
     {
-#if X265_DEPTH < 10
+#if X265_DEPTH <= 10
         X265_CHECK((bits <= (UINT64_MAX / m_lambda2)) && (psycost <= UINT64_MAX / (m_lambda * m_psyRd)),
                    "calcPsyRdCost wrap detected dist: %u, bits: %u, lambda: " X265_LL ", lambda2: " X265_LL "\n",
                    distortion, bits, m_lambda, m_lambda2);
