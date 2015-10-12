@@ -219,6 +219,7 @@ RateControl::RateControl(x265_param& p)
     m_cutreeStatFileOut = m_cutreeStatFileIn = NULL;
     m_rce2Pass = NULL;
     m_lastBsliceSatdCost = 0;
+    m_movingAvgSum = 0.0;
 
     // vbv initialization
     m_param->rc.vbvBufferSize = x265_clip3(0, 2000000, m_param->rc.vbvBufferSize);
@@ -1348,18 +1349,28 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
     {
         if (m_isAbr)
         {
-            double slidingWindowCplxSum = 0;
-            int start = m_sliderPos > s_slidingWindowFrames ?  m_sliderPos : 0;
-            for (int cnt = 0; cnt < s_slidingWindowFrames; cnt++, start++)
+            int pos = m_sliderPos % s_slidingWindowFrames;
+            int addPos = (pos + s_slidingWindowFrames - 1) % s_slidingWindowFrames;
+            if (m_sliderPos > s_slidingWindowFrames)
             {
-                int pos = start % s_slidingWindowFrames;
-                slidingWindowCplxSum *= 0.5;
-                if (!m_satdCostWindow[pos])
-                    break;
-                slidingWindowCplxSum += m_satdCostWindow[pos];
+                const static double base = pow(0.5, s_slidingWindowFrames - 1);
+                m_movingAvgSum -= m_lastRemovedSatdCost * base;
+                m_movingAvgSum *= 0.5;
+                m_movingAvgSum += m_satdCostWindow[addPos];
             }
-            rce->movingAvgSum = slidingWindowCplxSum;
-            m_satdCostWindow[m_sliderPos % s_slidingWindowFrames] = rce->lastSatd;
+            else if (m_sliderPos == s_slidingWindowFrames)
+            {
+                m_movingAvgSum += m_satdCostWindow[addPos];
+            }
+            else if (m_sliderPos > 0)
+            {
+                m_movingAvgSum += m_satdCostWindow[addPos];
+                m_movingAvgSum *= 0.5;
+            }
+
+            rce->movingAvgSum = m_movingAvgSum;
+            m_lastRemovedSatdCost = m_satdCostWindow[pos];
+            m_satdCostWindow[pos] = rce->lastSatd;
             m_sliderPos++;
         }
     }

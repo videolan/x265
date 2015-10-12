@@ -167,6 +167,8 @@ public:
     int64_t m_satdCostWindow[50];
     int64_t m_encodedBitsWindow[50];
     int     m_sliderPos;
+    int64_t m_lastRemovedSatdCost;
+    double  m_movingAvgSum;
 
     /* To detect a pattern of low detailed static frames in single pass ABR using satdcosts */
     int64_t m_lastBsliceSatdCost;
