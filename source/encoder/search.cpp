@@ -1157,7 +1157,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
     }
 }
 
-void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize, uint8_t* sharedModes, uint8_t* sharedChromaModes)
+void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize)
 {
     CUData& cu = intraMode.cu;
 
@@ -1168,8 +1168,8 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
     cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
     intraMode.initCosts();
-    intraMode.lumaDistortion += estIntraPredQT(intraMode, cuGeom, tuDepthRange, sharedModes);
-    intraMode.chromaDistortion += estIntraPredChromaQT(intraMode, cuGeom, sharedChromaModes);
+    intraMode.lumaDistortion += estIntraPredQT(intraMode, cuGeom, tuDepthRange);
+    intraMode.chromaDistortion += estIntraPredChromaQT(intraMode, cuGeom);
     intraMode.distortion += intraMode.lumaDistortion + intraMode.chromaDistortion;
 
     m_entropyCoder.resetBits();
@@ -1387,7 +1387,7 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     extractIntraResultQT(cu, *reconYuv, 0, 0);
 
     intraMode.lumaDistortion = icosts.distortion;
-    intraMode.chromaDistortion = estIntraPredChromaQT(intraMode, cuGeom, NULL);
+    intraMode.chromaDistortion = estIntraPredChromaQT(intraMode, cuGeom);
     intraMode.distortion = intraMode.lumaDistortion + intraMode.chromaDistortion;
 
     m_entropyCoder.resetBits();
@@ -1415,7 +1415,7 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     checkDQP(intraMode, cuGeom);
 }
 
-uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2], uint8_t* sharedModes)
+uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32_t depthRange[2])
 {
     CUData& cu = intraMode.cu;
     Yuv* reconYuv = &intraMode.reconYuv;
@@ -1439,8 +1439,8 @@ uint32_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uin
     {
         uint32_t bmode = 0;
 
-        if (sharedModes)
-            bmode = sharedModes[puIdx];
+        if (intraMode.cu.m_lumaIntraDir[puIdx] != (uint8_t)ALL_IDX)
+            bmode = intraMode.cu.m_lumaIntraDir[puIdx];
         else
         {
             uint64_t candCostList[MAX_RD_INTRA_MODES];
@@ -1679,7 +1679,7 @@ void Search::getBestIntraModeChroma(Mode& intraMode, const CUGeom& cuGeom)
     cu.setChromIntraDirSubParts(bestMode, 0, cuGeom.depth);
 }
 
-uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom, uint8_t* sharedChromaModes)
+uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
 {
     CUData& cu = intraMode.cu;
     Yuv& reconYuv = intraMode.reconYuv;
@@ -1707,10 +1707,10 @@ uint32_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom, uin
         uint32_t maxMode = NUM_CHROMA_MODE;
         uint32_t modeList[NUM_CHROMA_MODE];
 
-        if (sharedChromaModes && !initTuDepth)
+        if (intraMode.cu.m_chromaIntraDir[0] != (uint8_t)ALL_IDX && !initTuDepth)
         {
             for (uint32_t l = 0; l < NUM_CHROMA_MODE; l++)
-                modeList[l] = sharedChromaModes[0];
+                modeList[l] = intraMode.cu.m_chromaIntraDir[0];
             maxMode = 1;
         }
         else

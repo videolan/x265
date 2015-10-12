@@ -199,6 +199,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
     m_qp        = (int8_t*)charBuf; charBuf += m_numPartitions;
     m_log2CUSize         = charBuf; charBuf += m_numPartitions;
     m_lumaIntraDir       = charBuf; charBuf += m_numPartitions;
+    m_chromaIntraDir     = charBuf; charBuf += m_numPartitions;
     m_tqBypass           = charBuf; charBuf += m_numPartitions;
     m_refIdx[0] = (int8_t*)charBuf; charBuf += m_numPartitions;
     m_refIdx[1] = (int8_t*)charBuf; charBuf += m_numPartitions;
@@ -216,7 +217,6 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
     m_cbf[0]             = charBuf; charBuf += m_numPartitions;
     m_cbf[1]             = charBuf; charBuf += m_numPartitions;
     m_cbf[2]             = charBuf; charBuf += m_numPartitions;
-    m_chromaIntraDir     = charBuf; charBuf += m_numPartitions;
 
     X265_CHECK(charBuf == dataPool.charMemBlock + (m_numPartitions * BytesPerPartition) * (instance + 1), "CU data layout is broken\n");
 
@@ -246,7 +246,8 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     /* sequential memsets */
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);
     m_partSet(m_log2CUSize,   (uint8_t)g_maxLog2CUSize);
-    m_partSet(m_lumaIntraDir, (uint8_t)DC_IDX);
+    m_partSet(m_lumaIntraDir, (uint8_t)ALL_IDX);
+    m_partSet(m_chromaIntraDir, (uint8_t)ALL_IDX);
     m_partSet(m_tqBypass,     (uint8_t)frame.m_encData->m_param->bLossless);
     if (m_slice->m_sliceType != I_SLICE)
     {
@@ -257,7 +258,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     X265_CHECK(!(frame.m_encData->m_param->bLossless && !m_slice->m_pps->bTransquantBypassEnabled), "lossless enabled without TQbypass in PPS\n");
 
     /* initialize the remaining CU data in one memset */
-    memset(m_cuDepth, 0, (BytesPerPartition - 6) * m_numPartitions);
+    memset(m_cuDepth, 0, (BytesPerPartition - 7) * m_numPartitions);
 
     uint32_t widthInCU = m_slice->m_sps->numCuInWidth;
     m_cuLeft = (m_cuAddr % widthInCU) ? m_encData->getPicCTU(m_cuAddr - 1) : NULL;
@@ -284,14 +285,15 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp)
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);
 
     m_partSet(m_log2CUSize,   (uint8_t)cuGeom.log2CUSize);
-    m_partSet(m_lumaIntraDir, (uint8_t)DC_IDX);
+    m_partSet(m_lumaIntraDir, (uint8_t)ALL_IDX);
+    m_partSet(m_chromaIntraDir, (uint8_t)ALL_IDX);
     m_partSet(m_tqBypass,     (uint8_t)m_encData->m_param->bLossless);
     m_partSet((uint8_t*)m_refIdx[0], (uint8_t)REF_NOT_VALID);
     m_partSet((uint8_t*)m_refIdx[1], (uint8_t)REF_NOT_VALID);
     m_partSet(m_cuDepth,      (uint8_t)cuGeom.depth);
 
     /* initialize the remaining CU data in one memset */
-    memset(m_predMode, 0, (BytesPerPartition - 7) * m_numPartitions);
+    memset(m_predMode, 0, (BytesPerPartition - 8) * m_numPartitions);
 }
 
 /* Copy the results of a sub-part (split) CU to the parent CU */

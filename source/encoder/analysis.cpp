@@ -72,7 +72,6 @@ using namespace X265_NS;
 
 Analysis::Analysis()
 {
-    m_reuseIntraDataCTU = NULL;
     m_reuseInterDataCTU = NULL;
     m_reuseRef = NULL;
     m_reuseBestMergeCand = NULL;
@@ -138,17 +137,12 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_fencPic, ctu.m_cuAddr, 0);
 
     uint32_t numPartition = ctu.m_numPartitions;
-    if (m_param->analysisMode)
+    if (m_param->analysisMode && m_slice->m_sliceType != I_SLICE)
     {
-        if (m_slice->m_sliceType == I_SLICE)
-            m_reuseIntraDataCTU = (analysis_intra_data*)m_frame->m_analysisData.intraData;
-        else
-        {
-            int numPredDir = m_slice->isInterP() ? 1 : 2;
-            m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
-            m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
-            m_reuseBestMergeCand = &m_reuseInterDataCTU->bestMergeCand[ctu.m_cuAddr * CUGeom::MAX_GEOMS];
-        }
+        int numPredDir = m_slice->isInterP() ? 1 : 2;
+        m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
+        m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
+        m_reuseBestMergeCand = &m_reuseInterDataCTU->bestMergeCand[ctu.m_cuAddr * CUGeom::MAX_GEOMS];
     }
 
     ProfileCUScope(ctu, totalCTUTime, totalCTUs);
@@ -156,14 +150,22 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     uint32_t zOrder = 0;
     if (m_slice->m_sliceType == I_SLICE)
     {
+        analysis_intra_data* intraDataCTU = (analysis_intra_data*)m_frame->m_analysisData.intraData;
+        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+        {
+            memcpy(ctu.m_cuDepth, &intraDataCTU->depth[ctu.m_cuAddr * numPartition], sizeof(uint8_t) * numPartition);
+            memcpy(ctu.m_lumaIntraDir, &intraDataCTU->modes[ctu.m_cuAddr * numPartition], sizeof(uint8_t) * numPartition);
+            memcpy(ctu.m_partSize, &intraDataCTU->partSizes[ctu.m_cuAddr * numPartition], sizeof(char) * numPartition);
+            memcpy(ctu.m_chromaIntraDir, &intraDataCTU->chromaModes[ctu.m_cuAddr * numPartition], sizeof(uint8_t) * numPartition);
+        }
         compressIntraCU(ctu, cuGeom, zOrder, qp);
-        if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_analysisData.intraData)
+        if (m_param->analysisMode == X265_ANALYSIS_SAVE && intraDataCTU)
         {
             CUData* bestCU = &m_modeDepth[0].bestMode->cu;
-            memcpy(&m_reuseIntraDataCTU->depth[ctu.m_cuAddr * numPartition], bestCU->m_cuDepth, sizeof(uint8_t) * numPartition);
-            memcpy(&m_reuseIntraDataCTU->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
-            memcpy(&m_reuseIntraDataCTU->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSize, sizeof(uint8_t) * numPartition);
-            memcpy(&m_reuseIntraDataCTU->chromaModes[ctu.m_cuAddr * numPartition], bestCU->m_chromaIntraDir, sizeof(uint8_t) * numPartition);
+            memcpy(&intraDataCTU->depth[ctu.m_cuAddr * numPartition], bestCU->m_cuDepth, sizeof(uint8_t) * numPartition);
+            memcpy(&intraDataCTU->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
+            memcpy(&intraDataCTU->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSize, sizeof(uint8_t) * numPartition);
+            memcpy(&intraDataCTU->chromaModes[ctu.m_cuAddr * numPartition], bestCU->m_chromaIntraDir, sizeof(uint8_t) * numPartition);
         }
     }
     else
@@ -210,8 +212,7 @@ void Analysis::tryLossless(const CUGeom& cuGeom)
         md.pred[PRED_LOSSLESS].initCosts();
         md.pred[PRED_LOSSLESS].cu.initLosslessCU(md.bestMode->cu, cuGeom);
         PartSize size = (PartSize)md.pred[PRED_LOSSLESS].cu.m_partSize[0];
-        uint8_t* modes = md.pred[PRED_LOSSLESS].cu.m_lumaIntraDir;
-        checkIntra(md.pred[PRED_LOSSLESS], cuGeom, size, modes, NULL);
+        checkIntra(md.pred[PRED_LOSSLESS], cuGeom, size);
         checkBestMode(md.pred[PRED_LOSSLESS], cuGeom.depth);
     }
     else
@@ -233,42 +234,40 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, ui
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
 
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD)
-    {
-        uint8_t* reuseDepth  = &m_reuseIntraDataCTU->depth[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        uint8_t* reuseModes  = &m_reuseIntraDataCTU->modes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        char* reusePartSizes = &m_reuseIntraDataCTU->partSizes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        uint8_t* reuseChromaModes = &m_reuseIntraDataCTU->chromaModes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+    bool bAlreadyDecided = parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] != (uint8_t)ALL_IDX;
+    bool bDecidedDepth = parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
 
-        if (mightNotSplit && depth == reuseDepth[zOrder] && zOrder == cuGeom.absPartIdx)
+    // stop recursion if we reach the depth of previous analysis decision
+    mightSplit &= !(bAlreadyDecided && bDecidedDepth);
+
+    if (bAlreadyDecided)
+    {
+        if (bDecidedDepth)
         {
-            PartSize size = (PartSize)reusePartSizes[zOrder];
-            Mode& mode = size == SIZE_2Nx2N ? md.pred[PRED_INTRA] : md.pred[PRED_INTRA_NxN];
+            Mode& mode = md.pred[0];
+            md.bestMode = &mode;
             mode.cu.initSubCU(parentCTU, cuGeom, qp);
-            checkIntra(mode, cuGeom, size, &reuseModes[zOrder], &reuseChromaModes[zOrder]);
-            checkBestMode(mode, depth);
+            memcpy(mode.cu.m_lumaIntraDir, parentCTU.m_lumaIntraDir + cuGeom.absPartIdx, cuGeom.numPartitions);
+            memcpy(mode.cu.m_chromaIntraDir, parentCTU.m_chromaIntraDir + cuGeom.absPartIdx, cuGeom.numPartitions);
+            checkIntra(mode, cuGeom, (PartSize)parentCTU.m_partSize[cuGeom.absPartIdx]);
 
             if (m_bTryLossless)
                 tryLossless(cuGeom);
 
             if (mightSplit)
                 addSplitFlagCost(*md.bestMode, cuGeom.depth);
-
-            // increment zOrder offset to point to next best depth in sharedDepth buffer
-            zOrder += g_depthInc[g_maxCUDepth - 1][reuseDepth[zOrder]];
-            mightSplit = false;
         }
     }
     else if (mightNotSplit)
     {
         md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
-        checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL, NULL);
+        checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N);
         checkBestMode(md.pred[PRED_INTRA], depth);
 
         if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
         {
             md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom, qp);
-            checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN, NULL, NULL);
+            checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN);
             checkBestMode(md.pred[PRED_INTRA_NxN], depth);
         }
 
@@ -451,9 +450,9 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
             switch (pmode.modes[task])
             {
             case PRED_INTRA:
-                slave.checkIntra(md.pred[PRED_INTRA], pmode.cuGeom, SIZE_2Nx2N, NULL, NULL);
+                slave.checkIntra(md.pred[PRED_INTRA], pmode.cuGeom, SIZE_2Nx2N);
                 if (pmode.cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
-                    slave.checkIntra(md.pred[PRED_INTRA_NxN], pmode.cuGeom, SIZE_NxN, NULL, NULL);
+                    slave.checkIntra(md.pred[PRED_INTRA_NxN], pmode.cuGeom, SIZE_NxN);
                 break;
 
             case PRED_2Nx2N:
@@ -1369,13 +1368,13 @@ uint32_t Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& 
                 {
                     ProfileCounter(parentCTU, totalIntraCU[cuGeom.depth]);
                     md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
-                    checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N, NULL, NULL);
+                    checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N);
                     checkBestMode(md.pred[PRED_INTRA], depth);
 
                     if (cuGeom.log2CUSize == 3 && m_slice->m_sps->quadtreeTULog2MinSize < 3)
                     {
                         md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom, qp);
-                        checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN, NULL, NULL);
+                        checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN);
                         checkBestMode(md.pred[PRED_INTRA_NxN], depth);
                     }
                 }
