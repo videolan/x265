@@ -227,8 +227,8 @@ bool PixelHarness::check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt)
     {
         // NOTE: stride must be multiple of 16, because minimum block is 4x4
         int stride = (STRIDE + (rand() % STRIDE)) & ~15;
-        int cres = ref(sbuf1 + j, stride);
-        int vres = (int)checked(opt, sbuf1 + j, (intptr_t)stride);
+        sse_ret_t cres = ref(sbuf1 + j, stride);
+        sse_ret_t vres = (sse_ret_t)checked(opt, sbuf1 + j, (intptr_t)stride);
 
         if (cres != vres)
             return false;
