@@ -3990,7 +3990,11 @@ cglobal pixel_avg_%1x%2
     test dword r4m, 15
     jz pixel_avg_w%1_sse2
 %endif
+%if (%1 == 8)
+    jmp pixel_avg_w8_unaligned_sse2
+%else
     jmp pixel_avg_w%1_mmx2
+%endif
 %endif
 %endmacro
 
@@ -4049,6 +4053,32 @@ cglobal pixel_avg_w%1
     lea     r2, [r2 + 4 * r3]
     lea     r4, [r4 + 4 * r5]
 %endmacro
+
+INIT_XMM sse2
+cglobal pixel_avg_w8_unaligned
+    AVG_START
+.height_loop:
+%if HIGH_BIT_DEPTH
+    ; NO TEST BRANCH!
+    movu    m0, [t2]
+    movu    m1, [t2+SIZEOF_PIXEL*t3]
+    movu    m2, [t4]
+    movu    m3, [t4+SIZEOF_PIXEL*t5]
+    pavgw   m0, m2
+    pavgw   m1, m3
+    movu    [t0], m0
+    movu    [t0+SIZEOF_PIXEL*t1], m1
+%else ;!HIGH_BIT_DEPTH
+    movq    m0, [t2]
+    movhps  m0, [t2+SIZEOF_PIXEL*t3]
+    movq    m1, [t4]
+    movhps  m1, [t4+SIZEOF_PIXEL*t5]
+    pavgb   m0, m1
+    movq    [t0], m0
+    movhps  [t0+SIZEOF_PIXEL*t1], m0
+%endif
+    AVG_END
+
 
 ;-------------------------------------------------------------------------------------------------------------------------------
 ;void pixelavg_pp(pixel dst, intptr_t dstride, const pixel src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
@@ -4116,11 +4146,11 @@ AVGH 4, 8
 AVGH 4, 4
 AVGH 4, 2
 
-AVG_FUNC 8, movq, movq
-AVGH 8, 32
-AVGH 8, 16
-AVGH 8,  8
-AVGH 8,  4
+;AVG_FUNC 8, movq, movq
+;AVGH 8, 32
+;AVGH 8, 16
+;AVGH 8,  8
+;AVGH 8,  4
 
 AVG_FUNC 16, movq, movq
 AVGH 16, 64
@@ -4198,7 +4228,7 @@ AVGH 4, 8
 AVGH 4, 4
 AVGH 4, 2
 
-AVG_FUNC 8, movq, movq
+;AVG_FUNC 8, movq, movq
 AVGH 8, 32
 AVGH 8, 16
 AVGH 8,  8
