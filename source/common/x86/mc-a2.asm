@@ -1080,7 +1080,7 @@ cglobal mbtree_propagate_cost, 6,6,7
     addpd           m0, m1              ; prop + (intra*invq*fps_factor>>8)
 %endif
     cvtdq2pd        m1, xm2             ; intra
-    psubd           m2, m3              ; intra - inter
+    psubd           xm2, xm3            ; intra - inter
     cvtdq2pd        m2, xm2             ; intra - inter
     mulpd           m0, m2              ; (prop + (intra*invq*fps_factor>>8)) * (intra - inter)
 
