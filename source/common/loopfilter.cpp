@@ -138,7 +138,7 @@ static void processSaoCUB0(pixel* rec, const int8_t* offset, int ctuWidth, int c
     }
 }
 
-void pelFilterLumaStrong_c(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tcP, int32_t tcQ)
+static void pelFilterLumaStrong_c(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tcP, int32_t tcQ)
 {
     for (int32_t i = 0; i < UNIT_SIZE; i++, src += srcStep)
     {
