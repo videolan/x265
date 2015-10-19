@@ -194,6 +194,154 @@ cglobal pixel_ssd_ss_32x64, 4,7,10
     movq        rax, m9
     RET
 %endmacro
+%macro SSD_ONE_SS_32 0
+cglobal pixel_ssd_ss_32x32, 4,5,8
+    add         r1d, r1d
+    add         r3d, r3d
+    pxor        m5, m5
+    pxor        m6, m6
+    mov         r4d, 2
+
+.iterate:
+    mov         r5d, 16
+    pxor        m4, m4
+    pxor        m7, m7
+.loop:
+    movu        m0, [r0]
+    movu        m1, [r0 + mmsize]
+    movu        m2, [r2]
+    movu        m3, [r2 + mmsize]
+    psubw       m0, m2
+    psubw       m1, m3
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m4, m0
+    paddd       m7, m1
+    movu        m0, [r0 + 2 * mmsize]
+    movu        m1, [r0 + 3 * mmsize]
+    movu        m2, [r2 + 2 * mmsize]
+    movu        m3, [r2 + 3 * mmsize]
+    psubw       m0, m2
+    psubw       m1, m3
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m4, m0
+    paddd       m7, m1
+
+    add         r0, r1
+    add         r2, r3
+
+    dec         r5d
+    jnz         .loop
+
+    mova        m0, m4
+    pxor        m1, m1
+    punpckldq   m0, m1
+    punpckhdq   m4, m1
+    paddq       m5, m0
+    paddq       m6, m4
+
+    mova        m0, m7
+    punpckldq   m0, m1
+    punpckhdq   m7, m1
+    paddq       m5, m0
+    paddq       m6, m7
+
+    dec         r4d
+    jnz         .iterate
+
+    paddq       m5, m6
+    movhlps     m2, m5
+    paddq       m5, m2
+    movq        rax, m5
+    RET
+%endmacro
+
+%macro SSD_ONE_SS_64 0
+cglobal pixel_ssd_ss_64x64, 4,6,8
+    add         r1d, r1d
+    add         r3d, r3d
+    pxor        m5, m5
+    pxor        m6, m6
+    mov         r5d, 8
+
+.iterate:
+    pxor        m4, m4
+    pxor        m7, m7
+    mov         r4d, 8
+
+.loop:
+    ;----process 1st half a row----
+    movu        m0, [r0]
+    movu        m1, [r0 + mmsize]
+    movu        m2, [r2]
+    movu        m3, [r2 + mmsize]
+    psubw       m0, m2
+    psubw       m1, m3
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m4, m0
+    paddd       m7, m1
+    movu        m0, [r0 + 2 * mmsize]
+    movu        m1, [r0 + 3 * mmsize]
+    movu        m2, [r2 + 2 * mmsize]
+    movu        m3, [r2 + 3 * mmsize]
+    psubw       m0, m2
+    psubw       m1, m3
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m4, m0
+    paddd       m7, m1
+    ;----process 2nd half a row----
+    movu        m0, [r0 + 4 * mmsize]
+    movu        m1, [r0 + 5 * mmsize]
+    movu        m2, [r2 + 4 * mmsize]
+    movu        m3, [r2 + 5 * mmsize]
+    psubw       m0, m2
+    psubw       m1, m3
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m4, m0
+    paddd       m7, m1
+    movu        m0, [r0 + 6 * mmsize]
+    movu        m1, [r0 + 7 * mmsize]
+    movu        m2, [r2 + 6 * mmsize]
+    movu        m3, [r2 + 7 * mmsize]
+    psubw       m0, m2
+    psubw       m1, m3
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    paddd       m4, m0
+    paddd       m7, m1
+
+    add         r0, r1
+    add         r2, r3
+
+    dec         r4d
+    jnz         .loop
+
+    mova        m0, m4
+    pxor        m1, m1
+    punpckldq   m0, m1
+    punpckhdq   m4, m1
+    paddq       m5, m0
+    paddq       m6, m4
+
+    mova        m0, m7
+    punpckldq   m0, m1
+    punpckhdq   m7, m1
+    paddq       m5, m0
+    paddq       m6, m7
+
+    dec         r5
+    jne         .iterate
+
+    paddq       m5, m6
+    movhlps     m2, m5
+    paddq       m5, m2
+    movq        rax, m5
+    RET
+%endmacro
 
 %macro SSD_TWO 2
 cglobal pixel_ssd_ss_%1x%2, 4,7,8
@@ -574,19 +722,21 @@ SSD_24     24, 32
 SSD_ONE    32,  8
 SSD_ONE    32, 16
 SSD_ONE    32, 24
-SSD_ONE    32, 32
 
 %if BIT_DEPTH <= 10
     SSD_ONE    32, 64
+    SSD_ONE    32, 32
+    SSD_TWO    64, 64
 %else
     SSD_ONE_32
+    SSD_ONE_SS_32
+    SSD_ONE_SS_64
 %endif
-
 SSD_TWO    48, 64
 SSD_TWO    64, 16
 SSD_TWO    64, 32
 SSD_TWO    64, 48
-SSD_TWO    64, 64
+
 INIT_YMM avx2
 SSD_ONE    16, 8
 SSD_ONE    16, 32
