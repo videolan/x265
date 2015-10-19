@@ -1059,8 +1059,7 @@ cglobal mbtree_propagate_cost, 6,6,7
     vbroadcastsd    m6, [r5]
     mulpd           m6, [pd_inv256]
     xor             r5d, r5d
-    lea             r0, [r0+r5*2]
-    mova            m5, [pw_3fff]
+    vbroadcasti128  m5, [pw_3fff]
 
 .loop:
     movu            xm2, [r2+r5*4]      ; intra
