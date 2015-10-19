@@ -22,3 +22,4 @@ x265_encoder_close
 x265_cleanup
 x265_api_get_${X265_BUILD}
 x265_api_query
+x265_encoder_intra_refresh

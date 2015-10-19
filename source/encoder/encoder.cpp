@@ -437,6 +437,46 @@ void Encoder::updateVbvPlan(RateControl* rc)
     }
 }
 
+void Encoder::calcRefreshInterval(Frame* frameEnc)
+{
+    Slice* slice = frameEnc->m_encData->m_slice;
+    uint32_t numBlocksInRow = slice->m_sps->numCuInWidth;
+    FrameData::PeriodicIR* pir = &frameEnc->m_encData->m_pir;
+    if (slice->m_sliceType == I_SLICE)
+    {
+        pir->framesSinceLastPir = 0;
+        m_bQueuedIntraRefresh = 0;
+        /* PIR is currently only supported with ref == 1, so any intra frame effectively refreshes
+         * the whole frame and counts as an intra refresh. */
+        pir->position = numBlocksInRow;
+    }
+    else if (slice->m_sliceType == P_SLICE)
+    {
+        Frame* ref = frameEnc->m_encData->m_slice->m_refFrameList[0][0];
+        int pocdiff = frameEnc->m_poc - ref->m_poc;
+        float increment = X265_MAX(((float)numBlocksInRow - 1) / m_param->keyframeMax, 1);
+        pir->position = ref->m_encData->m_pir.position;
+        pir->framesSinceLastPir = ref->m_encData->m_pir.framesSinceLastPir + pocdiff;
+        if (pir->framesSinceLastPir >= m_param->keyframeMax ||
+           (m_bQueuedIntraRefresh && pir->position + 0.5 >= numBlocksInRow))
+        {
+            pir->position = 0;
+            pir->framesSinceLastPir = 0;
+            m_bQueuedIntraRefresh = 0;
+            frameEnc->m_lowres.bKeyframe = 1;
+        }
+        pir->pirStartCol = (uint32_t)(pir->position + 0.5);
+        pir->position += increment * pocdiff;
+        pir->pirEndCol = (uint32_t)(pir->position + 0.5);
+        /* If our intra refresh has reached the right side of the frame, we're done. */
+        if (pir->pirEndCol >= numBlocksInRow)
+        {
+            pir->position = numBlocksInRow;
+            pir->pirEndCol = numBlocksInRow;
+        }
+    }
+}
+
 /**
  * Feed one new input frame into the encoder, get one frame out. If pic_in is
  * NULL, a flush condition is implied and pic_in must be NULL for all subsequent
@@ -768,6 +808,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
             if (m_param->rc.rateControlMode != X265_RC_CQP)
                 m_lookahead->getEstimatedPictureCost(frameEnc);
+            if (m_param->bIntraRefresh)
+                 calcRefreshInterval(frameEnc);
 
             /* Allow FrameEncoder::compressFrame() to start in the frame encoder thread */
             if (!curEncoder->startCompressFrame(frameEnc))

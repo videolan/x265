@@ -131,6 +131,10 @@ public:
     bool               m_aborted;          // fatal error detected
     bool               m_reconfigured;      // reconfigure of encoder detected
 
+    /* Begin intra refresh when one not in progress or else begin one as soon as the current 
+     * one is done. Requires bIntraRefresh to be set.*/
+    int                m_bQueuedIntraRefresh;
+
     Encoder();
     ~Encoder() {}
 
@@ -163,6 +167,8 @@ public:
     void writeAnalysisFile(x265_analysis_data* pic);
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats);
+
+    void calcRefreshInterval(Frame* frameEnc);
 
 protected:
 

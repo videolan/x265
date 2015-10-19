@@ -2460,6 +2460,17 @@ void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mv
     cu.clipMv(mvmin);
     cu.clipMv(mvmax);
 
+    if (cu.m_encData->m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
+          cu.m_cuPelX / g_maxCUSize < m_frame->m_encData->m_pir.pirStartCol &&
+          m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol < m_slice->m_sps->numCuInWidth)
+    {
+        int safeX, maxSafeMv;
+        safeX = m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol * g_maxCUSize - 3;
+        maxSafeMv = (safeX - cu.m_cuPelX) * 4;
+        mvmax.x = X265_MIN(mvmax.x, maxSafeMv);
+        mvmin.x = X265_MIN(mvmin.x, maxSafeMv);
+    }
+
     /* Clip search range to signaled maximum MV length.
      * We do not support this VUI field being changed from the default */
     const int maxMvLen = (1 << 15) - 1;

@@ -170,10 +170,14 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     }
     else
     {
-        if (!m_param->rdLevel)
+        if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
+            ctu.m_cuPelX / g_maxCUSize >= frame.m_encData->m_pir.pirStartCol
+            && ctu.m_cuPelX / g_maxCUSize < frame.m_encData->m_pir.pirEndCol)
+            compressIntraCU(ctu, cuGeom, zOrder, qp);
+        else if (!m_param->rdLevel)
         {
             /* In RD Level 0/1, copy source pixels into the reconstructed block so
-            * they are available for intra predictions */
+             * they are available for intra predictions */
             m_modeDepth[0].fencYuv.copyToPicYuv(*m_frame->m_reconPic, ctu.m_cuAddr, 0);
 
             compressInterCU_rd0_4(ctu, cuGeom, qp);
@@ -1451,12 +1455,22 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     bestPred->sa8dCost = MAX_INT64;
     int bestSadCand = -1;
     int sizeIdx = cuGeom.log2CUSize - 2;
-
+    int safeX, maxSafeMv;
+    if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE)
+    {
+        safeX = m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol * g_maxCUSize - 3;
+        maxSafeMv = (safeX - tempPred->cu.m_cuPelX) * 4;
+    }
     for (uint32_t i = 0; i < numMergeCand; ++i)
     {
         if (m_bFrameParallel &&
             (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
             candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4))
+            continue;
+        if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
+            tempPred->cu.m_cuPelX / g_maxCUSize < m_frame->m_encData->m_pir.pirEndCol &&
+            candMvField[i][0].mv.x > maxSafeMv)
+            // skip merge candidates which reference beyond safe reference area
             continue;
 
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i; // merge candidate ID is stored in L0 MVP idx
@@ -1562,7 +1576,12 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         first = *m_reuseBestMergeCand;
         last = first + 1;
     }
-
+    int safeX, maxSafeMv;
+    if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE)
+    {
+        safeX = m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol * g_maxCUSize - 3;
+        maxSafeMv = (safeX - tempPred->cu.m_cuPelX) * 4;
+    }
     for (uint32_t i = first; i < last; i++)
     {
         if (m_bFrameParallel &&
@@ -1585,7 +1604,11 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
                 continue;
             triedBZero = true;
         }
-
+        if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
+            tempPred->cu.m_cuPelX / g_maxCUSize < m_frame->m_encData->m_pir.pirEndCol &&
+            candMvField[i][0].mv.x > maxSafeMv)
+            // skip merge candidates which reference beyond safe reference area
+            continue;
         tempPred->cu.m_mvpIdx[0][0] = (uint8_t)i;    /* merge candidate ID is stored in L0 MVP idx */
         tempPred->cu.m_interDir[0] = candDir[i];
         tempPred->cu.m_mv[0][0] = candMvField[i][0].mv;

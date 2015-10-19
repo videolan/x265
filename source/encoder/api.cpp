@@ -245,6 +245,16 @@ void x265_encoder_close(x265_encoder *enc)
     }
 }
 
+int x265_encoder_intra_refresh(x265_encoder *enc)
+{
+    if (!enc)
+        return -1;
+
+    Encoder *encoder = static_cast<Encoder*>(enc);
+    encoder->m_bQueuedIntraRefresh = 1;
+    return 0;
+}
+
 void x265_cleanup(void)
 {
     if (!g_ctuSizeConfigured)
@@ -317,6 +327,7 @@ static const x265_api libapi =
     &x265_cleanup,
 
     sizeof(x265_frame_stats),
+    &x265_encoder_intra_refresh,
 };
 
 typedef const x265_api* (*api_get_func)(int bitDepth);

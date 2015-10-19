@@ -1379,6 +1379,22 @@ void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
  *      close an encoder handler */
 void x265_encoder_close(x265_encoder *);
 
+/* x265_encoder_intra_refresh:
+ *      If an intra refresh is not in progress, begin one with the next P-frame.
+ *      If an intra refresh is in progress, begin one as soon as the current one finishes.
+ *      Requires bIntraRefresh to be set.
+ *
+ *      Useful for interactive streaming where the client can tell the server that packet loss has
+ *      occurred.  In this case, keyint can be set to an extremely high value so that intra refreshes
+ *      occur only when calling x265_encoder_intra_refresh.
+ *
+ *      In multi-pass encoding, if x265_encoder_intra_refresh is called differently in each pass,
+ *      behavior is undefined.
+ *
+ *      Should not be called during an x265_encoder_encode. */
+
+int x265_encoder_intra_refresh(x265_encoder *);
+
 /* x265_cleanup:
  *       release library static allocations, reset configured CTU size */
 void x265_cleanup(void);
@@ -1426,6 +1442,7 @@ typedef struct x265_api
     void          (*cleanup)(void);
 
     int           sizeof_frame_stats;   /* sizeof(x265_frame_stats) */
+    int           (*encoder_intra_refresh)(x265_encoder*);
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 

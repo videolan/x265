@@ -774,6 +774,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
             for (uint32_t cnt = 0; cnt < scale && lowresRow < heightInLowresCu; lowresRow++, cnt++)
             {
                 sum = 0; intraSum = 0;
+                int diff = 0;
                 lowresCuIdx = lowresRow * widthInLowresCu;
                 for (lowresCol = 0; lowresCol < widthInLowresCu; lowresCol++, lowresCuIdx++)
                 {
@@ -781,14 +782,18 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
                     if (qp_offset)
                     {
                         lowresCuCost = (uint16_t)((lowresCuCost * x265_exp2fix8(qp_offset[lowresCuIdx]) + 128) >> 8);
-                        int32_t intraCuCost = curFrame->m_lowres.intraCost[lowresCuIdx]; 
+                        int32_t intraCuCost = curFrame->m_lowres.intraCost[lowresCuIdx];
                         curFrame->m_lowres.intraCost[lowresCuIdx] = (intraCuCost * x265_exp2fix8(qp_offset[lowresCuIdx]) + 128) >> 8;
                     }
+                    if (m_param->bIntraRefresh && slice->m_sliceType == X265_TYPE_P)
+                        for (uint32_t x = curFrame->m_encData->m_pir.pirStartCol; x <= curFrame->m_encData->m_pir.pirEndCol; x++)
+                            diff += curFrame->m_lowres.intraCost[lowresCuIdx] - lowresCuCost;
                     curFrame->m_lowres.lowresCostForRc[lowresCuIdx] = lowresCuCost;
                     sum += lowresCuCost;
                     intraSum += curFrame->m_lowres.intraCost[lowresCuIdx];
                 }
                 curFrame->m_encData->m_rowStat[row].satdForVbv += sum;
+                curFrame->m_encData->m_rowStat[row].satdForVbv += diff;
                 curFrame->m_encData->m_rowStat[row].intraSatdForVbv += intraSum;
             }
         }
@@ -900,8 +905,7 @@ void Lookahead::slicetypeDecide()
             x265_log(m_param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid and %d reference frames\n",
                      frm.sliceType, m_param->maxNumReferences);
         }
-
-        if (/* (!param->intraRefresh || frm.frameNum == 0) && */ frm.frameNum - m_lastKeyframe >= m_param->keyframeMax)
+        if ((!m_param->bIntraRefresh || frm.frameNum == 0) && frm.frameNum - m_lastKeyframe >= m_param->keyframeMax)
         {
             if (frm.sliceType == X265_TYPE_AUTO || frm.sliceType == X265_TYPE_I)
                 frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
@@ -1184,7 +1188,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     frames[framecnt + 1] = NULL;
 
     keyintLimit = m_param->keyframeMax - frames[0]->frameNum + m_lastKeyframe - 1;
-    origNumFrames = numFrames = X265_MIN(framecnt, keyintLimit);
+    origNumFrames = numFrames = m_param->bIntraRefresh ? framecnt : X265_MIN(framecnt, keyintLimit);
 
     if (bIsVbvLookahead)
         numFrames = framecnt;
@@ -1380,12 +1384,12 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     if (m_param->rc.cuTree)
         cuTree(frames, X265_MIN(numFrames, m_param->keyframeMax), bKeyframe);
 
-    // if (!param->bIntraRefresh)
-    for (int j = keyintLimit + 1; j <= numFrames; j += m_param->keyframeMax)
-    {
-        frames[j]->sliceType = X265_TYPE_I;
-        resetStart = X265_MIN(resetStart, j + 1);
-    }
+    if (!m_param->bIntraRefresh)
+        for (int j = keyintLimit + 1; j <= numFrames; j += m_param->keyframeMax)
+        {
+            frames[j]->sliceType = X265_TYPE_I;
+            resetStart = X265_MIN(resetStart, j + 1);
+        }
 
     if (bIsVbvLookahead)
         vbvLookahead(frames, numFrames, bKeyframe);
@@ -1507,7 +1511,7 @@ bool Lookahead::scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScen
     {
         if (m_param->keyframeMin == m_param->keyframeMax)
             threshMin = threshMax;
-        if (gopSize <= m_param->keyframeMin / 4)
+        if (gopSize <= m_param->keyframeMin / 4 || m_param->bIntraRefresh)
             bias = threshMin / 4;
         else if (gopSize <= m_param->keyframeMin)
             bias = threshMin * gopSize / m_param->keyframeMin;
