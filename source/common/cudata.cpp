@@ -374,6 +374,8 @@ void CUData::initLosslessCU(const CUData& cu, const CUGeom& cuGeom)
     /* force TQBypass to true */
     m_partSet(m_tqBypass, true);
 
+    m_partSet(m_chromaIntraDir, (uint8_t)ALL_IDX);
+
     /* clear residual coding flags */
     m_partSet(m_predMode, cu.m_predMode[0] & (MODE_INTRA | MODE_INTER));
     m_partSet(m_tuDepth, 0);
