@@ -459,6 +459,9 @@ option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
     add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
                 ${X265_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+    if(EXTRA_LIB)
+        target_link_libraries(x265-shared ${EXTRA_LIB})
+    endif()
     target_link_libraries(x265-shared ${PLATFORM_LIBS})
     if(MSVC)
         set_target_properties(x265-shared PROPERTIES OUTPUT_NAME libx265)
@@ -483,9 +486,6 @@ if(ENABLE_SHARED)
                 LIBRARY DESTINATION ${LIB_INSTALL_DIR}
                 ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
                 RUNTIME DESTINATION ${BIN_INSTALL_DIR})
-    endif()
-    if(EXTRA_LIB)
-        target_link_libraries(x265-shared ${EXTRA_LIB})
     endif()
     if(LINKER_OPTIONS)
         # set_target_properties can't do list expansion
