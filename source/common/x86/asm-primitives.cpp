@@ -1540,15 +1540,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_16x16].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_16x16_avx2);
         p.cu[BLOCK_32x32].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_32x32_avx2);
         p.cu[BLOCK_64x64].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_64x64_avx2);
-
-#if X265_DEPTH <= 10
-
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sse_pp = PFX(pixel_ssd_16x16_avx2);
-        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = PFX(pixel_ssd_32x32_avx2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sse_pp = (pixel_sse_t)PFX(pixel_ssd_16x16_avx2);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = (pixel_sse_t)PFX(pixel_ssd_32x32_avx2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_16x32_avx2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_32x64_avx2);
-#endif
-
         p.quant = PFX(quant_avx2);
         p.nquant = PFX(nquant_avx2);
         p.dequant_normal  = PFX(dequant_normal_avx2);

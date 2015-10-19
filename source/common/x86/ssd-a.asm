@@ -107,16 +107,28 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
     dec    r4d
     jg .loop
 %endif
-
-%if BIT_DEPTH == 12 && mmsize == 16
-    movu        m5, m0
-    pxor        m6, m6
-    punpckldq   m0, m6
-    punpckhdq   m5, m6
-    paddq       m0, m5
-    movhlps     m5, m0
-    paddq       m0, m5
-    movq        r6, xm0
+%if BIT_DEPTH == 12 && %1 >= 16 && %2 >=16
+%if  mmsize == 16
+    movu            m5, m0
+    pxor            m6, m6
+    punpckldq       m0, m6
+    punpckhdq       m5, m6
+    paddq           m0, m5
+    movhlps         m5, m0
+    paddq           m0, m5
+    movq            r6, xm0
+%elif mmsize == 32
+    movu            m1, m0
+    pxor            m2, m2
+    punpckldq       m0, m2
+    punpckhdq       m1, m2
+    paddq           m0, m1
+    vextracti128    xm2, m0, 1
+    paddq           xm2, xm0
+    movhlps         xm1, xm2
+    paddq           xm2, xm1
+    movq            rax, xm2
+%endif
 %else 
     HADDD   m0, m5
     movd    eax,xm0
