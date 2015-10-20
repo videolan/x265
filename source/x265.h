@@ -676,9 +676,9 @@ typedef struct x265_param
     int       bBPyramid;
 
     /* A value which is added to the cost estimate of B frames in the lookahead.
-     * It may be a positive value (making B frames appear more expensive, which
-     * causes the lookahead to chose more P frames) or negative, which makes the
-     * lookahead chose more B frames. Default is 0, there are no limits */
+     * It may be a positive value (making B frames appear less expensive, which
+     * biases the lookahead to choose more B frames) or negative, which makes the
+     * lookahead choose more P frames. Default is 0, there are no limits */
     int       bFrameBias;
 
     /* The number of frames that must be queued in the lookahead before it may
