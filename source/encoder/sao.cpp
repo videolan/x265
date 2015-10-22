@@ -651,16 +651,6 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
     std::swap(m_tmpU1[plane], m_tmpU2[plane]);
 }
 
-void SAO::resetSaoUnit(SaoCtuParam* saoUnit)
-{
-    saoUnit->mergeMode  = SAO_MERGE_NONE;
-    saoUnit->typeIdx    = -1;
-    saoUnit->bandPos    = 0;
-
-    for (int i = 0; i < SAO_NUM_OFFSET; i++)
-        saoUnit->offset[i] = 0;
-}
-
 void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, const SaoCtuParam* saoUnitSrc)
 {
     saoUnitDst->mergeMode   = saoUnitSrc->mergeMode;
@@ -1177,9 +1167,7 @@ void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
                 }
             }
 
-            saoParam->ctuParam[plane][addr].mergeMode = SAO_MERGE_NONE;
-            saoParam->ctuParam[plane][addr].typeIdx   = -1;
-            saoParam->ctuParam[plane][addr].bandPos   = 0;
+            saoParam->ctuParam[plane][addr].reset();
             if (saoParam->bSaoFlag[plane > 0])
                 calcSaoStatsCu(addr, plane);
         }
@@ -1331,7 +1319,6 @@ void SAO::saoComponentParamDist(SAOParam* saoParam, int addr, int addrUp, int ad
     int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
     double currentRdCostTableBo[MAX_NUM_SAO_CLASS];
 
-    resetSaoUnit(lclCtuParam);
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
     m_entropyCoder.codeSaoOffset(*lclCtuParam, 0);
@@ -1391,7 +1378,6 @@ void SAO::saoComponentParamDist(SAOParam* saoParam, int addr, int addrUp, int ad
     m_entropyCoder.store(m_rdContexts.temp);
 
     // merge left or merge up
-
     for (int mergeIdx = 0; mergeIdx < 2; mergeIdx++)
     {
         SaoCtuParam* mergeSrcParam = NULL;
@@ -1418,8 +1404,6 @@ void SAO::saoComponentParamDist(SAOParam* saoParam, int addr, int addrUp, int ad
 
             mergeDist[mergeIdx + 1] = ((double)estDist / m_lumaLambda);
         }
-        else
-            resetSaoUnit(&mergeSaoParam[mergeIdx]);
     }
 }
 
@@ -1433,8 +1417,6 @@ void SAO::sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addr
     int    bestClassTableBo[2] = { 0, 0 };
     int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
 
-    resetSaoUnit(lclCtuParam[0]);
-    resetSaoUnit(lclCtuParam[1]);
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
     m_entropyCoder.codeSaoOffset(*lclCtuParam[0], 1);
@@ -1512,7 +1494,6 @@ void SAO::sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addr
     m_entropyCoder.store(m_rdContexts.temp);
 
     // merge left or merge up
-
     for (int mergeIdx = 0; mergeIdx < 2; mergeIdx++)
     {
         for (int compIdx = 0; compIdx < 2; compIdx++)
@@ -1541,8 +1522,6 @@ void SAO::sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addr
                 mergeSaoParam[plane][mergeIdx].mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
                 mergeDist[mergeIdx + 1] += ((double)estDist / m_chromaLambda);
             }
-            else
-                resetSaoUnit(&mergeSaoParam[plane][mergeIdx]);
         }
     }
 }
