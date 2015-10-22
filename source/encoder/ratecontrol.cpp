@@ -444,7 +444,7 @@ bool RateControl::init(const SPS& sps)
                 CMP_OPT_FIRST_PASS("open-gop", m_param->bOpenGOP);
                 CMP_OPT_FIRST_PASS("keyint", m_param->keyframeMax);
                 CMP_OPT_FIRST_PASS("scenecut", m_param->scenecutThreshold);
-                CMP_OPT_FIRST_PASS("intra_refresh", m_param->bIntraRefresh);
+                CMP_OPT_FIRST_PASS("intra-refresh", m_param->bIntraRefresh);
 
                 if ((p = strstr(opts, "b-adapt=")) != 0 && sscanf(p, "b-adapt=%d", &i) && i >= X265_B_ADAPT_NONE && i <= X265_B_ADAPT_TRELLIS)
                 {
