@@ -126,7 +126,7 @@ protected:
     uint32_t m_splitRefIdx[4];
 
     /* full analysis for an I-slice CU */
-    void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qp);
+    void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
 
     /* full analysis for a P or B slice CU */
     uint32_t compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
@@ -156,7 +156,7 @@ protected:
     /* generate residual and recon pixels for an entire CTU recursively (RD0) */
     void encodeResidue(const CUData& parentCTU, const CUGeom& cuGeom);
 
-    int calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom);
+    int calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, double baseQP = -1);
 
     /* check whether current mode is the new best */
     inline void checkBestMode(Mode& mode, uint32_t depth)

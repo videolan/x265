@@ -164,12 +164,12 @@ Search::~Search()
     X265_FREE(m_tsRecon);
 }
 
-int Search::setLambdaFromQP(const CUData& ctu, int qp)
+int Search::setLambdaFromQP(const CUData& ctu, int qp, int lambdaQp)
 {
     X265_CHECK(qp >= QP_MIN && qp <= QP_MAX_MAX, "QP used for lambda is out of range\n");
 
     m_me.setQP(qp);
-    m_rdCost.setQP(*m_slice, qp);
+    m_rdCost.setQP(*m_slice, lambdaQp < 0 ? qp : lambdaQp);
 
     int quantQP = x265_clip3(QP_MIN, QP_MAX_SPEC, qp);
     m_quant.setQPforQuant(ctu, quantQP);
