@@ -291,8 +291,19 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
     lea     r2,  [r2 + r6]
     dec     r4d
     jnz  .loop
+%if BIT_DEPTH == 10 && %1 == 64 && %2 ==64
+    movu        m5, m0
+    pxor        m6, m6
+    punpckldq   m0, m6
+    punpckhdq   m5, m6
+    paddq       m0, m5
+    movhlps     m5, m0
+    paddq       m0, m5
+    movq        rax, xm0
+%else 
     HADDD   m0, m5
     movd   eax, xm0
+%endif
     RET
 %endmacro
 %macro SSD_24 2
