@@ -1574,7 +1574,7 @@ VUI fields must be manually specified.
 
 .. option:: --colorprim <integer|string>
 
-	Specify color primitive to use when converting to RGB. Default
+	Specify color primaries to use when converting to RGB. Default
 	undefined (not signaled)
 
 	1. bt709
@@ -1644,7 +1644,7 @@ VUI fields must be manually specified.
 
 	Example for D65P3 1000-nits:
 
-		G(13200,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)
+		G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)
 
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
