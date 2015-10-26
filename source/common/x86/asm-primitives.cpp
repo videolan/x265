@@ -956,7 +956,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_LUMA_TU_S(cpy1Dto2D_shl, cpy1Dto2D_shl_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shr, cpy2Dto1D_shr_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shl, cpy2Dto1D_shl_, sse2);
-        ALL_LUMA_TU_S(ssd_s, pixel_ssd_s_, sse2);
+       // ALL_LUMA_TU_S(ssd_s, pixel_ssd_s_, sse2);
         ALL_LUMA_TU_S(calcresidual, getResidual, sse2);
         ALL_LUMA_TU_S(transpose, transpose, sse2);
 
@@ -1534,8 +1534,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].satd = PFX(pixel_satd_16x8_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].satd = PFX(pixel_satd_32x16_avx2);
 
-        p.cu[BLOCK_16x16].ssd_s = PFX(pixel_ssd_s_16_avx2);
-        p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx2);
+        //p.cu[BLOCK_16x16].ssd_s = PFX(pixel_ssd_s_16_avx2);
+        //p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx2);
 
         p.cu[BLOCK_16x16].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_16x16_avx2);
         p.cu[BLOCK_32x32].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_32x32_avx2);

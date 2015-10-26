@@ -404,9 +404,9 @@ int sa8d16(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix
 }
 
 template<int size>
-int pixel_ssd_s_c(const int16_t* a, intptr_t dstride)
+sse_t pixel_ssd_s_c(const int16_t* a, intptr_t dstride)
 {
-    int sum = 0;
+    sse_t sum = 0;
     for (int y = 0; y < size; y++)
     {
         for (int x = 0; x < size; x++)

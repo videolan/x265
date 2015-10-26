@@ -114,7 +114,7 @@ typedef int  (*pixelcmp_t)(const pixel* fenc, intptr_t fencstride, const pixel* 
 typedef int  (*pixelcmp_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
 typedef sse_t (*pixel_sse_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
 typedef sse_t (*pixel_sse_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
-typedef int  (*pixel_ssd_s_t)(const int16_t* fenc, intptr_t fencstride);
+typedef sse_t (*pixel_ssd_s_t)(const int16_t* fenc, intptr_t fencstride);
 typedef void (*pixelcmp_x4_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, const pixel* fref3, intptr_t frefstride, int32_t* res);
 typedef void (*pixelcmp_x3_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, intptr_t frefstride, int32_t* res);
 typedef void (*blockfill_s_t)(int16_t* dst, intptr_t dstride, int16_t val);
