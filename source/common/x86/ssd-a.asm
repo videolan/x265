@@ -3105,9 +3105,20 @@ cglobal pixel_ssd_s_32, 2,3,5
     dec     r2d
     jnz    .loop
 
+%if BIT_DEPTH >= 10
+    movu            m1, m0
+    pxor            m2, m2
+    punpckldq       m0, m2
+    punpckhdq       m1, m2
+    paddq           m0, m1
+    movhlps         m1, m0
+    paddq           m0, m1
+    movq            rax, xm0
+%else
     ; calculate sum and return
     HADDD   m0, m1
     movd    eax, m0
+%endif
     RET
 
 INIT_YMM avx2
@@ -3179,8 +3190,20 @@ cglobal pixel_ssd_s_32, 2,4,5
 
     dec     r2d
     jnz    .loop
-
+%if BIT_DEPTH >= 10
+    movu            m1, m0
+    pxor            m2, m2
+    punpckldq       m0, m2
+    punpckhdq       m1, m2
+    paddq           m0, m1
+    vextracti128    xm2, m0, 1
+    paddq           xm2, xm0
+    movhlps         xm1, xm2
+    paddq           xm2, xm1
+    movq            rax, xm2
+%else
     ; calculate sum and return
     HADDD   m0, m1
     movd    eax, xm0
+%endif
     RET
