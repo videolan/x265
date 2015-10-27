@@ -2020,7 +2020,6 @@ void Analysis::addSplitFlagCost(Mode& mode, uint32_t depth)
         mode.contexts.resetBits();
         mode.contexts.codeSplitFlag(mode.cu, 0, depth);
         uint32_t bits = mode.contexts.getNumberOfWrittenBits();
-        mode.mvBits += bits;
         mode.totalBits += bits;
         updateModeCost(mode);
     }
@@ -2031,7 +2030,6 @@ void Analysis::addSplitFlagCost(Mode& mode, uint32_t depth)
     }
     else
     {
-        mode.mvBits++;
         mode.totalBits++;
         updateModeCost(mode);
     }

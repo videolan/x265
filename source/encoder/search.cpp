@@ -1177,21 +1177,23 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
     if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu.m_tqBypass[0]);
 
+    int skipFlagBits = 0;
     if (!m_slice->isIntra())
     {
         m_entropyCoder.codeSkipFlag(cu, 0);
+        skipFlagBits = m_entropyCoder.getNumberOfWrittenBits();
         m_entropyCoder.codePredMode(cu.m_predMode[0]);
     }
 
     m_entropyCoder.codePartSize(cu, 0, cuGeom.depth);
     m_entropyCoder.codePredInfo(cu, 0);
-    intraMode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
+    intraMode.mvBits = m_entropyCoder.getNumberOfWrittenBits() - skipFlagBits;
 
     bool bCodeDQP = m_slice->m_pps->bUseDQP;
     m_entropyCoder.codeCoeff(cu, 0, bCodeDQP, tuDepthRange);
     m_entropyCoder.store(intraMode.contexts);
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
-    intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
+    intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits - skipFlagBits;
     if (m_rdCost.m_psyRd)
     {
         const Yuv* fencYuv = intraMode.fencYuv;
@@ -1395,16 +1397,17 @@ void Search::encodeIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
     if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu.m_tqBypass[0]);
     m_entropyCoder.codeSkipFlag(cu, 0);
+    int skipFlagBits = m_entropyCoder.getNumberOfWrittenBits();
     m_entropyCoder.codePredMode(cu.m_predMode[0]);
     m_entropyCoder.codePartSize(cu, 0, cuGeom.depth);
     m_entropyCoder.codePredInfo(cu, 0);
-    intraMode.mvBits += m_entropyCoder.getNumberOfWrittenBits();
+    intraMode.mvBits = m_entropyCoder.getNumberOfWrittenBits() - skipFlagBits;
 
     bool bCodeDQP = m_slice->m_pps->bUseDQP;
     m_entropyCoder.codeCoeff(cu, 0, bCodeDQP, tuDepthRange);
 
     intraMode.totalBits = m_entropyCoder.getNumberOfWrittenBits();
-    intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits;
+    intraMode.coeffBits = intraMode.totalBits - intraMode.mvBits - skipFlagBits;
     if (m_rdCost.m_psyRd)
     {
         const Yuv* fencYuv = intraMode.fencYuv;
@@ -2519,11 +2522,11 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
     if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu.m_tqBypass[0]);
     m_entropyCoder.codeSkipFlag(cu, 0);
+    int skipFlagBits = m_entropyCoder.getNumberOfWrittenBits();
     m_entropyCoder.codeMergeIndex(cu, 0);
-
-    interMode.mvBits = m_entropyCoder.getNumberOfWrittenBits();
+    interMode.mvBits = m_entropyCoder.getNumberOfWrittenBits() - skipFlagBits;
     interMode.coeffBits = 0;
-    interMode.totalBits = interMode.mvBits;
+    interMode.totalBits = interMode.mvBits + skipFlagBits;
     if (m_rdCost.m_psyRd)
         interMode.psyEnergy = m_rdCost.psyCost(part, fencYuv->m_buf[0], fencYuv->m_size, reconYuv->m_buf[0], reconYuv->m_size);
     interMode.resEnergy = primitives.cu[part].sse_pp(fencYuv->m_buf[0], fencYuv->m_size, predYuv->m_buf[0], predYuv->m_size);
@@ -2599,30 +2602,33 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(tqBypass);
 
-    uint32_t coeffBits, bits;
+    uint32_t coeffBits, bits, mvBits;
     if (cu.m_mergeFlag[0] && cu.m_partSize[0] == SIZE_2Nx2N && !cu.getQtRootCbf(0))
     {
         cu.setPredModeSubParts(MODE_SKIP);
 
         /* Merge/Skip */
+        coeffBits = mvBits = 0;
         m_entropyCoder.codeSkipFlag(cu, 0);
+        int skipFlagBits = m_entropyCoder.getNumberOfWrittenBits();
         m_entropyCoder.codeMergeIndex(cu, 0);
-        coeffBits = 0;
-        bits = m_entropyCoder.getNumberOfWrittenBits();
+        mvBits = m_entropyCoder.getNumberOfWrittenBits() - skipFlagBits;
+        bits = mvBits + skipFlagBits;
     }
     else
     {
         m_entropyCoder.codeSkipFlag(cu, 0);
+        int skipFlagBits = m_entropyCoder.getNumberOfWrittenBits();
         m_entropyCoder.codePredMode(cu.m_predMode[0]);
         m_entropyCoder.codePartSize(cu, 0, cuGeom.depth);
         m_entropyCoder.codePredInfo(cu, 0);
-        uint32_t mvBits = m_entropyCoder.getNumberOfWrittenBits();
+        mvBits = m_entropyCoder.getNumberOfWrittenBits() - skipFlagBits;
 
         bool bCodeDQP = m_slice->m_pps->bUseDQP;
         m_entropyCoder.codeCoeff(cu, 0, bCodeDQP, tuDepthRange);
         bits = m_entropyCoder.getNumberOfWrittenBits();
 
-        coeffBits = bits - mvBits;
+        coeffBits = bits - mvBits - skipFlagBits;
     }
 
     m_entropyCoder.store(interMode.contexts);
@@ -2644,7 +2650,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     interMode.chromaDistortion = bestChromaDist;
     interMode.distortion = bestLumaDist + bestChromaDist;
     interMode.coeffBits = coeffBits;
-    interMode.mvBits = bits - coeffBits;
+    interMode.mvBits = mvBits;
     updateModeCost(interMode);
     checkDQP(interMode, cuGeom);
 }
@@ -3477,7 +3483,6 @@ void Search::checkDQP(Mode& mode, const CUGeom& cuGeom)
                 mode.contexts.resetBits();
                 mode.contexts.codeDeltaQP(cu, 0);
                 uint32_t bits = mode.contexts.getNumberOfWrittenBits();
-                mode.mvBits += bits;
                 mode.totalBits += bits;
                 updateModeCost(mode);
             }
@@ -3488,7 +3493,6 @@ void Search::checkDQP(Mode& mode, const CUGeom& cuGeom)
             }
             else
             {
-                mode.mvBits++;
                 mode.totalBits++;
                 updateModeCost(mode);
             }
@@ -3522,7 +3526,6 @@ void Search::checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom)
                 mode.contexts.resetBits();
                 mode.contexts.codeDeltaQP(cu, 0);
                 uint32_t bits = mode.contexts.getNumberOfWrittenBits();
-                mode.mvBits += bits;
                 mode.totalBits += bits;
                 updateModeCost(mode);
             }
@@ -3533,7 +3536,6 @@ void Search::checkDQPForSplitPred(Mode& mode, const CUGeom& cuGeom)
             }
             else
             {
-                mode.mvBits++;
                 mode.totalBits++;
                 updateModeCost(mode);
             }
