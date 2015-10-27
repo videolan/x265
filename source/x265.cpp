@@ -486,6 +486,7 @@ bool CLIOptions::parseQPFile(x265_picture &pic_org)
             pic_org.forceqp = qp + 1;
         if (type == 'I') pic_org.sliceType = X265_TYPE_IDR;
         else if (type == 'i') pic_org.sliceType = X265_TYPE_I;
+        else if (type == 'K') pic_org.sliceType = param->bOpenGOP ? X265_TYPE_I : X265_TYPE_IDR;
         else if (type == 'P') pic_org.sliceType = X265_TYPE_P;
         else if (type == 'B') pic_org.sliceType = X265_TYPE_BREF;
         else if (type == 'b') pic_org.sliceType = X265_TYPE_B;

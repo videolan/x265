@@ -1428,10 +1428,11 @@ other levels.
 
 	framenumber frametype QP
 
-	Frametype can be one of [I,i,P,B,b]. **B** is a referenced B frame,
+	Frametype can be one of [I,i,K,P,B,b]. **B** is a referenced B frame,
 	**b** is an unreferenced B frame.  **I** is a keyframe (random
-	access point) while **i** is a I frame that is not a keyframe
-	(references are not broken).
+	access point) while **i** is an I frame that is not a keyframe
+	(references are not broken). **K** implies **I** if closed_gop option
+	is enabled, and **i** otherwise.
 
 	Specifying QP (integer) is optional, and if specified they are
 	clamped within the encoder to qpmin/qpmax.
