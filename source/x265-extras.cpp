@@ -198,11 +198,13 @@ void x265_csvlog_encode(FILE* csvfp, const x265_api& api, const x265_param& para
     }
 
     // CLI arguments or other
+    fputc('"', csvfp);
     for (int i = 1; i < argc; i++)
     {
-        if (i) fputc(' ', csvfp);
+        fputc(' ', csvfp);
         fputs(argv[i], csvfp);
     }
+    fputc('"', csvfp);
 
     // current date and time
     time_t now;
