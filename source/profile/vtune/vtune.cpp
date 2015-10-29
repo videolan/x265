@@ -30,7 +30,6 @@ namespace {
 const char *stringNames[] =
 {
 #include "../cpuEvents.h"
-    ""
 };
 #undef CPU_EVENT
 
@@ -44,7 +43,8 @@ __itt_string_handle* taskHandle[NUM_VTUNE_TASKS];
 void vtuneInit()
 {
     domain = __itt_domain_create("x265");
-    for (size_t i = 0; i < sizeof(stringNames) / sizeof(const char *); i++)
+    size_t length = sizeof(stringNames) / sizeof(const char *);
+    for (size_t i = 0; i < length; i++)
         taskHandle[i] = __itt_string_handle_create(stringNames[i]);
 }
 

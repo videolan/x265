@@ -1,2 +1,2 @@
-include_directories($ENV{VTUNE_AMPLIFIER_XE_2015_DIR}/include)
+include_directories(${VTUNE_INCLUDE_DIR})
 add_library(vtune vtune.h vtune.cpp ../cpuEvents.h)
