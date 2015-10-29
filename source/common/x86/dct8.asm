@@ -2904,7 +2904,7 @@ INIT_YMM avx2
 cglobal idct8, 3, 7, 13, 0-8*16
 %if BIT_DEPTH == 12
     %define         IDCT_SHIFT2        8
-    vpbroadcastd    m12,                [pd_256]
+    vpbroadcastd    m12,                [pd_128]
 %elif BIT_DEPTH == 10
     %define         IDCT_SHIFT2        10
     vpbroadcastd    m12,                [pd_512]
@@ -3065,7 +3065,7 @@ INIT_YMM avx2
 cglobal idct16, 3, 7, 16, 0-16*mmsize
 %if BIT_DEPTH == 12
     %define         IDCT_SHIFT2        8
-    vpbroadcastd    m15,                [pd_256]
+    vpbroadcastd    m15,                [pd_128]
 %elif BIT_DEPTH == 10
     %define         IDCT_SHIFT2        10
     vpbroadcastd    m15,                [pd_512]
@@ -3487,7 +3487,7 @@ cglobal idct32, 3, 6, 16, 0-32*64
 
 %if BIT_DEPTH == 12
     %define         IDCT_SHIFT2        8
-    vpbroadcastd    m15,                [pd_256]
+    vpbroadcastd    m15,                [pd_128]
 %elif BIT_DEPTH == 10
     %define         IDCT_SHIFT2        10
     vpbroadcastd    m15,                [pd_512]
@@ -3651,7 +3651,7 @@ cglobal idct4, 3, 4, 6
 %define             IDCT_SHIFT1         7
 %if BIT_DEPTH == 12
     %define         IDCT_SHIFT2        8
-    vpbroadcastd    m5,                [pd_256]
+    vpbroadcastd    m5,                [pd_128]
 %elif BIT_DEPTH == 10
     %define         IDCT_SHIFT2        10
     vpbroadcastd    m5,                [pd_512]
