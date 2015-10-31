@@ -6557,34 +6557,39 @@ SA8D
 %define TRANS TRANS_SSE4
 
 %macro LOAD_SUMSUB_8x8P_AVX2 7 ; 4*dst, 2*tmp, mul]
-    movq   xm%1, [r0]
-    movq   xm%3, [r2]
-    movq   xm%2, [r0+r1]
-    movq   xm%4, [r2+r3]
-    vinserti128 m%1, m%1, [r0+4*r1], 1
-    vinserti128 m%3, m%3, [r2+4*r3], 1
-    vinserti128 m%2, m%2, [r0+r4], 1
-    vinserti128 m%4, m%4, [r2+r5], 1
-    punpcklqdq m%1, m%1
-    punpcklqdq m%3, m%3
-    punpcklqdq m%2, m%2
-    punpcklqdq m%4, m%4
+    movddup xm%1, [r0]
+    movddup xm%3, [r2]
+    movddup xm%2, [r0+4*r1]
+    movddup xm%5, [r2+4*r3]
+    vinserti128 m%1, m%1, xm%2, 1
+    vinserti128 m%3, m%3, xm%5, 1
+
+    movddup xm%2, [r0+r1]
+    movddup xm%4, [r2+r3]
+    movddup xm%5, [r0+r4]
+    movddup xm%6, [r2+r5]
+    vinserti128 m%2, m%2, xm%5, 1
+    vinserti128 m%4, m%4, xm%6, 1
+
     DIFF_SUMSUB_SSSE3 %1, %3, %2, %4, %7
     lea      r0, [r0+2*r1]
     lea      r2, [r2+2*r3]
 
-    movq   xm%3, [r0]
-    movq   xm%5, [r2]
-    movq   xm%4, [r0+r1]
+    movddup xm%3, [r0]
+    movddup xm%5, [r0+4*r1]
+    vinserti128 m%3, m%3, xm%5, 1
+
+    movddup xm%5, [r2]
+    movddup xm%4, [r2+4*r3]
+    vinserti128 m%5, m%5, xm%4, 1
+
+    movddup xm%4, [r0+r1]
+    movddup xm%6, [r0+r4]
+    vinserti128 m%4, m%4, xm%6, 1
+
     movq   xm%6, [r2+r3]
-    vinserti128 m%3, m%3, [r0+4*r1], 1
-    vinserti128 m%5, m%5, [r2+4*r3], 1
-    vinserti128 m%4, m%4, [r0+r4], 1
-    vinserti128 m%6, m%6, [r2+r5], 1
-    punpcklqdq m%3, m%3
-    punpcklqdq m%5, m%5
-    punpcklqdq m%4, m%4
-    punpcklqdq m%6, m%6
+    movhps xm%6, [r2+r5]
+    vpermq m%6, m%6, q1100
     DIFF_SUMSUB_SSSE3 %3, %5, %4, %6, %7
 %endmacro
 
