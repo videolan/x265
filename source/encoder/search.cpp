@@ -2990,7 +2990,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                     singleBitsPrev = newBits;
 
                     int16_t* curResiC = m_rqt[qtLayer].resiQtYuv.getChromaAddr(chromaId, absPartIdxC);
-                    distC = m_rdCost.scaleChromaDist(chromaId, primitives.cu[log2TrSizeC - 2].ssd_s(resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize));
+                    X265_CHECK(resi == resiYuv.getChromaAddr(chromaId, absPartIdxC), "address of resi check failure\n");
+                    distC = m_rdCost.scaleChromaDist(chromaId, primitives.cu[log2TrSizeC - 2].ssd_s(resi, resiYuv.m_csize));
 
                     if (cbfFlag[chromaId][tuIterator.section])
                     {
@@ -2999,13 +3000,15 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
                         // non-zero cost calculation for luma, same as luma - This is an approximation
                         // finally we have to encode correct cbf after comparing with null cost
-                        sse_t dist = primitives.cu[partSizeC].sse_ss(resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, curResiC, strideResiC);
+                        X265_CHECK(resi == resiYuv.getChromaAddr(chromaId, absPartIdxC), "address of resi check failure\n");
+                        sse_t dist = primitives.cu[partSizeC].sse_ss(resi, resiYuv.m_csize, curResiC, strideResiC);
                         uint32_t nzCbfBitsC = m_entropyCoder.estimateCbfBits(cbfFlag[chromaId][tuIterator.section], (TextType)chromaId, tuDepth);
                         sse_t nonZeroDistC = m_rdCost.scaleChromaDist(chromaId, dist);
                         uint32_t nonZeroPsyEnergyC = 0; uint64_t singleCostC = 0;
                         if (m_rdCost.m_psyRd)
                         {
-                            nonZeroPsyEnergyC = m_rdCost.psyCost(partSizeC, resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, curResiC, strideResiC);
+                            X265_CHECK(resi == resiYuv.getChromaAddr(chromaId, absPartIdxC), "address of resi check failure\n");
+                            nonZeroPsyEnergyC = m_rdCost.psyCost(partSizeC, resi, resiYuv.m_csize, curResiC, strideResiC);
                             singleCostC = m_rdCost.calcPsyRdCost(nonZeroDistC, nzCbfBitsC + singleBits[chromaId][tuIterator.section], nonZeroPsyEnergyC);
                         }
                         else
@@ -3154,11 +3157,13 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
                         m_quant.invtransformNxN(cu, m_tsResidual, trSizeC, m_tsCoeff,
                                                 log2TrSizeC, (TextType)chromaId, false, true, numSigTSkipC);
-                        sse_t dist = primitives.cu[partSizeC].sse_ss(resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, m_tsResidual, trSizeC);
+                        X265_CHECK(resi == resiYuv.getChromaAddr(chromaId, absPartIdxC), "address of resi check failure\n");
+                        sse_t dist = primitives.cu[partSizeC].sse_ss(resi, resiYuv.m_csize, m_tsResidual, trSizeC);
                         nonZeroDistC = m_rdCost.scaleChromaDist(chromaId, dist);
                         if (m_rdCost.m_psyRd)
                         {
-                            nonZeroPsyEnergyC = m_rdCost.psyCost(partSizeC, resiYuv.getChromaAddr(chromaId, absPartIdxC), resiYuv.m_csize, m_tsResidual, trSizeC);
+                            X265_CHECK(resi == resiYuv.getChromaAddr(chromaId, absPartIdxC), "address of resi check failure\n");
+                            nonZeroPsyEnergyC = m_rdCost.psyCost(partSizeC, resi, resiYuv.m_csize, m_tsResidual, trSizeC);
                             singleCostC = m_rdCost.calcPsyRdCost(nonZeroDistC, singleBits[chromaId][tuIterator.section], nonZeroPsyEnergyC);
                         }
                         else
