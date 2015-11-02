@@ -1215,8 +1215,11 @@ int MotionEstimate::subpelCompare(ReferencePlanes *ref, const MV& qmv, pixelcmp_
         const pixel* refCb = ref->getCbAddr(ctuAddr, absPartIdx) + refOffset;
         const pixel* refCr = ref->getCrAddr(ctuAddr, absPartIdx) + refOffset;
 
-        xFrac = qmv.x & ((1 << shiftHor) - 1);
-        yFrac = qmv.y & ((1 << shiftVer) - 1);
+        X265_CHECK((hshift == 0) || (hshift == 1), "hshift must be 0 or 1\n");
+        X265_CHECK((vshift == 0) || (vshift == 1), "vshift must be 0 or 1\n");
+
+        xFrac = qmv.x & (hshift ? 7 : 3);
+        yFrac = qmv.y & (vshift ? 7 : 3);
 
         if (!(yFrac | xFrac))
         {
