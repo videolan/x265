@@ -137,6 +137,7 @@ const pd_32767,             times  4 dd 32767
 const pd_524416,            times  4 dd 524416
 const pd_n32768,            times  8 dd 0xffff8000
 const pd_n131072,           times  4 dd 0xfffe0000
+const pd_0000ffff,          times  8 dd 0x0000FFFF
 const pd_planar16_mul0,     times  1 dd  15,  14,  13,  12,  11,  10,   9,   8,   7,   6,   5,   4,   3,   2,   1,   0
 const pd_planar16_mul1,     times  1 dd   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16
 const trans8_shuf,          times  1 dd   0,   4,   1,   5,   2,   6,   3,   7
