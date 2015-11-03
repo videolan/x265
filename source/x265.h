@@ -827,6 +827,10 @@ typedef struct x265_param
      * 4 split CUs at the next lower CU depth.  The two flags may be combined */
     uint32_t  limitReferences;
 
+    /* Limit rectangular and asymetric motion partitions based on rdCost and mvCost
+    of the 4 split CUs at the next lower CU depth*/
+    uint32_t limitModes;
+
     /* ME search method (DIA, HEX, UMH, STAR, FULL). The search patterns
      * (methods) are sorted in increasing complexity, with diamond being the
      * simplest and fastest and full being the slowest.  DIA, HEX, and UMH were

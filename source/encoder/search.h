@@ -85,8 +85,9 @@ struct MotionData
     MV       mvp;
     int      mvpIdx;
     int      ref;
-    uint32_t cost;
     int      bits;
+    uint32_t mvCost;
+    uint32_t cost;
 };
 
 struct Mode

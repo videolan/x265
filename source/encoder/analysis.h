@@ -41,6 +41,21 @@ namespace X265_NS {
 
 class Entropy;
 
+struct SplitData
+{
+    uint32_t splitRefs;
+    uint32_t mvCost[2];
+    uint64_t rdCost;
+
+    void initSplitCUData()
+    {
+        splitRefs = 0;
+        mvCost[0] = 0; // L0
+        mvCost[1] = 0; // L1
+        rdCost    = 0;
+    }
+};
+
 class Analysis : public Search
 {
 public:
@@ -116,7 +131,7 @@ protected:
     /* full analysis for a P or B slice CU */
     uint32_t compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
     uint32_t compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
-    uint32_t compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qp);
+    SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qp);
 
     /* measure merge and skip */
     void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGeom);
