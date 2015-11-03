@@ -1920,43 +1920,78 @@ void Entropy::estSignificantMapBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize
         numCtx = bIsLuma ? 12 : 3;
     }
 
+    const int ctxSigOffset = OFF_SIG_FLAG_CTX + (bIsLuma ? 0 : NUM_SIG_FLAG_CTX_LUMA);
+
+    estBitsSbac.significantBits[0][0] = sbacGetEntropyBits(m_contextState[ctxSigOffset], 0);
+    estBitsSbac.significantBits[1][0] = sbacGetEntropyBits(m_contextState[ctxSigOffset], 1);
+
+    for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
+    {
+        estBitsSbac.significantBits[0][ctxIdx] = sbacGetEntropyBits(m_contextState[ctxSigOffset + ctxIdx], 0);
+        estBitsSbac.significantBits[1][ctxIdx] = sbacGetEntropyBits(m_contextState[ctxSigOffset + ctxIdx], 1);
+    }
+
+    const uint32_t maxGroupIdx = log2TrSize * 2 - 1;
     if (bIsLuma)
     {
-        for (uint32_t bin = 0; bin < 2; bin++)
-            estBitsSbac.significantBits[bin][0] = sbacGetEntropyBits(m_contextState[OFF_SIG_FLAG_CTX], bin);
+        if (log2TrSize == 2)
+        {
+            for (int i = 0, ctxIdx = 0; i < 2; i++, ctxIdx += NUM_CTX_LAST_FLAG_XY)
+            {
+                int bits = 0;
+                const uint8_t *ctxState = &m_contextState[OFF_CTX_LAST_FLAG_X + ctxIdx];
 
-        for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
-            for (uint32_t bin = 0; bin < 2; bin++)
-                estBitsSbac.significantBits[bin][ctxIdx] = sbacGetEntropyBits(m_contextState[OFF_SIG_FLAG_CTX + ctxIdx], bin);
+                for (uint32_t ctx = 0; ctx < 3; ctx++)
+                {
+                    estBitsSbac.lastBits[i][ctx] = bits + sbacGetEntropyBits(ctxState[ctx], 0);
+                    bits += sbacGetEntropyBits(ctxState[ctx], 1);
+                }
+
+                estBitsSbac.lastBits[i][maxGroupIdx] = bits;
+            }
+        }
+        else
+        {
+            const int blkSizeOffset = ((log2TrSize - 2) * 3 + (log2TrSize == 5));
+
+            for (int i = 0, ctxIdx = 0; i < 2; i++, ctxIdx += NUM_CTX_LAST_FLAG_XY)
+            {
+                int bits = 0;
+                const uint8_t *ctxState = &m_contextState[OFF_CTX_LAST_FLAG_X + ctxIdx];
+                X265_CHECK(maxGroupIdx & 1, "maxGroupIdx check failure\n");
+
+                for (uint32_t ctx = 0; ctx < (maxGroupIdx >> 1) + 1; ctx++)
+                {
+                    const int cost0 = sbacGetEntropyBits(ctxState[blkSizeOffset + ctx], 0);
+                    const int cost1 = sbacGetEntropyBits(ctxState[blkSizeOffset + ctx], 1);
+                    estBitsSbac.lastBits[i][ctx * 2 + 0] = bits + cost0;
+                    estBitsSbac.lastBits[i][ctx * 2 + 1] = bits + cost1 + cost0;
+                    bits += 2 * cost1;
+                }
+                // correct latest bit cost, it didn't include cost0
+                estBitsSbac.lastBits[i][maxGroupIdx] -= sbacGetEntropyBits(ctxState[blkSizeOffset + (maxGroupIdx >> 1)], 0);
+            }
+        }
     }
     else
     {
-        for (uint32_t bin = 0; bin < 2; bin++)
-            estBitsSbac.significantBits[bin][0] = sbacGetEntropyBits(m_contextState[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + 0)], bin);
+        const int blkSizeOffset = NUM_CTX_LAST_FLAG_XY_LUMA;
+        const int ctxShift = log2TrSize - 2;
 
-        for (int ctxIdx = firstCtx; ctxIdx < firstCtx + numCtx; ctxIdx++)
-            for (uint32_t bin = 0; bin < 2; bin++)
-                estBitsSbac.significantBits[bin][ctxIdx] = sbacGetEntropyBits(m_contextState[OFF_SIG_FLAG_CTX + (NUM_SIG_FLAG_CTX_LUMA + ctxIdx)], bin);
-    }
-
-    int blkSizeOffset = bIsLuma ? ((log2TrSize - 2) * 3 + ((log2TrSize - 1) >> 2)) : NUM_CTX_LAST_FLAG_XY_LUMA;
-    int ctxShift = bIsLuma ? ((log2TrSize + 1) >> 2) : log2TrSize - 2;
-    uint32_t maxGroupIdx = log2TrSize * 2 - 1;
-
-    uint32_t ctx;
-    for (int i = 0, ctxIdx = 0; i < 2; i++, ctxIdx += NUM_CTX_LAST_FLAG_XY)
-    {
-        int bits = 0;
-        const uint8_t *ctxState = &m_contextState[OFF_CTX_LAST_FLAG_X + ctxIdx];
-
-        for (ctx = 0; ctx < maxGroupIdx; ctx++)
+        for (int i = 0, ctxIdx = 0; i < 2; i++, ctxIdx += NUM_CTX_LAST_FLAG_XY)
         {
-            int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
-            estBitsSbac.lastBits[i][ctx] = bits + sbacGetEntropyBits(ctxState[ctxOffset], 0);
-            bits += sbacGetEntropyBits(ctxState[ctxOffset], 1);
-        }
+            int bits = 0;
+            const uint8_t *ctxState = &m_contextState[OFF_CTX_LAST_FLAG_X + ctxIdx];
 
-        estBitsSbac.lastBits[i][ctx] = bits;
+            for (uint32_t ctx = 0; ctx < maxGroupIdx; ctx++)
+            {
+                int ctxOffset = blkSizeOffset + (ctx >> ctxShift);
+                estBitsSbac.lastBits[i][ctx] = bits + sbacGetEntropyBits(ctxState[ctxOffset], 0);
+                bits += sbacGetEntropyBits(ctxState[ctxOffset], 1);
+            }
+
+            estBitsSbac.lastBits[i][maxGroupIdx] = bits;
+        }
     }
 }
 
