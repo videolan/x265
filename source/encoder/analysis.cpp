@@ -939,7 +939,6 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             if (m_param->bEnableRectInter)
             {
                 uint64_t splitCost = splitData[0].rdCost + splitData[1].rdCost + splitData[2].rdCost + splitData[3].rdCost;
-                ModeDepth& md = m_modeDepth[depth];
                 uint32_t threshold_2NxN, threshold_Nx2N;
 
                 if (m_slice->m_sliceType == P_SLICE)
@@ -990,7 +989,6 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             if (m_slice->m_sps->maxAMPDepth > depth)
             {
                 uint64_t splitCost = splitData[0].rdCost + splitData[1].rdCost + splitData[2].rdCost + splitData[3].rdCost;
-                ModeDepth& md = m_modeDepth[depth];
                 uint32_t threshold_2NxnU, threshold_2NxnD, threshold_nLx2N, threshold_nRx2N;
 
                 if (m_slice->m_sliceType == P_SLICE)
@@ -1428,7 +1426,6 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             if (m_param->bEnableRectInter)
             {
                 uint64_t splitCost = splitData[0].rdCost + splitData[1].rdCost + splitData[2].rdCost + splitData[3].rdCost;
-                ModeDepth& md = m_modeDepth[depth];
                 uint32_t threshold_2NxN, threshold_Nx2N;
 
                 if (m_slice->m_sliceType == P_SLICE)
@@ -1477,7 +1474,6 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             if (m_slice->m_sps->maxAMPDepth > depth)
             {
                 uint64_t splitCost = splitData[0].rdCost + splitData[1].rdCost + splitData[2].rdCost + splitData[3].rdCost;
-                ModeDepth& md = m_modeDepth[depth];
                 uint32_t threshold_2NxnU, threshold_2NxnD, threshold_nLx2N, threshold_nRx2N;
 
                 if (m_slice->m_sliceType == P_SLICE)
