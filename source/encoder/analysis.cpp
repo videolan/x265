@@ -318,6 +318,10 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
             {
                 /* record the depth of this non-present sub-CU */
                 splitCU->setEmptyPart(childGeom, subPartIdx);
+
+                /* Set depth of non-present CU to 0 to ensure that correct CU is fetched as reference to code deltaQP */
+                if (bAlreadyDecided)
+                    memset(parentCTU.m_cuDepth + childGeom.absPartIdx, 0, childGeom.numPartitions);
             }
         }
         nextContext->store(splitPred->contexts);
@@ -1792,6 +1796,12 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     {
         first = *m_reuseBestMergeCand;
         last = first + 1;
+        int numPred = m_slice->isInterB() + 1;
+
+        /* skip refs used for 2Nx2N, Nx2N, 2NxN inter predictions if best mode is SKIP */
+        m_reuseRef += numPred;
+        if (m_param->bEnableRectInter)
+            m_reuseRef += (numPred * 2 * 2);
     }
     int safeX, maxSafeMv;
     if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE)
@@ -1838,7 +1848,8 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
 
         uint8_t hasCbf = true;
         bool swapped = false;
-        if (!foundCbf0Merge)
+        /* bypass encoding merge with residual if analysis-mode = load as only SKIP CUs enter this function */
+        if (!foundCbf0Merge && !isShareMergeCand)
         {
             /* if the best prediction has CBF (not a skip) then try merge with residual */
 
@@ -1891,9 +1902,9 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
 
     if (m_param->analysisMode)
     {
-        m_reuseBestMergeCand++;
         if (m_param->analysisMode == X265_ANALYSIS_SAVE)
             *m_reuseBestMergeCand = bestPred->cu.m_mvpIdx[0][0];
+        m_reuseBestMergeCand++;
     }
 }
 
