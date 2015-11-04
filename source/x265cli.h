@@ -127,7 +127,8 @@ static const struct option long_options[] =
     { "b-pyramid",            no_argument, NULL, 0 },
     { "ref",            required_argument, NULL, 0 },
     { "limit-refs",     required_argument, NULL, 0 },
-    { "limit-modes",     required_argument, NULL, 0 },
+    { "no-limit-modes",       no_argument, NULL, 0 },
+    { "limit-modes",          no_argument, NULL, 0 },
     { "no-weightp",           no_argument, NULL, 0 },
     { "weightp",              no_argument, NULL, 'w' },
     { "no-weightb",           no_argument, NULL, 0 },
@@ -318,7 +319,7 @@ static void showHelp(x265_param *param)
     H0("   --merange <integer>           Motion search range. Default %d\n", param->searchRange);
     H0("   --[no-]rect                   Enable rectangular motion partitions Nx2N and 2NxN. Default %s\n", OPT(param->bEnableRectInter));
     H0("   --[no-]amp                    Enable asymmetric motion partitions, requires --rect. Default %s\n", OPT(param->bEnableAMP));
-    H0("   --limit-modes <0|1>            Limit rectangular and asymetirc motion partitions. Default %d\n", param->limitModes);
+    H0("   --[no-]limit-modes            Limit rectangular and asymmetric motion predictions. Default %d\n", param->limitModes);
     H1("   --[no-]temporal-mvp           Enable temporal MV predictors. Default %s\n", OPT(param->bEnableTemporalMvp));
     H0("\nSpatial / intra options:\n");
     H0("   --[no-]strong-intra-smoothing Enable strong intra smoothing for 32x32 blocks. Default %s\n", OPT(param->bEnableStrongIntraSmoothing));

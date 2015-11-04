@@ -650,7 +650,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     }
     OPT("ref") p->maxNumReferences = atoi(value);
     OPT("limit-refs") p->limitReferences = atoi(value);
-    OPT("limit-modes") p->limitModes = atoi(value);
+    OPT("limit-modes") p->limitModes = atobool(value);
     OPT("weightp") p->bEnableWeightedPred = atobool(value);
     OPT("weightb") p->bEnableWeightedBiPred = atobool(value);
     OPT("cbqpoffs") p->cbQpOffset = atoi(value);
@@ -1318,6 +1318,7 @@ void x265_print_params(x265_param* param)
 #define TOOLVAL(VAL, STR)  if (VAL) { sprintf(tmp, STR, VAL); appendtool(param, buf, sizeof(buf), tmp); }
     TOOLOPT(param->bEnableRectInter, "rect");
     TOOLOPT(param->bEnableAMP, "amp");
+    TOOLOPT(param->limitModes, "limit-modes");
     TOOLVAL(param->rdLevel, "rd=%d");
     TOOLVAL(param->psyRd, "psy-rd=%.2lf");
     TOOLVAL(param->rdoqLevel, "rdoq=%d");
@@ -1439,7 +1440,7 @@ char *x265_param2string(x265_param* p)
     s += sprintf(s, " b-adapt=%d", p->bFrameAdaptive);
     s += sprintf(s, " ref=%d", p->maxNumReferences);
     s += sprintf(s, " limit-refs=%d", p->limitReferences);
-    s += sprintf(s, " limit-modes=%d", p->limitModes);
+    BOOL(p->limitModes, "limit-modes");
     BOOL(p->bEnableWeightedPred, "weightp");
     BOOL(p->bEnableWeightedBiPred, "weightb");
     s += sprintf(s, " aq-mode=%d", p->rc.aqMode);

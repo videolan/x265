@@ -686,6 +686,15 @@ the prediction quad-tree.
 
 	This feature is EXPERIMENTAL and functional at all RD levels.
 
+.. option:: --limit-modes, --no-limit-modes
+    
+	When enabled, limit-modes will limit modes analyzed for each CU	using cost 
+	metrics from the 4 sub-CUs. When multiple inter modes like :option:`--rect`
+	and/or :option:`--amp` are enabled, this feature will use motion cost 
+	heuristics from the 4 sub-CUs to bypass modes that are unlikely to be the 
+	lowest. This can significantly improve performance when :option:`rect` and/or
+	:option:`--amp` are enabled at minimal compression efficiency loss.
+
 .. option:: --rect, --no-rect
 
 	Enable analysis of rectangular motion partitions Nx2N and 2NxN

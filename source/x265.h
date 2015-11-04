@@ -827,8 +827,7 @@ typedef struct x265_param
      * 4 split CUs at the next lower CU depth.  The two flags may be combined */
     uint32_t  limitReferences;
 
-    /* Limit rectangular and asymetric motion partitions based on rdCost and mvCost
-    of the 4 split CUs at the next lower CU depth*/
+    /* Limit modes analyzed for each CU using cost metrics from the 4 sub-CUs */
     uint32_t limitModes;
 
     /* ME search method (DIA, HEX, UMH, STAR, FULL). The search patterns
