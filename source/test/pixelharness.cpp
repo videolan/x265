@@ -1360,16 +1360,16 @@ bool PixelHarness::check_cutree_propagate_cost(cutree_propagate_cost ref, cutree
     memset(opt_dest, 0xCD, sizeof(opt_dest));
 
     double fps = 1.0;
-    int width = 16 + rand() % 64;
     int j = 0;
 
     for (int i = 0; i < ITERS; i++)
     {
+        int width = 16 + rand() % 64;
         int index = i % TEST_CASES;
         checked(opt, opt_dest, ushort_test_buff[index] + j, int_test_buff[index] + j, ushort_test_buff[index] + j, int_test_buff[index] + j, &fps, width);
         ref(ref_dest, ushort_test_buff[index] + j, int_test_buff[index] + j, ushort_test_buff[index] + j, int_test_buff[index] + j, &fps, width);
 
-        if (memcmp(ref_dest, opt_dest, width * sizeof(pixel)))
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
 
         reportfail();

@@ -995,7 +995,8 @@ FRAME_INIT_LOWRES
 ;                             uint16_t *inter_costs, int32_t *inv_qscales, double *fps_factor, int len )
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
-cglobal mbtree_propagate_cost, 6,6,7
+cglobal mbtree_propagate_cost, 7,7,7
+    dec         r6d
     movsd       m6, [r5]
     mulpd       m6, [pd_inv256]
     xor         r5d, r5d
@@ -1044,8 +1045,40 @@ cglobal mbtree_propagate_cost, 6,6,7
 
     movh        [r0+r5*4], m0
     add         r5d, 2
-    cmp         r5d, r6m
+    cmp         r5d, r6d
     jl         .loop
+
+    xor         r6d, r5d
+    jnz         .even
+    movd        m2, [r2+r5*4]       ; intra
+    movd        m0, [r4+r5*4]       ; invq
+    movd        m3, [r3+r5*2]       ; inter
+    pand        m3, m5
+    punpcklwd   m3, m4
+
+    ; PMINSD
+    pcmpgtd     m1, m2, m3
+    pand        m3, m1
+    pandn       m1, m2
+    por         m3, m1
+
+    movd        m1, [r1+r5*2]       ; prop
+    pmaddwd     m0, m2
+    punpcklwd   m1, m4
+    cvtdq2pd    m0, m0
+    mulpd       m0, m6              ; intra*invq*fps_factor>>8
+    cvtdq2pd    m1, m1              ; prop
+    addpd       m0, m1              ; prop + (intra*invq*fps_factor>>8)
+    cvtdq2pd    m1, m2              ; intra
+    psubd       m2, m3              ; intra - inter
+    cvtdq2pd    m2, m2              ; intra - inter
+    mulpd       m0, m2              ; (prop + (intra*invq*fps_factor>>8)) * (intra - inter)
+
+    divpd       m0, m1
+    addpd       m0, [pd_0_5]
+    cvttpd2dq    m0, m0
+    movd        [r0+r5*4], m0
+.even:
     RET
 
 
@@ -1055,7 +1088,8 @@ cglobal mbtree_propagate_cost, 6,6,7
 ;-----------------------------------------------------------------------------
 ; FIXME: align loads/stores to 16 bytes
 %macro MBTREE_AVX 0
-cglobal mbtree_propagate_cost, 6,6,7
+cglobal mbtree_propagate_cost, 7,7,7
+    sub             r6d, 3
     vbroadcastsd    m6, [r5]
     mulpd           m6, [pd_inv256]
     xor             r5d, r5d
@@ -1089,9 +1123,81 @@ cglobal mbtree_propagate_cost, 6,6,7
     cvttpd2dq       xm0, m0
 
     movu            [r0+r5*4], xm0
-    add             r5d, 4
-    cmp             r5d, r6m
+    add             r5d, 4              ; process 4 values in one iteration
+    cmp             r5d, r6d
     jl             .loop
+
+    add             r6d, 3
+    xor             r6d, r5d
+    jz              .even               ; if loop counter is multiple of 4, all values are processed
+
+    and             r6d, 3              ; otherwise, remaining unprocessed values must be 1, 2 or 3
+    cmp             r6d, 1
+    je              .process1           ; if only 1 value is unprocessed
+
+    ; process 2 values here
+    movq            xm2, [r2+r5*4]      ; intra
+    movq            xm0, [r4+r5*4]      ; invq
+    movd            xm3, [r3+r5*2]      ; inter
+    pmovzxwd        xm3, xm3
+    pand            xm3, xm5
+    pminsd          xm3, xm2
+
+    movd            xm1, [r1+r5*2]      ; prop
+    pmovzxwd        xm1, xm1
+    pmaddwd         xm0, xm2
+    cvtdq2pd        m0, xm0
+    cvtdq2pd        m1, xm1             ; prop
+%if cpuflag(avx2)
+    fmaddpd         m0, m0, m6, m1
+%else
+    mulpd           m0, m6              ; intra*invq*fps_factor>>8
+    addpd           m0, m1              ; prop + (intra*invq*fps_factor>>8)
+%endif
+    cvtdq2pd        m1, xm2             ; intra
+    psubd           xm2, xm3            ; intra - inter
+    cvtdq2pd        m2, xm2             ; intra - inter
+    mulpd           m0, m2              ; (prop + (intra*invq*fps_factor>>8)) * (intra - inter)
+
+    divpd           m0, m1
+    addpd           m0, [pd_0_5]
+    cvttpd2dq       xm0, m0
+    movq            [r0+r5*4], xm0
+
+    xor             r6d, 2
+    jz              .even
+    add             r5d, 2
+
+    ; process 1 value here
+.process1:
+    movd            xm2, [r2+r5*4]      ; intra
+    movd            xm0, [r4+r5*4]      ; invq
+    movzx           r6d, word [r3+r5*2] ; inter
+    movd            xm3, r6d
+    pand            xm3, xm5
+    pminsd          xm3, xm2
+
+    movzx           r6d, word [r1+r5*2] ; prop
+    movd            xm1, r6d
+    pmaddwd         xm0, xm2
+    cvtdq2pd        m0, xm0
+    cvtdq2pd        m1, xm1             ; prop
+%if cpuflag(avx2)
+    fmaddpd         m0, m0, m6, m1
+%else
+    mulpd           m0, m6              ; intra*invq*fps_factor>>8
+    addpd           m0, m1              ; prop + (intra*invq*fps_factor>>8)
+%endif
+    cvtdq2pd        m1, xm2             ; intra
+    psubd           xm2, xm3            ; intra - inter
+    cvtdq2pd        m2, xm2             ; intra - inter
+    mulpd           m0, m2              ; (prop + (intra*invq*fps_factor>>8)) * (intra - inter)
+
+    divpd           m0, m1
+    addpd           m0, [pd_0_5]
+    cvttpd2dq       xm0, m0
+    movd            [r0+r5*4], xm0
+.even:
     RET
 %endmacro
 
