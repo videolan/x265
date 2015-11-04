@@ -570,10 +570,14 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT2("level-idc", "level")
     {
         /* allow "5.1" or "51", both converted to integer 51 */
-        if (atof(value) < 7)
+        /* if level-idc specifies an obviously wrong value in either float or int, 
+        throw error consistently. Stronger level checking will be done in encoder_open()*/
+        if (atof(value) < 10)
             p->levelIdc = (int)(10 * atof(value) + .5);
-        else
+        else if (atoi(value) < 10)
             p->levelIdc = atoi(value);
+        else 
+            bError = true;
     }
     OPT("high-tier") p->bHighTier = atobool(value);
     OPT("allow-non-conformance") p->bAllowNonConformance = atobool(value);
