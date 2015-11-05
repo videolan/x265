@@ -955,7 +955,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 }
 
                 int try_2NxN_first = threshold_2NxN < threshold_Nx2N;
-                if (try_2NxN_first && splitCost < md.bestMode->rdCost + threshold_2NxN)
+                if (try_2NxN_first && splitCost < md.pred[PRED_2Nx2N].sa8dCost + threshold_2NxN)
                 {
                     refMasks[0] = splitData[0].splitRefs | splitData[1].splitRefs; /* top */
                     refMasks[1] = splitData[2].splitRefs | splitData[3].splitRefs; /* bot */
@@ -965,7 +965,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                         bestInter = &md.pred[PRED_2NxN];
                 }
 
-                if (splitCost < md.bestMode->rdCost + threshold_Nx2N)
+                if (splitCost < md.pred[PRED_2Nx2N].sa8dCost + threshold_Nx2N)
                 {
                     refMasks[0] = splitData[0].splitRefs | splitData[2].splitRefs; /* left */
                     refMasks[1] = splitData[1].splitRefs | splitData[3].splitRefs; /* right */
@@ -975,7 +975,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                         bestInter = &md.pred[PRED_Nx2N];
                 }
 
-                if (!try_2NxN_first && splitCost < md.bestMode->rdCost + threshold_2NxN)
+                if (!try_2NxN_first && splitCost < md.pred[PRED_2Nx2N].sa8dCost + threshold_2NxN)
                 {
                     refMasks[0] = splitData[0].splitRefs | splitData[1].splitRefs; /* top */
                     refMasks[1] = splitData[2].splitRefs | splitData[3].splitRefs; /* bot */
@@ -1027,7 +1027,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 if (bHor)
                 {
                     int try_2NxnD_first = threshold_2NxnD < threshold_2NxnU;
-                    if (try_2NxnD_first && splitCost < md.bestMode->rdCost + threshold_2NxnD)
+                    if (try_2NxnD_first && splitCost < md.pred[PRED_2Nx2N].sa8dCost + threshold_2NxnD)
                     {
                         refMasks[0] = allSplitRefs;                                    /* 75% top */
                         refMasks[1] = splitData[2].splitRefs | splitData[3].splitRefs; /* 25% bot */
@@ -1037,7 +1037,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                             bestInter = &md.pred[PRED_2NxnD];
                     }
 
-                    if (splitCost < md.bestMode->rdCost + threshold_2NxnU)
+                    if (splitCost < md.pred[PRED_2Nx2N].sa8dCost + threshold_2NxnU)
                     {
                         refMasks[0] = splitData[0].splitRefs | splitData[1].splitRefs; /* 25% top */
                         refMasks[1] = allSplitRefs;                                    /* 75% bot */
@@ -1047,7 +1047,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                             bestInter = &md.pred[PRED_2NxnU];
                     }
 
-                    if (!try_2NxnD_first && splitCost < md.bestMode->rdCost + threshold_2NxnD)
+                    if (!try_2NxnD_first && splitCost < md.pred[PRED_2Nx2N].sa8dCost + threshold_2NxnD)
                     {
                         refMasks[0] = allSplitRefs;                                    /* 75% top */
                         refMasks[1] = splitData[2].splitRefs | splitData[3].splitRefs; /* 25% bot */
@@ -1060,7 +1060,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 if (bVer)
                 {
                     int try_nRx2N_first = threshold_nRx2N < threshold_nLx2N;
-                    if (try_nRx2N_first && splitCost < md.bestMode->rdCost + threshold_nRx2N)
+                    if (try_nRx2N_first && splitCost < md.pred[PRED_2Nx2N].sa8dCost + threshold_nRx2N)
                     {
                         refMasks[0] = allSplitRefs;                                    /* 75% left  */
                         refMasks[1] = splitData[1].splitRefs | splitData[3].splitRefs; /* 25% right */
@@ -1070,7 +1070,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                             bestInter = &md.pred[PRED_nRx2N];
                     }
 
-                    if (splitCost < md.bestMode->rdCost + threshold_nLx2N)
+                    if (splitCost < md.pred[PRED_2Nx2N].sa8dCost + threshold_nLx2N)
                     {
                         refMasks[0] = splitData[0].splitRefs | splitData[2].splitRefs; /* 25% left  */
                         refMasks[1] = allSplitRefs;                                    /* 75% right */
@@ -1080,7 +1080,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                             bestInter = &md.pred[PRED_nLx2N];
                     }
 
-                    if (!try_nRx2N_first && splitCost < md.bestMode->rdCost + threshold_nRx2N)
+                    if (!try_nRx2N_first && splitCost < md.pred[PRED_2Nx2N].sa8dCost + threshold_nRx2N)
                     {
                         refMasks[0] = allSplitRefs;                                    /* 75% left  */
                         refMasks[1] = splitData[1].splitRefs | splitData[3].splitRefs; /* 25% right */
@@ -1264,7 +1264,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     {
         splitCUData.mvCost[0] = md.pred[PRED_2Nx2N].bestME[0][0].mvCost; // L0
         splitCUData.mvCost[1] = md.pred[PRED_2Nx2N].bestME[0][1].mvCost; // L1
-        splitCUData.rdCost    = md.bestMode->rdCost;
+        splitCUData.rdCost    = md.pred[PRED_2Nx2N].sa8dCost;
     }
     
     if (mightNotSplit)
