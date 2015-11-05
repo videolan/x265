@@ -1133,21 +1133,31 @@ Slice decision options
 
 .. option:: --lookahead-slices <0..16>
 
-	Use multiple worker threads to measure the estimated cost of each
-	frame within the lookahead. When :option:`--b-adapt` is 2, most
-	frame cost estimates will be performed in batch mode, many cost
-	estimates at the same time, and lookahead-slices is ignored for
-	batched estimates. The effect on performance can be quite small.
-	The higher this parameter, the less accurate the frame costs will be
-	(since context is lost across slice boundaries) which will result in
-	less accurate B-frame and scene-cut decisions.
+	Use multiple worker threads to measure the estimated cost of each frame
+	within the lookahead. The frame is divided into the specified number of
+	slices, and one-thread is launched  per slice. When :option:`--b-adapt` is
+	2, most frame cost estimates will be performed in batch mode (many cost
+	estimates at the same time) and lookahead-slices is ignored for batched
+	estimates; it may still be used for single cost estimations. The higher this
+	parameter, the less accurate the frame costs will be (since context is lost
+	across slice boundaries) which will result in less accurate B-frame and
+	scene-cut decisions. The effect on performance can be significant especially
+	on systems with many threads.
 
-	The encoder may internally lower the number of slices to ensure
-	each slice codes at least 10 16x16 rows of lowres blocks. If slices
-	are used in lookahead, they are logged in the list of tools as
-	*lslices*.
-	
-	**Values:** 0 - disabled (default). 1 is the same as 0. Max 16
+	The encoder may internally lower the number of slices or disable
+    slicing to ensure each slice codes at least 10 16x16 rows of lowres
+    blocks to minimize the impact on quality. For example, for 720p and
+    1080p videos, the number of slices is capped to 4 and 6, respectively.
+    For resolutions lesser than 720p, slicing is auto-disabled.
+        
+    If slices are used in lookahead, they are logged in the list of tools
+    as *lslices*
+
+	**Values:** 0 - disabled. 1 is the same as 0. Max 16.
+    Default: 8 for ultrafast, superfast, faster, fast, medium
+             4 for slow, slower
+             disabled for veryslow, slower
+
 
 .. option:: --b-adapt <integer>
 

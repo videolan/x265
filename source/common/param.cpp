@@ -147,7 +147,7 @@ void x265_param_default(x265_param* param)
     param->bFrameAdaptive = X265_B_ADAPT_TRELLIS;
     param->bBPyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
-    param->lookaheadSlices = 0;
+    param->lookaheadSlices = 8;
 
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
@@ -348,6 +348,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
+            param->lookaheadSlices = 4; // limit parallelism as already enough work exists
         }
         else if (!strcmp(preset, "slower"))
         {
@@ -365,6 +366,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
             param->bIntraInBFrames = 1;
+            param->lookaheadSlices = 4; // limit parallelism as already enough work exists
         }
         else if (!strcmp(preset, "veryslow"))
         {
@@ -383,6 +385,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->searchMethod = X265_STAR_SEARCH;
             param->maxNumReferences = 5;
             param->bIntraInBFrames = 1;
+            param->lookaheadSlices = 0; // disabled for best quality
         }
         else if (!strcmp(preset, "placebo"))
         {
@@ -404,6 +407,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->maxNumReferences = 5;
             param->rc.bEnableSlowFirstPass = 1;
             param->bIntraInBFrames = 1;
+            param->lookaheadSlices = 0; // disabled for best quality
             // TODO: optimized esa
         }
         else

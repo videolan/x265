@@ -516,7 +516,16 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_bBatchFrameCosts = m_bBatchMotionSearch;
 
     if (m_param->lookaheadSlices && !m_pool)
+    {
+        x265_log(param, X265_LOG_WARNING, "No pools found; disabling lookahead-slices\n");
         m_param->lookaheadSlices = 0;
+    }
+
+    if (m_param->lookaheadSlices && (m_param->sourceHeight < 720))
+    {
+        x265_log(param, X265_LOG_WARNING, "Source height < 720p; disabling lookahead-slices\n");
+        m_param->lookaheadSlices = 0;
+    }
 
     if (m_param->lookaheadSlices > 1)
     {
