@@ -448,30 +448,29 @@ void Encoder::calcRefreshInterval(Frame* frameEnc)
         m_bQueuedIntraRefresh = 0;
         /* PIR is currently only supported with ref == 1, so any intra frame effectively refreshes
          * the whole frame and counts as an intra refresh. */
-        pir->position = numBlocksInRow;
+        pir->pirEndCol = numBlocksInRow;
     }
     else if (slice->m_sliceType == P_SLICE)
     {
         Frame* ref = frameEnc->m_encData->m_slice->m_refFrameList[0][0];
         int pocdiff = frameEnc->m_poc - ref->m_poc;
-        float increment = X265_MAX(((float)numBlocksInRow - 1) / m_param->keyframeMax, 1);
-        pir->position = ref->m_encData->m_pir.position;
+        int numPFramesInGOP = m_param->keyframeMax / pocdiff;
+        int increment = (numBlocksInRow + numPFramesInGOP - 1) / numPFramesInGOP;
+        pir->pirEndCol = ref->m_encData->m_pir.pirEndCol;
         pir->framesSinceLastPir = ref->m_encData->m_pir.framesSinceLastPir + pocdiff;
         if (pir->framesSinceLastPir >= m_param->keyframeMax ||
-           (m_bQueuedIntraRefresh && pir->position + 0.5 >= numBlocksInRow))
+            (m_bQueuedIntraRefresh && pir->pirEndCol >= numBlocksInRow))
         {
-            pir->position = 0;
+            pir->pirEndCol = 0;
             pir->framesSinceLastPir = 0;
             m_bQueuedIntraRefresh = 0;
             frameEnc->m_lowres.bKeyframe = 1;
         }
-        pir->pirStartCol = (uint32_t)(pir->position + 0.5);
-        pir->position += increment * pocdiff;
-        pir->pirEndCol = (uint32_t)(pir->position + 0.5);
+        pir->pirStartCol = pir->pirEndCol;
+        pir->pirEndCol += increment;
         /* If our intra refresh has reached the right side of the frame, we're done. */
         if (pir->pirEndCol >= numBlocksInRow)
         {
-            pir->position = numBlocksInRow;
             pir->pirEndCol = numBlocksInRow;
         }
     }

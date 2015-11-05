@@ -137,7 +137,6 @@ public:
     /* data needed for periodic intra refresh */
     struct PeriodicIR
     {
-        double     position;
         uint32_t   pirStartCol;
         uint32_t   pirEndCol;
         int        framesSinceLastPir;
