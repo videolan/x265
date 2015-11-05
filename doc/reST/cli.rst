@@ -692,8 +692,8 @@ the prediction quad-tree.
 	metrics from the 4 sub-CUs. When multiple inter modes like :option:`--rect`
 	and/or :option:`--amp` are enabled, this feature will use motion cost 
 	heuristics from the 4 sub-CUs to bypass modes that are unlikely to be the 
-	lowest. This can significantly improve performance when :option:`rect` and/or
-	:option:`--amp` are enabled at minimal compression efficiency loss.
+	best choice. This can significantly improve performance when :option:`rect`
+	and/or :option:`--amp` are enabled at minimal compression efficiency loss.
 
 .. option:: --rect, --no-rect
 
