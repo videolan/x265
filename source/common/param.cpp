@@ -571,10 +571,10 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     {
         /* allow "5.1" or "51", both converted to integer 51 */
         /* if level-idc specifies an obviously wrong value in either float or int, 
-        throw error consistently. Stronger level checking will be done in encoder_open()*/
+        throw error consistently. Stronger level checking will be done in encoder_open() */
         if (atof(value) < 10)
             p->levelIdc = (int)(10 * atof(value) + .5);
-        else if (atoi(value) < 10)
+        else if (atoi(value) < 100)
             p->levelIdc = atoi(value);
         else 
             bError = true;
