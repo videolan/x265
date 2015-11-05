@@ -2427,6 +2427,118 @@ cglobal intra_pred_planar8, 3,3,5
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
 ;---------------------------------------------------------------------------------------
 INIT_XMM sse4
+%if ARCH_X86_64 == 1 && BIT_DEPTH == 12
+cglobal intra_pred_planar16, 3,5,12
+    add             r1d, r1d
+
+    pmovzxwd        m2, [r2 + 2]
+    pmovzxwd        m7, [r2 + 10]
+    pmovzxwd        m10, [r2 + 18]
+    pmovzxwd        m0, [r2 + 26]
+
+    movzx           r3d, word [r2 + 34]                     ; topRight   = above[16]
+    lea             r4, [pd_planar16_mul1]
+
+    movd            m3, r3d
+    pshufd          m3, m3, 0                               ; topRight
+
+    pslld           m8, m3, 2
+    pmulld          m3, m3, [r4 + 0*mmsize]                 ; (x + 1) * topRight
+    paddd           m9, m3, m8
+    paddd           m4, m9, m8
+    paddd           m8, m4
+
+    pslld           m1, m2, 4
+    pslld           m6, m7, 4
+    pslld           m5, m10, 4
+    pslld           m11, m0, 4
+    psubd           m1, m2
+    psubd           m6, m7
+    psubd           m5, m10
+    psubd           m11, m0
+
+    paddd           m4, m5
+    paddd           m3, m1
+    paddd           m8, m11
+    paddd           m9, m6
+
+    mova            m5, [pd_16]
+    paddd           m3, m5
+    paddd           m9, m5
+    paddd           m4, m5
+    paddd           m8, m5
+
+    movzx           r4d, word [r2 + 98]                     ; bottomLeft = left[16]
+    movd            m6, r4d
+    pshufd          m6, m6, 0                               ; bottomLeft
+
+    paddd           m4, m6
+    paddd           m3, m6
+    paddd           m8, m6
+    paddd           m9, m6
+
+    psubd           m1, m6, m0                              ; column 12-15
+    psubd           m11, m6, m10                            ; column 8-11
+    psubd           m10, m6, m7                             ; column 4-7
+    psubd           m6, m2                                  ; column 0-3
+
+    add             r2, 66
+    lea             r4, [pd_planar16_mul0]
+
+%macro INTRA_PRED_PLANAR16 1
+    movzx           r3d, word [r2]
+    movd            m5, r3d
+    pshufd          m5, m5, 0
+
+    pmulld          m0, m5, [r4 + 3*mmsize]                 ; column 12-15
+    pmulld          m2, m5, [r4 + 2*mmsize]                 ; column 8-11
+    pmulld          m7, m5, [r4 + 1*mmsize]                 ; column 4-7
+    pmulld          m5, m5, [r4 + 0*mmsize]                 ; column 0-3
+
+    paddd           m0, m8
+    paddd           m2, m4
+    paddd           m7, m9
+    paddd           m5, m3
+
+    paddd           m8, m1
+    paddd           m4, m11
+    paddd           m9, m10
+    paddd           m3, m6
+
+    psrad           m0, 5
+    psrad           m2, 5
+    psrad           m7, 5
+    psrad           m5, 5
+
+    packusdw        m2, m0
+    packusdw        m5, m7
+    movu            [r0], m5
+    movu            [r0 + mmsize], m2
+
+    add             r2, 2
+    lea             r0, [r0 + r1]
+%endmacro
+
+    INTRA_PRED_PLANAR16 0
+    INTRA_PRED_PLANAR16 1
+    INTRA_PRED_PLANAR16 2
+    INTRA_PRED_PLANAR16 3
+    INTRA_PRED_PLANAR16 4
+    INTRA_PRED_PLANAR16 5
+    INTRA_PRED_PLANAR16 6
+    INTRA_PRED_PLANAR16 7
+    INTRA_PRED_PLANAR16 8
+    INTRA_PRED_PLANAR16 9
+    INTRA_PRED_PLANAR16 10
+    INTRA_PRED_PLANAR16 11
+    INTRA_PRED_PLANAR16 12
+    INTRA_PRED_PLANAR16 13
+    INTRA_PRED_PLANAR16 14
+    INTRA_PRED_PLANAR16 15
+    RET
+
+%else
+; code for BIT_DEPTH == 10
 cglobal intra_pred_planar16, 3,3,8
     add             r1, r1
     movu            m2, [r2 + 2]
@@ -2504,6 +2616,7 @@ cglobal intra_pred_planar16, 3,3,8
     INTRA_PRED_PLANAR16 14
     INTRA_PRED_PLANAR16 15
     RET
+%endif
 
 ;---------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
