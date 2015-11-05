@@ -370,7 +370,7 @@ protected:
         Cost() { rdcost = 0; bits = 0; distortion = 0; energy = 0; }
     };
 
-    uint64_t estimateNullCbfCost(sse_t &dist, uint32_t &psyEnergy, uint32_t tuDepth, TextType compId);
+    uint64_t estimateNullCbfCost(sse_t dist, uint32_t psyEnergy, uint32_t tuDepth, TextType compId);
     void     estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& costs, const uint32_t depthRange[2]);
 
     // generate prediction, generate residual and recon. if bAllowSplit, find optimal RQT splits
