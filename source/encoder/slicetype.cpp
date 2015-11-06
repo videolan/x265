@@ -2088,6 +2088,7 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
     for (int i = 0; i < 1 + bBidir; i++)
     {
         int& fencCost = fenc->lowresMvCosts[i][listDist[i]][cuXY];
+        int skipCost = INT_MAX;
 
         if (!bDoSearch[i])
         {
@@ -2129,6 +2130,9 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
                 intptr_t stride = X265_LOWRES_CU_SIZE;
                 pixel *src = fref->lowresMC(pelOffset, mvc[idx], subpelbuf, stride);
                 int cost = tld.me.bufSATD(src, stride);
+                /* Except for mv0 case, everyting else is likely to have enough residual to not trigger the skip. */
+                if (!mvp.notZero() && bBidir)
+                    skipCost = cost;
                 COPY2_IF_LT(mvpcost, cost, mvp, mvc[idx]);
             }
         }
@@ -2136,6 +2140,11 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
         /* ME will never return a cost larger than the cost @MVP, so we do not
          * have to check that ME cost is more than the estimated merge cost */
         fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV);
+        if (skipCost < 64 && skipCost < fencCost && bBidir)
+        {
+            fencCost = skipCost;
+            *fencMV = 0;
+        }
         COPY2_IF_LT(bcost, fencCost, listused, i + 1);
     }
 
