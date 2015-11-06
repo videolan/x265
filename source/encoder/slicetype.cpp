@@ -2130,10 +2130,10 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
                 intptr_t stride = X265_LOWRES_CU_SIZE;
                 pixel *src = fref->lowresMC(pelOffset, mvc[idx], subpelbuf, stride);
                 int cost = tld.me.bufSATD(src, stride);
+                COPY2_IF_LT(mvpcost, cost, mvp, mvc[idx]);
                 /* Except for mv0 case, everyting else is likely to have enough residual to not trigger the skip. */
                 if (!mvp.notZero() && bBidir)
                     skipCost = cost;
-                COPY2_IF_LT(mvpcost, cost, mvp, mvc[idx]);
             }
         }
 
