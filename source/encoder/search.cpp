@@ -2995,7 +2995,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
                     if (m_rdCost.m_psyRd)
                     //Assuming zero residual 
-                        zeroPsyEnergyC = m_rdCost.psyCost(partSize, fenc, fencYuv->m_csize, mode.predYuv.getChromaAddr(chromaId, absPartIdxC), mode.predYuv.m_csize);
+                        zeroPsyEnergyC = m_rdCost.psyCost(partSizeC, fenc, fencYuv->m_csize, mode.predYuv.getChromaAddr(chromaId, absPartIdxC), mode.predYuv.m_csize);
 
                     if (cbfFlag[chromaId][tuIterator.section])
                     {
