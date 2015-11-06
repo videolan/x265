@@ -152,9 +152,26 @@ public:
     bool create(const x265_param& param, const SPS& sps);
     void reinit(const SPS& sps);
     void destroy();
-
     inline CUData* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }
 };
-}
 
+/* Stores intra analysis data for a single frame. This struct needs better packing */
+struct analysis_intra_data
+{
+    uint8_t*  depth;
+    uint8_t*  modes;
+    char*     partSizes;
+    uint8_t*  chromaModes;
+};
+
+/* Stores inter analysis data for a single frame */
+struct analysis_inter_data
+{
+    MV*         mv;
+    int32_t*    ref;
+    uint8_t*    depth;
+    uint8_t*    modes;
+    uint32_t*   bestMergeCand;
+};
+}
 #endif // ifndef X265_FRAMEDATA_H

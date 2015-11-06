@@ -2065,8 +2065,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 const MV* amvp = interMode.amvpCand[list][ref];
                 int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                 MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
-
-                MV lmv = getLowresMV(cu, pu, list, ref);
+                MV lmv = bestME[list].mv;
                 if (lmv.notZero())
                     mvc[numMvc++] = lmv;
 
