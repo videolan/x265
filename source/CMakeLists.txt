@@ -477,6 +477,8 @@ if(ENABLE_SHARED)
         set_target_properties(x265-shared PROPERTIES VERSION ${X265_BUILD})
         if(APPLE)
             set_target_properties(x265-shared PROPERTIES MACOSX_RPATH 1)
+        elseif(CYGWIN)
+            # Cygwin is not officially supported or tested. MinGW with msys is recommended.
         else()
             list(APPEND LINKER_OPTIONS "-Wl,-Bsymbolic,-znoexecstack")
         endif()
