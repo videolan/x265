@@ -48,6 +48,7 @@ struct SPS;
 
 struct Predictor
 {
+    double coeffMin;
     double coeff;
     double count;
     double decay;

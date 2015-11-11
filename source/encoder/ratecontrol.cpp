@@ -928,16 +928,20 @@ void RateControl::initFramePredictors()
     /* Frame Predictors used in vbv */
     for (int i = 0; i < 4; i++)
     {
+        m_pred[i].coeffMin = 1.0 / 4;
         m_pred[i].coeff = 1.0;
         m_pred[i].count = 1.0;
         m_pred[i].decay = 0.5;
         m_pred[i].offset = 0.0;
     }
     m_pred[0].coeff = m_pred[3].coeff = 0.75;
+    m_pred[0].coeffMin = m_pred[3].coeffMin = 0.75 / 4;
     if (m_param->rc.qCompress >= 0.8) // when tuned for grain 
     {
+        m_pred[1].coeffMin = 0.75 / 4;
         m_pred[1].coeff = 0.75;
-        m_pred[0].coeff = m_pred[3].coeff = 0.50;
+        m_pred[0].coeff = m_pred[3].coeff = 0.5;
+        m_pred[0].coeffMin = m_pred[3].coeffMin = 0.5 / 4;
     }
 }
 
@@ -997,6 +1001,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
             {
                 for (int j = 0; j < 2; j++)
                 {
+                    rce->rowPreds[i][j].coeffMin = 0.25 / 4;
                     rce->rowPreds[i][j].coeff = 0.25;
                     rce->rowPreds[i][j].count = 1.0;
                     rce->rowPreds[i][j].decay = 0.5;
@@ -2149,7 +2154,8 @@ void RateControl::updatePredictor(Predictor *p, double q, double var, double bit
         return;
     const double range = 2;
     double old_coeff = p->coeff / p->count;
-    double new_coeff = bits * q / var;
+    double old_offset = p->offset / p->count;
+    double new_coeff = X265_MAX((bits * q - old_offset) / var, p->coeffMin );
     double new_coeff_clipped = x265_clip3(old_coeff / range, old_coeff * range, new_coeff);
     double new_offset = bits * q - new_coeff_clipped * var;
     if (new_offset >= 0)
