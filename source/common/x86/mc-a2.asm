@@ -1019,7 +1019,16 @@ cglobal mbtree_propagate_cost, 7,7,7
     por         m3, m1
 
     movd        m1, [r1+r5*2]       ; prop
+%if (BIT_DEPTH <= 10)
     pmaddwd     m0, m2
+%else
+    punpckldq   m2, m2
+    punpckldq   m0, m0
+    pmuludq     m0, m2
+    pshufd      m2, m2, q3120
+    pshufd      m0, m0, q3120
+%endif
+
     punpcklwd   m1, m4
     cvtdq2pd    m0, m0
     mulpd       m0, m6              ; intra*invq*fps_factor>>8
@@ -1063,7 +1072,15 @@ cglobal mbtree_propagate_cost, 7,7,7
     por         m3, m1
 
     movd        m1, [r1+r5*2]       ; prop
+%if (BIT_DEPTH <= 10)
     pmaddwd     m0, m2
+%else
+    punpckldq   m2, m2              ; DWORD [- 1 - 0]
+    punpckldq   m0, m0
+    pmuludq     m0, m2              ; QWORD [m1 m0]
+    pshufd      m2, m2, q3120
+    pshufd      m0, m0, q3120
+%endif
     punpcklwd   m1, m4
     cvtdq2pd    m0, m0
     mulpd       m0, m6              ; intra*invq*fps_factor>>8
@@ -1103,7 +1120,11 @@ cglobal mbtree_propagate_cost, 7,7,7
     pminsd          xm3, xm2
 
     pmovzxwd        xm1, [r1+r5*2]      ; prop
+%if (BIT_DEPTH <= 10)
     pmaddwd         xm0, xm2
+%else
+    pmulld          xm0, xm2
+%endif
     cvtdq2pd        m0, xm0
     cvtdq2pd        m1, xm1             ; prop
 %if cpuflag(avx2)
@@ -1145,7 +1166,11 @@ cglobal mbtree_propagate_cost, 7,7,7
 
     movd            xm1, [r1+r5*2]      ; prop
     pmovzxwd        xm1, xm1
+%if (BIT_DEPTH <= 10)
     pmaddwd         xm0, xm2
+%else
+    pmulld          xm0, xm2
+%endif
     cvtdq2pd        m0, xm0
     cvtdq2pd        m1, xm1             ; prop
 %if cpuflag(avx2)
@@ -1179,7 +1204,11 @@ cglobal mbtree_propagate_cost, 7,7,7
 
     movzx           r6d, word [r1+r5*2] ; prop
     movd            xm1, r6d
+%if (BIT_DEPTH <= 10)
     pmaddwd         xm0, xm2
+%else
+    pmulld          xm0, xm2
+%endif
     cvtdq2pd        m0, xm0
     cvtdq2pd        m1, xm1             ; prop
 %if cpuflag(avx2)
