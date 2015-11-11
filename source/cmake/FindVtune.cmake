@@ -10,8 +10,11 @@
 include(FindPackageHandleStandardArgs)
 
 find_path(VTUNE_DIR
-    NAMES amplxe-vars.sh
-    PATHS ENV NUMA_ROOT
+    if(UNIX)
+        NAMES amplxe-vars.sh
+    else()
+        NAMES amplxe-vars.bat
+    endif(UNIX)
     HINTS $ENV{VTUNE_AMPLIFIER_XE_2016_DIR} $ENV{VTUNE_AMPLIFIER_XE_2015_DIR}
     DOC "Vtune root directory")
 
