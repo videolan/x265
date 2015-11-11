@@ -1969,7 +1969,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
     }
     rowSatdCost >>= X265_DEPTH - 8;
     updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
-    if (curEncData.m_slice->m_sliceType == P_SLICE)
+    if (curEncData.m_slice->m_sliceType != I_SLICE)
     {
         Frame* refFrame = curEncData.m_slice->m_refFrameList[0][0];
         if (qpVbv < refFrame->m_encData->m_rowStat[row].diagQp)
