@@ -127,6 +127,9 @@ BasketballDrive_1920x1080_50.y4m,--preset medium --recon-y4m-exec "ffplay -i pip
 FourPeople_1280x720_60.y4m,--preset ultrafast --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 FourPeople_1280x720_60.y4m,--preset veryslow --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 
+# Main12 intraCost overflow bug test
+720p50_parkrun_ter.y4m,--preset medium
+
 # interlace test, even though input YUV is not field seperated
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset fast --interlace bff
 CrowdRun_1920x1080_50_10bit_422.yuv,--preset faster --interlace tff
