@@ -128,6 +128,9 @@ cextern pw_planar16_mul
 cextern pd_planar16_mul0
 cextern pd_planar16_mul1
 cextern pw_planar32_mul
+cextern pd_planar32_mul1
+cextern pd_planar32_mul2
+cextern pd_planar16_mul2
 
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
@@ -1038,6 +1041,126 @@ cglobal intra_pred_planar32, 3,3,16
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
 ;---------------------------------------------------------------------------------------
 INIT_YMM avx2
+%if ARCH_X86_64 == 1 && BIT_DEPTH == 12
+cglobal intra_pred_planar32, 3,4,16
+    pmovzxwd        m1, [r2 + 2]
+    pmovzxwd        m4, [r2 + 34]
+    pmovzxwd        m2, [r2 + 18]
+    pmovzxwd        m3, [r2 + 50]
+    lea             r2, [r2 + 66]
+
+    movzx           r3d, word [r2]
+    movd            xm5, r3d
+    vpbroadcastd    m5, xm5
+
+    pslld           m8, m5, 3
+    pmulld          m7, m5, [pd_planar16_mul1 + 32]
+    psubd           m6, m7, m8
+    pmulld          m9, m5, [pd_planar32_mul2 + 32]
+    psubd           m8, m9, m8
+
+    movzx           r3d, word [r2 + 128]
+    movd            xm10, r3d
+    vpbroadcastd    m10, xm10
+
+    mova            m11, m10
+    paddd           m11, [pd_32]
+
+    paddd           m6, m11
+    paddd           m7, m11
+    paddd           m8, m11
+    paddd           m9, m11
+
+    psubd           m0, m10, m1
+    mova            m13, m0
+    pslld           m5, m1, 5
+    psubd           m1, m5, m1
+    paddd           m12, m6, m1
+
+    psubd           m5, m10, m4
+    mova            m6, m5
+    pslld           m1, m4, 5
+    psubd           m4, m1, m4
+    paddd           m14, m8, m4
+
+    psubd           m1, m10, m2
+    mova            m8, m1
+    pslld           m4, m2, 5
+    psubd           m2, m4, m2
+    paddd           m7, m2
+
+    psubd           m11, m10, m3
+    mova            m15, m11
+    pslld           m4, m3, 5
+    psubd           m3, m4, m3
+    paddd           m9, m3
+
+    mova            m2, [pd_planar32_mul1 + 32]
+    mova            m4, [pd_planar16_mul2 + 32]
+
+    add             r1, r1
+
+%macro PROCESS_AVX2 1
+    movzx           r3d, word [r2 + %1 * 2]
+    movd            xm0, r3d
+    vpbroadcastd    m0, xm0
+
+    pmulld          m1, m0, m2
+    pslld           m3, m0, 3
+    paddd           m5, m1, m3
+    pmulld          m0, m4
+    paddd           m11, m0, m3
+
+    paddd           m5, m12
+    paddd           m1, m7
+    paddd           m11, m14
+    paddd           m0, m9
+
+    psrad           m5, 6
+    psrad           m1, 6
+    psrad           m11, 6
+    psrad           m0, 6
+
+    packssdw        m5, m1
+    packssdw        m11, m0
+
+    vpermq          m5, m5, q3120
+    vpermq          m11, m11, q3120
+
+    movu            [r0], m5
+    movu            [r0 + mmsize], m11
+%endmacro
+
+%macro  INCREMENT_AVX2 0
+    paddd           m12, m13
+    paddd           m14, m6
+    paddd           m7, m8
+    paddd           m9, m15
+
+    add             r0, r1
+%endmacro
+
+    add             r2, mmsize*2
+%assign x 0
+%rep 4
+%assign y 0
+%rep 8
+    PROCESS_AVX2 y
+%if x + y < 10
+    INCREMENT_AVX2
+%endif
+%assign y y+1
+%endrep
+lea                 r2, [r2 + 16]
+%assign x x+1
+%endrep
+    RET
+
+%else
+; code for BIT_DEPTH == 10
+;---------------------------------------------------------------------------------------
+; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
+;---------------------------------------------------------------------------------------
 cglobal intra_pred_planar32, 3,3,8
     movu            m1, [r2 + 2]
     movu            m4, [r2 + 34]
@@ -1096,6 +1219,7 @@ lea     r2, [r2 + 16]
 %assign x x+1
 %endrep
     RET
+%endif
 
 ;---------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
