@@ -613,7 +613,8 @@ Mode decision / Analysis
 	+-------+---------------------------------------------------------------+
 	| Level | Description                                                   |
 	+=======+===============================================================+
-	| 0     | sa8d mode and split decisions, intra w/ source pixels         |
+	| 0     | sa8d mode and split decisions, intra w/ source pixels,        |
+	|       | currently not supported                                       |
 	+-------+---------------------------------------------------------------+
 	| 1     | recon generated (better intra), RDO merge/skip selection      |
 	+-------+---------------------------------------------------------------+
