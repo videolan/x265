@@ -93,10 +93,13 @@ void BitCost::destroy()
         {
             X265_FREE(s_costs[i] - 2 * BC_MAX_MV);
 
-            s_costs[i] = 0;
+            s_costs[i] = NULL;
         }
     }
 
-    X265_FREE(s_bitsizes - 2 * BC_MAX_MV);
-    s_bitsizes = 0;
+    if (s_bitsizes)
+    {
+        X265_FREE(s_bitsizes - 2 * BC_MAX_MV);
+        s_bitsizes = NULL;
+    }
 }
