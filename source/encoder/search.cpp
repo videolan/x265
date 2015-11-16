@@ -1534,9 +1534,10 @@ sse_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32
                 for (int i = 0; i < maxCandCount; i++)
                     candCostList[i] = MAX_INT64;
 
-                uint64_t paddedBcost = bcost + (bcost >> 3); // 1.12%
+                uint64_t paddedBcost = bcost + (bcost >> 2); // 1.25%
                 for (int mode = 0; mode < 35; mode++)
-                    if (modeCosts[mode] < paddedBcost || (mpms & ((uint64_t)1 << mode)))
+                    if ((modeCosts[mode] < paddedBcost) || ((uint32_t)mode == mpmModes[0])) 
+                        /* choose for R-D analysis only if this mode passes cost threshold or matches MPM[0] */
                         updateCandList(mode, modeCosts[mode], maxCandCount, rdModeList, candCostList);
             }
 
