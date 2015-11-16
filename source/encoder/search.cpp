@@ -1468,25 +1468,6 @@ sse_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32
                 int scaleStride = stride;
                 int costShift = 0;
 
-                if (tuSize > 32)
-                {
-                    // origin is 64x64, we scale to 32x32 and setup required parameters
-                    primitives.scale2D_64to32(m_fencScaled, fenc, stride);
-                    fenc = m_fencScaled;
-
-                    pixel nScale[129];
-                    intraNeighbourBuf[1][0] = intraNeighbourBuf[0][0];
-                    primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1);
-
-                    memcpy(&intraNeighbourBuf[0][1], &nScale[1], 2 * 64 * sizeof(pixel));
-                    memcpy(&intraNeighbourBuf[1][1], &nScale[1], 2 * 64 * sizeof(pixel));
-
-                    scaleTuSize = 32;
-                    scaleStride = 32;
-                    costShift = 2;
-                    sizeIdx = 5 - 2; // log2(scaleTuSize) - 2
-                }
-
                 m_entropyCoder.loadIntraDirModeLuma(m_rqt[depth].cur);
 
                 /* there are three cost tiers for intra modes:

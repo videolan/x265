@@ -259,7 +259,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
                 addSplitFlagCost(*md.bestMode, cuGeom.depth);
         }
     }
-    else if (mightNotSplit)
+    else if (cuGeom.log2CUSize != MAX_LOG2_CU_SIZE && mightNotSplit)
     {
         md.pred[PRED_INTRA].cu.initSubCU(parentCTU, cuGeom, qp);
         checkIntra(md.pred[PRED_INTRA], cuGeom, SIZE_2Nx2N);
@@ -614,7 +614,7 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
     if (mightNotSplit && depth >= minDepth)
     {
         int bTryAmp = m_slice->m_sps->maxAMPDepth > depth;
-        int bTryIntra = (m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) && (!m_param->limitReferences || splitIntra);
+        int bTryIntra = (m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) && (!m_param->limitReferences || splitIntra) && (cuGeom.log2CUSize != MAX_LOG2_CU_SIZE);
 
         if (m_slice->m_pps->bUseDQP && depth <= m_slice->m_pps->maxCuDQPDepth && m_slice->m_pps->maxCuDQPDepth != 0)
             setLambdaFromQP(parentCTU, qp);
@@ -1090,7 +1090,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                     }
                 }
             }
-            bool bTryIntra = m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames;
+            bool bTryIntra = (m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) && cuGeom.log2CUSize != MAX_LOG2_CU_SIZE;
             if (m_param->rdLevel >= 3)
             {
                 /* Calculate RD cost of best inter option */
@@ -1570,7 +1570,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 }
             }
 
-            if (m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames)
+            if ((m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) && cuGeom.log2CUSize != MAX_LOG2_CU_SIZE)
             {
                 if (!m_param->limitReferences || splitIntra)
                 {
