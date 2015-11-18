@@ -1165,6 +1165,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_2x8].p2s = PFX(filterPixelToShort_2x8_sse4);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_2x16].p2s = PFX(filterPixelToShort_2x16_sse4);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_6x16].p2s = PFX(filterPixelToShort_6x16_sse4);
+        p.costCoeffRemain = PFX(costCoeffRemain_sse4);
     }
     if (cpuMask & X265_CPU_AVX)
     {
