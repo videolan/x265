@@ -2115,15 +2115,15 @@ cglobal denoise_dct, 4, 4, 6
     mova     m0, [r0]
     pabsw    m1, m0
 
-    mova     m2, [r1]
+    movu     m2, [r1]
     pmovsxwd m3, m1
     paddd    m2, m3
-    mova     [r1], m2
-    mova     m2, [r1 + 16]
+    movu     [r1], m2
+    movu     m2, [r1 + 16]
     psrldq   m3, m1, 8
     pmovsxwd m4, m3
     paddd    m2, m4
-    mova     [r1 + 16], m2
+    movu     [r1 + 16], m2
 
     movu     m3, [r2]
     psubusw  m1, m3

@@ -79,7 +79,7 @@ class Encoder : public x265_encoder
 {
 public:
 
-    ALIGN_VAR_16(uint32_t, m_residualSumEmergency[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS]);
+    uint32_t           m_residualSumEmergency[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
     uint32_t           m_countEmergency[MAX_NUM_TR_CATEGORIES];
     uint16_t           (*m_offsetEmergency)[MAX_NUM_TR_CATEGORIES][MAX_NUM_TR_COEFFS];
 
