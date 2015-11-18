@@ -1019,7 +1019,7 @@ cglobal mbtree_propagate_cost, 7,7,7
     por         m3, m1
 
     movd        m1, [r1+r5*2]       ; prop
-%if (BIT_DEPTH <= 10)
+%if (BIT_DEPTH <= 8)
     pmaddwd     m0, m2
 %else
     punpckldq   m2, m2
@@ -1072,7 +1072,7 @@ cglobal mbtree_propagate_cost, 7,7,7
     por         m3, m1
 
     movd        m1, [r1+r5*2]       ; prop
-%if (BIT_DEPTH <= 10)
+%if (BIT_DEPTH <= 8)
     pmaddwd     m0, m2
 %else
     punpckldq   m2, m2              ; DWORD [- 1 - 0]
@@ -1120,7 +1120,7 @@ cglobal mbtree_propagate_cost, 7,7,7
     pminsd          xm3, xm2
 
     pmovzxwd        xm1, [r1+r5*2]      ; prop
-%if (BIT_DEPTH <= 10)
+%if (BIT_DEPTH <= 8)
     pmaddwd         xm0, xm2
 %else
     pmulld          xm0, xm2
@@ -1166,7 +1166,7 @@ cglobal mbtree_propagate_cost, 7,7,7
 
     movd            xm1, [r1+r5*2]      ; prop
     pmovzxwd        xm1, xm1
-%if (BIT_DEPTH <= 10)
+%if (BIT_DEPTH <= 8)
     pmaddwd         xm0, xm2
 %else
     pmulld          xm0, xm2
@@ -1204,7 +1204,7 @@ cglobal mbtree_propagate_cost, 7,7,7
 
     movzx           r6d, word [r1+r5*2] ; prop
     movd            xm1, r6d
-%if (BIT_DEPTH <= 10)
+%if (BIT_DEPTH <= 8)
     pmaddwd         xm0, xm2
 %else
     pmulld          xm0, xm2
