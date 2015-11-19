@@ -6743,7 +6743,7 @@ cglobal findPosFirstLast, 3,3,4
 %if ARCH_X86_64
 ; uint32_t costCoeffNxN(uint16_t *scan, coeff_t *coeff, intptr_t trSize, uint16_t *absCoeff, uint8_t *tabSigCtx, uint16_t scanFlagMask, uint8_t *baseCtx, int offset, int scanPosSigOff, int subPosBase)
 INIT_XMM sse4
-cglobal costCoeffNxN, 6,11,5
+cglobal costCoeffNxN, 6,11,6
     add         r2d, r2d
 
     ; abs(coeff)
