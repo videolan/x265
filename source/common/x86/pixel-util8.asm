@@ -57,7 +57,7 @@ hmulw_16p:              times  8 dw 1
 SECTION .text
 
 cextern pw_1
-cextern pw_0_15
+cextern pw_0_7
 cextern pb_1
 cextern pb_128
 cextern pw_00ff
@@ -1565,7 +1565,7 @@ cglobal weight_sp, 6,7,8
     movd        m0, r6d
     pshuflw     m0, m0, 0
     punpcklqdq  m0, m0
-    pcmpgtw     m0, [pw_0_15]
+    pcmpgtw     m0, [pw_0_7]
 
 .loopH:
     mov         r6d, r4d
@@ -1723,7 +1723,7 @@ cglobal weight_sp, 6,7,9
     pshuflw                   m0, m0, 0
     punpcklqdq                m0, m0
     vinserti128               m0, m0, xm0, 1
-    pcmpgtw                   m0, [pw_0_15]
+    pcmpgtw                   m0, [pw_0_7]
 
 .loopH:
     mov                       r6d, r4d
