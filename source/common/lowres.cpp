@@ -52,6 +52,7 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled)
         CHECKED_MALLOC(qpAqOffset, double, cuCount);
         CHECKED_MALLOC(invQscaleFactor, int, cuCount);
         CHECKED_MALLOC(qpCuTreeOffset, double, cuCount);
+        CHECKED_MALLOC(blockVariance, uint32_t, cuCount);
     }
     CHECKED_MALLOC(propagateCost, uint16_t, cuCount);
 
@@ -120,6 +121,7 @@ void Lowres::destroy()
     X265_FREE(invQscaleFactor);
     X265_FREE(qpCuTreeOffset);
     X265_FREE(propagateCost);
+    X265_FREE(blockVariance);
 }
 
 // (re) initialize lowres state

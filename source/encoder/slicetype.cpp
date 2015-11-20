@@ -147,19 +147,25 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
         if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
         {
             double bit_depth_correction = 1.f / (1 << (2*(X265_DEPTH-8)));
+            curFrame->m_lowres.frameVariance = 0;
+            uint64_t rowVariance = 0;
             for (blockY = 0; blockY < maxRow; blockY += 16)
             {
+                rowVariance = 0;
                 for (blockX = 0; blockX < maxCol; blockX += 16)
                 {
                     uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp);
+                    curFrame->m_lowres.blockVariance[blockXY] = energy;
+                    rowVariance += energy;
                     qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
                     curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
                     avg_adj += qp_adj;
                     avg_adj_pow2 += qp_adj * qp_adj;
                     blockXY++;
                 }
+                curFrame->m_lowres.frameVariance += (rowVariance / maxCol);
             }
-
+            curFrame->m_lowres.frameVariance /= maxRow;
             avg_adj /= blockCount;
             avg_adj_pow2 /= blockCount;
             strength = param->rc.aqStrength * avg_adj;
