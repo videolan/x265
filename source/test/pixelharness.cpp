@@ -1568,8 +1568,8 @@ bool PixelHarness::check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLa
 bool PixelHarness::check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt)
 {
     ALIGN_VAR_16(coeff_t, ref_src[32 * 32 + ITERS * 3]);
-    ALIGN_VAR_32(uint16_t, ref_absCoeff[1 << MLS_CG_SIZE]);
-    ALIGN_VAR_32(uint16_t, opt_absCoeff[1 << MLS_CG_SIZE]);
+    ALIGN_VAR_32(uint16_t, ref_absCoeff[(1 << MLS_CG_SIZE)]);
+    ALIGN_VAR_32(uint16_t, opt_absCoeff[(1 << MLS_CG_SIZE) + 4]);
 
     memset(ref_absCoeff, 0xCD, sizeof(ref_absCoeff));
     memset(opt_absCoeff, 0xCD, sizeof(opt_absCoeff));
@@ -1594,6 +1594,12 @@ bool PixelHarness::check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt)
     {
         ref_src[32 * 32 + i] = 0x1234;
     }
+
+    // Safe check magic
+    opt_absCoeff[(1 << MLS_CG_SIZE) + 0] = 0x0123;
+    opt_absCoeff[(1 << MLS_CG_SIZE) + 1] = 0x4567;
+    opt_absCoeff[(1 << MLS_CG_SIZE) + 2] = 0xBA98;
+    opt_absCoeff[(1 << MLS_CG_SIZE) + 3] = 0xFEDC;
 
     // generate CABAC context table
     uint8_t m_contextState_ref[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
@@ -1685,8 +1691,8 @@ bool PixelHarness::check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt)
             continue;
 
         const uint32_t blkPosBase = scanTbl[subPosBase];
-        uint32_t ref_sum = ref(scanTblCG4x4, &ref_src[blkPosBase + i], trSize, ref_absCoeff + numNonZero, rand_tabSigCtx, scanFlagMask, (uint8_t*)ref_baseCtx, offset, rand_scanPosSigOff, subPosBase);
-        uint32_t opt_sum = (uint32_t)checked(opt, scanTblCG4x4, &ref_src[blkPosBase + i], trSize, opt_absCoeff + numNonZero, rand_tabSigCtx, scanFlagMask, (uint8_t*)opt_baseCtx, offset, rand_scanPosSigOff, subPosBase);
+        uint32_t ref_sum = ref(scanTblCG4x4, &ref_src[blkPosBase + i], (intptr_t)trSize, ref_absCoeff + numNonZero, rand_tabSigCtx, scanFlagMask, (uint8_t*)ref_baseCtx, offset, rand_scanPosSigOff, subPosBase);
+        uint32_t opt_sum = (uint32_t)checked(opt, scanTblCG4x4, &ref_src[blkPosBase + i], (intptr_t)trSize, opt_absCoeff + numNonZero, rand_tabSigCtx, scanFlagMask, (uint8_t*)opt_baseCtx, offset, rand_scanPosSigOff, subPosBase);
 
         if (ref_sum != opt_sum)
             return false;
@@ -1694,7 +1700,13 @@ bool PixelHarness::check_costCoeffNxN(costCoeffNxN_t ref, costCoeffNxN_t opt)
             return false;
 
         // NOTE: just first rand_numCoeff valid, but I check full buffer for confirm no overwrite bug
-        if (memcmp(ref_absCoeff, opt_absCoeff, sizeof(ref_absCoeff)))
+        if (memcmp(ref_absCoeff, opt_absCoeff, rand_numCoeff * sizeof(ref_absCoeff[0])))
+            return false;
+
+        // Check memory beyond-bound write
+        if (   opt_absCoeff[(1 << MLS_CG_SIZE) + 1] != 0x4567
+            || opt_absCoeff[(1 << MLS_CG_SIZE) + 2] != 0xBA98
+            || opt_absCoeff[(1 << MLS_CG_SIZE) + 3] != 0xFEDC)
             return false;
 
         reportfail();

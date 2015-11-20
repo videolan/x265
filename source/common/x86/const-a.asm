@@ -114,6 +114,7 @@ const pw_FFFFFFFFFFFFFFF0,           dw 0x00
                             times  7 dw 0xff
 const hmul_16p,             times 16 db   1
                             times  8 db   1,  -1
+const pw_exp2_0_15,                  dw 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768
 
 
 ;; 32-bit constants

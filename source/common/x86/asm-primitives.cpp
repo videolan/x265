@@ -2145,7 +2145,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_4x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_4x4>;             // ALL_LUMA_PU_T has declared all sizes except 4x4, hence calling luma_hvpp[4x4] 
 
         if (cpuMask & X265_CPU_BMI2)
+        {
             p.scanPosLast = PFX(scanPosLast_avx2_bmi2);
+            p.costCoeffNxN = PFX(costCoeffNxN_avx2_bmi2);
+        }
     }
 }
 #else // if HIGH_BIT_DEPTH
@@ -3634,7 +3637,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.propagateCost = PFX(mbtree_propagate_cost_avx2);
 
         if (cpuMask & X265_CPU_BMI2)
+        {
             p.scanPosLast = PFX(scanPosLast_avx2_bmi2);
+            p.costCoeffNxN = PFX(costCoeffNxN_avx2_bmi2);
+        }
         p.cu[BLOCK_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx2);
         p.chroma[X265_CSP_I420].cu[CHROMA_420_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx2);
         p.chroma[X265_CSP_I422].cu[CHROMA_422_32x64].copy_ps = PFX(blockcopy_ps_32x64_avx2);
