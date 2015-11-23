@@ -509,7 +509,7 @@ bool RateControl::init(const SPS& sps)
                 char picType;
                 int e;
                 char *next;
-                double qpRc, qpAq;
+                double qpRc, qpAq, qNoVbv;
                 next = strstr(p, ";");
                 if (next)
                     *next++ = 0;
@@ -520,8 +520,8 @@ bool RateControl::init(const SPS& sps)
                     return false;
                 }
                 rce = &m_rce2Pass[frameNumber];
-                e += sscanf(p, " in:%*d out:%*d type:%c q:%lf q-aq:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf",
-                       &picType, &qpRc, &qpAq, &rce->coeffBits,
+                e += sscanf(p, " in:%*d out:%*d type:%c q:%lf q-aq:%lf q-noVbv:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf",
+                       &picType, &qpRc, &qpAq, &qNoVbv, &rce->coeffBits,
                        &rce->mvBits, &rce->miscBits, &rce->iCuCount, &rce->pCuCount,
                        &rce->skipCuCount);
                 rce->keptAsRef = true;
@@ -542,6 +542,9 @@ bool RateControl::init(const SPS& sps)
                 }
                 rce->qScale = x265_qp2qScale(qpRc);
                 totalQpAq += qpAq;
+                rce->qpNoVbv = qNoVbv;
+                rce->qpaRc = qpRc;
+                rce->qpAq = qpAq;
                 p = next;
             }
             X265_FREE(statsBuf);
@@ -2343,9 +2346,10 @@ int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* r
         : rce->sliceType == P_SLICE ? 'P'
         : IS_REFERENCED(curFrame) ? 'B' : 'b';
     if (fprintf(m_statFileOut,
-                "in:%d out:%d type:%c q:%.2f q-aq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
+                "in:%d out:%d type:%c q:%.2f q-aq:%.2f q-noVbv:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
                 rce->poc, rce->encodeOrder,
                 cType, curEncData.m_avgQpRc, curEncData.m_avgQpAq,
+                rce->qpNoVbv,
                 curFrame->m_encData->m_frameStats.coeffBits,
                 curFrame->m_encData->m_frameStats.mvBits,
                 curFrame->m_encData->m_frameStats.miscBits,
