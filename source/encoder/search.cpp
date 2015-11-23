@@ -2995,7 +2995,6 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                         if (m_rdCost.m_psyRd)
                         {
                             nonZeroPsyEnergyC = m_rdCost.psyCost(partSizeC, fenc, fencYuv->m_csize, curReconC, strideReconC);
-                            nonZeroPsyEnergyC = m_rdCost.psyCost(partSizeC, resi, resiYuv.m_csize, curResiC, strideResiC);
                             singleCostC = m_rdCost.calcPsyRdCost(nonZeroDistC, nzCbfBitsC + singleBits[chromaId][tuIterator.section], nonZeroPsyEnergyC);
                         }
                         else
