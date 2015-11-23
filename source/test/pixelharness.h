@@ -114,7 +114,6 @@ protected:
     bool check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt);
     bool check_cutree_propagate_cost(cutree_propagate_cost ref, cutree_propagate_cost opt);
     bool check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt);
-    bool check_psyCost_ss(pixelcmp_ss_t ref, pixelcmp_ss_t opt);
     bool check_calSign(sign_t ref, sign_t opt);
     bool check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt);
     bool check_findPosFirstLast(findPosFirstLast_t ref, findPosFirstLast_t opt);

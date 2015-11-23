@@ -1152,14 +1152,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.weight_sp = PFX(weight_sp_sse4);
 
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_pp_4x4_sse4);
-        p.cu[BLOCK_4x4].psy_cost_ss = PFX(psyCost_ss_4x4_sse4);
 
         // TODO: check POPCNT flag!
         ALL_LUMA_TU_S(copy_cnt, copy_cnt_, sse4);
 #if X265_DEPTH <= 10
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
 #endif
-        ALL_LUMA_CU(psy_cost_ss, psyCost_ss, sse4);
 
         p.chroma[X265_CSP_I420].pu[CHROMA_420_2x4].p2s = PFX(filterPixelToShort_2x4_sse4);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_2x8].p2s = PFX(filterPixelToShort_2x8_sse4);
@@ -1474,11 +1472,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].addAvg = PFX(addAvg_32x16_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].addAvg = PFX(addAvg_32x48_avx2);
 
-        p.cu[BLOCK_4x4].psy_cost_ss = PFX(psyCost_ss_4x4_avx2);
-        p.cu[BLOCK_8x8].psy_cost_ss = PFX(psyCost_ss_8x8_avx2);
-        p.cu[BLOCK_16x16].psy_cost_ss = PFX(psyCost_ss_16x16_avx2);
-        p.cu[BLOCK_32x32].psy_cost_ss = PFX(psyCost_ss_32x32_avx2);
-        p.cu[BLOCK_64x64].psy_cost_ss = PFX(psyCost_ss_64x64_avx2);
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_pp_4x4_avx2);
         p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar16_avx2);
         p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar32_avx2);
@@ -2508,7 +2501,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         INTRA_ANG_SSE4(sse4);
 
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_pp_4x4_sse4);
-        p.cu[BLOCK_4x4].psy_cost_ss = PFX(psyCost_ss_4x4_sse4);
 
         p.pu[LUMA_4x4].convert_p2s = PFX(filterPixelToShort_4x4_sse4);
         p.pu[LUMA_4x8].convert_p2s = PFX(filterPixelToShort_4x8_sse4);
@@ -2540,7 +2532,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.saoCuStatsE3 = PFX(saoCuStatsE3_sse4);
 
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
-        ALL_LUMA_CU(psy_cost_ss, psyCost_ss, sse4);
 
         p.costCoeffNxN = PFX(costCoeffNxN_sse4);
 #endif
@@ -2689,12 +2680,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.saoCuOrgE3[1] = PFX(saoCuOrgE3_32_avx2);
         p.saoCuOrgB0 = PFX(saoCuOrgB0_avx2);
         p.sign = PFX(calSign_avx2);
-
-        p.cu[BLOCK_4x4].psy_cost_ss = PFX(psyCost_ss_4x4_avx2);
-        p.cu[BLOCK_8x8].psy_cost_ss = PFX(psyCost_ss_8x8_avx2);
-        p.cu[BLOCK_16x16].psy_cost_ss = PFX(psyCost_ss_16x16_avx2);
-        p.cu[BLOCK_32x32].psy_cost_ss = PFX(psyCost_ss_32x32_avx2);
-        p.cu[BLOCK_64x64].psy_cost_ss = PFX(psyCost_ss_64x64_avx2);
 
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_pp_4x4_avx2);
         p.cu[BLOCK_8x8].psy_cost_pp = PFX(psyCost_pp_8x8_avx2);

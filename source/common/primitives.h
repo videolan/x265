@@ -262,7 +262,6 @@ struct EncoderPrimitives
         pixel_sse_t     sse_pp;        // Sum of Square Error (pixel, pixel) fenc alignment not assumed
         pixel_sse_ss_t  sse_ss;        // Sum of Square Error (short, short) fenc alignment not assumed
         pixelcmp_t      psy_cost_pp;   // difference in AC energy between two pixel blocks
-        pixelcmp_ss_t   psy_cost_ss;   // difference in AC energy between two signed residual blocks
         pixel_ssd_s_t   ssd_s;         // Sum of Square Error (residual coeff to self)
         pixelcmp_t      sa8d;          // Sum of Transformed Differences (8x8 Hadamard), uses satd for 4x4 intra TU
 

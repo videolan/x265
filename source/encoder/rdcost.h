@@ -109,12 +109,6 @@ public:
         return primitives.cu[size].psy_cost_pp(source, sstride, recon, rstride);
     }
 
-    /* return the difference in energy between the source block and the recon block */
-    inline int psyCost(int size, const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride) const
-    {
-        return primitives.cu[size].psy_cost_ss(source, sstride, recon, rstride);
-    }
-
     /* return the RD cost of this prediction, including the effect of psy-rd */
     inline uint64_t calcPsyRdCost(sse_t distortion, uint32_t bits, uint32_t psycost) const
     {

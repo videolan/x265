@@ -188,37 +188,6 @@ static int satd_4x4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, 
     return (int)(sum >> 1);
 }
 
-static int satd_4x4(const int16_t* pix1, intptr_t stride_pix1)
-{
-    int32_t tmp[4][4];
-    int32_t s01, s23, d01, d23;
-    int32_t satd = 0;
-    int d;
-
-    for (d = 0; d < 4; d++, pix1 += stride_pix1)
-    {
-        s01 = pix1[0] + pix1[1];
-        s23 = pix1[2] + pix1[3];
-        d01 = pix1[0] - pix1[1];
-        d23 = pix1[2] - pix1[3];
-
-        tmp[d][0] = s01 + s23;
-        tmp[d][1] = s01 - s23;
-        tmp[d][2] = d01 - d23;
-        tmp[d][3] = d01 + d23;
-    }
-
-    for (d = 0; d < 4; d++)
-    {
-        s01 = tmp[0][d] + tmp[1][d];
-        s23 = tmp[2][d] + tmp[3][d];
-        d01 = tmp[0][d] - tmp[1][d];
-        d23 = tmp[2][d] - tmp[3][d];
-        satd += abs(s01 + s23) + abs(s01 - s23) + abs(d01 - d23) + abs(d01 + d23);
-    }
-    return (int)(satd / 2);
-}
-
 // x264's SWAR version of satd 8x4, performs two 4x4 SATDs at once
 static int satd_8x4(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
 {
@@ -358,11 +327,6 @@ inline int _sa8d_8x8(const int16_t* pix1, intptr_t i_pix1)
     }
 
     return (int)sum;
-}
-
-static int sa8d_8x8(const int16_t* pix1, intptr_t i_pix1)
-{
-    return (int)((_sa8d_8x8(pix1, i_pix1) + 2) >> 2);
 }
 
 static int sa8d_16x16(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
@@ -784,39 +748,6 @@ int psyCost_pp(const pixel* source, intptr_t sstride, const pixel* recon, intptr
     }
 }
 
-template<int size>
-int psyCost_ss(const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride)
-{
-    static int16_t zeroBuf[8] /* = { 0 } */;
-
-    if (size)
-    {
-        int dim = 1 << (size + 2);
-        uint32_t totEnergy = 0;
-        for (int i = 0; i < dim; i += 8)
-        {
-            for (int j = 0; j < dim; j+= 8)
-            {
-                /* AC energy, measured by sa8d (AC + DC) minus SAD (DC) */
-                int sourceEnergy = sa8d_8x8(source + i * sstride + j, sstride) - 
-                                   (sad<8, 8>(source + i * sstride + j, sstride, zeroBuf, 0) >> 2);
-                int reconEnergy =  sa8d_8x8(recon + i * rstride + j, rstride) - 
-                                   (sad<8, 8>(recon + i * rstride + j, rstride, zeroBuf, 0) >> 2);
-
-                totEnergy += abs(sourceEnergy - reconEnergy);
-            }
-        }
-        return totEnergy;
-    }
-    else
-    {
-        /* 4x4 is too small for sa8d */
-        int sourceEnergy = satd_4x4(source, sstride) - (sad<4, 4>(source, sstride, zeroBuf, 0) >> 2);
-        int reconEnergy = satd_4x4(recon, rstride) - (sad<4, 4>(recon, rstride, zeroBuf, 0) >> 2);
-        return abs(sourceEnergy - reconEnergy);
-    }
-}
-
 template<int bx, int by>
 void blockcopy_pp_c(pixel* a, intptr_t stridea, const pixel* b, intptr_t strideb)
 {
@@ -1059,7 +990,6 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.cu[BLOCK_ ## W ## x ## H].cpy1Dto2D_shl = cpy1Dto2D_shl<W>; \
     p.cu[BLOCK_ ## W ## x ## H].cpy1Dto2D_shr = cpy1Dto2D_shr<W>; \
     p.cu[BLOCK_ ## W ## x ## H].psy_cost_pp   = psyCost_pp<BLOCK_ ## W ## x ## H>; \
-    p.cu[BLOCK_ ## W ## x ## H].psy_cost_ss   = psyCost_ss<BLOCK_ ## W ## x ## H>; \
     p.cu[BLOCK_ ## W ## x ## H].transpose     = transpose<W>; \
     p.cu[BLOCK_ ## W ## x ## H].ssd_s         = pixel_ssd_s_c<W>; \
     p.cu[BLOCK_ ## W ## x ## H].var           = pixel_var<W>; \
