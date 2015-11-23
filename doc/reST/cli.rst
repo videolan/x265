@@ -367,7 +367,7 @@ frame counts) are only applicable to the CLI application.
 
 	**CLI ONLY**
 
-.. option:: --total-frames <integer>
+.. option:: --frames <integer>
 
 	The number of frames intended to be encoded.  It may be left
 	unspecified, but when it is specified rate control can make use of
