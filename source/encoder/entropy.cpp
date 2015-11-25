@@ -1566,10 +1566,15 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
     uint8_t * const baseCtx = bIsLuma ? &m_contextState[OFF_SIG_FLAG_CTX] : &m_contextState[OFF_SIG_FLAG_CTX + NUM_SIG_FLAG_CTX_LUMA];
     uint32_t c1 = 1;
     int scanPosSigOff = scanPosLast - (lastScanSet << MLS_CG_SIZE) - 1;
-    ALIGN_VAR_32(uint16_t, absCoeff[(1 << MLS_CG_SIZE) + 1]);   // extra 2 bytes space for AVX2 assembly
+    ALIGN_VAR_32(uint16_t, absCoeff[(1 << MLS_CG_SIZE) + 1]);   // extra 2 bytes(+1) space for AVX2 assembly, +1 because (numNonZero<=1) in costCoeffNxN path
     uint32_t numNonZero = 1;
     unsigned long lastNZPosInCG;
     unsigned long firstNZPosInCG;
+
+#if _DEBUG
+    // Unnecessary, for Valgrind-3.10.0 only
+    memset(absCoeff, 0, sizeof(absCoeff));
+#endif
 
     absCoeff[0] = (uint16_t)abs(coeff[posLast]);
 
@@ -1716,6 +1721,7 @@ void Entropy::codeCoeffNxN(const CUData& cu, const coeff_t* coeff, uint32_t absP
             {
                 // maximum g_entropyBits are 18-bits and maximum of count are 16, so intermedia of sum are 22-bits
                 const uint8_t *tabSigCtx = table_cnt[(log2TrSize == 2) ? 4 : (uint32_t)patternSigCtx];
+                X265_CHECK(numNonZero <= 1, "numNonZero check failure");
                 uint32_t sum = primitives.costCoeffNxN(g_scan4x4[codingParameters.scanType], &coeff[blkPosBase], (intptr_t)trSize, absCoeff + numNonZero, tabSigCtx, scanFlagMask, baseCtx, offset + posOffset, scanPosSigOff, subPosBase);
 
 #if CHECKED_BUILD || _DEBUG
