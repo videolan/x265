@@ -754,7 +754,7 @@ void Search::offsetSubTUCBFs(CUData& cu, TextType ttype, uint32_t tuDepth, uint3
 }
 
 /* returns distortion */
-sse_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, uint32_t& psyEnergy)
+void Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, Cost& outCost)
 {
     CUData& cu = mode.cu;
     uint32_t log2TrSize = cuGeom.log2CUSize - tuDepth;
@@ -763,10 +763,9 @@ sse_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
     {
         uint32_t qNumParts = 1 << (log2TrSize - 1 - LOG2_UNIT_SIZE) * 2;
         uint32_t splitCbfU = 0, splitCbfV = 0;
-        sse_t outDist = 0;
         for (uint32_t qIdx = 0, qPartIdx = absPartIdx; qIdx < 4; ++qIdx, qPartIdx += qNumParts)
         {
-            outDist += codeIntraChromaQt(mode, cuGeom, tuDepth + 1, qPartIdx, psyEnergy);
+            codeIntraChromaQt(mode, cuGeom, tuDepth + 1, qPartIdx, outCost);
             splitCbfU |= cu.getCbf(qPartIdx, TEXT_CHROMA_U, tuDepth + 1);
             splitCbfV |= cu.getCbf(qPartIdx, TEXT_CHROMA_V, tuDepth + 1);
         }
@@ -775,8 +774,7 @@ sse_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
             cu.m_cbf[1][absPartIdx + offs] |= (splitCbfU << tuDepth);
             cu.m_cbf[2][absPartIdx + offs] |= (splitCbfV << tuDepth);
         }
-
-        return outDist;
+        return;
     }
 
     uint32_t log2TrSizeC = log2TrSize - m_hChromaShift;
@@ -785,7 +783,7 @@ sse_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
     {
         X265_CHECK(log2TrSize == 2 && m_csp != X265_CSP_I444 && tuDepth, "invalid tuDepth\n");
         if (absPartIdx & 3)
-            return 0;
+            return;
         log2TrSizeC = 2;
         tuDepthC--;
     }
@@ -796,13 +794,15 @@ sse_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
     bool checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && log2TrSizeC <= MAX_LOG2_TS_SIZE && !cu.m_tqBypass[0];
     checkTransformSkip &= !m_param->bEnableTSkipFast || (log2TrSize <= MAX_LOG2_TS_SIZE && cu.m_transformSkip[TEXT_LUMA][absPartIdx]);
     if (checkTransformSkip)
-        return codeIntraChromaTSkip(mode, cuGeom, tuDepth, tuDepthC, absPartIdx, psyEnergy);
+    {
+        codeIntraChromaTSkip(mode, cuGeom, tuDepth, tuDepthC, absPartIdx, outCost);
+        return;
+    }
 
     ShortYuv& resiYuv = m_rqt[cuGeom.depth].tmpResiYuv;
     uint32_t qtLayer = log2TrSize - 2;
     uint32_t stride = mode.fencYuv->m_csize;
     const uint32_t sizeIdxC = log2TrSizeC - 2;
-    sse_t outDist = 0;
 
     uint32_t curPartNum = cuGeom.numPartitions >> tuDepthC * 2;
     const SplitType splitType = (m_csp == X265_CSP_I422) ? VERTICAL_SPLIT : DONT_SPLIT;
@@ -858,10 +858,10 @@ sse_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
                 cu.setCbfPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
             }
 
-            outDist += m_rdCost.scaleChromaDist(chromaId, primitives.cu[sizeIdxC].sse_pp(reconQt, reconQtStride, fenc, stride));
+            outCost.distortion += m_rdCost.scaleChromaDist(chromaId, primitives.cu[sizeIdxC].sse_pp(reconQt, reconQtStride, fenc, stride));
 
             if (m_rdCost.m_psyRd)
-                psyEnergy += m_rdCost.psyCost(sizeIdxC, fenc, stride, reconQt, reconQtStride);
+                outCost.energy += m_rdCost.psyCost(sizeIdxC, fenc, stride, reconQt, reconQtStride);
 
             primitives.cu[sizeIdxC].copy_pp(picReconC, picStride, reconQt, reconQtStride);
         }
@@ -873,19 +873,16 @@ sse_t Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
         offsetSubTUCBFs(cu, TEXT_CHROMA_U, tuDepth, absPartIdx);
         offsetSubTUCBFs(cu, TEXT_CHROMA_V, tuDepth, absPartIdx);
     }
-
-    return outDist;
 }
 
 /* returns distortion */
-sse_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t tuDepthC, uint32_t absPartIdx, uint32_t& psyEnergy)
+void Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t tuDepthC, uint32_t absPartIdx, Cost& outCost)
 {
     CUData& cu = mode.cu;
     uint32_t fullDepth  = cuGeom.depth + tuDepth;
     uint32_t log2TrSize = cuGeom.log2CUSize - tuDepth;
     const uint32_t log2TrSizeC = 2;
     uint32_t qtLayer = log2TrSize - 2;
-    sse_t outDist = 0;
 
     /* At the TU layers above this one, no RDO is performed, only distortion is being measured,
      * so the entropy coder is not very accurate. The best we can do is return it in the same
@@ -1009,8 +1006,8 @@ sse_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tu
             intptr_t picStride = reconPic->m_strideC;
             primitives.cu[sizeIdxC].copy_pp(reconPicC, picStride, reconQt, reconQtStride);
 
-            outDist += bDist;
-            psyEnergy += bEnergy;
+            outCost.distortion += bDist;
+            outCost.energy += bEnergy;
         }
     }
     while (tuIterator.isNextSection());
@@ -1022,7 +1019,6 @@ sse_t Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tu
     }
 
     m_entropyCoder.load(m_rqt[fullDepth].rqtRoot);
-    return outDist;
 }
 
 void Search::extractIntraResultChromaQT(CUData& cu, Yuv& reconYuv, uint32_t absPartIdx, uint32_t tuDepth)
@@ -1709,8 +1705,8 @@ sse_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
             m_entropyCoder.load(m_rqt[depth].cur);
 
             cu.setChromIntraDirSubParts(modeList[mode], absPartIdxC, depth + initTuDepth);
-            uint32_t psyEnergy = 0;
-            sse_t dist = codeIntraChromaQt(intraMode, cuGeom, initTuDepth, absPartIdxC, psyEnergy);
+            Cost outCost;
+            codeIntraChromaQt(intraMode, cuGeom, initTuDepth, absPartIdxC, outCost);
 
             if (m_slice->m_pps->bTransformSkipEnabled)
                 m_entropyCoder.load(m_rqt[depth].cur);
@@ -1733,12 +1729,13 @@ sse_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
             codeCoeffQTChroma(cu, initTuDepth, absPartIdxC, TEXT_CHROMA_U);
             codeCoeffQTChroma(cu, initTuDepth, absPartIdxC, TEXT_CHROMA_V);
             uint32_t bits = m_entropyCoder.getNumberOfWrittenBits();
-            uint64_t cost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(dist, bits, psyEnergy) : m_rdCost.calcRdCost(dist, bits);
+            uint64_t cost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(outCost.distortion, bits, outCost.energy)
+                                             : m_rdCost.calcRdCost(outCost.distortion, bits);
 
             if (cost < bestCost)
             {
                 bestCost = cost;
-                bestDist = dist;
+                bestDist = outCost.distortion;
                 bestMode = modeList[mode];
                 extractIntraResultChromaQT(cu, reconYuv, absPartIdxC, initTuDepth);
                 memcpy(m_qtTempCbf[1], cu.m_cbf[1] + absPartIdxC, tuIterator.absPartIdxStep * sizeof(uint8_t));
