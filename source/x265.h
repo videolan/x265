@@ -92,13 +92,15 @@ typedef struct x265_nal
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
-    void*            interData;
-    void*            intraData;
+    int64_t          satdCost;
     uint32_t         frameRecordSize;
     uint32_t         poc;
     uint32_t         sliceType;
     uint32_t         numCUsInFrame;
     uint32_t         numPartitions;
+    void*            interData;
+    void*            intraData;
+    bool             bScenecut;
 } x265_analysis_data;
 
 /* cu statistics */

@@ -569,6 +569,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         else
         {
             inFrame = m_dpb->m_freeList.popBack();
+            /* Set lowres scencut and satdCost here to aovid overwriting ANALYSIS_READ
+               decision by lowres init*/
+            inFrame->m_lowres.bScenecut = false;
+            inFrame->m_lowres.satdCost = (int64_t)-1;
             inFrame->m_lowresInit = false;
         }
 
@@ -617,11 +621,15 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             readAnalysisFile(&inputPic->analysisData, inFrame->m_poc);
             inFrame->m_analysisData.poc = inFrame->m_poc;
             inFrame->m_analysisData.sliceType = inputPic->analysisData.sliceType;
+            inFrame->m_analysisData.bScenecut = inputPic->analysisData.bScenecut;
+            inFrame->m_analysisData.satdCost = inputPic->analysisData.satdCost;
             inFrame->m_analysisData.numCUsInFrame = inputPic->analysisData.numCUsInFrame;
             inFrame->m_analysisData.numPartitions = inputPic->analysisData.numPartitions;
             inFrame->m_analysisData.interData = inputPic->analysisData.interData;
             inFrame->m_analysisData.intraData = inputPic->analysisData.intraData;
             sliceType = inputPic->analysisData.sliceType;
+            inFrame->m_lowres.bScenecut = inFrame->m_analysisData.bScenecut;
+            inFrame->m_lowres.satdCost = inFrame->m_analysisData.satdCost;
         }
 
         m_lookahead->addPicture(*inFrame, sliceType);
@@ -694,6 +702,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 {
                     pic_out->analysisData.poc = pic_out->poc;
                     pic_out->analysisData.sliceType = pic_out->sliceType;
+                    pic_out->analysisData.bScenecut = outFrame->m_lowres.bScenecut;
+                    pic_out->analysisData.satdCost  = outFrame->m_lowres.satdCost;                    
                     pic_out->analysisData.numCUsInFrame = outFrame->m_analysisData.numCUsInFrame;
                     pic_out->analysisData.numPartitions = outFrame->m_analysisData.numPartitions;
                     pic_out->analysisData.interData = outFrame->m_analysisData.interData;
@@ -1905,6 +1915,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
     analysis->poc = poc;
     analysis->frameRecordSize = frameRecordSize;
     X265_FREAD(&analysis->sliceType, sizeof(int), 1, m_analysisFile);
+    X265_FREAD(&analysis->bScenecut, sizeof(bool), 1, m_analysisFile);
+    X265_FREAD(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFile);
     X265_FREAD(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
     X265_FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
 
@@ -1956,7 +1968,7 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis)
 
     /* calculate frameRecordSize */
     analysis->frameRecordSize = sizeof(analysis->frameRecordSize) + sizeof(analysis->poc) + sizeof(analysis->sliceType) +
-                      sizeof(analysis->numCUsInFrame) + sizeof(analysis->numPartitions);
+                      sizeof(analysis->numCUsInFrame) + sizeof(analysis->numPartitions) + sizeof(analysis->bScenecut) + sizeof(analysis->satdCost);
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
         analysis->frameRecordSize += sizeof(uint8_t) * analysis->numCUsInFrame * analysis->numPartitions * 4;
     else if (analysis->sliceType == X265_TYPE_P)
@@ -1976,6 +1988,8 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis)
     X265_FWRITE(&analysis->frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
     X265_FWRITE(&analysis->poc, sizeof(int), 1, m_analysisFile);
     X265_FWRITE(&analysis->sliceType, sizeof(int), 1, m_analysisFile);
+    X265_FWRITE(&analysis->bScenecut, sizeof(bool), 1, m_analysisFile);
+    X265_FWRITE(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFile);
     X265_FWRITE(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
     X265_FWRITE(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
 
