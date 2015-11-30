@@ -144,6 +144,7 @@ typedef struct x265_frame_stats
     uint16_t         maxLumaLevel;
     char             sliceType;
     int              bScenecut;
+    int              frameLatency;
     x265_cu_stats    cuStats;
 } x265_frame_stats;
 

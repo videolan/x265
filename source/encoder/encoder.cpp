@@ -731,7 +731,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (m_aborted)
                 return -1;
 
-            finishFrameStats(outFrame, curEncoder, frameData);
+            finishFrameStats(outFrame, curEncoder, frameData, m_pocLast);
 
             /* Write RateControl Frame level stats in multipass encodes */
             if (m_param->rc.bStatWrite)
@@ -1185,7 +1185,7 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
      * future safety) */
 }
 
-void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_frame_stats* frameStats)
+void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc)
 {
     PicYuv* reconPic = curFrame->m_reconPic;
     uint64_t bits = curEncoder->m_accessUnitBits;
@@ -1268,6 +1268,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
         frameStats->qp = curEncData.m_avgQpAq;
         frameStats->bits = bits;
         frameStats->bScenecut = curFrame->m_lowres.bScenecut;
+        frameStats->frameLatency = inPoc - poc;
         if (m_param->rc.rateControlMode == X265_RC_CRF)
             frameStats->rateFactor = curEncData.m_rateFactor;
         frameStats->psnrY = psnrY;

@@ -67,7 +67,8 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
                 if (param.bEnablePsnr)
                     fprintf(csvfp, "Y PSNR, U PSNR, V PSNR, YUV PSNR, ");
                 if (param.bEnableSsim)
-                    fprintf(csvfp, "SSIM, SSIM(dB),");
+                    fprintf(csvfp, "SSIM, SSIM(dB), ");
+                fprintf(csvfp, "Latency, ");
                 fprintf(csvfp, "List 0, List 1");
                 uint32_t size = param.maxCUSize;
                 for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
@@ -135,6 +136,7 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
         fprintf(csvfp, "%.3lf, %.3lf, %.3lf, %.3lf,", frameStats->psnrY, frameStats->psnrU, frameStats->psnrV, frameStats->psnr);
     if (param.bEnableSsim)
         fprintf(csvfp, " %.6f, %6.3f,", frameStats->ssim, x265_ssim2dB(frameStats->ssim));
+    fprintf(csvfp, "%d, ", frameStats->frameLatency);
     if (frameStats->sliceType == 'I')
         fputs(" -, -,", csvfp);
     else

@@ -166,7 +166,7 @@ public:
 
     void writeAnalysisFile(x265_analysis_data* pic);
 
-    void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats);
+    void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 
     void calcRefreshInterval(Frame* frameEnc);
 
