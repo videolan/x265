@@ -152,6 +152,15 @@ void FrameFilter::ParallelFilter::copySaoAboveRef(PicYuv* reconPic, uint32_t cuA
     X265_CHECK(col * ctuWidth + ctuWidth <= m_sao.m_numCuInWidth * ctuWidth, "m_tmpU buffer beyond bound write detected");
 }
 
+void FrameFilter::ParallelFilter::processSaoUnitCu(SAOParam *saoParam, int col)
+{
+    if (saoParam->bSaoFlag[0])
+        m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row, col);
+
+    if (saoParam->bSaoFlag[1])
+        m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row, col);
+}
+
 // NOTE: Single Threading only
 void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
 {
@@ -202,11 +211,8 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
                 // Process Previous Row SAO CU
                 if (m_row >= 1 && col >= 3)
                 {
-                    if (saoParam->bSaoFlag[0])
-                        m_prevRow->m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row - 1, col - 3);
-
-                    if (saoParam->bSaoFlag[1])
-                        m_prevRow->m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row - 1, col - 3);
+                    // Must delay 1 row to avoid thread data race conflict
+                    m_prevRow->processSaoUnitCu(saoParam, col - 3);
                 }
             }
 
@@ -238,30 +244,13 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
             if (numCols >= 1)
                 m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, numCols - 1, cuAddr);
 
-            // Process Previous Row SAO CU
-            if (saoParam->bSaoFlag[0])
-            {
-                if (m_row >= 1 && numCols >= 3)
-                    m_prevRow->m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row - 1, numCols - 3);
-
-                if (m_row >= 1 && numCols >= 2)
-                    m_prevRow->m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row - 1, numCols - 2);
-
-                if (m_row >= 1 && numCols >= 1)
-                    m_prevRow->m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row - 1, numCols - 1);
-            }
-
-            if (saoParam->bSaoFlag[1])
-            {
-                if (m_row >= 1 && numCols >= 3)
-                    m_prevRow->m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row - 1, numCols - 3);
-
-                if (m_row >= 1 && numCols >= 2)
-                    m_prevRow->m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row - 1, numCols - 2);
-
-                if (m_row >= 1 && numCols >= 1)
-                    m_prevRow->m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row - 1, numCols - 1);
-            }
+            // Process Previous Rows SAO CU
+            if (m_row >= 1 && numCols >= 3)
+                m_prevRow->processSaoUnitCu(saoParam, numCols - 3);
+            if (m_row >= 1 && numCols >= 2)
+                m_prevRow->processSaoUnitCu(saoParam, numCols - 2);
+            if (m_row >= 1 && numCols >= 1)
+                m_prevRow->processSaoUnitCu(saoParam, numCols - 1);
         }
         m_lastDeblocked.set(numCols - 1);
     }

@@ -88,6 +88,11 @@ public:
         { }
 
         void processTasks(int workerThreadId);
+
+        // Apply SAO on a CU in current row
+        void processSaoUnitCu(SAOParam *saoParam, int col);
+
+        // Copy and Save SAO reference pixels for SAO Rdo decide
         void copySaoAboveRef(PicYuv* reconPic, uint32_t cuAddr, int col);
 
     protected:
