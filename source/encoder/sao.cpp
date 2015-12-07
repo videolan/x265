@@ -87,8 +87,12 @@ SAO::SAO()
     m_tmpU[0] = NULL;
     m_tmpU[1] = NULL;
     m_tmpU[2] = NULL;
-    m_tmpL1 = NULL;
-    m_tmpL2 = NULL;
+    m_tmpL1[0] = NULL;
+    m_tmpL1[1] = NULL;
+    m_tmpL1[2] = NULL;
+    m_tmpL2[0] = NULL;
+    m_tmpL2[1] = NULL;
+    m_tmpL2[2] = NULL;
 
     m_depthSaoRate[0][0] = 0;
     m_depthSaoRate[0][1] = 0;
@@ -116,11 +120,12 @@ bool SAO::create(x265_param* param, int initCommon)
 
     CHECKED_MALLOC(m_clipTableBase,  pixel, maxY + 2 * rangeExt);
 
-    CHECKED_MALLOC(m_tmpL1, pixel, g_maxCUSize + 1);
-    CHECKED_MALLOC(m_tmpL2, pixel, g_maxCUSize + 1);
 
     for (int i = 0; i < 3; i++)
     {
+        CHECKED_MALLOC(m_tmpL1[i], pixel, g_maxCUSize + 1);
+        CHECKED_MALLOC(m_tmpL2[i], pixel, g_maxCUSize + 1);
+
         // SAO asm code will read 1 pixel before and after, so pad by 2
         // NOTE: m_param->sourceWidth+2 enough, to avoid condition check in copySaoAboveRef(), I alloc more up to 63 bytes in here
         CHECKED_MALLOC(m_tmpU[i], pixel, m_numCuInWidth * g_maxCUSize + 2);
@@ -182,11 +187,21 @@ void SAO::destroy(int destoryCommon)
 {
     X265_FREE_ZERO(m_clipTableBase);
 
-    X265_FREE_ZERO(m_tmpL1);
-    X265_FREE_ZERO(m_tmpL2);
 
     for (int i = 0; i < 3; i++)
     {
+        if (m_tmpL1[i])
+        {
+            X265_FREE(m_tmpL1[i]);
+            m_tmpL1[i] = NULL;
+        }
+
+        if (m_tmpL2[i])
+        {
+            X265_FREE(m_tmpL2[i]);
+            m_tmpL2[i] = NULL;
+        }
+
         if (m_tmpU[i])
         {
             X265_FREE(m_tmpU[i] - 1);
@@ -307,7 +322,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
 
     memset(_upBuff1 + MAX_CU_SIZE, 0, 2 * sizeof(int8_t)); /* avoid valgrind uninit warnings */
 
-    tmpL = m_tmpL1;
+    tmpL = m_tmpL1[plane];
     tmpU = &(m_tmpU[plane][lpelx]);
 
     switch (typeIdx)
@@ -607,7 +622,7 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
 
     for (int i = 0; i < ctuHeight + 1; i++)
     {
-        m_tmpL1[i] = rec[0];
+        m_tmpL1[plane][i] = rec[0];
         rec += stride;
     }
 
@@ -623,7 +638,7 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
             rec = reconPic->getPlaneAddr(plane, addr);
             for (int i = 0; i < ctuHeight + 1; i++)
             {
-                m_tmpL2[i] = rec[ctuWidth - 1];
+                m_tmpL2[plane][i] = rec[ctuWidth - 1];
                 rec += stride;
             }
         }
@@ -652,7 +667,7 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
             }
             processSaoCu(addr, typeIdx, plane);
         }
-        std::swap(m_tmpL1, m_tmpL2);
+        std::swap(m_tmpL1[plane], m_tmpL2[plane]);
     }
 }
 
