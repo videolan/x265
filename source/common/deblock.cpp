@@ -34,7 +34,7 @@ using namespace X265_NS;
 #define DEBLOCK_SMALLEST_BLOCK  8
 #define DEFAULT_INTRA_TC_OFFSET 2
 
-void Deblock::deblockCTU(const CUData* ctu, const CUGeom& cuGeom, int32_t dir) const
+void Deblock::deblockCTU(const CUData* ctu, const CUGeom& cuGeom, int32_t dir)
 {
     uint8_t blockStrength[MAX_NUM_PARTITIONS];
 
@@ -69,7 +69,7 @@ static inline uint8_t bsCuEdge(const CUData* cu, uint32_t absPartIdx, int32_t di
 
 /* Deblocking filter process in CU-based (the same function as conventional's)
  * param Edge the direction of the edge in block boundary (horizonta/vertical), which is added newly */
-void Deblock::deblockCU(const CUData* cu, const CUGeom& cuGeom, const int32_t dir, uint8_t blockStrength[]) const
+void Deblock::deblockCU(const CUData* cu, const CUGeom& cuGeom, const int32_t dir, uint8_t blockStrength[])
 {
     uint32_t absPartIdx = cuGeom.absPartIdx;
     uint32_t depth = cuGeom.depth;
@@ -124,7 +124,7 @@ static inline uint32_t calcBsIdx(const CUData* cu, uint32_t absPartIdx, int32_t 
         return g_rasterToZscan[g_zscanToRaster[absPartIdx] + baseUnitIdx * numUnits + edgeIdx];
 }
 
-void Deblock::setEdgefilterMultiple(const CUData* cu, uint32_t scanIdx, int32_t dir, int32_t edgeIdx, uint8_t value, uint8_t blockStrength[], uint32_t numUnits) const
+void Deblock::setEdgefilterMultiple(const CUData* cu, uint32_t scanIdx, int32_t dir, int32_t edgeIdx, uint8_t value, uint8_t blockStrength[], uint32_t numUnits)
 {
     X265_CHECK(numUnits > 0, "numUnits edge filter check\n");
     for (uint32_t i = 0; i < numUnits; i++)
@@ -134,7 +134,7 @@ void Deblock::setEdgefilterMultiple(const CUData* cu, uint32_t scanIdx, int32_t 
     }
 }
 
-void Deblock::setEdgefilterTU(const CUData* cu, uint32_t absPartIdx, uint32_t tuDepth, int32_t dir, uint8_t blockStrength[]) const
+void Deblock::setEdgefilterTU(const CUData* cu, uint32_t absPartIdx, uint32_t tuDepth, int32_t dir, uint8_t blockStrength[])
 {
     uint32_t log2TrSize = cu->m_log2CUSize[absPartIdx] - tuDepth;
     if (cu->m_tuDepth[absPartIdx] > tuDepth)
@@ -149,7 +149,7 @@ void Deblock::setEdgefilterTU(const CUData* cu, uint32_t absPartIdx, uint32_t tu
     setEdgefilterMultiple(cu, absPartIdx, dir, 0, 2, blockStrength, numUnits);
 }
 
-void Deblock::setEdgefilterPU(const CUData* cu, uint32_t absPartIdx, int32_t dir, uint8_t blockStrength[], uint32_t numUnits) const
+void Deblock::setEdgefilterPU(const CUData* cu, uint32_t absPartIdx, int32_t dir, uint8_t blockStrength[], uint32_t numUnits)
 {
     const uint32_t hNumUnits = numUnits >> 1;
     const uint32_t qNumUnits = numUnits >> 2;
@@ -190,7 +190,7 @@ void Deblock::setEdgefilterPU(const CUData* cu, uint32_t absPartIdx, int32_t dir
     }
 }
 
-uint8_t Deblock::getBoundaryStrength(const CUData* cuQ, int32_t dir, uint32_t partQ, const uint8_t blockStrength[]) const
+uint8_t Deblock::getBoundaryStrength(const CUData* cuQ, int32_t dir, uint32_t partQ, const uint8_t blockStrength[])
 {
     // Calculate block index
     uint32_t partP;
@@ -340,7 +340,7 @@ static inline void pelFilterChroma(pixel* src, intptr_t srcStep, intptr_t offset
     }
 }
 
-void Deblock::edgeFilterLuma(const CUData* cuQ, uint32_t absPartIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockStrength[]) const
+void Deblock::edgeFilterLuma(const CUData* cuQ, uint32_t absPartIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockStrength[])
 {
     PicYuv* reconPic = cuQ->m_encData->m_reconPic;
     pixel* src = reconPic->getLumaAddr(cuQ->m_cuAddr, absPartIdx);
@@ -440,7 +440,7 @@ void Deblock::edgeFilterLuma(const CUData* cuQ, uint32_t absPartIdx, uint32_t de
     }
 }
 
-void Deblock::edgeFilterChroma(const CUData* cuQ, uint32_t absPartIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockStrength[]) const
+void Deblock::edgeFilterChroma(const CUData* cuQ, uint32_t absPartIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockStrength[])
 {
     int32_t chFmt = cuQ->m_chromaFormat, chromaShift;
     intptr_t offset, srcStep;
