@@ -62,20 +62,25 @@ public:
     {
     public:
         static uint32_t     numCols;
+        static uint32_t     numRows;
+        uint32_t            m_row;
         uint32_t            m_rowAddr;
         x265_param*         m_param;
         FrameEncoder*       m_frameEncoder;
         FrameData*          m_encData;
+        ParallelFilter*     m_prevRow;
         SAO                 m_sao;
         ThreadSafeInteger   m_lastCol;          /* The column that next to process */
         ThreadSafeInteger   m_allowedCol;       /* The column that processed from Encode pipeline */
         ThreadSafeInteger   m_lastDeblocked;   /* The column that finished all of Deblock stages  */
 
         ParallelFilter()
-            : m_rowAddr(0)
+            : m_row(0)
+            , m_rowAddr(0)
             , m_param(NULL)
             , m_frameEncoder(NULL)
             , m_encData(NULL)
+            , m_prevRow(NULL)
         {
         }
 

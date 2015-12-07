@@ -36,6 +36,7 @@ static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t wi
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, uint32_t width, uint32_t height, void *buf, uint32_t& cnt);
 
 uint32_t FrameFilter::ParallelFilter::numCols = 0;
+uint32_t FrameFilter::ParallelFilter::numRows = 0;
 
 void FrameFilter::destroy()
 {
@@ -92,13 +93,18 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
         for(int row = 0; row < numRows; row++)
         {
             m_parallelFilter[row].m_param = m_param;
+            m_parallelFilter[row].m_row = row;
             m_parallelFilter[row].m_rowAddr = row * numCols;
             m_parallelFilter[row].m_frameEncoder = m_frameEncoder;
+
+            if (row > 0)
+                m_parallelFilter[row].m_prevRow = &m_parallelFilter[row - 1];
         }
     }
 
     // Setting maximum columns
     ParallelFilter::numCols = numCols;
+    ParallelFilter::numRows = numRows;
 }
 
 void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
@@ -192,6 +198,16 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
                     //       ..S H V |
                     m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, col - 2, cuAddr - 2);
                 }
+
+                // Process Previous Row SAO CU
+                if (m_row >= 1 && col >= 3)
+                {
+                    if (saoParam->bSaoFlag[0])
+                        m_prevRow->m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row - 1, col - 3);
+
+                    if (saoParam->bSaoFlag[1])
+                        m_prevRow->m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row - 1, col - 3);
+                }
             }
 
             m_lastDeblocked.set(col - 1);
@@ -221,6 +237,31 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
 
             if (numCols >= 1)
                 m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, numCols - 1, cuAddr);
+
+            // Process Previous Row SAO CU
+            if (saoParam->bSaoFlag[0])
+            {
+                if (m_row >= 1 && numCols >= 3)
+                    m_prevRow->m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row - 1, numCols - 3);
+
+                if (m_row >= 1 && numCols >= 2)
+                    m_prevRow->m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row - 1, numCols - 2);
+
+                if (m_row >= 1 && numCols >= 1)
+                    m_prevRow->m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row - 1, numCols - 1);
+            }
+
+            if (saoParam->bSaoFlag[1])
+            {
+                if (m_row >= 1 && numCols >= 3)
+                    m_prevRow->m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row - 1, numCols - 3);
+
+                if (m_row >= 1 && numCols >= 2)
+                    m_prevRow->m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row - 1, numCols - 2);
+
+                if (m_row >= 1 && numCols >= 1)
+                    m_prevRow->m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row - 1, numCols - 1);
+            }
         }
         m_lastDeblocked.set(numCols - 1);
     }
@@ -573,17 +614,7 @@ static void origCUSampleRestoration(const CUData* cu, const CUGeom& cuGeom, Fram
 void FrameFilter::processSao(int row)
 {
     FrameData& encData = *m_frame->m_encData;
-    SAOParam* saoParam = encData.m_saoParam;
     uint32_t numCols = encData.m_slice->m_sps->numCuInWidth;
-
-    for(uint32_t col = 0; col < numCols; col++)
-    {
-        if (saoParam->bSaoFlag[0])
-            m_parallelFilter[row].m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], row, col);
-
-        if (saoParam->bSaoFlag[1])
-            m_parallelFilter[row].m_sao.processSaoUnitCuChroma(saoParam->ctuParam, row, col);
-    }
 
     if (encData.m_slice->m_pps->bTransquantBypassEnabled)
     {

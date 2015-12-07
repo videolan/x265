@@ -1234,6 +1234,21 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             m_frameFilter.m_parallelFilter[row].waitForExit();
             m_frameFilter.m_parallelFilter[row].m_allowedCol.set(numCols);
             m_frameFilter.m_parallelFilter[row].processTasks(-1);
+
+            /* Apply SAO on last row of CUs */
+            if (m_param->bEnableSAO)
+            {
+                FrameData* encData = m_frameFilter.m_parallelFilter[row].m_encData;
+                SAOParam* saoParam = encData->m_saoParam;
+                for(uint32_t col = 0; col < numCols; col++)
+                {
+                    if (saoParam->bSaoFlag[0])
+                        m_frameFilter.m_parallelFilter[row].m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], row, col);
+
+                    if (saoParam->bSaoFlag[1])
+                        m_frameFilter.m_parallelFilter[row].m_sao.processSaoUnitCuChroma(saoParam->ctuParam, row, col);
+                }
+            }
         }
     }
 
