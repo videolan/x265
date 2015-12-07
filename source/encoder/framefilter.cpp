@@ -218,10 +218,6 @@ void FrameFilter::processRow(int row)
     SAOParam* saoParam = encData.m_saoParam;
     if (m_param->bEnableSAO)
     {
-        m_parallelFilter[row].m_sao.m_entropyCoder.load(m_frameEncoder->m_initSliceContext);
-        m_parallelFilter[row].m_sao.m_rdContexts.next.load(m_frameEncoder->m_initSliceContext);
-        m_parallelFilter[row].m_sao.m_rdContexts.cur.load(m_frameEncoder->m_initSliceContext);
-
         m_parallelFilter[row].m_sao.rdoSaoUnitRow(saoParam, row);
 
         // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
