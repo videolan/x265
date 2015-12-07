@@ -35,13 +35,7 @@ using namespace X265_NS;
 static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height);
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, uint32_t width, uint32_t height, void *buf, uint32_t& cnt);
 
-FrameFilter::FrameFilter()
-    : m_param(NULL)
-    , m_frame(NULL)
-    , m_frameEncoder(NULL)
-    , m_ssimBuf(NULL)
-{
-}
+uint32_t FrameFilter::ParallelDeblock::numCols = 0;
 
 void FrameFilter::destroy()
 {
@@ -49,9 +43,15 @@ void FrameFilter::destroy()
         m_sao.destroy();
 
     X265_FREE(m_ssimBuf);
+
+    if (m_pdeblock)
+    {
+        delete[] m_pdeblock;
+        m_pdeblock = NULL;
+    }
 }
 
-void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows)
+void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t numCols)
 {
     m_param = top->m_param;
     m_frameEncoder = frame;
@@ -69,6 +69,21 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows)
 
     if (m_param->bEnableSsim)
         m_ssimBuf = X265_MALLOC(int, 8 * (m_param->sourceWidth / 4 + 3));
+
+    if (m_param->bEnableLoopFilter)
+        m_pdeblock = new ParallelDeblock[numRows];
+
+    if (m_pdeblock)
+    {
+        for(int row = 0; row < numRows; row++)
+        {
+            m_pdeblock[row].m_rowAddr = row * numCols;
+            m_pdeblock[row].m_frameEncoder = m_frameEncoder;
+        }
+    }
+
+    // Setting maximum columns
+    ParallelDeblock::numCols = numCols;
 }
 
 void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
@@ -77,6 +92,52 @@ void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
 
     if (m_param->bEnableSAO)
         m_sao.startSlice(frame, initState, qp);
+
+    // Reset Deblock Data Struct
+    if (m_pdeblock)
+    {
+        for(int row = 0; row < m_numRows; row++)
+        {
+            m_pdeblock[row].m_lastCol.set(0);
+            m_pdeblock[row].m_allowedCol.set(0);
+            m_pdeblock[row].m_encData = frame->m_encData;
+        }
+    }
+}
+
+// NOTE: Single Threading only
+void FrameFilter::ParallelDeblock::processTasks(int /*workerThreadId*/)
+{
+    const CUGeom* cuGeoms = m_frameEncoder->m_cuGeoms;
+    const uint32_t* ctuGeomMap = m_frameEncoder->m_ctuGeomMap;
+    const int colStart = m_lastCol.get();
+    // TODO: Waiting previous row finish or simple clip on it?
+    const int colEnd = m_allowedCol.get();
+
+    // Avoid threading conflict
+    if (colStart >= colEnd)
+        return;
+
+    for (uint32_t col = (uint32_t)colStart; col < (uint32_t)colEnd; col++)
+    {
+        const uint32_t cuAddr = m_rowAddr + col;
+        const CUData* ctu = m_encData->getPicCTU(cuAddr);
+        deblockCTU(ctu, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_VER);
+
+        if (col > 0)
+        {
+            const CUData* ctuPrev = m_encData->getPicCTU(cuAddr - 1);
+            deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
+        }
+        m_lastCol.incr();
+    }
+
+    if (colEnd == (int)numCols)
+    {
+        const uint32_t cuAddr = m_rowAddr + numCols - 1;
+        const CUData* ctuPrev = m_encData->getPicCTU(cuAddr);
+        deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_HOR);
+    }
 }
 
 void FrameFilter::processRow(int row)
@@ -94,30 +155,6 @@ void FrameFilter::processRow(int row)
         return;
     }
     FrameData& encData = *m_frame->m_encData;
-    const uint32_t numCols = encData.m_slice->m_sps->numCuInWidth;
-    const uint32_t lineStartCUAddr = row * numCols;
-
-    if (m_param->bEnableLoopFilter)
-    {
-        const CUGeom* cuGeoms = m_frameEncoder->m_cuGeoms;
-        const uint32_t* ctuGeomMap = m_frameEncoder->m_ctuGeomMap;
-
-        for (uint32_t col = 0; col < numCols; col++)
-        {
-            uint32_t cuAddr = lineStartCUAddr + col;
-            const CUData* ctu = encData.getPicCTU(cuAddr);
-            deblockCTU(ctu, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_VER);
-
-            if (col > 0)
-            {
-                const CUData* ctuPrev = encData.getPicCTU(cuAddr - 1);
-                deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
-            }
-        }
-
-        const CUData* ctuPrev = encData.getPicCTU(lineStartCUAddr + numCols - 1);
-        deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[lineStartCUAddr + numCols - 1]], Deblock::EDGE_HOR);
-    }
 
     // SAO
     SAOParam* saoParam = encData.m_saoParam;
@@ -476,3 +513,4 @@ void FrameFilter::processSao(int row)
         }
     }
 }
+

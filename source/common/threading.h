@@ -205,6 +205,15 @@ public:
         return ret;
     }
 
+    int getIncr(int n = 1)
+    {
+        EnterCriticalSection(&m_cs);
+        int ret = m_val;
+        m_val += n;
+        LeaveCriticalSection(&m_cs);
+        return ret;
+    }
+
     void set(int newval)
     {
         EnterCriticalSection(&m_cs);
@@ -390,6 +399,15 @@ public:
     {
         pthread_mutex_lock(&m_mutex);
         int ret = m_val;
+        pthread_mutex_unlock(&m_mutex);
+        return ret;
+    }
+
+    int getIncr(int n = 1)
+    {
+        pthread_mutex_lock(&m_mutex);
+        int ret = m_val;
+        m_val += n;
         pthread_mutex_unlock(&m_mutex);
         return ret;
     }

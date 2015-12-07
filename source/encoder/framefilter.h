@@ -29,6 +29,7 @@
 #include "frame.h"
 #include "deblock.h"
 #include "sao.h"
+#include "threadpool.h" // class BondedTaskGroup
 
 namespace X265_NS {
 // private x265 namespace
@@ -39,7 +40,7 @@ class FrameEncoder;
 struct ThreadLocalData;
 
 // Manages the processing of a single frame loopfilter
-class FrameFilter : public Deblock
+class FrameFilter
 {
 public:
 
@@ -57,9 +58,46 @@ public:
     
     void*         m_ssimBuf; /* Temp storage for ssim computation */
 
-    FrameFilter();
+#define MAX_PFILTER_CUS     (4) /* maximum CUs for every thread */
+    class ParallelDeblock : public BondedTaskGroup, public Deblock
+    {
+    public:
+        static uint32_t     numCols;
+        uint32_t            m_rowAddr;
+        FrameEncoder*       m_frameEncoder;
+        FrameData*          m_encData;
+        ThreadSafeInteger   m_lastCol;          /* The column that next to process */
+        ThreadSafeInteger   m_allowedCol;       /* The column that processed from Encode pipeline */
 
-    void init(Encoder *top, FrameEncoder *frame, int numRows);
+        ParallelDeblock()
+            : m_rowAddr(0)
+            , m_frameEncoder(NULL)
+            , m_encData(NULL)
+        {
+        }
+
+        ~ParallelDeblock()
+        { }
+
+        void processTasks(int workerThreadId);
+
+    protected:
+
+        ParallelDeblock operator=(const ParallelDeblock&);
+    };
+
+    ParallelDeblock*    m_pdeblock;
+
+    FrameFilter()
+        : m_param(NULL)
+        , m_frame(NULL)
+        , m_frameEncoder(NULL)
+        , m_ssimBuf(NULL)
+        , m_pdeblock(NULL)
+    {
+    }
+
+    void init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t numCols);
     void destroy();
 
     void start(Frame *pic, Entropy& initState, int qp);

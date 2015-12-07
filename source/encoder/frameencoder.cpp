@@ -124,7 +124,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
         m_pool = NULL;
     }
 
-    m_frameFilter.init(top, this, numRows);
+    m_frameFilter.init(top, this, numRows, numCols);
 
     // initialize HRD parameters of SPS
     if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
@@ -857,7 +857,7 @@ void FrameEncoder::processRow(int row, int threadId)
 // Called by worker threads
 void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 {
-    uint32_t row = (uint32_t)intRow;
+    const uint32_t row = (uint32_t)intRow;
     CTURow& curRow = m_rows[row];
 
     tld.analysis.m_param = m_param;
@@ -899,7 +899,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     {
         ProfileScopeEvent(encodeCTU);
 
-        uint32_t col = curRow.completed;
+        const uint32_t col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
         CUData* ctu = curEncData.getPicCTU(cuAddr);
         ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp);
@@ -1089,9 +1089,28 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             }
         }
 
+        // TODO: move Deblock and SAO to before VBV check
+
         /* SAO parameter estimation using non-deblocked pixels for CTU bottom and right boundary areas */
         if (m_param->bEnableSAO && m_param->bSaoNonDeblocked)
             m_frameFilter.m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
+
+        /* Deblock with idle threading */
+        if (m_param->bEnableLoopFilter)
+        {
+            // TODO: Multiple Threading
+            // Delay ONE row to avoid Intra Prediction Conflict
+            if (row > 0)
+            {
+                // Waitting last threading finish
+                m_frameFilter.m_pdeblock[row - 1].waitForExit();
+
+                // Processing new group
+                const int allowCol = ((row >= 2) ? X265_MIN(m_frameFilter.m_pdeblock[row - 2].m_lastCol.get(), (int)col) : col);
+                m_frameFilter.m_pdeblock[row - 1].m_allowedCol.set(allowCol);
+                m_frameFilter.m_pdeblock[row - 1].tryBondPeers(*this, 1);
+            }
+        }
 
         if (m_param->bEnableWavefront && curRow.completed >= 2 && row < m_numRows - 1 &&
             (!m_bAllRowsStop || intRow + 1 < m_vbvResetTriggerRow))
@@ -1153,6 +1172,23 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
     if (m_param->bEnableWavefront)
     {
+        /* Processing left Deblock block with current threading */
+        if (m_param->bEnableLoopFilter & (row > 0))
+        {
+            /* TODO: Multiple Threading */
+            m_frameFilter.m_pdeblock[row - 1].waitForExit();
+
+            /* Check to avoid previous row process slower than current row */
+            if (row >= 2)
+            {
+                int prevCol = m_frameFilter.m_pdeblock[row - 2].m_lastCol.get();
+                while(prevCol != (int)numCols)
+                    prevCol = m_frameFilter.m_pdeblock[row - 2].m_lastCol.waitForChange(prevCol);
+            }
+            m_frameFilter.m_pdeblock[row - 1].m_allowedCol.set(numCols);
+            m_frameFilter.m_pdeblock[row - 1].processTasks(-1);
+        }
+
         /* trigger row-wise loop filters */
         if (row >= m_filterRowDelay)
         {
@@ -1163,8 +1199,19 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 enqueueRowFilter(0);
             tryWakeOne();
         }
+
         if (row == m_numRows - 1)
         {
+            /* TODO: Early start last row */
+            if (m_param->bEnableLoopFilter)
+            {
+                X265_CHECK(m_frameFilter.m_pdeblock[row - 1].m_allowedCol.get() == (int)numCols, "Deblock m_EncodedCol check failed");
+
+                /* NOTE: Last Row not execute before, so didn't need wait */
+                m_frameFilter.m_pdeblock[row].m_allowedCol.set(numCols);
+                m_frameFilter.m_pdeblock[row].processTasks(-1);
+            }
+
             for (uint32_t i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
                 enableRowFilter(i);
             tryWakeOne();
