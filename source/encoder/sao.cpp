@@ -1266,7 +1266,6 @@ void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
         X265_CHECK(sizeof(PerPlane) == (sizeof(int32_t) * (NUM_PLANE * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS)), "Found Padding space in struct PerPlane");
 
         // TODO: Confirm the address space is continuous
-        memset(m_count, 0, 3 * sizeof(m_count[0]));
         if (m_param->bSaoNonDeblocked)
         {
             memcpy(m_count, m_countPreDblk[addr], 3 * sizeof(m_count[0]));
