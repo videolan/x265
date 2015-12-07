@@ -543,18 +543,16 @@ void FrameFilter::processSao(int row)
     SAOParam* saoParam = encData.m_saoParam;
     uint32_t numCols = encData.m_slice->m_sps->numCuInWidth;
 
-    if (saoParam->bSaoFlag[0])
+    for(uint32_t col = 0; col < numCols; col++)
     {
-        for(uint32_t col = 0; col < numCols; col++)
+        if (saoParam->bSaoFlag[0])
             m_parallelFilter[row].m_sao.processSaoUnitCu(saoParam->ctuParam[0], row, col, 0);
-    }
 
-    if (saoParam->bSaoFlag[1])
-    {
-        for(uint32_t col = 0; col < numCols; col++)
+        if (saoParam->bSaoFlag[1])
+        {
             m_parallelFilter[row].m_sao.processSaoUnitCu(saoParam->ctuParam[1], row, col, 1);
-        for(uint32_t col = 0; col < numCols; col++)
             m_parallelFilter[row].m_sao.processSaoUnitCu(saoParam->ctuParam[2], row, col, 2);
+        }
     }
 
     if (encData.m_slice->m_pps->bTransquantBypassEnabled)

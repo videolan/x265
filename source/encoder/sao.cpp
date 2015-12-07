@@ -325,6 +325,8 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     tmpL = m_tmpL1[plane];
     tmpU = &(m_tmpU[plane][lpelx]);
 
+    int8_t* offsetEo = m_offsetEo[plane];
+
     switch (typeIdx)
     {
     case SAO_EO_0: // dir: -
@@ -343,7 +345,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                     int edgeType = signRight + signLeft + 2;
                     signLeft = -signRight;
 
-                    rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+                    rec[x] = m_clipTable[rec[x] + offsetEo[edgeType]];
                 }
 
                 rec += stride;
@@ -368,7 +370,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                     row1LastPxl = rec[stride + ctuWidth - 1];
                 }
 
-                primitives.saoCuOrgE0(rec, m_offsetEo, ctuWidth, signLeft1, stride);
+                primitives.saoCuOrgE0(rec, offsetEo, ctuWidth, signLeft1, stride);
 
                 if (!lpelx)
                 {
@@ -407,7 +409,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                     int edgeType = signDown + upBuff1[x] + 2;
                     upBuff1[x] = -signDown;
 
-                    rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+                    rec[x] = m_clipTable[rec[x] + offsetEo[edgeType]];
                 }
 
                 rec += stride;
@@ -420,11 +422,11 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
             int diff = (endY - startY) % 2;
             for (y = startY; y < endY - diff; y += 2)
             {
-                primitives.saoCuOrgE1_2Rows(rec, upBuff1, m_offsetEo, stride, ctuWidth);
+                primitives.saoCuOrgE1_2Rows(rec, upBuff1, offsetEo, stride, ctuWidth);
                 rec += 2 * stride;
             }
             if (diff & 1)
-                primitives.saoCuOrgE1(rec, upBuff1, m_offsetEo, stride, ctuWidth);
+                primitives.saoCuOrgE1(rec, upBuff1, offsetEo, stride, ctuWidth);
         }
 
         break;
@@ -474,7 +476,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                      int8_t signDown = signOf(rec[x] - rec[x + stride + 1]);
                      int edgeType = signDown + upBuff1[x] + 2;
                      upBufft[x + 1] = -signDown;
-                     rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+                     rec[x] = m_clipTable[rec[x] + offsetEo[edgeType]];
                  }
 
                  std::swap(upBuff1, upBufft);
@@ -488,7 +490,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
             {
                 int8_t iSignDown2 = signOf(rec[stride + startX] - tmpL[y]);
 
-                primitives.saoCuOrgE2[endX > 16](rec + startX, upBufft + startX, upBuff1 + startX, m_offsetEo, endX - startX, stride);
+                primitives.saoCuOrgE2[endX > 16](rec + startX, upBufft + startX, upBuff1 + startX, offsetEo, endX - startX, stride);
 
                 upBufft[startX] = iSignDown2;
 
@@ -520,14 +522,14 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                 int8_t signDown = signOf(rec[x] - tmpL[y + 1]);
                 int edgeType = signDown + upBuff1[x] + 2;
                 upBuff1[x - 1] = -signDown;
-                rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+                rec[x] = m_clipTable[rec[x] + offsetEo[edgeType]];
 
                 for (x = startX + 1; x < endX; x++)
                 {
                     signDown = signOf(rec[x] - rec[x + stride - 1]);
                     edgeType = signDown + upBuff1[x] + 2;
                     upBuff1[x - 1] = -signDown;
-                    rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+                    rec[x] = m_clipTable[rec[x] + offsetEo[edgeType]];
                 }
 
                 upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
@@ -557,9 +559,9 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                 int8_t signDown = signOf(rec[x] - tmpL[y + 1]);
                 int edgeType = signDown + upBuff1[x] + 2;
                 upBuff1[x - 1] = -signDown;
-                rec[x] = m_clipTable[rec[x] + m_offsetEo[edgeType]];
+                rec[x] = m_clipTable[rec[x] + offsetEo[edgeType]];
 
-                primitives.saoCuOrgE3[endX > 16](rec, upBuff1, m_offsetEo, stride - 1, startX, endX);
+                primitives.saoCuOrgE3[endX > 16](rec, upBuff1, offsetEo, stride - 1, startX, endX);
 
                 upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
 
@@ -571,7 +573,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     }
     case SAO_BO:
     {
-        const int8_t* offsetBo = m_offsetBo;
+        const int8_t* offsetBo = m_offsetBo[plane];
 
         if (ctuWidth & 15)
         {
@@ -649,10 +651,10 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
             {
                 if (typeIdx == SAO_BO)
                 {
-                    memset(m_offsetBo, 0, sizeof(m_offsetBo));
+                    memset(m_offsetBo[plane], 0, sizeof(m_offsetBo[0]));
 
                     for (int i = 0; i < SAO_NUM_OFFSET; i++)
-                        m_offsetBo[((ctuParam[addr].bandPos + i) & (SAO_NUM_BO_CLASSES - 1))] = (int8_t)(ctuParam[addr].offset[i] << SAO_BIT_INC);
+                        m_offsetBo[plane][((ctuParam[addr].bandPos + i) & (SAO_NUM_BO_CLASSES - 1))] = (int8_t)(ctuParam[addr].offset[i] << SAO_BIT_INC);
                 }
                 else // if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
                 {
@@ -662,7 +664,7 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
                         offset[i + 1] = ctuParam[addr].offset[i] << SAO_BIT_INC;
 
                     for (int edgeType = 0; edgeType < NUM_EDGETYPE; edgeType++)
-                        m_offsetEo[edgeType] = (int8_t)offset[s_eoTable[edgeType]];
+                        m_offsetEo[plane][edgeType] = (int8_t)offset[s_eoTable[edgeType]];
                 }
             }
             processSaoCu(addr, typeIdx, plane);
@@ -718,10 +720,10 @@ void SAO::processSaoUnitCu(SaoCtuParam* ctuParam, int idxY, int idxX, int plane)
         {
             if (typeIdx == SAO_BO)
             {
-                memset(m_offsetBo, 0, sizeof(m_offsetBo));
+                memset(m_offsetBo[plane], 0, sizeof(m_offsetBo[0]));
 
                 for (int i = 0; i < SAO_NUM_OFFSET; i++)
-                    m_offsetBo[((ctuParam[addr].bandPos + i) & (SAO_NUM_BO_CLASSES - 1))] = (int8_t)(ctuParam[addr].offset[i] << SAO_BIT_INC);
+                    m_offsetBo[plane][((ctuParam[addr].bandPos + i) & (SAO_NUM_BO_CLASSES - 1))] = (int8_t)(ctuParam[addr].offset[i] << SAO_BIT_INC);
             }
             else // if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
             {
@@ -731,7 +733,7 @@ void SAO::processSaoUnitCu(SaoCtuParam* ctuParam, int idxY, int idxX, int plane)
                     offset[i + 1] = ctuParam[addr].offset[i] << SAO_BIT_INC;
 
                 for (int edgeType = 0; edgeType < NUM_EDGETYPE; edgeType++)
-                    m_offsetEo[edgeType] = (int8_t)offset[s_eoTable[edgeType]];
+                    m_offsetEo[plane][edgeType] = (int8_t)offset[s_eoTable[edgeType]];
             }
         }
         processSaoCu(addr, typeIdx, plane);

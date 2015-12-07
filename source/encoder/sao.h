@@ -80,8 +80,8 @@ protected:
     PerPlane*   m_offsetOrgPreDblk;
 
     double      m_depthSaoRate[2][4];
-    int8_t      m_offsetBo[SAO_NUM_BO_CLASSES];
-    int8_t      m_offsetEo[NUM_EDGETYPE];
+    int8_t      m_offsetBo[NUM_PLANE][SAO_NUM_BO_CLASSES];
+    int8_t      m_offsetEo[NUM_PLANE][NUM_EDGETYPE];
 
     int         m_chromaFormat;
     int         m_numCuInWidth;
