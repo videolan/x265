@@ -134,8 +134,8 @@ void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
 /* restore original YUV samples to recon after SAO (if lossless) */
 static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absPartIdx)
 {
-    int size = cu->m_log2CUSize[absPartIdx] - 2;
-    uint32_t cuAddr = cu->m_cuAddr;
+    const int size = cu->m_log2CUSize[absPartIdx] - 2;
+    const uint32_t cuAddr = cu->m_cuAddr;
 
     PicYuv* reconPic = frame.m_reconPic;
     PicYuv* fencPic  = frame.m_fencPic;
@@ -151,7 +151,7 @@ static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absP
     pixel* dstCr = reconPic->getCrAddr(cuAddr, absPartIdx);
     pixel* srcCr = fencPic->getCrAddr(cuAddr, absPartIdx);
 
-    int csp = fencPic->m_picCsp;
+    const int csp = fencPic->m_picCsp;
     primitives.chroma[csp].cu[size].copy_pp(dstCb, reconPic->m_strideC, srcCb, fencPic->m_strideC);
     primitives.chroma[csp].cu[size].copy_pp(dstCr, reconPic->m_strideC, srcCr, fencPic->m_strideC);
 }
@@ -213,6 +213,7 @@ void FrameFilter::ParallelFilter::processSaoUnitCu(SAOParam *saoParam, int col)
 
         uint32_t cuAddr = m_rowAddr + col;
         const CUData* ctu = m_encData->getPicCTU(cuAddr);
+        assert(m_frameEncoder->m_frame->m_reconPic == m_encData->m_reconPic);
         origCUSampleRestoration(ctu, cuGeoms[ctuGeomMap[cuAddr]], *m_frameEncoder->m_frame);
     }
 }
@@ -272,7 +273,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
                 }
             }
 
-            m_lastDeblocked.set(col - 1);
+            m_lastDeblocked.set(col);
         }
         m_lastCol.incr();
     }
@@ -303,12 +304,14 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
             // Process Previous Rows SAO CU
             if (m_row >= 1 && numCols >= 3)
                 m_prevRow->processSaoUnitCu(saoParam, numCols - 3);
+
             if (m_row >= 1 && numCols >= 2)
                 m_prevRow->processSaoUnitCu(saoParam, numCols - 2);
+
             if (m_row >= 1 && numCols >= 1)
                 m_prevRow->processSaoUnitCu(saoParam, numCols - 1);
         }
-        m_lastDeblocked.set(numCols - 1);
+        m_lastDeblocked.set(numCols);
     }
 }
 

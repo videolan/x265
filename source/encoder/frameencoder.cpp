@@ -1205,7 +1205,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         if (row >= 2)
         {
             int prevCol = m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get();
-            while(prevCol != (int)numCols - 1)
+            while(prevCol != (int)numCols)
                 prevCol = m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.waitForChange(prevCol);
         }
         m_frameFilter.m_parallelFilter[row - 1].waitForExit();
@@ -1219,14 +1219,14 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         /* TODO: Early start last row */
         if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
         {
-            if (m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get() != (int)numCols - 1)
+            if (m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get() != (int)numCols)
                 x265_log(m_param, X265_LOG_WARNING, "detected ParallelFilter race condition on last row\n");
 
             // avoid race on last row and last column
             if (row >= 1)
             {
                 int prevCol = m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get();
-                while(prevCol != (int)numCols - 1)
+                while(prevCol != (int)numCols)
                     prevCol = m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.waitForChange(prevCol);
             }
 
@@ -1235,18 +1235,15 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             m_frameFilter.m_parallelFilter[row].m_allowedCol.set(numCols);
             m_frameFilter.m_parallelFilter[row].processTasks(-1);
 
-            /* Apply SAO on last row of CUs */
+            /* Apply SAO on last row of CUs, because we always apply SAO on row[X-1] */
             if (m_param->bEnableSAO)
             {
                 FrameData* encData = m_frameFilter.m_parallelFilter[row].m_encData;
                 SAOParam* saoParam = encData->m_saoParam;
                 for(uint32_t col = 0; col < numCols; col++)
                 {
-                    if (saoParam->bSaoFlag[0])
-                        m_frameFilter.m_parallelFilter[row].m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], row, col);
-
-                    if (saoParam->bSaoFlag[1])
-                        m_frameFilter.m_parallelFilter[row].m_sao.processSaoUnitCuChroma(saoParam->ctuParam, row, col);
+                    // NOTE: must use processSaoUnitCu(), it include TQBypass logic
+                    m_frameFilter.m_parallelFilter[row].processSaoUnitCu(saoParam, col);
                 }
             }
         }
