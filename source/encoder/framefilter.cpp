@@ -162,13 +162,20 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
     for (uint32_t col = (uint32_t)colStart; col < (uint32_t)colEnd; col++)
     {
         const uint32_t cuAddr = m_rowAddr + col;
-        const CUData* ctu = m_encData->getPicCTU(cuAddr);
-        deblockCTU(ctu, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_VER);
+
+        if (m_param->bEnableLoopFilter)
+        {
+            const CUData* ctu = m_encData->getPicCTU(cuAddr);
+            deblockCTU(ctu, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_VER);
+        }
 
         if (col > 0)
         {
-            const CUData* ctuPrev = m_encData->getPicCTU(cuAddr - 1);
-            deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
+            if (m_param->bEnableLoopFilter)
+            {
+                const CUData* ctuPrev = m_encData->getPicCTU(cuAddr - 1);
+                deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
+            }
 
             if (m_param->bEnableSAO)
                 copySaoAboveRef(reconPic, cuAddr - 1, col - 1);
@@ -179,8 +186,12 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
     if (colEnd == (int)numCols)
     {
         const uint32_t cuAddr = m_rowAddr + numCols - 1;
-        const CUData* ctuPrev = m_encData->getPicCTU(cuAddr);
-        deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_HOR);
+
+        if (m_param->bEnableLoopFilter)
+        {
+            const CUData* ctuPrev = m_encData->getPicCTU(cuAddr);
+            deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_HOR);
+        }
 
         if (m_param->bEnableSAO)
             copySaoAboveRef(reconPic, cuAddr, numCols - 1);

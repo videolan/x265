@@ -104,7 +104,8 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_param = top->m_param;
     m_numRows = numRows;
     m_numCols = numCols;
-    m_filterRowDelay = (m_param->bEnableSAO && m_param->bSaoNonDeblocked) ?
+    m_filterRowDelay = ((m_param->bEnableSAO && m_param->bSaoNonDeblocked)
+                        || (!m_param->bEnableLoopFilter && m_param->bEnableSAO)) ?
                         2 : (m_param->bEnableSAO || m_param->bEnableLoopFilter ? 1 : 0);
     m_filterRowDelayCus = m_filterRowDelay * numCols;
     m_rows = new CTURow[m_numRows];
@@ -1096,11 +1097,11 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             m_frameFilter.m_parallelFilter[row].m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
 
         /* Deblock with idle threading */
-        if (m_param->bEnableLoopFilter)
+        if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
         {
             // TODO: Multiple Threading
             // Delay ONE row to avoid Intra Prediction Conflict
-            if (row > 0)
+            if (row >= 1)
             {
                 // Waitting last threading finish
                 m_frameFilter.m_parallelFilter[row - 1].waitForExit();
@@ -1122,13 +1123,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 m_frameFilter.m_parallelFilter[row].m_allowedCol.set(allowCol);
                 m_frameFilter.m_parallelFilter[row].tryBondPeers(*this, 1);
             }
-        }
-
-        /* Case of DEBLOCK Disable and SAO Enable */
-        if (!m_param->bEnableLoopFilter && m_param->bEnableSAO)
-        {
-            PicYuv* reconPic = curEncData.m_reconPic;
-            m_frameFilter.m_parallelFilter[row].copySaoAboveRef(reconPic, cuAddr, col);
         }
 
         if (m_param->bEnableWavefront && curRow.completed >= 2 && row < m_numRows - 1 &&
@@ -1192,7 +1186,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     if (m_param->bEnableWavefront)
     {
         /* Processing left Deblock block with current threading */
-        if (m_param->bEnableLoopFilter & (row > 0))
+        if ((m_param->bEnableLoopFilter | m_param->bEnableSAO) & (row >= 1))
         {
             /* TODO: Multiple Threading */
             m_frameFilter.m_parallelFilter[row - 1].waitForExit();
@@ -1222,7 +1216,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         if (row == m_numRows - 1)
         {
             /* TODO: Early start last row */
-            if (m_param->bEnableLoopFilter)
+            if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
             {
                 X265_CHECK(m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.get() == (int)numCols, "Deblock m_EncodedCol check failed");
 
