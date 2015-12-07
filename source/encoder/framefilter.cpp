@@ -546,13 +546,10 @@ void FrameFilter::processSao(int row)
     for(uint32_t col = 0; col < numCols; col++)
     {
         if (saoParam->bSaoFlag[0])
-            m_parallelFilter[row].m_sao.processSaoUnitCu(saoParam->ctuParam[0], row, col, 0);
+            m_parallelFilter[row].m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], row, col);
 
         if (saoParam->bSaoFlag[1])
-        {
-            m_parallelFilter[row].m_sao.processSaoUnitCu(saoParam->ctuParam[1], row, col, 1);
-            m_parallelFilter[row].m_sao.processSaoUnitCu(saoParam->ctuParam[2], row, col, 2);
-        }
+            m_parallelFilter[row].m_sao.processSaoUnitCuChroma(saoParam->ctuParam, row, col);
     }
 
     if (encData.m_slice->m_pps->bTransquantBypassEnabled)

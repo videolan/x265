@@ -674,29 +674,21 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
 }
 
 /* Process SAO unit */
-void SAO::processSaoUnitCu(SaoCtuParam* ctuParam, int idxY, int idxX, int plane)
+void SAO::processSaoUnitCuLuma(SaoCtuParam* ctuParam, int idxY, int idxX)
 {
     PicYuv* reconPic = m_frame->m_reconPic;
-    intptr_t stride = plane ? reconPic->m_strideC : reconPic->m_stride;
-    uint32_t picWidth  = m_param->sourceWidth;
+    intptr_t stride = reconPic->m_stride;
     int ctuWidth  = g_maxCUSize;
     int ctuHeight = g_maxCUSize;
 
-    if (plane)
-    {
-        picWidth  >>= m_hChromaShift;
-        ctuWidth  >>= m_hChromaShift;
-        ctuHeight >>= m_vChromaShift;
-    }
-
     int addr = idxY * m_numCuInWidth + idxX;
-    pixel* rec = reconPic->getPlaneAddr(plane, addr);
+    pixel* rec = reconPic->getLumaAddr(addr);
 
     if (idxX == 0)
     {
         for (int i = 0; i < ctuHeight + 1; i++)
         {
-            m_tmpL1[plane][i] = rec[0];
+            m_tmpL1[0][i] = rec[0];
             rec += stride;
         }
     }
@@ -706,10 +698,10 @@ void SAO::processSaoUnitCu(SaoCtuParam* ctuParam, int idxY, int idxX, int plane)
 
     if (idxX != (m_numCuInWidth - 1))
     {
-        rec = reconPic->getPlaneAddr(plane, addr);
+        rec = reconPic->getLumaAddr(addr);
         for (int i = 0; i < ctuHeight + 1; i++)
         {
-            m_tmpL2[plane][i] = rec[ctuWidth - 1];
+            m_tmpL2[0][i] = rec[ctuWidth - 1];
             rec += stride;
         }
     }
@@ -720,10 +712,10 @@ void SAO::processSaoUnitCu(SaoCtuParam* ctuParam, int idxY, int idxX, int plane)
         {
             if (typeIdx == SAO_BO)
             {
-                memset(m_offsetBo[plane], 0, sizeof(m_offsetBo[0]));
+                memset(m_offsetBo[0], 0, sizeof(m_offsetBo[0]));
 
                 for (int i = 0; i < SAO_NUM_OFFSET; i++)
-                    m_offsetBo[plane][((ctuParam[addr].bandPos + i) & (SAO_NUM_BO_CLASSES - 1))] = (int8_t)(ctuParam[addr].offset[i] << SAO_BIT_INC);
+                    m_offsetBo[0][((ctuParam[addr].bandPos + i) & (SAO_NUM_BO_CLASSES - 1))] = (int8_t)(ctuParam[addr].offset[i] << SAO_BIT_INC);
             }
             else // if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
             {
@@ -733,12 +725,115 @@ void SAO::processSaoUnitCu(SaoCtuParam* ctuParam, int idxY, int idxX, int plane)
                     offset[i + 1] = ctuParam[addr].offset[i] << SAO_BIT_INC;
 
                 for (int edgeType = 0; edgeType < NUM_EDGETYPE; edgeType++)
-                    m_offsetEo[plane][edgeType] = (int8_t)offset[s_eoTable[edgeType]];
+                    m_offsetEo[0][edgeType] = (int8_t)offset[s_eoTable[edgeType]];
             }
         }
-        processSaoCu(addr, typeIdx, plane);
+        processSaoCu(addr, typeIdx, 0);
     }
-    std::swap(m_tmpL1[plane], m_tmpL2[plane]);
+    std::swap(m_tmpL1[0], m_tmpL2[0]);
+}
+
+/* Process SAO unit (Chroma only) */
+void SAO::processSaoUnitCuChroma(SaoCtuParam* ctuParam[3], int idxY, int idxX)
+{
+    PicYuv* reconPic = m_frame->m_reconPic;
+    intptr_t stride = reconPic->m_strideC;
+    int ctuWidth  = g_maxCUSize;
+    int ctuHeight = g_maxCUSize;
+
+    {
+        ctuWidth  >>= m_hChromaShift;
+        ctuHeight >>= m_vChromaShift;
+    }
+
+    int addr = idxY * m_numCuInWidth + idxX;
+    pixel* recCb = reconPic->getCbAddr(addr);
+    pixel* recCr = reconPic->getCrAddr(addr);
+
+    if (idxX == 0)
+    {
+        for (int i = 0; i < ctuHeight + 1; i++)
+        {
+            m_tmpL1[1][i] = recCb[0];
+            m_tmpL1[2][i] = recCr[0];
+            recCb += stride;
+            recCr += stride;
+        }
+    }
+
+    bool mergeLeftFlagCb = (ctuParam[1][addr].mergeMode == SAO_MERGE_LEFT);
+    int typeIdxCb = ctuParam[1][addr].typeIdx;
+
+    bool mergeLeftFlagCr = (ctuParam[2][addr].mergeMode == SAO_MERGE_LEFT);
+    int typeIdxCr = ctuParam[2][addr].typeIdx;
+
+    if (idxX != (m_numCuInWidth - 1))
+    {
+        recCb = reconPic->getCbAddr(addr);
+        recCr = reconPic->getCrAddr(addr);
+        for (int i = 0; i < ctuHeight + 1; i++)
+        {
+            m_tmpL2[1][i] = recCb[ctuWidth - 1];
+            m_tmpL2[2][i] = recCr[ctuWidth - 1];
+            recCb += stride;
+            recCr += stride;
+        }
+    }
+
+    // Process U
+    if (typeIdxCb >= 0)
+    {
+        if (!mergeLeftFlagCb)
+        {
+            if (typeIdxCb == SAO_BO)
+            {
+                memset(m_offsetBo[1], 0, sizeof(m_offsetBo[0]));
+
+                for (int i = 0; i < SAO_NUM_OFFSET; i++)
+                    m_offsetBo[1][((ctuParam[1][addr].bandPos + i) & (SAO_NUM_BO_CLASSES - 1))] = (int8_t)(ctuParam[1][addr].offset[i] << SAO_BIT_INC);
+            }
+            else // if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
+            {
+                int offset[NUM_EDGETYPE];
+                offset[0] = 0;
+                for (int i = 0; i < SAO_NUM_OFFSET; i++)
+                    offset[i + 1] = ctuParam[1][addr].offset[i] << SAO_BIT_INC;
+
+                for (int edgeType = 0; edgeType < NUM_EDGETYPE; edgeType++)
+                    m_offsetEo[1][edgeType] = (int8_t)offset[s_eoTable[edgeType]];
+            }
+        }
+        processSaoCu(addr, typeIdxCb, 1);
+    }
+
+    // Process V
+    if (typeIdxCr >= 0)
+    {
+        if (!mergeLeftFlagCr)
+        {
+            if (typeIdxCr == SAO_BO)
+            {
+                memset(m_offsetBo[2], 0, sizeof(m_offsetBo[0]));
+
+                for (int i = 0; i < SAO_NUM_OFFSET; i++)
+                    m_offsetBo[2][((ctuParam[2][addr].bandPos + i) & (SAO_NUM_BO_CLASSES - 1))] = (int8_t)(ctuParam[2][addr].offset[i] << SAO_BIT_INC);
+            }
+            else // if (typeIdx == SAO_EO_0 || typeIdx == SAO_EO_1 || typeIdx == SAO_EO_2 || typeIdx == SAO_EO_3)
+            {
+                int offset[NUM_EDGETYPE];
+                offset[0] = 0;
+                for (int i = 0; i < SAO_NUM_OFFSET; i++)
+                    offset[i + 1] = ctuParam[2][addr].offset[i] << SAO_BIT_INC;
+
+                for (int edgeType = 0; edgeType < NUM_EDGETYPE; edgeType++)
+                    m_offsetEo[2][edgeType] = (int8_t)offset[s_eoTable[edgeType]];
+            }
+        }
+        processSaoCu(addr, typeIdxCb, 2);
+    }
+
+    std::swap(m_tmpL1[1], m_tmpL2[1]);
+    std::swap(m_tmpL1[2], m_tmpL2[2]);
 }
 
 void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, const SaoCtuParam* saoUnitSrc)

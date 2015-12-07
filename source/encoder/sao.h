@@ -132,7 +132,8 @@ public:
     // CTU-based SAO process without slice granularity
     void processSaoCu(int addr, int typeIdx, int plane);
     void processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane);
-    void processSaoUnitCu(SaoCtuParam* ctuParam, int idxY, int idxX, int plane);
+    void processSaoUnitCuLuma(SaoCtuParam* ctuParam, int idxY, int idxX);
+    void processSaoUnitCuChroma(SaoCtuParam* ctuParam[3], int idxY, int idxX);
 
     void copySaoUnit(SaoCtuParam* saoUnitDst, const SaoCtuParam* saoUnitSrc);
 
