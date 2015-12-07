@@ -115,9 +115,6 @@ bool SAO::create(x265_param* param, int initCommon)
     const pixel rangeExt = maxY >> 1;
     int numCtu = m_numCuInWidth * m_numCuInHeight;
 
-    CHECKED_MALLOC(m_clipTableBase,  pixel, maxY + 2 * rangeExt);
-
-
     for (int i = 0; i < 3; i++)
     {
         CHECKED_MALLOC(m_tmpL1[i], pixel, g_maxCUSize + 1);
@@ -133,24 +130,31 @@ bool SAO::create(x265_param* param, int initCommon)
     {
         CHECKED_MALLOC(m_countPreDblk, PerPlane, numCtu);
         CHECKED_MALLOC(m_offsetOrgPreDblk, PerPlane, numCtu);
+
+        CHECKED_MALLOC(m_clipTableBase,  pixel, maxY + 2 * rangeExt);
+        m_clipTable = &(m_clipTableBase[rangeExt]);
+
+        // Share with fast clip lookup table
+        if (initCommon)
+        {
+            for (int i = 0; i < rangeExt; i++)
+                m_clipTableBase[i] = 0;
+
+            for (int i = 0; i < maxY; i++)
+                m_clipTable[i] = (pixel)i;
+
+            for (int i = maxY; i < maxY + rangeExt; i++)
+                m_clipTable[i] = maxY;
+        }
     }
     else
     {
         // must initialize these common pointer outside of function
         m_countPreDblk = NULL;
         m_offsetOrgPreDblk = NULL;
+        m_clipTableBase = NULL;
+        m_clipTable = NULL;
     }
-
-    m_clipTable = &(m_clipTableBase[rangeExt]);
-
-    for (int i = 0; i < rangeExt; i++)
-        m_clipTableBase[i] = 0;
-
-    for (int i = 0; i < maxY; i++)
-        m_clipTable[i] = (pixel)i;
-
-    for (int i = maxY; i < maxY + rangeExt; i++)
-        m_clipTable[i] = maxY;
 
     return true;
 
@@ -162,15 +166,17 @@ void SAO::createFromRootNode(SAO* root)
 {
     X265_CHECK(m_countPreDblk == NULL, "duplicate initialize on m_countPreDblk");
     X265_CHECK(m_offsetOrgPreDblk == NULL, "duplicate initialize on m_offsetOrgPreDblk");
+    X265_CHECK(m_clipTableBase == NULL, "duplicate initialize on m_clipTableBase");
+    X265_CHECK(m_clipTable == NULL, "duplicate initialize on m_clipTable");
 
     m_countPreDblk = root->m_countPreDblk;
     m_offsetOrgPreDblk = root->m_offsetOrgPreDblk;
+    m_clipTableBase = root->m_clipTableBase; // Unnecessary
+    m_clipTable = root->m_clipTable;
 }
 
 void SAO::destroy(int destoryCommon)
 {
-    X265_FREE_ZERO(m_clipTableBase);
-
     for (int i = 0; i < 3; i++)
     {
         if (m_tmpL1[i])
@@ -196,6 +202,7 @@ void SAO::destroy(int destoryCommon)
     {
         X265_FREE_ZERO(m_countPreDblk);
         X265_FREE_ZERO(m_offsetOrgPreDblk);
+        X265_FREE_ZERO(m_clipTableBase);
     }
 }
 
