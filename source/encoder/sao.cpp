@@ -73,9 +73,6 @@ const uint32_t SAO::s_eoTable[NUM_EDGETYPE] =
 
 SAO::SAO()
 {
-    m_count = NULL;
-    m_offset = NULL;
-    m_offsetOrg = NULL;
     m_countPreDblk = NULL;
     m_offsetOrgPreDblk = NULL;
     m_refDepth = 0;
@@ -131,10 +128,6 @@ bool SAO::create(x265_param* param, int initCommon)
         CHECKED_MALLOC(m_tmpU[i], pixel, m_numCuInWidth * g_maxCUSize + 2);
         m_tmpU[i] += 1;
     }
-
-    CHECKED_MALLOC(m_count, PerClass, NUM_PLANE);
-    CHECKED_MALLOC(m_offset, PerClass, NUM_PLANE);
-    CHECKED_MALLOC(m_offsetOrg, PerClass, NUM_PLANE);
 
     if (initCommon)
     {
@@ -198,10 +191,6 @@ void SAO::destroy(int destoryCommon)
             m_tmpU[i] = NULL;
         }
     }
-
-    if (m_count) X265_FREE_ZERO(m_count);
-    if (m_offset) X265_FREE_ZERO(m_offset);
-    if (m_offsetOrg) X265_FREE_ZERO(m_offsetOrg);
 
     if (destoryCommon)
     {
@@ -1214,9 +1203,9 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
 /* reset offset statistics */
 void SAO::resetStats()
 {
-    memset(m_count, 0, sizeof(PerClass) * NUM_PLANE);
-    memset(m_offset, 0, sizeof(PerClass) * NUM_PLANE);
-    memset(m_offsetOrg, 0, sizeof(PerClass) * NUM_PLANE);
+    memset(m_count, 0, sizeof(m_count));
+    memset(m_offset, 0, sizeof(m_offset));
+    memset(m_offsetOrg, 0, sizeof(m_offsetOrg));
 }
 
 void SAO::rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus)
@@ -1259,13 +1248,13 @@ void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
         // TODO: Confirm the address space is continuous
         if (m_param->bSaoNonDeblocked)
         {
-            memcpy(m_count, m_countPreDblk[addr], 3 * sizeof(m_count[0]));
-            memcpy(m_offsetOrg, m_offsetOrgPreDblk[addr], 3 * sizeof(m_offsetOrg[0]));
+            memcpy(m_count, m_countPreDblk[addr], sizeof(m_count));
+            memcpy(m_offsetOrg, m_offsetOrgPreDblk[addr], sizeof(m_offsetOrg));
         }
         else
         {
-            memset(m_count, 0, 3 * sizeof(m_count[0]));
-            memset(m_offsetOrg, 0, 3 * sizeof(m_offsetOrg[0]));
+            memset(m_count, 0, sizeof(m_count));
+            memset(m_offsetOrg, 0, sizeof(m_offsetOrg));
         }
 
         saoParam->ctuParam[0][addr].reset();

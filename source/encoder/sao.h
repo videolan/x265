@@ -71,9 +71,9 @@ public:
 protected:
 
     /* allocated per part */
-    PerClass*   m_count;
-    PerClass*   m_offset;
-    PerClass*   m_offsetOrg;
+    PerPlane    m_count;
+    PerPlane    m_offset;
+    PerPlane    m_offsetOrg;
 
     /* allocated per CTU */
     PerPlane*   m_countPreDblk;
