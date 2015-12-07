@@ -307,17 +307,8 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
 
     memset(_upBuff1 + MAX_CU_SIZE, 0, 2 * sizeof(int8_t)); /* avoid valgrind uninit warnings */
 
-    {
-        const pixel* recR = &rec[ctuWidth - 1];
-        for (int i = 0; i < ctuHeight + 1; i++)
-        {
-            m_tmpL2[i] = *recR;
-            recR += stride;
-        }
-
-        tmpL = m_tmpL1;
-        tmpU = &(m_tmpU[plane][lpelx]);
-    }
+    tmpL = m_tmpL1;
+    tmpU = &(m_tmpU[plane][lpelx]);
 
     switch (typeIdx)
     {
@@ -593,9 +584,6 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     }
     default: break;
     }
-
-//   if (iSaoType!=SAO_BO_0 || iSaoType!=SAO_BO_1)
-    std::swap(m_tmpL1, m_tmpL2);
 }
 
 /* Process SAO all units */
@@ -630,6 +618,16 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
         bool mergeLeftFlag = ctuParam[addr].mergeMode == SAO_MERGE_LEFT;
         int typeIdx = ctuParam[addr].typeIdx;
 
+        if (idxX != (m_numCuInWidth - 1))
+        {
+            rec = reconPic->getPlaneAddr(plane, addr);
+            for (int i = 0; i < ctuHeight + 1; i++)
+            {
+                m_tmpL2[i] = rec[ctuWidth - 1];
+                rec += stride;
+            }
+        }
+
         if (typeIdx >= 0)
         {
             if (!mergeLeftFlag)
@@ -654,16 +652,7 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
             }
             processSaoCu(addr, typeIdx, plane);
         }
-        else if (idxX != (m_numCuInWidth - 1))
-        {
-            rec = reconPic->getPlaneAddr(plane, addr);
-
-            for (int i = 0; i < ctuHeight + 1; i++)
-            {
-                m_tmpL1[i] = rec[ctuWidth - 1];
-                rec += stride;
-            }
-        }
+        std::swap(m_tmpL1, m_tmpL2);
     }
 }
 
