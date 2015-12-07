@@ -118,7 +118,6 @@ public:
 
     void processRow(int row);
     void processRowPost(int row);
-    void processSao(int row);
     uint32_t getCUHeight(int rowNum) const;
 };
 }
