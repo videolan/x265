@@ -1146,30 +1146,34 @@ void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
         if (allowMerge[1])
             m_entropyCoder.codeSaoMerge(0);
         m_entropyCoder.store(m_rdContexts.temp);
-        // reset stats Y, Cb, Cr
-        for (int plane = 0; plane < 3; plane++)
-        {
-            for (int j = 0; j < MAX_NUM_SAO_TYPE; j++)
-            {
-                for (int k = 0; k < MAX_NUM_SAO_CLASS; k++)
-                {
-                    m_offset[plane][j][k] = 0;
-                    if (m_param->bSaoNonDeblocked)
-                    {
-                        m_count[plane][j][k] = m_countPreDblk[addr][plane][j][k];
-                        m_offsetOrg[plane][j][k] = m_offsetOrgPreDblk[addr][plane][j][k];
-                    }
-                    else
-                    {
-                        m_count[plane][j][k] = 0;
-                        m_offsetOrg[plane][j][k] = 0;
-                    }
-                }
-            }
 
-            saoParam->ctuParam[plane][addr].reset();
-            if (saoParam->bSaoFlag[plane > 0])
-                calcSaoStatsCu(addr, plane);
+        // reset stats Y, Cb, Cr
+        X265_CHECK(sizeof(PerPlane) == (sizeof(int32_t) * (NUM_PLANE * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS)), "Found Padding space in struct PerPlane");
+
+        // TODO: Confirm the address space is continuous
+        memset(m_count, 0, 3 * sizeof(m_count[0]));
+        if (m_param->bSaoNonDeblocked)
+        {
+            memcpy(m_count, m_countPreDblk[addr], 3 * sizeof(m_count[0]));
+            memcpy(m_offsetOrg, m_offsetOrgPreDblk[addr], 3 * sizeof(m_offsetOrg[0]));
+        }
+        else
+        {
+            memset(m_count, 0, 3 * sizeof(m_count[0]));
+            memset(m_offsetOrg, 0, 3 * sizeof(m_offsetOrg[0]));
+        }
+
+        saoParam->ctuParam[0][addr].reset();
+        saoParam->ctuParam[1][addr].reset();
+        saoParam->ctuParam[2][addr].reset();
+
+        if (saoParam->bSaoFlag[0])
+            calcSaoStatsCu(addr, 0);
+
+        if (saoParam->bSaoFlag[1])
+        {
+            calcSaoStatsCu(addr, 1);
+            calcSaoStatsCu(addr, 2);
         }
 
         saoComponentParamDist(saoParam, addr, addrUp, addrLeft, &mergeSaoParam[0][0], mergeDist);
