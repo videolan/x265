@@ -1110,6 +1110,18 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 m_frameFilter.m_pdeblock[row - 1].m_allowedCol.set(allowCol);
                 m_frameFilter.m_pdeblock[row - 1].tryBondPeers(*this, 1);
             }
+
+            // Last Row may start early
+            if (row == m_numRows - 1)
+            {
+                // Waiting for the last thread to finish
+                m_frameFilter.m_pdeblock[row].waitForExit();
+
+                // Deblocking last row
+                const int allowCol = ((row >= 2) ? X265_MIN(m_frameFilter.m_pdeblock[row - 1].m_lastCol.get(), (int)col) : col);
+                m_frameFilter.m_pdeblock[row].m_allowedCol.set(allowCol);
+                m_frameFilter.m_pdeblock[row].tryBondPeers(*this, 1);
+            }
         }
 
         if (m_param->bEnableWavefront && curRow.completed >= 2 && row < m_numRows - 1 &&
@@ -1208,6 +1220,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 X265_CHECK(m_frameFilter.m_pdeblock[row - 1].m_allowedCol.get() == (int)numCols, "Deblock m_EncodedCol check failed");
 
                 /* NOTE: Last Row not execute before, so didn't need wait */
+                m_frameFilter.m_pdeblock[row].waitForExit();
                 m_frameFilter.m_pdeblock[row].m_allowedCol.set(numCols);
                 m_frameFilter.m_pdeblock[row].processTasks(-1);
             }
