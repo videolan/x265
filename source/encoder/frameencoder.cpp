@@ -1107,7 +1107,14 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 m_frameFilter.m_parallelFilter[row - 1].waitForExit();
 
                 // Processing new group
-                const int allowCol = ((row >= 2) ? X265_MIN(m_frameFilter.m_parallelFilter[row - 2].m_lastCol.get(), (int)col) : col);
+                int allowCol = col;
+
+                // avoid race condition on last column
+                if (row >= 2)
+                {
+                    allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get()
+                                                              : m_frameFilter.m_parallelFilter[row - 2].m_lastCol.get()), (int)col);
+                }
                 m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(allowCol);
                 m_frameFilter.m_parallelFilter[row - 1].tryBondPeers(*this, 1);
             }
@@ -1119,7 +1126,14 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 m_frameFilter.m_parallelFilter[row].waitForExit();
 
                 // Deblocking last row
-                const int allowCol = ((row >= 2) ? X265_MIN(m_frameFilter.m_parallelFilter[row - 1].m_lastCol.get(), (int)col) : col);
+                int allowCol = col;
+
+                // avoid race condition on last column
+                if (row >= 2)
+                {
+                    allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get()
+                                                              : m_frameFilter.m_parallelFilter[row - 1].m_lastCol.get()), (int)col);
+                }
                 m_frameFilter.m_parallelFilter[row].m_allowedCol.set(allowCol);
                 m_frameFilter.m_parallelFilter[row].tryBondPeers(*this, 1);
             }
@@ -1183,26 +1197,48 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     if (!m_param->bEnableSAO && (m_param->bEnableWavefront || row == m_numRows - 1))
         rowCoder.finishSlice();
 
+    /* Processing left Deblock block with current threading */
+    if ((m_param->bEnableLoopFilter | m_param->bEnableSAO) & (row >= 1))
+    {
+        /* TODO: Multiple Threading */
+        /* Check to avoid previous row process slower than current row */
+        if (row >= 2)
+        {
+            int prevCol = m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get();
+            while(prevCol != (int)numCols - 1)
+                prevCol = m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.waitForChange(prevCol);
+        }
+        m_frameFilter.m_parallelFilter[row - 1].waitForExit();
+        m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(numCols);
+        m_frameFilter.m_parallelFilter[row - 1].processTasks(-1);
+    }
+
+    /* trigger row-wise loop filters */
+    if (row == m_numRows - 1)
+    {
+        /* TODO: Early start last row */
+        if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
+        {
+            if (m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get() != (int)numCols - 1)
+                x265_log(m_param, X265_LOG_WARNING, "detected ParallelFilter race condition on last row\n");
+
+            // avoid race on last row and last column
+            if (row >= 1)
+            {
+                int prevCol = m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get();
+                while(prevCol != (int)numCols - 1)
+                    prevCol = m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.waitForChange(prevCol);
+            }
+
+            /* NOTE: Last Row not execute before, so didn't need wait */
+            m_frameFilter.m_parallelFilter[row].waitForExit();
+            m_frameFilter.m_parallelFilter[row].m_allowedCol.set(numCols);
+            m_frameFilter.m_parallelFilter[row].processTasks(-1);
+        }
+    }
+
     if (m_param->bEnableWavefront)
     {
-        /* Processing left Deblock block with current threading */
-        if ((m_param->bEnableLoopFilter | m_param->bEnableSAO) & (row >= 1))
-        {
-            /* TODO: Multiple Threading */
-            m_frameFilter.m_parallelFilter[row - 1].waitForExit();
-
-            /* Check to avoid previous row process slower than current row */
-            if (row >= 2)
-            {
-                int prevCol = m_frameFilter.m_parallelFilter[row - 2].m_lastCol.get();
-                while(prevCol != (int)numCols)
-                    prevCol = m_frameFilter.m_parallelFilter[row - 2].m_lastCol.waitForChange(prevCol);
-            }
-            m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(numCols);
-            m_frameFilter.m_parallelFilter[row - 1].processTasks(-1);
-        }
-
-        /* trigger row-wise loop filters */
         if (row >= m_filterRowDelay)
         {
             enableRowFilter(row - m_filterRowDelay);
@@ -1215,17 +1251,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
         if (row == m_numRows - 1)
         {
-            /* TODO: Early start last row */
-            if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
-            {
-                X265_CHECK(m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.get() == (int)numCols, "Deblock m_EncodedCol check failed");
-
-                /* NOTE: Last Row not execute before, so didn't need wait */
-                m_frameFilter.m_parallelFilter[row].waitForExit();
-                m_frameFilter.m_parallelFilter[row].m_allowedCol.set(numCols);
-                m_frameFilter.m_parallelFilter[row].processTasks(-1);
-            }
-
             for (uint32_t i = m_numRows - m_filterRowDelay; i < m_numRows; i++)
                 enableRowFilter(i);
             tryWakeOne();

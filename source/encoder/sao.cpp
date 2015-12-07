@@ -90,15 +90,7 @@ SAO::SAO()
     m_tmpL2[0] = NULL;
     m_tmpL2[1] = NULL;
     m_tmpL2[2] = NULL;
-
-    m_depthSaoRate[0][0] = 0;
-    m_depthSaoRate[0][1] = 0;
-    m_depthSaoRate[0][2] = 0;
-    m_depthSaoRate[0][3] = 0;
-    m_depthSaoRate[1][0] = 0;
-    m_depthSaoRate[1][1] = 0;
-    m_depthSaoRate[1][2] = 0;
-    m_depthSaoRate[1][3] = 0;
+    m_depthSaoRate = NULL;
 }
 
 bool SAO::create(x265_param* param, int initCommon)
@@ -130,6 +122,16 @@ bool SAO::create(x265_param* param, int initCommon)
     {
         CHECKED_MALLOC(m_countPreDblk, PerPlane, numCtu);
         CHECKED_MALLOC(m_offsetOrgPreDblk, PerPlane, numCtu);
+        CHECKED_MALLOC(m_depthSaoRate, double, 2 * SAO_DEPTHRATE_SIZE);
+
+        m_depthSaoRate[0 * SAO_DEPTHRATE_SIZE + 0] = 0;
+        m_depthSaoRate[0 * SAO_DEPTHRATE_SIZE + 1] = 0;
+        m_depthSaoRate[0 * SAO_DEPTHRATE_SIZE + 2] = 0;
+        m_depthSaoRate[0 * SAO_DEPTHRATE_SIZE + 3] = 0;
+        m_depthSaoRate[1 * SAO_DEPTHRATE_SIZE + 0] = 0;
+        m_depthSaoRate[1 * SAO_DEPTHRATE_SIZE + 1] = 0;
+        m_depthSaoRate[1 * SAO_DEPTHRATE_SIZE + 2] = 0;
+        m_depthSaoRate[1 * SAO_DEPTHRATE_SIZE + 3] = 0;
 
         CHECKED_MALLOC(m_clipTableBase,  pixel, maxY + 2 * rangeExt);
         m_clipTable = &(m_clipTableBase[rangeExt]);
@@ -166,11 +168,13 @@ void SAO::createFromRootNode(SAO* root)
 {
     X265_CHECK(m_countPreDblk == NULL, "duplicate initialize on m_countPreDblk");
     X265_CHECK(m_offsetOrgPreDblk == NULL, "duplicate initialize on m_offsetOrgPreDblk");
+    X265_CHECK(m_depthSaoRate == NULL, "duplicate initialize on m_depthSaoRate");
     X265_CHECK(m_clipTableBase == NULL, "duplicate initialize on m_clipTableBase");
     X265_CHECK(m_clipTable == NULL, "duplicate initialize on m_clipTable");
 
     m_countPreDblk = root->m_countPreDblk;
     m_offsetOrgPreDblk = root->m_offsetOrgPreDblk;
+    m_depthSaoRate = root->m_depthSaoRate;
     m_clipTableBase = root->m_clipTableBase; // Unnecessary
     m_clipTable = root->m_clipTable;
 }
@@ -202,6 +206,7 @@ void SAO::destroy(int destoryCommon)
     {
         X265_FREE_ZERO(m_countPreDblk);
         X265_FREE_ZERO(m_offsetOrgPreDblk);
+        X265_FREE_ZERO(m_depthSaoRate);
         X265_FREE_ZERO(m_clipTableBase);
     }
 }
@@ -262,9 +267,9 @@ void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
     // NOTE: Allow SAO automatic turn-off only when frame parallelism is disabled.
     if (m_param->frameNumThreads == 1)
     {
-        if (m_refDepth > 0 && m_depthSaoRate[0][m_refDepth - 1] > SAO_ENCODING_RATE)
+        if (m_refDepth > 0 && m_depthSaoRate[0 * SAO_DEPTHRATE_SIZE + m_refDepth - 1] > SAO_ENCODING_RATE)
             saoParam->bSaoFlag[0] = false;
-        if (m_refDepth > 0 && m_depthSaoRate[1][m_refDepth - 1] > SAO_ENCODING_RATE_CHROMA)
+        if (m_refDepth > 0 && m_depthSaoRate[1 * SAO_DEPTHRATE_SIZE + m_refDepth - 1] > SAO_ENCODING_RATE_CHROMA)
             saoParam->bSaoFlag[1] = false;
     }
 }
@@ -1218,14 +1223,14 @@ void SAO::resetStats()
 void SAO::rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus)
 {
     if (!saoParam->bSaoFlag[0])
-        m_depthSaoRate[0][m_refDepth] = 1.0;
+        m_depthSaoRate[0 * SAO_DEPTHRATE_SIZE + m_refDepth] = 1.0;
     else
-        m_depthSaoRate[0][m_refDepth] = m_numNoSao[0] / ((double)numctus);
+        m_depthSaoRate[0 * SAO_DEPTHRATE_SIZE + m_refDepth] = m_numNoSao[0] / ((double)numctus);
 
     if (!saoParam->bSaoFlag[1])
-        m_depthSaoRate[1][m_refDepth] = 1.0;
+        m_depthSaoRate[1 * SAO_DEPTHRATE_SIZE + m_refDepth] = 1.0;
     else
-        m_depthSaoRate[1][m_refDepth] = m_numNoSao[1] / ((double)numctus);
+        m_depthSaoRate[1 * SAO_DEPTHRATE_SIZE + m_refDepth] = m_numNoSao[1] / ((double)numctus);
 }
 
 void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
@@ -1336,6 +1341,111 @@ void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
             m_entropyCoder.load(m_rdContexts.temp);
             m_entropyCoder.store(m_rdContexts.cur);
         }
+    }
+}
+
+void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
+{
+    SaoCtuParam mergeSaoParam[NUM_MERGE_MODE][2];
+    double mergeDist[NUM_MERGE_MODE];
+    const bool allowMerge[2] = {(idxX != 0), (rowBaseAddr != 0)}; // left, up
+
+    const int addrUp   = rowBaseAddr ? addr - m_numCuInWidth : -1;
+    const int addrLeft = idxX ? addr - 1 : -1;
+
+    m_entropyCoder.load(m_rdContexts.cur);
+    if (allowMerge[0])
+        m_entropyCoder.codeSaoMerge(0);
+    if (allowMerge[1])
+        m_entropyCoder.codeSaoMerge(0);
+    m_entropyCoder.store(m_rdContexts.temp);
+
+    // reset stats Y, Cb, Cr
+    X265_CHECK(sizeof(PerPlane) == (sizeof(int32_t) * (NUM_PLANE * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS)), "Found Padding space in struct PerPlane");
+
+    // TODO: Confirm the address space is continuous
+    if (m_param->bSaoNonDeblocked)
+    {
+        memcpy(m_count, m_countPreDblk[addr], sizeof(m_count));
+        memcpy(m_offsetOrg, m_offsetOrgPreDblk[addr], sizeof(m_offsetOrg));
+    }
+    else
+    {
+        memset(m_count, 0, sizeof(m_count));
+        memset(m_offsetOrg, 0, sizeof(m_offsetOrg));
+    }
+
+    saoParam->ctuParam[0][addr].reset();
+    saoParam->ctuParam[1][addr].reset();
+    saoParam->ctuParam[2][addr].reset();
+
+    if (saoParam->bSaoFlag[0])
+        calcSaoStatsCu(addr, 0);
+
+    if (saoParam->bSaoFlag[1])
+    {
+        calcSaoStatsCu(addr, 1);
+        calcSaoStatsCu(addr, 2);
+    }
+
+    saoComponentParamDist(saoParam, addr, addrUp, addrLeft, &mergeSaoParam[0][0], mergeDist);
+
+    sao2ChromaParamDist(saoParam, addr, addrUp, addrLeft, mergeSaoParam, mergeDist);
+
+    if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
+    {
+        // Cost of new SAO_params
+        m_entropyCoder.load(m_rdContexts.cur);
+        m_entropyCoder.resetBits();
+        if (allowMerge[0])
+            m_entropyCoder.codeSaoMerge(0);
+        if (allowMerge[1])
+            m_entropyCoder.codeSaoMerge(0);
+        for (int plane = 0; plane < 3; plane++)
+        {
+            if (saoParam->bSaoFlag[plane > 0])
+                m_entropyCoder.codeSaoOffset(saoParam->ctuParam[plane][addr], plane);
+        }
+
+        uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
+        double bestCost = mergeDist[0] + (double)rate;
+        m_entropyCoder.store(m_rdContexts.temp);
+
+        // Cost of Merge
+        for (int mergeIdx = 0; mergeIdx < 2; ++mergeIdx)
+        {
+            if (!allowMerge[mergeIdx])
+                continue;
+
+            m_entropyCoder.load(m_rdContexts.cur);
+            m_entropyCoder.resetBits();
+            if (allowMerge[0])
+                m_entropyCoder.codeSaoMerge(1 - mergeIdx);
+            if (allowMerge[1] && (mergeIdx == 1))
+                m_entropyCoder.codeSaoMerge(1);
+
+            rate = m_entropyCoder.getNumberOfWrittenBits();
+            double mergeCost = mergeDist[mergeIdx + 1] + (double)rate;
+            if (mergeCost < bestCost)
+            {
+                SaoMergeMode mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
+                bestCost = mergeCost;
+                m_entropyCoder.store(m_rdContexts.temp);
+                for (int plane = 0; plane < 3; plane++)
+                {
+                    mergeSaoParam[plane][mergeIdx].mergeMode = mergeMode;
+                    if (saoParam->bSaoFlag[plane > 0])
+                        copySaoUnit(&saoParam->ctuParam[plane][addr], &mergeSaoParam[plane][mergeIdx]);
+                }
+            }
+        }
+
+        if (saoParam->ctuParam[0][addr].typeIdx < 0)
+            m_numNoSao[0]++;
+        if (saoParam->ctuParam[1][addr].typeIdx < 0)
+            m_numNoSao[1]++;
+        m_entropyCoder.load(m_rdContexts.temp);
+        m_entropyCoder.store(m_rdContexts.cur);
     }
 }
 

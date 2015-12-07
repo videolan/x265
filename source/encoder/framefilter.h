@@ -69,6 +69,7 @@ public:
         SAO                 m_sao;
         ThreadSafeInteger   m_lastCol;          /* The column that next to process */
         ThreadSafeInteger   m_allowedCol;       /* The column that processed from Encode pipeline */
+        ThreadSafeInteger   m_lastDeblocked;   /* The column that finished all of Deblock stages  */
 
         ParallelFilter()
             : m_rowAddr(0)

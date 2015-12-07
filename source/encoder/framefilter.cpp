@@ -115,6 +115,7 @@ void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
 
             m_parallelFilter[row].m_lastCol.set(0);
             m_parallelFilter[row].m_allowedCol.set(0);
+            m_parallelFilter[row].m_lastDeblocked.set(-1);
             m_parallelFilter[row].m_encData = frame->m_encData;
         }
 
@@ -148,6 +149,7 @@ void FrameFilter::ParallelFilter::copySaoAboveRef(PicYuv* reconPic, uint32_t cuA
 // NOTE: Single Threading only
 void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
 {
+    SAOParam* saoParam = m_encData->m_saoParam;
     const CUGeom* cuGeoms = m_frameEncoder->m_cuGeoms;
     const uint32_t* ctuGeomMap = m_frameEncoder->m_ctuGeomMap;
     PicYuv* reconPic = m_encData->m_reconPic;
@@ -169,7 +171,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
             deblockCTU(ctu, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_VER);
         }
 
-        if (col > 0)
+        if (col >= 1)
         {
             if (m_param->bEnableLoopFilter)
             {
@@ -178,7 +180,21 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
             }
 
             if (m_param->bEnableSAO)
+            {
+                // Save SAO bottom row reference pixels
                 copySaoAboveRef(reconPic, cuAddr - 1, col - 1);
+
+                // SAO Decide
+                if (col >= 2)
+                {
+                    // NOTE: Delay 2 column to avoid mistake on below case, it is Deblock sync logic issue, less probability but still alive
+                    //       ... H V |
+                    //       ..S H V |
+                    m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, col - 2, cuAddr - 2);
+                }
+            }
+
+            m_lastDeblocked.set(col - 1);
         }
         m_lastCol.incr();
     }
@@ -194,7 +210,19 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
         }
 
         if (m_param->bEnableSAO)
+        {
+            // Save SAO bottom row reference pixels
             copySaoAboveRef(reconPic, cuAddr, numCols - 1);
+
+            // SAO Decide
+            // NOTE: reduce condition check for 1 CU only video, Why someone play with it?
+            if (numCols >= 2)
+                m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, numCols - 2, cuAddr - 1);
+
+            if (numCols >= 1)
+                m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, numCols - 1, cuAddr);
+        }
+        m_lastDeblocked.set(numCols - 1);
     }
 }
 
@@ -218,8 +246,6 @@ void FrameFilter::processRow(int row)
     SAOParam* saoParam = encData.m_saoParam;
     if (m_param->bEnableSAO)
     {
-        m_parallelFilter[row].m_sao.rdoSaoUnitRow(saoParam, row);
-
         // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
         if (row >= m_saoRowDelay)
             processSao(row - m_saoRowDelay);
@@ -234,7 +260,14 @@ void FrameFilter::processRow(int row)
     {
         if (m_param->bEnableSAO)
         {
-            m_parallelFilter[row].m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_slice->m_sps->numCUsInFrame);
+            // Merge numNoSao into RootNode (Node0)
+            for(int i = 1; i < m_numRows; i++)
+            {
+                m_parallelFilter[0].m_sao.m_numNoSao[0] += m_parallelFilter[i].m_sao.m_numNoSao[0];
+                m_parallelFilter[0].m_sao.m_numNoSao[1] += m_parallelFilter[i].m_sao.m_numNoSao[1];
+            }
+
+            m_parallelFilter[0].m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_slice->m_sps->numCUsInFrame);
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
                 processSao(i);

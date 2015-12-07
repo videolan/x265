@@ -62,6 +62,7 @@ public:
     enum { NUM_EDGETYPE = 5 };
     enum { NUM_PLANE = 3 };
     enum { NUM_MERGE_MODE = 3 };
+    enum { SAO_DEPTHRATE_SIZE = 4 };
 
     static const uint32_t s_eoTable[NUM_EDGETYPE];
 
@@ -79,7 +80,7 @@ protected:
     PerPlane*   m_countPreDblk;
     PerPlane*   m_offsetOrgPreDblk;
 
-    double      m_depthSaoRate[2][4];
+    double*     m_depthSaoRate;
     int8_t      m_offsetBo[NUM_PLANE][SAO_NUM_BO_CLASSES];
     int8_t      m_offsetEo[NUM_PLANE][NUM_EDGETYPE];
 
@@ -149,6 +150,7 @@ public:
 
     void rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus);
     void rdoSaoUnitRow(SAOParam* saoParam, int idxY);
+    void rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr);
 
     friend class FrameFilter;
 };
