@@ -35,19 +35,22 @@ using namespace X265_NS;
 static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height);
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, uint32_t width, uint32_t height, void *buf, uint32_t& cnt);
 
-uint32_t FrameFilter::ParallelDeblock::numCols = 0;
+uint32_t FrameFilter::ParallelFilter::numCols = 0;
 
 void FrameFilter::destroy()
 {
-    if (m_param->bEnableSAO)
-        m_sao.destroy();
-
     X265_FREE(m_ssimBuf);
 
-    if (m_pdeblock)
+    if (m_parallelFilter)
     {
-        delete[] m_pdeblock;
-        m_pdeblock = NULL;
+        if (m_param->bEnableSAO)
+        {
+            for(int row = 0; row < m_numRows; row++)
+                m_parallelFilter[row].m_sao.destroy((row == 0 ? 1 : 0));
+        }
+
+        delete[] m_parallelFilter;
+        m_parallelFilter = NULL;
     }
 }
 
@@ -63,50 +66,65 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
     m_lastHeight = m_param->sourceHeight % g_maxCUSize ? m_param->sourceHeight % g_maxCUSize : g_maxCUSize;
 
-    if (m_param->bEnableSAO)
-        if (!m_sao.create(m_param))
-            m_param->bEnableSAO = 0;
-
     if (m_param->bEnableSsim)
         m_ssimBuf = X265_MALLOC(int, 8 * (m_param->sourceWidth / 4 + 3));
 
     if (m_param->bEnableLoopFilter)
-        m_pdeblock = new ParallelDeblock[numRows];
+        m_parallelFilter = new ParallelFilter[numRows];
 
-    if (m_pdeblock)
+    if (m_parallelFilter)
     {
+        if (m_param->bEnableSAO)
+        {
+            for(int row = 0; row < numRows; row++)
+            {
+                if (!m_parallelFilter[row].m_sao.create(m_param, (row == 0 ? 1 : 0)))
+                    m_param->bEnableSAO = 0;
+                else
+                {
+                    if (row != 0)
+                        m_parallelFilter[row].m_sao.createFromRootNode(&m_parallelFilter[0].m_sao);
+                }
+
+            }
+        }
+
         for(int row = 0; row < numRows; row++)
         {
-            m_pdeblock[row].m_rowAddr = row * numCols;
-            m_pdeblock[row].m_frameEncoder = m_frameEncoder;
+            m_parallelFilter[row].m_rowAddr = row * numCols;
+            m_parallelFilter[row].m_frameEncoder = m_frameEncoder;
         }
     }
 
     // Setting maximum columns
-    ParallelDeblock::numCols = numCols;
+    ParallelFilter::numCols = numCols;
 }
 
 void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
 {
     m_frame = frame;
 
-    if (m_param->bEnableSAO)
-        m_sao.startSlice(frame, initState, qp);
-
-    // Reset Deblock Data Struct
-    if (m_pdeblock)
+    // Reset Filter Data Struct
+    if (m_parallelFilter)
     {
         for(int row = 0; row < m_numRows; row++)
         {
-            m_pdeblock[row].m_lastCol.set(0);
-            m_pdeblock[row].m_allowedCol.set(0);
-            m_pdeblock[row].m_encData = frame->m_encData;
+            if (m_param->bEnableSAO)
+                m_parallelFilter[row].m_sao.startSlice(frame, initState, qp);
+
+            m_parallelFilter[row].m_lastCol.set(0);
+            m_parallelFilter[row].m_allowedCol.set(0);
+            m_parallelFilter[row].m_encData = frame->m_encData;
         }
+
+        // Reset SAO global/common statistics
+        if (m_param->bEnableSAO)
+            m_parallelFilter[0].m_sao.resetStats();
     }
 }
 
 // NOTE: Single Threading only
-void FrameFilter::ParallelDeblock::processTasks(int /*workerThreadId*/)
+void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
 {
     const CUGeom* cuGeoms = m_frameEncoder->m_cuGeoms;
     const uint32_t* ctuGeomMap = m_frameEncoder->m_ctuGeomMap;
@@ -160,11 +178,11 @@ void FrameFilter::processRow(int row)
     SAOParam* saoParam = encData.m_saoParam;
     if (m_param->bEnableSAO)
     {
-        m_sao.m_entropyCoder.load(m_frameEncoder->m_initSliceContext);
-        m_sao.m_rdContexts.next.load(m_frameEncoder->m_initSliceContext);
-        m_sao.m_rdContexts.cur.load(m_frameEncoder->m_initSliceContext);
+        m_parallelFilter[row].m_sao.m_entropyCoder.load(m_frameEncoder->m_initSliceContext);
+        m_parallelFilter[row].m_sao.m_rdContexts.next.load(m_frameEncoder->m_initSliceContext);
+        m_parallelFilter[row].m_sao.m_rdContexts.cur.load(m_frameEncoder->m_initSliceContext);
 
-        m_sao.rdoSaoUnitRow(saoParam, row);
+        m_parallelFilter[row].m_sao.rdoSaoUnitRow(saoParam, row);
 
         // NOTE: Delay a row because SAO decide need top row pixels at next row, is it HM's bug?
         if (row >= m_saoRowDelay)
@@ -180,7 +198,7 @@ void FrameFilter::processRow(int row)
     {
         if (m_param->bEnableSAO)
         {
-            m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_slice->m_sps->numCUsInFrame);
+            m_parallelFilter[row].m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_slice->m_sps->numCUsInFrame);
 
             for (int i = m_numRows - m_saoRowDelay; i < m_numRows; i++)
                 processSao(i);
@@ -489,12 +507,23 @@ void FrameFilter::processSao(int row)
     SAOParam* saoParam = encData.m_saoParam;
 
     if (saoParam->bSaoFlag[0])
-        m_sao.processSaoUnitRow(saoParam->ctuParam[0], row, 0);
+    {
+        m_parallelFilter[row].m_sao.processSaoUnitRow(saoParam->ctuParam[0], row, 0);
+        if (row != m_numRows - 1)
+        {
+            memcpy(m_parallelFilter[row + 1].m_sao.m_tmpU1[0], m_parallelFilter[row].m_sao.m_tmpU1[0], sizeof(pixel) * m_param->sourceWidth);
+        }
+    }
 
     if (saoParam->bSaoFlag[1])
     {
-        m_sao.processSaoUnitRow(saoParam->ctuParam[1], row, 1);
-        m_sao.processSaoUnitRow(saoParam->ctuParam[2], row, 2);
+        m_parallelFilter[row].m_sao.processSaoUnitRow(saoParam->ctuParam[1], row, 1);
+        m_parallelFilter[row].m_sao.processSaoUnitRow(saoParam->ctuParam[2], row, 2);
+        if (row != m_numRows - 1)
+        {
+            memcpy(m_parallelFilter[row + 1].m_sao.m_tmpU1[1], m_parallelFilter[row].m_sao.m_tmpU1[1], sizeof(pixel) * m_param->sourceWidth);
+            memcpy(m_parallelFilter[row + 1].m_sao.m_tmpU1[2], m_parallelFilter[row].m_sao.m_tmpU1[2], sizeof(pixel) * m_param->sourceWidth);
+        }
     }
 
     if (encData.m_slice->m_pps->bTransquantBypassEnabled)

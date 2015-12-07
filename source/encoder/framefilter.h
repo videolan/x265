@@ -51,7 +51,6 @@ public:
     int           m_vChromaShift;
     int           m_pad[2];
 
-    SAO           m_sao;
     int           m_numRows;
     int           m_saoRowDelay;
     int           m_lastHeight;
@@ -59,41 +58,42 @@ public:
     void*         m_ssimBuf; /* Temp storage for ssim computation */
 
 #define MAX_PFILTER_CUS     (4) /* maximum CUs for every thread */
-    class ParallelDeblock : public BondedTaskGroup, public Deblock
+    class ParallelFilter : public BondedTaskGroup, public Deblock
     {
     public:
         static uint32_t     numCols;
         uint32_t            m_rowAddr;
         FrameEncoder*       m_frameEncoder;
         FrameData*          m_encData;
+        SAO                 m_sao;
         ThreadSafeInteger   m_lastCol;          /* The column that next to process */
         ThreadSafeInteger   m_allowedCol;       /* The column that processed from Encode pipeline */
 
-        ParallelDeblock()
+        ParallelFilter()
             : m_rowAddr(0)
             , m_frameEncoder(NULL)
             , m_encData(NULL)
         {
         }
 
-        ~ParallelDeblock()
+        ~ParallelFilter()
         { }
 
         void processTasks(int workerThreadId);
 
     protected:
 
-        ParallelDeblock operator=(const ParallelDeblock&);
+        ParallelFilter operator=(const ParallelFilter&);
     };
 
-    ParallelDeblock*    m_pdeblock;
+    ParallelFilter*     m_parallelFilter;
 
     FrameFilter()
         : m_param(NULL)
         , m_frame(NULL)
         , m_frameEncoder(NULL)
         , m_ssimBuf(NULL)
-        , m_pdeblock(NULL)
+        , m_parallelFilter(NULL)
     {
     }
 

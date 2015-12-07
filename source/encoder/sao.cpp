@@ -103,7 +103,7 @@ SAO::SAO()
     m_depthSaoRate[1][3] = 0;
 }
 
-bool SAO::create(x265_param* param)
+bool SAO::create(x265_param* param, int initCommon)
 {
     m_param = param;
     m_chromaFormat = param->internalCsp;
@@ -131,12 +131,24 @@ bool SAO::create(x265_param* param)
         m_tmpU2[i] += 1;
     }
 
-    CHECKED_MALLOC(m_count, PerClass, NUM_PLANE);
-    CHECKED_MALLOC(m_offset, PerClass, NUM_PLANE);
-    CHECKED_MALLOC(m_offsetOrg, PerClass, NUM_PLANE);
+    if (initCommon)
+    {
+        CHECKED_MALLOC(m_count, PerClass, NUM_PLANE);
+        CHECKED_MALLOC(m_offset, PerClass, NUM_PLANE);
+        CHECKED_MALLOC(m_offsetOrg, PerClass, NUM_PLANE);
 
-    CHECKED_MALLOC(m_countPreDblk, PerPlane, numCtu);
-    CHECKED_MALLOC(m_offsetOrgPreDblk, PerPlane, numCtu);
+        CHECKED_MALLOC(m_countPreDblk, PerPlane, numCtu);
+        CHECKED_MALLOC(m_offsetOrgPreDblk, PerPlane, numCtu);
+    }
+    else
+    {
+        // must initialize these common pointer outside of function
+        m_count = NULL;
+        m_offset = NULL;
+        m_offsetOrg = NULL;
+        m_countPreDblk = NULL;
+        m_offsetOrgPreDblk = NULL;
+    }
 
     m_clipTable = &(m_clipTableBase[rangeExt]);
 
@@ -155,24 +167,50 @@ fail:
     return false;
 }
 
-void SAO::destroy()
+void SAO::createFromRootNode(SAO* root)
 {
-    X265_FREE(m_clipTableBase);
+    X265_CHECK(m_count == NULL, "duplicate initialize on m_count");
+    X265_CHECK(m_offset == NULL, "duplicate initialize on m_offset");
+    X265_CHECK(m_offsetOrg == NULL, "duplicate initialize on m_offsetOrg");
+    X265_CHECK(m_countPreDblk == NULL, "duplicate initialize on m_countPreDblk");
+    X265_CHECK(m_offsetOrgPreDblk == NULL, "duplicate initialize on m_offsetOrgPreDblk");
 
-    X265_FREE(m_tmpL1);
-    X265_FREE(m_tmpL2);
+    m_count = root->m_count;
+    m_offset = root->m_offset;
+    m_offsetOrg = root->m_offsetOrg;
+    m_countPreDblk = root->m_countPreDblk;
+    m_offsetOrgPreDblk = root->m_offsetOrgPreDblk;
+}
+
+void SAO::destroy(int destoryCommon)
+{
+    X265_FREE_ZERO(m_clipTableBase);
+
+    X265_FREE_ZERO(m_tmpL1);
+    X265_FREE_ZERO(m_tmpL2);
 
     for (int i = 0; i < 3; i++)
     {
-        if (m_tmpU1[i]) X265_FREE(m_tmpU1[i] - 1);
-        if (m_tmpU2[i]) X265_FREE(m_tmpU2[i] - 1);
+        if (m_tmpU1[i])
+        {
+            X265_FREE(m_tmpU1[i] - 1);
+            m_tmpU1[i] = NULL;
+        }
+        if (m_tmpU2[i])
+        {
+            X265_FREE(m_tmpU2[i] - 1);
+            m_tmpU2[i] = NULL;
+        }
     }
 
-    X265_FREE(m_count);
-    X265_FREE(m_offset);
-    X265_FREE(m_offsetOrg);
-    X265_FREE(m_countPreDblk);
-    X265_FREE(m_offsetOrgPreDblk);
+    if (destoryCommon)
+    {
+        X265_FREE(m_count);
+        X265_FREE(m_offset);
+        X265_FREE(m_offsetOrg);
+        X265_FREE(m_countPreDblk);
+        X265_FREE(m_offsetOrgPreDblk);
+    }
 }
 
 /* allocate memory for SAO parameters */
@@ -209,8 +247,6 @@ void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
         m_refDepth = 2 + !IS_REFERENCED(frame);
         break;
     }
-
-    resetStats();
 
     m_entropyCoder.load(initState);
     m_rdContexts.next.load(initState);
@@ -586,14 +622,13 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
         ctuHeight >>= m_vChromaShift;
     }
 
+    int addr = idxY * m_numCuInWidth;
+    pixel* rec = reconPic->getPlaneAddr(plane, addr);
+
     if (!idxY)
     {
-        pixel* rec = reconPic->m_picOrg[plane];
         memcpy(m_tmpU1[plane], rec, sizeof(pixel) * picWidth);
     }
-
-    int addr = idxY * m_numCuInWidth;
-    pixel* rec = plane ? reconPic->getChromaAddr(plane, addr) : reconPic->getLumaAddr(addr);
 
     for (int i = 0; i < ctuHeight + 1; i++)
     {

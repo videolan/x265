@@ -120,8 +120,9 @@ public:
 
     SAO();
 
-    bool create(x265_param* param);
-    void destroy();
+    bool create(x265_param* param, int initCommon);
+    void createFromRootNode(SAO *root);
+    void destroy(int destoryCommon);
 
     void allocSaoParam(SAOParam* saoParam) const;
 
@@ -147,6 +148,8 @@ public:
 
     void rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus);
     void rdoSaoUnitRow(SAOParam* saoParam, int idxY);
+
+    friend class FrameFilter;
 };
 
 }
