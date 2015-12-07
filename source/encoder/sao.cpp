@@ -132,21 +132,18 @@ bool SAO::create(x265_param* param, int initCommon)
         m_tmpU[i] += 1;
     }
 
+    CHECKED_MALLOC(m_count, PerClass, NUM_PLANE);
+    CHECKED_MALLOC(m_offset, PerClass, NUM_PLANE);
+    CHECKED_MALLOC(m_offsetOrg, PerClass, NUM_PLANE);
+
     if (initCommon)
     {
-        CHECKED_MALLOC(m_count, PerClass, NUM_PLANE);
-        CHECKED_MALLOC(m_offset, PerClass, NUM_PLANE);
-        CHECKED_MALLOC(m_offsetOrg, PerClass, NUM_PLANE);
-
         CHECKED_MALLOC(m_countPreDblk, PerPlane, numCtu);
         CHECKED_MALLOC(m_offsetOrgPreDblk, PerPlane, numCtu);
     }
     else
     {
         // must initialize these common pointer outside of function
-        m_count = NULL;
-        m_offset = NULL;
-        m_offsetOrg = NULL;
         m_countPreDblk = NULL;
         m_offsetOrgPreDblk = NULL;
     }
@@ -170,15 +167,9 @@ fail:
 
 void SAO::createFromRootNode(SAO* root)
 {
-    X265_CHECK(m_count == NULL, "duplicate initialize on m_count");
-    X265_CHECK(m_offset == NULL, "duplicate initialize on m_offset");
-    X265_CHECK(m_offsetOrg == NULL, "duplicate initialize on m_offsetOrg");
     X265_CHECK(m_countPreDblk == NULL, "duplicate initialize on m_countPreDblk");
     X265_CHECK(m_offsetOrgPreDblk == NULL, "duplicate initialize on m_offsetOrgPreDblk");
 
-    m_count = root->m_count;
-    m_offset = root->m_offset;
-    m_offsetOrg = root->m_offsetOrg;
     m_countPreDblk = root->m_countPreDblk;
     m_offsetOrgPreDblk = root->m_offsetOrgPreDblk;
 }
@@ -186,7 +177,6 @@ void SAO::createFromRootNode(SAO* root)
 void SAO::destroy(int destoryCommon)
 {
     X265_FREE_ZERO(m_clipTableBase);
-
 
     for (int i = 0; i < 3; i++)
     {
@@ -209,13 +199,14 @@ void SAO::destroy(int destoryCommon)
         }
     }
 
+    if (m_count) X265_FREE_ZERO(m_count);
+    if (m_offset) X265_FREE_ZERO(m_offset);
+    if (m_offsetOrg) X265_FREE_ZERO(m_offsetOrg);
+
     if (destoryCommon)
     {
-        X265_FREE(m_count);
-        X265_FREE(m_offset);
-        X265_FREE(m_offsetOrg);
-        X265_FREE(m_countPreDblk);
-        X265_FREE(m_offsetOrgPreDblk);
+        X265_FREE_ZERO(m_countPreDblk);
+        X265_FREE_ZERO(m_offsetOrgPreDblk);
     }
 }
 
