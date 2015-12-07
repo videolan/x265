@@ -623,8 +623,6 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
         rec += stride;
     }
 
-    rec -= (stride << 1);
-
     for (int idxX = 0; idxX < m_numCuInWidth; idxX++)
     {
         addr = idxY * m_numCuInWidth + idxX;
@@ -658,7 +656,7 @@ void SAO::processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane)
         }
         else if (idxX != (m_numCuInWidth - 1))
         {
-            rec = plane ? reconPic->getChromaAddr(plane, addr) : reconPic->getLumaAddr(addr);
+            rec = reconPic->getPlaneAddr(plane, addr);
 
             for (int i = 0; i < ctuHeight + 1; i++)
             {
