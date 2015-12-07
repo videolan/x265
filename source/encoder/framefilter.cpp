@@ -69,7 +69,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
     if (m_param->bEnableSsim)
         m_ssimBuf = X265_MALLOC(int, 8 * (m_param->sourceWidth / 4 + 3));
 
-    if (m_param->bEnableLoopFilter)
+    if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
         m_parallelFilter = new ParallelFilter[numRows];
 
     if (m_parallelFilter)
@@ -91,6 +91,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
 
         for(int row = 0; row < numRows; row++)
         {
+            m_parallelFilter[row].m_param = m_param;
             m_parallelFilter[row].m_rowAddr = row * numCols;
             m_parallelFilter[row].m_frameEncoder = m_frameEncoder;
         }
@@ -117,10 +118,31 @@ void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
             m_parallelFilter[row].m_encData = frame->m_encData;
         }
 
-        // Reset SAO global/common statistics
+        // Reset SAO common statistics
         if (m_param->bEnableSAO)
             m_parallelFilter[0].m_sao.resetStats();
     }
+}
+
+void FrameFilter::ParallelFilter::copySaoAboveRef(PicYuv* reconPic, uint32_t cuAddr, int col)
+{
+    // Copy SAO Top Reference Pixels
+    int ctuWidth  = g_maxCUSize;
+    const pixel* recY = reconPic->getPlaneAddr(0, cuAddr) - (m_rowAddr == 0 ? 0 : reconPic->m_stride);
+
+    // Luma
+    memcpy(&m_sao.m_tmpU[0][col * ctuWidth], recY, ctuWidth * sizeof(pixel));
+    X265_CHECK(col * ctuWidth + ctuWidth <= m_sao.m_numCuInWidth * ctuWidth, "m_tmpU buffer beyond bound write detected");
+
+    // Chroma
+    ctuWidth  >>= m_sao.m_hChromaShift;
+
+    const pixel* recU = reconPic->getPlaneAddr(1, cuAddr) - (m_rowAddr == 0 ? 0 : reconPic->m_strideC);
+    const pixel* recV = reconPic->getPlaneAddr(2, cuAddr) - (m_rowAddr == 0 ? 0 : reconPic->m_strideC);
+    memcpy(&m_sao.m_tmpU[1][col * ctuWidth], recU, ctuWidth * sizeof(pixel));
+    memcpy(&m_sao.m_tmpU[2][col * ctuWidth], recV, ctuWidth * sizeof(pixel));
+
+    X265_CHECK(col * ctuWidth + ctuWidth <= m_sao.m_numCuInWidth * ctuWidth, "m_tmpU buffer beyond bound write detected");
 }
 
 // NOTE: Single Threading only
@@ -128,6 +150,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
 {
     const CUGeom* cuGeoms = m_frameEncoder->m_cuGeoms;
     const uint32_t* ctuGeomMap = m_frameEncoder->m_ctuGeomMap;
+    PicYuv* reconPic = m_encData->m_reconPic;
     const int colStart = m_lastCol.get();
     // TODO: Waiting previous row finish or simple clip on it?
     const int colEnd = m_allowedCol.get();
@@ -146,6 +169,9 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
         {
             const CUData* ctuPrev = m_encData->getPicCTU(cuAddr - 1);
             deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
+
+            if (m_param->bEnableSAO)
+                copySaoAboveRef(reconPic, cuAddr - 1, col - 1);
         }
         m_lastCol.incr();
     }
@@ -155,6 +181,9 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
         const uint32_t cuAddr = m_rowAddr + numCols - 1;
         const CUData* ctuPrev = m_encData->getPicCTU(cuAddr);
         deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_HOR);
+
+        if (m_param->bEnableSAO)
+            copySaoAboveRef(reconPic, cuAddr, numCols - 1);
     }
 }
 
@@ -507,23 +536,12 @@ void FrameFilter::processSao(int row)
     SAOParam* saoParam = encData.m_saoParam;
 
     if (saoParam->bSaoFlag[0])
-    {
         m_parallelFilter[row].m_sao.processSaoUnitRow(saoParam->ctuParam[0], row, 0);
-        if (row != m_numRows - 1)
-        {
-            memcpy(m_parallelFilter[row + 1].m_sao.m_tmpU1[0], m_parallelFilter[row].m_sao.m_tmpU1[0], sizeof(pixel) * m_param->sourceWidth);
-        }
-    }
 
     if (saoParam->bSaoFlag[1])
     {
         m_parallelFilter[row].m_sao.processSaoUnitRow(saoParam->ctuParam[1], row, 1);
         m_parallelFilter[row].m_sao.processSaoUnitRow(saoParam->ctuParam[2], row, 2);
-        if (row != m_numRows - 1)
-        {
-            memcpy(m_parallelFilter[row + 1].m_sao.m_tmpU1[1], m_parallelFilter[row].m_sao.m_tmpU1[1], sizeof(pixel) * m_param->sourceWidth);
-            memcpy(m_parallelFilter[row + 1].m_sao.m_tmpU1[2], m_parallelFilter[row].m_sao.m_tmpU1[2], sizeof(pixel) * m_param->sourceWidth);
-        }
     }
 
     if (encData.m_slice->m_pps->bTransquantBypassEnabled)

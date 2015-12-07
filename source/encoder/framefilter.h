@@ -63,6 +63,7 @@ public:
     public:
         static uint32_t     numCols;
         uint32_t            m_rowAddr;
+        x265_param*         m_param;
         FrameEncoder*       m_frameEncoder;
         FrameData*          m_encData;
         SAO                 m_sao;
@@ -71,6 +72,7 @@ public:
 
         ParallelFilter()
             : m_rowAddr(0)
+            , m_param(NULL)
             , m_frameEncoder(NULL)
             , m_encData(NULL)
         {
@@ -80,6 +82,7 @@ public:
         { }
 
         void processTasks(int workerThreadId);
+        void copySaoAboveRef(PicYuv* reconPic, uint32_t cuAddr, int col);
 
     protected:
 

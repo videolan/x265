@@ -1124,6 +1124,13 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             }
         }
 
+        /* Case of DEBLOCK Disable and SAO Enable */
+        if (!m_param->bEnableLoopFilter && m_param->bEnableSAO)
+        {
+            PicYuv* reconPic = curEncData.m_reconPic;
+            m_frameFilter.m_parallelFilter[row].copySaoAboveRef(reconPic, cuAddr, col);
+        }
+
         if (m_param->bEnableWavefront && curRow.completed >= 2 && row < m_numRows - 1 &&
             (!m_bAllRowsStop || intRow + 1 < m_vbvResetTriggerRow))
         {

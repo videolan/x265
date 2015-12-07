@@ -92,8 +92,7 @@ protected:
     pixel*      m_clipTable;
     pixel*      m_clipTableBase;
 
-    pixel*      m_tmpU1[3];
-    pixel*      m_tmpU2[3];
+    pixel*      m_tmpU[3];
     pixel*      m_tmpL1;
     pixel*      m_tmpL2;
 
