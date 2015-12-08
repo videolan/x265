@@ -256,7 +256,7 @@ static void showHelp(x265_param *param)
     H0("   --log-level <string>          Logging level: none error warning info debug full. Default %s\n", X265_NS::logLevelNames[param->logLevel + 1]);
     H0("   --no-progress                 Disable CLI progress reports\n");
     H0("   --csv <filename>              Comma separated log file, if csv-log-level > 0 frame level statistics, else one line per run\n");
-    H0("   --csv-log-level               Level of csv logging, if csv-log-level > 0 frame level statistics, else one line per run: 0-2\n");
+    H0("   --csv-log-level <integer>     Level of csv logging, if csv-log-level > 0 frame level statistics, else one line per run: 0-2\n");
     H0("\nInput Options:\n");
     H0("   --input <filename>            Raw YUV or Y4M input file name. `-` for stdin\n");
     H1("   --y4m                         Force parsing of input stream as YUV4MPEG2 regardless of file extension\n");
