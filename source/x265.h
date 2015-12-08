@@ -100,7 +100,7 @@ typedef struct x265_analysis_data
     uint32_t         numPartitions;
     void*            interData;
     void*            intraData;
-    bool             bScenecut;
+    int              bScenecut;
 } x265_analysis_data;
 
 /* cu statistics */

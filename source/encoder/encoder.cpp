@@ -628,7 +628,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inFrame->m_analysisData.interData = inputPic->analysisData.interData;
             inFrame->m_analysisData.intraData = inputPic->analysisData.intraData;
             sliceType = inputPic->analysisData.sliceType;
-            inFrame->m_lowres.bScenecut = inFrame->m_analysisData.bScenecut;
+            inFrame->m_lowres.bScenecut = !!inFrame->m_analysisData.bScenecut;
             inFrame->m_lowres.satdCost = inFrame->m_analysisData.satdCost;
         }
 
@@ -1918,7 +1918,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
     analysis->poc = poc;
     analysis->frameRecordSize = frameRecordSize;
     X265_FREAD(&analysis->sliceType, sizeof(int), 1, m_analysisFile);
-    X265_FREAD(&analysis->bScenecut, sizeof(bool), 1, m_analysisFile);
+    X265_FREAD(&analysis->bScenecut, sizeof(int), 1, m_analysisFile);
     X265_FREAD(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFile);
     X265_FREAD(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
     X265_FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
@@ -1991,7 +1991,7 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis)
     X265_FWRITE(&analysis->frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
     X265_FWRITE(&analysis->poc, sizeof(int), 1, m_analysisFile);
     X265_FWRITE(&analysis->sliceType, sizeof(int), 1, m_analysisFile);
-    X265_FWRITE(&analysis->bScenecut, sizeof(bool), 1, m_analysisFile);
+    X265_FWRITE(&analysis->bScenecut, sizeof(int), 1, m_analysisFile);
     X265_FWRITE(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFile);
     X265_FWRITE(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
     X265_FWRITE(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
