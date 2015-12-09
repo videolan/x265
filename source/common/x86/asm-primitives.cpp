@@ -3638,6 +3638,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.frameInitLowres = PFX(frame_init_lowres_core_avx2);
         p.propagateCost = PFX(mbtree_propagate_cost_avx2);
         p.saoCuStatsE0 = PFX(saoCuStatsE0_avx2);
+        p.saoCuStatsE1 = PFX(saoCuStatsE1_avx2);
 
         if (cpuMask & X265_CPU_BMI2)
         {

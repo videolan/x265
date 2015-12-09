@@ -1810,6 +1810,7 @@ void saoCuStatsE1_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8
     memset(tmp_stats, 0, sizeof(tmp_stats));
     memset(tmp_count, 0, sizeof(tmp_count));
 
+    X265_CHECK(endX * endY <= (4096 - 16), "Assembly of saoE1 may overflow with this block size\n");
     for (y = 0; y < endY; y++)
     {
         for (x = 0; x < endX; x++)
@@ -1819,6 +1820,7 @@ void saoCuStatsE1_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8
             uint32_t edgeType = signDown + upBuff1[x] + 2;
             upBuff1[x] = (int8_t)(-signDown);
 
+            X265_CHECK(edgeType <= 4, "edgeType check failure\n");
             tmp_stats[edgeType] += diff[x];
             tmp_count[edgeType]++;
         }
