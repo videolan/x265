@@ -32,10 +32,10 @@ SECTION_RODATA 32
 
 ;; 8-bit constants
 
-const pb_0,                 times 16 db 0
+const pb_0,                 times 32 db 0
 const pb_1,                 times 32 db 1
 const pb_2,                 times 32 db 2
-const pb_3,                 times 16 db 3
+const pb_3,                 times 32 db 3
 const pb_4,                 times 32 db 4
 const pb_8,                 times 32 db 8
 const pb_15,                times 32 db 15

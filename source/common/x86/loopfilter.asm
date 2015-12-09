@@ -32,22 +32,22 @@ SECTION_RODATA 32
 pb_31:      times 32 db 31
 pb_124:     times 32 db 124
 pb_15:      times 32 db 15
-pb_movemask_32:  times 32 db 0x00
-                 times 32 db 0xFF
 
 SECTION .text
 cextern pb_1
+cextern pb_2
+cextern pb_3
+cextern pb_4
 cextern pb_01
 cextern pb_128
-cextern pb_2
+cextern pw_1
+cextern pw_n1
 cextern pw_2
+cextern pw_4
 cextern pw_pixel_max
 cextern pb_movemask
-cextern pw_1
+cextern pb_movemask_32
 cextern hmul_16p
-cextern pb_4
-cextern pw_4
-cextern pw_n1
 
 
 ;============================================================================================================
@@ -2129,6 +2129,186 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
     paddd       m0, m1
     movu        [r9], m0
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
+    add         [r9 + 4 * 4], r6d
+    RET
+
+
+;-----------------------------------------------------------------------------------------------------------------------
+; saoCuStatsE0(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
+;-----------------------------------------------------------------------------------------------------------------------
+INIT_YMM avx2
+; spending rbp register to avoid x86inc stack alignment problem
+cglobal saoCuStatsE0, 3,11,16
+    mov         r3d, r3m
+    mov         r4d, r4m
+    mov         r9, r5mp
+
+    ; clear internal temporary buffer
+    pxor        xm6, xm6                        ; count[0]
+    pxor        xm7, xm7                        ; count[1]
+    pxor        xm8, xm8                        ; count[2]
+    pxor        xm9, xm9                        ; count[3]
+    pxor        xm10, xm10                      ; count[4]
+    pxor        xm11, xm11                      ; stats[0]
+    pxor        xm12, xm12                      ; stats[1]
+    pxor        xm13, xm13                      ; stats[2]
+    pxor        xm14, xm14                      ; stats[3]
+    pxor        xm15, xm15                      ; stats[4]
+    xor         r7d, r7d
+
+    ; correct stride for diff[] and rec
+    mov         r6d, r3d
+    and         r6d, ~15
+    sub         r2, r6
+    lea         r8, [(r6 - 64) * 2]             ; 64 = MAX_CU_SIZE
+    lea         r10, [pb_movemask_32 + 32]
+
+.loopH:
+    mov         r5d, r3d
+
+    ; calculate signLeft
+    mov         r7b, [r1]
+    sub         r7b, [r1 - 1]
+    seta        r7b
+    setb        r6b
+    sub         r7b, r6b
+    neg         r7b
+    pinsrb      xm0, r7d, 15
+
+.loopL:
+    mova        m4, [pb_128]                    ; lower performance, but we haven't enough register for stats[]
+    movu        xm3, [r1]
+    movu        xm2, [r1 + 1]
+
+    pxor        xm1, xm3, xm4
+    pxor        xm2, xm4
+    pcmpgtb     xm3, xm1, xm2
+    pcmpgtb     xm2, xm1
+    pand        xm3, [pb_1]
+    por         xm2, xm3                        ; signRight
+
+    palignr     xm3, xm2, xm0, 15
+    psignb      xm3, xm4                        ; signLeft
+
+    mova        xm0, xm2
+    paddb       xm2, xm3
+    paddb       xm2, [pb_2]                     ; edgeType
+
+    ; get current process mask
+    mov         r7d, 16
+    mov         r6d, r5d
+    cmp         r5d, r7d
+    cmovge      r6d, r7d
+    neg         r6
+    movu        xm1, [r10 + r6]
+
+    ; tmp_count[edgeType]++
+    ; tmp_stats[edgeType] += (fenc[x] - rec[x])
+    pxor        xm3, xm3
+    por         xm1, xm2                        ; apply unavailable pixel mask
+    movu        m5, [r0]                        ; up to 14bits
+
+    pcmpeqb     xm3, xm1, xm3
+    psubb       xm6, xm3
+    pmovsxbw    m2, xm3
+    pmaddwd     m4, m5, m2
+    paddd       m11, m4
+
+    pcmpeqb     xm3, xm1, [pb_1]
+    psubb       xm7, xm3
+    pmovsxbw    m2, xm3
+    pmaddwd     m4, m5, m2
+    paddd       m12, m4
+
+    pcmpeqb     xm3, xm1, [pb_2]
+    psubb       xm8, xm3
+    pmovsxbw    m2, xm3
+    pmaddwd     m4, m5, m2
+    paddd       m13, m4
+
+    pcmpeqb     xm3, xm1, [pb_3]
+    psubb       xm9, xm3
+    pmovsxbw    m2, xm3
+    pmaddwd     m4, m5, m2
+    paddd       m14, m4
+
+    pcmpeqb     xm3, xm1, [pb_4]
+    psubb       xm10, xm3
+    pmovsxbw    m2, xm3
+    pmaddwd     m4, m5, m2
+    paddd       m15, m4
+
+    sub         r5d, 16
+    jle        .next
+
+    add         r0, 16*2
+    add         r1, 16
+    jmp        .loopL
+
+.next:
+    sub         r0, r8
+    add         r1, r2
+
+    dec         r4d
+    jnz        .loopH
+
+    ; sum to global buffer
+    mov         r0, r6mp
+
+    ; sum into word
+    ; WARNING: There have a ovberflow bug on case Block64x64 with ALL pixels are SAME type (HM algorithm never pass Block64x64 into here)
+    pxor        xm0, xm0
+    psadbw      xm1, xm6, xm0
+    psadbw      xm2, xm7, xm0
+    psadbw      xm3, xm8, xm0
+    psadbw      xm4, xm9, xm0
+    psadbw      xm5, xm10, xm0
+    pshufd      xm1, xm1, q3120
+    pshufd      xm2, xm2, q3120
+    pshufd      xm3, xm3, q3120
+    pshufd      xm4, xm4, q3120
+
+    ; sum count[4] only
+    movhlps     xm6, xm5
+    paddd       xm5, xm6
+
+    ; sum count[s_eoTable]
+    ; s_eoTable = {1, 2, 0, 3, 4}
+    punpcklqdq  xm3, xm1
+    punpcklqdq  xm2, xm4
+    phaddd      xm3, xm2
+    movu        xm1, [r0]
+    paddd       xm3, xm1
+    movu        [r0], xm3
+    movd        r5d, xm5
+    add         [r0 + 4 * 4], r5d
+
+    ; sum stats[s_eoTable]
+    vextracti128 xm1, m11, 1
+    paddd       xm1, xm11
+    vextracti128 xm2, m12, 1
+    paddd       xm2, xm12
+    vextracti128 xm3, m13, 1
+    paddd       xm3, xm13
+    vextracti128 xm4, m14, 1
+    paddd       xm4, xm14
+    vextracti128 xm5, m15, 1
+    paddd       xm5, xm15
+
+    ; s_eoTable = {1, 2, 0, 3, 4}
+    phaddd      xm3, xm1
+    phaddd      xm2, xm4
+    phaddd      xm3, xm2
+    psubd       xm3, xm0, xm3               ; negtive to compensate PMADDWD sign algorithm problem
+
+    ; sum stats[4] only
+    HADDD       xm5, xm6
+    psubd       xm5, xm0, xm5
+
+    movu        xm1, [r9]
+    paddd       xm3, xm1
+    movu        [r9], xm3
+    movd        r6d, xm5
     add         [r9 + 4 * 4], r6d
     RET
 %endif
