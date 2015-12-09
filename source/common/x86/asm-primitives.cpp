@@ -1573,9 +1573,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_32x32].cpy2Dto1D_shr = PFX(cpy2Dto1D_shr_32_avx2);
 
         ALL_LUMA_TU_S(idct, idct, avx2);
-#if X265_DEPTH <= 10
         ALL_LUMA_TU_S(dct, dct, avx2);
-#endif
+
         ALL_LUMA_CU_S(transpose, transpose, avx2);
 
         ALL_LUMA_PU(luma_vpp, interp_8tap_vert_pp, avx2);

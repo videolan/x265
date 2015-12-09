@@ -2174,7 +2174,7 @@ cglobal denoise_dct, 4, 4, 6
     pmaddwd         m0,                 m%4
     phaddd          m2,                 m0
     paddd           m2,                 m5
-    psrad           m2,                 DCT_SHIFT
+    psrad           m2,                 DCT8_SHIFT1
     packssdw        m2,                 m2
     vpermq          m2,                 m2, 0x08
     mova            [r5 + %2],          xm2
@@ -2190,7 +2190,7 @@ cglobal denoise_dct, 4, 4, 6
     phaddd          m8,                 m9
     phaddd          m6,                 m8
     paddd           m6,                 m5
-    psrad           m6,                 DCT_SHIFT2
+    psrad           m6,                 DCT8_SHIFT2
 
     vbroadcasti128  m4,                 [r6 + %2]
     pmaddwd         m10,                m0, m4
@@ -2201,7 +2201,7 @@ cglobal denoise_dct, 4, 4, 6
     phaddd          m8,                 m9
     phaddd          m10,                m8
     paddd           m10,                m5
-    psrad           m10,                DCT_SHIFT2
+    psrad           m10,                DCT8_SHIFT2
 
     packssdw        m6,                 m10
     vpermq          m10,                m6, 0xD8
@@ -2210,18 +2210,7 @@ cglobal denoise_dct, 4, 4, 6
 
 INIT_YMM avx2
 cglobal dct8, 3, 7, 11, 0-8*16
-%if BIT_DEPTH == 12
-    %define         DCT_SHIFT          6
-    vbroadcasti128  m5,                [pd_16]
-%elif BIT_DEPTH == 10
-    %define         DCT_SHIFT          4
-    vbroadcasti128  m5,                [pd_8]
-%elif BIT_DEPTH == 8
-    %define         DCT_SHIFT          2
-    vbroadcasti128  m5,                [pd_2]
-%else
-    %error Unsupported BIT_DEPTH!
-%endif
+vbroadcasti128      m5,                [pd_ %+ DCT8_ROUND1]
 %define             DCT_SHIFT2         9
 
     add             r2d,               r2d
@@ -2265,7 +2254,7 @@ cglobal dct8, 3, 7, 11, 0-8*16
     DCT8_PASS_1     7 * 16,             7 * 16, 4, 1
 
     ;pass2
-    vbroadcasti128  m5,                [pd_256]
+    vbroadcasti128  m5,                [pd_ %+ DCT8_ROUND2]
 
     mova            m0,                [r5]
     mova            m1,                [r5 + 32]
