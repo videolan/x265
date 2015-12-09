@@ -6499,6 +6499,1357 @@ cglobal pixel_sa8d_64x64, 4,7,8
 %endif ; !ARCH_X86_64
 %endmacro ; SA8D
 
+
+%if ARCH_X86_64 == 1 && BIT_DEPTH == 12
+INIT_YMM avx2
+cglobal sa8d_8x8_12bit
+    pmovzxwd        m0, [r0]
+    pmovzxwd        m9, [r2]
+    psubd           m0, m9
+
+    pmovzxwd        m1, [r0 + r1]
+    pmovzxwd        m9, [r2 + r3]
+    psubd           m1, m9
+
+    pmovzxwd        m2, [r0 + r1 * 2]
+    pmovzxwd        m9, [r2 + r3 * 2]
+    psubd           m2, m9
+
+    pmovzxwd        m8, [r0 + r4]
+    pmovzxwd        m9, [r2 + r5]
+    psubd           m8, m9
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+
+    pmovzxwd        m4, [r0]
+    pmovzxwd        m9, [r2]
+    psubd           m4, m9
+
+    pmovzxwd        m5, [r0 + r1]
+    pmovzxwd        m9, [r2 + r3]
+    psubd           m5, m9
+
+    pmovzxwd        m3, [r0 + r1 * 2]
+    pmovzxwd        m9, [r2 + r3 * 2]
+    psubd           m3, m9
+
+    pmovzxwd        m7, [r0 + r4]
+    pmovzxwd        m9, [r2 + r5]
+    psubd           m7, m9
+
+    mova            m6, m0
+    paddd           m0, m1
+    psubd           m1, m6
+    mova            m6, m2
+    paddd           m2, m8
+    psubd           m8, m6
+    mova            m6, m0
+
+    punpckldq       m0, m1
+    punpckhdq       m6, m1
+
+    mova            m1, m0
+    paddd           m0, m6
+    psubd           m6, m1
+    mova            m1, m2
+
+    punpckldq       m2, m8
+    punpckhdq       m1, m8
+
+    mova            m8, m2
+    paddd           m2, m1
+    psubd           m1, m8
+    mova            m8, m4
+    paddd           m4, m5
+    psubd           m5, m8
+    mova            m8, m3
+    paddd           m3, m7
+    psubd           m7, m8
+    mova            m8, m4
+
+    punpckldq       m4, m5
+    punpckhdq       m8, m5
+
+    mova            m5, m4
+    paddd           m4, m8
+    psubd           m8, m5
+    mova            m5, m3
+    punpckldq       m3, m7
+    punpckhdq       m5, m7
+
+    mova            m7, m3
+    paddd           m3, m5
+    psubd           m5, m7
+    mova            m7, m0
+    paddd           m0, m2
+    psubd           m2, m7
+    mova            m7, m6
+    paddd           m6, m1
+    psubd           m1, m7
+    mova            m7, m0
+
+    punpcklqdq      m0, m2
+    punpckhqdq      m7, m2
+
+    mova            m2, m0
+    paddd           m0, m7
+    psubd           m7, m2
+    mova            m2, m6
+
+    punpcklqdq      m6, m1
+    punpckhqdq      m2, m1
+
+    mova            m1, m6
+    paddd           m6, m2
+    psubd           m2, m1
+    mova            m1, m4
+    paddd           m4, m3
+    psubd           m3, m1
+    mova            m1, m8
+    paddd           m8, m5
+    psubd           m5, m1
+    mova            m1, m4
+
+    punpcklqdq      m4, m3
+    punpckhqdq      m1, m3
+
+    mova            m3, m4
+    paddd           m4, m1
+    psubd           m1, m3
+    mova            m3, m8
+
+    punpcklqdq      m8, m5
+    punpckhqdq      m3, m5
+
+    mova            m5, m8
+    paddd           m8, m3
+    psubd           m3, m5
+    mova            m5, m0
+    paddd           m0, m4
+    psubd           m4, m5
+    mova            m5, m7
+    paddd           m7, m1
+    psubd           m1, m5
+    mova            m5, m0
+
+    vinserti128     m0, m0, xm4, 1
+    vperm2i128      m5, m5, m4, 00110001b
+
+    pxor            m4, m4
+    psubd           m4, m0
+    pmaxsd          m0, m4
+    pxor            m4, m4
+    psubd           m4, m5
+    pmaxsd          m5, m4
+    pmaxsd          m0, m5
+    mova            m4, m7
+
+    vinserti128     m7, m7, xm1, 1
+    vperm2i128      m4, m4, m1, 00110001b
+
+    pxor            m1, m1
+    psubd           m1, m7
+    pmaxsd          m7, m1
+    pxor            m1, m1
+    psubd           m1, m4
+    pmaxsd          m4, m1
+    pmaxsd          m7, m4
+    mova            m1, m6
+    paddd           m6, m8
+    psubd           m8, m1
+    mova            m1, m2
+    paddd           m2, m3
+    psubd           m3, m1
+    mova            m1, m6
+
+    vinserti128     m6, m6, xm8, 1
+    vperm2i128      m1, m1, m8, 00110001b
+
+    pxor            m8, m8
+    psubd           m8, m6
+    pmaxsd          m6, m8
+    pxor            m8, m8
+    psubd           m8, m1
+    pmaxsd          m1, m8
+    pmaxsd          m6, m1
+    mova            m8, m2
+
+    vinserti128     m2, m2, xm3, 1
+    vperm2i128      m8, m8, m3, 00110001b
+
+    pxor            m3, m3
+    psubd           m3, m2
+    pmaxsd          m2, m3
+    pxor            m3, m3
+    psubd           m3, m8
+    pmaxsd          m8, m3
+    pmaxsd          m2, m8
+    paddd           m0, m6
+    paddd           m0, m7
+    paddd           m0, m2
+    ret
+
+cglobal pixel_sa8d_8x8, 4,6,10
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [r1 + r1 * 2]
+    lea             r5, [r3 + r3 * 2]
+
+    call            sa8d_8x8_12bit
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    movd            eax, xm0
+    add             eax, 1
+    shr             eax, 1
+    RET
+
+cglobal pixel_sa8d_8x16, 4,7,11
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [r1 + r1 * 2]
+    lea             r5, [r3 + r3 * 2]
+    pxor            m10, m10
+
+    call            sa8d_8x8_12bit
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm10, xm0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm0, xm10
+    movd            eax, xm0
+    RET
+
+cglobal pixel_sa8d_16x16, 4,8,11
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [r1 + r1 * 2]
+    lea             r5, [r3 + r3 * 2]
+    mov             r6, r0
+    mov             r7, r2
+    pxor            m10, m10
+
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    movd            eax, xm0
+    add             eax, 1
+    shr             eax, 1
+    RET
+
+cglobal pixel_sa8d_16x32, 4,8,12
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [r1 + r1 * 2]
+    lea             r5, [r3 + r3 * 2]
+    mov             r6, r0
+    mov             r7, r2
+    pxor            m10, m10
+    pxor            m11, m11
+
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    lea             r6, [r6 + r1 * 8]
+    lea             r6, [r6 + r1 * 8]
+    lea             r7, [r7 + r3 * 8]
+    lea             r7, [r7 + r3 * 8]
+    pxor            m10, m10
+    mov             r0, r6
+    mov             r2, r7
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+    movd            eax, xm11
+    RET
+
+cglobal pixel_sa8d_32x32, 4,8,12
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [r1 + r1 * 2]
+    lea             r5, [r3 + r3 * 2]
+    mov             r6, r0
+    mov             r7, r2
+    pxor            m10, m10
+    pxor            m11, m11
+
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    lea             r6, [r6 + r1 * 8]
+    lea             r6, [r6 + r1 * 8]
+    lea             r7, [r7 + r3 * 8]
+    lea             r7, [r7 + r3 * 8]
+    pxor            m10, m10
+    mov             r0, r6
+    mov             r2, r7
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+    movd            eax, xm11
+    RET
+
+cglobal pixel_sa8d_32x64, 4,8,12
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [r1 + r1 * 2]
+    lea             r5, [r3 + r3 * 2]
+    mov             r6, r0
+    mov             r7, r2
+    pxor            m10, m10
+    pxor            m11, m11
+
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    lea             r6, [r6 + r1 * 8]
+    lea             r6, [r6 + r1 * 8]
+    lea             r7, [r7 + r3 * 8]
+    lea             r7, [r7 + r3 * 8]
+    pxor            m10, m10
+    mov             r0, r6
+    mov             r2, r7
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    lea             r6, [r6 + r1 * 8]
+    lea             r6, [r6 + r1 * 8]
+    lea             r7, [r7 + r3 * 8]
+    lea             r7, [r7 + r3 * 8]
+    pxor            m10, m10
+    mov             r0, r6
+    mov             r2, r7
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    lea             r6, [r6 + r1 * 8]
+    lea             r6, [r6 + r1 * 8]
+    lea             r7, [r7 + r3 * 8]
+    lea             r7, [r7 + r3 * 8]
+    pxor            m10, m10
+    mov             r0, r6
+    mov             r2, r7
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+    movd            eax, xm11
+    RET
+
+cglobal pixel_sa8d_64x64, 4,8,12
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [r1 + r1 * 2]
+    lea             r5, [r3 + r3 * 2]
+    mov             r6, r0
+    mov             r7, r2
+    pxor            m10, m10
+    pxor            m11, m11
+
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 64]
+    lea             r2, [r7 + 64]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 80]
+    lea             r2, [r7 + 80]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 96]
+    lea             r2, [r7 + 96]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 112]
+    lea             r2, [r7 + 112]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    lea             r6, [r6 + r1 * 8]
+    lea             r6, [r6 + r1 * 8]
+    lea             r7, [r7 + r3 * 8]
+    lea             r7, [r7 + r3 * 8]
+    pxor            m10, m10
+    mov             r0, r6
+    mov             r2, r7
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 64]
+    lea             r2, [r7 + 64]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 80]
+    lea             r2, [r7 + 80]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 96]
+    lea             r2, [r7 + 96]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 112]
+    lea             r2, [r7 + 112]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    lea             r6, [r6 + r1 * 8]
+    lea             r6, [r6 + r1 * 8]
+    lea             r7, [r7 + r3 * 8]
+    lea             r7, [r7 + r3 * 8]
+    pxor            m10, m10
+    mov             r0, r6
+    mov             r2, r7
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 64]
+    lea             r2, [r7 + 64]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 80]
+    lea             r2, [r7 + 80]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 96]
+    lea             r2, [r7 + 96]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 112]
+    lea             r2, [r7 + 112]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    lea             r6, [r6 + r1 * 8]
+    lea             r6, [r6 + r1 * 8]
+    lea             r7, [r7 + r3 * 8]
+    lea             r7, [r7 + r3 * 8]
+    pxor            m10, m10
+    mov             r0, r6
+    mov             r2, r7
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 16]
+    lea             r2, [r7 + 16]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 32]
+    lea             r2, [r7 + 32]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 48]
+    lea             r2, [r7 + 48]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 64]
+    lea             r2, [r7 + 64]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 80]
+    lea             r2, [r7 + 80]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+
+    pxor            m10, m10
+    lea             r0, [r6 + 96]
+    lea             r2, [r7 + 96]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r6 + 112]
+    lea             r2, [r7 + 112]
+    call            sa8d_8x8_12bit
+    paddd           m10, m0
+
+    lea             r0, [r0 + r1 * 4]
+    lea             r2, [r2 + r3 * 4]
+    call            sa8d_8x8_12bit
+    paddd           m0, m10
+
+    vextracti128    xm6, m0, 1
+    paddd           xm0, xm6
+
+    movhlps         xm6, xm0
+    paddd           xm0, xm6
+
+    pshuflw         xm6, xm0, 0Eh
+    paddd           xm0, xm6
+    paddd           xm0, [pd_1]
+    psrld           xm0, 1
+    paddd           xm11, xm0
+    movd            eax, xm11
+    RET
+%endif
+
+
 ;=============================================================================
 ; INTRA SATD
 ;=============================================================================
@@ -6510,7 +7861,9 @@ cglobal pixel_sa8d_64x64, 4,7,8
 %define movdqu movups
 %define punpcklqdq movlhps
 INIT_XMM sse2
+%if BIT_DEPTH <= 10
 SA8D
+%endif
 SATDS_SSE2
 
 %if HIGH_BIT_DEPTH == 0
@@ -6526,8 +7879,10 @@ SA8D
 %define LOAD_SUMSUB_16P  LOAD_SUMSUB_16P_SSSE3
 %endif
 INIT_XMM ssse3
-SATDS_SSE2
+%if BIT_DEPTH <= 10
 SA8D
+%endif
+SATDS_SSE2
 %undef movdqa ; nehalem doesn't like movaps
 %undef movdqu ; movups
 %undef punpcklqdq ; or movlhps
@@ -6535,21 +7890,24 @@ SA8D
 %define TRANS TRANS_SSE4
 %define LOAD_DUP_4x8P LOAD_DUP_4x8P_PENRYN
 INIT_XMM sse4
-SATDS_SSE2
+%if BIT_DEPTH <= 10
 SA8D
+%endif
+SATDS_SSE2
 
 ; Sandy/Ivy Bridge and Bulldozer do movddup in the load unit, so
 ; it's effectively free.
 %define LOAD_DUP_4x8P LOAD_DUP_4x8P_CONROE
 INIT_XMM avx
-SATDS_SSE2
 SA8D
+SATDS_SSE2
 
 %define TRANS TRANS_XOP
 INIT_XMM xop
-SATDS_SSE2
+%if BIT_DEPTH <= 10
 SA8D
-
+%endif
+SATDS_SSE2
 
 %if HIGH_BIT_DEPTH == 0
 %define LOAD_SUMSUB_8x4P LOAD_SUMSUB8_16x4P_AVX2

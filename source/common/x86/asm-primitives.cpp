@@ -1313,6 +1313,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     }
     if (cpuMask & X265_CPU_AVX2)
     {
+#if X265_DEPTH == 12
+        ASSIGN_SA8D(avx2);
+#endif
         p.cu[BLOCK_4x4].intra_filter = PFX(intra_filter_4x4_avx2);
 
         // TODO: the planecopy_sp is really planecopy_SC now, must be fix it
