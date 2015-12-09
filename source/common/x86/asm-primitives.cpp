@@ -3640,6 +3640,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.saoCuStatsE0 = PFX(saoCuStatsE0_avx2);
         p.saoCuStatsE1 = PFX(saoCuStatsE1_avx2);
         p.saoCuStatsE2 = PFX(saoCuStatsE2_avx2);
+        p.saoCuStatsE3 = PFX(saoCuStatsE3_avx2);
 
         if (cpuMask & X265_CPU_BMI2)
         {
