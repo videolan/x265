@@ -75,6 +75,7 @@ struct RateControlEntry
     double  qpaRc;
     double  qpAq;
     double  qRceq;
+    double  qpPrev;
     double  frameSizePlanned;  /* frame Size decided by RateCotrol before encoding the frame */
     double  bufferRate;
     double  movingAvgSum;

@@ -144,6 +144,7 @@ inline void copyRceData(RateControlEntry* rce, RateControlEntry* rce2Pass)
     rce->sliceType = rce2Pass->sliceType;
     rce->qpNoVbv = rce2Pass->qpNoVbv;
     rce->newQp = rce2Pass->newQp;
+    rce->qRceq = rce2Pass->qRceq;
 }
 
 }  // end anonymous namespace
@@ -518,7 +519,7 @@ bool RateControl::init(const SPS& sps)
                 char picType;
                 int e;
                 char *next;
-                double qpRc, qpAq, qNoVbv;
+                double qpRc, qpAq, qNoVbv, qRceq;
                 next = strstr(p, ";");
                 if (next)
                     *next++ = 0;
@@ -530,8 +531,8 @@ bool RateControl::init(const SPS& sps)
                 }
                 rce = &m_rce2Pass[encodeOrder];
                 m_encOrder[frameNumber] = encodeOrder;
-                e += sscanf(p, " in:%*d out:%*d type:%c q:%lf q-aq:%lf q-noVbv:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf",
-                       &picType, &qpRc, &qpAq, &qNoVbv, &rce->coeffBits,
+                e += sscanf(p, " in:%*d out:%*d type:%c q:%lf q-aq:%lf q-noVbv:%lf q-Rceq:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf",
+                       &picType, &qpRc, &qpAq, &qNoVbv, &qRceq, &rce->coeffBits,
                        &rce->mvBits, &rce->miscBits, &rce->iCuCount, &rce->pCuCount,
                        &rce->skipCuCount);
                 rce->keptAsRef = true;
@@ -555,6 +556,7 @@ bool RateControl::init(const SPS& sps)
                 rce->qpNoVbv = qNoVbv;
                 rce->qpaRc = qpRc;
                 rce->qpAq = qpAq;
+                rce->qRceq = qRceq;
                 p = next;
             }
             X265_FREE(statsBuf);
@@ -1146,6 +1148,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
     }
     if (!m_isAbr && m_2pass && m_param->rc.rateControlMode == X265_RC_CRF)
     {
+        rce->qpPrev = x265_qScale2qp(rce->qScale);
         rce->qScale = rce->newQScale;
         rce->qpaRc = curEncData.m_avgQpRc = curEncData.m_avgQpAq = x265_qScale2qp(rce->newQScale);
         m_qp = int(rce->qpaRc + 0.5);
@@ -2353,20 +2356,31 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     {
         if (m_param->rc.rateControlMode == X265_RC_ABR && !m_param->rc.bStatRead)
             checkAndResetABR(rce, true);
-
-        if (m_param->rc.rateControlMode == X265_RC_CRF)
+    }
+    if (m_param->rc.rateControlMode == X265_RC_CRF)
+    {
+        double crfVal, qpRef = curEncData.m_avgQpRc;
+        bool is2passCrfChange = false;
+        if (m_2pass)
         {
-            if (int(curEncData.m_avgQpRc + 0.5) == slice->m_sliceQp)
-                curEncData.m_rateFactor = m_rateFactorConstant;
-            else
+            if (abs(curEncData.m_avgQpRc - rce->qpPrev) > 0.1)
             {
-                /* If vbv changed the frame QP recalculate the rate-factor */
-                double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
-                double mbtree_offset = m_param->rc.cuTree ? (1.0 - m_param->rc.qCompress) * 13.5 : 0;
-                curEncData.m_rateFactor = pow(baseCplx, 1 - m_qCompress) /
-                    x265_qp2qScale(int(curEncData.m_avgQpRc + 0.5) + mbtree_offset);
+                qpRef = rce->qpPrev;
+                is2passCrfChange = true;
             }
         }
+        if (is2passCrfChange || abs(qpRef - rce->qpNoVbv) > 0.5)
+        {
+            double crfFactor = rce->qRceq /x265_qp2qScale(qpRef);
+            double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
+            double mbtree_offset = m_param->rc.cuTree ? (1.0 - m_param->rc.qCompress) * 13.5 : 0;
+            crfVal = x265_qScale2qp(pow(baseCplx, 1 - m_qCompress) / crfFactor) - mbtree_offset;
+        }
+        else
+            crfVal = rce->sliceType == I_SLICE ? m_param->rc.rfConstant - m_ipOffset : 
+            (rce->sliceType == B_SLICE ? m_param->rc.rfConstant + m_pbOffset : m_param->rc.rfConstant);
+
+        curEncData.m_rateFactor = crfVal;
     }
 
     if (m_isAbr && !m_isAbrReset)
@@ -2460,10 +2474,10 @@ int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* r
         : rce->sliceType == P_SLICE ? 'P'
         : IS_REFERENCED(curFrame) ? 'B' : 'b';
     if (fprintf(m_statFileOut,
-                "in:%d out:%d type:%c q:%.2f q-aq:%.2f q-noVbv:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
+                "in:%d out:%d type:%c q:%.2f q-aq:%.2f q-noVbv:%.2f q-Rceq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
                 rce->poc, rce->encodeOrder,
                 cType, curEncData.m_avgQpRc, curEncData.m_avgQpAq,
-                rce->qpNoVbv,
+                rce->qpNoVbv, rce->qRceq,
                 curFrame->m_encData->m_frameStats.coeffBits,
                 curFrame->m_encData->m_frameStats.mvBits,
                 curFrame->m_encData->m_frameStats.miscBits,
