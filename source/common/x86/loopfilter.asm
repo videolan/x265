@@ -2000,11 +2000,14 @@ INIT_XMM sse4
 cglobal saoCuStatsBO, 7,12,2
     mova        m0, [pb_124]
     xor         r7d, r7d
+    add         r5, 4
+    add         r6, 4
 
 .loopH:
     mov         r10, r0
     mov         r11, r1
     mov         r9d, r3d
+
 .loopL:
     movu        m1, [r11]
     psrlw       m1, 1                   ; rec[x] >> boShift
@@ -2014,16 +2017,16 @@ cglobal saoCuStatsBO, 7,12,2
 %rep 16
     pextrb      r7d, m1, x
     movsx       r8d, word [r10 + x*2]   ; diff[x]
-    inc         dword  [r6 + r7 + 4]    ; count[classIdx]++
-    add         [r5 + r7 + 4], r8d      ; stats[classIdx] += (fenc[x] - rec[x]);
+    inc         dword  [r6 + r7]        ; count[classIdx]++
+    add         [r5 + r7], r8d          ; stats[classIdx] += (fenc[x] - rec[x]);
     dec         r9d
-    jz          .next
+    jz         .next
 %assign x x+1
 %endrep
 
     add         r10, 16*2
     add         r11, 16
-    jmp         .loopL
+    jmp        .loopL
 
 .next:
     add         r0, 64*2                ; MAX_CU_SIZE
