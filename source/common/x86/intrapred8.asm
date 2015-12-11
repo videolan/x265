@@ -355,55 +355,55 @@ const angHor8_tab_20,       times 8 db (32-24), 24
                             times 8 db (32-22), 22
                             times 8 db (32-11), 11
 
-const ang16_shuf_mode9,    times 8 db 0, 1
-                           times 8 db 1, 2
+const ang16_shuf_mode9,     times 8 db 0, 1
+                            times 8 db 1, 2
 
-const angHor_tab_9,  db (32-2), 2, (32-4), 4, (32-6), 6, (32-8), 8, (32-10), 10, (32-12), 12, (32-14), 14, (32-16), 16
-                     db (32-18), 18, (32-20), 20, (32-22), 22, (32-24),  24, (32-26),  26, (32-28), 28, (32-30), 30, (32-32), 32
+const angHor_tab_9,         db (32-2), 2, (32-4), 4, (32-6), 6, (32-8), 8, (32-10), 10, (32-12), 12, (32-14), 14, (32-16), 16
+                            db (32-18), 18, (32-20), 20, (32-22), 22, (32-24),  24, (32-26),  26, (32-28), 28, (32-30), 30, (32-32), 32
 
-const angHor_tab_11, db (32-30), 30, (32-28), 28, (32-26), 26, (32-24), 24, (32-22), 22, (32-20), 20, (32-18), 18, (32-16), 16
-                     db (32-14), 14, (32-12), 12, (32-10), 10, (32- 8),  8, (32- 6),  6, (32- 4),  4, (32- 2),  2, (32- 0),  0
+const angHor_tab_11,        db (32-30), 30, (32-28), 28, (32-26), 26, (32-24), 24, (32-22), 22, (32-20), 20, (32-18), 18, (32-16), 16
+                            db (32-14), 14, (32-12), 12, (32-10), 10, (32- 8),  8, (32- 6),  6, (32- 4),  4, (32- 2),  2, (32- 0),  0
 
-const ang16_shuf_mode12,   db 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 2, 3, 2, 3
-                           db 1, 2, 1, 2, 1, 2, 1, 2, 0, 1, 0, 1, 0, 1, 0, 1, 2, 3, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2, 1, 2, 1, 2
+const ang16_shuf_mode12,    db 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 2, 3, 2, 3
+                            db 1, 2, 1, 2, 1, 2, 1, 2, 0, 1, 0, 1, 0, 1, 0, 1, 2, 3, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2, 1, 2, 1, 2
 
-const angHor_tab_12, db (32-27), 27, (32-22), 22, (32-17), 17, (32-12), 12, (32-7), 7, (32-2), 2, (32-29), 29, (32-24), 24
-                     db (32-19), 19, (32-14), 14, (32-9), 9, (32-4), 4, (32-31), 31, (32-26),  26, (32-21), 21, (32-16), 16
+const angHor_tab_12,        db (32-27), 27, (32-22), 22, (32-17), 17, (32-12), 12, (32-7), 7, (32-2), 2, (32-29), 29, (32-24), 24
+                            db (32-19), 19, (32-14), 14, (32-9), 9, (32-4), 4, (32-31), 31, (32-26),  26, (32-21), 21, (32-16), 16
 
-const ang16_shuf_mode13,   db 4, 5, 4, 5, 4, 5, 3, 4, 3, 4, 3, 4, 3, 4, 2, 3, 5, 6, 5, 6, 5, 6, 4, 5, 4, 5, 4, 5, 4, 5, 3, 4
-                           db 2, 3, 2, 3, 1, 2, 1, 2, 1, 2, 1, 2, 0, 1, 0, 1, 3, 4, 3, 4, 2, 3, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2
-                           db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 11, 7, 4, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 11, 7, 4, 0
+const ang16_shuf_mode13,    db 4, 5, 4, 5, 4, 5, 3, 4, 3, 4, 3, 4, 3, 4, 2, 3, 5, 6, 5, 6, 5, 6, 4, 5, 4, 5, 4, 5, 4, 5, 3, 4
+                            db 2, 3, 2, 3, 1, 2, 1, 2, 1, 2, 1, 2, 0, 1, 0, 1, 3, 4, 3, 4, 2, 3, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2
+                            db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 11, 7, 4, 0, 0 ,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 11, 7, 4, 0
 
-const angHor_tab_13, db (32-23), 23, (32-14), 14, (32-5), 5, (32-28), 28, (32-19), 19, (32-10), 10, (32-1), 1, (32-24), 24
-                     db (32-15), 15, (32-6), 6, (32-29), 29, (32-20), 20, (32-11), 11, (32-2), 2, (32-25), 25, (32-16), 16
+const angHor_tab_13,        db (32-23), 23, (32-14), 14, (32-5), 5, (32-28), 28, (32-19), 19, (32-10), 10, (32-1), 1, (32-24), 24
+                            db (32-15), 15, (32-6), 6, (32-29), 29, (32-20), 20, (32-11), 11, (32-2), 2, (32-25), 25, (32-16), 16
 
-const ang16_shuf_mode14,   db 6, 7, 6, 7, 5, 6, 5, 6, 4, 5, 4, 5, 4, 5, 3, 4, 7, 8, 7, 8, 6, 7, 6, 7, 5, 6, 5, 6, 5, 6, 4, 5
-                           db 3, 4, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2, 0, 1, 0, 1, 4, 5, 3, 4, 3, 4, 3, 4, 2, 3, 2, 3, 1, 2, 1, 2
-                           db 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 12, 10, 7, 5, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 12, 10, 7, 5, 2, 0
+const ang16_shuf_mode14,    db 6, 7, 6, 7, 5, 6, 5, 6, 4, 5, 4, 5, 4, 5, 3, 4, 7, 8, 7, 8, 6, 7, 6, 7, 5, 6, 5, 6, 5, 6, 4, 5
+                            db 3, 4, 2, 3, 2, 3, 2, 3, 1, 2, 1, 2, 0, 1, 0, 1, 4, 5, 3, 4, 3, 4, 3, 4, 2, 3, 2, 3, 1, 2, 1, 2
+                            db 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 12, 10, 7, 5, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 12, 10, 7, 5, 2, 0
 
-const angHor_tab_14, db (32-19), 19, (32-6), 6, (32-25), 25, (32-12), 12, (32-31), 31, (32-18), 18, (32-5), 5, (32-24), 24
-                     db (32-11), 11, (32-30), 30, (32-17), 17, (32-4), 4, (32-23), 23, (32-10), 10, (32-29), 29, (32-16), 16
+const angHor_tab_14,        db (32-19), 19, (32-6), 6, (32-25), 25, (32-12), 12, (32-31), 31, (32-18), 18, (32-5), 5, (32-24), 24
+                            db (32-11), 11, (32-30), 30, (32-17), 17, (32-4), 4, (32-23), 23, (32-10), 10, (32-29), 29, (32-16), 16
 
-const ang16_shuf_mode15,   db 8, 9, 7, 8, 7, 8, 6, 7, 6, 7, 5, 6, 5, 6, 4, 5, 9, 10, 8, 9, 8, 9, 7, 8, 7, 8, 6, 7, 6, 7, 5, 6
-                           db 4, 5, 3, 4, 3, 4, 2, 3, 2, 3, 1, 2, 1, 2, 0, 1, 5, 6, 4, 5, 4, 5, 3, 4, 3, 4, 2, 3, 2, 3, 1, 2
-                           db 0, 0, 0, 0, 0, 0, 0, 15, 13, 11, 9, 8, 6, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0, 15, 13, 11, 9, 8, 6, 4, 2, 0
+const ang16_shuf_mode15,    db 8, 9, 7, 8, 7, 8, 6, 7, 6, 7, 5, 6, 5, 6, 4, 5, 9, 10, 8, 9, 8, 9, 7, 8, 7, 8, 6, 7, 6, 7, 5, 6
+                            db 4, 5, 3, 4, 3, 4, 2, 3, 2, 3, 1, 2, 1, 2, 0, 1, 5, 6, 4, 5, 4, 5, 3, 4, 3, 4, 2, 3, 2, 3, 1, 2
+                            db 0, 0, 0, 0, 0, 0, 0, 15, 13, 11, 9, 8, 6, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0, 15, 13, 11, 9, 8, 6, 4, 2, 0
 
-const angHor_tab_15, db (32-15), 15, (32-30), 30, (32-13), 13, (32-28), 28, (32-11), 11, (32-26), 26, (32-9), 9, (32-24), 24
-                     db (32-7), 7, (32-22), 22, (32-5), 5, (32-20), 20, (32-3), 3, (32-18), 18, (32-1), 1, (32- 16), 16
+const angHor_tab_15,        db (32-15), 15, (32-30), 30, (32-13), 13, (32-28), 28, (32-11), 11, (32-26), 26, (32-9), 9, (32-24), 24
+                            db (32-7), 7, (32-22), 22, (32-5), 5, (32-20), 20, (32-3), 3, (32-18), 18, (32-1), 1, (32- 16), 16
 
-const ang16_shuf_mode16,   db 10, 11, 9, 10, 9, 10, 8, 9, 7, 8, 7, 8, 6, 7, 5, 6, 11, 12, 10, 11, 10, 11, 9, 10, 8, 9, 8, 9, 7, 8, 6, 7
-                           db 5, 6, 4, 5, 3, 4, 3, 4, 2, 3, 1, 2, 1, 2, 0, 1, 6, 7, 5, 6, 4, 5, 4, 5, 3, 4, 2, 3, 2, 3, 1, 2
-                           db 0 ,0, 0, 0, 0, 15, 14, 12 , 11, 9, 8, 6, 5, 3, 2, 0, 0, 0, 0, 0, 0, 15, 14, 12, 11, 9, 8, 6, 5, 3, 2, 0
+const ang16_shuf_mode16,    db 10, 11, 9, 10, 9, 10, 8, 9, 7, 8, 7, 8, 6, 7, 5, 6, 11, 12, 10, 11, 10, 11, 9, 10, 8, 9, 8, 9, 7, 8, 6, 7
+                            db 5, 6, 4, 5, 3, 4, 3, 4, 2, 3, 1, 2, 1, 2, 0, 1, 6, 7, 5, 6, 4, 5, 4, 5, 3, 4, 2, 3, 2, 3, 1, 2
+                            db 0 ,0, 0, 0, 0, 15, 14, 12 , 11, 9, 8, 6, 5, 3, 2, 0, 0, 0, 0, 0, 0, 15, 14, 12, 11, 9, 8, 6, 5, 3, 2, 0
 
-const angHor_tab_16, db (32-11), 11, (32-22), 22, (32-1), 1, (32-12), 12, (32-23), 23, (32-2), 2, (32-13), 13, (32-24), 24
-                     db (32-3), 3, (32-14), 14, (32-25), 25, (32-4), 4, (32-15), 15, (32-26), 26, (32-5), 5, (32-16), 16
+const angHor_tab_16,        db (32-11), 11, (32-22), 22, (32-1), 1, (32-12), 12, (32-23), 23, (32-2), 2, (32-13), 13, (32-24), 24
+                            db (32-3), 3, (32-14), 14, (32-25), 25, (32-4), 4, (32-15), 15, (32-26), 26, (32-5), 5, (32-16), 16
 
-const ang16_shuf_mode17,   db 12, 13, 11, 12, 10, 11, 9, 10, 8, 9, 8, 9, 7, 8, 6, 7, 13, 14, 12, 13, 11, 12, 10, 11, 9, 10, 9, 10, 8, 9, 7, 8
-                           db 5, 6, 4, 5, 4, 5, 3, 4, 2, 3, 1, 2, 0, 1, 0, 1, 6, 7, 5, 6, 5, 6, 4, 5, 3, 4, 2, 3, 1, 2, 1, 2
-                           db 0, 0, 0, 15, 14, 12, 11, 10, 9, 7, 6, 5, 4, 2, 1, 0, 0, 0, 0, 15, 14, 12, 11, 10, 9, 7, 6, 5, 4, 2, 1, 0
+const ang16_shuf_mode17,    db 12, 13, 11, 12, 10, 11, 9, 10, 8, 9, 8, 9, 7, 8, 6, 7, 13, 14, 12, 13, 11, 12, 10, 11, 9, 10, 9, 10, 8, 9, 7, 8
+                            db 5, 6, 4, 5, 4, 5, 3, 4, 2, 3, 1, 2, 0, 1, 0, 1, 6, 7, 5, 6, 5, 6, 4, 5, 3, 4, 2, 3, 1, 2, 1, 2
+                            db 0, 0, 0, 15, 14, 12, 11, 10, 9, 7, 6, 5, 4, 2, 1, 0, 0, 0, 0, 15, 14, 12, 11, 10, 9, 7, 6, 5, 4, 2, 1, 0
 
-const angHor_tab_17, db (32- 6),  6, (32-12), 12, (32-18), 18, (32-24), 24, (32-30), 30, (32- 4),  4, (32-10), 10, (32-16), 16
-                     db (32-22), 22, (32-28), 28, (32- 2),  2, (32- 8),  8, (32-14), 14, (32-20), 20, (32-26), 26, (32- 0),  0
+const angHor_tab_17,        db (32- 6),  6, (32-12), 12, (32-18), 18, (32-24), 24, (32-30), 30, (32- 4),  4, (32-10), 10, (32-16), 16
+                            db (32-22), 22, (32-28), 28, (32- 2),  2, (32- 8),  8, (32-14), 14, (32-20), 20, (32-26), 26, (32- 0),  0
 
 ; Intrapred_angle32x32, modes 1 to 33 constants
 const ang32_shuf_mode9,         times 8 db 0, 1
@@ -467,6 +467,39 @@ const ang32_shuf_mode19,        db  8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 1
                                 dd  0,  0,  2,  3,  0,  0,  7,  1
                                 dd  0,  0,  5,  6,  0,  0,  0,  0
 
+; Intrapred_angle8x8, modes 1 to 33 constants
+const ang8_shuf_mode3,          db  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  4,  5,  5,  6,  6,  7,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  5,  6,  6,  7,  7,  8
+const ang8_shuf_mode4,          db  0,  1,  1,  2,  1,  2,  2,  3,  3,  4,  3,  4,  4,  5,  5,  6,  1,  2,  2,  3,  2,  3,  3,  4,  4,  5,  4,  5,  5,  6,  6,  7
+const ang8_shuf_mode5,          db  0,  1,  1,  2,  1,  2,  2,  3,  2,  3,  3,  4,  3,  4,  4,  5,  1,  2,  2,  3,  2,  3,  3,  4,  3,  4,  4,  5,  4,  5,  5,  6
+const ang8_shuf_mode6,          db  0,  1,  0,  1,  1,  2,  1,  2,  2,  3,  2,  3,  2,  3,  3,  4,  1,  2,  1,  2,  2,  3,  2,  3,  3,  4,  3,  4,  3,  4,  4,  5
+const ang8_shuf_mode7,          db  0,  1,  0,  1,  0,  1,  1,  2,  1,  2,  1,  2,  1,  2,  2,  3,  1,  2,  1,  2,  1,  2,  2,  3,  2,  3,  2,  3,  2,  3,  3,  4
+const ang8_shuf_mode8,          db  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  1,  2,  1,  2,  1,  2,  1,  2,  1,  2,  1,  2,  1,  2,  1,  2,  2,  3,  2,  3
+const ang8_shuf_mode9,          db  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  1,  2,  1,  2,  1,  2,  1,  2,  1,  2,  1,  2,  1,  2,  1,  2
+const ang8_shuf_mode12,         db  7,  8,  7,  8,  7,  8,  7,  8,  7,  8,  7,  8,  6,  7,  6,  7,  8,  9,  8,  9,  8,  9,  8,  9,  8,  9,  8,  9,  7,  8,  7,  8
+const ang8_shuf_mode13,         db  8,  9,  8,  9,  8,  9,  7,  8,  7,  8,  7,  8,  7,  8,  6,  7,  9, 10,  9, 10,  9, 10,  8,  9,  8,  9,  8,  9,  8,  9,  7,  8
+const ang8_shuf_mode14,         db  9, 10,  9, 10,  8,  9,  8,  9,  7,  8,  7,  8,  7,  8,  6,  7, 10, 11, 10, 11,  9, 10,  9, 10,  8,  9,  8,  9,  8,  9,  7,  8
+const ang8_shuf_mode15,         db 10, 11,  9, 10,  9, 10,  8,  9,  8,  9,  7,  8,  7,  8,  6,  7, 11, 12, 10, 11, 10, 11,  9, 10,  9, 10,  8,  9,  8,  9,  7,  8
+                                db  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  8,  6,  4,  2,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  8,  6,  4,  2,  0
+const ang8_shuf_mode16,         db 11, 12, 10, 11, 10, 11,  9, 10,  8,  9,  8,  9,  7,  8,  6,  7, 12, 13, 11, 12, 11, 12, 10, 11,  9, 10,  9, 10,  8,  9,  7,  8
+                                db  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  8,  6,  5,  3,  2,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  8,  6,  5,  3,  2,  0
+const ang8_shuf_mode17,         db 12, 13, 11, 12, 10, 11,  9, 10,  8,  9,  8,  9,  7,  8,  6,  7, 13, 14, 12, 13, 11, 12, 10, 11,  9, 10,  9, 10,  8,  9,  7,  8
+                                db  0,  0,  0,  0,  0,  0,  0,  0,  0,  7,  6,  5,  4,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  7,  6,  5,  4,  2,  1,  0
+
+const ang8_fact_mode3,          db (32-26), 26, (32-20), 20, (32-14), 14, (32- 8),  8, (32- 2),  2, (32-28), 28, (32-22), 22, (32-16), 16
+const ang8_fact_mode4,          db (32-21), 21, (32-10), 10, (32-31), 31, (32-20), 20, (32- 9),  9, (32-30), 30, (32-19), 19, (32- 8),  8
+const ang8_fact_mode5,          db (32-17), 17, (32- 2),  2, (32-19), 19, (32- 4),  4, (32-21), 21, (32- 6),  6, (32-23), 23, (32- 8),  8
+const ang8_fact_mode6,          db (32-13), 13, (32-26), 26, (32- 7),  7, (32-20), 20, (32- 1),  1, (32-14), 14, (32-27), 27, (32- 8),  8
+const ang8_fact_mode7,          db (32- 9),  9, (32-18), 18, (32-27), 27, (32- 4),  4, (32-13), 13, (32-22), 22, (32-31), 31, (32- 8),  8
+const ang8_fact_mode8,          db (32- 5),  5, (32-10), 10, (32-15), 15, (32-20), 20, (32-25), 25, (32-30), 30, (32- 3),  3, (32- 8),  8
+const ang8_fact_mode9,          db (32- 2),  2, (32- 4),  4, (32- 6),  6, (32- 8),  8, (32-10), 10, (32-12), 12, (32-14), 14, (32-16), 16
+const ang8_fact_mode11,         db (32-30), 30, (32-28), 28, (32-26), 26, (32-24), 24, (32-22), 22, (32-20), 20, (32-18), 18, (32-16), 16
+const ang8_fact_mode12,         db (32-27), 27, (32-22), 22, (32-17), 17, (32-12), 12, (32- 7),  7, (32- 2),  2, (32-29), 29, (32-24), 24
+const ang8_fact_mode13,         db (32-23), 23, (32-14), 14, (32- 5),  5, (32-28), 28, (32-19), 19, (32-10), 10, (32- 1),  1, (32-24), 24
+const ang8_fact_mode14,         db (32-19), 19, (32- 6),  6, (32-25), 25, (32-12), 12, (32-31), 31, (32-18), 18, (32- 5),  5, (32-24), 24
+const ang8_fact_mode15,         db (32-15), 15, (32-30), 30, (32-13), 13, (32-28), 28, (32-11), 11, (32-26), 26, (32- 9),  9, (32-24), 24
+const ang8_fact_mode16,         db (32-11), 11, (32-22), 22, (32- 1),  1, (32-12), 12, (32-23), 23, (32- 2),  2, (32-13), 13, (32-24), 24
+const ang8_fact_mode17,         db (32- 6),  6, (32-12), 12, (32-18), 18, (32-24), 24, (32-30), 30, (32- 4),  4, (32-10), 10, (32-16), 16
+
 const ang_table
 %assign x 0
 %rep 32
@@ -490,6 +523,7 @@ const pw_ang_table
 
 SECTION .text
 cextern pb_1
+cextern pb_2
 cextern pw_2
 cextern pw_3
 cextern pw_4
@@ -18582,48 +18616,48 @@ cglobal intra_pred_ang32_19, 3,5,10
 ; void intraPredAng8(pixel* dst, intptr_t dstStride, pixel* src, int dirMode, int bFilter)
 ;-----------------------------------------------------------------------------------------
 INIT_YMM avx2
-cglobal intra_pred_ang8_3, 3,4,5
-    mova              m3, [pw_1024]
+%macro ang8_store8x8 0
+    lea               r3, [3 * r1]
+    vextracti128      xm2, m1, 1
+    vextracti128      xm5, m4, 1
+    movq              [r0], xm1
+    movq              [r0 + r1], xm2
+    movhps            [r0 + 2 * r1], xm1
+    movhps            [r0 + r3], xm2
+    lea               r0, [r0 + 4 * r1]
+    movq              [r0], xm4
+    movq              [r0 + r1], xm5
+    movhps            [r0 + 2 * r1], xm4
+    movhps            [r0 + r3], xm5
+%endmacro
+
+cglobal intra_pred_ang8_3, 3,4,6
     vbroadcasti128    m0, [r2 + 17]
+    mova              m5, [ang8_shuf_mode3]
+    mova              m3, [pb_2]
 
-    pshufb            m1, m0, [c_ang8_src1_9_2_10]
-    pshufb            m2, m0, [c_ang8_src3_11_4_12]
-    pshufb            m4, m0, [c_ang8_src5_13_5_13]
-    pshufb            m0,     [c_ang8_src6_14_7_15]
+    pshufb            m1, m0, m5
+    paddb             m5, m3
+    pshufb            m2, m0, m5
+    paddb             m5, m3
+    pshufb            m4, m0, m5
+    paddb             m5, m3
+    pshufb            m0, m5
 
-    pmaddubsw         m1, [c_ang8_26_20]
+    vbroadcasti128    m5, [ang8_fact_mode3]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pmaddubsw         m2, [c_ang8_14_8]
     pmulhrsw          m2, m3
-    pmaddubsw         m4, [c_ang8_2_28]
     pmulhrsw          m4, m3
-    pmaddubsw         m0, [c_ang8_22_16]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
@@ -18662,48 +18696,33 @@ cglobal intra_pred_ang8_33, 3,4,5
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_4, 3,4,5
-    mova              m3, [pw_1024]
+cglobal intra_pred_ang8_4, 3,4,6
     vbroadcasti128    m0, [r2 + 17]
+    mova              m5, [ang8_shuf_mode4]
+    mova              m3, [pb_2]
 
-    pshufb            m1, m0, [c_ang8_src1_9_2_10]
-    pshufb            m2, m0, [c_ang8_src2_10_3_11]
-    pshufb            m4, m0, [c_ang8_src4_12_4_12]
-    pshufb            m0,     [c_ang8_src5_13_6_14]
+    pshufb            m1, m0, m5
+    paddb             m5, m3
+    pshufb            m2, m0, m5
+    paddb             m5, m3
+    pshufb            m4, m0, m5
+    paddb             m5, m3
+    pshufb            m0, m5
 
-    pmaddubsw         m1, [c_ang8_21_10]
+    vbroadcasti128    m5, [ang8_fact_mode4]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pmaddubsw         m2, [c_ang8_31_20]
     pmulhrsw          m2, m3
-    pmaddubsw         m4, [c_ang8_9_30]
     pmulhrsw          m4, m3
-    pmaddubsw         m0, [c_ang8_19_8]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
@@ -18743,48 +18762,33 @@ cglobal intra_pred_ang8_32, 3,4,5
 
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_5, 3, 4, 5
-    mova              m3, [pw_1024]
+cglobal intra_pred_ang8_5, 3, 4, 6
     vbroadcasti128    m0, [r2 + 17]
+    mova              m5, [ang8_shuf_mode5]
+    mova              m3, [pb_2]
 
-    pshufb            m1, m0, [c_ang8_src1_9_2_10]
-    pshufb            m2, m0, [c_ang8_src2_10_3_11]
-    pshufb            m4, m0, [c_ang8_src3_11_4_12]
-    pshufb            m0,     [c_ang8_src4_12_5_13]
+    pshufb            m1, m0, m5
+    paddb             m5, m3
+    pshufb            m2, m0, m5
+    paddb             m5, m3
+    pshufb            m4, m0, m5
+    paddb             m5, m3
+    pshufb            m0, m5
 
-    pmaddubsw         m1, [c_ang8_17_2]
+    vbroadcasti128    m5, [ang8_fact_mode5]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pmaddubsw         m2, [c_ang8_19_4]
     pmulhrsw          m2, m3
-    pmaddubsw         m4, [c_ang8_21_6]
     pmulhrsw          m4, m3
-    pmaddubsw         m0, [c_ang8_23_8]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
@@ -18824,48 +18828,33 @@ cglobal intra_pred_ang8_31, 3, 4, 5
 
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_6, 3, 4, 5
-    mova              m3, [pw_1024]
+cglobal intra_pred_ang8_6, 3, 4, 6
     vbroadcasti128    m0, [r2 + 17]
+    mova              m5, [ang8_shuf_mode6]
+    mova              m3, [pb_2]
 
-    pshufb            m1, m0, [intra_pred_shuff_0_8]
-    pshufb            m2, m0, [c_ang8_src2_10_2_10]
-    pshufb            m4, m0, [c_ang8_src3_11_3_11]
-    pshufb            m0,     [c_ang8_src3_11_4_12]
+    pshufb            m1, m0, m5
+    paddb             m5, m3
+    pshufb            m2, m0, m5
+    paddb             m5, m3
+    pshufb            m4, m0, m5
+    paddb             m5, m3
+    pshufb            m0, m5
 
-    pmaddubsw         m1, [c_ang8_13_26]
+    vbroadcasti128    m5, [ang8_fact_mode6]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pmaddubsw         m2, [c_ang8_7_20]
     pmulhrsw          m2, m3
-    pmaddubsw         m4, [c_ang8_1_14]
     pmulhrsw          m4, m3
-    pmaddubsw         m0, [c_ang8_27_8]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
@@ -18905,46 +18894,33 @@ cglobal intra_pred_ang8_30, 3, 4, 5
 
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_9, 3, 5, 5
-    mova              m3, [pw_1024]
+cglobal intra_pred_ang8_9, 3, 5, 6
     vbroadcasti128    m0, [r2 + 17]
+    mova              m5, [ang8_shuf_mode9]
+    mova              m3, [pb_2]
 
-    pshufb            m0, [intra_pred_shuff_0_8]
+    pshufb            m1, m0, m5
+    paddb             m5, m3
+    pshufb            m2, m0, m5
+    paddb             m5, m3
+    pshufb            m4, m0, m5
+    paddb             m5, m3
+    pshufb            m0, m5
 
-    lea               r4, [c_ang8_mode_27]
-    pmaddubsw         m1, m0, [r4]
+    vbroadcasti128    m5, [ang8_fact_mode9]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pmaddubsw         m2, m0, [r4 + mmsize]
     pmulhrsw          m2, m3
-    pmaddubsw         m4, m0, [r4 + 2 * mmsize]
     pmulhrsw          m4, m3
-    pmaddubsw         m0, [r4 + 3 * mmsize]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
@@ -19015,48 +18991,33 @@ cglobal intra_pred_ang8_25, 3, 5, 5
 
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_7, 3, 4, 5
-    mova              m3, [pw_1024]
+cglobal intra_pred_ang8_7, 3, 4, 6
     vbroadcasti128    m0, [r2 + 17]
+    mova              m5, [ang8_shuf_mode7]
+    mova              m3, [pb_2]
 
-    pshufb            m1, m0, [intra_pred_shuff_0_8]
-    pshufb            m2, m0, [c_ang8_src1_9_2_10]
-    pshufb            m4, m0, [c_ang8_src2_10_2_10]
-    pshufb            m0,     [c_ang8_src2_10_3_11]
+    pshufb            m1, m0, m5
+    paddb             m5, m3
+    pshufb            m2, m0, m5
+    paddb             m5, m3
+    pshufb            m4, m0, m5
+    paddb             m5, m3
+    pshufb            m0, m5
 
-    pmaddubsw         m1, [c_ang8_9_18]
+    vbroadcasti128    m5, [ang8_fact_mode7]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pmaddubsw         m2, [c_ang8_27_4]
     pmulhrsw          m2, m3
-    pmaddubsw         m4, [c_ang8_13_22]
     pmulhrsw          m4, m3
-    pmaddubsw         m0, [c_ang8_31_8]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
@@ -19097,48 +19058,32 @@ cglobal intra_pred_ang8_29, 3, 4, 5
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_8, 3, 4, 6
-    mova              m3, [pw_1024]
     vbroadcasti128    m0, [r2 + 17]
-    mova              m5, [intra_pred_shuff_0_8]
+    mova              m5, [ang8_shuf_mode8]
+    mova              m3, [pb_2]
 
     pshufb            m1, m0, m5
+    paddb             m5, m3
     pshufb            m2, m0, m5
+    paddb             m5, m3
     pshufb            m4, m0, m5
-    pshufb            m0,     [c_ang8_src2_10_2_10]
+    paddb             m5, m3
+    pshufb            m0, m5
 
-    pmaddubsw         m1, [c_ang8_5_10]
+    vbroadcasti128    m5, [ang8_fact_mode8]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pmaddubsw         m2, [c_ang8_15_20]
     pmulhrsw          m2, m3
-    pmaddubsw         m4, [c_ang8_25_30]
     pmulhrsw          m4, m3
-    pmaddubsw         m0, [c_ang8_3_8]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
@@ -19179,163 +19124,139 @@ cglobal intra_pred_ang8_28, 3, 4, 6
 
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_11, 3, 5, 5
-    mova              m3, [pw_1024]
+cglobal intra_pred_ang8_11, 3, 5, 6
+    mova               m3, [pw_1024]
     movu              xm1, [r2 + 16]
     pinsrb            xm1, [r2], 0
-    pshufb            xm1, [intra_pred_shuff_0_8]
-    vinserti128       m0, m1, xm1, 1
+    vinserti128        m0, m1, xm1, 1
 
-    lea               r4, [c_ang8_mode_25]
-    pmaddubsw         m1, m0, [r4]
+    mova              m5, [ang8_shuf_mode9]
+    mova              m3, [pb_2]
+
+    pshufb            m1, m0, m5
+    paddb             m5, m3
+    pshufb            m2, m0, m5
+    paddb             m5, m3
+    pshufb            m4, m0, m5
+    paddb             m5, m3
+    pshufb            m0, m5
+
+    vbroadcasti128    m5, [ang8_fact_mode11]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pmaddubsw         m2, m0, [r4 + mmsize]
     pmulhrsw          m2, m3
-    pmaddubsw         m4, m0, [r4 + 2 * mmsize]
     pmulhrsw          m4, m3
-    pmaddubsw         m0, [r4 + 3 * mmsize]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_15, 3, 6, 6
-    mova              m3, [pw_1024]
-    movu              xm5, [r2 + 16]
-    pinsrb            xm5, [r2], 0
-    lea               r5, [intra_pred_shuff_0_8]
-    mova              xm0, xm5
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 2], 0
-    vinserti128       m0, m0, xm5, 1
-    pshufb            m0, [r5]
+    vbroadcasti128    m1, [r2 + 17]
+    vbroadcasti128    m2, [r2]
+    mova              m3, [ang8_shuf_mode15 + mmsize]
+    pshufb            m2, m3
+    palignr           m1, m2, 11
 
-    lea               r4, [c_ang8_mode_15]
-    pmaddubsw         m1, m0, [r4]
+    mova              m5, [ang8_shuf_mode15]
+    mova              m3, [pb_2]
+    pshufb            m0, m1, m5
+    psubb             m5, m3
+    pshufb            m4, m1, m5
+    psubb             m5, m3
+    pshufb            m2, m1, m5
+    psubb             m5, m3
+    pshufb            m1, m5
+
+    vbroadcasti128    m5, [ang8_fact_mode15]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    mova              xm0, xm5
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 4], 0
-    vinserti128       m0, m0, xm5, 1
-    pshufb            m0, [r5]
-    pmaddubsw         m2, m0, [r4 + mmsize]
     pmulhrsw          m2, m3
-    mova              xm0, xm5
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 6], 0
-    vinserti128       m0, m0, xm5, 1
-    pshufb            m0, [r5]
-    pmaddubsw         m4, m0, [r4 + 2 * mmsize]
     pmulhrsw          m4, m3
-    mova              xm0, xm5
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 8], 0
-    vinserti128       m0, m0, xm5, 1
-    pshufb            m0, [r5]
-    pmaddubsw         m0, [r4 + 3 * mmsize]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_16, 3,4,7
-    lea                 r0, [r0 + r1 * 8]
-    sub                 r0, r1
-    neg                 r1
-    lea                 r3, [r1 * 3]
-    vbroadcasti128      m0, [angHor8_tab_16]            ; m0 = factor
-    mova                m1, [intra_pred8_shuff16]       ; m1 = 4 of Row shuffle
-    movu                m2, [intra_pred8_shuff16 + 8]   ; m2 = 4 of Row shuffle
+cglobal intra_pred_ang8_16, 3,4,6
+    vbroadcasti128    m1, [r2 + 17]
+    vbroadcasti128    m2, [r2]
+    mova              m3, [ang8_shuf_mode16 + mmsize]
+    pshufb            m2, m3
+    palignr           m1, m2, 10
 
-    ; prepare reference pixel
-    movq                xm3, [r2 + 16 + 1]              ; m3 = [-1 -2 -3 -4 -5 -6 -7 -8 x x x x x x x x]
-    movhps              xm3, [r2 + 2]                   ; m3 = [-1 -2 -3 -4 -5 -6 -7 -8 2 3 x 5 6 x 8 x]
-    pslldq              xm3, 1
-    pinsrb              xm3, [r2], 0                    ; m3 = [ 0 -1 -2 -3 -4 -5 -6 -7 -8 2 3 x 5 6 x 8]
-    pshufb              xm3, [c_ang8_mode_16]
-    vinserti128         m3, m3, xm3, 1                  ; m3 = [-8 -7 -6 -5 -4 -3 -2 -1  0 2 3 5 6 8]
+    mova              m5, [ang8_shuf_mode16]
+    mova              m3, [pb_2]
+    pshufb            m0, m1, m5
+    psubb             m5, m3
+    pshufb            m4, m1, m5
+    psubb             m5, m3
+    pshufb            m2, m1, m5
+    psubb             m5, m3
+    pshufb            m1, m5
 
-    ; process 4 rows
-    pshufb              m4, m3, m1
-    pshufb              m5, m3, m2
-    psrldq              m3, 4
-    punpcklbw           m6, m5, m4
-    punpckhbw           m5, m4
-    pmaddubsw           m6, m0
-    pmulhrsw            m6, [pw_1024]
-    pmaddubsw           m5, m0
-    pmulhrsw            m5, [pw_1024]
-    packuswb            m6, m5
-    vextracti128        xm5, m6, 1
-    movq                [r0], xm6
-    movhps              [r0 + r1], xm6
-    movq                [r0 + r1 * 2], xm5
-    movhps              [r0 + r3], xm5
+    vbroadcasti128    m5, [ang8_fact_mode16]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
+    pmulhrsw          m1, m3
+    pmulhrsw          m2, m3
+    pmulhrsw          m4, m3
+    pmulhrsw          m0, m3
+    packuswb          m1, m2
+    packuswb          m4, m0
 
-    ; process 4 rows
-    lea                 r0, [r0 + r1 * 4]
-    pshufb              m4, m3, m1
-    pshufb              m5, m3, m2
-    punpcklbw           m6, m5, m4
-    punpckhbw           m5, m4
-    pmaddubsw           m6, m0
-    pmulhrsw            m6, [pw_1024]
-    pmaddubsw           m5, m0
-    pmulhrsw            m5, [pw_1024]
-    packuswb            m6, m5
-    vextracti128        xm5, m6, 1
-    movq                [r0], xm6
-    movhps              [r0 + r1], xm6
-    movq                [r0 + r1 * 2], xm5
-    movhps              [r0 + r3], xm5
+    ang8_store8x8
+    RET
+
+INIT_YMM avx2
+cglobal intra_pred_ang8_17, 3,4,6
+    vbroadcasti128    m1, [r2 + 17]
+    vbroadcasti128    m2, [r2]
+    mova              m3, [ang8_shuf_mode17 + mmsize]
+    pshufb            m2, m3
+    palignr           m1, m2, 9
+
+    mova              m5, [ang8_shuf_mode17]
+    mova              m3, [pb_2]
+    pshufb            m0, m1, m5
+    psubb             m5, m3
+    pshufb            m4, m1, m5
+    psubb             m5, m3
+    pshufb            m2, m1, m5
+    psubb             m5, m3
+    pshufb            m1, m5
+
+    vbroadcasti128    m5, [ang8_fact_mode17]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
+    pmulhrsw          m1, m3
+    pmulhrsw          m2, m3
+    pmulhrsw          m4, m3
+    pmulhrsw          m0, m3
+    packuswb          m1, m2
+    packuswb          m4, m0
+
+    ang8_store8x8
     RET
 
 %if 1
@@ -19548,113 +19469,73 @@ cglobal intra_pred_ang8_22, 3, 6, 6
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_14, 3, 6, 6
-    mova              m3, [pw_1024]
-    movu              xm5, [r2 + 16]
-    pinsrb            xm5, [r2], 0
-    lea               r5, [intra_pred_shuff_0_8]
-    vinserti128       m0, m5, xm5, 1
-    pshufb            m0, [r5]
+    movu              xm1, [r2 + 13]
+    vinserti128       m1, m1, xm1, 1
 
-    lea               r4, [c_ang8_mode_14]
-    pmaddubsw         m1, m0, [r4]
+    pinsrb            xm1, [r2 + 0], 3
+    pinsrb            xm1, [r2 + 2], 2
+    pinsrb            xm1, [r2 + 5], 1
+    pinsrb            xm1, [r2 + 7], 0
+    vinserti128       m1, m1, xm1, 1
+
+    mova              m5, [ang8_shuf_mode14]
+    mova              m3, [pb_2]
+    pshufb            m0, m1, m5
+    psubb             m5, m3
+    pshufb            m4, m1, m5
+    psubb             m5, m3
+    pshufb            m2, m1, m5
+    psubb             m5, m3
+    pshufb            m1, m5
+
+    vbroadcasti128    m5, [ang8_fact_mode14]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 2], 0
-    vinserti128       m0, m5, xm5, 1
-    pshufb            m0, [r5]
-    pmaddubsw         m2, m0, [r4 + mmsize]
     pmulhrsw          m2, m3
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 5], 0
-    vinserti128       m0, m5, xm5, 1
-    pshufb            m0, [r5]
-    pmaddubsw         m4, m0, [r4 + 2 * mmsize]
     pmulhrsw          m4, m3
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 7], 0
-    pshufb            xm5, [r5]
-    vinserti128       m0, m0, xm5, 1
-    pmaddubsw         m0, [r4 + 3 * mmsize]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
 cglobal intra_pred_ang8_13, 3, 6, 6
-    mova              m3, [pw_1024]
-    movu              xm5, [r2 + 16]
-    pinsrb            xm5, [r2], 0
-    lea               r5, [intra_pred_shuff_0_8]
-    vinserti128       m0, m5, xm5, 1
-    pshufb            m0, [r5]
+    movu              xm1, [r2 + 14]
+    pinsrb            xm1, [r2 + 0], 2
+    pinsrb            xm1, [r2 + 4], 1
+    pinsrb            xm1, [r2 + 7], 0
+    vinserti128       m1, m1, xm1, 1
 
-    lea               r4, [c_ang8_mode_13]
-    pmaddubsw         m1, m0, [r4]
+    mova              m5, [ang8_shuf_mode13]
+    mova              m3, [pb_2]
+    pshufb            m0, m1, m5
+    psubb             m5, m3
+    pshufb            m4, m1, m5
+    psubb             m5, m3
+    pshufb            m2, m1, m5
+    psubb             m5, m3
+    pshufb            m1, m5
+
+    vbroadcasti128    m5, [ang8_fact_mode13]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 4], 0
-    pshufb            xm4, xm5, [r5]
-    vinserti128       m0, m0, xm4, 1
-    pmaddubsw         m2, m0, [r4 + mmsize]
     pmulhrsw          m2, m3
-    vinserti128       m0, m0, xm4, 0
-    pmaddubsw         m4, m0, [r4 + 2 * mmsize]
     pmulhrsw          m4, m3
-    pslldq            xm5, 1
-    pinsrb            xm5, [r2 + 7], 0
-    pshufb            xm5, [r5]
-    vinserti128       m0, m0, xm5, 1
-    pmaddubsw         m0, [r4 + 3 * mmsize]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 
@@ -19703,51 +19584,36 @@ cglobal intra_pred_ang8_23, 3, 6, 6
     RET
 
 INIT_YMM avx2
-cglobal intra_pred_ang8_12, 3, 5, 5
-    mova              m3, [pw_1024]
-    movu              xm1, [r2 + 16]
-    pinsrb            xm1, [r2], 0
-    pshufb            xm1, [intra_pred_shuff_0_8]
-    vinserti128       m0, m1, xm1, 1
+cglobal intra_pred_ang8_12, 3, 5, 6
+    movu              xm1, [r2 + 15]
+    pinsrb            xm1, [r2 + 0], 1
+    pinsrb            xm1, [r2 + 6], 0
+    vinserti128       m1, m1, xm1, 1
 
-    lea               r4, [c_ang8_mode_24]
-    pmaddubsw         m1, m0, [r4]
+    mova              m5, [ang8_shuf_mode12]
+    mova              m3, [pb_2]
+    pshufb            m0, m1, m5
+    psubb             m5, m3
+    pshufb            m4, m1, m5
+    psubb             m5, m3
+    pshufb            m2, m1, m5
+    psubb             m5, m3
+    pshufb            m1, m5
+
+    vbroadcasti128    m5, [ang8_fact_mode12]
+    mova              m3, [pw_1024]
+    pmaddubsw         m1, m5
+    pmaddubsw         m2, m5
+    pmaddubsw         m4, m5
+    pmaddubsw         m0, m5
     pmulhrsw          m1, m3
-    pmaddubsw         m2, m0, [r4 + mmsize]
     pmulhrsw          m2, m3
-    pmaddubsw         m4, m0, [r4 + 2 * mmsize]
     pmulhrsw          m4, m3
-    pslldq            xm0, 2
-    pinsrb            xm0, [r2 + 6], 0
-    pinsrb            xm0, [r2 + 0], 1
-    vinserti128       m0, m0, xm0, 1
-    pmaddubsw         m0, [r4 + 3 * mmsize]
     pmulhrsw          m0, m3
     packuswb          m1, m2
     packuswb          m4, m0
 
-    vperm2i128        m2, m1, m4, 00100000b
-    vperm2i128        m1, m1, m4, 00110001b
-    punpcklbw         m4, m2, m1
-    punpckhbw         m2, m1
-    punpcklwd         m1, m4, m2
-    punpckhwd         m4, m2
-    mova              m0, [trans8_shuf]
-    vpermd            m1, m0, m1
-    vpermd            m4, m0, m4
-
-    lea               r3, [3 * r1]
-    movq              [r0], xm1
-    movhps            [r0 + r1], xm1
-    vextracti128      xm2, m1, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
-    lea               r0, [r0 + 4 * r1]
-    movq              [r0], xm4
-    movhps            [r0 + r1], xm4
-    vextracti128      xm2, m4, 1
-    movq              [r0 + 2 * r1], xm2
-    movhps            [r0 + r3], xm2
+    ang8_store8x8
     RET
 
 INIT_YMM avx2
