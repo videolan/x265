@@ -1997,14 +1997,13 @@ cglobal calSign, 4, 5, 6
 ;--------------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
 INIT_XMM sse4
-cglobal saoCuStatsBO, 7,12,2
+cglobal saoCuStatsBO, 7,13,2
     mova        m0, [pb_124]
-    xor         r7d, r7d
     add         r5, 4
     add         r6, 4
 
 .loopH:
-    mov         r10, r0
+    mov         r12, r0
     mov         r11, r1
     mov         r9d, r3d
 
@@ -2013,10 +2012,32 @@ cglobal saoCuStatsBO, 7,12,2
     psrlw       m1, 1                   ; rec[x] >> boShift
     pand        m1, m0
 
+    cmp         r9d, 8
+    jle        .proc8
+
+    movq        r10, m1
 %assign x 0
-%rep 16
-    pextrb      r7d, m1, x
-    movsx       r8d, word [r10 + x*2]   ; diff[x]
+%rep 8
+    movzx       r7d, r10b
+    shr         r10, 8
+
+    movsx       r8d, word [r12 + x*2]   ; diff[x]
+    inc         dword  [r6 + r7]        ; count[classIdx]++
+    add         [r5 + r7], r8d          ; stats[classIdx] += (fenc[x] - rec[x]);
+%assign x x+1
+%endrep
+    movhlps     m1, m1
+    sub         r9d, 8
+    add         r12, 8*2
+
+.proc8:
+    movq        r10, m1
+%assign x 0
+%rep 8
+    movzx       r7d, r10b
+    shr         r10, 8
+
+    movsx       r8d, word [r12 + x*2]   ; diff[x]
     inc         dword  [r6 + r7]        ; count[classIdx]++
     add         [r5 + r7], r8d          ; stats[classIdx] += (fenc[x] - rec[x]);
     dec         r9d
@@ -2024,7 +2045,7 @@ cglobal saoCuStatsBO, 7,12,2
 %assign x x+1
 %endrep
 
-    add         r10, 16*2
+    add         r12, 8*2
     add         r11, 16
     jmp        .loopL
 
