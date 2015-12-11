@@ -342,7 +342,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]b-pyramid              Use B-frames as references. Default %s\n", OPT(param->bBPyramid));
     H1("   --qpfile <string>             Force frametypes and QPs for some or all frames\n");
     H1("                                 Format of each line: framenumber frametype QP\n");
-    H1("                                 QP is optional (none lets x265 choose). Frametypes: I,i,P,B,b.\n");
+    H1("                                 QP is optional (none lets x265 choose). Frametypes: I,i,K,P,B,b.\n");
     H1("                                 QPs are restricted by qpmin/qpmax.\n");
     H0("\nRate control, Adaptive Quantization:\n");
     H0("   --bitrate <integer>           Target bitrate (kbps) for ABR (implied). Default %d\n", param->rc.bitrate);
