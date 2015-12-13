@@ -661,22 +661,23 @@ void FrameEncoder::compressFrame()
 
     if (m_param->decodedPictureHashSEI)
     {
+        int planes = (m_frame->m_param->internalCsp != X265_CSP_I400) ? 3 : 1;
         if (m_param->decodedPictureHashSEI == 1)
         {
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::MD5;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < planes; i++)
                 MD5Final(&m_state[i], m_seiReconPictureDigest.m_digest[i]);
         }
         else if (m_param->decodedPictureHashSEI == 2)
         {
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CRC;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < planes; i++)
                 crcFinish(m_crc[i], m_seiReconPictureDigest.m_digest[i]);
         }
         else if (m_param->decodedPictureHashSEI == 3)
         {
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CHECKSUM;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < planes; i++)
                 checksumFinish(m_checksum[i], m_seiReconPictureDigest.m_digest[i]);
         }
 
@@ -807,7 +808,7 @@ void FrameEncoder::encodeSlice()
             }
             else
             {
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < (m_param->internalCsp != X265_CSP_I400 ? 3 : 1); i++)
                     saoParam->ctuParam[i][cuAddr].reset();
             }
         }

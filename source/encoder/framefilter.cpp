@@ -144,16 +144,18 @@ static void restoreOrigLosslessYuv(const CUData* cu, Frame& frame, uint32_t absP
     pixel* src = fencPic->getLumaAddr(cuAddr, absPartIdx);
 
     primitives.cu[size].copy_pp(dst, reconPic->m_stride, src, fencPic->m_stride);
-   
-    pixel* dstCb = reconPic->getCbAddr(cuAddr, absPartIdx);
-    pixel* srcCb = fencPic->getCbAddr(cuAddr, absPartIdx);
 
-    pixel* dstCr = reconPic->getCrAddr(cuAddr, absPartIdx);
-    pixel* srcCr = fencPic->getCrAddr(cuAddr, absPartIdx);
+    if (cu->m_chromaFormat != X265_CSP_I400)
+    {
+        pixel* dstCb = reconPic->getCbAddr(cuAddr, absPartIdx);
+        pixel* srcCb = fencPic->getCbAddr(cuAddr, absPartIdx);
+        pixel* dstCr = reconPic->getCrAddr(cuAddr, absPartIdx);
+        pixel* srcCr = fencPic->getCrAddr(cuAddr, absPartIdx);
 
-    const int csp = fencPic->m_picCsp;
-    primitives.chroma[csp].cu[size].copy_pp(dstCb, reconPic->m_strideC, srcCb, fencPic->m_strideC);
-    primitives.chroma[csp].cu[size].copy_pp(dstCr, reconPic->m_strideC, srcCr, fencPic->m_strideC);
+        const int csp = fencPic->m_picCsp;
+        primitives.chroma[csp].cu[size].copy_pp(dstCb, reconPic->m_strideC, srcCb, fencPic->m_strideC);
+        primitives.chroma[csp].cu[size].copy_pp(dstCr, reconPic->m_strideC, srcCr, fencPic->m_strideC);
+    }
 }
 
 /* Original YUV restoration for CU in lossless coding */
@@ -187,14 +189,17 @@ void FrameFilter::ParallelFilter::copySaoAboveRef(PicYuv* reconPic, uint32_t cuA
     X265_CHECK(col * ctuWidth + ctuWidth <= m_sao.m_numCuInWidth * ctuWidth, "m_tmpU buffer beyond bound write detected");
 
     // Chroma
-    ctuWidth  >>= m_sao.m_hChromaShift;
+    if (m_param->internalCsp != X265_CSP_I400)
+    {
+        ctuWidth  >>= m_sao.m_hChromaShift;
 
-    const pixel* recU = reconPic->getPlaneAddr(1, cuAddr) - (m_rowAddr == 0 ? 0 : reconPic->m_strideC);
-    const pixel* recV = reconPic->getPlaneAddr(2, cuAddr) - (m_rowAddr == 0 ? 0 : reconPic->m_strideC);
-    memcpy(&m_sao.m_tmpU[1][col * ctuWidth], recU, ctuWidth * sizeof(pixel));
-    memcpy(&m_sao.m_tmpU[2][col * ctuWidth], recV, ctuWidth * sizeof(pixel));
+        const pixel* recU = reconPic->getPlaneAddr(1, cuAddr) - (m_rowAddr == 0 ? 0 : reconPic->m_strideC);
+        const pixel* recV = reconPic->getPlaneAddr(2, cuAddr) - (m_rowAddr == 0 ? 0 : reconPic->m_strideC);
+        memcpy(&m_sao.m_tmpU[1][col * ctuWidth], recU, ctuWidth * sizeof(pixel));
+        memcpy(&m_sao.m_tmpU[2][col * ctuWidth], recV, ctuWidth * sizeof(pixel));
 
-    X265_CHECK(col * ctuWidth + ctuWidth <= m_sao.m_numCuInWidth * ctuWidth, "m_tmpU buffer beyond bound write detected");
+        X265_CHECK(col * ctuWidth + ctuWidth <= m_sao.m_numCuInWidth * ctuWidth, "m_tmpU buffer beyond bound write detected");
+    }
 }
 
 void FrameFilter::ParallelFilter::processSaoUnitCu(SAOParam *saoParam, int col)
@@ -352,7 +357,6 @@ void FrameFilter::processRow(int row)
 
             m_parallelFilter[0].m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_slice->m_sps->numCUsInFrame);
         }
-
         processRowPost(row);
     }
 }
@@ -371,25 +375,32 @@ void FrameFilter::processRowPost(int row)
 
     // Border extend Left and Right
     primitives.extendRowBorder(reconPic->getLumaAddr(lineStartCUAddr), reconPic->m_stride, reconPic->m_picWidth, realH, reconPic->m_lumaMarginX);
-    primitives.extendRowBorder(reconPic->getCbAddr(lineStartCUAddr), reconPic->m_strideC, reconPic->m_picWidth >> m_hChromaShift, realH >> m_vChromaShift, reconPic->m_chromaMarginX);
-    primitives.extendRowBorder(reconPic->getCrAddr(lineStartCUAddr), reconPic->m_strideC, reconPic->m_picWidth >> m_hChromaShift, realH >> m_vChromaShift, reconPic->m_chromaMarginX);
+    if (m_param->internalCsp != X265_CSP_I400)
+    {
+        primitives.extendRowBorder(reconPic->getCbAddr(lineStartCUAddr), reconPic->m_strideC, reconPic->m_picWidth >> m_hChromaShift, realH >> m_vChromaShift, reconPic->m_chromaMarginX);
+        primitives.extendRowBorder(reconPic->getCrAddr(lineStartCUAddr), reconPic->m_strideC, reconPic->m_picWidth >> m_hChromaShift, realH >> m_vChromaShift, reconPic->m_chromaMarginX);
+    }
 
     // Border extend Top
     if (!row)
     {
         const intptr_t stride = reconPic->m_stride;
-        const intptr_t strideC = reconPic->m_strideC;
         pixel *pixY = reconPic->getLumaAddr(lineStartCUAddr) - reconPic->m_lumaMarginX;
-        pixel *pixU = reconPic->getCbAddr(lineStartCUAddr) - reconPic->m_chromaMarginX;
-        pixel *pixV = reconPic->getCrAddr(lineStartCUAddr) - reconPic->m_chromaMarginX;
 
         for (uint32_t y = 0; y < reconPic->m_lumaMarginY; y++)
             memcpy(pixY - (y + 1) * stride, pixY, stride * sizeof(pixel));
 
-        for (uint32_t y = 0; y < reconPic->m_chromaMarginY; y++)
+        if (m_param->internalCsp != X265_CSP_I400)
         {
-            memcpy(pixU - (y + 1) * strideC, pixU, strideC * sizeof(pixel));
-            memcpy(pixV - (y + 1) * strideC, pixV, strideC * sizeof(pixel));
+            const intptr_t strideC = reconPic->m_strideC;
+            pixel *pixU = reconPic->getCbAddr(lineStartCUAddr) - reconPic->m_chromaMarginX;
+            pixel *pixV = reconPic->getCrAddr(lineStartCUAddr) - reconPic->m_chromaMarginX;
+
+            for (uint32_t y = 0; y < reconPic->m_chromaMarginY; y++)
+            {
+                memcpy(pixU - (y + 1) * strideC, pixU, strideC * sizeof(pixel));
+                memcpy(pixV - (y + 1) * strideC, pixV, strideC * sizeof(pixel));
+            }
         }
     }
 
@@ -397,17 +408,22 @@ void FrameFilter::processRowPost(int row)
     if (row == m_numRows - 1)
     {
         const intptr_t stride = reconPic->m_stride;
-        const intptr_t strideC = reconPic->m_strideC;
         pixel *pixY = reconPic->getLumaAddr(lineStartCUAddr) - reconPic->m_lumaMarginX + (realH - 1) * stride;
-        pixel *pixU = reconPic->getCbAddr(lineStartCUAddr) - reconPic->m_chromaMarginX + ((realH >> m_vChromaShift) - 1) * strideC;
-        pixel *pixV = reconPic->getCrAddr(lineStartCUAddr) - reconPic->m_chromaMarginX + ((realH >> m_vChromaShift) - 1) * strideC;
+
         for (uint32_t y = 0; y < reconPic->m_lumaMarginY; y++)
             memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(pixel));
 
-        for (uint32_t y = 0; y < reconPic->m_chromaMarginY; y++)
+        if (m_param->internalCsp != X265_CSP_I400)
         {
-            memcpy(pixU + (y + 1) * strideC, pixU, strideC * sizeof(pixel));
-            memcpy(pixV + (y + 1) * strideC, pixV, strideC * sizeof(pixel));
+            const intptr_t strideC = reconPic->m_strideC;
+            pixel *pixU = reconPic->getCbAddr(lineStartCUAddr) - reconPic->m_chromaMarginX + ((realH >> m_vChromaShift) - 1) * strideC;
+            pixel *pixV = reconPic->getCrAddr(lineStartCUAddr) - reconPic->m_chromaMarginX + ((realH >> m_vChromaShift) - 1) * strideC;
+
+            for (uint32_t y = 0; y < reconPic->m_chromaMarginY; y++)
+            {
+                memcpy(pixU + (y + 1) * strideC, pixU, strideC * sizeof(pixel));
+                memcpy(pixV + (y + 1) * strideC, pixV, strideC * sizeof(pixel));
+            }
         }
     }
 
@@ -424,16 +440,20 @@ void FrameFilter::processRowPost(int row)
         uint32_t height = getCUHeight(row);
 
         uint64_t ssdY = computeSSD(fencPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height);
-        height >>= m_vChromaShift;
-        width  >>= m_hChromaShift;
-        stride = reconPic->m_strideC;
-
-        uint64_t ssdU = computeSSD(fencPic->getCbAddr(cuAddr), reconPic->getCbAddr(cuAddr), stride, width, height);
-        uint64_t ssdV = computeSSD(fencPic->getCrAddr(cuAddr), reconPic->getCrAddr(cuAddr), stride, width, height);
-
         m_frameEncoder->m_SSDY += ssdY;
-        m_frameEncoder->m_SSDU += ssdU;
-        m_frameEncoder->m_SSDV += ssdV;
+
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            height >>= m_vChromaShift;
+            width >>= m_hChromaShift;
+            stride = reconPic->m_strideC;
+
+            uint64_t ssdU = computeSSD(fencPic->getCbAddr(cuAddr), reconPic->getCbAddr(cuAddr), stride, width, height);
+            uint64_t ssdV = computeSSD(fencPic->getCrAddr(cuAddr), reconPic->getCrAddr(cuAddr), stride, width, height);
+
+            m_frameEncoder->m_SSDU += ssdU;
+            m_frameEncoder->m_SSDV += ssdV;
+        }
     }
     if (m_param->bEnableSsim && m_ssimBuf)
     {
@@ -462,33 +482,45 @@ void FrameFilter::processRowPost(int row)
         intptr_t stride = reconPic->m_stride;
 
         if (!row)
-        {
-            for (int i = 0; i < 3; i++)
-                MD5Init(&m_frameEncoder->m_state[i]);
-        }
+            MD5Init(&m_frameEncoder->m_state[0]);
 
         updateMD5Plane(m_frameEncoder->m_state[0], reconPic->getLumaAddr(cuAddr), width, height, stride);
-        width  >>= m_hChromaShift;
-        height >>= m_vChromaShift;
-        stride = reconPic->m_strideC;
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            if (!row)
+            {
+                MD5Init(&m_frameEncoder->m_state[1]);
+                MD5Init(&m_frameEncoder->m_state[2]);
+            }
 
-        updateMD5Plane(m_frameEncoder->m_state[1], reconPic->getCbAddr(cuAddr), width, height, stride);
-        updateMD5Plane(m_frameEncoder->m_state[2], reconPic->getCrAddr(cuAddr), width, height, stride);
+            width >>= m_hChromaShift;
+            height >>= m_vChromaShift;
+            stride = reconPic->m_strideC;
+
+            updateMD5Plane(m_frameEncoder->m_state[1], reconPic->getCbAddr(cuAddr), width, height, stride);
+            updateMD5Plane(m_frameEncoder->m_state[2], reconPic->getCrAddr(cuAddr), width, height, stride);
+        }
     }
     else if (m_param->decodedPictureHashSEI == 2)
     {
         uint32_t height = getCUHeight(row);
         uint32_t width = reconPic->m_picWidth;
         intptr_t stride = reconPic->m_stride;
-        if (!row)
-            m_frameEncoder->m_crc[0] = m_frameEncoder->m_crc[1] = m_frameEncoder->m_crc[2] = 0xffff;
-        updateCRC(reconPic->getLumaAddr(cuAddr), m_frameEncoder->m_crc[0], height, width, stride);
-        width  >>= m_hChromaShift;
-        height >>= m_vChromaShift;
-        stride = reconPic->m_strideC;
 
-        updateCRC(reconPic->getCbAddr(cuAddr), m_frameEncoder->m_crc[1], height, width, stride);
-        updateCRC(reconPic->getCrAddr(cuAddr), m_frameEncoder->m_crc[2], height, width, stride);
+        if (!row)
+            m_frameEncoder->m_crc[0] = 0xffff;
+
+        updateCRC(reconPic->getLumaAddr(cuAddr), m_frameEncoder->m_crc[0], height, width, stride);
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            width >>= m_hChromaShift;
+            height >>= m_vChromaShift;
+            stride = reconPic->m_strideC;
+            m_frameEncoder->m_crc[1] = m_frameEncoder->m_crc[2] = 0xffff;
+
+            updateCRC(reconPic->getCbAddr(cuAddr), m_frameEncoder->m_crc[1], height, width, stride);
+            updateCRC(reconPic->getCrAddr(cuAddr), m_frameEncoder->m_crc[2], height, width, stride);
+        }
     }
     else if (m_param->decodedPictureHashSEI == 3)
     {
@@ -496,16 +528,24 @@ void FrameFilter::processRowPost(int row)
         uint32_t height = getCUHeight(row);
         intptr_t stride = reconPic->m_stride;
         uint32_t cuHeight = g_maxCUSize;
-        if (!row)
-            m_frameEncoder->m_checksum[0] = m_frameEncoder->m_checksum[1] = m_frameEncoder->m_checksum[2] = 0;
-        updateChecksum(reconPic->m_picOrg[0], m_frameEncoder->m_checksum[0], height, width, stride, row, cuHeight);
-        width  >>= m_hChromaShift;
-        height >>= m_vChromaShift;
-        stride = reconPic->m_strideC;
-        cuHeight >>= m_vChromaShift;
 
-        updateChecksum(reconPic->m_picOrg[1], m_frameEncoder->m_checksum[1], height, width, stride, row, cuHeight);
-        updateChecksum(reconPic->m_picOrg[2], m_frameEncoder->m_checksum[2], height, width, stride, row, cuHeight);
+        if (!row)
+            m_frameEncoder->m_checksum[0] = 0;
+
+        updateChecksum(reconPic->m_picOrg[0], m_frameEncoder->m_checksum[0], height, width, stride, row, cuHeight);
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            width >>= m_hChromaShift;
+            height >>= m_vChromaShift;
+            stride = reconPic->m_strideC;
+            cuHeight >>= m_vChromaShift;
+
+            if (!row)
+                m_frameEncoder->m_checksum[1] = m_frameEncoder->m_checksum[2] = 0;
+
+            updateChecksum(reconPic->m_picOrg[1], m_frameEncoder->m_checksum[1], height, width, stride, row, cuHeight);
+            updateChecksum(reconPic->m_picOrg[2], m_frameEncoder->m_checksum[2], height, width, stride, row, cuHeight);
+        }
     }
 
     if (ATOMIC_INC(&m_frameEncoder->m_completionCount) == 2 * (int)m_frameEncoder->m_numRows)

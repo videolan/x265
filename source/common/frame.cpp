@@ -72,15 +72,21 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
         /* initialize right border of m_reconpicYuv as SAO may read beyond the
          * end of the picture accessing uninitialized pixels */
         int maxHeight = sps.numCuInHeight * g_maxCUSize;
-        memset(m_reconPic->m_picOrg[0], 0, sizeof(pixel) * m_reconPic->m_stride * maxHeight);
-        memset(m_reconPic->m_picOrg[1], 0, sizeof(pixel) * m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
-        memset(m_reconPic->m_picOrg[2], 0, sizeof(pixel) * m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
+        memset(m_reconPic->m_picOrg[0], 0, sizeof(pixel)* m_reconPic->m_stride * maxHeight);
 
         /* use pre-calculated cu/pu offsets cached in the SPS structure */
-        m_reconPic->m_cuOffsetC = sps.cuOffsetC;
         m_reconPic->m_cuOffsetY = sps.cuOffsetY;
-        m_reconPic->m_buOffsetC = sps.buOffsetC;
         m_reconPic->m_buOffsetY = sps.buOffsetY;
+
+        if (param->internalCsp != X265_CSP_I400)
+        {
+            memset(m_reconPic->m_picOrg[1], 0, sizeof(pixel) * m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
+            memset(m_reconPic->m_picOrg[2], 0, sizeof(pixel) * m_reconPic->m_strideC * (maxHeight >> m_reconPic->m_vChromaShift));
+
+            /* use pre-calculated cu/pu offsets cached in the SPS structure */
+            m_reconPic->m_cuOffsetC = sps.cuOffsetC;
+            m_reconPic->m_buOffsetC = sps.buOffsetC;
+        }
     }
     return ok;
 }
