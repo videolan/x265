@@ -109,7 +109,7 @@ void Deblock::deblockCU(const CUData* cu, const CUGeom& cuGeom, const int32_t di
     for (uint32_t e = 0; e < numUnits; e += partIdxIncr)
     {
         edgeFilterLuma(cu, absPartIdx, depth, dir, e, blockStrength);
-        if (!((e0 + e) & chromaMask))
+        if (!((e0 + e) & chromaMask) && cu->m_chromaFormat != X265_CSP_I400)
             edgeFilterChroma(cu, absPartIdx, depth, dir, e, blockStrength);
     }
 }

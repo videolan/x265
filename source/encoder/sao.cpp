@@ -107,7 +107,7 @@ bool SAO::create(x265_param* param, int initCommon)
     const pixel rangeExt = maxY >> 1;
     int numCtu = m_numCuInWidth * m_numCuInHeight;
 
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < (param->internalCsp != X265_CSP_I400 ? 3 : 1); i++)
     {
         CHECKED_MALLOC(m_tmpL1[i], pixel, g_maxCUSize + 1);
         CHECKED_MALLOC(m_tmpL2[i], pixel, g_maxCUSize + 1);
@@ -214,11 +214,11 @@ void SAO::destroy(int destoryCommon)
 /* allocate memory for SAO parameters */
 void SAO::allocSaoParam(SAOParam* saoParam) const
 {
+    int planes = (m_param->internalCsp != X265_CSP_I400) ? 3 : 1;
     saoParam->numCuInWidth  = m_numCuInWidth;
 
-    saoParam->ctuParam[0] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
-    saoParam->ctuParam[1] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
-    saoParam->ctuParam[2] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
+    for (int i = 0; i < planes; i++)
+        saoParam->ctuParam[i] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
 }
 
 void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
@@ -259,7 +259,7 @@ void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
     }
 
     saoParam->bSaoFlag[0] = true;
-    saoParam->bSaoFlag[1] = true;
+    saoParam->bSaoFlag[1] = m_param->internalCsp != X265_CSP_I400;
 
     m_numNoSao[0] = 0; // Luma
     m_numNoSao[1] = 0; // Chroma
@@ -982,7 +982,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     memset(m_offsetOrgPreDblk[addr], 0, sizeof(PerPlane));
 
     int plane_offset = 0;
-    for (int plane = 0; plane < NUM_PLANE; plane++)
+    for (int plane = 0; plane < (frame->m_param->internalCsp != X265_CSP_I400 ? NUM_PLANE : 1); plane++)
     {
         if (plane == 1)
         {
@@ -1283,8 +1283,8 @@ void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
         }
 
         saoComponentParamDist(saoParam, addr, addrUp, addrLeft, &mergeSaoParam[0][0], mergeDist);
-
-        sao2ChromaParamDist(saoParam, addr, addrUp, addrLeft, mergeSaoParam, mergeDist);
+        if (m_chromaFormat != X265_CSP_I400)
+            sao2ChromaParamDist(saoParam, addr, addrUp, addrLeft, mergeSaoParam, mergeDist);
 
         if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
         {
@@ -1336,8 +1336,9 @@ void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
 
             if (saoParam->ctuParam[0][addr].typeIdx < 0)
                 m_numNoSao[0]++;
-            if (saoParam->ctuParam[1][addr].typeIdx < 0)
+            if (m_chromaFormat != X265_CSP_I400 && saoParam->ctuParam[1][addr].typeIdx < 0)
                 m_numNoSao[1]++;
+
             m_entropyCoder.load(m_rdContexts.temp);
             m_entropyCoder.store(m_rdContexts.cur);
         }
@@ -1352,6 +1353,9 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 
     const int addrUp   = rowBaseAddr ? addr - m_numCuInWidth : -1;
     const int addrLeft = idxX ? addr - 1 : -1;
+
+    bool chroma = m_param->internalCsp != X265_CSP_I400;
+    int planes = chroma ? 3 : 1;
 
     m_entropyCoder.load(m_rdContexts.cur);
     if (allowMerge[0])
@@ -1375,9 +1379,8 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
         memset(m_offsetOrg, 0, sizeof(m_offsetOrg));
     }
 
-    saoParam->ctuParam[0][addr].reset();
-    saoParam->ctuParam[1][addr].reset();
-    saoParam->ctuParam[2][addr].reset();
+    for (int i = 0; i < planes; i++)
+        saoParam->ctuParam[i][addr].reset();
 
     if (saoParam->bSaoFlag[0])
         calcSaoStatsCu(addr, 0);
@@ -1389,8 +1392,8 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
     }
 
     saoComponentParamDist(saoParam, addr, addrUp, addrLeft, &mergeSaoParam[0][0], mergeDist);
-
-    sao2ChromaParamDist(saoParam, addr, addrUp, addrLeft, mergeSaoParam, mergeDist);
+    if (chroma)
+        sao2ChromaParamDist(saoParam, addr, addrUp, addrLeft, mergeSaoParam, mergeDist);
 
     if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
     {
@@ -1401,7 +1404,7 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
             m_entropyCoder.codeSaoMerge(0);
         if (allowMerge[1])
             m_entropyCoder.codeSaoMerge(0);
-        for (int plane = 0; plane < 3; plane++)
+        for (int plane = 0; plane < planes; plane++)
         {
             if (saoParam->bSaoFlag[plane > 0])
                 m_entropyCoder.codeSaoOffset(saoParam->ctuParam[plane][addr], plane);
@@ -1431,7 +1434,7 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
                 SaoMergeMode mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
                 bestCost = mergeCost;
                 m_entropyCoder.store(m_rdContexts.temp);
-                for (int plane = 0; plane < 3; plane++)
+                for (int plane = 0; plane < planes; plane++)
                 {
                     mergeSaoParam[plane][mergeIdx].mergeMode = mergeMode;
                     if (saoParam->bSaoFlag[plane > 0])
@@ -1442,7 +1445,7 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 
         if (saoParam->ctuParam[0][addr].typeIdx < 0)
             m_numNoSao[0]++;
-        if (saoParam->ctuParam[1][addr].typeIdx < 0)
+        if (chroma && saoParam->ctuParam[1][addr].typeIdx < 0)
             m_numNoSao[1]++;
         m_entropyCoder.load(m_rdContexts.temp);
         m_entropyCoder.store(m_rdContexts.cur);
