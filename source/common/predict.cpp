@@ -99,7 +99,7 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
 
         if (cu.m_slice->m_pps->bUseWeightPred && wp0->bPresentFlag)
         {
-            for (int plane = 0; plane < 3; plane++)
+            for (int plane = 0; plane < (bChroma ? 3 : 1); plane++)
             {
                 wv0[plane].w      = wp0[plane].inputWeight;
                 wv0[plane].offset = wp0[plane].inputOffset * (1 << (X265_DEPTH - 8));
@@ -142,7 +142,7 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
             if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
             {
                 /* biprediction weighting */
-                for (int plane = 0; plane < 3; plane++)
+                for (int plane = 0; plane < (bChroma ? 3 : 1); plane++)
                 {
                     wv0[plane].w = pwp0[plane].inputWeight;
                     wv0[plane].o = pwp0[plane].inputOffset * (1 << (X265_DEPTH - 8));
@@ -159,7 +159,7 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
             {
                 /* uniprediction weighting, always outputs to wv0 */
                 const WeightParam* pwp = (refIdx0 >= 0) ? pwp0 : pwp1;
-                for (int plane = 0; plane < 3; plane++)
+                for (int plane = 0; plane < (bChroma ? 3 : 1); plane++)
                 {
                     wv0[plane].w = pwp[plane].inputWeight;
                     wv0[plane].offset = pwp[plane].inputOffset * (1 << (X265_DEPTH - 8));

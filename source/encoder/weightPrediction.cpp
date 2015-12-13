@@ -266,7 +266,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
 
         /* prepare estimates */
         float guessScale[3], fencMean[3], refMean[3];
-        for (int plane = 0; plane < 3; plane++)
+        for (int plane = 0; plane < (param.internalCsp != X265_CSP_I400 ? 3 : 1); plane++)
         {
             SET_WEIGHT(weights[plane], false, 1, 0, 0);
             uint64_t fencVar = fenc.wp_ssd[plane] + !refLowres.wp_ssd[plane];
@@ -290,7 +290,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
 
         MV *mvs = NULL;
 
-        for (int plane = 0; plane < 3; plane++)
+        for (int plane = 0; plane < (param.internalCsp != X265_CSP_I400 ? 3 : 1); plane++)
         {
             denom = plane ? chromaDenom : lumaDenom;
             if (plane && !weights[0].bPresentFlag)
@@ -329,7 +329,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
                 {
                     /* reference chroma planes must be extended prior to being
                      * used as motion compensation sources */
-                    if (!refFrame->m_bChromaExtended)
+                    if (!refFrame->m_bChromaExtended && param.internalCsp != X265_CSP_I400)
                     {
                         refFrame->m_bChromaExtended = true;
                         PicYuv *refPic = refFrame->m_fencPic;

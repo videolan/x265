@@ -189,29 +189,31 @@ public:
 
     uint8_t m_digest[3][16];
 
-    void write(Bitstream& bs, const SPS&)
+    void write(Bitstream& bs, const SPS& sps)
     {
         m_bitIf = &bs;
+
+        int planes = (sps.chromaFormatIdc != X265_CSP_I400) ? 3 : 1;
 
         WRITE_CODE(DECODED_PICTURE_HASH, 8, "payload_type");
 
         switch (m_method)
         {
         case MD5:
-            WRITE_CODE(1 + 16 * 3, 8, "payload_size");
+            WRITE_CODE(1 + 16 * planes, 8, "payload_size");
             WRITE_CODE(MD5, 8, "hash_type");
             break;
         case CRC:
-            WRITE_CODE(1 + 2 * 3, 8, "payload_size");
+            WRITE_CODE(1 + 2 * planes, 8, "payload_size");
             WRITE_CODE(CRC, 8, "hash_type");
             break;
         case CHECKSUM:
-            WRITE_CODE(1 + 4 * 3, 8, "payload_size");
+            WRITE_CODE(1 + 4 * planes, 8, "payload_size");
             WRITE_CODE(CHECKSUM, 8, "hash_type");
             break;
         }
 
-        for (int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
+        for (int yuvIdx = 0; yuvIdx < planes; yuvIdx++)
         {
             if (m_method == MD5)
             {

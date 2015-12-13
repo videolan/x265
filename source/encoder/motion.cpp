@@ -189,11 +189,12 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
     satd = primitives.pu[partEnum].satd;
     sad_x3 = primitives.pu[partEnum].sad_x3;
     sad_x4 = primitives.pu[partEnum].sad_x4;
+
     chromaSatd = primitives.chroma[fencPUYuv.m_csp].pu[partEnum].satd;
 
     /* Enable chroma residual cost if subpelRefine level is greater than 2 and chroma block size
      * is an even multiple of 4x4 pixels (indicated by non-null chromaSatd pointer) */
-    bChromaSATD = subpelRefine > 2 && chromaSatd;
+    bChromaSATD = subpelRefine > 2 && chromaSatd && (srcFencYuv.m_csp != X265_CSP_I400);
     X265_CHECK(!(bChromaSATD && !workload[subpelRefine].hpel_satd), "Chroma SATD cannot be used with SAD hpel\n");
 
     ctuAddr = _ctuAddr;

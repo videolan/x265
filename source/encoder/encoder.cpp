@@ -533,10 +533,13 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                  * allocated by this top level encoder */
                 if (m_sps.cuOffsetY)
                 {
-                    inFrame->m_fencPic->m_cuOffsetC = m_sps.cuOffsetC;
                     inFrame->m_fencPic->m_cuOffsetY = m_sps.cuOffsetY;
-                    inFrame->m_fencPic->m_buOffsetC = m_sps.buOffsetC;
                     inFrame->m_fencPic->m_buOffsetY = m_sps.buOffsetY;
+                    if (pic_in->colorSpace != X265_CSP_I400)
+                    {
+                        inFrame->m_fencPic->m_cuOffsetC = m_sps.cuOffsetC;
+                        inFrame->m_fencPic->m_buOffsetC = m_sps.buOffsetC;
+                    }
                 }
                 else
                 {
@@ -550,10 +553,15 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     }
                     else
                     {
-                        m_sps.cuOffsetC = inFrame->m_fencPic->m_cuOffsetC;
                         m_sps.cuOffsetY = inFrame->m_fencPic->m_cuOffsetY;
-                        m_sps.buOffsetC = inFrame->m_fencPic->m_buOffsetC;
                         m_sps.buOffsetY = inFrame->m_fencPic->m_buOffsetY;
+                        if (pic_in->colorSpace != X265_CSP_I400)
+                        {
+                            m_sps.cuOffsetC = inFrame->m_fencPic->m_cuOffsetC;
+                            m_sps.cuOffsetY = inFrame->m_fencPic->m_cuOffsetY;
+                            m_sps.buOffsetC = inFrame->m_fencPic->m_buOffsetC;
+                            m_sps.buOffsetY = inFrame->m_fencPic->m_buOffsetY;
+                        }
                     }
                 }
             }
@@ -692,10 +700,13 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
                 pic_out->planes[0] = recpic->m_picOrg[0];
                 pic_out->stride[0] = (int)(recpic->m_stride * sizeof(pixel));
-                pic_out->planes[1] = recpic->m_picOrg[1];
-                pic_out->stride[1] = (int)(recpic->m_strideC * sizeof(pixel));
-                pic_out->planes[2] = recpic->m_picOrg[2];
-                pic_out->stride[2] = (int)(recpic->m_strideC * sizeof(pixel));
+                if (m_param->internalCsp != X265_CSP_I400)
+                {
+                    pic_out->planes[1] = recpic->m_picOrg[1];
+                    pic_out->stride[1] = (int)(recpic->m_strideC * sizeof(pixel));
+                    pic_out->planes[2] = recpic->m_picOrg[2];
+                    pic_out->stride[2] = (int)(recpic->m_strideC * sizeof(pixel));
+                }
 
                 /* Dump analysis data from pic_out to file in save mode and free */
                 if (m_param->analysisMode == X265_ANALYSIS_SAVE)
@@ -712,32 +723,53 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     freeAnalysis(&pic_out->analysisData);
                 }
             }
-            if (slice->m_sliceType == P_SLICE)
+            if (m_param->internalCsp == X265_CSP_I400)
             {
-                if (slice->m_weightPredTable[0][0][0].bPresentFlag)
-                    m_numLumaWPFrames++;
-                if (slice->m_weightPredTable[0][0][1].bPresentFlag ||
-                    slice->m_weightPredTable[0][0][2].bPresentFlag)
-                    m_numChromaWPFrames++;
-            }
-            else if (slice->m_sliceType == B_SLICE)
-            {
-                bool bLuma = false, bChroma = false;
-                for (int l = 0; l < 2; l++)
+                if (slice->m_sliceType == P_SLICE)
                 {
-                    if (slice->m_weightPredTable[l][0][0].bPresentFlag)
-                        bLuma = true;
-                    if (slice->m_weightPredTable[l][0][1].bPresentFlag ||
-                        slice->m_weightPredTable[l][0][2].bPresentFlag)
-                        bChroma = true;
+                    if (slice->m_weightPredTable[0][0][0].bPresentFlag)
+                        m_numLumaWPFrames++;
                 }
-
-                if (bLuma)
-                    m_numLumaWPBiFrames++;
-                if (bChroma)
-                    m_numChromaWPBiFrames++;
+                else if (slice->m_sliceType == B_SLICE)
+                {
+                    bool bLuma = false;
+                    for (int l = 0; l < 2; l++)
+                    {
+                        if (slice->m_weightPredTable[l][0][0].bPresentFlag)
+                            bLuma = true;
+                    }
+                    if (bLuma)
+                        m_numLumaWPBiFrames++;
+                }
             }
+            else
+            {
+                if (slice->m_sliceType == P_SLICE)
+                {
+                    if (slice->m_weightPredTable[0][0][0].bPresentFlag)
+                        m_numLumaWPFrames++;
+                    if (slice->m_weightPredTable[0][0][1].bPresentFlag ||
+                        slice->m_weightPredTable[0][0][2].bPresentFlag)
+                        m_numChromaWPFrames++;
+                }
+                else if (slice->m_sliceType == B_SLICE)
+                {
+                    bool bLuma = false, bChroma = false;
+                    for (int l = 0; l < 2; l++)
+                    {
+                        if (slice->m_weightPredTable[l][0][0].bPresentFlag)
+                            bLuma = true;
+                        if (slice->m_weightPredTable[l][0][1].bPresentFlag ||
+                            slice->m_weightPredTable[l][0][2].bPresentFlag)
+                            bChroma = true;
+                    }
 
+                    if (bLuma)
+                        m_numLumaWPBiFrames++;
+                    if (bChroma)
+                        m_numChromaWPBiFrames++;
+                }
+            }
             if (m_aborted)
                 return -1;
 
