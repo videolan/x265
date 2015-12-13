@@ -222,12 +222,12 @@ public:
     void     copyToPic(uint32_t depth) const;
 
     /* RD-0 methods called only from encodeResidue */
-    void     copyFromPic(const CUData& ctu, const CUGeom& cuGeom);
+    void     copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp);
     void     updatePic(uint32_t depth) const;
 
     void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSize, (uint8_t)size); }
     void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }
-    void     clearCbf()                            { m_partSet(m_cbf[0], 0); m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0); }
+    void     clearCbf()                            { m_partSet(m_cbf[0], 0); if (m_chromaFormat != X265_CSP_I400) { m_partSet(m_cbf[1], 0); m_partSet(m_cbf[2], 0);} }
 
     /* these functions all take depth as an absolute depth from CTU, it is used to calculate the number of parts to copy */
     void     setQPSubParts(int8_t qp, uint32_t absPartIdx, uint32_t depth)                    { s_partSet[depth]((uint8_t*)m_qp + absPartIdx, (uint8_t)qp); }
@@ -246,7 +246,7 @@ public:
     void     setPURefIdx(int list, int8_t refIdx, int absPartIdx, int puIdx);
 
     uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t tuDepth) const { return (m_cbf[ttype][absPartIdx] >> tuDepth) & 0x1; }
-    uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx]; }
+    uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { if (m_chromaFormat == X265_CSP_I400) return m_cbf[0][absPartIdx] || 0; else { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx];} }
     int8_t   getRefQP(uint32_t currAbsIdxInCTU) const;
     uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField (*candMvField)[2], uint8_t* candDir) const;
     void     clipMv(MV& outMV) const;
@@ -339,8 +339,15 @@ struct CUDataMemPool
         uint32_t numPartition = NUM_4x4_PARTITIONS >> (depth * 2);
         uint32_t cuSize = g_maxCUSize >> depth;
         uint32_t sizeL = cuSize * cuSize;
-        uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));
-        CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numInstances);
+        if (csp == X265_CSP_I400)
+        {
+            CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL) * numInstances);
+        }
+        else
+        {            
+            uint32_t sizeC = sizeL >> (CHROMA_H_SHIFT(csp) + CHROMA_V_SHIFT(csp));
+            CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numInstances);
+        }
         CHECKED_MALLOC(charMemBlock, uint8_t, numPartition * numInstances * CUData::BytesPerPartition);
         CHECKED_MALLOC(mvMemBlock, MV, numPartition * 4 * numInstances);
         return true;
