@@ -430,7 +430,8 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData)
     if (slice.m_sps->bUseSAO)
     {
         WRITE_FLAG(saoParam->bSaoFlag[0], "slice_sao_luma_flag");
-        WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
+        if (encData.m_param->internalCsp != X265_CSP_I400)
+            WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
     }
 
     // check if numRefIdx match the defaults (1, hard-coded in PPS). If not, override
@@ -829,6 +830,79 @@ void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t cu
     }
 }
 
+void Entropy::encodeTransformLuma(const CUData& cu, uint32_t absPartIdx, uint32_t curDepth, uint32_t log2CurSize,
+                              bool& bCodeDQP, const uint32_t depthRange[2])
+{
+    const bool subdiv = cu.m_tuDepth[absPartIdx] > curDepth;
+
+    /* in each of these conditions, the subdiv flag is implied and not signaled,
+     * so we have checks to make sure the implied value matches our intentions */
+    if (cu.isIntra(absPartIdx) && cu.m_partSize[absPartIdx] != SIZE_2Nx2N && log2CurSize == MIN_LOG2_CU_SIZE)
+    {
+        X265_CHECK(subdiv, "intra NxN requires TU depth below CU depth\n");
+    }
+    else if (cu.isInter(absPartIdx) && cu.m_partSize[absPartIdx] != SIZE_2Nx2N &&
+             !curDepth && cu.m_slice->m_sps->quadtreeTUMaxDepthInter == 1)
+    {
+        X265_CHECK(subdiv, "inter TU must be smaller than CU when not 2Nx2N part size: log2CurSize %d, depthRange[0] %d\n", log2CurSize, depthRange[0]);
+    }
+    else if (log2CurSize > depthRange[1])
+    {
+        X265_CHECK(subdiv, "TU is larger than the max allowed, it should have been split\n");
+    }
+    else if (log2CurSize == cu.m_slice->m_sps->quadtreeTULog2MinSize || log2CurSize == depthRange[0])
+    {
+        X265_CHECK(!subdiv, "min sized TU cannot be subdivided\n");
+    }
+    else
+    {
+        X265_CHECK(log2CurSize > depthRange[0], "transform size failure\n");
+        codeTransformSubdivFlag(subdiv, 5 - log2CurSize);
+    }
+
+    if (subdiv)
+    {
+        --log2CurSize;
+        ++curDepth;
+
+        uint32_t qNumParts = 1 << (log2CurSize - LOG2_UNIT_SIZE) * 2;
+
+        encodeTransformLuma(cu, absPartIdx + 0 * qNumParts, curDepth, log2CurSize, bCodeDQP, depthRange);
+        encodeTransformLuma(cu, absPartIdx + 1 * qNumParts, curDepth, log2CurSize, bCodeDQP, depthRange);
+        encodeTransformLuma(cu, absPartIdx + 2 * qNumParts, curDepth, log2CurSize, bCodeDQP, depthRange);
+        encodeTransformLuma(cu, absPartIdx + 3 * qNumParts, curDepth, log2CurSize, bCodeDQP, depthRange);
+        return;
+    }
+
+    if (!cu.isIntra(absPartIdx) && !curDepth)
+    {
+        X265_CHECK(cu.getCbf(absPartIdx, TEXT_LUMA, 0), "CBF should have been set\n");
+    }
+    else
+        codeQtCbfLuma(cu, absPartIdx, curDepth);
+
+    uint32_t cbfY = cu.getCbf(absPartIdx, TEXT_LUMA, curDepth);
+
+    if (!cbfY)
+        return;
+
+    // dQP: only for CTU once
+    if (cu.m_slice->m_pps->bUseDQP && bCodeDQP)
+    {
+        uint32_t log2CUSize = cu.m_log2CUSize[absPartIdx];
+        uint32_t absPartIdxLT = absPartIdx & (0xFF << (log2CUSize - LOG2_UNIT_SIZE) * 2);
+        codeDeltaQP(cu, absPartIdxLT);
+        bCodeDQP = false;
+    }
+
+    if (cbfY)
+    {
+        uint32_t coeffOffset = absPartIdx << (LOG2_UNIT_SIZE * 2);
+        codeCoeffNxN(cu, cu.m_trCoeff[0] + coeffOffset, absPartIdx, log2CurSize, TEXT_LUMA);
+    }
+}
+
+
 void Entropy::codePredInfo(const CUData& cu, uint32_t absPartIdx)
 {
     if (cu.isIntra(absPartIdx)) // If it is intra mode, encode intra prediction mode.
@@ -909,7 +983,10 @@ void Entropy::codeCoeff(const CUData& cu, uint32_t absPartIdx, bool& bCodeDQP, c
     }
 
     uint32_t log2CUSize = cu.m_log2CUSize[absPartIdx];
-    encodeTransform(cu, absPartIdx, 0, log2CUSize, bCodeDQP, depthRange);
+    if (cu.m_chromaFormat == X265_CSP_I400)
+        encodeTransformLuma(cu, absPartIdx, 0, log2CUSize, bCodeDQP, depthRange);
+    else
+        encodeTransform(cu, absPartIdx, 0, log2CUSize, bCodeDQP, depthRange);
 }
 
 void Entropy::codeSaoOffset(const SaoCtuParam& ctuParam, int plane)
@@ -1011,7 +1088,7 @@ void Entropy::resetEntropy(const Slice& slice)
 void Entropy::codePredWeightTable(const Slice& slice)
 {
     const WeightParam *wp;
-    bool            bChroma      = true; // 4:0:0 not yet supported
+    bool            bChroma = slice.m_sps->chromaFormatIdc != X265_CSP_I400;
     bool            bDenomCoded  = false;
     int             numRefDirs   = slice.m_sliceType == B_SLICE ? 2 : 1;
     uint32_t        totalSignalledWeightFlags = 0;

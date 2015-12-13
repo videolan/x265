@@ -247,6 +247,8 @@ private:
 
     void encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth, uint32_t log2TrSize,
                          bool& bCodeDQP, const uint32_t depthRange[2]);
+    void encodeTransformLuma(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth, uint32_t log2TrSize,
+                         bool& bCodeDQP, const uint32_t depthRange[2]);
 
     void copyFrom(const Entropy& src);
     void copyContextsFrom(const Entropy& src);
