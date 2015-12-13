@@ -1082,8 +1082,8 @@ int x265_check_params(x265_param* param)
 
     CHECK(param->sourceWidth < (int)param->maxCUSize || param->sourceHeight < (int)param->maxCUSize,
           "Picture size must be at least one CTU");
-    CHECK(param->internalCsp < X265_CSP_I420 || X265_CSP_I444 < param->internalCsp,
-          "Color space must be i420, i422, or i444");
+    CHECK(param->internalCsp < X265_CSP_I400 || X265_CSP_I444 < param->internalCsp,
+          "Color space must be i400, i420, i422 or i444");
     CHECK(param->sourceWidth & !!CHROMA_H_SHIFT(param->internalCsp),
           "Picture width must be an integer multiple of the specified chroma subsampling");
     CHECK(param->sourceHeight & !!CHROMA_V_SHIFT(param->internalCsp),
