@@ -689,7 +689,7 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
             if (m_param->rdLevel > 2)
             {
                 /* RD selection between merge, inter, bidir and intra */
-                if (!m_bChromaSa8d) /* When m_bChromaSa8d is enabled, chroma MC has already been done */
+                if (!m_bChromaSa8d && (m_csp != X265_CSP_I400)) /* When m_bChromaSa8d is enabled, chroma MC has already been done */
                 {
                     uint32_t numPU = bestInter->cu.getNumPartInter(0);
                     for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
@@ -1098,7 +1098,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             if (m_param->rdLevel >= 3)
             {
                 /* Calculate RD cost of best inter option */
-                if (!m_bChromaSa8d) /* When m_bChromaSa8d is enabled, chroma MC has already been done */
+                if (!m_bChromaSa8d && (m_csp != X265_CSP_I400)) /* When m_bChromaSa8d is enabled, chroma MC has already been done */
                 {
                     uint32_t numPU = bestInter->cu.getNumPartInter(0);
                     for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
@@ -1173,10 +1173,13 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 else if (md.bestMode->cu.isInter(0))
                 {
                     uint32_t numPU = md.bestMode->cu.getNumPartInter(0);
-                    for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
+                    if (m_csp != X265_CSP_I400)
                     {
-                        PredictionUnit pu(md.bestMode->cu, cuGeom, puIdx);
-                        motionCompensation(md.bestMode->cu, pu, md.bestMode->predYuv, false, true);
+                        for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
+                        {
+                            PredictionUnit pu(md.bestMode->cu, cuGeom, puIdx);
+                            motionCompensation(md.bestMode->cu, pu, md.bestMode->predYuv, false, true);
+                        }
                     }
                     if (m_param->rdLevel == 2)
                         encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
@@ -1187,7 +1190,6 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
 
                         uint32_t tuDepthRange[2];
                         cu.getInterTUQtDepthRange(tuDepthRange, 0);
-
                         m_rqt[cuGeom.depth].tmpResiYuv.subtract(*md.bestMode->fencYuv, md.bestMode->predYuv, cuGeom.log2CUSize);
                         residualTransformQuantInter(*md.bestMode, cuGeom, 0, 0, tuDepthRange);
                         if (cu.getQtRootCbf(0))
@@ -1213,8 +1215,11 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                         cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
                         residualTransformQuantIntra(*md.bestMode, cuGeom, 0, 0, tuDepthRange);
-                        getBestIntraModeChroma(*md.bestMode, cuGeom);
-                        residualQTIntraChroma(*md.bestMode, cuGeom, 0, 0);
+                        if (m_csp != X265_CSP_I400)
+                        {
+                            getBestIntraModeChroma(*md.bestMode, cuGeom);
+                            residualQTIntraChroma(*md.bestMode, cuGeom, 0, 0);
+                        }
                         md.bestMode->reconYuv.copyFromPicYuv(reconPic, cu.m_cuAddr, cuGeom.absPartIdx); // TODO:
                     }
                 }
@@ -1701,12 +1706,11 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         tempPred->cu.m_mv[1][0] = candMvField[i][1].mv;
         tempPred->cu.m_refIdx[0][0] = (int8_t)candMvField[i][0].refIdx;
         tempPred->cu.m_refIdx[1][0] = (int8_t)candMvField[i][1].refIdx;
-
-        motionCompensation(tempPred->cu, pu, tempPred->predYuv, true, m_bChromaSa8d);
+        motionCompensation(tempPred->cu, pu, tempPred->predYuv, true, m_bChromaSa8d && (m_csp != X265_CSP_I400));
 
         tempPred->sa8dBits = getTUBits(i, numMergeCand);
         tempPred->distortion = primitives.cu[sizeIdx].sa8d(fencYuv->m_buf[0], fencYuv->m_size, tempPred->predYuv.m_buf[0], tempPred->predYuv.m_size);
-        if (m_bChromaSa8d)
+        if (m_bChromaSa8d && (m_csp != X265_CSP_I400))
         {
             tempPred->distortion += primitives.chroma[m_csp].cu[sizeIdx].sa8d(fencYuv->m_buf[1], fencYuv->m_csize, tempPred->predYuv.m_buf[1], tempPred->predYuv.m_csize);
             tempPred->distortion += primitives.chroma[m_csp].cu[sizeIdx].sa8d(fencYuv->m_buf[2], fencYuv->m_csize, tempPred->predYuv.m_buf[2], tempPred->predYuv.m_csize);
@@ -1725,7 +1729,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         return;
 
     /* calculate the motion compensation for chroma for the best mode selected */
-    if (!m_bChromaSa8d) /* Chroma MC was done above */
+    if (!m_bChromaSa8d && (m_csp != X265_CSP_I400)) /* Chroma MC was done above */
         motionCompensation(bestPred->cu, pu, bestPred->predYuv, false, true);
 
     if (m_param->rdLevel)
@@ -1848,7 +1852,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         tempPred->cu.m_refIdx[1][0] = (int8_t)candMvField[i][1].refIdx;
         tempPred->cu.setPredModeSubParts(MODE_INTER); /* must be cleared between encode iterations */
 
-        motionCompensation(tempPred->cu, pu, tempPred->predYuv, true, true);
+        motionCompensation(tempPred->cu, pu, tempPred->predYuv, true, m_csp != X265_CSP_I400);
 
         uint8_t hasCbf = true;
         bool swapped = false;
@@ -1935,15 +1939,14 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             }
         }
     }
-
-    predInterSearch(interMode, cuGeom, m_bChromaSa8d, refMask);
+    predInterSearch(interMode, cuGeom, m_bChromaSa8d && (m_csp != X265_CSP_I400), refMask);
 
     /* predInterSearch sets interMode.sa8dBits */
     const Yuv& fencYuv = *interMode.fencYuv;
     Yuv& predYuv = interMode.predYuv;
     int part = partitionFromLog2Size(cuGeom.log2CUSize);
     interMode.distortion = primitives.cu[part].sa8d(fencYuv.m_buf[0], fencYuv.m_size, predYuv.m_buf[0], predYuv.m_size);
-    if (m_bChromaSa8d)
+    if (m_bChromaSa8d && (m_csp != X265_CSP_I400))
     {
         interMode.distortion += primitives.chroma[m_csp].cu[part].sa8d(fencYuv.m_buf[1], fencYuv.m_csize, predYuv.m_buf[1], predYuv.m_csize);
         interMode.distortion += primitives.chroma[m_csp].cu[part].sa8d(fencYuv.m_buf[2], fencYuv.m_csize, predYuv.m_buf[2], predYuv.m_csize);
@@ -1992,8 +1995,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
             }
         }
     }
-
-    predInterSearch(interMode, cuGeom, true, refMask);
+    predInterSearch(interMode, cuGeom, m_csp != X265_CSP_I400, refMask);
 
     /* predInterSearch sets interMode.sa8dBits, but this is ignored */
     encodeResAndCalcRdInterCU(interMode, cuGeom);
@@ -2060,10 +2062,10 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
     cu.m_mvd[1][0] = bestME[1].mv - mvp1;
 
     PredictionUnit pu(cu, cuGeom, 0);
-    motionCompensation(cu, pu, bidir2Nx2N.predYuv, true, m_bChromaSa8d);
+    motionCompensation(cu, pu, bidir2Nx2N.predYuv, true, m_bChromaSa8d && (m_csp != X265_CSP_I400));
 
     int sa8d = primitives.cu[partEnum].sa8d(fencYuv.m_buf[0], fencYuv.m_size, bidir2Nx2N.predYuv.m_buf[0], bidir2Nx2N.predYuv.m_size);
-    if (m_bChromaSa8d)
+    if (m_bChromaSa8d && (m_csp != X265_CSP_I400))
     {
         /* Add in chroma distortion */
         sa8d += primitives.chroma[m_csp].cu[partEnum].sa8d(fencYuv.m_buf[1], fencYuv.m_csize, bidir2Nx2N.predYuv.m_buf[1], bidir2Nx2N.predYuv.m_csize);
@@ -2094,16 +2096,16 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
 
         int zsa8d;
 
-        if (m_bChromaSa8d)
+        if (m_bChromaSa8d && (m_csp != X265_CSP_I400))
         {
             cu.m_mv[0][0] = mvzero;
             cu.m_mv[1][0] = mvzero;
 
             motionCompensation(cu, pu, tmpPredYuv, true, true);
-
             zsa8d  = primitives.cu[partEnum].sa8d(fencYuv.m_buf[0], fencYuv.m_size, tmpPredYuv.m_buf[0], tmpPredYuv.m_size);
             zsa8d += primitives.chroma[m_csp].cu[partEnum].sa8d(fencYuv.m_buf[1], fencYuv.m_csize, tmpPredYuv.m_buf[1], tmpPredYuv.m_csize);
             zsa8d += primitives.chroma[m_csp].cu[partEnum].sa8d(fencYuv.m_buf[2], fencYuv.m_csize, tmpPredYuv.m_buf[2], tmpPredYuv.m_csize);
+
         }
         else
         {
@@ -2139,13 +2141,12 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
             cu.m_mvd[1][0] = mvzero - mvp1;
             cu.m_mvpIdx[1][0] = (uint8_t)mvpIdx1;
 
-            if (m_bChromaSa8d)
-                /* real MC was already performed */
+            if (m_bChromaSa8d) /* real MC was already performed */
                 bidir2Nx2N.predYuv.copyFromYuv(tmpPredYuv);
             else
-                motionCompensation(cu, pu, bidir2Nx2N.predYuv, true, true);
+                motionCompensation(cu, pu, bidir2Nx2N.predYuv, true, m_csp != X265_CSP_I400);
         }
-        else if (m_bChromaSa8d)
+        else if (m_bChromaSa8d && (m_csp != X265_CSP_I400))
         {
             /* recover overwritten motion vectors */
             cu.m_mv[0][0] = bestME[0].mv;
@@ -2174,7 +2175,7 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
     Mode *bestMode = m_modeDepth[cuGeom.depth].bestMode;
     CUData& cu = bestMode->cu;
 
-    cu.copyFromPic(ctu, cuGeom);
+    cu.copyFromPic(ctu, cuGeom, m_csp);
 
     PicYuv& reconPic = *m_frame->m_reconPic;
 
@@ -2191,8 +2192,11 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         cu.getIntraTUQtDepthRange(tuDepthRange, 0);
 
         residualTransformQuantIntra(*bestMode, cuGeom, 0, 0, tuDepthRange);
-        getBestIntraModeChroma(*bestMode, cuGeom);
-        residualQTIntraChroma(*bestMode, cuGeom, 0, 0);
+        if (m_csp != X265_CSP_I400)
+        {
+            getBestIntraModeChroma(*bestMode, cuGeom);
+            residualQTIntraChroma(*bestMode, cuGeom, 0, 0);
+        }
     }
     else // if (cu.isInter(0))
     {
@@ -2207,20 +2211,23 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         /* at RD 0, the prediction pixels are accumulated into the top depth predYuv */
         Yuv& predYuv = m_modeDepth[0].bestMode->predYuv;
         pixel* predY = predYuv.getLumaAddr(absPartIdx);
-        pixel* predU = predYuv.getCbAddr(absPartIdx);
-        pixel* predV = predYuv.getCrAddr(absPartIdx);
 
         primitives.cu[sizeIdx].sub_ps(resiYuv.m_buf[0], resiYuv.m_size,
                                       fencYuv.m_buf[0], predY,
                                       fencYuv.m_size, predYuv.m_size);
 
-        primitives.chroma[m_csp].cu[sizeIdx].sub_ps(resiYuv.m_buf[1], resiYuv.m_csize,
+        if (m_csp != X265_CSP_I400)
+        {
+            pixel* predU = predYuv.getCbAddr(absPartIdx);
+            pixel* predV = predYuv.getCrAddr(absPartIdx);
+            primitives.chroma[m_csp].cu[sizeIdx].sub_ps(resiYuv.m_buf[1], resiYuv.m_csize,
                                                  fencYuv.m_buf[1], predU,
                                                  fencYuv.m_csize, predYuv.m_csize);
 
-        primitives.chroma[m_csp].cu[sizeIdx].sub_ps(resiYuv.m_buf[2], resiYuv.m_csize,
+            primitives.chroma[m_csp].cu[sizeIdx].sub_ps(resiYuv.m_buf[2], resiYuv.m_csize,
                                                  fencYuv.m_buf[2], predV,
                                                  fencYuv.m_csize, predYuv.m_csize);
+        }
 
         uint32_t tuDepthRange[2];
         cu.getInterTUQtDepthRange(tuDepthRange, 0);
@@ -2239,20 +2246,24 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         else
             primitives.cu[sizeIdx].copy_pp(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
                                            predY, predYuv.m_size);
-
-        if (cu.m_cbf[1][0])
-            primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+        if (m_csp != X265_CSP_I400)
+        {
+             pixel* predU = predYuv.getCbAddr(absPartIdx);
+             pixel* predV = predYuv.getCrAddr(absPartIdx);
+            if (cu.m_cbf[1][0])
+                primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                         predU, resiYuv.m_buf[1], predYuv.m_csize, resiYuv.m_csize);
-        else
-            primitives.chroma[m_csp].cu[sizeIdx].copy_pp(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+            else
+                primitives.chroma[m_csp].cu[sizeIdx].copy_pp(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                          predU, predYuv.m_csize);
 
-        if (cu.m_cbf[2][0])
-            primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+            if (cu.m_cbf[2][0])
+                primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                         predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
-        else
-            primitives.chroma[m_csp].cu[sizeIdx].copy_pp(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+            else
+                primitives.chroma[m_csp].cu[sizeIdx].copy_pp(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                          predV, predYuv.m_csize);
+        }
     }
 
     cu.updatePic(cuGeom.depth);
