@@ -1301,6 +1301,8 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
+    bool foundSkip = false;
+    bool splitIntra = true;
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD)
     {
@@ -1321,13 +1323,9 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             // increment zOrder offset to point to next best depth in sharedDepth buffer
             zOrder += g_depthInc[g_maxCUDepth - 1][reuseDepth[zOrder]];
 
-            mightSplit = false;
-            mightNotSplit = false;
+            foundSkip = true;
         }
-    }
-
-    bool foundSkip = false;
-    bool splitIntra = true;
+    }  
 
     SplitData splitData[4];
     splitData[0].initSplitCUData();
@@ -1800,16 +1798,6 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     {
         first = *m_reuseBestMergeCand;
         last = first + 1;
-        int numPred = m_slice->isInterB() + 1;
-        /* skip refs and mvs used for 2Nx2N, Nx2N, 2NxN inter predictions if best mode is SKIP */
-        m_reuseRef += numPred;
-        m_reuseMv += numPred;
-        if (m_param->bEnableRectInter)
-        {
-           int inc = numPred * 2 * 2;
-            m_reuseRef += inc;
-            m_reuseMv += inc;
-        }
     }
     int safeX, maxSafeMv;
     if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE)
