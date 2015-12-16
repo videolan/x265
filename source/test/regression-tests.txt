@@ -51,6 +51,7 @@ DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset slower --no-weightp --rdoq-leve
 FourPeople_1280x720_60.y4m,--preset superfast --no-wpp --lookahead-slices 2
 FourPeople_1280x720_60.y4m,--preset medium --qp 38 --no-psy-rd --rd 0
 FourPeople_1280x720_60.y4m,--preset medium --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
+FourPeople_1280x720_60.y4m,--preset veryslow --numa-pools "none"
 Keiba_832x480_30.y4m,--preset superfast --no-fast-intra --nr-intra 1000 -F4
 Keiba_832x480_30.y4m,--preset medium --pmode --tune grain
 Keiba_832x480_30.y4m,--preset slower --fast-intra --nr-inter 500 -F4 --limit-refs 0
@@ -101,6 +102,7 @@ ducks_take_off_420_720p50.y4m,--preset medium --tskip --tskip-fast --constrained
 ducks_take_off_444_720p50.y4m,--preset medium --qp 38 --no-scenecut
 ducks_take_off_420_720p50.y4m,--preset slow --scaling-list default --qp 40
 ducks_take_off_444_720p50.y4m,--preset slower --psy-rd 1 --psy-rdoq 2.0 --rdoq-level 1 --limit-refs 1
+ducks_take_off_420_720p50.y4m,--preset slower --no-wpp
 ducks_take_off_420_720p50.y4m,--preset veryslow --constrained-intra --bframes 2
 mobile_calendar_422_ntsc.y4m,--preset superfast --weightp --rd 0
 mobile_calendar_422_ntsc.y4m,--preset medium --bitrate 500 -F4
