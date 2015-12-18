@@ -1857,6 +1857,7 @@ void Encoder::configure(x265_param *p)
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)
 {
+    X265_CHECK(analysis->sliceType, "invalid slice type\n");
     analysis->interData = analysis->intraData = NULL;
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
     {
@@ -1870,13 +1871,14 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
     }
     else
     {
+        int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
         analysis_inter_data *interData = (analysis_inter_data*)analysis->interData;
         CHECKED_MALLOC_ZERO(interData, analysis_inter_data, 1);
-        CHECKED_MALLOC_ZERO(interData->ref, int32_t, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2);
+        CHECKED_MALLOC_ZERO(interData->ref, int32_t, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir);
         CHECKED_MALLOC(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC_ZERO(interData->bestMergeCand, uint32_t, analysis->numCUsInFrame * CUGeom::MAX_GEOMS);
-        CHECKED_MALLOC_ZERO(interData->mv, MV, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * 2);
+        CHECKED_MALLOC_ZERO(interData->mv, MV, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir);
         analysis->interData = interData;
     }
     return;
