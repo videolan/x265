@@ -117,8 +117,10 @@ public:
     int           m_8x8Width;
     int           m_8x8Height;
     int           m_8x8Blocks;
+    int           m_cuCount;
     int           m_numCoopSlices;
     int           m_numRowsPerSlice;
+    double        m_cuTreeStrength;
 
     bool          m_isActive;
     bool          m_sliceTypeBusy;

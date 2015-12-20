@@ -501,7 +501,13 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
 
     m_8x8Height = ((m_param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_8x8Width = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
-    m_8x8Blocks = m_8x8Width > 2 && m_8x8Height > 2 ? (m_8x8Width - 2) * (m_8x8Height - 2) : m_8x8Width * m_8x8Height;
+    m_cuCount = m_8x8Width * m_8x8Height;
+    m_8x8Blocks = m_8x8Width > 2 && m_8x8Height > 2 ? (m_cuCount + 4 - 2 * (m_8x8Width + m_8x8Height)) : m_cuCount;
+
+    /* Allow the strength to be adjusted via qcompress, since the two concepts
+     * are very similar. */
+
+    m_cuTreeStrength = 5.0 * (1.0 - m_param->rc.qCompress);
 
     m_lastKeyframe = -m_param->keyframeMax;
     m_sliceTypeBusy = false;
@@ -1645,7 +1651,6 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bIntra)
     double averageDuration = totalDuration / (numframes + 1);
 
     int i = numframes;
-    int cuCount = m_8x8Width * m_8x8Height;
 
     while (i > 0 && frames[i]->sliceType == X265_TYPE_B)
         i--;
@@ -1659,18 +1664,18 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bIntra)
     {
         if (bIntra)
         {
-            memset(frames[0]->propagateCost, 0, cuCount * sizeof(uint16_t));
-            memcpy(frames[0]->qpCuTreeOffset, frames[0]->qpAqOffset, cuCount * sizeof(double));
+            memset(frames[0]->propagateCost, 0, m_cuCount * sizeof(uint16_t));
+            memcpy(frames[0]->qpCuTreeOffset, frames[0]->qpAqOffset, m_cuCount * sizeof(double));
             return;
         }
         std::swap(frames[lastnonb]->propagateCost, frames[0]->propagateCost);
-        memset(frames[0]->propagateCost, 0, cuCount * sizeof(uint16_t));
+        memset(frames[0]->propagateCost, 0, m_cuCount * sizeof(uint16_t));
     }
     else
     {
         if (lastnonb < idx)
             return;
-        memset(frames[lastnonb]->propagateCost, 0, cuCount * sizeof(uint16_t));
+        memset(frames[lastnonb]->propagateCost, 0, m_cuCount * sizeof(uint16_t));
     }
 
     CostEstimateGroup estGroup(*this, frames);
@@ -1686,13 +1691,13 @@ void Lookahead::cuTree(Lowres **frames, int numframes, bool bIntra)
 
         estGroup.singleCost(curnonb, lastnonb, lastnonb);
 
-        memset(frames[curnonb]->propagateCost, 0, cuCount * sizeof(uint16_t));
+        memset(frames[curnonb]->propagateCost, 0, m_cuCount * sizeof(uint16_t));
         bframes = lastnonb - curnonb - 1;
         if (m_param->bBPyramid && bframes > 1)
         {
             int middle = (bframes + 1) / 2 + curnonb;
             estGroup.singleCost(curnonb, lastnonb, middle);
-            memset(frames[middle]->propagateCost, 0, cuCount * sizeof(uint16_t));
+            memset(frames[middle]->propagateCost, 0, m_cuCount * sizeof(uint16_t));
             while (i > curnonb)
             {
                 int p0 = i > middle ? middle : curnonb;
@@ -1843,20 +1848,14 @@ void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Dist
     if (ref0Distance && frame->weightedCostDelta[ref0Distance - 1] > 0)
         weightdelta = (1.0 - frame->weightedCostDelta[ref0Distance - 1]);
 
-    /* Allow the strength to be adjusted via qcompress, since the two concepts
-     * are very similar. */
-
-    int cuCount = m_8x8Width * m_8x8Height;
-    double strength = 5.0 * (1.0 - m_param->rc.qCompress);
-
-    for (int cuIndex = 0; cuIndex < cuCount; cuIndex++)
+    for (int cuIndex = 0; cuIndex < m_cuCount; cuIndex++)
     {
         int intracost = (frame->intraCost[cuIndex] * frame->invQscaleFactor[cuIndex] + 128) >> 8;
         if (intracost)
         {
             int propagateCost = (frame->propagateCost[cuIndex] * fpsFactor + 128) >> 8;
             double log2_ratio = X265_LOG2(intracost + propagateCost) - X265_LOG2(intracost) + weightdelta;
-            frame->qpCuTreeOffset[cuIndex] = frame->qpAqOffset[cuIndex] - strength * log2_ratio;
+            frame->qpCuTreeOffset[cuIndex] = frame->qpAqOffset[cuIndex] - m_cuTreeStrength * log2_ratio;
         }
     }
 }
