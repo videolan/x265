@@ -507,7 +507,7 @@ void FrameFilter::processPostCu(uint32_t row, uint32_t col) const
     const intptr_t stride = reconPic->m_stride;
     const intptr_t strideC = reconPic->m_strideC;
     pixel *pixY = reconPic->getLumaAddr(lineStartCUAddr);
-    // // MUST BE check I400 since m_picOrg uninitialize in that case
+    // MUST BE check I400 since m_picOrg uninitialize in that case
     pixel *pixU = (m_param->internalCsp != X265_CSP_I400) ? reconPic->getCbAddr(lineStartCUAddr) : NULL;
     pixel *pixV = (m_param->internalCsp != X265_CSP_I400) ? reconPic->getCrAddr(lineStartCUAddr) : NULL;
     int copySizeY = realW;
@@ -560,13 +560,14 @@ void FrameFilter::processPostCu(uint32_t row, uint32_t col) const
     if (row == FrameFilter::ParallelFilter::numRows - 1)
     {
         pixY += (realH - 1) * stride;
-        pixU += ((realH >> vChromaShift) - 1) * strideC;
-        pixV += ((realH >> vChromaShift) - 1) * strideC;
         for (uint32_t y = 0; y < lumaMarginY; y++)
             memcpy(pixY + (y + 1) * stride, pixY, copySizeY * sizeof(pixel));
 
         if (m_param->internalCsp != X265_CSP_I400)
         {
+            pixU += ((realH >> vChromaShift) - 1) * strideC;
+            pixV += ((realH >> vChromaShift) - 1) * strideC;
+
             for (uint32_t y = 0; y < chromaMarginY; y++)
             {
                 memcpy(pixU + (y + 1) * strideC, pixU, copySizeC * sizeof(pixel));
