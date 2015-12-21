@@ -1139,6 +1139,12 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 m_frameFilter.m_parallelFilter[row].tryBondPeers(*this, 1);
             }
         }
+        // Both Loopfilter and SAO Disabled
+        else
+        {
+            m_frameFilter.m_parallelFilter[row].processPostCu(col);
+            m_frame->m_reconColCount[row].set(col);
+        }
 
         if (m_param->bEnableWavefront && curRow.completed >= 2 && row < m_numRows - 1 &&
             (!m_bAllRowsStop || intRow + 1 < m_vbvResetTriggerRow))
@@ -1247,6 +1253,13 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                     m_frameFilter.m_parallelFilter[row].processSaoUnitCu(saoParam, col);
                 }
             }
+
+            // Process border extension on last row
+            for(uint32_t col = 0; col < numCols; col++)
+            {
+                m_frameFilter.m_parallelFilter[row].processPostCu(col);
+            }
+            m_frame->m_reconColCount[row].set(numCols - 1);
         }
     }
 

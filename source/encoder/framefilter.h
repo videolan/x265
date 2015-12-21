@@ -63,9 +63,12 @@ public:
     public:
         static uint32_t     numCols;
         static uint32_t     numRows;
+        static uint32_t     lastHeight;
+        static uint32_t     lastWidth;
         uint32_t            m_row;
         uint32_t            m_rowAddr;
         x265_param*         m_param;
+        Frame*              m_frame;
         FrameEncoder*       m_frameEncoder;
         FrameData*          m_encData;
         ParallelFilter*     m_prevRow;
@@ -78,6 +81,7 @@ public:
             : m_row(0)
             , m_rowAddr(0)
             , m_param(NULL)
+            , m_frame(NULL)
             , m_frameEncoder(NULL)
             , m_encData(NULL)
             , m_prevRow(NULL)
@@ -94,6 +98,19 @@ public:
 
         // Copy and Save SAO reference pixels for SAO Rdo decide
         void copySaoAboveRef(PicYuv* reconPic, uint32_t cuAddr, int col);
+
+        // Post-Process (Border extension)
+        void processPostCu(uint32_t col) const;
+
+        uint32_t getCUHeight(int rowNum) const
+        {
+            return (rowNum == (int)numRows - 1) ? lastHeight : g_maxCUSize;
+        }
+
+        uint32_t getCUWidth(int colNum) const
+        {
+            return (colNum == (int)numCols - 1) ? lastWidth : g_maxCUSize;
+        }
 
     protected:
 

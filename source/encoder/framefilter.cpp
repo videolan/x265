@@ -37,6 +37,8 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
 
 uint32_t FrameFilter::ParallelFilter::numCols = 0;
 uint32_t FrameFilter::ParallelFilter::numRows = 0;
+uint32_t FrameFilter::ParallelFilter::lastHeight = 0;
+uint32_t FrameFilter::ParallelFilter::lastWidth = 0;
 
 void FrameFilter::destroy()
 {
@@ -65,7 +67,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
     m_pad[0] = top->m_sps.conformanceWindow.rightOffset;
     m_pad[1] = top->m_sps.conformanceWindow.bottomOffset;
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
-    m_lastHeight = m_param->sourceHeight % g_maxCUSize ? m_param->sourceHeight % g_maxCUSize : g_maxCUSize;
+    m_lastHeight = (m_param->sourceHeight % g_maxCUSize) ? (m_param->sourceHeight % g_maxCUSize) : g_maxCUSize;
 
     if (m_param->bEnableSsim)
         m_ssimBuf = X265_MALLOC(int, 8 * (m_param->sourceWidth / 4 + 3));
@@ -105,6 +107,8 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
     // Setting maximum columns
     ParallelFilter::numCols = numCols;
     ParallelFilter::numRows = numRows;
+    ParallelFilter::lastHeight = m_lastHeight;
+    ParallelFilter::lastWidth = (m_param->sourceWidth % g_maxCUSize) ? (m_param->sourceWidth % g_maxCUSize) : g_maxCUSize;
 }
 
 void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
@@ -123,6 +127,7 @@ void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
             m_parallelFilter[row].m_allowedCol.set(0);
             m_parallelFilter[row].m_lastDeblocked.set(-1);
             m_parallelFilter[row].m_encData = frame->m_encData;
+            m_parallelFilter[row].m_frame = frame;
         }
 
         // Reset SAO common statistics
@@ -218,8 +223,98 @@ void FrameFilter::ParallelFilter::processSaoUnitCu(SAOParam *saoParam, int col)
 
         uint32_t cuAddr = m_rowAddr + col;
         const CUData* ctu = m_encData->getPicCTU(cuAddr);
-        assert(m_frameEncoder->m_frame->m_reconPic == m_encData->m_reconPic);
-        origCUSampleRestoration(ctu, cuGeoms[ctuGeomMap[cuAddr]], *m_frameEncoder->m_frame);
+        assert(m_frame->m_reconPic == m_encData->m_reconPic);
+        origCUSampleRestoration(ctu, cuGeoms[ctuGeomMap[cuAddr]], *m_frame);
+    }
+}
+
+// NOTE: MUST BE delay a row when Deblock enabled, the Deblock will modify above pixels in Horizon pass
+void FrameFilter::ParallelFilter::processPostCu(uint32_t col) const
+{
+    // shortcut path for non-border area
+    if ((col != 0) & (col != numCols - 1) & (m_row != 0) & (m_row != numRows - 1))
+        return;
+
+    PicYuv *reconPic = m_frame->m_reconPic;
+    const uint32_t lineStartCUAddr = m_rowAddr + col;
+    const int realH = getCUHeight(m_row);
+    const int realW = getCUWidth(col);
+
+    const uint32_t lumaMarginX = reconPic->m_lumaMarginX;
+    const uint32_t lumaMarginY = reconPic->m_lumaMarginY;
+    const uint32_t chromaMarginX = reconPic->m_chromaMarginX;
+    const uint32_t chromaMarginY = reconPic->m_chromaMarginY;
+    const int hChromaShift = reconPic->m_hChromaShift;
+    const int vChromaShift = reconPic->m_vChromaShift;
+    const intptr_t stride = reconPic->m_stride;
+    const intptr_t strideC = reconPic->m_strideC;
+    pixel *pixY = reconPic->getLumaAddr(lineStartCUAddr);
+    // // MUST BE check I400 since m_picOrg uninitialize in that case
+    pixel *pixU = (m_param->internalCsp != X265_CSP_I400) ? reconPic->getCbAddr(lineStartCUAddr) : NULL;
+    pixel *pixV = (m_param->internalCsp != X265_CSP_I400) ? reconPic->getCrAddr(lineStartCUAddr) : NULL;
+    int copySizeY = realW;
+    int copySizeC = (realW >> hChromaShift);
+
+    if ((col == 0) | (col == numCols - 1))
+    {
+        // TODO: improve by process on Left or Right only
+        primitives.extendRowBorder(reconPic->getLumaAddr(m_rowAddr), stride, reconPic->m_picWidth, realH, reconPic->m_lumaMarginX);
+
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            primitives.extendRowBorder(reconPic->getCbAddr(m_rowAddr), strideC, reconPic->m_picWidth >> hChromaShift, realH >> vChromaShift, reconPic->m_chromaMarginX);
+            primitives.extendRowBorder(reconPic->getCrAddr(m_rowAddr), strideC, reconPic->m_picWidth >> hChromaShift, realH >> vChromaShift, reconPic->m_chromaMarginX);
+        }
+    }
+
+    // Extra Left and Right border on first and last CU
+    if ((col == 0) | (col == numCols - 1))
+    {
+        copySizeY += lumaMarginX;
+        copySizeC += chromaMarginX;
+    }
+
+    // First column need extension left padding area and first CU
+    if (col == 0)
+    {
+        pixY -= lumaMarginX;
+        pixU -= chromaMarginX;
+        pixV -= chromaMarginX;
+    }
+
+    // Border extend Top
+    if (m_row == 0)
+    {
+        for (uint32_t y = 0; y < lumaMarginY; y++)
+            memcpy(pixY - (y + 1) * stride, pixY, copySizeY * sizeof(pixel));
+
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            for (uint32_t y = 0; y < chromaMarginY; y++)
+            {
+                memcpy(pixU - (y + 1) * strideC, pixU, copySizeC * sizeof(pixel));
+                memcpy(pixV - (y + 1) * strideC, pixV, copySizeC * sizeof(pixel));
+            }
+        }
+    }
+
+    // Border extend Bottom
+    if (m_row == numRows - 1)
+    {
+        pixY += (realH - 1) * stride;
+        pixU += ((realH >> vChromaShift) - 1) * strideC;
+        pixV += ((realH >> vChromaShift) - 1) * strideC;
+        for (uint32_t y = 0; y < lumaMarginY; y++)
+            memcpy(pixY + (y + 1) * stride, pixY, copySizeY * sizeof(pixel));
+
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            for (uint32_t y = 0; y < chromaMarginY; y++)
+            {
+                memcpy(pixU + (y + 1) * strideC, pixU, copySizeC * sizeof(pixel));
+                memcpy(pixV + (y + 1) * strideC, pixV, copySizeC * sizeof(pixel));
+            }
+        }
     }
 }
 
@@ -254,6 +349,13 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
             {
                 const CUData* ctuPrev = m_encData->getPicCTU(cuAddr - 1);
                 deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
+
+                // When SAO Disable, setting column counter here
+                if ((!m_param->bEnableSAO) & (m_row >= 1))
+                {
+                    m_prevRow->processPostCu(col - 1);
+                    m_frame->m_reconColCount[m_row - 1].set(col - 1);
+                }
             }
 
             if (m_param->bEnableSAO)
@@ -275,6 +377,8 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
                 {
                     // Must delay 1 row to avoid thread data race conflict
                     m_prevRow->processSaoUnitCu(saoParam, col - 3);
+                    m_prevRow->processPostCu(col - 3);
+                    m_frame->m_reconColCount[m_row - 1].set(col - 3);
                 }
             }
 
@@ -291,8 +395,16 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
         {
             const CUData* ctuPrev = m_encData->getPicCTU(cuAddr);
             deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_HOR);
+
+            // When SAO Disable, setting column counter here
+            if ((!m_param->bEnableSAO) & (m_row >= 1))
+            {
+                m_prevRow->processPostCu(numCols - 1);
+                m_frame->m_reconColCount[m_row - 1].set(numCols - 1);
+            }
         }
 
+        // TODO: move processPostCu() into processSaoUnitCu()
         if (m_param->bEnableSAO)
         {
             // Save SAO bottom row reference pixels
@@ -308,13 +420,26 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
 
             // Process Previous Rows SAO CU
             if (m_row >= 1 && numCols >= 3)
+            {
                 m_prevRow->processSaoUnitCu(saoParam, numCols - 3);
+                m_prevRow->processPostCu(numCols - 3);
+            }
 
             if (m_row >= 1 && numCols >= 2)
+            {
                 m_prevRow->processSaoUnitCu(saoParam, numCols - 2);
+                m_prevRow->processPostCu(numCols - 2);
+            }
 
             if (m_row >= 1 && numCols >= 1)
+            {
                 m_prevRow->processSaoUnitCu(saoParam, numCols - 1);
+                m_prevRow->processPostCu(numCols - 1);
+            }
+
+            // Setting column sync counter
+            if (m_row >= 1)
+                m_frame->m_reconColCount[m_row - 1].set(numCols - 1);
         }
         m_lastDeblocked.set(numCols);
     }
@@ -371,61 +496,6 @@ void FrameFilter::processRowPost(int row)
     PicYuv *reconPic = m_frame->m_reconPic;
     const uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
-    const int realH = getCUHeight(row);
-
-    // Border extend Left and Right
-    primitives.extendRowBorder(reconPic->getLumaAddr(lineStartCUAddr), reconPic->m_stride, reconPic->m_picWidth, realH, reconPic->m_lumaMarginX);
-    if (m_param->internalCsp != X265_CSP_I400)
-    {
-        primitives.extendRowBorder(reconPic->getCbAddr(lineStartCUAddr), reconPic->m_strideC, reconPic->m_picWidth >> m_hChromaShift, realH >> m_vChromaShift, reconPic->m_chromaMarginX);
-        primitives.extendRowBorder(reconPic->getCrAddr(lineStartCUAddr), reconPic->m_strideC, reconPic->m_picWidth >> m_hChromaShift, realH >> m_vChromaShift, reconPic->m_chromaMarginX);
-    }
-
-    // Border extend Top
-    if (!row)
-    {
-        const intptr_t stride = reconPic->m_stride;
-        pixel *pixY = reconPic->getLumaAddr(lineStartCUAddr) - reconPic->m_lumaMarginX;
-
-        for (uint32_t y = 0; y < reconPic->m_lumaMarginY; y++)
-            memcpy(pixY - (y + 1) * stride, pixY, stride * sizeof(pixel));
-
-        if (m_param->internalCsp != X265_CSP_I400)
-        {
-            const intptr_t strideC = reconPic->m_strideC;
-            pixel *pixU = reconPic->getCbAddr(lineStartCUAddr) - reconPic->m_chromaMarginX;
-            pixel *pixV = reconPic->getCrAddr(lineStartCUAddr) - reconPic->m_chromaMarginX;
-
-            for (uint32_t y = 0; y < reconPic->m_chromaMarginY; y++)
-            {
-                memcpy(pixU - (y + 1) * strideC, pixU, strideC * sizeof(pixel));
-                memcpy(pixV - (y + 1) * strideC, pixV, strideC * sizeof(pixel));
-            }
-        }
-    }
-
-    // Border extend Bottom
-    if (row == m_numRows - 1)
-    {
-        const intptr_t stride = reconPic->m_stride;
-        pixel *pixY = reconPic->getLumaAddr(lineStartCUAddr) - reconPic->m_lumaMarginX + (realH - 1) * stride;
-
-        for (uint32_t y = 0; y < reconPic->m_lumaMarginY; y++)
-            memcpy(pixY + (y + 1) * stride, pixY, stride * sizeof(pixel));
-
-        if (m_param->internalCsp != X265_CSP_I400)
-        {
-            const intptr_t strideC = reconPic->m_strideC;
-            pixel *pixU = reconPic->getCbAddr(lineStartCUAddr) - reconPic->m_chromaMarginX + ((realH >> m_vChromaShift) - 1) * strideC;
-            pixel *pixV = reconPic->getCrAddr(lineStartCUAddr) - reconPic->m_chromaMarginX + ((realH >> m_vChromaShift) - 1) * strideC;
-
-            for (uint32_t y = 0; y < reconPic->m_chromaMarginY; y++)
-            {
-                memcpy(pixU + (y + 1) * strideC, pixU, strideC * sizeof(pixel));
-                memcpy(pixV + (y + 1) * strideC, pixV, strideC * sizeof(pixel));
-            }
-        }
-    }
 
     // Notify other FrameEncoders that this row of reconstructed pixels is available
     m_frame->m_reconRowCount.incr();
