@@ -102,12 +102,12 @@ public:
         // Post-Process (Border extension)
         void processPostCu(uint32_t col) const;
 
-        uint32_t getCUHeight(int rowNum) const
+        static uint32_t getCUHeight(int rowNum)
         {
             return (rowNum == (int)numRows - 1) ? lastHeight : g_maxCUSize;
         }
 
-        uint32_t getCUWidth(int colNum) const
+        static uint32_t getCUWidth(int colNum)
         {
             return (colNum == (int)numCols - 1) ? lastWidth : g_maxCUSize;
         }
@@ -134,8 +134,8 @@ public:
     void start(Frame *pic, Entropy& initState, int qp);
 
     void processRow(int row);
-    void processRowPost(int row);
-    uint32_t getCUHeight(int rowNum) const;
+    void processPostRow(int row);
+    void processPostCu(uint32_t row, uint32_t col) const;
 };
 }
 

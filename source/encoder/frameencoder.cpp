@@ -1142,8 +1142,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         // Both Loopfilter and SAO Disabled
         else
         {
-            m_frameFilter.m_parallelFilter[row].processPostCu(col);
-            m_frame->m_reconColCount[row].set(col);
+            m_frameFilter.processPostCu(row, col);
         }
 
         if (m_param->bEnableWavefront && curRow.completed >= 2 && row < m_numRows - 1 &&
@@ -1257,9 +1256,9 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             // Process border extension on last row
             for(uint32_t col = 0; col < numCols; col++)
             {
+                // m_reconColCount will be set in processPostCu()
                 m_frameFilter.m_parallelFilter[row].processPostCu(col);
             }
-            m_frame->m_reconColCount[row].set(numCols - 1);
         }
     }
 
