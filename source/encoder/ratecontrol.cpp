@@ -23,6 +23,10 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
+#if _MSC_VER
+#pragma warning(disable: 4127) // conditional expression is constant, yes I know
+#endif
+
 #include "common.h"
 #include "param.h"
 #include "frame.h"
