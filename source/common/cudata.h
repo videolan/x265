@@ -246,7 +246,7 @@ public:
     void     setPURefIdx(int list, int8_t refIdx, int absPartIdx, int puIdx);
 
     uint8_t  getCbf(uint32_t absPartIdx, TextType ttype, uint32_t tuDepth) const { return (m_cbf[ttype][absPartIdx] >> tuDepth) & 0x1; }
-    uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { if (m_chromaFormat == X265_CSP_I400) return m_cbf[0][absPartIdx] || 0; else { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx];} }
+    uint8_t  getQtRootCbf(uint32_t absPartIdx) const                             { if (m_chromaFormat == X265_CSP_I400) return m_cbf[0][absPartIdx] || false; else { return m_cbf[0][absPartIdx] || m_cbf[1][absPartIdx] || m_cbf[2][absPartIdx];} }
     int8_t   getRefQP(uint32_t currAbsIdxInCTU) const;
     uint32_t getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MVField (*candMvField)[2], uint8_t* candDir) const;
     void     clipMv(MV& outMV) const;
