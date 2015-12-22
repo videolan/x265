@@ -60,6 +60,9 @@
 #if HAVE_LIBNUMA
 #include <numa.h>
 #endif
+#if defined(_MSC_VER)
+# define strcasecmp _stricmp
+#endif
 
 namespace X265_NS {
 // x265 private namespace
@@ -277,7 +280,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
             }
             else if (*nodeStr == '-')
                 threadsPerPool[i] = 0;
-            else if (*nodeStr == '*')
+			else if (*nodeStr == '*' || !strcasecmp(nodeStr, "NULL"))
             {
                 for (int j = i; j < numNumaNodes; j++)
                 {
