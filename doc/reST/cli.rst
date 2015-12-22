@@ -685,7 +685,7 @@ the prediction quad-tree.
 	(within your decoder level limits) if you enable one or
 	both of these flags.
 
-	This feature is EXPERIMENTAL and functional at all RD levels.
+	Default 3.
 
 .. option:: --limit-modes, --no-limit-modes
     

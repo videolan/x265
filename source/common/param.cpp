@@ -159,7 +159,7 @@ void x265_param_default(x265_param* param)
     param->subpelRefine = 2;
     param->searchRange = 57;
     param->maxNumMergeCand = 2;
-    param->limitReferences = 0;
+    param->limitReferences = 3;
     param->limitModes = 0;
     param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
@@ -279,9 +279,9 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bEnableWeightedPred = 0;
             param->rdLevel = 2;
             param->maxNumReferences = 1;
+            param->limitReferences = 0;
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
-            param->rc.cuTree = 0;
             param->rc.qgSize = 32;
             param->bEnableFastIntra = 1;
         }
@@ -296,9 +296,9 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bEnableWeightedPred = 0;
             param->rdLevel = 2;
             param->maxNumReferences = 1;
+            param->limitReferences = 0;
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
-            param->rc.cuTree = 0;
             param->rc.qgSize = 32;
             param->bEnableSAO = 0;
             param->bEnableFastIntra = 1;
@@ -306,13 +306,11 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         else if (!strcmp(preset, "veryfast"))
         {
             param->lookaheadDepth = 15;
-            param->maxCUSize = 32;
             param->bFrameAdaptive = 0;
             param->subpelRefine = 1;
             param->bEnableEarlySkip = 1;
             param->rdLevel = 2;
-            param->maxNumReferences = 1;
-            param->rc.cuTree = 0;
+            param->maxNumReferences = 2;
             param->rc.qgSize = 32;
             param->bEnableFastIntra = 1;
         }
@@ -322,8 +320,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bFrameAdaptive = 0;
             param->bEnableEarlySkip = 1;
             param->rdLevel = 2;
-            param->maxNumReferences = 1;
-            param->rc.cuTree = 0;
+            param->maxNumReferences = 2;
             param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "fast"))
@@ -331,7 +328,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->lookaheadDepth = 15;
             param->bFrameAdaptive = 0;
             param->rdLevel = 2;
-            param->maxNumReferences = 2;
+            param->maxNumReferences = 3;
             param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "medium"))
@@ -348,6 +345,8 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
+            param->maxNumReferences = 4;
+            param->limitModes = 1;
             param->lookaheadSlices = 4; // limit parallelism as already enough work exists
         }
         else if (!strcmp(preset, "slower"))
@@ -365,6 +364,9 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->subpelRefine = 3;
             param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
+            param->maxNumReferences = 4;
+            param->limitReferences = 2;
+            param->limitModes = 1;
             param->bIntraInBFrames = 1;
             param->lookaheadSlices = 4; // limit parallelism as already enough work exists
         }
@@ -384,6 +386,8 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->maxNumMergeCand = 4;
             param->searchMethod = X265_STAR_SEARCH;
             param->maxNumReferences = 5;
+            param->limitReferences = 1;
+            param->limitModes = 1;
             param->bIntraInBFrames = 1;
             param->lookaheadSlices = 0; // disabled for best quality
         }
@@ -405,6 +409,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->searchMethod = X265_STAR_SEARCH;
             param->bEnableTransformSkip = 1;
             param->maxNumReferences = 5;
+            param->limitReferences = 0;
             param->rc.bEnableSlowFirstPass = 1;
             param->bIntraInBFrames = 1;
             param->lookaheadSlices = 0; // disabled for best quality
