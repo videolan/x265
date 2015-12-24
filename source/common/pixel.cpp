@@ -283,52 +283,6 @@ inline int sa8d_8x8(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intpt
     return (int)((_sa8d_8x8(pix1, i_pix1, pix2, i_pix2) + 2) >> 2);
 }
 
-inline int _sa8d_8x8(const int16_t* pix1, intptr_t i_pix1)
-{
-    int32_t tmp[8][8];
-    int32_t a0, a1, a2, a3, a4, a5, a6, a7;
-    int32_t sum = 0;
-
-    for (int i = 0; i < 8; i++, pix1 += i_pix1)
-    {
-        a0 = pix1[0] + pix1[1];
-        a1 = pix1[2] + pix1[3];
-        a2 = pix1[4] + pix1[5];
-        a3 = pix1[6] + pix1[7];
-        a4 = pix1[0] - pix1[1];
-        a5 = pix1[2] - pix1[3];
-        a6 = pix1[4] - pix1[5];
-        a7 = pix1[6] - pix1[7];
-        tmp[i][0] = (a0 + a1) + (a2 + a3);
-        tmp[i][1] = (a0 + a1) - (a2 + a3);
-        tmp[i][2] = (a0 - a1) + (a2 - a3);
-        tmp[i][3] = (a0 - a1) - (a2 - a3);
-        tmp[i][4] = (a4 + a5) + (a6 + a7);
-        tmp[i][5] = (a4 + a5) - (a6 + a7);
-        tmp[i][6] = (a4 - a5) + (a6 - a7);
-        tmp[i][7] = (a4 - a5) - (a6 - a7);
-    }
-
-    for (int i = 0; i < 8; i++)
-    {
-        a0 = (tmp[0][i] + tmp[1][i]) + (tmp[2][i] + tmp[3][i]);
-        a2 = (tmp[0][i] + tmp[1][i]) - (tmp[2][i] + tmp[3][i]);
-        a1 = (tmp[0][i] - tmp[1][i]) + (tmp[2][i] - tmp[3][i]);
-        a3 = (tmp[0][i] - tmp[1][i]) - (tmp[2][i] - tmp[3][i]);
-        a4 = (tmp[4][i] + tmp[5][i]) + (tmp[6][i] + tmp[7][i]);
-        a6 = (tmp[4][i] + tmp[5][i]) - (tmp[6][i] + tmp[7][i]);
-        a5 = (tmp[4][i] - tmp[5][i]) + (tmp[6][i] - tmp[7][i]);
-        a7 = (tmp[4][i] - tmp[5][i]) - (tmp[6][i] - tmp[7][i]);
-        a0 = abs(a0 + a4) + abs(a0 - a4);
-        a0 += abs(a1 + a5) + abs(a1 - a5);
-        a0 += abs(a2 + a6) + abs(a2 - a6);
-        a0 += abs(a3 + a7) + abs(a3 - a7);
-        sum += a0;
-    }
-
-    return (int)sum;
-}
-
 static int sa8d_16x16(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2)
 {
     int sum = _sa8d_8x8(pix1, i_pix1, pix2, i_pix2)
