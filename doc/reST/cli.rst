@@ -391,15 +391,15 @@ frame counts) are only applicable to the CLI application.
 
 .. option:: --input-csp <integer|string>
 
-	YUV only: Source color space. Only i420, i422, and i444 are
-	supported at this time. The internal color space is always the
-	same as the source color space (libx265 does not support any color
-	space conversions).
+	Chroma Subsampling (YUV only):  Only 4:0:0(monochrome), 4:2:0, 4:2:2, and 4:4:4 are supported at this time. 
+	The chroma subsampling format of your input must match your desired output chroma subsampling format 
+	(libx265 will not perform any chroma subsampling conversion), and it must be supported by the 
+	HEVC profile you have specified.
 
-	0. i400
-	1. i420 **(default)**
-	2. i422
-	3. i444
+	0. i400 (4:0:0 monochrome) - Not supported by Main or Main10 profiles
+	1. i420 (4:2:0 default)    - Supported by all HEVC profiles
+	2. i422 (4:2:2)            - Not supported by Main, Main10 and Main12 profiles
+	3. i444 (4:4:4)            - Supported by Main 4:4:4, Main 4:4:4 10, Main 4:4:4 12, Main 4:4:4 16 Intra profiles
 	4. nv12
 	5. nv16
 

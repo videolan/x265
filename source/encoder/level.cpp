@@ -463,7 +463,7 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
     {
         if (param->internalCsp != X265_CSP_I420)
         {
-            x265_log(param, X265_LOG_ERROR, "%s profile not compatible with %s input color space.\n",
+            x265_log(param, X265_LOG_ERROR, "%s profile not compatible with %s input chroma subsampling.\n",
                      profile, x265_source_csp_names[param->internalCsp]);
             return -1;
         }
@@ -473,7 +473,7 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
     {
         if (param->internalCsp != X265_CSP_I420 && param->internalCsp != X265_CSP_I422)
         {
-            x265_log(param, X265_LOG_ERROR, "%s profile not compatible with %s input color space.\n",
+            x265_log(param, X265_LOG_ERROR, "%s profile not compatible with %s input chroma subsampling.\n",
                      profile, x265_source_csp_names[param->internalCsp]);
             return -1;
         }

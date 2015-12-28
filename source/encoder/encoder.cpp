@@ -510,7 +510,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     {
         if (pic_in->colorSpace != m_param->internalCsp)
         {
-            x265_log(m_param, X265_LOG_ERROR, "Unsupported color space (%d) on input\n",
+            x265_log(m_param, X265_LOG_ERROR, "Unsupported chroma subsampling (%d) on input\n",
                      pic_in->colorSpace);
             return -1;
         }
@@ -1723,7 +1723,7 @@ void Encoder::configure(x265_param *p)
 
     if (p->scalingLists && p->internalCsp == X265_CSP_I444)
     {
-        x265_log(p, X265_LOG_WARNING, "Scaling lists are not yet supported for 4:4:4 color space\n");
+        x265_log(p, X265_LOG_WARNING, "Scaling lists are not yet supported for 4:4:4 chroma subsampling\n");
         p->scalingLists = 0;
     }
 

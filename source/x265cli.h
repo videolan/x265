@@ -263,7 +263,11 @@ static void showHelp(x265_param *param)
     H0("   --fps <float|rational>        Source frame rate (float or num/denom), auto-detected if Y4M\n");
     H0("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
     H1("   --input-depth <integer>       Bit-depth of input file. Default 8\n");
-    H1("   --input-csp <string>          Source color space: i420, i444 or i422, auto-detected if Y4M. Default: i420\n");
+    H1("   --input-csp <string>          Chroma subsampling, auto-detected if Y4M\n");
+    H1("                                 0 - i400 (4:0:0 monochrome)\n");
+    H1("                                 1 - i420 (4:2:0 default)\n");
+    H1("                                 2 - i422 (4:2:2)\n");
+    H1("                                 3 - i444 (4:4:4)\n");
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("   --seek <integer>              First frame to encode\n");
     H1("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
