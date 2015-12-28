@@ -114,7 +114,7 @@ bool SAO::create(x265_param* param, int initCommon)
 
         // SAO asm code will read 1 pixel before and after, so pad by 2
         // NOTE: m_param->sourceWidth+2 enough, to avoid condition check in copySaoAboveRef(), I alloc more up to 63 bytes in here
-        CHECKED_MALLOC(m_tmpU[i], pixel, m_numCuInWidth * g_maxCUSize + 2);
+        CHECKED_MALLOC(m_tmpU[i], pixel, m_numCuInWidth * g_maxCUSize + 2 + 32);
         m_tmpU[i] += 1;
     }
 
