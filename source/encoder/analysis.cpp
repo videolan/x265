@@ -836,6 +836,14 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     splitData[2].initSplitCUData();
     splitData[3].initSplitCUData();
 
+    // avoid uninitialize value in below reference
+    if (m_param->limitModes)
+    {
+        md.pred[PRED_2Nx2N].bestME[0][0].mvCost = 0; // L0
+        md.pred[PRED_2Nx2N].bestME[0][1].mvCost = 0; // L1
+        md.pred[PRED_2Nx2N].rdCost = 0;
+    }
+
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
     if (mightNotSplit && depth >= minDepth)
     {
@@ -1303,6 +1311,14 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
     bool foundSkip = false;
     bool splitIntra = true;
+
+    // avoid uninitialize value in below reference
+    if (m_param->limitModes)
+    {
+        md.pred[PRED_2Nx2N].bestME[0][0].mvCost = 0; // L0
+        md.pred[PRED_2Nx2N].bestME[0][1].mvCost = 0; // L1
+        md.pred[PRED_2Nx2N].rdCost = 0;
+    }
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD)
     {
