@@ -1299,8 +1299,8 @@ bool PixelHarness::check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt)
 
     memset(ref_dest, 0xCD, sizeof(ref_dest));
     memset(opt_dest, 0xCD, sizeof(opt_dest));
-    int width = 32 + rand() % 32;
-    int height = 32 + rand() % 32;
+    int width = 32 + (rand() % 32);
+    int height = 32 + (rand() % 32);
     intptr_t srcStride = 64;
     intptr_t dstStride = width;
     int j = 0;
@@ -1308,11 +1308,23 @@ bool PixelHarness::check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt)
     for (int i = 0; i < ITERS; i++)
     {
         int index = i % TEST_CASES;
+
         checked(opt, ushort_test_buff[index] + j, srcStride, opt_dest, dstStride, width, height, (int)8, (uint16_t)((1 << X265_DEPTH) - 1));
         ref(ushort_test_buff[index] + j, srcStride, ref_dest, dstStride, width, height, (int)8, (uint16_t)((1 << X265_DEPTH) - 1));
 
-        if (memcmp(ref_dest, opt_dest, width * height * sizeof(pixel)))
+        if (memcmp(ref_dest, opt_dest, dstStride * height * sizeof(pixel)))
+        {
+            memcpy(opt_dest, ref_dest, sizeof(ref_dest));
+            opt(ushort_test_buff[index] + j, srcStride, opt_dest, dstStride, width, height, (int)8, (uint16_t)((1 << X265_DEPTH) - 1));
             return false;
+        }
+
+        // check tail memory area
+        for(int x = width; x < dstStride; x++)
+        {
+            if (opt_dest[(height - 1 * dstStride) + x] != 0xCD)
+                return false;
+        }
 
         reportfail();
         j += INCR;
@@ -1343,6 +1355,13 @@ bool PixelHarness::check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt)
 
         if (memcmp(ref_dest, opt_dest, sizeof(ref_dest)))
             return false;
+
+        // check tail memory area
+        for(int x = width; x < dstStride; x++)
+        {
+            if (opt_dest[(height - 1 * dstStride) + x] != 0xCD)
+                return false;
+        }
 
         reportfail();
         j += INCR;
