@@ -55,7 +55,7 @@ public:
     int           m_saoRowDelay;
     int           m_lastHeight;
     
-    void*         m_ssimBuf; /* Temp storage for ssim computation */
+    void*         m_ssimBuf;        /* Temp storage for ssim computation */
 
 #define MAX_PFILTER_CUS     (4) /* maximum CUs for every thread */
     class ParallelFilter : public BondedTaskGroup, public Deblock

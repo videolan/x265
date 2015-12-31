@@ -1204,64 +1204,21 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         rowCoder.finishSlice();
 
     /* Processing left Deblock block with current threading */
-    if ((m_param->bEnableLoopFilter | m_param->bEnableSAO) & (row >= 1))
+    if ((m_param->bEnableLoopFilter | m_param->bEnableSAO) & (row >= 2))
     {
         /* TODO: Multiple Threading */
-        /* Check to avoid previous row process slower than current row */
-        if (row >= 2)
+
+        /* Check conditional to start previous row process with current threading */
+        if (m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get() == (int)numCols)
         {
-            int prevCol = m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get();
-            while(prevCol != (int)numCols)
-                prevCol = m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.waitForChange(prevCol);
+            /* stop threading on current row and restart it */
+            m_frameFilter.m_parallelFilter[row - 1].waitForExit();
+            m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(numCols);
+            m_frameFilter.m_parallelFilter[row - 1].processTasks(-1);
         }
-        m_frameFilter.m_parallelFilter[row - 1].waitForExit();
-        m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(numCols);
-        m_frameFilter.m_parallelFilter[row - 1].processTasks(-1);
     }
 
     /* trigger row-wise loop filters */
-    if (row == m_numRows - 1)
-    {
-        /* TODO: Early start last row */
-        if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
-        {
-            if (m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get() != (int)numCols)
-                x265_log(m_param, X265_LOG_WARNING, "detected ParallelFilter race condition on last row\n");
-
-            // avoid race on last row and last column
-            if (row >= 1)
-            {
-                int prevCol = m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get();
-                while(prevCol != (int)numCols)
-                    prevCol = m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.waitForChange(prevCol);
-            }
-
-            /* NOTE: Last Row not execute before, so didn't need wait */
-            m_frameFilter.m_parallelFilter[row].waitForExit();
-            m_frameFilter.m_parallelFilter[row].m_allowedCol.set(numCols);
-            m_frameFilter.m_parallelFilter[row].processTasks(-1);
-
-            /* Apply SAO on last row of CUs, because we always apply SAO on row[X-1] */
-            if (m_param->bEnableSAO)
-            {
-                FrameData* encData = m_frameFilter.m_parallelFilter[row].m_encData;
-                SAOParam* saoParam = encData->m_saoParam;
-                for(uint32_t col = 0; col < numCols; col++)
-                {
-                    // NOTE: must use processSaoUnitCu(), it include TQBypass logic
-                    m_frameFilter.m_parallelFilter[row].processSaoUnitCu(saoParam, col);
-                }
-            }
-
-            // Process border extension on last row
-            for(uint32_t col = 0; col < numCols; col++)
-            {
-                // m_reconColCount will be set in processPostCu()
-                m_frameFilter.m_parallelFilter[row].processPostCu(col);
-            }
-        }
-    }
-
     if (m_param->bEnableWavefront)
     {
         if (row >= m_filterRowDelay)

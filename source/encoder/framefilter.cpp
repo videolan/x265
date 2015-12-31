@@ -460,6 +460,42 @@ void FrameFilter::processRow(int row)
     // SAO: was integrate into encode loop
     SAOParam* saoParam = encData.m_saoParam;
 
+    /* Processing left block Deblock with current threading */
+    {
+        /* stop threading on current row */
+        m_parallelFilter[row].waitForExit();
+
+        /* Check to avoid previous row process slower than current row */
+        X265_CHECK((row < 1) || m_parallelFilter[row - 1].m_lastDeblocked.get() == (int)ParallelFilter::numCols, "previous row not finish");
+
+        m_parallelFilter[row].m_allowedCol.set(ParallelFilter::numCols);
+        m_parallelFilter[row].processTasks(-1);
+
+        if (row == m_numRows - 1)
+        {
+            /* TODO: Early start last row */
+            if ((row >= 1) && (m_parallelFilter[row - 1].m_lastDeblocked.get() != (int)ParallelFilter::numCols))
+                x265_log(m_param, X265_LOG_WARNING, "detected ParallelFilter race condition on last row\n");
+
+            /* Apply SAO on last row of CUs, because we always apply SAO on row[X-1] */
+            if (m_param->bEnableSAO)
+            {
+                for(uint32_t col = 0; col < ParallelFilter::numCols; col++)
+                {
+                    // NOTE: must use processSaoUnitCu(), it include TQBypass logic
+                    m_parallelFilter[row].processSaoUnitCu(saoParam, col);
+                }
+            }
+
+            // Process border extension on last row
+            for(uint32_t col = 0; col < ParallelFilter::numCols; col++)
+            {
+                // m_reconColCount will be set in processPostCu()
+                m_parallelFilter[row].processPostCu(col);
+            }
+        }
+    }
+
     // this row of CTUs has been encoded
 
     if (row > 0)
