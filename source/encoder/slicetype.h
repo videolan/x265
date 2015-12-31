@@ -45,7 +45,6 @@ class Lookahead;
 struct LookaheadTLD
 {
     MotionEstimate  me;
-    ReferencePlanes weightedRef;
     pixel*          wbuffer[4];
     int             widthInCU;
     int             heightInCU;

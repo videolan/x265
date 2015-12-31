@@ -151,6 +151,7 @@ struct Lowres : public ReferencePlanes
     /* cutree intermediate data */
     uint16_t* propagateCost;
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
+    ReferencePlanes weightedRef[X265_BFRAME_MAX + 2];
 
     bool create(PicYuv *origPic, int _bframes, bool bAqEnabled);
     void destroy();

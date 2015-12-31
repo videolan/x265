@@ -351,7 +351,7 @@ uint32_t LookaheadTLD::weightCostLuma(Lowres& fenc, Lowres& ref, WeightParam& wp
 
         primitives.weight_pp(ref.buffer[0], wbuffer[0], stride, widthHeight, paddedLines,
             scale, round << correction, denom + correction, offset);
-        src = weightedRef.fpelPlane[0];
+        src = fenc.weightedRef[fenc.frameNum - ref.frameNum].fpelPlane[0];
     }
 
     uint32_t cost = 0;
@@ -373,7 +373,6 @@ uint32_t LookaheadTLD::weightCostLuma(Lowres& fenc, Lowres& ref, WeightParam& wp
 bool LookaheadTLD::allocWeightedRef(Lowres& fenc)
 {
     intptr_t planesize = fenc.buffer[1] - fenc.buffer[0];
-    intptr_t padoffset = fenc.lowresPlane[0] - fenc.buffer[0];
     paddedLines = (int)(planesize / fenc.lumaStride);
 
     wbuffer[0] = X265_MALLOC(pixel, 4 * planesize);
@@ -385,14 +384,6 @@ bool LookaheadTLD::allocWeightedRef(Lowres& fenc)
     }
     else
         return false;
-
-    for (int i = 0; i < 4; i++)
-        weightedRef.lowresPlane[i] = wbuffer[i] + padoffset;
-
-    weightedRef.fpelPlane[0] = weightedRef.lowresPlane[0];
-    weightedRef.lumaStride = fenc.lumaStride;
-    weightedRef.isLowres = true;
-    weightedRef.isWeighted = false;
 
     return true;
 }
@@ -410,6 +401,16 @@ void LookaheadTLD::weightsAnalyse(Lowres& fenc, Lowres& ref)
         if (!allocWeightedRef(fenc))
             return;
     }
+
+    ReferencePlanes& weightedRef = fenc.weightedRef[deltaIndex];
+    intptr_t padoffset = fenc.lowresPlane[0] - fenc.buffer[0];
+    for (int i = 0; i < 4; i++)
+        weightedRef.lowresPlane[i] = wbuffer[i] + padoffset;
+
+    weightedRef.fpelPlane[0] = weightedRef.lowresPlane[0];
+    weightedRef.lumaStride = fenc.lumaStride;
+    weightedRef.isLowres = true;
+    weightedRef.isWeighted = false;
 
     /* epsilon is chosen to require at least a numerator of 127 (with denominator = 128) */
     float guessScale, fencMean, refMean;
@@ -1996,7 +1997,7 @@ int64_t CostEstimateGroup::estimateFrameCost(LookaheadTLD& tld, int p0, int p1, 
         if (bDoSearch[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0x7FFE;
 #endif
 
-        tld.weightedRef.isWeighted = false;
+        fenc->weightedRef[b - p0].isWeighted = false;
         if (param->bEnableWeightedPred && bDoSearch[0])
             tld.weightsAnalyse(*m_frames[b], *m_frames[p0]);
 
@@ -2070,7 +2071,7 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
     Lowres *fref1 = m_frames[p1];
     Lowres *fenc  = m_frames[b];
 
-    ReferencePlanes *wfref0 = tld.weightedRef.isWeighted ? &tld.weightedRef : fref0;
+    ReferencePlanes *wfref0 = fenc->weightedRef[b - p0].isWeighted ? &fenc->weightedRef[b - p0] : fref0;
 
     const int widthInCU = m_lookahead.m_8x8Width;
     const int heightInCU = m_lookahead.m_8x8Height;
