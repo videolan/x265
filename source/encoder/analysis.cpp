@@ -1256,27 +1256,23 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
 
     /* determine which motion references the parent CU should search */
     SplitData splitCUData;
-    if (!(m_param->limitReferences & X265_REF_LIMIT_DEPTH))
-        splitCUData.splitRefs = 0;
-    else if (md.bestMode == &md.pred[PRED_SPLIT])
-        splitCUData.splitRefs = allSplitRefs;
-    else
+    splitCUData.initSplitCUData();
+
+    if (m_param->limitReferences & X265_REF_LIMIT_DEPTH)
     {
-        /* use best merge/inter mode, in case of intra use 2Nx2N inter references */
-        CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : md.bestMode->cu;
-        uint32_t numPU = cu.getNumPartInter(0);
-        splitCUData.splitRefs = 0;
-        for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += cu.getPUOffset(puIdx, 0))
-            splitCUData.splitRefs |= cu.getBestRefIdx(subPartIdx);
+        if (md.bestMode == &md.pred[PRED_SPLIT])
+            splitCUData.splitRefs = allSplitRefs;
+        else 
+        {
+            /* use best merge/inter mode, in case of intra use 2Nx2N inter references */
+            CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : md.bestMode->cu;
+            uint32_t numPU = cu.getNumPartInter(0);
+            for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += cu.getPUOffset(puIdx, 0))
+                splitCUData.splitRefs |= cu.getBestRefIdx(subPartIdx);
+        }
     }
 
-    if (!m_param->limitModes)
-    {
-        splitCUData.mvCost[0] = 0; // L0
-        splitCUData.mvCost[1] = 0; // L1
-        splitCUData.rdCost    = 0;
-    }
-    else
+    if (m_param->limitModes)
     {
         splitCUData.mvCost[0] = md.pred[PRED_2Nx2N].bestME[0][0].mvCost; // L0
         splitCUData.mvCost[1] = md.pred[PRED_2Nx2N].bestME[0][1].mvCost; // L1
@@ -1629,27 +1625,22 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
        /* determine which motion references the parent CU should search */
     SplitData splitCUData;
-    if (!(m_param->limitReferences & X265_REF_LIMIT_DEPTH))
-        splitCUData.splitRefs = 0;
-    else if (md.bestMode == &md.pred[PRED_SPLIT])
-        splitCUData.splitRefs = allSplitRefs;
-    else
+    splitCUData.initSplitCUData();
+    if (m_param->limitReferences & X265_REF_LIMIT_DEPTH)
     {
-        /* use best merge/inter mode, in case of intra use 2Nx2N inter references */
-        CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : md.bestMode->cu;
-        uint32_t numPU = cu.getNumPartInter(0);
-        splitCUData.splitRefs = 0;
-        for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += cu.getPUOffset(puIdx, 0))
-            splitCUData.splitRefs |= cu.getBestRefIdx(subPartIdx);
+        if (md.bestMode == &md.pred[PRED_SPLIT])
+            splitCUData.splitRefs = allSplitRefs;
+        else
+        {
+            /* use best merge/inter mode, in case of intra use 2Nx2N inter references */
+            CUData& cu = md.bestMode->cu.isIntra(0) ? md.pred[PRED_2Nx2N].cu : md.bestMode->cu;
+            uint32_t numPU = cu.getNumPartInter(0);
+            for (uint32_t puIdx = 0, subPartIdx = 0; puIdx < numPU; puIdx++, subPartIdx += cu.getPUOffset(puIdx, 0))
+                splitCUData.splitRefs |= cu.getBestRefIdx(subPartIdx);
+        }
     }
 
-    if (!m_param->limitModes)
-    {
-        splitCUData.mvCost[0] = 0; // L0
-        splitCUData.mvCost[1] = 0; // L1
-        splitCUData.rdCost    = 0;
-    }
-    else
+    if (m_param->limitModes)
     {
         splitCUData.mvCost[0] = md.pred[PRED_2Nx2N].bestME[0][0].mvCost; // L0
         splitCUData.mvCost[1] = md.pred[PRED_2Nx2N].bestME[0][1].mvCost; // L1
