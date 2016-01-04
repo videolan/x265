@@ -49,7 +49,7 @@ DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset veryfast --weightp --nr-intra 1
 DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset medium --nr-inter 500 -F4 --no-psy-rdoq
 DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset slower --no-weightp --rdoq-level 0 --limit-refs 3
 FourPeople_1280x720_60.y4m,--preset superfast --no-wpp --lookahead-slices 2
-FourPeople_1280x720_60.y4m,--preset medium --qp 38 --no-psy-rd --rd 0
+FourPeople_1280x720_60.y4m,--preset medium --qp 38 --no-psy-rd
 FourPeople_1280x720_60.y4m,--preset medium --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 FourPeople_1280x720_60.y4m,--preset veryslow --numa-pools "none"
 Keiba_832x480_30.y4m,--preset superfast --no-fast-intra --nr-intra 1000 -F4
@@ -95,7 +95,7 @@ city_4cif_60fps.y4m,--preset medium --crf 4 --cu-lossless --sao-non-deblock
 city_4cif_60fps.y4m,--preset slower --scaling-list default
 city_4cif_60fps.y4m,--preset veryslow --rdpenalty 2 --sao-non-deblock --no-b-intra --limit-refs 0
 ducks_take_off_420_720p50.y4m,--preset ultrafast --constrained-intra --rd 1
-ducks_take_off_444_720p50.y4m,--preset superfast --weightp --rd 0 --limit-refs 2
+ducks_take_off_444_720p50.y4m,--preset superfast --weightp --limit-refs 2
 ducks_take_off_420_720p50.y4m,--preset faster --qp 24 --deblock -6 --limit-refs 2
 ducks_take_off_420_720p50.y4m,--preset fast --deblock 6 --bframes 16 --rc-lookahead 40
 ducks_take_off_420_720p50.y4m,--preset medium --tskip --tskip-fast --constrained-intra
@@ -104,7 +104,7 @@ ducks_take_off_420_720p50.y4m,--preset slow --scaling-list default --qp 40
 ducks_take_off_444_720p50.y4m,--preset slower --psy-rd 1 --psy-rdoq 2.0 --rdoq-level 1 --limit-refs 1
 ducks_take_off_420_720p50.y4m,--preset slower --no-wpp
 ducks_take_off_420_720p50.y4m,--preset veryslow --constrained-intra --bframes 2
-mobile_calendar_422_ntsc.y4m,--preset superfast --weightp --rd 0
+mobile_calendar_422_ntsc.y4m,--preset superfast --weightp
 mobile_calendar_422_ntsc.y4m,--preset medium --bitrate 500 -F4
 mobile_calendar_422_ntsc.y4m,--preset slower --tskip --tskip-fast
 mobile_calendar_422_ntsc.y4m,--preset veryslow --tskip --limit-refs 2
