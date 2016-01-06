@@ -61,10 +61,10 @@ public:
     class ParallelFilter : public BondedTaskGroup, public Deblock
     {
     public:
-        static uint32_t     numCols;
-        static uint32_t     numRows;
-        static uint32_t     lastHeight;
-        static uint32_t     lastWidth;
+        uint32_t            m_numCols;
+        uint32_t            m_numRows;
+        uint32_t            m_lastHeight;
+        uint32_t            m_lastWidth;
         uint32_t            m_row;
         uint32_t            m_rowAddr;
         x265_param*         m_param;
@@ -78,7 +78,11 @@ public:
         ThreadSafeInteger   m_lastDeblocked;   /* The column that finished all of Deblock stages  */
 
         ParallelFilter()
-            : m_row(0)
+            : m_numCols(0)
+            , m_numRows(0)
+            , m_lastHeight(0)
+            , m_lastWidth(0)
+            , m_row(0)
             , m_rowAddr(0)
             , m_param(NULL)
             , m_frame(NULL)
@@ -102,14 +106,14 @@ public:
         // Post-Process (Border extension)
         void processPostCu(uint32_t col) const;
 
-        static uint32_t getCUHeight(int rowNum)
+        uint32_t getCUHeight(int rowNum) const
         {
-            return (rowNum == (int)numRows - 1) ? lastHeight : g_maxCUSize;
+            return (rowNum == (int)m_numRows - 1) ? m_lastHeight : g_maxCUSize;
         }
 
-        static uint32_t getCUWidth(int colNum)
+        uint32_t getCUWidth(int colNum) const
         {
-            return (colNum == (int)numCols - 1) ? lastWidth : g_maxCUSize;
+            return (colNum == (int)m_numCols - 1) ? m_lastWidth : g_maxCUSize;
         }
 
     protected:

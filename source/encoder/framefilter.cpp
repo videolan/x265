@@ -35,11 +35,6 @@ using namespace X265_NS;
 static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height);
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, uint32_t width, uint32_t height, void *buf, uint32_t& cnt);
 
-uint32_t FrameFilter::ParallelFilter::numCols = 0;
-uint32_t FrameFilter::ParallelFilter::numRows = 0;
-uint32_t FrameFilter::ParallelFilter::lastHeight = 0;
-uint32_t FrameFilter::ParallelFilter::lastWidth = 0;
-
 void FrameFilter::destroy()
 {
     X265_FREE(m_ssimBuf);
@@ -94,6 +89,11 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
 
         for(int row = 0; row < numRows; row++)
         {
+            // Setting maximum bound information
+            m_parallelFilter[row].m_numCols = numCols;
+            m_parallelFilter[row].m_numRows = numRows;
+            m_parallelFilter[row].m_lastHeight = m_lastHeight;
+            m_parallelFilter[row].m_lastWidth = (m_param->sourceWidth % g_maxCUSize) ? (m_param->sourceWidth % g_maxCUSize) : g_maxCUSize;
             m_parallelFilter[row].m_param = m_param;
             m_parallelFilter[row].m_row = row;
             m_parallelFilter[row].m_rowAddr = row * numCols;
@@ -104,11 +104,6 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
         }
     }
 
-    // Setting maximum columns
-    ParallelFilter::numCols = numCols;
-    ParallelFilter::numRows = numRows;
-    ParallelFilter::lastHeight = m_lastHeight;
-    ParallelFilter::lastWidth = (m_param->sourceWidth % g_maxCUSize) ? (m_param->sourceWidth % g_maxCUSize) : g_maxCUSize;
 }
 
 void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
@@ -235,7 +230,7 @@ void FrameFilter::ParallelFilter::processPostCu(uint32_t col) const
     m_frame->m_reconColCount[m_row].set(col);
 
     // shortcut path for non-border area
-    if ((col != 0) & (col != numCols - 1) & (m_row != 0) & (m_row != numRows - 1))
+    if ((col != 0) & (col != m_numCols - 1) & (m_row != 0) & (m_row != m_numRows - 1))
         return;
 
     PicYuv *reconPic = m_frame->m_reconPic;
@@ -258,7 +253,7 @@ void FrameFilter::ParallelFilter::processPostCu(uint32_t col) const
     int copySizeY = realW;
     int copySizeC = (realW >> hChromaShift);
 
-    if ((col == 0) | (col == numCols - 1))
+    if ((col == 0) | (col == m_numCols - 1))
     {
         // TODO: improve by process on Left or Right only
         primitives.extendRowBorder(reconPic->getLumaAddr(m_rowAddr), stride, reconPic->m_picWidth, realH, reconPic->m_lumaMarginX);
@@ -271,7 +266,7 @@ void FrameFilter::ParallelFilter::processPostCu(uint32_t col) const
     }
 
     // Extra Left and Right border on first and last CU
-    if ((col == 0) | (col == numCols - 1))
+    if ((col == 0) | (col == m_numCols - 1))
     {
         copySizeY += lumaMarginX;
         copySizeC += chromaMarginX;
@@ -302,7 +297,7 @@ void FrameFilter::ParallelFilter::processPostCu(uint32_t col) const
     }
 
     // Border extend Bottom
-    if (m_row == numRows - 1)
+    if (m_row == m_numRows - 1)
     {
         pixY += (realH - 1) * stride;
         pixU += ((realH >> vChromaShift) - 1) * strideC;
@@ -386,9 +381,9 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
         m_lastCol.incr();
     }
 
-    if (colEnd == (int)numCols)
+    if (colEnd == (int)m_numCols)
     {
-        const uint32_t cuAddr = m_rowAddr + numCols - 1;
+        const uint32_t cuAddr = m_rowAddr + m_numCols - 1;
 
         if (m_param->bEnableLoopFilter)
         {
@@ -397,47 +392,47 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
 
             // When SAO Disable, setting column counter here
             if ((!m_param->bEnableSAO) & (m_row >= 1))
-                m_prevRow->processPostCu(numCols - 1);
+                m_prevRow->processPostCu(m_numCols - 1);
         }
 
         // TODO: move processPostCu() into processSaoUnitCu()
         if (m_param->bEnableSAO)
         {
             // Save SAO bottom row reference pixels
-            copySaoAboveRef(reconPic, cuAddr, numCols - 1);
+            copySaoAboveRef(reconPic, cuAddr, m_numCols - 1);
 
             // SAO Decide
             // NOTE: reduce condition check for 1 CU only video, Why someone play with it?
-            if (numCols >= 2)
-                m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, numCols - 2, cuAddr - 1);
+            if (m_numCols >= 2)
+                m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, m_numCols - 2, cuAddr - 1);
 
-            if (numCols >= 1)
-                m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, numCols - 1, cuAddr);
+            if (m_numCols >= 1)
+                m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, m_numCols - 1, cuAddr);
 
             // Process Previous Rows SAO CU
-            if (m_row >= 1 && numCols >= 3)
+            if (m_row >= 1 && m_numCols >= 3)
             {
-                m_prevRow->processSaoUnitCu(saoParam, numCols - 3);
-                m_prevRow->processPostCu(numCols - 3);
+                m_prevRow->processSaoUnitCu(saoParam, m_numCols - 3);
+                m_prevRow->processPostCu(m_numCols - 3);
             }
 
-            if (m_row >= 1 && numCols >= 2)
+            if (m_row >= 1 && m_numCols >= 2)
             {
-                m_prevRow->processSaoUnitCu(saoParam, numCols - 2);
-                m_prevRow->processPostCu(numCols - 2);
+                m_prevRow->processSaoUnitCu(saoParam, m_numCols - 2);
+                m_prevRow->processPostCu(m_numCols - 2);
             }
 
-            if (m_row >= 1 && numCols >= 1)
+            if (m_row >= 1 && m_numCols >= 1)
             {
-                m_prevRow->processSaoUnitCu(saoParam, numCols - 1);
-                m_prevRow->processPostCu(numCols - 1);
+                m_prevRow->processSaoUnitCu(saoParam, m_numCols - 1);
+                m_prevRow->processPostCu(m_numCols - 1);
             }
 
             // Setting column sync counter
             if (m_row >= 1)
-                m_frame->m_reconColCount[m_row - 1].set(numCols - 1);
+                m_frame->m_reconColCount[m_row - 1].set(m_numCols - 1);
         }
-        m_lastDeblocked.set(numCols);
+        m_lastDeblocked.set(m_numCols);
     }
 }
 
@@ -466,21 +461,21 @@ void FrameFilter::processRow(int row)
         m_parallelFilter[row].waitForExit();
 
         /* Check to avoid previous row process slower than current row */
-        X265_CHECK((row < 1) || m_parallelFilter[row - 1].m_lastDeblocked.get() == (int)ParallelFilter::numCols, "previous row not finish");
+        X265_CHECK((row < 1) || m_parallelFilter[row - 1].m_lastDeblocked.get() == (int)m_parallelFilter[row - 1].m_numCols, "previous row not finish");
 
-        m_parallelFilter[row].m_allowedCol.set(ParallelFilter::numCols);
+        m_parallelFilter[row].m_allowedCol.set(m_parallelFilter[row].m_numCols);
         m_parallelFilter[row].processTasks(-1);
 
         if (row == m_numRows - 1)
         {
             /* TODO: Early start last row */
-            if ((row >= 1) && (m_parallelFilter[row - 1].m_lastDeblocked.get() != (int)ParallelFilter::numCols))
+            if ((row >= 1) && (m_parallelFilter[row - 1].m_lastDeblocked.get() != (int)m_parallelFilter[row - 1].m_numCols))
                 x265_log(m_param, X265_LOG_WARNING, "detected ParallelFilter race condition on last row\n");
 
             /* Apply SAO on last row of CUs, because we always apply SAO on row[X-1] */
             if (m_param->bEnableSAO)
             {
-                for(uint32_t col = 0; col < ParallelFilter::numCols; col++)
+                for(uint32_t col = 0; col < m_parallelFilter[row].m_numCols; col++)
                 {
                     // NOTE: must use processSaoUnitCu(), it include TQBypass logic
                     m_parallelFilter[row].processSaoUnitCu(saoParam, col);
@@ -488,7 +483,7 @@ void FrameFilter::processRow(int row)
             }
 
             // Process border extension on last row
-            for(uint32_t col = 0; col < ParallelFilter::numCols; col++)
+            for(uint32_t col = 0; col < m_parallelFilter[row].m_numCols; col++)
             {
                 // m_reconColCount will be set in processPostCu()
                 m_parallelFilter[row].processPostCu(col);
@@ -525,14 +520,14 @@ void FrameFilter::processPostCu(uint32_t row, uint32_t col) const
     m_frame->m_reconColCount[row].set(col);
 
     // shortcut path for non-border area
-    if ((col != 0) & (col != FrameFilter::ParallelFilter::numCols - 1) & (row != 0) & (row != FrameFilter::ParallelFilter::numRows - 1))
+    if ((col != 0) & (col != m_parallelFilter[row].m_numCols - 1) & (row != 0) & (row != m_parallelFilter[row].m_numRows - 1))
         return;
 
     PicYuv *reconPic = m_frame->m_reconPic;
-    const uint32_t rowAddr = row * FrameFilter::ParallelFilter::numCols;
+    const uint32_t rowAddr = row * m_parallelFilter[row].m_numCols;
     const uint32_t lineStartCUAddr = rowAddr + col;
-    const int realH = FrameFilter::ParallelFilter::getCUHeight(row);
-    const int realW = FrameFilter::ParallelFilter::getCUWidth(col);
+    const int realH = m_parallelFilter[row].getCUHeight(row);
+    const int realW = m_parallelFilter[row].getCUWidth(col);
 
     const uint32_t lumaMarginX = reconPic->m_lumaMarginX;
     const uint32_t lumaMarginY = reconPic->m_lumaMarginY;
@@ -549,7 +544,7 @@ void FrameFilter::processPostCu(uint32_t row, uint32_t col) const
     int copySizeY = realW;
     int copySizeC = (realW >> hChromaShift);
 
-    if ((col == 0) | (col == FrameFilter::ParallelFilter::numCols - 1))
+    if ((col == 0) | (col == m_parallelFilter[row].m_numCols - 1))
     {
         // TODO: improve by process on Left or Right only
         primitives.extendRowBorder(reconPic->getLumaAddr(rowAddr), stride, reconPic->m_picWidth, realH, reconPic->m_lumaMarginX);
@@ -562,7 +557,7 @@ void FrameFilter::processPostCu(uint32_t row, uint32_t col) const
     }
 
     // Extra Left and Right border on first and last CU
-    if ((col == 0) | (col == FrameFilter::ParallelFilter::numCols - 1))
+    if ((col == 0) | (col == m_parallelFilter[row].m_numCols - 1))
     {
         copySizeY += lumaMarginX;
         copySizeC += chromaMarginX;
@@ -593,7 +588,7 @@ void FrameFilter::processPostCu(uint32_t row, uint32_t col) const
     }
 
     // Border extend Bottom
-    if (row == FrameFilter::ParallelFilter::numRows - 1)
+    if (row == m_parallelFilter[row].m_numRows - 1)
     {
         pixY += (realH - 1) * stride;
         for (uint32_t y = 0; y < lumaMarginY; y++)
@@ -629,7 +624,7 @@ void FrameFilter::processPostRow(int row)
 
         intptr_t stride = reconPic->m_stride;
         uint32_t width  = reconPic->m_picWidth - m_pad[0];
-        uint32_t height = FrameFilter::ParallelFilter::getCUHeight(row);
+        uint32_t height = m_parallelFilter[row].getCUHeight(row);
 
         uint64_t ssdY = computeSSD(fencPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height);
         m_frameEncoder->m_SSDY += ssdY;
@@ -669,7 +664,7 @@ void FrameFilter::processPostRow(int row)
     }
     if (m_param->decodedPictureHashSEI == 1)
     {
-        uint32_t height = FrameFilter::ParallelFilter::getCUHeight(row);
+        uint32_t height = m_parallelFilter[row].getCUHeight(row);
         uint32_t width = reconPic->m_picWidth;
         intptr_t stride = reconPic->m_stride;
 
@@ -695,7 +690,7 @@ void FrameFilter::processPostRow(int row)
     }
     else if (m_param->decodedPictureHashSEI == 2)
     {
-        uint32_t height = FrameFilter::ParallelFilter::getCUHeight(row);
+        uint32_t height = m_parallelFilter[row].getCUHeight(row);
         uint32_t width = reconPic->m_picWidth;
         intptr_t stride = reconPic->m_stride;
 
@@ -717,7 +712,7 @@ void FrameFilter::processPostRow(int row)
     else if (m_param->decodedPictureHashSEI == 3)
     {
         uint32_t width = reconPic->m_picWidth;
-        uint32_t height = FrameFilter::ParallelFilter::getCUHeight(row);
+        uint32_t height = m_parallelFilter[row].getCUHeight(row);
         intptr_t stride = reconPic->m_stride;
         uint32_t cuHeight = g_maxCUSize;
 
