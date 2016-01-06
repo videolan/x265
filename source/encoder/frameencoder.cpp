@@ -1102,7 +1102,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         {
             // TODO: Multiple Threading
             // Delay ONE row to avoid Intra Prediction Conflict
-            if (row >= 1)
+            if (m_pool && (row >= 1))
             {
                 // Waitting last threading finish
                 m_frameFilter.m_parallelFilter[row - 1].waitForExit();
@@ -1121,7 +1121,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             }
 
             // Last Row may start early
-            if (row == m_numRows - 1)
+            if (m_pool && (row == m_numRows - 1))
             {
                 // Waiting for the last thread to finish
                 m_frameFilter.m_parallelFilter[row].waitForExit();
