@@ -63,7 +63,7 @@ public:
     public:
         uint32_t            m_numCols;
         uint32_t            m_numRows;
-        uint32_t            m_lastHeight;
+        uint32_t            m_rowHeight;
         uint32_t            m_lastWidth;
         uint32_t            m_row;
         uint32_t            m_rowAddr;
@@ -80,7 +80,7 @@ public:
         ParallelFilter()
             : m_numCols(0)
             , m_numRows(0)
-            , m_lastHeight(0)
+            , m_rowHeight(0)
             , m_lastWidth(0)
             , m_row(0)
             , m_rowAddr(0)
@@ -106,9 +106,9 @@ public:
         // Post-Process (Border extension)
         void processPostCu(uint32_t col) const;
 
-        uint32_t getCUHeight(int rowNum) const
+        uint32_t getCUHeight() const
         {
-            return (rowNum == (int)m_numRows - 1) ? m_lastHeight : g_maxCUSize;
+            return m_rowHeight;
         }
 
         uint32_t getCUWidth(int colNum) const

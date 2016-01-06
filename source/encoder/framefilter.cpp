@@ -87,13 +87,14 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
             }
         }
 
+        const int lastWidth = (m_param->sourceWidth % g_maxCUSize) ? (m_param->sourceWidth % g_maxCUSize) : g_maxCUSize;
         for(int row = 0; row < numRows; row++)
         {
             // Setting maximum bound information
             m_parallelFilter[row].m_numCols = numCols;
             m_parallelFilter[row].m_numRows = numRows;
-            m_parallelFilter[row].m_lastHeight = m_lastHeight;
-            m_parallelFilter[row].m_lastWidth = (m_param->sourceWidth % g_maxCUSize) ? (m_param->sourceWidth % g_maxCUSize) : g_maxCUSize;
+            m_parallelFilter[row].m_rowHeight = (row == numRows - 1) ? m_lastHeight : g_maxCUSize;
+            m_parallelFilter[row].m_lastWidth = lastWidth;
             m_parallelFilter[row].m_param = m_param;
             m_parallelFilter[row].m_row = row;
             m_parallelFilter[row].m_rowAddr = row * numCols;
@@ -235,7 +236,7 @@ void FrameFilter::ParallelFilter::processPostCu(uint32_t col) const
 
     PicYuv *reconPic = m_frame->m_reconPic;
     const uint32_t lineStartCUAddr = m_rowAddr + col;
-    const int realH = getCUHeight(m_row);
+    const int realH = getCUHeight();
     const int realW = getCUWidth(col);
 
     const uint32_t lumaMarginX = reconPic->m_lumaMarginX;
@@ -526,7 +527,7 @@ void FrameFilter::processPostCu(uint32_t row, uint32_t col) const
     PicYuv *reconPic = m_frame->m_reconPic;
     const uint32_t rowAddr = row * m_parallelFilter[row].m_numCols;
     const uint32_t lineStartCUAddr = rowAddr + col;
-    const int realH = m_parallelFilter[row].getCUHeight(row);
+    const int realH = m_parallelFilter[row].getCUHeight();
     const int realW = m_parallelFilter[row].getCUWidth(col);
 
     const uint32_t lumaMarginX = reconPic->m_lumaMarginX;
@@ -624,7 +625,7 @@ void FrameFilter::processPostRow(int row)
 
         intptr_t stride = reconPic->m_stride;
         uint32_t width  = reconPic->m_picWidth - m_pad[0];
-        uint32_t height = m_parallelFilter[row].getCUHeight(row);
+        uint32_t height = m_parallelFilter[row].getCUHeight();
 
         uint64_t ssdY = computeSSD(fencPic->getLumaAddr(cuAddr), reconPic->getLumaAddr(cuAddr), stride, width, height);
         m_frameEncoder->m_SSDY += ssdY;
@@ -664,7 +665,7 @@ void FrameFilter::processPostRow(int row)
     }
     if (m_param->decodedPictureHashSEI == 1)
     {
-        uint32_t height = m_parallelFilter[row].getCUHeight(row);
+        uint32_t height = m_parallelFilter[row].getCUHeight();
         uint32_t width = reconPic->m_picWidth;
         intptr_t stride = reconPic->m_stride;
 
@@ -690,7 +691,7 @@ void FrameFilter::processPostRow(int row)
     }
     else if (m_param->decodedPictureHashSEI == 2)
     {
-        uint32_t height = m_parallelFilter[row].getCUHeight(row);
+        uint32_t height = m_parallelFilter[row].getCUHeight();
         uint32_t width = reconPic->m_picWidth;
         intptr_t stride = reconPic->m_stride;
 
@@ -712,7 +713,7 @@ void FrameFilter::processPostRow(int row)
     else if (m_param->decodedPictureHashSEI == 3)
     {
         uint32_t width = reconPic->m_picWidth;
-        uint32_t height = m_parallelFilter[row].getCUHeight(row);
+        uint32_t height = m_parallelFilter[row].getCUHeight();
         intptr_t stride = reconPic->m_stride;
         uint32_t cuHeight = g_maxCUSize;
 
