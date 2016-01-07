@@ -276,7 +276,7 @@ void FrameEncoder::threadMain()
         m_localTldIdx = 0;
     }
 
-    m_done.trigger();     /* signal that thread is initialized */ 
+    m_done.trigger();     /* signal that thread is initialized */
     m_enable.wait();      /* Encoder::encode() triggers this event */
 
     while (m_threadActive)
