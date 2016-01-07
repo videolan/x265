@@ -85,6 +85,7 @@ public:
     bool                   m_bChromaExtended;    // orig chroma planes motion extended for weight analysis
 
     float*                 m_quantOffsets;       // points to quantOffsets in x265_picture
+    x265_sei               m_userSEI;
 
     /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
     ThreadSafeInteger      m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference

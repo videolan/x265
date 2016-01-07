@@ -41,6 +41,8 @@ Frame::Frame()
     m_next = NULL;
     m_prev = NULL;
     m_param = NULL;
+    m_userSEI.numPayloads = 0;
+    m_userSEI.payloads = NULL;
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_rcData = NULL;
 }
@@ -141,6 +143,13 @@ void Frame::destroy()
     if (m_quantOffsets)
     {
         delete[] m_quantOffsets;
+    }
+
+    if (m_userSEI.numPayloads)
+    {
+        for (int i = 0; i < m_userSEI.numPayloads; i++)
+            delete[] m_userSEI.payloads[i].payload;
+        delete[] m_userSEI.payloads;
     }
 
     m_lowres.destroy();

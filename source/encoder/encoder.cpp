@@ -589,7 +589,20 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_pts       = pic_in->pts;
         inFrame->m_forceqp   = pic_in->forceqp;
         inFrame->m_param     = m_reconfigure ? m_latestParam : m_param;
-        
+
+        if (pic_in->userSEI.numPayloads)
+        {
+            int numPayloads = inFrame->m_userSEI.numPayloads = pic_in->userSEI.numPayloads;
+            inFrame->m_userSEI.payloads = new x265_sei_payload[numPayloads];
+            for (int i = 0; i < numPayloads; i++)
+            {
+                int size = inFrame->m_userSEI.payloads[i].payloadSize = pic_in->userSEI.payloads[i].payloadSize;
+                inFrame->m_userSEI.payloads[i].payloadType = pic_in->userSEI.payloads[i].payloadType;
+                inFrame->m_userSEI.payloads[i].payload = new uint8_t[size];
+                memcpy(inFrame->m_userSEI.payloads[i].payload, pic_in->userSEI.payloads[i].payload, size);
+            }
+        }
+
         if (pic_in->quantOffsets != NULL)
         {
             int cuCount = inFrame->m_lowres.maxBlocksInRow * inFrame->m_lowres.maxBlocksInCol;

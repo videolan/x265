@@ -46,36 +46,7 @@ public:
 
 protected:
 
-    enum PayloadType
-    {
-        BUFFERING_PERIOD                     = 0,
-        PICTURE_TIMING                       = 1,
-        PAN_SCAN_RECT                        = 2,
-        FILLER_PAYLOAD                       = 3,
-        USER_DATA_REGISTERED_ITU_T_T35       = 4,
-        USER_DATA_UNREGISTERED               = 5,
-        RECOVERY_POINT                       = 6,
-        SCENE_INFO                           = 9,
-        FULL_FRAME_SNAPSHOT                  = 15,
-        PROGRESSIVE_REFINEMENT_SEGMENT_START = 16,
-        PROGRESSIVE_REFINEMENT_SEGMENT_END   = 17,
-        FILM_GRAIN_CHARACTERISTICS           = 19,
-        POST_FILTER_HINT                     = 22,
-        TONE_MAPPING_INFO                    = 23,
-        FRAME_PACKING                        = 45,
-        DISPLAY_ORIENTATION                  = 47,
-        SOP_DESCRIPTION                      = 128,
-        ACTIVE_PARAMETER_SETS                = 129,
-        DECODING_UNIT_INFO                   = 130,
-        TEMPORAL_LEVEL0_INDEX                = 131,
-        DECODED_PICTURE_HASH                 = 132,
-        SCALABLE_NESTING                     = 133,
-        REGION_REFRESH_INFO                  = 134,
-        MASTERING_DISPLAY_INFO               = 137,
-        CONTENT_LIGHT_LEVEL_INFO             = 144,
-    };
-
-    virtual PayloadType payloadType() const = 0;
+    virtual SEIPayloadType payloadType() const = 0;
 
     virtual void writeSEI(const SPS&) { X265_CHECK(0, "empty writeSEI method called\n");  }
 
@@ -86,11 +57,12 @@ class SEIuserDataUnregistered : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return USER_DATA_UNREGISTERED; }
+    SEIPayloadType payloadType() const { return m_payloadType; }
 
     SEIuserDataUnregistered() : m_userData(NULL) {}
 
     static const uint8_t m_uuid_iso_iec_11578[16];
+    SEIPayloadType m_payloadType;
     uint32_t m_userDataLength;
     uint8_t *m_userData;
 
@@ -98,7 +70,7 @@ public:
     {
         m_bitIf = &bs;
 
-        WRITE_CODE(USER_DATA_UNREGISTERED, 8, "payload_type");
+        WRITE_CODE(m_payloadType, 8, "payload_type");
 
         uint32_t payloadSize = 16 + m_userDataLength;
         for (; payloadSize >= 0xff; payloadSize -= 0xff)
@@ -123,7 +95,7 @@ public:
     uint32_t maxDisplayMasteringLuminance;
     uint32_t minDisplayMasteringLuminance;
 
-    PayloadType payloadType() const { return MASTERING_DISPLAY_INFO; }
+    SEIPayloadType payloadType() const { return MASTERING_DISPLAY_INFO; }
 
     bool parse(const char* value)
     {
@@ -161,7 +133,7 @@ public:
     uint16_t max_content_light_level;
     uint16_t max_pic_average_light_level;
 
-    PayloadType payloadType() const { return CONTENT_LIGHT_LEVEL_INFO; }
+    SEIPayloadType payloadType() const { return CONTENT_LIGHT_LEVEL_INFO; }
 
     void write(Bitstream& bs, const SPS&)
     {
@@ -178,7 +150,7 @@ class SEIDecodedPictureHash : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return DECODED_PICTURE_HASH; }
+    SEIPayloadType payloadType() const { return DECODED_PICTURE_HASH; }
 
     enum Method
     {
@@ -238,7 +210,7 @@ class SEIActiveParameterSets : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return ACTIVE_PARAMETER_SETS; }
+    SEIPayloadType payloadType() const { return ACTIVE_PARAMETER_SETS; }
 
     bool m_selfContainedCvsFlag;
     bool m_noParamSetUpdateFlag;
@@ -258,7 +230,7 @@ class SEIBufferingPeriod : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return BUFFERING_PERIOD; }
+    SEIPayloadType payloadType() const { return BUFFERING_PERIOD; }
 
     SEIBufferingPeriod()
         : m_cpbDelayOffset(0)
@@ -292,7 +264,7 @@ class SEIPictureTiming : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return PICTURE_TIMING; }
+    SEIPayloadType payloadType() const { return PICTURE_TIMING; }
 
     uint32_t  m_picStruct;
     uint32_t  m_sourceScanType;
@@ -327,7 +299,7 @@ class SEIRecoveryPoint : public SEI
 {
 public:
 
-    PayloadType payloadType() const { return RECOVERY_POINT; }
+    SEIPayloadType payloadType() const { return RECOVERY_POINT; }
 
     int  m_recoveryPocCnt;
     bool m_exactMatchingFlag;

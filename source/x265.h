@@ -150,6 +150,55 @@ typedef struct x265_frame_stats
     x265_cu_stats    cuStats;
 } x265_frame_stats;
 
+/* Arbitrary User SEI
+ * Payload size is in bytes and the payload pointer must be non-NULL. 
+ * Payload types and syntax can be found in Annex D of the H.265 Specification.
+ * SEI Payload Alignment bits as described in Annex D must be included at the 
+ * end of the payload if needed. The payload should not be NAL-encapsulated.
+ * Payloads are written in the order of input */
+
+typedef enum
+{
+    BUFFERING_PERIOD                     = 0,
+    PICTURE_TIMING                       = 1,
+    PAN_SCAN_RECT                        = 2,
+    FILLER_PAYLOAD                       = 3,
+    USER_DATA_REGISTERED_ITU_T_T35       = 4,
+    USER_DATA_UNREGISTERED               = 5,
+    RECOVERY_POINT                       = 6,
+    SCENE_INFO                           = 9,
+    FULL_FRAME_SNAPSHOT                  = 15,
+    PROGRESSIVE_REFINEMENT_SEGMENT_START = 16,
+    PROGRESSIVE_REFINEMENT_SEGMENT_END   = 17,
+    FILM_GRAIN_CHARACTERISTICS           = 19,
+    POST_FILTER_HINT                     = 22,
+    TONE_MAPPING_INFO                    = 23,
+    FRAME_PACKING                        = 45,
+    DISPLAY_ORIENTATION                  = 47,
+    SOP_DESCRIPTION                      = 128,
+    ACTIVE_PARAMETER_SETS                = 129,
+    DECODING_UNIT_INFO                   = 130,
+    TEMPORAL_LEVEL0_INDEX                = 131,
+    DECODED_PICTURE_HASH                 = 132,
+    SCALABLE_NESTING                     = 133,
+    REGION_REFRESH_INFO                  = 134,
+    MASTERING_DISPLAY_INFO               = 137,
+    CONTENT_LIGHT_LEVEL_INFO             = 144,
+} SEIPayloadType;
+
+typedef struct x265_sei_payload
+{
+    int payloadSize;
+    SEIPayloadType payloadType;
+    uint8_t* payload;
+} x265_sei_payload;
+
+typedef struct x265_sei
+{
+    int numPayloads;
+    x265_sei_payload *payloads;
+} x265_sei;
+
 /* Used to pass pictures into the encoder, and to get picture data back out of
  * the encoder.  The input and output semantics are different */
 typedef struct x265_picture
@@ -220,6 +269,9 @@ typedef struct x265_picture
 
     /* Frame level statistics */
     x265_frame_stats frameData;
+
+    /* User defined SEI */
+    x265_sei         userSEI;
 
     /* Ratecontrol statistics for collecting the ratecontrol information.
      * It is not used for collecting the last pass ratecontrol data in 
