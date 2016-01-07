@@ -756,6 +756,14 @@ the prediction quad-tree.
 	evaluate if luma used tskip. Inter block tskip analysis is
 	unmodified. Default disabled
 
+.. option:: --rd-refine, --no-rd-refine
+
+	For each analysed CU, calculate R-D cost on the best partition mode
+	for a range of QP values, to find the optimal rounding effect.
+	Default disabled.
+
+	Only effective at RD levels 5 and 6
+
 Analysis re-use options, to improve performance when encoding the same
 sequence multiple times (presumably at varying bitrates). The encoder
 will not reuse analysis if the resolution and slice type parameters do

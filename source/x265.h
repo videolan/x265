@@ -951,6 +951,12 @@ typedef struct x265_param
      * between 0 and 50, 1.0 is typical. Default 1.0 */
     double    psyRdoq;
 
+    /* Perform quantisation parameter based RD refinement. RD cost is calculated
+     * on the best CU partitions, chosen after the CU analysis, for a range of QPs
+     * to find the optimal rounding effect. Only effective at rd-levels 5 and 6.
+     * Default disabled */
+    int       bEnableRdRefine;
+
     /* If X265_ANALYSIS_SAVE, write per-frame analysis information into analysis
      * buffers.  if X265_ANALYSIS_LOAD, read analysis information into analysis
      * buffer and use this analysis information to reduce the amount of work

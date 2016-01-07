@@ -1830,6 +1830,11 @@ void Encoder::configure(x265_param *p)
         p->analysisMode = X265_ANALYSIS_OFF;
         x265_log(p, X265_LOG_WARNING, "Analysis save and load mode not supported for distributed mode analysis\n");
     }
+    if (p->bEnableRdRefine && (p->rdLevel < 5 || !p->rc.aqMode))
+    {
+        p->bEnableRdRefine = false;
+        x265_log(p, X265_LOG_WARNING, "--rd-refine disabled, requires RD level > 4 and adaptive quant\n");
+    }
 
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
     if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
