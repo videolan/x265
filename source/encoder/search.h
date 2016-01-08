@@ -88,6 +88,11 @@ struct MotionData
     int      bits;
     uint32_t mvCost;
     uint32_t cost;
+
+    MotionData()
+    {
+        memset(this, 0, sizeof(MotionData));
+    }
 };
 
 struct Mode

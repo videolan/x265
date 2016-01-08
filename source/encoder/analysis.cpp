@@ -1326,12 +1326,6 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
             checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom, true);
 
-            if (m_bTryLossless)
-                tryLossless(cuGeom);
-
-            if (mightSplit)
-                addSplitFlagCost(*md.bestMode, cuGeom.depth);
-
             // increment zOrder offset to point to next best depth in sharedDepth buffer
             zOrder += g_depthInc[g_maxCUDepth - 1][reuseDepth[zOrder]];
 
@@ -1346,7 +1340,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     splitData[3].initSplitCUData();
 
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
-    if (mightNotSplit)
+    if (mightNotSplit && !foundSkip)
     {
         md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -1957,10 +1951,11 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
             {
+                if (bestME[i].ref >= 0)
+                    *m_reuseMv = getLowresMV(interMode.cu, pu, i, bestME[i].ref);
+
                 *m_reuseRef = bestME[i].ref;
                 m_reuseRef++;
-
-                *m_reuseMv = getLowresMV(interMode.cu, pu, i, bestME[i].ref);
                 m_reuseMv++;
             }
         }
@@ -2004,10 +1999,11 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
             {
+                if (bestME[i].ref >= 0)
+                    *m_reuseMv = getLowresMV(interMode.cu, pu, i, bestME[i].ref);
+
                 *m_reuseRef = bestME[i].ref;
                 m_reuseRef++;
-
-                *m_reuseMv = getLowresMV(interMode.cu, pu, i, bestME[i].ref);
                 m_reuseMv++;
             }
         }

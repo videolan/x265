@@ -2086,11 +2086,14 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
         cu.getNeighbourMV(puIdx, pu.puAbsPartIdx, interMode.interNeighbours);
 
         /* Uni-directional prediction */
-        if (m_param->analysisMode == X265_ANALYSIS_LOAD && bestME[0].ref >= 0)
+        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
         {
             for (int list = 0; list < numPredDir; list++)
             {
                 int ref = bestME[list].ref;
+                if (ref < 0)
+                    continue;
+
                 uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
                 bits += getTUBits(ref, numRefIdx[list]);
 
@@ -2108,7 +2111,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
 
                 /* Get total cost of partition, but only include MV bit cost once */
                 bits += m_me.bitcost(outmv);
-                uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
+                uint32_t mvCost = m_me.mvcost(outmv);
+                uint32_t cost = (satdCost - mvCost) + m_rdCost.getCost(bits);
 
                 /* Refine MVP selection, updates: mvpIdx, bits, cost */
                 mvp = checkBestMVP(amvp, outmv, mvpIdx, bits, cost);
@@ -2120,6 +2124,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     bestME[list].mvpIdx = mvpIdx;
                     bestME[list].cost = cost;
                     bestME[list].bits = bits;
+                    bestME[list].mvCost  = mvCost;
                 }
             }
             bDoUnidir = false;
@@ -2170,6 +2175,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
         }
         if (bDoUnidir)
         {
+            interMode.bestME[puIdx][0].ref = interMode.bestME[puIdx][1].ref = -1;
             uint32_t refMask = refMasks[puIdx] ? refMasks[puIdx] : (uint32_t)-1;
 
             for (int list = 0; list < numPredDir; list++)
