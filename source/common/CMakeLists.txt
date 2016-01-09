@@ -16,12 +16,14 @@ endif(EXTRA_LIB)
 if(ENABLE_ASSEMBLY)
     set_source_files_properties(threading.cpp primitives.cpp PROPERTIES COMPILE_FLAGS -DENABLE_ASSEMBLY=1)
     list(APPEND VFLAGS "-DENABLE_ASSEMBLY=1")
+endif(ENABLE_ASSEMBLY)
 
+if(ENABLE_ASSEMBLY AND X86)
     set(SSE3  vec/dct-sse3.cpp)
     set(SSSE3 vec/dct-ssse3.cpp)
     set(SSE41 vec/dct-sse41.cpp)
 
-    if(MSVC AND X86)
+    if(MSVC)
         set(PRIMITIVES ${SSE3} ${SSSE3} ${SSE41})
         set(WARNDISABLE "/wd4100") # unreferenced formal parameter
         if(INTEL_CXX)
@@ -38,7 +40,7 @@ if(ENABLE_ASSEMBLY)
             set_source_files_properties(${SSE3} ${SSSE3} ${SSE41} PROPERTIES COMPILE_FLAGS "${WARNDISABLE} /arch:SSE2")
         endif()
     endif()
-    if(GCC AND X86)
+    if(GCC)
         if(CLANG)
             # llvm intrinsic headers cause shadow warnings
             set(WARNDISABLE "-Wno-shadow -Wno-unused-parameter")
@@ -81,7 +83,20 @@ if(ENABLE_ASSEMBLY)
         set(ASM_PRIMITIVES ${ASM_PRIMITIVES} x86/${SRC})
     endforeach()
     source_group(Assembly FILES ${ASM_PRIMITIVES})
-endif(ENABLE_ASSEMBLY)
+endif(ENABLE_ASSEMBLY AND X86)
+
+if(ENABLE_ASSEMBLY AND (ARM OR CROSS_COMPILE_ARM))
+    set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h loopfilter.h)
+
+    # add ARM assembly/intrinsic files here
+    set(A_SRCS)
+    set(VEC_PRIMITIVES)
+
+    foreach(SRC ${C_SRCS})
+        set(ASM_PRIMITIVES ${ASM_PRIMITIVES} arm/${SRC})
+    endforeach()
+    source_group(Assembly FILES ${ASM_PRIMITIVES})
+endif(ENABLE_ASSEMBLY AND (ARM OR CROSS_COMPILE_ARM))
 
 # set_target_properties can't do list expansion
 string(REPLACE ";" " " VERSION_FLAGS "${VFLAGS}")

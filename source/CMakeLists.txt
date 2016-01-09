@@ -275,7 +275,9 @@ if(GCC)
 endif(GCC)
 
 find_package(Yasm)
-if(YASM_FOUND AND X86)
+if(ARM OR CROSS_COMPILE_ARM)
+    option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
+elseif(YASM_FOUND AND X86)
     if (YASM_VERSION_STRING VERSION_LESS "1.2.0")
         message(STATUS "Yasm version ${YASM_VERSION_STRING} is too old. 1.2.0 or later required")
         option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
@@ -423,15 +425,22 @@ if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
     else()
         set(SUFFIX o)
     endif()
-    foreach(ASM ${MSVC_ASMS})
-        set(YASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
-        list(APPEND YASM_SRCS ${YASM_SRC})
-        list(APPEND YASM_OBJS ${ASM}.${SUFFIX})
-        add_custom_command(
-            OUTPUT ${ASM}.${SUFFIX}
-            COMMAND ${YASM_EXECUTABLE} ARGS ${YASM_FLAGS} ${YASM_SRC} -o ${ASM}.${SUFFIX}
-            DEPENDS ${YASM_SRC})
-    endforeach()
+
+    if(ARM OR CROSS_COMPILE_ARM)
+    # compile ARM arch asm files here
+
+    elseif(X86)
+    # compile X86 arch asm files here
+        foreach(ASM ${MSVC_ASMS})
+            set(YASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
+            list(APPEND YASM_SRCS ${YASM_SRC})
+            list(APPEND YASM_OBJS ${ASM}.${SUFFIX})
+            add_custom_command(
+                OUTPUT ${ASM}.${SUFFIX}
+                COMMAND ${YASM_EXECUTABLE} ARGS ${YASM_FLAGS} ${YASM_SRC} -o ${ASM}.${SUFFIX}
+                DEPENDS ${YASM_SRC})
+        endforeach()
+    endif()
 endif()
 
 source_group(ASM FILES ${YASM_SRCS})
