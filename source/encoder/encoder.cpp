@@ -857,7 +857,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 m_aborted = true;
         }
         else if (m_encodedFrameNum)
-            m_rateControl->setFinalFrameCount(m_encodedFrameNum); 
+            m_rateControl->setFinalFrameCount(m_encodedFrameNum);
     }
     while (m_bZeroLatency && ++pass < 2);
 
@@ -869,7 +869,7 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
     encParam->maxNumReferences = param->maxNumReferences; // never uses more refs than specified in stream headers
     encParam->bEnableLoopFilter = param->bEnableLoopFilter;
     encParam->deblockingFilterTCOffset = param->deblockingFilterTCOffset;
-    encParam->deblockingFilterBetaOffset = param->deblockingFilterBetaOffset; 
+    encParam->deblockingFilterBetaOffset = param->deblockingFilterBetaOffset;
     encParam->bEnableFastIntra = param->bEnableFastIntra;
     encParam->bEnableEarlySkip = param->bEnableEarlySkip;
     encParam->bEnableTemporalMvp = param->bEnableTemporalMvp;
@@ -1104,7 +1104,7 @@ void Encoder::printSummary()
                  (double)cuStats.countPModeMasters / cuStats.totalCTUs,
                  (double)cuStats.pmodeBlockTime / cuStats.countPModeMasters);
         x265_log(m_param, X265_LOG_INFO, "CU:       %.3lf slaves per PMODE master, each took average of %.3lf ms\n",
-                 (double)cuStats.countPModeTasks / cuStats.countPModeMasters, 
+                 (double)cuStats.countPModeTasks / cuStats.countPModeMasters,
                  ELAPSED_MSEC(cuStats.pmodeTime) / cuStats.countPModeTasks);
     }
 

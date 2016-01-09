@@ -213,7 +213,7 @@ typedef struct x265_picture
 
     /* An array of quantizer offsets to be applied to this image during encoding.
      * These are added on top of the decisions made by rateControl.
-     * Adaptive quantization must be enabled to use this feature. These quantizer 
+     * Adaptive quantization must be enabled to use this feature. These quantizer
      * offsets should be given for each 16x16 block. Behavior if quant
      * offsets differ between encoding passes is undefined. */
     float            *quantOffsets;
@@ -619,7 +619,7 @@ typedef struct x265_param
 
     /* Enables the emission of a user data SEI with the stream headers which
      * describes the encoder version, build info, and parameters. This is
-     * very helpful for debugging, but may interfere with regression tests. 
+     * very helpful for debugging, but may interfere with regression tests.
      * Default enabled */
     int       bEmitInfoSEI;
 
@@ -1067,7 +1067,7 @@ typedef struct x265_param
 
         /* Enable slow and a more detailed first pass encode in multi pass rate control */
         int       bEnableSlowFirstPass;
-        
+
         /* rate-control overrides */
         int        zoneCount;
         x265_zone* zones;
@@ -1080,14 +1080,14 @@ typedef struct x265_param
          * values will affect all encoders in the same process */
         const char* lambdaFileName;
 
-        /* Enable stricter conditions to check bitrate deviations in CBR mode. May compromise 
+        /* Enable stricter conditions to check bitrate deviations in CBR mode. May compromise
          * quality to maintain bitrate adherence */
         int bStrictCbr;
 
-        /* Enable adaptive quantization at CU granularity. This parameter specifies 
-         * the minimum CU size at which QP can be adjusted, i.e. Quantization Group 
-         * (QG) size. Allowed values are 64, 32, 16 provided it falls within the 
-         * inclusuve range [maxCUSize, minCUSize]. Experimental, default: maxCUSize*/
+        /* Enable adaptive quantization at CU granularity. This parameter specifies
+         * the minimum CU size at which QP can be adjusted, i.e. Quantization Group
+         * (QG) size. Allowed values are 64, 32, 16 provided it falls within the
+         * inclusuve range [maxCUSize, minCUSize]. Experimental, default: maxCUSize */
         uint32_t qgSize;
     } rc;
 
