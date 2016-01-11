@@ -185,7 +185,7 @@ void x265_param_default(x265_param* param)
     param->cbQpOffset = 0;
     param->crQpOffset = 0;
     param->rdPenalty = 0;
-    param->psyRd = 0.3;
+    param->psyRd = 2.0;
     param->psyRdoq = 0.0;
     param->analysisMode = 0;
     param->analysisFileName = NULL;
@@ -1118,7 +1118,7 @@ int x265_check_params(x265_param* param)
           "deblocking filter tC offset must be in the range of -6 to +6");
     CHECK(param->deblockingFilterBetaOffset < -6 || param->deblockingFilterBetaOffset > 6,
           "deblocking filter Beta offset must be in the range of -6 to +6");
-    CHECK(param->psyRd < 0 || 2.0 < param->psyRd, "Psy-rd strength must be between 0 and 2.0");
+    CHECK(param->psyRd < 0 || 5.0 < param->psyRd, "Psy-rd strength must be between 0 and 5.0");
     CHECK(param->psyRdoq < 0 || 50.0 < param->psyRdoq, "Psy-rdoq strength must be between 0 and 50.0");
     CHECK(param->bEnableWavefront < 0, "WaveFrontSynchro cannot be negative");
     CHECK((param->vui.aspectRatioIdc < 0
