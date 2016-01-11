@@ -962,6 +962,58 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             // Save CABAC state for next row
             curRow.bufferedEntropy.loadContexts(rowCoder);
 
+        /* SAO parameter estimation using non-deblocked pixels for CTU bottom and right boundary areas */
+        if (m_param->bEnableSAO && m_param->bSaoNonDeblocked)
+            m_frameFilter.m_parallelFilter[row].m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
+
+        /* Deblock with idle threading */
+        if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
+        {
+            // TODO: Multiple Threading
+            // Delay ONE row to avoid Intra Prediction Conflict
+            if (m_pool && (row >= 1))
+            {
+                // Waitting last threading finish
+                m_frameFilter.m_parallelFilter[row - 1].waitForExit();
+
+                // Processing new group
+                int allowCol = col;
+
+                // avoid race condition on last column
+                if (row >= 2)
+                {
+                    allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get()
+                                                              : m_frameFilter.m_parallelFilter[row - 2].m_lastCol.get()), (int)col);
+                }
+                m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(allowCol);
+                m_frameFilter.m_parallelFilter[row - 1].tryBondPeers(*this, 1);
+            }
+
+            // Last Row may start early
+            if (m_pool && (row == m_numRows - 1))
+            {
+                // Waiting for the last thread to finish
+                m_frameFilter.m_parallelFilter[row].waitForExit();
+
+                // Deblocking last row
+                int allowCol = col;
+
+                // avoid race condition on last column
+                if (row >= 2)
+                {
+                    allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get()
+                                                              : m_frameFilter.m_parallelFilter[row - 1].m_lastCol.get()), (int)col);
+                }
+                m_frameFilter.m_parallelFilter[row].m_allowedCol.set(allowCol);
+                m_frameFilter.m_parallelFilter[row].tryBondPeers(*this, 1);
+            }
+        }
+        // Both Loopfilter and SAO Disabled
+        else
+        {
+            m_frameFilter.processPostCu(row, col);
+        }
+
         // Completed CU processing
         curRow.completed++;
 
@@ -1091,60 +1143,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             }
         }
 
-        // TODO: move Deblock and SAO to before VBV check
-
-        /* SAO parameter estimation using non-deblocked pixels for CTU bottom and right boundary areas */
-        if (m_param->bEnableSAO && m_param->bSaoNonDeblocked)
-            m_frameFilter.m_parallelFilter[row].m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
-
-        /* Deblock with idle threading */
-        if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
-        {
-            // TODO: Multiple Threading
-            // Delay ONE row to avoid Intra Prediction Conflict
-            if (m_pool && (row >= 1))
-            {
-                // Waitting last threading finish
-                m_frameFilter.m_parallelFilter[row - 1].waitForExit();
-
-                // Processing new group
-                int allowCol = col;
-
-                // avoid race condition on last column
-                if (row >= 2)
-                {
-                    allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get()
-                                                              : m_frameFilter.m_parallelFilter[row - 2].m_lastCol.get()), (int)col);
-                }
-                m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(allowCol);
-                m_frameFilter.m_parallelFilter[row - 1].tryBondPeers(*this, 1);
-            }
-
-            // Last Row may start early
-            if (m_pool && (row == m_numRows - 1))
-            {
-                // Waiting for the last thread to finish
-                m_frameFilter.m_parallelFilter[row].waitForExit();
-
-                // Deblocking last row
-                int allowCol = col;
-
-                // avoid race condition on last column
-                if (row >= 2)
-                {
-                    allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get()
-                                                              : m_frameFilter.m_parallelFilter[row - 1].m_lastCol.get()), (int)col);
-                }
-                m_frameFilter.m_parallelFilter[row].m_allowedCol.set(allowCol);
-                m_frameFilter.m_parallelFilter[row].tryBondPeers(*this, 1);
-            }
-        }
-        // Both Loopfilter and SAO Disabled
-        else
-        {
-            m_frameFilter.processPostCu(row, col);
-        }
-
         if (m_param->bEnableWavefront && curRow.completed >= 2 && row < m_numRows - 1 &&
             (!m_bAllRowsStop || intRow + 1 < m_vbvResetTriggerRow))
         {
@@ -1161,7 +1159,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
         ScopedLock self(curRow.lock);
         if ((m_bAllRowsStop && intRow > m_vbvResetTriggerRow) ||
-            (row > 0 && curRow.completed < numCols - 1 && m_rows[row - 1].completed < m_rows[row].completed + 2))
+            (row > 0 && ((curRow.completed < numCols - 1) || (m_rows[row - 1].completed < numCols)) && m_rows[row - 1].completed < m_rows[row].completed + 2))
         {
             curRow.active = false;
             curRow.busy = false;
