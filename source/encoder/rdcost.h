@@ -74,13 +74,18 @@ public:
             qpCr = x265_clip3(QP_MIN, QP_MAX_SPEC, qp + slice.m_pps->chromaQpOffset[1]);
         }
 
-        int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
-        uint16_t lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
-        m_chromaDistWeight[0] = lambdaOffset;
+        if (slice.m_sps->chromaFormatIdc == X265_CSP_I444)
+        {
+            int chroma_offset_idx = X265_MIN(qp - qpCb + 12, MAX_CHROMA_LAMBDA_OFFSET);
+            uint16_t lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
+            m_chromaDistWeight[0] = lambdaOffset;
 
-        chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
-        lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
-        m_chromaDistWeight[1] = lambdaOffset;
+            chroma_offset_idx = X265_MIN(qp - qpCr + 12, MAX_CHROMA_LAMBDA_OFFSET);
+            lambdaOffset = m_psyRd ? x265_chroma_lambda2_offset_tab[chroma_offset_idx] : 256;
+            m_chromaDistWeight[1] = lambdaOffset;
+        }
+        else
+            m_chromaDistWeight[0] = m_chromaDistWeight[1] = 256;
     }
 
     void setLambda(double lambda2, double lambda)
