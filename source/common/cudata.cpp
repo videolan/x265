@@ -480,7 +480,7 @@ void CUData::copyToPic(uint32_t depth) const
 }
 
 /* The reverse of copyToPic, called only by encodeResidue */
-void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp)
+void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp, bool copyQp)
 {
     m_encData       = ctu.m_encData;
     m_slice         = ctu.m_slice;
@@ -491,7 +491,8 @@ void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp)
     m_numPartitions = cuGeom.numPartitions;
 
     /* copy out all prediction info for this part */
-    m_partCopy((uint8_t*)m_qp, (uint8_t*)ctu.m_qp + m_absIdxInCTU);
+    if (copyQp) m_partCopy((uint8_t*)m_qp, (uint8_t*)ctu.m_qp + m_absIdxInCTU);
+
     m_partCopy(m_log2CUSize,   ctu.m_log2CUSize + m_absIdxInCTU);
     m_partCopy(m_lumaIntraDir, ctu.m_lumaIntraDir + m_absIdxInCTU);
     m_partCopy(m_tqBypass,     ctu.m_tqBypass + m_absIdxInCTU);

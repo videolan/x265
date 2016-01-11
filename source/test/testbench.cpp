@@ -169,6 +169,9 @@ int main(int argc, char *argv[])
         { "XOP", X265_CPU_XOP },
         { "AVX2", X265_CPU_AVX2 },
         { "BMI2", X265_CPU_AVX2 | X265_CPU_BMI1 | X265_CPU_BMI2 },
+        { "ARMv6", X265_CPU_ARMV6 },
+        { "NEON", X265_CPU_NEON },
+        { "FastNeonMRC", X265_CPU_FAST_NEON_MRC },
         { "", 0 },
     };
 
@@ -182,6 +185,7 @@ int main(int argc, char *argv[])
         else
             continue;
 
+#if X265_ARCH_X86
         EncoderPrimitives vecprim;
         memset(&vecprim, 0, sizeof(vecprim));
         setupInstrinsicPrimitives(vecprim, test_arch[i].flag);
@@ -197,6 +201,7 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
+#endif
 
         EncoderPrimitives asmprim;
         memset(&asmprim, 0, sizeof(asmprim));
@@ -220,7 +225,9 @@ int main(int argc, char *argv[])
 
     EncoderPrimitives optprim;
     memset(&optprim, 0, sizeof(optprim));
+#if X265_ARCH_X86
     setupInstrinsicPrimitives(optprim, cpuid);
+#endif
     setupAssemblyPrimitives(optprim, cpuid);
 
     /* Note that we do not setup aliases for performance tests, that would be
