@@ -943,7 +943,7 @@ typedef struct x265_param
     /* Psycho-visual rate-distortion strength. Only has an effect in presets
      * which use RDO. It makes mode decision favor options which preserve the
      * energy of the source, at the cost of lost compression. The value must
-     * be between 0 and 2.0, 1.0 is typical. Default 0.3 */
+     * be between 0 and 5.0, 1.0 is typical. Default 2.0 */
     double    psyRd;
 
     /* Strength of psycho-visual optimizations in quantization. Only has an
