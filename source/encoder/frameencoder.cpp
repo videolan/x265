@@ -1011,7 +1011,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         // Both Loopfilter and SAO Disabled
         else
         {
-            m_frameFilter.processPostCu(row, col);
+            m_frameFilter.m_parallelFilter[row].processPostCu(col);
         }
 
         // Completed CU processing

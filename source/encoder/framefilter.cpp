@@ -67,8 +67,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
     if (m_param->bEnableSsim)
         m_ssimBuf = X265_MALLOC(int, 8 * (m_param->sourceWidth / 4 + 3));
 
-    if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
-        m_parallelFilter = new ParallelFilter[numRows];
+    m_parallelFilter = new ParallelFilter[numRows];
 
     if (m_parallelFilter)
     {
@@ -511,101 +510,6 @@ void FrameFilter::processRow(int row)
             m_parallelFilter[0].m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_slice->m_sps->numCUsInFrame);
         }
         processPostRow(row);
-    }
-}
-
-// NOTE: This version for case that Disable both Deblock and Sao
-void FrameFilter::processPostCu(uint32_t row, uint32_t col) const
-{
-    // Update finished CU cursor
-    m_frame->m_reconColCount[row].set(col);
-
-    // shortcut path for non-border area
-    if ((col != 0) & (col != m_parallelFilter[row].m_numCols - 1) & (row != 0) & (row != m_parallelFilter[row].m_numRows - 1))
-        return;
-
-    PicYuv *reconPic = m_frame->m_reconPic;
-    const uint32_t rowAddr = row * m_parallelFilter[row].m_numCols;
-    const uint32_t lineStartCUAddr = rowAddr + col;
-    const int realH = m_parallelFilter[row].getCUHeight();
-    const int realW = m_parallelFilter[row].getCUWidth(col);
-
-    const uint32_t lumaMarginX = reconPic->m_lumaMarginX;
-    const uint32_t lumaMarginY = reconPic->m_lumaMarginY;
-    const uint32_t chromaMarginX = reconPic->m_chromaMarginX;
-    const uint32_t chromaMarginY = reconPic->m_chromaMarginY;
-    const int hChromaShift = reconPic->m_hChromaShift;
-    const int vChromaShift = reconPic->m_vChromaShift;
-    const intptr_t stride = reconPic->m_stride;
-    const intptr_t strideC = reconPic->m_strideC;
-    pixel *pixY = reconPic->getLumaAddr(lineStartCUAddr);
-    // MUST BE check I400 since m_picOrg uninitialize in that case
-    pixel *pixU = (m_param->internalCsp != X265_CSP_I400) ? reconPic->getCbAddr(lineStartCUAddr) : NULL;
-    pixel *pixV = (m_param->internalCsp != X265_CSP_I400) ? reconPic->getCrAddr(lineStartCUAddr) : NULL;
-    int copySizeY = realW;
-    int copySizeC = (realW >> hChromaShift);
-
-    if ((col == 0) | (col == m_parallelFilter[row].m_numCols - 1))
-    {
-        // TODO: improve by process on Left or Right only
-        primitives.extendRowBorder(reconPic->getLumaAddr(rowAddr), stride, reconPic->m_picWidth, realH, reconPic->m_lumaMarginX);
-
-        if (m_param->internalCsp != X265_CSP_I400)
-        {
-            primitives.extendRowBorder(reconPic->getCbAddr(rowAddr), strideC, reconPic->m_picWidth >> hChromaShift, realH >> vChromaShift, reconPic->m_chromaMarginX);
-            primitives.extendRowBorder(reconPic->getCrAddr(rowAddr), strideC, reconPic->m_picWidth >> hChromaShift, realH >> vChromaShift, reconPic->m_chromaMarginX);
-        }
-    }
-
-    // Extra Left and Right border on first and last CU
-    if ((col == 0) | (col == m_parallelFilter[row].m_numCols - 1))
-    {
-        copySizeY += lumaMarginX;
-        copySizeC += chromaMarginX;
-    }
-
-    // First column need extension left padding area and first CU
-    if (col == 0)
-    {
-        pixY -= lumaMarginX;
-        pixU -= chromaMarginX;
-        pixV -= chromaMarginX;
-    }
-
-    // Border extend Top
-    if (row == 0)
-    {
-        for (uint32_t y = 0; y < lumaMarginY; y++)
-            memcpy(pixY - (y + 1) * stride, pixY, copySizeY * sizeof(pixel));
-
-        if (m_param->internalCsp != X265_CSP_I400)
-        {
-            for (uint32_t y = 0; y < chromaMarginY; y++)
-            {
-                memcpy(pixU - (y + 1) * strideC, pixU, copySizeC * sizeof(pixel));
-                memcpy(pixV - (y + 1) * strideC, pixV, copySizeC * sizeof(pixel));
-            }
-        }
-    }
-
-    // Border extend Bottom
-    if (row == m_parallelFilter[row].m_numRows - 1)
-    {
-        pixY += (realH - 1) * stride;
-        for (uint32_t y = 0; y < lumaMarginY; y++)
-            memcpy(pixY + (y + 1) * stride, pixY, copySizeY * sizeof(pixel));
-
-        if (m_param->internalCsp != X265_CSP_I400)
-        {
-            pixU += ((realH >> vChromaShift) - 1) * strideC;
-            pixV += ((realH >> vChromaShift) - 1) * strideC;
-
-            for (uint32_t y = 0; y < chromaMarginY; y++)
-            {
-                memcpy(pixU + (y + 1) * strideC, pixU, copySizeC * sizeof(pixel));
-                memcpy(pixV + (y + 1) * strideC, pixV, copySizeC * sizeof(pixel));
-            }
-        }
     }
 }
 

@@ -139,7 +139,6 @@ public:
 
     void processRow(int row);
     void processPostRow(int row);
-    void processPostCu(uint32_t row, uint32_t col) const;
 };
 }
 
