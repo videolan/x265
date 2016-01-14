@@ -1236,7 +1236,7 @@ void SAO::rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus)
 void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
 {
     SaoCtuParam mergeSaoParam[NUM_MERGE_MODE][2];
-    double mergeDist[NUM_MERGE_MODE];
+    double lambda[3] = {m_lumaLambda, m_chromaLambda, m_chromaLambda};
     bool allowMerge[2]; // left, up
     allowMerge[1] = (idxY > 0);
 
@@ -1282,9 +1282,41 @@ void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
             calcSaoStatsCu(addr, 2);
         }
 
-        saoComponentParamDist(saoParam, addr, addrUp, addrLeft, &mergeSaoParam[0][0], mergeDist);
+        double mergeDist[NUM_MERGE_MODE] = {0.0, 0.0, 0.0};
+        saoLumaComponentParamDist(saoParam, addr, mergeDist);
         if (m_chromaFormat != X265_CSP_I400)
-            sao2ChromaParamDist(saoParam, addr, addrUp, addrLeft, mergeSaoParam, mergeDist);
+            saoChromaComponentParamDist(saoParam, addr, mergeDist);
+
+        // merge left or merge up
+        for (int plane = 0; plane < 3; plane++)
+        {
+            for (int mergeIdx = 0; mergeIdx < 2; mergeIdx++)
+            {
+                SaoCtuParam* mergeSrcParam = NULL;
+                if (addrLeft >= 0 && mergeIdx == 0)
+                    mergeSrcParam = &(saoParam->ctuParam[plane][addrLeft]);
+                else if (addrUp >= 0 && mergeIdx == 1)
+                    mergeSrcParam = &(saoParam->ctuParam[plane][addrUp]);
+                if (mergeSrcParam)
+                {
+                    int64_t estDist = 0;
+                    int typeIdx = mergeSrcParam->typeIdx;
+                    if (typeIdx >= 0)
+                    {
+                        int bandPos = (typeIdx == SAO_BO) ? mergeSrcParam->bandPos : 0;
+                        for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
+                        {
+                            int mergeOffset = mergeSrcParam->offset[classIdx];
+                            estDist += estSaoDist(m_count[plane][typeIdx][classIdx + bandPos + 1], mergeOffset, m_offsetOrg[plane][typeIdx][classIdx + bandPos + 1]);
+                        }
+                    }
+
+                    copySaoUnit(&mergeSaoParam[plane][mergeIdx], mergeSrcParam);
+                    mergeSaoParam[plane][mergeIdx].mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
+                    mergeDist[mergeIdx + 1] += ((double)estDist / lambda[plane]);
+                }
+            }
+        }
 
         if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
         {
@@ -1348,7 +1380,7 @@ void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
 void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 {
     SaoCtuParam mergeSaoParam[NUM_MERGE_MODE][2];
-    double mergeDist[NUM_MERGE_MODE];
+    double lambda[3] = {m_lumaLambda, m_chromaLambda, m_chromaLambda};
     const bool allowMerge[2] = {(idxX != 0), (rowBaseAddr != 0)}; // left, up
 
     const int addrUp   = rowBaseAddr ? addr - m_numCuInWidth : -1;
@@ -1391,9 +1423,41 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
         calcSaoStatsCu(addr, 2);
     }
 
-    saoComponentParamDist(saoParam, addr, addrUp, addrLeft, &mergeSaoParam[0][0], mergeDist);
+    double mergeDist[NUM_MERGE_MODE] = {0.0, 0.0, 0.0};
+    saoLumaComponentParamDist(saoParam, addr, mergeDist);
     if (chroma)
-        sao2ChromaParamDist(saoParam, addr, addrUp, addrLeft, mergeSaoParam, mergeDist);
+        saoChromaComponentParamDist(saoParam, addr, mergeDist);
+
+    // merge left or merge up
+    for (int plane = 0; plane < planes; plane++)
+    {
+        for (int mergeIdx = 0; mergeIdx < 2; mergeIdx++)
+        {
+            SaoCtuParam* mergeSrcParam = NULL;
+            if (addrLeft >= 0 && mergeIdx == 0)
+                mergeSrcParam = &(saoParam->ctuParam[plane][addrLeft]);
+            else if (addrUp >= 0 && mergeIdx == 1)
+                mergeSrcParam = &(saoParam->ctuParam[plane][addrUp]);
+            if (mergeSrcParam)
+            {
+                int64_t estDist = 0;
+                int typeIdx = mergeSrcParam->typeIdx;
+                if (typeIdx >= 0)
+                {
+                    int bandPos = (typeIdx == SAO_BO) ? mergeSrcParam->bandPos : 0;
+                    for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
+                    {
+                        int mergeOffset = mergeSrcParam->offset[classIdx];
+                        estDist += estSaoDist(m_count[plane][typeIdx][classIdx + bandPos + 1], mergeOffset, m_offsetOrg[plane][typeIdx][classIdx + bandPos + 1]);
+                    }
+                }
+
+                copySaoUnit(&mergeSaoParam[plane][mergeIdx], mergeSrcParam);
+                mergeSaoParam[plane][mergeIdx].mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
+                mergeDist[mergeIdx + 1] += ((double)estDist / lambda[plane]);
+            }
+        }
+    }
 
     if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
     {
@@ -1526,7 +1590,7 @@ inline int SAO::estIterOffset(int typeIdx, int classIdx, double lambda, int offs
     return offsetOut;
 }
 
-void SAO::saoComponentParamDist(SAOParam* saoParam, int addr, int addrUp, int addrLeft, SaoCtuParam* mergeSaoParam, double* mergeDist)
+void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist)
 {
     int64_t bestDist = 0;
 
@@ -1594,38 +1658,9 @@ void SAO::saoComponentParamDist(SAOParam* saoParam, int addr, int addrUp, int ad
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.codeSaoOffset(*lclCtuParam, 0);
     m_entropyCoder.store(m_rdContexts.temp);
-
-    // merge left or merge up
-    for (int mergeIdx = 0; mergeIdx < 2; mergeIdx++)
-    {
-        SaoCtuParam* mergeSrcParam = NULL;
-        if (addrLeft >= 0 && mergeIdx == 0)
-            mergeSrcParam = &(saoParam->ctuParam[0][addrLeft]);
-        else if (addrUp >= 0 && mergeIdx == 1)
-            mergeSrcParam = &(saoParam->ctuParam[0][addrUp]);
-        if (mergeSrcParam)
-        {
-            int64_t estDist = 0;
-            int typeIdx = mergeSrcParam->typeIdx;
-            if (typeIdx >= 0)
-            {
-                int bandPos = (typeIdx == SAO_BO) ? mergeSrcParam->bandPos : 0;
-                for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
-                {
-                    int mergeOffset = mergeSrcParam->offset[classIdx];
-                    estDist += estSaoDist(m_count[0][typeIdx][classIdx + bandPos + 1], mergeOffset, m_offsetOrg[0][typeIdx][classIdx + bandPos + 1]);
-                }
-            }
-
-            copySaoUnit(&mergeSaoParam[mergeIdx], mergeSrcParam);
-            mergeSaoParam[mergeIdx].mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
-
-            mergeDist[mergeIdx + 1] = ((double)estDist / m_lumaLambda);
-        }
-    }
 }
 
-void SAO::sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addrLeft, SaoCtuParam mergeSaoParam[][2], double* mergeDist)
+void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist)
 {
     int64_t bestDist = 0;
 
@@ -1710,38 +1745,6 @@ void SAO::sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addr
     m_entropyCoder.codeSaoOffset(*lclCtuParam[0], 1);
     m_entropyCoder.codeSaoOffset(*lclCtuParam[1], 2);
     m_entropyCoder.store(m_rdContexts.temp);
-
-    // merge left or merge up
-    for (int mergeIdx = 0; mergeIdx < 2; mergeIdx++)
-    {
-        for (int compIdx = 0; compIdx < 2; compIdx++)
-        {
-            int plane = compIdx + 1;
-            SaoCtuParam* mergeSrcParam = NULL;
-            if (addrLeft >= 0 && mergeIdx == 0)
-                mergeSrcParam = &(saoParam->ctuParam[plane][addrLeft]);
-            else if (addrUp >= 0 && mergeIdx == 1)
-                mergeSrcParam = &(saoParam->ctuParam[plane][addrUp]);
-            if (mergeSrcParam)
-            {
-                int64_t estDist = 0;
-                int typeIdx = mergeSrcParam->typeIdx;
-                if (typeIdx >= 0)
-                {
-                    int bandPos = (typeIdx == SAO_BO) ? mergeSrcParam->bandPos : 0;
-                    for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
-                    {
-                        int mergeOffset = mergeSrcParam->offset[classIdx];
-                        estDist += estSaoDist(m_count[plane][typeIdx][classIdx + bandPos + 1], mergeOffset, m_offsetOrg[plane][typeIdx][classIdx + bandPos + 1]);
-                    }
-                }
-
-                copySaoUnit(&mergeSaoParam[plane][mergeIdx], mergeSrcParam);
-                mergeSaoParam[plane][mergeIdx].mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
-                mergeDist[mergeIdx + 1] += ((double)estDist / m_chromaLambda);
-            }
-        }
-    }
 }
 
 // NOTE: must put in namespace X265_NS since we need class SAO

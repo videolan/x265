@@ -141,8 +141,8 @@ public:
     void calcSaoStatsCu(int addr, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
 
-    void saoComponentParamDist(SAOParam* saoParam, int addr, int addrUp, int addrLeft, SaoCtuParam mergeSaoParam[2], double* mergeDist);
-    void sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addrLeft, SaoCtuParam mergeSaoParam[][2], double* mergeDist);
+    void saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist);
+    void saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist);
 
     inline int estIterOffset(int typeIdx, int classIdx, double lambda, int offset, int32_t count, int32_t offsetOrg,
                              int32_t* currentDistortionTableBo, double* currentRdCostTableBo);
