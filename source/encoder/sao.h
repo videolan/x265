@@ -146,8 +146,6 @@ public:
 
     inline int estIterOffset(int typeIdx, int classIdx, double lambda, int offset, int32_t count, int32_t offsetOrg,
                              int32_t* currentDistortionTableBo, double* currentRdCostTableBo);
-    inline int64_t estSaoTypeDist(int plane, int typeIdx, double lambda, int32_t* currentDistortionTableBo, double* currentRdCostTableBo);
-
     void rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus);
     void rdoSaoUnitRow(SAOParam* saoParam, int idxY);
     void rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr);
