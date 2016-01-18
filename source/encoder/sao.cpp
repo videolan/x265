@@ -1415,12 +1415,17 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
         saoParam->ctuParam[i][addr].reset();
 
     if (saoParam->bSaoFlag[0])
+    {
         calcSaoStatsCu(addr, 0);
+        saoStatsInitialOffset(0);
+    }
 
     if (saoParam->bSaoFlag[1])
     {
         calcSaoStatsCu(addr, 1);
         calcSaoStatsCu(addr, 2);
+        saoStatsInitialOffset(1);
+        saoStatsInitialOffset(2);
     }
 
     double mergeDist[NUM_MERGE_MODE] = {0.0, 0.0, 0.0};
@@ -1516,6 +1521,47 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
     }
 }
 
+
+// Rounds the division of initial offsets by the number of samples in
+// each of the statistics table entries.
+void SAO::saoStatsInitialOffset(int plane)
+{
+    // EO
+    for (int typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE - 1; typeIdx++)
+    {
+        for (int classIdx = 1; classIdx < SAO_EO_LEN + 1; classIdx++)
+        {
+            int32_t  count     = m_count[plane][typeIdx][classIdx];
+            int32_t& offsetOrg = m_offsetOrg[plane][typeIdx][classIdx];
+            int32_t& offsetOut = m_offset[plane][typeIdx][classIdx];
+
+            if (count)
+            {
+                offsetOut = roundIBDI(offsetOrg, count << SAO_BIT_INC);
+                offsetOut = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offsetOut);
+
+                if (classIdx < 3) 
+                    offsetOut = X265_MAX(offsetOut, 0);
+                else
+                    offsetOut = X265_MIN(offsetOut, 0);
+            }
+        }
+    }
+    // BO
+    for (int classIdx = 1; classIdx < SAO_NUM_BO_CLASSES + 1; classIdx++)
+    {
+        int32_t  count     = m_count[plane][SAO_BO][classIdx];
+        int32_t& offsetOrg = m_offsetOrg[plane][SAO_BO][classIdx];
+        int32_t& offsetOut = m_offset[plane][SAO_BO][classIdx];
+
+        if (count)
+        {
+            offsetOut = roundIBDI(offsetOrg, count << SAO_BIT_INC);
+            offsetOut = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offsetOut);
+        }
+    }
+}
+
 inline int SAO::estIterOffset(int typeIdx, int classIdx, double lambda, int offset, int32_t count, int32_t offsetOrg, int32_t* currentDistortionTableBo, double* currentRdCostTableBo)
 {
     int offsetOut = 0;
@@ -1577,15 +1623,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
 
             if (count)
             {
-                int offset = roundIBDI(offsetOrg << (X265_DEPTH - 8), count);
-                offset = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offset);
-
-                if (classIdx < 3)
-                    offset = X265_MAX(offset, 0);
-                else
-                    offset = X265_MIN(offset, 0);
-
-                offsetOut = estIterOffset(typeIdx, classIdx, m_lumaLambda, offset, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
+                offsetOut = estIterOffset(typeIdx, classIdx, m_lumaLambda, offsetOut, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
             }
             else
             {
@@ -1630,10 +1668,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
 
         if (count)
         {
-            int offset = roundIBDI(offsetOrg << (X265_DEPTH - 8), count);
-            offset = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offset);
-
-            offsetOut = estIterOffset(SAO_BO, classIdx, m_lumaLambda, offset, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
+            offsetOut = estIterOffset(SAO_BO, classIdx, m_lumaLambda, offsetOut, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
         }
         else
         {
@@ -1718,15 +1753,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
 
                 if (count)
                 {
-                    int offset = roundIBDI(offsetOrg << (X265_DEPTH - 8), count);
-                    offset = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offset);
-
-                    if (classIdx < 3)
-                        offset = X265_MAX(offset, 0);
-                    else
-                        offset = X265_MIN(offset, 0);
-
-                    offsetOut = estIterOffset(typeIdx, classIdx, m_chromaLambda, offset, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
+                    offsetOut = estIterOffset(typeIdx, classIdx, m_chromaLambda, offsetOut, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
                 }
                 else
                 {
@@ -1784,10 +1811,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
 
             if (count)
             {
-                int offset = roundIBDI(offsetOrg << (X265_DEPTH - 8), count);
-                offset = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offset);
-
-                offsetOut = estIterOffset(SAO_BO, classIdx, m_chromaLambda, offset, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
+                offsetOut = estIterOffset(SAO_BO, classIdx, m_chromaLambda, offsetOut, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
             }
             else
             {

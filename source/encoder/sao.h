@@ -150,6 +150,8 @@ public:
     void rdoSaoUnitRow(SAOParam* saoParam, int idxY);
     void rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr);
 
+    void saoStatisticInitOffset(int plane);
+
     friend class FrameFilter;
 };
 
