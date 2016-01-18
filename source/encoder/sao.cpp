@@ -758,16 +758,6 @@ void SAO::processSaoUnitCuChroma(SaoCtuParam* ctuParam[3], int idxY, int idxX)
     std::swap(m_tmpL1[2], m_tmpL2[2]);
 }
 
-void SAO::copySaoUnit(SaoCtuParam* saoUnitDst, const SaoCtuParam* saoUnitSrc)
-{
-    saoUnitDst->mergeMode   = saoUnitSrc->mergeMode;
-    saoUnitDst->typeIdx     = saoUnitSrc->typeIdx;
-    saoUnitDst->bandPos     = saoUnitSrc->bandPos;
-
-    for (int i = 0; i < SAO_NUM_OFFSET; i++)
-        saoUnitDst->offset[i] = saoUnitSrc->offset[i];
-}
-
 /* Calculate SAO statistics for current CTU without non-crossing slice */
 void SAO::calcSaoStatsCu(int addr, int plane)
 {
@@ -1233,158 +1223,12 @@ void SAO::rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus)
         m_depthSaoRate[1 * SAO_DEPTHRATE_SIZE + m_refDepth] = m_numNoSao[1] / ((double)numctus);
 }
 
-void SAO::rdoSaoUnitRow(SAOParam* saoParam, int idxY)
-{
-    SaoCtuParam mergeSaoParam[NUM_MERGE_MODE][2];
-    double lambda[3] = {m_lumaLambda, m_chromaLambda, m_chromaLambda};
-    bool allowMerge[2]; // left, up
-    allowMerge[1] = (idxY > 0);
-
-    for (int idxX = 0; idxX < m_numCuInWidth; idxX++)
-    {
-        int addr     = idxX + idxY * m_numCuInWidth;
-        int addrUp   = idxY ? addr - m_numCuInWidth : -1;
-        int addrLeft = idxX ? addr - 1 : -1;
-        allowMerge[0] = (idxX > 0);
-
-        m_entropyCoder.load(m_rdContexts.cur);
-        if (allowMerge[0])
-            m_entropyCoder.codeSaoMerge(0);
-        if (allowMerge[1])
-            m_entropyCoder.codeSaoMerge(0);
-        m_entropyCoder.store(m_rdContexts.temp);
-
-        // reset stats Y, Cb, Cr
-        X265_CHECK(sizeof(PerPlane) == (sizeof(int32_t) * (NUM_PLANE * MAX_NUM_SAO_TYPE * MAX_NUM_SAO_CLASS)), "Found Padding space in struct PerPlane");
-
-        // TODO: Confirm the address space is continuous
-        if (m_param->bSaoNonDeblocked)
-        {
-            memcpy(m_count, m_countPreDblk[addr], sizeof(m_count));
-            memcpy(m_offsetOrg, m_offsetOrgPreDblk[addr], sizeof(m_offsetOrg));
-        }
-        else
-        {
-            memset(m_count, 0, sizeof(m_count));
-            memset(m_offsetOrg, 0, sizeof(m_offsetOrg));
-        }
-
-        saoParam->ctuParam[0][addr].reset();
-        saoParam->ctuParam[1][addr].reset();
-        saoParam->ctuParam[2][addr].reset();
-
-        if (saoParam->bSaoFlag[0])
-            calcSaoStatsCu(addr, 0);
-
-        if (saoParam->bSaoFlag[1])
-        {
-            calcSaoStatsCu(addr, 1);
-            calcSaoStatsCu(addr, 2);
-        }
-
-        double mergeDist[NUM_MERGE_MODE] = {0.0, 0.0, 0.0};
-        saoLumaComponentParamDist(saoParam, addr, mergeDist);
-        if (m_chromaFormat != X265_CSP_I400)
-            saoChromaComponentParamDist(saoParam, addr, mergeDist);
-
-        // merge left or merge up
-        for (int plane = 0; plane < 3; plane++)
-        {
-            for (int mergeIdx = 0; mergeIdx < 2; mergeIdx++)
-            {
-                SaoCtuParam* mergeSrcParam = NULL;
-                if (addrLeft >= 0 && mergeIdx == 0)
-                    mergeSrcParam = &(saoParam->ctuParam[plane][addrLeft]);
-                else if (addrUp >= 0 && mergeIdx == 1)
-                    mergeSrcParam = &(saoParam->ctuParam[plane][addrUp]);
-                if (mergeSrcParam)
-                {
-                    int64_t estDist = 0;
-                    int typeIdx = mergeSrcParam->typeIdx;
-                    if (typeIdx >= 0)
-                    {
-                        int bandPos = (typeIdx == SAO_BO) ? mergeSrcParam->bandPos : 0;
-                        for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
-                        {
-                            int mergeOffset = mergeSrcParam->offset[classIdx];
-                            estDist += estSaoDist(m_count[plane][typeIdx][classIdx + bandPos + 1], mergeOffset, m_offsetOrg[plane][typeIdx][classIdx + bandPos + 1]);
-                        }
-                    }
-
-                    copySaoUnit(&mergeSaoParam[plane][mergeIdx], mergeSrcParam);
-                    mergeSaoParam[plane][mergeIdx].mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
-                    mergeDist[mergeIdx + 1] += ((double)estDist / lambda[plane]);
-                }
-            }
-        }
-
-        if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
-        {
-            // Cost of new SAO_params
-            m_entropyCoder.load(m_rdContexts.cur);
-            m_entropyCoder.resetBits();
-            if (allowMerge[0])
-                m_entropyCoder.codeSaoMerge(0);
-            if (allowMerge[1])
-                m_entropyCoder.codeSaoMerge(0);
-            for (int plane = 0; plane < 3; plane++)
-            {
-                if (saoParam->bSaoFlag[plane > 0])
-                    m_entropyCoder.codeSaoOffset(saoParam->ctuParam[plane][addr], plane);
-            }
-
-            uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
-            double bestCost = mergeDist[0] + (double)rate;
-            m_entropyCoder.store(m_rdContexts.temp);
-
-            // Cost of Merge
-            for (int mergeIdx = 0; mergeIdx < 2; ++mergeIdx)
-            {
-                if (!allowMerge[mergeIdx])
-                    continue;
-
-                m_entropyCoder.load(m_rdContexts.cur);
-                m_entropyCoder.resetBits();
-                if (allowMerge[0])
-                    m_entropyCoder.codeSaoMerge(1 - mergeIdx);
-                if (allowMerge[1] && (mergeIdx == 1))
-                    m_entropyCoder.codeSaoMerge(1);
-
-                rate = m_entropyCoder.getNumberOfWrittenBits();
-                double mergeCost = mergeDist[mergeIdx + 1] + (double)rate;
-                if (mergeCost < bestCost)
-                {
-                    SaoMergeMode mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
-                    bestCost = mergeCost;
-                    m_entropyCoder.store(m_rdContexts.temp);
-                    for (int plane = 0; plane < 3; plane++)
-                    {
-                        mergeSaoParam[plane][mergeIdx].mergeMode = mergeMode;
-                        if (saoParam->bSaoFlag[plane > 0])
-                            copySaoUnit(&saoParam->ctuParam[plane][addr], &mergeSaoParam[plane][mergeIdx]);
-                    }
-                }
-            }
-
-            if (saoParam->ctuParam[0][addr].typeIdx < 0)
-                m_numNoSao[0]++;
-            if (m_chromaFormat != X265_CSP_I400 && saoParam->ctuParam[1][addr].typeIdx < 0)
-                m_numNoSao[1]++;
-
-            m_entropyCoder.load(m_rdContexts.temp);
-            m_entropyCoder.store(m_rdContexts.cur);
-        }
-    }
-}
-
 void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 {
-    SaoCtuParam mergeSaoParam[NUM_MERGE_MODE][2];
     double lambda[3] = {m_lumaLambda, m_chromaLambda, m_chromaLambda};
     const bool allowMerge[2] = {(idxX != 0), (rowBaseAddr != 0)}; // left, up
 
-    const int addrUp   = rowBaseAddr ? addr - m_numCuInWidth : -1;
-    const int addrLeft = idxX ? addr - 1 : -1;
+    const int addrMerge[2] = {(idxX ? addr - 1 : -1), (rowBaseAddr ? addr - m_numCuInWidth : -1)};// left, up
 
     bool chroma = m_param->internalCsp != X265_CSP_I400;
     int planes = chroma ? 3 : 1;
@@ -1425,44 +1269,13 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
         calcSaoStatsCu(addr, 1);
         calcSaoStatsCu(addr, 2);
         saoStatsInitialOffset(1);
-        saoStatsInitialOffset(2);
+//        saoStatsInitialOffset(2);
     }
 
-    double mergeDist[NUM_MERGE_MODE] = {0.0, 0.0, 0.0};
+    double mergeDist[NUM_MERGE_MODE] = { 0.0 };
     saoLumaComponentParamDist(saoParam, addr, mergeDist);
     if (chroma)
         saoChromaComponentParamDist(saoParam, addr, mergeDist);
-
-    // merge left or merge up
-    for (int plane = 0; plane < planes; plane++)
-    {
-        for (int mergeIdx = 0; mergeIdx < 2; mergeIdx++)
-        {
-            SaoCtuParam* mergeSrcParam = NULL;
-            if (addrLeft >= 0 && mergeIdx == 0)
-                mergeSrcParam = &(saoParam->ctuParam[plane][addrLeft]);
-            else if (addrUp >= 0 && mergeIdx == 1)
-                mergeSrcParam = &(saoParam->ctuParam[plane][addrUp]);
-            if (mergeSrcParam)
-            {
-                int64_t estDist = 0;
-                int typeIdx = mergeSrcParam->typeIdx;
-                if (typeIdx >= 0)
-                {
-                    int bandPos = (typeIdx == SAO_BO) ? mergeSrcParam->bandPos : 0;
-                    for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
-                    {
-                        int mergeOffset = mergeSrcParam->offset[classIdx];
-                        estDist += estSaoDist(m_count[plane][typeIdx][classIdx + bandPos + 1], mergeOffset, m_offsetOrg[plane][typeIdx][classIdx + bandPos + 1]);
-                    }
-                }
-
-                copySaoUnit(&mergeSaoParam[plane][mergeIdx], mergeSrcParam);
-                mergeSaoParam[plane][mergeIdx].mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
-                mergeDist[mergeIdx + 1] += ((double)estDist / lambda[plane]);
-            }
-        }
-    }
 
     if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
     {
@@ -1483,11 +1296,30 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
         double bestCost = mergeDist[0] + (double)rate;
         m_entropyCoder.store(m_rdContexts.temp);
 
-        // Cost of Merge
+        // Cost of merge left or Up
         for (int mergeIdx = 0; mergeIdx < 2; ++mergeIdx)
         {
             if (!allowMerge[mergeIdx])
                 continue;
+
+            for (int plane = 0; plane < 3; plane++)
+            {
+                int64_t estDist = 0;
+                SaoCtuParam* mergeSrcParam = &(saoParam->ctuParam[plane][addrMerge[mergeIdx]]);
+                int typeIdx = mergeSrcParam->typeIdx;
+                if (typeIdx >= 0)
+                {
+                    int bandPos = (typeIdx == SAO_BO) ? mergeSrcParam->bandPos : 0;
+                    for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
+                    {
+                        int mergeOffset = mergeSrcParam->offset[classIdx];
+                        estDist += estSaoDist(m_count[plane][typeIdx][classIdx + bandPos + 1], mergeOffset, m_offsetOrg[plane][typeIdx][classIdx + bandPos + 1]);
+                    }
+                }
+
+                mergeDist[mergeIdx + 1] += ((double)estDist / lambda[plane]);
+            }
+
 
             m_entropyCoder.load(m_rdContexts.cur);
             m_entropyCoder.resetBits();
@@ -1505,9 +1337,17 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
                 m_entropyCoder.store(m_rdContexts.temp);
                 for (int plane = 0; plane < planes; plane++)
                 {
-                    mergeSaoParam[plane][mergeIdx].mergeMode = mergeMode;
                     if (saoParam->bSaoFlag[plane > 0])
-                        copySaoUnit(&saoParam->ctuParam[plane][addr], &mergeSaoParam[plane][mergeIdx]);
+                    {
+                        SaoCtuParam* dstCtuParam   = &saoParam->ctuParam[plane][addr];
+                        SaoCtuParam* mergeSrcParam = &(saoParam->ctuParam[plane][addrMerge[mergeIdx]]);
+                        dstCtuParam->mergeMode = mergeMode;
+                        dstCtuParam->typeIdx   = mergeSrcParam->typeIdx;
+                        dstCtuParam->bandPos   = mergeSrcParam->bandPos;
+
+                        for (int i = 0; i < SAO_NUM_OFFSET; i++)
+                            dstCtuParam->offset[i] = mergeSrcParam->offset[i];
+                    }
                 }
             }
         }
@@ -1524,75 +1364,81 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 
 // Rounds the division of initial offsets by the number of samples in
 // each of the statistics table entries.
-void SAO::saoStatsInitialOffset(int plane)
+void SAO::saoStatsInitialOffset(int planes)
 {
     // EO
-    for (int typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE - 1; typeIdx++)
+    for (int plane = planes; plane <= 2*planes; plane++)
     {
-        for (int classIdx = 1; classIdx < SAO_EO_LEN + 1; classIdx++)
+        for (int typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE - 1; typeIdx++)
         {
-            int32_t  count     = m_count[plane][typeIdx][classIdx];
-            int32_t& offsetOrg = m_offsetOrg[plane][typeIdx][classIdx];
-            int32_t& offsetOut = m_offset[plane][typeIdx][classIdx];
+            for (int classIdx = 1; classIdx < SAO_EO_LEN + 1; classIdx++)
+            {
+                int32_t  count     = m_count[plane][typeIdx][classIdx];
+                int32_t& offsetOrg = m_offsetOrg[plane][typeIdx][classIdx];
+                int32_t& offsetOut = m_offset[plane][typeIdx][classIdx];
+
+                if (count)
+                {
+                    offsetOut = roundIBDI(offsetOrg, count << SAO_BIT_INC);
+                    offsetOut = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offsetOut);
+
+                    if (classIdx < 3) 
+                        offsetOut = X265_MAX(offsetOut, 0);
+                    else
+                        offsetOut = X265_MIN(offsetOut, 0);
+                }
+            }
+        }
+    }
+
+    // BO
+    for (int plane = planes; plane <= 2*planes; plane++)
+    {
+        for (int classIdx = 1; classIdx < SAO_NUM_BO_CLASSES + 1; classIdx++)
+        {
+            int32_t  count     = m_count[plane][SAO_BO][classIdx];
+            int32_t& offsetOrg = m_offsetOrg[plane][SAO_BO][classIdx];
+            int32_t& offsetOut = m_offset[plane][SAO_BO][classIdx];
 
             if (count)
             {
                 offsetOut = roundIBDI(offsetOrg, count << SAO_BIT_INC);
                 offsetOut = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offsetOut);
-
-                if (classIdx < 3) 
-                    offsetOut = X265_MAX(offsetOut, 0);
-                else
-                    offsetOut = X265_MIN(offsetOut, 0);
             }
-        }
-    }
-    // BO
-    for (int classIdx = 1; classIdx < SAO_NUM_BO_CLASSES + 1; classIdx++)
-    {
-        int32_t  count     = m_count[plane][SAO_BO][classIdx];
-        int32_t& offsetOrg = m_offsetOrg[plane][SAO_BO][classIdx];
-        int32_t& offsetOut = m_offset[plane][SAO_BO][classIdx];
-
-        if (count)
-        {
-            offsetOut = roundIBDI(offsetOrg, count << SAO_BIT_INC);
-            offsetOut = x265_clip3(-OFFSET_THRESH + 1, OFFSET_THRESH - 1, offsetOut);
         }
     }
 }
 
-inline int SAO::estIterOffset(int typeIdx, int classIdx, double lambda, int offset, int32_t count, int32_t offsetOrg, int32_t* currentDistortionTableBo, double* currentRdCostTableBo)
+inline int SAO::estIterOffset(int typeIdx, double lambda, int offset, int32_t count, int32_t offsetOrg, int& distBOClasses, double& costBOClasses)
 {
-    int offsetOut = 0;
+    int bestOffset = 0;
 
-    // Assuming sending quantized value 0 results in zero offset and sending the value zero needs 1 bit. entropy coder can be used to measure the exact rate here.
-    double tempMinCost = lambda;
+    // Assuming sending quantized value 0 results in zero offset and sending the value zero needs 1 bit.
+    // entropy coder can be used to measure the exact rate here.
+    double bestCost = lambda;
     while (offset != 0)
     {
         // Calculate the bits required for signalling the offset
-        int tempRate = (typeIdx == SAO_BO) ? (abs(offset) + 2) : (abs(offset) + 1);
+        int rate = (typeIdx == SAO_BO) ? (abs(offset) + 2) : (abs(offset) + 1);
         if (abs(offset) == OFFSET_THRESH - 1)
-            tempRate--;
+            rate--;
 
         // Do the dequntization before distorion calculation
-        int tempOffset = offset << SAO_BIT_INC;
-        int64_t tempDist  = estSaoDist(count, tempOffset, offsetOrg);
-        double tempCost   = ((double)tempDist + lambda * (double)tempRate);
-        if (tempCost < tempMinCost)
+        int64_t dist = estSaoDist(count, offset << SAO_BIT_INC, offsetOrg);
+        double cost  = ((double)dist + lambda * (double)rate);
+        if (cost < bestCost)
         {
-            tempMinCost = tempCost;
-            offsetOut = offset;
+            bestCost = cost;
+            bestOffset = offset;
             if (typeIdx == SAO_BO)
             {
-                currentDistortionTableBo[classIdx - 1] = (int)tempDist;
-                currentRdCostTableBo[classIdx - 1] = tempCost;
+                distBOClasses = (int)dist;
+                costBOClasses = bestCost;
             }
         }
         offset = (offset > 0) ? (offset - 1) : (offset + 1);
     }
-
-    return offsetOut;
+    return bestOffset;
 }
 
 void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist)
@@ -1602,8 +1448,8 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
 
     SaoCtuParam* lclCtuParam = &saoParam->ctuParam[0][addr];
 
-    int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
-    double currentRdCostTableBo[MAX_NUM_SAO_CLASS];
+    int    distBOClasses[MAX_NUM_SAO_CLASS];
+    double costBOClasses[MAX_NUM_SAO_CLASS];
 
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
@@ -1621,15 +1467,9 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
             int32_t& offsetOrg = m_offsetOrg[0][typeIdx][classIdx];
             int32_t& offsetOut = m_offset[0][typeIdx][classIdx];
 
-            if (count)
-            {
-                offsetOut = estIterOffset(typeIdx, classIdx, m_lumaLambda, offsetOut, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
-            }
-            else
-            {
-                offsetOrg = 0;
-                offsetOut = 0;
-            }
+            if (offsetOut)
+                offsetOut = estIterOffset(typeIdx, m_lumaLambda, offsetOut, count, offsetOrg, distBOClasses[0], costBOClasses[0]);
+
             estDist += estSaoDist(count, (int)offsetOut << SAO_BIT_INC, offsetOrg);
         }
 
@@ -1665,44 +1505,37 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
         int32_t& offsetOrg = m_offsetOrg[0][SAO_BO][classIdx];
         int32_t& offsetOut = m_offset[0][SAO_BO][classIdx];
 
-        currentDistortionTableBo[classIdx - 1] = 0;
-        currentRdCostTableBo[classIdx - 1] = m_lumaLambda;
+        distBOClasses[classIdx - 1] = 0;
+        costBOClasses[classIdx - 1] = m_lumaLambda;
 
-        if (count)
-        {
-            offsetOut = estIterOffset(SAO_BO, classIdx, m_lumaLambda, offsetOut, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
-        }
-        else
-        {
-            offsetOrg = 0;
-            offsetOut = 0;
-        }
+        if (offsetOut)
+            offsetOut = estIterOffset(SAO_BO, m_lumaLambda, offsetOut, count, offsetOrg, distBOClasses[classIdx - 1], costBOClasses[classIdx - 1]);
     }
 
     // Estimate Best Position
-    double bestRDCostTableBo = MAX_DOUBLE;
-    int    bestClassTableBo  = 0;
+    double bestRDCostBO = MAX_DOUBLE;
+    int    bestClassBO  = 0;
 
     for (int i = 0; i < SAO_NUM_BO_CLASSES - SAO_BO_LEN + 1; i++)
     {
         double currentRDCost = 0.0;
         for (int j = i; j < i + SAO_BO_LEN; j++)
-            currentRDCost += currentRdCostTableBo[j];
+            currentRDCost += costBOClasses[j];
 
-        if (currentRDCost < bestRDCostTableBo)
+        if (currentRDCost < bestRDCostBO)
         {
-            bestRDCostTableBo = currentRDCost;
-            bestClassTableBo  = i;
+            bestRDCostBO = currentRDCost;
+            bestClassBO  = i;
         }
     }
 
     estDist = 0;
-    for (int classIdx = bestClassTableBo; classIdx < bestClassTableBo + SAO_BO_LEN; classIdx++)
-        estDist += currentDistortionTableBo[classIdx];
+    for (int classIdx = bestClassBO; classIdx < bestClassBO + SAO_BO_LEN; classIdx++)
+        estDist += distBOClasses[classIdx];
 
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
-    m_entropyCoder.codeSaoOffsetBO(m_offset[0][SAO_BO] + (bestClassTableBo + 1), bestClassTableBo, 0);
+    m_entropyCoder.codeSaoOffsetBO(m_offset[0][SAO_BO] + (bestClassBO + 1), bestClassBO, 0);
 
     uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
     double cost = (double)estDist + m_lumaLambda * (double)estRate;
@@ -1714,9 +1547,9 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
 
         lclCtuParam->mergeMode = SAO_MERGE_NONE;
         lclCtuParam->typeIdx = SAO_BO;
-        lclCtuParam->bandPos = bestClassTableBo;
+        lclCtuParam->bandPos = bestClassBO;
         for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
-            lclCtuParam->offset[classIdx] = (int)m_offset[0][SAO_BO][classIdx + bestClassTableBo + 1];
+            lclCtuParam->offset[classIdx] = (int)m_offset[0][SAO_BO][classIdx + bestClassBO + 1];
     }
 
     mergeDist[0] = ((double)bestDist / m_lumaLambda);
@@ -1732,9 +1565,9 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
 
     SaoCtuParam* lclCtuParam[2] = { &saoParam->ctuParam[1][addr], &saoParam->ctuParam[2][addr] };
 
-    double currentRdCostTableBo[MAX_NUM_SAO_CLASS];
-    int    currentDistortionTableBo[MAX_NUM_SAO_CLASS];
-    int    bestClassTableBo[2] = { 0, 0 };
+    double costBOClasses[MAX_NUM_SAO_CLASS];
+    int    distBOClasses[MAX_NUM_SAO_CLASS];
+    int    bestClassBO[2] = { 0, 0 };
 
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
@@ -1754,15 +1587,8 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
                 int32_t& offsetOrg = m_offsetOrg[compIdx][typeIdx][classIdx];
                 int32_t& offsetOut = m_offset[compIdx][typeIdx][classIdx];
 
-                if (count)
-                {
-                    offsetOut = estIterOffset(typeIdx, classIdx, m_chromaLambda, offsetOut, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
-                }
-                else
-                {
-                    offsetOrg = 0;
-                    offsetOut = 0;
-                }
+                if (offsetOut)
+                    offsetOut = estIterOffset(typeIdx, m_chromaLambda, offsetOut, count, offsetOrg, distBOClasses[0], costBOClasses[0]);
 
                 estDist[compIdx - 1] += estSaoDist(count, (int)offsetOut << SAO_BIT_INC, offsetOrg);
             }
@@ -1772,9 +1598,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
         m_entropyCoder.resetBits();
 
         for (int compIdx = 0; compIdx < 2; compIdx++)
-        {
             m_entropyCoder.codeSaoOffsetEO(m_offset[compIdx + 1][typeIdx] + 1, typeIdx, compIdx + 1);
-        }
 
         uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
         double cost = (double)(estDist[0] + estDist[1]) + m_chromaLambda * (double)estRate;
@@ -1805,7 +1629,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
     // Estimate Best Position
     for (int compIdx = 1; compIdx < 3; compIdx++)
     {
-        double bestRDCostTableBo = MAX_DOUBLE;
+        double bestRDCostBO = MAX_DOUBLE;
 
         for (int classIdx = 1; classIdx < SAO_NUM_BO_CLASSES + 1; classIdx++)
         {
@@ -1813,45 +1637,36 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
             int32_t& offsetOrg = m_offsetOrg[compIdx][SAO_BO][classIdx];
             int32_t& offsetOut = m_offset[compIdx][SAO_BO][classIdx];
 
-            currentDistortionTableBo[classIdx - 1] = 0;
-            currentRdCostTableBo[classIdx - 1] = m_chromaLambda;
+            distBOClasses[classIdx - 1] = 0;
+            costBOClasses[classIdx - 1] = m_chromaLambda;
 
-            if (count)
-            {
-                offsetOut = estIterOffset(SAO_BO, classIdx, m_chromaLambda, offsetOut, count, offsetOrg, currentDistortionTableBo, currentRdCostTableBo);
-            }
-            else
-            {
-                offsetOrg = 0;
-                offsetOut = 0;
-            }
+            if (offsetOut)
+                offsetOut = estIterOffset(SAO_BO, m_chromaLambda, offsetOut, count, offsetOrg, distBOClasses[classIdx - 1], costBOClasses[classIdx - 1]);
         }
 
         for (int i = 0; i < SAO_NUM_BO_CLASSES - SAO_BO_LEN + 1; i++)
         {
             double currentRDCost = 0.0;
             for (int j = i; j < i + SAO_BO_LEN; j++)
-                currentRDCost += currentRdCostTableBo[j];
+                currentRDCost += costBOClasses[j];
 
-            if (currentRDCost < bestRDCostTableBo)
+            if (currentRDCost < bestRDCostBO)
             {
-                bestRDCostTableBo = currentRDCost;
-                bestClassTableBo[compIdx - 1]  = i;
+                bestRDCostBO = currentRDCost;
+                bestClassBO[compIdx - 1]  = i;
             }
         }
 
         estDist[compIdx - 1] = 0;
-        for (int classIdx = bestClassTableBo[compIdx - 1]; classIdx < bestClassTableBo[compIdx - 1] + SAO_BO_LEN; classIdx++)
-            estDist[compIdx - 1] += currentDistortionTableBo[classIdx];
+        for (int classIdx = bestClassBO[compIdx - 1]; classIdx < bestClassBO[compIdx - 1] + SAO_BO_LEN; classIdx++)
+            estDist[compIdx - 1] += distBOClasses[classIdx];
     }
 
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
 
     for (int compIdx = 0; compIdx < 2; compIdx++)
-    {
-        m_entropyCoder.codeSaoOffsetBO(m_offset[compIdx + 1][SAO_BO] + (bestClassTableBo[compIdx] + 1), bestClassTableBo[compIdx], compIdx + 1);
-    }
+        m_entropyCoder.codeSaoOffsetBO(m_offset[compIdx + 1][SAO_BO] + (bestClassBO[compIdx] + 1), bestClassBO[compIdx], compIdx + 1);
 
     uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
     double cost = (double)(estDist[0] + estDist[1]) + m_chromaLambda * (double)estRate;
@@ -1865,9 +1680,9 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
         {
             lclCtuParam[compIdx]->mergeMode = SAO_MERGE_NONE;
             lclCtuParam[compIdx]->typeIdx = SAO_BO;
-            lclCtuParam[compIdx]->bandPos = bestClassTableBo[compIdx];
+            lclCtuParam[compIdx]->bandPos = bestClassBO[compIdx];
             for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
-                lclCtuParam[compIdx]->offset[classIdx] = (int)m_offset[compIdx + 1][SAO_BO][classIdx + bestClassTableBo[compIdx] + 1];
+                lclCtuParam[compIdx]->offset[classIdx] = (int)m_offset[compIdx + 1][SAO_BO][classIdx + bestClassBO[compIdx] + 1];
         }
     }
 
