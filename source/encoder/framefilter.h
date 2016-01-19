@@ -52,8 +52,10 @@ public:
     int           m_pad[2];
 
     int           m_numRows;
+    int           m_numCols;
     int           m_saoRowDelay;
     int           m_lastHeight;
+    int           m_lastWidth;
     
     void*         m_ssimBuf;        /* Temp storage for ssim computation */
 
@@ -61,15 +63,10 @@ public:
     class ParallelFilter : public BondedTaskGroup, public Deblock
     {
     public:
-        uint32_t            m_numCols;
-        uint32_t            m_numRows;
         uint32_t            m_rowHeight;
-        uint32_t            m_lastWidth;
-        uint32_t            m_row;
+        int                 m_row;
         uint32_t            m_rowAddr;
-        x265_param*         m_param;
-        Frame*              m_frame;
-        FrameEncoder*       m_frameEncoder;
+        FrameFilter*        m_frameFilter;
         FrameData*          m_encData;
         ParallelFilter*     m_prevRow;
         SAO                 m_sao;
@@ -78,15 +75,10 @@ public:
         ThreadSafeInteger   m_lastDeblocked;   /* The column that finished all of Deblock stages  */
 
         ParallelFilter()
-            : m_numCols(0)
-            , m_numRows(0)
-            , m_rowHeight(0)
-            , m_lastWidth(0)
+            : m_rowHeight(0)
             , m_row(0)
             , m_rowAddr(0)
-            , m_param(NULL)
-            , m_frame(NULL)
-            , m_frameEncoder(NULL)
+            , m_frameFilter(NULL)
             , m_encData(NULL)
             , m_prevRow(NULL)
         {
@@ -104,16 +96,11 @@ public:
         void copySaoAboveRef(PicYuv* reconPic, uint32_t cuAddr, int col);
 
         // Post-Process (Border extension)
-        void processPostCu(uint32_t col) const;
+        void processPostCu(int col) const;
 
         uint32_t getCUHeight() const
         {
             return m_rowHeight;
-        }
-
-        uint32_t getCUWidth(int colNum) const
-        {
-            return (colNum == (int)m_numCols - 1) ? m_lastWidth : g_maxCUSize;
         }
 
     protected:
@@ -130,6 +117,11 @@ public:
         , m_ssimBuf(NULL)
         , m_parallelFilter(NULL)
     {
+    }
+
+    uint32_t getCUWidth(int colNum) const
+    {
+        return (colNum == (int)m_numCols - 1) ? m_lastWidth : g_maxCUSize;
     }
 
     void init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t numCols);
