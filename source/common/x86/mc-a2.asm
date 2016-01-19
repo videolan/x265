@@ -1115,12 +1115,12 @@ cglobal mbtree_propagate_cost, 7,7,7
     pmulld          xm0, xm2
     cvtdq2pd        m0, xm0
     cvtdq2pd        m1, xm1             ; prop
-%if cpuflag(avx2)
-    fmaddpd         m0, m0, m6, m1
-%else
+;%if cpuflag(avx2)
+;    fmaddpd         m0, m0, m6, m1
+;%else
     mulpd           m0, m6              ; intra*invq*fps_factor>>8
     addpd           m0, m1              ; prop + (intra*invq*fps_factor>>8)
-%endif
+;%endif
     cvtdq2pd        m1, xm2             ; intra
     psubd           xm2, xm3            ; intra - inter
     cvtdq2pd        m2, xm2             ; intra - inter
@@ -1157,12 +1157,12 @@ cglobal mbtree_propagate_cost, 7,7,7
     pmulld          xm0, xm2
     cvtdq2pd        m0, xm0
     cvtdq2pd        m1, xm1             ; prop
-%if cpuflag(avx2)
-    fmaddpd         m0, m0, m6, m1
-%else
+;%if cpuflag(avx2)
+;    fmaddpd         m0, m0, m6, m1
+;%else
     mulpd           m0, m6              ; intra*invq*fps_factor>>8
     addpd           m0, m1              ; prop + (intra*invq*fps_factor>>8)
-%endif
+;%endif
     cvtdq2pd        m1, xm2             ; intra
     psubd           xm2, xm3            ; intra - inter
     cvtdq2pd        m2, xm2             ; intra - inter
@@ -1191,12 +1191,12 @@ cglobal mbtree_propagate_cost, 7,7,7
     pmulld          xm0, xm2
     cvtdq2pd        m0, xm0
     cvtdq2pd        m1, xm1             ; prop
-%if cpuflag(avx2)
-    fmaddpd         m0, m0, m6, m1
-%else
+;%if cpuflag(avx2)
+;    fmaddpd         m0, m0, m6, m1
+;%else
     mulpd           m0, m6              ; intra*invq*fps_factor>>8
     addpd           m0, m1              ; prop + (intra*invq*fps_factor>>8)
-%endif
+;%endif
     cvtdq2pd        m1, xm2             ; intra
     psubd           xm2, xm3            ; intra - inter
     cvtdq2pd        m2, xm2             ; intra - inter
