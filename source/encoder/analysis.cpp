@@ -841,7 +841,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     {
         md.pred[PRED_2Nx2N].bestME[0][0].mvCost = 0; // L0
         md.pred[PRED_2Nx2N].bestME[0][1].mvCost = 0; // L1
-        md.pred[PRED_2Nx2N].rdCost = 0;
+        md.pred[PRED_2Nx2N].sa8dCost = 0;
     }
 
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
