@@ -1853,7 +1853,7 @@ void RateControl::hrdFullness(SEIBufferingPeriod *seiBP)
     }
 
     seiBP->m_initialCpbRemovalDelay = (uint32_t)(num * cpbState + denom) / denom;
-    seiBP->m_initialCpbRemovalDelayOffset = (uint32_t)(num * cpbSize + denom) / denom - seiBP->m_initialCpbRemovalDelay;
+    seiBP->m_initialCpbRemovalDelayOffset = (uint32_t)((num * cpbSize + denom) / denom - seiBP->m_initialCpbRemovalDelay);
 }
 
 void RateControl::updateVbvPlan(Encoder* enc)
