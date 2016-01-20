@@ -193,6 +193,7 @@ void x265_param_default(x265_param* param)
     param->bLossless = 0;
     param->bCULossless = 0;
     param->bEnableTemporalSubLayers = 0;
+    param->bEnableRdRefine = 0;
 
     /* Rate control options */
     param->rc.vbvMaxBitrate = 0;
@@ -702,6 +703,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         else
             p->psyRdoq = 0.0;
     }
+    OPT("rd-refine") p->bEnableRdRefine = atobool(value);
     OPT("signhide") p->bEnableSignHiding = atobool(value);
     OPT("b-intra") p->bIntraInBFrames = atobool(value);
     OPT("lft") p->bEnableLoopFilter = atobool(value); /* DEPRECATED */
@@ -1336,6 +1338,7 @@ void x265_print_params(x265_param* param)
     TOOLVAL(param->psyRd, "psy-rd=%.2lf");
     TOOLVAL(param->rdoqLevel, "rdoq=%d");
     TOOLVAL(param->psyRdoq, "psy-rdoq=%.2lf");
+    TOOLOPT(param->bEnableRdRefine, "rd-refine");
     TOOLOPT(param->bEnableEarlySkip, "early-skip");
     TOOLVAL(param->noiseReductionIntra, "nr-intra=%d");
     TOOLVAL(param->noiseReductionInter, "nr-inter=%d");
@@ -1465,6 +1468,7 @@ char *x265_param2string(x265_param* p)
     s += sprintf(s, " psy-rd=%.2f", p->psyRd);
     s += sprintf(s, " rdoq-level=%d", p->rdoqLevel);
     s += sprintf(s, " psy-rdoq=%.2f", p->psyRdoq);
+    BOOL(p->bEnableRdRefine, "rd-refine");
     BOOL(p->bEnableSignHiding, "signhide");
     BOOL(p->bEnableLoopFilter, "deblock");
     if (p->bEnableLoopFilter && (p->deblockingFilterBetaOffset || p->deblockingFilterTCOffset))

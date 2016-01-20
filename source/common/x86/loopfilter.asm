@@ -29,9 +29,6 @@
 %include "x86util.asm"
 
 SECTION_RODATA 32
-pb_31:      times 32 db 31
-pb_124:     times 32 db 124
-pb_15:      times 32 db 15
 
 SECTION .text
 cextern pb_1
@@ -39,6 +36,9 @@ cextern pb_2
 cextern pb_3
 cextern pb_4
 cextern pb_01
+cextern pb_15
+cextern pb_31
+cextern pb_124
 cextern pb_128
 cextern pw_1
 cextern pw_n1

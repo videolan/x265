@@ -43,11 +43,7 @@ deinterleave_shuf32b: SHUFFLE_MASK_W 1,3,5,7,9,11,13,15
 deinterleave_shuf32a: db 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30
 deinterleave_shuf32b: db 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31
 %endif
-pw_1024: times 16 dw 1024
 
-pd_16: times 4 dd 16
-pd_0f: times 4 dd 0xffff
-pf_inv256: times 8 dd 0.00390625
 const pd_inv256,    times 4 dq 0.00390625
 const pd_0_5,       times 4 dq 0.5
 
@@ -59,9 +55,11 @@ cextern pw_16
 cextern pw_32
 cextern pw_512
 cextern pw_00ff
+cextern pw_1024
 cextern pw_3fff
 cextern pw_pixel_max
 cextern pd_ffff
+cextern pd_16
 
 ;The hpel_filter routines use non-temporal writes for output.
 ;The following defines may be uncommented for testing.

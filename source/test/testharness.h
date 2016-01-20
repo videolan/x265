@@ -75,10 +75,14 @@ static inline uint32_t __rdtsc(void)
 {
     uint32_t a = 0;
 
+#if X265_ARCH_X86
     asm volatile("rdtsc" : "=a" (a) ::"edx");
+#elif X265_ARCH_ARM
+    // TOD-DO: verify following inline asm to get cpu Timestamp Counter for ARM arch
+    // asm volatile("mrc p15, 0, %0, c9, c13, 0" : "=r"(a));
+#endif
     return a;
 }
-
 #endif // ifdef _MSC_VER
 
 #define BENCH_RUNS 1000
@@ -125,7 +129,7 @@ int PFX(stack_pagealign)(int (*func)(), int align);
  * needs an explicit asm check because it only sometimes crashes in normal use. */
 intptr_t PFX(checkasm_call)(intptr_t (*func)(), int *ok, ...);
 float PFX(checkasm_call_float)(float (*func)(), int *ok, ...);
-#else
+#elif X265_ARCH_ARM == 0
 #define PFX(stack_pagealign)(func, align) func()
 #endif
 

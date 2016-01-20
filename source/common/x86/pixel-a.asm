@@ -50,9 +50,6 @@ ALIGN 32
 transd_shuf1: SHUFFLE_MASK_W 0, 8, 2, 10, 4, 12, 6, 14
 transd_shuf2: SHUFFLE_MASK_W 1, 9, 3, 11, 5, 13, 7, 15
 
-sw_f0:     dq 0xfff0, 0
-pd_f0:     times 4 dd 0xffff0000
-
 SECTION .text
 
 cextern pb_0
@@ -67,7 +64,6 @@ cextern pw_ppmmppmm
 cextern pw_pmpmpmpm
 cextern pw_pmmpzzzz
 cextern pd_1
-cextern popcnt_table
 cextern pd_2
 cextern hmul_16p
 cextern pb_movemask
