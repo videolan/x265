@@ -1467,8 +1467,10 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
             int32_t& offsetOrg = m_offsetOrg[0][typeIdx][classIdx];
             int32_t& offsetOut = m_offset[0][typeIdx][classIdx];
 
-            if (offsetOut)
+            if (count)
                 offsetOut = estIterOffset(typeIdx, m_lumaLambda, offsetOut, count, offsetOrg, distBOClasses[0], costBOClasses[0]);
+            else
+                offsetOut = 0;
 
             estDist += estSaoDist(count, (int)offsetOut << SAO_BIT_INC, offsetOrg);
         }
@@ -1508,8 +1510,10 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
         distBOClasses[classIdx - 1] = 0;
         costBOClasses[classIdx - 1] = m_lumaLambda;
 
-        if (offsetOut)
+        if (count)
             offsetOut = estIterOffset(SAO_BO, m_lumaLambda, offsetOut, count, offsetOrg, distBOClasses[classIdx - 1], costBOClasses[classIdx - 1]);
+        else
+            offsetOut = 0;
     }
 
     // Estimate Best Position
@@ -1587,8 +1591,10 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
                 int32_t& offsetOrg = m_offsetOrg[compIdx][typeIdx][classIdx];
                 int32_t& offsetOut = m_offset[compIdx][typeIdx][classIdx];
 
-                if (offsetOut)
+                if (count)
                     offsetOut = estIterOffset(typeIdx, m_chromaLambda, offsetOut, count, offsetOrg, distBOClasses[0], costBOClasses[0]);
+                else
+                    offsetOut = 0;
 
                 estDist[compIdx - 1] += estSaoDist(count, (int)offsetOut << SAO_BIT_INC, offsetOrg);
             }
@@ -1640,8 +1646,10 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
             distBOClasses[classIdx - 1] = 0;
             costBOClasses[classIdx - 1] = m_chromaLambda;
 
-            if (offsetOut)
+            if (count)
                 offsetOut = estIterOffset(SAO_BO, m_chromaLambda, offsetOut, count, offsetOrg, distBOClasses[classIdx - 1], costBOClasses[classIdx - 1]);
+            else
+                offsetOut = 0;
         }
 
         for (int i = 0; i < SAO_NUM_BO_CLASSES - SAO_BO_LEN + 1; i++)
