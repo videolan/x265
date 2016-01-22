@@ -2025,7 +2025,8 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
 
     /* Get total cost of partition, but only include MV bit cost once */
     bits += m_me.bitcost(outmv);
-    uint32_t cost = (satdCost - m_me.mvcost(outmv)) + m_rdCost.getCost(bits);
+    uint32_t mvCost = m_me.mvcost(outmv);
+    uint32_t cost = (satdCost - mvCost) + m_rdCost.getCost(bits);
 
     /* Refine MVP selection, updates: mvpIdx, bits, cost */
     mvp = checkBestMVP(amvp, outmv, mvpIdx, bits, cost);
@@ -2041,6 +2042,7 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
         bestME[list].ref = ref;
         bestME[list].cost = cost;
         bestME[list].bits = bits;
+        bestME[list].mvCost  = mvCost;
     }
 }
 
@@ -2152,8 +2154,6 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 /* the second list ref bits start at bit 16 */
                 refMask >>= 16;
             }
-
-
 
             if (pme.m_jobTotal > 2)
             {
