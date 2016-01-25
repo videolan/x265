@@ -1995,9 +1995,26 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
 
     else
     {
+        uint8_t *tempBuf = NULL, *depthBuf = NULL, *modeBuf = NULL;
+
+        tempBuf = X265_MALLOC(uint8_t, depthBytes * 2);
+        X265_FREAD(tempBuf, sizeof(uint8_t), depthBytes * 2, m_analysisFile);
+
+        depthBuf = tempBuf;
+        modeBuf  = tempBuf + depthBytes;
+
+        size_t count = 0;
+        for (uint32_t d = 0; d < depthBytes; d++)
+        {
+            int bytes = analysis->numPartitions >> (depthBuf[d] * 2);
+            memset(&((analysis_inter_data *)analysis->interData)->depth[count], depthBuf[d], bytes);
+            memset(&((analysis_inter_data *)analysis->interData)->modes[count], modeBuf[d], bytes);
+            count += bytes;
+        }
+        
+        X265_FREE(tempBuf);
+        
         int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
-        X265_FREAD(((analysis_inter_data *)analysis->interData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
-        X265_FREAD(((analysis_inter_data *)analysis->interData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FREAD(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);      
         X265_FREAD(((analysis_inter_data *)analysis->interData)->bestMergeCand, sizeof(uint32_t), analysis->numCUsInFrame * CUGeom::MAX_GEOMS, m_analysisFile);
         X265_FREAD(((analysis_inter_data *)analysis->interData)->mv, sizeof(MV), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
@@ -2048,6 +2065,30 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
             memcpy(&intraDataCTU->modes[ctu->m_cuAddr * ctu->m_numPartitions], ctu->m_lumaIntraDir, sizeof(uint8_t)* ctu->m_numPartitions);
         }
     }
+    else
+    {
+        for (uint32_t cuAddr = 0; cuAddr < analysis->numCUsInFrame; cuAddr++)
+        {
+            uint8_t depth = 0;
+            uint8_t predMode = 0;
+
+            CUData* ctu = curEncData.getPicCTU(cuAddr);
+            analysis_inter_data* interDataCTU = (analysis_inter_data*)analysis->interData;
+
+            for (uint32_t absPartIdx = 0; absPartIdx < ctu->m_numPartitions; depthBytes++)
+            {
+                depth = ctu->m_cuDepth[absPartIdx];
+                interDataCTU->depth[depthBytes] = depth;
+
+                predMode = ctu->m_predMode[absPartIdx];
+                interDataCTU->modes[depthBytes] = predMode;
+
+                absPartIdx += ctu->m_numPartitions >> (depth * 2);
+            }
+        }
+
+    }
+
 
     /* calculate frameRecordSize */
     analysis->frameRecordSize = sizeof(analysis->frameRecordSize) + sizeof(depthBytes) + sizeof(analysis->poc) + sizeof(analysis->sliceType) +
@@ -2058,7 +2099,7 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     {
         int numDir = (analysis->sliceType == X265_TYPE_P) ? 1 : 2;
         analysis->frameRecordSize += sizeof(int32_t) * analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir;
-        analysis->frameRecordSize += sizeof(uint8_t) * analysis->numCUsInFrame * analysis->numPartitions * 2;
+        analysis->frameRecordSize += depthBytes * 2;
         analysis->frameRecordSize += sizeof(uint32_t) * analysis->numCUsInFrame * CUGeom::MAX_GEOMS;
         analysis->frameRecordSize += sizeof(MV) * analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir;
     }
@@ -2081,8 +2122,8 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     else
     {
         int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
-        X265_FWRITE(((analysis_inter_data*)analysis->interData)->depth, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
-        X265_FWRITE(((analysis_inter_data*)analysis->interData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        X265_FWRITE(((analysis_inter_data*)analysis->interData)->depth, sizeof(uint8_t), depthBytes, m_analysisFile);
+        X265_FWRITE(((analysis_inter_data*)analysis->interData)->modes, sizeof(uint8_t), depthBytes, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->bestMergeCand, sizeof(uint32_t), analysis->numCUsInFrame * CUGeom::MAX_GEOMS, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->mv, sizeof(MV), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);

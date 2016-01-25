@@ -191,12 +191,6 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         {
             uint32_t zOrder = 0;
             compressInterCU_rd5_6(ctu, cuGeom, zOrder, qp);
-            if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_frame->m_analysisData.interData)
-            {
-                CUData* bestCU = &m_modeDepth[0].bestMode->cu;
-                memcpy(&m_reuseInterDataCTU->depth[ctu.m_cuAddr * numPartition], bestCU->m_cuDepth, sizeof(uint8_t) * numPartition);
-                memcpy(&m_reuseInterDataCTU->modes[ctu.m_cuAddr * numPartition], bestCU->m_predMode, sizeof(uint8_t) * numPartition);
-            }
         }
     }
 
