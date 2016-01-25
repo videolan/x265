@@ -165,14 +165,6 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             memcpy(ctu.m_chromaIntraDir, &intraDataCTU->chromaModes[ctu.m_cuAddr * numPartition], sizeof(uint8_t) * numPartition);
         }
         compressIntraCU(ctu, cuGeom, qp);
-        if (m_param->analysisMode == X265_ANALYSIS_SAVE && intraDataCTU)
-        {
-            CUData* bestCU = &m_modeDepth[0].bestMode->cu;
-            memcpy(&intraDataCTU->depth[ctu.m_cuAddr * numPartition], bestCU->m_cuDepth, sizeof(uint8_t) * numPartition);
-            memcpy(&intraDataCTU->modes[ctu.m_cuAddr * numPartition], bestCU->m_lumaIntraDir, sizeof(uint8_t) * numPartition);
-            memcpy(&intraDataCTU->partSizes[ctu.m_cuAddr * numPartition], bestCU->m_partSize, sizeof(uint8_t) * numPartition);
-            memcpy(&intraDataCTU->chromaModes[ctu.m_cuAddr * numPartition], bestCU->m_chromaIntraDir, sizeof(uint8_t) * numPartition);
-        }
     }
     else
     {

@@ -74,6 +74,7 @@ class DPB;
 class Lookahead;
 class RateControl;
 class ThreadPool;
+class FrameData;
 
 class Encoder : public x265_encoder
 {
@@ -164,7 +165,7 @@ public:
 
     void readAnalysisFile(x265_analysis_data* analysis, int poc);
 
-    void writeAnalysisFile(x265_analysis_data* pic);
+    void writeAnalysisFile(x265_analysis_data* pic, FrameData &curEncData);
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 
