@@ -912,7 +912,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     {
         md.pred[PRED_2Nx2N].bestME[0][0].mvCost = 0; // L0
         md.pred[PRED_2Nx2N].bestME[0][1].mvCost = 0; // L1
-        md.pred[PRED_2Nx2N].rdCost = 0;
+        md.pred[PRED_2Nx2N].sa8dCost = 0;
     }
 
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
@@ -1020,7 +1020,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             Mode *bestInter = &md.pred[PRED_2Nx2N];
             if (m_param->bEnableRectInter)
             {
-                uint64_t splitCost = splitData[0].rdCost + splitData[1].rdCost + splitData[2].rdCost + splitData[3].rdCost;
+                uint64_t splitCost = splitData[0].sa8dCost + splitData[1].sa8dCost + splitData[2].sa8dCost + splitData[3].sa8dCost;
                 uint32_t threshold_2NxN, threshold_Nx2N;
 
                 if (m_slice->m_sliceType == P_SLICE)
@@ -1070,7 +1070,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
 
             if (m_slice->m_sps->maxAMPDepth > depth)
             {
-                uint64_t splitCost = splitData[0].rdCost + splitData[1].rdCost + splitData[2].rdCost + splitData[3].rdCost;
+                uint64_t splitCost = splitData[0].sa8dCost + splitData[1].sa8dCost + splitData[2].sa8dCost + splitData[3].sa8dCost;
                 uint32_t threshold_2NxnU, threshold_2NxnD, threshold_nLx2N, threshold_nRx2N;
 
                 if (m_slice->m_sliceType == P_SLICE)
@@ -1347,7 +1347,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     {
         splitCUData.mvCost[0] = md.pred[PRED_2Nx2N].bestME[0][0].mvCost; // L0
         splitCUData.mvCost[1] = md.pred[PRED_2Nx2N].bestME[0][1].mvCost; // L1
-        splitCUData.rdCost    = md.pred[PRED_2Nx2N].sa8dCost;
+        splitCUData.sa8dCost    = md.pred[PRED_2Nx2N].sa8dCost;
     }
     
     if (mightNotSplit)
@@ -1508,7 +1508,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
             if (m_param->bEnableRectInter)
             {
-                uint64_t splitCost = splitData[0].rdCost + splitData[1].rdCost + splitData[2].rdCost + splitData[3].rdCost;
+                uint64_t splitCost = splitData[0].sa8dCost + splitData[1].sa8dCost + splitData[2].sa8dCost + splitData[3].sa8dCost;
                 uint32_t threshold_2NxN, threshold_Nx2N;
 
                 if (m_slice->m_sliceType == P_SLICE)
@@ -1556,7 +1556,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             // Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
             if (m_slice->m_sps->maxAMPDepth > depth)
             {
-                uint64_t splitCost = splitData[0].rdCost + splitData[1].rdCost + splitData[2].rdCost + splitData[3].rdCost;
+                uint64_t splitCost = splitData[0].sa8dCost + splitData[1].sa8dCost + splitData[2].sa8dCost + splitData[3].sa8dCost;
                 uint32_t threshold_2NxnU, threshold_2NxnD, threshold_nLx2N, threshold_nRx2N;
 
                 if (m_slice->m_sliceType == P_SLICE)
@@ -1715,7 +1715,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     {
         splitCUData.mvCost[0] = md.pred[PRED_2Nx2N].bestME[0][0].mvCost; // L0
         splitCUData.mvCost[1] = md.pred[PRED_2Nx2N].bestME[0][1].mvCost; // L1
-        splitCUData.rdCost    = md.pred[PRED_2Nx2N].rdCost;
+        splitCUData.sa8dCost    = md.pred[PRED_2Nx2N].rdCost;
     }
 
     /* Copy best data to encData CTU and recon */
