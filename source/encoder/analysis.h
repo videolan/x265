@@ -45,14 +45,14 @@ struct SplitData
 {
     uint32_t splitRefs;
     uint32_t mvCost[2];
-    uint64_t rdCost;
+    uint64_t sa8dCost;
 
     void initSplitCUData()
     {
         splitRefs = 0;
         mvCost[0] = 0; // L0
         mvCost[1] = 0; // L1
-        rdCost    = 0;
+        sa8dCost    = 0;
     }
 };
 
