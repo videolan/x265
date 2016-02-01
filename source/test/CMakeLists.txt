@@ -23,7 +23,13 @@ endif(X86)
 
 # add ARM assembly files
 if(ARM OR CROSS_COMPILE_ARM)
-    set(YASM_SRC)
+    enable_language(ASM)
+    set(YASM_SRC checkasm-arm.S)
+    add_custom_command(
+        OUTPUT checkasm-arm.obj
+        COMMAND ${CMAKE_CXX_COMPILER}
+        ARGS ${YASM_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/checkasm-arm.S -o checkasm-arm.obj
+        DEPENDS checkasm-arm.S)
 endif(ARM OR CROSS_COMPILE_ARM)
 
 # add PowerPC assembly files
