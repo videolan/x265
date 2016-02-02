@@ -128,15 +128,12 @@ public:
 
     void startSlice(Frame* pic, Entropy& initState, int qp);
     void resetStats();
-    void resetSaoUnit(SaoCtuParam* saoUnit);
 
     // CTU-based SAO process without slice granularity
     void processSaoCu(int addr, int typeIdx, int plane);
     void processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane);
     void processSaoUnitCuLuma(SaoCtuParam* ctuParam, int idxY, int idxX);
     void processSaoUnitCuChroma(SaoCtuParam* ctuParam[3], int idxY, int idxX);
-
-//    void copySaoUnit(SaoCtuParam* saoUnitDst, const SaoCtuParam* saoUnitSrc);
 
     void calcSaoStatsCu(int addr, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
@@ -147,10 +144,9 @@ public:
     inline int estIterOffset(int typeIdx, double lambda, int offset, int32_t count, int32_t offsetOrg,
                              int& currentDistortionTableBo, double& currentRdCostTableBo);
     void rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus);
-//    void rdoSaoUnitRow(SAOParam* saoParam, int idxY);
     void rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr);
 
-    void saoStatsInitialOffset(int plane);
+    void saoStatsInitialOffset(bool chroma);
 
     friend class FrameFilter;
 };

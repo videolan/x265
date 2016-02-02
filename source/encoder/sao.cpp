@@ -1259,18 +1259,15 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
         saoParam->ctuParam[i][addr].reset();
 
     if (saoParam->bSaoFlag[0])
-    {
         calcSaoStatsCu(addr, 0);
-        saoStatsInitialOffset(0);
-    }
 
     if (saoParam->bSaoFlag[1])
     {
         calcSaoStatsCu(addr, 1);
         calcSaoStatsCu(addr, 2);
-        saoStatsInitialOffset(1);
-//        saoStatsInitialOffset(2);
     }
+
+    saoStatsInitialOffset(chroma);
 
     double mergeDist[NUM_MERGE_MODE] = { 0.0 };
     saoLumaComponentParamDist(saoParam, addr, mergeDist);
@@ -1364,10 +1361,12 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 
 // Rounds the division of initial offsets by the number of samples in
 // each of the statistics table entries.
-void SAO::saoStatsInitialOffset(int planes)
+void SAO::saoStatsInitialOffset(bool chroma)
 {
+    int planes = chroma ? 3 : 1;
+
     // EO
-    for (int plane = planes; plane <= 2*planes; plane++)
+    for (int plane = 0; plane < planes; plane++)
     {
         for (int typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE - 1; typeIdx++)
         {
@@ -1392,7 +1391,7 @@ void SAO::saoStatsInitialOffset(int planes)
     }
 
     // BO
-    for (int plane = planes; plane <= 2*planes; plane++)
+    for (int plane = 0; plane < planes; plane++)
     {
         for (int classIdx = 1; classIdx < SAO_NUM_BO_CLASSES + 1; classIdx++)
         {
