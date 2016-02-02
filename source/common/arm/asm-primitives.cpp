@@ -29,12 +29,18 @@
 #include "x265.h"
 #include "cpu.h"
 
+extern "C" {
+#include "blockcopy8.h"
+}
 
 namespace X265_NS {
 // private x265 namespace
 
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
-
+    if (cpuMask & X265_CPU_NEON)
+    {
+        p.pu[LUMA_16x16].copy_pp = PFX(blockcopy_pp_16x16_neon);
+    }
 }
 } // namespace X265_NS

@@ -80,6 +80,9 @@ static inline uint32_t __rdtsc(void)
 #elif X265_ARCH_ARM
     // TOD-DO: verify following inline asm to get cpu Timestamp Counter for ARM arch
     // asm volatile("mrc p15, 0, %0, c9, c13, 0" : "=r"(a));
+
+    // TO-DO: replace clock() function with appropriate ARM cpu instructions
+    a = clock();
 #endif
     return a;
 }

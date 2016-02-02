@@ -27,7 +27,7 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#ifndef X265_I386_PIXEL_H
-#define X265_I386_PIXEL_H
+#ifndef X265_I386_PIXEL_ARM_H
+#define X265_I386_PIXEL_ARM_H
 
-#endif // ifndef X265_I386_PIXEL_H
+#endif // ifndef X265_I386_PIXEL_ARM_H

@@ -182,9 +182,11 @@ if(GCC)
         add_definitions(-march=i686)
     endif()
     if(ARM AND CROSS_COMPILE_ARM)
-        add_definitions(-march=armv6 -mfloat-abi=soft -mfpu=vfp)
+        set(ARM_ARGS -march=armv6 -mfloat-abi=soft -mfpu=vfp)
+        add_definitions(${ARM_ARGS})
     elseif(ARM)
-        add_definitions(-march=armv6 -mfloat-abi=hard -mfpu=vfp)
+        set(ARM_ARGS -march=armv6 -mfloat-abi=hard -mfpu=vfp)
+        add_definitions(${ARM_ARGS})
     endif()
     if(FPROFILE_GENERATE)
         if(INTEL_CXX)
@@ -418,7 +420,7 @@ endif(DETAILED_CU_STATS)
 add_subdirectory(encoder)
 add_subdirectory(common)
 
-if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
+if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
     # this is required because of this cmake bug
     # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170
     if(WIN32)
@@ -429,23 +431,33 @@ if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
 
     if(ARM OR CROSS_COMPILE_ARM)
     # compile ARM arch asm files here
-
+        enable_language(ASM)
+        foreach(ASM ${ARM_ASMS})
+            set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/arm/${ASM})
+            list(APPEND ASM_SRCS ${ASM_SRC})
+            list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
+            add_custom_command(
+                OUTPUT ${ASM}.${SUFFIX}
+                COMMAND ${CMAKE_CXX_COMPILER}
+                ARGS ${ARM_ARGS} -c ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                DEPENDS ${ASM_SRC})
+        endforeach()
     elseif(X86)
     # compile X86 arch asm files here
         foreach(ASM ${MSVC_ASMS})
-            set(YASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
-            list(APPEND YASM_SRCS ${YASM_SRC})
-            list(APPEND YASM_OBJS ${ASM}.${SUFFIX})
+            set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
+            list(APPEND ASM_SRCS ${ASM_SRC})
+            list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
             add_custom_command(
                 OUTPUT ${ASM}.${SUFFIX}
-                COMMAND ${YASM_EXECUTABLE} ARGS ${YASM_FLAGS} ${YASM_SRC} -o ${ASM}.${SUFFIX}
-                DEPENDS ${YASM_SRC})
+                COMMAND ${YASM_EXECUTABLE} ARGS ${YASM_FLAGS} ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                DEPENDS ${ASM_SRC})
         endforeach()
     endif()
 endif()
 
-source_group(ASM FILES ${YASM_SRCS})
-add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
+source_group(ASM FILES ${ASM_SRCS})
+add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS} ${ASM_SRCS})
 if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
 endif()
@@ -479,7 +491,7 @@ endif()
 
 option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
-    add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${YASM_OBJS}
+    add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${ASM_OBJS}
                 ${X265_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
     if(EXTRA_LIB)
         target_link_libraries(x265-shared ${EXTRA_LIB})
@@ -575,7 +587,7 @@ if(ENABLE_CLI)
         # Xcode seems unable to link the CLI with libs, so link as one targget
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT}
                        x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp
-                       $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${YASM_OBJS} ${YASM_SRCS})
+                       $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS} ${ASM_SRCS})
     else()
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} ${X265_RC_FILE}
                        ${ExportDefs} x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp)

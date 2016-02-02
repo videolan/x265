@@ -22,7 +22,7 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#ifndef X265_IPFILTER8_H
-#define X265_IPFILTER8_H
+#ifndef X265_IPFILTER8_ARM_H
+#define X265_IPFILTER8_ARM_H
 
-#endif // ifndef X265_IPFILTER8_H
+#endif // ifndef X265_IPFILTER8_ARM_H

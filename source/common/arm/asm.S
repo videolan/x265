@@ -25,8 +25,6 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#include "x265_config.h"
-
 .syntax unified
 
 #if   HAVE_NEON

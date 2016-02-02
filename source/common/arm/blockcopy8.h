@@ -23,7 +23,9 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#ifndef X265_BLOCKCOPY8_H
-#define X265_BLOCKCOPY8_H
+#ifndef X265_BLOCKCOPY8_ARM_H
+#define X265_BLOCKCOPY8_ARM_H
 
-#endif // ifndef X265_I386_PIXEL_H
+void x265_blockcopy_pp_16x16_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+
+#endif // ifndef X265_I386_PIXEL_ARM_H

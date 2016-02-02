@@ -25,7 +25,7 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#ifndef X265_INTRAPRED_H
-#define X265_INTRAPRED_H
+#ifndef X265_INTRAPRED_ARM_H
+#define X265_INTRAPRED_ARM_H
 
-#endif // ifndef X265_INTRAPRED_H
+#endif // ifndef X265_INTRAPRED_ARM_H

@@ -21,7 +21,7 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#ifndef X265_MC_H
-#define X265_MC_H
+#ifndef X265_MC_ARM_H
+#define X265_MC_ARM_H
 
-#endif // ifndef X265_MC_H
+#endif // ifndef X265_MC_ARM_H
