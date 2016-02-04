@@ -1,14 +1,9 @@
 /*****************************************************************************
- * pixel.h: x86 pixel metrics
- *****************************************************************************
- * Copyright (C) 2003-2013 x264 project
- * Copyright (C) 2013-2016 x265 project
+ * Copyright (C) 2016 x265 project
  *
- * Authors: Laurent Aimar <fenrir@via.ecp.fr>
- *          Loren Merritt <lorenm@u.washington.edu>
- *          Fiona Glaser <fiona@x264.com>
-;*          Min Chen <chenm003@163.com>
- *
+ * Authors:David Conrad <lessen42@gmail.com>
+ *          Janne Grunau <janne-x264@jannau.net>
+ * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,8 +22,42 @@
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
 
-#ifndef X265_I386_PIXEL_ARM_H
-#define X265_I386_PIXEL_ARM_H
-int x265_pixel_sad_4x4_armv6(const pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
-int x265_pixel_sad_4x8_armv6(const pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
-#endif // ifndef X265_I386_PIXEL_ARM_H
+#include "asm.S"
+
+.section .rodata
+
+.align 4
+
+.text
+
+/* sad4x4(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
+ *
+ * r0   - dst
+ * r1   - dstStride
+ * r2   - src
+ * d3   - srcStride */
+
+.macro SAD4_ARMV6 h
+function x265_pixel_sad_4x\h\()_armv6
+    push        {r4-r6,lr}
+    ldr         r4, [r2], r3
+    ldr         r5, [r0], r1
+    ldr         r6, [r2], r3
+    ldr         lr, [r0], r1
+    usad8       ip, r4, r5
+.rept (\h - 2)/2
+    ldr         r4, [r2], r3
+    ldr         r5, [r0], r1
+    usada8      ip, r6, lr, ip
+    ldr         r6, [r2], r3
+    ldr         lr, [r0], r1
+    usada8      ip, r4, r5, ip
+.endr
+    usada8      r0, r6, lr, ip
+    pop         {r4-r6,pc}
+endfunc
+.endm
+
+SAD4_ARMV6 4
+SAD4_ARMV6 8
+
