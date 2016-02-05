@@ -297,7 +297,7 @@ RateControl::RateControl(x265_param& p)
     /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24)
 #define ABR_INIT_QP_MAX (40)
-#define ABR_INIT_QP_GRAIN_MAX (32)
+#define ABR_INIT_QP_GRAIN_MAX (33)
 #define ABR_SCENECUT_INIT_QP_MIN (12)
 #define CRF_INIT_QP (int)m_param->rc.rfConstant
     for (int i = 0; i < 3; i++)
@@ -378,9 +378,12 @@ bool RateControl::init(const SPS& sps)
     m_isPatternPresent = false;
     m_numBframesInPattern = 0;
 
-        m_isGrainEnabled = false;
-        if(m_param->rc.bEnableGrain) // tune for grainy content OR equal p-b frame sizes
-        m_isGrainEnabled = true;
+    m_isGrainEnabled = false;
+    if(m_param->rc.bEnableGrain) // tune for grainy content OR equal p-b frame sizes
+    m_isGrainEnabled = true;
+    for (int i = 0; i < 3; i++)
+    m_lastQScaleFor[i] = x265_qp2qScale(m_param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN);
+    m_avgPFrameQp = 0 ;
 
     /* 720p videos seem to be a good cutoff for cplxrSum */
     double tuneCplxFactor = (m_ncu > 3600 && m_param->rc.cuTree) ? 2.5 : m_isGrainEnabled ? 1.9 : 1;
@@ -1493,17 +1496,17 @@ double RateControl::tuneAbrQScaleFromFeedback(double qScale)
 
 double RateControl::tuneQScaleForGrain(double rcOverflow)
 {
-    double qpstepBy1 = pow(2, 0.5 / 6.0);
+    double qpstep = rcOverflow > 1.1 ? rcOverflow : m_lstep;
     double qScaleAvg = x265_qp2qScale(m_avgPFrameQp);
     double  q = m_lastQScaleFor[P_SLICE];
     int curQp = int (x265_qScale2qp(m_lastQScaleFor[P_SLICE]) + 0.5);
     double curBitrate = m_qpToEncodedBits[curQp] * int(m_fps + 0.5);
-    int newQp = rcOverflow > 1 ? curQp + 1 : curQp - 1 ;
+    int newQp = rcOverflow > 1.1 ? curQp + 2 : rcOverflow > 1 ? curQp + 1 : curQp - 1 ;
     double projectedBitrate =  int(m_fps + 0.5) * m_qpToEncodedBits[newQp];
     if (curBitrate > 0 && projectedBitrate > 0)
         q =  abs(projectedBitrate - m_bitrate) < abs (curBitrate - m_bitrate) ? x265_qp2qScale(newQp) : m_lastQScaleFor[P_SLICE];
     else
-        q = rcOverflow > 1 ? qScaleAvg * qpstepBy1 : rcOverflow < 1 ?  qScaleAvg / qpstepBy1 : m_lastQScaleFor[P_SLICE];
+        q = rcOverflow > 1 ? qScaleAvg * qpstep : rcOverflow < 1 ?  qScaleAvg / qpstep : m_lastQScaleFor[P_SLICE];
     return q;
 }
 
@@ -1651,7 +1654,14 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
 
         rce->newQScale = qScale;
         if(rce->bLastMiniGopBFrame)
+        {
+            if (m_isFirstMiniGop && m_isGrainEnabled)
+            {
+                m_avgPFrameQp = (m_avgPFrameQp + rce->qpNoVbv) / 2;
+                m_lastQScaleFor[P_SLICE] = x265_qp2qScale(m_avgPFrameQp);
+            }
             m_isFirstMiniGop = false;
+        }
         return qScale;
     }
     else
@@ -1751,10 +1761,13 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 bool isEncodeEnd = (m_param->totalFrames && 
                     m_framesDone > 0.75 * m_param->totalFrames) ? 1 : 0;
                 bool isEncodeBeg = m_framesDone < (int)(m_fps + 0.5);
-                if(m_isGrainEnabled && m_sliceType!= I_SLICE && !isEncodeEnd &&
-                    ((overflow < 1.05 && overflow > 0.95) || isEncodeBeg))
+                if (m_isGrainEnabled)
                 {
-                    q = tuneQScaleForGrain(overflow);
+                    if(m_sliceType!= I_SLICE && m_framesDone && !isEncodeEnd &&
+                        ((overflow < 1.05 && overflow > 0.95) || isEncodeBeg))
+                    {
+                        q = tuneQScaleForGrain(overflow);
+                    }
                 }
             }
             if (m_sliceType == I_SLICE && m_param->keyframeMax > 1
@@ -1771,7 +1784,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 {
                     lqmin = m_lastQScaleFor[m_sliceType] / m_lstep;
                     lqmax = m_lastQScaleFor[m_sliceType] * m_lstep;
-                    if (!m_partialResidualFrames)
+                    if (!m_partialResidualFrames || m_isGrainEnabled)
                     {
                         if (overflow > 1.1 && m_framesDone > 3)
                             lqmax *= m_lstep;
@@ -1788,18 +1801,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             else if (m_framesDone == 0 && !m_isVbv && m_param->rc.rateControlMode == X265_RC_ABR)
             {
                 /* for ABR alone, clip the first I frame qp */
-                if (m_isGrainEnabled)
-                {
-                    /* to maintain grain uniformity, set I frame qp in a fixed range */
-                    lqmax = x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX) * (m_lstep * m_lstep);
-                    lqmin = x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX) / (m_lstep * m_lstep);
-                    q = x265_clip3(lqmin, lqmax, q);
-                }
-                else
-                {
-                    lqmax = x265_qp2qScale(ABR_INIT_QP_MAX) * m_lstep;
+                    lqmax =  m_lstep * m_isGrainEnabled ? x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX) :
+                        x265_qp2qScale(ABR_INIT_QP_MAX);
                     q = X265_MIN(lqmax, q);
-                }
             }
             q = x265_clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
             /* Set a min qp at scenechanges and transitions */
