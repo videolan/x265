@@ -899,8 +899,24 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
         md.pred[PRED_2Nx2N].sa8dCost = 0;
     }
 
+    bool bNoSplit = false;
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+    {
+        uint8_t* reuseDepth = &m_reuseInterDataCTU->depth[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+        uint8_t* reuseModes = &m_reuseInterDataCTU->modes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
+        if (mightNotSplit && depth == reuseDepth[cuGeom.absPartIdx] && reuseModes[cuGeom.absPartIdx] == MODE_SKIP)
+        {
+            md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
+            md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
+            checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
+
+            bNoSplit = true;
+            earlyskip = md.bestMode && m_param->bEnableEarlySkip;
+        }
+    }
+
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
-    if (mightNotSplit && depth >= minDepth)
+    if (mightNotSplit && depth >= minDepth && !bNoSplit)
     {
         /* Compute Merge Cost */
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -910,7 +926,6 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             earlyskip = m_param->bEnableEarlySkip && md.bestMode && md.bestMode->cu.isSkipped(0); // TODO: sa8d threshold per depth
     }
 
-    bool bNoSplit = false;
     if (md.bestMode)
     {
         bNoSplit = md.bestMode->cu.isSkipped(0);
