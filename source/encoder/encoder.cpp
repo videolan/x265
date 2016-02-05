@@ -361,7 +361,10 @@ void Encoder::stopJobs()
     }
 
     if (m_threadPool)
-        m_threadPool->stopWorkers();
+    {
+        for (int i = 0; i < m_numPools; i++)
+            m_threadPool[i].stopWorkers();
+    }
 }
 
 void Encoder::destroy()
