@@ -150,6 +150,22 @@ typedef struct x265_frame_stats
     x265_cu_stats    cuStats;
 } x265_frame_stats;
 
+/* Ratecontrol statistics */
+typedef struct x265_rc_stats
+{
+    double  qpaRc;
+    double  qRceq;
+    double  qpNoVbv;
+    double  newQScale;
+    int     mvBits;
+    int     miscBits;
+    int     coeffBits;
+    int     poc;
+    int     encodeOrder;
+    int     sliceType;
+    bool    keptAsRef;
+} x265_rc_stats;
+
 /* Used to pass pictures into the encoder, and to get picture data back out of
  * the encoder.  The input and output semantics are different */
 typedef struct x265_picture
@@ -172,6 +188,10 @@ typedef struct x265_picture
 
     /* Stride is the number of bytes between row starts */
     int     stride[3];
+
+    size_t framesize;
+
+    int    height;
 
     /* Must be specified on input pictures. x265_picture_init() will set it to
      * the encoder's internal bit depth, but this field must describe the depth
@@ -221,6 +241,10 @@ typedef struct x265_picture
     /* Frame level statistics */
     x265_frame_stats frameData;
 
+    /* Ratecontrol statistics for collecting the ratecontrol information.
+     * It is not used for collecting the last pass ratecontrol data in 
+     * multi pass ratecontrol mode. */
+    x265_rc_stats rcData;
 } x265_picture;
 
 typedef enum

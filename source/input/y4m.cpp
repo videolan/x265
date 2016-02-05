@@ -417,6 +417,8 @@ bool Y4MInput::readPicture(x265_picture& pic)
     {
         int pixelbytes = depth > 8 ? 2 : 1;
         pic.bitDepth = depth;
+        pic.framesize = framesize;
+        pic.height = height;
         pic.colorSpace = colorSpace;
         pic.stride[0] = width * pixelbytes;
         pic.stride[1] = pic.stride[0] >> x265_cli_csps[colorSpace].width[1];

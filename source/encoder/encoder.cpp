@@ -783,6 +783,21 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 if (m_rateControl->writeRateControlFrameStats(outFrame, &curEncoder->m_rce))
                     m_aborted = true;
 
+            if (pic_out && !m_param->rc.bStatRead)
+            {
+                pic_out->rcData.qpaRc = outFrame->m_encData->m_avgQpRc;
+                pic_out->rcData.qRceq = curEncoder->m_rce.qRceq;
+                pic_out->rcData.qpNoVbv = curEncoder->m_rce.qpNoVbv;
+                pic_out->rcData.coeffBits = outFrame->m_encData->m_frameStats.coeffBits;
+                pic_out->rcData.miscBits = outFrame->m_encData->m_frameStats.miscBits;
+                pic_out->rcData.mvBits = outFrame->m_encData->m_frameStats.mvBits;
+                pic_out->rcData.newQScale = x265_qp2qScale(outFrame->m_encData->m_avgQpRc);
+                pic_out->rcData.poc = curEncoder->m_rce.poc;
+                pic_out->rcData.encodeOrder = curEncoder->m_rce.encodeOrder;
+                pic_out->rcData.sliceType = curEncoder->m_rce.sliceType;
+                pic_out->rcData.keptAsRef = curEncoder->m_rce.sliceType == B_SLICE && !IS_REFERENCED(outFrame) ? false : true;
+            }
+
             /* Allow this frame to be recycled if no frame encoders are using it for reference */
             if (!pic_out)
             {
