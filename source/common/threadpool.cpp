@@ -280,7 +280,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
             }
             else if (*nodeStr == '-')
                 threadsPerPool[i] = 0;
-			else if (*nodeStr == '*' || !strcasecmp(nodeStr, "NULL"))
+            else if (*nodeStr == '*' || !strcasecmp(nodeStr, "NULL"))
             {
                 for (int j = i; j < numNumaNodes; j++)
                 {

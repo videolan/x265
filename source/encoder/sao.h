@@ -136,21 +136,21 @@ public:
     void processSaoUnitCuLuma(SaoCtuParam* ctuParam, int idxY, int idxX);
     void processSaoUnitCuChroma(SaoCtuParam* ctuParam[3], int idxY, int idxX);
 
-    void copySaoUnit(SaoCtuParam* saoUnitDst, const SaoCtuParam* saoUnitSrc);
+//    void copySaoUnit(SaoCtuParam* saoUnitDst, const SaoCtuParam* saoUnitSrc);
 
     void calcSaoStatsCu(int addr, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
 
-    void saoComponentParamDist(SAOParam* saoParam, int addr, int addrUp, int addrLeft, SaoCtuParam mergeSaoParam[2], double* mergeDist);
-    void sao2ChromaParamDist(SAOParam* saoParam, int addr, int addrUp, int addrLeft, SaoCtuParam mergeSaoParam[][2], double* mergeDist);
+    void saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist);
+    void saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist);
 
-    inline int estIterOffset(int typeIdx, int classIdx, double lambda, int offset, int32_t count, int32_t offsetOrg,
-                             int32_t* currentDistortionTableBo, double* currentRdCostTableBo);
-    inline int64_t estSaoTypeDist(int plane, int typeIdx, double lambda, int32_t* currentDistortionTableBo, double* currentRdCostTableBo);
-
+    inline int estIterOffset(int typeIdx, double lambda, int offset, int32_t count, int32_t offsetOrg,
+                             int& currentDistortionTableBo, double& currentRdCostTableBo);
     void rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus);
-    void rdoSaoUnitRow(SAOParam* saoParam, int idxY);
+//    void rdoSaoUnitRow(SAOParam* saoParam, int idxY);
     void rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr);
+
+    void saoStatsInitialOffset(int plane);
 
     friend class FrameFilter;
 };

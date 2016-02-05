@@ -169,6 +169,7 @@ public:
     void codeCoeffNxN(const CUData& cu, const coeff_t* coef, uint32_t absPartIdx, uint32_t log2TrSize, TextType ttype);
 
     inline void codeSaoMerge(uint32_t code)                          { encodeBin(code, m_contextState[OFF_SAO_MERGE_FLAG_CTX]); }
+    inline void codeSaoType(uint32_t code)                           { encodeBin(code, m_contextState[OFF_SAO_TYPE_IDX_CTX]); }
     inline void codeMVPIdx(uint32_t symbol)                          { encodeBin(symbol, m_contextState[OFF_MVP_IDX_CTX]); }
     inline void codeMergeFlag(const CUData& cu, uint32_t absPartIdx) { encodeBin(cu.m_mergeFlag[absPartIdx], m_contextState[OFF_MERGE_FLAG_EXT_CTX]); }
     inline void codeSkipFlag(const CUData& cu, uint32_t absPartIdx)  { encodeBin(cu.isSkipped(absPartIdx), m_contextState[OFF_SKIP_FLAG_CTX + cu.getCtxSkipFlag(absPartIdx)]); }
@@ -182,6 +183,8 @@ public:
     inline void codeTransformSkipFlags(uint32_t transformSkip, TextType ttype) { encodeBin(transformSkip, m_contextState[OFF_TRANSFORMSKIP_FLAG_CTX + (ttype ? NUM_TRANSFORMSKIP_FLAG_CTX : 0)]); }
     void codeDeltaQP(const CUData& cu, uint32_t absPartIdx);
     void codeSaoOffset(const SaoCtuParam& ctuParam, int plane);
+    void codeSaoOffsetEO(int *offset, int typeIdx, int plane);
+    void codeSaoOffsetBO(int *offset, int bandPos, int plane);
 
     /* RDO functions */
     void estBit(EstBitsSbac& estBitsSbac, uint32_t log2TrSize, bool bIsLuma) const;

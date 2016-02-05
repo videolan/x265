@@ -53,7 +53,6 @@ ch_shuf_adj: times 8 db 0
              times 8 db 2
              times 8 db 4
              times 8 db 6
-sq_1: times 1 dq 1
 
 SECTION .text
 
@@ -74,6 +73,7 @@ cextern pw_00ff
 cextern pw_pixel_max
 cextern pd_32
 cextern pd_64
+cextern pq_1
 
 ;====================================================================================================================
 ;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
@@ -3638,7 +3638,7 @@ cglobal pixel_avg_weight_w64
     mova        m3, [r4+16]
     movd        m2, [r4+32]         ; denom
     mova        m4, [pw_pixel_max]
-    paddw       m2, [sq_1]          ; denom+1
+    paddw       m2, [pq_1]          ; denom+1
 %endmacro
 
 ; src1, src2

@@ -123,6 +123,10 @@ protected:
     int32_t*             m_reuseRef;
     uint32_t*            m_reuseBestMergeCand;
     uint32_t m_splitRefIdx[4];
+    uint64_t* cacheCost;
+
+    /* refine RD based on QP for rd-levels 5 and 6 */
+    void qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t lqp);
 
     /* full analysis for an I-slice CU */
     void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
@@ -131,6 +135,8 @@ protected:
     uint32_t compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
     SplitData compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
     SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qp);
+
+    void recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t origqp = -1);
 
     /* measure merge and skip */
     void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGeom);

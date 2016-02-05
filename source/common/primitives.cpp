@@ -238,7 +238,9 @@ void x265_setup_primitives(x265_param *param)
             primitives.cu[i].intra_pred_allangs = NULL;
 
 #if ENABLE_ASSEMBLY
+#if X265_ARCH_X86
         setupInstrinsicPrimitives(primitives, param->cpuid);
+#endif
         setupAssemblyPrimitives(primitives, param->cpuid);
 #endif
 
@@ -249,7 +251,7 @@ void x265_setup_primitives(x265_param *param)
 }
 }
 
-#if ENABLE_ASSEMBLY
+#if ENABLE_ASSEMBLY && X265_ARCH_X86
 /* these functions are implemented in assembly. When assembly is not being
  * compiled, they are unnecessary and can be NOPs */
 #else

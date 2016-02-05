@@ -28,8 +28,6 @@
 
 SECTION_RODATA 32
 
-tab_Vm:    db 0, 2, 4, 6, 8, 10, 12, 14, 0, 0, 0, 0, 0, 0, 0, 0
-
 cextern pb_4
 cextern pb_1
 cextern pb_16

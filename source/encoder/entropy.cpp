@@ -1026,6 +1026,44 @@ void Entropy::codeSaoOffset(const SaoCtuParam& ctuParam, int plane)
     }
 }
 
+void Entropy::codeSaoOffsetEO(int *offset, int typeIdx, int plane)
+{
+    if (plane != 2)
+    {
+        encodeBin(1, m_contextState[OFF_SAO_TYPE_IDX_CTX]);
+        encodeBinEP(1);
+    }
+
+    enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
+
+    codeSaoMaxUvlc(offset[0], OFFSET_THRESH - 1);
+    codeSaoMaxUvlc(offset[1], OFFSET_THRESH - 1);
+    codeSaoMaxUvlc(-offset[2], OFFSET_THRESH - 1);
+    codeSaoMaxUvlc(-offset[3], OFFSET_THRESH - 1);
+    if (plane != 2)
+        encodeBinsEP((uint32_t)(typeIdx), 2);
+}
+
+void Entropy::codeSaoOffsetBO(int *offset, int bandPos, int plane)
+{
+    if (plane != 2)
+    {
+        encodeBin(1, m_contextState[OFF_SAO_TYPE_IDX_CTX]);
+        encodeBinEP(0);
+    }
+
+    enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
+
+    for (int i = 0; i < SAO_BO_LEN; i++)
+        codeSaoMaxUvlc(abs(offset[i]), OFFSET_THRESH - 1);
+
+    for (int i = 0; i < SAO_BO_LEN; i++)
+        if (offset[i] != 0)
+            encodeBinEP(offset[i] < 0);
+
+    encodeBinsEP(bandPos, 5);
+}
+
 /** initialize context model with respect to QP and initialization value */
 uint8_t sbacInit(int qp, int initValue)
 {

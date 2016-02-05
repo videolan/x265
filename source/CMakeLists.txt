@@ -30,7 +30,7 @@ option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
 mark_as_advanced(FPROFILE_USE FPROFILE_GENERATE NATIVE_BUILD)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 79)
+set(X265_BUILD 80)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -59,6 +59,11 @@ elseif(POWERMATCH GREATER "-1")
     set(POWER 1)
     add_definitions(-DX265_ARCH_POWER=1)
 elseif(${SYSPROC} STREQUAL "armv6l")
+    if(CROSS_COMPILE_ARM)
+        message(STATUS "Cross compiling for ARM arch")
+    else()
+        set(CROSS_COMPILE_ARM 0)
+    endif()
     message(STATUS "Detected ARM target processor")
     set(ARM 1)
     add_definitions(-DX265_ARCH_ARM=1 -DHAVE_ARMV6=1)
@@ -176,7 +181,9 @@ if(GCC)
     elseif(X86 AND NOT X64)
         add_definitions(-march=i686)
     endif()
-    if(ARM)
+    if(ARM AND CROSS_COMPILE_ARM)
+        add_definitions(-march=armv6 -mfloat-abi=soft -mfpu=vfp)
+    elseif(ARM)
         add_definitions(-march=armv6 -mfloat-abi=hard -mfpu=vfp)
     endif()
     if(FPROFILE_GENERATE)
@@ -269,7 +276,9 @@ if(GCC)
 endif(GCC)
 
 find_package(Yasm)
-if(YASM_FOUND AND X86)
+if(ARM OR CROSS_COMPILE_ARM)
+    option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
+elseif(YASM_FOUND AND X86)
     if (YASM_VERSION_STRING VERSION_LESS "1.2.0")
         message(STATUS "Yasm version ${YASM_VERSION_STRING} is too old. 1.2.0 or later required")
         option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
@@ -417,15 +426,22 @@ if((MSVC_IDE OR XCODE) AND ENABLE_ASSEMBLY)
     else()
         set(SUFFIX o)
     endif()
-    foreach(ASM ${MSVC_ASMS})
-        set(YASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
-        list(APPEND YASM_SRCS ${YASM_SRC})
-        list(APPEND YASM_OBJS ${ASM}.${SUFFIX})
-        add_custom_command(
-            OUTPUT ${ASM}.${SUFFIX}
-            COMMAND ${YASM_EXECUTABLE} ARGS ${YASM_FLAGS} ${YASM_SRC} -o ${ASM}.${SUFFIX}
-            DEPENDS ${YASM_SRC})
-    endforeach()
+
+    if(ARM OR CROSS_COMPILE_ARM)
+    # compile ARM arch asm files here
+
+    elseif(X86)
+    # compile X86 arch asm files here
+        foreach(ASM ${MSVC_ASMS})
+            set(YASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
+            list(APPEND YASM_SRCS ${YASM_SRC})
+            list(APPEND YASM_OBJS ${ASM}.${SUFFIX})
+            add_custom_command(
+                OUTPUT ${ASM}.${SUFFIX}
+                COMMAND ${YASM_EXECUTABLE} ARGS ${YASM_FLAGS} ${YASM_SRC} -o ${ASM}.${SUFFIX}
+                DEPENDS ${YASM_SRC})
+        endforeach()
+    endif()
 endif()
 
 source_group(ASM FILES ${YASM_SRCS})
