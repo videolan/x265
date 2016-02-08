@@ -555,18 +555,6 @@ const uint8_t g_intraFilterFlags[NUM_INTRA_MODE] =
     0x38, 
 };
 
-/* Contains how much to increment shared depth buffer for different ctu sizes to get next best depth
- * here, depth 0 = 64x64, depth 1 = 32x32, depth 2 = 16x16 and depth 3 = 8x8
- * if ctu = 64, depth buffer size is 256 combination of depth values 0, 1, 2, 3
- * if ctu = 32, depth buffer size is 64 combination of depth values 1, 2, 3
- * if ctu = 16, depth buffer size is 16 combination of depth values 2, 3 */
-const uint32_t g_depthInc[3][4] =
-{
-    { 16,  4,  0, 0},
-    { 64, 16,  4, 1},
-    {256, 64, 16, 4}
-};
-
 /* g_depthScanIdx [y][x] */
 const uint32_t g_depthScanIdx[8][8] =
 {

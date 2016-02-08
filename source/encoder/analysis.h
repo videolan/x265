@@ -133,7 +133,7 @@ protected:
     /* full analysis for a P or B slice CU */
     uint32_t compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
     SplitData compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
-    SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qp);
+    SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
 
     void recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t origqp = -1);
 
