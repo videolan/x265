@@ -74,7 +74,6 @@ Analysis::Analysis()
 {
     m_reuseInterDataCTU = NULL;
     m_reuseRef = NULL;
-    m_reuseBestMergeCand = NULL;
     m_reuseMv = NULL;
 }
 bool Analysis::create(ThreadLocalData *tld)
@@ -149,7 +148,6 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         int numPredDir = m_slice->isInterP() ? 1 : 2;
         m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
         m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
-        m_reuseBestMergeCand = &m_reuseInterDataCTU->bestMergeCand[ctu.m_cuAddr * CUGeom::MAX_GEOMS];
         m_reuseMv = &m_reuseInterDataCTU->mv[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
     }
     ProfileCUScope(ctu, totalCTUTime, totalCTUs);
@@ -612,7 +610,7 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
         if (m_param->rdLevel <= 4)
             checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
         else
-            checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom, false);
+            checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
     }
 
     bool bNoSplit = false;
@@ -1381,7 +1379,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
         {
             md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
             md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
-            checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom, true);
+            checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
             // increment zOrder offset to point to next best depth in sharedDepth buffer
             zOrder += g_depthInc[g_maxCUDepth - 1][reuseDepth[zOrder]];
@@ -1401,7 +1399,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     {
         md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
-        checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom, false);
+        checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
         foundSkip = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
     }
 
@@ -1933,7 +1931,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
 }
 
 /* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
-void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom, bool isShareMergeCand)
+void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom)
 {
     uint32_t depth = cuGeom.depth;
 
@@ -1961,19 +1959,13 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     bool triedPZero = false, triedBZero = false;
     bestPred->rdCost = MAX_INT64;
 
-    uint32_t first = 0, last = numMergeCand;
-    if (isShareMergeCand)
-    {
-        first = *m_reuseBestMergeCand;
-        last = first + 1;
-    }
     int safeX, maxSafeMv;
     if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE)
     {
         safeX = m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol * g_maxCUSize - 3;
         maxSafeMv = (safeX - tempPred->cu.m_cuPelX) * 4;
     }
-    for (uint32_t i = first; i < last; i++)
+    for (uint32_t i = 0; i < numMergeCand; i++)
     {
         if (m_bFrameParallel &&
             (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
@@ -2012,8 +2004,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
 
         uint8_t hasCbf = true;
         bool swapped = false;
-        /* bypass encoding merge with residual if analysis-mode = load as only SKIP CUs enter this function */
-        if (!foundCbf0Merge && !isShareMergeCand)
+        if (!foundCbf0Merge)
         {
             /* if the best prediction has CBF (not a skip) then try merge with residual */
 
@@ -2062,13 +2053,6 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
         bestPred->cu.setPURefIdx(0, (int8_t)candMvField[bestCand][0].refIdx, 0, 0);
         bestPred->cu.setPURefIdx(1, (int8_t)candMvField[bestCand][1].refIdx, 0, 0);
         checkDQP(*bestPred, cuGeom);
-    }
-
-    if (m_param->analysisMode)
-    {
-        if (m_param->analysisMode == X265_ANALYSIS_SAVE)
-            *m_reuseBestMergeCand = bestPred->cu.m_mvpIdx[0][0];
-        m_reuseBestMergeCand++;
     }
 }
 
