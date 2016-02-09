@@ -333,18 +333,40 @@ void FrameEncoder::compressFrame()
     // Weighted Prediction parameters estimation.
     bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred;
     bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
+
+    WeightParam* reuseWP = NULL;
+    if (m_param->analysisMode && (bUseWeightP || bUseWeightB))
+        reuseWP = ((analysis_inter_data*)m_frame->m_analysisData.interData)->wt;
+
     if (bUseWeightP || bUseWeightB)
     {
 #if DETAILED_CU_STATS
         m_cuStats.countWeightAnalyze++;
         ScopedElapsedTime time(m_cuStats.weightAnalyzeTime);
 #endif
-        WeightAnalysis wa(*this);
-        if (m_pool && wa.tryBondPeers(*this, 1))
-            /* use an idle worker for weight analysis */
-            wa.waitForExit();
+        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+        {
+            for (int list = 0; list < slice->isInterB() + 1; list++) 
+            {
+                for (int plane = 0; plane < (m_param->internalCsp != X265_CSP_I400 ? 3 : 1); plane++)
+                {
+                    for (int ref = 1; ref < slice->m_numRefIdx[list]; ref++)
+                        SET_WEIGHT(slice->m_weightPredTable[list][ref][plane], false, 1 << reuseWP->log2WeightDenom, reuseWP->log2WeightDenom, 0);
+                    slice->m_weightPredTable[list][0][plane] = *(reuseWP++);
+                }
+            }
+        }
         else
-            weightAnalyse(*slice, *m_frame, *m_param);
+        {
+            WeightAnalysis wa(*this);
+            if (m_pool && wa.tryBondPeers(*this, 1))
+                /* use an idle worker for weight analysis */
+                wa.waitForExit();
+            else
+                weightAnalyse(*slice, *m_frame, *m_param);
+
+        }
+
     }
     else
         slice->disableWeights();
@@ -361,6 +383,12 @@ void FrameEncoder::compressFrame()
             slice->m_refReconPicList[l][ref] = slice->m_refFrameList[l][ref]->m_reconPic;
             m_mref[l][ref].init(slice->m_refReconPicList[l][ref], w, *m_param);
         }
+        if (m_param->analysisMode == X265_ANALYSIS_SAVE && (bUseWeightP || bUseWeightB))
+        {
+            for (int i = 0; i < (m_param->internalCsp != X265_CSP_I400 ? 3 : 1); i++)
+                *(reuseWP++) = slice->m_weightPredTable[l][0][i];
+        }
+
     }
 
     int numTLD;

@@ -168,6 +168,7 @@ struct analysis_intra_data
 struct analysis_inter_data
 {
     MV*         mv;
+    WeightParam* wt;
     int32_t*    ref;
     uint8_t*    depth;
     uint8_t*    modes;
