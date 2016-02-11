@@ -42,6 +42,30 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
     if (cpuMask & X265_CPU_NEON)
     {
         p.pu[LUMA_16x16].copy_pp = PFX(blockcopy_pp_16x16_neon);
+        p.pu[LUMA_8x4].copy_pp = PFX(blockcopy_pp_8x4_neon);
+        p.pu[LUMA_8x8].copy_pp = PFX(blockcopy_pp_8x8_neon);
+        p.pu[LUMA_8x16].copy_pp = PFX(blockcopy_pp_8x16_neon);
+        p.pu[LUMA_8x32].copy_pp = PFX(blockcopy_pp_8x32_neon);
+        p.pu[LUMA_12x16].copy_pp = PFX(blockcopy_pp_12x16_neon); 
+        p.pu[LUMA_4x4].copy_pp = PFX(blockcopy_pp_4x4_neon);
+        p.pu[LUMA_4x8].copy_pp = PFX(blockcopy_pp_4x8_neon);
+        p.pu[LUMA_4x16].copy_pp = PFX(blockcopy_pp_4x16_neon);
+        p.pu[LUMA_16x4].copy_pp = PFX(blockcopy_pp_16x4_neon);
+        p.pu[LUMA_16x8].copy_pp = PFX(blockcopy_pp_16x8_neon);
+        p.pu[LUMA_16x12].copy_pp = PFX(blockcopy_pp_16x12_neon);
+        p.pu[LUMA_16x32].copy_pp = PFX(blockcopy_pp_16x32_neon);        
+        p.pu[LUMA_16x64].copy_pp = PFX(blockcopy_pp_16x64_neon);
+        p.pu[LUMA_24x32].copy_pp = PFX(blockcopy_pp_24x32_neon);
+        p.pu[LUMA_32x8].copy_pp = PFX(blockcopy_pp_32x8_neon);
+        p.pu[LUMA_32x16].copy_pp = PFX(blockcopy_pp_32x16_neon);
+        p.pu[LUMA_32x24].copy_pp = PFX(blockcopy_pp_32x24_neon);
+        p.pu[LUMA_32x32].copy_pp = PFX(blockcopy_pp_32x32_neon);
+        p.pu[LUMA_32x64].copy_pp = PFX(blockcopy_pp_32x64_neon);
+        p.pu[LUMA_48x64].copy_pp = PFX(blockcopy_pp_48x64_neon);
+        p.pu[LUMA_64x16].copy_pp = PFX(blockcopy_pp_64x16_neon);
+        p.pu[LUMA_64x32].copy_pp = PFX(blockcopy_pp_64x32_neon);
+        p.pu[LUMA_64x48].copy_pp = PFX(blockcopy_pp_64x48_neon);
+        p.pu[LUMA_64x64].copy_pp = PFX(blockcopy_pp_64x64_neon);
     }
     if (cpuMask & X265_CPU_ARMV6)
     {
