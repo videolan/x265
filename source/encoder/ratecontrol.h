@@ -202,7 +202,11 @@ public:
 
     /* 2 pass */
     bool    m_2pass;
+    bool    m_isGopReEncoded;
+    bool    m_isQpModified;
     int     m_numEntries;
+    int     m_start;
+    int     m_reencode;
     FILE*   m_statFileOut;
     FILE*   m_cutreeStatFileOut;
     FILE*   m_cutreeStatFileIn;
@@ -235,6 +239,8 @@ public:
     bool cuTreeReadFor2Pass(Frame* curFrame);
     void hrdFullness(SEIBufferingPeriod* sei);
     int writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce);
+    bool   initPass2();
+
 protected:
 
     static const int   s_slidingWindowFrames;
@@ -261,7 +267,6 @@ protected:
     double predictSize(Predictor *p, double q, double var);
     void   checkAndResetABR(RateControlEntry* rce, bool isFrameDone);
     double predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double qpm, int32_t& encodedBits);
-    bool   initPass2();
     bool   analyseABR2Pass(int startPoc, int endPoc, uint64_t allAvailableBits);
     void   initFramePredictors();
     double getDiffLimitedQScale(RateControlEntry *rce, double q);
