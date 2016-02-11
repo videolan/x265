@@ -1194,8 +1194,6 @@ int x265_check_params(x265_param* param)
         CHECK(0 > param->noiseReductionIntra || param->noiseReductionIntra > 2000, "Valid noise reduction range 0 - 2000");
     if (param->noiseReductionInter)
         CHECK(0 > param->noiseReductionInter || param->noiseReductionInter > 2000, "Valid noise reduction range 0 - 2000");
-    CHECK(param->rc.rateControlMode == X265_RC_CRF && param->rc.bStatRead && param->rc.vbvMaxBitrate == 0,
-          "Constant rate-factor is incompatible with 2pass");
     CHECK(param->rc.rateControlMode == X265_RC_CQP && param->rc.bStatRead,
           "Constant QP is incompatible with 2pass");
     CHECK(param->rc.bStrictCbr && (param->rc.bitrate <= 0 || param->rc.vbvBufferSize <=0),

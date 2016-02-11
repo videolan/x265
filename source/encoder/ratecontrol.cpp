@@ -212,7 +212,7 @@ RateControl::RateControl(x265_param& p)
             m_rateFactorMaxDecrement = m_param->rc.rfConstant - m_param->rc.rfConstantMin;
     }
     m_isAbr = m_param->rc.rateControlMode != X265_RC_CQP && !m_param->rc.bStatRead;
-    m_2pass = (m_param->rc.rateControlMode == X265_RC_ABR || m_param->rc.vbvMaxBitrate > 0) && m_param->rc.bStatRead;
+    m_2pass = m_param->rc.rateControlMode != X265_RC_CQP && m_param->rc.bStatRead;
     m_bitrate = m_param->rc.bitrate * 1000;
     m_frameDuration = (double)m_param->fpsDenom / m_param->fpsNum;
     m_qp = m_param->rc.qp;
@@ -417,7 +417,7 @@ bool RateControl::init(const SPS& sps)
                 return false;
             }
             {
-                int i, j;
+                int i, j, m;
                 uint32_t k , l;
                 bool bErr = false;
                 char *opts = statsBuf;
@@ -437,6 +437,11 @@ bool RateControl::init(const SPS& sps)
                 if ((p = strstr(opts, " fps=")) == 0 || sscanf(p, " fps=%u/%u", &k, &l) != 2)
                 {
                     x265_log(m_param, X265_LOG_ERROR, "fps specified in stats file not valid\n");
+                    return false;
+                }
+                if (((p = strstr(opts, " vbv-maxrate=")) == 0 || sscanf(p, " vbv-maxrate=%d", &m) != 1) && m_param->rc.rateControlMode == X265_RC_CRF)
+                {
+                    x265_log(m_param, X265_LOG_ERROR, "Constant rate-factor is incompatible with 2pass without vbv-maxrate in the previous pass\n");
                     return false;
                 }
                 if (k != m_param->fpsNum || l != m_param->fpsDenom)
@@ -564,7 +569,7 @@ bool RateControl::init(const SPS& sps)
                 p = next;
             }
             X265_FREE(statsBuf);
-            if (m_param->rc.rateControlMode == X265_RC_ABR || m_param->rc.vbvMaxBitrate > 0)
+            if (m_param->rc.rateControlMode != X265_RC_CQP)
             {
                 if (!initPass2())
                     return false;
