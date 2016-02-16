@@ -108,7 +108,7 @@ FUNC    .func   \name
 #define JOIN(a, b) GLUE(a, b)
 #define X(s) JOIN(EXTERN_ASM, s)
 
-#define FENC_STRIDE 16
+#define FENC_STRIDE 64
 #define FDEC_STRIDE 32
 
 .macro HORIZ_ADD dest, a, b

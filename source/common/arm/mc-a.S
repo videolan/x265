@@ -34,7 +34,7 @@
  * r0   - dst
  * r1   - dstStride
  * r2   - src
- * d3   - srcStride */
+ * r3   - srcStride */
 function x265_blockcopy_pp_16x16_neon
     vld1.8          {q0}, [r2]
     vst1.8          {q0}, [r0]

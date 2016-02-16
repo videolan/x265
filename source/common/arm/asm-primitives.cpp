@@ -41,6 +41,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // blockcopy
         p.pu[LUMA_16x16].copy_pp = PFX(blockcopy_pp_16x16_neon);
         p.pu[LUMA_8x4].copy_pp = PFX(blockcopy_pp_8x4_neon);
         p.pu[LUMA_8x8].copy_pp = PFX(blockcopy_pp_8x8_neon);
@@ -66,11 +67,65 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_64x32].copy_pp = PFX(blockcopy_pp_64x32_neon);
         p.pu[LUMA_64x48].copy_pp = PFX(blockcopy_pp_64x48_neon);
         p.pu[LUMA_64x64].copy_pp = PFX(blockcopy_pp_64x64_neon);
+
+        // sad_x3
+        p.pu[LUMA_4x4].sad_x3   = PFX(sad_x3_4x4_neon);
+        p.pu[LUMA_4x8].sad_x3   = PFX(sad_x3_4x8_neon);
+        p.pu[LUMA_4x16].sad_x3  = PFX(sad_x3_4x16_neon);
+        p.pu[LUMA_8x4].sad_x3   = PFX(sad_x3_8x4_neon);
+        p.pu[LUMA_8x8].sad_x3   = PFX(sad_x3_8x8_neon);
+        p.pu[LUMA_8x16].sad_x3  = PFX(sad_x3_8x16_neon);
+        p.pu[LUMA_8x32].sad_x3  = PFX(sad_x3_8x32_neon);
+        p.pu[LUMA_12x16].sad_x3 = PFX(sad_x3_12x16_neon);
+        p.pu[LUMA_16x4].sad_x3  = PFX(sad_x3_16x4_neon);
+        p.pu[LUMA_16x8].sad_x3  = PFX(sad_x3_16x8_neon);
+        p.pu[LUMA_16x12].sad_x3 = PFX(sad_x3_16x12_neon);
+        p.pu[LUMA_16x16].sad_x3 = PFX(sad_x3_16x16_neon);
+        p.pu[LUMA_16x32].sad_x3 = PFX(sad_x3_16x32_neon);
+        p.pu[LUMA_16x64].sad_x3 = PFX(sad_x3_16x64_neon);
+        p.pu[LUMA_24x32].sad_x3 = PFX(sad_x3_24x32_neon);
+        p.pu[LUMA_32x8].sad_x3  = PFX(sad_x3_32x8_neon);
+        p.pu[LUMA_32x16].sad_x3 = PFX(sad_x3_32x16_neon);
+        p.pu[LUMA_32x24].sad_x3 = PFX(sad_x3_32x24_neon);
+        p.pu[LUMA_32x32].sad_x3 = PFX(sad_x3_32x32_neon);
+        p.pu[LUMA_32x64].sad_x3 = PFX(sad_x3_32x64_neon);
+        p.pu[LUMA_48x64].sad_x3 = PFX(sad_x3_48x64_neon);
+        p.pu[LUMA_64x16].sad_x3 = PFX(sad_x3_64x16_neon);
+        p.pu[LUMA_64x32].sad_x3 = PFX(sad_x3_64x32_neon);
+        p.pu[LUMA_64x48].sad_x3 = PFX(sad_x3_64x48_neon);
+        p.pu[LUMA_64x64].sad_x3 = PFX(sad_x3_64x64_neon);
+
+        // sad_x4
+        p.pu[LUMA_4x4].sad_x4   = PFX(sad_x4_4x4_neon);
+        p.pu[LUMA_4x8].sad_x4   = PFX(sad_x4_4x8_neon);
+        p.pu[LUMA_4x16].sad_x4  = PFX(sad_x4_4x16_neon);
+        p.pu[LUMA_8x4].sad_x4   = PFX(sad_x4_8x4_neon);
+        p.pu[LUMA_8x8].sad_x4   = PFX(sad_x4_8x8_neon);
+        p.pu[LUMA_8x16].sad_x4  = PFX(sad_x4_8x16_neon);
+        p.pu[LUMA_8x32].sad_x4  = PFX(sad_x4_8x32_neon);
+        p.pu[LUMA_12x16].sad_x4 = PFX(sad_x4_12x16_neon);
+        p.pu[LUMA_16x4].sad_x4  = PFX(sad_x4_16x4_neon);
+        p.pu[LUMA_16x8].sad_x4  = PFX(sad_x4_16x8_neon);
+        p.pu[LUMA_16x12].sad_x4 = PFX(sad_x4_16x12_neon);
+        p.pu[LUMA_16x16].sad_x4 = PFX(sad_x4_16x16_neon);
+        p.pu[LUMA_16x32].sad_x4 = PFX(sad_x4_16x32_neon);
+        p.pu[LUMA_16x64].sad_x4 = PFX(sad_x4_16x64_neon);
+        p.pu[LUMA_24x32].sad_x4 = PFX(sad_x4_24x32_neon);
+        p.pu[LUMA_32x8].sad_x4  = PFX(sad_x4_32x8_neon);
+        p.pu[LUMA_32x16].sad_x4 = PFX(sad_x4_32x16_neon);
+        p.pu[LUMA_32x24].sad_x4 = PFX(sad_x4_32x24_neon);
+        p.pu[LUMA_32x32].sad_x4 = PFX(sad_x4_32x32_neon);
+        p.pu[LUMA_32x64].sad_x4 = PFX(sad_x4_32x64_neon);
+        p.pu[LUMA_48x64].sad_x4 = PFX(sad_x4_48x64_neon);
+        p.pu[LUMA_64x16].sad_x4 = PFX(sad_x4_64x16_neon);
+        p.pu[LUMA_64x32].sad_x4 = PFX(sad_x4_64x32_neon);
+        p.pu[LUMA_64x48].sad_x4 = PFX(sad_x4_64x48_neon);
+        p.pu[LUMA_64x64].sad_x4 = PFX(sad_x4_64x64_neon);
     }
     if (cpuMask & X265_CPU_ARMV6)
     {
-	 p.pu[LUMA_4x4].sad=PFX(pixel_sad_4x4_armv6);
-         p.pu[LUMA_4x8].sad=PFX(pixel_sad_4x8_armv6);
+        p.pu[LUMA_4x4].sad = PFX(pixel_sad_4x4_armv6);
+        p.pu[LUMA_4x8].sad = PFX(pixel_sad_4x8_armv6);
     }
 }
 } // namespace X265_NS
