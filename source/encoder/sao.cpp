@@ -282,7 +282,6 @@ void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
 // CTU-based SAO process without slice granularity
 void SAO::processSaoCu(int addr, int typeIdx, int plane)
 {
-    int x, y;
     PicYuv* reconPic = m_frame->m_reconPic;
     pixel* rec = reconPic->getPlaneAddr(plane, addr);
     intptr_t stride = plane ? reconPic->m_strideC : reconPic->m_stride;
@@ -307,20 +306,13 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     ctuWidth  = rpelx - lpelx;
     ctuHeight = bpely - tpely;
 
-    int startX;
-    int startY;
-    int endX;
-    int endY;
-    pixel* tmpL;
-    pixel* tmpU;
-
     int8_t _upBuff1[MAX_CU_SIZE + 2], *upBuff1 = _upBuff1 + 1, signLeft1[2];
     int8_t _upBufft[MAX_CU_SIZE + 2], *upBufft = _upBufft + 1;
 
     memset(_upBuff1 + MAX_CU_SIZE, 0, 2 * sizeof(int8_t)); /* avoid valgrind uninit warnings */
 
-    tmpL = m_tmpL1[plane];
-    tmpU = &(m_tmpU[plane][lpelx]);
+    pixel* tmpL = m_tmpL1[plane];
+    pixel* tmpU = &(m_tmpU[plane][lpelx]);
 
     int8_t* offsetEo = m_offsetEo[plane];
 
@@ -329,14 +321,14 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     case SAO_EO_0: // dir: -
     {
         pixel firstPxl = 0, lastPxl = 0, row1FirstPxl = 0, row1LastPxl = 0;
-        startX = !lpelx;
-        endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
+        int startX = !lpelx;
+        int endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
         if (ctuWidth & 15)
         {
-            for (y = 0; y < ctuHeight; y++)
+            for (int y = 0; y < ctuHeight; y++, rec += stride)
             {
                 int signLeft = signOf(rec[startX] - tmpL[y]);
-                for (x = startX; x < endX; x++)
+                for (int x = startX; x < endX; x++)
                 {
                     int signRight = signOf(rec[x] - rec[x + 1]);
                     int edgeType = signRight + signLeft + 2;
@@ -344,13 +336,11 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
 
                     rec[x] = m_clipTable[rec[x] + offsetEo[edgeType]];
                 }
-
-                rec += stride;
             }
         }
         else
         {
-            for (y = 0; y < ctuHeight; y += 2)
+            for (int y = 0; y < ctuHeight; y += 2, rec += 2 * stride)
             {
                 signLeft1[0] = signOf(rec[startX] - tmpL[y]);
                 signLeft1[1] = signOf(rec[stride + startX] - tmpL[y + 1]);
@@ -380,27 +370,25 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                     rec[ctuWidth - 1] = lastPxl;
                     rec[stride + ctuWidth - 1] = row1LastPxl;
                 }
-
-                rec += 2 * stride;
             }
         }
         break;
     }
     case SAO_EO_1: // dir: |
     {
-        startY = !tpely;
-        endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
+        int startY = !tpely;
+        int endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
         if (!tpely)
             rec += stride;
 
         if (ctuWidth & 15)
         {
-            for (x = 0; x < ctuWidth; x++)
+            for (int x = 0; x < ctuWidth; x++)
                 upBuff1[x] = signOf(rec[x] - tmpU[x]);
 
-            for (y = startY; y < endY; y++)
+            for (int y = startY; y < endY; y++, rec += stride)
             {
-                for (x = 0; x < ctuWidth; x++)
+                for (int x = 0; x < ctuWidth; x++)
                 {
                     int8_t signDown = signOf(rec[x] - rec[x + stride]);
                     int edgeType = signDown + upBuff1[x] + 2;
@@ -408,8 +396,6 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
 
                     rec[x] = m_clipTable[rec[x] + offsetEo[edgeType]];
                 }
-
-                rec += stride;
             }
         }
         else
@@ -417,11 +403,9 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
             primitives.sign(upBuff1, rec, tmpU, ctuWidth);
 
             int diff = (endY - startY) % 2;
-            for (y = startY; y < endY - diff; y += 2)
-            {
+            for (int y = startY; y < endY - diff; y += 2, rec += 2 * stride)
                 primitives.saoCuOrgE1_2Rows(rec, upBuff1, offsetEo, stride, ctuWidth);
-                rec += 2 * stride;
-            }
+
             if (diff & 1)
                 primitives.saoCuOrgE1(rec, upBuff1, offsetEo, stride, ctuWidth);
         }
@@ -430,11 +414,11 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
     }
     case SAO_EO_2: // dir: 135
     {
-        startX = !lpelx;
-        endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
+        int startX = !lpelx;
+        int endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
 
-        startY = !tpely;
-        endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
+        int startY = !tpely;
+        int endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
 
         if (!tpely)
             rec += stride;
@@ -459,16 +443,16 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         }
         else
         {
-            for (x = startX; x < endX; x++)
+            for (int x = startX; x < endX; x++)
                 upBuff1[x] = signOf(rec[x] - tmpU[x - 1]);
         }
 
         if (ctuWidth & 15)
         {
-             for (y = startY; y < endY; y++)
+             for (int y = startY; y < endY; y++, rec += stride)
              {
                  upBufft[startX] = signOf(rec[stride + startX] - tmpL[y]);
-                 for (x = startX; x < endX; x++)
+                 for (int x = startX; x < endX; x++)
                  {
                      int8_t signDown = signOf(rec[x] - rec[x + stride + 1]);
                      int edgeType = signDown + upBuff1[x] + 2;
@@ -477,13 +461,11 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                  }
 
                  std::swap(upBuff1, upBufft);
-
-                 rec += stride;
              }
         }
         else
         {
-            for (y = startY; y < endY; y++)
+            for (int y = startY; y < endY; y++, rec += stride)
             {
                 int8_t iSignDown2 = signOf(rec[stride + startX] - tmpL[y]);
 
@@ -492,30 +474,29 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                 upBufft[startX] = iSignDown2;
 
                 std::swap(upBuff1, upBufft);
-                rec += stride;
             }
         }
         break;
     }
     case SAO_EO_3: // dir: 45
     {
-        startX = !lpelx;
-        endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
+        int startX = !lpelx;
+        int endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
 
-        startY = !tpely;
-        endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
+        int startY = !tpely;
+        int endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
 
         if (!tpely)
             rec += stride;
 
         if (ctuWidth & 15)
         {
-            for (x = startX - 1; x < endX; x++)
+            for (int x = startX - 1; x < endX; x++)
                 upBuff1[x] = signOf(rec[x] - tmpU[x + 1]);
 
-            for (y = startY; y < endY; y++)
+            for (int y = startY; y < endY; y++, rec += stride)
             {
-                x = startX;
+                int x = startX;
                 int8_t signDown = signOf(rec[x] - tmpL[y + 1]);
                 int edgeType = signDown + upBuff1[x] + 2;
                 upBuff1[x - 1] = -signDown;
@@ -530,8 +511,6 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                 }
 
                 upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
-
-                rec += stride;
             }
         }
         else
@@ -550,9 +529,9 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
             if (rpelx == picWidth)
                 upBuff1[ctuWidth - 1] = lastSign;
 
-            for (y = startY; y < endY; y++)
+            for (int y = startY; y < endY; y++, rec += stride)
             {
-                x = startX;
+                int x = startX;
                 int8_t signDown = signOf(rec[x] - tmpL[y + 1]);
                 int edgeType = signDown + upBuff1[x] + 2;
                 upBuff1[x - 1] = -signDown;
@@ -561,8 +540,6 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
                 primitives.saoCuOrgE3[endX > 16](rec, upBuff1, offsetEo, stride - 1, startX, endX);
 
                 upBuff1[endX - 1] = signOf(rec[endX - 1 + stride] - rec[endX]);
-
-                rec += stride;
             }
         }
 
@@ -576,24 +553,14 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
         {
             #define SAO_BO_BITS 5
             const int boShift = X265_DEPTH - SAO_BO_BITS;
-            for (y = 0; y < ctuHeight; y++)
-            {
-                for (x = 0; x < ctuWidth; x++)
-                {
-                     int val = rec[x] + offsetBo[rec[x] >> boShift];
-                     if (val < 0)
-                         val = 0;
-                     else if (val > ((1 << X265_DEPTH) - 1))
-                         val = ((1 << X265_DEPTH) - 1);
-                     rec[x] = (pixel)val;
-                }
-                rec += stride;
-            }
+
+            for (int y = 0; y < ctuHeight; y++, rec += stride)
+                for (int x = 0; x < ctuWidth; x++)
+                    rec[x] = x265_clip(rec[x] + offsetBo[rec[x] >> boShift]);
         }
         else
-        {
             primitives.saoCuOrgB0(rec, offsetBo, ctuWidth, ctuHeight, stride);
-        }
+
         break;
     }
     default: break;
