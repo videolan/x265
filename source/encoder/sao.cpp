@@ -120,8 +120,11 @@ bool SAO::create(x265_param* param, int initCommon)
 
     if (initCommon)
     {
-        CHECKED_MALLOC(m_countPreDblk, PerPlane, numCtu);
-        CHECKED_MALLOC(m_offsetOrgPreDblk, PerPlane, numCtu);
+        if (m_param->bSaoNonDeblocked)
+        {
+            CHECKED_MALLOC(m_countPreDblk, PerPlane, numCtu);
+            CHECKED_MALLOC(m_offsetOrgPreDblk, PerPlane, numCtu);
+        }
         CHECKED_MALLOC(m_depthSaoRate, double, 2 * SAO_DEPTHRATE_SIZE);
 
         m_depthSaoRate[0 * SAO_DEPTHRATE_SIZE + 0] = 0;
@@ -137,17 +140,16 @@ bool SAO::create(x265_param* param, int initCommon)
         m_clipTable = &(m_clipTableBase[rangeExt]);
 
         // Share with fast clip lookup table
-        if (initCommon)
-        {
-            for (int i = 0; i < rangeExt; i++)
-                m_clipTableBase[i] = 0;
 
-            for (int i = 0; i < maxY; i++)
-                m_clipTable[i] = (pixel)i;
+        for (int i = 0; i < rangeExt; i++)
+            m_clipTableBase[i] = 0;
 
-            for (int i = maxY; i < maxY + rangeExt; i++)
-                m_clipTable[i] = maxY;
-        }
+        for (int i = 0; i < maxY; i++)
+            m_clipTable[i] = (pixel)i;
+
+        for (int i = maxY; i < maxY + rangeExt; i++)
+            m_clipTable[i] = maxY;
+
     }
     else
     {
@@ -204,8 +206,11 @@ void SAO::destroy(int destoryCommon)
 
     if (destoryCommon)
     {
-        X265_FREE_ZERO(m_countPreDblk);
-        X265_FREE_ZERO(m_offsetOrgPreDblk);
+        if (m_param->bSaoNonDeblocked)
+        {
+            X265_FREE_ZERO(m_countPreDblk);
+            X265_FREE_ZERO(m_offsetOrgPreDblk);
+        }
         X265_FREE_ZERO(m_depthSaoRate);
         X265_FREE_ZERO(m_clipTableBase);
     }
