@@ -56,7 +56,7 @@ public:
 
     enum { SAO_MAX_DEPTH = 4 };
     enum { SAO_BO_BITS  = 5 };
-    enum { MAX_NUM_SAO_CLASS = 33 };
+    enum { MAX_NUM_SAO_CLASS = 32 };
     enum { SAO_BIT_INC = 0 }; /* in HM12.0, it wrote as X265_MAX(X265_DEPTH - 10, 0) */
     enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
     enum { NUM_EDGETYPE = 5 };

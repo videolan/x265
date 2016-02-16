@@ -1007,7 +1007,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
         {
             for (x = (y < startY ? startX : 0); x < ctuWidth; x++)
             {
-                int classIdx = 1 + (rec[x] >> boShift);
+                int classIdx = rec[x] >> boShift;
                 stats[classIdx] += (fenc[x] - rec[x]);
                 count[classIdx]++;
             }
@@ -1306,11 +1306,11 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
                 int typeIdx = mergeSrcParam->typeIdx;
                 if (typeIdx >= 0)
                 {
-                    int bandPos = (typeIdx == SAO_BO) ? mergeSrcParam->bandPos : 0;
+                    int bandPos = (typeIdx == SAO_BO) ? mergeSrcParam->bandPos : 1;
                     for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
                     {
                         int mergeOffset = mergeSrcParam->offset[classIdx];
-                        estDist += estSaoDist(m_count[plane][typeIdx][classIdx + bandPos + 1], mergeOffset, m_offsetOrg[plane][typeIdx][classIdx + bandPos + 1]);
+                        estDist += estSaoDist(m_count[plane][typeIdx][classIdx + bandPos], mergeOffset, m_offsetOrg[plane][typeIdx][classIdx + bandPos]);
                     }
                 }
 
@@ -1393,7 +1393,7 @@ void SAO::saoStatsInitialOffset(bool chroma)
     // BO
     for (int plane = 0; plane < planes; plane++)
     {
-        for (int classIdx = 1; classIdx < SAO_NUM_BO_CLASSES + 1; classIdx++)
+        for (int classIdx = 0; classIdx < SAO_NUM_BO_CLASSES; classIdx++)
         {
             int32_t  count     = m_count[plane][SAO_BO][classIdx];
             int32_t& offsetOrg = m_offsetOrg[plane][SAO_BO][classIdx];
@@ -1500,17 +1500,17 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
 
     //BO RDO
     int64_t estDist = 0;
-    for (int classIdx = 1; classIdx < SAO_NUM_BO_CLASSES + 1; classIdx++)
+    for (int classIdx = 0; classIdx < SAO_NUM_BO_CLASSES; classIdx++)
     {
         int32_t  count     = m_count[0][SAO_BO][classIdx];
         int32_t& offsetOrg = m_offsetOrg[0][SAO_BO][classIdx];
         int32_t& offsetOut = m_offset[0][SAO_BO][classIdx];
 
-        distBOClasses[classIdx - 1] = 0;
-        costBOClasses[classIdx - 1] = m_lumaLambda;
+        distBOClasses[classIdx] = 0;
+        costBOClasses[classIdx] = m_lumaLambda;
 
         if (count)
-            offsetOut = estIterOffset(SAO_BO, m_lumaLambda, offsetOut, count, offsetOrg, distBOClasses[classIdx - 1], costBOClasses[classIdx - 1]);
+            offsetOut = estIterOffset(SAO_BO, m_lumaLambda, offsetOut, count, offsetOrg, distBOClasses[classIdx], costBOClasses[classIdx]);
         else
             offsetOut = 0;
     }
@@ -1538,7 +1538,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
 
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
-    m_entropyCoder.codeSaoOffsetBO(m_offset[0][SAO_BO] + (bestClassBO + 1), bestClassBO, 0);
+    m_entropyCoder.codeSaoOffsetBO(m_offset[0][SAO_BO] + bestClassBO, bestClassBO, 0);
 
     uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
     double cost = (double)estDist + m_lumaLambda * (double)estRate;
@@ -1552,7 +1552,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
         lclCtuParam->typeIdx = SAO_BO;
         lclCtuParam->bandPos = bestClassBO;
         for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
-            lclCtuParam->offset[classIdx] = (int)m_offset[0][SAO_BO][classIdx + bestClassBO + 1];
+            lclCtuParam->offset[classIdx] = (int)m_offset[0][SAO_BO][classIdx + bestClassBO];
     }
 
     mergeDist[0] = ((double)bestDist / m_lumaLambda);
@@ -1636,17 +1636,17 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
     {
         double bestRDCostBO = MAX_DOUBLE;
 
-        for (int classIdx = 1; classIdx < SAO_NUM_BO_CLASSES + 1; classIdx++)
+        for (int classIdx = 0; classIdx < SAO_NUM_BO_CLASSES; classIdx++)
         {
             int32_t  count = m_count[compIdx][SAO_BO][classIdx];
             int32_t& offsetOrg = m_offsetOrg[compIdx][SAO_BO][classIdx];
             int32_t& offsetOut = m_offset[compIdx][SAO_BO][classIdx];
 
-            distBOClasses[classIdx - 1] = 0;
-            costBOClasses[classIdx - 1] = m_chromaLambda;
+            distBOClasses[classIdx] = 0;
+            costBOClasses[classIdx] = m_chromaLambda;
 
             if (count)
-                offsetOut = estIterOffset(SAO_BO, m_chromaLambda, offsetOut, count, offsetOrg, distBOClasses[classIdx - 1], costBOClasses[classIdx - 1]);
+                offsetOut = estIterOffset(SAO_BO, m_chromaLambda, offsetOut, count, offsetOrg, distBOClasses[classIdx], costBOClasses[classIdx]);
             else
                 offsetOut = 0;
         }
@@ -1673,7 +1673,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
     m_entropyCoder.resetBits();
 
     for (int compIdx = 0; compIdx < 2; compIdx++)
-        m_entropyCoder.codeSaoOffsetBO(m_offset[compIdx + 1][SAO_BO] + (bestClassBO[compIdx] + 1), bestClassBO[compIdx], compIdx + 1);
+        m_entropyCoder.codeSaoOffsetBO(m_offset[compIdx + 1][SAO_BO] + bestClassBO[compIdx], bestClassBO[compIdx], compIdx + 1);
 
     uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
     double cost = (double)(estDist[0] + estDist[1]) + m_chromaLambda * (double)estRate;
@@ -1689,7 +1689,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
             lclCtuParam[compIdx]->typeIdx = SAO_BO;
             lclCtuParam[compIdx]->bandPos = bestClassBO[compIdx];
             for (int classIdx = 0; classIdx < SAO_NUM_OFFSET; classIdx++)
-                lclCtuParam[compIdx]->offset[classIdx] = (int)m_offset[compIdx + 1][SAO_BO][classIdx + bestClassBO[compIdx] + 1];
+                lclCtuParam[compIdx]->offset[classIdx] = (int)m_offset[compIdx + 1][SAO_BO][classIdx + bestClassBO[compIdx]];
         }
     }
 
@@ -1703,14 +1703,13 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
 // NOTE: must put in namespace X265_NS since we need class SAO
 void saoCuStatsBO_c(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
 {
-    int x, y;
     const int boShift = X265_DEPTH - SAO_BO_BITS;
 
-    for (y = 0; y < endY; y++)
+    for (int y = 0; y < endY; y++)
     {
-        for (x = 0; x < endX; x++)
+        for (int x = 0; x < endX; x++)
         {
-            int classIdx = 1 + (rec[x] >> boShift);
+            int classIdx = rec[x] >> boShift;
             stats[classIdx] += diff[x];
             count[classIdx]++;
         }
@@ -1722,7 +1721,6 @@ void saoCuStatsBO_c(const int16_t *diff, const pixel *rec, intptr_t stride, int 
 
 void saoCuStatsE0_c(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
 {
-    int x, y;
     int32_t tmp_stats[SAO::NUM_EDGETYPE];
     int32_t tmp_count[SAO::NUM_EDGETYPE];
 
@@ -1731,10 +1729,10 @@ void saoCuStatsE0_c(const int16_t *diff, const pixel *rec, intptr_t stride, int 
     memset(tmp_stats, 0, sizeof(tmp_stats));
     memset(tmp_count, 0, sizeof(tmp_count));
 
-    for (y = 0; y < endY; y++)
+    for (int y = 0; y < endY; y++)
     {
         int signLeft = signOf(rec[0] - rec[-1]);
-        for (x = 0; x < endX; x++)
+        for (int x = 0; x < endX; x++)
         {
             int signRight = signOf2(rec[x], rec[x + 1]);
             X265_CHECK(signRight == signOf(rec[x] - rec[x + 1]), "signDown check failure\n");
@@ -1750,7 +1748,7 @@ void saoCuStatsE0_c(const int16_t *diff, const pixel *rec, intptr_t stride, int 
         rec += stride;
     }
 
-    for (x = 0; x < SAO::NUM_EDGETYPE; x++)
+    for (int x = 0; x < SAO::NUM_EDGETYPE; x++)
     {
         stats[SAO::s_eoTable[x]] += tmp_stats[x];
         count[SAO::s_eoTable[x]] += tmp_count[x];
@@ -1762,7 +1760,6 @@ void saoCuStatsE1_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8
     X265_CHECK(endX <= MAX_CU_SIZE, "endX check failure\n");
     X265_CHECK(endY <= MAX_CU_SIZE, "endY check failure\n");
 
-    int x, y;
     int32_t tmp_stats[SAO::NUM_EDGETYPE];
     int32_t tmp_count[SAO::NUM_EDGETYPE];
 
@@ -1770,9 +1767,9 @@ void saoCuStatsE1_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8
     memset(tmp_count, 0, sizeof(tmp_count));
 
     X265_CHECK(endX * endY <= (4096 - 16), "Assembly of saoE1 may overflow with this block size\n");
-    for (y = 0; y < endY; y++)
+    for (int y = 0; y < endY; y++)
     {
-        for (x = 0; x < endX; x++)
+        for (int x = 0; x < endX; x++)
         {
             int signDown = signOf2(rec[x], rec[x + stride]);
             X265_CHECK(signDown == signOf(rec[x] - rec[x + stride]), "signDown check failure\n");
@@ -1787,7 +1784,7 @@ void saoCuStatsE1_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8
         rec += stride;
     }
 
-    for (x = 0; x < SAO::NUM_EDGETYPE; x++)
+    for (int x = 0; x < SAO::NUM_EDGETYPE; x++)
     {
         stats[SAO::s_eoTable[x]] += tmp_stats[x];
         count[SAO::s_eoTable[x]] += tmp_count[x];
@@ -1799,17 +1796,16 @@ void saoCuStatsE2_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8
     X265_CHECK(endX < MAX_CU_SIZE, "endX check failure\n");
     X265_CHECK(endY < MAX_CU_SIZE, "endY check failure\n");
 
-    int x, y;
     int32_t tmp_stats[SAO::NUM_EDGETYPE];
     int32_t tmp_count[SAO::NUM_EDGETYPE];
 
     memset(tmp_stats, 0, sizeof(tmp_stats));
     memset(tmp_count, 0, sizeof(tmp_count));
 
-    for (y = 0; y < endY; y++)
+    for (int y = 0; y < endY; y++)
     {
         upBufft[0] = signOf(rec[stride] - rec[-1]);
-        for (x = 0; x < endX; x++)
+        for (int x = 0; x < endX; x++)
         {
             int signDown = signOf2(rec[x], rec[x + stride + 1]);
             X265_CHECK(signDown == signOf(rec[x] - rec[x + stride + 1]), "signDown check failure\n");
@@ -1825,7 +1821,7 @@ void saoCuStatsE2_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8
         diff += MAX_CU_SIZE;
     }
 
-    for (x = 0; x < SAO::NUM_EDGETYPE; x++)
+    for (int x = 0; x < SAO::NUM_EDGETYPE; x++)
     {
         stats[SAO::s_eoTable[x]] += tmp_stats[x];
         count[SAO::s_eoTable[x]] += tmp_count[x];
@@ -1837,16 +1833,15 @@ void saoCuStatsE3_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8
     X265_CHECK(endX < MAX_CU_SIZE, "endX check failure\n");
     X265_CHECK(endY < MAX_CU_SIZE, "endY check failure\n");
 
-    int x, y;
     int32_t tmp_stats[SAO::NUM_EDGETYPE];
     int32_t tmp_count[SAO::NUM_EDGETYPE];
 
     memset(tmp_stats, 0, sizeof(tmp_stats));
     memset(tmp_count, 0, sizeof(tmp_count));
 
-    for (y = 0; y < endY; y++)
+    for (int y = 0; y < endY; y++)
     {
-        for (x = 0; x < endX; x++)
+        for (int x = 0; x < endX; x++)
         {
             int signDown = signOf2(rec[x], rec[x + stride - 1]);
             X265_CHECK(signDown == signOf(rec[x] - rec[x + stride - 1]), "signDown check failure\n");
@@ -1864,7 +1859,7 @@ void saoCuStatsE3_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8
         diff += MAX_CU_SIZE;
     }
 
-    for (x = 0; x < SAO::NUM_EDGETYPE; x++)
+    for (int x = 0; x < SAO::NUM_EDGETYPE; x++)
     {
         stats[SAO::s_eoTable[x]] += tmp_stats[x];
         count[SAO::s_eoTable[x]] += tmp_count[x];
