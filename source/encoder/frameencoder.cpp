@@ -969,44 +969,48 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         /* Deblock with idle threading */
         if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
         {
-            // TODO: Multiple Threading
-            // Delay ONE row to avoid Intra Prediction Conflict
-            if (m_pool && (row >= 1))
+            // NOTE: in VBV mode, we may reencode anytime, so we can't do Deblock stage-Horizon and SAO
+            if (!bIsVbv)
             {
-                // Waitting last threading finish
-                m_frameFilter.m_parallelFilter[row - 1].waitForExit();
-
-                // Processing new group
-                int allowCol = col;
-
-                // avoid race condition on last column
-                if (row >= 2)
+                // TODO: Multiple Threading
+                // Delay ONE row to avoid Intra Prediction Conflict
+                if (m_pool && (row >= 1))
                 {
-                    allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get()
-                                                              : m_frameFilter.m_parallelFilter[row - 2].m_lastCol.get()), (int)col);
+                    // Waitting last threading finish
+                    m_frameFilter.m_parallelFilter[row - 1].waitForExit();
+
+                    // Processing new group
+                    int allowCol = col;
+
+                    // avoid race condition on last column
+                    if (row >= 2)
+                    {
+                        allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get()
+                                                                  : m_frameFilter.m_parallelFilter[row - 2].m_lastCol.get()), (int)col);
+                    }
+                    m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(allowCol);
+                    m_frameFilter.m_parallelFilter[row - 1].tryBondPeers(*this, 1);
                 }
-                m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(allowCol);
-                m_frameFilter.m_parallelFilter[row - 1].tryBondPeers(*this, 1);
-            }
 
-            // Last Row may start early
-            if (m_pool && (row == m_numRows - 1))
-            {
-                // Waiting for the last thread to finish
-                m_frameFilter.m_parallelFilter[row].waitForExit();
-
-                // Deblocking last row
-                int allowCol = col;
-
-                // avoid race condition on last column
-                if (row >= 2)
+                // Last Row may start early
+                if (m_pool && (row == m_numRows - 1))
                 {
-                    allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get()
-                                                              : m_frameFilter.m_parallelFilter[row - 1].m_lastCol.get()), (int)col);
+                    // Waiting for the last thread to finish
+                    m_frameFilter.m_parallelFilter[row].waitForExit();
+
+                    // Deblocking last row
+                    int allowCol = col;
+
+                    // avoid race condition on last column
+                    if (row >= 2)
+                    {
+                        allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get()
+                                                                  : m_frameFilter.m_parallelFilter[row - 1].m_lastCol.get()), (int)col);
+                    }
+                    m_frameFilter.m_parallelFilter[row].m_allowedCol.set(allowCol);
+                    m_frameFilter.m_parallelFilter[row].tryBondPeers(*this, 1);
                 }
-                m_frameFilter.m_parallelFilter[row].m_allowedCol.set(allowCol);
-                m_frameFilter.m_parallelFilter[row].tryBondPeers(*this, 1);
-            }
+            } // end of !bIsVbv
         }
         // Both Loopfilter and SAO Disabled
         else
