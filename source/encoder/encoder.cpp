@@ -2020,7 +2020,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
         X265_FREAD(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);      
         X265_FREAD(((analysis_inter_data *)analysis->interData)->mv, sizeof(MV), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
-        X265_FREAD(((analysis_inter_data *)analysis->interData)->wt, sizeof(WeightParam), 3 * numDir, m_analysisFile);
+        uint32_t numPlanes = m_param->internalCsp == X265_CSP_I400 ? 1 : 3;
+        X265_FREAD(((analysis_inter_data *)analysis->interData)->wt, sizeof(WeightParam), numPlanes * numDir, m_analysisFile);
         consumedBytes += frameRecordSize;
         if (numDir == 1)
             totalConsumedBytes = consumedBytes;
@@ -2129,7 +2130,8 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->modes, sizeof(uint8_t), depthBytes, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->mv, sizeof(MV), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
-        X265_FWRITE(((analysis_inter_data*)analysis->interData)->wt, sizeof(WeightParam), 3 * numDir, m_analysisFile);
+        uint32_t numPlanes = m_param->internalCsp == X265_CSP_I400 ? 1 : 3;
+        X265_FWRITE(((analysis_inter_data*)analysis->interData)->wt, sizeof(WeightParam), numPlanes * numDir, m_analysisFile);
     }
 #undef X265_FWRITE
 }
