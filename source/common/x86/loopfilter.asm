@@ -154,7 +154,9 @@ cglobal saoCuOrgE0, 4,5,9
     sub         r4d, 16
     jnz        .loopH
     RET
-%else ; HIGH_BIT_DEPTH
+
+%else ; HIGH_BIT_DEPTH == 1
+
 cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
 
     mov         r4d, r4m
@@ -240,7 +242,7 @@ cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
     sub         r4d, 16
     jnz        .loopH
     RET
-%endif
+%endif ; HIGH_BIT_DEPTH == 0
 
 INIT_YMM avx2
 %if HIGH_BIT_DEPTH
@@ -2061,8 +2063,10 @@ cglobal saoCuStatsBO, 7,13,2
 ; saoCuStatsE0(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
 ;-----------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
+
+%if HIGH_BIT_DEPTH == 1
 INIT_XMM sse4
-cglobal saoCuStatsE0, 3,10,6, 0-32
+cglobal saoCuStatsE0, 3,10,8, 0-32
     mov         r3d, r3m
     mov         r4d, r4m
     mov         r9, r5mp
@@ -2071,7 +2075,7 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
     pxor        m0, m0
     mova        [rsp], m0
     mova        [rsp + mmsize], m0
-    mova        m4, [pb_128]
+    mova        m4, [pw_1]
     mova        m5, [pb_2]
     xor         r7d, r7d
 
@@ -2081,12 +2085,14 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
     sub         r2, r6
     lea         r8, [(r6 - 64) * 2]             ; 64 = MAX_CU_SIZE
 
+    FIX_STRIDES r2
+
 .loopH:
     mov         r5d, r3d
 
     ; calculate signLeft
-    mov         r7b, [r1]
-    sub         r7b, [r1 - 1]
+    mov         r7w, [r1]
+    sub         r7w, [r1 - SIZEOF_PIXEL]
     seta        r7b
     setb        r6b
     sub         r7b, r6b
@@ -2094,21 +2100,30 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
     pinsrb      m0, r7d, 15
 
 .loopL:
-    movu        m3, [r1]
-    movu        m2, [r1 + 1]
 
-    pxor        m1, m3, m4
-    pxor        m2, m4
-    pcmpgtb     m3, m1, m2
-    pcmpgtb     m2, m1
-    pand        m3, [pb_1]
-    por         m2, m3                          ; signRight
+    movu        m3, [r1]
+    movu        m2, [r1 + SIZEOF_PIXEL]
+    pcmpgtw     m6, m3, m2
+    pcmpgtw     m2, m3
+    pand        m6, m4
+    por         m2, m6
+
+    movu        m3, [r1 + mmsize]
+    movu        m6, [r1 + mmsize + SIZEOF_PIXEL]
+    pcmpgtw     m7, m3, m6
+    pcmpgtw     m6, m3
+    pand        m7, m4
+    por         m7, m6
+
+    packsswb    m2, m7                          ; signRight
 
     palignr     m3, m2, m0, 15
-    psignb      m3, m4                          ; signLeft
+
+    pxor        m6, m6
+    psubb       m6, m3                          ; signLeft
 
     mova        m0, m2
-    paddb       m2, m3
+    paddb       m2, m6
     paddb       m2, m5                          ; edgeType
 
     ; stats[edgeType]
@@ -2125,7 +2140,7 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
 %endrep
 
     add         r0, 16*2
-    add         r1, 16
+    add         r1, 16 * SIZEOF_PIXEL
     jmp        .loopL
 
 .next:
@@ -2155,6 +2170,106 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
     add         [r9 + 4 * 4], r6d
     RET
+%endif ; HIGH_BIT_DEPTH=1
+
+
+%if HIGH_BIT_DEPTH == 0
+INIT_XMM sse4
+cglobal saoCuStatsE0, 3,10,6, 0-32
+    mov         r3d, r3m
+    mov         r4d, r4m
+    mov         r9, r5mp
+
+    ; clear internal temporary buffer
+    pxor        m0, m0
+    mova        [rsp], m0
+    mova        [rsp + mmsize], m0
+    mova        m4, [pb_128]
+    mova        m5, [pb_2]
+    xor         r7d, r7d
+
+    ; correct stride for diff[] and rec
+    mov         r6d, r3d
+    and         r6d, ~15
+    sub         r2, r6
+    lea         r8, [(r6 - 64) * 2]             ; 64 = MAX_CU_SIZE
+
+.loopH:
+    mov         r5d, r3d
+
+    ; calculate signLeft
+    mov         r7b, [r1]
+    sub         r7b, [r1 - SIZEOF_PIXEL]
+    seta        r7b
+    setb        r6b
+    sub         r7b, r6b
+    neg         r7b
+    pinsrb      m0, r7d, 15
+
+.loopL:
+    movu        m3, [r1]
+    movu        m2, [r1 + SIZEOF_PIXEL]
+
+    pxor        m1, m3, m4
+    pxor        m2, m4
+    pcmpgtb     m3, m1, m2
+    pcmpgtb     m2, m1
+    pand        m3, [pb_1]
+
+    por         m2, m3                          ; signRight
+
+    palignr     m3, m2, m0, 15
+    psignb      m3, m4                          ; signLeft
+
+    mova        m0, m2
+    paddb       m2, m3
+    paddb       m2, m5                          ; edgeType
+
+    ; stats[edgeType]
+%assign x 0
+%rep 16
+    pextrb      r7d, m2, x
+
+    movsx       r6d, word [r0 + x * 2]
+    inc         word [rsp + r7 * 2]             ; tmp_count[edgeType]++
+    add         [rsp + 5 * 2 + r7 * 4], r6d     ; tmp_stats[edgeType] += (fenc[x] - rec[x])
+    dec         r5d
+    jz         .next
+%assign x x+1
+%endrep
+
+    add         r0, 16*2
+    add         r1, 16 * SIZEOF_PIXEL
+    jmp        .loopL
+
+.next:
+    sub         r0, r8
+    add         r1, r2
+
+    dec         r4d
+    jnz        .loopH
+
+    ; sum to global buffer
+    mov         r0, r6mp
+
+    ; s_eoTable = {1, 2, 0, 3, 4}
+    pmovzxwd    m0, [rsp + 0 * 2]
+    pshufd      m0, m0, q3102
+    movu        m1, [r0]
+    paddd       m0, m1
+    movu        [r0], m0
+    movzx       r5d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r5d
+
+    movu        m0, [rsp + 5 * 2 + 0 * 4]
+    pshufd      m0, m0, q3102
+    movu        m1, [r9]
+    paddd       m0, m1
+    movu        [r9], m0
+    mov         r6d, [rsp + 5 * 2 + 4 * 4]
+    add         [r9 + 4 * 4], r6d
+    RET
+%endif ; HIGH_BIT_DEPTH=0
 
 
 ;-----------------------------------------------------------------------------------------------------------------------
@@ -2341,6 +2456,112 @@ cglobal saoCuStatsE0, 3,11,16
 ; saoCuStatsE1_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count)
 ;-------------------------------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
+
+%if HIGH_BIT_DEPTH
+INIT_XMM sse4
+cglobal saoCuStatsE1, 4,12,8,0-32    ; Stack: 5 of stats and 5 of count
+    mov         r5d, r5m
+    mov         r4d, r4m
+
+    ; clear internal temporary buffer
+    pxor        m0, m0
+    mova        [rsp], m0
+    mova        [rsp + mmsize], m0
+    mova        m5, [pw_1]
+    mova        m6, [pb_2]
+    movh        m7, [r3 + r4]
+
+    FIX_STRIDES r2d
+
+.loopH:
+    mov         r6d, r4d
+    mov         r9, r0
+    mov         r10, r1
+    mov         r11, r3
+
+.loopW:
+    ; signDown
+    movu        m1, [r10]
+    movu        m2, [r10 + r2]
+    pcmpgtw     m3, m1, m2
+    pcmpgtw     m2, m1
+    pand        m3, m5
+    por         m2, m3
+
+    movu        m3, [r10 + mmsize]
+    movu        m4, [r10 + mmsize + r2]
+    pcmpgtw     m0, m3, m4
+    pcmpgtw     m4, m3
+    pand        m0, m5
+    por         m4, m0
+    packsswb    m2, m4
+
+    pxor        m3, m3
+    psubb       m3, m2                          ; -signDown
+
+    ; edgeType
+    movu        m4, [r11]
+    paddb       m4, m6
+    paddb       m2, m4
+
+    ; update upBuff1
+    movu        [r11], m3
+
+    ; 16 pixels
+%assign x 0
+%rep 16
+    pextrb      r7d, m2, x
+    inc         word [rsp + r7 * 2]
+
+    ; stats[edgeType]
+    movsx       r8d, word [r9 + x * 2]
+    add         [rsp + 5 * 2 + r7 * 4], r8d
+
+    dec         r6d
+    jz         .next
+%assign x x+1
+%endrep
+
+    add         r9, mmsize * 2
+    add         r10, mmsize * SIZEOF_PIXEL
+    add         r11, mmsize
+    jmp        .loopW
+
+.next:
+    ; restore pointer upBuff1
+    add         r0, 64*2                        ; MAX_CU_SIZE
+    add         r1, r2
+
+    dec         r5d
+    jg         .loopH
+
+    ; restore unavailable pixels
+    movh        [r3 + r4], m7
+
+    ; sum to global buffer
+    mov         r1, r6m
+    mov         r0, r7m
+
+    ; s_eoTable = {1,2,0,3,4}
+    pmovzxwd    m0, [rsp + 0 * 2]
+    pshufd      m0, m0, q3102
+    movu        m1, [r0]
+    paddd       m0, m1
+    movu        [r0], m0
+    movzx       r5d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r5d
+
+    movu        m0, [rsp + 5 * 2 + 0 * 4]
+    pshufd      m0, m0, q3102
+    movu        m1, [r1]
+    paddd       m0, m1
+    movu        [r1], m0
+    mov         r6d, [rsp + 5 * 2 + 4 * 4]
+    add         [r1 + 4 * 4], r6d
+    RET
+
+%else ; HIGH_BIT_DEPTH == 1
+
 INIT_XMM sse4
 cglobal saoCuStatsE1, 4,12,8,0-32    ; Stack: 5 of stats and 5 of count
     mov         r5d, r5m
@@ -2435,6 +2656,7 @@ cglobal saoCuStatsE1, 4,12,8,0-32    ; Stack: 5 of stats and 5 of count
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
     add         [r1 + 4 * 4], r6d
     RET
+%endif ; HIGH_BIT_DEPTH == 0
 
 
 INIT_YMM avx2
