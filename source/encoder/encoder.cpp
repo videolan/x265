@@ -795,7 +795,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 pic_out->rcData.poc = curEncoder->m_rce.poc;
                 pic_out->rcData.encodeOrder = curEncoder->m_rce.encodeOrder;
                 pic_out->rcData.sliceType = curEncoder->m_rce.sliceType;
-                pic_out->rcData.keptAsRef = curEncoder->m_rce.sliceType == B_SLICE && !IS_REFERENCED(outFrame) ? false : true;
+                pic_out->rcData.keptAsRef = curEncoder->m_rce.sliceType == B_SLICE && !IS_REFERENCED(outFrame) ? 0 : 1;
             }
 
             /* Allow this frame to be recycled if no frame encoders are using it for reference */

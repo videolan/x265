@@ -163,7 +163,7 @@ typedef struct x265_rc_stats
     int     poc;
     int     encodeOrder;
     int     sliceType;
-    bool    keptAsRef;
+    int     keptAsRef;
 } x265_rc_stats;
 
 /* Used to pass pictures into the encoder, and to get picture data back out of
@@ -189,7 +189,7 @@ typedef struct x265_picture
     /* Stride is the number of bytes between row starts */
     int     stride[3];
 
-    size_t framesize;
+    uint64_t framesize;
 
     int    height;
 
