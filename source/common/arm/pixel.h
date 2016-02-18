@@ -111,4 +111,10 @@ void x265_sad_x4_64x32_neon(const pixel* fenc, const pixel* fref0, const pixel* 
 void x265_sad_x4_64x48_neon(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, const pixel* fref3, intptr_t frefstride, int32_t* res);
 void x265_sad_x4_64x64_neon(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, const pixel* fref3, intptr_t frefstride, int32_t* res);
 
+sse_t x265_pixel_sse_pp_4x4_neon(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+sse_t x265_pixel_sse_pp_8x8_neon(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+sse_t x265_pixel_sse_pp_16x16_neon(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+sse_t x265_pixel_sse_pp_32x32_neon(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+sse_t x265_pixel_sse_pp_64x64_neon(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2);
+
 #endif // ifndef X265_I386_PIXEL_ARM_H
