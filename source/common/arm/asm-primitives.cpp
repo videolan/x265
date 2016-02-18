@@ -32,6 +32,7 @@
 extern "C" {
 #include "blockcopy8.h"
 #include "pixel.h"
+#include "pixel-util.h"
 }
 
 namespace X265_NS {
@@ -41,6 +42,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // pixel_var
+        p.cu[BLOCK_8x8].var   = PFX(pixel_var_8x8_neon);
+        p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_neon);
+        p.cu[BLOCK_32x32].var = PFX(pixel_var_32x32_neon);
+        p.cu[BLOCK_64x64].var = PFX(pixel_var_64x64_neon);
+
         // blockcopy
         p.pu[LUMA_16x16].copy_pp = PFX(blockcopy_pp_16x16_neon);
         p.pu[LUMA_8x4].copy_pp   = PFX(blockcopy_pp_8x4_neon);

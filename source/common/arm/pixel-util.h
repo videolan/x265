@@ -25,4 +25,9 @@
 #ifndef X265_PIXEL_UTIL_ARM_H
 #define X265_PIXEL_UTIL_ARM_H
 
+uint64_t x265_pixel_var_8x8_neon(const pixel* pix, intptr_t stride);
+uint64_t x265_pixel_var_16x16_neon(const pixel* pix, intptr_t stride);
+uint64_t x265_pixel_var_32x32_neon(const pixel* pix, intptr_t stride);
+uint64_t x265_pixel_var_64x64_neon(const pixel* pix, intptr_t stride);
+
 #endif // ifndef X265_PIXEL_UTIL_ARM_H
