@@ -121,8 +121,8 @@ void x265_param_default(x265_param* param)
     /* Source specifications */
     param->internalBitDepth = X265_DEPTH;
     param->internalCsp = X265_CSP_I420;
-
     param->levelIdc = 0;
+    param->uhdBluray = 0;
     param->bHighTier = 0;
     param->interlaceMode = 0;
     param->bAnnexB = 1;
@@ -877,6 +877,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("max-cll") bError |= sscanf(value, "%hu,%hu", &p->maxCLL, &p->maxFALL) != 2;
     OPT("min-luma") p->minLuma = (uint16_t)atoi(value);
     OPT("max-luma") p->maxLuma = (uint16_t)atoi(value);
+    OPT("uhd-bd") p->uhdBluray = atobool(value);
     else
         return X265_PARAM_BAD_NAME;
 #undef OPT
@@ -1023,7 +1024,8 @@ int x265_check_params(x265_param* param)
 {
 #define CHECK(expr, msg) check_failed |= _confirm(param, expr, msg)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
-
+    CHECK(param->uhdBluray == 1 && (X265_DEPTH != 10 || param->internalCsp != 1 || param->interlaceMode != 0),
+        "uhd-bd: bit depth, chroma subsample, source picture type must be 10, 4:2:0, progressive");
     CHECK(param->maxCUSize != 64 && param->maxCUSize != 32 && param->maxCUSize != 16,
           "max cu size must be 16, 32, or 64");
     if (check_failed == 1)

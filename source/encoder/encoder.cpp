@@ -1604,7 +1604,6 @@ void Encoder::initPPS(PPS *pps)
 void Encoder::configure(x265_param *p)
 {
     this->m_param = p;
-
     if (p->keyframeMax < 0)
     {
         /* A negative max GOP size indicates the user wants only one I frame at
@@ -1888,6 +1887,84 @@ void Encoder::configure(x265_param *p)
     }
     else
         m_param->rc.qgSize = p->maxCUSize;
+
+    if (p->uhdBluray)
+    {
+        p->bEnableAccessUnitDelimiters = 1;
+        p->vui.aspectRatioIdc = 1;
+        p->bEmitHRDSEI = 1;
+        int disableUhdBd = 0;
+        if (!p->bRepeatHeaders)
+        {
+            x265_log(p, X265_LOG_WARNING, "uhd-bd: Turning on repeat-headers\n");
+            p->bRepeatHeaders = 1;
+        }
+
+        if (p->bIntraRefresh)
+        {
+            x265_log(p, X265_LOG_WARNING, "uhd-bd: turning off intra-refresh\n");
+            p->bIntraRefresh = 0;
+        }
+
+        if (p->keyframeMin != 1)
+        {
+            x265_log(p, X265_LOG_WARNING, "uhd-bd: keyframeMin is always 1\n");
+            p->keyframeMin = 1;
+        }
+
+        int fps = (p->fpsNum + p->fpsDenom - 1) / p->fpsDenom;
+        if (p->keyframeMax > fps)
+        {
+            x265_log(p, X265_LOG_WARNING, "uhd-bd: reducing keyframeMax to %d\n", fps);
+            p->keyframeMax = fps;
+        }
+
+        if (p->maxNumReferences > 6)
+        {
+            x265_log(p, X265_LOG_WARNING, "uhd-bd: reducing references to 6\n");
+            p->maxNumReferences = 6;
+        }
+
+        if (p->bEnableTemporalSubLayers)
+        {
+            x265_log(p, X265_LOG_WARNING, "uhd-bd: Turning off temporal layering\n");
+            p->bEnableTemporalSubLayers = 0;
+        }
+
+        if (p->vui.colorPrimaries != 1 && p->vui.colorPrimaries != 9)
+        {
+            x265_log(p, X265_LOG_ERROR, "uhd-bd: colour primaries should be either BT.709 or BT.2020\n");
+            disableUhdBd = 1;
+        }
+        else if (p->vui.colorPrimaries == 9)
+        {
+            p->vui.bEnableChromaLocInfoPresentFlag = 1;
+            p->vui.chromaSampleLocTypeTopField = 2;
+            p->vui.chromaSampleLocTypeBottomField = 2;
+        }
+
+        if (p->vui.transferCharacteristics != 1 && p->vui.transferCharacteristics != 14 && p->vui.transferCharacteristics != 16)
+        {
+            x265_log(p, X265_LOG_ERROR, "uhd-bd: transfer characteristics supported are BT.709, BT.2020-10 or SMPTE ST.2084\n");
+            disableUhdBd = 1;
+        }
+        if (p->vui.matrixCoeffs != 1 && p->vui.matrixCoeffs != 9)
+        {
+            x265_log(p, X265_LOG_ERROR, "uhd-bd: matrix coeffs supported are either BT.709 or BT.2020\n");
+            disableUhdBd = 1;
+        }
+        if ((p->sourceWidth != 1920 && p->sourceWidth != 3840) || (p->sourceHeight != 1080 && p->sourceHeight != 1088 && p->sourceHeight != 2160))
+        {
+            x265_log(p, X265_LOG_ERROR, "uhd-bd: Supported resolutions are 1920x1080, 1920x1088 and 3840x2160\n");
+            disableUhdBd = 1;
+        }
+        if (disableUhdBd)
+        {
+            p->uhdBluray = 0;
+            x265_log(p, X265_LOG_ERROR, "uhd-bd: Disabled\n");
+        }
+    }
+
 
     if (p->bLogCuStats)
         x265_log(p, X265_LOG_WARNING, "--cu-stats option is now deprecated\n");

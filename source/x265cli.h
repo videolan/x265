@@ -53,6 +53,7 @@ static const struct option long_options[] =
     { "profile",        required_argument, NULL, 'P' },
     { "level-idc",      required_argument, NULL, 0 },
     { "high-tier",            no_argument, NULL, 0 },
+    { "uhd-bd",               no_argument, NULL, 0 },
     { "no-high-tier",         no_argument, NULL, 0 },
     { "allow-non-conformance",no_argument, NULL, 0 },
     { "no-allow-non-conformance",no_argument, NULL, 0 },
@@ -283,6 +284,7 @@ static void showHelp(x265_param *param)
     H0("-P/--profile <string>            Enforce an encode profile: main, main10, mainstillpicture\n");
     H0("   --level-idc <integer|float>   Force a minimum required decoder level (as '5.0' or '50')\n");
     H0("   --[no-]high-tier              If a decoder level is specified, this modifier selects High tier of that level\n");
+    H0("   --uhd-bd                      Enable UHD Bluray compatibility support\n");
     H0("   --[no-]allow-non-conformance  Allow the encoder to generate profile NONE bitstreams. Default %s\n", OPT(param->bAllowNonConformance));
     H0("\nThreading, performance:\n");
     H0("   --pools <integer,...>         Comma separated thread count per thread pool (pool per NUMA node)\n");

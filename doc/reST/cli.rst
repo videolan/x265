@@ -564,6 +564,15 @@ Profile, Level, Tier
 
 	Default: disabled
 
+.. option:: --uhd-bd
+
+    Enable Ultra HD Blu-ray format support. If specified with incompatible
+    encoding options, the encoder will attempt to modify/set the right 
+    encode specifications. If the encoder is unable to do so, this option
+    will be turned OFF. Highly experimental.
+	
+    Default: disabled
+	
 .. note::
 
 	:option:`--profile`, :option:`--level-idc`, and

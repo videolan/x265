@@ -611,6 +611,11 @@ typedef struct x265_param
      * Main (0) and High (1) tier. Default is Main tier (0) */
     int       bHighTier;
 
+    /* Enable UHD Blu-ray compatibility support. If specified, the encoder will
+     * attempt to modify/set the encode specifications. If the encoder is unable 
+     * to do so, this option will be turned OFF. */
+    int       uhdBluray;
+
     /* The maximum number of L0 references a P or B slice may use. This
      * influences the size of the decoded picture buffer. The higher this
      * number, the more reference frames there will be available for motion
