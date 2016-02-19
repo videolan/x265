@@ -2,6 +2,7 @@
  * Copyright (C) 2016 x265 project
  *
  * Authors: Dnyaneshwar G <dnyaneshwar@multicorewareinc.com>
+ *          Radhakrishnan VR <radhakrishnan@multicorewareinc.com>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -239,5 +240,79 @@ function x265_pixel_var_64x64_neon
     vpadd.u32       d0, d0, d2
 
     vmov            r0, r1, d0
+    bx              lr
+endfunc
+
+/* void getResidual4_neon(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
+ * r0   - fenc
+ * r1   - pred
+ * r2   - residual
+ * r3   - Stride */
+function x265_getResidual4_neon
+    lsl             r12, r3, #1
+.rept 2
+    vld1.u8         {d0}, [r0], r3
+    vld1.u8         {d1}, [r1], r3
+    vld1.u8         {d2}, [r0], r3
+    vld1.u8         {d3}, [r1], r3
+    vsubl.u8        q2, d0, d1
+    vsubl.u8        q3, d2, d3
+    vst1.s16        {d4}, [r2], r12
+    vst1.s16        {d6}, [r2], r12
+.endr
+    bx              lr
+endfunc
+
+function x265_getResidual8_neon
+    lsl             r12, r3, #1
+.rept 4
+    vld1.u8         {d0}, [r0], r3
+    vld1.u8         {d1}, [r1], r3
+    vld1.u8         {d2}, [r0], r3
+    vld1.u8         {d3}, [r1], r3
+    vsubl.u8        q2, d0, d1
+    vsubl.u8        q3, d2, d3
+    vst1.s16        {q2}, [r2], r12
+    vst1.s16        {q3}, [r2], r12
+.endr
+    bx              lr
+endfunc
+
+function x265_getResidual16_neon
+    lsl             r12, r3, #1
+.rept 8
+    vld1.u8         {d0, d1}, [r0], r3
+    vld1.u8         {d2, d3}, [r1], r3
+    vld1.u8         {d4, d5}, [r0], r3
+    vld1.u8         {d6, d7}, [r1], r3
+    vsubl.u8        q8, d0, d2
+    vsubl.u8        q9, d1, d3
+    vsubl.u8        q10, d4, d6
+    vsubl.u8        q11, d5, d7
+    vst1.s16        {q8, q9}, [r2], r12
+    vst1.s16        {q10, q11}, [r2], r12
+.endr
+    bx              lr
+endfunc
+
+function x265_getResidual32_neon
+    push            {r4}
+    lsl             r12, r3, #1
+    sub             r12, #32
+    mov             r4, #4
+loop_res32:
+    subs            r4, r4, #1
+.rept 8
+    vld1.u8         {q0, q1}, [r0], r3
+    vld1.u8         {q2, q3}, [r1], r3
+    vsubl.u8        q8, d0, d4
+    vsubl.u8        q9, d1, d5
+    vsubl.u8        q10, d2, d6
+    vsubl.u8        q11, d3, d7
+    vst1.s16        {q8, q9}, [r2]!
+    vst1.s16        {q10, q11}, [r2], r12
+.endr
+    bne             loop_res32
+    pop             {r4}
     bx              lr
 endfunc
