@@ -1396,7 +1396,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
             foundSkip = true;
-            earlyskip = m_param->bEnableEarlySkip && 1;
+            earlyskip = !!m_param->bEnableEarlySkip;
         }
     }
 

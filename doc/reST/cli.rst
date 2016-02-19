@@ -722,8 +722,8 @@ the prediction quad-tree.
 
 .. option:: --early-skip, --no-early-skip
 
-	Measure full CU size (2Nx2N) merge candidates first; if no residual
-	is found the analysis is short circuited. Default disabled
+	Measure 2Nx2N merge candidates first; if no residual is found, 
+	additional modes at that depth are not analysed. Default disabled
 
 .. option:: --fast-intra, --no-fast-intra
 
