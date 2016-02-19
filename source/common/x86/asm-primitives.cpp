@@ -1169,6 +1169,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 #if X86_64
         p.saoCuStatsE0 = PFX(saoCuStatsE0_sse4);
         p.saoCuStatsE1 = PFX(saoCuStatsE1_sse4);
+        p.saoCuStatsE2 = PFX(saoCuStatsE2_sse4);
+        p.saoCuStatsE3 = PFX(saoCuStatsE3_sse4);
 #endif
     }
     if (cpuMask & X265_CPU_AVX)
