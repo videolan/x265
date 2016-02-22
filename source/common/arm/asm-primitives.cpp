@@ -42,6 +42,13 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // pixel_sub_ps
+        p.cu[BLOCK_4x4].sub_ps   = PFX(pixel_sub_ps_4x4_neon);
+        p.cu[BLOCK_8x8].sub_ps   = PFX(pixel_sub_ps_8x8_neon);
+        p.cu[BLOCK_16x16].sub_ps = PFX(pixel_sub_ps_16x16_neon);
+        p.cu[BLOCK_32x32].sub_ps = PFX(pixel_sub_ps_32x32_neon);
+        p.cu[BLOCK_64x64].sub_ps = PFX(pixel_sub_ps_64x64_neon);
+
         // calc_Residual
         p.cu[BLOCK_4x4].calcresidual   = PFX(getResidual4_neon);
         p.cu[BLOCK_8x8].calcresidual   = PFX(getResidual8_neon);
