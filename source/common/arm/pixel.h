@@ -123,6 +123,12 @@ sse_t x265_pixel_sse_ss_16x16_neon(const int16_t* pix1, intptr_t stride_pix1, co
 sse_t x265_pixel_sse_ss_32x32_neon(const int16_t* pix1, intptr_t stride_pix1, const int16_t* pix2, intptr_t stride_pix2);
 sse_t x265_pixel_sse_ss_64x64_neon(const int16_t* pix1, intptr_t stride_pix1, const int16_t* pix2, intptr_t stride_pix2);
 
+sse_t x265_pixel_ssd_s_4x4_neon(const int16_t* a, intptr_t dstride);
+sse_t x265_pixel_ssd_s_8x8_neon(const int16_t* a, intptr_t dstride);
+sse_t x265_pixel_ssd_s_16x16_neon(const int16_t* a, intptr_t dstride);
+sse_t x265_pixel_ssd_s_32x32_neon(const int16_t* a, intptr_t dstride);
+sse_t x265_pixel_ssd_s_64x64_neon(const int16_t* a, intptr_t dstride);
+
 void x265_pixel_sub_ps_4x4_neon(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_sub_ps_8x8_neon(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_sub_ps_16x16_neon(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
