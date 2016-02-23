@@ -396,6 +396,17 @@ typedef struct x265_sliceType_stats
     double        psnrV;
     double        ssim;
     uint32_t      numPics;
+    
+    void clear() {
+        avgQp   = 0.0;
+        bitrate = 0.0;
+        psnrY   = 0.0;
+        psnrU   = 0.0;
+        psnrV   = 0.0;
+        ssim    = 0.0;
+        numPics = 0;
+    }
+
 } x265_sliceType_stats;
 
 /* Output statistics from encoder */
