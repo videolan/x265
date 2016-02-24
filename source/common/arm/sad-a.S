@@ -63,6 +63,302 @@ endfunc
 
 SAD4_ARMV6 4
 SAD4_ARMV6 8
+SAD4_ARMV6 16
+
+.macro SAD8_NEON h
+function x265_pixel_sad_8x\h\()_neon
+    vld1.8          d0, [r0], r1        // row 0
+    vld1.8          d1, [r2], r3        // row 1
+    vabdl.u8        q1, d0, d1
+
+.rept \h-1
+    vld1.8          d0, [r0], r1        // row 2,4,6
+    vld1.8          d1, [r2], r3        // row 3,5,7
+    vabal.u8        q1, d0, d1
+.endr
+
+    vadd.u16        d2, d2, d3
+    vpadd.u16       d0, d2, d2
+    vpaddl.u16      d0, d0
+    vmov.u32        r0, d0[0]
+    bx              lr
+endfunc
+.endm
+
+SAD8_NEON 4
+SAD8_NEON 8
+SAD8_NEON 16
+SAD8_NEON 32
+
+.macro SAD16_NEON h
+function x265_pixel_sad_16x\h\()_neon
+    vld1.8          {q0}, [r0], r1      // row 0
+    vld1.8          {q1}, [r2], r3
+    vld1.8          {q2}, [r0], r1      // row 1
+    vld1.8          {q3}, [r2], r3
+
+    vabdl.u8        q8, d0, d2
+    vabdl.u8        q9, d1, d3
+    vabal.u8        q8, d4, d6
+    vabal.u8        q9, d5, d7
+    mov             r12, #(\h-2)/2
+
+.loop_16x\h:
+
+    subs            r12, #1
+    vld1.8          {q0}, [r0], r1
+    vld1.8          {q1}, [r2], r3
+    vld1.8          {q2}, [r0], r1
+    vld1.8          {q3}, [r2], r3
+
+    vabal.u8        q8, d0, d2
+    vabal.u8        q9, d1, d3
+    vabal.u8        q8, d4, d6
+    vabal.u8        q9, d5, d7
+    bne             .loop_16x\h
+
+    vadd.u16        q8, q8, q9
+.if \h == 64
+    vaddl.u16       q0, d16, d17
+    vpadd.u32       d0, d0, d1
+    vpadd.u32       d0, d0
+.else
+    vadd.u16        d16, d16, d17
+    vpadd.u16       d0, d16, d16
+    vpaddl.u16      d0, d0
+.endif
+    vmov.u32        r0, d0[0]
+    bx              lr
+endfunc
+.endm
+
+SAD16_NEON 4
+SAD16_NEON 8
+SAD16_NEON 16
+SAD16_NEON 12
+SAD16_NEON 32
+SAD16_NEON 64
+
+.macro SAD32_NEON h
+function x265_pixel_sad_32x\h\()_neon
+    veor.u8         q8, q8
+    veor.u8         q9, q9
+    veor.u8         q10, q10
+    veor.u8         q11, q11
+    mov             r12, #\h/8
+
+.loop_32x\h:
+
+    subs            r12, #1
+.rept 4
+    vld1.8          {q0, q1}, [r0], r1           // row 0
+    vld1.8          {q2, q3}, [r2], r3           // row 0
+    vld1.8          {q12, q13}, [r0], r1         // row 1
+    vld1.8          {q14, q15}, [r2], r3         // row 1
+
+    vabal.u8        q8, d0, d4
+    vabal.u8        q9, d1, d5
+    vabal.u8        q10, d2, d6
+    vabal.u8        q11, d3, d7
+
+    vabal.u8        q8, d24, d28
+    vabal.u8        q9, d25, d29
+    vabal.u8        q10, d26, d30
+    vabal.u8        q11, d27, d31
+.endr
+    bne             .loop_32x\h
+
+    vadd.u16        q8, q8, q9
+    vadd.u16        q10, q10, q11
+.if \h == 64
+    vaddl.u16       q0, d16, d17
+    vpadd.u32       d0, d0, d1
+    vpaddl.u32      d0, d0
+
+    vaddl.u16       q1, d20, d21
+    vpadd.u32       d2, d2, d3
+    vpaddl.u32      d2, d2
+
+    vadd.u32        d0,d0,d2
+.else
+    vadd.u16        d16, d16, d17
+    vpadd.u16       d0, d16, d16
+    vpaddl.u16      d0, d0
+
+    vadd.u16        d20, d20, d21
+    vpadd.u16       d1, d20, d20
+    vpaddl.u16      d1, d1
+
+    vadd.u32        d0,d0,d1
+.endif
+    vmov.u32        r0,  d0[0]
+    bx              lr
+endfunc
+.endm
+
+SAD32_NEON 8
+SAD32_NEON 16
+SAD32_NEON 24
+SAD32_NEON 32
+SAD32_NEON 64
+
+.macro SAD64_NEON h
+function x265_pixel_sad_64x\h\()_neon
+    veor.u8         q8, q8
+    veor.u8         q9, q9
+    veor.u8         q10, q10
+    veor.u8         q11, q11
+    mov             r12, #32
+    sub             r1, r12
+    sub             r3, r12
+    mov             r12, #\h/8
+
+.loop_64x\h:
+
+    subs            r12, #1
+.rept 4
+    // Columns 0-32
+    vld1.8          {q0, q1}, [r0]!
+    vld1.8          {q2, q3}, [r2]!
+    vabal.u8        q8, d0, d4
+    vabal.u8        q9, d1, d5
+    vabal.u8        q10, d2, d6
+    vabal.u8        q11, d3, d7
+    // Columns 32-64
+    vld1.8          {q0, q1}, [r0],r1
+    vld1.8          {q2, q3}, [r2],r3
+    vabal.u8        q8, d0, d4
+    vabal.u8        q9, d1, d5
+    vabal.u8        q10, d2, d6
+    vabal.u8        q11, d3, d7
+    // Columns 0-32
+    vld1.8          {q12, q13}, [r0]!
+    vld1.8          {q14, q15}, [r2]!
+    vabal.u8        q8, d24, d28
+    vabal.u8        q9, d25, d29
+    vabal.u8        q10, d26, d30
+    vabal.u8        q11, d27, d31
+    // Columns 32-64
+    vld1.8          {q12, q13}, [r0],r1
+    vld1.8          {q14, q15}, [r2],r3
+    vabal.u8        q8, d24, d28
+    vabal.u8        q9, d25, d29
+    vabal.u8        q10, d26, d30
+    vabal.u8        q11, d27, d31
+.endr
+    bne             .loop_64x\h
+
+    vadd.u16        q8, q8, q9
+    vadd.u16        q10, q10, q11
+
+    vaddl.u16       q0, d16, d17
+    vpadd.u32       d0, d0, d1
+    vpaddl.u32      d0, d0
+
+    vaddl.u16       q1, d20, d21
+    vpadd.u32       d2, d2, d3
+    vpaddl.u32      d2, d2
+
+    vadd.u32        d0,d0,d2
+
+    vmov.u32        r0,  d0[0]
+    bx              lr
+endfunc
+.endm
+
+SAD64_NEON 16
+SAD64_NEON 32
+SAD64_NEON 48
+SAD64_NEON 64
+
+function x265_pixel_sad_24x32_neon
+    veor.u8         q0, q0
+    veor.u8         q1, q1
+    veor.u8         q2, q2
+    veor.u8         q8, q8
+    veor.u8         q9, q9
+    veor.u8         q10, q10
+    mov             r12, #16
+    sub             r1, #16
+    sub             r3, #16
+    mov             r12, #8
+
+.loop_24x32:
+
+    subs            r12, #1
+.rept 4
+    vld1.8          {q0}, [r0]!
+    vld1.8          {q1}, [r2]!
+    vabal.u8        q8, d0, d2
+    vabal.u8        q9, d1, d3
+
+    vld1.8          {d0}, [r0], r1
+    vld1.8          {d1}, [r2], r3
+    vabal.u8        q10, d0, d1
+.endr
+    bne             .loop_24x32
+
+    vadd.u16        q8, q8, q9
+    vadd.u16        d16, d16, d17
+    vpadd.u16       d0, d16, d16
+    vpaddl.u16      d0, d0
+    vadd.u16        d20, d20, d21
+    vpadd.u16       d1, d20, d20
+    vpaddl.u16      d1, d1
+    vadd.u32        d0,d0,d1
+    vmov.u32        r0, d0[0]
+    bx              lr
+endfunc
+
+function x265_pixel_sad_48x64_neon
+    veor.u8         q3, q3
+    veor.u8         q11, q11
+    veor.u8         q12, q12
+    veor.u8         q13, q13
+    veor.u8         q14, q14
+    veor.u8         q15, q15
+    mov             r12, #32
+    sub             r1, #32
+    sub             r3, #32
+    mov             r12, #16
+
+.loop_48x64:
+
+    subs            r12, #1
+.rept 4
+    vld1.8          {q0,q1}, [r0]!
+    vld1.8          {q2}, [r0], r1
+    vld1.8          {q8,q9}, [r2]!
+    vld1.8          {q10}, [r2], r3
+    vabal.u8        q3, d0, d16
+    vabal.u8        q11, d1, d17
+    vabal.u8        q12, d2, d18
+    vabal.u8        q13, d3, d19
+    vabal.u8        q14, d4, d20
+    vabal.u8        q15, d5, d21
+.endr
+    bne             .loop_48x64
+
+    vadd.u16        q3, q3, q11
+    vadd.u16        d6, d6, d7
+    vpaddl.u16      d0, d6
+    vpadd.u32       d0, d0
+
+    vadd.u16        q12, q12, q13
+    vadd.u16        d24, d24, d25
+    vpaddl.u16      d1, d24
+    vpadd.u32       d1, d1
+
+    vadd.u16        q14,q14,q15
+    vadd.u16        d28, d28, d29
+    vpaddl.u16      d2, d28
+    vpadd.u32       d2, d2
+
+    vadd.u32        d0, d0, d1
+    vadd.u32        d0, d0, d2
+    vmov.u32        r0, d0[0]
+    bx              lr
+endfunc
 
 // SAD_X3 and SAD_X4 code start
 
@@ -959,6 +1255,7 @@ SAD_X_24x32 4
 .endif
 .endm
 
+
 .macro SAD_X_12 x
     vld1.8          {q0}, [r0], r12
     vld1.8          {q1}, [r1], r4
@@ -1029,3 +1326,31 @@ endfunc
 
 SAD_X_12x16 3
 SAD_X_12x16 4
+
+function x265_pixel_sad_12x16_neon
+    veor.u8         q8, q8
+    veor.u8         q9, q9
+    movrel          r12, sad12_mask
+    vld1.8          {q15}, [r12]
+.rept 8
+    vld1.8          {q0}, [r0], r1
+    vld1.8          {q1}, [r2], r3
+    vand.u8         q0, q15
+    vand.u8         q1, q15
+    vld1.8          {q2}, [r0], r1
+    vld1.8          {q3}, [r2], r3
+    vand.u8         q2, q15
+    vand.u8         q3, q15
+    vabal.u8        q8, d0, d2
+    vabal.u8        q9, d1, d3
+    vabal.u8        q8, d4, d6
+    vabal.u8        q9, d5, d7
+.endr
+    vadd.u16        q8, q8, q9
+    vadd.u16        d16, d16, d17
+    vpadd.u16       d0, d16, d16
+    vpaddl.u16      d0, d0
+    vmov.u32        r0, d0[0]
+    bx              lr
+endfunc
+
