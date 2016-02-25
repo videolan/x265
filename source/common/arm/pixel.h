@@ -157,4 +157,10 @@ void x265_pixel_sub_ps_8x8_neon(int16_t* a, intptr_t dstride, const pixel* b0, c
 void x265_pixel_sub_ps_16x16_neon(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_sub_ps_32x32_neon(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_sub_ps_64x64_neon(int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1);
+
+void x265_pixel_add_ps_4x4_neon(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_add_ps_8x8_neon(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_add_ps_16x16_neon(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_add_ps_32x32_neon(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+void x265_pixel_add_ps_64x64_neon(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
 #endif // ifndef X265_I386_PIXEL_ARM_H

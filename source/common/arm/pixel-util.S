@@ -438,3 +438,191 @@ loop_sub64:
     pop             {r4, r5}
     bx              lr
 endfunc
+
+// void x265_pixel_add_ps_neon(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+function x265_pixel_add_ps_4x4_neon
+    push            {r4}
+    ldr             r4, [sp, #4]
+    ldr             r12, [sp, #8]
+    lsl             r12, #1
+    vmov.u16        q10, #255
+    veor.u16        q11, q11
+    veor.u16        d3, d3
+    veor.u16        d5, d5
+.rept 2
+    vld1.u8         {d0}, [r2], r4
+    vld1.u8         {d1}, [r2], r4
+    vld1.s16        {d2}, [r3], r12
+    vld1.s16        {d4}, [r3], r12
+    vmovl.u8        q8, d0
+    vmovl.u8        q9, d1
+    vadd.s16        q1, q1, q8
+    vadd.s16        q2, q2, q9
+    vqmovun.s16     d0, q1
+    vqmovun.s16     d1, q2
+    vst1.32         {d0[0]}, [r0], r1
+    vst1.32         {d1[0]}, [r0], r1
+.endr
+    pop             {r4}
+    bx              lr
+endfunc
+
+function x265_pixel_add_ps_8x8_neon
+    push            {r4}
+    ldr             r4, [sp, #4]
+    ldr             r12, [sp, #8]
+    lsl             r12, #1
+    vmov.u16        q10, #255
+    veor.u16        q11, q11
+.rept 4
+    vld1.u8         {d0}, [r2], r4
+    vld1.u8         {d1}, [r2], r4
+    vld1.s16        {q8}, [r3], r12
+    vld1.s16        {q9}, [r3], r12
+    vmovl.u8        q1, d0
+    vmovl.u8        q2, d1
+    vadd.s16        q1, q1, q8
+    vadd.s16        q2, q2, q9
+    vqmovun.s16     d0, q1
+    vqmovun.s16     d1, q2
+    vst1.8          {d0}, [r0], r1
+    vst1.8          {d1}, [r0], r1
+.endr
+    pop             {r4}
+    bx              lr
+endfunc
+
+function x265_pixel_add_ps_16x16_neon
+    push            {r4, r5}
+    ldr             r4, [sp, #8]
+    ldr             r12, [sp, #12]
+    lsl             r12, #1
+    vmov.u16        q10, #255
+    veor.u16        q11, q11
+    mov             r5, #2
+loop_addps16:
+    subs            r5, #1
+.rept 4
+    vld1.u8         {q0}, [r2], r4
+    vld1.u8         {q1}, [r2], r4
+    vld1.s16        {q8, q9}, [r3], r12
+    vld1.s16        {q12, q13}, [r3], r12
+
+    vmovl.u8        q2, d0
+    vmovl.u8        q3, d1
+    vmovl.u8        q0, d2
+    vmovl.u8        q1, d3
+
+    vadd.s16        q2, q2, q8
+    vadd.s16        q3, q3, q9
+    vadd.s16        q0, q0, q12
+    vadd.s16        q1, q1, q13
+
+    vqmovun.s16     d4, q2
+    vqmovun.s16     d5, q3
+    vqmovun.s16     d0, q0
+    vqmovun.s16     d1, q1
+    vst1.8          {d4, d5}, [r0], r1
+    vst1.8          {d0, d1}, [r0], r1
+.endr
+    bne             loop_addps16
+    pop             {r4, r5}
+    bx              lr
+endfunc
+
+ function x265_pixel_add_ps_32x32_neon
+    push            {r4, r5}
+    ldr             r4, [sp, #8]
+    ldr             r12, [sp, #12]
+    lsl             r12, #1
+    vmov.u16        q10, #255
+    veor.u16        q11, q11
+    mov             r5, #4
+    sub             r12, #32
+loop_addps32:
+    subs            r5, #1
+.rept 8
+    vld1.u8         {q0, q1}, [r2], r4
+    vld1.s16        {q8, q9}, [r3]!
+    vld1.s16        {q12, q13}, [r3], r12
+
+    vmovl.u8        q2, d0
+    vmovl.u8        q3, d1
+    vmovl.u8        q14, d2
+    vmovl.u8        q15, d3
+
+    vadd.s16        q2, q2, q8
+    vadd.s16        q3, q3, q9
+    vadd.s16        q14, q14, q12
+    vadd.s16        q15, q15, q13
+
+    vqmovun.s16     d0, q2
+    vqmovun.s16     d1, q3
+    vqmovun.s16     d2, q14
+    vqmovun.s16     d3, q15
+    vst1.8          {q0, q1}, [r0], r1
+.endr
+    bne             loop_addps32
+    pop             {r4, r5}
+    bx              lr
+endfunc
+
+function x265_pixel_add_ps_64x64_neon
+    push            {r4, r5}
+    vpush           {q4, q5, q6, q7}
+    ldr             r4, [sp, #72]
+    ldr             r12, [sp, #76]
+    lsl             r12, #1
+    vmov.u16        q2, #255
+    veor.u16        q3, q3
+    mov             r5, #32
+    sub             r1, #32
+    sub             r4, #32
+    sub             r12, #96
+loop_addps64:
+    subs            r5, #1
+.rept 2
+    vld1.u8         {q0, q1}, [r2]!
+    vld1.s16        {q8, q9}, [r3]!
+    vld1.s16        {q10, q11}, [r3]!
+    vld1.s16        {q12, q13}, [r3]!
+    vld1.s16        {q14, q15}, [r3], r12
+
+    vmovl.u8        q4, d0
+    vmovl.u8        q5, d1
+    vmovl.u8        q6, d2
+    vmovl.u8        q7, d3
+
+    vadd.s16        q4, q4, q8
+    vadd.s16        q5, q5, q9
+    vadd.s16        q6, q6, q10
+    vadd.s16        q7, q7, q11
+
+    vqmovun.s16     d0, q4
+    vqmovun.s16     d1, q5
+    vqmovun.s16     d2, q6
+    vqmovun.s16     d3, q7
+
+    vst1.u8         {q0, q1}, [r0]!
+    vld1.u8         {q0, q1}, [r2], r4
+    vmovl.u8        q4, d0
+    vmovl.u8        q5, d1
+    vmovl.u8        q6, d2
+    vmovl.u8        q7, d3
+
+    vadd.s16        q4, q4, q12
+    vadd.s16        q5, q5, q13
+    vadd.s16        q6, q6, q14
+    vadd.s16        q7, q7, q15
+
+    vqmovun.s16     d0, q4
+    vqmovun.s16     d1, q5
+    vqmovun.s16     d2, q6
+    vqmovun.s16     d3, q7
+    vst1.u8         {q0, q1}, [r0], r1
+.endr
+    bne             loop_addps64
+    vpop            {q4, q5, q6, q7}
+    pop             {r4, r5}
+    bx              lr
+endfunc
