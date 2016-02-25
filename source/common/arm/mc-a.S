@@ -443,3 +443,93 @@ pixel_avg_pp_64xN_neon 16 4
 pixel_avg_pp_64xN_neon 32 8
 pixel_avg_pp_64xN_neon 48 12
 pixel_avg_pp_64xN_neon 64 16
+
+// void x265_cpy2Dto1D_shr_4x4_neon(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift)
+function x265_cpy2Dto1D_shr_4x4_neon
+    add             r2, r2
+    vdup.16         q0, r3
+    vceq.s16        q1, q1
+    vshl.s16        q1, q0
+    vsri.s16        q1, #1
+    vneg.s16        q0, q0
+    vld1.s16        {d4}, [r1], r2
+    vld1.s16        {d5}, [r1], r2
+    vld1.s16        {d6}, [r1], r2
+    vld1.s16        {d7}, [r1], r2
+    vsub.s16        q2, q1
+    vsub.s16        q3, q1
+    vshl.s16        q2, q0
+    vshl.s16        q3, q0
+    vst1.16         {q2-q3}, [r0]
+    bx              lr
+endfunc
+
+function x265_cpy2Dto1D_shr_8x8_neon
+    add             r2, r2
+    vdup.16         q0, r3
+    vceq.s16        q1, q1
+    vshl.s16        q1, q0
+    vsri.s16        q1, #1
+    vneg.s16        q0, q0
+.rept 4
+    vld1.s16        {q2}, [r1], r2
+    vld1.s16        {q3}, [r1], r2
+    vsub.s16        q2, q1
+    vsub.s16        q3, q1
+    vshl.s16        q2, q0
+    vshl.s16        q3, q0
+    vst1.16         {q2-q3}, [r0]!
+.endr
+    bx              lr
+endfunc
+
+function x265_cpy2Dto1D_shr_16x16_neon
+    add             r2, r2
+    vdup.16         q0, r3
+    vceq.s16        q1, q1
+    vshl.s16        q1, q0
+    vsri.s16        q1, #1
+    vneg.s16        q0, q0
+    mov             r3, #4
+.loop_cpy2Dto1D_shr_16:
+    subs            r3, #1
+.rept 4
+    vld1.s16        {q2-q3}, [r1], r2
+    vsub.s16        q2, q1
+    vsub.s16        q3, q1
+    vshl.s16        q2, q0
+    vshl.s16        q3, q0
+    vst1.16         {q2-q3}, [r0]!
+.endr
+    bgt             .loop_cpy2Dto1D_shr_16
+    bx              lr
+endfunc
+
+function x265_cpy2Dto1D_shr_32x32_neon
+    add             r2, r2
+    sub             r2, #32
+    vdup.16         q0, r3
+    vceq.s16        q1, q1
+    vshl.s16        q1, q0
+    vsri.s16        q1, #1
+    vneg.s16        q0, q0
+    mov             r3, 16
+.loop_cpy2Dto1D_shr_32:
+    subs            r3, #1
+.rept 2
+    vld1.s16        {q2-q3}, [r1]!
+    vld1.s16        {q8-q9}, [r1], r2
+    vsub.s16        q2, q1
+    vsub.s16        q3, q1
+    vsub.s16        q8, q1
+    vsub.s16        q9, q1
+    vshl.s16        q2, q0
+    vshl.s16        q3, q0
+    vshl.s16        q8, q0
+    vshl.s16        q9, q0
+    vst1.16         {q2-q3}, [r0]!
+    vst1.16         {q8-q9}, [r0]!
+.endr
+    bgt             .loop_cpy2Dto1D_shr_32
+    bx              lr
+endfunc
