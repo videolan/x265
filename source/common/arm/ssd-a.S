@@ -194,3 +194,181 @@ function x265_pixel_sse_pp_64x64_neon
     vmov.32     r0, d0[0]
     bx          lr
 endfunc
+
+function x265_pixel_sse_ss_4x4_neon
+    add         r1, r1
+    add         r3, r3
+
+    vld1.s16    {d16}, [r0], r1
+    vld1.s16    {d18}, [r2], r3
+    vsub.s16    q2, q8, q9
+    vld1.s16    {d16}, [r0], r1
+    vmull.s16   q0, d4, d4
+    vld1.s16    {d18}, [r2], r3
+
+    vsub.s16    q2, q8, q9
+    vld1.s16    {d16}, [r0], r1
+    vmlal.s16   q0, d4, d4
+    vld1.s16    {d18}, [r2], r3
+
+    vsub.s16    q2, q8, q9
+    vld1.s16    {d16}, [r0], r1
+    vmlal.s16   q0, d4, d4
+    vld1.s16    {d18}, [r2], r3
+
+    vsub.s16    q2, q8, q9
+    vmlal.s16   q0, d4, d4
+
+    vadd.s32    d0, d0, d1
+    vpadd.s32   d0, d0, d0
+    vmov.32     r0, d0[0]
+    bx          lr
+endfunc
+
+function x265_pixel_sse_ss_8x8_neon
+    add         r1, r1
+    add         r3, r3
+
+    vld1.s16    {q8}, [r0], r1
+    vld1.s16    {q9}, [r2], r3
+    vsub.s16    q8, q9
+    vmull.s16   q0, d16, d16
+    vmull.s16   q1, d17, d17
+
+.rept 7
+    vld1.s16    {q8}, [r0], r1
+    vld1.s16    {q9}, [r2], r3
+    vsub.s16    q8, q9
+    vmlal.s16   q0, d16, d16
+    vmlal.s16   q1, d17, d17
+.endr
+    vadd.s32    q0, q1
+    vadd.s32    d0, d0, d1
+    vpadd.s32   d0, d0, d0
+    vmov.32     r0, d0[0]
+    bx          lr
+endfunc
+
+function x265_pixel_sse_ss_16x16_neon
+    add         r1, r1
+    add         r3, r3
+
+    mov         r12, #4
+    veor.u8     q0, q0
+    veor.u8     q1, q1
+
+.loop_sse_ss_16:
+    subs        r12, #1
+.rept 4
+    vld1.s16    {q8-q9}, [r0], r1
+    vld1.s16    {q10-q11}, [r2], r3
+    vsub.s16    q8, q10
+    vsub.s16    q9, q11
+    vmlal.s16   q0, d16, d16
+    vmlal.s16   q1, d17, d17
+    vmlal.s16   q0, d18, d18
+    vmlal.s16   q1, d19, d19
+.endr
+    bne         .loop_sse_ss_16
+    vadd.s32    q0, q1
+    vadd.s32    d0, d0, d1
+    vpadd.s32   d0, d0, d0
+    vmov.32     r0, d0[0]
+    bx          lr
+endfunc
+
+function x265_pixel_sse_ss_32x32_neon
+    add         r1, r1
+    add         r3, r3
+    sub         r1, #32
+    sub         r3, #32
+    mov         r12, #8
+    veor.u8     q0, q0
+    veor.u8     q1, q1
+
+.loop_sse_ss_32:
+    subs        r12, #1
+.rept 4
+    vld1.s16    {q8-q9}, [r0]!
+    vld1.s16    {q10-q11}, [r2]!
+    vsub.s16    q8, q10
+    vsub.s16    q9, q11
+    vmlal.s16   q0, d16, d16
+    vmlal.s16   q1, d17, d17
+    vmlal.s16   q0, d18, d18
+    vmlal.s16   q1, d19, d19
+
+    vld1.s16    {q8-q9}, [r0], r1
+    vld1.s16    {q10-q11}, [r2], r3
+    vsub.s16    q8, q10
+    vsub.s16    q9, q11
+    vmlal.s16   q0, d16, d16
+    vmlal.s16   q1, d17, d17
+    vmlal.s16   q0, d18, d18
+    vmlal.s16   q1, d19, d19
+.endr
+    bne         .loop_sse_ss_32
+    vadd.s32    q0, q1
+    vadd.s32    d0, d0, d1
+    vpadd.s32   d0, d0, d0
+    vmov.32     r0, d0[0]
+    bx          lr
+endfunc
+
+function x265_pixel_sse_ss_64x64_neon
+    add         r1, r1
+    add         r3, r3
+    sub         r1, #96
+    sub         r3, #96
+    mov         r12, #32
+    veor.u8     q0, q0
+    veor.u8     q1, q1
+
+.loop_sse_ss_64:
+    subs        r12, #1
+.rept 2
+    vld1.s16    {q8-q9}, [r0]!
+    vld1.s16    {q10-q11}, [r2]!
+    vsub.s16    q8, q10
+    vsub.s16    q9, q11
+    vmlal.s16   q0, d16, d16
+    vmlal.s16   q1, d17, d17
+    vmlal.s16   q0, d18, d18
+    vmlal.s16   q1, d19, d19
+
+    vld1.s16    {q8-q9}, [r0]!
+    vld1.s16    {q10-q11}, [r2]!
+    vsub.s16    q8, q10
+    vsub.s16    q9, q11
+    vmlal.s16   q0, d16, d16
+    vmlal.s16   q1, d17, d17
+    vmlal.s16   q0, d18, d18
+    vmlal.s16   q1, d19, d19
+
+    vld1.s16    {q8-q9}, [r0]!
+    vld1.s16    {q10-q11}, [r2]!
+    vsub.s16    q8, q10
+    vsub.s16    q9, q11
+    vmlal.s16   q0, d16, d16
+    vmlal.s16   q1, d17, d17
+    vmlal.s16   q0, d18, d18
+    vmlal.s16   q1, d19, d19
+
+    vld1.s16    {q8-q9}, [r0], r1
+    vld1.s16    {q10-q11}, [r2], r3
+    vsub.s16    q8, q10
+    vsub.s16    q9, q11
+    vmlal.s16   q0, d16, d16
+    vmlal.s16   q1, d17, d17
+    vmlal.s16   q0, d18, d18
+    vmlal.s16   q1, d19, d19
+.endr
+    bne         .loop_sse_ss_64
+    vadd.s32    q0, q1
+    vadd.s32    d0, d0, d1
+    vpadd.s32   d0, d0, d0
+    vmov.32     r0, d0[0]
+    bx          lr
+endfunc
+
+
