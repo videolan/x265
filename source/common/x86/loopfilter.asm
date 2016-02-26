@@ -36,6 +36,7 @@ cextern pb_2
 cextern pb_3
 cextern pb_4
 cextern pb_01
+cextern pb_0123
 cextern pb_15
 cextern pb_31
 cextern pb_124
@@ -48,8 +49,8 @@ cextern pw_pixel_max
 cextern pb_movemask
 cextern pb_movemask_32
 cextern hmul_16p
-
-
+cextern pw_1_ffff
+cextern pb_shuf_off4
 ;============================================================================================================
 ; void saoCuOrgE0(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t* signLeft, intptr_t stride)
 ;============================================================================================================
@@ -3985,5 +3986,110 @@ cglobal pelFilterLumaStrong_V, 5,5,10
     pextrw          [r0 + r1 * 1 + 1], m4, 1
     pextrw          [r0 + r1 * 2 + 1], m4, 2
     pextrw          [r0 + r2 * 1 + 1], m4, 3
+    RET
+%endif ; ARCH_X86_64
+
+%if ARCH_X86_64
+INIT_XMM sse4
+cglobal pelFilterChroma_H, 6,6,5
+    mov             r1, r2
+    neg             r3d
+    neg             r1
+
+    pmovzxbw        m4, [r0]                ; src[0]
+    pmovzxbw        m3, [r0 + r1]           ; src[-offset]
+    pmovzxbw        m0, [r0 + r2]           ; src[offset]
+    pmovzxbw        m2, [r0 + r1 * 2]       ; src[-offset * 2]
+
+    psubw           m1, m4, m3              ; m4 - m3
+    psubw           m2, m0                  ; m2 - m5
+    paddw           m2, [pw_4]
+    psllw           m1, 2                   ; (m4 - m3) * 4
+    paddw           m1, m2
+    psraw           m1, 3
+
+    movd            m0, r3d
+    pshufb          m0, [pb_01]             ; -tc
+
+    pmaxsw          m1, m0
+    psignw          m0, [pw_n1]
+    pminsw          m1, m0                  ; delta
+    punpcklqdq      m1, m1
+
+    shl             r5d, 16
+    or              r5w, r4w
+    punpcklqdq      m3, m4
+    mova            m2, [pw_1_ffff]
+
+    movd            m0, r5d
+    pshufb          m0, [pb_0123]
+
+    pand            m0, m1                  ; (delta & maskP) (delta & maskQ)
+    psignw          m0, m2
+    paddw           m3, m0
+
+    pxor            m0, m0
+    pmaxsw          m3, m0
+    pminsw          m3, [pw_pixel_max]
+
+    packuswb        m3, m3
+    movd            [r0 + r1], m3
+    pextrd          [r0], m3, 1
+    RET
+
+INIT_XMM sse4
+cglobal pelFilterChroma_V, 6,6,5
+    neg             r3d
+    lea             r2, [r1 * 3]
+
+    pmovzxbw        m4, [r0 + r1 * 0 - 2]   ; src[-offset*2, -offset, 0, offset] [m2 m3 m4 m5]
+    pmovzxbw        m3, [r0 + r1 * 1 - 2]
+    pmovzxbw        m0, [r0 + r1 * 2 - 2]
+    pmovzxbw        m2, [r0 + r2 * 1 - 2]
+
+    punpcklwd       m4, m3
+    punpcklwd       m0, m2
+    punpckldq       m2, m4, m0              ; [m2 m2 m2 m2 m3 m3 m3 m3]
+    punpckhdq       m4, m0                  ; [m4 m4 m4 m4 m5 m5 m5 m5]
+    psrldq          m3, m2, 8
+    psrldq          m0, m4, 8
+
+    psubw           m1, m4, m3              ; m4 - m3
+    psubw           m2, m0                  ; m2 - m5
+    paddw           m2, [pw_4]
+    psllw           m1, 2                   ; (m4 - m3) * 4
+    paddw           m1, m2
+    psraw           m1, 3
+
+    movd            m0, r3d
+    pshufb          m0, [pb_01]             ; -tc
+
+    pmaxsw          m1, m0
+    psignw          m0, [pw_n1]
+    pminsw          m1, m0                  ; delta
+    punpcklqdq      m1, m1
+
+    shl             r5d, 16
+    or              r5w, r4w
+    punpcklqdq      m3, m4
+    mova            m2, [pw_1_ffff]
+
+    movd            m0, r5d
+    pshufb          m0, [pb_0123]
+
+    pand            m0, m1                  ; (delta & maskP) (delta & maskQ)
+    psignw          m0, m2
+    paddw           m3, m0
+
+    pxor            m0, m0
+    pmaxsw          m3, m0
+    pminsw          m3, [pw_pixel_max]
+
+    packuswb        m3, m3
+    pshufb          m3, [pb_shuf_off4]
+    pextrw          [r0 + r1 * 0 - 1], m3, 0
+    pextrw          [r0 + r1 * 1 - 1], m3, 1
+    pextrw          [r0 + r1 * 2 - 1], m3, 2
+    pextrw          [r0 + r2 * 1 - 1], m3, 3
     RET
 %endif ; ARCH_X86_64

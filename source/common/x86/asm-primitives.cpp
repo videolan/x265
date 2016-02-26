@@ -2535,6 +2535,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
 #if X86_64
         p.pelFilterLumaStrong[0] = PFX(pelFilterLumaStrong_V_sse4);
         p.pelFilterLumaStrong[1] = PFX(pelFilterLumaStrong_H_sse4);
+        p.pelFilterChroma[0] = PFX(pelFilterChroma_V_sse4);
+        p.pelFilterChroma[1] = PFX(pelFilterChroma_H_sse4);
 
 //        p.saoCuStatsBO = PFX(saoCuStatsBO_sse4);
         p.saoCuStatsE0 = PFX(saoCuStatsE0_sse4);

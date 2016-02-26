@@ -48,6 +48,8 @@ const pb_128,               times 32 db 128
 const pb_a1,                times 16 db 0xa1
 
 const pb_01,                times  8 db   0,   1
+const pb_0123,              times  4 db   0,   1
+                            times  4 db   2,   3
 const hsub_mul,             times 16 db   1,  -1
 const pw_swap,              times  2 db   6,   7,   4,   5,   2,   3,   0,   1
 const pb_unpackbd1,         times  2 db   0,   0,   0,   0,   1,   1,   1,   1,   2,   2,   2,   2,   3,   3,   3,   3
@@ -66,6 +68,7 @@ const pb_0000000000000F0F,  times  2 db 0xff, 0x00
                             times 12 db 0x00
 const pb_000000000000000F,           db 0xff
                             times 15 db 0x00
+const pb_shuf_off4,         times  2 db   0,   4,   1,   5,   2,   6,   3,   7
 
 ;; 16-bit constants
 
@@ -117,6 +120,8 @@ const pw_FFFFFFFFFFFFFFF0,           dw 0x00
 const hmul_16p,             times 16 db   1
                             times  8 db   1,  -1
 const pw_exp2_0_15,                  dw 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768
+const pw_1_ffff,            times  4 dw 1
+                            times  4 dw 0xFFFF
 
 
 ;; 32-bit constants
