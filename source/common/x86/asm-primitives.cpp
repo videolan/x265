@@ -1101,6 +1101,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     }
     if (cpuMask & X265_CPU_SSE4)
     {
+        p.pelFilterLumaStrong[0] = PFX(pelFilterLumaStrong_V_sse4);
+        p.pelFilterLumaStrong[1] = PFX(pelFilterLumaStrong_H_sse4);
+        p.pelFilterChroma[0] = PFX(pelFilterChroma_V_sse4);
+        p.pelFilterChroma[1] = PFX(pelFilterChroma_H_sse4);
+
         p.saoCuOrgE0 = PFX(saoCuOrgE0_sse4);
         p.saoCuOrgE1 = PFX(saoCuOrgE1_sse4);
         p.saoCuOrgE1_2Rows = PFX(saoCuOrgE1_2Rows_sse4);

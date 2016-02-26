@@ -51,6 +51,8 @@ cextern pb_movemask_32
 cextern hmul_16p
 cextern pw_1_ffff
 cextern pb_shuf_off4
+cextern pw_shuf_off4
+
 ;============================================================================================================
 ; void saoCuOrgE0(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t* signLeft, intptr_t stride)
 ;============================================================================================================
@@ -3758,6 +3760,9 @@ cglobal saoCuStatsE3, 4,10,16           ; Stack: 5 of stats and 5 of count
 
 INIT_XMM sse4
 cglobal pelFilterLumaStrong_H, 5,7,10
+%if HIGH_BIT_DEPTH
+    add             r2d, r2d
+%endif
     mov             r1, r2
     neg             r3d
     neg             r4d
@@ -3766,6 +3771,16 @@ cglobal pelFilterLumaStrong_H, 5,7,10
     lea             r5, [r2 * 3]
     lea             r6, [r1 * 3]
 
+%if HIGH_BIT_DEPTH
+    movu            m4, [r0]                ; src[0]
+    movu            m3, [r0 + r1]           ; src[-offset]
+    movu            m2, [r0 + r1 * 2]       ; src[-offset * 2]
+    movu            m1, [r0 + r6]           ; src[-offset * 3]
+    movu            m0, [r0 + r1 * 4]       ; src[-offset * 4]
+    movu            m5, [r0 + r2]           ; src[offset]
+    movu            m6, [r0 + r2 * 2]       ; src[offset * 2]
+    movu            m7, [r0 + r5]           ; src[offset * 3]
+%else
     pmovzxbw        m4, [r0]                ; src[0]
     pmovzxbw        m3, [r0 + r1]           ; src[-offset]
     pmovzxbw        m2, [r0 + r1 * 2]       ; src[-offset * 2]
@@ -3774,6 +3789,7 @@ cglobal pelFilterLumaStrong_H, 5,7,10
     pmovzxbw        m5, [r0 + r2]           ; src[offset]
     pmovzxbw        m6, [r0 + r2 * 2]       ; src[offset * 2]
     pmovzxbw        m7, [r0 + r5]           ; src[offset * 3]
+%endif
 
     paddw           m0, m0                  ; m0*2
     mova            m8, m2
@@ -3841,6 +3857,15 @@ cglobal pelFilterLumaStrong_H, 5,7,10
     paddw           m0, m1
     paddw           m3, m4
     paddw           m9, m5
+
+%if HIGH_BIT_DEPTH
+    movh            [r0 + r6], m0
+    movhps          [r0 + r1], m0
+    movh            [r0], m3
+    movhps          [r0 + r2 * 2], m3,
+    movh            [r0 + r2 * 1], m9
+    movhps          [r0 + r1 * 2], m9
+%else
     packuswb        m0, m0
     packuswb        m3, m9
 
@@ -3850,14 +3875,41 @@ cglobal pelFilterLumaStrong_H, 5,7,10
     pextrd          [r0 + r2 * 2], m3, 1
     pextrd          [r0 + r2 * 1], m3, 2
     pextrd          [r0 + r1 * 2], m3, 3
+%endif
     RET
 
 INIT_XMM sse4
 cglobal pelFilterLumaStrong_V, 5,5,10
+%if HIGH_BIT_DEPTH
+    add             r1d, r1d
+%endif
     neg             r3d
     neg             r4d
     lea             r2, [r1 * 3]
 
+%if HIGH_BIT_DEPTH
+    movu            m0, [r0 - 8]            ; src[-offset * 4] row 0
+    movu            m1, [r0 + r1 * 1 - 8]   ; src[-offset * 4] row 1
+    movu            m2, [r0 + r1 * 2 - 8]   ; src[-offset * 4] row 2
+    movu            m3, [r0 + r2 * 1 - 8]   ; src[-offset * 4] row 3
+
+    punpckhwd       m4, m0, m1              ; [m4 m4 m5 m5 m6 m6 m7 m7]
+    punpcklwd       m0, m1                  ; [m0 m0 m1 m1 m2 m2 m3 m3]
+
+    punpckhwd       m5, m2, m3              ; [m4 m4 m5 m5 m6 m6 m7 m7]
+    punpcklwd       m2, m3                  ; [m0 m0 m1 m1 m2 m2 m3 m3]
+
+    punpckhdq       m3, m0, m2              ; [m2 m2 m2 m2 m3 m3 m3 m3]
+    punpckldq       m0, m2                  ; [m0 m0 m0 m0 m1 m1 m1 m1]
+    psrldq          m1, m0, 8               ; [m1 m1 m1 m1 x x x x]
+    mova            m2, m3                  ; [m2 m2 m2 m2 x x x x]
+    punpckhqdq      m3, m3                  ; [m3 m3 m3 m3 x x x x]
+
+    punpckhdq       m6, m4, m5              ; [m6 m6 m6 m6 m7 m7 m7 m7]
+    punpckldq       m4, m5                  ; [m4 m4 m4 m4 m5 m5 m5 m5]
+    psrldq          m7, m6, 8
+    psrldq          m5, m4, 8
+%else
     movh            m0, [r0 - 4]            ; src[-offset * 4] row 0
     movh            m1, [r0 + r1 * 1 - 4]   ; src[-offset * 4] row 1
     movh            m2, [r0 + r1 * 2 - 4]   ; src[-offset * 4] row 2
@@ -3890,6 +3942,7 @@ cglobal pelFilterLumaStrong_V, 5,5,10
     pmovzxbw        m5, m5
     pmovzxbw        m6, m6
     pmovzxbw        m7, m7
+%endif
 
     paddw           m0, m0                  ; m0*2
     mova            m8, m2
@@ -3957,6 +4010,35 @@ cglobal pelFilterLumaStrong_V, 5,5,10
     paddw           m0, m1
     paddw           m3, m4
     paddw           m9, m5
+
+%if HIGH_BIT_DEPTH
+    ; 4x6 output rows -
+    ; m0 - col 0
+    ; m3 - col 3
+
+    psrldq           m1, m0, 8
+    psrldq           m2, m3, 8
+
+    mova            m4, m9
+    psrldq          m5, m9, 8
+
+    ; transpose 4x6 to 6x4
+    punpcklwd       m0, m5
+    punpcklwd       m1, m3
+    punpcklwd       m4, m2
+
+    punpckldq       m9, m0, m1
+    punpckhdq       m0, m1
+
+    movh            [r0 + r1 * 0 - 6], m9
+    movhps          [r0 + r1 * 1 - 6], m9
+    movh            [r0 + r1 * 2 - 6], m0
+    movhps          [r0 + r2 * 1 - 6], m0
+    pextrd          [r0 + r1 * 0 + 2], m4, 0
+    pextrd          [r0 + r1 * 1 + 2], m4, 1
+    pextrd          [r0 + r1 * 2 + 2], m4, 2
+    pextrd          [r0 + r2 * 1 + 2], m4, 3
+%else
     packuswb        m0, m0
     packuswb        m3, m9
 
@@ -3986,20 +4068,31 @@ cglobal pelFilterLumaStrong_V, 5,5,10
     pextrw          [r0 + r1 * 1 + 1], m4, 1
     pextrw          [r0 + r1 * 2 + 1], m4, 2
     pextrw          [r0 + r2 * 1 + 1], m4, 3
+%endif
     RET
 %endif ; ARCH_X86_64
 
 %if ARCH_X86_64
 INIT_XMM sse4
 cglobal pelFilterChroma_H, 6,6,5
+%if HIGH_BIT_DEPTH
+    add             r2d, r2d
+%endif
     mov             r1, r2
     neg             r3d
     neg             r1
 
+%if HIGH_BIT_DEPTH
+    movu            m4, [r0]                ; src[0]
+    movu            m3, [r0 + r1]           ; src[-offset]
+    movu            m0, [r0 + r2]           ; src[offset]
+    movu            m2, [r0 + r1 * 2]       ; src[-offset * 2]
+%else
     pmovzxbw        m4, [r0]                ; src[0]
     pmovzxbw        m3, [r0 + r1]           ; src[-offset]
     pmovzxbw        m0, [r0 + r2]           ; src[offset]
     pmovzxbw        m2, [r0 + r1 * 2]       ; src[-offset * 2]
+%endif
 
     psubw           m1, m4, m3              ; m4 - m3
     psubw           m2, m0                  ; m2 - m5
@@ -4032,21 +4125,35 @@ cglobal pelFilterChroma_H, 6,6,5
     pmaxsw          m3, m0
     pminsw          m3, [pw_pixel_max]
 
+%if HIGH_BIT_DEPTH
+    movh            [r0 + r1], m3
+    movhps          [r0], m3
+%else
     packuswb        m3, m3
     movd            [r0 + r1], m3
     pextrd          [r0], m3, 1
+%endif
     RET
 
 INIT_XMM sse4
 cglobal pelFilterChroma_V, 6,6,5
+%if HIGH_BIT_DEPTH
+    add             r1d, r1d
+%endif
     neg             r3d
     lea             r2, [r1 * 3]
 
+%if HIGH_BIT_DEPTH
+    movu            m4, [r0 + r1 * 0 - 4]   ; src[-offset*2, -offset, 0, offset] [m2 m3 m4 m5]
+    movu            m3, [r0 + r1 * 1 - 4]
+    movu            m0, [r0 + r1 * 2 - 4]
+    movu            m2, [r0 + r2 * 1 - 4]
+%else
     pmovzxbw        m4, [r0 + r1 * 0 - 2]   ; src[-offset*2, -offset, 0, offset] [m2 m3 m4 m5]
     pmovzxbw        m3, [r0 + r1 * 1 - 2]
     pmovzxbw        m0, [r0 + r1 * 2 - 2]
     pmovzxbw        m2, [r0 + r2 * 1 - 2]
-
+%endif
     punpcklwd       m4, m3
     punpcklwd       m0, m2
     punpckldq       m2, m4, m0              ; [m2 m2 m2 m2 m3 m3 m3 m3]
@@ -4085,11 +4192,19 @@ cglobal pelFilterChroma_V, 6,6,5
     pmaxsw          m3, m0
     pminsw          m3, [pw_pixel_max]
 
+%if HIGH_BIT_DEPTH
+    pshufb          m3, [pw_shuf_off4]
+    pextrd          [r0 + r1 * 0 - 2], m3, 0
+    pextrd          [r0 + r1 * 1 - 2], m3, 1
+    pextrd          [r0 + r1 * 2 - 2], m3, 2
+    pextrd          [r0 + r2 * 1 - 2], m3, 3
+%else
     packuswb        m3, m3
     pshufb          m3, [pb_shuf_off4]
     pextrw          [r0 + r1 * 0 - 1], m3, 0
     pextrw          [r0 + r1 * 1 - 1], m3, 1
     pextrw          [r0 + r1 * 2 - 1], m3, 2
     pextrw          [r0 + r2 * 1 - 1], m3, 3
+%endif
     RET
 %endif ; ARCH_X86_64

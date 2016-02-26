@@ -69,6 +69,7 @@ const pb_0000000000000F0F,  times  2 db 0xff, 0x00
 const pb_000000000000000F,           db 0xff
                             times 15 db 0x00
 const pb_shuf_off4,         times  2 db   0,   4,   1,   5,   2,   6,   3,   7
+const pw_shuf_off4,         times  1 db   0,   1,   8,   9,   2,   3,  10,  11,   4,   5,  12,  13,   6,   7,  14,  15
 
 ;; 16-bit constants
 
