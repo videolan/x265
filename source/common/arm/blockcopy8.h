@@ -57,4 +57,9 @@ void x265_cpy2Dto1D_shr_8x8_neon(int16_t* dst, const int16_t* src, intptr_t srcS
 void x265_cpy2Dto1D_shr_16x16_neon(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 void x265_cpy2Dto1D_shr_32x32_neon(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 
+void x265_blockcopy_sp_4x4_neon(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_sp_8x8_neon(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_sp_16x16_neon(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_sp_32x32_neon(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_sp_64x64_neon(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
 #endif // ifndef X265_I386_PIXEL_ARM_H
