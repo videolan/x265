@@ -158,6 +158,27 @@ static void pelFilterLumaStrong_c(pixel* src, intptr_t srcStep, intptr_t offset,
         src[offset * 2]  = (pixel)(x265_clip3(-tcQ, tcQ, ((m3 + m4 + m5 + 3 * m6 + 2 * m7 + 4) >> 3) - m6) + m6);
     }
 }
+
+/* Deblocking of one line/column for the chrominance component
+* \param src     pointer to picture data
+* \param offset  offset value for picture data
+* \param tc      tc value
+* \param maskP   indicator to disable filtering on partP
+* \param maskQ   indicator to disable filtering on partQ */
+static void pelFilterChroma_c(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tc, int32_t maskP, int32_t maskQ)
+{
+    for (int32_t i = 0; i < UNIT_SIZE; i++, src += srcStep)
+    {
+        int16_t m4 = (int16_t)src[0];
+        int16_t m3 = (int16_t)src[-offset];
+        int16_t m5 = (int16_t)src[offset];
+        int16_t m2 = (int16_t)src[-offset * 2];
+
+        int32_t delta = x265_clip3(-tc, tc, ((((m4 - m3) * 4) + m2 - m5 + 4) >> 3));
+        src[-offset]  = x265_clip(m3 + (delta & maskP));
+        src[0]        = x265_clip(m4 - (delta & maskQ));
+    }
+}
 }
 
 namespace X265_NS {
@@ -176,5 +197,7 @@ void setupLoopFilterPrimitives_c(EncoderPrimitives &p)
     // C code is same for EDGE_VER and EDGE_HOR only asm code is different
     p.pelFilterLumaStrong[0] = pelFilterLumaStrong_c;
     p.pelFilterLumaStrong[1] = pelFilterLumaStrong_c;
+    p.pelFilterChroma[0]     = pelFilterChroma_c;
+    p.pelFilterChroma[1]     = pelFilterChroma_c;
 }
 }
