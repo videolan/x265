@@ -233,3 +233,81 @@ loop_cps64:
     bne             loop_cps64
     bx              lr
 endfunc
+
+// void x265_blockcopy_ss(int16_t* a, intptr_t stridea, const int16_t* b, intptr_t strideb)
+function x265_blockcopy_ss_4x4_neon
+    lsl             r1, #1
+    lsl             r3, #1
+.rept 2
+    vld1.u16        {d0}, [r2], r3
+    vld1.u16        {d1}, [r2], r3
+    vst1.u16        {d0}, [r0], r1
+    vst1.u16        {d1}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockcopy_ss_8x8_neon
+    lsl             r1, #1
+    lsl             r3, #1
+.rept 4
+    vld1.u16        {q0}, [r2], r3
+    vld1.u16        {q1}, [r2], r3
+    vst1.u16        {q0}, [r0], r1
+    vst1.u16        {q1}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockcopy_ss_16x16_neon
+    lsl             r1, #1
+    lsl             r3, #1
+.rept 8
+    vld1.u16        {q0, q1}, [r2], r3
+    vld1.u16        {q2, q3}, [r2], r3
+    vst1.u16        {q0, q1}, [r0], r1
+    vst1.u16        {q2, q3}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockcopy_ss_32x32_neon
+    lsl             r1, #1
+    lsl             r3, #1
+    mov             r12, #4
+    sub             r1, #32
+    sub             r3, #32
+loop_css32:
+    subs            r12, #1
+.rept 8
+    vld1.u16        {q0, q1}, [r2]!
+    vld1.u16        {q2, q3}, [r2], r3
+    vst1.u16        {q0, q1}, [r0]!
+    vst1.u16        {q2, q3}, [r0], r1
+.endr
+    bne             loop_css32
+    bx              lr
+endfunc
+
+function x265_blockcopy_ss_64x64_neon
+    lsl             r1, #1
+    lsl             r3, #1
+    mov             r12, #8
+    sub             r1, #96
+    sub             r3, #96
+loop_css64:
+    subs            r12, #1
+.rept 8
+    vld1.u16        {q0, q1}, [r2]!
+    vld1.u16        {q2, q3}, [r2]!
+    vld1.u16        {q8, q9}, [r2]!
+    vld1.u16        {q10, q11}, [r2], r3
+
+    vst1.u16        {q0, q1}, [r0]!
+    vst1.u16        {q2, q3}, [r0]!
+    vst1.u16        {q8, q9}, [r0]!
+    vst1.u16        {q10, q11}, [r0], r1
+.endr
+    bne             loop_css64
+    bx              lr
+endfunc

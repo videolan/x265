@@ -42,12 +42,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
-        // Blockcopy_sp
-        p.cu[BLOCK_4x4].copy_sp   = PFX(blockcopy_sp_4x4_neon);
-        p.cu[BLOCK_8x8].copy_sp   = PFX(blockcopy_sp_8x8_neon);
-        p.cu[BLOCK_16x16].copy_sp = PFX(blockcopy_sp_16x16_neon);
-        p.cu[BLOCK_32x32].copy_sp = PFX(blockcopy_sp_32x32_neon);
-        p.cu[BLOCK_64x64].copy_sp = PFX(blockcopy_sp_64x64_neon);
+        // Blockcopy_ss
+        p.cu[BLOCK_4x4].copy_ss   = PFX(blockcopy_ss_4x4_neon);
+        p.cu[BLOCK_8x8].copy_ss   = PFX(blockcopy_ss_8x8_neon);
+        p.cu[BLOCK_16x16].copy_ss = PFX(blockcopy_ss_16x16_neon);
+        p.cu[BLOCK_32x32].copy_ss = PFX(blockcopy_ss_32x32_neon);
+        p.cu[BLOCK_64x64].copy_ss = PFX(blockcopy_ss_64x64_neon);
 
         // Blockcopy_ps
         p.cu[BLOCK_4x4].copy_ps   = PFX(blockcopy_ps_4x4_neon);
@@ -55,6 +55,13 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_16x16].copy_ps = PFX(blockcopy_ps_16x16_neon);
         p.cu[BLOCK_32x32].copy_ps = PFX(blockcopy_ps_32x32_neon);
         p.cu[BLOCK_64x64].copy_ps = PFX(blockcopy_ps_64x64_neon);
+
+        // Blockcopy_sp
+        p.cu[BLOCK_4x4].copy_sp   = PFX(blockcopy_sp_4x4_neon);
+        p.cu[BLOCK_8x8].copy_sp   = PFX(blockcopy_sp_8x8_neon);
+        p.cu[BLOCK_16x16].copy_sp = PFX(blockcopy_sp_16x16_neon);
+        p.cu[BLOCK_32x32].copy_sp = PFX(blockcopy_sp_32x32_neon);
+        p.cu[BLOCK_64x64].copy_sp = PFX(blockcopy_sp_64x64_neon);
 
         // pixel_add_ps
         p.cu[BLOCK_4x4].add_ps   = PFX(pixel_add_ps_4x4_neon);
