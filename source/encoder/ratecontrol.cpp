@@ -655,7 +655,7 @@ void RateControl::initHRD(SPS& sps)
 
     #undef MAX_DURATION
 }
-bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvailableBits)
+bool RateControl::analyseABR2Pass(uint64_t allAvailableBits)
 {
     double rateFactor, stepMult;
     double qBlur = m_param->rc.qblur;
@@ -665,21 +665,21 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
     double *qScale, *blurredQscale;
     double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
     double clippedDuration = CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION;
-    int framesCount = endIndex - startIndex + 1;
     /* Blur complexities, to reduce local fluctuation of QP.
      * We don't blur the QPs directly, because then one very simple frame
      * could drag down the QP of a nearby complex frame and give it more
      * bits than intended. */
-    for (int i = startIndex; i <= endIndex; i++)
+    for (int i = 0; i < m_numEntries; i++)
     {
         double weightSum = 0;
         double cplxSum = 0;
         double weight = 1.0;
         double gaussianWeight;
         /* weighted average of cplx of future frames */
-        for (int j = 1; j < cplxBlur * 2 && j <= endIndex - i; j++)
+        for (int j = 1; j < cplxBlur * 2 && j < m_numEntries - i; j++)
         {
-            RateControlEntry *rcj = &m_rce2Pass[i + j];
+            int index = m_encOrder[i + j];
+            RateControlEntry *rcj = &m_rce2Pass[index];
             weight *= 1 - pow(rcj->iCuCount / m_ncu, 2);
             if (weight < 0.0001)
                 break;
@@ -691,7 +691,8 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
         weight = 1.0;
         for (int j = 0; j <= cplxBlur * 2 && j <= i; j++)
         {
-            RateControlEntry *rcj = &m_rce2Pass[i - j];
+            int index = m_encOrder[i - j];
+            RateControlEntry *rcj = &m_rce2Pass[index];
             gaussianWeight = weight * exp(-j * j / 200.0);
             weightSum += gaussianWeight;
             cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / clippedDuration;
@@ -699,12 +700,12 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
             if (weight < .0001)
                 break;
         }
-        m_rce2Pass[i].blurredComplexity = cplxSum / weightSum;
+        m_rce2Pass[m_encOrder[i]].blurredComplexity = cplxSum / weightSum;
     }
-    CHECKED_MALLOC(qScale, double, framesCount);
+    CHECKED_MALLOC(qScale, double, m_numEntries);
     if (filterSize > 1)
     {
-        CHECKED_MALLOC(blurredQscale, double, framesCount);
+        CHECKED_MALLOC(blurredQscale, double, m_numEntries);
     }
     else
         blurredQscale = qScale;
@@ -716,9 +717,9 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
      * approximation of scaling the 1st pass by the ratio of bitrates.
      * The search range is probably overkill, but speed doesn't matter here. */
     expectedBits = 1;
-    for (int i = startIndex; i <= endIndex; i++)
+    for (int i = 0; i < m_numEntries; i++)
     {
-        RateControlEntry* rce = &m_rce2Pass[i];
+        RateControlEntry* rce = &m_rce2Pass[m_encOrder[i]];
         double q = getQScale(rce, 1.0);
         expectedBits += qScale2bits(rce, q);
         m_lastQScaleFor[rce->sliceType] = q;
@@ -741,7 +742,7 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
         /* find qscale */
         for (int i = 0; i < m_numEntries; i++)
         {
-            RateControlEntry *rce = &m_rce2Pass[i];
+            RateControlEntry *rce = &m_rce2Pass[m_encOrder[i]];
             qScale[i] = getQScale(rce, rateFactor);
             m_lastQScaleFor[rce->sliceType] = qScale[i];
         }
@@ -749,7 +750,7 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
         /* fixed I/B qscale relative to P */
         for (int i = m_numEntries - 1; i >= 0; i--)
         {
-            qScale[i] = getDiffLimitedQScale(&m_rce2Pass[i], qScale[i]);
+            qScale[i] = getDiffLimitedQScale(&m_rce2Pass[m_encOrder[i]], qScale[i]);
             X265_CHECK(qScale[i] >= 0, "qScale became negative\n");
         }
 
@@ -768,7 +769,7 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
                     double coeff = qBlur == 0 ? 1.0 : exp(-d * d / (qBlur * qBlur));
                     if (idx < 0 || idx >= m_numEntries)
                         continue;
-                    if (m_rce2Pass[i].sliceType != m_rce2Pass[idx].sliceType)
+                    if (m_rce2Pass[m_encOrder[i]].sliceType != m_rce2Pass[m_encOrder[idx]].sliceType)
                         continue;
                     q += qScale[idx] * coeff;
                     sum += coeff;
@@ -780,7 +781,7 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
         /* find expected bits */
         for (int i = 0; i < m_numEntries; i++)
         {
-            RateControlEntry *rce = &m_rce2Pass[i];
+            RateControlEntry *rce = &m_rce2Pass[m_encOrder[i]];
             rce->newQScale = clipQscale(NULL, rce, blurredQscale[i]); // check if needed
             X265_CHECK(rce->newQScale >= 0, "new Qscale is negative\n");
             expectedBits += qScale2bits(rce, rce->newQScale);
@@ -794,9 +795,9 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
     if (filterSize > 1)
         X265_FREE(blurredQscale);
     if (m_isVbv)
-    if (!vbv2Pass(allAvailableBits, endIndex, startIndex))
+    if (!vbv2Pass(allAvailableBits, m_numEntries - 1, 0))
             return false;
-    expectedBits = countExpectedBits(startIndex, endIndex);
+    expectedBits = countExpectedBits(0, m_numEntries - 1);
     if (fabs(expectedBits / allAvailableBits - 1.0) > 0.01)
     {
         double avgq = 0;
@@ -947,7 +948,7 @@ bool RateControl::initPass2()
                      (int)(allConstBits * m_fps / framesCount * 1000.));
             return false;
         }
-        if (!analyseABR2Pass(0, m_numEntries - 1, allAvailableBits))
+        if (!analyseABR2Pass(allAvailableBits))
             return false;
     }
 

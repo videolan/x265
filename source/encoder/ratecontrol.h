@@ -267,7 +267,7 @@ protected:
     double predictSize(Predictor *p, double q, double var);
     void   checkAndResetABR(RateControlEntry* rce, bool isFrameDone);
     double predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double qpm, int32_t& encodedBits);
-    bool   analyseABR2Pass(int startPoc, int endPoc, uint64_t allAvailableBits);
+    bool   analyseABR2Pass(uint64_t allAvailableBits);
     void   initFramePredictors();
     double getDiffLimitedQScale(RateControlEntry *rce, double q);
     double countExpectedBits(int startPos, int framesCount);
