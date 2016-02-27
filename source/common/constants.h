@@ -98,6 +98,8 @@ extern const uint8_t g_intraFilterFlags[NUM_INTRA_MODE];
 
 extern const uint32_t g_depthScanIdx[8][8];
 
+extern const double g_YUVtoRGB_BT2020[3][3];
+
 }
 
 #endif

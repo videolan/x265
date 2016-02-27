@@ -1818,34 +1818,6 @@ bool PixelHarness::check_costC1C2Flag(costC1C2Flag_t ref, costC1C2Flag_t opt)
     return true;
 }
 
-bool PixelHarness::check_planeClipAndMax(planeClipAndMax_t ref, planeClipAndMax_t opt)
-{
-    for (int i = 0; i < ITERS; i++)
-    {
-        intptr_t rand_stride = rand() % STRIDE;
-        int rand_width = (rand() % (STRIDE * 2)) + 1;
-        const int rand_height = (rand() % MAX_HEIGHT) + 1;
-        const pixel rand_min = rand() % 32;
-        const pixel rand_max = PIXEL_MAX - (rand() % 32);
-        uint64_t ref_sum, opt_sum;
-
-        // video width must be more than or equal to 32
-        if (rand_width < 32)
-            rand_width = 32;
-
-        // stride must be more than or equal to width
-        if (rand_stride < rand_width)
-            rand_stride = rand_width;
-
-        pixel ref_max = ref(pbuf1, rand_stride, rand_width, rand_height, &ref_sum, rand_min, rand_max);
-        pixel opt_max = (pixel)checked(opt, pbuf1, rand_stride, rand_width, rand_height, &opt_sum, rand_min, rand_max);
-
-        if (ref_max != opt_max)
-            return false;
-    }
-    return true;
-}
-
 bool PixelHarness::check_pelFilterLumaStrong_H(pelFilterLumaStrong_t ref, pelFilterLumaStrong_t opt)
 {
     intptr_t srcStep = 1, offset = 64;
@@ -2543,15 +2515,6 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
     }
     
 
-    if (opt.planeClipAndMax)
-    {
-        if (!check_planeClipAndMax(ref.planeClipAndMax, opt.planeClipAndMax))
-        {
-            printf("planeClipAndMax failed!\n");
-            return false;
-        }
-    }
-
     if (opt.pelFilterLumaStrong[0])
     {
         if (!check_pelFilterLumaStrong_V(ref.pelFilterLumaStrong[0], opt.pelFilterLumaStrong[0]))
@@ -3045,13 +3008,6 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         abscoefBuf[C1FLAG_NUMBER - 2] = 2;
         abscoefBuf[C1FLAG_NUMBER - 1] = 3;
         REPORT_SPEEDUP(opt.costC1C2Flag, ref.costC1C2Flag, abscoefBuf, C1FLAG_NUMBER, (uint8_t*)psbuf1, 1);
-    }
-
-    if (opt.planeClipAndMax)
-    {
-        HEADER0("planeClipAndMax");
-        uint64_t dummy;
-        REPORT_SPEEDUP(opt.planeClipAndMax, ref.planeClipAndMax, pbuf1, 128, 63, 62, &dummy, 1, PIXEL_MAX - 1);
     }
 
     if (opt.pelFilterLumaStrong[0])
