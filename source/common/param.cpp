@@ -246,7 +246,7 @@ void x265_param_default(x265_param* param)
     param->maxCLL = 0;
     param->maxFALL = 0;
     param->minLuma = 0;
-    param->maxLuma = (1 << X265_DEPTH) - 1;
+    param->maxLuma = 0;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)

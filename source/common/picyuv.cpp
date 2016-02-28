@@ -279,12 +279,19 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
         }
     }
 
-    /* extend the right edge if width was not multiple of the minimum CU size */
-    uint64_t sumLuma;
     pixel *Y = m_picOrg[0];
-    m_maxLumaLevel = primitives.planeClipAndMax(Y, m_stride, width, height, &sumLuma, (pixel)param.minLuma, (pixel)param.maxLuma);
-    m_avgLumaLevel = (double)(sumLuma) / (m_picHeight * m_picWidth);
+    pixel *U = m_picOrg[1];
+    pixel *V = m_picOrg[2];
 
+    /* Apply min/max luma bounds and calculate max and avg luma levels for HDR SEI messages */
+    if (!!param.maxLuma || !!param.minLuma || !!param.maxCLL)
+    {
+        uint64_t sumLuma;
+        m_maxLumaLevel = primitives.planeClipAndMax(Y, m_stride, width, height, &sumLuma, (pixel)param.minLuma, (pixel)param.maxLuma);
+        m_avgLumaLevel = (double)(sumLuma) / (m_picHeight * m_picWidth);
+    }
+
+    /* extend the right edge if width was not multiple of the minimum CU size */
     for (int r = 0; r < height; r++)
     {
         for (int x = 0; x < padx; x++)
@@ -299,9 +306,6 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
 
     if (pic.colorSpace != X265_CSP_I400)
     {
-        pixel *U = m_picOrg[1];
-        pixel *V = m_picOrg[2];
-
         for (int r = 0; r < height >> m_vChromaShift; r++)
         {
             for (int x = 0; x < padx >> m_hChromaShift; x++)
