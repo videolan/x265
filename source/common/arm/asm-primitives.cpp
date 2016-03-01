@@ -42,6 +42,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // Block_fill
+        p.cu[BLOCK_4x4].blockfill_s   = PFX(blockfill_s_4x4_neon);
+        p.cu[BLOCK_8x8].blockfill_s   = PFX(blockfill_s_8x8_neon);
+        p.cu[BLOCK_16x16].blockfill_s = PFX(blockfill_s_16x16_neon);
+        p.cu[BLOCK_32x32].blockfill_s = PFX(blockfill_s_32x32_neon);
+
         // Blockcopy_ss
         p.cu[BLOCK_4x4].copy_ss   = PFX(blockcopy_ss_4x4_neon);
         p.cu[BLOCK_8x8].copy_ss   = PFX(blockcopy_ss_8x8_neon);

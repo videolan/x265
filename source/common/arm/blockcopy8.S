@@ -311,3 +311,44 @@ loop_css64:
     bne             loop_css64
     bx              lr
 endfunc
+
+// void x265_blockfill_s_neon(int16_t* dst, intptr_t dstride, int16_t val)
+function x265_blockfill_s_4x4_neon
+    vdup.u16        d0, r2
+    lsl             r1, #1
+.rept 4
+    vst1.16         {d0}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockfill_s_8x8_neon
+    vdup.u16        q0, r2
+    lsl             r1, #1
+.rept 8
+    vst1.16         {q0}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockfill_s_16x16_neon
+    vdup.u16        q0, r2
+    vmov            q1, q0
+    lsl             r1, #1
+.rept 16
+    vst1.16         {q0, q1}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockfill_s_32x32_neon
+    vdup.u16        q0, r2
+    vmov            q1, q0
+    lsl             r1, #1
+    sub             r1, #32
+.rept 32
+    vst1.16         {q0, q1}, [r0]!
+    vst1.16         {q0, q1}, [r0], r1
+.endr
+    bx              lr
+endfunc
