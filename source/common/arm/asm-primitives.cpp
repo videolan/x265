@@ -33,6 +33,7 @@ extern "C" {
 #include "blockcopy8.h"
 #include "pixel.h"
 #include "pixel-util.h"
+#include "ipfilter8.h"
 }
 
 namespace X265_NS {
@@ -42,6 +43,33 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // filterPixelToShort
+        p.pu[LUMA_4x4].convert_p2s   = PFX(filterPixelToShort_4x4_neon);
+        p.pu[LUMA_4x8].convert_p2s   = PFX(filterPixelToShort_4x8_neon);
+        p.pu[LUMA_4x16].convert_p2s  = PFX(filterPixelToShort_4x16_neon);
+        p.pu[LUMA_8x4].convert_p2s   = PFX(filterPixelToShort_8x4_neon);
+        p.pu[LUMA_8x8].convert_p2s   = PFX(filterPixelToShort_8x8_neon);
+        p.pu[LUMA_8x16].convert_p2s  = PFX(filterPixelToShort_8x16_neon);
+        p.pu[LUMA_8x32].convert_p2s  = PFX(filterPixelToShort_8x32_neon);
+        p.pu[LUMA_12x16].convert_p2s = PFX(filterPixelToShort_12x16_neon);
+        p.pu[LUMA_16x4].convert_p2s  = PFX(filterPixelToShort_16x4_neon);
+        p.pu[LUMA_16x8].convert_p2s  = PFX(filterPixelToShort_16x8_neon);
+        p.pu[LUMA_16x12].convert_p2s = PFX(filterPixelToShort_16x12_neon);
+        p.pu[LUMA_16x16].convert_p2s = PFX(filterPixelToShort_16x16_neon);
+        p.pu[LUMA_16x32].convert_p2s = PFX(filterPixelToShort_16x32_neon);
+        p.pu[LUMA_16x64].convert_p2s = PFX(filterPixelToShort_16x64_neon);
+        p.pu[LUMA_24x32].convert_p2s = PFX(filterPixelToShort_24x32_neon);
+        p.pu[LUMA_32x8].convert_p2s  = PFX(filterPixelToShort_32x8_neon);
+        p.pu[LUMA_32x16].convert_p2s = PFX(filterPixelToShort_32x16_neon);
+        p.pu[LUMA_32x24].convert_p2s = PFX(filterPixelToShort_32x24_neon);
+        p.pu[LUMA_32x32].convert_p2s = PFX(filterPixelToShort_32x32_neon);
+        p.pu[LUMA_32x64].convert_p2s = PFX(filterPixelToShort_32x64_neon);
+        p.pu[LUMA_48x64].convert_p2s = PFX(filterPixelToShort_48x64_neon);
+        p.pu[LUMA_64x16].convert_p2s = PFX(filterPixelToShort_64x16_neon);
+        p.pu[LUMA_64x32].convert_p2s = PFX(filterPixelToShort_64x32_neon);
+        p.pu[LUMA_64x48].convert_p2s = PFX(filterPixelToShort_64x48_neon);
+        p.pu[LUMA_64x64].convert_p2s = PFX(filterPixelToShort_64x64_neon);
+
         // Block_fill
         p.cu[BLOCK_4x4].blockfill_s   = PFX(blockfill_s_4x4_neon);
         p.cu[BLOCK_8x8].blockfill_s   = PFX(blockfill_s_8x8_neon);

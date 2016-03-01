@@ -25,4 +25,30 @@
 #ifndef X265_IPFILTER8_ARM_H
 #define X265_IPFILTER8_ARM_H
 
+void x265_filterPixelToShort_4x4_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_4x8_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_4x16_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_8x4_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_8x8_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_8x16_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_8x32_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_12x16_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x4_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x8_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x12_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x16_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x32_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_16x64_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_24x32_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_32x8_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_32x16_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_32x24_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_32x32_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_32x64_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_48x64_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_64x16_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_64x32_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_64x48_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+void x265_filterPixelToShort_64x64_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
+
 #endif // ifndef X265_IPFILTER8_ARM_H
