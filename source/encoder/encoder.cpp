@@ -905,28 +905,22 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
 {
     encParam->maxNumReferences = param->maxNumReferences; // never uses more refs than specified in stream headers
-    encParam->bEnableLoopFilter = param->bEnableLoopFilter;
-    encParam->deblockingFilterTCOffset = param->deblockingFilterTCOffset;
-    encParam->deblockingFilterBetaOffset = param->deblockingFilterBetaOffset;
     encParam->bEnableFastIntra = param->bEnableFastIntra;
     encParam->bEnableEarlySkip = param->bEnableEarlySkip;
-    encParam->bEnableTemporalMvp = param->bEnableTemporalMvp;
-    /* Scratch buffer prevents me_range from being increased for esa/tesa
-    if (param->searchMethod < X265_FULL_SEARCH || param->searchMethod < encParam->searchRange)
-        encParam->searchRange = param->searchRange; */
-    encParam->noiseReductionInter = param->noiseReductionInter;
-    encParam->noiseReductionIntra = param->noiseReductionIntra;
+    encParam->searchMethod = param->searchMethod;
+    /* Scratch buffer prevents me_range from being increased for esa/tesa */
+    if (param->searchRange < encParam->searchRange)
+        encParam->searchRange = param->searchRange;
     /* We can't switch out of subme=0 during encoding. */
     if (encParam->subpelRefine)
         encParam->subpelRefine = param->subpelRefine;
     encParam->rdoqLevel = param->rdoqLevel;
     encParam->rdLevel = param->rdLevel;
-    encParam->bEnableTSkipFast = param->bEnableTSkipFast;
-    encParam->psyRd = param->psyRd;
-    encParam->psyRdoq = param->psyRdoq;
-    encParam->bEnableSignHiding = param->bEnableSignHiding;
-    encParam->bEnableFastIntra = param->bEnableFastIntra;
-    encParam->maxTUSize = param->maxTUSize;
+    encParam->bEnableRectInter = param->bEnableRectInter;
+    encParam->maxNumMergeCand = param->maxNumMergeCand;
+    encParam->bIntraInBFrames = param->bIntraInBFrames;
+    /* To add: Loop Filter/deblocking controls, transform skip, signhide require PPS to be resent */
+    /* To add: SAO, temporal MVP, AMP, TU depths require SPS to be resent, at every CVS boundary */
     return x265_check_params(encParam);
 }
 

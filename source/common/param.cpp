@@ -1379,29 +1379,16 @@ void x265_print_reconfigured_params(x265_param* param, x265_param* reconfiguredP
     char tmp[40];
 #define TOOLCMP(COND1, COND2, STR, VAL)  if (COND1 != COND2) { sprintf(tmp, STR, VAL); appendtool(param, buf, sizeof(buf), tmp); }
     TOOLCMP(param->maxNumReferences, reconfiguredParam->maxNumReferences, "ref=%d", reconfiguredParam->maxNumReferences);
-    TOOLCMP(param->maxTUSize, reconfiguredParam->maxTUSize, "max-tu-size=%d", reconfiguredParam->maxTUSize);
+    TOOLCMP(param->bEnableFastIntra, reconfiguredParam->bEnableFastIntra, "fast-intra=%d", reconfiguredParam->bEnableFastIntra);
+    TOOLCMP(param->bEnableEarlySkip, reconfiguredParam->bEnableEarlySkip, "early-skip=%d", reconfiguredParam->bEnableEarlySkip);
+    TOOLCMP(param->searchMethod, reconfiguredParam->searchMethod, "me=%d", reconfiguredParam->searchMethod);
     TOOLCMP(param->searchRange, reconfiguredParam->searchRange, "merange=%d", reconfiguredParam->searchRange);
     TOOLCMP(param->subpelRefine, reconfiguredParam->subpelRefine, "subme= %d", reconfiguredParam->subpelRefine);
     TOOLCMP(param->rdLevel, reconfiguredParam->rdLevel, "rd=%d", reconfiguredParam->rdLevel);
-    TOOLCMP(param->psyRd, reconfiguredParam->psyRd, "psy-rd=%.2lf", reconfiguredParam->psyRd);
     TOOLCMP(param->rdoqLevel, reconfiguredParam->rdoqLevel, "rdoq=%d", reconfiguredParam->rdoqLevel);
-    TOOLCMP(param->psyRdoq, reconfiguredParam->psyRdoq, "psy-rdoq=%.2lf", reconfiguredParam->psyRdoq);
-    TOOLCMP(param->noiseReductionIntra, reconfiguredParam->noiseReductionIntra, "nr-intra=%d", reconfiguredParam->noiseReductionIntra);
-    TOOLCMP(param->noiseReductionInter, reconfiguredParam->noiseReductionInter, "nr-inter=%d", reconfiguredParam->noiseReductionInter);
-    TOOLCMP(param->bEnableTSkipFast, reconfiguredParam->bEnableTSkipFast, "tskip-fast=%d", reconfiguredParam->bEnableTSkipFast);
-    TOOLCMP(param->bEnableSignHiding, reconfiguredParam->bEnableSignHiding, "signhide=%d", reconfiguredParam->bEnableSignHiding);
-    TOOLCMP(param->bEnableFastIntra, reconfiguredParam->bEnableFastIntra, "fast-intra=%d", reconfiguredParam->bEnableFastIntra);
-    if (param->bEnableLoopFilter && (param->deblockingFilterBetaOffset != reconfiguredParam->deblockingFilterBetaOffset 
-        || param->deblockingFilterTCOffset != reconfiguredParam->deblockingFilterTCOffset))
-    {
-        sprintf(tmp, "deblock(tC=%d:B=%d)", param->deblockingFilterTCOffset, param->deblockingFilterBetaOffset);
-        appendtool(param, buf, sizeof(buf), tmp);
-    }
-    else
-        TOOLCMP(param->bEnableLoopFilter,  reconfiguredParam->bEnableLoopFilter, "deblock=%d", reconfiguredParam->bEnableLoopFilter);
-
-    TOOLCMP(param->bEnableTemporalMvp, reconfiguredParam->bEnableTemporalMvp, "tmvp=%d", reconfiguredParam->bEnableTemporalMvp);
-    TOOLCMP(param->bEnableEarlySkip, reconfiguredParam->bEnableEarlySkip, "early-skip=%d", reconfiguredParam->bEnableEarlySkip);
+    TOOLCMP(param->bEnableRectInter, reconfiguredParam->bEnableRectInter, "rect=%d", reconfiguredParam->bEnableRectInter);
+    TOOLCMP(param->maxNumMergeCand, reconfiguredParam->maxNumMergeCand, "max-merge=%d", reconfiguredParam->maxNumMergeCand);
+    TOOLCMP(param->bIntraInBFrames, reconfiguredParam->bIntraInBFrames, "b-intra=%d", reconfiguredParam->bIntraInBFrames);
     x265_log(param, X265_LOG_INFO, "tools:%s\n", buf);
 }
 
