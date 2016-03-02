@@ -60,8 +60,8 @@ struct LookaheadTLD
 
     LookaheadTLD()
     {
+        me.init(X265_CSP_I400);
         me.setQP(X265_LOOKAHEAD_QP);
-        me.init(X265_HEX_SEARCH, 1, X265_CSP_I400);
         for (int i = 0; i < 4; i++)
             wbuffer[i] = NULL;
         widthInCU = heightInCU = ncu = paddedLines = 0;

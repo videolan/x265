@@ -111,10 +111,8 @@ MotionEstimate::MotionEstimate()
     chromaSatd = NULL;
 }
 
-void MotionEstimate::init(int method, int refine, int csp)
+void MotionEstimate::init(int csp)
 {
-    searchMethod = method;
-    subpelRefine = refine;
     fencPUYuv.create(FENC_STRIDE, csp);
 }
 
@@ -162,7 +160,7 @@ MotionEstimate::~MotionEstimate()
 }
 
 /* Called by lookahead, luma only, no use of PicYuv */
-void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset, int pwidth, int pheight)
+void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset, int pwidth, int pheight, const int method, const int refine)
 {
     partEnum = partitionFromSizes(pwidth, pheight);
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
@@ -175,13 +173,17 @@ void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset,
     blockOffset = offset;
     absPartIdx = ctuAddr = -1;
 
+    /* Search params */
+    searchMethod = method;
+    subpelRefine = refine;
+
     /* copy PU block into cache */
     primitives.pu[partEnum].copy_pp(fencPUYuv.m_buf[0], FENC_STRIDE, fencY + offset, stride);
     X265_CHECK(!bChromaSATD, "chroma distortion measurements impossible in this code path\n");
 }
 
 /* Called by Search::predInterSearch() or --pme equivalent, chroma residual might be considered */
-void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPartIdx, int puPartIdx, int pwidth, int pheight)
+void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPartIdx, int puPartIdx, int pwidth, int pheight, const int method, const int refine)
 {
     partEnum = partitionFromSizes(pwidth, pheight);
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
@@ -191,6 +193,10 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
     sad_x4 = primitives.pu[partEnum].sad_x4;
 
     chromaSatd = primitives.chroma[fencPUYuv.m_csp].pu[partEnum].satd;
+
+    /* Set search characteristics */
+    searchMethod = method;
+    subpelRefine = refine;
 
     /* Enable chroma residual cost if subpelRefine level is greater than 2 and chroma block size
      * is an even multiple of 4x4 pixels (indicated by non-null chromaSatd pointer) */
