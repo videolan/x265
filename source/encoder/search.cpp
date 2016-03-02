@@ -73,7 +73,6 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
 {
     uint32_t maxLog2CUSize = g_log2Size[param.maxCUSize];
     m_param = &param;
-    m_bEnableRDOQ = !!param.rdoqLevel;
     m_bFrameParallel = param.frameNumThreads > 1;
     m_numLayers = g_log2Size[param.maxCUSize] - 2;
 
@@ -296,6 +295,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
     uint32_t sizeIdx    = log2TrSize - 2;
     bool mightNotSplit  = log2TrSize <= depthRange[1];
     bool mightSplit     = (log2TrSize > depthRange[0]) && (bAllowSplit || !mightNotSplit);
+    bool bEnableRDOQ  = !!m_param->rdoqLevel;
 
     /* If maximum RD penalty, force spits at TU size 32x32 if SPS allows TUs of 16x16 */
     if (m_param->rdPenalty == 2 && m_slice->m_sliceType != I_SLICE && log2TrSize == 5 && depthRange[0] <= 4)
@@ -336,7 +336,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
         coeff_t* coeffY       = m_rqt[qtLayer].coeffRQT[0] + coeffOffsetY;
 
         // store original entropy coding status
-        if (m_bEnableRDOQ)
+        if (bEnableRDOQ)
             m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSize, true);
 
         primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
@@ -487,6 +487,7 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
     uint32_t fullDepth = cuGeom.depth + tuDepth;
     uint32_t log2TrSize = cuGeom.log2CUSize - tuDepth;
     uint32_t tuSize = 1 << log2TrSize;
+    bool bEnableRDOQ = !!m_param->rdoqLevel;
 
     X265_CHECK(tuSize <= MAX_TS_SIZE, "transform skip is only possible at 4x4 TUs\n");
 
@@ -525,7 +526,7 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
     // store original entropy coding status
     m_entropyCoder.store(m_rqt[fullDepth].rqtRoot);
 
-    if (m_bEnableRDOQ)
+    if (bEnableRDOQ)
         m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSize, true);
 
     int checkTransformSkip = 1;
@@ -782,6 +783,7 @@ void Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDept
 {
     CUData& cu = mode.cu;
     uint32_t log2TrSize = cuGeom.log2CUSize - tuDepth;
+    bool bEnableRDOQ = !!m_param->rdoqLevel;
 
     if (tuDepth < cu.m_tuDepth[absPartIdx])
     {
@@ -812,7 +814,7 @@ void Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDept
         tuDepthC--;
     }
 
-    if (m_bEnableRDOQ)
+    if (bEnableRDOQ)
         m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSizeC, false);
 
     bool checkTransformSkip = m_slice->m_pps->bTransformSkipEnabled && log2TrSizeC <= MAX_LOG2_TS_SIZE && !cu.m_tqBypass[0];
@@ -2840,6 +2842,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
     CUData& cu = mode.cu;
     uint32_t depth = cuGeom.depth + tuDepth;
     uint32_t log2TrSize = cuGeom.log2CUSize - tuDepth;
+    bool bEnableRDOQ = !!m_param->rdoqLevel;
 
     bool bCheckSplit = log2TrSize > depthRange[0];
     bool bCheckFull = log2TrSize <= depthRange[1];
@@ -2897,7 +2900,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         cu.setTUDepthSubParts(tuDepth, absPartIdx, depth);
         cu.setTransformSkipSubParts(0, TEXT_LUMA, absPartIdx, depth);
 
-        if (m_bEnableRDOQ)
+        if (bEnableRDOQ)
             m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSize, true);
 
         const pixel* fenc = fencYuv->getLumaAddr(absPartIdx);
@@ -3011,7 +3014,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
                     cu.setTransformSkipPartRange(0, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
 
-                    if (m_bEnableRDOQ && (chromaId != TEXT_CHROMA_V))
+                    if (bEnableRDOQ && (chromaId != TEXT_CHROMA_V))
                         m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSizeC, false);
 
                     fenc = fencYuv->getChromaAddr(chromaId, absPartIdxC);
@@ -3112,7 +3115,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
             cu.setTransformSkipSubParts(1, TEXT_LUMA, absPartIdx, depth);
 
-            if (m_bEnableRDOQ)
+            if (bEnableRDOQ)
                 m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSize, true);
 
             fenc = fencYuv->getLumaAddr(absPartIdx);
@@ -3180,7 +3183,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
                     cu.setTransformSkipPartRange(1, (TextType)chromaId, absPartIdxC, tuIterator.absPartIdxStep);
 
-                    if (m_bEnableRDOQ && (chromaId != TEXT_CHROMA_V))
+                    if (bEnableRDOQ && (chromaId != TEXT_CHROMA_V))
                         m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSizeC, false);
 
                     fenc = fencYuv->getChromaAddr(chromaId, absPartIdxC);
