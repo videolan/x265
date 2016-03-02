@@ -100,7 +100,7 @@ public:
     ~Quant();
 
     /* one-time setup */
-    bool init(int rdoqLevel, double psyScale, const ScalingList& scalingList, Entropy& entropy);
+    bool init(double psyScale, const ScalingList& scalingList, Entropy& entropy);
     bool allocNoiseReduction(const x265_param& param);
 
     /* CU setup */
