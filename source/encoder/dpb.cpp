@@ -146,8 +146,8 @@ void DPB::prepareEncode(Frame *newFrame)
     // Mark pictures in m_piclist as unreferenced if they are not included in RPS
     applyReferencePictureSet(&slice->m_rps, pocCurr);
 
-    slice->m_numRefIdx[0] = X265_MIN(m_maxRefL0, slice->m_rps.numberOfNegativePictures); // Ensuring L0 contains just the -ve POC
-    slice->m_numRefIdx[1] = X265_MIN(m_maxRefL1, slice->m_rps.numberOfPositivePictures);
+    slice->m_numRefIdx[0] = X265_MIN(newFrame->m_param->maxNumReferences, slice->m_rps.numberOfNegativePictures); // Ensuring L0 contains just the -ve POC
+    slice->m_numRefIdx[1] = X265_MIN(newFrame->m_param->bBPyramid ? 2 : 1, slice->m_rps.numberOfPositivePictures);
     slice->setRefPicList(m_picList);
 
     X265_CHECK(slice->m_sliceType != B_SLICE || slice->m_numRefIdx[1], "B slice without L1 references (non-fatal)\n");

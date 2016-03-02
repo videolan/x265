@@ -39,8 +39,6 @@ public:
 
     int                m_lastIDR;
     int                m_pocCRA;
-    int                m_maxRefL0;
-    int                m_maxRefL1;
     int                m_bOpenGOP;
     bool               m_bRefreshPending;
     bool               m_bTemporalSublayer;
@@ -54,8 +52,6 @@ public:
         m_pocCRA = 0;
         m_bRefreshPending = false;
         m_frameDataFreeList = NULL;
-        m_maxRefL0 = param->maxNumReferences;
-        m_maxRefL1 = param->bBPyramid ? 2 : 1;
         m_bOpenGOP = param->bOpenGOP;
         m_bTemporalSublayer = !!param->bEnableTemporalSubLayers;
     }
