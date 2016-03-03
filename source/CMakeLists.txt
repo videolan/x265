@@ -617,3 +617,6 @@ if(ENABLE_ASSEMBLY AND NOT XCODE)
         add_subdirectory(test)
     endif()
 endif()
+
+set(PLATFORM_LIBS ${PLATFORM_LIBS} CACHE LIST "List of platform libraries from
+x265")
