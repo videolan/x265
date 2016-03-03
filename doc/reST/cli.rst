@@ -1668,10 +1668,13 @@ VUI fields must be manually specified.
 	a string which is parsed when the stream header SEI are emitted. The
 	string format is "G(%hu,%hu)B(%hu,%hu)R(%hu,%hu)WP(%hu,%hu)L(%u,%u)"
 	where %hu are unsigned 16bit integers and %u are unsigned 32bit
-	integers. The SEI includes X,Y display primaries for RGB channels,
-	white point X,Y and max,min luminance values. (HDR)
+	integers. The SEI includes X,Y display primaries for RGB channels
+	and white point (WP) in units of 0.00002 and max,min luminance (L)
+	values in units of 0.0001 candela per meter square. (HDR)
 
-	Example for D65P3 1000-nits:
+	Example for a P3D65 1000-nits monitor, where G(x=0.264, y=0.690),
+	B(x=0.150, y=0.060), R(x=0.680, y=0.320), WP(x=0.3127, y=0.3290),
+	L(max=1000, min=0.0001):
 
 		G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)
 
@@ -1680,14 +1683,20 @@ VUI fields must be manually specified.
 
 .. option:: --max-cll <string>
 
-	Maximum content light level and maximum frame average light level as
-	required by the Consumer Electronics Association 861.3 specification.
+	Maximum content light level (MaxCLL) and maximum frame average light
+	level (MaxFALL) as required by the Consumer Electronics Association
+	861.3 specification.
 
 	Specified as a string which is parsed when the stream header SEI are
 	emitted. The string format is "%hu,%hu" where %hu are unsigned 16bit
 	integers. The first value is the max content light level (or 0 if no
 	maximum is indicated), the second value is the maximum picture
 	average light level (or 0). (HDR)
+
+	Example for MaxCLL=1000 candela per square meter, MaxFALL=400
+	candela per square meter:
+
+		--max-cll “1000,400”
 
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
