@@ -48,6 +48,8 @@ PicYuv::PicYuv()
     m_avgLumaLevel = 0;
     m_stride = 0;
     m_strideC = 0;
+    m_hChromaShift = 0;
+    m_vChromaShift = 0;
 }
 
 bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)

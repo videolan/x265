@@ -880,75 +880,50 @@ static void calcHDRStats_c(pixel *srcY, pixel* srcU, pixel* srcV, intptr_t strid
     uint64_t sumLuma = 0;
     pixel rgb[3];
 
-    if (!hShift && !vShift) /* YUV444 */
+    for (int r = 0; r < height >> vShift; r++)
     {
-        for (int r = 0; r < height; r++)
+        for (int c = 0; c < width >> hShift; c++)
         {
-            for (int c = 0; c < width; c++)
+            pixel y = 0, cb = 0, cr = 0;
+            /* Clip luma of source picture to max and min, only if they are specified. Average luma values for RGB conversions */
+            if (!hShift && !vShift) /* YUV444 */
             {
-                /* Clip luma of source picture to max and min */
-                srcY[c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[c]);
-
-                /* Rec 2020 Yuv to RGB */
-                for (int i = 0; i < 3; i++)
-                    rgb[i] = (pixel) (srcY[c] * g_YUVtoRGB_BT2020[i][0] + srcU[c] * g_YUVtoRGB_BT2020[i][1] + srcV[c] * g_YUVtoRGB_BT2020[i][2]);
-                /* maxCLL and maxFALL */
-                maxLumaLevel = X265_MAX(maxLumaLevel, X265_MAX(rgb[0], X265_MAX(rgb[1], rgb[2])));
-                sumLuma += maxLumaLevel;
+                y = srcY[c] = maxPix ? x265_clip3((pixel)minPix, (pixel)maxPix, srcY[c]) : X265_MAX(minPix, srcY[c]);
+                cb = srcU[c]; cr = srcV[c];
             }
-            srcY += stride; srcU += strideC; srcV += strideC;
+            else if (hShift && !vShift) /* YUV422 */
+            {
+                srcY[2*c] = maxPix ? x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c]) : X265_MAX(minPix, srcY[2*c]);
+                srcY[2*c + 1] = maxPix ? x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c + 1]) : X265_MAX(minPix, srcY[2*c + 1]);
+                y = (srcY[2*c] + srcY[2*c + 1]) >> 1;
+                cb = srcU[c]; cr = srcV[c];
+            }
+            else if (hShift && vShift) /* YUV420 */
+            {
+                srcY[2*c] = maxPix ? x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c]) : X265_MAX(minPix, srcY[2*c]);
+                srcY[2*c + 1] = maxPix ? x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c + 1]) : X265_MAX(minPix, srcY[2*c + 1]);
+                srcY[stride + 2*c] = maxPix ? x265_clip3((pixel)minPix, (pixel)maxPix, srcY[stride + 2*c]) : X265_MAX(minPix, srcY[stride + 2*c]);
+                srcY[stride + 2*c + 1] = maxPix ? x265_clip3((pixel)minPix, (pixel)maxPix, srcY[stride + 2*c + 1]) : X265_MAX(minPix, srcY[stride + 2*c + 1]);
+                y = (srcY[2*c] + srcY[2*c + 1] + srcY[stride + 2*c] + srcY[stride + 2*c + 1]) >> 2;
+                cb = srcU[c]; cr = srcV[c];
+            }
+            else if (!strideC) /* YUV400 */
+            {
+                y = srcY[c] = maxPix ? x265_clip3((pixel)minPix, (pixel)maxPix, srcY[c]) : X265_MAX(minPix, srcY[c]);
+                cb = cr = 0;
+            }
+            /* Rec 2020 Yuv to RGB */
+            for (int i = 0; i < 3; i++)
+                rgb[i] = (pixel) (y * g_YUVtoRGB_BT2020[i][0] + cb * g_YUVtoRGB_BT2020[i][1] + cr * g_YUVtoRGB_BT2020[i][2]);
+            /* maxCLL and maxFALL */
+            maxLumaLevel = X265_MAX(maxLumaLevel, X265_MAX(rgb[0], X265_MAX(rgb[1], rgb[2])));
+            sumLuma += maxLumaLevel;
         }
-    }
-    else if (hShift && !vShift) /* YUV422 */
-    {
-        for (int r = 0; r < height; r++)
+        srcY += stride << vShift; 
+        if (strideC)
         {
-            for (int c = 0; c < width >> hShift; c++)
-            {
-                srcY[2*c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c]);
-                srcY[2*c + 1] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c + 1]);
-                pixel y = (srcY[2*c] + srcY[2*c + 1]) >> 1;
-                for (int i = 0; i < 3; i++)
-                    rgb[i] = (pixel)(y * g_YUVtoRGB_BT2020[i][0] + srcU[c] * g_YUVtoRGB_BT2020[i][1] + srcV[c] * g_YUVtoRGB_BT2020[i][2]);
-                maxLumaLevel = X265_MAX(maxLumaLevel, X265_MAX(rgb[0], X265_MAX(rgb[1], rgb[2])));
-                sumLuma += maxLumaLevel;
-            }
-            srcY += stride; srcU += strideC; srcV += strideC;
-        }
-    }
-    else if (hShift && vShift) /* YUV420 */
-    {
-        for (int r = 0; r < height >> vShift; r++)
-        {
-            for (int c = 0; c < width >> vShift; c++)
-            {
-                srcY[2*c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c]);
-                srcY[2*c + 1] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c + 1]);
-                srcY[stride + 2*c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[stride + 2*c]);
-                srcY[stride + 2*c + 1] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[stride + 2*c + 1]);
-                pixel y = (srcY[2*c] + srcY[2*c + 1] + srcY[stride + 2*c] + srcY[stride + 2*c + 1]) >> 2;
-                for (int i = 0; i < 3; i++)
-                    rgb[i] = (pixel) (y * g_YUVtoRGB_BT2020[i][0] + srcU[c] * g_YUVtoRGB_BT2020[i][1] + srcV[c] * g_YUVtoRGB_BT2020[i][2]);
-                maxLumaLevel = X265_MAX(maxLumaLevel, X265_MAX(rgb[0], X265_MAX(rgb[1], rgb[2])));
-                sumLuma += maxLumaLevel;
-            }
-            srcY += (stride << 1); srcU += strideC; srcV += strideC;
-        }
-    }
-    else if (!strideC) /* YUV400 */
-    {
-        for (int r = 0; r < height; r++)
-        {
-            for (int c = 0; c < width; c++)
-            {
-                srcY[c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[c]);
-                for (int i = 0; i < 3; i++)
-                    rgb[i] = (pixel) (srcY[c] * g_YUVtoRGB_BT2020[i][0]);
-                /* maxCLL and maxFALL */
-                maxLumaLevel = X265_MAX(maxLumaLevel, X265_MAX(rgb[0], X265_MAX(rgb[1], rgb[2])));
-                sumLuma += maxLumaLevel;
-            }
-            srcY += stride;
+            srcU += strideC;
+            srcV += strideC;
         }
     }
     *outsum = sumLuma;
