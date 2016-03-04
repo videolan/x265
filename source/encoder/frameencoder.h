@@ -129,7 +129,7 @@ public:
     Event                    m_done;
     Event                    m_completionEvent;
     int                      m_localTldIdx;
-
+    bool                     m_reconfigure; /* reconfigure in progress */
     volatile bool            m_threadActive;
     volatile bool            m_bAllRowsStop;
     volatile int             m_completionCount;

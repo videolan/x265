@@ -41,6 +41,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param);
 FrameEncoder::FrameEncoder()
 {
     m_prevOutputTime = x265_mdate();
+    m_reconfigure = false;
     m_isFrameEncoder = true;
     m_threadActive = true;
     m_slicetypeWaitTime = 0;
@@ -104,6 +105,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     m_param = top->m_param;
     m_numRows = numRows;
     m_numCols = numCols;
+    m_reconfigure = false;
     m_filterRowDelay = ((m_param->bEnableSAO && m_param->bSaoNonDeblocked)
                         || (!m_param->bEnableLoopFilter && m_param->bEnableSAO)) ?
                         2 : (m_param->bEnableSAO || m_param->bEnableLoopFilter ? 1 : 0);

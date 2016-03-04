@@ -55,7 +55,7 @@ using namespace X265_NS;
 Encoder::Encoder()
 {
     m_aborted = false;
-    m_reconfigured = false;
+    m_reconfigure = false;
     m_encodedFrameNum = 0;
     m_pocLast = -1;
     m_curEncoder = 0;
@@ -528,7 +528,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_dpb->m_freeList.empty())
         {
             inFrame = new Frame;
-            x265_param* p = m_reconfigured? m_latestParam : m_param;
+            x265_param* p = m_reconfigure ? m_latestParam : m_param;
             if (inFrame->create(p, pic_in->quantOffsets))
             {
                 /* the first PicYuv created is asked to generate the CU and block unit offset
@@ -594,7 +594,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_userData  = pic_in->userData;
         inFrame->m_pts       = pic_in->pts;
         inFrame->m_forceqp   = pic_in->forceqp;
-        inFrame->m_param     = m_reconfigured ? m_latestParam : m_param;
+        inFrame->m_param     = m_reconfigure ? m_latestParam : m_param;
         
         if (pic_in->quantOffsets != NULL)
         {
@@ -818,16 +818,36 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             frameEnc = m_lookahead->getDecidedPicture();
         if (frameEnc && !pass)
         {
+            if (curEncoder->m_reconfigure)
+            {
+                /* One round robin cycle of FE reconfigure is complete */
+                if (m_reconfigure)
+                {
+                    /* Safe to copy m_latestParam to Encoder::m_param, encoder reconfigure complete */
+                    memcpy (m_param, m_latestParam, sizeof(x265_param));
+                    m_reconfigure = false;
+                }
+                /* Reset current FEs to default */
+                curEncoder->m_param = m_param;
+                curEncoder->m_reconfigure = false;
+            }
+            else
+            {
+                /* Initiate reconfigure for this FE if necessary */
+                curEncoder->m_param = m_reconfigure ? m_latestParam : m_param;
+                curEncoder->m_reconfigure = m_reconfigure;
+            }
             /* give this frame a FrameData instance before encoding */
             if (m_dpb->m_frameDataFreeList)
             {
                 frameEnc->m_encData = m_dpb->m_frameDataFreeList;
                 m_dpb->m_frameDataFreeList = m_dpb->m_frameDataFreeList->m_freeListNext;
                 frameEnc->reinit(m_sps);
+                frameEnc->m_param = m_reconfigure ? m_latestParam : m_param;
             }
             else
             {
-                frameEnc->allocEncodeData(m_param, m_sps);
+                frameEnc->allocEncodeData(m_reconfigure ? m_latestParam : m_param, m_sps);
                 Slice* slice = frameEnc->m_encData->m_slice;
                 slice->m_sps = &m_sps;
                 slice->m_pps = &m_pps;
