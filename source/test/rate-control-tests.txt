@@ -25,6 +25,11 @@ sita_1920x1080_30.yuv,--preset superfast --bitrate 3000 --vbv-bufsize 3000 --vbv
 
 
 # multi-pass rate control tests
+sita_1920x1080_30.yuv, --preset ultrafast --crf 20 --no-cutree --no-scenecut --keyint 50 --no-open-gop --pass 1 --vbv-bufsize 7000 --vbv-maxrate 5000, --preset ultrafast --crf 20 --no-cutree --no-scenecut --keyint 50 --no-open-gop --pass 2 --vbv-bufsize 7000 --vbv-maxrate 5000
+sita_1920x1080_30.yuv, --preset medium --crf 20 --no-cutree --no-scenecut --keyint 50 --no-open-gop --pass 1 --vbv-bufsize 7000 --vbv-maxrate 5000, --preset medium --crf 20 --no-cutree --no-scenecut --keyint 50 --no-open-gop --pass 2 --vbv-bufsize 7000 --vbv-maxrate 5000
+sintel_trailer_2k_480p24.y4m, --preset medium --crf 18 --no-cutree --no-scenecut --no-open-gop --keyint 50 --vbv-bufsize 1200 --vbv-maxrate 1000 --pass 1, --preset medium --crf 18 --no-cutree --no-scenecut --no-open-gop --keyint 50 --vbv-bufsize 1200 --vbv-maxrate 1000 --pass 2
+sintel_trailer_2k_480p24.y4m, --preset veryslow --crf 18 --no-cutree --no-scenecut --no-open-gop --keyint 50 --vbv-bufsize 1200 --vbv-maxrate 1000 --pass 1, --preset veryslow --crf 18 --no-cutree --no-scenecut --no-open-gop --keyint 50 --vbv-bufsize 1200 --vbv-maxrate 1000 --pass 2
+ten_teaser_3840x2160_50_10bit.yuv, --preset medium --crf 25 --no-cutree --no-open-gop --no-scenecut --keyint 50 --vbv-maxrate 10000 --vbv-bufsize 12000 --pass 1, --preset medium --crf 25 --no-cutree --no-open-gop --no-scenecut --keyint 50 --vbv-maxrate 10000 --vbv-bufsize 12000 --pass 2
 big_buck_bunny_360p24.y4m,--preset slow --crf 40 --pass 1 -f 5000,--preset slow --bitrate 200 --pass 2 -f 5000
 big_buck_bunny_360p24.y4m,--preset medium --bitrate 700 --pass 1 -F4 --slow-firstpass -f 5000 ,--preset medium --bitrate 700 --vbv-bufsize 900 --vbv-maxrate 700 --pass 2 -F4 -f 5000
 112_1920x1080_25.yuv,--preset fast --bitrate 1000 --vbv-maxrate 1000 --vbv-bufsize 1000 --strict-cbr --pass 1 -F4,--preset fast --bitrate 1000 --vbv-maxrate 3000 --vbv-bufsize 3000 --pass 2 -F4
