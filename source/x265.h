@@ -1113,6 +1113,9 @@ typedef struct x265_param
          * (QG) size. Allowed values are 64, 32, 16 provided it falls within the
          * inclusuve range [maxCUSize, minCUSize]. Experimental, default: maxCUSize */
         uint32_t qgSize;
+
+        /* internally enable if tune grain is set */
+        int      bEnableGrain;
     } rc;
 
     /*== Video Usability Information ==*/

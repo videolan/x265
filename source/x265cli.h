@@ -143,6 +143,8 @@ static const struct option long_options[] =
     { "qp",             required_argument, NULL, 'q' },
     { "aq-mode",        required_argument, NULL, 0 },
     { "aq-strength",    required_argument, NULL, 0 },
+    { "rc-grain",             no_argument, NULL, 0 },
+    { "no-rc-grain",          no_argument, NULL, 0 },
     { "ipratio",        required_argument, NULL, 0 },
     { "pbratio",        required_argument, NULL, 0 },
     { "qcomp",          required_argument, NULL, 0 },
@@ -376,6 +378,7 @@ static void showHelp(x265_param *param)
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
     H0("   --qg-size <int>               Specifies the size of the quantization group (64, 32, 16). Default %d\n", param->rc.qgSize);
     H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
+    H0("   --[no-]rc-grain               Enable ratecontrol mode to handle grains specifically. turned on with tune grain. Default %d\n", OPT(param->rc.bEnableGrain));
     H1("   --ipratio <float>             QP factor between I and P. Default %.2f\n", param->rc.ipFactor);
     H1("   --pbratio <float>             QP factor between P and B. Default %.2f\n", param->rc.pbFactor);
     H1("   --qcomp <float>               Weight given to predicted complexity. Default %.2f\n", param->rc.qCompress);

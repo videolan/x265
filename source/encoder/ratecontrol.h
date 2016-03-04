@@ -126,7 +126,7 @@ public:
     bool   m_isVbv;
     bool   m_isCbr;
     bool   m_singleFrameVbv;
-
+    bool   m_isGrainEnabled;
     bool   m_isAbrReset;
     int    m_lastAbrResetPoc;
 
@@ -141,7 +141,8 @@ public:
     double m_vbvMaxRate;       /* in kbps */
     double m_rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
     double m_rateFactorMaxDecrement; /* don't allow RF below (this value). */
-
+    double m_avgPFrameQp;
+    bool   m_isFirstMiniGop;
     Predictor m_pred[4];       /* Slice predictors to preidct bits for each Slice type - I,P,Bref and B */
     int64_t m_leadingNoBSatd;
     int     m_predType;       /* Type of slice predictors to be used - depends on the slice type */
@@ -178,7 +179,7 @@ public:
     bool    m_isPatternPresent;
     bool    m_isSceneTransition;
     int     m_lastPredictorReset;
-
+    double m_qpToEncodedBits[QP_MAX_MAX];
     /* a common variable on which rateControlStart, rateControlEnd and rateControUpdateStats waits to
      * sync the calls to these functions. For example
      * -F2:
@@ -274,6 +275,7 @@ protected:
     bool   vbv2Pass(uint64_t allAvailableBits, int frameCount, int startPos);
     bool   findUnderflow(double *fills, int *t0, int *t1, int over, int framesCount);
     bool   fixUnderflow(int t0, int t1, double adjustment, double qscaleMin, double qscaleMax);
+    double tuneQScaleForGrain(double rcOverflow);
 };
 }
 #endif // ifndef X265_RATECONTROL_H

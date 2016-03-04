@@ -1416,7 +1416,16 @@ Quality, rate control and rate distortion options
 
 	The maximum single adjustment in QP allowed to rate control. Default
 	4
+	
+.. option:: --rc-grain, --no-rc-grain
 
+   Enables a specialised ratecontrol algorithm for film grain content. This 
+   parameter strictly minimises QP fluctuations within and across frames 
+   and removes pulsing of grain. By default, it is disabled. 
+   Turned on when --tune grain is applied. 
+   It is highly recommended that this is used through the tune grain feature
+   where other param options are also tuned to improve the grains.
+   
 .. option:: --qblur <float>
 
 	Temporally blur quants. Default 0.5

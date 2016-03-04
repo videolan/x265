@@ -1773,10 +1773,18 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "Analysis load/save options incompatible with pmode/pme, Disabling pmode/pme\n");
         p->bDistributeMotionEstimation = p->bDistributeModeAnalysis = 0;
     }
+
     if (p->analysisMode && p->rc.cuTree)
     {
         x265_log(p, X265_LOG_WARNING, "Analysis load/save options works only with cu-tree off, Disabling cu-tree\n");
         p->rc.cuTree = 0;
+    }
+
+    if (p->rc.bEnableGrain)
+    {
+        x265_log(p, X265_LOG_WARNING, "Rc Grain removes qp fluctuations caused by aq/cutree, Disabling aq,cu-tree\n");
+        p->rc.cuTree = 0;
+        p->rc.aqMode = 0;
     }
 
     if (p->bDistributeModeAnalysis && (p->limitReferences >> 1) && 1)

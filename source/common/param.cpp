@@ -222,6 +222,7 @@ void x265_param_default(x265_param* param)
     param->rc.zones = NULL;
     param->rc.bEnableSlowFirstPass = 0;
     param->rc.bStrictCbr = 0;
+    param->rc.bEnableGrain = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -454,16 +455,12 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(tune, "grain"))
         {
-            param->deblockingFilterBetaOffset = -2;
-            param->deblockingFilterTCOffset = -2;
-            param->bIntraInBFrames = 0;
-            param->rdoqLevel = 2;
-            param->psyRdoq = 10.0;
-            param->psyRd = 0.5;
             param->rc.ipFactor = 1.1;
-            param->rc.pbFactor = 1.1;
-            param->rc.aqStrength = 0.3;
-            param->rc.qCompress = 0.8;
+            param->rc.pbFactor = 1.0;
+            param->rc.cuTree = 0;
+            param->rc.aqMode = 0;
+            param->rc.qpStep = 1.0;
+            param->rc.bEnableGrain = 1;
         }
         else
             return -1;
@@ -759,6 +756,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         p->rc.qp = atoi(value);
         p->rc.rateControlMode = X265_RC_CQP;
     }
+    OPT("rc-grain") p->rc.bEnableGrain = atobool(value);
     OPT("zones")
     {
         p->rc.zoneCount = 1;
