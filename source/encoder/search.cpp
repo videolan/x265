@@ -2017,9 +2017,12 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
     int mvpIdx = selectMVP(interMode.cu, pu, amvp, list, ref);
     MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
 
-    MV lmv = getLowresMV(interMode.cu, pu, list, ref);
-    if (lmv.notZero())
-        mvc[numMvc++] = lmv;
+    if (!m_param->analysisMode) /* Prevents load/save outputs from diverging if lowresMV is not available */
+    {
+        MV lmv = getLowresMV(interMode.cu, pu, list, ref);
+        if (lmv.notZero())
+            mvc[numMvc++] = lmv;
+    }
 
     setSearchRange(interMode.cu, mvp, m_param->searchRange, mvmin, mvmax);
 
@@ -2201,9 +2204,12 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                     MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
 
-                    MV lmv = getLowresMV(cu, pu, list, ref);
-                    if (lmv.notZero())
-                        mvc[numMvc++] = lmv;
+                    if (!m_param->analysisMode) /* Prevents load/save outputs from diverging when lowresMV is not available */
+                    {
+                        MV lmv = getLowresMV(cu, pu, list, ref);
+                        if (lmv.notZero())
+                            mvc[numMvc++] = lmv;
+                    }
 
                     setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
                     int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv);
