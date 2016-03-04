@@ -54,7 +54,7 @@ void FrameFilter::destroy()
 
 void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t numCols)
 {
-    m_param = top->m_param;
+    m_param = frame->m_param;
     m_frameEncoder = frame;
     m_numRows = numRows;
     m_numCols = numCols;
