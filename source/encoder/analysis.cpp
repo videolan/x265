@@ -74,7 +74,6 @@ Analysis::Analysis()
 {
     m_reuseInterDataCTU = NULL;
     m_reuseRef = NULL;
-    m_reuseMv = NULL;
 }
 bool Analysis::create(ThreadLocalData *tld)
 {
@@ -148,7 +147,6 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         int numPredDir = m_slice->isInterP() ? 1 : 2;
         m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
         m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
-        m_reuseMv = &m_reuseInterDataCTU->mv[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
     }
     ProfileCUScope(ctu, totalCTUTime, totalCTUs);
 
@@ -2085,9 +2083,6 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             {
                 bestME[i].ref = *m_reuseRef;
                 m_reuseRef++;
-
-                bestME[i].mv = *m_reuseMv;
-                m_reuseMv++;
             }
         }
     }
@@ -2110,16 +2105,11 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
         uint32_t numPU = interMode.cu.getNumPartInter(0);
         for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
         {
-            PredictionUnit pu(interMode.cu, cuGeom, puIdx);
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                if (bestME[i].ref >= 0)
-                    *m_reuseMv = getLowresMV(interMode.cu, pu, i, bestME[i].ref);
-
                 *m_reuseRef = bestME[i].ref;
                 m_reuseRef++;
-                m_reuseMv++;
             }
         }
     }
@@ -2142,9 +2132,6 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
             {
                 bestME[i].ref = *m_reuseRef;
                 m_reuseRef++;
-
-                bestME[i].mv = *m_reuseMv;
-                m_reuseMv++;
             }
         }
     }
@@ -2158,16 +2145,11 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
         uint32_t numPU = interMode.cu.getNumPartInter(0);
         for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
         {
-            PredictionUnit pu(interMode.cu, cuGeom, puIdx);
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                if (bestME[i].ref >= 0)
-                    *m_reuseMv = getLowresMV(interMode.cu, pu, i, bestME[i].ref);
-
                 *m_reuseRef = bestME[i].ref;
                 m_reuseRef++;
-                m_reuseMv++;
             }
         }
     }

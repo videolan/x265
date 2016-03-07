@@ -119,8 +119,8 @@ public:
 protected:
     /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
     analysis_inter_data* m_reuseInterDataCTU;
-    MV*                  m_reuseMv;
     int32_t*             m_reuseRef;
+
     uint32_t m_splitRefIdx[4];
     uint64_t* cacheCost;
 
