@@ -2130,8 +2130,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     bestME[list].bits = bits;
                     bestME[list].mvCost  = mvCost;
                 }
-            }
-            bDoUnidir = false;
+                bDoUnidir = false;
+            }            
         }
         else if (m_param->bDistributeMotionEstimation)
         {

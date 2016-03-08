@@ -87,6 +87,7 @@ struct CUGeom
     uint32_t numPartitions; // Number of 4x4 blocks in the CU
     uint32_t flags;         // CU flags.
     uint32_t depth;         // depth of this CU relative from CTU
+    uint32_t geomRecurId;   // Unique geom id from 0 to MAX_GEOMS - 1 for every depth
 };
 
 struct MVField

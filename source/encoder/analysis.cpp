@@ -147,6 +147,9 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         int numPredDir = m_slice->isInterP() ? 1 : 2;
         m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
         m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
+        if (m_param->analysisMode == X265_ANALYSIS_SAVE)
+            for (int i = 0; i < X265_MAX_PRED_MODE_PER_CTU * numPredDir; i++)
+                m_reuseRef[i] = -1;
     }
     ProfileCUScope(ctu, totalCTUTime, totalCTUs);
 
@@ -2075,15 +2078,15 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU)
     {
+        int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
+        int index = 0;
+
         uint32_t numPU = interMode.cu.getNumPartInter(0);
         for (uint32_t part = 0; part < numPU; part++)
         {
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
-            {
-                bestME[i].ref = *m_reuseRef;
-                m_reuseRef++;
-            }
+                bestME[i].ref = m_reuseRef[refOffset + index++];
         }
     }
     predInterSearch(interMode, cuGeom, m_bChromaSa8d && (m_csp != X265_CSP_I400), refMask);
@@ -2102,15 +2105,15 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
     {
+        int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
+        int index = 0;
+
         uint32_t numPU = interMode.cu.getNumPartInter(0);
         for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
         {
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
-            {
-                *m_reuseRef = bestME[i].ref;
-                m_reuseRef++;
-            }
+                m_reuseRef[refOffset + index++] = bestME[i].ref;
         }
     }
 }
@@ -2124,15 +2127,15 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU)
     {
+        int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
+        int index = 0;
+
         uint32_t numPU = interMode.cu.getNumPartInter(0);
         for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
         {
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
-            {
-                bestME[i].ref = *m_reuseRef;
-                m_reuseRef++;
-            }
+                bestME[i].ref = m_reuseRef[refOffset + index++];
         }
     }
     predInterSearch(interMode, cuGeom, m_csp != X265_CSP_I400, refMask);
@@ -2142,15 +2145,15 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
 
     if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
     {
+        int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
+        int index = 0;
+
         uint32_t numPU = interMode.cu.getNumPartInter(0);
         for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
         {
             MotionData* bestME = interMode.bestME[puIdx];
             for (int32_t i = 0; i < numPredDir; i++)
-            {
-                *m_reuseRef = bestME[i].ref;
-                m_reuseRef++;
-            }
+                m_reuseRef[refOffset + index++] = bestME[i].ref;
         }
     }
 }
