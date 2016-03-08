@@ -2387,13 +2387,13 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
         bool is2passCrfChange = false;
         if (m_2pass)
         {
-            if (abs(curEncData.m_avgQpRc - rce->qpPrev) > 0.1)
+            if (fabs(curEncData.m_avgQpRc - rce->qpPrev) > 0.1)
             {
                 qpRef = rce->qpPrev;
                 is2passCrfChange = true;
             }
         }
-        if (is2passCrfChange || abs(qpRef - rce->qpNoVbv) > 0.5)
+        if (is2passCrfChange || fabs(qpRef - rce->qpNoVbv) > 0.5)
         {
             double crfFactor = rce->qRceq /x265_qp2qScale(qpRef);
             double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
