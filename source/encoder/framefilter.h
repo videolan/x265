@@ -127,7 +127,7 @@ public:
     void init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t numCols);
     void destroy();
 
-    void start(Frame *pic, Entropy& initState, int qp);
+    void start(Frame *pic, Entropy& initState);
 
     void processRow(int row);
     void processPostRow(int row);

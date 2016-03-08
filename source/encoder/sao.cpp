@@ -76,8 +76,6 @@ SAO::SAO()
     m_countPreDblk = NULL;
     m_offsetOrgPreDblk = NULL;
     m_refDepth = 0;
-    m_lumaLambda = 0;
-    m_chromaLambda = 0;
     m_param = NULL;
     m_clipTable = NULL;
     m_clipTableBase = NULL;
@@ -226,17 +224,10 @@ void SAO::allocSaoParam(SAOParam* saoParam) const
         saoParam->ctuParam[i] = new SaoCtuParam[m_numCuInHeight * m_numCuInWidth];
 }
 
-void SAO::startSlice(Frame* frame, Entropy& initState, int qp)
+void SAO::startSlice(Frame* frame, Entropy& initState)
 {
-    Slice* slice = frame->m_encData->m_slice;
-    int qpCb = qp;
-    if (m_param->internalCsp == X265_CSP_I420)
-        qpCb = x265_clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice->m_pps->chromaQpOffset[0]]);
-    else
-        qpCb = X265_MIN(qp + slice->m_pps->chromaQpOffset[0], QP_MAX_SPEC);
-    m_lumaLambda = x265_lambda2_tab[qp];
-    m_chromaLambda = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
     m_frame = frame;
+    Slice* slice = m_frame->m_encData->m_slice;
 
     switch (slice->m_sliceType)
     {
@@ -1197,7 +1188,22 @@ void SAO::rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus)
 
 void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 {
-    double lambda[3] = {m_lumaLambda, m_chromaLambda, m_chromaLambda};
+    Slice* slice = m_frame->m_encData->m_slice;
+//    int qp = slice->m_sliceQp;
+    const CUData* cu = m_frame->m_encData->getPicCTU(addr);
+    int qp = cu->m_qp[0];
+
+    double lambda[2] = {0.0};
+
+    int qpCb = qp;
+    if (m_param->internalCsp == X265_CSP_I420)
+        qpCb = x265_clip3(QP_MIN, QP_MAX_MAX, (int)g_chromaScale[qp + slice->m_pps->chromaQpOffset[0]]);
+    else
+        qpCb = X265_MIN(qp + slice->m_pps->chromaQpOffset[0], QP_MAX_SPEC);
+
+    lambda[0] = x265_lambda2_tab[qp];
+    lambda[1] = x265_lambda2_tab[qpCb]; // Use Cb QP for SAO chroma
+
     const bool allowMerge[2] = {(idxX != 0), (rowBaseAddr != 0)}; // left, up
 
     const int addrMerge[2] = {(idxX ? addr - 1 : -1), (rowBaseAddr ? addr - m_numCuInWidth : -1)};// left, up
@@ -1242,9 +1248,9 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
     saoStatsInitialOffset(chroma);
 
     double mergeDist[NUM_MERGE_MODE] = { 0.0 };
-    saoLumaComponentParamDist(saoParam, addr, mergeDist);
+    saoLumaComponentParamDist(saoParam, addr, mergeDist, lambda);
     if (chroma)
-        saoChromaComponentParamDist(saoParam, addr, mergeDist);
+        saoChromaComponentParamDist(saoParam, addr, mergeDist, lambda);
 
     if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
     {
@@ -1286,9 +1292,8 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
                     }
                 }
 
-                mergeDist[mergeIdx + 1] += ((double)estDist / lambda[plane]);
+                mergeDist[mergeIdx + 1] += ((double)estDist / lambda[!!plane]);
             }
-
 
             m_entropyCoder.load(m_rdContexts.cur);
             m_entropyCoder.resetBits();
@@ -1412,7 +1417,7 @@ inline int SAO::estIterOffset(int typeIdx, double lambda, int offset, int32_t co
     return bestOffset;
 }
 
-void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist)
+void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda)
 {
     int64_t bestDist = 0;
     int bestTypeIdx = -1;
@@ -1426,7 +1431,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
     m_entropyCoder.resetBits();
     m_entropyCoder.codeSaoType(0);
 
-    double dCostPartBest = m_entropyCoder.getNumberOfWrittenBits() * m_lumaLambda;
+    double dCostPartBest = m_entropyCoder.getNumberOfWrittenBits() * lambda[0];
 
     //EO distortion calculation
     for (int typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE - 1; typeIdx++)
@@ -1439,7 +1444,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
             int32_t& offsetOut = m_offset[0][typeIdx][classIdx];
 
             if (count)
-                offsetOut = estIterOffset(typeIdx, m_lumaLambda, offsetOut, count, offsetOrg, distBOClasses[0], costBOClasses[0]);
+                offsetOut = estIterOffset(typeIdx, lambda[0], offsetOut, count, offsetOrg, distBOClasses[0], costBOClasses[0]);
             else
                 offsetOut = 0;
 
@@ -1451,7 +1456,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
         m_entropyCoder.codeSaoOffsetEO(m_offset[0][typeIdx] + 1, typeIdx, 0);
 
         uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
-        double cost = (double)estDist + m_lumaLambda * (double)estRate;
+        double cost = (double)estDist + lambda[0] * (double)estRate;
 
         if (cost < dCostPartBest)
         {
@@ -1479,10 +1484,10 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
         int32_t& offsetOut = m_offset[0][SAO_BO][classIdx];
 
         distBOClasses[classIdx] = 0;
-        costBOClasses[classIdx] = m_lumaLambda;
+        costBOClasses[classIdx] = lambda[0];
 
         if (count)
-            offsetOut = estIterOffset(SAO_BO, m_lumaLambda, offsetOut, count, offsetOrg, distBOClasses[classIdx], costBOClasses[classIdx]);
+            offsetOut = estIterOffset(SAO_BO, lambda[0], offsetOut, count, offsetOrg, distBOClasses[classIdx], costBOClasses[classIdx]);
         else
             offsetOut = 0;
     }
@@ -1513,7 +1518,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
     m_entropyCoder.codeSaoOffsetBO(m_offset[0][SAO_BO] + bestClassBO, bestClassBO, 0);
 
     uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
-    double cost = (double)estDist + m_lumaLambda * (double)estRate;
+    double cost = (double)estDist + lambda[0] * (double)estRate;
 
     if (cost < dCostPartBest)
     {
@@ -1527,13 +1532,13 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
             lclCtuParam->offset[classIdx] = (int)m_offset[0][SAO_BO][classIdx + bestClassBO];
     }
 
-    mergeDist[0] = ((double)bestDist / m_lumaLambda);
+    mergeDist[0] = ((double)bestDist / lambda[0]);
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.codeSaoOffset(*lclCtuParam, 0);
     m_entropyCoder.store(m_rdContexts.temp);
 }
 
-void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist)
+void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda)
 {
     int64_t bestDist = 0;
     int bestTypeIdx = -1;
@@ -1548,7 +1553,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
     m_entropyCoder.resetBits();
     m_entropyCoder.codeSaoType(0);
 
-    double costPartBest = m_entropyCoder.getNumberOfWrittenBits() * m_chromaLambda;
+    double costPartBest = m_entropyCoder.getNumberOfWrittenBits() * lambda[1];
 
     //EO RDO
     for (int typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE - 1; typeIdx++)
@@ -1563,7 +1568,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
                 int32_t& offsetOut = m_offset[compIdx][typeIdx][classIdx];
 
                 if (count)
-                    offsetOut = estIterOffset(typeIdx, m_chromaLambda, offsetOut, count, offsetOrg, distBOClasses[0], costBOClasses[0]);
+                    offsetOut = estIterOffset(typeIdx, lambda[1], offsetOut, count, offsetOrg, distBOClasses[0], costBOClasses[0]);
                 else
                     offsetOut = 0;
 
@@ -1578,7 +1583,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
             m_entropyCoder.codeSaoOffsetEO(m_offset[compIdx + 1][typeIdx] + 1, typeIdx, compIdx + 1);
 
         uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
-        double cost = (double)(estDist[0] + estDist[1]) + m_chromaLambda * (double)estRate;
+        double cost = (double)(estDist[0] + estDist[1]) + lambda[1] * (double)estRate;
 
         if (cost < costPartBest)
         {
@@ -1615,10 +1620,10 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
             int32_t& offsetOut = m_offset[compIdx][SAO_BO][classIdx];
 
             distBOClasses[classIdx] = 0;
-            costBOClasses[classIdx] = m_chromaLambda;
+            costBOClasses[classIdx] = lambda[1];
 
             if (count)
-                offsetOut = estIterOffset(SAO_BO, m_chromaLambda, offsetOut, count, offsetOrg, distBOClasses[classIdx], costBOClasses[classIdx]);
+                offsetOut = estIterOffset(SAO_BO, lambda[1], offsetOut, count, offsetOrg, distBOClasses[classIdx], costBOClasses[classIdx]);
             else
                 offsetOut = 0;
         }
@@ -1648,7 +1653,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
         m_entropyCoder.codeSaoOffsetBO(m_offset[compIdx + 1][SAO_BO] + bestClassBO[compIdx], bestClassBO[compIdx], compIdx + 1);
 
     uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
-    double cost = (double)(estDist[0] + estDist[1]) + m_chromaLambda * (double)estRate;
+    double cost = (double)(estDist[0] + estDist[1]) + lambda[1] * (double)estRate;
 
     if (cost < costPartBest)
     {
@@ -1665,7 +1670,7 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
         }
     }
 
-    mergeDist[0] += ((double)bestDist / m_chromaLambda);
+    mergeDist[0] += ((double)bestDist / lambda[1]);
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.codeSaoOffset(*lclCtuParam[0], 1);
     m_entropyCoder.codeSaoOffset(*lclCtuParam[1], 2);

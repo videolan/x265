@@ -439,7 +439,7 @@ void FrameEncoder::compressFrame()
 
     m_initSliceContext.resetEntropy(*slice);
 
-    m_frameFilter.start(m_frame, m_initSliceContext, qp);
+    m_frameFilter.start(m_frame, m_initSliceContext);
 
     /* ensure all rows are blocked prior to initializing row CTU counters */
     WaveFront::clearEnabledRowMask();

@@ -114,10 +114,6 @@ public:
     int         m_refDepth;
     int         m_numNoSao[2];
 
-    double      m_lumaLambda;
-    double      m_chromaLambda;
-    /* TODO: No doubles for distortion */
-
     SAO();
 
     bool create(x265_param* param, int initCommon);
@@ -126,7 +122,7 @@ public:
 
     void allocSaoParam(SAOParam* saoParam) const;
 
-    void startSlice(Frame* pic, Entropy& initState, int qp);
+    void startSlice(Frame* pic, Entropy& initState);
     void resetStats();
 
     // CTU-based SAO process without slice granularity
@@ -138,8 +134,8 @@ public:
     void calcSaoStatsCu(int addr, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
 
-    void saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist);
-    void saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist);
+    void saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda);
+    void saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda);
 
     inline int estIterOffset(int typeIdx, double lambda, int offset, int32_t count, int32_t offsetOrg,
                              int& currentDistortionTableBo, double& currentRdCostTableBo);

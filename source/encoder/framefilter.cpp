@@ -103,7 +103,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
 
 }
 
-void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
+void FrameFilter::start(Frame *frame, Entropy& initState)
 {
     m_frame = frame;
 
@@ -113,7 +113,7 @@ void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
         for(int row = 0; row < m_numRows; row++)
         {
             if (m_param->bEnableSAO)
-                m_parallelFilter[row].m_sao.startSlice(frame, initState, qp);
+                m_parallelFilter[row].m_sao.startSlice(frame, initState);
 
             m_parallelFilter[row].m_lastCol.set(0);
             m_parallelFilter[row].m_allowedCol.set(0);
