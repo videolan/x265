@@ -117,9 +117,11 @@ public:
     Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
 
 protected:
-    /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
+    /* Analysis data for save/load mode, writes/reads data based on absPartIdx */
     analysis_inter_data* m_reuseInterDataCTU;
     int32_t*             m_reuseRef;
+    uint8_t*             m_reuseDepth;
+    uint8_t*             m_reuseModes;
 
     uint32_t m_splitRefIdx[4];
     uint64_t* cacheCost;

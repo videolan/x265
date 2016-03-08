@@ -147,6 +147,8 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         int numPredDir = m_slice->isInterP() ? 1 : 2;
         m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
         m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
+        m_reuseDepth = &m_reuseInterDataCTU->depth[ctu.m_cuAddr * ctu.m_numPartitions];
+        m_reuseModes = &m_reuseInterDataCTU->modes[ctu.m_cuAddr * ctu.m_numPartitions];
         if (m_param->analysisMode == X265_ANALYSIS_SAVE)
             for (int i = 0; i < X265_MAX_PRED_MODE_PER_CTU * numPredDir; i++)
                 m_reuseRef[i] = -1;
@@ -900,9 +902,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     bool foundSkip = false;
     if (m_param->analysisMode == X265_ANALYSIS_LOAD)
     {
-        uint8_t* reuseDepth = &m_reuseInterDataCTU->depth[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        uint8_t* reuseModes = &m_reuseInterDataCTU->modes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        if (mightNotSplit && depth == reuseDepth[cuGeom.absPartIdx] && reuseModes[cuGeom.absPartIdx] == MODE_SKIP)
+        if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx] && m_reuseModes[cuGeom.absPartIdx] == MODE_SKIP)
         {
             md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
             md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -1388,9 +1388,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
     if (m_param->analysisMode == X265_ANALYSIS_LOAD)
     {
-        uint8_t* reuseDepth  = &m_reuseInterDataCTU->depth[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        uint8_t* reuseModes  = &m_reuseInterDataCTU->modes[parentCTU.m_cuAddr * parentCTU.m_numPartitions];
-        if (mightNotSplit && depth == reuseDepth[cuGeom.absPartIdx] && reuseModes[cuGeom.absPartIdx] == MODE_SKIP)
+        if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx] && m_reuseModes[cuGeom.absPartIdx] == MODE_SKIP)
         {
             md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
             md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
