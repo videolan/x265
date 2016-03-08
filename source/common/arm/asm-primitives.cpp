@@ -43,6 +43,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // copy_count
+        p.cu[BLOCK_4x4].copy_cnt     = PFX(copy_cnt_4_neon);
+        p.cu[BLOCK_8x8].copy_cnt     = PFX(copy_cnt_8_neon);
+        p.cu[BLOCK_16x16].copy_cnt   = PFX(copy_cnt_16_neon);
+        p.cu[BLOCK_32x32].copy_cnt   = PFX(copy_cnt_32_neon);
+
         // filterPixelToShort
         p.pu[LUMA_4x4].convert_p2s   = PFX(filterPixelToShort_4x4_neon);
         p.pu[LUMA_4x8].convert_p2s   = PFX(filterPixelToShort_4x8_neon);

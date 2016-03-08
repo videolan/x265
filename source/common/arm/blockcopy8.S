@@ -352,3 +352,108 @@ function x265_blockfill_s_32x32_neon
 .endr
     bx              lr
 endfunc
+
+// uint32_t copy_count(int16_t* coeff, const int16_t* residual, intptr_t resiStride)
+function x265_copy_cnt_4_neon
+    lsl             r2, #1
+    mov             r12, #8
+    veor            d4, d4
+.rept 2
+    vld1.s16        {d0}, [r1], r2
+    vld1.s16        {d1}, [r1], r2
+    vclz.i16        d2, d0
+    vclz.i16        d3, d1
+    vshr.u16        q1, #4
+    vadd.u16        d2, d3
+    vadd.u16        d4, d2
+    vst1.s16        {d0}, [r0], r12
+    vst1.s16        {d1}, [r0], r12
+.endr
+    vpadd.u16       d4, d4
+    vpadd.u16       d4, d4
+    vmov.u16        r12, d4[0]
+    rsb             r0, r12, #16
+    bx              lr
+endfunc
+
+function x265_copy_cnt_8_neon
+    lsl             r2, #1
+    mov             r12, #16
+    veor            q8, q8
+.rept 4
+    vld1.s16        {q0}, [r1], r2
+    vld1.s16        {q1}, [r1], r2
+    vclz.i16        q2, q0
+    vclz.i16        q3, q1
+    vshr.u16        q2, #4
+    vshr.u16        q3, #4
+    vadd.u16        q2, q3
+    vadd.u16        q8, q2
+    vst1.s16        {q0}, [r0], r12
+    vst1.s16        {q1}, [r0], r12
+.endr
+    vadd.u16        d16, d17
+    vpadd.u16       d16, d16
+    vpadd.u16       d16, d16
+    vmov.u16        r12, d16[0]
+    rsb             r0, r12, #64
+    bx              lr
+endfunc
+
+function x265_copy_cnt_16_neon
+    lsl             r2, #1
+    mov             r12, #32
+    veor            q2, q2
+.rept 16
+    vld1.s16        {q0, q1}, [r1], r2
+    vst1.s16        {q0, q1}, [r0], r12
+    vclz.i16        q8, q0
+    vclz.i16        q9, q1
+    vshr.u16        q8, #4
+    vshr.u16        q9, #4
+    vadd.u16        q8, q9
+    vadd.u16        q2, q8
+.endr
+    vadd.u16        d4, d5
+    vpadd.u16       d4, d4
+    vpadd.u16       d4, d4
+
+    vmov.u16        r12, d4[0]
+    rsb             r0, r12, #256
+    bx              lr
+endfunc
+
+function x265_copy_cnt_32_neon
+    lsl             r2, #1
+    sub             r2, #32
+    mov             r12, #32
+    veor            q12, q12
+.rept 32
+    vld1.s16        {q0, q1}, [r1]!
+    vld1.s16        {q2, q3}, [r1], r2
+    vst1.s16        {q0, q1}, [r0]!
+    vst1.s16        {q2, q3}, [r0], r12
+
+    vclz.i16        q8, q0
+    vclz.i16        q9, q1
+    vclz.i16        q10, q2
+    vclz.i16        q11, q3
+
+    vshr.u16        q8, #4
+    vshr.u16        q9, #4
+    vshr.u16        q10, #4
+    vshr.u16        q11, #4
+
+    vadd.u16        q8, q9
+    vadd.u16        q10, q11
+    vadd.u16        q8, q10
+    vadd.u16        q12, q8
+.endr
+    vadd.u16        d24, d25
+    vpadd.u16       d24, d24
+    vpadd.u16       d24, d24
+
+    vmov.u16        r12, d24[0]
+    rsb             r0, r12, #1024
+    bx              lr
+endfunc
