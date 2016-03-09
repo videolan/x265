@@ -36,4 +36,5 @@ void x265_getResidual16_neon(const pixel* fenc, const pixel* pred, int16_t* resi
 void x265_getResidual32_neon(const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride);
 
 void x265_scale1D_128to64_neon(pixel *dst, const pixel *src);
+void x265_scale2D_64to32_neon(pixel* dst, const pixel* src, intptr_t stride);
 #endif // ifndef X265_PIXEL_UTIL_ARM_H

@@ -43,6 +43,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        //scale2D_64to32
+        p.scale2D_64to32  = PFX(scale2D_64to32_neon);
+
         // scale1D_128to64
         p.scale1D_128to64 = PFX(scale1D_128to64_neon);
 

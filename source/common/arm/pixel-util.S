@@ -647,6 +647,43 @@ function x265_scale1D_128to64_neon
     bx              lr
 endfunc
 
+// void scale2D_64to32(pixel* dst, const pixel* src, intptr_t stride)
+function x265_scale2D_64to32_neon
+    sub             r2, #32
+    mov             r3, #16
+loop_scale2D:
+    subs            r3, #1
+.rept 2
+    vld2.8          {q8, q9}, [r1]!
+    vld2.8          {q10, q11}, [r1], r2
+    vld2.8          {q12, q13}, [r1]!
+    vld2.8          {q14, q15}, [r1], r2
+
+    vaddl.u8        q0, d16, d18
+    vaddl.u8        q1, d17, d19
+    vaddl.u8        q2, d20, d22
+    vaddl.u8        q3, d21, d23
+
+    vaddl.u8        q8, d24, d26
+    vaddl.u8        q9, d25, d27
+    vaddl.u8        q10, d28, d30
+    vaddl.u8        q11, d29, d31
+
+    vadd.u16        q0, q8
+    vadd.u16        q1, q9
+    vadd.u16        q2, q10
+    vadd.u16        q3, q11
+
+    vrshrn.u16      d16, q0, #2
+    vrshrn.u16      d17, q1, #2
+    vrshrn.u16      d18, q2, #2
+    vrshrn.u16      d19, q3, #2
+    vst1.8          {q8, q9}, [r0]!
+.endr
+    bne             loop_scale2D
+    bx              lr
+endfunc
+
 function x265_pixel_planecopy_cp_neon
     push            {r4, r5, r6, r7}
     ldr             r4, [sp, #4 * 4]
