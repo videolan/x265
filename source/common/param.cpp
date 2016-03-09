@@ -459,7 +459,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->rc.pbFactor = 1.0;
             param->rc.cuTree = 0;
             param->rc.aqMode = 0;
-            param->rc.qpStep = 1.0;
+            param->rc.qpStep = 1;
             param->rc.bEnableGrain = 1;
         }
         else
