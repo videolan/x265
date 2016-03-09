@@ -627,6 +627,26 @@ loop_addps64:
     bx              lr
 endfunc
 
+// void scale1D_128to64(pixel *dst, const pixel *src)
+function x265_scale1D_128to64_neon 
+    mov             r12, #32
+.rept 2
+    vld2.u8         {q8, q9}, [r1]!
+    vld2.u8         {q10, q11}, [r1]!
+    vld2.u8         {q12, q13}, [r1]!
+    vld2.u8         {q14, q15}, [r1], r12
+
+    vrhadd.u8       q0, q8, q9
+    vrhadd.u8       q1, q10, q11
+    vrhadd.u8       q2, q12, q13
+    vrhadd.u8       q3, q14, q15
+
+    vst1.u8         {q0, q1}, [r0]!
+    vst1.u8         {q2, q3}, [r0], r12
+.endr
+    bx              lr
+endfunc
+
 function x265_pixel_planecopy_cp_neon
     push            {r4, r5, r6, r7}
     ldr             r4, [sp, #4 * 4]

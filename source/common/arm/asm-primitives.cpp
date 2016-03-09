@@ -43,6 +43,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // scale1D_128to64
+        p.scale1D_128to64 = PFX(scale1D_128to64_neon);
+
         // copy_count
         p.cu[BLOCK_4x4].copy_cnt     = PFX(copy_cnt_4_neon);
         p.cu[BLOCK_8x8].copy_cnt     = PFX(copy_cnt_8_neon);
