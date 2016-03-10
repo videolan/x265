@@ -1421,10 +1421,10 @@ Quality, rate control and rate distortion options
 
    Enables a specialised ratecontrol algorithm for film grain content. This 
    parameter strictly minimises QP fluctuations within and across frames 
-   and removes pulsing of grain. By default, it is disabled. 
-   Turned on when --tune grain is applied. 
-   It is highly recommended that this is used through the tune grain feature
-   where other param options are also tuned to improve the grains.
+   and removes pulsing of grain. Default disabled. 
+   Enabled when :option:'--tune' grain is applied. It is highly recommended 
+   that this option is used through the tune grain feature where a combination 
+   of param options are used to improve visual quality.
    
 .. option:: --qblur <float>
 
