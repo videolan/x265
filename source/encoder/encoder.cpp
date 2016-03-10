@@ -783,7 +783,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 if (m_rateControl->writeRateControlFrameStats(outFrame, &curEncoder->m_rce))
                     m_aborted = true;
 
-            if (pic_out && !m_param->rc.bStatRead)
+            if (pic_out && m_param->rc.bStatWrite)
             {
                 pic_out->rcData.qpaRc = outFrame->m_encData->m_avgQpRc;
                 pic_out->rcData.qRceq = curEncoder->m_rce.qRceq;

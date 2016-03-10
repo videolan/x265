@@ -874,7 +874,7 @@ bool RateControl::initPass2()
                         double step = 0;
                         if (endIndex + fps >= m_numEntries)
                         {
-                            m_start = endIndex - fps + 1;
+                            m_start = endIndex - (endIndex % fps);
                             return true;
                         }
                         for (int start = endIndex + 1; start <= endIndex + fps && start < m_numEntries; start++)
