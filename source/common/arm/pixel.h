@@ -163,4 +163,6 @@ void x265_pixel_add_ps_8x8_neon(pixel* a, intptr_t dstride, const pixel* b0, con
 void x265_pixel_add_ps_16x16_neon(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_add_ps_32x32_neon(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
 void x265_pixel_add_ps_64x64_neon(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
+
+void x265_pixel_planecopy_cp_neon(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 #endif // ifndef X265_I386_PIXEL_ARM_H

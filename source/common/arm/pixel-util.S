@@ -626,3 +626,55 @@ loop_addps64:
     pop             {r4, r5}
     bx              lr
 endfunc
+
+function x265_pixel_planecopy_cp_neon
+    push            {r4, r5, r6, r7}
+    ldr             r4, [sp, #4 * 4]
+    ldr             r5, [sp, #4 * 4 + 4]
+    ldr             r12, [sp, #4 * 4 + 8]
+    vdup.8          q2, r12
+    sub             r5, #1
+
+.loop_h:
+    mov             r6, r0
+    mov             r12, r2
+    eor             r7, r7
+.loop_w:
+    vld1.u8         {q0}, [r6]!
+    vshl.u8         q0, q0, q2
+    vst1.u8         {q0}, [r12]!
+
+    add             r7, #16
+    cmp             r7, r4
+    blt             .loop_w
+
+    add             r0, r1
+    add             r2, r3
+
+    subs             r5, #1
+    bgt             .loop_h
+
+// handle last row
+    mov             r5, r4
+    lsr             r5, #3
+
+.loopW8:
+    vld1.u8         d0, [r0]!
+    vshl.u8         d0, d0, d4
+    vst1.u8         d0, [r2]!
+    subs            r4, r4, #8
+    subs            r5, #1
+    bgt             .loopW8
+
+    mov             r5,#8
+    sub             r5, r4
+    sub             r0, r5
+    sub             r2, r5
+    vld1.u8         d0, [r0]
+    vshl.u8         d0, d0, d4
+    vst1.u8         d0, [r2]
+
+    pop             {r4, r5, r6, r7}
+    bx              lr
+endfunc
+

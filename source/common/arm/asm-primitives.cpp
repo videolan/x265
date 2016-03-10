@@ -286,6 +286,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_64x32].pixelavg_pp = PFX(pixel_avg_pp_64x32_neon);
         p.pu[LUMA_64x48].pixelavg_pp = PFX(pixel_avg_pp_64x48_neon);
         p.pu[LUMA_64x64].pixelavg_pp = PFX(pixel_avg_pp_64x64_neon);
+
+        // planecopy
+        p.planecopy_cp = PFX(pixel_planecopy_cp_neon);
+
     }
     if (cpuMask & X265_CPU_ARMV6)
     {
