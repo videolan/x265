@@ -180,7 +180,8 @@ changes made to the parameters for auto-detection and other reasons::
 	 *       used to modify encoder parameters.
 	 *      various parameters from x265_param are copied.
 	 *      this takes effect immediately, on whichever frame is encoded next;
-	 *      returns 0 on success, negative on parameter validation error.
+	 *      returns negative on parameter validation error, 0 on successful reconfigure
+	 *      and 1 when a reconfigure is already in progress.
 	 *
 	 *      not all parameters can be changed; see the actual function for a
 	 *      detailed breakdown.  since not all parameters can be changed, moving
