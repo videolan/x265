@@ -855,7 +855,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_4x4_PARTITIONS);
             }
 
-            curEncoder->m_rce.encodeOrder = m_encodedFrameNum++;
+            curEncoder->m_rce.encodeOrder = frameEnc->m_encodeOrder = m_encodedFrameNum++;
             if (m_bframeDelay)
             {
                 int64_t *prevReorderedPts = m_prevReorderedPts;
