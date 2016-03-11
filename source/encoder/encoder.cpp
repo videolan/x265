@@ -2165,3 +2165,27 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     }
 #undef X265_FWRITE
 }
+
+void Encoder::printReconfigureParams()
+{
+    if (!m_reconfigure)
+        return;
+    x265_param* oldParam = m_param;
+    x265_param* newParam = m_latestParam;
+    
+    x265_log(newParam,X265_LOG_INFO, "Reconfigured param options, input Frame: %d\n", m_encodedFrameNum + 1);
+
+    char tmp[40];
+#define TOOLCMP(COND1, COND2, STR)  if (COND1 != COND2) { sprintf(tmp, STR, COND1, COND2); x265_log(newParam, X265_LOG_INFO, tmp); }
+    TOOLCMP(oldParam->maxNumReferences, newParam->maxNumReferences, "ref=%d to %d; ");
+    TOOLCMP(oldParam->bEnableFastIntra, newParam->bEnableFastIntra, "fast-intra=%d to %d; ");
+    TOOLCMP(oldParam->bEnableEarlySkip, newParam->bEnableEarlySkip, "early-skip=%d to %d; ");
+    TOOLCMP(oldParam->searchMethod, newParam->searchMethod, "me=%d to %d; ");
+    TOOLCMP(oldParam->searchRange, newParam->searchRange, "merange=%d to %d; ");
+    TOOLCMP(oldParam->subpelRefine, newParam->subpelRefine, "subme= %d to %d; ");
+    TOOLCMP(oldParam->rdLevel, newParam->rdLevel, "rd=%d to %d; ");
+    TOOLCMP(oldParam->rdoqLevel, newParam->rdoqLevel, "rdoq=%d to %d; " );
+    TOOLCMP(oldParam->bEnableRectInter, newParam->bEnableRectInter, "rect=%d to %d; ");
+    TOOLCMP(oldParam->maxNumMergeCand, newParam->maxNumMergeCand, "max-merge=%d to %d; ");
+    TOOLCMP(oldParam->bIntraInBFrames, newParam->bIntraInBFrames, "b-intra=%d to %d; ");
+}

@@ -153,6 +153,8 @@ public:
 
     void printSummary();
 
+    void printReconfigureParams();
+
     char* statsString(EncStats&, char*);
 
     void configure(x265_param *param);

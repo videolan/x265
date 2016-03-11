@@ -1368,30 +1368,6 @@ void x265_print_params(x265_param* param)
     fflush(stderr);
 }
 
-void x265_print_reconfigured_params(x265_param* param, x265_param* reconfiguredParam)
-{
-    if (!param || !reconfiguredParam)
-        return;
-
-    x265_log(param,X265_LOG_INFO, "Reconfigured param options :\n");
-
-    char buf[80] = { 0 };
-    char tmp[40];
-#define TOOLCMP(COND1, COND2, STR, VAL)  if (COND1 != COND2) { sprintf(tmp, STR, VAL); appendtool(param, buf, sizeof(buf), tmp); }
-    TOOLCMP(param->maxNumReferences, reconfiguredParam->maxNumReferences, "ref=%d", reconfiguredParam->maxNumReferences);
-    TOOLCMP(param->bEnableFastIntra, reconfiguredParam->bEnableFastIntra, "fast-intra=%d", reconfiguredParam->bEnableFastIntra);
-    TOOLCMP(param->bEnableEarlySkip, reconfiguredParam->bEnableEarlySkip, "early-skip=%d", reconfiguredParam->bEnableEarlySkip);
-    TOOLCMP(param->searchMethod, reconfiguredParam->searchMethod, "me=%d", reconfiguredParam->searchMethod);
-    TOOLCMP(param->searchRange, reconfiguredParam->searchRange, "merange=%d", reconfiguredParam->searchRange);
-    TOOLCMP(param->subpelRefine, reconfiguredParam->subpelRefine, "subme= %d", reconfiguredParam->subpelRefine);
-    TOOLCMP(param->rdLevel, reconfiguredParam->rdLevel, "rd=%d", reconfiguredParam->rdLevel);
-    TOOLCMP(param->rdoqLevel, reconfiguredParam->rdoqLevel, "rdoq=%d", reconfiguredParam->rdoqLevel);
-    TOOLCMP(param->bEnableRectInter, reconfiguredParam->bEnableRectInter, "rect=%d", reconfiguredParam->bEnableRectInter);
-    TOOLCMP(param->maxNumMergeCand, reconfiguredParam->maxNumMergeCand, "max-merge=%d", reconfiguredParam->maxNumMergeCand);
-    TOOLCMP(param->bIntraInBFrames, reconfiguredParam->bIntraInBFrames, "b-intra=%d", reconfiguredParam->bIntraInBFrames);
-    x265_log(param, X265_LOG_INFO, "tools:%s\n", buf);
-}
-
 char *x265_param2string(x265_param* p)
 {
     char *buf, *s;

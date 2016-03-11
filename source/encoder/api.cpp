@@ -179,7 +179,7 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
     else
     {
         encoder->m_reconfigure = true;
-        x265_print_reconfigured_params(&save, encoder->m_latestParam);
+        encoder->printReconfigureParams();
     }
     return ret;
 }
