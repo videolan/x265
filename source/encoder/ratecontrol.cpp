@@ -1801,7 +1801,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             else if (m_framesDone == 0 && !m_isVbv && m_param->rc.rateControlMode == X265_RC_ABR)
             {
                 /* for ABR alone, clip the first I frame qp */
-                    lqmax =  m_lstep * m_isGrainEnabled ? x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX) :
+                    lqmax =  (m_lstep * m_isGrainEnabled) ? x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX) :
                         x265_qp2qScale(ABR_INIT_QP_MAX);
                     q = X265_MIN(lqmax, q);
             }
