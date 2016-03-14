@@ -79,7 +79,6 @@ bool Analysis::create(ThreadLocalData *tld)
 {
     m_tld = tld;
     m_bTryLossless = m_param->bCULossless && !m_param->bLossless && m_param->rdLevel >= 2;
-    m_bChromaSa8d = m_param->rdLevel >= 3;
 
     int costArrSize = 1;
     uint32_t maxDQPDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
@@ -130,6 +129,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
 {
     m_slice = ctu.m_slice;
     m_frame = &frame;
+    m_bChromaSa8d = m_param->rdLevel >= 3;
 
 #if _DEBUG || CHECKED_BUILD
     invalidateContexts(0);
