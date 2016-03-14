@@ -215,7 +215,6 @@ bool FrameEncoder::startCompressFrame(Frame* curFrame)
 {
     m_slicetypeWaitTime = x265_mdate() - m_prevOutputTime;
     m_frame = curFrame;
-    m_param = curFrame->m_param;
     m_sliceType = curFrame->m_lowres.sliceType;
     curFrame->m_encData->m_frameEncoderID = m_jpId;
     curFrame->m_encData->m_jobProvider = this;
