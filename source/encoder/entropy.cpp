@@ -306,7 +306,7 @@ void Entropy::codeScalingList(const ScalingList& scalingList)
 {
     for (int sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
     {
-        for (int listId = 0; listId < ScalingList::NUM_LISTS; listId++)
+        for (int listId = 0; listId < ScalingList::NUM_LISTS; listId += (sizeId == 3) ? 3 : 1)
         {
             int predList = scalingList.checkPredMode(sizeId, listId);
             WRITE_FLAG(predList < 0, "scaling_list_pred_mode_flag");
@@ -334,12 +334,7 @@ void Entropy::codeScalingList(const ScalingList& scalingList, uint32_t sizeId, u
     for (int i = 0; i < coefNum; i++)
     {
         data = src[scan[i]] - nextCoef;
-        nextCoef = src[scan[i]];
-        if (data > 127)
-            data = data - 256;
-        if (data < -128)
-            data = data + 256;
-
+        nextCoef = (nextCoef + data + 256) % 256;
         WRITE_SVLC(data,  "scaling_list_delta_coef");
     }
 }

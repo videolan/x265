@@ -57,7 +57,11 @@ const char MatrixType[4][6][20] =
     },
     {
         "INTRA32X32_LUMA",
+        "",
+        "",
         "INTER32X32_LUMA",
+        "",
+        "",
     },
 };
 const char MatrixType_DC[4][12][22] =
@@ -76,7 +80,11 @@ const char MatrixType_DC[4][12][22] =
     },
     {
         "INTRA32X32_LUMA_DC",
+        "",
+        "",
         "INTER32X32_LUMA_DC",
+        "",
+        "",
     },
 };
 
@@ -246,15 +254,15 @@ bool ScalingList::parseScalingList(const char* filename)
 
     char line[1024];
     int32_t *src = NULL;
+    fseek(fp, 0, 0);
 
     for (int sizeIdc = 0; sizeIdc < NUM_SIZES; sizeIdc++)
     {
         int size = X265_MIN(MAX_MATRIX_COEF_NUM, s_numCoefPerSize[sizeIdc]);
-        for (int listIdc = 0; listIdc < NUM_LISTS; listIdc++)
+        for (int listIdc = 0; listIdc < NUM_LISTS;  listIdc += (sizeIdc == 3) ? 3 : 1)
         {
             src = m_scalingListCoef[sizeIdc][listIdc];
 
-            fseek(fp, 0, 0);
             do
             {
                 char *ret = fgets(line, 1024, fp);
@@ -282,7 +290,6 @@ bool ScalingList::parseScalingList(const char* filename)
 
             if (sizeIdc > BLOCK_8x8)
             {
-                fseek(fp, 0, 0);
                 do
                 {
                     char *ret = fgets(line, 1024, fp);
@@ -310,7 +317,7 @@ bool ScalingList::parseScalingList(const char* filename)
     fclose(fp);
 
     m_bEnabled = true;
-    m_bDataPresent = !checkDefaultScalingList();
+    m_bDataPresent = true;
 
     return false;
 }
