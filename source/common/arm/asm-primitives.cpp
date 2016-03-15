@@ -43,6 +43,33 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // luma_hpp
+        p.pu[LUMA_4x4].luma_hpp   = PFX(interp_horiz_pp_4x4_neon);
+        p.pu[LUMA_4x8].luma_hpp   = PFX(interp_horiz_pp_4x8_neon);
+        p.pu[LUMA_4x16].luma_hpp  = PFX(interp_horiz_pp_4x16_neon);
+        p.pu[LUMA_8x4].luma_hpp   = PFX(interp_horiz_pp_8x4_neon);
+        p.pu[LUMA_8x8].luma_hpp   = PFX(interp_horiz_pp_8x8_neon);
+        p.pu[LUMA_8x16].luma_hpp  = PFX(interp_horiz_pp_8x16_neon);
+        p.pu[LUMA_8x32].luma_hpp  = PFX(interp_horiz_pp_8x32_neon);
+        p.pu[LUMA_12x16].luma_hpp = PFX(interp_horiz_pp_12x16_neon);
+        p.pu[LUMA_16x4].luma_hpp  = PFX(interp_horiz_pp_16x4_neon);
+        p.pu[LUMA_16x8].luma_hpp  = PFX(interp_horiz_pp_16x8_neon);
+        p.pu[LUMA_16x12].luma_hpp = PFX(interp_horiz_pp_16x12_neon);
+        p.pu[LUMA_16x16].luma_hpp = PFX(interp_horiz_pp_16x16_neon);
+        p.pu[LUMA_16x32].luma_hpp = PFX(interp_horiz_pp_16x32_neon);
+        p.pu[LUMA_16x64].luma_hpp = PFX(interp_horiz_pp_16x64_neon);
+        p.pu[LUMA_24x32].luma_hpp = PFX(interp_horiz_pp_24x32_neon);
+        p.pu[LUMA_32x8].luma_hpp  = PFX(interp_horiz_pp_32x8_neon);
+        p.pu[LUMA_32x16].luma_hpp = PFX(interp_horiz_pp_32x16_neon);
+        p.pu[LUMA_32x24].luma_hpp = PFX(interp_horiz_pp_32x24_neon);
+        p.pu[LUMA_32x32].luma_hpp = PFX(interp_horiz_pp_32x32_neon);
+        p.pu[LUMA_32x64].luma_hpp = PFX(interp_horiz_pp_32x64_neon);
+        p.pu[LUMA_48x64].luma_hpp = PFX(interp_horiz_pp_48x64_neon);
+        p.pu[LUMA_64x16].luma_hpp = PFX(interp_horiz_pp_64x16_neon);
+        p.pu[LUMA_64x32].luma_hpp = PFX(interp_horiz_pp_64x32_neon);
+        p.pu[LUMA_64x48].luma_hpp = PFX(interp_horiz_pp_64x48_neon);
+        p.pu[LUMA_64x64].luma_hpp = PFX(interp_horiz_pp_64x64_neon);
+
         // count nonzero
         p.cu[BLOCK_4x4].count_nonzero     = PFX(count_nonzero_4_neon);
         p.cu[BLOCK_8x8].count_nonzero     = PFX(count_nonzero_8_neon);

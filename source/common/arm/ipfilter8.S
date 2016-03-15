@@ -2,6 +2,7 @@
  * Copyright (C) 2016 x265 project
  *
  * Authors: Dnyaneshwar G <dnyaneshwar@multicorewareinc.com>
+ *          Radhakrishnan VR <radhakrishnan@multicorewareinc.com>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -706,6 +707,7 @@ function x265_filterPixelToShort_48x64_neon
     bgt         .loop_filterP2S_48x64
     bx          lr
 endfunc
+
 //**************luma_vpp************
 .macro LUMA_VPP_4xN h
 function x265_interp_8tap_vert_pp_4x\h\()_neon
@@ -2482,3 +2484,163 @@ CHROMA_VSP 64 48
 CHROMA_VSP 64 64
 CHROMA_VSP 48 64
 
+ // void interp_horiz_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
+.macro vextin8
+    pld             [r5]
+    vld1.8          {q3}, [r5]!
+    vext.8          d0, d6, d7, #1
+    vext.8          d1, d6, d7, #2
+    vext.8          d2, d6, d7, #3
+    vext.8          d3, d6, d7, #4
+    vext.8          d4, d6, d7, #5
+    vext.8          d5, d6, d7, #6
+    vext.8          d6, d6, d7, #7
+.endm
+
+.macro HPP_FILTER a b filterhpp
+    mov             r12,#32
+    mov             r6, #\b
+    sub             r3, #\a
+    mov             r8, #\a
+    cmp             r8, #4
+    beq             4f
+    cmp             r8, #12
+    beq             12f
+    b               6f
+4:
+    HPP_FILTER_4 \a \b \filterhpp
+    b               5f
+12:
+    HPP_FILTER_12 \a \b \filterhpp
+    b               5f
+6:
+loop2_hpp_\filterhpp\()_\a\()x\b:
+    mov             r7, #\a
+    lsr             r7, #3
+    mov             r5, r0
+    sub             r5, #4
+loop3_hpp_\filterhpp\()_\a\()x\b:
+    vextin8
+    \filterhpp
+    vdup.32         q8, r12
+    vadd.s32        q9, q8
+    vqshrun.s32     d0, q9, #6
+    vadd.s32        q10, q8
+    vqshrun.s32     d1, q10, #6
+    vqmovn.u16      d0, q0
+    vst1.u8         d0, [r2]!
+    subs            r7, #1
+    sub             r5, #8
+    bne             loop3_hpp_\filterhpp\()_\a\()x\b
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop2_hpp_\filterhpp\()_\a\()x\b
+5:
+.endm
+
+.macro HPP_FILTER_4 w h filterhpp
+loop4_hpp_\filterhpp\()_\w\()x\h:
+    mov             r5, r0
+    sub             r5, #4
+    vextin8
+    \filterhpp
+    vdup.32         q8, r12
+    vadd.s32        q9, q8
+    vqshrun.s32     d0, q9, #6
+    vadd.s32        q10, q8
+    vqshrun.s32     d1, q10, #6
+    vqmovn.u16      d0, q0
+    vst1.u32        {d0[0]}, [r2]!
+    sub             r5, #8
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop4_hpp_\filterhpp\()_\w\()x\h
+.endm
+
+.macro HPP_FILTER_12 w h filterhpp
+loop12_hpp_\filterhpp\()_\w\()x\h:
+    mov             r5, r0
+    sub             r5, #4
+    vextin8
+    \filterhpp
+    vdup.32         q8, r12
+    vadd.s32        q9, q8
+    vqshrun.s32     d0, q9, #6
+    vadd.s32        q10, q8
+    vqshrun.s32     d1, q10, #6
+    vqmovn.u16      d0, q0
+    vst1.u8         {d0}, [r2]!
+    sub             r5, #8
+
+    vextin8
+    \filterhpp
+    vdup.32         q8, r12
+    vadd.s32        q9, q8
+    vqshrun.s32     d0, q9, #6
+    vadd.s32        q10, q8
+    vqshrun.s32     d1, q10, #6
+    vqmovn.u16      d0, q0
+    vst1.u32        {d0[0]}, [r2]!
+    add             r2, r3
+    subs            r6, #1
+    add             r0, r1
+    bne             loop12_hpp_\filterhpp\()_\w\()x\h
+.endm
+
+.macro LUMA_HPP w h
+function x265_interp_horiz_pp_\w\()x\h\()_neon
+    push            {r4, r5, r6, r7, r8}
+    ldr             r4, [sp, #20]
+    cmp             r4, #0
+    beq             0f
+    cmp             r4, #1
+    beq             1f
+    cmp             r4, #2
+    beq             2f
+    cmp             r4, #3
+    beq             3f
+0:
+    HPP_FILTER  \w \h qpel_filter_0_32b
+    b               5f
+1:
+    HPP_FILTER  \w \h qpel_filter_1_32b
+    b               5f
+2:
+    HPP_FILTER  \w \h qpel_filter_2_32b
+    b               5f
+3:
+    HPP_FILTER  \w \h qpel_filter_3_32b
+    b               5f
+5:
+    pop             {r4, r5, r6, r7, r8}
+    bx              lr
+endfunc
+.endm
+
+LUMA_HPP    4 4
+LUMA_HPP    4 8
+LUMA_HPP    4 16
+LUMA_HPP    8 4
+LUMA_HPP    8 8
+LUMA_HPP    8 16
+LUMA_HPP    8 32
+LUMA_HPP    12 16
+LUMA_HPP    16 4
+LUMA_HPP    16 8
+LUMA_HPP    16 12
+LUMA_HPP    16 16
+LUMA_HPP    16 32
+LUMA_HPP    16 64
+LUMA_HPP    24 32
+LUMA_HPP    32 8
+LUMA_HPP    32 16
+LUMA_HPP    32 24
+LUMA_HPP    32 32
+LUMA_HPP    32 64
+LUMA_HPP    48 64
+LUMA_HPP    64 16
+LUMA_HPP    64 32
+LUMA_HPP    64 48
+LUMA_HPP    64 64
