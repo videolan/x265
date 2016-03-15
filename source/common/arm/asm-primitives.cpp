@@ -43,6 +43,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // count nonzero
+        p.cu[BLOCK_4x4].count_nonzero     = PFX(count_nonzero_4_neon);
+        p.cu[BLOCK_8x8].count_nonzero     = PFX(count_nonzero_8_neon);
+        p.cu[BLOCK_16x16].count_nonzero   = PFX(count_nonzero_16_neon);
+        p.cu[BLOCK_32x32].count_nonzero   = PFX(count_nonzero_32_neon);
+
         //scale2D_64to32
         p.scale2D_64to32  = PFX(scale2D_64to32_neon);
 
