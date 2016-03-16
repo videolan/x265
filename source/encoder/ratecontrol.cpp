@@ -1359,14 +1359,6 @@ double RateControl::getDiffLimitedQScale(RateControlEntry *rce, double q)
         m_accumPNorm = mask * (1 + m_accumPNorm);
     }
 
-    x265_zone* zone = getZone();
-    if (zone)
-    {
-        if (zone->bForceQp)
-            q = x265_qp2qScale(zone->qp);
-        else
-            q /= zone->bitrateFactor;
-    }
     return q;
 }
 double RateControl::countExpectedBits(int startPos, int endPos)
@@ -1688,6 +1680,14 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             }
             diff = m_predictedBits - (int64_t)rce->expectedBits;
             q = rce->newQScale;
+            x265_zone* zone = getZone();
+            if (zone)
+            {
+                if (zone->bForceQp)
+                    q = x265_qp2qScale(zone->qp);
+                else
+                    q /= zone->bitrateFactor;
+            }
             q /= x265_clip3(0.5, 2.0, (double)(abrBuffer - diff) / abrBuffer);
             if (m_expectedBitsSum > 0)
             {
@@ -1749,12 +1749,28 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             if (m_param->rc.rateControlMode == X265_RC_CRF)
             {
                 q = getQScale(rce, m_rateFactorConstant);
+                x265_zone* zone = getZone();
+                if (zone)
+                {
+                    if (zone->bForceQp)
+                        q = x265_qp2qScale(zone->qp);
+                    else
+                        q /= zone->bitrateFactor;
+                }
             }
             else
             {
                 if (!m_param->rc.bStatRead)
                     checkAndResetABR(rce, false);
                 double initialQScale = getQScale(rce, m_wantedBitsWindow / m_cplxrSum);
+                x265_zone* zone = getZone();
+                if (zone)
+                {
+                    if (zone->bForceQp)
+                        initialQScale = x265_qp2qScale(zone->qp);
+                    else
+                        initialQScale /= zone->bitrateFactor;
+                }
                 double tunedQScale = tuneAbrQScaleFromFeedback(initialQScale);
                 overflow = tunedQScale / initialQScale;
                 q = !m_partialResidualFrames? tunedQScale : initialQScale;
@@ -2359,15 +2375,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
         m_lastRceq = q;
         q /= rateFactor;
     }
-    
-    x265_zone* zone = getZone();
-    if (zone)
-    {
-        if (zone->bForceQp)
-            q = x265_qp2qScale(zone->qp);
-        else
-            q /= zone->bitrateFactor;
-    }
+
     return q;
 }
 
