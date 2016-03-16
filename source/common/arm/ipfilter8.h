@@ -51,4 +51,29 @@ void x265_filterPixelToShort_64x32_neon(const pixel* src, intptr_t srcStride, in
 void x265_filterPixelToShort_64x48_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 void x265_filterPixelToShort_64x64_neon(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride);
 
+void x265_interp_8tap_vert_pp_4x4_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_4x8_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_4x16_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_8x4_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_8x8_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_8x16_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_8x32_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_16x4_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_16x8_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_16x16_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_16x32_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_16x64_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_16x12_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_32x8_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_32x16_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_32x32_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_32x64_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_32x24_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_64x16_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_64x32_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_64x64_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_64x48_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_24x32_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_48x64_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
+void x265_interp_8tap_vert_pp_12x16_neon(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx);
 #endif // ifndef X265_IPFILTER8_ARM_H
