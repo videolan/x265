@@ -279,7 +279,7 @@ void determineLevel(const x265_param &param, VPS& vps)
 bool enforceLevel(x265_param& param, VPS& vps)
 {
     vps.numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : !!param.bframes;
-    vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 2, (uint32_t)param.maxNumReferences) + vps.numReorderPics);
+    vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 2, (uint32_t)param.maxNumReferences) + 1);
 
     /* no level specified by user, just auto-detect from the configuration */
     if (param.levelIdc <= 0)
@@ -379,7 +379,7 @@ bool enforceLevel(x265_param& param, VPS& vps)
     while (vps.maxDecPicBuffering > maxDpbSize && param.maxNumReferences > 1)
     {
         param.maxNumReferences--;
-        vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + vps.numReorderPics);
+        vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + 1);
     }
     if (param.maxNumReferences != savedRefCount)
         x265_log(&param, X265_LOG_INFO, "Lowering max references to %d to meet level requirement\n", param.maxNumReferences);
