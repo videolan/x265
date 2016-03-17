@@ -821,22 +821,17 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (curEncoder->m_reconfigure)
             {
                 /* One round robin cycle of FE reconfigure is complete */
-                if (m_reconfigure)
-                {
-                    /* Safe to copy m_latestParam to Encoder::m_param, encoder reconfigure complete */
-                    memcpy (m_param, m_latestParam, sizeof(x265_param));
-                    m_reconfigure = false;
-                }
-                /* Reset current FEs to default */
-                curEncoder->m_param = m_param;
-                curEncoder->m_reconfigure = false;
+                /* Safe to copy m_latestParam to Encoder::m_param, encoder reconfigure complete */
+                for (int frameEncId = 0; frameEncId < m_param->frameNumThreads; frameEncId++)
+                    m_frameEncoder[frameEncId]->m_reconfigure = false;
+                memcpy (m_param, m_latestParam, sizeof(x265_param));
+                m_reconfigure = false;
             }
-            else
-            {
-                /* Initiate reconfigure for this FE if necessary */
-                curEncoder->m_param = m_reconfigure ? m_latestParam : m_param;
-                curEncoder->m_reconfigure = m_reconfigure;
-            }
+
+            /* Initiate reconfigure for this FE if necessary */
+            curEncoder->m_param = m_reconfigure ? m_latestParam : m_param;
+            curEncoder->m_reconfigure = m_reconfigure;
+
             /* give this frame a FrameData instance before encoding */
             if (m_dpb->m_frameDataFreeList)
             {
@@ -2174,7 +2169,7 @@ void Encoder::printReconfigureParams()
     x265_param* oldParam = m_param;
     x265_param* newParam = m_latestParam;
     
-    x265_log(newParam, X265_LOG_INFO, "Reconfigured param options, input Frame: %d\n", m_encodedFrameNum + 1);
+    x265_log(newParam, X265_LOG_INFO, "Reconfigured param options, input Frame: %d\n", m_pocLast + 1);
 
     char tmp[40];
 #define TOOLCMP(COND1, COND2, STR)  if (COND1 != COND2) { sprintf(tmp, STR, COND1, COND2); x265_log(newParam, X265_LOG_INFO, tmp); }
