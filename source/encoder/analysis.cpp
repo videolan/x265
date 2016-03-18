@@ -432,6 +432,7 @@ void Analysis::processPmode(PMODE& pmode, Analysis& slave)
         slave.m_slice = m_slice;
         slave.m_frame = m_frame;
         slave.m_param = m_param;
+        slave.m_bChromaSa8d = m_param->rdLevel >= 3;
         slave.setLambdaFromQP(md.pred[PRED_2Nx2N].cu, m_rdCost.m_qp);
         slave.invalidateContexts(0);
         slave.m_rqt[pmode.cuGeom.depth].cur.load(m_rqt[pmode.cuGeom.depth].cur);
