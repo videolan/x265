@@ -1225,18 +1225,21 @@ int x265_set_globals(x265_param* param)
     uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
     uint32_t minLog2CUSize = (uint32_t)g_log2Size[param->minCUSize];
 
-    if (ATOMIC_INC(&g_ctuSizeConfigured) > 1)
+    Lock gLock;
+    ScopedLock sLock(gLock);
+
+    if (++g_ctuSizeConfigured > 1)
     {
         if (g_maxCUSize != param->maxCUSize)
         {
-            x265_log(param, X265_LOG_ERROR, "maxCUSize must be the same for all encoders in a single process");
-            return -1;
+            x265_log(param, X265_LOG_WARNING, "maxCUSize must be the same for all encoders in a single process");
         }
         if (g_maxCUDepth != maxLog2CUSize - minLog2CUSize)
         {
-            x265_log(param, X265_LOG_ERROR, "maxCUDepth must be the same for all encoders in a single process");
-            return -1;
+            x265_log(param, X265_LOG_WARNING, "maxCUDepth must be the same for all encoders in a single process");
         }
+        param->maxCUSize = g_maxCUSize;
+        return x265_check_params(param); /* Check again, since param may have changed */
     }
     else
     {
