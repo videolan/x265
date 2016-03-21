@@ -290,7 +290,7 @@ bool enforceLevel(x265_param& param, VPS& vps)
         level++;
     if (levels[level].levelIdc != param.levelIdc)
     {
-        x265_log(&param, X265_LOG_WARNING, "specified level %d does not exist\n", param.levelIdc);
+        x265_log(&param, X265_LOG_ERROR, "specified level %d does not exist\n", param.levelIdc);
         return false;
     }
 
@@ -313,24 +313,24 @@ bool enforceLevel(x265_param& param, VPS& vps)
         ok = false;
     if (!ok)
     {
-        x265_log(&param, X265_LOG_WARNING, "picture dimensions are out of range for specified level\n");
+        x265_log(&param, X265_LOG_ERROR, "picture dimensions are out of range for specified level\n");
         return false;
     }
     else if (samplesPerSec > l.maxLumaSamplesPerSecond)
     {
-        x265_log(&param, X265_LOG_WARNING, "frame rate is out of range for specified level\n");
+        x265_log(&param, X265_LOG_ERROR, "frame rate is out of range for specified level\n");
         return false;
     }
 
     if ((uint32_t)param.rc.vbvMaxBitrate > (highTier ? l.maxBitrateHigh : l.maxBitrateMain))
     {
         param.rc.vbvMaxBitrate = highTier ? l.maxBitrateHigh : l.maxBitrateMain;
-        x265_log(&param, X265_LOG_INFO, "lowering VBV max bitrate to %dKbps\n", param.rc.vbvMaxBitrate);
+        x265_log(&param, X265_LOG_WARNING, "lowering VBV max bitrate to %dKbps\n", param.rc.vbvMaxBitrate);
     }
     if ((uint32_t)param.rc.vbvBufferSize > (highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain))
     {
         param.rc.vbvBufferSize = highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain;
-        x265_log(&param, X265_LOG_INFO, "lowering VBV buffer size to %dKb\n", param.rc.vbvBufferSize);
+        x265_log(&param, X265_LOG_WARNING, "lowering VBV buffer size to %dKb\n", param.rc.vbvBufferSize);
     }
 
     switch (param.rc.rateControlMode)
@@ -339,12 +339,12 @@ bool enforceLevel(x265_param& param, VPS& vps)
         if ((uint32_t)param.rc.bitrate > (highTier ? l.maxBitrateHigh : l.maxBitrateMain))
         {
             param.rc.bitrate = l.maxBitrateHigh;
-            x265_log(&param, X265_LOG_INFO, "lowering target bitrate to High tier limit of %dKbps\n", param.rc.bitrate);
+            x265_log(&param, X265_LOG_WARNING, "lowering target bitrate to High tier limit of %dKbps\n", param.rc.bitrate);
         }
         break;
 
     case X265_RC_CQP:
-        x265_log(&param, X265_LOG_WARNING, "Constant QP is inconsistent with specifying a decoder level, no bitrate guarantee is possible.\n");
+        x265_log(&param, X265_LOG_ERROR, "Constant QP is inconsistent with specifying a decoder level, no bitrate guarantee is possible.\n");
         return false;
 
     case X265_RC_CRF:
@@ -382,13 +382,13 @@ bool enforceLevel(x265_param& param, VPS& vps)
         vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + 1);
     }
     if (param.maxNumReferences != savedRefCount)
-        x265_log(&param, X265_LOG_INFO, "Lowering max references to %d to meet level requirement\n", param.maxNumReferences);
+        x265_log(&param, X265_LOG_WARNING, "Lowering max references to %d to meet level requirement\n", param.maxNumReferences);
 
     /* For level 5 and higher levels, the value of CtbSizeY shall be equal to 32 or 64 */
     if (param.levelIdc >= 50 && param.maxCUSize < 32)
     {
         param.maxCUSize = 32;
-        x265_log(&param, X265_LOG_INFO, "Levels 5.0 and above require a maximum CTU size of at least 32, using --ctu 32\n");
+        x265_log(&param, X265_LOG_WARNING, "Levels 5.0 and above require a maximum CTU size of at least 32, using --ctu 32\n");
     }
 
     /* The value of NumPocTotalCurr shall be less than or equal to 8 */
@@ -396,7 +396,7 @@ bool enforceLevel(x265_param& param, VPS& vps)
     if (numPocTotalCurr > 8)
     {
         param.maxNumReferences = 8 - !!param.bframes;
-        x265_log(&param, X265_LOG_INFO, "Lowering max references to %d to meet numPocTotalCurr requirement\n", param.maxNumReferences);
+        x265_log(&param, X265_LOG_WARNING, "Lowering max references to %d to meet numPocTotalCurr requirement\n", param.maxNumReferences);
     }
 
     return true;
