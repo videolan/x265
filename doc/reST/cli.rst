@@ -1681,7 +1681,7 @@ VUI fields must be manually specified.
 	and white point (WP) in units of 0.00002 and max,min luminance (L)
 	values in units of 0.0001 candela per meter square. (HDR)
 
-	Example for a P3D65 1000-nits monitor, where G(x=0.264, y=0.690),
+	Example for a P3D65 1000-nits monitor, where G(x=0.265, y=0.690),
 	B(x=0.150, y=0.060), R(x=0.680, y=0.320), WP(x=0.3127, y=0.3290),
 	L(max=1000, min=0.0001):
 
