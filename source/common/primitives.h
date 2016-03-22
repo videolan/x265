@@ -185,7 +185,7 @@ typedef void (*saoCuStatsE3_t)(const int16_t *diff, const pixel *rec, intptr_t s
 typedef void (*sign_t)(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
-typedef void (*calcHDRStats_t)(pixel *srcY, pixel* srcU, pixel* srcV, intptr_t stride, intptr_t strideC, int width, int height, uint64_t *outsum, pixel *outMax, const pixel minPix, const pixel maxPix, const int hShift, const int vShift);
+typedef void (*calcHDRStats_t)(pixel *srcY, pixel* srcU, pixel* srcV, intptr_t stride, intptr_t strideC, int width, int height, double *outsum, pixel *outMax, const pixel minPix, const pixel maxPix, const int hShift, const int vShift);
 
 typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
 

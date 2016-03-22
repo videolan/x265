@@ -27,7 +27,6 @@
 #include "primitives.h"
 
 #define PIXEL_MIN 0
-#define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 
 namespace {
 
