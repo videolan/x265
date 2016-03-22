@@ -698,7 +698,7 @@ function x265_filterPixelToShort_48x64_neon
     bgt         .loop_filterP2S_48x64
     bx          lr
 endfunc
-
+//**************luma_vpp************
 .macro LUMA_VPP_4xN h
 function x265_interp_8tap_vert_pp_4x\h\()_neon
     push           {r4, r5, r6}
@@ -1606,4 +1606,333 @@ function x265_interp_8tap_vert_sp_12x16_neon
     pop             {r4, r5, r6, r7}
     bx              lr
 endfunc
+//**************luma_vps*****************
+.macro LUMA_VPS_4xN h
+function x265_interp_8tap_vert_ps_4x\h\()_neon
+    push           {r4, r5, r6}
+    ldr             r4, [sp, #4 * 3]
+    lsl             r3, #1
+    mov             r5, r4, lsl #6
+    mov             r4, r1, lsl #2
+    sub             r4, r1
+    sub             r0, r4
 
+    mov             r4, #8192
+    vdup.32         q8, r4
+    mov             r4, #\h
+
+.loop_vps_4x\h:
+    movrel          r12, g_lumaFilter
+    add             r12, r5
+    mov             r6, r0
+
+    pld [r6]
+    vld1.u32        d0[0], [r6], r1
+    pld [r6]
+    vld1.u32        d0[1], [r6], r1
+    pld [r6]
+    vld1.u32        d1[0], [r6], r1
+    pld [r6]
+    vld1.u32        d1[1], [r6], r1
+    pld [r6]
+    vld1.u32        d2[0], [r6], r1
+    pld [r6]
+    vld1.u32        d2[1], [r6], r1
+    pld [r6]
+    vld1.u32        d3[0], [r6], r1
+    pld [r6]
+    vld1.u32        d3[1], [r6], r1
+
+    veor.u8         q9, q9
+
+    vmovl.u8        q11, d0
+    vmovl.u16       q12, d22
+    vmovl.u16       q13, d23
+    vld1.s32        d20, [r12]!
+    vmov.s32        d21, d20
+    vmla.s32        q9, q12, q10
+    vld1.s32        d20, [r12]!
+    vmov.s32        d21, d20
+    vmla.s32        q9, q13, q10
+
+    vmovl.u8        q11, d1
+    vmovl.u16       q12, d22
+    vmovl.u16       q13, d23
+    vld1.s32        d20, [r12]!
+    vmov.s32        d21, d20
+    vmla.s32        q9, q12, q10
+    vld1.s32        d20, [r12]!
+    vmov.s32        d21, d20
+    vmla.s32        q9, q13, q10
+
+    vmovl.u8        q11, d2
+    vmovl.u16       q12, d22
+    vmovl.u16       q13, d23
+    vld1.s32        d20, [r12]!
+    vmov.s32        d21, d20
+    vmla.s32        q9, q12, q10
+    vld1.s32        d20, [r12]!
+    vmov.s32        d21, d20
+    vmla.s32        q9, q13, q10
+
+    vmovl.u8        q11, d3
+    vmovl.u16       q12, d22
+    vmovl.u16       q13, d23
+    vld1.s32        d20, [r12]!
+    vmov.s32        d21, d20
+    vmla.s32        q9, q12, q10
+    vld1.s32        d20, [r12]!
+    vmov.s32        d21, d20
+    vmla.s32        q9, q13, q10
+
+    vsub.s32        q9, q8
+    vqmovn.s32      d0, q9
+    vst1.u16        d0, [r2], r3
+
+    add             r0, r1
+    subs            r4, #1
+    bne             .loop_vps_4x\h
+
+    pop             {r4, r5, r6}
+    bx              lr
+    .ltorg
+endfunc
+.endm
+
+LUMA_VPS_4xN 4
+LUMA_VPS_4xN 8
+LUMA_VPS_4xN 16
+
+
+.macro FILTER_VPS a b filterv
+
+.loop_ps_\filterv\()_\a\()x\b:
+
+    mov             r7, r2
+    mov             r6, r0
+    eor             r8, r8
+
+.loop_ps_w8_\filterv\()_\a\()x\b:
+
+    add             r6, r0, r8
+
+    pld [r6]
+    vld1.u8         d0, [r6], r1
+    pld [r6]
+    vld1.u8         d1, [r6], r1
+    pld [r6]
+    vld1.u8         d2, [r6], r1
+    pld [r6]
+    vld1.u8         d3, [r6], r1
+    pld [r6]
+    vld1.u8         d4, [r6], r1
+    pld [r6]
+    vld1.u8         d5, [r6], r1
+    pld [r6]
+    vld1.u8         d6, [r6], r1
+    pld [r6]
+    vld1.u8         d7, [r6], r1
+
+    veor.u8         q9, q9
+    veor.u8         q10, q10
+
+   \filterv
+
+    mov             r12,#8192
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vqmovn.s32      d0, q9
+    vsub.s32        q10, q8
+    vqmovn.s32      d1, q10
+    vst1.u16         {q0}, [r7]!
+
+    add             r8, #8
+    cmp             r8, #\a
+    blt             .loop_ps_w8_\filterv\()_\a\()x\b
+
+    add             r0, r1
+    add             r2, r3
+    subs            r4, #1
+    bne             .loop_ps_\filterv\()_\a\()x\b 
+
+.endm 
+
+.macro LUMA_VPS  w h
+function x265_interp_8tap_vert_ps_\w\()x\h\()_neon
+
+    push            {r4, r5, r6, r7, r8}
+    ldr             r5, [sp, #4 * 5]
+    lsl             r3, #1
+    mov             r4, r1, lsl #2
+    sub             r4, r1
+    sub             r0, r4
+    mov             r4, #\h
+
+    cmp             r5, #0
+    beq              0f
+    cmp             r5, #1
+    beq              1f
+    cmp             r5, #2
+    beq              2f
+    cmp             r5, #3
+    beq              3f
+0:
+    FILTER_VPS  \w \h qpel_filter_0_32b
+    b            5f
+1:
+    FILTER_VPS  \w \h qpel_filter_1_32b
+    b            5f
+2:
+    FILTER_VPS  \w \h qpel_filter_2_32b
+    b            5f
+3:
+    FILTER_VPS  \w \h qpel_filter_3_32b
+    b            5f
+5:
+    pop             {r4, r5, r6, r7, r8}
+    bx              lr
+endfunc
+.endm
+
+LUMA_VPS 8 4
+LUMA_VPS 8 8
+LUMA_VPS 8 16
+LUMA_VPS 8 32
+LUMA_VPS 16 4
+LUMA_VPS 16 8
+LUMA_VPS 16 16
+LUMA_VPS 16 32
+LUMA_VPS 16 64
+LUMA_VPS 16 12
+LUMA_VPS 32 8
+LUMA_VPS 32 16
+LUMA_VPS 32 32
+LUMA_VPS 32 64
+LUMA_VPS 32 24
+LUMA_VPS 64 16
+LUMA_VPS 64 32
+LUMA_VPS 64 64
+LUMA_VPS 64 48
+LUMA_VPS 24 32
+LUMA_VPS 48 64
+
+function x265_interp_8tap_vert_ps_12x16_neon
+    push            {r4, r5, r6, r7}
+    lsl             r3, #1
+    ldr             r5, [sp, #4 * 4]
+    mov             r4, r1, lsl #2
+    sub             r4, r1
+    sub             r0, r4
+
+    mov             r4, #16
+.loop_vps_12x16:
+
+    mov             r6, r0
+    mov             r7, r2
+
+    pld [r6]
+    vld1.u8         d0, [r6], r1
+    pld [r6]
+    vld1.u8         d1, [r6], r1
+    pld [r6]
+    vld1.u8         d2, [r6], r1
+    pld [r6]
+    vld1.u8         d3, [r6], r1
+    pld [r6]
+    vld1.u8         d4, [r6], r1
+    pld [r6]
+    vld1.u8         d5, [r6], r1
+    pld [r6]
+    vld1.u8         d6, [r6], r1
+    pld [r6]
+    vld1.u8         d7, [r6], r1
+
+    veor.u8         q9, q9
+    veor.u8         q10, q10
+
+    cmp             r5,#0
+    beq              0f
+    cmp             r5,#1
+    beq              1f
+    cmp             r5,#2
+    beq              2f
+    cmp             r5,#3
+    beq              3f
+0:
+    qpel_filter_0_32b
+    b            5f
+1:
+    qpel_filter_1_32b
+    b            5f
+2:
+    qpel_filter_2_32b
+    b            5f
+3:
+    qpel_filter_3_32b
+    b            5f
+5:
+    mov             r12,#8192
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vqmovn.s32      d0, q9
+    vsub.s32        q10, q8
+    vqmovn.s32      d1, q10
+    vst1.u8         {q0}, [r7]!
+
+    add             r6, r0, #8
+
+    pld [r6]
+    vld1.u8         d0, [r6], r1
+    pld [r6]
+    vld1.u8         d1, [r6], r1
+    pld [r6]
+    vld1.u8         d2, [r6], r1
+    pld [r6]
+    vld1.u8         d3, [r6], r1
+    pld [r6]
+    vld1.u8         d4, [r6], r1
+    pld [r6]
+    vld1.u8         d5, [r6], r1
+    pld [r6]
+    vld1.u8         d6, [r6], r1
+    pld [r6]
+    vld1.u8         d7, [r6], r1
+
+    veor.u8         q9, q9
+    veor.u8         q10, q10
+
+    cmp             r5,#0
+    beq              0f
+    cmp             r5,#1
+    beq              1f
+    cmp             r5,#2
+    beq              2f
+    cmp             r5,#3
+    beq              3f
+0:
+    qpel_filter_0_32b
+    b            5f
+1:
+    qpel_filter_1_32b
+    b            5f
+2:
+    qpel_filter_2_32b
+    b            5f
+3:
+    qpel_filter_3_32b
+    b            5f
+5:
+    mov             r12,#8192
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vqmovn.s32      d0, q9
+    vst1.u8         d0, [r7]!
+
+    add             r0, r1
+    add             r2, r3
+    subs            r4, #1
+    bne             .loop_vps_12x16
+
+    pop             {r4, r5, r6, r7}
+    bx              lr
+endfunc

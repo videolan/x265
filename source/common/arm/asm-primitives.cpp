@@ -357,6 +357,32 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_24x32].luma_vsp   = PFX(interp_8tap_vert_sp_24x32_neon);
         p.pu[LUMA_48x64].luma_vsp   = PFX(interp_8tap_vert_sp_48x64_neon);
         p.pu[LUMA_12x16].luma_vsp   = PFX(interp_8tap_vert_sp_12x16_neon);
+
+        p.pu[LUMA_4x4].luma_vps     = PFX(interp_8tap_vert_ps_4x4_neon);
+        p.pu[LUMA_4x8].luma_vps     = PFX(interp_8tap_vert_ps_4x8_neon);
+        p.pu[LUMA_4x16].luma_vps    = PFX(interp_8tap_vert_ps_4x16_neon);
+        p.pu[LUMA_8x4].luma_vps     = PFX(interp_8tap_vert_ps_8x4_neon);
+        p.pu[LUMA_8x8].luma_vps     = PFX(interp_8tap_vert_ps_8x8_neon);
+        p.pu[LUMA_8x16].luma_vps    = PFX(interp_8tap_vert_ps_8x16_neon);
+        p.pu[LUMA_8x32].luma_vps    = PFX(interp_8tap_vert_ps_8x32_neon);
+        p.pu[LUMA_16x4].luma_vps    = PFX(interp_8tap_vert_ps_16x4_neon);
+        p.pu[LUMA_16x8].luma_vps    = PFX(interp_8tap_vert_ps_16x8_neon);
+        p.pu[LUMA_16x16].luma_vps   = PFX(interp_8tap_vert_ps_16x16_neon);
+        p.pu[LUMA_16x32].luma_vps   = PFX(interp_8tap_vert_ps_16x32_neon);
+        p.pu[LUMA_16x64].luma_vps   = PFX(interp_8tap_vert_ps_16x64_neon);
+        p.pu[LUMA_16x12].luma_vps   = PFX(interp_8tap_vert_ps_16x12_neon);
+        p.pu[LUMA_32x8].luma_vps    = PFX(interp_8tap_vert_ps_32x8_neon);
+        p.pu[LUMA_32x16].luma_vps   = PFX(interp_8tap_vert_ps_32x16_neon);
+        p.pu[LUMA_32x32].luma_vps   = PFX(interp_8tap_vert_ps_32x32_neon);
+        p.pu[LUMA_32x64].luma_vps   = PFX(interp_8tap_vert_ps_32x64_neon);
+        p.pu[LUMA_32x24].luma_vps   = PFX(interp_8tap_vert_ps_32x24_neon);
+        p.pu[LUMA_64x16].luma_vps   = PFX(interp_8tap_vert_ps_64x16_neon);
+        p.pu[LUMA_64x32].luma_vps   = PFX(interp_8tap_vert_ps_64x32_neon);
+        p.pu[LUMA_64x64].luma_vps   = PFX(interp_8tap_vert_ps_64x64_neon);
+        p.pu[LUMA_64x48].luma_vps   = PFX(interp_8tap_vert_ps_64x48_neon);
+        p.pu[LUMA_24x32].luma_vps   = PFX(interp_8tap_vert_ps_24x32_neon);
+        p.pu[LUMA_48x64].luma_vps   = PFX(interp_8tap_vert_ps_48x64_neon);
+        p.pu[LUMA_12x16].luma_vps   = PFX(interp_8tap_vert_ps_12x16_neon);
     }
     if (cpuMask & X265_CPU_ARMV6)
     {
