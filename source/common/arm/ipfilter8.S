@@ -31,7 +31,15 @@ g_lumaFilter:
 .word -1,-1,4,4,-10,-10,58,58,17,17,-5,-5,1,1,0,0
 .word -1,-1,4,4,-11,-11,40,40,40,40,-11,-11,4,4,-1,-1
 .word 0,0,1,1,-5,-5,17,17,58,58,-10,-10,4,4,-1,-1 
-
+g_chromaFilter:
+.word 0, 0, 64, 64, 0, 0, 0, 0
+.word -2, -2, 58, 58, 10, 10, -2, -2
+.word -4, -4, 54, 54, 16, 16, -2, -2
+.word -6, -6, 46, 46, 28, 28, -4, -4
+.word -4, -4, 36, 36, 36, 36, -4 ,-4
+.word -4, -4, 28, 28, 46, 46, -6, -6
+.word -2, -2, 16, 16, 54, 54, -4 ,-4
+.word -2, -2, 10, 10, 58, 58, -2, -2
 
 .text
 
@@ -1936,3 +1944,541 @@ function x265_interp_8tap_vert_ps_12x16_neon
     pop             {r4, r5, r6, r7}
     bx              lr
 endfunc
+
+//************chroma_vpp************
+
+.macro qpel_filter_chroma_0_32b
+    vmov.i16        d16, #64
+    vmull.s16       q6, d6, d16    // 64*b0
+    vmull.s16       q7, d7, d16   // 64*b1
+.endm
+
+.macro qpel_filter_chroma_1_32b
+    vmov.i16        d16, #58
+    vmov.i16        d17, #10
+    vmull.s16       q9, d6, d16     // 58*b0
+    vmull.s16       q10, d7, d16     // 58*b1
+    vmull.s16       q11, d8, d17    // 10*c0
+    vmull.s16       q12, d9, d17    // 10*c1
+    vadd.s16        q2, q5          //a +d
+    vshll.s16       q13, d4, #1     // 2 * (a0+d0)
+    vshll.s16       q14, d5, #1     // 2 * (a1+d1)
+    vsub.s32        q9, q13         // 58*b0 - 2 * (a0+d0)
+    vsub.s32        q10, q14         // 58*b1 - 2 * (a1+d1)
+    vadd.s32        q6, q9, q11         // 58*b0 - 2 * (a0+d0) +10*c0
+    vadd.s32        q7, q10, q12         // 58*b1 - 2 * (a1+d1) +10*c1
+.endm
+
+.macro qpel_filter_chroma_2_32b
+    vmov.i16        d16, #54
+    vmull.s16       q9, d6, d16     // 54*b0
+    vmull.s16       q10, d7, d16     // 54*b1
+    vshll.s16       q11, d4, #2     // 4 * a0
+    vshll.s16       q12, d5, #2     // 4 * a1
+    vshll.s16       q13, d8, #4     // 16 * c0
+    vshll.s16       q14, d9, #4     // 16 * c1
+    vshll.s16       q15, d10, #1     // 2 * d0
+    vshll.s16       q8, d11, #1     // 2 * d1
+
+    vadd.s32        q9, q13         // 54*b0 + 16 * c0
+    vadd.s32        q10, q14        // 54*b1 + 16 * c1
+    vadd.s32        q11, q15         // 4 * a0 +2 * d0
+    vadd.s32        q12, q8         // 4 * a1 +2 * d1
+    vsub.s32        q6, q9, q11     // 54*b0 + 16 * c0 - ( 4 * a0 +2 * d0)
+    vsub.s32        q7, q10, q12     // 54*b0 + 16 * c0 - ( 4 * a0 +2 * d0)
+.endm
+
+.macro qpel_filter_chroma_3_32b
+    vmov.i16        d16, #46
+    vmov.i16        d17, #28
+    vmull.s16       q9, d6, d16     // 46*b0
+    vmull.s16       q10, d7, d16     // 46*b1
+    vmull.s16       q11, d8, d17    // 28*c0
+    vmull.s16       q12, d9, d17    // 28*c1
+    vmov.i16        d17, #6
+    vshll.s16       q13, d10, #2     // 4 * d0
+    vshll.s16       q14, d11, #2     // 4 * d1
+    vmull.s16       q15, d4, d17    // 6*a0
+    vmull.s16       q8, d5, d17    // 6*a1
+    vadd.s32        q9, q11         // 46*b0 + 28*c0
+    vadd.s32        q10, q12        //  46*b1 + 28*c1
+    vadd.s32        q13, q15         // 4 * d0 + 6*a0
+    vadd.s32        q14, q8        // 4 * d1 + 6*a1
+    vsub.s32        q6, q9, q13         // 46*b0 + 28*c0 -(4 * d0 + 6*a0)
+    vsub.s32        q7, q10, q14         //  46*b1 + 28*c1 -(4 * d1 + 6*a1)
+.endm
+
+.macro qpel_filter_chroma_4_32b
+    vmov.i16        d16, #36
+    vadd.s16        q2, q5          // a +d
+    vadd.s16        q3, q4          // b+c
+    vmull.s16       q9, d6, d16     // 36*(b0 + c0)
+    vmull.s16       q10, d7, d16     // 36*(b1 + c1)
+    vshll.s16       q11, d4, #2     // 4 * (a0+d0)
+    vshll.s16       q12, d5, #2     // 4 * (a1+d1)
+    vsub.s32        q6, q9, q11         // 36*(b0 + c0) - ( 4 * (a0+d0))
+    vsub.s32        q7, q10, q12         // 36*(b1 + c1) - ( 4 * (a1+d1))
+.endm
+
+.macro qpel_filter_chroma_5_32b
+    vmov.i16        d16, #46
+    vmov.i16        d17, #28
+    vmull.s16       q9, d6, d17     // 28*b0
+    vmull.s16       q10, d7, d17     // 28*b1
+    vmull.s16       q11, d8, d16    // 46*c0
+    vmull.s16       q12, d9, d16    // 46*c1
+    vmov.i16        d17, #6
+    vshll.s16       q13, d4, #2     // 4 * a0
+    vshll.s16       q14, d5, #2     // 4 * a1
+    vmull.s16       q15, d10, d17    // 6*d0
+    vmull.s16       q8, d11, d17    // 6*d1
+    vadd.s32        q9, q11         // 28*b0 + 46*c0
+    vadd.s32        q10, q12        //  28*b1 + 46*c1
+    vadd.s32        q13, q15         // 4 * a0 + 6*d0
+    vadd.s32        q14, q8        //  4 * a1 + 6*d1
+    vsub.s32        q6, q9, q13         // 28*b0 + 46*c0- (4 * a0 + 6*d0)
+    vsub.s32        q7, q10, q14         //   28*b1 + 46*c1- (4 * a1 + 6*d1)
+.endm
+
+.macro qpel_filter_chroma_6_32b
+    vmov.i16        d16, #54
+    vmull.s16       q9, d8, d16     // 54*c0
+    vmull.s16       q10, d9, d16     // 54*c1
+    vshll.s16       q11, d4, #1     // 2 * a0
+    vshll.s16       q12, d5, #1     // 2 * a1
+    vshll.s16       q13, d6, #4     // 16 * b0
+    vshll.s16       q14, d7, #4     // 16 * b1
+    vshll.s16       q15, d10, #2     // 4 * d0
+    vshll.s16       q8, d11, #2     // 4 * d1
+    vadd.s32        q9, q13         // 54*c0 + 16 * b0
+    vadd.s32        q10, q14        // 54*c1 + 16 * b1
+    vadd.s32        q11, q15         // 2 * a0 + 4 * d0
+    vadd.s32        q12, q8         // 2 * a1 + 4 * d1
+    vsub.s32        q6, q9, q11     // 54*c0 + 16 * b0 - ( 2 * a0 + 4 * d0)
+    vsub.s32        q7, q10, q12     //  54*c1 + 16 * b1 - ( 2 * a1 + 4 * d1)
+.endm
+
+.macro qpel_filter_chroma_7_32b
+    vmov.i16        d16, #10
+    vmov.i16        d17, #58
+    vmull.s16       q9, d6, d16     // 10*b0
+    vmull.s16       q10, d7, d16     // 10*b1
+    vmull.s16       q11, d8, d17    // 58*c0
+    vmull.s16       q12, d9, d17    // 58*c1
+    vadd.s16        q2, q5          //a +d
+    vshll.s16       q13, d4, #1     // 2 * (a0+d0)
+    vshll.s16       q14, d5, #1     // 2 * (a1+d1)
+    vsub.s32        q9, q13         // 58*c0 - 2 * (a0+d0)
+    vsub.s32        q10, q14         // 58*c1 - 2 * (a1+d1)
+    vadd.s32        q6, q9, q11         // 58*c0 - 2 * (a0+d0) +10*b0
+    vadd.s32        q7, q10, q12         // 58*c1 - 2 * (a1+d1) +10*b1
+.endm
+
+.macro FILTER_CHROMA_VPP a b filterv
+
+    vpush           {q4-q7}
+
+.loop_\filterv\()_\a\()x\b:
+
+    mov             r7, r2
+    mov             r6, r0
+    eor             r8, r8
+
+.loop_w8_\filterv\()_\a\()x\b:
+
+    add             r6, r0, r8
+
+    pld [r6]
+    vld1.u8         d0, [r6], r1
+    pld [r6]
+    vld1.u8         d1, [r6], r1
+    pld [r6]
+    vld1.u8         d2, [r6], r1
+    pld [r6]
+    vld1.u8         d3, [r6], r1
+
+    vmovl.u8        q2, d0
+    vmovl.u8        q3, d1
+    vmovl.u8        q4, d2
+    vmovl.u8        q5, d3
+
+    veor.u8         q6, q6
+    veor.u8         q7, q7
+
+   \filterv
+
+    mov             r12,#32
+    vdup.32         q8, r12
+    vadd.s32        q6, q8
+    vqshrun.s32     d0, q6, #6
+    vadd.s32        q7, q8
+    vqshrun.s32     d1, q7, #6
+    vqmovn.u16      d0, q0
+    vst1.u8         d0, [r7]!
+
+    add             r8, #8
+    cmp             r8, #\a
+    blt             .loop_w8_\filterv\()_\a\()x\b
+
+    add             r0, r1
+    add             r2, r3
+    subs            r4, #1
+    bne             .loop_\filterv\()_\a\()x\b 
+    vpop            {q4-q7}
+.endm 
+
+.macro CHROMA_VPP  w h
+function x265_interp_4tap_vert_pp_\w\()x\h\()_neon
+
+    push            {r4, r5, r6, r7, r8}
+    ldr             r5, [sp, #4 * 5]
+    sub             r0, r1
+    mov             r4, #\h
+
+    cmp             r5, #0
+    beq              0f
+    cmp             r5, #1
+    beq              1f
+    cmp             r5, #2
+    beq              2f
+    cmp             r5, #3
+    beq              3f
+    cmp             r5, #4
+    beq              4f
+    cmp             r5, #5
+    beq              5f
+    cmp             r5, #6
+    beq              6f
+    cmp             r5, #7
+    beq              7f
+0:
+    FILTER_CHROMA_VPP  \w \h qpel_filter_chroma_0_32b
+    b            8f
+1:
+    FILTER_CHROMA_VPP  \w \h qpel_filter_chroma_1_32b
+    b            8f
+2:
+    FILTER_CHROMA_VPP  \w \h qpel_filter_chroma_2_32b
+    b            8f
+3:
+    FILTER_CHROMA_VPP  \w \h qpel_filter_chroma_3_32b
+    b            8f
+4:
+    FILTER_CHROMA_VPP  \w \h qpel_filter_chroma_4_32b
+    b            8f
+5:
+    FILTER_CHROMA_VPP  \w \h qpel_filter_chroma_5_32b
+    b            8f
+6:
+    FILTER_CHROMA_VPP  \w \h qpel_filter_chroma_6_32b
+    b            8f
+7:
+    FILTER_CHROMA_VPP  \w \h qpel_filter_chroma_7_32b
+    b            8f
+8:
+    pop             {r4, r5, r6, r7, r8}
+    bx              lr
+endfunc
+.endm
+
+CHROMA_VPP 8 2
+CHROMA_VPP 8 4
+CHROMA_VPP 8 6
+CHROMA_VPP 8 8
+CHROMA_VPP 8 16
+CHROMA_VPP 8 32
+CHROMA_VPP 8 12
+CHROMA_VPP 8 64
+CHROMA_VPP 16 4
+CHROMA_VPP 16 8
+CHROMA_VPP 16 12
+CHROMA_VPP 16 16
+CHROMA_VPP 16 32
+CHROMA_VPP 16 64
+CHROMA_VPP 16 24
+CHROMA_VPP 32 8
+CHROMA_VPP 32 16
+CHROMA_VPP 32 24
+CHROMA_VPP 32 32
+CHROMA_VPP 32 64
+CHROMA_VPP 32 48
+CHROMA_VPP 24 32
+CHROMA_VPP 24 64
+CHROMA_VPP 64 16
+CHROMA_VPP 64 32
+CHROMA_VPP 64 48
+CHROMA_VPP 64 64
+CHROMA_VPP 48 64
+
+.macro FILTER_CHROMA_VPS a b filterv
+
+    vpush           {q4-q7}
+
+.loop_vps_\filterv\()_\a\()x\b:
+
+    mov             r7, r2
+    mov             r6, r0
+    eor             r8, r8
+
+.loop_vps_w8_\filterv\()_\a\()x\b:
+
+    add             r6, r0, r8
+
+    pld [r6]
+    vld1.u8         d0, [r6], r1
+    pld [r6]
+    vld1.u8         d1, [r6], r1
+    pld [r6]
+    vld1.u8         d2, [r6], r1
+    pld [r6]
+    vld1.u8         d3, [r6], r1
+
+    vmovl.u8        q2, d0
+    vmovl.u8        q3, d1
+    vmovl.u8        q4, d2
+    vmovl.u8        q5, d3
+
+    veor.u8         q6, q6
+    veor.u8         q7, q7
+
+   \filterv
+
+    mov             r12,#8192
+    vdup.32         q8, r12
+    vsub.s32        q6, q8
+    vqmovn.s32      d0, q6
+    vsub.s32        q7, q8
+    vqmovn.s32      d1, q7
+    vst1.u16         {q0}, [r7]!
+
+    add             r8, #8
+    cmp             r8, #\a
+    blt             .loop_vps_w8_\filterv\()_\a\()x\b
+
+    add             r0, r1
+    add             r2, r3
+    subs            r4, #1
+    bne             .loop_vps_\filterv\()_\a\()x\b 
+    vpop            {q4-q7}
+.endm 
+
+.macro CHROMA_VPS  w h
+function x265_interp_4tap_vert_ps_\w\()x\h\()_neon
+
+    push            {r4, r5, r6, r7, r8}
+    ldr             r5, [sp, #4 * 5]
+    lsl             r3, #1
+    sub             r0, r1
+    mov             r4, #\h
+
+    cmp             r5, #0
+    beq              0f
+    cmp             r5, #1
+    beq              1f
+    cmp             r5, #2
+    beq              2f
+    cmp             r5, #3
+    beq              3f
+    cmp             r5, #4
+    beq              4f
+    cmp             r5, #5
+    beq              5f
+    cmp             r5, #6
+    beq              6f
+    cmp             r5, #7
+    beq              7f
+0:
+    FILTER_CHROMA_VPS  \w \h qpel_filter_chroma_0_32b
+    b            8f
+1:
+    FILTER_CHROMA_VPS  \w \h qpel_filter_chroma_1_32b
+    b            8f
+2:
+    FILTER_CHROMA_VPS  \w \h qpel_filter_chroma_2_32b
+    b            8f
+3:
+    FILTER_CHROMA_VPS  \w \h qpel_filter_chroma_3_32b
+    b            8f
+4:
+    FILTER_CHROMA_VPS  \w \h qpel_filter_chroma_4_32b
+    b            8f
+5:
+    FILTER_CHROMA_VPS  \w \h qpel_filter_chroma_5_32b
+    b            8f
+6:
+    FILTER_CHROMA_VPS  \w \h qpel_filter_chroma_6_32b
+    b            8f
+7:
+    FILTER_CHROMA_VPS  \w \h qpel_filter_chroma_7_32b
+    b            8f
+8:
+    pop             {r4, r5, r6, r7, r8}
+    bx              lr
+endfunc
+.endm
+
+CHROMA_VPS 8 2
+CHROMA_VPS 8 4
+CHROMA_VPS 8 6
+CHROMA_VPS 8 8
+CHROMA_VPS 8 16
+CHROMA_VPS 8 32
+CHROMA_VPS 8 12
+CHROMA_VPS 8 64
+CHROMA_VPS 16 4
+CHROMA_VPS 16 8
+CHROMA_VPS 16 12
+CHROMA_VPS 16 16
+CHROMA_VPS 16 32
+CHROMA_VPS 16 64
+CHROMA_VPS 16 24
+CHROMA_VPS 32 8
+CHROMA_VPS 32 16
+CHROMA_VPS 32 24
+CHROMA_VPS 32 32
+CHROMA_VPS 32 64
+CHROMA_VPS 32 48
+CHROMA_VPS 24 32
+CHROMA_VPS 24 64
+CHROMA_VPS 64 16
+CHROMA_VPS 64 32
+CHROMA_VPS 64 48
+CHROMA_VPS 64 64
+CHROMA_VPS 48 64
+
+.macro FILTER_CHROMA_VSP a b filterv
+
+    vpush           {q4-q7}
+
+.loop_vsp_\filterv\()_\a\()x\b:
+
+    mov             r7, r2
+    mov             r6, r0
+    eor             r8, r8
+
+.loop_vsp_w8_\filterv\()_\a\()x\b:
+
+    add             r6, r0, r8
+
+    pld [r6]
+    vld1.u16         {q2}, [r6], r1
+    pld [r6]
+    vld1.u16         {q3}, [r6], r1
+    pld [r6]
+    vld1.u16         {q4}, [r6], r1
+    pld [r6]
+    vld1.u16         {q5}, [r6], r1
+
+    veor.u8         q6, q6
+    veor.u8         q7, q7
+
+   \filterv
+
+    mov             r12,#1
+    lsl             r12, #19
+    add             r12, #2048
+    vdup.32         q8, r12
+    vadd.s32        q6, q8
+    vqshrun.s32     d0, q6, #12
+    vadd.s32        q7, q8
+    vqshrun.s32     d1, q7, #12
+    vqmovn.u16      d0, q0
+    vst1.u8         d0, [r7]!
+
+    add             r8, #16
+    mov             r12, #\a
+    lsl             r12, #1
+    cmp             r8, r12
+    blt             .loop_vsp_w8_\filterv\()_\a\()x\b
+
+    add             r0, r1
+    add             r2, r3
+    subs            r4, #1
+    bne             .loop_vsp_\filterv\()_\a\()x\b 
+    vpop            {q4-q7}
+.endm 
+
+.macro CHROMA_VSP  w h
+function x265_interp_4tap_vert_sp_\w\()x\h\()_neon
+
+    push            {r4, r5, r6, r7, r8}
+    ldr             r5, [sp, #4 * 5]
+    lsl             r1, #1
+    sub             r0, r1
+    mov             r4, #\h
+
+    cmp             r5, #0
+    beq              0f
+    cmp             r5, #1
+    beq              1f
+    cmp             r5, #2
+    beq              2f
+    cmp             r5, #3
+    beq              3f
+    cmp             r5, #4
+    beq              4f
+    cmp             r5, #5
+    beq              5f
+    cmp             r5, #6
+    beq              6f
+    cmp             r5, #7
+    beq              7f
+0:
+    FILTER_CHROMA_VSP  \w \h qpel_filter_chroma_0_32b
+    b            8f
+1:
+    FILTER_CHROMA_VSP  \w \h qpel_filter_chroma_1_32b
+    b            8f
+2:
+    FILTER_CHROMA_VSP  \w \h qpel_filter_chroma_2_32b
+    b            8f
+3:
+    FILTER_CHROMA_VSP  \w \h qpel_filter_chroma_3_32b
+    b            8f
+4:
+    FILTER_CHROMA_VSP  \w \h qpel_filter_chroma_4_32b
+    b            8f
+5:
+    FILTER_CHROMA_VSP  \w \h qpel_filter_chroma_5_32b
+    b            8f
+6:
+    FILTER_CHROMA_VSP  \w \h qpel_filter_chroma_6_32b
+    b            8f
+7:
+    FILTER_CHROMA_VSP  \w \h qpel_filter_chroma_7_32b
+    b            8f
+8:
+    pop             {r4, r5, r6, r7, r8}
+    bx              lr
+endfunc
+.endm
+
+CHROMA_VSP 8 2
+CHROMA_VSP 8 4
+CHROMA_VSP 8 6
+CHROMA_VSP 8 8
+CHROMA_VSP 8 16
+CHROMA_VSP 8 32
+CHROMA_VSP 8 12
+CHROMA_VSP 8 64
+CHROMA_VSP 16 4
+CHROMA_VSP 16 8
+CHROMA_VSP 16 12
+CHROMA_VSP 16 16
+CHROMA_VSP 16 32
+CHROMA_VSP 16 64
+CHROMA_VSP 16 24
+CHROMA_VSP 32 8
+CHROMA_VSP 32 16
+CHROMA_VSP 32 24
+CHROMA_VSP 32 32
+CHROMA_VSP 32 64
+CHROMA_VSP 32 48
+CHROMA_VSP 24 32
+CHROMA_VSP 24 64
+CHROMA_VSP 64 16
+CHROMA_VSP 64 32
+CHROMA_VSP 64 48
+CHROMA_VSP 64 64
+CHROMA_VSP 48 64
+
