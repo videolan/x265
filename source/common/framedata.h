@@ -172,6 +172,8 @@ struct analysis_inter_data
     int32_t*    ref;
     uint8_t*    depth;
     uint8_t*    modes;
+    uint8_t*    partSize;
+    uint8_t*    mergeFlag;
 };
 }
 #endif // ifndef X265_FRAMEDATA_H

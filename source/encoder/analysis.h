@@ -122,6 +122,8 @@ protected:
     int32_t*             m_reuseRef;
     uint8_t*             m_reuseDepth;
     uint8_t*             m_reuseModes;
+    uint8_t*             m_reusePartSize;
+    uint8_t*             m_reuseMergeFlag;
 
     uint32_t m_splitRefIdx[4];
     uint64_t* cacheCost;
