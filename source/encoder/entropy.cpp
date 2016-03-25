@@ -721,15 +721,11 @@ void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t cu
     bool bSmallChroma = (log2CurSize - hChromaShift) < 2;
     if (!curDepth || !bSmallChroma)
     {
-        if (!curDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_U, curDepth - 1))
+        uint32_t parentIdx = absPartIdx & (0xFF << (log2CurSize + 1 - LOG2_UNIT_SIZE) * 2);
+        if (!curDepth || cu.getCbf(parentIdx, TEXT_CHROMA_U, curDepth - 1))
             codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_U, curDepth, !subdiv);
-        if (!curDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_V, curDepth - 1))
+        if (!curDepth || cu.getCbf(parentIdx, TEXT_CHROMA_V, curDepth - 1))
             codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_V, curDepth, !subdiv);
-    }
-    else
-    {
-        X265_CHECK(cu.getCbf(absPartIdx, TEXT_CHROMA_U, curDepth) == cu.getCbf(absPartIdx, TEXT_CHROMA_U, curDepth - 1), "chroma xform size match failure\n");
-        X265_CHECK(cu.getCbf(absPartIdx, TEXT_CHROMA_V, curDepth) == cu.getCbf(absPartIdx, TEXT_CHROMA_V, curDepth - 1), "chroma xform size match failure\n");
     }
 
     if (subdiv)
@@ -753,7 +749,7 @@ void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t cu
         X265_CHECK(cu.getCbf(absPartIdxC, TEXT_LUMA, 0), "CBF should have been set\n");
     }
     else
-        codeQtCbfLuma(cu, absPartIdx, curDepth);
+        codeQtCbfLuma(cu.getCbf(absPartIdx, TEXT_LUMA, curDepth), curDepth);
 
     uint32_t cbfY = cu.getCbf(absPartIdx, TEXT_LUMA, curDepth);
     uint32_t cbfU = cu.getCbf(absPartIdxC, TEXT_CHROMA_U, curDepth);
@@ -874,7 +870,7 @@ void Entropy::encodeTransformLuma(const CUData& cu, uint32_t absPartIdx, uint32_
         X265_CHECK(cu.getCbf(absPartIdx, TEXT_LUMA, 0), "CBF should have been set\n");
     }
     else
-        codeQtCbfLuma(cu, absPartIdx, curDepth);
+        codeQtCbfLuma(cu.getCbf(absPartIdx, TEXT_LUMA, curDepth), curDepth);
 
     uint32_t cbfY = cu.getCbf(absPartIdx, TEXT_LUMA, curDepth);
 

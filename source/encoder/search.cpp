@@ -222,9 +222,10 @@ void Search::codeSubdivCbfQTChroma(const CUData& cu, uint32_t tuDepth, uint32_t 
 
     if (!(log2TrSize - m_hChromaShift < 2))
     {
-        if (!tuDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_U, tuDepth - 1))
+        uint32_t parentIdx = absPartIdx & (0xFF << (log2TrSize + 1 - LOG2_UNIT_SIZE) * 2);
+        if (!tuDepth || cu.getCbf(parentIdx, TEXT_CHROMA_U, tuDepth - 1))
             m_entropyCoder.codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_U, tuDepth, !subdiv);
-        if (!tuDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_V, tuDepth - 1))
+        if (!tuDepth || cu.getCbf(parentIdx, TEXT_CHROMA_V, tuDepth - 1))
             m_entropyCoder.codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_V, tuDepth, !subdiv);
     }
 
@@ -434,8 +435,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
 
             cbf |= cu.getCbf(qPartIdx, TEXT_LUMA, tuDepth + 1);
         }
-        for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
-            cu.m_cbf[0][absPartIdx + offs] |= (cbf << tuDepth);
+        cu.m_cbf[0][absPartIdx] |= (cbf << tuDepth);
 
         if (mightNotSplit && log2TrSize != depthRange[0])
         {
@@ -718,8 +718,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
             residualTransformQuantIntra(mode, cuGeom, qPartIdx, tuDepth + 1, depthRange);
             cbf |= cu.getCbf(qPartIdx, TEXT_LUMA, tuDepth + 1);
         }
-        for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
-            cu.m_cbf[0][absPartIdx + offs] |= (cbf << tuDepth);
+        cu.m_cbf[0][absPartIdx] |= (cbf << tuDepth);
     }
 }
 
@@ -795,11 +794,9 @@ void Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDept
             splitCbfU |= cu.getCbf(qPartIdx, TEXT_CHROMA_U, tuDepth + 1);
             splitCbfV |= cu.getCbf(qPartIdx, TEXT_CHROMA_V, tuDepth + 1);
         }
-        for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
-        {
-            cu.m_cbf[1][absPartIdx + offs] |= (splitCbfU << tuDepth);
-            cu.m_cbf[2][absPartIdx + offs] |= (splitCbfV << tuDepth);
-        }
+        cu.m_cbf[1][absPartIdx] |= (splitCbfU << tuDepth);
+        cu.m_cbf[2][absPartIdx] |= (splitCbfV << tuDepth);
+
         return;
     }
 
@@ -1093,11 +1090,8 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
             splitCbfU |= cu.getCbf(qPartIdx, TEXT_CHROMA_U, tuDepth + 1);
             splitCbfV |= cu.getCbf(qPartIdx, TEXT_CHROMA_V, tuDepth + 1);
         }
-        for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
-        {
-            cu.m_cbf[1][absPartIdx + offs] |= (splitCbfU << tuDepth);
-            cu.m_cbf[2][absPartIdx + offs] |= (splitCbfV << tuDepth);
-        }
+        cu.m_cbf[1][absPartIdx] |= (splitCbfU << tuDepth);
+        cu.m_cbf[2][absPartIdx] |= (splitCbfV << tuDepth);
 
         return;
     }
@@ -1631,8 +1625,7 @@ sse_t Search::estIntraPredQT(Mode &intraMode, const CUGeom& cuGeom, const uint32
         for (uint32_t qIdx = 0, qPartIdx = 0; qIdx < 4; ++qIdx, qPartIdx += qNumParts)
             combCbfY |= cu.getCbf(qPartIdx, TEXT_LUMA, 1);
 
-        for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
-            cu.m_cbf[0][offs] |= combCbfY;
+        cu.m_cbf[0][0] |= combCbfY;
     }
 
     // TODO: remove this
@@ -1818,11 +1811,8 @@ sse_t Search::estIntraPredChromaQT(Mode &intraMode, const CUGeom& cuGeom)
             combCbfV |= cu.getCbf(qPartIdx, TEXT_CHROMA_V, 1);
         }
 
-        for (uint32_t offs = 0; offs < 4 * qNumParts; offs++)
-        {
-            cu.m_cbf[1][offs] |= combCbfU;
-            cu.m_cbf[2][offs] |= combCbfV;
-        }
+        cu.m_cbf[1][0] |= combCbfU;
+        cu.m_cbf[2][0] |= combCbfV;
     }
 
     /* TODO: remove this */
@@ -2818,14 +2808,11 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
                 vcbf |= cu.getCbf(qPartIdx, TEXT_CHROMA_V, tuDepth + 1);
             }
         }
-        for (uint32_t i = 0; i < 4 * qNumParts; ++i)
+        cu.m_cbf[0][absPartIdx] |= ycbf << tuDepth;
+        if (m_csp != X265_CSP_I400)
         {
-            cu.m_cbf[0][absPartIdx + i] |= ycbf << tuDepth;
-            if (m_csp != X265_CSP_I400)
-            {
-                cu.m_cbf[1][absPartIdx + i] |= ucbf << tuDepth;
-                cu.m_cbf[2][absPartIdx + i] |= vcbf << tuDepth;
-            }
+            cu.m_cbf[1][absPartIdx] |= ucbf << tuDepth;
+            cu.m_cbf[2][absPartIdx] |= vcbf << tuDepth;
         }
     }
 }
@@ -3323,14 +3310,11 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                 vcbf |= cu.getCbf(qPartIdx, TEXT_CHROMA_V, tuDepth + 1);
             }
         }
-        for (uint32_t i = 0; i < 4 * qNumParts; ++i)
+        cu.m_cbf[0][absPartIdx] |= ycbf << tuDepth;
+        if (m_csp != X265_CSP_I400)
         {
-            cu.m_cbf[0][absPartIdx + i] |= ycbf << tuDepth;
-            if (m_csp != X265_CSP_I400)
-            {
-                cu.m_cbf[1][absPartIdx + i] |= ucbf << tuDepth;
-                cu.m_cbf[2][absPartIdx + i] |= vcbf << tuDepth;
-            }
+            cu.m_cbf[1][absPartIdx] |= ucbf << tuDepth;
+            cu.m_cbf[2][absPartIdx] |= vcbf << tuDepth;
         }
 
         // Here we were encoding cbfs and coefficients for splitted blocks. Since I have collected coefficient bits
@@ -3423,21 +3407,17 @@ void Search::codeInterSubdivCbfQT(CUData& cu, uint32_t absPartIdx, const uint32_
     {
         if (!(log2TrSize - m_hChromaShift < 2))
         {
-            if (!tuDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_U, tuDepth - 1))
+            uint32_t parentIdx = absPartIdx & (0xFF << (log2TrSize + 1 - LOG2_UNIT_SIZE) * 2);
+            if (!tuDepth || cu.getCbf(parentIdx, TEXT_CHROMA_U, tuDepth - 1))
                 m_entropyCoder.codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_U, tuDepth, !bSubdiv);
-            if (!tuDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_V, tuDepth - 1))
+            if (!tuDepth || cu.getCbf(parentIdx, TEXT_CHROMA_V, tuDepth - 1))
                 m_entropyCoder.codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_V, tuDepth, !bSubdiv);
-        }
-        else
-        {
-            X265_CHECK(cu.getCbf(absPartIdx, TEXT_CHROMA_U, tuDepth) == cu.getCbf(absPartIdx, TEXT_CHROMA_U, tuDepth - 1), "chroma CBF not matching\n");
-            X265_CHECK(cu.getCbf(absPartIdx, TEXT_CHROMA_V, tuDepth) == cu.getCbf(absPartIdx, TEXT_CHROMA_V, tuDepth - 1), "chroma CBF not matching\n");
         }
     }
 
     if (!bSubdiv)
     {
-        m_entropyCoder.codeQtCbfLuma(cu, absPartIdx, tuDepth);
+        m_entropyCoder.codeQtCbfLuma(cu.getCbf(absPartIdx, TEXT_LUMA, tuDepth), tuDepth);
     }
     else
     {

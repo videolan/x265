@@ -162,7 +162,6 @@ public:
 
     void codePartSize(const CUData& cu, uint32_t absPartIdx, uint32_t depth);
     void codePredInfo(const CUData& cu, uint32_t absPartIdx);
-    inline void codeQtCbfLuma(const CUData& cu, uint32_t absPartIdx, uint32_t tuDepth) { codeQtCbfLuma(cu.getCbf(absPartIdx, TEXT_LUMA, tuDepth), tuDepth); }
 
     void codeQtCbfChroma(const CUData& cu, uint32_t absPartIdx, TextType ttype, uint32_t tuDepth, bool lowestLevel);
     void codeCoeff(const CUData& cu, uint32_t absPartIdx, bool& bCodeDQP, const uint32_t depthRange[2]);
