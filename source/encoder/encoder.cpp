@@ -1953,9 +1953,9 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_ERROR, "uhd-bd: matrix coeffs supported are either BT.709 or BT.2020\n");
             disableUhdBd = 1;
         }
-        if ((p->sourceWidth != 1920 && p->sourceWidth != 3840) || (p->sourceHeight != 1080 && p->sourceHeight != 1088 && p->sourceHeight != 2160))
+        if ((p->sourceWidth != 1920 && p->sourceWidth != 3840) || (p->sourceHeight != 1080 && p->sourceHeight != 2160))
         {
-            x265_log(p, X265_LOG_ERROR, "uhd-bd: Supported resolutions are 1920x1080, 1920x1088 and 3840x2160\n");
+            x265_log(p, X265_LOG_ERROR, "uhd-bd: Supported resolutions are 1920x1080 and 3840x2160\n");
             disableUhdBd = 1;
         }
         if (disableUhdBd)
