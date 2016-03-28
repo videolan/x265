@@ -302,6 +302,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         // planecopy
         p.planecopy_cp = PFX(pixel_planecopy_cp_neon);
 
+        p.cu[BLOCK_8x8].sa8d = PFX(pixel_sa8d_8x8_neon);
+        p.cu[BLOCK_16x16].sa8d = PFX(pixel_sa8d_16x16_neon);
     }
     if (cpuMask & X265_CPU_ARMV6)
     {

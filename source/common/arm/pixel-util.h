@@ -37,4 +37,6 @@ void x265_getResidual32_neon(const pixel* fenc, const pixel* pred, int16_t* resi
 
 void x265_scale1D_128to64_neon(pixel *dst, const pixel *src);
 void x265_scale2D_64to32_neon(pixel* dst, const pixel* src, intptr_t stride);
+int x265_pixel_sa8d_8x8_neon(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2);
+int x265_pixel_sa8d_16x16_neon(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2);
 #endif // ifndef X265_PIXEL_UTIL_ARM_H

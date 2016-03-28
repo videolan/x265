@@ -735,3 +735,133 @@ function x265_pixel_planecopy_cp_neon
     bx              lr
 endfunc
 
+
+.macro LOAD_DIFF_8x4 q0 q1 q2 q3
+    vld1.32     {d1}, [r2], r3
+    vld1.32     {d0}, [r0,:64], r1
+    vsubl.u8    \q0, d0,  d1
+    vld1.32     {d3}, [r2], r3
+    vld1.32     {d2}, [r0,:64], r1
+    vsubl.u8    \q1, d2,  d3
+    vld1.32     {d5}, [r2], r3
+    vld1.32     {d4}, [r0,:64], r1
+    vsubl.u8    \q2, d4,  d5
+    vld1.32     {d7}, [r2], r3
+    vld1.32     {d6}, [r0,:64], r1
+    vsubl.u8    \q3, d6,  d7
+.endm
+
+.macro HADAMARD4_V r1, r2, r3, r4, t1, t2, t3, t4
+    SUMSUB_ABCD \t1, \t2, \t3, \t4, \r1, \r2, \r3, \r4
+    SUMSUB_ABCD \r1, \r3, \r2, \r4, \t1, \t3, \t2, \t4
+.endm
+
+.macro sa8d_satd_8x8 satd=
+function x265_sa8d_\satd\()8x8_neon, export=0
+    LOAD_DIFF_8x4   q8,  q9,  q10, q11
+    vld1.64         {d7}, [r2], r3
+    SUMSUB_AB       q0,  q1,  q8,  q9
+    vld1.64         {d6}, [r0,:64], r1
+    vsubl.u8        q12, d6,  d7
+    vld1.64         {d17}, [r2], r3
+    SUMSUB_AB       q2,  q3,  q10, q11
+    vld1.64         {d16}, [r0,:64], r1
+    vsubl.u8        q13, d16, d17
+    vld1.64         {d19}, [r2], r3
+    SUMSUB_AB       q8,  q10, q0,  q2
+    vld1.64         {d18}, [r0,:64], r1
+    vsubl.u8        q14, d18, d19
+    vld1.64         {d1}, [r2], r3
+    SUMSUB_AB       q9,  q11, q1,  q3
+    vld1.64         {d0}, [r0,:64], r1
+    vsubl.u8        q15, d0,  d1
+
+    HADAMARD4_V     q12, q13, q14, q15,  q0,  q1,  q2,  q3
+
+    SUMSUB_ABCD     q0,  q8,  q1,  q9,   q8,  q12, q9,  q13
+    SUMSUB_AB       q2,  q10, q10, q14
+    vtrn.16         q8,  q9
+    SUMSUB_AB       q3,  q11, q11, q15
+    vtrn.16         q0,  q1
+    SUMSUB_AB       q12, q13, q8,  q9
+    vtrn.16         q10, q11
+    SUMSUB_AB       q8,  q9,  q0,  q1
+    vtrn.16         q2,  q3
+    SUMSUB_AB       q14, q15, q10, q11
+    vadd.i16        q10, q2,  q3
+    vtrn.32         q12, q14
+    vsub.i16        q11, q2,  q3
+    vtrn.32         q13, q15
+    SUMSUB_AB       q0,  q2,  q12, q14
+    vtrn.32         q8,  q10
+    SUMSUB_AB       q1,  q3,  q13, q15
+    vtrn.32         q9,  q11
+    SUMSUB_AB       q12, q14, q8,  q10
+    SUMSUB_AB       q13, q15, q9,  q11
+
+    vswp            d1,  d24
+    ABS2            q0,  q12
+    vswp            d3,  d26
+    ABS2            q1,  q13
+    vswp            d5,  d28
+    ABS2            q2,  q14
+    vswp            d7,  d30
+    ABS2            q3,  q15
+    vmax.s16        q8,  q0,  q12
+    vmax.s16        q9,  q1,  q13
+    vmax.s16        q10, q2,  q14
+    vmax.s16        q11, q3,  q15
+    vadd.i16        q8,  q8,  q9
+    vadd.i16        q9,  q10, q11
+
+    bx              lr
+endfunc
+.endm
+
+sa8d_satd_8x8
+
+function x265_pixel_sa8d_8x8_neon
+    mov             ip,  lr
+    bl              x265_sa8d_8x8_neon
+    vadd.u16        q0,  q8,  q9
+    HORIZ_ADD       d0,  d0,  d1
+    mov             lr,  ip
+    vmov.32         r0,  d0[0]
+    add             r0,  r0,  #1
+    lsr             r0,  r0,  #1
+    bx              lr
+endfunc
+
+function x265_pixel_sa8d_16x16_neon
+    vpush           {d8-d11}
+    mov             ip,  lr
+    bl              x265_sa8d_8x8_neon
+    vpaddl.u16      q4,  q8
+    vpaddl.u16      q5,  q9
+    bl              x265_sa8d_8x8_neon
+    vpadal.u16      q4,  q8
+    vpadal.u16      q5,  q9
+    sub             r0,  r0,  r1,  lsl #4
+    sub             r2,  r2,  r3,  lsl #4
+    add             r0,  r0,  #8
+    add             r2,  r2,  #8
+    bl              x265_sa8d_8x8_neon
+    vpadal.u16      q4,  q8
+    vpadal.u16      q5,  q9
+    bl              x265_sa8d_8x8_neon
+    vpaddl.u16      q8,  q8
+    vpaddl.u16      q9,  q9
+    vadd.u32        q0,  q4,  q8
+    vadd.u32        q1,  q5,  q9
+    vadd.u32        q0,  q0,  q1
+    vadd.u32        d0,  d0,  d1
+    vpadd.u32       d0,  d0,  d0
+    vpop            {d8-d11}
+    mov             lr,  ip
+    vmov.32         r0,  d0[0]
+    add             r0,  r0,  #1
+    lsr             r0,  r0,  #1
+    bx              lr
+endfunc
+
+
