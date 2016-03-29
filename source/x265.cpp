@@ -29,13 +29,9 @@
 #include "x265-extras.h"
 #include "x265cli.h"
 
-#include "common.h"
 #include "input/input.h"
 #include "output/output.h"
 #include "output/reconplay.h"
-
-#include "param.h"
-#include "cpu.h"
 
 #if HAVE_VLD
 /* Visual Leak Detector */
