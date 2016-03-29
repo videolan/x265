@@ -2644,3 +2644,235 @@ LUMA_HPP    64 16
 LUMA_HPP    64 32
 LUMA_HPP    64 48
 LUMA_HPP    64 64
+
+// void interp_horiz_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
+.macro HPS_FILTER a b filterhps
+    mov             r12, #8192
+    mov             r6, r10
+    sub             r3, #\a
+    lsl             r3, #1
+
+    mov             r8, #\a
+    cmp             r8, #4
+    beq             14f
+    cmp             r8, #12
+    beq             15f
+    b               7f
+14:
+    HPS_FILTER_4 \a \b \filterhps
+    b               10f
+15:
+    HPS_FILTER_12 \a \b \filterhps
+    b               10f
+7:
+    cmp             r9, #0
+    beq             8f
+    cmp             r9, #1
+    beq             9f
+8:
+loop1_hps_\filterhps\()_\a\()x\b\()_rowext0:
+    mov             r7, #\a
+    lsr             r7, #3
+    mov             r5, r0
+    sub             r5, #4
+loop2_hps_\filterhps\()_\a\()x\b\()_rowext0:
+    vextin8
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vsub.s32        q10, q8
+    vmovn.u32       d0, q9
+    vmovn.u32       d1, q10
+    vst1.s16        {q0}, [r2]!
+    subs            r7, #1
+    sub             r5, #8
+    bne             loop2_hps_\filterhps\()_\a\()x\b\()_rowext0
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop1_hps_\filterhps\()_\a\()x\b\()_rowext0
+    b               10f
+9:
+loop3_hps_\filterhps\()_\a\()x\b\()_rowext1:
+    mov             r7, #\a
+    lsr             r7, #3
+    mov             r5, r0
+    sub             r5, #4
+loop4_hps_\filterhps\()_\a\()x\b\()_rowext1:
+    vextin8
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vsub.s32        q10, q8
+    vmovn.u32       d0, q9
+    vmovn.u32       d1, q10
+    vst1.s16        {q0}, [r2]!
+    subs            r7, #1
+    sub             r5, #8
+    bne             loop4_hps_\filterhps\()_\a\()x\b\()_rowext1
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop3_hps_\filterhps\()_\a\()x\b\()_rowext1
+10:
+.endm
+
+.macro HPS_FILTER_4 w h filterhps
+    cmp             r9, #0
+    beq             11f
+    cmp             r9, #1
+    beq             12f
+11:
+loop4_hps_\filterhps\()_\w\()x\h\()_rowext0:
+    mov             r5, r0
+    sub             r5, #4
+    vextin8
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vmovn.u32       d0, q9
+    vst1.s16        {d0}, [r2]!
+    sub             r5, #8
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop4_hps_\filterhps\()_\w\()x\h\()_rowext0
+    b               13f
+12:
+loop5_hps_\filterhps\()_\w\()x\h\()_rowext1:
+    mov             r5, r0
+    sub             r5, #4
+    vextin8
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vmovn.u32       d0, q9
+    vst1.s16        {d0}, [r2]!
+    sub             r5, #8
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop5_hps_\filterhps\()_\w\()x\h\()_rowext1
+13:
+.endm
+
+.macro HPS_FILTER_12 w h filterhps
+    cmp             r9, #0
+    beq             14f
+    cmp             r9, #1
+    beq             15f
+14:
+loop12_hps_\filterhps\()_\w\()x\h\()_rowext0:
+    mov             r5, r0
+    sub             r5, #4
+    vextin8
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vsub.s32        q10, q8
+    vmovn.u32       d0, q9
+    vmovn.u32       d1, q10
+    vst1.s16        {q0}, [r2]!
+    sub             r5, #8
+
+    vextin8
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vmovn.u32       d0, q9
+    vst1.s16        {d0}, [r2]!
+    add             r2, r3
+    subs            r6, #1
+    add             r0, r1
+    bne             loop12_hps_\filterhps\()_\w\()x\h\()_rowext0
+    b               16f
+15:
+loop12_hps_\filterhps\()_\w\()x\h\()_rowext1:
+    mov             r5, r0
+    sub             r5, #4
+    vextin8
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vsub.s32        q10, q8
+    vmovn.u32       d0, q9
+    vmovn.u32       d1, q10
+    vst1.s16        {q0}, [r2]!
+    sub             r5, #8
+
+    vextin8
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q9, q8
+    vmovn.u32       d0, q9
+    vst1.s16        {d0}, [r2]!
+    add             r2, r3
+    subs            r6, #1
+    add             r0, r1
+    bne             loop12_hps_\filterhps\()_\w\()x\h\()_rowext1
+16:
+.endm
+
+.macro LUMA_HPS w h
+function x265_interp_horiz_ps_\w\()x\h\()_neon
+    push            {r4, r5, r6, r7, r8, r9, r10}
+    ldr             r4, [sp, #28]
+    ldr             r9, [sp, #32]
+    mov             r10, #\h
+    cmp             r9, #0
+    beq             6f
+    sub             r0, r0, r1, lsl #2
+    add             r0, r1
+    add             r10, #7
+6:
+    cmp             r4, #0
+    beq             0f
+    cmp             r4, #1
+    beq             1f
+    cmp             r4, #2
+    beq             2f
+    cmp             r4, #3
+    beq             3f
+0:
+    HPS_FILTER  \w \h qpel_filter_0_32b
+    b               5f
+1:
+    HPS_FILTER  \w \h qpel_filter_1_32b
+    b               5f
+2:
+    HPS_FILTER  \w \h qpel_filter_2_32b
+    b               5f
+3:
+    HPS_FILTER  \w \h qpel_filter_3_32b
+    b               5f
+5:
+    pop             {r4, r5, r6, r7, r8, r9, r10}
+    bx              lr
+endfunc
+.endm
+
+LUMA_HPS    4 4
+LUMA_HPS    4 8
+LUMA_HPS    4 16
+LUMA_HPS    8 4
+LUMA_HPS    8 8
+LUMA_HPS    8 16
+LUMA_HPS    8 32
+LUMA_HPS    12 16
+LUMA_HPS    16 4
+LUMA_HPS    16 8
+LUMA_HPS    16 12
+LUMA_HPS    16 16
+LUMA_HPS    16 32
+LUMA_HPS    16 64
+LUMA_HPS    24 32
+LUMA_HPS    32 8
+LUMA_HPS    32 16
+LUMA_HPS    32 24
+LUMA_HPS    32 32
+LUMA_HPS    32 64
+LUMA_HPS    48 64
+LUMA_HPS    64 16
+LUMA_HPS    64 32
+LUMA_HPS    64 48
+LUMA_HPS    64 64
