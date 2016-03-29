@@ -33,13 +33,6 @@
 namespace X265_NS {
 // private namespace
 
-enum SAOTypeLen
-{
-    SAO_EO_LEN = 4,
-    SAO_BO_LEN = 4,
-    SAO_NUM_BO_CLASSES = 32
-};
-
 enum SAOType
 {
     SAO_EO_0 = 0,
@@ -81,7 +74,7 @@ protected:
     PerPlane*   m_offsetOrgPreDblk;
 
     double*     m_depthSaoRate;
-    int8_t      m_offsetBo[NUM_PLANE][SAO_NUM_BO_CLASSES];
+    int8_t      m_offsetBo[NUM_PLANE][MAX_NUM_SAO_CLASS];
     int8_t      m_offsetEo[NUM_PLANE][NUM_EDGETYPE];
 
     int         m_chromaFormat;
@@ -134,11 +127,10 @@ public:
     void calcSaoStatsCu(int addr, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
 
-    void saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda);
-    void saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda);
+    void saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda, double &bestCost);
+    void saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda, double &bestCost);
 
-    inline int estIterOffset(int typeIdx, double lambda, int offset, int32_t count, int32_t offsetOrg,
-                             int& currentDistortionTableBo, double& currentRdCostTableBo);
+    void estIterOffset(int typeIdx, double lambda, int32_t count, int32_t offsetOrg, int& offset, int& distClasses, double& costClasses);
     void rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus);
     void rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr);
 

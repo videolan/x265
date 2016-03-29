@@ -1179,10 +1179,10 @@ void Entropy::codeSaoOffset(const SaoCtuParam& ctuParam, int plane)
         enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
         if (typeIdx == SAO_BO)
         {
-            for (int i = 0; i < SAO_BO_LEN; i++)
+            for (int i = 0; i < SAO_NUM_OFFSET; i++)
                 codeSaoMaxUvlc(abs(ctuParam.offset[i]), OFFSET_THRESH - 1);
 
-            for (int i = 0; i < SAO_BO_LEN; i++)
+            for (int i = 0; i < SAO_NUM_OFFSET; i++)
                 if (ctuParam.offset[i] != 0)
                     encodeBinEP(ctuParam.offset[i] < 0);
 
@@ -1228,10 +1228,10 @@ void Entropy::codeSaoOffsetBO(int *offset, int bandPos, int plane)
 
     enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
 
-    for (int i = 0; i < SAO_BO_LEN; i++)
+    for (int i = 0; i < SAO_NUM_OFFSET; i++)
         codeSaoMaxUvlc(abs(offset[i]), OFFSET_THRESH - 1);
 
-    for (int i = 0; i < SAO_BO_LEN; i++)
+    for (int i = 0; i < SAO_NUM_OFFSET; i++)
         if (offset[i] != 0)
             encodeBinEP(offset[i] < 0);
 
