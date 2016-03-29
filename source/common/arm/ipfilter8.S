@@ -2876,3 +2876,465 @@ LUMA_HPS    64 16
 LUMA_HPS    64 32
 LUMA_HPS    64 48
 LUMA_HPS    64 64
+
+// ******* Chroma_hpp *******
+.macro vextin8_chroma
+    pld             [r5]
+    vld1.8          {q3}, [r5]!
+    vext.8          d0, d6, d7, #1
+    vext.8          d1, d6, d7, #2
+    vext.8          d2, d6, d7, #3
+    vext.8          d3, d6, d7, #4
+
+    vmovl.u8        q2, d0
+    vmovl.u8        q3, d1
+    vmovl.u8        q4, d2
+    vmovl.u8        q5, d3
+.endm
+
+.macro FILTER_CHROMA_HPP a b filterhpp
+    vpush           {q4-q7}
+    mov             r12,#32
+    mov             r6, #\b
+    sub             r3, #\a
+    mov             r8, #\a
+    cmp             r8, #4
+    beq             11f
+    cmp             r8, #12
+    beq             12f
+    b               13f
+11:
+    FILTER_CHROMA_HPP_4 \a \b \filterhpp
+    b               14f
+12:
+    FILTER_CHROMA_HPP_12 \a \b \filterhpp
+    b               14f
+13:
+    veor            q6, q6
+    veor            q7, q7
+
+loop2_hpp_\filterhpp\()_\a\()x\b:
+    mov             r7, #\a
+    lsr             r7, #3
+    mov             r5, r0
+    sub             r5, #2
+loop3_hpp_\filterhpp\()_\a\()x\b:
+    vextin8_chroma
+    \filterhpp
+    vdup.32         q8, r12
+    vadd.s32        q6, q8
+    vqshrun.s32     d0, q6, #6
+    vadd.s32        q7, q8
+    vqshrun.s32     d1, q7, #6
+    vqmovn.u16      d0, q0
+    vst1.u8         d0, [r2]!
+    subs            r7, #1
+    sub             r5, #8
+    bne             loop3_hpp_\filterhpp\()_\a\()x\b
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop2_hpp_\filterhpp\()_\a\()x\b
+14:
+    vpop            {q4-q7}
+.endm
+
+.macro FILTER_CHROMA_HPP_4 w h filterhpp
+loop4_hpp_\filterhpp\()_\w\()x\h:
+    mov             r5, r0
+    sub             r5, #2
+    vextin8_chroma
+    \filterhpp
+    vdup.32         q8, r12
+    vadd.s32        q6, q8
+    vqshrun.s32     d0, q6, #6
+    vadd.s32        q7, q8
+    vqshrun.s32     d1, q7, #6
+    vqmovn.u16      d0, q0
+    vst1.u32        {d0[0]}, [r2]!
+    sub             r5, #8
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop4_hpp_\filterhpp\()_\w\()x\h
+.endm
+
+.macro FILTER_CHROMA_HPP_12 w h filterhpp
+loop12_hpp_\filterhpp\()_\w\()x\h:
+    mov             r5, r0
+    sub             r5, #2
+    vextin8_chroma
+    \filterhpp
+    vdup.32         q8, r12
+    vadd.s32        q6, q8
+    vqshrun.s32     d0, q6, #6
+    vadd.s32        q7, q8
+    vqshrun.s32     d1, q7, #6
+    vqmovn.u16      d0, q0
+    vst1.u8         {d0}, [r2]!
+    sub             r5, #8
+
+    vextin8_chroma
+    \filterhpp
+    vdup.32         q8, r12
+    vadd.s32        q6, q8
+    vqshrun.s32     d0, q6, #6
+    vadd.s32        q7, q8
+    vqshrun.s32     d1, q7, #6
+    vqmovn.u16      d0, q0
+    vst1.u32        {d0[0]}, [r2]!
+    add             r2, r3
+    subs            r6, #1
+    add             r0, r1
+    bne             loop12_hpp_\filterhpp\()_\w\()x\h
+.endm
+
+.macro CHROMA_HPP  w h
+function x265_interp_4tap_horiz_pp_\w\()x\h\()_neon
+
+    push            {r4, r5, r6, r7, r8}
+    ldr             r4, [sp, #4 * 5]
+
+    cmp             r4, #0
+    beq              0f
+    cmp             r4, #1
+    beq              1f
+    cmp             r4, #2
+    beq              2f
+    cmp             r4, #3
+    beq              3f
+    cmp             r4, #4
+    beq              4f
+    cmp             r4, #5
+    beq              5f
+    cmp             r4, #6
+    beq              6f
+    cmp             r4, #7
+    beq              7f
+0:
+    FILTER_CHROMA_HPP  \w \h qpel_filter_chroma_0_32b
+    b            8f
+1:
+    FILTER_CHROMA_HPP  \w \h qpel_filter_chroma_1_32b
+    b            8f
+2:
+    FILTER_CHROMA_HPP  \w \h qpel_filter_chroma_2_32b
+    b            8f
+3:
+    FILTER_CHROMA_HPP  \w \h qpel_filter_chroma_3_32b
+    b            8f
+4:
+    FILTER_CHROMA_HPP  \w \h qpel_filter_chroma_4_32b
+    b            8f
+5:
+    FILTER_CHROMA_HPP  \w \h qpel_filter_chroma_5_32b
+    b            8f
+6:
+    FILTER_CHROMA_HPP  \w \h qpel_filter_chroma_6_32b
+    b            8f
+7:
+    FILTER_CHROMA_HPP  \w \h qpel_filter_chroma_7_32b
+
+8:
+    pop             {r4, r5, r6, r7, r8}
+    bx              lr
+endfunc
+.endm
+
+CHROMA_HPP 4 2
+CHROMA_HPP 4 4
+CHROMA_HPP 4 8
+CHROMA_HPP 4 16
+CHROMA_HPP 4 32
+CHROMA_HPP 8 2
+CHROMA_HPP 8 4
+CHROMA_HPP 8 6
+CHROMA_HPP 8 8
+CHROMA_HPP 8 12
+CHROMA_HPP 8 16
+CHROMA_HPP 8 32
+CHROMA_HPP 8 64
+CHROMA_HPP 12 16
+CHROMA_HPP 12 32
+CHROMA_HPP 16 4
+CHROMA_HPP 16 8
+CHROMA_HPP 16 12
+CHROMA_HPP 16 16
+CHROMA_HPP 16 24
+CHROMA_HPP 16 32
+CHROMA_HPP 16 64
+CHROMA_HPP 24 32
+CHROMA_HPP 24 64
+CHROMA_HPP 32 8
+CHROMA_HPP 32 16
+CHROMA_HPP 32 24
+CHROMA_HPP 32 32
+CHROMA_HPP 32 48
+CHROMA_HPP 32 64
+CHROMA_HPP 48 64
+CHROMA_HPP 64 16
+CHROMA_HPP 64 32
+CHROMA_HPP 64 48
+CHROMA_HPP 64 64
+// ***** Chroma_hps *****
+.macro FILTER_CHROMA_HPS a b filterhps
+    vpush           {q4-q7}
+    mov             r12, #8192
+    mov             r6, r10
+    sub             r3, #\a
+    lsl             r3, #1
+
+    mov             r8, #\a
+    cmp             r8, #4
+    beq             14f
+    cmp             r8, #12
+    beq             15f
+    b               16f
+14:
+    FILTER_CHROMA_HPS_4 \a \b \filterhps
+    b               10f
+15:
+    FILTER_CHROMA_HPS_12 \a \b \filterhps
+    b               10f
+16:
+    cmp             r9, #0
+    beq             17f
+    cmp             r9, #1
+    beq             18f
+17:
+loop1_hps_\filterhps\()_\a\()x\b\()_rowext0:
+    mov             r7, #\a
+    lsr             r7, #3
+    mov             r5, r0
+    sub             r5, #2
+loop2_hps_\filterhps\()_\a\()x\b\()_rowext0:
+    vextin8_chroma
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q6, q8
+    vsub.s32        q7, q8
+    vmovn.u32       d0, q6
+    vmovn.u32       d1, q7
+    vst1.s16        {q0}, [r2]!
+    subs            r7, #1
+    sub             r5, #8
+    bne             loop2_hps_\filterhps\()_\a\()x\b\()_rowext0
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop1_hps_\filterhps\()_\a\()x\b\()_rowext0
+    b               10f
+18:
+loop3_hps_\filterhps\()_\a\()x\b\()_rowext1:
+    mov             r7, #\a
+    lsr             r7, #3
+    mov             r5, r0
+    sub             r5, #2
+loop4_hps_\filterhps\()_\a\()x\b\()_rowext1:
+    vextin8_chroma
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q6, q8
+    vsub.s32        q7, q8
+    vmovn.u32       d0, q6
+    vmovn.u32       d1, q7
+    vst1.s16        {q0}, [r2]!
+    subs            r7, #1
+    sub             r5, #8
+    bne             loop4_hps_\filterhps\()_\a\()x\b\()_rowext1
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop3_hps_\filterhps\()_\a\()x\b\()_rowext1
+10:
+    vpop            {q4-q7}
+.endm
+
+.macro FILTER_CHROMA_HPS_4 w h filterhps
+    cmp             r9, #0
+    beq             19f
+    cmp             r9, #1
+    beq             20f
+19:
+loop4_hps_\filterhps\()_\w\()x\h\()_rowext0:
+    mov             r5, r0
+    sub             r5, #2
+    vextin8_chroma
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q6, q8
+    vmovn.u32       d0, q6
+    vst1.s16        {d0}, [r2]!
+    sub             r5, #8
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop4_hps_\filterhps\()_\w\()x\h\()_rowext0
+    b               21f
+20:
+loop5_hps_\filterhps\()_\w\()x\h\()_rowext1:
+    mov             r5, r0
+    sub             r5, #2
+    vextin8_chroma
+    \filterhps
+    vdup.32         q8, r12
+    vsub.s32        q6, q8
+    vmovn.u32       d0, q6
+    vst1.s16        {d0}, [r2]!
+    sub             r5, #8
+    subs            r6, #1
+    add             r0, r1
+    add             r2, r3
+    bne             loop5_hps_\filterhps\()_\w\()x\h\()_rowext1
+21:
+.endm
+
+.macro FILTER_CHROMA_HPS_12 w h filterhpp
+    cmp             r9, #0
+    beq             22f
+    cmp             r9, #1
+    beq             23f
+22:
+loop12_hps_\filterhpp\()_\w\()x\h\()_rowext0:
+    mov             r5, r0
+    sub             r5, #2
+    vextin8_chroma
+    \filterhpp
+    vdup.32         q8, r12
+    vsub.s32        q6, q8
+    vsub.s32        q7, q8
+    vmovn.u32       d0, q6
+    vmovn.u32       d1, q7
+    vst1.s16        {q0}, [r2]!
+    sub             r5, #8
+
+    vextin8_chroma
+    \filterhpp
+    vdup.32         q8, r12
+    vsub.s32        q6, q8
+    vmovn.u32       d0, q6
+    vst1.s16        {d0}, [r2]!
+    add             r2, r3
+    subs            r6, #1
+    add             r0, r1
+    bne             loop12_hps_\filterhpp\()_\w\()x\h\()_rowext0
+    b               24f
+23:
+loop12_hps_\filterhpp\()_\w\()x\h\()_rowext1:
+    mov             r5, r0
+    sub             r5, #2
+    vextin8_chroma
+    \filterhpp
+    vdup.32         q8, r12
+    vsub.s32        q6, q8
+    vsub.s32        q7, q8
+    vmovn.u32       d0, q6
+    vmovn.u32       d1, q7
+    vst1.s16        {q0}, [r2]!
+    sub             r5, #8
+
+    vextin8_chroma
+    \filterhpp
+    vdup.32         q8, r12
+    vsub.s32        q6, q8
+    vmovn.u32       d0, q6
+    vst1.s16        {d0}, [r2]!
+    add             r2, r3
+    subs            r6, #1
+    add             r0, r1
+    bne             loop12_hps_\filterhpp\()_\w\()x\h\()_rowext1
+24:
+.endm
+
+.macro CHROMA_HPS w h
+function x265_interp_4tap_horiz_ps_\w\()x\h\()_neon
+    push            {r4, r5, r6, r7, r8, r9, r10}
+    ldr             r4, [sp, #28]
+    ldr             r9, [sp, #32]
+    mov             r10, #\h
+    cmp             r9, #0
+    beq             9f
+    sub             r0, r1
+    add             r10, #3
+9:
+    cmp             r4, #0
+    beq              0f
+    cmp             r4, #1
+    beq              1f
+    cmp             r4, #2
+    beq              2f
+    cmp             r4, #3
+    beq              3f
+    cmp             r4, #4
+    beq              4f
+    cmp             r4, #5
+    beq              5f
+    cmp             r4, #6
+    beq              6f
+    cmp             r4, #7
+    beq              7f
+0:
+    FILTER_CHROMA_HPS  \w \h qpel_filter_chroma_0_32b
+    b            8f
+1:
+    FILTER_CHROMA_HPS  \w \h qpel_filter_chroma_1_32b
+    b            8f
+2:
+    FILTER_CHROMA_HPS  \w \h qpel_filter_chroma_2_32b
+    b            8f
+3:
+    FILTER_CHROMA_HPS  \w \h qpel_filter_chroma_3_32b
+    b            8f
+4:
+    FILTER_CHROMA_HPS  \w \h qpel_filter_chroma_4_32b
+    b            8f
+5:
+    FILTER_CHROMA_HPS  \w \h qpel_filter_chroma_5_32b
+    b            8f
+6:
+    FILTER_CHROMA_HPS  \w \h qpel_filter_chroma_6_32b
+    b            8f
+7:
+    FILTER_CHROMA_HPS  \w \h qpel_filter_chroma_7_32b
+
+8:
+    pop             {r4, r5, r6, r7, r8, r9, r10}
+    bx              lr
+endfunc
+.endm
+
+CHROMA_HPS 4 2
+CHROMA_HPS 4 4
+CHROMA_HPS 4 8
+CHROMA_HPS 4 16
+CHROMA_HPS 4 32
+CHROMA_HPS 8 2
+CHROMA_HPS 8 4
+CHROMA_HPS 8 6
+CHROMA_HPS 8 8
+CHROMA_HPS 8 12
+CHROMA_HPS 8 16
+CHROMA_HPS 8 32
+CHROMA_HPS 8 64
+CHROMA_HPS 12 16
+CHROMA_HPS 12 32
+CHROMA_HPS 16 4
+CHROMA_HPS 16 8
+CHROMA_HPS 16 12
+CHROMA_HPS 16 16
+CHROMA_HPS 16 24
+CHROMA_HPS 16 32
+CHROMA_HPS 16 64
+CHROMA_HPS 24 32
+CHROMA_HPS 24 64
+CHROMA_HPS 32 8
+CHROMA_HPS 32 16
+CHROMA_HPS 32 24
+CHROMA_HPS 32 32
+CHROMA_HPS 32 48
+CHROMA_HPS 32 64
+CHROMA_HPS 48 64
+CHROMA_HPS 64 16
+CHROMA_HPS 64 32
+CHROMA_HPS 64 48
+CHROMA_HPS 64 64
