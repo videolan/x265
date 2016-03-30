@@ -13799,3 +13799,77 @@ cglobal planeClipAndMax, 5,7,8
     movzx           eax, al
     RET
 %endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0
+
+
+%if HIGH_BIT_DEPTH == 1 && BIT_DEPTH == 10
+%macro LOAD_DIFF_AVX2 4
+    movu       %1, %3
+    movu       %2, %4
+    psubw      %1, %2
+%endmacro
+
+%macro LOAD_DIFF_8x4P_AVX2 7-9 r0,r2 ; 4x dest, 2x temp, 2x pointer
+    LOAD_DIFF_AVX2 xm%1, xm%5, [%8],      [%9]
+    LOAD_DIFF_AVX2 xm%2, xm%6, [%8+r1],   [%9+r3]
+    LOAD_DIFF_AVX2 xm%3, xm%5, [%8+2*r1], [%9+2*r3]
+    LOAD_DIFF_AVX2 xm%4, xm%6, [%8+r4],   [%9+r5]
+
+    lea %8, [%8+4*r1]
+    lea %9, [%9+4*r3]
+%endmacro
+
+%macro SATD_8x4_AVX2 8-9
+    HADAMARD4_2D_SSE %2, %3, %4, %5, %6, amax
+    paddw m%8, m%2
+    paddw m%8, m%4
+%endmacro
+
+INIT_YMM avx2
+cglobal pixel_satd_8x8, 4,4,7
+
+    FIX_STRIDES r1, r3
+    pxor    xm6, xm6
+
+    ; load_diff 0 & 4
+    movu    xm0, [r0]
+    movu    xm1, [r2]
+    vinserti128 m0, m0, [r0 + r1 * 4], 1
+    vinserti128 m1, m1, [r2 + r3 * 4], 1
+    psubw   m0, m1
+    add     r0, r1
+    add     r2, r3
+
+    ; load_diff 1 & 5
+    movu    xm1, [r0]
+    movu    xm2, [r2]
+    vinserti128 m1, m1, [r0 + r1 * 4], 1
+    vinserti128 m2, m2, [r2 + r3 * 4], 1
+    psubw   m1, m2
+    add     r0, r1
+    add     r2, r3
+
+    ; load_diff 2 & 6
+    movu    xm2, [r0]
+    movu    xm3, [r2]
+    vinserti128 m2, m2, [r0 + r1 * 4], 1
+    vinserti128 m3, m3, [r2 + r3 * 4], 1
+    psubw   m2, m3
+    add     r0, r1
+    add     r2, r3
+
+    ; load_diff 3 & 7
+    movu    xm3, [r0]
+    movu    xm4, [r2]
+    vinserti128 m3, m3, [r0 + r1 * 4], 1
+    vinserti128 m4, m4, [r2 + r3 * 4], 1
+    psubw   m3, m4
+
+    SATD_8x4_SSE vertical, 0, 1, 2, 3, 4, 5, 6
+
+    vextracti128 xm0, m6, 1
+    paddw xm6, xm0
+    HADDUW xm6, xm0
+    movd   eax, xm6
+    RET
+
+%endif ; HIGH_BIT_DEPTH == 1 && BIT_DEPTH == 10

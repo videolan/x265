@@ -2157,6 +2157,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu);                        // calling luma_hvpp for all sizes
         p.pu[LUMA_4x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_4x4>;             // ALL_LUMA_PU_T has declared all sizes except 4x4, hence calling luma_hvpp[4x4] 
 
+#if X265_DEPTH == 10
+        p.pu[LUMA_8x8].satd = PFX(pixel_satd_8x8_avx2);
+#endif
+
         if (cpuMask & X265_CPU_BMI2)
         {
             p.scanPosLast = PFX(scanPosLast_avx2_bmi2);
