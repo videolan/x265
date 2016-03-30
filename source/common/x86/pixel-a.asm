@@ -13808,20 +13808,14 @@ cglobal planeClipAndMax, 5,7,8
     psubw      %1, %2
 %endmacro
 
-%macro LOAD_DIFF_8x4P_AVX2 7-9 r0,r2 ; 4x dest, 2x temp, 2x pointer
-    LOAD_DIFF_AVX2 xm%1, xm%5, [%8],      [%9]
-    LOAD_DIFF_AVX2 xm%2, xm%6, [%8+r1],   [%9+r3]
-    LOAD_DIFF_AVX2 xm%3, xm%5, [%8+2*r1], [%9+2*r3]
-    LOAD_DIFF_AVX2 xm%4, xm%6, [%8+r4],   [%9+r5]
+%macro LOAD_DIFF_8x4P_AVX2 6-8 r0,r2 ; 4x dest, 2x temp, 2x pointer
+    LOAD_DIFF_AVX2 xm%1, xm%5, [%7],      [%8]
+    LOAD_DIFF_AVX2 xm%2, xm%6, [%7+r1],   [%8+r3]
+    LOAD_DIFF_AVX2 xm%3, xm%5, [%7+2*r1], [%8+2*r3]
+    LOAD_DIFF_AVX2 xm%4, xm%6, [%7+r4],   [%8+r5]
 
-    lea %8, [%8+4*r1]
-    lea %9, [%9+4*r3]
-%endmacro
-
-%macro SATD_8x4_AVX2 8-9
-    HADAMARD4_2D_SSE %2, %3, %4, %5, %6, amax
-    paddw m%8, m%2
-    paddw m%8, m%4
+    ;lea %7, [%7+4*r1]
+    ;lea %8, [%8+4*r3]
 %endmacro
 
 INIT_YMM avx2
@@ -13870,6 +13864,135 @@ cglobal pixel_satd_8x8, 4,4,7
     paddw xm6, xm0
     HADDUW xm6, xm0
     movd   eax, xm6
+    RET
+
+INIT_XMM avx2
+cglobal pixel_sa8d_8x8_internal
+    lea  r6, [r0+4*r1]
+    lea  r7, [r2+4*r3]
+    LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    ;HADAMARD2_2D 0, 1, 2, 8, 6, wd
+    ;HADAMARD2_2D 4, 5, 3, 9, 6, wd
+    ;HADAMARD2_2D 0, 2, 1, 8, 6, dq
+    ;HADAMARD2_2D 4, 3, 5, 9, 6, dq
+    ;HADAMARD2_2D 0, 4, 2, 3, 6, qdq, amax
+    ;HADAMARD2_2D 1, 5, 8, 9, 6, qdq, amax
+
+    paddw m0, m1
+    paddw m0, m2
+    paddw m0, m8
+    SAVE_MM_PERMUTATION
+    ret
+
+
+INIT_XMM avx2
+cglobal pixel_sa8d_8x8, 4,8,12
+    FIX_STRIDES r1, r3
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    call pixel_sa8d_8x8_internal
+    HADDUW m0, m1
+    movd eax, m0
+    add eax, 1
+    shr eax, 1
+    RET
+
+
+INIT_YMM avx2
+cglobal pixel_sa8d_16x16, 4,8,12
+    FIX_STRIDES r1, r3
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    lea  r6, [r0+4*r1]
+    lea  r7, [r2+4*r3]
+    vbroadcasti128 m7, [pw_1]
+
+    ;call pixel_sa8d_8x8_internal ; pix[0]
+    ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    movu m0, [r0]
+    movu m5, [r2]
+    psubw m0, m5
+    movu m1, [r0 + r1]
+    movu m6, [r2 + r3]
+    psubw m1, m6
+    movu m2, [r0 + r1 * 2]
+    movu m5, [r2 + r3 * 2]
+    psubw m2, m5
+    movu m8, [r0 + r4]
+    movu m6, [r2 + r5]
+    psubw m8, m6
+
+    ;LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+    movu m4, [r6]
+    movu m11, [r7]
+    psubw m4, m11
+    movu m5, [r6 + r1]
+    movu m6, [r7 + r3]
+    psubw m5, m6
+    movu m3, [r6 + r1 * 2]
+    movu m11, [r7 + r3 * 2]
+    psubw m3, m11
+    movu m9, [r6 + r4]
+    movu m6, [r7 + r5]
+    psubw m9, m6
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    paddw m0, m1
+    paddw m2, m8
+    pmaddwd m0, m7
+    pmaddwd m2, m7
+    paddd m10, m0, m2
+
+    lea  r0, [r0+8*r1]
+    lea  r2, [r2+8*r3]
+    lea  r6, [r6+8*r1]
+    lea  r7, [r7+8*r3]
+
+    ;call pixel_sa8d_8x8_internal ; pix[8*stride+8]
+    ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    movu m0, [r0]
+    movu m5, [r2]
+    psubw m0, m5
+    movu m1, [r0 + r1]
+    movu m6, [r2 + r3]
+    psubw m1, m6
+    movu m2, [r0 + r1 * 2]
+    movu m5, [r2 + r3 * 2]
+    psubw m2, m5
+    movu m8, [r0 + r4]
+    movu m6, [r2 + r5]
+    psubw m8, m6
+
+    ;LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+    movu m4, [r6]
+    movu m11, [r7]
+    psubw m4, m11
+    movu m5, [r6 + r1]
+    movu m6, [r7 + r3]
+    psubw m5, m6
+    movu m3, [r6 + r1 * 2]
+    movu m11, [r7 + r3 * 2]
+    psubw m3, m11
+    movu m9, [r6 + r4]
+    movu m6, [r7 + r5]
+    psubw m9, m6
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    paddw m0, m1
+    paddw m2, m8
+    pmaddwd m0, m7
+    pmaddwd m2, m7
+    paddd m10, m0
+    paddd m10, m2
+
+    HADDD m10, m0
+
+    movd eax, xm10
+    add  eax, 1
+    shr  eax, 1
     RET
 
 %endif ; HIGH_BIT_DEPTH == 1 && BIT_DEPTH == 10

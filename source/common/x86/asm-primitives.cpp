@@ -2159,6 +2159,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
 #if X265_DEPTH == 10
         p.pu[LUMA_8x8].satd = PFX(pixel_satd_8x8_avx2);
+        p.cu[LUMA_8x8].sa8d = PFX(pixel_sa8d_8x8_avx2);
+        p.cu[LUMA_16x16].sa8d = PFX(pixel_sa8d_16x16_avx2);
 #endif
 
         if (cpuMask & X265_CPU_BMI2)
