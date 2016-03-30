@@ -735,20 +735,930 @@ function x265_pixel_planecopy_cp_neon
     bx              lr
 endfunc
 
+//******* satd *******
+.macro satd_4x4_neon
+    vld1.32         {d1[]}, [r2], r3
+    vld1.32         {d0[]}, [r0,:32], r1
+    vld1.32         {d3[]}, [r2], r3
+    vld1.32         {d2[]}, [r0,:32], r1
+    vld1.32         {d1[1]}, [r2], r3
+    vld1.32         {d0[1]}, [r0,:32], r1
+    vld1.32         {d3[1]}, [r2], r3
+    vld1.32         {d2[1]}, [r0,:32], r1
+    vsubl.u8        q0, d0, d1
+    vsubl.u8        q1, d2, d3
+    SUMSUB_AB       q2, q3, q0, q1
+    SUMSUB_ABCD     d0, d2, d1, d3, d4, d5, d6, d7
+    HADAMARD        1, sumsub, q2, q3, q0, q1
+    HADAMARD        2, amax, q0,, q2, q3
+    HORIZ_ADD       d0, d0, d1
+.endm
+
+function x265_pixel_satd_4x4_neon
+    satd_4x4_neon
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+.macro LOAD_DIFF_8x4_1 q0 q1 q2 q3
+    vld1.32         {d1}, [r2], r3
+    vld1.32         {d0}, [r0,:64], r1
+    vsubl.u8        \q0, d0, d1
+    vld1.32         {d3}, [r2], r3
+    vld1.32         {d2}, [r0,:64], r1
+    vsubl.u8        \q1, d2, d3
+    vld1.32         {d5}, [r2], r3
+    vld1.32         {d4}, [r0,:64], r1
+    vsubl.u8        \q2, d4, d5
+    vld1.32         {d7}, [r2], r3
+    vld1.32         {d6}, [r0,:64], r1
+    vsubl.u8        \q3, d6, d7
+.endm
+
+.macro x265_satd_4x8_8x4_end_neon
+    vadd.s16        q0, q8, q10
+    vadd.s16        q1, q9, q11
+    vsub.s16        q2, q8, q10
+    vsub.s16        q3, q9, q11
+
+    vtrn.16         q0, q1
+    vadd.s16        q8, q0, q1
+    vtrn.16         q2, q3
+    vsub.s16        q9, q0, q1
+    vadd.s16        q10, q2, q3
+    vsub.s16        q11, q2, q3
+    vtrn.32         q8, q10
+    vabs.s16        q8, q8
+    vtrn.32         q9, q11
+    vabs.s16        q10, q10
+    vabs.s16        q9, q9
+    vabs.s16        q11, q11
+    vmax.u16        q0, q8, q10
+    vmax.u16        q1, q9, q11
+    vadd.u16        q0, q0, q1
+    HORIZ_ADD       d0, d0, d1
+.endm
+
+.macro pixel_satd_4x8_neon
+    vld1.32         {d1[]}, [r2], r3
+    vld1.32         {d0[]}, [r0,:32], r1
+    vld1.32         {d3[]}, [r2], r3
+    vld1.32         {d2[]}, [r0,:32], r1
+    vld1.32         {d5[]}, [r2], r3
+    vld1.32         {d4[]}, [r0,:32], r1
+    vld1.32         {d7[]}, [r2], r3
+    vld1.32         {d6[]}, [r0,:32], r1
+
+    vld1.32         {d1[1]}, [r2], r3
+    vld1.32         {d0[1]}, [r0,:32], r1
+    vsubl.u8        q0, d0, d1
+    vld1.32         {d3[1]}, [r2], r3
+    vld1.32         {d2[1]}, [r0,:32], r1
+    vsubl.u8        q1, d2, d3
+    vld1.32         {d5[1]}, [r2], r3
+    vld1.32         {d4[1]}, [r0,:32], r1
+    vsubl.u8        q2, d4, d5
+    vld1.32         {d7[1]}, [r2], r3
+    SUMSUB_AB       q8, q9, q0, q1
+    vld1.32         {d6[1]}, [r0,:32], r1
+    vsubl.u8        q3, d6, d7
+    SUMSUB_AB       q10, q11, q2, q3
+    x265_satd_4x8_8x4_end_neon
+.endm
+
+function x265_pixel_satd_4x8_neon
+    pixel_satd_4x8_neon
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+function x265_pixel_satd_4x16_neon
+    push            {r4, r5}
+    eor             r4, r4
+    pixel_satd_4x8_neon
+    vmov.32         r5, d0[0]
+    add             r4, r5
+    pixel_satd_4x8_neon
+    vmov.32         r5, d0[0]
+    add             r0, r5, r4
+    pop             {r4, r5}
+    bx              lr
+endfunc
+
+function x265_pixel_satd_4x32_neon
+    push            {r4, r5}
+    eor             r4, r4
+.rept 4
+    pixel_satd_4x8_neon
+    vmov.32         r5, d0[0]
+    add             r4, r5
+.endr
+    mov             r0, r4
+    pop             {r4, r5}
+    bx              lr
+endfunc
+
+function x265_pixel_satd_12x16_neon
+    push            {r4, r5, r6, r7}
+    vpush           {d8-d11}
+    mov             ip, lr
+    mov             r4, r0
+    mov             r5, r2
+    eor             r7, r7
+    pixel_satd_4x8_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+    pixel_satd_4x8_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+
+    add             r0, r4, #4
+    add             r2, r5, #4
+    pixel_satd_4x8_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+    pixel_satd_4x8_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+
+    add             r0, r4, #8
+    add             r2, r5, #8
+    pixel_satd_4x8_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+    pixel_satd_4x8_neon
+    vmov.32         r6, d0[0]
+    add             r0, r7, r6
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_12x32_neon
+    push            {r4, r5, r6, r7}
+    vpush           {d8-d11}
+    mov             ip, lr
+    mov             r4, r0
+    mov             r5, r2
+    eor             r7, r7
+.rept 4
+    pixel_satd_4x8_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+.endr
+
+    add             r0, r4, #4
+    add             r2, r5, #4
+.rept 4
+    pixel_satd_4x8_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+.endr
+
+    add             r0, r4, #8
+    add             r2, r5, #8
+.rept 4
+    pixel_satd_4x8_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+.endr
+
+    mov             r0, r7
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_8x4_neon
+    push            {r4, r5, r6}
+    mov             r4, r0
+    mov             r5, r2
+    satd_4x4_neon
+    add             r0, r4, #4
+    add             r2, r5, #4
+    vmov.32         r6, d0[0]
+    satd_4x4_neon
+    vmov.32         r0, d0[0]
+    add             r0, r0, r6
+    pop             {r4, r5, r6}
+    bx              lr
+endfunc
+
+function x265_pixel_satd_8x8_neon
+    mov             ip, lr
+    push            {r4, r5, r6, r7}
+    eor             r4, r4
+    mov             r6, r0
+    mov             r7, r2
+    pixel_satd_4x8_neon
+    vmov.32         r5, d0[0]
+    add             r4, r5
+    add             r0, r6, #4
+    add             r2, r7, #4
+    pixel_satd_4x8_neon
+    vmov.32         r5, d0[0]
+    add             r0, r4, r5
+    pop             {r4, r5, r6, r7}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_8x12_neon
+    push            {r4, r5, r6, r7}
+    mov             r4, r0
+    mov             r5, r2
+    eor             r7, r7
+    satd_4x4_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+    add             r0, r4, #4
+    add             r2, r5, #4
+    satd_4x4_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+.rept 2
+    sub             r0, #4
+    sub             r2, #4
+    mov             r4, r0
+    mov             r5, r2
+    satd_4x4_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+    add             r0, r4, #4
+    add             r2, r5, #4
+    satd_4x4_neon
+    vmov.32         r6, d0[0]
+    add             r7, r6
+.endr
+    mov             r0, r7
+    pop             {r4, r5, r6, r7}
+    bx              lr
+endfunc
+
+function x265_pixel_satd_8x16_neon
+    vpush           {d8-d11}
+    mov             ip, lr
+    bl              x265_satd_8x8_neon
+    vadd.u16        q4, q12, q13
+    vadd.u16        q5, q14, q15
+
+    bl              x265_satd_8x8_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vpop            {d8-d11}
+    mov             lr, ip
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+function x265_pixel_satd_8x32_neon
+    vpush           {d8-d11}
+    mov             ip, lr
+    bl              x265_satd_8x8_neon
+    vadd.u16        q4, q12, q13
+    vadd.u16        q5, q14, q15
+.rept 3
+    bl              x265_satd_8x8_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+.endr
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vpop            {d8-d11}
+    mov             lr, ip
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+function x265_pixel_satd_8x64_neon
+    vpush           {d8-d11}
+    mov             ip, lr
+    bl              x265_satd_8x8_neon
+    vadd.u16        q4, q12, q13
+    vadd.u16        q5, q14, q15
+.rept 7
+    bl              x265_satd_8x8_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+.endr
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vpop            {d8-d11}
+    mov             lr, ip
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+function x265_satd_8x8_neon
+    LOAD_DIFF_8x4_1   q8, q9, q10, q11
+    vld1.64         {d7}, [r2], r3
+    vld1.64         {d6}, [r0,:64], r1
+    vsubl.u8        q12, d6, d7
+    SUMSUB_AB       q0, q1, q8, q9
+
+    vld1.64         {d17}, [r2], r3
+    vld1.64         {d16}, [r0,:64], r1
+    vsubl.u8        q13, d16, d17
+    SUMSUB_AB       q2, q3, q10, q11
+
+    vld1.64         {d19}, [r2], r3
+    vld1.64         {d18}, [r0,:64], r1
+    vsubl.u8        q14, d18, d19
+    SUMSUB_AB       q8, q10, q0, q2
+
+    vld1.64         {d1}, [r2], r3
+    vld1.64         {d0}, [r0,:64], r1
+    vsubl.u8        q15, d0, d1
+    SUMSUB_AB       q9, q11, q1, q3
+endfunc
+
+// one vertical hadamard pass and two horizontal
+function x265_satd_8x4v_8x8h_neon, export=0
+    SUMSUB_ABCD     q0, q1, q2, q3, q12, q13, q14, q15
+    SUMSUB_AB       q12, q14, q0, q2
+    SUMSUB_AB       q13, q15, q1, q3
+    vtrn.16         q8, q9
+    vtrn.16         q10, q11
+
+    SUMSUB_AB       q0, q1, q8, q9
+    SUMSUB_AB       q2, q3, q10, q11
+    vtrn.16         q12, q13
+    vtrn.16         q14, q15
+
+    SUMSUB_AB       q8, q9, q12, q13
+    SUMSUB_AB       q10, q11, q14, q15
+    vtrn.32         q0, q2
+    vtrn.32         q1, q3
+    ABS2            q0, q2
+    ABS2            q1, q3
+
+    vtrn.32         q8, q10
+    vtrn.32         q9, q11
+    ABS2            q8, q10
+    ABS2            q9, q11
+
+    vmax.s16        q12, q0, q2
+    vmax.s16        q13, q1, q3
+    vmax.s16        q14, q8, q10
+    vmax.s16        q15, q9, q11
+    bx              lr
+endfunc
+
+function x265_satd_16x4_neon, export=0
+    vld1.64         {d2-d3}, [r2], r3
+    vld1.64         {d0-d1}, [r0,:128], r1
+    vsubl.u8        q8, d0, d2
+    vsubl.u8        q12, d1, d3
+
+    vld1.64         {d6-d7}, [r2], r3
+    vld1.64         {d4-d5}, [r0,:128], r1
+    vsubl.u8        q9, d4, d6
+    vsubl.u8        q13, d5, d7
+
+    vld1.64         {d2-d3}, [r2], r3
+    vld1.64         {d0-d1}, [r0,:128], r1
+    vsubl.u8        q10, d0, d2
+    vsubl.u8        q14, d1, d3
+
+    vld1.64         {d6-d7}, [r2], r3
+    vld1.64         {d4-d5}, [r0,:128], r1
+    vsubl.u8        q11, d4, d6
+    vsubl.u8        q15, d5, d7
+
+    vadd.s16        q0, q8, q9
+    vsub.s16        q1, q8, q9
+    SUMSUB_AB       q2, q3, q10, q11
+    SUMSUB_ABCD     q8, q10, q9, q11, q0, q2, q1, q3
+    b               x265_satd_8x4v_8x8h_neon
+endfunc
+
+function x265_pixel_satd_16x4_neon
+    vpush           {d8-d11}
+    mov             ip, lr
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q12, q13
+    vadd.u16        q5, q14, q15
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vpop            {d8-d11}
+    mov             lr, ip
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+function x265_pixel_satd_16x8_neon
+    vpush           {d8-d11}
+    mov             ip, lr
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q12, q13
+    vadd.u16        q5, q14, q15
+
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vpop            {d8-d11}
+    mov             lr, ip
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+function x265_pixel_satd_16x12_neon
+    vpush           {d8-d11}
+    mov             ip, lr
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q12, q13
+    vadd.u16        q5, q14, q15
+.rept 2
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+.endr
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vpop            {d8-d11}
+    mov             lr, ip
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+function x265_pixel_satd_16x16_neon
+    vpush           {d8-d11}
+    mov             ip, lr
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q12, q13
+    vadd.u16        q5, q14, q15
+.rept 3
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+.endr
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vpop            {d8-d11}
+    mov             lr, ip
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+function x265_pixel_satd_16x24_neon
+    vpush           {d8-d11}
+    mov             ip, lr
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q12, q13
+    vadd.u16        q5, q14, q15
+.rept 5
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+.endr
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vpop            {d8-d11}
+    mov             lr, ip
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+.macro pixel_satd_16x32_neon
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q12, q13
+    vadd.u16        q5, q14, q15
+.rept 7
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+.endr
+.endm
+
+function x265_pixel_satd_16x32_neon
+    vpush           {d8-d11}
+    mov             ip, lr
+    pixel_satd_16x32_neon
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vpop            {d8-d11}
+    mov             lr, ip
+    vmov.32         r0, d0[0]
+    bx              lr
+endfunc
+
+function x265_pixel_satd_16x64_neon
+    push            {r6, r7}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+    pixel_satd_16x32_neon
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vmov.32         r6, d0[0]
+    add             r7, r6
+
+    veor            q4, q5
+    veor            q5, q5
+    pixel_satd_16x32_neon
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vmov.32         r6, d0[0]
+    add             r0, r7, r6
+    vpop            {d8-d11}
+    pop             {r6, r7}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_24x32_neon
+    push            {r4, r5, r6, r7}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+    mov             r4, r0
+    mov             r5, r2
+.rept 3
+    veor            q4, q4
+    veor            q5, q5
+.rept 4
+    bl              x265_satd_8x8_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+.endr
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vmov.32         r6, d0[0]
+    add             r7, r6
+    add             r4, #8
+    add             r5, #8
+    mov             r0, r4
+    mov             r2, r5
+.endr
+    mov             r0, r7
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_24x64_neon
+    push            {r4, r5, r6, r7}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+    mov             r4, r0
+    mov             r5, r2
+.rept 3
+    veor            q4, q4
+    veor            q5, q5
+.rept 4
+    bl              x265_satd_8x8_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+.endr
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vmov.32         r6, d0[0]
+    add             r7, r6
+    add             r4, #8
+    add             r5, #8
+    mov             r0, r4
+    mov             r2, r5
+.endr
+
+    sub             r4, #24
+    sub             r5, #24
+    add             r0, r4, r1, lsl #5
+    add             r2, r5, r3, lsl #5
+    mov             r4, r0
+    mov             r5, r2
+.rept 3
+    veor            q4, q4
+    veor            q5, q5
+.rept 4
+    bl              x265_satd_8x8_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+.endr
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vmov.32         r6, d0[0]
+    add             r7, r6
+    add             r4, #8
+    add             r5, #8
+    mov             r0, r4
+    mov             r2, r5
+.endr
+    mov             r0, r7
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+.macro pixel_satd_32x8
+    mov             r4, r0
+    mov             r5, r2
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+
+    add             r0, r4, #16
+    add             r2, r5, #16
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+
+    bl              x265_satd_16x4_neon
+    vadd.u16        q4, q4, q12
+    vadd.u16        q5, q5, q13
+    vadd.u16        q4, q4, q14
+    vadd.u16        q5, q5, q15
+.endm
+
+function x265_pixel_satd_32x8_neon
+    push            {r4, r5}
+    vpush           {d8-d11}
+    mov             ip, lr
+    veor            q4, q4
+    veor            q5, q5
+    pixel_satd_32x8
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vmov.32         r0, d0[0]
+    vpop            {d8-d11}
+    pop             {r4, r5}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+.macro satd_32x16_neon
+    veor            q4, q4
+    veor            q5, q5
+    pixel_satd_32x8
+    sub             r0, #16
+    sub             r2, #16
+    pixel_satd_32x8
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vmov.32         r6, d0[0]
+.endm
+
+function x265_pixel_satd_32x16_neon
+    push            {r4, r5, r6}
+    vpush           {d8-d11}
+    mov             ip, lr
+    satd_32x16_neon
+    mov             r0, r6
+    vpop            {d8-d11}
+    pop             {r4, r5, r6}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_32x24_neon
+    push            {r4, r5, r6}
+    vpush           {d8-d11}
+    mov             ip, lr
+    satd_32x16_neon
+    veor            q4, q4
+    veor            q5, q5
+    sub             r0, #16
+    sub             r2, #16
+    pixel_satd_32x8
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vmov.32         r0, d0[0]
+    add             r0, r6
+    vpop            {d8-d11}
+    pop             {r4, r5, r6}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_32x32_neon
+    push            {r4, r5, r6, r7}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+    satd_32x16_neon
+    sub             r0, #16
+    sub             r2, #16
+    add             r7, r6
+    satd_32x16_neon
+    add             r0, r7, r6
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_32x48_neon
+    push            {r4, r5, r6, r7}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+.rept 2
+    satd_32x16_neon
+    sub             r0, #16
+    sub             r2, #16
+    add             r7, r6
+.endr
+    satd_32x16_neon
+    add             r0, r7, r6
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_32x64_neon
+    push            {r4, r5, r6, r7}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+.rept 3
+    satd_32x16_neon
+    sub             r0, #16
+    sub             r2, #16
+    add             r7, r6
+.endr
+    satd_32x16_neon
+    add             r0, r7, r6
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+.macro satd_64x16_neon
+    mov             r8, r0
+    mov             r9, r2
+    satd_32x16_neon
+    add             r7, r6
+    add             r0, r8, #32
+    add             r2, r9, #32
+    satd_32x16_neon
+    add             r7, r6
+.endm
+
+function x265_pixel_satd_64x16_neon
+    push            {r4, r5, r6, r7, r8, r9}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+    satd_64x16_neon
+    mov             r0, r7
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7, r8, r9}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_64x32_neon
+    push            {r4, r5, r6, r7, r8, r9}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+    satd_64x16_neon
+    sub             r0, #48
+    sub             r2, #48
+    satd_64x16_neon
+    mov             r0, r7
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7, r8, r9}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_64x48_neon
+    push            {r4, r5, r6, r7, r8, r9}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+    satd_64x16_neon
+    sub             r0, #48
+    sub             r2, #48
+    satd_64x16_neon
+    sub             r0, #48
+    sub             r2, #48
+    satd_64x16_neon
+    mov             r0, r7
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7, r8, r9}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_64x64_neon
+    push            {r4, r5, r6, r7, r8, r9}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+    satd_64x16_neon
+    sub             r0, #48
+    sub             r2, #48
+    satd_64x16_neon
+    sub             r0, #48
+    sub             r2, #48
+    satd_64x16_neon
+    sub             r0, #48
+    sub             r2, #48
+    satd_64x16_neon
+    mov             r0, r7
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7, r8, r9}
+    mov             lr, ip
+    bx              lr
+endfunc
+
+function x265_pixel_satd_48x64_neon
+    push            {r4, r5, r6, r7, r8, r9}
+    vpush           {d8-d11}
+    mov             ip, lr
+    eor             r7, r7
+    mov             r8, r0
+    mov             r9, r2
+.rept 3
+    satd_32x16_neon
+    sub             r0, #16
+    sub             r2, #16
+    add             r7, r6
+.endr
+    satd_32x16_neon
+    add             r7, r6
+
+    add             r0, r8, #32
+    add             r2, r9, #32
+    pixel_satd_16x32_neon
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vmov.32         r6, d0[0]
+    add             r7, r6
+
+    veor            q4, q5
+    veor            q5, q5
+    pixel_satd_16x32_neon
+    vadd.u16        q0, q4, q5
+    HORIZ_ADD       d0, d0, d1
+    vmov.32         r6, d0[0]
+    add             r0, r7, r6
+
+    vpop            {d8-d11}
+    pop             {r4, r5, r6, r7, r8, r9}
+    mov             lr, ip
+    bx              lr
+endfunc
 
 .macro LOAD_DIFF_8x4 q0 q1 q2 q3
-    vld1.32     {d1}, [r2], r3
-    vld1.32     {d0}, [r0,:64], r1
-    vsubl.u8    \q0, d0,  d1
-    vld1.32     {d3}, [r2], r3
-    vld1.32     {d2}, [r0,:64], r1
-    vsubl.u8    \q1, d2,  d3
-    vld1.32     {d5}, [r2], r3
-    vld1.32     {d4}, [r0,:64], r1
-    vsubl.u8    \q2, d4,  d5
-    vld1.32     {d7}, [r2], r3
-    vld1.32     {d6}, [r0,:64], r1
-    vsubl.u8    \q3, d6,  d7
+    vld1.32         {d1}, [r2], r3
+    vld1.32         {d0}, [r0,:64], r1
+    vsubl.u8        \q0, d0, d1
+    vld1.32         {d3}, [r2], r3
+    vld1.32         {d2}, [r0,:64], r1
+    vsubl.u8        \q1, d2, d3
+    vld1.32         {d5}, [r2], r3
+    vld1.32         {d4}, [r0,:64], r1
+    vsubl.u8        \q2, d4, d5
+    vld1.32         {d7}, [r2], r3
+    vld1.32         {d6}, [r0,:64], r1
+    vsubl.u8        \q3, d6, d7
 .endm
 
 .macro HADAMARD4_V r1, r2, r3, r4, t1, t2, t3, t4
