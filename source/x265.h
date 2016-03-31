@@ -189,10 +189,6 @@ typedef struct x265_picture
     /* Stride is the number of bytes between row starts */
     int     stride[3];
 
-    uint64_t framesize;
-
-    int    height;
-
     /* Must be specified on input pictures. x265_picture_init() will set it to
      * the encoder's internal bit depth, but this field must describe the depth
      * of the input pictures. Must be between 8 and 16. Values larger than 8
@@ -245,6 +241,10 @@ typedef struct x265_picture
      * It is not used for collecting the last pass ratecontrol data in 
      * multi pass ratecontrol mode. */
     x265_rc_stats rcData;
+
+    uint64_t framesize;
+
+    int    height;
 } x265_picture;
 
 typedef enum
