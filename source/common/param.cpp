@@ -1382,7 +1382,7 @@ char *x265_param2string(x265_param* p)
         return NULL;
 
 #define BOOL(param, cliopt) \
-    s += sprintf(s, " %s", (param) ? cliopt : "no-"cliopt);
+    s += sprintf(s, " %s", (param) ? cliopt : "no-" cliopt);
 
     s += sprintf(s, "%dx%d", p->sourceWidth,p->sourceHeight);
     s += sprintf(s, " fps=%u/%u", p->fpsNum, p->fpsDenom);
