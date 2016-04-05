@@ -832,8 +832,29 @@ function x265_pixel_sa8d_8x8_neon
     bx              lr
 endfunc
 
+function x265_pixel_sa8d_8x16_neon
+    push            {r4, r5}
+    mov             ip,  lr
+    bl              x265_sa8d_8x8_neon
+    vadd.u16        q0,  q8,  q9
+    HORIZ_ADD       d0,  d0,  d1
+    vmov.32         r5, d0[0]
+    add             r5,  r5,  #1
+    lsr             r5,  r5,  #1
+    bl              x265_sa8d_8x8_neon
+    vadd.u16        q0,  q8,  q9
+    HORIZ_ADD       d0,  d0,  d1
+    vmov.32         r4, d0[0]
+    add             r4,  r4,  #1
+    lsr             r4,  r4,  #1
+    add             r0, r4, r5
+    mov             lr,  ip
+    pop             {r4, r5}
+    bx              lr
+endfunc
+
 function x265_pixel_sa8d_16x16_neon
-    vpush           {d8-d11}
+    vpush           {d8 - d11}
     mov             ip,  lr
     bl              x265_sa8d_8x8_neon
     vpaddl.u16      q4,  q8
@@ -864,4 +885,170 @@ function x265_pixel_sa8d_16x16_neon
     bx              lr
 endfunc
 
+.macro sa8d_16x16 reg
+    bl              x265_sa8d_8x8_neon
+    vpaddl.u16      q4,  q8
+    vpaddl.u16      q5,  q9
+    bl              x265_sa8d_8x8_neon
+    vpadal.u16      q4,  q8
+    vpadal.u16      q5,  q9
+    sub             r0,  r0,  r1,  lsl #4
+    sub             r2,  r2,  r3,  lsl #4
+    add             r0,  r0,  #8
+    add             r2,  r2,  #8
+    bl              x265_sa8d_8x8_neon
+    vpadal.u16      q4,  q8
+    vpadal.u16      q5,  q9
+    bl              x265_sa8d_8x8_neon
+    vpaddl.u16      q8,  q8
+    vpaddl.u16      q9,  q9
+    vadd.u32        q0,  q4,  q8
+    vadd.u32        q1,  q5,  q9
+    vadd.u32        q0,  q0,  q1
+    vadd.u32        d0,  d0,  d1
+    vpadd.u32       d0,  d0,  d0
+    vmov.32         \reg,  d0[0]
+    add             \reg,  \reg,  #1
+    lsr             \reg,  \reg,  #1
+.endm
+
+function x265_pixel_sa8d_16x32_neon
+    push            {r4, r5}
+    vpush           {d8 - d11}
+    mov             ip,  lr
+
+    sa8d_16x16 r4
+
+    sub             r0,  r0,  #8
+    sub             r2,  r2,  #8
+
+    sa8d_16x16 r5
+
+    add             r0, r4, r5
+    vpop            {d8 - d11}
+    pop             {r4, r5}
+    mov             lr,  ip
+    bx              lr
+endfunc
+
+function x265_pixel_sa8d_32x32_neon
+    push            {r4 - r7}
+    vpush           {d8 - d11}
+    mov             ip,  lr
+
+    sa8d_16x16 r4
+
+    sub             r0,  r0,  r1,  lsl #4
+    sub             r2,  r2,  r3,  lsl #4
+    add             r0,  r0,  #8
+    add             r2,  r2,  #8
+
+    sa8d_16x16 r5
+
+    sub             r0,  r0,  #24
+    sub             r2,  r2,  #24
+
+   sa8d_16x16 r6
+
+    sub             r0,  r0,  r1,  lsl #4
+    sub             r2,  r2,  r3,  lsl #4
+    add             r0,  r0,  #8
+    add             r2,  r2,  #8
+
+   sa8d_16x16 r7
+
+    add             r4, r4, r5
+    add             r6, r6, r7
+    add             r0, r4, r6
+    vpop            {d8 - d11}
+    pop             {r4 - r7}
+    mov             lr,  ip
+    bx              lr
+endfunc
+
+function x265_pixel_sa8d_32x64_neon
+    push            {r4 - r10}
+    vpush           {d8 - d11}
+    mov             ip,  lr
+
+    mov             r10, #4
+    eor             r9, r9
+
+.loop_32:
+
+    sa8d_16x16 r4
+
+    sub             r0,  r0,  r1,  lsl #4
+    sub             r2,  r2,  r3,  lsl #4
+    add             r0,  r0,  #8
+    add             r2,  r2,  #8
+
+    sa8d_16x16 r5
+
+    add             r4, r4, r5
+    add             r9, r9, r4
+
+    sub             r0,  r0,  #24
+    sub             r2,  r2,  #24
+
+    subs            r10, #1
+    bgt            .loop_32
+
+    mov             r0, r9
+    vpop            {d8-d11}
+    pop             {r4-r10}
+    mov             lr,  ip
+    bx              lr
+endfunc
+
+function x265_pixel_sa8d_64x64_neon
+    push            {r4-r10}
+    vpush           {d8-d11}
+    mov             ip,  lr
+
+    mov             r10, #4
+    eor             r9, r9
+
+.loop_1:
+
+    sa8d_16x16 r4
+
+    sub             r0,  r0,  r1,  lsl #4
+    sub             r2,  r2,  r3,  lsl #4
+    add             r0,  r0,  #8
+    add             r2,  r2,  #8
+
+    sa8d_16x16 r5
+
+    sub             r0,  r0,  r1,  lsl #4
+    sub             r2,  r2,  r3,  lsl #4
+    add             r0,  r0,  #8
+    add             r2,  r2,  #8
+
+   sa8d_16x16 r6
+
+    sub             r0,  r0,  r1,  lsl #4
+    sub             r2,  r2,  r3,  lsl #4
+    add             r0,  r0,  #8
+    add             r2,  r2,  #8
+
+   sa8d_16x16 r7
+
+    add             r4, r4, r5
+    add             r6, r6, r7
+    add             r8, r4, r6
+    add             r9, r9, r8
+
+    sub             r0,  r0,  #56
+    sub             r2,  r2,  #56
+
+    subs            r10, #1
+    bgt            .loop_1
+
+    mov             r0, r9
+    vpop            {d8-d11}
+    pop             {r4-r10}
+    mov             lr,  ip
+    bx              lr
+endfunc
 

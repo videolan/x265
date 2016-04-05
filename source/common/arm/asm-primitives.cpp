@@ -302,8 +302,14 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         // planecopy
         p.planecopy_cp = PFX(pixel_planecopy_cp_neon);
 
+        //p.cu[BLOCK_4x4].sa8d   = PFX(pixel_satd_4x4_neon);
         p.cu[BLOCK_8x8].sa8d = PFX(pixel_sa8d_8x8_neon);
         p.cu[BLOCK_16x16].sa8d = PFX(pixel_sa8d_16x16_neon);
+        p.cu[BLOCK_32x32].sa8d = PFX(pixel_sa8d_32x32_neon);
+        p.cu[BLOCK_64x64].sa8d = PFX(pixel_sa8d_64x64_neon);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sa8d = PFX(pixel_sa8d_8x16_neon); 
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sa8d = PFX(pixel_sa8d_16x32_neon);
+        p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sa8d = PFX(pixel_sa8d_32x64_neon);
 
         // vertical interpolation filters
         p.pu[LUMA_4x4].luma_vpp     = PFX(interp_8tap_vert_pp_4x4_neon);
