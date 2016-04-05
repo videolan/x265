@@ -1332,7 +1332,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
 
     if (frameStats)
     {
-        const int picOrderCntLSB = (slice->m_poc - slice->m_lastIDR + (1 << BITS_FOR_POC)) % (1 << BITS_FOR_POC);
+        const int picOrderCntLSB = slice->m_poc - slice->m_lastIDR;
 
         frameStats->encoderOrder = m_outputCount++;
         frameStats->sliceType = c;
