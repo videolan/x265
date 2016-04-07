@@ -320,11 +320,14 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
     const uint32_t* ctuGeomMap = m_frameFilter->m_frameEncoder->m_ctuGeomMap;
     PicYuv* reconPic = m_encData->m_reconPic;
     const int colStart = m_lastCol.get();
-    // TODO: Waiting previous row finish or simple clip on it?
-    const int colEnd = m_allowedCol.get();
     const int numCols = m_frameFilter->m_numCols;
+    // TODO: Waiting previous row finish or simple clip on it?
+    int colEnd = m_allowedCol.get();
 
     // Avoid threading conflict
+    if (m_prevRow && colEnd > m_prevRow->m_lastDeblocked.get())
+        colEnd = m_prevRow->m_lastDeblocked.get();
+
     if (colStart >= colEnd)
         return;
 
