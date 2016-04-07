@@ -230,6 +230,7 @@ RateControl::RateControl(x265_param& p)
     m_encOrder = NULL;
     m_lastBsliceSatdCost = 0;
     m_movingAvgSum = 0.0;
+    m_isNextGop = false;
 
     // vbv initialization
     m_param->rc.vbvBufferSize = x265_clip3(0, 2000000, m_param->rc.vbvBufferSize);
@@ -1786,8 +1787,8 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                     }
                 }
             }
-            if (m_sliceType == I_SLICE && m_param->keyframeMax > 1
-                && m_lastNonBPictType != I_SLICE && !m_isAbrReset)
+            if ((m_sliceType == I_SLICE && m_param->keyframeMax > 1
+                && m_lastNonBPictType != I_SLICE && !m_isAbrReset) || (m_isNextGop && !m_framesDone))
             {
                 if (!m_param->rc.bStrictCbr)
                     q = x265_qp2qScale(m_accumPQp / m_accumPNorm);

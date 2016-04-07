@@ -128,6 +128,7 @@ public:
     bool   m_singleFrameVbv;
     bool   m_isGrainEnabled;
     bool   m_isAbrReset;
+    bool   m_isNextGop;
     int    m_lastAbrResetPoc;
 
     double m_rateTolerance;
