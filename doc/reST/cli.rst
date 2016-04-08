@@ -1056,7 +1056,7 @@ a drastic effect on rate control, forcing higher overall QP, and can
 cause ringing artifacts. psy-rdoq is less accurate than psy-rd, it is
 biasing towards energy in general while psy-rd biases towards the energy
 of the source image. But very large psy-rdoq values can sometimes be
-beneficial, preserving film grain for instance.
+beneficial.
 
 As a general rule, when both psycho-visual features are disabled, the
 encoder will tend to blur blocks in areas of difficult motion. Turning
@@ -1093,8 +1093,8 @@ areas of high motion.
 	energy in the reconstructed image. This generally improves perceived
 	visual quality at the cost of lower quality metric scores.  It only
 	has effect when :option:`--rdoq-level` is 1 or 2. High values can
-	be beneficial in preserving high-frequency detail like film grain.
-	Default: 1.0
+	be beneficial in preserving high-frequency detail.
+	Default: 0.0 (1.0 for presets slow, slower, veryslow)
 
 	**Range of values:** 0 .. 50.0
 
