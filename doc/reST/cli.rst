@@ -376,10 +376,10 @@ frame counts) are only applicable to the CLI application.
 
 .. option:: --dither
 
-	Enable high quality downscaling. Dithering is based on the diffusion
-	of errors from one row of pixels to the next row of pixels in a
-	picture. Only applicable when the input bit depth is larger than
-	8bits and internal bit depth is 8bits. Default disabled
+	Enable high quality downscaling to the encoder's internal bitdepth. 
+	Dithering is based on the diffusion	of errors from one row of pixels 
+	to the next row of pixels in a picture. Only applicable when the 
+	input bit depth is larger than 8bits. Default disabled
 
 	**CLI ONLY**
 

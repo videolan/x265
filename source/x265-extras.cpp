@@ -335,6 +335,12 @@ void x265_dither_image(const x265_api& api, x265_picture& picIn, int picWidth, i
         return;
     }
 
+    if (picIn.bitDepth == bitDepth)
+    {
+        fprintf(stderr, "extras[error]: dither support enabled only if encoder depth is different from picture depth\n");
+        return;
+    }
+
     /* This portion of code is from readFrame in x264. */
     for (int i = 0; i < x265_cli_csps[picIn.colorSpace].planes; i++)
     {
