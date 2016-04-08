@@ -280,9 +280,9 @@ void x265_csvlog_encode(FILE* csvfp, const x265_api& api, const x265_param& para
     fprintf(csvfp, " %-6u, %-6u, %s\n", stats.maxCLL, stats.maxFALL, api.version_str);
 }
 
-/* The dithering algorithm is based on Sierra-2-4A error diffusion. */
-static void ditherPlane(pixel *dst, int dstStride, uint16_t *src, int srcStride,
-                        int width, int height, int16_t *errors, int bitDepth)
+/* The dithering algorithm is based on Sierra-2-4A error diffusion.
+ * We convert planes in place (without allocating a new buffer). */
+static void ditherPlane(uint16_t *src, int srcStride, int width, int height, int16_t *errors, int bitDepth)
 {
     const int lShift = 16 - bitDepth;
     const int rShift = 16 - bitDepth + 2;
@@ -290,15 +290,33 @@ static void ditherPlane(pixel *dst, int dstStride, uint16_t *src, int srcStride,
     const int pixelMax = (1 << bitDepth) - 1;
 
     memset(errors, 0, (width + 1) * sizeof(int16_t));
-    int pitch = 1;
-    for (int y = 0; y < height; y++, src += srcStride, dst += dstStride)
+
+    if (bitDepth == 8)
     {
-        int16_t err = 0;
-        for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++, src += srcStride)
         {
-            err = err * 2 + errors[x] + errors[x + 1];
-            dst[x * pitch] = (pixel)x265_clip3(0, pixelMax, ((src[x * 1] << 2) + err + half) >> rShift);
-            errors[x] = err = src[x * pitch] - (dst[x * pitch] << lShift);
+            int16_t err = 0;
+            for (int x = 0; x < width; x++)
+            {
+                err = err * 2 + errors[x] + errors[x + 1];
+                int tmpDst = x265_clip3(0, pixelMax, ((src[x] << 2) + err + half) >> rShift);
+                errors[x] = err = (int16_t)(src[x] - (tmpDst << lShift));
+                src[x] = (uint8_t)tmpDst;
+            }
+        }
+    }
+    else
+    {
+        for (int y = 0; y < height; y++, src += srcStride)
+        {
+            int16_t err = 0;
+            for (int x = 0; x < width; x++)
+            {
+                err = err * 2 + errors[x] + errors[x + 1];
+                int tmpDst = x265_clip3(0, pixelMax, ((src[x] << 2) + err + half) >> rShift);
+                errors[x] = err = (int16_t)(src[x] - (tmpDst << lShift));
+                src[x] = (uint16_t)tmpDst;
+            }
         }
     }
 }
@@ -320,7 +338,7 @@ void x265_dither_image(const x265_api& api, x265_picture& picIn, int picWidth, i
     /* This portion of code is from readFrame in x264. */
     for (int i = 0; i < x265_cli_csps[picIn.colorSpace].planes; i++)
     {
-        if ((picIn.bitDepth & 7) && (picIn.bitDepth != 16))
+        if (picIn.bitDepth < 16)
         {
             /* upconvert non 16bit high depth planes to 16bit */
             uint16_t *plane = (uint16_t*)picIn.planes[i];
@@ -332,14 +350,10 @@ void x265_dither_image(const x265_api& api, x265_picture& picIn, int picWidth, i
             for (uint32_t j = 0; j < pixelCount; j++)
                 plane[j] = plane[j] << lShift;
         }
-    }
 
-    for (int i = 0; i < x265_cli_csps[picIn.colorSpace].planes; i++)
-    {
         int height = (int)(picHeight >> x265_cli_csps[picIn.colorSpace].height[i]);
         int width = (int)(picWidth >> x265_cli_csps[picIn.colorSpace].width[i]);
 
-        ditherPlane(((pixel*)picIn.planes[i]), picIn.stride[i] / sizeof(pixel), ((uint16_t*)picIn.planes[i]),
-                    picIn.stride[i] / 2, width, height, errorBuf, bitDepth);
+        ditherPlane(((uint16_t*)picIn.planes[i]), picIn.stride[i] / 2, width, height, errorBuf, bitDepth);
     }
 }
