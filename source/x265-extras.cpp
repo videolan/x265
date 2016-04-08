@@ -295,13 +295,14 @@ static void ditherPlane(uint16_t *src, int srcStride, int width, int height, int
     {
         for (int y = 0; y < height; y++, src += srcStride)
         {
+            uint8_t* dst = (uint8_t *)src;
             int16_t err = 0;
             for (int x = 0; x < width; x++)
             {
                 err = err * 2 + errors[x] + errors[x + 1];
                 int tmpDst = x265_clip3(0, pixelMax, ((src[x] << 2) + err + half) >> rShift);
                 errors[x] = err = (int16_t)(src[x] - (tmpDst << lShift));
-                src[x] = (uint8_t)tmpDst;
+                dst[x] = (uint8_t)tmpDst;
             }
         }
     }
