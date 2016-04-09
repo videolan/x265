@@ -121,29 +121,22 @@ Film Grain Retention
 ~~~~~~~~~~~~~~~~~~~~
 
 :option:`--tune` *grain* tries to improve the retention of film grain in
-the reconstructed output. It disables rate distortion optimizations in
-quantization, and increases the default psy-rd.
+the reconstructed output. Varying the  quantization parameter within and 
+across frames causes grain strobing (uneven distribution of grain), which 
+is visually distracting. :option: `--tune` *grain* severely dials down 
+algorithms that vary the quantization parameter. 
 
-    * :option:`--psy-rd` 0.5
-    * :option:`--rdoq-level` 0
-    * :option:`--psy-rdoq` 0
+    * :option:`--aq-mode` 0
+    * :option:`--cu-tree` 0
+    * :option:`--ip-factor` 1.1
+	* :option:`--pb-factor` 1.0
+	* :option:`--qp-step` 1
 
-It lowers the strength of adaptive quantization, so residual energy can
-be more evenly distributed across the (noisy) picture:
-
-    * :option:`--aq-strength` 0.3
-
-And it similarly tunes rate control to prevent the slice QP from
-swinging too wildly from frame to frame:
-
-    * :option:`--ipratio` 1.1
-    * :option:`--pbratio` 1.1
-    * :option:`--qcomp` 0.8
-
-And lastly it reduces the strength of deblocking to prevent grain being
-blurred on block boundaries:
-
-    * :option:`--deblock` -2
+It also enables a specialised ratecontrol algorithm :option:`--rc-grain` 
+that strictly minimises QP fluctuations across frames, while still allowing 
+the encoder to hit bitrate targets and VBV buffer limits (with a slightly 
+higher margin of error than normal). It is highly recommended that this 
+algorithm is used only through the :option:`--tune` *grain* feature. 
 
 Fast Decode
 ~~~~~~~~~~~
