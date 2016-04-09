@@ -609,7 +609,7 @@ Profile, Level, Tier
 Mode decision / Analysis
 ========================
 
-.. option:: --rd <0..6>
+.. option:: --rd <1..6>
 
 	Level of RDO in mode decision. The higher the value, the more
 	exhaustive the analysis and the more rate distortion optimization is
@@ -638,7 +638,7 @@ Mode decision / Analysis
 	| 6     | Currently same as 5                                           |
 	+-------+---------------------------------------------------------------+
 
-	**Range of values:** 0: least .. 6: full RDO analysis
+	**Range of values:** 1: least .. 6: full RDO analysis
 
 Options which affect the coding unit quad-tree, sometimes referred to as
 the prediction quad-tree.

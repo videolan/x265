@@ -793,7 +793,7 @@ typedef struct x265_param
      * enabled). At level 2 rate-distortion cost is used to make decimate decisions
      * on each 4x4 coding group (including the cost of signaling the group within
      * the group bitmap).  Psy-rdoq is less effective at preserving energy when
-     * RDOQ is at level 2 */
+     * RDOQ is at level 2. Default: 0 */
     int       rdoqLevel;
 
     /* Enable the implicit signaling of the sign bit of the last coefficient of
@@ -925,17 +925,17 @@ typedef struct x265_param
     /* Note: when deblocking and SAO are both enabled, the loop filter CU lag is
      * only one row, as they operate in series on the same row. */
 
-    /* Select the method in which SAO deals with deblocking boundary pixels.  If
+    /* Select the method in which SAO deals with deblocking boundary pixels. If
      * disabled the right and bottom boundary areas are skipped. If enabled,
      * non-deblocked pixels are used entirely. Default is disabled */
     int       bSaoNonDeblocked;
 
     /*== Analysis tools ==*/
 
-    /* A value between X265_NO_RDO_NO_RDOQ and X265_RDO_LEVEL which determines
-     * the level of rate distortion optimizations to perform during mode
-     * decisions and quantization. The more RDO the better the compression
-     * efficiency at a major cost of performance. Default is no RDO (0) */
+    /* A value between 1 and 6 (both inclusive) which determines the level of 
+     * rate distortion optimizations to perform during mode and depth decisions.
+     * The more RDO the better the compression efficiency at a major cost of 
+     * performance. Default is 3 */
     int       rdLevel;
 
     /* Enable early skip decisions to avoid intra and inter analysis in likely
@@ -976,8 +976,8 @@ typedef struct x265_param
     double    psyRd;
 
     /* Strength of psycho-visual optimizations in quantization. Only has an
-     * effect in presets which use RDOQ (rd-levels 4 and 5).  The value must be
-     * between 0 and 50, 1.0 is typical. Default 1.0 */
+     * effect when RDOQ is enabled (presets slow, slower and veryslow). The 
+     * value must be between 0 and 50, 1.0 is typical. Default 0 */
     double    psyRdoq;
 
     /* Perform quantisation parameter based RD refinement. RD cost is calculated
