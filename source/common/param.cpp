@@ -1437,7 +1437,7 @@ char *x265_param2string(x265_param* p)
     BOOL(p->bEnableRdRefine, "rd-refine");
     BOOL(p->bEnableSignHiding, "signhide");
     BOOL(p->bEnableLoopFilter, "deblock");
-    if (p->bEnableLoopFilter && (p->deblockingFilterBetaOffset || p->deblockingFilterTCOffset))
+    if (p->bEnableLoopFilter)
         s += sprintf(s, "=%d:%d", p->deblockingFilterTCOffset, p->deblockingFilterBetaOffset);
     BOOL(p->bEnableSAO, "sao");
     BOOL(p->bSaoNonDeblocked, "sao-non-deblock");
