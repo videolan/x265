@@ -13995,4 +13995,373 @@ cglobal pixel_sa8d_16x16, 4,8,12
     shr  eax, 1
     RET
 
+
+; TODO: optimize me, need more 2 of YMM registers because C model get partial result every 16x16 block
+INIT_YMM avx2
+cglobal pixel_sa8d_32x32, 4,8,14
+    FIX_STRIDES r1, r3
+    lea  r4, [3*r1]
+    lea  r5, [3*r3]
+    lea  r6, [r0+4*r1]
+    lea  r7, [r2+4*r3]
+    vbroadcasti128 m7, [pw_1]
+
+
+    ;SA8D[16x8] ; pix[0]
+    ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    movu m0, [r0]
+    movu m5, [r2]
+    psubw m0, m5
+    movu m1, [r0 + r1]
+    movu m6, [r2 + r3]
+    psubw m1, m6
+    movu m2, [r0 + r1 * 2]
+    movu m5, [r2 + r3 * 2]
+    psubw m2, m5
+    movu m8, [r0 + r4]
+    movu m6, [r2 + r5]
+    psubw m8, m6
+
+    ;LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+    movu m4, [r6]
+    movu m11, [r7]
+    psubw m4, m11
+    movu m5, [r6 + r1]
+    movu m6, [r7 + r3]
+    psubw m5, m6
+    movu m3, [r6 + r1 * 2]
+    movu m11, [r7 + r3 * 2]
+    psubw m3, m11
+    movu m9, [r6 + r4]
+    movu m6, [r7 + r5]
+    psubw m9, m6
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    paddw m0, m1
+    paddw m2, m8
+    pmaddwd m0, m7
+    pmaddwd m2, m7
+    paddd m10, m0, m2
+
+
+    ; SA8D[16x8] ; pix[16]
+    add  r0, mmsize
+    add  r2, mmsize
+    add  r6, mmsize
+    add  r7, mmsize
+
+    ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    movu m0, [r0]
+    movu m5, [r2]
+    psubw m0, m5
+    movu m1, [r0 + r1]
+    movu m6, [r2 + r3]
+    psubw m1, m6
+    movu m2, [r0 + r1 * 2]
+    movu m5, [r2 + r3 * 2]
+    psubw m2, m5
+    movu m8, [r0 + r4]
+    movu m6, [r2 + r5]
+    psubw m8, m6
+
+    ;LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+    movu m4, [r6]
+    movu m11, [r7]
+    psubw m4, m11
+    movu m5, [r6 + r1]
+    movu m6, [r7 + r3]
+    psubw m5, m6
+    movu m3, [r6 + r1 * 2]
+    movu m11, [r7 + r3 * 2]
+    psubw m3, m11
+    movu m9, [r6 + r4]
+    movu m6, [r7 + r5]
+    psubw m9, m6
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    paddw m0, m1
+    paddw m2, m8
+    pmaddwd m0, m7
+    pmaddwd m2, m7
+    paddd m12, m0, m2
+
+
+    ; SA8D[16x8] ; pix[8*stride+16]
+    lea  r0, [r0+8*r1]
+    lea  r2, [r2+8*r3]
+    lea  r6, [r6+8*r1]
+    lea  r7, [r7+8*r3]
+
+    ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    movu m0, [r0]
+    movu m5, [r2]
+    psubw m0, m5
+    movu m1, [r0 + r1]
+    movu m6, [r2 + r3]
+    psubw m1, m6
+    movu m2, [r0 + r1 * 2]
+    movu m5, [r2 + r3 * 2]
+    psubw m2, m5
+    movu m8, [r0 + r4]
+    movu m6, [r2 + r5]
+    psubw m8, m6
+
+    ;LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+    movu m4, [r6]
+    movu m11, [r7]
+    psubw m4, m11
+    movu m5, [r6 + r1]
+    movu m6, [r7 + r3]
+    psubw m5, m6
+    movu m3, [r6 + r1 * 2]
+    movu m11, [r7 + r3 * 2]
+    psubw m3, m11
+    movu m9, [r6 + r4]
+    movu m6, [r7 + r5]
+    psubw m9, m6
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    paddw m0, m1
+    paddw m2, m8
+    pmaddwd m0, m7
+    pmaddwd m2, m7
+    paddd m12, m0
+    paddd m12, m2
+
+    ; sum[1]
+    HADDD m12, m0
+
+
+    ; SA8D[16x8] ; pix[8*stride]
+    sub  r0, mmsize
+    sub  r2, mmsize
+    sub  r6, mmsize
+    sub  r7, mmsize
+
+    ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    movu m0, [r0]
+    movu m5, [r2]
+    psubw m0, m5
+    movu m1, [r0 + r1]
+    movu m6, [r2 + r3]
+    psubw m1, m6
+    movu m2, [r0 + r1 * 2]
+    movu m5, [r2 + r3 * 2]
+    psubw m2, m5
+    movu m8, [r0 + r4]
+    movu m6, [r2 + r5]
+    psubw m8, m6
+
+    ;LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+    movu m4, [r6]
+    movu m11, [r7]
+    psubw m4, m11
+    movu m5, [r6 + r1]
+    movu m6, [r7 + r3]
+    psubw m5, m6
+    movu m3, [r6 + r1 * 2]
+    movu m11, [r7 + r3 * 2]
+    psubw m3, m11
+    movu m9, [r6 + r4]
+    movu m6, [r7 + r5]
+    psubw m9, m6
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    paddw m0, m1
+    paddw m2, m8
+    pmaddwd m0, m7
+    pmaddwd m2, m7
+    paddd m10, m0
+    paddd m10, m2
+
+    ; sum[0]
+    HADDD m10, m0
+    punpckldq xm10, xm12
+
+
+    ;SA8D[16x8] ; pix[16*stridr]
+    lea  r0, [r0+8*r1]
+    lea  r2, [r2+8*r3]
+    lea  r6, [r6+8*r1]
+    lea  r7, [r7+8*r3]
+
+    ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    movu m0, [r0]
+    movu m5, [r2]
+    psubw m0, m5
+    movu m1, [r0 + r1]
+    movu m6, [r2 + r3]
+    psubw m1, m6
+    movu m2, [r0 + r1 * 2]
+    movu m5, [r2 + r3 * 2]
+    psubw m2, m5
+    movu m8, [r0 + r4]
+    movu m6, [r2 + r5]
+    psubw m8, m6
+
+    ;LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+    movu m4, [r6]
+    movu m11, [r7]
+    psubw m4, m11
+    movu m5, [r6 + r1]
+    movu m6, [r7 + r3]
+    psubw m5, m6
+    movu m3, [r6 + r1 * 2]
+    movu m11, [r7 + r3 * 2]
+    psubw m3, m11
+    movu m9, [r6 + r4]
+    movu m6, [r7 + r5]
+    psubw m9, m6
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    paddw m0, m1
+    paddw m2, m8
+    pmaddwd m0, m7
+    pmaddwd m2, m7
+    paddd m12, m0, m2
+
+
+    ; SA8D[16x8] ; pix[16*stride+16]
+    add  r0, mmsize
+    add  r2, mmsize
+    add  r6, mmsize
+    add  r7, mmsize
+
+    ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    movu m0, [r0]
+    movu m5, [r2]
+    psubw m0, m5
+    movu m1, [r0 + r1]
+    movu m6, [r2 + r3]
+    psubw m1, m6
+    movu m2, [r0 + r1 * 2]
+    movu m5, [r2 + r3 * 2]
+    psubw m2, m5
+    movu m8, [r0 + r4]
+    movu m6, [r2 + r5]
+    psubw m8, m6
+
+    ;LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+    movu m4, [r6]
+    movu m11, [r7]
+    psubw m4, m11
+    movu m5, [r6 + r1]
+    movu m6, [r7 + r3]
+    psubw m5, m6
+    movu m3, [r6 + r1 * 2]
+    movu m11, [r7 + r3 * 2]
+    psubw m3, m11
+    movu m9, [r6 + r4]
+    movu m6, [r7 + r5]
+    psubw m9, m6
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    paddw m0, m1
+    paddw m2, m8
+    pmaddwd m0, m7
+    pmaddwd m2, m7
+    paddd m13, m0, m2
+
+
+    ; SA8D[16x8] ; pix[24*stride+16]
+    lea  r0, [r0+8*r1]
+    lea  r2, [r2+8*r3]
+    lea  r6, [r6+8*r1]
+    lea  r7, [r7+8*r3]
+
+    ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    movu m0, [r0]
+    movu m5, [r2]
+    psubw m0, m5
+    movu m1, [r0 + r1]
+    movu m6, [r2 + r3]
+    psubw m1, m6
+    movu m2, [r0 + r1 * 2]
+    movu m5, [r2 + r3 * 2]
+    psubw m2, m5
+    movu m8, [r0 + r4]
+    movu m6, [r2 + r5]
+    psubw m8, m6
+
+    ;LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+    movu m4, [r6]
+    movu m11, [r7]
+    psubw m4, m11
+    movu m5, [r6 + r1]
+    movu m6, [r7 + r3]
+    psubw m5, m6
+    movu m3, [r6 + r1 * 2]
+    movu m11, [r7 + r3 * 2]
+    psubw m3, m11
+    movu m9, [r6 + r4]
+    movu m6, [r7 + r5]
+    psubw m9, m6
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    paddw m0, m1
+    paddw m2, m8
+    pmaddwd m0, m7
+    pmaddwd m2, m7
+    paddd m13, m0
+    paddd m13, m2
+
+    ; sum[3]
+    HADDD m13, m0
+
+
+    ; SA8D[16x8] ; pix[24*stride]
+    sub  r0, mmsize
+    sub  r2, mmsize
+    sub  r6, mmsize
+    sub  r7, mmsize
+
+    ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
+    movu m0, [r0]
+    movu m5, [r2]
+    psubw m0, m5
+    movu m1, [r0 + r1]
+    movu m6, [r2 + r3]
+    psubw m1, m6
+    movu m2, [r0 + r1 * 2]
+    movu m5, [r2 + r3 * 2]
+    psubw m2, m5
+    movu m8, [r0 + r4]
+    movu m6, [r2 + r5]
+    psubw m8, m6
+
+    ;LOAD_DIFF_8x4P_AVX2 4, 5, 3, 9, 11, 6, r6, r7
+    movu m4, [r6]
+    movu m11, [r7]
+    psubw m4, m11
+    movu m5, [r6 + r1]
+    movu m6, [r7 + r3]
+    psubw m5, m6
+    movu m3, [r6 + r1 * 2]
+    movu m11, [r7 + r3 * 2]
+    psubw m3, m11
+    movu m9, [r6 + r4]
+    movu m6, [r7 + r5]
+    psubw m9, m6
+
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
+    paddw m0, m1
+    paddw m2, m8
+    pmaddwd m0, m7
+    pmaddwd m2, m7
+    paddd m12, m0
+    paddd m12, m2
+
+    ; sum[2]
+    HADDD m12, m0
+    punpckldq xm12, xm13
+
+    ; SA8D
+    punpcklqdq xm0, xm10, xm12
+    paddd xm0, [pd_1]
+    psrld xm0, 1
+    HADDD xm0, xm1
+
+    movd eax, xm0
+    RET
+
 %endif ; HIGH_BIT_DEPTH == 1 && BIT_DEPTH == 10
