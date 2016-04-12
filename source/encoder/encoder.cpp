@@ -1900,6 +1900,12 @@ void Encoder::configure(x265_param *p)
             p->bRepeatHeaders = 1;
         }
 
+        if (p->bOpenGOP)
+        {
+            x265_log(p, X265_LOG_WARNING, "uhd-bd: Turning off open GOP\n");
+            p->bOpenGOP = false;
+        }
+
         if (p->bIntraRefresh)
         {
             x265_log(p, X265_LOG_WARNING, "uhd-bd: turning off intra-refresh\n");
