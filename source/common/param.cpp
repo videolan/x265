@@ -1307,8 +1307,9 @@ void x265_print_params(x265_param* param)
     x265_log(param, X265_LOG_INFO, "Lookahead / bframes / badapt        : %d / %d / %d\n", param->lookaheadDepth, param->bframes, param->bFrameAdaptive);
     x265_log(param, X265_LOG_INFO, "b-pyramid / weightp / weightb       : %d / %d / %d\n",
              param->bBPyramid, param->bEnableWeightedPred, param->bEnableWeightedBiPred);
-    x265_log(param, X265_LOG_INFO, "References / ref-limit  cu / depth  : %d / %d / %d\n",
-             param->maxNumReferences, !!(param->limitReferences & X265_REF_LIMIT_CU), !!(param->limitReferences & X265_REF_LIMIT_DEPTH));
+    x265_log(param, X265_LOG_INFO, "References / ref-limit  cu / depth  : %d / %s / %s\n",
+             param->maxNumReferences, (param->limitReferences & X265_REF_LIMIT_CU) ? "on" : "off",
+             (param->limitReferences & X265_REF_LIMIT_DEPTH) ? "on" : "off");
 
     if (param->rc.aqMode)
         x265_log(param, X265_LOG_INFO, "AQ: mode / str / qg-size / cu-tree  : %d / %0.1f / %d / %d\n", param->rc.aqMode,
