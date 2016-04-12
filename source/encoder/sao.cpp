@@ -1254,7 +1254,7 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 
     // Estimate distortion and cost of new SAO params
     saoLumaComponentParamDist(saoParam, addr, mergeDist, lambda, bestCost);
-    if (chroma)
+    if (chroma && saoParam->bSaoFlag[1])
         saoChromaComponentParamDist(saoParam, addr, mergeDist, lambda, bestCost);
 
     if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
