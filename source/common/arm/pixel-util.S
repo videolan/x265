@@ -2026,3 +2026,46 @@ dequant_loop2:
     pop             {r4, r5, r6, r7}
     bx              lr
 endfunc
+
+// void dequant_normal_c(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift)
+function x265_dequant_normal_neon
+    push            {r4, r5, r6}
+    ldr             r4, [sp, #12]       // shift
+#if HIGH_BIT_DEPTH
+    cmp             r3, #32767
+    jle             .skip
+    shr             r3, (BIT_DEPTH - 8)
+    sub             r4, (BIT_DEPTH - 8)
+.skip:
+#endif
+    mov             r12, #1
+    sub             r5, r4, #1
+    lsr             r2, #3              // num / 8
+    lsl             r5, r12, r5         // 1 << shift - 1
+
+    neg             r6, r4
+    vdup.32         q0, r3
+    vdup.32         q1, r6
+    vdup.32         q2, r5
+
+dqn_loop1:
+    vld1.16         {q3}, [r0]!
+    vmovl.s16       q8, d6
+    vmovl.s16       q9, d7
+
+    vmul.s32        q8, q0
+    vmul.s32        q9, q0
+    vadd.s32        q8, q2
+    vadd.s32        q9, q2
+
+    vshl.s32        q8, q1
+    vshl.s32        q9, q1
+    vqmovn.s32      d16, q8
+    vqmovn.s32      d17, q9
+
+    subs            r2, #1
+    vst1.16         {q8}, [r1]!
+    bne             dqn_loop1
+    pop             {r4, r5, r6}
+    bx              lr
+endfunc

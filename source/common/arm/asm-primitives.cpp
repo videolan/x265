@@ -46,6 +46,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
     {
         // dequant_scaling
          p.dequant_scaling = PFX(dequant_scaling_neon);
+         p.dequant_normal  = PFX(dequant_normal_neon);
 
         // luma satd
          p.pu[LUMA_4x4].satd   = PFX(pixel_satd_4x4_neon);
