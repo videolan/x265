@@ -1962,3 +1962,67 @@ function x265_pixel_sa8d_64x64_neon
     bx              lr
 endfunc
 
+/***** dequant_scaling*****/
+// void dequant_scaling_c(const int16_t* quantCoef, const int32_t* deQuantCoef, int16_t* coef, int num, int per, int shift)
+function x265_dequant_scaling_neon
+    push            {r4, r5, r6, r7}
+    ldr             r4, [sp, #16]       // per
+    ldr             r5, [sp, #20]       //.shift
+    add             r5, #4              // shift + 4
+    lsr             r3, #3              // num / 8
+    cmp             r5, r4
+    blt             skip
+
+    mov             r12, #1
+    sub             r6, r5, r4          // shift - per
+    sub             r6, #1              // shift - per - 1
+    lsl             r6, r12, r6         // 1 << shift - per - 1 (add)
+    vdup.32         q0, r6
+    sub             r7, r4, r5          // per - shift
+    vdup.32         q3, r7
+
+dequant_loop1:
+    vld1.16         {q9}, [r0]!          // quantCoef
+    vld1.32         {q2}, [r1]!          // deQuantCoef
+    vld1.32         {q10}, [r1]!
+    vmovl.s16       q1, d18
+    vmovl.s16       q9, d19
+
+    vmul.s32        q1, q2              // quantCoef * deQuantCoef
+    vmul.s32        q9, q10
+    vadd.s32        q1, q0              // quantCoef * deQuantCoef + add
+    vadd.s32        q9, q0
+
+    vshl.s32        q1, q3
+    vshl.s32        q9, q3
+    vqmovn.s32      d16, q1             // x265_clip3
+    vqmovn.s32      d17, q9
+    subs            r3, #1
+    vst1.16         {q8}, [r2]!
+    bne             dequant_loop1
+    b               1f
+
+skip:
+    sub             r6, r4, r5          // per - shift
+    vdup.16         q0, r6
+
+dequant_loop2:
+    vld1.16         {q9}, [r0]!          // quantCoef
+    vld1.32         {q2}, [r1]!          // deQuantCoef
+    vld1.32         {q10}, [r1]!
+    vmovl.s16       q1, d18
+    vmovl.s16       q9, d19
+
+    vmul.s32        q1, q2              // quantCoef * deQuantCoef
+    vmul.s32        q9, q10
+    vqmovn.s32      d16, q1             // x265_clip3
+    vqmovn.s32      d17, q9
+
+    vqshl.s16       q8, q0             // coefQ << per - shift
+    subs            r3, #1
+    vst1.16         {q8}, [r2]!
+    bne             dequant_loop2
+1:
+    pop             {r4, r5, r6, r7}
+    bx              lr
+endfunc

@@ -44,6 +44,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // dequant_scaling
+         p.dequant_scaling = PFX(dequant_scaling_neon);
+
         // luma satd
          p.pu[LUMA_4x4].satd   = PFX(pixel_satd_4x4_neon);
          p.pu[LUMA_4x8].satd   = PFX(pixel_satd_4x8_neon);
