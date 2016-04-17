@@ -117,13 +117,13 @@ after the preset.
 
 
 
-Film Grain Retention
-~~~~~~~~~~~~~~~~~~~~
+Film Grain
+~~~~~~~~~~
 
-:option:`--tune` *grain* tries to improve the retention of film grain in
+:option:`--tune` *grain* tries to improve the handling of film grain in
 the reconstructed output. Varying the  quantization parameter within and 
 across frames causes grain strobing (uneven distribution of grain), which 
-is visually distracting. :option: `--tune` *grain* severely dials down 
+is visually distracting. :option: `--tune` *grain* strongly restricts 
 algorithms that vary the quantization parameter. 
 
     * :option:`--aq-mode` 0
