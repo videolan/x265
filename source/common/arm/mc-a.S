@@ -48,12 +48,10 @@ endfunc
 
 .macro blockcopy_pp_4xN_neon h
 function x265_blockcopy_pp_4x\h\()_neon
-    push            {r4}
 .rept \h
-    ldr             r4, [r2], r3
-    str             r4, [r0], r1
+    ldr             r12, [r2], r3
+    str             r12, [r0], r1
 .endr
-    pop             {r4}
     bx              lr
 endfunc
 .endm
@@ -61,6 +59,8 @@ endfunc
 blockcopy_pp_4xN_neon 4
 blockcopy_pp_4xN_neon 8
 blockcopy_pp_4xN_neon 16
+blockcopy_pp_4xN_neon 2
+blockcopy_pp_4xN_neon 32
 
 .macro blockcopy_pp_16xN_neon h
 function x265_blockcopy_pp_16x\h\()_neon
@@ -75,19 +75,18 @@ endfunc
 blockcopy_pp_16xN_neon 4
 blockcopy_pp_16xN_neon 8
 blockcopy_pp_16xN_neon 12
+blockcopy_pp_16xN_neon 24
 
 .macro blockcopy_pp_16xN1_neon h i
 function x265_blockcopy_pp_16x\h\()_neon
-    push            {r4}
-    mov             r4, #\i
+    mov             r12, #\i
 loop_16x\h\():
 .rept 8
     vld1.8          {q0}, [r2], r3
     vst1.8          {q0}, [r0], r1
 .endr
-    subs            r4, r4, #1
+    subs            r12, r12, #1
     bne             loop_16x\h
-    pop             {r4}
     bx              lr
 endfunc
 .endm
@@ -109,33 +108,31 @@ blockcopy_pp_8xN_neon 4
 blockcopy_pp_8xN_neon 8
 blockcopy_pp_8xN_neon 16
 blockcopy_pp_8xN_neon 32
+blockcopy_pp_8xN_neon 2
+blockcopy_pp_8xN_neon 6
+blockcopy_pp_8xN_neon 12
 
 function x265_blockcopy_pp_12x16_neon
-    push            {r4, r5}
-    mov             r5, #8
-    sub             r3, r5
-    sub             r1, r5
+    sub             r3, #8
+    sub             r1, #8
 .rept 16
     vld1.8          {d0}, [r2]!
-    ldr             r4, [r2], r3
+    ldr             r12, [r2], r3
     vst1.8          {d0}, [r0]!
-    str             r4, [r0], r1
+    str             r12, [r0], r1
 .endr
-    pop            {r4, r5}
     bx              lr
 endfunc
 
 function x265_blockcopy_pp_24x32_neon
-    push            {r4}
-    mov             r4, #4
+    mov             r12, #4
 loop_24x32:
 .rept 8
     vld1.8          {d0, d1, d2}, [r2], r3
     vst1.8          {d0, d1, d2}, [r0], r1
 .endr
-    subs            r4, r4, #1
+    subs            r12, r12, #1
     bne             loop_24x32
-    pop             {r4}
     bx              lr
 endfunc
 
@@ -149,16 +146,14 @@ endfunc
 
 .macro blockcopy_pp_32xN_neon h i
 function x265_blockcopy_pp_32x\h\()_neon
-    push            {r4}
-    mov             r4, #\i
+    mov             r12, #\i
 loop_32x\h\():
 .rept 8
     vld1.8          {q0, q1}, [r2], r3
     vst1.8          {q0, q1}, [r0], r1
 .endr
-    subs            r4, r4, #1
+    subs            r12, r12, #1
     bne             loop_32x\h
-    pop             {r4}
     bx              lr
 endfunc
 .endm
@@ -167,13 +162,12 @@ blockcopy_pp_32xN_neon 16 2
 blockcopy_pp_32xN_neon 24 3
 blockcopy_pp_32xN_neon 32 4
 blockcopy_pp_32xN_neon 64 8
+blockcopy_pp_32xN_neon 48 6
 
 function x265_blockcopy_pp_48x64_neon
-    push            {r4, r5}
-    mov             r4, #8
-    mov             r5, #32
-    sub             r3, r5
-    sub             r1, r5
+    mov             r12, #8
+    sub             r3, #32
+    sub             r1, #32
 loop_48x64:
 .rept 8
     vld1.8          {q0, q1}, [r2]!
@@ -181,19 +175,16 @@ loop_48x64:
     vst1.8          {q0, q1}, [r0]!
     vst1.8          {q2}, [r0], r1
 .endr
-    subs            r4, r4, #1
+    subs            r12, r12, #1
     bne             loop_48x64
-    pop             {r4, r5}
     bx              lr
 endfunc
 
 .macro blockcopy_pp_64xN_neon h i
 function x265_blockcopy_pp_64x\h\()_neon
-    push            {r4, r5}
-    mov             r4, #\i
-    mov             r5, #32
-    sub             r3, r5
-    sub             r1, r5
+    mov             r12, #\i
+    sub             r3, #32
+    sub             r1, #32
 loop_64x\h\():
 .rept 4
     vld1.8          {q0, q1}, [r2]!
@@ -201,9 +192,8 @@ loop_64x\h\():
     vst1.8          {q0, q1}, [r0]!
     vst1.8          {q2, q3}, [r0], r1
 .endr
-    subs            r4, r4, #1
+    subs            r12, r12, #1
     bne             loop_64x\h
-    pop             {r4, r5}
     bx              lr
 endfunc
 .endm
@@ -212,6 +202,79 @@ blockcopy_pp_64xN_neon 16 4
 blockcopy_pp_64xN_neon 32 8
 blockcopy_pp_64xN_neon 48 12
 blockcopy_pp_64xN_neon 64 16
+
+.macro blockcopy_pp_2xN_neon h
+function x265_blockcopy_pp_2x\h\()_neon
+.rept \h
+    ldrh            r12, [r2], r3
+    strh            r12, [r0], r1
+.endr
+    bx              lr
+endfunc
+.endm
+
+blockcopy_pp_2xN_neon 4
+blockcopy_pp_2xN_neon 8
+blockcopy_pp_2xN_neon 16
+
+.macro blockcopy_pp_6xN_neon h i
+function x265_blockcopy_pp_6x\h\()_neon
+    sub             r1, #4
+.rept \i
+    vld1.8          {d0}, [r2], r3
+    vld1.8          {d1}, [r2], r3
+    vst1.32         {d0[0]}, [r0]!
+    vst1.16         {d0[2]}, [r0], r1
+    vst1.32         {d1[0]}, [r0]!
+    vst1.16         {d1[2]}, [r0], r1
+.endr
+    bx              lr
+endfunc
+.endm
+blockcopy_pp_6xN_neon 8 4
+blockcopy_pp_6xN_neon 16 8
+
+function x265_blockcopy_pp_8x64_neon
+    mov             r12, #4
+loop_pp_8x64:
+    subs            r12, #1
+.rept 16
+    vld1.8          {d0}, [r2], r3
+    vst1.8          {d0}, [r0], r1
+.endr
+    bne             loop_pp_8x64
+    bx              lr
+endfunc
+
+function x265_blockcopy_pp_12x32_neon
+    push            {r4}
+    sub             r3, #8
+    sub             r1, #8
+    mov             r12, #4
+loop_pp_12x32:
+    subs            r12, #1
+.rept 8
+    vld1.8          {d0}, [r2]!
+    ldr             r4, [r2], r3
+    vst1.8          {d0}, [r0]!
+    str             r4, [r0], r1
+.endr
+    bne             loop_pp_12x32
+    pop            {r4}
+    bx              lr
+endfunc
+
+function x265_blockcopy_pp_24x64_neon
+    mov             r12, #4
+loop_24x64:
+.rept 16
+    vld1.8          {d0, d1, d2}, [r2], r3
+    vst1.8          {d0, d1, d2}, [r0], r1
+.endr
+    subs            r12, r12, #1
+    bne             loop_24x64
+    bx              lr
+endfunc
 
 // void pixelavg_pp(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
 .macro pixel_avg_pp_4xN_neon h

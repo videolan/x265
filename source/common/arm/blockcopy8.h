@@ -51,6 +51,21 @@ void x265_blockcopy_pp_64x16_neon(pixel* dst, intptr_t dstStride, const pixel* s
 void x265_blockcopy_pp_64x32_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 void x265_blockcopy_pp_64x48_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 void x265_blockcopy_pp_64x64_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_2x4_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_2x8_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_2x16_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_6x8_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_6x16_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_8x2_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_8x6_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_8x12_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_8x64_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_12x32_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_4x2_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_4x32_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_16x24_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_24x64_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+void x265_blockcopy_pp_32x48_neon(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 
 void x265_cpy2Dto1D_shr_4x4_neon(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 void x265_cpy2Dto1D_shr_8x8_neon(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);

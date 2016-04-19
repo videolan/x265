@@ -463,6 +463,56 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.pu[LUMA_64x48].copy_pp = PFX(blockcopy_pp_64x48_neon);
         p.pu[LUMA_64x64].copy_pp = PFX(blockcopy_pp_64x64_neon);
 
+        // chroma blockcopy
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_2x4].copy_pp   = PFX(blockcopy_pp_2x4_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_2x8].copy_pp   = PFX(blockcopy_pp_2x8_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x2].copy_pp   = PFX(blockcopy_pp_4x2_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x4].copy_pp   = PFX(blockcopy_pp_4x4_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x8].copy_pp   = PFX(blockcopy_pp_4x8_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x16].copy_pp  = PFX(blockcopy_pp_4x16_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_6x8].copy_pp   = PFX(blockcopy_pp_6x8_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x2].copy_pp   = PFX(blockcopy_pp_8x2_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x4].copy_pp   = PFX(blockcopy_pp_8x4_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x6].copy_pp   = PFX(blockcopy_pp_8x6_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].copy_pp   = PFX(blockcopy_pp_8x8_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x16].copy_pp  = PFX(blockcopy_pp_8x16_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].copy_pp  = PFX(blockcopy_pp_8x32_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].copy_pp = PFX(blockcopy_pp_12x16_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].copy_pp  = PFX(blockcopy_pp_16x4_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].copy_pp  = PFX(blockcopy_pp_16x8_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].copy_pp = PFX(blockcopy_pp_16x12_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].copy_pp = PFX(blockcopy_pp_16x16_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].copy_pp = PFX(blockcopy_pp_16x32_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].copy_pp = PFX(blockcopy_pp_24x32_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].copy_pp  = PFX(blockcopy_pp_32x8_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].copy_pp = PFX(blockcopy_pp_32x16_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].copy_pp = PFX(blockcopy_pp_32x24_neon);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].copy_pp = PFX(blockcopy_pp_32x32_neon);
+
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_2x16].copy_pp  = PFX(blockcopy_pp_2x16_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x4].copy_pp   = PFX(blockcopy_pp_4x4_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x8].copy_pp   = PFX(blockcopy_pp_4x8_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x16].copy_pp  = PFX(blockcopy_pp_4x16_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x32].copy_pp  = PFX(blockcopy_pp_4x32_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_6x16].copy_pp  = PFX(blockcopy_pp_6x16_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].copy_pp   = PFX(blockcopy_pp_8x4_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].copy_pp   = PFX(blockcopy_pp_8x8_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x12].copy_pp  = PFX(blockcopy_pp_8x12_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].copy_pp  = PFX(blockcopy_pp_8x16_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x32].copy_pp  = PFX(blockcopy_pp_8x32_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x64].copy_pp  = PFX(blockcopy_pp_8x64_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_12x32].copy_pp = PFX(blockcopy_pp_12x32_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].copy_pp  = PFX(blockcopy_pp_16x8_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].copy_pp = PFX(blockcopy_pp_16x16_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].copy_pp = PFX(blockcopy_pp_16x24_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].copy_pp = PFX(blockcopy_pp_16x32_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].copy_pp = PFX(blockcopy_pp_16x64_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].copy_pp = PFX(blockcopy_pp_24x64_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].copy_pp = PFX(blockcopy_pp_32x16_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].copy_pp = PFX(blockcopy_pp_32x32_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].copy_pp = PFX(blockcopy_pp_32x48_neon);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].copy_pp = PFX(blockcopy_pp_32x64_neon);
+
         // sad
         p.pu[LUMA_8x4].sad    = PFX(pixel_sad_8x4_neon);
         p.pu[LUMA_8x8].sad    = PFX(pixel_sad_8x8_neon);
