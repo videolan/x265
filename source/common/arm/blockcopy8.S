@@ -312,6 +312,210 @@ loop_css64:
     bx              lr
 endfunc
 
+/******** Chroma blockcopy********/
+function x265_blockcopy_ss_4x8_neon
+    lsl             r1, #1
+    lsl             r3, #1
+.rept 4
+    vld1.u16        {d0}, [r2], r3
+    vld1.u16        {d1}, [r2], r3
+    vst1.u16        {d0}, [r0], r1
+    vst1.u16        {d1}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockcopy_ss_8x16_neon
+    lsl             r1, #1
+    lsl             r3, #1
+.rept 8
+    vld1.u16        {q0}, [r2], r3
+    vld1.u16        {q1}, [r2], r3
+    vst1.u16        {q0}, [r0], r1
+    vst1.u16        {q1}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockcopy_ss_16x32_neon
+    lsl             r1, #1
+    lsl             r3, #1
+.rept 16
+    vld1.u16        {q0, q1}, [r2], r3
+    vld1.u16        {q2, q3}, [r2], r3
+    vst1.u16        {q0, q1}, [r0], r1
+    vst1.u16        {q2, q3}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockcopy_ss_32x64_neon
+    lsl             r1, #1
+    lsl             r3, #1
+    mov             r12, #8
+    sub             r1, #32
+    sub             r3, #32
+loop_css_32x64:
+    subs            r12, #1
+.rept 8
+    vld1.u16        {q0, q1}, [r2]!
+    vld1.u16        {q2, q3}, [r2], r3
+    vst1.u16        {q0, q1}, [r0]!
+    vst1.u16        {q2, q3}, [r0], r1
+.endr
+    bne             loop_css_32x64
+    bx              lr
+endfunc
+
+// chroma blockcopy_ps
+function x265_blockcopy_ps_4x8_neon
+    lsl             r1, #1
+.rept 4
+    vld1.u8         {d0}, [r2], r3
+    vld1.u8         {d1}, [r2], r3
+    vmovl.u8        q1, d0
+    vmovl.u8        q2, d1
+    vst1.u16        {d2}, [r0], r1
+    vst1.u16        {d4}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockcopy_ps_8x16_neon
+    lsl             r1, #1
+.rept 8
+    vld1.u8         {d0}, [r2], r3
+    vld1.u8         {d1}, [r2], r3
+    vmovl.u8        q1, d0
+    vmovl.u8        q2, d1
+    vst1.u16        {q1}, [r0], r1
+    vst1.u16        {q2}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockcopy_ps_16x32_neon
+    lsl             r1, #1
+    mov             r12, #4
+loop_cps_16x32:
+    subs            r12, #1
+.rept 4
+    vld1.u8         {q0}, [r2], r3
+    vld1.u8         {q1}, [r2], r3
+    vmovl.u8        q8, d0
+    vmovl.u8        q9, d1
+    vmovl.u8        q10, d2
+    vmovl.u8        q11, d3
+    vst1.u16        {q8, q9}, [r0], r1
+    vst1.u16        {q10, q11}, [r0], r1
+.endr
+    bne             loop_cps_16x32
+    bx              lr
+endfunc
+
+function x265_blockcopy_ps_32x64_neon
+    lsl             r1, #1
+    sub             r1, #32
+    mov             r12, #8
+loop_cps_32x64:
+    subs            r12, #1
+.rept 4
+    vld1.u8         {q0, q1}, [r2], r3
+    vld1.u8         {q2, q3}, [r2], r3
+    vmovl.u8        q8, d0
+    vmovl.u8        q9, d1
+    vmovl.u8        q10, d2
+    vmovl.u8        q11, d3
+
+    vmovl.u8        q12, d4
+    vmovl.u8        q13, d5
+    vmovl.u8        q14, d6
+    vmovl.u8        q15, d7
+
+    vst1.u16        {q8, q9}, [r0]!
+    vst1.u16        {q10, q11}, [r0], r1
+    vst1.u16        {q12, q13}, [r0]!
+    vst1.u16        {q14, q15}, [r0], r1
+.endr
+    bne             loop_cps_32x64
+    bx              lr
+endfunc
+
+// chroma blockcopy_sp
+function x265_blockcopy_sp_4x8_neon
+    lsl             r3, #1
+.rept 4
+    vld1.u16        {q0}, [r2], r3
+    vld1.u16        {q1}, [r2], r3
+    vmovn.u16       d0, q0
+    vmovn.u16       d1, q1
+    vst1.u32        {d0[0]}, [r0], r1
+    vst1.u32        {d1[0]}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockcopy_sp_8x16_neon
+    lsl             r3, #1
+.rept 8
+    vld1.u16        {q0}, [r2], r3
+    vld1.u16        {q1}, [r2], r3
+    vmovn.u16       d0, q0
+    vmovn.u16       d1, q1
+    vst1.u8         {d0}, [r0], r1
+    vst1.u8         {d1}, [r0], r1
+.endr
+    bx              lr
+endfunc
+
+function x265_blockcopy_sp_16x32_neon
+    lsl             r3, #1
+    mov             r12, #4
+loop_csp_16x32:
+    subs            r12, #1
+.rept 4
+    vld1.u16        {q0, q1}, [r2], r3
+    vld1.u16        {q2, q3}, [r2], r3
+    vmovn.u16       d0, q0
+    vmovn.u16       d1, q1
+    vmovn.u16       d2, q2
+    vmovn.u16       d3, q3
+    vst1.u8         {q0}, [r0], r1
+    vst1.u8         {q1}, [r0], r1
+.endr
+    bne             loop_csp_16x32
+    bx              lr
+endfunc
+
+function x265_blockcopy_sp_32x64_neon
+    mov             r12, #8
+    lsl             r3, #1
+    sub             r3, #32
+loop_csp_32x64:
+    subs            r12, #1
+.rept 4
+    vld1.u16        {q0, q1}, [r2]!
+    vld1.u16        {q2, q3}, [r2], r3
+    vld1.u16        {q8, q9}, [r2]!
+    vld1.u16        {q10, q11}, [r2], r3
+
+    vmovn.u16       d0, q0
+    vmovn.u16       d1, q1
+    vmovn.u16       d2, q2
+    vmovn.u16       d3, q3
+
+    vmovn.u16       d4, q8
+    vmovn.u16       d5, q9
+    vmovn.u16       d6, q10
+    vmovn.u16       d7, q11
+
+    vst1.u8         {q0, q1}, [r0], r1
+    vst1.u8         {q2, q3}, [r0], r1
+.endr
+    bne             loop_csp_32x64
+    bx              lr
+endfunc
+
 // void x265_blockfill_s_neon(int16_t* dst, intptr_t dstride, int16_t val)
 function x265_blockfill_s_4x4_neon
     vdup.u16        d0, r2

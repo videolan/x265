@@ -90,6 +90,22 @@ void x265_blockcopy_ss_16x16_neon(int16_t* a, intptr_t stridea, const int16_t* b
 void x265_blockcopy_ss_32x32_neon(int16_t* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
 void x265_blockcopy_ss_64x64_neon(int16_t* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
 
+// chroma blockcopy
+void x265_blockcopy_ss_4x8_neon(int16_t* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_ss_8x16_neon(int16_t* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_ss_16x32_neon(int16_t* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_ss_32x64_neon(int16_t* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+
+void x265_blockcopy_sp_4x8_neon(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_sp_8x16_neon(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_sp_16x32_neon(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+void x265_blockcopy_sp_32x64_neon(pixel* a, intptr_t stridea, const int16_t* b, intptr_t strideb);
+
+void x265_blockcopy_ps_4x8_neon(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+void x265_blockcopy_ps_8x16_neon(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+void x265_blockcopy_ps_16x32_neon(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+void x265_blockcopy_ps_32x64_neon(int16_t* a, intptr_t stridea, const pixel* b, intptr_t strideb);
+
 void x265_blockfill_s_4x4_neon(int16_t* dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_8x8_neon(int16_t* dst, intptr_t dstride, int16_t val);
 void x265_blockfill_s_16x16_neon(int16_t* dst, intptr_t dstride, int16_t val);
