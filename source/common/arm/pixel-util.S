@@ -580,15 +580,16 @@ function x265_pixel_add_ps_8x8_neon
     bx              lr
 endfunc
 
-function x265_pixel_add_ps_16x16_neon
+.macro pixel_add_ps_16xN_neon h i
+function x265_pixel_add_ps_16x\h\()_neon
     push            {r4, r5}
     ldr             r4, [sp, #8]
     ldr             r12, [sp, #12]
     lsl             r12, #1
     vmov.u16        q10, #255
     veor.u16        q11, q11
-    mov             r5, #2
-loop_addps16:
+    mov             r5, #\i
+loop_addps_16x\h\():
     subs            r5, #1
 .rept 4
     vld1.u8         {q0}, [r2], r4
@@ -613,23 +614,28 @@ loop_addps16:
     vst1.8          {d4, d5}, [r0], r1
     vst1.8          {d0, d1}, [r0], r1
 .endr
-    bne             loop_addps16
+    bne             loop_addps_16x\h
     pop             {r4, r5}
     bx              lr
 endfunc
+.endm
 
- function x265_pixel_add_ps_32x32_neon
+pixel_add_ps_16xN_neon 16 2
+pixel_add_ps_16xN_neon 32 4
+
+.macro pixel_add_ps_32xN_neon h i
+ function x265_pixel_add_ps_32x\h\()_neon
     push            {r4, r5}
     ldr             r4, [sp, #8]
     ldr             r12, [sp, #12]
     lsl             r12, #1
     vmov.u16        q10, #255
     veor.u16        q11, q11
-    mov             r5, #4
+    mov             r5, #\i
     sub             r12, #32
-loop_addps32:
+loop_addps_32x\h\():
     subs            r5, #1
-.rept 8
+.rept 4
     vld1.u8         {q0, q1}, [r2], r4
     vld1.s16        {q8, q9}, [r3]!
     vld1.s16        {q12, q13}, [r3], r12
@@ -650,10 +656,14 @@ loop_addps32:
     vqmovun.s16     d3, q15
     vst1.8          {q0, q1}, [r0], r1
 .endr
-    bne             loop_addps32
+    bne             loop_addps_32x\h
     pop             {r4, r5}
     bx              lr
 endfunc
+.endm
+
+pixel_add_ps_32xN_neon 32 8
+pixel_add_ps_32xN_neon 64 16
 
 function x265_pixel_add_ps_64x64_neon
     push            {r4, r5}
@@ -711,6 +721,63 @@ loop_addps64:
 .endr
     bne             loop_addps64
     vpop            {q4, q5, q6, q7}
+    pop             {r4, r5}
+    bx              lr
+endfunc
+
+// Chroma add_ps
+function x265_pixel_add_ps_4x8_neon
+    push            {r4}
+    ldr             r4, [sp, #4]
+    ldr             r12, [sp, #8]
+    lsl             r12, #1
+    vmov.u16        q10, #255
+    veor.u16        q11, q11
+    veor.u16        d3, d3
+    veor.u16        d5, d5
+.rept 4
+    vld1.u8         {d0}, [r2], r4
+    vld1.u8         {d1}, [r2], r4
+    vld1.s16        {d2}, [r3], r12
+    vld1.s16        {d4}, [r3], r12
+    vmovl.u8        q8, d0
+    vmovl.u8        q9, d1
+    vadd.s16        q1, q1, q8
+    vadd.s16        q2, q2, q9
+    vqmovun.s16     d0, q1
+    vqmovun.s16     d1, q2
+    vst1.32         {d0[0]}, [r0], r1
+    vst1.32         {d1[0]}, [r0], r1
+.endr
+    pop             {r4}
+    bx              lr
+endfunc
+
+function x265_pixel_add_ps_8x16_neon
+    push            {r4, r5}
+    ldr             r4, [sp, #8]
+    ldr             r12, [sp, #12]
+    lsl             r12, #1
+    vmov.u16        q10, #255
+    veor.u16        q11, q11
+    mov             r5, #2
+loop_add_8x16:
+    subs            r5, #1
+.rept 4
+    vld1.u8         {d0}, [r2], r4
+    vld1.u8         {d1}, [r2], r4
+    vld1.s16        {q8}, [r3], r12
+    vld1.s16        {q9}, [r3], r12
+    vmovl.u8        q1, d0
+    vmovl.u8        q2, d1
+    vadd.s16        q1, q1, q8
+    vadd.s16        q2, q2, q9
+    vqmovun.s16     d0, q1
+    vqmovun.s16     d1, q2
+    vst1.8          {d0}, [r0], r1
+    vst1.8          {d1}, [r0], r1
+.endr
+    bne             loop_add_8x16
     pop             {r4, r5}
     bx              lr
 endfunc
