@@ -44,6 +44,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // quant
+         p.quant = PFX(quant_neon);
+
         // dequant_scaling
          p.dequant_scaling = PFX(dequant_scaling_neon);
          p.dequant_normal  = PFX(dequant_normal_neon);

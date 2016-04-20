@@ -79,6 +79,8 @@ int x265_pixel_sa8d_32x32_neon(const pixel* pix1, intptr_t i_pix1, const pixel* 
 int x265_pixel_sa8d_32x64_neon(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2);
 int x265_pixel_sa8d_64x64_neon(const pixel* pix1, intptr_t i_pix1, const pixel* pix2, intptr_t i_pix2);
 
+uint32_t x265_quant_neon(const int16_t* coef, const int32_t* quantCoeff, int32_t* deltaU, int16_t* qCoef, int qBits, int add, int numCoeff);
+
 void x265_dequant_scaling_neon(const int16_t* quantCoef, const int32_t* deQuantCoef, int16_t* coef, int num, int per, int shift);
 void x265_dequant_normal_neon(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
 #endif // ifndef X265_PIXEL_UTIL_ARM_H
