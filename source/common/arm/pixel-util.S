@@ -439,6 +439,94 @@ loop_sub64:
     bx              lr
 endfunc
 
+// chroma sub_ps
+function x265_pixel_sub_ps_4x8_neon
+    push            {r4}
+    lsl             r1, r1, #1
+    ldr             r4, [sp, #4]
+    ldr             r12, [sp, #8]
+.rept 4
+    vld1.u8         {d0}, [r2], r4
+    vld1.u8         {d1}, [r3], r12
+    vld1.u8         {d2}, [r2], r4
+    vld1.u8         {d3}, [r3], r12
+    vsubl.u8        q2, d0, d1
+    vsubl.u8        q3, d2, d3
+    vst1.s16        {d4}, [r0], r1
+    vst1.s16        {d6}, [r0], r1
+.endr
+    pop             {r4}
+    bx              lr
+endfunc
+
+function x265_pixel_sub_ps_8x16_neon
+    push            {r4}
+    lsl             r1, r1, #1
+    ldr             r4, [sp, #4]
+    ldr             r12, [sp, #8]
+.rept 8
+    vld1.u8         {d0}, [r2], r4
+    vld1.u8         {d1}, [r3], r12
+    vld1.u8         {d2}, [r2], r4
+    vld1.u8         {d3}, [r3], r12
+    vsubl.u8        q2, d0, d1
+    vsubl.u8        q3, d2, d3
+    vst1.s16        {q2}, [r0], r1
+    vst1.s16        {q3}, [r0], r1
+.endr
+    pop             {r4}
+    bx              lr
+endfunc
+
+function x265_pixel_sub_ps_16x32_neon
+    push            {r4, r5}
+    lsl             r1, r1, #1
+    ldr             r4, [sp, #8]
+    ldr             r12, [sp, #12]
+    mov             r5, #4
+loop_sub_16x32:
+    subs            r5, r5, #1
+.rept 4
+    vld1.u8         {q0}, [r2], r4
+    vld1.u8         {q1}, [r3], r12
+    vld1.u8         {q2}, [r2], r4
+    vld1.u8         {q3}, [r3], r12
+    vsubl.u8        q8, d0, d2
+    vsubl.u8        q9, d1, d3
+    vsubl.u8        q10, d4, d6
+    vsubl.u8        q11, d5, d7
+    vst1.s16        {q8, q9}, [r0], r1
+    vst1.s16        {q10, q11}, [r0], r1
+.endr
+    bne             loop_sub_16x32
+    pop             {r4, r5}
+    bx              lr
+endfunc
+
+function x265_pixel_sub_ps_32x64_neon
+    push            {r4, r5}
+    lsl             r1, r1, #1
+    ldr             r4, [sp, #8]
+    ldr             r12, [sp, #12]
+    sub             r1, #32
+    mov             r5, #16
+loop_sub_32x64:
+    subs            r5, r5, #1
+.rept 4
+    vld1.u8         {q0, q1}, [r2], r4
+    vld1.u8         {q2, q3}, [r3], r12
+    vsubl.u8        q8, d0, d4
+    vsubl.u8        q9, d1, d5
+    vsubl.u8        q10, d2, d6
+    vsubl.u8        q11, d3, d7
+    vst1.s16        {q8, q9}, [r0]!
+    vst1.s16        {q10, q11}, [r0], r1
+.endr
+    bne             loop_sub_32x64
+    pop             {r4, r5}
+    bx              lr
+endfunc
+
 // void x265_pixel_add_ps_neon(pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1);
 function x265_pixel_add_ps_4x4_neon
     push            {r4}
