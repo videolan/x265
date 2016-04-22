@@ -2009,6 +2009,55 @@ function x265_quant_neon
     bx              lr
 endfunc
 
+function x265_nquant_neon
+    push            {r4}
+    neg             r12, r3
+    vdup.s32        q0, r12                 // q0= -qbits
+    ldr             r3, [sp, #1* 4]
+    vdup.s32        q1, r3                  // add
+    ldr             r3, [sp, #1* 4 + 4]     // numcoeff
+
+    lsr             r3, r3 ,#2
+    veor.s32        q4, q4                 // q4= accumulate numsig
+    eor             r4, r4
+    veor.s32        q12, q12
+
+.loop_nquant:
+
+    vld1.s16        d16, [r0]!
+    vmovl.s16       q9, d16                // q9= coef[blockpos]
+
+    vclt.s32        q8, q9, #0             // q8= sign
+
+    vabs.s32        q9, q9                 // q9= level=abs(coef[blockpos])
+    vld1.s32        {q10}, [r1]!           // q10= quantCoeff[blockpos]
+    vmul.i32        q9, q9, q10            // q9 = tmplevel = abs(level) * quantCoeff[blockpos];
+
+    vadd.s32        q10, q9, q1            // q10= tmplevel+add
+    vshl.s32        q10, q10, q0           // q10= level =(tmplevel+add) >> qbits
+
+    // numsig
+    vceq.s32        q11, q10, q12
+    vadd.s32        q4, q11
+    add             r4, #4
+
+    veor.s32        q11, q10, q8
+    vsub.s32        q11, q11, q8
+    vqmovn.s32      d16, q11
+    vabs.s16        d17, d16
+    vst1.s16        d17, [r2]!
+
+    subs            r3, #1
+    bne             .loop_nquant
+
+    vadd.u32        d8, d9
+    vpadd.u32       d8, d8
+    vmov.32         r12, d8[0]
+    add             r0, r4, r12
+
+    pop             {r4}
+    bx              lr
+endfunc
 .macro sa8d_16x16 reg
     bl              x265_sa8d_8x8_neon
     vpaddl.u16      q4,  q8

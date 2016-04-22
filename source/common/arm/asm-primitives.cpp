@@ -46,6 +46,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
     {
         // quant
          p.quant = PFX(quant_neon);
+         p.nquant = PFX(nquant_neon);
 
         // dequant_scaling
          p.dequant_scaling = PFX(dequant_scaling_neon);
