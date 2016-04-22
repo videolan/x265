@@ -180,7 +180,7 @@ public:
     bool    m_isPatternPresent;
     bool    m_isSceneTransition;
     int     m_lastPredictorReset;
-    double m_qpToEncodedBits[QP_MAX_MAX];
+    double  m_qpToEncodedBits[QP_MAX_MAX + 1];
     /* a common variable on which rateControlStart, rateControlEnd and rateControUpdateStats waits to
      * sync the calls to these functions. For example
      * -F2:

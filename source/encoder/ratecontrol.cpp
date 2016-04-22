@@ -2449,6 +2449,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
                 curEncData.m_avgQpRc += curEncData.m_rowStat[i].sumQpRc;
 
             curEncData.m_avgQpRc /= slice->m_sps->numCUsInFrame;
+            curEncData.m_avgQpRc = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, curEncData.m_avgQpRc);
             rce->qpaRc = curEncData.m_avgQpRc;
         }
 
