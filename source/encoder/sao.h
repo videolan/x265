@@ -54,7 +54,6 @@ public:
     enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
     enum { NUM_EDGETYPE = 5 };
     enum { NUM_PLANE = 3 };
-    enum { NUM_MERGE_MODE = 3 };
     enum { SAO_DEPTHRATE_SIZE = 4 };
 
     static const uint32_t s_eoTable[NUM_EDGETYPE];
@@ -127,14 +126,14 @@ public:
     void calcSaoStatsCu(int addr, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
 
-    void saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda, double &bestCost);
-    void saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda, double &bestCost);
+    void saoLumaComponentParamDist(SAOParam* saoParam, int addr, double& rateDist, double* lambda, double &bestCost);
+    void saoChromaComponentParamDist(SAOParam* saoParam, int addr, double& rateDist, double* lambda, double &bestCost);
 
     void estIterOffset(int typeIdx, double lambda, int32_t count, int32_t offsetOrg, int& offset, int& distClasses, double& costClasses);
     void rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus);
     void rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr);
 
-    void saoStatsInitialOffset(bool chroma);
+    void saoStatsInitialOffset(int planes);
 
     friend class FrameFilter;
 };

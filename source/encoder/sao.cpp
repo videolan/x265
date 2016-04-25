@@ -1238,7 +1238,7 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
         calcSaoStatsCu(addr, 2);
     }
 
-    saoStatsInitialOffset(chroma);
+    saoStatsInitialOffset(planes);
 
     // SAO distortion calculation
     m_entropyCoder.load(m_rdContexts.cur);
@@ -1249,13 +1249,13 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
         m_entropyCoder.codeSaoMerge(0);
     m_entropyCoder.store(m_rdContexts.temp);
 
-    double mergeDist[NUM_MERGE_MODE] = { 0.0 };
-    double bestCost = 0.0;
-
     // Estimate distortion and cost of new SAO params
-    saoLumaComponentParamDist(saoParam, addr, mergeDist, lambda, bestCost);
-    if (chroma && saoParam->bSaoFlag[1])
-        saoChromaComponentParamDist(saoParam, addr, mergeDist, lambda, bestCost);
+    double bestCost = 0.0;
+    double rateDist = 0.0;
+    // Estimate distortion and cost of new SAO params
+    saoLumaComponentParamDist(saoParam, addr, rateDist, lambda, bestCost);
+    if (chroma)
+        saoChromaComponentParamDist(saoParam, addr, rateDist, lambda, bestCost);
 
     if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
     {
@@ -1265,7 +1265,8 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
             if (!allowMerge[mergeIdx])
                 continue;
 
-            for (int plane = 0; plane < 3; plane++)
+            double mergeDist = 0; 
+            for (int plane = 0; plane < planes; plane++)
             {
                 int64_t estDist = 0;
                 SaoCtuParam* mergeSrcParam = &(saoParam->ctuParam[plane][addrMerge[mergeIdx]]);
@@ -1279,8 +1280,7 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
                         estDist += estSaoDist(m_count[plane][typeIdx][classIdx + bandPos], mergeOffset, m_offsetOrg[plane][typeIdx][classIdx + bandPos]);
                     }
                 }
-
-                mergeDist[mergeIdx + 1] += ((double)estDist / lambda[!!plane]);
+                mergeDist += ((double)estDist / lambda[!!plane]);
             }
 
             m_entropyCoder.load(m_rdContexts.cur);
@@ -1290,8 +1290,8 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
             if (allowMerge[1] && (mergeIdx == 1))
                 m_entropyCoder.codeSaoMerge(1);
 
-            int32_t rate = m_entropyCoder.getNumberOfWrittenBits();
-            double mergeCost = mergeDist[mergeIdx + 1] + (double)rate;
+            int32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
+            double mergeCost = mergeDist + (double)estRate;
             if (mergeCost < bestCost)
             {
                 SaoMergeMode mergeMode = mergeIdx ? SAO_MERGE_UP : SAO_MERGE_LEFT;
@@ -1326,9 +1326,8 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 
 // Rounds the division of initial offsets by the number of samples in
 // each of the statistics table entries.
-void SAO::saoStatsInitialOffset(bool chroma)
+void SAO::saoStatsInitialOffset(int planes)
 {
-    int planes = chroma ? 3 : 1;
     memset(m_offset, 0, sizeof(m_offset));
 
     // EO
@@ -1405,7 +1404,7 @@ void SAO::estIterOffset(int typeIdx, double lambda, int32_t count, int32_t offse
     offset = bestOffset;
 }
 
-void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda, double &bestCost)
+void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double& rateDist, double* lambda, double &bestCost)
 {
     int64_t bestDist = 0;
     int bestTypeIdx = -1;
@@ -1513,16 +1512,19 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int addr, double* mergeD
             lclCtuParam->offset[classIdx] = (int)m_offset[0][SAO_BO][classIdx + bestClassBO];
     }
 
-    mergeDist[0] = ((double)bestDist / lambda[0]);
+    rateDist = ((double)bestDist / lambda[0]);
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.codeSaoOffset(*lclCtuParam, 0);
     m_entropyCoder.store(m_rdContexts.temp);
 
-    uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
-    bestCost = mergeDist[0] + (double)rate;
+    if (m_param->internalCsp == X265_CSP_I400)
+    {
+        uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
+        bestCost = rateDist + (double)rate;
+    }
 }
 
-void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* mergeDist, double* lambda, double &bestCost)
+void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double& rateDist, double* lambda, double &bestCost)
 {
     int64_t bestDist = 0;
     int bestTypeIdx = -1;
@@ -1645,15 +1647,23 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int addr, double* merg
         }
     }
 
-    mergeDist[0] += ((double)bestDist / lambda[1]);
+    rateDist += ((double)bestDist / lambda[1]);
     m_entropyCoder.load(m_rdContexts.temp);
 
-    m_entropyCoder.codeSaoOffset(*lclCtuParam[0], 1);
-    m_entropyCoder.codeSaoOffset(*lclCtuParam[1], 2);
-    m_entropyCoder.store(m_rdContexts.temp);
+    if (saoParam->bSaoFlag[1])
+    {
+        m_entropyCoder.codeSaoOffset(*lclCtuParam[0], 1);
+        m_entropyCoder.codeSaoOffset(*lclCtuParam[1], 2);
+        m_entropyCoder.store(m_rdContexts.temp);
 
-    uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
-    bestCost = mergeDist[0] + (double)rate;
+        uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
+        bestCost = rateDist + (double)rate;
+    }
+    else
+    {
+        uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
+        bestCost = rateDist + (double)rate;
+    }
 }
 
 // NOTE: must put in namespace X265_NS since we need class SAO
