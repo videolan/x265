@@ -1845,16 +1845,6 @@ void Encoder::configure(x265_param *p)
         m_conformanceWindow.rightOffset = padsize;
     }
 
-    /* set pad size if height is not multiple of the minimum CU size */
-    if (p->sourceHeight & (p->minCUSize - 1))
-    {
-        uint32_t rem = p->sourceHeight & (p->minCUSize - 1);
-        uint32_t padsize = p->minCUSize - rem;
-        p->sourceHeight += padsize;
-
-        m_conformanceWindow.bEnabled = true;
-        m_conformanceWindow.bottomOffset = padsize;
-    }
     if (p->bEnableRdRefine && (p->rdLevel < 5 || !p->rc.aqMode))
     {
         p->bEnableRdRefine = false;
@@ -1974,6 +1964,15 @@ void Encoder::configure(x265_param *p)
         }
     }
 
+    /* set pad size if height is not multiple of the minimum CU size */
+    if (p->sourceHeight & (p->minCUSize - 1))
+    {
+        uint32_t rem = p->sourceHeight & (p->minCUSize - 1);
+        uint32_t padsize = p->minCUSize - rem;
+        p->sourceHeight += padsize;
+        m_conformanceWindow.bEnabled = true;
+        m_conformanceWindow.bottomOffset = padsize;
+    }
 
     if (p->bLogCuStats)
         x265_log(p, X265_LOG_WARNING, "--cu-stats option is now deprecated\n");
