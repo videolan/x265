@@ -34,6 +34,7 @@ extern "C" {
 #include "pixel.h"
 #include "pixel-util.h"
 #include "ipfilter8.h"
+#include "dct8.h"
 }
 
 namespace X265_NS {
@@ -820,6 +821,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.chroma[X265_CSP_I444].pu[LUMA_24x32].filter_vsp = PFX(interp_4tap_vert_sp_24x32_neon);
         p.chroma[X265_CSP_I444].pu[LUMA_48x64].filter_vsp = PFX(interp_4tap_vert_sp_48x64_neon);
 
+        p.cu[BLOCK_4x4].dct = PFX(dct_4x4_neon);
     }
     if (cpuMask & X265_CPU_ARMV6)
     {

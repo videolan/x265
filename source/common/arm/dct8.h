@@ -25,4 +25,6 @@
 #ifndef X265_DCT8_ARM_H
 #define X265_DCT8_ARM_H
 
+void PFX(dct_4x4_neon)(const int16_t* src, int16_t* dst, intptr_t srcStride);
+
 #endif // ifndef X265_DCT8_ARM_H
