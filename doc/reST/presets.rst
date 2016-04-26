@@ -129,8 +129,8 @@ algorithms that vary the quantization parameter within and across frames.
     * :option:`--aq-mode` 0
     * :option:`--cu-tree` 0
     * :option:`--ip-factor` 1.1
-	* :option:`--pb-factor` 1.0
-	* :option:`--qp-step` 1
+    * :option:`--pb-factor` 1.0
+    * :option:`--qp-step` 1
 
 It also enables a specialised ratecontrol algorithm :option:`--rc-grain` 
 that strictly minimises QP fluctuations across frames, while still allowing 
