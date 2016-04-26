@@ -127,10 +127,10 @@ distribution of grain. :option:`--tune` *grain* strongly restricts
 algorithms that vary the quantization parameter within and across frames.
 
     * :option:`--aq-mode` 0
-    * :option:`--cu-tree` 0
-    * :option:`--ip-factor` 1.1
-    * :option:`--pb-factor` 1.0
-    * :option:`--qp-step` 1
+    * :option:`--cutree` 0
+    * :option:`--ipratio` 1.1
+    * :option:`--pbratio` 1.0
+    * :option:`--qpstep` 1
 
 It also enables a specialised ratecontrol algorithm :option:`--rc-grain` 
 that strictly minimises QP fluctuations across frames, while still allowing 
