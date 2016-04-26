@@ -120,11 +120,11 @@ after the preset.
 Film Grain
 ~~~~~~~~~~
 
-:option:`--tune` *grain* tries to improve the handling of film grain in
-the reconstructed output. Varying the  quantization parameter within and 
-across frames causes grain strobing (uneven distribution of grain), which 
-is visually distracting. :option: `--tune` *grain* strongly restricts 
-algorithms that vary the quantization parameter. 
+:option:`--tune` *grain* aims to encode grainy content with the best 
+visual quality. The purpose of this option is neither to retain nor 
+eliminate grain, but prevent noticeable artifacts caused by uneven 
+distribution of grain. :option:`--tune` *grain* strongly restricts 
+algorithms that vary the quantization parameter within and across frames.
 
     * :option:`--aq-mode` 0
     * :option:`--cu-tree` 0
