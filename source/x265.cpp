@@ -451,10 +451,10 @@ bool CLIOptions::parse(int argc, char **argv)
     this->output = OutputFile::open(outputfn, info);
     if (this->output->isFail())
     {
-        x265_log(param, X265_LOG_ERROR, "failed to open output file <%s> for writing\n", outputfn);
+        x265_log_file(param, X265_LOG_ERROR, "failed to open output file <%s> for writing\n", outputfn);
         return true;
     }
-    general_log(param, this->output->getName(), X265_LOG_INFO, "output file: %s\n", outputfn);
+    general_log_file(param, this->output->getName(), X265_LOG_INFO, "output file: %s\n", outputfn);
     return false;
 }
 
@@ -493,6 +493,39 @@ bool CLIOptions::parseQPFile(x265_picture &pic_org)
     return 1;
 }
 
+#ifdef _WIN32
+/* Copy of x264 code, which allows for Unicode characters in the command line.
+ * Retrieve command line arguments as UTF-8. */
+static int get_argv_utf8(int *argc_ptr, char ***argv_ptr)
+{
+    int ret = 0;
+    wchar_t **argv_utf16 = CommandLineToArgvW(GetCommandLineW(), argc_ptr);
+    if (argv_utf16)
+    {
+        int argc = *argc_ptr;
+        int offset = (argc + 1) * sizeof(char*);
+        int size = offset;
+
+        for (int i = 0; i < argc; i++)
+            size += WideCharToMultiByte(CP_UTF8, 0, argv_utf16[i], -1, NULL, 0, NULL, NULL);
+
+        char **argv = *argv_ptr = (char**)malloc(size);
+        if (argv)
+        {
+            for (int i = 0; i < argc; i++)
+            {
+                argv[i] = (char*)argv + offset;
+                offset += WideCharToMultiByte(CP_UTF8, 0, argv_utf16[i], -1, argv[i], size - offset, NULL, NULL);
+            }
+            argv[argc] = NULL;
+            ret = 1;
+        }
+        LocalFree(argv_utf16);
+    }
+    return ret;
+}
+#endif
+
 /* CLI return codes:
  *
  * 0 - encode successful
@@ -513,6 +546,9 @@ int main(int argc, char **argv)
 
     GetConsoleTitle(orgConsoleTitle, CONSOLE_TITLE_SIZE);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
+#if _WIN32
+    get_argv_utf8(&argc, &argv);
+#endif
 
     ReconPlay* reconPlay = NULL;
     CLIOptions cliopt;

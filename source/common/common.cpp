@@ -29,6 +29,8 @@
 #if _WIN32
 #include <sys/types.h>
 #include <sys/timeb.h>
+#include <io.h>
+#include <fcntl.h>
 #else
 #include <sys/time.h>
 #endif
@@ -139,6 +141,90 @@ void general_log(const x265_param* param, const char* caller, int level, const c
     fputs(buffer, stderr);
 }
 
+#if _WIN32
+/* For Unicode filenames in Windows we convert UTF-8 strings to UTF-16 and we use _w functions.
+ * For other OS we do not make any changes. */
+void general_log_file(const x265_param* param, const char* caller, int level, const char* fmt, ...)
+{
+    if (param && level > param->logLevel)
+        return;
+    const int bufferSize = 4096;
+    char buffer[bufferSize];
+    int p = 0;
+    const char* log_level;
+    switch (level)
+    {
+    case X265_LOG_ERROR:
+        log_level = "error";
+        break;
+    case X265_LOG_WARNING:
+        log_level = "warning";
+        break;
+    case X265_LOG_INFO:
+        log_level = "info";
+        break;
+    case X265_LOG_DEBUG:
+        log_level = "debug";
+        break;
+    case X265_LOG_FULL:
+        log_level = "full";
+        break;
+    default:
+        log_level = "unknown";
+        break;
+    }
+
+    if (caller)
+        p += sprintf(buffer, "%-4s [%s]: ", caller, log_level);
+    va_list arg;
+    va_start(arg, fmt);
+    vsnprintf(buffer + p, bufferSize - p, fmt, arg);
+    va_end(arg);
+
+    wchar_t buf_utf16[bufferSize];
+    MultiByteToWideChar(CP_UTF8, 0, buffer, -1, buf_utf16, sizeof(buf_utf16)/sizeof(wchar_t));
+    fflush(stderr);
+    int oldmode = _setmode(_fileno(stderr), _O_U8TEXT);
+    fwprintf(stderr, L"%ls", buf_utf16);               // WARNING: due to bug in msvcrt.dll fputws doesn't work in mingw/gcc 
+    fflush(stderr);
+    _setmode(_fileno(stderr), oldmode);
+}
+
+FILE* x265_fopen(const char* fileName, const char* mode)
+{
+    wchar_t buf_utf16[MAX_PATH * 2], mode_utf16[16];
+
+    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, fileName, -1, buf_utf16, sizeof(buf_utf16)/sizeof(wchar_t)) &&
+        MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, mode, -1, mode_utf16, sizeof(mode_utf16)/sizeof(wchar_t)))
+    {
+        return _wfopen(buf_utf16, mode_utf16);
+    }
+    return NULL;
+}
+
+int x265_unlink(const char* fileName)
+{
+    wchar_t buf_utf16[MAX_PATH * 2];
+
+    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, fileName, -1, buf_utf16, sizeof(buf_utf16)/sizeof(wchar_t)))
+        return _wunlink(buf_utf16);
+
+    return -1;
+}
+
+int x265_rename(const char* oldName, const char* newName)
+{
+    wchar_t old_utf16[MAX_PATH * 2], new_utf16[MAX_PATH * 2];
+
+    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, oldName, -1, old_utf16, sizeof(old_utf16)/sizeof(wchar_t)) &&
+        MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, newName, -1, new_utf16, sizeof(new_utf16)/sizeof(wchar_t)))
+    {
+        return _wrename(old_utf16, new_utf16);
+    }
+    return -1;
+}
+#endif
+
 double x265_ssim2dB(double ssim)
 {
     double inv_ssim = 1 - ssim;
@@ -177,10 +263,10 @@ char* x265_slurp_file(const char *filename)
     size_t fSize;
     char *buf = NULL;
 
-    FILE *fh = fopen(filename, "rb");
+    FILE *fh = x265_fopen(filename, "rb");
     if (!fh)
     {
-        x265_log(NULL, X265_LOG_ERROR, "unable to open file %s\n", filename);
+        x265_log_file(NULL, X265_LOG_ERROR, "unable to open file %s\n", filename);
         return NULL;
     }
 

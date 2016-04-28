@@ -35,7 +35,7 @@ class RAWOutput : public OutputFile
 {
 protected:
 
-    std::ostream* ofs;
+    FILE* ofs;
 
     bool b_fail;
 

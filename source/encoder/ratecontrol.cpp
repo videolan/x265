@@ -417,11 +417,11 @@ bool RateControl::init(const SPS& sps)
                 char *tmpFile = strcatFilename(fileName, ".cutree");
                 if (!tmpFile)
                     return false;
-                m_cutreeStatFileIn = fopen(tmpFile, "rb");
+                m_cutreeStatFileIn = x265_fopen(tmpFile, "rb");
                 X265_FREE(tmpFile);
                 if (!m_cutreeStatFileIn)
                 {
-                    x265_log(m_param, X265_LOG_ERROR, "can't open stats file %s\n", tmpFile);
+                    x265_log_file(m_param, X265_LOG_ERROR, "can't open stats file %s.cutree\n", fileName);
                     return false;
                 }
             }
@@ -602,11 +602,11 @@ bool RateControl::init(const SPS& sps)
             statFileTmpname = strcatFilename(fileName, ".temp");
             if (!statFileTmpname)
                 return false;
-            m_statFileOut = fopen(statFileTmpname, "wb");
+            m_statFileOut = x265_fopen(statFileTmpname, "wb");
             X265_FREE(statFileTmpname);
             if (!m_statFileOut)
             {
-                x265_log(m_param, X265_LOG_ERROR, "can't open stats file %s\n", statFileTmpname);
+                x265_log_file(m_param, X265_LOG_ERROR, "can't open stats file %s.temp\n", fileName);
                 return false;
             }
             p = x265_param2string(m_param);
@@ -618,11 +618,11 @@ bool RateControl::init(const SPS& sps)
                 statFileTmpname = strcatFilename(fileName, ".cutree.temp");
                 if (!statFileTmpname)
                     return false;
-                m_cutreeStatFileOut = fopen(statFileTmpname, "wb");
+                m_cutreeStatFileOut = x265_fopen(statFileTmpname, "wb");
                 X265_FREE(statFileTmpname);
                 if (!m_cutreeStatFileOut)
                 {
-                    x265_log(m_param, X265_LOG_ERROR, "can't open mbtree stats file %s\n", statFileTmpname);
+                    x265_log_file(m_param, X265_LOG_ERROR, "can't open mbtree stats file %s.cutree.temp\n", fileName);
                     return false;
                 }
             }
@@ -2659,13 +2659,12 @@ void RateControl::destroy()
         int bError = 1;
         if (tmpFileName)
         {
-           unlink(fileName);
-           bError = rename(tmpFileName, fileName);
+            x265_unlink(fileName);
+            bError = x265_rename(tmpFileName, fileName);
         }
         if (bError)
         {
-            x265_log(m_param, X265_LOG_ERROR, "failed to rename output stats file to \"%s\"\n",
-                     fileName);
+            x265_log_file(m_param, X265_LOG_ERROR, "failed to rename output stats file to \"%s\"\n", fileName);
         }
         X265_FREE(tmpFileName);
     }
@@ -2678,13 +2677,12 @@ void RateControl::destroy()
         int bError = 1;
         if (tmpFileName && newFileName)
         {
-           unlink(newFileName);
-           bError = rename(tmpFileName, newFileName);
+            x265_unlink(newFileName);
+            bError = x265_rename(tmpFileName, newFileName);
         }
         if (bError)
         {
-            x265_log(m_param, X265_LOG_ERROR, "failed to rename cutree output stats file to \"%s\"\n",
-                     newFileName);
+            x265_log_file(m_param, X265_LOG_ERROR, "failed to rename cutree output stats file to \"%s\"\n", newFileName);
         }
         X265_FREE(tmpFileName);
         X265_FREE(newFileName);
