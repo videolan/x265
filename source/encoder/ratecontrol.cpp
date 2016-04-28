@@ -2444,22 +2444,25 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     {
         if (m_isVbv && !(m_2pass && m_param->rc.rateControlMode == X265_RC_CRF))
         {
+            double avgQpRc = 0;
             /* determine avg QP decided by VBV rate control */
             for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
-                curEncData.m_avgQpRc += curEncData.m_rowStat[i].sumQpRc;
+                avgQpRc += curEncData.m_rowStat[i].sumQpRc;
 
-            curEncData.m_avgQpRc /= slice->m_sps->numCUsInFrame;
-            curEncData.m_avgQpRc = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, curEncData.m_avgQpRc);
+            avgQpRc /= slice->m_sps->numCUsInFrame;
+            curEncData.m_avgQpRc = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, avgQpRc);
             rce->qpaRc = curEncData.m_avgQpRc;
         }
 
         if (m_param->rc.aqMode)
         {
+            double avgQpAq = 0;
             /* determine actual avg encoded QP, after AQ/cutree adjustments */
             for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
-                curEncData.m_avgQpAq += curEncData.m_rowStat[i].sumQpAq;
+                avgQpAq += curEncData.m_rowStat[i].sumQpAq;
 
-            curEncData.m_avgQpAq /= (slice->m_sps->numCUsInFrame * NUM_4x4_PARTITIONS);
+            avgQpAq /= (slice->m_sps->numCUsInFrame * NUM_4x4_PARTITIONS);
+            curEncData.m_avgQpAq = avgQpAq;
         }
         else
             curEncData.m_avgQpAq = curEncData.m_avgQpRc;
