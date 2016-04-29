@@ -181,13 +181,17 @@ void general_log_file(const x265_param* param, const char* caller, int level, co
     vsnprintf(buffer + p, bufferSize - p, fmt, arg);
     va_end(arg);
 
-    wchar_t buf_utf16[bufferSize];
-    MultiByteToWideChar(CP_UTF8, 0, buffer, -1, buf_utf16, sizeof(buf_utf16)/sizeof(wchar_t));
-    fflush(stderr);
-    int oldmode = _setmode(_fileno(stderr), _O_U8TEXT);
-    fwprintf(stderr, L"%ls", buf_utf16);               // WARNING: due to bug in msvcrt.dll fputws doesn't work in mingw/gcc 
-    fflush(stderr);
-    _setmode(_fileno(stderr), oldmode);
+    HANDLE console = GetStdHandle(STD_ERROR_HANDLE);
+    DWORD mode;
+    if (GetConsoleMode(console, &mode))
+    {
+        wchar_t buf_utf16[bufferSize];
+        int length_utf16 = MultiByteToWideChar(CP_UTF8, 0, buffer, -1, buf_utf16, sizeof(buf_utf16)/sizeof(wchar_t)) - 1;
+        if (length_utf16 > 0)
+            WriteConsoleW(console, buf_utf16, length_utf16, &mode, NULL);
+    }
+    else
+        fputs(buffer, stderr);
 }
 
 FILE* x265_fopen(const char* fileName, const char* mode)
