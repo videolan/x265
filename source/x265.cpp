@@ -547,6 +547,7 @@ int main(int argc, char **argv)
     GetConsoleTitle(orgConsoleTitle, CONSOLE_TITLE_SIZE);
     SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
 #if _WIN32
+    char** orgArgv = argv;
     get_argv_utf8(&argc, &argv);
 #endif
 
@@ -778,6 +779,14 @@ fail:
 
     SetConsoleTitle(orgConsoleTitle);
     SetThreadExecutionState(ES_CONTINUOUS);
+
+#if _WIN32
+    if (argv != orgArgv)
+    {
+        free(argv);
+        argv = orgArgv;
+    }
+#endif
 
 #if HAVE_VLD
     assert(VLDReportLeaks() == 0);
