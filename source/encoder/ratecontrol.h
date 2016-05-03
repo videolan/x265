@@ -107,6 +107,7 @@ struct RateControlEntry
     int      miscBits;
     int      coeffBits;
     bool     keptAsRef;
+    bool     scenecut;
 
     SEIPictureTiming *picTimingSEI;
     HRDTiming        *hrdTiming;

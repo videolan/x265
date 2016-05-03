@@ -1123,11 +1123,13 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         copyRceData(rce, &m_rce2Pass[index]);
     }
     rce->isActive = true;
+    rce->scenecut = false;
     bool isRefFrameScenecut = m_sliceType!= I_SLICE && m_curSlice->m_refFrameList[0][0]->m_lowres.bScenecut;
     m_isFirstMiniGop = m_sliceType == I_SLICE ? true : m_isFirstMiniGop;
     if (curFrame->m_lowres.bScenecut)
     {
         m_isSceneTransition = true;
+        rce->scenecut = true;
         m_lastPredictorReset = rce->encodeOrder;
 
         initFramePredictors();
@@ -1922,7 +1924,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
     double abrBuffer = 2 * m_rateTolerance * m_bitrate;
 
     // Check if current Slice is a scene cut that follows low detailed/blank frames
-    if (rce->lastSatd > 4 * rce->movingAvgSum)
+    if (rce->lastSatd > 4 * rce->movingAvgSum || rce->scenecut)
     {
         if (!m_isAbrReset && rce->movingAvgSum > 0
             && (m_isPatternPresent || !m_param->bframes))
