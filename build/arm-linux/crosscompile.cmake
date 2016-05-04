@@ -1,4 +1,7 @@
 # CMake toolchain file for cross compiling x265 for ARM arch
+# This feature is only supported as experimental. Use with caution.
+# Please report bugs on bitbucket
+# Run cmake with: cmake -DCMAKE_TOOLCHAIN_FILE=crosscompile.cmake -G "Unix Makefiles" ../../source && ccmake ../../source
 
 set(CROSS_COMPILE_ARM 1)
 set(CMAKE_SYSTEM_NAME Linux)

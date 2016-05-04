@@ -261,9 +261,9 @@ void PFX(cpu_emms)(void) {}
 void PFX(cpu_cpuid)(uint32_t, uint32_t *eax, uint32_t *, uint32_t *, uint32_t *) { *eax = 0; }
 void PFX(cpu_xgetbv)(uint32_t, uint32_t *, uint32_t *) {}
 
-#if ENABLE_ASSEMBLY && X265_ARCH_ARM == 0
+#if X265_ARCH_ARM
 void PFX(cpu_neon_test)(void) {}
 int PFX(cpu_fast_neon_mrc_test)(void) { return 0; }
-#endif
+#endif // X265_ARCH_ARM
 }
 #endif
