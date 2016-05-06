@@ -41,7 +41,7 @@ bool FrameData::create(const x265_param& param, const SPS& sps)
     for (uint32_t ctuAddr = 0; ctuAddr < sps.numCUsInFrame; ctuAddr++)
         m_picCTU[ctuAddr].initialize(m_cuMemPool, 0, param.internalCsp, ctuAddr);
 
-    CHECKED_MALLOC(m_cuStat, RCStatCU, sps.numCUsInFrame);
+    CHECKED_MALLOC_ZERO(m_cuStat, RCStatCU, sps.numCUsInFrame);
     CHECKED_MALLOC(m_rowStat, RCStatRow, sps.numCuInHeight);
     reinit(sps);
     return true;
