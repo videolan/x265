@@ -44,6 +44,33 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // addAvg
+         p.pu[LUMA_4x4].addAvg   = PFX(addAvg_4x4_neon);
+         p.pu[LUMA_4x8].addAvg   = PFX(addAvg_4x8_neon);
+         p.pu[LUMA_4x16].addAvg  = PFX(addAvg_4x16_neon);
+         p.pu[LUMA_8x4].addAvg   = PFX(addAvg_8x4_neon);
+         p.pu[LUMA_8x8].addAvg   = PFX(addAvg_8x8_neon);
+         p.pu[LUMA_8x16].addAvg  = PFX(addAvg_8x16_neon);
+         p.pu[LUMA_8x32].addAvg  = PFX(addAvg_8x32_neon);
+         p.pu[LUMA_12x16].addAvg = PFX(addAvg_12x16_neon);
+         p.pu[LUMA_16x4].addAvg  = PFX(addAvg_16x4_neon);
+         p.pu[LUMA_16x8].addAvg  = PFX(addAvg_16x8_neon);
+         p.pu[LUMA_16x12].addAvg = PFX(addAvg_16x12_neon);
+         p.pu[LUMA_16x16].addAvg = PFX(addAvg_16x16_neon);
+         p.pu[LUMA_16x32].addAvg = PFX(addAvg_16x32_neon);
+         p.pu[LUMA_16x64].addAvg = PFX(addAvg_16x64_neon);
+         p.pu[LUMA_24x32].addAvg = PFX(addAvg_24x32_neon);
+         p.pu[LUMA_32x8].addAvg  = PFX(addAvg_32x8_neon);
+         p.pu[LUMA_32x16].addAvg = PFX(addAvg_32x16_neon);
+         p.pu[LUMA_32x24].addAvg = PFX(addAvg_32x24_neon);
+         p.pu[LUMA_32x32].addAvg = PFX(addAvg_32x32_neon);
+         p.pu[LUMA_32x64].addAvg = PFX(addAvg_32x64_neon);
+         p.pu[LUMA_48x64].addAvg = PFX(addAvg_48x64_neon);
+         p.pu[LUMA_64x16].addAvg = PFX(addAvg_64x16_neon);
+         p.pu[LUMA_64x32].addAvg = PFX(addAvg_64x32_neon);
+         p.pu[LUMA_64x48].addAvg = PFX(addAvg_64x48_neon);
+         p.pu[LUMA_64x64].addAvg = PFX(addAvg_64x64_neon);
+
         // quant
          p.quant = PFX(quant_neon);
          p.nquant = PFX(nquant_neon);
