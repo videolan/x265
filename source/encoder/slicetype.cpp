@@ -456,10 +456,13 @@ void LookaheadTLD::weightsAnalyse(Lowres& fenc, Lowres& ref)
     COPY4_IF_LT(minscore, s, minscale, curScale, minoff, curOffset, found, 1);
 
     /* Use a smaller denominator if possible */
-    while (mindenom > 0 && !(minscale & 1))
+    if (mindenom > 0 && !(minscale & 1))
     {
-        mindenom--;
-        minscale >>= 1;
+        unsigned long idx;
+        CLZ(idx, minscale);
+        int shift = X265_MIN((int)idx, mindenom);
+        mindenom -= shift;
+        minscale >>= shift;
     }
 
     if (!found || (minscale == 1 << mindenom && minoff == 0) || (float)minscore / origscore > 0.998f)

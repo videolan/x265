@@ -31,6 +31,7 @@
 #include "slice.h"
 #include "mv.h"
 #include "bitstream.h"
+#include "threading.h"
 
 using namespace X265_NS;
 namespace {
@@ -456,10 +457,13 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
             /* Use a smaller luma denominator if possible */
             if (!(plane || list))
             {
-                while (mindenom > 0 && !(minscale & 1))
+                if (mindenom > 0 && !(minscale & 1))
                 {
-                    mindenom--;
-                    minscale >>= 1;
+                    unsigned long idx;
+                    CLZ(idx, minscale);
+                    int shift = X265_MIN((int)idx, mindenom);
+                    mindenom -= shift;
+                    minscale >>= shift;
                 }
             }
 
