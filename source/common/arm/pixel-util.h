@@ -84,4 +84,6 @@ uint32_t x265_nquant_neon(const int16_t* coef, const int32_t* quantCoeff, int16_
 
 void x265_dequant_scaling_neon(const int16_t* quantCoef, const int32_t* deQuantCoef, int16_t* coef, int num, int per, int shift);
 void x265_dequant_normal_neon(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift);
+
+void x265_ssim_4x4x2_core_neon(const pixel* pix1, intptr_t stride1, const pixel* pix2, intptr_t stride2, int sums[2][4]);
 #endif // ifndef X265_PIXEL_UTIL_ARM_H

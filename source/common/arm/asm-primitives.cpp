@@ -44,6 +44,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 {
     if (cpuMask & X265_CPU_NEON)
     {
+        // ssim_4x4x2_core
+        p.ssim_4x4x2_core = PFX(ssim_4x4x2_core_neon);
+
         // addAvg
          p.pu[LUMA_4x4].addAvg   = PFX(addAvg_4x4_neon);
          p.pu[LUMA_4x8].addAvg   = PFX(addAvg_4x8_neon);

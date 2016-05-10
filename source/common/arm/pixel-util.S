@@ -2332,3 +2332,60 @@ dqn_loop1:
     pop             {r4, r5, r6}
     bx              lr
 endfunc
+
+/********* ssim ***********/
+// void x265_ssim_4x4x2_core_neon(const pixel* pix1, intptr_t stride1, const pixel* pix2, intptr_t stride2, int sums[2][4]);
+function x265_ssim_4x4x2_core_neon
+    ldr             r12, [sp]
+
+    vld1.64         {d0}, [r0], r1
+    vld1.64         {d1}, [r0], r1
+    vld1.64         {d2}, [r0], r1
+    vld1.64         {d3}, [r0], r1
+
+    vld1.64         {d4}, [r2], r3
+    vld1.64         {d5}, [r2], r3
+    vld1.64         {d6}, [r2], r3
+    vld1.64         {d7}, [r2], r3
+
+    vpaddl.u8       q8, q0
+    vpadal.u8       q8, q1
+    vpaddl.u8       q9, q2
+    vpadal.u8       q9, q3
+    vadd.u16        d16, d17
+    vpaddl.u16      d16, d16
+    vadd.u16        d18, d19
+    vpaddl.u16      d17, d18
+
+    vmull.u8        q10, d0, d0
+    vmull.u8        q11, d1, d1
+    vmull.u8        q12, d2, d2
+    vmull.u8        q13, d3, d3
+    vpaddl.u16      q10, q10
+    vpadal.u16      q10, q11
+    vpadal.u16      q10, q12
+    vpadal.u16      q10, q13
+
+    vmull.u8        q9, d4, d4
+    vmull.u8        q11, d5, d5
+    vmull.u8        q12, d6, d6
+    vmull.u8        q13, d7, d7
+    vpadal.u16      q10, q9
+    vpadal.u16      q10, q11
+    vpadal.u16      q10, q12
+    vpadal.u16      q10, q13
+    vpadd.u32       d18, d20, d21
+
+    vmull.u8        q10, d0, d4
+    vmull.u8        q11, d1, d5
+    vmull.u8        q12, d2, d6
+    vmull.u8        q13, d3, d7
+    vpaddl.u16      q10, q10
+    vpadal.u16      q10, q11
+    vpadal.u16      q10, q12
+    vpadal.u16      q10, q13
+    vpadd.u32       d19, d20, d21
+
+    vst4.32         {d16-d19}, [r12]
+    bx              lr
+endfunc
