@@ -1861,11 +1861,6 @@ void Encoder::configure(x265_param *p)
         m_conformanceWindow.bEnabled = true;
         m_conformanceWindow.bottomOffset = padsize;
     }
-    if (p->bDistributeModeAnalysis && p->analysisMode)
-    {
-        p->analysisMode = X265_ANALYSIS_OFF;
-        x265_log(p, X265_LOG_WARNING, "Analysis save and load mode not supported for distributed mode analysis\n");
-    }
     if (p->bEnableRdRefine && (p->rdLevel < 5 || !p->rc.aqMode))
     {
         p->bEnableRdRefine = false;
