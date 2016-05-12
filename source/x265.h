@@ -938,9 +938,13 @@ typedef struct x265_param
      * performance. Default is 3 */
     int       rdLevel;
 
-    /* Enable early skip decisions to avoid intra and inter analysis in likely
+    /* Enable early skip decisions to avoid analysing additional modes in likely
      * skip blocks. Default is disabled */
     int       bEnableEarlySkip;
+
+    /* Enable early CU size decisions to avoid recursing to higher depths. 
+     * Default is enabled */
+    int bEnableRecursionSkip;
 
     /* Use a faster search method to find the best intra mode. Default is 0 */
     int       bEnableFastIntra;

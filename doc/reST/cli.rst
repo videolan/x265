@@ -734,6 +734,13 @@ the prediction quad-tree.
 	Measure 2Nx2N merge candidates first; if no residual is found, 
 	additional modes at that depth are not analysed. Default disabled
 
+.. option:: --recursion-skip, --no-recursion-skip
+
+	Measure 2Nx2N merge candidates first; if no residual is found, then
+	do not recurse to higher depths. In rdlevels 4 and lower, additional 
+	heuristics such as neighbour costs are used to skip recursion. 
+	Default enabled.
+
 .. option:: --fast-intra, --no-fast-intra
 
 	Perform an initial scan of every fifth intra angular mode, then

@@ -915,7 +915,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
                 checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
-                skipRecursion = true;
+                skipRecursion = !!m_param->bEnableRecursionSkip;
                 if (m_param->rdLevel)
                     skipModes = m_param->bEnableEarlySkip && md.bestMode;
             }
@@ -931,7 +931,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     }
 
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs, if skip mode was not set above */
-    if (mightNotSplit && depth >= minDepth && !skipRecursion)
+    if (mightNotSplit && depth >= minDepth && !skipRecursion) /* TODO: Re-evaluate if analysis load/save still works */
     {
         /* Compute Merge Cost */
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -941,7 +941,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             skipModes = m_param->bEnableEarlySkip && md.bestMode && md.bestMode->cu.isSkipped(0); // TODO: sa8d threshold per depth
     }
 
-    if (md.bestMode)
+    if (md.bestMode && m_param->bEnableRecursionSkip)
     {
         skipRecursion = md.bestMode->cu.isSkipped(0);
         if (mightSplit && depth && depth >= minDepth && !skipRecursion)
@@ -1419,7 +1419,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
                 checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
-                skipRecursion = true;
+                skipRecursion = !!m_param->bEnableRecursionSkip;
                 skipModes = !!m_param->bEnableEarlySkip;
             }
             if (m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
@@ -1439,8 +1439,8 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
         md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
         checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
-        skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
-        skipModes = m_param->bEnableEarlySkip && skipRecursion;
+        skipRecursion = m_param->bEnableRecursionSkip && md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
+        skipModes = m_param->bEnableEarlySkip && md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
     }
 
     // estimate split cost

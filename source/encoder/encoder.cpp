@@ -903,6 +903,7 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
     encParam->maxNumReferences = param->maxNumReferences; // never uses more refs than specified in stream headers
     encParam->bEnableFastIntra = param->bEnableFastIntra;
     encParam->bEnableEarlySkip = param->bEnableEarlySkip;
+    encParam->bEnableRecursionSkip = param->bEnableRecursionSkip;
     encParam->searchMethod = param->searchMethod;
     /* Scratch buffer prevents me_range from being increased for esa/tesa */
     if (param->searchRange < encParam->searchRange)
@@ -2280,6 +2281,7 @@ void Encoder::printReconfigureParams()
     TOOLCMP(oldParam->maxNumReferences, newParam->maxNumReferences, "ref=%d to %d\n");
     TOOLCMP(oldParam->bEnableFastIntra, newParam->bEnableFastIntra, "fast-intra=%d to %d\n");
     TOOLCMP(oldParam->bEnableEarlySkip, newParam->bEnableEarlySkip, "early-skip=%d to %d\n");
+    TOOLCMP(oldParam->bEnableRecursionSkip, newParam->bEnableRecursionSkip, "recursion-skip=%d to %d\n");
     TOOLCMP(oldParam->searchMethod, newParam->searchMethod, "me=%d to %d\n");
     TOOLCMP(oldParam->searchRange, newParam->searchRange, "merange=%d to %d\n");
     TOOLCMP(oldParam->subpelRefine, newParam->subpelRefine, "subme= %d to %d\n");
