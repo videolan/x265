@@ -365,10 +365,10 @@ void filterVertical_sp_c(const int16_t* src, intptr_t srcStride, pixel* dst, int
 template<int N, int width, int height>
 void interp_hv_pp_c(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY)
 {
-    short immedVals[(64 + 8) * (64 + 8)];
+    ALIGN_VAR_32(int16_t, immed[width * (height + N - 1)]);
 
-    interp_horiz_ps_c<N, width, height>(src, srcStride, immedVals, width, idxX, 1);
-    filterVertical_sp_c<N>(immedVals + 3 * width, width, dst, dstStride, width, height, idxY);
+    interp_horiz_ps_c<N, width, height>(src, srcStride, immed, width, idxX, 1);
+    filterVertical_sp_c<N>(immed + (N / 2 - 1) * width, width, dst, dstStride, width, height, idxY);
 }
 }
 

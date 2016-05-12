@@ -861,12 +861,12 @@ namespace X265_NS {
 template<int size>
 void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int idxX, int idxY)
 {
-    ALIGN_VAR_32(int16_t, immed[MAX_CU_SIZE * (MAX_CU_SIZE + NTAPS_LUMA)]);
-    const int filterSize = NTAPS_LUMA;
-    const int halfFilterSize = filterSize >> 1;
+    ALIGN_VAR_32(int16_t, immed[MAX_CU_SIZE * (MAX_CU_SIZE + NTAPS_LUMA - 1)]);
+    const int halfFilterSize = NTAPS_LUMA >> 1;
+    const int immedStride = MAX_CU_SIZE;
 
-    primitives.pu[size].luma_hps(src, srcStride, immed, MAX_CU_SIZE, idxX, 1);
-    primitives.pu[size].luma_vsp(immed + (halfFilterSize - 1) * MAX_CU_SIZE, MAX_CU_SIZE, dst, dstStride, idxY);
+    primitives.pu[size].luma_hps(src, srcStride, immed, immedStride, idxX, 1);
+    primitives.pu[size].luma_vsp(immed + (halfFilterSize - 1) * immedStride, immedStride, dst, dstStride, idxY);
 }
 
 #if HIGH_BIT_DEPTH
