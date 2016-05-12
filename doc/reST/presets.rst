@@ -125,18 +125,24 @@ visual quality. The purpose of this option is neither to retain nor
 eliminate grain, but prevent noticeable artifacts caused by uneven 
 distribution of grain. :option:`--tune` *grain* strongly restricts 
 algorithms that vary the quantization parameter within and across frames.
+Tune grain also biases towards decisions that retain more high frequency
+components.
 
     * :option:`--aq-mode` 0
     * :option:`--cutree` 0
     * :option:`--ipratio` 1.1
     * :option:`--pbratio` 1.0
     * :option:`--qpstep` 1
-
+    * :option:`--sao` 0
+    * :option:`--psy-rd` 4.0
+    * :option:`--psy-rdoq` 10.0
+    * :option:`--recursion-skip` 0
+    
 It also enables a specialised ratecontrol algorithm :option:`--rc-grain` 
 that strictly minimises QP fluctuations across frames, while still allowing 
 the encoder to hit bitrate targets and VBV buffer limits (with a slightly 
 higher margin of error than normal). It is highly recommended that this 
-algorithm is used only through the :option:`--tune` *grain* feature. 
+algorithm is used only through the :option:`--tune` *grain* feature.
 
 Fast Decode
 ~~~~~~~~~~~

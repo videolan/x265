@@ -462,6 +462,10 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->rc.aqMode = 0;
             param->rc.qpStep = 1;
             param->rc.bEnableGrain = 1;
+            param->bEnableRecursionSkip = 0;
+            param->psyRd = 4.0;
+            param->psyRdoq = 10.0;
+            param->bEnableSAO = 0;
         }
         else
             return -1;
