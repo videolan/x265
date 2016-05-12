@@ -120,3 +120,281 @@ function x265_dct_4x4_neon
     bx              lr
 endfunc
 
+.align 4
+ctr4:
+.word 83            // d0[0] = 83
+.word 36            // d0[1] = 36
+ctr8:
+.word 75            // d1[0] = 75
+.word 89            // d1[1] = 89
+.word 18            // d2[0] = 18
+.word 50            // d2[1] = 50
+
+
+/* uses registers q4 - q7 for temp values */
+.macro tr4 r0, r1, r2, r3
+    vsub.s32    q8, \r0, \r3    // EO0
+    vadd.s32    q9, \r0, \r3    // EE0
+    vadd.s32    q10, \r1, \r2   // EE1
+    vsub.s32    q11, \r1, \r2   // EO1
+
+    vmul.s32    \r1, q8, d0[0]  // 83 * EO0
+    vmul.s32    \r3, q8, d0[1]  // 36 * EO0
+    vshl.s32    q9, q9, #6      // 64 * EE0
+    vshl.s32    q10, q10, #6    // 64 * EE1
+    vmla.s32    \r1, q11, d0[1] // 83 * EO0 + 36 * EO1
+    vmls.s32    \r3, q11, d0[0] // 36 * EO0 - 83 * EO1
+    vadd.s32    \r0, q9, q10    // 64 * (EE0 + EE1)
+    vsub.s32    \r2, q9, q10    // 64 * (EE0 - EE1)
+.endm
+
+
+.macro tr8 r0, r1, r2, r3
+    vmul.s32  q12, \r0, d1[1]   //  89 * src1
+    vmul.s32  q13, \r0, d1[0]   //  75 * src1
+    vmul.s32  q14, \r0, d2[1]   //  50 * src1
+    vmul.s32  q15, \r0, d2[0]   //  18 * src1
+
+    vmla.s32  q12, \r1, d1[0]   //  75 * src3
+    vmls.s32  q13, \r1, d2[0]   // -18 * src3
+    vmls.s32  q14, \r1, d1[1]   // -89 * src3
+    vmls.s32  q15, \r1, d2[1]   // -50 * src3
+
+    vmla.s32  q12, \r2, d2[1]   //  50 * src5
+    vmls.s32  q13, \r2, d1[1]   // -89 * src5
+    vmla.s32  q14, \r2, d2[0]   //  18 * src5
+    vmla.s32  q15, \r2, d1[0]   //  75 * src5
+
+    vmla.s32  q12, \r3, d2[0]   //  18 * src7
+    vmls.s32  q13, \r3, d2[1]   // -50 * src7
+    vmla.s32  q14, \r3, d1[0]   //  75 * src7
+    vmls.s32  q15, \r3, d1[1]   // -89 * src7
+.endm
+
+
+// TODO: in the DCT-2D stage, I spending 4x8=32 LD/ST operators because I haven't temporary buffer
+/* void dct8_c(const int16_t* src, int16_t* dst, intptr_t srcStride) */
+function x265_dct_8x8_neon
+    vpush {q4-q7}
+
+    mov r2, r2, lsl #1
+
+    adr r3, ctr4
+    vld1.16 {d0-d2}, [r3]
+    mov r3, r1
+
+    // DCT-1D
+    // top half
+    vld1.16 {q12}, [r0], r2
+    vld1.16 {q13}, [r0], r2
+    vld1.16 {q14}, [r0], r2
+    vld1.16 {q15}, [r0], r2
+
+    TRANSPOSE4x4x2_16 d24, d26, d28, d30,  d25, d27, d29, d31
+
+    // |--|
+    // |24|
+    // |26|
+    // |28|
+    // |30|
+    // |25|
+    // |27|
+    // |29|
+    // |31|
+    // |--|
+
+    vaddl.s16 q4, d28, d27
+    vaddl.s16 q5, d30, d25
+    vaddl.s16 q2, d24, d31
+    vaddl.s16 q3, d26, d29
+
+    tr4 q2, q3, q4, q5
+
+    vqrshrn.s32 d20, q3, 2
+    vqrshrn.s32 d16, q2, 2
+    vqrshrn.s32 d17, q4, 2
+    vqrshrn.s32 d21, q5, 2
+
+    vsubl.s16 q2, d24, d31
+    vsubl.s16 q3, d26, d29
+    vsubl.s16 q4, d28, d27
+    vsubl.s16 q5, d30, d25
+
+    tr8 q2, q3, q4, q5
+
+    vqrshrn.s32 d18, q12, 2
+    vqrshrn.s32 d22, q13, 2
+    vqrshrn.s32 d19, q14, 2
+    vqrshrn.s32 d23, q15, 2
+
+    vstm r1!, {d16-d23]
+
+    // bottom half
+    vld1.16 {q12}, [r0], r2
+    vld1.16 {q13}, [r0], r2
+    vld1.16 {q14}, [r0], r2
+    vld1.16 {q15}, [r0], r2
+    mov r2, #8*2
+
+    TRANSPOSE4x4x2_16 d24, d26, d28, d30,  d25, d27, d29, d31
+
+    // |--|
+    // |24|
+    // |26|
+    // |28|
+    // |30|
+    // |25|
+    // |27|
+    // |29|
+    // |31|
+    // |--|
+
+    vaddl.s16 q4, d28, d27
+    vaddl.s16 q5, d30, d25
+    vaddl.s16 q2, d24, d31
+    vaddl.s16 q3, d26, d29
+
+    tr4 q2, q3, q4, q5
+
+    vqrshrn.s32 d20, q3, 2
+    vqrshrn.s32 d16, q2, 2
+    vqrshrn.s32 d17, q4, 2
+    vqrshrn.s32 d21, q5, 2
+
+    vsubl.s16 q2, d24, d31
+    vsubl.s16 q3, d26, d29
+    vsubl.s16 q4, d28, d27
+    vsubl.s16 q5, d30, d25
+
+    tr8 q2, q3, q4, q5
+
+    vqrshrn.s32 d18, q12, 2
+    vqrshrn.s32 d22, q13, 2
+    vqrshrn.s32 d19, q14, 2
+    vqrshrn.s32 d23, q15, 2
+
+    vstm r1, {d16-d23]
+    mov r1, r3
+
+    // DCT-2D
+    // left half
+    vld1.16 {d24}, [r1], r2
+    vld1.16 {d26}, [r1], r2
+    vld1.16 {d28}, [r1], r2
+    vld1.16 {d30}, [r1], r2
+    vld1.16 {d25}, [r1], r2
+    vld1.16 {d27}, [r1], r2
+    vld1.16 {d29}, [r1], r2
+    vld1.16 {d31}, [r1], r2
+    mov r1, r3
+
+    TRANSPOSE4x4x2_16 d24, d26, d28, d30,  d25, d27, d29, d31
+
+    // |--|
+    // |24|
+    // |26|
+    // |28|
+    // |30|
+    // |25|
+    // |27|
+    // |29|
+    // |31|
+    // |--|
+
+    vaddl.s16 q4, d28, d27
+    vaddl.s16 q5, d30, d25
+    vaddl.s16 q2, d24, d31
+    vaddl.s16 q3, d26, d29
+
+    tr4 q2, q3, q4, q5
+
+    vqrshrn.s32 d18, q3, 9
+    vqrshrn.s32 d16, q2, 9
+    vqrshrn.s32 d20, q4, 9
+    vqrshrn.s32 d22, q5, 9
+
+    vsubl.s16 q2, d24, d31
+    vsubl.s16 q3, d26, d29
+    vsubl.s16 q4, d28, d27
+    vsubl.s16 q5, d30, d25
+
+    tr8 q2, q3, q4, q5
+
+    vqrshrn.s32 d17, q12, 9
+    vqrshrn.s32 d19, q13, 9
+    vqrshrn.s32 d21, q14, 9
+    vqrshrn.s32 d23, q15, 9
+
+    add r3, #8
+    vst1.16 {d16}, [r1], r2
+    vst1.16 {d17}, [r1], r2
+    vst1.16 {d18}, [r1], r2
+    vst1.16 {d19}, [r1], r2
+    vst1.16 {d20}, [r1], r2
+    vst1.16 {d21}, [r1], r2
+    vst1.16 {d22}, [r1], r2
+    vst1.16 {d23}, [r1], r2
+    mov r1, r3
+
+
+    // right half
+    vld1.16 {d24}, [r1], r2
+    vld1.16 {d26}, [r1], r2
+    vld1.16 {d28}, [r1], r2
+    vld1.16 {d30}, [r1], r2
+    vld1.16 {d25}, [r1], r2
+    vld1.16 {d27}, [r1], r2
+    vld1.16 {d29}, [r1], r2
+    vld1.16 {d31}, [r1], r2
+    mov r1, r3
+
+    TRANSPOSE4x4x2_16 d24, d26, d28, d30,  d25, d27, d29, d31
+
+    // |--|
+    // |24|
+    // |26|
+    // |28|
+    // |30|
+    // |25|
+    // |27|
+    // |29|
+    // |31|
+    // |--|
+
+    vaddl.s16 q4, d28, d27
+    vaddl.s16 q5, d30, d25
+    vaddl.s16 q2, d24, d31
+    vaddl.s16 q3, d26, d29
+
+    tr4 q2, q3, q4, q5
+
+    vqrshrn.s32 d18, q3, 9
+    vqrshrn.s32 d16, q2, 9
+    vqrshrn.s32 d20, q4, 9
+    vqrshrn.s32 d22, q5, 9
+
+    vsubl.s16 q2, d24, d31
+    vsubl.s16 q3, d26, d29
+    vsubl.s16 q4, d28, d27
+    vsubl.s16 q5, d30, d25
+
+    tr8 q2, q3, q4, q5
+
+    vqrshrn.s32 d17, q12, 9
+    vqrshrn.s32 d19, q13, 9
+    vqrshrn.s32 d21, q14, 9
+    vqrshrn.s32 d23, q15, 9
+
+    vst1.16 {d16}, [r1], r2
+    vst1.16 {d17}, [r1], r2
+    vst1.16 {d18}, [r1], r2
+    vst1.16 {d19}, [r1], r2
+    vst1.16 {d20}, [r1], r2
+    vst1.16 {d21}, [r1], r2
+    vst1.16 {d22}, [r1], r2
+    vst1.16 {d23}, [r1], r2
+
+    vpop {q4-q7}
+    bx lr
+endfunc
+
