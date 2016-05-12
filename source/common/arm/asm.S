@@ -175,9 +175,20 @@ FUNC    .func   \name
     vtrn.8          \r2, \r3
 .endm
 
-.macro TRANSPOSE4x4_16  d0 d1 d2 d3
-    vtrn.32     \d0, \d2
-    vtrn.32     \d1, \d3
-    vtrn.16     \d0, \d1
-    vtrn.16     \d2, \d3
+.macro TRANSPOSE4x4_16  r0, r1, r2, r3
+    vtrn.32     \r0, \r2            // r0 = [21 20 01 00], r2 = [23 22 03 02]
+    vtrn.32     \r1, \r3            // r1 = [31 30 11 10], r3 = [33 32 13 12]
+    vtrn.16     \r0, \r1            // r0 = [30 20 10 00], r1 = [31 21 11 01]
+    vtrn.16     \r2, \r3            // r2 = [32 22 12 02], r3 = [33 23 13 03]
+.endm
+
+.macro TRANSPOSE4x4x2_16  rA0, rA1, rA2, rA3, rB0, rB1, rB2, rB3
+    vtrn.32     \rA0, \rA2          // r0 = [21 20 01 00], r2 = [23 22 03 02]
+    vtrn.32     \rA1, \rA3          // r1 = [31 30 11 10], r3 = [33 32 13 12]
+    vtrn.32     \rB0, \rB2
+    vtrn.32     \rB1, \rB3
+    vtrn.16     \rA0, \rA1          // r0 = [30 20 10 00], r1 = [31 21 11 01]
+    vtrn.16     \rA2, \rA3          // r2 = [32 22 12 02], r3 = [33 23 13 03]
+    vtrn.16     \rB0, \rB1
+    vtrn.16     \rB2, \rB3
 .endm
