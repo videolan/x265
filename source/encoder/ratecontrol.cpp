@@ -1700,6 +1700,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 double w = x265_clip3(0.0, 1.0, curTime * 100);
                 q *= pow((double)m_totalBits / m_expectedBitsSum, w);
             }
+            if (m_framesDone == 0 && m_param->rc.rateControlMode == X265_RC_ABR && m_isGrainEnabled)
+                q = X265_MIN(x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX), q);
+
             rce->qpNoVbv = x265_qScale2qp(q);
             if (m_isVbv)
             {
