@@ -46,17 +46,17 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
         return NULL;
     }
 
-    FILE *csvfp = fopen(fname, "r");
+    FILE *csvfp = x265_fopen(fname, "r");
     if (csvfp)
     {
         /* file already exists, re-open for append */
         fclose(csvfp);
-        return fopen(fname, "ab");
+        return x265_fopen(fname, "ab");
     }
     else
     {
         /* new CSV file, write header */
-        csvfp = fopen(fname, "wb");
+        csvfp = x265_fopen(fname, "wb");
         if (csvfp)
         {
             if (level)

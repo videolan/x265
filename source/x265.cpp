@@ -308,12 +308,9 @@ bool CLIOptions::parse(int argc, char **argv)
             OPT("recon-y4m-exec") reconPlayCmd = optarg;
             OPT("qpfile")
             {
-                this->qpfile = fopen(optarg, "rb");
+                this->qpfile = x265_fopen(optarg, "rb");
                 if (!this->qpfile)
-                {
-                    x265_log(param, X265_LOG_ERROR, "%s qpfile not found or error in opening qp file\n", optarg);
-                    return false;
-                }
+                    x265_log_file(param, X265_LOG_ERROR, "%s qpfile not found or error in opening qp file\n", optarg);
             }
             else
                 bError |= !!api->param_parse(param, long_options[long_options_index].name, optarg);
@@ -374,7 +371,7 @@ bool CLIOptions::parse(int argc, char **argv)
     this->input = InputFile::open(info, this->bForceY4m);
     if (!this->input || this->input->isFail())
     {
-        x265_log(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
+        x265_log_file(param, X265_LOG_ERROR, "unable to open input file <%s>\n", inputfn);
         return true;
     }
 
@@ -593,7 +590,7 @@ int main(int argc, char **argv)
         cliopt.csvfpt = x265_csvlog_open(*api, *param, cliopt.csvfn, cliopt.csvLogLevel);
         if (!cliopt.csvfpt)
         {
-            x265_log(param, X265_LOG_ERROR, "Unable to open CSV log file <%s>, aborting\n", cliopt.csvfn);
+            x265_log_file(param, X265_LOG_ERROR, "Unable to open CSV log file <%s>, aborting\n", cliopt.csvfn);
             cliopt.destroy();
             if (cliopt.api)
                 cliopt.api->param_free(cliopt.param);
