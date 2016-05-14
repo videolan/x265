@@ -389,6 +389,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->maxNumMergeCand = 4;
             param->searchMethod = X265_STAR_SEARCH;
             param->maxNumReferences = 5;
+            param->bEnableRecursionSkip = 0;
             param->limitReferences = 1;
             param->limitModes = 1;
             param->bIntraInBFrames = 1;
@@ -411,6 +412,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->maxNumMergeCand = 5;
             param->searchMethod = X265_STAR_SEARCH;
             param->bEnableTransformSkip = 1;
+            param->bEnableRecursionSkip = 0;
             param->maxNumReferences = 5;
             param->limitReferences = 0;
             param->rc.bEnableSlowFirstPass = 1;
