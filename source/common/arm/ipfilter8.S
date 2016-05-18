@@ -3,6 +3,7 @@
  *
  * Authors: Dnyaneshwar G <dnyaneshwar@multicorewareinc.com>
  *          Radhakrishnan VR <radhakrishnan@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,6 +42,7 @@ g_chromaFilter:
 .word -4, -4, 28, 28, 46, 46, -6, -6
 .word -2, -2, 16, 16, 54, 54, -4 ,-4
 .word -2, -2, 10, 10, 58, 58, -2, -2
+
 
 .text
 
@@ -709,85 +711,90 @@ function x265_filterPixelToShort_48x64_neon
 endfunc
 
 //**************luma_vpp************
+.align 8
+// TODO: I don't like S16 in here, but the VMUL with scalar doesn't support (U8 x U8)
+g_luma_s16:
+.hword   0, 0,   0, 64,  0,   0, 0,  0
+.hword  -1, 4, -10, 58, 17,  -5, 1,  0
+.hword  -1, 4, -11, 40, 40, -11, 4, -1
+.hword   0, 1,  -5, 17, 58, -10, 4, -1
+
 .macro LUMA_VPP_4xN h
 function x265_interp_8tap_vert_pp_4x\h\()_neon
-    push           {r4, r5, lr}
-    ldr             r4, [sp, #4 * 3]
-    mov             r5, r4, lsl #6
-    mov             r4, r1, lsl #2
-    sub             r4, r1
-    sub             r0, r4
+    ldr         r12, [sp]
+    push        {lr}
+    adr         lr, g_luma_s16
+    sub         r0, r1
+    sub         r0, r0, r1, lsl #1          // src -= 3 * srcStride
+    add         lr, lr, r12, lsl #4
+    vld1.16     {q0}, [lr, :64]             // q8 = luma interpolate coeff
+    vdup.s16    d24, d0[0]
+    vdup.s16    d25, d0[1]
+    vdup.s16    d26, d0[2]
+    vdup.s16    d27, d0[3]
+    vdup.s16    d28, d1[0]
+    vdup.s16    d29, d1[1]
+    vdup.s16    d30, d1[2]
+    vdup.s16    d31, d1[3]
 
-    mov             r4, #32
-    vdup.32         q8, r4
-    mov             r4, #\h
+    mov         r12, #\h
+
+    // prepare to load 8 lines
+    vld1.u32    {d0[0]}, [r0], r1
+    vld1.u32    {d0[1]}, [r0], r1
+    vld1.u32    {d2[0]}, [r0], r1
+    vld1.u32    {d2[1]}, [r0], r1
+    vld1.u32    {d4[0]}, [r0], r1
+    vld1.u32    {d4[1]}, [r0], r1
+    vld1.u32    {d6[0]}, [r0], r1
+    vld1.u32    {d6[1]}, [r0], r1
+    vmovl.u8    q0, d0
+    vmovl.u8    q1, d2
+    vmovl.u8    q2, d4
+    vmovl.u8    q3, d6
 
 .loop_4x\h:
-    movrel          r12, g_lumaFilter
-    add             r12, r5
-    mov             lr, r0
+    // TODO: read extra 1 row for speed optimize, may made crash on OS X platform!
+    vld1.u32    {d16[0]}, [r0], r1
+    vld1.u32    {d16[1]}, [r0], r1
+    vmovl.u8    q8, d16
 
-    vld1.u32        d0[0], [lr], r1
-    vld1.u32        d0[1], [lr], r1
-    vld1.u32        d1[0], [lr], r1
-    vld1.u32        d1[1], [lr], r1
-    vld1.u32        d2[0], [lr], r1
-    vld1.u32        d2[1], [lr], r1
-    vld1.u32        d3[0], [lr], r1
-    vld1.u32        d3[1], [lr], r1
+    // row[0-1]
+    vmul.s16    q9, q0, q12
+    vext.64     q11, q0, q1, 1
+    vmul.s16    q10, q11, q12
+    vmov        q0, q1
 
-    veor.u8         q9, q9
+    // row[2-3]
+    vmla.s16    q9, q1, q13
+    vext.64     q11, q1, q2, 1
+    vmla.s16    q10, q11, q13
+    vmov        q1, q2
 
-    vmovl.u8        q11, d0
-    vmovl.u16       q12, d22
-    vmovl.u16       q13, d23
-    vld1.s32        d20, [r12]!
-    vmov.s32        d21, d20
-    vmla.s32        q9, q12, q10
-    vld1.s32        d20, [r12]!
-    vmov.s32        d21, d20
-    vmla.s32        q9, q13, q10
+    // row[4-5]
+    vmla.s16    q9, q2, q14
+    vext.64     q11, q2, q3, 1
+    vmla.s16    q10, q11, q14
+    vmov        q2, q3
 
-    vmovl.u8        q11, d1
-    vmovl.u16       q12, d22
-    vmovl.u16       q13, d23
-    vld1.s32        d20, [r12]!
-    vmov.s32        d21, d20
-    vmla.s32        q9, q12, q10
-    vld1.s32        d20, [r12]!
-    vmov.s32        d21, d20
-    vmla.s32        q9, q13, q10
+    // row[6-7]
+    vmla.s16    q9, q3, q15
+    vext.64     q11, q3, q8, 1
+    vmla.s16    q10, q11, q15
+    vmov        q3, q8
 
-    vmovl.u8        q11, d2
-    vmovl.u16       q12, d22
-    vmovl.u16       q13, d23
-    vld1.s32        d20, [r12]!
-    vmov.s32        d21, d20
-    vmla.s32        q9, q12, q10
-    vld1.s32        d20, [r12]!
-    vmov.s32        d21, d20
-    vmla.s32        q9, q13, q10
+    // sum row[0-7]
+    vadd.s16    d18, d18, d19
+    vadd.s16    d19, d20, d21
 
-    vmovl.u8        q11, d3
-    vmovl.u16       q12, d22
-    vmovl.u16       q13, d23
-    vld1.s32        d20, [r12]!
-    vmov.s32        d21, d20
-    vmla.s32        q9, q12, q10
-    vld1.s32        d20, [r12]!
-    vmov.s32        d21, d20
-    vmla.s32        q9, q13, q10
+    vqrshrun.s16 d18, q9, #6
+    vst1.u32    {d18[0]}, [r2], r3
+    vst1.u32    {d18[1]}, [r2], r3
 
-    vadd.s32        q9, q8
-    vqshrun.s32     d0, q9, #6
-    vqmovn.u16      d0, q0
-    vst1.u32        d0[0], [r2], r3
+    subs        r12, #2
+    bne        .loop_4x4
 
-    add             r0, r1
-    subs            r4, #1
-    bne             .loop_4x\h
-
-    pop             {r4, r5, pc}
+    pop         {pc}
     .ltorg
 endfunc
 .endm
