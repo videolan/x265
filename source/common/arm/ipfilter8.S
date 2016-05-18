@@ -711,7 +711,7 @@ endfunc
 //**************luma_vpp************
 .macro LUMA_VPP_4xN h
 function x265_interp_8tap_vert_pp_4x\h\()_neon
-    push           {r4, r5, r6}
+    push           {r4, r5, lr}
     ldr             r4, [sp, #4 * 3]
     mov             r5, r4, lsl #6
     mov             r4, r1, lsl #2
@@ -725,24 +725,16 @@ function x265_interp_8tap_vert_pp_4x\h\()_neon
 .loop_4x\h:
     movrel          r12, g_lumaFilter
     add             r12, r5
-    mov             r6, r0
+    mov             lr, r0
 
-    pld [r6]
-    vld1.u32        d0[0], [r6], r1
-    pld [r6]
-    vld1.u32        d0[1], [r6], r1
-    pld [r6]
-    vld1.u32        d1[0], [r6], r1
-    pld [r6]
-    vld1.u32        d1[1], [r6], r1
-    pld [r6]
-    vld1.u32        d2[0], [r6], r1
-    pld [r6]
-    vld1.u32        d2[1], [r6], r1
-    pld [r6]
-    vld1.u32        d3[0], [r6], r1
-    pld [r6]
-    vld1.u32        d3[1], [r6], r1
+    vld1.u32        d0[0], [lr], r1
+    vld1.u32        d0[1], [lr], r1
+    vld1.u32        d1[0], [lr], r1
+    vld1.u32        d1[1], [lr], r1
+    vld1.u32        d2[0], [lr], r1
+    vld1.u32        d2[1], [lr], r1
+    vld1.u32        d3[0], [lr], r1
+    vld1.u32        d3[1], [lr], r1
 
     veor.u8         q9, q9
 
@@ -795,8 +787,7 @@ function x265_interp_8tap_vert_pp_4x\h\()_neon
     subs            r4, #1
     bne             .loop_4x\h
 
-    pop             {r4, r5, r6}
-    bx              lr
+    pop             {r4, r5, pc}
     .ltorg
 endfunc
 .endm
