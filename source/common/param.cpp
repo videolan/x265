@@ -221,7 +221,7 @@ void x265_param_default(x265_param* param)
     param->rc.qblur = 0.5;
     param->rc.zoneCount = 0;
     param->rc.zones = NULL;
-    param->rc.bEnableSlowFirstPass = 0;
+    param->rc.bEnableSlowFirstPass = 1;
     param->rc.bStrictCbr = 0;
     param->rc.bEnableGrain = 0;
 
@@ -415,7 +415,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bEnableRecursionSkip = 0;
             param->maxNumReferences = 5;
             param->limitReferences = 0;
-            param->rc.bEnableSlowFirstPass = 1;
             param->bIntraInBFrames = 1;
             param->lookaheadSlices = 0; // disabled for best quality
             // TODO: optimized esa

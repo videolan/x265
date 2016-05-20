@@ -1360,13 +1360,13 @@ Quality, rate control and rate distortion options
 
 .. option:: --slow-firstpass, --no-slow-firstpass
 
-	Enable a slow and more detailed first pass encode in multi-pass rate
-	control mode.  Speed of the first pass encode is slightly lesser and
-	quality midly improved when compared to the default settings in a
-	multi-pass encode. Default disabled (turbo mode enabled)
+	Enable first pass encode with the exact settings specified. 
+	The quality in subsequent multi-pass encodes is better
+	(compared to first pass) when the settings match across each pass. 
+	Default enabled.
 
-	When **turbo** first pass is not disabled, these options are
-	set on the first pass to improve performance:
+	When slow first pass is disabled, a **turbo** encode with the following
+	go-fast options is used to improve performance:
 	
 	* :option:`--fast-intra`
 	* :option:`--no-rect`
