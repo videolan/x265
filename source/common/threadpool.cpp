@@ -273,7 +273,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
     }
     delete groupAffinityPointer;
 #elif HAVE_LIBNUMA
-    if (bNumaSupport >= 0)
+    if (bNumaSupport)
     {
         for (int i = 0; i < numNumaNodes; i++)
         {
@@ -341,8 +341,16 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
             else
             {
                 int count = atoi(nodeStr);
-                threadsPerPool[i] = X265_MIN(count, cpusPerNode[i]);
-                nodeMaskPerPool[i] = ((uint64_t)1 << i);
+                if (i > 0 || strchr(nodeStr, ','))   // it is comma -> old logic
+                {
+                    threadsPerPool[i] = X265_MIN(count, cpusPerNode[i]);
+                    nodeMaskPerPool[i] = ((uint64_t)1 << i);
+                }
+                else                                 // new logic: exactly 'count' threads on all NUMAs
+                {
+                    threadsPerPool[numNumaNodes] = X265_MIN(count, numNumaNodes * MAX_POOL_THREADS);
+                    nodeMaskPerPool[numNumaNodes] = ((uint64_t)-1 >> (64 - numNumaNodes));
+                }
             }
 
             /* consume current node string, comma, and white-space */
