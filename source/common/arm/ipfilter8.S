@@ -48,22 +48,25 @@ g_chromaFilter:
 
 // filterPixelToShort(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride)
 function x265_filterPixelToShort_4x4_neon
+    vld1.u32    {d0[]}, [r0], r1
+    vld1.u32    {d0[1]}, [r0], r1
+    vld1.u32    {d1[]}, [r0], r1
+    vld1.u32    {d1[1]}, [r0], r1
+
+    // avoid load pipeline stall
+    vmov.i16    q1, #0xE000
+
+    vshll.u8    q2, d0, #6
+    vshll.u8    q3, d1, #6
+    vadd.i16    q2, q1
+    vadd.i16    q3, q1
+
     add         r3, r3
-    vmov.u16    q8, #64
-    vmov.u16    q9, #8192
-    vneg.s16    q9, q9
-.rept 2
-    vld1.u8     {d0}, [r0], r1
-    vld1.u8     {d2}, [r0], r1
-    vmovl.u8    q0, d0
-    vmovl.u8    q1, d2
-    vmov        q2, q9
-    vmov        q3, q9
-    vmla.s16    q2, q0, q8
-    vmla.s16    q3, q1, q8
     vst1.16     {d4}, [r2], r3
+    vst1.16     {d5}, [r2], r3
     vst1.16     {d6}, [r2], r3
-.endr
+    vst1.16     {d7}, [r2], r3
+
     bx          lr
 endfunc
 
