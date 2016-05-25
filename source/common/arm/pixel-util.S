@@ -3,6 +3,7 @@
  *
  * Authors: Dnyaneshwar G <dnyaneshwar@multicorewareinc.com>
  *          Radhakrishnan VR <radhakrishnan@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2389,3 +2390,68 @@ function x265_ssim_4x4x2_core_neon
     vst4.32         {d16-d19}, [r12]
     bx              lr
 endfunc
+
+// int psyCost_pp(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride)
+function x265_psyCost_4x4_neon
+    vld1.32         {d16[]}, [r0,:32], r1                   // d16 = [A03 A02 A01 A00 A03 A02 A01 A00]
+    vld1.32         {d17[]}, [r0,:32], r1                   // d17 = [A13 A12 A11 A10 A13 A12 A11 A10]
+    vld1.32         {d16[1]}, [r0,:32], r1                  // d16 = [A23 A22 A21 A20 A03 A02 A01 A00]
+    vld1.32         {d17[1]}, [r0,:32], r1                  // d17 = [A33 A32 A31 A30 A13 A12 A11 A10]
+
+    vld1.32         {d18[]}, [r2,:32], r3                   // d18 = [B03 B02 B01 B00 B03 B02 B01 B00]
+    vld1.32         {d19[]}, [r2,:32], r3                   // d19 = [B13 B12 B11 B10 B13 B12 B11 B10]
+    vld1.32         {d18[1]}, [r2,:32], r3                  // d18 = [B23 B22 B21 B20 B03 B02 B01 B00]
+    vld1.32         {d19[1]}, [r2,:32], r3                  // d19 = [B33 B32 B31 B30 B13 B12 B11 B10]
+
+    vaddl.u8        q2, d16, d17                            // q2 = [2+3 0+1]
+    vsubl.u8        q3, d16, d17                            // q3 = [2-3 0-1]
+    vaddl.u8        q12, d18, d19
+    vsubl.u8        q13, d18, d19
+
+    SUMSUB_ABCD     d0, d2, d1, d3, d4, d5, d6, d7          // q0 = [(0-1)+(2-3) (0+1)+(2+3)], q1 = [(0-1)-(2-3) (0+1)-(2+3)]
+    SUMSUB_ABCD     d20, d22, d21, d23, d24, d25, d26, d27
+
+    // Hadamard-1D
+    vtrn.16         q0, q1
+    vtrn.16         q10, q11
+    SUMSUB_AB       q2, q3, q0, q1                          // q2 = [((0-1)-(2-3))+((0-1)+(2-3)) ((0+1)-(2+3))+((0+1)+(2+3))], q3 = [((0-1)-(2-3))-((0-1)+(2-3)) ((0+1)-(2+3))-((0+1)+(2+3))]
+    SUMSUB_AB       q12, q13, q10, q11
+
+    // SAD Stage-0
+    vaddl.u8        q14, d16, d17                           // q14 = [S23x4 S01x4]
+    vaddl.u8        q15, d18, d19
+
+    // Hadamard-2D
+    vtrn.32         q2, q3
+    vtrn.32         q12, q13
+    vabs.s16        q2, q2
+    vabs.s16        q12, q12
+    vabs.s16        q3, q3
+    vabs.s16        q13, q13
+
+    // SAD Stage-1
+    vadd.u16        d28, d29                                // SAD: reduce to 4 elements
+    vadd.u16        d30, d31
+
+    vmax.s16        q0, q2, q3
+    vmax.s16        q10, q12, q13
+
+    // SAD Stage-2
+    vpadd.u16       d28, d30                                // SAD: reduce to 2 elements
+
+    // SAD & SATD Final Stage
+    vswp            d1, d20
+    vadd.u16        q0, q10
+    vpaddl.u16      d28, d28                                // d28 = SAD_DWORD[B A]
+    vpadd.u16       d0, d1
+    vshr.u32        d28, #2                                 // d28 = SAD_DWORD[B A] >> 2
+    vpaddl.u16      d0, d0                                  // d0 = SATD_DWORD[B A]
+    vsub.s32        d0, d28                                 // d0 = SATD - SAD
+    vmov.32         r0, d0[0]
+    vmov.32         r1, d0[1]
+    subs            r0, r1
+    rsbmi           r0, r0, #0
+
+    bx              lr
+endfunc
+
