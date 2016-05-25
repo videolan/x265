@@ -255,7 +255,7 @@ void SAO::startSlice(Frame* frame, Entropy& initState)
     }
 
     saoParam->bSaoFlag[0] = true;
-    saoParam->bSaoFlag[1] = m_param->internalCsp != X265_CSP_I400;
+    saoParam->bSaoFlag[1] = m_param->internalCsp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400;
 
     m_numNoSao[0] = 0; // Luma
     m_numNoSao[1] = 0; // Chroma
@@ -935,7 +935,7 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     memset(m_offsetOrgPreDblk[addr], 0, sizeof(PerPlane));
 
     int plane_offset = 0;
-    for (int plane = 0; plane < (frame->m_param->internalCsp != X265_CSP_I400 ? NUM_PLANE : 1); plane++)
+    for (int plane = 0; plane < (frame->m_param->internalCsp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400? NUM_PLANE : 1); plane++)
     {
         if (plane == 1)
         {
@@ -1208,7 +1208,7 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 
     const int addrMerge[2] = {(idxX ? addr - 1 : -1), (rowBaseAddr ? addr - m_numCuInWidth : -1)};// left, up
 
-    bool chroma = m_param->internalCsp != X265_CSP_I400;
+    bool chroma = m_param->internalCsp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400;
     int planes = chroma ? 3 : 1;
 
     // reset stats Y, Cb, Cr

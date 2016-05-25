@@ -233,7 +233,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
     cache.numPredDir = slice.isInterP() ? 1 : 2;
     cache.lowresWidthInCU = fenc.width >> 3;
     cache.lowresHeightInCU = fenc.lines >> 3;
-    cache.csp = fencPic->m_picCsp;
+    cache.csp = param.internalCsp;
     cache.hshift = CHROMA_H_SHIFT(cache.csp);
     cache.vshift = CHROMA_V_SHIFT(cache.csp);
 
@@ -330,7 +330,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
                 {
                     /* reference chroma planes must be extended prior to being
                      * used as motion compensation sources */
-                    if (!refFrame->m_bChromaExtended && param.internalCsp != X265_CSP_I400)
+                    if (!refFrame->m_bChromaExtended && param.internalCsp != X265_CSP_I400 && frame.m_fencPic->m_picCsp != X265_CSP_I400)
                     {
                         refFrame->m_bChromaExtended = true;
                         PicYuv *refPic = refFrame->m_fencPic;

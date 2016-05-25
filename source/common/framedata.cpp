@@ -31,11 +31,12 @@ FrameData::FrameData()
     memset(this, 0, sizeof(*this));
 }
 
-bool FrameData::create(const x265_param& param, const SPS& sps)
+bool FrameData::create(const x265_param& param, const SPS& sps, int csp)
 {
     m_param = &param;
     m_slice  = new Slice;
     m_picCTU = new CUData[sps.numCUsInFrame];
+    m_picCsp = csp;
 
     m_cuMemPool.create(0, param.internalCsp, sps.numCUsInFrame);
     for (uint32_t ctuAddr = 0; ctuAddr < sps.numCUsInFrame; ctuAddr++)

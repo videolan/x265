@@ -183,7 +183,7 @@ void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset,
 }
 
 /* Called by Search::predInterSearch() or --pme equivalent, chroma residual might be considered */
-void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPartIdx, int puPartIdx, int pwidth, int pheight, const int method, const int refine)
+void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPartIdx, int puPartIdx, int pwidth, int pheight, const int method, const int refine, bool bChroma)
 {
     partEnum = partitionFromSizes(pwidth, pheight);
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
@@ -200,7 +200,7 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
 
     /* Enable chroma residual cost if subpelRefine level is greater than 2 and chroma block size
      * is an even multiple of 4x4 pixels (indicated by non-null chromaSatd pointer) */
-    bChromaSATD = subpelRefine > 2 && chromaSatd && (srcFencYuv.m_csp != X265_CSP_I400);
+    bChromaSATD = subpelRefine > 2 && chromaSatd && (srcFencYuv.m_csp != X265_CSP_I400 && bChroma);
     X265_CHECK(!(bChromaSATD && !workload[subpelRefine].hpel_satd), "Chroma SATD cannot be used with SAD hpel\n");
 
     ctuAddr = _ctuAddr;

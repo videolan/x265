@@ -180,6 +180,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
      * warnings from valgrind about using uninitialized pixels */
     padx++;
     pady++;
+    m_picCsp = pic.colorSpace;
 
     X265_CHECK(pic.bitDepth >= 8, "pic.bitDepth check failure");
 
@@ -194,7 +195,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
 
             primitives.planecopy_cp(yChar, pic.stride[0] / sizeof(*yChar), yPixel, m_stride, width, height, shift);
 
-            if (pic.colorSpace != X265_CSP_I400)
+            if (param.internalCsp != X265_CSP_I400)
             {
                 pixel *uPixel = m_picOrg[1];
                 pixel *vPixel = m_picOrg[2];
@@ -220,7 +221,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
                 yChar += pic.stride[0] / sizeof(*yChar);
             }
 
-            if (pic.colorSpace != X265_CSP_I400)
+            if (param.internalCsp != X265_CSP_I400)
             {
                 pixel *uPixel = m_picOrg[1];
                 pixel *vPixel = m_picOrg[2];
@@ -262,7 +263,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
             primitives.planecopy_sp_shl(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
         }
 
-        if (pic.colorSpace != X265_CSP_I400)
+        if (param.internalCsp != X265_CSP_I400)
         {
             pixel *uPixel = m_picOrg[1];
             pixel *vPixel = m_picOrg[2];
@@ -312,7 +313,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
     for (int i = 1; i <= pady; i++)
         memcpy(Y + i * m_stride, Y, (width + padx) * sizeof(pixel));
 
-    if (pic.colorSpace != X265_CSP_I400)
+    if (param.internalCsp != X265_CSP_I400)
     {
         for (int r = 0; r < height >> m_vChromaShift; r++)
         {

@@ -527,7 +527,7 @@ void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp, bool 
 }
 
 /* Only called by encodeResidue, these fields can be modified during inter/intra coding */
-void CUData::updatePic(uint32_t depth) const
+void CUData::updatePic(uint32_t depth, int picCsp) const
 {
     CUData& ctu = *m_encData->getPicCTU(m_cuAddr);
 
@@ -541,7 +541,7 @@ void CUData::updatePic(uint32_t depth) const
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
     memcpy(ctu.m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t)* tmpY);
 
-    if (ctu.m_chromaFormat != X265_CSP_I400)
+    if (ctu.m_chromaFormat != X265_CSP_I400 && picCsp != X265_CSP_I400)
     {
         m_partCopy(ctu.m_transformSkip[1] + m_absIdxInCTU, m_transformSkip[1]);
         m_partCopy(ctu.m_transformSkip[2] + m_absIdxInCTU, m_transformSkip[2]);

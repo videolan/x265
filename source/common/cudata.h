@@ -224,7 +224,7 @@ public:
 
     /* RD-0 methods called only from encodeResidue */
     void     copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp, bool copyQp = true);
-    void     updatePic(uint32_t depth) const;
+    void     updatePic(uint32_t depth, int picCsp) const;
 
     void     setPartSizeSubParts(PartSize size)    { m_partSet(m_partSize, (uint8_t)size); }
     void     setPredModeSubParts(PredMode mode)    { m_partSet(m_predMode, (uint8_t)mode); }

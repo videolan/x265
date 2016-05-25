@@ -511,12 +511,6 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
     if (pic_in)
     {
-        if (pic_in->colorSpace != m_param->internalCsp)
-        {
-            x265_log(m_param, X265_LOG_ERROR, "Unsupported chroma subsampling (%d) on input\n",
-                     pic_in->colorSpace);
-            return -1;
-        }
         if (pic_in->bitDepth < 8 || pic_in->bitDepth > 16)
         {
             x265_log(m_param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n",
@@ -538,7 +532,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 {
                     inFrame->m_fencPic->m_cuOffsetY = m_sps.cuOffsetY;
                     inFrame->m_fencPic->m_buOffsetY = m_sps.buOffsetY;
-                    if (pic_in->colorSpace != X265_CSP_I400)
+                    if (m_param->internalCsp != X265_CSP_I400)
                     {
                         inFrame->m_fencPic->m_cuOffsetC = m_sps.cuOffsetC;
                         inFrame->m_fencPic->m_buOffsetC = m_sps.buOffsetC;
@@ -558,7 +552,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     {
                         m_sps.cuOffsetY = inFrame->m_fencPic->m_cuOffsetY;
                         m_sps.buOffsetY = inFrame->m_fencPic->m_buOffsetY;
-                        if (pic_in->colorSpace != X265_CSP_I400)
+                        if (m_param->internalCsp != X265_CSP_I400)
                         {
                             m_sps.cuOffsetC = inFrame->m_fencPic->m_cuOffsetC;
                             m_sps.cuOffsetY = inFrame->m_fencPic->m_cuOffsetY;
