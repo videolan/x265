@@ -91,24 +91,6 @@ inline int calcLength(uint32_t x)
     return z + lut[x];
 }
 
-inline void reduceFraction(int* n, int* d)
-{
-    int a = *n;
-    int b = *d;
-    int c;
-    if (!a || !b)
-        return;
-    c = a % b;
-    while (c)
-    {
-        a = b;
-        b = c;
-        c = a % b;
-    }
-    *n /= b;
-    *d /= b;
-}
-
 inline char *strcatFilename(const char *input, const char *suffix)
 {
     char *output = X265_MALLOC(char, strlen(input) + strlen(suffix) + 1);
@@ -1963,18 +1945,17 @@ void RateControl::hrdFullness(SEIBufferingPeriod *seiBP)
     const HRDInfo* hrd = &vui->hrdParameters;
     int num = 90000;
     int denom = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
-    reduceFraction(&num, &denom);
     int64_t cpbState = (int64_t)m_bufferFillFinal;
     int64_t cpbSize = (int64_t)hrd->cpbSizeValue << (hrd->cpbSizeScale + CPB_SHIFT);
 
     if (cpbState < 0 || cpbState > cpbSize)
     {
         x265_log(m_param, X265_LOG_WARNING, "CPB %s: %.0lf bits in a %.0lf-bit buffer\n",
-                 cpbState < 0 ? "underflow" : "overflow", (float)cpbState/denom, (float)cpbSize/denom);
+                 cpbState < 0 ? "underflow" : "overflow", (float)cpbState, (float)cpbSize);
     }
 
-    seiBP->m_initialCpbRemovalDelay = (uint32_t)(num * cpbState + denom) / denom;
-    seiBP->m_initialCpbRemovalDelayOffset = (uint32_t)((num * cpbSize + denom) / denom - seiBP->m_initialCpbRemovalDelay);
+    seiBP->m_initialCpbRemovalDelay = (uint32_t)(num * cpbState / denom);
+    seiBP->m_initialCpbRemovalDelayOffset = (uint32_t)(num * cpbSize / denom - seiBP->m_initialCpbRemovalDelay);
 }
 
 void RateControl::updateVbvPlan(Encoder* enc)
