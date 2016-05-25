@@ -118,12 +118,12 @@ public:
     void resetStats();
 
     // CTU-based SAO process without slice granularity
-    void processSaoCu(int addr, int typeIdx, int plane);
+    void applyPixelOffsets(int addr, int typeIdx, int plane);
     void processSaoUnitRow(SaoCtuParam* ctuParam, int idxY, int plane);
-    void processSaoUnitCuLuma(SaoCtuParam* ctuParam, int idxY, int idxX);
-    void processSaoUnitCuChroma(SaoCtuParam* ctuParam[3], int idxY, int idxX);
+    void generateLumaOffsets(SaoCtuParam* ctuParam, int idxY, int idxX);
+    void generateChromaOffsets(SaoCtuParam* ctuParam[3], int idxY, int idxX);
 
-    void calcSaoStatsCu(int addr, int plane);
+    void calcSaoStatsCTU(int addr, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
 
     void saoLumaComponentParamDist(SAOParam* saoParam, int addr, double& rateDist, double* lambda, double &bestCost);

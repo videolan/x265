@@ -198,14 +198,14 @@ void FrameFilter::ParallelFilter::copySaoAboveRef(PicYuv* reconPic, uint32_t cuA
     }
 }
 
-void FrameFilter::ParallelFilter::processSaoUnitCu(SAOParam *saoParam, int col)
+void FrameFilter::ParallelFilter::processSaoCTU(SAOParam *saoParam, int col)
 {
     // TODO: apply SAO on CU and copy back soon, is it necessary?
     if (saoParam->bSaoFlag[0])
-        m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row, col);
+        m_sao.generateLumaOffsets(saoParam->ctuParam[0], m_row, col);
 
     if (saoParam->bSaoFlag[1])
-        m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row, col);
+        m_sao.generateChromaOffsets(saoParam->ctuParam, m_row, col);
 
     if (m_encData->m_slice->m_pps->bTransquantBypassEnabled)
     {
@@ -371,7 +371,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
                 if (m_row >= 1 && col >= 3)
                 {
                     // Must delay 1 row to avoid thread data race conflict
-                    m_prevRow->processSaoUnitCu(saoParam, col - 3);
+                    m_prevRow->processSaoCTU(saoParam, col - 3);
                     m_prevRow->processPostCu(col - 3);
                 }
             }
@@ -412,19 +412,19 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
             // Process Previous Rows SAO CU
             if (m_row >= 1 && numCols >= 3)
             {
-                m_prevRow->processSaoUnitCu(saoParam, numCols - 3);
+                m_prevRow->processSaoCTU(saoParam, numCols - 3);
                 m_prevRow->processPostCu(numCols - 3);
             }
 
             if (m_row >= 1 && numCols >= 2)
             {
-                m_prevRow->processSaoUnitCu(saoParam, numCols - 2);
+                m_prevRow->processSaoCTU(saoParam, numCols - 2);
                 m_prevRow->processPostCu(numCols - 2);
             }
 
             if (m_row >= 1 && numCols >= 1)
             {
-                m_prevRow->processSaoUnitCu(saoParam, numCols - 1);
+                m_prevRow->processSaoCTU(saoParam, numCols - 1);
                 m_prevRow->processPostCu(numCols - 1);
             }
 
@@ -478,7 +478,7 @@ void FrameFilter::processRow(int row)
                 for(int col = 0; col < m_numCols; col++)
                 {
                     // NOTE: must use processSaoUnitCu(), it include TQBypass logic
-                    m_parallelFilter[row].processSaoUnitCu(saoParam, col);
+                    m_parallelFilter[row].processSaoCTU(saoParam, col);
                 }
             }
 

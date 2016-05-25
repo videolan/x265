@@ -271,7 +271,7 @@ void SAO::startSlice(Frame* frame, Entropy& initState)
 }
 
 // CTU-based SAO process without slice granularity
-void SAO::processSaoCu(int addr, int typeIdx, int plane)
+void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
 {
     PicYuv* reconPic = m_frame->m_reconPic;
     pixel* rec = reconPic->getPlaneAddr(plane, addr);
@@ -559,7 +559,7 @@ void SAO::processSaoCu(int addr, int typeIdx, int plane)
 }
 
 /* Process SAO unit */
-void SAO::processSaoUnitCuLuma(SaoCtuParam* ctuParam, int idxY, int idxX)
+void SAO::generateLumaOffsets(SaoCtuParam* ctuParam, int idxY, int idxX)
 {
     PicYuv* reconPic = m_frame->m_reconPic;
     intptr_t stride = reconPic->m_stride;
@@ -613,13 +613,13 @@ void SAO::processSaoUnitCuLuma(SaoCtuParam* ctuParam, int idxY, int idxX)
                     m_offsetEo[0][edgeType] = (int8_t)offset[s_eoTable[edgeType]];
             }
         }
-        processSaoCu(addr, typeIdx, 0);
+        applyPixelOffsets(addr, typeIdx, 0);
     }
     std::swap(m_tmpL1[0], m_tmpL2[0]);
 }
 
 /* Process SAO unit (Chroma only) */
-void SAO::processSaoUnitCuChroma(SaoCtuParam* ctuParam[3], int idxY, int idxX)
+void SAO::generateChromaOffsets(SaoCtuParam* ctuParam[3], int idxY, int idxX)
 {
     PicYuv* reconPic = m_frame->m_reconPic;
     intptr_t stride = reconPic->m_strideC;
@@ -688,7 +688,7 @@ void SAO::processSaoUnitCuChroma(SaoCtuParam* ctuParam[3], int idxY, int idxX)
                     m_offsetEo[1][edgeType] = (int8_t)offset[s_eoTable[edgeType]];
             }
         }
-        processSaoCu(addr, typeIdxCb, 1);
+        applyPixelOffsets(addr, typeIdxCb, 1);
     }
 
     // Process V
@@ -714,7 +714,7 @@ void SAO::processSaoUnitCuChroma(SaoCtuParam* ctuParam[3], int idxY, int idxX)
                     m_offsetEo[2][edgeType] = (int8_t)offset[s_eoTable[edgeType]];
             }
         }
-        processSaoCu(addr, typeIdxCb, 2);
+        applyPixelOffsets(addr, typeIdxCb, 2);
     }
 
     std::swap(m_tmpL1[1], m_tmpL2[1]);
@@ -722,7 +722,7 @@ void SAO::processSaoUnitCuChroma(SaoCtuParam* ctuParam[3], int idxY, int idxX)
 }
 
 /* Calculate SAO statistics for current CTU without non-crossing slice */
-void SAO::calcSaoStatsCu(int addr, int plane)
+void SAO::calcSaoStatsCTU(int addr, int plane)
 {
     const PicYuv* reconPic = m_frame->m_reconPic;
     const CUData* cu = m_frame->m_encData->getPicCTU(addr);
@@ -1230,12 +1230,12 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
         saoParam->ctuParam[i][addr].reset();
 
     if (saoParam->bSaoFlag[0])
-        calcSaoStatsCu(addr, 0);
+        calcSaoStatsCTU(addr, 0);
 
     if (saoParam->bSaoFlag[1])
     {
-        calcSaoStatsCu(addr, 1);
-        calcSaoStatsCu(addr, 2);
+        calcSaoStatsCTU(addr, 1);
+        calcSaoStatsCTU(addr, 2);
     }
 
     saoStatsInitialOffset(planes);
