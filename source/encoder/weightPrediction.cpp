@@ -460,7 +460,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
                 if (mindenom > 0 && !(minscale & 1))
                 {
                     unsigned long idx;
-                    CLZ(idx, minscale);
+                    CTZ(idx, minscale);
                     int shift = X265_MIN((int)idx, mindenom);
                     mindenom -= shift;
                     minscale >>= shift;
