@@ -1674,15 +1674,18 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 if (m_pred[m_predType].count == 1)
                     qScale = x265_clip3(lmin, lmax, qScale);
                 m_lastQScaleFor[m_sliceType] = qScale;
-                rce->frameSizePlanned = predictSize(&m_pred[m_predType], qScale, (double)m_currentSatd);
             }
-            else
-                rce->frameSizePlanned = qScale2bits(rce, qScale);
-
-            /* Limit planned size by MinCR */
-            rce->frameSizePlanned = X265_MIN(rce->frameSizePlanned, rce->frameSizeMaximum);
-            rce->frameSizeEstimated = rce->frameSizePlanned;
         }
+
+        if (m_2pass)
+            rce->frameSizePlanned = qScale2bits(rce, qScale);
+        else
+            rce->frameSizePlanned = predictSize(&m_pred[m_predType], qScale, (double)m_currentSatd);
+
+        /* Limit planned size by MinCR */
+        if (m_isVbv)
+            rce->frameSizePlanned = X265_MIN(rce->frameSizePlanned, rce->frameSizeMaximum);
+        rce->frameSizeEstimated = rce->frameSizePlanned;
 
         rce->newQScale = qScale;
         if(rce->bLastMiniGopBFrame)
@@ -1900,7 +1903,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
         if ((m_curSlice->m_poc == 0 || m_lastQScaleFor[P_SLICE] < q) && !(m_2pass && !m_isVbv))
             m_lastQScaleFor[P_SLICE] = q * fabs(m_param->rc.ipFactor);
 
-        if (m_2pass && m_isVbv)
+        if (m_2pass)
             rce->frameSizePlanned = qScale2bits(rce, q);
         else
             rce->frameSizePlanned = predictSize(&m_pred[m_predType], q, (double)m_currentSatd);
