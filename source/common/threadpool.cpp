@@ -73,7 +73,7 @@ const uint64_t m2 = 0x3333333333333333; //binary: 00110011..
 const uint64_t m3 = 0x0f0f0f0f0f0f0f0f; //binary:  4 zeros,  4 ones ...
 const uint64_t h01 = 0x0101010101010101; //the sum of 256 to the power of 0,1,2,3...
 
-int popCount(uint64_t x)
+static int popCount(uint64_t x)
 {
     x -= (x >> 1) & m1;
     x = (x & m2) + ((x >> 2) & m2);
