@@ -68,6 +68,7 @@
 # define strcasecmp _stricmp
 #endif
 
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7
 const uint64_t m1 = 0x5555555555555555; //binary: 0101...
 const uint64_t m2 = 0x3333333333333333; //binary: 00110011..
 const uint64_t m3 = 0x0f0f0f0f0f0f0f0f; //binary:  4 zeros,  4 ones ...
@@ -80,6 +81,7 @@ static int popCount(uint64_t x)
     x = (x + (x >> 4)) & m3;
     return (x * h01) >> 56;
 }
+#endif
 
 namespace X265_NS {
 // x265 private namespace
@@ -580,18 +582,21 @@ int ThreadPool::getNumaNodeCount()
 /* static */
 int ThreadPool::getCpuCount()
 {
-#if _WIN32
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7
     enum { MAX_NODE_NUM = 127 };
     int cpus = 0;
     int numNumaNodes = X265_MIN(getNumaNodeCount(), MAX_NODE_NUM);
-    PGROUP_AFFINITY groupAffinityPointer = new GROUP_AFFINITY;
+    GROUP_AFFINITY groupAffinity;
     for (int i = 0; i < numNumaNodes; i++)
     {
-        GetNumaNodeProcessorMaskEx((UCHAR)i, groupAffinityPointer);
-        cpus += popCount(groupAffinityPointer->Mask);
+        GetNumaNodeProcessorMaskEx((UCHAR)i, &groupAffinity);
+        cpus += popCount(groupAffinity.Mask);
     }
-    delete groupAffinityPointer;
     return cpus;
+#elif _WIN32
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo(&sysinfo);
+    return sysinfo.dwNumberOfProcessors;
 #elif __unix__ && X265_ARCH_ARM
     /* Return the number of processors configured by OS. Because, most embedded linux distributions
      * uses only one processor as the scheduler doesn't have enough work to utilize all processors */
