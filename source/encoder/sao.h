@@ -126,12 +126,13 @@ public:
     void calcSaoStatsCTU(int addr, int plane);
     void calcSaoStatsCu_BeforeDblk(Frame* pic, int idxX, int idxY);
 
-    void saoLumaComponentParamDist(SAOParam* saoParam, int addr, double& rateDist, double* lambda, double &bestCost);
-    void saoChromaComponentParamDist(SAOParam* saoParam, int addr, double& rateDist, double* lambda, double &bestCost);
+    void saoLumaComponentParamDist(SAOParam* saoParam, int addr, int64_t& rateDist, int64_t* lambda, int64_t& bestCost);
+    void saoChromaComponentParamDist(SAOParam* saoParam, int addr, int64_t& rateDist, int64_t* lambda, int64_t& bestCost);
 
-    void estIterOffset(int typeIdx, double lambda, int32_t count, int32_t offsetOrg, int& offset, int& distClasses, double& costClasses);
+    void estIterOffset(int typeIdx, int64_t lambda, int32_t count, int32_t offsetOrg, int32_t& offset, int32_t& distClasses, int64_t& costClasses);
     void rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus);
     void rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr);
+    int64_t calcSaoRdoCost(int64_t distortion, uint32_t bits, int64_t lambda);
 
     void saoStatsInitialOffset(int planes);
 
