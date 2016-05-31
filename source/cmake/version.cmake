@@ -52,12 +52,13 @@ elseif(HG_EXECUTABLE AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../.hg)
         )
     execute_process(
         COMMAND
-        ${HG_EXECUTABLE} log -r. --template "{node|short}"
+        ${HG_EXECUTABLE} log -r. --template "{node}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         OUTPUT_VARIABLE HG_REVISION_ID
         ERROR_QUIET
         OUTPUT_STRIP_TRAILING_WHITESPACE
         )
+    string(SUBSTRING "${HG_REVISION_ID}" 0 16 HG_REVISION_ID)
 
     if(X265_LATEST_TAG MATCHES "^r")
         string(SUBSTRING ${X265_LATEST_TAG} 1 -1 X265_LATEST_TAG)
