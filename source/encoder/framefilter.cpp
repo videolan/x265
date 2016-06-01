@@ -553,10 +553,10 @@ void FrameFilter::processPostRow(int row)
         pixel *fenc = m_frame->m_fencPic->m_picOrg[0];
         intptr_t stride1 = reconPic->m_stride;
         intptr_t stride2 = m_frame->m_fencPic->m_stride;
-        uint32_t bEnd = ((row + 1) == (this->m_numRows - 1));
+        uint32_t bEnd = ((row) == (this->m_numRows - 1));
         uint32_t bStart = (row == 0);
         uint32_t minPixY = row * g_maxCUSize - 4 * !bStart;
-        uint32_t maxPixY = (row + 1) * g_maxCUSize - 4 * !bEnd;
+        uint32_t maxPixY = X265_MIN((row + 1) * g_maxCUSize - 4 * !bEnd, (uint32_t)m_param->sourceHeight);
         uint32_t ssim_cnt;
         x265_emms();
 
@@ -726,7 +726,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
         {
             std::swap(sum0, sum1);
             for (uint32_t x = 0; x < width; x += 2)
-                primitives.ssim_4x4x2_core(&pix1[(4 * x + (z * stride1))], stride1, &pix2[(4 * x + (z * stride2))], stride2, &sum0[x]);
+                primitives.ssim_4x4x2_core(&pix1[4 * (x + (z * stride1))], stride1, &pix2[4 * (x + (z * stride2))], stride2, &sum0[x]);
         }
 
         for (uint32_t x = 0; x < width - 1; x += 4)
