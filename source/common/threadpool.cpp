@@ -277,16 +277,16 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
 #elif HAVE_LIBNUMA
     if (bNumaSupport)
     {
+        struct bitmask* bitMask = numa_allocate_cpumask();
         for (int i = 0; i < numNumaNodes; i++)
         {
-            struct bitmask* bitMask = numa_allocate_cpumask();
             int ret = numa_node_to_cpus(i, bitMask);
             if (!ret)
-                cpusPerNode[i] = numa_num_possible_cpus();
+                cpusPerNode[i] = numa_bitmask_weight(bitMask);
             else
                 x265_log(p, X265_LOG_ERROR, "Failed to genrate CPU mask\n");
-            numa_free_cpumask(bitMask);
         }
+        numa_free_cpumask(bitMask);
     }
 #else // NUMA not supported
     cpusPerNode[0] = getCpuCount();
