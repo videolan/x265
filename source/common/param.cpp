@@ -121,9 +121,9 @@ void x265_param_default(x265_param* param)
     /* Source specifications */
     param->internalBitDepth = X265_DEPTH;
     param->internalCsp = X265_CSP_I420;
-    param->levelIdc = 0;
+    param->levelIdc = 0; //Auto-detect level
     param->uhdBluray = 0;
-    param->bHighTier = 0;
+    param->bHighTier = 1; //Allow high tier by default
     param->interlaceMode = 0;
     param->bAnnexB = 1;
     param->bRepeatHeaders = 0;
