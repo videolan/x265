@@ -1433,8 +1433,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t& r
     m_entropyCoder.resetBits();
     m_entropyCoder.codeSaoType(0);
 
-    uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
-    int64_t costPartBest = calcSaoRdoCost(0, rate, lambda[0]);
+    int64_t costPartBest = calcSaoRdoCost(0, m_entropyCoder.getNumberOfWrittenBits(), lambda[0]);
 
     //EO distortion calculation
     for (int typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE - 1; typeIdx++)
@@ -1456,8 +1455,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t& r
         m_entropyCoder.resetBits();
         m_entropyCoder.codeSaoOffsetEO(m_offset[0][typeIdx] + 1, typeIdx, 0);
 
-        uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
-        int64_t cost = calcSaoRdoCost(estDist, rate, lambda[0]);
+        int64_t cost = calcSaoRdoCost(estDist, m_entropyCoder.getNumberOfWrittenBits(), lambda[0]);
 
         if (cost < costPartBest)
         {
@@ -1512,8 +1510,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t& r
     m_entropyCoder.resetBits();
     m_entropyCoder.codeSaoOffsetBO(m_offset[0][SAO_BO] + bestClassBO, bestClassBO, 0);
 
-    uint32_t estRate = m_entropyCoder.getNumberOfWrittenBits();
-    int64_t cost = calcSaoRdoCost(estDist, estRate, lambda[0]);
+    int64_t cost = calcSaoRdoCost(estDist, m_entropyCoder.getNumberOfWrittenBits(), lambda[0]);
 
     if (cost < costPartBest)
     {
@@ -1534,8 +1531,7 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t& r
 
     if (m_param->internalCsp == X265_CSP_I400)
     {
-        uint32_t rate = m_entropyCoder.getNumberOfWrittenBits();
-        bestCost = rateDist + rate;
+        bestCost = rateDist + m_entropyCoder.getNumberOfWrittenBits();
     }
 }
 
