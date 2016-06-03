@@ -1884,6 +1884,19 @@ void Encoder::configure(x265_param *p)
         p->vui.aspectRatioIdc = 1;
         p->bEmitHRDSEI = 1;
         int disableUhdBd = 0;
+
+        if (p->levelIdc && p->levelIdc != 51)
+        {
+            x265_log(p, X265_LOG_WARNING, "uhd-bd: Wrong level specified, UHD Bluray mandates Level 5.1\n");
+        }
+        p->levelIdc = 51;
+
+        if (!p->bHighTier)
+        {
+            x265_log(p, X265_LOG_WARNING, "uhd-bd: Turning on high tier\n");
+            p->bHighTier = 1;
+        }
+
         if (!p->bRepeatHeaders)
         {
             x265_log(p, X265_LOG_WARNING, "uhd-bd: Turning on repeat-headers\n");

@@ -131,33 +131,33 @@ void determineLevel(const x265_param &param, VPS& vps)
         vps.ptl.levelIdc = Level::LEVEL8_5;
         vps.ptl.tierFlag = Level::MAIN;
     }
+    else if (param.uhdBluray)
+    {
+        i = 8;
+        vps.ptl.levelIdc = levels[i].levelEnum;
+        vps.ptl.tierFlag = Level::HIGH;
+        vps.ptl.minCrForLevel = levels[i].minCompressionRatio;
+        vps.ptl.maxLumaSrForLevel = levels[i].maxLumaSamplesPerSecond;
+    }
     else for (i = 0; i < NumLevels; i++)
     {
-        if (param.uhdBluray && levels[i].levelIdc != 51)
-        {
+        if (lumaSamples > levels[i].maxLumaSamples)
             continue;
-        }
-        else if (!param.uhdBluray)
-        {
-            if (lumaSamples > levels[i].maxLumaSamples)
-                continue;
-            else if (samplesPerSec > levels[i].maxLumaSamplesPerSecond)
-                continue;
-            else if (bitrate > levels[i].maxBitrateMain && levels[i].maxBitrateHigh == MAX_UINT)
-                continue;
-            else if (bitrate > levels[i].maxBitrateHigh)
-                continue;
-            else if (param.sourceWidth > sqrt(levels[i].maxLumaSamples * 8.0f))
-                continue;
-            else if (param.sourceHeight > sqrt(levels[i].maxLumaSamples * 8.0f))
-                continue;
-            else if (param.levelIdc && param.levelIdc != levels[i].levelIdc)
-                continue;
-        }
+        else if (samplesPerSec > levels[i].maxLumaSamplesPerSecond)
+            continue;
+        else if (bitrate > levels[i].maxBitrateMain && levels[i].maxBitrateHigh == MAX_UINT)
+            continue;
+        else if (bitrate > levels[i].maxBitrateHigh)
+            continue;
+        else if (param.sourceWidth > sqrt(levels[i].maxLumaSamples * 8.0f))
+            continue;
+        else if (param.sourceHeight > sqrt(levels[i].maxLumaSamples * 8.0f))
+            continue;
+        else if (param.levelIdc && param.levelIdc != levels[i].levelIdc)
+            continue;
         uint32_t maxDpbSize = MaxDpbPicBuf;
-        if (param.uhdBluray)
-            maxDpbSize = 6;
-        else if (lumaSamples <= (levels[i].maxLumaSamples >> 2))
+
+        if (lumaSamples <= (levels[i].maxLumaSamples >> 2))
             maxDpbSize = X265_MIN(4 * MaxDpbPicBuf, 16);
         else if (lumaSamples <= (levels[i].maxLumaSamples >> 1))
             maxDpbSize = X265_MIN(2 * MaxDpbPicBuf, 16);
@@ -209,8 +209,6 @@ void determineLevel(const x265_param &param, VPS& vps)
         else
             vps.ptl.tierFlag = Level::MAIN;
 #undef CHECK_RANGE
-        if (param.uhdBluray)
-            vps.ptl.tierFlag = Level::HIGH;
 
         vps.ptl.levelIdc = levels[i].levelEnum;
         vps.ptl.minCrForLevel = levels[i].minCompressionRatio;
@@ -381,12 +379,15 @@ bool enforceLevel(x265_param& param, VPS& vps)
     /* The value of sps_max_dec_pic_buffering_minus1[ HighestTid ] + 1 shall be less than or equal to MaxDpbSize */
     const uint32_t MaxDpbPicBuf = 6;
     uint32_t maxDpbSize = MaxDpbPicBuf;
-    if (lumaSamples <= (l.maxLumaSamples >> 2))
-        maxDpbSize = X265_MIN(4 * MaxDpbPicBuf, 16);
-    else if (lumaSamples <= (l.maxLumaSamples >> 1))
-        maxDpbSize = X265_MIN(2 * MaxDpbPicBuf, 16);
-    else if (lumaSamples <= ((3 * l.maxLumaSamples) >> 2))
-        maxDpbSize = X265_MIN((4 * MaxDpbPicBuf) / 3, 16);
+    if (!param.uhdBluray) /* Do not change MaxDpbPicBuf for UHD-Bluray */
+    {
+        if (lumaSamples <= (l.maxLumaSamples >> 2))
+            maxDpbSize = X265_MIN(4 * MaxDpbPicBuf, 16);
+        else if (lumaSamples <= (l.maxLumaSamples >> 1))
+            maxDpbSize = X265_MIN(2 * MaxDpbPicBuf, 16);
+        else if (lumaSamples <= ((3 * l.maxLumaSamples) >> 2))
+            maxDpbSize = X265_MIN((4 * MaxDpbPicBuf) / 3, 16);
+    }
 
     int savedRefCount = param.maxNumReferences;
     while (vps.maxDecPicBuffering > maxDpbSize && param.maxNumReferences > 1)
