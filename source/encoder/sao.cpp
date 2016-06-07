@@ -1377,7 +1377,7 @@ inline int64_t SAO::calcSaoRdoCost(int64_t distortion, uint32_t bits, int64_t la
 {
 #if X265_DEPTH < 10
         X265_CHECK(bits <= (INT64_MAX - 128) / lambda,
-                   "calcRdCost wrap detected dist: %u, bits %u, lambda: " X265_LL "\n",
+                   "calcRdCost wrap detected dist: " X265_LL ", bits %u, lambda: " X265_LL "\n",
                    distortion, bits, lambda);
 #else
         X265_CHECK(bits <= (INT64_MAX - 128) / lambda,
