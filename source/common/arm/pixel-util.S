@@ -2293,44 +2293,38 @@ endfunc
 
 // void dequant_normal_c(const int16_t* quantCoef, int16_t* coef, int num, int scale, int shift)
 function x265_dequant_normal_neon
-    push            {r4, r5, r6}
-    ldr             r4, [sp, #12]       // shift
-#if HIGH_BIT_DEPTH
-    cmp             r3, #32767
-    jle             .skip
-    shr             r3, (BIT_DEPTH - 8)
-    sub             r4, (BIT_DEPTH - 8)
-.skip:
+    ldr             r12, [sp]            // shift
+#if HIGH_BIT_DEPTH  // NEVER TEST path
+    cmp             r3, #32768
+    lsrlt           r3, #(BIT_DEPTH - 8)
+    sublt           r12, #(BIT_DEPTH - 8)
 #endif
-    mov             r12, #1
-    sub             r5, r4, #1
-    lsr             r2, #3              // num / 8
-    lsl             r5, r12, r5         // 1 << shift - 1
+    lsr             r2, #4              // num / 16
 
-    neg             r6, r4
-    vdup.32         q0, r3
-    vdup.32         q1, r6
-    vdup.32         q2, r5
+    neg             r12, r12
+    vdup.16         q0, r3
+    vdup.32         q1, r12
 
-dqn_loop1:
-    vld1.16         {q3}, [r0]!
-    vmovl.s16       q8, d6
-    vmovl.s16       q9, d7
+.dqn_loop1:
+    vld1.16         {d4-d7}, [r0]!
 
-    vmul.s32        q8, q0
-    vmul.s32        q9, q0
-    vadd.s32        q8, q2
-    vadd.s32        q9, q2
+    vmull.s16       q8, d4, d0
+    vmull.s16       q9, d5, d0
+    vmull.s16       q10, d6, d0
+    vmull.s16       q11, d7, d0
 
-    vshl.s32        q8, q1
-    vshl.s32        q9, q1
+    vrshl.s32       q8, q1
+    vrshl.s32       q9, q1
+    vrshl.s32       q10, q1
+    vrshl.s32       q11, q1
     vqmovn.s32      d16, q8
     vqmovn.s32      d17, q9
+    vqmovn.s32      d18, q10
+    vqmovn.s32      d19, q11
 
     subs            r2, #1
-    vst1.16         {q8}, [r1]!
-    bne             dqn_loop1
-    pop             {r4, r5, r6}
+    vst1.16         {d16-d19}, [r1]!
+    bgt            .dqn_loop1
     bx              lr
 endfunc
 
