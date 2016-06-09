@@ -664,89 +664,175 @@ endfunc
 
 // int  count_nonzero_c(const int16_t* quantCoeff)
 function x265_count_nonzero_4_neon
-    veor            d4, d4
-.rept 2
-    vld1.s16        {d0}, [r0]!
-    vld1.s16        {d1}, [r0]!
-    vclz.i16        d2, d0
-    vclz.i16        d3, d1
-    vshr.u16        q1, #4
-    vadd.u16        d2, d3
-    vadd.u16        d4, d2
-.endr
-    vpadd.u16       d4, d4
-    vpadd.u16       d4, d4
-    vmov.u16        r12, d4[0]
-    rsb             r0, r12, #16
+    vld1.s16        {d0-d3}, [r0]
+    vceq.u16        q0, #0
+    vceq.u16        q1, #0
+    eor             r1, r1
+    vtrn.8          q0, q1
+
+    vshr.u8         q0, #7
+
+    vadd.u8         d0, d1
+    vshr.u64        d1, d0, #32
+    vadd.u8         d0, d1
+    vmov.u32        r0, d0[0]
+    usad8           r0, r0, r1
+    rsb             r0, #16
     bx              lr
 endfunc
 
 function x265_count_nonzero_8_neon
-    veor            q8, q8
-.rept 4
-    vld1.s16        {q0}, [r0]!
-    vld1.s16        {q1}, [r0]!
-    vclz.i16        q2, q0
-    vclz.i16        q3, q1
-    vshr.u16        q2, #4
-    vshr.u16        q3, #4
-    vadd.u16        q2, q3
-    vadd.u16        q8, q2
-.endr
-    vadd.u16        d16, d17
-    vpadd.u16       d16, d16
-    vpadd.u16       d16, d16
-    vmov.u16        r12, d16[0]
-    rsb             r0, r12, #64
+    vldm            r0, {q8-q15}
+    eor             r1, r1
+    vceq.u16        q8, #0
+    vceq.u16        q9, #0
+    vceq.u16        q10, #0
+    vceq.u16        q11, #0
+    vceq.u16        q12, #0
+    vceq.u16        q13, #0
+    vceq.u16        q14, #0
+    vceq.u16        q15, #0
+
+    vtrn.8          q8, q9
+    vtrn.8          q10, q11
+    vtrn.8          q12, q13
+    vtrn.8          q14, q15
+
+    vadd.s8         q8, q10
+    vadd.s8         q12, q14
+    vadd.s8         q8, q12
+
+    vadd.s8         d16, d17
+    vshr.u64        d17, d16, #32
+    vadd.s8         d16, d17
+    vabs.s8         d16, d16
+
+    vmov.u32        r0, d16[0]
+    usad8           r0, r0, r1
+    rsb             r0, #64
     bx              lr
 endfunc
 
 function x265_count_nonzero_16_neon
-    veor            q2, q2
-.rept 16
-    vld1.s16        {q0, q1}, [r0]!
-    vclz.i16        q8, q0
-    vclz.i16        q9, q1
-    vshr.u16        q8, #4
-    vshr.u16        q9, #4
-    vadd.u16        q8, q9
-    vadd.u16        q2, q8
-.endr
-    vadd.u16        d4, d5
-    vpadd.u16       d4, d4
-    vpadd.u16       d4, d4
+    vldm            r0!, {q8-q15}
+    eor             r1, r1
+    vceq.u16        q8, #0
+    vceq.u16        q9, #0
+    vceq.u16        q10, #0
+    vceq.u16        q11, #0
+    vceq.u16        q12, #0
+    vceq.u16        q13, #0
+    vceq.u16        q14, #0
+    vceq.u16        q15, #0
 
-    vmov.u16        r12, d4[0]
-    rsb             r0, r12, #256
+    vtrn.8          q8, q9
+    vtrn.8          q10, q11
+    vtrn.8          q12, q13
+    vtrn.8          q14, q15
+
+    vmov            q0, q8
+    vmov            q1, q10
+    vmov            q2, q12
+    vmov            q3, q14
+
+.rept 3
+    vldm            r0!, {q8-q15}
+    vceq.u16        q8, #0
+    vceq.u16        q9, #0
+    vceq.u16        q10, #0
+    vceq.u16        q11, #0
+    vceq.u16        q12, #0
+    vceq.u16        q13, #0
+    vceq.u16        q14, #0
+    vceq.u16        q15, #0
+
+    vtrn.8          q8, q9
+    vtrn.8          q10, q11
+    vtrn.8          q12, q13
+    vtrn.8          q14, q15
+
+    vadd.s8         q0, q8
+    vadd.s8         q1, q10
+    vadd.s8         q2, q12
+    vadd.s8         q3, q14
+.endr
+
+    vadd.s8         q0, q1
+    vadd.s8         q2, q3
+    vadd.s8         q0, q2                      // dynamic range is 4+1 bits
+
+    vadd.s8         d0, d1
+    vshr.u64        d1, d0, #32
+    vadd.s8         d0, d1
+    vabs.s8         d0, d0                      // maximum value of each element are 64
+
+    vmov.u32        r0, d0[0]
+    usad8           r0, r0, r1
+    rsb             r0, #256
     bx              lr
 endfunc
 
 function x265_count_nonzero_32_neon
-    veor            q12, q12
-.rept 32
-    vld1.s16        {q0, q1}, [r0]!
-    vld1.s16        {q2, q3}, [r0]!
+    vldm            r0!, {q8-q15}
+    vceq.u16        q8, #0
+    vceq.u16        q9, #0
+    vceq.u16        q10, #0
+    vceq.u16        q11, #0
+    vceq.u16        q12, #0
+    vceq.u16        q13, #0
+    vceq.u16        q14, #0
+    vceq.u16        q15, #0
 
-    vclz.i16        q8, q0
-    vclz.i16        q9, q1
-    vclz.i16        q10, q2
-    vclz.i16        q11, q3
+    vtrn.8          q8, q9
+    vtrn.8          q10, q11
+    vtrn.8          q12, q13
+    vtrn.8          q14, q15
 
-    vshr.u16        q8, #4
-    vshr.u16        q9, #4
-    vshr.u16        q10, #4
-    vshr.u16        q11, #4
+    mov             r1, #15
 
-    vadd.u16        q8, q9
-    vadd.u16        q10, q11
-    vadd.u16        q8, q10
-    vadd.u16        q12, q8
-.endr
-    vadd.u16        d24, d25
-    vpadd.u16       d24, d24
-    vpadd.u16       d24, d24
+    vmov            q0, q8
+    vmov            q1, q10
+    vmov            q2, q12
+    vmov            q3, q14
 
-    vmov.u16        r12, d24[0]
-    rsb             r0, r12, #1024
+.loop:    
+    vldm            r0!, {q8-q15}
+    subs            r1, #1
+
+    vceq.u16        q8, #0
+    vceq.u16        q9, #0
+    vceq.u16        q10, #0
+    vceq.u16        q11, #0
+    vceq.u16        q12, #0
+    vceq.u16        q13, #0
+    vceq.u16        q14, #0
+    vceq.u16        q15, #0
+
+    vtrn.8          q8, q9
+    vtrn.8          q10, q11
+    vtrn.8          q12, q13
+    vtrn.8          q14, q15
+
+    vadd.s8         q0, q8
+    vadd.s8         q1, q10
+    vadd.s8         q2, q12
+    vadd.s8         q3, q14
+    bgt            .loop
+
+    // sum
+    vadd.s8         q0, q1
+    vadd.s8         q2, q3
+    vadd.s8         q0, q2                      // dynamic range is 6+1 bits
+
+    vaddl.s8        q0, d0, d1
+    vadd.s16        d0, d1
+    vshr.u64        d1, d0, #32
+    vadd.s16        d0, d1
+    vabs.s16        d0, d0                      //  maximum value of each element are 512
+
+    vmov.u32        r0, d0[0]
+    uasx            r0, r0, r0
+    mov             r0, r0, lsr 16
+    rsb             r0, #1024
     bx              lr
 endfunc
