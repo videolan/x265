@@ -43,6 +43,7 @@ PixelHarness::PixelHarness()
         ushort_test_buff[0][i]  = rand() % ((1 << 16) - 1);
         uchar_test_buff[0][i]   = rand() % ((1 << 8) - 1);
         residual_test_buff[0][i] = (rand() % (2 * RMAX + 1)) - RMAX - 1;// For sse_ss only
+        double_test_buff[0][i]  = (double)(short_test_buff[0][i]) / 256.0;
 
         pixel_test_buff[1][i]   = PIXEL_MIN;
         short_test_buff[1][i]   = SMIN;
@@ -52,6 +53,7 @@ PixelHarness::PixelHarness()
         ushort_test_buff[1][i]  = PIXEL_MIN;
         uchar_test_buff[1][i]   = PIXEL_MIN;
         residual_test_buff[1][i] = RMIN;
+        double_test_buff[1][i]  = (double)(short_test_buff[1][i]) / 256.0;
 
         pixel_test_buff[2][i]   = PIXEL_MAX;
         short_test_buff[2][i]   = SMAX;
@@ -61,6 +63,7 @@ PixelHarness::PixelHarness()
         ushort_test_buff[2][i]  = ((1 << 16) - 1);
         uchar_test_buff[2][i]   = 255;
         residual_test_buff[2][i] = RMAX;
+        double_test_buff[2][i] = (double)(short_test_buff[2][i]) / 256.0;
 
         pbuf1[i] = rand() & PIXEL_MAX;
         pbuf2[i] = rand() & PIXEL_MAX;
@@ -1397,6 +1400,60 @@ bool PixelHarness::check_cutree_propagate_cost(cutree_propagate_cost ref, cutree
     return true;
 }
 
+bool PixelHarness::check_cutree_fix8_pack(cutree_fix8_pack ref, cutree_fix8_pack opt)
+{
+    ALIGN_VAR_32(uint16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_32(uint16_t, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int count = 256 + i;
+        int index = i % TEST_CASES;
+        checked(opt, opt_dest, double_test_buff[index] + j, count);
+        ref(ref_dest, double_test_buff[index] + j, count);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(uint16_t)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_cutree_fix8_unpack(cutree_fix8_unpack ref, cutree_fix8_unpack opt)
+{
+    ALIGN_VAR_32(double, ref_dest[64 * 64]);
+    ALIGN_VAR_32(double, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int count = 256 + i;
+        int index = i % TEST_CASES;
+        checked(opt, opt_dest, ushort_test_buff[index] + j, count);
+        ref(ref_dest, ushort_test_buff[index] + j, count);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(double)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt)
 {
     int j = 0, index1, index2, optres, refres;
@@ -2531,6 +2588,24 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.fix8Pack)
+    {
+        if (!check_cutree_fix8_pack(ref.fix8Pack, opt.fix8Pack))
+        {
+            printf("cuTreeFix8Pack failed\n");
+            return false;
+        }
+    }
+
+    if (opt.fix8Unpack)
+    {
+        if (!check_cutree_fix8_unpack(ref.fix8Unpack, opt.fix8Unpack))
+        {
+            printf("cuTreeFix8Unpack failed\n");
+            return false;
+        }
+    }
+
     if (opt.scanPosLast)
     {
         if (!check_scanPosLast(ref.scanPosLast, opt.scanPosLast))
@@ -3028,6 +3103,18 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("propagateCost");
         REPORT_SPEEDUP(opt.propagateCost, ref.propagateCost, ibuf1, ushort_test_buff[0], int_test_buff[0], ushort_test_buff[0], int_test_buff[0], double_test_buff[0], 80);
+    }
+
+    if (opt.fix8Pack)
+    {
+        HEADER0("cuTreeFix8Pack");
+        REPORT_SPEEDUP(opt.fix8Pack, ref.fix8Pack, ushort_test_buff[0], double_test_buff[0], 390);
+    }
+
+    if (opt.fix8Unpack)
+    {
+        HEADER0("cuTreeFix8Unpack");
+        REPORT_SPEEDUP(opt.fix8Unpack, ref.fix8Unpack, double_test_buff[0], ushort_test_buff[0], 390);
     }
 
     if (opt.scanPosLast)

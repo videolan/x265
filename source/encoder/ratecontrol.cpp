@@ -1432,12 +1432,9 @@ bool RateControl::cuTreeReadFor2Pass(Frame* frame)
             }
             while(type != sliceTypeActual);
         }
+        primitives.fix8Unpack(frame->m_lowres.qpCuTreeOffset, m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], m_ncu);
         for (int i = 0; i < m_ncu; i++)
-        {
-            int16_t qpFix8 = m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos][i];
-            frame->m_lowres.qpCuTreeOffset[i] = (double)(qpFix8) / 256.0;
             frame->m_lowres.invQscaleFactor[i] = x265_exp2fix8(frame->m_lowres.qpCuTreeOffset[i]);
-        }
         m_cuTreeStats.qpBufPos--;
     }
     return true;
@@ -2596,8 +2593,7 @@ int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* r
     if (m_param->rc.cuTree && IS_REFERENCED(curFrame) && !m_param->rc.bStatRead)
     {
         uint8_t sliceType = (uint8_t)rce->sliceType;
-        for (int i = 0; i < m_ncu; i++)
-                m_cuTreeStats.qpBuffer[0][i] = (uint16_t)(curFrame->m_lowres.qpCuTreeOffset[i] * 256.0);
+        primitives.fix8Pack(m_cuTreeStats.qpBuffer[0], curFrame->m_lowres.qpCuTreeOffset, m_ncu);
         if (fwrite(&sliceType, 1, 1, m_cutreeStatFileOut) < 1)
             goto writeFailure;
         if (fwrite(m_cuTreeStats.qpBuffer[0], sizeof(uint16_t), m_ncu, m_cutreeStatFileOut) < (size_t)m_ncu)

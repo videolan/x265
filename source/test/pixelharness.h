@@ -113,6 +113,8 @@ protected:
     bool check_planecopy_sp(planecopy_sp_t ref, planecopy_sp_t opt);
     bool check_planecopy_cp(planecopy_cp_t ref, planecopy_cp_t opt);
     bool check_cutree_propagate_cost(cutree_propagate_cost ref, cutree_propagate_cost opt);
+    bool check_cutree_fix8_pack(cutree_fix8_pack ref, cutree_fix8_pack opt);
+    bool check_cutree_fix8_unpack(cutree_fix8_unpack ref, cutree_fix8_unpack opt);
     bool check_psyCost_pp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_calSign(sign_t ref, sign_t opt);
     bool check_scanPosLast(scanPosLast_t ref, scanPosLast_t opt);

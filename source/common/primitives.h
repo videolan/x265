@@ -189,6 +189,9 @@ typedef void (*calcHDRStats_t)(pixel *srcY, pixel* srcU, pixel* srcV, intptr_t s
 
 typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
 
+typedef void (*cutree_fix8_unpack)(double *dst, uint16_t *src, int count);
+typedef void (*cutree_fix8_pack)(uint16_t *dst, double *src, int count);
+
 typedef int (*scanPosLast_t)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* scanCG4x4, const int trSize);
 typedef uint32_t (*findPosFirstLast_t)(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16]);
 
@@ -314,6 +317,8 @@ struct EncoderPrimitives
 
     downscale_t           frameInitLowres;
     cutree_propagate_cost propagateCost;
+    cutree_fix8_unpack    fix8Unpack;
+    cutree_fix8_pack      fix8Pack;
 
     extendCURowBorder_t   extendRowBorder;
     planecopy_cp_t        planecopy_cp;

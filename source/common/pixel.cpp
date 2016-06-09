@@ -872,6 +872,22 @@ static void estimateCUPropagateCost(int* dst, const uint16_t* propagateIn, const
     }
 }
 
+/* Conversion between double and Q8.8 fixed point (big-endian) for storage */
+static void cuTreeFix8Pack(uint16_t *dst, double *src, int count)
+{
+    for (int i = 0; i < count; i++)
+        dst[i] = (uint16_t)(src[i] * 256.0);
+}
+
+static void cuTreeFix8Unpack(double *dst, uint16_t *src, int count)
+{
+    for (int i = 0; i < count; i++)
+    {
+        int16_t qpFix8 = src[i];
+        dst[i] = (double)(qpFix8) / 256.0;
+    }
+}
+
 #if HIGH_BIT_DEPTH
 static void calcHDRStats_c(pixel *srcY, pixel* srcU, pixel* srcV, intptr_t stride, intptr_t strideC, int width, int height, double *outsum, 
                            pixel *outMax, const pixel minPix, const pixel maxPix, const int hShift, const int vShift)
@@ -1225,5 +1241,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.calcHDRStats = calcHDRStats_c;
 #endif
     p.propagateCost = estimateCUPropagateCost;
+    p.fix8Unpack = cuTreeFix8Unpack;
+    p.fix8Pack = cuTreeFix8Pack;
 }
 }
