@@ -42,12 +42,14 @@ Frame::Frame()
     m_prev = NULL;
     m_param = NULL;
     memset(&m_lowres, 0, sizeof(m_lowres));
+    m_rcData = NULL;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
 {
     m_fencPic = new PicYuv;
     m_param = param;
+    CHECKED_MALLOC_ZERO(m_rcData, RcStats, 1);
 
     if (m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
         m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode))
@@ -63,6 +65,8 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         }
         return true;
     }
+    return false;
+fail:
     return false;
 }
 
@@ -140,4 +144,5 @@ void Frame::destroy()
     }
 
     m_lowres.destroy();
+    X265_FREE(m_rcData);
 }

@@ -779,17 +779,23 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
             if (pic_out && m_param->rc.bStatWrite)
             {
-                pic_out->rcData.qpaRc = outFrame->m_encData->m_avgQpRc;
-                pic_out->rcData.qRceq = curEncoder->m_rce.qRceq;
-                pic_out->rcData.qpNoVbv = curEncoder->m_rce.qpNoVbv;
-                pic_out->rcData.coeffBits = outFrame->m_encData->m_frameStats.coeffBits;
-                pic_out->rcData.miscBits = outFrame->m_encData->m_frameStats.miscBits;
-                pic_out->rcData.mvBits = outFrame->m_encData->m_frameStats.mvBits;
-                pic_out->rcData.newQScale = x265_qp2qScale(outFrame->m_encData->m_avgQpRc);
-                pic_out->rcData.poc = curEncoder->m_rce.poc;
-                pic_out->rcData.encodeOrder = curEncoder->m_rce.encodeOrder;
-                pic_out->rcData.sliceType = curEncoder->m_rce.sliceType;
-                pic_out->rcData.keptAsRef = curEncoder->m_rce.sliceType == B_SLICE && !IS_REFERENCED(outFrame) ? 0 : 1;
+                /* m_rcData is allocated for every frame */
+                pic_out->rcData = outFrame->m_rcData;
+                outFrame->m_rcData->qpaRc = outFrame->m_encData->m_avgQpRc;
+                outFrame->m_rcData->qRceq = curEncoder->m_rce.qRceq;
+                outFrame->m_rcData->qpNoVbv = curEncoder->m_rce.qpNoVbv;
+                outFrame->m_rcData->coeffBits = outFrame->m_encData->m_frameStats.coeffBits;
+                outFrame->m_rcData->miscBits = outFrame->m_encData->m_frameStats.miscBits;
+                outFrame->m_rcData->mvBits = outFrame->m_encData->m_frameStats.mvBits;
+                outFrame->m_rcData->qScale = outFrame->m_rcData->newQScale = x265_qp2qScale(outFrame->m_encData->m_avgQpRc);
+                outFrame->m_rcData->poc = curEncoder->m_rce.poc;
+                outFrame->m_rcData->encodeOrder = curEncoder->m_rce.encodeOrder;
+                outFrame->m_rcData->sliceType = curEncoder->m_rce.sliceType;
+                outFrame->m_rcData->keptAsRef = curEncoder->m_rce.sliceType == B_SLICE && !IS_REFERENCED(outFrame) ? 0 : 1;
+                outFrame->m_rcData->qpAq = outFrame->m_encData->m_avgQpAq;
+                outFrame->m_rcData->iCuCount = outFrame->m_encData->m_frameStats.percent8x8Intra * m_rateControl->m_ncu;
+                outFrame->m_rcData->pCuCount = outFrame->m_encData->m_frameStats.percent8x8Inter * m_rateControl->m_ncu;
+                outFrame->m_rcData->skipCuCount = outFrame->m_encData->m_frameStats.percent8x8Skip  * m_rateControl->m_ncu;
             }
 
             /* Allow this frame to be recycled if no frame encoders are using it for reference */

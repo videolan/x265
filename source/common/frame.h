@@ -37,6 +37,27 @@ struct SPS;
 
 #define IS_REFERENCED(frame) (frame->m_lowres.sliceType != X265_TYPE_B)
 
+/* Ratecontrol statistics */
+struct RcStats
+{
+    double   qpaRc;
+    double   qpAq;
+    double   qRceq;
+    double   qpNoVbv;
+    double   newQScale;
+    double   iCuCount;
+    double   pCuCount;
+    double   skipCuCount;
+    double   qScale;
+    int      mvBits;
+    int      miscBits;
+    int      coeffBits;
+    int      poc;
+    int      encodeOrder;
+    int      sliceType;
+    int      keptAsRef;
+};
+
 class Frame
 {
 public:
@@ -72,6 +93,7 @@ public:
     Frame*                 m_prev;
     x265_param*            m_param;              // Points to the latest param set for the frame.
     x265_analysis_data     m_analysisData;
+    RcStats*               m_rcData;
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);
