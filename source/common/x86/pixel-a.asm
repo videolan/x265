@@ -13910,11 +13910,11 @@ cglobal pixel_sa8d_16x16, 4,8,12
     lea  r7, [r2+4*r3]
     vbroadcasti128 m7, [pw_1]
 
-    ;call pixel_sa8d_8x8_internal ; pix[0]
+    ; Top 16x8
     ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
-    movu m0, [r0]
+    movu m0, [r0]                                   ; 10 bits
     movu m5, [r2]
-    psubw m0, m5
+    psubw m0, m5                                    ; 11 bits
     movu m1, [r0 + r1]
     movu m6, [r2 + r3]
     psubw m1, m6
@@ -13939,11 +13939,13 @@ cglobal pixel_sa8d_16x16, 4,8,12
     movu m6, [r7 + r5]
     psubw m9, m6
 
-    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
-    paddw m0, m1
-    paddw m2, m8
+    HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax    ; 16 bits
     pmaddwd m0, m7
+    pmaddwd m1, m7
     pmaddwd m2, m7
+    pmaddwd m8, m7
+    paddd m0, m1
+    paddd m2, m8
     paddd m10, m0, m2
 
     lea  r0, [r0+8*r1]
@@ -13951,7 +13953,7 @@ cglobal pixel_sa8d_16x16, 4,8,12
     lea  r6, [r6+8*r1]
     lea  r7, [r7+8*r3]
 
-    ;call pixel_sa8d_8x8_internal ; pix[8*stride+8]
+    ; Bottom 16x8
     ;LOAD_DIFF_8x4P_AVX2 0, 1, 2, 8, 5, 6, r0, r2
     movu m0, [r0]
     movu m5, [r2]
@@ -13981,10 +13983,12 @@ cglobal pixel_sa8d_16x16, 4,8,12
     psubw m9, m6
 
     HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
-    paddw m0, m1
-    paddw m2, m8
     pmaddwd m0, m7
+    pmaddwd m1, m7
     pmaddwd m2, m7
+    pmaddwd m8, m7
+    paddd m0, m1
+    paddd m2, m8
     paddd m10, m0
     paddd m10, m2
 
