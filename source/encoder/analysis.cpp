@@ -915,7 +915,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
                 checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
-                skipRecursion = !!m_param->bEnableRecursionSkip;
+                skipRecursion = !!m_param->bEnableRecursionSkip && md.bestMode;
                 if (m_param->rdLevel)
                     skipModes = m_param->bEnableEarlySkip && md.bestMode;
             }
@@ -931,7 +931,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     }
 
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs, if skip mode was not set above */
-    if (mightNotSplit && depth >= minDepth && !skipRecursion) /* TODO: Re-evaluate if analysis load/save still works */
+    if (mightNotSplit && depth >= minDepth && !md.bestMode) /* TODO: Re-evaluate if analysis load/save still works */
     {
         /* Compute Merge Cost */
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -1426,8 +1426,8 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
                 checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
 
-                skipRecursion = !!m_param->bEnableRecursionSkip;
-                skipModes = !!m_param->bEnableEarlySkip;
+                skipRecursion = !!m_param->bEnableRecursionSkip && md.bestMode;
+                skipModes = !!m_param->bEnableEarlySkip && md.bestMode;
             }
             if (m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
                 skipRectAmp = true && !!md.bestMode;
@@ -1441,7 +1441,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     splitData[3].initSplitCUData();
 
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
-    if (mightNotSplit && !skipRecursion)
+    if (mightNotSplit && !md.bestMode)
     {
         md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
