@@ -66,7 +66,15 @@ elseif(HG_EXECUTABLE AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../.hg)
 elseif(GIT_EXECUTABLE AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../.git)
     execute_process(
         COMMAND
-        ${GIT_EXECUTABLE} describe --tags --abbrev=0 --first-parent
+        ${GIT_EXECUTABLE} rev-list --tags --max-count=1
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE X265_LATEST_TAG_COMMIT
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+    execute_process(
+        COMMAND
+        ${GIT_EXECUTABLE} describe --tags ${X265_LATEST_TAG_COMMIT}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         OUTPUT_VARIABLE X265_LATEST_TAG
         ERROR_QUIET
