@@ -108,6 +108,7 @@ public:
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
     bool      m_bTryLossless;
     bool      m_bChromaSa8d;
+    bool      m_bHD;
 
     Analysis();
 
@@ -160,6 +161,7 @@ protected:
     /* work-avoidance heuristics for RD levels < 5 */
     uint32_t topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom);
     bool recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom, const Mode& bestMode);
+    bool complexityCheckCU(const Mode& bestMode);
 
     /* generate residual and recon pixels for an entire CTU recursively (RD0) */
     void encodeResidue(const CUData& parentCTU, const CUGeom& cuGeom);

@@ -74,6 +74,7 @@ Analysis::Analysis()
 {
     m_reuseInterDataCTU = NULL;
     m_reuseRef = NULL;
+    m_bHD = false;
 }
 bool Analysis::create(ThreadLocalData *tld)
 {
@@ -105,6 +106,8 @@ bool Analysis::create(ThreadLocalData *tld)
             md.pred[j].fencYuv = &md.fencYuv;
         }
     }
+    if (m_param->sourceHeight >= 1080)
+        m_bHD = true;
 
     return ok;
 }
@@ -944,8 +947,13 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     if (md.bestMode && m_param->bEnableRecursionSkip)
     {
         skipRecursion = md.bestMode->cu.isSkipped(0);
-        if (mightSplit && depth && depth >= minDepth && !skipRecursion)
-            skipRecursion = recursionDepthCheck(parentCTU, cuGeom, *md.bestMode);
+        if (mightSplit && depth >= minDepth && !skipRecursion)
+        {
+            if (depth)
+                skipRecursion = recursionDepthCheck(parentCTU, cuGeom, *md.bestMode);
+            if (m_bHD && !skipRecursion && m_param->rdLevel == 2 && md.fencYuv.m_size != MAX_CU_SIZE)
+                skipRecursion = complexityCheckCU(*md.bestMode);
+        }
     }
 
     /* Step 2. Evaluate each of the 4 split sub-blocks in series */
@@ -2589,6 +2597,30 @@ bool Analysis::recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom
         if (curCost < avgCost && avgCost)
             return true;
     }
+
+    return false;
+}
+
+bool Analysis::complexityCheckCU(const Mode& bestMode)
+{
+    uint32_t mean = 0;
+    uint32_t homo = 0;
+    uint32_t cuSize = bestMode.fencYuv->m_size;
+    for (uint32_t y = 0; y < cuSize; y++) {
+        for (uint32_t x = 0; x < cuSize; x++) {
+            mean += (bestMode.fencYuv->m_buf[0][y * cuSize + x]);
+        }
+    }
+    mean = mean / (cuSize * cuSize);
+    for (uint32_t y = 0 ; y < cuSize; y++){
+        for (uint32_t x = 0 ; x < cuSize; x++){
+            homo += abs(int(bestMode.fencYuv->m_buf[0][y * cuSize + x] - mean));
+        }
+    }
+    homo = homo / (cuSize * cuSize);
+
+    if (homo < (.1 * mean))
+        return true;
 
     return false;
 }
