@@ -1007,6 +1007,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
 
         p.cu[BLOCK_4x4].dct = PFX(dct_4x4_neon);
         p.cu[BLOCK_8x8].dct = PFX(dct_8x8_neon);
+        p.cu[BLOCK_16x16].dct = PFX(dct_16x16_neon);
 #if !HIGH_BIT_DEPTH
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
 #endif // !HIGH_BIT_DEPTH
