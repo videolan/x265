@@ -2183,8 +2183,6 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
 
 int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv)
 {
-    if (m_param->rc.bStatRead && m_param->rc.rateControlMode == X265_RC_CRF)
-        return 0;
     FrameData& curEncData = *curFrame->m_encData;
     double qScaleVbv = x265_qp2qScale(qpVbv);
     uint64_t rowSatdCost = curEncData.m_rowStat[row].diagSatd;
