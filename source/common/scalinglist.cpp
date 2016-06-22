@@ -29,64 +29,6 @@ namespace {
 // file-anonymous namespace
 
 /* Strings for scaling list file parsing */
-const char MatrixType[4][6][20] =
-{
-    {
-        "INTRA4X4_LUMA",
-        "INTRA4X4_CHROMAU",
-        "INTRA4X4_CHROMAV",
-        "INTER4X4_LUMA",
-        "INTER4X4_CHROMAU",
-        "INTER4X4_CHROMAV"
-    },
-    {
-        "INTRA8X8_LUMA",
-        "INTRA8X8_CHROMAU",
-        "INTRA8X8_CHROMAV",
-        "INTER8X8_LUMA",
-        "INTER8X8_CHROMAU",
-        "INTER8X8_CHROMAV"
-    },
-    {
-        "INTRA16X16_LUMA",
-        "INTRA16X16_CHROMAU",
-        "INTRA16X16_CHROMAV",
-        "INTER16X16_LUMA",
-        "INTER16X16_CHROMAU",
-        "INTER16X16_CHROMAV"
-    },
-    {
-        "INTRA32X32_LUMA",
-        "",
-        "",
-        "INTER32X32_LUMA",
-        "",
-        "",
-    },
-};
-const char MatrixType_DC[4][12][22] =
-{
-    {
-    },
-    {
-    },
-    {
-        "INTRA16X16_LUMA_DC",
-        "INTRA16X16_CHROMAU_DC",
-        "INTRA16X16_CHROMAV_DC",
-        "INTER16X16_LUMA_DC",
-        "INTER16X16_CHROMAU_DC",
-        "INTER16X16_CHROMAV_DC"
-    },
-    {
-        "INTRA32X32_LUMA_DC",
-        "",
-        "",
-        "INTER32X32_LUMA_DC",
-        "",
-        "",
-    },
-};
 
 static int quantTSDefault4x4[16] =
 {
@@ -124,6 +66,64 @@ static int quantInterDefault8x8[64] =
 
 namespace X265_NS {
 // private namespace
+    const char ScalingList::MatrixType[4][6][20] =
+    {
+        {
+            "INTRA4X4_LUMA",
+            "INTRA4X4_CHROMAU",
+            "INTRA4X4_CHROMAV",
+            "INTER4X4_LUMA",
+            "INTER4X4_CHROMAU",
+            "INTER4X4_CHROMAV"
+        },
+        {
+            "INTRA8X8_LUMA",
+            "INTRA8X8_CHROMAU",
+            "INTRA8X8_CHROMAV",
+            "INTER8X8_LUMA",
+            "INTER8X8_CHROMAU",
+            "INTER8X8_CHROMAV"
+        },
+        {
+            "INTRA16X16_LUMA",
+            "INTRA16X16_CHROMAU",
+            "INTRA16X16_CHROMAV",
+            "INTER16X16_LUMA",
+            "INTER16X16_CHROMAU",
+            "INTER16X16_CHROMAV"
+        },
+        {
+            "INTRA32X32_LUMA",
+            "",
+            "",
+            "INTER32X32_LUMA",
+            "",
+            "",
+        },
+    };
+    const char ScalingList::MatrixType_DC[4][12][22] =
+    {
+        {
+        },
+        {
+        },
+        {
+            "INTRA16X16_LUMA_DC",
+            "INTRA16X16_CHROMAU_DC",
+            "INTRA16X16_CHROMAV_DC",
+            "INTER16X16_LUMA_DC",
+            "INTER16X16_CHROMAU_DC",
+            "INTER16X16_CHROMAV_DC"
+        },
+        {
+            "INTRA32X32_LUMA_DC",
+            "",
+            "",
+            "INTER32X32_LUMA_DC",
+            "",
+            "",
+        },
+    };
 
 const int     ScalingList::s_numCoefPerSize[NUM_SIZES] = { 16, 64, 256, 1024 };
 const int32_t ScalingList::s_quantScales[NUM_REM] = { 26214, 23302, 20560, 18396, 16384, 14564 };
