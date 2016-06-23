@@ -2288,7 +2288,7 @@ void Encoder::printReconfigureParams()
     TOOLCMP(oldParam->maxNumReferences, newParam->maxNumReferences, "ref=%d to %d\n");
     TOOLCMP(oldParam->bEnableFastIntra, newParam->bEnableFastIntra, "fast-intra=%d to %d\n");
     TOOLCMP(oldParam->bEnableEarlySkip, newParam->bEnableEarlySkip, "early-skip=%d to %d\n");
-    TOOLCMP(oldParam->bEnableRecursionSkip, newParam->bEnableRecursionSkip, "recursion-skip=%d to %d\n");
+    TOOLCMP(oldParam->bEnableRecursionSkip, newParam->bEnableRecursionSkip, "rskip=%d to %d\n");
     TOOLCMP(oldParam->searchMethod, newParam->searchMethod, "me=%d to %d\n");
     TOOLCMP(oldParam->searchRange, newParam->searchRange, "merange=%d to %d\n");
     TOOLCMP(oldParam->subpelRefine, newParam->subpelRefine, "subme= %d to %d\n");

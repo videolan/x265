@@ -732,12 +732,14 @@ the prediction quad-tree.
 	Measure 2Nx2N merge candidates first; if no residual is found, 
 	additional modes at that depth are not analysed. Default disabled
 
-.. option:: --recursion-skip, --no-recursion-skip
+.. option:: --rskip, --no-rskip
 
-	Measure 2Nx2N merge candidates first; if no residual is found, then
-	do not recurse to higher depths. In rdlevels 4 and lower, additional 
-	heuristics such as neighbour costs are used to skip recursion. 
-	Default enabled.
+	In rdlevels 5 and 6 measure 2Nx2N merge candidates and compare it with
+	inter2Nx2N;if no residual is found, then do not recurse to higher depths
+	for depths > 0. At depth 0 recursion is allowed even when the residual is zero.
+	In rdlevels 4 and below additional heuristics such as neighbour costs 
+	are used to skip recursion when there is no residual after measuring 2Nx2N merge
+	candidates.
 
 .. option:: --fast-intra, --no-fast-intra
 
