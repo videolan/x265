@@ -1398,7 +1398,7 @@ void SAO::estIterOffset(int typeIdx, int64_t lambda, int32_t count, int32_t offs
     while (offset != 0)
     {
         // Calculate the bits required for signalling the offset
-        int rate = (typeIdx == SAO_BO) ? (abs(offset) + 2) : (abs(offset) + 1);
+        uint32_t rate = (typeIdx == SAO_BO) ? (abs(offset) + 2) : (abs(offset) + 1);
         if (abs(offset) == OFFSET_THRESH - 1)
             rate--;
 
