@@ -1213,7 +1213,9 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     uint32_t rowCount = 0;
     if (m_param->rc.rateControlMode == X265_RC_ABR || bIsVbv)
     {
-        if ((uint32_t)m_rce.encodeOrder <= 2 * (m_param->fpsNum / m_param->fpsDenom))
+        if (!m_rce.encodeOrder)
+            rowCount = m_numRows - 1;
+        else if ((uint32_t)m_rce.encodeOrder <= 2 * (m_param->fpsNum / m_param->fpsDenom))
             rowCount = X265_MIN((m_numRows + 1) / 2, m_numRows - 1);
         else
             rowCount = X265_MIN(m_refLagRows, m_numRows - 1);

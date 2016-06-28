@@ -279,7 +279,7 @@ RateControl::RateControl(x265_param& p)
 
     /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24)
-#define ABR_INIT_QP_MAX (40)
+#define ABR_INIT_QP_MAX (37)
 #define ABR_INIT_QP_GRAIN_MAX (33)
 #define ABR_SCENECUT_INIT_QP_MIN (12)
 #define CRF_INIT_QP (int)m_param->rc.rfConstant
