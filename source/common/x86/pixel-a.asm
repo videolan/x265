@@ -14041,10 +14041,12 @@ cglobal pixel_sa8d_32x32, 4,8,14
     psubw m9, m6
 
     HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
-    paddw m0, m1
-    paddw m2, m8
     pmaddwd m0, m7
+    pmaddwd m1, m7
     pmaddwd m2, m7
+    pmaddwd m8, m7
+    paddd m0, m1
+    paddd m2, m8
     paddd m10, m0, m2
 
 
@@ -14083,10 +14085,12 @@ cglobal pixel_sa8d_32x32, 4,8,14
     psubw m9, m6
 
     HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
-    paddw m0, m1
-    paddw m2, m8
     pmaddwd m0, m7
+    pmaddwd m1, m7
     pmaddwd m2, m7
+    pmaddwd m8, m7
+    paddd m0, m1
+    paddd m2, m8
     paddd m12, m0, m2
 
 
@@ -14125,10 +14129,12 @@ cglobal pixel_sa8d_32x32, 4,8,14
     psubw m9, m6
 
     HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
-    paddw m0, m1
-    paddw m2, m8
     pmaddwd m0, m7
+    pmaddwd m1, m7
     pmaddwd m2, m7
+    pmaddwd m8, m7
+    paddd m0, m1
+    paddd m2, m8
     paddd m12, m0
     paddd m12, m2
 
@@ -14171,10 +14177,12 @@ cglobal pixel_sa8d_32x32, 4,8,14
     psubw m9, m6
 
     HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
-    paddw m0, m1
-    paddw m2, m8
     pmaddwd m0, m7
+    pmaddwd m1, m7
     pmaddwd m2, m7
+    pmaddwd m8, m7
+    paddd m0, m1
+    paddd m2, m8
     paddd m10, m0
     paddd m10, m2
 
@@ -14218,10 +14226,12 @@ cglobal pixel_sa8d_32x32, 4,8,14
     psubw m9, m6
 
     HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
-    paddw m0, m1
-    paddw m2, m8
     pmaddwd m0, m7
+    pmaddwd m1, m7
     pmaddwd m2, m7
+    pmaddwd m8, m7
+    paddd m0, m1
+    paddd m2, m8
     paddd m12, m0, m2
 
 
@@ -14260,10 +14270,12 @@ cglobal pixel_sa8d_32x32, 4,8,14
     psubw m9, m6
 
     HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
-    paddw m0, m1
-    paddw m2, m8
     pmaddwd m0, m7
+    pmaddwd m1, m7
     pmaddwd m2, m7
+    pmaddwd m8, m7
+    paddd m0, m1
+    paddd m2, m8
     paddd m13, m0, m2
 
 
@@ -14302,10 +14314,12 @@ cglobal pixel_sa8d_32x32, 4,8,14
     psubw m9, m6
 
     HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
-    paddw m0, m1
-    paddw m2, m8
     pmaddwd m0, m7
+    pmaddwd m1, m7
     pmaddwd m2, m7
+    pmaddwd m8, m7
+    paddd m0, m1
+    paddd m2, m8
     paddd m13, m0
     paddd m13, m2
 
@@ -14348,10 +14362,12 @@ cglobal pixel_sa8d_32x32, 4,8,14
     psubw m9, m6
 
     HADAMARD8_2D 0, 1, 2, 8, 4, 5, 3, 9, 6, amax
-    paddw m0, m1
-    paddw m2, m8
     pmaddwd m0, m7
+    pmaddwd m1, m7
     pmaddwd m2, m7
+    pmaddwd m8, m7
+    paddd m0, m1
+    paddd m2, m8
     paddd m12, m0
     paddd m12, m2
 
