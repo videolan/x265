@@ -64,7 +64,7 @@ public:
     const int16_t* getCrAddr(uint32_t absPartIdx) const                         { return m_buf[2] + getChromaAddrOffset(absPartIdx); }
     const int16_t* getChromaAddr(uint32_t chromaId, uint32_t partUnitIdx) const { return m_buf[chromaId] + getChromaAddrOffset(partUnitIdx); }
 
-    void subtract(const Yuv& srcYuv0, const Yuv& srcYuv1, uint32_t log2Size);
+    void subtract(const Yuv& srcYuv0, const Yuv& srcYuv1, uint32_t log2Size, int picCsp);
 
     void copyPartToPartLuma(ShortYuv& dstYuv, uint32_t absPartIdx, uint32_t log2Size) const;
     void copyPartToPartChroma(ShortYuv& dstYuv, uint32_t absPartIdx, uint32_t log2SizeL) const;

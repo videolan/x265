@@ -83,7 +83,7 @@ uint32_t LookaheadTLD::acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blo
     uint32_t var;
 
     var  = acEnergyPlane(curFrame, curFrame->m_fencPic->m_picOrg[0] + blockOffsetLuma, stride, 0, csp);
-    if (csp != X265_CSP_I400)
+    if (csp != X265_CSP_I400 && curFrame->m_fencPic->m_picCsp != X265_CSP_I400)
     {
         var += acEnergyPlane(curFrame, curFrame->m_fencPic->m_picOrg[1] + blockOffsetChroma, cStride, 1, csp);
         var += acEnergyPlane(curFrame, curFrame->m_fencPic->m_picOrg[2] + blockOffsetChroma, cStride, 2, csp);
@@ -456,10 +456,13 @@ void LookaheadTLD::weightsAnalyse(Lowres& fenc, Lowres& ref)
     COPY4_IF_LT(minscore, s, minscale, curScale, minoff, curOffset, found, 1);
 
     /* Use a smaller denominator if possible */
-    while (mindenom > 0 && !(minscale & 1))
+    if (mindenom > 0 && !(minscale & 1))
     {
-        mindenom--;
-        minscale >>= 1;
+        unsigned long idx;
+        CTZ(idx, minscale);
+        int shift = X265_MIN((int)idx, mindenom);
+        mindenom -= shift;
+        minscale >>= shift;
     }
 
     if (!found || (minscale == 1 << mindenom && minoff == 0) || (float)minscore / origscore > 0.998f)
@@ -2081,7 +2084,7 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
     const intptr_t pelOffset = cuSize * cuX + cuSize * cuY * fenc->lumaStride;
 
     if (bBidir || bDoSearch[0] || bDoSearch[1])
-        tld.me.setSourcePU(fenc->lowresPlane[0], fenc->lumaStride, pelOffset, cuSize, cuSize);
+        tld.me.setSourcePU(fenc->lowresPlane[0], fenc->lumaStride, pelOffset, cuSize, cuSize, X265_HEX_SEARCH, 1);
 
     /* A small, arbitrary bias to avoid VBV problems caused by zero-residual lookahead blocks. */
     int lowresPenalty = 4;

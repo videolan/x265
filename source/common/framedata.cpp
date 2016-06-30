@@ -31,17 +31,18 @@ FrameData::FrameData()
     memset(this, 0, sizeof(*this));
 }
 
-bool FrameData::create(const x265_param& param, const SPS& sps)
+bool FrameData::create(const x265_param& param, const SPS& sps, int csp)
 {
     m_param = &param;
     m_slice  = new Slice;
     m_picCTU = new CUData[sps.numCUsInFrame];
+    m_picCsp = csp;
 
     m_cuMemPool.create(0, param.internalCsp, sps.numCUsInFrame);
     for (uint32_t ctuAddr = 0; ctuAddr < sps.numCUsInFrame; ctuAddr++)
         m_picCTU[ctuAddr].initialize(m_cuMemPool, 0, param.internalCsp, ctuAddr);
 
-    CHECKED_MALLOC(m_cuStat, RCStatCU, sps.numCUsInFrame);
+    CHECKED_MALLOC_ZERO(m_cuStat, RCStatCU, sps.numCUsInFrame);
     CHECKED_MALLOC(m_rowStat, RCStatRow, sps.numCuInHeight);
     reinit(sps);
     return true;

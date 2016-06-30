@@ -90,7 +90,7 @@ public:
         void processTasks(int workerThreadId);
 
         // Apply SAO on a CU in current row
-        void processSaoUnitCu(SAOParam *saoParam, int col);
+        void processSaoCTU(SAOParam *saoParam, int col);
 
         // Copy and Save SAO reference pixels for SAO Rdo decide
         void copySaoAboveRef(PicYuv* reconPic, uint32_t cuAddr, int col);
@@ -127,7 +127,7 @@ public:
     void init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t numCols);
     void destroy();
 
-    void start(Frame *pic, Entropy& initState, int qp);
+    void start(Frame *pic, Entropy& initState);
 
     void processRow(int row);
     void processPostRow(int row);

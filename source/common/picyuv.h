@@ -60,7 +60,7 @@ public:
     uint32_t m_chromaMarginX;
     uint32_t m_chromaMarginY;
 
-    uint16_t m_maxLumaLevel;
+    pixel m_maxLumaLevel;
     double   m_avgLumaLevel;
 
     PicYuv();

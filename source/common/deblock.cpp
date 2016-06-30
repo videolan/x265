@@ -319,27 +319,6 @@ static inline void pelFilterLuma(pixel* src, intptr_t srcStep, intptr_t offset, 
     }
 }
 
-/* Deblocking of one line/column for the chrominance component
- * \param src     pointer to picture data
- * \param offset  offset value for picture data
- * \param tc      tc value
- * \param maskP   indicator to disable filtering on partP
- * \param maskQ   indicator to disable filtering on partQ */
-static inline void pelFilterChroma(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tc, int32_t maskP, int32_t maskQ)
-{
-    for (int32_t i = 0; i < UNIT_SIZE; i++, src += srcStep)
-    {
-        int16_t m4  = (int16_t)src[0];
-        int16_t m3  = (int16_t)src[-offset];
-        int16_t m5  = (int16_t)src[offset];
-        int16_t m2  = (int16_t)src[-offset * 2];
-
-        int32_t delta = x265_clip3(-tc, tc, ((((m4 - m3) * 4) + m2 - m5 + 4) >> 3));
-        src[-offset] = x265_clip(m3 + (delta & maskP));
-        src[0] = x265_clip(m4 - (delta & maskQ));
-    }
-}
-
 void Deblock::edgeFilterLuma(const CUData* cuQ, uint32_t absPartIdx, uint32_t depth, int32_t dir, int32_t edge, const uint8_t blockStrength[])
 {
     PicYuv* reconPic = cuQ->m_encData->m_reconPic;
@@ -517,7 +496,7 @@ void Deblock::edgeFilterChroma(const CUData* cuQ, uint32_t absPartIdx, uint32_t 
             int32_t tc = s_tcTable[indexTC] << bitdepthShift;
             pixel* srcC = srcChroma[chromaIdx];
 
-            pelFilterChroma(srcC + unitOffset, srcStep, offset, tc, maskP, maskQ);
+            primitives.pelFilterChroma[dir](srcC + unitOffset, srcStep, offset, tc, maskP, maskQ);
         }
     }
 }

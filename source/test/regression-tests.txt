@@ -67,6 +67,7 @@ NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset slow --no-cutree --analysis-
 News-4k.y4m,--preset ultrafast --no-cutree --analysis-mode=save --bitrate 15000,--preset ultrafast --no-cutree --analysis-mode=load --bitrate 15000
 News-4k.y4m,--preset superfast --lookahead-slices 6 --aq-mode 0
 News-4k.y4m,--preset medium --tune ssim --no-sao --qg-size 16
+News-4k.y4m,--preset veryslow --no-rskip
 OldTownCross_1920x1080_50_10bit_422.yuv,--preset superfast --weightp
 OldTownCross_1920x1080_50_10bit_422.yuv,--preset medium --no-weightp
 OldTownCross_1920x1080_50_10bit_422.yuv,--preset slower --tune fastdecode

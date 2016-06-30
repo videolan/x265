@@ -480,7 +480,7 @@ void CUData::copyToPic(uint32_t depth) const
 }
 
 /* The reverse of copyToPic, called only by encodeResidue */
-void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp)
+void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp, bool copyQp)
 {
     m_encData       = ctu.m_encData;
     m_slice         = ctu.m_slice;
@@ -491,7 +491,8 @@ void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp)
     m_numPartitions = cuGeom.numPartitions;
 
     /* copy out all prediction info for this part */
-    m_partCopy((uint8_t*)m_qp, (uint8_t*)ctu.m_qp + m_absIdxInCTU);
+    if (copyQp) m_partCopy((uint8_t*)m_qp, (uint8_t*)ctu.m_qp + m_absIdxInCTU);
+
     m_partCopy(m_log2CUSize,   ctu.m_log2CUSize + m_absIdxInCTU);
     m_partCopy(m_lumaIntraDir, ctu.m_lumaIntraDir + m_absIdxInCTU);
     m_partCopy(m_tqBypass,     ctu.m_tqBypass + m_absIdxInCTU);
@@ -526,7 +527,7 @@ void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp)
 }
 
 /* Only called by encodeResidue, these fields can be modified during inter/intra coding */
-void CUData::updatePic(uint32_t depth) const
+void CUData::updatePic(uint32_t depth, int picCsp) const
 {
     CUData& ctu = *m_encData->getPicCTU(m_cuAddr);
 
@@ -540,7 +541,7 @@ void CUData::updatePic(uint32_t depth) const
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
     memcpy(ctu.m_trCoeff[0] + tmpY2, m_trCoeff[0], sizeof(coeff_t)* tmpY);
 
-    if (ctu.m_chromaFormat != X265_CSP_I400)
+    if (ctu.m_chromaFormat != X265_CSP_I400 && picCsp != X265_CSP_I400)
     {
         m_partCopy(ctu.m_transformSkip[1] + m_absIdxInCTU, m_transformSkip[1]);
         m_partCopy(ctu.m_transformSkip[2] + m_absIdxInCTU, m_transformSkip[2]);
@@ -2088,6 +2089,7 @@ void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUS
                 cu->absPartIdx = g_depthScanIdx[yOffset][xOffset] * 4;
                 cu->numPartitions = (NUM_4x4_PARTITIONS >> ((g_maxLog2CUSize - cu->log2CUSize) * 2));
                 cu->depth = g_log2Size[maxCUSize] - log2CUSize;
+                cu->geomRecurId = cuIdx;
 
                 cu->flags = 0;
                 CU_SET_FLAG(cu->flags, CUGeom::PRESENT, presentFlag);

@@ -107,6 +107,7 @@ struct RateControlEntry
     int      miscBits;
     int      coeffBits;
     bool     keptAsRef;
+    bool     scenecut;
 
     SEIPictureTiming *picTimingSEI;
     HRDTiming        *hrdTiming;
@@ -126,8 +127,9 @@ public:
     bool   m_isVbv;
     bool   m_isCbr;
     bool   m_singleFrameVbv;
-
+    bool   m_isGrainEnabled;
     bool   m_isAbrReset;
+    bool   m_isNextGop;
     int    m_lastAbrResetPoc;
 
     double m_rateTolerance;
@@ -141,7 +143,8 @@ public:
     double m_vbvMaxRate;       /* in kbps */
     double m_rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
     double m_rateFactorMaxDecrement; /* don't allow RF below (this value). */
-
+    double m_avgPFrameQp;
+    bool   m_isFirstMiniGop;
     Predictor m_pred[4];       /* Slice predictors to preidct bits for each Slice type - I,P,Bref and B */
     int64_t m_leadingNoBSatd;
     int     m_predType;       /* Type of slice predictors to be used - depends on the slice type */
@@ -178,7 +181,7 @@ public:
     bool    m_isPatternPresent;
     bool    m_isSceneTransition;
     int     m_lastPredictorReset;
-
+    double  m_qpToEncodedBits[QP_MAX_MAX + 1];
     /* a common variable on which rateControlStart, rateControlEnd and rateControUpdateStats waits to
      * sync the calls to these functions. For example
      * -F2:
@@ -202,7 +205,11 @@ public:
 
     /* 2 pass */
     bool    m_2pass;
+    bool    m_isGopReEncoded;
+    bool    m_isQpModified;
     int     m_numEntries;
+    int     m_start;
+    int     m_reencode;
     FILE*   m_statFileOut;
     FILE*   m_cutreeStatFileOut;
     FILE*   m_cutreeStatFileIn;
@@ -235,6 +242,8 @@ public:
     bool cuTreeReadFor2Pass(Frame* curFrame);
     void hrdFullness(SEIBufferingPeriod* sei);
     int writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce);
+    bool   initPass2();
+
 protected:
 
     static const int   s_slidingWindowFrames;
@@ -261,14 +270,14 @@ protected:
     double predictSize(Predictor *p, double q, double var);
     void   checkAndResetABR(RateControlEntry* rce, bool isFrameDone);
     double predictRowsSizeSum(Frame* pic, RateControlEntry* rce, double qpm, int32_t& encodedBits);
-    bool   initPass2();
-    bool   analyseABR2Pass(int startPoc, int endPoc, uint64_t allAvailableBits);
+    bool   analyseABR2Pass(uint64_t allAvailableBits);
     void   initFramePredictors();
     double getDiffLimitedQScale(RateControlEntry *rce, double q);
     double countExpectedBits(int startPos, int framesCount);
     bool   vbv2Pass(uint64_t allAvailableBits, int frameCount, int startPos);
     bool   findUnderflow(double *fills, int *t0, int *t1, int over, int framesCount);
     bool   fixUnderflow(int t0, int t1, double adjustment, double qscaleMin, double qscaleMax);
+    double tuneQScaleForGrain(double rcOverflow);
 };
 }
 #endif // ifndef X265_RATECONTROL_H

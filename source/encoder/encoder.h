@@ -74,6 +74,7 @@ class DPB;
 class Lookahead;
 class RateControl;
 class ThreadPool;
+class FrameData;
 
 class Encoder : public x265_encoder
 {
@@ -110,7 +111,7 @@ public:
     Frame*             m_exportedPic;
     FILE*              m_analysisFile;
     x265_param*        m_param;
-    x265_param*        m_latestParam;
+    x265_param*        m_latestParam;     // Holds latest param during a reconfigure
     RateControl*       m_rateControl;
     Lookahead*         m_lookahead;
 
@@ -129,7 +130,7 @@ public:
     bool               m_emitCLLSEI;
     bool               m_bZeroLatency;     // x265_encoder_encode() returns NALs for the input picture, zero lag
     bool               m_aborted;          // fatal error detected
-    bool               m_reconfigured;      // reconfigure of encoder detected
+    bool               m_reconfigure;      // Encoder reconfigure in progress
 
     /* Begin intra refresh when one not in progress or else begin one as soon as the current 
      * one is done. Requires bIntraRefresh to be set.*/
@@ -152,6 +153,8 @@ public:
 
     void printSummary();
 
+    void printReconfigureParams();
+
     char* statsString(EncStats&, char*);
 
     void configure(x265_param *param);
@@ -164,7 +167,7 @@ public:
 
     void readAnalysisFile(x265_analysis_data* analysis, int poc);
 
-    void writeAnalysisFile(x265_analysis_data* pic);
+    void writeAnalysisFile(x265_analysis_data* pic, FrameData &curEncData);
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 

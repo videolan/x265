@@ -272,7 +272,6 @@ public:
     pixel*          m_tsRecon;        /* transform skip reconstructed pixels 32x32 */
 
     bool            m_bFrameParallel;
-    bool            m_bEnableRDOQ;
     uint32_t        m_numLayers;
     uint32_t        m_refLagPixels;
 

@@ -43,11 +43,11 @@ deinterleave_shuf32b: SHUFFLE_MASK_W 1,3,5,7,9,11,13,15
 deinterleave_shuf32a: db 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30
 deinterleave_shuf32b: db 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31
 %endif
-pw_1024: times 16 dw 1024
 
-pd_16: times 4 dd 16
-pd_0f: times 4 dd 0xffff
-pf_inv256: times 8 dd 0.00390625
+cutree_fix8_unpack_shuf: db -1,-1, 0, 1,-1,-1, 2, 3,-1,-1, 4, 5,-1,-1, 6, 7
+                         db -1,-1, 8, 9,-1,-1,10,11,-1,-1,12,13,-1,-1,14,15
+
+const pq_256,       times 4 dq 256.0
 const pd_inv256,    times 4 dq 0.00390625
 const pd_0_5,       times 4 dq 0.5
 
@@ -59,9 +59,11 @@ cextern pw_16
 cextern pw_32
 cextern pw_512
 cextern pw_00ff
+cextern pw_1024
 cextern pw_3fff
 cextern pw_pixel_max
 cextern pd_ffff
+cextern pd_16
 
 ;The hpel_filter routines use non-temporal writes for output.
 ;The following defines may be uncommented for testing.
@@ -1215,3 +1217,121 @@ MBTREE_AVX
 
 INIT_YMM avx2
 MBTREE_AVX
+
+
+%macro CUTREE_FIX8 0
+;-----------------------------------------------------------------------------
+; void cutree_fix8_pack( uint16_t *dst, double *src, int count )
+;-----------------------------------------------------------------------------
+cglobal cutree_fix8_pack, 3, 4, 5
+    movapd       m2, [pq_256]
+    sub          r2d, mmsize / 2
+    movsxdifnidn r2, r2d
+    lea          r1, [r1 + 8 * r2]
+    lea          r0, [r0 + 2 * r2]
+    neg          r2
+    jg .skip_loop
+.loop:
+    mulpd        m0, m2, [r1 + 8 * r2]
+    mulpd        m1, m2, [r1 + 8 * r2 + mmsize]
+    mulpd        m3, m2, [r1 + 8 * r2 + 2 * mmsize]
+    mulpd        m4, m2, [r1 + 8 * r2 + 3 * mmsize]
+    cvttpd2dq    xm0, m0
+    cvttpd2dq    xm1, m1
+    cvttpd2dq    xm3, m3
+    cvttpd2dq    xm4, m4
+%if mmsize == 32
+    vinserti128  m0, m0, xm3, 1
+    vinserti128  m1, m1, xm4, 1
+    packssdw     m0, m1
+%else
+    punpcklqdq   m0, m1
+    punpcklqdq   m3, m4
+    packssdw     m0, m3
+%endif
+    mova         [r0 + 2 * r2], m0
+    add          r2, mmsize / 2
+    jle .loop
+.skip_loop:
+    sub          r2, mmsize / 2
+    jz .end
+    ; Do the remaining values in scalar in order to avoid overreading src.
+.scalar:
+    movq         xm0, [r1 + 8 * r2 + 4 * mmsize] 
+    mulsd        xm0, xm2
+    cvttsd2si    r3d, xm0
+    mov          [r0 + 2 * r2 + mmsize], r3w
+    inc          r2
+    jl .scalar
+.end:
+    RET
+
+;-----------------------------------------------------------------------------
+; void cutree_fix8_unpack( double *dst, uint16_t *src, int count )
+;-----------------------------------------------------------------------------
+cglobal cutree_fix8_unpack, 3, 4, 7
+%if mmsize != 32
+    mova           m4, [cutree_fix8_unpack_shuf+16]
+%endif
+    movapd         m2, [pd_inv256]
+    mova           m3, [cutree_fix8_unpack_shuf]
+    sub            r2d, mmsize / 2
+    movsxdifnidn   r2, r2d
+    lea            r1, [r1 + 2 * r2]
+    lea            r0, [r0 + 8 * r2]
+    neg            r2
+    jg .skip_loop
+.loop:
+%if mmsize == 32
+    vbroadcasti128 m0, [r1 + 2 * r2]
+    vbroadcasti128 m1, [r1 + 2 * r2 + 16]
+    pshufb         m0, m3
+    pshufb         m1, m3
+%else
+    mova           m1, [r1 + 2 * r2]
+    pshufb         m0, m1, m3
+    pshufb         m1, m4
+%endif
+    psrad          m0, 16 ; sign-extend
+    psrad          m1, 16
+    cvtdq2pd       m5, xm0
+    cvtdq2pd       m6, xm1
+%if mmsize == 32
+    vpermq         m0, m0, q1032
+    vpermq         m1, m1, q1032
+%else
+    psrldq         m0, 8
+    psrldq         m1, 8
+%endif
+    cvtdq2pd       m0, xm0
+    cvtdq2pd       m1, xm1
+    mulpd          m0, m2
+    mulpd          m1, m2
+    mulpd          m5, m2
+    mulpd          m6, m2
+    movapd         [r0 + 8 * r2], m5
+    movapd         [r0 + 8 * r2 + mmsize], m0
+    movapd         [r0 + 8 * r2 + mmsize * 2], m6
+    movapd         [r0 + 8 * r2 + mmsize * 3], m1
+    add            r2, mmsize / 2
+    jle .loop
+.skip_loop:
+    sub            r2, mmsize / 2
+    jz .end
+.scalar:
+    movzx          r3d, word [r1 + 2 * r2 + mmsize]
+    movsx          r3d, r3w
+    cvtsi2sd       xm0, r3d
+    mulsd          xm0, xm2
+    movsd          [r0 + 8 * r2 + 4 * mmsize], xm0
+    inc            r2
+    jl .scalar
+.end:
+    RET
+%endmacro
+
+INIT_XMM ssse3
+CUTREE_FIX8
+
+INIT_YMM avx2
+CUTREE_FIX8

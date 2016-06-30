@@ -46,4 +46,20 @@ PROPAGATE_COST(avx2)
 
 #undef PROPAGATE_COST
 
+#define FIX8UNPACK(cpu) \
+    void PFX(cutree_fix8_unpack_ ## cpu)(double *dst, uint16_t *src, int count);
+
+FIX8UNPACK(ssse3)
+FIX8UNPACK(avx2)
+
+#undef FIX8UNPACK
+
+#define FIX8PACK(cpu) \
+    void PFX(cutree_fix8_pack_## cpu)(uint16_t *dst, double *src, int count);
+
+FIX8PACK(ssse3)
+FIX8PACK(avx2)
+
+#undef FIX8PACK
+
 #endif // ifndef X265_MC_H

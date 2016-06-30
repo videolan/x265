@@ -185,9 +185,12 @@ typedef void (*saoCuStatsE3_t)(const int16_t *diff, const pixel *rec, intptr_t s
 typedef void (*sign_t)(int8_t *dst, const pixel *src1, const pixel *src2, const int endX);
 typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
-typedef pixel (*planeClipAndMax_t)(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, const pixel minPix, const pixel maxPix);
+typedef void (*calcHDRStats_t)(pixel *srcY, pixel* srcU, pixel* srcV, intptr_t stride, intptr_t strideC, int width, int height, double *outsum, pixel *outMax, const pixel minPix, const pixel maxPix, const int hShift, const int vShift);
 
 typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
+
+typedef void (*cutree_fix8_unpack)(double *dst, uint16_t *src, int count);
+typedef void (*cutree_fix8_pack)(uint16_t *dst, double *src, int count);
 
 typedef int (*scanPosLast_t)(const uint16_t *scan, const coeff_t *coeff, uint16_t *coeffSign, uint16_t *coeffFlag, uint8_t *coeffNum, int numSig, const uint16_t* scanCG4x4, const int trSize);
 typedef uint32_t (*findPosFirstLast_t)(const int16_t *dstCoeff, const intptr_t trSize, const uint16_t scanTbl[16]);
@@ -197,6 +200,7 @@ typedef uint32_t (*costCoeffRemain_t)(uint16_t *absCoeff, int numNonZero, int id
 typedef uint32_t (*costC1C2Flag_t)(uint16_t *absCoeff, intptr_t numC1Flag, uint8_t *baseCtxMod, intptr_t ctxOffset);
 
 typedef void (*pelFilterLumaStrong_t)(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tcP, int32_t tcQ);
+typedef void (*pelFilterChroma_t)(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tc, int32_t maskP, int32_t maskQ);
 
 /* Function pointers to optimized encoder primitives. Each pointer can reference
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */
@@ -313,12 +317,14 @@ struct EncoderPrimitives
 
     downscale_t           frameInitLowres;
     cutree_propagate_cost propagateCost;
+    cutree_fix8_unpack    fix8Unpack;
+    cutree_fix8_pack      fix8Pack;
 
     extendCURowBorder_t   extendRowBorder;
     planecopy_cp_t        planecopy_cp;
     planecopy_sp_t        planecopy_sp;
     planecopy_sp_t        planecopy_sp_shl;
-    planeClipAndMax_t     planeClipAndMax;
+    calcHDRStats_t        calcHDRStats;
 
     weightp_sp_t          weight_sp;
     weightp_pp_t          weight_pp;
@@ -332,6 +338,7 @@ struct EncoderPrimitives
     costC1C2Flag_t        costC1C2Flag;
 
     pelFilterLumaStrong_t pelFilterLumaStrong[2]; // EDGE_VER = 0, EDGE_HOR = 1
+    pelFilterChroma_t     pelFilterChroma[2];     // EDGE_VER = 0, EDGE_HOR = 1
 
     /* There is one set of chroma primitives per color space. An encoder will
      * have just a single color space and thus it will only ever use one entry

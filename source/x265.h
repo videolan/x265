@@ -98,9 +98,9 @@ typedef struct x265_analysis_data
     uint32_t         sliceType;
     uint32_t         numCUsInFrame;
     uint32_t         numPartitions;
+    int              bScenecut;
     void*            interData;
     void*            intraData;
-    int              bScenecut;
 } x265_analysis_data;
 
 /* cu statistics */
@@ -221,6 +221,14 @@ typedef struct x265_picture
     /* Frame level statistics */
     x265_frame_stats frameData;
 
+    /* Ratecontrol statistics for collecting the ratecontrol information.
+     * It is not used for collecting the last pass ratecontrol data in 
+     * multi pass ratecontrol mode. */
+    void*  rcData;
+
+    uint64_t framesize;
+
+    int    height;
 } x265_picture;
 
 typedef enum
@@ -587,6 +595,11 @@ typedef struct x265_param
      * Main (0) and High (1) tier. Default is Main tier (0) */
     int       bHighTier;
 
+    /* Enable UHD Blu-ray compatibility support. If specified, the encoder will
+     * attempt to modify/set the encode specifications. If the encoder is unable 
+     * to do so, this option will be turned OFF. */
+    int       uhdBluray;
+
     /* The maximum number of L0 references a P or B slice may use. This
      * influences the size of the decoded picture buffer. The higher this
      * number, the more reference frames there will be available for motion
@@ -764,7 +777,7 @@ typedef struct x265_param
      * enabled). At level 2 rate-distortion cost is used to make decimate decisions
      * on each 4x4 coding group (including the cost of signaling the group within
      * the group bitmap).  Psy-rdoq is less effective at preserving energy when
-     * RDOQ is at level 2 */
+     * RDOQ is at level 2. Default: 0 */
     int       rdoqLevel;
 
     /* Enable the implicit signaling of the sign bit of the last coefficient of
@@ -896,22 +909,26 @@ typedef struct x265_param
     /* Note: when deblocking and SAO are both enabled, the loop filter CU lag is
      * only one row, as they operate in series on the same row. */
 
-    /* Select the method in which SAO deals with deblocking boundary pixels.  If
+    /* Select the method in which SAO deals with deblocking boundary pixels. If
      * disabled the right and bottom boundary areas are skipped. If enabled,
      * non-deblocked pixels are used entirely. Default is disabled */
     int       bSaoNonDeblocked;
 
     /*== Analysis tools ==*/
 
-    /* A value between X265_NO_RDO_NO_RDOQ and X265_RDO_LEVEL which determines
-     * the level of rate distortion optimizations to perform during mode
-     * decisions and quantization. The more RDO the better the compression
-     * efficiency at a major cost of performance. Default is no RDO (0) */
+    /* A value between 1 and 6 (both inclusive) which determines the level of 
+     * rate distortion optimizations to perform during mode and depth decisions.
+     * The more RDO the better the compression efficiency at a major cost of 
+     * performance. Default is 3 */
     int       rdLevel;
 
-    /* Enable early skip decisions to avoid intra and inter analysis in likely
+    /* Enable early skip decisions to avoid analysing additional modes in likely
      * skip blocks. Default is disabled */
     int       bEnableEarlySkip;
+
+    /* Enable early CU size decisions to avoid recursing to higher depths. 
+     * Default is enabled */
+    int bEnableRecursionSkip;
 
     /* Use a faster search method to find the best intra mode. Default is 0 */
     int       bEnableFastIntra;
@@ -947,9 +964,15 @@ typedef struct x265_param
     double    psyRd;
 
     /* Strength of psycho-visual optimizations in quantization. Only has an
-     * effect in presets which use RDOQ (rd-levels 4 and 5).  The value must be
-     * between 0 and 50, 1.0 is typical. Default 1.0 */
+     * effect when RDOQ is enabled (presets slow, slower and veryslow). The 
+     * value must be between 0 and 50, 1.0 is typical. Default 0 */
     double    psyRdoq;
+
+    /* Perform quantisation parameter based RD refinement. RD cost is calculated
+     * on the best CU partitions, chosen after the CU analysis, for a range of QPs
+     * to find the optimal rounding effect. Only effective at rd-levels 5 and 6.
+     * Default disabled */
+    int       bEnableRdRefine;
 
     /* If X265_ANALYSIS_SAVE, write per-frame analysis information into analysis
      * buffers.  if X265_ANALYSIS_LOAD, read analysis information into analysis
@@ -1083,6 +1106,9 @@ typedef struct x265_param
          * (QG) size. Allowed values are 64, 32, 16 provided it falls within the
          * inclusuve range [maxCUSize, minCUSize]. Experimental, default: maxCUSize */
         uint32_t qgSize;
+
+        /* internally enable if tune grain is set */
+        int      bEnableGrain;
     } rc;
 
     /*== Video Usability Information ==*/

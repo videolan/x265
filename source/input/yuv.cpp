@@ -225,6 +225,8 @@ bool YUVInput::readPicture(x265_picture& pic)
         uint32_t pixelbytes = depth > 8 ? 2 : 1;
         pic.colorSpace = colorSpace;
         pic.bitDepth = depth;
+        pic.framesize = framesize;
+        pic.height = height;
         pic.stride[0] = width * pixelbytes;
         pic.stride[1] = pic.stride[0] >> x265_cli_csps[colorSpace].width[1];
         pic.stride[2] = pic.stride[0] >> x265_cli_csps[colorSpace].width[2];

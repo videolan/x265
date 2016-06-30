@@ -188,10 +188,9 @@ Quant::Quant()
     m_nr           = NULL;
 }
 
-bool Quant::init(int rdoqLevel, double psyScale, const ScalingList& scalingList, Entropy& entropy)
+bool Quant::init(double psyScale, const ScalingList& scalingList, Entropy& entropy)
 {
     m_entropyCoder = &entropy;
-    m_rdoqLevel    = rdoqLevel;
     m_psyRdoqScale = (int32_t)(psyScale * 256.0);
     X265_CHECK((psyScale * 256.0) < (double)MAX_INT, "psyScale value too large\n");
     m_scalingList  = &scalingList;
@@ -223,6 +222,7 @@ void Quant::setQPforQuant(const CUData& ctu, int qp)
 {
     m_nr = m_frameNr ? &m_frameNr[ctu.m_encData->m_frameEncoderID] : NULL;
     m_qpParam[TEXT_LUMA].setQpParam(qp + QP_BD_OFFSET);
+    m_rdoqLevel = ctu.m_encData->m_param->rdoqLevel;
     if (ctu.m_chromaFormat != X265_CSP_I400)
     {
         setChromaQP(qp + ctu.m_slice->m_pps->chromaQpOffset[0], TEXT_CHROMA_U, ctu.m_chromaFormat);

@@ -29,9 +29,6 @@
 %include "x86util.asm"
 
 SECTION_RODATA 32
-pb_31:      times 32 db 31
-pb_124:     times 32 db 124
-pb_15:      times 32 db 15
 
 SECTION .text
 cextern pb_1
@@ -39,6 +36,10 @@ cextern pb_2
 cextern pb_3
 cextern pb_4
 cextern pb_01
+cextern pb_0123
+cextern pb_15
+cextern pb_31
+cextern pb_124
 cextern pb_128
 cextern pw_1
 cextern pw_n1
@@ -48,7 +49,9 @@ cextern pw_pixel_max
 cextern pb_movemask
 cextern pb_movemask_32
 cextern hmul_16p
-
+cextern pw_1_ffff
+cextern pb_shuf_off4
+cextern pw_shuf_off4
 
 ;============================================================================================================
 ; void saoCuOrgE0(pixel * rec, int8_t * offsetEo, int lcuWidth, int8_t* signLeft, intptr_t stride)
@@ -154,7 +157,9 @@ cglobal saoCuOrgE0, 4,5,9
     sub         r4d, 16
     jnz        .loopH
     RET
-%else ; HIGH_BIT_DEPTH
+
+%else ; HIGH_BIT_DEPTH == 1
+
 cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
 
     mov         r4d, r4m
@@ -240,7 +245,7 @@ cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
     sub         r4d, 16
     jnz        .loopH
     RET
-%endif
+%endif ; HIGH_BIT_DEPTH == 0
 
 INIT_YMM avx2
 %if HIGH_BIT_DEPTH
@@ -2061,8 +2066,10 @@ cglobal saoCuStatsBO, 7,13,2
 ; saoCuStatsE0(const int16_t *diff, const pixel *rec, intptr_t stride, int endX, int endY, int32_t *stats, int32_t *count)
 ;-----------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
+
+%if HIGH_BIT_DEPTH == 1
 INIT_XMM sse4
-cglobal saoCuStatsE0, 3,10,6, 0-32
+cglobal saoCuStatsE0, 3,10,8, 0-32
     mov         r3d, r3m
     mov         r4d, r4m
     mov         r9, r5mp
@@ -2071,7 +2078,7 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
     pxor        m0, m0
     mova        [rsp], m0
     mova        [rsp + mmsize], m0
-    mova        m4, [pb_128]
+    mova        m4, [pw_1]
     mova        m5, [pb_2]
     xor         r7d, r7d
 
@@ -2081,12 +2088,14 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
     sub         r2, r6
     lea         r8, [(r6 - 64) * 2]             ; 64 = MAX_CU_SIZE
 
+    FIX_STRIDES r2
+
 .loopH:
     mov         r5d, r3d
 
     ; calculate signLeft
-    mov         r7b, [r1]
-    sub         r7b, [r1 - 1]
+    mov         r7w, [r1]
+    sub         r7w, [r1 - SIZEOF_PIXEL]
     seta        r7b
     setb        r6b
     sub         r7b, r6b
@@ -2094,21 +2103,30 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
     pinsrb      m0, r7d, 15
 
 .loopL:
-    movu        m3, [r1]
-    movu        m2, [r1 + 1]
 
-    pxor        m1, m3, m4
-    pxor        m2, m4
-    pcmpgtb     m3, m1, m2
-    pcmpgtb     m2, m1
-    pand        m3, [pb_1]
-    por         m2, m3                          ; signRight
+    movu        m3, [r1]
+    movu        m2, [r1 + SIZEOF_PIXEL]
+    pcmpgtw     m6, m3, m2
+    pcmpgtw     m2, m3
+    pand        m6, m4
+    por         m2, m6
+
+    movu        m3, [r1 + mmsize]
+    movu        m6, [r1 + mmsize + SIZEOF_PIXEL]
+    pcmpgtw     m7, m3, m6
+    pcmpgtw     m6, m3
+    pand        m7, m4
+    por         m7, m6
+
+    packsswb    m2, m7                          ; signRight
 
     palignr     m3, m2, m0, 15
-    psignb      m3, m4                          ; signLeft
+
+    pxor        m6, m6
+    psubb       m6, m3                          ; signLeft
 
     mova        m0, m2
-    paddb       m2, m3
+    paddb       m2, m6
     paddb       m2, m5                          ; edgeType
 
     ; stats[edgeType]
@@ -2125,7 +2143,7 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
 %endrep
 
     add         r0, 16*2
-    add         r1, 16
+    add         r1, 16 * SIZEOF_PIXEL
     jmp        .loopL
 
 .next:
@@ -2155,6 +2173,106 @@ cglobal saoCuStatsE0, 3,10,6, 0-32
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
     add         [r9 + 4 * 4], r6d
     RET
+%endif ; HIGH_BIT_DEPTH=1
+
+
+%if HIGH_BIT_DEPTH == 0
+INIT_XMM sse4
+cglobal saoCuStatsE0, 3,10,6, 0-32
+    mov         r3d, r3m
+    mov         r4d, r4m
+    mov         r9, r5mp
+
+    ; clear internal temporary buffer
+    pxor        m0, m0
+    mova        [rsp], m0
+    mova        [rsp + mmsize], m0
+    mova        m4, [pb_128]
+    mova        m5, [pb_2]
+    xor         r7d, r7d
+
+    ; correct stride for diff[] and rec
+    mov         r6d, r3d
+    and         r6d, ~15
+    sub         r2, r6
+    lea         r8, [(r6 - 64) * 2]             ; 64 = MAX_CU_SIZE
+
+.loopH:
+    mov         r5d, r3d
+
+    ; calculate signLeft
+    mov         r7b, [r1]
+    sub         r7b, [r1 - SIZEOF_PIXEL]
+    seta        r7b
+    setb        r6b
+    sub         r7b, r6b
+    neg         r7b
+    pinsrb      m0, r7d, 15
+
+.loopL:
+    movu        m3, [r1]
+    movu        m2, [r1 + SIZEOF_PIXEL]
+
+    pxor        m1, m3, m4
+    pxor        m2, m4
+    pcmpgtb     m3, m1, m2
+    pcmpgtb     m2, m1
+    pand        m3, [pb_1]
+
+    por         m2, m3                          ; signRight
+
+    palignr     m3, m2, m0, 15
+    psignb      m3, m4                          ; signLeft
+
+    mova        m0, m2
+    paddb       m2, m3
+    paddb       m2, m5                          ; edgeType
+
+    ; stats[edgeType]
+%assign x 0
+%rep 16
+    pextrb      r7d, m2, x
+
+    movsx       r6d, word [r0 + x * 2]
+    inc         word [rsp + r7 * 2]             ; tmp_count[edgeType]++
+    add         [rsp + 5 * 2 + r7 * 4], r6d     ; tmp_stats[edgeType] += (fenc[x] - rec[x])
+    dec         r5d
+    jz         .next
+%assign x x+1
+%endrep
+
+    add         r0, 16*2
+    add         r1, 16 * SIZEOF_PIXEL
+    jmp        .loopL
+
+.next:
+    sub         r0, r8
+    add         r1, r2
+
+    dec         r4d
+    jnz        .loopH
+
+    ; sum to global buffer
+    mov         r0, r6mp
+
+    ; s_eoTable = {1, 2, 0, 3, 4}
+    pmovzxwd    m0, [rsp + 0 * 2]
+    pshufd      m0, m0, q3102
+    movu        m1, [r0]
+    paddd       m0, m1
+    movu        [r0], m0
+    movzx       r5d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r5d
+
+    movu        m0, [rsp + 5 * 2 + 0 * 4]
+    pshufd      m0, m0, q3102
+    movu        m1, [r9]
+    paddd       m0, m1
+    movu        [r9], m0
+    mov         r6d, [rsp + 5 * 2 + 4 * 4]
+    add         [r9 + 4 * 4], r6d
+    RET
+%endif ; HIGH_BIT_DEPTH=0
 
 
 ;-----------------------------------------------------------------------------------------------------------------------
@@ -2341,6 +2459,112 @@ cglobal saoCuStatsE0, 3,11,16
 ; saoCuStatsE1_c(const int16_t *diff, const pixel *rec, intptr_t stride, int8_t *upBuff1, int endX, int endY, int32_t *stats, int32_t *count)
 ;-------------------------------------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
+
+%if HIGH_BIT_DEPTH
+INIT_XMM sse4
+cglobal saoCuStatsE1, 4,12,8,0-32    ; Stack: 5 of stats and 5 of count
+    mov         r5d, r5m
+    mov         r4d, r4m
+
+    ; clear internal temporary buffer
+    pxor        m0, m0
+    mova        [rsp], m0
+    mova        [rsp + mmsize], m0
+    mova        m5, [pw_1]
+    mova        m6, [pb_2]
+    movh        m7, [r3 + r4]
+
+    FIX_STRIDES r2d
+
+.loopH:
+    mov         r6d, r4d
+    mov         r9, r0
+    mov         r10, r1
+    mov         r11, r3
+
+.loopW:
+    ; signDown
+    movu        m1, [r10]
+    movu        m2, [r10 + r2]
+    pcmpgtw     m3, m1, m2
+    pcmpgtw     m2, m1
+    pand        m3, m5
+    por         m2, m3
+
+    movu        m3, [r10 + mmsize]
+    movu        m4, [r10 + mmsize + r2]
+    pcmpgtw     m0, m3, m4
+    pcmpgtw     m4, m3
+    pand        m0, m5
+    por         m4, m0
+    packsswb    m2, m4
+
+    pxor        m3, m3
+    psubb       m3, m2                          ; -signDown
+
+    ; edgeType
+    movu        m4, [r11]
+    paddb       m4, m6
+    paddb       m2, m4
+
+    ; update upBuff1
+    movu        [r11], m3
+
+    ; 16 pixels
+%assign x 0
+%rep 16
+    pextrb      r7d, m2, x
+    inc         word [rsp + r7 * 2]
+
+    ; stats[edgeType]
+    movsx       r8d, word [r9 + x * 2]
+    add         [rsp + 5 * 2 + r7 * 4], r8d
+
+    dec         r6d
+    jz         .next
+%assign x x+1
+%endrep
+
+    add         r9, mmsize * 2
+    add         r10, mmsize * SIZEOF_PIXEL
+    add         r11, mmsize
+    jmp        .loopW
+
+.next:
+    ; restore pointer upBuff1
+    add         r0, 64*2                        ; MAX_CU_SIZE
+    add         r1, r2
+
+    dec         r5d
+    jg         .loopH
+
+    ; restore unavailable pixels
+    movh        [r3 + r4], m7
+
+    ; sum to global buffer
+    mov         r1, r6m
+    mov         r0, r7m
+
+    ; s_eoTable = {1,2,0,3,4}
+    pmovzxwd    m0, [rsp + 0 * 2]
+    pshufd      m0, m0, q3102
+    movu        m1, [r0]
+    paddd       m0, m1
+    movu        [r0], m0
+    movzx       r5d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r5d
+
+    movu        m0, [rsp + 5 * 2 + 0 * 4]
+    pshufd      m0, m0, q3102
+    movu        m1, [r1]
+    paddd       m0, m1
+    movu        [r1], m0
+    mov         r6d, [rsp + 5 * 2 + 4 * 4]
+    add         [r1 + 4 * 4], r6d
+    RET
+
+%else ; HIGH_BIT_DEPTH == 1
+
 INIT_XMM sse4
 cglobal saoCuStatsE1, 4,12,8,0-32    ; Stack: 5 of stats and 5 of count
     mov         r5d, r5m
@@ -2435,6 +2659,7 @@ cglobal saoCuStatsE1, 4,12,8,0-32    ; Stack: 5 of stats and 5 of count
     mov         r6d, [rsp + 5 * 2 + 4 * 4]
     add         [r1 + 4 * 4], r6d
     RET
+%endif ; HIGH_BIT_DEPTH == 0
 
 
 INIT_YMM avx2
@@ -2650,6 +2875,129 @@ cglobal saoCuStatsE1, 4,13,16       ; Stack: 5 of stats and 5 of count
 ;}
 
 %if ARCH_X86_64
+
+%if HIGH_BIT_DEPTH == 1
+INIT_XMM sse4
+cglobal saoCuStatsE2, 5,9,7,0-32    ; Stack: 5 of stats and 5 of count
+    mov         r5d, r5m
+    FIX_STRIDES r2d
+
+    ; clear internal temporary buffer
+    pxor        m0, m0
+    mova        [rsp], m0
+    mova        [rsp + mmsize], m0
+    mova        m5, [pw_1]
+    mova        m6, [pb_2]
+
+.loopH:
+    ; TODO: merge into SIMD in below
+    ; get upBuffX[0]
+    mov         r6w, [r1 + r2]
+    sub         r6w, [r1 -  1 * SIZEOF_PIXEL]
+    seta        r6b
+    setb        r7b
+    sub         r6b, r7b
+    mov         [r4], r6b
+
+    ; backup unavailable pixels
+    movh        m0, [r4 + r5 + 1]
+
+    mov         r6d, r5d
+.loopW:
+    ; signDown
+    ; stats[edgeType]
+    ; edgeType
+    movu        m1, [r1]
+    movu        m2, [r1 + r2 + 1 * SIZEOF_PIXEL]
+    pcmpgtw     m3, m1, m2
+    pcmpgtw     m2, m1
+    pand        m2, m5
+    por         m3, m2
+
+    movu        m1, [r1 + mmsize]
+    movu        m2, [r1 + r2 + 1 * SIZEOF_PIXEL + mmsize]
+    pcmpgtw     m4, m1, m2
+    pcmpgtw     m2, m1
+    pand        m2, m5
+    por         m4, m2
+    packsswb    m3, m4
+
+    movu        m4, [r3]
+    paddb       m4, m6
+    psubb       m4, m3
+
+    ; update upBuff1
+    movu        [r4 + 1], m3
+
+    ; 16 pixels
+%assign x 0
+%rep 16
+    pextrb      r7d, m4, x
+    inc    word [rsp + r7 * 2]
+
+    movsx       r8d, word [r0 + x * 2]
+    add         [rsp + 5 * 2 + r7 * 4], r8d
+
+    dec         r6d
+    jz         .next
+%assign x x+1
+%endrep
+
+    add         r0, mmsize * 2
+    add         r1, mmsize * SIZEOF_PIXEL
+    add         r3, mmsize
+    add         r4, mmsize
+    jmp        .loopW
+
+.next:
+    xchg        r3, r4
+
+    ; restore pointer upBuff1
+    mov         r6d, r5d
+    and         r6d, ~15
+    neg         r6                              ; MUST BE 64-bits, it is Negtive
+
+    ; move to next row
+
+    ; move back to start point
+    add         r3, r6
+    add         r4, r6
+
+    ; adjust with stride
+    lea         r0, [r0 + (r6 + 64) * 2]        ; 64 = MAX_CU_SIZE
+    add         r1, r2
+    lea         r1, [r1 + r6 * SIZEOF_PIXEL]
+
+    ; restore unavailable pixels
+    movh        [r3 + r5 + 1], m0
+
+    dec    byte r6m
+    jg         .loopH
+
+    ; sum to global buffer
+    mov         r1, r7m
+    mov         r0, r8m
+
+    ; s_eoTable = {1,2,0,3,4}
+    pmovzxwd    m0, [rsp + 0 * 2]
+    pshufd      m0, m0, q3102
+    movu        m1, [r0]
+    paddd       m0, m1
+    movu        [r0], m0
+    movzx       r5d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r5d
+
+    movu        m0, [rsp + 5 * 2 + 0 * 4]
+    pshufd      m0, m0, q3102
+    movu        m1, [r1]
+    paddd       m0, m1
+    movu        [r1], m0
+    mov         r6d, [rsp + 5 * 2 + 4 * 4]
+    add         [r1 + 4 * 4], r6d
+    RET
+
+%else ; HIGH_BIT_DEPTH == 1
+
 ; TODO: x64 only because I need temporary register r7,r8, easy portab to x86
 INIT_XMM sse4
 cglobal saoCuStatsE2, 5,9,8,0-32    ; Stack: 5 of stats and 5 of count
@@ -2767,6 +3115,7 @@ cglobal saoCuStatsE2, 5,9,8,0-32    ; Stack: 5 of stats and 5 of count
     add         [r1 + 4 * 4], r6d
     RET
 
+%endif ; HIGH_BIT_DEPTH == 0
 
 INIT_YMM avx2
 cglobal saoCuStatsE2, 5,10,16                        ; Stack: 5 of stats and 5 of count
@@ -2994,6 +3343,119 @@ cglobal saoCuStatsE2, 5,10,16                        ; Stack: 5 of stats and 5 o
 ;}
 
 %if ARCH_X86_64
+
+%if HIGH_BIT_DEPTH == 1
+INIT_XMM sse4
+cglobal saoCuStatsE3, 4,9,8,0-32    ; Stack: 5 of stats and 5 of count
+    mov         r4d, r4m
+    mov         r5d, r5m
+    FIX_STRIDES r2d
+
+    ; clear internal temporary buffer
+    pxor        m0, m0
+    mova        [rsp], m0
+    mova        [rsp + mmsize], m0
+    ;mova        m0, [pb_128]
+    mova        m5, [pw_1]
+    mova        m6, [pb_2]
+    movh        m7, [r3 + r4]
+
+.loopH:
+    mov         r6d, r4d
+
+.loopW:
+    ; signDown
+    movu        m1, [r1]
+    movu        m2, [r1 + r2 - 1 * SIZEOF_PIXEL]
+    pcmpgtw     m3, m1, m2
+    pcmpgtw     m2, m1
+    pand        m2, m5
+    por         m3, m2
+
+    movu        m1, [r1 + mmsize]
+    movu        m2, [r1 + r2 - 1 * SIZEOF_PIXEL + mmsize]
+    pcmpgtw     m4, m1, m2
+    pcmpgtw     m2, m1
+    pand        m2, m5
+    por         m4, m2
+    packsswb    m3, m4
+
+    ; edgeType
+    movu        m4, [r3]
+    paddb       m4, m6
+    psubb       m4, m3
+
+    ; update upBuff1
+    movu        [r3 - 1], m3
+
+    ; stats[edgeType]
+    pxor        m1, m0
+
+    ; 16 pixels
+%assign x 0
+%rep 16
+    pextrb      r7d, m4, x
+    inc    word [rsp + r7 * 2]
+
+    movsx       r8d, word [r0 + x * 2]
+    add         [rsp + 5 * 2 + r7 * 4], r8d
+
+    dec         r6d
+    jz         .next
+%assign x x+1
+%endrep
+
+    add         r0, 16 * 2
+    add         r1, 16 * SIZEOF_PIXEL
+    add         r3, 16
+    jmp         .loopW
+
+.next:
+    ; restore pointer upBuff1
+    mov         r6d, r4d
+    and         r6d, ~15
+    neg         r6                              ; MUST BE 64-bits, it is Negtive
+
+    ; move to next row
+
+    ; move back to start point
+    add         r3, r6
+
+    ; adjust with stride
+    lea         r0, [r0 + (r6 + 64) * 2]        ; 64 = MAX_CU_SIZE
+    add         r1, r2
+    lea         r1, [r1 + r6 * SIZEOF_PIXEL]
+
+    dec         r5d
+    jg         .loopH
+
+    ; restore unavailable pixels
+    movh        [r3 + r4], m7
+
+    ; sum to global buffer
+    mov         r1, r6m
+    mov         r0, r7m
+
+    ; s_eoTable = {1,2,0,3,4}
+    pmovzxwd    m0, [rsp + 0 * 2]
+    pshufd      m0, m0, q3102
+    movu        m1, [r0]
+    paddd       m0, m1
+    movu        [r0], m0
+    movzx       r5d, word [rsp + 4 * 2]
+    add         [r0 + 4 * 4], r5d
+
+    movu        m0, [rsp + 5 * 2 + 0 * 4]
+    pshufd      m0, m0, q3102
+    movu        m1, [r1]
+    paddd       m0, m1
+    movu        [r1], m0
+    mov         r6d, [rsp + 5 * 2 + 4 * 4]
+    add         [r1 + 4 * 4], r6d
+    RET
+
+%else ; HIGH_BIT_DEPTH == 1
+
 INIT_XMM sse4
 cglobal saoCuStatsE3, 4,9,8,0-32    ; Stack: 5 of stats and 5 of count
     mov         r4d, r4m
@@ -3099,6 +3561,7 @@ cglobal saoCuStatsE3, 4,9,8,0-32    ; Stack: 5 of stats and 5 of count
     add         [r1 + 4 * 4], r6d
     RET
 
+%endif ; HIGH_BIT_DEPTH == 0
 
 INIT_YMM avx2
 cglobal saoCuStatsE3, 4,10,16           ; Stack: 5 of stats and 5 of count
@@ -3297,6 +3760,9 @@ cglobal saoCuStatsE3, 4,10,16           ; Stack: 5 of stats and 5 of count
 
 INIT_XMM sse4
 cglobal pelFilterLumaStrong_H, 5,7,10
+%if HIGH_BIT_DEPTH
+    add             r2d, r2d
+%endif
     mov             r1, r2
     neg             r3d
     neg             r4d
@@ -3305,6 +3771,16 @@ cglobal pelFilterLumaStrong_H, 5,7,10
     lea             r5, [r2 * 3]
     lea             r6, [r1 * 3]
 
+%if HIGH_BIT_DEPTH
+    movu            m4, [r0]                ; src[0]
+    movu            m3, [r0 + r1]           ; src[-offset]
+    movu            m2, [r0 + r1 * 2]       ; src[-offset * 2]
+    movu            m1, [r0 + r6]           ; src[-offset * 3]
+    movu            m0, [r0 + r1 * 4]       ; src[-offset * 4]
+    movu            m5, [r0 + r2]           ; src[offset]
+    movu            m6, [r0 + r2 * 2]       ; src[offset * 2]
+    movu            m7, [r0 + r5]           ; src[offset * 3]
+%else
     pmovzxbw        m4, [r0]                ; src[0]
     pmovzxbw        m3, [r0 + r1]           ; src[-offset]
     pmovzxbw        m2, [r0 + r1 * 2]       ; src[-offset * 2]
@@ -3313,6 +3789,7 @@ cglobal pelFilterLumaStrong_H, 5,7,10
     pmovzxbw        m5, [r0 + r2]           ; src[offset]
     pmovzxbw        m6, [r0 + r2 * 2]       ; src[offset * 2]
     pmovzxbw        m7, [r0 + r5]           ; src[offset * 3]
+%endif
 
     paddw           m0, m0                  ; m0*2
     mova            m8, m2
@@ -3380,6 +3857,15 @@ cglobal pelFilterLumaStrong_H, 5,7,10
     paddw           m0, m1
     paddw           m3, m4
     paddw           m9, m5
+
+%if HIGH_BIT_DEPTH
+    movh            [r0 + r6], m0
+    movhps          [r0 + r1], m0
+    movh            [r0], m3
+    movhps          [r0 + r2 * 2], m3,
+    movh            [r0 + r2 * 1], m9
+    movhps          [r0 + r1 * 2], m9
+%else
     packuswb        m0, m0
     packuswb        m3, m9
 
@@ -3389,14 +3875,41 @@ cglobal pelFilterLumaStrong_H, 5,7,10
     pextrd          [r0 + r2 * 2], m3, 1
     pextrd          [r0 + r2 * 1], m3, 2
     pextrd          [r0 + r1 * 2], m3, 3
+%endif
     RET
 
 INIT_XMM sse4
 cglobal pelFilterLumaStrong_V, 5,5,10
+%if HIGH_BIT_DEPTH
+    add             r1d, r1d
+%endif
     neg             r3d
     neg             r4d
     lea             r2, [r1 * 3]
 
+%if HIGH_BIT_DEPTH
+    movu            m0, [r0 - 8]            ; src[-offset * 4] row 0
+    movu            m1, [r0 + r1 * 1 - 8]   ; src[-offset * 4] row 1
+    movu            m2, [r0 + r1 * 2 - 8]   ; src[-offset * 4] row 2
+    movu            m3, [r0 + r2 * 1 - 8]   ; src[-offset * 4] row 3
+
+    punpckhwd       m4, m0, m1              ; [m4 m4 m5 m5 m6 m6 m7 m7]
+    punpcklwd       m0, m1                  ; [m0 m0 m1 m1 m2 m2 m3 m3]
+
+    punpckhwd       m5, m2, m3              ; [m4 m4 m5 m5 m6 m6 m7 m7]
+    punpcklwd       m2, m3                  ; [m0 m0 m1 m1 m2 m2 m3 m3]
+
+    punpckhdq       m3, m0, m2              ; [m2 m2 m2 m2 m3 m3 m3 m3]
+    punpckldq       m0, m2                  ; [m0 m0 m0 m0 m1 m1 m1 m1]
+    psrldq          m1, m0, 8               ; [m1 m1 m1 m1 x x x x]
+    mova            m2, m3                  ; [m2 m2 m2 m2 x x x x]
+    punpckhqdq      m3, m3                  ; [m3 m3 m3 m3 x x x x]
+
+    punpckhdq       m6, m4, m5              ; [m6 m6 m6 m6 m7 m7 m7 m7]
+    punpckldq       m4, m5                  ; [m4 m4 m4 m4 m5 m5 m5 m5]
+    psrldq          m7, m6, 8
+    psrldq          m5, m4, 8
+%else
     movh            m0, [r0 - 4]            ; src[-offset * 4] row 0
     movh            m1, [r0 + r1 * 1 - 4]   ; src[-offset * 4] row 1
     movh            m2, [r0 + r1 * 2 - 4]   ; src[-offset * 4] row 2
@@ -3429,6 +3942,7 @@ cglobal pelFilterLumaStrong_V, 5,5,10
     pmovzxbw        m5, m5
     pmovzxbw        m6, m6
     pmovzxbw        m7, m7
+%endif
 
     paddw           m0, m0                  ; m0*2
     mova            m8, m2
@@ -3496,6 +4010,35 @@ cglobal pelFilterLumaStrong_V, 5,5,10
     paddw           m0, m1
     paddw           m3, m4
     paddw           m9, m5
+
+%if HIGH_BIT_DEPTH
+    ; 4x6 output rows -
+    ; m0 - col 0
+    ; m3 - col 3
+
+    psrldq           m1, m0, 8
+    psrldq           m2, m3, 8
+
+    mova            m4, m9
+    psrldq          m5, m9, 8
+
+    ; transpose 4x6 to 6x4
+    punpcklwd       m0, m5
+    punpcklwd       m1, m3
+    punpcklwd       m4, m2
+
+    punpckldq       m9, m0, m1
+    punpckhdq       m0, m1
+
+    movh            [r0 + r1 * 0 - 6], m9
+    movhps          [r0 + r1 * 1 - 6], m9
+    movh            [r0 + r1 * 2 - 6], m0
+    movhps          [r0 + r2 * 1 - 6], m0
+    pextrd          [r0 + r1 * 0 + 2], m4, 0
+    pextrd          [r0 + r1 * 1 + 2], m4, 1
+    pextrd          [r0 + r1 * 2 + 2], m4, 2
+    pextrd          [r0 + r2 * 1 + 2], m4, 3
+%else
     packuswb        m0, m0
     packuswb        m3, m9
 
@@ -3525,5 +4068,143 @@ cglobal pelFilterLumaStrong_V, 5,5,10
     pextrw          [r0 + r1 * 1 + 1], m4, 1
     pextrw          [r0 + r1 * 2 + 1], m4, 2
     pextrw          [r0 + r2 * 1 + 1], m4, 3
+%endif
+    RET
+%endif ; ARCH_X86_64
+
+%if ARCH_X86_64
+INIT_XMM sse4
+cglobal pelFilterChroma_H, 6,6,5
+%if HIGH_BIT_DEPTH
+    add             r2d, r2d
+%endif
+    mov             r1, r2
+    neg             r3d
+    neg             r1
+
+%if HIGH_BIT_DEPTH
+    movu            m4, [r0]                ; src[0]
+    movu            m3, [r0 + r1]           ; src[-offset]
+    movu            m0, [r0 + r2]           ; src[offset]
+    movu            m2, [r0 + r1 * 2]       ; src[-offset * 2]
+%else
+    pmovzxbw        m4, [r0]                ; src[0]
+    pmovzxbw        m3, [r0 + r1]           ; src[-offset]
+    pmovzxbw        m0, [r0 + r2]           ; src[offset]
+    pmovzxbw        m2, [r0 + r1 * 2]       ; src[-offset * 2]
+%endif
+
+    psubw           m1, m4, m3              ; m4 - m3
+    psubw           m2, m0                  ; m2 - m5
+    paddw           m2, [pw_4]
+    psllw           m1, 2                   ; (m4 - m3) * 4
+    paddw           m1, m2
+    psraw           m1, 3
+
+    movd            m0, r3d
+    pshufb          m0, [pb_01]             ; -tc
+
+    pmaxsw          m1, m0
+    psignw          m0, [pw_n1]
+    pminsw          m1, m0                  ; delta
+    punpcklqdq      m1, m1
+
+    shl             r5d, 16
+    or              r5w, r4w
+    punpcklqdq      m3, m4
+    mova            m2, [pw_1_ffff]
+
+    movd            m0, r5d
+    pshufb          m0, [pb_0123]
+
+    pand            m0, m1                  ; (delta & maskP) (delta & maskQ)
+    psignw          m0, m2
+    paddw           m3, m0
+
+    pxor            m0, m0
+    pmaxsw          m3, m0
+    pminsw          m3, [pw_pixel_max]
+
+%if HIGH_BIT_DEPTH
+    movh            [r0 + r1], m3
+    movhps          [r0], m3
+%else
+    packuswb        m3, m3
+    movd            [r0 + r1], m3
+    pextrd          [r0], m3, 1
+%endif
+    RET
+
+INIT_XMM sse4
+cglobal pelFilterChroma_V, 6,6,5
+%if HIGH_BIT_DEPTH
+    add             r1d, r1d
+%endif
+    neg             r3d
+    lea             r2, [r1 * 3]
+
+%if HIGH_BIT_DEPTH
+    movu            m4, [r0 + r1 * 0 - 4]   ; src[-offset*2, -offset, 0, offset] [m2 m3 m4 m5]
+    movu            m3, [r0 + r1 * 1 - 4]
+    movu            m0, [r0 + r1 * 2 - 4]
+    movu            m2, [r0 + r2 * 1 - 4]
+%else
+    pmovzxbw        m4, [r0 + r1 * 0 - 2]   ; src[-offset*2, -offset, 0, offset] [m2 m3 m4 m5]
+    pmovzxbw        m3, [r0 + r1 * 1 - 2]
+    pmovzxbw        m0, [r0 + r1 * 2 - 2]
+    pmovzxbw        m2, [r0 + r2 * 1 - 2]
+%endif
+    punpcklwd       m4, m3
+    punpcklwd       m0, m2
+    punpckldq       m2, m4, m0              ; [m2 m2 m2 m2 m3 m3 m3 m3]
+    punpckhdq       m4, m0                  ; [m4 m4 m4 m4 m5 m5 m5 m5]
+    psrldq          m3, m2, 8
+    psrldq          m0, m4, 8
+
+    psubw           m1, m4, m3              ; m4 - m3
+    psubw           m2, m0                  ; m2 - m5
+    paddw           m2, [pw_4]
+    psllw           m1, 2                   ; (m4 - m3) * 4
+    paddw           m1, m2
+    psraw           m1, 3
+
+    movd            m0, r3d
+    pshufb          m0, [pb_01]             ; -tc
+
+    pmaxsw          m1, m0
+    psignw          m0, [pw_n1]
+    pminsw          m1, m0                  ; delta
+    punpcklqdq      m1, m1
+
+    shl             r5d, 16
+    or              r5w, r4w
+    punpcklqdq      m3, m4
+    mova            m2, [pw_1_ffff]
+
+    movd            m0, r5d
+    pshufb          m0, [pb_0123]
+
+    pand            m0, m1                  ; (delta & maskP) (delta & maskQ)
+    psignw          m0, m2
+    paddw           m3, m0
+
+    pxor            m0, m0
+    pmaxsw          m3, m0
+    pminsw          m3, [pw_pixel_max]
+
+%if HIGH_BIT_DEPTH
+    pshufb          m3, [pw_shuf_off4]
+    pextrd          [r0 + r1 * 0 - 2], m3, 0
+    pextrd          [r0 + r1 * 1 - 2], m3, 1
+    pextrd          [r0 + r1 * 2 - 2], m3, 2
+    pextrd          [r0 + r2 * 1 - 2], m3, 3
+%else
+    packuswb        m3, m3
+    pshufb          m3, [pb_shuf_off4]
+    pextrw          [r0 + r1 * 0 - 1], m3, 0
+    pextrw          [r0 + r1 * 1 - 1], m3, 1
+    pextrw          [r0 + r1 * 2 - 1], m3, 2
+    pextrw          [r0 + r2 * 1 - 1], m3, 3
+%endif
     RET
 %endif ; ARCH_X86_64

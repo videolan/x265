@@ -146,10 +146,11 @@ public:
     double         m_avgQpRc;    /* avg QP as decided by rate-control */
     double         m_avgQpAq;    /* avg QP as decided by AQ in addition to rate-control */
     double         m_rateFactor; /* calculated based on the Frame QP */
+    int            m_picCsp;
 
     FrameData();
 
-    bool create(const x265_param& param, const SPS& sps);
+    bool create(const x265_param& param, const SPS& sps, int csp);
     void reinit(const SPS& sps);
     void destroy();
     inline CUData* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }
@@ -168,10 +169,12 @@ struct analysis_intra_data
 struct analysis_inter_data
 {
     MV*         mv;
+    WeightParam* wt;
     int32_t*    ref;
     uint8_t*    depth;
     uint8_t*    modes;
-    uint32_t*   bestMergeCand;
+    uint8_t*    partSize;
+    uint8_t*    mergeFlag;
 };
 }
 #endif // ifndef X265_FRAMEDATA_H

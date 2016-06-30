@@ -607,7 +607,6 @@ static float ssim_end_1(int s1, int s2, int ss, int s12)
  * s1*s1, s2*s2, and s1*s2 also obtain this value for edge cases: ((2^10-1)*16*4)^2 = 4286582784.
  * Maximum value for 9-bit is: ss*64 = (2^9-1)^2*16*4*64 = 1069551616, which will not overflow. */
 
-#define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 #if HIGH_BIT_DEPTH
     X265_CHECK((X265_DEPTH == 10) || (X265_DEPTH == 12), "ssim invalid depth\n");
 #define type float
@@ -873,30 +872,87 @@ static void estimateCUPropagateCost(int* dst, const uint16_t* propagateIn, const
     }
 }
 
-static pixel planeClipAndMax_c(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, const pixel minPix, const pixel maxPix)
+/* Conversion between double and Q8.8 fixed point (big-endian) for storage */
+static void cuTreeFix8Pack(uint16_t *dst, double *src, int count)
 {
-    pixel maxLumaLevel = 0;
-    uint64_t sumLuma = 0;
-
-    for (int r = 0; r < height; r++)
-    {
-        for (int c = 0; c < width; c++)
-        {
-            /* Clip luma of source picture to max and min values before extending edges of picYuv */
-            src[c] = x265_clip3((pixel)minPix, (pixel)maxPix, src[c]);
-
-            /* Determine maximum and average luma level in a picture */
-            maxLumaLevel = X265_MAX(src[c], maxLumaLevel);
-            sumLuma += src[c];
-        }
-
-        src += stride;
-    }
-
-    *outsum = sumLuma;
-    return maxLumaLevel;
+    for (int i = 0; i < count; i++)
+        dst[i] = (uint16_t)(src[i] * 256.0);
 }
 
+static void cuTreeFix8Unpack(double *dst, uint16_t *src, int count)
+{
+    for (int i = 0; i < count; i++)
+    {
+        int16_t qpFix8 = src[i];
+        dst[i] = (double)(qpFix8) / 256.0;
+    }
+}
+
+#if HIGH_BIT_DEPTH
+static void calcHDRStats_c(pixel *srcY, pixel* srcU, pixel* srcV, intptr_t stride, intptr_t strideC, int width, int height, double *outsum, 
+                           pixel *outMax, const pixel minPix, const pixel maxPix, const int hShift, const int vShift)
+{
+    pixel rgb[3];
+    uint16_t maxRGB = 0, maxLumaLevel = 0;
+    uint64_t rowsumLuma = 0;
+    double rowavgLuma = 0;
+
+    uint16_t minLegal = (uint16_t)MIN_HDR_LEGAL_RANGE, maxLegal = (uint16_t)MAX_HDR_LEGAL_RANGE;
+
+    for (int r = 0; r < height >> vShift; r++)
+    {
+        rowsumLuma = 0;
+        for (int c = 0; c < width >> hShift; c++)
+        {
+            pixel y = 0, cb = 0, cr = 0;
+            /* Clip luma of source picture to max and min, only if they are specified. Average luma values for RGB conversions */
+            if (!hShift && !vShift) /* YUV444 */
+            {
+                y = srcY[c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[c]);
+                cb = srcU[c]; cr = srcV[c];
+            }
+            else if (hShift && !vShift) /* YUV422 */
+            {
+                srcY[2*c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c]);
+                srcY[2*c + 1] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c + 1]);
+                y = (srcY[2*c] + srcY[2*c + 1]) >> 1;
+                cb = srcU[c]; cr = srcV[c];
+            }
+            else if (hShift && vShift) /* YUV420 */
+            {
+                srcY[2*c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c]);
+                srcY[2*c + 1] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c + 1]);
+                srcY[stride + 2*c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[stride + 2*c]);
+                srcY[stride + 2*c + 1] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[stride + 2*c + 1]);
+                y = (srcY[2*c] + srcY[2*c + 1] + srcY[stride + 2*c] + srcY[stride + 2*c + 1]) >> 2;
+                cb = srcU[c]; cr = srcV[c];
+            }
+            else if (!strideC) /* YUV400 */
+            {
+                y = srcY[c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[c]);
+                cb = cr = 0;
+            }
+            /* Rec 2020 Yuv to RGB */
+            for (int i = 0; i < 3; i++)
+                rgb[i] = (pixel) (y * g_YUVtoRGB_BT2020[i][0] + (cb - CBCR_OFFSET) * g_YUVtoRGB_BT2020[i][1] + (cr - CBCR_OFFSET) * g_YUVtoRGB_BT2020[i][2]);
+            /* maxCLL and maxFALL */
+            maxRGB = X265_MAX(maxRGB, X265_MAX(rgb[0], X265_MAX(rgb[1], rgb[2])));
+            maxRGB = X265_MIN(X265_MAX(maxRGB, minLegal), maxLegal);
+            maxLumaLevel = (uint16_t) g_ST2084_PQTable[maxRGB - minLegal];
+            rowsumLuma += maxLumaLevel;
+        }
+        srcY += stride << vShift; 
+        if (strideC)
+        {
+            srcU += strideC;
+            srcV += strideC;
+        }
+        rowavgLuma += ((double)rowsumLuma / width);
+    }
+    *outsum = rowavgLuma / height;
+    *outMax = maxLumaLevel;
+}
+#endif
 }  // end anonymous namespace
 
 namespace X265_NS {
@@ -1181,7 +1237,11 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.planecopy_cp = planecopy_cp_c;
     p.planecopy_sp = planecopy_sp_c;
     p.planecopy_sp_shl = planecopy_sp_shl_c;
-    p.planeClipAndMax = planeClipAndMax_c;
+#if HIGH_BIT_DEPTH
+    p.calcHDRStats = calcHDRStats_c;
+#endif
     p.propagateCost = estimateCUPropagateCost;
+    p.fix8Unpack = cuTreeFix8Unpack;
+    p.fix8Pack = cuTreeFix8Pack;
 }
 }

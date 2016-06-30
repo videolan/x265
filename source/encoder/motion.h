@@ -70,12 +70,12 @@ public:
 
     static void initScales();
     static int hpelIterationCount(int subme);
-    void init(int method, int refine, int csp);
+    void init(int csp);
 
     /* Methods called at slice setup */
 
-    void setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset, int pwidth, int pheight);
-    void setSourcePU(const Yuv& srcFencYuv, int ctuAddr, int cuPartIdx, int puPartIdx, int pwidth, int pheight);
+    void setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset, int pwidth, int pheight, const int searchMethod, const int subpelRefine);
+    void setSourcePU(const Yuv& srcFencYuv, int ctuAddr, int cuPartIdx, int puPartIdx, int pwidth, int pheight, const int searchMethod, const int subpelRefine, bool bChroma);
 
     /* buf*() and motionEstimate() methods all use cached fenc pixels and thus
      * require setSourcePU() to be called prior. */

@@ -322,6 +322,8 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define MAX_NUM_TR_COEFFS           MAX_TR_SIZE * MAX_TR_SIZE // Maximum number of transform coefficients, for a 32x32 transform
 #define MAX_NUM_TR_CATEGORIES       16                        // 32, 16, 8, 4 transform categories each for luma and chroma
 
+#define PIXEL_MAX ((1 << X265_DEPTH) - 1)
+
 namespace X265_NS {
 
 enum { SAO_NUM_OFFSET = 4 };
@@ -402,7 +404,19 @@ void extendPicBorder(pixel* recon, intptr_t stride, int width, int height, int m
 /* located in common.cpp */
 int64_t  x265_mdate(void);
 #define  x265_log(param, ...) general_log(param, "x265", __VA_ARGS__)
+#define  x265_log_file(param, ...) general_log_file(param, "x265", __VA_ARGS__)
 void     general_log(const x265_param* param, const char* caller, int level, const char* fmt, ...);
+#if _WIN32
+void     general_log_file(const x265_param* param, const char* caller, int level, const char* fmt, ...);
+FILE*    x265_fopen(const char* fileName, const char* mode);
+int      x265_unlink(const char* fileName);
+int      x265_rename(const char* oldName, const char* newName);
+#else
+#define  general_log_file(param, caller, level, fmt, ...) general_log(param, caller, level, fmt, __VA_ARGS__)
+#define  x265_fopen(fileName, mode) fopen(fileName, mode)
+#define  x265_unlink(fileName) unlink(fileName)
+#define  x265_rename(oldName, newName) rename(oldName, newName)
+#endif
 int      x265_exp2fix8(double x);
 
 double   x265_ssim2dB(double ssim);

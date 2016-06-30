@@ -108,6 +108,7 @@ public:
     ModeDepth m_modeDepth[NUM_CU_DEPTH];
     bool      m_bTryLossless;
     bool      m_bChromaSa8d;
+    bool      m_bHD;
 
     Analysis();
 
@@ -117,12 +118,19 @@ public:
     Mode& compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, const Entropy& initialContext);
 
 protected:
-    /* Analysis data for load/save modes, keeps getting incremented as CTU analysis proceeds and data is consumed or read */
+    /* Analysis data for save/load mode, writes/reads data based on absPartIdx */
     analysis_inter_data* m_reuseInterDataCTU;
-    MV*                  m_reuseMv;
     int32_t*             m_reuseRef;
-    uint32_t*            m_reuseBestMergeCand;
+    uint8_t*             m_reuseDepth;
+    uint8_t*             m_reuseModes;
+    uint8_t*             m_reusePartSize;
+    uint8_t*             m_reuseMergeFlag;
+
     uint32_t m_splitRefIdx[4];
+    uint64_t* cacheCost;
+
+    /* refine RD based on QP for rd-levels 5 and 6 */
+    void qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t lqp);
 
     /* full analysis for an I-slice CU */
     void compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
@@ -130,11 +138,13 @@ protected:
     /* full analysis for a P or B slice CU */
     uint32_t compressInterCU_dist(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
     SplitData compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
-    SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, uint32_t &zOrder, int32_t qp);
+    SplitData compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp);
+
+    void recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t origqp = -1);
 
     /* measure merge and skip */
     void checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGeom);
-    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom, bool isShareMergeCand);
+    void checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGeom);
 
     /* measure inter options */
     void checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize partSize, uint32_t refmask[2]);
@@ -151,6 +161,7 @@ protected:
     /* work-avoidance heuristics for RD levels < 5 */
     uint32_t topSkipMinDepth(const CUData& parentCTU, const CUGeom& cuGeom);
     bool recursionDepthCheck(const CUData& parentCTU, const CUGeom& cuGeom, const Mode& bestMode);
+    bool complexityCheckCU(const Mode& bestMode);
 
     /* generate residual and recon pixels for an entire CTU recursively (RD0) */
     void encodeResidue(const CUData& parentCTU, const CUGeom& cuGeom);

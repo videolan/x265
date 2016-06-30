@@ -38,6 +38,189 @@
 
 namespace X265_NS {
 
+// initial probability for cu_transquant_bypass flag
+static const uint8_t INIT_CU_TRANSQUANT_BYPASS_FLAG[3][NUM_TQUANT_BYPASS_FLAG_CTX] =
+{
+    { 154 },
+    { 154 },
+    { 154 },
+};
+
+// initial probability for split flag
+static const uint8_t INIT_SPLIT_FLAG[3][NUM_SPLIT_FLAG_CTX] =
+{
+    { 107,  139,  126, },
+    { 107,  139,  126, },
+    { 139,  141,  157, },
+};
+
+static const uint8_t INIT_SKIP_FLAG[3][NUM_SKIP_FLAG_CTX] =
+{
+    { 197,  185,  201, },
+    { 197,  185,  201, },
+    { CNU,  CNU,  CNU, },
+};
+
+static const uint8_t INIT_MERGE_FLAG_EXT[3][NUM_MERGE_FLAG_EXT_CTX] =
+{
+    { 154, },
+    { 110, },
+    { CNU, },
+};
+
+static const uint8_t INIT_MERGE_IDX_EXT[3][NUM_MERGE_IDX_EXT_CTX] =
+{
+    { 137, },
+    { 122, },
+    { CNU, },
+};
+
+static const uint8_t INIT_PART_SIZE[3][NUM_PART_SIZE_CTX] =
+{
+    { 154,  139,  154, 154 },
+    { 154,  139,  154, 154 },
+    { 184,  CNU,  CNU, CNU },
+};
+
+static const uint8_t INIT_PRED_MODE[3][NUM_PRED_MODE_CTX] =
+{
+    { 134, },
+    { 149, },
+    { CNU, },
+};
+
+static const uint8_t INIT_INTRA_PRED_MODE[3][NUM_ADI_CTX] =
+{
+    { 183, },
+    { 154, },
+    { 184, },
+};
+
+static const uint8_t INIT_CHROMA_PRED_MODE[3][NUM_CHROMA_PRED_CTX] =
+{
+    { 152,  139, },
+    { 152,  139, },
+    {  63,  139, },
+};
+
+static const uint8_t INIT_INTER_DIR[3][NUM_INTER_DIR_CTX] =
+{
+    {  95,   79,   63,   31,  31, },
+    {  95,   79,   63,   31,  31, },
+    { CNU,  CNU,  CNU,  CNU, CNU, },
+};
+
+static const uint8_t INIT_MVD[3][NUM_MV_RES_CTX] =
+{
+    { 169,  198, },
+    { 140,  198, },
+    { CNU,  CNU, },
+};
+
+static const uint8_t INIT_REF_PIC[3][NUM_REF_NO_CTX] =
+{
+    { 153,  153 },
+    { 153,  153 },
+    { CNU,  CNU },
+};
+
+static const uint8_t INIT_DQP[3][NUM_DELTA_QP_CTX] =
+{
+    { 154,  154,  154, },
+    { 154,  154,  154, },
+    { 154,  154,  154, },
+};
+
+static const uint8_t INIT_QT_CBF[3][NUM_QT_CBF_CTX] =
+{
+    { 153,  111,  149,   92,  167,  154,  154 },
+    { 153,  111,  149,  107,  167,  154,  154 },
+    { 111,  141,   94,  138,  182,  154,  154 },
+};
+
+static const uint8_t INIT_QT_ROOT_CBF[3][NUM_QT_ROOT_CBF_CTX] =
+{
+    {  79, },
+    {  79, },
+    { CNU, },
+};
+
+static const uint8_t INIT_LAST[3][NUM_CTX_LAST_FLAG_XY] =
+{
+    { 125,  110,  124,  110,   95,   94,  125,  111,  111,   79,  125,  126,  111,  111,   79,
+      108,  123,   93 },
+    { 125,  110,   94,  110,   95,   79,  125,  111,  110,   78,  110,  111,  111,   95,   94,
+      108,  123,  108 },
+    { 110,  110,  124,  125,  140,  153,  125,  127,  140,  109,  111,  143,  127,  111,   79,
+      108,  123,   63 },
+};
+
+static const uint8_t INIT_SIG_CG_FLAG[3][2 * NUM_SIG_CG_FLAG_CTX] =
+{
+    { 121,  140,
+      61,  154, },
+    { 121,  140,
+      61,  154, },
+    {  91,  171,
+       134,  141, },
+};
+
+static const uint8_t INIT_SIG_FLAG[3][NUM_SIG_FLAG_CTX] =
+{
+    { 170,  154,  139,  153,  139,  123,  123,   63,  124,  166,  183,  140,  136,  153,  154,  166,  183,  140,  136,  153,  154,  166,  183,  140,  136,  153,  154,  170,  153,  138,  138,  122,  121,  122,  121,  167,  151,  183,  140,  151,  183,  140,  },
+    { 155,  154,  139,  153,  139,  123,  123,   63,  153,  166,  183,  140,  136,  153,  154,  166,  183,  140,  136,  153,  154,  166,  183,  140,  136,  153,  154,  170,  153,  123,  123,  107,  121,  107,  121,  167,  151,  183,  140,  151,  183,  140,  },
+    { 111,  111,  125,  110,  110,   94,  124,  108,  124,  107,  125,  141,  179,  153,  125,  107,  125,  141,  179,  153,  125,  107,  125,  141,  179,  153,  125,  140,  139,  182,  182,  152,  136,  152,  136,  153,  136,  139,  111,  136,  139,  111,  },
+};
+
+static const uint8_t INIT_ONE_FLAG[3][NUM_ONE_FLAG_CTX] =
+{
+    { 154,  196,  167,  167,  154,  152,  167,  182,  182,  134,  149,  136,  153,  121,  136,  122,  169,  208,  166,  167,  154,  152,  167,  182, },
+    { 154,  196,  196,  167,  154,  152,  167,  182,  182,  134,  149,  136,  153,  121,  136,  137,  169,  194,  166,  167,  154,  167,  137,  182, },
+    { 140,   92,  137,  138,  140,  152,  138,  139,  153,   74,  149,   92,  139,  107,  122,  152,  140,  179,  166,  182,  140,  227,  122,  197, },
+};
+
+static const uint8_t INIT_ABS_FLAG[3][NUM_ABS_FLAG_CTX] =
+{
+    { 107,  167,   91,  107,  107,  167, },
+    { 107,  167,   91,  122,  107,  167, },
+    { 138,  153,  136,  167,  152,  152, },
+};
+
+static const uint8_t INIT_MVP_IDX[3][NUM_MVP_IDX_CTX] =
+{
+    { 168 },
+    { 168 },
+    { CNU },
+};
+
+static const uint8_t INIT_SAO_MERGE_FLAG[3][NUM_SAO_MERGE_FLAG_CTX] =
+{
+    { 153,  },
+    { 153,  },
+    { 153,  },
+};
+
+static const uint8_t INIT_SAO_TYPE_IDX[3][NUM_SAO_TYPE_IDX_CTX] =
+{
+    { 160, },
+    { 185, },
+    { 200, },
+};
+
+static const uint8_t INIT_TRANS_SUBDIV_FLAG[3][NUM_TRANS_SUBDIV_FLAG_CTX] =
+{
+    { 224,  167,  122, },
+    { 124,  138,   94, },
+    { 153,  138,  138, },
+};
+
+static const uint8_t INIT_TRANSFORMSKIP_FLAG[3][2 * NUM_TRANSFORMSKIP_FLAG_CTX] =
+{
+    { 139,  139 },
+    { 139,  139 },
+    { 139,  139 },
+};
+
 Entropy::Entropy()
 {
     markValid();
@@ -306,7 +489,7 @@ void Entropy::codeScalingList(const ScalingList& scalingList)
 {
     for (int sizeId = 0; sizeId < ScalingList::NUM_SIZES; sizeId++)
     {
-        for (int listId = 0; listId < ScalingList::NUM_LISTS; listId++)
+        for (int listId = 0; listId < ScalingList::NUM_LISTS; listId += (sizeId == 3) ? 3 : 1)
         {
             int predList = scalingList.checkPredMode(sizeId, listId);
             WRITE_FLAG(predList < 0, "scaling_list_pred_mode_flag");
@@ -334,12 +517,7 @@ void Entropy::codeScalingList(const ScalingList& scalingList, uint32_t sizeId, u
     for (int i = 0; i < coefNum; i++)
     {
         data = src[scan[i]] - nextCoef;
-        nextCoef = src[scan[i]];
-        if (data > 127)
-            data = data - 256;
-        if (data < -128)
-            data = data + 256;
-
+        nextCoef = (nextCoef + data + 256) % 256;
         WRITE_SVLC(data,  "scaling_list_delta_coef");
     }
 }
@@ -726,15 +904,11 @@ void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t cu
     bool bSmallChroma = (log2CurSize - hChromaShift) < 2;
     if (!curDepth || !bSmallChroma)
     {
-        if (!curDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_U, curDepth - 1))
+        uint32_t parentIdx = absPartIdx & (0xFF << (log2CurSize + 1 - LOG2_UNIT_SIZE) * 2);
+        if (!curDepth || cu.getCbf(parentIdx, TEXT_CHROMA_U, curDepth - 1))
             codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_U, curDepth, !subdiv);
-        if (!curDepth || cu.getCbf(absPartIdx, TEXT_CHROMA_V, curDepth - 1))
+        if (!curDepth || cu.getCbf(parentIdx, TEXT_CHROMA_V, curDepth - 1))
             codeQtCbfChroma(cu, absPartIdx, TEXT_CHROMA_V, curDepth, !subdiv);
-    }
-    else
-    {
-        X265_CHECK(cu.getCbf(absPartIdx, TEXT_CHROMA_U, curDepth) == cu.getCbf(absPartIdx, TEXT_CHROMA_U, curDepth - 1), "chroma xform size match failure\n");
-        X265_CHECK(cu.getCbf(absPartIdx, TEXT_CHROMA_V, curDepth) == cu.getCbf(absPartIdx, TEXT_CHROMA_V, curDepth - 1), "chroma xform size match failure\n");
     }
 
     if (subdiv)
@@ -758,7 +932,7 @@ void Entropy::encodeTransform(const CUData& cu, uint32_t absPartIdx, uint32_t cu
         X265_CHECK(cu.getCbf(absPartIdxC, TEXT_LUMA, 0), "CBF should have been set\n");
     }
     else
-        codeQtCbfLuma(cu, absPartIdx, curDepth);
+        codeQtCbfLuma(cu.getCbf(absPartIdx, TEXT_LUMA, curDepth), curDepth);
 
     uint32_t cbfY = cu.getCbf(absPartIdx, TEXT_LUMA, curDepth);
     uint32_t cbfU = cu.getCbf(absPartIdxC, TEXT_CHROMA_U, curDepth);
@@ -879,7 +1053,7 @@ void Entropy::encodeTransformLuma(const CUData& cu, uint32_t absPartIdx, uint32_
         X265_CHECK(cu.getCbf(absPartIdx, TEXT_LUMA, 0), "CBF should have been set\n");
     }
     else
-        codeQtCbfLuma(cu, absPartIdx, curDepth);
+        codeQtCbfLuma(cu.getCbf(absPartIdx, TEXT_LUMA, curDepth), curDepth);
 
     uint32_t cbfY = cu.getCbf(absPartIdx, TEXT_LUMA, curDepth);
 
@@ -1005,10 +1179,10 @@ void Entropy::codeSaoOffset(const SaoCtuParam& ctuParam, int plane)
         enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
         if (typeIdx == SAO_BO)
         {
-            for (int i = 0; i < SAO_BO_LEN; i++)
+            for (int i = 0; i < SAO_NUM_OFFSET; i++)
                 codeSaoMaxUvlc(abs(ctuParam.offset[i]), OFFSET_THRESH - 1);
 
-            for (int i = 0; i < SAO_BO_LEN; i++)
+            for (int i = 0; i < SAO_NUM_OFFSET; i++)
                 if (ctuParam.offset[i] != 0)
                     encodeBinEP(ctuParam.offset[i] < 0);
 
@@ -1024,6 +1198,44 @@ void Entropy::codeSaoOffset(const SaoCtuParam& ctuParam, int plane)
                 encodeBinsEP((uint32_t)(typeIdx), 2);
         }
     }
+}
+
+void Entropy::codeSaoOffsetEO(int *offset, int typeIdx, int plane)
+{
+    if (plane != 2)
+    {
+        encodeBin(1, m_contextState[OFF_SAO_TYPE_IDX_CTX]);
+        encodeBinEP(1);
+    }
+
+    enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
+
+    codeSaoMaxUvlc(offset[0], OFFSET_THRESH - 1);
+    codeSaoMaxUvlc(offset[1], OFFSET_THRESH - 1);
+    codeSaoMaxUvlc(-offset[2], OFFSET_THRESH - 1);
+    codeSaoMaxUvlc(-offset[3], OFFSET_THRESH - 1);
+    if (plane != 2)
+        encodeBinsEP((uint32_t)(typeIdx), 2);
+}
+
+void Entropy::codeSaoOffsetBO(int *offset, int bandPos, int plane)
+{
+    if (plane != 2)
+    {
+        encodeBin(1, m_contextState[OFF_SAO_TYPE_IDX_CTX]);
+        encodeBinEP(0);
+    }
+
+    enum { OFFSET_THRESH = 1 << X265_MIN(X265_DEPTH - 5, 5) };
+
+    for (int i = 0; i < SAO_NUM_OFFSET; i++)
+        codeSaoMaxUvlc(abs(offset[i]), OFFSET_THRESH - 1);
+
+    for (int i = 0; i < SAO_NUM_OFFSET; i++)
+        if (offset[i] != 0)
+            encodeBinEP(offset[i] < 0);
+
+    encodeBinsEP(bandPos, 5);
 }
 
 /** initialize context model with respect to QP and initialization value */

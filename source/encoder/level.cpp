@@ -131,6 +131,14 @@ void determineLevel(const x265_param &param, VPS& vps)
         vps.ptl.levelIdc = Level::LEVEL8_5;
         vps.ptl.tierFlag = Level::MAIN;
     }
+    else if (param.uhdBluray)
+    {
+        i = 8;
+        vps.ptl.levelIdc = levels[i].levelEnum;
+        vps.ptl.tierFlag = Level::HIGH;
+        vps.ptl.minCrForLevel = levels[i].minCompressionRatio;
+        vps.ptl.maxLumaSrForLevel = levels[i].maxLumaSamplesPerSecond;
+    }
     else for (i = 0; i < NumLevels; i++)
     {
         if (lumaSamples > levels[i].maxLumaSamples)
@@ -145,8 +153,10 @@ void determineLevel(const x265_param &param, VPS& vps)
             continue;
         else if (param.sourceHeight > sqrt(levels[i].maxLumaSamples * 8.0f))
             continue;
-
+        else if (param.levelIdc && param.levelIdc != levels[i].levelIdc)
+            continue;
         uint32_t maxDpbSize = MaxDpbPicBuf;
+
         if (lumaSamples <= (levels[i].maxLumaSamples >> 2))
             maxDpbSize = X265_MIN(4 * MaxDpbPicBuf, 16);
         else if (lumaSamples <= (levels[i].maxLumaSamples >> 1))
@@ -188,7 +198,7 @@ void determineLevel(const x265_param &param, VPS& vps)
             CHECK_RANGE((uint32_t)param.rc.vbvBufferSize, levels[i].maxCpbSizeMain, levels[i].maxCpbSizeHigh))
         {
             /* The bitrate or buffer size are out of range for Main tier, but in
-             * range for High tier. If the user requested High tier then give
+             * range for High tier. If the user allowed High tier then give
              * them High tier at this level.  Otherwise allow the loop to
              * progress to the Main tier of the next level */
             if (param.bHighTier)
@@ -279,7 +289,7 @@ void determineLevel(const x265_param &param, VPS& vps)
 bool enforceLevel(x265_param& param, VPS& vps)
 {
     vps.numReorderPics = (param.bBPyramid && param.bframes > 1) ? 2 : !!param.bframes;
-    vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 2, (uint32_t)param.maxNumReferences) + vps.numReorderPics);
+    vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 2, (uint32_t)param.maxNumReferences) + 1);
 
     /* no level specified by user, just auto-detect from the configuration */
     if (param.levelIdc <= 0)
@@ -290,17 +300,14 @@ bool enforceLevel(x265_param& param, VPS& vps)
         level++;
     if (levels[level].levelIdc != param.levelIdc)
     {
-        x265_log(&param, X265_LOG_WARNING, "specified level %d does not exist\n", param.levelIdc);
+        x265_log(&param, X265_LOG_ERROR, "specified level %d does not exist\n", param.levelIdc);
         return false;
     }
 
     LevelSpec& l = levels[level];
-    bool highTier = !!param.bHighTier;
-    if (highTier && l.maxBitrateHigh == MAX_UINT)
-    {
-        highTier = false;
-        x265_log(&param, X265_LOG_WARNING, "Level %s has no High tier, using Main tier\n", l.name);
-    }
+
+    //highTier is allowed for this level and has not been explicitly disabled. This does not mean it is the final chosen tier
+    bool allowHighTier = l.maxBitrateHigh < MAX_UINT && param.bHighTier;
 
     uint32_t lumaSamples = param.sourceWidth * param.sourceHeight;
     uint32_t samplesPerSec = (uint32_t)(lumaSamples * ((double)param.fpsNum / param.fpsDenom));
@@ -313,47 +320,51 @@ bool enforceLevel(x265_param& param, VPS& vps)
         ok = false;
     if (!ok)
     {
-        x265_log(&param, X265_LOG_WARNING, "picture dimensions are out of range for specified level\n");
+        x265_log(&param, X265_LOG_ERROR, "picture dimensions are out of range for specified level\n");
         return false;
     }
     else if (samplesPerSec > l.maxLumaSamplesPerSecond)
     {
-        x265_log(&param, X265_LOG_WARNING, "frame rate is out of range for specified level\n");
+        x265_log(&param, X265_LOG_ERROR, "frame rate is out of range for specified level\n");
         return false;
     }
 
-    if ((uint32_t)param.rc.vbvMaxBitrate > (highTier ? l.maxBitrateHigh : l.maxBitrateMain))
+    /* Adjustments of Bitrate, VBV buffer size, refs will be triggered only if specified params do not fit 
+     * within the max limits of that level (high tier if allowed, main otherwise)
+     */
+
+    if ((uint32_t)param.rc.vbvMaxBitrate > (allowHighTier ? l.maxBitrateHigh : l.maxBitrateMain))
     {
-        param.rc.vbvMaxBitrate = highTier ? l.maxBitrateHigh : l.maxBitrateMain;
-        x265_log(&param, X265_LOG_INFO, "lowering VBV max bitrate to %dKbps\n", param.rc.vbvMaxBitrate);
+        param.rc.vbvMaxBitrate = allowHighTier ? l.maxBitrateHigh : l.maxBitrateMain;
+        x265_log(&param, X265_LOG_WARNING, "lowering VBV max bitrate to %dKbps\n", param.rc.vbvMaxBitrate);
     }
-    if ((uint32_t)param.rc.vbvBufferSize > (highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain))
+    if ((uint32_t)param.rc.vbvBufferSize > (allowHighTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain))
     {
-        param.rc.vbvBufferSize = highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain;
-        x265_log(&param, X265_LOG_INFO, "lowering VBV buffer size to %dKb\n", param.rc.vbvBufferSize);
+        param.rc.vbvBufferSize = allowHighTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain;
+        x265_log(&param, X265_LOG_WARNING, "lowering VBV buffer size to %dKb\n", param.rc.vbvBufferSize);
     }
 
     switch (param.rc.rateControlMode)
     {
     case X265_RC_ABR:
-        if ((uint32_t)param.rc.bitrate > (highTier ? l.maxBitrateHigh : l.maxBitrateMain))
+        if ((uint32_t)param.rc.bitrate > (allowHighTier ? l.maxBitrateHigh : l.maxBitrateMain))
         {
-            param.rc.bitrate = l.maxBitrateHigh;
-            x265_log(&param, X265_LOG_INFO, "lowering target bitrate to High tier limit of %dKbps\n", param.rc.bitrate);
+            param.rc.bitrate =  allowHighTier ? l.maxBitrateHigh : l.maxBitrateMain;
+            x265_log(&param, X265_LOG_WARNING, "lowering target bitrate to High tier limit of %dKbps\n", param.rc.bitrate);
         }
         break;
 
     case X265_RC_CQP:
-        x265_log(&param, X265_LOG_WARNING, "Constant QP is inconsistent with specifying a decoder level, no bitrate guarantee is possible.\n");
+        x265_log(&param, X265_LOG_ERROR, "Constant QP is inconsistent with specifying a decoder level, no bitrate guarantee is possible.\n");
         return false;
 
     case X265_RC_CRF:
         if (!param.rc.vbvBufferSize || !param.rc.vbvMaxBitrate)
         {
             if (!param.rc.vbvMaxBitrate)
-                param.rc.vbvMaxBitrate = highTier ? l.maxBitrateHigh : l.maxBitrateMain;
+                param.rc.vbvMaxBitrate = allowHighTier ? l.maxBitrateHigh : l.maxBitrateMain;
             if (!param.rc.vbvBufferSize)
-                param.rc.vbvBufferSize = highTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain;
+                param.rc.vbvBufferSize = allowHighTier ? l.maxCpbSizeHigh : l.maxCpbSizeMain;
             x265_log(&param, X265_LOG_WARNING, "Specifying a decoder level with constant rate factor rate-control requires\n");
             x265_log(&param, X265_LOG_WARNING, "enabling VBV with vbv-bufsize=%dkb vbv-maxrate=%dkbps. VBV outputs are non-deterministic!\n",
                      param.rc.vbvBufferSize, param.rc.vbvMaxBitrate);
@@ -368,27 +379,30 @@ bool enforceLevel(x265_param& param, VPS& vps)
     /* The value of sps_max_dec_pic_buffering_minus1[ HighestTid ] + 1 shall be less than or equal to MaxDpbSize */
     const uint32_t MaxDpbPicBuf = 6;
     uint32_t maxDpbSize = MaxDpbPicBuf;
-    if (lumaSamples <= (l.maxLumaSamples >> 2))
-        maxDpbSize = X265_MIN(4 * MaxDpbPicBuf, 16);
-    else if (lumaSamples <= (l.maxLumaSamples >> 1))
-        maxDpbSize = X265_MIN(2 * MaxDpbPicBuf, 16);
-    else if (lumaSamples <= ((3 * l.maxLumaSamples) >> 2))
-        maxDpbSize = X265_MIN((4 * MaxDpbPicBuf) / 3, 16);
+    if (!param.uhdBluray) /* Do not change MaxDpbPicBuf for UHD-Bluray */
+    {
+        if (lumaSamples <= (l.maxLumaSamples >> 2))
+            maxDpbSize = X265_MIN(4 * MaxDpbPicBuf, 16);
+        else if (lumaSamples <= (l.maxLumaSamples >> 1))
+            maxDpbSize = X265_MIN(2 * MaxDpbPicBuf, 16);
+        else if (lumaSamples <= ((3 * l.maxLumaSamples) >> 2))
+            maxDpbSize = X265_MIN((4 * MaxDpbPicBuf) / 3, 16);
+    }
 
     int savedRefCount = param.maxNumReferences;
     while (vps.maxDecPicBuffering > maxDpbSize && param.maxNumReferences > 1)
     {
         param.maxNumReferences--;
-        vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + vps.numReorderPics);
+        vps.maxDecPicBuffering = X265_MIN(MAX_NUM_REF, X265_MAX(vps.numReorderPics + 1, (uint32_t)param.maxNumReferences) + 1);
     }
     if (param.maxNumReferences != savedRefCount)
-        x265_log(&param, X265_LOG_INFO, "Lowering max references to %d to meet level requirement\n", param.maxNumReferences);
+        x265_log(&param, X265_LOG_WARNING, "Lowering max references to %d to meet level requirement\n", param.maxNumReferences);
 
     /* For level 5 and higher levels, the value of CtbSizeY shall be equal to 32 or 64 */
     if (param.levelIdc >= 50 && param.maxCUSize < 32)
     {
         param.maxCUSize = 32;
-        x265_log(&param, X265_LOG_INFO, "Levels 5.0 and above require a maximum CTU size of at least 32, using --ctu 32\n");
+        x265_log(&param, X265_LOG_WARNING, "Levels 5.0 and above require a maximum CTU size of at least 32, using --ctu 32\n");
     }
 
     /* The value of NumPocTotalCurr shall be less than or equal to 8 */
@@ -396,7 +410,7 @@ bool enforceLevel(x265_param& param, VPS& vps)
     if (numPocTotalCurr > 8)
     {
         param.maxNumReferences = 8 - !!param.bframes;
-        x265_log(&param, X265_LOG_INFO, "Lowering max references to %d to meet numPocTotalCurr requirement\n", param.maxNumReferences);
+        x265_log(&param, X265_LOG_WARNING, "Lowering max references to %d to meet numPocTotalCurr requirement\n", param.maxNumReferences);
     }
 
     return true;

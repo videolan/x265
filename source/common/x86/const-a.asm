@@ -40,12 +40,16 @@ const pb_4,                 times 32 db 4
 const pb_8,                 times 32 db 8
 const pb_15,                times 32 db 15
 const pb_16,                times 32 db 16
+const pb_31,                times 32 db 31
 const pb_32,                times 32 db 32
 const pb_64,                times 32 db 64
+const pb_124,               times 32 db 124
 const pb_128,               times 32 db 128
 const pb_a1,                times 16 db 0xa1
 
 const pb_01,                times  8 db   0,   1
+const pb_0123,              times  4 db   0,   1
+                            times  4 db   2,   3
 const hsub_mul,             times 16 db   1,  -1
 const pw_swap,              times  2 db   6,   7,   4,   5,   2,   3,   0,   1
 const pb_unpackbd1,         times  2 db   0,   0,   0,   0,   1,   1,   1,   1,   2,   2,   2,   2,   3,   3,   3,   3
@@ -64,6 +68,8 @@ const pb_0000000000000F0F,  times  2 db 0xff, 0x00
                             times 12 db 0x00
 const pb_000000000000000F,           db 0xff
                             times 15 db 0x00
+const pb_shuf_off4,         times  2 db   0,   4,   1,   5,   2,   6,   3,   7
+const pw_shuf_off4,         times  1 db   0,   1,   8,   9,   2,   3,  10,  11,   4,   5,  12,  13,   6,   7,  14,  15
 
 ;; 16-bit constants
 
@@ -115,6 +121,8 @@ const pw_FFFFFFFFFFFFFFF0,           dw 0x00
 const hmul_16p,             times 16 db   1
                             times  8 db   1,  -1
 const pw_exp2_0_15,                  dw 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768
+const pw_1_ffff,            times  4 dw 1
+                            times  4 dw 0xFFFF
 
 
 ;; 32-bit constants
@@ -146,10 +154,6 @@ const pd_planar32_mul2,     times  1 dd  17,  18,  19,  20,  21,  22,  23,  24, 
 const pd_planar16_mul2,     times  1 dd  15,  14,  13,  12,  11,  10,   9,   8,    7,   6,   5,   4,   3,   2,   1,   0
 const trans8_shuf,          times  1 dd   0,   4,   1,   5,   2,   6,   3,   7
 
-const popcnt_table
-%assign x 0
-%rep 256
-; population count
-db ((x>>0)&1)+((x>>1)&1)+((x>>2)&1)+((x>>3)&1)+((x>>4)&1)+((x>>5)&1)+((x>>6)&1)+((x>>7)&1)
-%assign x x+1
-%endrep
+;; 64-bit constants
+
+const pq_1,                 times 1 dq 1

@@ -116,6 +116,7 @@ tab_LumaCoeff:    dw   0, 0,  0,  64,  0,   0,  0,  0
                   dw  -1, 4, -11, 40,  40, -11, 4, -1
                   dw   0, 1, -5,  17,  58, -10, 4, -1
 
+ALIGN 32
 tab_LumaCoeffV:   times 4 dw 0, 0
                   times 4 dw 0, 64
                   times 4 dw 0, 0
@@ -161,9 +162,8 @@ const interp8_hps_shuf,     dd 0, 4, 1, 5, 2, 6, 3, 7
 const interp8_hpp_shuf,     db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
                             db 4, 5, 6, 7, 8, 9, 10, 11, 6, 7, 8, 9, 10, 11, 12, 13
 
-const pb_shuf,  db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
-                db 4, 5, 6, 7, 8, 9, 10, 11, 6, 7, 8, 9, 10, 11, 12, 13
-
+const interp8_hpp_shuf_new, db 0, 1, 2, 3, 2, 3, 4, 5, 4, 5, 6, 7, 6, 7, 8, 9
+                            db 4, 5, 6, 7, 6, 7, 8, 9, 8, 9, 10, 11, 10, 11, 12, 13
 
 SECTION .text
 cextern pd_8
@@ -10407,7 +10407,7 @@ cglobal interp_8tap_horiz_ps_8x%1, 4, 6, 8
     vpbroadcastq        m0, [tab_LumaCoeff + r4]
     vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -10475,7 +10475,7 @@ cglobal interp_8tap_horiz_ps_24x32, 4, 6, 8
     vpbroadcastq        m0, [tab_LumaCoeff + r4]
     vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -10536,16 +10536,16 @@ cglobal interp_8tap_horiz_ps_%1x%2, 4, 6, 8
     add                 r3d, r3d
     mov                 r4d, r4m
     mov                 r5d, r5m
-    shl                 r4d, 4
+    shl                 r4d, 6
 %ifdef PIC
-    lea                 r6, [tab_LumaCoeff]
-    vpbroadcastq        m0, [r6 + r4]
-    vpbroadcastq        m1, [r6 + r4 + 8]
+    lea                 r6, [tab_LumaCoeffV]
+    movu                m0, [r6 + r4]
+    movu                m1, [r6 + r4 + mmsize]
 %else
-    vpbroadcastq        m0, [tab_LumaCoeff + r4]
-    vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
+    movu                m0, [tab_LumaCoeffV + r4]
+    movu                m1, [tab_LumaCoeffV + r4 + mmsize]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf_new]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -10554,7 +10554,7 @@ cglobal interp_8tap_horiz_ps_%1x%2, 4, 6, 8
     sub                 r0, 6
     test                r5d, r5d
     mov                 r4d, %2
-    jz                  .loop0
+    jz                 .loop0
     lea                 r6, [r1*3]
     sub                 r0, r6
     add                 r4d, 7
@@ -10563,64 +10563,64 @@ cglobal interp_8tap_horiz_ps_%1x%2, 4, 6, 8
 %assign x 0
 %rep %1/16
     vbroadcasti128      m4, [r0 + x]
-    vbroadcasti128      m5, [r0 + 8 + x]
+    vbroadcasti128      m5, [r0 + 4 * SIZEOF_PIXEL + x]
     pshufb              m4, m3
-    pshufb              m7, m5, m3
+    pshufb              m5, m3
 
     pmaddwd             m4, m0
-    pmaddwd             m7, m1
+    pmaddwd             m7, m5, m1
     paddd               m4, m7
+    vextracti128        xm7, m4, 1
+    paddd               xm4, xm7
+    paddd               xm4, xm2
+    psrad               xm4, INTERP_SHIFT_PS
 
     vbroadcasti128      m6, [r0 + 16 + x]
-    pshufb              m5, m3
-    pshufb              m7, m6, m3
+    pshufb              m6, m3
 
     pmaddwd             m5, m0
-    pmaddwd             m7, m1
+    pmaddwd             m7, m6, m1
     paddd               m5, m7
-
-    phaddd              m4, m5
-    vpermq              m4, m4, q3120
-    paddd               m4, m2
-    vextracti128        xm5,m4, 1
-    psrad               xm4, INTERP_SHIFT_PS
+    vextracti128        xm7, m5, 1
+    paddd               xm5, xm7
+    paddd               xm5, xm2
     psrad               xm5, INTERP_SHIFT_PS
-    packssdw            xm4, xm5
 
+    packssdw            xm4, xm5
     movu                [r2 + x], xm4
 
     vbroadcasti128      m5, [r0 + 24 + x]
-    pshufb              m6, m3
-    pshufb              m7, m5, m3
+    pshufb              m5, m3
 
     pmaddwd             m6, m0
-    pmaddwd             m7, m1
+    pmaddwd             m7, m5, m1
     paddd               m6, m7
+    vextracti128        xm7, m6, 1
+    paddd               xm6, xm7
+    paddd               xm6, xm2
+    psrad               xm6, INTERP_SHIFT_PS
 
     vbroadcasti128      m7, [r0 + 32 + x]
-    pshufb              m5, m3
     pshufb              m7, m3
 
     pmaddwd             m5, m0
     pmaddwd             m7, m1
     paddd               m5, m7
-
-    phaddd              m6, m5
-    vpermq              m6, m6, q3120
-    paddd               m6, m2
-    vextracti128        xm5,m6, 1
-    psrad               xm6, INTERP_SHIFT_PS
+    vextracti128        xm7, m5, 1
+    paddd               xm5, xm7
+    paddd               xm5, xm2
     psrad               xm5, INTERP_SHIFT_PS
-    packssdw            xm6, xm5
 
+    packssdw            xm6, xm5
     movu                [r2 + 16 + x], xm6
-    %assign x x+32
-    %endrep
+
+%assign x x+32
+%endrep
 
     add                 r2, r3
     add                 r0, r1
     dec                 r4d
-    jnz                 .loop0
+    jnz                .loop0
     RET
 %endif
 %endmacro
@@ -10656,7 +10656,7 @@ cglobal interp_8tap_horiz_ps_16x%1, 4, 6, 8
     vpbroadcastq        m0, [tab_LumaCoeff + r4]
     vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -10749,7 +10749,7 @@ cglobal interp_8tap_horiz_ps_12x16, 4, 6, 8
     vpbroadcastq        m0, [tab_LumaCoeff + r4]
     vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -10824,7 +10824,7 @@ cglobal interp_4tap_horiz_ps_8x%1, 4, 7, 6
 %else
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -10883,7 +10883,7 @@ cglobal interp_4tap_horiz_ps_16x%1, 4, 7, 6
 %else
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -10956,7 +10956,7 @@ cglobal interp_4tap_horiz_ps_24x%1, 4, 7, 6
 %else
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -11038,7 +11038,7 @@ cglobal interp_4tap_horiz_ps_12x%1, 4, 7, 6
 %else
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -11103,7 +11103,7 @@ cglobal interp_4tap_horiz_ps_32x%1, 4, 7, 6
 %else
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -11204,7 +11204,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4, 7, 6
 %else
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -11357,7 +11357,7 @@ cglobal interp_4tap_horiz_ps_48x64, 4, 7, 6
 %else
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map
@@ -11477,7 +11477,7 @@ cglobal interp_4tap_horiz_ps_6x%1, 4, 7, 6
 %else
     vpbroadcastq        m0, [tab_ChromaCoeff + r4 * 8]
 %endif
-    mova                m3, [pb_shuf]
+    mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
 
     ; register map

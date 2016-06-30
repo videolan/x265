@@ -73,7 +73,6 @@ public:
     };
 
     ShortYuv  m_predShortYuv[2]; /* temporary storage for weighted prediction */
-    int16_t*  m_immedVals;
 
     // Unfiltered/filtered neighbours of the current partition.
     pixel     intraNeighbourBuf[2][258];

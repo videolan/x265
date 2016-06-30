@@ -28,6 +28,10 @@
 
 #include <new>
 
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7
+#include <winnt.h>
+#endif
+
 #if X86_64
 
 #ifdef __GNUC__
@@ -62,6 +66,21 @@
 #endif
 #if defined(_MSC_VER)
 # define strcasecmp _stricmp
+#endif
+
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7
+const uint64_t m1 = 0x5555555555555555; //binary: 0101...
+const uint64_t m2 = 0x3333333333333333; //binary: 00110011..
+const uint64_t m3 = 0x0f0f0f0f0f0f0f0f; //binary:  4 zeros,  4 ones ...
+const uint64_t h01 = 0x0101010101010101; //the sum of 256 to the power of 0,1,2,3...
+
+static int popCount(uint64_t x)
+{
+    x -= (x >> 1) & m1;
+    x = (x & m2) + ((x >> 2) & m2);
+    x = (x + (x >> 4)) & m3;
+    return (x * h01) >> 56;
+}
 #endif
 
 namespace X265_NS {
@@ -238,7 +257,6 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
     memset(nodeMaskPerPool, 0, sizeof(nodeMaskPerPool));
 
     int numNumaNodes = X265_MIN(getNumaNodeCount(), MAX_NODE_NUM);
-    int cpuCount = getCpuCount();
     bool bNumaSupport = false;
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
@@ -248,26 +266,54 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
 #endif
 
 
-    for (int i = 0; i < cpuCount; i++)
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7
+    PGROUP_AFFINITY groupAffinityPointer = new GROUP_AFFINITY;
+    for (int i = 0; i < numNumaNodes; i++)
     {
-#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
-        UCHAR node;
-        if (GetNumaProcessorNode((UCHAR)i, &node))
-            cpusPerNode[X265_MIN(node, (UCHAR)MAX_NODE_NUM)]++;
-        else
-#elif HAVE_LIBNUMA
-        if (bNumaSupport >= 0)
-            cpusPerNode[X265_MIN(numa_node_of_cpu(i), MAX_NODE_NUM)]++;
-        else
-#endif
-            cpusPerNode[0]++;
+        GetNumaNodeProcessorMaskEx((UCHAR)i, groupAffinityPointer);
+        cpusPerNode[i] = popCount(groupAffinityPointer->Mask);
     }
+    delete groupAffinityPointer;
+#elif HAVE_LIBNUMA
+    if (bNumaSupport)
+    {
+        struct bitmask* bitMask = numa_allocate_cpumask();
+        for (int i = 0; i < numNumaNodes; i++)
+        {
+            int ret = numa_node_to_cpus(i, bitMask);
+            if (!ret)
+                cpusPerNode[i] = numa_bitmask_weight(bitMask);
+            else
+                x265_log(p, X265_LOG_ERROR, "Failed to genrate CPU mask\n");
+        }
+        numa_free_cpumask(bitMask);
+    }
+#else // NUMA not supported
+    cpusPerNode[0] = getCpuCount();
+#endif
 
     if (bNumaSupport && p->logLevel >= X265_LOG_DEBUG)
-        for (int i = 0; i < numNumaNodes; i++)
-            x265_log(p, X265_LOG_DEBUG, "detected NUMA node %d with %d logical cores\n", i, cpusPerNode[i]);
-
-    /* limit threads based on param->numaPools */
+    for (int i = 0; i < numNumaNodes; i++)
+        x265_log(p, X265_LOG_DEBUG, "detected NUMA node %d with %d logical cores\n", i, cpusPerNode[i]);
+    /* limit threads based on param->numaPools
+     * For windows because threads can't be allocated to live across sockets
+     * changing the default behavior to be per-socket pools -- FIXME */
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7
+     if (!p->numaPools)
+     {
+         char poolString[50] = "";
+         for (int i = 0; i < numNumaNodes; i++)
+         {
+             char nextCount[10] = "";
+             if (i)
+                 sprintf(nextCount, ",%d", cpusPerNode[i]);
+             else
+                   sprintf(nextCount, "%d", cpusPerNode[i]);
+             strcat(poolString, nextCount);
+         }
+         x265_param_parse(p, "pools", poolString);
+     }
+#endif
     if (p->numaPools && *p->numaPools)
     {
         const char *nodeStr = p->numaPools;
@@ -280,7 +326,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
             }
             else if (*nodeStr == '-')
                 threadsPerPool[i] = 0;
-			else if (*nodeStr == '*' || !strcasecmp(nodeStr, "NULL"))
+            else if (*nodeStr == '*' || !strcasecmp(nodeStr, "NULL"))
             {
                 for (int j = i; j < numNumaNodes; j++)
                 {
@@ -297,8 +343,16 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
             else
             {
                 int count = atoi(nodeStr);
-                threadsPerPool[i] = X265_MIN(count, cpusPerNode[i]);
-                nodeMaskPerPool[i] = ((uint64_t)1 << i);
+                if (i > 0 || strchr(nodeStr, ','))   // it is comma -> old logic
+                {
+                    threadsPerPool[i] = X265_MIN(count, cpusPerNode[i]);
+                    nodeMaskPerPool[i] = ((uint64_t)1 << i);
+                }
+                else                                 // new logic: exactly 'count' threads on all NUMAs
+                {
+                    threadsPerPool[numNumaNodes] = X265_MIN(count, numNumaNodes * MAX_POOL_THREADS);
+                    nodeMaskPerPool[numNumaNodes] = ((uint64_t)-1 >> (64 - numNumaNodes));
+                }
             }
 
             /* consume current node string, comma, and white-space */
@@ -389,16 +443,15 @@ bool ThreadPool::create(int numThreads, int maxProviders, uint64_t nodeMask)
     X265_CHECK(numThreads <= MAX_POOL_THREADS, "a single thread pool cannot have more than MAX_POOL_THREADS threads\n");
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
-    m_winCpuMask = 0x0;
-    GROUP_AFFINITY groupAffinity;
+    memset(&m_groupAffinity, 0, sizeof(GROUP_AFFINITY));
     for (int i = 0; i < getNumaNodeCount(); i++)
     {
         int numaNode = ((nodeMask >> i) & 0x1U) ? i : -1;
         if (numaNode != -1)
-            if (GetNumaNodeProcessorMaskEx((USHORT)numaNode, &groupAffinity))
-                m_winCpuMask |= groupAffinity.Mask;
+        if (GetNumaNodeProcessorMaskEx((USHORT)numaNode, &m_groupAffinity))
+            break;
     }
-    m_numaMask = &m_winCpuMask;
+    m_numaMask = &m_groupAffinity.Mask;
 #elif HAVE_LIBNUMA
     if (numa_available() >= 0)
     {
@@ -480,11 +533,16 @@ void ThreadPool::setCurrentThreadAffinity()
     setThreadNodeAffinity(m_numaMask);
 }
 
-/* static */
 void ThreadPool::setThreadNodeAffinity(void *numaMask)
 {
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7 
-    if (SetThreadAffinityMask(GetCurrentThread(), *((DWORD_PTR*)numaMask)))
+    UNREFERENCED_PARAMETER(numaMask);
+    GROUP_AFFINITY groupAffinity;
+    memset(&groupAffinity, 0, sizeof(GROUP_AFFINITY));
+    groupAffinity.Group = m_groupAffinity.Group;
+    groupAffinity.Mask = m_groupAffinity.Mask;
+    const PGROUP_AFFINITY affinityPointer = &groupAffinity;
+    if (SetThreadGroupAffinity(GetCurrentThread(), affinityPointer, NULL))
         return;
     else
         x265_log(NULL, X265_LOG_ERROR, "unable to set thread affinity for NUMA node mask\n");
@@ -524,10 +582,25 @@ int ThreadPool::getNumaNodeCount()
 /* static */
 int ThreadPool::getCpuCount()
 {
-#if _WIN32
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7
+    enum { MAX_NODE_NUM = 127 };
+    int cpus = 0;
+    int numNumaNodes = X265_MIN(getNumaNodeCount(), MAX_NODE_NUM);
+    GROUP_AFFINITY groupAffinity;
+    for (int i = 0; i < numNumaNodes; i++)
+    {
+        GetNumaNodeProcessorMaskEx((UCHAR)i, &groupAffinity);
+        cpus += popCount(groupAffinity.Mask);
+    }
+    return cpus;
+#elif _WIN32
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
     return sysinfo.dwNumberOfProcessors;
+#elif __unix__ && X265_ARCH_ARM
+    /* Return the number of processors configured by OS. Because, most embedded linux distributions
+     * uses only one processor as the scheduler doesn't have enough work to utilize all processors */
+    return sysconf(_SC_NPROCESSORS_CONF);
 #elif __unix__
     return sysconf(_SC_NPROCESSORS_ONLN);
 #elif MACOS

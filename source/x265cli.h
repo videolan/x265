@@ -53,6 +53,7 @@ static const struct option long_options[] =
     { "profile",        required_argument, NULL, 'P' },
     { "level-idc",      required_argument, NULL, 0 },
     { "high-tier",            no_argument, NULL, 0 },
+    { "uhd-bd",               no_argument, NULL, 0 },
     { "no-high-tier",         no_argument, NULL, 0 },
     { "allow-non-conformance",no_argument, NULL, 0 },
     { "no-allow-non-conformance",no_argument, NULL, 0 },
@@ -96,6 +97,8 @@ static const struct option long_options[] =
     { "amp",                  no_argument, NULL, 0 },
     { "no-early-skip",        no_argument, NULL, 0 },
     { "early-skip",           no_argument, NULL, 0 },
+    { "no-rskip",             no_argument, NULL, 0 },
+    { "rskip",                no_argument, NULL, 0 },
     { "no-fast-cbf",          no_argument, NULL, 0 },
     { "fast-cbf",             no_argument, NULL, 0 },
     { "no-tskip",             no_argument, NULL, 0 },
@@ -143,6 +146,8 @@ static const struct option long_options[] =
     { "qp",             required_argument, NULL, 'q' },
     { "aq-mode",        required_argument, NULL, 0 },
     { "aq-strength",    required_argument, NULL, 0 },
+    { "rc-grain",             no_argument, NULL, 0 },
+    { "no-rc-grain",          no_argument, NULL, 0 },
     { "ipratio",        required_argument, NULL, 0 },
     { "pbratio",        required_argument, NULL, 0 },
     { "qcomp",          required_argument, NULL, 0 },
@@ -159,6 +164,8 @@ static const struct option long_options[] =
     { "psy-rdoq",       required_argument, NULL, 0 },
     { "no-psy-rd",            no_argument, NULL, 0 },
     { "no-psy-rdoq",          no_argument, NULL, 0 },
+    { "rd-refine",            no_argument, NULL, 0 },
+    { "no-rd-refine",         no_argument, NULL, 0 },
     { "scaling-list",   required_argument, NULL, 0 },
     { "lossless",             no_argument, NULL, 0 },
     { "no-lossless",          no_argument, NULL, 0 },
@@ -279,6 +286,7 @@ static void showHelp(x265_param *param)
     H0("-P/--profile <string>            Enforce an encode profile: main, main10, mainstillpicture\n");
     H0("   --level-idc <integer|float>   Force a minimum required decoder level (as '5.0' or '50')\n");
     H0("   --[no-]high-tier              If a decoder level is specified, this modifier selects High tier of that level\n");
+    H0("   --uhd-bd                      Enable UHD Bluray compatibility support\n");
     H0("   --[no-]allow-non-conformance  Allow the encoder to generate profile NONE bitstreams. Default %s\n", OPT(param->bAllowNonConformance));
     H0("\nThreading, performance:\n");
     H0("   --pools <integer,...>         Comma separated thread count per thread pool (pool per NUMA node)\n");
@@ -300,11 +308,13 @@ static void showHelp(x265_param *param)
     H0("   --tu-intra-depth <integer>    Max TU recursive depth for intra CUs. Default %d\n", param->tuQTMaxIntraDepth);
     H0("   --tu-inter-depth <integer>    Max TU recursive depth for inter CUs. Default %d\n", param->tuQTMaxInterDepth);
     H0("\nAnalysis:\n");
-    H0("   --rd <0..6>                   Level of RDO in mode decision 0:least....6:full RDO. Default %d\n", param->rdLevel);
+    H0("   --rd <1..6>                   Level of RDO in mode decision 1:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --[no-]psy-rd <0..5.0>        Strength of psycho-visual rate distortion optimization, 0 to disable. Default %.1f\n", param->psyRd);
     H0("   --[no-]rdoq-level <0|1|2>     Level of RDO in quantization 0:none, 1:levels, 2:levels & coding groups. Default %d\n", param->rdoqLevel);
     H0("   --[no-]psy-rdoq <0..50.0>     Strength of psycho-visual optimization in RDO quantization, 0 to disable. Default %.1f\n", param->psyRdoq);
+    H0("   --[no-]rd-refine              Enable QP based RD refinement for rd levels 5 and 6. Default %s\n", OPT(param->bEnableRdRefine));
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
+    H0("   --[no-]rskip                  Enable early exit from recursion. Default %s\n", OPT(param->bEnableRecursionSkip));
     H1("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
     H1("   --nr-intra <integer>          An integer value in range of 0 to 2000, which denotes strength of noise reduction in intra CUs. Default 0\n");
     H1("   --nr-inter <integer>          An integer value in range of 0 to 2000, which denotes strength of noise reduction in inter CUs. Default 0\n");
@@ -373,6 +383,7 @@ static void showHelp(x265_param *param)
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
     H0("   --qg-size <int>               Specifies the size of the quantization group (64, 32, 16). Default %d\n", param->rc.qgSize);
     H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
+    H0("   --[no-]rc-grain               Enable ratecontrol mode to handle grains specifically. turned on with tune grain. Default %s\n", OPT(param->rc.bEnableGrain));
     H1("   --ipratio <float>             QP factor between I and P. Default %.2f\n", param->rc.ipFactor);
     H1("   --pbratio <float>             QP factor between P and B. Default %.2f\n", param->rc.pbFactor);
     H1("   --qcomp <float>               Weight given to predicted complexity. Default %.2f\n", param->rc.qCompress);

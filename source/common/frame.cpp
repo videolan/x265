@@ -42,12 +42,14 @@ Frame::Frame()
     m_prev = NULL;
     m_param = NULL;
     memset(&m_lowres, 0, sizeof(m_lowres));
+    m_rcData = NULL;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
 {
     m_fencPic = new PicYuv;
     m_param = param;
+    CHECKED_MALLOC_ZERO(m_rcData, RcStats, 1);
 
     if (m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
         m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode))
@@ -64,14 +66,17 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         return true;
     }
     return false;
+fail:
+    return false;
 }
 
 bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
 {
     m_encData = new FrameData;
     m_reconPic = new PicYuv;
+    m_param = param;
     m_encData->m_reconPic = m_reconPic;
-    bool ok = m_encData->create(*param, sps) && m_reconPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
+    bool ok = m_encData->create(*param, sps, m_fencPic->m_picCsp) && m_reconPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
     if (ok)
     {
         /* initialize right border of m_reconpicYuv as SAO may read beyond the
@@ -139,4 +144,5 @@ void Frame::destroy()
     }
 
     m_lowres.destroy();
+    X265_FREE(m_rcData);
 }

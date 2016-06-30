@@ -68,7 +68,7 @@ int MotionReference::init(PicYuv* recPic, WeightParam *wp, const x265_param& p)
         intptr_t stride = reconPic->m_stride;
         int cuHeight = g_maxCUSize;
 
-        for (int c = 0; c < (p.internalCsp != X265_CSP_I400 ? numInterpPlanes : 1); c++)
+        for (int c = 0; c < (p.internalCsp != X265_CSP_I400 && recPic->m_picCsp != X265_CSP_I400 ? numInterpPlanes : 1); c++)
         {
             if (c == 1)
             {

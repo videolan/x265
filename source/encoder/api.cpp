@@ -166,15 +166,20 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
 
     x265_param save;
     Encoder* encoder = static_cast<Encoder*>(enc);
+    if (encoder->m_reconfigure) /* Reconfigure in progress */
+        return 1;
     memcpy(&save, encoder->m_latestParam, sizeof(x265_param));
     int ret = encoder->reconfigureParam(encoder->m_latestParam, param_in);
     if (ret)
+    {
         /* reconfigure failed, recover saved param set */
         memcpy(encoder->m_latestParam, &save, sizeof(x265_param));
+        ret = -1;
+    }
     else
     {
-        encoder->m_reconfigured = true;
-        x265_print_reconfigured_params(&save, encoder->m_latestParam);
+        encoder->m_reconfigure = true;
+        encoder->printReconfigureParams();
     }
     return ret;
 }

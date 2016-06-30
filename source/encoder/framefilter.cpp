@@ -54,7 +54,7 @@ void FrameFilter::destroy()
 
 void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t numCols)
 {
-    m_param = top->m_param;
+    m_param = frame->m_param;
     m_frameEncoder = frame;
     m_numRows = numRows;
     m_numCols = numCols;
@@ -103,7 +103,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
 
 }
 
-void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
+void FrameFilter::start(Frame *frame, Entropy& initState)
 {
     m_frame = frame;
 
@@ -113,7 +113,7 @@ void FrameFilter::start(Frame *frame, Entropy& initState, int qp)
         for(int row = 0; row < m_numRows; row++)
         {
             if (m_param->bEnableSAO)
-                m_parallelFilter[row].m_sao.startSlice(frame, initState, qp);
+                m_parallelFilter[row].m_sao.startSlice(frame, initState);
 
             m_parallelFilter[row].m_lastCol.set(0);
             m_parallelFilter[row].m_allowedCol.set(0);
@@ -198,14 +198,14 @@ void FrameFilter::ParallelFilter::copySaoAboveRef(PicYuv* reconPic, uint32_t cuA
     }
 }
 
-void FrameFilter::ParallelFilter::processSaoUnitCu(SAOParam *saoParam, int col)
+void FrameFilter::ParallelFilter::processSaoCTU(SAOParam *saoParam, int col)
 {
     // TODO: apply SAO on CU and copy back soon, is it necessary?
     if (saoParam->bSaoFlag[0])
-        m_sao.processSaoUnitCuLuma(saoParam->ctuParam[0], m_row, col);
+        m_sao.generateLumaOffsets(saoParam->ctuParam[0], m_row, col);
 
     if (saoParam->bSaoFlag[1])
-        m_sao.processSaoUnitCuChroma(saoParam->ctuParam, m_row, col);
+        m_sao.generateChromaOffsets(saoParam->ctuParam, m_row, col);
 
     if (m_encData->m_slice->m_pps->bTransquantBypassEnabled)
     {
@@ -320,11 +320,14 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
     const uint32_t* ctuGeomMap = m_frameFilter->m_frameEncoder->m_ctuGeomMap;
     PicYuv* reconPic = m_encData->m_reconPic;
     const int colStart = m_lastCol.get();
-    // TODO: Waiting previous row finish or simple clip on it?
-    const int colEnd = m_allowedCol.get();
     const int numCols = m_frameFilter->m_numCols;
+    // TODO: Waiting previous row finish or simple clip on it?
+    int colEnd = m_allowedCol.get();
 
     // Avoid threading conflict
+    if (m_prevRow && colEnd > m_prevRow->m_lastDeblocked.get())
+        colEnd = m_prevRow->m_lastDeblocked.get();
+
     if (colStart >= colEnd)
         return;
 
@@ -368,7 +371,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
                 if (m_row >= 1 && col >= 3)
                 {
                     // Must delay 1 row to avoid thread data race conflict
-                    m_prevRow->processSaoUnitCu(saoParam, col - 3);
+                    m_prevRow->processSaoCTU(saoParam, col - 3);
                     m_prevRow->processPostCu(col - 3);
                 }
             }
@@ -409,19 +412,19 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
             // Process Previous Rows SAO CU
             if (m_row >= 1 && numCols >= 3)
             {
-                m_prevRow->processSaoUnitCu(saoParam, numCols - 3);
+                m_prevRow->processSaoCTU(saoParam, numCols - 3);
                 m_prevRow->processPostCu(numCols - 3);
             }
 
             if (m_row >= 1 && numCols >= 2)
             {
-                m_prevRow->processSaoUnitCu(saoParam, numCols - 2);
+                m_prevRow->processSaoCTU(saoParam, numCols - 2);
                 m_prevRow->processPostCu(numCols - 2);
             }
 
             if (m_row >= 1 && numCols >= 1)
             {
-                m_prevRow->processSaoUnitCu(saoParam, numCols - 1);
+                m_prevRow->processSaoCTU(saoParam, numCols - 1);
                 m_prevRow->processPostCu(numCols - 1);
             }
 
@@ -475,7 +478,7 @@ void FrameFilter::processRow(int row)
                 for(int col = 0; col < m_numCols; col++)
                 {
                     // NOTE: must use processSaoUnitCu(), it include TQBypass logic
-                    m_parallelFilter[row].processSaoUnitCu(saoParam, col);
+                    m_parallelFilter[row].processSaoCTU(saoParam, col);
                 }
             }
 
@@ -550,10 +553,10 @@ void FrameFilter::processPostRow(int row)
         pixel *fenc = m_frame->m_fencPic->m_picOrg[0];
         intptr_t stride1 = reconPic->m_stride;
         intptr_t stride2 = m_frame->m_fencPic->m_stride;
-        uint32_t bEnd = ((row + 1) == (this->m_numRows - 1));
+        uint32_t bEnd = ((row) == (this->m_numRows - 1));
         uint32_t bStart = (row == 0);
         uint32_t minPixY = row * g_maxCUSize - 4 * !bStart;
-        uint32_t maxPixY = (row + 1) * g_maxCUSize - 4 * !bEnd;
+        uint32_t maxPixY = X265_MIN((row + 1) * g_maxCUSize - 4 * !bEnd, (uint32_t)m_param->sourceHeight);
         uint32_t ssim_cnt;
         x265_emms();
 
@@ -723,7 +726,7 @@ static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t 
         {
             std::swap(sum0, sum1);
             for (uint32_t x = 0; x < width; x += 2)
-                primitives.ssim_4x4x2_core(&pix1[(4 * x + (z * stride1))], stride1, &pix2[(4 * x + (z * stride2))], stride2, &sum0[x]);
+                primitives.ssim_4x4x2_core(&pix1[4 * (x + (z * stride1))], stride1, &pix2[4 * (x + (z * stride2))], stride2, &sum0[x]);
         }
 
         for (uint32_t x = 0; x < width - 1; x += 4)

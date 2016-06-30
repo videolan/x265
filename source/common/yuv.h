@@ -73,7 +73,7 @@ public:
     void   copyPartToYuv(Yuv& dstYuv, uint32_t absPartIdx) const;
 
     // Clip(srcYuv0 + srcYuv1) -> m_buf .. aka recon = clip(pred + residual)
-    void   addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2SizeL);
+    void   addClip(const Yuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t log2SizeL, int picCsp);
 
     // (srcYuv0 + srcYuv1)/2 for YUV partition (bidir averaging)
     void   addAvg(const ShortYuv& srcYuv0, const ShortYuv& srcYuv1, uint32_t absPartIdx, uint32_t width, uint32_t height, bool bLuma, bool bChroma);

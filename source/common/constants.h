@@ -96,8 +96,14 @@ extern const uint8_t x265_exp2_lut[64];
 // Intra tables
 extern const uint8_t g_intraFilterFlags[NUM_INTRA_MODE];
 
-extern const uint32_t g_depthInc[3][4];
 extern const uint32_t g_depthScanIdx[8][8];
+
+extern const double g_YUVtoRGB_BT2020[3][3];
+
+#define MIN_HDR_LEGAL_RANGE 64
+#define MAX_HDR_LEGAL_RANGE 940
+#define CBCR_OFFSET 512
+extern const double g_ST2084_PQTable[MAX_HDR_LEGAL_RANGE - MIN_HDR_LEGAL_RANGE + 1];
 
 }
 

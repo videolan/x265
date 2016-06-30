@@ -53,7 +53,7 @@ namespace {
 {\
     bErr = 0;\
     p = strstr(opts, opt "=");\
-    char* q = strstr(opts, "no-"opt);\
+    char* q = strstr(opts, "no-" opt);\
     if (p && sscanf(p, opt "=%d" , &i) && param_val != i)\
         bErr = 1;\
     else if (!param_val && !q && !p)\
@@ -89,24 +89,6 @@ inline int calcLength(uint32_t x)
     z += y = ((x - 0x10) >> 29) & 4;
     x >>= y ^ 4;
     return z + lut[x];
-}
-
-inline void reduceFraction(int* n, int* d)
-{
-    int a = *n;
-    int b = *d;
-    int c;
-    if (!a || !b)
-        return;
-    c = a % b;
-    while (c)
-    {
-        a = b;
-        b = c;
-        c = a % b;
-    }
-    *n /= b;
-    *d /= b;
 }
 
 inline char *strcatFilename(const char *input, const char *suffix)
@@ -190,6 +172,8 @@ RateControl::RateControl(x265_param& p)
     m_numEntries = 0;
     m_isSceneTransition = false;
     m_lastPredictorReset = 0;
+    m_avgPFrameQp = 0;
+    m_isFirstMiniGop = false;
     if (m_param->rc.rateControlMode == X265_RC_CRF)
     {
         m_param->rc.qp = (int)m_param->rc.rfConstant;
@@ -225,8 +209,10 @@ RateControl::RateControl(x265_param& p)
     m_statFileOut = NULL;
     m_cutreeStatFileOut = m_cutreeStatFileIn = NULL;
     m_rce2Pass = NULL;
+    m_encOrder = NULL;
     m_lastBsliceSatdCost = 0;
     m_movingAvgSum = 0.0;
+    m_isNextGop = false;
 
     // vbv initialization
     m_param->rc.vbvBufferSize = x265_clip3(0, 2000000, m_param->rc.vbvBufferSize);
@@ -288,9 +274,13 @@ RateControl::RateControl(x265_param& p)
     m_ipOffset = 6.0 * X265_LOG2(m_param->rc.ipFactor);
     m_pbOffset = 6.0 * X265_LOG2(m_param->rc.pbFactor);
 
+    for (int i = 0; i < QP_MAX_MAX; i++)
+        m_qpToEncodedBits[i] = 0;
+
     /* Adjust the first frame in order to stabilize the quality level compared to the rest */
 #define ABR_INIT_QP_MIN (24)
 #define ABR_INIT_QP_MAX (40)
+#define ABR_INIT_QP_GRAIN_MAX (33)
 #define ABR_SCENECUT_INIT_QP_MIN (12)
 #define CRF_INIT_QP (int)m_param->rc.rfConstant
     for (int i = 0; i < 3; i++)
@@ -361,6 +351,7 @@ bool RateControl::init(const SPS& sps)
         m_amortizeFraction = 0.85;
         m_amortizeFrames = m_param->totalFrames / 2;
     }
+
     for (int i = 0; i < s_slidingWindowFrames; i++)
     {
         m_satdCostWindow[i] = 0;
@@ -370,14 +361,21 @@ bool RateControl::init(const SPS& sps)
     m_isPatternPresent = false;
     m_numBframesInPattern = 0;
 
-    /* 720p videos seem to be a good cutoff for cplxrSum */
-    double tuneCplxFactor = (m_param->rc.cuTree && m_ncu > 3600) ? 2.5 : 1;
+    m_isGrainEnabled = false;
+    if(m_param->rc.bEnableGrain) // tune for grainy content OR equal p-b frame sizes
+    m_isGrainEnabled = true;
+    for (int i = 0; i < 3; i++)
+    m_lastQScaleFor[i] = x265_qp2qScale(m_param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN);
+    m_avgPFrameQp = 0 ;
 
+    /* 720p videos seem to be a good cutoff for cplxrSum */
+    double tuneCplxFactor = (m_ncu > 3600 && m_param->rc.cuTree) ? 2.5 : m_isGrainEnabled ? 1.9 : 1;
     /* estimated ratio that produces a reasonable QP for the first I-frame */
     m_cplxrSum = .01 * pow(7.0e5, m_qCompress) * pow(m_ncu, 0.5) * tuneCplxFactor;
     m_wantedBitsWindow = m_bitrate * m_frameDuration;
     m_accumPNorm = .01;
     m_accumPQp = (m_param->rc.rateControlMode == X265_RC_CRF ? CRF_INIT_QP : ABR_INIT_QP_MIN) * m_accumPNorm;
+
 
     /* Frame Predictors used in vbv */
     initFramePredictors();
@@ -401,11 +399,11 @@ bool RateControl::init(const SPS& sps)
                 char *tmpFile = strcatFilename(fileName, ".cutree");
                 if (!tmpFile)
                     return false;
-                m_cutreeStatFileIn = fopen(tmpFile, "rb");
+                m_cutreeStatFileIn = x265_fopen(tmpFile, "rb");
                 X265_FREE(tmpFile);
                 if (!m_cutreeStatFileIn)
                 {
-                    x265_log(m_param, X265_LOG_ERROR, "can't open stats file %s\n", tmpFile);
+                    x265_log_file(m_param, X265_LOG_ERROR, "can't open stats file %s.cutree\n", fileName);
                     return false;
                 }
             }
@@ -571,6 +569,8 @@ bool RateControl::init(const SPS& sps)
             X265_FREE(statsBuf);
             if (m_param->rc.rateControlMode != X265_RC_CQP)
             {
+                m_start = 0;
+                m_isQpModified = true;
                 if (!initPass2())
                     return false;
             } /* else we're using constant quant, so no need to run the bitrate allocation */
@@ -584,11 +584,11 @@ bool RateControl::init(const SPS& sps)
             statFileTmpname = strcatFilename(fileName, ".temp");
             if (!statFileTmpname)
                 return false;
-            m_statFileOut = fopen(statFileTmpname, "wb");
+            m_statFileOut = x265_fopen(statFileTmpname, "wb");
             X265_FREE(statFileTmpname);
             if (!m_statFileOut)
             {
-                x265_log(m_param, X265_LOG_ERROR, "can't open stats file %s\n", statFileTmpname);
+                x265_log_file(m_param, X265_LOG_ERROR, "can't open stats file %s.temp\n", fileName);
                 return false;
             }
             p = x265_param2string(m_param);
@@ -600,11 +600,11 @@ bool RateControl::init(const SPS& sps)
                 statFileTmpname = strcatFilename(fileName, ".cutree.temp");
                 if (!statFileTmpname)
                     return false;
-                m_cutreeStatFileOut = fopen(statFileTmpname, "wb");
+                m_cutreeStatFileOut = x265_fopen(statFileTmpname, "wb");
                 X265_FREE(statFileTmpname);
                 if (!m_cutreeStatFileOut)
                 {
-                    x265_log(m_param, X265_LOG_ERROR, "can't open mbtree stats file %s\n", statFileTmpname);
+                    x265_log_file(m_param, X265_LOG_ERROR, "can't open mbtree stats file %s.cutree.temp\n", fileName);
                     return false;
                 }
             }
@@ -652,7 +652,7 @@ void RateControl::initHRD(SPS& sps)
 
     #undef MAX_DURATION
 }
-bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvailableBits)
+bool RateControl::analyseABR2Pass(uint64_t allAvailableBits)
 {
     double rateFactor, stepMult;
     double qBlur = m_param->rc.qblur;
@@ -662,21 +662,21 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
     double *qScale, *blurredQscale;
     double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
     double clippedDuration = CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION;
-    int framesCount = endIndex - startIndex + 1;
     /* Blur complexities, to reduce local fluctuation of QP.
      * We don't blur the QPs directly, because then one very simple frame
      * could drag down the QP of a nearby complex frame and give it more
      * bits than intended. */
-    for (int i = startIndex; i <= endIndex; i++)
+    for (int i = 0; i < m_numEntries; i++)
     {
         double weightSum = 0;
         double cplxSum = 0;
         double weight = 1.0;
         double gaussianWeight;
         /* weighted average of cplx of future frames */
-        for (int j = 1; j < cplxBlur * 2 && j <= endIndex - i; j++)
+        for (int j = 1; j < cplxBlur * 2 && j < m_numEntries - i; j++)
         {
-            RateControlEntry *rcj = &m_rce2Pass[i + j];
+            int index = m_encOrder[i + j];
+            RateControlEntry *rcj = &m_rce2Pass[index];
             weight *= 1 - pow(rcj->iCuCount / m_ncu, 2);
             if (weight < 0.0001)
                 break;
@@ -688,7 +688,8 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
         weight = 1.0;
         for (int j = 0; j <= cplxBlur * 2 && j <= i; j++)
         {
-            RateControlEntry *rcj = &m_rce2Pass[i - j];
+            int index = m_encOrder[i - j];
+            RateControlEntry *rcj = &m_rce2Pass[index];
             gaussianWeight = weight * exp(-j * j / 200.0);
             weightSum += gaussianWeight;
             cplxSum += gaussianWeight * (qScale2bits(rcj, 1) - rcj->miscBits) / clippedDuration;
@@ -696,12 +697,12 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
             if (weight < .0001)
                 break;
         }
-        m_rce2Pass[i].blurredComplexity = cplxSum / weightSum;
+        m_rce2Pass[m_encOrder[i]].blurredComplexity = cplxSum / weightSum;
     }
-    CHECKED_MALLOC(qScale, double, framesCount);
+    CHECKED_MALLOC(qScale, double, m_numEntries);
     if (filterSize > 1)
     {
-        CHECKED_MALLOC(blurredQscale, double, framesCount);
+        CHECKED_MALLOC(blurredQscale, double, m_numEntries);
     }
     else
         blurredQscale = qScale;
@@ -713,9 +714,9 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
      * approximation of scaling the 1st pass by the ratio of bitrates.
      * The search range is probably overkill, but speed doesn't matter here. */
     expectedBits = 1;
-    for (int i = startIndex; i <= endIndex; i++)
+    for (int i = 0; i < m_numEntries; i++)
     {
-        RateControlEntry* rce = &m_rce2Pass[i];
+        RateControlEntry* rce = &m_rce2Pass[m_encOrder[i]];
         double q = getQScale(rce, 1.0);
         expectedBits += qScale2bits(rce, q);
         m_lastQScaleFor[rce->sliceType] = q;
@@ -738,7 +739,7 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
         /* find qscale */
         for (int i = 0; i < m_numEntries; i++)
         {
-            RateControlEntry *rce = &m_rce2Pass[i];
+            RateControlEntry *rce = &m_rce2Pass[m_encOrder[i]];
             qScale[i] = getQScale(rce, rateFactor);
             m_lastQScaleFor[rce->sliceType] = qScale[i];
         }
@@ -746,7 +747,7 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
         /* fixed I/B qscale relative to P */
         for (int i = m_numEntries - 1; i >= 0; i--)
         {
-            qScale[i] = getDiffLimitedQScale(&m_rce2Pass[i], qScale[i]);
+            qScale[i] = getDiffLimitedQScale(&m_rce2Pass[m_encOrder[i]], qScale[i]);
             X265_CHECK(qScale[i] >= 0, "qScale became negative\n");
         }
 
@@ -765,7 +766,7 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
                     double coeff = qBlur == 0 ? 1.0 : exp(-d * d / (qBlur * qBlur));
                     if (idx < 0 || idx >= m_numEntries)
                         continue;
-                    if (m_rce2Pass[i].sliceType != m_rce2Pass[idx].sliceType)
+                    if (m_rce2Pass[m_encOrder[i]].sliceType != m_rce2Pass[m_encOrder[idx]].sliceType)
                         continue;
                     q += qScale[idx] * coeff;
                     sum += coeff;
@@ -777,7 +778,7 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
         /* find expected bits */
         for (int i = 0; i < m_numEntries; i++)
         {
-            RateControlEntry *rce = &m_rce2Pass[i];
+            RateControlEntry *rce = &m_rce2Pass[m_encOrder[i]];
             rce->newQScale = clipQscale(NULL, rce, blurredQscale[i]); // check if needed
             X265_CHECK(rce->newQScale >= 0, "new Qscale is negative\n");
             expectedBits += qScale2bits(rce, rce->newQScale);
@@ -791,9 +792,9 @@ bool RateControl::analyseABR2Pass(int startIndex, int endIndex, uint64_t allAvai
     if (filterSize > 1)
         X265_FREE(blurredQscale);
     if (m_isVbv)
-    if (!vbv2Pass(allAvailableBits, endIndex, startIndex))
+    if (!vbv2Pass(allAvailableBits, m_numEntries - 1, 0))
             return false;
-    expectedBits = countExpectedBits(startIndex, endIndex);
+    expectedBits = countExpectedBits(0, m_numEntries - 1);
     if (fabs(expectedBits / allAvailableBits - 1.0) > 0.01)
     {
         double avgq = 0;
@@ -831,13 +832,12 @@ bool RateControl::initPass2()
     uint64_t allConstBits = 0, allCodedBits = 0;
     uint64_t allAvailableBits = uint64_t(m_param->rc.bitrate * 1000. * m_numEntries * m_frameDuration);
     int startIndex, framesCount, endIndex;
-    int fps = (int)(m_fps + 0.5);
+    int fps = X265_MIN(m_param->keyframeMax, (int)(m_fps + 0.5));
     startIndex = endIndex = framesCount = 0;
-    bool isQpModified = true;
     int diffQp = 0;
     double targetBits = 0;
     double expectedBits = 0;
-    for (startIndex = 0, endIndex = 0; endIndex < m_numEntries; endIndex++)
+    for (startIndex = m_start, endIndex = m_start; endIndex < m_numEntries; endIndex++)
     {
         allConstBits += m_rce2Pass[endIndex].miscBits;
         allCodedBits += m_rce2Pass[endIndex].coeffBits + m_rce2Pass[endIndex].mvBits;
@@ -851,11 +851,16 @@ bool RateControl::initPass2()
             {
                 if (diffQp >= 1)
                 {
-                    if (!isQpModified && endIndex > fps)
+                    if (!m_isQpModified && endIndex > fps)
                     {
                         double factor = 2;
                         double step = 0;
-                        for (int start = endIndex; start <= endIndex + fps - 1 && start < m_numEntries; start++)
+                        if (endIndex + fps >= m_numEntries)
+                        {
+                            m_start = endIndex - (endIndex % fps);
+                            return true;
+                        }
+                        for (int start = endIndex + 1; start <= endIndex + fps && start < m_numEntries; start++)
                         {
                             RateControlEntry *rce = &m_rce2Pass[start];
                             targetBits += qScale2bits(rce, x265_qp2qScale(rce->qpNoVbv));
@@ -863,12 +868,13 @@ bool RateControl::initPass2()
                         }
                         if (expectedBits < 0.95 * targetBits)
                         {
-                            isQpModified = true;
+                            m_isQpModified = true;
+                            m_isGopReEncoded = true;
                             while (endIndex + fps < m_numEntries)
                             {
                                 step = pow(2, factor / 6.0);
                                 expectedBits = 0;
-                                for (int start = endIndex; start <= endIndex + fps - 1; start++)
+                                for (int start = endIndex + 1; start <= endIndex + fps; start++)
                                 {
                                     RateControlEntry *rce = &m_rce2Pass[start];
                                     rce->newQScale = rce->qScale / step;
@@ -883,13 +889,13 @@ bool RateControl::initPass2()
                             }
 
                             if (m_isVbv && endIndex + fps < m_numEntries)
-                                if (!vbv2Pass((uint64_t)targetBits, endIndex + fps - 1, endIndex))
+                                if (!vbv2Pass((uint64_t)targetBits, endIndex + fps, endIndex + 1))
                                     return false;
 
                             targetBits = 0;
                             expectedBits = 0;
 
-                            for (int start = endIndex - fps; start <= endIndex - 1; start++)
+                            for (int start = endIndex - fps + 1; start <= endIndex; start++)
                             {
                                 RateControlEntry *rce = &m_rce2Pass[start];
                                 targetBits += qScale2bits(rce, x265_qp2qScale(rce->qpNoVbv));
@@ -898,7 +904,7 @@ bool RateControl::initPass2()
                             {
                                 step = pow(2, factor / 6.0);
                                 expectedBits = 0;
-                                for (int start = endIndex - fps; start <= endIndex - 1; start++)
+                                for (int start = endIndex - fps + 1; start <= endIndex; start++)
                                 {
                                     RateControlEntry *rce = &m_rce2Pass[start];
                                     rce->newQScale = rce->qScale * step;
@@ -912,10 +918,13 @@ bool RateControl::initPass2()
                                      break;
                             }
                             if (m_isVbv)
-                                if (!vbv2Pass((uint64_t)targetBits, endIndex - 1, endIndex - fps))
+                                if (!vbv2Pass((uint64_t)targetBits, endIndex, endIndex - fps + 1))
                                     return false;
                             diffQp = 0;
+                            m_reencode = endIndex - fps + 1;
+                            endIndex = endIndex + fps;
                             startIndex = endIndex + 1;
+                            m_start = startIndex;
                             targetBits = expectedBits = 0;
                         }
                         else
@@ -923,7 +932,7 @@ bool RateControl::initPass2()
                     }
                 }
                 else
-                    isQpModified = false;
+                    m_isQpModified = false;
             }
         }
     }
@@ -936,9 +945,12 @@ bool RateControl::initPass2()
                      (int)(allConstBits * m_fps / framesCount * 1000.));
             return false;
         }
-        if (!analyseABR2Pass(0, m_numEntries - 1, allAvailableBits))
+        if (!analyseABR2Pass(allAvailableBits))
             return false;
     }
+
+    m_start = X265_MAX(m_start, endIndex - fps);
+
     return true;
 }
 
@@ -1054,12 +1066,12 @@ void RateControl::initFramePredictors()
     }
     m_pred[0].coeff = m_pred[3].coeff = 0.75;
     m_pred[0].coeffMin = m_pred[3].coeffMin = 0.75 / 4;
-    if (m_param->rc.qCompress >= 0.8) // when tuned for grain 
+    if (m_isGrainEnabled) // when tuned for grain 
     {
         m_pred[1].coeffMin = 0.75 / 4;
         m_pred[1].coeff = 0.75;
-        m_pred[0].coeff = m_pred[3].coeff = 0.5;
-        m_pred[0].coeffMin = m_pred[3].coeffMin = 0.5 / 4;
+        m_pred[0].coeff = m_pred[3].coeff = 0.75;
+        m_pred[0].coeffMin = m_pred[3].coeffMin = 0.75 / 4;
     }
 }
 
@@ -1093,11 +1105,15 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         copyRceData(rce, &m_rce2Pass[index]);
     }
     rce->isActive = true;
+    rce->scenecut = false;
     bool isRefFrameScenecut = m_sliceType!= I_SLICE && m_curSlice->m_refFrameList[0][0]->m_lowres.bScenecut;
+    m_isFirstMiniGop = m_sliceType == I_SLICE ? true : m_isFirstMiniGop;
     if (curFrame->m_lowres.bScenecut)
     {
         m_isSceneTransition = true;
+        rce->scenecut = true;
         m_lastPredictorReset = rce->encodeOrder;
+
         initFramePredictors();
     }
     else if (m_sliceType != B_SLICE && !isRefFrameScenecut)
@@ -1202,6 +1218,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         double q = x265_qScale2qp(rateEstimateQscale(curFrame, rce));
         q = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, q);
         m_qp = int(q + 0.5);
+        q = m_isGrainEnabled ? m_qp : q;
         rce->qpaRc = curEncData.m_avgQpRc = curEncData.m_avgQpAq = q;
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
         rce->qRceq = m_lastRceq;
@@ -1327,14 +1344,6 @@ double RateControl::getDiffLimitedQScale(RateControlEntry *rce, double q)
         m_accumPNorm = mask * (1 + m_accumPNorm);
     }
 
-    x265_zone* zone = getZone();
-    if (zone)
-    {
-        if (zone->bForceQp)
-            q = x265_qp2qScale(zone->qp);
-        else
-            q /= zone->bitrateFactor;
-    }
     return q;
 }
 double RateControl::countExpectedBits(int startPos, int endPos)
@@ -1423,12 +1432,9 @@ bool RateControl::cuTreeReadFor2Pass(Frame* frame)
             }
             while(type != sliceTypeActual);
         }
+        primitives.fix8Unpack(frame->m_lowres.qpCuTreeOffset, m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], m_ncu);
         for (int i = 0; i < m_ncu; i++)
-        {
-            int16_t qpFix8 = m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos][i];
-            frame->m_lowres.qpCuTreeOffset[i] = (double)(qpFix8) / 256.0;
             frame->m_lowres.invQscaleFactor[i] = x265_exp2fix8(frame->m_lowres.qpCuTreeOffset[i]);
-        }
         m_cuTreeStats.qpBufPos--;
     }
     return true;
@@ -1441,8 +1447,6 @@ fail:
 double RateControl::tuneAbrQScaleFromFeedback(double qScale)
 {
     double abrBuffer = 2 * m_rateTolerance * m_bitrate;
-    if (m_currentSatd)
-    {
         /* use framesDone instead of POC as poc count is not serial with bframes enabled */
         double overflow = 1.0;
         double timeDone = (double)(m_framesDone - m_param->frameNumThreads + 1) * m_frameDuration;
@@ -1455,14 +1459,29 @@ double RateControl::tuneAbrQScaleFromFeedback(double qScale)
         }
 
         if (wantedBits > 0 && encodedBits > 0 && (!m_partialResidualFrames || 
-            m_param->rc.bStrictCbr))
+            m_param->rc.bStrictCbr || m_isGrainEnabled))
         {
             abrBuffer *= X265_MAX(1, sqrt(timeDone));
             overflow = x265_clip3(.5, 2.0, 1.0 + (encodedBits - wantedBits) / abrBuffer);
             qScale *= overflow;
         }
-    }
     return qScale;
+}
+
+double RateControl::tuneQScaleForGrain(double rcOverflow)
+{
+    double qpstep = rcOverflow > 1.1 ? rcOverflow : m_lstep;
+    double qScaleAvg = x265_qp2qScale(m_avgPFrameQp);
+    double  q = m_lastQScaleFor[P_SLICE];
+    int curQp = int (x265_qScale2qp(m_lastQScaleFor[P_SLICE]) + 0.5);
+    double curBitrate = m_qpToEncodedBits[curQp] * int(m_fps + 0.5);
+    int newQp = rcOverflow > 1.1 ? curQp + 2 : rcOverflow > 1 ? curQp + 1 : curQp - 1 ;
+    double projectedBitrate =  int(m_fps + 0.5) * m_qpToEncodedBits[newQp];
+    if (curBitrate > 0 && projectedBitrate > 0)
+        q =  abs(projectedBitrate - m_bitrate) < abs (curBitrate - m_bitrate) ? x265_qp2qScale(newQp) : m_lastQScaleFor[P_SLICE];
+    else
+        q = rcOverflow > 1 ? qScaleAvg * qpstep : rcOverflow < 1 ?  qScaleAvg / qpstep : m_lastQScaleFor[P_SLICE];
+    return q;
 }
 
 double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
@@ -1530,6 +1549,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 q0 = q1;
             }
         }
+
         if (prevRefSlice->m_sliceType == B_SLICE && IS_REFERENCED(m_curSlice->m_refFrameList[0][0]))
             q0 -= m_pbOffset / 2;
         if (nextRefSlice->m_sliceType == B_SLICE && IS_REFERENCED(m_curSlice->m_refFrameList[1][0]))
@@ -1540,7 +1560,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             q = q1;
         else if (i1)
             q = q0;
-        else
+        else if(m_isGrainEnabled && !m_2pass)
+                q = q1;
+            else
             q = (q0 * dt1 + q1 * dt0) / (dt0 + dt1);
 
         if (IS_REFERENCED(curFrame))
@@ -1548,7 +1570,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
         else
             q += m_pbOffset;
 
-        /* Set a min qp at scenechanges and transitions */
+                /* Set a min qp at scenechanges and transitions */
         if (m_isSceneTransition)
         {
             q = X265_MAX(ABR_SCENECUT_INIT_QP_MIN, q);
@@ -1558,11 +1580,28 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
         double qScale = x265_qp2qScale(q);
         rce->qpNoVbv = q;
         double lmin = 0, lmax = 0;
+        if (m_isGrainEnabled && m_isFirstMiniGop)
+        {
+            lmin = m_lastQScaleFor[P_SLICE] / m_lstep;
+            lmax = m_lastQScaleFor[P_SLICE] * m_lstep;
+            double tunedQscale = tuneAbrQScaleFromFeedback(qScale);
+            double overflow = tunedQscale / qScale;
+            if (!m_isAbrReset)
+                qScale = x265_clip3(lmin, lmax, qScale);
+            m_avgPFrameQp = m_avgPFrameQp == 0 ? rce->qpNoVbv : m_avgPFrameQp;
+            if (overflow != 1)
+            {
+                qScale = tuneQScaleForGrain(overflow);
+                q = x265_qScale2qp(qScale);
+            }
+            rce->qpNoVbv = q;
+        }
         if (m_isVbv)
         {
             lmin = m_lastQScaleFor[P_SLICE] / m_lstep;
             lmax = m_lastQScaleFor[P_SLICE] * m_lstep;
-            if (m_isCbr)
+
+            if (m_isCbr && !m_isGrainEnabled)
             {
                 qScale = tuneAbrQScaleFromFeedback(qScale);
                 if (!m_isAbrReset)
@@ -1586,7 +1625,17 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             rce->frameSizePlanned = X265_MIN(rce->frameSizePlanned, rce->frameSizeMaximum);
             rce->frameSizeEstimated = rce->frameSizePlanned;
         }
+
         rce->newQScale = qScale;
+        if(rce->bLastMiniGopBFrame)
+        {
+            if (m_isFirstMiniGop && m_isGrainEnabled)
+            {
+                m_avgPFrameQp = (m_avgPFrameQp + rce->qpNoVbv) / 2;
+                m_lastQScaleFor[P_SLICE] = x265_qp2qScale(m_avgPFrameQp);
+            }
+            m_isFirstMiniGop = false;
+        }
         return qScale;
     }
     else
@@ -1613,6 +1662,14 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             }
             diff = m_predictedBits - (int64_t)rce->expectedBits;
             q = rce->newQScale;
+            x265_zone* zone = getZone();
+            if (zone)
+            {
+                if (zone->bForceQp)
+                    q = x265_qp2qScale(zone->qp);
+                else
+                    q /= zone->bitrateFactor;
+            }
             q /= x265_clip3(0.5, 2.0, (double)(abrBuffer - diff) / abrBuffer);
             if (m_expectedBitsSum > 0)
             {
@@ -1622,6 +1679,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 double w = x265_clip3(0.0, 1.0, curTime * 100);
                 q *= pow((double)m_totalBits / m_expectedBitsSum, w);
             }
+            if (m_framesDone == 0 && m_param->rc.rateControlMode == X265_RC_ABR && m_isGrainEnabled)
+                q = X265_MIN(x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX), q);
+
             rce->qpNoVbv = x265_qScale2qp(q);
             if (m_isVbv)
             {
@@ -1674,21 +1734,50 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             if (m_param->rc.rateControlMode == X265_RC_CRF)
             {
                 q = getQScale(rce, m_rateFactorConstant);
+                x265_zone* zone = getZone();
+                if (zone)
+                {
+                    if (zone->bForceQp)
+                        q = x265_qp2qScale(zone->qp);
+                    else
+                        q /= zone->bitrateFactor;
+                }
             }
             else
             {
                 if (!m_param->rc.bStatRead)
                     checkAndResetABR(rce, false);
                 double initialQScale = getQScale(rce, m_wantedBitsWindow / m_cplxrSum);
-                q = tuneAbrQScaleFromFeedback(initialQScale);
-                overflow = q / initialQScale;
+                x265_zone* zone = getZone();
+                if (zone)
+                {
+                    if (zone->bForceQp)
+                        initialQScale = x265_qp2qScale(zone->qp);
+                    else
+                        initialQScale /= zone->bitrateFactor;
+                }
+                double tunedQScale = tuneAbrQScaleFromFeedback(initialQScale);
+                overflow = tunedQScale / initialQScale;
+                q = !m_partialResidualFrames? tunedQScale : initialQScale;
+                bool isEncodeEnd = (m_param->totalFrames && 
+                    m_framesDone > 0.75 * m_param->totalFrames) ? 1 : 0;
+                bool isEncodeBeg = m_framesDone < (int)(m_fps + 0.5);
+                if (m_isGrainEnabled)
+                {
+                    if(m_sliceType!= I_SLICE && m_framesDone && !isEncodeEnd &&
+                        ((overflow < 1.05 && overflow > 0.95) || isEncodeBeg))
+                    {
+                        q = tuneQScaleForGrain(overflow);
+                    }
+                }
             }
-            if (m_sliceType == I_SLICE && m_param->keyframeMax > 1
-                && m_lastNonBPictType != I_SLICE && !m_isAbrReset)
+            if ((m_sliceType == I_SLICE && m_param->keyframeMax > 1
+                && m_lastNonBPictType != I_SLICE && !m_isAbrReset) || (m_isNextGop && !m_framesDone))
             {
                 if (!m_param->rc.bStrictCbr)
                     q = x265_qp2qScale(m_accumPQp / m_accumPNorm);
                 q /= fabs(m_param->rc.ipFactor);
+                m_avgPFrameQp = 0;
             }
             else if (m_framesDone > 0)
             {
@@ -1696,7 +1785,7 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                 {
                     lqmin = m_lastQScaleFor[m_sliceType] / m_lstep;
                     lqmax = m_lastQScaleFor[m_sliceType] * m_lstep;
-                    if (!m_partialResidualFrames)
+                    if (!m_partialResidualFrames || m_isGrainEnabled)
                     {
                         if (overflow > 1.1 && m_framesDone > 3)
                             lqmax *= m_lstep;
@@ -1713,8 +1802,9 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             else if (m_framesDone == 0 && !m_isVbv && m_param->rc.rateControlMode == X265_RC_ABR)
             {
                 /* for ABR alone, clip the first I frame qp */
-                lqmax = x265_qp2qScale(ABR_INIT_QP_MAX) * m_lstep;
-                q = X265_MIN(lqmax, q);
+                    lqmax =  (m_lstep * m_isGrainEnabled) ? x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX) :
+                        x265_qp2qScale(ABR_INIT_QP_MAX);
+                    q = X265_MIN(lqmax, q);
             }
             q = x265_clip3(MIN_QPSCALE, MAX_MAX_QPSCALE, q);
             /* Set a min qp at scenechanges and transitions */
@@ -1725,6 +1815,11 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
                m_lastQScaleFor[P_SLICE] = X265_MAX(minScenecutQscale, m_lastQScaleFor[P_SLICE]);
             }
             rce->qpNoVbv = x265_qScale2qp(q);
+            if(m_sliceType == P_SLICE)
+            {
+                m_avgPFrameQp = m_avgPFrameQp == 0 ? rce->qpNoVbv : m_avgPFrameQp;
+                m_avgPFrameQp = (m_avgPFrameQp + rce->qpNoVbv) / 2;
+            }
             q = clipQscale(curFrame, rce, q);
             /*  clip qp to permissible range after vbv-lookahead estimation to avoid possible
              * mispredictions by initial frame size predictors, after each scenecut */
@@ -1811,7 +1906,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
     double abrBuffer = 2 * m_rateTolerance * m_bitrate;
 
     // Check if current Slice is a scene cut that follows low detailed/blank frames
-    if (rce->lastSatd > 4 * rce->movingAvgSum)
+    if (rce->lastSatd > 4 * rce->movingAvgSum || rce->scenecut)
     {
         if (!m_isAbrReset && rce->movingAvgSum > 0
             && (m_isPatternPresent || !m_param->bframes))
@@ -1847,18 +1942,17 @@ void RateControl::hrdFullness(SEIBufferingPeriod *seiBP)
     const HRDInfo* hrd = &vui->hrdParameters;
     int num = 90000;
     int denom = hrd->bitRateValue << (hrd->bitRateScale + BR_SHIFT);
-    reduceFraction(&num, &denom);
     int64_t cpbState = (int64_t)m_bufferFillFinal;
     int64_t cpbSize = (int64_t)hrd->cpbSizeValue << (hrd->cpbSizeScale + CPB_SHIFT);
 
     if (cpbState < 0 || cpbState > cpbSize)
     {
         x265_log(m_param, X265_LOG_WARNING, "CPB %s: %.0lf bits in a %.0lf-bit buffer\n",
-                 cpbState < 0 ? "underflow" : "overflow", (float)cpbState/denom, (float)cpbSize/denom);
+                 cpbState < 0 ? "underflow" : "overflow", (float)cpbState, (float)cpbSize);
     }
 
-    seiBP->m_initialCpbRemovalDelay = (uint32_t)(num * cpbState + denom) / denom;
-    seiBP->m_initialCpbRemovalDelayOffset = (uint32_t)((num * cpbSize + denom) / denom - seiBP->m_initialCpbRemovalDelay);
+    seiBP->m_initialCpbRemovalDelay = (uint32_t)(num * cpbState / denom);
+    seiBP->m_initialCpbRemovalDelayOffset = (uint32_t)(num * cpbSize / denom - seiBP->m_initialCpbRemovalDelay);
 }
 
 void RateControl::updateVbvPlan(Encoder* enc)
@@ -2089,8 +2183,6 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
 
 int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv)
 {
-    if (m_param->rc.bStatRead && m_param->rc.rateControlMode == X265_RC_CRF)
-        return 0;
     FrameData& curEncData = *curFrame->m_encData;
     double qScaleVbv = x265_qp2qScale(qpVbv);
     uint64_t rowSatdCost = curEncData.m_rowStat[row].diagSatd;
@@ -2265,15 +2357,7 @@ double RateControl::getQScale(RateControlEntry *rce, double rateFactor)
         m_lastRceq = q;
         q /= rateFactor;
     }
-    
-    x265_zone* zone = getZone();
-    if (zone)
-    {
-        if (zone->bForceQp)
-            q = x265_qp2qScale(zone->qp);
-        else
-            q /= zone->bitrateFactor;
-    }
+
     return q;
 }
 
@@ -2341,21 +2425,25 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     {
         if (m_isVbv && !(m_2pass && m_param->rc.rateControlMode == X265_RC_CRF))
         {
+            double avgQpRc = 0;
             /* determine avg QP decided by VBV rate control */
             for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
-                curEncData.m_avgQpRc += curEncData.m_rowStat[i].sumQpRc;
+                avgQpRc += curEncData.m_rowStat[i].sumQpRc;
 
-            curEncData.m_avgQpRc /= slice->m_sps->numCUsInFrame;
+            avgQpRc /= slice->m_sps->numCUsInFrame;
+            curEncData.m_avgQpRc = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, avgQpRc);
             rce->qpaRc = curEncData.m_avgQpRc;
         }
 
         if (m_param->rc.aqMode)
         {
+            double avgQpAq = 0;
             /* determine actual avg encoded QP, after AQ/cutree adjustments */
             for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
-                curEncData.m_avgQpAq += curEncData.m_rowStat[i].sumQpAq;
+                avgQpAq += curEncData.m_rowStat[i].sumQpAq;
 
-            curEncData.m_avgQpAq /= (slice->m_sps->numCUsInFrame * NUM_4x4_PARTITIONS);
+            avgQpAq /= (slice->m_sps->numCUsInFrame * NUM_4x4_PARTITIONS);
+            curEncData.m_avgQpAq = avgQpAq;
         }
         else
             curEncData.m_avgQpAq = curEncData.m_avgQpRc;
@@ -2372,13 +2460,13 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
         bool is2passCrfChange = false;
         if (m_2pass)
         {
-            if (abs(curEncData.m_avgQpRc - rce->qpPrev) > 0.1)
+            if (fabs(curEncData.m_avgQpRc - rce->qpPrev) > 0.1)
             {
                 qpRef = rce->qpPrev;
                 is2passCrfChange = true;
             }
         }
-        if (is2passCrfChange || abs(qpRef - rce->qpNoVbv) > 0.5)
+        if (is2passCrfChange || fabs(qpRef - rce->qpNoVbv) > 0.5)
         {
             double crfFactor = rce->qRceq /x265_qp2qScale(qpRef);
             double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
@@ -2431,6 +2519,11 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
         int pos = m_sliderPos - m_param->frameNumThreads;
         if (pos >= 0)
             m_encodedBitsWindow[pos % s_slidingWindowFrames] = actualBits;
+        if(rce->sliceType != I_SLICE)
+        {
+        int qp = int (rce->qpaRc + 0.5);
+        m_qpToEncodedBits[qp] =  m_qpToEncodedBits[qp] == 0 ? actualBits : (m_qpToEncodedBits[qp] + actualBits) * 0.5;
+        }
     }
 
     if (m_2pass)
@@ -2498,8 +2591,7 @@ int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* r
     if (m_param->rc.cuTree && IS_REFERENCED(curFrame) && !m_param->rc.bStatRead)
     {
         uint8_t sliceType = (uint8_t)rce->sliceType;
-        for (int i = 0; i < m_ncu; i++)
-                m_cuTreeStats.qpBuffer[0][i] = (uint16_t)(curFrame->m_lowres.qpCuTreeOffset[i] * 256.0);
+        primitives.fix8Pack(m_cuTreeStats.qpBuffer[0], curFrame->m_lowres.qpCuTreeOffset, m_ncu);
         if (fwrite(&sliceType, 1, 1, m_cutreeStatFileOut) < 1)
             goto writeFailure;
         if (fwrite(m_cuTreeStats.qpBuffer[0], sizeof(uint16_t), m_ncu, m_cutreeStatFileOut) < (size_t)m_ncu)
@@ -2547,13 +2639,12 @@ void RateControl::destroy()
         int bError = 1;
         if (tmpFileName)
         {
-           unlink(fileName);
-           bError = rename(tmpFileName, fileName);
+            x265_unlink(fileName);
+            bError = x265_rename(tmpFileName, fileName);
         }
         if (bError)
         {
-            x265_log(m_param, X265_LOG_ERROR, "failed to rename output stats file to \"%s\"\n",
-                     fileName);
+            x265_log_file(m_param, X265_LOG_ERROR, "failed to rename output stats file to \"%s\"\n", fileName);
         }
         X265_FREE(tmpFileName);
     }
@@ -2566,13 +2657,12 @@ void RateControl::destroy()
         int bError = 1;
         if (tmpFileName && newFileName)
         {
-           unlink(newFileName);
-           bError = rename(tmpFileName, newFileName);
+            x265_unlink(newFileName);
+            bError = x265_rename(tmpFileName, newFileName);
         }
         if (bError)
         {
-            x265_log(m_param, X265_LOG_ERROR, "failed to rename cutree output stats file to \"%s\"\n",
-                     newFileName);
+            x265_log_file(m_param, X265_LOG_ERROR, "failed to rename cutree output stats file to \"%s\"\n", newFileName);
         }
         X265_FREE(tmpFileName);
         X265_FREE(newFileName);
@@ -2582,6 +2672,7 @@ void RateControl::destroy()
         fclose(m_cutreeStatFileIn);
 
     X265_FREE(m_rce2Pass);
+    X265_FREE(m_encOrder);
     for (int i = 0; i < 2; i++)
         X265_FREE(m_cuTreeStats.qpBuffer[i]);
     

@@ -31,6 +31,7 @@
 #include "slice.h"
 #include "mv.h"
 #include "bitstream.h"
+#include "threading.h"
 
 using namespace X265_NS;
 namespace {
@@ -132,25 +133,25 @@ void mcChroma(pixel *      mcout,
                 intptr_t fpeloffset = (mv.y >> 2) * stride + (mv.x >> 2);
                 pixel *temp = src + pixoff + fpeloffset;
 
-                int xFrac = mv.x & 0x7;
-                int yFrac = mv.y & 0x7;
-                if ((yFrac | xFrac) == 0)
+                int xFrac = mv.x & 7;
+                int yFrac = mv.y & 7;
+                if (!(yFrac | xFrac))
                 {
                     primitives.chroma[csp].pu[LUMA_16x16].copy_pp(mcout + pixoff, stride, temp, stride);
                 }
-                else if (yFrac == 0)
+                else if (!yFrac)
                 {
                     primitives.chroma[csp].pu[LUMA_16x16].filter_hpp(temp, stride, mcout + pixoff, stride, xFrac);
                 }
-                else if (xFrac == 0)
+                else if (!xFrac)
                 {
                     primitives.chroma[csp].pu[LUMA_16x16].filter_vpp(temp, stride, mcout + pixoff, stride, yFrac);
                 }
                 else
                 {
-                    ALIGN_VAR_16(int16_t, imm[16 * (16 + NTAPS_CHROMA)]);
-                    primitives.chroma[csp].pu[LUMA_16x16].filter_hps(temp, stride, imm, bw, xFrac, 1);
-                    primitives.chroma[csp].pu[LUMA_16x16].filter_vsp(imm + ((NTAPS_CHROMA >> 1) - 1) * bw, bw, mcout + pixoff, stride, yFrac);
+                    ALIGN_VAR_16(int16_t, immed[16 * (16 + NTAPS_CHROMA - 1)]);
+                    primitives.chroma[csp].pu[LUMA_16x16].filter_hps(temp, stride, immed, bw, xFrac, 1);
+                    primitives.chroma[csp].pu[LUMA_16x16].filter_vsp(immed + ((NTAPS_CHROMA >> 1) - 1) * bw, bw, mcout + pixoff, stride, yFrac);
                 }
             }
             else
@@ -232,7 +233,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
     cache.numPredDir = slice.isInterP() ? 1 : 2;
     cache.lowresWidthInCU = fenc.width >> 3;
     cache.lowresHeightInCU = fenc.lines >> 3;
-    cache.csp = fencPic->m_picCsp;
+    cache.csp = param.internalCsp;
     cache.hshift = CHROMA_H_SHIFT(cache.csp);
     cache.vshift = CHROMA_V_SHIFT(cache.csp);
 
@@ -329,7 +330,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
                 {
                     /* reference chroma planes must be extended prior to being
                      * used as motion compensation sources */
-                    if (!refFrame->m_bChromaExtended && param.internalCsp != X265_CSP_I400)
+                    if (!refFrame->m_bChromaExtended && param.internalCsp != X265_CSP_I400 && frame.m_fencPic->m_picCsp != X265_CSP_I400)
                     {
                         refFrame->m_bChromaExtended = true;
                         PicYuv *refPic = refFrame->m_fencPic;
@@ -456,10 +457,13 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
             /* Use a smaller luma denominator if possible */
             if (!(plane || list))
             {
-                while (mindenom > 0 && !(minscale & 1))
+                if (mindenom > 0 && !(minscale & 1))
                 {
-                    mindenom--;
-                    minscale >>= 1;
+                    unsigned long idx;
+                    CTZ(idx, minscale);
+                    int shift = X265_MIN((int)idx, mindenom);
+                    mindenom -= shift;
+                    minscale >>= shift;
                 }
             }
 

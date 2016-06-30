@@ -32,11 +32,11 @@ RAWOutput::RAWOutput(const char* fname, InputFileInfo&)
     b_fail = false;
     if (!strcmp(fname, "-"))
     {
-        ofs = &cout;
+        ofs = stdout;
         return;
     }
-    ofs = new ofstream(fname, ios::binary | ios::out);
-    if (ofs->fail())
+    ofs = x265_fopen(fname, "wb");
+    if (!ofs || ferror(ofs))
         b_fail = true;
 }
 
@@ -51,7 +51,7 @@ int RAWOutput::writeHeaders(const x265_nal* nal, uint32_t nalcount)
 
     for (uint32_t i = 0; i < nalcount; i++)
     {
-        ofs->write((const char*)nal->payload, nal->sizeBytes);
+        fwrite((const void*)nal->payload, 1, nal->sizeBytes, ofs);
         bytes += nal->sizeBytes;
         nal++;
     }
@@ -65,7 +65,7 @@ int RAWOutput::writeFrame(const x265_nal* nal, uint32_t nalcount, x265_picture&)
 
     for (uint32_t i = 0; i < nalcount; i++)
     {
-        ofs->write((const char*)nal->payload, nal->sizeBytes);
+        fwrite((const void*)nal->payload, 1, nal->sizeBytes, ofs);
         bytes += nal->sizeBytes;
         nal++;
     }
@@ -75,6 +75,6 @@ int RAWOutput::writeFrame(const x265_nal* nal, uint32_t nalcount, x265_picture&)
 
 void RAWOutput::closeFile(int64_t, int64_t)
 {
-    if (ofs != &cout)
-        delete ofs;
+    if (ofs != stdout)
+        fclose(ofs);
 }
