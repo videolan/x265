@@ -68,7 +68,7 @@ inline bool isEqualCol(int addrA, int addrB, int numUnits)
 inline bool isEqualRow(int addrA, int addrB, int numUnits)
 {
     // addrA / numUnits == addrB / numUnits
-    return ((addrA ^ addrB) & ~(numUnits - 1)) == 0;
+    return ((addrA ^ addrB) < numUnits);
 }
 
 /* Check whether 2 addresses point to the same row or column */
@@ -88,7 +88,7 @@ inline bool isZeroCol(int addr, int numUnits)
 inline bool isZeroRow(int addr, int numUnits)
 {
     // addr / numUnits == 0
-    return (addr & ~(numUnits - 1)) == 0;
+    return (addr < numUnits);
 }
 
 /* Check whether one address points to a column whose index is smaller than a given value */
