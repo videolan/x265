@@ -1528,7 +1528,6 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
         if (!skipModes)
         {
-            uint32_t refMasks[2];
             refMasks[0] = allSplitRefs;
 
             if (m_param->limitReferences & X265_REF_LIMIT_CU)
