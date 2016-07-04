@@ -1424,6 +1424,13 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
         md.pred[PRED_2Nx2N].rdCost = 0;
     }
 
+	SplitData splitData[4];
+	splitData[0].initSplitCUData();
+	splitData[1].initSplitCUData();
+	splitData[2].initSplitCUData();
+	splitData[3].initSplitCUData();
+	uint32_t allSplitRefs = splitData[0].splitRefs | splitData[1].splitRefs | splitData[2].splitRefs | splitData[3].splitRefs;
+	uint32_t refMasks[2];
     if (m_param->analysisMode == X265_ANALYSIS_LOAD)
     {
         if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
@@ -1433,23 +1440,20 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
                 md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
                 checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
-
-                skipRecursion = !!m_param->bEnableRecursionSkip && md.bestMode;
                 skipModes = !!m_param->bEnableEarlySkip && md.bestMode;
+                refMasks[0] = allSplitRefs;
+                md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
+                checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
+
+                if (m_param->bEnableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
+	                skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
             }
             if (m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
                 skipRectAmp = true && !!md.bestMode;
         }
     }
 
-    SplitData splitData[4];
-    splitData[0].initSplitCUData();
-    splitData[1].initSplitCUData();
-    splitData[2].initSplitCUData();
-    splitData[3].initSplitCUData();
-
-    uint32_t allSplitRefs = splitData[0].splitRefs | splitData[1].splitRefs | splitData[2].splitRefs | splitData[3].splitRefs;
-    uint32_t refMasks[2];
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
     if (mightNotSplit && !md.bestMode)
     {
