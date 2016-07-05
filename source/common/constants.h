@@ -32,9 +32,6 @@ namespace X265_NS {
 
 extern int g_ctuSizeConfigured;
 
-void initZscanToRaster(uint32_t maxFullDepth, uint32_t depth, uint32_t startVal, uint32_t*& curIdx);
-void initRasterToZscan(uint32_t maxFullDepth);
-
 extern double x265_lambda_tab[QP_MAX_MAX + 1];
 extern double x265_lambda2_tab[QP_MAX_MAX + 1];
 extern const uint16_t x265_chroma_lambda2_offset_tab[MAX_CHROMA_LAMBDA_OFFSET + 1];
@@ -46,8 +43,8 @@ extern const uint8_t g_chromaScale[ChromaQPMappingTableSize];
 extern const uint8_t g_chroma422IntraAngleMappingTable[AngleMapping422TableSize];
 
 // flexible conversion from relative to absolute index
-extern uint32_t g_zscanToRaster[MAX_NUM_PARTITIONS];
-extern uint32_t g_rasterToZscan[MAX_NUM_PARTITIONS];
+extern const uint32_t g_zscanToRaster[MAX_NUM_PARTITIONS];
+extern const uint32_t g_rasterToZscan[MAX_NUM_PARTITIONS];
 
 // conversion of partition index to picture pel position
 extern const uint8_t g_zscanToPelX[MAX_NUM_PARTITIONS];
