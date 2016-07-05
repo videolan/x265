@@ -1010,6 +1010,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
         p.cu[BLOCK_16x16].dct = PFX(dct_16x16_neon);
 #if !HIGH_BIT_DEPTH
         p.cu[BLOCK_4x4].psy_cost_pp = PFX(psyCost_4x4_neon);
+        p.cu[BLOCK_8x8].psy_cost_pp = PFX(psyCost_8x8_neon);
 #endif // !HIGH_BIT_DEPTH
     }
     if (cpuMask & X265_CPU_ARMV6)

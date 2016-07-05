@@ -2449,3 +2449,191 @@ function x265_psyCost_4x4_neon
     bx              lr
 endfunc
 
+function x265_psyCost_8x8_neon
+
+    vpush           {q4-q7}
+
+    vld1.8          {d0}, [r0], r1
+    vld1.8          {d1}, [r0], r1
+    vmovl.u8        q8, d0
+    vld1.8          {d2}, [r0], r1
+    vmovl.u8        q9, d1
+    vld1.8          {d3}, [r0], r1
+    vmovl.u8        q10, d2
+    vld1.8          {d4}, [r0], r1
+    vmovl.u8        q11, d3
+    vld1.8          {d5}, [r0], r1
+    vmovl.u8        q12, d4
+    vld1.8          {d6}, [r0], r1
+    vmovl.u8        q13, d5
+    vld1.8          {d7}, [r0], r1
+    vmovl.u8        q14, d6
+    vmovl.u8        q15, d7
+
+    // SAD Stage-0
+    vadd.u16        q4, q8, q9
+    vadd.u16        q5, q10, q11
+    vadd.u16        q6, q12, q13
+    vadd.u16        q7, q14, q15
+
+    // SAD Stage-1
+    vadd.u16        q4, q5
+    vadd.u16        q6, q7
+    vadd.u16        q4, q6
+    vpadd.u16       d8, d9
+    vpaddl.u16      d8, d8
+    vpadd.u32       d8, d8
+    vshr.u32        d8, #2
+
+    // sa8d
+    SUMSUB_AB       q0,  q1,  q8,  q9
+    SUMSUB_AB       q2,  q3,  q10, q11
+    SUMSUB_AB       q8,  q10, q0,  q2
+    SUMSUB_AB       q9,  q11, q1,  q3
+
+    HADAMARD4_V     q12, q13, q14, q15,  q0,  q1,  q2,  q3
+
+    SUMSUB_ABCD     q0,  q8,  q1,  q9,   q8,  q12, q9,  q13
+    SUMSUB_AB       q2,  q10, q10, q14
+    vtrn.16         q8,  q9
+    SUMSUB_AB       q3,  q11, q11, q15
+    vtrn.16         q0,  q1
+    SUMSUB_AB       q12, q13, q8,  q9
+    vtrn.16         q10, q11
+    SUMSUB_AB       q8,  q9,  q0,  q1
+    vtrn.16         q2,  q3
+    SUMSUB_AB       q14, q15, q10, q11
+    vadd.i16        q10, q2,  q3
+    vtrn.32         q12, q14
+    vsub.i16        q11, q2,  q3
+    vtrn.32         q13, q15
+    SUMSUB_AB       q0,  q2,  q12, q14
+    vtrn.32         q8,  q10
+    SUMSUB_AB       q1,  q3,  q13, q15
+    vtrn.32         q9,  q11
+    SUMSUB_AB       q12, q14, q8,  q10
+    SUMSUB_AB       q13, q15, q9,  q11
+
+    vswp            d1,  d24
+    ABS2            q0,  q12
+    vswp            d3,  d26
+    ABS2            q1,  q13
+    vswp            d5,  d28
+    ABS2            q2,  q14
+    vswp            d7,  d30
+    ABS2            q3,  q15
+    vmax.s16        q8,  q0,  q12
+    vmax.s16        q9,  q1,  q13
+    vmax.s16        q10, q2,  q14
+    vmax.s16        q11, q3,  q15
+    vadd.i16        q8,  q8,  q9
+    vadd.i16        q9,  q10, q11
+    vadd.u16        q0, q8, q9
+    vadd.u16        d0, d1
+    vpaddl.u16      d0, d0
+    vpadd.u32       d0, d0
+    vmov.32         r0, d0[0]
+    add             r0, r0, #1
+    lsr             r0, r0, #1
+//-------------------------------------------------------------
+    vld1.8          d0, [r2], r3
+    vld1.8          d1, [r2], r3
+    vmovl.u8        q8, d0
+    vld1.8          d2, [r2], r3
+    vmovl.u8        q9, d1
+    vld1.8          d3, [r2], r3
+    vmovl.u8        q10, d2
+    vld1.8          d4, [r2], r3
+    vmovl.u8        q11, d3
+    vld1.8          d5, [r2], r3
+    vmovl.u8        q12, d4
+    vld1.8          d6, [r2], r3
+    vmovl.u8        q13, d5
+    vld1.8          d7, [r2], r3
+    vmovl.u8        q14, d6
+    vmovl.u8        q15, d7
+
+    // SAD Stage-0
+    vadd.u16       q5, q8, q9
+    vadd.u16       q6, q10, q11
+    vadd.u16       q7, q12, q13
+    vadd.u16       q0, q14, q15
+
+    // SAD Stage-1
+    vadd.u16        q5, q6
+    vadd.u16        q7, q0
+    vadd.u16        q5, q7
+    vadd.u16        d10, d11
+    vpaddl.u16      d10, d10
+    vpadd.u32       d10, d10
+    vshr.u32        d10, #2
+
+    // sa8d
+    SUMSUB_AB       q0,  q1,  q8,  q9
+    SUMSUB_AB       q2,  q3,  q10, q11
+    SUMSUB_AB       q8,  q10, q0,  q2
+    SUMSUB_AB       q9,  q11, q1,  q3
+
+    HADAMARD4_V     q12, q13, q14, q15,  q0,  q1,  q2,  q3
+
+    SUMSUB_ABCD     q0,  q8,  q1,  q9,   q8,  q12, q9,  q13
+    SUMSUB_AB       q2,  q10, q10, q14
+    vtrn.16         q8,  q9
+    SUMSUB_AB       q3,  q11, q11, q15
+    vtrn.16         q0,  q1
+    SUMSUB_AB       q12, q13, q8,  q9
+    vtrn.16         q10, q11
+    SUMSUB_AB       q8,  q9,  q0,  q1
+    vtrn.16         q2,  q3
+    SUMSUB_AB       q14, q15, q10, q11
+    vadd.i16        q10, q2,  q3
+    vtrn.32         q12, q14
+    vsub.i16        q11, q2,  q3
+    vtrn.32         q13, q15
+    SUMSUB_AB       q0,  q2,  q12, q14
+    vtrn.32         q8,  q10
+    SUMSUB_AB       q1,  q3,  q13, q15
+    vtrn.32         q9,  q11
+    SUMSUB_AB       q12, q14, q8,  q10
+    SUMSUB_AB       q13, q15, q9,  q11
+
+    vswp            d1,  d24
+    ABS2            q0,  q12
+    vswp            d3,  d26
+    ABS2            q1,  q13
+    vswp            d5,  d28
+    ABS2            q2,  q14
+    vswp            d7,  d30
+    ABS2            q3,  q15
+    vmax.s16        q8,  q0,  q12
+    vmax.s16        q9,  q1,  q13
+    vmax.s16        q10, q2,  q14
+    vmax.s16        q11, q3,  q15
+    vadd.i16        q8,  q8,  q9
+    vadd.i16        q9,  q10, q11
+    vadd.u16        q0, q8, q9
+    vadd.u16        d0, d1
+    vpaddl.u16      d0, d0
+    vpadd.u32       d0, d0
+    vmov.32         r2, d0[0]
+    add             r2, r2, #1
+    lsr             r2, r2, #1
+
+    // SAD & SA8D Final Stage
+    vmov.32         r1, d8[0]
+    sub             r0, r1
+    vmov.32         r3, d10[0]
+    sub             r2, r3
+    cmp             r0, r2
+    bgt             subr0
+    sub             r0, r2, r0
+    b               end
+subr0:
+    sub             r0, r2
+end:
+
+    vpop            {q4-q7}
+    bx              lr
+endfunc
+
+
