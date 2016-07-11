@@ -776,8 +776,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (m_param->rc.bStatWrite)
                 if (m_rateControl->writeRateControlFrameStats(outFrame, &curEncoder->m_rce))
                     m_aborted = true;
-
-            if (pic_out && m_param->rc.bStatWrite)
+            if (pic_out)
             {
                 /* m_rcData is allocated for every frame */
                 pic_out->rcData = outFrame->m_rcData;
