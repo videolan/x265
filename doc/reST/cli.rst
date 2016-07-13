@@ -734,12 +734,13 @@ the prediction quad-tree.
 
 .. option:: --rskip, --no-rskip
 
-	In rdlevels 5 and 6 measure 2Nx2N merge candidates and compare it with
-	inter2Nx2N;if no residual is found, then do not recurse to higher depths
-	for depths > 0. At depth 0 recursion is allowed even when the residual is zero.
-	In rdlevels 4 and below additional heuristics such as neighbour costs 
-	are used to skip recursion when there is no residual after measuring 2Nx2N merge
-	candidates.
+	This option determines early exit from CU depth recursion. When a skip CU is
+	found, additional heuristics (depending on rd-level) are used to decide whether
+	to terminate recursion. In rdlevels 5 and 6, comparison with inter2Nx2N is used, 
+	while at rdlevels 4 and neighbour costs are used to skip recursion.
+	Provides minimal quality degradation at good performance gains when enabled. 
+
+	Default: enabled, disabled for :option:`--tune grain`
 
 .. option:: --fast-intra, --no-fast-intra
 

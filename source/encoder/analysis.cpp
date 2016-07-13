@@ -1424,13 +1424,13 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
         md.pred[PRED_2Nx2N].rdCost = 0;
     }
 
-	SplitData splitData[4];
-	splitData[0].initSplitCUData();
-	splitData[1].initSplitCUData();
-	splitData[2].initSplitCUData();
-	splitData[3].initSplitCUData();
-	uint32_t allSplitRefs = splitData[0].splitRefs | splitData[1].splitRefs | splitData[2].splitRefs | splitData[3].splitRefs;
-	uint32_t refMasks[2];
+    SplitData splitData[4];
+    splitData[0].initSplitCUData();
+    splitData[1].initSplitCUData();
+    splitData[2].initSplitCUData();
+    splitData[3].initSplitCUData();
+    uint32_t allSplitRefs = splitData[0].splitRefs | splitData[1].splitRefs | splitData[2].splitRefs | splitData[3].splitRefs;
+    uint32_t refMasks[2];
     if (m_param->analysisMode == X265_ANALYSIS_LOAD)
     {
         if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
@@ -1447,7 +1447,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
 
                 if (m_param->bEnableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
-	                skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
+                    skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
             }
             if (m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
                 skipRectAmp = true && !!md.bestMode;
