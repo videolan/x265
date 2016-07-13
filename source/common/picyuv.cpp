@@ -289,12 +289,14 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
     pixel *V = m_picOrg[2];
 
 #if HIGH_BIT_DEPTH
-    bool calcHDRParams = !!param.minLuma || !!param.maxCLL || (param.maxLuma != PIXEL_MAX);
-    /* Apply min/max luma bounds and calculate max and avg luma levels for HDR SEI messages */
+    bool calcHDRParams = !!param.minLuma || (param.maxLuma != PIXEL_MAX);
+    /* Apply min/max luma bounds for HDR pixel manipulations */
     if (calcHDRParams)
     {
         X265_CHECK(pic.bitDepth == 10, "HDR stats can be applied/calculated only for 10bpp content");
-        primitives.calcHDRStats(Y, U, V, m_stride, m_strideC, width, height, &m_avgLumaLevel, &m_maxLumaLevel, (pixel)param.minLuma, (pixel)param.maxLuma, m_hChromaShift, m_vChromaShift);
+        uint64_t sumLuma;
+        m_maxLumaLevel = primitives.planeClipAndMax(Y, m_stride, width, height, &sumLuma, (pixel)param.minLuma, (pixel)param.maxLuma);
+        m_avgLumaLevel = (double) sumLuma / (m_picHeight * m_picWidth);
     }
 #else
     (void) param;

@@ -1243,12 +1243,6 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
 
         stats->maxCLL         = m_analyzeAll.m_maxCLL;
         stats->maxFALL        = (uint16_t)(m_analyzeAll.m_maxFALL / m_analyzeAll.m_numPics);
-
-        if (m_emitCLLSEI)
-        {
-            m_param->maxCLL = stats->maxCLL;
-            m_param->maxFALL = stats->maxFALL;
-        }
     }
 
     /* If new statistics are added to x265_stats, we must check here whether the

@@ -2157,6 +2157,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.fix8Unpack = PFX(cutree_fix8_unpack_avx2);
         p.fix8Pack = PFX(cutree_fix8_pack_avx2);
 
+        /* TODO: This kernel needs to be modified to work with HIGH_BIT_DEPTH only 
+        p.planeClipAndMax = PFX(planeClipAndMax_avx2); */
+
         // TODO: depends on hps and vsp
         ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu);                        // calling luma_hvpp for all sizes
         p.pu[LUMA_4x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_4x4>;             // ALL_LUMA_PU_T has declared all sizes except 4x4, hence calling luma_hvpp[4x4] 

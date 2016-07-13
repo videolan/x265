@@ -889,69 +889,27 @@ static void cuTreeFix8Unpack(double *dst, uint16_t *src, int count)
 }
 
 #if HIGH_BIT_DEPTH
-static void calcHDRStats_c(pixel *srcY, pixel* srcU, pixel* srcV, intptr_t stride, intptr_t strideC, int width, int height, double *outsum, 
-                           pixel *outMax, const pixel minPix, const pixel maxPix, const int hShift, const int vShift)
+static pixel planeClipAndMax_c(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, 
+                               const pixel minPix, const pixel maxPix)
 {
-    pixel rgb[3];
-    uint16_t maxRGB = 0, maxLumaLevel = 0;
-    uint64_t rowsumLuma = 0;
-    double rowavgLuma = 0;
+    pixel maxLumaLevel = 0;
+    uint64_t sumLuma = 0;
 
-    uint16_t minLegal = (uint16_t)MIN_HDR_LEGAL_RANGE, maxLegal = (uint16_t)MAX_HDR_LEGAL_RANGE;
-
-    for (int r = 0; r < height >> vShift; r++)
+    for (int r = 0; r < height; r++)
     {
-        rowsumLuma = 0;
-        for (int c = 0; c < width >> hShift; c++)
+        for (int c = 0; c < width; c++)
         {
-            pixel y = 0, cb = 0, cr = 0;
-            /* Clip luma of source picture to max and min, only if they are specified. Average luma values for RGB conversions */
-            if (!hShift && !vShift) /* YUV444 */
-            {
-                y = srcY[c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[c]);
-                cb = srcU[c]; cr = srcV[c];
-            }
-            else if (hShift && !vShift) /* YUV422 */
-            {
-                srcY[2*c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c]);
-                srcY[2*c + 1] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c + 1]);
-                y = (srcY[2*c] + srcY[2*c + 1]) >> 1;
-                cb = srcU[c]; cr = srcV[c];
-            }
-            else if (hShift && vShift) /* YUV420 */
-            {
-                srcY[2*c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c]);
-                srcY[2*c + 1] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[2*c + 1]);
-                srcY[stride + 2*c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[stride + 2*c]);
-                srcY[stride + 2*c + 1] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[stride + 2*c + 1]);
-                y = (srcY[2*c] + srcY[2*c + 1] + srcY[stride + 2*c] + srcY[stride + 2*c + 1]) >> 2;
-                cb = srcU[c]; cr = srcV[c];
-            }
-            else if (!strideC) /* YUV400 */
-            {
-                y = srcY[c] = x265_clip3((pixel)minPix, (pixel)maxPix, srcY[c]);
-                cb = cr = 0;
-            }
-            /* Rec 2020 Yuv to RGB */
-            for (int i = 0; i < 3; i++)
-                rgb[i] = (pixel) (y * g_YUVtoRGB_BT2020[i][0] + (cb - CBCR_OFFSET) * g_YUVtoRGB_BT2020[i][1] + (cr - CBCR_OFFSET) * g_YUVtoRGB_BT2020[i][2]);
-            /* maxCLL and maxFALL */
-            maxRGB = X265_MAX(maxRGB, X265_MAX(rgb[0], X265_MAX(rgb[1], rgb[2])));
-            maxRGB = X265_MIN(X265_MAX(maxRGB, minLegal), maxLegal);
-            maxLumaLevel = (uint16_t) g_ST2084_PQTable[maxRGB - minLegal];
-            rowsumLuma += maxLumaLevel;
+            /* Clip luma of source picture to max and min*/
+            src[c] = x265_clip3((pixel)minPix, (pixel)maxPix, src[c]);
+            maxLumaLevel = X265_MAX(src[c], maxLumaLevel);
+            sumLuma += src[c];
         }
-        srcY += stride << vShift; 
-        if (strideC)
-        {
-            srcU += strideC;
-            srcV += strideC;
-        }
-        rowavgLuma += ((double)rowsumLuma / width);
+        src += stride;
     }
-    *outsum = rowavgLuma / height;
-    *outMax = maxLumaLevel;
+    *outsum = sumLuma;
+    return maxLumaLevel;
 }
+
 #endif
 }  // end anonymous namespace
 
@@ -1238,7 +1196,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.planecopy_sp = planecopy_sp_c;
     p.planecopy_sp_shl = planecopy_sp_shl_c;
 #if HIGH_BIT_DEPTH
-    p.calcHDRStats = calcHDRStats_c;
+    p.planeClipAndMax = planeClipAndMax_c;
 #endif
     p.propagateCost = estimateCUPropagateCost;
     p.fix8Unpack = cuTreeFix8Unpack;
