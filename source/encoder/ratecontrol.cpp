@@ -1223,6 +1223,10 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         /* copy value of lastRceq into thread local rce struct *to be used in RateControlEnd() */
         rce->qRceq = m_lastRceq;
         accumPQpUpdate();
+        curFrame->m_rcData->cumulativePQp = m_accumPQp;
+        curFrame->m_rcData->cumulativePNorm = m_accumPNorm;
+        for (int i = 0; i < 3; i++)
+            curFrame->m_rcData->lastQScaleFor[i] = m_lastQScaleFor[i];
     }
     else // CQP
     {
