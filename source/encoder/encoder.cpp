@@ -1468,6 +1468,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
                 
                 bs.resetBits();
                 SEIuserDataUnregistered idsei;
+                idsei.m_payloadType = USER_DATA_UNREGISTERED;
                 idsei.m_userData = (uint8_t*)buffer;
                 idsei.m_userDataLength = (uint32_t)strlen(buffer);
                 idsei.write(bs, m_sps);
