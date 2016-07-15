@@ -1434,6 +1434,14 @@ Quality, rate control and rate distortion options
 	The maximum single adjustment in QP allowed to rate control. Default
 	4
 	
+.. option:: --qpmin <integer>
+
+	sets a hard lower limit on QP allowed to ratecontrol. Default 0
+
+.. option:: --qpmax <integer>
+
+	sets a hard upper limit on QP allowed to ratecontrol. Default 69
+	
 .. option:: --rc-grain, --no-rc-grain
 
    Enables a specialised ratecontrol algorithm for film grain content. This 

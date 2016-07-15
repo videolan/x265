@@ -162,6 +162,8 @@ public:
     double  m_accumPNorm;
     double  m_lastQScaleFor[3];  /* last qscale for a specific pict type, used for max_diff & ipb factor stuff */
     double  m_lstep;
+    double  m_lmin[3];
+    double  m_lmax[3];
     double  m_shortTermCplxSum;
     double  m_shortTermCplxCount;
     double  m_lastRceq;

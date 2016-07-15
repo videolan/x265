@@ -255,7 +255,7 @@ void Analysis::qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t
             cuPrevCost = origCUCost;
 
             int modCUQP = qp + dir;
-            while (modCUQP >= QP_MIN && modCUQP <= QP_MAX_SPEC)
+            while (modCUQP >= m_param->rc.qpMin && modCUQP <= QP_MAX_SPEC)
             {
                 recodeCU(parentCTU, cuGeom, modCUQP, qp);
                 cuCost = md.bestMode->rdCost;
@@ -2667,5 +2667,5 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, doub
         qp += qp_offset;
     }
 
-    return x265_clip3(QP_MIN, QP_MAX_MAX, (int)(qp + 0.5));
+    return x265_clip3(m_param->rc.qpMin, m_param->rc.qpMax, (int)(qp + 0.5));
 }

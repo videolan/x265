@@ -152,6 +152,8 @@ static const struct option long_options[] =
     { "pbratio",        required_argument, NULL, 0 },
     { "qcomp",          required_argument, NULL, 0 },
     { "qpstep",         required_argument, NULL, 0 },
+    { "qpmin",          required_argument, NULL, 0 },
+    { "qpmax",          required_argument, NULL, 0 },
     { "ratetol",        required_argument, NULL, 0 },
     { "cplxblur",       required_argument, NULL, 0 },
     { "qblur",          required_argument, NULL, 0 },
@@ -388,6 +390,8 @@ static void showHelp(x265_param *param)
     H1("   --pbratio <float>             QP factor between P and B. Default %.2f\n", param->rc.pbFactor);
     H1("   --qcomp <float>               Weight given to predicted complexity. Default %.2f\n", param->rc.qCompress);
     H1("   --qpstep <integer>            The maximum single adjustment in QP allowed to rate control. Default %d\n", param->rc.qpStep);
+    H1("   --qpmin <integer>             sets a hard lower limit on QP allowed to ratecontrol. Default %d\n", param->rc.qpMin);
+    H1("   --qpmax <integer>             sets a hard upper limit on QP allowed to ratecontrol. Default %d\n", param->rc.qpMax);
     H1("   --cbqpoffs <integer>          Chroma Cb QP Offset [-12..12]. Default %d\n", param->cbQpOffset);
     H1("   --crqpoffs <integer>          Chroma Cr QP Offset [-12..12]. Default %d\n", param->crQpOffset);
     H1("   --scaling-list <string>       Specify a file containing HM style quant scaling lists or 'default' or 'off'. Default: off\n");

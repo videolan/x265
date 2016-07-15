@@ -1127,7 +1127,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             {
                 double qpBase = curEncData.m_cuStat[cuAddr].baseQp;
                 int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_frame, row, &m_rce, qpBase);
-                qpBase = x265_clip3((double)QP_MIN, (double)QP_MAX_MAX, qpBase);
+                qpBase = x265_clip3((double)m_param->rc.qpMin, (double)m_param->rc.qpMax, qpBase);
                 curEncData.m_rowStat[row].diagQp = qpBase;
                 curEncData.m_rowStat[row].diagQpScale =  x265_qp2qScale(qpBase);
 

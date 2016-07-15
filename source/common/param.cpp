@@ -224,6 +224,8 @@ void x265_param_default(x265_param* param)
     param->rc.bEnableSlowFirstPass = 1;
     param->rc.bStrictCbr = 0;
     param->rc.bEnableGrain = 0;
+    param->rc.qpMin = 0;
+    param->rc.qpMax = QP_MAX_MAX;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -509,6 +511,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     bool bError = false;
     bool bNameWasBool = false;
     bool bValueWasNull = !value;
+    bool bExtraParams = false;
     char nameBuf[64];
 
     if (!name)
@@ -747,6 +750,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("vbv-init")    p->rc.vbvBufferInit = atof(value);
     OPT("crf-max")     p->rc.rfConstantMax = atof(value);
     OPT("crf-min")     p->rc.rfConstantMin = atof(value);
+    OPT("qpmax")       p->rc.qpMax = atoi(value);
     OPT("crf")
     {
         p->rc.rfConstant = atof(value);
@@ -885,7 +889,14 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("max-luma") p->maxLuma = (uint16_t)atoi(value);
     OPT("uhd-bd") p->uhdBluray = atobool(value);
     else
-        return X265_PARAM_BAD_NAME;
+        bExtraParams = true;
+    if (bExtraParams)
+    {
+        if (0) ;
+        OPT("qpmin") p->rc.qpMin = atoi(value);
+        else
+            return X265_PARAM_BAD_NAME;
+    }
 #undef OPT
 #undef atobool
 #undef atoi
@@ -1208,6 +1219,10 @@ int x265_check_params(x265_param* param)
           "Strict-cbr cannot be applied without specifying target bitrate or vbv bufsize");
     CHECK(param->analysisMode && (param->analysisMode < X265_ANALYSIS_OFF || param->analysisMode > X265_ANALYSIS_LOAD),
         "Invalid analysis mode. Analysis mode 0: OFF 1: SAVE : 2 LOAD");
+    CHECK(param->rc.qpMax < QP_MIN || param->rc.qpMax > QP_MAX_MAX,
+        "qpmax exceeds supported range (0 to 69)");
+    CHECK(param->rc.qpMin < QP_MIN || param->rc.qpMin > QP_MAX_MAX,
+        "qpmin exceeds supported range (0 to 69)");
     return check_failed;
 }
 
@@ -1463,7 +1478,7 @@ char *x265_param2string(x265_param* p)
         else
             s += sprintf(s, " bitrate=%d", p->rc.bitrate);
         s += sprintf(s, " qcomp=%.2f qpmin=%d qpmax=%d qpstep=%d",
-                     p->rc.qCompress, QP_MIN, QP_MAX_SPEC, p->rc.qpStep);
+                     p->rc.qCompress, p->rc.qpMin, p->rc.qpMax, p->rc.qpStep);
         if (p->rc.bStatRead)
             s += sprintf( s, " cplxblur=%.1f qblur=%.1f",
                           p->rc.complexityBlur, p->rc.qblur);

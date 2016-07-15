@@ -1161,6 +1161,12 @@ typedef struct x265_param
 
         /* internally enable if tune grain is set */
         int      bEnableGrain;
+
+        /* sets a hard upper limit on QP */
+        int      qpMax;
+
+        /* sets a hard lower limit on QP */
+        int      qpMin;
     } rc;
 
     /*== Video Usability Information ==*/
