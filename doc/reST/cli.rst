@@ -1314,13 +1314,18 @@ Quality, rate control and rate distortion options
 	0. disabled
 	1. AQ enabled **(default)**
 	2. AQ enabled with auto-variance
-	3. AQ enabled with auto-variance and bias to dark scenes
+	3. AQ enabled with auto-variance and bias to dark scenes. This is 
+	recommended for 8-bit encodes or low-bitrate 10-bit encodes, to 
+	prevent color banding/blocking. 
 
 .. option:: --aq-strength <float>
 
 	Adjust the strength of the adaptive quantization offsets. Setting
-	:option:`--aq-strength` to 0 disables AQ. Default 1.0.
+	:option:`--aq-strength` to 0 disables AQ. At aq-modes 2 and 3, high 
+	aq-strengths will lead to high QP offsets resulting in a large 
+	difference in achieved bitrates. 
 
+	Default 1.0.
 	**Range of values:** 0.0 to 3.0
 
 .. option:: --qg-size <64|32|16>
