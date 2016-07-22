@@ -1731,19 +1731,19 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                     ProfileCounter(parentCTU, skippedIntraCU[cuGeom.depth]);
                 }
             }
-            if ((md.bestMode->cu.isInter(0) && !(md.bestMode->cu.m_mergeFlag[0] && md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N)) && (m_frame->m_fencPic->m_picCsp == X265_CSP_I400 && m_csp != X265_CSP_I400))
-            {
-                uint32_t numPU = md.bestMode->cu.getNumPartInter(0);
-
-                for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
-                {
-                    PredictionUnit pu(md.bestMode->cu, cuGeom, puIdx);
-                    motionCompensation(md.bestMode->cu, pu, md.bestMode->predYuv, false, m_csp != X265_CSP_I400);
-                }
-                encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
-            }
         }
 
+        if ((md.bestMode->cu.isInter(0) && !(md.bestMode->cu.m_mergeFlag[0] && md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N)) && (m_frame->m_fencPic->m_picCsp == X265_CSP_I400 && m_csp != X265_CSP_I400))
+        {
+            uint32_t numPU = md.bestMode->cu.getNumPartInter(0);
+
+            for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
+            {
+                PredictionUnit pu(md.bestMode->cu, cuGeom, puIdx);
+                motionCompensation(md.bestMode->cu, pu, md.bestMode->predYuv, false, m_csp != X265_CSP_I400);
+            }
+            encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
+        }
         if (m_bTryLossless)
             tryLossless(cuGeom);
 
