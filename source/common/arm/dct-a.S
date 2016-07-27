@@ -215,9 +215,7 @@ function x265_dct_8x8_neon
     vqrshrn.s32 d22, q13, 2
     vqrshrn.s32 d19, q14, 2
     vqrshrn.s32 d23, q15, 2
-
-    vstm r1!, {d16-d23]
-
+    vstm r1!, {d16-d23}
     // bottom half
     vld1.16 {q12}, [r0], r2
     vld1.16 {q13}, [r0], r2
@@ -261,10 +259,8 @@ function x265_dct_8x8_neon
     vqrshrn.s32 d22, q13, 2
     vqrshrn.s32 d19, q14, 2
     vqrshrn.s32 d23, q15, 2
-
-    vstm r1, {d16-d23]
+    vstm r1, {d16-d23}
     mov r1, r3
-
     // DCT-2D
     // left half
     vld1.16 {d24}, [r1], r2
