@@ -717,6 +717,31 @@ void Lookahead::addPicture(Frame& curFrame, int sliceType)
     m_inputLock.release();
 }
 
+void Lookahead::addPicture(Frame& curFrame)
+{
+    m_inputLock.acquire();
+    m_inputQueue.pushBack(curFrame);
+    m_inputLock.release();
+}
+
+void Lookahead::checkLookaheadQueue(int &frameCnt)
+{
+    /* determine if the lookahead is (over) filled enough for frames to begin to
+     * be consumed by frame encoders */
+    if (!m_filled)
+    {
+        if (!m_param->bframes & !m_param->lookaheadDepth)
+            m_filled = true; /* zero-latency */
+        else if (frameCnt >= m_param->lookaheadDepth + 2 + m_param->bframes)
+            m_filled = true; /* full capacity plus mini-gop lag */
+    }
+
+    m_inputLock.acquire();
+    if (m_pool && m_inputQueue.size() >= m_fullQueueSize)
+        tryWakeOne();
+    m_inputLock.release();
+}
+
 /* Called by API thread */
 void Lookahead::flush()
 {

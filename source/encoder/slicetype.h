@@ -144,6 +144,8 @@ public:
     void    stopJobs();
 
     void    addPicture(Frame&, int sliceType);
+    void    addPicture(Frame& curFrame);
+    void    checkLookaheadQueue(int &frameCnt);
     void    flush();
     Frame*  getDecidedPicture();
 
