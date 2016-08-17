@@ -84,13 +84,13 @@ struct LookaheadTLD
     ~LookaheadTLD() { X265_FREE(wbuffer[0]); }
 
     void calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param);
-    void lowresIntraEstimate(Lowres& fenc);
+    void lowresIntraEstimate(Lowres& fenc, uint32_t qgSize);
 
     void weightsAnalyse(Lowres& fenc, Lowres& ref);
 
 protected:
 
-    uint32_t acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, int csp);
+    uint32_t acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, int csp, uint32_t qgSize);
     uint32_t weightCostLuma(Lowres& fenc, Lowres& ref, WeightParam& wp);
     bool     allocWeightedRef(Lowres& fenc);
 };

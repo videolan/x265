@@ -615,9 +615,18 @@ bool RateControl::init(const SPS& sps)
         }
         if (m_param->rc.cuTree)
         {
-            m_cuTreeStats.qpBuffer[0] = X265_MALLOC(uint16_t, m_ncu * sizeof(uint16_t));
-            if (m_param->bBPyramid && m_param->rc.bStatRead)
-                m_cuTreeStats.qpBuffer[1] = X265_MALLOC(uint16_t, m_ncu * sizeof(uint16_t));
+            if (m_param->rc.qgSize == 8)
+            {
+                m_cuTreeStats.qpBuffer[0] = X265_MALLOC(uint16_t, m_ncu * 4 * sizeof(uint16_t));
+                if (m_param->bBPyramid && m_param->rc.bStatRead)
+                    m_cuTreeStats.qpBuffer[1] = X265_MALLOC(uint16_t, m_ncu * 4 * sizeof(uint16_t));
+            }
+            else
+            {
+                m_cuTreeStats.qpBuffer[0] = X265_MALLOC(uint16_t, m_ncu * sizeof(uint16_t));
+                if (m_param->bBPyramid && m_param->rc.bStatRead)
+                    m_cuTreeStats.qpBuffer[1] = X265_MALLOC(uint16_t, m_ncu * sizeof(uint16_t));
+            }
             m_cuTreeStats.qpBufPos = -1;
         }
     }
@@ -1424,6 +1433,11 @@ bool RateControl::cuTreeReadFor2Pass(Frame* frame)
 {
     int index = m_encOrder[frame->m_poc];
     uint8_t sliceTypeActual = (uint8_t)m_rce2Pass[index].sliceType;
+    int ncu;
+    if (m_param->rc.qgSize == 8)
+        ncu = m_ncu * 4;
+    else
+        ncu = m_ncu;
     if (m_rce2Pass[index].keptAsRef)
     {
         /* TODO: We don't need pre-lookahead to measure AQ offsets, but there is currently
@@ -1437,7 +1451,7 @@ bool RateControl::cuTreeReadFor2Pass(Frame* frame)
 
                 if (!fread(&type, 1, 1, m_cutreeStatFileIn))
                     goto fail;
-                if (fread(m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], sizeof(uint16_t), m_ncu, m_cutreeStatFileIn) != (size_t)m_ncu)
+                if (fread(m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], sizeof(uint16_t), ncu, m_cutreeStatFileIn) != (size_t)ncu)
                     goto fail;
 
                 if (type != sliceTypeActual && m_cuTreeStats.qpBufPos == 1)
@@ -1448,8 +1462,8 @@ bool RateControl::cuTreeReadFor2Pass(Frame* frame)
             }
             while(type != sliceTypeActual);
         }
-        primitives.fix8Unpack(frame->m_lowres.qpCuTreeOffset, m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], m_ncu);
-        for (int i = 0; i < m_ncu; i++)
+        primitives.fix8Unpack(frame->m_lowres.qpCuTreeOffset, m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], ncu);
+        for (int i = 0; i < ncu; i++)
             frame->m_lowres.invQscaleFactor[i] = x265_exp2fix8(frame->m_lowres.qpCuTreeOffset[i]);
         m_cuTreeStats.qpBufPos--;
     }
@@ -2593,6 +2607,11 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
 int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce)
 {
     FrameData& curEncData = *curFrame->m_encData;
+    int ncu;
+    if (m_param->rc.qgSize == 8)
+        ncu = m_ncu * 4;
+    else
+        ncu = m_ncu;
     char cType = rce->sliceType == I_SLICE ? (rce->poc > 0 && m_param->bOpenGOP ? 'i' : 'I')
         : rce->sliceType == P_SLICE ? 'P'
         : IS_REFERENCED(curFrame) ? 'B' : 'b';
@@ -2612,10 +2631,10 @@ int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* r
     if (m_param->rc.cuTree && IS_REFERENCED(curFrame) && !m_param->rc.bStatRead)
     {
         uint8_t sliceType = (uint8_t)rce->sliceType;
-        primitives.fix8Pack(m_cuTreeStats.qpBuffer[0], curFrame->m_lowres.qpCuTreeOffset, m_ncu);
+        primitives.fix8Pack(m_cuTreeStats.qpBuffer[0], curFrame->m_lowres.qpCuTreeOffset, ncu);
         if (fwrite(&sliceType, 1, 1, m_cutreeStatFileOut) < 1)
             goto writeFailure;
-        if (fwrite(m_cuTreeStats.qpBuffer[0], sizeof(uint16_t), m_ncu, m_cutreeStatFileOut) < (size_t)m_ncu)
+        if (fwrite(m_cuTreeStats.qpBuffer[0], sizeof(uint16_t), ncu, m_cutreeStatFileOut) < (size_t)ncu)
             goto writeFailure;
     }
     return 0;

@@ -132,6 +132,8 @@ struct Lowres : public ReferencePlanes
     MV*       lowresMvs[2][X265_BFRAME_MAX + 1];
     uint32_t  maxBlocksInRow;
     uint32_t  maxBlocksInCol;
+    uint32_t  maxBlocksInRowFullRes;
+    uint32_t  maxBlocksInColFullRes;
 
     /* used for vbvLookahead */
     int       plannedType[X265_LOOKAHEAD_MAX + 1];
@@ -153,7 +155,7 @@ struct Lowres : public ReferencePlanes
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
     ReferencePlanes weightedRef[X265_BFRAME_MAX + 2];
 
-    bool create(PicYuv *origPic, int _bframes, bool bAqEnabled);
+    bool create(PicYuv *origPic, int _bframes, bool bAqEnabled, uint32_t qgSize);
     void destroy();
     void init(PicYuv *origPic, int poc);
 };

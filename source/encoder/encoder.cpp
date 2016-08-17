@@ -605,7 +605,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
         if (pic_in->quantOffsets != NULL)
         {
-            int cuCount = inFrame->m_lowres.maxBlocksInRow * inFrame->m_lowres.maxBlocksInCol;
+            int cuCount;
+            if (m_param->rc.qgSize == 8)
+                cuCount = inFrame->m_lowres.maxBlocksInRowFullRes * inFrame->m_lowres.maxBlocksInColFullRes;
+            else
+                cuCount = inFrame->m_lowres.maxBlocksInRow * inFrame->m_lowres.maxBlocksInCol;
             memcpy(inFrame->m_quantOffsets, pic_in->quantOffsets, cuCount * sizeof(float));
         }
 
@@ -790,7 +794,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 if (m_rateControl->writeRateControlFrameStats(outFrame, &curEncoder->m_rce))
                     m_aborted = true;
             if (pic_out)
-            {
+            { 
                 /* m_rcData is allocated for every frame */
                 pic_out->rcData = outFrame->m_rcData;
                 outFrame->m_rcData->qpaRc = outFrame->m_encData->m_avgQpRc;
@@ -1590,7 +1594,7 @@ void Encoder::initPPS(PPS *pps)
     {
         pps->bUseDQP = true;
         pps->maxCuDQPDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
-        X265_CHECK(pps->maxCuDQPDepth <= 2, "max CU DQP depth cannot be greater than 2\n");
+        X265_CHECK(pps->maxCuDQPDepth <= 3, "max CU DQP depth cannot be greater than 3\n");
     }
     else
     {
@@ -1874,10 +1878,10 @@ void Encoder::configure(x265_param *p)
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
     if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
     {
-        if (p->rc.qgSize < X265_MAX(16, p->minCUSize))
+        if (p->rc.qgSize < X265_MAX(8, p->minCUSize))
         {
-            p->rc.qgSize = X265_MAX(16, p->minCUSize);
-            x265_log(p, X265_LOG_WARNING, "QGSize should be greater than or equal to 16 and minCUSize, setting QGSize = %d\n", p->rc.qgSize);
+            p->rc.qgSize = X265_MAX(8, p->minCUSize);
+            x265_log(p, X265_LOG_WARNING, "QGSize should be greater than or equal to 8 and minCUSize, setting QGSize = %d\n", p->rc.qgSize);
         }
         if (p->rc.qgSize > p->maxCUSize)
         {

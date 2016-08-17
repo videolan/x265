@@ -1387,8 +1387,8 @@ bool PixelHarness::check_cutree_propagate_cost(cutree_propagate_cost ref, cutree
     {
         int width = 16 + rand() % 64;
         int index = i % TEST_CASES;
-        checked(opt, opt_dest, ushort_test_buff[index] + j, int_test_buff[index] + j, ushort_test_buff[index] + j, int_test_buff[index] + j, &fps, width);
-        ref(ref_dest, ushort_test_buff[index] + j, int_test_buff[index] + j, ushort_test_buff[index] + j, int_test_buff[index] + j, &fps, width);
+        checked(opt, opt_dest, ushort_test_buff[index] + j, int_test_buff[index] + j, ushort_test_buff[index] + j, int_test_buff[index] + j, &fps, width, 32);
+        ref(ref_dest, ushort_test_buff[index] + j, int_test_buff[index] + j, ushort_test_buff[index] + j, int_test_buff[index] + j, &fps, width, 32);
 
         if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
             return false;
@@ -3102,7 +3102,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     if (opt.propagateCost)
     {
         HEADER0("propagateCost");
-        REPORT_SPEEDUP(opt.propagateCost, ref.propagateCost, ibuf1, ushort_test_buff[0], int_test_buff[0], ushort_test_buff[0], int_test_buff[0], double_test_buff[0], 80);
+        REPORT_SPEEDUP(opt.propagateCost, ref.propagateCost, ibuf1, ushort_test_buff[0], int_test_buff[0], ushort_test_buff[0], int_test_buff[0], double_test_buff[0], 80, 32);
     }
 
     if (opt.fix8Pack)

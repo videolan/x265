@@ -2637,7 +2637,11 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, doub
 {
     FrameData& curEncData = *m_frame->m_encData;
     double qp = baseQp >= 0 ? baseQp : curEncData.m_cuStat[ctu.m_cuAddr].baseQp;
-
+    int loopIncr;
+    if (m_param->rc.qgSize == 8)
+        loopIncr = 8;
+    else
+        loopIncr = 16;
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
     bool isReferenced = IS_REFERENCED(m_frame);
     double *qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
@@ -2647,17 +2651,17 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, doub
         uint32_t height = m_frame->m_fencPic->m_picHeight;
         uint32_t block_x = ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx];
         uint32_t block_y = ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx];
-        uint32_t maxCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
+        uint32_t maxCols = (m_frame->m_fencPic->m_picWidth + (loopIncr - 1)) / loopIncr;
         uint32_t blockSize = g_maxCUSize >> cuGeom.depth;
         double qp_offset = 0;
         uint32_t cnt = 0;
         uint32_t idx;
 
-        for (uint32_t block_yy = block_y; block_yy < block_y + blockSize && block_yy < height; block_yy += 16)
+        for (uint32_t block_yy = block_y; block_yy < block_y + blockSize && block_yy < height; block_yy += loopIncr)
         {
-            for (uint32_t block_xx = block_x; block_xx < block_x + blockSize && block_xx < width; block_xx += 16)
+            for (uint32_t block_xx = block_x; block_xx < block_x + blockSize && block_xx < width; block_xx += loopIncr)
             {
-                idx = ((block_yy / 16) * (maxCols)) + (block_xx / 16);
+                idx = ((block_yy / loopIncr) * (maxCols)) + (block_xx / loopIncr);
                 qp_offset += qpoffs[idx];
                 cnt++;
             }
