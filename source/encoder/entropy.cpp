@@ -285,7 +285,7 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
 
     WRITE_UVLC(X265_DEPTH - 8,   "bit_depth_luma_minus8");
     WRITE_UVLC(X265_DEPTH - 8,   "bit_depth_chroma_minus8");
-    WRITE_UVLC(BITS_FOR_POC - 4, "log2_max_pic_order_cnt_lsb_minus4");
+    WRITE_UVLC(sps.log2MaxPocLsb - 4, "log2_max_pic_order_cnt_lsb_minus4");
     WRITE_FLAG(true,             "sps_sub_layer_ordering_info_present_flag");
 
     for (uint32_t i = 0; i < sps.maxTempSubLayers; i++)
@@ -584,8 +584,8 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData)
 
     if (!slice.getIdrPicFlag())
     {
-        int picOrderCntLSB = (slice.m_poc - slice.m_lastIDR + (1 << BITS_FOR_POC)) % (1 << BITS_FOR_POC);
-        WRITE_CODE(picOrderCntLSB, BITS_FOR_POC, "pic_order_cnt_lsb");
+        int picOrderCntLSB = (slice.m_poc - slice.m_lastIDR + (1 << slice.m_sps->log2MaxPocLsb)) % (1 << slice.m_sps->log2MaxPocLsb);
+        WRITE_CODE(picOrderCntLSB, slice.m_sps->log2MaxPocLsb, "pic_order_cnt_lsb");
 
 #if _DEBUG || CHECKED_BUILD
         // check for bitstream restriction stating that:

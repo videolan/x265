@@ -1198,6 +1198,10 @@ Slice decision options
 
 	**Values:** 0:none; 1:fast; 2:full(trellis) **default**
 
+.. option:: --log2-max-poc-lsb <integer>
+
+  Maximum of the picture order count. Default 8
+
 .. option:: --bframes, -b <0..16>
 
 	Maximum number of consecutive b-frames. Use :option:`--bframes` 0 to

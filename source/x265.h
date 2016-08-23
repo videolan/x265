@@ -1294,6 +1294,9 @@ typedef struct x265_param
      * value to that value. */
     uint16_t maxLuma;
 
+    /* Maximum of the picture order count */
+    int log2MaxPocLsb;
+
 } x265_param;
 
 /* x265_param_alloc:

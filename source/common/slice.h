@@ -223,6 +223,7 @@ struct SPS
 
     int      log2MinCodingBlockSize;
     int      log2DiffMaxMinCodingBlockSize;
+    int      log2MaxPocLsb;
 
     uint32_t quadtreeTULog2MaxSize;
     uint32_t quadtreeTULog2MinSize;

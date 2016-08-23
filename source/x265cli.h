@@ -206,6 +206,7 @@ static const struct option long_options[] =
     { "max-cll",        required_argument, NULL, 0 },
     { "min-luma",       required_argument, NULL, 0 },
     { "max-luma",       required_argument, NULL, 0 },
+    { "log2-max-poc-lsb", required_argument, NULL, 8 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
     { "no-repeat-headers",    no_argument, NULL, 0 },
@@ -431,6 +432,7 @@ static void showHelp(x265_param *param)
     H0("   --max-cll <string>            Emit content light level info SEI as \"cll,fall\" (HDR)\n");
     H0("   --min-luma <integer>          Minimum luma plane value of input source picture\n");
     H0("   --max-luma <integer>          Maximum luma plane value of input source picture\n");
+    H0("   --log2-max-poc-lsb <integer>  Maximum of the picture order count\n");
     H0("\nBitstream options:\n");
     H0("   --[no-]repeat-headers         Emit SPS and PPS headers at each keyframe. Default %s\n", OPT(param->bRepeatHeaders));
     H0("   --[no-]info                   Emit SEI identifying encoder and parameters. Default %s\n", OPT(param->bEmitInfoSEI));

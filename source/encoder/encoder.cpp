@@ -1537,6 +1537,7 @@ void Encoder::initSPS(SPS *sps)
 
     sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
     sps->bTemporalMVPEnabled = m_param->bEnableTemporalMvp;
+    sps->log2MaxPocLsb = m_param->log2MaxPocLsb;
 
     VUI& vui = sps->vuiParameters;
     vui.aspectRatioInfoPresentFlag = !!m_param->vui.aspectRatioIdc;
@@ -1992,6 +1993,13 @@ void Encoder::configure(x265_param *p)
 
     if (p->csvfn)
         x265_log(p, X265_LOG_WARNING, "libx265 no longer supports CSV file statistics\n");
+
+    if (p->log2MaxPocLsb < 4)
+    {
+        x265_log(p, X265_LOG_WARNING, "maximum of the picture order count can not be less than 4\n");
+        p->log2MaxPocLsb = 4;
+    }
+
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)

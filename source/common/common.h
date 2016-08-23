@@ -157,7 +157,6 @@ typedef uint64_t sse_t;
 #define MIN_QPSCALE     0.21249999999999999
 #define MAX_MAX_QPSCALE 615.46574234477100
 
-#define BITS_FOR_POC 8
 
 template<typename T>
 inline T x265_min(T a, T b) { return a < b ? a : b; }
