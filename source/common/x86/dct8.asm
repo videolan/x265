@@ -2112,9 +2112,8 @@ cglobal denoise_dct, 4, 4, 6
     pxor     m5,  m5
     shr      r3d, 3
 .loop:
-    mova     m0, [r0]
+    movu     m0, [r0]
     pabsw    m1, m0
-
     movu     m2, [r1]
     pmovsxwd m3, m1
     paddd    m2, m3
@@ -2130,7 +2129,7 @@ cglobal denoise_dct, 4, 4, 6
     pcmpgtw  m4, m1, m5
     pand     m1, m4
     psignw   m1, m0
-    mova     [r0], m1
+    movu     [r0], m1
     add      r0, 16
     add      r1, 32
     add      r2, 16
