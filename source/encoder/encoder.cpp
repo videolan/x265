@@ -1538,6 +1538,12 @@ void Encoder::initSPS(SPS *sps)
     sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
     sps->bTemporalMVPEnabled = m_param->bEnableTemporalMvp;
     sps->log2MaxPocLsb = m_param->log2MaxPocLsb;
+    int maxDeltaPOC = (m_param->bframes + 2) * (!!m_param->bBPyramid + 1) * 2;
+    while ((1 << sps->log2MaxPocLsb) <= maxDeltaPOC * 2)
+        sps->log2MaxPocLsb++;
+
+    if (sps->log2MaxPocLsb != m_param->log2MaxPocLsb)
+        x265_log(m_param, X265_LOG_WARNING, "Reset log2MaxPocLsb to %d to account for all POC values\n", sps->log2MaxPocLsb);
 
     VUI& vui = sps->vuiParameters;
     vui.aspectRatioInfoPresentFlag = !!m_param->vui.aspectRatioIdc;
