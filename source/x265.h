@@ -1297,6 +1297,9 @@ typedef struct x265_param
     /* Maximum of the picture order count */
     int log2MaxPocLsb;
 
+    /* Disable SEI message printing */
+    int bEnableSEIDump;
+    
 } x265_param;
 
 /* x265_param_alloc:

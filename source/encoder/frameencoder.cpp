@@ -466,7 +466,7 @@ void FrameEncoder::compressFrame()
 
     if (m_frame->m_lowres.bKeyframe)
     {
-        if (m_param->bEmitHRDSEI)
+        if (m_param->bEnableSEIDump && m_param->bEmitHRDSEI)
         {
             SEIBufferingPeriod* bpSei = &m_top->m_rateControl->m_bufPeriodSEI;
 
@@ -488,7 +488,7 @@ void FrameEncoder::compressFrame()
         }
     }
 
-    if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
+    if (m_param->bEnableSEIDump && (m_param->bEmitHRDSEI || !!m_param->interlaceMode))
     {
         SEIPictureTiming *sei = m_rce.picTimingSEI;
         const VUI *vui = &slice->m_sps->vuiParameters;
@@ -524,19 +524,22 @@ void FrameEncoder::compressFrame()
     }
 
     /* Write user SEI */
-    for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
+    if (m_param->bEnableSEIDump)
     {
-        x265_sei_payload *payload = &m_frame->m_userSEI.payloads[i];
-        SEIuserDataUnregistered sei;
+        for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
+        {
+            x265_sei_payload *payload = &m_frame->m_userSEI.payloads[i];
+            SEIuserDataUnregistered sei;
 
-        sei.m_payloadType = payload->payloadType;
-        sei.m_userDataLength = payload->payloadSize;
-        sei.m_userData = payload->payload;
+            sei.m_payloadType = payload->payloadType;
+            sei.m_userDataLength = payload->payloadSize;
+            sei.m_userData = payload->payload;
 
-        m_bs.resetBits();
-        sei.write(m_bs, *slice->m_sps);
-        m_bs.writeByteAlignment();
-        m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+            m_bs.resetBits();
+            sei.write(m_bs, *slice->m_sps);
+            m_bs.writeByteAlignment();
+            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+        }
     }
 
     /* CQP and CRF (without capped VBV) doesn't use mid-frame statistics to 
@@ -705,7 +708,7 @@ void FrameEncoder::compressFrame()
 
     m_nalList.serialize(slice->m_nalUnitType, m_bs);
 
-    if (m_param->decodedPictureHashSEI)
+    if (m_param->bEnableSEIDump && m_param->decodedPictureHashSEI)
     {
         int planes = (m_frame->m_param->internalCsp != X265_CSP_I400) ? 3 : 1;
         if (m_param->decodedPictureHashSEI == 1)

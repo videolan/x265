@@ -207,6 +207,8 @@ static const struct option long_options[] =
     { "min-luma",       required_argument, NULL, 0 },
     { "max-luma",       required_argument, NULL, 0 },
     { "log2-max-poc-lsb", required_argument, NULL, 8 },
+    { "no-sei-dump",          no_argument, NULL, 0 },
+    { "sei-dump",             no_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
     { "no-repeat-headers",    no_argument, NULL, 0 },
@@ -432,7 +434,6 @@ static void showHelp(x265_param *param)
     H0("   --max-cll <string>            Emit content light level info SEI as \"cll,fall\" (HDR)\n");
     H0("   --min-luma <integer>          Minimum luma plane value of input source picture\n");
     H0("   --max-luma <integer>          Maximum luma plane value of input source picture\n");
-    H0("   --log2-max-poc-lsb <integer>  Maximum of the picture order count\n");
     H0("\nBitstream options:\n");
     H0("   --[no-]repeat-headers         Emit SPS and PPS headers at each keyframe. Default %s\n", OPT(param->bRepeatHeaders));
     H0("   --[no-]info                   Emit SEI identifying encoder and parameters. Default %s\n", OPT(param->bEmitInfoSEI));
@@ -440,6 +441,8 @@ static void showHelp(x265_param *param)
     H0("   --[no-]temporal-layers        Enable a temporal sublayer for unreferenced B frames. Default %s\n", OPT(param->bEnableTemporalSubLayers));
     H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
     H1("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
+    H0("   --log2-max-poc-lsb <integer>  Maximum of the picture order count\n");
+    H0("   --[no-]sei-dump               Emit SEI packets in bitstream. Default %s\n", OPT(param->bEnableSEIDump));
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");

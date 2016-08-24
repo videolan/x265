@@ -1198,10 +1198,6 @@ Slice decision options
 
 	**Values:** 0:none; 1:fast; 2:full(trellis) **default**
 
-.. option:: --log2-max-poc-lsb <integer>
-
-  Maximum of the picture order count. Default 8
-
 .. option:: --bframes, -b <0..16>
 
 	Maximum number of consecutive b-frames. Use :option:`--bframes` 0 to
@@ -1817,6 +1813,15 @@ Bitstream options
 	3 then the two layers evenly split the frame rate, with a cadence of
 	PbBbP. You probably also want :option:`--no-scenecut` and a keyframe
 	interval that is a multiple of 4.
+
+.. option:: --log2-max-poc-lsb <integer>
+
+  Maximum of the picture order count. Default 8
+
+.. option:: --sei-dump, --no-sei-dump
+
+  Over-riding control to dump, or not dump, SEI messages. HRD-related SEI
+  messages are always dumped, immaterial of this option. Default enabled.
 
 Debugging options
 =================
