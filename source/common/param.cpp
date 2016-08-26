@@ -252,7 +252,7 @@ void x265_param_default(x265_param* param)
     param->minLuma = 0;
     param->maxLuma = PIXEL_MAX;
     param->log2MaxPocLsb = 8;
-    param->bEnableSEIDump = true;
+    param->bDiscardSEI = false;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -897,7 +897,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         if (0) ;
         OPT("qpmin") p->rc.qpMin = atoi(value);
         OPT("log2-max-poc-lsb") p->log2MaxPocLsb = atoi(value);
-        OPT("sei-dump") p->bEnableSEIDump = atobool(value);
+        OPT("discard-sei") p->bDiscardSEI = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }

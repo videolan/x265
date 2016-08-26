@@ -466,7 +466,7 @@ void FrameEncoder::compressFrame()
 
     if (m_frame->m_lowres.bKeyframe)
     {
-        if (m_param->bEnableSEIDump && m_param->bEmitHRDSEI)
+        if (!m_param->bDiscardSEI && m_param->bEmitHRDSEI)
         {
             SEIBufferingPeriod* bpSei = &m_top->m_rateControl->m_bufPeriodSEI;
 
@@ -488,7 +488,7 @@ void FrameEncoder::compressFrame()
         }
     }
 
-    if (m_param->bEnableSEIDump && (m_param->bEmitHRDSEI || !!m_param->interlaceMode))
+    if (!m_param->bDiscardSEI && (m_param->bEmitHRDSEI || !!m_param->interlaceMode))
     {
         SEIPictureTiming *sei = m_rce.picTimingSEI;
         const VUI *vui = &slice->m_sps->vuiParameters;
@@ -524,7 +524,7 @@ void FrameEncoder::compressFrame()
     }
 
     /* Write user SEI */
-    if (m_param->bEnableSEIDump)
+    if (!m_param->bDiscardSEI)
     {
         for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
         {
@@ -708,7 +708,7 @@ void FrameEncoder::compressFrame()
 
     m_nalList.serialize(slice->m_nalUnitType, m_bs);
 
-    if (m_param->bEnableSEIDump && m_param->decodedPictureHashSEI)
+    if (!m_param->bDiscardSEI && m_param->decodedPictureHashSEI)
     {
         int planes = (m_frame->m_param->internalCsp != X265_CSP_I400) ? 3 : 1;
         if (m_param->decodedPictureHashSEI == 1)

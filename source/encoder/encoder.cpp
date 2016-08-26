@@ -1456,7 +1456,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         list.serialize(NAL_UNIT_PREFIX_SEI, bs);
     }
 
-    if (m_param->bEnableSEIDump && m_param->bEmitInfoSEI)
+    if (!m_param->bDiscardSEI && m_param->bEmitInfoSEI)
     {
         char *opts = x265_param2string(m_param);
         if (opts)
@@ -1486,7 +1486,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         }
     }
 
-    if (m_param->bEnableSEIDump && (m_param->bEmitHRDSEI || !!m_param->interlaceMode))
+    if (!m_param->bDiscardSEI && (m_param->bEmitHRDSEI || !!m_param->interlaceMode))
     {
         /* Picture Timing and Buffering Period SEI require the SPS to be "activated" */
         SEIActiveParameterSets sei;
