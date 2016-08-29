@@ -1300,6 +1300,9 @@ typedef struct x265_param
     /* Dicard SEI messages when printing */
     int bDiscardSEI;
     
+    /* Control remove vui information to get low bitrate */
+    int       bDiscardVUI;
+
 } x265_param;
 
 /* x265_param_alloc:

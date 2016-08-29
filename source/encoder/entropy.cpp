@@ -318,8 +318,15 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_FLAG(sps.bTemporalMVPEnabled, "sps_temporal_mvp_enable_flag");
     WRITE_FLAG(sps.bUseStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
 
-    WRITE_FLAG(1, "vui_parameters_present_flag");
-    codeVUI(sps.vuiParameters, sps.maxTempSubLayers);
+    if (sps.bDiscardVUI)
+    {
+        WRITE_FLAG(0, "vui_parameters_present_flag");
+    }
+    else
+    {
+        WRITE_FLAG(1, "vui_parameters_present_flag");
+        codeVUI(sps.vuiParameters, sps.maxTempSubLayers);
+    }
 
     WRITE_FLAG(0, "sps_extension_flag");
 }

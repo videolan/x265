@@ -1818,10 +1818,14 @@ Bitstream options
 
   Maximum of the picture order count. Default 8
 
-.. option:: --sei-dump, --no-sei-dump
+.. option:: --discard-sei
 
-  Over-riding control to dump, or not dump, SEI messages. HRD-related SEI
-  messages are always dumped, immaterial of this option. Default enabled.
+  Discard SEI messages generated from the final bitstream. HDR-related SEI
+  messages are always dumped, immaterial of this option. Default disabled.
+	
+.. option:: --discard-vui
+
+	Discard VUI information from the bitstream. Default disabled.
 
 Debugging options
 =================
