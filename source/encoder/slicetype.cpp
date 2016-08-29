@@ -127,7 +127,6 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
         modeTwoConst = 11.f;
         loopIncr = 16;
     }
-    //int blockCount = curFrame->m_lowres.maxBlocksInRowFullRes * curFrame->m_lowres.maxBlocksInColFullRes;
 
     float* quantOffsets = curFrame->m_quantOffsets;
     for (int y = 0; y < 3; y++)
@@ -352,9 +351,9 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc, uint32_t qgSize)
             if (qgSize == 8)
             {
                 invQscaleFactor = (fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4] +
-                                  fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + 1] +
-                                  fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc.maxBlocksInRowFullRes] +
-                                  fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc.maxBlocksInRowFullRes + 1]) / 4;
+                                   fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + 1] +
+                                   fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc.maxBlocksInRowFullRes] +
+                                   fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc.maxBlocksInRowFullRes + 1]) / 4;
                 icostAq = (bFrameScoreCU && fenc.invQscaleFactor) ? ((icost * invQscaleFactor + 128) >> 8) : icost;
             }
             else
@@ -854,9 +853,9 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
                         double qpOffset;
                         if (m_param->rc.qgSize == 8)
                             qpOffset = (qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4] +
-                                       qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + 1] +
-                                       qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + curFrame->m_lowres.maxBlocksInRowFullRes] +
-                                       qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + curFrame->m_lowres.maxBlocksInRowFullRes + 1]) / 4;
+                                        qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + 1] +
+                                        qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + curFrame->m_lowres.maxBlocksInRowFullRes] +
+                                        qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + curFrame->m_lowres.maxBlocksInRowFullRes + 1]) / 4;
                         else
                             qpOffset = qp_offset[lowresCuIdx];
                         lowresCuCost = (uint16_t)((lowresCuCost * x265_exp2fix8(qpOffset) + 128) >> 8);
@@ -1915,9 +1914,9 @@ void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Dist
             {
                 const int cuXY = cuX + cuY * m_8x8Width;
                 int invQscaleFactor = (frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4] +
-                    frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4 + 1] +
-                    frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes] +
-                    frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes + 1]) / 4;
+                                       frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4 + 1] +
+                                       frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes] +
+                                       frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes + 1]) / 4;
 
                 int intracost = ((frame->intraCost[cuXY]) / 4 * invQscaleFactor + 128) >> 8;
                 if (intracost)
@@ -1970,9 +1969,9 @@ int64_t Lookahead::frameCostRecalculate(Lowres** frames, int p0, int p1, int b)
             double qp_adj;
             if (m_param->rc.qgSize == 8)
                 qp_adj = (qp_offset[cux * 2 + cuy * m_8x8Width * 4] +
-                         qp_offset[cux * 2 + cuy * m_8x8Width * 4 + 1] +
-                         qp_offset[cux * 2 + cuy * m_8x8Width * 4 + frames[b]->maxBlocksInRowFullRes] +
-                         qp_offset[cux * 2 + cuy * m_8x8Width * 4 + frames[b]->maxBlocksInRowFullRes + 1]) / 4;
+                          qp_offset[cux * 2 + cuy * m_8x8Width * 4 + 1] +
+                          qp_offset[cux * 2 + cuy * m_8x8Width * 4 + frames[b]->maxBlocksInRowFullRes] +
+                          qp_offset[cux * 2 + cuy * m_8x8Width * 4 + frames[b]->maxBlocksInRowFullRes + 1]) / 4;
             else 
                 qp_adj = qp_offset[cuxy];
             cuCost = (cuCost * x265_exp2fix8(qp_adj) + 128) >> 8;
@@ -2297,9 +2296,9 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
     if (m_lookahead.m_param->rc.qgSize == 8)
     {
         invQscaleFactor = (fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4] +
-                          fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + 1] +
-                          fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc->maxBlocksInRowFullRes] +
-                          fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc->maxBlocksInRowFullRes + 1]) / 4;
+                           fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + 1] +
+                           fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc->maxBlocksInRowFullRes] +
+                           fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc->maxBlocksInRowFullRes + 1]) / 4;
         bcostAq = (bFrameScoreCU && fenc->invQscaleFactor) ? ((bcost * invQscaleFactor + 128) >> 8) : bcost;
     }
     else

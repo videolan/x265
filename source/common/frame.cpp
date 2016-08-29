@@ -63,7 +63,7 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         if (quantOffsets)
         {
             int32_t cuCount;
-            if (param->rc.qgSize == 8 )
+            if (param->rc.qgSize == 8)
                 cuCount = m_lowres.maxBlocksInRowFullRes * m_lowres.maxBlocksInColFullRes;
             else
                 cuCount = m_lowres.maxBlocksInRow * m_lowres.maxBlocksInCol;
