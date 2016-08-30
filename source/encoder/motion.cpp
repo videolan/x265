@@ -581,14 +581,15 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    int              numCandidates,
                                    const MV *       mvc,
                                    int              merange,
-                                   MV &             outQMv)
+                                   MV &             outQMv,
+                                   pixel *          srcReferencePlane)
 {
     ALIGN_VAR_16(int, costs[16]);
     if (ctuAddr >= 0)
         blockOffset = ref->reconPic->getLumaAddr(ctuAddr, absPartIdx) - ref->reconPic->getLumaAddr(0);
     intptr_t stride = ref->lumaStride;
     pixel* fenc = fencPUYuv.m_buf[0];
-    pixel* fref = ref->fpelPlane[0] + blockOffset;
+    pixel* fref = srcReferencePlane == 0 ? ref->fpelPlane[0] + blockOffset : srcReferencePlane + blockOffset;
 
     setMVP(qmvp);
 

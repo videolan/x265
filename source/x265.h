@@ -935,6 +935,9 @@ typedef struct x265_param
     /* Enable weighted prediction in B slices. Default is disabled */
     int       bEnableWeightedBiPred;
 
+    /* Enable source pixels in motion estimation. Default is disabled */
+    int      bSourceReferenceEstimation;
+
     /*== Loop Filters ==*/
 
     /* Enable the deblocking loop filter, which improves visual quality by

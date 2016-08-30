@@ -1009,6 +1009,11 @@ Temporal / motion search options
 
 	Enable weighted prediction in B slices. Default disabled
 
+.. option:: --analyze-src-pics, --no-analyze-src-pics
+
+    Enalbe motion estimation with source frame pixels, in this mode, 
+    motion estimation can be computed independently. Default disabled.
+
 Spatial/intra options
 =====================
 

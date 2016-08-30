@@ -174,6 +174,7 @@ void x265_param_default(x265_param* param)
     param->bEnableTSkipFast = 0;
     param->maxNumReferences = 3;
     param->bEnableTemporalMvp = 1;
+    param->bSourceReferenceEstimation = 0;
 
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
@@ -898,6 +899,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     {
         if (0) ;
         OPT("qpmin") p->rc.qpMin = atoi(value);
+        OPT("analyze-src-pics") p->bSourceReferenceEstimation = atobool(value);
         OPT("log2-max-poc-lsb") p->log2MaxPocLsb = atoi(value);
         OPT("discard-sei") p->bDiscardSEI = atobool(value);
         OPT("discard-vui") p->bDiscardVUI = atobool(value);
