@@ -141,7 +141,7 @@ bool ScalingList::init()
     bool ok = true;
     for (int sizeId = 0; sizeId < NUM_SIZES; sizeId++)
     {
-        for (int listId = 0; listId < NUM_LISTS; listId++)
+        for (int listId = 0; listId < NUM_LISTS; listId += (sizeId == 3) ? 3 : 1)
         {
             m_scalingListCoef[sizeId][listId] = X265_MALLOC(int32_t, X265_MIN(MAX_MATRIX_COEF_NUM, s_numCoefPerSize[sizeId]));
             ok &= !!m_scalingListCoef[sizeId][listId];
@@ -160,7 +160,7 @@ ScalingList::~ScalingList()
 {
     for (int sizeId = 0; sizeId < NUM_SIZES; sizeId++)
     {
-        for (int listId = 0; listId < NUM_LISTS; listId++)
+        for (int listId = 0; listId < NUM_LISTS; listId += (sizeId == 3) ? 3 : 1)
         {
             X265_FREE(m_scalingListCoef[sizeId][listId]);
             for (int rem = 0; rem < NUM_REM; rem++)
@@ -198,7 +198,7 @@ bool ScalingList::checkDefaultScalingList() const
     int defaultCounter = 0;
 
     for (int s = 0; s < NUM_SIZES; s++)
-        for (int l = 0; l < NUM_LISTS; l++)
+        for (int l = 0; l < NUM_LISTS; l += (s == 3) ? 3 : 1)
             if (!memcmp(m_scalingListCoef[s][l], getScalingListDefaultAddress(s, l),
                         sizeof(int32_t) * X265_MIN(MAX_MATRIX_COEF_NUM, s_numCoefPerSize[s])) &&
                 ((s < BLOCK_16x16) || (m_scalingListDC[s][l] == 16)))
@@ -237,7 +237,7 @@ void ScalingList::processDefaultMarix(int sizeId, int listId)
 void ScalingList::setDefaultScalingList()
 {
     for (int sizeId = 0; sizeId < NUM_SIZES; sizeId++)
-        for (int listId = 0; listId < NUM_LISTS; listId++)
+        for (int listId = 0; listId < NUM_LISTS; listId += (sizeId == 3) ? 3 : 1)
             processDefaultMarix(sizeId, listId);
     m_bEnabled = true;
     m_bDataPresent = false;
@@ -332,7 +332,7 @@ void ScalingList::setupQuantMatrices()
         int stride = X265_MIN(MAX_MATRIX_SIZE_NUM, width);
         int count = s_numCoefPerSize[size];
 
-        for (int list = 0; list < NUM_LISTS; list++)
+        for (int list = 0; list < NUM_LISTS; list += (size == 3) ? 3 : 1)
         {
             int32_t *coeff = m_scalingListCoef[size][list];
             int32_t dc = m_scalingListDC[size][list];
