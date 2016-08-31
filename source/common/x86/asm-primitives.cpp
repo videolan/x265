@@ -1027,7 +1027,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_CHROMA_444_PU(p2s, filterPixelToShort, sse2);
         ALL_LUMA_PU(convert_p2s, filterPixelToShort, sse2);
         ALL_LUMA_TU(count_nonzero, count_nonzero, sse2);
-        //p.propagateCost = PFX(mbtree_propagate_cost_sse2);
+        p.propagateCost = PFX(mbtree_propagate_cost_sse2);
     }
     if (cpuMask & X265_CPU_SSE3)
     {
@@ -1312,7 +1312,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_64x32].copy_pp = (copy_pp_t)PFX(blockcopy_ss_64x32_avx);
         p.pu[LUMA_64x48].copy_pp = (copy_pp_t)PFX(blockcopy_ss_64x48_avx);
         p.pu[LUMA_64x64].copy_pp = (copy_pp_t)PFX(blockcopy_ss_64x64_avx);
-        //p.propagateCost = PFX(mbtree_propagate_cost_avx);
+        p.propagateCost = PFX(mbtree_propagate_cost_avx);
     }
     if (cpuMask & X265_CPU_XOP)
     {
@@ -2153,7 +2153,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_vsp = PFX(interp_4tap_vert_sp_64x64_avx2);
 
         p.frameInitLowres = PFX(frame_init_lowres_core_avx2);
-        //p.propagateCost = PFX(mbtree_propagate_cost_avx2);
+        p.propagateCost = PFX(mbtree_propagate_cost_avx2);
         p.fix8Unpack = PFX(cutree_fix8_unpack_avx2);
         p.fix8Pack = PFX(cutree_fix8_pack_avx2);
 
@@ -2356,7 +2356,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         ALL_CHROMA_444_PU(p2s, filterPixelToShort, sse2);
         ALL_LUMA_PU(convert_p2s, filterPixelToShort, sse2);
         ALL_LUMA_TU(count_nonzero, count_nonzero, sse2);
-        //p.propagateCost = PFX(mbtree_propagate_cost_sse2);
+        p.propagateCost = PFX(mbtree_propagate_cost_sse2);
     }
     if (cpuMask & X265_CPU_SSE3)
     {
@@ -2670,7 +2670,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_48x64].copy_pp = PFX(blockcopy_pp_48x64_avx);
 
         p.frameInitLowres = PFX(frame_init_lowres_core_avx);
-        //p.propagateCost = PFX(mbtree_propagate_cost_avx);
+        p.propagateCost = PFX(mbtree_propagate_cost_avx);
     }
     if (cpuMask & X265_CPU_XOP)
     {
@@ -3666,7 +3666,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I444].pu[LUMA_64x16].filter_vpp = PFX(interp_4tap_vert_pp_64x16_avx2);
 
         p.frameInitLowres = PFX(frame_init_lowres_core_avx2);
-        //p.propagateCost = PFX(mbtree_propagate_cost_avx2);
+        p.propagateCost = PFX(mbtree_propagate_cost_avx2);
         p.saoCuStatsE0 = PFX(saoCuStatsE0_avx2);
         p.saoCuStatsE1 = PFX(saoCuStatsE1_avx2);
         p.saoCuStatsE2 = PFX(saoCuStatsE2_avx2);

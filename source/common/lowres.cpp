@@ -45,7 +45,7 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled, uint32_t qgS
     if (qgSize == 8)
         cuCountFullRes = maxBlocksInRowFullRes * maxBlocksInColFullRes;
     else
-        cuCountFullRes = maxBlocksInRow * maxBlocksInCol;
+        cuCountFullRes = cuCount;
 
     /* rounding the width to multiple of lowres CU size */
     width = maxBlocksInRow * X265_LOWRES_CU_SIZE;
@@ -60,6 +60,8 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled, uint32_t qgS
         CHECKED_MALLOC(invQscaleFactor, int, cuCountFullRes);
         CHECKED_MALLOC(qpCuTreeOffset, double, cuCountFullRes);
         CHECKED_MALLOC(blockVariance, uint32_t, cuCountFullRes);
+        if (qgSize == 8)
+            CHECKED_MALLOC(invQscaleFactor8x8, int, cuCount);
     }
     CHECKED_MALLOC(propagateCost, uint16_t, cuCount);
 
@@ -129,6 +131,7 @@ void Lowres::destroy()
     X265_FREE(qpCuTreeOffset);
     X265_FREE(propagateCost);
     X265_FREE(blockVariance);
+    X265_FREE(invQscaleFactor8x8);
 }
 
 // (re) initialize lowres state

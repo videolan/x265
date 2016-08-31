@@ -187,7 +187,7 @@ typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* d
 typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 typedef pixel (*planeClipAndMax_t)(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, const pixel minPix, const pixel maxPix);
 
-typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len, uint32_t qgSize);
+typedef void (*cutree_propagate_cost) (int* dst, const uint16_t* propagateIn, const int32_t* intraCosts, const uint16_t* interCosts, const int32_t* invQscales, const double* fpsFactor, int len);
 
 typedef void (*cutree_fix8_unpack)(double *dst, uint16_t *src, int count);
 typedef void (*cutree_fix8_pack)(uint16_t *dst, double *src, int count);

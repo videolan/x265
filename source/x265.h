@@ -263,8 +263,8 @@ typedef struct x265_picture
     /* An array of quantizer offsets to be applied to this image during encoding.
      * These are added on top of the decisions made by rateControl.
      * Adaptive quantization must be enabled to use this feature. These quantizer
-     * offsets should be given for each 16x16 block. Behavior if quant
-     * offsets differ between encoding passes is undefined. */
+     * offsets should be given for each 16x16 block (8x8 block, when qg-size is 8).
+     * Behavior if quant offsets differ between encoding passes is undefined. */
     float            *quantOffsets;
 
     /* Frame level statistics */

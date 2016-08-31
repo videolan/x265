@@ -994,7 +994,7 @@ FRAME_INIT_LOWRES
 
 ;-----------------------------------------------------------------------------
 ; void mbtree_propagate_cost( int *dst, uint16_t *propagate_in, int32_t *intra_costs,
-;                             uint16_t *inter_costs, int32_t *inv_qscales, double *fps_factor, int len, uint32_t qgSize)
+;                             uint16_t *inter_costs, int32_t *inv_qscales, double *fps_factor, int len )
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
 cglobal mbtree_propagate_cost, 7,7,7

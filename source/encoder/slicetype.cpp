@@ -237,6 +237,21 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
         }
     }
 
+    if (param->rc.qgSize == 8)
+    {
+        for (int cuY = 0; cuY < heightInCU; cuY++)
+        {
+            for (int cuX = 0; cuX < widthInCU; cuX++)
+            {
+                const int cuXY = cuX + cuY * widthInCU;
+                curFrame->m_lowres.invQscaleFactor8x8[cuXY] = (curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4] +
+                                                               curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + 1] +
+                                                               curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + curFrame->m_lowres.maxBlocksInRowFullRes] +
+                                                               curFrame->m_lowres.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + curFrame->m_lowres.maxBlocksInRowFullRes + 1]) / 4;
+            }
+        }
+    }
+
     if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
     {
         int hShift = CHROMA_H_SHIFT(param->internalCsp);
@@ -347,15 +362,9 @@ void LookaheadTLD::lowresIntraEstimate(Lowres& fenc, uint32_t qgSize)
             frame cost estimates, they are not very accurate */
             const bool bFrameScoreCU = (cuX > 0 && cuX < widthInCU - 1 &&
                                         cuY > 0 && cuY < heightInCU - 1) || widthInCU <= 2 || heightInCU <= 2;
-            int invQscaleFactor, icostAq;
+            int icostAq;
             if (qgSize == 8)
-            {
-                invQscaleFactor = (fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4] +
-                                   fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + 1] +
-                                   fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc.maxBlocksInRowFullRes] +
-                                   fenc.invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc.maxBlocksInRowFullRes + 1]) / 4;
-                icostAq = (bFrameScoreCU && fenc.invQscaleFactor) ? ((icost * invQscaleFactor + 128) >> 8) : icost;
-            }
+                icostAq = (bFrameScoreCU && fenc.invQscaleFactor) ? ((icost * fenc.invQscaleFactor8x8[cuXY] + 128) >> 8) : icost;
             else
                 icostAq = (bFrameScoreCU && fenc.invQscaleFactor) ? ((icost * fenc.invQscaleFactor[cuXY] +128) >> 8) : icost;
 
@@ -1816,11 +1825,11 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
         if (m_param->rc.qgSize == 8)
             primitives.propagateCost(m_scratch, propagateCost,
                        frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
-                       frames[b]->invQscaleFactor + (cuIndex * 4), &fpsFactor, m_8x8Width, m_param->rc.qgSize);
+                       frames[b]->invQscaleFactor8x8 + cuIndex, &fpsFactor, m_8x8Width);
         else
             primitives.propagateCost(m_scratch, propagateCost,
                        frames[b]->intraCost + cuIndex, frames[b]->lowresCosts[b - p0][p1 - b] + cuIndex,
-                       frames[b]->invQscaleFactor + cuIndex, &fpsFactor, m_8x8Width, m_param->rc.qgSize);
+                       frames[b]->invQscaleFactor + cuIndex, &fpsFactor, m_8x8Width);
 
         if (referenced)
             propagateCost += m_8x8Width;
@@ -1913,12 +1922,7 @@ void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Dist
             for (int cuX = 0; cuX < m_8x8Width; cuX++)
             {
                 const int cuXY = cuX + cuY * m_8x8Width;
-                int invQscaleFactor = (frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4] +
-                                       frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4 + 1] +
-                                       frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes] +
-                                       frame->invQscaleFactor[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes + 1]) / 4;
-
-                int intracost = ((frame->intraCost[cuXY]) / 4 * invQscaleFactor + 128) >> 8;
+                int intracost = ((frame->intraCost[cuXY]) / 4 * frame->invQscaleFactor8x8[cuXY] + 128) >> 8;
                 if (intracost)
                 {
                     int propagateCost = ((frame->propagateCost[cuXY]) / 4 * fpsFactor + 128) >> 8;
@@ -1928,7 +1932,6 @@ void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Dist
                     frame->qpCuTreeOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes] = frame->qpAqOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes] - m_cuTreeStrength * (log2_ratio);
                     frame->qpCuTreeOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes + 1] = frame->qpAqOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes + 1] - m_cuTreeStrength * (log2_ratio);
                 }
-
             }
         }
     }
@@ -2292,15 +2295,9 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
     /* do not include edge blocks in the frame cost estimates, they are not very accurate */
     const bool bFrameScoreCU = (cuX > 0 && cuX < widthInCU - 1 &&
                                 cuY > 0 && cuY < heightInCU - 1) || widthInCU <= 2 || heightInCU <= 2;
-    int invQscaleFactor, bcostAq;
+    int bcostAq;
     if (m_lookahead.m_param->rc.qgSize == 8)
-    {
-        invQscaleFactor = (fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4] +
-                           fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + 1] +
-                           fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc->maxBlocksInRowFullRes] +
-                           fenc->invQscaleFactor[cuX * 2 + cuY * widthInCU * 4 + fenc->maxBlocksInRowFullRes + 1]) / 4;
-        bcostAq = (bFrameScoreCU && fenc->invQscaleFactor) ? ((bcost * invQscaleFactor + 128) >> 8) : bcost;
-    }
+        bcostAq = (bFrameScoreCU && fenc->invQscaleFactor) ? ((bcost * fenc->invQscaleFactor8x8[cuXY] + 128) >> 8) : bcost;
     else
         bcostAq = (bFrameScoreCU && fenc->invQscaleFactor) ? ((bcost * fenc->invQscaleFactor[cuXY] +128) >> 8) : bcost;
 

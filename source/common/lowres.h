@@ -145,6 +145,7 @@ struct Lowres : public ReferencePlanes
     double*   qpAqOffset;      // AQ QP offset values for each 16x16 CU
     double*   qpCuTreeOffset;  // cuTree QP offset values for each 16x16 CU
     int*      invQscaleFactor; // qScale values for qp Aq Offsets
+    int*      invQscaleFactor8x8; // temporary buffer for qg-size 8
     uint32_t* blockVariance;
     uint64_t  wp_ssd[3];       // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
     uint64_t  wp_sum[3];
