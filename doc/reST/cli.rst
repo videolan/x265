@@ -474,21 +474,22 @@ Profile, Level, Tier
 
 	8bit profiles::
 
-	main, main-intra, mainstillpicture (or msp for short)
-	main444-8 main444-intra main444-stillpicture
+	* main, main-intra, mainstillpicture (or msp for short)
+	* main444-8, main444-intra, main444-stillpicture
+
 	See note below on signaling intra and stillpicture profiles.
 	
 	10bit profiles::
 
-	main10, main10-intra
-	main422-10, main422-10-intra
-	main444-10, main444-10-intra
+	* main10, main10-intra
+	* main422-10, main422-10-intra
+	* main444-10, main444-10-intra
 
 	12bit profiles::
 
-	main12, main12-intra
-	main422-12, main422-12-intra
-	main444-12, main444-12-intra
+	* main12, main12-intra
+	* main422-12, main422-12-intra
+	* main444-12, main444-12-intra
 
 
 	**CLI ONLY**
