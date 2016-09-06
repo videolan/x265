@@ -2212,6 +2212,7 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
     int bcost = tld.me.COST_MAX;
     int listused = 0;
 
+    // TODO: restrict to slices boundaries
     // establish search bounds that don't cross extended frame boundaries
     mvmin.x = (int16_t)(-cuX * cuSize - 8);
     mvmin.y = (int16_t)(-cuY * cuSize - 8);

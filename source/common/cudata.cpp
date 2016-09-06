@@ -275,9 +275,9 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
     m_cuPelY        = (cuAddr / m_slice->m_sps->numCuInWidth) << g_maxLog2CUSize;
     m_absIdxInCTU   = 0;
     m_numPartitions = NUM_4x4_PARTITIONS;
-    m_bFirstRowInSlice = firstRowInSlice;
-    m_bLastRowInSlice  = lastRowInSlice;
-    m_bLastCuInSlice   = lastCuInSlice;
+    m_bFirstRowInSlice = (uint8_t)firstRowInSlice;
+    m_bLastRowInSlice  = (uint8_t)lastRowInSlice;
+    m_bLastCuInSlice   = (uint8_t)lastCuInSlice;
 
     /* sequential memsets */
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);

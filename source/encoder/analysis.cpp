@@ -1416,9 +1416,6 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     bool splitIntra = true;
     bool skipRectAmp = false;
 
-    if (parentCTU.m_slice->m_poc == 1 && parentCTU.m_cuAddr == 181 && depth == 0)
-        printf("");
-
     // avoid uninitialize value in below reference
     if (m_param->limitModes)
     {
@@ -1591,9 +1588,6 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                         checkInter_rd5_6(md.pred[PRED_2NxN], cuGeom, SIZE_2NxN, refMasks);
                         checkBestMode(md.pred[PRED_2NxN], cuGeom.depth);
                     }
-
-    if (parentCTU.m_slice->m_poc == 1 && parentCTU.m_cuAddr == 376 && depth == 1)
-        printf("");
 
                     if (splitCost < md.bestMode->rdCost + threshold_Nx2N)
                     {

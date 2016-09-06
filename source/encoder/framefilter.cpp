@@ -466,16 +466,11 @@ void FrameFilter::processRow(int row)
         /* Check to avoid previous row process slower than current row */
         X265_CHECK(ctu->m_bFirstRowInSlice || m_parallelFilter[row - 1].m_lastDeblocked.get() == m_numCols, "previous row not finish");
 
-        //if (ctu->m_bLastRowInSlice & ctu->m_bFirstRowInSlice)
-        //        printf("");
         m_parallelFilter[row].m_allowedCol.set(m_numCols);
         m_parallelFilter[row].processTasks(-1);
 
         if (ctu->m_bLastRowInSlice)
         {
-            //if (ctu->m_bFirstRowInSlice)
-            //    printf("");
-
             /* TODO: Early start last row */
             if ((!ctu->m_bFirstRowInSlice) && (m_parallelFilter[row - 1].m_lastDeblocked.get() != m_numCols))
                 x265_log(m_param, X265_LOG_WARNING, "detected ParallelFilter race condition on last row\n");

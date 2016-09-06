@@ -153,7 +153,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     {
         unsigned long tmp;
         CLZ(tmp, (numRows * numCols));
-        m_sliceAddrBits = tmp + 1;
+        m_sliceAddrBits = (uint16_t)(tmp + 1);
     }
 
     return ok;
@@ -459,7 +459,7 @@ void FrameEncoder::compressFrame()
     m_entropyCoder.load(m_initSliceContext);
     const uint32_t sliceGroupSize = (m_numRows + m_param->maxSlices - 1) / m_param->maxSlices;
     const uint32_t sliceGroupSizeAccu = (m_numRows << 8) / m_param->maxSlices;
-    m_sliceGroupSize = sliceGroupSize;
+    m_sliceGroupSize = (uint16_t)sliceGroupSize;
 
     uint32_t rowSum = sliceGroupSizeAccu;
     uint32_t sliceId = 0;
@@ -1474,7 +1474,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     /* trigger row-wise loop filters */
     if (m_param->bEnableWavefront)
     {
-        if ((rowInSlice >= m_filterRowDelay))
+        if (rowInSlice >= m_filterRowDelay)
         {
             //printf("POC %2d: Row %2d Filter Enable\n", slice->m_poc, row - m_filterRowDelay);
             enableRowFilter(row - m_filterRowDelay);

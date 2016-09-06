@@ -1936,9 +1936,6 @@ int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[
     Yuv& tmpPredYuv = m_rqt[cu.m_cuDepth[0]].tmpPredYuv;
     uint32_t costs[AMVP_NUM_CANDS];
 
-    if (cu.m_slice->m_poc == 119 && cu.m_cuAddr == 189)
-        printf("");
-
     for (int i = 0; i < AMVP_NUM_CANDS; i++)
     {
         MV mvCand = amvp[i];
@@ -1948,9 +1945,12 @@ int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[
         {
             costs[i] = m_me.COST_MAX;
 
-            if ((mvCand.y >= (m_param->searchRange + 1) * 4)
-              | (mvCand.y < m_sliceMinY)
-              | (mvCand.y > m_sliceMaxY))
+            if (mvCand.y >= (m_param->searchRange + 1) * 4)
+                continue;
+
+            if ((m_param->maxSlices > 1) &
+                ((mvCand.y < m_sliceMinY)
+              |  (mvCand.y > m_sliceMaxY)))
                 continue;
         }
         cu.clipMv(mvCand);

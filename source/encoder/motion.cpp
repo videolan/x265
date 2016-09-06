@@ -1096,7 +1096,7 @@ me_hex2:
     const SubpelWorkload& wl = workload[this->subpelRefine];
 
     // check mv range for slice bound
-    if ((bmv.y != 0) & ((bmv.y < qmvmin.y) | (bmv.y > qmvmax.y)))
+    if ((bmv.y < qmvmin.y) | (bmv.y > qmvmax.y))
     {
         bmv.y = x265_min(x265_max(bmv.y, qmvmin.y), qmvmax.y);
     }
