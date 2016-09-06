@@ -470,7 +470,7 @@ void FrameEncoder::compressFrame()
         if ((i >= rowRange) & (sidx != m_param->maxSlices - 1))
         {
             rowSum += sliceGroupSizeAccu;
-            m_sliceBaseRow[sidx++] = i;
+            m_sliceBaseRow[++sidx] = i;
         }
 
         m_rows[i].init(m_initSliceContext, sidx);
