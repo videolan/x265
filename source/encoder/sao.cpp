@@ -931,6 +931,16 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     int ctuHeight = g_maxCUSize;
     uint32_t lpelx = cu->m_cuPelX;
     uint32_t tpely = cu->m_cuPelY;
+    const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;
+    const uint32_t lastRowInSlice = cu->m_bLastRowInSlice;
+    const uint32_t bAboveAvail = (!tpely) | firstRowInSlice;
+
+    // NOTE: Careful! the picHeight for Equal operator only, so I may safe to hack it
+    if (lastRowInSlice)
+    {
+        picHeight = x265_min(picHeight, (tpely + ctuHeight));
+    }
+
     uint32_t rpelx = x265_min(lpelx + ctuWidth,  picWidth);
     uint32_t bpely = x265_min(tpely + ctuHeight, picHeight);
     ctuWidth  = rpelx - lpelx;
@@ -1048,10 +1058,10 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
 
             startX = (rpelx == picWidth) ? ctuWidth : ctuWidth - skipR;
             startY = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB;
-            firstY = !tpely;
+            firstY = bAboveAvail;
             // endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
             endY   = ctuHeight - 1; // not refer below CTU
-            if (!tpely)
+            if (firstY)
             {
                 fenc += stride;
                 rec += stride;
@@ -1094,12 +1104,12 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
             startX = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR;
             startY = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB;
             firstX = !lpelx;
-            firstY = !tpely;
+            firstY = bAboveAvail;
             // endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
             // endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
             endX   = ctuWidth - 1;  // not refer right CTU
             endY   = ctuHeight - 1; // not refer below CTU
-            if (!tpely)
+            if (firstY)
             {
                 fenc += stride;
                 rec += stride;
@@ -1146,12 +1156,12 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
             startX = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR;
             startY = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB;
             firstX = !lpelx;
-            firstY = !tpely;
+            firstY = bAboveAvail;
             // endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
             // endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
             endX   = ctuWidth - 1;  // not refer right CTU
             endY   = ctuHeight - 1; // not refer below CTU
-            if (!tpely)
+            if (firstY)
             {
                 fenc += stride;
                 rec += stride;
