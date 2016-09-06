@@ -1062,7 +1062,7 @@ int x265_check_params(x265_param* param)
     /* Unsupport SAO & Loopfilter in multiple-slices mode now */
     if (param->maxSlices > 1)
     {
-        param->bEnableLoopFilter = 0;
+        //param->bEnableLoopFilter = 0;
         param->bEnableSAO = 0;
     }
 

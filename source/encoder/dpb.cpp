@@ -167,7 +167,9 @@ void DPB::prepareEncode(Frame *newFrame)
         slice->m_colFromL0Flag = true;
         slice->m_colRefIdx = 0;
     }
-    slice->m_sLFaseFlag = (SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0;
+
+    // Disable Loopfilter in bound area, because we will do slice-parallelism in future
+    slice->m_sLFaseFlag = false; // (SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0;
 
     /* Increment reference count of all motion-referenced frames to prevent them
      * from being recycled. These counts are decremented at the end of
