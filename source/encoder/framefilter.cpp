@@ -189,8 +189,8 @@ void FrameFilter::ParallelFilter::copySaoAboveRef(const CUData *ctu, PicYuv* rec
     {
         ctuWidth  >>= m_sao.m_hChromaShift;
 
-        const pixel* recU = reconPic->getPlaneAddr(1, cuAddr) - (m_rowAddr == 0 ? 0 : reconPic->m_strideC);
-        const pixel* recV = reconPic->getPlaneAddr(2, cuAddr) - (m_rowAddr == 0 ? 0 : reconPic->m_strideC);
+        const pixel* recU = reconPic->getPlaneAddr(1, cuAddr) - (ctu->m_bFirstRowInSlice ? 0 : reconPic->m_strideC);
+        const pixel* recV = reconPic->getPlaneAddr(2, cuAddr) - (ctu->m_bFirstRowInSlice ? 0 : reconPic->m_strideC);
         memcpy(&m_sao.m_tmpU[1][col * ctuWidth], recU, ctuWidth * sizeof(pixel));
         memcpy(&m_sao.m_tmpU[2][col * ctuWidth], recV, ctuWidth * sizeof(pixel));
 

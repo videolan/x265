@@ -285,7 +285,7 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
     uint32_t tpely = cu->m_cuPelY;
     const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;
     const uint32_t lastRowInSlice = cu->m_bLastRowInSlice;
-    const uint32_t bAboveAvail = (!tpely) | firstRowInSlice;
+    const uint32_t bAboveUnavail = (!tpely) | firstRowInSlice;
 
     // NOTE: Careful! the picHeight for Equal operator only, so I may safe to hack it
     if (lastRowInSlice)
@@ -377,7 +377,7 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
     }
     case SAO_EO_1: // dir: |
     {
-        int startY = bAboveAvail;
+        int startY = bAboveUnavail;
         int endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
         if (startY)
             rec += stride;
@@ -418,7 +418,7 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
         int startX = !lpelx;
         int endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
 
-        int startY = bAboveAvail;
+        int startY = bAboveUnavail;
         int endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
 
         if (startY)
@@ -484,7 +484,7 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
         int startX = !lpelx;
         int endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
 
-        int startY = bAboveAvail;
+        int startY = bAboveUnavail;
         int endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
 
         if (startY)
@@ -749,7 +749,7 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
     uint32_t tpely = cu->m_cuPelY;
     const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;
     const uint32_t lastRowInSlice = cu->m_bLastRowInSlice;
-    const uint32_t bAboveAvail = (!tpely) | firstRowInSlice;
+    const uint32_t bAboveUnavail = (!tpely) | firstRowInSlice;
 
     // NOTE: Careful! the picHeight for Equal operator only, so I may safe to hack it
     if (lastRowInSlice)
@@ -845,7 +845,7 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
 
             rec  = rec0;
 
-            startY = bAboveAvail;
+            startY = bAboveUnavail;
             endX   = (rpelx == picWidth) ? ctuWidth : ctuWidth - skipR + plane_offset;
             endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
             if (startY)
@@ -872,7 +872,7 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
             startX = !lpelx;
             endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
 
-            startY = bAboveAvail;
+            startY = bAboveUnavail;
             endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
             if (startY)
             {
@@ -899,7 +899,7 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
             startX = !lpelx;
             endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
 
-            startY = bAboveAvail;
+            startY = bAboveUnavail;
             endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
 
             if (startY)

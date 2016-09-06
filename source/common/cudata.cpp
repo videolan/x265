@@ -276,7 +276,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
     m_absIdxInCTU   = 0;
     m_numPartitions = NUM_4x4_PARTITIONS;
     m_bFirstRowInSlice = firstRowInSlice;
-    m_bLastRowInSlice   = lastRowInSlice;
+    m_bLastRowInSlice  = lastRowInSlice;
     m_bLastCuInSlice   = lastCuInSlice;
 
     /* sequential memsets */
