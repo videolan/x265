@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Deepthi Nandakumar <deepthi@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -894,9 +895,19 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("min-luma") p->minLuma = (uint16_t)atoi(value);
     OPT("max-luma") p->maxLuma = (uint16_t)atoi(value);
     OPT("uhd-bd") p->uhdBluray = atobool(value);
-    OPT("slices") p->maxSlices = atoi(value);
     else
         bExtraParams = true;
+
+    // solve "fatal error C1061: compiler limit : blocks nested too deeply"
+    if (bExtraParams)
+    {
+        bExtraParams = false;
+        if (0) ;
+        OPT("slices") p->maxSlices = atoi(value);
+        else
+            bExtraParams = true;
+    }
+
     if (bExtraParams)
     {
         if (0) ;
