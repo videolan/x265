@@ -1944,14 +1944,22 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     {
         if (m_bFrameParallel)
         {
-            if (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-                 candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4)
-                continue;
+            // Parallel slices bound check
+            if (m_param->maxSlices > 1)
+            {
+                // NOTE: First row in slice can't negative
+                if ((candMvField[i][0].mv.y < m_sliceMinY) | (candMvField[i][1].mv.y < m_sliceMinY))
+                    continue;
 
-//             if (m_param->maxSlices > 1 &&
-//                 1
-//                 )
-//                 continue;
+                // Last row in slice can't reference beyond bound since it is another slice area
+                // TODO: we may beyond bound in future since these area have a chance to finish because we use parallel slices. Necessary prepare research on load balance
+                if ((candMvField[i][0].mv.y > m_sliceMaxY) | (candMvField[i][1].mv.y > m_sliceMaxY))
+                    continue;
+            }
+
+            if (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+                candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4)
+                continue;
         }
 
         if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
@@ -2069,14 +2077,13 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
             // Parallel slices bound check
             if (m_param->maxSlices > 1)
             {
-                if (tempPred->cu.m_bFirstRowInSlice &
-                    ((candMvField[i][0].mv.y < (2 * 4)) | (candMvField[i][1].mv.y < (2 * 4))))
+                // NOTE: First row in slice can't negative
+                if ((candMvField[i][0].mv.y < m_sliceMinY) | (candMvField[i][1].mv.y < m_sliceMinY))
                     continue;
 
                 // Last row in slice can't reference beyond bound since it is another slice area
                 // TODO: we may beyond bound in future since these area have a chance to finish because we use parallel slices. Necessary prepare research on load balance
-                if (tempPred->cu.m_bLastRowInSlice &&
-                    (candMvField[i][0].mv.y > -3 * 4 || candMvField[i][1].mv.y > -3 * 4))
+                if ((candMvField[i][0].mv.y > m_sliceMaxY) | (candMvField[i][1].mv.y > m_sliceMaxY))
                     continue;
             }
 

@@ -179,9 +179,11 @@ public:
     uint32_t      m_chromaFormat;
     uint32_t      m_hChromaShift;
     uint32_t      m_vChromaShift;
-    uint32_t      m_bFirstRowInSlice;
-    uint32_t      m_bLastRowInSlice;
-    uint32_t      m_bLastCuInSlice;
+
+    /* multiple slices informations */
+    uint8_t      m_bFirstRowInSlice;
+    uint8_t      m_bLastRowInSlice;
+    uint8_t      m_bLastCuInSlice;
 
     /* Per-part data, stored contiguously */
     int8_t*       m_qp;               // array of QP values

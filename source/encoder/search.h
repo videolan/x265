@@ -275,6 +275,9 @@ public:
     uint32_t        m_numLayers;
     uint32_t        m_refLagPixels;
 
+    int16_t         m_sliceMaxY;
+    int16_t         m_sliceMinY;
+
 #if DETAILED_CU_STATS
     /* Accumulate CU statistics separately for each frame encoder */
     CUStats         m_stats[X265_MAX_FRAME_THREADS];

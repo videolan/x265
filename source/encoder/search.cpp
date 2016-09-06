@@ -1936,23 +1936,29 @@ int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[
     Yuv& tmpPredYuv = m_rqt[cu.m_cuDepth[0]].tmpPredYuv;
     uint32_t costs[AMVP_NUM_CANDS];
 
+    if (cu.m_slice->m_poc == 119 && cu.m_cuAddr == 189)
+        printf("");
+
     for (int i = 0; i < AMVP_NUM_CANDS; i++)
     {
         MV mvCand = amvp[i];
 
         // NOTE: skip mvCand if Y is > merange and -FN>1
-        if (m_bFrameParallel &&
-            (mvCand.y >= (m_param->searchRange + 1) * 4))
-            costs[i] = m_me.COST_MAX;
-        else
+        if (m_bFrameParallel)
         {
-            cu.clipMv(mvCand);
-            predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refReconPicList[list][ref], mvCand);
-            costs[i] = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
+            costs[i] = m_me.COST_MAX;
+
+            if ((mvCand.y >= (m_param->searchRange + 1) * 4)
+              | (mvCand.y < m_sliceMinY)
+              | (mvCand.y > m_sliceMaxY))
+                continue;
         }
+        cu.clipMv(mvCand);
+        predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refReconPicList[list][ref], mvCand);
+        costs[i] = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
     }
 
-    return costs[0] <= costs[1] ? 0 : 1;
+    return (costs[0] <= costs[1]) ? 0 : 1;
 }
 
 void Search::PME::processTasks(int workerThreadId)
@@ -2517,11 +2523,12 @@ void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mv
         mvmin.x = X265_MIN(mvmin.x, maxSafeMv);
     }
 
-    if (cu.m_bFirstRowInSlice)
-        mvmin.y = X265_MAX(mvmin.y, 2 * 4);
-
-    if (cu.m_bLastRowInSlice)
-        mvmax.y = X265_MIN(mvmax.y, -10 * 4);
+    // apply restrict on slices
+    if ((m_param->maxSlices > 1) & m_bFrameParallel)
+    {
+        mvmin.y = X265_MAX(mvmin.y, m_sliceMinY);
+        mvmax.y = X265_MIN(mvmax.y, m_sliceMaxY);
+    }
 
     /* Clip search range to signaled maximum MV length.
      * We do not support this VUI field being changed from the default */

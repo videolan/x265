@@ -1150,7 +1150,7 @@ me_hex2:
                 MV qmv = bmv + square1[i] * 2;
 
                 // check mv range for slice bound
-                if (qmv.y < qmvmin.y)
+                if ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y))
                     continue;
 
                 int cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
@@ -1175,7 +1175,7 @@ me_hex2:
                 MV qmv = bmv + square1[i];
 
                 // check mv range for slice bound
-                if (qmv.y < qmvmin.y)
+                if ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y))
                     continue;
 
                 int cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);

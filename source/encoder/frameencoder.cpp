@@ -1116,7 +1116,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     const uint32_t bFirstRowInSlice = ((row == 0) || (m_rows[row - 1].sliceId != curRow.sliceId)) ? 1 : 0;
     const uint32_t bLastRowInSlice = ((row == m_numRows - 1) || (m_rows[row + 1].sliceId != curRow.sliceId)) ? 1 : 0;
     const uint32_t sliceId = curRow.sliceId;
-    const uint32_t endRowInSlice = m_sliceBaseRow[sliceId + 1];
+    const uint32_t endRowInSlicePlus1 = m_sliceBaseRow[sliceId + 1];
     const uint32_t rowInSlice = row - m_sliceBaseRow[sliceId];
 
     if (bFirstRowInSlice && !curRow.completed)
@@ -1127,6 +1127,18 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         rowCoder.load(m_initSliceContext);
         //m_rows[row - 1].bufferedEntropy.loadContexts(m_initSliceContext);
     }
+
+
+    // TODO: specially case handle on first and last row
+
+    // Initialize restrict on MV range in slices
+    tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * g_maxCUSize * 4) + 2 * 4;
+    tld.analysis.m_sliceMaxY = (int16_t)((endRowInSlicePlus1 - 1 - row) * (g_maxCUSize * 4) - 3 * 4);
+
+    // Handle single row slice
+    if (tld.analysis.m_sliceMaxY < tld.analysis.m_sliceMinY)
+        tld.analysis.m_sliceMaxY = tld.analysis.m_sliceMinY = 0;
+
 
     while (curRow.completed < numCols)
     {
@@ -1475,7 +1487,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
         if (bLastRowInSlice)
         {
-            for (uint32_t i = endRowInSlice - m_filterRowDelay; i < endRowInSlice; i++)
+            for (uint32_t i = endRowInSlicePlus1 - m_filterRowDelay; i < endRowInSlicePlus1; i++)
             {
                 //printf("POC %2d: Row %2d Filter Enable\n", slice->m_poc, i);
                 enableRowFilter(i);

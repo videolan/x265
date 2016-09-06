@@ -139,14 +139,14 @@ public:
 
     uint32_t                 m_numRows;
     uint32_t                 m_numCols;
-    uint32_t                 m_sliceAddrBits;
     uint32_t                 m_filterRowDelay;
     uint32_t                 m_filterRowDelayCus;
     uint32_t                 m_refLagRows;
 
     CTURow*                  m_rows;
+    uint16_t                 m_sliceAddrBits;
+    uint16_t                 m_sliceGroupSize;
     uint32_t*                m_sliceBaseRow;
-    uint32_t                 m_sliceGroupSize;
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 
