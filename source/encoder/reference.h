@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,11 +42,11 @@ public:
     MotionReference();
     ~MotionReference();
     int  init(PicYuv*, WeightParam* wp, const x265_param& p);
-    void applyWeight(int rows, int numRows);
+    void applyWeight(uint32_t finishedRows, uint32_t maxNumRows, uint32_t maxNumRowsInSlice, uint32_t sliceId);
 
-    pixel*  weightBuffer[3];
-    int     numInterpPlanes;
-    int     numWeightedRows;
+    pixel*      weightBuffer[3];
+    int         numInterpPlanes;
+    uint32_t*   numSliceWeightedRows;
 
 protected:
 

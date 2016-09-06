@@ -3,6 +3,7 @@
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Deepthi Devaki <deepthidevaki@multicorewareinc.com>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,10 +37,12 @@ MotionReference::MotionReference()
     weightBuffer[0] = NULL;
     weightBuffer[1] = NULL;
     weightBuffer[2] = NULL;
+    numSliceWeightedRows = NULL;
 }
 
 MotionReference::~MotionReference()
 {
+    X265_FREE(numSliceWeightedRows);
     X265_FREE(weightBuffer[0]);
     X265_FREE(weightBuffer[1]);
     X265_FREE(weightBuffer[2]);
@@ -48,10 +51,11 @@ MotionReference::~MotionReference()
 int MotionReference::init(PicYuv* recPic, WeightParam *wp, const x265_param& p)
 {
     reconPic = recPic;
-    numWeightedRows = 0;
     lumaStride = recPic->m_stride;
     chromaStride = recPic->m_strideC;
     numInterpPlanes = p.subpelRefine > 2 ? 3 : 1; /* is chroma satd possible? */
+    numSliceWeightedRows = X265_MALLOC(uint32_t, p.maxSlices);
+    memset(numSliceWeightedRows, 0, p.maxSlices * sizeof(uint32_t));
 
     /* directly reference the extended integer pel planes */
     fpelPlane[0] = recPic->m_picOrg[0];
@@ -105,9 +109,10 @@ int MotionReference::init(PicYuv* recPic, WeightParam *wp, const x265_param& p)
     return 0;
 }
 
-void MotionReference::applyWeight(int finishedRows, int maxNumRows)
+void MotionReference::applyWeight(uint32_t finishedRows, uint32_t maxNumRows, uint32_t maxNumRowsInSlice, uint32_t sliceId)
 {
-    finishedRows = X265_MIN(finishedRows, maxNumRows);
+    const uint32_t numWeightedRows = numSliceWeightedRows[sliceId];
+    finishedRows = X265_MIN(finishedRows, maxNumRowsInSlice);
     if (numWeightedRows >= finishedRows)
         return;
 
@@ -116,7 +121,7 @@ void MotionReference::applyWeight(int finishedRows, int maxNumRows)
     intptr_t stride = reconPic->m_stride;
     int width   = reconPic->m_picWidth;
     int height  = (finishedRows - numWeightedRows) * g_maxCUSize;
-    if (finishedRows == maxNumRows && (reconPic->m_picHeight % g_maxCUSize))
+    if ((finishedRows == maxNumRows) && (reconPic->m_picHeight % g_maxCUSize))
     {
         /* the last row may be partial height */
         height -= g_maxCUSize;
@@ -170,5 +175,5 @@ void MotionReference::applyWeight(int finishedRows, int maxNumRows)
         }
     }
 
-    numWeightedRows = finishedRows;
+    numSliceWeightedRows[sliceId] = finishedRows;
 }
