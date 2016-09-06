@@ -334,6 +334,17 @@ Performance Options
 
 	**Values:** psnr, ssim, grain, zero-latency, fast-decode.
 
+.. option:: --slices <integer>
+
+	Encode each incoming frame as multiple parallel slices that may be decoded
+	independently. Support available only for rectangular slices that cover the
+	entire width of the image. 
+
+	Recommended for improving encoder performance only if frame-parallelism and
+	WPP are unable to maximize utilization on given hardware.
+
+	Default: 1 slice per frame. **Experimental feature**
+
 Input/Output File Options
 =========================
 
