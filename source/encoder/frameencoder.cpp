@@ -462,21 +462,20 @@ void FrameEncoder::compressFrame()
     m_sliceGroupSize = (uint16_t)sliceGroupSize;
 
     uint32_t rowSum = sliceGroupSizeAccu;
-    uint32_t sliceId = 0;
+    uint32_t sidx = 0;
     for (uint32_t i = 0; i < m_numRows; i++)
     {
         const uint32_t rowRange = (rowSum >> 8);
 
-        if ((i >= rowRange) & (sliceId != m_param->maxSlices - 1))
+        if ((i >= rowRange) & (sidx != m_param->maxSlices - 1))
         {
-            sliceId++;
             rowSum += sliceGroupSizeAccu;
-            m_sliceBaseRow[sliceId] = i;
+            m_sliceBaseRow[sidx++] = i;
         }
 
-        m_rows[i].init(m_initSliceContext, sliceId);
+        m_rows[i].init(m_initSliceContext, sidx);
     }
-    X265_CHECK(sliceId < m_param->maxSlices, "sliceID check failed!");
+    X265_CHECK(sidx < m_param->maxSlices, "sliceID check failed!");
 
     m_sliceBaseRow[0] = 0;
     m_sliceBaseRow[m_param->maxSlices] = m_numRows;
