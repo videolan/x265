@@ -166,6 +166,7 @@ uint32_t g_maxLog2CUSize = MAX_LOG2_CU_SIZE;
 uint32_t g_maxCUSize     = MAX_CU_SIZE;
 uint32_t g_unitSizeDepth = NUM_CU_DEPTH;
 uint32_t g_maxCUDepth    = NUM_CU_DEPTH - 1;
+uint32_t g_maxSlices     = 1;
 
 const uint32_t g_zscanToRaster[MAX_NUM_PARTITIONS] =
 {

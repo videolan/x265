@@ -1096,7 +1096,7 @@ me_hex2:
     const SubpelWorkload& wl = workload[this->subpelRefine];
 
     // check mv range for slice bound
-    if ((bmv.y < qmvmin.y) | (bmv.y > qmvmax.y))
+    if ((g_maxSlices > 1) & ((bmv.y < qmvmin.y) | (bmv.y > qmvmax.y)))
     {
         bmv.y = x265_min(x265_max(bmv.y, qmvmin.y), qmvmax.y);
     }
@@ -1150,7 +1150,7 @@ me_hex2:
                 MV qmv = bmv + square1[i] * 2;
 
                 // check mv range for slice bound
-                if ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y))
+                if ((g_maxSlices > 1) & ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y)))
                     continue;
 
                 int cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
@@ -1175,7 +1175,7 @@ me_hex2:
                 MV qmv = bmv + square1[i];
 
                 // check mv range for slice bound
-                if ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y))
+                if ((g_maxSlices > 1) & ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y)))
                     continue;
 
                 int cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);

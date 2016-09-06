@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -173,7 +174,7 @@ void DPB::prepareEncode(Frame *newFrame)
     }
 
     // Disable Loopfilter in bound area, because we will do slice-parallelism in future
-    slice->m_sLFaseFlag = false; // (SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0;
+    slice->m_sLFaseFlag = (g_maxSlices > 1) ? false : ((SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0);
 
     /* Increment reference count of all motion-referenced frames to prevent them
      * from being recycled. These counts are decremented at the end of

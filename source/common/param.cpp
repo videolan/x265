@@ -1302,6 +1302,8 @@ int x265_set_globals(x265_param* param)
         g_maxCUDepth    = maxLog2CUSize - minLog2CUSize;
         g_unitSizeDepth = maxLog2CUSize - LOG2_UNIT_SIZE;
     }
+
+    g_maxSlices = param->maxSlices;
     return 0;
 }
 

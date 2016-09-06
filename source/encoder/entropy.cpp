@@ -331,7 +331,7 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_FLAG(0, "sps_extension_flag");
 }
 
-void Entropy::codePPS(const PPS& pps)
+void Entropy::codePPS(const PPS& pps, bool filerAcross)
 {
     WRITE_UVLC(0,                          "pps_pic_parameter_set_id");
     WRITE_UVLC(0,                          "pps_seq_parameter_set_id");
@@ -360,7 +360,7 @@ void Entropy::codePPS(const PPS& pps)
     WRITE_FLAG(pps.bTransquantBypassEnabled,  "transquant_bypass_enable_flag");
     WRITE_FLAG(0,                             "tiles_enabled_flag");
     WRITE_FLAG(pps.bEntropyCodingSyncEnabled, "entropy_coding_sync_enabled_flag");
-    WRITE_FLAG(0,                             "loop_filter_across_slices_enabled_flag");
+    WRITE_FLAG(filerAcross,                   "loop_filter_across_slices_enabled_flag");
 
     WRITE_FLAG(pps.bDeblockingFilterControlPresent, "deblocking_filter_control_present_flag");
     if (pps.bDeblockingFilterControlPresent)
@@ -676,13 +676,14 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
     // TODO: Enable when pps_loop_filter_across_slices_enabled_flag==1
     //       We didn't support filter across slice board, so disable it now
 
-    /*
-    bool isSAOEnabled = slice.m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1] : false;
-    bool isDBFEnabled = !slice.m_pps->bPicDisableDeblockingFilter;
+    if (g_maxSlices <= 1)
+    {
+        bool isSAOEnabled = slice.m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1] : false;
+        bool isDBFEnabled = !slice.m_pps->bPicDisableDeblockingFilter;
 
-    if (isSAOEnabled || isDBFEnabled)
-        WRITE_FLAG(slice.m_sLFaseFlag, "slice_loop_filter_across_slices_enabled_flag");
-    */
+        if (isSAOEnabled || isDBFEnabled)
+            WRITE_FLAG(slice.m_sLFaseFlag, "slice_loop_filter_across_slices_enabled_flag");
+    }
 }
 
 /** write wavefront substreams sizes for the slice header */
