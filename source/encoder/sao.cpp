@@ -751,12 +751,6 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
     const uint32_t lastRowInSlice = cu->m_bLastRowInSlice;
     const uint32_t bAboveUnavail = (!tpely) | firstRowInSlice;
 
-    // NOTE: Careful! the picHeight for Equal operator only, so I may safe to hack it
-    if (lastRowInSlice)
-    {
-        picHeight = x265_min(picHeight, (tpely + ctuHeight));
-    }
-
     if (plane)
     {
         picWidth  >>= m_hChromaShift;
@@ -770,6 +764,12 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
     uint32_t bpely = x265_min(tpely + ctuHeight, picHeight);
     ctuWidth  = rpelx - lpelx;
     ctuHeight = bpely - tpely;
+
+    // NOTE: Careful! the picHeight apply for Equal operator only in below, so I may safe to hack it
+    if (lastRowInSlice)
+    {
+        picHeight = bpely;
+    }
 
     int startX;
     int startY;
