@@ -283,6 +283,16 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
     int ctuHeight = g_maxCUSize;
     uint32_t lpelx = cu->m_cuPelX;
     uint32_t tpely = cu->m_cuPelY;
+    const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;
+    const uint32_t lastRowInSlice = cu->m_bLastRowInSlice;
+    const uint32_t bAboveAvail = (!tpely) | firstRowInSlice;
+
+    // NOTE: Careful! the picHeight for Equal operator only, so I may safe to hack it
+    if (lastRowInSlice)
+    {
+        picHeight = x265_min(picHeight, (tpely + ctuHeight));
+    }
+
     if (plane)
     {
         picWidth  >>= m_hChromaShift;
@@ -367,9 +377,9 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
     }
     case SAO_EO_1: // dir: |
     {
-        int startY = !tpely;
+        int startY = bAboveAvail;
         int endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
-        if (!tpely)
+        if (startY)
             rec += stride;
 
         if (ctuWidth & 15)
@@ -408,10 +418,10 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
         int startX = !lpelx;
         int endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
 
-        int startY = !tpely;
+        int startY = bAboveAvail;
         int endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
 
-        if (!tpely)
+        if (startY)
             rec += stride;
 
         if (!(ctuWidth & 15))
@@ -474,10 +484,10 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
         int startX = !lpelx;
         int endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth;
 
-        int startY = !tpely;
+        int startY = bAboveAvail;
         int endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight;
 
-        if (!tpely)
+        if (startY)
             rec += stride;
 
         if (ctuWidth & 15)
@@ -737,6 +747,16 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
     int ctuHeight = g_maxCUSize;
     uint32_t lpelx = cu->m_cuPelX;
     uint32_t tpely = cu->m_cuPelY;
+    const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;
+    const uint32_t lastRowInSlice = cu->m_bLastRowInSlice;
+    const uint32_t bAboveAvail = (!tpely) | firstRowInSlice;
+
+    // NOTE: Careful! the picHeight for Equal operator only, so I may safe to hack it
+    if (lastRowInSlice)
+    {
+        picHeight = x265_min(picHeight, (tpely + ctuHeight));
+    }
+
     if (plane)
     {
         picWidth  >>= m_hChromaShift;
@@ -825,10 +845,10 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
 
             rec  = rec0;
 
-            startY = !tpely;
+            startY = bAboveAvail;
             endX   = (rpelx == picWidth) ? ctuWidth : ctuWidth - skipR + plane_offset;
             endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
-            if (!tpely)
+            if (startY)
             {
                 rec += stride;
             }
@@ -852,9 +872,9 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
             startX = !lpelx;
             endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
 
-            startY = !tpely;
+            startY = bAboveAvail;
             endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
-            if (!tpely)
+            if (startY)
             {
                 fenc += stride;
                 rec += stride;
@@ -879,10 +899,10 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
             startX = !lpelx;
             endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
 
-            startY = !tpely;
+            startY = bAboveAvail;
             endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
 
-            if (!tpely)
+            if (startY)
             {
                 fenc += stride;
                 rec += stride;

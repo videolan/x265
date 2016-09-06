@@ -703,6 +703,12 @@ void FrameEncoder::compressFrame()
     m_entropyCoder.load(m_initSliceContext);
     m_entropyCoder.setBitstream(&m_bs);
 
+    // finish encode of each CTU row, only required when SAO is enabled
+    if (m_param->bEnableSAO)
+        encodeSlice(0);
+
+    m_entropyCoder.setBitstream(&m_bs);
+
     if (m_param->maxSlices > 1)
     {
         uint32_t nextSliceRow = 0;
@@ -716,10 +722,6 @@ void FrameEncoder::compressFrame()
             //const int sliceQp = ctu->m_qp[0];
             m_entropyCoder.codeSliceHeader(*slice, *m_frame->m_encData, sliceAddr, m_sliceAddrBits, slice->m_sliceQp);
 
-            // finish encode of each CTU row, only required when SAO is enabled
-            //if (m_param->bEnableSAO)
-            //    encodeSlice();
-
             // Find rows of current slice
             const uint32_t prevSliceRow = nextSliceRow;
             while(nextSliceRow < m_numRows && m_rows[nextSliceRow].sliceID == sliceId)
@@ -732,22 +734,16 @@ void FrameEncoder::compressFrame()
             m_entropyCoder.setBitstream(&m_bs);
             if (slice->m_pps->bEntropyCodingSyncEnabled)
             {
-                //m_entropyCoder.WRITE_UVLC(0, "num_entry_point_offsets");
                 m_entropyCoder.codeSliceHeaderWPPEntryPoints(&m_substreamSizes[prevSliceRow], (nextSliceRow - prevSliceRow - 1), maxStreamSize);
             }
             m_bs.writeByteAlignment();
 
             m_nalList.serialize(slice->m_nalUnitType, m_bs);
-            //break;
         }
     }
     else
     {
         m_entropyCoder.codeSliceHeader(*slice, *m_frame->m_encData, 0, 0, slice->m_sliceQp);
-
-        // finish encode of each CTU row, only required when SAO is enabled
-        if (m_param->bEnableSAO)
-            encodeSlice();
 
         // serialize each row, record final lengths in slice header
         uint32_t maxStreamSize = m_nalList.serializeSubstreams(m_substreamSizes, numSubstreams, m_outStreams);
@@ -864,7 +860,7 @@ void FrameEncoder::compressFrame()
     m_endFrameTime = x265_mdate();
 }
 
-void FrameEncoder::encodeSlice()
+void FrameEncoder::encodeSlice(uint32_t sliceAddr)
 {
     Slice* slice = m_frame->m_encData->m_slice;
     const uint32_t widthInLCUs = slice->m_sps->numCuInWidth;
@@ -872,31 +868,35 @@ void FrameEncoder::encodeSlice()
     const uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : 1;
 
     SAOParam* saoParam = slice->m_sps->bUseSAO ? m_frame->m_encData->m_saoParam : NULL;
-    for (uint32_t cuAddr = 0; cuAddr < lastCUAddr; cuAddr++)
+    for (uint32_t cuAddr = sliceAddr; cuAddr < lastCUAddr; cuAddr++)
     {
         uint32_t col = cuAddr % widthInLCUs;
-        uint32_t lin = cuAddr / widthInLCUs;
-        uint32_t subStrm = lin % numSubstreams;
+        uint32_t row = cuAddr / widthInLCUs;
+        uint32_t subStrm = row % numSubstreams;
         CUData* ctu = m_frame->m_encData->getPicCTU(cuAddr);
 
         m_entropyCoder.setBitstream(&m_outStreams[subStrm]);
 
         // Synchronize cabac probabilities with upper-right CTU if it's available and we're at the start of a line.
-        if (m_param->bEnableWavefront && !col && lin)
+        if (m_param->bEnableWavefront && !col && row)
         {
             m_entropyCoder.copyState(m_initSliceContext);
-            m_entropyCoder.loadContexts(m_rows[lin - 1].bufferedEntropy);
+            m_entropyCoder.loadContexts(m_rows[row - 1].bufferedEntropy);
         }
+
+        // Initialize slice context
+        if (ctu->m_bFirstRowInSlice && !col)
+            m_entropyCoder.load(m_initSliceContext);
 
         if (saoParam)
         {
             if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
             {
                 int mergeLeft = col && saoParam->ctuParam[0][cuAddr].mergeMode == SAO_MERGE_LEFT;
-                int mergeUp = lin && saoParam->ctuParam[0][cuAddr].mergeMode == SAO_MERGE_UP;
+                int mergeUp = !ctu->m_bFirstRowInSlice && saoParam->ctuParam[0][cuAddr].mergeMode == SAO_MERGE_UP;
                 if (col)
                     m_entropyCoder.codeSaoMerge(mergeLeft);
-                if (lin && !mergeLeft)
+                if (!ctu->m_bFirstRowInSlice && !mergeLeft)
                     m_entropyCoder.codeSaoMerge(mergeUp);
                 if (!mergeLeft && !mergeUp)
                 {
@@ -923,12 +923,13 @@ void FrameEncoder::encodeSlice()
         {
             if (col == 1)
                 // Store probabilities of second CTU in line into buffer
-                m_rows[lin].bufferedEntropy.loadContexts(m_entropyCoder);
+                m_rows[row].bufferedEntropy.loadContexts(m_entropyCoder);
 
             if (col == widthInLCUs - 1)
                 m_entropyCoder.finishSlice();
         }
     }
+
     if (!m_param->bEnableWavefront)
         m_entropyCoder.finishSlice();
 }
@@ -1019,7 +1020,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         const uint32_t cuAddr = lineStartCUAddr + col;
         CUData* ctu = curEncData.getPicCTU(cuAddr);
         const uint32_t bLastCuInSlice = (bLastRowInSlice & (col == numCols - 1)) ? 1 : 0;
-        ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp, bFirstRowInSlice, bLastCuInSlice);
+        ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp, bFirstRowInSlice, bLastRowInSlice, bLastCuInSlice);
 
         if (bIsVbv)
         {

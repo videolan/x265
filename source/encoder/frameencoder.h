@@ -217,7 +217,7 @@ protected:
     void compressFrame();
 
     /* called by compressFrame to generate final per-row bitstreams */
-    void encodeSlice();
+    void encodeSlice(uint32_t sliceAddr);
 
     void threadMain();
     int  collectCTUStatistics(const CUData& ctu, FrameStats* frameLog);

@@ -180,6 +180,7 @@ public:
     uint32_t      m_hChromaShift;
     uint32_t      m_vChromaShift;
     uint32_t      m_bFirstRowInSlice;
+    uint32_t      m_bLastRowInSlice;
     uint32_t      m_bLastCuInSlice;
 
     /* Per-part data, stored contiguously */
@@ -216,7 +217,7 @@ public:
     void     initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, int instance);
     static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
 
-    void     initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t firstRowInSlice, uint32_t lastCUInSlice);
+    void     initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t firstRowInSlice, uint32_t lastRowInSlice, uint32_t lastCUInSlice);
     void     initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp);
     void     initLosslessCU(const CUData& cu, const CUGeom& cuGeom);
 

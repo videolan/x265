@@ -1059,17 +1059,12 @@ int x265_check_params(x265_param* param)
     if (check_failed == 1)
         return check_failed;
 
-    /* Unsupport SAO & Loopfilter in multiple-slices mode now */
-    if (param->maxSlices > 1)
-    {
-        //param->bEnableLoopFilter = 0;
-        param->bEnableSAO = 0;
-    }
-
     uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
     uint32_t tuQTMaxLog2Size = X265_MIN(maxLog2CUSize, 5);
     uint32_t tuQTMinLog2Size = 2; //log2(4)
 
+    CHECK((param->maxSlices > 1) && !param->bEnableWavefront,
+        "Multiple-Slices mode must be enable Wavefront Parallel Processing (--wpp)");
     CHECK(param->internalBitDepth != X265_DEPTH,
           "internalBitDepth must match compiled bit depth");
     CHECK(param->minCUSize != 64 && param->minCUSize != 32 && param->minCUSize != 16 && param->minCUSize != 8,

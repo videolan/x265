@@ -266,7 +266,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
     }
 }
 
-void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t firstRowInSlice, uint32_t lastCuInSlice)
+void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t firstRowInSlice, uint32_t lastRowInSlice, uint32_t lastCuInSlice)
 {
     m_encData       = frame.m_encData;
     m_slice         = m_encData->m_slice;
@@ -276,7 +276,8 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
     m_absIdxInCTU   = 0;
     m_numPartitions = NUM_4x4_PARTITIONS;
     m_bFirstRowInSlice = firstRowInSlice;
-    m_bLastCuInSlice  = lastCuInSlice;
+    m_bLastRowInSlice   = lastRowInSlice;
+    m_bLastCuInSlice   = lastCuInSlice;
 
     /* sequential memsets */
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);

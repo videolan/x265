@@ -360,7 +360,7 @@ void Entropy::codePPS(const PPS& pps)
     WRITE_FLAG(pps.bTransquantBypassEnabled,  "transquant_bypass_enable_flag");
     WRITE_FLAG(0,                             "tiles_enabled_flag");
     WRITE_FLAG(pps.bEntropyCodingSyncEnabled, "entropy_coding_sync_enabled_flag");
-    WRITE_FLAG(1,                             "loop_filter_across_slices_enabled_flag");
+    WRITE_FLAG(0,                             "loop_filter_across_slices_enabled_flag");
 
     WRITE_FLAG(pps.bDeblockingFilterControlPresent, "deblocking_filter_control_present_flag");
     if (pps.bDeblockingFilterControlPresent)

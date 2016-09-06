@@ -174,11 +174,11 @@ static void origCUSampleRestoration(const CUData* cu, const CUGeom& cuGeom, Fram
         restoreOrigLosslessYuv(cu, frame, absPartIdx);
 }
 
-void FrameFilter::ParallelFilter::copySaoAboveRef(PicYuv* reconPic, uint32_t cuAddr, int col)
+void FrameFilter::ParallelFilter::copySaoAboveRef(const CUData *ctu, PicYuv* reconPic, uint32_t cuAddr, int col)
 {
     // Copy SAO Top Reference Pixels
     int ctuWidth  = g_maxCUSize;
-    const pixel* recY = reconPic->getPlaneAddr(0, cuAddr) - (m_rowAddr == 0 ? 0 : reconPic->m_stride);
+    const pixel* recY = reconPic->getPlaneAddr(0, cuAddr) - (ctu->m_bFirstRowInSlice ? 0 : reconPic->m_stride);
 
     // Luma
     memcpy(&m_sao.m_tmpU[0][col * ctuWidth], recY, ctuWidth * sizeof(pixel));
@@ -334,18 +334,18 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
     for (uint32_t col = (uint32_t)colStart; col < (uint32_t)colEnd; col++)
     {
         const uint32_t cuAddr = m_rowAddr + col;
+        const CUData* ctu = m_encData->getPicCTU(cuAddr);
 
         if (m_frameFilter->m_param->bEnableLoopFilter)
         {
-            const CUData* ctu = m_encData->getPicCTU(cuAddr);
             deblockCTU(ctu, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_VER);
         }
 
         if (col >= 1)
         {
+            const CUData* ctuPrev = m_encData->getPicCTU(cuAddr - 1);
             if (m_frameFilter->m_param->bEnableLoopFilter)
             {
-                const CUData* ctuPrev = m_encData->getPicCTU(cuAddr - 1);
                 deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
 
                 // When SAO Disable, setting column counter here
@@ -356,7 +356,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
             if (m_frameFilter->m_param->bEnableSAO)
             {
                 // Save SAO bottom row reference pixels
-                copySaoAboveRef(reconPic, cuAddr - 1, col - 1);
+                copySaoAboveRef(ctuPrev, reconPic, cuAddr - 1, col - 1);
 
                 // SAO Decide
                 if (col >= 2)
@@ -364,7 +364,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
                     // NOTE: Delay 2 column to avoid mistake on below case, it is Deblock sync logic issue, less probability but still alive
                     //       ... H V |
                     //       ..S H V |
-                    m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, col - 2, cuAddr - 2);
+                    m_sao.rdoSaoUnitCu(saoParam, (ctu->m_bFirstRowInSlice ? 0 : m_rowAddr), col - 2, cuAddr - 2);
                 }
 
                 // Process Previous Row SAO CU
@@ -384,10 +384,10 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
     if (colEnd == numCols)
     {
         const uint32_t cuAddr = m_rowAddr + numCols - 1;
+        const CUData* ctuPrev = m_encData->getPicCTU(cuAddr);
 
         if (m_frameFilter->m_param->bEnableLoopFilter)
         {
-            const CUData* ctuPrev = m_encData->getPicCTU(cuAddr);
             deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_HOR);
 
             // When SAO Disable, setting column counter here
@@ -398,16 +398,18 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
         // TODO: move processPostCu() into processSaoUnitCu()
         if (m_frameFilter->m_param->bEnableSAO)
         {
+            const CUData* ctu = m_encData->getPicCTU(m_rowAddr + numCols - 2);
+
             // Save SAO bottom row reference pixels
-            copySaoAboveRef(reconPic, cuAddr, numCols - 1);
+            copySaoAboveRef(ctuPrev, reconPic, cuAddr, numCols - 1);
 
             // SAO Decide
             // NOTE: reduce condition check for 1 CU only video, Why someone play with it?
             if (numCols >= 2)
-                m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, numCols - 2, cuAddr - 1);
+                m_sao.rdoSaoUnitCu(saoParam, (ctu->m_bFirstRowInSlice ? 0 : m_rowAddr), numCols - 2, cuAddr - 1);
 
             if (numCols >= 1)
-                m_sao.rdoSaoUnitCu(saoParam, m_rowAddr, numCols - 1, cuAddr);
+                m_sao.rdoSaoUnitCu(saoParam, (ctuPrev->m_bFirstRowInSlice ? 0 : m_rowAddr), numCols - 1, cuAddr);
 
             // Process Previous Rows SAO CU
             if (m_row >= 1 && numCols >= 3)

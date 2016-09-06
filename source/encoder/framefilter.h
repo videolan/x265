@@ -93,7 +93,7 @@ public:
         void processSaoCTU(SAOParam *saoParam, int col);
 
         // Copy and Save SAO reference pixels for SAO Rdo decide
-        void copySaoAboveRef(PicYuv* reconPic, uint32_t cuAddr, int col);
+        void copySaoAboveRef(const CUData *ctu, PicYuv* reconPic, uint32_t cuAddr, int col);
 
         // Post-Process (Border extension)
         void processPostCu(int col) const;
