@@ -681,7 +681,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
 }
 
 /** write wavefront substreams sizes for the slice header */
-void Entropy::codeSliceHeaderWPPEntryPoints(const Slice& slice, const uint32_t *substreamSizes, uint32_t maxOffset)
+void Entropy::codeSliceHeaderWPPEntryPoints(const uint32_t *substreamSizes, uint32_t numSubStreams, uint32_t maxOffset)
 {
     uint32_t offsetLen = 1;
     while (maxOffset >= (1U << offsetLen))
@@ -690,12 +690,11 @@ void Entropy::codeSliceHeaderWPPEntryPoints(const Slice& slice, const uint32_t *
         X265_CHECK(offsetLen < 32, "offsetLen is too large\n");
     }
 
-    uint32_t numRows = slice.m_sps->numCuInHeight - 1;
-    WRITE_UVLC(numRows, "num_entry_point_offsets");
-    if (numRows > 0)
+    WRITE_UVLC(numSubStreams, "num_entry_point_offsets");
+    if (numSubStreams > 0)
         WRITE_UVLC(offsetLen - 1, "offset_len_minus1");
 
-    for (uint32_t i = 0; i < numRows; i++)
+    for (uint32_t i = 0; i < numSubStreams; i++)
         WRITE_CODE(substreamSizes[i] - 1, offsetLen, "entry_point_offset_minus1");
 }
 

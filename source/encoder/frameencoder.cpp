@@ -726,14 +726,14 @@ void FrameEncoder::compressFrame()
                 nextSliceRow++;
 
             // serialize each row, record final lengths in slice header
-            /*uint32_t maxStreamSize =*/ m_nalList.serializeSubstreams(&m_substreamSizes[prevSliceRow], (nextSliceRow - prevSliceRow), &m_outStreams[prevSliceRow]);
+            uint32_t maxStreamSize = m_nalList.serializeSubstreams(&m_substreamSizes[prevSliceRow], (nextSliceRow - prevSliceRow), &m_outStreams[prevSliceRow]);
 
             // complete the slice header by writing WPP row-starts
             m_entropyCoder.setBitstream(&m_bs);
             if (slice->m_pps->bEntropyCodingSyncEnabled)
             {
-                m_entropyCoder.WRITE_UVLC(0, "num_entry_point_offsets");
-                //m_entropyCoder.codeSliceHeaderWPPEntryPoints(*slice, &m_substreamSizes[prevSliceRow], maxStreamSize);
+                //m_entropyCoder.WRITE_UVLC(0, "num_entry_point_offsets");
+                m_entropyCoder.codeSliceHeaderWPPEntryPoints(&m_substreamSizes[prevSliceRow], (nextSliceRow - prevSliceRow - 1), maxStreamSize);
             }
             m_bs.writeByteAlignment();
 
@@ -755,7 +755,7 @@ void FrameEncoder::compressFrame()
         // complete the slice header by writing WPP row-starts
         m_entropyCoder.setBitstream(&m_bs);
         if (slice->m_pps->bEntropyCodingSyncEnabled)
-            m_entropyCoder.codeSliceHeaderWPPEntryPoints(*slice, m_substreamSizes, maxStreamSize);
+            m_entropyCoder.codeSliceHeaderWPPEntryPoints(m_substreamSizes, (slice->m_sps->numCuInHeight - 1), maxStreamSize);
         m_bs.writeByteAlignment();
 
         m_nalList.serialize(slice->m_nalUnitType, m_bs);
