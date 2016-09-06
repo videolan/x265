@@ -673,11 +673,16 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
     int code = sliceQp - 26;
     WRITE_SVLC(code, "slice_qp_delta");
 
+    // TODO: Enable when pps_loop_filter_across_slices_enabled_flag==1
+    //       We didn't support filter across slice board, so disable it now
+
+    /*
     bool isSAOEnabled = slice.m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1] : false;
     bool isDBFEnabled = !slice.m_pps->bPicDisableDeblockingFilter;
 
     if (isSAOEnabled || isDBFEnabled)
         WRITE_FLAG(slice.m_sLFaseFlag, "slice_loop_filter_across_slices_enabled_flag");
+    */
 }
 
 /** write wavefront substreams sizes for the slice header */
