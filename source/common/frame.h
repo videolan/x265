@@ -2,6 +2,7 @@
 * Copyright (C) 2013 x265 project
 *
 * Author: Steve Borho <steve@borho.org>
+*         Min Chen <chenm003@163.com>
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -88,7 +89,7 @@ public:
     x265_sei               m_userSEI;
 
     /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
-    ThreadSafeInteger      m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
+    ThreadSafeInteger*     m_reconRowFlag;       // flag of CTU rows completely reconstructed and extended for motion reference
     ThreadSafeInteger*     m_reconColCount;      // count of CTU cols completely reconstructed and extended for motion reference
     int32_t                m_numRows;
     volatile uint32_t      m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount

@@ -522,7 +522,7 @@ void FrameFilter::processPostRow(int row)
     const uint32_t lineStartCUAddr = row * numCols;
 
     // Notify other FrameEncoders that this row of reconstructed pixels is available
-    m_frame->m_reconRowCount.incr();
+    m_frame->m_reconRowFlag[row].set(1);
 
     uint32_t cuAddr = lineStartCUAddr;
     if (m_param->bEnablePsnr)

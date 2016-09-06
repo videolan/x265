@@ -582,9 +582,9 @@ void FrameEncoder::compressFrame()
                 {
                     Frame *refpic = slice->m_refFrameList[l][ref];
 
-                    uint32_t reconRowCount = refpic->m_reconRowCount.get();
-                    while ((reconRowCount != m_numRows) && (reconRowCount < row + m_refLagRows))
-                        reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
+                    const int rowIdx = X265_MIN(m_numRows, (row + m_refLagRows)) - 1;
+                    while (refpic->m_reconRowFlag[rowIdx].get() == 0)
+                        refpic->m_reconRowFlag[rowIdx].waitForChange(0);
 
                     if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
                         m_mref[l][ref].applyWeight(row + m_refLagRows, m_numRows);
@@ -621,9 +621,9 @@ void FrameEncoder::compressFrame()
                     {
                         Frame *refpic = slice->m_refFrameList[list][ref];
 
-                        uint32_t reconRowCount = refpic->m_reconRowCount.get();
-                        while ((reconRowCount != m_numRows) && (reconRowCount < i + m_refLagRows))
-                            reconRowCount = refpic->m_reconRowCount.waitForChange(reconRowCount);
+                        const int rowIdx = X265_MIN(m_numRows, (i + m_refLagRows)) - 1;
+                        while (refpic->m_reconRowFlag[rowIdx].get() == 0)
+                            refpic->m_reconRowFlag[rowIdx].waitForChange(0);
 
                         if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
                             m_mref[list][ref].applyWeight(i + m_refLagRows, m_numRows);

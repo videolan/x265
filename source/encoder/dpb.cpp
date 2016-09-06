@@ -71,14 +71,18 @@ void DPB::recycleUnreferenced()
         iterFrame = iterFrame->m_next;
         if (!curFrame->m_encData->m_bHasReferences && !curFrame->m_countRefEncoders)
         {
-            curFrame->m_reconRowCount.set(0);
             curFrame->m_bChromaExtended = false;
 
             // Reset column counter
+            X265_CHECK(curFrame->m_reconRowFlag != NULL, "curFrame->m_reconRowFlag check failure");
             X265_CHECK(curFrame->m_reconColCount != NULL, "curFrame->m_reconColCount check failure");
             X265_CHECK(curFrame->m_numRows > 0, "curFrame->m_numRows check failure");
-            for(int32_t col = 0; col < curFrame->m_numRows; col++)
-                curFrame->m_reconColCount[col].set(0);
+
+            for(int32_t row = 0; row < curFrame->m_numRows; row++)
+            {
+                curFrame->m_reconRowFlag[row].set(0);
+                curFrame->m_reconColCount[row].set(0);
+            }
 
             // iterator is invalidated by remove, restart scan
             m_picList.remove(*curFrame);
