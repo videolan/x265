@@ -256,6 +256,7 @@ void x265_param_default(x265_param* param)
     param->maxLuma = PIXEL_MAX;
     param->log2MaxPocLsb = 8;
     param->bDiscardSEI = false;
+    param->maxSlices = 1;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -893,6 +894,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("min-luma") p->minLuma = (uint16_t)atoi(value);
     OPT("max-luma") p->maxLuma = (uint16_t)atoi(value);
     OPT("uhd-bd") p->uhdBluray = atobool(value);
+    OPT("slices") p->maxSlices = atoi(value);
     else
         bExtraParams = true;
     if (bExtraParams)
@@ -1234,6 +1236,8 @@ int x265_check_params(x265_param* param)
         "qpmin exceeds supported range (0 to 69)");
     CHECK(param->log2MaxPocLsb < 4,
         "maximum of the picture order count can not be less than 4");
+    CHECK(1 > param->maxSlices || param->maxSlices > ((param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize),
+        "The slices can not be more than rows");
     return check_failed;
 }
 
@@ -1384,6 +1388,8 @@ void x265_print_params(x265_param* param)
     TOOLOPT(param->bEnableFastIntra, "fast-intra");
     TOOLOPT(param->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
     TOOLVAL(param->lookaheadSlices, "lslices=%d");
+    if (param->maxSlices > 1)
+        TOOLVAL(param->maxSlices, "slices=%d");
     if (param->bEnableLoopFilter)
     {
         if (param->deblockingFilterBetaOffset || param->deblockingFilterTCOffset)

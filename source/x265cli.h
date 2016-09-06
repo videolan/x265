@@ -237,6 +237,7 @@ static const struct option long_options[] =
     { "recon-y4m-exec", required_argument, NULL, 0 },
     { "analyze-src-pics", no_argument, NULL, 0 },
     { "no-analyze-src-pics", no_argument, NULL, 0 },
+    { "slices",         required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },

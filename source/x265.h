@@ -1306,6 +1306,9 @@ typedef struct x265_param
     /* Control remove vui information to get low bitrate */
     int       bDiscardVUI;
 
+    /* Maximum count of Slices of picture, the value range is [1, maximum rows] */
+    unsigned int maxSlices;
+
 } x265_param;
 
 /* x265_param_alloc:
