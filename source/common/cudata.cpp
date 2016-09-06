@@ -266,7 +266,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
     }
 }
 
-void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
+void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t firstRowInSlice, uint32_t lastCuInSlice)
 {
     m_encData       = frame.m_encData;
     m_slice         = m_encData->m_slice;
@@ -275,6 +275,8 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
     m_cuPelY        = (cuAddr / m_slice->m_sps->numCuInWidth) << g_maxLog2CUSize;
     m_absIdxInCTU   = 0;
     m_numPartitions = NUM_4x4_PARTITIONS;
+    m_bFirstRowInSlice = firstRowInSlice;
+    m_bLastCuInSlice  = lastCuInSlice;
 
     /* sequential memsets */
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);
@@ -295,7 +297,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp)
 
     uint32_t widthInCU = m_slice->m_sps->numCuInWidth;
     m_cuLeft = (m_cuAddr % widthInCU) ? m_encData->getPicCTU(m_cuAddr - 1) : NULL;
-    m_cuAbove = (m_cuAddr / widthInCU) ? m_encData->getPicCTU(m_cuAddr - widthInCU) : NULL;
+    m_cuAbove = (m_cuAddr >= widthInCU) && !m_bFirstRowInSlice ? m_encData->getPicCTU(m_cuAddr - widthInCU) : NULL;
     m_cuAboveLeft = (m_cuLeft && m_cuAbove) ? m_encData->getPicCTU(m_cuAddr - widthInCU - 1) : NULL;
     m_cuAboveRight = (m_cuAbove && ((m_cuAddr % widthInCU) < (widthInCU - 1))) ? m_encData->getPicCTU(m_cuAddr - widthInCU + 1) : NULL;
 }
@@ -313,6 +315,9 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp)
     m_cuAbove       = ctu.m_cuAbove;
     m_cuAboveLeft   = ctu.m_cuAboveLeft;
     m_cuAboveRight  = ctu.m_cuAboveRight;
+    m_bFirstRowInSlice = ctu.m_bFirstRowInSlice;
+    m_bLastCuInSlice = ctu.m_bLastCuInSlice;
+
     X265_CHECK(m_numPartitions == cuGeom.numPartitions, "initSubCU() size mismatch\n");
 
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);
@@ -335,6 +340,9 @@ void CUData::copyPartFrom(const CUData& subCU, const CUGeom& childGeom, uint32_t
     X265_CHECK(subPartIdx < 4, "part unit should be less than 4\n");
 
     uint32_t offset = childGeom.numPartitions * subPartIdx;
+
+    m_bFirstRowInSlice = subCU.m_bFirstRowInSlice;
+    m_bLastCuInSlice = subCU.m_bLastCuInSlice;
 
     m_subPartCopy((uint8_t*)m_qp + offset, (uint8_t*)subCU.m_qp);
     m_subPartCopy(m_log2CUSize + offset, subCU.m_log2CUSize);

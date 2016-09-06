@@ -145,6 +145,13 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     else
         m_param->noiseReductionIntra = m_param->noiseReductionInter = 0;
 
+    // 7.4.7.1 - Ceil( Log2( PicSizeInCtbsY ) ) bits
+    {
+        unsigned long tmp;
+        CLZ(tmp, (numRows * numCols));
+        m_sliceAddrBits = tmp + 1;
+    }
+
     return ok;
 }
 
@@ -444,12 +451,16 @@ void FrameEncoder::compressFrame()
     /* ensure all rows are blocked prior to initializing row CTU counters */
     WaveFront::clearEnabledRowMask();
 
-    /* reset entropy coders */
+    /* reset entropy coders and compute slice id */
     m_entropyCoder.load(m_initSliceContext);
+    const unsigned int sliceGroupSize = (m_numRows + m_param->maxSlices - 1) / m_param->maxSlices;
     for (uint32_t i = 0; i < m_numRows; i++)
-        m_rows[i].init(m_initSliceContext);
+    {
+        m_rows[i].init(m_initSliceContext, i / sliceGroupSize);
+    }
 
-    uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : 1;
+    uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : m_param->maxSlices;
+    X265_CHECK(m_param->bEnableWavefront || (m_param->maxSlices == 1), "Multiple slices without WPP unsupport now!");
     if (!m_outStreams)
     {
         m_outStreams = new Bitstream[numSubstreams];
@@ -691,22 +702,65 @@ void FrameEncoder::compressFrame()
     m_bs.resetBits();
     m_entropyCoder.load(m_initSliceContext);
     m_entropyCoder.setBitstream(&m_bs);
-    m_entropyCoder.codeSliceHeader(*slice, *m_frame->m_encData);
 
-    // finish encode of each CTU row, only required when SAO is enabled
-    if (m_param->bEnableSAO)
-        encodeSlice();
+    if (m_param->maxSlices > 1)
+    {
+        uint32_t nextSliceRow = 0;
 
-    // serialize each row, record final lengths in slice header
-    uint32_t maxStreamSize = m_nalList.serializeSubstreams(m_substreamSizes, numSubstreams, m_outStreams);
+        for(uint32_t sliceId = 0; sliceId < m_param->maxSlices; sliceId++)
+        {
+            m_bs.resetBits();
 
-    // complete the slice header by writing WPP row-starts
-    m_entropyCoder.setBitstream(&m_bs);
-    if (slice->m_pps->bEntropyCodingSyncEnabled)
-        m_entropyCoder.codeSliceHeaderWPPEntryPoints(*slice, m_substreamSizes, maxStreamSize);
-    m_bs.writeByteAlignment();
+            const uint32_t sliceAddr = nextSliceRow * m_numCols;
+            //CUData* ctu = m_frame->m_encData->getPicCTU(sliceAddr);
+            //const int sliceQp = ctu->m_qp[0];
+            m_entropyCoder.codeSliceHeader(*slice, *m_frame->m_encData, sliceAddr, m_sliceAddrBits, slice->m_sliceQp);
 
-    m_nalList.serialize(slice->m_nalUnitType, m_bs);
+            // finish encode of each CTU row, only required when SAO is enabled
+            //if (m_param->bEnableSAO)
+            //    encodeSlice();
+
+            // Find rows of current slice
+            const uint32_t prevSliceRow = nextSliceRow;
+            while(nextSliceRow < m_numRows && m_rows[nextSliceRow].sliceID == sliceId)
+                nextSliceRow++;
+
+            // serialize each row, record final lengths in slice header
+            /*uint32_t maxStreamSize =*/ m_nalList.serializeSubstreams(&m_substreamSizes[prevSliceRow], (nextSliceRow - prevSliceRow), &m_outStreams[prevSliceRow]);
+
+            // complete the slice header by writing WPP row-starts
+            m_entropyCoder.setBitstream(&m_bs);
+            if (slice->m_pps->bEntropyCodingSyncEnabled)
+            {
+                m_entropyCoder.WRITE_UVLC(0, "num_entry_point_offsets");
+                //m_entropyCoder.codeSliceHeaderWPPEntryPoints(*slice, &m_substreamSizes[prevSliceRow], maxStreamSize);
+            }
+            m_bs.writeByteAlignment();
+
+            m_nalList.serialize(slice->m_nalUnitType, m_bs);
+            //break;
+        }
+    }
+    else
+    {
+        m_entropyCoder.codeSliceHeader(*slice, *m_frame->m_encData, 0, 0, slice->m_sliceQp);
+
+        // finish encode of each CTU row, only required when SAO is enabled
+        if (m_param->bEnableSAO)
+            encodeSlice();
+
+        // serialize each row, record final lengths in slice header
+        uint32_t maxStreamSize = m_nalList.serializeSubstreams(m_substreamSizes, numSubstreams, m_outStreams);
+
+        // complete the slice header by writing WPP row-starts
+        m_entropyCoder.setBitstream(&m_bs);
+        if (slice->m_pps->bEntropyCodingSyncEnabled)
+            m_entropyCoder.codeSliceHeaderWPPEntryPoints(*slice, m_substreamSizes, maxStreamSize);
+        m_bs.writeByteAlignment();
+
+        m_nalList.serialize(slice->m_nalUnitType, m_bs);
+    }
+
 
     if (!m_param->bDiscardSEI && m_param->decodedPictureHashSEI)
     {
@@ -945,6 +999,17 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     uint32_t maxBlockCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
     uint32_t maxBlockRows = (m_frame->m_fencPic->m_picHeight + (16 - 1)) / 16;
     uint32_t noOfBlocks = g_maxCUSize / 16;
+    const uint32_t bFirstRowInSlice = ((row == 0) || (m_rows[row - 1].sliceID != curRow.sliceID)) ? 1 : 0;
+    const uint32_t bLastRowInSlice = ((row == m_numRows - 1) || (m_rows[row + 1].sliceID != curRow.sliceID)) ? 1 : 0;
+
+    if (bFirstRowInSlice && !curRow.completed)
+    {
+        // Load SBAC coder context from previous row and initialize row state.
+        //rowCoder.copyState(m_initSliceContext);
+        //rowCoder.loadContexts(m_rows[row - 1].bufferedEntropy);
+        rowCoder.load(m_initSliceContext);
+        //m_rows[row - 1].bufferedEntropy.loadContexts(m_initSliceContext);
+    }
 
     while (curRow.completed < numCols)
     {
@@ -953,7 +1018,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         const uint32_t col = curRow.completed;
         const uint32_t cuAddr = lineStartCUAddr + col;
         CUData* ctu = curEncData.getPicCTU(cuAddr);
-        ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp);
+        const uint32_t bLastCuInSlice = (bLastRowInSlice & (col == numCols - 1)) ? 1 : 0;
+        ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp, bFirstRowInSlice, bLastCuInSlice);
 
         if (bIsVbv)
         {
@@ -989,7 +1055,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         else
             curEncData.m_cuStat[cuAddr].baseQp = curEncData.m_avgQpRc;
 
-        if (m_param->bEnableWavefront && !col && row)
+        if (m_param->bEnableWavefront && !col && !bFirstRowInSlice)
         {
             // Load SBAC coder context from previous row and initialize row state.
             rowCoder.copyState(m_initSliceContext);
@@ -1253,8 +1319,10 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     }
 
     /* flush row bitstream (if WPP and no SAO) or flush frame if no WPP and no SAO */
-    if (!m_param->bEnableSAO && (m_param->bEnableWavefront || row == m_numRows - 1))
+    /* end_of_sub_stream_one_bit / end_of_slice_segment_flag */
+    if (!m_param->bEnableSAO && (m_param->bEnableWavefront || bLastRowInSlice))
         rowCoder.finishSlice();
+
 
     /* Processing left Deblock block with current threading */
     if ((m_param->bEnableLoopFilter | m_param->bEnableSAO) & (row >= 2))

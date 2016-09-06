@@ -577,15 +577,21 @@ void Entropy::codeAUD(const Slice& slice)
     WRITE_CODE(picType, 3, "pic_type");
 }
 
-void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData)
+void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t slice_addr, uint32_t slice_addr_bits, int sliceQp)
 {
-    WRITE_FLAG(1, "first_slice_segment_in_pic_flag");
+    WRITE_FLAG((slice_addr == 0 ? 1 : 0), "first_slice_segment_in_pic_flag");
     if (slice.getRapPicFlag())
         WRITE_FLAG(0, "no_output_of_prior_pics_flag");
 
     WRITE_UVLC(0, "slice_pic_parameter_set_id");
 
     /* x265 does not use dependent slices, so always write all this data */
+    if (slice_addr)
+    {
+        // if( dependent_slice_segments_enabled_flag )
+        //     dependent_slice_segment_flag             u(1)
+        WRITE_CODE(slice_addr, slice_addr_bits, "slice_segment_address");
+    }
 
     WRITE_UVLC(slice.m_sliceType, "slice_type");
 
@@ -664,7 +670,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData)
     if (!slice.isIntra())
         WRITE_UVLC(MRG_MAX_NUM_CANDS - slice.m_maxNumMergeCand, "five_minus_max_num_merge_cand");
 
-    int code = slice.m_sliceQp - 26;
+    int code = sliceQp - 26;
     WRITE_SVLC(code, "slice_qp_delta");
 
     bool isSAOEnabled = slice.m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1] : false;
@@ -863,13 +869,13 @@ void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth, b
     if (granularityBoundary)
     {
         // Encode slice finish
-        bool bTerminateSlice = false;
+        uint32_t bTerminateSlice = ctu.m_bLastCuInSlice;
         if (cuAddr + (NUM_4x4_PARTITIONS >> (depth << 1)) == realEndAddress)
-            bTerminateSlice = true;
+            bTerminateSlice = 1;
 
         // The 1-terminating bit is added to all streams, so don't add it here when it's 1.
         if (!bTerminateSlice)
-            encodeBinTrm(0);
+            encodeBinTrm(0);    // end_of_slice_segment_flag
 
         if (!m_bitIf)
             resetBits(); // TODO: most likely unnecessary

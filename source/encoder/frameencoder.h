@@ -73,6 +73,7 @@ struct CTURow
 {
     Entropy           bufferedEntropy;  /* store CTU2 context for next row CTU0 */
     Entropy           rowGoOnCoder;     /* store context between CTUs, code bitstream if !SAO */
+    unsigned int      sliceID;          /* store current row slice id */
 
     FrameStats        rowStats;
 
@@ -96,11 +97,12 @@ struct CTURow
     volatile uint32_t completed;
 
     /* called at the start of each frame to initialize state */
-    void init(Entropy& initContext)
+    void init(Entropy& initContext, unsigned int sid)
     {
         active = false;
         busy = false;
         completed = 0;
+        sliceID = sid;
         memset(&rowStats, 0, sizeof(rowStats));
         rowGoOnCoder.load(initContext);
     }
@@ -137,6 +139,7 @@ public:
 
     uint32_t                 m_numRows;
     uint32_t                 m_numCols;
+    uint32_t                 m_sliceAddrBits;
     uint32_t                 m_filterRowDelay;
     uint32_t                 m_filterRowDelayCus;
     uint32_t                 m_refLagRows;
