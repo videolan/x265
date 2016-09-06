@@ -151,6 +151,8 @@ void Encoder::create()
         m_aborted = true;
     }
 
+    x265_log(p, X265_LOG_INFO, "Slices                              : %d\n", p->maxSlices);
+
     char buf[128];
     int len = 0;
     if (p->bEnableWavefront)

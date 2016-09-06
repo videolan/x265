@@ -1250,7 +1250,7 @@ int x265_check_params(x265_param* param)
     CHECK(param->log2MaxPocLsb < 4,
         "maximum of the picture order count can not be less than 4");
     CHECK(1 > param->maxSlices || param->maxSlices > ((param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize),
-        "The slices can not be more than rows");
+        "The slices can not be more than number of rows");
     return check_failed;
 }
 

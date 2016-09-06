@@ -122,7 +122,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     range += !!(m_param->searchMethod < 2);  /* diamond/hex range check lag */
     range += NTAPS_LUMA / 2;                 /* subpel filter half-length */
     range += 2 + MotionEstimate::hpelIterationCount(m_param->subpelRefine) / 2; /* subpel refine steps */
-    m_refLagRows = 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
+    m_refLagRows = /*(m_param->maxSlices > 1 ? 1 : 0) +*/ 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
     if (!WaveFront::init(m_numRows * 2))
@@ -457,17 +457,28 @@ void FrameEncoder::compressFrame()
 
     /* reset entropy coders and compute slice id */
     m_entropyCoder.load(m_initSliceContext);
-    const unsigned int sliceGroupSize = (m_numRows + m_param->maxSlices - 1) / m_param->maxSlices;
+    const uint32_t sliceGroupSize = (m_numRows + m_param->maxSlices - 1) / m_param->maxSlices;
+    const uint32_t sliceGroupSizeAccu = (m_numRows << 8) / m_param->maxSlices;
     m_sliceGroupSize = sliceGroupSize;
+
+    uint32_t rowSum = sliceGroupSizeAccu;
+    uint32_t sliceId = 0;
     for (uint32_t i = 0; i < m_numRows; i++)
     {
-        m_rows[i].init(m_initSliceContext, i / sliceGroupSize);
-    }
+        const uint32_t rowRange = (rowSum >> 8);
 
-    for (uint32_t i = 0; i < m_param->maxSlices; i++)
-    {
-        m_sliceBaseRow[i] = i * sliceGroupSize;
+        if ((i >= rowRange) & (sliceId != m_param->maxSlices - 1))
+        {
+            sliceId++;
+            rowSum += sliceGroupSizeAccu;
+            m_sliceBaseRow[sliceId] = i;
+        }
+
+        m_rows[i].init(m_initSliceContext, sliceId);
     }
+    X265_CHECK(sliceId < m_param->maxSlices, "sliceID check failed!");
+
+    m_sliceBaseRow[0] = 0;
     m_sliceBaseRow[m_param->maxSlices] = m_numRows;
 
     uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : m_param->maxSlices;
@@ -599,6 +610,9 @@ void FrameEncoder::compressFrame()
                 if (row >= m_numRows)
                     break;
 
+                if (row > sliceEndRow)
+                    continue;
+
                 // block until all reference frames have reconstructed the rows we need
                 for (int l = 0; l < numPredDir; l++)
                 {
@@ -606,7 +620,9 @@ void FrameEncoder::compressFrame()
                     {
                         Frame *refpic = slice->m_refFrameList[l][ref];
 
-                        const int rowIdx = X265_MIN(m_numRows, (row + m_refLagRows)) - 1;
+                        // NOTE: we unnecessary wait row that beyond current slice boundary
+                        const int rowIdx = X265_MIN(sliceEndRow, (row + m_refLagRows));
+
                         while (refpic->m_reconRowFlag[rowIdx].get() == 0)
                             refpic->m_reconRowFlag[rowIdx].waitForChange(0);
 
@@ -614,6 +630,8 @@ void FrameEncoder::compressFrame()
                             m_mref[l][ref].applyWeight(row + m_refLagRows, m_numRows, sliceEndRow, sliceId);
                     }
                 }
+
+                //printf("POC %2d: Row=%2d **\n", m_frame->m_poc, row);
 
                 enableRowEncoder(row); /* clear external dependency for this row */
                 if (!rowInSlice)
@@ -646,7 +664,7 @@ void FrameEncoder::compressFrame()
                     {
                         Frame *refpic = slice->m_refFrameList[list][ref];
 
-                        const int rowIdx = X265_MIN(m_numRows, (i + m_refLagRows)) - 1;
+                        const int rowIdx = X265_MIN(m_numRows - 1, (i + m_refLagRows));
                         while (refpic->m_reconRowFlag[rowIdx].get() == 0)
                             refpic->m_reconRowFlag[rowIdx].waitForChange(0);
 
@@ -697,7 +715,7 @@ void FrameEncoder::compressFrame()
                 updateMD5Plane(m_state[2], reconPic->m_picOrg[2], width, height, stride);
             }
         }
-        // TODO: NOT test path in below mode
+        // TODO: NOT verify code in below mode
         else if (m_param->decodedPictureHashSEI == 2)
         {
             m_crc[0] = 0xffff;
@@ -1120,6 +1138,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         const uint32_t bLastCuInSlice = (bLastRowInSlice & (col == numCols - 1)) ? 1 : 0;
         ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp, bFirstRowInSlice, bLastRowInSlice, bLastCuInSlice);
 
+        //printf("CU[%2d,%2d]\n", row, col);
+
         if (bIsVbv)
         {
             if (!row)
@@ -1188,7 +1208,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             {
                 // TODO: Multiple Threading
                 // Delay ONE row to avoid Intra Prediction Conflict
-                if (m_pool && (row >= 1))
+                if (m_pool && !bFirstRowInSlice)
                 {
                     // Waitting last threading finish
                     m_frameFilter.m_parallelFilter[row - 1].waitForExit();
@@ -1197,7 +1217,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                     int allowCol = col;
 
                     // avoid race condition on last column
-                    if (row >= 2)
+                    if (rowInSlice >= 2)
                     {
                         allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get()
                                                                   : m_frameFilter.m_parallelFilter[row - 2].m_lastCol.get()), (int)col);
@@ -1207,7 +1227,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 }
 
                 // Last Row may start early
-                if (m_pool && (row == m_numRows - 1))
+                if (m_pool && bLastRowInSlice)
                 {
                     // Waiting for the last thread to finish
                     m_frameFilter.m_parallelFilter[row].waitForExit();
@@ -1216,7 +1236,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                     int allowCol = col;
 
                     // avoid race condition on last column
-                    if (row >= 2)
+                    if (rowInSlice >= 2)
                     {
                         allowCol = X265_MIN(((col == numCols - 1) ? m_frameFilter.m_parallelFilter[row - 1].m_lastDeblocked.get()
                                                                   : m_frameFilter.m_parallelFilter[row - 1].m_lastCol.get()), (int)col);
@@ -1442,7 +1462,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     /* trigger row-wise loop filters */
     if (m_param->bEnableWavefront)
     {
-        if (rowInSlice >= m_filterRowDelay)
+        if ((rowInSlice >= m_filterRowDelay))
         {
             //printf("POC %2d: Row %2d Filter Enable\n", slice->m_poc, row - m_filterRowDelay);
             enableRowFilter(row - m_filterRowDelay);
@@ -1462,12 +1482,21 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             }
             tryWakeOne();
         }
+
+        // handle specially case - single row slice
+        if  (bFirstRowInSlice & bLastRowInSlice)
+        {
+            enqueueRowFilter(row);
+            tryWakeOne();
+        }
     }
 
     tld.analysis.m_param = NULL;
     curRow.busy = false;
 
-    // CHECK_ME: Does it always false condition?
+    //printf("Row %2d done\n", row);
+
+    // CHECK_ME: Does it always FALSE condition?
     if (ATOMIC_INC(&m_completionCount) == 2 * (int)m_numRows)
         m_completionEvent.trigger();
 }

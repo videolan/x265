@@ -349,7 +349,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
                 deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
 
                 // When SAO Disable, setting column counter here
-                if ((!m_frameFilter->m_param->bEnableSAO) & !ctuPrev->m_bFirstRowInSlice)
+                if (!m_frameFilter->m_param->bEnableSAO & !ctuPrev->m_bFirstRowInSlice)
                     m_prevRow->processPostCu(col - 1);
             }
 
@@ -368,7 +368,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
                 }
 
                 // Process Previous Row SAO CU
-                if (m_row >= 1 && col >= 3)
+                if (!ctu->m_bFirstRowInSlice && col >= 3)
                 {
                     // Must delay 1 row to avoid thread data race conflict
                     m_prevRow->processSaoCTU(saoParam, col - 3);
@@ -391,7 +391,7 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
             deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_HOR);
 
             // When SAO Disable, setting column counter here
-            if ((!m_frameFilter->m_param->bEnableSAO) & !ctuPrev->m_bFirstRowInSlice)
+            if (!m_frameFilter->m_param->bEnableSAO & !ctuPrev->m_bFirstRowInSlice)
                 m_prevRow->processPostCu(numCols - 1);
         }
 
@@ -466,11 +466,16 @@ void FrameFilter::processRow(int row)
         /* Check to avoid previous row process slower than current row */
         X265_CHECK(ctu->m_bFirstRowInSlice || m_parallelFilter[row - 1].m_lastDeblocked.get() == m_numCols, "previous row not finish");
 
+        //if (ctu->m_bLastRowInSlice & ctu->m_bFirstRowInSlice)
+        //        printf("");
         m_parallelFilter[row].m_allowedCol.set(m_numCols);
         m_parallelFilter[row].processTasks(-1);
 
         if (ctu->m_bLastRowInSlice)
         {
+            //if (ctu->m_bFirstRowInSlice)
+            //    printf("");
+
             /* TODO: Early start last row */
             if ((!ctu->m_bFirstRowInSlice) && (m_parallelFilter[row - 1].m_lastDeblocked.get() != m_numCols))
                 x265_log(m_param, X265_LOG_WARNING, "detected ParallelFilter race condition on last row\n");
@@ -499,9 +504,12 @@ void FrameFilter::processRow(int row)
     if (!ctu->m_bFirstRowInSlice)
         processPostRow(row - 1);
 
+    if (ctu->m_bLastRowInSlice)
+        processPostRow(row);
+
     // NOTE: slices parallelism will be execute out-of-order
-    int numRowFinished = 0;
-    for(int numRowFinished = 0; numRowFinished < m_numRows; numRowFinished++)
+    int numRowFinished;
+    for(numRowFinished = 0; numRowFinished < m_numRows; numRowFinished++)
         if (!m_frame->m_reconRowFlag[numRowFinished].get())
             break;
 
@@ -519,9 +527,6 @@ void FrameFilter::processRow(int row)
             m_parallelFilter[0].m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_slice->m_sps->numCUsInFrame);
         }
     }
-
-    if (ctu->m_bLastRowInSlice)
-        processPostRow(row);
 }
 
 void FrameFilter::processPostRow(int row)
@@ -655,11 +660,12 @@ void FrameFilter::processPostRow(int row)
             }
         }
     } // end of (m_param->maxSlices == 1)
-    printf("POC %2d: Row=%2d\n", m_frame->m_poc, row);
+    //printf("POC %2d: Row=%2d\n", m_frame->m_poc, row);
 
+    //printf("POC %2d: Row=%2d X\n", m_frame->m_poc, row);
     if (ATOMIC_INC(&m_frameEncoder->m_completionCount) == 2 * (int)m_frameEncoder->m_numRows)
     {
-        printf("POC %2d: Row=%2d -->\n", m_frame->m_poc, row);
+        //printf("POC %2d: Row=%2d -->\n", m_frame->m_poc, row);
         m_frameEncoder->m_completionEvent.trigger();
     }
 }

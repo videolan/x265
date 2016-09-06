@@ -1854,10 +1854,26 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
     for (uint32_t mergeCand = 0; mergeCand < numMergeCand; ++mergeCand)
     {
         /* Prevent TMVP candidates from using unavailable reference pixels */
-        if (m_bFrameParallel &&
-            (candMvField[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-             candMvField[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
-            continue;
+        if (m_bFrameParallel)
+        {
+            // Parallel slices bound check
+            if (m_param->maxSlices > 1)
+            {
+                if (cu.m_bFirstRowInSlice &
+                    ((candMvField[mergeCand][0].mv.y < (2 * 4)) | (candMvField[mergeCand][1].mv.y < (2 * 4))))
+                    continue;
+
+                // Last row in slice can't reference beyond bound since it is another slice area
+                // TODO: we may beyond bound in future since these area have a chance to finish because we use parallel slices. Necessary prepare research on load balance
+                if (cu.m_bLastRowInSlice &&
+                    ((candMvField[mergeCand][0].mv.y > -3 * 4) | (candMvField[mergeCand][1].mv.y > -3 * 4)))
+                    continue;
+            }
+
+            if (candMvField[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+                candMvField[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4)
+                continue;
+        }
 
         cu.m_mv[0][pu.puAbsPartIdx] = candMvField[mergeCand][0].mv;
         cu.m_refIdx[0][pu.puAbsPartIdx] = (int8_t)candMvField[mergeCand][0].refIdx;
@@ -1925,7 +1941,8 @@ int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[
         MV mvCand = amvp[i];
 
         // NOTE: skip mvCand if Y is > merange and -FN>1
-        if (m_bFrameParallel && (mvCand.y >= (m_param->searchRange + 1) * 4))
+        if (m_bFrameParallel &&
+            (mvCand.y >= (m_param->searchRange + 1) * 4))
             costs[i] = m_me.COST_MAX;
         else
         {
@@ -2107,7 +2124,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 const MV* amvp = interMode.amvpCand[list][ref];
                 int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                 MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
-                
+
                 setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
                 int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv,
                   m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
@@ -2499,6 +2516,12 @@ void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mv
         mvmax.x = X265_MIN(mvmax.x, maxSafeMv);
         mvmin.x = X265_MIN(mvmin.x, maxSafeMv);
     }
+
+    if (cu.m_bFirstRowInSlice)
+        mvmin.y = X265_MAX(mvmin.y, 2 * 4);
+
+    if (cu.m_bLastRowInSlice)
+        mvmax.y = X265_MIN(mvmax.y, -10 * 4);
 
     /* Clip search range to signaled maximum MV length.
      * We do not support this VUI field being changed from the default */

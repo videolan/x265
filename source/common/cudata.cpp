@@ -317,6 +317,7 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp)
     m_cuAboveLeft   = ctu.m_cuAboveLeft;
     m_cuAboveRight  = ctu.m_cuAboveRight;
     m_bFirstRowInSlice = ctu.m_bFirstRowInSlice;
+    m_bLastRowInSlice = ctu.m_bLastRowInSlice;
     m_bLastCuInSlice = ctu.m_bLastCuInSlice;
 
     X265_CHECK(m_numPartitions == cuGeom.numPartitions, "initSubCU() size mismatch\n");

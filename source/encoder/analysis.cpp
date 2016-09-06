@@ -1416,6 +1416,9 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     bool splitIntra = true;
     bool skipRectAmp = false;
 
+    if (parentCTU.m_slice->m_poc == 1 && parentCTU.m_cuAddr == 181 && depth == 0)
+        printf("");
+
     // avoid uninitialize value in below reference
     if (m_param->limitModes)
     {
@@ -1588,6 +1591,9 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                         checkInter_rd5_6(md.pred[PRED_2NxN], cuGeom, SIZE_2NxN, refMasks);
                         checkBestMode(md.pred[PRED_2NxN], cuGeom.depth);
                     }
+
+    if (parentCTU.m_slice->m_poc == 1 && parentCTU.m_cuAddr == 376 && depth == 1)
+        printf("");
 
                     if (splitCost < md.bestMode->rdCost + threshold_Nx2N)
                     {
@@ -1936,10 +1942,18 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     }
     for (uint32_t i = 0; i < numMergeCand; ++i)
     {
-        if (m_bFrameParallel &&
-            (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-            candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4))
-            continue;
+        if (m_bFrameParallel)
+        {
+            if (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+                 candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4)
+                continue;
+
+//             if (m_param->maxSlices > 1 &&
+//                 1
+//                 )
+//                 continue;
+        }
+
         if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
             tempPred->cu.m_cuPelX / g_maxCUSize < m_frame->m_encData->m_pir.pirEndCol &&
             candMvField[i][0].mv.x > maxSafeMv)
@@ -2050,10 +2064,26 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     }
     for (uint32_t i = 0; i < numMergeCand; i++)
     {
-        if (m_bFrameParallel &&
-            (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-            candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4))
-            continue;
+        if (m_bFrameParallel)
+        {
+            // Parallel slices bound check
+            if (m_param->maxSlices > 1)
+            {
+                if (tempPred->cu.m_bFirstRowInSlice &
+                    ((candMvField[i][0].mv.y < (2 * 4)) | (candMvField[i][1].mv.y < (2 * 4))))
+                    continue;
+
+                // Last row in slice can't reference beyond bound since it is another slice area
+                // TODO: we may beyond bound in future since these area have a chance to finish because we use parallel slices. Necessary prepare research on load balance
+                if (tempPred->cu.m_bLastRowInSlice &&
+                    (candMvField[i][0].mv.y > -3 * 4 || candMvField[i][1].mv.y > -3 * 4))
+                    continue;
+            }
+
+            if (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+                candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4)
+                continue;
+        }
 
         /* the merge candidate list is packed with MV(0,0) ref 0 when it is not full */
         if (candDir[i] == 1 && !candMvField[i][0].mv.word && !candMvField[i][0].refIdx)
