@@ -626,7 +626,7 @@ void FrameEncoder::compressFrame()
                             refpic->m_reconRowFlag[rowIdx].waitForChange(0);
 
                         if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
-                            m_mref[l][ref].applyWeight(row + m_refLagRows, m_numRows, sliceEndRow, sliceId);
+                            m_mref[l][ref].applyWeight(row + m_refLagRows, m_numRows, sliceEndRow + 1, sliceId);
                     }
                 }
 
