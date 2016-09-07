@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -301,6 +302,7 @@ static void showHelp(x265_param *param)
     H0("                                 '-' implies no threads on node, '+' implies one thread per core on node\n");
     H0("-F/--frame-threads <integer>     Number of concurrently encoded frames. 0: auto-determined by core count\n");
     H0("   --[no-]wpp                    Enable Wavefront Parallel Processing. Default %s\n", OPT(param->bEnableWavefront));
+    H0("   --[no-]slices <integer>       Enable Multiple Slices feature. Default %s\n", OPT(param->maxSlices));
     H0("   --[no-]pmode                  Parallel mode analysis. Default %s\n", OPT(param->bDistributeModeAnalysis));
     H0("   --[no-]pme                    Parallel motion estimation. Default %s\n", OPT(param->bDistributeMotionEstimation));
     H0("   --[no-]asm <bool|int|string>  Override CPU detection. Default: auto\n");
