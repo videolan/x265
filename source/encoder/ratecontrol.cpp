@@ -2003,8 +2003,8 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
 {
     // B-frames are not directly subject to VBV,
     // since they are controlled by referenced P-frames' QPs.
-    double lmin = m_lmin[m_sliceType];
-    double lmax = m_lmax[m_sliceType];
+    double lmin = m_lmin[rce->sliceType];
+    double lmax = m_lmax[rce->sliceType];
     double q0 = q;
     if (m_isVbv && m_currentSatd > 0 && curFrame)
     {
