@@ -299,8 +299,8 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools)
      * For windows because threads can't be allocated to live across sockets
      * changing the default behavior to be per-socket pools -- FIXME */
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN7
-     if (!p->numaPools)
-     {
+    if (!p->numaPools || (strcmp(p->numaPools, "NULL") == 0 || strcmp(p->numaPools, "*") == 0 || strcmp(p->numaPools, "") == 0))
+    {
          char poolString[50] = "";
          for (int i = 0; i < numNumaNodes; i++)
          {
