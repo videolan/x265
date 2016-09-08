@@ -73,6 +73,7 @@ struct CTURow
 {
     Entropy           bufferedEntropy;  /* store CTU2 context for next row CTU0 */
     Entropy           rowGoOnCoder;     /* store context between CTUs, code bitstream if !SAO */
+    unsigned int      sliceId;          /* store current row slice id */
 
     FrameStats        rowStats;
 
@@ -96,11 +97,12 @@ struct CTURow
     volatile uint32_t completed;
 
     /* called at the start of each frame to initialize state */
-    void init(Entropy& initContext)
+    void init(Entropy& initContext, unsigned int sid)
     {
         active = false;
         busy = false;
         completed = 0;
+        sliceId = sid;
         memset(&rowStats, 0, sizeof(rowStats));
         rowGoOnCoder.load(initContext);
     }
@@ -142,6 +144,9 @@ public:
     uint32_t                 m_refLagRows;
 
     CTURow*                  m_rows;
+    uint16_t                 m_sliceAddrBits;
+    uint16_t                 m_sliceGroupSize;
+    uint32_t*                m_sliceBaseRow;
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 
@@ -214,7 +219,7 @@ protected:
     void compressFrame();
 
     /* called by compressFrame to generate final per-row bitstreams */
-    void encodeSlice();
+    void encodeSlice(uint32_t sliceAddr);
 
     void threadMain();
     int  collectCTUStatistics(const CUData& ctu, FrameStats* frameLog);

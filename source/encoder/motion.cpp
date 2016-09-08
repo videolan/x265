@@ -581,14 +581,15 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    int              numCandidates,
                                    const MV *       mvc,
                                    int              merange,
-                                   MV &             outQMv)
+                                   MV &             outQMv,
+                                   pixel *          srcReferencePlane)
 {
     ALIGN_VAR_16(int, costs[16]);
     if (ctuAddr >= 0)
         blockOffset = ref->reconPic->getLumaAddr(ctuAddr, absPartIdx) - ref->reconPic->getLumaAddr(0);
     intptr_t stride = ref->lumaStride;
     pixel* fenc = fencPUYuv.m_buf[0];
-    pixel* fref = ref->fpelPlane[0] + blockOffset;
+    pixel* fref = srcReferencePlane == 0 ? ref->fpelPlane[0] + blockOffset : srcReferencePlane + blockOffset;
 
     setMVP(qmvp);
 
@@ -1094,6 +1095,12 @@ me_hex2:
 
     const SubpelWorkload& wl = workload[this->subpelRefine];
 
+    // check mv range for slice bound
+    if ((g_maxSlices > 1) & ((bmv.y < qmvmin.y) | (bmv.y > qmvmax.y)))
+    {
+        bmv.y = x265_min(x265_max(bmv.y, qmvmin.y), qmvmax.y);
+    }
+
     if (!bcost)
     {
         /* if there was zero residual at the clipped MVP, we can skip subpel
@@ -1141,6 +1148,11 @@ me_hex2:
             for (int i = 1; i <= wl.hpel_dirs; i++)
             {
                 MV qmv = bmv + square1[i] * 2;
+
+                // check mv range for slice bound
+                if ((g_maxSlices > 1) & ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y)))
+                    continue;
+
                 int cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
                 COPY2_IF_LT(bcost, cost, bdir, i);
             }
@@ -1161,6 +1173,11 @@ me_hex2:
             for (int i = 1; i <= wl.qpel_dirs; i++)
             {
                 MV qmv = bmv + square1[i];
+
+                // check mv range for slice bound
+                if ((g_maxSlices > 1) & ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y)))
+                    continue;
+
                 int cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
                 COPY2_IF_LT(bcost, cost, bdir, i);
             }

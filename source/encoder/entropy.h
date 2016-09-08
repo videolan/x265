@@ -142,13 +142,13 @@ public:
 
     void codeVPS(const VPS& vps);
     void codeSPS(const SPS& sps, const ScalingList& scalingList, const ProfileTierLevel& ptl);
-    void codePPS(const PPS& pps);
+    void codePPS(const PPS& pps, bool filerAcross);
     void codeVUI(const VUI& vui, int maxSubTLayers);
     void codeAUD(const Slice& slice);
     void codeHrdParameters(const HRDInfo& hrd, int maxSubTLayers);
 
-    void codeSliceHeader(const Slice& slice, FrameData& encData);
-    void codeSliceHeaderWPPEntryPoints(const Slice& slice, const uint32_t *substreamSizes, uint32_t maxOffset);
+    void codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t slice_addr, uint32_t slice_addr_bits, int sliceQp);
+    void codeSliceHeaderWPPEntryPoints(const uint32_t *substreamSizes, uint32_t numSubStreams, uint32_t maxOffset);
     void codeShortTermRefPicSet(const RPS& rps);
     void finishSlice()                 { encodeBinTrm(1); finish(); dynamic_cast<Bitstream*>(m_bitIf)->writeByteAlignment(); }
 

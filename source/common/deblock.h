@@ -48,7 +48,7 @@ protected:
     // set filtering functions
     static void setEdgefilterTU(const CUData* cu, uint32_t absPartIdx, uint32_t tuDepth, int32_t dir, uint8_t blockStrength[]);
     static void setEdgefilterPU(const CUData* cu, uint32_t absPartIdx, int32_t dir, uint8_t blockStrength[], uint32_t numUnits);
-    static void setEdgefilterMultiple(const CUData* cu, uint32_t absPartIdx, int32_t dir, int32_t edgeIdx, uint8_t value, uint8_t blockStrength[], uint32_t numUnits);
+    static void setEdgefilterMultiple(uint32_t absPartIdx, int32_t dir, int32_t edgeIdx, uint8_t value, uint8_t blockStrength[], uint32_t numUnits);
 
     // get filtering functions
     static uint8_t getBoundaryStrength(const CUData* cuQ, int32_t dir, uint32_t partQ, const uint8_t blockStrength[]);

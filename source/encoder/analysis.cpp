@@ -255,7 +255,7 @@ void Analysis::qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t
             cuPrevCost = origCUCost;
 
             int modCUQP = qp + dir;
-            while (modCUQP >= QP_MIN && modCUQP <= QP_MAX_SPEC)
+            while (modCUQP >= m_param->rc.qpMin && modCUQP <= QP_MAX_SPEC)
             {
                 recodeCU(parentCTU, cuGeom, modCUQP, qp);
                 cuCost = md.bestMode->rdCost;
@@ -1731,19 +1731,19 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                     ProfileCounter(parentCTU, skippedIntraCU[cuGeom.depth]);
                 }
             }
-            if ((md.bestMode->cu.isInter(0) && !(md.bestMode->cu.m_mergeFlag[0] && md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N)) && (m_frame->m_fencPic->m_picCsp == X265_CSP_I400 && m_csp != X265_CSP_I400))
-            {
-                uint32_t numPU = md.bestMode->cu.getNumPartInter(0);
-
-                for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
-                {
-                    PredictionUnit pu(md.bestMode->cu, cuGeom, puIdx);
-                    motionCompensation(md.bestMode->cu, pu, md.bestMode->predYuv, false, m_csp != X265_CSP_I400);
-                }
-                encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
-            }
         }
 
+        if ((md.bestMode->cu.isInter(0) && !(md.bestMode->cu.m_mergeFlag[0] && md.bestMode->cu.m_partSize[0] == SIZE_2Nx2N)) && (m_frame->m_fencPic->m_picCsp == X265_CSP_I400 && m_csp != X265_CSP_I400))
+        {
+            uint32_t numPU = md.bestMode->cu.getNumPartInter(0);
+
+            for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
+            {
+                PredictionUnit pu(md.bestMode->cu, cuGeom, puIdx);
+                motionCompensation(md.bestMode->cu, pu, md.bestMode->predYuv, false, m_csp != X265_CSP_I400);
+            }
+            encodeResAndCalcRdInterCU(*md.bestMode, cuGeom);
+        }
         if (m_bTryLossless)
             tryLossless(cuGeom);
 
@@ -1936,10 +1936,26 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     }
     for (uint32_t i = 0; i < numMergeCand; ++i)
     {
-        if (m_bFrameParallel &&
-            (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-            candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4))
-            continue;
+        if (m_bFrameParallel)
+        {
+            // Parallel slices bound check
+            if (m_param->maxSlices > 1)
+            {
+                // NOTE: First row in slice can't negative
+                if ((candMvField[i][0].mv.y < m_sliceMinY) | (candMvField[i][1].mv.y < m_sliceMinY))
+                    continue;
+
+                // Last row in slice can't reference beyond bound since it is another slice area
+                // TODO: we may beyond bound in future since these area have a chance to finish because we use parallel slices. Necessary prepare research on load balance
+                if ((candMvField[i][0].mv.y > m_sliceMaxY) | (candMvField[i][1].mv.y > m_sliceMaxY))
+                    continue;
+            }
+
+            if (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+                candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4)
+                continue;
+        }
+
         if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
             tempPred->cu.m_cuPelX / g_maxCUSize < m_frame->m_encData->m_pir.pirEndCol &&
             candMvField[i][0].mv.x > maxSafeMv)
@@ -2050,10 +2066,25 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     }
     for (uint32_t i = 0; i < numMergeCand; i++)
     {
-        if (m_bFrameParallel &&
-            (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-            candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4))
-            continue;
+        if (m_bFrameParallel)
+        {
+            // Parallel slices bound check
+            if (m_param->maxSlices > 1)
+            {
+                // NOTE: First row in slice can't negative
+                if ((candMvField[i][0].mv.y < m_sliceMinY) | (candMvField[i][1].mv.y < m_sliceMinY))
+                    continue;
+
+                // Last row in slice can't reference beyond bound since it is another slice area
+                // TODO: we may beyond bound in future since these area have a chance to finish because we use parallel slices. Necessary prepare research on load balance
+                if ((candMvField[i][0].mv.y > m_sliceMaxY) | (candMvField[i][1].mv.y > m_sliceMaxY))
+                    continue;
+            }
+
+            if (candMvField[i][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+                candMvField[i][1].mv.y >= (m_param->searchRange + 1) * 4)
+                continue;
+        }
 
         /* the merge candidate list is packed with MV(0,0) ref 0 when it is not full */
         if (candDir[i] == 1 && !candMvField[i][0].mv.word && !candMvField[i][0].refIdx)
@@ -2637,7 +2668,11 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, doub
 {
     FrameData& curEncData = *m_frame->m_encData;
     double qp = baseQp >= 0 ? baseQp : curEncData.m_cuStat[ctu.m_cuAddr].baseQp;
-
+    int loopIncr;
+    if (m_param->rc.qgSize == 8)
+        loopIncr = 8;
+    else
+        loopIncr = 16;
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
     bool isReferenced = IS_REFERENCED(m_frame);
     double *qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
@@ -2647,17 +2682,17 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, doub
         uint32_t height = m_frame->m_fencPic->m_picHeight;
         uint32_t block_x = ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx];
         uint32_t block_y = ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx];
-        uint32_t maxCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
+        uint32_t maxCols = (m_frame->m_fencPic->m_picWidth + (loopIncr - 1)) / loopIncr;
         uint32_t blockSize = g_maxCUSize >> cuGeom.depth;
         double qp_offset = 0;
         uint32_t cnt = 0;
         uint32_t idx;
 
-        for (uint32_t block_yy = block_y; block_yy < block_y + blockSize && block_yy < height; block_yy += 16)
+        for (uint32_t block_yy = block_y; block_yy < block_y + blockSize && block_yy < height; block_yy += loopIncr)
         {
-            for (uint32_t block_xx = block_x; block_xx < block_x + blockSize && block_xx < width; block_xx += 16)
+            for (uint32_t block_xx = block_x; block_xx < block_x + blockSize && block_xx < width; block_xx += loopIncr)
             {
-                idx = ((block_yy / 16) * (maxCols)) + (block_xx / 16);
+                idx = ((block_yy / loopIncr) * (maxCols)) + (block_xx / loopIncr);
                 qp_offset += qpoffs[idx];
                 cnt++;
             }
@@ -2667,5 +2702,5 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, doub
         qp += qp_offset;
     }
 
-    return x265_clip3(QP_MIN, QP_MAX_MAX, (int)(qp + 0.5));
+    return x265_clip3(m_param->rc.qpMin, m_param->rc.qpMax, (int)(qp + 0.5));
 }

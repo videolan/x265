@@ -2,6 +2,7 @@
 * Copyright (C) 2013 x265 project
 *
 * Author: Steve Borho <steve@borho.org>
+*         Min Chen <chenm003@163.com>
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -49,6 +50,9 @@ struct RcStats
     double   pCuCount;
     double   skipCuCount;
     double   qScale;
+    double   cumulativePQp;
+    double   cumulativePNorm;
+    double   lastQScaleFor[3];
     int      mvBits;
     int      miscBits;
     int      coeffBits;
@@ -82,9 +86,10 @@ public:
     bool                   m_bChromaExtended;    // orig chroma planes motion extended for weight analysis
 
     float*                 m_quantOffsets;       // points to quantOffsets in x265_picture
+    x265_sei               m_userSEI;
 
     /* Frame Parallelism - notification between FrameEncoders of available motion reference rows */
-    ThreadSafeInteger      m_reconRowCount;      // count of CTU rows completely reconstructed and extended for motion reference
+    ThreadSafeInteger*     m_reconRowFlag;       // flag of CTU rows completely reconstructed and extended for motion reference
     ThreadSafeInteger*     m_reconColCount;      // count of CTU cols completely reconstructed and extended for motion reference
     int32_t                m_numRows;
     volatile uint32_t      m_countRefEncoders;   // count of FrameEncoder threads monitoring m_reconRowCount

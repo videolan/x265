@@ -71,6 +71,7 @@
 #define NUM_INTRA_MODE 35
 
 #if defined(__GNUC__)
+#define ALIGN_VAR_4(T, var)  T var __attribute__((aligned(4)))
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
 #define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
 #define ALIGN_VAR_32(T, var) T var __attribute__((aligned(32)))
@@ -81,6 +82,7 @@
 
 #elif defined(_MSC_VER)
 
+#define ALIGN_VAR_4(T, var)  __declspec(align(4)) T var
 #define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
 #define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
@@ -157,7 +159,6 @@ typedef uint64_t sse_t;
 #define MIN_QPSCALE     0.21249999999999999
 #define MAX_MAX_QPSCALE 615.46574234477100
 
-#define BITS_FOR_POC 8
 
 template<typename T>
 inline T x265_min(T a, T b) { return a < b ? a : b; }
@@ -255,7 +256,9 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define LOG2_UNIT_SIZE          2                           // log2(unitSize)
 #define UNIT_SIZE               (1 << LOG2_UNIT_SIZE)       // unit size of CU partition
 
-#define MAX_NUM_PARTITIONS      256
+#define LOG2_RASTER_SIZE        (MAX_LOG2_CU_SIZE - LOG2_UNIT_SIZE)
+#define RASTER_SIZE             (1 << LOG2_RASTER_SIZE)
+#define MAX_NUM_PARTITIONS      (RASTER_SIZE * RASTER_SIZE)
 #define NUM_4x4_PARTITIONS      (1U << (g_unitSizeDepth << 1)) // number of 4x4 units in max CU size
 
 #define MIN_PU_SIZE             4

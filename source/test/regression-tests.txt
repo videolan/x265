@@ -49,6 +49,7 @@ DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset veryfast --weightp --nr-intra 1
 DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset medium --nr-inter 500 -F4 --no-psy-rdoq
 DucksAndLegs_1920x1080_60_10bit_444.yuv,--preset slower --no-weightp --rdoq-level 0 --limit-refs 3
 FourPeople_1280x720_60.y4m,--preset superfast --no-wpp --lookahead-slices 2
+FourPeople_1280x720_60.y4m,--preset veryfast --aq-mode 2 --aq-strength 1.5 --qg-size 8
 FourPeople_1280x720_60.y4m,--preset medium --qp 38 --no-psy-rd
 FourPeople_1280x720_60.y4m,--preset medium --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 FourPeople_1280x720_60.y4m,--preset veryslow --numa-pools "none"
@@ -90,7 +91,7 @@ big_buck_bunny_360p24.y4m,--preset superfast --psy-rdoq 2.0 --aq-mode 3
 big_buck_bunny_360p24.y4m,--preset veryfast --no-deblock
 big_buck_bunny_360p24.y4m,--preset faster --keyint 240 --min-keyint 60 --rc-lookahead 200
 big_buck_bunny_360p24.y4m,--preset medium --keyint 60 --min-keyint 48 --weightb --limit-refs 3
-big_buck_bunny_360p24.y4m,--preset slow --psy-rdoq 2.0 --rdoq-level 1 --no-b-intra --aq-mode 3
+big_buck_bunny_360p24.y4m,--preset slow --psy-rdoq 2.0 --rdoq-level 1 --no-b-intra --aq-mode 3 --qg-size 8
 city_4cif_60fps.y4m,--preset superfast --rdpenalty 1 --tu-intra-depth 2
 city_4cif_60fps.y4m,--preset medium --crf 4 --cu-lossless --sao-non-deblock
 city_4cif_60fps.y4m,--preset slower --scaling-list default
@@ -128,7 +129,7 @@ washdc_422_ntsc.y4m,--preset superfast --psy-rd 1 --tune zerolatency
 washdc_422_ntsc.y4m,--preset veryfast --tu-inter-depth 4
 washdc_422_ntsc.y4m,--preset faster --rdoq-level 1 --max-merge 5
 vtc1nw_422_ntsc.y4m,--preset medium --scaling-list default --ctu 16 --ref 5
-washdc_422_ntsc.y4m,--preset medium --no-weightp --max-tu-size 4 --limit-refs 1 --aq-mode 2
+washdc_422_ntsc.y4m,--preset medium --no-weightp --max-tu-size 4 --limit-refs 1 --aq-mode 2 --qg-size 8
 vtc1nw_422_ntsc.y4m,--preset slower --nr-inter 1000 -F4 --tune fast-decode --qg-size 16
 washdc_422_ntsc.y4m,--preset slower --psy-rdoq 2.0 --rdoq-level 2 --qg-size 32 --limit-refs 1
 washdc_422_ntsc.y4m,--preset veryslow --crf 4 --cu-lossless --limit-refs 3 --limit-modes

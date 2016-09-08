@@ -30,7 +30,7 @@ option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
 mark_as_advanced(FPROFILE_USE FPROFILE_GENERATE NATIVE_BUILD)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 87)
+set(X265_BUILD 94)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -184,6 +184,10 @@ if(GCC)
         string(FIND "${CMAKE_CXX_FLAGS}" "-march" marchPos)
         if(marchPos LESS "0")
             add_definitions(-march=i686)
+            if(WIN32 AND NOT INTEL_CXX AND NOT CLANG AND
+               CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0 AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
+                add_definitions(-mpreferred-stack-boundary=2)
+            endif()
         endif()
     endif()
     if(ARM AND CROSS_COMPILE_ARM)

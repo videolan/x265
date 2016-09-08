@@ -132,6 +132,8 @@ struct Lowres : public ReferencePlanes
     MV*       lowresMvs[2][X265_BFRAME_MAX + 1];
     uint32_t  maxBlocksInRow;
     uint32_t  maxBlocksInCol;
+    uint32_t  maxBlocksInRowFullRes;
+    uint32_t  maxBlocksInColFullRes;
 
     /* used for vbvLookahead */
     int       plannedType[X265_LOOKAHEAD_MAX + 1];
@@ -143,6 +145,7 @@ struct Lowres : public ReferencePlanes
     double*   qpAqOffset;      // AQ QP offset values for each 16x16 CU
     double*   qpCuTreeOffset;  // cuTree QP offset values for each 16x16 CU
     int*      invQscaleFactor; // qScale values for qp Aq Offsets
+    int*      invQscaleFactor8x8; // temporary buffer for qg-size 8
     uint32_t* blockVariance;
     uint64_t  wp_ssd[3];       // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
     uint64_t  wp_sum[3];
@@ -153,7 +156,7 @@ struct Lowres : public ReferencePlanes
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
     ReferencePlanes weightedRef[X265_BFRAME_MAX + 2];
 
-    bool create(PicYuv *origPic, int _bframes, bool bAqEnabled);
+    bool create(PicYuv *origPic, int _bframes, bool bAqEnabled, uint32_t qgSize);
     void destroy();
     void init(PicYuv *origPic, int poc);
 };

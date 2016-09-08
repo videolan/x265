@@ -88,5 +88,6 @@ void x265_dequant_normal_neon(const int16_t* quantCoef, int16_t* coef, int num, 
 void x265_ssim_4x4x2_core_neon(const pixel* pix1, intptr_t stride1, const pixel* pix2, intptr_t stride2, int sums[2][4]);
 
 int PFX(psyCost_4x4_neon)(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
+int PFX(psyCost_8x8_neon)(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride);
 
 #endif // ifndef X265_PIXEL_UTIL_ARM_H

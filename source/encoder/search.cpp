@@ -1854,10 +1854,26 @@ uint32_t Search::mergeEstimation(CUData& cu, const CUGeom& cuGeom, const Predict
     for (uint32_t mergeCand = 0; mergeCand < numMergeCand; ++mergeCand)
     {
         /* Prevent TMVP candidates from using unavailable reference pixels */
-        if (m_bFrameParallel &&
-            (candMvField[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
-             candMvField[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4))
-            continue;
+        if (m_bFrameParallel)
+        {
+            // Parallel slices bound check
+            if (m_param->maxSlices > 1)
+            {
+                if (cu.m_bFirstRowInSlice &
+                    ((candMvField[mergeCand][0].mv.y < (2 * 4)) | (candMvField[mergeCand][1].mv.y < (2 * 4))))
+                    continue;
+
+                // Last row in slice can't reference beyond bound since it is another slice area
+                // TODO: we may beyond bound in future since these area have a chance to finish because we use parallel slices. Necessary prepare research on load balance
+                if (cu.m_bLastRowInSlice &&
+                    ((candMvField[mergeCand][0].mv.y > -3 * 4) | (candMvField[mergeCand][1].mv.y > -3 * 4)))
+                    continue;
+            }
+
+            if (candMvField[mergeCand][0].mv.y >= (m_param->searchRange + 1) * 4 ||
+                candMvField[mergeCand][1].mv.y >= (m_param->searchRange + 1) * 4)
+                continue;
+        }
 
         cu.m_mv[0][pu.puAbsPartIdx] = candMvField[mergeCand][0].mv;
         cu.m_refIdx[0][pu.puAbsPartIdx] = (int8_t)candMvField[mergeCand][0].refIdx;
@@ -1925,17 +1941,24 @@ int Search::selectMVP(const CUData& cu, const PredictionUnit& pu, const MV amvp[
         MV mvCand = amvp[i];
 
         // NOTE: skip mvCand if Y is > merange and -FN>1
-        if (m_bFrameParallel && (mvCand.y >= (m_param->searchRange + 1) * 4))
-            costs[i] = m_me.COST_MAX;
-        else
+        if (m_bFrameParallel)
         {
-            cu.clipMv(mvCand);
-            predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refReconPicList[list][ref], mvCand);
-            costs[i] = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
+            costs[i] = m_me.COST_MAX;
+
+            if (mvCand.y >= (m_param->searchRange + 1) * 4)
+                continue;
+
+            if ((m_param->maxSlices > 1) &
+                ((mvCand.y < m_sliceMinY)
+              |  (mvCand.y > m_sliceMaxY)))
+                continue;
         }
+        cu.clipMv(mvCand);
+        predInterLumaPixel(pu, tmpPredYuv, *m_slice->m_refReconPicList[list][ref], mvCand);
+        costs[i] = m_me.bufSAD(tmpPredYuv.getLumaAddr(pu.puAbsPartIdx), tmpPredYuv.m_size);
     }
 
-    return costs[0] <= costs[1] ? 0 : 1;
+    return (costs[0] <= costs[1]) ? 0 : 1;
 }
 
 void Search::PME::processTasks(int workerThreadId)
@@ -2023,7 +2046,8 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
 
     setSearchRange(interMode.cu, mvp, m_param->searchRange, mvmin, mvmax);
 
-    int satdCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv);
+    int satdCost = m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv, 
+      m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
 
     /* Get total cost of partition, but only include MV bit cost once */
     bits += m_me.bitcost(outmv);
@@ -2106,9 +2130,10 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 const MV* amvp = interMode.amvpCand[list][ref];
                 int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                 MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
-                
+
                 setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
-                int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv);
+                int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv,
+                  m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
 
                 /* Get total cost of partition, but only include MV bit cost once */
                 bits += m_me.bitcost(outmv);
@@ -2206,7 +2231,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     }
 
                     setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
-                    int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv);
+                    int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv, 
+                      m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
 
                     /* Get total cost of partition, but only include MV bit cost once */
                     bits += m_me.bitcost(outmv);
@@ -2495,6 +2521,13 @@ void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mv
         maxSafeMv = (safeX - cu.m_cuPelX) * 4;
         mvmax.x = X265_MIN(mvmax.x, maxSafeMv);
         mvmin.x = X265_MIN(mvmin.x, maxSafeMv);
+    }
+
+    // apply restrict on slices
+    if ((m_param->maxSlices > 1) & m_bFrameParallel)
+    {
+        mvmin.y = X265_MAX(mvmin.y, m_sliceMinY);
+        mvmax.y = X265_MIN(mvmax.y, m_sliceMaxY);
     }
 
     /* Clip search range to signaled maximum MV length.

@@ -2,6 +2,7 @@
 * Copyright (C) 2013 x265 project
 *
 * Author: Steve Borho <steve@borho.org>
+*         Min Chen <chenm003@163.com>
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -32,7 +33,7 @@ Frame::Frame()
 {
     m_bChromaExtended = false;
     m_lowresInit = false;
-    m_reconRowCount.set(0);
+    m_reconRowFlag = NULL;
     m_reconColCount = NULL;
     m_countRefEncoders = 0;
     m_encData = NULL;
@@ -41,6 +42,8 @@ Frame::Frame()
     m_next = NULL;
     m_prev = NULL;
     m_param = NULL;
+    m_userSEI.numPayloads = 0;
+    m_userSEI.payloads = NULL;
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_rcData = NULL;
 }
@@ -52,15 +55,20 @@ bool Frame::create(x265_param *param, float* quantOffsets)
     CHECKED_MALLOC_ZERO(m_rcData, RcStats, 1);
 
     if (m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
-        m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode))
+        m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode, param->rc.qgSize))
     {
         X265_CHECK((m_reconColCount == NULL), "m_reconColCount was initialized");
         m_numRows = (m_fencPic->m_picHeight + g_maxCUSize - 1)  / g_maxCUSize;
+        m_reconRowFlag = new ThreadSafeInteger[m_numRows];
         m_reconColCount = new ThreadSafeInteger[m_numRows];
 
         if (quantOffsets)
         {
-            int32_t cuCount = m_lowres.maxBlocksInRow * m_lowres.maxBlocksInCol;
+            int32_t cuCount;
+            if (param->rc.qgSize == 8)
+                cuCount = m_lowres.maxBlocksInRowFullRes * m_lowres.maxBlocksInColFullRes;
+            else
+                cuCount = m_lowres.maxBlocksInRow * m_lowres.maxBlocksInCol;
             m_quantOffsets = new float[cuCount];
         }
         return true;
@@ -132,6 +140,12 @@ void Frame::destroy()
         m_reconPic = NULL;
     }
 
+    if (m_reconRowFlag)
+    {
+        delete[] m_reconRowFlag;
+        m_reconRowFlag = NULL;
+    }
+
     if (m_reconColCount)
     {
         delete[] m_reconColCount;
@@ -141,6 +155,13 @@ void Frame::destroy()
     if (m_quantOffsets)
     {
         delete[] m_quantOffsets;
+    }
+
+    if (m_userSEI.numPayloads)
+    {
+        for (int i = 0; i < m_userSEI.numPayloads; i++)
+            delete[] m_userSEI.payloads[i].payload;
+        delete[] m_userSEI.payloads;
     }
 
     m_lowres.destroy();

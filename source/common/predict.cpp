@@ -671,17 +671,14 @@ void Predict::initIntraNeighbors(const CUData& cu, uint32_t absPartIdx, uint32_t
     int numIntraNeighbor;
     bool* bNeighborFlags = intraNeighbors->bNeighborFlags;
 
-    uint32_t numPartInWidth = 1 << (cu.m_log2CUSize[0] - LOG2_UNIT_SIZE - tuDepth);
-    uint32_t partIdxLT = cu.m_absIdxInCTU + absPartIdx;
-    uint32_t partIdxRT = g_rasterToZscan[g_zscanToRaster[partIdxLT] + numPartInWidth - 1];
-
     uint32_t tuSize = 1 << log2TrSize;
     int  tuWidthInUnits = tuSize >> log2UnitWidth;
     int  tuHeightInUnits = tuSize >> log2UnitHeight;
     int  aboveUnits = tuWidthInUnits << 1;
     int  leftUnits = tuHeightInUnits << 1;
-    int  partIdxStride = cu.m_slice->m_sps->numPartInCUSize;
-    uint32_t partIdxLB = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) * partIdxStride)];
+    uint32_t partIdxLT = cu.m_absIdxInCTU + absPartIdx;
+    uint32_t partIdxRT = g_rasterToZscan[g_zscanToRaster[partIdxLT] + tuWidthInUnits - 1];
+    uint32_t partIdxLB = g_rasterToZscan[g_zscanToRaster[partIdxLT] + ((tuHeightInUnits - 1) << LOG2_RASTER_SIZE)];
 
     if (cu.m_slice->isIntra() || !cu.m_slice->m_pps->bConstrainedIntraPred)
     {
@@ -910,7 +907,7 @@ int Predict::isLeftAvailable(const CUData& cu, uint32_t partIdxLT, uint32_t part
 {
     const uint32_t rasterPartBegin = g_zscanToRaster[partIdxLT];
     const uint32_t rasterPartEnd = g_zscanToRaster[partIdxLB];
-    const uint32_t idxStep = cu.m_slice->m_sps->numPartInCUSize;
+    const uint32_t idxStep = RASTER_SIZE;
     int numIntra = 0;
 
     for (uint32_t rasterPart = rasterPartBegin; rasterPart <= rasterPartEnd; rasterPart += idxStep, bValidFlags--) // opposite direction

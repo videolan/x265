@@ -2,6 +2,7 @@
  * Copyright (C) 2013 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,14 +72,18 @@ void DPB::recycleUnreferenced()
         iterFrame = iterFrame->m_next;
         if (!curFrame->m_encData->m_bHasReferences && !curFrame->m_countRefEncoders)
         {
-            curFrame->m_reconRowCount.set(0);
             curFrame->m_bChromaExtended = false;
 
             // Reset column counter
+            X265_CHECK(curFrame->m_reconRowFlag != NULL, "curFrame->m_reconRowFlag check failure");
             X265_CHECK(curFrame->m_reconColCount != NULL, "curFrame->m_reconColCount check failure");
             X265_CHECK(curFrame->m_numRows > 0, "curFrame->m_numRows check failure");
-            for(int32_t col = 0; col < curFrame->m_numRows; col++)
-                curFrame->m_reconColCount[col].set(0);
+
+            for(int32_t row = 0; row < curFrame->m_numRows; row++)
+            {
+                curFrame->m_reconRowFlag[row].set(0);
+                curFrame->m_reconColCount[row].set(0);
+            }
 
             // iterator is invalidated by remove, restart scan
             m_picList.remove(*curFrame);
@@ -167,7 +172,9 @@ void DPB::prepareEncode(Frame *newFrame)
         slice->m_colFromL0Flag = true;
         slice->m_colRefIdx = 0;
     }
-    slice->m_sLFaseFlag = (SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0;
+
+    // Disable Loopfilter in bound area, because we will do slice-parallelism in future
+    slice->m_sLFaseFlag = (g_maxSlices > 1) ? false : ((SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0);
 
     /* Increment reference count of all motion-referenced frames to prevent them
      * from being recycled. These counts are decremented at the end of

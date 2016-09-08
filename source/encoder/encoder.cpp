@@ -151,6 +151,8 @@ void Encoder::create()
         m_aborted = true;
     }
 
+    x265_log(p, X265_LOG_INFO, "Slices                              : %d\n", p->maxSlices);
+
     char buf[128];
     int len = 0;
     if (p->bEnableWavefront)
@@ -589,10 +591,27 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_pts       = pic_in->pts;
         inFrame->m_forceqp   = pic_in->forceqp;
         inFrame->m_param     = m_reconfigure ? m_latestParam : m_param;
-        
+
+        if (pic_in->userSEI.numPayloads)
+        {
+            int numPayloads = inFrame->m_userSEI.numPayloads = pic_in->userSEI.numPayloads;
+            inFrame->m_userSEI.payloads = new x265_sei_payload[numPayloads];
+            for (int i = 0; i < numPayloads; i++)
+            {
+                int size = inFrame->m_userSEI.payloads[i].payloadSize = pic_in->userSEI.payloads[i].payloadSize;
+                inFrame->m_userSEI.payloads[i].payloadType = pic_in->userSEI.payloads[i].payloadType;
+                inFrame->m_userSEI.payloads[i].payload = new uint8_t[size];
+                memcpy(inFrame->m_userSEI.payloads[i].payload, pic_in->userSEI.payloads[i].payload, size);
+            }
+        }
+
         if (pic_in->quantOffsets != NULL)
         {
-            int cuCount = inFrame->m_lowres.maxBlocksInRow * inFrame->m_lowres.maxBlocksInCol;
+            int cuCount;
+            if (m_param->rc.qgSize == 8)
+                cuCount = inFrame->m_lowres.maxBlocksInRowFullRes * inFrame->m_lowres.maxBlocksInColFullRes;
+            else
+                cuCount = inFrame->m_lowres.maxBlocksInRow * inFrame->m_lowres.maxBlocksInCol;
             memcpy(inFrame->m_quantOffsets, pic_in->quantOffsets, cuCount * sizeof(float));
         }
 
@@ -776,9 +795,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (m_param->rc.bStatWrite)
                 if (m_rateControl->writeRateControlFrameStats(outFrame, &curEncoder->m_rce))
                     m_aborted = true;
-
-            if (pic_out && m_param->rc.bStatWrite)
-            {
+            if (pic_out)
+            { 
                 /* m_rcData is allocated for every frame */
                 pic_out->rcData = outFrame->m_rcData;
                 outFrame->m_rcData->qpaRc = outFrame->m_encData->m_avgQpRc;
@@ -1411,7 +1429,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     list.serialize(NAL_UNIT_SPS, bs);
 
     bs.resetBits();
-    sbacCoder.codePPS(m_pps);
+    sbacCoder.codePPS(m_pps, (m_param->maxSlices <= 1));
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
@@ -1440,7 +1458,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         list.serialize(NAL_UNIT_PREFIX_SEI, bs);
     }
 
-    if (m_param->bEmitInfoSEI)
+    if (!m_param->bDiscardSEI && m_param->bEmitInfoSEI)
     {
         char *opts = x265_param2string(m_param);
         if (opts)
@@ -1456,6 +1474,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
                 
                 bs.resetBits();
                 SEIuserDataUnregistered idsei;
+                idsei.m_payloadType = USER_DATA_UNREGISTERED;
                 idsei.m_userData = (uint8_t*)buffer;
                 idsei.m_userDataLength = (uint32_t)strlen(buffer);
                 idsei.write(bs, m_sps);
@@ -1469,7 +1488,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         }
     }
 
-    if (m_param->bEmitHRDSEI || !!m_param->interlaceMode)
+    if (!m_param->bDiscardSEI && (m_param->bEmitHRDSEI || !!m_param->interlaceMode))
     {
         /* Picture Timing and Buffering Period SEI require the SPS to be "activated" */
         SEIActiveParameterSets sei;
@@ -1524,6 +1543,14 @@ void Encoder::initSPS(SPS *sps)
 
     sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
     sps->bTemporalMVPEnabled = m_param->bEnableTemporalMvp;
+    sps->bDiscardVUI = m_param->bDiscardVUI;
+    sps->log2MaxPocLsb = m_param->log2MaxPocLsb;
+    int maxDeltaPOC = (m_param->bframes + 2) * (!!m_param->bBPyramid + 1) * 2;
+    while ((1 << sps->log2MaxPocLsb) <= maxDeltaPOC * 2)
+        sps->log2MaxPocLsb++;
+
+    if (sps->log2MaxPocLsb != m_param->log2MaxPocLsb)
+        x265_log(m_param, X265_LOG_WARNING, "Reset log2MaxPocLsb to %d to account for all POC values\n", sps->log2MaxPocLsb);
 
     VUI& vui = sps->vuiParameters;
     vui.aspectRatioInfoPresentFlag = !!m_param->vui.aspectRatioIdc;
@@ -1570,7 +1597,7 @@ void Encoder::initPPS(PPS *pps)
     {
         pps->bUseDQP = true;
         pps->maxCuDQPDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
-        X265_CHECK(pps->maxCuDQPDepth <= 2, "max CU DQP depth cannot be greater than 2\n");
+        X265_CHECK(pps->maxCuDQPDepth <= 3, "max CU DQP depth cannot be greater than 3\n");
     }
     else
     {
@@ -1854,10 +1881,10 @@ void Encoder::configure(x265_param *p)
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
     if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
     {
-        if (p->rc.qgSize < X265_MAX(16, p->minCUSize))
+        if (p->rc.qgSize < X265_MAX(8, p->minCUSize))
         {
-            p->rc.qgSize = X265_MAX(16, p->minCUSize);
-            x265_log(p, X265_LOG_WARNING, "QGSize should be greater than or equal to 16 and minCUSize, setting QGSize = %d\n", p->rc.qgSize);
+            p->rc.qgSize = X265_MAX(8, p->minCUSize);
+            x265_log(p, X265_LOG_WARNING, "QGSize should be greater than or equal to 8 and minCUSize, setting QGSize = %d\n", p->rc.qgSize);
         }
         if (p->rc.qgSize > p->maxCUSize)
         {
@@ -1979,6 +2006,13 @@ void Encoder::configure(x265_param *p)
 
     if (p->csvfn)
         x265_log(p, X265_LOG_WARNING, "libx265 no longer supports CSV file statistics\n");
+
+    if (p->log2MaxPocLsb < 4)
+    {
+        x265_log(p, X265_LOG_WARNING, "maximum of the picture order count can not be less than 4\n");
+        p->log2MaxPocLsb = 4;
+    }
+
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)

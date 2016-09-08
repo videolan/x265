@@ -59,10 +59,9 @@ Logging/Statistic Options
 
 .. option:: --log-level <integer|string>
 
-	Logging level. Debug level enables per-frame QP, metric, and bitrate
-	logging. If a CSV file is being generated, frame level makes the log
-	be per-frame rather than per-encode. Full level enables hash and
-	weight logging. -1 disables all logging, except certain fatal
+	Controls the level of information displayed on the console. Debug level
+	enables per-frame QP, metric, and bitrate logging. Full level enables
+	hash and weight logging. -1 disables all logging, except certain fatal
 	errors, and can be specified by the string "none".
 
 	0. error
@@ -79,8 +78,8 @@ Logging/Statistic Options
 
 .. option:: --csv <filename>
 
-	Writes encoding results to a comma separated value log file. Creates
-	the file if it doesnt already exist. If :option:`--csv-log-level` is 0, 
+	Write encoding statistics to a Comma Separated Values log file. Creates
+	the file if it doesn't already exist. If :option:`--csv-log-level` is 0, 
 	it adds one line per run. If :option:`--csv-log-level` is greater than
 	0, it writes one line per frame. Default none
 
@@ -128,12 +127,13 @@ Logging/Statistic Options
 
 .. option:: --csv-log-level <integer>
 
-        CSV logging level. Default 0
-        0. summary
-        1. frame level logging
-        2. frame level logging with performance statistics
+    Controls the level of detail (and size) of --csv log files
+		
+    0. summary **(default)**
+    1. frame level logging
+    2. frame level logging with performance statistics
 
-        **CLI ONLY**
+    **CLI ONLY**
 
 .. option:: --ssim, --no-ssim
 
@@ -334,6 +334,17 @@ Performance Options
 
 	**Values:** psnr, ssim, grain, zero-latency, fast-decode.
 
+.. option:: --slices <integer>
+
+	Encode each incoming frame as multiple parallel slices that may be decoded
+	independently. Support available only for rectangular slices that cover the
+	entire width of the image. 
+
+	Recommended for improving encoder performance only if frame-parallelism and
+	WPP are unable to maximize utilization on given hardware.
+
+	Default: 1 slice per frame. **Experimental feature**
+
 Input/Output File Options
 =========================
 
@@ -474,21 +485,22 @@ Profile, Level, Tier
 
 	8bit profiles::
 
-	main, main-intra, mainstillpicture (or msp for short)
-	main444-8 main444-intra main444-stillpicture
+	* main, main-intra, mainstillpicture (or msp for short)
+	* main444-8, main444-intra, main444-stillpicture
+
 	See note below on signaling intra and stillpicture profiles.
 	
 	10bit profiles::
 
-	main10, main10-intra
-	main422-10, main422-10-intra
-	main444-10, main444-10-intra
+	* main10, main10-intra
+	* main422-10, main422-10-intra
+	* main444-10, main444-10-intra
 
 	12bit profiles::
 
-	main12, main12-intra
-	main422-12, main422-12-intra
-	main444-12, main444-12-intra
+	* main12, main12-intra
+	* main422-12, main422-12-intra
+	* main444-12, main444-12-intra
 
 
 	**CLI ONLY**
@@ -1009,6 +1021,11 @@ Temporal / motion search options
 
 	Enable weighted prediction in B slices. Default disabled
 
+.. option:: --analyze-src-pics, --no-analyze-src-pics
+
+    Enalbe motion estimation with source frame pixels, in this mode, 
+    motion estimation can be computed independently. Default disabled.
+
 Spatial/intra options
 =====================
 
@@ -1314,20 +1331,25 @@ Quality, rate control and rate distortion options
 	0. disabled
 	1. AQ enabled **(default)**
 	2. AQ enabled with auto-variance
-	3. AQ enabled with auto-variance and bias to dark scenes
+	3. AQ enabled with auto-variance and bias to dark scenes. This is 
+	recommended for 8-bit encodes or low-bitrate 10-bit encodes, to 
+	prevent color banding/blocking. 
 
 .. option:: --aq-strength <float>
 
 	Adjust the strength of the adaptive quantization offsets. Setting
-	:option:`--aq-strength` to 0 disables AQ. Default 1.0.
+	:option:`--aq-strength` to 0 disables AQ. At aq-modes 2 and 3, high 
+	aq-strengths will lead to high QP offsets resulting in a large 
+	difference in achieved bitrates. 
 
+	Default 1.0.
 	**Range of values:** 0.0 to 3.0
 
-.. option:: --qg-size <64|32|16>
+.. option:: --qg-size <64|32|16|8>
 
 	Enable adaptive quantization for sub-CTUs. This parameter specifies 
 	the minimum CU size at which QP can be adjusted, ie. Quantization Group
-	size. Allowed range of values are 64, 32, 16 provided this falls within 
+	size. Allowed range of values are 64, 32, 16, 8 provided this falls within 
 	the inclusive range [maxCUSize, minCUSize]. Experimental.
 	Default: same as maxCUSize
 
@@ -1433,6 +1455,14 @@ Quality, rate control and rate distortion options
 
 	The maximum single adjustment in QP allowed to rate control. Default
 	4
+	
+.. option:: --qpmin <integer>
+
+	sets a hard lower limit on QP allowed to ratecontrol. Default 0
+
+.. option:: --qpmax <integer>
+
+	sets a hard upper limit on QP allowed to ratecontrol. Default 69
 	
 .. option:: --rc-grain, --no-rc-grain
 
@@ -1722,7 +1752,7 @@ VUI fields must be manually specified.
 	Example for MaxCLL=1000 candela per square meter, MaxFALL=400
 	candela per square meter:
 
-		--max-cll ‚Äú1000,400‚Äù
+		--max-cll ì1000,400î
 
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
@@ -1800,6 +1830,19 @@ Bitstream options
 	3 then the two layers evenly split the frame rate, with a cadence of
 	PbBbP. You probably also want :option:`--no-scenecut` and a keyframe
 	interval that is a multiple of 4.
+
+.. option:: --log2-max-poc-lsb <integer>
+
+  Maximum of the picture order count. Default 8
+
+.. option:: --discard-sei
+
+  Discard SEI messages generated from the final bitstream. HDR-related SEI
+  messages are always dumped, immaterial of this option. Default disabled.
+	
+.. option:: --discard-vui
+
+	Discard VUI information from the bitstream. Default disabled.
 
 Debugging options
 =================

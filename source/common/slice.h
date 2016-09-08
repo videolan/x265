@@ -2,6 +2,7 @@
  * Copyright (C) 2015 x265 project
  *
  * Authors: Steve Borho <steve@borho.org>
+ *          Min Chen <chenm003@163.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -223,6 +224,7 @@ struct SPS
 
     int      log2MinCodingBlockSize;
     int      log2DiffMaxMinCodingBlockSize;
+    int      log2MaxPocLsb;
 
     uint32_t quadtreeTULog2MaxSize;
     uint32_t quadtreeTULog2MinSize;
@@ -241,6 +243,7 @@ struct SPS
     bool     bUseAMP; // use param
     bool     bUseStrongIntraSmoothing; // use param
     bool     bTemporalMVPEnabled;
+    bool     bDiscardVUI;
 
     Window   conformanceWindow;
     VUI      vuiParameters;

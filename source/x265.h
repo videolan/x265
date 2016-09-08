@@ -150,6 +150,55 @@ typedef struct x265_frame_stats
     x265_cu_stats    cuStats;
 } x265_frame_stats;
 
+/* Arbitrary User SEI
+ * Payload size is in bytes and the payload pointer must be non-NULL. 
+ * Payload types and syntax can be found in Annex D of the H.265 Specification.
+ * SEI Payload Alignment bits as described in Annex D must be included at the 
+ * end of the payload if needed. The payload should not be NAL-encapsulated.
+ * Payloads are written in the order of input */
+
+typedef enum
+{
+    BUFFERING_PERIOD                     = 0,
+    PICTURE_TIMING                       = 1,
+    PAN_SCAN_RECT                        = 2,
+    FILLER_PAYLOAD                       = 3,
+    USER_DATA_REGISTERED_ITU_T_T35       = 4,
+    USER_DATA_UNREGISTERED               = 5,
+    RECOVERY_POINT                       = 6,
+    SCENE_INFO                           = 9,
+    FULL_FRAME_SNAPSHOT                  = 15,
+    PROGRESSIVE_REFINEMENT_SEGMENT_START = 16,
+    PROGRESSIVE_REFINEMENT_SEGMENT_END   = 17,
+    FILM_GRAIN_CHARACTERISTICS           = 19,
+    POST_FILTER_HINT                     = 22,
+    TONE_MAPPING_INFO                    = 23,
+    FRAME_PACKING                        = 45,
+    DISPLAY_ORIENTATION                  = 47,
+    SOP_DESCRIPTION                      = 128,
+    ACTIVE_PARAMETER_SETS                = 129,
+    DECODING_UNIT_INFO                   = 130,
+    TEMPORAL_LEVEL0_INDEX                = 131,
+    DECODED_PICTURE_HASH                 = 132,
+    SCALABLE_NESTING                     = 133,
+    REGION_REFRESH_INFO                  = 134,
+    MASTERING_DISPLAY_INFO               = 137,
+    CONTENT_LIGHT_LEVEL_INFO             = 144,
+} SEIPayloadType;
+
+typedef struct x265_sei_payload
+{
+    int payloadSize;
+    SEIPayloadType payloadType;
+    uint8_t* payload;
+} x265_sei_payload;
+
+typedef struct x265_sei
+{
+    int numPayloads;
+    x265_sei_payload *payloads;
+} x265_sei;
+
 /* Used to pass pictures into the encoder, and to get picture data back out of
  * the encoder.  The input and output semantics are different */
 typedef struct x265_picture
@@ -214,12 +263,15 @@ typedef struct x265_picture
     /* An array of quantizer offsets to be applied to this image during encoding.
      * These are added on top of the decisions made by rateControl.
      * Adaptive quantization must be enabled to use this feature. These quantizer
-     * offsets should be given for each 16x16 block. Behavior if quant
-     * offsets differ between encoding passes is undefined. */
+     * offsets should be given for each 16x16 block (8x8 block, when qg-size is 8).
+     * Behavior if quant offsets differ between encoding passes is undefined. */
     float            *quantOffsets;
 
     /* Frame level statistics */
     x265_frame_stats frameData;
+
+    /* User defined SEI */
+    x265_sei         userSEI;
 
     /* Ratecontrol statistics for collecting the ratecontrol information.
      * It is not used for collecting the last pass ratecontrol data in 
@@ -883,6 +935,9 @@ typedef struct x265_param
     /* Enable weighted prediction in B slices. Default is disabled */
     int       bEnableWeightedBiPred;
 
+    /* Enable source pixels in motion estimation. Default is disabled */
+    int      bSourceReferenceEstimation;
+
     /*== Loop Filters ==*/
 
     /* Enable the deblocking loop filter, which improves visual quality by
@@ -1103,12 +1158,18 @@ typedef struct x265_param
 
         /* Enable adaptive quantization at CU granularity. This parameter specifies
          * the minimum CU size at which QP can be adjusted, i.e. Quantization Group
-         * (QG) size. Allowed values are 64, 32, 16 provided it falls within the
+         * (QG) size. Allowed values are 64, 32, 16, 8 provided it falls within the
          * inclusuve range [maxCUSize, minCUSize]. Experimental, default: maxCUSize */
         uint32_t qgSize;
 
         /* internally enable if tune grain is set */
         int      bEnableGrain;
+
+        /* sets a hard upper limit on QP */
+        int      qpMax;
+
+        /* sets a hard lower limit on QP */
+        int      qpMin;
     } rc;
 
     /*== Video Usability Information ==*/
@@ -1235,6 +1296,18 @@ typedef struct x265_param
      * would automatically decrease any luma values above the specified --max-luma
      * value to that value. */
     uint16_t maxLuma;
+
+    /* Maximum of the picture order count */
+    int log2MaxPocLsb;
+
+    /* Dicard SEI messages when printing */
+    int bDiscardSEI;
+    
+    /* Control remove vui information to get low bitrate */
+    int       bDiscardVUI;
+
+    /* Maximum count of Slices of picture, the value range is [1, maximum rows] */
+    unsigned int maxSlices;
 
 } x265_param;
 
