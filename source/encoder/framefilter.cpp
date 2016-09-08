@@ -655,12 +655,9 @@ void FrameFilter::processPostRow(int row)
             }
         }
     } // end of (m_param->maxSlices == 1)
-    //printf("POC %2d: Row=%2d\n", m_frame->m_poc, row);
 
-    //printf("POC %2d: Row=%2d X\n", m_frame->m_poc, row);
     if (ATOMIC_INC(&m_frameEncoder->m_completionCount) == 2 * (int)m_frameEncoder->m_numRows)
     {
-        //printf("POC %2d: Row=%2d -->\n", m_frame->m_poc, row);
         m_frameEncoder->m_completionEvent.trigger();
     }
 }

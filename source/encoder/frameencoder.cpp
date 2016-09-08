@@ -630,8 +630,6 @@ void FrameEncoder::compressFrame()
                     }
                 }
 
-                //printf("POC %2d: Row=%2d **\n", m_frame->m_poc, row);
-
                 enableRowEncoder(row); /* clear external dependency for this row */
                 if (!rowInSlice)
                 {
@@ -1149,8 +1147,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         const uint32_t bLastCuInSlice = (bLastRowInSlice & (col == numCols - 1)) ? 1 : 0;
         ctu->initCTU(*m_frame, cuAddr, slice->m_sliceQp, bFirstRowInSlice, bLastRowInSlice, bLastCuInSlice);
 
-        //printf("CU[%2d,%2d]\n", row, col);
-
         if (bIsVbv)
         {
             if (!row)
@@ -1397,7 +1393,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         {
             /* activate next row */
             ScopedLock below(m_rows[row + 1].lock);
-            //printf("POC %2d: CU(%2d,%2d) Enable\n", slice->m_poc, row + 1, col);
+
             if (m_rows[row + 1].active == false &&
                 m_rows[row + 1].completed + 2 <= curRow.completed)
             {
@@ -1475,7 +1471,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     {
         if (rowInSlice >= m_filterRowDelay)
         {
-            //printf("POC %2d: Row %2d Filter Enable\n", slice->m_poc, row - m_filterRowDelay);
             enableRowFilter(row - m_filterRowDelay);
 
             /* NOTE: Activate filter if first row (row 0) */
@@ -1488,7 +1483,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         {
             for (uint32_t i = endRowInSlicePlus1 - m_filterRowDelay; i < endRowInSlicePlus1; i++)
             {
-                //printf("POC %2d: Row %2d Filter Enable\n", slice->m_poc, i);
                 enableRowFilter(i);
             }
             tryWakeOne();
@@ -1504,8 +1498,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
     tld.analysis.m_param = NULL;
     curRow.busy = false;
-
-    //printf("Row %2d done\n", row);
 
     // CHECK_ME: Does it always FALSE condition?
     if (ATOMIC_INC(&m_completionCount) == 2 * (int)m_numRows)
