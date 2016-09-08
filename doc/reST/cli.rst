@@ -59,10 +59,9 @@ Logging/Statistic Options
 
 .. option:: --log-level <integer|string>
 
-	Logging level. Debug level enables per-frame QP, metric, and bitrate
-	logging. If a CSV file is being generated, frame level makes the log
-	be per-frame rather than per-encode. Full level enables hash and
-	weight logging. -1 disables all logging, except certain fatal
+	Controls the level of information displayed on the console. Debug level
+	enables per-frame QP, metric, and bitrate logging. Full level enables
+	hash and weight logging. -1 disables all logging, except certain fatal
 	errors, and can be specified by the string "none".
 
 	0. error
@@ -79,8 +78,8 @@ Logging/Statistic Options
 
 .. option:: --csv <filename>
 
-	Writes encoding results to a comma separated value log file. Creates
-	the file if it doesnt already exist. If :option:`--csv-log-level` is 0, 
+	Write encoding statistics to a Comma Separated Values log file. Creates
+	the file if it doesn't already exist. If :option:`--csv-log-level` is 0, 
 	it adds one line per run. If :option:`--csv-log-level` is greater than
 	0, it writes one line per frame. Default none
 
@@ -128,12 +127,13 @@ Logging/Statistic Options
 
 .. option:: --csv-log-level <integer>
 
-        CSV logging level. Default 0
-        0. summary
-        1. frame level logging
-        2. frame level logging with performance statistics
+    Controls the level of detail (and size) of --csv log files
+		
+    0. summary **(default)**
+    1. frame level logging
+    2. frame level logging with performance statistics
 
-        **CLI ONLY**
+    **CLI ONLY**
 
 .. option:: --ssim, --no-ssim
 
@@ -1752,7 +1752,7 @@ VUI fields must be manually specified.
 	Example for MaxCLL=1000 candela per square meter, MaxFALL=400
 	candela per square meter:
 
-		--max-cll ‚Äú1000,400‚Äù
+		--max-cll ì1000,400î
 
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
