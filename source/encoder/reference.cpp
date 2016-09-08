@@ -54,6 +54,13 @@ int MotionReference::init(PicYuv* recPic, WeightParam *wp, const x265_param& p)
     lumaStride = recPic->m_stride;
     chromaStride = recPic->m_strideC;
     numInterpPlanes = p.subpelRefine > 2 ? 3 : 1; /* is chroma satd possible? */
+
+    if (numSliceWeightedRows)
+    {
+        // Unnecessary, but avoid risk on parameters dynamic modify in future.
+        X265_FREE(numSliceWeightedRows);
+        numSliceWeightedRows = NULL;
+    }
     numSliceWeightedRows = X265_MALLOC(uint32_t, p.maxSlices);
     memset(numSliceWeightedRows, 0, p.maxSlices * sizeof(uint32_t));
 
