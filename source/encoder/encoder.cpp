@@ -1338,7 +1338,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
     m_analyzeAll.m_maxFALL += curFrame->m_fencPic->m_avgLumaLevel;
     m_analyzeAll.m_maxCLL = X265_MAX(m_analyzeAll.m_maxCLL, curFrame->m_fencPic->m_maxLumaLevel);
 
-    char c = (slice->isIntra() ? 'I' : slice->isInterP() ? 'P' : 'B');
+    char c = (slice->isIntra() ? (curFrame->m_lowres.sliceType == X265_TYPE_IDR ? 'I' : 'i') : slice->isInterP() ? 'P' : 'B');
     int poc = slice->m_poc;
     if (!IS_REFERENCED(curFrame))
         c += 32; // lower case if unreferenced
