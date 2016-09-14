@@ -137,7 +137,7 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
     if (param.bEnableSsim)
         fprintf(csvfp, " %.6f, %6.3f,", frameStats->ssim, x265_ssim2dB(frameStats->ssim));
     fprintf(csvfp, "%d, ", frameStats->frameLatency);
-    if (frameStats->sliceType == 'I')
+    if (frameStats->sliceType == 'I' || frameStats->sliceType == 'i')
         fputs(" -, -,", csvfp);
     else
     {
