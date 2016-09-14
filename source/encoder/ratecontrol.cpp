@@ -547,8 +547,11 @@ bool RateControl::init(const SPS& sps)
                        &rce->mvBits, &rce->miscBits, &rce->iCuCount, &rce->pCuCount,
                        &rce->skipCuCount);
                 rce->keptAsRef = true;
+                rce->isIdr = false;
                 if (picType == 'b' || picType == 'p')
                     rce->keptAsRef = false;
+                if (picType == 'I')
+                    rce->isIdr = true;
                 if (picType == 'I' || picType == 'i')
                     rce->sliceType = I_SLICE;
                 else if (picType == 'P' || picType == 'p')
@@ -1065,7 +1068,7 @@ int RateControl::rateControlSliceType(int frameNum)
             return X265_TYPE_AUTO;
         }
         int index = m_encOrder[frameNum];
-        int frameType = m_rce2Pass[index].sliceType == I_SLICE ? (frameNum > 0 && m_param->bOpenGOP ? X265_TYPE_I : X265_TYPE_IDR)
+        int frameType = m_rce2Pass[index].sliceType == I_SLICE ? (m_rce2Pass[index].isIdr ? X265_TYPE_IDR : X265_TYPE_I)
                         : m_rce2Pass[index].sliceType == P_SLICE ? X265_TYPE_P
                         : (m_rce2Pass[index].sliceType == B_SLICE && m_rce2Pass[index].keptAsRef ? X265_TYPE_BREF : X265_TYPE_B);
         return frameType;
@@ -2612,7 +2615,7 @@ int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* r
         ncu = m_ncu * 4;
     else
         ncu = m_ncu;
-    char cType = rce->sliceType == I_SLICE ? (rce->poc > 0 && m_param->bOpenGOP ? 'i' : 'I')
+    char cType = rce->sliceType == I_SLICE ? (curFrame->m_lowres.sliceType == X265_TYPE_IDR ? 'I' : 'i')
         : rce->sliceType == P_SLICE ? 'P'
         : IS_REFERENCED(curFrame) ? 'B' : 'b';
     if (fprintf(m_statFileOut,
