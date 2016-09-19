@@ -53,15 +53,14 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled, uint32_t qgS
 
     size_t planesize = lumaStride * (lines + 2 * origPic->m_lumaMarginY);
     size_t padoffset = lumaStride * origPic->m_lumaMarginY + origPic->m_lumaMarginX;
-
     if (bAQEnabled)
     {
-        CHECKED_MALLOC(qpAqOffset, double, cuCountFullRes);
-        CHECKED_MALLOC(invQscaleFactor, int, cuCountFullRes);
-        CHECKED_MALLOC(qpCuTreeOffset, double, cuCountFullRes);
-        CHECKED_MALLOC(blockVariance, uint32_t, cuCountFullRes);
+        CHECKED_MALLOC_ZERO(qpAqOffset, double, cuCountFullRes);
+        CHECKED_MALLOC_ZERO(invQscaleFactor, int, cuCountFullRes);
+        CHECKED_MALLOC_ZERO(qpCuTreeOffset, double, cuCountFullRes);
+        CHECKED_MALLOC_ZERO(blockVariance, uint32_t, cuCountFullRes);
         if (qgSize == 8)
-            CHECKED_MALLOC(invQscaleFactor8x8, int, cuCount);
+            CHECKED_MALLOC_ZERO(invQscaleFactor8x8, int, cuCount);
     }
     CHECKED_MALLOC(propagateCost, uint16_t, cuCount);
 
