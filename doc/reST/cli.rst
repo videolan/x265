@@ -1842,7 +1842,8 @@ Bitstream options
 	
 .. option:: --discard-vui
 
-	Discard VUI information from the bitstream. Default disabled.
+	Discard optional VUI information (timing, HRD info) from the
+	bitstream. Default disabled.
 
 Debugging options
 =================

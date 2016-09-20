@@ -318,15 +318,8 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_FLAG(sps.bTemporalMVPEnabled, "sps_temporal_mvp_enable_flag");
     WRITE_FLAG(sps.bUseStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
 
-    if (sps.bDiscardVUI)
-    {
-        WRITE_FLAG(0, "vui_parameters_present_flag");
-    }
-    else
-    {
-        WRITE_FLAG(1, "vui_parameters_present_flag");
-        codeVUI(sps.vuiParameters, sps.maxTempSubLayers);
-    }
+    WRITE_FLAG(1, "vui_parameters_present_flag");
+    codeVUI(sps.vuiParameters, sps.maxTempSubLayers, sps.bDiscardOptionalVUI);
 
     WRITE_FLAG(0, "sps_extension_flag");
 }
@@ -429,65 +422,75 @@ void Entropy::codeProfileTier(const ProfileTierLevel& ptl, int maxTempSubLayers)
     }
 }
 
-void Entropy::codeVUI(const VUI& vui, int maxSubTLayers)
+void Entropy::codeVUI(const VUI& vui, int maxSubTLayers, bool bDiscardOptionalVUI)
 {
-    WRITE_FLAG(vui.aspectRatioInfoPresentFlag,  "aspect_ratio_info_present_flag");
+    WRITE_FLAG(vui.aspectRatioInfoPresentFlag, "aspect_ratio_info_present_flag");
     if (vui.aspectRatioInfoPresentFlag)
     {
-        WRITE_CODE(vui.aspectRatioIdc, 8,       "aspect_ratio_idc");
+        WRITE_CODE(vui.aspectRatioIdc, 8, "aspect_ratio_idc");
         if (vui.aspectRatioIdc == 255)
         {
-            WRITE_CODE(vui.sarWidth, 16,        "sar_width");
-            WRITE_CODE(vui.sarHeight, 16,       "sar_height");
+            WRITE_CODE(vui.sarWidth, 16, "sar_width");
+            WRITE_CODE(vui.sarHeight, 16, "sar_height");
         }
     }
 
-    WRITE_FLAG(vui.overscanInfoPresentFlag,     "overscan_info_present_flag");
+    WRITE_FLAG(vui.overscanInfoPresentFlag, "overscan_info_present_flag");
     if (vui.overscanInfoPresentFlag)
         WRITE_FLAG(vui.overscanAppropriateFlag, "overscan_appropriate_flag");
 
-    WRITE_FLAG(vui.videoSignalTypePresentFlag,  "video_signal_type_present_flag");
+    WRITE_FLAG(vui.videoSignalTypePresentFlag, "video_signal_type_present_flag");
     if (vui.videoSignalTypePresentFlag)
     {
-        WRITE_CODE(vui.videoFormat, 3,          "video_format");
-        WRITE_FLAG(vui.videoFullRangeFlag,      "video_full_range_flag");
+        WRITE_CODE(vui.videoFormat, 3, "video_format");
+        WRITE_FLAG(vui.videoFullRangeFlag, "video_full_range_flag");
         WRITE_FLAG(vui.colourDescriptionPresentFlag, "colour_description_present_flag");
         if (vui.colourDescriptionPresentFlag)
         {
-            WRITE_CODE(vui.colourPrimaries, 8,         "colour_primaries");
+            WRITE_CODE(vui.colourPrimaries, 8, "colour_primaries");
             WRITE_CODE(vui.transferCharacteristics, 8, "transfer_characteristics");
-            WRITE_CODE(vui.matrixCoefficients, 8,      "matrix_coefficients");
+            WRITE_CODE(vui.matrixCoefficients, 8, "matrix_coefficients");
         }
     }
 
-    WRITE_FLAG(vui.chromaLocInfoPresentFlag,           "chroma_loc_info_present_flag");
+    WRITE_FLAG(vui.chromaLocInfoPresentFlag, "chroma_loc_info_present_flag");
     if (vui.chromaLocInfoPresentFlag)
     {
-        WRITE_UVLC(vui.chromaSampleLocTypeTopField,    "chroma_sample_loc_type_top_field");
+        WRITE_UVLC(vui.chromaSampleLocTypeTopField, "chroma_sample_loc_type_top_field");
         WRITE_UVLC(vui.chromaSampleLocTypeBottomField, "chroma_sample_loc_type_bottom_field");
     }
 
-    WRITE_FLAG(0,                                     "neutral_chroma_indication_flag");
-    WRITE_FLAG(vui.fieldSeqFlag,                      "field_seq_flag");
-    WRITE_FLAG(vui.frameFieldInfoPresentFlag,         "frame_field_info_present_flag");
+    WRITE_FLAG(0, "neutral_chroma_indication_flag");
+    WRITE_FLAG(vui.fieldSeqFlag, "field_seq_flag");
+    WRITE_FLAG(vui.frameFieldInfoPresentFlag, "frame_field_info_present_flag");
 
-    WRITE_FLAG(vui.defaultDisplayWindow.bEnabled,    "default_display_window_flag");
+    WRITE_FLAG(vui.defaultDisplayWindow.bEnabled, "default_display_window_flag");
     if (vui.defaultDisplayWindow.bEnabled)
     {
-        WRITE_UVLC(vui.defaultDisplayWindow.leftOffset,   "def_disp_win_left_offset");
-        WRITE_UVLC(vui.defaultDisplayWindow.rightOffset,  "def_disp_win_right_offset");
-        WRITE_UVLC(vui.defaultDisplayWindow.topOffset,    "def_disp_win_top_offset");
+        WRITE_UVLC(vui.defaultDisplayWindow.leftOffset, "def_disp_win_left_offset");
+        WRITE_UVLC(vui.defaultDisplayWindow.rightOffset, "def_disp_win_right_offset");
+        WRITE_UVLC(vui.defaultDisplayWindow.topOffset, "def_disp_win_top_offset");
         WRITE_UVLC(vui.defaultDisplayWindow.bottomOffset, "def_disp_win_bottom_offset");
     }
 
-    WRITE_FLAG(1,                                 "vui_timing_info_present_flag");
-    WRITE_CODE(vui.timingInfo.numUnitsInTick, 32, "vui_num_units_in_tick");
-    WRITE_CODE(vui.timingInfo.timeScale, 32,      "vui_time_scale");
-    WRITE_FLAG(0,                                 "vui_poc_proportional_to_timing_flag");
+    if (bDiscardOptionalVUI)
+        WRITE_FLAG(0, "vui_timing_info_present_flag");
+    else
+    {
+        WRITE_FLAG(1, "vui_timing_info_present_flag");
+        WRITE_CODE(vui.timingInfo.numUnitsInTick, 32, "vui_num_units_in_tick");
+        WRITE_CODE(vui.timingInfo.timeScale, 32, "vui_time_scale");
+        WRITE_FLAG(0, "vui_poc_proportional_to_timing_flag");
+    }
 
-    WRITE_FLAG(vui.hrdParametersPresentFlag,  "vui_hrd_parameters_present_flag");
-    if (vui.hrdParametersPresentFlag)
-        codeHrdParameters(vui.hrdParameters, maxSubTLayers);
+    if (bDiscardOptionalVUI)
+        WRITE_FLAG(0, "vui_hrd_parameters_present_flag");
+    else
+    {
+        WRITE_FLAG(vui.hrdParametersPresentFlag, "vui_hrd_parameters_present_flag");
+        if (vui.hrdParametersPresentFlag)
+            codeHrdParameters(vui.hrdParameters, maxSubTLayers);
+    }
 
     WRITE_FLAG(0, "bitstream_restriction_flag");
 }

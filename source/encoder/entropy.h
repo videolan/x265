@@ -143,7 +143,7 @@ public:
     void codeVPS(const VPS& vps);
     void codeSPS(const SPS& sps, const ScalingList& scalingList, const ProfileTierLevel& ptl);
     void codePPS(const PPS& pps, bool filerAcross);
-    void codeVUI(const VUI& vui, int maxSubTLayers);
+    void codeVUI(const VUI& vui, int maxSubTLayers, bool discardOptionalVUI);
     void codeAUD(const Slice& slice);
     void codeHrdParameters(const HRDInfo& hrd, int maxSubTLayers);
 

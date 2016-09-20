@@ -449,7 +449,7 @@ static void showHelp(x265_param *param)
     H1("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
     H0("   --log2-max-poc-lsb <integer>  Maximum of the picture order count\n");
     H0("   --discard-sei                 Discard SEI packets in bitstream. Default %s\n", OPT(param->bDiscardSEI));
-    H0("   --discard-vui                 Discard VUI information from the bistream. Default %s\n", OPT(param->bDiscardVUI));
+    H0("   --discard-vui                 Discard optional VUI information from the bistream. Default %s\n", OPT(param->bDiscardOptionalVUI));
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");

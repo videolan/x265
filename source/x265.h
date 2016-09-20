@@ -1303,8 +1303,8 @@ typedef struct x265_param
     /* Dicard SEI messages when printing */
     int bDiscardSEI;
     
-    /* Control remove vui information to get low bitrate */
-    int       bDiscardVUI;
+    /* Control removing optional vui information (timing, HRD info) to get low bitrate */
+    int       bDiscardOptionalVUI;
 
     /* Maximum count of Slices of picture, the value range is [1, maximum rows] */
     unsigned int maxSlices;

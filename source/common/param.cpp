@@ -229,7 +229,7 @@ void x265_param_default(x265_param* param)
     param->rc.qpMin = 0;
     param->rc.qpMax = QP_MAX_MAX;
 
-    param->bDiscardVUI = 0;
+    param->bDiscardOptionalVUI = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -915,7 +915,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("analyze-src-pics") p->bSourceReferenceEstimation = atobool(value);
         OPT("log2-max-poc-lsb") p->log2MaxPocLsb = atoi(value);
         OPT("discard-sei") p->bDiscardSEI = atobool(value);
-        OPT("discard-vui") p->bDiscardVUI = atobool(value);
+        OPT("discard-vui") p->bDiscardOptionalVUI = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }

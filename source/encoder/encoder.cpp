@@ -1543,7 +1543,7 @@ void Encoder::initSPS(SPS *sps)
 
     sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
     sps->bTemporalMVPEnabled = m_param->bEnableTemporalMvp;
-    sps->bDiscardVUI = m_param->bDiscardVUI;
+    sps->bDiscardOptionalVUI = m_param->bDiscardOptionalVUI;
     sps->log2MaxPocLsb = m_param->log2MaxPocLsb;
     int maxDeltaPOC = (m_param->bframes + 2) * (!!m_param->bBPyramid + 1) * 2;
     while ((1 << sps->log2MaxPocLsb) <= maxDeltaPOC * 2)
