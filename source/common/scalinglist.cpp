@@ -312,6 +312,22 @@ bool ScalingList::parseScalingList(const char* filename)
                 m_scalingListDC[sizeIdc][listIdc] = data;
             }
         }
+        if (sizeIdc == 3)
+        {
+            for (int listIdc = 1; listIdc < NUM_LISTS; listIdc++)
+            {
+                if (listIdc % 3 != 0)
+                {
+                    src = m_scalingListCoef[sizeIdc][listIdc];
+                    const int *srcNextSmallerSize = m_scalingListCoef[sizeIdc - 1][listIdc];
+                    for (int i = 0; i < size; i++)
+                    {
+                        src[i] = srcNextSmallerSize[i];
+                    }
+                    m_scalingListDC[sizeIdc][listIdc] = m_scalingListDC[sizeIdc - 1][listIdc];
+                }
+            }
+        }
     }
 
     fclose(fp);
