@@ -1660,7 +1660,7 @@ void Encoder::configure(x265_param *p)
         double fps = (double)p->fpsNum / p->fpsDenom;
         p->keyframeMin = X265_MIN((int)fps, p->keyframeMax / 10);
     }
-    p->keyframeMin = X265_MAX(1, X265_MIN(p->keyframeMin, p->keyframeMax / 2 + 1));
+    p->keyframeMin = X265_MAX(1, p->keyframeMin);
 
     if (!p->bframes)
         p->bBPyramid = 0;
