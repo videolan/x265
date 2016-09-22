@@ -1716,8 +1716,16 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             }
             if (m_framesDone == 0 && m_param->rc.rateControlMode == X265_RC_ABR && m_isGrainEnabled)
                 q = X265_MIN(x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX), q);
-
             rce->qpNoVbv = x265_qScale2qp(q);
+            if ((m_sliceType == I_SLICE && m_param->keyframeMax > 1
+                && m_lastNonBPictType != I_SLICE && !m_isAbrReset) || (m_isNextGop && !m_framesDone))
+                m_avgPFrameQp = 0;
+            if (m_sliceType == P_SLICE)
+            {
+                m_avgPFrameQp = m_avgPFrameQp == 0 ? rce->qpNoVbv : m_avgPFrameQp;
+                m_avgPFrameQp = (m_avgPFrameQp + rce->qpNoVbv) / 2;
+            }
+
             if (m_isVbv)
             {
                 /* Do not overflow vbv */
