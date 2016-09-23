@@ -3194,6 +3194,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                 singlePsyEnergy[TEXT_LUMA][0] = nonZeroPsyEnergyY;
                 cbfFlag[TEXT_LUMA][0] = !!numSigTSkipY;
                 bestTransformMode[TEXT_LUMA][0] = 1;
+                if (m_param->limitTU)
+                    numSig[TEXT_LUMA][0] = numSigTSkipY;
                 uint32_t numCoeffY = 1 << (log2TrSize << 1);
                 memcpy(coeffCurY, m_tsCoeff, sizeof(coeff_t) * numCoeffY);
                 primitives.cu[partSize].copy_ss(curResiY, strideResiY, m_tsResidual, trSize);
@@ -3331,6 +3333,21 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
             fullCost.rdcost = m_rdCost.calcPsyRdCost(fullCost.distortion, fullCost.bits, fullCost.energy);
         else
             fullCost.rdcost = m_rdCost.calcRdCost(fullCost.distortion, fullCost.bits);
+
+        if (m_param->limitTU && bCheckSplit)
+        {
+            // Stop recursion if the TU's energy level is minimal
+            if (cbfFlag[TEXT_LUMA][0] == 0)
+                bCheckSplit = false;
+            else if (numSig[TEXT_LUMA][0] < (cuGeom.numPartitions / 16))
+            {
+                uint32_t energy = 0;
+                for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
+                    energy += abs(coeffCurY[i]);
+                if (energy < numSig[TEXT_LUMA][0])
+                    bCheckSplit = false;
+            }
+        }
     }
 
     // code sub-blocks
