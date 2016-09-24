@@ -341,6 +341,8 @@ bool RateControl::init(const SPS& sps)
             m_param->rc.vbvBufferInit = x265_clip3(0.0, 1.0, m_param->rc.vbvBufferInit / m_param->rc.vbvBufferSize);
         m_param->rc.vbvBufferInit = x265_clip3(0.0, 1.0, X265_MAX(m_param->rc.vbvBufferInit, m_bufferRate / m_bufferSize));
         m_bufferFillFinal = m_bufferSize * m_param->rc.vbvBufferInit;
+        m_bufferFillActual = m_bufferFillFinal;
+        m_bufferExcess = 0;
     }
 
     m_totalBits = 0;
@@ -2446,6 +2448,10 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
     m_bufferFillFinal = X265_MAX(m_bufferFillFinal, 0);
     m_bufferFillFinal += m_bufferRate;
     m_bufferFillFinal = X265_MIN(m_bufferFillFinal, m_bufferSize);
+    double bufferBits = X265_MIN(bits + m_bufferExcess, m_bufferRate);
+    m_bufferExcess = X265_MAX(m_bufferExcess - bufferBits + bits, 0);
+    m_bufferFillActual += bufferBits - bits;
+    m_bufferFillActual = X265_MIN(m_bufferFillActual, m_bufferSize);
 }
 
 /* After encoding one frame, update rate control state */

@@ -64,6 +64,8 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
                 fprintf(csvfp, "Encode Order, Type, POC, QP, Bits, Scenecut, ");
                 if (param.rc.rateControlMode == X265_RC_CRF)
                     fprintf(csvfp, "RateFactor, ");
+                if (param.rc.vbvBufferSize)
+                    fprintf(csvfp, "BufferFill, ");
                 if (param.bEnablePsnr)
                     fprintf(csvfp, "Y PSNR, U PSNR, V PSNR, YUV PSNR, ");
                 if (param.bEnableSsim)
@@ -132,6 +134,8 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
     fprintf(csvfp, "%d, %c-SLICE, %4d, %2.2lf, %10d, %d,", frameStats->encoderOrder, frameStats->sliceType, frameStats->poc, frameStats->qp, (int)frameStats->bits, frameStats->bScenecut);
     if (param.rc.rateControlMode == X265_RC_CRF)
         fprintf(csvfp, "%.3lf,", frameStats->rateFactor);
+    if (param.rc.vbvBufferSize)
+        fprintf(csvfp, "%.3lf,", frameStats->bufferFill);
     if (param.bEnablePsnr)
         fprintf(csvfp, "%.3lf, %.3lf, %.3lf, %.3lf,", frameStats->psnrY, frameStats->psnrU, frameStats->psnrV, frameStats->psnr);
     if (param.bEnableSsim)

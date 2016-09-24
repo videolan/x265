@@ -144,6 +144,8 @@ public:
     double m_rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
     double m_rateFactorMaxDecrement; /* don't allow RF below (this value). */
     double m_avgPFrameQp;
+    double m_bufferFillActual;
+    double m_bufferExcess;
     bool   m_isFirstMiniGop;
     Predictor m_pred[4];       /* Slice predictors to preidct bits for each Slice type - I,P,Bref and B */
     int64_t m_leadingNoBSatd;
