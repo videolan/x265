@@ -9,4 +9,4 @@ x265 Documentation
    threading
    presets
    lossless
-   releasenote
+   releasenotes
