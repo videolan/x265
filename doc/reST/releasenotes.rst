@@ -2,8 +2,10 @@
 Release Notes
 *************
 
-Version 2.1: Release date - 27th September, 2016.
-=================================================
+Version 2.1
+===========
+
+Release date - 27th September, 2016
 
 Encoder enhancements
 --------------------
@@ -24,8 +26,10 @@ Bug fixes
 2. Assembly fix for crashes in 32-bit from dct_sse4.
 3. Threadpool creation fix in windows platform.
 
-Version 2.0: Release date - 13th July, 2016
-===========================================
+Version 2.0
+===========
+
+Release date - 13th July, 2016
 
 New Features
 ------------
@@ -49,8 +53,10 @@ Misc
 ----
 1. An SSIM calculation bug was corrected
 
-Version 1.9: Release date - 29th January, 2016
-==============================================
+Version 1.9
+===========
+
+Release date - 29th January, 2016
 
 New Features
 ------------
@@ -76,8 +82,10 @@ Presets and Performance
 2. The default psy-rd strength has been increased to 2.0
 3. Multi-socket machines now use a single pool of threads that can work cross-socket.
 
-Version 1.8: Release date - 10th August, 2016
-=============================================
+Version 1.8
+===========
+
+Release date - 10th August, 2016
 
 API Changes
 -----------
