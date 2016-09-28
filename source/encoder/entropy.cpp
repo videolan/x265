@@ -324,7 +324,7 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_FLAG(0, "sps_extension_flag");
 }
 
-void Entropy::codePPS(const PPS& pps, bool filerAcross)
+void Entropy::codePPS( const PPS& pps, bool filerAcross, int iPPSInitQpMinus26 )
 {
     WRITE_UVLC(0,                          "pps_pic_parameter_set_id");
     WRITE_UVLC(0,                          "pps_seq_parameter_set_id");
@@ -336,7 +336,7 @@ void Entropy::codePPS(const PPS& pps, bool filerAcross)
     WRITE_UVLC(0,                          "num_ref_idx_l0_default_active_minus1");
     WRITE_UVLC(0,                          "num_ref_idx_l1_default_active_minus1");
 
-    WRITE_SVLC(0, "init_qp_minus26");
+    WRITE_SVLC(iPPSInitQpMinus26,         "init_qp_minus26");
     WRITE_FLAG(pps.bConstrainedIntraPred, "constrained_intra_pred_flag");
     WRITE_FLAG(pps.bTransformSkipEnabled, "transform_skip_enabled_flag");
 
@@ -673,7 +673,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
     if (!slice.isIntra())
         WRITE_UVLC(MRG_MAX_NUM_CANDS - slice.m_maxNumMergeCand, "five_minus_max_num_merge_cand");
 
-    int code = sliceQp - 26;
+    int code = sliceQp - (slice.m_iPPSQpMinus26 + 26);
     WRITE_SVLC(code, "slice_qp_delta");
 
     // TODO: Enable when pps_loop_filter_across_slices_enabled_flag==1

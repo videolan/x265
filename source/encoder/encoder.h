@@ -26,6 +26,7 @@
 
 #include "common.h"
 #include "slice.h"
+#include "threading.h"
 #include "scalinglist.h"
 #include "x265.h"
 #include "nal.h"
@@ -135,6 +136,12 @@ public:
     /* Begin intra refresh when one not in progress or else begin one as soon as the current 
      * one is done. Requires bIntraRefresh to be set.*/
     int                m_bQueuedIntraRefresh;
+
+    /* For optimising slice QP */
+    Lock               m_sliceQpLock;
+    int                m_iFrameNum;
+    int64_t            m_iBitsCostSum[QP_MAX_MAX + 1];
+    int                m_iPPSQpMinus26;
 
     Encoder();
     ~Encoder() {}

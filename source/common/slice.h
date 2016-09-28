@@ -347,6 +347,8 @@ public:
     bool        m_sLFaseFlag;      // loop filter boundary flag
     bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
 
+    int         m_iPPSQpMinus26;
+	
     Slice()
     {
         m_lastIDR = 0;
@@ -356,6 +358,7 @@ public:
         memset(m_refReconPicList, 0, sizeof(m_refReconPicList));
         memset(m_refPOCList, 0, sizeof(m_refPOCList));
         disableWeights();
+        m_iPPSQpMinus26 = 0;
     }
 
     void disableWeights();

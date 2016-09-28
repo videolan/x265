@@ -74,6 +74,8 @@ Encoder::Encoder()
     m_threadPool = NULL;
     m_analysisFile = NULL;
     m_offsetEmergency = NULL;
+    m_iFrameNum = 0;
+    m_iPPSQpMinus26 = 0;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
 
@@ -869,6 +871,36 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_4x4_PARTITIONS);
             }
 
+            if( frameEnc->m_lowres.bKeyframe && m_param->bRepeatHeaders )
+            {
+                ScopedLock qpLock( m_sliceQpLock );
+                if( m_iFrameNum >= m_param->frameNumThreads )
+                {
+                    //Search the least cost
+                    int64_t iLeastCost = m_iBitsCostSum[0];
+                    int iLeastId = 0;
+                    for( int i = 1; i < QP_MAX_MAX + 1; i++ )
+                    {
+                        if( iLeastCost > m_iBitsCostSum[i] )
+                        {
+                            iLeastId = i;
+                            iLeastCost = m_iBitsCostSum[i];
+                        }
+                    }
+
+                    m_iPPSQpMinus26 = (iLeastId + 1) - 26;
+
+                    m_iFrameNum = 0;
+                }
+
+                for( int i = 0; i < QP_MAX_MAX + 1; i++ )
+                {
+                    m_iBitsCostSum[i] = 0;
+                }
+            }
+
+            frameEnc->m_encData->m_slice->m_iPPSQpMinus26 = m_iPPSQpMinus26;
+
             curEncoder->m_rce.encodeOrder = frameEnc->m_encodeOrder = m_encodedFrameNum++;
             if (m_bframeDelay)
             {
@@ -1430,7 +1462,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     list.serialize(NAL_UNIT_SPS, bs);
 
     bs.resetBits();
-    sbacCoder.codePPS(m_pps, (m_param->maxSlices <= 1));
+    sbacCoder.codePPS( m_pps, (m_param->maxSlices <= 1), m_iPPSQpMinus26);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
