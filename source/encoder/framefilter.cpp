@@ -503,10 +503,13 @@ void FrameFilter::processRow(int row)
         processPostRow(row);
 
     // NOTE: slices parallelism will be execute out-of-order
-    int numRowFinished;
-    for(numRowFinished = 0; numRowFinished < m_numRows; numRowFinished++)
-        if (!m_frame->m_reconRowFlag[numRowFinished].get())
-            break;
+    int numRowFinished = 0;
+    if (m_frame->m_reconRowFlag)
+    {
+        for (numRowFinished = 0; numRowFinished < m_numRows; numRowFinished++)
+            if (!m_frame->m_reconRowFlag[numRowFinished].get())
+                break;
+    }
 
     if (numRowFinished == m_numRows)
     {
