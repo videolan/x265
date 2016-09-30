@@ -274,6 +274,7 @@ public:
     bool            m_bFrameParallel;
     uint32_t        m_numLayers;
     uint32_t        m_refLagPixels;
+    uint32_t        m_maxTUDepth;
 
     int16_t         m_sliceMaxY;
     int16_t         m_sliceMinY;
