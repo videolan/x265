@@ -49,6 +49,8 @@
 #define ProfileCounter(cu, count)
 #endif
 
+#define NUM_SUBPART MAX_TS_SIZE * 4 // 4 sub partitions * 4 depth
+
 namespace X265_NS {
 // private namespace
 
@@ -378,8 +380,17 @@ protected:
         Cost() { rdcost = 0; bits = 0; distortion = 0; energy = 0; }
     };
 
+    struct cacheTUInfo
+    {
+        Cost cost[NUM_SUBPART];
+        uint32_t bestTransformMode[NUM_SUBPART][MAX_NUM_COMPONENT][2];
+        uint8_t cbfFlag[NUM_SUBPART][MAX_NUM_COMPONENT][2];
+        Entropy rqtStore[NUM_SUBPART];
+    };
+
     uint64_t estimateNullCbfCost(sse_t dist, uint32_t psyEnergy, uint32_t tuDepth, TextType compId);
-    void     estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& costs, const uint32_t depthRange[2]);
+    bool     splitTU(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, ShortYuv& resiYuv, Cost& splitCost, const uint32_t depthRange[2], cacheTUInfo& cache, int32_t splitMore);
+    void     estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& costs, const uint32_t depthRange[2], cacheTUInfo& cache, int32_t splitMore = -1);
 
     // generate prediction, generate residual and recon. if bAllowSplit, find optimal RQT splits
     void     codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth, uint32_t absPartIdx, bool bAllowSplit, Cost& costs, const uint32_t depthRange[2]);
