@@ -1301,11 +1301,11 @@ typedef struct x265_param
     /* Maximum of the picture order count */
     int log2MaxPocLsb;
 
-    /* Dicard SEI messages when printing */
-    int bDiscardSEI;
-    
-    /* Control removing optional vui information (timing, HRD info) to get low bitrate */
-    int       bDiscardOptionalVUI;
+    /* Emit VUI Timing info, an optional VUI field */
+    int bEmitVUITimingInfo;
+
+    /* Emit HRD Timing info */
+    int bEmitVUIHRDInfo;
 
     /* Maximum count of Slices of picture, the value range is [1, maximum rows] */
     unsigned int maxSlices;

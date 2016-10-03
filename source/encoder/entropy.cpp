@@ -319,7 +319,7 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_FLAG(sps.bUseStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
 
     WRITE_FLAG(1, "vui_parameters_present_flag");
-    codeVUI(sps.vuiParameters, sps.maxTempSubLayers, sps.bDiscardOptionalVUI);
+    codeVUI(sps.vuiParameters, sps.maxTempSubLayers, sps.bEmitVUITimingInfo, sps.bEmitVUIHRDInfo);
 
     WRITE_FLAG(0, "sps_extension_flag");
 }
@@ -422,7 +422,7 @@ void Entropy::codeProfileTier(const ProfileTierLevel& ptl, int maxTempSubLayers)
     }
 }
 
-void Entropy::codeVUI(const VUI& vui, int maxSubTLayers, bool bDiscardOptionalVUI)
+void Entropy::codeVUI(const VUI& vui, int maxSubTLayers, bool bEmitVUITimingInfo, bool bEmitVUIHRDInfo)
 {
     WRITE_FLAG(vui.aspectRatioInfoPresentFlag, "aspect_ratio_info_present_flag");
     if (vui.aspectRatioInfoPresentFlag)
@@ -473,7 +473,7 @@ void Entropy::codeVUI(const VUI& vui, int maxSubTLayers, bool bDiscardOptionalVU
         WRITE_UVLC(vui.defaultDisplayWindow.bottomOffset, "def_disp_win_bottom_offset");
     }
 
-    if (bDiscardOptionalVUI)
+    if (!bEmitVUITimingInfo)
         WRITE_FLAG(0, "vui_timing_info_present_flag");
     else
     {
@@ -483,7 +483,7 @@ void Entropy::codeVUI(const VUI& vui, int maxSubTLayers, bool bDiscardOptionalVU
         WRITE_FLAG(0, "vui_poc_proportional_to_timing_flag");
     }
 
-    if (bDiscardOptionalVUI)
+    if (!bEmitVUIHRDInfo)
         WRITE_FLAG(0, "vui_hrd_parameters_present_flag");
     else
     {

@@ -1491,7 +1491,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         list.serialize(NAL_UNIT_PREFIX_SEI, bs);
     }
 
-    if (!m_param->bDiscardSEI && m_param->bEmitInfoSEI)
+    if (m_param->bEmitInfoSEI)
     {
         char *opts = x265_param2string(m_param);
         if (opts)
@@ -1521,7 +1521,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         }
     }
 
-    if (!m_param->bDiscardSEI && (m_param->bEmitHRDSEI || !!m_param->interlaceMode))
+    if ((m_param->bEmitHRDSEI || !!m_param->interlaceMode))
     {
         /* Picture Timing and Buffering Period SEI require the SPS to be "activated" */
         SEIActiveParameterSets sei;
@@ -1576,7 +1576,8 @@ void Encoder::initSPS(SPS *sps)
 
     sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
     sps->bTemporalMVPEnabled = m_param->bEnableTemporalMvp;
-    sps->bDiscardOptionalVUI = m_param->bDiscardOptionalVUI;
+    sps->bEmitVUITimingInfo = m_param->bEmitVUITimingInfo;
+    sps->bEmitVUIHRDInfo = m_param->bEmitVUIHRDInfo;
     sps->log2MaxPocLsb = m_param->log2MaxPocLsb;
     int maxDeltaPOC = (m_param->bframes + 2) * (!!m_param->bBPyramid + 1) * 2;
     while ((1 << sps->log2MaxPocLsb) <= maxDeltaPOC * 2)

@@ -1824,7 +1824,7 @@ Bitstream options
 	enhancement layer. A decoder may chose to drop the enhancement layer 
 	and only decode and display the base layer slices.
 	
-	If used with a fixed GOP (:option:`b-adapt` 0) and :option:`bframes`
+	If used with a fixed GOP (:option:`--b-adapt` 0) and :option:`--bframes`
 	3 then the two layers evenly split the frame rate, with a cadence of
 	PbBbP. You probably also want :option:`--no-scenecut` and a keyframe
 	interval that is a multiple of 4.
@@ -1833,15 +1833,15 @@ Bitstream options
 
   Maximum of the picture order count. Default 8
 
-.. option:: --discard-sei
+.. option:: --[no]-vui-timing-info
 
-  Discard SEI messages generated from the final bitstream. HDR-related SEI
-  messages are always dumped, immaterial of this option. Default disabled.
-	
-.. option:: --discard-vui
+	Discard optional VUI timing info from bitstream. Default enabled.
 
-	Discard optional VUI information (timing, HRD info) from the
-	bitstream. Default disabled.
+.. option:: --[no]-vui-hrd-info
+
+	Discard optional VUI HRD info from bitstream. Default enabled when
+	:option:`--hrd` is enabled.
+
 
 Debugging options
 =================

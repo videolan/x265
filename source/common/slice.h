@@ -243,7 +243,8 @@ struct SPS
     bool     bUseAMP; // use param
     bool     bUseStrongIntraSmoothing; // use param
     bool     bTemporalMVPEnabled;
-    bool     bDiscardOptionalVUI;
+    bool     bEmitVUITimingInfo;
+    bool     bEmitVUIHRDInfo;
 
     Window   conformanceWindow;
     VUI      vuiParameters;
