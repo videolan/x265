@@ -352,6 +352,9 @@ typedef enum
 #define X265_REF_LIMIT_DEPTH    1
 #define X265_REF_LIMIT_CU       2
 
+#define X265_TU_LIMIT_BFS       1
+#define X265_TU_LIMIT_DFS       2
+
 #define X265_BFRAME_MAX         16
 #define X265_MAX_FRAME_THREADS  16
 
@@ -823,6 +826,10 @@ typedef struct x265_param
      * 4. The higher the value the more efficiently the residual can be
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxIntraDepth;
+
+    /* Enable early exit decisions for TU to avoid recursing to higher depths.
+     * Default: 0 */
+    uint32_t  limitTU;
 
     /* Set the amount of rate-distortion analysis to use within quant. 0 implies
      * no rate-distortion optimization. At level 1 rate-distortion cost is used to

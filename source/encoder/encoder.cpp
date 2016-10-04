@@ -1912,6 +1912,11 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "--rd-refine disabled, requires RD level > 4 and adaptive quant\n");
     }
 
+    if (p->limitTU && p->tuQTMaxInterDepth < 2)
+    {
+        p->limitTU = 0;
+        x265_log(p, X265_LOG_WARNING, "limit TU disabled, requires tu-inter-depth > 1\n");
+    }
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
     if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
     {

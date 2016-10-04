@@ -176,6 +176,7 @@ void x265_param_default(x265_param* param)
     param->maxNumReferences = 3;
     param->bEnableTemporalMvp = 1;
     param->bSourceReferenceEstimation = 0;
+    param->limitTU = 0;
 
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
@@ -901,21 +902,14 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     // solve "fatal error C1061: compiler limit : blocks nested too deeply"
     if (bExtraParams)
     {
-        bExtraParams = false;
-        if (0) ;
-        OPT("slices") p->maxSlices = atoi(value);
-        else
-            bExtraParams = true;
-    }
-
-    if (bExtraParams)
-    {
         if (0) ;
         OPT("qpmin") p->rc.qpMin = atoi(value);
         OPT("analyze-src-pics") p->bSourceReferenceEstimation = atobool(value);
         OPT("log2-max-poc-lsb") p->log2MaxPocLsb = atoi(value);
         OPT("vui-timing-info") p->bEmitVUITimingInfo = atobool(value);
         OPT("vui-hrd-info") p->bEmitVUIHRDInfo = atobool(value);
+        OPT("slices") p->maxSlices = atoi(value);
+        OPT("limit-TU") p->limitTU = atoi(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1122,6 +1116,7 @@ int x265_check_params(x265_param* param)
           "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1");
     CHECK((param->maxTUSize != 32 && param->maxTUSize != 16 && param->maxTUSize != 8 && param->maxTUSize != 4),
           "max TU size must be 4, 8, 16, or 32");
+    CHECK(param->limitTU > 2, "Invalid limit-TU option, limit-TU must be 0, 1 or 2");
     CHECK(param->maxNumMergeCand < 1, "MaxNumMergeCand must be 1 or greater.");
     CHECK(param->maxNumMergeCand > 5, "MaxNumMergeCand must be 5 or smaller.");
 
@@ -1395,6 +1390,7 @@ void x265_print_params(x265_param* param)
     TOOLVAL(param->noiseReductionInter, "nr-inter=%d");
     TOOLOPT(param->bEnableTSkipFast, "tskip-fast");
     TOOLOPT(!param->bEnableTSkipFast && param->bEnableTransformSkip, "tskip");
+    TOOLVAL(param->limitTU , "limitTU=%d");
     TOOLOPT(param->bCULossless, "cu-lossless");
     TOOLOPT(param->bEnableSignHiding, "signhide");
     TOOLOPT(param->bEnableTemporalMvp, "tmvp");
@@ -1486,6 +1482,7 @@ char *x265_param2string(x265_param* p)
     s += sprintf(s, " rdoq-level=%d", p->rdoqLevel);
     s += sprintf(s, " psy-rdoq=%.2f", p->psyRdoq);
     s += sprintf(s, " log2-max-poc-lsb=%d", p->log2MaxPocLsb);
+    s += sprintf(s, " limit-TU=%d", p->limitTU);
     BOOL(p->bEnableRdRefine, "rd-refine");
     BOOL(p->bEnableSignHiding, "signhide");
     BOOL(p->bEnableLoopFilter, "deblock");

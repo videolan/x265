@@ -869,6 +869,16 @@ as the residual quad-tree (RQT).
 	partitions, in which case a TU split is implied and thus the
 	residual quad-tree begins one layer below the CU quad-tree.
 
+.. option:: --limit-TU <0|1|2>
+
+	Enables early exit from TU depth recursion. It has 2 levels.
+	Level 1 - decides to recurse to next higher depth based on cost comparison of
+	full size TU and split TU.
+	Level 2 - based on first split subTU's depth, limits recursion of other split
+	subTUs.
+
+	Default: 0
+
 .. option:: --nr-intra <integer>, --nr-inter <integer>
 
 	Noise reduction - an adaptive deadzone applied after DCT
