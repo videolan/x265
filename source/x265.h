@@ -827,8 +827,8 @@ typedef struct x265_param
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxIntraDepth;
 
-    /* Enable early exit decisions for TU to avoid recursing to higher depths.
-     * Default: 0 */
+    /* Enable early exit decisions for inter coded blocks to avoid recursing to
+     * higher TU depths. Default: 0 */
     uint32_t  limitTU;
 
     /* Set the amount of rate-distortion analysis to use within quant. 0 implies

@@ -2620,10 +2620,11 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
 
     if (m_param->limitTU == X265_TU_LIMIT_DFS)
         m_maxTUDepth = 0;
-    cacheTUInfo cache;
+    else if (m_param->limitTU == X265_TU_LIMIT_BFS)
+        memset(&m_cacheTU, 0, sizeof(TUInfoCache));
 
     Cost costs;
-    estimateResidualQT(interMode, cuGeom, 0, 0, *resiYuv, costs, tuDepthRange, cache);
+    estimateResidualQT(interMode, cuGeom, 0, 0, *resiYuv, costs, tuDepthRange);
 
     uint32_t tqBypass = cu.m_tqBypass[0];
     if (!tqBypass)
@@ -2872,7 +2873,7 @@ uint64_t Search::estimateNullCbfCost(sse_t dist, uint32_t psyEnergy, uint32_t tu
         return m_rdCost.calcRdCost(dist, nullBits);
 }
 
-bool Search::splitTU(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, ShortYuv& resiYuv, Cost& splitCost, const uint32_t depthRange[2], cacheTUInfo& cache, int32_t splitMore)
+bool Search::splitTU(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, ShortYuv& resiYuv, Cost& splitCost, const uint32_t depthRange[2], int32_t splitMore)
 {
     CUData& cu = mode.cu;
     uint32_t depth = cuGeom.depth + tuDepth;
@@ -2888,7 +2889,7 @@ bool Search::splitTU(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint
             for (uint32_t i = 0; i < cuGeom.numPartitions / 4; i++)
                 m_maxTUDepth = X265_MAX(m_maxTUDepth, cu.m_tuDepth[i]);
         }
-        estimateResidualQT(mode, cuGeom, qPartIdx, tuDepth + 1, resiYuv, splitCost, depthRange, cache, splitMore);
+        estimateResidualQT(mode, cuGeom, qPartIdx, tuDepth + 1, resiYuv, splitCost, depthRange, splitMore);
         ycbf |= cu.getCbf(qPartIdx, TEXT_LUMA,     tuDepth + 1);
         if (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400)
         {
@@ -2921,7 +2922,7 @@ bool Search::splitTU(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint
     return ycbf || ucbf || vcbf;
 }
 
-void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, ShortYuv& resiYuv, Cost& outCosts, const uint32_t depthRange[2], cacheTUInfo& cache, int32_t splitMore)
+void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, ShortYuv& resiYuv, Cost& outCosts, const uint32_t depthRange[2], int32_t splitMore)
 {
     CUData& cu = mode.cu;
     uint32_t depth = cuGeom.depth + tuDepth;
@@ -3437,12 +3438,12 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
             {
                 for(int part = 0; part < (m_csp == X265_CSP_I422) + 1; part++)
                 {
-                    cache.bestTransformMode[idx][plane][part] = bestTransformMode[plane][part];
-                    cache.cbfFlag[idx][plane][part] = cbfFlag[plane][part];
+                    m_cacheTU.bestTransformMode[idx][plane][part] = bestTransformMode[plane][part];
+                    m_cacheTU.cbfFlag[idx][plane][part] = cbfFlag[plane][part];
                 }
             }
-            cache.cost[idx] = fullCost;
-            m_entropyCoder.store(cache.rqtStore[idx]);
+            m_cacheTU.cost[idx] = fullCost;
+            m_entropyCoder.store(m_cacheTU.rqtStore[idx]);
         }
     }
     if (bLoadTUData)
@@ -3451,12 +3452,12 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         {
             for(int part = 0; part < (m_csp == X265_CSP_I422) + 1; part++)
             {
-                bestTransformMode[plane][part] = cache.bestTransformMode[idx][plane][part];
-                cbfFlag[plane][part] = cache.cbfFlag[idx][plane][part];
+                bestTransformMode[plane][part] = m_cacheTU.bestTransformMode[idx][plane][part];
+                cbfFlag[plane][part] = m_cacheTU.cbfFlag[idx][plane][part];
             }
         }
-        fullCost = cache.cost[idx];
-        m_entropyCoder.load(cache.rqtStore[idx]);
+        fullCost = m_cacheTU.cost[idx];
+        m_entropyCoder.load(m_cacheTU.rqtStore[idx]);
         bCheckFull = true;
     }
 
@@ -3478,7 +3479,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
             splitCost.bits = m_entropyCoder.getNumberOfWrittenBits();
         }
 
-        bool yCbCrCbf = splitTU(mode, cuGeom, absPartIdx, tuDepth, resiYuv, splitCost, depthRange, cache, 0);
+        bool yCbCrCbf = splitTU(mode, cuGeom, absPartIdx, tuDepth, resiYuv, splitCost, depthRange, 0);
         if (yCbCrCbf || !bCheckFull)
         {
             if (splitCost.rdcost < fullCost.rdcost)
@@ -3498,7 +3499,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                             m_entropyCoder.codeTransformSubdivFlag(1, 5 - log2TrSize);
                             splitCost.bits = m_entropyCoder.getNumberOfWrittenBits();
                         }
-                        splitTU(mode, cuGeom, absPartIdx, tuDepth, resiYuv, splitCost, depthRange, cache, 1);
+                        splitTU(mode, cuGeom, absPartIdx, tuDepth, resiYuv, splitCost, depthRange, 1);
                     }
                 }
                 outCosts.distortion += splitCost.distortion;
