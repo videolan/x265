@@ -152,7 +152,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     // 7.4.7.1 - Ceil( Log2( PicSizeInCtbsY ) ) bits
     {
         unsigned long tmp;
-        CLZ(tmp, (numRows * numCols));
+        CLZ(tmp, (numRows * numCols - 1));
         m_sliceAddrBits = (uint16_t)(tmp + 1);
     }
 
