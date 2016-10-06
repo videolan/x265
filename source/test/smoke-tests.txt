@@ -19,6 +19,7 @@ CrowdRun_1920x1080_50_10bit_444.yuv,--preset=ultrafast --constrained-intra --min
 CrowdRun_1920x1080_50_10bit_444.yuv,--preset=medium --max-tu-size 16
 DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset=veryfast --min-cu 16
 DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset=fast --weightb --interlace bff
+DucksAndLegs_1920x1080_60_10bit_422.yuv,--preset=veryslow --limit-ref 1 --limit-mode --tskip --limit-tu 1
 
 # Main12 intraCost overflow bug test
 720p50_parkrun_ter.y4m,--preset medium
