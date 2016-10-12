@@ -139,9 +139,10 @@ public:
 
     /* For optimising slice QP */
     Lock               m_sliceQpLock;
-    int                m_iFrameNum;
-    int64_t            m_iBitsCostSum[QP_MAX_MAX + 1];
+    int                m_iFrameNum;   
     int                m_iPPSQpMinus26;
+    int                m_iLastSliceQp;
+    int64_t            m_iBitsCostSum[QP_MAX_MAX + 1];
 
     Encoder();
     ~Encoder() {}

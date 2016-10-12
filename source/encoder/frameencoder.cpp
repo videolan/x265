@@ -473,6 +473,7 @@ void FrameEncoder::compressFrame()
         }
 
         m_top->m_iFrameNum++;
+        m_top->m_iLastSliceQp = slice->m_sliceQp;
     }
 
     m_initSliceContext.resetEntropy(*slice);
