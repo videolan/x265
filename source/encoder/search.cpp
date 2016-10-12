@@ -3420,14 +3420,15 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         if (m_param->limitTU && bCheckSplit)
         {
             // Stop recursion if the TU's energy level is minimal
+            uint32_t numCoeff = trSize * trSize;
             if (cbfFlag[TEXT_LUMA][0] == 0)
                 bCheckSplit = false;
-            else if (numSig[TEXT_LUMA][0] < (cuGeom.numPartitions / 16))
+            else if (numSig[TEXT_LUMA][0] < (numCoeff / 64))
             {
                 uint32_t energy = 0;
-                for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
+                for (uint32_t i = 0; i < numCoeff; i++)
                     energy += abs(coeffCurY[i]);
-                if (energy < numSig[TEXT_LUMA][0])
+                if (energy == numSig[TEXT_LUMA][0])
                     bCheckSplit = false;
             }
         }
