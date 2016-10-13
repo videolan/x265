@@ -243,7 +243,7 @@ public:
     int  rateControlStart(Frame* curFrame, RateControlEntry* rce, Encoder* enc);
     void rateControlUpdateStats(RateControlEntry* rce);
     int  rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce);
-    int  rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv);
+    int  rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv);
     int  rateControlSliceType(int frameNum);
     bool cuTreeReadFor2Pass(Frame* curFrame);
     void hrdFullness(SEIBufferingPeriod* sei);

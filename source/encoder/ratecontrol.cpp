@@ -2180,7 +2180,7 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
     for (uint32_t row = 0; row < maxRows; row++)
     {
         encodedBitsSoFar += curEncData.m_rowStat[row].encodedBits;
-        rowSatdCostSoFar = curEncData.m_rowStat[row].diagSatd;
+        rowSatdCostSoFar = curEncData.m_rowStat[row].rowSatd;
         uint32_t satdCostForPendingCus = curEncData.m_rowStat[row].satdForVbv - rowSatdCostSoFar;
         satdCostForPendingCus >>= X265_DEPTH - 8;
         if (satdCostForPendingCus  > 0)
@@ -2209,7 +2209,7 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
                 }
 
                 refRowSatdCost >>= X265_DEPTH - 8;
-                refQScale = refEncData.m_rowStat[row].diagQpScale;
+                refQScale = refEncData.m_rowStat[row].rowQpScale;
             }
 
             if (picType == I_SLICE || qScale >= refQScale)
@@ -2231,7 +2231,7 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
             }
             else if (picType == P_SLICE)
             {
-                intraCostForPendingCus = curEncData.m_rowStat[row].intraSatdForVbv - curEncData.m_rowStat[row].diagIntraSatd;
+                intraCostForPendingCus = curEncData.m_rowStat[row].intraSatdForVbv - curEncData.m_rowStat[row].rowIntraSatd;
                 intraCostForPendingCus >>= X265_DEPTH - 8;
                 /* Our QP is lower than the reference! */
                 double pred_intra = predictSize(rce->rowPred[1], qScale, intraCostForPendingCus);
@@ -2246,16 +2246,16 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
     return totalSatdBits + encodedBitsSoFar;
 }
 
-int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv)
+int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv)
 {
     FrameData& curEncData = *curFrame->m_encData;
     double qScaleVbv = x265_qp2qScale(qpVbv);
-    uint64_t rowSatdCost = curEncData.m_rowStat[row].diagSatd;
+    uint64_t rowSatdCost = curEncData.m_rowStat[row].rowSatd;
     double encodedBits = curEncData.m_rowStat[row].encodedBits;
 
-    if (row == 1)
+    if (m_param->bEnableWavefront && row == 1)
     {
-        rowSatdCost += curEncData.m_rowStat[0].diagSatd;
+        rowSatdCost += curEncData.m_rowStat[0].rowSatd;
         encodedBits += curEncData.m_rowStat[0].encodedBits;
     }
     rowSatdCost >>= X265_DEPTH - 8;
@@ -2263,11 +2263,11 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
     if (curEncData.m_slice->m_sliceType != I_SLICE)
     {
         Frame* refFrame = curEncData.m_slice->m_refFrameList[0][0];
-        if (qpVbv < refFrame->m_encData->m_rowStat[row].diagQp)
+        if (qpVbv < refFrame->m_encData->m_rowStat[row].rowQp)
         {
-            uint64_t intraRowSatdCost = curEncData.m_rowStat[row].diagIntraSatd;
-            if (row == 1)
-                intraRowSatdCost += curEncData.m_rowStat[0].diagIntraSatd;
+            uint64_t intraRowSatdCost = curEncData.m_rowStat[row].rowIntraSatd;
+            if (m_param->bEnableWavefront && row == 1)
+                intraRowSatdCost += curEncData.m_rowStat[0].rowIntraSatd;
             intraRowSatdCost >>= X265_DEPTH - 8;
             updatePredictor(rce->rowPred[1], qScaleVbv, (double)intraRowSatdCost, encodedBits);
         }
@@ -2328,7 +2328,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
         }
 
         while (qpVbv > qpMin
-               && (qpVbv > curEncData.m_rowStat[0].diagQp || m_singleFrameVbv)
+               && (qpVbv > curEncData.m_rowStat[0].rowQp || m_singleFrameVbv)
                && (((accFrameBits < rce->frameSizePlanned * 0.8f && qpVbv <= prevRowQp)
                    || accFrameBits < (rce->bufferFill - m_bufferSize + m_bufferRate) * 1.1)
                    && (!m_param->rc.bStrictCbr ? 1 : abrOvershoot < 0)))
@@ -2348,7 +2348,7 @@ int RateControl::rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateCo
                 accFrameBits = predictRowsSizeSum(curFrame, rce, qpVbv, encodedBitsSoFar);
                 abrOvershoot = (accFrameBits + m_totalBits - m_wantedBitsWindow) / totalBitsNeeded;
             }
-            if (qpVbv > curEncData.m_rowStat[0].diagQp &&
+            if (qpVbv > curEncData.m_rowStat[0].rowQp &&
                 abrOvershoot < -0.1 && timeDone > 0.5 && accFrameBits < rce->frameSizePlanned - rcTol)
             {
                 qpVbv -= stepSize;

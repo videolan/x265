@@ -149,12 +149,6 @@ void Encoder::create()
         p->bEnableWavefront = p->bDistributeModeAnalysis = p->bDistributeMotionEstimation = p->lookaheadSlices = 0;
     }
 
-    if (!p->bEnableWavefront && p->rc.vbvBufferSize)
-    {
-        x265_log(p, X265_LOG_ERROR, "VBV requires wavefront parallelism\n");
-        m_aborted = true;
-    }
-
     x265_log(p, X265_LOG_INFO, "Slices                              : %d\n", p->maxSlices);
 
     char buf[128];

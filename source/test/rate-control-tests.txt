@@ -21,6 +21,9 @@ NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset medium --bitrate 8000 --vbv-
 big_buck_bunny_360p24.y4m,--preset medium --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 600 --aud --hrd --tune fast-decode
 sita_1920x1080_30.yuv,--preset superfast --crf 25 --vbv-bufsize 3000 --vbv-maxrate 4000 --vbv-bufsize 5000 --hrd  --crf-max 30
 sita_1920x1080_30.yuv,--preset superfast --bitrate 3000 --vbv-bufsize 3000 --vbv-maxrate 3000 --aud --strict-cbr
+BasketballDrive_1920x1080_50.y4m,--preset ultrafast --bitrate 3000 --vbv-bufsize 3000 --vbv-maxrate 3000 --no-wpp
+big_buck_bunny_360p24.y4m,--preset medium --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 600 --no-wpp --aud --hrd --tune fast-decode
+sita_1920x1080_30.yuv,--preset superfast --bitrate 3000 --vbv-bufsize 3000 --vbv-maxrate 3000 --aud --strict-cbr --no-wpp
 
 
 

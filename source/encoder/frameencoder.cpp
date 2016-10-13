@@ -50,6 +50,7 @@ FrameEncoder::FrameEncoder()
     m_bAllRowsStop = false;
     m_vbvResetTriggerRow = -1;
     m_outStreams = NULL;
+    m_backupStreams = NULL;
     m_substreamSizes = NULL;
     m_nr = NULL;
     m_tld = NULL;
@@ -85,6 +86,7 @@ void FrameEncoder::destroy()
 
     delete[] m_rows;
     delete[] m_outStreams;
+    delete[] m_backupStreams;
     X265_FREE(m_sliceBaseRow);
     X265_FREE(m_cuGeoms);
     X265_FREE(m_ctuGeomMap);
@@ -532,6 +534,8 @@ void FrameEncoder::compressFrame()
     if (!m_outStreams)
     {
         m_outStreams = new Bitstream[numSubstreams];
+        if (!m_param->bEnableWavefront)
+            m_backupStreams = new Bitstream[numSubstreams];
         m_substreamSizes = X265_MALLOC(uint32_t, numSubstreams);
         if (!m_param->bEnableSAO)
             for (uint32_t i = 0; i < numSubstreams; i++)
@@ -1203,17 +1207,25 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
         if (bIsVbv)
         {
-            if (!row)
+            if (col == 0 && !m_param->bEnableWavefront)
             {
-                curEncData.m_rowStat[row].diagQp = curEncData.m_avgQpRc;
-                curEncData.m_rowStat[row].diagQpScale = x265_qp2qScale(curEncData.m_avgQpRc);
+                m_backupStreams[0].copyBits(&m_outStreams[0]);
+                curRow.bufferedEntropy.copyState(rowCoder);
+                curRow.bufferedEntropy.loadContexts(rowCoder);
+            }
+            if (!row && m_vbvResetTriggerRow != intRow)
+            {
+                curEncData.m_rowStat[row].rowQp = curEncData.m_avgQpRc;
+                curEncData.m_rowStat[row].rowQpScale = x265_qp2qScale(curEncData.m_avgQpRc);
             }
 
             FrameData::RCStatCU& cuStat = curEncData.m_cuStat[cuAddr];
-            if (row >= col && row && m_vbvResetTriggerRow != intRow)
+            if (m_param->bEnableWavefront && row >= col && row && m_vbvResetTriggerRow != intRow)
                 cuStat.baseQp = curEncData.m_cuStat[cuAddr - numCols + 1].baseQp;
+            else if (!m_param->bEnableWavefront && row && m_vbvResetTriggerRow != intRow)
+                cuStat.baseQp = curEncData.m_rowStat[row - 1].rowQp;
             else
-                cuStat.baseQp = curEncData.m_rowStat[row].diagQp;
+                cuStat.baseQp = curEncData.m_rowStat[row].rowQp;
 
             /* TODO: use defines from slicetype.h for lowres block size */
             uint32_t block_y = (ctu->m_cuPelY >> g_maxLog2CUSize) * noOfBlocks;
@@ -1364,21 +1376,52 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         if (bIsVbv)
         {
             // Update encoded bits, satdCost, baseQP for each CU
-            curEncData.m_rowStat[row].diagSatd      += curEncData.m_cuStat[cuAddr].vbvCost;
-            curEncData.m_rowStat[row].diagIntraSatd += curEncData.m_cuStat[cuAddr].intraVbvCost;
+            curEncData.m_rowStat[row].rowSatd      += curEncData.m_cuStat[cuAddr].vbvCost;
+            curEncData.m_rowStat[row].rowIntraSatd += curEncData.m_cuStat[cuAddr].intraVbvCost;
             curEncData.m_rowStat[row].encodedBits   += curEncData.m_cuStat[cuAddr].totalBits;
             curEncData.m_rowStat[row].sumQpRc       += curEncData.m_cuStat[cuAddr].baseQp;
             curEncData.m_rowStat[row].numEncodedCUs = cuAddr;
 
-            // If current block is at row diagonal checkpoint, call vbv ratecontrol.
+            // If current block is at row end checkpoint, call vbv ratecontrol.
 
-            if (row == col && row)
+            if (!m_param->bEnableWavefront && col == numCols - 1)
             {
                 double qpBase = curEncData.m_cuStat[cuAddr].baseQp;
-                int reEncode = m_top->m_rateControl->rowDiagonalVbvRateControl(m_frame, row, &m_rce, qpBase);
+                int reEncode = m_top->m_rateControl->rowVbvRateControl(m_frame, row, &m_rce, qpBase);
                 qpBase = x265_clip3((double)m_param->rc.qpMin, (double)m_param->rc.qpMax, qpBase);
-                curEncData.m_rowStat[row].diagQp = qpBase;
-                curEncData.m_rowStat[row].diagQpScale =  x265_qp2qScale(qpBase);
+                curEncData.m_rowStat[row].rowQp = qpBase;
+                curEncData.m_rowStat[row].rowQpScale = x265_qp2qScale(qpBase);
+                if (reEncode < 0)
+                {
+                    x265_log(m_param, X265_LOG_DEBUG, "POC %d row %d - encode restart required for VBV, to %.2f from %.2f\n",
+                        m_frame->m_poc, row, qpBase, curEncData.m_cuStat[cuAddr].baseQp);
+
+                    m_vbvResetTriggerRow = row;
+                    m_outStreams[0].copyBits(&m_backupStreams[0]);
+
+                    rowCoder.copyState(curRow.bufferedEntropy);
+                    rowCoder.loadContexts(curRow.bufferedEntropy);
+
+                    curRow.completed = 0;
+                    memset(&curRow.rowStats, 0, sizeof(curRow.rowStats));
+                    curEncData.m_rowStat[row].numEncodedCUs = 0;
+                    curEncData.m_rowStat[row].encodedBits = 0;
+                    curEncData.m_rowStat[row].rowSatd = 0;
+                    curEncData.m_rowStat[row].rowIntraSatd = 0;
+                    curEncData.m_rowStat[row].sumQpRc = 0;
+                    curEncData.m_rowStat[row].sumQpAq = 0;
+                }
+            }
+
+            // If current block is at row diagonal checkpoint, call vbv ratecontrol.
+
+            else if (m_param->bEnableWavefront && row == col && row)
+            {
+                double qpBase = curEncData.m_cuStat[cuAddr].baseQp;
+                int reEncode = m_top->m_rateControl->rowVbvRateControl(m_frame, row, &m_rce, qpBase);
+                qpBase = x265_clip3((double)m_param->rc.qpMin, (double)m_param->rc.qpMax, qpBase);
+                curEncData.m_rowStat[row].rowQp = qpBase;
+                curEncData.m_rowStat[row].rowQpScale =  x265_qp2qScale(qpBase);
 
                 if (reEncode < 0)
                 {
@@ -1431,8 +1474,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                         memset(&stopRow.rowStats, 0, sizeof(stopRow.rowStats));
                         curEncData.m_rowStat[r].numEncodedCUs = 0;
                         curEncData.m_rowStat[r].encodedBits = 0;
-                        curEncData.m_rowStat[r].diagSatd = 0;
-                        curEncData.m_rowStat[r].diagIntraSatd = 0;
+                        curEncData.m_rowStat[r].rowSatd = 0;
+                        curEncData.m_rowStat[r].rowIntraSatd = 0;
                         curEncData.m_rowStat[r].sumQpRc = 0;
                         curEncData.m_rowStat[r].sumQpAq = 0;
                     }
