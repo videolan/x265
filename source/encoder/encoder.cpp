@@ -321,6 +321,8 @@ void Encoder::create()
     if (!m_lookahead->create())
         m_aborted = true;
 
+    initRefIdx();
+
     if (m_param->analysisMode)
     {
         const char* name = m_param->analysisFileName;
@@ -905,6 +907,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             }
 
             frameEnc->m_encData->m_slice->m_iPPSQpMinus26 = m_iPPSQpMinus26;
+            frameEnc->m_encData->m_slice->numRefIdxDefault[0] = m_pps.numRefIdxDefault[0];
+            frameEnc->m_encData->m_slice->numRefIdxDefault[1] = m_pps.numRefIdxDefault[1];
 
             curEncoder->m_rce.encodeOrder = frameEnc->m_encodeOrder = m_encodedFrameNum++;
             if (m_bframeDelay)
@@ -1451,6 +1455,66 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
 
+void Encoder::initRefIdx()
+{
+    int j = 0;
+
+    for (j = 0; j < MAX_NUM_REF_IDX; j++)
+    {
+        m_refIdxLastGOP.numRefIdxl0[j] = 0;
+        m_refIdxLastGOP.numRefIdxl1[j] = 0;
+    }
+
+    return;
+}
+
+void Encoder::analyseRefIdx(int *numRefIdx)
+{
+    int i_l0 = 0;
+    int i_l1 = 0;
+
+    i_l0 = numRefIdx[0];
+    i_l1 = numRefIdx[1];
+
+    if ((0 < i_l0) && (MAX_NUM_REF_IDX > i_l0))
+        m_refIdxLastGOP.numRefIdxl0[i_l0]++;
+    if ((0 < i_l1) && (MAX_NUM_REF_IDX > i_l1))
+        m_refIdxLastGOP.numRefIdxl1[i_l1]++;
+
+    return;
+}
+
+void Encoder::updateRefIdx()
+{
+    int i_max_l0 = 0;
+    int i_max_l1 = 0;
+    int j = 0;
+
+    i_max_l0 = 0;
+    i_max_l1 = 0;
+    m_refIdxLastGOP.numRefIdxDefault[0] = 1;
+    m_refIdxLastGOP.numRefIdxDefault[1] = 1;
+    for (j = 0; j < MAX_NUM_REF_IDX; j++)
+    {
+        if (i_max_l0 < m_refIdxLastGOP.numRefIdxl0[j])
+        {
+            i_max_l0 = m_refIdxLastGOP.numRefIdxl0[j];
+            m_refIdxLastGOP.numRefIdxDefault[0] = j;
+        }
+        if (i_max_l1 < m_refIdxLastGOP.numRefIdxl1[j])
+        {
+            i_max_l1 = m_refIdxLastGOP.numRefIdxl1[j];
+            m_refIdxLastGOP.numRefIdxDefault[1] = j;
+        }
+    }
+
+    m_pps.numRefIdxDefault[0] = m_refIdxLastGOP.numRefIdxDefault[0];
+    m_pps.numRefIdxDefault[1] = m_refIdxLastGOP.numRefIdxDefault[1];
+    initRefIdx();
+
+    return;
+}
+
 void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 {
     sbacCoder.setBitstream(&bs);
@@ -1660,6 +1724,9 @@ void Encoder::initPPS(PPS *pps)
     pps->deblockingFilterTcOffsetDiv2 = m_param->deblockingFilterTCOffset;
 
     pps->bEntropyCodingSyncEnabled = m_param->bEnableWavefront;
+
+    pps->numRefIdxDefault[0] = 1;
+    pps->numRefIdxDefault[1] = 1;
 }
 
 void Encoder::configure(x265_param *p)

@@ -333,8 +333,8 @@ void Entropy::codePPS( const PPS& pps, bool filerAcross, int iPPSInitQpMinus26 )
     WRITE_CODE(0, 3,                       "num_extra_slice_header_bits");
     WRITE_FLAG(pps.bSignHideEnabled,       "sign_data_hiding_flag");
     WRITE_FLAG(0,                          "cabac_init_present_flag");
-    WRITE_UVLC(0,                          "num_ref_idx_l0_default_active_minus1");
-    WRITE_UVLC(0,                          "num_ref_idx_l1_default_active_minus1");
+    WRITE_UVLC(pps.numRefIdxDefault[0] - 1, "num_ref_idx_l0_default_active_minus1");
+    WRITE_UVLC(pps.numRefIdxDefault[1] - 1, "num_ref_idx_l1_default_active_minus1");
 
     WRITE_SVLC(iPPSInitQpMinus26,         "init_qp_minus26");
     WRITE_FLAG(pps.bConstrainedIntraPred, "constrained_intra_pred_flag");
@@ -633,7 +633,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
 
     if (!slice.isIntra())
     {
-        bool overrideFlag = (slice.m_numRefIdx[0] != 1 || (slice.isInterB() && slice.m_numRefIdx[1] != 1));
+        bool overrideFlag = (slice.m_numRefIdx[0] != slice.numRefIdxDefault[0] || (slice.isInterB() && slice.m_numRefIdx[1] != slice.numRefIdxDefault[1]));
         WRITE_FLAG(overrideFlag, "num_ref_idx_active_override_flag");
         if (overrideFlag)
         {

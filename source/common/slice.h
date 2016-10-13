@@ -283,6 +283,8 @@ struct PPS
 
     bool     bDeblockingFilterControlPresent;
     bool     bPicDisableDeblockingFilter;
+
+    int      numRefIdxDefault[2];
 };
 
 struct WeightParam
@@ -349,7 +351,8 @@ public:
     bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
 
     int         m_iPPSQpMinus26;
-	
+    int         numRefIdxDefault[2];
+
     Slice()
     {
         m_lastIDR = 0;
@@ -360,6 +363,8 @@ public:
         memset(m_refPOCList, 0, sizeof(m_refPOCList));
         disableWeights();
         m_iPPSQpMinus26 = 0;
+        numRefIdxDefault[0] = 1;
+        numRefIdxDefault[1] = 1;
     }
 
     void disableWeights();

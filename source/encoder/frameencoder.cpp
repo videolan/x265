@@ -353,7 +353,13 @@ void FrameEncoder::compressFrame()
         m_nalList.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
     }
     if (m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders)
+    {
+        {
+            ScopedLock refIdxLock(m_top->m_sliceRefIdxLock);
+            m_top->updateRefIdx();
+        }
         m_top->getStreamHeaders(m_nalList, m_entropyCoder, m_bs);
+    }
 
     // Weighted Prediction parameters estimation.
     bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred;
@@ -855,6 +861,10 @@ void FrameEncoder::compressFrame()
             const uint32_t sliceAddr = nextSliceRow * m_numCols;
             //CUData* ctu = m_frame->m_encData->getPicCTU(sliceAddr);
             //const int sliceQp = ctu->m_qp[0];
+            {
+                ScopedLock refIdxLock(m_top->m_sliceRefIdxLock);
+                m_top->analyseRefIdx(slice->m_numRefIdx);
+            }
             m_entropyCoder.codeSliceHeader(*slice, *m_frame->m_encData, sliceAddr, m_sliceAddrBits, slice->m_sliceQp);
 
             // Find rows of current slice
@@ -878,6 +888,10 @@ void FrameEncoder::compressFrame()
     }
     else
     {
+        {
+            ScopedLock refIdxLock(m_top->m_sliceRefIdxLock);
+            m_top->analyseRefIdx(slice->m_numRefIdx);
+        }
         m_entropyCoder.codeSliceHeader(*slice, *m_frame->m_encData, 0, 0, slice->m_sliceQp);
 
         // serialize each row, record final lengths in slice header

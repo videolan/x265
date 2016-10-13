@@ -70,6 +70,15 @@ struct EncStats
     void addSsim(double ssim);
 };
 
+#define MAX_NUM_REF_IDX 64
+
+struct RefIdxLastGOP
+{
+    int numRefIdxDefault[2];
+    int numRefIdxl0[MAX_NUM_REF_IDX];
+    int numRefIdxl1[MAX_NUM_REF_IDX];
+};
+
 class FrameEncoder;
 class DPB;
 class Lookahead;
@@ -144,6 +153,9 @@ public:
     int                m_iLastSliceQp;
     int64_t            m_iBitsCostSum[QP_MAX_MAX + 1];
 
+    Lock               m_sliceRefIdxLock;
+    RefIdxLastGOP      m_refIdxLastGOP;
+
     Encoder();
     ~Encoder() {}
 
@@ -180,6 +192,10 @@ public:
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 
     void calcRefreshInterval(Frame* frameEnc);
+
+    void initRefIdx();
+    void analyseRefIdx(int *numRefIdx);
+    void updateRefIdx();
 
 protected:
 
