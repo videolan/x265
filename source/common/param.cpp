@@ -230,9 +230,6 @@ void x265_param_default(x265_param* param)
     param->rc.qpMin = 0;
     param->rc.qpMax = QP_MAX_MAX;
 
-    param->bEmitVUITimingInfo = 1;
-    param->bEmitVUIHRDInfo = 1;
-
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
     param->vui.sarWidth = 0;
@@ -259,6 +256,12 @@ void x265_param_default(x265_param* param)
     param->maxLuma = PIXEL_MAX;
     param->log2MaxPocLsb = 8;
     param->maxSlices = 1;
+
+    param->bEmitVUITimingInfo   = 1;
+    param->bEmitVUIHRDInfo      = 1;
+    param->bOptQpPPS            = 1;
+    param->bOptRefListLengthPPS = 1;
+
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -910,6 +913,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("vui-hrd-info") p->bEmitVUIHRDInfo = atobool(value);
         OPT("slices") p->maxSlices = atoi(value);
         OPT("limit-tu") p->limitTU = atoi(value);
+        OPT("opt-qp-pps") p->bOptQpPPS = atobool(value);
+        OPT("opt-ref-list-length-pps") p->bOptRefListLengthPPS = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }

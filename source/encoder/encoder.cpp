@@ -874,7 +874,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_4x4_PARTITIONS);
             }
 
-            if( frameEnc->m_lowres.bKeyframe && m_param->bRepeatHeaders )
+            if( m_param->bOptQpPPS && frameEnc->m_lowres.bKeyframe && m_param->bRepeatHeaders )
             {
                 ScopedLock qpLock( m_sliceQpLock );
                 if( m_iFrameNum > 0 )

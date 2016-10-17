@@ -1317,6 +1317,12 @@ typedef struct x265_param
     /* Maximum count of Slices of picture, the value range is [1, maximum rows] */
     unsigned int maxSlices;
 
+    /* Optimize QP in PPS based on statistics from prevvious GOP*/
+    int bOptQpPPS;
+
+    /* Opitmize ref list length in PPS based on stats from previous GOP*/
+    int bOptRefListLengthPPS;
+
 } x265_param;
 
 /* x265_param_alloc:

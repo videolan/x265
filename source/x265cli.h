@@ -213,6 +213,10 @@ static const struct option long_options[] =
     { "no-vui-timing-info",   no_argument, NULL, 0 },
     { "vui-hrd-info",         no_argument, NULL, 0 },
     { "no-vui-hrd-info",      no_argument, NULL, 0 },
+    { "opt-qp-pps",           no_argument, NULL, 0 },
+    { "no-opt-qp-pps",        no_argument, NULL, 0 },
+    { "opt-ref-list-length-pps",         no_argument, NULL, 0 },
+    { "no-opt-ref-list-length-pps",      no_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
     { "no-repeat-headers",    no_argument, NULL, 0 },
@@ -452,8 +456,10 @@ static void showHelp(x265_param *param)
     H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
     H1("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
     H0("   --log2-max-poc-lsb <integer>  Maximum of the picture order count\n");
-    H0("   --[no]-vui-timing-info        Discard optional VUI timing information from the bistream. Default %s\n", OPT(param->bEmitVUITimingInfo));
-    H0("   --[no]-vui-hrd-info           Discard optional HRD timing information from the bistream. Default %s\n", OPT(param->bEmitVUIHRDInfo));
+    H0("   --[no-]vui-timing-info        Discard optional VUI timing information from the bistream. Default %s\n", OPT(param->bEmitVUITimingInfo));
+    H0("   --[no-]vui-hrd-info           Discard optional HRD timing information from the bistream. Default %s\n", OPT(param->bEmitVUIHRDInfo));
+    H0("   --[no-]opt-qp-pps             Discard optional HRD timing information from the bistream. Default %s\n", OPT(param->bOptQpPPS));
+    H0("   --[no-]opt-ref-list-length-pps  Discard optional HRD timing information from the bistream. Default %s\n", OPT(param->bOptRefListLengthPPS));
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");

@@ -354,6 +354,7 @@ void FrameEncoder::compressFrame()
     }
     if (m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders)
     {
+        if (m_param->bOptRefListLengthPPS)
         {
             ScopedLock refIdxLock(m_top->m_sliceRefIdxLock);
             m_top->updateRefIdx();
@@ -467,7 +468,7 @@ void FrameEncoder::compressFrame()
     /* Clip slice QP to 0-51 spec range before encoding */
     slice->m_sliceQp = x265_clip3(-QP_BD_OFFSET, QP_MAX_SPEC, qp);
 
-    if( m_param->bRepeatHeaders )
+    if( m_param->bOptQpPPS && m_param->bRepeatHeaders )
     {
         ScopedLock qpLock( m_top->m_sliceQpLock );
         for( int i = 0; i < (QP_MAX_MAX + 1); i++ )
@@ -861,6 +862,7 @@ void FrameEncoder::compressFrame()
             const uint32_t sliceAddr = nextSliceRow * m_numCols;
             //CUData* ctu = m_frame->m_encData->getPicCTU(sliceAddr);
             //const int sliceQp = ctu->m_qp[0];
+            if (m_param->bOptRefListLengthPPS)
             {
                 ScopedLock refIdxLock(m_top->m_sliceRefIdxLock);
                 m_top->analyseRefIdx(slice->m_numRefIdx);
@@ -888,6 +890,7 @@ void FrameEncoder::compressFrame()
     }
     else
     {
+        if (m_param->bOptRefListLengthPPS)
         {
             ScopedLock refIdxLock(m_top->m_sliceRefIdxLock);
             m_top->analyseRefIdx(slice->m_numRefIdx);
