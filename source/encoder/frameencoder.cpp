@@ -468,17 +468,15 @@ void FrameEncoder::compressFrame()
     /* Clip slice QP to 0-51 spec range before encoding */
     slice->m_sliceQp = x265_clip3(-QP_BD_OFFSET, QP_MAX_SPEC, qp);
 
-    if( m_param->bOptQpPPS && m_param->bRepeatHeaders )
+    if (m_param->bOptQpPPS && m_param->bRepeatHeaders)
     {
-        ScopedLock qpLock( m_top->m_sliceQpLock );
-        for( int i = 0; i < (QP_MAX_MAX + 1); i++ )
+        ScopedLock qpLock(m_top->m_sliceQpLock);
+        for (int i = 0; i < (QP_MAX_MAX + 1); i++)
         {
             int delta = slice->m_sliceQp - (i + 1);
             int codeLength = getBsLength( delta );
-
             m_top->m_iBitsCostSum[i] += codeLength;
         }
-
         m_top->m_iFrameNum++;
         m_top->m_iLastSliceQp = slice->m_sliceQp;
     }

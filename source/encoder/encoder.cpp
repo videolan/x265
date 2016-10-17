@@ -874,17 +874,17 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_4x4_PARTITIONS);
             }
 
-            if( m_param->bOptQpPPS && frameEnc->m_lowres.bKeyframe && m_param->bRepeatHeaders )
+            if (m_param->bOptQpPPS && frameEnc->m_lowres.bKeyframe && m_param->bRepeatHeaders)
             {
-                ScopedLock qpLock( m_sliceQpLock );
-                if( m_iFrameNum > 0 )
+                ScopedLock qpLock(m_sliceQpLock);
+                if (m_iFrameNum > 0)
                 {
                     //Search the least cost
                     int64_t iLeastCost = m_iBitsCostSum[0];
                     int iLeastId = 0;
-                    for( int i = 1; i < QP_MAX_MAX + 1; i++ )
+                    for (int i = 1; i < QP_MAX_MAX + 1; i++)
                     {
-                        if( iLeastCost > m_iBitsCostSum[i] )
+                        if (iLeastCost > m_iBitsCostSum[i])
                         {
                             iLeastId = i;
                             iLeastCost = m_iBitsCostSum[i];
@@ -893,17 +893,13 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
                     /* If last slice Qp is close to (26 + m_iPPSQpMinus26) or outputs is all I-frame video,
                        we don't need to change m_iPPSQpMinus26. */
-                    if( (abs( m_iLastSliceQp - (26 + m_iPPSQpMinus26)) > 1) && (m_iFrameNum > 1) )
-                    {
+                    if ((abs(m_iLastSliceQp - (26 + m_iPPSQpMinus26)) > 1) && (m_iFrameNum > 1))
                         m_iPPSQpMinus26 = (iLeastId + 1) - 26;
-                    }
                     m_iFrameNum = 0;
                 }
 
-                for( int i = 0; i < QP_MAX_MAX + 1; i++ )
-                {
+                for (int i = 0; i < QP_MAX_MAX + 1; i++)
                     m_iBitsCostSum[i] = 0;
-                }
             }
 
             frameEnc->m_encData->m_slice->m_iPPSQpMinus26 = m_iPPSQpMinus26;
