@@ -99,6 +99,10 @@ const cpu_name_t cpu_names[] =
     { "ARMv6",           X265_CPU_ARMV6 },
     { "NEON",            X265_CPU_NEON },
     { "FastNeonMRC",     X265_CPU_FAST_NEON_MRC },
+
+#elif X265_ARCH_POWER8
+    { "Altivec",         X265_CPU_ALTIVEC },
+
 #endif // if X265_ARCH_X86
     { "", 0 },
 };
@@ -363,7 +367,18 @@ uint32_t cpu_detect(void)
     return flags;
 }
 
-#else // if X265_ARCH_X86
+#elif X265_ARCH_POWER8
+
+uint32_t cpu_detect(void)
+{
+#if HAVE_ALTIVEC
+    return X265_CPU_ALTIVEC;
+#else
+    return 0;
+#endif
+}
+
+#else // if X265_ARCH_POWER8
 
 uint32_t cpu_detect(void)
 {

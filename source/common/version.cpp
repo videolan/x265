@@ -77,10 +77,8 @@
 #define BITS    "[32 bit]"
 #endif
 
-#if defined(ENABLE_ASSEMBLY)
+#if defined(ENABLE_ASSEMBLY) || HAVE_ALTIVEC
 #define ASM     ""
-#elif HAVE_ALTIVEC
-#define ASM     "[altivec]"
 #else
 #define ASM     "[noasm]"
 #endif

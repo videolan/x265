@@ -426,7 +426,7 @@ if(POWER)
 
     option(CPU_POWER8 "Enable CPU POWER8 profiling instrumentation" ON)
     if(CPU_POWER8)
-        add_definitions(-mcpu=power8)
+        add_definitions(-mcpu=power8 -DX265_ARCH_POWER8=1)
     endif()
 endif()
 
