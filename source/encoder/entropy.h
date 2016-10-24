@@ -149,7 +149,7 @@ public:
 
     void codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t slice_addr, uint32_t slice_addr_bits, int sliceQp);
     void codeSliceHeaderWPPEntryPoints(const uint32_t *substreamSizes, uint32_t numSubStreams, uint32_t maxOffset);
-    void codeShortTermRefPicSet(const RPS& rps);
+    void codeShortTermRefPicSet(const RPS& rps, int idx);
     void finishSlice()                 { encodeBinTrm(1); finish(); dynamic_cast<Bitstream*>(m_bitIf)->writeByteAlignment(); }
 
     void encodeCTU(const CUData& cu, const CUGeom& cuGeom);

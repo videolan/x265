@@ -312,7 +312,9 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_FLAG(sps.bUseSAO, "sample_adaptive_offset_enabled_flag");
 
     WRITE_FLAG(0, "pcm_enabled_flag");
-    WRITE_UVLC(0, "num_short_term_ref_pic_sets");
+    WRITE_UVLC(sps.spsrpsNum, "num_short_term_ref_pic_sets");
+    for (int i = 0; i < sps.spsrpsNum; i++)
+        codeShortTermRefPicSet(sps.spsrps[i], i);
     WRITE_FLAG(0, "long_term_ref_pics_present_flag");
 
     WRITE_FLAG(sps.bTemporalMVPEnabled, "sps_temporal_mvp_enable_flag");
@@ -614,8 +616,21 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
             }
 #endif
 
-        WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
-        codeShortTermRefPicSet(slice.m_rps);
+        if (slice.m_rpsIdx < 0)
+        {
+            WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
+            codeShortTermRefPicSet(slice.m_rps, slice.m_sps->spsrpsNum);
+        }
+        else
+        {
+            WRITE_FLAG(1, "short_term_ref_pic_set_sps_flag");
+            int numBits = 0;
+            while ((1 << numBits) < slice.m_iNumRPSInSPS)
+                numBits++;
+
+            if (numBits > 0)
+                WRITE_CODE(slice.m_rpsIdx, numBits, "short_term_ref_pic_set_idx");
+        }
 
         if (slice.m_sps->bTemporalMVPEnabled)
             WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
@@ -707,8 +722,11 @@ void Entropy::codeSliceHeaderWPPEntryPoints(const uint32_t *substreamSizes, uint
         WRITE_CODE(substreamSizes[i] - 1, offsetLen, "entry_point_offset_minus1");
 }
 
-void Entropy::codeShortTermRefPicSet(const RPS& rps)
+void Entropy::codeShortTermRefPicSet(const RPS& rps, int idx)
 {
+    if (idx > 0)
+        WRITE_FLAG(0, "inter_ref_pic_set_prediction_flag");
+
     WRITE_UVLC(rps.numberOfNegativePictures, "num_negative_pics");
     WRITE_UVLC(rps.numberOfPositivePictures, "num_positive_pics");
     int prev = 0;

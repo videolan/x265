@@ -1852,6 +1852,10 @@ Bitstream options
 	Discard optional VUI HRD info from bitstream. Default enabled when
 	:option:`--hrd` is enabled.
 
+.. option:: --[no]-multi-pass-opt-rps
+
+	Enable storing commonly RPS in SPS in multi pass mode. Default disabled.
+
 
 Debugging options
 =================

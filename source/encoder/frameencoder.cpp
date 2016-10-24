@@ -359,8 +359,22 @@ void FrameEncoder::compressFrame()
             ScopedLock refIdxLock(m_top->m_sliceRefIdxLock);
             m_top->updateRefIdx();
         }
-        m_top->getStreamHeaders(m_nalList, m_entropyCoder, m_bs);
+        if (m_top->m_param->rc.bStatRead  && m_top->m_param->bMultiPassOptRPS)
+        {
+            ScopedLock refIdxLock(m_top->m_rpsInSpsLock);
+            if (!m_top->computeSPSRPSIndex())
+            {
+                x265_log(m_param, X265_LOG_ERROR, "compute commonly RPS failed!\n");
+                m_top->m_aborted = true;
+            }
+            m_top->getStreamHeaders(m_nalList, m_entropyCoder, m_bs);
+        }
+        else
+            m_top->getStreamHeaders(m_nalList, m_entropyCoder, m_bs);
     }
+
+    if (m_top->m_param->rc.bStatRead && m_top->m_param->bMultiPassOptRPS)
+        m_frame->m_encData->m_slice->m_rpsIdx = (m_top->m_rateControl->m_rce2Pass + m_frame->m_encodeOrder)->rpsIdx;
 
     // Weighted Prediction parameters estimation.
     bool bUseWeightP = slice->m_sliceType == P_SLICE && slice->m_pps->bUseWeightPred;

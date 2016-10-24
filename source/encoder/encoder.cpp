@@ -77,6 +77,7 @@ Encoder::Encoder()
     m_iFrameNum = 0;
     m_iPPSQpMinus26 = 0;
     m_iLastSliceQp = 0;
+    m_rpsInSpsCount = 0;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
 
@@ -905,6 +906,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             frameEnc->m_encData->m_slice->m_iPPSQpMinus26 = m_iPPSQpMinus26;
             frameEnc->m_encData->m_slice->numRefIdxDefault[0] = m_pps.numRefIdxDefault[0];
             frameEnc->m_encData->m_slice->numRefIdxDefault[1] = m_pps.numRefIdxDefault[1];
+            frameEnc->m_encData->m_slice->m_iNumRPSInSPS = m_sps.spsrpsNum;
 
             curEncoder->m_rce.encodeOrder = frameEnc->m_encodeOrder = m_encodedFrameNum++;
             if (m_bframeDelay)
@@ -1067,6 +1069,13 @@ void Encoder::printSummary()
         float uncompressed = frameSize * X265_DEPTH * m_analyzeAll.m_numPics;
 
         x265_log(m_param, X265_LOG_INFO, "lossless compression ratio %.2f::1\n", uncompressed / m_analyzeAll.m_accBits);
+    }
+    if (m_param->bMultiPassOptRPS && m_param->rc.bStatRead)
+    {
+        x265_log(m_param, X265_LOG_INFO, "RPS in SPS: %d frames (%.2f%%), RPS not in SPS: %d frames (%.2f%%)\n", 
+            m_rpsInSpsCount, (float)100.0 * m_rpsInSpsCount / m_rateControl->m_numEntries, 
+            m_rateControl->m_numEntries - m_rpsInSpsCount, 
+            (float)100.0 * (m_rateControl->m_numEntries - m_rpsInSpsCount) / m_rateControl->m_numEntries);
     }
 
     if (m_analyzeAll.m_numPics)
@@ -2433,3 +2442,203 @@ void Encoder::printReconfigureParams()
     TOOLCMP(oldParam->maxNumMergeCand, newParam->maxNumMergeCand, "max-merge=%d to %d\n");
     TOOLCMP(oldParam->bIntraInBFrames, newParam->bIntraInBFrames, "b-intra=%d to %d\n");
 }
+
+bool Encoder::computeSPSRPSIndex()
+{
+    RPS* rpsInSPS = m_sps.spsrps;
+    int* rpsNumInPSP = &m_sps.spsrpsNum;
+    int  beginNum = m_sps.numGOPBegin;
+    int  endNum;
+    RPS* rpsInRec;
+    RPS* rpsInIdxList;
+    RPS* thisRpsInSPS;
+    RPS* thisRpsInList;
+    RPSListNode* headRpsIdxList = NULL;
+    RPSListNode* tailRpsIdxList = NULL;
+    RPSListNode* rpsIdxListIter = NULL;
+    RateControlEntry *rce2Pass = m_rateControl->m_rce2Pass;
+    int numEntries = m_rateControl->m_numEntries;
+    RateControlEntry *rce;
+    int idx = 0;
+    int pos = 0;
+    int resultIdx[64];
+    memset(rpsInSPS, 0, sizeof(RPS) * MAX_NUM_SHORT_TERM_RPS);
+
+    // find out all RPS date in current GOP
+    beginNum++;
+    endNum = beginNum;
+    if (!m_param->bRepeatHeaders)
+    {
+        endNum = numEntries;
+    }
+    else
+    {
+        while (endNum < numEntries)
+        {
+            rce = &rce2Pass[endNum];
+            if (rce->sliceType == I_SLICE)
+            {
+                break;
+            }
+            endNum++;
+        }
+    }
+    m_sps.numGOPBegin = endNum;
+
+    // find out all kinds of RPS
+    for (int i = beginNum; i < endNum; i++)
+    {
+        rce = &rce2Pass[i];
+        rpsInRec = &rce->rpsData;
+        rpsIdxListIter = headRpsIdxList;
+        // i frame don't recode RPS info
+        if (rce->sliceType != I_SLICE)
+        {
+            while (rpsIdxListIter)
+            {
+                rpsInIdxList = rpsIdxListIter->rps;
+                if (rpsInRec->numberOfPictures == rpsInIdxList->numberOfPictures
+                    && rpsInRec->numberOfNegativePictures == rpsInIdxList->numberOfNegativePictures
+                    && rpsInRec->numberOfPositivePictures == rpsInIdxList->numberOfPositivePictures)
+                {
+                    for (pos = 0; pos < rpsInRec->numberOfPictures; pos++)
+                    {
+                        if (rpsInRec->deltaPOC[pos] != rpsInIdxList->deltaPOC[pos]
+                            || rpsInRec->bUsed[pos] != rpsInIdxList->bUsed[pos])
+                            break;
+                    }
+                    if (pos == rpsInRec->numberOfPictures)    // if this type of RPS has exist
+                    {
+                        rce->rpsIdx = rpsIdxListIter->idx;
+                        rpsIdxListIter->count++;
+                        // sort RPS type link after reset RPS type count.
+                        RPSListNode* next = rpsIdxListIter->next;
+                        RPSListNode* prior = rpsIdxListIter->prior;
+                        RPSListNode* iter = prior;
+                        if (iter)
+                        {
+                            while (iter)
+                            {
+                                if (iter->count > rpsIdxListIter->count)
+                                    break;
+                                iter = iter->prior;
+                            }
+                            if (iter)
+                            {
+                                prior->next = next;
+                                if (next)
+                                    next->prior = prior;
+                                else
+                                    tailRpsIdxList = prior;
+                                rpsIdxListIter->next = iter->next;
+                                rpsIdxListIter->prior = iter;
+                                iter->next->prior = rpsIdxListIter;
+                                iter->next = rpsIdxListIter;
+                            }
+                            else
+                            {
+                                prior->next = next;
+                                if (next)
+                                    next->prior = prior;
+                                else
+                                    tailRpsIdxList = prior;
+                                headRpsIdxList->prior = rpsIdxListIter;
+                                rpsIdxListIter->next = headRpsIdxList;
+                                rpsIdxListIter->prior = NULL;
+                                headRpsIdxList = rpsIdxListIter;
+                            }
+                        }
+                        break;
+                    }
+                }
+                rpsIdxListIter = rpsIdxListIter->next;
+            }
+            if (!rpsIdxListIter)  // add new type of RPS
+            {
+                RPSListNode* newIdxNode = new RPSListNode();
+                if (newIdxNode == NULL)
+                    goto fail;
+                newIdxNode->rps = rpsInRec;
+                newIdxNode->idx = idx++;
+                newIdxNode->count = 1;
+                newIdxNode->next = NULL;
+                newIdxNode->prior = NULL;
+                if (!tailRpsIdxList)
+                    tailRpsIdxList = headRpsIdxList = newIdxNode;
+                else
+                {
+                    tailRpsIdxList->next = newIdxNode;
+                    newIdxNode->prior = tailRpsIdxList;
+                    tailRpsIdxList = newIdxNode;
+                }
+                rce->rpsIdx = newIdxNode->idx;
+            }
+        }
+        else
+        {
+            rce->rpsIdx = -1;
+        }
+    }
+
+    // get commonly RPS set
+    memset(resultIdx, 0, sizeof(resultIdx));
+    if (idx > MAX_NUM_SHORT_TERM_RPS)
+        idx = MAX_NUM_SHORT_TERM_RPS;
+
+    *rpsNumInPSP = idx;
+    rpsIdxListIter = headRpsIdxList;
+    for (int i = 0; i < idx; i++)
+    {
+        resultIdx[i] = rpsIdxListIter->idx;
+        m_rpsInSpsCount += rpsIdxListIter->count;
+        thisRpsInSPS = rpsInSPS + i;
+        thisRpsInList = rpsIdxListIter->rps;
+        thisRpsInSPS->numberOfPictures = thisRpsInList->numberOfPictures;
+        thisRpsInSPS->numberOfNegativePictures = thisRpsInList->numberOfNegativePictures;
+        thisRpsInSPS->numberOfPositivePictures = thisRpsInList->numberOfPositivePictures;
+        for (pos = 0; pos < thisRpsInList->numberOfPictures; pos++)
+        {
+            thisRpsInSPS->deltaPOC[pos] = thisRpsInList->deltaPOC[pos];
+            thisRpsInSPS->bUsed[pos] = thisRpsInList->bUsed[pos];
+        }
+        rpsIdxListIter = rpsIdxListIter->next;
+    }
+
+    //reset every frame's RPS index
+    for (int i = beginNum; i < endNum; i++)
+    {
+        int j;
+        rce = &rce2Pass[i];
+        for (j = 0; j < idx; j++)
+        {
+            if (rce->rpsIdx == resultIdx[j])
+            {
+                rce->rpsIdx = j;
+                break;
+            }
+        }
+
+        if (j == idx)
+            rce->rpsIdx = -1;
+    }
+
+    rpsIdxListIter = headRpsIdxList;
+    while (rpsIdxListIter)
+    {
+        RPSListNode* freeIndex = rpsIdxListIter;
+        rpsIdxListIter = rpsIdxListIter->next;
+        delete freeIndex;
+    }
+    return true;
+
+fail:
+    rpsIdxListIter = headRpsIdxList;
+    while (rpsIdxListIter)
+    {
+        RPSListNode* freeIndex = rpsIdxListIter;
+        rpsIdxListIter = rpsIdxListIter->next;
+        delete freeIndex;
+    }
+    return false;
+}
+

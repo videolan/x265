@@ -1323,6 +1323,9 @@ typedef struct x265_param
     /* Opitmize ref list length in PPS based on stats from previous GOP*/
     int bOptRefListLengthPPS;
 
+    /* Enable storing commonly RPS in SPS in multi pass mode */
+    int       bMultiPassOptRPS;
+
 } x265_param;
 
 /* x265_param_alloc:

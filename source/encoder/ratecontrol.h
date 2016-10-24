@@ -111,6 +111,8 @@ struct RateControlEntry
     bool     isIdr;
     SEIPictureTiming *picTimingSEI;
     HRDTiming        *hrdTiming;
+    int      rpsIdx;
+    RPS      rpsData;
 };
 
 class RateControl
@@ -282,6 +284,8 @@ protected:
     bool   findUnderflow(double *fills, int *t0, int *t1, int over, int framesCount);
     bool   fixUnderflow(int t0, int t1, double adjustment, double qscaleMin, double qscaleMax);
     double tuneQScaleForGrain(double rcOverflow);
+    void   splitdeltaPOC(char deltapoc[], RateControlEntry *rce);
+    void   splitbUsed(char deltapoc[], RateControlEntry *rce);
 };
 }
 #endif // ifndef X265_RATECONTROL_H

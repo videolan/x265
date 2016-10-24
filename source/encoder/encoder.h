@@ -79,6 +79,15 @@ struct RefIdxLastGOP
     int numRefIdxl1[MAX_NUM_REF_IDX];
 };
 
+struct RPSListNode
+{
+    int idx;
+    int count;
+    RPS* rps;
+    RPSListNode* next;
+    RPSListNode* prior;
+};
+
 class FrameEncoder;
 class DPB;
 class Lookahead;
@@ -156,6 +165,9 @@ public:
     Lock               m_sliceRefIdxLock;
     RefIdxLastGOP      m_refIdxLastGOP;
 
+    Lock               m_rpsInSpsLock;
+    int                m_rpsInSpsCount;
+
     Encoder();
     ~Encoder() {}
 
@@ -196,6 +208,7 @@ public:
     void initRefIdx();
     void analyseRefIdx(int *numRefIdx);
     void updateRefIdx();
+    bool computeSPSRPSIndex();
 
 protected:
 

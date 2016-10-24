@@ -239,6 +239,10 @@ struct SPS
     uint32_t maxLatencyIncrease;
     int      numReorderPics;
 
+    RPS      spsrps[MAX_NUM_SHORT_TERM_RPS];
+    int      spsrpsNum;
+    int      numGOPBegin;
+
     bool     bUseSAO; // use param
     bool     bUseAMP; // use param
     bool     bUseStrongIntraSmoothing; // use param
@@ -337,6 +341,7 @@ public:
     int         m_sliceQp;
     int         m_poc;
     int         m_lastIDR;
+    int         m_rpsIdx;
 
     uint32_t    m_colRefIdx;       // never modified
 
@@ -352,6 +357,7 @@ public:
 
     int         m_iPPSQpMinus26;
     int         numRefIdxDefault[2];
+    int         m_iNumRPSInSPS;
 
     Slice()
     {
@@ -365,6 +371,7 @@ public:
         m_iPPSQpMinus26 = 0;
         numRefIdxDefault[0] = 1;
         numRefIdxDefault[1] = 1;
+        m_rpsIdx = -1;
     }
 
     void disableWeights();

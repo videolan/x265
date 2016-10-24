@@ -198,6 +198,7 @@ void x265_param_default(x265_param* param)
     param->bCULossless = 0;
     param->bEnableTemporalSubLayers = 0;
     param->bEnableRdRefine = 0;
+    param->bMultiPassOptRPS = 0;
 
     /* Rate control options */
     param->rc.vbvMaxBitrate = 0;
@@ -915,6 +916,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("limit-tu") p->limitTU = atoi(value);
         OPT("opt-qp-pps") p->bOptQpPPS = atobool(value);
         OPT("opt-ref-list-length-pps") p->bOptRefListLengthPPS = atobool(value);
+        OPT("multi-pass-opt-rps") p->bMultiPassOptRPS = atobool(value);
+
         else
             return X265_PARAM_BAD_NAME;
     }

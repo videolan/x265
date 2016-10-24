@@ -106,6 +106,9 @@ public:
     CUDataMemPool  m_cuMemPool;
     CUData*        m_picCTU;
 
+    RPS*           m_spsrps;
+    int            m_spsrpsIdx;
+
     /* Rate control data used during encode and by references */
     struct RCStatCU
     {

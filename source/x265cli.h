@@ -236,6 +236,8 @@ static const struct option long_options[] =
     { "pass",           required_argument, NULL, 0 },
     { "slow-firstpass",       no_argument, NULL, 0 },
     { "no-slow-firstpass",    no_argument, NULL, 0 },
+    { "multi-pass-opt-rps",   no_argument, NULL, 0 },
+    { "no-multi-pass-opt-rps", no_argument, NULL, 0 },
     { "analysis-mode",  required_argument, NULL, 0 },
     { "analysis-file",  required_argument, NULL, 0 },
     { "strict-cbr",           no_argument, NULL, 0 },
@@ -460,6 +462,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]vui-hrd-info           Discard optional HRD timing information from the bistream. Default %s\n", OPT(param->bEmitVUIHRDInfo));
     H0("   --[no-]opt-qp-pps             Discard optional HRD timing information from the bistream. Default %s\n", OPT(param->bOptQpPPS));
     H0("   --[no-]opt-ref-list-length-pps  Discard optional HRD timing information from the bistream. Default %s\n", OPT(param->bOptRefListLengthPPS));
+    H0("   --[no-]multi-pass-opt-rps     Enable storing commonly RPS in SPS in multi pass mode. Default %s\n", OPT(param->bMultiPassOptRPS));
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");

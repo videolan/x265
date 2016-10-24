@@ -544,10 +544,27 @@ bool RateControl::init(const SPS& sps)
                 }
                 rce = &m_rce2Pass[encodeOrder];
                 m_encOrder[frameNumber] = encodeOrder;
-                e += sscanf(p, " in:%*d out:%*d type:%c q:%lf q-aq:%lf q-noVbv:%lf q-Rceq:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf",
-                       &picType, &qpRc, &qpAq, &qNoVbv, &qRceq, &rce->coeffBits,
-                       &rce->mvBits, &rce->miscBits, &rce->iCuCount, &rce->pCuCount,
-                       &rce->skipCuCount);
+                if (!m_param->bMultiPassOptRPS)
+                {
+                    e += sscanf(p, " in:%*d out:%*d type:%c q:%lf q-aq:%lf q-noVbv:%lf q-Rceq:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf",
+                        &picType, &qpRc, &qpAq, &qNoVbv, &qRceq, &rce->coeffBits,
+                        &rce->mvBits, &rce->miscBits, &rce->iCuCount, &rce->pCuCount,
+                        &rce->skipCuCount);
+                }
+                else
+                {
+                    char deltaPOC[128];
+                    char bUsed[40];
+                    memset(deltaPOC, 0, sizeof(deltaPOC));
+                    memset(bUsed, 0, sizeof(bUsed));
+                    e += sscanf(p, " in:%*d out:%*d type:%c q:%lf q-aq:%lf q-noVbv:%lf q-Rceq:%lf tex:%d mv:%d misc:%d icu:%lf pcu:%lf scu:%lf nump:%d numnegp:%d numposp:%d deltapoc:%s bused:%s",
+                        &picType, &qpRc, &qpAq, &qNoVbv, &qRceq, &rce->coeffBits,
+                        &rce->mvBits, &rce->miscBits, &rce->iCuCount, &rce->pCuCount,
+                        &rce->skipCuCount, &rce->rpsData.numberOfPictures, &rce->rpsData.numberOfNegativePictures, &rce->rpsData.numberOfPositivePictures, deltaPOC, bUsed);
+                    splitdeltaPOC(deltaPOC, rce);
+                    splitbUsed(bUsed, rce);
+                    rce->rpsIdx = -1;
+                }
                 rce->keptAsRef = true;
                 rce->isIdr = false;
                 if (picType == 'b' || picType == 'p')
@@ -2632,18 +2649,55 @@ int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* r
     char cType = rce->sliceType == I_SLICE ? (curFrame->m_lowres.sliceType == X265_TYPE_IDR ? 'I' : 'i')
         : rce->sliceType == P_SLICE ? 'P'
         : IS_REFERENCED(curFrame) ? 'B' : 'b';
-    if (fprintf(m_statFileOut,
-                "in:%d out:%d type:%c q:%.2f q-aq:%.2f q-noVbv:%.2f q-Rceq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
-                rce->poc, rce->encodeOrder,
-                cType, curEncData.m_avgQpRc, curEncData.m_avgQpAq,
-                rce->qpNoVbv, rce->qRceq,
-                curFrame->m_encData->m_frameStats.coeffBits,
-                curFrame->m_encData->m_frameStats.mvBits,
-                curFrame->m_encData->m_frameStats.miscBits,
-                curFrame->m_encData->m_frameStats.percent8x8Intra * m_ncu,
-                curFrame->m_encData->m_frameStats.percent8x8Inter * m_ncu,
-                curFrame->m_encData->m_frameStats.percent8x8Skip  * m_ncu) < 0)
-        goto writeFailure;
+    
+    if (!curEncData.m_param->bMultiPassOptRPS)
+    {
+        if (fprintf(m_statFileOut,
+            "in:%d out:%d type:%c q:%.2f q-aq:%.2f q-noVbv:%.2f q-Rceq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f ;\n",
+            rce->poc, rce->encodeOrder,
+            cType, curEncData.m_avgQpRc, curEncData.m_avgQpAq,
+            rce->qpNoVbv, rce->qRceq,
+            curFrame->m_encData->m_frameStats.coeffBits,
+            curFrame->m_encData->m_frameStats.mvBits,
+            curFrame->m_encData->m_frameStats.miscBits,
+            curFrame->m_encData->m_frameStats.percent8x8Intra * m_ncu,
+            curFrame->m_encData->m_frameStats.percent8x8Inter * m_ncu,
+            curFrame->m_encData->m_frameStats.percent8x8Skip  * m_ncu) < 0)
+            goto writeFailure;
+    }
+    else{
+        RPS* rpsWriter = &curFrame->m_encData->m_slice->m_rps;
+        int i, num = rpsWriter->numberOfPictures;
+        char deltaPOC[128];
+        char bUsed[40];
+        memset(deltaPOC, 0, sizeof(deltaPOC));
+        memset(bUsed, 0, sizeof(bUsed));
+        sprintf(deltaPOC, "deltapoc:~");
+        sprintf(bUsed, "bused:~");
+
+        for (i = 0; i < num; i++)
+        {
+            sprintf(deltaPOC, "%s%d~", deltaPOC, rpsWriter->deltaPOC[i]);
+            sprintf(bUsed, "%s%d~", bUsed, rpsWriter->bUsed[i]);
+        }
+
+        if (fprintf(m_statFileOut,
+            "in:%d out:%d type:%c q:%.2f q-aq:%.2f q-noVbv:%.2f q-Rceq:%.2f tex:%d mv:%d misc:%d icu:%.2f pcu:%.2f scu:%.2f nump:%d numnegp:%d numposp:%d %s %s ;\n",
+            rce->poc, rce->encodeOrder,
+            cType, curEncData.m_avgQpRc, curEncData.m_avgQpAq,
+            rce->qpNoVbv, rce->qRceq,
+            curFrame->m_encData->m_frameStats.coeffBits,
+            curFrame->m_encData->m_frameStats.mvBits,
+            curFrame->m_encData->m_frameStats.miscBits,
+            curFrame->m_encData->m_frameStats.percent8x8Intra * m_ncu,
+            curFrame->m_encData->m_frameStats.percent8x8Inter * m_ncu,
+            curFrame->m_encData->m_frameStats.percent8x8Skip  * m_ncu,
+            rpsWriter->numberOfPictures,
+            rpsWriter->numberOfNegativePictures,
+            rpsWriter->numberOfPositivePictures,
+            deltaPOC, bUsed) < 0)
+            goto writeFailure;
+    }
     /* Don't re-write the data in multi-pass mode. */
     if (m_param->rc.cuTree && IS_REFERENCED(curFrame) && !m_param->rc.bStatRead)
     {
@@ -2736,3 +2790,48 @@ void RateControl::destroy()
     X265_FREE(m_param->rc.zones);
 }
 
+void RateControl::splitdeltaPOC(char deltapoc[], RateControlEntry *rce)
+{
+    int idx = 0, length = 0;
+    char tmpStr[128];
+    char* src = deltapoc;
+    char* buf = strstr(src, "~");
+    while (buf)
+    {
+        memset(tmpStr, 0, sizeof(tmpStr));
+        length = (int)(buf - src);
+        if (length != 0)
+        {
+            strncpy(tmpStr, src, length);
+            rce->rpsData.deltaPOC[idx] = atoi(tmpStr);
+            idx++;
+            if (idx == rce->rpsData.numberOfPictures)
+                break;
+        }
+        src += (length + 1);
+        buf = strstr(src, "~");
+    }
+}
+
+void RateControl::splitbUsed(char bused[], RateControlEntry *rce)
+{
+    int idx = 0, length = 0;
+    char tmpStr[128];
+    char* src = bused;
+    char* buf = strstr(src, "~");
+    while (buf)
+    {
+        memset(tmpStr, 0, sizeof(tmpStr));
+        length = (int)(buf - src);
+        if (length != 0)
+        {
+            strncpy(tmpStr, src, length);
+            rce->rpsData.bUsed[idx] = atoi(tmpStr) > 0;
+            idx++;
+            if (idx == rce->rpsData.numberOfPictures)
+                break;
+        }
+        src += (length + 1);
+        buf = strstr(src, "~");
+    }
+}
