@@ -1326,6 +1326,10 @@ typedef struct x265_param
     /* Enable storing commonly RPS in SPS in multi pass mode */
     int       bMultiPassOptRPS;
 
+    /* This value represents the percentage difference between the inter cost and
+    * intra cost of a frame used in scenecut detection. Default 5. */
+    double     bBiasForScenecut;
+
 } x265_param;
 
 /* x265_param_alloc:

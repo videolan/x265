@@ -1930,6 +1930,7 @@ void Encoder::configure(x265_param *p)
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
 
     p->bFrameBias = X265_MIN(X265_MAX(-90, p->bFrameBias), 100);
+    p->bBiasForScenecut = (double)(p->bBiasForScenecut / 100);
 
     if (p->logLevel < X265_LOG_INFO)
     {

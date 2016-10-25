@@ -149,6 +149,7 @@ void x265_param_default(x265_param* param)
     param->bBPyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
     param->lookaheadSlices = 8;
+    param->bBiasForScenecut = 5.0;
 
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
@@ -917,6 +918,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("opt-qp-pps") p->bOptQpPPS = atobool(value);
         OPT("opt-ref-list-length-pps") p->bOptRefListLengthPPS = atobool(value);
         OPT("multi-pass-opt-rps") p->bMultiPassOptRPS = atobool(value);
+        OPT("bias-for-scenecut") p->bBiasForScenecut = atof(value);
 
         else
             return X265_PARAM_BAD_NAME;
@@ -1220,6 +1222,8 @@ int x265_check_params(x265_param* param)
           "Valid Logging level -1:none 0:error 1:warning 2:info 3:debug 4:full");
     CHECK(param->scenecutThreshold < 0,
           "scenecutThreshold must be greater than 0");
+    CHECK(param->bBiasForScenecut < 0 || 100 < param->bBiasForScenecut,
+           "bias-for-scenecut must be between 0 and 100");
     CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,
           "Valid penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum");
     CHECK(param->keyframeMax < -1,
@@ -1470,6 +1474,7 @@ char *x265_param2string(x265_param* p)
     s += sprintf(s, " keyint=%d", p->keyframeMax);
     s += sprintf(s, " min-keyint=%d", p->keyframeMin);
     s += sprintf(s, " scenecut=%d", p->scenecutThreshold);
+    s += sprintf(s, " bias-for-scenecut=%.2f", p->bBiasForScenecut);
     s += sprintf(s, " rc-lookahead=%d", p->lookaheadDepth);
     s += sprintf(s, " lookahead-slices=%d", p->lookaheadSlices);
     s += sprintf(s, " bframes=%d", p->bframes);

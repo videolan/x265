@@ -1163,6 +1163,13 @@ Slice decision options
 	:option:`--scenecut` 0 or :option:`--no-scenecut` disables adaptive
 	I frame placement. Default 40
 
+.. option:: --bias-for-scenecut <0..100.0>
+
+	This value represents the percentage difference between the inter cost and
+	intra cost of a frame used in scenecut detection. For example, a value of 5 indicates,
+	if the inter cost of a frame is greater than or equal to 95 percent of the intra cost of the frame,
+	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5.	
+	
 .. option:: --intra-refresh
 
 	Enables Periodic Intra Refresh(PIR) instead of keyframe insertion.
