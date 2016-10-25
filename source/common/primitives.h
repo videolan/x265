@@ -412,6 +412,12 @@ void setupCPrimitives(EncoderPrimitives &p);
 void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAliasPrimitives(EncoderPrimitives &p);
+#if HAVE_ALTIVEC
+void setupPixelPrimitives_altivec(EncoderPrimitives &p);
+void setupDCTPrimitives_altivec(EncoderPrimitives &p);
+void setupFilterPrimitives_altivec(EncoderPrimitives &p);
+void setupIntraPrimitives_altivec(EncoderPrimitives &p);
+#endif
 }
 
 #if !EXPORT_C_API

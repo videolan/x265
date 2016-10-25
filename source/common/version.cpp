@@ -79,6 +79,8 @@
 
 #if defined(ENABLE_ASSEMBLY)
 #define ASM     ""
+#elif HAVE_ALTIVEC
+#define ASM     "[altivec]"
 #else
 #define ASM     "[noasm]"
 #endif
