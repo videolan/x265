@@ -1533,6 +1533,11 @@ char *x265_param2string(x265_param* p)
         if (p->bframes)
             s += sprintf(s, " pbratio=%.2f", p->rc.pbFactor);
     }
+    if (p->bMultiPassOptRPS)
+    {
+        BOOL(p->bMultiPassOptRPS, "multi-pass-opt-rps");
+        BOOL(p->bRepeatHeaders, "repeat-headers");
+    }
 #undef BOOL
     return buf;
 }

@@ -2486,6 +2486,11 @@ bool Encoder::computeSPSRPSIndex()
             rce = &rce2Pass[endNum];
             if (rce->sliceType == I_SLICE)
             {
+                if (m_param->keyframeMin && (endNum - beginNum + 1 < m_param->keyframeMin))
+                {
+                    endNum++;
+                    continue;
+                }
                 break;
             }
             endNum++;

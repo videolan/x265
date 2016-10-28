@@ -462,6 +462,12 @@ bool RateControl::init(const SPS& sps)
                 CMP_OPT_FIRST_PASS("keyint", m_param->keyframeMax);
                 CMP_OPT_FIRST_PASS("scenecut", m_param->scenecutThreshold);
                 CMP_OPT_FIRST_PASS("intra-refresh", m_param->bIntraRefresh);
+                if (m_param->bMultiPassOptRPS)
+                {
+                    CMP_OPT_FIRST_PASS("multi-pass-opt-rps", m_param->bMultiPassOptRPS);
+                    CMP_OPT_FIRST_PASS("repeat-headers", m_param->bRepeatHeaders);
+                    CMP_OPT_FIRST_PASS("min-keyint", m_param->keyframeMin);
+                }
 
                 if ((p = strstr(opts, "b-adapt=")) != 0 && sscanf(p, "b-adapt=%d", &i) && i >= X265_B_ADAPT_NONE && i <= X265_B_ADAPT_TRELLIS)
                 {
