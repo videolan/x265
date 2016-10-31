@@ -1942,12 +1942,12 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
             if (m_param->maxSlices > 1)
             {
                 // NOTE: First row in slice can't negative
-                if ((candMvField[i][0].mv.y < m_sliceMinY) | (candMvField[i][1].mv.y < m_sliceMinY))
+                if (X265_MIN(candMvField[i][0].mv.y, candMvField[i][1].mv.y) < m_sliceMinY)
                     continue;
 
                 // Last row in slice can't reference beyond bound since it is another slice area
                 // TODO: we may beyond bound in future since these area have a chance to finish because we use parallel slices. Necessary prepare research on load balance
-                if ((candMvField[i][0].mv.y > m_sliceMaxY) | (candMvField[i][1].mv.y > m_sliceMaxY))
+                if (X265_MAX(candMvField[i][0].mv.y, candMvField[i][1].mv.y) > m_sliceMaxY)
                     continue;
             }
 
@@ -2072,12 +2072,12 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
             if (m_param->maxSlices > 1)
             {
                 // NOTE: First row in slice can't negative
-                if ((candMvField[i][0].mv.y < m_sliceMinY) | (candMvField[i][1].mv.y < m_sliceMinY))
+                if (X265_MIN(candMvField[i][0].mv.y, candMvField[i][1].mv.y) < m_sliceMinY)
                     continue;
 
                 // Last row in slice can't reference beyond bound since it is another slice area
                 // TODO: we may beyond bound in future since these area have a chance to finish because we use parallel slices. Necessary prepare research on load balance
-                if ((candMvField[i][0].mv.y > m_sliceMaxY) | (candMvField[i][1].mv.y > m_sliceMaxY))
+                if (X265_MAX(candMvField[i][0].mv.y, candMvField[i][1].mv.y) > m_sliceMaxY)
                     continue;
             }
 

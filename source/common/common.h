@@ -176,7 +176,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define X265_MAX(a, b) ((a) > (b) ? (a) : (b))
-#define COPY1_IF_LT(x, y) if ((y) < (x)) (x) = (y);
+#define COPY1_IF_LT(x, y) {if ((y) < (x)) (x) = (y);}
 #define COPY2_IF_LT(x, y, a, b) \
     if ((y) < (x)) \
     { \

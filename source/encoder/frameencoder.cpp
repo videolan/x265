@@ -123,7 +123,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     int range  = m_param->searchRange;       /* fpel search */
     range += !!(m_param->searchMethod < 2);  /* diamond/hex range check lag */
     range += NTAPS_LUMA / 2;                 /* subpel filter half-length */
-    range += 2 + MotionEstimate::hpelIterationCount(m_param->subpelRefine) / 2; /* subpel refine steps */
+    range += 2 + (MotionEstimate::hpelIterationCount(m_param->subpelRefine) + 1) / 2; /* subpel refine steps */
     m_refLagRows = /*(m_param->maxSlices > 1 ? 1 : 0) +*/ 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
@@ -654,8 +654,7 @@ void FrameEncoder::compressFrame()
                 const uint32_t sliceEndRow = m_sliceBaseRow[sliceId + 1] - 1;
                 const uint32_t row = sliceStartRow + rowInSlice;
 
-                if (row >= m_numRows)
-                    break;
+                X265_CHECK(row < m_numRows, "slices row fault was detected");
 
                 if (row > sliceEndRow)
                     continue;
@@ -674,7 +673,7 @@ void FrameEncoder::compressFrame()
                             refpic->m_reconRowFlag[rowIdx].waitForChange(0);
 
                         if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
-                            m_mref[l][ref].applyWeight(row + m_refLagRows, m_numRows, sliceEndRow + 1, sliceId);
+                            m_mref[l][ref].applyWeight(rowIdx, m_numRows, sliceEndRow, sliceId);
                     }
                 }
 
@@ -714,7 +713,7 @@ void FrameEncoder::compressFrame()
                             refpic->m_reconRowFlag[rowIdx].waitForChange(0);
 
                         if ((bUseWeightP || bUseWeightB) && m_mref[l][ref].isWeighted)
-                            m_mref[list][ref].applyWeight(i + m_refLagRows, m_numRows, m_numRows, 0);
+                            m_mref[list][ref].applyWeight(rowIdx, m_numRows, m_numRows, 0);
                     }
                 }
 
@@ -1187,8 +1186,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     // TODO: specially case handle on first and last row
 
     // Initialize restrict on MV range in slices
-    tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * g_maxCUSize * 4) + 2 * 4;
-    tld.analysis.m_sliceMaxY = (int16_t)((endRowInSlicePlus1 - 1 - row) * (g_maxCUSize * 4) - 3 * 4);
+    tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * g_maxCUSize * 4) + 3 * 4;
+    tld.analysis.m_sliceMaxY = (int16_t)((endRowInSlicePlus1 - 1 - row) * (g_maxCUSize * 4) - 4 * 4);
 
     // Handle single row slice
     if (tld.analysis.m_sliceMaxY < tld.analysis.m_sliceMinY)
@@ -1502,7 +1501,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
         ScopedLock self(curRow.lock);
         if ((m_bAllRowsStop && intRow > m_vbvResetTriggerRow) ||
-            (!bFirstRowInSlice && ((curRow.completed < numCols - 1) || (m_rows[row - 1].completed < numCols)) && m_rows[row - 1].completed < m_rows[row].completed + 2))
+            (!bFirstRowInSlice && ((curRow.completed < numCols - 1) || (m_rows[row - 1].completed < numCols)) && m_rows[row - 1].completed < curRow.completed + 2))
         {
             curRow.active = false;
             curRow.busy = false;

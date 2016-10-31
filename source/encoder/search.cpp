@@ -2545,6 +2545,9 @@ void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mv
     /* conditional clipping for frame parallelism */
     mvmin.y = X265_MIN(mvmin.y, (int16_t)m_refLagPixels);
     mvmax.y = X265_MIN(mvmax.y, (int16_t)m_refLagPixels);
+
+    /* conditional clipping for negative mv range */
+    mvmax.y = X265_MAX(mvmax.y, mvmin.y);
 }
 
 /* Note: this function overwrites the RD cost variables of interMode, but leaves the sa8d cost unharmed */

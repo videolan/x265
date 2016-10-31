@@ -278,10 +278,14 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
         costs[1] += mvcost((omv + MV(m1x, m1y)) << 2); \
         costs[2] += mvcost((omv + MV(m2x, m2y)) << 2); \
         costs[3] += mvcost((omv + MV(m3x, m3y)) << 2); \
-        COPY2_IF_LT(bcost, costs[0], bmv, omv + MV(m0x, m0y)); \
-        COPY2_IF_LT(bcost, costs[1], bmv, omv + MV(m1x, m1y)); \
-        COPY2_IF_LT(bcost, costs[2], bmv, omv + MV(m2x, m2y)); \
-        COPY2_IF_LT(bcost, costs[3], bmv, omv + MV(m3x, m3y)); \
+        if ((g_maxSlices == 1) | ((omv.y + m0y >= mvmin.y) & (omv.y + m0y <= mvmax.y))) \
+            COPY2_IF_LT(bcost, costs[0], bmv, omv + MV(m0x, m0y)); \
+        if ((g_maxSlices == 1) | ((omv.y + m1y >= mvmin.y) & (omv.y + m1y <= mvmax.y))) \
+            COPY2_IF_LT(bcost, costs[1], bmv, omv + MV(m1x, m1y)); \
+        if ((g_maxSlices == 1) | ((omv.y + m2y >= mvmin.y) & (omv.y + m2y <= mvmax.y))) \
+            COPY2_IF_LT(bcost, costs[2], bmv, omv + MV(m2x, m2y)); \
+        if ((g_maxSlices == 1) | ((omv.y + m3y >= mvmin.y) & (omv.y + m3y <= mvmax.y))) \
+            COPY2_IF_LT(bcost, costs[3], bmv, omv + MV(m3x, m3y)); \
     }
 
 #define COST_MV_X4_DIR(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y, costs) \
@@ -659,8 +663,10 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
         do
         {
             COST_MV_X4_DIR(0, -1, 0, 1, -1, 0, 1, 0, costs);
-            COPY1_IF_LT(bcost, (costs[0] << 4) + 1);
-            COPY1_IF_LT(bcost, (costs[1] << 4) + 3);
+            if ((g_maxSlices == 1) | ((bmv.y - 1 >= mvmin.y) & (bmv.y - 1 <= mvmax.y)))
+                COPY1_IF_LT(bcost, (costs[0] << 4) + 1);
+            if ((g_maxSlices == 1) | ((bmv.y + 1 >= mvmin.y) & (bmv.y + 1 <= mvmax.y)))
+                COPY1_IF_LT(bcost, (costs[1] << 4) + 3);
             COPY1_IF_LT(bcost, (costs[2] << 4) + 4);
             COPY1_IF_LT(bcost, (costs[3] << 4) + 12);
             if (!(bcost & 15))
@@ -698,36 +704,57 @@ me_hex2:
       /* equivalent to the above, but eliminates duplicate candidates */
         COST_MV_X3_DIR(-2, 0, -1, 2,  1, 2, costs);
         bcost <<= 3;
-        COPY1_IF_LT(bcost, (costs[0] << 3) + 2);
-        COPY1_IF_LT(bcost, (costs[1] << 3) + 3);
-        COPY1_IF_LT(bcost, (costs[2] << 3) + 4);
+        if ((g_maxSlices == 1) | ((bmv.y >= mvmin.y) & (bmv.y <= mvmax.y)))
+            COPY1_IF_LT(bcost, (costs[0] << 3) + 2);
+        if ((g_maxSlices == 1) | ((bmv.y + 2 >= mvmin.y) & (bmv.y + 2 <= mvmax.y)))
+        {
+            COPY1_IF_LT(bcost, (costs[1] << 3) + 3);
+            COPY1_IF_LT(bcost, (costs[2] << 3) + 4);
+        }
+
         COST_MV_X3_DIR(2, 0,  1, -2, -1, -2, costs);
-        COPY1_IF_LT(bcost, (costs[0] << 3) + 5);
-        COPY1_IF_LT(bcost, (costs[1] << 3) + 6);
-        COPY1_IF_LT(bcost, (costs[2] << 3) + 7);
+        if ((g_maxSlices == 1) | ((bmv.y >= mvmin.y) & (bmv.y <= mvmax.y)))
+            COPY1_IF_LT(bcost, (costs[0] << 3) + 5);
+        if ((g_maxSlices == 1) | ((bmv.y - 2 >= mvmin.y) & (bmv.y - 2 <= mvmax.y)))
+        {
+            COPY1_IF_LT(bcost, (costs[1] << 3) + 6);
+            COPY1_IF_LT(bcost, (costs[2] << 3) + 7);
+        }
 
         if (bcost & 7)
         {
             int dir = (bcost & 7) - 2;
-            bmv += hex2[dir + 1];
 
-            /* half hexagon, not overlapping the previous iteration */
-            for (int i = (merange >> 1) - 1; i > 0 && bmv.checkRange(mvmin, mvmax); i--)
+            if ((g_maxSlices == 1) | ((bmv.y + hex2[dir + 1].y >= mvmin.y) & (bmv.y + hex2[dir + 1].y <= mvmax.y)))
             {
-                COST_MV_X3_DIR(hex2[dir + 0].x, hex2[dir + 0].y,
-                               hex2[dir + 1].x, hex2[dir + 1].y,
-                               hex2[dir + 2].x, hex2[dir + 2].y,
-                               costs);
-                bcost &= ~7;
-                COPY1_IF_LT(bcost, (costs[0] << 3) + 1);
-                COPY1_IF_LT(bcost, (costs[1] << 3) + 2);
-                COPY1_IF_LT(bcost, (costs[2] << 3) + 3);
-                if (!(bcost & 7))
-                    break;
-                dir += (bcost & 7) - 2;
-                dir = mod6m1[dir + 1];
                 bmv += hex2[dir + 1];
-            }
+
+                /* half hexagon, not overlapping the previous iteration */
+                for (int i = (merange >> 1) - 1; i > 0 && bmv.checkRange(mvmin, mvmax); i--)
+                {
+                    COST_MV_X3_DIR(hex2[dir + 0].x, hex2[dir + 0].y,
+                        hex2[dir + 1].x, hex2[dir + 1].y,
+                        hex2[dir + 2].x, hex2[dir + 2].y,
+                        costs);
+                    bcost &= ~7;
+
+                    if ((g_maxSlices == 1) | ((bmv.y + hex2[dir + 0].y >= mvmin.y) & (bmv.y + hex2[dir + 0].y <= mvmax.y)))
+                        COPY1_IF_LT(bcost, (costs[0] << 3) + 1);
+
+                    if ((g_maxSlices == 1) | ((bmv.y + hex2[dir + 1].y >= mvmin.y) & (bmv.y + hex2[dir + 1].y <= mvmax.y)))
+                        COPY1_IF_LT(bcost, (costs[1] << 3) + 2);
+
+                    if ((g_maxSlices == 1) | ((bmv.y + hex2[dir + 2].y >= mvmin.y) & (bmv.y + hex2[dir + 2].y <= mvmax.y)))
+                        COPY1_IF_LT(bcost, (costs[2] << 3) + 3);
+
+                    if (!(bcost & 7))
+                        break;
+
+                    dir += (bcost & 7) - 2;
+                    dir = mod6m1[dir + 1];
+                    bmv += hex2[dir + 1];
+                }
+            } // if ((g_maxSlices == 1) | ((bmv.y + hex2[dir + 1].y >= mvmin.y) & (bmv.y + hex2[dir + 1].y <= mvmax.y)))
         }
         bcost >>= 3;
 #endif // if 0
@@ -735,15 +762,21 @@ me_hex2:
         /* square refine */
         int dir = 0;
         COST_MV_X4_DIR(0, -1,  0, 1, -1, 0, 1, 0, costs);
-        COPY2_IF_LT(bcost, costs[0], dir, 1);
-        COPY2_IF_LT(bcost, costs[1], dir, 2);
+        if ((g_maxSlices == 1) | ((bmv.y - 1 >= mvmin.y) & (bmv.y - 1 <= mvmax.y)))
+            COPY2_IF_LT(bcost, costs[0], dir, 1);
+        if ((g_maxSlices == 1) | ((bmv.y + 1 >= mvmin.y) & (bmv.y + 1 <= mvmax.y)))
+            COPY2_IF_LT(bcost, costs[1], dir, 2);
         COPY2_IF_LT(bcost, costs[2], dir, 3);
         COPY2_IF_LT(bcost, costs[3], dir, 4);
         COST_MV_X4_DIR(-1, -1, -1, 1, 1, -1, 1, 1, costs);
-        COPY2_IF_LT(bcost, costs[0], dir, 5);
-        COPY2_IF_LT(bcost, costs[1], dir, 6);
-        COPY2_IF_LT(bcost, costs[2], dir, 7);
-        COPY2_IF_LT(bcost, costs[3], dir, 8);
+        if ((g_maxSlices == 1) | ((bmv.y - 1 >= mvmin.y) & (bmv.y - 1 <= mvmax.y)))
+            COPY2_IF_LT(bcost, costs[0], dir, 5);
+        if ((g_maxSlices == 1) | ((bmv.y + 1 >= mvmin.y) & (bmv.y + 1 <= mvmax.y)))
+            COPY2_IF_LT(bcost, costs[1], dir, 6);
+        if ((g_maxSlices == 1) | ((bmv.y - 1 >= mvmin.y) & (bmv.y - 1 <= mvmax.y)))
+            COPY2_IF_LT(bcost, costs[2], dir, 7);
+        if ((g_maxSlices == 1) | ((bmv.y + 1 >= mvmin.y) & (bmv.y + 1 <= mvmax.y)))
+            COPY2_IF_LT(bcost, costs[3], dir, 8);
         bmv += square1[dir];
         break;
     }
@@ -756,6 +789,7 @@ me_hex2:
         /* refine predictors */
         omv = bmv;
         ucost1 = bcost;
+        X265_CHECK((g_maxSlices == 1) | ((pmv.y >= mvmin.y) & (pmv.y <= mvmax.y)), "pmv outside of search range!");
         DIA1_ITER(pmv.x, pmv.y);
         if (pmv.notZero())
             DIA1_ITER(0, 0);
@@ -1099,6 +1133,7 @@ me_hex2:
     if ((g_maxSlices > 1) & ((bmv.y < qmvmin.y) | (bmv.y > qmvmax.y)))
     {
         bmv.y = x265_min(x265_max(bmv.y, qmvmin.y), qmvmax.y);
+        bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);
     }
 
     if (!bcost)
@@ -1113,6 +1148,11 @@ me_hex2:
         for (int i = 1; i <= wl.hpel_dirs; i++)
         {
             MV qmv = bmv + square1[i] * 2;
+
+            /* skip invalid range */
+            if ((g_maxSlices > 1) & ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y)))
+                continue;
+
             int cost = ref->lowresQPelCost(fenc, blockOffset, qmv, sad) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
@@ -1124,6 +1164,11 @@ me_hex2:
         for (int i = 1; i <= wl.qpel_dirs; i++)
         {
             MV qmv = bmv + square1[i];
+
+            /* skip invalid range */
+            if ((g_maxSlices > 1) & ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y)))
+                continue;
+
             int cost = ref->lowresQPelCost(fenc, blockOffset, qmv, satd) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
@@ -1188,6 +1233,9 @@ me_hex2:
                 break;
         }
     }
+
+    // check mv range for slice bound
+    X265_CHECK((g_maxSlices == 1) | ((bmv.y >= qmvmin.y) & (bmv.y <= qmvmax.y)), "mv beyond range!");
 
     x265_emms();
     outQMv = bmv;
