@@ -1256,8 +1256,6 @@ int x265_check_params(x265_param* param)
         "qpmin exceeds supported range (0 to 69)");
     CHECK(param->log2MaxPocLsb < 4 || param->log2MaxPocLsb > 16,
         "Supported range for log2MaxPocLsb is 4 to 16");
-    CHECK(1 > param->maxSlices || param->maxSlices > ((param->sourceHeight + param->maxCUSize - 1) / param->maxCUSize),
-        "The slices can not be more than number of rows");
     return check_failed;
 }
 
