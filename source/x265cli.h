@@ -462,8 +462,8 @@ static void showHelp(x265_param *param)
     H0("   --log2-max-poc-lsb <integer>  Maximum of the picture order count\n");
     H0("   --[no-]vui-timing-info        Discard optional VUI timing information from the bistream. Default %s\n", OPT(param->bEmitVUITimingInfo));
     H0("   --[no-]vui-hrd-info           Discard optional HRD timing information from the bistream. Default %s\n", OPT(param->bEmitVUIHRDInfo));
-    H0("   --[no-]opt-qp-pps             Discard optional HRD timing information from the bistream. Default %s\n", OPT(param->bOptQpPPS));
-    H0("   --[no-]opt-ref-list-length-pps  Discard optional HRD timing information from the bistream. Default %s\n", OPT(param->bOptRefListLengthPPS));
+    H0("   --[no-]opt-qp-pps             Dynamically optimize QP in PPS (instead of default 26) based on QPs in previous GOP. Default %s\n", OPT(param->bOptQpPPS));
+    H0("   --[no-]opt-ref-list-length-pps  Dynamically set L0 and L1 ref list length in PPS (instead of default 0) based on values in last GOP. Default %s\n", OPT(param->bOptRefListLengthPPS));
     H0("   --[no-]multi-pass-opt-rps     Enable storing commonly RPS in SPS in multi pass mode. Default %s\n", OPT(param->bMultiPassOptRPS));
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
