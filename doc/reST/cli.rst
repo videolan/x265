@@ -1850,16 +1850,26 @@ Bitstream options
 
   Maximum of the picture order count. Default 8
 
-.. option:: --[no]-vui-timing-info
+.. option:: --[no-]vui-timing-info
 
 	Discard optional VUI timing info from bitstream. Default enabled.
 
-.. option:: --[no]-vui-hrd-info
+.. option:: --[no-]vui-hrd-info
 
 	Discard optional VUI HRD info from bitstream. Default enabled when
 	:option:`--hrd` is enabled.
 
-.. option:: --[no]-multi-pass-opt-rps
+.. option:: --[no-]opt-qp-pps
+
+	Optimize QP in PPS (instead of default value of 26) based on the QP values
+	observed in last GOP. Default enabled.
+
+.. option:: --[no-]opt-ref-list-length-pps
+
+	Optimize L0 and L1 ref list length in PPS (instead of default value of 0)
+	based on the lengths observed in the last GOP. Default enabled.
+
+.. option:: --[no-]multi-pass-opt-rps
 
 	Enable storing commonly RPS in SPS in multi pass mode. Default disabled.
 
