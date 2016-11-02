@@ -1852,11 +1852,11 @@ Bitstream options
 
 .. option:: --[no-]vui-timing-info
 
-	Discard optional VUI timing info from bitstream. Default enabled.
+	Emit VUI timing info in bitstream. Default enabled.
 
 .. option:: --[no-]vui-hrd-info
 
-	Discard optional VUI HRD info from bitstream. Default enabled when
+	Emit VUI HRD info in  bitstream. Default enabled when
 	:option:`--hrd` is enabled.
 
 .. option:: --[no-]opt-qp-pps
