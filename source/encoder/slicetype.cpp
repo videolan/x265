@@ -1617,7 +1617,7 @@ bool Lookahead::scenecutInternal(Lowres **frames, int p0, int p1, bool bRealScen
 
     /* magic numbers pulled out of thin air */
     float threshMin = (float)(threshMax * 0.25);
-    double bias = m_param->bBiasForScenecut;
+    double bias = m_param->scenecutBias;
     if (bRealScenecut)
     {
         if (m_param->keyframeMin == m_param->keyframeMax)

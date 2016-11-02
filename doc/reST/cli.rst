@@ -1163,7 +1163,7 @@ Slice decision options
 	:option:`--scenecut` 0 or :option:`--no-scenecut` disables adaptive
 	I frame placement. Default 40
 
-.. option:: --bias-for-scenecut <0..100.0>
+.. option:: --scenecut-bias <0..100.0>
 
 	This value represents the percentage difference between the inter cost and
 	intra cost of a frame used in scenecut detection. For example, a value of 5 indicates,

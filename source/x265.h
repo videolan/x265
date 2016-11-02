@@ -1331,7 +1331,7 @@ typedef struct x265_param
 
     /* This value represents the percentage difference between the inter cost and
     * intra cost of a frame used in scenecut detection. Default 5. */
-    double     bBiasForScenecut;
+    double     scenecutBias;
 
 } x265_param;
 
