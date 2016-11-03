@@ -206,7 +206,7 @@ vmle1 = vec_mule(s1, vf);\
 vmlo1 = vec_mulo(s1, vf);\
 vsume = vec_add(vec_add(vmle0, vmle1), u16_16);\
 ve = vec_sra(vsume, u16_5);\
-vsumo = vec_add(vec_add(vmlo0, vmlo1), u16_16);\ 
+vsumo = vec_add(vec_add(vmlo0, vmlo1), u16_16);\
 vo = vec_sra(vsumo, u16_5);\
 vout = vec_pack(vec_mergeh(ve, vo), vec_mergel(ve, vo));\
 }
@@ -15755,13 +15755,13 @@ void intra_pred<16, 27>(pixel* dst, intptr_t dstStride, const pixel *srcPix0, in
 
 #if 0
     #define one_line(s0, s1, vf32, vf, vout) {\
-        vmle0 = vec_mule(s0, vf32);\ 
-        vmlo0 = vec_mulo(s0, vf32);\ 
+        vmle0 = vec_mule(s0, vf32);\
+        vmlo0 = vec_mulo(s0, vf32);\
         vmle1 = vec_mule(s1, vf);\
-        vmlo1 = vec_mulo(s1, vf);\ 
+        vmlo1 = vec_mulo(s1, vf);\
         vsume = vec_add(vec_add(vmle0, vmle1), u16_16);\
         ve = vec_sra(vsume, u16_5);\
-        vsumo = vec_add(vec_add(vmlo0, vmlo1), u16_16);\ 
+        vsumo = vec_add(vec_add(vmlo0, vmlo1), u16_16);\
         vo = vec_sra(vsumo, u16_5);\
         vout = vec_pack(vec_mergeh(ve, vo), vec_mergel(ve, vo));\
     }
@@ -16896,13 +16896,13 @@ void intra_pred<16, 29>(pixel* dst, intptr_t dstStride, const pixel *srcPix0, in
 
 #if 0
     #define one_line(s0, s1, vf32, vf, vout) {\
-        vmle0 = vec_mule(s0, vf32);\ 
-        vmlo0 = vec_mulo(s0, vf32);\ 
+        vmle0 = vec_mule(s0, vf32);\
+        vmlo0 = vec_mulo(s0, vf32);\
         vmle1 = vec_mule(s1, vf);\
-        vmlo1 = vec_mulo(s1, vf);\ 
+        vmlo1 = vec_mulo(s1, vf);\
         vsume = vec_add(vec_add(vmle0, vmle1), u16_16);\
         ve = vec_sra(vsume, u16_5);\
-        vsumo = vec_add(vec_add(vmlo0, vmlo1), u16_16);\ 
+        vsumo = vec_add(vec_add(vmlo0, vmlo1), u16_16);\
         vo = vec_sra(vsumo, u16_5);\
         vout = vec_pack(vec_mergeh(ve, vo), vec_mergel(ve, vo));\
     }
@@ -30741,9 +30741,9 @@ void one_ang_pred_altivec<32, 11>(pixel* dst, const pixel *srcPix0, int bFilter)
 
 #define ONE_ANG(log2Size, mode, dest, refPix, filtPix, bLuma)\
 {\
-    const int width = 1<< log2Size;\  
+    const int width = 1<< log2Size;\
     pixel *srcPix0  = (g_intraFilterFlags[mode] & width ? filtPix  : refPix);\
-    pixel *dst = dest + ((mode - 2) << (log2Size * 2));\ 
+    pixel *dst = dest + ((mode - 2) << (log2Size * 2));\
     srcPix0  = refPix;\
     dst = dest;\
     one_ang_pred_altivec<width, mode>(dst, srcPix0, bLuma);\

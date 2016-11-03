@@ -107,7 +107,7 @@ if(POWER)
             set(ALTIVEC_PRIMITIVES ${ALTIVEC_PRIMITIVES} ppc/${SRC})
         endforeach()
         source_group(Intrinsics_altivec FILES ${ALTIVEC_PRIMITIVES})
-        set_source_files_properties(${ALTIVEC_PRIMITIVES} PROPERTIES COMPILE_FLAGS -Wno-unused)
+        set_source_files_properties(${ALTIVEC_PRIMITIVES} PROPERTIES COMPILE_FLAGS "-Wno-unused  -Wno-unknown-pragmas -Wno-maybe-uninitialized")
     endif()
 endif()
 

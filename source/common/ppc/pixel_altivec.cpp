@@ -303,7 +303,7 @@ void inline sum_columns_altivec<12, 16>(vec_s32_t sumv, int* sum)
 }
 
 template<int lx, int ly>
-int inline sad_altivec(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2){}
+int inline sad_altivec(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2){ return 0; }
 
 template<>
 int inline sad_altivec<24, 32>(const pixel* pix1, intptr_t stride_pix1, const pixel* pix2, intptr_t stride_pix2)
@@ -3335,6 +3335,7 @@ int satd_altivec<48, 24>(const pixel* pix1, intptr_t stride_pix1, const pixel* p
               +satd_16x16_altivec(pix3, stride_pix1, pix4, stride_pix2)
               + satd_16x16_altivec(pix3+16, stride_pix1, pix4+16, stride_pix2)
               + satd_16x16_altivec(pix3+32, stride_pix1, pix4+32, stride_pix2);
+    return satd;
 }
 
 template<>
@@ -3349,6 +3350,7 @@ int satd_altivec<48, 32>(const pixel* pix1, intptr_t stride_pix1, const pixel* p
               +satd_16x16_altivec(pix3, stride_pix1, pix4, stride_pix2)
               + satd_16x16_altivec(pix3+16, stride_pix1, pix4+16, stride_pix2)
               + satd_16x16_altivec(pix3+32, stride_pix1, pix4+32, stride_pix2);
+    return satd;
 }
 
 template<>
@@ -3373,6 +3375,7 @@ int satd_altivec<48, 64>(const pixel* pix1, intptr_t stride_pix1, const pixel* p
               +satd_16x16_altivec(pix7, stride_pix1, pix8, stride_pix2)
               + satd_16x16_altivec(pix7+16, stride_pix1,pix8+16, stride_pix2)
               + satd_16x16_altivec(pix7+32, stride_pix1, pix8+32, stride_pix2);
+    return satd;
 }
 
 template<>
@@ -3657,7 +3660,7 @@ inline int sa8d_8x8_altivec(const pixel* pix1, intptr_t i_pix1, const pixel* pix
 
 int sa8d_8x8_altivec(const int16_t* pix1, intptr_t i_pix1)
 {
-    int sum;
+    int sum = 0;
     return ((sum+2)>>2);
 }
 

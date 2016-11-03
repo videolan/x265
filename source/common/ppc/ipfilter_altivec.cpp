@@ -319,11 +319,11 @@ void interp_vert_pp_altivec(const pixel* __restrict__ src, intptr_t srcStride, p
             vsumH += vsrcH * vcoeff7;
             vsumL += vsrcL * vcoeff7;
 
-            vector short vvalH = vsumH + voffset >> vshift;
+            vector short vvalH = (vsumH + voffset) >> vshift;
             vvalH = vec_max( vvalH, vzero_s16 );
             vvalH = vec_min( vvalH, vmaxVal   );
 
-            vector short vvalL = vsumL + voffset >> vshift;
+            vector short vvalL = (vsumL + voffset) >> vshift;
             vvalL = vec_max( vvalL, vzero_s16 );
             vvalL = vec_min( vvalL, vmaxVal   );
 
@@ -378,11 +378,11 @@ void interp_vert_pp_altivec(const pixel* __restrict__ src, intptr_t srcStride, p
             vsum2H += vsrc2H * vcoeff7;
             vsum2L += vsrc2L * vcoeff7;
 
-            vector short vval2H = vsum2H + voffset >> vshift;
+            vector short vval2H = (vsum2H + voffset) >> vshift;
             vval2H = vec_max( vval2H, vzero_s16 );
             vval2H = vec_min( vval2H, vmaxVal   );
 
-            vector short vval2L = vsum2L + voffset >> vshift;
+            vector short vval2L = (vsum2L + voffset) >> vshift;
             vval2L = vec_max( vval2L, vzero_s16 );
             vval2L = vec_min( vval2L, vmaxVal   );
 
@@ -452,9 +452,9 @@ template <int N, int width, int height>
 void filterVertical_sp_altivec(const int16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int coeffIdx)
 {
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
-    int shift = IF_FILTER_PREC + headRoom;
+    unsigned int shift = IF_FILTER_PREC + headRoom;
     int offset = (1 << (shift - 1)) + (IF_INTERNAL_OFFS << IF_FILTER_PREC);
-    uint16_t maxVal = (1 << X265_DEPTH) - 1;
+    const uint16_t maxVal = (1 << X265_DEPTH) - 1;
     const int16_t* coeff = (N == 8 ? g_lumaFilter[coeffIdx] : g_chromaFilter[coeffIdx]);
 
     src -= (N / 2 - 1) * srcStride;
@@ -594,7 +594,7 @@ void interp_horiz_ps_altivec(const pixel* src, intptr_t srcStride, int16_t* dst,
 
     const int16_t* coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
-    int shift = IF_FILTER_PREC - headRoom;
+    unsigned int shift = IF_FILTER_PREC - headRoom;
     int offset = -IF_INTERNAL_OFFS << shift;
     int blkheight = height;
 
@@ -1148,11 +1148,11 @@ void interp_horiz_pp_altivec(const pixel* __restrict__ src, intptr_t srcStride, 
             vsumH  += vsrcH * vcoeff7;
             vsumL  += vsrcL * vcoeff7;
 
-            vector short vvalH = vsumH + voffset >> vheadRoom;
+            vector short vvalH = (vsumH + voffset) >> vheadRoom;
             vvalH = vec_max( vvalH, vzero_s16 );
             vvalH = vec_min( vvalH, vmaxVal   );
 
-            vector short vvalL = vsumL + voffset >> vheadRoom;
+            vector short vvalL = (vsumL + voffset) >> vheadRoom;
             vvalL = vec_max( vvalL, vzero_s16 );
             vvalL = vec_min( vvalL, vmaxVal   );
 
@@ -1210,11 +1210,11 @@ void interp_horiz_pp_altivec(const pixel* __restrict__ src, intptr_t srcStride, 
             vsum2H  += vsrc2H * vcoeff7;
             vsum2L  += vsrc2L * vcoeff7;
 
-            vector short vval2H = vsum2H + voffset >> vheadRoom;
+            vector short vval2H = (vsum2H + voffset) >> vheadRoom;
             vval2H = vec_max( vval2H, vzero_s16 );
             vval2H = vec_min( vval2H, vmaxVal   );
 
-            vector short vval2L = vsum2L + voffset >> vheadRoom;
+            vector short vval2L = (vsum2L + voffset) >> vheadRoom;
             vval2L = vec_max( vval2L, vzero_s16 );
             vval2L = vec_min( vval2L, vmaxVal   );
 
@@ -1255,7 +1255,7 @@ void interp_horiz_pp_altivec(const pixel* __restrict__ src, intptr_t srcStride, 
 //
 //    vector unsigned char v_pixel_char_0, v_pixel_char_1, v_pixel_char_2 ;
 //    vector signed short v_pixel_short_0, v_pixel_short_1, v_pixel_short_2, v_pixel_short_3, v_pixel_short_4 ;
-//    const vector signed short v_mask_unisgned_char_to_short = {0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF} ; \
+//    const vector signed short v_mask_unisgned_char_to_short = {0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF} ;
 //    const vector signed int v_zeros_int = {0, 0, 0, 0} ;
 //    const vector signed short v_zeros_short = {0, 0, 0, 0, 0, 0, 0, 0} ;
 //
