@@ -3,10 +3,9 @@
 # consider VBV tests a failure if new bitrate is more than 5% different
 # from the old bitrate
 # vbv-tolerance = 0.05
-
 big_buck_bunny_360p24.y4m,--preset=superfast --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 400 --hrd --aud --repeat-headers
 big_buck_bunny_360p24.y4m,--preset=medium --bitrate 1000 -F4 --cu-lossless --scaling-list default
-big_buck_bunny_360p24.y4m,--preset=slower --no-weightp --pme --qg-size 16
+big_buck_bunny_360p24.y4m,--preset=slower --no-weightp --qg-size 16
 washdc_422_ntsc.y4m,--preset=faster --no-strong-intra-smoothing --keyint 1 --qg-size 16
 washdc_422_ntsc.y4m,--preset=medium --qp 40 --nr-inter 400 -F4
 washdc_422_ntsc.y4m,--preset=veryslow --pmode --tskip --rdoq-level 0
