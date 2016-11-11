@@ -1442,6 +1442,9 @@ char *x265_param2string(x265_param* p)
     s += sprintf(s, "%dx%d", p->sourceWidth,p->sourceHeight);
     s += sprintf(s, " fps=%u/%u", p->fpsNum, p->fpsDenom);
     s += sprintf(s, " bitdepth=%d", p->internalBitDepth);
+    s += sprintf(s, " frame-threads=%d", p->frameNumThreads);
+    s += sprintf(s, " level-idc=%d", p->levelIdc);
+    s += sprintf(s, " numa-pools=%s", p->numaPools);
     BOOL(p->bEnableWavefront, "wpp");
     s += sprintf(s, " ctu=%d", p->maxCUSize);
     s += sprintf(s, " min-cu-size=%d", p->minCUSize);
@@ -1519,10 +1522,10 @@ char *x265_param2string(x265_param* p)
                           p->rc.complexityBlur, p->rc.qblur);
         if (p->rc.vbvBufferSize)
         {
-            s += sprintf(s, " vbv-maxrate=%d vbv-bufsize=%d",
-                          p->rc.vbvMaxBitrate, p->rc.vbvBufferSize);
+            s += sprintf(s, " vbv-maxrate=%d vbv-bufsize=%d vbv-init=%.1f",
+                          p->rc.vbvMaxBitrate, p->rc.vbvBufferSize, p->rc.vbvBufferInit);
             if (p->rc.rateControlMode == X265_RC_CRF)
-                s += sprintf(s, " crf-max=%.1f", p->rc.rfConstantMax);
+                s += sprintf(s, " crf-max=%.1f crf-min=%.1f", p->rc.rfConstantMax, p->rc.rfConstantMin);
         }
     }
     else if (p->rc.rateControlMode == X265_RC_CQP)
@@ -1538,6 +1541,8 @@ char *x265_param2string(x265_param* p)
         BOOL(p->bMultiPassOptRPS, "multi-pass-opt-rps");
         BOOL(p->bRepeatHeaders, "repeat-headers");
     }
+    s += sprintf(s, " uhd-bd=%d", p->uhdBluray);
+    s += sprintf(s, " slices=%d", p->maxSlices);
 #undef BOOL
     return buf;
 }
