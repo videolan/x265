@@ -128,11 +128,12 @@ void MotionReference::applyWeight(uint32_t finishedRows, uint32_t maxNumRows, ui
     intptr_t stride = reconPic->m_stride;
     int width   = reconPic->m_picWidth;
     int height  = (finishedRows - numWeightedRows) * g_maxCUSize;
-    if ((finishedRows == maxNumRows) && (reconPic->m_picHeight % g_maxCUSize))
+    /* the last row may be partial height */
+    if (finishedRows == maxNumRows - 1)
     {
-        /* the last row may be partial height */
-        height -= g_maxCUSize;
-        height += reconPic->m_picHeight % g_maxCUSize;
+        const int leftRows = (reconPic->m_picHeight & (g_maxCUSize - 1));
+
+        height += leftRows ? leftRows : g_maxCUSize;
     }
     int cuHeight = g_maxCUSize;
 
@@ -172,7 +173,7 @@ void MotionReference::applyWeight(uint32_t finishedRows, uint32_t maxNumRows, ui
         }
 
         // Extending Bottom
-        if (finishedRows == maxNumRows)
+        if (finishedRows == maxNumRows - 1)
         {
             int picHeight = reconPic->m_picHeight;
             if (c) picHeight >>= reconPic->m_vChromaShift;
