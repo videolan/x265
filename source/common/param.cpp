@@ -1082,8 +1082,8 @@ int x265_check_params(x265_param* param)
         "Multiple-Slices mode must be enable Wavefront Parallel Processing (--wpp)");
     CHECK(param->internalBitDepth != X265_DEPTH,
           "internalBitDepth must match compiled bit depth");
-    CHECK(param->minCUSize != 64 && param->minCUSize != 32 && param->minCUSize != 16 && param->minCUSize != 8,
-          "minimim CU size must be 8, 16, 32, or 64");
+    CHECK(param->minCUSize != 32 && param->minCUSize != 16 && param->minCUSize != 8,
+          "minimim CU size must be 8, 16 or 32");
     CHECK(param->minCUSize > param->maxCUSize,
           "min CU size must be less than or equal to max CU size");
     CHECK(param->rc.qp < -6 * (param->internalBitDepth - 8) || param->rc.qp > QP_MAX_SPEC,
