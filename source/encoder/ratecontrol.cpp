@@ -433,7 +433,7 @@ bool RateControl::init(const SPS& sps)
                 }
                 *statsIn = '\0';
                 statsIn++;
-                if (sscanf(opts, "#options: %dx%d", &i, &j) != 2)
+                if ((p = strstr(opts, " input-res=")) == 0 || sscanf(p, " input-res=%dx%d", &i, &j) != 2)
                 {
                     x265_log(m_param, X265_LOG_ERROR, "Resolution specified in stats file not valid\n");
                     return false;
@@ -459,7 +459,7 @@ bool RateControl::init(const SPS& sps)
                 CMP_OPT_FIRST_PASS("bframes", m_param->bframes);
                 CMP_OPT_FIRST_PASS("b-pyramid", m_param->bBPyramid);
                 CMP_OPT_FIRST_PASS("open-gop", m_param->bOpenGOP);
-                CMP_OPT_FIRST_PASS("keyint", m_param->keyframeMax);
+                CMP_OPT_FIRST_PASS(" keyint", m_param->keyframeMax);
                 CMP_OPT_FIRST_PASS("scenecut", m_param->scenecutThreshold);
                 CMP_OPT_FIRST_PASS("intra-refresh", m_param->bIntraRefresh);
                 if (m_param->bMultiPassOptRPS)
