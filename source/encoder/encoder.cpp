@@ -2433,10 +2433,10 @@ void Encoder::printReconfigureParams()
     x265_param* oldParam = m_param;
     x265_param* newParam = m_latestParam;
     
-    x265_log(newParam, X265_LOG_INFO, "Reconfigured param options, input Frame: %d\n", m_pocLast + 1);
+    x265_log(newParam, X265_LOG_DEBUG, "Reconfigured param options, input Frame: %d\n", m_pocLast + 1);
 
     char tmp[40];
-#define TOOLCMP(COND1, COND2, STR)  if (COND1 != COND2) { sprintf(tmp, STR, COND1, COND2); x265_log(newParam, X265_LOG_INFO, tmp); }
+#define TOOLCMP(COND1, COND2, STR)  if (COND1 != COND2) { sprintf(tmp, STR, COND1, COND2); x265_log(newParam, X265_LOG_DEBUG, tmp); }
     TOOLCMP(oldParam->maxNumReferences, newParam->maxNumReferences, "ref=%d to %d\n");
     TOOLCMP(oldParam->bEnableFastIntra, newParam->bEnableFastIntra, "fast-intra=%d to %d\n");
     TOOLCMP(oldParam->bEnableEarlySkip, newParam->bEnableEarlySkip, "early-skip=%d to %d\n");
