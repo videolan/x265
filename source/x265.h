@@ -357,6 +357,7 @@ typedef enum
 
 #define X265_TU_LIMIT_BFS       1
 #define X265_TU_LIMIT_DFS       2
+#define X265_TU_LIMIT_NEIGH     4
 
 #define X265_BFRAME_MAX         16
 #define X265_MAX_FRAME_THREADS  16

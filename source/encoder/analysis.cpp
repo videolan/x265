@@ -203,6 +203,57 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     return *m_modeDepth[0].bestMode;
 }
 
+int32_t Analysis::loadTUDepth(CUGeom cuGeom, CUData parentCTU)
+{
+    float predDepth = 0;
+    CUData* neighbourCU;
+    uint8_t count = 0;
+    int32_t maxTUDepth = -1;
+    neighbourCU = m_slice->m_refFrameList[0][0]->m_encData->m_picCTU;
+    predDepth += neighbourCU->m_refTuDepth[cuGeom.geomRecurId];
+    count++;
+    if (m_slice->isInterB())
+    {
+        neighbourCU = m_slice->m_refFrameList[1][0]->m_encData->m_picCTU;
+        predDepth += neighbourCU->m_refTuDepth[cuGeom.geomRecurId];
+        count++;
+    }
+    if (parentCTU.m_cuAbove)
+    {
+        predDepth += parentCTU.m_cuAbove->m_refTuDepth[cuGeom.geomRecurId];
+        count++;
+        if (parentCTU.m_cuAboveLeft)
+        {
+            predDepth += parentCTU.m_cuAboveLeft->m_refTuDepth[cuGeom.geomRecurId];
+            count++;
+        }
+        if (parentCTU.m_cuAboveRight)
+        {
+            predDepth += parentCTU.m_cuAboveRight->m_refTuDepth[cuGeom.geomRecurId];
+            count++;
+        }
+    }
+    if (parentCTU.m_cuLeft)
+    {
+        predDepth += parentCTU.m_cuLeft->m_refTuDepth[cuGeom.geomRecurId];
+        count++;
+    }
+    predDepth /= count;
+
+    if (predDepth == 0)
+        maxTUDepth = 0;
+    else if (predDepth < 1)
+        maxTUDepth = 1;
+    else if (predDepth >= 1 && predDepth <= 1.5)
+        maxTUDepth = 2;
+    else if (predDepth > 1.5 && predDepth <= 2.5)
+        maxTUDepth = 3;
+    else
+        maxTUDepth = -1;
+
+    return maxTUDepth;
+}
+
 void Analysis::tryLossless(const CUGeom& cuGeom)
 {
     ModeDepth& md = m_modeDepth[cuGeom.depth];
@@ -324,6 +375,15 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
             md.pred[PRED_INTRA_NxN].cu.initSubCU(parentCTU, cuGeom, qp);
             checkIntra(md.pred[PRED_INTRA_NxN], cuGeom, SIZE_NxN);
             checkBestMode(md.pred[PRED_INTRA_NxN], depth);
+        }
+
+        if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4)
+        {
+            CUData* ctu = md.bestMode->cu.m_encData->getPicCTU(parentCTU.m_cuAddr);
+            int8_t maxTUDepth = -1;
+            for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
+                maxTUDepth = X265_MAX(maxTUDepth, md.bestMode->cu.m_tuDepth[i]);
+            ctu->m_refTuDepth[cuGeom.geomRecurId] = maxTUDepth;
         }
 
         if (m_bTryLossless)
@@ -894,6 +954,9 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     bool skipRectAmp = false;
     bool chooseMerge = false;
 
+    if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4)
+        m_maxTUDepth = loadTUDepth(cuGeom, parentCTU);
+
     SplitData splitData[4];
     splitData[0].initSplitCUData();
     splitData[1].initSplitCUData();
@@ -1400,6 +1463,18 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     if (m_param->rdLevel)
         md.bestMode->reconYuv.copyToPicYuv(reconPic, cuAddr, cuGeom.absPartIdx);
 
+    if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4)
+    {
+        if (mightNotSplit)
+        {
+            CUData* ctu = md.bestMode->cu.m_encData->getPicCTU(parentCTU.m_cuAddr);
+            int8_t maxTUDepth = -1;
+            for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
+                maxTUDepth = X265_MAX(maxTUDepth, md.bestMode->cu.m_tuDepth[i]);
+            ctu->m_refTuDepth[cuGeom.geomRecurId] = maxTUDepth;
+        }
+    }
+
     return splitCUData;
 }
 
@@ -1423,6 +1498,9 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
         md.pred[PRED_2Nx2N].bestME[0][1].mvCost = 0; // L1
         md.pred[PRED_2Nx2N].rdCost = 0;
     }
+
+    if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4)
+        m_maxTUDepth = loadTUDepth(cuGeom, parentCTU);
 
     SplitData splitData[4];
     splitData[0].initSplitCUData();
@@ -1749,6 +1827,18 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
         if (mightSplit)
             addSplitFlagCost(*md.bestMode, cuGeom.depth);
+    }
+
+    if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4)
+    {
+        if (mightNotSplit)
+        {
+            CUData* ctu = md.bestMode->cu.m_encData->getPicCTU(parentCTU.m_cuAddr);
+            int8_t maxTUDepth = -1;
+            for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
+                maxTUDepth = X265_MAX(maxTUDepth, md.bestMode->cu.m_tuDepth[i]);
+            ctu->m_refTuDepth[cuGeom.geomRecurId] = maxTUDepth;
+        }
     }
 
     /* compare split RD cost against best cost */

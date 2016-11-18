@@ -28,6 +28,8 @@
 #include "slice.h"
 #include "mv.h"
 
+#define NUM_TU_DEPTH 21
+
 namespace X265_NS {
 // private namespace
 
@@ -204,6 +206,7 @@ public:
     enum { BytesPerPartition = 21 };  // combined sizeof() of all per-part data
 
     coeff_t*      m_trCoeff[3];       // transformed coefficient buffer per plane
+    int8_t        m_refTuDepth[NUM_TU_DEPTH];   // TU depth of CU at depths 0, 1 and 2
 
     MV*           m_mv[2];            // array of motion vectors per list
     MV*           m_mvd[2];           // array of coded motion vector deltas per list
