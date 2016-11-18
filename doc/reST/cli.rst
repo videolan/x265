@@ -869,7 +869,7 @@ as the residual quad-tree (RQT).
 	partitions, in which case a TU split is implied and thus the
 	residual quad-tree begins one layer below the CU quad-tree.
 
-.. option:: --limit-tu <0..3>
+.. option:: --limit-tu <0..4>
 
 	Enables early exit from TU depth recursion, for inter coded blocks.
 	Level 1 - decides to recurse to next higher depth based on cost 
@@ -878,6 +878,9 @@ as the residual quad-tree (RQT).
 	other split subTUs.
 	Level 3 - based on the average depth of the co-located and the neighbor
 	CUs' TU depth, limits recursion of the current CU.
+	Level 4 - uses the depth of the neighbouring/ co-located CUs TU depth 
+	to limit the 1st subTU depth. The 1st subTU depth is taken as the 
+	limiting depth for the other subTUs.
 
 	Default: 0
 

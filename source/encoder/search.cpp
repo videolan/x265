@@ -103,6 +103,8 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
             m_limitTU = X265_TU_LIMIT_DFS;
         else if (m_param->limitTU == 3)
             m_limitTU = X265_TU_LIMIT_NEIGH;
+        else if (m_param->limitTU == 4)
+            m_limitTU = X265_TU_LIMIT_DFS + X265_TU_LIMIT_NEIGH;
     }
 
     /* these are indexed by qtLayer (log2size - 2) so nominally 0=4x4, 1=8x8, 2=16x16, 3=32x32
@@ -2638,13 +2640,20 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
 
     m_entropyCoder.load(m_rqt[depth].cur);
 
-    if (m_limitTU & X265_TU_LIMIT_DFS)
+    if ((m_limitTU & X265_TU_LIMIT_DFS) && !(m_limitTU & X265_TU_LIMIT_NEIGH))
         m_maxTUDepth = -1;
     else if (m_limitTU & X265_TU_LIMIT_BFS)
         memset(&m_cacheTU, 0, sizeof(TUInfoCache));
 
     Cost costs;
-    estimateResidualQT(interMode, cuGeom, 0, 0, *resiYuv, costs, tuDepthRange);
+    if ((m_limitTU & X265_TU_LIMIT_DFS) && (m_limitTU & X265_TU_LIMIT_NEIGH))
+    {
+        int32_t tempDepth = m_maxTUDepth;
+        estimateResidualQT(interMode, cuGeom, 0, 0, *resiYuv, costs, tuDepthRange);
+        m_maxTUDepth = tempDepth;
+    }
+    else
+        estimateResidualQT(interMode, cuGeom, 0, 0, *resiYuv, costs, tuDepthRange);
 
     uint32_t tqBypass = cu.m_tqBypass[0];
     if (!tqBypass)
@@ -2905,8 +2914,9 @@ bool Search::splitTU(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint
     {
         if ((m_limitTU & X265_TU_LIMIT_DFS) && tuDepth == 0 && qIdx == 1)
         {
+            m_maxTUDepth = cu.m_tuDepth[0];
             // Fetch maximum TU depth of first sub partition to limit recursion of others
-            for (uint32_t i = 0; i < cuGeom.numPartitions / 4; i++)
+            for (uint32_t i = 1; i < cuGeom.numPartitions / 4; i++)
                 m_maxTUDepth = X265_MAX(m_maxTUDepth, cu.m_tuDepth[i]);
         }
         estimateResidualQT(mode, cuGeom, qPartIdx, tuDepth + 1, resiYuv, splitCost, depthRange, splitMore);
