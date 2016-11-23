@@ -499,16 +499,18 @@ void FrameFilter::processRow(int row)
     if (!ctu->m_bFirstRowInSlice)
         processPostRow(row - 1);
 
-    if (ctu->m_bLastRowInSlice)
-        processPostRow(row);
-
     // NOTE: slices parallelism will be execute out-of-order
     int numRowFinished = 0;
     if (m_frame->m_reconRowFlag)
     {
         for (numRowFinished = 0; numRowFinished < m_numRows; numRowFinished++)
+        {
             if (!m_frame->m_reconRowFlag[numRowFinished].get())
                 break;
+
+            if (numRowFinished == row)
+                continue;
+        }
     }
 
     if (numRowFinished == m_numRows)
@@ -525,6 +527,9 @@ void FrameFilter::processRow(int row)
             m_parallelFilter[0].m_sao.rdoSaoUnitRowEnd(saoParam, encData.m_slice->m_sps->numCUsInFrame);
         }
     }
+
+    if (ctu->m_bLastRowInSlice)
+        processPostRow(row);
 }
 
 void FrameFilter::processPostRow(int row)
