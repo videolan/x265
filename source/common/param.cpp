@@ -1428,7 +1428,7 @@ void x265_print_params(x265_param* param)
     fflush(stderr);
 }
 
-char *x265_param2string(x265_param* p)
+char *x265_param2string(x265_param* p, int padx, int pady)
 {
     char *buf, *s;
 
@@ -1452,7 +1452,7 @@ char *x265_param2string(x265_param* p)
     s += sprintf(s, " bitdepth=%d", p->internalBitDepth);
     s += sprintf(s, " input-csp=%d", p->internalCsp);
     s += sprintf(s, " fps=%u/%u", p->fpsNum, p->fpsDenom);
-    s += sprintf(s, " input-res=%dx%d", p->sourceWidth, p->sourceHeight);
+    s += sprintf(s, " input-res=%dx%d", p->sourceWidth - padx, p->sourceHeight - pady);
     s += sprintf(s, " interlace=%d", p->interlaceMode);
     s += sprintf(s, " total-frames=%d", p->totalFrames);
     s += sprintf(s, " level-idc=%d", p->levelIdc);

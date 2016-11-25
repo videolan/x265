@@ -1561,7 +1561,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 
     if (m_param->bEmitInfoSEI)
     {
-        char *opts = x265_param2string(m_param);
+        char *opts = x265_param2string(m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
         if (opts)
         {
             char *buffer = X265_MALLOC(char, strlen(opts) + strlen(PFX(version_str)) +
