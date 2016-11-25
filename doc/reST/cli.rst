@@ -1876,7 +1876,7 @@ Bitstream options
 
 .. option:: --[no-]multi-pass-opt-rps
 
-	Enable storing commonly RPS in SPS in multi pass mode. Default disabled.
+	Enable storing commonly used RPS in SPS in multi pass mode. Default disabled.
 
 
 Debugging options

@@ -464,7 +464,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]vui-hrd-info           Emit VUI HRD information in the bistream. Default %s\n", OPT(param->bEmitVUIHRDInfo));
     H0("   --[no-]opt-qp-pps             Dynamically optimize QP in PPS (instead of default 26) based on QPs in previous GOP. Default %s\n", OPT(param->bOptQpPPS));
     H0("   --[no-]opt-ref-list-length-pps  Dynamically set L0 and L1 ref list length in PPS (instead of default 0) based on values in last GOP. Default %s\n", OPT(param->bOptRefListLengthPPS));
-    H0("   --[no-]multi-pass-opt-rps     Enable storing commonly RPS in SPS in multi pass mode. Default %s\n", OPT(param->bMultiPassOptRPS));
+    H0("   --[no-]multi-pass-opt-rps     Enable storing commonly used RPS in SPS in multi pass mode. Default %s\n", OPT(param->bMultiPassOptRPS));
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
