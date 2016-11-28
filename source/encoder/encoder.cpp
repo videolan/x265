@@ -869,6 +869,25 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_4x4_PARTITIONS);
             }
 
+            if (m_param->searchMethod == X265_SEA && frameEnc->m_lowres.sliceType != X265_TYPE_B)
+            {
+                int padX = g_maxCUSize + 32;
+                int padY = g_maxCUSize + 16;
+                uint32_t numCuInHeight = (frameEnc->m_encData->m_reconPic->m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
+                int maxHeight = numCuInHeight * g_maxCUSize;
+                for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
+                {
+                    frameEnc->m_encData->m_meBuffer[i] = X265_MALLOC(uint32_t, frameEnc->m_reconPic->m_stride * (maxHeight + (2 * padY)));
+                    if (frameEnc->m_encData->m_meBuffer[i])
+                    {
+                        memset(frameEnc->m_encData->m_meBuffer[i], 0, sizeof(uint32_t)* frameEnc->m_reconPic->m_stride * (maxHeight + (2 * padY)));
+                        frameEnc->m_encData->m_meIntegral[i] = frameEnc->m_encData->m_meBuffer[i] + frameEnc->m_encData->m_reconPic->m_stride * padY + padX;
+                    }
+                    else
+                        x265_log(m_param, X265_LOG_ERROR, "SEA motion search: POC %d Integral buffer[%d] unallocated\n", frameEnc->m_poc, i);
+                }
+            }
+
             if (m_param->bOptQpPPS && frameEnc->m_lowres.bKeyframe && m_param->bRepeatHeaders)
             {
                 ScopedLock qpLock(m_sliceQpLock);

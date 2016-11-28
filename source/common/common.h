@@ -328,6 +328,8 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 #define PIXEL_MAX ((1 << X265_DEPTH) - 1)
 
+#define INTEGRAL_PLANE_NUM          12 // 12 integral planes for 32x32, 32x24, 32x8, 24x32, 16x16, 16x12, 16x4, 12x16, 8x32, 8x8, 4x16 and 4x4.
+
 namespace X265_NS {
 
 enum { SAO_NUM_OFFSET = 4 };

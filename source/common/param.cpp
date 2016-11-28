@@ -1092,8 +1092,8 @@ int x265_check_params(x265_param* param)
           "Frame rate numerator and denominator must be specified");
     CHECK(param->interlaceMode < 0 || param->interlaceMode > 2,
           "Interlace mode must be 0 (progressive) 1 (top-field first) or 2 (bottom field first)");
-    CHECK(param->searchMethod<0 || param->searchMethod> X265_FULL_SEARCH,
-          "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 5:FULL)");
+    CHECK(param->searchMethod < 0 || param->searchMethod > X265_FULL_SEARCH,
+          "Search method is not supported value (0:DIA 1:HEX 2:UMH 3:HM 4:SEA 5:FULL)");
     CHECK(param->searchRange < 0,
           "Search Range must be more than 0");
     CHECK(param->searchRange >= 32768,
@@ -1256,6 +1256,10 @@ int x265_check_params(x265_param* param)
         "qpmin exceeds supported range (0 to 69)");
     CHECK(param->log2MaxPocLsb < 4 || param->log2MaxPocLsb > 16,
         "Supported range for log2MaxPocLsb is 4 to 16");
+#if !X86_64
+    CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
+        "SEA motion search does not support resolutions greater than 480p in 32 bit build");
+#endif
     return check_failed;
 }
 

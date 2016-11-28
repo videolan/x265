@@ -48,6 +48,12 @@ bool FrameData::create(const x265_param& param, const SPS& sps, int csp)
     CHECKED_MALLOC_ZERO(m_cuStat, RCStatCU, sps.numCUsInFrame);
     CHECKED_MALLOC(m_rowStat, RCStatRow, sps.numCuInHeight);
     reinit(sps);
+    
+    for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
+    {
+        m_meBuffer[i] = NULL;
+        m_meIntegral[i] = NULL;
+    }
     return true;
 
 fail:
@@ -70,4 +76,16 @@ void FrameData::destroy()
 
     X265_FREE(m_cuStat);
     X265_FREE(m_rowStat);
+
+    if (m_meBuffer)
+    {
+        for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
+        {
+            if (m_meBuffer[i] != NULL)
+            {
+                X265_FREE(m_meBuffer[i]);
+                m_meBuffer[i] = NULL;
+            }
+        }
+    }
 }

@@ -943,6 +943,16 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
 
+    if (m_param->searchMethod == X265_SEA)
+    {
+        int numPredDir = m_slice->isInterP() ? 1 : 2;
+        int offset = (int)(m_frame->m_reconPic->m_cuOffsetY[parentCTU.m_cuAddr] + m_frame->m_reconPic->m_buOffsetY[cuGeom.absPartIdx]);
+        for (int list = 0; list < numPredDir; list++)
+            for (int i = 0; i < m_frame->m_encData->m_slice->m_numRefIdx[list]; i++)
+                for (int planes = 0; planes < INTEGRAL_PLANE_NUM; planes++)
+                    m_modeDepth[depth].fencYuv.m_integral[list][i][planes] = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_encData->m_meIntegral[planes] + offset;
+    }
+
     PicYuv& reconPic = *m_frame->m_reconPic;
 
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
@@ -1483,6 +1493,16 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
+
+    if (m_param->searchMethod == X265_SEA)
+    {
+        int numPredDir = m_slice->isInterP() ? 1 : 2;
+        int offset = (int)(m_frame->m_reconPic->m_cuOffsetY[parentCTU.m_cuAddr] + m_frame->m_reconPic->m_buOffsetY[cuGeom.absPartIdx]);
+        for (int list = 0; list < numPredDir; list++)
+            for (int i = 0; i < m_frame->m_encData->m_slice->m_numRefIdx[list]; i++)
+                for (int planes = 0; planes < INTEGRAL_PLANE_NUM; planes++)
+                    m_modeDepth[depth].fencYuv.m_integral[list][i][planes] = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_encData->m_meIntegral[planes] + offset;
+    }
 
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);

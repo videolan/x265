@@ -67,6 +67,8 @@ protected:
 
     uint16_t *m_cost;
 
+    uint16_t *m_fpelMvCosts[4];
+
     MV        m_mvp;
 
     BitCost& operator =(const BitCost&);
@@ -83,6 +85,8 @@ private:
     static float *s_bitsizes;
 
     static uint16_t *s_costs[BC_MAX_QP];
+
+    static uint16_t *s_fpelMvCosts[BC_MAX_QP][4];
 
     static Lock s_costCalcLock;
 

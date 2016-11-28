@@ -964,13 +964,17 @@ Temporal / motion search options
 	encoder: a star-pattern search followed by an optional radix scan
 	followed by an optional star-search refinement. Full is an
 	exhaustive search; an order of magnitude slower than all other
-	searches but not much better than umh or star.
+	searches but not much better than umh or star. SEA is similar to
+	FULL search; a three step motion search adopted from x264: DC 
+	calculation followed by ADS calculation followed by SAD of the
+	passed motion vector candidates, hence faster than Full search. 
 
 	0. dia
 	1. hex **(default)**
 	2. umh
 	3. star
-	4. full
+	4. sea
+	5. full
 
 .. option:: --subme, -m <0..7>
 

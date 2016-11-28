@@ -117,6 +117,52 @@ void sad_x4(const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel
     }
 }
 
+template<int lx, int ly>
+int ads_x4(int encDC[4], uint32_t *sums, int delta, uint16_t *costMvX, int16_t *mvs, int width, int thresh)
+{
+    int nmv = 0;
+    for (int16_t i = 0; i < width; i++, sums++)
+    {
+        int ads = abs(encDC[0] - long(sums[0]))
+            + abs(encDC[1] - long(sums[lx >> 1]))
+            + abs(encDC[2] - long(sums[delta]))
+            + abs(encDC[3] - long(sums[delta + (lx >> 1)]))
+            + costMvX[i];
+        if (ads < thresh)
+            mvs[nmv++] = i;
+    }
+    return nmv;
+}
+
+template<int lx, int ly>
+int ads_x2(int encDC[2], uint32_t *sums, int delta, uint16_t *costMvX, int16_t *mvs, int width, int thresh)
+{
+    int nmv = 0;
+    for (int16_t i = 0; i < width; i++, sums++)
+    {
+        int ads = abs(encDC[0] - long(sums[0]))
+            + abs(encDC[1] - long(sums[delta]))
+            + costMvX[i];
+        if (ads < thresh)
+            mvs[nmv++] = i;
+    }
+    return nmv;
+}
+
+template<int lx, int ly>
+int ads_x1(int encDC[1], uint32_t *sums, int, uint16_t *costMvX, int16_t *mvs, int width, int thresh)
+{
+    int nmv = 0;
+    for (int16_t i = 0; i < width; i++, sums++)
+    {
+        int ads = abs(encDC[0] - long(sums[0]))
+            + costMvX[i];
+        if (ads < thresh)
+            mvs[nmv++] = i;
+    }
+    return nmv;
+}
+
 template<int lx, int ly, class T1, class T2>
 sse_t sse(const T1* pix1, intptr_t stride_pix1, const T2* pix2, intptr_t stride_pix2)
 {
@@ -990,6 +1036,32 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     LUMA_PU(48, 64);
     LUMA_PU(64, 16);
     LUMA_PU(16, 64);
+
+    p.pu[LUMA_4x4].ads = ads_x1<4, 4>;
+    p.pu[LUMA_8x8].ads = ads_x1<8, 8>;
+    p.pu[LUMA_8x4].ads = ads_x2<8, 4>;
+    p.pu[LUMA_4x8].ads = ads_x2<4, 8>;
+    p.pu[LUMA_16x16].ads = ads_x4<16, 16>;
+    p.pu[LUMA_16x8].ads = ads_x2<16, 8>;
+    p.pu[LUMA_8x16].ads = ads_x2<8, 16>;
+    p.pu[LUMA_16x12].ads = ads_x1<16, 12>;
+    p.pu[LUMA_12x16].ads = ads_x1<12, 16>;
+    p.pu[LUMA_16x4].ads = ads_x1<16, 4>;
+    p.pu[LUMA_4x16].ads = ads_x1<4, 16>;
+    p.pu[LUMA_32x32].ads = ads_x4<32, 32>;
+    p.pu[LUMA_32x16].ads = ads_x2<32, 16>;
+    p.pu[LUMA_16x32].ads = ads_x2<16, 32>;
+    p.pu[LUMA_32x24].ads = ads_x4<32, 24>;
+    p.pu[LUMA_24x32].ads = ads_x4<24, 32>;
+    p.pu[LUMA_32x8].ads = ads_x4<32, 8>;
+    p.pu[LUMA_8x32].ads = ads_x4<8, 32>;
+    p.pu[LUMA_64x64].ads = ads_x4<64, 64>;
+    p.pu[LUMA_64x32].ads = ads_x2<64, 32>;
+    p.pu[LUMA_32x64].ads = ads_x2<32, 64>;
+    p.pu[LUMA_64x48].ads = ads_x4<64, 48>;
+    p.pu[LUMA_48x64].ads = ads_x4<48, 64>;
+    p.pu[LUMA_64x16].ads = ads_x4<64, 16>;
+    p.pu[LUMA_16x64].ads = ads_x4<16, 64>;
 
     p.pu[LUMA_4x4].satd   = satd_4x4;
     p.pu[LUMA_8x8].satd   = satd8<8, 8>;

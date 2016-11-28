@@ -109,6 +109,8 @@ MotionEstimate::MotionEstimate()
     blockOffset = 0;
     bChromaSATD = false;
     chromaSatd = NULL;
+    for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
+        integral[i] = NULL;
 }
 
 void MotionEstimate::init(int csp)
@@ -165,9 +167,11 @@ void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset,
     partEnum = partitionFromSizes(pwidth, pheight);
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
     sad = primitives.pu[partEnum].sad;
+    ads = primitives.pu[partEnum].ads;
     satd = primitives.pu[partEnum].satd;
     sad_x3 = primitives.pu[partEnum].sad_x3;
     sad_x4 = primitives.pu[partEnum].sad_x4;
+
 
     blockwidth = pwidth;
     blockOffset = offset;
@@ -188,6 +192,7 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
     partEnum = partitionFromSizes(pwidth, pheight);
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
     sad = primitives.pu[partEnum].sad;
+    ads = primitives.pu[partEnum].ads;
     satd = primitives.pu[partEnum].satd;
     sad_x3 = primitives.pu[partEnum].sad_x3;
     sad_x4 = primitives.pu[partEnum].sad_x4;
@@ -287,6 +292,21 @@ void MotionEstimate::setSourcePU(const Yuv& srcFencYuv, int _ctuAddr, int cuPart
         if ((omv.y + m3y >= mvmin.y) & (omv.y + m3y <= mvmax.y)) \
             COPY2_IF_LT(bcost, costs[3], bmv, omv + MV(m3x, m3y)); \
     }
+
+#define COST_MV_X3_ABS( m0x, m0y, m1x, m1y, m2x, m2y )\
+{\
+    sad_x3(fenc, \
+    fref + (m0x) + (m0y) * stride, \
+    fref + (m1x) + (m1y) * stride, \
+    fref + (m2x) + (m2y) * stride, \
+    stride, costs); \
+    costs[0] += p_cost_mvx[(m0x) << 2]; /* no cost_mvy */\
+    costs[1] += p_cost_mvx[(m1x) << 2]; \
+    costs[2] += p_cost_mvx[(m2x) << 2]; \
+    COPY3_IF_LT(bcost, costs[0], bmv.x, m0x, bmv.y, m0y); \
+    COPY3_IF_LT(bcost, costs[1], bmv.x, m1x, bmv.y, m1y); \
+    COPY3_IF_LT(bcost, costs[2], bmv.x, m2x, bmv.y, m2y); \
+}
 
 #define COST_MV_X4_DIR(m0x, m0y, m1x, m1y, m2x, m2y, m3x, m3y, costs) \
     { \
@@ -1075,6 +1095,161 @@ me_hex2:
             }
         }
 
+        break;
+    }
+
+    case X265_SEA:
+    {
+        // Successive Elimination Algorithm
+        const int16_t minX = X265_MAX(omv.x - (int16_t)merange, mvmin.x);
+        const int16_t minY = X265_MAX(omv.y - (int16_t)merange, mvmin.y);
+        const int16_t maxX = X265_MIN(omv.x + (int16_t)merange, mvmax.x);
+        const int16_t maxY = X265_MIN(omv.y + (int16_t)merange, mvmax.y);
+        const uint16_t *p_cost_mvx = m_cost_mvx - qmvp.x;
+        const uint16_t *p_cost_mvy = m_cost_mvy - qmvp.y;
+        int16_t* meScratchBuffer = NULL;
+        int scratchSize = merange * 2 + 4;
+        if (scratchSize)
+        {
+            meScratchBuffer = X265_MALLOC(int16_t, scratchSize);
+            memset(meScratchBuffer, 0, sizeof(int16_t)* scratchSize);
+        }
+
+        /* SEA is fastest in multiples of 4 */
+        int meRangeWidth = (maxX - minX + 3) & ~3;
+        int w = 0, h = 0;                    // Width and height of the PU
+        ALIGN_VAR_32(pixel, zero[64 * FENC_STRIDE]) = { 0 };
+        ALIGN_VAR_32(int, encDC[4]);
+        uint16_t *fpelCostMvX = m_fpelMvCosts[-qmvp.x & 3] + (-qmvp.x >> 2);
+        sizesFromPartition(partEnum, &w, &h);
+        int deltaX = (w <= 8) ? (w) : (w >> 1);
+        int deltaY = (h <= 8) ? (h) : (h >> 1);
+
+        /* Check if very small rectangular blocks which cannot be sub-divided anymore */
+        bool smallRectPartition = partEnum == LUMA_4x4 || partEnum == LUMA_16x12 ||
+            partEnum == LUMA_12x16 || partEnum == LUMA_16x4 || partEnum == LUMA_4x16;
+        /* Check if vertical partition */
+        bool verticalRect = partEnum == LUMA_32x64 || partEnum == LUMA_16x32 || partEnum == LUMA_8x16 ||
+            partEnum == LUMA_4x8;
+        /* Check if horizontal partition */
+        bool horizontalRect = partEnum == LUMA_64x32 || partEnum == LUMA_32x16 || partEnum == LUMA_16x8 ||
+            partEnum == LUMA_8x4;
+        /* Check if assymetric vertical partition */
+        bool assymetricVertical = partEnum == LUMA_12x16 || partEnum == LUMA_4x16 || partEnum == LUMA_24x32 ||
+            partEnum == LUMA_8x32 || partEnum == LUMA_48x64 || partEnum == LUMA_16x64;
+        /* Check if assymetric horizontal partition */
+        bool assymetricHorizontal = partEnum == LUMA_16x12 || partEnum == LUMA_16x4 || partEnum == LUMA_32x24 ||
+            partEnum == LUMA_32x8 || partEnum == LUMA_64x48 || partEnum == LUMA_64x16;
+
+        int tempPartEnum = 0;
+
+        /* If a vertical rectangular partition, it is horizontally split into two, for ads_x2() */
+        if (verticalRect)
+            tempPartEnum = partitionFromSizes(w, h >> 1);
+        /* If a horizontal rectangular partition, it is vertically split into two, for ads_x2() */
+        else if (horizontalRect)
+            tempPartEnum = partitionFromSizes(w >> 1, h);
+        /* We have integral planes introduced to account for assymetric partitions.
+         * Hence all assymetric partitions except those which cannot be split into legal sizes,
+         * are split into four for ads_x4() */
+        else if (assymetricVertical || assymetricHorizontal)
+            tempPartEnum = smallRectPartition ? partEnum : partitionFromSizes(w >> 1, h >> 1);
+        /* General case: Square partitions. All partitions with width > 8 are split into four
+         * for ads_x4(), for 4x4 and 8x8 we do ads_x1() */
+        else
+            tempPartEnum = (w <= 8) ? partEnum : partitionFromSizes(w >> 1, h >> 1);
+
+        /* Successive elimination by comparing DC before a full SAD,
+         * because sum(abs(diff)) >= abs(diff(sum)). */
+        primitives.pu[tempPartEnum].sad_x4(zero,
+                         fenc,
+                         fenc + deltaX,
+                         fenc + deltaY * FENC_STRIDE,
+                         fenc + deltaX + deltaY * FENC_STRIDE,
+                         FENC_STRIDE,
+                         encDC);
+
+        /* Assigning appropriate integral plane */
+        uint32_t *sumsBase = NULL;
+        switch (deltaX)
+        {
+            case 32: if (deltaY % 24 == 0)
+                         sumsBase = integral[1];
+                     else if (deltaY == 8)
+                         sumsBase = integral[2];
+                     else
+                         sumsBase = integral[0];
+               break;
+            case 24: sumsBase = integral[3];
+               break;
+            case 16: if (deltaY % 12 == 0)
+                         sumsBase = integral[5];
+                     else if (deltaY == 4)
+                         sumsBase = integral[6];
+                     else
+                         sumsBase = integral[4];
+               break;
+            case 12: sumsBase = integral[7];
+                break;
+            case 8: if (deltaY == 32)
+                        sumsBase = integral[8];
+                    else
+                        sumsBase = integral[9];
+                break;
+            case 4: if (deltaY == 16)
+                        sumsBase = integral[10];
+                    else
+                        sumsBase = integral[11];
+                break;
+            default: sumsBase = integral[11];
+                break;
+        }
+
+        if (partEnum == LUMA_64x64 || partEnum == LUMA_32x32 || partEnum == LUMA_16x16 ||
+            partEnum == LUMA_32x64 || partEnum == LUMA_16x32 || partEnum == LUMA_8x16 ||
+            partEnum == LUMA_4x8 || partEnum == LUMA_12x16 || partEnum == LUMA_4x16 ||
+            partEnum == LUMA_24x32 || partEnum == LUMA_8x32 || partEnum == LUMA_48x64 ||
+            partEnum == LUMA_16x64)
+            deltaY *= (int)stride;
+
+        if (verticalRect)
+            encDC[1] = encDC[2];
+
+        if (horizontalRect)
+            deltaY = deltaX;
+
+        /* ADS and SAD */
+        MV tmv;
+        for (tmv.y = minY; tmv.y <= maxY; tmv.y++)
+        {
+            int i, xn;
+            int ycost = p_cost_mvy[tmv.y] << 2;
+            if (bcost <= ycost)
+                continue;
+            bcost -= ycost;
+
+            /* ADS_4 for 16x16, 32x32, 64x64, 24x32, 32x24, 48x64, 64x48, 32x8, 8x32, 64x16, 16x64 partitions
+             * ADS_1 for 4x4, 8x8, 16x4, 4x16, 16x12, 12x16 partitions
+             * ADS_2 for all other rectangular partitions */
+            xn = ads(encDC,
+                    sumsBase + minX + tmv.y * stride,
+                    deltaY,
+                    fpelCostMvX + minX,
+                    meScratchBuffer,
+                    meRangeWidth,
+                    bcost);
+
+            for (i = 0; i < xn - 2; i += 3)
+                COST_MV_X3_ABS(minX + meScratchBuffer[i], tmv.y,
+                             minX + meScratchBuffer[i + 1], tmv.y,
+                             minX + meScratchBuffer[i + 2], tmv.y);
+
+            bcost += ycost;
+            for (; i < xn; i++)
+                COST_MV(minX + meScratchBuffer[i], tmv.y);
+        }
+        if (meScratchBuffer)
+            x265_free(meScratchBuffer);
         break;
     }
 

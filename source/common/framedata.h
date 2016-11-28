@@ -151,6 +151,9 @@ public:
     double         m_rateFactor; /* calculated based on the Frame QP */
     int            m_picCsp;
 
+    uint32_t*              m_meIntegral[INTEGRAL_PLANE_NUM];       // 12 integral planes for 32x32, 32x24, 32x8, 24x32, 16x16, 16x12, 16x4, 12x16, 8x32, 8x8, 4x16 and 4x4.
+    uint32_t*              m_meBuffer[INTEGRAL_PLANE_NUM];
+
     FrameData();
 
     bool create(const x265_param& param, const SPS& sps, int csp);

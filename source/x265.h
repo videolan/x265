@@ -290,6 +290,7 @@ typedef enum
     X265_HEX_SEARCH,
     X265_UMH_SEARCH,
     X265_STAR_SEARCH,
+    X265_SEA,
     X265_FULL_SEARCH
 } X265_ME_METHODS;
 
@@ -464,7 +465,7 @@ typedef struct x265_stats
 } x265_stats;
 
 /* String values accepted by x265_param_parse() (and CLI) for various parameters */
-static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
+static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "sea", "full", 0 };
 static const char * const x265_source_csp_names[] = { "i400", "i420", "i422", "i444", "nv12", "nv16", 0 };
 static const char * const x265_video_format_names[] = { "component", "pal", "ntsc", "secam", "mac", "undef", 0 };
 static const char * const x265_fullrange_names[] = { "limited", "full", 0 };
@@ -910,9 +911,9 @@ typedef struct x265_param
     /* Limit modes analyzed for each CU using cost metrics from the 4 sub-CUs */
     uint32_t limitModes;
 
-    /* ME search method (DIA, HEX, UMH, STAR, FULL). The search patterns
+    /* ME search method (DIA, HEX, UMH, STAR, SEA, FULL). The search patterns
      * (methods) are sorted in increasing complexity, with diamond being the
-     * simplest and fastest and full being the slowest.  DIA, HEX, and UMH were
+     * simplest and fastest and full being the slowest.  DIA, HEX, UMH and SEA were
      * adapted from x264 directly. STAR is an adaption of the HEVC reference
      * encoder's three step search, while full is a naive exhaustive search. The
      * default is the star search, it has a good balance of performance and

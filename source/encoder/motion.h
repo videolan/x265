@@ -52,6 +52,7 @@ protected:
     pixelcmp_t sad;
     pixelcmp_x3_t sad_x3;
     pixelcmp_x4_t sad_x4;
+    pixelcmp_ads_t ads;
     pixelcmp_t satd;
     pixelcmp_t chromaSatd;
 
@@ -61,6 +62,7 @@ public:
 
     static const int COST_MAX = 1 << 28;
 
+    uint32_t* integral[INTEGRAL_PLANE_NUM];
     Yuv fencPUYuv;
     int partEnum;
     bool bChromaSATD;
