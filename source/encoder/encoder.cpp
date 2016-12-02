@@ -1974,6 +1974,12 @@ void Encoder::configure(x265_param *p)
         if (s)
             x265_log(p, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
     }
+    if (p->searchMethod == X265_SEA && (p->bDistributeMotionEstimation || p->bDistributeModeAnalysis))
+    {
+        x265_log(p, X265_LOG_WARNING, "Disabling pme and pmode: --pme and --pmode cannot be used with SEA motion search!\n");
+        p->bDistributeMotionEstimation = 0;
+        p->bDistributeModeAnalysis = 0;
+    }
 
     /* some options make no sense if others are disabled */
     p->bSaoNonDeblocked &= p->bEnableSAO;
