@@ -26,6 +26,7 @@ BasketballDrive_1920x1080_50.y4m,--preset veryslow --no-cutree --analysis-mode=s
 BasketballDrive_1920x1080_50.y4m,--preset veryslow --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 Coastguard-4k.y4m,--preset ultrafast --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 Coastguard-4k.y4m,--preset superfast --tune grain --overscan=crop
+Coastguard-4k.y4m,--preset superfast --tune grain --pme --aq-strength 2 --merange 190
 Coastguard-4k.y4m,--preset veryfast --no-cutree --analysis-mode=save --bitrate 15000,--preset veryfast --no-cutree --analysis-mode=load --bitrate 15000
 Coastguard-4k.y4m,--preset medium --rdoq-level 1 --tune ssim --no-signhide --me umh --slices 2
 Coastguard-4k.y4m,--preset slow --tune psnr --cbqpoffs -1 --crqpoffs 1 --limit-refs 1
@@ -71,11 +72,13 @@ News-4k.y4m,--preset superfast --lookahead-slices 6 --aq-mode 0
 News-4k.y4m,--preset superfast --slices 4 --aq-mode 0 
 News-4k.y4m,--preset medium --tune ssim --no-sao --qg-size 16
 News-4k.y4m,--preset veryslow --no-rskip
+News-4k.y4m,--preset veryslow --pme --crf 40
 OldTownCross_1920x1080_50_10bit_422.yuv,--preset superfast --weightp
 OldTownCross_1920x1080_50_10bit_422.yuv,--preset medium --no-weightp
 OldTownCross_1920x1080_50_10bit_422.yuv,--preset slower --tune fastdecode
 ParkScene_1920x1080_24_10bit_444.yuv,--preset superfast --weightp --lookahead-slices 4
 ParkScene_1920x1080_24.y4m,--preset medium --qp 40 --rdpenalty 2 --tu-intra-depth 3
+ParkScene_1920x1080_24.y4m,--preset medium --pme --tskip-fast --tskip --min-keyint 48 --weightb --limit-refs 3
 ParkScene_1920x1080_24.y4m,--preset slower --no-weightp
 RaceHorses_416x240_30.y4m,--preset superfast --no-cutree
 RaceHorses_416x240_30.y4m,--preset medium --tskip-fast --tskip
