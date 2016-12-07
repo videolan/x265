@@ -205,6 +205,7 @@ public:
     uint8_t*      m_chromaIntraDir;   // array of intra directions (chroma)
     enum { BytesPerPartition = 21 };  // combined sizeof() of all per-part data
 
+    sse_t*        m_distortion;
     coeff_t*      m_trCoeff[3];       // transformed coefficient buffer per plane
     int8_t        m_refTuDepth[NUM_TU_DEPTH];   // TU depth of CU at depths 0, 1 and 2
 
@@ -341,8 +342,9 @@ struct CUDataMemPool
     uint8_t* charMemBlock;
     coeff_t* trCoeffMemBlock;
     MV*      mvMemBlock;
+    sse_t*   distortionMemBlock;
 
-    CUDataMemPool() { charMemBlock = NULL; trCoeffMemBlock = NULL; mvMemBlock = NULL; }
+    CUDataMemPool() { charMemBlock = NULL; trCoeffMemBlock = NULL; mvMemBlock = NULL; distortionMemBlock = NULL; }
 
     bool create(uint32_t depth, uint32_t csp, uint32_t numInstances)
     {
@@ -360,6 +362,7 @@ struct CUDataMemPool
         }
         CHECKED_MALLOC(charMemBlock, uint8_t, numPartition * numInstances * CUData::BytesPerPartition);
         CHECKED_MALLOC_ZERO(mvMemBlock, MV, numPartition * 4 * numInstances);
+        CHECKED_MALLOC(distortionMemBlock, sse_t, numPartition * numInstances);
         return true;
     fail:
         return false;
@@ -370,6 +373,7 @@ struct CUDataMemPool
         X265_FREE(trCoeffMemBlock);
         X265_FREE(mvMemBlock);
         X265_FREE(charMemBlock);
+        X265_FREE(distortionMemBlock);
     }
 };
 }

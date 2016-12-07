@@ -218,6 +218,8 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
         m_mvd[0] = m_mv[1] +  m_numPartitions;
         m_mvd[1] = m_mvd[0] + m_numPartitions;
 
+        m_distortion = dataPool.distortionMemBlock + instance * m_numPartitions;
+
         uint32_t cuSize = g_maxCUSize >> depth;
         m_trCoeff[0] = dataPool.trCoeffMemBlock + instance * (cuSize * cuSize);
         m_trCoeff[1] = m_trCoeff[2] = 0;
@@ -256,6 +258,8 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
         m_mv[1]  = m_mv[0] +  m_numPartitions;
         m_mvd[0] = m_mv[1] +  m_numPartitions;
         m_mvd[1] = m_mvd[0] + m_numPartitions;
+
+        m_distortion = dataPool.distortionMemBlock + instance * m_numPartitions;
 
         uint32_t cuSize = g_maxCUSize >> depth;
         uint32_t sizeL = cuSize * cuSize;
@@ -304,6 +308,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
     m_cuAbove = (m_cuAddr >= widthInCU) && !m_bFirstRowInSlice ? m_encData->getPicCTU(m_cuAddr - widthInCU) : NULL;
     m_cuAboveLeft = (m_cuLeft && m_cuAbove) ? m_encData->getPicCTU(m_cuAddr - widthInCU - 1) : NULL;
     m_cuAboveRight = (m_cuAbove && ((m_cuAddr % widthInCU) < (widthInCU - 1))) ? m_encData->getPicCTU(m_cuAddr - widthInCU + 1) : NULL;
+    memset(m_distortion, 0, m_numPartitions * sizeof(sse_t));
 }
 
 // initialize Sub partition
@@ -337,6 +342,7 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp)
 
     /* initialize the remaining CU data in one memset */
     memset(m_predMode, 0, (ctu.m_chromaFormat == X265_CSP_I400 ? BytesPerPartition - 12 : BytesPerPartition - 8) * m_numPartitions);
+    memset(m_distortion, 0, m_numPartitions * sizeof(sse_t));
 }
 
 /* Copy the results of a sub-part (split) CU to the parent CU */
@@ -371,6 +377,8 @@ void CUData::copyPartFrom(const CUData& subCU, const CUGeom& childGeom, uint32_t
     memcpy(m_mv[1] + offset, subCU.m_mv[1], childGeom.numPartitions * sizeof(MV));
     memcpy(m_mvd[0] + offset, subCU.m_mvd[0], childGeom.numPartitions * sizeof(MV));
     memcpy(m_mvd[1] + offset, subCU.m_mvd[1], childGeom.numPartitions * sizeof(MV));
+
+    memcpy(m_distortion + offset, subCU.m_distortion, childGeom.numPartitions * sizeof(sse_t));
 
     uint32_t tmp = 1 << ((g_maxLog2CUSize - childGeom.depth) * 2);
     uint32_t tmp2 = subPartIdx * tmp;
@@ -421,6 +429,7 @@ void CUData::initLosslessCU(const CUData& cu, const CUGeom& cuGeom)
     memcpy(m_mv[1],  cu.m_mv[1],  m_numPartitions * sizeof(MV));
     memcpy(m_mvd[0], cu.m_mvd[0], m_numPartitions * sizeof(MV));
     memcpy(m_mvd[1], cu.m_mvd[1], m_numPartitions * sizeof(MV));
+    memcpy(m_distortion, cu.m_distortion, m_numPartitions * sizeof(sse_t));
 
     /* force TQBypass to true */
     m_partSet(m_tqBypass, true);
@@ -467,6 +476,8 @@ void CUData::copyToPic(uint32_t depth) const
     memcpy(ctu.m_mv[1] + m_absIdxInCTU, m_mv[1], m_numPartitions * sizeof(MV));
     memcpy(ctu.m_mvd[0] + m_absIdxInCTU, m_mvd[0], m_numPartitions * sizeof(MV));
     memcpy(ctu.m_mvd[1] + m_absIdxInCTU, m_mvd[1], m_numPartitions * sizeof(MV));
+
+    memcpy(ctu.m_distortion + m_absIdxInCTU, m_distortion, m_numPartitions * sizeof(sse_t));
 
     uint32_t tmpY = 1 << ((g_maxLog2CUSize - depth) * 2);
     uint32_t tmpY2 = m_absIdxInCTU << (LOG2_UNIT_SIZE * 2);
@@ -519,6 +530,8 @@ void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp, bool 
     memcpy(m_mv[1], ctu.m_mv[1] + m_absIdxInCTU, m_numPartitions * sizeof(MV));
     memcpy(m_mvd[0], ctu.m_mvd[0] + m_absIdxInCTU, m_numPartitions * sizeof(MV));
     memcpy(m_mvd[1], ctu.m_mvd[1] + m_absIdxInCTU, m_numPartitions * sizeof(MV));
+
+    memcpy(m_distortion, ctu.m_distortion + m_absIdxInCTU, m_numPartitions * sizeof(sse_t));
 
     /* clear residual coding flags */
     m_partSet(m_tuDepth, 0);

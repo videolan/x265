@@ -1207,7 +1207,7 @@ void Search::checkIntra(Mode& intraMode, const CUGeom& cuGeom, PartSize partSize
     }
     else
         intraMode.distortion += intraMode.lumaDistortion;
-
+    cu.m_distortion[0] = intraMode.distortion;
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
         m_entropyCoder.codeCUTransquantBypassFlag(cu.m_tqBypass[0]);
@@ -2624,6 +2624,7 @@ void Search::encodeResAndCalcRdSkipCU(Mode& interMode)
         interMode.chromaDistortion += m_rdCost.scaleChromaDist(2, primitives.chroma[m_csp].cu[part].sse_pp(fencYuv->m_buf[2], fencYuv->m_csize, reconYuv->m_buf[2], reconYuv->m_csize));
         interMode.distortion += interMode.chromaDistortion;
     }
+    cu.m_distortion[0] = interMode.distortion;
     m_entropyCoder.load(m_rqt[depth].cur);
     m_entropyCoder.resetBits();
     if (m_slice->m_pps->bTransquantBypassEnabled)
@@ -2786,6 +2787,7 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     interMode.lumaDistortion = bestLumaDist;
     interMode.coeffBits = coeffBits;
     interMode.mvBits = mvBits;
+    cu.m_distortion[0] = interMode.distortion;
     updateModeCost(interMode);
     checkDQP(interMode, cuGeom);
 }
