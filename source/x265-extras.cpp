@@ -191,7 +191,7 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
     fflush(stderr);
 }
 
-void x265_csvlog_encode(FILE* csvfp, const x265_api& api, const x265_param& param, const x265_stats& stats, int level, int argc, char** argv)
+void x265_csvlog_encode(FILE* csvfp, const char* version, const x265_param& param, const x265_stats& stats, int level, int argc, char** argv)
 {
     if (!csvfp)
         return;
@@ -281,7 +281,7 @@ void x265_csvlog_encode(FILE* csvfp, const x265_api& api, const x265_param& para
     else
         fprintf(csvfp, " -, -, -, -, -, -, -,");
 
-    fprintf(csvfp, " %-6u, %-6u, %s\n", stats.maxCLL, stats.maxFALL, api.version_str);
+    fprintf(csvfp, " %-6u, %-6u, %s\n", stats.maxCLL, stats.maxFALL, version);
 }
 
 /* The dithering algorithm is based on Sierra-2-4A error diffusion.
