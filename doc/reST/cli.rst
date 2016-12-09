@@ -1227,8 +1227,18 @@ Slice decision options
     Default: 8 for ultrafast, superfast, faster, fast, medium
              4 for slow, slower
              disabled for veryslow, slower
+			 
+.. option:: --lookahead-threads <integer>
 
+    Use multiple worker threads dedicated to doing only lookahead instead of sharing
+    the worker threads with frame Encoders. A dedicated lookahead threadpool is created with the
+    specified number of worker threads. This can range from 0 upto half the
+    hardware threads available for encoding. Using too many threads for lookahead can starve
+    resources for frame Encoder and can harm performance. Default is 0 - disabled, Lookahead 
+	shares worker threads with other FrameEncoders . 
 
+    **Values:** 0 - disabled(default). Max - Half of available hardware threads.
+	
 .. option:: --b-adapt <integer>
 
 	Set the level of effort in determining B frame placement.

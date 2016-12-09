@@ -129,8 +129,8 @@ public:
     bool          m_bBatchFrameCosts;
     bool          m_filled;
     bool          m_isSceneTransition;
+    int           m_numPools;
     Lookahead(x265_param *param, ThreadPool *pool);
-
 #if DETAILED_CU_STATS
     int64_t       m_slicetypeDecideElapsedTime;
     int64_t       m_preLookaheadElapsedTime;

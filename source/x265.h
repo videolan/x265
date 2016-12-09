@@ -1335,6 +1335,13 @@ typedef struct x265_param
     * intra cost of a frame used in scenecut detection. Default 5. */
     double     scenecutBias;
 
+    /* Use multiple worker threads dedicated to doing only lookahead instead of sharing
+    * the worker threads with Frame Encoders. A dedicated lookahead threadpool is created with the
+    * specified number of worker threads. This can range from 0 upto half the
+    * hardware threads available for encoding. Using too many threads for lookahead can starve
+    * resources for frame Encoder and can harm performance. Default is 0 - disabled. */
+    int       lookaheadThreads;
+
 } x265_param;
 
 /* x265_param_alloc:

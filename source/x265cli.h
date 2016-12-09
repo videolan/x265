@@ -125,6 +125,7 @@ static const struct option long_options[] =
     { "intra-refresh",        no_argument, NULL, 0 },
     { "rc-lookahead",   required_argument, NULL, 0 },
     { "lookahead-slices", required_argument, NULL, 0 },
+    { "lookahead-threads", required_argument, NULL, 0 },
     { "bframes",        required_argument, NULL, 'b' },
     { "bframe-bias",    required_argument, NULL, 0 },
     { "b-adapt",        required_argument, NULL, 0 },
@@ -372,6 +373,7 @@ static void showHelp(x265_param *param)
     H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
     H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
     H1("   --lookahead-slices <0..16>    Number of slices to use per lookahead cost estimate. Default %d\n", param->lookaheadSlices);
+    H0("   --lookahead-threads <integer> Number of threads to be dedicated to perform lookahead only. Default %d\n", param->lookaheadThreads);
     H0("   --bframes <integer>           Maximum number of consecutive b-frames (now it only enables B GOP structure) Default %d\n", param->bframes);
     H1("   --bframe-bias <integer>       Bias towards B frame decisions. Default %d\n", param->bFrameBias);
     H0("   --b-adapt <0..2>              0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);

@@ -128,11 +128,9 @@ void Encoder::create()
         else
             p->frameNumThreads = 1;
     }
-
     m_numPools = 0;
     if (allowPools)
-        m_threadPool = ThreadPool::allocThreadPools(p, m_numPools);
-
+        m_threadPool = ThreadPool::allocThreadPools(p, m_numPools, 0);
     if (!m_numPools)
     {
         // issue warnings if any of these features were requested
@@ -201,17 +199,26 @@ void Encoder::create()
         m_scalingList.setDefaultScalingList();
     else if (m_scalingList.parseScalingList(m_param->scalingLists))
         m_aborted = true;
-
-    m_lookahead = new Lookahead(m_param, m_threadPool);
-    if (m_numPools)
+    int pools = m_numPools;
+    ThreadPool* lookAheadThreadPool = 0;
+    if (m_param->lookaheadThreads > 0)
     {
-        m_lookahead->m_jpId = m_threadPool[0].m_numProviders++;
-        m_threadPool[0].m_jpTable[m_lookahead->m_jpId] = m_lookahead;
+        lookAheadThreadPool = ThreadPool::allocThreadPools(p, pools, 1);
     }
-
+    else
+        lookAheadThreadPool = m_threadPool;
+    m_lookahead = new Lookahead(m_param, lookAheadThreadPool);
+    if (pools)
+    {
+        m_lookahead->m_jpId = lookAheadThreadPool[0].m_numProviders++;
+        lookAheadThreadPool[0].m_jpTable[m_lookahead->m_jpId] = m_lookahead;
+    }
+    if (m_param->lookaheadThreads > 0)
+        for (int i = 0; i < pools; i++)
+            lookAheadThreadPool[i].start();
+    m_lookahead->m_numPools = pools;
     m_dpb = new DPB(m_param);
     m_rateControl = new RateControl(*m_param);
-
     initVPS(&m_vps);
     initSPS(&m_sps);
     initPPS(&m_pps);

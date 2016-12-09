@@ -656,8 +656,12 @@ void Lookahead::stopJobs()
         if (wait)
             m_outputSignal.wait();
     }
+    if (m_pool && m_param->lookaheadThreads > 0)
+    {
+        for (int i = 0; i < m_numPools; i++)
+            m_pool[i].stopWorkers();
+    }
 }
-
 void Lookahead::destroy()
 {
     // these two queues will be empty unless the encode was aborted
@@ -676,10 +680,10 @@ void Lookahead::destroy()
     }
 
     X265_FREE(m_scratch);
-
     delete [] m_tld;
+    if (m_param->lookaheadThreads > 0)
+        delete [] m_pool;
 }
-
 /* The synchronization of slicetypeDecide is managed here.  The findJob() method
  * polls the occupancy of the input queue. If the queue is
  * full, it will run slicetypeDecide() and output a mini-gop of frames to the

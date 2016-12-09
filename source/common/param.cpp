@@ -149,8 +149,8 @@ void x265_param_default(x265_param* param)
     param->bBPyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
     param->lookaheadSlices = 8;
+    param->lookaheadThreads = 0;
     param->scenecutBias = 5.0;
-
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
     param->bEnableStrongIntraSmoothing = 1;
@@ -919,7 +919,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("opt-ref-list-length-pps") p->bOptRefListLengthPPS = atobool(value);
         OPT("multi-pass-opt-rps") p->bMultiPassOptRPS = atobool(value);
         OPT("scenecut-bias") p->scenecutBias = atof(value);
-
+        OPT("lookahead-threads") p->lookaheadThreads = atoi(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1412,6 +1412,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(param->bEnableFastIntra, "fast-intra");
     TOOLOPT(param->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
     TOOLVAL(param->lookaheadSlices, "lslices=%d");
+    TOOLVAL(param->lookaheadThreads, "lthreads=%d")
     if (param->maxSlices > 1)
         TOOLVAL(param->maxSlices, "slices=%d");
     if (param->bEnableLoopFilter)
