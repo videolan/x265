@@ -2645,12 +2645,6 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
     uint32_t tuDepthRange[2];
     cu.getInterTUQtDepthRange(tuDepthRange, 0);
 
-    if (m_limitTU & X265_TU_LIMIT_NEIGH)
-    {
-        int32_t maxLog2CUSize = g_log2Size[m_param->maxCUSize];
-        m_maxTUDepth = x265_clip3(maxLog2CUSize - (int32_t)tuDepthRange[1], maxLog2CUSize - (int32_t)tuDepthRange[0], m_maxTUDepth);
-    }
-
     m_entropyCoder.load(m_rqt[depth].cur);
 
     if ((m_limitTU & X265_TU_LIMIT_DFS) && !(m_limitTU & X265_TU_LIMIT_NEIGH))
@@ -2659,9 +2653,18 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
         memset(&m_cacheTU, 0, sizeof(TUInfoCache));
 
     Cost costs;
-    if ((m_limitTU & X265_TU_LIMIT_DFS) && (m_limitTU & X265_TU_LIMIT_NEIGH))
+    if (m_limitTU & X265_TU_LIMIT_NEIGH)
     {
+        /* Save and reload maxTUDepth to avoid changing of maxTUDepth between modes */
         int32_t tempDepth = m_maxTUDepth;
+        if (m_maxTUDepth != -1)
+        {
+            uint32_t splitFlag = interMode.cu.m_partSize[0] != SIZE_2Nx2N;
+            uint32_t minSize = tuDepthRange[0];
+            uint32_t maxSize = tuDepthRange[1];
+            maxSize = X265_MIN(maxSize, cuGeom.log2CUSize - splitFlag);
+            m_maxTUDepth = x265_clip3(cuGeom.log2CUSize - maxSize, cuGeom.log2CUSize - minSize, (uint32_t)m_maxTUDepth);
+        }
         estimateResidualQT(interMode, cuGeom, 0, 0, *resiYuv, costs, tuDepthRange);
         m_maxTUDepth = tempDepth;
     }
