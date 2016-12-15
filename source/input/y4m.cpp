@@ -280,7 +280,7 @@ bool Y4MInput::parseHeader()
                 {
                     c = ifs->get();
 
-                    if (c <= '9' && c >= '0')
+                    if (c <= 'o' && c >= '0')
                         csp = csp * 10 + (c - '0');
                     else if (c == 'p')
                     {
@@ -300,9 +300,23 @@ bool Y4MInput::parseHeader()
                         break;
                 }
 
-                if (d >= 8 && d <= 16)
-                    depth = d;
-                colorSpace = (csp == 444) ? X265_CSP_I444 : (csp == 422) ? X265_CSP_I422 : X265_CSP_I420;
+                switch (csp)
+                {
+                case ('m'-'0')*100000 + ('o'-'0')*10000 + ('n'-'0')*1000 + ('o'-'0')*100 + 16:
+                    colorSpace = X265_CSP_I400;
+                    depth = 16;
+                    break;
+
+                case ('m'-'0')*1000 + ('o'-'0')*100 + ('n'-'0')*10 + ('o'-'0'):
+                    colorSpace = X265_CSP_I400;
+                    depth = 8;
+                    break;
+                   
+                default:
+                    if (d >= 8 && d <= 16)
+                        depth = d;
+                    colorSpace = (csp == 444) ? X265_CSP_I444 : (csp == 422) ? X265_CSP_I422 : X265_CSP_I420;
+                }
                 break;
 
             default:
@@ -324,7 +338,7 @@ bool Y4MInput::parseHeader()
     if (width < MIN_FRAME_WIDTH || width > MAX_FRAME_WIDTH ||
         height < MIN_FRAME_HEIGHT || height > MAX_FRAME_HEIGHT ||
         (rateNum / rateDenom) < 1 || (rateNum / rateDenom) > MAX_FRAME_RATE ||
-        colorSpace <= X265_CSP_I400 || colorSpace >= X265_CSP_COUNT)
+        colorSpace < X265_CSP_I400 || colorSpace >= X265_CSP_COUNT)
         return false;
 
     return true;

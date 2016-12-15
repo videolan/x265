@@ -746,7 +746,7 @@ fail:
 
     api->encoder_get_stats(encoder, &stats, sizeof(stats));
     if (cliopt.csvfpt && !b_ctrl_c)
-        x265_csvlog_encode(cliopt.csvfpt, *api, *param, stats, cliopt.csvLogLevel, argc, argv);
+        x265_csvlog_encode(cliopt.csvfpt, api->version_str, *param, stats, cliopt.csvLogLevel, argc, argv);
     api->encoder_close(encoder);
 
     int64_t second_largest_pts = 0;

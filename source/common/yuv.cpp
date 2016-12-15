@@ -47,6 +47,11 @@ bool Yuv::create(uint32_t size, int csp)
     m_size  = size;
     m_part = partitionFromSizes(size, size);
 
+    for (int i = 0; i < 2; i++)
+        for (int j = 0; j < MAX_NUM_REF; j++)
+            for (int k = 0; k < INTEGRAL_PLANE_NUM; k++)
+                m_integral[i][j][k] = NULL;
+
     if (csp == X265_CSP_I400)
     {
         CHECKED_MALLOC(m_buf[0], pixel, size * size + 8);

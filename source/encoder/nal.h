@@ -34,6 +34,7 @@ class Bitstream;
 
 class NALList
 {
+public:
     static const int MAX_NAL_UNITS = 16;
 
 public:

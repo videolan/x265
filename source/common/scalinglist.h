@@ -42,6 +42,8 @@ public:
     static const int     s_numCoefPerSize[NUM_SIZES];
     static const int32_t s_invQuantScales[NUM_REM];
     static const int32_t s_quantScales[NUM_REM];
+    static const char MatrixType[4][6][20];
+    static const char MatrixType_DC[4][12][22];
 
     int32_t  m_scalingListDC[NUM_SIZES][NUM_LISTS];   // the DC value of the matrix coefficient for 16x16
     int32_t* m_scalingListCoef[NUM_SIZES][NUM_LISTS]; // quantization matrix

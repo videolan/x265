@@ -176,7 +176,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 #define X265_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define X265_MAX(a, b) ((a) > (b) ? (a) : (b))
-#define COPY1_IF_LT(x, y) if ((y) < (x)) (x) = (y);
+#define COPY1_IF_LT(x, y) {if ((y) < (x)) (x) = (y);}
 #define COPY2_IF_LT(x, y, a, b) \
     if ((y) < (x)) \
     { \
@@ -312,6 +312,7 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 #define MAX_NUM_REF_PICS            16 // max. number of pictures used for reference
 #define MAX_NUM_REF                 16 // max. number of entries in picture reference list
+#define MAX_NUM_SHORT_TERM_RPS      64 // max. number of short term reference picture set in SPS
 
 #define REF_NOT_VALID               -1
 
@@ -326,6 +327,8 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define MAX_NUM_TR_CATEGORIES       16                        // 32, 16, 8, 4 transform categories each for luma and chroma
 
 #define PIXEL_MAX ((1 << X265_DEPTH) - 1)
+
+#define INTEGRAL_PLANE_NUM          12 // 12 integral planes for 32x32, 32x24, 32x8, 24x32, 16x16, 16x12, 16x4, 12x16, 8x32, 8x8, 4x16 and 4x4.
 
 namespace X265_NS {
 

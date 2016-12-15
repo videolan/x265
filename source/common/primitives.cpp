@@ -243,6 +243,15 @@ void x265_setup_primitives(x265_param *param)
 #endif
         setupAssemblyPrimitives(primitives, param->cpuid);
 #endif
+#if HAVE_ALTIVEC
+        if (param->cpuid & X265_CPU_ALTIVEC)
+        {
+            setupPixelPrimitives_altivec(primitives);       // pixel_altivec.cpp, overwrite the initialization for altivec optimizated functions
+            setupDCTPrimitives_altivec(primitives);         // dct_altivec.cpp, overwrite the initialization for altivec optimizated functions
+            setupFilterPrimitives_altivec(primitives);      // ipfilter.cpp, overwrite the initialization for altivec optimizated functions
+            setupIntraPrimitives_altivec(primitives);       // intrapred_altivec.cpp, overwrite the initialization for altivec optimizated functions
+        }
+#endif
 
         setupAliasPrimitives(primitives);
     }

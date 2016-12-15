@@ -239,11 +239,16 @@ struct SPS
     uint32_t maxLatencyIncrease;
     int      numReorderPics;
 
+    RPS      spsrps[MAX_NUM_SHORT_TERM_RPS];
+    int      spsrpsNum;
+    int      numGOPBegin;
+
     bool     bUseSAO; // use param
     bool     bUseAMP; // use param
     bool     bUseStrongIntraSmoothing; // use param
     bool     bTemporalMVPEnabled;
-    bool     bDiscardOptionalVUI;
+    bool     bEmitVUITimingInfo;
+    bool     bEmitVUIHRDInfo;
 
     Window   conformanceWindow;
     VUI      vuiParameters;
@@ -282,6 +287,8 @@ struct PPS
 
     bool     bDeblockingFilterControlPresent;
     bool     bPicDisableDeblockingFilter;
+
+    int      numRefIdxDefault[2];
 };
 
 struct WeightParam
@@ -334,6 +341,7 @@ public:
     int         m_sliceQp;
     int         m_poc;
     int         m_lastIDR;
+    int         m_rpsIdx;
 
     uint32_t    m_colRefIdx;       // never modified
 
@@ -347,6 +355,10 @@ public:
     bool        m_sLFaseFlag;      // loop filter boundary flag
     bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
 
+    int         m_iPPSQpMinus26;
+    int         numRefIdxDefault[2];
+    int         m_iNumRPSInSPS;
+
     Slice()
     {
         m_lastIDR = 0;
@@ -356,6 +368,10 @@ public:
         memset(m_refReconPicList, 0, sizeof(m_refReconPicList));
         memset(m_refPOCList, 0, sizeof(m_refPOCList));
         disableWeights();
+        m_iPPSQpMinus26 = 0;
+        numRefIdxDefault[0] = 1;
+        numRefIdxDefault[1] = 1;
+        m_rpsIdx = -1;
     }
 
     void disableWeights();

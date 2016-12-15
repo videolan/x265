@@ -74,6 +74,10 @@ Encoder::Encoder()
     m_threadPool = NULL;
     m_analysisFile = NULL;
     m_offsetEmergency = NULL;
+    m_iFrameNum = 0;
+    m_iPPSQpMinus26 = 0;
+    m_iLastSliceQp = 0;
+    m_rpsInSpsCount = 0;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
 
@@ -143,12 +147,6 @@ void Encoder::create()
 
         // disable all pool features if the thread pool is disabled or unusable.
         p->bEnableWavefront = p->bDistributeModeAnalysis = p->bDistributeMotionEstimation = p->lookaheadSlices = 0;
-    }
-
-    if (!p->bEnableWavefront && p->rc.vbvBufferSize)
-    {
-        x265_log(p, X265_LOG_ERROR, "VBV requires wavefront parallelism\n");
-        m_aborted = true;
     }
 
     x265_log(p, X265_LOG_INFO, "Slices                              : %d\n", p->maxSlices);
@@ -317,6 +315,8 @@ void Encoder::create()
         m_aborted = true;
     if (!m_lookahead->create())
         m_aborted = true;
+
+    initRefIdx();
 
     if (m_param->analysisMode)
     {
@@ -869,6 +869,58 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_4x4_PARTITIONS);
             }
 
+            if (m_param->searchMethod == X265_SEA && frameEnc->m_lowres.sliceType != X265_TYPE_B)
+            {
+                int padX = g_maxCUSize + 32;
+                int padY = g_maxCUSize + 16;
+                uint32_t numCuInHeight = (frameEnc->m_encData->m_reconPic->m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
+                int maxHeight = numCuInHeight * g_maxCUSize;
+                for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
+                {
+                    frameEnc->m_encData->m_meBuffer[i] = X265_MALLOC(uint32_t, frameEnc->m_reconPic->m_stride * (maxHeight + (2 * padY)));
+                    if (frameEnc->m_encData->m_meBuffer[i])
+                    {
+                        memset(frameEnc->m_encData->m_meBuffer[i], 0, sizeof(uint32_t)* frameEnc->m_reconPic->m_stride * (maxHeight + (2 * padY)));
+                        frameEnc->m_encData->m_meIntegral[i] = frameEnc->m_encData->m_meBuffer[i] + frameEnc->m_encData->m_reconPic->m_stride * padY + padX;
+                    }
+                    else
+                        x265_log(m_param, X265_LOG_ERROR, "SEA motion search: POC %d Integral buffer[%d] unallocated\n", frameEnc->m_poc, i);
+                }
+            }
+
+            if (m_param->bOptQpPPS && frameEnc->m_lowres.bKeyframe && m_param->bRepeatHeaders)
+            {
+                ScopedLock qpLock(m_sliceQpLock);
+                if (m_iFrameNum > 0)
+                {
+                    //Search the least cost
+                    int64_t iLeastCost = m_iBitsCostSum[0];
+                    int iLeastId = 0;
+                    for (int i = 1; i < QP_MAX_MAX + 1; i++)
+                    {
+                        if (iLeastCost > m_iBitsCostSum[i])
+                        {
+                            iLeastId = i;
+                            iLeastCost = m_iBitsCostSum[i];
+                        }
+                    }
+
+                    /* If last slice Qp is close to (26 + m_iPPSQpMinus26) or outputs is all I-frame video,
+                       we don't need to change m_iPPSQpMinus26. */
+                    if ((abs(m_iLastSliceQp - (26 + m_iPPSQpMinus26)) > 1) && (m_iFrameNum > 1))
+                        m_iPPSQpMinus26 = (iLeastId + 1) - 26;
+                    m_iFrameNum = 0;
+                }
+
+                for (int i = 0; i < QP_MAX_MAX + 1; i++)
+                    m_iBitsCostSum[i] = 0;
+            }
+
+            frameEnc->m_encData->m_slice->m_iPPSQpMinus26 = m_iPPSQpMinus26;
+            frameEnc->m_encData->m_slice->numRefIdxDefault[0] = m_pps.numRefIdxDefault[0];
+            frameEnc->m_encData->m_slice->numRefIdxDefault[1] = m_pps.numRefIdxDefault[1];
+            frameEnc->m_encData->m_slice->m_iNumRPSInSPS = m_sps.spsrpsNum;
+
             curEncoder->m_rce.encodeOrder = frameEnc->m_encodeOrder = m_encodedFrameNum++;
             if (m_bframeDelay)
             {
@@ -1030,6 +1082,13 @@ void Encoder::printSummary()
         float uncompressed = frameSize * X265_DEPTH * m_analyzeAll.m_numPics;
 
         x265_log(m_param, X265_LOG_INFO, "lossless compression ratio %.2f::1\n", uncompressed / m_analyzeAll.m_accBits);
+    }
+    if (m_param->bMultiPassOptRPS && m_param->rc.bStatRead)
+    {
+        x265_log(m_param, X265_LOG_INFO, "RPS in SPS: %d frames (%.2f%%), RPS not in SPS: %d frames (%.2f%%)\n", 
+            m_rpsInSpsCount, (float)100.0 * m_rpsInSpsCount / m_rateControl->m_numEntries, 
+            m_rateControl->m_numEntries - m_rpsInSpsCount, 
+            (float)100.0 * (m_rateControl->m_numEntries - m_rpsInSpsCount) / m_rateControl->m_numEntries);
     }
 
     if (m_analyzeAll.m_numPics)
@@ -1353,6 +1412,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
         frameStats->qp = curEncData.m_avgQpAq;
         frameStats->bits = bits;
         frameStats->bScenecut = curFrame->m_lowres.bScenecut;
+        frameStats->bufferFill = m_rateControl->m_bufferFillActual;
         frameStats->frameLatency = inPoc - poc;
         if (m_param->rc.rateControlMode == X265_RC_CRF)
             frameStats->rateFactor = curEncData.m_rateFactor;
@@ -1413,6 +1473,66 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
 
+void Encoder::initRefIdx()
+{
+    int j = 0;
+
+    for (j = 0; j < MAX_NUM_REF_IDX; j++)
+    {
+        m_refIdxLastGOP.numRefIdxl0[j] = 0;
+        m_refIdxLastGOP.numRefIdxl1[j] = 0;
+    }
+
+    return;
+}
+
+void Encoder::analyseRefIdx(int *numRefIdx)
+{
+    int i_l0 = 0;
+    int i_l1 = 0;
+
+    i_l0 = numRefIdx[0];
+    i_l1 = numRefIdx[1];
+
+    if ((0 < i_l0) && (MAX_NUM_REF_IDX > i_l0))
+        m_refIdxLastGOP.numRefIdxl0[i_l0]++;
+    if ((0 < i_l1) && (MAX_NUM_REF_IDX > i_l1))
+        m_refIdxLastGOP.numRefIdxl1[i_l1]++;
+
+    return;
+}
+
+void Encoder::updateRefIdx()
+{
+    int i_max_l0 = 0;
+    int i_max_l1 = 0;
+    int j = 0;
+
+    i_max_l0 = 0;
+    i_max_l1 = 0;
+    m_refIdxLastGOP.numRefIdxDefault[0] = 1;
+    m_refIdxLastGOP.numRefIdxDefault[1] = 1;
+    for (j = 0; j < MAX_NUM_REF_IDX; j++)
+    {
+        if (i_max_l0 < m_refIdxLastGOP.numRefIdxl0[j])
+        {
+            i_max_l0 = m_refIdxLastGOP.numRefIdxl0[j];
+            m_refIdxLastGOP.numRefIdxDefault[0] = j;
+        }
+        if (i_max_l1 < m_refIdxLastGOP.numRefIdxl1[j])
+        {
+            i_max_l1 = m_refIdxLastGOP.numRefIdxl1[j];
+            m_refIdxLastGOP.numRefIdxDefault[1] = j;
+        }
+    }
+
+    m_pps.numRefIdxDefault[0] = m_refIdxLastGOP.numRefIdxDefault[0];
+    m_pps.numRefIdxDefault[1] = m_refIdxLastGOP.numRefIdxDefault[1];
+    initRefIdx();
+
+    return;
+}
+
 void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 {
     sbacCoder.setBitstream(&bs);
@@ -1429,7 +1549,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     list.serialize(NAL_UNIT_SPS, bs);
 
     bs.resetBits();
-    sbacCoder.codePPS(m_pps, (m_param->maxSlices <= 1));
+    sbacCoder.codePPS( m_pps, (m_param->maxSlices <= 1), m_iPPSQpMinus26);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
@@ -1458,9 +1578,9 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         list.serialize(NAL_UNIT_PREFIX_SEI, bs);
     }
 
-    if (!m_param->bDiscardSEI && m_param->bEmitInfoSEI)
+    if (m_param->bEmitInfoSEI)
     {
-        char *opts = x265_param2string(m_param);
+        char *opts = x265_param2string(m_param, m_sps.conformanceWindow.rightOffset, m_sps.conformanceWindow.bottomOffset);
         if (opts)
         {
             char *buffer = X265_MALLOC(char, strlen(opts) + strlen(PFX(version_str)) +
@@ -1468,7 +1588,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
             if (buffer)
             {
                 sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "
-                        "Copyright 2013-2015 (c) Multicoreware Inc - "
+                        "Copyright 2013-2016 (c) Multicoreware Inc - "
                         "http://x265.org - options: %s",
                         X265_BUILD, PFX(version_str), PFX(build_info_str), opts);
                 
@@ -1488,7 +1608,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         }
     }
 
-    if (!m_param->bDiscardSEI && (m_param->bEmitHRDSEI || !!m_param->interlaceMode))
+    if ((m_param->bEmitHRDSEI || !!m_param->interlaceMode))
     {
         /* Picture Timing and Buffering Period SEI require the SPS to be "activated" */
         SEIActiveParameterSets sei;
@@ -1543,7 +1663,8 @@ void Encoder::initSPS(SPS *sps)
 
     sps->bUseStrongIntraSmoothing = m_param->bEnableStrongIntraSmoothing;
     sps->bTemporalMVPEnabled = m_param->bEnableTemporalMvp;
-    sps->bDiscardOptionalVUI = m_param->bDiscardOptionalVUI;
+    sps->bEmitVUITimingInfo = m_param->bEmitVUITimingInfo;
+    sps->bEmitVUIHRDInfo = m_param->bEmitVUIHRDInfo;
     sps->log2MaxPocLsb = m_param->log2MaxPocLsb;
     int maxDeltaPOC = (m_param->bframes + 2) * (!!m_param->bBPyramid + 1) * 2;
     while ((1 << sps->log2MaxPocLsb) <= maxDeltaPOC * 2)
@@ -1621,6 +1742,9 @@ void Encoder::initPPS(PPS *pps)
     pps->deblockingFilterTcOffsetDiv2 = m_param->deblockingFilterTCOffset;
 
     pps->bEntropyCodingSyncEnabled = m_param->bEnableWavefront;
+
+    pps->numRefIdxDefault[0] = 1;
+    pps->numRefIdxDefault[1] = 1;
 }
 
 void Encoder::configure(x265_param *p)
@@ -1819,6 +1943,7 @@ void Encoder::configure(x265_param *p)
     m_bframeDelay = p->bframes ? (p->bBPyramid ? 2 : 1) : 0;
 
     p->bFrameBias = X265_MIN(X265_MAX(-90, p->bFrameBias), 100);
+    p->scenecutBias = (double)(p->scenecutBias / 100);
 
     if (p->logLevel < X265_LOG_INFO)
     {
@@ -1849,6 +1974,12 @@ void Encoder::configure(x265_param *p)
         if (s)
             x265_log(p, X265_LOG_WARNING, "--tune %s should be used if attempting to benchmark %s!\n", s, s);
     }
+    if (p->searchMethod == X265_SEA && (p->bDistributeMotionEstimation || p->bDistributeModeAnalysis))
+    {
+        x265_log(p, X265_LOG_WARNING, "Disabling pme and pmode: --pme and --pmode cannot be used with SEA motion search!\n");
+        p->bDistributeMotionEstimation = 0;
+        p->bDistributeModeAnalysis = 0;
+    }
 
     /* some options make no sense if others are disabled */
     p->bSaoNonDeblocked &= p->bEnableSAO;
@@ -1878,6 +2009,11 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "--rd-refine disabled, requires RD level > 4 and adaptive quant\n");
     }
 
+    if (p->limitTU && p->tuQTMaxInterDepth < 2)
+    {
+        p->limitTU = 0;
+        x265_log(p, X265_LOG_WARNING, "limit-tu disabled, requires tu-inter-depth > 1\n");
+    }
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
     if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv))
     {
@@ -2013,6 +2149,19 @@ void Encoder::configure(x265_param *p)
         p->log2MaxPocLsb = 4;
     }
 
+    if (p->maxSlices < 1)
+    {
+        x265_log(p, X265_LOG_WARNING, "maxSlices can not be less than 1, force set to 1\n");
+        p->maxSlices = 1;
+    }
+
+    const uint32_t numRows = (p->sourceHeight + p->maxCUSize - 1) / p->maxCUSize;
+    const uint32_t slicesLimit = X265_MIN(numRows, NALList::MAX_NAL_UNITS - 1);
+    if (p->maxSlices > numRows)
+    {
+        x265_log(p, X265_LOG_WARNING, "maxSlices can not be more than min(rows, MAX_NAL_UNITS-1), force set to %d\n", slicesLimit);
+        p->maxSlices = slicesLimit;
+    }
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)
@@ -2309,10 +2458,10 @@ void Encoder::printReconfigureParams()
     x265_param* oldParam = m_param;
     x265_param* newParam = m_latestParam;
     
-    x265_log(newParam, X265_LOG_INFO, "Reconfigured param options, input Frame: %d\n", m_pocLast + 1);
+    x265_log(newParam, X265_LOG_DEBUG, "Reconfigured param options, input Frame: %d\n", m_pocLast + 1);
 
     char tmp[40];
-#define TOOLCMP(COND1, COND2, STR)  if (COND1 != COND2) { sprintf(tmp, STR, COND1, COND2); x265_log(newParam, X265_LOG_INFO, tmp); }
+#define TOOLCMP(COND1, COND2, STR)  if (COND1 != COND2) { sprintf(tmp, STR, COND1, COND2); x265_log(newParam, X265_LOG_DEBUG, tmp); }
     TOOLCMP(oldParam->maxNumReferences, newParam->maxNumReferences, "ref=%d to %d\n");
     TOOLCMP(oldParam->bEnableFastIntra, newParam->bEnableFastIntra, "fast-intra=%d to %d\n");
     TOOLCMP(oldParam->bEnableEarlySkip, newParam->bEnableEarlySkip, "early-skip=%d to %d\n");
@@ -2326,3 +2475,208 @@ void Encoder::printReconfigureParams()
     TOOLCMP(oldParam->maxNumMergeCand, newParam->maxNumMergeCand, "max-merge=%d to %d\n");
     TOOLCMP(oldParam->bIntraInBFrames, newParam->bIntraInBFrames, "b-intra=%d to %d\n");
 }
+
+bool Encoder::computeSPSRPSIndex()
+{
+    RPS* rpsInSPS = m_sps.spsrps;
+    int* rpsNumInPSP = &m_sps.spsrpsNum;
+    int  beginNum = m_sps.numGOPBegin;
+    int  endNum;
+    RPS* rpsInRec;
+    RPS* rpsInIdxList;
+    RPS* thisRpsInSPS;
+    RPS* thisRpsInList;
+    RPSListNode* headRpsIdxList = NULL;
+    RPSListNode* tailRpsIdxList = NULL;
+    RPSListNode* rpsIdxListIter = NULL;
+    RateControlEntry *rce2Pass = m_rateControl->m_rce2Pass;
+    int numEntries = m_rateControl->m_numEntries;
+    RateControlEntry *rce;
+    int idx = 0;
+    int pos = 0;
+    int resultIdx[64];
+    memset(rpsInSPS, 0, sizeof(RPS) * MAX_NUM_SHORT_TERM_RPS);
+
+    // find out all RPS date in current GOP
+    beginNum++;
+    endNum = beginNum;
+    if (!m_param->bRepeatHeaders)
+    {
+        endNum = numEntries;
+    }
+    else
+    {
+        while (endNum < numEntries)
+        {
+            rce = &rce2Pass[endNum];
+            if (rce->sliceType == I_SLICE)
+            {
+                if (m_param->keyframeMin && (endNum - beginNum + 1 < m_param->keyframeMin))
+                {
+                    endNum++;
+                    continue;
+                }
+                break;
+            }
+            endNum++;
+        }
+    }
+    m_sps.numGOPBegin = endNum;
+
+    // find out all kinds of RPS
+    for (int i = beginNum; i < endNum; i++)
+    {
+        rce = &rce2Pass[i];
+        rpsInRec = &rce->rpsData;
+        rpsIdxListIter = headRpsIdxList;
+        // i frame don't recode RPS info
+        if (rce->sliceType != I_SLICE)
+        {
+            while (rpsIdxListIter)
+            {
+                rpsInIdxList = rpsIdxListIter->rps;
+                if (rpsInRec->numberOfPictures == rpsInIdxList->numberOfPictures
+                    && rpsInRec->numberOfNegativePictures == rpsInIdxList->numberOfNegativePictures
+                    && rpsInRec->numberOfPositivePictures == rpsInIdxList->numberOfPositivePictures)
+                {
+                    for (pos = 0; pos < rpsInRec->numberOfPictures; pos++)
+                    {
+                        if (rpsInRec->deltaPOC[pos] != rpsInIdxList->deltaPOC[pos]
+                            || rpsInRec->bUsed[pos] != rpsInIdxList->bUsed[pos])
+                            break;
+                    }
+                    if (pos == rpsInRec->numberOfPictures)    // if this type of RPS has exist
+                    {
+                        rce->rpsIdx = rpsIdxListIter->idx;
+                        rpsIdxListIter->count++;
+                        // sort RPS type link after reset RPS type count.
+                        RPSListNode* next = rpsIdxListIter->next;
+                        RPSListNode* prior = rpsIdxListIter->prior;
+                        RPSListNode* iter = prior;
+                        if (iter)
+                        {
+                            while (iter)
+                            {
+                                if (iter->count > rpsIdxListIter->count)
+                                    break;
+                                iter = iter->prior;
+                            }
+                            if (iter)
+                            {
+                                prior->next = next;
+                                if (next)
+                                    next->prior = prior;
+                                else
+                                    tailRpsIdxList = prior;
+                                rpsIdxListIter->next = iter->next;
+                                rpsIdxListIter->prior = iter;
+                                iter->next->prior = rpsIdxListIter;
+                                iter->next = rpsIdxListIter;
+                            }
+                            else
+                            {
+                                prior->next = next;
+                                if (next)
+                                    next->prior = prior;
+                                else
+                                    tailRpsIdxList = prior;
+                                headRpsIdxList->prior = rpsIdxListIter;
+                                rpsIdxListIter->next = headRpsIdxList;
+                                rpsIdxListIter->prior = NULL;
+                                headRpsIdxList = rpsIdxListIter;
+                            }
+                        }
+                        break;
+                    }
+                }
+                rpsIdxListIter = rpsIdxListIter->next;
+            }
+            if (!rpsIdxListIter)  // add new type of RPS
+            {
+                RPSListNode* newIdxNode = new RPSListNode();
+                if (newIdxNode == NULL)
+                    goto fail;
+                newIdxNode->rps = rpsInRec;
+                newIdxNode->idx = idx++;
+                newIdxNode->count = 1;
+                newIdxNode->next = NULL;
+                newIdxNode->prior = NULL;
+                if (!tailRpsIdxList)
+                    tailRpsIdxList = headRpsIdxList = newIdxNode;
+                else
+                {
+                    tailRpsIdxList->next = newIdxNode;
+                    newIdxNode->prior = tailRpsIdxList;
+                    tailRpsIdxList = newIdxNode;
+                }
+                rce->rpsIdx = newIdxNode->idx;
+            }
+        }
+        else
+        {
+            rce->rpsIdx = -1;
+        }
+    }
+
+    // get commonly RPS set
+    memset(resultIdx, 0, sizeof(resultIdx));
+    if (idx > MAX_NUM_SHORT_TERM_RPS)
+        idx = MAX_NUM_SHORT_TERM_RPS;
+
+    *rpsNumInPSP = idx;
+    rpsIdxListIter = headRpsIdxList;
+    for (int i = 0; i < idx; i++)
+    {
+        resultIdx[i] = rpsIdxListIter->idx;
+        m_rpsInSpsCount += rpsIdxListIter->count;
+        thisRpsInSPS = rpsInSPS + i;
+        thisRpsInList = rpsIdxListIter->rps;
+        thisRpsInSPS->numberOfPictures = thisRpsInList->numberOfPictures;
+        thisRpsInSPS->numberOfNegativePictures = thisRpsInList->numberOfNegativePictures;
+        thisRpsInSPS->numberOfPositivePictures = thisRpsInList->numberOfPositivePictures;
+        for (pos = 0; pos < thisRpsInList->numberOfPictures; pos++)
+        {
+            thisRpsInSPS->deltaPOC[pos] = thisRpsInList->deltaPOC[pos];
+            thisRpsInSPS->bUsed[pos] = thisRpsInList->bUsed[pos];
+        }
+        rpsIdxListIter = rpsIdxListIter->next;
+    }
+
+    //reset every frame's RPS index
+    for (int i = beginNum; i < endNum; i++)
+    {
+        int j;
+        rce = &rce2Pass[i];
+        for (j = 0; j < idx; j++)
+        {
+            if (rce->rpsIdx == resultIdx[j])
+            {
+                rce->rpsIdx = j;
+                break;
+            }
+        }
+
+        if (j == idx)
+            rce->rpsIdx = -1;
+    }
+
+    rpsIdxListIter = headRpsIdxList;
+    while (rpsIdxListIter)
+    {
+        RPSListNode* freeIndex = rpsIdxListIter;
+        rpsIdxListIter = rpsIdxListIter->next;
+        delete freeIndex;
+    }
+    return true;
+
+fail:
+    rpsIdxListIter = headRpsIdxList;
+    while (rpsIdxListIter)
+    {
+        RPSListNode* freeIndex = rpsIdxListIter;
+        rpsIdxListIter = rpsIdxListIter->next;
+        delete freeIndex;
+    }
+    return false;
+}
+

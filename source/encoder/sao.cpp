@@ -1208,10 +1208,15 @@ void SAO::rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus)
     if (!saoParam->bSaoFlag[0])
         m_depthSaoRate[0 * SAO_DEPTHRATE_SIZE + m_refDepth] = 1.0;
     else
+    {
+        X265_CHECK(m_numNoSao[0] <= numctus, "m_numNoSao check failure!");
         m_depthSaoRate[0 * SAO_DEPTHRATE_SIZE + m_refDepth] = m_numNoSao[0] / ((double)numctus);
+    }
 
     if (!saoParam->bSaoFlag[1])
+    {
         m_depthSaoRate[1 * SAO_DEPTHRATE_SIZE + m_refDepth] = 1.0;
+    }
     else
         m_depthSaoRate[1 * SAO_DEPTHRATE_SIZE + m_refDepth] = m_numNoSao[1] / ((double)numctus);
 }

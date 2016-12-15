@@ -141,6 +141,11 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
         Encoder *encoder = static_cast<Encoder*>(enc);
         Entropy sbacCoder;
         Bitstream bs;
+        if (encoder->m_param->rc.bStatRead && encoder->m_param->bMultiPassOptRPS)
+        {
+            if (!encoder->computeSPSRPSIndex())
+                return -1;
+        }
         encoder->getStreamHeaders(encoder->m_nalList, sbacCoder, bs);
         *pp_nal = &encoder->m_nalList.m_nal[0];
         if (pi_nal) *pi_nal = encoder->m_nalList.m_numNal;

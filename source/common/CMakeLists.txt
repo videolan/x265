@@ -99,6 +99,19 @@ if(ENABLE_ASSEMBLY AND (ARM OR CROSS_COMPILE_ARM))
     source_group(Assembly FILES ${ASM_PRIMITIVES})
 endif(ENABLE_ASSEMBLY AND (ARM OR CROSS_COMPILE_ARM))
 
+if(POWER)
+    set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS -DX265_VERSION=${X265_VERSION})
+    if(ENABLE_ALTIVEC)
+        set(ALTIVEC_SRCS pixel_altivec.cpp dct_altivec.cpp ipfilter_altivec.cpp intrapred_altivec.cpp)
+        foreach(SRC ${ALTIVEC_SRCS})
+            set(ALTIVEC_PRIMITIVES ${ALTIVEC_PRIMITIVES} ppc/${SRC})
+        endforeach()
+        source_group(Intrinsics_altivec FILES ${ALTIVEC_PRIMITIVES})
+        set_source_files_properties(${ALTIVEC_PRIMITIVES} PROPERTIES COMPILE_FLAGS "-Wno-unused  -Wno-unknown-pragmas -Wno-maybe-uninitialized")
+    endif()
+endif()
+
+
 # set_target_properties can't do list expansion
 string(REPLACE ";" " " VERSION_FLAGS "${VFLAGS}")
 set_source_files_properties(version.cpp PROPERTIES COMPILE_FLAGS ${VERSION_FLAGS})
@@ -116,7 +129,7 @@ if(WIN32)
 endif(WIN32)
 
 add_library(common OBJECT
-    ${ASM_PRIMITIVES} ${VEC_PRIMITIVES} ${WINXP}
+    ${ASM_PRIMITIVES} ${VEC_PRIMITIVES} ${ALTIVEC_PRIMITIVES} ${WINXP}
     primitives.cpp primitives.h
     pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp loopfilter.cpp
     constants.cpp constants.h

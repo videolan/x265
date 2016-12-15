@@ -54,15 +54,39 @@ void BitCost::setQP(unsigned int qp)
                 s_costs[qp][i] = s_costs[qp][-i] = (uint16_t)X265_MIN(s_bitsizes[i] * lambda + 0.5f, (1 << 15) - 1);
         }
     }
-
+    for (int j = 0; j < 4; j++)
+    {
+        if (!s_fpelMvCosts[qp][j])
+        {
+            ScopedLock s(s_costCalcLock);
+            if (!s_fpelMvCosts[qp][j])
+            {
+                s_fpelMvCosts[qp][j] = X265_MALLOC(uint16_t, BC_MAX_MV + 1) + (BC_MAX_MV >> 1);
+                if (!s_fpelMvCosts[qp][j])
+                {
+                    x265_log(NULL, X265_LOG_ERROR, "BitCost s_fpelMvCosts buffer allocation failure\n");
+                    return;
+                }
+                for (int i = -(BC_MAX_MV >> 1); i < (BC_MAX_MV >> 1); i++)
+                {
+                    s_fpelMvCosts[qp][j][i] = s_costs[qp][i * 4 + j];
+                }
+            }
+        }
+    }
     m_cost = s_costs[qp];
+    for (int j = 0; j < 4; j++)
+    {
+        m_fpelMvCosts[j] = s_fpelMvCosts[qp][j];
+    }
 }
-
 /***
  * Class static data and methods
  */
 
 uint16_t *BitCost::s_costs[BC_MAX_QP];
+
+uint16_t* BitCost::s_fpelMvCosts[BC_MAX_QP][4];
 
 float *BitCost::s_bitsizes;
 
@@ -94,6 +118,17 @@ void BitCost::destroy()
             X265_FREE(s_costs[i] - 2 * BC_MAX_MV);
 
             s_costs[i] = NULL;
+        }
+    }
+    for (int i = 0; i < BC_MAX_QP; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (s_fpelMvCosts[i][j])
+            {
+                X265_FREE(s_fpelMvCosts[i][j] - (BC_MAX_MV >> 1));
+                s_fpelMvCosts[i][j] = NULL;
+            }
         }
     }
 

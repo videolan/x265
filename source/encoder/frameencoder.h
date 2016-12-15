@@ -184,6 +184,7 @@ public:
     NoiseReduction*          m_nr;
     ThreadLocalData*         m_tld; /* for --no-wpp */
     Bitstream*               m_outStreams;
+    Bitstream*               m_backupStreams;
     uint32_t*                m_substreamSizes;
 
     CUGeom*                  m_cuGeoms;

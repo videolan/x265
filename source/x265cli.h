@@ -85,6 +85,7 @@ static const struct option long_options[] =
     { "max-tu-size",    required_argument, NULL, 0 },
     { "tu-intra-depth", required_argument, NULL, 0 },
     { "tu-inter-depth", required_argument, NULL, 0 },
+    { "limit-tu",       required_argument, NULL, 0 },
     { "me",             required_argument, NULL, 0 },
     { "subme",          required_argument, NULL, 'm' },
     { "merange",        required_argument, NULL, 0 },
@@ -120,6 +121,7 @@ static const struct option long_options[] =
     { "min-keyint",     required_argument, NULL, 'i' },
     { "scenecut",       required_argument, NULL, 0 },
     { "no-scenecut",          no_argument, NULL, 0 },
+    { "scenecut-bias",  required_argument, NULL, 0 },
     { "intra-refresh",        no_argument, NULL, 0 },
     { "rc-lookahead",   required_argument, NULL, 0 },
     { "lookahead-slices", required_argument, NULL, 0 },
@@ -208,8 +210,14 @@ static const struct option long_options[] =
     { "min-luma",       required_argument, NULL, 0 },
     { "max-luma",       required_argument, NULL, 0 },
     { "log2-max-poc-lsb", required_argument, NULL, 8 },
-    { "discard-sei",          no_argument, NULL, 0 },
-    { "discard-vui",          no_argument, NULL, 0 },
+    { "vui-timing-info",      no_argument, NULL, 0 },
+    { "no-vui-timing-info",   no_argument, NULL, 0 },
+    { "vui-hrd-info",         no_argument, NULL, 0 },
+    { "no-vui-hrd-info",      no_argument, NULL, 0 },
+    { "opt-qp-pps",           no_argument, NULL, 0 },
+    { "no-opt-qp-pps",        no_argument, NULL, 0 },
+    { "opt-ref-list-length-pps",         no_argument, NULL, 0 },
+    { "no-opt-ref-list-length-pps",      no_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
     { "no-repeat-headers",    no_argument, NULL, 0 },
@@ -229,6 +237,8 @@ static const struct option long_options[] =
     { "pass",           required_argument, NULL, 0 },
     { "slow-firstpass",       no_argument, NULL, 0 },
     { "no-slow-firstpass",    no_argument, NULL, 0 },
+    { "multi-pass-opt-rps",   no_argument, NULL, 0 },
+    { "no-multi-pass-opt-rps", no_argument, NULL, 0 },
     { "analysis-mode",  required_argument, NULL, 0 },
     { "analysis-file",  required_argument, NULL, 0 },
     { "strict-cbr",           no_argument, NULL, 0 },
@@ -317,6 +327,7 @@ static void showHelp(x265_param *param)
     H0("   --max-tu-size <32|16|8|4>     Maximum TU size (WxH). Default %d\n", param->maxTUSize);
     H0("   --tu-intra-depth <integer>    Max TU recursive depth for intra CUs. Default %d\n", param->tuQTMaxIntraDepth);
     H0("   --tu-inter-depth <integer>    Max TU recursive depth for inter CUs. Default %d\n", param->tuQTMaxInterDepth);
+    H0("   --limit-tu <0..4>             Enable early exit from TU recursion for inter coded blocks. Default %d\n", param->limitTU);
     H0("\nAnalysis:\n");
     H0("   --rd <1..6>                   Level of RDO in mode decision 1:least....6:full RDO. Default %d\n", param->rdLevel);
     H0("   --[no-]psy-rd <0..5.0>        Strength of psycho-visual rate distortion optimization, 0 to disable. Default %.1f\n", param->psyRd);
@@ -357,6 +368,7 @@ static void showHelp(x265_param *param)
     H0("-i/--min-keyint <integer>        Scenecuts closer together than this are coded as I, not IDR. Default: auto\n");
     H0("   --no-scenecut                 Disable adaptive I-frame decision\n");
     H0("   --scenecut <integer>          How aggressively to insert extra I-frames. Default %d\n", param->scenecutThreshold);
+    H1("   --scenecut-bias <0..100.0>    Bias for scenecut detection. Default %.2f\n", param->scenecutBias);
     H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
     H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
     H1("   --lookahead-slices <0..16>    Number of slices to use per lookahead cost estimate. Default %d\n", param->lookaheadSlices);
@@ -448,8 +460,11 @@ static void showHelp(x265_param *param)
     H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
     H1("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
     H0("   --log2-max-poc-lsb <integer>  Maximum of the picture order count\n");
-    H0("   --discard-sei                 Discard SEI packets in bitstream. Default %s\n", OPT(param->bDiscardSEI));
-    H0("   --discard-vui                 Discard optional VUI information from the bistream. Default %s\n", OPT(param->bDiscardOptionalVUI));
+    H0("   --[no-]vui-timing-info        Emit VUI timing information in the bistream. Default %s\n", OPT(param->bEmitVUITimingInfo));
+    H0("   --[no-]vui-hrd-info           Emit VUI HRD information in the bistream. Default %s\n", OPT(param->bEmitVUIHRDInfo));
+    H0("   --[no-]opt-qp-pps             Dynamically optimize QP in PPS (instead of default 26) based on QPs in previous GOP. Default %s\n", OPT(param->bOptQpPPS));
+    H0("   --[no-]opt-ref-list-length-pps  Dynamically set L0 and L1 ref list length in PPS (instead of default 0) based on values in last GOP. Default %s\n", OPT(param->bOptRefListLengthPPS));
+    H0("   --[no-]multi-pass-opt-rps     Enable storing commonly used RPS in SPS in multi pass mode. Default %s\n", OPT(param->bMultiPassOptRPS));
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");

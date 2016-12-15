@@ -115,6 +115,7 @@ typedef int  (*pixelcmp_ss_t)(const int16_t* fenc, intptr_t fencstride, const in
 typedef sse_t (*pixel_sse_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
 typedef sse_t (*pixel_sse_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
 typedef sse_t (*pixel_ssd_s_t)(const int16_t* fenc, intptr_t fencstride);
+typedef int(*pixelcmp_ads_t)(int encDC[], uint32_t *sums, int delta, uint16_t *costMvX, int16_t *mvs, int width, int thresh);
 typedef void (*pixelcmp_x4_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, const pixel* fref3, intptr_t frefstride, int32_t* res);
 typedef void (*pixelcmp_x3_t)(const pixel* fenc, const pixel* fref0, const pixel* fref1, const pixel* fref2, intptr_t frefstride, int32_t* res);
 typedef void (*blockfill_s_t)(int16_t* dst, intptr_t dstride, int16_t val);
@@ -217,6 +218,7 @@ struct EncoderPrimitives
         pixelcmp_t     sad;         // Sum of Absolute Differences
         pixelcmp_x3_t  sad_x3;      // Sum of Absolute Differences, 3 mv offsets at once
         pixelcmp_x4_t  sad_x4;      // Sum of Absolute Differences, 4 mv offsets at once
+        pixelcmp_ads_t ads;         // Absolute Differences sum
         pixelcmp_t     satd;        // Sum of Absolute Transformed Differences (4x4 Hadamard)
 
         filter_pp_t    luma_hpp;    // 8-tap luma motion compensation interpolation filters
@@ -402,6 +404,22 @@ inline int partitionFromSizes(int width, int height)
     return part;
 }
 
+/* Computes the size of the LumaPU for a given LumaPU enum */
+inline void sizesFromPartition(int part, int *width, int *height)
+{
+    X265_CHECK(part >= 0 && part <= 24, "Invalid part %d \n", part);
+    extern const uint8_t lumaPartitionMapTable[];
+    int index = 0;
+    for (int i = 0; i < 256;i++)
+        if (part == lumaPartitionMapTable[i])
+        {
+            index = i;
+            break;
+        }
+    *width = 4 * ((index >> 4) + 1);
+    *height = 4 * ((index % 16) + 1);
+}
+
 inline int partitionFromLog2Size(int log2Size)
 {
     X265_CHECK(2 <= log2Size && log2Size <= 6, "Invalid block size\n");
@@ -412,6 +430,12 @@ void setupCPrimitives(EncoderPrimitives &p);
 void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask);
 void setupAliasPrimitives(EncoderPrimitives &p);
+#if HAVE_ALTIVEC
+void setupPixelPrimitives_altivec(EncoderPrimitives &p);
+void setupDCTPrimitives_altivec(EncoderPrimitives &p);
+void setupFilterPrimitives_altivec(EncoderPrimitives &p);
+void setupIntraPrimitives_altivec(EncoderPrimitives &p);
+#endif
 }
 
 #if !EXPORT_C_API

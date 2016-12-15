@@ -312,19 +312,21 @@ void Entropy::codeSPS(const SPS& sps, const ScalingList& scalingList, const Prof
     WRITE_FLAG(sps.bUseSAO, "sample_adaptive_offset_enabled_flag");
 
     WRITE_FLAG(0, "pcm_enabled_flag");
-    WRITE_UVLC(0, "num_short_term_ref_pic_sets");
+    WRITE_UVLC(sps.spsrpsNum, "num_short_term_ref_pic_sets");
+    for (int i = 0; i < sps.spsrpsNum; i++)
+        codeShortTermRefPicSet(sps.spsrps[i], i);
     WRITE_FLAG(0, "long_term_ref_pics_present_flag");
 
     WRITE_FLAG(sps.bTemporalMVPEnabled, "sps_temporal_mvp_enable_flag");
     WRITE_FLAG(sps.bUseStrongIntraSmoothing, "sps_strong_intra_smoothing_enable_flag");
 
     WRITE_FLAG(1, "vui_parameters_present_flag");
-    codeVUI(sps.vuiParameters, sps.maxTempSubLayers, sps.bDiscardOptionalVUI);
+    codeVUI(sps.vuiParameters, sps.maxTempSubLayers, sps.bEmitVUITimingInfo, sps.bEmitVUIHRDInfo);
 
     WRITE_FLAG(0, "sps_extension_flag");
 }
 
-void Entropy::codePPS(const PPS& pps, bool filerAcross)
+void Entropy::codePPS( const PPS& pps, bool filerAcross, int iPPSInitQpMinus26 )
 {
     WRITE_UVLC(0,                          "pps_pic_parameter_set_id");
     WRITE_UVLC(0,                          "pps_seq_parameter_set_id");
@@ -333,10 +335,10 @@ void Entropy::codePPS(const PPS& pps, bool filerAcross)
     WRITE_CODE(0, 3,                       "num_extra_slice_header_bits");
     WRITE_FLAG(pps.bSignHideEnabled,       "sign_data_hiding_flag");
     WRITE_FLAG(0,                          "cabac_init_present_flag");
-    WRITE_UVLC(0,                          "num_ref_idx_l0_default_active_minus1");
-    WRITE_UVLC(0,                          "num_ref_idx_l1_default_active_minus1");
+    WRITE_UVLC(pps.numRefIdxDefault[0] - 1, "num_ref_idx_l0_default_active_minus1");
+    WRITE_UVLC(pps.numRefIdxDefault[1] - 1, "num_ref_idx_l1_default_active_minus1");
 
-    WRITE_SVLC(0, "init_qp_minus26");
+    WRITE_SVLC(iPPSInitQpMinus26,         "init_qp_minus26");
     WRITE_FLAG(pps.bConstrainedIntraPred, "constrained_intra_pred_flag");
     WRITE_FLAG(pps.bTransformSkipEnabled, "transform_skip_enabled_flag");
 
@@ -422,7 +424,7 @@ void Entropy::codeProfileTier(const ProfileTierLevel& ptl, int maxTempSubLayers)
     }
 }
 
-void Entropy::codeVUI(const VUI& vui, int maxSubTLayers, bool bDiscardOptionalVUI)
+void Entropy::codeVUI(const VUI& vui, int maxSubTLayers, bool bEmitVUITimingInfo, bool bEmitVUIHRDInfo)
 {
     WRITE_FLAG(vui.aspectRatioInfoPresentFlag, "aspect_ratio_info_present_flag");
     if (vui.aspectRatioInfoPresentFlag)
@@ -473,7 +475,7 @@ void Entropy::codeVUI(const VUI& vui, int maxSubTLayers, bool bDiscardOptionalVU
         WRITE_UVLC(vui.defaultDisplayWindow.bottomOffset, "def_disp_win_bottom_offset");
     }
 
-    if (bDiscardOptionalVUI)
+    if (!bEmitVUITimingInfo)
         WRITE_FLAG(0, "vui_timing_info_present_flag");
     else
     {
@@ -483,7 +485,7 @@ void Entropy::codeVUI(const VUI& vui, int maxSubTLayers, bool bDiscardOptionalVU
         WRITE_FLAG(0, "vui_poc_proportional_to_timing_flag");
     }
 
-    if (bDiscardOptionalVUI)
+    if (!bEmitVUIHRDInfo)
         WRITE_FLAG(0, "vui_hrd_parameters_present_flag");
     else
     {
@@ -614,8 +616,21 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
             }
 #endif
 
-        WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
-        codeShortTermRefPicSet(slice.m_rps);
+        if (slice.m_rpsIdx < 0)
+        {
+            WRITE_FLAG(0, "short_term_ref_pic_set_sps_flag");
+            codeShortTermRefPicSet(slice.m_rps, slice.m_sps->spsrpsNum);
+        }
+        else
+        {
+            WRITE_FLAG(1, "short_term_ref_pic_set_sps_flag");
+            int numBits = 0;
+            while ((1 << numBits) < slice.m_iNumRPSInSPS)
+                numBits++;
+
+            if (numBits > 0)
+                WRITE_CODE(slice.m_rpsIdx, numBits, "short_term_ref_pic_set_idx");
+        }
 
         if (slice.m_sps->bTemporalMVPEnabled)
             WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
@@ -633,7 +648,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
 
     if (!slice.isIntra())
     {
-        bool overrideFlag = (slice.m_numRefIdx[0] != 1 || (slice.isInterB() && slice.m_numRefIdx[1] != 1));
+        bool overrideFlag = (slice.m_numRefIdx[0] != slice.numRefIdxDefault[0] || (slice.isInterB() && slice.m_numRefIdx[1] != slice.numRefIdxDefault[1]));
         WRITE_FLAG(overrideFlag, "num_ref_idx_active_override_flag");
         if (overrideFlag)
         {
@@ -673,7 +688,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
     if (!slice.isIntra())
         WRITE_UVLC(MRG_MAX_NUM_CANDS - slice.m_maxNumMergeCand, "five_minus_max_num_merge_cand");
 
-    int code = sliceQp - 26;
+    int code = sliceQp - (slice.m_iPPSQpMinus26 + 26);
     WRITE_SVLC(code, "slice_qp_delta");
 
     // TODO: Enable when pps_loop_filter_across_slices_enabled_flag==1
@@ -707,8 +722,11 @@ void Entropy::codeSliceHeaderWPPEntryPoints(const uint32_t *substreamSizes, uint
         WRITE_CODE(substreamSizes[i] - 1, offsetLen, "entry_point_offset_minus1");
 }
 
-void Entropy::codeShortTermRefPicSet(const RPS& rps)
+void Entropy::codeShortTermRefPicSet(const RPS& rps, int idx)
 {
+    if (idx > 0)
+        WRITE_FLAG(0, "inter_ref_pic_set_prediction_flag");
+
     WRITE_UVLC(rps.numberOfNegativePictures, "num_negative_pics");
     WRITE_UVLC(rps.numberOfPositivePictures, "num_positive_pics");
     int prev = 0;

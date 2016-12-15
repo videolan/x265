@@ -869,6 +869,24 @@ as the residual quad-tree (RQT).
 	partitions, in which case a TU split is implied and thus the
 	residual quad-tree begins one layer below the CU quad-tree.
 
+.. option:: --limit-tu <0..4>
+
+	Enables early exit from TU depth recursion, for inter coded blocks.
+	Level 1 - decides to recurse to next higher depth based on cost 
+	comparison of full size TU and split TU.
+	
+	Level 2 - based on first split subTU's depth, limits recursion of
+	other split subTUs.
+	
+	Level 3 - based on the average depth of the co-located and the neighbor
+	CUs' TU depth, limits recursion of the current CU.
+	
+	Level 4 - uses the depth of the neighbouring/ co-located CUs TU depth 
+	to limit the 1st subTU depth. The 1st subTU depth is taken as the 
+	limiting depth for the other subTUs.
+
+	Default: 0
+
 .. option:: --nr-intra <integer>, --nr-inter <integer>
 
 	Noise reduction - an adaptive deadzone applied after DCT
@@ -949,13 +967,17 @@ Temporal / motion search options
 	encoder: a star-pattern search followed by an optional radix scan
 	followed by an optional star-search refinement. Full is an
 	exhaustive search; an order of magnitude slower than all other
-	searches but not much better than umh or star.
+	searches but not much better than umh or star. SEA is similar to
+	FULL search; a three step motion search adopted from x264: DC 
+	calculation followed by ADS calculation followed by SAD of the
+	passed motion vector candidates, hence faster than Full search. 
 
 	0. dia
 	1. hex **(default)**
 	2. umh
 	3. star
-	4. full
+	4. sea
+	5. full
 
 .. option:: --subme, -m <0..7>
 
@@ -1153,6 +1175,13 @@ Slice decision options
 	:option:`--scenecut` 0 or :option:`--no-scenecut` disables adaptive
 	I frame placement. Default 40
 
+.. option:: --scenecut-bias <0..100.0>
+
+	This value represents the percentage difference between the inter cost and
+	intra cost of a frame used in scenecut detection. For example, a value of 5 indicates,
+	if the inter cost of a frame is greater than or equal to 95 percent of the intra cost of the frame,
+	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5.	
+	
 .. option:: --intra-refresh
 
 	Enables Periodic Intra Refresh(PIR) instead of keyframe insertion.
@@ -1824,7 +1853,7 @@ Bitstream options
 	enhancement layer. A decoder may chose to drop the enhancement layer 
 	and only decode and display the base layer slices.
 	
-	If used with a fixed GOP (:option:`b-adapt` 0) and :option:`bframes`
+	If used with a fixed GOP (:option:`--b-adapt` 0) and :option:`--bframes`
 	3 then the two layers evenly split the frame rate, with a cadence of
 	PbBbP. You probably also want :option:`--no-scenecut` and a keyframe
 	interval that is a multiple of 4.
@@ -1833,15 +1862,29 @@ Bitstream options
 
   Maximum of the picture order count. Default 8
 
-.. option:: --discard-sei
+.. option:: --[no-]vui-timing-info
 
-  Discard SEI messages generated from the final bitstream. HDR-related SEI
-  messages are always dumped, immaterial of this option. Default disabled.
-	
-.. option:: --discard-vui
+	Emit VUI timing info in bitstream. Default enabled.
 
-	Discard optional VUI information (timing, HRD info) from the
-	bitstream. Default disabled.
+.. option:: --[no-]vui-hrd-info
+
+	Emit VUI HRD info in  bitstream. Default enabled when
+	:option:`--hrd` is enabled.
+
+.. option:: --[no-]opt-qp-pps
+
+	Optimize QP in PPS (instead of default value of 26) based on the QP values
+	observed in last GOP. Default enabled.
+
+.. option:: --[no-]opt-ref-list-length-pps
+
+	Optimize L0 and L1 ref list length in PPS (instead of default value of 0)
+	based on the lengths observed in the last GOP. Default enabled.
+
+.. option:: --[no-]multi-pass-opt-rps
+
+	Enable storing commonly used RPS in SPS in multi pass mode. Default disabled.
+
 
 Debugging options
 =================

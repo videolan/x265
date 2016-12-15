@@ -111,6 +111,8 @@ struct RateControlEntry
     bool     isIdr;
     SEIPictureTiming *picTimingSEI;
     HRDTiming        *hrdTiming;
+    int      rpsIdx;
+    RPS      rpsData;
 };
 
 class RateControl
@@ -144,6 +146,8 @@ public:
     double m_rateFactorMaxIncrement; /* Don't allow RF above (CRF + this value). */
     double m_rateFactorMaxDecrement; /* don't allow RF below (this value). */
     double m_avgPFrameQp;
+    double m_bufferFillActual;
+    double m_bufferExcess;
     bool   m_isFirstMiniGop;
     Predictor m_pred[4];       /* Slice predictors to preidct bits for each Slice type - I,P,Bref and B */
     int64_t m_leadingNoBSatd;
@@ -239,7 +243,7 @@ public:
     int  rateControlStart(Frame* curFrame, RateControlEntry* rce, Encoder* enc);
     void rateControlUpdateStats(RateControlEntry* rce);
     int  rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce);
-    int  rowDiagonalVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv);
+    int  rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv);
     int  rateControlSliceType(int frameNum);
     bool cuTreeReadFor2Pass(Frame* curFrame);
     void hrdFullness(SEIBufferingPeriod* sei);
@@ -280,6 +284,8 @@ protected:
     bool   findUnderflow(double *fills, int *t0, int *t1, int over, int framesCount);
     bool   fixUnderflow(int t0, int t1, double adjustment, double qscaleMin, double qscaleMax);
     double tuneQScaleForGrain(double rcOverflow);
+    void   splitdeltaPOC(char deltapoc[], RateControlEntry *rce);
+    void   splitbUsed(char deltapoc[], RateControlEntry *rce);
 };
 }
 #endif // ifndef X265_RATECONTROL_H

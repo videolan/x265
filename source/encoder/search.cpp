@@ -67,6 +67,7 @@ Search::Search()
     m_param = NULL;
     m_slice = NULL;
     m_frame = NULL;
+    m_maxTUDepth = -1;
 }
 
 bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
@@ -92,6 +93,19 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     uint32_t sizeL = 1 << (maxLog2CUSize * 2);
     uint32_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift);
     uint32_t numPartitions = 1 << (maxLog2CUSize - LOG2_UNIT_SIZE) * 2;
+
+    m_limitTU = 0;
+    if (m_param->limitTU)
+    {
+        if (m_param->limitTU == 1)
+            m_limitTU = X265_TU_LIMIT_BFS;
+        else if (m_param->limitTU == 2)
+            m_limitTU = X265_TU_LIMIT_DFS;
+        else if (m_param->limitTU == 3)
+            m_limitTU = X265_TU_LIMIT_NEIGH;
+        else if (m_param->limitTU == 4)
+            m_limitTU = X265_TU_LIMIT_DFS + X265_TU_LIMIT_NEIGH;
+    }
 
     /* these are indexed by qtLayer (log2size - 2) so nominally 0=4x4, 1=8x8, 2=16x16, 3=32x32
      * the coeffRQT and reconQtYuv are allocated to the max CU size at every depth. The parts
@@ -2131,6 +2145,13 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                 MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
 
+                if (m_param->searchMethod == X265_SEA)
+                {
+                    int puX = puIdx & 1;
+                    int puY = puIdx >> 1;
+                    for (int planes = 0; planes < INTEGRAL_PLANE_NUM; planes++)
+                        m_me.integral[planes] = interMode.fencYuv->m_integral[list][ref][planes] + puX * pu.width + puY * pu.height * m_slice->m_refFrameList[list][ref]->m_reconPic->m_stride;
+                }
                 setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
                 int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv,
                   m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
@@ -2229,7 +2250,13 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                         if (lmv.notZero())
                             mvc[numMvc++] = lmv;
                     }
-
+                    if (m_param->searchMethod == X265_SEA)
+                    {
+                        int puX = puIdx & 1;
+                        int puY = puIdx >> 1;
+                        for (int planes = 0; planes < INTEGRAL_PLANE_NUM; planes++)
+                            m_me.integral[planes] = interMode.fencYuv->m_integral[list][ref][planes] + puX * pu.width + puY * pu.height * m_slice->m_refFrameList[list][ref]->m_reconPic->m_stride;
+                    }
                     setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
                     int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv, 
                       m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
@@ -2544,6 +2571,9 @@ void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mv
     /* conditional clipping for frame parallelism */
     mvmin.y = X265_MIN(mvmin.y, (int16_t)m_refLagPixels);
     mvmax.y = X265_MIN(mvmax.y, (int16_t)m_refLagPixels);
+
+    /* conditional clipping for negative mv range */
+    mvmax.y = X265_MAX(mvmax.y, mvmin.y);
 }
 
 /* Note: this function overwrites the RD cost variables of interMode, but leaves the sa8d cost unharmed */
@@ -2617,8 +2647,29 @@ void Search::encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom)
 
     m_entropyCoder.load(m_rqt[depth].cur);
 
+    if ((m_limitTU & X265_TU_LIMIT_DFS) && !(m_limitTU & X265_TU_LIMIT_NEIGH))
+        m_maxTUDepth = -1;
+    else if (m_limitTU & X265_TU_LIMIT_BFS)
+        memset(&m_cacheTU, 0, sizeof(TUInfoCache));
+
     Cost costs;
-    estimateResidualQT(interMode, cuGeom, 0, 0, *resiYuv, costs, tuDepthRange);
+    if (m_limitTU & X265_TU_LIMIT_NEIGH)
+    {
+        /* Save and reload maxTUDepth to avoid changing of maxTUDepth between modes */
+        int32_t tempDepth = m_maxTUDepth;
+        if (m_maxTUDepth != -1)
+        {
+            uint32_t splitFlag = interMode.cu.m_partSize[0] != SIZE_2Nx2N;
+            uint32_t minSize = tuDepthRange[0];
+            uint32_t maxSize = tuDepthRange[1];
+            maxSize = X265_MIN(maxSize, cuGeom.log2CUSize - splitFlag);
+            m_maxTUDepth = x265_clip3(cuGeom.log2CUSize - maxSize, cuGeom.log2CUSize - minSize, (uint32_t)m_maxTUDepth);
+        }
+        estimateResidualQT(interMode, cuGeom, 0, 0, *resiYuv, costs, tuDepthRange);
+        m_maxTUDepth = tempDepth;
+    }
+    else
+        estimateResidualQT(interMode, cuGeom, 0, 0, *resiYuv, costs, tuDepthRange);
 
     uint32_t tqBypass = cu.m_tqBypass[0];
     if (!tqBypass)
@@ -2867,7 +2918,57 @@ uint64_t Search::estimateNullCbfCost(sse_t dist, uint32_t psyEnergy, uint32_t tu
         return m_rdCost.calcRdCost(dist, nullBits);
 }
 
-void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, ShortYuv& resiYuv, Cost& outCosts, const uint32_t depthRange[2])
+bool Search::splitTU(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, ShortYuv& resiYuv, Cost& splitCost, const uint32_t depthRange[2], int32_t splitMore)
+{
+    CUData& cu = mode.cu;
+    uint32_t depth = cuGeom.depth + tuDepth;
+    uint32_t log2TrSize = cuGeom.log2CUSize - tuDepth;
+
+    uint32_t qNumParts = 1 << (log2TrSize - 1 - LOG2_UNIT_SIZE) * 2;
+    uint32_t ycbf = 0, ucbf = 0, vcbf = 0;
+    for (uint32_t qIdx = 0, qPartIdx = absPartIdx; qIdx < 4; ++qIdx, qPartIdx += qNumParts)
+    {
+        if ((m_limitTU & X265_TU_LIMIT_DFS) && tuDepth == 0 && qIdx == 1)
+        {
+            m_maxTUDepth = cu.m_tuDepth[0];
+            // Fetch maximum TU depth of first sub partition to limit recursion of others
+            for (uint32_t i = 1; i < cuGeom.numPartitions / 4; i++)
+                m_maxTUDepth = X265_MAX(m_maxTUDepth, cu.m_tuDepth[i]);
+        }
+        estimateResidualQT(mode, cuGeom, qPartIdx, tuDepth + 1, resiYuv, splitCost, depthRange, splitMore);
+        ycbf |= cu.getCbf(qPartIdx, TEXT_LUMA,     tuDepth + 1);
+        if (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400)
+        {
+            ucbf |= cu.getCbf(qPartIdx, TEXT_CHROMA_U, tuDepth + 1);
+            vcbf |= cu.getCbf(qPartIdx, TEXT_CHROMA_V, tuDepth + 1);
+        }
+    }
+    cu.m_cbf[0][absPartIdx] |= ycbf << tuDepth;
+    if (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400)
+    {
+        cu.m_cbf[1][absPartIdx] |= ucbf << tuDepth;
+        cu.m_cbf[2][absPartIdx] |= vcbf << tuDepth;
+    }
+
+    // Here we were encoding cbfs and coefficients for splitted blocks. Since I have collected coefficient bits
+    // for each individual blocks, only encoding cbf values. As I mentioned encoding chroma cbfs is different then luma.
+    // But have one doubt that if coefficients are encoded in context at depth 2 (for example) and cbfs are encoded in context
+    // at depth 0 (for example).
+    m_entropyCoder.load(m_rqt[depth].rqtRoot);
+    m_entropyCoder.resetBits();
+    codeInterSubdivCbfQT(cu, absPartIdx, tuDepth, depthRange);
+    uint32_t splitCbfBits = m_entropyCoder.getNumberOfWrittenBits();
+    splitCost.bits += splitCbfBits;
+
+    if (m_rdCost.m_psyRd)
+        splitCost.rdcost = m_rdCost.calcPsyRdCost(splitCost.distortion, splitCost.bits, splitCost.energy);
+    else
+        splitCost.rdcost = m_rdCost.calcRdCost(splitCost.distortion, splitCost.bits);
+        
+    return ycbf || ucbf || vcbf;
+}
+
+void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, ShortYuv& resiYuv, Cost& outCosts, const uint32_t depthRange[2], int32_t splitMore)
 {
     CUData& cu = mode.cu;
     uint32_t depth = cuGeom.depth + tuDepth;
@@ -2876,6 +2977,37 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
 
     bool bCheckSplit = log2TrSize > depthRange[0];
     bool bCheckFull = log2TrSize <= depthRange[1];
+    bool bSaveTUData = false, bLoadTUData = false;
+    uint32_t idx = 0;
+
+    if ((m_limitTU & X265_TU_LIMIT_BFS) && splitMore >= 0)
+    {
+        if (bCheckSplit && bCheckFull && tuDepth)
+        {
+            uint32_t qNumParts = 1 << (log2TrSize - LOG2_UNIT_SIZE) * 2;
+            uint32_t qIdx = (absPartIdx / qNumParts) % 4;
+            idx = (depth - 1) * 4 + qIdx;
+            if (splitMore)
+            {
+                bLoadTUData = true;
+                bCheckFull = false;
+            }
+            else
+            {
+                bSaveTUData = true;
+                bCheckSplit = false;
+            }
+        }
+    }
+    else if (m_limitTU & X265_TU_LIMIT_DFS || m_limitTU & X265_TU_LIMIT_NEIGH)
+    {
+        if (bCheckSplit && m_maxTUDepth >= 0)
+        {
+            uint32_t log2MaxTrSize = cuGeom.log2CUSize - m_maxTUDepth;
+            bCheckSplit = log2TrSize > log2MaxTrSize;
+        }
+    }
+
     bool bSplitPresentFlag = bCheckSplit && bCheckFull;
 
     if (cu.m_partSize[0] != SIZE_2Nx2N && !tuDepth && bCheckSplit)
@@ -3194,6 +3326,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                 singlePsyEnergy[TEXT_LUMA][0] = nonZeroPsyEnergyY;
                 cbfFlag[TEXT_LUMA][0] = !!numSigTSkipY;
                 bestTransformMode[TEXT_LUMA][0] = 1;
+                if (m_param->limitTU)
+                    numSig[TEXT_LUMA][0] = numSigTSkipY;
                 uint32_t numCoeffY = 1 << (log2TrSize << 1);
                 memcpy(coeffCurY, m_tsCoeff, sizeof(coeff_t) * numCoeffY);
                 primitives.cu[partSize].copy_ss(curResiY, strideResiY, m_tsResidual, trSize);
@@ -3331,6 +3465,50 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
             fullCost.rdcost = m_rdCost.calcPsyRdCost(fullCost.distortion, fullCost.bits, fullCost.energy);
         else
             fullCost.rdcost = m_rdCost.calcRdCost(fullCost.distortion, fullCost.bits);
+
+        if (m_param->limitTU && bCheckSplit)
+        {
+            // Stop recursion if the TU's energy level is minimal
+            uint32_t numCoeff = trSize * trSize;
+            if (cbfFlag[TEXT_LUMA][0] == 0)
+                bCheckSplit = false;
+            else if (numSig[TEXT_LUMA][0] < (numCoeff / 64))
+            {
+                uint32_t energy = 0;
+                for (uint32_t i = 0; i < numCoeff; i++)
+                    energy += abs(coeffCurY[i]);
+                if (energy == numSig[TEXT_LUMA][0])
+                    bCheckSplit = false;
+            }
+        }
+
+        if (bSaveTUData)
+        {
+            for (int plane = 0; plane < MAX_NUM_COMPONENT; plane++)
+            {
+                for(int part = 0; part < (m_csp == X265_CSP_I422) + 1; part++)
+                {
+                    m_cacheTU.bestTransformMode[idx][plane][part] = bestTransformMode[plane][part];
+                    m_cacheTU.cbfFlag[idx][plane][part] = cbfFlag[plane][part];
+                }
+            }
+            m_cacheTU.cost[idx] = fullCost;
+            m_entropyCoder.store(m_cacheTU.rqtStore[idx]);
+        }
+    }
+    if (bLoadTUData)
+    {
+        for (int plane = 0; plane < MAX_NUM_COMPONENT; plane++)
+        {
+            for(int part = 0; part < (m_csp == X265_CSP_I422) + 1; part++)
+            {
+                bestTransformMode[plane][part] = m_cacheTU.bestTransformMode[idx][plane][part];
+                cbfFlag[plane][part] = m_cacheTU.cbfFlag[idx][plane][part];
+            }
+        }
+        fullCost = m_cacheTU.cost[idx];
+        m_entropyCoder.load(m_cacheTU.rqtStore[idx]);
+        bCheckFull = true;
     }
 
     // code sub-blocks
@@ -3351,45 +3529,29 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
             splitCost.bits = m_entropyCoder.getNumberOfWrittenBits();
         }
 
-        uint32_t qNumParts = 1 << (log2TrSize - 1 - LOG2_UNIT_SIZE) * 2;
-        uint32_t ycbf = 0, ucbf = 0, vcbf = 0;
-        for (uint32_t qIdx = 0, qPartIdx = absPartIdx; qIdx < 4; ++qIdx, qPartIdx += qNumParts)
-        {
-            estimateResidualQT(mode, cuGeom, qPartIdx, tuDepth + 1, resiYuv, splitCost, depthRange);
-            ycbf |= cu.getCbf(qPartIdx, TEXT_LUMA,     tuDepth + 1);
-            if (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400)
-            {
-                ucbf |= cu.getCbf(qPartIdx, TEXT_CHROMA_U, tuDepth + 1);
-                vcbf |= cu.getCbf(qPartIdx, TEXT_CHROMA_V, tuDepth + 1);
-            }
-        }
-        cu.m_cbf[0][absPartIdx] |= ycbf << tuDepth;
-        if (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400)
-        {
-            cu.m_cbf[1][absPartIdx] |= ucbf << tuDepth;
-            cu.m_cbf[2][absPartIdx] |= vcbf << tuDepth;
-        }
-
-        // Here we were encoding cbfs and coefficients for splitted blocks. Since I have collected coefficient bits
-        // for each individual blocks, only encoding cbf values. As I mentioned encoding chroma cbfs is different then luma.
-        // But have one doubt that if coefficients are encoded in context at depth 2 (for example) and cbfs are encoded in context
-        // at depth 0 (for example).
-        m_entropyCoder.load(m_rqt[depth].rqtRoot);
-        m_entropyCoder.resetBits();
-
-        codeInterSubdivCbfQT(cu, absPartIdx, tuDepth, depthRange);
-        uint32_t splitCbfBits = m_entropyCoder.getNumberOfWrittenBits();
-        splitCost.bits += splitCbfBits;
-
-        if (m_rdCost.m_psyRd)
-            splitCost.rdcost = m_rdCost.calcPsyRdCost(splitCost.distortion, splitCost.bits, splitCost.energy);
-        else
-            splitCost.rdcost = m_rdCost.calcRdCost(splitCost.distortion, splitCost.bits);
-
-        if (ycbf || ucbf || vcbf || !bCheckFull)
+        bool yCbCrCbf = splitTU(mode, cuGeom, absPartIdx, tuDepth, resiYuv, splitCost, depthRange, 0);
+        if (yCbCrCbf || !bCheckFull)
         {
             if (splitCost.rdcost < fullCost.rdcost)
             {
+                if (m_limitTU & X265_TU_LIMIT_BFS)
+                {
+                    uint32_t nextlog2TrSize = cuGeom.log2CUSize - (tuDepth + 1);
+                    bool nextSplit = nextlog2TrSize > depthRange[0];
+                    if (nextSplit)
+                    {
+                        m_entropyCoder.load(m_rqt[depth].rqtRoot);
+                        splitCost.bits = splitCost.distortion = splitCost.rdcost = splitCost.energy = 0;
+                        if (bSplitPresentFlag && (log2TrSize <= depthRange[1] && log2TrSize > depthRange[0]))
+                        {
+                            // Subdiv flag can be encoded at the start of analysis of split blocks.
+                            m_entropyCoder.resetBits();
+                            m_entropyCoder.codeTransformSubdivFlag(1, 5 - log2TrSize);
+                            splitCost.bits = m_entropyCoder.getNumberOfWrittenBits();
+                        }
+                        splitTU(mode, cuGeom, absPartIdx, tuDepth, resiYuv, splitCost, depthRange, 1);
+                    }
+                }
                 outCosts.distortion += splitCost.distortion;
                 outCosts.rdcost     += splitCost.rdcost;
                 outCosts.bits       += splitCost.bits;

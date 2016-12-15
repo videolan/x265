@@ -137,6 +137,7 @@ typedef struct x265_frame_stats
     double           avgPsyEnergy;
     double           avgResEnergy;
     double           avgLumaLevel;
+    double           bufferFill;
     uint64_t         bits;
     int              encoderOrder;
     int              poc;
@@ -289,6 +290,7 @@ typedef enum
     X265_HEX_SEARCH,
     X265_UMH_SEARCH,
     X265_STAR_SEARCH,
+    X265_SEA,
     X265_FULL_SEARCH
 } X265_ME_METHODS;
 
@@ -334,6 +336,9 @@ typedef enum
 #define X265_CPU_NEON            0x0000002  /* ARM NEON */
 #define X265_CPU_FAST_NEON_MRC   0x0000004  /* Transfer from NEON to ARM register is fast (Cortex-A9) */
 
+/* IBM Power8 */
+#define X265_CPU_ALTIVEC         0x0000001
+
 #define X265_MAX_SUBPEL_LEVEL   7
 
 /* Log level */
@@ -350,6 +355,10 @@ typedef enum
 
 #define X265_REF_LIMIT_DEPTH    1
 #define X265_REF_LIMIT_CU       2
+
+#define X265_TU_LIMIT_BFS       1
+#define X265_TU_LIMIT_DFS       2
+#define X265_TU_LIMIT_NEIGH     4
 
 #define X265_BFRAME_MAX         16
 #define X265_MAX_FRAME_THREADS  16
@@ -456,7 +465,7 @@ typedef struct x265_stats
 } x265_stats;
 
 /* String values accepted by x265_param_parse() (and CLI) for various parameters */
-static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "full", 0 };
+static const char * const x265_motion_est_names[] = { "dia", "hex", "umh", "star", "sea", "full", 0 };
 static const char * const x265_source_csp_names[] = { "i400", "i420", "i422", "i444", "nv12", "nv16", 0 };
 static const char * const x265_video_format_names[] = { "component", "pal", "ntsc", "secam", "mac", "undef", 0 };
 static const char * const x265_fullrange_names[] = { "limited", "full", 0 };
@@ -823,6 +832,10 @@ typedef struct x265_param
      * compressed by the DCT transforms, at the expense of much more compute */
     uint32_t  tuQTMaxIntraDepth;
 
+    /* Enable early exit decisions for inter coded blocks to avoid recursing to
+     * higher TU depths. Default: 0 */
+    uint32_t  limitTU;
+
     /* Set the amount of rate-distortion analysis to use within quant. 0 implies
      * no rate-distortion optimization. At level 1 rate-distortion cost is used to
      * find optimal rounding values for each level (and allows psy-rdoq to be
@@ -898,9 +911,9 @@ typedef struct x265_param
     /* Limit modes analyzed for each CU using cost metrics from the 4 sub-CUs */
     uint32_t limitModes;
 
-    /* ME search method (DIA, HEX, UMH, STAR, FULL). The search patterns
+    /* ME search method (DIA, HEX, UMH, STAR, SEA, FULL). The search patterns
      * (methods) are sorted in increasing complexity, with diamond being the
-     * simplest and fastest and full being the slowest.  DIA, HEX, and UMH were
+     * simplest and fastest and full being the slowest.  DIA, HEX, UMH and SEA were
      * adapted from x264 directly. STAR is an adaption of the HEVC reference
      * encoder's three step search, while full is a naive exhaustive search. The
      * default is the star search, it has a good balance of performance and
@@ -1300,14 +1313,27 @@ typedef struct x265_param
     /* Maximum of the picture order count */
     int log2MaxPocLsb;
 
-    /* Dicard SEI messages when printing */
-    int bDiscardSEI;
-    
-    /* Control removing optional vui information (timing, HRD info) to get low bitrate */
-    int       bDiscardOptionalVUI;
+    /* Emit VUI Timing info, an optional VUI field */
+    int bEmitVUITimingInfo;
+
+    /* Emit HRD Timing info */
+    int bEmitVUIHRDInfo;
 
     /* Maximum count of Slices of picture, the value range is [1, maximum rows] */
     unsigned int maxSlices;
+
+    /* Optimize QP in PPS based on statistics from prevvious GOP*/
+    int bOptQpPPS;
+
+    /* Opitmize ref list length in PPS based on stats from previous GOP*/
+    int bOptRefListLengthPPS;
+
+    /* Enable storing commonly RPS in SPS in multi pass mode */
+    int       bMultiPassOptRPS;
+
+    /* This value represents the percentage difference between the inter cost and
+    * intra cost of a frame used in scenecut detection. Default 5. */
+    double     scenecutBias;
 
 } x265_param;
 

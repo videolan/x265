@@ -106,6 +106,9 @@ public:
     CUDataMemPool  m_cuMemPool;
     CUData*        m_picCTU;
 
+    RPS*           m_spsrps;
+    int            m_spsrpsIdx;
+
     /* Rate control data used during encode and by references */
     struct RCStatCU
     {
@@ -123,10 +126,10 @@ public:
         uint32_t encodedBits;   /* sum of 'totalBits' of encoded CTUs */
         uint32_t satdForVbv;    /* sum of lowres (estimated) costs for entire row */
         uint32_t intraSatdForVbv; /* sum of lowres (estimated) intra costs for entire row */
-        uint32_t diagSatd;
-        uint32_t diagIntraSatd;
-        double   diagQp;
-        double   diagQpScale;
+        uint32_t rowSatd;
+        uint32_t rowIntraSatd;
+        double   rowQp;
+        double   rowQpScale;
         double   sumQpRc;
         double   sumQpAq;
     };
@@ -148,6 +151,9 @@ public:
     double         m_rateFactor; /* calculated based on the Frame QP */
     int            m_picCsp;
 
+    uint32_t*              m_meIntegral[INTEGRAL_PLANE_NUM];       // 12 integral planes for 32x32, 32x24, 32x8, 24x32, 16x16, 16x12, 16x4, 12x16, 8x32, 8x8, 4x16 and 4x4.
+    uint32_t*              m_meBuffer[INTEGRAL_PLANE_NUM];
+
     FrameData();
 
     bool create(const x265_param& param, const SPS& sps, int csp);
@@ -168,7 +174,6 @@ struct analysis_intra_data
 /* Stores inter analysis data for a single frame */
 struct analysis_inter_data
 {
-    MV*         mv;
     WeightParam* wt;
     int32_t*    ref;
     uint8_t*    depth;

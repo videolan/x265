@@ -30,7 +30,7 @@ option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
 mark_as_advanced(FPROFILE_USE FPROFILE_GENERATE NATIVE_BUILD)
 
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 95)
+set(X265_BUILD 102)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -60,6 +60,11 @@ elseif(POWERMATCH GREATER "-1")
     message(STATUS "Detected POWER target processor")
     set(POWER 1)
     add_definitions(-DX265_ARCH_POWER=1)
+    if("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
+        set(PPC64 1)
+        add_definitions(-DPPC64=1)
+        message(STATUS "Detected POWER PPC64 target processor")
+    endif()
 elseif(ARMMATCH GREATER "-1")
     if(CROSS_COMPILE_ARM)
         message(STATUS "Cross compiling for ARM arch")
@@ -167,6 +172,19 @@ elseif(CLANG)
 elseif(CMAKE_COMPILER_IS_GNUCXX)
     set(GCC 1)
 endif()
+
+if(CC STREQUAL "xlc")
+    message(STATUS "Use XLC compiler")
+    set(XLC 1)
+    set(GCC 0)
+    #set(CMAKE_C_COMPILER "/usr/bin/xlc")
+    #set(CMAKE_CXX_COMPILER "/usr/bin/xlc++")
+    add_definitions(-D__XLC__=1)
+    add_definitions(-O3 -qstrict -qhot -qaltivec)
+    add_definitions(-qinline=level=10 -qpath=IL:/data/video_files/latest.tpo/)
+endif()
+
+
 if(GCC)
     add_definitions(-Wall -Wextra -Wshadow)
     add_definitions(-D__STDC_LIMIT_MACROS=1)
@@ -394,6 +412,22 @@ if(WIN32)
         # default to targeting Windows 7 for the NUMA APIs
         add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_WIN7)
     endif(WINXP_SUPPORT)
+endif()
+
+if(POWER)
+    # IBM Power8
+    option(ENABLE_ALTIVEC "Enable ALTIVEC profiling instrumentation" ON)
+    if(ENABLE_ALTIVEC)
+        add_definitions(-DHAVE_ALTIVEC=1 -maltivec -mabi=altivec)
+        add_definitions(-flax-vector-conversions -fpermissive)
+    else()
+        add_definitions(-DHAVE_ALTIVEC=0)
+    endif()
+
+    option(CPU_POWER8 "Enable CPU POWER8 profiling instrumentation" ON)
+    if(CPU_POWER8)
+        add_definitions(-mcpu=power8 -DX265_ARCH_POWER8=1)
+    endif()
 endif()
 
 include(version) # determine X265_VERSION and X265_LATEST_TAG

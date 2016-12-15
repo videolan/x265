@@ -296,6 +296,9 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
     /* initialize the remaining CU data in one memset */
     memset(m_cuDepth, 0, (frame.m_param->internalCsp == X265_CSP_I400 ? BytesPerPartition - 11 : BytesPerPartition - 7) * m_numPartitions);
 
+    for (int8_t i = 0; i < NUM_TU_DEPTH; i++)
+        m_refTuDepth[i] = -1;
+
     uint32_t widthInCU = m_slice->m_sps->numCuInWidth;
     m_cuLeft = (m_cuAddr % widthInCU) ? m_encData->getPicCTU(m_cuAddr - 1) : NULL;
     m_cuAbove = (m_cuAddr >= widthInCU) && !m_bFirstRowInSlice ? m_encData->getPicCTU(m_cuAddr - widthInCU) : NULL;

@@ -48,6 +48,7 @@ public:
     int      m_csp;
     int      m_hChromaShift;
     int      m_vChromaShift;
+    uint32_t *m_integral[2][MAX_NUM_REF][INTEGRAL_PLANE_NUM];
 
     Yuv();
 

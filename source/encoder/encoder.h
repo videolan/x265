@@ -26,6 +26,7 @@
 
 #include "common.h"
 #include "slice.h"
+#include "threading.h"
 #include "scalinglist.h"
 #include "x265.h"
 #include "nal.h"
@@ -67,6 +68,24 @@ struct EncStats
     void addBits(uint64_t bits);
 
     void addSsim(double ssim);
+};
+
+#define MAX_NUM_REF_IDX 64
+
+struct RefIdxLastGOP
+{
+    int numRefIdxDefault[2];
+    int numRefIdxl0[MAX_NUM_REF_IDX];
+    int numRefIdxl1[MAX_NUM_REF_IDX];
+};
+
+struct RPSListNode
+{
+    int idx;
+    int count;
+    RPS* rps;
+    RPSListNode* next;
+    RPSListNode* prior;
 };
 
 class FrameEncoder;
@@ -136,6 +155,19 @@ public:
      * one is done. Requires bIntraRefresh to be set.*/
     int                m_bQueuedIntraRefresh;
 
+    /* For optimising slice QP */
+    Lock               m_sliceQpLock;
+    int                m_iFrameNum;   
+    int                m_iPPSQpMinus26;
+    int                m_iLastSliceQp;
+    int64_t            m_iBitsCostSum[QP_MAX_MAX + 1];
+
+    Lock               m_sliceRefIdxLock;
+    RefIdxLastGOP      m_refIdxLastGOP;
+
+    Lock               m_rpsInSpsLock;
+    int                m_rpsInSpsCount;
+
     Encoder();
     ~Encoder() {}
 
@@ -172,6 +204,11 @@ public:
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 
     void calcRefreshInterval(Frame* frameEnc);
+
+    void initRefIdx();
+    void analyseRefIdx(int *numRefIdx);
+    void updateRefIdx();
+    bool computeSPSRPSIndex();
 
 protected:
 
