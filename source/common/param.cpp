@@ -1495,8 +1495,6 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnableTransformSkip, "tskip");
     s += sprintf(s, " nr-intra=%d", p->noiseReductionIntra);
     s += sprintf(s, " nr-inter=%d", p->noiseReductionInter);
-    if (p->scalingLists)
-        s += sprintf(s, " scaling-list=%s", p->scalingLists);
     BOOL(p->bEnableConstrainedIntra, "constrained-intra");
     BOOL(p->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
     s += sprintf(s, " max-merge=%d", p->maxNumMergeCand);
@@ -1526,8 +1524,6 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " psy-rdoq=%.2f", p->psyRdoq);
     BOOL(p->bEnableRdRefine, "rd-refine");
     s += sprintf(s, " analysis-mode=%d", p->analysisMode);
-    if (p->analysisMode)
-        s += sprintf(s, " analysis-file=%s", p->analysisFileName);
     BOOL(p->bLossless, "lossless");
     s += sprintf(s, " cbqpoffs=%d", p->cbQpOffset);
     s += sprintf(s, " crqpoffs=%d", p->crQpOffset);
@@ -1543,8 +1539,6 @@ char *x265_param2string(x265_param* p, int padx, int pady)
         s += sprintf(s, " qcomp=%.2f qpstep=%d", p->rc.qCompress, p->rc.qpStep);
         s += sprintf(s, " stats-write=%d", p->rc.bStatWrite);
         s += sprintf(s, " stats-read=%d", p->rc.bStatRead);
-        if (p->rc.bStatRead || p->rc.bStatWrite)
-            s += sprintf(s, " stats-file=%s", p->rc.statFileName);
         if (p->rc.bStatRead)
             s += sprintf(s, " cplxblur=%.1f qblur=%.1f",
             p->rc.complexityBlur, p->rc.qblur);
@@ -1582,8 +1576,6 @@ char *x265_param2string(x265_param* p, int padx, int pady)
                 s += sprintf(s, " bitrate-factor=%f", p->rc.zones[i].bitrateFactor);
         }
     }
-    if (p->rc.lambdaFileName)
-        s += sprintf(s, " lambda-file=%s", p->rc.lambdaFileName);
     BOOL(p->rc.bStrictCbr, "strict-cbr");
     s += sprintf(s, " qg-size=%d", p->rc.qgSize);
     BOOL(p->rc.bEnableGrain, "rc-grain");
