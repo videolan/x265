@@ -111,6 +111,7 @@ public:
     int           m_bitsLeft;
     uint64_t      m_fracBits;
     EstBitsSbac   m_estBitsSbac;
+    double        m_meanQP;
 
     Entropy();
 

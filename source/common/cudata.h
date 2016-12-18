@@ -216,6 +216,7 @@ public:
     const CUData* m_cuAboveRight;     // pointer to above-right neighbor CTU
     const CUData* m_cuAbove;          // pointer to above neighbor CTU
     const CUData* m_cuLeft;           // pointer to left neighbor CTU
+    double m_meanQP;
 
     CUData();
 

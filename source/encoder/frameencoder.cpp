@@ -1182,6 +1182,65 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         //m_rows[row - 1].bufferedEntropy.loadContexts(m_initSliceContext);
     }
 
+    // calculate mean QP for consistent deltaQP signalling calculation
+    if (m_param->bOptCUDeltaQP)
+    {
+        ScopedLock self(curRow.lock);
+        if (!curRow.avgQPComputed)
+        {
+            if (m_param->bEnableWavefront || !row)
+            {
+                double meanQPOff = 0;
+                uint32_t loopIncr, count = 0;
+                bool isReferenced = IS_REFERENCED(m_frame);
+                double *qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
+                if (qpoffs)
+                {
+                    if (m_param->rc.qgSize == 8)
+                        loopIncr = 8;
+                    else
+                        loopIncr = 16;
+                    uint32_t cuYStart = 0, height = m_frame->m_fencPic->m_picHeight;
+                    if (m_param->bEnableWavefront)
+                    {
+                        cuYStart = intRow * m_param->maxCUSize;
+                        height = cuYStart + m_param->maxCUSize;
+                    }
+
+                    uint32_t qgSize = m_param->rc.qgSize, width = m_frame->m_fencPic->m_picWidth;
+                    uint32_t maxOffsetCols = (m_frame->m_fencPic->m_picWidth + (loopIncr - 1)) / loopIncr;
+                    for (uint32_t cuY = cuYStart; cuY < height && (cuY < m_frame->m_fencPic->m_picHeight); cuY += qgSize)
+                    {
+                        for (uint32_t cuX = 0; cuX < width; cuX += qgSize)
+                        {
+                            double qp_offset = 0;
+                            uint32_t cnt = 0;
+
+                            for (uint32_t block_yy = cuY; block_yy < cuY + qgSize && block_yy < m_frame->m_fencPic->m_picHeight; block_yy += loopIncr)
+                            {
+                                for (uint32_t block_xx = cuX; block_xx < cuX + qgSize && block_xx < width; block_xx += loopIncr)
+                                {
+                                    int idx = ((block_yy / loopIncr) * (maxOffsetCols)) + (block_xx / loopIncr);
+                                    qp_offset += qpoffs[idx];
+                                    cnt++;
+                                }
+                            }
+                            qp_offset /= cnt;
+                            meanQPOff += qp_offset;
+                            count++;
+                        }
+                    }
+                    meanQPOff /= count;
+                }
+                rowCoder.m_meanQP = slice->m_sliceQp + meanQPOff;
+            }
+            else
+            {
+                rowCoder.m_meanQP = m_rows[0].rowGoOnCoder.m_meanQP;
+            }
+            curRow.avgQPComputed = 1;
+        }
+    }
 
     // TODO: specially case handle on first and last row
 

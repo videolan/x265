@@ -142,6 +142,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     ctu.setQPSubParts((int8_t)qp, 0, 0);
 
     m_rqt[0].cur.load(initialContext);
+    ctu.m_meanQP = initialContext.m_meanQP;
     m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_fencPic, ctu.m_cuAddr, 0);
 
     uint32_t numPartition = ctu.m_numPartitions;
@@ -197,7 +198,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             compressInterCU_rd5_6(ctu, cuGeom, qp);
     }
 
-    if (m_param->bEnableRdRefine)
+    if (m_param->bEnableRdRefine || m_param->bOptCUDeltaQP)
         qprdRefine(ctu, cuGeom, qp, qp);
 
     return *m_modeDepth[0].bestMode;
@@ -299,8 +300,13 @@ void Analysis::qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t
         int cuIdx = (cuGeom.childOffset - 1) / 3;
         bestCUCost = origCUCost = cacheCost[cuIdx];
 
-        for (int dir = 2; dir >= -2; dir -= 4)
+        int direction = m_param->bOptCUDeltaQP ? 1 : 2;
+
+        for (int dir = direction; dir >= -direction; dir -= (direction * 2))
         {
+            if (m_param->bOptCUDeltaQP && ((dir != 1) || ((qp + 3) >= (int32_t)parentCTU.m_meanQP)))
+                break;
+
             int threshold = 1;
             int failure = 0;
             cuPrevCost = origCUCost;
@@ -308,6 +314,9 @@ void Analysis::qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t
             int modCUQP = qp + dir;
             while (modCUQP >= m_param->rc.qpMin && modCUQP <= QP_MAX_SPEC)
             {
+                if (m_param->bOptCUDeltaQP && modCUQP > (int32_t)parentCTU.m_meanQP)
+                    break;
+
                 recodeCU(parentCTU, cuGeom, modCUQP, qp);
                 cuCost = md.bestMode->rdCost;
 
