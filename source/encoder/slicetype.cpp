@@ -1495,6 +1495,8 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 
         resetStart = bKeyframe ? 1 : 2;
     }
+    if (m_param->bAQMotion)
+        aqMotion(frames, bKeyframe);
 
     if (m_param->rc.cuTree)
         cuTree(frames, X265_MIN(numFrames, m_param->keyframeMax), bKeyframe);
@@ -1723,6 +1725,88 @@ int64_t Lookahead::slicetypePathCost(Lowres **frames, char *path, int64_t thresh
     }
 
     return cost;
+}
+void Lookahead::aqMotion(Lowres **frames, bool bIntra)
+{
+    if (!bIntra)
+    {
+        int curnonb = 0, lastnonb = 1;
+        int bframes = 0, i = 1;
+        while (frames[lastnonb]->sliceType != X265_TYPE_P)
+            lastnonb++;
+        bframes = lastnonb - 1;
+        if (m_param->bBPyramid && bframes > 1)
+        {
+            int middle = (bframes + 1) / 2;
+            for (i = 1; i < lastnonb; i++)
+            {
+                int p0 = i > middle ? middle : curnonb;
+                int p1 = i < middle ? middle : lastnonb;
+                if (i != middle)
+                    calcMotionAdaptiveQuantFrame(frames, p0, p1, i);
+            }
+            calcMotionAdaptiveQuantFrame(frames, curnonb, lastnonb, middle);
+        }
+        else
+            for (i = 1; i < lastnonb; i++)
+                calcMotionAdaptiveQuantFrame(frames, curnonb, lastnonb, i);
+        calcMotionAdaptiveQuantFrame(frames, curnonb, lastnonb, lastnonb);
+    }
+}
+
+void Lookahead::calcMotionAdaptiveQuantFrame(Lowres **frames, int p0, int p1, int b)
+{
+    int listDist[2] = { b - p0 - 1, p1 - b - 1 };
+    int32_t strideInCU = m_8x8Width;
+    double qp_adj = 0, avg_adj = 0, avg_adj_pow2 = 0, sd;
+    for (uint16_t blocky = 0; blocky < m_8x8Height; blocky++)
+    {
+        int cuIndex = blocky * strideInCU;
+        for (uint16_t blockx = 0; blockx < m_8x8Width; blockx++, cuIndex++)
+        {
+            int32_t lists_used = frames[b]->lowresCosts[b - p0][p1 - b][cuIndex] >> LOWRES_COST_SHIFT;
+            double displacement = 0;
+            for (uint16_t list = 0; list < 2; list++)
+            {
+                if ((lists_used >> list) & 1)
+                {
+                    MV *mvs = frames[b]->lowresMvs[list][listDist[list]];
+                    int32_t x = mvs[cuIndex].x;
+                    int32_t y = mvs[cuIndex].y;
+                    displacement += sqrt(pow(abs(x), 2) + pow(abs(y), 2));
+                }
+                else
+                    displacement += 0.0;
+            }
+            if (lists_used == 3)
+                displacement = displacement / 2;
+            qp_adj = pow(displacement, 0.1);
+            frames[b]->qpAqMotionOffset[cuIndex] = qp_adj;
+            avg_adj += qp_adj;
+            avg_adj_pow2 += qp_adj * qp_adj;
+        }
+    }
+    avg_adj /= m_cuCount;
+    avg_adj_pow2 /= m_cuCount;
+    sd = sqrt((avg_adj_pow2 - (avg_adj * avg_adj)));
+    if (sd > 0)
+    {
+        for (uint16_t blocky = 0; blocky < m_8x8Height; blocky++)
+        {
+            int cuIndex = blocky * strideInCU;
+            for (uint16_t blockx = 0; blockx < m_8x8Width; blockx++, cuIndex++)
+            {
+                qp_adj = frames[b]->qpAqMotionOffset[cuIndex];
+                qp_adj = (qp_adj - avg_adj) / sd;
+                if (qp_adj > 1)
+                {
+                    frames[b]->qpAqOffset[cuIndex] += qp_adj;
+                    frames[b]->qpCuTreeOffset[cuIndex] += qp_adj;
+                    frames[b]->invQscaleFactor[cuIndex] += x265_exp2fix8(qp_adj);
+                }
+            }
+        }
+    }
 }
 
 void Lookahead::cuTree(Lowres **frames, int numframes, bool bIntra)

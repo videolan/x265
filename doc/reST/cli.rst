@@ -1382,6 +1382,14 @@ Quality, rate control and rate distortion options
 	Default 1.0.
 	**Range of values:** 0.0 to 3.0
 
+.. option:: --[no-]aq-motion
+
+	Adjust the AQ offsets based on the relative motion of each block with
+	respect to the motion of the frame. The more the relative motion of the block,
+	the more quantization is used. Default disabled. 
+
+	Requires AQ Mode to be on.
+
 .. option:: --qg-size <64|32|16|8>
 
 	Enable adaptive quantization for sub-CTUs. This parameter specifies 

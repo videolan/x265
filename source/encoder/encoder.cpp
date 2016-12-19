@@ -2132,6 +2132,12 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "--opt-cu-delta-qp disabled, requires RD level > 4\n");
     }
 
+    if (p->bAQMotion && !p->rc.aqMode)
+    {
+        p->bAQMotion = false;
+        x265_log(p, X265_LOG_WARNING, "--aq-motion disabled, requires aq mode to be on\n");
+    }
+
     if (p->limitTU && p->tuQTMaxInterDepth < 2)
     {
         p->limitTU = 0;

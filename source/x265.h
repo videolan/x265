@@ -1360,6 +1360,9 @@ typedef struct x265_param
 
     /* Refine analysis in multipass ratecontrol based on distortion data stored */
     int         analysisMultiPassDistortion;
+
+    /* Adaptive Quantization based on relative motion */
+    int        bAQMotion;
 } x265_param;
 
 /* x265_param_alloc:

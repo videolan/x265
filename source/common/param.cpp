@@ -266,6 +266,7 @@ void x265_param_default(x265_param* param)
     param->bOptQpPPS            = 1;
     param->bOptRefListLengthPPS = 1;
     param->bOptCUDeltaQP        = 0;
+    param->bAQMotion = 0;
 
 }
 
@@ -926,6 +927,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("opt-cu-delta-qp") p->bOptCUDeltaQP = atobool(value);
         OPT("multi-pass-opt-analysis") p->analysisMultiPassRefine = atobool(value);
         OPT("multi-pass-opt-distortion") p->analysisMultiPassDistortion = atobool(value);
+        OPT("aq-motion") p->bAQMotion = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1621,6 +1623,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bMultiPassOptRPS, "multi-pass-opt-rps");
     s += sprintf(s, " scenecut-bias=%.2f", p->scenecutBias);
     BOOL(p->bOptCUDeltaQP, "opt-cu-delta-qp");
+    BOOL(p->bAQMotion, "aq-motion");
 #undef BOOL
     return buf;
 }
