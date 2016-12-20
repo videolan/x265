@@ -429,6 +429,14 @@ void Encoder::destroy()
     if (m_analysisFile)
         fclose(m_analysisFile);
 
+    if (m_latestParam != NULL && m_latestParam != m_param)
+    {
+        if (m_latestParam->scalingLists != m_param->scalingLists)
+            free((char*)m_latestParam->scalingLists);
+
+        PARAM_NS::x265_param_free(m_latestParam);
+    }
+
     if (m_param)
     {
         /* release string arguments that were strdup'd */
@@ -441,8 +449,6 @@ void Encoder::destroy()
 
         PARAM_NS::x265_param_free(m_param);
     }
-
-    PARAM_NS::x265_param_free(m_latestParam);
 }
 
 void Encoder::updateVbvPlan(RateControl* rc)
@@ -1031,6 +1037,8 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
     encParam->bEnableRectInter = param->bEnableRectInter;
     encParam->maxNumMergeCand = param->maxNumMergeCand;
     encParam->bIntraInBFrames = param->bIntraInBFrames;
+    if (param->scalingLists && !encParam->scalingLists)
+        encParam->scalingLists = strdup(param->scalingLists);
     /* To add: Loop Filter/deblocking controls, transform skip, signhide require PPS to be resent */
     /* To add: SAO, temporal MVP, AMP, TU depths require SPS to be resent, at every CVS boundary */
     return x265_check_params(encParam);
@@ -2797,7 +2805,7 @@ void Encoder::printReconfigureParams()
     
     x265_log(newParam, X265_LOG_DEBUG, "Reconfigured param options, input Frame: %d\n", m_pocLast + 1);
 
-    char tmp[40];
+    char tmp[60];
 #define TOOLCMP(COND1, COND2, STR)  if (COND1 != COND2) { sprintf(tmp, STR, COND1, COND2); x265_log(newParam, X265_LOG_DEBUG, tmp); }
     TOOLCMP(oldParam->maxNumReferences, newParam->maxNumReferences, "ref=%d to %d\n");
     TOOLCMP(oldParam->bEnableFastIntra, newParam->bEnableFastIntra, "fast-intra=%d to %d\n");
@@ -2811,6 +2819,7 @@ void Encoder::printReconfigureParams()
     TOOLCMP(oldParam->bEnableRectInter, newParam->bEnableRectInter, "rect=%d to %d\n");
     TOOLCMP(oldParam->maxNumMergeCand, newParam->maxNumMergeCand, "max-merge=%d to %d\n");
     TOOLCMP(oldParam->bIntraInBFrames, newParam->bIntraInBFrames, "b-intra=%d to %d\n");
+    TOOLCMP(oldParam->scalingLists, newParam->scalingLists, "scalinglists=%s to %s\n");
 }
 
 bool Encoder::computeSPSRPSIndex()
