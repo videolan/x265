@@ -1895,6 +1895,13 @@ Bitstream options
 
 	Enable storing commonly used RPS in SPS in multi pass mode. Default disabled.
 
+.. option:: --[no-]opt-cu-delta-qp
+
+	Optimize CU level QPs by pulling up lower QPs to value close to meanQP thereby
+	minimizing fluctuations in deltaQP signalling. Default disabled.
+
+	Only effective at RD levels 5 and 6
+
 
 Debugging options
 =================

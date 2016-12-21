@@ -263,6 +263,7 @@ void x265_param_default(x265_param* param)
     param->bEmitVUIHRDInfo      = 1;
     param->bOptQpPPS            = 1;
     param->bOptRefListLengthPPS = 1;
+    param->bOptCUDeltaQP        = 0;
 
 }
 
@@ -920,6 +921,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("multi-pass-opt-rps") p->bMultiPassOptRPS = atobool(value);
         OPT("scenecut-bias") p->scenecutBias = atof(value);
         OPT("lookahead-threads") p->lookaheadThreads = atoi(value);
+        OPT("opt-cu-delta-qp") p->bOptCUDeltaQP = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1614,6 +1616,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bOptRefListLengthPPS, "opt-ref-list-length-pps");
     BOOL(p->bMultiPassOptRPS, "multi-pass-opt-rps");
     s += sprintf(s, " scenecut-bias=%.2f", p->scenecutBias);
+    BOOL(p->bOptCUDeltaQP, "opt-cu-delta-qp");
 #undef BOOL
     return buf;
 }

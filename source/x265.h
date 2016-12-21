@@ -1342,6 +1342,9 @@ typedef struct x265_param
     * resources for frame Encoder and can harm performance. Default is 0 - disabled. */
     int       lookaheadThreads;
 
+    /* Optimize CU level QPs to signal consistent deltaQPs in frame for rd level > 4 */
+    int        bOptCUDeltaQP;
+
 } x265_param;
 
 /* x265_param_alloc:

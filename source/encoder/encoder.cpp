@@ -2016,6 +2016,12 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "--rd-refine disabled, requires RD level > 4 and adaptive quant\n");
     }
 
+    if (p->bOptCUDeltaQP && p->rdLevel < 5)
+    {
+        p->bOptCUDeltaQP = false;
+        x265_log(p, X265_LOG_WARNING, "--opt-cu-delta-qp disabled, requires RD level > 4\n");
+    }
+
     if (p->limitTU && p->tuQTMaxInterDepth < 2)
     {
         p->limitTU = 0;
