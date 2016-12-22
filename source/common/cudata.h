@@ -358,9 +358,8 @@ struct CUDataMemPool
             CHECKED_MALLOC(trCoeffMemBlock, coeff_t, (sizeL + sizeC * 2) * numInstances);
         }
         CHECKED_MALLOC(charMemBlock, uint8_t, numPartition * numInstances * CUData::BytesPerPartition);
-        CHECKED_MALLOC(mvMemBlock, MV, numPartition * 4 * numInstances);
+        CHECKED_MALLOC_ZERO(mvMemBlock, MV, numPartition * 4 * numInstances);
         return true;
-
     fail:
         return false;
     }
