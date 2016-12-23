@@ -662,7 +662,7 @@ the prediction quad-tree.
 	and less frame parallelism as well. Because of this the faster
 	presets use a CU size of 32. Default: 64
 
-.. option:: --min-cu-size <64|32|16|8>
+.. option:: --min-cu-size <32|16|8>
 
 	Minimum CU size (width and height). By using 16 or 32 the encoder
 	will not analyze the cost of CUs below that minimum threshold,
@@ -1333,7 +1333,7 @@ Quality, rate control and rate distortion options
 	slices using param->rc.ipFactor and param->rc.pbFactor unless QP 0
 	is specified, in which case QP 0 is used for all slice types.  Note
 	that QP 0 does not cause lossless encoding, it only disables
-	quantization. Default disabled (CRF)
+	quantization. Default disabled.
 
 	**Range of values:** an integer from 0 to 51
 
