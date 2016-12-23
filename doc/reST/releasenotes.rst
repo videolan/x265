@@ -2,6 +2,34 @@
 Release Notes
 *************
 
+Version 2.2
+===========
+
+Release date - 26th December, 2016.
+
+Encoder enhancements
+--------------------
+1. Enhancements to TU selection algorithm with early-outs for improved speed; use :option:`--limit-tu` to exercise.
+2. New motion search method SEA (Successive Elimination Algorithm) supported now as :option: `--me` 4
+3. Bit-stream optimizations to improve fields in PPS and SPS for bit-rate savings through :option:`--[no-]opt-qp-pps`, :option:`--[no-]opt-ref-list-length-pps`, and :option:`--[no-]multi-pass-opt-rps`.
+4. Enabled using VBV constraints when encoding without WPP.
+5. All param options dumped in SEI packet in bitstream when info selected.
+6. x265 now supports POWERPC-based systems. Several key functions also have optimized ALTIVEC kernels.
+
+API changes
+-----------
+1. Options to disable SEI and optional-VUI messages from bitstream made more descriptive.
+2. New option :option:`--scenecut-bias` to enable controlling bias to mark scene-cuts via cli.
+3. Support mono and mono16 color spaces for y4m input.
+4. :option:`--min-cu-size` of 64 no-longer supported for reasons of visual quality (was crashing earlier anyways.)
+5. API for CSV now expects version string for better integration of x265 into other applications.
+
+Bug fixes
+---------
+1. Several fixes to slice-based encoding.
+2. :option:`--log2-max-poc-lsb`'s range limited according to HEVC spec.
+3. Restrict MVs to within legal boundaries when encoding.
+
 Version 2.1
 ===========
 
@@ -85,7 +113,7 @@ Presets and Performance
 Version 1.8
 ===========
 
-Release date - 10th August, 2016
+Release date - 10th August, 2015
 
 API Changes
 -----------
