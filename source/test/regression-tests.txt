@@ -71,6 +71,7 @@ News-4k.y4m,--preset ultrafast --no-cutree --analysis-mode=save --bitrate 15000,
 News-4k.y4m,--preset superfast --lookahead-slices 6 --aq-mode 0
 News-4k.y4m,--preset superfast --slices 4 --aq-mode 0 
 News-4k.y4m,--preset medium --tune ssim --no-sao --qg-size 16
+News-4k.y4m,--preset slower --opt-cu-delta-qp
 News-4k.y4m,--preset veryslow --no-rskip
 News-4k.y4m,--preset veryslow --pme --crf 40
 OldTownCross_1920x1080_50_10bit_422.yuv,--preset superfast --weightp
@@ -100,6 +101,7 @@ big_buck_bunny_360p24.y4m,--preset slow --psy-rdoq 2.0 --rdoq-level 1 --no-b-int
 city_4cif_60fps.y4m,--preset superfast --rdpenalty 1 --tu-intra-depth 2
 city_4cif_60fps.y4m,--preset medium --crf 4 --cu-lossless --sao-non-deblock
 city_4cif_60fps.y4m,--preset slower --scaling-list default
+city_4cif_60fps.y4m,--preset veryslow --opt-cu-delta-qp
 city_4cif_60fps.y4m,--preset veryslow --rdpenalty 2 --sao-non-deblock --no-b-intra --limit-refs 0
 ducks_take_off_420_720p50.y4m,--preset ultrafast --constrained-intra --rd 1
 ducks_take_off_444_720p50.y4m,--preset superfast --weightp --limit-refs 2
