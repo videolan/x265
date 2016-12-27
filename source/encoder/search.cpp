@@ -2128,7 +2128,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
         cu.getNeighbourMV(puIdx, pu.puAbsPartIdx, interMode.interNeighbours);
 
         /* Uni-directional prediction */
-        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+        if (m_param->analysisMode == X265_ANALYSIS_LOAD || (m_param->analysisMultiPassRefine && m_param->rc.bStatRead))
         {
             for (int list = 0; list < numPredDir; list++)
             {
@@ -2153,7 +2153,11 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                         m_me.integral[planes] = interMode.fencYuv->m_integral[list][ref][planes] + puX * pu.width + puY * pu.height * m_slice->m_refFrameList[list][ref]->m_reconPic->m_stride;
                 }
                 setSearchRange(cu, mvp, m_param->searchRange, mvmin, mvmax);
-                int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvp, numMvc, mvc, m_param->searchRange, outmv,
+                MV mvpIn = mvp;
+                if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && mvpIdx == bestME[list].mvpIdx)
+                    mvpIn = bestME[list].mv;
+                    
+                int satdCost = m_me.motionEstimate(&slice->m_mref[list][ref], mvmin, mvmax, mvpIn, numMvc, mvc, m_param->searchRange, outmv,
                   m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
 
                 /* Get total cost of partition, but only include MV bit cost once */
@@ -2162,7 +2166,22 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 uint32_t cost = (satdCost - mvCost) + m_rdCost.getCost(bits);
 
                 /* Refine MVP selection, updates: mvpIdx, bits, cost */
-                mvp = checkBestMVP(amvp, outmv, mvpIdx, bits, cost);
+                if (!m_param->analysisMultiPassRefine)
+                    mvp = checkBestMVP(amvp, outmv, mvpIdx, bits, cost);
+                else
+                {
+                    /* It is more accurate to compare with actual mvp that was used in motionestimate than amvp[mvpIdx]. Here 
+                      the actual mvp is bestME from pass 1 for that mvpIdx */
+                    int diffBits = m_me.bitcost(outmv, amvp[!mvpIdx]) - m_me.bitcost(outmv, mvpIn);
+                    if (diffBits < 0)
+                    {
+                        mvpIdx = !mvpIdx;
+                        uint32_t origOutBits = bits;
+                        bits = origOutBits + diffBits;
+                        cost = (cost - m_rdCost.getCost(origOutBits)) + m_rdCost.getCost(bits);
+                    }
+                    mvp = amvp[mvpIdx];
+                }
 
                 if (cost < bestME[list].cost)
                 {

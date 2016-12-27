@@ -146,6 +146,23 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_fencPic, ctu.m_cuAddr, 0);
 
     uint32_t numPartition = ctu.m_numPartitions;
+    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead)
+    {
+        m_multipassAnalysis = (analysis2PassFrameData*)m_frame->m_analysis2Pass.analysisFramedata;
+        m_multipassDepth = &m_multipassAnalysis->depth[ctu.m_cuAddr * ctu.m_numPartitions];
+        if (m_slice->m_sliceType != I_SLICE)
+        {
+            int numPredDir = m_slice->isInterP() ? 1 : 2;
+            for (int dir = 0; dir < numPredDir; dir++)
+            {
+                m_multipassMv[dir] = &m_multipassAnalysis->m_mv[dir][ctu.m_cuAddr * ctu.m_numPartitions];
+                m_multipassMvpIdx[dir] = &m_multipassAnalysis->mvpIdx[dir][ctu.m_cuAddr * ctu.m_numPartitions];
+                m_multipassRef[dir] = &m_multipassAnalysis->ref[dir][ctu.m_cuAddr * ctu.m_numPartitions];
+            }
+            m_multipassModes = &m_multipassAnalysis->modes[ctu.m_cuAddr * ctu.m_numPartitions];
+        }
+    }
+
     if (m_param->analysisMode && m_slice->m_sliceType != I_SLICE)
     {
         int numPredDir = m_slice->isInterP() ? 1 : 2;
@@ -1015,6 +1032,22 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             }
         }
     }
+    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_multipassAnalysis)
+    {
+        if (mightNotSplit && depth == m_multipassDepth[cuGeom.absPartIdx])
+        {
+            if (m_multipassModes[cuGeom.absPartIdx] == MODE_SKIP)
+            {
+                md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
+                checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
+
+                skipRecursion = !!m_param->bEnableRecursionSkip && md.bestMode;
+                if (m_param->rdLevel)
+                    skipModes = m_param->bEnableEarlySkip && md.bestMode;
+            }
+        }
+    }
 
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs, if skip mode was not set above */
     if (mightNotSplit && depth >= minDepth && !md.bestMode) /* TODO: Re-evaluate if analysis load/save still works */
@@ -1559,6 +1592,28 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             }
             if (m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
                 skipRectAmp = true && !!md.bestMode;
+        }
+    }
+
+    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_multipassAnalysis)
+    {
+        if (mightNotSplit && depth == m_multipassDepth[cuGeom.absPartIdx])
+        {
+            if (m_multipassModes[cuGeom.absPartIdx] == MODE_SKIP)
+            {
+                md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
+                checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
+
+                skipModes = !!m_param->bEnableEarlySkip && md.bestMode;
+                refMasks[0] = allSplitRefs;
+                md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
+                checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
+
+                if (m_param->bEnableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
+                    skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
+            }
         }
     }
 
@@ -2310,6 +2365,21 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
                 bestME[i].ref = m_reuseRef[refOffset + index++];
         }
     }
+
+    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_multipassAnalysis)
+    {
+        uint32_t numPU = interMode.cu.getNumPartInter(0);
+        for (uint32_t part = 0; part < numPU; part++)
+        {
+            MotionData* bestME = interMode.bestME[part];
+            for (int32_t i = 0; i < numPredDir; i++)
+            {
+                bestME[i].ref = m_multipassRef[i][cuGeom.absPartIdx];
+                bestME[i].mv = m_multipassMv[i][cuGeom.absPartIdx];
+                bestME[i].mvpIdx = m_multipassMvpIdx[i][cuGeom.absPartIdx];
+            }
+        }
+    }
     predInterSearch(interMode, cuGeom, m_bChromaSa8d && (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400), refMask);
 
     /* predInterSearch sets interMode.sa8dBits */
@@ -2359,6 +2429,22 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
                 bestME[i].ref = m_reuseRef[refOffset + index++];
         }
     }
+
+    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_multipassAnalysis)
+    {
+        uint32_t numPU = interMode.cu.getNumPartInter(0);
+        for (uint32_t part = 0; part < numPU; part++)
+        {
+            MotionData* bestME = interMode.bestME[part];
+            for (int32_t i = 0; i < numPredDir; i++)
+            {
+                bestME[i].ref = m_multipassRef[i][cuGeom.absPartIdx];
+                bestME[i].mv = m_multipassMv[i][cuGeom.absPartIdx];
+                bestME[i].mvpIdx = m_multipassMvpIdx[i][cuGeom.absPartIdx];
+            }
+        }
+    }
+
     predInterSearch(interMode, cuGeom, m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400, refMask);
 
     /* predInterSearch sets interMode.sa8dBits, but this is ignored */
