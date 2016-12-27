@@ -1438,6 +1438,23 @@ Quality, rate control and rate distortion options
 	* :option:`--subme` = MIN(2, :option:`--subme`)
 	* :option:`--rd` = MIN(2, :option:`--rd`)
 
+.. option:: --multi-pass-opt-analysis, --no-multi-pass-opt-analysis
+
+    Enable/Disable multipass analysis refinement along with multipass ratecontrol. Based on 
+    the information stored in pass 1, in subsequent passes analysis data is refined 
+    and also redundant steps are skipped.
+    In pass 1 analysis information like motion vector, depth, reference and prediction
+    modes of the final best CTU partition is stored for each CTU.
+    Default disabled.
+
+.. option:: --multi-pass-opt-distortion, --no-multi-pass-opt-distortion
+
+    Enable/Disable multipass refinement of qp based on distortion data along with multipass
+    ratecontrol. In pass 1 distortion of best CTU partition is stored. CTUs with high
+    distortion get lower(negative)qp offsets and vice-versa for low distortion CTUs in pass 2.
+    This helps to improve the subjective quality.
+    Default disabled.
+
 .. option:: --strict-cbr, --no-strict-cbr
 	
 	Enables stricter conditions to control bitrate deviance from the 

@@ -115,6 +115,14 @@ typedef struct x265_cu_stats
     /* All the above values will add up to 100%. */
 } x265_cu_stats;
 
+
+typedef struct x265_analysis_2Pass
+{
+    uint32_t      poc;
+    uint32_t      frameRecordSize;
+    void*         analysisFramedata;
+}x265_analysis_2Pass;
+
 /* Frame level statistics */
 typedef struct x265_frame_stats
 {
@@ -282,6 +290,8 @@ typedef struct x265_picture
     uint64_t framesize;
 
     int    height;
+
+    x265_analysis_2Pass analysis2Pass;
 } x265_picture;
 
 typedef enum
@@ -1345,6 +1355,11 @@ typedef struct x265_param
     /* Optimize CU level QPs to signal consistent deltaQPs in frame for rd level > 4 */
     int        bOptCUDeltaQP;
 
+    /* Refine analysis in multipass ratecontrol based on analysis information stored */
+    int         analysisMultiPassRefine;
+
+    /* Refine analysis in multipass ratecontrol based on distortion data stored */
+    int         analysisMultiPassDistortion;
 } x265_param;
 
 /* x265_param_alloc:

@@ -181,5 +181,15 @@ struct analysis_inter_data
     uint8_t*    partSize;
     uint8_t*    mergeFlag;
 };
+
+struct analysis2PassFrameData
+{
+    uint8_t*      depth;
+    MV*           m_mv[2];
+    int*          mvpIdx[2];
+    int32_t*      ref[2];
+    uint8_t*      modes;
+};
+
 }
 #endif // ifndef X265_FRAMEDATA_H

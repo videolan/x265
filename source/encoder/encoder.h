@@ -30,6 +30,7 @@
 #include "scalinglist.h"
 #include "x265.h"
 #include "nal.h"
+#include "framedata.h"
 
 struct x265_encoder {};
 
@@ -197,9 +198,17 @@ public:
 
     void freeAnalysis(x265_analysis_data* analysis);
 
+    void allocAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType);
+
+    void freeAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType);
+
     void readAnalysisFile(x265_analysis_data* analysis, int poc);
 
     void writeAnalysisFile(x265_analysis_data* pic, FrameData &curEncData);
+
+    void readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int poc, int sliceType);
+
+    void writeAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, FrameData &curEncData);
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 

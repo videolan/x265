@@ -210,6 +210,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     {
         pic_in->analysisData.intraData = NULL;
         pic_in->analysisData.interData = NULL;
+        pic_in->analysis2Pass.analysisFramedata = NULL;
     }
 
     if (pp_nal && numEncoded > 0)

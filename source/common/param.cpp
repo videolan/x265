@@ -193,6 +193,8 @@ void x265_param_default(x265_param* param)
     param->psyRd = 2.0;
     param->psyRdoq = 0.0;
     param->analysisMode = 0;
+    param->analysisMultiPassRefine = 0;
+    param->analysisMultiPassDistortion = 0;
     param->analysisFileName = NULL;
     param->bIntraInBFrames = 0;
     param->bLossless = 0;
@@ -922,6 +924,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("scenecut-bias") p->scenecutBias = atof(value);
         OPT("lookahead-threads") p->lookaheadThreads = atoi(value);
         OPT("opt-cu-delta-qp") p->bOptCUDeltaQP = atobool(value);
+        OPT("multi-pass-opt-analysis") p->analysisMultiPassRefine = atobool(value);
+        OPT("multi-pass-opt-distortion") p->analysisMultiPassDistortion = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
