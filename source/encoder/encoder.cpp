@@ -2315,6 +2315,8 @@ void Encoder::allocAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType)
     {
         CHECKED_MALLOC_ZERO(analysisFrameData->ctuDistortion, sse_t, numCUsInFrame);
         CHECKED_MALLOC(analysisFrameData->scaledDistortion, double, numCUsInFrame);
+        CHECKED_MALLOC(analysisFrameData->offset, double, numCUsInFrame);
+        CHECKED_MALLOC(analysisFrameData->threshold, double, numCUsInFrame);
     }
     if (!IS_X265_TYPE_I(sliceType))
     {
@@ -2346,6 +2348,8 @@ void Encoder::freeAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType)
         {
             X265_FREE(((analysis2PassFrameData*)analysis->analysisFramedata)->ctuDistortion);
             X265_FREE(((analysis2PassFrameData*)analysis->analysisFramedata)->scaledDistortion);
+            X265_FREE(((analysis2PassFrameData*)analysis->analysisFramedata)->offset);
+            X265_FREE(((analysis2PassFrameData*)analysis->analysisFramedata)->threshold);
         }
         if (!IS_X265_TYPE_I(sliceType))
         {
@@ -2555,6 +2559,16 @@ void Encoder::readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int curP
     double avg = sum / numCUsInFrame;
     analysisFrameData->sdDistortion = pow(((sqrSum / numCUsInFrame) - (avg * avg)), 0.5);
     analysisFrameData->averageDistortion = avg;
+    analysisFrameData->highDistortionCtuCount = analysisFrameData->lowDistortionCtuCount = 0;
+    for (uint32_t i = 0; i < numCUsInFrame; ++i)
+    {
+        analysisFrameData->threshold[i] = analysisFrameData->scaledDistortion[i] / analysisFrameData->averageDistortion;
+        analysisFrameData->offset[i] = (analysisFrameData->averageDistortion - analysisFrameData->scaledDistortion[i]) / analysisFrameData->sdDistortion;
+        if (analysisFrameData->threshold[i] < 0.9 && analysisFrameData->offset[i] >= 1)
+            analysisFrameData->lowDistortionCtuCount++;
+        else if (analysisFrameData->threshold[i] > 1.1 && analysisFrameData->offset[i] <= -1)
+            analysisFrameData->highDistortionCtuCount++;
+    }
     if (!IS_X265_TYPE_I(sliceType))
     {
         MV *tempMVBuf[2], *MVBuf[2];

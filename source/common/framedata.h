@@ -194,6 +194,10 @@ struct analysis2PassFrameData
     double*       scaledDistortion;
     double        averageDistortion;
     double        sdDistortion;
+    uint32_t      highDistortionCtuCount;
+    uint32_t      lowDistortionCtuCount;
+    double*       offset;
+    double*       threshold;
 };
 
 }
