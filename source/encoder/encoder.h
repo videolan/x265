@@ -130,6 +130,8 @@ public:
     DPB*               m_dpb;
     Frame*             m_exportedPic;
     FILE*              m_analysisFile;
+    FILE*              m_analysisFileIn;
+    FILE*              m_analysisFileOut;
     x265_param*        m_param;
     x265_param*        m_latestParam;     // Holds latest param during a reconfigure
     RateControl*       m_rateControl;

@@ -454,6 +454,28 @@ bool RateControl::init(const SPS& sps)
                               m_param->fpsNum, m_param->fpsDenom, k, l);
                     return false;
                 }
+                if (m_param->analysisMultiPassRefine)
+                {
+                    p = strstr(opts, "ref=");
+                    sscanf(p, "ref=%d", &i);
+                    if (i > m_param->maxNumReferences)
+                    {
+                        x265_log(m_param, X265_LOG_ERROR, "maxNumReferences cannot be less than 1st pass (%d vs %d)\n",
+                            i, m_param->maxNumReferences);
+                        return false;
+                    }
+                }
+                if (m_param->analysisMultiPassRefine || m_param->analysisMultiPassDistortion)
+                {
+                    p = strstr(opts, "ctu=");
+                    sscanf(p, "ctu=%u", &k);
+                    if (k != m_param->maxCUSize)
+                    {
+                        x265_log(m_param, X265_LOG_ERROR, "maxCUSize mismatch with 1st pass (%u vs %u)\n",
+                            k, m_param->maxCUSize);
+                        return false;
+                    }
+                }
                 CMP_OPT_FIRST_PASS("bitdepth", m_param->internalBitDepth);
                 CMP_OPT_FIRST_PASS("weightp", m_param->bEnableWeightedPred);
                 CMP_OPT_FIRST_PASS("bframes", m_param->bframes);

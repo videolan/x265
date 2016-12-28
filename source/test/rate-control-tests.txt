@@ -46,4 +46,5 @@ sita_1920x1080_30.yuv, --preset medium --crf 20 --no-cutree --keyint 50 --min-ke
 
 # multi-pass rate control and analysis
 ducks_take_off_1080p50.y4m,--bitrate 6000 --pass 1  --multi-pass-opt-analysis  --hash 1 --ssim --psnr, --bitrate 6000 --pass 2  --multi-pass-opt-analysis  --hash 1 --ssim --psnr
-big_buck_bunny_360p24.y4m,--preset veryslow --bitrate 600 --pass 1  --multi-pass-opt-analysis  --hash 1 --ssim --psnr, --preset veryslow --bitrate 600 --pass 2  --multi-pass-opt-analysis  --hash 1 --ssim --psnr
+big_buck_bunny_360p24.y4m,--preset veryslow --bitrate 600 --pass 1  --multi-pass-opt-analysis  --multi-pass-opt-distortion --hash 1 --ssim --psnr, --preset veryslow --bitrate 600 --pass 2  --multi-pass-opt-analysis  --multi-pass-opt-distortion --hash 1 --ssim --psnr
+parkrun_ter_720p50.y4m, --bitrate 3500 --pass 1 --multi-pass-opt-distortion --hash 1 --ssim --psnr, --bitrate 3500 --pass 3 --multi-pass-opt-distortion --hash 1 --ssim --psnr, --bitrate 3500 --pass 2 --multi-pass-opt-distortion --hash 1 --ssim --psnr
