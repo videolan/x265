@@ -189,7 +189,7 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
             {
                 if (encoder->m_scalingList.parseScalingList(encoder->m_latestParam->scalingLists))
                     return -1;
-                encoder->m_scalingList.setupQuantMatrices();
+                encoder->m_scalingList.setupQuantMatrices(encoder->m_param->internalCsp);
             }
             else
             {

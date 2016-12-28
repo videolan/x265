@@ -60,7 +60,7 @@ public:
     bool     init();
     void     setDefaultScalingList();
     bool     parseScalingList(const char* filename);
-    void     setupQuantMatrices();
+    void     setupQuantMatrices(int internalCsp);
 
     /* used during SPS coding */
     int      checkPredMode(int sizeId, int listId) const;

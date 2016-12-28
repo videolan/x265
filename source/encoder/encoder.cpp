@@ -252,10 +252,10 @@ void Encoder::create()
         if (!scalingEnabled)
         {
             m_scalingList.setDefaultScalingList();
-            m_scalingList.setupQuantMatrices();
+            m_scalingList.setupQuantMatrices(m_sps.chromaFormatIdc);
         }
         else
-            m_scalingList.setupQuantMatrices();
+            m_scalingList.setupQuantMatrices(m_sps.chromaFormatIdc);
 
         for (int q = 0; q < QP_MAX_MAX - QP_MAX_SPEC; q++)
         {
@@ -308,11 +308,11 @@ void Encoder::create()
         {
             m_scalingList.m_bEnabled = false;
             m_scalingList.m_bDataPresent = false;
-            m_scalingList.setupQuantMatrices();
+            m_scalingList.setupQuantMatrices(m_sps.chromaFormatIdc);
         }
     }
     else
-        m_scalingList.setupQuantMatrices();
+        m_scalingList.setupQuantMatrices(m_sps.chromaFormatIdc);
 
     int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
     int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
@@ -1993,12 +1993,6 @@ void Encoder::configure(x265_param *p)
 
     }
 
-
-    if (p->scalingLists && p->internalCsp == X265_CSP_I444)
-    {
-        x265_log(p, X265_LOG_WARNING, "Scaling lists are not yet supported for 4:4:4 chroma subsampling\n");
-        p->scalingLists = 0;
-    }
 
     if (p->interlaceMode)
         x265_log(p, X265_LOG_WARNING, "Support for interlaced video is experimental\n");

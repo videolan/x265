@@ -339,7 +339,7 @@ bool ScalingList::parseScalingList(const char* filename)
 }
 
 /** set quantized matrix coefficient for encode */
-void ScalingList::setupQuantMatrices()
+void ScalingList::setupQuantMatrices(int internalCsp)
 {
     for (int size = 0; size < NUM_SIZES; size++)
     {
@@ -360,6 +360,21 @@ void ScalingList::setupQuantMatrices()
 
                 if (m_bEnabled)
                 {
+                    if (internalCsp == X265_CSP_I444)
+                    {
+                        for (int i = 0; i < 64; i++)
+                        {
+                            m_scalingListCoef[BLOCK_32x32][1][i] = m_scalingListCoef[BLOCK_16x16][1][i];
+                            m_scalingListCoef[BLOCK_32x32][2][i] = m_scalingListCoef[BLOCK_16x16][2][i];
+                            m_scalingListCoef[BLOCK_32x32][4][i] = m_scalingListCoef[BLOCK_16x16][4][i];
+                            m_scalingListCoef[BLOCK_32x32][5][i] = m_scalingListCoef[BLOCK_16x16][5][i];
+                        }
+
+                        m_scalingListDC[BLOCK_32x32][1] = m_scalingListDC[BLOCK_16x16][1];
+                        m_scalingListDC[BLOCK_32x32][2] = m_scalingListDC[BLOCK_16x16][2];
+                        m_scalingListDC[BLOCK_32x32][4] = m_scalingListDC[BLOCK_16x16][4];
+                        m_scalingListDC[BLOCK_32x32][5] = m_scalingListDC[BLOCK_16x16][5];
+                    }
                     processScalingListEnc(coeff, quantCoeff, s_quantScales[rem] << 4, width, width, ratio, stride, dc);
                     processScalingListDec(coeff, dequantCoeff, s_invQuantScales[rem], width, width, ratio, stride, dc);
                 }
