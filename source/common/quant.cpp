@@ -479,6 +479,82 @@ uint32_t Quant::transformNxN(const CUData& cu, const pixel* fenc, uint32_t fencS
     }
 }
 
+uint64_t Quant::ssimDistortion(const CUData& cu, const pixel* fenc, uint32_t fStride, const pixel* recon, intptr_t rstride, uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx)
+{
+    static const int ssim_c1 = (int)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64 + .5); // 416
+    static const int ssim_c2 = (int)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63 + .5); // 235963
+
+    int trSize = 1 << log2TrSize;
+    uint64_t ssDc = 0, ssBlock = 0, ssAc = 0;
+
+    // Calculation of (X(0) - Y(0)) * (X(0) - Y(0)), DC
+    ssDc = 0;
+    for (int y = 0; y < trSize; y += 4)
+    {
+        for (int x = 0; x < trSize; x += 4)
+        {
+            int temp = fenc[y * fStride + x] - recon[y * rstride + x]; // copy of residual coeff
+            ssDc += temp * temp;
+        }
+    }
+
+    // Calculation of (X(k) - Y(k)) * (X(k) - Y(k)), AC
+    ssBlock = 0;
+    for (int y = 0; y < trSize; y++)
+    {
+        for (int x = 0; x < trSize; x++)
+        {
+            int temp = fenc[y * fStride + x] - recon[y * rstride + x]; // copy of residual coeff
+            ssBlock += temp * temp;
+        }
+    }
+
+    ssAc = ssBlock - ssDc;
+
+    // 1. Calculation of fdc'
+    // Calculate numerator of dc normalization factor
+    uint64_t fDc_num = 0;
+
+    // 2. Calculate dc component
+    uint64_t dc_k = 0;
+    for (int block_yy = 0; block_yy < trSize; block_yy += 4)
+    {
+        for (int block_xx = 0; block_xx < trSize; block_xx += 4)
+        {
+            uint32_t temp = fenc[block_yy * fStride + block_xx];
+            dc_k += temp * temp;
+        }
+    }
+
+    fDc_num = (2 * dc_k)  + (trSize * trSize * ssim_c1); // 16 pixels -> for each 4x4 block
+    fDc_num /= ((trSize >> 2) * (trSize >> 2));
+
+    // 1. Calculation of fac'
+    // Calculate numerator of ac normalization factor
+    uint64_t fAc_num = 0;
+
+    // 2. Calculate ac component
+    uint64_t ac_k = 0;
+    for (int block_yy = 0; block_yy < trSize; block_yy += 1)
+    {
+        for (int block_xx = 0; block_xx < trSize; block_xx += 1)
+        {
+            uint32_t temp = fenc[block_yy * fStride + block_xx];
+            ac_k += temp * temp;
+        }
+    }
+    ac_k -= dc_k;
+
+    double s = 1 + 0.005 * cu.m_qp[absPartIdx];
+
+    fAc_num = ac_k + uint64_t(s * ac_k) + ssim_c2;
+    fAc_num /= ((trSize >> 2) * (trSize >> 2));
+
+    // Calculate dc and ac normalization factor
+    uint64_t ssim_distortion = ((ssDc * cu.m_fDc_den[ttype]) / fDc_num) + ((ssAc * cu.m_fAc_den[ttype]) / fAc_num);
+    return ssim_distortion;
+}
+
 void Quant::invtransformNxN(const CUData& cu, int16_t* residual, uint32_t resiStride, const coeff_t* coeff,
                             uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig)
 {

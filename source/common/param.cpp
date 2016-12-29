@@ -202,6 +202,7 @@ void x265_param_default(x265_param* param)
     param->bEnableTemporalSubLayers = 0;
     param->bEnableRdRefine = 0;
     param->bMultiPassOptRPS = 0;
+    param->bSsimRd = 0;
 
     /* Rate control options */
     param->rc.vbvMaxBitrate = 0;
@@ -928,6 +929,16 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("multi-pass-opt-analysis") p->analysisMultiPassRefine = atobool(value);
         OPT("multi-pass-opt-distortion") p->analysisMultiPassDistortion = atobool(value);
         OPT("aq-motion") p->bAQMotion = atobool(value);
+        OPT("ssim-rd")
+        {
+            int bval = atobool(value);
+            if (bError || bval)
+            {
+                bError = false;
+                p->psyRd = 0.0;
+                p->bSsimRd = atobool(value);
+            }
+        }
         else
             return X265_PARAM_BAD_NAME;
     }

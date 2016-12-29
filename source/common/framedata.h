@@ -55,6 +55,7 @@ struct FrameStats
     double      avgLumaDistortion;
     double      avgChromaDistortion;
     double      avgPsyEnergy;
+    double      avgSsimEnergy;
     double      avgResEnergy;
     double      percentIntraNxN;
     double      percentSkipCu[NUM_CU_DEPTH];
@@ -68,6 +69,7 @@ struct FrameStats
     uint64_t    lumaDistortion;
     uint64_t    chromaDistortion;
     uint64_t    psyEnergy;
+    int64_t     ssimEnergy;
     uint64_t    resEnergy;
     uint64_t    cntSkipCu[NUM_CU_DEPTH];
     uint64_t    cntMergeCu[NUM_CU_DEPTH];

@@ -1363,6 +1363,11 @@ typedef struct x265_param
 
     /* Adaptive Quantization based on relative motion */
     int        bAQMotion;
+
+    /* SSIM based RDO, based on residual divisive normalization scheme. Used for mode
+    * selection during analysis of CTUs, can achieve significant gain in terms of 
+    * objective quality metrics SSIM and PSNR */
+    int       bSsimRd;
 } x265_param;
 
 /* x265_param_alloc:

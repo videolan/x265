@@ -111,6 +111,8 @@ public:
 
     void invtransformNxN(const CUData& cu, int16_t* residual, uint32_t resiStride, const coeff_t* coeff,
                          uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig);
+    uint64_t ssimDistortion(const CUData& cu, const pixel* fenc, uint32_t fStride, const pixel* recon, intptr_t rstride,
+                            uint32_t log2TrSize, TextType ttype, uint32_t absPartIdx);
 
     /* Pattern decision for context derivation process of significant_coeff_flag */
     static uint32_t calcPatternSigCtx(uint64_t sigCoeffGroupFlag64, uint32_t cgPosX, uint32_t cgPosY, uint32_t cgBlkPos, uint32_t trSizeCG)

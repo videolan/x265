@@ -224,6 +224,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
         m_trCoeff[0] = dataPool.trCoeffMemBlock + instance * (cuSize * cuSize);
         m_trCoeff[1] = m_trCoeff[2] = 0;
         m_transformSkip[1] = m_transformSkip[2] = m_cbf[1] = m_cbf[2] = 0;
+        m_fAc_den[0] = m_fDc_den[0] = 0;
     }
     else
     {
@@ -267,6 +268,8 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
         m_trCoeff[0] = dataPool.trCoeffMemBlock + instance * (sizeL + sizeC * 2);
         m_trCoeff[1] = m_trCoeff[0] + sizeL;
         m_trCoeff[2] = m_trCoeff[0] + sizeL + sizeC;
+        for (int i = 0; i < 3; i++)
+            m_fAc_den[i] = m_fDc_den[i] = 0;
     }
 }
 
@@ -327,6 +330,11 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp)
     m_bFirstRowInSlice = ctu.m_bFirstRowInSlice;
     m_bLastRowInSlice = ctu.m_bLastRowInSlice;
     m_bLastCuInSlice = ctu.m_bLastCuInSlice;
+    for (int i = 0; i < 3; i++)
+    {
+        m_fAc_den[i] = ctu.m_fAc_den[i];
+        m_fDc_den[i] = ctu.m_fDc_den[i];
+    }
 
     X265_CHECK(m_numPartitions == cuGeom.numPartitions, "initSubCU() size mismatch\n");
 

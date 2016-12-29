@@ -76,6 +76,7 @@ Analysis::Analysis()
     m_reuseRef = NULL;
     m_bHD = false;
 }
+
 bool Analysis::create(ThreadLocalData *tld)
 {
     m_tld = tld;
@@ -144,6 +145,9 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     m_rqt[0].cur.load(initialContext);
     ctu.m_meanQP = initialContext.m_meanQP;
     m_modeDepth[0].fencYuv.copyFromPicYuv(*m_frame->m_fencPic, ctu.m_cuAddr, 0);
+
+    if (m_param->bSsimRd)
+        calculateNormFactor(ctu, qp);
 
     uint32_t numPartition = ctu.m_numPartitions;
     if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead)
@@ -2909,4 +2913,66 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, doub
     }
 
     return x265_clip3(m_param->rc.qpMin, m_param->rc.qpMax, (int)(qp + 0.5));
+}
+
+void Analysis::normFactor(const pixel* src, uint32_t blockSize, CUData& ctu, int qp, TextType ttype)
+{
+    static const int ssim_c1 = (int)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64 + .5); // 416
+    static const int ssim_c2 = (int)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63 + .5); // 235963
+
+    double s = 1 + 0.005 * qp;
+
+    // Calculate denominator of normalization factor
+    uint64_t fDc_den = 0, fAc_den = 0;
+
+    // 1. Calculate dc component
+    uint64_t z_o = 0;
+    for (uint32_t block_yy = 0; block_yy < blockSize; block_yy += 4)
+    {
+        for (uint32_t block_xx = 0; block_xx < blockSize; block_xx += 4)
+        {
+            uint32_t temp = src[block_yy * blockSize + block_xx];
+            z_o += temp * temp; // 2 * (Z(0)) pow(2)
+        }
+    }
+    fDc_den = (2 * z_o)  + (blockSize * blockSize * ssim_c1); // 2 * (Z(0)) pow(2) + N * C1
+    fDc_den /= ((blockSize >> 2) * (blockSize >> 2));
+
+    // 2. Calculate ac component
+    uint64_t z_k = 0;
+    for (uint32_t block_yy = 0; block_yy < blockSize; block_yy += 1)
+    {
+        for (uint32_t block_xx = 0; block_xx < blockSize; block_xx += 1)
+        {
+            uint32_t temp = src[block_yy * blockSize + block_xx];
+            z_k += temp * temp;
+        }
+    }
+
+    // Remove the DC part
+    z_k -= z_o;
+
+    fAc_den = z_k + int(s * z_k) + ssim_c2;
+    fAc_den /= ((blockSize >> 2) * (blockSize >> 2));
+
+    ctu.m_fAc_den[ttype] = fAc_den;
+    ctu.m_fDc_den[ttype] = fDc_den;
+}
+
+void Analysis::calculateNormFactor(CUData& ctu, int qp)
+{
+    const pixel* srcY = m_modeDepth[0].fencYuv.m_buf[0];
+    uint32_t blockSize = m_modeDepth[0].fencYuv.m_size;
+
+    normFactor(srcY, blockSize, ctu, qp, TEXT_LUMA);
+
+    if (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400)
+    {
+        const pixel* srcU = m_modeDepth[0].fencYuv.m_buf[1];
+        const pixel* srcV = m_modeDepth[0].fencYuv.m_buf[2];
+        uint32_t blockSizeC = m_modeDepth[0].fencYuv.m_csize;
+
+        normFactor(srcU, blockSizeC, ctu, qp, TEXT_CHROMA_U);
+        normFactor(srcV, blockSizeC, ctu, qp, TEXT_CHROMA_V);
+    }
 }

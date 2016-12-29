@@ -176,6 +176,8 @@ protected:
 
     int calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, double baseQP = -1);
 
+    void calculateNormFactor(CUData& ctu, int qp);
+    void normFactor(const pixel* src, uint32_t blockSize, CUData& ctu, int qp, TextType ttype);
     /* check whether current mode is the new best */
     inline void checkBestMode(Mode& mode, uint32_t depth)
     {
