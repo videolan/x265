@@ -818,10 +818,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     pic_out->analysis2Pass.poc = pic_out->poc;
                     pic_out->analysis2Pass.analysisFramedata = outFrame->m_analysis2Pass.analysisFramedata;
                 }
-                writeAnalysis2PassFile(&outFrame->m_analysis2Pass, *outFrame->m_encData);
+                writeAnalysis2PassFile(&outFrame->m_analysis2Pass, *outFrame->m_encData, outFrame->m_lowres.sliceType);
             }
             if (m_param->analysisMultiPassRefine || m_param->analysisMultiPassDistortion)
-                freeAnalysis2Pass(&outFrame->m_analysis2Pass, slice->m_sliceType);
+                freeAnalysis2Pass(&outFrame->m_analysis2Pass, outFrame->m_lowres.sliceType);
             if (m_param->internalCsp == X265_CSP_I400)
             {
                 if (slice->m_sliceType == P_SLICE)
@@ -2771,14 +2771,13 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     }
 #undef X265_FWRITE
 }
-
-void Encoder::writeAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, FrameData &curEncData)
+void Encoder::writeAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, FrameData &curEncData, int slicetype)
 {
 #define X265_FWRITE(val, size, writeSize, fileOffset)\
     if (fwrite(val, size, writeSize, fileOffset) < writeSize)\
     {\
     x265_log(NULL, X265_LOG_ERROR, "Error writing analysis 2 pass data\n"); \
-    freeAnalysis2Pass(analysis2Pass, curEncData.m_slice->m_sliceType); \
+    freeAnalysis2Pass(analysis2Pass, slicetype); \
     m_aborted = true; \
     return; \
 }\

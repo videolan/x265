@@ -207,11 +207,8 @@ public:
     void readAnalysisFile(x265_analysis_data* analysis, int poc);
 
     void writeAnalysisFile(x265_analysis_data* pic, FrameData &curEncData);
-
     void readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int poc, int sliceType);
-
-    void writeAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, FrameData &curEncData);
-
+    void writeAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, FrameData &curEncData, int slicetype);
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 
     void calcRefreshInterval(Frame* frameEnc);
