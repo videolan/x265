@@ -362,7 +362,13 @@ void Encoder::create()
         if (m_param->rc.bStatWrite)
         {
             char* temp = strcatFilename(name, ".temp");
-            m_analysisFileOut = fopen(temp, "wb");
+            if (!temp)
+                m_aborted = true;
+            else
+            {
+                m_analysisFileOut = fopen(temp, "wb");
+                X265_FREE(temp);
+            }
             if (!m_analysisFileOut)
             {
                 x265_log(NULL, X265_LOG_ERROR, "Analysis 2 pass: failed to open file %s\n", temp);
@@ -463,9 +469,9 @@ void Encoder::destroy()
 
         PARAM_NS::x265_param_free(m_latestParam);
     }
-
     if (m_analysisFileIn)
         fclose(m_analysisFileIn);
+
     if (m_analysisFileOut)
     {
         int bError = 1;
@@ -473,15 +479,18 @@ void Encoder::destroy()
         const char* name = m_param->analysisFileName;
         if (!name)
             name = defaultAnalysisFileName;
-        x265_unlink(name);
         char* temp = strcatFilename(name, ".temp");
-        bError = x265_rename(temp, name);
+        if (temp)
+        {
+            x265_unlink(name);
+            bError = x265_rename(temp, name);
+        }
         if (bError)
         {
             x265_log(m_param, X265_LOG_ERROR, "failed to rename analysis stats file to \"%s\"\n", name);
         }
+        X265_FREE(temp);
      }
-
     if (m_param)
     {
         /* release string arguments that were strdup'd */
@@ -919,13 +928,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             frameEnc = m_lookahead->getDecidedPicture();
         if (frameEnc && !pass)
         {
-            int sliceType = frameEnc->m_lowres.sliceType;
             if (m_param->analysisMultiPassRefine || m_param->analysisMultiPassDistortion)
             {
-                allocAnalysis2Pass(&frameEnc->m_analysis2Pass, sliceType);
+                allocAnalysis2Pass(&frameEnc->m_analysis2Pass, frameEnc->m_lowres.sliceType);
                 frameEnc->m_analysis2Pass.poc = frameEnc->m_poc;
                 if (m_param->rc.bStatRead)
-                    readAnalysis2PassFile(&frameEnc->m_analysis2Pass, frameEnc->m_poc, sliceType);
+                    readAnalysis2PassFile(&frameEnc->m_analysis2Pass, frameEnc->m_poc, frameEnc->m_lowres.sliceType);
              }
             if (curEncoder->m_reconfigure)
             {
@@ -2558,9 +2566,7 @@ void Encoder::readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int curP
         return;
     }
     /* Now arrived at the right frame, read the record */
-    analysis2Pass->poc = poc;
     analysis2Pass->frameRecordSize = frameRecordSize;
-
     uint8_t* tempBuf = NULL, *depthBuf = NULL;
     sse_t *tempdistBuf = NULL, *distortionBuf = NULL;
     tempBuf = X265_MALLOC(uint8_t, depthBytes);
