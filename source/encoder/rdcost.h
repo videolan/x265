@@ -135,7 +135,7 @@ public:
     {
 #if X265_DEPTH < 10
         X265_CHECK((bits <= (UINT64_MAX / m_lambda2)) && (ssimCost <= UINT64_MAX / m_lambda),
-                   "calcPsyRdCost wrap detected dist: %u, bits: %u, lambda: " X265_LL ", lambda2: " X265_LL "\n",
+                   "calcPsyRdCost wrap detected dist: " X265_LL " bits: %u, lambda: " X265_LL ", lambda2: " X265_LL "\n",
                    distortion, bits, m_lambda, m_lambda2);
 #else
         X265_CHECK((bits <= (UINT64_MAX / m_lambda2)) && (ssimCost <= UINT64_MAX / m_lambda),
