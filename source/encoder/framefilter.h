@@ -133,6 +133,7 @@ public:
 
     void processRow(int row);
     void processPostRow(int row);
+    void computeMEIntegral(int row);
 };
 }
 

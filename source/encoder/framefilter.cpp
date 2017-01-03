@@ -642,6 +642,9 @@ void FrameFilter::processPostRow(int row)
     const uint32_t numCols = m_frame->m_encData->m_slice->m_sps->numCuInWidth;
     const uint32_t lineStartCUAddr = row * numCols;
 
+    /* Generate integral planes for SEA motion search */
+    if(m_param->searchMethod == X265_SEA)
+        computeMEIntegral(row);
     // Notify other FrameEncoders that this row of reconstructed pixels is available
     m_frame->m_reconRowFlag[row].set(1);
 
@@ -768,10 +771,16 @@ void FrameFilter::processPostRow(int row)
         }
     } // end of (m_param->maxSlices == 1)
 
-    int lastRow = row == (int)m_frame->m_encData->m_slice->m_sps->numCuInHeight - 1;
+    if (ATOMIC_INC(&m_frameEncoder->m_completionCount) == 2 * (int)m_frameEncoder->m_numRows)
+    {
+        m_frameEncoder->m_completionEvent.trigger();
+    }
+}
 
-    /* generate integral planes for SEA motion search */
-    if (m_param->searchMethod == X265_SEA && m_frame->m_encData->m_meIntegral && m_frame->m_lowres.sliceType != X265_TYPE_B)
+void FrameFilter::computeMEIntegral(int row)
+{
+    int lastRow = row == (int)m_frame->m_encData->m_slice->m_sps->numCuInHeight - 1;
+    if (m_frame->m_encData->m_meIntegral && m_frame->m_lowres.sliceType != X265_TYPE_B)
     {
         /* If WPP, other than first row, integral calculation for current row needs to wait till the
         * integral for the previous row is computed */
@@ -867,11 +876,6 @@ void FrameFilter::processPostRow(int row)
                 integral_init4v(sum4x4 - 4 * stride, stride);
         }
         m_parallelFilter[row].m_frameFilter->integralCompleted.set(1);
-    }
-
-    if (ATOMIC_INC(&m_frameEncoder->m_completionCount) == 2 * (int)m_frameEncoder->m_numRows)
-    {
-        m_frameEncoder->m_completionEvent.trigger();
     }
 }
 
