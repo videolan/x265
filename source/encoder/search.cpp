@@ -635,7 +635,7 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
         }
         else if(m_rdCost.m_ssimRd)
         {
-            tmpEnergy = m_quant.ssimDistortion(cu, fenc, stride, reconQt, reconQtStride, log2TrSize, TEXT_LUMA, absPartIdx);
+            tmpEnergy = m_quant.ssimDistortion(cu, fenc, stride, tmpRecon, tmpReconStride, log2TrSize, TEXT_LUMA, absPartIdx);
             tmpCost = m_rdCost.calcSsimRdCost(tmpDist, tmpBits, tmpEnergy);
         }
         else
