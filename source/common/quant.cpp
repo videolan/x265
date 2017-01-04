@@ -483,6 +483,7 @@ uint64_t Quant::ssimDistortion(const CUData& cu, const pixel* fenc, uint32_t fSt
 {
     static const int ssim_c1 = (int)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64 + .5); // 416
     static const int ssim_c2 = (int)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63 + .5); // 235963
+    int shift = (X265_DEPTH - 8);
 
     int trSize = 1 << log2TrSize;
     uint64_t ssDc = 0, ssBlock = 0, ssAc = 0;
@@ -521,7 +522,7 @@ uint64_t Quant::ssimDistortion(const CUData& cu, const pixel* fenc, uint32_t fSt
     {
         for (int block_xx = 0; block_xx < trSize; block_xx += 4)
         {
-            uint32_t temp = fenc[block_yy * fStride + block_xx];
+            uint32_t temp = fenc[block_yy * fStride + block_xx] >> shift;
             dc_k += temp * temp;
         }
     }
@@ -539,7 +540,7 @@ uint64_t Quant::ssimDistortion(const CUData& cu, const pixel* fenc, uint32_t fSt
     {
         for (int block_xx = 0; block_xx < trSize; block_xx += 1)
         {
-            uint32_t temp = fenc[block_yy * fStride + block_xx];
+            uint32_t temp = fenc[block_yy * fStride + block_xx] >> shift;
             ac_k += temp * temp;
         }
     }

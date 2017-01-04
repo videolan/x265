@@ -2919,6 +2919,7 @@ void Analysis::normFactor(const pixel* src, uint32_t blockSize, CUData& ctu, int
 {
     static const int ssim_c1 = (int)(.01 * .01 * PIXEL_MAX * PIXEL_MAX * 64 + .5); // 416
     static const int ssim_c2 = (int)(.03 * .03 * PIXEL_MAX * PIXEL_MAX * 64 * 63 + .5); // 235963
+    int shift = (X265_DEPTH - 8);
 
     double s = 1 + 0.005 * qp;
 
@@ -2931,7 +2932,7 @@ void Analysis::normFactor(const pixel* src, uint32_t blockSize, CUData& ctu, int
     {
         for (uint32_t block_xx = 0; block_xx < blockSize; block_xx += 4)
         {
-            uint32_t temp = src[block_yy * blockSize + block_xx];
+            uint32_t temp = src[block_yy * blockSize + block_xx] >> shift;
             z_o += temp * temp; // 2 * (Z(0)) pow(2)
         }
     }
@@ -2944,7 +2945,7 @@ void Analysis::normFactor(const pixel* src, uint32_t blockSize, CUData& ctu, int
     {
         for (uint32_t block_xx = 0; block_xx < blockSize; block_xx += 1)
         {
-            uint32_t temp = src[block_yy * blockSize + block_xx];
+            uint32_t temp = src[block_yy * blockSize + block_xx] >> shift;
             z_k += temp * temp;
         }
     }
