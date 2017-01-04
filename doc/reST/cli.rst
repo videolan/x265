@@ -944,6 +944,16 @@ as the residual quad-tree (RQT).
 	maximum TU size is smaller than the CU size then transform QT begins 
 	at the depth of the max-tu-size. Default: 32.
 
+.. option:: --ssim-rd, --no-ssim-rd
+
+    Enable/Disable SSIM RDO. SSIM is a better perceptual quality assessment
+    method as compared to MSE. SSIM based RDO calculation is based on residual
+    divisive normalization scheme. This normalization is consistent with the 
+    luminance and contrast masking effect of Human Visual System. It is used
+    for mode selection during analysis of CTUs and can achieve significant 
+    gain in terms of objective quality metrics SSIM and PSNR. It only has effect
+    on presets which use RDO-based mode decisions (:option:`--rd` 3 and above).
+
 Temporal / motion search options
 ================================
 
