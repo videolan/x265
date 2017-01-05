@@ -144,6 +144,7 @@ struct Lowres : public ReferencePlanes
     /* rate control / adaptive quant data */
     double*   qpAqOffset;      // AQ QP offset values for each 16x16 CU
     double*   qpCuTreeOffset;  // cuTree QP offset values for each 16x16 CU
+    double*   qpAqMotionOffset;
     int*      invQscaleFactor; // qScale values for qp Aq Offsets
     int*      invQscaleFactor8x8; // temporary buffer for qg-size 8
     uint32_t* blockVariance;

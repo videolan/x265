@@ -56,6 +56,7 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled, uint32_t qgS
     if (bAQEnabled)
     {
         CHECKED_MALLOC_ZERO(qpAqOffset, double, cuCountFullRes);
+        CHECKED_MALLOC_ZERO(qpAqMotionOffset, double, cuCountFullRes);
         CHECKED_MALLOC_ZERO(invQscaleFactor, int, cuCountFullRes);
         CHECKED_MALLOC_ZERO(qpCuTreeOffset, double, cuCountFullRes);
         CHECKED_MALLOC_ZERO(blockVariance, uint32_t, cuCountFullRes);
@@ -124,8 +125,8 @@ void Lowres::destroy()
         X265_FREE(lowresMvCosts[0][i]);
         X265_FREE(lowresMvCosts[1][i]);
     }
-
     X265_FREE(qpAqOffset);
+    X265_FREE(qpAqMotionOffset);
     X265_FREE(invQscaleFactor);
     X265_FREE(qpCuTreeOffset);
     X265_FREE(propagateCost);

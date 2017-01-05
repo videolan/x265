@@ -118,6 +118,7 @@ struct Mode
     uint64_t    sa8dCost;   // sum of partition sa8d distortion costs   (sa8d(fenc, pred) + lambda * bits)
     uint32_t    sa8dBits;   // signal bits used in sa8dCost calculation
     uint32_t    psyEnergy;  // sum of partition psycho-visual energy difference
+    uint32_t    ssimEnergy;
     sse_t   resEnergy;  // sum of partition residual energy after motion prediction
     sse_t   lumaDistortion;
     sse_t   chromaDistortion;
@@ -132,6 +133,7 @@ struct Mode
         sa8dCost = 0;
         sa8dBits = 0;
         psyEnergy = 0;
+        ssimEnergy = 0;
         resEnergy = 0;
         lumaDistortion = 0;
         chromaDistortion = 0;
@@ -147,6 +149,7 @@ struct Mode
         sa8dCost += subMode.sa8dCost;
         sa8dBits += subMode.sa8dBits;
         psyEnergy += subMode.psyEnergy;
+        ssimEnergy += subMode.ssimEnergy;
         resEnergy += subMode.resEnergy;
         lumaDistortion += subMode.lumaDistortion;
         chromaDistortion += subMode.chromaDistortion;
@@ -390,7 +393,7 @@ protected:
         Entropy rqtStore[NUM_SUBPART];
     } m_cacheTU;
 
-    uint64_t estimateNullCbfCost(sse_t dist, uint32_t psyEnergy, uint32_t tuDepth, TextType compId);
+    uint64_t estimateNullCbfCost(sse_t dist, uint32_t energy, uint32_t tuDepth, TextType compId);
     bool     splitTU(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t tuDepth, ShortYuv& resiYuv, Cost& splitCost, const uint32_t depthRange[2], int32_t splitMore);
     void     estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPartIdx, uint32_t depth, ShortYuv& resiYuv, Cost& costs, const uint32_t depthRange[2], int32_t splitMore = -1);
 
@@ -430,7 +433,9 @@ protected:
     // get most probable luma modes for CU part, and bit cost of all non mpm modes
     uint32_t getIntraRemModeBits(CUData & cu, uint32_t absPartIdx, uint32_t mpmModes[3], uint64_t& mpms) const;
 
-    void updateModeCost(Mode& m) const { m.rdCost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(m.distortion, m.totalBits, m.psyEnergy) : m_rdCost.calcRdCost(m.distortion, m.totalBits); }
+    void updateModeCost(Mode& m) const { m.rdCost = m_rdCost.m_psyRd ? m_rdCost.calcPsyRdCost(m.distortion, m.totalBits, m.psyEnergy)
+                                                : (m_rdCost.m_ssimRd ? m_rdCost.calcSsimRdCost(m.distortion, m.totalBits, m.ssimEnergy) 
+                                                : m_rdCost.calcRdCost(m.distortion, m.totalBits)); }
 };
 }
 

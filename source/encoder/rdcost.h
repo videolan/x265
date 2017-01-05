@@ -41,9 +41,11 @@ public:
     uint32_t  m_chromaDistWeight[2];
     uint32_t  m_psyRdBase;
     uint32_t  m_psyRd;
+    uint32_t  m_ssimRd;
     int       m_qp; /* QP used to configure lambda, may be higher than QP_MAX_SPEC but <= QP_MAX_MAX */
 
     void setPsyRdScale(double scale)                { m_psyRdBase = (uint32_t)floor(65536.0 * scale * 0.33); }
+    void setSsimRd(int ssimRd) { m_ssimRd = ssimRd; };
 
     void setQP(const Slice& slice, int qp)
     {
@@ -127,6 +129,20 @@ public:
                    distortion, bits, m_lambda, m_lambda2);
 #endif
         return distortion + ((m_lambda * m_psyRd * psycost) >> 24) + ((bits * m_lambda2) >> 8);
+    }
+
+    inline uint64_t calcSsimRdCost(uint64_t distortion, uint32_t bits, uint32_t ssimCost) const
+    {
+#if X265_DEPTH < 10
+        X265_CHECK((bits <= (UINT64_MAX / m_lambda2)) && (ssimCost <= UINT64_MAX / m_lambda),
+                   "calcPsyRdCost wrap detected dist: " X265_LL " bits: %u, lambda: " X265_LL ", lambda2: " X265_LL "\n",
+                   distortion, bits, m_lambda, m_lambda2);
+#else
+        X265_CHECK((bits <= (UINT64_MAX / m_lambda2)) && (ssimCost <= UINT64_MAX / m_lambda),
+                   "calcPsyRdCost wrap detected dist: " X265_LL ", bits: %u, lambda: " X265_LL ", lambda2: " X265_LL "\n",
+                   distortion, bits, m_lambda, m_lambda2);
+#endif
+        return distortion + ((m_lambda * ssimCost) >> 14) + ((bits * m_lambda2) >> 8);
     }
 
     inline uint64_t calcRdSADCost(uint32_t sadCost, uint32_t bits) const

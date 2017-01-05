@@ -827,6 +827,7 @@ void FrameEncoder::compressFrame()
         m_frame->m_encData->m_frameStats.lumaDistortion   += m_rows[i].rowStats.lumaDistortion;
         m_frame->m_encData->m_frameStats.chromaDistortion += m_rows[i].rowStats.chromaDistortion;
         m_frame->m_encData->m_frameStats.psyEnergy        += m_rows[i].rowStats.psyEnergy;
+        m_frame->m_encData->m_frameStats.ssimEnergy       += m_rows[i].rowStats.ssimEnergy;
         m_frame->m_encData->m_frameStats.resEnergy        += m_rows[i].rowStats.resEnergy;
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
@@ -841,6 +842,7 @@ void FrameEncoder::compressFrame()
     m_frame->m_encData->m_frameStats.avgLumaDistortion   = (double)(m_frame->m_encData->m_frameStats.lumaDistortion) / m_frame->m_encData->m_frameStats.totalCtu;
     m_frame->m_encData->m_frameStats.avgChromaDistortion = (double)(m_frame->m_encData->m_frameStats.chromaDistortion) / m_frame->m_encData->m_frameStats.totalCtu;
     m_frame->m_encData->m_frameStats.avgPsyEnergy        = (double)(m_frame->m_encData->m_frameStats.psyEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
+    m_frame->m_encData->m_frameStats.avgSsimEnergy       = (double)(m_frame->m_encData->m_frameStats.ssimEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
     m_frame->m_encData->m_frameStats.avgResEnergy        = (double)(m_frame->m_encData->m_frameStats.resEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
     m_frame->m_encData->m_frameStats.percentIntraNxN     = (double)(m_frame->m_encData->m_frameStats.cntIntraNxN * 100) / m_frame->m_encData->m_frameStats.totalCu;
     for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
@@ -1182,6 +1184,65 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         //m_rows[row - 1].bufferedEntropy.loadContexts(m_initSliceContext);
     }
 
+    // calculate mean QP for consistent deltaQP signalling calculation
+    if (m_param->bOptCUDeltaQP)
+    {
+        ScopedLock self(curRow.lock);
+        if (!curRow.avgQPComputed)
+        {
+            if (m_param->bEnableWavefront || !row)
+            {
+                double meanQPOff = 0;
+                uint32_t loopIncr, count = 0;
+                bool isReferenced = IS_REFERENCED(m_frame);
+                double *qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
+                if (qpoffs)
+                {
+                    if (m_param->rc.qgSize == 8)
+                        loopIncr = 8;
+                    else
+                        loopIncr = 16;
+                    uint32_t cuYStart = 0, height = m_frame->m_fencPic->m_picHeight;
+                    if (m_param->bEnableWavefront)
+                    {
+                        cuYStart = intRow * m_param->maxCUSize;
+                        height = cuYStart + m_param->maxCUSize;
+                    }
+
+                    uint32_t qgSize = m_param->rc.qgSize, width = m_frame->m_fencPic->m_picWidth;
+                    uint32_t maxOffsetCols = (m_frame->m_fencPic->m_picWidth + (loopIncr - 1)) / loopIncr;
+                    for (uint32_t cuY = cuYStart; cuY < height && (cuY < m_frame->m_fencPic->m_picHeight); cuY += qgSize)
+                    {
+                        for (uint32_t cuX = 0; cuX < width; cuX += qgSize)
+                        {
+                            double qp_offset = 0;
+                            uint32_t cnt = 0;
+
+                            for (uint32_t block_yy = cuY; block_yy < cuY + qgSize && block_yy < m_frame->m_fencPic->m_picHeight; block_yy += loopIncr)
+                            {
+                                for (uint32_t block_xx = cuX; block_xx < cuX + qgSize && block_xx < width; block_xx += loopIncr)
+                                {
+                                    int idx = ((block_yy / loopIncr) * (maxOffsetCols)) + (block_xx / loopIncr);
+                                    qp_offset += qpoffs[idx];
+                                    cnt++;
+                                }
+                            }
+                            qp_offset /= cnt;
+                            meanQPOff += qp_offset;
+                            count++;
+                        }
+                    }
+                    meanQPOff /= count;
+                }
+                rowCoder.m_meanQP = slice->m_sliceQp + meanQPOff;
+            }
+            else
+            {
+                rowCoder.m_meanQP = m_rows[0].rowGoOnCoder.m_meanQP;
+            }
+            curRow.avgQPComputed = 1;
+        }
+    }
 
     // TODO: specially case handle on first and last row
 
@@ -1252,6 +1313,10 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             rowCoder.copyState(m_initSliceContext);
             rowCoder.loadContexts(m_rows[row - 1].bufferedEntropy);
         }
+        analysis2PassFrameData* analysisFrameData = (analysis2PassFrameData*)(m_frame->m_analysis2Pass).analysisFramedata;
+        if (analysisFrameData && m_param->rc.bStatRead && m_param->analysisMultiPassDistortion && (analysisFrameData->threshold[cuAddr] < 0.9 || analysisFrameData->threshold[cuAddr] > 1.1)
+            && analysisFrameData->highDistortionCtuCount && analysisFrameData->lowDistortionCtuCount)
+            curEncData.m_cuStat[cuAddr].baseQp += analysisFrameData->offset[cuAddr];
 
         // Does all the CU analysis, returns best top level mode decision
         Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, m_cuGeoms[m_ctuGeomMap[cuAddr]], rowCoder);
@@ -1356,6 +1421,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         curRow.rowStats.lumaDistortion   += best.lumaDistortion;
         curRow.rowStats.chromaDistortion += best.chromaDistortion;
         curRow.rowStats.psyEnergy        += best.psyEnergy;
+        curRow.rowStats.ssimEnergy       += best.ssimEnergy;
         curRow.rowStats.resEnergy        += best.resEnergy;
         curRow.rowStats.cntIntraNxN      += frameLog.cntIntraNxN;
         curRow.rowStats.totalCu          += frameLog.totalCu;

@@ -115,6 +115,14 @@ typedef struct x265_cu_stats
     /* All the above values will add up to 100%. */
 } x265_cu_stats;
 
+
+typedef struct x265_analysis_2Pass
+{
+    uint32_t      poc;
+    uint32_t      frameRecordSize;
+    void*         analysisFramedata;
+}x265_analysis_2Pass;
+
 /* Frame level statistics */
 typedef struct x265_frame_stats
 {
@@ -282,6 +290,8 @@ typedef struct x265_picture
     uint64_t framesize;
 
     int    height;
+
+    x265_analysis_2Pass analysis2Pass;
 } x265_picture;
 
 typedef enum
@@ -1335,6 +1345,29 @@ typedef struct x265_param
     * intra cost of a frame used in scenecut detection. Default 5. */
     double     scenecutBias;
 
+    /* Use multiple worker threads dedicated to doing only lookahead instead of sharing
+    * the worker threads with Frame Encoders. A dedicated lookahead threadpool is created with the
+    * specified number of worker threads. This can range from 0 upto half the
+    * hardware threads available for encoding. Using too many threads for lookahead can starve
+    * resources for frame Encoder and can harm performance. Default is 0 - disabled. */
+    int       lookaheadThreads;
+
+    /* Optimize CU level QPs to signal consistent deltaQPs in frame for rd level > 4 */
+    int        bOptCUDeltaQP;
+
+    /* Refine analysis in multipass ratecontrol based on analysis information stored */
+    int         analysisMultiPassRefine;
+
+    /* Refine analysis in multipass ratecontrol based on distortion data stored */
+    int         analysisMultiPassDistortion;
+
+    /* Adaptive Quantization based on relative motion */
+    int        bAQMotion;
+
+    /* SSIM based RDO, based on residual divisive normalization scheme. Used for mode
+    * selection during analysis of CTUs, can achieve significant gain in terms of 
+    * objective quality metrics SSIM and PSNR */
+    int       bSsimRd;
 } x265_param;
 
 /* x265_param_alloc:

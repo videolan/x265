@@ -1227,8 +1227,18 @@ Slice decision options
     Default: 8 for ultrafast, superfast, faster, fast, medium
              4 for slow, slower
              disabled for veryslow, slower
+			 
+.. option:: --lookahead-threads <integer>
 
+    Use multiple worker threads dedicated to doing only lookahead instead of sharing
+    the worker threads with frame Encoders. A dedicated lookahead threadpool is created with the
+    specified number of worker threads. This can range from 0 upto half the
+    hardware threads available for encoding. Using too many threads for lookahead can starve
+    resources for frame Encoder and can harm performance. Default is 0 - disabled, Lookahead 
+	shares worker threads with other FrameEncoders . 
 
+    **Values:** 0 - disabled(default). Max - Half of available hardware threads.
+	
 .. option:: --b-adapt <integer>
 
 	Set the level of effort in determining B frame placement.
@@ -1372,6 +1382,14 @@ Quality, rate control and rate distortion options
 	Default 1.0.
 	**Range of values:** 0.0 to 3.0
 
+.. option:: --[no-]aq-motion
+
+	Adjust the AQ offsets based on the relative motion of each block with
+	respect to the motion of the frame. The more the relative motion of the block,
+	the more quantization is used. Default disabled. 
+
+	Requires AQ Mode to be on.
+
 .. option:: --qg-size <64|32|16|8>
 
 	Enable adaptive quantization for sub-CTUs. This parameter specifies 
@@ -1427,6 +1445,23 @@ Quality, rate control and rate distortion options
 	* :option:`--me` = DIA
 	* :option:`--subme` = MIN(2, :option:`--subme`)
 	* :option:`--rd` = MIN(2, :option:`--rd`)
+
+.. option:: --multi-pass-opt-analysis, --no-multi-pass-opt-analysis
+
+    Enable/Disable multipass analysis refinement along with multipass ratecontrol. Based on 
+    the information stored in pass 1, in subsequent passes analysis data is refined 
+    and also redundant steps are skipped.
+    In pass 1 analysis information like motion vector, depth, reference and prediction
+    modes of the final best CTU partition is stored for each CTU.
+    Default disabled.
+
+.. option:: --multi-pass-opt-distortion, --no-multi-pass-opt-distortion
+
+    Enable/Disable multipass refinement of qp based on distortion data along with multipass
+    ratecontrol. In pass 1 distortion of best CTU partition is stored. CTUs with high
+    distortion get lower(negative)qp offsets and vice-versa for low distortion CTUs in pass 2.
+    This helps to improve the subjective quality.
+    Default disabled.
 
 .. option:: --strict-cbr, --no-strict-cbr
 	
@@ -1884,6 +1919,13 @@ Bitstream options
 .. option:: --[no-]multi-pass-opt-rps
 
 	Enable storing commonly used RPS in SPS in multi pass mode. Default disabled.
+
+.. option:: --[no-]opt-cu-delta-qp
+
+	Optimize CU level QPs by pulling up lower QPs to value close to meanQP thereby
+	minimizing fluctuations in deltaQP signalling. Default disabled.
+
+	Only effective at RD levels 5 and 6
 
 
 Debugging options

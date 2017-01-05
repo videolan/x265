@@ -55,6 +55,7 @@ struct FrameStats
     double      avgLumaDistortion;
     double      avgChromaDistortion;
     double      avgPsyEnergy;
+    double      avgSsimEnergy;
     double      avgResEnergy;
     double      percentIntraNxN;
     double      percentSkipCu[NUM_CU_DEPTH];
@@ -68,6 +69,7 @@ struct FrameStats
     uint64_t    lumaDistortion;
     uint64_t    chromaDistortion;
     uint64_t    psyEnergy;
+    int64_t     ssimEnergy;
     uint64_t    resEnergy;
     uint64_t    cntSkipCu[NUM_CU_DEPTH];
     uint64_t    cntMergeCu[NUM_CU_DEPTH];
@@ -181,5 +183,24 @@ struct analysis_inter_data
     uint8_t*    partSize;
     uint8_t*    mergeFlag;
 };
+
+struct analysis2PassFrameData
+{
+    uint8_t*      depth;
+    MV*           m_mv[2];
+    int*          mvpIdx[2];
+    int32_t*      ref[2];
+    uint8_t*      modes;
+    sse_t*        distortion;
+    sse_t*        ctuDistortion;
+    double*       scaledDistortion;
+    double        averageDistortion;
+    double        sdDistortion;
+    uint32_t      highDistortionCtuCount;
+    uint32_t      lowDistortionCtuCount;
+    double*       offset;
+    double*       threshold;
+};
+
 }
 #endif // ifndef X265_FRAMEDATA_H

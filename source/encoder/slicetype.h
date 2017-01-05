@@ -129,8 +129,8 @@ public:
     bool          m_bBatchFrameCosts;
     bool          m_filled;
     bool          m_isSceneTransition;
+    int           m_numPools;
     Lookahead(x265_param *param, ThreadPool *pool);
-
 #if DETAILED_CU_STATS
     int64_t       m_slicetypeDecideElapsedTime;
     int64_t       m_preLookaheadElapsedTime;
@@ -165,7 +165,8 @@ protected:
     int64_t slicetypePathCost(Lowres **frames, char *path, int64_t threshold);
     int64_t vbvFrameCost(Lowres **frames, int p0, int p1, int b);
     void    vbvLookahead(Lowres **frames, int numFrames, int keyframes);
-
+    void    aqMotion(Lowres **frames, bool bintra);
+    void    calcMotionAdaptiveQuantFrame(Lowres **frames, int p0, int p1, int b);
     /* called by slicetypeAnalyse() to effect cuTree adjustments to adaptive
      * quant offsets */
     void    cuTree(Lowres **frames, int numframes, bool bintra);

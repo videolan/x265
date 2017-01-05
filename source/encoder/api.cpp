@@ -183,6 +183,20 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
     }
     else
     {
+        if (encoder->m_latestParam->scalingLists && encoder->m_latestParam->scalingLists != encoder->m_param->scalingLists)
+        {
+            if (encoder->m_param->bRepeatHeaders)
+            {
+                if (encoder->m_scalingList.parseScalingList(encoder->m_latestParam->scalingLists))
+                    return -1;
+                encoder->m_scalingList.setupQuantMatrices();
+            }
+            else
+            {
+                x265_log(encoder->m_param, X265_LOG_ERROR, "Repeat headers is turned OFF, cannot reconfigure scalinglists\n");
+                return -1;
+            }
+        }
         encoder->m_reconfigure = true;
         encoder->printReconfigureParams();
     }
@@ -210,6 +224,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     {
         pic_in->analysisData.intraData = NULL;
         pic_in->analysisData.interData = NULL;
+        pic_in->analysis2Pass.analysisFramedata = NULL;
     }
 
     if (pp_nal && numEncoded > 0)

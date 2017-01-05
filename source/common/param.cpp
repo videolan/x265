@@ -149,8 +149,8 @@ void x265_param_default(x265_param* param)
     param->bBPyramid = 1;
     param->scenecutThreshold = 40; /* Magic number pulled in from x264 */
     param->lookaheadSlices = 8;
+    param->lookaheadThreads = 0;
     param->scenecutBias = 5.0;
-
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
     param->bEnableStrongIntraSmoothing = 1;
@@ -193,6 +193,8 @@ void x265_param_default(x265_param* param)
     param->psyRd = 2.0;
     param->psyRdoq = 0.0;
     param->analysisMode = 0;
+    param->analysisMultiPassRefine = 0;
+    param->analysisMultiPassDistortion = 0;
     param->analysisFileName = NULL;
     param->bIntraInBFrames = 0;
     param->bLossless = 0;
@@ -200,6 +202,7 @@ void x265_param_default(x265_param* param)
     param->bEnableTemporalSubLayers = 0;
     param->bEnableRdRefine = 0;
     param->bMultiPassOptRPS = 0;
+    param->bSsimRd = 0;
 
     /* Rate control options */
     param->rc.vbvMaxBitrate = 0;
@@ -263,6 +266,8 @@ void x265_param_default(x265_param* param)
     param->bEmitVUIHRDInfo      = 1;
     param->bOptQpPPS            = 1;
     param->bOptRefListLengthPPS = 1;
+    param->bOptCUDeltaQP        = 0;
+    param->bAQMotion = 0;
 
 }
 
@@ -919,7 +924,21 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("opt-ref-list-length-pps") p->bOptRefListLengthPPS = atobool(value);
         OPT("multi-pass-opt-rps") p->bMultiPassOptRPS = atobool(value);
         OPT("scenecut-bias") p->scenecutBias = atof(value);
-
+        OPT("lookahead-threads") p->lookaheadThreads = atoi(value);
+        OPT("opt-cu-delta-qp") p->bOptCUDeltaQP = atobool(value);
+        OPT("multi-pass-opt-analysis") p->analysisMultiPassRefine = atobool(value);
+        OPT("multi-pass-opt-distortion") p->analysisMultiPassDistortion = atobool(value);
+        OPT("aq-motion") p->bAQMotion = atobool(value);
+        OPT("ssim-rd")
+        {
+            int bval = atobool(value);
+            if (bError || bval)
+            {
+                bError = false;
+                p->psyRd = 0.0;
+                p->bSsimRd = atobool(value);
+            }
+        }
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1412,6 +1431,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(param->bEnableFastIntra, "fast-intra");
     TOOLOPT(param->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
     TOOLVAL(param->lookaheadSlices, "lslices=%d");
+    TOOLVAL(param->lookaheadThreads, "lthreads=%d")
     if (param->maxSlices > 1)
         TOOLVAL(param->maxSlices, "slices=%d");
     if (param->bEnableLoopFilter)
@@ -1613,6 +1633,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bOptRefListLengthPPS, "opt-ref-list-length-pps");
     BOOL(p->bMultiPassOptRPS, "multi-pass-opt-rps");
     s += sprintf(s, " scenecut-bias=%.2f", p->scenecutBias);
+    BOOL(p->bOptCUDeltaQP, "opt-cu-delta-qp");
+    BOOL(p->bAQMotion, "aq-motion");
 #undef BOOL
     return buf;
 }

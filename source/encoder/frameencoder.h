@@ -95,6 +95,7 @@ struct CTURow
 
     /* count of completed CUs in this row */
     volatile uint32_t completed;
+    volatile uint32_t avgQPComputed;
 
     /* called at the start of each frame to initialize state */
     void init(Entropy& initContext, unsigned int sid)
@@ -102,6 +103,7 @@ struct CTURow
         active = false;
         busy = false;
         completed = 0;
+        avgQPComputed = 0;
         sliceId = sid;
         memset(&rowStats, 0, sizeof(rowStats));
         rowGoOnCoder.load(initContext);

@@ -125,6 +125,7 @@ static const struct option long_options[] =
     { "intra-refresh",        no_argument, NULL, 0 },
     { "rc-lookahead",   required_argument, NULL, 0 },
     { "lookahead-slices", required_argument, NULL, 0 },
+    { "lookahead-threads", required_argument, NULL, 0 },
     { "bframes",        required_argument, NULL, 'b' },
     { "bframe-bias",    required_argument, NULL, 0 },
     { "b-adapt",        required_argument, NULL, 0 },
@@ -218,6 +219,8 @@ static const struct option long_options[] =
     { "no-opt-qp-pps",        no_argument, NULL, 0 },
     { "opt-ref-list-length-pps",         no_argument, NULL, 0 },
     { "no-opt-ref-list-length-pps",      no_argument, NULL, 0 },
+    { "opt-cu-delta-qp",      no_argument, NULL, 0 },
+    { "no-opt-cu-delta-qp",   no_argument, NULL, 0 },
     { "no-dither",            no_argument, NULL, 0 },
     { "dither",               no_argument, NULL, 0 },
     { "no-repeat-headers",    no_argument, NULL, 0 },
@@ -235,6 +238,10 @@ static const struct option long_options[] =
     { "nr-inter",       required_argument, NULL, 0 },
     { "stats",          required_argument, NULL, 0 },
     { "pass",           required_argument, NULL, 0 },
+    { "multi-pass-opt-analysis", no_argument, NULL, 0 },
+    { "no-multi-pass-opt-analysis",    no_argument, NULL, 0 },
+    { "multi-pass-opt-distortion",     no_argument, NULL, 0 },
+    { "no-multi-pass-opt-distortion",  no_argument, NULL, 0 },
     { "slow-firstpass",       no_argument, NULL, 0 },
     { "no-slow-firstpass",    no_argument, NULL, 0 },
     { "multi-pass-opt-rps",   no_argument, NULL, 0 },
@@ -249,6 +256,10 @@ static const struct option long_options[] =
     { "analyze-src-pics", no_argument, NULL, 0 },
     { "no-analyze-src-pics", no_argument, NULL, 0 },
     { "slices",         required_argument, NULL, 0 },
+    { "aq-motion", no_argument, NULL, 0 },
+    { "no-aq-motion", no_argument, NULL, 0 },
+    { "ssim-rd",      no_argument, NULL, 0 },
+    { "no-ssim-rd",   no_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -333,6 +344,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]psy-rd <0..5.0>        Strength of psycho-visual rate distortion optimization, 0 to disable. Default %.1f\n", param->psyRd);
     H0("   --[no-]rdoq-level <0|1|2>     Level of RDO in quantization 0:none, 1:levels, 2:levels & coding groups. Default %d\n", param->rdoqLevel);
     H0("   --[no-]psy-rdoq <0..50.0>     Strength of psycho-visual optimization in RDO quantization, 0 to disable. Default %.1f\n", param->psyRdoq);
+    H0("   --[no-]ssim-rd                Enable ssim rate distortion optimization, 0 to disable. Default %s\n", OPT(param->bSsimRd));
     H0("   --[no-]rd-refine              Enable QP based RD refinement for rd levels 5 and 6. Default %s\n", OPT(param->bEnableRdRefine));
     H0("   --[no-]early-skip             Enable early SKIP detection. Default %s\n", OPT(param->bEnableEarlySkip));
     H0("   --[no-]rskip                  Enable early exit from recursion. Default %s\n", OPT(param->bEnableRecursionSkip));
@@ -372,6 +384,7 @@ static void showHelp(x265_param *param)
     H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
     H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
     H1("   --lookahead-slices <0..16>    Number of slices to use per lookahead cost estimate. Default %d\n", param->lookaheadSlices);
+    H0("   --lookahead-threads <integer> Number of threads to be dedicated to perform lookahead only. Default %d\n", param->lookaheadThreads);
     H0("   --bframes <integer>           Maximum number of consecutive b-frames (now it only enables B GOP structure) Default %d\n", param->bframes);
     H1("   --bframe-bias <integer>       Bias towards B frame decisions. Default %d\n", param->bFrameBias);
     H0("   --b-adapt <0..2>              0 - none, 1 - fast, 2 - full (trellis) adaptive B frame scheduling. Default %d\n", param->bFrameAdaptive);
@@ -396,6 +409,8 @@ static void showHelp(x265_param *param)
        "                                   - 1 : First pass, creates stats file\n"
        "                                   - 2 : Last pass, does not overwrite stats file\n"
        "                                   - 3 : Nth pass, overwrites stats file\n");
+    H0("   --[no-]multi-pass-opt-analysis   Refine analysis in 2 pass based on analysis information from pass 1\n");
+    H0("   --[no-]multi-pass-opt-distortion Use distortion of CTU from pass 1 to refine qp in 2 pass\n");
     H0("   --stats                       Filename for stats file in multipass pass rate control. Default x265_2pass.log\n");
     H0("   --[no-]analyze-src-pics       Motion estimation uses source frame planes. Default disable\n");
     H0("   --[no-]slow-firstpass         Enable a slow first pass in a multipass rate control mode. Default %s\n", OPT(param->rc.bEnableSlowFirstPass));
@@ -404,6 +419,7 @@ static void showHelp(x265_param *param)
     H0("   --analysis-file <filename>    Specify file name used for either dumping or reading analysis data.\n");
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance 3:auto variance with bias to dark scenes. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
+    H0("   --[no-]aq-motion              Adaptive Quantization based on the relative motion of each CU w.r.t., frame. Default %s\n", OPT(param->bOptCUDeltaQP));
     H0("   --qg-size <int>               Specifies the size of the quantization group (64, 32, 16, 8). Default %d\n", param->rc.qgSize);
     H0("   --[no-]cutree                 Enable cutree for Adaptive Quantization. Default %s\n", OPT(param->rc.cuTree));
     H0("   --[no-]rc-grain               Enable ratecontrol mode to handle grains specifically. turned on with tune grain. Default %s\n", OPT(param->rc.bEnableGrain));
@@ -465,6 +481,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]opt-qp-pps             Dynamically optimize QP in PPS (instead of default 26) based on QPs in previous GOP. Default %s\n", OPT(param->bOptQpPPS));
     H0("   --[no-]opt-ref-list-length-pps  Dynamically set L0 and L1 ref list length in PPS (instead of default 0) based on values in last GOP. Default %s\n", OPT(param->bOptRefListLengthPPS));
     H0("   --[no-]multi-pass-opt-rps     Enable storing commonly used RPS in SPS in multi pass mode. Default %s\n", OPT(param->bMultiPassOptRPS));
+    H0("   --[no-]opt-cu-delta-qp        Optimize to signal consistent CU level delta QPs in frame. Default %s\n", OPT(param->bOptCUDeltaQP));
     H1("\nReconstructed video options (debugging):\n");
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
