@@ -969,11 +969,28 @@ void FrameEncoder::compressFrame()
     }
     m_accessUnitBits = bytes << 3;
 
-    m_endCompressTime = x265_mdate();
-
+    int filler = 0;
     /* rateControlEnd may also block for earlier frames to call rateControlUpdateStats */
-    if (m_top->m_rateControl->rateControlEnd(m_frame, m_accessUnitBits, &m_rce) < 0)
+    if (m_top->m_rateControl->rateControlEnd(m_frame, m_accessUnitBits, &m_rce, &filler) < 0)
         m_top->m_aborted = true;
+
+    if (filler > 0)
+    {
+        filler = (filler - FILLER_OVERHEAD * 8) >> 3;
+        m_bs.resetBits();
+        while (filler > 0)
+        {
+            m_bs.write(0xff, 8);
+            filler--;
+        }
+        m_bs.writeByteAlignment();
+        m_nalList.serialize(NAL_UNIT_FILLER_DATA, m_bs);
+        bytes += m_nalList.m_nal[m_nalList.m_numNal - 1].sizeBytes;
+        bytes -= 3; //exclude start code prefix
+        m_accessUnitBits = bytes << 3;
+    }
+
+    m_endCompressTime = x265_mdate();
 
     /* Decrement referenced frame reference counts, allow them to be recycled */
     for (int l = 0; l < numPredDir; l++)

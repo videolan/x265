@@ -330,6 +330,10 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 #define INTEGRAL_PLANE_NUM          12 // 12 integral planes for 32x32, 32x24, 32x8, 24x32, 16x16, 16x12, 16x4, 12x16, 8x32, 8x8, 4x16 and 4x4.
 
+#define NAL_TYPE_OVERHEAD 2
+#define START_CODE_OVERHEAD 3 
+#define FILLER_OVERHEAD (NAL_TYPE_OVERHEAD + START_CODE_OVERHEAD + 1)
+
 namespace X265_NS {
 
 enum { SAO_NUM_OFFSET = 4 };

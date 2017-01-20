@@ -2479,14 +2479,16 @@ void RateControl::updatePredictor(Predictor *p, double q, double var, double bit
     p->offset += new_offset;
 }
 
-void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
+int RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 {
     int predType = rce->sliceType;
+    int filler = 0;
+    double bufferBits;
     predType = rce->sliceType == B_SLICE && rce->keptAsRef ? 3 : predType;
     if (rce->lastSatd >= m_ncu && rce->encodeOrder >= m_lastPredictorReset)
         updatePredictor(&m_pred[predType], x265_qp2qScale(rce->qpaRc), (double)rce->lastSatd, (double)bits);
     if (!m_isVbv)
-        return;
+        return 0;
 
     m_bufferFillFinal -= bits;
 
@@ -2495,15 +2497,32 @@ void RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
 
     m_bufferFillFinal = X265_MAX(m_bufferFillFinal, 0);
     m_bufferFillFinal += m_bufferRate;
-    m_bufferFillFinal = X265_MIN(m_bufferFillFinal, m_bufferSize);
-    double bufferBits = X265_MIN(bits + m_bufferExcess, m_bufferRate);
-    m_bufferExcess = X265_MAX(m_bufferExcess - bufferBits + bits, 0);
-    m_bufferFillActual += bufferBits - bits;
-    m_bufferFillActual = X265_MIN(m_bufferFillActual, m_bufferSize);
+
+    if (m_bufferFillFinal > m_bufferSize) 
+    {
+        if (m_param->rc.bStrictCbr)
+        {
+            filler = (int)(m_bufferFillFinal - m_bufferSize);
+            filler += FILLER_OVERHEAD * 8;
+            m_bufferFillFinal -= filler;
+            bufferBits = X265_MIN(bits + filler + m_bufferExcess, m_bufferRate);
+            m_bufferExcess = X265_MAX(m_bufferExcess - bufferBits + bits + filler, 0);
+            m_bufferFillActual += bufferBits - bits - filler;
+        }
+        else
+        {
+            m_bufferFillFinal = X265_MIN(m_bufferFillFinal, m_bufferSize);
+            bufferBits = X265_MIN(bits + m_bufferExcess, m_bufferRate);
+            m_bufferExcess = X265_MAX(m_bufferExcess - bufferBits + bits, 0);
+            m_bufferFillActual += bufferBits - bits;
+            m_bufferFillActual = X265_MIN(m_bufferFillActual, m_bufferSize);
+        }
+    }
+    return filler;
 }
 
 /* After encoding one frame, update rate control state */
-int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce)
+int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce, int *filler)
 {
     int orderValue = m_startEndOrder.get();
     int endOrdinal = (rce->encodeOrder + m_param->frameNumThreads) * 2 - 1;
@@ -2634,7 +2653,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
 
     if (m_isVbv)
     {
-        updateVbv(actualBits, rce);
+        *filler = updateVbv(actualBits, rce);
 
         if (m_param->bEmitHRDSEI)
         {
@@ -2656,9 +2675,9 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
 
                 rce->hrdTiming->cpbInitialAT = hrd->cbrFlag ? m_prevCpbFinalAT : X265_MAX(m_prevCpbFinalAT, cpbEarliestAT);
             }
-
+            int filler_bits = *filler ? (*filler - START_CODE_OVERHEAD * 8)  : 0; 
             uint32_t cpbsizeUnscale = hrd->cpbSizeValue << (hrd->cpbSizeScale + CPB_SHIFT);
-            rce->hrdTiming->cpbFinalAT = m_prevCpbFinalAT = rce->hrdTiming->cpbInitialAT + actualBits / cpbsizeUnscale;
+            rce->hrdTiming->cpbFinalAT = m_prevCpbFinalAT = rce->hrdTiming->cpbInitialAT + (actualBits + filler_bits)/ cpbsizeUnscale;
             rce->hrdTiming->dpbOutputTime = (double)rce->picTimingSEI->m_picDpbOutputDelay * time->numUnitsInTick / time->timeScale + rce->hrdTiming->cpbRemovalTime;
         }
     }

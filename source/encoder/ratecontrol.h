@@ -242,7 +242,7 @@ public:
     // to be called for each curFrame to process RateControl and set QP
     int  rateControlStart(Frame* curFrame, RateControlEntry* rce, Encoder* enc);
     void rateControlUpdateStats(RateControlEntry* rce);
-    int  rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce);
+    int  rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry* rce, int *filler);
     int  rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv);
     int  rateControlSliceType(int frameNum);
     bool cuTreeReadFor2Pass(Frame* curFrame);
@@ -269,7 +269,7 @@ protected:
     void   accumPQpUpdate();
 
     int    getPredictorType(int lowresSliceType, int sliceType);
-    void   updateVbv(int64_t bits, RateControlEntry* rce);
+    int    updateVbv(int64_t bits, RateControlEntry* rce);
     void   updatePredictor(Predictor *p, double q, double var, double bits);
     double clipQscale(Frame* pic, RateControlEntry* rce, double q);
     void   updateVbvPlan(Encoder* enc);
