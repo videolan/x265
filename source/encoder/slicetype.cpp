@@ -563,7 +563,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_lastKeyframe = -m_param->keyframeMax;
     m_sliceTypeBusy = false;
     m_fullQueueSize = X265_MAX(1, m_param->lookaheadDepth);
-    m_bAdaptiveQuant = m_param->rc.aqMode || m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred;
+    m_bAdaptiveQuant = m_param->rc.aqMode || m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred || m_param->bAQMotion;
 
     /* If we have a thread pool and are using --b-adapt 2, it is generally
      * preferable to perform all motion searches for each lowres frame in large
@@ -872,7 +872,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
         uint32_t widthInLowresCu = (uint32_t)m_8x8Width, heightInLowresCu = (uint32_t)m_8x8Height;
         double *qp_offset = 0;
         /* Factor in qpoffsets based on Aq/Cutree in CU costs */
-        if (m_param->rc.aqMode)
+        if (m_param->rc.aqMode || m_param->bAQMotion)
             qp_offset = (frames[b]->sliceType == X265_TYPE_B || !m_param->rc.cuTree) ? frames[b]->qpAqOffset : frames[b]->qpCuTreeOffset;
 
         for (uint32_t row = 0; row < numCuInHeight; row++)
@@ -1266,7 +1266,7 @@ int64_t Lookahead::vbvFrameCost(Lowres **frames, int p0, int p1, int b)
     CostEstimateGroup estGroup(*this, frames);
     int64_t cost = estGroup.singleCost(p0, p1, b);
 
-    if (m_param->rc.aqMode)
+    if (m_param->rc.aqMode || m_param->bAQMotion)
     {
         if (m_param->rc.cuTree)
             return frameCostRecalculate(frames, p0, p1, b);
