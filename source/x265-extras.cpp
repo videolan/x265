@@ -114,7 +114,7 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
 
                 /* detailed performance statistics */
                 if (level >= 2)
-                    fprintf(csvfp, ", DecideWait (ms), Row0Wait (ms), Wall time (ms), Ref Wait Wall (ms), Total CTU time (ms), Stall Time (ms), Avg WPP, Row Blocks");
+                    fprintf(csvfp, ", DecideWait (ms), Row0Wait (ms), Wall time (ms), Ref Wait Wall (ms), Total CTU time (ms), Stall Time (ms), Total frame time (ms), Avg WPP, Row Blocks");
                 fprintf(csvfp, "\n");
             }
             else
@@ -184,7 +184,7 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
 
     if (level >= 2)
     {
-        fprintf(csvfp, ", %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf,", frameStats->decideWaitTime, frameStats->row0WaitTime, frameStats->wallTime, frameStats->refWaitWallTime, frameStats->totalCTUTime, frameStats->stallTime);
+        fprintf(csvfp, ", %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf,", frameStats->decideWaitTime, frameStats->row0WaitTime, frameStats->wallTime, frameStats->refWaitWallTime, frameStats->totalCTUTime, frameStats->stallTime, frameStats->totalFrameTime);
         fprintf(csvfp, " %.3lf, %d", frameStats->avgWPP, frameStats->countRowBlocks);
     }
     fprintf(csvfp, "\n");

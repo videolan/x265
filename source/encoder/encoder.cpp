@@ -605,6 +605,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_dpb->m_freeList.empty())
         {
             inFrame = new Frame;
+            inFrame->m_encodeStartTime = x265_mdate();
             x265_param* p = m_reconfigure ? m_latestParam : m_param;
             if (inFrame->create(p, pic_in->quantOffsets))
             {
@@ -657,6 +658,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         else
         {
             inFrame = m_dpb->m_freeList.popBack();
+            inFrame->m_encodeStartTime = x265_mdate();
             /* Set lowres scencut and satdCost here to aovid overwriting ANALYSIS_READ
                decision by lowres init*/
             inFrame->m_lowres.bScenecut = false;
@@ -1542,6 +1544,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
         frameStats->refWaitWallTime = ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_allRowsAvailableTime);
         frameStats->totalCTUTime = ELAPSED_MSEC(0, curEncoder->m_totalWorkerElapsedTime);
         frameStats->stallTime = ELAPSED_MSEC(0, curEncoder->m_totalNoWorkerTime);
+        frameStats->totalFrameTime = ELAPSED_MSEC(curFrame->m_encodeStartTime, x265_mdate());
         if (curEncoder->m_totalActiveWorkerCount)
             frameStats->avgWPP = (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples;
         else

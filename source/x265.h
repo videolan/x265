@@ -157,6 +157,7 @@ typedef struct x265_frame_stats
     int              bScenecut;
     int              frameLatency;
     x265_cu_stats    cuStats;
+    double           totalFrameTime;
 } x265_frame_stats;
 
 /* Arbitrary User SEI

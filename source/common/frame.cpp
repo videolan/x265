@@ -46,6 +46,7 @@ Frame::Frame()
     m_userSEI.payloads = NULL;
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_rcData = NULL;
+    m_encodeStartTime = 0;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)

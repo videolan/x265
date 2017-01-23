@@ -100,6 +100,8 @@ public:
     x265_analysis_data     m_analysisData;
     x265_analysis_2Pass    m_analysis2Pass;
     RcStats*               m_rcData;
+
+    int64_t                m_encodeStartTime;
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);
