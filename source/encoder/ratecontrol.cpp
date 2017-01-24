@@ -228,6 +228,11 @@ RateControl::RateControl(x265_param& p)
             x265_log(m_param, X265_LOG_WARNING, "VBV is incompatible with constant QP, ignored.\n");
             m_param->rc.vbvBufferSize = 0;
             m_param->rc.vbvMaxBitrate = 0;
+            if (m_param->complexAnalysis)
+            {
+                x265_log(m_param, X265_LOG_WARNING, "Complex analysis requires VBV, complex analysis disabled.\n");
+                m_param->complexAnalysis = 0;
+            }
         }
         else if (m_param->rc.vbvMaxBitrate == 0)
         {

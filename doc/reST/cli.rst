@@ -872,6 +872,7 @@ as the residual quad-tree (RQT).
 .. option:: --limit-tu <0..4>
 
 	Enables early exit from TU depth recursion, for inter coded blocks.
+	
 	Level 1 - decides to recurse to next higher depth based on cost 
 	comparison of full size TU and split TU.
 	
@@ -943,6 +944,15 @@ as the residual quad-tree (RQT).
 	quad-tree begins at the same depth of the coded tree unit, but if the
 	maximum TU size is smaller than the CU size then transform QT begins 
 	at the depth of the max-tu-size. Default: 32.
+	
+.. option:: --complex-analysis <0..4>
+	
+	Increases the RD-level at points where the bitrate drops due to vbv. 
+	The number of CUs for which the RD is reconfigured is determined based
+	on the strength. Strength 1 gives the best FPS, strength 4 gives the 
+	best SSIM. Strength 0 switches this feature off. Default: 0.
+	
+	Effective for RD levels 4 and below.
 
 .. option:: --ssim-rd, --no-ssim-rd
 
