@@ -162,9 +162,7 @@ public:
     Lock               m_sliceQpLock;
     int                m_iFrameNum;   
     int                m_iPPSQpMinus26;
-    int                m_iLastSliceQp;
     int64_t            m_iBitsCostSum[QP_MAX_MAX + 1];
-
     Lock               m_sliceRefIdxLock;
     RefIdxLastGOP      m_refIdxLastGOP;
 

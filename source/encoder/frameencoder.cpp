@@ -494,9 +494,7 @@ void FrameEncoder::compressFrame()
             m_top->m_iBitsCostSum[i] += codeLength;
         }
         m_top->m_iFrameNum++;
-        m_top->m_iLastSliceQp = slice->m_sliceQp;
     }
-
     m_initSliceContext.resetEntropy(*slice);
 
     m_frameFilter.start(m_frame, m_initSliceContext);

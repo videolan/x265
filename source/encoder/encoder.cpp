@@ -78,7 +78,6 @@ Encoder::Encoder()
     m_offsetEmergency = NULL;
     m_iFrameNum = 0;
     m_iPPSQpMinus26 = 0;
-    m_iLastSliceQp = 0;
     m_rpsInSpsCount = 0;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
@@ -1005,10 +1004,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                             iLeastCost = m_iBitsCostSum[i];
                         }
                     }
-
                     /* If last slice Qp is close to (26 + m_iPPSQpMinus26) or outputs is all I-frame video,
                        we don't need to change m_iPPSQpMinus26. */
-                    if ((abs(m_iLastSliceQp - (26 + m_iPPSQpMinus26)) > 1) && (m_iFrameNum > 1))
+                    if (m_iFrameNum > 1)
                         m_iPPSQpMinus26 = (iLeastId + 1) - 26;
                     m_iFrameNum = 0;
                 }
