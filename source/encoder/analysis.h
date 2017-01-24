@@ -174,7 +174,7 @@ protected:
     /* generate residual and recon pixels for an entire CTU recursively (RD0) */
     void encodeResidue(const CUData& parentCTU, const CUGeom& cuGeom);
 
-    int calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, double baseQP = -1);
+    int calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int32_t complexCheck, double baseQP = -1);
 
     void calculateNormFactor(CUData& ctu, int qp);
     void normFactor(const pixel* src, uint32_t blockSize, CUData& ctu, int qp, TextType ttype);

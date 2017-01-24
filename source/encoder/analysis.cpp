@@ -139,7 +139,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     invalidateContexts(0);
 #endif
 
-    int qp = setLambdaFromQP(ctu, m_slice->m_pps->bUseDQP ? calculateQpforCuSize(ctu, cuGeom) : m_slice->m_sliceQp);
+    int qp = setLambdaFromQP(ctu, m_slice->m_pps->bUseDQP ? calculateQpforCuSize(ctu, cuGeom, 0) : m_slice->m_sliceQp);
     ctu.setQPSubParts((int8_t)qp, 0, 0);
 
     m_rqt[0].cur.load(initialContext);
@@ -439,7 +439,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
                 m_rqt[nextDepth].cur.load(*nextContext);
 
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
-                    nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
+                    nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom, 0));
 
                 compressIntraCU(parentCTU, childGeom, nextQP);
 
@@ -742,7 +742,7 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
                 m_rqt[nextDepth].cur.load(*nextContext);
 
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
-                    nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
+                    nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom, 0));
 
                 splitRefs[subPartIdx] = compressInterCU_dist(parentCTU, childGeom, nextQP);
 
@@ -969,6 +969,9 @@ uint32_t Analysis::compressInterCU_dist(const CUData& parentCTU, const CUGeom& c
 
 SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp)
 {
+    if (m_param->complexAnalysis && parentCTU.m_vbvAffected && calculateQpforCuSize(parentCTU, cuGeom, 1))
+        return compressInterCU_rd5_6(parentCTU, cuGeom, qp);
+
     uint32_t depth = cuGeom.depth;
     uint32_t cuAddr = parentCTU.m_cuAddr;
     ModeDepth& md = m_modeDepth[depth];
@@ -1100,7 +1103,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 m_rqt[nextDepth].cur.load(*nextContext);
 
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
-                    nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
+                    nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom, 0));
 
                 splitData[subPartIdx] = compressInterCU_rd0_4(parentCTU, childGeom, nextQP);
 
@@ -1537,6 +1540,9 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
 
 SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp)
 {
+    if (m_param->complexAnalysis && parentCTU.m_vbvAffected && !calculateQpforCuSize(parentCTU, cuGeom, 1))
+        return compressInterCU_rd0_4(parentCTU, cuGeom, qp);
+
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
@@ -1662,7 +1668,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 m_rqt[nextDepth].cur.load(*nextContext);
 
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
-                    nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
+                    nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom, 0));
 
                 splitData[subPartIdx] = compressInterCU_rd5_6(parentCTU, childGeom, nextQP);
 
@@ -2044,7 +2050,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 m_rqt[nextDepth].cur.load(*nextContext);
 
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
-                    nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
+                    nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom, 0));
 
                 qprdRefine(parentCTU, childGeom, nextQP, lqp);
 
@@ -2874,7 +2880,7 @@ bool Analysis::complexityCheckCU(const Mode& bestMode)
     return false;
 }
 
-int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, double baseQp)
+int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int32_t complexCheck, double baseQp)
 {
     FrameData& curEncData = *m_frame->m_encData;
     double qp = baseQp >= 0 ? baseQp : curEncData.m_cuStat[ctu.m_cuAddr].baseQp;
@@ -2885,7 +2891,11 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, doub
         loopIncr = 16;
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
     bool isReferenced = IS_REFERENCED(m_frame);
-    double *qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
+    double *qpoffs;
+    if (complexCheck)
+        qpoffs = m_frame->m_lowres.qpAqOffset;
+    else
+        qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
     if (qpoffs)
     {
         uint32_t width = m_frame->m_fencPic->m_picWidth;
@@ -2910,8 +2920,17 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, doub
 
         qp_offset /= cnt;
         qp += qp_offset;
+        if (complexCheck)
+        {
+            int32_t offset = ((int)(qp_offset * 100 + .5));
+            double threshold = (1 - ((X265_MAX_ANALYSIS_STRENGTH - m_param->complexAnalysis) * 0.5));
+            int32_t max_threshold = ((int)(threshold * 100 + .5));
+            if (offset < max_threshold)
+                return 1;
+            else
+                return 0;
+        }
     }
-
     return x265_clip3(m_param->rc.qpMin, m_param->rc.qpMax, (int)(qp + 0.5));
 }
 
