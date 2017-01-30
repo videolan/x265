@@ -1169,7 +1169,7 @@ int x265_check_params(x265_param* param)
           "RD Level is out of range");
     CHECK(param->rdoqLevel < 0 || param->rdoqLevel > 2,
         "RDOQ Level is out of range");
-    CHECK(param->complexAnalysis < 0 || param->complexAnalysis > 4,
+    CHECK(param->complexAnalysis < 0 || param->complexAnalysis > X265_MAX_ANALYSIS_STRENGTH,
         "Complex analysis strength must be between 0 and 4");
     CHECK(param->bframes && param->bframes >= param->lookaheadDepth && !param->rc.bStatRead,
           "Lookahead depth must be greater than the max consecutive bframe count");

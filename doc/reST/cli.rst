@@ -947,10 +947,11 @@ as the residual quad-tree (RQT).
 	
 .. option:: --complex-analysis <0..4>
 	
-	Increases the RD-level at points where the bitrate drops due to vbv. 
-	The number of CUs for which the RD is reconfigured is determined based
-	on the strength. Strength 1 gives the best FPS, strength 4 gives the 
-	best SSIM. Strength 0 switches this feature off. Default: 0.
+	Increases the RD level at points where quality drops due to VBV rate 
+	control enforcement. The number of CUs for which the RD is reconfigured 
+	is determined based on the strength. Strength 1 gives the best FPS, 
+	strength 4 gives the best SSIM. Strength 0 switches this feature off. 
+	Default: 0.
 	
 	Effective for RD levels 4 and below.
 

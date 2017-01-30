@@ -2160,7 +2160,7 @@ void Encoder::configure(x265_param *p)
     if (m_param->complexAnalysis && (!bIsVbv || !p->rc.aqMode || p->rdLevel > 4))
     {
         p->complexAnalysis = 0;
-        x265_log(p, X265_LOG_WARNING, "Complex-analysis disabled, requires RD > 4, VBV and aq-mode enabled\n");
+        x265_log(p, X265_LOG_WARNING, "Complex-analysis disabled, requires RD <= 4, VBV and aq-mode enabled\n");
     }
 
     if (p->uhdBluray)

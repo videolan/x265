@@ -858,9 +858,6 @@ typedef struct x265_param
      * RDOQ is at level 2. Default: 0 */
     int       rdoqLevel;
 
-    /* Increase RD at points where bitrate drops due to vbv. Default 0 */
-    double    complexAnalysis;
-
     /* Enable the implicit signaling of the sign bit of the last coefficient of
      * each transform unit. This saves one bit per TU at the expense of figuring
      * out which coefficient can be toggled with the least distortion.
@@ -1374,6 +1371,10 @@ typedef struct x265_param
     * selection during analysis of CTUs, can achieve significant gain in terms of 
     * objective quality metrics SSIM and PSNR */
     int       bSsimRd;
+
+    /* Increase RD at points where bitrate drops due to vbv. Default 0 */
+    double    complexAnalysis;
+
 } x265_param;
 
 /* x265_param_alloc:
