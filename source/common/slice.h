@@ -289,6 +289,7 @@ struct PPS
     bool     bPicDisableDeblockingFilter;
 
     int      numRefIdxDefault[2];
+    bool     pps_slice_chroma_qp_offsets_present_flag;
 };
 
 struct WeightParam
@@ -339,6 +340,7 @@ public:
     NalUnitType m_nalUnitType;
     SliceType   m_sliceType;
     int         m_sliceQp;
+    int         m_chromaQpOffset[2];
     int         m_poc;
     int         m_lastIDR;
     int         m_rpsIdx;
@@ -372,6 +374,7 @@ public:
         numRefIdxDefault[0] = 1;
         numRefIdxDefault[1] = 1;
         m_rpsIdx = -1;
+        m_chromaQpOffset[0] = m_chromaQpOffset[1] = 0;
     }
 
     void disableWeights();

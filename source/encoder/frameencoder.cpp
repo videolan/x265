@@ -483,6 +483,13 @@ void FrameEncoder::compressFrame()
 
     /* Clip slice QP to 0-51 spec range before encoding */
     slice->m_sliceQp = x265_clip3(-QP_BD_OFFSET, QP_MAX_SPEC, qp);
+    if (m_param->bHDROpt)
+    {
+        int qpCb = x265_clip3(-12, 0, (int)round(m_top->m_cB * ((-.46) * qp + 9.26)));
+        int qpCr = x265_clip3(-12, 0, (int)round(m_top->m_cR * ((-.46) * qp + 9.26)));
+        slice->m_chromaQpOffset[0] = slice->m_pps->chromaQpOffset[0] + qpCb < -12 ? (qpCb + (-12 - (slice->m_pps->chromaQpOffset[0] + qpCb))) : qpCb;
+        slice->m_chromaQpOffset[1] = slice->m_pps->chromaQpOffset[1] + qpCr < -12 ? (qpCr + (-12 - (slice->m_pps->chromaQpOffset[1] + qpCr))) : qpCr;
+    }
 
     if (m_param->bOptQpPPS && m_param->bRepeatHeaders)
     {

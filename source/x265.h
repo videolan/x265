@@ -492,6 +492,7 @@ static const char * const x265_sar_names[] = { "undef", "1:1", "12:11", "10:11",
                                                "32:11", "80:33", "18:11", "15:11", "64:33", "160:99", "4:3", "3:2", "2:1", 0 };
 static const char * const x265_interlace_names[] = { "prog", "tff", "bff", 0 };
 static const char * const x265_analysis_names[] = { "off", "save", "load", 0 };
+static const char * const x265_capture_colorprim_names[] = { "", "bt709", "p3d65", "bt2020", 0 };
 
 /* Zones: override ratecontrol for specific sections of the video.
  * If zones overlap, whichever comes later in the list takes precedence. */
@@ -1379,6 +1380,13 @@ typedef struct x265_param
      * Auto-enabled when max-cll, max-fall, or mastering display info is specified.
      * Default is disabled */
     int       bEmitHDRSEI;
+
+    /* Color primaries of the capture device */
+    int       captureColorPrim;
+
+    /* Enable luma and chroma offsets for HDR/WCG content.
+     * Default is disabled */
+    int       bHDROpt;
 } x265_param;
 
 /* x265_param_alloc:

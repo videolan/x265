@@ -79,6 +79,8 @@ Encoder::Encoder()
     m_iFrameNum = 0;
     m_iPPSQpMinus26 = 0;
     m_rpsInSpsCount = 0;
+    m_cB = 0.0;
+    m_cR = 0.0;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
 
@@ -1829,6 +1831,7 @@ void Encoder::initPPS(PPS *pps)
 
     pps->chromaQpOffset[0] = m_param->cbQpOffset;
     pps->chromaQpOffset[1] = m_param->crQpOffset;
+    pps->pps_slice_chroma_qp_offsets_present_flag = m_param->bHDROpt;
 
     pps->bConstrainedIntraPred = m_param->bEnableConstrainedIntra;
     pps->bUseWeightPred = m_param->bEnableWeightedPred;
@@ -2293,6 +2296,37 @@ void Encoder::configure(x265_param *p)
     {
         x265_log(p, X265_LOG_WARNING, "maxSlices can not be more than min(rows, MAX_NAL_UNITS-1), force set to %d\n", slicesLimit);
         p->maxSlices = slicesLimit;
+    }
+    if (p->bHDROpt)
+    {
+        if (p->internalCsp != X265_CSP_I420 || p->internalBitDepth != 10 || p->vui.colorPrimaries != 9 ||
+            p->vui.transferCharacteristics != 16 || p->vui.matrixCoeffs != 9)
+        {
+            x265_log(p, X265_LOG_ERROR, "Recommended Settings for HDR: colour primaries should be BT.2020,\n"
+                                        "                                            transfer characteristics should be SMPTE ST.2084,\n"
+                                        "                                            matrix coeffs should be BT.2020,\n"
+                                        "                                            the input video should be 10 bit 4:2:0\n"
+                                        "                                            Disabling offset tuning for HDR videos\n");
+            p->bHDROpt = 0;
+        }
+        else
+        {
+            if (p->captureColorPrim == 1)
+            {
+                m_cB = 1.14;
+                m_cR = 1.78;
+            }
+            else if (p->captureColorPrim == 2)
+            {
+                m_cB = 1.04;
+                m_cR = 1.39;
+            }
+            else if (p->captureColorPrim == 3)
+            {
+                m_cB = 1.0;
+                m_cR = 1.0;
+            }
+        }
     }
 }
 

@@ -67,13 +67,13 @@ public:
         int qpCb, qpCr;
         if (slice.m_sps->chromaFormatIdc == X265_CSP_I420)
         {
-            qpCb = (int)g_chromaScale[x265_clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaQpOffset[0])];
-            qpCr = (int)g_chromaScale[x265_clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaQpOffset[1])];
+            qpCb = (int)g_chromaScale[x265_clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaQpOffset[0] + slice.m_chromaQpOffset[0])];
+            qpCr = (int)g_chromaScale[x265_clip3(QP_MIN, QP_MAX_MAX, qp + slice.m_pps->chromaQpOffset[1] + slice.m_chromaQpOffset[1])];
         }
         else
         {
-            qpCb = x265_clip3(QP_MIN, QP_MAX_SPEC, qp + slice.m_pps->chromaQpOffset[0]);
-            qpCr = x265_clip3(QP_MIN, QP_MAX_SPEC, qp + slice.m_pps->chromaQpOffset[1]);
+            qpCb = x265_clip3(QP_MIN, QP_MAX_SPEC, qp + slice.m_pps->chromaQpOffset[0] + slice.m_chromaQpOffset[0]);
+            qpCr = x265_clip3(QP_MIN, QP_MAX_SPEC, qp + slice.m_pps->chromaQpOffset[1] + slice.m_chromaQpOffset[1]);
         }
 
         if (slice.m_sps->chromaFormatIdc == X265_CSP_I444)

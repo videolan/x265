@@ -225,8 +225,8 @@ void Quant::setQPforQuant(const CUData& ctu, int qp)
     m_rdoqLevel = ctu.m_encData->m_param->rdoqLevel;
     if (ctu.m_chromaFormat != X265_CSP_I400)
     {
-        setChromaQP(qp + ctu.m_slice->m_pps->chromaQpOffset[0], TEXT_CHROMA_U, ctu.m_chromaFormat);
-        setChromaQP(qp + ctu.m_slice->m_pps->chromaQpOffset[1], TEXT_CHROMA_V, ctu.m_chromaFormat);
+        setChromaQP(qp + ctu.m_slice->m_pps->chromaQpOffset[0] + ctu.m_slice->m_chromaQpOffset[0], TEXT_CHROMA_U, ctu.m_chromaFormat);
+        setChromaQP(qp + ctu.m_slice->m_pps->chromaQpOffset[1] + ctu.m_slice->m_chromaQpOffset[1], TEXT_CHROMA_V, ctu.m_chromaFormat);
     }
 }
 

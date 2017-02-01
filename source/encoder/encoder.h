@@ -168,6 +168,9 @@ public:
 
     Lock               m_rpsInSpsLock;
     int                m_rpsInSpsCount;
+    /* For HDR*/
+    double                m_cB;
+    double                m_cR;
 
     Encoder();
     ~Encoder() {}

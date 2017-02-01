@@ -105,6 +105,21 @@ uint32_t LookaheadTLD::acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blo
     x265_emms();
     return var;
 }
+/* Find the sum of pixels of each block for luma plane */
+uint32_t LookaheadTLD::lumaSumCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, uint32_t qgSize)
+{
+    intptr_t stride = curFrame->m_fencPic->m_stride;
+    intptr_t blockOffsetLuma = blockX + (blockY * stride);
+    uint64_t sum_ssd;
+
+    if (qgSize == 8)
+        sum_ssd = primitives.cu[BLOCK_8x8].var(curFrame->m_fencPic->m_picOrg[0] + blockOffsetLuma, stride);
+    else
+        sum_ssd = primitives.cu[BLOCK_16x16].var(curFrame->m_fencPic->m_picOrg[0] + blockOffsetLuma, stride);
+
+    x265_emms();
+    return (uint32_t)sum_ssd;
+}
 
 void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
 {
@@ -226,6 +241,30 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                 {
                     uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp,param->rc.qgSize);
                     qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));
+                }
+
+                if (param->bHDROpt)
+                {
+                    uint32_t sum = lumaSumCu(curFrame, blockX, blockY, param->rc.qgSize);
+                    uint32_t lumaAvg = sum / (loopIncr * loopIncr);
+                    if (lumaAvg < 301)
+                        qp_adj += 3;
+                    else if (lumaAvg >= 301 && lumaAvg < 367)
+                        qp_adj += 2;
+                    else if (lumaAvg >= 367 && lumaAvg < 434)
+                        qp_adj += 1;
+                    else if (lumaAvg >= 501 && lumaAvg < 567)
+                        qp_adj -= 1;
+                    else if (lumaAvg >= 567 && lumaAvg < 634)
+                        qp_adj -= 2;
+                    else if (lumaAvg >= 634 && lumaAvg < 701)
+                        qp_adj -= 3;
+                    else if (lumaAvg >= 701 && lumaAvg < 767)
+                        qp_adj -= 4;
+                    else if (lumaAvg >= 767 && lumaAvg < 834)
+                        qp_adj -= 5;
+                    else if (lumaAvg >= 834)
+                        qp_adj -= 6;
                 }
                 if (quantOffsets != NULL)
                     qp_adj += quantOffsets[blockXY];
