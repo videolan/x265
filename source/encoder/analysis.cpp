@@ -174,8 +174,11 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
         m_reuseDepth = &m_reuseInterDataCTU->depth[ctu.m_cuAddr * ctu.m_numPartitions];
         m_reuseModes = &m_reuseInterDataCTU->modes[ctu.m_cuAddr * ctu.m_numPartitions];
-        m_reusePartSize = &m_reuseInterDataCTU->partSize[ctu.m_cuAddr * ctu.m_numPartitions];
-        m_reuseMergeFlag = &m_reuseInterDataCTU->mergeFlag[ctu.m_cuAddr * ctu.m_numPartitions];
+        if (m_param->analysisRefineLevel > 2)
+        {
+            m_reusePartSize = &m_reuseInterDataCTU->partSize[ctu.m_cuAddr * ctu.m_numPartitions];
+            m_reuseMergeFlag = &m_reuseInterDataCTU->mergeFlag[ctu.m_cuAddr * ctu.m_numPartitions];
+        }
         if (m_param->analysisMode == X265_ANALYSIS_SAVE)
             for (int i = 0; i < X265_MAX_PRED_MODE_PER_CTU * numPredDir; i++)
                 m_reuseRef[i] = -1;
@@ -1029,7 +1032,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 if (m_param->rdLevel)
                     skipModes = m_param->bEnableEarlySkip && md.bestMode;
             }
-            if (m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
+            if (m_param->analysisRefineLevel > 2 && m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
             {
                 if (m_reuseModes[cuGeom.absPartIdx] != MODE_INTRA  && m_reuseModes[cuGeom.absPartIdx] != 4)
                 {
@@ -1600,7 +1603,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 if (m_param->bEnableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
                     skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
             }
-            if (m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
+            if (m_param->analysisRefineLevel > 2 && m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
                 skipRectAmp = true && !!md.bestMode;
         }
     }
