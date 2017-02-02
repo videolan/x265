@@ -222,6 +222,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     // encoder now owns these analysisData buffers.
     if (pic_in)
     {
+        pic_in->analysisData.wt = NULL;
         pic_in->analysisData.intraData = NULL;
         pic_in->analysisData.interData = NULL;
         pic_in->analysis2Pass.analysisFramedata = NULL;

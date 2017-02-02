@@ -99,6 +99,7 @@ typedef struct x265_analysis_data
     uint32_t         numCUsInFrame;
     uint32_t         numPartitions;
     int              bScenecut;
+    void*            wt;
     void*            interData;
     void*            intraData;
 } x265_analysis_data;

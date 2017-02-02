@@ -384,7 +384,7 @@ void FrameEncoder::compressFrame()
 
     WeightParam* reuseWP = NULL;
     if (m_param->analysisMode && (bUseWeightP || bUseWeightB))
-        reuseWP = ((analysis_inter_data*)m_frame->m_analysisData.interData)->wt;
+        reuseWP = (WeightParam*)m_frame->m_analysisData.wt;
 
     if (bUseWeightP || bUseWeightB)
     {

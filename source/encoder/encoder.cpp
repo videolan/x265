@@ -733,6 +733,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inFrame->m_analysisData.satdCost = inputPic->analysisData.satdCost;
             inFrame->m_analysisData.numCUsInFrame = inputPic->analysisData.numCUsInFrame;
             inFrame->m_analysisData.numPartitions = inputPic->analysisData.numPartitions;
+            inFrame->m_analysisData.wt = inputPic->analysisData.wt;
             inFrame->m_analysisData.interData = inputPic->analysisData.interData;
             inFrame->m_analysisData.intraData = inputPic->analysisData.intraData;
             sliceType = inputPic->analysisData.sliceType;
@@ -817,6 +818,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     pic_out->analysisData.satdCost  = outFrame->m_lowres.satdCost;                    
                     pic_out->analysisData.numCUsInFrame = outFrame->m_analysisData.numCUsInFrame;
                     pic_out->analysisData.numPartitions = outFrame->m_analysisData.numPartitions;
+                    pic_out->analysisData.wt = outFrame->m_analysisData.wt;
                     pic_out->analysisData.interData = outFrame->m_analysisData.interData;
                     pic_out->analysisData.intraData = outFrame->m_analysisData.intraData;
                     writeAnalysisFile(&pic_out->analysisData, *outFrame->m_encData);
@@ -2336,7 +2338,8 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
         CHECKED_MALLOC(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC(interData->partSize, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC(interData->mergeFlag, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(interData->wt, WeightParam, 3 * numDir);
+        uint32_t numPlanes = m_param->internalCsp == X265_CSP_I400 ? 1 : 3;
+        CHECKED_MALLOC_ZERO(analysis->wt, WeightParam, numPlanes * numDir);
         analysis->interData = interData;
     }
     return;
@@ -2363,7 +2366,7 @@ void Encoder::freeAnalysis(x265_analysis_data* analysis)
         X265_FREE(((analysis_inter_data*)analysis->interData)->modes);
         X265_FREE(((analysis_inter_data*)analysis->interData)->mergeFlag);
         X265_FREE(((analysis_inter_data*)analysis->interData)->partSize);
-        X265_FREE(((analysis_inter_data*)analysis->interData)->wt);
+        X265_FREE(analysis->wt);
         X265_FREE(analysis->interData);
     }
 }
@@ -2540,7 +2543,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
         X265_FREAD(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
         uint32_t numPlanes = m_param->internalCsp == X265_CSP_I400 ? 1 : 3;
-        X265_FREAD(((analysis_inter_data *)analysis->interData)->wt, sizeof(WeightParam), numPlanes * numDir, m_analysisFile);
+        X265_FREAD((WeightParam*)analysis->wt, sizeof(WeightParam), numPlanes * numDir, m_analysisFile);
         consumedBytes += frameRecordSize;
         if (numDir == 1)
             totalConsumedBytes = consumedBytes;
@@ -2784,7 +2787,7 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->mergeFlag, sizeof(uint8_t), depthBytes, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
         uint32_t numPlanes = m_param->internalCsp == X265_CSP_I400 ? 1 : 3;
-        X265_FWRITE(((analysis_inter_data*)analysis->interData)->wt, sizeof(WeightParam), numPlanes * numDir, m_analysisFile);
+        X265_FWRITE((WeightParam*)analysis->wt, sizeof(WeightParam), numPlanes * numDir, m_analysisFile);
     }
 #undef X265_FWRITE
 }

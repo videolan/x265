@@ -176,7 +176,6 @@ struct analysis_intra_data
 /* Stores inter analysis data for a single frame */
 struct analysis_inter_data
 {
-    WeightParam* wt;
     int32_t*    ref;
     uint8_t*    depth;
     uint8_t*    modes;
