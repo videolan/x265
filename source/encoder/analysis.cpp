@@ -167,7 +167,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         }
     }
 
-    if (m_param->analysisMode && m_slice->m_sliceType != I_SLICE)
+    if (m_param->analysisMode && m_slice->m_sliceType != I_SLICE && m_param->analysisRefineLevel > 1)
     {
         int numPredDir = m_slice->isInterP() ? 1 : 2;
         m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
@@ -188,7 +188,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     if (m_slice->m_sliceType == I_SLICE)
     {
         analysis_intra_data* intraDataCTU = (analysis_intra_data*)m_frame->m_analysisData.intraData;
-        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+        if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1)
         {
             memcpy(ctu.m_cuDepth, &intraDataCTU->depth[ctu.m_cuAddr * numPartition], sizeof(uint8_t) * numPartition);
             memcpy(ctu.m_lumaIntraDir, &intraDataCTU->modes[ctu.m_cuAddr * numPartition], sizeof(uint8_t) * numPartition);
@@ -1018,7 +1018,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
         md.pred[PRED_2Nx2N].sa8dCost = 0;
     }
 
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1)
     {
         if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
         {
@@ -1585,7 +1585,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     splitData[3].initSplitCUData();
     uint32_t allSplitRefs = splitData[0].splitRefs | splitData[1].splitRefs | splitData[2].splitRefs | splitData[3].splitRefs;
     uint32_t refMasks[2];
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1)
     {
         if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
         {
@@ -2365,7 +2365,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.cu.setPredModeSubParts(MODE_INTER);
     int numPredDir = m_slice->isInterP() ? 1 : 2;
 
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU && m_param->analysisRefineLevel > 1)
     {
         int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
         int index = 0;
@@ -2407,7 +2407,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
     }
     interMode.sa8dCost = m_rdCost.calcRdSADCost((uint32_t)interMode.distortion, interMode.sa8dBits);
 
-    if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
+    if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU && m_param->analysisRefineLevel > 1)
     {
         int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
         int index = 0;
@@ -2429,7 +2429,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.cu.setPredModeSubParts(MODE_INTER);
     int numPredDir = m_slice->isInterP() ? 1 : 2;
 
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU && m_param->analysisRefineLevel > 1)
     {
         int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
         int index = 0;
@@ -2463,7 +2463,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     /* predInterSearch sets interMode.sa8dBits, but this is ignored */
     encodeResAndCalcRdInterCU(interMode, cuGeom);
 
-    if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU)
+    if (m_param->analysisMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU && m_param->analysisRefineLevel > 1)
     {
         int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
         int index = 0;
