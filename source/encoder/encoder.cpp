@@ -2344,7 +2344,6 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
 
         analysis_inter_data *interData = (analysis_inter_data*)analysis->interData;
         CHECKED_MALLOC_ZERO(interData, analysis_inter_data, 1);
-        CHECKED_MALLOC_ZERO(interData->ref, int32_t, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir);
         CHECKED_MALLOC(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         CHECKED_MALLOC(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         if (m_param->analysisRefineLevel > 2)
@@ -2352,6 +2351,30 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
             CHECKED_MALLOC(interData->partSize, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
             CHECKED_MALLOC(interData->mergeFlag, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         }
+
+        if (m_param->analysisRefineLevel == 5)
+        {
+            CHECKED_MALLOC(interData->interDir, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+            for (int dir = 0; dir < numDir; dir++)
+            {
+                CHECKED_MALLOC(interData->mvpIdx[dir], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+                CHECKED_MALLOC(interData->refIdx[dir], int8_t, analysis->numPartitions * analysis->numCUsInFrame);
+               CHECKED_MALLOC(interData->mv[dir], MV, analysis->numPartitions * analysis->numCUsInFrame);
+            }
+
+            /* Allocate intra in inter */
+            if (analysis->sliceType == X265_TYPE_P || m_param->bIntraInBFrames)
+            {
+                analysis_intra_data *intraData = (analysis_intra_data*)analysis->intraData;
+                CHECKED_MALLOC_ZERO(intraData, analysis_intra_data, 1);
+                CHECKED_MALLOC(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+                CHECKED_MALLOC(intraData->chromaModes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+                analysis->intraData = intraData;
+            }
+        }
+        else
+            CHECKED_MALLOC_ZERO(interData->ref, int32_t, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir);
+
         analysis->interData = interData;
     }
     return;
@@ -2363,6 +2386,7 @@ fail:
 
 void Encoder::freeAnalysis(x265_analysis_data* analysis)
 {
+    /* Early exit freeing weights alone if level is 1 (when there is no analysis inter/intra) */
     if (analysis->sliceType > X265_TYPE_I && analysis->wt)
         X265_FREE(analysis->wt);
     if (m_param->analysisRefineLevel < 2)
@@ -2389,6 +2413,25 @@ void Encoder::freeAnalysis(x265_analysis_data* analysis)
             X265_FREE(((analysis_inter_data*)analysis->interData)->mergeFlag);
             X265_FREE(((analysis_inter_data*)analysis->interData)->partSize);
         }
+
+        if (m_param->analysisRefineLevel == 5)
+        {
+            X265_FREE(((analysis_inter_data*)analysis->interData)->interDir);
+            int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
+            for (int dir = 0; dir < numDir; dir++)
+            {
+                X265_FREE(((analysis_inter_data*)analysis->interData)->mvpIdx[dir]);
+                X265_FREE(((analysis_inter_data*)analysis->interData)->refIdx[dir]);
+                X265_FREE(((analysis_inter_data*)analysis->interData)->mv[dir]);
+            }
+            if (analysis->sliceType == P_SLICE || m_param->bIntraInBFrames)
+            {
+                X265_FREE(((analysis_intra_data*)analysis->intraData)->modes);
+                X265_FREE(((analysis_intra_data*)analysis->intraData)->chromaModes);
+                X265_FREE(analysis->intraData);
+            }
+        }
+
         X265_FREE(analysis->interData);
     }
 }
@@ -2513,6 +2556,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
 
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
     {
+        analysis->sliceType = X265_TYPE_I;
         if (m_param->analysisRefineLevel < 2)
             return;
 
@@ -2536,7 +2580,6 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         }
         X265_FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
         X265_FREE(tempBuf);
-        analysis->sliceType = X265_TYPE_I;
         consumedBytes += frameRecordSize;
     }
 
@@ -2549,8 +2592,19 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
             return;
 
         uint8_t *tempBuf = NULL, *depthBuf = NULL, *modeBuf = NULL, *partSize = NULL, *mergeFlag = NULL;
+        uint8_t *interDir = NULL, *chromaDir = NULL, *mvpIdx[2];
+        MV* mv[2];
+        int8_t* refIdx[2];
 
         int numBuf = m_param->analysisRefineLevel > 2 ? 4 : 2;
+        bool bIntraInInter = false;
+        if (m_param->analysisRefineLevel == 5)
+        {
+            numBuf++;
+            bIntraInInter = (analysis->sliceType == X265_TYPE_P || m_param->bIntraInBFrames);
+            if (bIntraInInter) numBuf++;
+        }
+
         tempBuf = X265_MALLOC(uint8_t, depthBytes * numBuf);
         X265_FREAD(tempBuf, sizeof(uint8_t), depthBytes * numBuf, m_analysisFile);
 
@@ -2560,6 +2614,20 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         {
             partSize = modeBuf + depthBytes;
             mergeFlag = partSize + depthBytes;
+            if (m_param->analysisRefineLevel == 5)
+            {
+                interDir = mergeFlag + depthBytes;
+                if (bIntraInInter) chromaDir = interDir + depthBytes;
+                for (uint32_t i = 0; i < numDir; i++)
+                {
+                    mvpIdx[i] = X265_MALLOC(uint8_t, depthBytes * 3);
+                    X265_FREAD(mvpIdx[i], sizeof(uint8_t), depthBytes, m_analysisFile);
+                    refIdx[i] = X265_MALLOC(int8_t, depthBytes);
+                    X265_FREAD(refIdx[i], sizeof(int8_t), depthBytes, m_analysisFile);
+                    mv[i] = X265_MALLOC(MV, depthBytes);
+                    X265_FREAD(mv[i], sizeof(MV), depthBytes, m_analysisFile);
+                }
+            }
         }
 
         size_t count = 0;
@@ -2571,14 +2639,44 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
             if (m_param->analysisRefineLevel > 2)
             {
                 memset(&((analysis_inter_data *)analysis->interData)->partSize[count], partSize[d], bytes);
-                memset(&((analysis_inter_data *)analysis->interData)->mergeFlag[count], mergeFlag[d], bytes);
+                int numPU = nbPartsTable[(int)partSize[d]];
+                for (int pu = 0; pu < numPU; pu++)
+                {
+                    if (pu) d++;
+                    ((analysis_inter_data *)analysis->interData)->mergeFlag[count + pu] = mergeFlag[d];
+                    if (m_param->analysisRefineLevel == 5)
+                    {
+                        ((analysis_inter_data *)analysis->interData)->interDir[count + pu] = interDir[d];
+                        for (uint32_t i = 0; i < numDir; i++)
+                        {
+                            ((analysis_inter_data *)analysis->interData)->mvpIdx[i][count + pu] = mvpIdx[i][d];
+                            ((analysis_inter_data *)analysis->interData)->refIdx[i][count + pu] = refIdx[i][d];
+                            memcpy(&((analysis_inter_data *)analysis->interData)->mv[i][count + pu], &mv[i][d], sizeof(MV));
+                        }
+                    }
+                }
+                if (m_param->analysisRefineLevel == 5 && bIntraInInter)
+                    memset(&((analysis_intra_data *)analysis->intraData)->chromaModes[count], chromaDir[d], bytes);
             }
             count += bytes;
         }
 
         X265_FREE(tempBuf);
 
-        X265_FREAD(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
+        if (m_param->analysisRefineLevel == 5)
+        {
+            for (uint32_t i = 0; i < numDir; i++)
+            {
+                X265_FREE(mvpIdx[i]);
+                X265_FREE(refIdx[i]);
+                X265_FREE(mv[i]);
+            }
+            if (bIntraInInter)
+                X265_FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        }
+        else
+            X265_FREAD(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
+
         consumedBytes += frameRecordSize;
         if (numDir == 1)
             totalConsumedBytes = consumedBytes;
@@ -2724,12 +2822,18 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     }\
 
     uint32_t depthBytes = 0;
-    int numDir = (analysis->sliceType == X265_TYPE_P) ? 1 : 2;
+    int numDir, numPlanes;
+    bool bIntraInInter = false;
+
     /* calculate frameRecordSize */
     analysis->frameRecordSize = sizeof(analysis->frameRecordSize) + sizeof(depthBytes) + sizeof(analysis->poc) + sizeof(analysis->sliceType) +
                       sizeof(analysis->numCUsInFrame) + sizeof(analysis->numPartitions) + sizeof(analysis->bScenecut) + sizeof(analysis->satdCost);
     if (analysis->sliceType > X265_TYPE_I)
-        analysis->frameRecordSize += sizeof(WeightParam)* 3 * numDir;
+    {
+        numDir = (analysis->sliceType == X265_TYPE_P) ? 1 : 2;
+        numPlanes = m_param->internalCsp == X265_CSP_I400 ? 1 : 3;
+        analysis->frameRecordSize += sizeof(WeightParam) * numPlanes * numDir;
+    }
 
     if (m_param->analysisRefineLevel > 1)
     {
@@ -2762,15 +2866,16 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
         }
         else
         {
+            bIntraInInter = (analysis->sliceType == X265_TYPE_P || m_param->bIntraInBFrames);
             for (uint32_t cuAddr = 0; cuAddr < analysis->numCUsInFrame; cuAddr++)
             {
                 uint8_t depth = 0;
                 uint8_t predMode = 0;
                 uint8_t partSize = 0;
-                uint8_t mergeFlag = 0;
 
                 CUData* ctu = curEncData.getPicCTU(cuAddr);
                 analysis_inter_data* interDataCTU = (analysis_inter_data*)analysis->interData;
+                analysis_intra_data* intraDataCTU = (analysis_intra_data*)analysis->intraData;
 
                 for (uint32_t absPartIdx = 0; absPartIdx < ctu->m_numPartitions; depthBytes++)
                 {
@@ -2778,7 +2883,7 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
                     interDataCTU->depth[depthBytes] = depth;
 
                     predMode = ctu->m_predMode[absPartIdx];
-                    if (ctu->m_refIdx[1][absPartIdx] != -1)
+                    if (m_param->analysisRefineLevel != 5 && ctu->m_refIdx[1][absPartIdx] != -1)
                         predMode = 4; // used as indiacator if the block is coded as bidir
 
                     interDataCTU->modes[depthBytes] = predMode;
@@ -2788,12 +2893,32 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
                         partSize = ctu->m_partSize[absPartIdx];
                         interDataCTU->partSize[depthBytes] = partSize;
 
-                        mergeFlag = ctu->m_mergeFlag[absPartIdx];
-                        interDataCTU->mergeFlag[depthBytes] = mergeFlag;
-                    }
+                        /* Store per PU data */
+                        uint32_t numPU = nbPartsTable[(int)partSize];
+                        for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
+                        {
+                            uint32_t puabsPartIdx = ctu->getPUOffset(puIdx, absPartIdx) + absPartIdx;
+                            if (puIdx) depthBytes++;
+                            interDataCTU->mergeFlag[depthBytes] = ctu->m_mergeFlag[puabsPartIdx];
 
+                            if (m_param->analysisRefineLevel == 5)
+                            {
+                                interDataCTU->interDir[depthBytes] = ctu->m_interDir[puabsPartIdx];
+                                for (int dir = 0; dir < numDir; dir++)
+                                {
+                                    interDataCTU->mvpIdx[dir][depthBytes] = ctu->m_mvpIdx[dir][puabsPartIdx];
+                                    interDataCTU->refIdx[dir][depthBytes] = ctu->m_refIdx[dir][puabsPartIdx];
+                                    interDataCTU->mv[dir][depthBytes] = ctu->m_mv[dir][puabsPartIdx];
+                                }
+                            }
+                        }
+                        if (m_param->analysisRefineLevel == 5 && bIntraInInter)
+                            intraDataCTU->chromaModes[depthBytes] = ctu->m_chromaIntraDir[absPartIdx];
+                    }
                     absPartIdx += ctu->m_numPartitions >> (depth * 2);
                 }
+                if (m_param->analysisRefineLevel == 5 && bIntraInInter)
+                    memcpy(&intraDataCTU->modes[ctu->m_cuAddr * ctu->m_numPartitions], ctu->m_lumaIntraDir, sizeof(uint8_t)* ctu->m_numPartitions);
             }
         }
 
@@ -2801,9 +2926,23 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
             analysis->frameRecordSize += sizeof(uint8_t)* analysis->numCUsInFrame * analysis->numPartitions + depthBytes * 3;
         else
         {
-            int numBuf = m_param->analysisRefineLevel > 2 ? 4 : 2;
-            analysis->frameRecordSize += depthBytes * numBuf;
-            analysis->frameRecordSize += sizeof(int32_t)* analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir;
+            /* Add sizeof depth, modes, partSize, mergeFlag */
+            analysis->frameRecordSize += depthBytes * 2;
+            if (m_param->analysisRefineLevel > 2)
+                analysis->frameRecordSize += (depthBytes * 2);
+
+            if (m_param->analysisRefineLevel == 5)
+            {
+                /* Add Size of interDir, mvpIdx, refIdx, mv, luma and chroma modes */
+                analysis->frameRecordSize += depthBytes;
+                analysis->frameRecordSize += sizeof(uint8_t)* depthBytes * numDir;
+                analysis->frameRecordSize += sizeof(int8_t)* depthBytes * numDir;
+                analysis->frameRecordSize += sizeof(MV)* depthBytes * numDir;
+                if (bIntraInInter)
+                    analysis->frameRecordSize += sizeof(uint8_t)* analysis->numCUsInFrame * analysis->numPartitions + depthBytes;
+            }
+            else
+                analysis->frameRecordSize += sizeof(int32_t)* analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir;
         }
     }
     X265_FWRITE(&analysis->frameRecordSize, sizeof(uint32_t), 1, m_analysisFile);
@@ -2815,10 +2954,7 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     X265_FWRITE(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
     X265_FWRITE(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
     if (analysis->sliceType > X265_TYPE_I)
-    {
-        uint32_t numPlanes = m_param->internalCsp == X265_CSP_I400 ? 1 : 3;
         X265_FWRITE((WeightParam*)analysis->wt, sizeof(WeightParam), numPlanes * numDir, m_analysisFile);
-    }
 
     if (m_param->analysisRefineLevel < 2)
         return;
@@ -2832,18 +2968,33 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     }
     else
     {
-        int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->depth, sizeof(uint8_t), depthBytes, m_analysisFile);
         X265_FWRITE(((analysis_inter_data*)analysis->interData)->modes, sizeof(uint8_t), depthBytes, m_analysisFile);
         if (m_param->analysisRefineLevel > 2)
         {
             X265_FWRITE(((analysis_inter_data*)analysis->interData)->partSize, sizeof(uint8_t), depthBytes, m_analysisFile);
             X265_FWRITE(((analysis_inter_data*)analysis->interData)->mergeFlag, sizeof(uint8_t), depthBytes, m_analysisFile);
+            if (m_param->analysisRefineLevel == 5)
+            {
+                X265_FWRITE(((analysis_inter_data*)analysis->interData)->interDir, sizeof(uint8_t), depthBytes, m_analysisFile);
+                if (bIntraInInter) X265_FWRITE(((analysis_intra_data*)analysis->intraData)->chromaModes, sizeof(uint8_t), depthBytes, m_analysisFile);
+                for (int dir = 0; dir < numDir; dir++)
+                {
+                    X265_FWRITE(((analysis_inter_data*)analysis->interData)->mvpIdx[dir], sizeof(uint8_t), depthBytes, m_analysisFile);
+                    X265_FWRITE(((analysis_inter_data*)analysis->interData)->refIdx[dir], sizeof(int8_t), depthBytes, m_analysisFile);
+                    X265_FWRITE(((analysis_inter_data*)analysis->interData)->mv[dir], sizeof(MV), depthBytes, m_analysisFile);
+                }
+                if (bIntraInInter)
+                    X265_FWRITE(((analysis_intra_data*)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+            }
         }
-        X265_FWRITE(((analysis_inter_data*)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
+        if (m_param->analysisRefineLevel != 5)
+            X265_FWRITE(((analysis_inter_data*)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
+
     }
 #undef X265_FWRITE
 }
+
 void Encoder::writeAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, FrameData &curEncData, int slicetype)
 {
 #define X265_FWRITE(val, size, writeSize, fileOffset)\

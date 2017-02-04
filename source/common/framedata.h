@@ -181,6 +181,10 @@ struct analysis_inter_data
     uint8_t*    modes;
     uint8_t*    partSize;
     uint8_t*    mergeFlag;
+    uint8_t*    interDir;
+    uint8_t*    mvpIdx[2];
+    int8_t*     refIdx[2];
+    MV*         mv[2];
 };
 
 struct analysis2PassFrameData

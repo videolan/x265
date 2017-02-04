@@ -167,7 +167,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         }
     }
 
-    if (m_param->analysisMode && m_slice->m_sliceType != I_SLICE && m_param->analysisRefineLevel > 1)
+    if (m_param->analysisMode && m_slice->m_sliceType != I_SLICE && m_param->analysisRefineLevel > 1 && m_param->analysisRefineLevel < 5)
     {
         int numPredDir = m_slice->isInterP() ? 1 : 2;
         m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
@@ -213,6 +213,26 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
 
             /* generate residual for entire CTU at once and copy to reconPic */
             encodeResidue(ctu, cuGeom);
+        }
+        else if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel == 5)
+        {
+            analysis_inter_data* interDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
+            int posCTU = ctu.m_cuAddr * numPartition;
+            memcpy(ctu.m_cuDepth, &interDataCTU->depth[posCTU], sizeof(uint8_t) * numPartition);
+            memcpy(ctu.m_predMode, &interDataCTU->modes[posCTU], sizeof(uint8_t) * numPartition);
+            memcpy(ctu.m_partSize, &interDataCTU->partSize[posCTU], sizeof(uint8_t) * numPartition);
+            if (m_slice->m_sliceType == P_SLICE || m_param->bIntraInBFrames)
+            {
+                analysis_intra_data* intraDataCTU = (analysis_intra_data*)m_frame->m_analysisData.intraData;
+                memcpy(ctu.m_lumaIntraDir, &intraDataCTU->modes[posCTU], sizeof(uint8_t) * numPartition);
+                memcpy(ctu.m_chromaIntraDir, &intraDataCTU->chromaModes[posCTU], sizeof(uint8_t) * numPartition);
+            }
+            //Calculate log2CUSize from depth
+            for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
+                ctu.m_log2CUSize[i] = (uint8_t)g_maxLog2CUSize - ctu.m_cuDepth[i];
+
+            qprdRefine (ctu, cuGeom, qp, qp);
+            return *m_modeDepth[0].bestMode;
         }
         else if (m_param->bDistributeModeAnalysis && m_param->rdLevel >= 2)
             compressInterCU_dist(ctu, cuGeom, qp);
@@ -316,6 +336,8 @@ void Analysis::qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t
     int lambdaQP = lqp;
 
     bool doQPRefine = (bDecidedDepth && depth <= m_slice->m_pps->maxCuDQPDepth) || (!bDecidedDepth && depth == m_slice->m_pps->maxCuDQPDepth);
+    if (m_param->analysisRefineLevel == 5)
+        doQPRefine = false;
 
     if (doQPRefine)
     {
@@ -2007,10 +2029,39 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         else
         {
             mode.cu.copyFromPic(parentCTU, cuGeom, m_csp, false);
-            for (int part = 0; part < (int)parentCTU.getNumPartInter(cuGeom.absPartIdx); part++)
+            uint32_t numPU = parentCTU.getNumPartInter(cuGeom.absPartIdx);
+            for (uint32_t part = 0; part < numPU; part++)
             {
                 PredictionUnit pu(mode.cu, cuGeom, part);
-                motionCompensation(mode.cu, pu, mode.predYuv, true, true);
+                if (m_param->analysisRefineLevel == 5)
+                {
+                    analysis_inter_data* interDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
+                    int cuIdx = (mode.cu.m_cuAddr * parentCTU.m_numPartitions) + cuGeom.absPartIdx;
+                    mode.cu.m_mergeFlag[pu.puAbsPartIdx] = interDataCTU->mergeFlag[cuIdx + part];
+                    mode.cu.setPUInterDir(interDataCTU->interDir[cuIdx + part], pu.puAbsPartIdx, part);
+                    for (int dir = 0; dir < m_slice->isInterB() + 1; dir++)
+                    {
+                        mode.cu.setPUMv(dir, interDataCTU->mv[dir][cuIdx + part], pu.puAbsPartIdx, part);
+                        mode.cu.setPURefIdx(dir, interDataCTU->refIdx[dir][cuIdx + part], pu.puAbsPartIdx, part);
+                        mode.cu.m_mvpIdx[dir][pu.puAbsPartIdx] = interDataCTU->mvpIdx[dir][cuIdx + part];
+                    }
+                    if (!mode.cu.m_mergeFlag[pu.puAbsPartIdx])
+                    {
+                        //AMVP
+                        MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 2];
+                        mode.cu.getNeighbourMV(part, pu.puAbsPartIdx, mode.interNeighbours);
+                        for (int list = 0; list < m_slice->isInterB() + 1; list++)
+                        {
+                            int ref = mode.cu.m_refIdx[list][pu.puAbsPartIdx];
+                            if (ref == -1)
+                                continue;
+                            mode.cu.getPMV(mode.interNeighbours, list, ref, mode.amvpCand[list][ref], mvc);
+                            MV mvp = mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]];
+                            mode.cu.m_mvd[list][pu.puAbsPartIdx] = mode.cu.m_mv[list][pu.puAbsPartIdx] - mvp;
+                        }
+                    }
+                }
+                motionCompensation(mode.cu, pu, mode.predYuv, true, (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400));
             }
 
             if (parentCTU.isSkipped(cuGeom.absPartIdx))
@@ -2019,7 +2070,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 encodeResAndCalcRdInterCU(mode, cuGeom);
 
             /* checkMerge2Nx2N function performs checkDQP after encoding residual, do the same */
-            bool mergeInter2Nx2N = size == SIZE_2Nx2N && parentCTU.m_mergeFlag[cuGeom.absPartIdx];
+            bool mergeInter2Nx2N = size == SIZE_2Nx2N && mode.cu.m_mergeFlag[0];
             if (parentCTU.isSkipped(cuGeom.absPartIdx) || mergeInter2Nx2N)
                 checkDQP(mode, cuGeom);
         }
@@ -2029,6 +2080,9 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
 
         if (mightSplit)
             addSplitFlagCost(*md.bestMode, cuGeom.depth);
+
+        if (mightSplit && m_param->rdLevel < 5)
+            checkDQPForSplitPred(*md.bestMode, cuGeom);
     }
     else
     {
@@ -2055,7 +2109,8 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
                     nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
 
-                qprdRefine(parentCTU, childGeom, nextQP, lqp);
+                int lamdaQP = m_param->analysisRefineLevel == 5 ? nextQP : lqp;
+                qprdRefine(parentCTU, childGeom, nextQP, lamdaQP);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
