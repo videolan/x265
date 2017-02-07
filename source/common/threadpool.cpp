@@ -57,7 +57,10 @@
 
 #endif
 
-#if MACOS
+/* TODO FIX: Macro __MACH__ ideally should be part of MacOS definition, but adding to Cmake
+   behaving is not as expected, need to fix this. */
+
+#if MACOS && __MACH__
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #endif
@@ -617,7 +620,7 @@ int ThreadPool::getCpuCount()
     return sysconf(_SC_NPROCESSORS_CONF);
 #elif __unix__
     return sysconf(_SC_NPROCESSORS_ONLN);
-#elif MACOS
+#elif MACOS && __MACH__
     int nm[2];
     size_t len = 4;
     uint32_t count;

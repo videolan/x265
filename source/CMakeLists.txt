@@ -122,7 +122,7 @@ if(CMAKE_GENERATOR STREQUAL "Xcode")
   set(XCODE 1)
 endif()
 if(APPLE)
-  add_definitions(-DMACOS)
+  add_definitions(-DMACOS=1)
 endif()
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
