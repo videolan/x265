@@ -390,7 +390,7 @@ typedef enum
 #define X265_AQ_AUTO_VARIANCE        2
 #define X265_AQ_AUTO_VARIANCE_BIASED 3
 
-#define X265_MAX_ANALYSIS_STRENGTH   4
+#define x265_ADAPT_RD_STRENGTH   4
 
 /* NOTE! For this release only X265_CSP_I420 and X265_CSP_I444 are supported */
 
@@ -1373,7 +1373,7 @@ typedef struct x265_param
     int       bSsimRd;
 
     /* Increase RD at points where bitrate drops due to vbv. Default 0 */
-    double    complexAnalysis;
+    double    dynamicRd;
 
     /* Enables the emitting of HDR SEI packets which contains HDR-specific params.
      * Auto-enabled when max-cll, max-fall, or mastering display info is specified.

@@ -945,7 +945,7 @@ as the residual quad-tree (RQT).
 	maximum TU size is smaller than the CU size then transform QT begins 
 	at the depth of the max-tu-size. Default: 32.
 	
-.. option:: --complex-analysis <0..4>
+.. option:: --dynamic-rd <0..4>
 	
 	Increases the RD level at points where quality drops due to VBV rate 
 	control enforcement. The number of CUs for which the RD is reconfigured 

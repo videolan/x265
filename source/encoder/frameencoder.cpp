@@ -1333,7 +1333,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             && analysisFrameData->highDistortionCtuCount && analysisFrameData->lowDistortionCtuCount)
             curEncData.m_cuStat[cuAddr].baseQp += analysisFrameData->offset[cuAddr];
 
-        if (m_param->complexAnalysis && (int32_t)(m_rce.qpaRc - m_rce.qpNoVbv) > 0)
+        if (m_param->dynamicRd && (int32_t)(m_rce.qpaRc - m_rce.qpNoVbv) > 0)
             ctu->m_vbvAffected = true;
 
         // Does all the CU analysis, returns best top level mode decision

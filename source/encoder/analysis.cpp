@@ -2923,7 +2923,7 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
         if (complexCheck)
         {
             int32_t offset = (int32_t)(qp_offset * 100 + .5);
-            double threshold = (1 - ((X265_MAX_ANALYSIS_STRENGTH - m_param->complexAnalysis) * 0.5));
+            double threshold = (1 - ((x265_ADAPT_RD_STRENGTH - m_param->dynamicRd) * 0.5));
             int32_t max_threshold = (int32_t)(threshold * 100 + .5);
             if (offset < max_threshold)
                 return 1;

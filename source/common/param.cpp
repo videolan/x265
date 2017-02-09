@@ -179,7 +179,7 @@ void x265_param_default(x265_param* param)
     param->bEnableTemporalMvp = 1;
     param->bSourceReferenceEstimation = 0;
     param->limitTU = 0;
-    param->complexAnalysis = 0;
+    param->dynamicRd = 0;
 
     /* Loop Filter */
     param->bEnableLoopFilter = 1;
@@ -931,7 +931,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("multi-pass-opt-analysis") p->analysisMultiPassRefine = atobool(value);
         OPT("multi-pass-opt-distortion") p->analysisMultiPassDistortion = atobool(value);
         OPT("aq-motion") p->bAQMotion = atobool(value);
-        OPT("complex-analysis") p->complexAnalysis = atof(value);
+        OPT("dynamic-rd") p->dynamicRd = atof(value);
         OPT("ssim-rd")
         {
             int bval = atobool(value);
@@ -1171,8 +1171,8 @@ int x265_check_params(x265_param* param)
           "RD Level is out of range");
     CHECK(param->rdoqLevel < 0 || param->rdoqLevel > 2,
         "RDOQ Level is out of range");
-    CHECK(param->complexAnalysis < 0 || param->complexAnalysis > X265_MAX_ANALYSIS_STRENGTH,
-        "Complex analysis strength must be between 0 and 4");
+    CHECK(param->dynamicRd < 0 || param->dynamicRd > x265_ADAPT_RD_STRENGTH,
+        "Dynamic RD strength must be between 0 and 4");
     CHECK(param->bframes && param->bframes >= param->lookaheadDepth && !param->rc.bStatRead,
           "Lookahead depth must be greater than the max consecutive bframe count");
     CHECK(param->bframes < 0,
@@ -1422,7 +1422,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(param->bEnableAMP, "amp");
     TOOLOPT(param->limitModes, "limit-modes");
     TOOLVAL(param->rdLevel, "rd=%d");
-    TOOLVAL(param->complexAnalysis, "complex-analysis=%.2f");
+    TOOLVAL(param->dynamicRd, "dynamic-rd=%.2f");
     TOOLVAL(param->psyRd, "psy-rd=%.2lf");
     TOOLVAL(param->rdoqLevel, "rdoq=%d");
     TOOLVAL(param->psyRdoq, "psy-rdoq=%.2lf");
@@ -1522,7 +1522,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " tu-intra-depth=%d", p->tuQTMaxIntraDepth);
     s += sprintf(s, " limit-tu=%d", p->limitTU);
     s += sprintf(s, " rdoq-level=%d", p->rdoqLevel);
-    s += sprintf(s, " complex-analysis=%.2f", p->complexAnalysis);
+    s += sprintf(s, " dynamic-rd=%.2f", p->dynamicRd);
     BOOL(p->bEnableSignHiding, "signhide");
     BOOL(p->bEnableTransformSkip, "tskip");
     s += sprintf(s, " nr-intra=%d", p->noiseReductionIntra);
