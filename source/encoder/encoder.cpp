@@ -1654,21 +1654,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
-    if (m_param->masteringDisplayColorVolume)
-    {
-        SEIMasteringDisplayColorVolume mdsei;
-        if (mdsei.parse(m_param->masteringDisplayColorVolume))
-        {
-            bs.resetBits();
-            mdsei.write(bs, m_sps);
-            bs.writeByteAlignment();
-            list.serialize(NAL_UNIT_PREFIX_SEI, bs);
-        }
-        else
-            x265_log(m_param, X265_LOG_WARNING, "unable to parse mastering display color volume info\n");
-    }
-
-    if (m_emitCLLSEI)
+    if (m_param->bEmitHDRSEI)
     {
         SEIContentLightLevel cllsei;
         cllsei.max_content_light_level = m_param->maxCLL;
@@ -1677,6 +1663,20 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         cllsei.write(bs, m_sps);
         bs.writeByteAlignment();
         list.serialize(NAL_UNIT_PREFIX_SEI, bs);
+
+        if (m_param->masteringDisplayColorVolume)
+        {
+            SEIMasteringDisplayColorVolume mdsei;
+            if (mdsei.parse(m_param->masteringDisplayColorVolume))
+            {
+                bs.resetBits();
+                mdsei.write(bs, m_sps);
+                bs.writeByteAlignment();
+                list.serialize(NAL_UNIT_PREFIX_SEI, bs);
+            }
+            else
+                x265_log(m_param, X265_LOG_WARNING, "unable to parse mastering display color volume info\n");
+        }
     }
 
     if (m_param->bEmitInfoSEI)

@@ -131,6 +131,7 @@ void x265_param_default(x265_param* param)
     param->bEnableAccessUnitDelimiters = 0;
     param->bEmitHRDSEI = 0;
     param->bEmitInfoSEI = 1;
+    param->bEmitHDRSEI = 0;
 
     /* CU definitions */
     param->maxCUSize = 64;
@@ -941,6 +942,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
                 p->bSsimRd = atobool(value);
             }
         }
+        OPT("hdr") p->bEmitHDRSEI = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1283,6 +1285,10 @@ int x265_check_params(x265_param* param)
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
 #endif
+
+    if (param->masteringDisplayColorVolume || param->maxFALL || param->maxCLL)
+        param->bEmitHDRSEI = 1;
+
     return check_failed;
 }
 
@@ -1641,6 +1647,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " scenecut-bias=%.2f", p->scenecutBias);
     BOOL(p->bOptCUDeltaQP, "opt-cu-delta-qp");
     BOOL(p->bAQMotion, "aq-motion");
+    BOOL(p->bEmitHDRSEI, "hdr");
 #undef BOOL
     return buf;
 }

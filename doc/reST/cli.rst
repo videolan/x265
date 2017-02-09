@@ -1809,7 +1809,8 @@ VUI fields must be manually specified.
 	where %hu are unsigned 16bit integers and %u are unsigned 32bit
 	integers. The SEI includes X,Y display primaries for RGB channels
 	and white point (WP) in units of 0.00002 and max,min luminance (L)
-	values in units of 0.0001 candela per meter square. (HDR)
+	values in units of 0.0001 candela per meter square. Applicable for HDR
+	content.
 
 	Example for a P3D65 1000-nits monitor, where G(x=0.265, y=0.690),
 	B(x=0.150, y=0.060), R(x=0.680, y=0.320), WP(x=0.3127, y=0.3290),
@@ -1830,7 +1831,7 @@ VUI fields must be manually specified.
 	emitted. The string format is "%hu,%hu" where %hu are unsigned 16bit
 	integers. The first value is the max content light level (or 0 if no
 	maximum is indicated), the second value is the maximum picture
-	average light level (or 0). (HDR)
+	average light level (or 0). Applicable for HDR content.
 
 	Example for MaxCLL=1000 candela per square meter, MaxFALL=400
 	candela per square meter:
@@ -1839,6 +1840,13 @@ VUI fields must be manually specified.
 
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
+
+.. option:: --hdr, --no-hdr
+
+	Force signalling of HDR parameters in SEI packets. Enabled
+	automatically when :option`--master-display` or :option`--max-cll` is
+	specified. Useful when there is a desire to signal 0 values for max-cll
+	and max-fall. Default disabled.
 
 .. option:: --min-luma <integer>
 

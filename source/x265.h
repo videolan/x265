@@ -1375,6 +1375,10 @@ typedef struct x265_param
     /* Increase RD at points where bitrate drops due to vbv. Default 0 */
     double    complexAnalysis;
 
+    /* Enables the emitting of HDR SEI packets which contains HDR-specific params.
+     * Auto-enabled when max-cll, max-fall, or mastering display info is specified.
+     * Default is disabled */
+    int       bEmitHDRSEI;
 } x265_param;
 
 /* x265_param_alloc:
