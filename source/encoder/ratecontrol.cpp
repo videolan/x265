@@ -1896,20 +1896,20 @@ double RateControl::rateEstimateQscale(Frame* curFrame, RateControlEntry *rce)
             else if (m_framesDone == 0 && !m_isVbv && m_param->rc.rateControlMode == X265_RC_ABR)
             {
                 /* for ABR alone, clip the first I frame qp */
-                    lqmax =  (m_lstep * m_isGrainEnabled) ? x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX) :
+                lqmax = (m_isGrainEnabled && m_lstep) ? x265_qp2qScale(ABR_INIT_QP_GRAIN_MAX) :
                         x265_qp2qScale(ABR_INIT_QP_MAX);
-                    q = X265_MIN(lqmax, q);
+                q = X265_MIN(lqmax, q);
             }
             q = x265_clip3(lqmin, lqmax, q);
             /* Set a min qp at scenechanges and transitions */
             if (m_isSceneTransition)
             {
-               double minScenecutQscale =x265_qp2qScale(ABR_SCENECUT_INIT_QP_MIN); 
-               q = X265_MAX(minScenecutQscale, q);
-               m_lastQScaleFor[P_SLICE] = X265_MAX(minScenecutQscale, m_lastQScaleFor[P_SLICE]);
+                double minScenecutQscale = x265_qp2qScale(ABR_SCENECUT_INIT_QP_MIN);
+                q = X265_MAX(minScenecutQscale, q);
+                m_lastQScaleFor[P_SLICE] = X265_MAX(minScenecutQscale, m_lastQScaleFor[P_SLICE]);
             }
             rce->qpNoVbv = x265_qScale2qp(q);
-            if(m_sliceType == P_SLICE)
+            if (m_sliceType == P_SLICE)
             {
                 m_avgPFrameQp = m_avgPFrameQp == 0 ? rce->qpNoVbv : m_avgPFrameQp;
                 m_avgPFrameQp = (m_avgPFrameQp + rce->qpNoVbv) / 2;

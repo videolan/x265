@@ -64,9 +64,9 @@ void Bitstream::write(uint32_t val, uint32_t numBits)
 
         switch (writeBytes)
         {
-        case 4: push_back(write_bits >> 24);
-        case 3: push_back(write_bits >> 16);
-        case 2: push_back(write_bits >> 8);
+        case 4: push_back(write_bits >> 24);  // fall-through
+        case 3: push_back(write_bits >> 16);  // fall-through
+        case 2: push_back(write_bits >> 8);   // fall-through
         case 1: push_back(write_bits);
         }
 
