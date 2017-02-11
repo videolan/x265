@@ -345,10 +345,10 @@ void Encoder::create()
         if (!name)
             name = defaultAnalysisFileName;
         const char* mode = m_param->analysisMode == X265_ANALYSIS_LOAD ? "rb" : "wb";
-        m_analysisFile = fopen(name, mode);
+        m_analysisFile = x265_fopen(name, mode);
         if (!m_analysisFile)
         {
-            x265_log(NULL, X265_LOG_ERROR, "Analysis load/save: failed to open file %s\n", name);
+            x265_log_file(NULL, X265_LOG_ERROR, "Analysis load/save: failed to open file %s\n", name);
             m_aborted = true;
         }
     }
@@ -365,21 +365,21 @@ void Encoder::create()
                 m_aborted = true;
             else
             {
-                m_analysisFileOut = fopen(temp, "wb");
+                m_analysisFileOut = x265_fopen(temp, "wb");
                 X265_FREE(temp);
             }
             if (!m_analysisFileOut)
             {
-                x265_log(NULL, X265_LOG_ERROR, "Analysis 2 pass: failed to open file %s\n", temp);
+                x265_log_file(NULL, X265_LOG_ERROR, "Analysis 2 pass: failed to open file %s.temp\n", name);
                 m_aborted = true;
             }
         }
         if (m_param->rc.bStatRead)
         {
-            m_analysisFileIn = fopen(name, "rb");
+            m_analysisFileIn = x265_fopen(name, "rb");
             if (!m_analysisFileIn)
             {
-                x265_log(NULL, X265_LOG_ERROR, "Analysis 2 pass: failed to open file %s\n", name);
+                x265_log_file(NULL, X265_LOG_ERROR, "Analysis 2 pass: failed to open file %s\n", name);
                 m_aborted = true;
             }
         }
@@ -486,7 +486,7 @@ void Encoder::destroy()
         }
         if (bError)
         {
-            x265_log(m_param, X265_LOG_ERROR, "failed to rename analysis stats file to \"%s\"\n", name);
+            x265_log_file(m_param, X265_LOG_ERROR, "failed to rename analysis stats file to \"%s\"\n", name);
         }
         X265_FREE(temp);
      }

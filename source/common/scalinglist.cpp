@@ -245,10 +245,10 @@ void ScalingList::setDefaultScalingList()
 
 bool ScalingList::parseScalingList(const char* filename)
 {
-    FILE *fp = fopen(filename, "r");
+    FILE *fp = x265_fopen(filename, "r");
     if (!fp)
     {
-        x265_log(NULL, X265_LOG_ERROR, "can't open scaling list file %s\n", filename);
+        x265_log_file(NULL, X265_LOG_ERROR, "can't open scaling list file %s\n", filename);
         return true;
     }
 
@@ -268,7 +268,7 @@ bool ScalingList::parseScalingList(const char* filename)
                 char *ret = fgets(line, 1024, fp);
                 if (!ret || (!strstr(line, MatrixType[sizeIdc][listIdc]) && feof(fp)))
                 {
-                    x265_log(NULL, X265_LOG_ERROR, "can't read matrix from %s\n", filename);
+                    x265_log_file(NULL, X265_LOG_ERROR, "can't read matrix from %s\n", filename);
                     return true;
                 }
             }
@@ -279,7 +279,7 @@ bool ScalingList::parseScalingList(const char* filename)
                 int data;
                 if (fscanf(fp, "%d,", &data) != 1)
                 {
-                    x265_log(NULL, X265_LOG_ERROR, "can't read matrix from %s\n", filename);
+                    x265_log_file(NULL, X265_LOG_ERROR, "can't read matrix from %s\n", filename);
                     return true;
                 }
                 src[i] = data;
@@ -295,7 +295,7 @@ bool ScalingList::parseScalingList(const char* filename)
                     char *ret = fgets(line, 1024, fp);
                     if (!ret || (!strstr(line, MatrixType_DC[sizeIdc][listIdc]) && feof(fp)))
                     {
-                        x265_log(NULL, X265_LOG_ERROR, "can't read DC from %s\n", filename);
+                        x265_log_file(NULL, X265_LOG_ERROR, "can't read DC from %s\n", filename);
                         return true;
                     }
                 }
@@ -304,7 +304,7 @@ bool ScalingList::parseScalingList(const char* filename)
                 int data;
                 if (fscanf(fp, "%d,", &data) != 1)
                 {
-                    x265_log(NULL, X265_LOG_ERROR, "can't read matrix from %s\n", filename);
+                    x265_log_file(NULL, X265_LOG_ERROR, "can't read matrix from %s\n", filename);
                     return true;
                 }
 

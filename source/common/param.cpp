@@ -1657,10 +1657,10 @@ bool parseLambdaFile(x265_param* param)
     if (!param->rc.lambdaFileName)
         return false;
 
-    FILE *lfn = fopen(param->rc.lambdaFileName, "r");
+    FILE *lfn = x265_fopen(param->rc.lambdaFileName, "r");
     if (!lfn)
     {
-        x265_log(param, X265_LOG_ERROR, "unable to read lambda file <%s>\n", param->rc.lambdaFileName);
+        x265_log_file(param, X265_LOG_ERROR, "unable to read lambda file <%s>\n", param->rc.lambdaFileName);
         return true;
     }
 
