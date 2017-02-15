@@ -2,6 +2,34 @@
 Release Notes
 *************
 
+Version 2.3
+===========
+
+Release date - 15th February, 2017.
+
+Encoder enhancements
+--------------------
+1. New SSIM-based RD-cost computation for improved visual quality, and efficiency; use :option:`--ssim-rd` to exercise.
+2. Multi-pass encoding can now share analysis information from prior passes (in addition to rate-control information) to improve performance and quality of subsequent passes; to your multi-pass command-lines that use the :option:`--pass` option, add :option:`--multi-pass-opt-distortion` to share distortion information, and :option:`--multi-pass-opt-analysis` to share other analysis information.
+3. A dedicated thread pool for lookahead can now be specified with :option:`--lookahead-threads`.
+4. option:`--dynamic-rd` dynamically increase analysis in areas where the bitrate is being capped by VBV; works for both CRF and ABR encodes with VBV settings.
+5. The number of bits used to signal the delta-QP can be optimized with the :option:`--opt-cu-delta-qp` option; found to be useful in some scenarios for lower bitrate targets.
+6. Experimental feature option:`--aq-motion` adds new QP offsets based on relative motion of a block with respect to the movement of the frame.
+
+API changes
+-----------
+1. Reconfigure API now supports signalling new scaling lists.
+2. x265 application's csv functionality now reports time (in milliseconds) taken to encode each frame.
+3. :option:`--strict-cbr` enables stricter bitrate adherence by adding filler bits when achieved bitrate is lower than the target; earlier, it was only reacting when the achieved rate was higher.
+4. :option:`--hdr` can be used to ensure that max-cll and max-fall values are always signaled (even if 0,0).
+
+Bug fixes
+---------
+1. Fixed incorrect HW thread counting on MacOS platform.
+2. Fixed scaling lists support for 4:4:4 videos.
+3. Inconsistent output fix for :option:`--opt-qp-pss` by removing last slice's QP from cost calculation.
+4. VTune profiling (enabled using ENABLE_VTUNE CMake option) now also works with 2017 VTune builds.
+
 Version 2.2
 ===========
 
@@ -11,7 +39,7 @@ Encoder enhancements
 --------------------
 1. Enhancements to TU selection algorithm with early-outs for improved speed; use :option:`--limit-tu` to exercise.
 2. New motion search method SEA (Successive Elimination Algorithm) supported now as :option: `--me` 4
-3. Bit-stream optimizations to improve fields in PPS and SPS for bit-rate savings through :option:`--[no-]opt-qp-pps`, :option:`--[no-]opt-ref-list-length-pps`, and :option:`--[no-]multi-pass-opt-rps`.
+3. Bit-stream optimizations to improve fields in PPS and SPS for bit-rate savings through :option:`--opt-qp-pps`, :option:`--opt-ref-list-length-pps`, and :option:`--multi-pass-opt-rps`.
 4. Enabled using VBV constraints when encoding without WPP.
 5. All param options dumped in SEI packet in bitstream when info selected.
 6. x265 now supports POWERPC-based systems. Several key functions also have optimized ALTIVEC kernels.

@@ -1403,7 +1403,7 @@ Quality, rate control and rate distortion options
 	Default 1.0.
 	**Range of values:** 0.0 to 3.0
 
-.. option:: --[no-]aq-motion
+.. option:: --aq-motion, --no-aq-motion
 
 	Adjust the AQ offsets based on the relative motion of each block with
 	respect to the motion of the frame. The more the relative motion of the block,
@@ -1924,30 +1924,30 @@ Bitstream options
 
   Maximum of the picture order count. Default 8
 
-.. option:: --[no-]vui-timing-info
+.. option:: --vui-timing-info, --no-vui-timing-info
 
 	Emit VUI timing info in bitstream. Default enabled.
 
-.. option:: --[no-]vui-hrd-info
+.. option:: --vui-hrd-info, --no-vui-hrd-info
 
 	Emit VUI HRD info in  bitstream. Default enabled when
 	:option:`--hrd` is enabled.
 
-.. option:: --[no-]opt-qp-pps
+.. option:: --opt-qp-pps, --no-opt-qp-pps
 
 	Optimize QP in PPS (instead of default value of 26) based on the QP values
 	observed in last GOP. Default enabled.
 
-.. option:: --[no-]opt-ref-list-length-pps
+.. option:: --opt-ref-list-length-pps, --no-opt-ref-list-length-pps
 
 	Optimize L0 and L1 ref list length in PPS (instead of default value of 0)
 	based on the lengths observed in the last GOP. Default enabled.
 
-.. option:: --[no-]multi-pass-opt-rps
+.. option:: --multi-pass-opt-rps, --no-multi-pass-opt-rps
 
 	Enable storing commonly used RPS in SPS in multi pass mode. Default disabled.
 
-.. option:: --[no-]opt-cu-delta-qp
+.. option:: --opt-cu-delta-qp, --no-opt-cu-delta-qp
 
 	Optimize CU level QPs by pulling up lower QPs to value close to meanQP thereby
 	minimizing fluctuations in deltaQP signalling. Default disabled.
