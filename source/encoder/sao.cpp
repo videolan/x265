@@ -1230,11 +1230,11 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 
     int64_t lambda[2] = { 0 };
 
-    int qpCb = qp;
+    int qpCb = qp + slice->m_pps->chromaQpOffset[0] + slice->m_chromaQpOffset[0];
     if (m_param->internalCsp == X265_CSP_I420)
-        qpCb = x265_clip3(m_param->rc.qpMin, m_param->rc.qpMax, (int)g_chromaScale[qp + slice->m_pps->chromaQpOffset[0] + slice->m_chromaQpOffset[0]]);
+        qpCb = x265_clip3(m_param->rc.qpMin, m_param->rc.qpMax, (int)g_chromaScale[x265_clip3(QP_MIN, QP_MAX_MAX, qpCb)]);
     else
-        qpCb = X265_MIN(qp + slice->m_pps->chromaQpOffset[0] + slice->m_chromaQpOffset[0], QP_MAX_SPEC);
+        qpCb = x265_clip3(m_param->rc.qpMin, m_param->rc.qpMax, qpCb);
     lambda[0] = (int64_t)floor(256.0 * x265_lambda2_tab[qp]);
     lambda[1] = (int64_t)floor(256.0 * x265_lambda2_tab[qpCb]); // Use Cb QP for SAO chroma
 
