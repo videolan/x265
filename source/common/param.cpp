@@ -271,7 +271,6 @@ void x265_param_default(x265_param* param)
     param->bOptCUDeltaQP        = 0;
     param->bAQMotion = 0;
     param->bHDROpt = 0;
-    param->captureColorPrim = 3;
 
 }
 
@@ -946,10 +945,6 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         }
         OPT("hdr") p->bEmitHDRSEI = atobool(value);
         OPT("hdr-opt") p->bHDROpt = atobool(value);
-        OPT("capture-csp")
-        {
-            p->captureColorPrim = parseName(value, x265_capture_colorprim_names, bError);
-        }
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1288,10 +1283,6 @@ int x265_check_params(x265_param* param)
         "qpmin exceeds supported range (0 to 69)");
     CHECK(param->log2MaxPocLsb < 4 || param->log2MaxPocLsb > 16,
         "Supported range for log2MaxPocLsb is 4 to 16");
-    CHECK(param->captureColorPrim < 0
-        || param->captureColorPrim > 3,
-        "Capture Color Primaries must be bt709, p3d65,"
-        " bt2020");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
@@ -1660,7 +1651,6 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bAQMotion, "aq-motion");
     BOOL(p->bEmitHDRSEI, "hdr");
     BOOL(p->bHDROpt, "hdr-opt");
-    s += sprintf(s, " Capture-colorprim=%d", p->captureColorPrim);
 #undef BOOL
     return buf;
 }

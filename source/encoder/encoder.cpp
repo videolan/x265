@@ -79,8 +79,8 @@ Encoder::Encoder()
     m_iFrameNum = 0;
     m_iPPSQpMinus26 = 0;
     m_rpsInSpsCount = 0;
-    m_cB = 0.0;
-    m_cR = 0.0;
+    m_cB = 1.0;
+    m_cR = 1.0;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
 
@@ -2308,24 +2308,6 @@ void Encoder::configure(x265_param *p)
                                         "                                            the input video should be 10 bit 4:2:0\n"
                                         "                                            Disabling offset tuning for HDR videos\n");
             p->bHDROpt = 0;
-        }
-        else
-        {
-            if (p->captureColorPrim == 1)
-            {
-                m_cB = 1.14;
-                m_cR = 1.78;
-            }
-            else if (p->captureColorPrim == 2)
-            {
-                m_cB = 1.04;
-                m_cR = 1.39;
-            }
-            else if (p->captureColorPrim == 3)
-            {
-                m_cB = 1.0;
-                m_cR = 1.0;
-            }
         }
     }
 }

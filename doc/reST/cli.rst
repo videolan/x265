@@ -414,15 +414,6 @@ frame counts) are only applicable to the CLI application.
 	4. nv12
 	5. nv16
 
-.. option:: --capture-csp <integer|string>
-
-	Specify color primaries of the Capture device. Default
-	bt2020.
-
-	1. bt709
-	2. p3d65
-	3. bt2020
-
 .. option:: --fps <integer|float|numerator/denominator>
 
 	YUV only: Source frame rate
@@ -1858,8 +1849,7 @@ VUI fields must be manually specified.
 .. option:: --hdr-opt, --no-hdr-opt
 
 	Add luma and chroma offsets for HDR/WCG content.
-	Input video should be 10 bit 4:2:0. Also set the appropriate color primaries
-	of the capture device using :option:`--capture-csp` option. Applicable for HDR content.
+	Input video should be 10 bit 4:2:0. Applicable for HDR content.
 	Default disabled. **Experimental Feature**
 
 .. option:: --min-luma <integer>
