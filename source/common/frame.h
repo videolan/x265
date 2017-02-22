@@ -84,6 +84,7 @@ public:
     Lowres                 m_lowres;
     bool                   m_lowresInit;         // lowres init complete (pre-analysis)
     bool                   m_bChromaExtended;    // orig chroma planes motion extended for weight analysis
+    bool                   m_reconfigureRc;
 
     float*                 m_quantOffsets;       // points to quantOffsets in x265_picture
     x265_sei               m_userSEI;

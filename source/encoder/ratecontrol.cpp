@@ -683,6 +683,56 @@ bool RateControl::init(const SPS& sps)
     return true;
 }
 
+void RateControl::reconfigureRC()
+{
+    if (m_isVbv)
+    {
+        m_param->rc.vbvBufferSize = x265_clip3(0, 2000000, m_param->rc.vbvBufferSize);
+        m_param->rc.vbvMaxBitrate = x265_clip3(0, 2000000, m_param->rc.vbvMaxBitrate);
+        if (m_param->rc.vbvMaxBitrate < m_param->rc.bitrate &&
+            m_param->rc.rateControlMode == X265_RC_ABR)
+        {
+            x265_log(m_param, X265_LOG_WARNING, "max bitrate less than average bitrate, assuming CBR\n");
+            m_param->rc.bitrate = m_param->rc.vbvMaxBitrate;
+        }
+
+        if (m_param->rc.vbvBufferSize < (int)(m_param->rc.vbvMaxBitrate / m_fps))
+        {
+            m_param->rc.vbvBufferSize = (int)(m_param->rc.vbvMaxBitrate / m_fps);
+            x265_log(m_param, X265_LOG_WARNING, "VBV buffer size cannot be smaller than one frame, using %d kbit\n",
+                m_param->rc.vbvBufferSize);
+        }
+        int vbvBufferSize = m_param->rc.vbvBufferSize * 1000;
+        int vbvMaxBitrate = m_param->rc.vbvMaxBitrate * 1000;
+        m_bufferRate = vbvMaxBitrate / m_fps;
+        m_vbvMaxRate = vbvMaxBitrate;
+        m_bufferSize = vbvBufferSize;
+        m_singleFrameVbv = m_bufferRate * 1.1 > m_bufferSize;
+    }
+    if (m_param->rc.rateControlMode == X265_RC_CRF)
+    {
+        #define CRF_INIT_QP (int)m_param->rc.rfConstant
+        m_param->rc.bitrate = 0;
+        double baseCplx = m_ncu * (m_param->bframes ? 120 : 80);
+        double mbtree_offset = m_param->rc.cuTree ? (1.0 - m_param->rc.qCompress) * 13.5 : 0;
+        m_rateFactorConstant = pow(baseCplx, 1 - m_qCompress) /
+            x265_qp2qScale(m_param->rc.rfConstant + mbtree_offset);
+        if (m_param->rc.rfConstantMax)
+        {
+            m_rateFactorMaxIncrement = m_param->rc.rfConstantMax - m_param->rc.rfConstant;
+            if (m_rateFactorMaxIncrement <= 0)
+            {
+                x265_log(m_param, X265_LOG_WARNING, "CRF max must be greater than CRF\n");
+                m_rateFactorMaxIncrement = 0;
+            }
+        }
+        if (m_param->rc.rfConstantMin)
+            m_rateFactorMaxDecrement = m_param->rc.rfConstant - m_param->rc.rfConstantMin;
+    }
+    m_bitrate = m_param->rc.bitrate * 1000;
+}
+
+
 void RateControl::initHRD(SPS& sps)
 {
     int vbvBufferSize = m_param->rc.vbvBufferSize * 1000;

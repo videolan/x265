@@ -56,6 +56,7 @@ Encoder::Encoder()
 {
     m_aborted = false;
     m_reconfigure = false;
+    m_reconfigureRc = false;
     m_encodedFrameNum = 0;
     m_pocLast = -1;
     m_curEncoder = 0;
@@ -607,7 +608,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         {
             inFrame = new Frame;
             inFrame->m_encodeStartTime = x265_mdate();
-            x265_param* p = m_reconfigure ? m_latestParam : m_param;
+            x265_param* p = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
             if (inFrame->create(p, pic_in->quantOffsets))
             {
                 /* the first PicYuv created is asked to generate the CU and block unit offset
@@ -674,7 +675,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_userData  = pic_in->userData;
         inFrame->m_pts       = pic_in->pts;
         inFrame->m_forceqp   = pic_in->forceqp;
-        inFrame->m_param     = m_reconfigure ? m_latestParam : m_param;
+        inFrame->m_param     = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
 
         if (pic_in->userSEI.numPayloads)
         {
@@ -740,6 +741,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inFrame->m_lowres.bScenecut = !!inFrame->m_analysisData.bScenecut;
             inFrame->m_lowres.satdCost = inFrame->m_analysisData.satdCost;
         }
+        if (m_reconfigureRc)
+            inFrame->m_reconfigureRc = true;
 
         m_lookahead->addPicture(*inFrame, sliceType);
         m_numDelayedPic++;
@@ -940,6 +943,15 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 if (m_param->rc.bStatRead)
                     readAnalysis2PassFile(&frameEnc->m_analysis2Pass, frameEnc->m_poc, frameEnc->m_lowres.sliceType);
              }
+
+            if (frameEnc->m_reconfigureRc && m_reconfigureRc)
+            {
+                memcpy(m_param, m_latestParam, sizeof(x265_param));
+                m_rateControl->reconfigureRC();
+                m_reconfigureRc = false;
+            }
+            if (frameEnc->m_reconfigureRc && !m_reconfigureRc)
+                frameEnc->m_reconfigureRc = false;
             if (curEncoder->m_reconfigure)
             {
                 /* One round robin cycle of FE reconfigure is complete */
@@ -1090,6 +1102,25 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
     encParam->bIntraInBFrames = param->bIntraInBFrames;
     if (param->scalingLists && !encParam->scalingLists)
         encParam->scalingLists = strdup(param->scalingLists);
+    /* VBV can't be turned ON if it wasn't ON to begin with and can't be turned OFF if it was ON to begin with*/
+    if (param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0 &&
+        encParam->rc.vbvMaxBitrate > 0 && encParam->rc.vbvBufferSize > 0)
+    {
+        m_reconfigureRc |= encParam->rc.vbvMaxBitrate != param->rc.vbvMaxBitrate;
+        m_reconfigureRc |= encParam->rc.vbvBufferSize != param->rc.vbvBufferSize;
+        if (m_reconfigureRc && m_param->bEmitHRDSEI)
+            x265_log(m_param, X265_LOG_WARNING, "VBV parameters cannot be changed when HRD is in use.\n");
+        else
+        {
+            encParam->rc.vbvMaxBitrate = param->rc.vbvMaxBitrate;
+            encParam->rc.vbvBufferSize = param->rc.vbvBufferSize;
+        }
+    }
+    m_reconfigureRc |= encParam->rc.bitrate != param->rc.bitrate;
+    encParam->rc.bitrate = param->rc.bitrate;
+    m_reconfigureRc |= encParam->rc.rfConstant != param->rc.rfConstant;
+    encParam->rc.rfConstant = param->rc.rfConstant; 
+
     /* To add: Loop Filter/deblocking controls, transform skip, signhide require PPS to be resent */
     /* To add: SAO, temporal MVP, AMP, TU depths require SPS to be resent, at every CVS boundary */
     return x265_check_params(encParam);
@@ -3090,7 +3121,7 @@ void Encoder::writeAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, FrameDa
 
 void Encoder::printReconfigureParams()
 {
-    if (!m_reconfigure)
+    if (!(m_reconfigure || m_reconfigureRc))
         return;
     x265_param* oldParam = m_param;
     x265_param* newParam = m_latestParam;
@@ -3112,6 +3143,10 @@ void Encoder::printReconfigureParams()
     TOOLCMP(oldParam->maxNumMergeCand, newParam->maxNumMergeCand, "max-merge=%d to %d\n");
     TOOLCMP(oldParam->bIntraInBFrames, newParam->bIntraInBFrames, "b-intra=%d to %d\n");
     TOOLCMP(oldParam->scalingLists, newParam->scalingLists, "scalinglists=%s to %s\n");
+    TOOLCMP(oldParam->rc.vbvMaxBitrate, newParam->rc.vbvMaxBitrate, "vbv-maxrate=%d to %d\n");
+    TOOLCMP(oldParam->rc.vbvBufferSize, newParam->rc.vbvBufferSize, "vbv-bufsize=%d to %d\n");
+    TOOLCMP(oldParam->rc.bitrate, newParam->rc.bitrate, "bitrate=%d to %d\n");
+    TOOLCMP(oldParam->rc.rfConstant, newParam->rc.rfConstant, "crf=%f to %f\n");
 }
 
 bool Encoder::computeSPSRPSIndex()

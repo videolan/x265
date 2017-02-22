@@ -153,6 +153,7 @@ public:
     bool               m_bZeroLatency;     // x265_encoder_encode() returns NALs for the input picture, zero lag
     bool               m_aborted;          // fatal error detected
     bool               m_reconfigure;      // Encoder reconfigure in progress
+    bool               m_reconfigureRc;
 
     /* Begin intra refresh when one not in progress or else begin one as soon as the current 
      * one is done. Requires bIntraRefresh to be set.*/

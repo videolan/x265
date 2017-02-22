@@ -234,6 +234,7 @@ public:
     RateControl(x265_param& p);
     bool init(const SPS& sps);
     void initHRD(SPS& sps);
+    void reconfigureRC();
 
     void setFinalFrameCount(int count);
     void terminate();          /* un-block all waiting functions so encoder may close */

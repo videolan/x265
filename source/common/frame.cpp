@@ -47,6 +47,7 @@ Frame::Frame()
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_rcData = NULL;
     m_encodeStartTime = 0;
+    m_reconfigureRc = false;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
