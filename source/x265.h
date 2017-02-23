@@ -1384,6 +1384,12 @@ typedef struct x265_param
     /* Enable luma and chroma offsets for HDR/WCG content.
      * Default is disabled */
     int       bHDROpt;
+
+    /* A value between 1 and 5 (both inclusive) determines the level of
+    * information stored/reused in save/load analysis-mode. Higher the refine
+    * level higher the informtion stored/reused. Default is 3 */
+    int       analysisRefineLevel;
+
 } x265_param;
 
 /* x265_param_alloc:

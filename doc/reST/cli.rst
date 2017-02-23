@@ -816,6 +816,27 @@ not match.
 	Specify a filename for analysis data (see :option:`--analysis-mode`)
 	If no filename is specified, x265_analysis.dat is used.
 
+.. option:: --refine-level <1..5>
+
+	Amount of information stored/reused in :option:`--analysis-mode` is distributed across levels.
+	Higher the value, higher the information stored/reused, faster the encode. Default 3.
+
+	Note that --refine-level must be paired with analysis-mode.
+
+	+-------+-----------------------------------------+
+	| Level | Description                             |
+	+=======+=========================================+
+	| 1     | Lookahead information                   |
+	+-------+-----------------------------------------+
+	| 2     | Level 1 + intra/inter modes, ref's      |
+	+-------+-----------------------------------------+
+	| 3     | Level 2 + rect-amp                      |
+	+-------+-----------------------------------------+
+	| 4     | Currently same as 3                     |
+	+-------+-----------------------------------------+
+	| 5     | Level 4 + Entire CU analysis-info       |
+	+-------+-----------------------------------------+
+
 Options which affect the transform unit quad-tree, sometimes referred to
 as the residual quad-tree (RQT).
 

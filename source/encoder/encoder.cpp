@@ -2021,6 +2021,9 @@ void Encoder::configure(x265_param *p)
         p->rc.cuTree = 0;
     }
 
+    if (p->analysisMode == X265_ANALYSIS_OFF && p->analysisRefineLevel)
+        x265_log(p, X265_LOG_WARNING, "refine-level option works only with analysis-mode load/save\n");
+
     if (p->analysisMode && (p->analysisMultiPassRefine || p->analysisMultiPassDistortion))
     {
         x265_log(p, X265_LOG_WARNING, "Cannot use Analysis load/save option and multi-pass-opt-analysis/multi-pass-opt-distortion together,"
