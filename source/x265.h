@@ -1385,9 +1385,9 @@ typedef struct x265_param
      * Default is disabled */
     int       bHDROpt;
 
-    /* A value between 1 and 5 (both inclusive) determines the level of
+    /* A value between 1 and 10 (both inclusive) determines the level of
     * information stored/reused in save/load analysis-mode. Higher the refine
-    * level higher the informtion stored/reused. Default is 3 */
+    * level higher the informtion stored/reused. Default is 5 */
     int       analysisRefineLevel;
 
 } x265_param;

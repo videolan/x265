@@ -271,7 +271,7 @@ void x265_param_default(x265_param* param)
     param->bOptCUDeltaQP        = 0;
     param->bAQMotion = 0;
     param->bHDROpt = 0;
-    param->analysisRefineLevel = 3;
+    param->analysisRefineLevel = 5;
 
 }
 
@@ -1279,8 +1279,8 @@ int x265_check_params(x265_param* param)
           "Strict-cbr cannot be applied without specifying target bitrate or vbv bufsize");
     CHECK(param->analysisMode && (param->analysisMode < X265_ANALYSIS_OFF || param->analysisMode > X265_ANALYSIS_LOAD),
         "Invalid analysis mode. Analysis mode 0: OFF 1: SAVE : 2 LOAD");
-    CHECK(param->analysisMode && (param->analysisRefineLevel < 1 || param->analysisRefineLevel > 5),
-        "Invalid analysis refine level. Value must be between 1 and 5 (inclusive)");
+    CHECK(param->analysisMode && (param->analysisRefineLevel < 1 || param->analysisRefineLevel > 10),
+        "Invalid analysis refine level. Value must be between 1 and 10 (inclusive)");
     CHECK(param->rc.qpMax < QP_MIN || param->rc.qpMax > QP_MAX_MAX,
         "qpmax exceeds supported range (0 to 69)");
     CHECK(param->rc.qpMin < QP_MIN || param->rc.qpMin > QP_MAX_MAX,

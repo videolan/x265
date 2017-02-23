@@ -167,14 +167,14 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         }
     }
 
-    if (m_param->analysisMode && m_slice->m_sliceType != I_SLICE && m_param->analysisRefineLevel > 1 && m_param->analysisRefineLevel < 5)
+    if (m_param->analysisMode && m_slice->m_sliceType != I_SLICE && m_param->analysisRefineLevel > 1 && m_param->analysisRefineLevel < 10)
     {
         int numPredDir = m_slice->isInterP() ? 1 : 2;
         m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
         m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
         m_reuseDepth = &m_reuseInterDataCTU->depth[ctu.m_cuAddr * ctu.m_numPartitions];
         m_reuseModes = &m_reuseInterDataCTU->modes[ctu.m_cuAddr * ctu.m_numPartitions];
-        if (m_param->analysisRefineLevel > 2)
+        if (m_param->analysisRefineLevel > 4)
         {
             m_reusePartSize = &m_reuseInterDataCTU->partSize[ctu.m_cuAddr * ctu.m_numPartitions];
             m_reuseMergeFlag = &m_reuseInterDataCTU->mergeFlag[ctu.m_cuAddr * ctu.m_numPartitions];
@@ -214,7 +214,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             /* generate residual for entire CTU at once and copy to reconPic */
             encodeResidue(ctu, cuGeom);
         }
-        else if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel == 5)
+        else if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel == 10)
         {
             analysis_inter_data* interDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
             int posCTU = ctu.m_cuAddr * numPartition;
@@ -336,7 +336,7 @@ void Analysis::qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t
     int lambdaQP = lqp;
 
     bool doQPRefine = (bDecidedDepth && depth <= m_slice->m_pps->maxCuDQPDepth) || (!bDecidedDepth && depth == m_slice->m_pps->maxCuDQPDepth);
-    if (m_param->analysisRefineLevel == 5)
+    if (m_param->analysisRefineLevel == 10)
         doQPRefine = false;
 
     if (doQPRefine)
@@ -1054,7 +1054,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 if (m_param->rdLevel)
                     skipModes = m_param->bEnableEarlySkip && md.bestMode;
             }
-            if (m_param->analysisRefineLevel > 2 && m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
+            if (m_param->analysisRefineLevel > 4 && m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
             {
                 if (m_reuseModes[cuGeom.absPartIdx] != MODE_INTRA  && m_reuseModes[cuGeom.absPartIdx] != 4)
                 {
@@ -1625,7 +1625,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 if (m_param->bEnableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
                     skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
             }
-            if (m_param->analysisRefineLevel > 2 && m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
+            if (m_param->analysisRefineLevel > 4 && m_reusePartSize[cuGeom.absPartIdx] == SIZE_2Nx2N)
                 skipRectAmp = true && !!md.bestMode;
         }
     }
@@ -2033,7 +2033,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
             for (uint32_t part = 0; part < numPU; part++)
             {
                 PredictionUnit pu(mode.cu, cuGeom, part);
-                if (m_param->analysisRefineLevel == 5)
+                if (m_param->analysisRefineLevel == 10)
                 {
                     analysis_inter_data* interDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
                     int cuIdx = (mode.cu.m_cuAddr * parentCTU.m_numPartitions) + cuGeom.absPartIdx;
@@ -2109,7 +2109,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
                     nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
 
-                int lamdaQP = m_param->analysisRefineLevel == 5 ? nextQP : lqp;
+                int lamdaQP = m_param->analysisRefineLevel == 10 ? nextQP : lqp;
                 qprdRefine(parentCTU, childGeom, nextQP, lamdaQP);
 
                 // Save best CU and pred data for this sub CU
