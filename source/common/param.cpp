@@ -1655,7 +1655,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bAQMotion, "aq-motion");
     BOOL(p->bEmitHDRSEI, "hdr");
     BOOL(p->bHDROpt, "hdr-opt");
-    s += sprintf(s, "refine-level=%d", p->analysisRefineLevel);
+    s += sprintf(s, " refine-level=%d", p->analysisRefineLevel);
 #undef BOOL
     return buf;
 }

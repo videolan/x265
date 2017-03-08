@@ -68,7 +68,7 @@ KristenAndSara_1280x720_60.y4m,--preset medium --no-cutree --max-tu-size 16
 KristenAndSara_1280x720_60.y4m,--preset slower --pmode --max-tu-size 8 --limit-refs 0 --limit-modes --limit-tu 1
 NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset superfast --tune psnr
 NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset medium --tune grain --limit-refs 2
-NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset slow --no-cutree --analysis-mode=save --refine-level 10 --bitrate 9000,--preset slow --no-cutree --analysis-mode=load --refine-level 10 --bitrate 9000
+NebutaFestival_2560x1600_60_10bit_crop.yuv,--preset slow --no-cutree --analysis-mode=save --rd 5 --refine-level 10 --bitrate 9000,--preset slow --no-cutree --analysis-mode=load --rd 5 --refine-level 10 --bitrate 9000
 News-4k.y4m,--preset ultrafast --no-cutree --analysis-mode=save --refine-level 2 --bitrate 15000,--preset ultrafast --no-cutree --analysis-mode=load --refine-level 2 --bitrate 15000
 News-4k.y4m,--preset superfast --lookahead-slices 6 --aq-mode 0
 News-4k.y4m,--preset superfast --slices 4 --aq-mode 0 

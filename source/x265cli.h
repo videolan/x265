@@ -424,7 +424,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]strict-cbr             Enable stricter conditions and tolerance for bitrate deviations in CBR mode. Default %s\n", OPT(param->rc.bStrictCbr));
     H0("   --analysis-mode <string|int>  save - Dump analysis info into file, load - Load analysis buffers from the file. Default %d\n", param->analysisMode);
     H0("   --analysis-file <filename>    Specify file name used for either dumping or reading analysis data.\n");
-    H0("   --refine-level <1..10>        Level of analyis refinement indicates amount of info stored/reused in save/load mode, 1:least....10:most. Default %d\n", param->analysisRefineLevel);
+    H0("   --refine-level <1..10>        Level of analysis refinement indicates amount of info stored/reused in save/load mode, 1:least....10:most. Default %d\n", param->analysisRefineLevel);
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance 3:auto variance with bias to dark scenes. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
     H0("   --[no-]aq-motion              Adaptive Quantization based on the relative motion of each CU w.r.t., frame. Default %s\n", OPT(param->bOptCUDeltaQP));
