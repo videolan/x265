@@ -2291,10 +2291,9 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "maxSlices can not be less than 1, force set to 1\n");
         p->maxSlices = 1;
     }
-
     const uint32_t numRows = (p->sourceHeight + p->maxCUSize - 1) / p->maxCUSize;
     const uint32_t slicesLimit = X265_MIN(numRows, NALList::MAX_NAL_UNITS - 1);
-    if (p->maxSlices > numRows)
+    if (p->maxSlices > slicesLimit)
     {
         x265_log(p, X265_LOG_WARNING, "maxSlices can not be more than min(rows, MAX_NAL_UNITS-1), force set to %d\n", slicesLimit);
         p->maxSlices = slicesLimit;
