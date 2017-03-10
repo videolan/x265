@@ -396,6 +396,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->limitModes = 1;
             param->bIntraInBFrames = 1;
             param->lookaheadSlices = 4; // limit parallelism as already enough work exists
+            param->limitTU = 4;
         }
         else if (!strcmp(preset, "veryslow"))
         {
@@ -417,6 +418,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->limitModes = 1;
             param->bIntraInBFrames = 1;
             param->lookaheadSlices = 0; // disabled for best quality
+            param->limitTU = 4;
         }
         else if (!strcmp(preset, "placebo"))
         {
