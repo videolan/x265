@@ -129,7 +129,7 @@ double x265_lambda_tab[QP_MAX_MAX + 1] =
     456.1401, 512.0000, 574.7006, 645.0796, 724.0773
 };
 
-// lambda2 = 0.038 * pow(0.234, QP)
+// lambda2 = 0.038 * exp(0.234 * QP)
 double x265_lambda2_tab[QP_MAX_MAX + 1] =
 {
     0.0380, 0.0480, 0.0606, 0.0766, 0.0968,
