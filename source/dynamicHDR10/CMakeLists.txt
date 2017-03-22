@@ -1,0 +1,175 @@
+# vim: syntax=cmake
+if(ENABLE_DYNAMIC_HDR10)
+
+add_library(dynamicHDR10 OBJECT 
+    BasicStructures.cpp BasicStructures.h
+    json11/json11.cpp json11/json11.h
+    JsonHelper.cpp JsonHelper.h
+    metadataFromJson.cpp metadataFromJson.h
+    SeiMetadataDictionary.cpp SeiMetadataDictionary.h
+    hdr10plus.h
+    api.cpp )
+
+else()
+cmake_minimum_required (VERSION 2.8.11)
+project(dynamicHDR10)
+include(CheckIncludeFiles)
+include(CheckFunctionExists)
+include(CheckSymbolExists)
+include(CheckCXXCompilerFlag)
+
+SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
+
+if(GCC)
+    add_definitions(-Wall -Wextra -Wshadow)
+    add_definitions(-D__STDC_LIMIT_MACROS=1)
+    add_definitions(-std=c++11)
+    if(ENABLE_PIC)
+         add_definitions(-fPIC)
+    endif(ENABLE_PIC)
+    if(NATIVE_BUILD)
+        if(INTEL_CXX)
+            add_definitions(-xhost)
+        else()
+            add_definitions(-march=native)
+        endif()
+    elseif(X86 AND NOT X64)
+        string(FIND "${CMAKE_CXX_FLAGS}" "-march" marchPos)
+        if(marchPos LESS "0")
+            add_definitions(-march=i686)
+            if(WIN32 AND NOT INTEL_CXX AND NOT CLANG AND
+               CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0 AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
+                add_definitions(-mpreferred-stack-boundary=2)
+            endif()
+        endif()
+    endif()
+    if(ARM AND CROSS_COMPILE_ARM)
+        set(ARM_ARGS -march=armv6 -mfloat-abi=soft -mfpu=vfp -marm -fPIC)
+    elseif(ARM)
+        find_package(Neon)
+        if(CPU_HAS_NEON)
+            set(ARM_ARGS -mcpu=native -mfloat-abi=hard -mfpu=neon -marm -fPIC)
+            add_definitions(-DHAVE_NEON)
+        else()
+            set(ARM_ARGS -mcpu=native -mfloat-abi=hard -mfpu=vfp -marm)
+        endif()
+    endif()
+    add_definitions(${ARM_ARGS})
+    if(FPROFILE_GENERATE)
+        if(INTEL_CXX)
+            add_definitions(-prof-gen -prof-dir="${CMAKE_CURRENT_BINARY_DIR}")
+            list(APPEND LINKER_OPTIONS "-prof-gen")
+        else()
+            check_cxx_compiler_flag(-fprofile-generate CC_HAS_PROFILE_GENERATE)
+            if(CC_HAS_PROFILE_GENERATE)
+                add_definitions(-fprofile-generate)
+                list(APPEND LINKER_OPTIONS "-fprofile-generate")
+            endif(CC_HAS_PROFILE_GENERATE)
+        endif(INTEL_CXX)
+    endif(FPROFILE_GENERATE)
+    if(FPROFILE_USE)
+        if(INTEL_CXX)
+            add_definitions(-prof-use -prof-dir="${CMAKE_CURRENT_BINARY_DIR}")
+            list(APPEND LINKER_OPTIONS "-prof-use")
+        else()
+            check_cxx_compiler_flag(-fprofile-use CC_HAS_PROFILE_USE)
+            check_cxx_compiler_flag(-fprofile-correction CC_HAS_PROFILE_CORRECTION)
+            check_cxx_compiler_flag(-Wno-error=coverage-mismatch CC_HAS_COVMISMATCH)
+            if(CC_HAS_PROFILE_USE)
+                add_definitions(-fprofile-use)
+                list(APPEND LINKER_OPTIONS "-fprofile-use")
+            endif(CC_HAS_PROFILE_USE)
+            if(CC_HAS_PROFILE_CORRECTION)
+                # auto-correct corrupted counters (happens a lot with x265)
+                add_definitions(-fprofile-correction)
+            endif(CC_HAS_PROFILE_CORRECTION)
+            if(CC_HAS_COVMISMATCH)
+                # ignore coverage mismatches (also happens a lot)
+                add_definitions(-Wno-error=coverage-mismatch)
+            endif(CC_HAS_COVMISMATCH)
+        endif(INTEL_CXX)
+    endif(FPROFILE_USE)
+    if(STATIC_LINK_CRT)
+        add_definitions(-static)
+        list(APPEND LINKER_OPTIONS "-static")
+    endif(STATIC_LINK_CRT)
+    check_cxx_compiler_flag(-Wno-strict-overflow CC_HAS_NO_STRICT_OVERFLOW)
+    check_cxx_compiler_flag(-Wno-narrowing CC_HAS_NO_NARROWING) 
+    check_cxx_compiler_flag(-Wno-array-bounds CC_HAS_NO_ARRAY_BOUNDS) 
+    if (CC_HAS_NO_ARRAY_BOUNDS)
+        add_definitions(-Wno-array-bounds) # these are unhelpful
+    endif()
+    check_cxx_compiler_flag(-ffast-math CC_HAS_FAST_MATH) 
+    if (CC_HAS_FAST_MATH)
+        add_definitions(-ffast-math)
+    endif()
+    check_cxx_compiler_flag(-mstackrealign CC_HAS_STACK_REALIGN) 
+    if (CC_HAS_STACK_REALIGN)
+        add_definitions(-mstackrealign)
+    endif()
+    # Disable exceptions. Reduce executable size, increase compability.
+    check_cxx_compiler_flag(-fno-exceptions CC_HAS_FNO_EXCEPTIONS_FLAG)
+    if(CC_HAS_FNO_EXCEPTIONS_FLAG)
+        add_definitions(-fno-exceptions)
+    endif()
+    set(FSANITIZE "" CACHE STRING "-fsanitize options for GCC/clang")
+    if(FSANITIZE)
+        add_definitions(-fsanitize=${FSANITIZE})
+        # clang and gcc need the sanitize options to be passed at link
+        # time so the appropriate ASAN/TSAN runtime libraries can be
+        # linked.
+        list(APPEND LINKER_OPTIONS "-fsanitize=${FSANITIZE}")
+    endif()
+    option(ENABLE_AGGRESSIVE_CHECKS "Enable stack protection and -ftrapv" OFF)
+    if(ENABLE_AGGRESSIVE_CHECKS)
+        # use with care, -ftrapv can cause testbench SIGILL exceptions
+        # since it is testing corner cases of signed integer math
+        add_definitions(-DUSING_FTRAPV=1)
+        check_cxx_compiler_flag(-fsanitize=undefined-trap CC_HAS_CATCH_UNDEFINED) # clang
+        check_cxx_compiler_flag(-ftrapv CC_HAS_FTRAPV)                            # gcc
+        check_cxx_compiler_flag(-fstack-protector-all CC_HAS_STACK_PROTECT)       # gcc
+        if(CC_HAS_FTRAPV)
+            add_definitions(-ftrapv)
+        endif()
+        if(CC_HAS_CATCH_UNDEFINED)
+            add_definitions(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error)
+        endif()
+        if(CC_HAS_STACK_PROTECT)
+            add_definitions(-fstack-protector-all)
+            if(MINGW)
+                list(APPEND PLATFORM_LIBS ssp)
+            endif()
+        endif()
+    endif(ENABLE_AGGRESSIVE_CHECKS)
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CC_VERSION)
+endif(GCC)
+
+# Build options
+set(LIB_INSTALL_DIR lib CACHE STRING "Install location of libraries")
+set(BIN_INSTALL_DIR bin CACHE STRING "Install location of executables")
+    
+option(ENABLE_SHARED "Build shared library" OFF)
+
+if(ENABLE_SHARED)
+    add_library(dynamicHDR10 SHARED
+        json11/json11.cpp json11/json11.h
+        BasicStructures.cpp BasicStructures.h
+        JsonHelper.cpp JsonHelper.h
+        metadataFromJson.cpp metadataFromJson.h
+        SeiMetadataDictionary.cpp SeiMetadataDictionary.h
+        hdr10plus.h api.cpp )
+else()
+    add_library(dynamicHDR10 STATIC
+    json11/json11.cpp json11/json11.h
+    BasicStructures.cpp BasicStructures.h
+    JsonHelper.cpp JsonHelper.h
+    metadataFromJson.cpp metadataFromJson.h
+    SeiMetadataDictionary.cpp SeiMetadataDictionary.h
+    hdr10plus.h api.cpp )
+endif()
+
+install (TARGETS dynamicHDR10
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+install(FILES hdr10plus.h DESTINATION include)
+endif()
