@@ -1335,11 +1335,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             rowCoder.copyState(m_initSliceContext);
             rowCoder.loadContexts(m_rows[row - 1].bufferedEntropy);
         }
-        analysis2PassFrameData* analysisFrameData = (analysis2PassFrameData*)(m_frame->m_analysis2Pass).analysisFramedata;
-        if (analysisFrameData && m_param->rc.bStatRead && m_param->analysisMultiPassDistortion && (analysisFrameData->threshold[cuAddr] < 0.9 || analysisFrameData->threshold[cuAddr] > 1.1)
-            && analysisFrameData->highDistortionCtuCount && analysisFrameData->lowDistortionCtuCount)
-            curEncData.m_cuStat[cuAddr].baseQp += analysisFrameData->offset[cuAddr];
-
         if (m_param->dynamicRd && (int32_t)(m_rce.qpaRc - m_rce.qpNoVbv) > 0)
             ctu->m_vbvAffected = true;
 

@@ -2942,6 +2942,15 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
 {
     FrameData& curEncData = *m_frame->m_encData;
     double qp = baseQp >= 0 ? baseQp : curEncData.m_cuStat[ctu.m_cuAddr].baseQp;
+
+    if (m_param->analysisMultiPassDistortion && m_param->rc.bStatRead)
+    {
+        m_multipassAnalysis = (analysis2PassFrameData*)m_frame->m_analysis2Pass.analysisFramedata;
+        if ((m_multipassAnalysis->threshold[ctu.m_cuAddr] < 0.9 || m_multipassAnalysis->threshold[ctu.m_cuAddr] > 1.1)
+            && m_multipassAnalysis->highDistortionCtuCount && m_multipassAnalysis->lowDistortionCtuCount)
+            qp += m_multipassAnalysis->offset[ctu.m_cuAddr];
+    }
+
     int loopIncr;
     if (m_param->rc.qgSize == 8)
         loopIncr = 8;
