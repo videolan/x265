@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2016 x265 project
+ * Copyright (C) 2013-2017 MulticoreWare, Inc
  *
  * Authors: Dnyaneshwar G <dnyaneshwar@multicorewareinc.com>
  *          Radhakrishnan VR <radhakrishnan@multicorewareinc.com>

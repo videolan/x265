@@ -1,7 +1,8 @@
 ;*****************************************************************************
 ;* x86util.asm: x86 utility macros
 ;*****************************************************************************
-;* Copyright (C) 2008-2013 x264 project
+;* Copyright (C) 2003-2013 x264 project
+;* Copyright (C) 2013-2017 MulticoreWare, Inc
 ;*
 ;* Authors: Holger Lubitz <holger@lubitz.org>
 ;*          Loren Merritt <lorenm@u.washington.edu>

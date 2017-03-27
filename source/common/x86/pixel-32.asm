@@ -2,6 +2,7 @@
 ;* pixel-32.asm: x86_32 pixel metrics
 ;*****************************************************************************
 ;* Copyright (C) 2003-2013 x264 project
+;* Copyright (C) 2013-2017 MulticoreWare, Inc
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Laurent Aimar <fenrir@via.ecp.fr>

@@ -2,7 +2,7 @@
 ;* mc-a.asm: x86 motion compensation
 ;*****************************************************************************
 ;* Copyright (C) 2003-2013 x264 project
-;* Copyright (C) 2013-2015 x265 project
+;* Copyright (C) 2013-2017 MulticoreWare, Inc
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Fiona Glaser <fiona@x264.com>

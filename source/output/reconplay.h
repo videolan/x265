@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013 x265 project
+ * Copyright (C) 2013-2017 MulticoreWare, Inc
  *
  * Authors: Peixuan Zhang <zhangpeixuancn@gmail.com>
  *          Chunli Zhang <chunli@multicorewareinc.com>

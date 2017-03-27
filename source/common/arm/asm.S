@@ -1,7 +1,7 @@
 /*****************************************************************************
  * asm.S: arm utility macros
  *****************************************************************************
- * Copyright (C) 2016 x265 project
+ * Copyright (C) 2013-2017 MulticoreWare, Inc
  *
  * Authors: Mans Rullgard <mans@mansr.com>
  *          David Conrad <lessen42@gmail.com>

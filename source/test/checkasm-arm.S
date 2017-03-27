@@ -1,7 +1,7 @@
 /****************************************************************************
  * checkasm-arm.S: assembly check tool
  *****************************************************************************
- * Copyright (C) 2016 x265 project
+ * Copyright (C) 2013-2017 MulticoreWare, Inc
  *
  * Authors: Martin Storsjo <martin@martin.st>
  *          Dnyaneshwar Gorade <dnyaneshwar@multicorewareinc.com>

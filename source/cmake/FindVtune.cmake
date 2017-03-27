@@ -5,7 +5,7 @@
 #   VTUNE_INCLUDE_DIR: Points to the vtunes include dir
 #   VTUNE_LIBRARY_DIR: Points to the directory with libraries
 #
-# Copyright (c) 2015 Pradeep Ramachandran
+# Copyright (c) 2013-2017 MulticoreWare, Inc
 
 include(FindPackageHandleStandardArgs)
 

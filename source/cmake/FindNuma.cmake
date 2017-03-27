@@ -14,7 +14,7 @@
 #   NUMA_LIBRARY
 #     Points to the libnuma that can be passed to target_link_libararies.
 #
-# Copyright (c) 2015 Steve Borho
+# Copyright (c) 2013-2017 MulticoreWare, Inc
 
 include(FindPackageHandleStandardArgs)
 

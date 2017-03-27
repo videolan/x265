@@ -1,5 +1,5 @@
 ;*****************************************************************************
-;* Copyright (C) 2013 x265 project
+;* Copyright (C) 2013-2017 MulticoreWare, Inc
 ;*
 ;* Authors: Praveen Kumar Tiwari <praveen@multicorewareinc.com>
 ;*          Min Chen <chenm003@163.com>

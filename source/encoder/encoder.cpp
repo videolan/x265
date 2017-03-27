@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2013 x265 project
+ * Copyright (C) 2013-2017 MulticoreWare, Inc
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Min Chen <chenm003@163.com>
@@ -1693,7 +1693,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
             if (buffer)
             {
                 sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "
-                        "Copyright 2013-2017 (c) Multicoreware Inc - "
+                        "Copyright 2013-2017 (c) Multicoreware, Inc - "
                         "http://x265.org - options: %s",
                         X265_BUILD, PFX(version_str), PFX(build_info_str), opts);
                 
