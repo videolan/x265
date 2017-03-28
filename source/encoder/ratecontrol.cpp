@@ -1348,6 +1348,8 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         curFrame->m_rcData->cumulativePNorm = m_accumPNorm;
         for (int i = 0; i < 3; i++)
             curFrame->m_rcData->lastQScaleFor[i] = m_lastQScaleFor[i];
+        curFrame->m_rcData->shortTermCplxSum = m_shortTermCplxSum;
+        curFrame->m_rcData->shortTermCplxCount = m_shortTermCplxCount;
     }
     else // CQP
     {
@@ -2693,6 +2695,10 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
         int qp = int (rce->qpaRc + 0.5);
         m_qpToEncodedBits[qp] =  m_qpToEncodedBits[qp] == 0 ? actualBits : (m_qpToEncodedBits[qp] + actualBits) * 0.5;
         }
+        curFrame->m_rcData->wantedBitsWindow = m_wantedBitsWindow;
+        curFrame->m_rcData->cplxrSum = m_cplxrSum;
+        curFrame->m_rcData->totalBits = m_totalBits;
+        curFrame->m_rcData->encodedBits = m_encodedBits;
     }
 
     if (m_2pass)

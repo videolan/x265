@@ -60,6 +60,12 @@ struct RcStats
     int      encodeOrder;
     int      sliceType;
     int      keptAsRef;
+    double   wantedBitsWindow;
+    double   cplxrSum;
+    double   shortTermCplxSum;
+    double   shortTermCplxCount;
+    int64_t  totalBits;
+    int64_t  encodedBits;
 };
 
 class Frame
