@@ -172,8 +172,10 @@ public:
     /* For HDR*/
     double                m_cB;
     double                m_cR;
-    int                m_bToneMap; // Enables tone-mapping
-    const hdr10plus_api*     api;
+
+    int                     m_bToneMap; // Enables tone-mapping
+    const hdr10plus_api*    m_hdr10plus_api;
+
     Encoder();
     ~Encoder() {}
     void create();

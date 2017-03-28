@@ -38,24 +38,38 @@ const uint8_t SEIuserDataUnregistered::m_uuid_iso_iec_11578[16] = {
  * in bitstream bs */
 void SEI::write(Bitstream& bs, const SPS& sps)
 {
-    BitCounter count;
-    m_bitIf = &count;
-
-    /* virtual writeSEI method, write to bit counter */
-    writeSEI(sps);
-
+    uint32_t type = m_payloadType;
     m_bitIf = &bs;
-    uint32_t type = payloadType();
-    for (; type >= 0xff; type -= 0xff)
-        WRITE_CODE(0xff, 8, "payload_type");
+    BitCounter count;
+    bool hrdTypes = (m_payloadType == ACTIVE_PARAMETER_SETS || m_payloadType == PICTURE_TIMING || m_payloadType == BUFFERING_PERIOD);
+    if (hrdTypes)
+    {
+        m_bitIf = &count;
+        /* virtual writeSEI method, write to bit counter to determine size */
+        writeSEI(sps);
+        m_bitIf = &bs;
+        uint32_t type = m_payloadType;
+        for (; type >= 0xff; type -= 0xff)
+            WRITE_CODE(0xff, 8, "payload_type");
+    }
     WRITE_CODE(type, 8, "payload_type");
+    uint32_t payloadSize;
+    if (hrdTypes || m_payloadType == USER_DATA_UNREGISTERED)
+    {
+        if (hrdTypes)
+        {
+            X265_CHECK(0 == (count.getNumberOfWrittenBits() & 7), "payload unaligned\n");
+            payloadSize = count.getNumberOfWrittenBits() >> 3;
+        }
+        else
+            payloadSize = m_payloadSize + 16;
 
-    X265_CHECK(0 == (count.getNumberOfWrittenBits() & 7), "payload unaligned\n");
-    uint32_t payloadSize = count.getNumberOfWrittenBits() >> 3;
-    for (; payloadSize >= 0xff; payloadSize -= 0xff)
-        WRITE_CODE(0xff, 8, "payload_size");
-    WRITE_CODE(payloadSize, 8, "payload_size");
-
+        for (; payloadSize >= 0xff; payloadSize -= 0xff)
+            WRITE_CODE(0xff, 8, "payload_size");
+        WRITE_CODE(payloadSize, 8, "payload_size");
+    }
+    else if(m_payloadType != USER_DATA_REGISTERED_ITU_T_T35)
+        WRITE_CODE(m_payloadSize, 8, "payload_size");
     /* virtual writeSEI method, write to bs */
     writeSEI(sps);
 }
@@ -71,4 +85,9 @@ void SEI::writeByteAlign()
             WRITE_FLAG(0, "bit_equal_to_zero");
         }
     }
+}
+
+void SEI::setSize(uint32_t size)
+{
+    m_payloadSize = size;
 }

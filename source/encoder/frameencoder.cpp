@@ -615,30 +615,28 @@ void FrameEncoder::compressFrame()
     for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
     {
         x265_sei_payload *payload = &m_frame->m_userSEI.payloads[i];
-        if (payload->payloadType != USER_DATA_REGISTERED_ITU_T_T35)
+        if (payload->payloadType == USER_DATA_UNREGISTERED)
         {
             SEIuserDataUnregistered sei;
-            sei.m_payloadType = payload->payloadType;
-            sei.m_userDataLength = payload->payloadSize;
             sei.m_userData = payload->payload;
             m_bs.resetBits();
+            sei.setSize(payload->payloadSize);
             sei.write(m_bs, *slice->m_sps);
             m_bs.writeByteAlignment();
             m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
         }
-#if ENABLE_DYNAMIC_HDR10
-        else if (m_param->toneMapFile != NULL)
+        else if (payload->payloadType == USER_DATA_REGISTERED_ITU_T_T35)
         {
             SEICreativeIntentMeta sei;
-
             sei.cim = payload->payload;
-
             m_bs.resetBits();
+            sei.setSize(payload->payloadSize);
             sei.write(m_bs, *slice->m_sps);
             m_bs.writeByteAlignment();
             m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
         }
-#endif
+        else
+            x265_log(m_param, X265_LOG_ERROR, "Unrecognized SEI type\n");
     }
     /* CQP and CRF (without capped VBV) doesn't use mid-frame statistics to 
      * tune RateControl parameters for other frames.
@@ -948,29 +946,32 @@ void FrameEncoder::compressFrame()
     if (m_param->decodedPictureHashSEI)
     {
         int planes = (m_frame->m_param->internalCsp != X265_CSP_I400) ? 3 : 1;
+        int32_t payloadSize = 0;
         if (m_param->decodedPictureHashSEI == 1)
         {
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::MD5;
             for (int i = 0; i < planes; i++)
                 MD5Final(&m_state[i], m_seiReconPictureDigest.m_digest[i]);
+            payloadSize = 1 + 16 * planes;
         }
         else if (m_param->decodedPictureHashSEI == 2)
         {
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CRC;
             for (int i = 0; i < planes; i++)
                 crcFinish(m_crc[i], m_seiReconPictureDigest.m_digest[i]);
+            payloadSize = 1 + 2 * planes;
         }
         else if (m_param->decodedPictureHashSEI == 3)
         {
             m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CHECKSUM;
             for (int i = 0; i < planes; i++)
                 checksumFinish(m_checksum[i], m_seiReconPictureDigest.m_digest[i]);
+            payloadSize = 1 + 4 * planes;
         }
-
         m_bs.resetBits();
+        m_seiReconPictureDigest.setSize(payloadSize);
         m_seiReconPictureDigest.write(m_bs, *slice->m_sps);
         m_bs.writeByteAlignment();
-
         m_nalList.serialize(NAL_UNIT_SUFFIX_SEI, m_bs);
     }
 

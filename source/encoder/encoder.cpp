@@ -86,7 +86,7 @@ Encoder::Encoder()
         m_frameEncoder[i] = NULL;
     MotionEstimate::initScales();
 #if ENABLE_DYNAMIC_HDR10
-    api = hdr10plus_api_get();
+    m_hdr10plus_api = hdr10plus_api_get();
 #endif
 }
 inline char *strcatFilename(const char *input, const char *suffix)
@@ -602,7 +602,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_bToneMap)
         {
             uint8_t *cim = NULL;
-            if (api->hdr10plus_json_to_frame_cim(m_param->toneMapFile, pic_in->poc, cim))
+            if (m_hdr10plus_api->hdr10plus_json_to_frame_cim(m_param->toneMapFile, pic_in->poc, cim))
             {
                 toneMap.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * cim[0]);
                 toneMap.payloadSize = cim[0];
@@ -1758,9 +1758,8 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
                 
                 bs.resetBits();
                 SEIuserDataUnregistered idsei;
-                idsei.m_payloadType = USER_DATA_UNREGISTERED;
                 idsei.m_userData = (uint8_t*)buffer;
-                idsei.m_userDataLength = (uint32_t)strlen(buffer);
+                idsei.setSize((uint32_t)strlen(buffer));
                 idsei.write(bs, m_sps);
                 bs.writeByteAlignment();
                 list.serialize(NAL_UNIT_PREFIX_SEI, bs);

@@ -34,53 +34,34 @@ namespace X265_NS {
 class SEI : public SyntaxElementWriter
 {
 public:
+    /* SEI users call write() to marshal an SEI to a bitstream.
+     * The write() method calls writeSEI() which encodes the header */
+    void write(Bitstream& bs, const SPS& sps);
 
-    /* SEI users call write() to marshal an SEI to a bitstream. SEI
-     * subclasses may implement write() or accept the default write()
-     * method which calls writeSEI() with a bitcounter to determine
-     * the size, then it encodes the header and calls writeSEI a
-     * second time for the real encode. */
-    virtual void write(Bitstream& bs, const SPS& sps);
-
+    void setSize(uint32_t size);
     virtual ~SEI() {}
-
 protected:
-
-    virtual SEIPayloadType payloadType() const = 0;
-
-    virtual void writeSEI(const SPS&) { X265_CHECK(0, "empty writeSEI method called\n");  }
-
+    SEIPayloadType  m_payloadType;
+    uint32_t        m_payloadSize;
+    virtual void writeSEI(const SPS&) = 0;
     void writeByteAlign();
 };
 
 class SEIuserDataUnregistered : public SEI
 {
 public:
-
-    SEIPayloadType payloadType() const { return m_payloadType; }
-
-    SEIuserDataUnregistered() : m_userData(NULL) {}
-
-    static const uint8_t m_uuid_iso_iec_11578[16];
-    SEIPayloadType m_payloadType;
-    uint32_t m_userDataLength;
-    uint8_t *m_userData;
-
-    void write(Bitstream& bs, const SPS&)
+    SEIuserDataUnregistered() : m_userData(NULL)
     {
-        m_bitIf = &bs;
-
-        WRITE_CODE(m_payloadType, 8, "payload_type");
-
-        uint32_t payloadSize = 16 + m_userDataLength;
-        for (; payloadSize >= 0xff; payloadSize -= 0xff)
-            WRITE_CODE(0xff, 8, "payload_size");
-        WRITE_CODE(payloadSize, 8, "payload_size");
-
+        m_payloadType = USER_DATA_UNREGISTERED;
+        m_payloadSize = 0;
+    }
+    static const uint8_t m_uuid_iso_iec_11578[16];
+    uint8_t *m_userData;
+    void writeSEI(const SPS&)
+    {
         for (uint32_t i = 0; i < 16; i++)
             WRITE_CODE(m_uuid_iso_iec_11578[i], 8, "sei.uuid_iso_iec_11578[i]");
-
-        for (uint32_t i = 0; i < m_userDataLength; i++)
+        for (uint32_t i = 0; i < m_payloadSize; i++)
             WRITE_CODE(m_userData[i], 8, "user_data");
     }
 };
@@ -88,15 +69,16 @@ public:
 class SEIMasteringDisplayColorVolume : public SEI
 {
 public:
-
+    SEIMasteringDisplayColorVolume()
+    {
+        m_payloadType = MASTERING_DISPLAY_INFO;
+        m_payloadSize = (8 * 2 + 2 * 4);
+    }
     uint16_t displayPrimaryX[3];
     uint16_t displayPrimaryY[3];
     uint16_t whitePointX, whitePointY;
     uint32_t maxDisplayMasteringLuminance;
     uint32_t minDisplayMasteringLuminance;
-
-    SEIPayloadType payloadType() const { return MASTERING_DISPLAY_INFO; }
-
     bool parse(const char* value)
     {
         return sscanf(value, "G(%hu,%hu)B(%hu,%hu)R(%hu,%hu)WP(%hu,%hu)L(%u,%u)",
@@ -106,14 +88,8 @@ public:
                       &whitePointX, &whitePointY,
                       &maxDisplayMasteringLuminance, &minDisplayMasteringLuminance) == 10;
     }
-
-    void write(Bitstream& bs, const SPS&)
+    void writeSEI(const SPS&)
     {
-        m_bitIf = &bs;
-
-        WRITE_CODE(MASTERING_DISPLAY_INFO, 8, "payload_type");
-        WRITE_CODE(8 * 2 + 2 * 4, 8, "payload_size");
-
         for (uint32_t i = 0; i < 3; i++)
         {
             WRITE_CODE(displayPrimaryX[i], 16, "display_primaries_x[ c ]");
@@ -129,18 +105,15 @@ public:
 class SEIContentLightLevel : public SEI
 {
 public:
-
+    SEIContentLightLevel()
+    {
+        m_payloadType = CONTENT_LIGHT_LEVEL_INFO;
+        m_payloadSize = 4;
+    }
     uint16_t max_content_light_level;
     uint16_t max_pic_average_light_level;
-
-    SEIPayloadType payloadType() const { return CONTENT_LIGHT_LEVEL_INFO; }
-
-    void write(Bitstream& bs, const SPS&)
+    void writeSEI(const SPS&)
     {
-        m_bitIf = &bs;
-
-        WRITE_CODE(CONTENT_LIGHT_LEVEL_INFO, 8, "payload_type");
-        WRITE_CODE(4, 8, "payload_size");
         WRITE_CODE(max_content_light_level,     16, "max_content_light_level");
         WRITE_CODE(max_pic_average_light_level, 16, "max_pic_average_light_level");
     }
@@ -149,42 +122,22 @@ public:
 class SEIDecodedPictureHash : public SEI
 {
 public:
-
-    SEIPayloadType payloadType() const { return DECODED_PICTURE_HASH; }
-
+    SEIDecodedPictureHash()
+    {
+        m_payloadType = DECODED_PICTURE_HASH;
+        m_payloadSize = 0;
+    }
     enum Method
     {
         MD5,
         CRC,
         CHECKSUM,
     } m_method;
-
     uint8_t m_digest[3][16];
-
-    void write(Bitstream& bs, const SPS& sps)
+    void writeSEI(const SPS& sps)
     {
-        m_bitIf = &bs;
-
         int planes = (sps.chromaFormatIdc != X265_CSP_I400) ? 3 : 1;
-
-        WRITE_CODE(DECODED_PICTURE_HASH, 8, "payload_type");
-
-        switch (m_method)
-        {
-        case MD5:
-            WRITE_CODE(1 + 16 * planes, 8, "payload_size");
-            WRITE_CODE(MD5, 8, "hash_type");
-            break;
-        case CRC:
-            WRITE_CODE(1 + 2 * planes, 8, "payload_size");
-            WRITE_CODE(CRC, 8, "hash_type");
-            break;
-        case CHECKSUM:
-            WRITE_CODE(1 + 4 * planes, 8, "payload_size");
-            WRITE_CODE(CHECKSUM, 8, "hash_type");
-            break;
-        }
-
+        WRITE_CODE(m_method, 8, "hash_type");
         for (int yuvIdx = 0; yuvIdx < planes; yuvIdx++)
         {
             if (m_method == MD5)
@@ -209,9 +162,11 @@ public:
 class SEIActiveParameterSets : public SEI
 {
 public:
-
-    SEIPayloadType payloadType() const { return ACTIVE_PARAMETER_SETS; }
-
+    SEIActiveParameterSets()
+    {
+        m_payloadType = ACTIVE_PARAMETER_SETS;
+        m_payloadSize = 0;
+    }
     bool m_selfContainedCvsFlag;
     bool m_noParamSetUpdateFlag;
 
@@ -229,16 +184,14 @@ public:
 class SEIBufferingPeriod : public SEI
 {
 public:
-
-    SEIPayloadType payloadType() const { return BUFFERING_PERIOD; }
-
     SEIBufferingPeriod()
         : m_cpbDelayOffset(0)
         , m_dpbDelayOffset(0)
         , m_auCpbRemovalDelayDelta(1)
     {
+        m_payloadType = BUFFERING_PERIOD;
+        m_payloadSize = 0;
     }
-
     bool     m_cpbDelayOffset;
     bool     m_dpbDelayOffset;
     uint32_t m_initialCpbRemovalDelay;
@@ -263,9 +216,11 @@ public:
 class SEIPictureTiming : public SEI
 {
 public:
-
-    SEIPayloadType payloadType() const { return PICTURE_TIMING; }
-
+    SEIPictureTiming()
+    {
+        m_payloadType = PICTURE_TIMING;
+        m_payloadSize = 0;
+    }
     uint32_t  m_picStruct;
     uint32_t  m_sourceScanType;
     bool      m_duplicateFlag;
@@ -298,9 +253,6 @@ public:
 class SEIRecoveryPoint : public SEI
 {
 public:
-
-    SEIPayloadType payloadType() const { return RECOVERY_POINT; }
-
     int  m_recoveryPocCnt;
     bool m_exactMatchingFlag;
     bool m_brokenLinkFlag;
@@ -318,38 +270,34 @@ public:
 class SEICreativeIntentMeta : public SEI
 {
 public:
+    SEICreativeIntentMeta()
+    {
+        m_payloadType = USER_DATA_REGISTERED_ITU_T_T35;
+        m_payloadSize = 0;
+    }
+
     uint8_t *cim;
 
-    SEIPayloadType payloadType() const { return USER_DATA_REGISTERED_ITU_T_T35; }
-
     // daniel.vt@samsung.com :: for the Creative Intent Meta Data Encoding ( seongnam.oh@samsung.com )
-    void write(Bitstream& bs, const SPS&)
+    void writeSEI(const SPS&)
     {
         if (!cim)
-        {
             return;
-        }
 
-        m_bitIf = &bs;
-        WRITE_CODE(USER_DATA_REGISTERED_ITU_T_T35, 8, "payload_type");
         int i = 0;
-        int payloadSize = cim[0];
+        int payloadSize = m_payloadSize;
         while (cim[i] == 0xFF)
         {
             i++;
             payloadSize += cim[i];
             WRITE_CODE(0xFF, 8, "payload_size");
         }
-        WRITE_CODE((uint8_t)payloadSize, 8, "payload_size");
+        WRITE_CODE(payloadSize, 8, "payload_size");
         i++;
         payloadSize += i;
         for (; i < payloadSize; ++i)
-        {
             WRITE_CODE(cim[i], 8, "creative_intent_metadata");
-        }
-
     }
 };
-
 }
 #endif // ifndef X265_SEI_H
