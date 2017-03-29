@@ -20,7 +20,7 @@ BasketballDrive_1920x1080_50.y4m,--preset medium --keyint -1 --nr-inter 100 -F4 
 BasketballDrive_1920x1080_50.y4m,--preset medium --no-cutree --analysis-mode=save --refine-level 2 --bitrate 7000 --limit-modes,--preset medium --no-cutree --analysis-mode=load --refine-level 2 --bitrate 7000 --limit-modes
 BasketballDrive_1920x1080_50.y4m,--preset slow --nr-intra 100 -F4 --aq-strength 3 --qg-size 16 --limit-refs 1
 BasketballDrive_1920x1080_50.y4m,--preset slower --lossless --chromaloc 3 --subme 0 --limit-tu 4
-BasketballDrive_1920x1080_50.y4m,--preset slower --no-cutree --analysis-mode=save --refine-level 10 --bitrate 7000,--preset slower --no-cutree --analysis-mode=load --refine-level 10 --bitrate 7000
+BasketballDrive_1920x1080_50.y4m,--preset slower --no-cutree --analysis-mode=save --refine-level 10 --bitrate 7000 --limit-tu 0,--preset slower --no-cutree --analysis-mode=load --refine-level 10 --bitrate 7000 --limit-tu 0
 BasketballDrive_1920x1080_50.y4m,--preset veryslow --crf 4 --cu-lossless --pmode --limit-refs 1 --aq-mode 3 --limit-tu 3
 BasketballDrive_1920x1080_50.y4m,--preset veryslow --no-cutree --analysis-mode=save --bitrate 7000 --tskip-fast --limit-tu 4,--preset veryslow --no-cutree --analysis-mode=load --bitrate 7000  --tskip-fast --limit-tu 4
 BasketballDrive_1920x1080_50.y4m,--preset veryslow --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
