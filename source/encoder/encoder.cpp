@@ -2375,9 +2375,17 @@ void Encoder::configure(x265_param *p)
     m_conformanceWindow.topOffset = 0;
     m_conformanceWindow.bottomOffset = 0;
     m_conformanceWindow.leftOffset = 0;
-
     /* set pad size if width is not multiple of the minimum CU size */
-    if (p->sourceWidth & (p->minCUSize - 1))
+    if (p->scaleFactor == 2 && ((p->sourceWidth / 2) & (p->minCUSize - 1)) && p->analysisMode == X265_ANALYSIS_LOAD)
+    {
+        uint32_t rem = (p->sourceWidth / 2) & (p->minCUSize - 1);
+        uint32_t padsize = p->minCUSize - rem;
+        p->sourceWidth += padsize * 2;
+
+        m_conformanceWindow.bEnabled = true;
+        m_conformanceWindow.rightOffset = padsize * 2;
+    }
+    else if(p->sourceWidth & (p->minCUSize - 1))
     {
         uint32_t rem = p->sourceWidth & (p->minCUSize - 1);
         uint32_t padsize = p->minCUSize - rem;
@@ -2556,9 +2564,16 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_ERROR, "uhd-bd: Disabled\n");
         }
     }
-
     /* set pad size if height is not multiple of the minimum CU size */
-    if (p->sourceHeight & (p->minCUSize - 1))
+    if (p->scaleFactor == 2 && ((p->sourceHeight / 2) & (p->minCUSize - 1)) && p->analysisMode == X265_ANALYSIS_LOAD)
+    {
+        uint32_t rem = (p->sourceHeight / 2) & (p->minCUSize - 1);
+        uint32_t padsize = p->minCUSize - rem;
+        p->sourceHeight += padsize * 2;
+        m_conformanceWindow.bEnabled = true;
+        m_conformanceWindow.bottomOffset = padsize * 2;
+    }
+    else if(p->sourceHeight & (p->minCUSize - 1))
     {
         uint32_t rem = p->sourceHeight & (p->minCUSize - 1);
         uint32_t padsize = p->minCUSize - rem;
