@@ -2140,7 +2140,7 @@ void Encoder::configure(x265_param *p)
     /* some options make no sense if others are disabled */
     p->bSaoNonDeblocked &= p->bEnableSAO;
     p->bEnableTSkipFast &= p->bEnableTransformSkip;
-
+    p->bLimitSAO &= p->bEnableSAO;
     /* initialize the conformance window */
     m_conformanceWindow.bEnabled = false;
     m_conformanceWindow.rightOffset = 0;

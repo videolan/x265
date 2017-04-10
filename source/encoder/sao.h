@@ -133,9 +133,7 @@ public:
     void rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus);
     void rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr);
     int64_t calcSaoRdoCost(int64_t distortion, uint32_t bits, int64_t lambda);
-
-    void saoStatsInitialOffset(int planes);
-
+    void saoStatsInitialOffset(int addr, int planes);
     friend class FrameFilter;
 };
 

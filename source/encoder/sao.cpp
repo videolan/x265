@@ -734,6 +734,7 @@ void SAO::generateChromaOffsets(SaoCtuParam* ctuParam[3], int idxY, int idxX)
 /* Calculate SAO statistics for current CTU without non-crossing slice */
 void SAO::calcSaoStatsCTU(int addr, int plane)
 {
+    Slice* slice = m_frame->m_encData->m_slice;
     const PicYuv* reconPic = m_frame->m_reconPic;
     const CUData* cu = m_frame->m_encData->getPicCTU(addr);
     const pixel* fenc0 = m_frame->m_fencPic->getPlaneAddr(plane, addr);
@@ -857,60 +858,60 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
 
             primitives.saoCuStatsE1(diff + startY * MAX_CU_SIZE, rec0 + startY * stride, stride, upBuff1, endX, endY - startY, m_offsetOrg[plane][SAO_EO_1], m_count[plane][SAO_EO_1]);
         }
-
-        // SAO_EO_2: // dir: 135
+        if (!m_param->bLimitSAO || ((slice->m_sliceType == P_SLICE && !cu->isSkipped(0)) ||
+            (slice->m_sliceType != B_SLICE)))
         {
-            if (m_param->bSaoNonDeblocked)
+            // SAO_EO_2: // dir: 135
             {
-                skipB = 4;
-                skipR = 5;
+                if (m_param->bSaoNonDeblocked)
+                {
+                    skipB = 4;
+                    skipR = 5;
+                }
+
+                fenc = fenc0;
+                rec  = rec0;
+
+                startX = !lpelx;
+                endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
+
+                startY = bAboveUnavail;
+                endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
+                if (startY)
+                {
+                    fenc += stride;
+                    rec += stride;
+                }
+
+                primitives.sign(upBuff1, &rec[startX], &rec[startX - stride - 1], (endX - startX));
+
+                primitives.saoCuStatsE2(diff + startX + startY * MAX_CU_SIZE, rec0  + startX + startY * stride, stride, upBuff1, upBufft, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_2], m_count[plane][SAO_EO_2]);
             }
-
-            fenc = fenc0;
-            rec  = rec0;
-
-            startX = !lpelx;
-            endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
-
-            startY = bAboveUnavail;
-            endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
-            if (startY)
+            // SAO_EO_3: // dir: 45
             {
-                fenc += stride;
-                rec += stride;
+                if (m_param->bSaoNonDeblocked)
+                {
+                    skipB = 4;
+                    skipR = 5;
+                }
+                fenc = fenc0;
+                rec  = rec0;
+                startX = !lpelx;
+                endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
+
+                startY = bAboveUnavail;
+                endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
+
+                if (startY)
+                {
+                    fenc += stride;
+                    rec += stride;
+                }
+
+                primitives.sign(upBuff1, &rec[startX - 1], &rec[startX - 1 - stride + 1], (endX - startX + 1));
+
+                primitives.saoCuStatsE3(diff + startX + startY * MAX_CU_SIZE, rec0  + startX + startY * stride, stride, upBuff1 + 1, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_3], m_count[plane][SAO_EO_3]);
             }
-
-            primitives.sign(upBuff1, &rec[startX], &rec[startX - stride - 1], (endX - startX));
-
-            primitives.saoCuStatsE2(diff + startX + startY * MAX_CU_SIZE, rec0  + startX + startY * stride, stride, upBuff1, upBufft, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_2], m_count[plane][SAO_EO_2]);
-        }
-
-        // SAO_EO_3: // dir: 45
-        {
-            if (m_param->bSaoNonDeblocked)
-            {
-                skipB = 4;
-                skipR = 5;
-            }
-
-            fenc = fenc0;
-            rec  = rec0;
-
-            startX = !lpelx;
-            endX   = (rpelx == picWidth) ? ctuWidth - 1 : ctuWidth - skipR + plane_offset;
-
-            startY = bAboveUnavail;
-            endY   = (bpely == picHeight) ? ctuHeight - 1 : ctuHeight - skipB + plane_offset;
-
-            if (startY)
-            {
-                fenc += stride;
-                rec += stride;
-            }
-
-            primitives.sign(upBuff1, &rec[startX - 1], &rec[startX - 1 - stride + 1], (endX - startX + 1));
-
-            primitives.saoCuStatsE3(diff + startX + startY * MAX_CU_SIZE, rec0  + startX + startY * stride, stride, upBuff1 + 1, endX - startX, endY - startY, m_offsetOrg[plane][SAO_EO_3], m_count[plane][SAO_EO_3]);
         }
     }
 }
@@ -1224,10 +1225,8 @@ void SAO::rdoSaoUnitRowEnd(const SAOParam* saoParam, int numctus)
 void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 {
     Slice* slice = m_frame->m_encData->m_slice;
-//    int qp = slice->m_sliceQp;
     const CUData* cu = m_frame->m_encData->getPicCTU(addr);
     int qp = cu->m_qp[0];
-
     int64_t lambda[2] = { 0 };
 
     int qpCb = qp + slice->m_pps->chromaQpOffset[0] + slice->m_chromaQpOffset[0];
@@ -1262,18 +1261,6 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
 
     for (int i = 0; i < planes; i++)
         saoParam->ctuParam[i][addr].reset();
-
-    if (saoParam->bSaoFlag[0])
-        calcSaoStatsCTU(addr, 0);
-
-    if (saoParam->bSaoFlag[1])
-    {
-        calcSaoStatsCTU(addr, 1);
-        calcSaoStatsCTU(addr, 2);
-    }
-
-    saoStatsInitialOffset(planes);
-
     // SAO distortion calculation
     m_entropyCoder.load(m_rdContexts.cur);
     m_entropyCoder.resetBits();
@@ -1282,15 +1269,44 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
     if (allowMerge[1])
         m_entropyCoder.codeSaoMerge(0);
     m_entropyCoder.store(m_rdContexts.temp);
-
-    // Estimate distortion and cost of new SAO params
+    memset(m_offset, 0, sizeof(m_offset));
     int64_t bestCost = 0;
     int64_t rateDist = 0;
-    // Estimate distortion and cost of new SAO params
-    saoLumaComponentParamDist(saoParam, addr, rateDist, lambda, bestCost);
-    if (chroma)
-        saoChromaComponentParamDist(saoParam, addr, rateDist, lambda, bestCost);
 
+    bool bAboveLeftAvail = true;
+    for (int mergeIdx = 0; mergeIdx < 2; ++mergeIdx)
+    {
+        if (!allowMerge[mergeIdx])
+            continue;
+
+        SaoCtuParam* mergeSrcParam = &(saoParam->ctuParam[0][addrMerge[mergeIdx]]);
+        bAboveLeftAvail = bAboveLeftAvail && (mergeSrcParam->typeIdx == -1);
+    }
+    // Don't apply sao if ctu is skipped or ajacent ctus are sao off
+    bool bSaoOff = (slice->m_sliceType == B_SLICE) && (cu->isSkipped(0) || bAboveLeftAvail);
+
+    // Estimate distortion and cost of new SAO params
+    if (saoParam->bSaoFlag[0])
+    {
+        if (!m_param->bLimitSAO || !bSaoOff)
+        {
+            calcSaoStatsCTU(addr, 0);
+            saoStatsInitialOffset(addr, 0);
+            saoLumaComponentParamDist(saoParam, addr, rateDist, lambda, bestCost);
+        }
+    }
+
+    SaoCtuParam* lclCtuParam = &saoParam->ctuParam[0][addr];
+    if (saoParam->bSaoFlag[1])
+    {
+        if (!m_param->bLimitSAO || ((lclCtuParam->typeIdx != -1) && !bSaoOff))
+        {
+            calcSaoStatsCTU(addr, 1);
+            calcSaoStatsCTU(addr, 2);
+            saoStatsInitialOffset(addr, 1);
+            saoChromaComponentParamDist(saoParam, addr, rateDist, lambda, bestCost);
+        }
+    }
     if (saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1])
     {
         // Cost of merge left or Up
@@ -1357,17 +1373,27 @@ void SAO::rdoSaoUnitCu(SAOParam* saoParam, int rowBaseAddr, int idxX, int addr)
     }
 }
 
-
 // Rounds the division of initial offsets by the number of samples in
 // each of the statistics table entries.
-void SAO::saoStatsInitialOffset(int planes)
+void SAO::saoStatsInitialOffset(int addr, int planes)
 {
-    memset(m_offset, 0, sizeof(m_offset));
+    Slice* slice = m_frame->m_encData->m_slice;
+    const CUData* cu = m_frame->m_encData->getPicCTU(addr);
 
-    // EO
-    for (int plane = 0; plane < planes; plane++)
+    int maxSaoType;
+    if (m_param->bLimitSAO && ((slice->m_sliceType == P_SLICE && cu->isSkipped(0)) ||
+       (slice->m_sliceType == B_SLICE)))
     {
-        for (int typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE - 1; typeIdx++)
+        maxSaoType = MAX_NUM_SAO_TYPE - 3;
+    }
+    else
+    {
+        maxSaoType = MAX_NUM_SAO_TYPE - 1;
+    }
+    // EO
+    for (int plane = planes; plane <= planes * 2; plane++)
+    {
+        for (int typeIdx = 0; typeIdx < maxSaoType; typeIdx++)
         {
             for (int classIdx = 1; classIdx < SAO_NUM_OFFSET + 1; classIdx++)
             {
@@ -1388,9 +1414,8 @@ void SAO::saoStatsInitialOffset(int planes)
             }
         }
     }
-
     // BO
-    for (int plane = 0; plane < planes; plane++)
+    for (int plane = planes; plane <= planes * 2; plane++)
     {
         for (int classIdx = 0; classIdx < MAX_NUM_SAO_CLASS; classIdx++)
         {
@@ -1451,12 +1476,12 @@ void SAO::estIterOffset(int typeIdx, int64_t lambda, int32_t count, int32_t offs
     costClasses = bestCost;
     offset = bestOffset;
 }
-
 void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t& rateDist, int64_t* lambda, int64_t &bestCost)
 {
+    Slice* slice = m_frame->m_encData->m_slice;
+    const CUData* cu = m_frame->m_encData->getPicCTU(addr);
     int64_t bestDist = 0;
     int bestTypeIdx = -1;
-
     SaoCtuParam* lclCtuParam = &saoParam->ctuParam[0][addr];
 
     int32_t distClasses[MAX_NUM_SAO_CLASS];
@@ -1466,19 +1491,27 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t& r
     m_entropyCoder.load(m_rdContexts.temp);
     m_entropyCoder.resetBits();
     m_entropyCoder.codeSaoType(0);
-
     int64_t costPartBest = calcSaoRdoCost(0, m_entropyCoder.getNumberOfWrittenBits(), lambda[0]);
+    int maxSaoType;
+    if (m_param->bLimitSAO && ((slice->m_sliceType == P_SLICE && cu->isSkipped(0)) ||
+        (slice->m_sliceType == B_SLICE)))
+    {
+        maxSaoType = MAX_NUM_SAO_TYPE - 3;
+    }
+    else
+    {
+        maxSaoType = MAX_NUM_SAO_TYPE - 1;
+    }
 
     //EO distortion calculation
-    for (int typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE - 1; typeIdx++)
+    for (int typeIdx = 0; typeIdx < maxSaoType; typeIdx++)
     {
         int64_t estDist = 0;
         for (int classIdx = 1; classIdx < SAO_NUM_OFFSET + 1; classIdx++)
         {
-            int32_t&  count     = m_count[0][typeIdx][classIdx];
+            int32_t&  count    = m_count[0][typeIdx][classIdx];
             int32_t& offsetOrg = m_offsetOrg[0][typeIdx][classIdx];
             int32_t& offsetOut = m_offset[0][typeIdx][classIdx];
-
             estIterOffset(typeIdx, lambda[0], count, offsetOrg, offsetOut, distClasses[classIdx], costClasses[classIdx]);
 
             //Calculate distortion
@@ -1568,12 +1601,12 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t& r
         bestCost = rateDist + m_entropyCoder.getNumberOfWrittenBits();
     }
 }
-
 void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t& rateDist, int64_t* lambda, int64_t &bestCost)
 {
+    Slice* slice = m_frame->m_encData->m_slice;
+    const CUData* cu = m_frame->m_encData->getPicCTU(addr);
     int64_t bestDist = 0;
     int bestTypeIdx = -1;
-
     SaoCtuParam* lclCtuParam[2] = { &saoParam->ctuParam[1][addr], &saoParam->ctuParam[2][addr] };
 
     int64_t costClasses[MAX_NUM_SAO_CLASS];
@@ -1586,9 +1619,19 @@ void SAO::saoChromaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t&
 
     uint32_t bits = m_entropyCoder.getNumberOfWrittenBits();
     int64_t costPartBest = calcSaoRdoCost(0, bits, lambda[1]);
+    int maxSaoType;
+    if (m_param->bLimitSAO && ((slice->m_sliceType == P_SLICE && cu->isSkipped(0)) ||
+        (slice->m_sliceType == B_SLICE)))
+    {
+        maxSaoType = MAX_NUM_SAO_TYPE - 3;
+    }
+    else
+    {
+        maxSaoType = MAX_NUM_SAO_TYPE - 1;
+    }
 
     //EO RDO
-    for (int typeIdx = 0; typeIdx < MAX_NUM_SAO_TYPE - 1; typeIdx++)
+    for (int typeIdx = 0; typeIdx < maxSaoType; typeIdx++)
     {
         int64_t estDist[2] = {0, 0};
         for (int compIdx = 1; compIdx < 3; compIdx++)

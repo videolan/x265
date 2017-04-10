@@ -1689,10 +1689,14 @@ Loop filters
 	When enabled, non-deblocked pixels are used for SAO analysis. When
 	disabled, SAO analysis skips the right/bottom boundary areas.
 	Default disabled
+.. option:: --limit-sao, --no-limit-sao
+    Limit SAO filter computation by early terminating SAO process based
+    on inter prediction mode, CTU spatial-domain correlations, and relations
+    between luma and chroma.
+    Default disabled
 
 VUI (Video Usability Information) options
 =========================================
-
 x265 emits a VUI with only the timing info by default. If the SAR is
 specified (or read from a Y4M header) it is also included.  All other
 VUI fields must be manually specified.
