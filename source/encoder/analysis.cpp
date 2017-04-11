@@ -156,20 +156,28 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         if (ctuTemp->ctuPartitions)
         {
             int32_t depthIdx = 0;
+            uint32_t maxNum8x8Partitions = 64;
             uint8_t* depthInfoPtr = m_frame->m_addOnDepth[ctu.m_cuAddr];
             uint8_t* contentInfoPtr = m_frame->m_addOnCtuInfo[ctu.m_cuAddr];
+            int* prevCtuInfoChangePtr = m_frame->m_addOnPrevChange[ctu.m_cuAddr];
             do
             {
                 uint8_t depth = (uint8_t)ctuTemp->ctuPartitions[depthIdx];
                 uint8_t content = (uint8_t)(*((int32_t *)ctuTemp->ctuInfo + depthIdx));
+                int prevCtuInfoChange = m_frame->m_prevCtuInfoChange[ctu.m_cuAddr * maxNum8x8Partitions + depthIdx];
                 memset(depthInfoPtr, depth, sizeof(uint8_t) * numPartition >> 2 * depth);
                 memset(contentInfoPtr, content, sizeof(uint8_t) * numPartition >> 2 * depth);
+                memset(prevCtuInfoChangePtr, 0, sizeof(int) * numPartition >> 2 * depth);
+                for (uint32_t l = 0; l < numPartition >> 2 * depth; l++)
+                    prevCtuInfoChangePtr[l] = prevCtuInfoChange;
                 depthInfoPtr += ctu.m_numPartitions >> 2 * depth;
                 contentInfoPtr += ctu.m_numPartitions >> 2 * depth;
+                prevCtuInfoChangePtr += ctu.m_numPartitions >> 2 * depth;
                 depthIdx++;
             } while (ctuTemp->ctuPartitions[depthIdx] != 0);
 
             m_additionalCtuInfo = m_frame->m_addOnCtuInfo[ctu.m_cuAddr];
+            m_prevCtuInfoChange = m_frame->m_addOnPrevChange[ctu.m_cuAddr];
             memcpy(ctu.m_cuDepth, m_frame->m_addOnDepth[ctu.m_cuAddr], sizeof(uint8_t) * numPartition);
             //Calculate log2CUSize from depth
             for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
@@ -1051,6 +1059,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     bool skipRectAmp = false;
     bool chooseMerge = false;
     bool bCtuInfoCheck = false;
+    int sameContentRef = 0;
 
     if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4)
         m_maxTUDepth = loadTUDepth(cuGeom, parentCTU);
@@ -1071,6 +1080,8 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
 
     if (m_param->bCTUInfo && depth <= parentCTU.m_cuDepth[cuGeom.absPartIdx])
     {
+        if (bDecidedDepth && m_additionalCtuInfo[cuGeom.absPartIdx])
+            sameContentRef = findSameContentRefCount(parentCTU, cuGeom);
         if (depth < parentCTU.m_cuDepth[cuGeom.absPartIdx])
         {
             mightNotSplit &= bDecidedDepth;
@@ -1639,6 +1650,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     bool splitIntra = true;
     bool skipRectAmp = false;
     bool bCtuInfoCheck = false;
+    int sameContentRef = 0;
 
     // avoid uninitialize value in below reference
     if (m_param->limitModes)
@@ -1660,6 +1672,8 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     uint32_t refMasks[2];
     if (m_param->bCTUInfo && depth <= parentCTU.m_cuDepth[cuGeom.absPartIdx])
     {
+        if (bDecidedDepth && m_additionalCtuInfo[cuGeom.absPartIdx])
+            sameContentRef = findSameContentRefCount(parentCTU, cuGeom);
         if (depth < parentCTU.m_cuDepth[cuGeom.absPartIdx])
         {
             mightNotSplit &= bDecidedDepth;
@@ -3137,4 +3151,23 @@ void Analysis::calculateNormFactor(CUData& ctu, int qp)
         normFactor(srcU, blockSizeC, ctu, qp, TEXT_CHROMA_U);
         normFactor(srcV, blockSizeC, ctu, qp, TEXT_CHROMA_V);
     }
+}
+
+int Analysis::findSameContentRefCount(const CUData& parentCTU, const CUGeom& cuGeom)
+{
+    int sameContentRef = 0;
+    int m_curPoc = parentCTU.m_slice->m_poc;
+    int prevChange = m_prevCtuInfoChange[cuGeom.absPartIdx];
+    int numPredDir = m_slice->isInterP() ? 1 : 2;
+    for (int list = 0; list < numPredDir; list++)
+    {
+        for (int i = 0; i < m_frame->m_encData->m_slice->m_numRefIdx[list]; i++)
+        {
+            int refPoc = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_poc;
+            int refPrevChange = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_addOnPrevChange[parentCTU.m_cuAddr][cuGeom.absPartIdx];
+            if ((refPoc < prevChange && refPoc < m_curPoc) || (refPoc > m_curPoc && prevChange < m_curPoc && refPrevChange > m_curPoc) || ((refPoc == prevChange) && (m_additionalCtuInfo[cuGeom.absPartIdx] == CTU_INFO_CHANGE)))
+                sameContentRef++;    /* Content changed */
+        }
+    }
+    return sameContentRef;
 }

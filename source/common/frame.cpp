@@ -52,6 +52,7 @@ Frame::Frame()
     m_prevCtuInfoChange = NULL;
     m_addOnDepth = NULL;
     m_addOnCtuInfo = NULL;
+    m_addOnPrevChange = NULL;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
@@ -67,10 +68,12 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         uint32_t numCTUsInFrame = widthInCTU * heightInCTU;
         CHECKED_MALLOC_ZERO(m_addOnDepth, uint8_t *, numCTUsInFrame);
         CHECKED_MALLOC_ZERO(m_addOnCtuInfo, uint8_t *, numCTUsInFrame);
+        CHECKED_MALLOC_ZERO(m_addOnPrevChange, int *, numCTUsInFrame);
         for (uint32_t i = 0; i < numCTUsInFrame; i++)
         {
             CHECKED_MALLOC_ZERO(m_addOnDepth[i], uint8_t, uint32_t(NUM_4x4_PARTITIONS));
             CHECKED_MALLOC_ZERO(m_addOnCtuInfo[i], uint8_t, uint32_t(NUM_4x4_PARTITIONS));
+            CHECKED_MALLOC_ZERO(m_addOnPrevChange[i], int, uint32_t(NUM_4x4_PARTITIONS));
         }
     }
 
@@ -197,6 +200,8 @@ void Frame::destroy()
             m_addOnDepth[i] = NULL;
             X265_FREE(m_addOnCtuInfo[i]);
             m_addOnCtuInfo[i] = NULL;
+            X265_FREE(m_addOnPrevChange[i]);
+            m_addOnPrevChange[i] = NULL;
         }
         X265_FREE(*m_ctuInfo);
         *m_ctuInfo = NULL;
@@ -208,7 +213,8 @@ void Frame::destroy()
         m_addOnDepth = NULL;
         X265_FREE(m_addOnCtuInfo);
         m_addOnCtuInfo = NULL;
-
+        X265_FREE(m_addOnPrevChange);
+        m_addOnPrevChange = NULL;
     }
     m_lowres.destroy();
     X265_FREE(m_rcData);

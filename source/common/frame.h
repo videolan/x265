@@ -115,6 +115,7 @@ public:
 
     uint8_t**              m_addOnDepth;
     uint8_t**              m_addOnCtuInfo;
+    int**                  m_addOnPrevChange;
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);
