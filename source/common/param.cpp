@@ -1430,6 +1430,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(param->limitModes, "limit-modes");
     TOOLVAL(param->rdLevel, "rd=%d");
     TOOLVAL(param->dynamicRd, "dynamic-rd=%.2f");
+    TOOLOPT(param->bSsimRd, "ssim-rd");
     TOOLVAL(param->psyRd, "psy-rd=%.2lf");
     TOOLVAL(param->rdoqLevel, "rdoq=%d");
     TOOLVAL(param->psyRdoq, "psy-rdoq=%.2lf");
@@ -1530,6 +1531,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " limit-tu=%d", p->limitTU);
     s += sprintf(s, " rdoq-level=%d", p->rdoqLevel);
     s += sprintf(s, " dynamic-rd=%.2f", p->dynamicRd);
+    BOOL(p->bSsimRd, "ssim-rd");
     BOOL(p->bEnableSignHiding, "signhide");
     BOOL(p->bEnableTransformSkip, "tskip");
     s += sprintf(s, " nr-intra=%d", p->noiseReductionIntra);
