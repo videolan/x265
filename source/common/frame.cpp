@@ -50,6 +50,8 @@ Frame::Frame()
     m_reconfigureRc = false;
     m_ctuInfo = NULL;
     m_prevCtuInfoChange = NULL;
+    m_addOnDepth = NULL;
+    m_addOnCtuInfo = NULL;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
@@ -57,6 +59,20 @@ bool Frame::create(x265_param *param, float* quantOffsets)
     m_fencPic = new PicYuv;
     m_param = param;
     CHECKED_MALLOC_ZERO(m_rcData, RcStats, 1);
+
+    if (param->bCTUInfo)
+    {
+        uint32_t widthInCTU = (m_param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+        uint32_t heightInCTU = (m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+        uint32_t numCTUsInFrame = widthInCTU * heightInCTU;
+        CHECKED_MALLOC_ZERO(m_addOnDepth, uint8_t *, numCTUsInFrame);
+        CHECKED_MALLOC_ZERO(m_addOnCtuInfo, uint8_t *, numCTUsInFrame);
+        for (uint32_t i = 0; i < numCTUsInFrame; i++)
+        {
+            CHECKED_MALLOC_ZERO(m_addOnDepth[i], uint8_t, uint32_t(NUM_4x4_PARTITIONS));
+            CHECKED_MALLOC_ZERO(m_addOnCtuInfo[i], uint8_t, uint32_t(NUM_4x4_PARTITIONS));
+        }
+    }
 
     if (m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
         m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode || !!param->bAQMotion, param->rc.qgSize))
@@ -177,6 +193,10 @@ void Frame::destroy()
         {
             X265_FREE((*m_ctuInfo + i)->ctuInfo);
             (*m_ctuInfo + i)->ctuInfo = NULL;
+            X265_FREE(m_addOnDepth[i]);
+            m_addOnDepth[i] = NULL;
+            X265_FREE(m_addOnCtuInfo[i]);
+            m_addOnCtuInfo[i] = NULL;
         }
         X265_FREE(*m_ctuInfo);
         *m_ctuInfo = NULL;
@@ -184,6 +204,11 @@ void Frame::destroy()
         m_ctuInfo = NULL;
         X265_FREE(m_prevCtuInfoChange);
         m_prevCtuInfoChange = NULL;
+        X265_FREE(m_addOnDepth);
+        m_addOnDepth = NULL;
+        X265_FREE(m_addOnCtuInfo);
+        m_addOnCtuInfo = NULL;
+
     }
     m_lowres.destroy();
     X265_FREE(m_rcData);

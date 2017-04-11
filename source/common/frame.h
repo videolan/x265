@@ -112,6 +112,9 @@ public:
     Event                  m_copied;
     int*                   m_prevCtuInfoChange;
     int64_t                m_encodeStartTime;
+
+    uint8_t**              m_addOnDepth;
+    uint8_t**              m_addOnCtuInfo;
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);
