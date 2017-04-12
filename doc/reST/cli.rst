@@ -1689,11 +1689,13 @@ Loop filters
 	When enabled, non-deblocked pixels are used for SAO analysis. When
 	disabled, SAO analysis skips the right/bottom boundary areas.
 	Default disabled
+
 .. option:: --limit-sao, --no-limit-sao
-    Limit SAO filter computation by early terminating SAO process based
-    on inter prediction mode, CTU spatial-domain correlations, and relations
-    between luma and chroma.
-    Default disabled
+
+	Limit SAO filter computation by early terminating SAO process based
+	on inter prediction mode, CTU spatial-domain correlations, and relations
+	between luma and chroma.
+	Default disabled
 
 VUI (Video Usability Information) options
 =========================================
