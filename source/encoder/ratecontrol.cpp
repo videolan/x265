@@ -2550,25 +2550,25 @@ int RateControl::updateVbv(int64_t bits, RateControlEntry* rce)
     m_bufferFillFinal = X265_MAX(m_bufferFillFinal, 0);
     m_bufferFillFinal += m_bufferRate;
 
-    if (m_bufferFillFinal > m_bufferSize) 
+    if (m_param->rc.bStrictCbr)
     {
-        if (m_param->rc.bStrictCbr)
+        if (m_bufferFillFinal > m_bufferSize)
         {
             filler = (int)(m_bufferFillFinal - m_bufferSize);
             filler += FILLER_OVERHEAD * 8;
-            m_bufferFillFinal -= filler;
-            bufferBits = X265_MIN(bits + filler + m_bufferExcess, m_bufferRate);
-            m_bufferExcess = X265_MAX(m_bufferExcess - bufferBits + bits + filler, 0);
-            m_bufferFillActual += bufferBits - bits - filler;
         }
-        else
-        {
-            m_bufferFillFinal = X265_MIN(m_bufferFillFinal, m_bufferSize);
-            bufferBits = X265_MIN(bits + m_bufferExcess, m_bufferRate);
-            m_bufferExcess = X265_MAX(m_bufferExcess - bufferBits + bits, 0);
-            m_bufferFillActual += bufferBits - bits;
-            m_bufferFillActual = X265_MIN(m_bufferFillActual, m_bufferSize);
-        }
+        m_bufferFillFinal -= filler;
+        bufferBits = X265_MIN(bits + filler + m_bufferExcess, m_bufferRate);
+        m_bufferExcess = X265_MAX(m_bufferExcess - bufferBits + bits + filler, 0);
+        m_bufferFillActual += bufferBits - bits - filler;
+    }
+    else
+    {
+        m_bufferFillFinal = X265_MIN(m_bufferFillFinal, m_bufferSize);
+        bufferBits = X265_MIN(bits + m_bufferExcess, m_bufferRate);
+        m_bufferExcess = X265_MAX(m_bufferExcess - bufferBits + bits, 0);
+        m_bufferFillActual += bufferBits - bits;
+        m_bufferFillActual = X265_MIN(m_bufferFillActual, m_bufferSize);
     }
     return filler;
 }
