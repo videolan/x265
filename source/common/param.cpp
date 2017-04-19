@@ -272,6 +272,7 @@ void x265_param_default(x265_param* param)
     param->bAQMotion = 0;
     param->bHDROpt = 0;
     param->analysisRefineLevel = 5;
+    param->toneMapFile = NULL;
 }
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
 {
@@ -948,6 +949,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("hdr") p->bEmitHDRSEI = atobool(value);
         OPT("hdr-opt") p->bHDROpt = atobool(value);
         OPT("limit-sao") p->bLimitSAO = atobool(value);
+        OPT("dhdr10-info") p->toneMapFile = strdup(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1467,6 +1469,9 @@ void x265_print_params(x265_param* param)
     TOOLOPT(!param->bSaoNonDeblocked && param->bEnableSAO, "sao");
     TOOLOPT(param->rc.bStatWrite, "stats-write");
     TOOLOPT(param->rc.bStatRead,  "stats-read");
+#if ENABLE_DYNAMIC_HDR10
+    TOOLVAL(param->toneMapFile != NULL, "dhdr10-info");
+#endif
     x265_log(param, X265_LOG_INFO, "tools:%s\n", buf);
     fflush(stderr);
 }

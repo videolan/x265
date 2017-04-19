@@ -31,9 +31,9 @@
 #include "x265.h"
 #include "nal.h"
 #include "framedata.h"
+#include "dynamicHDR10\hdr10plus.h"
 
 struct x265_encoder {};
-
 namespace X265_NS {
 // private namespace
 extern const char g_sliceTypeToChar[3];
@@ -172,10 +172,10 @@ public:
     /* For HDR*/
     double                m_cB;
     double                m_cR;
-
+    int                m_bToneMap; // Enables tone-mapping
+    const hdr10plus_api*     api;
     Encoder();
     ~Encoder() {}
-
     void create();
     void stopJobs();
     void destroy();

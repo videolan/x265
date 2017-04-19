@@ -84,10 +84,11 @@ Encoder::Encoder()
     m_cR = 1.0;
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
-
     MotionEstimate::initScales();
+#if ENABLE_DYNAMIC_HDR10
+    api = hdr10plus_api_get();
+#endif
 }
-
 inline char *strcatFilename(const char *input, const char *suffix)
 {
     char *output = X265_MALLOC(char, strlen(input) + strlen(suffix) + 1);
@@ -502,7 +503,7 @@ void Encoder::destroy()
         free((char*)m_param->scalingLists);
         free((char*)m_param->numaPools);
         free((char*)m_param->masteringDisplayColorVolume);
-
+        free((char*)m_param->toneMapFile);
         PARAM_NS::x265_param_free(m_param);
     }
 }
@@ -593,9 +594,24 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         m_exportedPic = NULL;
         m_dpb->recycleUnreferenced();
     }
-
     if (pic_in)
     {
+        x265_sei_payload toneMap;
+        toneMap.payload = NULL;
+#if ENABLE_DYNAMIC_HDR10
+        if (m_bToneMap)
+        {
+            uint8_t *cim = NULL;
+            if (api->hdr10plus_json_to_frame_cim(m_param->toneMapFile, pic_in->poc, cim))
+            {
+                toneMap.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * cim[0]);
+                toneMap.payloadSize = cim[0];
+                toneMap.payloadType = USER_DATA_REGISTERED_ITU_T_T35;
+                memcpy(toneMap.payload, cim, toneMap.payloadSize);
+            }
+        }
+#endif
+
         if (pic_in->bitDepth < 8 || pic_in->bitDepth > 16)
         {
             x265_log(m_param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n",
@@ -677,17 +693,29 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_forceqp   = pic_in->forceqp;
         inFrame->m_param     = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
 
-        if (pic_in->userSEI.numPayloads)
+        int toneMapEnable = 0;
+        if (m_bToneMap && toneMap.payload)
+            toneMapEnable = 1;
+        int numPayloads = pic_in->userSEI.numPayloads + toneMapEnable;
+        inFrame->m_userSEI.numPayloads = numPayloads;
+
+        if (inFrame->m_userSEI.numPayloads)
         {
-            int numPayloads = inFrame->m_userSEI.numPayloads = pic_in->userSEI.numPayloads;
             inFrame->m_userSEI.payloads = new x265_sei_payload[numPayloads];
             for (int i = 0; i < numPayloads; i++)
             {
-                int size = inFrame->m_userSEI.payloads[i].payloadSize = pic_in->userSEI.payloads[i].payloadSize;
-                inFrame->m_userSEI.payloads[i].payloadType = pic_in->userSEI.payloads[i].payloadType;
+                x265_sei_payload input;
+                if (i == (numPayloads - 1))
+                    input = toneMap;
+                else
+                    input = pic_in->userSEI.payloads[i];
+                int size = inFrame->m_userSEI.payloads[i].payloadSize = input.payloadSize;
+                inFrame->m_userSEI.payloads[i].payloadType = input.payloadType;
                 inFrame->m_userSEI.payloads[i].payload = new uint8_t[size];
-                memcpy(inFrame->m_userSEI.payloads[i].payload, pic_in->userSEI.payloads[i].payload, size);
+                memcpy(inFrame->m_userSEI.payloads[i].payload, input.payload, size);
             }
+            if (toneMap.payload)
+                x265_free(toneMap.payload);
         }
 
         if (pic_in->quantOffsets != NULL)
@@ -2198,6 +2226,28 @@ void Encoder::configure(x265_param *p)
         p->dynamicRd = 0;
         x265_log(p, X265_LOG_WARNING, "Dynamic-rd disabled, requires RD <= 4, VBV and aq-mode enabled\n");
     }
+#ifdef ENABLE_DYNAMIC_HDR10
+    if (m_param->toneMapFile)
+    {
+        if (!x265_fopen(p->toneMapFile, "r"))
+        {
+            x265_log(p, X265_LOG_WARNING, "Unable to open tone-map file. Disabling --dhdr10-info\n");
+            m_bToneMap = 0;
+            m_param->toneMapFile = NULL;
+        }
+        else
+            m_bToneMap = 1;
+    }
+    else
+        m_bToneMap = 0;
+#else
+    if (m_param->toneMapFile)
+    {
+        x265_log(p, X265_LOG_WARNING, "--dhdr10-info disabled. Enable dynamic HDR in cmake.\n");
+        m_bToneMap = 0;
+        m_param->toneMapFile = NULL;
+    }
+#endif
 
     if (p->uhdBluray)
     {

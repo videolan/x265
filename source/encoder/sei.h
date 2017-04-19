@@ -313,6 +313,43 @@ public:
         writeByteAlign();
     }
 };
-}
 
+//seongnam.oh@samsung.com :: for the Creative Intent Meta Data Encoding
+class SEICreativeIntentMeta : public SEI
+{
+public:
+    uint8_t *cim;
+
+    SEIPayloadType payloadType() const { return USER_DATA_REGISTERED_ITU_T_T35; }
+
+    // daniel.vt@samsung.com :: for the Creative Intent Meta Data Encoding ( seongnam.oh@samsung.com )
+    void write(Bitstream& bs, const SPS&)
+    {
+        if (!cim)
+        {
+            return;
+        }
+
+        m_bitIf = &bs;
+        WRITE_CODE(USER_DATA_REGISTERED_ITU_T_T35, 8, "payload_type");
+        int i = 0;
+        int payloadSize = cim[0];
+        while (cim[i] == 0xFF)
+        {
+            i++;
+            payloadSize += cim[i];
+            WRITE_CODE(0xFF, 8, "payload_size");
+        }
+        WRITE_CODE((uint8_t)payloadSize, 8, "payload_size");
+        i++;
+        payloadSize += i;
+        for (; i < payloadSize; ++i)
+        {
+            WRITE_CODE(cim[i], 8, "creative_intent_metadata");
+        }
+
+    }
+};
+
+}
 #endif // ifndef X265_SEI_H

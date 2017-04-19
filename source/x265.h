@@ -1379,10 +1379,14 @@ typedef struct x265_param
     * information stored/reused in save/load analysis-mode. Higher the refine
     * level higher the informtion stored/reused. Default is 5 */
     int       analysisRefineLevel;
+
      /* Limit Sample Adaptive Offset filter computation by early terminating SAO
      * process based on inter prediction mode, CTU spatial-domain correlations,
      * and relations between luma and chroma */
     int       bLimitSAO;
+
+    /* File containing the tone mapping information */
+    const char*     toneMapFile;
 
 } x265_param;
 /* x265_param_alloc:

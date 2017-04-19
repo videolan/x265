@@ -615,18 +615,31 @@ void FrameEncoder::compressFrame()
     for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
     {
         x265_sei_payload *payload = &m_frame->m_userSEI.payloads[i];
-        SEIuserDataUnregistered sei;
+        if (payload->payloadType != USER_DATA_REGISTERED_ITU_T_T35)
+        {
+            SEIuserDataUnregistered sei;
+            sei.m_payloadType = payload->payloadType;
+            sei.m_userDataLength = payload->payloadSize;
+            sei.m_userData = payload->payload;
+            m_bs.resetBits();
+            sei.write(m_bs, *slice->m_sps);
+            m_bs.writeByteAlignment();
+            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+        }
+#if ENABLE_DYNAMIC_HDR10
+        else if (m_param->toneMapFile != NULL)
+        {
+            SEICreativeIntentMeta sei;
 
-        sei.m_payloadType = payload->payloadType;
-        sei.m_userDataLength = payload->payloadSize;
-        sei.m_userData = payload->payload;
+            sei.cim = payload->payload;
 
-        m_bs.resetBits();
-        sei.write(m_bs, *slice->m_sps);
-        m_bs.writeByteAlignment();
-        m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+            m_bs.resetBits();
+            sei.write(m_bs, *slice->m_sps);
+            m_bs.writeByteAlignment();
+            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+        }
+#endif
     }
-
     /* CQP and CRF (without capped VBV) doesn't use mid-frame statistics to 
      * tune RateControl parameters for other frames.
      * Hence, for these modes, update m_startEndOrder and unlock RC for previous threads waiting in

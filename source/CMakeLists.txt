@@ -29,7 +29,7 @@ option(NATIVE_BUILD "Target the build CPU" OFF)
 option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
 mark_as_advanced(FPROFILE_USE FPROFILE_GENERATE NATIVE_BUILD)
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 114)
+set(X265_BUILD 115)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -363,6 +363,13 @@ if(HIGH_BIT_DEPTH)
 else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0 -DX265_DEPTH=8)
 endif(HIGH_BIT_DEPTH)
+# this option is to enable the inclusion of dynamic HDR10 library to the libx265 compilation
+option(ENABLE_DYNAMIC_HDR10 "Enable dynamic HDR10 compilation" OFF)
+if (ENABLE_DYNAMIC_HDR10)
+    add_subdirectory(dynamicHDR10)
+    include_directories(dynamicHDR10)
+    add_definitions(-DENABLE_DYNAMIC_HDR10)
+endif(ENABLE_DYNAMIC_HDR10)
 
 # this option can only be used when linking multiple libx265 libraries
 # together, and some alternate API access method is implemented.
@@ -502,9 +509,12 @@ if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
         endforeach()
     endif()
 endif()
-
 source_group(ASM FILES ${ASM_SRCS})
-add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS} ${ASM_SRCS})
+if(ENABLE_DYNAMIC_HDR10)
+    add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:dynamicHDR10> ${ASM_OBJS} ${ASM_SRCS})
+else()
+    add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS} ${ASM_SRCS})
+endif()
 if(NOT MSVC)
     set_target_properties(x265-static PROPERTIES OUTPUT_NAME x265)
 endif()
@@ -535,11 +545,16 @@ endif()
 if(NOT (MSVC_IDE OR XCODE))
     add_custom_target(clean-generated COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/clean-generated.cmake)
 endif()
-
 option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
-    add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${ASM_OBJS}
-                ${X265_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+
+    if(ENABLE_DYNAMIC_HDR10)
+        add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${ASM_OBJS}
+                    ${X265_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:dynamicHDR10>)
+    else()
+        add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${ASM_OBJS}
+                   ${X265_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+    endif()
     if(EXTRA_LIB)
         target_link_libraries(x265-shared ${EXTRA_LIB})
     endif()
@@ -629,12 +644,17 @@ if(ENABLE_CLI)
     if(WIN32)
         set(ExportDefs "${PROJECT_BINARY_DIR}/x265.def")
     endif(WIN32)
-
     if(XCODE)
         # Xcode seems unable to link the CLI with libs, so link as one targget
+        if(ENABLE_DYNAMIC_HDR10)
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT}
-                       x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp
-                       $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS} ${ASM_SRCS})
+                        x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp
+                        $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:dynamicHDR10> ${ASM_OBJS} ${ASM_SRCS})
+        else()
+            add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT}
+                        x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp
+                        $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS} ${ASM_SRCS})
+        endif()
     else()
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} ${X265_RC_FILE}
                        ${ExportDefs} x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp)
