@@ -269,6 +269,8 @@ static const struct option long_options[] =
     { "limit-sao",            no_argument, NULL, 0 },
     { "no-limit-sao",         no_argument, NULL, 0 },
     { "dhdr10-info",    required_argument, NULL, 0 },
+    { "dhdr10-opt",           no_argument, NULL, 0},
+    { "no-dhdr10-opt",        no_argument, NULL, 0},
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -316,6 +318,7 @@ static void showHelp(x265_param *param)
     H1("                                 3 - i444 (4:4:4)\n");
 #if ENABLE_DYNAMIC_HDR10
     H0("   --dhdr10-info <filename>      JSON file containing the Creative Intent Metadata to be encoded as Dynamic Tone Mapping \n");
+    H0("   --[no-]dhdr10-opt             Insert tone mapping SEI only for IDR frames and when the tone mapping information changes. Default disabled");
 #endif
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("   --seek <integer>              First frame to encode\n");

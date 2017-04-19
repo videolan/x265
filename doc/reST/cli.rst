@@ -1876,6 +1876,16 @@ VUI fields must be manually specified.
 	Add luma and chroma offsets for HDR/WCG content.
 	Input video should be 10 bit 4:2:0. Applicable for HDR content.
 	Default disabled. **Experimental Feature**
+	
+.. option:: --dhdr10-info <filename>
+
+	Inserts tone mapping information as an SEI message.
+	
+.. option:: --dhdr10-opt, --no-dhdr10-opt
+
+	Limits the frames for which tone mapping information is inserted as 
+	SEI message. Inserts SEI only for IDR frames and for frames where tone
+	mapping information has changed.
 
 .. option:: --min-luma <integer>
 

@@ -272,8 +272,11 @@ void x265_param_default(x265_param* param)
     param->bAQMotion = 0;
     param->bHDROpt = 0;
     param->analysisRefineLevel = 5;
+
     param->toneMapFile = NULL;
+    param->bDhdr10opt = 0;
 }
+
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
 {
 #if EXPORT_C_API
@@ -950,6 +953,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("hdr-opt") p->bHDROpt = atobool(value);
         OPT("limit-sao") p->bLimitSAO = atobool(value);
         OPT("dhdr10-info") p->toneMapFile = strdup(value);
+        OPT("dhdr10-opt") p->bDhdr10opt = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1663,6 +1667,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bAQMotion, "aq-motion");
     BOOL(p->bEmitHDRSEI, "hdr");
     BOOL(p->bHDROpt, "hdr-opt");
+    BOOL(p->bDhdr10opt, "dhdr10-opt");
     s += sprintf(s, " refine-level=%d", p->analysisRefineLevel);
     BOOL(p->bLimitSAO, "limit-sao");
 #undef BOOL

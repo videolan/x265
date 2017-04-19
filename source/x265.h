@@ -1388,6 +1388,9 @@ typedef struct x265_param
     /* File containing the tone mapping information */
     const char*     toneMapFile;
 
+    /* Insert tone mapping information only for IDR frames and when the 
+     * tone mapping information changes. */
+    int       bDhdr10opt;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not

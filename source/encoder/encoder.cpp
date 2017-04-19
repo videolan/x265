@@ -87,6 +87,7 @@ Encoder::Encoder()
     MotionEstimate::initScales();
 #if ENABLE_DYNAMIC_HDR10
     m_hdr10plus_api = hdr10plus_api_get();
+    m_prevTonemapPayload.payload = NULL;
 #endif
 }
 inline char *strcatFilename(const char *input, const char *suffix)
@@ -2226,6 +2227,12 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "Dynamic-rd disabled, requires RD <= 4, VBV and aq-mode enabled\n");
     }
 #ifdef ENABLE_DYNAMIC_HDR10
+    if (m_param->bDhdr10opt && m_param->toneMapFile == NULL)
+    {
+        x265_log(p, X265_LOG_WARNING, "Disabling dhdr10-opt. dhdr10-info must be enabled.\n");
+        m_param->bDhdr10opt = 0;
+    }
+
     if (m_param->toneMapFile)
     {
         if (!x265_fopen(p->toneMapFile, "r"))
@@ -2245,6 +2252,11 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "--dhdr10-info disabled. Enable dynamic HDR in cmake.\n");
         m_bToneMap = 0;
         m_param->toneMapFile = NULL;
+    }
+    else if (m_param->bDhdr10opt)
+    {
+        x265_log(p, X265_LOG_WARNING, "Disabling dhdr10-opt. dhdr10-info must be enabled.\n");
+        m_param->bDhdr10opt = 0;
     }
 #endif
 

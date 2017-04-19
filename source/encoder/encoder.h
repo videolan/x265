@@ -175,9 +175,15 @@ public:
 
     int                     m_bToneMap; // Enables tone-mapping
     const hdr10plus_api*    m_hdr10plus_api;
+    x265_sei_payload        m_prevTonemapPayload;
 
     Encoder();
-    ~Encoder() {}
+    ~Encoder() 
+    {
+        if (m_prevTonemapPayload.payload != NULL)
+            X265_FREE(m_prevTonemapPayload.payload);
+    }
+
     void create();
     void stopJobs();
     void destroy();

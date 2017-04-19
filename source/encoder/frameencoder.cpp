@@ -448,6 +448,40 @@ void FrameEncoder::compressFrame()
     /* Get the QP for this frame from rate control. This call may block until
      * frames ahead of it in encode order have called rateControlEnd() */
     m_rce.encodeOrder = m_frame->m_encodeOrder;
+    bool payloadChange = false;
+    bool writeSei = true;
+    if (m_param->bDhdr10opt)
+    {
+        for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
+        {
+            x265_sei_payload *payload = &m_frame->m_userSEI.payloads[i];
+            if(payload->payloadType == USER_DATA_REGISTERED_ITU_T_T35)
+            {
+                if (m_top->m_prevTonemapPayload.payload != NULL && payload->payloadSize == m_top->m_prevTonemapPayload.payloadSize)
+                {
+                    if (memcmp(m_top->m_prevTonemapPayload.payload, payload->payload, payload->payloadSize) != 0)
+                        payloadChange = true;
+                }
+                else
+                {
+                    payloadChange = true;
+                    if (m_top->m_prevTonemapPayload.payload != NULL)
+                        x265_free(m_top->m_prevTonemapPayload.payload);
+                    m_top->m_prevTonemapPayload.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * payload->payloadSize);
+                }
+
+                if (payloadChange)
+                {
+                    m_top->m_prevTonemapPayload.payloadType = payload->payloadType;
+                    m_top->m_prevTonemapPayload.payloadSize = payload->payloadSize;
+                    memcpy(m_top->m_prevTonemapPayload.payload, payload->payload, payload->payloadSize);
+                }
+
+                bool isIDR = m_frame->m_lowres.sliceType == X265_TYPE_IDR;
+                writeSei = payloadChange || isIDR;
+            }
+        }
+    }
     int qp = m_top->m_rateControl->rateControlStart(m_frame, &m_rce, m_top);
     m_rce.newQp = qp;
 
@@ -627,13 +661,16 @@ void FrameEncoder::compressFrame()
         }
         else if (payload->payloadType == USER_DATA_REGISTERED_ITU_T_T35)
         {
-            SEICreativeIntentMeta sei;
-            sei.cim = payload->payload;
-            m_bs.resetBits();
-            sei.setSize(payload->payloadSize);
-            sei.write(m_bs, *slice->m_sps);
-            m_bs.writeByteAlignment();
-            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+            if (writeSei)
+            {
+                SEICreativeIntentMeta sei;
+                sei.cim = payload->payload;
+                m_bs.resetBits();
+                sei.setSize(payload->payloadSize);
+                sei.write(m_bs, *slice->m_sps);
+                m_bs.writeByteAlignment();
+                m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+            }
         }
         else
             x265_log(m_param, X265_LOG_ERROR, "Unrecognized SEI type\n");
