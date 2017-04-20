@@ -85,10 +85,12 @@ Encoder::Encoder()
     for (int i = 0; i < X265_MAX_FRAME_THREADS; i++)
         m_frameEncoder[i] = NULL;
     MotionEstimate::initScales();
+
 #if ENABLE_DYNAMIC_HDR10
     m_hdr10plus_api = hdr10plus_api_get();
-    m_prevTonemapPayload.payload = NULL;
 #endif
+
+    m_prevTonemapPayload.payload = NULL;
 }
 inline char *strcatFilename(const char *input, const char *suffix)
 {

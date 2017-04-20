@@ -48,8 +48,8 @@ void SEI::write(Bitstream& bs, const SPS& sps)
         /* virtual writeSEI method, write to bit counter to determine size */
         writeSEI(sps);
         m_bitIf = &bs;
-        uint32_t type = m_payloadType;
-        for (; type >= 0xff; type -= 0xff)
+        uint32_t payloadType = m_payloadType;
+        for (; payloadType >= 0xff; payloadType -= 0xff)
             WRITE_CODE(0xff, 8, "payload_type");
     }
     WRITE_CODE(type, 8, "payload_type");

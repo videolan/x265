@@ -31,7 +31,10 @@
 #include "x265.h"
 #include "nal.h"
 #include "framedata.h"
-#include "dynamicHDR10\hdr10plus.h"
+
+#ifdef ENABLE_DYNAMIC_HDR10
+    #include "dynamicHDR10\hdr10plus.h"
+#endif
 
 struct x265_encoder {};
 namespace X265_NS {
@@ -174,15 +177,21 @@ public:
     double                m_cR;
 
     int                     m_bToneMap; // Enables tone-mapping
-    const hdr10plus_api*    m_hdr10plus_api;
+
+#ifdef ENABLE_DYNAMIC_HDR10
+    const hdr10plus_api     *m_hdr10plus_api;
+#endif
+
     x265_sei_payload        m_prevTonemapPayload;
 
     Encoder();
-    ~Encoder() 
+    ~Encoder()
     {
+#ifdef ENABLE_DYNAMIC_HDR10
         if (m_prevTonemapPayload.payload != NULL)
             X265_FREE(m_prevTonemapPayload.payload);
-    }
+#endif
+    };
 
     void create();
     void stopJobs();
