@@ -2237,9 +2237,10 @@ void Encoder::configure(x265_param *p)
     {
         if (!x265_fopen(p->toneMapFile, "r"))
         {
-            x265_log(p, X265_LOG_WARNING, "Unable to open tone-map file. Disabling --dhdr10-info\n");
+            x265_log(p, X265_LOG_ERROR, "Unable to open tone-map file.\n");
             m_bToneMap = 0;
             m_param->toneMapFile = NULL;
+            m_aborted = true;
         }
         else
             m_bToneMap = 1;
