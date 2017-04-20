@@ -2825,7 +2825,7 @@ void Encoder::readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int curP
         analysisFrameData->distortion[count] = distortionBuf[d];
         analysisFrameData->ctuDistortion[ctuCount] += analysisFrameData->distortion[count];
         count += bytes;
-        if ((count % (size_t)NUM_4x4_PARTITIONS) == 0)
+        if ((count % (unsigned)NUM_4x4_PARTITIONS) == 0)
         {
             analysisFrameData->scaledDistortion[ctuCount] = X265_LOG2(X265_MAX(analysisFrameData->ctuDistortion[ctuCount], 1));
             sum += analysisFrameData->scaledDistortion[ctuCount];
