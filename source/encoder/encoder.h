@@ -31,7 +31,7 @@
 #include "x265.h"
 #include "nal.h"
 #include "framedata.h"
-#include "dynamicHDR10\hdr10plus.h"
+#include "dynamicHDR10/hdr10plus.h"
 
 struct x265_encoder {};
 namespace X265_NS {
