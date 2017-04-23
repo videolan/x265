@@ -2,6 +2,38 @@
 Release Notes
 *************
 
+Release Notes
+*************
+
+Version 2.4
+===========
+
+Release date - 22nd April, 2017.
+
+Encoder enhancements
+--------------------
+1. HDR10+ supported. Dynamic metadata may be either supplied as a bitstream via the userSEI field of x265_picture, or as a json jile that can be parsed by x265 and inserted into the bitstream; use :option:`--dhdr10-info` to specify json file name, and :option:`--dhdr10-opt` to enable optimization of inserting tone-map information only at IDR frames, or when the tone map information changes.
+2. Lambda tables for 8, 10, and 12-bit encoding revised, resulting in significant enhancement to subjective  visual quality.
+3. Enhanced HDR10 encoding with HDR-specific QP optimzations for chroma, and luma planes of WCG content enabled; use :option:`--hdr-opt` to activate.
+4. Ability to accept analysis information from other previous encodes (that may or may not be x265), and selectively reuse and refine analysis for encoding subsequent passes enabled with the :option:`--refine-level` option. 
+5. Slow and veryslow presets receive a 20% speed boost at iso-quality by enabling the :option:`--limit-tu` option.
+6. The bitrate target for x265 can now be dynamically reconfigured via the reconfigure API.
+7. Performance optimized SAO algorithm introduced via the :option:`--limit-sao` option; seeing 10% speed benefits at faster presets.
+
+API changes
+-----------
+1. x265_reconfigure API now also accepts rate-control parameters for dynamic reconfiguration.
+2. Several additions to data fields in x265_analysis to support :option:`--refine-level`: see x265.h for more details.
+
+Bug fixes
+---------
+1. Avoid negative offsets in x265 lambda2 table with SAO enabled.
+2. Fix mingw32 build error.
+3. Seek now enabled for pipe input, in addition to file-based input
+4. Fix issue of statically linking core-utils not working in linux.
+5. Fix visual artifacts with :option:`--multi-pass-opt-distortion` with VBV.
+6. Fix bufferFill stats reported in csv.
+
 Version 2.3
 ===========
 
