@@ -44,9 +44,8 @@ PixelHarness::PixelHarness()
         uchar_test_buff[0][i]   = rand() % ((1 << 8) - 1);
         residual_test_buff[0][i] = (rand() % (2 * RMAX + 1)) - RMAX - 1;// For sse_ss only
         double_test_buff[0][i]  = (double)(short_test_buff[0][i]) / 256.0;
-
         pixel_test_buff[1][i]   = PIXEL_MIN;
-        short_test_buff[1][i]   = SMIN;
+        short_test_buff[1][i]   = (int16_t)SMIN;
         short_test_buff1[1][i]  = PIXEL_MIN;
         short_test_buff2[1][i]  = -16384;
         int_test_buff[1][i]     = SHORT_MIN;

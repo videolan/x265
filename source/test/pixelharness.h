@@ -40,7 +40,7 @@ protected:
     enum { BUFFSIZE = STRIDE * (MAX_HEIGHT + PAD_ROWS) + INCR * ITERS };
     enum { TEST_CASES = 3 };
     enum { SMAX = 1 << 12 };
-    enum { SMIN = -1 << 12 };
+    enum { SMIN = (unsigned)-1 << 12 };
     enum { RMAX = PIXEL_MAX - PIXEL_MIN }; //The maximum value obtained by subtracting pixel values (residual max)
     enum { RMIN = PIXEL_MIN - PIXEL_MAX }; //The minimum value obtained by subtracting pixel values (residual min)
 

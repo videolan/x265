@@ -39,8 +39,7 @@ protected:
     enum { ITERS = 100 };
     enum { TEST_CASES = 3 };
     enum { SMAX = 1 << 12 };
-    enum { SMIN = -1 << 12 };
-
+    enum { SMIN = (unsigned)-1 << 12 };
     ALIGN_VAR_32(pixel, pixel_buff[TEST_BUF_SIZE]);
     int16_t short_buff[TEST_BUF_SIZE];
     int16_t IPF_vec_output_s[TEST_BUF_SIZE];

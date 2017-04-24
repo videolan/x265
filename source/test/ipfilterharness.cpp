@@ -38,10 +38,8 @@ IPFilterHarness::IPFilterHarness()
     {
         pixel_test_buff[0][i] = rand() & PIXEL_MAX;
         short_test_buff[0][i] = (rand() % (2 * SMAX)) - SMAX;
-
         pixel_test_buff[1][i] = PIXEL_MIN;
-        short_test_buff[1][i] = SMIN;
-
+        short_test_buff[1][i] = (int16_t)SMIN;
         pixel_test_buff[2][i] = PIXEL_MAX;
         short_test_buff[2][i] = SMAX;
     }
