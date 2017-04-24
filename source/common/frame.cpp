@@ -48,6 +48,8 @@ Frame::Frame()
     m_rcData = NULL;
     m_encodeStartTime = 0;
     m_reconfigureRc = false;
+    m_ctuInfo = NULL;
+    m_prevCtuInfoChange = NULL;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
@@ -166,6 +168,23 @@ void Frame::destroy()
         delete[] m_userSEI.payloads;
     }
 
+    if (m_ctuInfo)
+    {
+        uint32_t widthInCU = (m_param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+        uint32_t heightInCU = (m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+        uint32_t numCUsInFrame = widthInCU * heightInCU;
+        for (uint32_t i = 0; i < numCUsInFrame; i++)
+        {
+            X265_FREE((*m_ctuInfo + i)->ctuInfo);
+            (*m_ctuInfo + i)->ctuInfo = NULL;
+        }
+        X265_FREE(*m_ctuInfo);
+        *m_ctuInfo = NULL;
+        X265_FREE(m_ctuInfo);
+        m_ctuInfo = NULL;
+        X265_FREE(m_prevCtuInfoChange);
+        m_prevCtuInfoChange = NULL;
+    }
     m_lowres.destroy();
     X265_FREE(m_rcData);
 }

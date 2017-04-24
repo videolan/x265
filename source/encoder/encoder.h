@@ -199,6 +199,8 @@ public:
 
     int reconfigureParam(x265_param* encParam, x265_param* param);
 
+    void copyCtuInfo(x265_ctu_info_t** frameCtuInfo, int poc);
+
     void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);

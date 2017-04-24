@@ -1221,7 +1221,16 @@ Slice decision options
 	intra cost of a frame used in scenecut detection. For example, a value of 5 indicates,
 	if the inter cost of a frame is greater than or equal to 95 percent of the intra cost of the frame,
 	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5.	
-	
+
+.. option:: --ctu-info <0, 1, 2, 4, 6>
+
+   This value enables receiving CTU information asynchronously and determine reaction to the CTU information. Default 0.
+   1: force the partitions if CTU information is present.
+   2: functionality of (1) and reduce qp if CTU information has changed.
+   4: functionality of (1) and force Inter modes when CTU Information has changed, merge/skip otherwise.
+   This option should be enabled only when planning to invoke the API function x265_encoder_ctu_info to copy ctu-info asynchronously. 
+   If enabled without calling the API function, the encoder will wait indefinitely.
+
 .. option:: --intra-refresh
 
 	Enables Periodic Intra Refresh(PIR) instead of keyframe insertion.

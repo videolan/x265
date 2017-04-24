@@ -160,6 +160,20 @@ typedef struct x265_frame_stats
     x265_cu_stats    cuStats;
     double           totalFrameTime;
 } x265_frame_stats;
+typedef struct x265_ctu_info_t
+{
+    int32_t ctuAddress;
+    int32_t ctuPartitions[64];
+    void*    ctuInfo;
+} x265_ctu_info_t;
+
+typedef enum
+{
+    NO_CTU_INFO = 0,
+    HAS_CTU_INFO = 1,
+    CTU_INFO_CHANGE = 2,
+}CTUInfo;
+
 
 /* Arbitrary User SEI
  * Payload size is in bytes and the payload pointer must be non-NULL. 
@@ -1391,6 +1405,9 @@ typedef struct x265_param
     /* Insert tone mapping information only for IDR frames and when the 
      * tone mapping information changes. */
     int       bDhdr10opt;
+
+    /* Determine how x265 react to the content information recieved through the API */
+    int       bCTUInfo;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
@@ -1581,6 +1598,12 @@ void x265_encoder_close(x265_encoder *);
 
 int x265_encoder_intra_refresh(x265_encoder *);
 
+/* x265_encoder_ctu_info:
+ *    Copy CTU information such as ctu address and ctu partition structure of all
+ *    CTUs in each frame. The function is invoked only if "--ctu-info" is enabled and
+ *    the encoder will wait for this copy to complete if enabled.
+ */
+int x265_encoder_ctu_info(x265_encoder *, int poc, x265_ctu_info_t** ctu);
 /* x265_cleanup:
  *       release library static allocations, reset configured CTU size */
 void x265_cleanup(void);
@@ -1629,6 +1652,7 @@ typedef struct x265_api
 
     int           sizeof_frame_stats;   /* sizeof(x265_frame_stats) */
     int           (*encoder_intra_refresh)(x265_encoder*);
+    int           (*encoder_ctu_info)(x265_encoder*, int, x265_ctu_info_t**);
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 

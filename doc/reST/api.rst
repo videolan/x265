@@ -192,6 +192,12 @@ changes made to the parameters for auto-detection and other reasons::
 	 *      presets is not recommended without a more fine-grained breakdown of
 	 *      parameters to take this into account. */
 	int x265_encoder_reconfig(x265_encoder *, x265_param *);
+**x265_encoder_ctu_info**
+       /* x265_encoder_ctu_info:
+        *    Copy CTU information such as ctu address and ctu partition structure of all
+        *    CTUs in each frame. The function is invoked only if "--ctu-info" is enabled and
+        *    the encoder will wait for this copy to complete if enabled.
+        */
 
 Pictures
 ========

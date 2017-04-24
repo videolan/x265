@@ -275,6 +275,7 @@ void x265_param_default(x265_param* param)
 
     param->toneMapFile = NULL;
     param->bDhdr10opt = 0;
+    param->bCTUInfo = 0;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -954,6 +955,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("limit-sao") p->bLimitSAO = atobool(value);
         OPT("dhdr10-info") p->toneMapFile = strdup(value);
         OPT("dhdr10-opt") p->bDhdr10opt = atobool(value);
+        OPT("ctu-info") p->bCTUInfo = atoi(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1294,6 +1296,8 @@ int x265_check_params(x265_param* param)
         "qpmin exceeds supported range (0 to 69)");
     CHECK(param->log2MaxPocLsb < 4 || param->log2MaxPocLsb > 16,
         "Supported range for log2MaxPocLsb is 4 to 16");
+    CHECK(param->bCTUInfo < 0 || (param->bCTUInfo != 0 && param->bCTUInfo != 1 && param->bCTUInfo != 2 && param->bCTUInfo != 4 && param->bCTUInfo != 6) || param->bCTUInfo > 6,
+        "Supported values for bCTUInfo are 0, 1, 2, 4, 6");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
@@ -1457,6 +1461,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(param->bEnableStrongIntraSmoothing, "strong-intra-smoothing");
     TOOLVAL(param->lookaheadSlices, "lslices=%d");
     TOOLVAL(param->lookaheadThreads, "lthreads=%d")
+    TOOLVAL(param->bCTUInfo, "ctu-info=%d");
     if (param->maxSlices > 1)
         TOOLVAL(param->maxSlices, "slices=%d");
     if (param->bEnableLoopFilter)
@@ -1670,6 +1675,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bDhdr10opt, "dhdr10-opt");
     s += sprintf(s, " refine-level=%d", p->analysisRefineLevel);
     BOOL(p->bLimitSAO, "limit-sao");
+    s += sprintf(s, " ctu-info=%d", p->bCTUInfo);
 #undef BOOL
     return buf;
 }

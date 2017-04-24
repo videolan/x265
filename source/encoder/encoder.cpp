@@ -1157,6 +1157,120 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
     return x265_check_params(encParam);
 }
 
+void Encoder::copyCtuInfo(x265_ctu_info_t** frameCtuInfo, int poc)
+{
+    uint32_t widthInCU = (m_param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t heightInCU = (m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    Frame* curFrame;
+    Frame* prevFrame = NULL;
+    int32_t* frameCTU;
+    uint32_t numCUsInFrame = widthInCU * heightInCU;
+    uint32_t maxNum8x8Partitions = 64;
+    bool copied = false;
+    do
+    {
+        curFrame = m_lookahead->m_inputQueue.getPOC(poc);
+        if (!curFrame)
+            curFrame = m_lookahead->m_outputQueue.getPOC(poc);
+
+        if (poc > 0)
+        {
+            prevFrame = m_lookahead->m_inputQueue.getPOC(poc - 1);
+            if (!prevFrame)
+                prevFrame = m_lookahead->m_outputQueue.getPOC(poc - 1);
+            if (!prevFrame)
+            {
+                FrameEncoder* prevEncoder;
+                for (int i = 0; i < m_param->frameNumThreads; i++)
+                {
+                    prevEncoder = m_frameEncoder[i];
+                    prevFrame = prevEncoder->m_frame;
+                    if (prevFrame && (prevEncoder->m_frame->m_poc == poc - 1))
+                    {
+                        prevFrame = prevEncoder->m_frame;
+                        break;
+                    }
+                }
+            }
+        }
+        x265_ctu_info_t* ctuTemp, *prevCtuTemp;
+        if (curFrame)
+        {
+            if (!curFrame->m_ctuInfo)
+                CHECKED_MALLOC(curFrame->m_ctuInfo, x265_ctu_info_t*, 1);
+            CHECKED_MALLOC(*curFrame->m_ctuInfo, x265_ctu_info_t, numCUsInFrame);
+            CHECKED_MALLOC_ZERO(curFrame->m_prevCtuInfoChange, int, numCUsInFrame * maxNum8x8Partitions);
+            for (uint32_t i = 0; i < numCUsInFrame; i++)
+            {
+                ctuTemp = *curFrame->m_ctuInfo + i;
+                CHECKED_MALLOC(frameCTU, int32_t, maxNum8x8Partitions);
+                ctuTemp->ctuInfo = (int32_t*)frameCTU;
+                ctuTemp->ctuAddress = frameCtuInfo[i]->ctuAddress;
+                memcpy(ctuTemp->ctuPartitions, frameCtuInfo[i]->ctuPartitions, sizeof(int32_t) * maxNum8x8Partitions);
+                memcpy(ctuTemp->ctuInfo, frameCtuInfo[i]->ctuInfo, sizeof(int32_t) * maxNum8x8Partitions);
+                if (prevFrame && curFrame->m_poc > 1)
+                {
+                    prevCtuTemp = *prevFrame->m_ctuInfo + i;
+                    for (uint32_t j = 0; j < maxNum8x8Partitions; j++)
+                        curFrame->m_prevCtuInfoChange[i * maxNum8x8Partitions + j] = (*((int32_t *)prevCtuTemp->ctuInfo + j) == 2) ? (poc - 1) : prevFrame->m_prevCtuInfoChange[i * maxNum8x8Partitions + j];
+                }
+            }
+            copied = true;
+            curFrame->m_copied.trigger();
+        }
+        else
+        {
+            FrameEncoder* curEncoder;
+            for (int i = 0; i < m_param->frameNumThreads; i++)
+            {
+                curEncoder = m_frameEncoder[i];
+                curFrame = curEncoder->m_frame;
+                if (curFrame)
+                {
+                    if (poc == curFrame->m_poc)
+                    {
+                        if (!curFrame->m_ctuInfo)
+                            CHECKED_MALLOC(curFrame->m_ctuInfo, x265_ctu_info_t*, 1);
+                        CHECKED_MALLOC(*curFrame->m_ctuInfo, x265_ctu_info_t, numCUsInFrame);
+                        CHECKED_MALLOC_ZERO(curFrame->m_prevCtuInfoChange, int, numCUsInFrame * maxNum8x8Partitions);
+                        for (uint32_t l = 0; l < numCUsInFrame; l++)
+                        {
+                            ctuTemp = *curFrame->m_ctuInfo + l;
+                            CHECKED_MALLOC(frameCTU, int32_t, maxNum8x8Partitions);
+                            ctuTemp->ctuInfo = (int32_t*)frameCTU;
+                            ctuTemp->ctuAddress = frameCtuInfo[l]->ctuAddress;
+                            memcpy(ctuTemp->ctuPartitions, frameCtuInfo[l]->ctuPartitions, sizeof(int32_t) * maxNum8x8Partitions);
+                            memcpy(ctuTemp->ctuInfo, frameCtuInfo[l]->ctuInfo, sizeof(int32_t) * maxNum8x8Partitions);
+                            if (prevFrame && curFrame->m_poc > 1)
+                            {
+                                prevCtuTemp = *prevFrame->m_ctuInfo + l;
+                                for (uint32_t j = 0; j < maxNum8x8Partitions; j++)
+                                    curFrame->m_prevCtuInfoChange[l * maxNum8x8Partitions + j] = (*((int32_t *)prevCtuTemp->ctuInfo + j) == CTU_INFO_CHANGE) ? (poc - 1) : prevFrame->m_prevCtuInfoChange[l * maxNum8x8Partitions + j];
+                            }
+                        }
+                        copied = true;
+                        curFrame->m_copied.trigger();
+                        break;
+                    }
+                }
+            }
+        }
+    } while (!copied);
+    return;
+fail:
+    for (uint32_t i = 0; i < numCUsInFrame; i++)
+    {
+        X265_FREE((*curFrame->m_ctuInfo + i)->ctuInfo);
+        (*curFrame->m_ctuInfo + i)->ctuInfo = NULL;
+    }
+    X265_FREE(*curFrame->m_ctuInfo);
+    *(curFrame->m_ctuInfo) = NULL;
+    X265_FREE(curFrame->m_ctuInfo);
+    curFrame->m_ctuInfo = NULL;
+    X265_FREE(curFrame->m_prevCtuInfoChange);
+    curFrame->m_prevCtuInfoChange = NULL;
+}
+
 void EncStats::addPsnr(double psnrY, double psnrU, double psnrV)
 {
     m_psnrSumY += psnrY;
