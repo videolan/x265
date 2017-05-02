@@ -123,9 +123,8 @@ void interp_horiz_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intpt
     const int16_t* coeff = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC - headRoom;
-    int offset = -IF_INTERNAL_OFFS << shift;
+    int offset = (unsigned)-IF_INTERNAL_OFFS << shift;
     int blkheight = height;
-
     src -= N / 2 - 1;
 
     if (isRowExt)
@@ -209,10 +208,8 @@ void interp_vert_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr
     const int16_t* c = (N == 4) ? g_chromaFilter[coeffIdx] : g_lumaFilter[coeffIdx];
     int headRoom = IF_INTERNAL_PREC - X265_DEPTH;
     int shift = IF_FILTER_PREC - headRoom;
-    int offset = -IF_INTERNAL_OFFS << shift;
-
+    int offset = (unsigned)-IF_INTERNAL_OFFS << shift;
     src -= (N / 2 - 1) * srcStride;
-
     int row, col;
     for (row = 0; row < height; row++)
     {

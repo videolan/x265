@@ -1474,7 +1474,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(param->rc.bStatWrite, "stats-write");
     TOOLOPT(param->rc.bStatRead,  "stats-read");
 #if ENABLE_DYNAMIC_HDR10
-    TOOLVAL(param->toneMapFile != NULL, "dhdr10-info");
+    TOOLOPT(param->toneMapFile != NULL, "dhdr10-info");
 #endif
     x265_log(param, X265_LOG_INFO, "tools:%s\n", buf);
     fflush(stderr);
