@@ -57,6 +57,7 @@ void setupFilterPrimitives_c(EncoderPrimitives &p);
 void setupIntraPrimitives_c(EncoderPrimitives &p);
 void setupLoopFilterPrimitives_c(EncoderPrimitives &p);
 void setupSaoPrimitives_c(EncoderPrimitives &p);
+void setupSeaIntegralPrimitives_c(EncoderPrimitives &p);
 
 void setupCPrimitives(EncoderPrimitives &p)
 {
@@ -66,6 +67,7 @@ void setupCPrimitives(EncoderPrimitives &p)
     setupIntraPrimitives_c(p);      // intrapred.cpp
     setupLoopFilterPrimitives_c(p); // loopfilter.cpp
     setupSaoPrimitives_c(p);        // sao.cpp
+    setupSeaIntegralPrimitives_c(p);  // framefilter.cpp
 }
 
 void setupAliasPrimitives(EncoderPrimitives &p)

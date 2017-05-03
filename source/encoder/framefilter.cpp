@@ -35,107 +35,126 @@ using namespace X265_NS;
 static uint64_t computeSSD(pixel *fenc, pixel *rec, intptr_t stride, uint32_t width, uint32_t height);
 static float calculateSSIM(pixel *pix1, intptr_t stride1, pixel *pix2, intptr_t stride2, uint32_t width, uint32_t height, void *buf, uint32_t& cnt);
 
-static void integral_init4h(uint32_t *sum, pixel *pix, intptr_t stride)
+namespace X265_NS
 {
-    int32_t v = pix[0] + pix[1] + pix[2] + pix[3];
-    for (int16_t x = 0; x < stride - 4; x++)
+    static void integral_init4h_c(uint32_t *sum, pixel *pix, intptr_t stride)
     {
-        sum[x] = v + sum[x - stride];
-        v += pix[x + 4] - pix[x];
+        int32_t v = pix[0] + pix[1] + pix[2] + pix[3];
+        for (int16_t x = 0; x < stride - 4; x++)
+        {
+            sum[x] = v + sum[x - stride];
+            v += pix[x + 4] - pix[x];
+        }
     }
-}
 
-static void integral_init8h(uint32_t *sum, pixel *pix, intptr_t stride)
-{
-    int32_t v = pix[0] + pix[1] + pix[2] + pix[3] + pix[4] + pix[5] + pix[6] + pix[7];
-    for (int16_t x = 0; x < stride - 8; x++)
+    static void integral_init8h_c(uint32_t *sum, pixel *pix, intptr_t stride)
     {
-        sum[x] = v + sum[x - stride];
-        v += pix[x + 8] - pix[x];
+        int32_t v = pix[0] + pix[1] + pix[2] + pix[3] + pix[4] + pix[5] + pix[6] + pix[7];
+        for (int16_t x = 0; x < stride - 8; x++)
+        {
+            sum[x] = v + sum[x - stride];
+            v += pix[x + 8] - pix[x];
+        }
     }
-}
 
-static void integral_init12h(uint32_t *sum, pixel *pix, intptr_t stride)
-{
-    int32_t v = pix[0] + pix[1] + pix[2] + pix[3] + pix[4] + pix[5] + pix[6] + pix[7] +
-        pix[8] + pix[9] + pix[10] + pix[11];
-    for (int16_t x = 0; x < stride - 12; x++)
+    static void integral_init12h_c(uint32_t *sum, pixel *pix, intptr_t stride)
     {
-        sum[x] = v + sum[x - stride];
-        v += pix[x + 12] - pix[x];
+        int32_t v = pix[0] + pix[1] + pix[2] + pix[3] + pix[4] + pix[5] + pix[6] + pix[7] +
+            pix[8] + pix[9] + pix[10] + pix[11];
+        for (int16_t x = 0; x < stride - 12; x++)
+        {
+            sum[x] = v + sum[x - stride];
+            v += pix[x + 12] - pix[x];
+        }
     }
-}
 
-static void integral_init16h(uint32_t *sum, pixel *pix, intptr_t stride)
-{
-    int32_t v = pix[0] + pix[1] + pix[2] + pix[3] + pix[4] + pix[5] + pix[6] + pix[7] +
-        pix[8] + pix[9] + pix[10] + pix[11] + pix[12] + pix[13] + pix[14] + pix[15];
-    for (int16_t x = 0; x < stride - 16; x++)
+    static void integral_init16h_c(uint32_t *sum, pixel *pix, intptr_t stride)
     {
-        sum[x] = v + sum[x - stride];
-        v += pix[x + 16] - pix[x];
+        int32_t v = pix[0] + pix[1] + pix[2] + pix[3] + pix[4] + pix[5] + pix[6] + pix[7] +
+            pix[8] + pix[9] + pix[10] + pix[11] + pix[12] + pix[13] + pix[14] + pix[15];
+        for (int16_t x = 0; x < stride - 16; x++)
+        {
+            sum[x] = v + sum[x - stride];
+            v += pix[x + 16] - pix[x];
+        }
     }
-}
 
-static void integral_init24h(uint32_t *sum, pixel *pix, intptr_t stride)
-{
-    int32_t v = pix[0] + pix[1] + pix[2] + pix[3] + pix[4] + pix[5] + pix[6] + pix[7] +
-        pix[8] + pix[9] + pix[10] + pix[11] + pix[12] + pix[13] + pix[14] + pix[15] +
-        pix[16] + pix[17] + pix[18] + pix[19] + pix[20] + pix[21] + pix[22] + pix[23];
-    for (int16_t x = 0; x < stride - 24; x++)
+    static void integral_init24h_c(uint32_t *sum, pixel *pix, intptr_t stride)
     {
-        sum[x] = v + sum[x - stride];
-        v += pix[x + 24] - pix[x];
+        int32_t v = pix[0] + pix[1] + pix[2] + pix[3] + pix[4] + pix[5] + pix[6] + pix[7] +
+            pix[8] + pix[9] + pix[10] + pix[11] + pix[12] + pix[13] + pix[14] + pix[15] +
+            pix[16] + pix[17] + pix[18] + pix[19] + pix[20] + pix[21] + pix[22] + pix[23];
+        for (int16_t x = 0; x < stride - 24; x++)
+        {
+            sum[x] = v + sum[x - stride];
+            v += pix[x + 24] - pix[x];
+        }
     }
-}
 
-static void integral_init32h(uint32_t *sum, pixel *pix, intptr_t stride)
-{
-    int32_t v = pix[0] + pix[1] + pix[2] + pix[3] + pix[4] + pix[5] + pix[6] + pix[7] +
-        pix[8] + pix[9] + pix[10] + pix[11] + pix[12] + pix[13] + pix[14] + pix[15] +
-        pix[16] + pix[17] + pix[18] + pix[19] + pix[20] + pix[21] + pix[22] + pix[23] +
-        pix[24] + pix[25] + pix[26] + pix[27] + pix[28] + pix[29] + pix[30] + pix[31];
-    for (int16_t x = 0; x < stride - 32; x++)
+    static void integral_init32h_c(uint32_t *sum, pixel *pix, intptr_t stride)
     {
-        sum[x] = v + sum[x - stride];
-        v += pix[x + 32] - pix[x];
+        int32_t v = pix[0] + pix[1] + pix[2] + pix[3] + pix[4] + pix[5] + pix[6] + pix[7] +
+            pix[8] + pix[9] + pix[10] + pix[11] + pix[12] + pix[13] + pix[14] + pix[15] +
+            pix[16] + pix[17] + pix[18] + pix[19] + pix[20] + pix[21] + pix[22] + pix[23] +
+            pix[24] + pix[25] + pix[26] + pix[27] + pix[28] + pix[29] + pix[30] + pix[31];
+        for (int16_t x = 0; x < stride - 32; x++)
+        {
+            sum[x] = v + sum[x - stride];
+            v += pix[x + 32] - pix[x];
+        }
     }
-}
 
-static void integral_init4v(uint32_t *sum4, intptr_t stride)
-{
-    for (int x = 0; x < stride; x++)
-        sum4[x] = sum4[x + 4 * stride] - sum4[x];
-}
+    static void integral_init4v_c(uint32_t *sum4, intptr_t stride)
+    {
+        for (int x = 0; x < stride; x++)
+            sum4[x] = sum4[x + 4 * stride] - sum4[x];
+    }
 
-static void integral_init8v(uint32_t *sum8, intptr_t stride)
-{
-    for (int x = 0; x < stride; x++)
-        sum8[x] = sum8[x + 8 * stride] - sum8[x];
-}
+    static void integral_init8v_c(uint32_t *sum8, intptr_t stride)
+    {
+        for (int x = 0; x < stride; x++)
+            sum8[x] = sum8[x + 8 * stride] - sum8[x];
+    }
 
-static void integral_init12v(uint32_t *sum12, intptr_t stride)
-{
-    for (int x = 0; x < stride; x++)
-        sum12[x] = sum12[x + 12 * stride] - sum12[x];
-}
+    static void integral_init12v_c(uint32_t *sum12, intptr_t stride)
+    {
+        for (int x = 0; x < stride; x++)
+            sum12[x] = sum12[x + 12 * stride] - sum12[x];
+    }
 
-static void integral_init16v(uint32_t *sum16, intptr_t stride)
-{
-    for (int x = 0; x < stride; x++)
-        sum16[x] = sum16[x + 16 * stride] - sum16[x];
-}
+    static void integral_init16v_c(uint32_t *sum16, intptr_t stride)
+    {
+        for (int x = 0; x < stride; x++)
+            sum16[x] = sum16[x + 16 * stride] - sum16[x];
+    }
 
-static void integral_init24v(uint32_t *sum24, intptr_t stride)
-{
-    for (int x = 0; x < stride; x++)
-        sum24[x] = sum24[x + 24 * stride] - sum24[x];
-}
+    static void integral_init24v_c(uint32_t *sum24, intptr_t stride)
+    {
+        for (int x = 0; x < stride; x++)
+            sum24[x] = sum24[x + 24 * stride] - sum24[x];
+    }
 
-static void integral_init32v(uint32_t *sum32, intptr_t stride)
-{
-    for (int x = 0; x < stride; x++)
-        sum32[x] = sum32[x + 32 * stride] - sum32[x];
+    static void integral_init32v_c(uint32_t *sum32, intptr_t stride)
+    {
+        for (int x = 0; x < stride; x++)
+            sum32[x] = sum32[x + 32 * stride] - sum32[x];
+    }
+
+    void setupSeaIntegralPrimitives_c(EncoderPrimitives &p)
+    {
+        p.integral_initv[INTEGRAL_4] = integral_init4v_c;
+        p.integral_initv[INTEGRAL_8] = integral_init8v_c;
+        p.integral_initv[INTEGRAL_12] = integral_init12v_c;
+        p.integral_initv[INTEGRAL_16] = integral_init16v_c;
+        p.integral_initv[INTEGRAL_24] = integral_init24v_c;
+        p.integral_initv[INTEGRAL_32] = integral_init32v_c;
+        p.integral_inith[INTEGRAL_4] = integral_init4h_c;
+        p.integral_inith[INTEGRAL_8] = integral_init8h_c;
+        p.integral_inith[INTEGRAL_12] = integral_init12h_c;
+        p.integral_inith[INTEGRAL_16] = integral_init16h_c;
+        p.integral_inith[INTEGRAL_24] = integral_init24h_c;
+        p.integral_inith[INTEGRAL_32] = integral_init32h_c;
+    }
 }
 
 void FrameFilter::destroy()
@@ -833,47 +852,47 @@ void FrameFilter::computeMEIntegral(int row)
             uint32_t *sum4x4 = m_frame->m_encData->m_meIntegral[11] + (y + 1) * stride - padX;
 
             /*For width = 32 */
-            integral_init32h(sum32x32, pix, stride);
+            integral_init32h_c(sum32x32, pix, stride);
             if (y >= 32 - padY)
-                integral_init32v(sum32x32 - 32 * stride, stride);
-            integral_init32h(sum32x24, pix, stride);
+                integral_init32v_c(sum32x32 - 32 * stride, stride);
+            integral_init32h_c(sum32x24, pix, stride);
             if (y >= 24 - padY)
-                integral_init24v(sum32x24 - 24 * stride, stride);
-            integral_init32h(sum32x8, pix, stride);
+                integral_init24v_c(sum32x24 - 24 * stride, stride);
+            integral_init32h_c(sum32x8, pix, stride);
             if (y >= 8 - padY)
-                integral_init8v(sum32x8 - 8 * stride, stride);
+                integral_init8v_c(sum32x8 - 8 * stride, stride);
             /*For width = 24 */
-            integral_init24h(sum24x32, pix, stride);
+            integral_init24h_c(sum24x32, pix, stride);
             if (y >= 32 - padY)
-                integral_init32v(sum24x32 - 32 * stride, stride);
+                integral_init32v_c(sum24x32 - 32 * stride, stride);
             /*For width = 16 */
-            integral_init16h(sum16x16, pix, stride);
+            integral_init16h_c(sum16x16, pix, stride);
             if (y >= 16 - padY)
-                integral_init16v(sum16x16 - 16 * stride, stride);
-            integral_init16h(sum16x12, pix, stride);
+                integral_init16v_c(sum16x16 - 16 * stride, stride);
+            integral_init16h_c(sum16x12, pix, stride);
             if (y >= 12 - padY)
-                integral_init12v(sum16x12 - 12 * stride, stride);
-            integral_init16h(sum16x4, pix, stride);
+                integral_init12v_c(sum16x12 - 12 * stride, stride);
+            integral_init16h_c(sum16x4, pix, stride);
             if (y >= 4 - padY)
-                integral_init4v(sum16x4 - 4 * stride, stride);
+                integral_init4v_c(sum16x4 - 4 * stride, stride);
             /*For width = 12 */
-            integral_init12h(sum12x16, pix, stride);
+            integral_init12h_c(sum12x16, pix, stride);
             if (y >= 16 - padY)
-                integral_init16v(sum12x16 - 16 * stride, stride);
+                integral_init16v_c(sum12x16 - 16 * stride, stride);
             /*For width = 8 */
-            integral_init8h(sum8x32, pix, stride);
+            integral_init8h_c(sum8x32, pix, stride);
             if (y >= 32 - padY)
-                integral_init32v(sum8x32 - 32 * stride, stride);
-            integral_init8h(sum8x8, pix, stride);
+                integral_init32v_c(sum8x32 - 32 * stride, stride);
+            integral_init8h_c(sum8x8, pix, stride);
             if (y >= 8 - padY)
-                integral_init8v(sum8x8 - 8 * stride, stride);
+                integral_init8v_c(sum8x8 - 8 * stride, stride);
             /*For width = 4 */
-            integral_init4h(sum4x16, pix, stride);
+            integral_init4h_c(sum4x16, pix, stride);
             if (y >= 16 - padY)
-                integral_init16v(sum4x16 - 16 * stride, stride);
-            integral_init4h(sum4x4, pix, stride);
+                integral_init16v_c(sum4x16 - 16 * stride, stride);
+            integral_init4h_c(sum4x4, pix, stride);
             if (y >= 4 - padY)
-                integral_init4v(sum4x4 - 4 * stride, stride);
+                integral_init4v_c(sum4x4 - 4 * stride, stride);
         }
         m_parallelFilter[row].m_frameFilter->integralCompleted.set(1);
     }

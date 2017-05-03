@@ -2002,6 +2002,70 @@ bool PixelHarness::check_pelFilterChroma_V(pelFilterChroma_t ref, pelFilterChrom
     return true;
 }
 
+bool PixelHarness::check_integral_initv(integralv_t ref, integralv_t opt)
+{
+    intptr_t srcStep = 64;
+    int j = 0;
+    uint32_t dst_ref[BUFFSIZE] = { 0 };
+    uint32_t dst_opt[BUFFSIZE] = { 0 };
+
+    for (int i = 0; i < 64; i++)
+    {
+        dst_ref[i] = pixel_test_buff[0][i];
+        dst_opt[i] = pixel_test_buff[0][i];
+    }
+
+    for (int i = 0, k = 0; i < BUFFSIZE; i++)
+    {
+        if (i % 64 == 0)
+            k++;
+        dst_ref[i] = dst_ref[i % 64] + k;
+        dst_opt[i] = dst_opt[i % 64] + k;
+    }
+
+    int padx = 4;
+    int pady = 4;
+    uint32_t *dst_ref_ptr = dst_ref + srcStep * pady + padx;
+    uint32_t *dst_opt_ptr = dst_opt + srcStep * pady + padx;
+    for (int i = 0; i < ITERS; i++)
+    {
+        ref(dst_ref_ptr, srcStep);
+        checked(opt, dst_opt_ptr, srcStep);
+
+        if (memcmp(dst_ref, dst_opt, sizeof(uint32_t) * BUFFSIZE))
+            return false;
+
+        reportfail()
+            j += INCR;
+    }
+    return true;
+}
+
+bool PixelHarness::check_integral_inith(integralh_t ref, integralh_t opt)
+{
+    intptr_t srcStep = 64;
+    int j = 0;
+    uint32_t dst_ref[BUFFSIZE] = { 0 };
+    uint32_t dst_opt[BUFFSIZE] = { 0 };
+
+    int padx = 4;
+    int pady = 4;
+    uint32_t *dst_ref_ptr = dst_ref + srcStep * pady + padx;
+    uint32_t *dst_opt_ptr = dst_opt + srcStep * pady + padx;
+    for (int k = 0; k < ITERS; k++)
+    {
+        ref(dst_ref_ptr, pixel_test_buff[0], srcStep);
+        checked(opt, dst_opt_ptr, pixel_test_buff[0], srcStep);
+
+        if (memcmp(dst_ref, dst_opt, sizeof(uint32_t) * BUFFSIZE))
+            return false;
+
+        reportfail()
+            j += INCR;
+    }
+    return true;
+}
+
 bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.pu[part].satd)
@@ -2687,6 +2751,64 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    for (int k = 0; k < NUM_INTEGRAL_SIZE; k++)
+    {
+        if (opt.integral_initv[k] && !check_integral_initv(ref.integral_initv[k], opt.integral_initv[k]))
+        {
+            switch (k)
+            {
+            case 0:
+                printf("Integral4v failed!\n");
+                break;
+            case 1:
+                printf("Integral8v failed!\n");
+                break;
+            case 2:
+                printf("Integral12v failed!\n");
+                break;
+            case 3:
+                printf("Integral16v failed!\n");
+                break;
+            case 4:
+                printf("Integral24v failed!\n");
+                break;
+            case 5:
+                printf("Integral32v failed!\n");
+                break;
+            }
+            return false;
+        }
+    }
+
+
+    for (int k = 0; k < NUM_INTEGRAL_SIZE; k++)
+    {
+        if (opt.integral_inith[k] && !check_integral_inith(ref.integral_inith[k], opt.integral_inith[k]))
+        {
+            switch (k)
+            {
+                case 0:
+                    printf("Integral4h failed!\n");
+                    break;
+                case 1:
+                    printf("Integral8h failed!\n");
+                    break;
+                case 2:
+                    printf("Integral12h failed!\n");
+                    break;
+                case 3:
+                    printf("Integral16h failed!\n");
+                    break;
+                case 4:
+                    printf("Integral24h failed!\n");
+                    break;
+                case 5:
+                    printf("Integral32h failed!\n");
+                    break;
+            }
+            return false;
+        }
+    }
     return true;
 }
 
@@ -3208,5 +3330,68 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         int32_t maskQ = (rand() % PIXEL_MAX) - 1;
         HEADER0("pelFilterChroma_Horizontal");
         REPORT_SPEEDUP(opt.pelFilterChroma[1], ref.pelFilterChroma[1], pbuf1, 1, STRIDE, tc, maskP, maskQ);
+    }
+
+    for (int k = 0; k < NUM_INTEGRAL_SIZE; k++)
+    {
+        if (opt.integral_initv[k])
+        {
+            switch (k)
+            {
+                case 0:
+                    HEADER0("integral_init4v");
+                    break;
+                case 1:
+                    HEADER0("integral_init8v");
+                    break;
+                case 2:
+                    HEADER0("integral_init12v");
+                    break;
+                case 3:
+                    HEADER0("integral_init16v");
+                    break;
+                case 4:
+                    HEADER0("integral_init24v");
+                    break;
+                case 5:
+                    HEADER0("integral_init32v");
+                    break;
+                default:
+                    break;
+            }
+            REPORT_SPEEDUP(opt.integral_initv[k], ref.integral_initv[k], (uint32_t*)pbuf1, STRIDE);
+        }
+    }
+
+    for (int k = 0; k < NUM_INTEGRAL_SIZE; k++)
+    {
+        if (opt.integral_inith[k])
+        {
+            uint32_t dst_buf[BUFFSIZE] = { 0 };
+            switch (k)
+            {
+            case 0:
+                HEADER0("integral_init4h");
+                break;
+            case 1:
+                HEADER0("integral_init8h");
+                break;
+            case 2:
+                HEADER0("integral_init12h");
+                break;
+            case 3:
+                HEADER0("integral_init16h");
+                break;
+            case 4:
+                HEADER0("integral_init24h");
+                break;
+            case 5:
+                HEADER0("integral_init32h");
+                break;
+            default:
+                break;
+            }
+            REPORT_SPEEDUP(opt.integral_inith[k], ref.integral_inith[k], dst_buf, pbuf1, STRIDE);
+        }
     }
 }
