@@ -182,11 +182,16 @@ if(CC STREQUAL "xlc")
     add_definitions(-O3 -qstrict -qhot -qaltivec)
     add_definitions(-qinline=level=10 -qpath=IL:/data/video_files/latest.tpo/)
 endif()
-
-
+# this option is to enable the inclusion of dynamic HDR10 library to the libx265 compilation
+option(ENABLE_DYNAMIC_HDR10 "Enable dynamic HDR10 compilation" OFF)
 if(GCC)
     add_definitions(-Wall -Wextra -Wshadow)
     add_definitions(-D__STDC_LIMIT_MACROS=1)
+    if(ENABLE_DYNAMIC_HDR10)
+        add_definitions(-std=gnu++11)
+    else()
+        add_definitions(-std=gnu++98)
+    endif()
     if(ENABLE_PIC)
          add_definitions(-fPIC)
     endif(ENABLE_PIC)
@@ -362,21 +367,12 @@ if(HIGH_BIT_DEPTH)
 else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0 -DX265_DEPTH=8)
 endif(HIGH_BIT_DEPTH)
-# this option is to enable the inclusion of dynamic HDR10 library to the libx265 compilation
-option(ENABLE_DYNAMIC_HDR10 "Enable dynamic HDR10 compilation" OFF)
+
 if (ENABLE_DYNAMIC_HDR10)
     add_subdirectory(dynamicHDR10)
     include_directories(dynamicHDR10)
     add_definitions(-DENABLE_DYNAMIC_HDR10)
 endif(ENABLE_DYNAMIC_HDR10)
-if(GCC)
-    if(ENABLE_DYNAMIC_HDR10)
-        add_definitions(-std=gnu++11)
-    else()
-        add_definitions(-std=gnu++98)
-    endif()
-endif(GCC)
-
 # this option can only be used when linking multiple libx265 libraries
 # together, and some alternate API access method is implemented.
 option(EXPORT_C_API "Implement public C programming interface" ON)
