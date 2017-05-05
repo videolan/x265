@@ -47,4 +47,14 @@ struct BezierCurveData
     std::vector<int> coeff;
 };
 
+struct PercentileLuminance{
+
+    float averageLuminance = 0.0;
+    float maxRLuminance = 0.0;
+    float maxGLuminance = 0.0;
+    float maxBLuminance = 0.0;
+    int order;
+    std::vector<unsigned int> percentiles;
+};
+
 #endif // BASICSTRUCTURES_H

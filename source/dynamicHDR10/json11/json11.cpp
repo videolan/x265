@@ -26,6 +26,12 @@
 #include <cstdio>
 #include <limits>
 
+#if _MSC_VER
+#pragma warning(disable: 4510) //const member cannot be default initialized
+#pragma warning(disable: 4512) //assignment operator could not be generated
+#pragma warning(disable: 4610) //const member cannot be default initialized
+#endif
+
 namespace json11 {
 
 static const int max_depth = 200;
@@ -435,7 +441,7 @@ struct JsonParser final {
     char get_next_token() {
         consume_garbage();
         if (i == str.size())
-            return fail("unexpected end of input", 0);
+            return fail("unexpected end of input", '0');
 
         return str[i++];
     }
@@ -472,7 +478,7 @@ struct JsonParser final {
     string parse_string() {
         string out;
         long last_escaped_codepoint = -1;
-        while (true) {
+        for (;;) {
             if (i == str.size())
                 return fail("unexpected end of input in string", "");
 
@@ -665,7 +671,7 @@ struct JsonParser final {
             if (ch == '}')
                 return data;
 
-            while (1) {
+            for (;;) {
                 if (ch != '"')
                     return fail("expected '\"' in object, got " + esc(ch));
 
@@ -698,7 +704,7 @@ struct JsonParser final {
             if (ch == ']')
                 return data;
 
-            while (1) {
+            for (;;) {
                 i--;
                 data.push_back(parse_json(depth + 1));
                 if (failed)
