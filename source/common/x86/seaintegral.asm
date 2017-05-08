@@ -70,8 +70,22 @@ cglobal integral8v, 2, 3, 2
 ;void integral_init12v_c(uint32_t *sum12, intptr_t stride)
 ;-----------------------------------------------------------------------------
 INIT_YMM avx2
-cglobal integral12v, 2, 2, 0
- 
+cglobal integral12v, 2, 4, 2
+    mov r2, r1
+    mov r3, r1
+    shl r2, 5
+    shl r3, 4
+    add r2, r3
+
+.loop
+    movu    m0, [r0]
+    movu    m1, [r0 + r2]
+    psubd   m1, m0
+    movu    [r0], m1
+    add     r0, 32
+    sub     r1, 8
+    cmp     r1, 0
+    jnz     .loop
     RET
 
 ;-----------------------------------------------------------------------------
