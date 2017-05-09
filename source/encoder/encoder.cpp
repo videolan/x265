@@ -708,7 +708,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             for (int i = 0; i < numPayloads; i++)
             {
                 x265_sei_payload input;
-                if (i == (numPayloads - 1))
+                if ((i == (numPayloads - 1)) && toneMapEnable)
                     input = toneMap;
                 else
                     input = pic_in->userSEI.payloads[i];

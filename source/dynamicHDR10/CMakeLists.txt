@@ -2,7 +2,7 @@
 if(ENABLE_DYNAMIC_HDR10)
 
 add_library(dynamicHDR10 OBJECT 
-    BasicStructures.cpp BasicStructures.h
+    BasicStructures.h
     json11/json11.cpp json11/json11.h
     JsonHelper.cpp JsonHelper.h
     metadataFromJson.cpp metadataFromJson.h
@@ -153,7 +153,7 @@ option(ENABLE_SHARED "Build shared library" OFF)
 if(ENABLE_SHARED)
     add_library(dynamicHDR10 SHARED
         json11/json11.cpp json11/json11.h
-        BasicStructures.cpp BasicStructures.h
+        BasicStructures.h
         JsonHelper.cpp JsonHelper.h
         metadataFromJson.cpp metadataFromJson.h
         SeiMetadataDictionary.cpp SeiMetadataDictionary.h
@@ -161,7 +161,7 @@ if(ENABLE_SHARED)
 else()
     add_library(dynamicHDR10 STATIC
     json11/json11.cpp json11/json11.h
-    BasicStructures.cpp BasicStructures.h
+    BasicStructures.h
     JsonHelper.cpp JsonHelper.h
     metadataFromJson.cpp metadataFromJson.h
     SeiMetadataDictionary.cpp SeiMetadataDictionary.h
