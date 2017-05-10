@@ -65,9 +65,10 @@ public:
 
     PicYuv();
 
-    bool  create(uint32_t picWidth, uint32_t picHeight, uint32_t csp);
+    bool  create(uint32_t picWidth, uint32_t picHeight, uint32_t csp, pixel *pixelbuf = NULL);
     bool  createOffsets(const SPS& sps);
     void  destroy();
+    int   getLumaBufLen(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp);
 
     void  copyFromPicture(const x265_picture&, const x265_param& param, int padx, int pady);
 

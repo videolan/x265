@@ -52,7 +52,7 @@ PicYuv::PicYuv()
     m_vChromaShift = 0;
 }
 
-bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
+bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp, pixel *pixelbuf)
 {
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
@@ -68,8 +68,13 @@ bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
     m_stride = (numCuInWidth * g_maxCUSize) + (m_lumaMarginX << 1);
 
     int maxHeight = numCuInHeight * g_maxCUSize;
-    CHECKED_MALLOC(m_picBuf[0], pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
-    m_picOrg[0] = m_picBuf[0] + m_lumaMarginY * m_stride + m_lumaMarginX;
+    if (pixelbuf)
+        m_picOrg[0] = pixelbuf;
+    else
+    {
+        CHECKED_MALLOC(m_picBuf[0], pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
+        m_picOrg[0] = m_picBuf[0] + m_lumaMarginY * m_stride + m_lumaMarginX;
+    }
 
     if (picCsp != X265_CSP_I400)
     {
@@ -92,6 +97,27 @@ bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
 
 fail:
     return false;
+}
+
+int PicYuv::getLumaBufLen(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp)
+{
+    m_picWidth = picWidth;
+    m_picHeight = picHeight;
+    m_hChromaShift = CHROMA_H_SHIFT(picCsp);
+    m_vChromaShift = CHROMA_V_SHIFT(picCsp);
+    m_picCsp = picCsp;
+
+    uint32_t numCuInWidth = (m_picWidth + g_maxCUSize - 1) / g_maxCUSize;
+    uint32_t numCuInHeight = (m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
+
+    m_lumaMarginX = g_maxCUSize + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
+    m_lumaMarginY = g_maxCUSize + 16; // margin for 8-tap filter and infinite padding
+    m_stride = (numCuInWidth * g_maxCUSize) + (m_lumaMarginX << 1);
+
+    int maxHeight = numCuInHeight * g_maxCUSize;
+    int bufLen = (int)(m_stride * (maxHeight + (m_lumaMarginY * 2)));
+
+    return bufLen;
 }
 
 /* the first picture allocated by the encoder will be asked to generate these
