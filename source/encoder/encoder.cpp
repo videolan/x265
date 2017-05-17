@@ -772,6 +772,32 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inFrame->m_lowres.bScenecut = !!inFrame->m_analysisData.bScenecut;
             inFrame->m_lowres.satdCost = inFrame->m_analysisData.satdCost;
         }
+        if (m_param->bUseRcStats && pic_in->rcData)
+        {
+            RcStats* rc = (RcStats*)pic_in->rcData;
+            m_rateControl->m_accumPQp = rc->cumulativePQp;
+            m_rateControl->m_accumPNorm = rc->cumulativePNorm;
+            m_rateControl->m_isNextGop = true;
+            for (int j = 0; j < 3; j++)
+                m_rateControl->m_lastQScaleFor[j] = rc->lastQScaleFor[j];
+            m_rateControl->m_wantedBitsWindow = rc->wantedBitsWindow;
+            m_rateControl->m_cplxrSum = rc->cplxrSum;
+            m_rateControl->m_totalBits = rc->totalBits;
+            m_rateControl->m_encodedBits = rc->encodedBits;
+            m_rateControl->m_shortTermCplxSum = rc->shortTermCplxSum;
+            m_rateControl->m_shortTermCplxCount = rc->shortTermCplxCount;
+            if (m_rateControl->m_isVbv)
+            {
+                m_rateControl->m_bufferFillFinal = rc->bufferFillFinal;
+                for (int i = 0; i < 4; i++)
+                {
+                    m_rateControl->m_pred[i].coeff = rc->coeff[i];
+                    m_rateControl->m_pred[i].count = rc->count[i];
+                    m_rateControl->m_pred[i].offset = rc->offset[i];
+                }
+            }
+            m_param->bUseRcStats = 0;
+        }
         if (m_reconfigureRc)
             inFrame->m_reconfigureRc = true;
 

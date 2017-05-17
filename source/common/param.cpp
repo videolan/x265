@@ -276,6 +276,7 @@ void x265_param_default(x265_param* param)
     param->toneMapFile = NULL;
     param->bDhdr10opt = 0;
     param->bCTUInfo = 0;
+    param->bUseRcStats = 0;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)

@@ -1408,6 +1408,9 @@ typedef struct x265_param
 
     /* Determine how x265 react to the content information recieved through the API */
     int       bCTUInfo;
+
+    /* Use ratecontrol statistics from pic_in, if available*/
+    int       bUseRcStats;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
