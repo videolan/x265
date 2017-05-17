@@ -66,6 +66,10 @@ struct RcStats
     double   shortTermCplxCount;
     int64_t  totalBits;
     int64_t  encodedBits;
+    double   coeff[4];
+    double   count[4];
+    double   offset[4];
+    double   bufferFillFinal;
 };
 
 class Frame
