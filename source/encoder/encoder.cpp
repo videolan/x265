@@ -1762,6 +1762,16 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
         frameStats->avgResEnergy            = curFrame->m_encData->m_frameStats.avgResEnergy;
         frameStats->avgLumaLevel            = curFrame->m_fencPic->m_avgLumaLevel;
         frameStats->maxLumaLevel            = curFrame->m_fencPic->m_maxLumaLevel;
+        frameStats->minLumaLevel            = curFrame->m_fencPic->m_minLumaLevel;
+
+        frameStats->maxChromaULevel = curFrame->m_fencPic->m_maxChromaULevel;
+        frameStats->minChromaULevel = curFrame->m_fencPic->m_minChromaULevel;
+        frameStats->avgChromaULevel = curFrame->m_fencPic->m_avgChromaULevel;
+
+        frameStats->maxChromaVLevel = curFrame->m_fencPic->m_maxChromaVLevel;
+        frameStats->minChromaVLevel = curFrame->m_fencPic->m_minChromaVLevel;
+        frameStats->avgChromaVLevel = curFrame->m_fencPic->m_avgChromaVLevel;
+
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
             frameStats->cuStats.percentSkipCu[depth]  = curFrame->m_encData->m_frameStats.percentSkipCu[depth];
@@ -1771,6 +1781,36 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
             frameStats->cuStats.percentInterDistribution[depth][2] = curFrame->m_encData->m_frameStats.percentInterDistribution[depth][2];
             for (int n = 0; n < INTRA_MODES; n++)
                 frameStats->cuStats.percentIntraDistribution[depth][n] = curFrame->m_encData->m_frameStats.percentIntraDistribution[depth][n];
+        }
+
+        if (curFrame->m_encData->m_frameStats.totalPu[4] == 0)
+            frameStats->puStats.percentNxN = 0;
+        else
+            frameStats->puStats.percentNxN = (double)(curFrame->m_encData->m_frameStats.cnt4x4 / (double)curFrame->m_encData->m_frameStats.totalPu[4]) * 100;
+        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        {
+            if (curFrame->m_encData->m_frameStats.totalPu[depth] == 0)
+            {
+                frameStats->puStats.percentSkipPu[depth] = 0;
+                frameStats->puStats.percentIntraPu[depth] = 0;
+                frameStats->puStats.percentAmpPu[depth] = 0;
+                for (int i = 0; i < INTER_MODES - 1; i++)
+                {
+                    frameStats->puStats.percentInterPu[depth][i] = 0;
+                    frameStats->puStats.percentMergePu[depth][i] = 0;
+                }
+            }
+            else
+            {
+                frameStats->puStats.percentSkipPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntSkipPu[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                frameStats->puStats.percentIntraPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntIntraPu[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                frameStats->puStats.percentAmpPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntAmp[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                for (int i = 0; i < INTER_MODES - 1; i++)
+                {
+                    frameStats->puStats.percentInterPu[depth][i] = (double)(curFrame->m_encData->m_frameStats.cntInterPu[depth][i] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                    frameStats->puStats.percentMergePu[depth][i] = (double)(curFrame->m_encData->m_frameStats.cntMergePu[depth][i] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                }
+            }
         }
     }
 }

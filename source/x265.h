@@ -117,6 +117,20 @@ typedef struct x265_cu_stats
 } x265_cu_stats;
 
 
+/* pu statistics */
+typedef struct x265_pu_stats
+{
+    double      percentSkipPu[4];               // Percentage of skip cu in all depths
+    double      percentIntraPu[4];              // Percentage of intra modes in all depths
+    double      percentAmpPu[4];                // Percentage of amp modes in all depths
+    double      percentInterPu[4][3];           // Percentage of inter 2nx2n, 2nxn and nx2n in all depths
+    double      percentMergePu[4][3];           // Percentage of merge 2nx2n, 2nxn and nx2n in all depth
+    double      percentNxN;
+
+    /* All the above values will add up to 100%. */
+} x265_pu_stats;
+
+
 typedef struct x265_analysis_2Pass
 {
     uint32_t      poc;
@@ -154,12 +168,25 @@ typedef struct x265_frame_stats
     int              list0POC[16];
     int              list1POC[16];
     uint16_t         maxLumaLevel;
+    uint16_t         minLumaLevel;
+
+    uint16_t         maxChromaULevel;
+    uint16_t         minChromaULevel;
+    double           avgChromaULevel;
+
+
+    uint16_t         maxChromaVLevel;
+    uint16_t         minChromaVLevel;
+    double           avgChromaVLevel;
+
     char             sliceType;
     int              bScenecut;
     int              frameLatency;
     x265_cu_stats    cuStats;
+    x265_pu_stats    puStats;
     double           totalFrameTime;
 } x265_frame_stats;
+
 typedef struct x265_ctu_info_t
 {
     int32_t ctuAddress;

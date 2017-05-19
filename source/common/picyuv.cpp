@@ -46,6 +46,23 @@ PicYuv::PicYuv()
 
     m_maxLumaLevel = 0;
     m_avgLumaLevel = 0;
+
+    m_maxChromaULevel = 0;
+    m_avgChromaULevel = 0;
+
+    m_maxChromaVLevel = 0;
+    m_avgChromaVLevel = 0;
+
+#if (X265_DEPTH > 8)
+    m_minLumaLevel = 0xFFFF;
+    m_minChromaULevel = 0xFFFF;
+    m_minChromaVLevel = 0xFFFF;
+#else
+    m_minLumaLevel = 0xFF;
+    m_minChromaULevel = 0xFF;
+    m_minChromaVLevel = 0xFF;
+#endif
+
     m_stride = 0;
     m_strideC = 0;
     m_hChromaShift = 0;
@@ -210,6 +227,11 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
 
     X265_CHECK(pic.bitDepth >= 8, "pic.bitDepth check failure");
 
+    uint64_t lumaSum;
+    uint64_t cbSum;
+    uint64_t crSum;
+    lumaSum = cbSum = crSum = 0;
+
     if (pic.bitDepth == 8)
     {
 #if (X265_DEPTH > 8)
@@ -313,6 +335,44 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
     pixel *Y = m_picOrg[0];
     pixel *U = m_picOrg[1];
     pixel *V = m_picOrg[2];
+
+    if (param.logLevel >= 2)
+    {
+        pixel *yPic = m_picOrg[0];
+        pixel *uPic = m_picOrg[1];
+        pixel *vPic = m_picOrg[2];
+
+        for (int r = 0; r < height; r++)
+        {
+            for (int c = 0; c < width; c++)
+            {
+                m_maxLumaLevel = X265_MAX(yPic[c], m_maxLumaLevel);
+                m_minLumaLevel = X265_MIN(yPic[c], m_minLumaLevel);
+                lumaSum += yPic[c];
+            }
+            yPic += m_stride;
+        }
+        m_avgLumaLevel = (double)lumaSum / (m_picHeight * m_picWidth);
+
+        for (int r = 0; r < height >> m_vChromaShift; r++)
+        {
+            for (int c = 0; c < width >> m_hChromaShift; c++)
+            {
+                m_maxChromaULevel = X265_MAX(uPic[c], m_maxChromaULevel);
+                m_minChromaULevel = X265_MIN(uPic[c], m_minChromaULevel);
+                cbSum += uPic[c];
+
+                m_maxChromaVLevel = X265_MAX(vPic[c], m_maxChromaVLevel);
+                m_minChromaVLevel = X265_MIN(vPic[c], m_minChromaVLevel);
+                crSum += vPic[c];
+            }
+
+            uPic += m_strideC;
+            vPic += m_strideC;
+        }
+        m_avgChromaULevel = (double)cbSum / ((height >> m_vChromaShift) * (width >> m_hChromaShift));
+        m_avgChromaVLevel = (double)crSum / ((height >> m_vChromaShift) * (width >> m_hChromaShift));
+    }
 
 #if HIGH_BIT_DEPTH
     bool calcHDRParams = !!param.minLuma || (param.maxLuma != PIXEL_MAX);

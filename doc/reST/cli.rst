@@ -83,9 +83,30 @@ Logging/Statistic Options
 	it adds one line per run. If :option:`--csv-log-level` is greater than
 	0, it writes one line per frame. Default none
 
-	Several frame performance statistics are available when 
-	:option:`--csv-log-level` is greater than or equal to 2:
-
+	Several statistics about the encoded bitstream and encoder performance are 
+	available when :option:`--csv-log-level` is greater than or equal to 2:
+	
+	**Analysis statistics:**
+	
+	**CU Statistics** percentage of CU modes.
+	
+	**Distortion** Average luma and chroma distortion. Calculated as
+	SSE is done on fenc and recon(after quantization).
+	
+	**Psy Energy **  Average psy energy calculated as the sum of absolute
+	difference between source and recon energy. Energy is measured by sa8d
+	minus SAD.
+	
+	**Residual Energy** Average residual energy. SSE is calculated on fenc 
+	and pred(before quantization).
+	
+	**Luma/Chroma Values** minumum, maximum and average(averaged by area)
+	luma and chroma values of source for each frame.
+	
+	**PU Statistics** percentage of PU modes at each depth.
+	
+	**Performance statistics:**
+	
 	**DecideWait ms** number of milliseconds the frame encoder had to
 	wait, since the previous frame was retrieved by the API thread,
 	before a new frame has been given to it. This is the latency

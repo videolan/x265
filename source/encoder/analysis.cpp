@@ -280,7 +280,67 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     if (m_param->bEnableRdRefine || m_param->bOptCUDeltaQP)
         qprdRefine(ctu, cuGeom, qp, qp);
 
+    if (m_param->logLevel >= 2)
+        collectPUStatistics(ctu, cuGeom);
+
     return *m_modeDepth[0].bestMode;
+}
+
+void Analysis::collectPUStatistics(const CUData& ctu, const CUGeom& cuGeom)
+{
+    uint8_t depth = 0;
+    uint8_t partSize = 0;
+    for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
+    {
+        depth = ctu.m_cuDepth[absPartIdx];
+        partSize = ctu.m_partSize[absPartIdx];
+        uint32_t numPU = nbPartsTable[(int)partSize];
+        int shift = 2 * (g_maxCUDepth + 1 - depth);
+        for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
+        {
+            PredictionUnit pu(ctu, cuGeom, puIdx);
+            int puabsPartIdx = ctu.getPUOffset(puIdx, absPartIdx);
+            int mode = 1;
+            if (ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_Nx2N || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_2NxN)
+                mode = 2;
+            else if (ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_2NxnU || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_2NxnD || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_nLx2N || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_nRx2N)
+                 mode = 3;
+
+            if (ctu.m_predMode[puabsPartIdx + absPartIdx] == MODE_SKIP)
+            {
+                ctu.m_encData->m_frameStats.cntSkipPu[depth] += (uint64_t)(1 << shift);
+                ctu.m_encData->m_frameStats.totalPu[depth] += (uint64_t)(1 << shift);
+            }
+            else if (ctu.m_predMode[puabsPartIdx + absPartIdx] == MODE_INTRA)
+            {
+                if (ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_NxN)
+                {
+                    ctu.m_encData->m_frameStats.cnt4x4++;
+                    ctu.m_encData->m_frameStats.totalPu[4]++;
+                }
+                else
+                {
+                    ctu.m_encData->m_frameStats.cntIntraPu[depth] += (uint64_t)(1 << shift);
+                    ctu.m_encData->m_frameStats.totalPu[depth] += (uint64_t)(1 << shift);
+                }
+            }
+            else if (mode == 3)
+            {
+                ctu.m_encData->m_frameStats.cntAmp[depth] += (uint64_t)(1 << shift);
+                ctu.m_encData->m_frameStats.totalPu[depth] += (uint64_t)(1 << shift);
+                break;
+            }
+            else
+            {
+                if (ctu.m_mergeFlag[puabsPartIdx + absPartIdx])
+                    ctu.m_encData->m_frameStats.cntMergePu[depth][ctu.m_partSize[puabsPartIdx + absPartIdx]] += (1 << shift) / mode;
+                else
+                    ctu.m_encData->m_frameStats.cntInterPu[depth][ctu.m_partSize[puabsPartIdx + absPartIdx]] += (1 << shift) / mode;
+
+                ctu.m_encData->m_frameStats.totalPu[depth] += (1 << shift) / mode;
+            }
+        }
+    }
 }
 
 int32_t Analysis::loadTUDepth(CUGeom cuGeom, CUData parentCTU)
