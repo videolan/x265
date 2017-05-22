@@ -93,7 +93,7 @@ Logging/Statistic Options
 	**Distortion** Average luma and chroma distortion. Calculated as
 	SSE is done on fenc and recon(after quantization).
 	
-	**Psy Energy **  Average psy energy calculated as the sum of absolute
+	**Psy Energy**  Average psy energy calculated as the sum of absolute
 	difference between source and recon energy. Energy is measured by sa8d
 	minus SAD.
 	

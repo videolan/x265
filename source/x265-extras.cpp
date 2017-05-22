@@ -112,7 +112,9 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
                 }
                 fprintf(csvfp, ", Avg Luma Distortion, Avg Chroma Distortion, Avg psyEnergy, Avg Residual Energy,"
                                " Min Luma Level, Max Luma Level, Avg Luma Level");
-                fprintf(csvfp, ", Min Cb Level, Max Cb Level, Avg Cb Level, Min Cr Level, Max Cr Level, Avg Cr Level");
+
+                if (param.internalCsp != X265_CSP_I400)
+                    fprintf(csvfp, ", Min Cb Level, Max Cb Level, Avg Cb Level, Min Cr Level, Max Cr Level, Avg Cr Level");
 
                 if (level >= 2)
                 {
@@ -215,8 +217,12 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
                                                     frameStats->avgResEnergy);
 
     fprintf(csvfp, ", %d, %d, %.2lf", frameStats->minLumaLevel, frameStats->maxLumaLevel, frameStats->avgLumaLevel);
-    fprintf(csvfp, ", %d, %d, %.2lf", frameStats->minChromaULevel, frameStats->maxChromaULevel, frameStats->avgChromaULevel);
-    fprintf(csvfp, ", %d, %d, %.2lf", frameStats->minChromaVLevel, frameStats->maxChromaVLevel, frameStats->avgChromaVLevel);
+
+    if (param.internalCsp != X265_CSP_I400)
+    {
+        fprintf(csvfp, ", %d, %d, %.2lf", frameStats->minChromaULevel, frameStats->maxChromaULevel, frameStats->avgChromaULevel);
+        fprintf(csvfp, ", %d, %d, %.2lf", frameStats->minChromaVLevel, frameStats->maxChromaVLevel, frameStats->avgChromaVLevel);
+    }
 
     if (level >= 2)
     {

@@ -354,24 +354,27 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
         }
         m_avgLumaLevel = (double)lumaSum / (m_picHeight * m_picWidth);
 
-        for (int r = 0; r < height >> m_vChromaShift; r++)
+        if (param.internalCsp != X265_CSP_I400)
         {
-            for (int c = 0; c < width >> m_hChromaShift; c++)
+            for (int r = 0; r < height >> m_vChromaShift; r++)
             {
-                m_maxChromaULevel = X265_MAX(uPic[c], m_maxChromaULevel);
-                m_minChromaULevel = X265_MIN(uPic[c], m_minChromaULevel);
-                cbSum += uPic[c];
+                for (int c = 0; c < width >> m_hChromaShift; c++)
+                {
+                    m_maxChromaULevel = X265_MAX(uPic[c], m_maxChromaULevel);
+                    m_minChromaULevel = X265_MIN(uPic[c], m_minChromaULevel);
+                    cbSum += uPic[c];
 
-                m_maxChromaVLevel = X265_MAX(vPic[c], m_maxChromaVLevel);
-                m_minChromaVLevel = X265_MIN(vPic[c], m_minChromaVLevel);
-                crSum += vPic[c];
+                    m_maxChromaVLevel = X265_MAX(vPic[c], m_maxChromaVLevel);
+                    m_minChromaVLevel = X265_MIN(vPic[c], m_minChromaVLevel);
+                    crSum += vPic[c];
+                }
+
+                uPic += m_strideC;
+                vPic += m_strideC;
             }
-
-            uPic += m_strideC;
-            vPic += m_strideC;
+            m_avgChromaULevel = (double)cbSum / ((height >> m_vChromaShift) * (width >> m_hChromaShift));
+            m_avgChromaVLevel = (double)crSum / ((height >> m_vChromaShift) * (width >> m_hChromaShift));
         }
-        m_avgChromaULevel = (double)cbSum / ((height >> m_vChromaShift) * (width >> m_hChromaShift));
-        m_avgChromaVLevel = (double)crSum / ((height >> m_vChromaShift) * (width >> m_hChromaShift));
     }
 
 #if HIGH_BIT_DEPTH
