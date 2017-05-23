@@ -495,6 +495,13 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
 
     bool bAlreadyDecided = parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] != (uint8_t)ALL_IDX;
     bool bDecidedDepth = parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
+    int split = 0;
+    if (m_param->intraRefine)
+    {
+        split = ((cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1)) && bDecidedDepth);
+        if (cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize]) && !bDecidedDepth)
+            bAlreadyDecided = false;
+    }
 
     if (bAlreadyDecided)
     {
@@ -535,7 +542,7 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
     }
 
     // stop recursion if we reach the depth of previous analysis decision
-    mightSplit &= !(bAlreadyDecided && bDecidedDepth);
+    mightSplit &= !(bAlreadyDecided && bDecidedDepth) || split;
 
     if (mightSplit)
     {
