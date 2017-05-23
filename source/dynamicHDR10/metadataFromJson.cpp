@@ -168,7 +168,7 @@ public:
     {
         int payloadBytes = 1;
 
-        for(;payload > 0xFF; payload -= 0xFF, ++payloadBytes);
+        for(;payload >= 0xFF; payload -= 0xFF, ++payloadBytes);
 
         if(payloadBytes > 1)
         {

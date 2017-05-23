@@ -607,8 +607,13 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             uint8_t *cim = NULL;
             if (m_hdr10plus_api->hdr10plus_json_to_frame_cim(m_param->toneMapFile, pic_in->poc, cim))
             {
-                toneMap.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * cim[0]);
-                toneMap.payloadSize = cim[0];
+                int32_t i = 0;
+                toneMap.payloadSize = 0;
+                while (cim[i] == 0xFF)
+                    toneMap.payloadSize += cim[i++] + 1;
+                toneMap.payloadSize += cim[i] + 1;
+
+                toneMap.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * toneMap.payloadSize);
                 toneMap.payloadType = USER_DATA_REGISTERED_ITU_T_T35;
                 memcpy(toneMap.payload, cim, toneMap.payloadSize);
             }

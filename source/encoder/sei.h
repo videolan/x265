@@ -289,12 +289,10 @@ public:
         while (cim[i] == 0xFF)
         {
             i++;
-            payloadSize += cim[i];
             WRITE_CODE(0xFF, 8, "payload_size");
         }
-        WRITE_CODE(payloadSize, 8, "payload_size");
+        WRITE_CODE(cim[i], 8, "payload_size");
         i++;
-        payloadSize += i;
         for (; i < payloadSize; ++i)
             WRITE_CODE(cim[i], 8, "creative_intent_metadata");
     }
