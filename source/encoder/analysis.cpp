@@ -75,6 +75,7 @@ Analysis::Analysis()
     m_reuseInterDataCTU = NULL;
     m_reuseRef = NULL;
     m_bHD = false;
+    m_evaluateInter = 0;
 }
 
 bool Analysis::create(ThreadLocalData *tld)
@@ -1128,6 +1129,13 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     bool bCtuInfoCheck = false;
     int sameContentRef = 0;
 
+    if (m_evaluateInter == 1)
+    {
+        skipRectAmp = !!md.bestMode;
+        mightSplit &= false;
+        minDepth = depth;
+    }
+
     if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4)
         m_maxTUDepth = loadTUDepth(cuGeom, parentCTU);
 
@@ -1192,7 +1200,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             mightSplit &= !bDecidedDepth;
         }
     }
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1 && m_param->analysisRefineLevel != 10)
     {
         if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
         {
@@ -1746,6 +1754,12 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     bool bCtuInfoCheck = false;
     int sameContentRef = 0;
 
+    if (m_evaluateInter == 1)
+    {
+        skipRectAmp = !!md.bestMode;
+        mightSplit &= false;
+    }
+
     // avoid uninitialize value in below reference
     if (m_param->limitModes)
     {
@@ -1815,7 +1829,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             mightSplit &= !bDecidedDepth;
         }
     }
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1 && m_param->analysisRefineLevel != 10)
     {
         if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
         {
@@ -2218,9 +2232,13 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
     ModeDepth& md = m_modeDepth[depth];
     md.bestMode = NULL;
 
+    m_evaluateInter = 0;
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
     bool bDecidedDepth = parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
+
+    int split = (m_param->interRefine && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1)
+                && bDecidedDepth && parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP);
 
     if (bDecidedDepth)
     {
@@ -2286,8 +2304,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 }
                 motionCompensation(mode.cu, pu, mode.predYuv, true, (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400));
             }
-
-            if (parentCTU.isSkipped(cuGeom.absPartIdx))
+            if (!m_param->interRefine && parentCTU.isSkipped(cuGeom.absPartIdx))
                 encodeResAndCalcRdSkipCU(mode);
             else
                 encodeResAndCalcRdInterCU(mode, cuGeom);
@@ -2306,11 +2323,18 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
 
         if (mightSplit && m_param->rdLevel < 5)
             checkDQPForSplitPred(*md.bestMode, cuGeom);
+
+        if (m_param->interRefine && parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP  && !mode.cu.isSkipped(0))
+        {
+            m_evaluateInter = 1;
+            m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, cuGeom, qp) : compressInterCU_rd0_4(parentCTU, cuGeom, qp);
+        }
     }
-    else
+    if (!bDecidedDepth || split)
     {
         Mode* splitPred = &md.pred[PRED_SPLIT];
-        md.bestMode = splitPred;
+        if (!split)
+            md.bestMode = splitPred;
         splitPred->initCosts();
         CUData* splitCU = &splitPred->cu;
         splitCU->initSubCU(parentCTU, cuGeom, qp);
@@ -2333,7 +2357,11 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                     nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
 
                 int lamdaQP = m_param->analysisRefineLevel == 10 ? nextQP : lqp;
-                qprdRefine(parentCTU, childGeom, nextQP, lamdaQP);
+
+                if (split)
+                    m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, childGeom, nextQP) : compressInterCU_rd0_4(parentCTU, childGeom, nextQP);
+                else
+                    qprdRefine(parentCTU, childGeom, nextQP, lamdaQP);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
@@ -2353,6 +2381,14 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
             addSplitFlagCost(*splitPred, cuGeom.depth);
         else
             updateModeCost(*splitPred);
+
+        if (m_param->interRefine)
+        {
+            if (m_param->rdLevel > 1)
+                checkBestMode(*splitPred, cuGeom.depth);
+            else if (splitPred->sa8dCost < md.bestMode->sa8dCost)
+                md.bestMode = splitPred;
+        }
 
         checkDQPForSplitPred(*splitPred, cuGeom);
 
@@ -2643,7 +2679,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.cu.setPredModeSubParts(MODE_INTER);
     int numPredDir = m_slice->isInterP() ? 1 : 2;
 
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU && m_param->analysisRefineLevel > 1)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU && m_param->analysisRefineLevel > 1 && m_param->analysisRefineLevel != 10)
     {
         int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
         int index = 0;
@@ -2707,7 +2743,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.cu.setPredModeSubParts(MODE_INTER);
     int numPredDir = m_slice->isInterP() ? 1 : 2;
 
-    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU && m_param->analysisRefineLevel > 1)
+    if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU && m_param->analysisRefineLevel > 1 && m_param->analysisRefineLevel != 10)
     {
         int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
         int index = 0;

@@ -138,6 +138,7 @@ protected:
     int32_t*                m_multipassRef[2];
     uint8_t*                m_multipassModes;
 
+    uint8_t                 m_evaluateInter;
     uint8_t*                m_additionalCtuInfo;
     int*                    m_prevCtuInfoChange;
     /* refine RD based on QP for rd-levels 5 and 6 */

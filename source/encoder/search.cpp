@@ -2150,7 +2150,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
         cu.getNeighbourMV(puIdx, pu.puAbsPartIdx, interMode.interNeighbours);
 
         /* Uni-directional prediction */
-        if ((m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1)
+        if ((m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1 && m_param->analysisRefineLevel != 10)
             || (m_param->analysisMultiPassRefine && m_param->rc.bStatRead))
         {
             for (int list = 0; list < numPredDir; list++)
