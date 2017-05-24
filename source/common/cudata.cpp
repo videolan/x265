@@ -28,6 +28,7 @@
 #include "picyuv.h"
 #include "mv.h"
 #include "cudata.h"
+#define MAX_MV 1 << 14
 
 using namespace X265_NS;
 
@@ -1623,6 +1624,11 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
                 dir |= (1 << list);
                 candMvField[count][list].mv = colmv;
                 candMvField[count][list].refIdx = refIdx;
+                if (m_encData->m_param->scaleFactor && m_encData->m_param->analysisMode == X265_ANALYSIS_SAVE && m_log2CUSize[0] < 4)
+                {
+                    MV dist(MAX_MV, MAX_MV);
+                    candMvField[count][list].mv = dist;
+                }
             }
         }
 
@@ -1783,7 +1789,13 @@ int CUData::getPMV(InterNeighbourMV *neighbours, uint32_t picList, uint32_t refI
             int curRefPOC = m_slice->m_refPOCList[picList][refIdx];
             int curPOC = m_slice->m_poc;
 
-            pmv[numMvc++] = amvpCand[num++] = scaleMvByPOCDist(neighbours[MD_COLLOCATED].mv[picList], curPOC, curRefPOC, colPOC, colRefPOC);
+            if (m_encData->m_param->scaleFactor && m_encData->m_param->analysisMode == X265_ANALYSIS_SAVE && (m_log2CUSize[0] < 4))
+            {
+                MV dist(MAX_MV, MAX_MV);
+                pmv[numMvc++] = amvpCand[num++] = dist;
+            }
+            else
+                pmv[numMvc++] = amvpCand[num++] = scaleMvByPOCDist(neighbours[MD_COLLOCATED].mv[picList], curPOC, curRefPOC, colPOC, colRefPOC);
         }
     }
 

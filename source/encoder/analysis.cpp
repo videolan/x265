@@ -2263,6 +2263,19 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                             mode.cu.m_mvd[list][pu.puAbsPartIdx] = mode.cu.m_mv[list][pu.puAbsPartIdx] - mvp;
                         }
                     }
+                    else if(m_param->scaleFactor)
+                    {
+                        MVField candMvField[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
+                        uint8_t candDir[MRG_MAX_NUM_CANDS];
+                        mode.cu.getInterMergeCandidates(pu.puAbsPartIdx, part, candMvField, candDir);
+                        mode.cu.m_mvpIdx[0][pu.puAbsPartIdx] = interDataCTU->mvpIdx[0][cuIdx + part];
+                        uint8_t mvpIdx = mode.cu.m_mvpIdx[0][pu.puAbsPartIdx];
+                        mode.cu.setPUInterDir(candDir[mvpIdx], pu.puAbsPartIdx, part);
+                        mode.cu.setPUMv(0, candMvField[mvpIdx][0].mv, pu.puAbsPartIdx, part);
+                        mode.cu.setPUMv(1, candMvField[mvpIdx][1].mv, pu.puAbsPartIdx, part);
+                        mode.cu.setPURefIdx(0, (int8_t)candMvField[mvpIdx][0].refIdx, pu.puAbsPartIdx, part);
+                        mode.cu.setPURefIdx(1, (int8_t)candMvField[mvpIdx][1].refIdx, pu.puAbsPartIdx, part);
+                    }
                 }
                 motionCompensation(mode.cu, pu, mode.predYuv, true, (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400));
             }

@@ -2855,6 +2855,11 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
     X265_FREAD(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFile);
     X265_FREAD(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFile);
     X265_FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFile);
+    int scaledNumPartition = analysis->numPartitions;
+    int factor = 1 << m_param->scaleFactor;
+
+    if (m_param->scaleFactor)
+        analysis->numPartitions *= factor;
 
     /* Memory is allocated for inter and intra analysis data based on the slicetype */
     allocAnalysis(analysis);
@@ -2878,12 +2883,31 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         for (uint32_t d = 0; d < depthBytes; d++)
         {
             int bytes = analysis->numPartitions >> (depthBuf[d] * 2);
+            if (m_param->scaleFactor)
+            {
+                if (depthBuf[d] == 0)
+                    depthBuf[d] = 1;
+                if (partSizes[d] == SIZE_NxN)
+                    partSizes[d] = SIZE_2Nx2N;
+            }
             memset(&((analysis_intra_data *)analysis->intraData)->depth[count], depthBuf[d], bytes);
             memset(&((analysis_intra_data *)analysis->intraData)->chromaModes[count], modeBuf[d], bytes);
             memset(&((analysis_intra_data *)analysis->intraData)->partSizes[count], partSizes[d], bytes);
             count += bytes;
         }
-        X265_FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+
+        if (!m_param->scaleFactor)
+        {
+            X265_FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+        }
+        else
+        {
+            uint8_t *tempLumaBuf = X265_MALLOC(uint8_t, analysis->numCUsInFrame * scaledNumPartition);
+            X265_FREAD(tempLumaBuf, sizeof(uint8_t), analysis->numCUsInFrame * scaledNumPartition, m_analysisFile);
+            for (uint32_t ctu32Idx = 0, cnt = 0; ctu32Idx < analysis->numCUsInFrame * scaledNumPartition; ctu32Idx++, cnt += factor)
+                memset(&((analysis_intra_data *)analysis->intraData)->modes[cnt], tempLumaBuf[ctu32Idx], factor);
+            X265_FREE(tempLumaBuf);
+        }
         X265_FREE(tempBuf);
         consumedBytes += frameRecordSize;
     }
@@ -2939,12 +2963,16 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
         for (uint32_t d = 0; d < depthBytes; d++)
         {
             int bytes = analysis->numPartitions >> (depthBuf[d] * 2);
+            if (m_param->scaleFactor && modeBuf[d] == MODE_INTRA && depthBuf[d] == 0)
+                 depthBuf[d] = 1;
             memset(&((analysis_inter_data *)analysis->interData)->depth[count], depthBuf[d], bytes);
             memset(&((analysis_inter_data *)analysis->interData)->modes[count], modeBuf[d], bytes);
             if (m_param->analysisRefineLevel > 4)
             {
+                if (m_param->scaleFactor && modeBuf[d] == MODE_INTRA && partSize[d] == SIZE_NxN)
+                     partSize[d] = SIZE_2Nx2N;
                 memset(&((analysis_inter_data *)analysis->interData)->partSize[count], partSize[d], bytes);
-                int numPU = nbPartsTable[(int)partSize[d]];
+                int numPU = (modeBuf[d] == MODE_INTRA) ? 1 : nbPartsTable[(int)partSize[d]];
                 for (int pu = 0; pu < numPU; pu++)
                 {
                     if (pu) d++;
@@ -2956,6 +2984,11 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
                         {
                             ((analysis_inter_data *)analysis->interData)->mvpIdx[i][count + pu] = mvpIdx[i][d];
                             ((analysis_inter_data *)analysis->interData)->refIdx[i][count + pu] = refIdx[i][d];
+                            if (m_param->scaleFactor)
+                            {
+                                mv[i][d].x *= (int16_t)m_param->scaleFactor;
+                                mv[i][d].y *= (int16_t)m_param->scaleFactor;
+                            }
                             memcpy(&((analysis_inter_data *)analysis->interData)->mv[i][count + pu], &mv[i][d], sizeof(MV));
                         }
                     }
@@ -2977,7 +3010,20 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
                 X265_FREE(mv[i]);
             }
             if (bIntraInInter)
-                X265_FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+            {
+                if (!m_param->scaleFactor)
+                {
+                    X265_FREAD(((analysis_intra_data *)analysis->intraData)->modes, sizeof(uint8_t), analysis->numCUsInFrame * analysis->numPartitions, m_analysisFile);
+                }
+                else
+                {
+                    uint8_t *tempLumaBuf = X265_MALLOC(uint8_t, analysis->numCUsInFrame * scaledNumPartition);
+                    X265_FREAD(tempLumaBuf, sizeof(uint8_t), analysis->numCUsInFrame * scaledNumPartition, m_analysisFile);
+                    for (uint32_t ctu32Idx = 0, cnt = 0; ctu32Idx < analysis->numCUsInFrame * scaledNumPartition; ctu32Idx++, cnt += factor)
+                        memset(&((analysis_intra_data *)analysis->intraData)->modes[cnt], tempLumaBuf[ctu32Idx], factor);
+                    X265_FREE(tempLumaBuf);
+                }
+            }
         }
         else
             X265_FREAD(((analysis_inter_data *)analysis->interData)->ref, sizeof(int32_t), analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir, m_analysisFile);
@@ -3199,7 +3245,7 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
                         interDataCTU->partSize[depthBytes] = partSize;
 
                         /* Store per PU data */
-                        uint32_t numPU = nbPartsTable[(int)partSize];
+                        uint32_t numPU = (predMode == MODE_INTRA) ? 1 : nbPartsTable[(int)partSize];
                         for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
                         {
                             uint32_t puabsPartIdx = ctu->getPUOffset(puIdx, absPartIdx) + absPartIdx;

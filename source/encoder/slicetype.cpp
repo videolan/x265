@@ -893,7 +893,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     if (m_param->rc.cuTree && !m_param->rc.bStatRead)
         /* update row satds based on cutree offsets */
         curFrame->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
-    else if (m_param->analysisMode != X265_ANALYSIS_LOAD)
+    else if (m_param->analysisMode != X265_ANALYSIS_LOAD || m_param->scaleFactor)
     {
         if (m_param->rc.aqMode)
             curFrame->m_lowres.satdCost = curFrame->m_lowres.costEstAq[b - p0][p1 - b];
