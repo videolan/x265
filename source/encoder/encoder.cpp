@@ -2274,6 +2274,18 @@ void Encoder::configure(x265_param *p)
             "Disabling Analysis load/save and multi-pass-opt-analysis/multi-pass-opt-distortion\n");
         p->analysisMode = p->analysisMultiPassRefine = p->analysisMultiPassDistortion = 0;
     }
+    if (p->scaleFactor)
+    {
+        if (p->scaleFactor == 1)
+        {
+            p->scaleFactor = 0;
+        }
+        else if (!p->analysisMode || p->analysisRefineLevel < 10)
+        {
+            x265_log(p, X265_LOG_WARNING, "Input scaling works with analysis-mode, refine-level 10. Disabling scale-factor.\n");
+            p->scaleFactor = 0;
+        }
+    }
 
     if ((p->analysisMultiPassRefine || p->analysisMultiPassDistortion) && (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation))
     {

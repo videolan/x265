@@ -1439,6 +1439,9 @@ typedef struct x265_param
 
     /* Use ratecontrol statistics from pic_in, if available*/
     int       bUseRcStats;
+
+    /* Factor by which input video is scaled down for analysis save mode. Default is 0 */
+    int       scaleFactor;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not

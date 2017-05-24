@@ -277,6 +277,7 @@ void x265_param_default(x265_param* param)
     param->bDhdr10opt = 0;
     param->bCTUInfo = 0;
     param->bUseRcStats = 0;
+    param->scaleFactor = 0;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -957,6 +958,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("dhdr10-info") p->toneMapFile = strdup(value);
         OPT("dhdr10-opt") p->bDhdr10opt = atobool(value);
         OPT("ctu-info") p->bCTUInfo = atoi(value);
+        OPT("scale-factor") p->scaleFactor = atoi(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1291,6 +1293,7 @@ int x265_check_params(x265_param* param)
         "Invalid analysis mode. Analysis mode 0: OFF 1: SAVE : 2 LOAD");
     CHECK(param->analysisMode && (param->analysisRefineLevel < 1 || param->analysisRefineLevel > 10),
         "Invalid analysis refine level. Value must be between 1 and 10 (inclusive)");
+    CHECK(param->scaleFactor > 2, "Invalid scale-factor. Supports factor <= 2");
     CHECK(param->rc.qpMax < QP_MIN || param->rc.qpMax > QP_MAX_MAX,
         "qpmax exceeds supported range (0 to 69)");
     CHECK(param->rc.qpMin < QP_MIN || param->rc.qpMin > QP_MAX_MAX,
@@ -1675,6 +1678,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bHDROpt, "hdr-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
     s += sprintf(s, " refine-level=%d", p->analysisRefineLevel);
+       s += sprintf(s, " scale-factor=%d", p->scaleFactor);
     BOOL(p->bLimitSAO, "limit-sao");
     s += sprintf(s, " ctu-info=%d", p->bCTUInfo);
 #undef BOOL

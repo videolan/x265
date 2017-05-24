@@ -893,6 +893,11 @@ not match.
 	+--------+-----------------------------------------+
 	| 10     | Level 5 + Full CU analysis-info         |
 	+--------+-----------------------------------------+
+.. option:: --scale-factor
+
+       Factor by which input video is scaled down for analysis save mode.
+       This option should be coupled with analysis-mode option, --refine-level 10.
+       The ctu size of load should be double the size of save. Default 0.
 
 Options which affect the transform unit quad-tree, sometimes referred to
 as the residual quad-tree (RQT).
