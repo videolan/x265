@@ -772,6 +772,32 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             inFrame->m_lowres.bScenecut = !!inFrame->m_analysisData.bScenecut;
             inFrame->m_lowres.satdCost = inFrame->m_analysisData.satdCost;
         }
+        if (m_param->bUseRcStats && pic_in->rcData)
+        {
+            RcStats* rc = (RcStats*)pic_in->rcData;
+            m_rateControl->m_accumPQp = rc->cumulativePQp;
+            m_rateControl->m_accumPNorm = rc->cumulativePNorm;
+            m_rateControl->m_isNextGop = true;
+            for (int j = 0; j < 3; j++)
+                m_rateControl->m_lastQScaleFor[j] = rc->lastQScaleFor[j];
+            m_rateControl->m_wantedBitsWindow = rc->wantedBitsWindow;
+            m_rateControl->m_cplxrSum = rc->cplxrSum;
+            m_rateControl->m_totalBits = rc->totalBits;
+            m_rateControl->m_encodedBits = rc->encodedBits;
+            m_rateControl->m_shortTermCplxSum = rc->shortTermCplxSum;
+            m_rateControl->m_shortTermCplxCount = rc->shortTermCplxCount;
+            if (m_rateControl->m_isVbv)
+            {
+                m_rateControl->m_bufferFillFinal = rc->bufferFillFinal;
+                for (int i = 0; i < 4; i++)
+                {
+                    m_rateControl->m_pred[i].coeff = rc->coeff[i];
+                    m_rateControl->m_pred[i].count = rc->count[i];
+                    m_rateControl->m_pred[i].offset = rc->offset[i];
+                }
+            }
+            m_param->bUseRcStats = 0;
+        }
         if (m_reconfigureRc)
             inFrame->m_reconfigureRc = true;
 
@@ -1155,6 +1181,120 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
     /* To add: Loop Filter/deblocking controls, transform skip, signhide require PPS to be resent */
     /* To add: SAO, temporal MVP, AMP, TU depths require SPS to be resent, at every CVS boundary */
     return x265_check_params(encParam);
+}
+
+void Encoder::copyCtuInfo(x265_ctu_info_t** frameCtuInfo, int poc)
+{
+    uint32_t widthInCU = (m_param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t heightInCU = (m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    Frame* curFrame;
+    Frame* prevFrame = NULL;
+    int32_t* frameCTU;
+    uint32_t numCUsInFrame = widthInCU * heightInCU;
+    uint32_t maxNum8x8Partitions = 64;
+    bool copied = false;
+    do
+    {
+        curFrame = m_lookahead->m_inputQueue.getPOC(poc);
+        if (!curFrame)
+            curFrame = m_lookahead->m_outputQueue.getPOC(poc);
+
+        if (poc > 0)
+        {
+            prevFrame = m_lookahead->m_inputQueue.getPOC(poc - 1);
+            if (!prevFrame)
+                prevFrame = m_lookahead->m_outputQueue.getPOC(poc - 1);
+            if (!prevFrame)
+            {
+                FrameEncoder* prevEncoder;
+                for (int i = 0; i < m_param->frameNumThreads; i++)
+                {
+                    prevEncoder = m_frameEncoder[i];
+                    prevFrame = prevEncoder->m_frame;
+                    if (prevFrame && (prevEncoder->m_frame->m_poc == poc - 1))
+                    {
+                        prevFrame = prevEncoder->m_frame;
+                        break;
+                    }
+                }
+            }
+        }
+        x265_ctu_info_t* ctuTemp, *prevCtuTemp;
+        if (curFrame)
+        {
+            if (!curFrame->m_ctuInfo)
+                CHECKED_MALLOC(curFrame->m_ctuInfo, x265_ctu_info_t*, 1);
+            CHECKED_MALLOC(*curFrame->m_ctuInfo, x265_ctu_info_t, numCUsInFrame);
+            CHECKED_MALLOC_ZERO(curFrame->m_prevCtuInfoChange, int, numCUsInFrame * maxNum8x8Partitions);
+            for (uint32_t i = 0; i < numCUsInFrame; i++)
+            {
+                ctuTemp = *curFrame->m_ctuInfo + i;
+                CHECKED_MALLOC(frameCTU, int32_t, maxNum8x8Partitions);
+                ctuTemp->ctuInfo = (int32_t*)frameCTU;
+                ctuTemp->ctuAddress = frameCtuInfo[i]->ctuAddress;
+                memcpy(ctuTemp->ctuPartitions, frameCtuInfo[i]->ctuPartitions, sizeof(int32_t) * maxNum8x8Partitions);
+                memcpy(ctuTemp->ctuInfo, frameCtuInfo[i]->ctuInfo, sizeof(int32_t) * maxNum8x8Partitions);
+                if (prevFrame && curFrame->m_poc > 1)
+                {
+                    prevCtuTemp = *prevFrame->m_ctuInfo + i;
+                    for (uint32_t j = 0; j < maxNum8x8Partitions; j++)
+                        curFrame->m_prevCtuInfoChange[i * maxNum8x8Partitions + j] = (*((int32_t *)prevCtuTemp->ctuInfo + j) == 2) ? (poc - 1) : prevFrame->m_prevCtuInfoChange[i * maxNum8x8Partitions + j];
+                }
+            }
+            copied = true;
+            curFrame->m_copied.trigger();
+        }
+        else
+        {
+            FrameEncoder* curEncoder;
+            for (int i = 0; i < m_param->frameNumThreads; i++)
+            {
+                curEncoder = m_frameEncoder[i];
+                curFrame = curEncoder->m_frame;
+                if (curFrame)
+                {
+                    if (poc == curFrame->m_poc)
+                    {
+                        if (!curFrame->m_ctuInfo)
+                            CHECKED_MALLOC(curFrame->m_ctuInfo, x265_ctu_info_t*, 1);
+                        CHECKED_MALLOC(*curFrame->m_ctuInfo, x265_ctu_info_t, numCUsInFrame);
+                        CHECKED_MALLOC_ZERO(curFrame->m_prevCtuInfoChange, int, numCUsInFrame * maxNum8x8Partitions);
+                        for (uint32_t l = 0; l < numCUsInFrame; l++)
+                        {
+                            ctuTemp = *curFrame->m_ctuInfo + l;
+                            CHECKED_MALLOC(frameCTU, int32_t, maxNum8x8Partitions);
+                            ctuTemp->ctuInfo = (int32_t*)frameCTU;
+                            ctuTemp->ctuAddress = frameCtuInfo[l]->ctuAddress;
+                            memcpy(ctuTemp->ctuPartitions, frameCtuInfo[l]->ctuPartitions, sizeof(int32_t) * maxNum8x8Partitions);
+                            memcpy(ctuTemp->ctuInfo, frameCtuInfo[l]->ctuInfo, sizeof(int32_t) * maxNum8x8Partitions);
+                            if (prevFrame && curFrame->m_poc > 1)
+                            {
+                                prevCtuTemp = *prevFrame->m_ctuInfo + l;
+                                for (uint32_t j = 0; j < maxNum8x8Partitions; j++)
+                                    curFrame->m_prevCtuInfoChange[l * maxNum8x8Partitions + j] = (*((int32_t *)prevCtuTemp->ctuInfo + j) == CTU_INFO_CHANGE) ? (poc - 1) : prevFrame->m_prevCtuInfoChange[l * maxNum8x8Partitions + j];
+                            }
+                        }
+                        copied = true;
+                        curFrame->m_copied.trigger();
+                        break;
+                    }
+                }
+            }
+        }
+    } while (!copied);
+    return;
+fail:
+    for (uint32_t i = 0; i < numCUsInFrame; i++)
+    {
+        X265_FREE((*curFrame->m_ctuInfo + i)->ctuInfo);
+        (*curFrame->m_ctuInfo + i)->ctuInfo = NULL;
+    }
+    X265_FREE(*curFrame->m_ctuInfo);
+    *(curFrame->m_ctuInfo) = NULL;
+    X265_FREE(curFrame->m_ctuInfo);
+    curFrame->m_ctuInfo = NULL;
+    X265_FREE(curFrame->m_prevCtuInfoChange);
+    curFrame->m_prevCtuInfoChange = NULL;
 }
 
 void EncStats::addPsnr(double psnrY, double psnrU, double psnrV)
@@ -1622,6 +1762,16 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
         frameStats->avgResEnergy            = curFrame->m_encData->m_frameStats.avgResEnergy;
         frameStats->avgLumaLevel            = curFrame->m_fencPic->m_avgLumaLevel;
         frameStats->maxLumaLevel            = curFrame->m_fencPic->m_maxLumaLevel;
+        frameStats->minLumaLevel            = curFrame->m_fencPic->m_minLumaLevel;
+
+        frameStats->maxChromaULevel = curFrame->m_fencPic->m_maxChromaULevel;
+        frameStats->minChromaULevel = curFrame->m_fencPic->m_minChromaULevel;
+        frameStats->avgChromaULevel = curFrame->m_fencPic->m_avgChromaULevel;
+
+        frameStats->maxChromaVLevel = curFrame->m_fencPic->m_maxChromaVLevel;
+        frameStats->minChromaVLevel = curFrame->m_fencPic->m_minChromaVLevel;
+        frameStats->avgChromaVLevel = curFrame->m_fencPic->m_avgChromaVLevel;
+
         for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
         {
             frameStats->cuStats.percentSkipCu[depth]  = curFrame->m_encData->m_frameStats.percentSkipCu[depth];
@@ -1631,6 +1781,36 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
             frameStats->cuStats.percentInterDistribution[depth][2] = curFrame->m_encData->m_frameStats.percentInterDistribution[depth][2];
             for (int n = 0; n < INTRA_MODES; n++)
                 frameStats->cuStats.percentIntraDistribution[depth][n] = curFrame->m_encData->m_frameStats.percentIntraDistribution[depth][n];
+        }
+
+        if (curFrame->m_encData->m_frameStats.totalPu[4] == 0)
+            frameStats->puStats.percentNxN = 0;
+        else
+            frameStats->puStats.percentNxN = (double)(curFrame->m_encData->m_frameStats.cnt4x4 / (double)curFrame->m_encData->m_frameStats.totalPu[4]) * 100;
+        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        {
+            if (curFrame->m_encData->m_frameStats.totalPu[depth] == 0)
+            {
+                frameStats->puStats.percentSkipPu[depth] = 0;
+                frameStats->puStats.percentIntraPu[depth] = 0;
+                frameStats->puStats.percentAmpPu[depth] = 0;
+                for (int i = 0; i < INTER_MODES - 1; i++)
+                {
+                    frameStats->puStats.percentInterPu[depth][i] = 0;
+                    frameStats->puStats.percentMergePu[depth][i] = 0;
+                }
+            }
+            else
+            {
+                frameStats->puStats.percentSkipPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntSkipPu[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                frameStats->puStats.percentIntraPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntIntraPu[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                frameStats->puStats.percentAmpPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntAmp[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                for (int i = 0; i < INTER_MODES - 1; i++)
+                {
+                    frameStats->puStats.percentInterPu[depth][i] = (double)(curFrame->m_encData->m_frameStats.cntInterPu[depth][i] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                    frameStats->puStats.percentMergePu[depth][i] = (double)(curFrame->m_encData->m_frameStats.cntMergePu[depth][i] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                }
+            }
         }
     }
 }

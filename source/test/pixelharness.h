@@ -126,6 +126,8 @@ protected:
     bool check_pelFilterLumaStrong_H(pelFilterLumaStrong_t ref, pelFilterLumaStrong_t opt);
     bool check_pelFilterChroma_V(pelFilterChroma_t ref, pelFilterChroma_t opt);
     bool check_pelFilterChroma_H(pelFilterChroma_t ref, pelFilterChroma_t opt);
+    bool check_integral_initv(integralv_t ref, integralv_t opt);
+    bool check_integral_inith(integralh_t ref, integralh_t opt);
 
 public:
 

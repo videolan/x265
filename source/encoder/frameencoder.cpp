@@ -295,6 +295,11 @@ void FrameEncoder::threadMain()
 
     while (m_threadActive)
     {
+        if (m_param->bCTUInfo)
+        {
+            while (!m_frame->m_ctuInfo)
+                m_frame->m_copied.wait();
+        }
         compressFrame();
         m_done.trigger(); /* FrameEncoder::getEncodedPicture() blocks for this event */
         m_enable.wait();

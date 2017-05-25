@@ -83,9 +83,30 @@ Logging/Statistic Options
 	it adds one line per run. If :option:`--csv-log-level` is greater than
 	0, it writes one line per frame. Default none
 
-	Several frame performance statistics are available when 
-	:option:`--csv-log-level` is greater than or equal to 2:
-
+	Several statistics about the encoded bitstream and encoder performance are 
+	available when :option:`--csv-log-level` is greater than or equal to 2:
+	
+	**Analysis statistics:**
+	
+	**CU Statistics** percentage of CU modes.
+	
+	**Distortion** Average luma and chroma distortion. Calculated as
+	SSE is done on fenc and recon(after quantization).
+	
+	**Psy Energy**  Average psy energy calculated as the sum of absolute
+	difference between source and recon energy. Energy is measured by sa8d
+	minus SAD.
+	
+	**Residual Energy** Average residual energy. SSE is calculated on fenc 
+	and pred(before quantization).
+	
+	**Luma/Chroma Values** minumum, maximum and average(averaged by area)
+	luma and chroma values of source for each frame.
+	
+	**PU Statistics** percentage of PU modes at each depth.
+	
+	**Performance statistics:**
+	
 	**DecideWait ms** number of milliseconds the frame encoder had to
 	wait, since the previous frame was retrieved by the API thread,
 	before a new frame has been given to it. This is the latency
@@ -1221,7 +1242,16 @@ Slice decision options
 	intra cost of a frame used in scenecut detection. For example, a value of 5 indicates,
 	if the inter cost of a frame is greater than or equal to 95 percent of the intra cost of the frame,
 	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5.	
-	
+
+.. option:: --ctu-info <0, 1, 2, 4, 6>
+
+   This value enables receiving CTU information asynchronously and determine reaction to the CTU information. Default 0.
+   1: force the partitions if CTU information is present.
+   2: functionality of (1) and reduce qp if CTU information has changed.
+   4: functionality of (1) and force Inter modes when CTU Information has changed, merge/skip otherwise.
+   This option should be enabled only when planning to invoke the API function x265_encoder_ctu_info to copy ctu-info asynchronously. 
+   If enabled without calling the API function, the encoder will wait indefinitely.
+
 .. option:: --intra-refresh
 
 	Enables Periodic Intra Refresh(PIR) instead of keyframe insertion.

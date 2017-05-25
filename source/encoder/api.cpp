@@ -295,6 +295,14 @@ int x265_encoder_intra_refresh(x265_encoder *enc)
     encoder->m_bQueuedIntraRefresh = 1;
     return 0;
 }
+int x265_encoder_ctu_info(x265_encoder *enc, int poc, x265_ctu_info_t** ctu)
+{
+    if (!ctu || !enc)
+        return -1;
+    Encoder* encoder = static_cast<Encoder*>(enc);
+    encoder->copyCtuInfo(ctu, poc);
+    return 0;
+}
 
 void x265_cleanup(void)
 {
@@ -372,6 +380,7 @@ static const x265_api libapi =
 
     sizeof(x265_frame_stats),
     &x265_encoder_intra_refresh,
+    &x265_encoder_ctu_info,
 };
 
 typedef const x265_api* (*api_get_func)(int bitDepth);

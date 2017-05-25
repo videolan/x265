@@ -117,6 +117,20 @@ typedef struct x265_cu_stats
 } x265_cu_stats;
 
 
+/* pu statistics */
+typedef struct x265_pu_stats
+{
+    double      percentSkipPu[4];               // Percentage of skip cu in all depths
+    double      percentIntraPu[4];              // Percentage of intra modes in all depths
+    double      percentAmpPu[4];                // Percentage of amp modes in all depths
+    double      percentInterPu[4][3];           // Percentage of inter 2nx2n, 2nxn and nx2n in all depths
+    double      percentMergePu[4][3];           // Percentage of merge 2nx2n, 2nxn and nx2n in all depth
+    double      percentNxN;
+
+    /* All the above values will add up to 100%. */
+} x265_pu_stats;
+
+
 typedef struct x265_analysis_2Pass
 {
     uint32_t      poc;
@@ -154,12 +168,39 @@ typedef struct x265_frame_stats
     int              list0POC[16];
     int              list1POC[16];
     uint16_t         maxLumaLevel;
+    uint16_t         minLumaLevel;
+
+    uint16_t         maxChromaULevel;
+    uint16_t         minChromaULevel;
+    double           avgChromaULevel;
+
+
+    uint16_t         maxChromaVLevel;
+    uint16_t         minChromaVLevel;
+    double           avgChromaVLevel;
+
     char             sliceType;
     int              bScenecut;
     int              frameLatency;
     x265_cu_stats    cuStats;
+    x265_pu_stats    puStats;
     double           totalFrameTime;
 } x265_frame_stats;
+
+typedef struct x265_ctu_info_t
+{
+    int32_t ctuAddress;
+    int32_t ctuPartitions[64];
+    void*    ctuInfo;
+} x265_ctu_info_t;
+
+typedef enum
+{
+    NO_CTU_INFO = 0,
+    HAS_CTU_INFO = 1,
+    CTU_INFO_CHANGE = 2,
+}CTUInfo;
+
 
 /* Arbitrary User SEI
  * Payload size is in bytes and the payload pointer must be non-NULL. 
@@ -1391,6 +1432,12 @@ typedef struct x265_param
     /* Insert tone mapping information only for IDR frames and when the 
      * tone mapping information changes. */
     int       bDhdr10opt;
+
+    /* Determine how x265 react to the content information recieved through the API */
+    int       bCTUInfo;
+
+    /* Use ratecontrol statistics from pic_in, if available*/
+    int       bUseRcStats;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
@@ -1581,6 +1628,12 @@ void x265_encoder_close(x265_encoder *);
 
 int x265_encoder_intra_refresh(x265_encoder *);
 
+/* x265_encoder_ctu_info:
+ *    Copy CTU information such as ctu address and ctu partition structure of all
+ *    CTUs in each frame. The function is invoked only if "--ctu-info" is enabled and
+ *    the encoder will wait for this copy to complete if enabled.
+ */
+int x265_encoder_ctu_info(x265_encoder *, int poc, x265_ctu_info_t** ctu);
 /* x265_cleanup:
  *       release library static allocations, reset configured CTU size */
 void x265_cleanup(void);
@@ -1629,6 +1682,7 @@ typedef struct x265_api
 
     int           sizeof_frame_stats;   /* sizeof(x265_frame_stats) */
     int           (*encoder_intra_refresh)(x265_encoder*);
+    int           (*encoder_ctu_info)(x265_encoder*, int, x265_ctu_info_t**);
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 

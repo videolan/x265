@@ -105,6 +105,23 @@ void DPB::recycleUnreferenced()
                 }
             }
 
+            if (curFrame->m_ctuInfo != NULL)
+            {
+                uint32_t widthInCU = (curFrame->m_param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
+                uint32_t heightInCU = (curFrame->m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+                uint32_t numCUsInFrame = widthInCU * heightInCU;
+                for (uint32_t i = 0; i < numCUsInFrame; i++)
+                {
+                    X265_FREE((*curFrame->m_ctuInfo + i)->ctuInfo);
+                    (*curFrame->m_ctuInfo + i)->ctuInfo = NULL;
+                }
+                X265_FREE(*curFrame->m_ctuInfo);
+                *(curFrame->m_ctuInfo) = NULL;
+                X265_FREE(curFrame->m_ctuInfo);
+                curFrame->m_ctuInfo = NULL;
+                X265_FREE(curFrame->m_prevCtuInfoChange);
+                curFrame->m_prevCtuInfoChange = NULL;
+            }
             curFrame->m_encData = NULL;
             curFrame->m_reconPic = NULL;
         }

@@ -122,6 +122,7 @@ static const struct option long_options[] =
     { "scenecut",       required_argument, NULL, 0 },
     { "no-scenecut",          no_argument, NULL, 0 },
     { "scenecut-bias",  required_argument, NULL, 0 },
+    { "ctu-info",       required_argument, NULL, 0 },
     { "intra-refresh",        no_argument, NULL, 0 },
     { "rc-lookahead",   required_argument, NULL, 0 },
     { "lookahead-slices", required_argument, NULL, 0 },
@@ -367,6 +368,11 @@ static void showHelp(x265_param *param)
     H1("   --[no-]tskip-fast             Enable fast intra transform skipping. Default %s\n", OPT(param->bEnableTSkipFast));
     H1("   --nr-intra <integer>          An integer value in range of 0 to 2000, which denotes strength of noise reduction in intra CUs. Default 0\n");
     H1("   --nr-inter <integer>          An integer value in range of 0 to 2000, which denotes strength of noise reduction in inter CUs. Default 0\n");
+    H0("   --ctu-info <integer>          Enable receiving ctu information asynchronously and determine reaction to the CTU information (0, 1, 2, 4, 6) Default 0\n"
+       "                                    - 1: force the partitions if CTU information is present\n"
+       "                                    - 2: functionality of (1) and reduce qp if CTU information has changed\n"
+       "                                    - 4: functionality of (1) and force Inter modes when CTU Information has changed, merge/skip otherwise\n"
+       "                                    Enable this option only when planning to invoke the API function x265_encoder_ctu_info to copy ctu-info asynchronously\n");
     H0("\nCoding tools:\n");
     H0("-w/--[no-]weightp                Enable weighted prediction in P slices. Default %s\n", OPT(param->bEnableWeightedPred));
     H0("   --[no-]weightb                Enable weighted prediction in B slices. Default %s\n", OPT(param->bEnableWeightedBiPred));

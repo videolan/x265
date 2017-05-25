@@ -150,6 +150,41 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         calculateNormFactor(ctu, qp);
 
     uint32_t numPartition = ctu.m_numPartitions;
+    if (m_param->bCTUInfo && (*m_frame->m_ctuInfo + ctu.m_cuAddr))
+    {
+        x265_ctu_info_t* ctuTemp = *m_frame->m_ctuInfo + ctu.m_cuAddr;
+        if (ctuTemp->ctuPartitions)
+        {
+            int32_t depthIdx = 0;
+            uint32_t maxNum8x8Partitions = 64;
+            uint8_t* depthInfoPtr = m_frame->m_addOnDepth[ctu.m_cuAddr];
+            uint8_t* contentInfoPtr = m_frame->m_addOnCtuInfo[ctu.m_cuAddr];
+            int* prevCtuInfoChangePtr = m_frame->m_addOnPrevChange[ctu.m_cuAddr];
+            do
+            {
+                uint8_t depth = (uint8_t)ctuTemp->ctuPartitions[depthIdx];
+                uint8_t content = (uint8_t)(*((int32_t *)ctuTemp->ctuInfo + depthIdx));
+                int prevCtuInfoChange = m_frame->m_prevCtuInfoChange[ctu.m_cuAddr * maxNum8x8Partitions + depthIdx];
+                memset(depthInfoPtr, depth, sizeof(uint8_t) * numPartition >> 2 * depth);
+                memset(contentInfoPtr, content, sizeof(uint8_t) * numPartition >> 2 * depth);
+                memset(prevCtuInfoChangePtr, 0, sizeof(int) * numPartition >> 2 * depth);
+                for (uint32_t l = 0; l < numPartition >> 2 * depth; l++)
+                    prevCtuInfoChangePtr[l] = prevCtuInfoChange;
+                depthInfoPtr += ctu.m_numPartitions >> 2 * depth;
+                contentInfoPtr += ctu.m_numPartitions >> 2 * depth;
+                prevCtuInfoChangePtr += ctu.m_numPartitions >> 2 * depth;
+                depthIdx++;
+            } while (ctuTemp->ctuPartitions[depthIdx] != 0);
+
+            m_additionalCtuInfo = m_frame->m_addOnCtuInfo[ctu.m_cuAddr];
+            m_prevCtuInfoChange = m_frame->m_addOnPrevChange[ctu.m_cuAddr];
+            memcpy(ctu.m_cuDepth, m_frame->m_addOnDepth[ctu.m_cuAddr], sizeof(uint8_t) * numPartition);
+            //Calculate log2CUSize from depth
+            for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
+                ctu.m_log2CUSize[i] = (uint8_t)g_maxLog2CUSize - ctu.m_cuDepth[i];
+        }
+    }
+
     if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead)
     {
         m_multipassAnalysis = (analysis2PassFrameData*)m_frame->m_analysis2Pass.analysisFramedata;
@@ -245,7 +280,67 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     if (m_param->bEnableRdRefine || m_param->bOptCUDeltaQP)
         qprdRefine(ctu, cuGeom, qp, qp);
 
+    if (m_param->logLevel >= 2)
+        collectPUStatistics(ctu, cuGeom);
+
     return *m_modeDepth[0].bestMode;
+}
+
+void Analysis::collectPUStatistics(const CUData& ctu, const CUGeom& cuGeom)
+{
+    uint8_t depth = 0;
+    uint8_t partSize = 0;
+    for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
+    {
+        depth = ctu.m_cuDepth[absPartIdx];
+        partSize = ctu.m_partSize[absPartIdx];
+        uint32_t numPU = nbPartsTable[(int)partSize];
+        int shift = 2 * (g_maxCUDepth + 1 - depth);
+        for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
+        {
+            PredictionUnit pu(ctu, cuGeom, puIdx);
+            int puabsPartIdx = ctu.getPUOffset(puIdx, absPartIdx);
+            int mode = 1;
+            if (ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_Nx2N || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_2NxN)
+                mode = 2;
+            else if (ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_2NxnU || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_2NxnD || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_nLx2N || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_nRx2N)
+                 mode = 3;
+
+            if (ctu.m_predMode[puabsPartIdx + absPartIdx] == MODE_SKIP)
+            {
+                ctu.m_encData->m_frameStats.cntSkipPu[depth] += (uint64_t)(1 << shift);
+                ctu.m_encData->m_frameStats.totalPu[depth] += (uint64_t)(1 << shift);
+            }
+            else if (ctu.m_predMode[puabsPartIdx + absPartIdx] == MODE_INTRA)
+            {
+                if (ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_NxN)
+                {
+                    ctu.m_encData->m_frameStats.cnt4x4++;
+                    ctu.m_encData->m_frameStats.totalPu[4]++;
+                }
+                else
+                {
+                    ctu.m_encData->m_frameStats.cntIntraPu[depth] += (uint64_t)(1 << shift);
+                    ctu.m_encData->m_frameStats.totalPu[depth] += (uint64_t)(1 << shift);
+                }
+            }
+            else if (mode == 3)
+            {
+                ctu.m_encData->m_frameStats.cntAmp[depth] += (uint64_t)(1 << shift);
+                ctu.m_encData->m_frameStats.totalPu[depth] += (uint64_t)(1 << shift);
+                break;
+            }
+            else
+            {
+                if (ctu.m_mergeFlag[puabsPartIdx + absPartIdx])
+                    ctu.m_encData->m_frameStats.cntMergePu[depth][ctu.m_partSize[puabsPartIdx + absPartIdx]] += (1 << shift) / mode;
+                else
+                    ctu.m_encData->m_frameStats.cntInterPu[depth][ctu.m_partSize[puabsPartIdx + absPartIdx]] += (1 << shift) / mode;
+
+                ctu.m_encData->m_frameStats.totalPu[depth] += (1 << shift) / mode;
+            }
+        }
+    }
 }
 
 int32_t Analysis::loadTUDepth(CUGeom cuGeom, CUData parentCTU)
@@ -1017,11 +1112,14 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
     uint32_t minDepth = topSkipMinDepth(parentCTU, cuGeom);
+    bool bDecidedDepth = parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
     bool skipModes = false; /* Skip any remaining mode analyses at current depth */
     bool skipRecursion = false; /* Skip recursion */
     bool splitIntra = true;
     bool skipRectAmp = false;
     bool chooseMerge = false;
+    bool bCtuInfoCheck = false;
+    int sameContentRef = 0;
 
     if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4)
         m_maxTUDepth = loadTUDepth(cuGeom, parentCTU);
@@ -1040,6 +1138,53 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
         md.pred[PRED_2Nx2N].sa8dCost = 0;
     }
 
+    if (m_param->bCTUInfo && depth <= parentCTU.m_cuDepth[cuGeom.absPartIdx])
+    {
+        if (bDecidedDepth && m_additionalCtuInfo[cuGeom.absPartIdx])
+            sameContentRef = findSameContentRefCount(parentCTU, cuGeom);
+        if (depth < parentCTU.m_cuDepth[cuGeom.absPartIdx])
+        {
+            mightNotSplit &= bDecidedDepth;
+            bCtuInfoCheck = skipRecursion = false;
+            skipModes = true;
+        }
+        else if (mightNotSplit && bDecidedDepth)
+        {
+            if (m_additionalCtuInfo[cuGeom.absPartIdx])
+            {
+                bCtuInfoCheck = skipRecursion = true;
+                md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
+                checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
+                if (!sameContentRef)
+                {
+                    if ((m_param->bCTUInfo & 2) && (m_slice->m_pps->bUseDQP && depth <= m_slice->m_pps->maxCuDQPDepth))
+                    {
+                        qp -= int32_t(0.04 * qp);
+                        setLambdaFromQP(parentCTU, qp);
+                    }
+                    if (m_param->bCTUInfo & 4)
+                        skipModes = false;
+                }
+                if (sameContentRef || (!sameContentRef && !(m_param->bCTUInfo & 4)))
+                {
+                    if (m_param->rdLevel)
+                        skipModes = m_param->bEnableEarlySkip && md.bestMode && md.bestMode->cu.isSkipped(0);
+                    if ((m_param->bCTUInfo & 4) && sameContentRef)
+                        skipModes = md.bestMode && true;
+                }
+            }
+            else
+            {
+                md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
+                checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
+                if (m_param->rdLevel)
+                    skipModes = m_param->bEnableEarlySkip && md.bestMode && md.bestMode->cu.isSkipped(0);
+            }
+            mightSplit &= !bDecidedDepth;
+        }
+    }
     if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1)
     {
         if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
@@ -1082,7 +1227,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     }
 
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs, if skip mode was not set above */
-    if (mightNotSplit && depth >= minDepth && !md.bestMode) /* TODO: Re-evaluate if analysis load/save still works */
+    if (mightNotSplit && depth >= minDepth && !md.bestMode && !bCtuInfoCheck) /* TODO: Re-evaluate if analysis load/save still works */
     {
         /* Compute Merge Cost */
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -1092,7 +1237,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             skipModes = m_param->bEnableEarlySkip && md.bestMode && md.bestMode->cu.isSkipped(0); // TODO: sa8d threshold per depth
     }
 
-    if (md.bestMode && m_param->bEnableRecursionSkip)
+    if (md.bestMode && m_param->bEnableRecursionSkip && !bCtuInfoCheck)
     {
         skipRecursion = md.bestMode->cu.isSkipped(0);
         if (mightSplit && depth >= minDepth && !skipRecursion)
@@ -1107,6 +1252,8 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     /* Step 2. Evaluate each of the 4 split sub-blocks in series */
     if (mightSplit && !skipRecursion)
     {
+        if (bCtuInfoCheck && m_param->bCTUInfo & 2)
+            qp = int((1 / 0.96) * qp + 0.5);
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
         CUData* splitCU = &splitPred->cu;
@@ -1162,7 +1309,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
      *   2  3 */
     uint32_t allSplitRefs = splitData[0].splitRefs | splitData[1].splitRefs | splitData[2].splitRefs | splitData[3].splitRefs;
     /* Step 3. Evaluate ME (2Nx2N, rect, amp) and intra modes at current depth */
-    if (mightNotSplit && depth >= minDepth)
+    if (mightNotSplit && (depth >= minDepth || (m_param->bCTUInfo && !md.bestMode)))
     {
         if (m_slice->m_pps->bUseDQP && depth <= m_slice->m_pps->maxCuDQPDepth && m_slice->m_pps->maxCuDQPDepth != 0)
             setLambdaFromQP(parentCTU, qp);
@@ -1346,7 +1493,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                     }
                 }
             }
-            bool bTryIntra = (m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) && cuGeom.log2CUSize != MAX_LOG2_CU_SIZE;
+            bool bTryIntra = (m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) && cuGeom.log2CUSize != MAX_LOG2_CU_SIZE && !((m_param->bCTUInfo & 4) && bCtuInfoCheck);
             if (m_param->rdLevel >= 3)
             {
                 /* Calculate RD cost of best inter option */
@@ -1584,10 +1731,13 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
+    bool bDecidedDepth = parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
     bool skipRecursion = false;
     bool skipModes = false;
     bool splitIntra = true;
     bool skipRectAmp = false;
+    bool bCtuInfoCheck = false;
+    int sameContentRef = 0;
 
     // avoid uninitialize value in below reference
     if (m_param->limitModes)
@@ -1607,6 +1757,57 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     splitData[3].initSplitCUData();
     uint32_t allSplitRefs = splitData[0].splitRefs | splitData[1].splitRefs | splitData[2].splitRefs | splitData[3].splitRefs;
     uint32_t refMasks[2];
+    if (m_param->bCTUInfo && depth <= parentCTU.m_cuDepth[cuGeom.absPartIdx])
+    {
+        if (bDecidedDepth && m_additionalCtuInfo[cuGeom.absPartIdx])
+            sameContentRef = findSameContentRefCount(parentCTU, cuGeom);
+        if (depth < parentCTU.m_cuDepth[cuGeom.absPartIdx])
+        {
+            mightNotSplit &= bDecidedDepth;
+            bCtuInfoCheck = skipRecursion = false;
+            skipModes = true;
+        }
+        else if (mightNotSplit && bDecidedDepth)
+        {
+            if (m_additionalCtuInfo[cuGeom.absPartIdx])
+            {
+                bCtuInfoCheck = skipRecursion = true;
+                refMasks[0] = allSplitRefs;
+                md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
+                checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
+                if (!sameContentRef)
+                {
+                    if ((m_param->bCTUInfo & 2) && (m_slice->m_pps->bUseDQP && depth <= m_slice->m_pps->maxCuDQPDepth))
+                    {
+                        qp -= int32_t(0.04 * qp);
+                        setLambdaFromQP(parentCTU, qp);
+                    }
+                    if (m_param->bCTUInfo & 4)
+                        skipModes = false;
+                }
+                if (sameContentRef || (!sameContentRef && !(m_param->bCTUInfo & 4)))
+                {
+                    if (m_param->rdLevel)
+                        skipModes = m_param->bEnableEarlySkip && md.bestMode && md.bestMode->cu.isSkipped(0);
+                    if ((m_param->bCTUInfo & 4) && sameContentRef)
+                        skipModes = md.bestMode && true;
+                }
+            }
+            else
+            {
+                md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
+                md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
+                checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
+                skipModes = !!m_param->bEnableEarlySkip && md.bestMode;
+                refMasks[0] = allSplitRefs;
+                md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
+                checkInter_rd5_6(md.pred[PRED_2Nx2N], cuGeom, SIZE_2Nx2N, refMasks);
+                checkBestMode(md.pred[PRED_2Nx2N], cuGeom.depth);
+            }
+            mightSplit &= !bDecidedDepth;
+        }
+    }
     if (m_param->analysisMode == X265_ANALYSIS_LOAD && m_param->analysisRefineLevel > 1)
     {
         if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
@@ -1653,7 +1854,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     }
 
     /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
-    if (mightNotSplit && !md.bestMode)
+    if (mightNotSplit && !md.bestMode && !bCtuInfoCheck)
     {
         md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
         md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -1672,6 +1873,8 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     /* Step 2. Evaluate each of the 4 split sub-blocks in series */
     if (mightSplit && !skipRecursion)
     {
+        if (bCtuInfoCheck && m_param->bCTUInfo & 2)
+            qp = int((1 / 0.96) * qp + 0.5);
         Mode* splitPred = &md.pred[PRED_SPLIT];
         splitPred->initCosts();
         CUData* splitCU = &splitPred->cu;
@@ -1908,7 +2111,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 }
             }
 
-            if ((m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) && cuGeom.log2CUSize != MAX_LOG2_CU_SIZE)
+            if ((m_slice->m_sliceType != B_SLICE || m_param->bIntraInBFrames) && (cuGeom.log2CUSize != MAX_LOG2_CU_SIZE) && !((m_param->bCTUInfo & 4) && bCtuInfoCheck))
             {
                 if (!m_param->limitReferences || splitIntra)
                 {
@@ -3063,4 +3266,23 @@ void Analysis::calculateNormFactor(CUData& ctu, int qp)
         normFactor(srcU, blockSizeC, ctu, qp, TEXT_CHROMA_U);
         normFactor(srcV, blockSizeC, ctu, qp, TEXT_CHROMA_V);
     }
+}
+
+int Analysis::findSameContentRefCount(const CUData& parentCTU, const CUGeom& cuGeom)
+{
+    int sameContentRef = 0;
+    int m_curPoc = parentCTU.m_slice->m_poc;
+    int prevChange = m_prevCtuInfoChange[cuGeom.absPartIdx];
+    int numPredDir = m_slice->isInterP() ? 1 : 2;
+    for (int list = 0; list < numPredDir; list++)
+    {
+        for (int i = 0; i < m_frame->m_encData->m_slice->m_numRefIdx[list]; i++)
+        {
+            int refPoc = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_poc;
+            int refPrevChange = m_frame->m_encData->m_slice->m_refFrameList[list][i]->m_addOnPrevChange[parentCTU.m_cuAddr][cuGeom.absPartIdx];
+            if ((refPoc < prevChange && refPoc < m_curPoc) || (refPoc > m_curPoc && prevChange < m_curPoc && refPrevChange > m_curPoc) || ((refPoc == prevChange) && (m_additionalCtuInfo[cuGeom.absPartIdx] == CTU_INFO_CHANGE)))
+                sameContentRef++;    /* Content changed */
+        }
+    }
+    return sameContentRef;
 }
