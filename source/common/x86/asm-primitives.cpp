@@ -3709,6 +3709,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.integral_initv[INTEGRAL_16] = PFX(integral16v_avx2);
         p.integral_initv[INTEGRAL_24] = PFX(integral24v_avx2);
         p.integral_initv[INTEGRAL_32] = PFX(integral32v_avx2);
+        p.integral_inith[INTEGRAL_4] = PFX(integral4h_avx2);
 
     }
 #endif

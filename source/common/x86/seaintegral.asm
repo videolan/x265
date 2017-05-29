@@ -152,8 +152,67 @@ cglobal integral32v, 2, 3, 2
 ;static void integral_init4h_c(uint32_t *sum, pixel *pix, intptr_t stride)
 ;-----------------------------------------------------------------------------
 INIT_YMM avx2
-cglobal integral4h, 3, 3, 0
- 
+
+%macro INTEGRAL_FOUR_HORIZONTAL_16 0
+    pmovzxbw       m0, [r1]
+    pmovzxbw       m1, [r1 + 1]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 2]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 3]
+    paddw          m0, m1
+%endmacro
+
+cglobal integral4h, 3, 5, 3
+    lea            r3, [4 * r2]
+    sub            r0, r3
+    sub            r2, 4                      ;stride - 4
+    mov            r4, r2
+    shr            r4, 4
+
+.loop_16:
+    INTEGRAL_FOUR_HORIZONTAL_16
+    vperm2i128     m2, m0, m0, 1
+    pmovzxwd       m2, xm2
+    pmovzxwd       m0, xm0
+    movu           m1, [r0]
+    paddd          m0, m1
+    movu           [r0 + r3], m0
+    movu           m1, [r0 + 32]
+    paddd          m2, m1
+    movu           [r0 + r3 + 32], m2
+    add            r1, 16
+    add            r0, 64
+    sub            r2, 16
+    sub            r4, 1
+    jnz            .loop_16
+    cmp            r2, 12
+    je             .loop_12
+    cmp            r2, 4
+    je             .loop_4
+
+.loop_12:
+    INTEGRAL_FOUR_HORIZONTAL_16
+    vperm2i128     m2, m0, m0, 1
+    pmovzxwd       xm2, xm2
+    pmovzxwd       m0, xm0
+    movu           m1, [r0]
+    paddd          m0, m1
+    movu           [r0 + r3], m0
+    movu           xm1, [r0 + 32]
+    paddd          xm2, xm1
+    movu           [r0 + r3 + 32], xm2
+    jmp             .end
+
+.loop_4:
+    INTEGRAL_FOUR_HORIZONTAL_16
+    pmovzxwd       xm0, xm0
+    movu           xm1, [r0]
+    paddd          xm0, xm1
+    movu           [r0 + r3], xm0
+    jmp            .end
+
+.end
     RET
 
 ;-----------------------------------------------------------------------------
