@@ -259,7 +259,6 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define LOG2_RASTER_SIZE        (MAX_LOG2_CU_SIZE - LOG2_UNIT_SIZE)
 #define RASTER_SIZE             (1 << LOG2_RASTER_SIZE)
 #define MAX_NUM_PARTITIONS      (RASTER_SIZE * RASTER_SIZE)
-#define NUM_4x4_PARTITIONS      (1U << (g_unitSizeDepth << 1)) // number of 4x4 units in max CU size
 
 #define MIN_PU_SIZE             4
 #define MIN_TU_SIZE             4

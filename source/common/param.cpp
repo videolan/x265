@@ -1339,42 +1339,6 @@ void x265_param_apply_fastfirstpass(x265_param* param)
     }
 }
 
-int x265_set_globals(x265_param* param)
-{
-    uint32_t maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
-    uint32_t minLog2CUSize = (uint32_t)g_log2Size[param->minCUSize];
-
-    Lock gLock;
-    ScopedLock sLock(gLock);
-
-    if (++g_ctuSizeConfigured > 1)
-    {
-        if (g_maxCUSize != param->maxCUSize)
-        {
-            x265_log(param, X265_LOG_WARNING, "maxCUSize must be the same for all encoders in a single process");
-        }
-        if (g_maxCUDepth != maxLog2CUSize - minLog2CUSize)
-        {
-            x265_log(param, X265_LOG_WARNING, "maxCUDepth must be the same for all encoders in a single process");
-        }
-        param->maxCUSize = g_maxCUSize;
-        return x265_check_params(param); /* Check again, since param may have changed */
-    }
-    else
-    {
-        // set max CU width & height
-        g_maxCUSize     = param->maxCUSize;
-        g_maxLog2CUSize = maxLog2CUSize;
-
-        // compute actual CU depth with respect to config depth and max transform size
-        g_maxCUDepth    = maxLog2CUSize - minLog2CUSize;
-        g_unitSizeDepth = maxLog2CUSize - LOG2_UNIT_SIZE;
-    }
-
-    g_maxSlices = param->maxSlices;
-    return 0;
-}
-
 static void appendtool(x265_param* param, char* buf, size_t size, const char* toolstr)
 {
     static const int overhead = (int)strlen("x265 [info]: tools: ");

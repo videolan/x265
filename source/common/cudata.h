@@ -161,8 +161,8 @@ class CUData
 {
 public:
 
-    static cubcast_t s_partSet[NUM_FULL_DEPTH]; // pointer to broadcast set functions per absolute depth
-    static uint32_t  s_numPartInCUSize;
+    cubcast_t s_partSet[NUM_FULL_DEPTH]; // pointer to broadcast set functions per absolute depth
+    uint32_t  s_numPartInCUSize;
 
     bool          m_vbvAffected;
 

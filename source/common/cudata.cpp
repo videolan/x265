@@ -111,9 +111,6 @@ inline MV scaleMv(MV mv, int scale)
 
 }
 
-cubcast_t CUData::s_partSet[NUM_FULL_DEPTH] = { NULL, NULL, NULL, NULL, NULL };
-uint32_t CUData::s_numPartInCUSize;
-
 CUData::CUData()
 {
     memset(this, 0, sizeof(*this));

@@ -97,9 +97,6 @@ x265_encoder *x265_encoder_open(x265_param *p)
     if (x265_check_params(param))
         goto fail;
 
-    if (x265_set_globals(param))
-        goto fail;
-
     encoder = new Encoder;
     if (!param->rc.bEnableSlowFirstPass)
         PARAM_NS::x265_param_apply_fastfirstpass(param);
@@ -312,7 +309,6 @@ void x265_encoder_close(x265_encoder *enc)
         encoder->printSummary();
         encoder->destroy();
         delete encoder;
-        ATOMIC_DEC(&g_ctuSizeConfigured);
     }
 }
 
@@ -336,11 +332,7 @@ int x265_encoder_ctu_info(x265_encoder *enc, int poc, x265_ctu_info_t** ctu)
 
 void x265_cleanup(void)
 {
-    if (!g_ctuSizeConfigured)
-    {
-        BitCost::destroy();
-        CUData::s_partSet[0] = NULL; /* allow CUData to adjust to new CTU size */
-    }
+    BitCost::destroy();
 }
 
 x265_picture *x265_picture_alloc()

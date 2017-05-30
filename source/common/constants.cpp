@@ -161,7 +161,6 @@ const uint16_t x265_chroma_lambda2_offset_tab[MAX_CHROMA_LAMBDA_OFFSET+1] =
     65535
 };
 
-int      g_ctuSizeConfigured = 0;
 uint32_t g_maxLog2CUSize = MAX_LOG2_CU_SIZE;
 uint32_t g_maxCUSize     = MAX_CU_SIZE;
 uint32_t g_unitSizeDepth = NUM_CU_DEPTH;
