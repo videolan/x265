@@ -1464,6 +1464,10 @@ typedef struct x265_param
 
     /* Actual CU depth with respect to config depth */
     uint32_t  maxCUDepth;
+
+    /* CU depth with respect to maximum transform size */
+    uint32_t  unitSizeDepth;
+
 } x265_param;
 
 /* x265_param_alloc:

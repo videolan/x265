@@ -129,7 +129,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, const x26
 
     if (!s_partSet[0])
     {
-        s_numPartInCUSize = 1 << g_unitSizeDepth;
+        s_numPartInCUSize = 1 << param.unitSizeDepth;
         switch (param.maxLog2CUSize)
         {
         case 6:
@@ -801,7 +801,7 @@ const CUData* CUData::getPUAboveRightAdi(uint32_t& arPartUnitIdx, uint32_t curPa
 /* Get left QpMinCu */
 const CUData* CUData::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxInCTU) const
 {
-    uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (g_unitSizeDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
+    uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (m_encData->m_param->unitSizeDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
     uint32_t absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
     // check for left CTU boundary
@@ -818,7 +818,7 @@ const CUData* CUData::getQpMinCuLeft(uint32_t& lPartUnitIdx, uint32_t curAbsIdxI
 /* Get above QpMinCu */
 const CUData* CUData::getQpMinCuAbove(uint32_t& aPartUnitIdx, uint32_t curAbsIdxInCTU) const
 {
-    uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (g_unitSizeDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
+    uint32_t absZorderQpMinCUIdx = curAbsIdxInCTU & (0xFF << (m_encData->m_param->unitSizeDepth - m_slice->m_pps->maxCuDQPDepth) * 2);
     uint32_t absRorderQpMinCUIdx = g_zscanToRaster[absZorderQpMinCUIdx];
 
     // check for top CTU boundary
@@ -857,7 +857,7 @@ int CUData::getLastValidPartIdx(int absPartIdx) const
 
 int8_t CUData::getLastCodedQP(uint32_t absPartIdx) const
 {
-    uint32_t quPartIdxMask = 0xFF << (g_unitSizeDepth - m_slice->m_pps->maxCuDQPDepth) * 2;
+    uint32_t quPartIdxMask = 0xFF << (m_encData->m_param->unitSizeDepth - m_slice->m_pps->maxCuDQPDepth) * 2;
     int lastValidPartIdx = getLastValidPartIdx(absPartIdx & quPartIdxMask);
 
     if (lastValidPartIdx >= 0)

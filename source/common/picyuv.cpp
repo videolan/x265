@@ -146,7 +146,7 @@ int PicYuv::getLumaBufLen(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp
  * allocated by the same encoder. */
 bool PicYuv::createOffsets(const SPS& sps)
 {
-    uint32_t numPartitions = 1 << (g_unitSizeDepth * 2);
+    uint32_t numPartitions = 1 << (m_param->unitSizeDepth * 2);
 
     if (m_picCsp != X265_CSP_I400)
     {

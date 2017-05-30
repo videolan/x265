@@ -1986,7 +1986,7 @@ void Encoder::initSPS(SPS *sps)
     sps->numCuInHeight = (m_param->sourceHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
     sps->numCUsInFrame = sps->numCuInWidth * sps->numCuInHeight;
     sps->numPartitions = NUM_4x4_PARTITIONS;
-    sps->numPartInCUSize = 1 << g_unitSizeDepth;
+    sps->numPartInCUSize = 1 << m_param->unitSizeDepth;
 
     sps->log2MinCodingBlockSize = m_param->maxLog2CUSize - m_param->maxCUDepth;
     sps->log2DiffMaxMinCodingBlockSize = m_param->maxCUDepth;
@@ -2644,6 +2644,7 @@ void Encoder::configure(x265_param *p)
     }
     p->maxLog2CUSize = g_log2Size[p->maxCUSize];
     p->maxCUDepth    = p->maxLog2CUSize - g_log2Size[p->minCUSize];
+    p->unitSizeDepth = p->maxLog2CUSize - LOG2_UNIT_SIZE;
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)
