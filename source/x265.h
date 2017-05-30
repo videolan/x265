@@ -1461,6 +1461,9 @@ typedef struct x265_param
 
     /* Log of maximum CTU size */
     uint32_t  maxLog2CUSize;
+
+    /* Actual CU depth with respect to config depth */
+    uint32_t  maxCUDepth;
 } x265_param;
 
 /* x265_param_alloc:

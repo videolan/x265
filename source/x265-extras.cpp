@@ -69,7 +69,7 @@ FILE* x265_csvlog_open(const x265_param& param, const char* fname, int level)
                 fprintf(csvfp, "Latency, ");
                 fprintf(csvfp, "List 0, List 1");
                 uint32_t size = param.maxCUSize;
-                for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
                 {
                     fprintf(csvfp, ", Intra %dx%d DC, Intra %dx%d Planar, Intra %dx%d Ang", size, size, size, size, size, size);
                     size /= 2;
@@ -78,7 +78,7 @@ FILE* x265_csvlog_open(const x265_param& param, const char* fname, int level)
                 size = param.maxCUSize;
                 if (param.bEnableRectInter)
                 {
-                    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                    for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
                     {
                         fprintf(csvfp, ", Inter %dx%d, Inter %dx%d (Rect)", size, size, size, size);
                         if (param.bEnableAMP)
@@ -88,20 +88,20 @@ FILE* x265_csvlog_open(const x265_param& param, const char* fname, int level)
                 }
                 else
                 {
-                    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                    for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
                     {
                         fprintf(csvfp, ", Inter %dx%d", size, size);
                         size /= 2;
                     }
                 }
                 size = param.maxCUSize;
-                for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
                 {
                     fprintf(csvfp, ", Skip %dx%d", size, size);
                     size /= 2;
                 }
                 size = param.maxCUSize;
-                for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
                 {
                     fprintf(csvfp, ", Merge %dx%d", size, size);
                     size /= 2;
@@ -184,14 +184,14 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
         else
             fputs(" -,", csvfp);
     }
-    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+    for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
         fprintf(csvfp, "%5.2lf%%, %5.2lf%%, %5.2lf%%,", frameStats->cuStats.percentIntraDistribution[depth][0],
                                                         frameStats->cuStats.percentIntraDistribution[depth][1],
                                                         frameStats->cuStats.percentIntraDistribution[depth][2]);
     fprintf(csvfp, "%5.2lf%%", frameStats->cuStats.percentIntraNxN);
     if (param.bEnableRectInter)
     {
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
         {
             fprintf(csvfp, ", %5.2lf%%, %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0],
                                                    frameStats->cuStats.percentInterDistribution[depth][1]);
@@ -201,12 +201,12 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
     }
     else
     {
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
             fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0]);
     }
-    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+    for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
         fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentSkipCu[depth]);
-    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+    for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
         fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentMergeCu[depth]);
 
     fprintf(csvfp, ", %.2lf, %.2lf, %.2lf, %.2lf ", frameStats->avgLumaDistortion,

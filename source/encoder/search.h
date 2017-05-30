@@ -204,9 +204,9 @@ struct CUStats
         memset(this, 0, sizeof(*this));
     }
 
-    void accumulate(CUStats& other)
+    void accumulate(CUStats& other, x265_param& param)
     {
-        for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+        for (uint32_t i = 0; i <= param.maxCUDepth; i++)
         {
             intraRDOElapsedTime[i] += other.intraRDOElapsedTime[i];
             interRDOElapsedTime[i] += other.interRDOElapsedTime[i];

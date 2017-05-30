@@ -1424,7 +1424,7 @@ void Encoder::printSummary()
     /* Summarize stats from all frame encoders */
     CUStats cuStats;
     for (int i = 0; i < m_param->frameNumThreads; i++)
-        cuStats.accumulate(m_frameEncoder[i]->m_cuStats);
+        cuStats.accumulate(m_frameEncoder[i]->m_cuStats, m_param);
 
     if (!cuStats.totalCTUTime)
         return;
@@ -1445,7 +1445,7 @@ void Encoder::printSummary()
 
     int64_t interRDOTotalTime = 0, intraRDOTotalTime = 0;
     uint64_t interRDOTotalCount = 0, intraRDOTotalCount = 0;
-    for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+    for (uint32_t i = 0; i <= m_param->maxCUDepth; i++)
     {
         interRDOTotalTime += cuStats.interRDOElapsedTime[i];
         intraRDOTotalTime += cuStats.intraRDOElapsedTime[i];
@@ -1771,7 +1771,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
         frameStats->minChromaVLevel = curFrame->m_fencPic->m_minChromaVLevel;
         frameStats->avgChromaVLevel = curFrame->m_fencPic->m_avgChromaVLevel;
 
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
         {
             frameStats->cuStats.percentSkipCu[depth]  = curFrame->m_encData->m_frameStats.percentSkipCu[depth];
             frameStats->cuStats.percentMergeCu[depth] = curFrame->m_encData->m_frameStats.percentMergeCu[depth];
@@ -1786,7 +1786,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
             frameStats->puStats.percentNxN = 0;
         else
             frameStats->puStats.percentNxN = (double)(curFrame->m_encData->m_frameStats.cnt4x4 / (double)curFrame->m_encData->m_frameStats.totalPu[4]) * 100;
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
         {
             if (curFrame->m_encData->m_frameStats.totalPu[depth] == 0)
             {
@@ -1988,8 +1988,8 @@ void Encoder::initSPS(SPS *sps)
     sps->numPartitions = NUM_4x4_PARTITIONS;
     sps->numPartInCUSize = 1 << g_unitSizeDepth;
 
-    sps->log2MinCodingBlockSize = m_param->maxLog2CUSize - g_maxCUDepth;
-    sps->log2DiffMaxMinCodingBlockSize = g_maxCUDepth;
+    sps->log2MinCodingBlockSize = m_param->maxLog2CUSize - m_param->maxCUDepth;
+    sps->log2DiffMaxMinCodingBlockSize = m_param->maxCUDepth;
     uint32_t maxLog2TUSize = (uint32_t)g_log2Size[m_param->maxTUSize];
     sps->quadtreeTULog2MaxSize = X265_MIN((uint32_t)m_param->maxLog2CUSize, maxLog2TUSize);
     sps->quadtreeTULog2MinSize = 2;
@@ -1999,7 +1999,7 @@ void Encoder::initSPS(SPS *sps)
     sps->bUseSAO = m_param->bEnableSAO;
 
     sps->bUseAMP = m_param->bEnableAMP;
-    sps->maxAMPDepth = m_param->bEnableAMP ? g_maxCUDepth : 0;
+    sps->maxAMPDepth = m_param->bEnableAMP ? m_param->maxCUDepth : 0;
 
     sps->maxTempSubLayers = m_param->bEnableTemporalSubLayers ? 2 : 1;
     sps->maxDecPicBuffering = m_vps.maxDecPicBuffering;
@@ -2643,6 +2643,7 @@ void Encoder::configure(x265_param *p)
         }
     }
     p->maxLog2CUSize = g_log2Size[p->maxCUSize];
+    p->maxCUDepth    = p->maxLog2CUSize - g_log2Size[p->minCUSize];
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)

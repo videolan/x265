@@ -136,7 +136,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     }
 
     /* the rest of these buffers are indexed per-depth */
-    for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+    for (uint32_t i = 0; i <= m_param->maxCUDepth; i++)
     {
         int cuSize = param.maxCUSize >> i;
         ok &= m_rqt[i].tmpResiYuv.create(cuSize, param.internalCsp);
@@ -186,7 +186,7 @@ Search::~Search()
         m_rqt[i].resiQtYuv.destroy();
     }
 
-    for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+    for (uint32_t i = 0; i <= m_param->maxCUDepth; i++)
     {
         m_rqt[i].tmpResiYuv.destroy();
         m_rqt[i].tmpPredYuv.destroy();

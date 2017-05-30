@@ -887,7 +887,7 @@ void FrameEncoder::compressFrame()
         m_frame->m_encData->m_frameStats.psyEnergy        += m_rows[i].rowStats.psyEnergy;
         m_frame->m_encData->m_frameStats.ssimEnergy       += m_rows[i].rowStats.ssimEnergy;
         m_frame->m_encData->m_frameStats.resEnergy        += m_rows[i].rowStats.resEnergy;
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
         {
             m_frame->m_encData->m_frameStats.cntSkipCu[depth] += m_rows[i].rowStats.cntSkipCu[depth];
             m_frame->m_encData->m_frameStats.cntMergeCu[depth] += m_rows[i].rowStats.cntMergeCu[depth];
@@ -903,7 +903,7 @@ void FrameEncoder::compressFrame()
     m_frame->m_encData->m_frameStats.avgSsimEnergy       = (double)(m_frame->m_encData->m_frameStats.ssimEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
     m_frame->m_encData->m_frameStats.avgResEnergy        = (double)(m_frame->m_encData->m_frameStats.resEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
     m_frame->m_encData->m_frameStats.percentIntraNxN     = (double)(m_frame->m_encData->m_frameStats.cntIntraNxN * 100) / m_frame->m_encData->m_frameStats.totalCu;
-    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+    for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
     {
         m_frame->m_encData->m_frameStats.percentSkipCu[depth]  = (double)(m_frame->m_encData->m_frameStats.cntSkipCu[depth] * 100) / m_frame->m_encData->m_frameStats.totalCu;
         m_frame->m_encData->m_frameStats.percentMergeCu[depth] = (double)(m_frame->m_encData->m_frameStats.cntMergeCu[depth] * 100) / m_frame->m_encData->m_frameStats.totalCu;
@@ -1101,7 +1101,7 @@ void FrameEncoder::compressFrame()
     /* Accumulate CU statistics from each worker thread, we could report
      * per-frame stats here, but currently we do not. */
     for (int i = 0; i < numTLD; i++)
-        m_cuStats.accumulate(m_tld[i].analysis.m_stats[m_jpId]);
+        m_cuStats.accumulate(m_tld[i].analysis.m_stats[m_jpId], m_param);
 #endif
 
     m_endFrameTime = x265_mdate();
@@ -1213,7 +1213,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     const uint32_t row = (uint32_t)intRow;
     CTURow& curRow = m_rows[row];
 
-    tld.analysis.m_param = m_param;
     if (m_param->bEnableWavefront)
     {
         ScopedLock self(curRow.lock);
@@ -1478,10 +1477,10 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             curRow.rowStats.coeffBits += best.coeffBits;
             curRow.rowStats.miscBits  += best.totalBits - (best.mvBits + best.coeffBits);
 
-            for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+            for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
             {
                 /* 1 << shift == number of 8x8 blocks at current depth */
-                int shift = 2 * (g_maxCUDepth - depth);
+                int shift = 2 * (m_param->maxCUDepth - depth);
                 int cuSize = m_param->maxCUSize >> depth;
 
                 if (cuSize == 8)
@@ -1501,7 +1500,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         curRow.rowStats.resEnergy        += best.resEnergy;
         curRow.rowStats.cntIntraNxN      += frameLog.cntIntraNxN;
         curRow.rowStats.totalCu          += frameLog.totalCu;
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
         {
             curRow.rowStats.cntSkipCu[depth] += frameLog.cntSkipCu[depth];
             curRow.rowStats.cntMergeCu[depth] += frameLog.cntMergeCu[depth];
@@ -1734,7 +1733,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         }
     }
 
-    tld.analysis.m_param = NULL;
     curRow.busy = false;
 
     // CHECK_ME: Does it always FALSE condition?

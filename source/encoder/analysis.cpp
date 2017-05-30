@@ -93,7 +93,7 @@ bool Analysis::create(ThreadLocalData *tld)
     uint32_t cuSize = m_param->maxCUSize;
 
     bool ok = true;
-    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++, cuSize >>= 1)
+    for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++, cuSize >>= 1)
     {
         ModeDepth &md = m_modeDepth[depth];
 
@@ -116,7 +116,7 @@ bool Analysis::create(ThreadLocalData *tld)
 
 void Analysis::destroy()
 {
-    for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+    for (uint32_t i = 0; i <= m_param->maxCUDepth; i++)
     {
         m_modeDepth[i].cuMemPool.destroy();
         m_modeDepth[i].fencYuv.destroy();
@@ -296,7 +296,7 @@ void Analysis::collectPUStatistics(const CUData& ctu, const CUGeom& cuGeom)
         depth = ctu.m_cuDepth[absPartIdx];
         partSize = ctu.m_partSize[absPartIdx];
         uint32_t numPU = nbPartsTable[(int)partSize];
-        int shift = 2 * (g_maxCUDepth + 1 - depth);
+        int shift = 2 * (m_param->maxCUDepth + 1 - depth);
         for (uint32_t puIdx = 0; puIdx < numPU; puIdx++)
         {
             PredictionUnit pu(ctu, cuGeom, puIdx);
@@ -2937,7 +2937,7 @@ void Analysis::checkBidir2Nx2N(Mode& inter2Nx2N, Mode& bidir2Nx2N, const CUGeom&
 
 void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
 {
-    if (cuGeom.depth < ctu.m_cuDepth[cuGeom.absPartIdx] && cuGeom.depth < g_maxCUDepth)
+    if (cuGeom.depth < ctu.m_cuDepth[cuGeom.absPartIdx] && cuGeom.depth < ctu.m_encData->m_param->maxCUDepth)
     {
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
