@@ -352,7 +352,7 @@ struct CUDataMemPool
 
     bool create(uint32_t depth, uint32_t csp, uint32_t numInstances, const x265_param& param)
     {
-        uint32_t numPartition = NUM_4x4_PARTITIONS >> (depth * 2);
+        uint32_t numPartition = param.num4x4Partitions >> (depth * 2);
         uint32_t cuSize = param.maxCUSize >> depth;
         uint32_t sizeL = cuSize * cuSize;
         if (csp == X265_CSP_I400)

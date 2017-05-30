@@ -125,7 +125,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, const x26
     m_chromaFormat  = csp;
     m_hChromaShift  = CHROMA_H_SHIFT(csp);
     m_vChromaShift  = CHROMA_V_SHIFT(csp);
-    m_numPartitions = NUM_4x4_PARTITIONS >> (depth * 2);
+    m_numPartitions = param.num4x4Partitions >> (depth * 2);
 
     if (!s_partSet[0])
     {
@@ -283,7 +283,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
     m_cuPelX        = (cuAddr % m_slice->m_sps->numCuInWidth) << m_slice->m_param->maxLog2CUSize;
     m_cuPelY        = (cuAddr / m_slice->m_sps->numCuInWidth) << m_slice->m_param->maxLog2CUSize;
     m_absIdxInCTU   = 0;
-    m_numPartitions = NUM_4x4_PARTITIONS;
+    m_numPartitions = m_encData->m_param->num4x4Partitions;
     m_bFirstRowInSlice = (uint8_t)firstRowInSlice;
     m_bLastRowInSlice  = (uint8_t)lastRowInSlice;
     m_bLastCuInSlice   = (uint8_t)lastCuInSlice;
@@ -658,7 +658,7 @@ const CUData* CUData::getPUAboveLeft(uint32_t& alPartUnitIdx, uint32_t curPartUn
         return m_cuLeft;
     }
 
-    alPartUnitIdx = NUM_4x4_PARTITIONS - 1;
+    alPartUnitIdx = m_encData->m_param->num4x4Partitions - 1;
     return m_cuAboveLeft;
 }
 
@@ -867,7 +867,7 @@ int8_t CUData::getLastCodedQP(uint32_t absPartIdx) const
         if (m_absIdxInCTU)
             return m_encData->getPicCTU(m_cuAddr)->getLastCodedQP(m_absIdxInCTU);
         else if (m_cuAddr > 0 && !(m_slice->m_pps->bEntropyCodingSyncEnabled && !(m_cuAddr % m_slice->m_sps->numCuInWidth)))
-            return m_encData->getPicCTU(m_cuAddr - 1)->getLastCodedQP(NUM_4x4_PARTITIONS);
+            return m_encData->getPicCTU(m_cuAddr - 1)->getLastCodedQP(m_encData->m_param->num4x4Partitions);
         else
             return (int8_t)m_slice->m_sliceQp;
     }
@@ -999,7 +999,7 @@ uint32_t CUData::getCtxSkipFlag(uint32_t absPartIdx) const
 
 bool CUData::setQPSubCUs(int8_t qp, uint32_t absPartIdx, uint32_t depth)
 {
-    uint32_t curPartNumb = NUM_4x4_PARTITIONS >> (depth << 1);
+    uint32_t curPartNumb = m_encData->m_param->num4x4Partitions >> (depth << 1);
     uint32_t curPartNumQ = curPartNumb >> 2;
 
     if (m_cuDepth[absPartIdx] > depth)
@@ -2103,6 +2103,8 @@ void CUData::getTUEntropyCodingParameters(TUEntropyCodingParameters &result, uin
 
 void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS])
 {
+    uint32_t num4x4Partition = (1U << ((g_log2Size[maxCUSize] - LOG2_UNIT_SIZE) << 1));
+
     // Initialize the coding blocks inside the CTB
     for (uint32_t log2CUSize = g_log2Size[maxCUSize], rangeCUIdx = 0; log2CUSize >= g_log2Size[minCUSize]; log2CUSize--)
     {
@@ -2131,7 +2133,7 @@ void CUData::calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUS
                 cu->log2CUSize = log2CUSize;
                 cu->childOffset = childIdx - cuIdx;
                 cu->absPartIdx = g_depthScanIdx[yOffset][xOffset] * 4;
-                cu->numPartitions = (NUM_4x4_PARTITIONS >> ((g_log2Size[maxCUSize] - cu->log2CUSize) * 2));
+                cu->numPartitions = (num4x4Partition >> ((g_log2Size[maxCUSize] - cu->log2CUSize) * 2));
                 cu->depth = g_log2Size[maxCUSize] - log2CUSize;
                 cu->geomRecurId = cuIdx;
 

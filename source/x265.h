@@ -1468,6 +1468,9 @@ typedef struct x265_param
     /* CU depth with respect to maximum transform size */
     uint32_t  unitSizeDepth;
 
+    /* Number of 4x4 units in maximum CU size */
+    uint32_t  num4x4Partitions;
+
 } x265_param;
 
 /* x265_param_alloc:

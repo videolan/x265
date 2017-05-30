@@ -71,9 +71,9 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         CHECKED_MALLOC_ZERO(m_addOnPrevChange, int *, numCTUsInFrame);
         for (uint32_t i = 0; i < numCTUsInFrame; i++)
         {
-            CHECKED_MALLOC_ZERO(m_addOnDepth[i], uint8_t, uint32_t(NUM_4x4_PARTITIONS));
-            CHECKED_MALLOC_ZERO(m_addOnCtuInfo[i], uint8_t, uint32_t(NUM_4x4_PARTITIONS));
-            CHECKED_MALLOC_ZERO(m_addOnPrevChange[i], int, uint32_t(NUM_4x4_PARTITIONS));
+            CHECKED_MALLOC_ZERO(m_addOnDepth[i], uint8_t, uint32_t(param->num4x4Partitions));
+            CHECKED_MALLOC_ZERO(m_addOnCtuInfo[i], uint8_t, uint32_t(param->num4x4Partitions));
+            CHECKED_MALLOC_ZERO(m_addOnPrevChange[i], int, uint32_t(param->num4x4Partitions));
         }
     }
 

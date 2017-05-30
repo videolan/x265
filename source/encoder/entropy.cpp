@@ -902,7 +902,7 @@ void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth, b
     {
         // Encode slice finish
         uint32_t bTerminateSlice = ctu.m_bLastCuInSlice;
-        if (cuAddr + (NUM_4x4_PARTITIONS >> (depth << 1)) == realEndAddress)
+        if (cuAddr + (slice->m_param->num4x4Partitions >> (depth << 1)) == realEndAddress)
             bTerminateSlice = 1;
 
         // The 1-terminating bit is added to all streams, so don't add it here when it's 1.

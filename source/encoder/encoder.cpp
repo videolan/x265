@@ -1037,7 +1037,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 slice->m_pps = &m_pps;
                 slice->m_param = m_param;
                 slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
-                slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_4x4_PARTITIONS);
+                slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * m_param->num4x4Partitions);
             }
 
             if (m_param->searchMethod == X265_SEA && frameEnc->m_lowres.sliceType != X265_TYPE_B)
@@ -1114,7 +1114,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
                 uint32_t numCUsInFrame   = widthInCU * heightInCU;
                 analysis->numCUsInFrame  = numCUsInFrame;
-                analysis->numPartitions  = NUM_4x4_PARTITIONS;
+                analysis->numPartitions  = m_param->num4x4Partitions;
                 allocAnalysis(analysis);
             }
             /* determine references, setup RPS, etc */
@@ -1985,7 +1985,7 @@ void Encoder::initSPS(SPS *sps)
     sps->numCuInWidth = (m_param->sourceWidth + m_param->maxCUSize - 1) / m_param->maxCUSize;
     sps->numCuInHeight = (m_param->sourceHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
     sps->numCUsInFrame = sps->numCuInWidth * sps->numCuInHeight;
-    sps->numPartitions = NUM_4x4_PARTITIONS;
+    sps->numPartitions = m_param->num4x4Partitions;
     sps->numPartInCUSize = 1 << m_param->unitSizeDepth;
 
     sps->log2MinCodingBlockSize = m_param->maxLog2CUSize - m_param->maxCUDepth;
@@ -2645,6 +2645,7 @@ void Encoder::configure(x265_param *p)
     p->maxLog2CUSize = g_log2Size[p->maxCUSize];
     p->maxCUDepth    = p->maxLog2CUSize - g_log2Size[p->minCUSize];
     p->unitSizeDepth = p->maxLog2CUSize - LOG2_UNIT_SIZE;
+    p->num4x4Partitions = (1U << (p->unitSizeDepth << 1));
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)
@@ -2781,8 +2782,8 @@ void Encoder::allocAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType)
 
     uint32_t numCUsInFrame = widthInCU * heightInCU;
     CHECKED_MALLOC_ZERO(analysisFrameData, analysis2PassFrameData, 1);
-    CHECKED_MALLOC_ZERO(analysisFrameData->depth, uint8_t, NUM_4x4_PARTITIONS * numCUsInFrame);
-    CHECKED_MALLOC_ZERO(analysisFrameData->distortion, sse_t, NUM_4x4_PARTITIONS * numCUsInFrame);
+    CHECKED_MALLOC_ZERO(analysisFrameData->depth, uint8_t, m_param->num4x4Partitions * numCUsInFrame);
+    CHECKED_MALLOC_ZERO(analysisFrameData->distortion, sse_t, m_param->num4x4Partitions * numCUsInFrame);
     if (m_param->rc.bStatRead)
     {
         CHECKED_MALLOC_ZERO(analysisFrameData->ctuDistortion, sse_t, numCUsInFrame);
@@ -2792,13 +2793,13 @@ void Encoder::allocAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType)
     }
     if (!IS_X265_TYPE_I(sliceType))
     {
-        CHECKED_MALLOC_ZERO(analysisFrameData->m_mv[0], MV, NUM_4x4_PARTITIONS * numCUsInFrame);
-        CHECKED_MALLOC_ZERO(analysisFrameData->m_mv[1], MV, NUM_4x4_PARTITIONS * numCUsInFrame);
-        CHECKED_MALLOC_ZERO(analysisFrameData->mvpIdx[0], int, NUM_4x4_PARTITIONS * numCUsInFrame);
-        CHECKED_MALLOC_ZERO(analysisFrameData->mvpIdx[1], int, NUM_4x4_PARTITIONS * numCUsInFrame);
-        CHECKED_MALLOC_ZERO(analysisFrameData->ref[0], int32_t, NUM_4x4_PARTITIONS * numCUsInFrame);
-        CHECKED_MALLOC_ZERO(analysisFrameData->ref[1], int32_t, NUM_4x4_PARTITIONS * numCUsInFrame);
-        CHECKED_MALLOC(analysisFrameData->modes, uint8_t, NUM_4x4_PARTITIONS * numCUsInFrame);
+        CHECKED_MALLOC_ZERO(analysisFrameData->m_mv[0], MV, m_param->num4x4Partitions * numCUsInFrame);
+        CHECKED_MALLOC_ZERO(analysisFrameData->m_mv[1], MV, m_param->num4x4Partitions * numCUsInFrame);
+        CHECKED_MALLOC_ZERO(analysisFrameData->mvpIdx[0], int, m_param->num4x4Partitions * numCUsInFrame);
+        CHECKED_MALLOC_ZERO(analysisFrameData->mvpIdx[1], int, m_param->num4x4Partitions * numCUsInFrame);
+        CHECKED_MALLOC_ZERO(analysisFrameData->ref[0], int32_t, m_param->num4x4Partitions * numCUsInFrame);
+        CHECKED_MALLOC_ZERO(analysisFrameData->ref[1], int32_t, m_param->num4x4Partitions * numCUsInFrame);
+        CHECKED_MALLOC(analysisFrameData->modes, uint8_t, m_param->num4x4Partitions * numCUsInFrame);
     }
 
     analysis->analysisFramedata = analysisFrameData;
@@ -3109,12 +3110,12 @@ void Encoder::readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int curP
     double sum = 0, sqrSum = 0;
     for (uint32_t d = 0; d < depthBytes; d++)
     {
-        int bytes = NUM_4x4_PARTITIONS >> (depthBuf[d] * 2);
+        int bytes = m_param->num4x4Partitions >> (depthBuf[d] * 2);
         memset(&analysisFrameData->depth[count], depthBuf[d], bytes);
         analysisFrameData->distortion[count] = distortionBuf[d];
         analysisFrameData->ctuDistortion[ctuCount] += analysisFrameData->distortion[count];
         count += bytes;
-        if ((count % (unsigned)NUM_4x4_PARTITIONS) == 0)
+        if ((count % (unsigned)m_param->num4x4Partitions) == 0)
         {
             analysisFrameData->scaledDistortion[ctuCount] = X265_LOG2(X265_MAX(analysisFrameData->ctuDistortion[ctuCount], 1));
             sum += analysisFrameData->scaledDistortion[ctuCount];
@@ -3162,7 +3163,7 @@ void Encoder::readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int curP
         count = 0;
         for (uint32_t d = 0; d < depthBytes; d++)
         {
-            size_t bytes = NUM_4x4_PARTITIONS >> (depthBuf[d] * 2);
+            size_t bytes = m_param->num4x4Partitions >> (depthBuf[d] * 2);
             for (int i = 0; i < numDir; i++)
             {
                 for (size_t j = count, k = 0; k < bytes; j++, k++)

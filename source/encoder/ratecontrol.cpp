@@ -2613,7 +2613,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
             for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
                 avgQpAq += curEncData.m_rowStat[i].sumQpAq;
 
-            avgQpAq /= (slice->m_sps->numCUsInFrame * NUM_4x4_PARTITIONS);
+            avgQpAq /= (slice->m_sps->numCUsInFrame * m_param->num4x4Partitions);
             curEncData.m_avgQpAq = avgQpAq;
         }
         else

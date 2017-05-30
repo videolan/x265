@@ -366,7 +366,7 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
 
         uint32_t numCUsInFrame   = widthInCU * heightInCU;
         pic->analysisData.numCUsInFrame = numCUsInFrame;
-        pic->analysisData.numPartitions = NUM_4x4_PARTITIONS;
+        pic->analysisData.numPartitions = param->num4x4Partitions;
     }
 }
 
