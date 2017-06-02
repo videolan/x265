@@ -83,8 +83,44 @@ Logging/Statistic Options
 	it adds one line per run. If :option:`--csv-log-level` is greater than
 	0, it writes one line per frame. Default none
 
+	The following statistics are available when :option:`--csv-log-level` is
+	greater than or	equal to 1:
+	
+	**Encode Order** The frame order in which the encoder encodes.
+	
+	**Type** Slice type of the frame.
+	
+	**POC** Picture Order Count - The display order of the frames. 
+	
+	**QP** Quantization Parameter decided for the frame. 
+	
+	**Bits** Number of bits consumed by the frame.
+	
+	**Scenecut** 1 if the frame is a scenecut, 0 otherwise. 
+	
+	**RateFactor** Applicable only when CRF is enabled. The rate factor depends
+	on the CRF given by the user. This is used to determine the QP so as to 
+	target a certain quality.
+	
+	**BufferFill** Bits available for the next frame. Includes bits carried
+	over from the current frame.
+	
+	**Latency** Latency in terms of number of frames between when the frame 
+	was given in and when the frame is given out.
+	
+	**PSNR** Peak signal to noise ratio for Y, U and V planes.
+	
+	**SSIM** A quality metric that denotes the structural similarity between frames.
+	
+	**Ref lists** POC of references in lists 0 and 1 for the frame.
+	
 	Several statistics about the encoded bitstream and encoder performance are 
 	available when :option:`--csv-log-level` is greater than or equal to 2:
+	
+	**I/P cost ratio:** The ratio between the cost when a frame is decided as an
+	I frame to that when it is decided as a P frame as computed from the 
+	quarter-resolution frame in look-ahead. This, in combination with other parameters
+	such as position of the frame in the GOP, is used to decide scene transitions.
 	
 	**Analysis statistics:**
 	
@@ -132,6 +168,8 @@ Logging/Statistic Options
 	**Stall Time ms** the number of milliseconds of the reported wall
 	time that were spent with zero worker threads, aka all compression
 	was completely stalled.
+	
+	**Total frame time** Total time spent to encode the frame.
 
 	**Avg WPP** the average number of worker threads working on this
 	frame, at any given time. This value is sampled at the completion of

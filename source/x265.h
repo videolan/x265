@@ -181,6 +181,7 @@ typedef struct x265_frame_stats
 
     char             sliceType;
     int              bScenecut;
+    double           ipCostRatio;
     int              frameLatency;
     x265_cu_stats    cuStats;
     x265_pu_stats    puStats;

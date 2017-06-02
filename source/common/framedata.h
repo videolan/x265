@@ -62,6 +62,7 @@ struct FrameStats
     double      percentMergeCu[NUM_CU_DEPTH];
     double      percentIntraDistribution[NUM_CU_DEPTH][INTRA_MODES];
     double      percentInterDistribution[NUM_CU_DEPTH][3];           // 2Nx2N, RECT, AMP modes percentage
+    double      ipCostRatio;
 
     uint64_t    cntIntraNxN;
     uint64_t    totalCu;
