@@ -252,6 +252,10 @@ static const struct option long_options[] =
     { "analysis-file",  required_argument, NULL, 0 },
     { "refine-level",   required_argument, NULL, 0 },
     { "scale-factor",   required_argument, NULL, 0 },
+    { "refine-intra",   no_argument, NULL, 0 },
+    { "no-refine-intra",no_argument, NULL, 0 },
+    { "refine-inter",   no_argument, NULL, 0 },
+    { "no-refine-inter",no_argument, NULL, 0 },
     { "strict-cbr",           no_argument, NULL, 0 },
     { "temporal-layers",      no_argument, NULL, 0 },
     { "no-temporal-layers",   no_argument, NULL, 0 },
@@ -442,6 +446,8 @@ static void showHelp(x265_param *param)
     H0("   --analysis-file <filename>    Specify file name used for either dumping or reading analysis data.\n");
     H0("   --refine-level <1..10>        Level of analysis refinement indicates amount of info stored/reused in save/load mode, 1:least....10:most. Default %d\n", param->analysisRefineLevel);
     H0("   --scale-factor <int>          Specify factor by which input video is scaled down for analysis save mode. Default %d\n", param->scaleFactor);
+    H0("   --[no-]refine-intra           Enable intra refinement for load mode. Default %s\n", OPT(param->intraRefine));
+    H0("   --[no-]refine-inter           Enable inter refinement for load mode. Default %s\n", OPT(param->interRefine));
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance 3:auto variance with bias to dark scenes. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
     H0("   --[no-]aq-motion              Adaptive Quantization based on the relative motion of each CU w.r.t., frame. Default %s\n", OPT(param->bOptCUDeltaQP));

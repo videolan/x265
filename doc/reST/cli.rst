@@ -899,6 +899,18 @@ not match.
        This option should be coupled with analysis-mode option, --refine-level 10.
        The ctu size of load should be double the size of save. Default 0.
 
+.. option:: --refine-intra
+	
+	Enables refinement of intra blocks in current encode. Evaluates all 
+	intra modes for blocks of size one smaller than the min-cu-size of the 
+	incoming analysis data from the previous encode. Default disabled.
+	
+.. option:: --refine-inter-depth
+
+	Enables refinement of inter blocks in current encode. Evaluates all 
+	inter modes for blocks of size one smaller than the min-cu-size of the 
+	incoming analysis data from the previous encode. Default disabled.
+
 Options which affect the transform unit quad-tree, sometimes referred to
 as the residual quad-tree (RQT).
 

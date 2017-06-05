@@ -278,6 +278,8 @@ void x265_param_default(x265_param* param)
     param->bCTUInfo = 0;
     param->bUseRcStats = 0;
     param->scaleFactor = 0;
+    param->intraRefine = 0;
+    param->interRefine = 0;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -959,6 +961,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("dhdr10-opt") p->bDhdr10opt = atobool(value);
         OPT("ctu-info") p->bCTUInfo = atoi(value);
         OPT("scale-factor") p->scaleFactor = atoi(value);
+        OPT("refine-intra")p->intraRefine = atobool(value);
+        OPT("refine-inter")p->interRefine = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1678,7 +1682,9 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bHDROpt, "hdr-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
     s += sprintf(s, " refine-level=%d", p->analysisRefineLevel);
-       s += sprintf(s, " scale-factor=%d", p->scaleFactor);
+    s += sprintf(s, " scale-factor=%d", p->scaleFactor);
+    s += sprintf(s, " refine-intra=%d", p->intraRefine);
+    s += sprintf(s, " refine-inter=%d", p->interRefine);
     BOOL(p->bLimitSAO, "limit-sao");
     s += sprintf(s, " ctu-info=%d", p->bCTUInfo);
 #undef BOOL

@@ -1442,7 +1442,15 @@ typedef struct x265_param
 
     /* Factor by which input video is scaled down for analysis save mode. Default is 0 */
     int       scaleFactor;
+
+    /* Enable intra refinement in load mode*/
+    int       intraRefine;
+
+    /* Enable inter refinement in load mode*/
+    int       interRefine;
+
 } x265_param;
+
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
  *  special in any way, but using this method together with x265_param_free()

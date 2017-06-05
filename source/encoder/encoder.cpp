@@ -2287,6 +2287,30 @@ void Encoder::configure(x265_param *p)
         }
     }
 
+    if (p->intraRefine)
+    {
+        if (p->analysisMode!= X265_ANALYSIS_LOAD || p->analysisRefineLevel < 10 || !p->scaleFactor)
+        {
+            x265_log(p, X265_LOG_WARNING, "Intra refinement requires analysis load, refine-level 10, scale factor. Disabling intra refine.\n");
+            p->intraRefine = 0;
+        }
+    }
+
+    if (p->interRefine)
+    {
+        if (p->analysisMode != X265_ANALYSIS_LOAD || p->analysisRefineLevel < 10 || !p->scaleFactor)
+        {
+            x265_log(p, X265_LOG_WARNING, "Inter refinement requires analysis load, refine-level 10, scale factor. Disabling inter refine.\n");
+            p->interRefine = 0;
+        }
+    }
+
+    if (p->limitTU && p->interRefine)
+    {
+        x265_log(p, X265_LOG_WARNING, "Inter refinement does not support limitTU. Disabling limitTU.\n");
+        p->limitTU = 0;
+    }
+
     if ((p->analysisMultiPassRefine || p->analysisMultiPassDistortion) && (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation))
     {
         x265_log(p, X265_LOG_WARNING, "multi-pass-opt-analysis/multi-pass-opt-distortion incompatible with pmode/pme, Disabling pmode/pme\n");
