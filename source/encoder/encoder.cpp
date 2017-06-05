@@ -2310,6 +2310,15 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "Inter refinement does not support limitTU. Disabling limitTU.\n");
         p->limitTU = 0;
     }
+	
+	if (p->mvRefine)
+    {
+        if (p->analysisMode != X265_ANALYSIS_LOAD || p->analysisRefineLevel < 10 || !p->scaleFactor)
+        {
+            x265_log(p, X265_LOG_WARNING, "MV refinement requires analysis load, refine-level 10, scale factor. Disabling inter refine.\n");
+            p->mvRefine = 0;
+        }
+    }
 
     if ((p->analysisMultiPassRefine || p->analysisMultiPassDistortion) && (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation))
     {

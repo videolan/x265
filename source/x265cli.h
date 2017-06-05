@@ -277,6 +277,8 @@ static const struct option long_options[] =
     { "dhdr10-info",    required_argument, NULL, 0 },
     { "dhdr10-opt",           no_argument, NULL, 0},
     { "no-dhdr10-opt",        no_argument, NULL, 0},
+    { "refine-mv",            no_argument, NULL, 0 },
+    { "no-refine-mv",         no_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -448,6 +450,7 @@ static void showHelp(x265_param *param)
     H0("   --scale-factor <int>          Specify factor by which input video is scaled down for analysis save mode. Default %d\n", param->scaleFactor);
     H0("   --[no-]refine-intra           Enable intra refinement for load mode. Default %s\n", OPT(param->intraRefine));
     H0("   --[no-]refine-inter           Enable inter refinement for load mode. Default %s\n", OPT(param->interRefine));
+    H0("   --[no-]refine-mv              Enable mv refinement for load mode. Default %s\n", OPT(param->mvRefine));
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance 3:auto variance with bias to dark scenes. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
     H0("   --[no-]aq-motion              Adaptive Quantization based on the relative motion of each CU w.r.t., frame. Default %s\n", OPT(param->bOptCUDeltaQP));

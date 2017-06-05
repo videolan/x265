@@ -2267,14 +2267,16 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                     int cuIdx = (mode.cu.m_cuAddr * parentCTU.m_numPartitions) + cuGeom.absPartIdx;
                     mode.cu.m_mergeFlag[pu.puAbsPartIdx] = interDataCTU->mergeFlag[cuIdx + part];
                     mode.cu.setPUInterDir(interDataCTU->interDir[cuIdx + part], pu.puAbsPartIdx, part);
-                    for (int dir = 0; dir < m_slice->isInterB() + 1; dir++)
+                    for (int list = 0; list < m_slice->isInterB() + 1; list++)
                     {
-                        mode.cu.setPUMv(dir, interDataCTU->mv[dir][cuIdx + part], pu.puAbsPartIdx, part);
-                        mode.cu.setPURefIdx(dir, interDataCTU->refIdx[dir][cuIdx + part], pu.puAbsPartIdx, part);
-                        mode.cu.m_mvpIdx[dir][pu.puAbsPartIdx] = interDataCTU->mvpIdx[dir][cuIdx + part];
+                        mode.cu.setPUMv(list, interDataCTU->mv[list][cuIdx + part], pu.puAbsPartIdx, part);
+                        mode.cu.setPURefIdx(list, interDataCTU->refIdx[list][cuIdx + part], pu.puAbsPartIdx, part);
+                        mode.cu.m_mvpIdx[list][pu.puAbsPartIdx] = interDataCTU->mvpIdx[list][cuIdx + part];
                     }
                     if (!mode.cu.m_mergeFlag[pu.puAbsPartIdx])
                     {
+                        if (m_param->mvRefine)
+                            m_me.setSourcePU(*mode.fencYuv, pu.ctuAddr, pu.cuAbsPartIdx, pu.puAbsPartIdx, pu.width, pu.height, m_param->searchMethod, m_param->subpelRefine, false);
                         //AMVP
                         MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 2];
                         mode.cu.getNeighbourMV(part, pu.puAbsPartIdx, mode.interNeighbours);
@@ -2285,6 +2287,12 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                                 continue;
                             mode.cu.getPMV(mode.interNeighbours, list, ref, mode.amvpCand[list][ref], mvc);
                             MV mvp = mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]];
+                            if (m_param->mvRefine)
+                            {
+                                MV outmv;
+                                searchMV(mode, pu, list, ref, outmv);
+                                mode.cu.setPUMv(list, outmv, pu.puAbsPartIdx, part);
+                            }
                             mode.cu.m_mvd[list][pu.puAbsPartIdx] = mode.cu.m_mv[list][pu.puAbsPartIdx] - mvp;
                         }
                     }
@@ -2293,7 +2301,6 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                         MVField candMvField[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
                         uint8_t candDir[MRG_MAX_NUM_CANDS];
                         mode.cu.getInterMergeCandidates(pu.puAbsPartIdx, part, candMvField, candDir);
-                        mode.cu.m_mvpIdx[0][pu.puAbsPartIdx] = interDataCTU->mvpIdx[0][cuIdx + part];
                         uint8_t mvpIdx = mode.cu.m_mvpIdx[0][pu.puAbsPartIdx];
                         mode.cu.setPUInterDir(candDir[mvpIdx], pu.puAbsPartIdx, part);
                         mode.cu.setPUMv(0, candMvField[mvpIdx][0].mv, pu.puAbsPartIdx, part);

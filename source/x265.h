@@ -1449,6 +1449,9 @@ typedef struct x265_param
     /* Enable inter refinement in load mode*/
     int       interRefine;
 
+    /* Enable motion vector refinement in load mode*/
+    int       mvRefine;
+
 } x265_param;
 
 /* x265_param_alloc:

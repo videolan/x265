@@ -911,6 +911,12 @@ not match.
 	inter modes for blocks of size one smaller than the min-cu-size of the 
 	incoming analysis data from the previous encode. Default disabled.
 
+.. option:: --refine-mv
+	
+	Enables refinement of motion vector for scaled video. Evaluates the best 
+	motion vector by searching the surrounding eight integer and subpel pixel
+    positions.
+
 Options which affect the transform unit quad-tree, sometimes referred to
 as the residual quad-tree (RQT).
 

@@ -2108,6 +2108,17 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
     }
 }
 
+void Search::searchMV(Mode& interMode, const PredictionUnit& pu, int list, int ref, MV& outmv)
+{
+    CUData& cu = interMode.cu;
+    const Slice *slice = m_slice;
+    MV mv = cu.m_mv[list][pu.puAbsPartIdx];
+    cu.clipMv(mv);
+    MV mvmin, mvmax;
+    setSearchRange(cu, mv, m_param->searchRange, mvmin, mvmax);
+    m_me.refineMV(&slice->m_mref[list][ref], mvmin, mvmax, mv, outmv);
+}
+
 /* find the best inter prediction for each PU of specified mode */
 void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC, uint32_t refMasks[2])
 {
