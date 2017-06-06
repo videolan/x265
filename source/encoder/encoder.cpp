@@ -855,20 +855,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
                 pic_out->pts = outFrame->m_pts;
                 pic_out->dts = outFrame->m_dts;
-
-                switch (slice->m_sliceType)
-                {
-                case I_SLICE:
-                    pic_out->sliceType = outFrame->m_lowres.bKeyframe ? X265_TYPE_IDR : X265_TYPE_I;
-                    break;
-                case P_SLICE:
-                    pic_out->sliceType = X265_TYPE_P;
-                    break;
-                case B_SLICE:
-                    pic_out->sliceType = X265_TYPE_B;
-                    break;
-                }
-
+                pic_out->sliceType = outFrame->m_lowres.sliceType;
                 pic_out->planes[0] = recpic->m_picOrg[0];
                 pic_out->stride[0] = (int)(recpic->m_stride * sizeof(pixel));
                 if (m_param->internalCsp != X265_CSP_I400)
@@ -2906,7 +2893,6 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc)
 
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
     {
-        analysis->sliceType = X265_TYPE_I;
         if (m_param->analysisRefineLevel < 2)
             return;
 
