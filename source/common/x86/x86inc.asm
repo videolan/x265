@@ -135,6 +135,7 @@
     %define r%1w %2w
     %define r%1b %2b
     %define r%1h %2h
+    %define %2q %2
     %if %0 == 2
         %define r%1m  %2d
         %define r%1mp %2
@@ -984,13 +985,13 @@ INIT_XMM
 
 ; Append cpuflags to the callee's name iff the appended name is known and the plain name isn't
 %macro call 1
-    call_internal %1, %1 %+ SUFFIX
+    call_internal %1 %+ SUFFIX, %1
 %endmacro
 %macro call_internal 2
-    %xdefine %%i %1
-    %ifndef cglobaled_%1
-        %ifdef cglobaled_%2
-            %xdefine %%i %2
+    %xdefine %%i %2
+    %ifndef cglobaled_%2
+        %ifdef cglobaled_%1
+            %xdefine %%i %1
         %endif
     %endif
     call %%i
