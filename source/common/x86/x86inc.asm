@@ -76,10 +76,6 @@
     SECTION .rodata align=%1
 %endmacro
 
-%macro SECTION_TEXT 0-1 16
-    SECTION .text align=%1
-%endmacro
-
 %if WIN64
     %define PIC
 %elif ARCH_X86_64 == 0
