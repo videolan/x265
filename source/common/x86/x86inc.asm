@@ -1476,13 +1476,13 @@ FMA4_INSTR fmsubadd, pd, ps
 FMA4_INSTR fnmadd,   pd, ps, sd, ss
 FMA4_INSTR fnmsub,   pd, ps, sd, ss
 
-; workaround: vpbroadcastq is broken in x86_32 due to a yasm bug
-%if ARCH_X86_64 == 0
-%macro vpbroadcastq 2
-%if sizeof%1 == 16
-    movddup %1, %2
-%else
-    vbroadcastsd %1, %2
-%endif
-%endmacro
+; workaround: vpbroadcastq is broken in x86_32 due to a yasm bug (fixed in 1.3.0)
+%if __YASM_VERSION_ID__ < 0x01030000 && ARCH_X86_64 == 0
+    %macro vpbroadcastq 2
+        %if sizeof%1 == 16
+            movddup %1, %2
+        %else
+            vbroadcastsd %1, %2
+        %endif
+    %endmacro
 %endif
