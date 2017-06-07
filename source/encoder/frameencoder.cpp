@@ -1510,14 +1510,17 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         x265_emms();
 
         if (bIsVbv)
-        {
-            // Update encoded bits, satdCost, baseQP for each CU
-            curEncData.m_rowStat[row].rowSatd      += curEncData.m_cuStat[cuAddr].vbvCost;
-            curEncData.m_rowStat[row].rowIntraSatd += curEncData.m_cuStat[cuAddr].intraVbvCost;
-            curEncData.m_rowStat[row].encodedBits   += curEncData.m_cuStat[cuAddr].totalBits;
-            curEncData.m_rowStat[row].sumQpRc       += curEncData.m_cuStat[cuAddr].baseQp;
-            curEncData.m_rowStat[row].numEncodedCUs = cuAddr;
-
+        {   
+            // Update encoded bits, satdCost, baseQP for each CU if tune grain is disabled
+            if ((m_param->bEnableWavefront && (!cuAddr || !m_param->rc.bEnableConstVbv)) || !m_param->bEnableWavefront)
+            {
+                curEncData.m_rowStat[row].rowSatd += curEncData.m_cuStat[cuAddr].vbvCost;
+                curEncData.m_rowStat[row].rowIntraSatd += curEncData.m_cuStat[cuAddr].intraVbvCost;
+                curEncData.m_rowStat[row].encodedBits += curEncData.m_cuStat[cuAddr].totalBits;
+                curEncData.m_rowStat[row].sumQpRc += curEncData.m_cuStat[cuAddr].baseQp;
+                curEncData.m_rowStat[row].numEncodedCUs = cuAddr;
+            }
+            
             // If current block is at row end checkpoint, call vbv ratecontrol.
 
             if (!m_param->bEnableWavefront && col == numCols - 1)
@@ -1553,6 +1556,24 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
             else if (m_param->bEnableWavefront && row == col && row)
             {
+                if (m_param->rc.bEnableConstVbv)
+                {
+                    int32_t startCuAddr = numCols * row;
+                    int32_t EndCuAddr = startCuAddr + col;
+                    for (int32_t r = row; r >= 0; r--)
+                    {
+                        for (int32_t c = startCuAddr; c <= EndCuAddr && c <= (int32_t)numCols * (r + 1) - 1; c++)
+                        {
+                            curEncData.m_rowStat[r].rowSatd += curEncData.m_cuStat[c].vbvCost;
+                            curEncData.m_rowStat[r].rowIntraSatd += curEncData.m_cuStat[c].intraVbvCost;
+                            curEncData.m_rowStat[r].encodedBits += curEncData.m_cuStat[c].totalBits;
+                            curEncData.m_rowStat[r].sumQpRc += curEncData.m_cuStat[c].baseQp;
+                            curEncData.m_rowStat[r].numEncodedCUs = c;
+                        }
+                        startCuAddr = EndCuAddr - numCols;
+                        EndCuAddr = startCuAddr + 1;
+                    }
+                }
                 double qpBase = curEncData.m_cuStat[cuAddr].baseQp;
                 int reEncode = m_top->m_rateControl->rowVbvRateControl(m_frame, row, &m_rce, qpBase);
                 qpBase = x265_clip3((double)m_param->rc.qpMin, (double)m_param->rc.qpMax, qpBase);
@@ -1648,6 +1669,23 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     }
 
     /** this row of CTUs has been compressed **/
+    if (m_param->bEnableWavefront && m_param->rc.bEnableConstVbv)
+    {
+        if (row == m_numRows - 1)
+        {
+            for (int32_t r = 0; r < (int32_t)m_numRows; r++)
+            {
+                for (int32_t c = curEncData.m_rowStat[r].numEncodedCUs + 1; c < (int32_t)numCols * (r + 1); c++)
+                {
+                    curEncData.m_rowStat[r].rowSatd += curEncData.m_cuStat[c].vbvCost;
+                    curEncData.m_rowStat[r].rowIntraSatd += curEncData.m_cuStat[c].intraVbvCost;
+                    curEncData.m_rowStat[r].encodedBits += curEncData.m_cuStat[c].totalBits;
+                    curEncData.m_rowStat[r].sumQpRc += curEncData.m_cuStat[c].baseQp;
+                    curEncData.m_rowStat[r].numEncodedCUs = c;
+                }
+            }
+        }
+    }
 
     /* If encoding with ABR, update update bits and complexity in rate control
      * after a number of rows so the next frame's rateControlStart has more

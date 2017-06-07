@@ -236,6 +236,7 @@ void x265_param_default(x265_param* param)
     param->rc.bEnableGrain = 0;
     param->rc.qpMin = 0;
     param->rc.qpMax = QP_MAX_MAX;
+    param->rc.bEnableConstVbv = 0;
 
     /* Video Usability Information (VUI) */
     param->vui.aspectRatioIdc = 0;
@@ -494,6 +495,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->psyRd = 4.0;
             param->psyRdoq = 10.0;
             param->bEnableSAO = 0;
+            param->rc.bEnableConstVbv = 1;
         }
         else
             return -1;
@@ -954,6 +956,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("limit-sao") p->bLimitSAO = atobool(value);
         OPT("dhdr10-info") p->toneMapFile = strdup(value);
         OPT("dhdr10-opt") p->bDhdr10opt = atobool(value);
+        OPT("const-vbv") p->rc.bEnableConstVbv = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1630,6 +1633,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " qg-size=%d", p->rc.qgSize);
     BOOL(p->rc.bEnableGrain, "rc-grain");
     s += sprintf(s, " qpmax=%d qpmin=%d", p->rc.qpMax, p->rc.qpMin);
+    BOOL(p->rc.bEnableConstVbv, "const-vbv");
     s += sprintf(s, " sar=%d", p->vui.aspectRatioIdc);
     if (p->vui.aspectRatioIdc == X265_EXTENDED_SAR)
         s += sprintf(s, " sar-width : sar-height=%d:%d", p->vui.sarWidth, p->vui.sarHeight);
