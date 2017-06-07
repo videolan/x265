@@ -985,7 +985,11 @@ INIT_XMM
 
 ; Append cpuflags to the callee's name iff the appended name is known and the plain name isn't
 %macro call 1
-    call_internal %1 %+ SUFFIX, %1
+    %ifid %1
+        call_internal %1 %+ SUFFIX, %1
+    %else
+        call %1
+    %endif
 %endmacro
 %macro call_internal 2
     %xdefine %%i %2
