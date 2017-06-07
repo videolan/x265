@@ -274,13 +274,120 @@ cglobal integral4h, 3, 5, 3
     RET
 %endif
 
+%macro INTEGRAL_EIGHT_HORIZONTAL_16 0
+    pmovzxbw       m0, [r1]
+    pmovzxbw       m1, [r1 + 1]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 2]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 3]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 4]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 5]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 6]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 7]
+    paddw          m0, m1
+%endmacro
+
+%macro INTEGRAL_EIGHT_HORIZONTAL_8 0
+    pmovzxbw       xm0, [r1]
+    pmovzxbw       xm1, [r1 + 1]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 2]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 3]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 4]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 5]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 6]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 7]
+    paddw          xm0, xm1
+%endmacro
+
+%macro INTEGRAL_EIGHT_HORIZONTAL_8_HBD 0
+    pmovzxwd       m0, [r1]
+    pmovzxwd       m1, [r1 + 2]
+    paddd          m0, m1
+    pmovzxwd       m1, [r1 + 4]
+    paddd          m0, m1
+    pmovzxwd       m1, [r1 + 6]
+    paddd          m0, m1
+    pmovzxwd       m1, [r1 + 8]
+    paddd          m0, m1
+    pmovzxwd       m1, [r1 + 10]
+    paddd          m0, m1
+    pmovzxwd       m1, [r1 + 12]
+    paddd          m0, m1
+    pmovzxwd       m1, [r1 + 14]
+    paddd          m0, m1
+%endmacro
+
 ;-----------------------------------------------------------------------------
 ;static void integral_init8h_c(uint32_t *sum, pixel *pix, intptr_t stride)
 ;-----------------------------------------------------------------------------
 INIT_YMM avx2
-cglobal integral8h, 3, 3, 0
- 
+%if HIGH_BIT_DEPTH
+cglobal integral8h, 3, 4, 3
+    lea            r3, [4 * r2]
+    sub            r0, r3
+    sub            r2, 8                      ;stride - 8
+
+.loop:
+    INTEGRAL_EIGHT_HORIZONTAL_8_HBD
+    movu           m1, [r0]
+    paddd          m0, m1
+    movu           [r0 + r3], m0 
+    add            r1, 16
+    add            r0, 32
+    sub            r2, 8
+    jnz            .loop
     RET
+
+%else
+cglobal integral8h, 3, 5, 3
+    lea            r3, [4 * r2]
+    sub            r0, r3
+    sub            r2, 8                      ;stride - 8
+    mov            r4, r2
+    shr            r4, 4
+
+.loop_16:
+    INTEGRAL_EIGHT_HORIZONTAL_16
+    vperm2i128     m2, m0, m0, 1
+    pmovzxwd       m2, xm2
+    pmovzxwd       m0, xm0
+    movu           m1, [r0]
+    paddd          m0, m1
+    movu           [r0 + r3], m0
+    movu           m1, [r0 + 32]
+    paddd          m2, m1
+    movu           [r0 + r3 + 32], m2
+    add            r1, 16
+    add            r0, 64
+    sub            r2, 16
+    sub            r4, 1
+    jnz            .loop_16
+    cmp            r2, 8
+    je             .loop_8
+    jmp             .end
+
+.loop_8:
+    INTEGRAL_EIGHT_HORIZONTAL_8
+    pmovzxwd       m0, xm0
+    movu           m1, [r0]
+    paddd          m0, m1
+    movu           [r0 + r3], m0
+    jmp             .end
+
+.end
+    RET
+%endif
 
 ;-----------------------------------------------------------------------------
 ;static void integral_init12h_c(uint32_t *sum, pixel *pix, intptr_t stride)
