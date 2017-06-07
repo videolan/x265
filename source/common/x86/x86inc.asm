@@ -161,7 +161,7 @@
     %define r%1b %2
     %define e%1b %2
     %if ARCH_X86_64 == 0
-        %define r%1  e%1
+        %define r%1 e%1
     %endif
 %endmacro
 
@@ -272,7 +272,7 @@ DECLARE_REG_TMP_SIZE 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14
 
 %macro ASSERT 1
     %if (%1) == 0
-        %error assert failed
+        %error assertion ``%1'' failed
     %endif
 %endmacro
 
@@ -850,7 +850,7 @@ BRANCH_INSTR jz, je, jnz, jne, jl, jle, jnl, jnle, jg, jge, jng, jnge, ja, jae, 
     %define mmsize 16
     %define num_mmregs 8
     %if ARCH_X86_64
-    %define num_mmregs 16
+        %define num_mmregs 16
     %endif
     %define mova movdqa
     %define movu movdqu
@@ -858,9 +858,9 @@ BRANCH_INSTR jz, je, jnz, jne, jl, jle, jnl, jnle, jg, jge, jng, jnge, ja, jae, 
     %define movnta movntdq
     %assign %%i 0
     %rep num_mmregs
-    CAT_XDEFINE m, %%i, xmm %+ %%i
-    CAT_XDEFINE nnxmm, %%i, %%i
-    %assign %%i %%i+1
+        CAT_XDEFINE m, %%i, xmm %+ %%i
+        CAT_XDEFINE nnxmm, %%i, %%i
+        %assign %%i %%i+1
     %endrep
     INIT_CPUFLAGS %1
 %endmacro
@@ -898,8 +898,6 @@ INIT_XMM
     %define ymmmm%1   mm%1
     %define ymmxmm%1 xmm%1
     %define ymmymm%1 ymm%1
-    %define ymm%1xmm xmm%1
-    %define xmm%1ymm ymm%1
     %define xm%1 xmm %+ m%1
     %define ym%1 ymm %+ m%1
 %endmacro
@@ -1088,8 +1086,8 @@ INIT_XMM
         %ifdef cpuname
             %if notcpuflag(%2)
                 %error use of ``%1'' %2 instruction in cpuname function: current_function
-                %elif cpuflags_%2 < cpuflags_sse && notcpuflag(sse2) && __sizeofreg > 8
-                    %error use of ``%1'' sse2 instruction in cpuname function: current_function
+            %elif cpuflags_%2 < cpuflags_sse && notcpuflag(sse2) && __sizeofreg > 8
+                %error use of ``%1'' sse2 instruction in cpuname function: current_function
             %endif
         %endif
     %endif
