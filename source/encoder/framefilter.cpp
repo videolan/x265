@@ -852,47 +852,47 @@ void FrameFilter::computeMEIntegral(int row)
             uint32_t *sum4x4 = m_frame->m_encData->m_meIntegral[11] + (y + 1) * stride - padX;
 
             /*For width = 32 */
-            integral_init32h_c(sum32x32, pix, stride);
+            primitives.integral_inith[INTEGRAL_32](sum32x32, pix, stride);
             if (y >= 32 - padY)
-                primitives.integral_initv[5](sum32x32 - 32 * stride, stride);
-            integral_init32h_c(sum32x24, pix, stride);
+                primitives.integral_initv[INTEGRAL_32](sum32x32 - 32 * stride, stride);
+            primitives.integral_inith[INTEGRAL_32](sum32x24, pix, stride);
             if (y >= 24 - padY)
-                primitives.integral_initv[4](sum32x24 - 24 * stride, stride);
-            integral_init32h_c(sum32x8, pix, stride);
+                primitives.integral_initv[INTEGRAL_24](sum32x24 - 24 * stride, stride);
+            primitives.integral_inith[INTEGRAL_32](sum32x8, pix, stride);
             if (y >= 8 - padY)
-                primitives.integral_initv[1](sum32x8 - 8 * stride, stride);
+                primitives.integral_initv[INTEGRAL_8](sum32x8 - 8 * stride, stride);
             /*For width = 24 */
-            integral_init24h_c(sum24x32, pix, stride);
+            primitives.integral_inith[INTEGRAL_24](sum24x32, pix, stride);
             if (y >= 32 - padY)
-                primitives.integral_initv[5](sum24x32 - 32 * stride, stride);
+                primitives.integral_initv[INTEGRAL_32](sum24x32 - 32 * stride, stride);
             /*For width = 16 */
-            integral_init16h_c(sum16x16, pix, stride);
+            primitives.integral_inith[INTEGRAL_16](sum16x16, pix, stride);
             if (y >= 16 - padY)
-                primitives.integral_initv[3](sum16x16 - 16 * stride, stride);
-            integral_init16h_c(sum16x12, pix, stride);
+                primitives.integral_initv[INTEGRAL_16](sum16x16 - 16 * stride, stride);
+            primitives.integral_inith[INTEGRAL_16](sum16x12, pix, stride);
             if (y >= 12 - padY)
-                primitives.integral_initv[2](sum16x12 - 12 * stride, stride);
-            integral_init16h_c(sum16x4, pix, stride);
+                primitives.integral_initv[INTEGRAL_12](sum16x12 - 12 * stride, stride);
+            primitives.integral_inith[INTEGRAL_16](sum16x4, pix, stride);
             if (y >= 4 - padY)
-                primitives.integral_initv[0](sum16x4 - 4 * stride, stride);
+                primitives.integral_initv[INTEGRAL_4](sum16x4 - 4 * stride, stride);
             /*For width = 12 */
-            integral_init12h_c(sum12x16, pix, stride);
+            primitives.integral_inith[INTEGRAL_12](sum12x16, pix, stride);
             if (y >= 16 - padY)
-                primitives.integral_initv[3](sum12x16 - 16 * stride, stride);
+                primitives.integral_initv[INTEGRAL_16](sum12x16 - 16 * stride, stride);
             /*For width = 8 */
-            integral_init8h_c(sum8x32, pix, stride);
+            primitives.integral_inith[INTEGRAL_8](sum8x32, pix, stride);
             if (y >= 32 - padY)
-                primitives.integral_initv[5](sum8x32 - 32 * stride, stride);
-            integral_init8h_c(sum8x8, pix, stride);
+                primitives.integral_initv[INTEGRAL_32](sum8x32 - 32 * stride, stride);
+            primitives.integral_inith[INTEGRAL_8](sum8x8, pix, stride);
             if (y >= 8 - padY)
-                primitives.integral_initv[1](sum8x8 - 8 * stride, stride);
+                primitives.integral_initv[INTEGRAL_8](sum8x8 - 8 * stride, stride);
             /*For width = 4 */
-            integral_init4h_c(sum4x16, pix, stride);
+            primitives.integral_inith[INTEGRAL_4](sum4x16, pix, stride);
             if (y >= 16 - padY)
-                primitives.integral_initv[3](sum4x16 - 16 * stride, stride);
-            integral_init4h_c(sum4x4, pix, stride);
+                primitives.integral_initv[INTEGRAL_16](sum4x16 - 16 * stride, stride);
+            primitives.integral_inith[INTEGRAL_4](sum4x4, pix, stride);
             if (y >= 4 - padY)
-                primitives.integral_initv[0](sum4x4 - 4 * stride, stride);
+                primitives.integral_initv[INTEGRAL_4](sum4x4 - 4 * stride, stride);
         }
         m_parallelFilter[row].m_frameFilter->integralCompleted.set(1);
     }
