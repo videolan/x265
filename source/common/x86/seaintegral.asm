@@ -750,12 +750,146 @@ cglobal integral16h, 3, 5, 3
     RET
 %endif
 
+%macro INTEGRAL_TWENTYFOUR_HORIZONTAL_16 0
+    pmovzxbw       m0, [r1]
+    pmovzxbw       m1, [r1 + 1]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 2]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 3]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 4]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 5]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 6]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 7]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 8]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 9]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 10]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 11]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 12]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 13]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 14]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 15]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 16]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 17]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 18]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 19]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 20]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 21]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 22]
+    paddw          m0, m1
+    pmovzxbw       m1, [r1 + 23]
+    paddw          m0, m1
+%endmacro
+
+%macro INTEGRAL_TWENTYFOUR_HORIZONTAL_8 0
+    pmovzxbw       xm0, [r1]
+    pmovzxbw       xm1, [r1 + 1]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 2]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 3]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 4]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 5]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 6]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 7]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 8]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 9]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 10]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 11]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 12]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 13]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 14]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 15]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 16]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 17]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 18]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 19]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 20]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 21]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 22]
+    paddw          xm0, xm1
+    pmovzxbw       xm1, [r1 + 23]
+    paddw          xm0, xm1
+%endmacro
+
 ;-----------------------------------------------------------------------------
 ;static void integral_init24h_c(uint32_t *sum, pixel *pix, intptr_t stride)
 ;-----------------------------------------------------------------------------
 INIT_YMM avx2
-cglobal integral24h, 3, 3, 0
- 
+cglobal integral24h, 3, 5, 3
+    lea            r3, [4 * r2]
+    sub            r0, r3
+    sub            r2, 24                      ;stride - 24
+    mov            r4, r2
+    shr            r4, 4
+
+.loop_16:
+    INTEGRAL_TWENTYFOUR_HORIZONTAL_16
+    vperm2i128     m2, m0, m0, 1
+    pmovzxwd       m2, xm2
+    pmovzxwd       m0, xm0
+    movu           m1, [r0]
+    paddd          m0, m1
+    movu           [r0 + r3], m0
+    movu           m1, [r0 + 32]
+    paddd          m2, m1
+    movu           [r0 + r3 + 32], m2
+    add            r1, 16
+    add            r0, 64
+    sub            r2, 16
+    sub            r4, 1
+    jnz            .loop_16
+    cmp            r2, 8
+    je             .loop_8
+    jmp             .end
+
+.loop_8:
+    INTEGRAL_TWENTYFOUR_HORIZONTAL_8
+    pmovzxwd       m0, xm0
+    movu           m1, [r0]
+    paddd          m0, m1
+    movu           [r0 + r3], m0
+    jmp             .end
+
+.end
     RET
 
 ;-----------------------------------------------------------------------------
