@@ -78,7 +78,7 @@ bool Frame::create(x265_param *param, float* quantOffsets)
     }
 
     if (m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
-        m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode || !!param->bAQMotion, param->rc.qgSize))
+        m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode || !!param->bAQMotion || !!param->bHDROpt, param->rc.qgSize))
     {
         X265_CHECK((m_reconColCount == NULL), "m_reconColCount was initialized");
         m_numRows = (m_fencPic->m_picHeight + g_maxCUSize - 1)  / g_maxCUSize;

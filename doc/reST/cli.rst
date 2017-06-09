@@ -1966,6 +1966,7 @@ VUI fields must be manually specified.
 
 	Add luma and chroma offsets for HDR/WCG content.
 	Input video should be 10 bit 4:2:0. Applicable for HDR content.
+	It is recommended to use this feature along with AQ mode.
 	Default disabled. **Experimental Feature**
 	
 .. option:: --dhdr10-info <filename>

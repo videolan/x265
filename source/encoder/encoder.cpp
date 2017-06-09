@@ -2066,7 +2066,7 @@ void Encoder::initPPS(PPS *pps)
 {
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
 
-    if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv || m_param->bAQMotion))
+    if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv || m_param->bAQMotion || m_param->bHDROpt))
     {
         pps->bUseDQP = true;
         pps->maxCuDQPDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
@@ -2446,7 +2446,7 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "limit-tu disabled, requires tu-inter-depth > 1\n");
     }
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
-    if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv || m_param->bAQMotion))
+    if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv || m_param->bAQMotion || m_param->bHDROpt))
     {
         if (p->rc.qgSize < X265_MAX(8, p->minCUSize))
         {

@@ -243,34 +243,48 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                     qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));
                 }
 
-                if (param->bHDROpt)
-                {
-                    uint32_t sum = lumaSumCu(curFrame, blockX, blockY, param->rc.qgSize);
-                    uint32_t lumaAvg = sum / (loopIncr * loopIncr);
-                    if (lumaAvg < 301)
-                        qp_adj += 3;
-                    else if (lumaAvg >= 301 && lumaAvg < 367)
-                        qp_adj += 2;
-                    else if (lumaAvg >= 367 && lumaAvg < 434)
-                        qp_adj += 1;
-                    else if (lumaAvg >= 501 && lumaAvg < 567)
-                        qp_adj -= 1;
-                    else if (lumaAvg >= 567 && lumaAvg < 634)
-                        qp_adj -= 2;
-                    else if (lumaAvg >= 634 && lumaAvg < 701)
-                        qp_adj -= 3;
-                    else if (lumaAvg >= 701 && lumaAvg < 767)
-                        qp_adj -= 4;
-                    else if (lumaAvg >= 767 && lumaAvg < 834)
-                        qp_adj -= 5;
-                    else if (lumaAvg >= 834)
-                        qp_adj -= 6;
-                }
                 if (quantOffsets != NULL)
                     qp_adj += quantOffsets[blockXY];
                 curFrame->m_lowres.qpAqOffset[blockXY] = qp_adj;
                 curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
                 curFrame->m_lowres.invQscaleFactor[blockXY] = x265_exp2fix8(qp_adj);
+                blockXY++;
+            }
+        }
+    }
+
+    if (param->bHDROpt)
+    {
+        double qp_adj;
+        blockXY = 0;
+        for (blockY = 0; blockY < maxRow; blockY += loopIncr)
+        {
+            for (blockX = 0; blockX < maxCol; blockX += loopIncr)
+            {
+                qp_adj = 0;
+                uint32_t sum = lumaSumCu(curFrame, blockX, blockY, param->rc.qgSize);
+                uint32_t lumaAvg = sum / (loopIncr * loopIncr);
+                if (lumaAvg < 301)
+                    qp_adj = 3;
+                else if (lumaAvg >= 301 && lumaAvg < 367)
+                    qp_adj = 2;
+                else if (lumaAvg >= 367 && lumaAvg < 434)
+                    qp_adj = 1;
+                else if (lumaAvg >= 501 && lumaAvg < 567)
+                    qp_adj = -1;
+                else if (lumaAvg >= 567 && lumaAvg < 634)
+                    qp_adj = -2;
+                else if (lumaAvg >= 634 && lumaAvg < 701)
+                    qp_adj = -3;
+                else if (lumaAvg >= 701 && lumaAvg < 767)
+                    qp_adj = -4;
+                else if (lumaAvg >= 767 && lumaAvg < 834)
+                    qp_adj = -5;
+                else if (lumaAvg >= 834)
+                    qp_adj = -6;
+                curFrame->m_lowres.qpAqOffset[blockXY] += qp_adj;
+                curFrame->m_lowres.qpCuTreeOffset[blockXY] += qp_adj;
+                curFrame->m_lowres.invQscaleFactor[blockXY] = x265_exp2fix8(curFrame->m_lowres.qpAqOffset[blockXY]);
                 blockXY++;
             }
         }
@@ -602,7 +616,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_lastKeyframe = -m_param->keyframeMax;
     m_sliceTypeBusy = false;
     m_fullQueueSize = X265_MAX(1, m_param->lookaheadDepth);
-    m_bAdaptiveQuant = m_param->rc.aqMode || m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred || m_param->bAQMotion;
+    m_bAdaptiveQuant = m_param->rc.aqMode || m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred || m_param->bAQMotion || m_param->bHDROpt;
 
     /* If we have a thread pool and are using --b-adapt 2, it is generally
      * preferable to perform all motion searches for each lowres frame in large
@@ -911,7 +925,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
         uint32_t widthInLowresCu = (uint32_t)m_8x8Width, heightInLowresCu = (uint32_t)m_8x8Height;
         double *qp_offset = 0;
         /* Factor in qpoffsets based on Aq/Cutree in CU costs */
-        if (m_param->rc.aqMode || m_param->bAQMotion)
+        if (m_param->rc.aqMode || m_param->bAQMotion || m_param->bHDROpt)
             qp_offset = (frames[b]->sliceType == X265_TYPE_B || !m_param->rc.cuTree) ? frames[b]->qpAqOffset : frames[b]->qpCuTreeOffset;
 
         for (uint32_t row = 0; row < numCuInHeight; row++)
@@ -1305,7 +1319,7 @@ int64_t Lookahead::vbvFrameCost(Lowres **frames, int p0, int p1, int b)
     CostEstimateGroup estGroup(*this, frames);
     int64_t cost = estGroup.singleCost(p0, p1, b);
 
-    if (m_param->rc.aqMode || m_param->bAQMotion)
+    if (m_param->rc.aqMode || m_param->bAQMotion || m_param->bHDROpt)
     {
         if (m_param->rc.cuTree)
             return frameCostRecalculate(frames, p0, p1, b);
