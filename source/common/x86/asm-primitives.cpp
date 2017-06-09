@@ -2167,6 +2167,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.integral_inith[INTEGRAL_4] = PFX(integral4h_avx2);
         p.integral_inith[INTEGRAL_8] = PFX(integral8h_avx2);
         p.integral_inith[INTEGRAL_12] = PFX(integral12h_avx2);
+        p.integral_inith[INTEGRAL_16] = PFX(integral16h_avx2);
 
         /* TODO: This kernel needs to be modified to work with HIGH_BIT_DEPTH only 
         p.planeClipAndMax = PFX(planeClipAndMax_avx2); */
@@ -3715,6 +3716,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.integral_inith[INTEGRAL_4] = PFX(integral4h_avx2);
         p.integral_inith[INTEGRAL_8] = PFX(integral8h_avx2);
         p.integral_inith[INTEGRAL_12] = PFX(integral12h_avx2);
+        p.integral_inith[INTEGRAL_16] = PFX(integral16h_avx2);
 
     }
 #endif
