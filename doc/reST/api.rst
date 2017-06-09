@@ -347,6 +347,14 @@ statistics from the encoder::
 Cleanup
 =======
 
+At the end of the encode, the application will want to trigger logging
+of the final encode statistics, if :option:`--csv` had been specified::
+
+ 	/* x265_encoder_log:
+	 *       write a line to the configured CSV file. If a CSV filename was not
+	 *       configured, or file open failed, this function will perform no write. */
+ 	void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
+ 	
 Finally, the encoder must be closed in order to free all of its
 resources. An encoder that has been flushed cannot be restarted and
 reused. Once **x265_encoder_close()** has been called, the encoder

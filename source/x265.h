@@ -654,7 +654,14 @@ typedef struct x265_param
      * X265_LOG_FULL, default is X265_LOG_INFO */
     int       logLevel;
 
-    /* Filename of CSV log. Now deprecated */
+    /* Level of csv logging. 0 is summary, 1 is frame level logging,
+     * 2 is frame level logging with performance statistics */
+    int       csvLogLevel;
+
+    /* filename of CSV log. If csvLogLevel is non-zero, the encoder will emit
+     * per-slice statistics to this log file in encode order. Otherwise the
+     * encoder will emit per-stream statistics into the log file when
+     * x265_encoder_log is called (presumably at the end of the encode) */
     const char* csvfn;
 
     /*== Internal Picture Specification ==*/
@@ -1620,7 +1627,8 @@ int x265_encoder_reconfig(x265_encoder *, x265_param *);
 void x265_encoder_get_stats(x265_encoder *encoder, x265_stats *, uint32_t statsSizeBytes);
 
 /* x265_encoder_log:
- *       This function is deprecated */
+ *       write a line to the configured CSV file.  If a CSV filename was not
+ *       configured, or file open failed, this function will perform no write. */
 void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
 
 /* x265_encoder_close:

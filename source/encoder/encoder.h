@@ -137,6 +137,7 @@ public:
     x265_param*        m_latestParam;     // Holds latest param during a reconfigure
     RateControl*       m_rateControl;
     Lookahead*         m_lookahead;
+    FILE*              m_csvfpt;
 
     /* Collect statistics globally */
     EncStats           m_analyzeAll;

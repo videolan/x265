@@ -29,7 +29,7 @@ option(NATIVE_BUILD "Target the build CPU" OFF)
 option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
 mark_as_advanced(FPROFILE_USE FPROFILE_GENERATE NATIVE_BUILD)
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 121)
+set(X265_BUILD 122)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -650,16 +650,16 @@ if(ENABLE_CLI)
         # Xcode seems unable to link the CLI with libs, so link as one targget
         if(ENABLE_DYNAMIC_HDR10)
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT}
-                        x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp
+                        x265.cpp x265.h x265cli.h
                         $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:dynamicHDR10> ${ASM_OBJS} ${ASM_SRCS})
         else()
             add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT}
-                        x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp
+                        x265.cpp x265.h x265cli.h
                         $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS} ${ASM_SRCS})
         endif()
     else()
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT} ${X265_RC_FILE}
-                       ${ExportDefs} x265.cpp x265.h x265cli.h x265-extras.h x265-extras.cpp)
+                       ${ExportDefs} x265.cpp x265.h x265cli.h)
         if(WIN32 OR NOT ENABLE_SHARED OR INTEL_CXX)
             # The CLI cannot link to the shared library on Windows, it
             # requires internal APIs not exported from the DLL

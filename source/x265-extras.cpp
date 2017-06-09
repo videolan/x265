@@ -25,7 +25,7 @@
 
 #include "x265.h"
 #include "x265-extras.h"
-
+#include "param.h"
 #include "common.h"
 
 using namespace X265_NS;
@@ -38,14 +38,8 @@ static const char* summaryCSVHeader =
     "B count, B ave-QP, B kbps, B-PSNR Y, B-PSNR U, B-PSNR V, B-SSIM (dB), "
     "MaxCLL, MaxFALL, Version\n";
 
-FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char* fname, int level)
+FILE* x265_csvlog_open(const x265_param& param, const char* fname, int level)
 {
-    if (sizeof(x265_stats) != api.sizeof_stats || sizeof(x265_picture) != api.sizeof_picture)
-    {
-        fprintf(stderr, "extras [error]: structure size skew, unable to create CSV logfile\n");
-        return NULL;
-    }
-
     FILE *csvfp = x265_fopen(fname, "r");
     if (csvfp)
     {
@@ -255,7 +249,7 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
     fflush(stderr);
 }
 
-void x265_csvlog_encode(FILE* csvfp, const char* version, const x265_param& param, const x265_stats& stats, int level, int argc, char** argv)
+void x265_csvlog_encode(FILE* csvfp, const char* version, const x265_param& param, int padx, int pady, const x265_stats& stats, int level, int argc, char** argv)
 {
     if (!csvfp)
         return;
@@ -268,13 +262,27 @@ void x265_csvlog_encode(FILE* csvfp, const char* version, const x265_param& para
     }
 
     // CLI arguments or other
-    fputc('"', csvfp);
-    for (int i = 1; i < argc; i++)
+    if (argc)
     {
-        fputc(' ', csvfp);
-        fputs(argv[i], csvfp);
+        fputc('"', csvfp);
+        for (int i = 1; i < argc; i++)
+        {
+            fputc(' ', csvfp);
+            fputs(argv[i], csvfp);
+        }
+        fputc('"', csvfp);
     }
-    fputc('"', csvfp);
+    else
+    {
+        const x265_param* paramTemp = &param;
+        char *opts = x265_param2string((x265_param*)paramTemp, padx, pady);
+        if (opts)
+        {
+            fputc('"', csvfp);
+            fputs(opts, csvfp);
+            fputc('"', csvfp);
+        }
+    }
 
     // current date and time
     time_t now;

@@ -110,6 +110,7 @@ void x265_param_default(x265_param* param)
     param->frameNumThreads = 0;
 
     param->logLevel = X265_LOG_INFO;
+    param->csvLogLevel = 0;
     param->csvfn = NULL;
     param->rc.lambdaFileName = NULL;
     param->bLogCuStats = 0;
@@ -927,6 +928,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     if (bExtraParams)
     {
         if (0) ;
+        OPT("csv") p->csvfn = strdup(value);
+        OPT("csv-log-level") p->csvLogLevel = atoi(value);
         OPT("qpmin") p->rc.qpMin = atoi(value);
         OPT("analyze-src-pics") p->bSourceReferenceEstimation = atobool(value);
         OPT("log2-max-poc-lsb") p->log2MaxPocLsb = atoi(value);
@@ -1516,6 +1519,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnablePsnr, "psnr");
     BOOL(p->bEnableSsim, "ssim");
     s += sprintf(s, " log-level=%d", p->logLevel);
+    if (p->csvfn)
+        s += sprintf(s, " csvfn=%s csv-log-level=%d", p->csvfn, p->csvLogLevel);
     s += sprintf(s, " bitdepth=%d", p->internalBitDepth);
     s += sprintf(s, " input-csp=%d", p->internalCsp);
     s += sprintf(s, " fps=%u/%u", p->fpsNum, p->fpsDenom);

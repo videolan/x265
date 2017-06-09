@@ -30,6 +30,7 @@
 #include "level.h"
 #include "nal.h"
 #include "bitcost.h"
+#include "x265-extras.h"
 
 /* multilib namespace reflectors */
 #if LINKED_8BIT
@@ -119,6 +120,17 @@ x265_encoder *x265_encoder_open(x265_param *p)
     }
 
     encoder->create();
+    /* Try to open CSV file handle */
+    if (encoder->m_param->csvfn)
+    {
+        encoder->m_csvfpt = x265_csvlog_open(*encoder->m_param, encoder->m_param->csvfn, encoder->m_param->csvLogLevel);
+        if (!encoder->m_csvfpt)
+        {
+            x265_log(encoder->m_param, X265_LOG_ERROR, "Unable to open CSV log file <%s>, aborting\n", encoder->m_param->csvfn);
+            encoder->m_aborted = true;
+        }
+    }
+
     encoder->m_latestParam = latestParam;
     memcpy(latestParam, param, sizeof(x265_param));
     if (encoder->m_aborted)
@@ -144,7 +156,10 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
         if (encoder->m_param->rc.bStatRead && encoder->m_param->bMultiPassOptRPS)
         {
             if (!encoder->computeSPSRPSIndex())
+            {
+                encoder->m_aborted = true;
                 return -1;
+            }
         }
         encoder->getStreamHeaders(encoder->m_nalList, sbacCoder, bs);
         *pp_nal = &encoder->m_nalList.m_nal[0];
@@ -152,6 +167,11 @@ int x265_encoder_headers(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal)
         return encoder->m_nalList.m_occupancy;
     }
 
+    if (enc)
+    {
+        Encoder *encoder = static_cast<Encoder*>(enc);
+        encoder->m_aborted = true;
+    }
     return -1;
 }
 
@@ -251,6 +271,12 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     else if (pi_nal)
         *pi_nal = 0;
 
+    if (numEncoded && encoder->m_param->csvLogLevel)
+        x265_csvlog_frame(encoder->m_csvfpt, *encoder->m_param, *pic_out, encoder->m_param->csvLogLevel);
+
+    if (numEncoded < 0)
+        encoder->m_aborted = true;
+
     return numEncoded;
 }
 
@@ -263,12 +289,16 @@ void x265_encoder_get_stats(x265_encoder *enc, x265_stats *outputStats, uint32_t
     }
 }
 
-void x265_encoder_log(x265_encoder* enc, int, char **)
+void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
 {
     if (enc)
     {
         Encoder *encoder = static_cast<Encoder*>(enc);
-        x265_log(encoder->m_param, X265_LOG_WARNING, "x265_encoder_log is now deprecated\n");
+        x265_stats stats;
+        int padx = encoder->m_sps.conformanceWindow.rightOffset;
+        int pady = encoder->m_sps.conformanceWindow.bottomOffset;
+        encoder->fetchStats(&stats, sizeof(stats));
+        x265_csvlog_encode(encoder->m_csvfpt, x265_version_str, *encoder->m_param, padx, pady, stats, encoder->m_param->csvLogLevel, argc, argv);
     }
 }
 

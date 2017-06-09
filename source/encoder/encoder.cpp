@@ -70,6 +70,7 @@ Encoder::Encoder()
     m_exportedPic = NULL;
     m_numDelayedPic = 0;
     m_outputCount = 0;
+    m_csvfpt = NULL;
     m_param = NULL;
     m_latestParam = NULL;
     m_threadPool = NULL;
@@ -468,6 +469,9 @@ void Encoder::destroy()
     if (m_analysisFile)
         fclose(m_analysisFile);
 
+    if (m_csvfpt)
+        fclose(m_csvfpt);
+
     if (m_latestParam != NULL && m_latestParam != m_param)
     {
         if (m_latestParam->scalingLists != m_param->scalingLists)
@@ -504,6 +508,7 @@ void Encoder::destroy()
         free((char*)m_param->rc.statFileName);
         free((char*)m_param->analysisFileName);
         free((char*)m_param->scalingLists);
+        free((char*)m_param->csvfn);
         free((char*)m_param->numaPools);
         free((char*)m_param->masteringDisplayColorVolume);
         free((char*)m_param->toneMapFile);
@@ -2617,9 +2622,6 @@ void Encoder::configure(x265_param *p)
 
     if (p->bLogCuStats)
         x265_log(p, X265_LOG_WARNING, "--cu-stats option is now deprecated\n");
-
-    if (p->csvfn)
-        x265_log(p, X265_LOG_WARNING, "libx265 no longer supports CSV file statistics\n");
 
     if (p->log2MaxPocLsb < 4)
     {

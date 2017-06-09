@@ -52,8 +52,7 @@ Command line executable return codes::
 	2. unable to open encoder
 	3. unable to generate stream headers
 	4. encoder abort
-	5. unable to open csv file
-
+	
 Logging/Statistic Options
 =========================
 
@@ -182,8 +181,6 @@ Logging/Statistic Options
 	is more of a problem for P frames where some blocks are much more
 	expensive than others.
 	
-	**CLI ONLY**
-
 .. option:: --csv-log-level <integer>
 
     Controls the level of detail (and size) of --csv log files
@@ -191,8 +188,6 @@ Logging/Statistic Options
     0. summary **(default)**
     1. frame level logging
     2. frame level logging with performance statistics
-
-    **CLI ONLY**
 
 .. option:: --ssim, --no-ssim
 
