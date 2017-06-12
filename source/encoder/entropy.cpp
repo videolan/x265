@@ -700,7 +700,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
     // TODO: Enable when pps_loop_filter_across_slices_enabled_flag==1
     //       We didn't support filter across slice board, so disable it now
 
-    if (g_maxSlices <= 1)
+    if (encData.m_param->maxSlices <= 1)
     {
         bool isSAOEnabled = slice.m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1] : false;
         bool isDBFEnabled = !slice.m_pps->bPicDisableDeblockingFilter;

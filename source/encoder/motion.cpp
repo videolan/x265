@@ -739,6 +739,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    const MV *       mvc,
                                    int              merange,
                                    MV &             outQMv,
+                                   uint32_t         maxSlices,
                                    pixel *          srcReferencePlane)
 {
     ALIGN_VAR_16(int, costs[16]);
@@ -1439,7 +1440,7 @@ me_hex2:
     const SubpelWorkload& wl = workload[this->subpelRefine];
 
     // check mv range for slice bound
-    if ((g_maxSlices > 1) & ((bmv.y < qmvmin.y) | (bmv.y > qmvmax.y)))
+    if ((maxSlices > 1) & ((bmv.y < qmvmin.y) | (bmv.y > qmvmax.y)))
     {
         bmv.y = x265_min(x265_max(bmv.y, qmvmin.y), qmvmax.y);
         bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);

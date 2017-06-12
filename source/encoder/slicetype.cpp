@@ -2407,7 +2407,7 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
         /* ME will never return a cost larger than the cost @MVP, so we do not
          * have to check that ME cost is more than the estimated merge cost */
-        fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV);
+        fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV, m_lookahead.m_param->maxSlices);
         if (skipCost < 64 && skipCost < fencCost && bBidir)
         {
             fencCost = skipCost;
