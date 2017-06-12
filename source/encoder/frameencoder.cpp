@@ -1366,8 +1366,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 cuStat.baseQp = curEncData.m_rowStat[row].rowQp;
 
             /* TODO: use defines from slicetype.h for lowres block size */
-            uint32_t block_y = (ctu->m_cuPelY >> g_maxLog2CUSize) * noOfBlocks;
-            uint32_t block_x = (ctu->m_cuPelX >> g_maxLog2CUSize) * noOfBlocks;
+            uint32_t block_y = (ctu->m_cuPelY >> m_param->maxLog2CUSize) * noOfBlocks;
+            uint32_t block_x = (ctu->m_cuPelX >> m_param->maxLog2CUSize) * noOfBlocks;
             
             cuStat.vbvCost = 0;
             cuStat.intraVbvCost = 0;

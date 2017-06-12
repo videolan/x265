@@ -116,7 +116,7 @@ FILE* x265_csvlog_open(const x265_param& param, const char* fname, int level)
                 {
                     /* PU statistics */
                     size = param.maxCUSize;
-                    for (uint32_t i = 0; i< g_maxLog2CUSize - (uint32_t)g_log2Size[param.minCUSize] + 1; i++)
+                    for (uint32_t i = 0; i< param.maxLog2CUSize - (uint32_t)g_log2Size[param.minCUSize] + 1; i++)
                     {
                         fprintf(csvfp, ", Intra %dx%d", size, size);
                         fprintf(csvfp, ", Skip %dx%d", size, size);
@@ -224,7 +224,7 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
 
     if (level >= 2)
     {
-        for (uint32_t i = 0; i < g_maxLog2CUSize - (uint32_t)g_log2Size[param.minCUSize] + 1; i++)
+        for (uint32_t i = 0; i < param.maxLog2CUSize - (uint32_t)g_log2Size[param.minCUSize] + 1; i++)
         {
             fprintf(csvfp, ", %.2lf%%", frameStats->puStats.percentIntraPu[i]);
             fprintf(csvfp, ", %.2lf%%", frameStats->puStats.percentSkipPu[i]);

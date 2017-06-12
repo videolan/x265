@@ -182,7 +182,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             memcpy(ctu.m_cuDepth, m_frame->m_addOnDepth[ctu.m_cuAddr], sizeof(uint8_t) * numPartition);
             //Calculate log2CUSize from depth
             for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
-                ctu.m_log2CUSize[i] = (uint8_t)g_maxLog2CUSize - ctu.m_cuDepth[i];
+                ctu.m_log2CUSize[i] = (uint8_t)m_param->maxLog2CUSize - ctu.m_cuDepth[i];
         }
     }
 
@@ -265,7 +265,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             }
             //Calculate log2CUSize from depth
             for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
-                ctu.m_log2CUSize[i] = (uint8_t)g_maxLog2CUSize - ctu.m_cuDepth[i];
+                ctu.m_log2CUSize[i] = (uint8_t)m_param->maxLog2CUSize - ctu.m_cuDepth[i];
 
             qprdRefine (ctu, cuGeom, qp, qp);
             return *m_modeDepth[0].bestMode;

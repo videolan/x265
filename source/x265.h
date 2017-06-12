@@ -1459,6 +1459,8 @@ typedef struct x265_param
     /* Enable motion vector refinement in load mode*/
     int       mvRefine;
 
+    /* Log of maximum CTU size */
+    uint32_t  maxLog2CUSize;
 } x265_param;
 
 /* x265_param_alloc:

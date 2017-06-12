@@ -791,9 +791,9 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
         // WARNING: *) May read beyond bound on video than ctuWidth or ctuHeight is NOT multiple of cuSize
         X265_CHECK((ctuWidth == ctuHeight) || (m_chromaFormat != X265_CSP_I420), "video size check failure\n");
         if (plane)
-            primitives.chroma[m_chromaFormat].cu[g_maxLog2CUSize - 2].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
+            primitives.chroma[m_chromaFormat].cu[m_param->maxLog2CUSize - 2].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
         else
-           primitives.cu[g_maxLog2CUSize - 2].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
+           primitives.cu[m_param->maxLog2CUSize - 2].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
     }
     else
     {

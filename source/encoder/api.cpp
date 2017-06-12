@@ -361,8 +361,8 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
 
     if (param->analysisMode)
     {
-        uint32_t widthInCU = (param->sourceWidth + param->maxCUSize - 1) >> g_maxLog2CUSize;
-        uint32_t heightInCU = (param->sourceHeight + param->maxCUSize - 1) >> g_maxLog2CUSize;
+        uint32_t widthInCU = (param->sourceWidth + param->maxCUSize - 1) >> param->maxLog2CUSize;
+        uint32_t heightInCU = (param->sourceHeight + param->maxCUSize - 1) >> param->maxLog2CUSize;
 
         uint32_t numCUsInFrame   = widthInCU * heightInCU;
         pic->analysisData.numCUsInFrame = numCUsInFrame;
