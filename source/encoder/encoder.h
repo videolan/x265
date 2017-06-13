@@ -224,7 +224,7 @@ public:
 
     void freeAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType);
 
-    void readAnalysisFile(x265_analysis_data* analysis, int poc);
+    void readAnalysisFile(x265_analysis_data* analysis, int poc, const x265_picture* picIn);
 
     void writeAnalysisFile(x265_analysis_data* pic, FrameData &curEncData);
     void readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int poc, int sliceType);

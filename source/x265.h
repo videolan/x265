@@ -98,6 +98,7 @@ typedef struct x265_analysis_data
     uint32_t         sliceType;
     uint32_t         numCUsInFrame;
     uint32_t         numPartitions;
+    uint32_t         depthBytes;
     int              bScenecut;
     void*            wt;
     void*            interData;
@@ -1470,6 +1471,9 @@ typedef struct x265_param
 
     /* Number of 4x4 units in maximum CU size */
     uint32_t  num4x4Partitions;
+
+    /* Specify if analysis mode uses file for data reuse */
+    int       bUseAnalysisFile;
 
 } x265_param;
 
