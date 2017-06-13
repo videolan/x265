@@ -188,6 +188,9 @@ if(GCC)
     add_definitions(-Wall -Wextra -Wshadow)
     add_definitions(-D__STDC_LIMIT_MACROS=1)
     if(ENABLE_DYNAMIC_HDR10)
+        if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8")
+            message(FATAL_ERROR "gcc version above 4.8 required to support hdr10plus")
+        endif()
         add_definitions(-std=gnu++11)
     else()
         add_definitions(-std=gnu++98)
@@ -369,8 +372,8 @@ else(HIGH_BIT_DEPTH)
 endif(HIGH_BIT_DEPTH)
 
 if (ENABLE_DYNAMIC_HDR10)
+    include_directories(. dynamicHDR10 "${PROJECT_BINARY_DIR}")
     add_subdirectory(dynamicHDR10)
-    include_directories(dynamicHDR10)
     add_definitions(-DENABLE_DYNAMIC_HDR10)
 endif(ENABLE_DYNAMIC_HDR10)
 # this option can only be used when linking multiple libx265 libraries
@@ -514,6 +517,8 @@ endif()
 source_group(ASM FILES ${ASM_SRCS})
 if(ENABLE_DYNAMIC_HDR10)
     add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:dynamicHDR10> ${ASM_OBJS} ${ASM_SRCS})
+    add_library(hdr10plus-static STATIC $<TARGET_OBJECTS:dynamicHDR10>)
+    set_target_properties(hdr10plus-static PROPERTIES OUTPUT_NAME hdr10plus)
 else()
     add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS} ${ASM_SRCS})
 endif()
@@ -526,6 +531,12 @@ endif()
 install(TARGETS x265-static
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+
+if(ENABLE_DYNAMIC_HDR10)
+    install(TARGETS hdr10plus-static
+        LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+        ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+endif()
 install(FILES x265.h "${PROJECT_BINARY_DIR}/x265_config.h" DESTINATION include)
 
 if(CMAKE_RC_COMPILER)
@@ -549,10 +560,16 @@ if(NOT (MSVC_IDE OR XCODE))
 endif()
 option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
-
     if(ENABLE_DYNAMIC_HDR10)
         add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${ASM_OBJS}
                     ${X265_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:dynamicHDR10>)
+        add_library(hdr10plus SHARED $<TARGET_OBJECTS:dynamicHDR10>)
+
+        if(MSVC)
+            set_target_properties(hdr10plus PROPERTIES OUTPUT_NAME libhdr10plus)
+        else()
+            set_target_properties(hdr10plus PROPERTIES OUTPUT_NAME hdr10plus)
+        endif()
     else()
         add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${ASM_OBJS}
                    ${X265_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
@@ -586,6 +603,11 @@ if(ENABLE_SHARED)
                 LIBRARY DESTINATION ${LIB_INSTALL_DIR}
                 ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
                 RUNTIME DESTINATION ${BIN_INSTALL_DIR})
+    endif()
+    if(ENABLE_DYNAMIC_HDR10)
+        install(TARGETS hdr10plus
+            LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+            ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
     endif()
     if(LINKER_OPTIONS)
         # set_target_properties can't do list expansion
