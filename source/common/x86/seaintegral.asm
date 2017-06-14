@@ -148,11 +148,6 @@ cglobal integral32v, 2, 3, 2
     jnz     .loop
     RET
 
-;-----------------------------------------------------------------------------
-;static void integral_init4h_c(uint32_t *sum, pixel *pix, intptr_t stride)
-;-----------------------------------------------------------------------------
-INIT_YMM avx2
-
 %macro INTEGRAL_FOUR_HORIZONTAL_16 0
     pmovzxbw       m0, [r1]
     pmovzxbw       m1, [r1 + 1]
@@ -163,6 +158,24 @@ INIT_YMM avx2
     paddw          m0, m1
 %endmacro
 
+%macro INTEGRAL_FOUR_HORIZONTAL_4 0
+    movd       xm0, [r1]
+    movd       xm1, [r1 + 1]
+    pmovzxbw   xm0, xm0
+    pmovzxbw   xm1, xm1
+    paddw      xm0, xm1
+    movd       xm1, [r1 + 2]
+    pmovzxbw   xm1, xm1
+    paddw      xm0, xm1
+    movd       xm1, [r1 + 3]
+    pmovzxbw   xm1, xm1
+    paddw      xm0, xm1
+%endmacro
+
+;-----------------------------------------------------------------------------
+;static void integral_init4h(uint32_t *sum, pixel *pix, intptr_t stride)
+;-----------------------------------------------------------------------------
+INIT_YMM avx2
 cglobal integral4h, 3, 5, 3
     lea            r3, [4 * r2]
     sub            r0, r3
@@ -205,7 +218,7 @@ cglobal integral4h, 3, 5, 3
     jmp             .end
 
 .loop_4:
-    INTEGRAL_FOUR_HORIZONTAL_16
+    INTEGRAL_FOUR_HORIZONTAL_4
     pmovzxwd       xm0, xm0
     movu           xm1, [r0]
     paddd          xm0, xm1
