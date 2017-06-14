@@ -172,10 +172,55 @@ cglobal integral32v, 2, 3, 2
     paddw      xm0, xm1
 %endmacro
 
+%macro INTEGRAL_FOUR_HORIZONTAL_8_HBD 0
+    pmovzxwd       m0, [r1]
+    pmovzxwd       m1, [r1 + 2]
+    paddd          m0, m1
+    pmovzxwd       m1, [r1 + 4]
+    paddd          m0, m1
+    pmovzxwd       m1, [r1 + 6]
+    paddd          m0, m1
+%endmacro
+
+%macro INTEGRAL_FOUR_HORIZONTAL_4_HBD 0
+    pmovzxwd       xm0, [r1]
+    pmovzxwd       xm1, [r1 + 2]
+    paddd          xm0, xm1
+    pmovzxwd       xm1, [r1 + 4]
+    paddd          xm0, xm1
+    pmovzxwd       xm1, [r1 + 6]
+    paddd          xm0, xm1
+%endmacro
+
 ;-----------------------------------------------------------------------------
 ;static void integral_init4h(uint32_t *sum, pixel *pix, intptr_t stride)
 ;-----------------------------------------------------------------------------
 INIT_YMM avx2
+%if HIGH_BIT_DEPTH
+cglobal integral4h, 3, 5, 3
+    lea            r3, [4 * r2]
+    sub            r0, r3
+    sub            r2, 4                      ;stride - 4
+    mov            r4, r2
+    shr            r4, 3
+
+.loop_8:
+    INTEGRAL_FOUR_HORIZONTAL_8_HBD
+    movu           m1, [r0]
+    paddd          m0, m1
+    movu           [r0 + r3], m0 
+    add            r1, 16
+    add            r0, 32
+    sub            r2, 8
+    sub            r4, 1
+    jnz            .loop_8
+    INTEGRAL_FOUR_HORIZONTAL_4_HBD
+    movu           xm1, [r0]
+    paddd          xm0, xm1
+    movu           [r0 + r3], xm0
+    RET
+
+%else
 cglobal integral4h, 3, 5, 3
     lea            r3, [4 * r2]
     sub            r0, r3
@@ -227,6 +272,7 @@ cglobal integral4h, 3, 5, 3
 
 .end
     RET
+%endif
 
 ;-----------------------------------------------------------------------------
 ;static void integral_init8h_c(uint32_t *sum, pixel *pix, intptr_t stride)
