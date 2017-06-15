@@ -43,7 +43,6 @@ cglobal integral4v, 2, 3, 2
     movu    [r0], m1
     add     r0, 32
     sub     r1, 8
-    cmp     r1, 0
     jnz     .loop
     RET
 
@@ -62,7 +61,6 @@ cglobal integral8v, 2, 3, 2
     movu    [r0], m1
     add     r0, 32
     sub     r1, 8
-    cmp     r1, 0
     jnz     .loop
     RET
 
@@ -84,7 +82,6 @@ cglobal integral12v, 2, 4, 2
     movu    [r0], m1
     add     r0, 32
     sub     r1, 8
-    cmp     r1, 0
     jnz     .loop
     RET
 
@@ -103,7 +100,6 @@ cglobal integral16v, 2, 3, 2
     movu    [r0], m1
     add     r0, 32
     sub     r1, 8
-    cmp     r1, 0
     jnz     .loop
     RET
 
@@ -125,7 +121,6 @@ cglobal integral24v, 2, 4, 2
     movu    [r0], m1
     add     r0, 32
     sub     r1, 8
-    cmp     r1, 0
     jnz     .loop
     RET
 
@@ -144,7 +139,6 @@ cglobal integral32v, 2, 3, 2
     movu    [r0], m1
     add     r0, 32
     sub     r1, 8
-    cmp     r1, 0
     jnz     .loop
     RET
 
