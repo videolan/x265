@@ -2043,25 +2043,31 @@ bool PixelHarness::check_integral_initv(integralv_t ref, integralv_t opt)
 
 bool PixelHarness::check_integral_inith(integralh_t ref, integralh_t opt)
 {
-    intptr_t srcStep = 64;
+    /* Since stride is always a multiple of 8 and data movement in AVX2 is 16 elements at a time for 8 bit pixel, we need
+     * to check correctness for two cases: stride multiple of 16 and stride not a multiple of 16; fine for High bit depth
+     * where data movement in AVX2 is 8 elements at a time */
+    intptr_t srcStep[2] = { 56, 64 };
     int j = 0;
     uint32_t dst_ref[BUFFSIZE] = { 0 };
     uint32_t dst_opt[BUFFSIZE] = { 0 };
 
     int padx = 4;
     int pady = 4;
-    uint32_t *dst_ref_ptr = dst_ref + srcStep * pady + padx;
-    uint32_t *dst_opt_ptr = dst_opt + srcStep * pady + padx;
-    for (int k = 0; k < ITERS; k++)
+    for (int l = 0; l < 2; l++)
     {
-        ref(dst_ref_ptr, pixel_test_buff[0], srcStep);
-        checked(opt, dst_opt_ptr, pixel_test_buff[0], srcStep);
+        uint32_t *dst_ref_ptr = dst_ref + srcStep[l] * pady + padx;
+        uint32_t *dst_opt_ptr = dst_opt + srcStep[l] * pady + padx;
+        for (int k = 0; k < ITERS; k++)
+        {
+            ref(dst_ref_ptr, pixel_test_buff[0], srcStep[l]);
+            checked(opt, dst_opt_ptr, pixel_test_buff[0], srcStep[l]);
 
-        if (memcmp(dst_ref, dst_opt, sizeof(uint32_t) * BUFFSIZE))
-            return false;
+            if (memcmp(dst_ref, dst_opt, sizeof(uint32_t) * BUFFSIZE))
+                return false;
 
-        reportfail()
-            j += INCR;
+            reportfail()
+                j += INCR;
+        }
     }
     return true;
 }
