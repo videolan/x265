@@ -324,7 +324,7 @@ static void showHelp(x265_param *param)
     H1("                                 1 - i420 (4:2:0 default)\n");
     H1("                                 2 - i422 (4:2:2)\n");
     H1("                                 3 - i444 (4:4:4)\n");
-#if ENABLE_DYNAMIC_HDR10
+#if ENABLE_HDR10_PLUS
     H0("   --dhdr10-info <filename>      JSON file containing the Creative Intent Metadata to be encoded as Dynamic Tone Mapping\n");
     H0("   --[no-]dhdr10-opt             Insert tone mapping SEI only for IDR frames and when the tone mapping information changes. Default disabled\n");
 #endif

@@ -1,5 +1,5 @@
 # vim: syntax=cmake
-if(ENABLE_DYNAMIC_HDR10)
+if(ENABLE_HDR10_PLUS)
 
 add_library(dynamicHDR10 OBJECT 
     BasicStructures.h

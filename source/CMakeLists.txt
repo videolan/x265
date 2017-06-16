@@ -183,11 +183,11 @@ if(CC STREQUAL "xlc")
     add_definitions(-qinline=level=10 -qpath=IL:/data/video_files/latest.tpo/)
 endif()
 # this option is to enable the inclusion of dynamic HDR10 library to the libx265 compilation
-option(ENABLE_DYNAMIC_HDR10 "Enable dynamic HDR10 compilation" OFF)
+option(ENABLE_HDR10_PLUS "Enable dynamic HDR10 compilation" OFF)
 if(GCC)
     add_definitions(-Wall -Wextra -Wshadow)
     add_definitions(-D__STDC_LIMIT_MACROS=1)
-    if(ENABLE_DYNAMIC_HDR10)
+    if(ENABLE_HDR10_PLUS)
         if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8")
             message(FATAL_ERROR "gcc version above 4.8 required to support hdr10plus")
         endif()
@@ -371,11 +371,11 @@ else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0 -DX265_DEPTH=8)
 endif(HIGH_BIT_DEPTH)
 
-if (ENABLE_DYNAMIC_HDR10)
+if (ENABLE_HDR10_PLUS)
     include_directories(. dynamicHDR10 "${PROJECT_BINARY_DIR}")
     add_subdirectory(dynamicHDR10)
-    add_definitions(-DENABLE_DYNAMIC_HDR10)
-endif(ENABLE_DYNAMIC_HDR10)
+    add_definitions(-DENABLE_HDR10_PLUS)
+endif(ENABLE_HDR10_PLUS)
 # this option can only be used when linking multiple libx265 libraries
 # together, and some alternate API access method is implemented.
 option(EXPORT_C_API "Implement public C programming interface" ON)
@@ -515,7 +515,7 @@ if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
     endif()
 endif()
 source_group(ASM FILES ${ASM_SRCS})
-if(ENABLE_DYNAMIC_HDR10)
+if(ENABLE_HDR10_PLUS)
     add_library(x265-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:dynamicHDR10> ${ASM_OBJS} ${ASM_SRCS})
     add_library(hdr10plus-static STATIC $<TARGET_OBJECTS:dynamicHDR10>)
     set_target_properties(hdr10plus-static PROPERTIES OUTPUT_NAME hdr10plus)
@@ -532,7 +532,7 @@ install(TARGETS x265-static
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 
-if(ENABLE_DYNAMIC_HDR10)
+if(ENABLE_HDR10_PLUS)
     install(TARGETS hdr10plus-static
         LIBRARY DESTINATION ${LIB_INSTALL_DIR}
         ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
@@ -560,15 +560,15 @@ if(NOT (MSVC_IDE OR XCODE))
 endif()
 option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
-    if(ENABLE_DYNAMIC_HDR10)
+    if(ENABLE_HDR10_PLUS)
         add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${ASM_OBJS}
                     ${X265_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:dynamicHDR10>)
-        add_library(hdr10plus SHARED $<TARGET_OBJECTS:dynamicHDR10>)
+        add_library(hdr10plus-shared SHARED $<TARGET_OBJECTS:dynamicHDR10>)
 
         if(MSVC)
-            set_target_properties(hdr10plus PROPERTIES OUTPUT_NAME libhdr10plus)
+            set_target_properties(hdr10plus-shared PROPERTIES OUTPUT_NAME libhdr10plus)
         else()
-            set_target_properties(hdr10plus PROPERTIES OUTPUT_NAME hdr10plus)
+            set_target_properties(hdr10plus-shared PROPERTIES OUTPUT_NAME hdr10plus)
         endif()
     else()
         add_library(x265-shared SHARED "${PROJECT_BINARY_DIR}/x265.def" ${ASM_OBJS}
@@ -604,8 +604,8 @@ if(ENABLE_SHARED)
                 ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
                 RUNTIME DESTINATION ${BIN_INSTALL_DIR})
     endif()
-    if(ENABLE_DYNAMIC_HDR10)
-        install(TARGETS hdr10plus
+    if(ENABLE_HDR10_PLUS)
+        install(TARGETS hdr10plus-shared
             LIBRARY DESTINATION ${LIB_INSTALL_DIR}
             ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
     endif()
@@ -670,7 +670,7 @@ if(ENABLE_CLI)
     endif(WIN32)
     if(XCODE)
         # Xcode seems unable to link the CLI with libs, so link as one targget
-        if(ENABLE_DYNAMIC_HDR10)
+        if(ENABLE_HDR10_PLUS)
         add_executable(cli ../COPYING ${InputFiles} ${OutputFiles} ${GETOPT}
                         x265.cpp x265.h x265cli.h
                         $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> $<TARGET_OBJECTS:dynamicHDR10> ${ASM_OBJS} ${ASM_SRCS})

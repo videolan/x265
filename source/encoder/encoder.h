@@ -31,7 +31,7 @@
 #include "x265.h"
 #include "nal.h"
 #include "framedata.h"
-#ifdef ENABLE_DYNAMIC_HDR10
+#ifdef ENABLE_HDR10_PLUS
     #include "dynamicHDR10/hdr10plus.h"
 #endif
 struct x265_encoder {};
@@ -177,7 +177,7 @@ public:
 
     int                     m_bToneMap; // Enables tone-mapping
 
-#ifdef ENABLE_DYNAMIC_HDR10
+#ifdef ENABLE_HDR10_PLUS
     const hdr10plus_api     *m_hdr10plus_api;
 #endif
 
@@ -186,7 +186,7 @@ public:
     Encoder();
     ~Encoder()
     {
-#ifdef ENABLE_DYNAMIC_HDR10
+#ifdef ENABLE_HDR10_PLUS
         if (m_prevTonemapPayload.payload != NULL)
             X265_FREE(m_prevTonemapPayload.payload);
 #endif

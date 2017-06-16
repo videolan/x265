@@ -87,7 +87,7 @@ Encoder::Encoder()
         m_frameEncoder[i] = NULL;
     MotionEstimate::initScales();
 
-#if ENABLE_DYNAMIC_HDR10
+#if ENABLE_HDR10_PLUS
     m_hdr10plus_api = hdr10plus_api_get();
 #endif
 
@@ -606,7 +606,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     {
         x265_sei_payload toneMap;
         toneMap.payload = NULL;
-#if ENABLE_DYNAMIC_HDR10
+#if ENABLE_HDR10_PLUS
         if (m_bToneMap)
         {
             uint8_t *cim = NULL;
@@ -2302,12 +2302,12 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "Inter refinement does not support limitTU. Disabling limitTU.\n");
         p->limitTU = 0;
     }
-	
-	if (p->mvRefine)
+
+    if (p->mvRefine)
     {
         if (p->analysisMode != X265_ANALYSIS_LOAD || p->analysisRefineLevel < 10 || !p->scaleFactor)
         {
-            x265_log(p, X265_LOG_WARNING, "MV refinement requires analysis load, refine-level 10, scale factor. Disabling inter refine.\n");
+            x265_log(p, X265_LOG_WARNING, "MV refinement requires analysis load, refine-level 10, scale factor. Disabling MV refine.\n");
             p->mvRefine = 0;
         }
     }
@@ -2459,7 +2459,7 @@ void Encoder::configure(x265_param *p)
         p->dynamicRd = 0;
         x265_log(p, X265_LOG_WARNING, "Dynamic-rd disabled, requires RD <= 4, VBV and aq-mode enabled\n");
     }
-#ifdef ENABLE_DYNAMIC_HDR10
+#ifdef ENABLE_HDR10_PLUS
     if (m_param->bDhdr10opt && m_param->toneMapFile == NULL)
     {
         x265_log(p, X265_LOG_WARNING, "Disabling dhdr10-opt. dhdr10-info must be enabled.\n");
@@ -2483,7 +2483,7 @@ void Encoder::configure(x265_param *p)
 #else
     if (m_param->toneMapFile)
     {
-        x265_log(p, X265_LOG_WARNING, "--dhdr10-info disabled. Enable dynamic HDR in cmake.\n");
+        x265_log(p, X265_LOG_WARNING, "--dhdr10-info disabled. Enable HDR10_PLUS in cmake.\n");
         m_bToneMap = 0;
         m_param->toneMapFile = NULL;
     }
