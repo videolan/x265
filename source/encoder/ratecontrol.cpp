@@ -2592,7 +2592,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     int64_t actualBits = bits;
     Slice *slice = curEncData.m_slice;
 
-    if (m_param->rc.aqMode || m_isVbv || m_param->bAQMotion || m_param->bHDROpt)
+    if (m_param->rc.aqMode || m_isVbv || m_param->bAQMotion)
     {
         if (m_isVbv && !(m_2pass && m_param->rc.rateControlMode == X265_RC_CRF))
         {
@@ -2606,7 +2606,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
             rce->qpaRc = curEncData.m_avgQpRc;
         }
 
-        if (m_param->rc.aqMode || m_param->bAQMotion || m_param->bHDROpt)
+        if (m_param->rc.aqMode || m_param->bAQMotion)
         {
             double avgQpAq = 0;
             /* determine actual avg encoded QP, after AQ/cutree adjustments */
