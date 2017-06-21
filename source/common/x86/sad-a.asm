@@ -378,111 +378,60 @@ SAD  4,  4
     lea     r0,  [r0 + r1]
 %endmacro
 
-%macro SAD_W16 0
-;-----------------------------------------------------------------------------
-; int pixel_sad_16x16( uint8_t *, intptr_t, uint8_t *, intptr_t )
-;-----------------------------------------------------------------------------
-cglobal pixel_sad_16x16, 4,4,8
-    movu    m0, [r2]
-    movu    m1, [r2+r3]
-    lea     r2, [r2+2*r3]
-    movu    m2, [r2]
-    movu    m3, [r2+r3]
-    lea     r2, [r2+2*r3]
-    psadbw  m0, [r0]
-    psadbw  m1, [r0+r1]
-    lea     r0, [r0+2*r1]
-    movu    m4, [r2]
-    paddw   m0, m1
-    psadbw  m2, [r0]
-    psadbw  m3, [r0+r1]
-    lea     r0, [r0+2*r1]
-    movu    m5, [r2+r3]
-    lea     r2, [r2+2*r3]
-    paddw   m2, m3
-    movu    m6, [r2]
-    movu    m7, [r2+r3]
-    lea     r2, [r2+2*r3]
-    paddw   m0, m2
-    psadbw  m4, [r0]
-    psadbw  m5, [r0+r1]
-    lea     r0, [r0+2*r1]
-    movu    m1, [r2]
-    paddw   m4, m5
-    psadbw  m6, [r0]
-    psadbw  m7, [r0+r1]
-    lea     r0, [r0+2*r1]
-    movu    m2, [r2+r3]
-    lea     r2, [r2+2*r3]
-    paddw   m6, m7
-    movu    m3, [r2]
-    paddw   m0, m4
-    movu    m4, [r2+r3]
-    lea     r2, [r2+2*r3]
-    paddw   m0, m6
-    psadbw  m1, [r0]
-    psadbw  m2, [r0+r1]
-    lea     r0, [r0+2*r1]
-    movu    m5, [r2]
-    paddw   m1, m2
-    psadbw  m3, [r0]
-    psadbw  m4, [r0+r1]
-    lea     r0, [r0+2*r1]
-    movu    m6, [r2+r3]
-    lea     r2, [r2+2*r3]
-    paddw   m3, m4
-    movu    m7, [r2]
-    paddw   m0, m1
-    movu    m1, [r2+r3]
-    paddw   m0, m3
-    psadbw  m5, [r0]
-    psadbw  m6, [r0+r1]
-    lea     r0, [r0+2*r1]
-    paddw   m5, m6
-    psadbw  m7, [r0]
-    psadbw  m1, [r0+r1]
-    paddw   m7, m1
-    paddw   m0, m5
-    paddw   m0, m7
-    SAD_END_SSE2
+%macro SAD_W16 1 ; h
+cglobal pixel_sad_16x%1, 4,4
+%assign %%i 0
+%if ARCH_X86_64
+    lea  r6, [3*r1] ; r6 results in fewer REX prefixes than r4 and both are volatile
+    lea  r5, [3*r3]
+%rep %1/4
+    movu     m1, [r2]
+    psadbw   m1, [r0]
+    movu     m3, [r2+r3]
+    psadbw   m3, [r0+r1]
+    movu     m2, [r2+2*r3]
+    psadbw   m2, [r0+2*r1]
+    movu     m4, [r2+r5]
+    psadbw   m4, [r0+r6]
+%if %%i != %1/4-1
+    lea      r2, [r2+4*r3]
+    lea      r0, [r0+4*r1]
+%endif
+    paddw    m1, m3
+    paddw    m2, m4
+    ACCUM paddw, 0, 1, %%i
+    paddw    m0, m2
+    %assign %%i %%i+1
+%endrep
+%else     ; The cost of having to save and restore registers on x86-32
+%rep %1/2 ; nullifies the benefit of having 3*stride in registers.
+    movu     m1, [r2]
+    psadbw   m1, [r0]
+    movu     m2, [r2+r3]
+    psadbw   m2, [r0+r1]
+%if %%i != %1/2-1
+    lea      r2, [r2+2*r3]
+    lea      r0, [r0+2*r1]
+%endif
+    ACCUM paddw, 0, 1, %%i
+    paddw    m0, m2
+    %assign %%i %%i+1
+%endrep
+%endif
+     SAD_END_SSE2
+ %endmacro
 
-;-----------------------------------------------------------------------------
-; int pixel_sad_16x8( uint8_t *, intptr_t, uint8_t *, intptr_t )
-;-----------------------------------------------------------------------------
-cglobal pixel_sad_16x8, 4,4
-    movu    m0, [r2]
-    movu    m2, [r2+r3]
-    lea     r2, [r2+2*r3]
-    movu    m3, [r2]
-    movu    m4, [r2+r3]
-    psadbw  m0, [r0]
-    psadbw  m2, [r0+r1]
-    lea     r0, [r0+2*r1]
-    psadbw  m3, [r0]
-    psadbw  m4, [r0+r1]
-    lea     r0, [r0+2*r1]
-    lea     r2, [r2+2*r3]
-    paddw   m0, m2
-    paddw   m3, m4
-    paddw   m0, m3
-    movu    m1, [r2]
-    movu    m2, [r2+r3]
-    lea     r2, [r2+2*r3]
-    movu    m3, [r2]
-    movu    m4, [r2+r3]
-    psadbw  m1, [r0]
-    psadbw  m2, [r0+r1]
-    lea     r0, [r0+2*r1]
-    psadbw  m3, [r0]
-    psadbw  m4, [r0+r1]
-    lea     r0, [r0+2*r1]
-    lea     r2, [r2+2*r3]
-    paddw   m1, m2
-    paddw   m3, m4
-    paddw   m0, m1
-    paddw   m0, m3
-    SAD_END_SSE2
+INIT_XMM sse2
+SAD_W16 8
+SAD_W16 16
+INIT_XMM sse3
+SAD_W16 8
+SAD_W16 16
+INIT_XMM sse2, aligned
+SAD_W16 8
+SAD_W16 16
 
+%macro SAD_Wx 0
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_16x12( uint8_t *, intptr_t, uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
@@ -808,11 +757,11 @@ cglobal pixel_sad_12x16, 4,4,4
 %endmacro
 
 INIT_XMM sse2
-SAD_W16
+SAD_Wx
 INIT_XMM sse3
-SAD_W16
+SAD_Wx
 INIT_XMM sse2, aligned
-SAD_W16
+SAD_Wx
 
 %macro SAD_INC_4x8P_SSE 1
     movq    m1, [r0]
