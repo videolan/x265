@@ -120,8 +120,8 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
             CHECKED_MALLOC(m_rqt[i].coeffRQT[0], coeff_t, sizeL + sizeC * 2);
             m_rqt[i].coeffRQT[1] = m_rqt[i].coeffRQT[0] + sizeL;
             m_rqt[i].coeffRQT[2] = m_rqt[i].coeffRQT[0] + sizeL + sizeC;
-            ok &= m_rqt[i].reconQtYuv.create(g_maxCUSize, param.internalCsp);
-            ok &= m_rqt[i].resiQtYuv.create(g_maxCUSize, param.internalCsp);
+            ok &= m_rqt[i].reconQtYuv.create(param.maxCUSize, param.internalCsp);
+            ok &= m_rqt[i].resiQtYuv.create(param.maxCUSize, param.internalCsp);
         }
     }
     else
@@ -130,15 +130,15 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
         {
             CHECKED_MALLOC(m_rqt[i].coeffRQT[0], coeff_t, sizeL);
             m_rqt[i].coeffRQT[1] = m_rqt[i].coeffRQT[2] = NULL;
-            ok &= m_rqt[i].reconQtYuv.create(g_maxCUSize, param.internalCsp);
-            ok &= m_rqt[i].resiQtYuv.create(g_maxCUSize, param.internalCsp);
+            ok &= m_rqt[i].reconQtYuv.create(param.maxCUSize, param.internalCsp);
+            ok &= m_rqt[i].resiQtYuv.create(param.maxCUSize, param.internalCsp);
         }
     }
 
     /* the rest of these buffers are indexed per-depth */
     for (uint32_t i = 0; i <= g_maxCUDepth; i++)
     {
-        int cuSize = g_maxCUSize >> i;
+        int cuSize = param.maxCUSize >> i;
         ok &= m_rqt[i].tmpResiYuv.create(cuSize, param.internalCsp);
         ok &= m_rqt[i].tmpPredYuv.create(cuSize, param.internalCsp);
         ok &= m_rqt[i].bidirPredYuv[0].create(cuSize, param.internalCsp);
@@ -2593,11 +2593,11 @@ void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mv
     cu.clipMv(mvmax);
 
     if (cu.m_encData->m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
-          cu.m_cuPelX / g_maxCUSize < m_frame->m_encData->m_pir.pirStartCol &&
+          cu.m_cuPelX / m_param->maxCUSize < m_frame->m_encData->m_pir.pirStartCol &&
           m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol < m_slice->m_sps->numCuInWidth)
     {
         int safeX, maxSafeMv;
-        safeX = m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol * g_maxCUSize - 3;
+        safeX = m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol * m_param->maxCUSize - 3;
         maxSafeMv = (safeX - cu.m_cuPelX) * 4;
         mvmax.x = X265_MIN(mvmax.x, maxSafeMv);
         mvmin.x = X265_MIN(mvmin.x, maxSafeMv);

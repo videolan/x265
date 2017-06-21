@@ -71,10 +71,11 @@ public:
     pixel   m_maxChromaVLevel;
     pixel   m_minChromaVLevel;
     double  m_avgChromaVLevel;
+    x265_param *m_param;
 
     PicYuv();
 
-    bool  create(uint32_t picWidth, uint32_t picHeight, uint32_t csp, pixel *pixelbuf = NULL);
+    bool  create(x265_param* param, pixel *pixelbuf = NULL);
     bool  createOffsets(const SPS& sps);
     void  destroy();
     int   getLumaBufLen(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp);

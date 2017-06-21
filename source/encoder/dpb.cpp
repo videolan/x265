@@ -107,8 +107,8 @@ void DPB::recycleUnreferenced()
 
             if (curFrame->m_ctuInfo != NULL)
             {
-                uint32_t widthInCU = (curFrame->m_param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
-                uint32_t heightInCU = (curFrame->m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+                uint32_t widthInCU = (curFrame->m_param->sourceWidth + curFrame->m_param->maxCUSize - 1) >> g_maxLog2CUSize;
+                uint32_t heightInCU = (curFrame->m_param->sourceHeight + curFrame->m_param->maxCUSize - 1) >> g_maxLog2CUSize;
                 uint32_t numCUsInFrame = widthInCU * heightInCU;
                 for (uint32_t i = 0; i < numCUsInFrame; i++)
                 {

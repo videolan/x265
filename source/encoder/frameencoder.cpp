@@ -124,7 +124,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     range += !!(m_param->searchMethod < 2);  /* diamond/hex range check lag */
     range += NTAPS_LUMA / 2;                 /* subpel filter half-length */
     range += 2 + (MotionEstimate::hpelIterationCount(m_param->subpelRefine) + 1) / 2; /* subpel refine steps */
-    m_refLagRows = /*(m_param->maxSlices > 1 ? 1 : 0) +*/ 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
+    m_refLagRows = /*(m_param->maxSlices > 1 ? 1 : 0) +*/ 1 + ((range + m_param->maxCUSize - 1) / m_param->maxCUSize);
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
     if (!WaveFront::init(m_numRows * 2))
@@ -837,7 +837,7 @@ void FrameEncoder::compressFrame()
         }
         else if (m_param->decodedPictureHashSEI == 3)
         {
-            uint32_t cuHeight = g_maxCUSize;
+            uint32_t cuHeight = m_param->maxCUSize;
 
             m_checksum[0] = 0;
 
@@ -1246,7 +1246,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
     uint32_t maxBlockCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
     uint32_t maxBlockRows = (m_frame->m_fencPic->m_picHeight + (16 - 1)) / 16;
-    uint32_t noOfBlocks = g_maxCUSize / 16;
+    uint32_t noOfBlocks = m_param->maxCUSize / 16;
     const uint32_t bFirstRowInSlice = ((row == 0) || (m_rows[row - 1].sliceId != curRow.sliceId)) ? 1 : 0;
     const uint32_t bLastRowInSlice = ((row == m_numRows - 1) || (m_rows[row + 1].sliceId != curRow.sliceId)) ? 1 : 0;
     const uint32_t sliceId = curRow.sliceId;
@@ -1325,8 +1325,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     // TODO: specially case handle on first and last row
 
     // Initialize restrict on MV range in slices
-    tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * g_maxCUSize * 4) + 3 * 4;
-    tld.analysis.m_sliceMaxY = (int16_t)((endRowInSlicePlus1 - 1 - row) * (g_maxCUSize * 4) - 4 * 4);
+    tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * m_param->maxCUSize * 4) + 3 * 4;
+    tld.analysis.m_sliceMaxY = (int16_t)((endRowInSlicePlus1 - 1 - row) * (m_param->maxCUSize * 4) - 4 * 4);
 
     // Handle single row slice
     if (tld.analysis.m_sliceMaxY < tld.analysis.m_sliceMinY)
@@ -1482,7 +1482,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             {
                 /* 1 << shift == number of 8x8 blocks at current depth */
                 int shift = 2 * (g_maxCUDepth - depth);
-                int cuSize = g_maxCUSize >> depth;
+                int cuSize = m_param->maxCUSize >> depth;
 
                 if (cuSize == 8)
                     curRow.rowStats.intra8x8Cnt += (int)(frameLog.cntIntra[depth] + frameLog.cntIntraNxN);

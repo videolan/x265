@@ -185,8 +185,8 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
     m_pad[0] = top->m_sps.conformanceWindow.rightOffset;
     m_pad[1] = top->m_sps.conformanceWindow.bottomOffset;
     m_saoRowDelay = m_param->bEnableLoopFilter ? 1 : 0;
-    m_lastHeight = (m_param->sourceHeight % g_maxCUSize) ? (m_param->sourceHeight % g_maxCUSize) : g_maxCUSize;
-    m_lastWidth = (m_param->sourceWidth % g_maxCUSize) ? (m_param->sourceWidth % g_maxCUSize) : g_maxCUSize;
+    m_lastHeight = (m_param->sourceHeight % m_param->maxCUSize) ? (m_param->sourceHeight % m_param->maxCUSize) : m_param->maxCUSize;
+    m_lastWidth = (m_param->sourceWidth % m_param->maxCUSize) ? (m_param->sourceWidth % m_param->maxCUSize) : m_param->maxCUSize;
     integralCompleted.set(0);
 
     if (m_param->bEnableSsim)
@@ -214,7 +214,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
         for(int row = 0; row < numRows; row++)
         {
             // Setting maximum bound information
-            m_parallelFilter[row].m_rowHeight = (row == numRows - 1) ? m_lastHeight : g_maxCUSize;
+            m_parallelFilter[row].m_rowHeight = (row == numRows - 1) ? m_lastHeight : m_param->maxCUSize;
             m_parallelFilter[row].m_row = row;
             m_parallelFilter[row].m_rowAddr = row * numCols;
             m_parallelFilter[row].m_frameFilter = this;
@@ -300,7 +300,7 @@ static void origCUSampleRestoration(const CUData* cu, const CUGeom& cuGeom, Fram
 void FrameFilter::ParallelFilter::copySaoAboveRef(const CUData *ctu, PicYuv* reconPic, uint32_t cuAddr, int col)
 {
     // Copy SAO Top Reference Pixels
-    int ctuWidth  = g_maxCUSize;
+    int ctuWidth  = ctu->m_encData->m_param->maxCUSize;
     const pixel* recY = reconPic->getPlaneAddr(0, cuAddr) - (ctu->m_bFirstRowInSlice ? 0 : reconPic->m_stride);
 
     // Luma
@@ -701,8 +701,8 @@ void FrameFilter::processPostRow(int row)
         intptr_t stride2 = m_frame->m_fencPic->m_stride;
         uint32_t bEnd = ((row) == (this->m_numRows - 1));
         uint32_t bStart = (row == 0);
-        uint32_t minPixY = row * g_maxCUSize - 4 * !bStart;
-        uint32_t maxPixY = X265_MIN((row + 1) * g_maxCUSize - 4 * !bEnd, (uint32_t)m_param->sourceHeight);
+        uint32_t minPixY = row * m_param->maxCUSize - 4 * !bStart;
+        uint32_t maxPixY = X265_MIN((row + 1) * m_param->maxCUSize - 4 * !bEnd, (uint32_t)m_param->sourceHeight);
         uint32_t ssim_cnt;
         x265_emms();
 
@@ -768,7 +768,7 @@ void FrameFilter::processPostRow(int row)
             uint32_t width = reconPic->m_picWidth;
             uint32_t height = m_parallelFilter[row].getCUHeight();
             intptr_t stride = reconPic->m_stride;
-            uint32_t cuHeight = g_maxCUSize;
+            uint32_t cuHeight = m_param->maxCUSize;
 
             if (!row)
                 m_frameEncoder->m_checksum[0] = 0;
@@ -812,18 +812,18 @@ void FrameFilter::computeMEIntegral(int row)
         }
 
         int stride = (int)m_frame->m_reconPic->m_stride;
-        int padX = g_maxCUSize + 32;
-        int padY = g_maxCUSize + 16;
+        int padX = m_param->maxCUSize + 32;
+        int padY = m_param->maxCUSize + 16;
         int numCuInHeight = m_frame->m_encData->m_slice->m_sps->numCuInHeight;
-        int maxHeight = numCuInHeight * g_maxCUSize;
+        int maxHeight = numCuInHeight * m_param->maxCUSize;
         int startRow = 0;
 
         if (m_param->interlaceMode)
-            startRow = (row * g_maxCUSize >> 1);
+            startRow = (row * m_param->maxCUSize >> 1);
         else
-            startRow = row * g_maxCUSize;
+            startRow = row * m_param->maxCUSize;
 
-        int height = lastRow ? (maxHeight + g_maxCUSize * m_param->interlaceMode) : (((row + m_param->interlaceMode) * g_maxCUSize) + g_maxCUSize);
+        int height = lastRow ? (maxHeight + m_param->maxCUSize * m_param->interlaceMode) : (((row + m_param->interlaceMode) * m_param->maxCUSize) + m_param->maxCUSize);
 
         if (!row)
         {

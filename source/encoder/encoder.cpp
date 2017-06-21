@@ -321,8 +321,8 @@ void Encoder::create()
     else
         m_scalingList.setupQuantMatrices(m_sps.chromaFormatIdc);
 
-    int numRows = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
-    int numCols = (m_param->sourceWidth  + g_maxCUSize - 1) / g_maxCUSize;
+    int numRows = (m_param->sourceHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
+    int numCols = (m_param->sourceWidth  + m_param->maxCUSize - 1) / m_param->maxCUSize;
     for (int i = 0; i < m_param->frameNumThreads; i++)
     {
         if (!m_frameEncoder[i]->init(this, numRows, numCols))
@@ -1035,16 +1035,17 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 Slice* slice = frameEnc->m_encData->m_slice;
                 slice->m_sps = &m_sps;
                 slice->m_pps = &m_pps;
+                slice->m_param = m_param;
                 slice->m_maxNumMergeCand = m_param->maxNumMergeCand;
                 slice->m_endCUAddr = slice->realEndAddress(m_sps.numCUsInFrame * NUM_4x4_PARTITIONS);
             }
 
             if (m_param->searchMethod == X265_SEA && frameEnc->m_lowres.sliceType != X265_TYPE_B)
             {
-                int padX = g_maxCUSize + 32;
-                int padY = g_maxCUSize + 16;
-                uint32_t numCuInHeight = (frameEnc->m_encData->m_reconPic->m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
-                int maxHeight = numCuInHeight * g_maxCUSize;
+                int padX = m_param->maxCUSize + 32;
+                int padY = m_param->maxCUSize + 16;
+                uint32_t numCuInHeight = (frameEnc->m_encData->m_reconPic->m_picHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
+                int maxHeight = numCuInHeight * m_param->maxCUSize;
                 for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
                 {
                     frameEnc->m_encData->m_meBuffer[i] = X265_MALLOC(uint32_t, frameEnc->m_reconPic->m_stride * (maxHeight + (2 * padY)));
@@ -1108,8 +1109,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 x265_analysis_data* analysis = &frameEnc->m_analysisData;
                 analysis->poc = frameEnc->m_poc;
                 analysis->sliceType = frameEnc->m_lowres.sliceType;
-                uint32_t widthInCU       = (m_param->sourceWidth  + g_maxCUSize - 1) >> g_maxLog2CUSize;
-                uint32_t heightInCU      = (m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+                uint32_t widthInCU       = (m_param->sourceWidth  + m_param->maxCUSize - 1) >> g_maxLog2CUSize;
+                uint32_t heightInCU      = (m_param->sourceHeight + m_param->maxCUSize - 1) >> g_maxLog2CUSize;
 
                 uint32_t numCUsInFrame   = widthInCU * heightInCU;
                 analysis->numCUsInFrame  = numCUsInFrame;
@@ -1182,8 +1183,8 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
 
 void Encoder::copyCtuInfo(x265_ctu_info_t** frameCtuInfo, int poc)
 {
-    uint32_t widthInCU = (m_param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
-    uint32_t heightInCU = (m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t widthInCU = (m_param->sourceWidth + m_param->maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t heightInCU = (m_param->sourceHeight + m_param->maxCUSize - 1) >> g_maxLog2CUSize;
     Frame* curFrame;
     Frame* prevFrame = NULL;
     int32_t* frameCTU;
@@ -1554,7 +1555,7 @@ void Encoder::printSummary()
     }
 
     x265_log(m_param, X265_LOG_INFO, "CU: " X265_LL " %dX%d CTUs compressed in %.3lf seconds, %.3lf CTUs per worker-second\n",
-             cuStats.totalCTUs, g_maxCUSize, g_maxCUSize,
+             cuStats.totalCTUs, m_param->maxCUSize, m_param->maxCUSize,
              ELAPSED_SEC(totalWorkerTime),
              cuStats.totalCTUs / ELAPSED_SEC(totalWorkerTime));
 
@@ -1981,8 +1982,8 @@ void Encoder::initSPS(SPS *sps)
     sps->chromaFormatIdc = m_param->internalCsp;
     sps->picWidthInLumaSamples = m_param->sourceWidth;
     sps->picHeightInLumaSamples = m_param->sourceHeight;
-    sps->numCuInWidth = (m_param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
-    sps->numCuInHeight = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+    sps->numCuInWidth = (m_param->sourceWidth + m_param->maxCUSize - 1) / m_param->maxCUSize;
+    sps->numCuInHeight = (m_param->sourceHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
     sps->numCUsInFrame = sps->numCuInWidth * sps->numCuInHeight;
     sps->numPartitions = NUM_4x4_PARTITIONS;
     sps->numPartInCUSize = 1 << g_unitSizeDepth;
@@ -2212,7 +2213,7 @@ void Encoder::configure(x265_param *p)
         p->lookaheadDepth = p->totalFrames;
     if (p->bIntraRefresh)
     {
-        int numCuInWidth = (m_param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
+        int numCuInWidth = (m_param->sourceWidth + m_param->maxCUSize - 1) / m_param->maxCUSize;
         if (p->maxNumReferences > 1)
         {
             x265_log(p,  X265_LOG_WARNING, "Max References > 1 + intra-refresh is not supported , setting max num references = 1\n");
@@ -2772,8 +2773,8 @@ void Encoder::allocAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType)
 {
     analysis->analysisFramedata = NULL;
     analysis2PassFrameData *analysisFrameData = (analysis2PassFrameData*)analysis->analysisFramedata;
-    uint32_t widthInCU = (m_param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
-    uint32_t heightInCU = (m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t widthInCU = (m_param->sourceWidth + m_param->maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t heightInCU = (m_param->sourceHeight + m_param->maxCUSize - 1) >> g_maxLog2CUSize;
 
     uint32_t numCUsInFrame = widthInCU * heightInCU;
     CHECKED_MALLOC_ZERO(analysisFrameData, analysis2PassFrameData, 1);
@@ -3074,8 +3075,8 @@ void Encoder::readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int curP
 }\
 
     uint32_t depthBytes = 0;
-    uint32_t widthInCU = (m_param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
-    uint32_t heightInCU = (m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t widthInCU = (m_param->sourceWidth + m_param->maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t heightInCU = (m_param->sourceHeight + m_param->maxCUSize - 1) >> g_maxLog2CUSize;
     uint32_t numCUsInFrame = widthInCU * heightInCU;
 
     int poc; uint32_t frameRecordSize;
@@ -3384,8 +3385,8 @@ void Encoder::writeAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, FrameDa
 }\
 
     uint32_t depthBytes = 0;
-    uint32_t widthInCU = (m_param->sourceWidth + g_maxCUSize - 1) >> g_maxLog2CUSize;
-    uint32_t heightInCU = (m_param->sourceHeight + g_maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t widthInCU = (m_param->sourceWidth + m_param->maxCUSize - 1) >> g_maxLog2CUSize;
+    uint32_t heightInCU = (m_param->sourceHeight + m_param->maxCUSize - 1) >> g_maxLog2CUSize;
     uint32_t numCUsInFrame = widthInCU * heightInCU;
     analysis2PassFrameData* analysisFrameData = (analysis2PassFrameData*)analysis2Pass->analysisFramedata;
 

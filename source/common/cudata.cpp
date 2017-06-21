@@ -119,8 +119,9 @@ CUData::CUData()
     memset(this, 0, sizeof(*this));
 }
 
-void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, int instance)
+void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, const x265_param& param, int instance)
 {
+    int csp = param.internalCsp;
     m_chromaFormat  = csp;
     m_hChromaShift  = CHROMA_H_SHIFT(csp);
     m_vChromaShift  = CHROMA_V_SHIFT(csp);
@@ -221,7 +222,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
 
         m_distortion = dataPool.distortionMemBlock + instance * m_numPartitions;
 
-        uint32_t cuSize = g_maxCUSize >> depth;
+        uint32_t cuSize = param.maxCUSize >> depth;
         m_trCoeff[0] = dataPool.trCoeffMemBlock + instance * (cuSize * cuSize);
         m_trCoeff[1] = m_trCoeff[2] = 0;
         m_transformSkip[1] = m_transformSkip[2] = m_cbf[1] = m_cbf[2] = 0;
@@ -263,7 +264,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, 
 
         m_distortion = dataPool.distortionMemBlock + instance * m_numPartitions;
 
-        uint32_t cuSize = g_maxCUSize >> depth;
+        uint32_t cuSize = param.maxCUSize >> depth;
         uint32_t sizeL = cuSize * cuSize;
         uint32_t sizeC = sizeL >> (m_hChromaShift + m_vChromaShift); // block chroma part
         m_trCoeff[0] = dataPool.trCoeffMemBlock + instance * (sizeL + sizeC * 2);
@@ -1917,10 +1918,10 @@ void CUData::clipMv(MV& outMV) const
     uint32_t offset = 8;
 
     int16_t xmax = (int16_t)((m_slice->m_sps->picWidthInLumaSamples + offset - m_cuPelX - 1) << mvshift);
-    int16_t xmin = -(int16_t)((g_maxCUSize + offset + m_cuPelX - 1) << mvshift);
+    int16_t xmin = -(int16_t)((m_encData->m_param->maxCUSize + offset + m_cuPelX - 1) << mvshift);
 
     int16_t ymax = (int16_t)((m_slice->m_sps->picHeightInLumaSamples + offset - m_cuPelY - 1) << mvshift);
-    int16_t ymin = -(int16_t)((g_maxCUSize + offset + m_cuPelY - 1) << mvshift);
+    int16_t ymin = -(int16_t)((m_encData->m_param->maxCUSize + offset + m_cuPelY - 1) << mvshift);
 
     outMV.x = X265_MIN(xmax, X265_MAX(xmin, outMV.x));
     outMV.y = X265_MIN(ymax, X265_MAX(ymin, outMV.y));

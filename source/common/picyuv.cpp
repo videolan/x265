@@ -69,22 +69,26 @@ PicYuv::PicYuv()
     m_vChromaShift = 0;
 }
 
-bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp, pixel *pixelbuf)
+bool PicYuv::create(x265_param* param, pixel *pixelbuf)
 {
+    m_param = param;
+    uint32_t picWidth = m_param->sourceWidth;
+    uint32_t picHeight = m_param->sourceHeight;
+    uint32_t picCsp = m_param->internalCsp;
     m_picWidth  = picWidth;
     m_picHeight = picHeight;
     m_hChromaShift = CHROMA_H_SHIFT(picCsp);
     m_vChromaShift = CHROMA_V_SHIFT(picCsp);
     m_picCsp = picCsp;
 
-    uint32_t numCuInWidth = (m_picWidth + g_maxCUSize - 1)  / g_maxCUSize;
-    uint32_t numCuInHeight = (m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
+    uint32_t numCuInWidth = (m_picWidth + param->maxCUSize - 1)  / param->maxCUSize;
+    uint32_t numCuInHeight = (m_picHeight + param->maxCUSize - 1) / param->maxCUSize;
 
-    m_lumaMarginX = g_maxCUSize + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
-    m_lumaMarginY = g_maxCUSize + 16; // margin for 8-tap filter and infinite padding
-    m_stride = (numCuInWidth * g_maxCUSize) + (m_lumaMarginX << 1);
+    m_lumaMarginX = param->maxCUSize + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
+    m_lumaMarginY = param->maxCUSize + 16; // margin for 8-tap filter and infinite padding
+    m_stride = (numCuInWidth * param->maxCUSize) + (m_lumaMarginX << 1);
 
-    int maxHeight = numCuInHeight * g_maxCUSize;
+    int maxHeight = numCuInHeight * param->maxCUSize;
     if (pixelbuf)
         m_picOrg[0] = pixelbuf;
     else
@@ -97,7 +101,7 @@ bool PicYuv::create(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp, pixe
     {
         m_chromaMarginX = m_lumaMarginX;  // keep 16-byte alignment for chroma CTUs
         m_chromaMarginY = m_lumaMarginY >> m_vChromaShift;
-        m_strideC = ((numCuInWidth * g_maxCUSize) >> m_hChromaShift) + (m_chromaMarginX * 2);
+        m_strideC = ((numCuInWidth * m_param->maxCUSize) >> m_hChromaShift) + (m_chromaMarginX * 2);
 
         CHECKED_MALLOC(m_picBuf[1], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
         CHECKED_MALLOC(m_picBuf[2], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
@@ -124,14 +128,14 @@ int PicYuv::getLumaBufLen(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp
     m_vChromaShift = CHROMA_V_SHIFT(picCsp);
     m_picCsp = picCsp;
 
-    uint32_t numCuInWidth = (m_picWidth + g_maxCUSize - 1) / g_maxCUSize;
-    uint32_t numCuInHeight = (m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
+    uint32_t numCuInWidth = (m_picWidth + m_param->maxCUSize - 1) / m_param->maxCUSize;
+    uint32_t numCuInHeight = (m_picHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
 
-    m_lumaMarginX = g_maxCUSize + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
-    m_lumaMarginY = g_maxCUSize + 16; // margin for 8-tap filter and infinite padding
-    m_stride = (numCuInWidth * g_maxCUSize) + (m_lumaMarginX << 1);
+    m_lumaMarginX = m_param->maxCUSize + 32; // search margin and 8-tap filter half-length, padded for 32-byte alignment
+    m_lumaMarginY = m_param->maxCUSize + 16; // margin for 8-tap filter and infinite padding
+    m_stride = (numCuInWidth * m_param->maxCUSize) + (m_lumaMarginX << 1);
 
-    int maxHeight = numCuInHeight * g_maxCUSize;
+    int maxHeight = numCuInHeight * m_param->maxCUSize;
     int bufLen = (int)(m_stride * (maxHeight + (m_lumaMarginY * 2)));
 
     return bufLen;
@@ -152,8 +156,8 @@ bool PicYuv::createOffsets(const SPS& sps)
         {
             for (uint32_t cuCol = 0; cuCol < sps.numCuInWidth; cuCol++)
             {
-                m_cuOffsetY[cuRow * sps.numCuInWidth + cuCol] = m_stride * cuRow * g_maxCUSize + cuCol * g_maxCUSize;
-                m_cuOffsetC[cuRow * sps.numCuInWidth + cuCol] = m_strideC * cuRow * (g_maxCUSize >> m_vChromaShift) + cuCol * (g_maxCUSize >> m_hChromaShift);
+                m_cuOffsetY[cuRow * sps.numCuInWidth + cuCol] = m_stride * cuRow * m_param->maxCUSize + cuCol * m_param->maxCUSize;
+                m_cuOffsetC[cuRow * sps.numCuInWidth + cuCol] = m_strideC * cuRow * (m_param->maxCUSize >> m_vChromaShift) + cuCol * (m_param->maxCUSize >> m_hChromaShift);
             }
         }
 
@@ -172,7 +176,7 @@ bool PicYuv::createOffsets(const SPS& sps)
         CHECKED_MALLOC(m_cuOffsetY, intptr_t, sps.numCuInWidth * sps.numCuInHeight);
         for (uint32_t cuRow = 0; cuRow < sps.numCuInHeight; cuRow++)
         for (uint32_t cuCol = 0; cuCol < sps.numCuInWidth; cuCol++)
-            m_cuOffsetY[cuRow * sps.numCuInWidth + cuCol] = m_stride * cuRow * g_maxCUSize + cuCol * g_maxCUSize;
+            m_cuOffsetY[cuRow * sps.numCuInWidth + cuCol] = m_stride * cuRow * m_param->maxCUSize + cuCol * m_param->maxCUSize;
 
         CHECKED_MALLOC(m_buOffsetY, intptr_t, (size_t)numPartitions);
         for (uint32_t idx = 0; idx < numPartitions; ++idx)

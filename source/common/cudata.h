@@ -225,7 +225,7 @@ public:
 
     CUData();
 
-    void     initialize(const CUDataMemPool& dataPool, uint32_t depth, int csp, int instance);
+    void     initialize(const CUDataMemPool& dataPool, uint32_t depth, const x265_param& param, int instance);
     static void calcCTUGeoms(uint32_t ctuWidth, uint32_t ctuHeight, uint32_t maxCUSize, uint32_t minCUSize, CUGeom cuDataArray[CUGeom::MAX_GEOMS]);
 
     void     initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t firstRowInSlice, uint32_t lastRowInSlice, uint32_t lastCUInSlice);
@@ -350,10 +350,10 @@ struct CUDataMemPool
 
     CUDataMemPool() { charMemBlock = NULL; trCoeffMemBlock = NULL; mvMemBlock = NULL; distortionMemBlock = NULL; }
 
-    bool create(uint32_t depth, uint32_t csp, uint32_t numInstances)
+    bool create(uint32_t depth, uint32_t csp, uint32_t numInstances, const x265_param& param)
     {
         uint32_t numPartition = NUM_4x4_PARTITIONS >> (depth * 2);
-        uint32_t cuSize = g_maxCUSize >> depth;
+        uint32_t cuSize = param.maxCUSize >> depth;
         uint32_t sizeL = cuSize * cuSize;
         if (csp == X265_CSP_I400)
         {

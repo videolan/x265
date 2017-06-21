@@ -98,8 +98,8 @@ bool SAO::create(x265_param* param, int initCommon)
     m_hChromaShift = CHROMA_H_SHIFT(param->internalCsp);
     m_vChromaShift = CHROMA_V_SHIFT(param->internalCsp);
 
-    m_numCuInWidth =  (m_param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
-    m_numCuInHeight = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+    m_numCuInWidth =  (m_param->sourceWidth + m_param->maxCUSize - 1) / m_param->maxCUSize;
+    m_numCuInHeight = (m_param->sourceHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
 
     const pixel maxY = (1 << X265_DEPTH) - 1;
     const pixel rangeExt = maxY >> 1;
@@ -107,12 +107,12 @@ bool SAO::create(x265_param* param, int initCommon)
 
     for (int i = 0; i < (param->internalCsp != X265_CSP_I400 ? 3 : 1); i++)
     {
-        CHECKED_MALLOC(m_tmpL1[i], pixel, g_maxCUSize + 1);
-        CHECKED_MALLOC(m_tmpL2[i], pixel, g_maxCUSize + 1);
+        CHECKED_MALLOC(m_tmpL1[i], pixel, m_param->maxCUSize + 1);
+        CHECKED_MALLOC(m_tmpL2[i], pixel, m_param->maxCUSize + 1);
 
         // SAO asm code will read 1 pixel before and after, so pad by 2
         // NOTE: m_param->sourceWidth+2 enough, to avoid condition check in copySaoAboveRef(), I alloc more up to 63 bytes in here
-        CHECKED_MALLOC(m_tmpU[i], pixel, m_numCuInWidth * g_maxCUSize + 2 + 32);
+        CHECKED_MALLOC(m_tmpU[i], pixel, m_numCuInWidth * m_param->maxCUSize + 2 + 32);
         m_tmpU[i] += 1;
     }
 
@@ -279,8 +279,8 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     const CUData* cu = m_frame->m_encData->getPicCTU(addr);
-    int ctuWidth = g_maxCUSize;
-    int ctuHeight = g_maxCUSize;
+    int ctuWidth = m_param->maxCUSize;
+    int ctuHeight = m_param->maxCUSize;
     uint32_t lpelx = cu->m_cuPelX;
     uint32_t tpely = cu->m_cuPelY;
     const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;
@@ -573,8 +573,8 @@ void SAO::generateLumaOffsets(SaoCtuParam* ctuParam, int idxY, int idxX)
 {
     PicYuv* reconPic = m_frame->m_reconPic;
     intptr_t stride = reconPic->m_stride;
-    int ctuWidth  = g_maxCUSize;
-    int ctuHeight = g_maxCUSize;
+    int ctuWidth = m_param->maxCUSize;
+    int ctuHeight = m_param->maxCUSize;
 
     int addr = idxY * m_numCuInWidth + idxX;
     pixel* rec = reconPic->getLumaAddr(addr);
@@ -633,8 +633,8 @@ void SAO::generateChromaOffsets(SaoCtuParam* ctuParam[3], int idxY, int idxX)
 {
     PicYuv* reconPic = m_frame->m_reconPic;
     intptr_t stride = reconPic->m_strideC;
-    int ctuWidth  = g_maxCUSize;
-    int ctuHeight = g_maxCUSize;
+    int ctuWidth  = m_param->maxCUSize;
+    int ctuHeight = m_param->maxCUSize;
 
     {
         ctuWidth  >>= m_hChromaShift;
@@ -744,8 +744,8 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
     intptr_t stride = plane ? reconPic->m_strideC : reconPic->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
-    int ctuWidth  = g_maxCUSize;
-    int ctuHeight = g_maxCUSize;
+    int ctuWidth  = m_param->maxCUSize;
+    int ctuHeight = m_param->maxCUSize;
     uint32_t lpelx = cu->m_cuPelX;
     uint32_t tpely = cu->m_cuPelY;
     const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;
@@ -928,8 +928,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     intptr_t stride = reconPic->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
-    int ctuWidth  = g_maxCUSize;
-    int ctuHeight = g_maxCUSize;
+    int ctuWidth  = m_param->maxCUSize;
+    int ctuHeight = m_param->maxCUSize;
     uint32_t lpelx = cu->m_cuPelX;
     uint32_t tpely = cu->m_cuPelY;
     const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;

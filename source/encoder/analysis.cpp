@@ -90,19 +90,19 @@ bool Analysis::create(ThreadLocalData *tld)
     cacheCost = X265_MALLOC(uint64_t, costArrSize);
 
     int csp = m_param->internalCsp;
-    uint32_t cuSize = g_maxCUSize;
+    uint32_t cuSize = m_param->maxCUSize;
 
     bool ok = true;
     for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++, cuSize >>= 1)
     {
         ModeDepth &md = m_modeDepth[depth];
 
-        md.cuMemPool.create(depth, csp, MAX_PRED_TYPES);
+        md.cuMemPool.create(depth, csp, MAX_PRED_TYPES, *m_param);
         ok &= md.fencYuv.create(cuSize, csp);
 
         for (int j = 0; j < MAX_PRED_TYPES; j++)
         {
-            md.pred[j].cu.initialize(md.cuMemPool, depth, csp, j);
+            md.pred[j].cu.initialize(md.cuMemPool, depth, *m_param, j);
             ok &= md.pred[j].predYuv.create(cuSize, csp);
             ok &= md.pred[j].reconYuv.create(cuSize, csp);
             md.pred[j].fencYuv = &md.fencYuv;
@@ -236,8 +236,8 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     else
     {
         if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
-            ctu.m_cuPelX / g_maxCUSize >= frame.m_encData->m_pir.pirStartCol
-            && ctu.m_cuPelX / g_maxCUSize < frame.m_encData->m_pir.pirEndCol)
+            ctu.m_cuPelX / m_param->maxCUSize >= frame.m_encData->m_pir.pirStartCol
+            && ctu.m_cuPelX / m_param->maxCUSize < frame.m_encData->m_pir.pirEndCol)
             compressIntraCU(ctu, cuGeom, qp);
         else if (!m_param->rdLevel)
         {
@@ -2440,7 +2440,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
     int safeX, maxSafeMv;
     if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE)
     {
-        safeX = m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol * g_maxCUSize - 3;
+        safeX = m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol * m_param->maxCUSize - 3;
         maxSafeMv = (safeX - tempPred->cu.m_cuPelX) * 4;
     }
     for (uint32_t i = 0; i < numMergeCand; ++i)
@@ -2466,7 +2466,7 @@ void Analysis::checkMerge2Nx2N_rd0_4(Mode& skip, Mode& merge, const CUGeom& cuGe
         }
 
         if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
-            tempPred->cu.m_cuPelX / g_maxCUSize < m_frame->m_encData->m_pir.pirEndCol &&
+            tempPred->cu.m_cuPelX / m_param->maxCUSize < m_frame->m_encData->m_pir.pirEndCol &&
             candMvField[i][0].mv.x > maxSafeMv)
             // skip merge candidates which reference beyond safe reference area
             continue;
@@ -2570,7 +2570,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
     int safeX, maxSafeMv;
     if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE)
     {
-        safeX = m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol * g_maxCUSize - 3;
+        safeX = m_slice->m_refFrameList[0][0]->m_encData->m_pir.pirEndCol * m_param->maxCUSize - 3;
         maxSafeMv = (safeX - tempPred->cu.m_cuPelX) * 4;
     }
     for (uint32_t i = 0; i < numMergeCand; i++)
@@ -2611,7 +2611,7 @@ void Analysis::checkMerge2Nx2N_rd5_6(Mode& skip, Mode& merge, const CUGeom& cuGe
             triedBZero = true;
         }
         if (m_param->bIntraRefresh && m_slice->m_sliceType == P_SLICE &&
-            tempPred->cu.m_cuPelX / g_maxCUSize < m_frame->m_encData->m_pir.pirEndCol &&
+            tempPred->cu.m_cuPelX / m_param->maxCUSize < m_frame->m_encData->m_pir.pirEndCol &&
             candMvField[i][0].mv.x > maxSafeMv)
             // skip merge candidates which reference beyond safe reference area
             continue;
@@ -3236,7 +3236,7 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
         uint32_t block_x = ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx];
         uint32_t block_y = ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx];
         uint32_t maxCols = (m_frame->m_fencPic->m_picWidth + (loopIncr - 1)) / loopIncr;
-        uint32_t blockSize = g_maxCUSize >> cuGeom.depth;
+        uint32_t blockSize = m_param->maxCUSize >> cuGeom.depth;
         double qp_offset = 0;
         uint32_t cnt = 0;
         uint32_t idx;

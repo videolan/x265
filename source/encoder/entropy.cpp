@@ -888,7 +888,7 @@ void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth, b
     uint32_t cuAddr = ctu.getSCUAddr() + absPartIdx;
     X265_CHECK(realEndAddress == slice->realEndAddress(slice->m_endCUAddr), "real end address expected\n");
 
-    uint32_t granularityMask = g_maxCUSize - 1;
+    uint32_t granularityMask = ctu.m_encData->m_param->maxCUSize - 1;
     uint32_t cuSize = 1 << ctu.m_log2CUSize[absPartIdx];
     uint32_t rpelx = ctu.m_cuPelX + g_zscanToPelX[absPartIdx] + cuSize;
     uint32_t bpely = ctu.m_cuPelY + g_zscanToPelY[absPartIdx] + cuSize;
