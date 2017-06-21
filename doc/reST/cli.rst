@@ -1577,7 +1577,11 @@ Quality, rate control and rate distortion options
     and also redundant steps are skipped.
     In pass 1 analysis information like motion vector, depth, reference and prediction
     modes of the final best CTU partition is stored for each CTU.
-    Default disabled.
+    Multipass analysis refinement cannot be enabled when 'analysis-save/analysis-load' option
+    is enabled and both will be disabled when enabled together. This feature requires 'pmode/pme'
+    to be disabled and hence pmode/pme will be disabled when enabled at the same time.
+
+    Default: disabled.
 
 .. option:: --multi-pass-opt-distortion, --no-multi-pass-opt-distortion
 
@@ -1585,7 +1589,11 @@ Quality, rate control and rate distortion options
     ratecontrol. In pass 1 distortion of best CTU partition is stored. CTUs with high
     distortion get lower(negative)qp offsets and vice-versa for low distortion CTUs in pass 2.
     This helps to improve the subjective quality.
-    Default disabled.
+    Multipass refinement of qp cannot be enabled when 'analysis-save/analysis-load' option
+    is enabled and both will be disabled when enabled together. 'multi-pass-opt-distortion' 
+    requires 'pmode/pme' to be disabled and hence pmode/pme will be disabled when enabled along with it.
+
+    Default: disabled.
 
 .. option:: --strict-cbr, --no-strict-cbr
 	
