@@ -849,33 +849,31 @@ the prediction quad-tree.
 
 Analysis re-use options, to improve performance when encoding the same
 sequence multiple times (presumably at varying bitrates). The encoder
-will not reuse analysis if the resolution and slice type parameters do
-not match.
+will not reuse analysis if slice type parameters do not match.
 
-.. option:: --analysis-mode <string|int>
+.. option:: --analysis-reuse-mode <string|int>
 
-	Specify whether analysis information of each frame is output by encoder
-	or input for reuse. By reading the analysis data writen by an
-	earlier encode of the same sequence, substantial redundant work may
-	be avoided.
-
-	The following data may be stored and reused:
-	I frames   - split decisions and luma intra directions of all CUs.
-	P/B frames - motion vectors are dumped at each depth for all CUs.
+	This option allows reuse of analysis information from first pass to second pass.
+	:option:`--analysis-reuse-mode save` specifies that encoder outputs analysis information of each frame.
+	:option:`--analysis-reuse-mode load` specifies that encoder reuses analysis information from first pass.
+	There is no benefit using load mode without running encoder in save mode. Analysis data from save mode is
+	written to a file specified by :option:`--analysis-reuse-file`. The amount of analysis data stored/reused
+	is determined by :option:`--analysis-reuse-level`. By reading the analysis data writen by an earlier encode
+	of the same sequence, substantial redundant work may be avoided. Requires cutree, pmode to be off. Default 0.
 
 	**Values:** off(0), save(1): dump analysis data, load(2): read analysis data
 
-.. option:: --analysis-file <filename>
+.. option:: --analysis-reuse-file <filename>
 
-	Specify a filename for analysis data (see :option:`--analysis-mode`)
+	Specify a filename for analysis data (see :option:`--analysis-reuse-mode`)
 	If no filename is specified, x265_analysis.dat is used.
 
-.. option:: --refine-level <1..10>
+.. option:: --analysis-reuse-level <1..10>
 
-	Amount of information stored/reused in :option:`--analysis-mode` is distributed across levels.
+	Amount of information stored/reused in :option:`--analysis-reuse-mode` is distributed across levels.
 	Higher the value, higher the information stored/reused, faster the encode. Default 5.
 
-	Note that --refine-level must be paired with analysis-mode.
+	Note that --analysis-reuse-level must be paired with analysis-reuse-mode.
 
 	+--------+-----------------------------------------+
 	| Level  | Description                             |
@@ -888,10 +886,11 @@ not match.
 	+--------+-----------------------------------------+
 	| 10     | Level 5 + Full CU analysis-info         |
 	+--------+-----------------------------------------+
+
 .. option:: --scale-factor
 
        Factor by which input video is scaled down for analysis save mode.
-       This option should be coupled with analysis-mode option, --refine-level 10.
+       This option should be coupled with analysis-reuse-mode option, --analysis-reuse-level 10.
        The ctu size of load should be double the size of save. Default 0.
 
 .. option:: --refine-intra

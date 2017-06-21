@@ -1622,7 +1622,7 @@ uint32_t CUData::getInterMergeCandidates(uint32_t absPartIdx, uint32_t puIdx, MV
                 dir |= (1 << list);
                 candMvField[count][list].mv = colmv;
                 candMvField[count][list].refIdx = refIdx;
-                if (m_encData->m_param->scaleFactor && m_encData->m_param->analysisMode == X265_ANALYSIS_SAVE && m_log2CUSize[0] < 4)
+                if (m_encData->m_param->scaleFactor && m_encData->m_param->analysisReuseMode == X265_ANALYSIS_SAVE && m_log2CUSize[0] < 4)
                 {
                     MV dist(MAX_MV, MAX_MV);
                     candMvField[count][list].mv = dist;
@@ -1787,7 +1787,7 @@ int CUData::getPMV(InterNeighbourMV *neighbours, uint32_t picList, uint32_t refI
             int curRefPOC = m_slice->m_refPOCList[picList][refIdx];
             int curPOC = m_slice->m_poc;
 
-            if (m_encData->m_param->scaleFactor && m_encData->m_param->analysisMode == X265_ANALYSIS_SAVE && (m_log2CUSize[0] < 4))
+            if (m_encData->m_param->scaleFactor && m_encData->m_param->analysisReuseMode == X265_ANALYSIS_SAVE && (m_log2CUSize[0] < 4))
             {
                 MV dist(MAX_MV, MAX_MV);
                 pmv[numMvc++] = amvpCand[num++] = dist;

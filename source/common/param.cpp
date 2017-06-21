@@ -195,10 +195,10 @@ void x265_param_default(x265_param* param)
     param->rdPenalty = 0;
     param->psyRd = 2.0;
     param->psyRdoq = 0.0;
-    param->analysisMode = 0;
+    param->analysisReuseMode = 0;
     param->analysisMultiPassRefine = 0;
     param->analysisMultiPassDistortion = 0;
-    param->analysisFileName = NULL;
+    param->analysisReuseFileName = NULL;
     param->bIntraInBFrames = 0;
     param->bLossless = 0;
     param->bCULossless = 0;
@@ -272,7 +272,7 @@ void x265_param_default(x265_param* param)
     param->bOptCUDeltaQP        = 0;
     param->bAQMotion = 0;
     param->bHDROpt = 0;
-    param->analysisRefineLevel = 5;
+    param->analysisReuseLevel = 5;
 
     param->toneMapFile = NULL;
     param->bDhdr10opt = 0;
@@ -836,7 +836,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         p->rc.bStrictCbr = atobool(value);
         p->rc.pbFactor = 1.0;
     }
-    OPT("analysis-mode") p->analysisMode = parseName(value, x265_analysis_names, bError);
+    OPT("analysis-reuse-mode") p->analysisReuseMode = parseName(value, x265_analysis_names, bError);
     OPT("sar")
     {
         p->vui.aspectRatioIdc = parseName(value, x265_sar_names, bError);
@@ -915,7 +915,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     OPT("scaling-list") p->scalingLists = strdup(value);
     OPT2("pools", "numa-pools") p->numaPools = strdup(value);
     OPT("lambda-file") p->rc.lambdaFileName = strdup(value);
-    OPT("analysis-file") p->analysisFileName = strdup(value);
+    OPT("analysis-reuse-file") p->analysisReuseFileName = strdup(value);
     OPT("qg-size") p->rc.qgSize = atoi(value);
     OPT("master-display") p->masteringDisplayColorVolume = strdup(value);
     OPT("max-cll") bError |= sscanf(value, "%hu,%hu", &p->maxCLL, &p->maxFALL) != 2;
@@ -948,7 +948,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("multi-pass-opt-distortion") p->analysisMultiPassDistortion = atobool(value);
         OPT("aq-motion") p->bAQMotion = atobool(value);
         OPT("dynamic-rd") p->dynamicRd = atof(value);
-        OPT("refine-level") p->analysisRefineLevel = atoi(value);
+        OPT("analysis-reuse-level") p->analysisReuseLevel = atoi(value);
         OPT("ssim-rd")
         {
             int bval = atobool(value);
@@ -1299,9 +1299,9 @@ int x265_check_params(x265_param* param)
           "Constant QP is incompatible with 2pass");
     CHECK(param->rc.bStrictCbr && (param->rc.bitrate <= 0 || param->rc.vbvBufferSize <=0),
           "Strict-cbr cannot be applied without specifying target bitrate or vbv bufsize");
-    CHECK(param->analysisMode && (param->analysisMode < X265_ANALYSIS_OFF || param->analysisMode > X265_ANALYSIS_LOAD),
+    CHECK(param->analysisReuseMode && (param->analysisReuseMode < X265_ANALYSIS_OFF || param->analysisReuseMode > X265_ANALYSIS_LOAD),
         "Invalid analysis mode. Analysis mode 0: OFF 1: SAVE : 2 LOAD");
-    CHECK(param->analysisMode && (param->analysisRefineLevel < 1 || param->analysisRefineLevel > 10),
+    CHECK(param->analysisReuseMode && (param->analysisReuseLevel < 1 || param->analysisReuseLevel > 10),
         "Invalid analysis refine level. Value must be between 1 and 10 (inclusive)");
     CHECK(param->scaleFactor > 2, "Invalid scale-factor. Supports factor <= 2");
     CHECK(param->rc.qpMax < QP_MIN || param->rc.qpMax > QP_MAX_MAX,
@@ -1558,7 +1558,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " psy-rd=%.2f", p->psyRd);
     s += sprintf(s, " psy-rdoq=%.2f", p->psyRdoq);
     BOOL(p->bEnableRdRefine, "rd-refine");
-    s += sprintf(s, " analysis-mode=%d", p->analysisMode);
+    s += sprintf(s, " analysis-reuse-mode=%d", p->analysisReuseMode);
     BOOL(p->bLossless, "lossless");
     s += sprintf(s, " cbqpoffs=%d", p->cbQpOffset);
     s += sprintf(s, " crqpoffs=%d", p->crQpOffset);
@@ -1653,7 +1653,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEmitHDRSEI, "hdr");
     BOOL(p->bHDROpt, "hdr-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
-    s += sprintf(s, " refine-level=%d", p->analysisRefineLevel);
+    s += sprintf(s, " analysis-reuse-level=%d", p->analysisReuseLevel);
     s += sprintf(s, " scale-factor=%d", p->scaleFactor);
     s += sprintf(s, " refine-intra=%d", p->intraRefine);
     s += sprintf(s, " refine-inter=%d", p->interRefine);

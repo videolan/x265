@@ -301,15 +301,15 @@ typedef struct x265_picture
      * to allow the encoder to determine base QP */
     int     forceqp;
 
-    /* If param.analysisMode is X265_ANALYSIS_OFF this field is ignored on input
+    /* If param.analysisReuseMode is X265_ANALYSIS_OFF this field is ignored on input
      * and output. Else the user must call x265_alloc_analysis_data() to
      * allocate analysis buffers for every picture passed to the encoder.
      *
-     * On input when param.analysisMode is X265_ANALYSIS_LOAD and analysisData
+     * On input when param.analysisReuseMode is X265_ANALYSIS_LOAD and analysisData
      * member pointers are valid, the encoder will use the data stored here to
      * reduce encoder work.
      *
-     * On output when param.analysisMode is X265_ANALYSIS_SAVE and analysisData
+     * On output when param.analysisReuseMode is X265_ANALYSIS_SAVE and analysisData
      * member pointers are valid, the encoder will write output analysis into
      * this data structure */
     x265_analysis_data analysisData;
@@ -1107,10 +1107,10 @@ typedef struct x265_param
      * buffers.  if X265_ANALYSIS_LOAD, read analysis information into analysis
      * buffer and use this analysis information to reduce the amount of work
      * the encoder must perform. Default X265_ANALYSIS_OFF */
-    int       analysisMode;
+    int       analysisReuseMode;
 
-    /* Filename for analysisMode save/load. Default name is "x265_analysis.dat" */
-    const char* analysisFileName;
+    /* Filename for analysisReuseMode save/load. Default name is "x265_analysis.dat" */
+    const char* analysisReuseFileName;
 
     /*== Rate Control ==*/
 
@@ -1426,9 +1426,9 @@ typedef struct x265_param
     int       bHDROpt;
 
     /* A value between 1 and 10 (both inclusive) determines the level of
-    * information stored/reused in save/load analysis-mode. Higher the refine
-    * level higher the informtion stored/reused. Default is 5 */
-    int       analysisRefineLevel;
+    * information stored/reused in save/load analysis-reuse-mode. Higher the refine
+    * level higher the information stored/reused. Default is 5 */
+    int       analysisReuseLevel;
 
      /* Limit Sample Adaptive Offset filter computation by early terminating SAO
      * process based on inter prediction mode, CTU spatial-domain correlations,

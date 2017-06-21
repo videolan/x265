@@ -388,7 +388,7 @@ void FrameEncoder::compressFrame()
     bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
 
     WeightParam* reuseWP = NULL;
-    if (m_param->analysisMode && (bUseWeightP || bUseWeightB))
+    if (m_param->analysisReuseMode && (bUseWeightP || bUseWeightB))
         reuseWP = (WeightParam*)m_frame->m_analysisData.wt;
 
     if (bUseWeightP || bUseWeightB)
@@ -397,7 +397,7 @@ void FrameEncoder::compressFrame()
         m_cuStats.countWeightAnalyze++;
         ScopedElapsedTime time(m_cuStats.weightAnalyzeTime);
 #endif
-        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD)
         {
             for (int list = 0; list < slice->isInterB() + 1; list++) 
             {
@@ -436,7 +436,7 @@ void FrameEncoder::compressFrame()
             slice->m_refReconPicList[l][ref] = slice->m_refFrameList[l][ref]->m_reconPic;
             m_mref[l][ref].init(slice->m_refReconPicList[l][ref], w, *m_param);
         }
-        if (m_param->analysisMode == X265_ANALYSIS_SAVE && (bUseWeightP || bUseWeightB))
+        if (m_param->analysisReuseMode == X265_ANALYSIS_SAVE && (bUseWeightP || bUseWeightB))
         {
             for (int i = 0; i < (m_param->internalCsp != X265_CSP_I400 ? 3 : 1); i++)
                 *(reuseWP++) = slice->m_weightPredTable[l][0][i];

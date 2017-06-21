@@ -248,9 +248,9 @@ static const struct option long_options[] =
     { "no-slow-firstpass",    no_argument, NULL, 0 },
     { "multi-pass-opt-rps",   no_argument, NULL, 0 },
     { "no-multi-pass-opt-rps", no_argument, NULL, 0 },
-    { "analysis-mode",  required_argument, NULL, 0 },
-    { "analysis-file",  required_argument, NULL, 0 },
-    { "refine-level",   required_argument, NULL, 0 },
+    { "analysis-reuse-mode",  required_argument, NULL, 0 },
+    { "analysis-reuse-file",  required_argument, NULL, 0 },
+    { "analysis-reuse-level", required_argument, NULL, 0 },
     { "scale-factor",   required_argument, NULL, 0 },
     { "refine-intra",   no_argument, NULL, 0 },
     { "no-refine-intra",no_argument, NULL, 0 },
@@ -444,9 +444,9 @@ static void showHelp(x265_param *param)
     H0("   --[no-]analyze-src-pics       Motion estimation uses source frame planes. Default disable\n");
     H0("   --[no-]slow-firstpass         Enable a slow first pass in a multipass rate control mode. Default %s\n", OPT(param->rc.bEnableSlowFirstPass));
     H0("   --[no-]strict-cbr             Enable stricter conditions and tolerance for bitrate deviations in CBR mode. Default %s\n", OPT(param->rc.bStrictCbr));
-    H0("   --analysis-mode <string|int>  save - Dump analysis info into file, load - Load analysis buffers from the file. Default %d\n", param->analysisMode);
-    H0("   --analysis-file <filename>    Specify file name used for either dumping or reading analysis data.\n");
-    H0("   --refine-level <1..10>        Level of analysis refinement indicates amount of info stored/reused in save/load mode, 1:least....10:most. Default %d\n", param->analysisRefineLevel);
+    H0("   --analysis-reuse-mode <string|int>  save - Dump analysis info into file, load - Load analysis buffers from the file. Default %d\n", param->analysisReuseMode);
+    H0("   --analysis-reuse-file <filename>    Specify file name used for either dumping or reading analysis data. Deault x265_analysis.dat\n");
+    H0("   --analysis-reuse-level <1..10>      Level of analysis reuse indicates amount of info stored/reused in save/load mode, 1:least..10:most. Default %d\n", param->analysisReuseLevel);
     H0("   --scale-factor <int>          Specify factor by which input video is scaled down for analysis save mode. Default %d\n", param->scaleFactor);
     H0("   --[no-]refine-intra           Enable intra refinement for load mode. Default %s\n", OPT(param->intraRefine));
     H0("   --[no-]refine-inter           Enable inter refinement for load mode. Default %s\n", OPT(param->interRefine));
