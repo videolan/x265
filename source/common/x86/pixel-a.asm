@@ -8145,6 +8145,211 @@ cglobal pixel_sa8d_32x32, 4,8,8
 %endif ; ARCH_X86_64=1
 %endif ; HIGH_BIT_DEPTH
 
+%macro SATD_AVX512_LOAD4 2 ; size, opmask
+    vpbroadcast%1 m0, [r0]
+    vpbroadcast%1 m0 {%2}, [r0+2*r1]
+    vpbroadcast%1 m2, [r2]
+    vpbroadcast%1 m2 {%2}, [r2+2*r3]
+    add           r0, r1
+    add           r2, r3
+    vpbroadcast%1 m1, [r0]
+    vpbroadcast%1 m1 {%2}, [r0+2*r1]
+    vpbroadcast%1 m3, [r2]
+    vpbroadcast%1 m3 {%2}, [r2+2*r3]
+%endmacro
+
+%macro SATD_AVX512_LOAD8 5 ; size, halfreg, opmask1, opmask2, opmask3
+    vpbroadcast%1 %{2}0, [r0]
+    vpbroadcast%1 %{2}0 {%3}, [r0+2*r1]
+    vpbroadcast%1 %{2}2, [r2]
+    vpbroadcast%1 %{2}2 {%3}, [r2+2*r3]
+    vpbroadcast%1    m0 {%4}, [r0+4*r1]
+    vpbroadcast%1    m2 {%4}, [r2+4*r3]
+    vpbroadcast%1    m0 {%5}, [r0+2*r4]
+    vpbroadcast%1    m2 {%5}, [r2+2*r5]
+    vpbroadcast%1 %{2}1, [r0+r1]
+    vpbroadcast%1 %{2}1 {%3}, [r0+r4]
+    vpbroadcast%1 %{2}3, [r2+r3]
+    vpbroadcast%1 %{2}3 {%3}, [r2+r5]
+    lea              r0, [r0+4*r1]
+    lea              r2, [r2+4*r3]
+    vpbroadcast%1    m1 {%4}, [r0+r1]
+    vpbroadcast%1    m3 {%4}, [r2+r3]
+    vpbroadcast%1    m1 {%5}, [r0+r4]
+    vpbroadcast%1    m3 {%5}, [r2+r5]
+%endmacro
+
+%macro SATD_AVX512_PACKED 0
+    DIFF_SUMSUB_SSSE3 0, 2, 1, 3, 4
+    SUMSUB_BA      w, 0, 1, 2
+    SBUTTERFLY   qdq, 0, 1, 2
+    SUMSUB_BA      w, 0, 1, 2
+    HMAXABSW2         0, 1, 2, 3
+%endmacro
+
+%macro SATD_AVX512_END 0
+    paddw          m0 {k1}{z}, m1 ; zero-extend to dwords
+%if ARCH_X86_64
+%if mmsize == 64
+    vextracti32x8 ym1, m0, 1
+    paddd         ym0, ym1
+%endif
+%if mmsize >= 32
+    vextracti128  xm1, ym0, 1
+    paddd        xmm0, xm0, xm1
+%endif
+    punpckhqdq   xmm1, xmm0, xmm0
+    paddd        xmm0, xmm1
+    movq          rax, xmm0
+    rorx          rdx, rax, 32
+    add           eax, edx
+%else
+    HADDD          m0, m1
+    movd          eax, xm0
+%endif
+    RET
+%endmacro
+
+%macro HMAXABSW2 4 ; a, b, tmp1, tmp2
+    pabsw     m%1, m%1
+    pabsw     m%2, m%2
+    psrldq    m%3, m%1, 2
+    psrld     m%4, m%2, 16
+    pmaxsw    m%1, m%3
+    pmaxsw    m%2, m%4
+%endmacro
+
+INIT_ZMM avx512
+cglobal pixel_satd_16x8_internal
+    vbroadcasti64x4 m6, [hmul_16p]
+    kxnorb           k2, k2, k2
+    mov             r4d, 0x55555555
+    knotw            k2, k2
+    kmovd            k1, r4d
+    lea              r4, [3*r1]
+    lea              r5, [3*r3]
+satd_16x8_avx512:
+    vbroadcasti128  ym0,      [r0]
+    vbroadcasti32x4  m0 {k2}, [r0+4*r1] ; 0 0 4 4
+    vbroadcasti128  ym4,      [r2]
+    vbroadcasti32x4  m4 {k2}, [r2+4*r3]
+    vbroadcasti128  ym2,      [r0+2*r1]
+    vbroadcasti32x4  m2 {k2}, [r0+2*r4] ; 2 2 6 6
+    vbroadcasti128  ym5,      [r2+2*r3]
+    vbroadcasti32x4  m5 {k2}, [r2+2*r5]
+    DIFF_SUMSUB_SSSE3 0, 4, 2, 5, 6
+    vbroadcasti128  ym1,      [r0+r1]
+    vbroadcasti128  ym4,      [r2+r3]
+    vbroadcasti128  ym3,      [r0+r4]
+    vbroadcasti128  ym5,      [r2+r5]
+    lea              r0, [r0+4*r1]
+    lea              r2, [r2+4*r3]
+    vbroadcasti32x4  m1 {k2}, [r0+r1] ; 1 1 5 5
+    vbroadcasti32x4  m4 {k2}, [r2+r3]
+    vbroadcasti32x4  m3 {k2}, [r0+r4] ; 3 3 7 7
+    vbroadcasti32x4  m5 {k2}, [r2+r5]
+    DIFF_SUMSUB_SSSE3 1, 4, 3, 5, 6
+    HADAMARD4_V       0, 1, 2, 3, 4
+    HMAXABSW2         0, 2, 4, 5
+    HMAXABSW2         1, 3, 4, 5
+    paddw            m4, m0, m2 ; m1
+    paddw            m2, m1, m3 ; m0
+    ret
+
+cglobal pixel_satd_8x8_internal
+    vbroadcasti64x4 m4, [hmul_16p]
+    mov     r4d, 0x55555555
+    kmovd    k1, r4d   ; 01010101
+    kshiftlb k2, k1, 5 ; 10100000
+    kshiftlb k3, k1, 4 ; 01010000
+    lea      r4, [3*r1]
+    lea      r5, [3*r3]
+satd_8x8_avx512:
+    SATD_AVX512_LOAD8 q, ym, k1, k2, k3 ; 2 0 2 0 6 4 6 4
+    SATD_AVX512_PACKED                  ; 3 1 3 1 7 5 7 5
+    ret
+
+cglobal pixel_satd_16x8, 4,6
+    call pixel_satd_16x8_internal_avx512
+    jmp satd_zmm_avx512_end
+
+cglobal pixel_satd_16x16, 4,6
+    call pixel_satd_16x8_internal_avx512
+    lea      r0, [r0+4*r1]
+    lea      r2, [r2+4*r3]
+    paddw    m7, m0, m1
+    call satd_16x8_avx512
+    paddw    m1, m7
+    jmp satd_zmm_avx512_end
+
+cglobal pixel_satd_8x8, 4,6
+    call pixel_satd_8x8_internal_avx512
+satd_zmm_avx512_end:
+    SATD_AVX512_END
+
+cglobal pixel_satd_8x16, 4,6
+    call pixel_satd_8x8_internal_avx512
+    lea      r0, [r0+4*r1]
+    lea      r2, [r2+4*r3]
+    paddw    m5, m0, m1
+    call satd_8x8_avx512
+    paddw    m1, m5
+    jmp satd_zmm_avx512_end
+
+INIT_YMM avx512
+cglobal pixel_satd_4x8_internal
+    vbroadcasti128 m4, [hmul_4p]
+    mov     r4d, 0x55550c
+    kmovd    k2, r4d   ; 00001100
+    kshiftlb k3, k2, 2 ; 00110000
+    kshiftlb k4, k2, 4 ; 11000000
+    kshiftrd k1, k2, 8 ; 01010101
+    lea      r4, [3*r1]
+    lea      r5, [3*r3]
+satd_4x8_avx512:
+    SATD_AVX512_LOAD8 d, xm, k2, k3, k4 ; 0 0 2 2 4 4 6 6
+satd_ymm_avx512:                        ; 1 1 3 3 5 5 7 7
+    SATD_AVX512_PACKED
+    ret
+
+cglobal pixel_satd_8x4, 4,5
+    mova     m4, [hmul_16p]
+    mov     r4d, 0x5555
+    kmovw    k1, r4d
+    SATD_AVX512_LOAD4 q, k1 ; 2 0 2 0
+    call satd_ymm_avx512    ; 3 1 3 1
+    jmp satd_ymm_avx512_end2
+
+cglobal pixel_satd_4x8, 4,6
+    call pixel_satd_4x8_internal_avx512
+satd_ymm_avx512_end:
+%if ARCH_X86_64 == 0
+    pop     r5d
+    %assign regs_used 5
+%endif
+satd_ymm_avx512_end2:
+    SATD_AVX512_END
+
+cglobal pixel_satd_4x16, 4,6
+    call pixel_satd_4x8_internal_avx512
+    lea      r0, [r0+4*r1]
+    lea      r2, [r2+4*r3]
+    paddw    m5, m0, m1
+    call satd_4x8_avx512
+    paddw    m1, m5
+    jmp satd_ymm_avx512_end
+
+INIT_XMM avx512
+cglobal pixel_satd_4x4, 4,5
+    mova     m4, [hmul_4p]
+    mov     r4d, 0x550c
+    kmovw    k2, r4d
+    kshiftrw k1, k2, 8
+    SATD_AVX512_LOAD4 d, k2 ; 0 0 2 2
+    SATD_AVX512_PACKED      ; 1 1 3 3
+    SWAP      0, 1
+    SATD_AVX512_END
+
 ; Input 10bit, Output 8bit
 ;------------------------------------------------------------------------------------------------------------------------
 ;void planecopy_sc(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)

@@ -65,6 +65,7 @@ DECL_PIXELS(ssse3);
 DECL_PIXELS(avx);
 DECL_PIXELS(xop);
 DECL_PIXELS(avx2);
+DECL_PIXELS(avx512);
 
 #undef DECL_PIXELS
 

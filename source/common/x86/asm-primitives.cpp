@@ -3720,6 +3720,35 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.integral_inith[INTEGRAL_32] = PFX(integral32h_avx2);
 
     }
+    if (cpuMask & X265_CPU_AVX512)
+    {
+        p.pu[LUMA_4x4].satd = PFX(pixel_satd_4x4_avx512);
+        p.pu[LUMA_4x8].satd = PFX(pixel_satd_4x8_avx512);
+        p.pu[LUMA_4x16].satd = PFX(pixel_satd_4x16_avx512);
+        p.pu[LUMA_8x4].satd = PFX(pixel_satd_8x4_avx512);
+        p.pu[LUMA_8x8].satd = PFX(pixel_satd_8x8_avx512);
+        p.pu[LUMA_8x16].satd = PFX(pixel_satd_8x16_avx512);
+        p.pu[LUMA_16x8].satd = PFX(pixel_satd_16x8_avx512);
+        p.pu[LUMA_16x16].satd = PFX(pixel_satd_16x16_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x4].satd = PFX(pixel_satd_4x4_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x8].satd = PFX(pixel_satd_4x8_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_4x16].satd = PFX(pixel_satd_4x16_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].satd = PFX(pixel_satd_8x4_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].satd = PFX(pixel_satd_8x8_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].satd = PFX(pixel_satd_8x16_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].satd = PFX(pixel_satd_16x8_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].satd = PFX(pixel_satd_16x16_avx512);
+
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x4].satd = PFX(pixel_satd_4x4_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x8].satd = PFX(pixel_satd_4x8_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_4x16].satd = PFX(pixel_satd_4x16_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x4].satd = PFX(pixel_satd_8x4_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].satd = PFX(pixel_satd_8x8_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x16].satd = PFX(pixel_satd_8x16_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].satd = PFX(pixel_satd_16x8_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].satd = PFX(pixel_satd_16x16_avx512);
+
+    }
 #endif
 }
 #endif // if HIGH_BIT_DEPTH
