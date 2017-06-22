@@ -134,26 +134,19 @@ void Encoder::create()
     if (!p->bEnableWavefront && !p->bDistributeModeAnalysis && !p->bDistributeMotionEstimation && !p->lookaheadSlices)
         allowPools = false;
 
-    if (!p->frameNumThreads)
-    {
-        // auto-detect frame threads
-        int cpuCount = ThreadPool::getCpuCount();
-        if (!p->bEnableWavefront)
-            p->frameNumThreads = X265_MIN3(cpuCount, (rows + 1) / 2, X265_MAX_FRAME_THREADS);
-        else if (cpuCount >= 32)
-            p->frameNumThreads = (p->sourceHeight > 2000) ? 8 : 6; // dual-socket 10-core IvyBridge or higher
-        else if (cpuCount >= 16)
-            p->frameNumThreads = 5; // 8 HT cores, or dual socket
-        else if (cpuCount >= 8)
-            p->frameNumThreads = 3; // 4 HT cores
-        else if (cpuCount >= 4)
-            p->frameNumThreads = 2; // Dual or Quad core
-        else
-            p->frameNumThreads = 1;
-    }
     m_numPools = 0;
     if (allowPools)
         m_threadPool = ThreadPool::allocThreadPools(p, m_numPools, 0);
+    else
+    {
+        if (!p->frameNumThreads)
+        {
+            // auto-detect frame threads
+            int cpuCount = ThreadPool::getCpuCount();
+            ThreadPool::getFrameThreadsCount(p, cpuCount);
+        }
+    }
+
     if (!m_numPools)
     {
         // issue warnings if any of these features were requested
