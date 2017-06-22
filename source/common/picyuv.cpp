@@ -340,7 +340,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
     pixel *U = m_picOrg[1];
     pixel *V = m_picOrg[2];
 
-    if (param.logLevel >= 2)
+    if (param.csvLogLevel >= 2)
     {
         pixel *yPic = m_picOrg[0];
         pixel *uPic = m_picOrg[1];

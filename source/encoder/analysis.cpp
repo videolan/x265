@@ -281,7 +281,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     if (m_param->bEnableRdRefine || m_param->bOptCUDeltaQP)
         qprdRefine(ctu, cuGeom, qp, qp);
 
-    if (m_param->logLevel >= 2)
+    if (m_param->csvLogLevel >= 2)
         collectPUStatistics(ctu, cuGeom);
 
     return *m_modeDepth[0].bestMode;

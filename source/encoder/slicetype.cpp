@@ -1638,7 +1638,7 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
             m_isSceneTransition = false; /* Signal end of scene transitioning */
     }
 
-    if (m_param->logLevel >= 2)
+    if (m_param->csvLogLevel >= 2)
     {
         int64_t icost = frames[p1]->costEst[0][0];
         int64_t pcost = frames[p1]->costEst[p1 - p0][0];

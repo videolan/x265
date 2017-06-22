@@ -1709,7 +1709,8 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
         frameStats->qp = curEncData.m_avgQpAq;
         frameStats->bits = bits;
         frameStats->bScenecut = curFrame->m_lowres.bScenecut;
-        frameStats->ipCostRatio = curFrame->m_lowres.ipCostRatio;
+        if (m_param->csvLogLevel >= 2)
+            frameStats->ipCostRatio = curFrame->m_lowres.ipCostRatio;
         frameStats->bufferFill = m_rateControl->m_bufferFillActual;
         frameStats->frameLatency = inPoc - poc;
         if (m_param->rc.rateControlMode == X265_RC_CRF)
@@ -1734,74 +1735,81 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
 
 #define ELAPSED_MSEC(start, end) (((double)(end) - (start)) / 1000)
 
-        frameStats->decideWaitTime = ELAPSED_MSEC(0, curEncoder->m_slicetypeWaitTime);
-        frameStats->row0WaitTime = ELAPSED_MSEC(curEncoder->m_startCompressTime, curEncoder->m_row0WaitTime);
-        frameStats->wallTime = ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_endCompressTime);
-        frameStats->refWaitWallTime = ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_allRowsAvailableTime);
-        frameStats->totalCTUTime = ELAPSED_MSEC(0, curEncoder->m_totalWorkerElapsedTime);
-        frameStats->stallTime = ELAPSED_MSEC(0, curEncoder->m_totalNoWorkerTime);
-        frameStats->totalFrameTime = ELAPSED_MSEC(curFrame->m_encodeStartTime, x265_mdate());
-        if (curEncoder->m_totalActiveWorkerCount)
-            frameStats->avgWPP = (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples;
-        else
-            frameStats->avgWPP = 1;
-        frameStats->countRowBlocks = curEncoder->m_countRowBlocks;
-
-        frameStats->cuStats.percentIntraNxN = curFrame->m_encData->m_frameStats.percentIntraNxN;
-        frameStats->avgChromaDistortion     = curFrame->m_encData->m_frameStats.avgChromaDistortion;
-        frameStats->avgLumaDistortion       = curFrame->m_encData->m_frameStats.avgLumaDistortion;
-        frameStats->avgPsyEnergy            = curFrame->m_encData->m_frameStats.avgPsyEnergy;
-        frameStats->avgResEnergy            = curFrame->m_encData->m_frameStats.avgResEnergy;
-        frameStats->avgLumaLevel            = curFrame->m_fencPic->m_avgLumaLevel;
-        frameStats->maxLumaLevel            = curFrame->m_fencPic->m_maxLumaLevel;
-        frameStats->minLumaLevel            = curFrame->m_fencPic->m_minLumaLevel;
-
-        frameStats->maxChromaULevel = curFrame->m_fencPic->m_maxChromaULevel;
-        frameStats->minChromaULevel = curFrame->m_fencPic->m_minChromaULevel;
-        frameStats->avgChromaULevel = curFrame->m_fencPic->m_avgChromaULevel;
-
-        frameStats->maxChromaVLevel = curFrame->m_fencPic->m_maxChromaVLevel;
-        frameStats->minChromaVLevel = curFrame->m_fencPic->m_minChromaVLevel;
-        frameStats->avgChromaVLevel = curFrame->m_fencPic->m_avgChromaVLevel;
-
-        for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
+        if (m_param->csvLogLevel >= 2)
         {
-            frameStats->cuStats.percentSkipCu[depth]  = curFrame->m_encData->m_frameStats.percentSkipCu[depth];
-            frameStats->cuStats.percentMergeCu[depth] = curFrame->m_encData->m_frameStats.percentMergeCu[depth];
-            frameStats->cuStats.percentInterDistribution[depth][0] = curFrame->m_encData->m_frameStats.percentInterDistribution[depth][0];
-            frameStats->cuStats.percentInterDistribution[depth][1] = curFrame->m_encData->m_frameStats.percentInterDistribution[depth][1];
-            frameStats->cuStats.percentInterDistribution[depth][2] = curFrame->m_encData->m_frameStats.percentInterDistribution[depth][2];
-            for (int n = 0; n < INTRA_MODES; n++)
-                frameStats->cuStats.percentIntraDistribution[depth][n] = curFrame->m_encData->m_frameStats.percentIntraDistribution[depth][n];
-        }
+            frameStats->decideWaitTime = ELAPSED_MSEC(0, curEncoder->m_slicetypeWaitTime);
+            frameStats->row0WaitTime = ELAPSED_MSEC(curEncoder->m_startCompressTime, curEncoder->m_row0WaitTime);
+            frameStats->wallTime = ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_endCompressTime);
+            frameStats->refWaitWallTime = ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_allRowsAvailableTime);
+            frameStats->totalCTUTime = ELAPSED_MSEC(0, curEncoder->m_totalWorkerElapsedTime);
+            frameStats->stallTime = ELAPSED_MSEC(0, curEncoder->m_totalNoWorkerTime);
+            frameStats->totalFrameTime = ELAPSED_MSEC(curFrame->m_encodeStartTime, x265_mdate());
+            if (curEncoder->m_totalActiveWorkerCount)
+                frameStats->avgWPP = (double)curEncoder->m_totalActiveWorkerCount / curEncoder->m_activeWorkerCountSamples;
+            else
+                frameStats->avgWPP = 1;
+            frameStats->countRowBlocks = curEncoder->m_countRowBlocks;
 
-        if (curFrame->m_encData->m_frameStats.totalPu[4] == 0)
-            frameStats->puStats.percentNxN = 0;
-        else
-            frameStats->puStats.percentNxN = (double)(curFrame->m_encData->m_frameStats.cnt4x4 / (double)curFrame->m_encData->m_frameStats.totalPu[4]) * 100;
-        for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
-        {
-            if (curFrame->m_encData->m_frameStats.totalPu[depth] == 0)
+            frameStats->avgChromaDistortion = curFrame->m_encData->m_frameStats.avgChromaDistortion;
+            frameStats->avgLumaDistortion = curFrame->m_encData->m_frameStats.avgLumaDistortion;
+            frameStats->avgPsyEnergy = curFrame->m_encData->m_frameStats.avgPsyEnergy;
+            frameStats->avgResEnergy = curFrame->m_encData->m_frameStats.avgResEnergy;
+            frameStats->avgLumaLevel = curFrame->m_fencPic->m_avgLumaLevel;
+            frameStats->maxLumaLevel = curFrame->m_fencPic->m_maxLumaLevel;
+            frameStats->minLumaLevel = curFrame->m_fencPic->m_minLumaLevel;
+
+            frameStats->maxChromaULevel = curFrame->m_fencPic->m_maxChromaULevel;
+            frameStats->minChromaULevel = curFrame->m_fencPic->m_minChromaULevel;
+            frameStats->avgChromaULevel = curFrame->m_fencPic->m_avgChromaULevel;
+
+            frameStats->maxChromaVLevel = curFrame->m_fencPic->m_maxChromaVLevel;
+            frameStats->minChromaVLevel = curFrame->m_fencPic->m_minChromaVLevel;
+            frameStats->avgChromaVLevel = curFrame->m_fencPic->m_avgChromaVLevel;
+
+            if (curFrame->m_encData->m_frameStats.totalPu[4] == 0)
+                frameStats->puStats.percentNxN = 0;
+            else
+                frameStats->puStats.percentNxN = (double)(curFrame->m_encData->m_frameStats.cnt4x4 / (double)curFrame->m_encData->m_frameStats.totalPu[4]) * 100;
+            for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
             {
-                frameStats->puStats.percentSkipPu[depth] = 0;
-                frameStats->puStats.percentIntraPu[depth] = 0;
-                frameStats->puStats.percentAmpPu[depth] = 0;
-                for (int i = 0; i < INTER_MODES - 1; i++)
+                if (curFrame->m_encData->m_frameStats.totalPu[depth] == 0)
                 {
-                    frameStats->puStats.percentInterPu[depth][i] = 0;
-                    frameStats->puStats.percentMergePu[depth][i] = 0;
+                    frameStats->puStats.percentSkipPu[depth] = 0;
+                    frameStats->puStats.percentIntraPu[depth] = 0;
+                    frameStats->puStats.percentAmpPu[depth] = 0;
+                    for (int i = 0; i < INTER_MODES - 1; i++)
+                    {
+                        frameStats->puStats.percentInterPu[depth][i] = 0;
+                        frameStats->puStats.percentMergePu[depth][i] = 0;
+                    }
+                }
+                else
+                {
+                    frameStats->puStats.percentSkipPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntSkipPu[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                    frameStats->puStats.percentIntraPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntIntraPu[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                    frameStats->puStats.percentAmpPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntAmp[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                    for (int i = 0; i < INTER_MODES - 1; i++)
+                    {
+                        frameStats->puStats.percentInterPu[depth][i] = (double)(curFrame->m_encData->m_frameStats.cntInterPu[depth][i] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                        frameStats->puStats.percentMergePu[depth][i] = (double)(curFrame->m_encData->m_frameStats.cntMergePu[depth][i] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
+                    }
                 }
             }
-            else
+        }
+
+        if (m_param->csvLogLevel >= 1)
+        {
+            frameStats->cuStats.percentIntraNxN = curFrame->m_encData->m_frameStats.percentIntraNxN;
+
+            for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
             {
-                frameStats->puStats.percentSkipPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntSkipPu[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
-                frameStats->puStats.percentIntraPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntIntraPu[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
-                frameStats->puStats.percentAmpPu[depth] = (double)(curFrame->m_encData->m_frameStats.cntAmp[depth] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
-                for (int i = 0; i < INTER_MODES - 1; i++)
-                {
-                    frameStats->puStats.percentInterPu[depth][i] = (double)(curFrame->m_encData->m_frameStats.cntInterPu[depth][i] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
-                    frameStats->puStats.percentMergePu[depth][i] = (double)(curFrame->m_encData->m_frameStats.cntMergePu[depth][i] / (double)curFrame->m_encData->m_frameStats.totalPu[depth]) * 100;
-                }
+                frameStats->cuStats.percentSkipCu[depth] = curFrame->m_encData->m_frameStats.percentSkipCu[depth];
+                frameStats->cuStats.percentMergeCu[depth] = curFrame->m_encData->m_frameStats.percentMergeCu[depth];
+                frameStats->cuStats.percentInterDistribution[depth][0] = curFrame->m_encData->m_frameStats.percentInterDistribution[depth][0];
+                frameStats->cuStats.percentInterDistribution[depth][1] = curFrame->m_encData->m_frameStats.percentInterDistribution[depth][1];
+                frameStats->cuStats.percentInterDistribution[depth][2] = curFrame->m_encData->m_frameStats.percentInterDistribution[depth][2];
+                for (int n = 0; n < INTRA_MODES; n++)
+                    frameStats->cuStats.percentIntraDistribution[depth][n] = curFrame->m_encData->m_frameStats.percentIntraDistribution[depth][n];
             }
         }
     }
