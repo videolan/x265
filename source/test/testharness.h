@@ -91,7 +91,7 @@ static inline uint32_t __rdtsc(void)
 }
 #endif // ifdef _MSC_VER
 
-#define BENCH_RUNS 1000
+#define BENCH_RUNS 2000
 
 // Adapted from checkasm.c, runs each optimized primitive four times, measures rdtsc
 // and discards invalid times.  Repeats 1000 times to get a good average.  Then measures
