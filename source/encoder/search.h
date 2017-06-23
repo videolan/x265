@@ -204,9 +204,9 @@ struct CUStats
         memset(this, 0, sizeof(*this));
     }
 
-    void accumulate(CUStats& other)
+    void accumulate(CUStats& other, x265_param& param)
     {
-        for (uint32_t i = 0; i <= g_maxCUDepth; i++)
+        for (uint32_t i = 0; i <= param.maxCUDepth; i++)
         {
             intraRDOElapsedTime[i] += other.intraRDOElapsedTime[i];
             interRDOElapsedTime[i] += other.interRDOElapsedTime[i];
@@ -311,6 +311,7 @@ public:
     // estimation inter prediction (non-skip)
     void     predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC, uint32_t masks[2]);
 
+    void     searchMV(Mode& interMode, const PredictionUnit& pu, int list, int ref, MV& outmv);
     // encode residual and compute rd-cost for inter mode
     void     encodeResAndCalcRdInterCU(Mode& interMode, const CUGeom& cuGeom);
     void     encodeResAndCalcRdSkipCU(Mode& interMode);

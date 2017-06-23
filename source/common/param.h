@@ -28,7 +28,6 @@
 namespace X265_NS {
 
 int   x265_check_params(x265_param *param);
-int   x265_set_globals(x265_param *param);
 void  x265_print_params(x265_param *param);
 void  x265_param_apply_fastfirstpass(x265_param *p);
 char* x265_param2string(x265_param *param, int padx, int pady);

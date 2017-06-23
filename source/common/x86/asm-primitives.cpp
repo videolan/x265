@@ -114,6 +114,7 @@ extern "C" {
 #include "blockcopy8.h"
 #include "intrapred.h"
 #include "dct8.h"
+#include "seaintegral.h"
 }
 
 #define ALL_LUMA_CU_TYPED(prim, fncdef, fname, cpu) \
@@ -2157,6 +2158,17 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.fix8Unpack = PFX(cutree_fix8_unpack_avx2);
         p.fix8Pack = PFX(cutree_fix8_pack_avx2);
 
+        p.integral_initv[INTEGRAL_4] = PFX(integral4v_avx2);
+        p.integral_initv[INTEGRAL_8] = PFX(integral8v_avx2);
+        p.integral_initv[INTEGRAL_12] = PFX(integral12v_avx2);
+        p.integral_initv[INTEGRAL_16] = PFX(integral16v_avx2);
+        p.integral_initv[INTEGRAL_24] = PFX(integral24v_avx2);
+        p.integral_initv[INTEGRAL_32] = PFX(integral32v_avx2);
+        p.integral_inith[INTEGRAL_4] = PFX(integral4h_avx2);
+        p.integral_inith[INTEGRAL_8] = PFX(integral8h_avx2);
+        p.integral_inith[INTEGRAL_12] = PFX(integral12h_avx2);
+        p.integral_inith[INTEGRAL_16] = PFX(integral16h_avx2);
+
         /* TODO: This kernel needs to be modified to work with HIGH_BIT_DEPTH only 
         p.planeClipAndMax = PFX(planeClipAndMax_avx2); */
 
@@ -3694,6 +3706,19 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_48x64].sad_x3 = PFX(pixel_sad_x3_48x64_avx2);
         p.fix8Unpack = PFX(cutree_fix8_unpack_avx2);
         p.fix8Pack = PFX(cutree_fix8_pack_avx2);
+
+        p.integral_initv[INTEGRAL_4] = PFX(integral4v_avx2);
+        p.integral_initv[INTEGRAL_8] = PFX(integral8v_avx2);
+        p.integral_initv[INTEGRAL_12] = PFX(integral12v_avx2);
+        p.integral_initv[INTEGRAL_16] = PFX(integral16v_avx2);
+        p.integral_initv[INTEGRAL_24] = PFX(integral24v_avx2);
+        p.integral_initv[INTEGRAL_32] = PFX(integral32v_avx2);
+        p.integral_inith[INTEGRAL_4] = PFX(integral4h_avx2);
+        p.integral_inith[INTEGRAL_8] = PFX(integral8h_avx2);
+        p.integral_inith[INTEGRAL_12] = PFX(integral12h_avx2);
+        p.integral_inith[INTEGRAL_16] = PFX(integral16h_avx2);
+        p.integral_inith[INTEGRAL_24] = PFX(integral24h_avx2);
+        p.integral_inith[INTEGRAL_32] = PFX(integral32h_avx2);
 
     }
 #endif

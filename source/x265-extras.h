@@ -44,7 +44,7 @@ extern "C" {
  * closed by the caller using fclose(). If level is 0, then no frame logging
  * header is written to the file. This function will return NULL if it is unable
  * to open the file for write or if it detects a structure size skew */
-LIBAPI FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char* fname, int level);
+LIBAPI FILE* x265_csvlog_open(const x265_param& param, const char* fname, int level);
 
 /* Log frame statistics to the CSV file handle. level should have been non-zero
  * in the call to x265_csvlog_open() if this function is called. */
@@ -53,7 +53,7 @@ LIBAPI void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_p
 /* Log final encode statistics to the CSV file handle. 'argc' and 'argv' are
  * intended to be command line arguments passed to the encoder. Encode
  * statistics should be queried from the encoder just prior to closing it. */
-LIBAPI void x265_csvlog_encode(FILE* csvfp, const char* version, const x265_param& param, const x265_stats& stats, int level, int argc, char** argv);
+LIBAPI void x265_csvlog_encode(FILE* csvfp, const char* version, const x265_param& param, int padx, int pady, const x265_stats& stats, int level, int argc, char** argv);
 
 /* In-place downshift from a bit-depth greater than 8 to a bit-depth of 8, using
  * the residual bits to dither each row. */

@@ -105,6 +105,23 @@ void DPB::recycleUnreferenced()
                 }
             }
 
+            if (curFrame->m_ctuInfo != NULL)
+            {
+                uint32_t widthInCU = (curFrame->m_param->sourceWidth + curFrame->m_param->maxCUSize - 1) >> curFrame->m_param->maxLog2CUSize;
+                uint32_t heightInCU = (curFrame->m_param->sourceHeight + curFrame->m_param->maxCUSize - 1) >> curFrame->m_param->maxLog2CUSize;
+                uint32_t numCUsInFrame = widthInCU * heightInCU;
+                for (uint32_t i = 0; i < numCUsInFrame; i++)
+                {
+                    X265_FREE((*curFrame->m_ctuInfo + i)->ctuInfo);
+                    (*curFrame->m_ctuInfo + i)->ctuInfo = NULL;
+                }
+                X265_FREE(*curFrame->m_ctuInfo);
+                *(curFrame->m_ctuInfo) = NULL;
+                X265_FREE(curFrame->m_ctuInfo);
+                curFrame->m_ctuInfo = NULL;
+                X265_FREE(curFrame->m_prevCtuInfoChange);
+                curFrame->m_prevCtuInfoChange = NULL;
+            }
             curFrame->m_encData = NULL;
             curFrame->m_reconPic = NULL;
         }
@@ -187,7 +204,7 @@ void DPB::prepareEncode(Frame *newFrame)
     }
 
     // Disable Loopfilter in bound area, because we will do slice-parallelism in future
-    slice->m_sLFaseFlag = (g_maxSlices > 1) ? false : ((SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0);
+    slice->m_sLFaseFlag = (newFrame->m_param->maxSlices > 1) ? false : ((SLFASE_CONSTANT & (1 << (pocCurr % 31))) > 0);
 
     /* Increment reference count of all motion-referenced frames to prevent them
      * from being recycled. These counts are decremented at the end of

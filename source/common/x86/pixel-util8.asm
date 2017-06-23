@@ -1597,7 +1597,7 @@ cglobal weight_sp, 6,7,8
 
 .widthLess8:
     movu        m6, [r1]
-    pblendvb    m6, m6, m7, m0
+    pblendvb    m6, m7, m0
     movu        [r1], m6
 
 .nextH:

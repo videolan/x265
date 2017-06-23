@@ -118,6 +118,8 @@ struct Lowres : public ReferencePlanes
     bool   bKeyframe;
     bool   bLastMiniGopBFrame;
 
+    double ipCostRatio;
+
     /* lookahead output data */
     int64_t   costEst[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];
     int64_t   costEstAq[X265_BFRAME_MAX + 2][X265_BFRAME_MAX + 2];

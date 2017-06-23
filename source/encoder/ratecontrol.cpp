@@ -2614,7 +2614,7 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
             for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
                 avgQpAq += curEncData.m_rowStat[i].sumQpAq;
 
-            avgQpAq /= (slice->m_sps->numCUsInFrame * NUM_4x4_PARTITIONS);
+            avgQpAq /= (slice->m_sps->numCUsInFrame * m_param->num4x4Partitions);
             curEncData.m_avgQpAq = avgQpAq;
         }
         else
@@ -2712,6 +2712,13 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     {
         *filler = updateVbv(actualBits, rce);
 
+        curFrame->m_rcData->bufferFillFinal = m_bufferFillFinal;
+        for (int i = 0; i < 4; i++)
+        {
+            curFrame->m_rcData->coeff[i] = m_pred[i].coeff;
+            curFrame->m_rcData->count[i] = m_pred[i].count;
+            curFrame->m_rcData->offset[i] = m_pred[i].offset;
+        }
         if (m_param->bEmitHRDSEI)
         {
             const VUI *vui = &curEncData.m_slice->m_sps->vuiParameters;

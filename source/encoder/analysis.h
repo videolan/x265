@@ -137,6 +137,10 @@ protected:
     int*                    m_multipassMvpIdx[2];
     int32_t*                m_multipassRef[2];
     uint8_t*                m_multipassModes;
+
+    uint8_t                 m_evaluateInter;
+    uint8_t*                m_additionalCtuInfo;
+    int*                    m_prevCtuInfoChange;
     /* refine RD based on QP for rd-levels 5 and 6 */
     void qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp, int32_t lqp);
 
@@ -178,6 +182,9 @@ protected:
 
     void calculateNormFactor(CUData& ctu, int qp);
     void normFactor(const pixel* src, uint32_t blockSize, CUData& ctu, int qp, TextType ttype);
+
+    void collectPUStatistics(const CUData& ctu, const CUGeom& cuGeom);
+
     /* check whether current mode is the new best */
     inline void checkBestMode(Mode& mode, uint32_t depth)
     {
@@ -190,6 +197,7 @@ protected:
         else
             md.bestMode = &mode;
     }
+    int findSameContentRefCount(const CUData& parentCTU, const CUGeom& cuGeom);
 };
 
 struct ThreadLocalData
