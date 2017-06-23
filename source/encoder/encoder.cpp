@@ -88,6 +88,8 @@ Encoder::Encoder()
 
 #if ENABLE_DYNAMIC_HDR10
     m_hdr10plus_api = hdr10plus_api_get();
+    numCimInfo = 0;
+    cim = NULL;
 #endif
 
     m_prevTonemapPayload.payload = NULL;
@@ -431,6 +433,10 @@ void Encoder::stopJobs()
 
 void Encoder::destroy()
 {
+#if ENABLE_DYNAMIC_HDR10
+    m_hdr10plus_api->hdr10plus_clear_movie(cim, numCimInfo);
+#endif
+        
     if (m_exportedPic)
     {
         ATOMIC_DEC(&m_exportedPic->m_countRefEncoders);
@@ -604,18 +610,19 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 #if ENABLE_DYNAMIC_HDR10
         if (m_bToneMap)
         {
-            uint8_t *cim = NULL;
-            if (m_hdr10plus_api->hdr10plus_json_to_frame_cim(m_param->toneMapFile, pic_in->poc, cim))
+            if (pic_in->poc == 0)
+                numCimInfo = m_hdr10plus_api->hdr10plus_json_to_movie_cim(m_param->toneMapFile, cim);
+            if (pic_in->poc < numCimInfo)
             {
                 int32_t i = 0;
                 toneMap.payloadSize = 0;
-                while (cim[i] == 0xFF)
-                    toneMap.payloadSize += cim[i++] + 1;
-                toneMap.payloadSize += cim[i] + 1;
+                while (cim[pic_in->poc][i] == 0xFF)
+                    toneMap.payloadSize += cim[pic_in->poc][i++] + 1;
+                toneMap.payloadSize += cim[pic_in->poc][i] + 1;
 
                 toneMap.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * toneMap.payloadSize);
                 toneMap.payloadType = USER_DATA_REGISTERED_ITU_T_T35;
-                memcpy(toneMap.payload, cim, toneMap.payloadSize);
+                memcpy(toneMap.payload, cim[pic_in->poc], toneMap.payloadSize);
             }
         }
 #endif
