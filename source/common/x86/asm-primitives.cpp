@@ -2188,6 +2188,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
             p.costCoeffNxN = PFX(costCoeffNxN_avx2_bmi2);
         }
     }
+    if (cpuMask & X265_CPU_AVX512)
+    {
+        p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_avx512);
+    }
 }
 #else // if HIGH_BIT_DEPTH
 
@@ -3748,6 +3752,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].satd = PFX(pixel_satd_16x8_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].satd = PFX(pixel_satd_16x16_avx512);
 
+        p.cu[BLOCK_8x8].var = PFX(pixel_var_8x8_avx512);
+        p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_avx512);
     }
 #endif
 }
