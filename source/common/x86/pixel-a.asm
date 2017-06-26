@@ -8187,7 +8187,7 @@ cglobal pixel_sa8d_32x32, 4,8,8
     HMAXABSW2         0, 1, 2, 3
 %endmacro
 
-%macro SATD_AVX512_END 0
+%macro SATD_AVX512_END 0-1 0 ; sa8d
     paddw          m0 {k1}{z}, m1 ; zero-extend to dwords
 %if ARCH_X86_64
 %if mmsize == 64
@@ -8202,10 +8202,19 @@ cglobal pixel_sa8d_32x32, 4,8,8
     paddd        xmm0, xmm1
     movq          rax, xmm0
     rorx          rdx, rax, 32
+%if %1
+    lea           eax, [rax+rdx+1]
+    shr           eax, 1
+%else
     add           eax, edx
+%endif
 %else
     HADDD          m0, m1
     movd          eax, xm0
+%if %1
+    inc           eax
+    shr           eax, 1
+%endif
 %endif
     RET
 %endmacro
@@ -8349,6 +8358,29 @@ cglobal pixel_satd_4x4, 4,5
     SATD_AVX512_PACKED      ; 1 1 3 3
     SWAP      0, 1
     SATD_AVX512_END
+
+INIT_ZMM avx512
+cglobal pixel_sa8d_8x8, 4,6
+    vbroadcasti64x4 m4, [hmul_16p]
+    mov     r4d, 0x55555555
+    kmovd    k1, r4d   ; 01010101
+    kshiftlb k2, k1, 5 ; 10100000
+    kshiftlb k3, k1, 4 ; 01010000
+    lea      r4, [3*r1]
+    lea      r5, [3*r3]
+    SATD_AVX512_LOAD8 q, ym, k1, k2, k3 ; 2 0 2 0 6 4 6 4
+    DIFF_SUMSUB_SSSE3 0, 2, 1, 3, 4     ; 3 1 3 1 7 5 7 5
+    SUMSUB_BA      w, 0, 1, 2
+    SBUTTERFLY   qdq, 0, 1, 2
+    SUMSUB_BA      w, 0, 1, 2
+    shufps        m2, m0, m1, q2020
+    shufps        m1, m0, m1, q3131
+    SUMSUB_BA      w, 2, 1, 0
+    vshufi32x4    m0, m2, m1, q1010
+    vshufi32x4    m1, m2, m1, q3232
+    SUMSUB_BA      w, 0, 1, 2
+    HMAXABSW2      0, 1, 2, 3
+    SATD_AVX512_END 1
 
 ; Input 10bit, Output 8bit
 ;------------------------------------------------------------------------------------------------------------------------

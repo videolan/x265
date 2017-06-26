@@ -3752,6 +3752,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].satd = PFX(pixel_satd_16x8_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].satd = PFX(pixel_satd_16x16_avx512);
 
+        p.cu[BLOCK_8x8].sa8d = PFX(pixel_sa8d_8x8_avx512);
+        p.chroma[X265_CSP_I420].cu[BLOCK_420_8x8].sa8d = PFX(pixel_sa8d_8x8_avx512);
+
         p.cu[BLOCK_8x8].var = PFX(pixel_var_8x8_avx512);
         p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_avx512);
         p.pu[LUMA_16x16].pixelavg_pp = PFX(pixel_avg_16x16_avx512);
@@ -3759,6 +3762,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_8x16].pixelavg_pp = PFX(pixel_avg_8x16_avx512);
         p.pu[LUMA_8x8].pixelavg_pp = PFX(pixel_avg_8x8_avx512);
         p.pu[LUMA_8x4].pixelavg_pp = PFX(pixel_avg_8x4_avx512);
+
     }
 #endif
 }
