@@ -3754,6 +3754,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
 
         p.cu[BLOCK_8x8].var = PFX(pixel_var_8x8_avx512);
         p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_avx512);
+        p.pu[LUMA_16x16].pixelavg_pp = PFX(pixel_avg_16x16_avx512);
+        p.pu[LUMA_16x8].pixelavg_pp = PFX(pixel_avg_16x8_avx512);
     }
 #endif
 }
