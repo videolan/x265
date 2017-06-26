@@ -3574,6 +3574,38 @@ AVG_WEIGHT 64, 7
 AVG_WEIGHT 24, 7
 AVG_WEIGHT 48, 7
 
+INIT_YMM avx512
+cglobal pixel_avg_weight_w8
+    BIWEIGHT_START
+    kxnorb         k1, k1, k1
+    kaddb          k1, k1, k1
+    AVG_START 5
+.height_loop:
+    movq          xm0, [t2]
+    movq          xm2, [t4]
+    movq          xm1, [t2+t3]
+    movq          xm5, [t4+t5]
+    lea            t2, [t2+t3*2]
+    lea            t4, [t4+t5*2]
+    vpbroadcastq   m0 {k1}, [t2]
+    vpbroadcastq   m2 {k1}, [t4]
+    vpbroadcastq   m1 {k1}, [t2+t3]
+    vpbroadcastq   m5 {k1}, [t4+t5]
+    punpcklbw      m0, m2
+    punpcklbw      m1, m5
+    pmaddubsw      m0, m3
+    pmaddubsw      m1, m3
+    pmulhrsw       m0, m4
+    pmulhrsw       m1, m4
+    packuswb       m0, m1
+    vextracti128 xmm1, m0, 1
+    movq         [t0], xm0
+    movhps    [t0+t1], xm0
+    lea            t0, [t0+t1*2]
+    movq         [t0], xmm1
+    movhps    [t0+t1], xmm1
+    AVG_END 4
+
 INIT_YMM avx2
 cglobal pixel_avg_weight_w16
     BIWEIGHT_START
@@ -4383,6 +4415,9 @@ AVGH 16, 4
 INIT_XMM avx512
 AVGH 16, 16
 AVGH 16,  8
+AVGH  8, 16
+AVGH  8,  8
+AVGH  8,  4
 
 %endif ;HIGH_BIT_DEPTH
 
