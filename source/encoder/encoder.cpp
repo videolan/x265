@@ -2650,6 +2650,16 @@ void Encoder::configure(x265_param *p)
             p->bHDROpt = 0;
         }
     }
+
+    if (m_param->toneMapFile || p->bHDROpt || p->bEmitHDRSEI)
+    {
+        if (!p->bRepeatHeaders)
+        {
+            p->bRepeatHeaders = 1;
+            x265_log(p, X265_LOG_WARNING, "Turning on repeat-headers for HDR compatibility\n");
+        }
+    }
+
     p->maxLog2CUSize = g_log2Size[p->maxCUSize];
     p->maxCUDepth    = p->maxLog2CUSize - g_log2Size[p->minCUSize];
     p->unitSizeDepth = p->maxLog2CUSize - LOG2_UNIT_SIZE;
