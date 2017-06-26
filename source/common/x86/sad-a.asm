@@ -380,6 +380,9 @@ SAD  4,  4
 
 %macro SAD_W16 1 ; h
 cglobal pixel_sad_16x%1, 4,4
+%ifidn cpuname, sse2
+.skip_prologue:
+%endif
 %assign %%i 0
 %if ARCH_X86_64
     lea  r6, [3*r1] ; r6 results in fewer REX prefixes than r4 and both are volatile
@@ -790,7 +793,132 @@ cglobal pixel_sad_8x16_sse2, 4,4
     SAD_INC_4x8P_SSE 1
     SAD_INC_4x8P_SSE 1
     SAD_END_SSE2
+
+%macro SAD_W48_AVX512 3 ; w, h, d/q
+cglobal pixel_sad_%1x%2, 4,4
+    kxnorb        k1, k1, k1
+    kaddb         k1, k1, k1
+%assign %%i 0
+%if ARCH_X86_64 && %2 != 4
+    lea           r6, [3*r1]
+    lea           r5, [3*r3]
+%rep %2/4
+    mov%3         m1,      [r0]
+    vpbroadcast%3 m1 {k1}, [r0+r1]
+    mov%3         m3,      [r2]
+    vpbroadcast%3 m3 {k1}, [r2+r3]
+    mov%3         m2,      [r0+2*r1]
+    vpbroadcast%3 m2 {k1}, [r0+r6]
+    mov%3         m4,      [r2+2*r3]
+    vpbroadcast%3 m4 {k1}, [r2+r5]
+%if %%i != %2/4-1
+    lea           r0, [r0+4*r1]
+    lea           r2, [r2+4*r3]
+%endif
+    psadbw        m1, m3
+    psadbw        m2, m4
+    ACCUM      paddd, 0, 1, %%i
+    paddd         m0, m2
+    %assign %%i %%i+1
+%endrep
+%else
+%rep %2/2
+    mov%3         m1,      [r0]
+    vpbroadcast%3 m1 {k1}, [r0+r1]
+    mov%3         m2,      [r2]
+    vpbroadcast%3 m2 {k1}, [r2+r3]
+%if %%i != %2/2-1
+    lea           r0, [r0+2*r1]
+    lea           r2, [r2+2*r3]
+%endif
+    psadbw        m1, m2
+    ACCUM      paddd, 0, 1, %%i
+    %assign %%i %%i+1
+%endrep
+%endif
+%if %1 == 8
+    punpckhqdq    m1, m0, m0
+    paddd         m0, m1
+%endif
+    movd         eax, m0
     RET
+%endmacro
+
+INIT_XMM avx512
+SAD_W48_AVX512 4,  4, d
+SAD_W48_AVX512 4,  8, d
+SAD_W48_AVX512 4, 16, d
+SAD_W48_AVX512 8,  4, q
+SAD_W48_AVX512 8,  8, q
+SAD_W48_AVX512 8, 16, q
+
+%macro SAD_W16_AVX512_START 1 ; h
+    cmp  r1d, 16                           ; optimized for width = 16, which has the
+    jne pixel_sad_16x%1_sse2.skip_prologue ; rows laid out contiguously in memory
+    lea   r1, [3*r3]
+%endmacro
+
+%macro SAD_W16_AVX512_END 0
+    paddd          m0, m1
+    paddd          m0, m2
+    paddd          m0, m3
+%if mmsize == 64
+    vextracti32x8 ym1, m0, 1
+    paddd         ym0, ym1
+%endif
+    vextracti128  xm1, ym0, 1
+    paddd        xmm0, xm0, xm1
+    punpckhqdq   xmm1, xmm0, xmm0
+    paddd        xmm0, xmm1
+    movd          eax, xmm0
+    RET
+%endmacro
+
+INIT_YMM avx512
+cglobal pixel_sad_16x8, 4,4
+    SAD_W16_AVX512_START 8
+    movu         xm0, [r2]
+    vinserti128   m0, [r2+r3], 1
+    psadbw        m0, [r0+0*32]
+    movu         xm1, [r2+2*r3]
+    vinserti128   m1, [r2+r1], 1
+    lea           r2, [r2+4*r3]
+    psadbw        m1, [r0+1*32]
+    movu         xm2, [r2]
+    vinserti128   m2, [r2+r3], 1
+    psadbw        m2, [r0+2*32]
+    movu         xm3, [r2+2*r3]
+    vinserti128   m3, [r2+r1], 1
+    psadbw        m3, [r0+3*32]
+    SAD_W16_AVX512_END
+
+INIT_ZMM avx512
+cglobal pixel_sad_16x16, 4,4
+    SAD_W16_AVX512_START 16
+    movu          xm0, [r2]
+    vinserti128   ym0, [r2+r3],   1
+    movu          xm1, [r2+4*r3]
+    vinserti32x4   m0, [r2+2*r3], 2
+    vinserti32x4   m1, [r2+2*r1], 2
+    vinserti32x4   m0, [r2+r1],   3
+    lea            r2, [r2+4*r3]
+    vinserti32x4   m1, [r2+r3],   1
+    psadbw         m0, [r0+0*64]
+    vinserti32x4   m1, [r2+r1],   3
+    lea            r2, [r2+4*r3]
+    psadbw         m1, [r0+1*64]
+    movu          xm2, [r2]
+    vinserti128   ym2, [r2+r3],   1
+    movu          xm3, [r2+4*r3]
+    vinserti32x4   m2, [r2+2*r3], 2
+    vinserti32x4   m3, [r2+2*r1], 2
+    vinserti32x4   m2, [r2+r1],   3
+    lea            r2, [r2+4*r3]
+    vinserti32x4   m3, [r2+r3],   1
+    psadbw         m2, [r0+2*64]
+    vinserti32x4   m3, [r2+r1],   3
+    psadbw         m3, [r0+3*64]
+    SAD_W16_AVX512_END
 
 ;=============================================================================
 ; SAD x3/x4 MMX

@@ -3763,6 +3763,15 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_8x8].pixelavg_pp = PFX(pixel_avg_8x8_avx512);
         p.pu[LUMA_8x4].pixelavg_pp = PFX(pixel_avg_8x4_avx512);
 
+        p.pu[LUMA_4x4].sad = PFX(pixel_sad_4x4_avx512);
+        p.pu[LUMA_4x8].sad = PFX(pixel_sad_4x8_avx512);
+        p.pu[LUMA_4x16].sad = PFX(pixel_sad_4x16_avx512);
+        p.pu[LUMA_8x4].sad = PFX(pixel_sad_8x4_avx512);
+        p.pu[LUMA_8x8].sad = PFX(pixel_sad_8x8_avx512);
+        p.pu[LUMA_8x16].sad = PFX(pixel_sad_8x16_avx512);
+        p.pu[LUMA_16x8].sad = PFX(pixel_sad_16x8_avx512);
+        p.pu[LUMA_16x16].sad = PFX(pixel_sad_16x16_avx512);
+
     }
 #endif
 }
