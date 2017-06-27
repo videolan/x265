@@ -340,24 +340,24 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
     pixel *U = m_picOrg[1];
     pixel *V = m_picOrg[2];
 
+    pixel *yPic = m_picOrg[0];
+    pixel *uPic = m_picOrg[1];
+    pixel *vPic = m_picOrg[2];
+
+    for (int r = 0; r < height; r++)
+    {
+        for (int c = 0; c < width; c++)
+        {
+            m_maxLumaLevel = X265_MAX(yPic[c], m_maxLumaLevel);
+            m_minLumaLevel = X265_MIN(yPic[c], m_minLumaLevel);
+            lumaSum += yPic[c];
+        }
+        yPic += m_stride;
+    }
+    m_avgLumaLevel = (double)lumaSum / (m_picHeight * m_picWidth);
+
     if (param.csvLogLevel >= 2)
     {
-        pixel *yPic = m_picOrg[0];
-        pixel *uPic = m_picOrg[1];
-        pixel *vPic = m_picOrg[2];
-
-        for (int r = 0; r < height; r++)
-        {
-            for (int c = 0; c < width; c++)
-            {
-                m_maxLumaLevel = X265_MAX(yPic[c], m_maxLumaLevel);
-                m_minLumaLevel = X265_MIN(yPic[c], m_minLumaLevel);
-                lumaSum += yPic[c];
-            }
-            yPic += m_stride;
-        }
-        m_avgLumaLevel = (double)lumaSum / (m_picHeight * m_picWidth);
-
         if (param.internalCsp != X265_CSP_I400)
         {
             for (int r = 0; r < height >> m_vChromaShift; r++)

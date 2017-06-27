@@ -1798,7 +1798,7 @@ int FrameEncoder::collectCTUStatistics(const CUData& ctu, FrameStats* log)
         totQP += ctu.m_qp[absPartIdx] * (ctu.m_numPartitions >> (depth * 2));
     }
 
-    if (m_param->csvLogLevel >= 1)
+    if (m_param->csvLogLevel >= 1 || m_param->rc.bStatWrite)
     {
         if (ctu.m_slice->m_sliceType == I_SLICE)
         {

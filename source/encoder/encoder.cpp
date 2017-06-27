@@ -1742,6 +1742,10 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
 
 #define ELAPSED_MSEC(start, end) (((double)(end) - (start)) / 1000)
 
+        frameStats->maxLumaLevel = curFrame->m_fencPic->m_maxLumaLevel;
+        frameStats->minLumaLevel = curFrame->m_fencPic->m_minLumaLevel;
+        frameStats->avgLumaLevel = curFrame->m_fencPic->m_avgLumaLevel;
+
         if (m_param->csvLogLevel >= 2)
         {
             frameStats->decideWaitTime = ELAPSED_MSEC(0, curEncoder->m_slicetypeWaitTime);
@@ -1761,9 +1765,6 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
             frameStats->avgLumaDistortion = curFrame->m_encData->m_frameStats.avgLumaDistortion;
             frameStats->avgPsyEnergy = curFrame->m_encData->m_frameStats.avgPsyEnergy;
             frameStats->avgResEnergy = curFrame->m_encData->m_frameStats.avgResEnergy;
-            frameStats->avgLumaLevel = curFrame->m_fencPic->m_avgLumaLevel;
-            frameStats->maxLumaLevel = curFrame->m_fencPic->m_maxLumaLevel;
-            frameStats->minLumaLevel = curFrame->m_fencPic->m_minLumaLevel;
 
             frameStats->maxChromaULevel = curFrame->m_fencPic->m_maxChromaULevel;
             frameStats->minChromaULevel = curFrame->m_fencPic->m_minChromaULevel;
