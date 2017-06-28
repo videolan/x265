@@ -1553,14 +1553,17 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t& r
     }
 
     // Estimate Best Position
-    int64_t bestRDCostBO = MAX_INT64;
     int32_t bestClassBO  = 0;
+    int64_t currentRDCost = costClasses[0];
+    currentRDCost += costClasses[1];
+    currentRDCost += costClasses[2];
+    currentRDCost += costClasses[3];
+    int64_t bestRDCostBO = currentRDCost;
 
-    for (int i = 0; i < MAX_NUM_SAO_CLASS - SAO_NUM_OFFSET + 1; i++)
+    for (int i = 1; i < MAX_NUM_SAO_CLASS - SAO_NUM_OFFSET + 1; i++)
     {
-        int64_t currentRDCost = 0;
-        for (int j = i; j < i + SAO_NUM_OFFSET; j++)
-            currentRDCost += costClasses[j];
+        currentRDCost -= costClasses[i - 1];
+        currentRDCost += costClasses[i + 3];
 
         if (currentRDCost < bestRDCostBO)
         {
