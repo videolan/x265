@@ -1819,7 +1819,8 @@ void Lookahead::calcMotionAdaptiveQuantFrame(Lowres **frames, int p0, int p1, in
                     MV *mvs = frames[b]->lowresMvs[list][listDist[list]];
                     int32_t x = mvs[cuIndex].x;
                     int32_t y = mvs[cuIndex].y;
-                    displacement += sqrt(pow(abs(x), 2) + pow(abs(y), 2));
+                    // NOTE: the dynamic range of abs(x) and abs(y) is 15-bits
+                    displacement += sqrt((double)(abs(x) * abs(x)) + (double)(abs(y) * abs(y)));
                 }
                 else
                     displacement += 0.0;
