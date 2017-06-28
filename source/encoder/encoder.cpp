@@ -1130,46 +1130,59 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
 int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
 {
-    encParam->maxNumReferences = param->maxNumReferences; // never uses more refs than specified in stream headers
-    encParam->bEnableFastIntra = param->bEnableFastIntra;
-    encParam->bEnableEarlySkip = param->bEnableEarlySkip;
-    encParam->bEnableRecursionSkip = param->bEnableRecursionSkip;
-    encParam->searchMethod = param->searchMethod;
-    /* Scratch buffer prevents me_range from being increased for esa/tesa */
-    if (param->searchRange < encParam->searchRange)
-        encParam->searchRange = param->searchRange;
-    /* We can't switch out of subme=0 during encoding. */
-    if (encParam->subpelRefine)
-        encParam->subpelRefine = param->subpelRefine;
-    encParam->rdoqLevel = param->rdoqLevel;
-    encParam->rdLevel = param->rdLevel;
-    encParam->bEnableRectInter = param->bEnableRectInter;
-    encParam->maxNumMergeCand = param->maxNumMergeCand;
-    encParam->bIntraInBFrames = param->bIntraInBFrames;
-    if (param->scalingLists && !encParam->scalingLists)
-        encParam->scalingLists = strdup(param->scalingLists);
-    /* VBV can't be turned ON if it wasn't ON to begin with and can't be turned OFF if it was ON to begin with*/
-    if (param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0 &&
-        encParam->rc.vbvMaxBitrate > 0 && encParam->rc.vbvBufferSize > 0)
+    if (isReconfigureRc(encParam, param))
     {
-        m_reconfigureRc |= encParam->rc.vbvMaxBitrate != param->rc.vbvMaxBitrate;
-        m_reconfigureRc |= encParam->rc.vbvBufferSize != param->rc.vbvBufferSize;
-        if (m_reconfigureRc && m_param->bEmitHRDSEI)
-            x265_log(m_param, X265_LOG_WARNING, "VBV parameters cannot be changed when HRD is in use.\n");
-        else
+        /* VBV can't be turned ON if it wasn't ON to begin with and can't be turned OFF if it was ON to begin with*/
+        if (param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0 &&
+            encParam->rc.vbvMaxBitrate > 0 && encParam->rc.vbvBufferSize > 0)
         {
-            encParam->rc.vbvMaxBitrate = param->rc.vbvMaxBitrate;
-            encParam->rc.vbvBufferSize = param->rc.vbvBufferSize;
+            m_reconfigureRc |= encParam->rc.vbvMaxBitrate != param->rc.vbvMaxBitrate;
+            m_reconfigureRc |= encParam->rc.vbvBufferSize != param->rc.vbvBufferSize;
+            if (m_reconfigureRc && m_param->bEmitHRDSEI)
+                x265_log(m_param, X265_LOG_WARNING, "VBV parameters cannot be changed when HRD is in use.\n");
+            else
+            {
+                encParam->rc.vbvMaxBitrate = param->rc.vbvMaxBitrate;
+                encParam->rc.vbvBufferSize = param->rc.vbvBufferSize;
+            }
         }
+        m_reconfigureRc |= encParam->rc.bitrate != param->rc.bitrate;
+        encParam->rc.bitrate = param->rc.bitrate;
+        m_reconfigureRc |= encParam->rc.rfConstant != param->rc.rfConstant;
+        encParam->rc.rfConstant = param->rc.rfConstant;
     }
-    m_reconfigureRc |= encParam->rc.bitrate != param->rc.bitrate;
-    encParam->rc.bitrate = param->rc.bitrate;
-    m_reconfigureRc |= encParam->rc.rfConstant != param->rc.rfConstant;
-    encParam->rc.rfConstant = param->rc.rfConstant; 
-
+    else
+    {
+        encParam->maxNumReferences = param->maxNumReferences; // never uses more refs than specified in stream headers
+        encParam->bEnableFastIntra = param->bEnableFastIntra;
+        encParam->bEnableEarlySkip = param->bEnableEarlySkip;
+        encParam->bEnableRecursionSkip = param->bEnableRecursionSkip;
+        encParam->searchMethod = param->searchMethod;
+        /* Scratch buffer prevents me_range from being increased for esa/tesa */
+        if (param->searchRange < encParam->searchRange)
+            encParam->searchRange = param->searchRange;
+        /* We can't switch out of subme=0 during encoding. */
+        if (encParam->subpelRefine)
+            encParam->subpelRefine = param->subpelRefine;
+        encParam->rdoqLevel = param->rdoqLevel;
+        encParam->rdLevel = param->rdLevel;
+        encParam->bEnableRectInter = param->bEnableRectInter;
+        encParam->maxNumMergeCand = param->maxNumMergeCand;
+        encParam->bIntraInBFrames = param->bIntraInBFrames;
+        if (param->scalingLists && !encParam->scalingLists)
+            encParam->scalingLists = strdup(param->scalingLists);
+    }
     /* To add: Loop Filter/deblocking controls, transform skip, signhide require PPS to be resent */
     /* To add: SAO, temporal MVP, AMP, TU depths require SPS to be resent, at every CVS boundary */
     return x265_check_params(encParam);
+}
+
+bool Encoder::isReconfigureRc(x265_param* latestParam, x265_param* param_in)
+{
+    return (latestParam->rc.vbvMaxBitrate != param_in->rc.vbvMaxBitrate
+        || latestParam->rc.vbvBufferSize != param_in->rc.vbvBufferSize
+        || latestParam->rc.bitrate != param_in->rc.bitrate
+        || latestParam->rc.rfConstant != param_in->rc.rfConstant);
 }
 
 void Encoder::copyCtuInfo(x265_ctu_info_t** frameCtuInfo, int poc)

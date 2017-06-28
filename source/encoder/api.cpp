@@ -188,7 +188,8 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
 
     x265_param save;
     Encoder* encoder = static_cast<Encoder*>(enc);
-    if (encoder->m_reconfigure || encoder->m_reconfigureRc) /* Reconfigure in progress */
+    bool isReconfigureRc = encoder->isReconfigureRc(encoder->m_latestParam, param_in);
+    if (encoder->m_reconfigure && !isReconfigureRc || encoder->m_reconfigureRc && isReconfigureRc) /* Reconfigure in progress */
         return 1;
     memcpy(&save, encoder->m_latestParam, sizeof(x265_param));
     int ret = encoder->reconfigureParam(encoder->m_latestParam, param_in);
@@ -205,16 +206,22 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
             if (encoder->m_param->bRepeatHeaders)
             {
                 if (encoder->m_scalingList.parseScalingList(encoder->m_latestParam->scalingLists))
+                {
+                    memcpy(encoder->m_latestParam, &save, sizeof(x265_param));
                     return -1;
+                }
                 encoder->m_scalingList.setupQuantMatrices(encoder->m_param->internalCsp);
             }
             else
             {
                 x265_log(encoder->m_param, X265_LOG_ERROR, "Repeat headers is turned OFF, cannot reconfigure scalinglists\n");
+                memcpy(encoder->m_latestParam, &save, sizeof(x265_param));
                 return -1;
             }
         }
-        if (encoder->m_reconfigureRc)
+        if (!isReconfigureRc)
+            encoder->m_reconfigure = true;
+        else if (encoder->m_reconfigureRc)
         {
             VPS saveVPS;
             memcpy(&saveVPS.ptl, &encoder->m_vps.ptl, sizeof(saveVPS.ptl));
@@ -225,11 +232,11 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
                 x265_log(encoder->m_param, X265_LOG_WARNING, "Profile/Level/Tier has changed from %d/%d/%s to %d/%d/%s.Cannot reconfigure rate-control.\n",
                          saveVPS.ptl.profileIdc, saveVPS.ptl.levelIdc, saveVPS.ptl.tierFlag ? "High" : "Main", encoder->m_vps.ptl.profileIdc,
                          encoder->m_vps.ptl.levelIdc, encoder->m_vps.ptl.tierFlag ? "High" : "Main");
+                memcpy(encoder->m_latestParam, &save, sizeof(x265_param));
+                memcpy(&encoder->m_vps.ptl, &saveVPS.ptl, sizeof(saveVPS.ptl));
                 encoder->m_reconfigureRc = false;
             }
         }
-        else
-            encoder->m_reconfigure = true;
         encoder->printReconfigureParams();
     }
     return ret;
