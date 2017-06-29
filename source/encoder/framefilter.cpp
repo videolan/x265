@@ -582,10 +582,7 @@ void FrameFilter::processRow(int row)
     CUData* ctu = encData.getPicCTU(m_parallelFilter[row].m_rowAddr);
 
     /* Processing left block Deblock with current threading */
-    {
-        /* stop threading on current row */
-        m_parallelFilter[row].waitForExit();
-
+    {        
         /* Check to avoid previous row process slower than current row */
         X265_CHECK(ctu->m_bFirstRowInSlice || m_parallelFilter[row - 1].m_lastDeblocked.get() == m_numCols, "previous row not finish");
 
@@ -618,7 +615,6 @@ void FrameFilter::processRow(int row)
     }
 
     // this row of CTUs has been encoded
-
     if (!ctu->m_bFirstRowInSlice)
         processPostRow(row - 1);
 

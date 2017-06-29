@@ -62,7 +62,7 @@ public:
     void*         m_ssimBuf;        /* Temp storage for ssim computation */
 
 #define MAX_PFILTER_CUS     (4) /* maximum CUs for every thread */
-    class ParallelFilter : public BondedTaskGroup, public Deblock
+    class ParallelFilter : public Deblock
     {
     public:
         uint32_t            m_rowHeight;
@@ -104,10 +104,6 @@ public:
         {
             return m_rowHeight;
         }
-
-    protected:
-
-        ParallelFilter operator=(const ParallelFilter&);
     };
 
     ParallelFilter*     m_parallelFilter;

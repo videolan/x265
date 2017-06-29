@@ -1264,10 +1264,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     if (bFirstRowInSlice && !curRow.completed)
     {
         // Load SBAC coder context from previous row and initialize row state.
-        //rowCoder.copyState(m_initSliceContext);
-        //rowCoder.loadContexts(m_rows[row - 1].bufferedEntropy);
-        rowCoder.load(m_initSliceContext);
-        //m_rows[row - 1].bufferedEntropy.loadContexts(m_initSliceContext);
+        rowCoder.load(m_initSliceContext);        
     }
 
     // calculate mean QP for consistent deltaQP signalling calculation
@@ -1328,9 +1325,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             }
             curRow.avgQPComputed = 1;
         }
-    }
-
-    // TODO: specially case handle on first and last row
+    }    
 
     // Initialize restrict on MV range in slices
     tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * m_param->maxCUSize * 4) + 3 * 4;
@@ -1428,15 +1423,10 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         {
             // NOTE: in VBV mode, we may reencode anytime, so we can't do Deblock stage-Horizon and SAO
             if (!bIsVbv)
-            {
-                // TODO: Multiple Threading
-                // Delay ONE row to avoid Intra Prediction Conflict
+            {                
+                // Delay one row to avoid intra prediction conflict
                 if (m_pool && !bFirstRowInSlice)
-                {
-                    // Waitting last threading finish
-                    m_frameFilter.m_parallelFilter[row - 1].waitForExit();
-
-                    // Processing new group
+                {                    
                     int allowCol = col;
 
                     // avoid race condition on last column
@@ -1446,15 +1436,11 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                                                                   : m_frameFilter.m_parallelFilter[row - 2].m_lastCol.get()), (int)col);
                     }
                     m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(allowCol);
-                    m_frameFilter.m_parallelFilter[row - 1].tryBondPeers(*this, 1);
                 }
 
                 // Last Row may start early
                 if (m_pool && bLastRowInSlice)
                 {
-                    // Waiting for the last thread to finish
-                    m_frameFilter.m_parallelFilter[row].waitForExit();
-
                     // Deblocking last row
                     int allowCol = col;
 
@@ -1465,7 +1451,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                                                                   : m_frameFilter.m_parallelFilter[row - 1].m_lastCol.get()), (int)col);
                     }
                     m_frameFilter.m_parallelFilter[row].m_allowedCol.set(allowCol);
-                    m_frameFilter.m_parallelFilter[row].tryBondPeers(*this, 1);
                 }
             } // end of !bIsVbv
         }
@@ -1481,7 +1466,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         FrameStats frameLog;
         curEncData.m_rowStat[row].sumQpAq += collectCTUStatistics(*ctu, &frameLog);
 
-        // copy no. of intra, inter Cu cnt per row into frame stats for 2 pass
+        // copy number of intra, inter cu per row into frame stats for 2 pass
         if (m_param->rc.bStatWrite)
         {
             curRow.rowStats.mvBits    += best.mvBits;
@@ -1537,7 +1522,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             }
             
             // If current block is at row end checkpoint, call vbv ratecontrol.
-
             if (!m_param->bEnableWavefront && col == numCols - 1)
             {
                 double qpBase = curEncData.m_cuStat[cuAddr].baseQp;
@@ -1566,9 +1550,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                     curEncData.m_rowStat[row].sumQpAq = 0;
                 }
             }
-
             // If current block is at row diagonal checkpoint, call vbv ratecontrol.
-
             else if (m_param->bEnableWavefront && row == col && row)
             {
                 if (m_param->rc.bEnableConstVbv)
@@ -1683,7 +1665,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         }
     }
 
-    /** this row of CTUs has been compressed **/
+    /* this row of CTUs has been compressed */
     if (m_param->bEnableWavefront && m_param->rc.bEnableConstVbv)
     {
         if (row == m_numRows - 1)
@@ -1740,13 +1722,10 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     /* Processing left Deblock block with current threading */
     if ((m_param->bEnableLoopFilter | m_param->bEnableSAO) & (rowInSlice >= 2))
     {
-        /* TODO: Multiple Threading */
-
         /* Check conditional to start previous row process with current threading */
         if (m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get() == (int)numCols)
         {
             /* stop threading on current row and restart it */
-            m_frameFilter.m_parallelFilter[row - 1].waitForExit();
             m_frameFilter.m_parallelFilter[row - 1].m_allowedCol.set(numCols);
             m_frameFilter.m_parallelFilter[row - 1].processTasks(-1);
         }
