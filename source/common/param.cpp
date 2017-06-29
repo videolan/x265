@@ -970,7 +970,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("const-vbv") p->rc.bEnableConstVbv = atobool(value);
         OPT("ctu-info") p->bCTUInfo = atoi(value);
         OPT("scale-factor") p->scaleFactor = atoi(value);
-        OPT("refine-intra")p->intraRefine = atobool(value);
+        OPT("refine-intra")p->intraRefine = atoi(value);
         OPT("refine-inter")p->interRefine = atobool(value);
         OPT("refine-mv")p->mvRefine = atobool(value);
         else

@@ -893,11 +893,22 @@ will not reuse analysis if slice type parameters do not match.
        This option should be coupled with analysis-reuse-mode option, --analysis-reuse-level 10.
        The ctu size of load should be double the size of save. Default 0.
 
-.. option:: --refine-intra
+.. option:: --refine-intra <0|1|2>
 	
-	Enables refinement of intra blocks in current encode. Evaluates all 
-	intra modes for blocks of size one smaller than the min-cu-size of the 
-	incoming analysis data from the previous encode. Default disabled.
+	Enables refinement of intra blocks in current encode. 
+	
+	Level 0 - Forces both mode and depth from the previous encode.
+	
+	Level 1 - Evaluates all intra modes for blocks of size one smaller than 
+	the min-cu-size of the incoming analysis data from the previous encode, 
+	forces modes for blocks of larger size.
+	
+	Level 2 - Evaluates all intra modes for	blocks of size one smaller than 
+	the min-cu-size of the incoming analysis data from the previous encode. 
+	For larger blocks, force only depth when angular mode is chosen by the 
+	previous encode, force depth and mode when other intra modes are chosen.
+	
+	Default 0.
 	
 .. option:: --refine-inter-depth
 
