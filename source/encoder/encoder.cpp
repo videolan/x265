@@ -70,7 +70,6 @@ Encoder::Encoder()
     m_exportedPic = NULL;
     m_numDelayedPic = 0;
     m_outputCount = 0;
-    m_csvfpt = NULL;
     m_param = NULL;
     m_latestParam = NULL;
     m_threadPool = NULL;
@@ -475,9 +474,6 @@ void Encoder::destroy()
     if (m_analysisFile)
         fclose(m_analysisFile);
 
-    if (m_csvfpt)
-        fclose(m_csvfpt);
-
     if (m_latestParam != NULL && m_latestParam != m_param)
     {
         if (m_latestParam->scalingLists != m_param->scalingLists)
@@ -509,6 +505,8 @@ void Encoder::destroy()
      }
     if (m_param)
     {
+        if (m_param->csvfpt)
+            fclose(m_param->csvfpt);
         /* release string arguments that were strdup'd */
         free((char*)m_param->rc.lambdaFileName);
         free((char*)m_param->rc.statFileName);

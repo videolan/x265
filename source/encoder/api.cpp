@@ -120,8 +120,8 @@ x265_encoder *x265_encoder_open(x265_param *p)
     /* Try to open CSV file handle */
     if (encoder->m_param->csvfn)
     {
-        encoder->m_csvfpt = x265_csvlog_open(*encoder->m_param, encoder->m_param->csvfn, encoder->m_param->csvLogLevel);
-        if (!encoder->m_csvfpt)
+        encoder->m_param->csvfpt = x265_csvlog_open(*encoder->m_param, encoder->m_param->csvfn, encoder->m_param->csvLogLevel);
+        if (!encoder->m_param->csvfpt)
         {
             x265_log(encoder->m_param, X265_LOG_ERROR, "Unable to open CSV log file <%s>, aborting\n", encoder->m_param->csvfn);
             encoder->m_aborted = true;
@@ -269,7 +269,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
         *pi_nal = 0;
 
     if (numEncoded && encoder->m_param->csvLogLevel)
-        x265_csvlog_frame(encoder->m_csvfpt, *encoder->m_param, *pic_out, encoder->m_param->csvLogLevel);
+        x265_csvlog_frame(encoder->m_param->csvfpt, *encoder->m_param, *pic_out, encoder->m_param->csvLogLevel);
 
     if (numEncoded < 0)
         encoder->m_aborted = true;
@@ -295,7 +295,7 @@ void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
         int padx = encoder->m_sps.conformanceWindow.rightOffset;
         int pady = encoder->m_sps.conformanceWindow.bottomOffset;
         encoder->fetchStats(&stats, sizeof(stats));
-        x265_csvlog_encode(encoder->m_csvfpt, x265_version_str, *encoder->m_param, padx, pady, stats, encoder->m_param->csvLogLevel, argc, argv);
+        x265_csvlog_encode(encoder->m_param->csvfpt, x265_version_str, *encoder->m_param, padx, pady, stats, encoder->m_param->csvLogLevel, argc, argv);
     }
 }
 

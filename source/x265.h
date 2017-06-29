@@ -26,6 +26,7 @@
 #define X265_H
 
 #include <stdint.h>
+#include <cstdio>
 #include "x265_config.h"
 
 #ifdef __cplusplus
@@ -1478,6 +1479,8 @@ typedef struct x265_param
     /* Specify if analysis mode uses file for data reuse */
     int       bUseAnalysisFile;
 
+    /* File pointer for csv log */
+    FILE*     csvfpt;
 } x265_param;
 
 /* x265_param_alloc:

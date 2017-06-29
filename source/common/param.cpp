@@ -284,6 +284,7 @@ void x265_param_default(x265_param* param)
     param->interRefine = 0;
     param->mvRefine = 0;
     param->bUseAnalysisFile = 1;
+    param->csvfpt = NULL;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
