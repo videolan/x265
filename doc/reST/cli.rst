@@ -1677,7 +1677,7 @@ Quality, rate control and rate distortion options
    that this option is used through the tune grain feature where a combination 
    of param options are used to improve visual quality.
    
- .. option:: --const-vbv, --no-const-vbv
+.. option:: --const-vbv, --no-const-vbv
 
    Enables VBV algorithm to be consistent across runs. Default disabled. 
    Enabled when :option:'--tune' grain is applied.

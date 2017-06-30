@@ -2272,7 +2272,7 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
             uint32_t refRowSatdCost = 0, refRowBits = 0, intraCostForPendingCus = 0;
             double refQScale = 0;
 
-            if (picType != I_SLICE)
+            if (picType != I_SLICE && !m_param->rc.bEnableConstVbv)
             {
                 FrameData& refEncData = *refFrame->m_encData;
                 uint32_t endCuAddr = maxCols * (row + 1);
@@ -2344,7 +2344,7 @@ int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEnt
     }
     rowSatdCost >>= X265_DEPTH - 8;
     updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
-    if (curEncData.m_slice->m_sliceType != I_SLICE)
+    if (curEncData.m_slice->m_sliceType != I_SLICE && !m_param->rc.bEnableConstVbv)
     {
         Frame* refFrame = curEncData.m_slice->m_refFrameList[0][0];
         if (qpVbv < refFrame->m_encData->m_rowStat[row].rowQp)
