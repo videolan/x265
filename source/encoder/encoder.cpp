@@ -1422,7 +1422,7 @@ void Encoder::printSummary()
     /* Summarize stats from all frame encoders */
     CUStats cuStats;
     for (int i = 0; i < m_param->frameNumThreads; i++)
-        cuStats.accumulate(m_frameEncoder[i]->m_cuStats, m_param);
+        cuStats.accumulate(m_frameEncoder[i]->m_cuStats, *m_param);
 
     if (!cuStats.totalCTUTime)
         return;

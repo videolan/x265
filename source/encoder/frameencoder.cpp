@@ -1110,7 +1110,7 @@ void FrameEncoder::compressFrame()
     /* Accumulate CU statistics from each worker thread, we could report
      * per-frame stats here, but currently we do not. */
     for (int i = 0; i < numTLD; i++)
-        m_cuStats.accumulate(m_tld[i].analysis.m_stats[m_jpId], m_param);
+        m_cuStats.accumulate(m_tld[i].analysis.m_stats[m_jpId], *m_param);
 #endif
 
     m_endFrameTime = x265_mdate();
