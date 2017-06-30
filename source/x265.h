@@ -24,11 +24,9 @@
 
 #ifndef X265_H
 #define X265_H
-
 #include <stdint.h>
-#include <cstdio>
+#include <stdio.h>
 #include "x265_config.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
