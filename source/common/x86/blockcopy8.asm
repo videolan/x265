@@ -4462,6 +4462,154 @@ BLOCKCOPY_SS_W64_H4_avx 64, 32
 BLOCKCOPY_SS_W64_H4_avx 64, 48
 BLOCKCOPY_SS_W64_H4_avx 64, 64
 
+%macro PROCESS_BLOCKCOPY_SS_W64_H8_avx512 0
+    movu    m0, [r2]
+    movu    m1, [r2 + mmsize]
+    movu    m2, [r2 + r3]
+    movu    m3, [r2 + r3 + mmsize]
+
+    movu    [r0],               m0
+    movu    [r0 + mmsize],      m1
+    movu    [r0 + r1],          m2
+    movu    [r0 + r1 + mmsize], m3
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + 2 * r3 + mmsize]
+    movu    m2, [r2 + r6]
+    movu    m3, [r2 + r6 + mmsize]
+    lea     r2, [r2 + 4 * r3]
+
+    movu    [r0 + 2 * r1],          m0
+    movu    [r0 + 2 * r1 + mmsize], m1
+    movu    [r0 + r5],              m2
+    movu    [r0 + r5 + mmsize],     m3
+    lea     r0, [r0 + 4 * r1]
+
+    movu    m0, [r2]
+    movu    m1, [r2 + mmsize]
+    movu    m2, [r2 + r3]
+    movu    m3, [r2 + r3 + mmsize]
+
+    movu    [r0],               m0
+    movu    [r0 + mmsize],      m1
+    movu    [r0 + r1],          m2
+    movu    [r0 + r1 + mmsize], m3
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + 2 * r3 + mmsize]
+    movu    m2, [r2 + r6]
+    movu    m3, [r2 + r6 + mmsize]
+    lea     r2, [r2 + 4 * r3]
+
+    movu    [r0 + 2 * r1],          m0
+    movu    [r0 + 2 * r1 + mmsize], m1
+    movu    [r0 + r5],              m2
+    movu    [r0 + r5 + mmsize],     m3
+    lea     r0, [r0 + 4 * r1]
+%endmacro
+
+%macro PROCESS_BLOCKCOPY_SS_W64_H8_LAST_avx512 0
+    movu    m0, [r2]
+    movu    m1, [r2 + mmsize]
+    movu    m2, [r2 + r3]
+    movu    m3, [r2 + r3 + mmsize]
+
+    movu    [r0],               m0
+    movu    [r0 + mmsize],      m1
+    movu    [r0 + r1],          m2
+    movu    [r0 + r1 + mmsize], m3
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + 2 * r3 + mmsize]
+    movu    m2, [r2 + r6]
+    movu    m3, [r2 + r6 + mmsize]
+    lea     r2, [r2 + 4 * r3]
+
+    movu    [r0 + 2 * r1],          m0
+    movu    [r0 + 2 * r1 + mmsize], m1
+    movu    [r0 + r5],              m2
+    movu    [r0 + r5 + mmsize],     m3
+    lea     r0, [r0 + 4 * r1]
+
+    movu    m0, [r2]
+    movu    m1, [r2 + mmsize]
+    movu    m2, [r2 + r3]
+    movu    m3, [r2 + r3 + mmsize]
+
+    movu    [r0],               m0
+    movu    [r0 + mmsize],      m1
+    movu    [r0 + r1],          m2
+    movu    [r0 + r1 + mmsize], m3
+
+    movu    m0, [r2 + 2 * r3]
+    movu    m1, [r2 + 2 * r3 + mmsize]
+    movu    m2, [r2 + r6]
+    movu    m3, [r2 + r6 + mmsize]
+
+    movu    [r0 + 2 * r1],          m0
+    movu    [r0 + 2 * r1 + mmsize], m1
+    movu    [r0 + r5],              m2
+    movu    [r0 + r5 + mmsize],     m3
+%endmacro
+
+;-----------------------------------------------------------------------------
+; void blockcopy_ss_%1x%2(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal blockcopy_ss_64x16, 4, 7, 4
+    add     r1, r1
+    add     r3, r3
+    lea     r5, [3 * r1]
+    lea     r6, [3 * r3]
+
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_LAST_avx512
+    RET
+
+INIT_ZMM avx512
+cglobal blockcopy_ss_64x32, 4, 7, 4
+    add     r1, r1
+    add     r3, r3
+    lea     r5, [3 * r1]
+    lea     r6, [3 * r3]
+
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_LAST_avx512
+    RET
+
+INIT_ZMM avx512
+cglobal blockcopy_ss_64x48, 4, 7, 4
+    add     r1, r1
+    add     r3, r3
+    lea     r5, [3 * r1]
+    lea     r6, [3 * r3]
+
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_LAST_avx512
+    RET
+
+INIT_ZMM avx512
+cglobal blockcopy_ss_64x64, 4, 7, 4
+    add     r1, r1
+    add     r3, r3
+    lea     r5, [3 * r1]
+    lea     r6, [3 * r3]
+
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_avx512
+    PROCESS_BLOCKCOPY_SS_W64_H8_LAST_avx512
+    RET
 ;--------------------------------------------------------------------------------------
 ; void cpy2Dto1D_shr(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 ;--------------------------------------------------------------------------------------

@@ -3854,6 +3854,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_64x64].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_ss_64x64_avx512);
         p.cu[BLOCK_32x32].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_ss_32x32_avx512);
 
+        p.cu[BLOCK_64x64].copy_ss = PFX(blockcopy_ss_64x64_avx512);
+
     }
 #endif
 }
