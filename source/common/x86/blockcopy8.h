@@ -57,6 +57,7 @@ FUNCDEF_CHROMA_PU(void, blockcopy_pp, avx, pixel* dst, intptr_t dstStride, const
 FUNCDEF_PU(void, blockcopy_sp, sse2, pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 FUNCDEF_PU(void, blockcopy_sp, sse4, pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 FUNCDEF_PU(void, blockcopy_sp, avx2, pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+FUNCDEF_PU(void, blockcopy_sp, avx512, pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 FUNCDEF_PU(void, blockcopy_ps, sse2, int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 FUNCDEF_PU(void, blockcopy_ps, sse4, int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 FUNCDEF_PU(void, blockcopy_ps, avx2, int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);

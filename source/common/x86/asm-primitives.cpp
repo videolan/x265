@@ -3777,6 +3777,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_16x8].sad = PFX(pixel_sad_16x8_avx512);
         p.pu[LUMA_16x16].sad = PFX(pixel_sad_16x16_avx512);
 
+        p.cu[BLOCK_64x64].copy_sp = PFX(blockcopy_sp_64x64_avx512);
+
     }
 #endif
 }
