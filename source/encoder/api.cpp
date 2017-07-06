@@ -295,7 +295,8 @@ void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
         int padx = encoder->m_sps.conformanceWindow.rightOffset;
         int pady = encoder->m_sps.conformanceWindow.bottomOffset;
         encoder->fetchStats(&stats, sizeof(stats));
-        x265_csvlog_encode(encoder->m_param->csvfpt, x265_version_str, *encoder->m_param, padx, pady, stats, encoder->m_param->csvLogLevel, argc, argv);
+        const x265_api * api = x265_api_get(0);
+        x265_csvlog_encode(encoder->m_param->csvfpt, api->version_str, *encoder->m_param, padx, pady, stats, encoder->m_param->csvLogLevel, argc, argv);
     }
 }
 
