@@ -3653,6 +3653,7 @@ INIT_ZMM avx512
     vextracti32x4 [t0+t1], m0, 3
     AVG_END 4
 
+INIT_YMM avx2
 cglobal pixel_avg_weight_w32
     BIWEIGHT_START
     AVG_START 5
@@ -3668,6 +3669,7 @@ cglobal pixel_avg_weight_w32
     mova    [t0], m0
     AVG_END
 
+INIT_YMM avx2
 cglobal pixel_avg_weight_w64
     BIWEIGHT_START
     AVG_START 5
