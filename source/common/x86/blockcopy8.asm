@@ -3124,6 +3124,36 @@ cglobal blockcopy_ps_%1x%2, 4, 7, 2
 BLOCKCOPY_PS_W32_H4_avx2 32, 32
 BLOCKCOPY_PS_W32_H4_avx2 32, 64
 
+%macro BLOCKCOPY_PS_W32_H4_avx512 2
+INIT_ZMM avx512
+cglobal blockcopy_ps_%1x%2, 4, 7, 4
+    add     r1, r1
+    mov     r4d, %2/8
+    lea     r5, [3 * r3]
+    lea     r6, [3 * r1]
+.loop:
+%rep 2
+    pmovzxbw      m0, [r2]
+    pmovzxbw      m1, [r2 + r3]
+    pmovzxbw      m2, [r2 + r3 * 2]
+    pmovzxbw      m3, [r2 + r5]
+
+    movu          [r0], m0
+    movu          [r0 + r1], m1
+    movu          [r0 + r1 * 2], m2
+    movu          [r0 + r6], m3
+
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+%endrep
+    dec           r4d
+    jnz           .loop
+    RET
+%endmacro
+
+BLOCKCOPY_PS_W32_H4_avx512 32, 32
+BLOCKCOPY_PS_W32_H4_avx512 32, 64
+
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_%1x%2(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 ;-----------------------------------------------------------------------------
