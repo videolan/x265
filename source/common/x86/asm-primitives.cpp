@@ -3783,6 +3783,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I422].cu[CHROMA_422_32x64].copy_ps = PFX(blockcopy_ps_32x64_avx512);
         p.cu[BLOCK_64x64].copy_ps = PFX(blockcopy_ps_64x64_avx512);
 
+        p.scale1D_128to64 = PFX(scale1D_128to64_avx512);
+
     }
 #endif
 }

@@ -4062,6 +4062,39 @@ cglobal scale1D_128to64, 2, 2, 4
     RET
 %endif
 
+%if HIGH_BIT_DEPTH == 0
+INIT_ZMM avx512
+cglobal scale1D_128to64, 2, 2, 6
+    pxor            m4, m4
+    vbroadcasti32x8 m5, [pb_1]
+
+    ;Top pixel
+    movu            m0, [r1]
+    movu            m1, [r1 + 64]
+    movu            m2, [r1 + 128]
+    movu            m3, [r1 + 192]
+
+    pmaddubsw       m0, m0, m5
+    pavgw           m0, m4
+    pmaddubsw       m1, m1, m5
+    pavgw           m1, m4
+    packuswb        m0, m1
+    vpermq          m0, m0, q3120
+    vshufi64x2      m0, m0, q3120
+    movu            [r0], m0
+
+    ;Left pixel
+    pmaddubsw       m2, m2, m5
+    pavgw           m2, m4
+    pmaddubsw       m3, m3, m5
+    pavgw           m3, m4
+    packuswb        m2, m3
+    vpermq          m2, m2, q3120
+    vshufi64x2      m2, m2, q3120
+    movu            [r0 + 64], m2
+    RET
+%endif
+
 ;-----------------------------------------------------------------
 ; void scale2D_64to32(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
