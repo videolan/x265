@@ -3781,6 +3781,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx512);
         p.chroma[X265_CSP_I420].cu[CHROMA_420_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx512);
         p.chroma[X265_CSP_I422].cu[CHROMA_422_32x64].copy_ps = PFX(blockcopy_ps_32x64_avx512);
+        p.cu[BLOCK_64x64].copy_ps = PFX(blockcopy_ps_64x64_avx512);
 
     }
 #endif

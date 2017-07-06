@@ -3340,6 +3340,42 @@ cglobal blockcopy_ps_64x64, 4, 7, 4
     RET
 
 ;-----------------------------------------------------------------------------
+; void blockcopy_ps_%1x%2(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+;-----------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal blockcopy_ps_64x64, 4, 7, 4
+    add     r1, r1
+    mov     r4d, 64/8
+    lea     r5, [3 * r3]
+    lea     r6, [3 * r1]
+.loop:
+%rep 2
+    pmovzxbw      m0, [r2]
+    pmovzxbw      m1, [r2 + 32]
+    pmovzxbw      m2, [r2 + r3]
+    pmovzxbw      m3, [r2 + r3 + 32]
+    movu          [r0], m0
+    movu          [r0 + 64], m1
+    movu          [r0 + r1], m2
+    movu          [r0 + r1 + 64], m3
+
+    pmovzxbw      m0, [r2 + r3 * 2]
+    pmovzxbw      m1, [r2 + r3 * 2 + 32]
+    pmovzxbw      m2, [r2 + r5]
+    pmovzxbw      m3, [r2 + r5 + 32]
+    movu          [r0 + r1 * 2], m0
+    movu          [r0 + r1 * 2 + 64], m1
+    movu          [r0 + r6], m2
+    movu          [r0 + r6 + 64], m3
+
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+%endrep
+    dec           r4d
+    jnz           .loop
+    RET
+
+;-----------------------------------------------------------------------------
 ; void blockcopy_ss_2x4(int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)
 ;-----------------------------------------------------------------------------
 INIT_XMM sse2
