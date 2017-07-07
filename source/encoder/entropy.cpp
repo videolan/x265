@@ -700,7 +700,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
     // TODO: Enable when pps_loop_filter_across_slices_enabled_flag==1
     //       We didn't support filter across slice board, so disable it now
 
-    if (g_maxSlices <= 1)
+    if (encData.m_param->maxSlices <= 1)
     {
         bool isSAOEnabled = slice.m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1] : false;
         bool isDBFEnabled = !slice.m_pps->bPicDisableDeblockingFilter;
@@ -783,7 +783,7 @@ void Entropy::encodeCU(const CUData& ctu, const CUGeom& cuGeom, uint32_t absPart
     if (cuSplitFlag) 
         codeSplitFlag(ctu, absPartIdx, depth);
 
-    if (depth < ctu.m_cuDepth[absPartIdx] && depth < g_maxCUDepth)
+    if (depth < ctu.m_cuDepth[absPartIdx] && depth < ctu.m_encData->m_param->maxCUDepth)
     {
         uint32_t qNumParts = cuGeom.numPartitions >> 2;
         if (depth == slice->m_pps->maxCuDQPDepth && slice->m_pps->bUseDQP)
@@ -863,7 +863,7 @@ uint32_t Entropy::bitsInterMode(const CUData& cu, uint32_t absPartIdx, uint32_t 
     case SIZE_nRx2N:
         bits += bitsCodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
         bits += bitsCodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 1]);
-        if (depth == g_maxCUDepth && !(cu.m_log2CUSize[absPartIdx] == 3))
+        if (depth == cu.m_encData->m_param->maxCUDepth && !(cu.m_log2CUSize[absPartIdx] == 3))
             bits += bitsCodeBin(1, m_contextState[OFF_PART_SIZE_CTX + 2]);
         if (cu.m_slice->m_sps->maxAMPDepth > depth)
         {
@@ -888,7 +888,7 @@ void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth, b
     uint32_t cuAddr = ctu.getSCUAddr() + absPartIdx;
     X265_CHECK(realEndAddress == slice->realEndAddress(slice->m_endCUAddr), "real end address expected\n");
 
-    uint32_t granularityMask = g_maxCUSize - 1;
+    uint32_t granularityMask = ctu.m_encData->m_param->maxCUSize - 1;
     uint32_t cuSize = 1 << ctu.m_log2CUSize[absPartIdx];
     uint32_t rpelx = ctu.m_cuPelX + g_zscanToPelX[absPartIdx] + cuSize;
     uint32_t bpely = ctu.m_cuPelY + g_zscanToPelY[absPartIdx] + cuSize;
@@ -902,7 +902,7 @@ void Entropy::finishCU(const CUData& ctu, uint32_t absPartIdx, uint32_t depth, b
     {
         // Encode slice finish
         uint32_t bTerminateSlice = ctu.m_bLastCuInSlice;
-        if (cuAddr + (NUM_4x4_PARTITIONS >> (depth << 1)) == realEndAddress)
+        if (cuAddr + (slice->m_param->num4x4Partitions >> (depth << 1)) == realEndAddress)
             bTerminateSlice = 1;
 
         // The 1-terminating bit is added to all streams, so don't add it here when it's 1.
@@ -1512,7 +1512,7 @@ void Entropy::codePartSize(const CUData& cu, uint32_t absPartIdx, uint32_t depth
 
     if (cu.isIntra(absPartIdx))
     {
-        if (depth == g_maxCUDepth)
+        if (depth == cu.m_encData->m_param->maxCUDepth)
             encodeBin(partSize == SIZE_2Nx2N ? 1 : 0, m_contextState[OFF_PART_SIZE_CTX]);
         return;
     }
@@ -1541,7 +1541,7 @@ void Entropy::codePartSize(const CUData& cu, uint32_t absPartIdx, uint32_t depth
     case SIZE_nRx2N:
         encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 0]);
         encodeBin(0, m_contextState[OFF_PART_SIZE_CTX + 1]);
-        if (depth == g_maxCUDepth && !(cu.m_log2CUSize[absPartIdx] == 3))
+        if (depth == cu.m_encData->m_param->maxCUDepth && !(cu.m_log2CUSize[absPartIdx] == 3))
             encodeBin(1, m_contextState[OFF_PART_SIZE_CTX + 2]);
         if (cu.m_slice->m_sps->maxAMPDepth > depth)
         {

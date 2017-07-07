@@ -24,10 +24,9 @@
 
 #ifndef X265_H
 #define X265_H
-
 #include <stdint.h>
+#include <stdio.h>
 #include "x265_config.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -98,6 +97,7 @@ typedef struct x265_analysis_data
     uint32_t         sliceType;
     uint32_t         numCUsInFrame;
     uint32_t         numPartitions;
+    uint32_t         depthBytes;
     int              bScenecut;
     void*            wt;
     void*            interData;
@@ -115,6 +115,20 @@ typedef struct x265_cu_stats
 
     /* All the above values will add up to 100%. */
 } x265_cu_stats;
+
+
+/* pu statistics */
+typedef struct x265_pu_stats
+{
+    double      percentSkipPu[4];               // Percentage of skip cu in all depths
+    double      percentIntraPu[4];              // Percentage of intra modes in all depths
+    double      percentAmpPu[4];                // Percentage of amp modes in all depths
+    double      percentInterPu[4][3];           // Percentage of inter 2nx2n, 2nxn and nx2n in all depths
+    double      percentMergePu[4][3];           // Percentage of merge 2nx2n, 2nxn and nx2n in all depth
+    double      percentNxN;
+
+    /* All the above values will add up to 100%. */
+} x265_pu_stats;
 
 
 typedef struct x265_analysis_2Pass
@@ -154,12 +168,40 @@ typedef struct x265_frame_stats
     int              list0POC[16];
     int              list1POC[16];
     uint16_t         maxLumaLevel;
+    uint16_t         minLumaLevel;
+
+    uint16_t         maxChromaULevel;
+    uint16_t         minChromaULevel;
+    double           avgChromaULevel;
+
+
+    uint16_t         maxChromaVLevel;
+    uint16_t         minChromaVLevel;
+    double           avgChromaVLevel;
+
     char             sliceType;
     int              bScenecut;
+    double           ipCostRatio;
     int              frameLatency;
     x265_cu_stats    cuStats;
+    x265_pu_stats    puStats;
     double           totalFrameTime;
 } x265_frame_stats;
+
+typedef struct x265_ctu_info_t
+{
+    int32_t ctuAddress;
+    int32_t ctuPartitions[64];
+    void*    ctuInfo;
+} x265_ctu_info_t;
+
+typedef enum
+{
+    NO_CTU_INFO = 0,
+    HAS_CTU_INFO = 1,
+    CTU_INFO_CHANGE = 2,
+}CTUInfo;
+
 
 /* Arbitrary User SEI
  * Payload size is in bytes and the payload pointer must be non-NULL. 
@@ -258,15 +300,15 @@ typedef struct x265_picture
      * to allow the encoder to determine base QP */
     int     forceqp;
 
-    /* If param.analysisMode is X265_ANALYSIS_OFF this field is ignored on input
+    /* If param.analysisReuseMode is X265_ANALYSIS_OFF this field is ignored on input
      * and output. Else the user must call x265_alloc_analysis_data() to
      * allocate analysis buffers for every picture passed to the encoder.
      *
-     * On input when param.analysisMode is X265_ANALYSIS_LOAD and analysisData
+     * On input when param.analysisReuseMode is X265_ANALYSIS_LOAD and analysisData
      * member pointers are valid, the encoder will use the data stored here to
      * reduce encoder work.
      *
-     * On output when param.analysisMode is X265_ANALYSIS_SAVE and analysisData
+     * On output when param.analysisReuseMode is X265_ANALYSIS_SAVE and analysisData
      * member pointers are valid, the encoder will write output analysis into
      * this data structure */
     x265_analysis_data analysisData;
@@ -612,7 +654,14 @@ typedef struct x265_param
      * X265_LOG_FULL, default is X265_LOG_INFO */
     int       logLevel;
 
-    /* Filename of CSV log. Now deprecated */
+    /* Level of csv logging. 0 is summary, 1 is frame level logging,
+     * 2 is frame level logging with performance statistics */
+    int       csvLogLevel;
+
+    /* filename of CSV log. If csvLogLevel is non-zero, the encoder will emit
+     * per-slice statistics to this log file in encode order. Otherwise the
+     * encoder will emit per-stream statistics into the log file when
+     * x265_encoder_log is called (presumably at the end of the encode) */
     const char* csvfn;
 
     /*== Internal Picture Specification ==*/
@@ -1057,10 +1106,10 @@ typedef struct x265_param
      * buffers.  if X265_ANALYSIS_LOAD, read analysis information into analysis
      * buffer and use this analysis information to reduce the amount of work
      * the encoder must perform. Default X265_ANALYSIS_OFF */
-    int       analysisMode;
+    int       analysisReuseMode;
 
-    /* Filename for analysisMode save/load. Default name is "x265_analysis.dat" */
-    const char* analysisFileName;
+    /* Filename for analysisReuseMode save/load. Default name is "x265_analysis.dat" */
+    const char* analysisReuseFileName;
 
     /*== Rate Control ==*/
 
@@ -1379,9 +1428,9 @@ typedef struct x265_param
     int       bHDROpt;
 
     /* A value between 1 and 10 (both inclusive) determines the level of
-    * information stored/reused in save/load analysis-mode. Higher the refine
-    * level higher the informtion stored/reused. Default is 5 */
-    int       analysisRefineLevel;
+    * information stored/reused in save/load analysis-reuse-mode. Higher the refine
+    * level higher the information stored/reused. Default is 5 */
+    int       analysisReuseLevel;
 
      /* Limit Sample Adaptive Offset filter computation by early terminating SAO
      * process based on inter prediction mode, CTU spatial-domain correlations,
@@ -1394,7 +1443,44 @@ typedef struct x265_param
     /* Insert tone mapping information only for IDR frames and when the 
      * tone mapping information changes. */
     int       bDhdr10opt;
+
+    /* Determine how x265 react to the content information recieved through the API */
+    int       bCTUInfo;
+
+    /* Use ratecontrol statistics from pic_in, if available*/
+    int       bUseRcStats;
+
+    /* Factor by which input video is scaled down for analysis save mode. Default is 0 */
+    int       scaleFactor;
+
+    /* Enable intra refinement in load mode*/
+    int       intraRefine;
+
+    /* Enable inter refinement in load mode*/
+    int       interRefine;
+
+    /* Enable motion vector refinement in load mode*/
+    int       mvRefine;
+
+    /* Log of maximum CTU size */
+    uint32_t  maxLog2CUSize;
+
+    /* Actual CU depth with respect to config depth */
+    uint32_t  maxCUDepth;
+
+    /* CU depth with respect to maximum transform size */
+    uint32_t  unitSizeDepth;
+
+    /* Number of 4x4 units in maximum CU size */
+    uint32_t  num4x4Partitions;
+
+    /* Specify if analysis mode uses file for data reuse */
+    int       bUseAnalysisFile;
+
+    /* File pointer for csv log */
+    FILE*     csvfpt;
 } x265_param;
+
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
  *  special in any way, but using this method together with x265_param_free()
@@ -1561,7 +1647,8 @@ int x265_encoder_reconfig(x265_encoder *, x265_param *);
 void x265_encoder_get_stats(x265_encoder *encoder, x265_stats *, uint32_t statsSizeBytes);
 
 /* x265_encoder_log:
- *       This function is deprecated */
+ *       write a line to the configured CSV file.  If a CSV filename was not
+ *       configured, or file open failed, this function will perform no write. */
 void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
 
 /* x265_encoder_close:
@@ -1584,6 +1671,12 @@ void x265_encoder_close(x265_encoder *);
 
 int x265_encoder_intra_refresh(x265_encoder *);
 
+/* x265_encoder_ctu_info:
+ *    Copy CTU information such as ctu address and ctu partition structure of all
+ *    CTUs in each frame. The function is invoked only if "--ctu-info" is enabled and
+ *    the encoder will wait for this copy to complete if enabled.
+ */
+int x265_encoder_ctu_info(x265_encoder *, int poc, x265_ctu_info_t** ctu);
 /* x265_cleanup:
  *       release library static allocations, reset configured CTU size */
 void x265_cleanup(void);
@@ -1632,6 +1725,7 @@ typedef struct x265_api
 
     int           sizeof_frame_stats;   /* sizeof(x265_frame_stats) */
     int           (*encoder_intra_refresh)(x265_encoder*);
+    int           (*encoder_ctu_info)(x265_encoder*, int, x265_ctu_info_t**);
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 

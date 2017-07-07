@@ -57,10 +57,10 @@ if(ENABLE_ASSEMBLY AND X86)
     set(VEC_PRIMITIVES vec/vec-primitives.cpp ${PRIMITIVES})
     source_group(Intrinsics FILES ${VEC_PRIMITIVES})
 
-    set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h loopfilter.h)
+    set(C_SRCS asm-primitives.cpp pixel.h mc.h ipfilter8.h blockcopy8.h dct8.h loopfilter.h seaintegral.h)
     set(A_SRCS pixel-a.asm const-a.asm cpu-a.asm ssd-a.asm mc-a.asm
                mc-a2.asm pixel-util8.asm blockcopy8.asm
-               pixeladd8.asm dct8.asm)
+               pixeladd8.asm dct8.asm seaintegral.asm)
     if(HIGH_BIT_DEPTH)
         set(A_SRCS ${A_SRCS} sad16-a.asm intrapred16.asm ipfilter16.asm loopfilter.asm)
     else()

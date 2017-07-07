@@ -360,6 +360,7 @@ public:
     int         m_iPPSQpMinus26;
     int         numRefIdxDefault[2];
     int         m_iNumRPSInSPS;
+    const x265_param *m_param;
 
     Slice()
     {

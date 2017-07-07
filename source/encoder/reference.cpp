@@ -72,12 +72,12 @@ int MotionReference::init(PicYuv* recPic, WeightParam *wp, const x265_param& p)
 
     if (wp)
     {
-        uint32_t numCUinHeight = (reconPic->m_picHeight + g_maxCUSize - 1) / g_maxCUSize;
+        uint32_t numCUinHeight = (reconPic->m_picHeight + p.maxCUSize - 1) / p.maxCUSize;
 
         int marginX = reconPic->m_lumaMarginX;
         int marginY = reconPic->m_lumaMarginY;
         intptr_t stride = reconPic->m_stride;
-        int cuHeight = g_maxCUSize;
+        int cuHeight = p.maxCUSize;
 
         for (int c = 0; c < (p.internalCsp != X265_CSP_I400 && recPic->m_picCsp != X265_CSP_I400 ? numInterpPlanes : 1); c++)
         {
@@ -127,15 +127,15 @@ void MotionReference::applyWeight(uint32_t finishedRows, uint32_t maxNumRows, ui
     int marginY = reconPic->m_lumaMarginY;
     intptr_t stride = reconPic->m_stride;
     int width   = reconPic->m_picWidth;
-    int height  = (finishedRows - numWeightedRows) * g_maxCUSize;
+    int height  = (finishedRows - numWeightedRows) * reconPic->m_param->maxCUSize;
     /* the last row may be partial height */
     if (finishedRows == maxNumRows - 1)
     {
-        const int leftRows = (reconPic->m_picHeight & (g_maxCUSize - 1));
+        const int leftRows = (reconPic->m_picHeight & (reconPic->m_param->maxCUSize - 1));
 
-        height += leftRows ? leftRows : g_maxCUSize;
+        height += leftRows ? leftRows : reconPic->m_param->maxCUSize;
     }
-    int cuHeight = g_maxCUSize;
+    int cuHeight = reconPic->m_param->maxCUSize;
 
     for (int c = 0; c < numInterpPlanes; c++)
     {

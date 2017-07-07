@@ -124,7 +124,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
     range += !!(m_param->searchMethod < 2);  /* diamond/hex range check lag */
     range += NTAPS_LUMA / 2;                 /* subpel filter half-length */
     range += 2 + (MotionEstimate::hpelIterationCount(m_param->subpelRefine) + 1) / 2; /* subpel refine steps */
-    m_refLagRows = /*(m_param->maxSlices > 1 ? 1 : 0) +*/ 1 + ((range + g_maxCUSize - 1) / g_maxCUSize);
+    m_refLagRows = /*(m_param->maxSlices > 1 ? 1 : 0) +*/ 1 + ((range + m_param->maxCUSize - 1) / m_param->maxCUSize);
 
     // NOTE: 2 times of numRows because both Encoder and Filter in same queue
     if (!WaveFront::init(m_numRows * 2))
@@ -295,6 +295,11 @@ void FrameEncoder::threadMain()
 
     while (m_threadActive)
     {
+        if (m_param->bCTUInfo)
+        {
+            while (!m_frame->m_ctuInfo)
+                m_frame->m_copied.wait();
+        }
         compressFrame();
         m_done.trigger(); /* FrameEncoder::getEncodedPicture() blocks for this event */
         m_enable.wait();
@@ -383,7 +388,7 @@ void FrameEncoder::compressFrame()
     bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
 
     WeightParam* reuseWP = NULL;
-    if (m_param->analysisMode && (bUseWeightP || bUseWeightB))
+    if (m_param->analysisReuseMode && (bUseWeightP || bUseWeightB))
         reuseWP = (WeightParam*)m_frame->m_analysisData.wt;
 
     if (bUseWeightP || bUseWeightB)
@@ -392,7 +397,7 @@ void FrameEncoder::compressFrame()
         m_cuStats.countWeightAnalyze++;
         ScopedElapsedTime time(m_cuStats.weightAnalyzeTime);
 #endif
-        if (m_param->analysisMode == X265_ANALYSIS_LOAD)
+        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD)
         {
             for (int list = 0; list < slice->isInterB() + 1; list++) 
             {
@@ -431,7 +436,7 @@ void FrameEncoder::compressFrame()
             slice->m_refReconPicList[l][ref] = slice->m_refFrameList[l][ref]->m_reconPic;
             m_mref[l][ref].init(slice->m_refReconPicList[l][ref], w, *m_param);
         }
-        if (m_param->analysisMode == X265_ANALYSIS_SAVE && (bUseWeightP || bUseWeightB))
+        if (m_param->analysisReuseMode == X265_ANALYSIS_SAVE && (bUseWeightP || bUseWeightB))
         {
             for (int i = 0; i < (m_param->internalCsp != X265_CSP_I400 ? 3 : 1); i++)
                 *(reuseWP++) = slice->m_weightPredTable[l][0][i];
@@ -832,7 +837,7 @@ void FrameEncoder::compressFrame()
         }
         else if (m_param->decodedPictureHashSEI == 3)
         {
-            uint32_t cuHeight = g_maxCUSize;
+            uint32_t cuHeight = m_param->maxCUSize;
 
             m_checksum[0] = 0;
 
@@ -872,43 +877,52 @@ void FrameEncoder::compressFrame()
         m_frame->m_encData->m_frameStats.percent8x8Inter = (double)totalP / totalCuCount;
         m_frame->m_encData->m_frameStats.percent8x8Skip  = (double)totalSkip / totalCuCount;
     }
-    for (uint32_t i = 0; i < m_numRows; i++)
+
+    if (m_param->csvLogLevel >= 1)
     {
-        m_frame->m_encData->m_frameStats.cntIntraNxN      += m_rows[i].rowStats.cntIntraNxN;
-        m_frame->m_encData->m_frameStats.totalCu          += m_rows[i].rowStats.totalCu;
-        m_frame->m_encData->m_frameStats.totalCtu         += m_rows[i].rowStats.totalCtu;
-        m_frame->m_encData->m_frameStats.lumaDistortion   += m_rows[i].rowStats.lumaDistortion;
-        m_frame->m_encData->m_frameStats.chromaDistortion += m_rows[i].rowStats.chromaDistortion;
-        m_frame->m_encData->m_frameStats.psyEnergy        += m_rows[i].rowStats.psyEnergy;
-        m_frame->m_encData->m_frameStats.ssimEnergy       += m_rows[i].rowStats.ssimEnergy;
-        m_frame->m_encData->m_frameStats.resEnergy        += m_rows[i].rowStats.resEnergy;
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        for (uint32_t i = 0; i < m_numRows; i++)
         {
-            m_frame->m_encData->m_frameStats.cntSkipCu[depth] += m_rows[i].rowStats.cntSkipCu[depth];
-            m_frame->m_encData->m_frameStats.cntMergeCu[depth] += m_rows[i].rowStats.cntMergeCu[depth];
-            for (int m = 0; m < INTER_MODES; m++)
-                m_frame->m_encData->m_frameStats.cuInterDistribution[depth][m] += m_rows[i].rowStats.cuInterDistribution[depth][m];
+            m_frame->m_encData->m_frameStats.cntIntraNxN += m_rows[i].rowStats.cntIntraNxN;
+            m_frame->m_encData->m_frameStats.totalCu += m_rows[i].rowStats.totalCu;
+            m_frame->m_encData->m_frameStats.totalCtu += m_rows[i].rowStats.totalCtu;
+            m_frame->m_encData->m_frameStats.lumaDistortion += m_rows[i].rowStats.lumaDistortion;
+            m_frame->m_encData->m_frameStats.chromaDistortion += m_rows[i].rowStats.chromaDistortion;
+            m_frame->m_encData->m_frameStats.psyEnergy += m_rows[i].rowStats.psyEnergy;
+            m_frame->m_encData->m_frameStats.ssimEnergy += m_rows[i].rowStats.ssimEnergy;
+            m_frame->m_encData->m_frameStats.resEnergy += m_rows[i].rowStats.resEnergy;
+            for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
+            {
+                m_frame->m_encData->m_frameStats.cntSkipCu[depth] += m_rows[i].rowStats.cntSkipCu[depth];
+                m_frame->m_encData->m_frameStats.cntMergeCu[depth] += m_rows[i].rowStats.cntMergeCu[depth];
+                for (int m = 0; m < INTER_MODES; m++)
+                    m_frame->m_encData->m_frameStats.cuInterDistribution[depth][m] += m_rows[i].rowStats.cuInterDistribution[depth][m];
+                for (int n = 0; n < INTRA_MODES; n++)
+                    m_frame->m_encData->m_frameStats.cuIntraDistribution[depth][n] += m_rows[i].rowStats.cuIntraDistribution[depth][n];
+            }
+        }
+        m_frame->m_encData->m_frameStats.percentIntraNxN = (double)(m_frame->m_encData->m_frameStats.cntIntraNxN * 100) / m_frame->m_encData->m_frameStats.totalCu;
+
+        for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
+        {
+            m_frame->m_encData->m_frameStats.percentSkipCu[depth] = (double)(m_frame->m_encData->m_frameStats.cntSkipCu[depth] * 100) / m_frame->m_encData->m_frameStats.totalCu;
+            m_frame->m_encData->m_frameStats.percentMergeCu[depth] = (double)(m_frame->m_encData->m_frameStats.cntMergeCu[depth] * 100) / m_frame->m_encData->m_frameStats.totalCu;
             for (int n = 0; n < INTRA_MODES; n++)
-                m_frame->m_encData->m_frameStats.cuIntraDistribution[depth][n] += m_rows[i].rowStats.cuIntraDistribution[depth][n];
+                m_frame->m_encData->m_frameStats.percentIntraDistribution[depth][n] = (double)(m_frame->m_encData->m_frameStats.cuIntraDistribution[depth][n] * 100) / m_frame->m_encData->m_frameStats.totalCu;
+            uint64_t cuInterRectCnt = 0; // sum of Nx2N, 2NxN counts
+            cuInterRectCnt += m_frame->m_encData->m_frameStats.cuInterDistribution[depth][1] + m_frame->m_encData->m_frameStats.cuInterDistribution[depth][2];
+            m_frame->m_encData->m_frameStats.percentInterDistribution[depth][0] = (double)(m_frame->m_encData->m_frameStats.cuInterDistribution[depth][0] * 100) / m_frame->m_encData->m_frameStats.totalCu;
+            m_frame->m_encData->m_frameStats.percentInterDistribution[depth][1] = (double)(cuInterRectCnt * 100) / m_frame->m_encData->m_frameStats.totalCu;
+            m_frame->m_encData->m_frameStats.percentInterDistribution[depth][2] = (double)(m_frame->m_encData->m_frameStats.cuInterDistribution[depth][3] * 100) / m_frame->m_encData->m_frameStats.totalCu;
         }
     }
-    m_frame->m_encData->m_frameStats.avgLumaDistortion   = (double)(m_frame->m_encData->m_frameStats.lumaDistortion) / m_frame->m_encData->m_frameStats.totalCtu;
-    m_frame->m_encData->m_frameStats.avgChromaDistortion = (double)(m_frame->m_encData->m_frameStats.chromaDistortion) / m_frame->m_encData->m_frameStats.totalCtu;
-    m_frame->m_encData->m_frameStats.avgPsyEnergy        = (double)(m_frame->m_encData->m_frameStats.psyEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
-    m_frame->m_encData->m_frameStats.avgSsimEnergy       = (double)(m_frame->m_encData->m_frameStats.ssimEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
-    m_frame->m_encData->m_frameStats.avgResEnergy        = (double)(m_frame->m_encData->m_frameStats.resEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
-    m_frame->m_encData->m_frameStats.percentIntraNxN     = (double)(m_frame->m_encData->m_frameStats.cntIntraNxN * 100) / m_frame->m_encData->m_frameStats.totalCu;
-    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+
+    if (m_param->csvLogLevel >= 2)
     {
-        m_frame->m_encData->m_frameStats.percentSkipCu[depth]  = (double)(m_frame->m_encData->m_frameStats.cntSkipCu[depth] * 100) / m_frame->m_encData->m_frameStats.totalCu;
-        m_frame->m_encData->m_frameStats.percentMergeCu[depth] = (double)(m_frame->m_encData->m_frameStats.cntMergeCu[depth] * 100) / m_frame->m_encData->m_frameStats.totalCu;
-        for (int n = 0; n < INTRA_MODES; n++)
-            m_frame->m_encData->m_frameStats.percentIntraDistribution[depth][n] = (double)(m_frame->m_encData->m_frameStats.cuIntraDistribution[depth][n] * 100) / m_frame->m_encData->m_frameStats.totalCu;
-        uint64_t cuInterRectCnt = 0; // sum of Nx2N, 2NxN counts
-        cuInterRectCnt += m_frame->m_encData->m_frameStats.cuInterDistribution[depth][1] + m_frame->m_encData->m_frameStats.cuInterDistribution[depth][2];
-        m_frame->m_encData->m_frameStats.percentInterDistribution[depth][0] = (double)(m_frame->m_encData->m_frameStats.cuInterDistribution[depth][0] * 100) / m_frame->m_encData->m_frameStats.totalCu;
-        m_frame->m_encData->m_frameStats.percentInterDistribution[depth][1] = (double)(cuInterRectCnt * 100) / m_frame->m_encData->m_frameStats.totalCu;
-        m_frame->m_encData->m_frameStats.percentInterDistribution[depth][2] = (double)(m_frame->m_encData->m_frameStats.cuInterDistribution[depth][3] * 100) / m_frame->m_encData->m_frameStats.totalCu;
+        m_frame->m_encData->m_frameStats.avgLumaDistortion = (double)(m_frame->m_encData->m_frameStats.lumaDistortion) / m_frame->m_encData->m_frameStats.totalCtu;
+        m_frame->m_encData->m_frameStats.avgChromaDistortion = (double)(m_frame->m_encData->m_frameStats.chromaDistortion) / m_frame->m_encData->m_frameStats.totalCtu;
+        m_frame->m_encData->m_frameStats.avgPsyEnergy = (double)(m_frame->m_encData->m_frameStats.psyEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
+        m_frame->m_encData->m_frameStats.avgSsimEnergy = (double)(m_frame->m_encData->m_frameStats.ssimEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
+        m_frame->m_encData->m_frameStats.avgResEnergy = (double)(m_frame->m_encData->m_frameStats.resEnergy) / m_frame->m_encData->m_frameStats.totalCtu;
     }
 
     m_bs.resetBits();
@@ -1096,7 +1110,7 @@ void FrameEncoder::compressFrame()
     /* Accumulate CU statistics from each worker thread, we could report
      * per-frame stats here, but currently we do not. */
     for (int i = 0; i < numTLD; i++)
-        m_cuStats.accumulate(m_tld[i].analysis.m_stats[m_jpId]);
+        m_cuStats.accumulate(m_tld[i].analysis.m_stats[m_jpId], *m_param);
 #endif
 
     m_endFrameTime = x265_mdate();
@@ -1106,7 +1120,7 @@ void FrameEncoder::encodeSlice(uint32_t sliceAddr)
 {
     Slice* slice = m_frame->m_encData->m_slice;
     const uint32_t widthInLCUs = slice->m_sps->numCuInWidth;
-    const uint32_t lastCUAddr = (slice->m_endCUAddr + NUM_4x4_PARTITIONS - 1) / NUM_4x4_PARTITIONS;
+    const uint32_t lastCUAddr = (slice->m_endCUAddr + m_param->num4x4Partitions - 1) / m_param->num4x4Partitions;
     const uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : 1;
 
     SAOParam* saoParam = slice->m_sps->bUseSAO ? m_frame->m_encData->m_saoParam : NULL;
@@ -1208,7 +1222,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     const uint32_t row = (uint32_t)intRow;
     CTURow& curRow = m_rows[row];
 
-    tld.analysis.m_param = m_param;
     if (m_param->bEnableWavefront)
     {
         ScopedLock self(curRow.lock);
@@ -1241,7 +1254,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
     uint32_t maxBlockCols = (m_frame->m_fencPic->m_picWidth + (16 - 1)) / 16;
     uint32_t maxBlockRows = (m_frame->m_fencPic->m_picHeight + (16 - 1)) / 16;
-    uint32_t noOfBlocks = g_maxCUSize / 16;
+    uint32_t noOfBlocks = m_param->maxCUSize / 16;
     const uint32_t bFirstRowInSlice = ((row == 0) || (m_rows[row - 1].sliceId != curRow.sliceId)) ? 1 : 0;
     const uint32_t bLastRowInSlice = ((row == m_numRows - 1) || (m_rows[row + 1].sliceId != curRow.sliceId)) ? 1 : 0;
     const uint32_t sliceId = curRow.sliceId;
@@ -1320,8 +1333,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     // TODO: specially case handle on first and last row
 
     // Initialize restrict on MV range in slices
-    tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * g_maxCUSize * 4) + 3 * 4;
-    tld.analysis.m_sliceMaxY = (int16_t)((endRowInSlicePlus1 - 1 - row) * (g_maxCUSize * 4) - 4 * 4);
+    tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * m_param->maxCUSize * 4) + 3 * 4;
+    tld.analysis.m_sliceMaxY = (int16_t)((endRowInSlicePlus1 - 1 - row) * (m_param->maxCUSize * 4) - 4 * 4);
 
     // Handle single row slice
     if (tld.analysis.m_sliceMaxY < tld.analysis.m_sliceMinY)
@@ -1361,8 +1374,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 cuStat.baseQp = curEncData.m_rowStat[row].rowQp;
 
             /* TODO: use defines from slicetype.h for lowres block size */
-            uint32_t block_y = (ctu->m_cuPelY >> g_maxLog2CUSize) * noOfBlocks;
-            uint32_t block_x = (ctu->m_cuPelX >> g_maxLog2CUSize) * noOfBlocks;
+            uint32_t block_y = (ctu->m_cuPelY >> m_param->maxLog2CUSize) * noOfBlocks;
+            uint32_t block_x = (ctu->m_cuPelX >> m_param->maxLog2CUSize) * noOfBlocks;
             
             cuStat.vbvCost = 0;
             cuStat.intraVbvCost = 0;
@@ -1473,11 +1486,11 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             curRow.rowStats.coeffBits += best.coeffBits;
             curRow.rowStats.miscBits  += best.totalBits - (best.mvBits + best.coeffBits);
 
-            for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+            for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
             {
                 /* 1 << shift == number of 8x8 blocks at current depth */
-                int shift = 2 * (g_maxCUDepth - depth);
-                int cuSize = g_maxCUSize >> depth;
+                int shift = 2 * (m_param->maxCUDepth - depth);
+                int cuSize = m_param->maxCUSize >> depth;
 
                 if (cuSize == 8)
                     curRow.rowStats.intra8x8Cnt += (int)(frameLog.cntIntra[depth] + frameLog.cntIntraNxN);
@@ -1496,7 +1509,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         curRow.rowStats.resEnergy        += best.resEnergy;
         curRow.rowStats.cntIntraNxN      += frameLog.cntIntraNxN;
         curRow.rowStats.totalCu          += frameLog.totalCu;
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++)
         {
             curRow.rowStats.cntSkipCu[depth] += frameLog.cntSkipCu[depth];
             curRow.rowStats.cntMergeCu[depth] += frameLog.cntMergeCu[depth];
@@ -1767,7 +1780,6 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         }
     }
 
-    tld.analysis.m_param = NULL;
     curRow.busy = false;
 
     // CHECK_ME: Does it always FALSE condition?
@@ -1779,78 +1791,86 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 int FrameEncoder::collectCTUStatistics(const CUData& ctu, FrameStats* log)
 {
     int totQP = 0;
-    if (ctu.m_slice->m_sliceType == I_SLICE)
+    uint32_t depth = 0;
+    for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
     {
-        uint32_t depth = 0;
-        for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
-        {
-            depth = ctu.m_cuDepth[absPartIdx];
-
-            log->totalCu++;
-            log->cntIntra[depth]++;
-            totQP += ctu.m_qp[absPartIdx] * (ctu.m_numPartitions >> (depth * 2));
-
-            if (ctu.m_predMode[absPartIdx] == MODE_NONE)
-            {
-                log->totalCu--;
-                log->cntIntra[depth]--;
-            }
-            else if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
-            {
-                /* TODO: log intra modes at absPartIdx +0 to +3 */
-                X265_CHECK(ctu.m_log2CUSize[absPartIdx] == 3 && ctu.m_slice->m_sps->quadtreeTULog2MinSize < 3, "Intra NxN found at improbable depth\n");
-                log->cntIntraNxN++;
-                log->cntIntra[depth]--;
-            }
-            else if (ctu.m_lumaIntraDir[absPartIdx] > 1)
-                log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
-            else
-                log->cuIntraDistribution[depth][ctu.m_lumaIntraDir[absPartIdx]]++;
-        }
+        depth = ctu.m_cuDepth[absPartIdx];
+        totQP += ctu.m_qp[absPartIdx] * (ctu.m_numPartitions >> (depth * 2));
     }
-    else
+
+    if (m_param->csvLogLevel >= 1 || m_param->rc.bStatWrite)
     {
-        uint32_t depth = 0;
-        for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
+        if (ctu.m_slice->m_sliceType == I_SLICE)
         {
-            depth = ctu.m_cuDepth[absPartIdx];
-
-            log->totalCu++;
-            totQP += ctu.m_qp[absPartIdx] * (ctu.m_numPartitions >> (depth * 2));
-
-            if (ctu.m_predMode[absPartIdx] == MODE_NONE)
-                log->totalCu--;
-            else if (ctu.isSkipped(absPartIdx))
+            depth = 0;
+            for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
             {
-                if (ctu.m_mergeFlag[0])
-                    log->cntMergeCu[depth]++;
-                else
-                    log->cntSkipCu[depth]++;
-            }
-            else if (ctu.isInter(absPartIdx))
-            {
-                log->cntInter[depth]++;
+                depth = ctu.m_cuDepth[absPartIdx];
 
-                if (ctu.m_partSize[absPartIdx] < AMP_ID)
-                    log->cuInterDistribution[depth][ctu.m_partSize[absPartIdx]]++;
-                else
-                    log->cuInterDistribution[depth][AMP_ID]++;
-            }
-            else if (ctu.isIntra(absPartIdx))
-            {
+                log->totalCu++;
                 log->cntIntra[depth]++;
 
-                if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
+                if (ctu.m_predMode[absPartIdx] == MODE_NONE)
                 {
+                    log->totalCu--;
+                    log->cntIntra[depth]--;
+                }
+                else if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
+                {
+                    /* TODO: log intra modes at absPartIdx +0 to +3 */
                     X265_CHECK(ctu.m_log2CUSize[absPartIdx] == 3 && ctu.m_slice->m_sps->quadtreeTULog2MinSize < 3, "Intra NxN found at improbable depth\n");
                     log->cntIntraNxN++;
                     log->cntIntra[depth]--;
-                    /* TODO: log intra modes at absPartIdx +0 to +3 */
                 }
                 else if (ctu.m_lumaIntraDir[absPartIdx] > 1)
                     log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
                 else
                     log->cuIntraDistribution[depth][ctu.m_lumaIntraDir[absPartIdx]]++;
+            }
+        }
+        else
+        {
+            depth = 0;
+            for (uint32_t absPartIdx = 0; absPartIdx < ctu.m_numPartitions; absPartIdx += ctu.m_numPartitions >> (depth * 2))
+            {
+                depth = ctu.m_cuDepth[absPartIdx];
+
+                log->totalCu++;
+
+                if (ctu.m_predMode[absPartIdx] == MODE_NONE)
+                    log->totalCu--;
+                else if (ctu.isSkipped(absPartIdx))
+                {
+                    if (ctu.m_mergeFlag[0])
+                        log->cntMergeCu[depth]++;
+                    else
+                        log->cntSkipCu[depth]++;
+                }
+                else if (ctu.isInter(absPartIdx))
+                {
+                    log->cntInter[depth]++;
+
+                    if (ctu.m_partSize[absPartIdx] < AMP_ID)
+                        log->cuInterDistribution[depth][ctu.m_partSize[absPartIdx]]++;
+                    else
+                        log->cuInterDistribution[depth][AMP_ID]++;
+                }
+                else if (ctu.isIntra(absPartIdx))
+                {
+                    log->cntIntra[depth]++;
+
+                    if (ctu.m_partSize[absPartIdx] != SIZE_2Nx2N)
+                    {
+                        X265_CHECK(ctu.m_log2CUSize[absPartIdx] == 3 && ctu.m_slice->m_sps->quadtreeTULog2MinSize < 3, "Intra NxN found at improbable depth\n");
+                        log->cntIntraNxN++;
+                        log->cntIntra[depth]--;
+                        /* TODO: log intra modes at absPartIdx +0 to +3 */
+                    }
+                    else if (ctu.m_lumaIntraDir[absPartIdx] > 1)
+                        log->cuIntraDistribution[depth][ANGULAR_MODE_ID]++;
+                    else
+                        log->cuIntraDistribution[depth][ctu.m_lumaIntraDir[absPartIdx]]++;
+                }
             }
         }
     }

@@ -66,6 +66,10 @@ struct RcStats
     double   shortTermCplxCount;
     int64_t  totalBits;
     int64_t  encodedBits;
+    double   coeff[4];
+    double   count[4];
+    double   offset[4];
+    double   bufferFillFinal;
 };
 
 class Frame
@@ -108,7 +112,14 @@ public:
     x265_analysis_2Pass    m_analysis2Pass;
     RcStats*               m_rcData;
 
+    x265_ctu_info_t**      m_ctuInfo;
+    Event                  m_copied;
+    int*                   m_prevCtuInfoChange;
     int64_t                m_encodeStartTime;
+
+    uint8_t**              m_addOnDepth;
+    uint8_t**              m_addOnCtuInfo;
+    int**                  m_addOnPrevChange;
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);

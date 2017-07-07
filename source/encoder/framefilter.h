@@ -123,7 +123,7 @@ public:
 
     uint32_t getCUWidth(int colNum) const
     {
-        return (colNum == (int)m_numCols - 1) ? m_lastWidth : g_maxCUSize;
+        return (colNum == (int)m_numCols - 1) ? m_lastWidth : m_param->maxCUSize;
     }
 
     void init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t numCols);

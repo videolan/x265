@@ -1583,7 +1583,7 @@ cglobal saoCuOrgB0, 5,7,8
     pshufb      m1, m4, m0
     pcmpgtb     m0, [pb_15]         ; m0 = [mask]
 
-    pblendvb    m6, m6, m1, m0      ; NOTE: don't use 3 parameters style, x264 macro have some bug!
+    pblendvb    m6, m1, m0
 
     pmovsxbw    m0, m6              ; offset
     punpckhbw   m6, m6
@@ -1630,7 +1630,7 @@ cglobal saoCuOrgB0, 4, 7, 8
     pshufb      m6, m3, m1
     pshufb      m5, m4, m1
 
-    pblendvb    m6, m6, m5, m0    ; NOTE: don't use 3 parameters style, x264 macro have some bug!
+    pblendvb    m6, m5, m0
 
     pmovzxbw    m1, m2            ; rec
     punpckhbw   m2, m7
@@ -1904,7 +1904,7 @@ cglobal calSign, 4,5,6
     sub         r3,     r4
     movu        xmm0,   [r3]
     movu        m3,     [r0]
-    pblendvb    m5,     m5,     m3,     xmm0
+    pblendvb    m5,     m3,     xmm0
     movu        [r0],   m5
 
 .end:

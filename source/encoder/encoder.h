@@ -31,7 +31,7 @@
 #include "x265.h"
 #include "nal.h"
 #include "framedata.h"
-#ifdef ENABLE_DYNAMIC_HDR10
+#ifdef ENABLE_HDR10_PLUS
     #include "dynamicHDR10/hdr10plus.h"
 #endif
 struct x265_encoder {};
@@ -176,7 +176,7 @@ public:
 
     int                     m_bToneMap; // Enables tone-mapping
 
-#ifdef ENABLE_DYNAMIC_HDR10
+#ifdef ENABLE_HDR10_PLUS
     const hdr10plus_api     *m_hdr10plus_api;
     uint8_t                 **cim;
     int                     numCimInfo;
@@ -187,7 +187,7 @@ public:
     Encoder();
     ~Encoder()
     {
-#ifdef ENABLE_DYNAMIC_HDR10
+#ifdef ENABLE_HDR10_PLUS
         if (m_prevTonemapPayload.payload != NULL)
             X265_FREE(m_prevTonemapPayload.payload);
 #endif
@@ -200,6 +200,8 @@ public:
     int encode(const x265_picture* pic, x265_picture *pic_out);
 
     int reconfigureParam(x265_param* encParam, x265_param* param);
+
+    void copyCtuInfo(x265_ctu_info_t** frameCtuInfo, int poc);
 
     void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
 
@@ -223,7 +225,7 @@ public:
 
     void freeAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType);
 
-    void readAnalysisFile(x265_analysis_data* analysis, int poc);
+    void readAnalysisFile(x265_analysis_data* analysis, int poc, const x265_picture* picIn);
 
     void writeAnalysisFile(x265_analysis_data* pic, FrameData &curEncData);
     void readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int poc, int sliceType);

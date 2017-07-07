@@ -25,7 +25,7 @@
 
 #include "x265.h"
 #include "x265-extras.h"
-
+#include "param.h"
 #include "common.h"
 
 using namespace X265_NS;
@@ -38,14 +38,8 @@ static const char* summaryCSVHeader =
     "B count, B ave-QP, B kbps, B-PSNR Y, B-PSNR U, B-PSNR V, B-SSIM (dB), "
     "MaxCLL, MaxFALL, Version\n";
 
-FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char* fname, int level)
+FILE* x265_csvlog_open(const x265_param& param, const char* fname, int level)
 {
-    if (sizeof(x265_stats) != api.sizeof_stats || sizeof(x265_picture) != api.sizeof_picture)
-    {
-        fprintf(stderr, "extras [error]: structure size skew, unable to create CSV logfile\n");
-        return NULL;
-    }
-
     FILE *csvfp = x265_fopen(fname, "r");
     if (csvfp)
     {
@@ -62,6 +56,8 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
             if (level)
             {
                 fprintf(csvfp, "Encode Order, Type, POC, QP, Bits, Scenecut, ");
+                if (level >= 2)
+                    fprintf(csvfp, "I/P cost ratio, ");
                 if (param.rc.rateControlMode == X265_RC_CRF)
                     fprintf(csvfp, "RateFactor, ");
                 if (param.rc.vbvBufferSize)
@@ -73,7 +69,7 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
                 fprintf(csvfp, "Latency, ");
                 fprintf(csvfp, "List 0, List 1");
                 uint32_t size = param.maxCUSize;
-                for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
                 {
                     fprintf(csvfp, ", Intra %dx%d DC, Intra %dx%d Planar, Intra %dx%d Ang", size, size, size, size, size, size);
                     size /= 2;
@@ -82,7 +78,7 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
                 size = param.maxCUSize;
                 if (param.bEnableRectInter)
                 {
-                    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                    for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
                     {
                         fprintf(csvfp, ", Inter %dx%d, Inter %dx%d (Rect)", size, size, size, size);
                         if (param.bEnableAMP)
@@ -92,29 +88,56 @@ FILE* x265_csvlog_open(const x265_api& api, const x265_param& param, const char*
                 }
                 else
                 {
-                    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                    for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
                     {
                         fprintf(csvfp, ", Inter %dx%d", size, size);
                         size /= 2;
                     }
                 }
                 size = param.maxCUSize;
-                for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
                 {
                     fprintf(csvfp, ", Skip %dx%d", size, size);
                     size /= 2;
                 }
                 size = param.maxCUSize;
-                for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+                for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
                 {
                     fprintf(csvfp, ", Merge %dx%d", size, size);
                     size /= 2;
                 }
-                fprintf(csvfp, ", Avg Luma Distortion, Avg Chroma Distortion, Avg psyEnergy, Avg Luma Level, Max Luma Level, Avg Residual Energy");
 
-                /* detailed performance statistics */
                 if (level >= 2)
-                    fprintf(csvfp, ", DecideWait (ms), Row0Wait (ms), Wall time (ms), Ref Wait Wall (ms), Total CTU time (ms), Stall Time (ms), Total frame time (ms), Avg WPP, Row Blocks");
+                {
+                    fprintf(csvfp, ", Avg Luma Distortion, Avg Chroma Distortion, Avg psyEnergy, Avg Residual Energy,"
+                        " Min Luma Level, Max Luma Level, Avg Luma Level");
+
+                    if (param.internalCsp != X265_CSP_I400)
+                        fprintf(csvfp, ", Min Cb Level, Max Cb Level, Avg Cb Level, Min Cr Level, Max Cr Level, Avg Cr Level");
+
+                    /* PU statistics */
+                    size = param.maxCUSize;
+                    for (uint32_t i = 0; i< param.maxLog2CUSize - (uint32_t)g_log2Size[param.minCUSize] + 1; i++)
+                    {
+                        fprintf(csvfp, ", Intra %dx%d", size, size);
+                        fprintf(csvfp, ", Skip %dx%d", size, size);
+                        fprintf(csvfp, ", AMP %d", size);
+                        fprintf(csvfp, ", Inter %dx%d", size, size);
+                        fprintf(csvfp, ", Merge %dx%d", size, size);
+                        fprintf(csvfp, ", Inter %dx%d", size, size / 2);
+                        fprintf(csvfp, ", Merge %dx%d", size, size / 2);
+                        fprintf(csvfp, ", Inter %dx%d", size / 2, size);
+                        fprintf(csvfp, ", Merge %dx%d", size / 2, size);
+                        size /= 2;
+                    }
+
+                    if ((uint32_t)g_log2Size[param.minCUSize] == 3)
+                        fprintf(csvfp, ", 4x4");
+
+                    /* detailed performance statistics */
+                    fprintf(csvfp, ", DecideWait (ms), Row0Wait (ms), Wall time (ms), Ref Wait Wall (ms), Total CTU time (ms),"
+                    "Stall Time (ms), Total frame time (ms), Avg WPP, Row Blocks");
+                }
                 fprintf(csvfp, "\n");
             }
             else
@@ -131,7 +154,10 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
         return;
 
     const x265_frame_stats* frameStats = &pic.frameData;
-    fprintf(csvfp, "%d, %c-SLICE, %4d, %2.2lf, %10d, %d,", frameStats->encoderOrder, frameStats->sliceType, frameStats->poc, frameStats->qp, (int)frameStats->bits, frameStats->bScenecut);
+    fprintf(csvfp, "%d, %c-SLICE, %4d, %2.2lf, %10d, %d,", frameStats->encoderOrder, frameStats->sliceType, frameStats->poc, 
+                                                           frameStats->qp, (int)frameStats->bits, frameStats->bScenecut);
+    if (level >= 2)
+        fprintf(csvfp, "%.2f,", frameStats->ipCostRatio);
     if (param.rc.rateControlMode == X265_RC_CRF)
         fprintf(csvfp, "%.3lf,", frameStats->rateFactor);
     if (param.rc.vbvBufferSize)
@@ -159,39 +185,76 @@ void x265_csvlog_frame(FILE* csvfp, const x265_param& param, const x265_picture&
         else
             fputs(" -,", csvfp);
     }
-    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-        fprintf(csvfp, "%5.2lf%%, %5.2lf%%, %5.2lf%%,", frameStats->cuStats.percentIntraDistribution[depth][0], frameStats->cuStats.percentIntraDistribution[depth][1], frameStats->cuStats.percentIntraDistribution[depth][2]);
-    fprintf(csvfp, "%5.2lf%%", frameStats->cuStats.percentIntraNxN);
-    if (param.bEnableRectInter)
+
+    if (level)
     {
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
+        for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+            fprintf(csvfp, "%5.2lf%%, %5.2lf%%, %5.2lf%%,", frameStats->cuStats.percentIntraDistribution[depth][0],
+            frameStats->cuStats.percentIntraDistribution[depth][1],
+            frameStats->cuStats.percentIntraDistribution[depth][2]);
+        fprintf(csvfp, "%5.2lf%%", frameStats->cuStats.percentIntraNxN);
+        if (param.bEnableRectInter)
         {
-            fprintf(csvfp, ", %5.2lf%%, %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0], frameStats->cuStats.percentInterDistribution[depth][1]);
-            if (param.bEnableAMP)
-                fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][2]);
+            for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+            {
+                fprintf(csvfp, ", %5.2lf%%, %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0],
+                    frameStats->cuStats.percentInterDistribution[depth][1]);
+                if (param.bEnableAMP)
+                    fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][2]);
+            }
         }
+        else
+        {
+            for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+                fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0]);
+        }
+        for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+            fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentSkipCu[depth]);
+        for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+            fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentMergeCu[depth]);
     }
-    else
-    {
-        for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-            fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0]);
-    }
-    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-        fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentSkipCu[depth]);
-    for (uint32_t depth = 0; depth <= g_maxCUDepth; depth++)
-        fprintf(csvfp, ", %5.2lf%%", frameStats->cuStats.percentMergeCu[depth]);
-    fprintf(csvfp, ", %.2lf, %.2lf, %.2lf, %.2lf, %d, %.2lf", frameStats->avgLumaDistortion, frameStats->avgChromaDistortion, frameStats->avgPsyEnergy, frameStats->avgLumaLevel, frameStats->maxLumaLevel, frameStats->avgResEnergy);
 
     if (level >= 2)
     {
-        fprintf(csvfp, ", %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf,", frameStats->decideWaitTime, frameStats->row0WaitTime, frameStats->wallTime, frameStats->refWaitWallTime, frameStats->totalCTUTime, frameStats->stallTime, frameStats->totalFrameTime);
+        fprintf(csvfp, ", %.2lf, %.2lf, %.2lf, %.2lf ", frameStats->avgLumaDistortion,
+            frameStats->avgChromaDistortion,
+            frameStats->avgPsyEnergy,
+            frameStats->avgResEnergy);
+
+        fprintf(csvfp, ", %d, %d, %.2lf", frameStats->minLumaLevel, frameStats->maxLumaLevel, frameStats->avgLumaLevel);
+
+        if (param.internalCsp != X265_CSP_I400)
+        {
+            fprintf(csvfp, ", %d, %d, %.2lf", frameStats->minChromaULevel, frameStats->maxChromaULevel, frameStats->avgChromaULevel);
+            fprintf(csvfp, ", %d, %d, %.2lf", frameStats->minChromaVLevel, frameStats->maxChromaVLevel, frameStats->avgChromaVLevel);
+        }
+
+        for (uint32_t i = 0; i < param.maxLog2CUSize - (uint32_t)g_log2Size[param.minCUSize] + 1; i++)
+        {
+            fprintf(csvfp, ", %.2lf%%", frameStats->puStats.percentIntraPu[i]);
+            fprintf(csvfp, ", %.2lf%%", frameStats->puStats.percentSkipPu[i]);
+            fprintf(csvfp, ",%.2lf%%", frameStats->puStats.percentAmpPu[i]);
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                fprintf(csvfp, ", %.2lf%%", frameStats->puStats.percentInterPu[i][j]);
+                fprintf(csvfp, ", %.2lf%%", frameStats->puStats.percentMergePu[i][j]);
+            }
+        }
+        if ((uint32_t)g_log2Size[param.minCUSize] == 3)
+            fprintf(csvfp, ",%.2lf%%", frameStats->puStats.percentNxN);
+
+        fprintf(csvfp, ", %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf,", frameStats->decideWaitTime, frameStats->row0WaitTime,
+                                                                             frameStats->wallTime, frameStats->refWaitWallTime,
+                                                                             frameStats->totalCTUTime, frameStats->stallTime,
+                                                                             frameStats->totalFrameTime);
+
         fprintf(csvfp, " %.3lf, %d", frameStats->avgWPP, frameStats->countRowBlocks);
     }
     fprintf(csvfp, "\n");
     fflush(stderr);
 }
 
-void x265_csvlog_encode(FILE* csvfp, const char* version, const x265_param& param, const x265_stats& stats, int level, int argc, char** argv)
+void x265_csvlog_encode(FILE* csvfp, const char* version, const x265_param& param, int padx, int pady, const x265_stats& stats, int level, int argc, char** argv)
 {
     if (!csvfp)
         return;
@@ -204,13 +267,27 @@ void x265_csvlog_encode(FILE* csvfp, const char* version, const x265_param& para
     }
 
     // CLI arguments or other
-    fputc('"', csvfp);
-    for (int i = 1; i < argc; i++)
+    if (argc)
     {
-        fputc(' ', csvfp);
-        fputs(argv[i], csvfp);
+        fputc('"', csvfp);
+        for (int i = 1; i < argc; i++)
+        {
+            fputc(' ', csvfp);
+            fputs(argv[i], csvfp);
+        }
+        fputc('"', csvfp);
     }
-    fputc('"', csvfp);
+    else
+    {
+        const x265_param* paramTemp = &param;
+        char *opts = x265_param2string((x265_param*)paramTemp, padx, pady);
+        if (opts)
+        {
+            fputc('"', csvfp);
+            fputs(opts, csvfp);
+            fputc('"', csvfp);
+        }
+    }
 
     // current date and time
     time_t now;
