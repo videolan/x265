@@ -6215,4 +6215,42 @@ cglobal pixel_sad_64x64, 4,7,6
     movd            eax, xm0
     RET
 
+;-----------------------------------------------------------------------------
+; int pixel_sad_64x%1( uint8_t *, intptr_t, uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+%macro PIXEL_SAD_W64_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_sad_64x%1, 4,5,6
+    xorps           m0, m0
+    xorps           m5, m5
+
+%rep %1/2
+    movu           m1, [r0]               ; first 64 of row 0 of pix0
+    movu           m2, [r2]               ; first 64 of row 0 of pix1
+    movu           m3, [r0 + r1]          ; first 64 of row 1 of pix0
+    movu           m4, [r2 + r3]          ; first 64 of row 1 of pix1
+    psadbw         m1, m2
+    psadbw         m3, m4
+    paddd          m0, m1
+    paddd          m5, m3
+    lea            r2, [r2 + 2 * r3]
+    lea            r0, [r0 + 2 * r1]
+%endrep
+
+    paddd          m0, m5
+    vextracti32x8  ym1, m0, 1
+    paddd          ym0, ym1
+    vextracti64x2  xm1, m0, 1
+    paddd          xm0, xm1
+    pshufd         xm1, xm0, 2
+    paddd          xm0, xm1
+    movd           eax, xm0
+    RET
+%endmacro
+
+PIXEL_SAD_W64_AVX512 16
+PIXEL_SAD_W64_AVX512 32
+PIXEL_SAD_W64_AVX512 48
+PIXEL_SAD_W64_AVX512 64
+
 %endif
