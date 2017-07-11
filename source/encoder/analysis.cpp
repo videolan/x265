@@ -511,7 +511,9 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
             Mode& mode = md.pred[0];
             md.bestMode = &mode;
             mode.cu.initSubCU(parentCTU, cuGeom, qp);
-            if (m_param->intraRefine != 2 || parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] <= 1)
+            bool reuseModes = !((m_param->intraRefine == 3) ||
+                                (m_param->intraRefine == 2 && parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] > DC_IDX));
+            if (reuseModes)
             {
                 memcpy(mode.cu.m_lumaIntraDir, parentCTU.m_lumaIntraDir + cuGeom.absPartIdx, cuGeom.numPartitions);
                 memcpy(mode.cu.m_chromaIntraDir, parentCTU.m_chromaIntraDir + cuGeom.absPartIdx, cuGeom.numPartitions);
@@ -2271,7 +2273,9 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         PartSize size = (PartSize)parentCTU.m_partSize[cuGeom.absPartIdx];
         if (parentCTU.isIntra(cuGeom.absPartIdx))
         {
-            if (m_param->intraRefine != 2 || parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] <= 1)
+            bool reuseModes = !((m_param->intraRefine == 3) ||
+                                (m_param->intraRefine == 2 && parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] > DC_IDX));
+            if (reuseModes)
             {
                 memcpy(mode.cu.m_lumaIntraDir, parentCTU.m_lumaIntraDir + cuGeom.absPartIdx, cuGeom.numPartitions);
                 memcpy(mode.cu.m_chromaIntraDir, parentCTU.m_chromaIntraDir + cuGeom.absPartIdx, cuGeom.numPartitions);
