@@ -669,7 +669,7 @@ void FrameEncoder::compressFrame()
             if (writeSei)
             {
                 SEICreativeIntentMeta sei;
-                sei.cim = payload->payload;
+                sei.m_payload = payload->payload;
                 m_bs.resetBits();
                 sei.setSize(payload->payloadSize);
                 sei.write(m_bs, *slice->m_sps);
