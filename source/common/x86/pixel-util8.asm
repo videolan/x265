@@ -5782,6 +5782,132 @@ cglobal pixel_sub_ps_64x64, 6, 7, 8, dest, deststride, src0, src1, srcstride0, s
     jnz         .loop
     RET
 %endif
+
+;-----------------------------------------------------------------------------
+; void pixel_sub_ps_64x64(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
+;-----------------------------------------------------------------------------
+%macro PROCESS_SUB_PS_64x8_AVX512 0
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r2 + 32]
+    pmovzxbw    m2,     [r3]
+    pmovzxbw    m3,     [r3 + 32]
+    pmovzxbw    m4,     [r2 + r4]
+    pmovzxbw    m5,     [r2 + r4 + 32]
+    pmovzxbw    m6,     [r3 + r5]
+    pmovzxbw    m7,     [r3 + r5 + 32]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+    psubw       m4,     m6
+    psubw       m5,     m7
+    movu        [r0],               m0
+    movu        [r0 + 64],          m1
+    movu        [r0 + 2 * r1],      m4
+    movu        [r0 + 2 * r1 + 64], m5
+
+    lea         r0,     [r0 + 4 * r1]
+    lea         r2,     [r2 + 2 * r4]
+    lea         r3,     [r3 + 2 * r5]
+
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r2 + 32]
+    pmovzxbw    m2,     [r3]
+    pmovzxbw    m3,     [r3 + 32]
+    pmovzxbw    m4,     [r2 + r4]
+    pmovzxbw    m5,     [r2 + r4 + 32]
+    pmovzxbw    m6,     [r3 + r5]
+    pmovzxbw    m7,     [r3 + r5 + 32]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+    psubw       m4,     m6
+    psubw       m5,     m7
+    movu        [r0],               m0
+    movu        [r0 + 64],          m1
+    movu        [r0 + 2 * r1],      m4
+    movu        [r0 + 2 * r1 + 64], m5
+
+    lea         r0,     [r0 + 4 * r1]
+    lea         r2,     [r2 + 2 * r4]
+    lea         r3,     [r3 + 2 * r5]
+
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r2 + 32]
+    pmovzxbw    m2,     [r3]
+    pmovzxbw    m3,     [r3 + 32]
+    pmovzxbw    m4,     [r2 + r4]
+    pmovzxbw    m5,     [r2 + r4 + 32]
+    pmovzxbw    m6,     [r3 + r5]
+    pmovzxbw    m7,     [r3 + r5 + 32]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+    psubw       m4,     m6
+    psubw       m5,     m7
+    movu        [r0],               m0
+    movu        [r0 + 64],          m1
+    movu        [r0 + 2 * r1],      m4
+    movu        [r0 + 2 * r1 + 64], m5
+
+    lea         r0,     [r0 + 4 * r1]
+    lea         r2,     [r2 + 2 * r4]
+    lea         r3,     [r3 + 2 * r5]
+
+    pmovzxbw    m0,     [r2]
+    pmovzxbw    m1,     [r2 + 32]
+    pmovzxbw    m2,     [r3]
+    pmovzxbw    m3,     [r3 + 32]
+    pmovzxbw    m4,     [r2 + r4]
+    pmovzxbw    m5,     [r2 + r4 + 32]
+    pmovzxbw    m6,     [r3 + r5]
+    pmovzxbw    m7,     [r3 + r5 + 32]
+
+    psubw       m0,     m2
+    psubw       m1,     m3
+    psubw       m4,     m6
+    psubw       m5,     m7
+    movu        [r0],               m0
+    movu        [r0 + 64],          m1
+    movu        [r0 + 2 * r1],      m4
+    movu        [r0 + 2 * r1 + 64], m5
+%endmacro
+
+%if HIGH_BIT_DEPTH==0
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal pixel_sub_ps_64x64, 6, 7, 8
+    PROCESS_SUB_PS_64x8_AVX512
+    lea         r0,     [r0 + 4 * r1]
+    lea         r2,     [r2 + 2 * r4]
+    lea         r3,     [r3 + 2 * r5]
+    PROCESS_SUB_PS_64x8_AVX512
+    lea         r0,     [r0 + 4 * r1]
+    lea         r2,     [r2 + 2 * r4]
+    lea         r3,     [r3 + 2 * r5]
+    PROCESS_SUB_PS_64x8_AVX512
+    lea         r0,     [r0 + 4 * r1]
+    lea         r2,     [r2 + 2 * r4]
+    lea         r3,     [r3 + 2 * r5]
+    PROCESS_SUB_PS_64x8_AVX512
+    lea         r0,     [r0 + 4 * r1]
+    lea         r2,     [r2 + 2 * r4]
+    lea         r3,     [r3 + 2 * r5]
+    PROCESS_SUB_PS_64x8_AVX512
+    lea         r0,     [r0 + 4 * r1]
+    lea         r2,     [r2 + 2 * r4]
+    lea         r3,     [r3 + 2 * r5]
+    PROCESS_SUB_PS_64x8_AVX512
+    lea         r0,     [r0 + 4 * r1]
+    lea         r2,     [r2 + 2 * r4]
+    lea         r3,     [r3 + 2 * r5]
+    PROCESS_SUB_PS_64x8_AVX512
+    lea         r0,     [r0 + 4 * r1]
+    lea         r2,     [r2 + 2 * r4]
+    lea         r3,     [r3 + 2 * r5]
+    PROCESS_SUB_PS_64x8_AVX512
+    RET
+%endif
+%endif
 ;=============================================================================
 ; variance
 ;=============================================================================
