@@ -1145,3 +1145,147 @@ cglobal pixel_add_ps_64x64, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
     RET
 
 %endif
+
+;-----------------------------------------------------------------------------
+; void pixel_add_ps_64x64(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
+;-----------------------------------------------------------------------------
+%macro PROCESS_ADD_PS_64x8_AVX512 0
+    pmovzxbw    m0,         [r2]
+    pmovzxbw    m1,         [r2 + 32]
+    movu        m2,         [r3]
+    movu        m3,         [r3 + 64]
+    pmovzxbw    m4,         [r2 + r4]
+    pmovzxbw    m5,         [r2 + r4 + 32]
+    movu        m6,         [r3 + r5]
+    movu        m7,         [r3 + r5 + 64]
+
+    paddw       m0,         m2
+    paddw       m1,         m3
+    paddw       m4,         m6
+    paddw       m5,         m7
+    packuswb    m0,         m1
+    packuswb    m4,         m5
+    vpermq      m0,         m0, 11011000b
+    vpermq      m4,         m4, 11011000b
+    vshufi64x2  m0,         m0, 11011000b
+    vshufi64x2  m4,         m4, 11011000b
+    movu        [r0],       m0
+    movu        [r0 + r1],  m4
+
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+
+    pmovzxbw    m0,         [r2]
+    pmovzxbw    m1,         [r2 + 32]
+    movu        m2,         [r3]
+    movu        m3,         [r3 + 64]
+    pmovzxbw    m4,         [r2 + r4]
+    pmovzxbw    m5,         [r2 + r4 + 32]
+    movu        m6,         [r3 + r5]
+    movu        m7,         [r3 + r5 + 64]
+
+    paddw       m0,         m2
+    paddw       m1,         m3
+    paddw       m4,         m6
+    paddw       m5,         m7
+    packuswb    m0,         m1
+    packuswb    m4,         m5
+    vpermq      m0,         m0, 11011000b
+    vpermq      m4,         m4, 11011000b
+    vshufi64x2  m0,         m0, 11011000b
+    vshufi64x2  m4,         m4, 11011000b
+    movu        [r0],       m0
+    movu        [r0 + r1],  m4
+
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+
+    pmovzxbw    m0,         [r2]
+    pmovzxbw    m1,         [r2 + 32]
+    movu        m2,         [r3]
+    movu        m3,         [r3 + 64]
+    pmovzxbw    m4,         [r2 + r4]
+    pmovzxbw    m5,         [r2 + r4 + 32]
+    movu        m6,         [r3 + r5]
+    movu        m7,         [r3 + r5 + 64]
+
+    paddw       m0,         m2
+    paddw       m1,         m3
+    paddw       m4,         m6
+    paddw       m5,         m7
+    packuswb    m0,         m1
+    packuswb    m4,         m5
+    vpermq      m0,         m0, 11011000b
+    vpermq      m4,         m4, 11011000b
+    vshufi64x2  m0,         m0, 11011000b
+    vshufi64x2  m4,         m4, 11011000b
+    movu        [r0],       m0
+    movu        [r0 + r1],  m4
+
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+
+    pmovzxbw    m0,         [r2]
+    pmovzxbw    m1,         [r2 + 32]
+    movu        m2,         [r3]
+    movu        m3,         [r3 + 64]
+    pmovzxbw    m4,         [r2 + r4]
+    pmovzxbw    m5,         [r2 + r4 + 32]
+    movu        m6,         [r3 + r5]
+    movu        m7,         [r3 + r5 + 64]
+
+    paddw       m0,         m2
+    paddw       m1,         m3
+    paddw       m4,         m6
+    paddw       m5,         m7
+    packuswb    m0,         m1
+    packuswb    m4,         m5
+    vpermq      m0,         m0, 11011000b
+    vpermq      m4,         m4, 11011000b
+    vshufi64x2  m0,         m0, 11011000b
+    vshufi64x2  m4,         m4, 11011000b
+    movu        [r0],       m0
+    movu        [r0 + r1],  m4
+%endmacro
+
+%if ARCH_X86_64
+%if HIGH_BIT_DEPTH==0
+INIT_ZMM avx512
+cglobal pixel_add_ps_64x64, 6, 7, 8
+    add         r5,         r5
+    PROCESS_ADD_PS_64x8_AVX512
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+    PROCESS_ADD_PS_64x8_AVX512
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+    PROCESS_ADD_PS_64x8_AVX512
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+    PROCESS_ADD_PS_64x8_AVX512
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+    PROCESS_ADD_PS_64x8_AVX512
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+    PROCESS_ADD_PS_64x8_AVX512
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+    PROCESS_ADD_PS_64x8_AVX512
+    lea         r2,         [r2 + r4 * 2]
+    lea         r3,         [r3 + r5 * 2]
+    lea         r0,         [r0 + r1 * 2]
+    PROCESS_ADD_PS_64x8_AVX512
+    RET
+
+%endif
+%endif

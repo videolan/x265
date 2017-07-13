@@ -3805,6 +3805,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_64x48].addAvg = PFX(addAvg_64x48_avx512);
         p.pu[LUMA_64x64].addAvg = PFX(addAvg_64x64_avx512);
 
+        p.cu[BLOCK_64x64].add_ps = PFX(pixel_add_ps_64x64_avx512);
+
     }
 #endif
 }
