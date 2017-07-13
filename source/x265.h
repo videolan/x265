@@ -1479,6 +1479,9 @@ typedef struct x265_param
 
     /* File pointer for csv log */
     FILE*     csvfpt;
+
+    /* Force flushing the frames from encoder */
+    int       forceFlush;
 } x265_param;
 
 /* x265_param_alloc:

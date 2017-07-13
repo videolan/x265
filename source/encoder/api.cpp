@@ -188,6 +188,8 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
 
     x265_param save;
     Encoder* encoder = static_cast<Encoder*>(enc);
+    if (encoder->m_latestParam->forceFlush != param_in->forceFlush)
+        return encoder->reconfigureParam(encoder->m_latestParam, param_in);
     bool isReconfigureRc = encoder->isReconfigureRc(encoder->m_latestParam, param_in);
     if (encoder->m_reconfigure && !isReconfigureRc || encoder->m_reconfigureRc && isReconfigureRc) /* Reconfigure in progress */
         return 1;
@@ -255,7 +257,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     {
         numEncoded = encoder->encode(pic_in, pic_out);
     }
-    while (numEncoded == 0 && !pic_in && encoder->m_numDelayedPic);
+    while (numEncoded == 0 && !pic_in && encoder->m_numDelayedPic && !encoder->m_latestParam->forceFlush);
 
     // do not allow reuse of these buffers for more than one picture. The
     // encoder now owns these analysisData buffers.

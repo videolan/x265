@@ -603,6 +603,17 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     }
     if (pic_in)
     {
+        if (m_latestParam->forceFlush == 1)
+        {
+            m_lookahead->setLookaheadQueue();
+            m_latestParam->forceFlush = 0;
+        }
+        if (m_latestParam->forceFlush == 2)
+        {
+            m_lookahead->m_filled = false;
+            m_latestParam->forceFlush = 0;
+        }
+
         x265_sei_payload toneMap;
         toneMap.payload = NULL;
 #if ENABLE_HDR10_PLUS
@@ -804,6 +815,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         m_lookahead->addPicture(*inFrame, sliceType);
         m_numDelayedPic++;
     }
+    else if (m_latestParam->forceFlush == 2)
+        m_lookahead->m_filled = true;
     else
         m_lookahead->flush();
 
@@ -1172,6 +1185,7 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
         if (param->scalingLists && !encParam->scalingLists)
             encParam->scalingLists = strdup(param->scalingLists);
     }
+    encParam->forceFlush = param->forceFlush;
     /* To add: Loop Filter/deblocking controls, transform skip, signhide require PPS to be resent */
     /* To add: SAO, temporal MVP, AMP, TU depths require SPS to be resent, at every CVS boundary */
     return x265_check_params(encParam);

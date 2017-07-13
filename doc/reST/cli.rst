@@ -1405,6 +1405,16 @@ Slice decision options
 .. option:: --b-pyramid, --no-b-pyramid
 
 	Use B-frames as references, when possible. Default enabled
+	
+.. option:: --force-flush <integer>
+
+	Force the encoder to flush frames. Default is 0.
+	
+	Values:
+	0 - flush the encoder only when all the input pictures are over.
+	1 - flush all the frames even when the input is not over. 
+	    slicetype decision may change with this option.
+	2 - flush the slicetype decided frames only.     
 
 Quality, rate control and rate distortion options
 =================================================
