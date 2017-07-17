@@ -4348,6 +4348,154 @@ cglobal pixel_sad_x4_48x64, 7,8,10
     paddd           m3, m4
 %endmacro
 
+%macro SAD_X4_48x8_AVX512 0
+    movu            ym4, [r0]
+    vinserti32x8    m4, [r0 + FENC_STRIDE], 1
+    movu            ym5, [r1]
+    vinserti32x8    m5, [r1 + r5], 1
+    movu            ym6, [r2]
+    vinserti32x8    m6, [r2 + r5], 1
+    movu            ym7, [r3]
+    vinserti32x8    m7, [r3 + r5], 1
+    movu            ym8, [r4]
+    vinserti32x8    m8, [r4 + r5], 1
+
+    psadbw          m9, m4, m5
+    paddd           m0, m9
+    psadbw          m5, m4, m6
+    paddd           m1, m5
+    psadbw          m6, m4, m7
+    paddd           m2, m6
+    psadbw          m4, m8
+    paddd           m3, m4
+
+    movu            ym4, [r0 + FENC_STRIDE * 2]
+    vinserti32x8     m4, [r0 + FENC_STRIDE * 3], 1
+    movu            ym5, [r1 + r5 * 2]
+    vinserti32x8     m5, [r1 + r7], 1
+    movu            ym6, [r2 + r5 * 2]
+    vinserti32x8     m6, [r2 + r7], 1
+    movu            ym7, [r3 + r5 * 2]
+    vinserti32x8     m7, [r3 + r7], 1
+    movu            ym8, [r4 + r5 * 2]
+    vinserti32x8     m8, [r4 + r7], 1
+
+    psadbw          m9, m4, m5
+    paddd           m0, m9
+    psadbw          m5, m4, m6
+    paddd           m1, m5
+    psadbw          m6, m4, m7
+    paddd           m2, m6
+    psadbw          m4, m8
+    paddd           m3, m4
+
+    movu           xm4, [r0 + 32]
+    vinserti32x4    m4, [r0 + FENC_STRIDE + 32], 1
+    vinserti32x4    m4, [r0 + FENC_STRIDE * 2 + 32], 2
+    vinserti32x4    m4, [r0 + FENC_STRIDE * 3 + 32], 3
+    movu           xm5, [r1 + 32]
+    vinserti32x4    m5, [r1 + r5 + 32], 1
+    vinserti32x4    m5, [r1 + r5 * 2 + 32], 2
+    vinserti32x4    m5, [r1 + r7 + 32], 3
+    movu           xm6, [r2 + 32]
+    vinserti32x4    m6, [r2 + r5 + 32], 1
+    vinserti32x4    m6, [r2 + r5 * 2 + 32], 2
+    vinserti32x4    m6, [r2 + r7 + 32], 3
+    movu           xm7, [r3 + 32]
+    vinserti32x4    m7, [r3 + r5 + 32], 1
+    vinserti32x4    m7, [r3 + r5 * 2 + 32], 2
+    vinserti32x4    m7, [r3 + r7 + 32], 3
+    movu           xm8, [r4 + 32]
+    vinserti32x4    m8, [r4 + r5 + 32], 1
+    vinserti32x4    m8, [r4 + r5 * 2 + 32], 2
+    vinserti32x4    m8, [r4 + r7 + 32], 3
+
+    psadbw          m9, m4, m5
+    paddd           m0, m9
+    psadbw          m5, m4, m6
+    paddd           m1, m5
+    psadbw          m6, m4, m7
+    paddd           m2, m6
+    psadbw          m4, m8
+    paddd           m3, m4
+
+    add             r0, FENC_STRIDE * 4
+    lea             r1, [r1 + r5 * 4]
+    lea             r2, [r2 + r5 * 4]
+    lea             r3, [r3 + r5 * 4]
+    lea             r4, [r4 + r5 * 4]
+
+    movu            ym4, [r0]
+    vinserti32x8    m4, [r0 + FENC_STRIDE], 1
+    movu            ym5, [r1]
+    vinserti32x8    m5, [r1 + r5], 1
+    movu            ym6, [r2]
+    vinserti32x8    m6, [r2 + r5], 1
+    movu            ym7, [r3]
+    vinserti32x8    m7, [r3 + r5], 1
+    movu            ym8, [r4]
+    vinserti32x8    m8, [r4 + r5], 1
+
+    psadbw          m9, m4, m5
+    paddd           m0, m9
+    psadbw          m5, m4, m6
+    paddd           m1, m5
+    psadbw          m6, m4, m7
+    paddd           m2, m6
+    psadbw          m4, m8
+    paddd           m3, m4
+
+    movu            ym4, [r0 + FENC_STRIDE * 2]
+    vinserti32x8     m4, [r0 + FENC_STRIDE * 3], 1
+    movu            ym5, [r1 + r5 * 2]
+    vinserti32x8     m5, [r1 + r7], 1
+    movu            ym6, [r2 + r5 * 2]
+    vinserti32x8     m6, [r2 + r7], 1
+    movu            ym7, [r3 + r5 * 2]
+    vinserti32x8     m7, [r3 + r7], 1
+    movu            ym8, [r4 + r5 * 2]
+    vinserti32x8     m8, [r4 + r7], 1
+
+    psadbw          m9, m4, m5
+    paddd           m0, m9
+    psadbw          m5, m4, m6
+    paddd           m1, m5
+    psadbw          m6, m4, m7
+    paddd           m2, m6
+    psadbw          m4, m8
+    paddd           m3, m4
+
+    movu           xm4, [r0 + 32]
+    vinserti32x4    m4, [r0 + FENC_STRIDE + 32], 1
+    vinserti32x4    m4, [r0 + FENC_STRIDE * 2 + 32], 2
+    vinserti32x4    m4, [r0 + FENC_STRIDE * 3 + 32], 3
+    movu           xm5, [r1 + 32]
+    vinserti32x4    m5, [r1 + r5 + 32], 1
+    vinserti32x4    m5, [r1 + r5 * 2 + 32], 2
+    vinserti32x4    m5, [r1 + r7 + 32], 3
+    movu           xm6, [r2 + 32]
+    vinserti32x4    m6, [r2 + r5 + 32], 1
+    vinserti32x4    m6, [r2 + r5 * 2 + 32], 2
+    vinserti32x4    m6, [r2 + r7 + 32], 3
+    movu           xm7, [r3 + 32]
+    vinserti32x4    m7, [r3 + r5 + 32], 1
+    vinserti32x4    m7, [r3 + r5 * 2 + 32], 2
+    vinserti32x4    m7, [r3 + r7 + 32], 3
+    movu           xm8, [r4 + 32]
+    vinserti32x4    m8, [r4 + r5 + 32], 1
+    vinserti32x4    m8, [r4 + r5 * 2 + 32], 2
+    vinserti32x4    m8, [r4 + r7 + 32], 3
+
+    psadbw          m9, m4, m5
+    paddd           m0, m9
+    psadbw          m5, m4, m6
+    paddd           m1, m5
+    psadbw          m6, m4, m7
+    paddd           m2, m6
+    psadbw          m4, m8
+    paddd           m3, m4
+%endmacro
+
 %macro PIXEL_SAD_X4_END_AVX512 0
     vextracti32x8  ym4, m0, 1
     vextracti32x8  ym5, m1, 1
@@ -4658,6 +4806,60 @@ cglobal pixel_sad_x4_32x64, 7,8,10
     lea             r3, [r3 + r5 * 4]
     lea             r4, [r4 + r5 * 4]
     SAD_X4_32x8_AVX512
+    PIXEL_SAD_X4_END_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_x4_48x64, 7,8,10
+    pxor            m0, m0
+    pxor            m1, m1
+    pxor            m2, m2
+    pxor            m3, m3
+    lea             r7, [r5 * 3]
+
+    SAD_X4_48x8_AVX512
+    add             r0, FENC_STRIDE * 4
+    lea             r1, [r1 + r5 * 4]
+    lea             r2, [r2 + r5 * 4]
+    lea             r3, [r3 + r5 * 4]
+    lea             r4, [r4 + r5 * 4]
+    SAD_X4_48x8_AVX512
+    add             r0, FENC_STRIDE * 4
+    lea             r1, [r1 + r5 * 4]
+    lea             r2, [r2 + r5 * 4]
+    lea             r3, [r3 + r5 * 4]
+    lea             r4, [r4 + r5 * 4]
+    SAD_X4_48x8_AVX512
+    add             r0, FENC_STRIDE * 4
+    lea             r1, [r1 + r5 * 4]
+    lea             r2, [r2 + r5 * 4]
+    lea             r3, [r3 + r5 * 4]
+    lea             r4, [r4 + r5 * 4]
+    SAD_X4_48x8_AVX512
+    add             r0, FENC_STRIDE * 4
+    lea             r1, [r1 + r5 * 4]
+    lea             r2, [r2 + r5 * 4]
+    lea             r3, [r3 + r5 * 4]
+    lea             r4, [r4 + r5 * 4]
+    SAD_X4_48x8_AVX512
+    add             r0, FENC_STRIDE * 4
+    lea             r1, [r1 + r5 * 4]
+    lea             r2, [r2 + r5 * 4]
+    lea             r3, [r3 + r5 * 4]
+    lea             r4, [r4 + r5 * 4]
+    SAD_X4_48x8_AVX512
+    add             r0, FENC_STRIDE * 4
+    lea             r1, [r1 + r5 * 4]
+    lea             r2, [r2 + r5 * 4]
+    lea             r3, [r3 + r5 * 4]
+    lea             r4, [r4 + r5 * 4]
+    SAD_X4_48x8_AVX512
+    add             r0, FENC_STRIDE * 4
+    lea             r1, [r1 + r5 * 4]
+    lea             r2, [r2 + r5 * 4]
+    lea             r3, [r3 + r5 * 4]
+    lea             r4, [r4 + r5 * 4]
+    SAD_X4_48x8_AVX512
     PIXEL_SAD_X4_END_AVX512
     RET
 ;------------------------------------------------------------
