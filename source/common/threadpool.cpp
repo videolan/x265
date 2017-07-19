@@ -454,6 +454,7 @@ ThreadPool* ThreadPool::allocThreadPools(x265_param* p, int& numPools, bool isTh
                     if ((nodeMaskPerPool[node] >> j) & 1)
                         len += sprintf(nodesstr + len, ",%d", j);
                 x265_log(p, X265_LOG_INFO, "Thread pool %d using %d threads on numa nodes %s\n", i, numThreads, nodesstr + 1);
+                delete[] nodesstr;
             }
             else
                 x265_log(p, X265_LOG_INFO, "Thread pool created using %d threads\n", numThreads);
