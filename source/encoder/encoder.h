@@ -178,8 +178,8 @@ public:
 
 #ifdef ENABLE_DYNAMIC_HDR10
     const hdr10plus_api     *m_hdr10plus_api;
-    uint8_t                 **cim;
-    int                     numCimInfo;
+    uint8_t                 **m_cim;
+    int                     m_numCimInfo;
 #endif
 
     x265_sei_payload        m_prevTonemapPayload;

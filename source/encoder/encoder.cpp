@@ -88,8 +88,8 @@ Encoder::Encoder()
 
 #if ENABLE_DYNAMIC_HDR10
     m_hdr10plus_api = hdr10plus_api_get();
-    numCimInfo = 0;
-    cim = NULL;
+    m_numCimInfo = 0;
+    m_cim = NULL;
 #endif
 
     m_prevTonemapPayload.payload = NULL;
@@ -403,6 +403,11 @@ void Encoder::create()
     m_nalList.m_annexB = !!m_param->bAnnexB;
 
     m_emitCLLSEI = p->maxCLL || p->maxFALL;
+
+#if ENABLE_DYNAMIC_HDR10
+    if (m_bToneMap)
+        m_numCimInfo = m_hdr10plus_api->hdr10plus_json_to_movie_cim(m_param->toneMapFile, m_cim);
+#endif
 }
 
 void Encoder::stopJobs()
@@ -434,7 +439,8 @@ void Encoder::stopJobs()
 void Encoder::destroy()
 {
 #if ENABLE_DYNAMIC_HDR10
-    m_hdr10plus_api->hdr10plus_clear_movie(cim, numCimInfo);
+    if (m_bToneMap)
+        m_hdr10plus_api->hdr10plus_clear_movie(m_cim, m_numCimInfo);
 #endif
         
     if (m_exportedPic)
@@ -610,19 +616,18 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 #if ENABLE_DYNAMIC_HDR10
         if (m_bToneMap)
         {
-            if (pic_in->poc == 0)
-                numCimInfo = m_hdr10plus_api->hdr10plus_json_to_movie_cim(m_param->toneMapFile, cim);
-            if (pic_in->poc < numCimInfo)
+            int currentPOC = m_pocLast + 1;
+            if (currentPOC < m_numCimInfo)
             {
                 int32_t i = 0;
                 toneMap.payloadSize = 0;
-                while (cim[pic_in->poc][i] == 0xFF)
-                    toneMap.payloadSize += cim[pic_in->poc][i++] + 1;
-                toneMap.payloadSize += cim[pic_in->poc][i] + 1;
+                while (m_cim[currentPOC][i] == 0xFF)
+                    toneMap.payloadSize += m_cim[currentPOC][i++] + 1;
+                toneMap.payloadSize += m_cim[currentPOC][i] + 1;
 
                 toneMap.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * toneMap.payloadSize);
                 toneMap.payloadType = USER_DATA_REGISTERED_ITU_T_T35;
-                memcpy(toneMap.payload, cim[pic_in->poc], toneMap.payloadSize);
+                memcpy(toneMap.payload, m_cim[currentPOC], toneMap.payloadSize);
             }
         }
 #endif
@@ -716,7 +721,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
         if (inFrame->m_userSEI.numPayloads)
         {
-            inFrame->m_userSEI.payloads = new x265_sei_payload[numPayloads];
+            if (!inFrame->m_userSEI.payloads)
+            {
+                inFrame->m_userSEI.payloads = new x265_sei_payload[numPayloads];
+                for (int i = 0; i < numPayloads; i++)
+                    inFrame->m_userSEI.payloads[i].payload = NULL;
+            }
             for (int i = 0; i < numPayloads; i++)
             {
                 x265_sei_payload input;
@@ -726,7 +736,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     input = pic_in->userSEI.payloads[i];
                 int size = inFrame->m_userSEI.payloads[i].payloadSize = input.payloadSize;
                 inFrame->m_userSEI.payloads[i].payloadType = input.payloadType;
-                inFrame->m_userSEI.payloads[i].payload = new uint8_t[size];
+                if (!inFrame->m_userSEI.payloads[i].payload)
+                    inFrame->m_userSEI.payloads[i].payload = new uint8_t[size];
                 memcpy(inFrame->m_userSEI.payloads[i].payload, input.payload, size);
             }
             if (toneMap.payload)

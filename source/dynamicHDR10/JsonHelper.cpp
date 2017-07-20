@@ -188,9 +188,15 @@ JsonArray JsonHelper::readJsonArray(const string &path)
 
     tfile.close();
 
-    size_t beginning = json_str2.find_first_of("[");
-    int fixchar = json_str2[json_str2.size() - 2] == ']' ? 1 : 0;
-    return Json::parse(json_str2.substr(beginning,json_str2.size() - fixchar),err).array_items();
+    vector<Json> data;
+    if (json_str2.size() != 0)
+    {
+        size_t beginning = json_str2.find_first_of("[");
+        int fixchar = json_str2[json_str2.size() - 2] == ']' ? 1 : 0;
+        return Json::parse(json_str2.substr(beginning, json_str2.size() - fixchar), err).array_items();
+    }
+    else
+        return data;
 }
 
 bool JsonHelper::validatePathExtension(string &path)
