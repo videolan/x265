@@ -1953,9 +1953,6 @@ cglobal filterPixelToShort_32x%1, 3, 7, 3
     P2S_H_32xN_avx2 64
     P2S_H_32xN_avx2 48
 
-;-----------------------------------------------------------------------------
-; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
-;-----------------------------------------------------------------------------
 %macro PROCESS_P2S_32x8_AVX512 0
     pmovzxbw    m0, [r0]
     pmovzxbw    m1, [r0 + r1]
@@ -1999,6 +1996,9 @@ cglobal filterPixelToShort_32x%1, 3, 7, 3
     movu        [r2 + r6],      m3
 %endmacro
 
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
 INIT_ZMM avx512
 cglobal filterPixelToShort_32x8, 3, 7, 5
     mov         r3d, r3m
@@ -2446,9 +2446,6 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     P2S_H_64xN_avx2 32
     P2S_H_64xN_avx2 48
 
-;-----------------------------------------------------------------------------
-; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
-;-----------------------------------------------------------------------------
 %macro PROCESS_P2S_64x8_AVX512 0
     pmovzxbw    m0, [r0]
     pmovzxbw    m1, [r0 + mmsize/2]
@@ -2526,6 +2523,9 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     movu        [r2 + r6 + mmsize], m3
 %endmacro
 
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
 INIT_ZMM avx512
 cglobal filterPixelToShort_64x64, 3, 7, 5
     mov         r3d, r3m
@@ -2561,14 +2561,14 @@ cglobal filterPixelToShort_64x64, 3, 7, 5
     RET
 
 INIT_ZMM avx512
-cglobal filterPixelToShort_64x48, 3, 7, 9
+cglobal filterPixelToShort_64x48, 3, 7, 5
     mov         r3d, r3m
     add         r3d, r3d
     lea         r5, [r1 * 3]
     lea         r6, [r3 * 3]
 
     ; load constant
-    vpbroadcastd      m8, [pw_2000]
+    vpbroadcastd      m4, [pw_2000]
 
     PROCESS_P2S_64x8_AVX512
     lea         r0, [r0 + r1 * 4]
@@ -2589,14 +2589,14 @@ cglobal filterPixelToShort_64x48, 3, 7, 9
     RET
 
 INIT_ZMM avx512
-cglobal filterPixelToShort_64x32, 3, 7, 9
+cglobal filterPixelToShort_64x32, 3, 7, 5
     mov         r3d, r3m
     add         r3d, r3d
     lea         r5, [r1 * 3]
     lea         r6, [r3 * 3]
 
     ; load constant
-    vpbroadcastd      m8, [pw_2000]
+    vpbroadcastd      m4, [pw_2000]
 
     PROCESS_P2S_64x8_AVX512
     lea         r0, [r0 + r1 * 4]
@@ -2611,14 +2611,14 @@ cglobal filterPixelToShort_64x32, 3, 7, 9
     RET
 
 INIT_ZMM avx512
-cglobal filterPixelToShort_64x16, 3, 7, 9
+cglobal filterPixelToShort_64x16, 3, 7, 5
     mov         r3d, r3m
     add         r3d, r3d
     lea         r5, [r1 * 3]
     lea         r6, [r3 * 3]
 
     ; load constant
-    vpbroadcastd      m8, [pw_2000]
+    vpbroadcastd      m4, [pw_2000]
 
     PROCESS_P2S_64x8_AVX512
     lea         r0, [r0 + r1 * 4]
@@ -3047,9 +3047,6 @@ cglobal filterPixelToShort_48x64, 3,7,4
     jnz        .loop
     RET
 
-;-----------------------------------------------------------------------------
-; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
-;-----------------------------------------------------------------------------
 %macro PROCESS_P2S_48x8_AVX512 0
     pmovzxbw    m0, [r0]
     pmovzxbw    m1, [r0 + r1]
@@ -3123,6 +3120,9 @@ cglobal filterPixelToShort_48x64, 3,7,4
     movu        [r2 + r6 + 64],      ym3
 %endmacro
 
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
 INIT_ZMM avx512
 cglobal filterPixelToShort_48x64, 3,7,5
     mov         r3d, r3m
@@ -3131,7 +3131,7 @@ cglobal filterPixelToShort_48x64, 3,7,5
     lea         r6, [r3 * 3]
 
     ; load constant
-    vpbroadcastd m8, [pw_2000]
+    vpbroadcastd m4, [pw_2000]
 
     PROCESS_P2S_48x8_AVX512
     lea         r0, [r0 + r1 * 4]
