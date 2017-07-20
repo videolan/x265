@@ -3851,6 +3851,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = PFX(filterPixelToShort_32x48_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = PFX(filterPixelToShort_32x64_avx512);
 
+        p.cu[BLOCK_64x64].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_ss_64x64_avx512);
+
     }
 #endif
 }
