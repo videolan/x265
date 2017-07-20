@@ -1457,6 +1457,47 @@ cglobal pixel_ssd_ss_64x64, 4,5,4
     paddd       m5, m3
 %endmacro
 
+%macro PROCESS_SSD_SS_32x8_AVX512 0
+    movu        m0, [r0]
+    movu        m1, [r0 + r1]
+    movu        m2, [r0 + 2 * r1]
+    movu        m3, [r0 + r5]
+
+    psubw       m0, [r2]
+    psubw       m1, [r2 + r3]
+    psubw       m2, [r2 + 2 * r3]
+    psubw       m3, [r2 + r6]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    pmaddwd     m2, m2
+    pmaddwd     m3, m3
+    paddd       m4, m0
+    paddd       m5, m1
+    paddd       m4, m2
+    paddd       m5, m3
+
+    lea         r0, [r0 + 4 * r1]
+    lea         r2, [r2 + 4 * r3]
+
+    movu        m0, [r0]
+    movu        m1, [r0 + r1]
+    movu        m2, [r0 + 2 * r1]
+    movu        m3, [r0 + r5]
+
+    psubw       m0, [r2]
+    psubw       m1, [r2 + r3]
+    psubw       m2, [r2 + 2 * r3]
+    psubw       m3, [r2 + r6]
+    pmaddwd     m0, m0
+    pmaddwd     m1, m1
+    pmaddwd     m2, m2
+    pmaddwd     m3, m3
+    paddd       m4, m0
+    paddd       m5, m1
+    paddd       m4, m2
+    paddd       m5, m3
+%endmacro
+
 INIT_ZMM avx512
 cglobal pixel_ssd_ss_64x64, 4,7,6
     add         r1d, r1d
@@ -1488,6 +1529,30 @@ cglobal pixel_ssd_ss_64x64, 4,7,6
     lea         r0, [r0 + 4 * r1]
     lea         r2, [r2 + 4 * r3]
     PROCESS_SSD_SS_64x8_AVX512
+    paddd       m4, m5
+    HADDD       m4, m0
+    movd        eax, xm4
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_ssd_ss_32x32, 4,7,6
+    add         r1d, r1d
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+    pxor        m4, m4
+    pxor        m5, m5
+
+    PROCESS_SSD_SS_32x8_AVX512
+    lea         r0, [r0 + 4 * r1]
+    lea         r2, [r2 + 4 * r3]
+    PROCESS_SSD_SS_32x8_AVX512
+    lea         r0, [r0 + 4 * r1]
+    lea         r2, [r2 + 4 * r3]
+    PROCESS_SSD_SS_32x8_AVX512
+    lea         r0, [r0 + 4 * r1]
+    lea         r2, [r2 + 4 * r3]
+    PROCESS_SSD_SS_32x8_AVX512
     paddd       m4, m5
     HADDD       m4, m0
     movd        eax, xm4
