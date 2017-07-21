@@ -3723,6 +3723,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.integral_inith[INTEGRAL_24] = PFX(integral24h_avx2);
         p.integral_inith[INTEGRAL_32] = PFX(integral32h_avx2);
 
+        p.cu[BLOCK_32x32].calcresidual = PFX(getResidual32_avx512);
     }
     if (cpuMask & X265_CPU_AVX512)
     {
@@ -3858,6 +3859,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I420].cu[CHROMA_420_32x32].copy_ss = PFX(blockcopy_ss_32x32_avx512);
         p.chroma[X265_CSP_I422].cu[CHROMA_422_32x64].copy_ss = PFX(blockcopy_ss_32x64_avx512);
         p.cu[BLOCK_64x64].copy_ss = PFX(blockcopy_ss_64x64_avx512);
+
+        p.cu[BLOCK_32x32].calcresidual = PFX(getResidual32_avx512);
 
     }
 #endif
