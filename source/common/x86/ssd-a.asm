@@ -3389,3 +3389,65 @@ cglobal pixel_ssd_s_32, 2,4,5
     movd    eax, xm0
 %endif
     RET
+
+;-----------------------------------------------------------------------------
+; ssd_s avx512 code start
+;-----------------------------------------------------------------------------
+%macro PROCESS_SSD_S_32x8_AVX512 0
+    movu    m1, [r0]
+    movu    m2, [r0 + r1]
+    movu    m3, [r0 + 2 * r1]
+    movu    m4, [r0 + r3]
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    lea     r0, [r0 + 4 * r1]
+
+    movu    m1, [r0]
+    movu    m2, [r0 + r1]
+    movu    m3, [r0 + 2 * r1]
+    movu    m4, [r0 + r3]
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+%endmacro
+
+;-----------------------------------------------------------------------------
+; int pixel_ssd_s( int16_t *ref, intptr_t i_stride )
+;-----------------------------------------------------------------------------
+%if HIGH_BIT_DEPTH==0
+INIT_ZMM avx512
+cglobal pixel_ssd_s_32, 2,4,5
+    add     r1, r1
+    lea     r3, [r1 * 3]
+    pxor    m0, m0
+
+    PROCESS_SSD_S_32x8_AVX512
+    lea     r0, [r0 + 4 * r1]
+    PROCESS_SSD_S_32x8_AVX512
+    lea     r0, [r0 + 4 * r1]
+    PROCESS_SSD_S_32x8_AVX512
+    lea     r0, [r0 + 4 * r1]
+    PROCESS_SSD_S_32x8_AVX512
+
+    ; calculate sum and return
+    HADDD   m0, m1
+    movd    eax, xm0
+    RET
+%endif
+;-----------------------------------------------------------------------------
+; ssd_s avx512 code end
+;-----------------------------------------------------------------------------
