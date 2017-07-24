@@ -897,24 +897,38 @@ will not reuse analysis if slice type parameters do not match.
 	
 	Enables refinement of intra blocks in current encode. 
 	
-	Level 0 - Forces both mode and depth from the previous encode.
+	Level 0 - Forces both mode and depth from the save encode.
 	
-	Level 1 - Evaluates all intra modes for blocks of size one smaller than 
-	the min-cu-size of the incoming analysis data from the previous encode, 
-	forces modes for blocks of larger size.
+	Level 1 - Evaluates all intra modes at current depth(n) and at depth 
+	(n+1) when current block size is one greater than the min-cu-size.
+	Forces modes for larger blocks.
 	
-	Level 2 - Evaluates all intra modes for	blocks of size one smaller than 
-	the min-cu-size of the incoming analysis data from the previous encode. 
-	For larger blocks, force only depth when angular mode is chosen by the 
-	previous encode, force depth and mode when other intra modes are chosen.
+	Level 2 - In addition to the functionality of level 1, at all depths, force 
+	(a) only depth when angular mode is chosen by the save encode.
+	(b) depth and mode when other intra modes are chosen by the save encode.
 	
 	Default 0.
 	
-.. option:: --refine-inter-depth
+.. option:: --refine-inter <0..3>
 
-	Enables refinement of inter blocks in current encode. Evaluates all 
-	inter modes for blocks of size one smaller than the min-cu-size of the 
-	incoming analysis data from the previous encode. Default disabled.
+	Enables refinement of inter blocks in current encode. 
+	
+	Level 0 - Forces both mode and depth from the save encode.
+	
+	Level 1 - Evaluates all inter modes at current depth(n) and at depth 
+	(n+1) when current block size is one greater than the min-cu-size.
+	Forces modes for larger blocks.
+	
+	Level 2 - In addition to the functionality of level 1, restricts the modes 
+	evaluated when specific modes are decided as the best mode by the save encode.
+	
+	2nx2n in save encode - disable re-evaluation of rect and amp.
+	
+	skip in save encode  - re-evaluates only skip, merge and 2nx2n modes.
+	
+	Level 3 - Perform analysis of inter modes while reusing depths from the save encode.
+	
+	Default 0.
 
 .. option:: --refine-mv
 	

@@ -255,8 +255,7 @@ static const struct option long_options[] =
     { "analysis-reuse-level", required_argument, NULL, 0 },
     { "scale-factor",   required_argument, NULL, 0 },
     { "refine-intra",   required_argument, NULL, 0 },
-    { "refine-inter",   no_argument, NULL, 0 },
-    { "no-refine-inter",no_argument, NULL, 0 },
+    { "refine-inter",   required_argument, NULL, 0 },
     { "strict-cbr",           no_argument, NULL, 0 },
     { "temporal-layers",      no_argument, NULL, 0 },
     { "no-temporal-layers",   no_argument, NULL, 0 },
@@ -454,8 +453,17 @@ static void showHelp(x265_param *param)
     H0("   --analysis-reuse-file <filename>    Specify file name used for either dumping or reading analysis data. Deault x265_analysis.dat\n");
     H0("   --analysis-reuse-level <1..10>      Level of analysis reuse indicates amount of info stored/reused in save/load mode, 1:least..10:most. Default %d\n", param->analysisReuseLevel);
     H0("   --scale-factor <int>          Specify factor by which input video is scaled down for analysis save mode. Default %d\n", param->scaleFactor);
-    H0("   --refine-intra <int>          Enable intra refinement for load mode. Default %d\n", param->intraRefine);
-    H0("   --[no-]refine-inter           Enable inter refinement for load mode. Default %s\n", OPT(param->interRefine));
+    H0("   --refine-intra <0..2>         Enable intra refinement for encode that uses analysis-reuse-mode=load.\n"
+        "                                    - 0 : Forces both mode and depth from the save encode.\n"
+        "                                    - 1 : Evaluates all intra modes when current block size is one greater than the min-cu-size.\n"
+        "                                    - 2 : In addition to level 1 functionality, force only depth when angular mode is chosen by the save encode.\n"
+        "                                Default:%d\n", param->intraRefine);
+    H0("   --refine-inter <0..3>         Enable inter refinement for encode that uses analysis-reuse-mode=load.\n"
+        "                                    - 0 : Forces both mode and depth from the save encode.\n"
+        "                                    - 1 : Evaluates all inter modes when current block is a skip and block size is one greater than the min-cu-size.\n"
+        "                                    - 2 : In addition to level 1 functionality, restricts the modes evaluated when specific modes are decided as the best mode by the save encode.\n"
+        "                                    - 3 : Perform analysis of inter modes while reusing depths from the previous encode.\n"
+        "                                Default:%d\n", param->interRefine);
     H0("   --[no-]refine-mv              Enable mv refinement for load mode. Default %s\n", OPT(param->mvRefine));
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance 3:auto variance with bias to dark scenes. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);

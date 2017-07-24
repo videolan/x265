@@ -2349,6 +2349,11 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "MV refinement requires analysis load, analysis-reuse-level 10, scale factor. Disabling MV refine.\n");
             p->mvRefine = 0;
         }
+        else if (p->interRefine >= 2)
+        {
+            x265_log(p, X265_LOG_WARNING, "MVs are recomputed when refine-inter >= 2. MV refinement not applicable. Disabling MV refine\n");
+            p->mvRefine = 0;
+        }
     }
 
     if ((p->analysisMultiPassRefine || p->analysisMultiPassDistortion) && (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation))
