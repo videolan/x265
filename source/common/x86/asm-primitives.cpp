@@ -2191,6 +2191,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     if (cpuMask & X265_CPU_AVX512)
     {
         p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_avx512);
+        p.cu[BLOCK_64x64].sub_ps = PFX(pixel_sub_ps_64x64_avx512);
     }
 }
 #else // if HIGH_BIT_DEPTH

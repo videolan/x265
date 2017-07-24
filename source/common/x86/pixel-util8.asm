@@ -6023,9 +6023,6 @@ cglobal pixel_sub_ps_64x64, 6, 7, 8, dest, deststride, src0, src1, srcstride0, s
     RET
 %endif
 
-;-----------------------------------------------------------------------------
-; void pixel_sub_ps_64x64(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
-;-----------------------------------------------------------------------------
 %macro PROCESS_SUB_PS_64x8_AVX512 0
     pmovzxbw    m0,     [r2]
     pmovzxbw    m1,     [r2 + 32]
@@ -6112,7 +6109,129 @@ cglobal pixel_sub_ps_64x64, 6, 7, 8, dest, deststride, src0, src1, srcstride0, s
     movu        [r0 + 2 * r1 + 64], m5
 %endmacro
 
-%if HIGH_BIT_DEPTH==0
+%macro PROCESS_SUB_PS_64x8_HBD_AVX512 0
+    movu        m0,     [r2]
+    movu        m1,     [r2 + 64]
+    movu        m4,     [r3]
+    movu        m5,     [r3 + 64]
+    psubw       m0,     m4
+    psubw       m1,     m5
+    movu        m2,     [r2 + r4]
+    movu        m3,     [r2 + r4 + 64]
+    movu        m6,     [r3 + r5]
+    movu        m7,     [r3 + r5 + 64]
+    psubw       m2,     m6
+    psubw       m3,     m7
+
+    movu        [r0],                 m0
+    movu        [r0 + 64],            m1
+    movu        [r0 + r1],            m2
+    movu        [r0 + r1 + 64],       m3
+
+    movu        m0,     [r2 + r4 * 2]
+    movu        m1,     [r2 + r4 * 2 + 64]
+    movu        m4,     [r3 + r5 * 2]
+    movu        m5,     [r3 + r5 * 2 + 64]
+    psubw       m0,     m4
+    psubw       m1,     m5
+    movu        m2,     [r2 + r7]
+    movu        m3,     [r2 + r7 + 64]
+    movu        m6,     [r3 + r8]
+    movu        m7,     [r3 + r8 + 64]
+    psubw       m2,     m6
+    psubw       m3,     m7
+
+    movu        [r0 + r1 * 2],        m0
+    movu        [r0 + r1 * 2 + 64],   m1
+    movu        [r0 + r6],            m2
+    movu        [r0 + r6 + 64],       m3
+
+    lea         r0,     [r0 + r1 * 4]
+    lea         r2,     [r2 + r4 * 4]
+    lea         r3,     [r3 + r5 * 4]
+
+    movu        m0,     [r2]
+    movu        m1,     [r2 + 64]
+    movu        m4,     [r3]
+    movu        m5,     [r3 + 64]
+    psubw       m0,     m4
+    psubw       m1,     m5
+    movu        m2,     [r2 + r4]
+    movu        m3,     [r2 + r4 + 64]
+    movu        m6,     [r3 + r5]
+    movu        m7,     [r3 + r5 + 64]
+    psubw       m2,     m6
+    psubw       m3,     m7
+
+    movu        [r0],                 m0
+    movu        [r0 + 64],            m1
+    movu        [r0 + r1],            m2
+    movu        [r0 + r1 + 64],       m3
+
+    movu        m0,     [r2 + r4 * 2]
+    movu        m1,     [r2 + r4 * 2 + 64]
+    movu        m4,     [r3 + r5 * 2]
+    movu        m5,     [r3 + r5 * 2 + 64]
+    psubw       m0,     m4
+    psubw       m1,     m5
+    movu        m2,     [r2 + r7]
+    movu        m3,     [r2 + r7 + 64]
+    movu        m6,     [r3 + r8]
+    movu        m7,     [r3 + r8 + 64]
+    psubw       m2,     m6
+    psubw       m3,     m7
+
+    movu        [r0 + r1 * 2],        m0
+    movu        [r0 + r1 * 2 + 64],   m1
+    movu        [r0 + r6],            m2
+    movu        [r0 + r6 + 64],       m3
+%endmacro
+;-----------------------------------------------------------------------------
+; void pixel_sub_ps_64x64(int16_t *dest, intptr_t destride, pixel *src0, pixel *src1, intptr_t srcstride0, intptr_t srcstride1);
+;-----------------------------------------------------------------------------
+%if HIGH_BIT_DEPTH
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal pixel_sub_ps_64x64, 6, 9, 8
+    add         r1d,    r1d
+    add         r4d,    r4d
+    add         r5d,    r5d
+    lea         r6,     [r1 * 3]
+    lea         r7,     [r4 * 3]
+    lea         r8,     [r5 * 3]
+
+    PROCESS_SUB_PS_64x8_HBD_AVX512
+    lea         r0,     [r0 + r1 * 4]
+    lea         r2,     [r2 + r4 * 4]
+    lea         r3,     [r3 + r5 * 4]
+    PROCESS_SUB_PS_64x8_HBD_AVX512
+    lea         r0,     [r0 + r1 * 4]
+    lea         r2,     [r2 + r4 * 4]
+    lea         r3,     [r3 + r5 * 4]
+    PROCESS_SUB_PS_64x8_HBD_AVX512
+    lea         r0,     [r0 + r1 * 4]
+    lea         r2,     [r2 + r4 * 4]
+    lea         r3,     [r3 + r5 * 4]
+    PROCESS_SUB_PS_64x8_HBD_AVX512
+    lea         r0,     [r0 + r1 * 4]
+    lea         r2,     [r2 + r4 * 4]
+    lea         r3,     [r3 + r5 * 4]
+    PROCESS_SUB_PS_64x8_HBD_AVX512
+    lea         r0,     [r0 + r1 * 4]
+    lea         r2,     [r2 + r4 * 4]
+    lea         r3,     [r3 + r5 * 4]
+    PROCESS_SUB_PS_64x8_HBD_AVX512
+    lea         r0,     [r0 + r1 * 4]
+    lea         r2,     [r2 + r4 * 4]
+    lea         r3,     [r3 + r5 * 4]
+    PROCESS_SUB_PS_64x8_HBD_AVX512
+    lea         r0,     [r0 + r1 * 4]
+    lea         r2,     [r2 + r4 * 4]
+    lea         r3,     [r3 + r5 * 4]
+    PROCESS_SUB_PS_64x8_HBD_AVX512
+    RET
+%endif
+%else
 %if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_sub_ps_64x64, 6, 7, 8
