@@ -893,7 +893,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     if (m_param->rc.cuTree && !m_param->rc.bStatRead)
         /* update row satds based on cutree offsets */
         curFrame->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
-    else if (m_param->analysisMode != X265_ANALYSIS_LOAD)
+    else if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD || m_param->scaleFactor)
     {
         if (m_param->rc.aqMode)
             curFrame->m_lowres.satdCost = curFrame->m_lowres.costEstAq[b - p0][p1 - b];
@@ -907,7 +907,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
         curFrame->m_lowres.lowresCostForRc = curFrame->m_lowres.lowresCosts[b - p0][p1 - b];
         uint32_t lowresRow = 0, lowresCol = 0, lowresCuIdx = 0, sum = 0, intraSum = 0;
         uint32_t scale = m_param->maxCUSize / (2 * X265_LOWRES_CU_SIZE);
-        uint32_t numCuInHeight = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+        uint32_t numCuInHeight = (m_param->sourceHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
         uint32_t widthInLowresCu = (uint32_t)m_8x8Width, heightInLowresCu = (uint32_t)m_8x8Height;
         double *qp_offset = 0;
         /* Factor in qpoffsets based on Aq/Cutree in CU costs */
@@ -1638,6 +1638,13 @@ bool Lookahead::scenecut(Lowres **frames, int p0, int p1, bool bRealScenecut, in
             m_isSceneTransition = false; /* Signal end of scene transitioning */
     }
 
+    if (m_param->csvLogLevel >= 2)
+    {
+        int64_t icost = frames[p1]->costEst[0][0];
+        int64_t pcost = frames[p1]->costEst[p1 - p0][0];
+        frames[p1]->ipCostRatio = (double)icost / pcost;
+    }
+
     /* A frame is always analysed with bRealScenecut = true first, and then bRealScenecut = false,
        the former for I decisions and the latter for P/B decisions. It's possible that the first 
        analysis detected scenecuts which were later nulled due to scene transitioning, in which 
@@ -1812,7 +1819,8 @@ void Lookahead::calcMotionAdaptiveQuantFrame(Lowres **frames, int p0, int p1, in
                     MV *mvs = frames[b]->lowresMvs[list][listDist[list]];
                     int32_t x = mvs[cuIndex].x;
                     int32_t y = mvs[cuIndex].y;
-                    displacement += sqrt(pow(abs(x), 2) + pow(abs(y), 2));
+                    // NOTE: the dynamic range of abs(x) and abs(y) is 15-bits
+                    displacement += sqrt((double)(abs(x) * abs(x)) + (double)(abs(y) * abs(y)));
                 }
                 else
                     displacement += 0.0;
@@ -2400,7 +2408,7 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
         /* ME will never return a cost larger than the cost @MVP, so we do not
          * have to check that ME cost is more than the estimated merge cost */
-        fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV);
+        fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV, m_lookahead.m_param->maxSlices);
         if (skipCost < 64 && skipCost < fencCost && bBidir)
         {
             fencCost = skipCost;

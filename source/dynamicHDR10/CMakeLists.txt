@@ -1,5 +1,5 @@
 # vim: syntax=cmake
-if(ENABLE_DYNAMIC_HDR10)
+if(ENABLE_HDR10_PLUS)
 
 add_library(dynamicHDR10 OBJECT 
     BasicStructures.h
@@ -10,7 +10,6 @@ add_library(dynamicHDR10 OBJECT
     hdr10plus.h
     api.cpp )
 
-else()
 cmake_minimum_required (VERSION 2.8.11)
 project(dynamicHDR10)
 include(CheckIncludeFiles)
@@ -150,26 +149,5 @@ set(BIN_INSTALL_DIR bin CACHE STRING "Install location of executables")
     
 option(ENABLE_SHARED "Build shared library" OFF)
 
-if(ENABLE_SHARED)
-    add_library(dynamicHDR10 SHARED
-        json11/json11.cpp json11/json11.h
-        BasicStructures.h
-        JsonHelper.cpp JsonHelper.h
-        metadataFromJson.cpp metadataFromJson.h
-        SeiMetadataDictionary.cpp SeiMetadataDictionary.h
-        hdr10plus.h api.cpp )
-else()
-    add_library(dynamicHDR10 STATIC
-    json11/json11.cpp json11/json11.h
-    BasicStructures.h
-    JsonHelper.cpp JsonHelper.h
-    metadataFromJson.cpp metadataFromJson.h
-    SeiMetadataDictionary.cpp SeiMetadataDictionary.h
-    hdr10plus.h api.cpp )
-endif()
-
-install (TARGETS dynamicHDR10
-    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 install(FILES hdr10plus.h DESTINATION include)
 endif()

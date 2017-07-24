@@ -598,6 +598,139 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
     }
 }
 
+void MotionEstimate::refineMV(ReferencePlanes* ref,
+                              const MV&        mvmin,
+                              const MV&        mvmax,
+                              const MV&        qmvp,
+                              MV&              outQMv)
+{
+    ALIGN_VAR_16(int, costs[16]);
+    if (ctuAddr >= 0)
+        blockOffset = ref->reconPic->getLumaAddr(ctuAddr, absPartIdx) - ref->reconPic->getLumaAddr(0);
+    intptr_t stride = ref->lumaStride;
+    pixel* fenc = fencPUYuv.m_buf[0];
+    pixel* fref = ref->fpelPlane[0] + blockOffset;
+    
+    setMVP(qmvp);
+    
+    MV qmvmin = mvmin.toQPel();
+    MV qmvmax = mvmax.toQPel();
+   
+    /* The term cost used here means satd/sad values for that particular search.
+     * The costs used in ME integer search only includes the SAD cost of motion
+     * residual and sqrtLambda times MVD bits.  The subpel refine steps use SATD
+     * cost of residual and sqrtLambda * MVD bits.
+    */
+             
+    // measure SATD cost at clipped QPEL MVP
+    MV pmv = qmvp.clipped(qmvmin, qmvmax);
+    MV bestpre = pmv;
+    int bprecost;
+
+    bprecost = subpelCompare(ref, pmv, sad);
+
+    /* re-measure full pel rounded MVP with SAD as search start point */
+    MV bmv = pmv.roundToFPel();
+    int bcost = bprecost;
+    if (pmv.isSubpel())
+        bcost = sad(fenc, FENC_STRIDE, fref + bmv.x + bmv.y * stride, stride) + mvcost(bmv << 2);
+
+    /* square refine */
+    int dir = 0;
+    COST_MV_X4_DIR(0, -1, 0, 1, -1, 0, 1, 0, costs);
+    if ((bmv.y - 1 >= mvmin.y) & (bmv.y - 1 <= mvmax.y))
+        COPY2_IF_LT(bcost, costs[0], dir, 1);
+    if ((bmv.y + 1 >= mvmin.y) & (bmv.y + 1 <= mvmax.y))
+        COPY2_IF_LT(bcost, costs[1], dir, 2);
+    COPY2_IF_LT(bcost, costs[2], dir, 3);
+    COPY2_IF_LT(bcost, costs[3], dir, 4);
+    COST_MV_X4_DIR(-1, -1, -1, 1, 1, -1, 1, 1, costs);
+    if ((bmv.y - 1 >= mvmin.y) & (bmv.y - 1 <= mvmax.y))
+        COPY2_IF_LT(bcost, costs[0], dir, 5);
+    if ((bmv.y + 1 >= mvmin.y) & (bmv.y + 1 <= mvmax.y))
+        COPY2_IF_LT(bcost, costs[1], dir, 6);
+    if ((bmv.y - 1 >= mvmin.y) & (bmv.y - 1 <= mvmax.y))
+        COPY2_IF_LT(bcost, costs[2], dir, 7);
+    if ((bmv.y + 1 >= mvmin.y) & (bmv.y + 1 <= mvmax.y))
+        COPY2_IF_LT(bcost, costs[3], dir, 8);
+    bmv += square1[dir];
+
+    if (bprecost < bcost)
+    {
+        bmv = bestpre;
+        bcost = bprecost;
+    }
+    else
+        bmv = bmv.toQPel(); // promote search bmv to qpel
+
+    // TO DO: Change SubpelWorkload to fine tune MV
+    // Now it is set to 5 for experiment.
+    // const SubpelWorkload& wl = workload[this->subpelRefine];
+    const SubpelWorkload& wl = workload[5];
+
+    pixelcmp_t hpelcomp;
+
+    if (wl.hpel_satd)
+    {
+        bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);
+        hpelcomp = satd;
+    }
+    else
+        hpelcomp = sad;
+
+    for (int iter = 0; iter < wl.hpel_iters; iter++)
+    {
+        int bdir = 0;
+        for (int i = 1; i <= wl.hpel_dirs; i++)
+        {
+            MV qmv = bmv + square1[i] * 2;            
+
+            // check mv range for slice bound
+            if ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y))
+                continue;
+
+            int cost = subpelCompare(ref, qmv, hpelcomp) + mvcost(qmv);
+            COPY2_IF_LT(bcost, cost, bdir, i);
+        }
+
+        if (bdir)
+            bmv += square1[bdir] * 2;            
+        else
+            break;
+    }
+
+    /* if HPEL search used SAD, remeasure with SATD before QPEL */
+    if (!wl.hpel_satd)
+        bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);
+
+    for (int iter = 0; iter < wl.qpel_iters; iter++)
+    {
+        int bdir = 0;
+        for (int i = 1; i <= wl.qpel_dirs; i++)
+        {
+            MV qmv = bmv + square1[i];
+            
+            // check mv range for slice bound
+            if ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y))
+                continue;
+
+            int cost = subpelCompare(ref, qmv, satd) + mvcost(qmv);
+            COPY2_IF_LT(bcost, cost, bdir, i);
+        }
+
+        if (bdir)
+            bmv += square1[bdir];
+        else
+            break;
+    }
+
+    // check mv range for slice bound
+    X265_CHECK(((pmv.y >= qmvmin.y) & (pmv.y <= qmvmax.y)), "mv beyond range!");
+    
+    x265_emms();
+    outQMv = bmv;
+}
+
 int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    const MV &       mvmin,
                                    const MV &       mvmax,
@@ -606,6 +739,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    const MV *       mvc,
                                    int              merange,
                                    MV &             outQMv,
+                                   uint32_t         maxSlices,
                                    pixel *          srcReferencePlane)
 {
     ALIGN_VAR_16(int, costs[16]);
@@ -1306,7 +1440,7 @@ me_hex2:
     const SubpelWorkload& wl = workload[this->subpelRefine];
 
     // check mv range for slice bound
-    if ((g_maxSlices > 1) & ((bmv.y < qmvmin.y) | (bmv.y > qmvmax.y)))
+    if ((maxSlices > 1) & ((bmv.y < qmvmin.y) | (bmv.y > qmvmax.y)))
     {
         bmv.y = x265_min(x265_max(bmv.y, qmvmin.y), qmvmax.y);
         bcost = subpelCompare(ref, bmv, satd) + mvcost(bmv);

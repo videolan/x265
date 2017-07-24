@@ -98,8 +98,8 @@ bool SAO::create(x265_param* param, int initCommon)
     m_hChromaShift = CHROMA_H_SHIFT(param->internalCsp);
     m_vChromaShift = CHROMA_V_SHIFT(param->internalCsp);
 
-    m_numCuInWidth =  (m_param->sourceWidth + g_maxCUSize - 1) / g_maxCUSize;
-    m_numCuInHeight = (m_param->sourceHeight + g_maxCUSize - 1) / g_maxCUSize;
+    m_numCuInWidth =  (m_param->sourceWidth + m_param->maxCUSize - 1) / m_param->maxCUSize;
+    m_numCuInHeight = (m_param->sourceHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
 
     const pixel maxY = (1 << X265_DEPTH) - 1;
     const pixel rangeExt = maxY >> 1;
@@ -107,12 +107,12 @@ bool SAO::create(x265_param* param, int initCommon)
 
     for (int i = 0; i < (param->internalCsp != X265_CSP_I400 ? 3 : 1); i++)
     {
-        CHECKED_MALLOC(m_tmpL1[i], pixel, g_maxCUSize + 1);
-        CHECKED_MALLOC(m_tmpL2[i], pixel, g_maxCUSize + 1);
+        CHECKED_MALLOC(m_tmpL1[i], pixel, m_param->maxCUSize + 1);
+        CHECKED_MALLOC(m_tmpL2[i], pixel, m_param->maxCUSize + 1);
 
         // SAO asm code will read 1 pixel before and after, so pad by 2
         // NOTE: m_param->sourceWidth+2 enough, to avoid condition check in copySaoAboveRef(), I alloc more up to 63 bytes in here
-        CHECKED_MALLOC(m_tmpU[i], pixel, m_numCuInWidth * g_maxCUSize + 2 + 32);
+        CHECKED_MALLOC(m_tmpU[i], pixel, m_numCuInWidth * m_param->maxCUSize + 2 + 32);
         m_tmpU[i] += 1;
     }
 
@@ -279,8 +279,8 @@ void SAO::applyPixelOffsets(int addr, int typeIdx, int plane)
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
     const CUData* cu = m_frame->m_encData->getPicCTU(addr);
-    int ctuWidth = g_maxCUSize;
-    int ctuHeight = g_maxCUSize;
+    int ctuWidth = m_param->maxCUSize;
+    int ctuHeight = m_param->maxCUSize;
     uint32_t lpelx = cu->m_cuPelX;
     uint32_t tpely = cu->m_cuPelY;
     const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;
@@ -573,8 +573,8 @@ void SAO::generateLumaOffsets(SaoCtuParam* ctuParam, int idxY, int idxX)
 {
     PicYuv* reconPic = m_frame->m_reconPic;
     intptr_t stride = reconPic->m_stride;
-    int ctuWidth  = g_maxCUSize;
-    int ctuHeight = g_maxCUSize;
+    int ctuWidth = m_param->maxCUSize;
+    int ctuHeight = m_param->maxCUSize;
 
     int addr = idxY * m_numCuInWidth + idxX;
     pixel* rec = reconPic->getLumaAddr(addr);
@@ -633,8 +633,8 @@ void SAO::generateChromaOffsets(SaoCtuParam* ctuParam[3], int idxY, int idxX)
 {
     PicYuv* reconPic = m_frame->m_reconPic;
     intptr_t stride = reconPic->m_strideC;
-    int ctuWidth  = g_maxCUSize;
-    int ctuHeight = g_maxCUSize;
+    int ctuWidth  = m_param->maxCUSize;
+    int ctuHeight = m_param->maxCUSize;
 
     {
         ctuWidth  >>= m_hChromaShift;
@@ -744,8 +744,8 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
     intptr_t stride = plane ? reconPic->m_strideC : reconPic->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
-    int ctuWidth  = g_maxCUSize;
-    int ctuHeight = g_maxCUSize;
+    int ctuWidth  = m_param->maxCUSize;
+    int ctuHeight = m_param->maxCUSize;
     uint32_t lpelx = cu->m_cuPelX;
     uint32_t tpely = cu->m_cuPelY;
     const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;
@@ -791,9 +791,9 @@ void SAO::calcSaoStatsCTU(int addr, int plane)
         // WARNING: *) May read beyond bound on video than ctuWidth or ctuHeight is NOT multiple of cuSize
         X265_CHECK((ctuWidth == ctuHeight) || (m_chromaFormat != X265_CSP_I420), "video size check failure\n");
         if (plane)
-            primitives.chroma[m_chromaFormat].cu[g_maxLog2CUSize - 2].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
+            primitives.chroma[m_chromaFormat].cu[m_param->maxLog2CUSize - 2].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
         else
-           primitives.cu[g_maxLog2CUSize - 2].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
+           primitives.cu[m_param->maxLog2CUSize - 2].sub_ps(diff, MAX_CU_SIZE, fenc0, rec0, stride, stride);
     }
     else
     {
@@ -928,8 +928,8 @@ void SAO::calcSaoStatsCu_BeforeDblk(Frame* frame, int idxX, int idxY)
     intptr_t stride = reconPic->m_stride;
     uint32_t picWidth  = m_param->sourceWidth;
     uint32_t picHeight = m_param->sourceHeight;
-    int ctuWidth  = g_maxCUSize;
-    int ctuHeight = g_maxCUSize;
+    int ctuWidth  = m_param->maxCUSize;
+    int ctuHeight = m_param->maxCUSize;
     uint32_t lpelx = cu->m_cuPelX;
     uint32_t tpely = cu->m_cuPelY;
     const uint32_t firstRowInSlice = cu->m_bFirstRowInSlice;
@@ -1553,14 +1553,17 @@ void SAO::saoLumaComponentParamDist(SAOParam* saoParam, int32_t addr, int64_t& r
     }
 
     // Estimate Best Position
-    int64_t bestRDCostBO = MAX_INT64;
     int32_t bestClassBO  = 0;
+    int64_t currentRDCost = costClasses[0];
+    currentRDCost += costClasses[1];
+    currentRDCost += costClasses[2];
+    currentRDCost += costClasses[3];
+    int64_t bestRDCostBO = currentRDCost;
 
-    for (int i = 0; i < MAX_NUM_SAO_CLASS - SAO_NUM_OFFSET + 1; i++)
+    for (int i = 1; i < MAX_NUM_SAO_CLASS - SAO_NUM_OFFSET + 1; i++)
     {
-        int64_t currentRDCost = 0;
-        for (int j = i; j < i + SAO_NUM_OFFSET; j++)
-            currentRDCost += costClasses[j];
+        currentRDCost -= costClasses[i - 1];
+        currentRDCost += costClasses[i + 3];
 
         if (currentRDCost < bestRDCostBO)
         {

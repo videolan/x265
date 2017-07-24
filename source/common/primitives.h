@@ -110,6 +110,17 @@ enum ChromaCU422
     BLOCK_422_32x64
 };
 
+enum IntegralSize
+{
+    INTEGRAL_4,
+    INTEGRAL_8,
+    INTEGRAL_12,
+    INTEGRAL_16,
+    INTEGRAL_24,
+    INTEGRAL_32,
+    NUM_INTEGRAL_SIZE
+};
+
 typedef int  (*pixelcmp_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
 typedef int  (*pixelcmp_ss_t)(const int16_t* fenc, intptr_t fencstride, const int16_t* fref, intptr_t frefstride);
 typedef sse_t (*pixel_sse_t)(const pixel* fenc, intptr_t fencstride, const pixel* fref, intptr_t frefstride); // fenc is aligned
@@ -202,6 +213,9 @@ typedef uint32_t (*costC1C2Flag_t)(uint16_t *absCoeff, intptr_t numC1Flag, uint8
 
 typedef void (*pelFilterLumaStrong_t)(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tcP, int32_t tcQ);
 typedef void (*pelFilterChroma_t)(pixel* src, intptr_t srcStep, intptr_t offset, int32_t tc, int32_t maskP, int32_t maskQ);
+
+typedef void (*integralv_t)(uint32_t *sum, intptr_t stride);
+typedef void (*integralh_t)(uint32_t *sum, pixel *pix, intptr_t stride);
 
 /* Function pointers to optimized encoder primitives. Each pointer can reference
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */
@@ -341,6 +355,9 @@ struct EncoderPrimitives
 
     pelFilterLumaStrong_t pelFilterLumaStrong[2]; // EDGE_VER = 0, EDGE_HOR = 1
     pelFilterChroma_t     pelFilterChroma[2];     // EDGE_VER = 0, EDGE_HOR = 1
+
+    integralv_t            integral_initv[NUM_INTEGRAL_SIZE];
+    integralh_t            integral_inith[NUM_INTEGRAL_SIZE];
 
     /* There is one set of chroma primitives per color space. An encoder will
      * have just a single color space and thus it will only ever use one entry

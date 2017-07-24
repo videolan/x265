@@ -48,6 +48,11 @@ Frame::Frame()
     m_rcData = NULL;
     m_encodeStartTime = 0;
     m_reconfigureRc = false;
+    m_ctuInfo = NULL;
+    m_prevCtuInfoChange = NULL;
+    m_addOnDepth = NULL;
+    m_addOnCtuInfo = NULL;
+    m_addOnPrevChange = NULL;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
@@ -56,11 +61,26 @@ bool Frame::create(x265_param *param, float* quantOffsets)
     m_param = param;
     CHECKED_MALLOC_ZERO(m_rcData, RcStats, 1);
 
-    if (m_fencPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp) &&
-        m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode || !!param->bAQMotion, param->rc.qgSize))
+    if (param->bCTUInfo)
+    {
+        uint32_t widthInCTU = (m_param->sourceWidth + param->maxCUSize - 1) >> m_param->maxLog2CUSize;
+        uint32_t heightInCTU = (m_param->sourceHeight +  param->maxCUSize - 1) >> m_param->maxLog2CUSize;
+        uint32_t numCTUsInFrame = widthInCTU * heightInCTU;
+        CHECKED_MALLOC_ZERO(m_addOnDepth, uint8_t *, numCTUsInFrame);
+        CHECKED_MALLOC_ZERO(m_addOnCtuInfo, uint8_t *, numCTUsInFrame);
+        CHECKED_MALLOC_ZERO(m_addOnPrevChange, int *, numCTUsInFrame);
+        for (uint32_t i = 0; i < numCTUsInFrame; i++)
+        {
+            CHECKED_MALLOC_ZERO(m_addOnDepth[i], uint8_t, uint32_t(param->num4x4Partitions));
+            CHECKED_MALLOC_ZERO(m_addOnCtuInfo[i], uint8_t, uint32_t(param->num4x4Partitions));
+            CHECKED_MALLOC_ZERO(m_addOnPrevChange[i], int, uint32_t(param->num4x4Partitions));
+        }
+    }
+
+    if (m_fencPic->create(param) && m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode || !!param->bAQMotion, param->rc.qgSize))
     {
         X265_CHECK((m_reconColCount == NULL), "m_reconColCount was initialized");
-        m_numRows = (m_fencPic->m_picHeight + g_maxCUSize - 1)  / g_maxCUSize;
+        m_numRows = (m_fencPic->m_picHeight + param->maxCUSize - 1)  / param->maxCUSize;
         m_reconRowFlag = new ThreadSafeInteger[m_numRows];
         m_reconColCount = new ThreadSafeInteger[m_numRows];
 
@@ -86,12 +106,12 @@ bool Frame::allocEncodeData(x265_param *param, const SPS& sps)
     m_reconPic = new PicYuv;
     m_param = param;
     m_encData->m_reconPic = m_reconPic;
-    bool ok = m_encData->create(*param, sps, m_fencPic->m_picCsp) && m_reconPic->create(param->sourceWidth, param->sourceHeight, param->internalCsp);
+    bool ok = m_encData->create(*param, sps, m_fencPic->m_picCsp) && m_reconPic->create(param);
     if (ok)
     {
         /* initialize right border of m_reconpicYuv as SAO may read beyond the
          * end of the picture accessing uninitialized pixels */
-        int maxHeight = sps.numCuInHeight * g_maxCUSize;
+        int maxHeight = sps.numCuInHeight * param->maxCUSize;
         memset(m_reconPic->m_picOrg[0], 0, sizeof(pixel)* m_reconPic->m_stride * maxHeight);
 
         /* use pre-calculated cu/pu offsets cached in the SPS structure */
@@ -166,6 +186,35 @@ void Frame::destroy()
         delete[] m_userSEI.payloads;
     }
 
+    if (m_ctuInfo)
+    {
+        uint32_t widthInCU = (m_param->sourceWidth + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize;
+        uint32_t heightInCU = (m_param->sourceHeight + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize;
+        uint32_t numCUsInFrame = widthInCU * heightInCU;
+        for (uint32_t i = 0; i < numCUsInFrame; i++)
+        {
+            X265_FREE((*m_ctuInfo + i)->ctuInfo);
+            (*m_ctuInfo + i)->ctuInfo = NULL;
+            X265_FREE(m_addOnDepth[i]);
+            m_addOnDepth[i] = NULL;
+            X265_FREE(m_addOnCtuInfo[i]);
+            m_addOnCtuInfo[i] = NULL;
+            X265_FREE(m_addOnPrevChange[i]);
+            m_addOnPrevChange[i] = NULL;
+        }
+        X265_FREE(*m_ctuInfo);
+        *m_ctuInfo = NULL;
+        X265_FREE(m_ctuInfo);
+        m_ctuInfo = NULL;
+        X265_FREE(m_prevCtuInfoChange);
+        m_prevCtuInfoChange = NULL;
+        X265_FREE(m_addOnDepth);
+        m_addOnDepth = NULL;
+        X265_FREE(m_addOnCtuInfo);
+        m_addOnCtuInfo = NULL;
+        X265_FREE(m_addOnPrevChange);
+        m_addOnPrevChange = NULL;
+    }
     m_lowres.destroy();
     X265_FREE(m_rcData);
 }

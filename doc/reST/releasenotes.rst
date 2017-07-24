@@ -2,8 +2,33 @@
 Release Notes
 *************
 
-Release Notes
-*************
+Version 2.5
+===========
+
+Release date - 13th July, 2017.
+
+Encoder enhancements
+--------------------
+1. Improved grain handling with :option:`--tune` grain option by throttling VBV operations to limit QP jumps.
+2. Frame threads are now decided based on number of threads specified in the :option:`--pools`, as opposed to the number of hardware threads available. The mapping was also adjusted to improve quality of the encodes with minimal impact to performance.
+3. CSV logging feature (enabled by :option:`--csv`) is now part of the library; it was previously part of the x265 application. Applications that integrate libx265 can now extract frame level statistics for their encodes by exercising this option in the library.
+4.  Globals that track min and max CU sizes, number of slices, and other parameters have now been moved into instance-specific variables. Consequently, applications that invoke multiple instances of x265 library are no longer restricted to use the same settings for these parameter options across the multiple instances.
+5. x265 can now generate a seprate library that exports the HDR10+ parsing API. Other libraries that wish to use this API may do so by linking against this library. Enable ENABLE_HDR10_PLUS in CMake options and build to generate this library.
+6. SEA motion search receives a 10% performance boost from AVX2 optimization of its kernels.
+7. The CSV log is now more elaborate with additional fields such as PU statistics, average-min-max luma and chroma values, etc. Refer to documentation of :option:`--csv` for details of all fields.
+8. x86inc.asm cleaned-up for improved instruction handling.
+
+API changes
+-----------
+1. New API x265_encoder_ctu_info() introduced to specify suggested partition sizes for various CTUs in a frame. To be used in conjunction with :option:`--ctu-info` to react to the specified partitions appropriately.
+2. Rate-control statistics passed through the x265_picture object for an incoming frame are now used by the encoder.
+3. Options to scale, reuse, and refine analysis for incoming analysis shared through the x265_analysis_data field in x265_picture for runs that use :option:`--analysis-reuse-mode` load; use options :option:`--scale`, :option:`--refine-mv`, :option:`--refine-inter`, and :option:`--refine-intra` to explore. 
+4. VBV now has a deterministic mode. Use :option:`--const-vbv` to exercise.
+
+Bug fixes
+---------
+1. Several fixes for HDR10+ parsing code including incompatibility with user-specific SEI, removal of warnings, linking issues in linux, etc.
+2. SEI messages for HDR10 repeated every keyint when HDR options (:option:`--hdr-opt`, :option:`--master-display`) specified.
 
 Version 2.4
 ===========

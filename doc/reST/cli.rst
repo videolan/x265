@@ -52,8 +52,7 @@ Command line executable return codes::
 	2. unable to open encoder
 	3. unable to generate stream headers
 	4. encoder abort
-	5. unable to open csv file
-
+	
 Logging/Statistic Options
 =========================
 
@@ -83,9 +82,66 @@ Logging/Statistic Options
 	it adds one line per run. If :option:`--csv-log-level` is greater than
 	0, it writes one line per frame. Default none
 
-	Several frame performance statistics are available when 
-	:option:`--csv-log-level` is greater than or equal to 2:
-
+	The following statistics are available when :option:`--csv-log-level` is
+	greater than or	equal to 1:
+	
+	**Encode Order** The frame order in which the encoder encodes.
+	
+	**Type** Slice type of the frame.
+	
+	**POC** Picture Order Count - The display order of the frames. 
+	
+	**QP** Quantization Parameter decided for the frame. 
+	
+	**Bits** Number of bits consumed by the frame.
+	
+	**Scenecut** 1 if the frame is a scenecut, 0 otherwise. 
+	
+	**RateFactor** Applicable only when CRF is enabled. The rate factor depends
+	on the CRF given by the user. This is used to determine the QP so as to 
+	target a certain quality.
+	
+	**BufferFill** Bits available for the next frame. Includes bits carried
+	over from the current frame.
+	
+	**Latency** Latency in terms of number of frames between when the frame 
+	was given in and when the frame is given out.
+	
+	**PSNR** Peak signal to noise ratio for Y, U and V planes.
+	
+	**SSIM** A quality metric that denotes the structural similarity between frames.
+	
+	**Ref lists** POC of references in lists 0 and 1 for the frame.
+	
+	Several statistics about the encoded bitstream and encoder performance are 
+	available when :option:`--csv-log-level` is greater than or equal to 2:
+	
+	**I/P cost ratio:** The ratio between the cost when a frame is decided as an
+	I frame to that when it is decided as a P frame as computed from the 
+	quarter-resolution frame in look-ahead. This, in combination with other parameters
+	such as position of the frame in the GOP, is used to decide scene transitions.
+	
+	**Analysis statistics:**
+	
+	**CU Statistics** percentage of CU modes.
+	
+	**Distortion** Average luma and chroma distortion. Calculated as
+	SSE is done on fenc and recon(after quantization).
+	
+	**Psy Energy**  Average psy energy calculated as the sum of absolute
+	difference between source and recon energy. Energy is measured by sa8d
+	minus SAD.
+	
+	**Residual Energy** Average residual energy. SSE is calculated on fenc 
+	and pred(before quantization).
+	
+	**Luma/Chroma Values** minumum, maximum and average(averaged by area)
+	luma and chroma values of source for each frame.
+	
+	**PU Statistics** percentage of PU modes at each depth.
+	
+	**Performance statistics:**
+	
 	**DecideWait ms** number of milliseconds the frame encoder had to
 	wait, since the previous frame was retrieved by the API thread,
 	before a new frame has been given to it. This is the latency
@@ -111,6 +167,8 @@ Logging/Statistic Options
 	**Stall Time ms** the number of milliseconds of the reported wall
 	time that were spent with zero worker threads, aka all compression
 	was completely stalled.
+	
+	**Total frame time** Total time spent to encode the frame.
 
 	**Avg WPP** the average number of worker threads working on this
 	frame, at any given time. This value is sampled at the completion of
@@ -123,8 +181,6 @@ Logging/Statistic Options
 	is more of a problem for P frames where some blocks are much more
 	expensive than others.
 	
-	**CLI ONLY**
-
 .. option:: --csv-log-level <integer>
 
     Controls the level of detail (and size) of --csv log files
@@ -132,8 +188,6 @@ Logging/Statistic Options
     0. summary **(default)**
     1. frame level logging
     2. frame level logging with performance statistics
-
-    **CLI ONLY**
 
 .. option:: --ssim, --no-ssim
 
@@ -795,33 +849,31 @@ the prediction quad-tree.
 
 Analysis re-use options, to improve performance when encoding the same
 sequence multiple times (presumably at varying bitrates). The encoder
-will not reuse analysis if the resolution and slice type parameters do
-not match.
+will not reuse analysis if slice type parameters do not match.
 
-.. option:: --analysis-mode <string|int>
+.. option:: --analysis-reuse-mode <string|int>
 
-	Specify whether analysis information of each frame is output by encoder
-	or input for reuse. By reading the analysis data writen by an
-	earlier encode of the same sequence, substantial redundant work may
-	be avoided.
-
-	The following data may be stored and reused:
-	I frames   - split decisions and luma intra directions of all CUs.
-	P/B frames - motion vectors are dumped at each depth for all CUs.
+	This option allows reuse of analysis information from first pass to second pass.
+	:option:`--analysis-reuse-mode save` specifies that encoder outputs analysis information of each frame.
+	:option:`--analysis-reuse-mode load` specifies that encoder reuses analysis information from first pass.
+	There is no benefit using load mode without running encoder in save mode. Analysis data from save mode is
+	written to a file specified by :option:`--analysis-reuse-file`. The amount of analysis data stored/reused
+	is determined by :option:`--analysis-reuse-level`. By reading the analysis data writen by an earlier encode
+	of the same sequence, substantial redundant work may be avoided. Requires cutree, pmode to be off. Default 0.
 
 	**Values:** off(0), save(1): dump analysis data, load(2): read analysis data
 
-.. option:: --analysis-file <filename>
+.. option:: --analysis-reuse-file <filename>
 
-	Specify a filename for analysis data (see :option:`--analysis-mode`)
+	Specify a filename for analysis data (see :option:`--analysis-reuse-mode`)
 	If no filename is specified, x265_analysis.dat is used.
 
-.. option:: --refine-level <1..10>
+.. option:: --analysis-reuse-level <1..10>
 
-	Amount of information stored/reused in :option:`--analysis-mode` is distributed across levels.
+	Amount of information stored/reused in :option:`--analysis-reuse-mode` is distributed across levels.
 	Higher the value, higher the information stored/reused, faster the encode. Default 5.
 
-	Note that --refine-level must be paired with analysis-mode.
+	Note that --analysis-reuse-level must be paired with analysis-reuse-mode.
 
 	+--------+-----------------------------------------+
 	| Level  | Description                             |
@@ -834,6 +886,41 @@ not match.
 	+--------+-----------------------------------------+
 	| 10     | Level 5 + Full CU analysis-info         |
 	+--------+-----------------------------------------+
+
+.. option:: --scale-factor
+
+       Factor by which input video is scaled down for analysis save mode.
+       This option should be coupled with analysis-reuse-mode option, --analysis-reuse-level 10.
+       The ctu size of load should be double the size of save. Default 0.
+
+.. option:: --refine-intra <0|1|2>
+	
+	Enables refinement of intra blocks in current encode. 
+	
+	Level 0 - Forces both mode and depth from the previous encode.
+	
+	Level 1 - Evaluates all intra modes for blocks of size one smaller than 
+	the min-cu-size of the incoming analysis data from the previous encode, 
+	forces modes for blocks of larger size.
+	
+	Level 2 - Evaluates all intra modes for	blocks of size one smaller than 
+	the min-cu-size of the incoming analysis data from the previous encode. 
+	For larger blocks, force only depth when angular mode is chosen by the 
+	previous encode, force depth and mode when other intra modes are chosen.
+	
+	Default 0.
+	
+.. option:: --refine-inter-depth
+
+	Enables refinement of inter blocks in current encode. Evaluates all 
+	inter modes for blocks of size one smaller than the min-cu-size of the 
+	incoming analysis data from the previous encode. Default disabled.
+
+.. option:: --refine-mv
+	
+	Enables refinement of motion vector for scaled video. Evaluates the best 
+	motion vector by searching the surrounding eight integer and subpel pixel
+    positions.
 
 Options which affect the transform unit quad-tree, sometimes referred to
 as the residual quad-tree (RQT).
@@ -1221,7 +1308,16 @@ Slice decision options
 	intra cost of a frame used in scenecut detection. For example, a value of 5 indicates,
 	if the inter cost of a frame is greater than or equal to 95 percent of the intra cost of the frame,
 	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5.	
-	
+
+.. option:: --ctu-info <0, 1, 2, 4, 6>
+
+   This value enables receiving CTU information asynchronously and determine reaction to the CTU information. Default 0.
+   1: force the partitions if CTU information is present.
+   2: functionality of (1) and reduce qp if CTU information has changed.
+   4: functionality of (1) and force Inter modes when CTU Information has changed, merge/skip otherwise.
+   This option should be enabled only when planning to invoke the API function x265_encoder_ctu_info to copy ctu-info asynchronously. 
+   If enabled without calling the API function, the encoder will wait indefinitely.
+
 .. option:: --intra-refresh
 
 	Enables Periodic Intra Refresh(PIR) instead of keyframe insertion.
@@ -1491,7 +1587,11 @@ Quality, rate control and rate distortion options
     and also redundant steps are skipped.
     In pass 1 analysis information like motion vector, depth, reference and prediction
     modes of the final best CTU partition is stored for each CTU.
-    Default disabled.
+    Multipass analysis refinement cannot be enabled when 'analysis-save/analysis-load' option
+    is enabled and both will be disabled when enabled together. This feature requires 'pmode/pme'
+    to be disabled and hence pmode/pme will be disabled when enabled at the same time.
+
+    Default: disabled.
 
 .. option:: --multi-pass-opt-distortion, --no-multi-pass-opt-distortion
 
@@ -1499,7 +1599,11 @@ Quality, rate control and rate distortion options
     ratecontrol. In pass 1 distortion of best CTU partition is stored. CTUs with high
     distortion get lower(negative)qp offsets and vice-versa for low distortion CTUs in pass 2.
     This helps to improve the subjective quality.
-    Default disabled.
+    Multipass refinement of qp cannot be enabled when 'analysis-save/analysis-load' option
+    is enabled and both will be disabled when enabled together. 'multi-pass-opt-distortion' 
+    requires 'pmode/pme' to be disabled and hence pmode/pme will be disabled when enabled along with it.
+
+    Default: disabled.
 
 .. option:: --strict-cbr, --no-strict-cbr
 	

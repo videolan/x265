@@ -192,6 +192,12 @@ changes made to the parameters for auto-detection and other reasons::
 	 *      presets is not recommended without a more fine-grained breakdown of
 	 *      parameters to take this into account. */
 	int x265_encoder_reconfig(x265_encoder *, x265_param *);
+**x265_encoder_ctu_info**
+       /* x265_encoder_ctu_info:
+        *    Copy CTU information such as ctu address and ctu partition structure of all
+        *    CTUs in each frame. The function is invoked only if "--ctu-info" is enabled and
+        *    the encoder will wait for this copy to complete if enabled.
+        */
 
 Pictures
 ========
@@ -341,6 +347,14 @@ statistics from the encoder::
 Cleanup
 =======
 
+At the end of the encode, the application will want to trigger logging
+of the final encode statistics, if :option:`--csv` had been specified::
+
+ 	/* x265_encoder_log:
+	 *       write a line to the configured CSV file. If a CSV filename was not
+	 *       configured, or file open failed, this function will perform no write. */
+ 	void x265_encoder_log(x265_encoder *encoder, int argc, char **argv);
+ 	
 Finally, the encoder must be closed in order to free all of its
 resources. An encoder that has been flushed cannot be restarted and
 reused. Once **x265_encoder_close()** has been called, the encoder

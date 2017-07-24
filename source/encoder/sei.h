@@ -276,25 +276,17 @@ public:
         m_payloadSize = 0;
     }
 
-    uint8_t *cim;
+    uint8_t *m_payload;
 
     // daniel.vt@samsung.com :: for the Creative Intent Meta Data Encoding ( seongnam.oh@samsung.com )
     void writeSEI(const SPS&)
     {
-        if (!cim)
+        if (!m_payload)
             return;
 
-        int i = 0;
-        int payloadSize = m_payloadSize;
-        while (cim[i] == 0xFF)
-        {
-            i++;
-            WRITE_CODE(0xFF, 8, "payload_size");
-        }
-        WRITE_CODE(cim[i], 8, "payload_size");
-        i++;
-        for (; i < payloadSize; ++i)
-            WRITE_CODE(cim[i], 8, "creative_intent_metadata");
+        uint32_t i = 0;
+        for (; i < m_payloadSize; ++i)
+            WRITE_CODE(m_payload[i], 8, "creative_intent_metadata");
     }
 };
 }

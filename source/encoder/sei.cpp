@@ -54,21 +54,23 @@ void SEI::write(Bitstream& bs, const SPS& sps)
     }
     WRITE_CODE(type, 8, "payload_type");
     uint32_t payloadSize;
-    if (hrdTypes || m_payloadType == USER_DATA_UNREGISTERED)
+    if (hrdTypes || m_payloadType == USER_DATA_UNREGISTERED || m_payloadType == USER_DATA_REGISTERED_ITU_T_T35)
     {
         if (hrdTypes)
         {
             X265_CHECK(0 == (count.getNumberOfWrittenBits() & 7), "payload unaligned\n");
             payloadSize = count.getNumberOfWrittenBits() >> 3;
         }
-        else
+        else if (m_payloadType == USER_DATA_UNREGISTERED)
             payloadSize = m_payloadSize + 16;
+        else
+            payloadSize = m_payloadSize;
 
         for (; payloadSize >= 0xff; payloadSize -= 0xff)
             WRITE_CODE(0xff, 8, "payload_size");
         WRITE_CODE(payloadSize, 8, "payload_size");
     }
-    else if(m_payloadType != USER_DATA_REGISTERED_ITU_T_T35)
+    else
         WRITE_CODE(m_payloadSize, 8, "payload_size");
     /* virtual writeSEI method, write to bs */
     writeSEI(sps);

@@ -60,14 +60,25 @@ public:
     uint32_t m_chromaMarginX;
     uint32_t m_chromaMarginY;
 
-    pixel m_maxLumaLevel;
-    double   m_avgLumaLevel;
+    pixel   m_maxLumaLevel;
+    pixel   m_minLumaLevel;
+    double  m_avgLumaLevel;
+
+    pixel   m_maxChromaULevel;
+    pixel   m_minChromaULevel;
+    double  m_avgChromaULevel;
+
+    pixel   m_maxChromaVLevel;
+    pixel   m_minChromaVLevel;
+    double  m_avgChromaVLevel;
+    x265_param *m_param;
 
     PicYuv();
 
-    bool  create(uint32_t picWidth, uint32_t picHeight, uint32_t csp);
+    bool  create(x265_param* param, pixel *pixelbuf = NULL);
     bool  createOffsets(const SPS& sps);
     void  destroy();
+    int   getLumaBufLen(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp);
 
     void  copyFromPicture(const x265_picture&, const x265_param& param, int padx, int pady);
 

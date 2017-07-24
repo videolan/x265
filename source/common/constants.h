@@ -30,8 +30,6 @@
 namespace X265_NS {
 // private namespace
 
-extern int g_ctuSizeConfigured;
-
 extern double x265_lambda_tab[QP_MAX_MAX + 1];
 extern double x265_lambda2_tab[QP_MAX_MAX + 1];
 extern const uint16_t x265_chroma_lambda2_offset_tab[MAX_CHROMA_LAMBDA_OFFSET + 1];
