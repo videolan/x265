@@ -88,6 +88,20 @@ typedef struct x265_nal
     uint8_t* payload;
 } x265_nal;
 
+#define X265_LOOKAHEAD_MAX 250
+
+typedef struct x265_lookahead_data
+{
+    int64_t   plannedSatd[X265_LOOKAHEAD_MAX + 1];
+    uint32_t  *vbvCost;
+    uint32_t  *intraVbvCost;
+    uint32_t  *satdForVbv;
+    uint32_t  *intraSatdForVbv;
+    int       keyframe;
+    int       lastMiniGopBFrame;
+    int       plannedType[X265_LOOKAHEAD_MAX + 1];
+} x265_lookahead_data;
+
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
@@ -102,6 +116,8 @@ typedef struct x265_analysis_data
     void*            wt;
     void*            interData;
     void*            intraData;
+    uint32_t         numCuInHeight;
+    x265_lookahead_data lookahead;
 } x265_analysis_data;
 
 /* cu statistics */

@@ -742,9 +742,21 @@ void Lookahead::destroy()
 /* Called by API thread */
 void Lookahead::addPicture(Frame& curFrame, int sliceType)
 {
-    checkLookaheadQueue(m_inputCount);
-    curFrame.m_lowres.sliceType = sliceType;
-    addPicture(curFrame);
+    if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && !m_param->bUseAnalysisFile && m_param->scaleFactor)
+    {
+        if (!m_filled)
+            m_filled = true;
+        m_outputLock.acquire();
+        m_outputQueue.pushBack(curFrame);
+        m_outputLock.release();
+        m_inputCount++;
+    }
+    else
+    {
+        checkLookaheadQueue(m_inputCount);
+        curFrame.m_lowres.sliceType = sliceType;
+        addPicture(curFrame);
+    }
 }
 
 void Lookahead::addPicture(Frame& curFrame)
@@ -831,6 +843,9 @@ Frame* Lookahead::getDecidedPicture()
             return out;
         }
 
+        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && !m_param->bUseAnalysisFile && m_param->scaleFactor)
+            return NULL;
+
         findJob(-1); /* run slicetypeDecide() if necessary */
 
         m_inputLock.acquire();
@@ -887,68 +902,68 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     default:
         return;
     }
-
-    X265_CHECK(curFrame->m_lowres.costEst[b - p0][p1 - b] > 0, "Slice cost not estimated\n")
-
-    if (m_param->rc.cuTree && !m_param->rc.bStatRead)
-        /* update row satds based on cutree offsets */
-        curFrame->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
-    else if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD || m_param->scaleFactor)
+    if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD || m_param->bUseAnalysisFile || !m_param->scaleFactor)
     {
-        if (m_param->rc.aqMode)
-            curFrame->m_lowres.satdCost = curFrame->m_lowres.costEstAq[b - p0][p1 - b];
-        else
-            curFrame->m_lowres.satdCost = curFrame->m_lowres.costEst[b - p0][p1 - b];
-    }
-
-    if (m_param->rc.vbvBufferSize && m_param->rc.vbvMaxBitrate)
-    {
-        /* aggregate lowres row satds to CTU resolution */
-        curFrame->m_lowres.lowresCostForRc = curFrame->m_lowres.lowresCosts[b - p0][p1 - b];
-        uint32_t lowresRow = 0, lowresCol = 0, lowresCuIdx = 0, sum = 0, intraSum = 0;
-        uint32_t scale = m_param->maxCUSize / (2 * X265_LOWRES_CU_SIZE);
-        uint32_t numCuInHeight = (m_param->sourceHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
-        uint32_t widthInLowresCu = (uint32_t)m_8x8Width, heightInLowresCu = (uint32_t)m_8x8Height;
-        double *qp_offset = 0;
-        /* Factor in qpoffsets based on Aq/Cutree in CU costs */
-        if (m_param->rc.aqMode || m_param->bAQMotion)
-            qp_offset = (frames[b]->sliceType == X265_TYPE_B || !m_param->rc.cuTree) ? frames[b]->qpAqOffset : frames[b]->qpCuTreeOffset;
-
-        for (uint32_t row = 0; row < numCuInHeight; row++)
+        X265_CHECK(curFrame->m_lowres.costEst[b - p0][p1 - b] > 0, "Slice cost not estimated\n")
+        if (m_param->rc.cuTree && !m_param->rc.bStatRead)
+            /* update row satds based on cutree offsets */
+            curFrame->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
+        else if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD)
         {
-            lowresRow = row * scale;
-            for (uint32_t cnt = 0; cnt < scale && lowresRow < heightInLowresCu; lowresRow++, cnt++)
+            if (m_param->rc.aqMode)
+                curFrame->m_lowres.satdCost = curFrame->m_lowres.costEstAq[b - p0][p1 - b];
+            else
+                curFrame->m_lowres.satdCost = curFrame->m_lowres.costEst[b - p0][p1 - b];
+        }
+        if (m_param->rc.vbvBufferSize && m_param->rc.vbvMaxBitrate)
+        {
+            /* aggregate lowres row satds to CTU resolution */
+            curFrame->m_lowres.lowresCostForRc = curFrame->m_lowres.lowresCosts[b - p0][p1 - b];
+            uint32_t lowresRow = 0, lowresCol = 0, lowresCuIdx = 0, sum = 0, intraSum = 0;
+            uint32_t scale = m_param->maxCUSize / (2 * X265_LOWRES_CU_SIZE);
+            uint32_t numCuInHeight = (m_param->sourceHeight + m_param->maxCUSize - 1) / m_param->maxCUSize;
+            uint32_t widthInLowresCu = (uint32_t)m_8x8Width, heightInLowresCu = (uint32_t)m_8x8Height;
+            double *qp_offset = 0;
+            /* Factor in qpoffsets based on Aq/Cutree in CU costs */
+            if (m_param->rc.aqMode || m_param->bAQMotion)
+                qp_offset = (frames[b]->sliceType == X265_TYPE_B || !m_param->rc.cuTree) ? frames[b]->qpAqOffset : frames[b]->qpCuTreeOffset;
+
+            for (uint32_t row = 0; row < numCuInHeight; row++)
             {
-                sum = 0; intraSum = 0;
-                int diff = 0;
-                lowresCuIdx = lowresRow * widthInLowresCu;
-                for (lowresCol = 0; lowresCol < widthInLowresCu; lowresCol++, lowresCuIdx++)
+                lowresRow = row * scale;
+                for (uint32_t cnt = 0; cnt < scale && lowresRow < heightInLowresCu; lowresRow++, cnt++)
                 {
-                    uint16_t lowresCuCost = curFrame->m_lowres.lowresCostForRc[lowresCuIdx] & LOWRES_COST_MASK;
-                    if (qp_offset)
+                    sum = 0; intraSum = 0;
+                    int diff = 0;
+                    lowresCuIdx = lowresRow * widthInLowresCu;
+                    for (lowresCol = 0; lowresCol < widthInLowresCu; lowresCol++, lowresCuIdx++)
                     {
-                        double qpOffset;
-                        if (m_param->rc.qgSize == 8)
-                            qpOffset = (qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4] +
-                                        qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + 1] +
-                                        qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + curFrame->m_lowres.maxBlocksInRowFullRes] +
-                                        qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + curFrame->m_lowres.maxBlocksInRowFullRes + 1]) / 4;
-                        else
-                            qpOffset = qp_offset[lowresCuIdx];
-                        lowresCuCost = (uint16_t)((lowresCuCost * x265_exp2fix8(qpOffset) + 128) >> 8);
-                        int32_t intraCuCost = curFrame->m_lowres.intraCost[lowresCuIdx];
-                        curFrame->m_lowres.intraCost[lowresCuIdx] = (intraCuCost * x265_exp2fix8(qpOffset) + 128) >> 8;
+                        uint16_t lowresCuCost = curFrame->m_lowres.lowresCostForRc[lowresCuIdx] & LOWRES_COST_MASK;
+                        if (qp_offset)
+                        {
+                            double qpOffset;
+                            if (m_param->rc.qgSize == 8)
+                                qpOffset = (qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4] +
+                                qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + 1] +
+                                qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + curFrame->m_lowres.maxBlocksInRowFullRes] +
+                                qp_offset[lowresCol * 2 + lowresRow * widthInLowresCu * 4 + curFrame->m_lowres.maxBlocksInRowFullRes + 1]) / 4;
+                            else
+                                qpOffset = qp_offset[lowresCuIdx];
+                            lowresCuCost = (uint16_t)((lowresCuCost * x265_exp2fix8(qpOffset) + 128) >> 8);
+                            int32_t intraCuCost = curFrame->m_lowres.intraCost[lowresCuIdx];
+                            curFrame->m_lowres.intraCost[lowresCuIdx] = (intraCuCost * x265_exp2fix8(qpOffset) + 128) >> 8;
+                        }
+                        if (m_param->bIntraRefresh && slice->m_sliceType == X265_TYPE_P)
+                            for (uint32_t x = curFrame->m_encData->m_pir.pirStartCol; x <= curFrame->m_encData->m_pir.pirEndCol; x++)
+                                diff += curFrame->m_lowres.intraCost[lowresCuIdx] - lowresCuCost;
+                        curFrame->m_lowres.lowresCostForRc[lowresCuIdx] = lowresCuCost;
+                        sum += lowresCuCost;
+                        intraSum += curFrame->m_lowres.intraCost[lowresCuIdx];
                     }
-                    if (m_param->bIntraRefresh && slice->m_sliceType == X265_TYPE_P)
-                        for (uint32_t x = curFrame->m_encData->m_pir.pirStartCol; x <= curFrame->m_encData->m_pir.pirEndCol; x++)
-                            diff += curFrame->m_lowres.intraCost[lowresCuIdx] - lowresCuCost;
-                    curFrame->m_lowres.lowresCostForRc[lowresCuIdx] = lowresCuCost;
-                    sum += lowresCuCost;
-                    intraSum += curFrame->m_lowres.intraCost[lowresCuIdx];
+                    curFrame->m_encData->m_rowStat[row].satdForVbv += sum;
+                    curFrame->m_encData->m_rowStat[row].satdForVbv += diff;
+                    curFrame->m_encData->m_rowStat[row].intraSatdForVbv += intraSum;
                 }
-                curFrame->m_encData->m_rowStat[row].satdForVbv += sum;
-                curFrame->m_encData->m_rowStat[row].satdForVbv += diff;
-                curFrame->m_encData->m_rowStat[row].intraSatdForVbv += intraSum;
             }
         }
     }

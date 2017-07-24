@@ -1376,17 +1376,19 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             /* TODO: use defines from slicetype.h for lowres block size */
             uint32_t block_y = (ctu->m_cuPelY >> m_param->maxLog2CUSize) * noOfBlocks;
             uint32_t block_x = (ctu->m_cuPelX >> m_param->maxLog2CUSize) * noOfBlocks;
-            
-            cuStat.vbvCost = 0;
-            cuStat.intraVbvCost = 0;
-            for (uint32_t h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
+            if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD || m_param->bUseAnalysisFile || !m_param->scaleFactor)
             {
-                uint32_t idx = block_x + (block_y * maxBlockCols);
-
-                for (uint32_t w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++, idx++)
+                cuStat.vbvCost = 0;
+                cuStat.intraVbvCost = 0;
+                for (uint32_t h = 0; h < noOfBlocks && block_y < maxBlockRows; h++, block_y++)
                 {
-                    cuStat.vbvCost += m_frame->m_lowres.lowresCostForRc[idx] & LOWRES_COST_MASK;
-                    cuStat.intraVbvCost += m_frame->m_lowres.intraCost[idx];
+                    uint32_t idx = block_x + (block_y * maxBlockCols);
+
+                    for (uint32_t w = 0; w < noOfBlocks && (block_x + w) < maxBlockCols; w++, idx++)
+                    {
+                        cuStat.vbvCost += m_frame->m_lowres.lowresCostForRc[idx] & LOWRES_COST_MASK;
+                        cuStat.intraVbvCost += m_frame->m_lowres.intraCost[idx];
+                    }
                 }
             }
         }

@@ -207,7 +207,6 @@ typedef int16_t  coeff_t;      // transform coefficient
 
 // arbitrary, but low because SATD scores are 1/4 normal
 #define X265_LOOKAHEAD_QP (12 + QP_BD_OFFSET)
-#define X265_LOOKAHEAD_MAX 250
 
 // Use the same size blocks as x264.  Using larger blocks seems to give artificially
 // high cost estimates (intra and inter both suffer)
