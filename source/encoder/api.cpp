@@ -191,7 +191,7 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
     if (encoder->m_latestParam->forceFlush != param_in->forceFlush)
         return encoder->reconfigureParam(encoder->m_latestParam, param_in);
     bool isReconfigureRc = encoder->isReconfigureRc(encoder->m_latestParam, param_in);
-    if (encoder->m_reconfigure && !isReconfigureRc || encoder->m_reconfigureRc && isReconfigureRc) /* Reconfigure in progress */
+    if ((encoder->m_reconfigure && !isReconfigureRc) || (encoder->m_reconfigureRc && isReconfigureRc)) /* Reconfigure in progress */
         return 1;
     memcpy(&save, encoder->m_latestParam, sizeof(x265_param));
     int ret = encoder->reconfigureParam(encoder->m_latestParam, param_in);
