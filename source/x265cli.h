@@ -280,6 +280,7 @@ static const struct option long_options[] =
     { "no-dhdr10-opt",        no_argument, NULL, 0},
     { "refine-mv",            no_argument, NULL, 0 },
     { "no-refine-mv",         no_argument, NULL, 0 },
+    { "force-flush",    required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -423,6 +424,10 @@ static void showHelp(x265_param *param)
     H1("                                 Format of each line: framenumber frametype QP\n");
     H1("                                 QP is optional (none lets x265 choose). Frametypes: I,i,K,P,B,b.\n");
     H1("                                 QPs are restricted by qpmin/qpmax.\n");
+    H1("   --force-flush <integer>       Force the encoder to flush frames. Default %d\n", param->forceFlush);
+    H1("                                 0 - flush the encoder only when all the input pictures are over.\n");
+    H1("                                 1 - flush all the frames even when the input is not over. Slicetype decision may change with this option.\n");
+    H1("                                 2 - flush the slicetype decided frames only.\n");
     H0("\nRate control, Adaptive Quantization:\n");
     H0("   --bitrate <integer>           Target bitrate (kbps) for ABR (implied). Default %d\n", param->rc.bitrate);
     H1("-q/--qp <integer>                QP for P slices in CQP mode (implied). --ipratio and --pbration determine other slice QPs\n");

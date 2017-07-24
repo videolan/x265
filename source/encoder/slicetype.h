@@ -120,6 +120,7 @@ public:
     int           m_cuCount;
     int           m_numCoopSlices;
     int           m_numRowsPerSlice;
+    int           m_inputCount;
     double        m_cuTreeStrength;
 
     bool          m_isActive;
@@ -151,7 +152,7 @@ public:
     Frame*  getDecidedPicture();
 
     void    getEstimatedPictureCost(Frame *pic);
-
+    void    setLookaheadQueue();
 
 protected:
 

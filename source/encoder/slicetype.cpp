@@ -588,6 +588,7 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_filled   = false;
     m_outputSignalRequired = false;
     m_isActive = true;
+    m_inputCount = 0;
 
     m_8x8Height = ((m_param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_8x8Width = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
@@ -741,23 +742,9 @@ void Lookahead::destroy()
 /* Called by API thread */
 void Lookahead::addPicture(Frame& curFrame, int sliceType)
 {
+    checkLookaheadQueue(m_inputCount);
     curFrame.m_lowres.sliceType = sliceType;
-
-    /* determine if the lookahead is (over) filled enough for frames to begin to
-     * be consumed by frame encoders */
-    if (!m_filled)
-    {
-        if (!m_param->bframes & !m_param->lookaheadDepth)
-            m_filled = true; /* zero-latency */
-        else if (curFrame.m_poc >= m_param->lookaheadDepth + 2 + m_param->bframes)
-            m_filled = true; /* full capacity plus mini-gop lag */
-    }
-
-    m_inputLock.acquire();
-    m_inputQueue.pushBack(curFrame);
-    if (m_pool && m_inputQueue.size() >= m_fullQueueSize)
-        tryWakeOne();
-    m_inputLock.release();
+    addPicture(curFrame);
 }
 
 void Lookahead::addPicture(Frame& curFrame)
@@ -765,6 +752,7 @@ void Lookahead::addPicture(Frame& curFrame)
     m_inputLock.acquire();
     m_inputQueue.pushBack(curFrame);
     m_inputLock.release();
+    m_inputCount++;
 }
 
 void Lookahead::checkLookaheadQueue(int &frameCnt)
@@ -791,6 +779,12 @@ void Lookahead::flush()
     /* force slicetypeDecide to run until the input queue is empty */
     m_fullQueueSize = 1;
     m_filled = true;
+}
+
+void Lookahead::setLookaheadQueue()
+{
+    m_filled = false;
+    m_fullQueueSize = X265_MAX(1, m_param->lookaheadDepth);
 }
 
 void Lookahead::findJob(int /*workerThreadID*/)
@@ -832,7 +826,10 @@ Frame* Lookahead::getDecidedPicture()
         m_outputLock.release();
 
         if (out)
+        {
+            m_inputCount--;
             return out;
+        }
 
         findJob(-1); /* run slicetypeDecide() if necessary */
 
@@ -843,7 +840,10 @@ Frame* Lookahead::getDecidedPicture()
         if (wait)
             m_outputSignal.wait();
 
-        return m_outputQueue.popFront();
+        out = m_outputQueue.popFront();
+        if (out)
+            m_inputCount--;
+        return out;
     }
     else
         return NULL;
