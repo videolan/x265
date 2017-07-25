@@ -2230,6 +2230,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].copy_sp = (copy_sp_t)PFX(blockcopy_ss_32x32_avx512);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].copy_sp = (copy_sp_t)PFX(blockcopy_ss_32x64_avx512);
 
+        p.pu[LUMA_64x16].convert_p2s = PFX(filterPixelToShort_64x16_avx512);
+        p.pu[LUMA_64x32].convert_p2s = PFX(filterPixelToShort_64x32_avx512);
+        p.pu[LUMA_64x48].convert_p2s = PFX(filterPixelToShort_64x48_avx512);
+        p.pu[LUMA_64x64].convert_p2s = PFX(filterPixelToShort_64x64_avx512);
     }
 }
 #else // if HIGH_BIT_DEPTH
