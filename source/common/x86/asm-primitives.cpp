@@ -3848,6 +3848,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_16x8].sad = PFX(pixel_sad_16x8_avx512);
         p.pu[LUMA_16x16].sad = PFX(pixel_sad_16x16_avx512);
 
+        p.pu[LUMA_64x64].copy_pp = PFX(blockcopy_pp_64x64_avx512);
+        p.pu[LUMA_64x32].copy_pp = PFX(blockcopy_pp_64x32_avx512);
+        p.pu[LUMA_64x48].copy_pp = PFX(blockcopy_pp_64x48_avx512);
+        p.pu[LUMA_64x16].copy_pp = PFX(blockcopy_pp_64x16_avx512);
+
         p.cu[BLOCK_64x64].copy_sp = PFX(blockcopy_sp_64x64_avx512);
         p.cu[BLOCK_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx512);
         p.chroma[X265_CSP_I420].cu[CHROMA_420_32x32].copy_ps = PFX(blockcopy_ps_32x32_avx512);
