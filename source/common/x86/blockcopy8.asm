@@ -2162,15 +2162,7 @@ cglobal blockcopy_sp_%1x%2, 4, 7, 4, dst, dstStride, src, srcStride
 
 BLOCKCOPY_SP_W64_H4_avx2 64, 64
 
-%macro BLOCKCOPY_SP_W64_H4_avx512 2
-INIT_ZMM avx512
-cglobal blockcopy_sp_%1x%2, 4, 7, 4, dst, dstStride, src, srcStride
-    mov    r4d, %2/4
-    add    r3,  r3
-    lea    r5,  [3 * r3]
-    lea    r6,  [3 * r1]
-
-.loop:
+%macro PROCESS_BLOCKCOPY_SP_64x8_AVX512 0
     movu               m0,             [r2]
     movu               m1,             [r2 + 64]
     movu               m2,             [r2 + r3]
@@ -2187,8 +2179,8 @@ cglobal blockcopy_sp_%1x%2, 4, 7, 4, dst, dstStride, src, srcStride
 
     movu               m0,             [r2 + 2 * r3]
     movu               m1,             [r2 + 2 * r3 + 64]
-    movu               m2,             [r2 + r5]
-    movu               m3,             [r2 + r5 + 64]
+    movu               m2,             [r2 + r4]
+    movu               m3,             [r2 + r4 + 64]
 
     packuswb           m0,             m1
     packuswb           m2,             m3
@@ -2197,17 +2189,69 @@ cglobal blockcopy_sp_%1x%2, 4, 7, 4, dst, dstStride, src, srcStride
     vshufi64x2         m0,             m0,                 11011000b
     vshufi64x2         m2,             m2,                 11011000b
     movu               [r0 + 2 * r1],  m0
-    movu               [r0 + r6],      m2
+    movu               [r0 + r5],      m2
 
     lea    r0, [r0 + 4 * r1]
     lea    r2, [r2 + 4 * r3]
 
-    dec    r4d
-    jnz    .loop
-    RET
+    movu               m0,             [r2]
+    movu               m1,             [r2 + 64]
+    movu               m2,             [r2 + r3]
+    movu               m3,             [r2 + r3 + 64]
+
+    packuswb           m0,             m1
+    packuswb           m2,             m3
+    vpermq             m0,             m0,                 11011000b
+    vpermq             m2,             m2,                 11011000b
+    vshufi64x2         m0,             m0,                 11011000b
+    vshufi64x2         m2,             m2,                 11011000b
+    movu               [r0],           m0
+    movu               [r0 + r1],      m2
+
+    movu               m0,             [r2 + 2 * r3]
+    movu               m1,             [r2 + 2 * r3 + 64]
+    movu               m2,             [r2 + r4]
+    movu               m3,             [r2 + r4 + 64]
+
+    packuswb           m0,             m1
+    packuswb           m2,             m3
+    vpermq             m0,             m0,                 11011000b
+    vpermq             m2,             m2,                 11011000b
+    vshufi64x2         m0,             m0,                 11011000b
+    vshufi64x2         m2,             m2,                 11011000b
+    movu               [r0 + 2 * r1],  m0
+    movu               [r0 + r5],      m2
 %endmacro
 
-BLOCKCOPY_SP_W64_H4_avx512 64, 64
+INIT_ZMM avx512
+cglobal blockcopy_sp_64x64, 4, 6, 4
+    add    r3,  r3
+    lea    r4,  [3 * r3]
+    lea    r5,  [3 * r1]
+
+    PROCESS_BLOCKCOPY_SP_64x8_AVX512
+    lea    r0, [r0 + 4 * r1]
+    lea    r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_SP_64x8_AVX512
+    lea    r0, [r0 + 4 * r1]
+    lea    r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_SP_64x8_AVX512
+    lea    r0, [r0 + 4 * r1]
+    lea    r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_SP_64x8_AVX512
+    lea    r0, [r0 + 4 * r1]
+    lea    r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_SP_64x8_AVX512
+    lea    r0, [r0 + 4 * r1]
+    lea    r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_SP_64x8_AVX512
+    lea    r0, [r0 + 4 * r1]
+    lea    r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_SP_64x8_AVX512
+    lea    r0, [r0 + 4 * r1]
+    lea    r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_SP_64x8_AVX512
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockfill_s_4x4(int16_t* dst, intptr_t dstride, int16_t val)
@@ -3184,35 +3228,78 @@ cglobal blockcopy_ps_%1x%2, 4, 7, 2
 BLOCKCOPY_PS_W32_H4_avx2 32, 32
 BLOCKCOPY_PS_W32_H4_avx2 32, 64
 
-%macro BLOCKCOPY_PS_W32_H4_avx512 2
-INIT_ZMM avx512
-cglobal blockcopy_ps_%1x%2, 4, 7, 4
-    add     r1, r1
-    mov     r4d, %2/8
-    lea     r5, [3 * r3]
-    lea     r6, [3 * r1]
-.loop:
-%rep 2
+%macro PROCESS_BLOCKCOPY_PS_32x8_AVX512 0
     pmovzxbw      m0, [r2]
     pmovzxbw      m1, [r2 + r3]
     pmovzxbw      m2, [r2 + r3 * 2]
-    pmovzxbw      m3, [r2 + r5]
+    pmovzxbw      m3, [r2 + r4]
 
     movu          [r0], m0
     movu          [r0 + r1], m1
     movu          [r0 + r1 * 2], m2
-    movu          [r0 + r6], m3
+    movu          [r0 + r5], m3
 
     lea           r0, [r0 + 4 * r1]
     lea           r2, [r2 + 4 * r3]
-%endrep
-    dec           r4d
-    jnz           .loop
-    RET
+
+    pmovzxbw      m0, [r2]
+    pmovzxbw      m1, [r2 + r3]
+    pmovzxbw      m2, [r2 + r3 * 2]
+    pmovzxbw      m3, [r2 + r4]
+
+    movu          [r0], m0
+    movu          [r0 + r1], m1
+    movu          [r0 + r1 * 2], m2
+    movu          [r0 + r5], m3
 %endmacro
 
-BLOCKCOPY_PS_W32_H4_avx512 32, 32
-BLOCKCOPY_PS_W32_H4_avx512 32, 64
+INIT_ZMM avx512
+cglobal blockcopy_ps_32x32, 4, 6, 4
+    add     r1, r1
+    lea     r4, [3 * r3]
+    lea     r5, [3 * r1]
+
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal blockcopy_ps_32x64, 4, 6, 4
+    add     r1, r1
+    lea     r4, [3 * r3]
+    lea     r5, [3 * r1]
+
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_32x8_AVX512
+    RET
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_%1x%2(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
@@ -3399,17 +3486,7 @@ cglobal blockcopy_ps_64x64, 4, 7, 4
     jnz           .loop
     RET
 
-;-----------------------------------------------------------------------------
-; void blockcopy_ps_%1x%2(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
-;-----------------------------------------------------------------------------
-INIT_ZMM avx512
-cglobal blockcopy_ps_64x64, 4, 7, 4
-    add     r1, r1
-    mov     r4d, 64/8
-    lea     r5, [3 * r3]
-    lea     r6, [3 * r1]
-.loop:
-%rep 2
+%macro PROCESS_BLOCKCOPY_PS_64x8_AVX512 0
     pmovzxbw      m0, [r2]
     pmovzxbw      m1, [r2 + 32]
     pmovzxbw      m2, [r2 + r3]
@@ -3421,18 +3498,65 @@ cglobal blockcopy_ps_64x64, 4, 7, 4
 
     pmovzxbw      m0, [r2 + r3 * 2]
     pmovzxbw      m1, [r2 + r3 * 2 + 32]
-    pmovzxbw      m2, [r2 + r5]
-    pmovzxbw      m3, [r2 + r5 + 32]
+    pmovzxbw      m2, [r2 + r4]
+    pmovzxbw      m3, [r2 + r4 + 32]
     movu          [r0 + r1 * 2], m0
     movu          [r0 + r1 * 2 + 64], m1
-    movu          [r0 + r6], m2
-    movu          [r0 + r6 + 64], m3
+    movu          [r0 + r5], m2
+    movu          [r0 + r5 + 64], m3
 
     lea           r0, [r0 + 4 * r1]
     lea           r2, [r2 + 4 * r3]
-%endrep
-    dec           r4d
-    jnz           .loop
+
+    pmovzxbw      m0, [r2]
+    pmovzxbw      m1, [r2 + 32]
+    pmovzxbw      m2, [r2 + r3]
+    pmovzxbw      m3, [r2 + r3 + 32]
+    movu          [r0], m0
+    movu          [r0 + 64], m1
+    movu          [r0 + r1], m2
+    movu          [r0 + r1 + 64], m3
+
+    pmovzxbw      m0, [r2 + r3 * 2]
+    pmovzxbw      m1, [r2 + r3 * 2 + 32]
+    pmovzxbw      m2, [r2 + r4]
+    pmovzxbw      m3, [r2 + r4 + 32]
+    movu          [r0 + r1 * 2], m0
+    movu          [r0 + r1 * 2 + 64], m1
+    movu          [r0 + r5], m2
+    movu          [r0 + r5 + 64], m3
+%endmacro
+;-----------------------------------------------------------------------------
+; void blockcopy_ps_%1x%2(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+;-----------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal blockcopy_ps_64x64, 4, 6, 4
+    add     r1, r1
+    lea     r4, [3 * r3]
+    lea     r5, [3 * r1]
+
+    PROCESS_BLOCKCOPY_PS_64x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_64x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_64x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_64x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_64x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_64x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_64x8_AVX512
+    lea           r0, [r0 + 4 * r1]
+    lea           r2, [r2 + 4 * r3]
+    PROCESS_BLOCKCOPY_PS_64x8_AVX512
     RET
 
 ;-----------------------------------------------------------------------------
