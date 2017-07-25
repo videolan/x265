@@ -2249,6 +2249,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = PFX(filterPixelToShort_32x48_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = PFX(filterPixelToShort_32x64_avx512);
 
+        p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx512);
+
     }
 }
 #else // if HIGH_BIT_DEPTH
@@ -3919,6 +3921,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_64x64].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_ss_64x64_avx512);
         p.cu[BLOCK_32x32].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_ss_32x32_avx512);
         p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx512);
+        p.cu[BLOCK_16x16].ssd_s = PFX(pixel_ssd_s_16_avx512);
 
         p.cu[BLOCK_32x32].copy_ss = PFX(blockcopy_ss_32x32_avx512);
         p.chroma[X265_CSP_I420].cu[CHROMA_420_32x32].copy_ss = PFX(blockcopy_ss_32x32_avx512);
