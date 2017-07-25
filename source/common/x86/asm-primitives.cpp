@@ -2191,10 +2191,20 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     if (cpuMask & X265_CPU_AVX512)
     {
         p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_avx512);
+        p.cu[BLOCK_32x32].calcresidual = PFX(getResidual32_avx512);
         p.cu[BLOCK_64x64].sub_ps = PFX(pixel_sub_ps_64x64_avx512);
         p.cu[BLOCK_32x32].sub_ps = PFX(pixel_sub_ps_32x32_avx512);
         p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sub_ps = PFX(pixel_sub_ps_32x32_avx512);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sub_ps = PFX(pixel_sub_ps_32x64_avx512);
+
+        // 64 X N
+        p.cu[BLOCK_64x64].copy_ss = PFX(blockcopy_ss_64x64_avx512);
+        p.pu[LUMA_64x64].copy_pp = (copy_pp_t)PFX(blockcopy_ss_64x64_avx512);
+        p.pu[LUMA_64x48].copy_pp = (copy_pp_t)PFX(blockcopy_ss_64x48_avx512);
+        p.pu[LUMA_64x32].copy_pp = (copy_pp_t)PFX(blockcopy_ss_64x32_avx512);
+        p.pu[LUMA_64x16].copy_pp = (copy_pp_t)PFX(blockcopy_ss_64x16_avx512);
+        p.cu[BLOCK_64x64].copy_ps = (copy_ps_t)PFX(blockcopy_ss_64x64_avx512);
+        p.cu[BLOCK_64x64].copy_sp = (copy_sp_t)PFX(blockcopy_ss_64x64_avx512);
     }
 }
 #else // if HIGH_BIT_DEPTH
@@ -3727,7 +3737,6 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.integral_inith[INTEGRAL_24] = PFX(integral24h_avx2);
         p.integral_inith[INTEGRAL_32] = PFX(integral32h_avx2);
 
-        p.cu[BLOCK_32x32].calcresidual = PFX(getResidual32_avx512);
     }
     if (cpuMask & X265_CPU_AVX512)
     {
