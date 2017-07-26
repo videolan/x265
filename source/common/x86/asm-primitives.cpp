@@ -2239,6 +2239,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_32x24].convert_p2s = PFX(filterPixelToShort_32x24_avx512);
         p.pu[LUMA_32x32].convert_p2s = PFX(filterPixelToShort_32x32_avx512);
         p.pu[LUMA_32x64].convert_p2s = PFX(filterPixelToShort_32x64_avx512);
+        p.pu[LUMA_48x64].convert_p2s = PFX(filterPixelToShort_48x64_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].p2s = PFX(filterPixelToShort_32x8_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].p2s = PFX(filterPixelToShort_32x16_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].p2s = PFX(filterPixelToShort_32x24_avx512);

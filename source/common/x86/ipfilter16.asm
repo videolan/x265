@@ -416,6 +416,79 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
     movu       [r2 + r4], m3
 %endmacro
 
+%macro P2S_48x8_AVX512 0
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    movu       m2, [r0 + r1 * 2]
+    movu       m3, [r0 + r5]
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
+    psubw      m0, m4
+    psubw      m1, m4
+    psubw      m2, m4
+    psubw      m3, m4
+    movu       [r2], m0
+    movu       [r2 + r3], m1
+    movu       [r2 + r3 * 2], m2
+    movu       [r2 + r4], m3
+
+    movu       ym0, [r0 + mmsize]
+    movu       ym1, [r0 + r1 + mmsize]
+    movu       ym2, [r0 + r1 * 2 + mmsize]
+    movu       ym3, [r0 + r5 + mmsize]
+    psllw      ym0, (14 - BIT_DEPTH)
+    psllw      ym1, (14 - BIT_DEPTH)
+    psllw      ym2, (14 - BIT_DEPTH)
+    psllw      ym3, (14 - BIT_DEPTH)
+    psubw      ym0, ym4
+    psubw      ym1, ym4
+    psubw      ym2, ym4
+    psubw      ym3, ym4
+    movu       [r2 + mmsize], ym0
+    movu       [r2 + r3 + mmsize], ym1
+    movu       [r2 + r3 * 2 + mmsize], ym2
+    movu       [r2 + r4 + mmsize], ym3
+
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+
+    movu       m0, [r0]
+    movu       m1, [r0 + r1]
+    movu       m2, [r0 + r1 * 2]
+    movu       m3, [r0 + r5]
+    psllw      m0, (14 - BIT_DEPTH)
+    psllw      m1, (14 - BIT_DEPTH)
+    psllw      m2, (14 - BIT_DEPTH)
+    psllw      m3, (14 - BIT_DEPTH)
+    psubw      m0, m4
+    psubw      m1, m4
+    psubw      m2, m4
+    psubw      m3, m4
+    movu       [r2], m0
+    movu       [r2 + r3], m1
+    movu       [r2 + r3 * 2], m2
+    movu       [r2 + r4], m3
+
+    movu       ym0, [r0 + mmsize]
+    movu       ym1, [r0 + r1 + mmsize]
+    movu       ym2, [r0 + r1 * 2 + mmsize]
+    movu       ym3, [r0 + r5 + mmsize]
+    psllw      ym0, (14 - BIT_DEPTH)
+    psllw      ym1, (14 - BIT_DEPTH)
+    psllw      ym2, (14 - BIT_DEPTH)
+    psllw      ym3, (14 - BIT_DEPTH)
+    psubw      ym0, ym4
+    psubw      ym1, ym4
+    psubw      ym2, ym4
+    psubw      ym3, ym4
+    movu       [r2 + mmsize], ym0
+    movu       [r2 + r3 + mmsize], ym1
+    movu       [r2 + r3 * 2 + mmsize], ym2
+    movu       [r2 + r4 + mmsize], ym3
+%endmacro
+
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride)
 ;-----------------------------------------------------------------------------
@@ -639,6 +712,39 @@ cglobal filterPixelToShort_32x64, 4, 6, 5
     lea        r0, [r0 + r1 * 4]
     lea        r2, [r2 + r3 * 4]
     P2S_32x8_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_48x64, 4, 6, 5
+    add        r1d, r1d
+    add        r3d, r3d
+    lea        r4, [r3 * 3]
+    lea        r5, [r1 * 3]
+
+    ; load constant
+    vbroadcasti32x8    m4, [pw_2000]
+    P2S_48x8_AVX512
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+    P2S_48x8_AVX512
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+    P2S_48x8_AVX512
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+    P2S_48x8_AVX512
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+    P2S_48x8_AVX512
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+    P2S_48x8_AVX512
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+    P2S_48x8_AVX512
+    lea        r0, [r0 + r1 * 4]
+    lea        r2, [r2 + r3 * 4]
+    P2S_48x8_AVX512
     RET
 ;-----------------------------------------------------------------------------------------------------------------------------
 ;p2s avx512 code end
