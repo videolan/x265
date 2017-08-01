@@ -1812,6 +1812,79 @@ ADDAVG_W64_H1_AVX2 64
     movu        [r2 + r8 + mmsize],       m0
 %endmacro
 
+%macro PROCESS_ADDAVG_48x4_HBD_AVX512 0
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        ym0,              [r0 + mmsize]
+    movu        ym1,              [r1 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + mmsize],    ym0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        ym0,              [r0 + r3 + mmsize]
+    movu        ym1,              [r1 + r4 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + r5 + mmsize],       ym0
+
+    movu        m0,              [r0 + 2 * r3]
+    movu        m1,              [r1 + 2 * r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 2 * r5],   m0
+
+    movu        ym0,              [r0 + 2 * r3 + mmsize]
+    movu        ym1,              [r1 + 2 * r4 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + 2 * r5 + mmsize],   ym0
+
+    movu        m0,              [r0 + r6]
+    movu        m1,              [r1 + r7]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r8],       m0
+
+    movu        ym0,              [r0 + r6 + mmsize]
+    movu        ym1,              [r1 + r7 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + r8 + mmsize],       ym0
+%endmacro
 ;-----------------------------------------------------------------------------
 ;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
 ;-----------------------------------------------------------------------------
@@ -1874,6 +1947,28 @@ ADDAVG_W64_HBD_AVX512 16
 ADDAVG_W64_HBD_AVX512 32
 ADDAVG_W64_HBD_AVX512 48
 ADDAVG_W64_HBD_AVX512 64
+
+INIT_ZMM avx512
+cglobal addAvg_48x64, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,              m2
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+    lea         r6,              [3 * r3]
+    lea         r7,              [3 * r4]
+    lea         r8,              [3 * r5]
+
+%rep 15
+    PROCESS_ADDAVG_48x4_HBD_AVX512
+    lea         r2,              [r2 + 4 * r5]
+    lea         r0,              [r0 + 4 * r3]
+    lea         r1,              [r1 + 4 * r4]
+%endrep
+    PROCESS_ADDAVG_48x4_HBD_AVX512
+    RET
 ;-----------------------------------------------------------------------------
 ;addAvg avx512 high bit depth code end
 ;-----------------------------------------------------------------------------
