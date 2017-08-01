@@ -2301,6 +2301,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_32x24].pixelavg_pp = PFX(pixel_avg_32x24_avx512);
         p.pu[LUMA_32x32].pixelavg_pp = PFX(pixel_avg_32x32_avx512);
         p.pu[LUMA_32x64].pixelavg_pp = PFX(pixel_avg_32x64_avx512);
+        p.pu[LUMA_64x16].pixelavg_pp = PFX(pixel_avg_64x16_avx512);
+        p.pu[LUMA_64x32].pixelavg_pp = PFX(pixel_avg_64x32_avx512);
+        p.pu[LUMA_64x48].pixelavg_pp = PFX(pixel_avg_64x48_avx512);
+        p.pu[LUMA_64x64].pixelavg_pp = PFX(pixel_avg_64x64_avx512);
 
     }
 }

@@ -5676,6 +5676,84 @@ cglobal pixel_avg_48x64, 6,10,4
     movu    [r0 + r8], m2
 %endmacro
 
+%macro PROCESS_PIXELAVG_64x8_HBD_AVX512 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0], m0
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + mmsize]
+    movu    m1, [r4 + mmsize]
+    movu    m2, [r2 + r3 + mmsize]
+    movu    m3, [r4 + r5 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + mmsize], m0
+    movu    [r0 + r1 + mmsize], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2], m0
+    movu    [r0 + r8], m2
+
+    movu    m0, [r2 + r3 * 2 + mmsize]
+    movu    m1, [r4 + r5 * 2 + mmsize]
+    movu    m2, [r2 + r6 + mmsize]
+    movu    m3, [r4 + r7 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2 + mmsize], m0
+    movu    [r0 + r8 + mmsize], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+
+    movu    m0, [r2]
+    movu    m1, [r4]
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0], m0
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + mmsize]
+    movu    m1, [r4 + mmsize]
+    movu    m2, [r2 + r3 + mmsize]
+    movu    m3, [r4 + r5 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + mmsize], m0
+    movu    [r0 + r1 + mmsize], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2], m0
+    movu    [r0 + r8], m2
+
+    movu    m0, [r2 + r3 * 2 + mmsize]
+    movu    m1, [r4 + r5 * 2 + mmsize]
+    movu    m2, [r2 + r6 + mmsize]
+    movu    m3, [r4 + r7 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2 + mmsize], m0
+    movu    [r0 + r8 + mmsize], m2
+%endmacro
+
 %macro PIXEL_AVG_HBD_W32 1
 INIT_ZMM avx512
 cglobal pixel_avg_32x%1, 6,9,4
@@ -5701,6 +5779,31 @@ PIXEL_AVG_HBD_W32 16
 PIXEL_AVG_HBD_W32 24
 PIXEL_AVG_HBD_W32 32
 PIXEL_AVG_HBD_W32 64
+
+%macro PIXEL_AVG_HBD_W64 1
+INIT_ZMM avx512
+cglobal pixel_avg_64x%1, 6,9,4
+    add     r1d, r1d
+    add     r3d, r3d
+    add     r5d, r5d
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+
+%rep %1/8 - 1
+    PROCESS_PIXELAVG_64x8_HBD_AVX512
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endrep
+    PROCESS_PIXELAVG_64x8_HBD_AVX512
+    RET
+%endmacro
+
+PIXEL_AVG_HBD_W64 16
+PIXEL_AVG_HBD_W64 32
+PIXEL_AVG_HBD_W64 48
+PIXEL_AVG_HBD_W64 64
 ;-----------------------------------------------------------------------------
 ;pixel_avg_pp avx512 high bit depth code end
 ;-----------------------------------------------------------------------------
