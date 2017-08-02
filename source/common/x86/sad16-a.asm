@@ -1154,6 +1154,86 @@ cglobal pixel_sad_%1x%2, 4,5,8
 INIT_XMM sse2
 SAD_12  12, 16
 
+
+%macro PROCESS_SAD_64x8_AVX512 0
+    movu    m1, [r2]
+    movu    m2, [r2 + mmsize]
+    movu    m3, [r2 + r3]
+    movu    m4, [r2 + r3 + mmsize]
+    psubw   m1, [r0]
+    psubw   m2, [r0 + mmsize]
+    psubw   m3, [r0 + r1]
+    psubw   m4, [r0 + r1 + mmsize]
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    pabsw   m4, m4
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m5, m1, m3
+
+    movu    m1, [r2 + 2 * r3]
+    movu    m2, [r2 + 2 * r3 + mmsize]
+    movu    m3, [r2 + r5]
+    movu    m4, [r2 + r5 + mmsize]
+    psubw   m1, [r0 + 2 * r1]
+    psubw   m2, [r0 + 2 * r1 + mmsize]
+    psubw   m3, [r0 + r4]
+    psubw   m4, [r0 + r4 + mmsize]
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    pabsw   m4, m4
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m1, m3
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+
+    pmaddwd m5, m6
+    paddd   m0, m5
+    pmaddwd m1, m6
+    paddd   m0, m1
+
+    movu    m1, [r2]
+    movu    m2, [r2 + mmsize]
+    movu    m3, [r2 + r3]
+    movu    m4, [r2 + r3 + mmsize]
+    psubw   m1, [r0]
+    psubw   m2, [r0 + mmsize]
+    psubw   m3, [r0 + r1]
+    psubw   m4, [r0 + r1 + mmsize]
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    pabsw   m4, m4
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m5, m1, m3
+
+    movu    m1, [r2 + 2 * r3]
+    movu    m2, [r2 + 2 * r3 + mmsize]
+    movu    m3, [r2 + r5]
+    movu    m4, [r2 + r5 + mmsize]
+    psubw   m1, [r0 + 2 * r1]
+    psubw   m2, [r0 + 2 * r1 + mmsize]
+    psubw   m3, [r0 + r4]
+    psubw   m4, [r0 + r4 + mmsize]
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    pabsw   m4, m4
+    paddw   m1, m2
+    paddw   m3, m4
+    paddw   m1, m3
+
+    pmaddwd m5, m6
+    paddd   m0, m5
+    pmaddwd m1, m6
+    paddd   m0, m1
+%endmacro
+
 %macro PROCESS_SAD_32x8_AVX512 0
     movu    m1, [r2]
     movu    m2, [r2 + r3]
@@ -1263,6 +1343,116 @@ SAD_12  12, 16
 %endmacro
 
 
+;-----------------------------------------------------------------------------
+; int pixel_sad_64x%1( uint16_t *, intptr_t, uint16_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal pixel_sad_64x16, 4,6,7
+    pxor    m0, m0
+
+    vbroadcasti32x8 m6, [pw_1]
+
+    add     r3d, r3d
+    add     r1d, r1d
+    lea     r4d, [r1 * 3]
+    lea     r5d, [r3 * 3]
+
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    PROCESS_SAD_AVX512_END
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_64x32, 4,6,7
+    pxor    m0, m0
+
+    vbroadcasti32x8 m6, [pw_1]
+
+    add     r3d, r3d
+    add     r1d, r1d
+    lea     r4d, [r1 * 3]
+    lea     r5d, [r3 * 3]
+
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    PROCESS_SAD_AVX512_END
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_64x48, 4,6,7
+    pxor    m0, m0
+
+    vbroadcasti32x8 m6, [pw_1]
+
+    add     r3d, r3d
+    add     r1d, r1d
+    lea     r4d, [r1 * 3]
+    lea     r5d, [r3 * 3]
+
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    PROCESS_SAD_AVX512_END
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_64x64, 4,6,7
+   pxor    m0, m0
+
+    vbroadcasti32x8 m6, [pw_1]
+
+    add     r3d, r3d
+    add     r1d, r1d
+    lea     r4d, [r1 * 3]
+    lea     r5d, [r3 * 3]
+
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    lea            r2, [r2 + 4 * r3]
+    lea            r0, [r0 + 4 * r1]
+    PROCESS_SAD_64x8_AVX512
+    PROCESS_SAD_AVX512_END
+    RET
 
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_32x%1( uint16_t *, intptr_t, uint16_t *, intptr_t )
