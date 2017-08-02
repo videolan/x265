@@ -28,6 +28,7 @@
 FUNCDEF_TU_S(void, cpy2Dto1D_shl, sse2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy2Dto1D_shl, sse4, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy2Dto1D_shl, avx2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+FUNCDEF_TU_S(void, cpy2Dto1D_shl, avx512, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 
 FUNCDEF_TU_S(void, cpy2Dto1D_shr, sse2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy2Dto1D_shr, sse4, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);

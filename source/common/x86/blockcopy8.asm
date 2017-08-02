@@ -6140,6 +6140,102 @@ cglobal cpy2Dto1D_shl_32, 3, 5, 5
     RET
 
 ;--------------------------------------------------------------------------------------
+; cpy2Dto1D_shl avx512 code start
+;--------------------------------------------------------------------------------------
+%macro PROCESS_CPY2Dto1D_SHL_16x8_AVX512 0
+    movu             m1,    [r1]
+    vinserti32x8     m1,    [r1 + r2], 1
+    movu             m2,    [r1 + 2 * r2]
+    vinserti32x8     m2,    [r1 + r3], 1
+
+    psllw    m1, xm0
+    psllw    m2, xm0
+    movu     [r0], m1
+    movu     [r0 + mmsize], m2
+
+    add      r0, 2 * mmsize
+    lea      r1, [r1 + r2 * 4]
+
+    movu             m1,    [r1]
+    vinserti32x8     m1,    [r1 + r2], 1
+    movu             m2,    [r1 + 2 * r2]
+    vinserti32x8     m2,    [r1 + r3], 1
+
+    psllw    m1, xm0
+    psllw    m2, xm0
+    movu     [r0], m1
+    movu     [r0 + mmsize], m2
+%endmacro
+
+%macro PROCESS_CPY2Dto1D_SHL_32x8_AVX512 0
+    movu     m1, [r1]
+    movu     m2, [r1 + r2]
+    movu     m3, [r1 + 2 * r2]
+    movu     m4, [r1 + r3]
+
+    psllw    m1, xm0
+    psllw    m2, xm0
+    psllw    m3, xm0
+    psllw    m4, xm0
+    movu     [r0], m1
+    movu     [r0 + mmsize], m2
+    movu     [r0 + 2 * mmsize], m3
+    movu     [r0 + 3 * mmsize], m4
+
+    add      r0, 4 * mmsize
+    lea      r1, [r1 + r2 * 4]
+
+    movu     m1, [r1]
+    movu     m2, [r1 + r2]
+    movu     m3, [r1 + 2 * r2]
+    movu     m4, [r1 + r3]
+
+    psllw    m1, xm0
+    psllw    m2, xm0
+    psllw    m3, xm0
+    psllw    m4, xm0
+    movu     [r0], m1
+    movu     [r0 + mmsize], m2
+    movu     [r0 + 2 * mmsize], m3
+    movu     [r0 + 3 * mmsize], m4
+%endmacro
+
+;--------------------------------------------------------------------------------------
+; void cpy2Dto1D_shl(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+;--------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal cpy2Dto1D_shl_32, 4, 4, 5
+    add     r2d, r2d
+    movd    xm0, r3d
+    lea     r3, [3 * r2]
+
+    PROCESS_CPY2Dto1D_SHL_32x8_AVX512
+    add      r0, 4 * mmsize
+    lea      r1, [r1 + r2 * 4]
+    PROCESS_CPY2Dto1D_SHL_32x8_AVX512
+    add      r0, 4 * mmsize
+    lea      r1, [r1 + r2 * 4]
+    PROCESS_CPY2Dto1D_SHL_32x8_AVX512
+    add      r0, 4 * mmsize
+    lea      r1, [r1 + r2 * 4]
+    PROCESS_CPY2Dto1D_SHL_32x8_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal cpy2Dto1D_shl_16, 4, 4, 3
+    add     r2d, r2d
+    movd    xm0, r3d
+    lea     r3, [3 * r2]
+
+    PROCESS_CPY2Dto1D_SHL_16x8_AVX512
+    add      r0, 2 * mmsize
+    lea      r1, [r1 + r2 * 4]
+    PROCESS_CPY2Dto1D_SHL_16x8_AVX512
+    RET
+;--------------------------------------------------------------------------------------
+; cpy2Dto1D_shl avx512 code end
+;--------------------------------------------------------------------------------------
+;--------------------------------------------------------------------------------------
 ; void cpy1Dto2D_shr(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
 ;--------------------------------------------------------------------------------------
 INIT_XMM sse2
