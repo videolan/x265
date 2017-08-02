@@ -1986,6 +1986,111 @@ cglobal pixel_sad_48x64, 4, 7, 9
     PROCESS_SAD_AVX512_END
     RET
 
+;-----------------------------------------------------------------------------
+; int pixel_sad_48x64( uint16_t *, intptr_t, uint16_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal pixel_sad_48x64, 4, 7, 9
+    pxor    m0,  m0
+    mov     r6d, 64/8
+
+    vbroadcasti32x8 m8, [pw_1]
+
+    add     r3d, r3d
+    add     r1d, r1d
+    lea     r4d, [r1 * 3]
+    lea     r5d, [r3 * 3]
+.loop:
+    movu            m1,  [r2]
+    movu            m2,  [r2 + r3]
+    movu           ym3,  [r2 + mmsize]
+    vinserti32x8    m3,  [r2 + r3 + mmsize], 1
+    movu            m4,  [r0]
+    movu            m5,  [r0 + r1]
+    movu           ym6,  [r0 + mmsize]
+    vinserti32x8    m6,  [r0 + r1 + mmsize], 1
+
+    psubw   m1, m4
+    psubw   m2, m5
+    psubw   m3, m6
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    paddw   m1, m2
+    paddw   m7, m3, m1
+
+    movu            m1,  [r2 + 2 * r3]
+    movu            m2,  [r2 + r5]
+    movu           ym3,  [r2 + 2 * r3 + mmsize]
+    vinserti32x8    m3,  [r2 + r5 + mmsize], 1
+    movu            m4,  [r0 + 2 * r1]
+    movu            m5,  [r0 + r4]
+    movu           ym6,  [r0 + 2 * r1 + mmsize]
+    vinserti32x8    m6,  [r0 + r4 + mmsize], 1
+    psubw   m1, m4
+    psubw   m2, m5
+    psubw   m3, m6
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    paddw   m1, m2
+    paddw   m1, m3
+
+    pmaddwd m7, m8
+    paddd   m0, m7
+    pmaddwd m1, m8
+    paddd   m0, m1
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+
+    movu            m1,  [r2]
+    movu            m2,  [r2 + r3]
+    movu           ym3,  [r2 + mmsize]
+    vinserti32x8    m3,  [r2 + r3 + mmsize], 1
+    movu            m4,  [r0]
+    movu            m5,  [r0 + r1]
+    movu           ym6,  [r0 + mmsize]
+    vinserti32x8    m6,  [r0 + r1 + mmsize], 1
+
+    psubw   m1, m4
+    psubw   m2, m5
+    psubw   m3, m6
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    paddw   m1, m2
+    paddw   m7, m3, m1
+
+    movu            m1,  [r2 + 2 * r3]
+    movu            m2,  [r2 + r5]
+    movu           ym3,  [r2 + 2 * r3 + mmsize]
+    vinserti32x8    m3,  [r2 + r5 + mmsize], 1
+    movu            m4,  [r0 + 2 * r1]
+    movu            m5,  [r0 + r4]
+    movu           ym6,  [r0 + 2 * r1 + mmsize]
+    vinserti32x8    m6,  [r0 + r4 + mmsize], 1
+    psubw   m1, m4
+    psubw   m2, m5
+    psubw   m3, m6
+    pabsw   m1, m1
+    pabsw   m2, m2
+    pabsw   m3, m3
+    paddw   m1, m2
+    paddw   m1, m3
+
+    pmaddwd m7, m8
+    paddd   m0, m7
+    pmaddwd m1, m8
+    paddd   m0, m1
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+
+    dec     r6d
+    jg      .loop
+
+    PROCESS_SAD_AVX512_END
+    RET
+
 ;=============================================================================
 ; SAD x3/x4
 ;=============================================================================
