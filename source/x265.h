@@ -1482,6 +1482,9 @@ typedef struct x265_param
 
     /* Force flushing the frames from encoder */
     int       forceFlush;
+
+    /* Enable skipping split RD analysis when sum of split CU rdCost larger than none split CU rdCost for Intra CU */
+    int       bEnableSplitRdSkip;
 } x265_param;
 
 /* x265_param_alloc:

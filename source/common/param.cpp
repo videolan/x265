@@ -157,6 +157,7 @@ void x265_param_default(x265_param* param)
     param->bEnableConstrainedIntra = 0;
     param->bEnableStrongIntraSmoothing = 1;
     param->bEnableFastIntra = 0;
+    param->bEnableSplitRdSkip = 0;
 
     /* Inter Coding tools */
     param->searchMethod = X265_HEX_SEARCH;
@@ -975,6 +976,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("refine-inter")p->interRefine = atoi(value);
         OPT("refine-mv")p->mvRefine = atobool(value);
         OPT("force-flush")p->forceFlush = atoi(value);
+        OPT("splitrd-skip") p->bEnableSplitRdSkip = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1435,6 +1437,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(param->bEnableRdRefine, "rd-refine");
     TOOLOPT(param->bEnableEarlySkip, "early-skip");
     TOOLOPT(param->bEnableRecursionSkip, "rskip");
+    TOOLOPT(param->bEnableSplitRdSkip, "splitrd-skip");
     TOOLVAL(param->noiseReductionIntra, "nr-intra=%d");
     TOOLVAL(param->noiseReductionInter, "nr-inter=%d");
     TOOLOPT(param->bEnableTSkipFast, "tskip-fast");
@@ -1564,6 +1567,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnableTSkipFast, "tskip-fast");
     BOOL(p->bCULossless, "cu-lossless");
     BOOL(p->bIntraInBFrames, "b-intra");
+    BOOL(p->bEnableSplitRdSkip, "splitrd-skip");
     s += sprintf(s, " rdpenalty=%d", p->rdPenalty);
     s += sprintf(s, " psy-rd=%.2f", p->psyRd);
     s += sprintf(s, " psy-rdoq=%.2f", p->psyRdoq);

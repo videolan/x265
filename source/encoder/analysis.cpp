@@ -485,7 +485,7 @@ void Analysis::qprdRefine(const CUData& parentCTU, const CUGeom& cuGeom, int32_t
     md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.absPartIdx);
 }
 
-void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp)
+uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t qp)
 {
     uint32_t depth = cuGeom.depth;
     ModeDepth& md = m_modeDepth[depth];
@@ -562,6 +562,8 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
         invalidateContexts(nextDepth);
         Entropy* nextContext = &m_rqt[depth].cur;
         int32_t nextQP = qp;
+        uint64_t curCost = 0;
+        int skipSplitCheck = 0;
 
         for (uint32_t subPartIdx = 0; subPartIdx < 4; subPartIdx++)
         {
@@ -574,7 +576,17 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
                     nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
 
-                compressIntraCU(parentCTU, childGeom, nextQP);
+                if (m_param->bEnableSplitRdSkip)
+                {
+                    curCost += compressIntraCU(parentCTU, childGeom, nextQP);
+                    if (m_modeDepth[depth].bestMode && curCost > m_modeDepth[depth].bestMode->rdCost)
+                    {
+                        skipSplitCheck = 1;
+                        break;
+                    }
+                }
+                else
+                    compressIntraCU(parentCTU, childGeom, nextQP);
 
                 // Save best CU and pred data for this sub CU
                 splitCU->copyPartFrom(nd.bestMode->cu, childGeom, subPartIdx);
@@ -592,14 +604,17 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
                     memset(parentCTU.m_cuDepth + childGeom.absPartIdx, 0, childGeom.numPartitions);
             }
         }
-        nextContext->store(splitPred->contexts);
-        if (mightNotSplit)
-            addSplitFlagCost(*splitPred, cuGeom.depth);
-        else
-            updateModeCost(*splitPred);
+        if (!skipSplitCheck)
+        {
+            nextContext->store(splitPred->contexts);
+            if (mightNotSplit)
+                addSplitFlagCost(*splitPred, cuGeom.depth);
+            else
+                updateModeCost(*splitPred);
 
-        checkDQPForSplitPred(*splitPred, cuGeom);
-        checkBestMode(*splitPred, depth);
+            checkDQPForSplitPred(*splitPred, cuGeom);
+            checkBestMode(*splitPred, depth);
+        }
     }
 
     if (m_param->bEnableRdRefine && depth <= m_slice->m_pps->maxCuDQPDepth)
@@ -622,6 +637,8 @@ void Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom, in
     md.bestMode->cu.copyToPic(depth);
     if (md.bestMode != &md.pred[PRED_SPLIT])
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.absPartIdx);
+
+    return md.bestMode->rdCost;
 }
 
 void Analysis::PMODE::processTasks(int workerThreadId)
