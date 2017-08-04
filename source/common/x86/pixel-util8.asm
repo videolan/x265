@@ -7105,6 +7105,82 @@ cglobal pixel_var_64x64, 2,4,7
     RET
 %endif ; !HIGH_BIT_DEPTH
 
+%macro PROCESS_VAR_32x8_AVX512 0
+    pmovzxbw        m0, [r0]
+    pmovzxbw        m1, [r0 + r1]
+    pmovzxbw        m2, [r0 + 2 * r1]
+    pmovzxbw        m3, [r0 + r2]
+
+    paddw     m4, m0
+    paddw     m4, m1
+    paddw     m4, m2
+    paddw     m4, m3
+    pmaddwd   m0, m0
+    pmaddwd   m1, m1
+    pmaddwd   m2, m2
+    pmaddwd   m3, m3
+    paddd     m5, m0
+    paddd     m5, m1
+    paddd     m5, m2
+    paddd     m5, m3
+
+    lea             r0, [r0 + r1 * 4]
+
+    pmovzxbw        m0, [r0]
+    pmovzxbw        m1, [r0 + r1]
+    pmovzxbw        m2, [r0 + 2 * r1]
+    pmovzxbw        m3, [r0 + r2]
+
+    paddw     m4, m0
+    paddw     m4, m1
+    paddw     m4, m2
+    paddw     m4, m3
+    pmaddwd   m0, m0
+    pmaddwd   m1, m1
+    pmaddwd   m2, m2
+    pmaddwd   m3, m3
+    paddd     m5, m0
+    paddd     m5, m1
+    paddd     m5, m2
+    paddd     m5, m3
+%endmacro
+
+%macro PROCESS_VAR_AVX512_END 0
+    vextracti32x8  ym0, m4, 1
+    vextracti32x8  ym1, m5, 1
+    paddw          ym4, ym0
+    paddd          ym5, ym1
+    vextracti32x4  xm0, m4, 1
+    vextracti32x4  xm1, m5, 1
+    paddw          xm4, xm0
+    paddd          xm5, xm1
+    HADDW          xm4, xm2
+    HADDD          xm5, xm1
+    punpckldq      xm4, xm5
+    movq           rax, xm4
+%endmacro
+
+%if HIGH_BIT_DEPTH==0
+;-----------------------------------------------------------------------------
+; int pixel_var_wxh( uint8_t *, intptr_t )
+;-----------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal pixel_var_32x32, 2,4,6
+    pxor  m4, m4    ; sum
+    pxor  m5, m5    ; sum squared
+    lea   r2, [3 * r1]
+
+    PROCESS_VAR_32x8_AVX512
+    lea   r0, [r0 + r1 * 4]
+    PROCESS_VAR_32x8_AVX512
+    lea   r0, [r0 + r1 * 4]
+    PROCESS_VAR_32x8_AVX512
+    lea   r0, [r0 + r1 * 4]
+    PROCESS_VAR_32x8_AVX512
+    PROCESS_VAR_AVX512_END
+    RET
+%endif
+
 %macro VAR_AVX512_CORE 1 ; accum
 %if %1
     paddw    m0, m2
