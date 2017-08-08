@@ -5513,7 +5513,62 @@ cglobal cpy1Dto2D_shl_32, 3, 4, 5
     jnz        .loop
     RET
 
+;--------------------------------------------------------------------------------------
+; cpy_1Dto2D_shl avx512 code start
+;--------------------------------------------------------------------------------------
+%macro PROCESS_CPY1Dto2D_SHL_32x8_AVX512 0
+    movu        m1,            [r1 + 0 * mmsize]
+    movu        m2,            [r1 + 1 * mmsize]
+    movu        m3,            [r1 + 2 * mmsize]
+    movu        m4,            [r1 + 3 * mmsize]
+    psllw       m1,            xm0
+    psllw       m2,            xm0
+    psllw       m3,            xm0
+    psllw       m4,            xm0
+    movu        [r0],          m1
+    movu        [r0 + r2],     m2
+    movu        [r0 + 2 * r2], m3
+    movu        [r0 + r3],     m4
 
+    add         r1,            4 * mmsize
+    lea         r0,            [r0 + r2 * 4]
+
+    movu        m1,            [r1 + 0 * mmsize]
+    movu        m2,            [r1 + 1 * mmsize]
+    movu        m3,            [r1 + 2 * mmsize]
+    movu        m4,            [r1 + 3 * mmsize]
+    psllw       m1,            xm0
+    psllw       m2,            xm0
+    psllw       m3,            xm0
+    psllw       m4,            xm0
+    movu        [r0],          m1
+    movu        [r0 + r2],     m2
+    movu        [r0 + 2 * r2], m3
+    movu        [r0 + r3],     m4
+%endmacro
+;--------------------------------------------------------------------------------------
+; void cpy1Dto2D_shl(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal cpy1Dto2D_shl_32, 4, 4, 5
+    add         r2d, r2d
+    movd        xm0, r3d
+    lea         r3, [3 * r2]
+
+    PROCESS_CPY1Dto2D_SHL_32x8_AVX512
+    add         r1, 4 * mmsize
+    lea         r0, [r0 + r2 * 4]
+    PROCESS_CPY1Dto2D_SHL_32x8_AVX512
+    add         r1, 4 * mmsize
+    lea         r0, [r0 + r2 * 4]
+    PROCESS_CPY1Dto2D_SHL_32x8_AVX512
+    add         r1, 4 * mmsize
+    lea         r0, [r0 + r2 * 4]
+    PROCESS_CPY1Dto2D_SHL_32x8_AVX512
+    RET
+;--------------------------------------------------------------------------------------
+; copy_cnt avx512 code end
+;--------------------------------------------------------------------------------------
 ;--------------------------------------------------------------------------------------
 ; uint32_t copy_cnt(int16_t* dst, const int16_t* src, intptr_t srcStride);
 ;--------------------------------------------------------------------------------------
