@@ -3487,6 +3487,165 @@ cglobal pixel_sad_x4_32x64, 6,8,10
     RET
 
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------
+; void pixel_sad_x4_48x64( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, const pixel* pix5, intptr_t frefstride, int32_t* res )
+;------------------------------------------------------------------------------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal pixel_sad_x4_48x64, 4, 9, 20
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+    pxor    m3,  m3
+    mov     r8d,  64/4
+
+    vbroadcasti32x8 m19, [pw_1]
+
+    add     r5d, r5d
+    lea     r7d, [r5 * 3]
+.loop:
+    movu            m4,   [r0]
+    movu            m5,   [r0 + 2 * FENC_STRIDE]
+    movu           ym6,   [r0 + mmsize]
+    vinserti32x8    m6,   [r0 + 2 * FENC_STRIDE + mmsize], 1
+    movu            m7,   [r1]
+    movu            m8,   [r1 + r5]
+    movu           ym9,   [r1 + mmsize]
+    vinserti32x8    m9,   [r1 + r5 + mmsize], 1
+    movu            m10,  [r2]
+    movu            m11,  [r2 + r5]
+    movu           ym12,  [r2 + mmsize]
+    vinserti32x8    m12,  [r2 + r5 + mmsize], 1
+    movu            m13,  [r3]
+    movu            m14,  [r3 + r5]
+    movu           ym15,  [r3 + mmsize]
+    vinserti32x8    m15,  [r3 + r5 + mmsize], 1
+    movu            m16,  [r4]
+    movu            m17,  [r4 + r5]
+    movu           ym18,  [r4 + mmsize]
+    vinserti32x8    m18,  [r4 + r5 + mmsize], 1
+
+    psubw   m7,  m4
+    psubw   m8,  m5
+    psubw   m9,  m6
+    psubw   m10, m4
+    psubw   m11, m5
+    psubw   m12, m6
+    psubw   m13, m4
+    psubw   m14, m5
+    psubw   m15, m6
+    psubw   m16, m4
+    psubw   m17, m5
+    psubw   m18, m6
+
+    pabsw   m7,  m7
+    pabsw   m8,  m8
+    pabsw   m9,  m9
+    pabsw   m10, m10
+    pabsw   m11, m11
+    pabsw   m12, m12
+    pabsw   m13, m13
+    pabsw   m14, m14
+    pabsw   m15, m15
+    pabsw   m16, m16
+    pabsw   m17, m17
+    pabsw   m18, m18
+
+    paddw   m7,  m8
+    paddw   m7,  m9
+    paddw   m10, m11
+    paddw   m10, m12
+    paddw   m13, m14
+    paddw   m13, m15
+    paddw   m16, m17
+    paddw   m16, m18
+
+    pmaddwd m7,  m19
+    paddd   m0,  m7
+    pmaddwd m10, m19
+    paddd   m1,  m10
+    pmaddwd m13, m19
+    paddd   m2,  m13
+    pmaddwd m16, m19
+    paddd   m3,  m16
+
+    movu            m4,   [r0 + 4 * FENC_STRIDE]
+    movu            m5,   [r0 + 6 * FENC_STRIDE]
+    movu           ym6,   [r0 + 4 * FENC_STRIDE + mmsize]
+    vinserti32x8    m6,   [r0 + 6 * FENC_STRIDE + mmsize], 1
+    movu            m7,   [r1 + 2 * r5]
+    movu            m8,   [r1 + r7]
+    movu           ym9,   [r1 + 2 * r5 + mmsize]
+    vinserti32x8    m9,   [r1 + r7 + mmsize], 1
+    movu            m10,  [r2 + 2 * r5]
+    movu            m11,  [r2 + r7]
+    movu           ym12,  [r2 + 2 * r5 + mmsize]
+    vinserti32x8    m12,  [r2 + r7 + mmsize], 1
+    movu            m13,  [r3 + 2 * r5]
+    movu            m14,  [r3 + r7]
+    movu           ym15,  [r3 + 2 * r5 + mmsize]
+    vinserti32x8    m15,  [r3 + r7 + mmsize], 1
+    movu            m16,  [r4 + 2 * r5]
+    movu            m17,  [r4 + r7]
+    movu           ym18,  [r4 + 2 * r5 + mmsize]
+    vinserti32x8    m18,  [r4 + r7 + mmsize], 1
+
+
+    psubw   m7,  m4
+    psubw   m8,  m5
+    psubw   m9,  m6
+    psubw   m10, m4
+    psubw   m11, m5
+    psubw   m12, m6
+    psubw   m13, m4
+    psubw   m14, m5
+    psubw   m15, m6
+    psubw   m16, m4
+    psubw   m17, m5
+    psubw   m18, m6
+
+    pabsw   m7,  m7
+    pabsw   m8,  m8
+    pabsw   m9,  m9
+    pabsw   m10, m10
+    pabsw   m11, m11
+    pabsw   m12, m12
+    pabsw   m13, m13
+    pabsw   m14, m14
+    pabsw   m15, m15
+    pabsw   m16, m16
+    pabsw   m17, m17
+    pabsw   m18, m18
+
+    paddw   m7,  m8
+    paddw   m7,  m9
+    paddw   m10, m11
+    paddw   m10, m12
+    paddw   m13, m14
+    paddw   m13, m15
+    paddw   m16, m17
+    paddw   m16, m18
+
+    pmaddwd m7,  m19
+    paddd   m0,  m7
+    pmaddwd m10, m19
+    paddd   m1,  m10
+    pmaddwd m13, m19
+    paddd   m2,  m13
+    pmaddwd m16, m19
+    paddd   m3,  m16
+
+    add             r0, FENC_STRIDE * 8
+    lea             r1, [r1 + r5 * 4]
+    lea             r2, [r2 + r5 * 4]
+    lea             r3, [r3 + r5 * 4]
+    lea             r4, [r4 + r5 * 4]
+
+    dec     r8d
+    jg      .loop
+
+    PROCESS_SAD_X4_END_AVX512
+    RET
+
+;------------------------------------------------------------------------------------------------------------------------------------------------------------
 ; void pixel_sad_x4_64x%1( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, const pixel* pix5, intptr_t frefstride, int32_t* res )
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------
 
