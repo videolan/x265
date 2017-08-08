@@ -2302,6 +2302,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_32x24].sad_x3 = PFX(pixel_sad_x3_32x24_avx512);
         p.pu[LUMA_32x32].sad_x3 = PFX(pixel_sad_x3_32x32_avx512);
         p.pu[LUMA_32x64].sad_x3 = PFX(pixel_sad_x3_32x64_avx512);
+        p.pu[LUMA_48x64].sad_x3 = PFX(pixel_sad_x3_48x64_avx512);
         p.pu[LUMA_64x16].sad_x3 = PFX(pixel_sad_x3_64x16_avx512);
         p.pu[LUMA_64x32].sad_x3 = PFX(pixel_sad_x3_64x32_avx512);
         p.pu[LUMA_64x48].sad_x3 = PFX(pixel_sad_x3_64x48_avx512);
