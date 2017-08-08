@@ -68,6 +68,10 @@ protected:
 #include <intrin.h>
 #elif HAVE_RDTSC
 #include <intrin.h>
+#elif (!defined(__APPLE__) && (defined (__GNUC__) && (defined(__x86_64__) || defined(__i386__))))
+#include <x86intrin.h>
+#elif ( !defined(__APPLE__) && defined (__GNUC__) && defined(__ARM_NEON__))
+#include <arm_neon.h>
 #elif defined(__GNUC__)
 /* fallback for older GCC/MinGW */
 static inline uint32_t __rdtsc(void)
