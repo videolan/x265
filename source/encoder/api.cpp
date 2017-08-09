@@ -257,7 +257,9 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     {
         numEncoded = encoder->encode(pic_in, pic_out);
     }
-    while (numEncoded == 0 && !pic_in && encoder->m_numDelayedPic && !encoder->m_latestParam->forceFlush);
+    while ((numEncoded == 0 && !pic_in && encoder->m_numDelayedPic && !encoder->m_latestParam->forceFlush) && !encoder->m_externalFlush);
+    if (numEncoded)
+        encoder->m_externalFlush = false;
 
     // do not allow reuse of these buffers for more than one picture. The
     // encoder now owns these analysisData buffers.

@@ -2342,6 +2342,10 @@ void Encoder::initPPS(PPS *pps)
 void Encoder::configure(x265_param *p)
 {
     this->m_param = p;
+    if (p->bMVType == AVC_INFO)
+        this->m_externalFlush = true;
+    else 
+        this->m_externalFlush = false;
     if (p->keyframeMax < 0)
     {
         /* A negative max GOP size indicates the user wants only one I frame at

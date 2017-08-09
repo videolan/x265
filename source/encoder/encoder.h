@@ -138,6 +138,7 @@ public:
     RateControl*       m_rateControl;
     Lookahead*         m_lookahead;
 
+    bool               m_externalFlush;
     /* Collect statistics globally */
     EncStats           m_analyzeAll;
     EncStats           m_analyzeI;
