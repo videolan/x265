@@ -209,6 +209,8 @@ public:
 
     int getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc);
 
+    int setAnalysisDataAfterZScan(x265_analysis_data *analysis_data, Frame* curFrame);
+
     void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);

@@ -487,6 +487,95 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc)
     return 0;
 }
 
+int Encoder::setAnalysisDataAfterZScan(x265_analysis_data *analysis_data, Frame* curFrame)
+{
+    int mbImageWidth, mbImageHeight;
+    mbImageWidth = (curFrame->m_fencPic->m_picWidth + 16 - 1) >> 4; //AVC block sizes
+    mbImageHeight = (curFrame->m_fencPic->m_picHeight + 16 - 1) >> 4;
+    if (analysis_data->sliceType == X265_TYPE_IDR || analysis_data->sliceType == X265_TYPE_I)
+    {
+        curFrame->m_analysisData.sliceType = X265_TYPE_I;
+        if (m_param->analysisReuseLevel < 7)
+            return -1;
+        curFrame->m_analysisData.numPartitions = m_param->num4x4Partitions;
+        int num16x16inCUWidth = m_param->maxCUSize >> 4;
+        uint32_t ctuAddr, offset, cuPos;
+        analysis_intra_data * intraData = (analysis_intra_data *)curFrame->m_analysisData.intraData;
+        analysis_intra_data * srcIntraData = (analysis_intra_data *)analysis_data->intraData;
+        for (int i = 0; i < mbImageHeight; i++)
+        {
+            for (int j = 0; j < mbImageWidth; j++)
+            {
+                int mbIndex = j + i * mbImageWidth;
+                ctuAddr = (j / num16x16inCUWidth + ((i / num16x16inCUWidth) * (mbImageWidth / num16x16inCUWidth)));
+                offset = ((i % num16x16inCUWidth) << 5) + ((j % num16x16inCUWidth) << 4);
+                if ((j % 4 >= 2) && m_param->maxCUSize == 64)
+                    offset += (2 * 16);
+                if ((i % 4 >= 2) && m_param->maxCUSize == 64)
+                    offset += (2 * 32);
+                cuPos = ctuAddr  * curFrame->m_analysisData.numPartitions + offset;
+                memcpy(&(intraData)->depth[cuPos], &(srcIntraData)->depth[mbIndex * 16], 16);
+                memcpy(&(intraData)->chromaModes[cuPos], &(srcIntraData)->chromaModes[mbIndex * 16], 16);
+                memcpy(&(intraData)->partSizes[cuPos], &(srcIntraData)->partSizes[mbIndex * 16], 16);
+                memcpy(&(intraData)->partSizes[cuPos], &(srcIntraData)->partSizes[mbIndex * 16], 16);
+            }
+        }
+        memcpy(&(intraData)->modes, (srcIntraData)->modes, curFrame->m_analysisData.numPartitions * analysis_data->numCUsInFrame);
+    }
+    else
+    {
+        uint32_t numDir = analysis_data->sliceType == X265_TYPE_P ? 1 : 2;
+        if (m_param->analysisReuseLevel < 7)
+            return -1;
+        curFrame->m_analysisData.numPartitions = m_param->num4x4Partitions;
+        int num16x16inCUWidth = m_param->maxCUSize >> 4;
+        uint32_t ctuAddr, offset, cuPos;
+        analysis_inter_data * interData = (analysis_inter_data *)curFrame->m_analysisData.interData;
+        analysis_inter_data * srcInterData = (analysis_inter_data*)analysis_data->interData;
+        for (int i = 0; i < mbImageHeight; i++)
+        {
+            for (int j = 0; j < mbImageWidth; j++)
+            {
+                int mbIndex = j + i * mbImageWidth;
+                ctuAddr = (j / num16x16inCUWidth + ((i / num16x16inCUWidth) * (mbImageWidth / num16x16inCUWidth)));
+                offset = ((i % num16x16inCUWidth) << 5) + ((j % num16x16inCUWidth) << 4);
+                if ((j % 4 >= 2) && m_param->maxCUSize == 64)
+                    offset += (2 * 16);
+                if ((i % 4 >= 2) && m_param->maxCUSize == 64)
+                    offset += (2 * 32);
+                cuPos = ctuAddr  * curFrame->m_analysisData.numPartitions + offset;
+                memcpy(&(interData)->depth[cuPos], &(srcInterData)->depth[mbIndex * 16], 16);
+                memcpy(&(interData)->modes[cuPos], &(srcInterData)->modes[mbIndex * 16], 16);
+
+                memcpy(&(interData)->partSize[cuPos], &(srcInterData)->partSize[mbIndex * 16], 16);
+
+                int bytes = curFrame->m_analysisData.numPartitions >> ((srcInterData)->depth[mbIndex * 16] * 2);
+                int cuCount = 1;
+                if (bytes < 16)
+                    cuCount = 4;
+                for (int cuI = 0; cuI < cuCount; cuI++)
+                {
+                    int numPU = nbPartsTable[(srcInterData)->partSize[mbIndex * 16 + cuI * bytes]];
+                    for (int pu = 0; pu < numPU; pu++)
+                    {
+                        int cuOffset = cuI * bytes + pu;
+                        (interData)->mergeFlag[cuPos + cuOffset] = (srcInterData)->mergeFlag[(mbIndex * 16) + cuOffset];
+
+                        (interData)->interDir[cuPos + cuOffset] = (srcInterData)->interDir[(mbIndex * 16) + cuOffset];
+                        for (uint32_t k = 0; k < numDir; k++)
+                        {
+                            (interData)->mvpIdx[k][cuPos + cuOffset] = (srcInterData)->mvpIdx[k][(mbIndex * 16) + cuOffset];
+                            (interData)->refIdx[k][cuPos + cuOffset] = (srcInterData)->refIdx[k][(mbIndex * 16) + cuOffset];
+                            memcpy(&(interData)->mv[k][cuPos + cuOffset], &(srcInterData)->mv[k][(mbIndex * 16) + cuOffset], sizeof(MV));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 void Encoder::destroy()
 {
 #if ENABLE_HDR10_PLUS
