@@ -113,6 +113,8 @@ public:
     x265_analysis_2Pass    m_analysis2Pass;
     RcStats*               m_rcData;
 
+    Event                  m_copyMVType;
+
     x265_ctu_info_t**      m_ctuInfo;
     Event                  m_copied;
     int*                   m_prevCtuInfoChange;
