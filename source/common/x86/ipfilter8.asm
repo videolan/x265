@@ -147,8 +147,8 @@ const tab_c_64_n64, times 8 db 64, -64
 const interp8_hps_shuf,     dd 0, 4, 1, 5, 2, 6, 3, 7
 
 const interp4_horiz_shuf_load1_avx512,  times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
-
 const interp4_horiz_shuf_load2_avx512,  times 2 db 8, 9, 10, 11, 9, 10, 11, 12, 10, 11, 12, 13, 11, 12, 13, 14
+const interp4_horiz_shuf_load3_avx512,  times 2 db 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10
 
 const interp4_horiz_shuf_store1_avx512, dd 0 ,8, 1, 9, 4, 12, 5, 13, 2, 10, 3, 11, 6, 14, 7, 15
 
@@ -10129,4 +10129,91 @@ cglobal interp_4tap_horiz_ps_32x%1, 4,7,9
 
 ;-------------------------------------------------------------------------------------------------------------
 ;ipfilter_chroma_avx512 code end
+;-------------------------------------------------------------------------------------------------------------
+;-------------------------------------------------------------------------------------------------------------
+;ipfilter_luma_avx512 code start
+;-------------------------------------------------------------------------------------------------------------
+%macro PROCESS_IPFILTER_LUMA_PP_64x1_AVX512 0
+    ; register map
+    ; m0 , m1 interpolate coeff
+    ; m2 , m3, m4  shuffle order table
+    ; m5 - pw_1
+    ; m6 - pw_512
+
+    movu              m7,        [r0]
+    movu              m9,        [r0 + 8]
+
+    pshufb            m8,        m7,        m3
+    pshufb            m7,        m2
+    pshufb            m10,       m9,        m3
+    pshufb            m11,       m9,        m4
+    pshufb            m9,        m2
+
+
+    pmaddubsw         m7,        m0
+    pmaddubsw         m12,       m8,        m1
+    pmaddwd           m7,        m5
+    pmaddwd           m12,       m5
+    paddd             m7,        m12
+
+    pmaddubsw         m8,        m0
+    pmaddubsw         m12,       m9,        m1
+    pmaddwd           m8,        m5
+    pmaddwd           m12,       m5
+    paddd             m8,        m12
+
+    pmaddubsw         m9,        m0
+    pmaddubsw         m12,       m10,       m1
+    pmaddwd           m9,        m5
+    pmaddwd           m12,       m5
+    paddd             m9,        m12
+
+    pmaddubsw         m10,       m0
+    pmaddubsw         m12,      m11,        m1
+    pmaddwd           m10,      m5
+    pmaddwd           m12,      m5
+    paddd             m10,      m12
+
+    packssdw          m7,       m8
+    packssdw          m9,       m10
+    pmulhrsw          m7,       m6
+    pmulhrsw          m9,       m6
+    packuswb          m7,       m9
+    movu              [r2],     m7
+%endmacro
+
+%macro IPFILTER_LUMA_64xN_AVX512 1
+INIT_ZMM avx512
+cglobal interp_8tap_horiz_pp_64x%1, 4,6,13
+    sub               r0,    3
+    mov               r4d,   r4m
+%ifdef PIC
+    lea               r5,        [tab_LumaCoeff]
+    vpbroadcastd      m0,        [r5 + r4 * 8]
+    vpbroadcastd      m1,        [r5 + r4 * 8 + 4]
+%else
+    vpbroadcastd      m0,        [tab_LumaCoeff + r4 * 8]
+    vpbroadcastd      m1,        [tab_LumaCoeff + r4 * 8 + 4]
+%endif
+    vbroadcasti32x8   m2,        [interp4_horiz_shuf_load1_avx512]
+    vbroadcasti32x8   m3,        [interp4_horiz_shuf_load3_avx512]
+    vbroadcasti32x8   m4,        [interp4_horiz_shuf_load2_avx512]
+    vpbroadcastd      m5,        [pw_1]
+    vbroadcasti32x8   m6,        [pw_512]
+
+%rep %1-1
+    PROCESS_IPFILTER_LUMA_PP_64x1_AVX512
+    lea               r0,        [r0 + r1]
+    lea               r2,        [r2 + r3]
+%endrep
+    PROCESS_IPFILTER_LUMA_PP_64x1_AVX512
+    RET
+%endmacro
+
+IPFILTER_LUMA_64xN_AVX512 16
+IPFILTER_LUMA_64xN_AVX512 32
+IPFILTER_LUMA_64xN_AVX512 48
+IPFILTER_LUMA_64xN_AVX512 64
+;-------------------------------------------------------------------------------------------------------------
+;ipfilter_luma_avx512 code end
 ;-------------------------------------------------------------------------------------------------------------
