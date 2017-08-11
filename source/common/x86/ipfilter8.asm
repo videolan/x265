@@ -26,7 +26,7 @@
 %include "x86inc.asm"
 %include "x86util.asm"
 
-SECTION_RODATA 32
+SECTION_RODATA 64
 const tab_Tm,    db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6
                  db 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10
                  db 8, 9,10,11, 9,10,11,12,10,11,12,13,11,12,13, 14
@@ -151,6 +151,9 @@ const interp4_horiz_shuf_load1_avx512,  times 2 db 0, 1, 2, 3, 1, 2, 3, 4, 2, 3,
 const interp4_horiz_shuf_load2_avx512,  times 2 db 8, 9, 10, 11, 9, 10, 11, 12, 10, 11, 12, 13, 11, 12, 13, 14
 
 const interp4_horiz_shuf_store1_avx512, dd 0 ,8, 1, 9, 4, 12, 5, 13, 2, 10, 3, 11, 6, 14, 7, 15
+
+ALIGN 64
+const interp8_hps_shuf_avx512,  dq 0, 4, 1, 5, 2, 6, 3, 7
 
 SECTION .text
 
@@ -9836,7 +9839,7 @@ cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
     FILTER_VER_LUMA_S_AVX2_32x24 sp
     FILTER_VER_LUMA_S_AVX2_32x24 ss
 ;-------------------------------------------------------------------------------------------------------------
-;ipfilter_chroma_pp_avx512 code start
+;ipfilter_chroma_avx512 code start
 ;-------------------------------------------------------------------------------------------------------------
 %macro PROCESS_IPFILTER_CHROMA_PP_64x1_AVX512 0
     ; register map
@@ -9976,6 +9979,86 @@ cglobal interp_4tap_horiz_pp_32x%1, 4,6,10
     IPFILTER_CHROMA_PP_32xN_AVX512 32
     IPFILTER_CHROMA_PP_32xN_AVX512 64
     IPFILTER_CHROMA_PP_32xN_AVX512 48
+
+%macro PROCESS_IPFILTER_CHROMA_PS_64x1_AVX512 0
+    movu               ym6,          [r0]
+    vinserti32x8       m6,           [r0 + 4], 1
+    pshufb             m7,           m6,       m2
+    pshufb             m6,           m1
+    pmaddubsw          m6,           m0
+    pmaddubsw          m7,           m0
+    pmaddwd            m6,           m3
+    pmaddwd            m7,           m3
+
+    movu               ym8,          [r0 + 32]
+    vinserti32x8       m8,           [r0 + 36], 1
+    pshufb             m9,           m8,       m2
+    pshufb             m8,           m1
+    pmaddubsw          m8,           m0
+    pmaddubsw          m9,           m0
+    pmaddwd            m8,           m3
+    pmaddwd            m9,           m3
+
+    packssdw           m6,           m7
+    packssdw           m8,           m9
+    psubw              m6,           m4
+    psubw              m8,           m4
+    vpermq             m6,           m10,       m6
+    vpermq             m8,           m10,       m8
+    movu               [r2],         m6
+    movu               [r2 + mmsize],m8
+%endmacro
+
 ;-------------------------------------------------------------------------------------------------------------
-;ipfilter_chroma_pp_avx512 code end
+; void interp_horiz_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
+;-------------------------------------------------------------------------------------------------------------
+%macro IPFILTER_CHROMA_PS_64xN_AVX512 1
+INIT_ZMM avx512
+cglobal interp_4tap_horiz_ps_64x%1, 4,7,11
+    mov             r4d, r4m
+    mov             r5d, r5m
+
+%ifdef PIC
+    lea               r6,           [tab_ChromaCoeff]
+    vpbroadcastd      m0,           [r6 + r4 * 4]
+%else
+    vpbroadcastd      m0,           [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    vbroadcasti32x8    m1,           [interp4_horiz_shuf_load1_avx512]
+    vbroadcasti32x8    m2,           [interp4_horiz_shuf_load2_avx512]
+    vbroadcasti32x8    m3,           [pw_1]
+    vbroadcasti32x8    m4,           [pw_2000]
+    mova               m10,          [interp8_hps_shuf_avx512]
+
+    ; register map
+    ; m0    - interpolate coeff
+    ; m1,m2 - load shuffle order table
+    ; m3    - constant word 1
+    ; m4    - constant word 2000
+    ; m10   - store shuffle order table
+
+    mov               r6d,         %1
+    dec               r0
+    test              r5d,         r5d
+    je                .loop
+    sub               r0,          r1
+    add               r6d,         3
+
+.loop:
+    PROCESS_IPFILTER_CHROMA_PS_64x1_AVX512
+    lea               r2,           [r2 + 2 * r3]
+    lea               r0,           [r0 + r1]
+    dec               r6d
+    jnz               .loop
+    RET
+%endmacro
+
+    IPFILTER_CHROMA_PS_64xN_AVX512 64
+    IPFILTER_CHROMA_PS_64xN_AVX512 32
+    IPFILTER_CHROMA_PS_64xN_AVX512 48
+    IPFILTER_CHROMA_PS_64xN_AVX512 16
+
+;-------------------------------------------------------------------------------------------------------------
+;ipfilter_chroma_avx512 code end
 ;-------------------------------------------------------------------------------------------------------------
