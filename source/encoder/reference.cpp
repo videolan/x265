@@ -155,12 +155,10 @@ void MotionReference::applyWeight(uint32_t finishedRows, uint32_t maxNumRows, ui
 
         const pixel* src = reconPic->m_picOrg[c] + numWeightedRows * cuHeight * stride;
         pixel* dst = fpelPlane[c] + numWeightedRows * cuHeight * stride;
-
         // Computing weighted CU rows
         int correction = IF_INTERNAL_PREC - X265_DEPTH; // intermediate interpolation depth
-        int padwidth = (width + 15) & ~15;              // weightp assembly needs even 16 byte widths
+        int padwidth = (width + 31) & ~31;              // weightp assembly needs even 32 byte widths
         primitives.weight_pp(src, dst, stride, padwidth, height, w[c].weight, w[c].round << correction, w[c].shift + correction, w[c].offset);
-
         // Extending Left & Right
         primitives.extendRowBorder(dst, stride, width, height, marginX);
 

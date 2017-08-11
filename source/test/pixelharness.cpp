@@ -291,6 +291,9 @@ bool PixelHarness::check_weightp(weightp_pp_t ref, weightp_pp_t opt)
     memset(opt_dest, 0, 64 * 64 * sizeof(pixel));
     int j = 0;
     int width = 16 * (rand() % 4 + 1);
+    int cpuid = X265_NS::cpu_detect();
+    if (cpuid & X265_CPU_AVX512)
+        width = 32 * (rand() % 2 + 1);
     int height = 8;
     int w0 = rand() % 128;
     int shift = rand() % 8; // maximum is 7, see setFromWeightAndOffset()

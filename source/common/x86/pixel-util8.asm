@@ -1662,6 +1662,116 @@ cglobal weight_pp, 6, 7, 6
     jnz         .loopH
     RET
 %endif
+
+%if HIGH_BIT_DEPTH
+INIT_ZMM avx512
+cglobal weight_pp, 6, 7, 7
+%define correction      (14 - BIT_DEPTH)
+    mov          r6d, r6m
+    shl          r6d, 16 - correction
+    or           r6d, r5d
+
+    movd         xm0, r6d
+    vpbroadcastd  m0, xm0
+    mov          r5d, r7m
+    sub          r5d, correction
+    movd         xm1, r5d
+
+    vpbroadcastd    m2, r8m
+    vbroadcasti32x8 m5, [pw_1]
+    vbroadcasti32x8 m6, [pw_pixel_max]
+
+    add         r2d, r2d
+    add         r3d, r3d
+    sub         r2d, r3d
+    shr         r3d, 6
+
+.loopH:
+    mov          r5d, r3d
+
+.loopW:
+    movu        m4, [r0]
+    punpcklwd   m3, m4, m5
+    pmaddwd     m3, m0
+    psrad       m3, xm1
+    paddd       m3, m2
+
+    punpckhwd   m4, m5
+    pmaddwd     m4, m0
+    psrad       m4, xm1
+    paddd       m4, m2
+
+    packusdw    m3,   m4
+    pminuw      m3,   m6
+    movu        [r1], m3
+
+    add         r0, 64
+    add         r1, 64
+
+    dec         r5d
+    jnz         .loopW
+
+    lea         r0, [r0 + r2]
+    lea         r1, [r1 + r2]
+
+    dec         r4d
+    jnz         .loopH
+%undef correction
+    RET
+%else
+INIT_ZMM avx512
+cglobal weight_pp, 6, 7, 6
+
+    shl          r5d, 6
+    mov          r6d, r6m
+    shl          r6d, 16
+    or           r6d, r5d
+
+    movd         xm0, r6d
+    vpbroadcastd  m0, xm0
+    movd         xm1, r7m
+    vpbroadcastd  m2, r8m
+
+    vbroadcasti32x8 m5, [pw_1]
+
+    sub          r2d, r3d
+    shr          r3d, 5
+
+.loopH:
+    mov          r5d, r3d
+
+.loopW:
+    pmovzxbw    m4, [r0]
+    punpcklwd   m3, m4, m5
+    pmaddwd     m3, m0
+    psrad       m3, xm1
+    paddd       m3, m2
+
+    punpckhwd   m4, m5
+    pmaddwd     m4, m0
+    psrad       m4, xm1
+    paddd       m4, m2
+
+    packssdw       m3,  m4
+    vextracti64x4 ym4,  m3, 1
+    packuswb      ym3,  ym4
+    vpermq        ym3,  ym3, q3120
+    movu          [r1], ym3
+
+    add         r0, 32
+    add         r1, 32
+
+    dec         r5d
+    jnz         .loopW
+
+    lea         r0, [r0 + r2]
+    lea         r1, [r1 + r2]
+
+    dec         r4d
+    jnz         .loopH
+    RET
+%endif
+
 ;-------------------------------------------------------------------------------------------------------------------------------------------------
 ;void weight_sp(int16_t *src, pixel *dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)
 ;-------------------------------------------------------------------------------------------------------------------------------------------------
