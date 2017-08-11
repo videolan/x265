@@ -10010,7 +10010,7 @@ cglobal interp_4tap_horiz_pp_32x%1, 4,6,10
 %endmacro
 
 ;-------------------------------------------------------------------------------------------------------------
-; void interp_horiz_ps_c(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
+; void interp_horiz_ps_64xN(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
 ;-------------------------------------------------------------------------------------------------------------
 %macro IPFILTER_CHROMA_PS_64xN_AVX512 1
 INIT_ZMM avx512
@@ -10058,6 +10058,74 @@ cglobal interp_4tap_horiz_ps_64x%1, 4,7,11
     IPFILTER_CHROMA_PS_64xN_AVX512 32
     IPFILTER_CHROMA_PS_64xN_AVX512 48
     IPFILTER_CHROMA_PS_64xN_AVX512 16
+
+%macro PROCESS_IPFILTER_CHROMA_PS_32x1_AVX512 0
+    movu               ym6,          [r0]
+    vinserti32x8       m6,           [r0 + 4], 1
+    pshufb             m7,           m6,       m2
+    pshufb             m6,           m6,       m1
+    pmaddubsw          m6,           m0
+    pmaddubsw          m7,           m0
+    pmaddwd            m6,           m3
+    pmaddwd            m7,           m3
+
+    packssdw           m6,           m7
+    psubw              m6,           m4
+    vpermq             m6,           m8,       m6
+    movu               [r2],         m6
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_horiz_ps_32xN(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
+;-------------------------------------------------------------------------------------------------------------
+%macro IPFILTER_CHROMA_PS_32xN_AVX512 1
+INIT_ZMM avx512
+cglobal interp_4tap_horiz_ps_32x%1, 4,7,9
+    mov             r4d, r4m
+    mov             r5d, r5m
+
+%ifdef PIC
+    lea               r6,           [tab_ChromaCoeff]
+    vpbroadcastd      m0,           [r6 + r4 * 4]
+%else
+    vpbroadcastd      m0,           [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    vbroadcasti32x8    m1,           [interp4_horiz_shuf_load1_avx512]
+    vbroadcasti32x8    m2,           [interp4_horiz_shuf_load2_avx512]
+    vbroadcasti32x8    m3,           [pw_1]
+    vbroadcasti32x8    m4,           [pw_2000]
+    mova               m8,           [interp8_hps_shuf_avx512]
+
+    ; register map
+    ; m0    - interpolate coeff
+    ; m1,m2 - load shuffle order table
+    ; m3    - constant word 1
+    ; m4    - constant word 2000
+    ; m8   - store shuffle order table
+
+    mov               r6d,         %1
+    dec               r0
+    test              r5d,         r5d
+    je                .loop
+    sub               r0,          r1
+    add               r6d,         3
+
+.loop:
+    PROCESS_IPFILTER_CHROMA_PS_32x1_AVX512
+    lea               r2,           [r2 + 2 * r3]
+    lea               r0,           [r0 + r1]
+    dec               r6d
+    jnz               .loop
+    RET
+%endmacro
+
+    IPFILTER_CHROMA_PS_32xN_AVX512 64
+    IPFILTER_CHROMA_PS_32xN_AVX512 48
+    IPFILTER_CHROMA_PS_32xN_AVX512 32
+    IPFILTER_CHROMA_PS_32xN_AVX512 24
+    IPFILTER_CHROMA_PS_32xN_AVX512 16
+    IPFILTER_CHROMA_PS_32xN_AVX512 8
 
 ;-------------------------------------------------------------------------------------------------------------
 ;ipfilter_chroma_avx512 code end
