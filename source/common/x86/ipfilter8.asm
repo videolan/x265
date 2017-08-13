@@ -9907,6 +9907,48 @@ cglobal interp_8tap_vert_%1_32x24, 4, 10, 15
     vextracti32x8    [r2 + r3],      m5,            1
 %endmacro
 
+%macro PROCESS_IPFILTER_CHROMA_PP_16x4_AVX512 0
+    ; register map
+    ; m0 - interpolate coeff
+    ; m1, m2 - shuffle order table
+    ; m3 - constant word 1
+    ; m4 - constant word 512
+
+    movu              xm5,           [r0]
+    vinserti32x4       m5,           [r0 + r1],            1
+    vinserti32x4       m5,           [r0 + 2 * r1],        2
+    vinserti32x4       m5,           [r0 + r6],            3
+    pshufb             m6,           m5,       m2
+    pshufb             m5,           m1
+
+    movu              xm7,           [r0 + 4]
+    vinserti32x4       m7,           [r0 + r1 + 4],        1
+    vinserti32x4       m7,           [r0 + 2 * r1 + 4],    2
+    vinserti32x4       m7,           [r0 + r6 + 4],        3
+    pshufb             m8,           m7,       m2
+    pshufb             m7,           m1
+
+    pmaddubsw          m5,           m0
+    pmaddubsw          m7,           m0
+    pmaddwd            m5,           m3
+    pmaddwd            m7,           m3
+
+    pmaddubsw          m6,           m0
+    pmaddubsw          m8,           m0
+    pmaddwd            m6,           m3
+    pmaddwd            m8,           m3
+
+    packssdw           m5,           m7
+    packssdw           m6,           m8
+    pmulhrsw           m5,           m4
+    pmulhrsw           m6,           m4
+    packuswb           m5,           m6
+    movu              [r2],          xm5
+    vextracti32x4     [r2 + r3],     m5,       1
+    vextracti32x4     [r2 + 2 * r3], m5,       2
+    vextracti32x4     [r2 + r7],     m5,       3
+%endmacro
+
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp_64xN(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
 ;-------------------------------------------------------------------------------------------------------------
@@ -9975,6 +10017,42 @@ cglobal interp_4tap_horiz_pp_32x%1, 4,6,9
     IPFILTER_CHROMA_PP_32xN_AVX512 32
     IPFILTER_CHROMA_PP_32xN_AVX512 64
     IPFILTER_CHROMA_PP_32xN_AVX512 48
+
+%macro IPFILTER_CHROMA_PP_16xN_AVX512 1
+INIT_ZMM avx512
+cglobal interp_4tap_horiz_pp_16x%1, 4,8,9
+    mov               r4d,          r4m
+    lea               r6,           [3 * r1]
+    lea               r7,           [3 * r3]
+%ifdef PIC
+    lea               r5,           [tab_ChromaCoeff]
+    vpbroadcastd      m0,           [r5 + r4 * 4]
+%else
+    vpbroadcastd      m0,           [tab_ChromaCoeff + r4 * 4]
+%endif
+
+    vbroadcasti32x8   m1,           [interp4_horiz_shuf_load1_avx512]
+    vbroadcasti32x8   m2,           [interp4_horiz_shuf_load2_avx512]
+    vbroadcasti32x8   m3,           [pw_1]
+    vbroadcasti32x8   m4,           [pw_512]
+    dec               r0
+
+%rep %1/4 - 1
+    PROCESS_IPFILTER_CHROMA_PP_16x4_AVX512
+    lea               r2,           [r2 + 4 * r3]
+    lea               r0,           [r0 + 4 * r1]
+%endrep
+    PROCESS_IPFILTER_CHROMA_PP_16x4_AVX512
+    RET
+%endmacro
+
+    IPFILTER_CHROMA_PP_16xN_AVX512 4
+    IPFILTER_CHROMA_PP_16xN_AVX512 8
+    IPFILTER_CHROMA_PP_16xN_AVX512 12
+    IPFILTER_CHROMA_PP_16xN_AVX512 16
+    IPFILTER_CHROMA_PP_16xN_AVX512 24
+    IPFILTER_CHROMA_PP_16xN_AVX512 32
+    IPFILTER_CHROMA_PP_16xN_AVX512 64
 
 %macro PROCESS_IPFILTER_CHROMA_PS_64x1_AVX512 0
     movu               ym6,          [r0]
