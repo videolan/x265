@@ -2191,6 +2191,25 @@ BLOCKCOPY_SP_W64_H4_avx2 64, 64
     movu               [r0 + r5],      m2
 %endmacro
 
+%macro PROCESS_BLOCKCOPY_SP_32x4_AVX512 0
+    movu               m0,             [r2]
+    movu               m1,             [r2 + r3]
+    movu               m2,             [r2 + 2 * r3]
+    movu               m3,             [r2 + r4]
+
+    packuswb           m0,             m1
+    packuswb           m2,             m3
+    vpermq             m0,             m4,         m0
+    vpermq             m2,             m4,         m2
+    movu               [r0],           ym0
+    vextracti32x8      [r0 + r1],      m0,         1
+    movu               [r0 + 2 * r1],  ym2
+    vextracti32x8      [r0 + r5],      m2,         1
+%endmacro
+
+;-----------------------------------------------------------------------------
+; void blockcopy_sp_%1x%2(pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)
+;-----------------------------------------------------------------------------
 INIT_ZMM avx512
 cglobal blockcopy_sp_64x64, 4, 6, 5
     mova   m4, [shuf1_avx512]
@@ -2205,6 +2224,26 @@ cglobal blockcopy_sp_64x64, 4, 6, 5
 %endrep
     PROCESS_BLOCKCOPY_SP_64x4_AVX512
     RET
+
+%macro BLOCKCOPY_SP_32xN_AVX512 1
+INIT_ZMM avx512
+cglobal blockcopy_sp_32x%1, 4, 6, 5
+    mova   m4, [shuf1_avx512]
+    add    r3,  r3
+    lea    r4,  [3 * r3]
+    lea    r5,  [3 * r1]
+
+%rep %1/4 - 1
+    PROCESS_BLOCKCOPY_SP_32x4_AVX512
+    lea    r0, [r0 + 4 * r1]
+    lea    r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_BLOCKCOPY_SP_32x4_AVX512
+    RET
+%endmacro
+
+BLOCKCOPY_SP_32xN_AVX512 32
+BLOCKCOPY_SP_32xN_AVX512 64
 
 ;-----------------------------------------------------------------------------
 ; void blockfill_s_4x4(int16_t* dst, intptr_t dstride, int16_t val)
