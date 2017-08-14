@@ -26,7 +26,10 @@
 %include "x86inc.asm"
 %include "x86util.asm"
 
-SECTION_RODATA 32
+SECTION_RODATA 64
+
+ALIGN 64
+const shuf1_avx512,  dq 0, 2, 4, 6, 1, 3, 5, 7
 
 cextern pb_4
 cextern pb_1
@@ -2162,7 +2165,7 @@ cglobal blockcopy_sp_%1x%2, 4, 7, 4, dst, dstStride, src, srcStride
 
 BLOCKCOPY_SP_W64_H4_avx2 64, 64
 
-%macro PROCESS_BLOCKCOPY_SP_64x8_AVX512 0
+%macro PROCESS_BLOCKCOPY_SP_64x4_AVX512 0
     movu               m0,             [r2]
     movu               m1,             [r2 + 64]
     movu               m2,             [r2 + r3]
@@ -2170,10 +2173,8 @@ BLOCKCOPY_SP_W64_H4_avx2 64, 64
 
     packuswb           m0,             m1
     packuswb           m2,             m3
-    vpermq             m0,             m0,                 11011000b
-    vpermq             m2,             m2,                 11011000b
-    vshufi64x2         m0,             m0,                 11011000b
-    vshufi64x2         m2,             m2,                 11011000b
+    vpermq             m0,             m4,         m0
+    vpermq             m2,             m4,         m2
     movu               [r0],           m0
     movu               [r0 + r1],      m2
 
@@ -2184,73 +2185,25 @@ BLOCKCOPY_SP_W64_H4_avx2 64, 64
 
     packuswb           m0,             m1
     packuswb           m2,             m3
-    vpermq             m0,             m0,                 11011000b
-    vpermq             m2,             m2,                 11011000b
-    vshufi64x2         m0,             m0,                 11011000b
-    vshufi64x2         m2,             m2,                 11011000b
-    movu               [r0 + 2 * r1],  m0
-    movu               [r0 + r5],      m2
-
-    lea    r0, [r0 + 4 * r1]
-    lea    r2, [r2 + 4 * r3]
-
-    movu               m0,             [r2]
-    movu               m1,             [r2 + 64]
-    movu               m2,             [r2 + r3]
-    movu               m3,             [r2 + r3 + 64]
-
-    packuswb           m0,             m1
-    packuswb           m2,             m3
-    vpermq             m0,             m0,                 11011000b
-    vpermq             m2,             m2,                 11011000b
-    vshufi64x2         m0,             m0,                 11011000b
-    vshufi64x2         m2,             m2,                 11011000b
-    movu               [r0],           m0
-    movu               [r0 + r1],      m2
-
-    movu               m0,             [r2 + 2 * r3]
-    movu               m1,             [r2 + 2 * r3 + 64]
-    movu               m2,             [r2 + r4]
-    movu               m3,             [r2 + r4 + 64]
-
-    packuswb           m0,             m1
-    packuswb           m2,             m3
-    vpermq             m0,             m0,                 11011000b
-    vpermq             m2,             m2,                 11011000b
-    vshufi64x2         m0,             m0,                 11011000b
-    vshufi64x2         m2,             m2,                 11011000b
+    vpermq             m0,             m4,         m0
+    vpermq             m2,             m4,         m2
     movu               [r0 + 2 * r1],  m0
     movu               [r0 + r5],      m2
 %endmacro
 
 INIT_ZMM avx512
-cglobal blockcopy_sp_64x64, 4, 6, 4
+cglobal blockcopy_sp_64x64, 4, 6, 5
+    mova   m4, [shuf1_avx512]
     add    r3,  r3
     lea    r4,  [3 * r3]
     lea    r5,  [3 * r1]
 
-    PROCESS_BLOCKCOPY_SP_64x8_AVX512
+%rep 15
+    PROCESS_BLOCKCOPY_SP_64x4_AVX512
     lea    r0, [r0 + 4 * r1]
     lea    r2, [r2 + 4 * r3]
-    PROCESS_BLOCKCOPY_SP_64x8_AVX512
-    lea    r0, [r0 + 4 * r1]
-    lea    r2, [r2 + 4 * r3]
-    PROCESS_BLOCKCOPY_SP_64x8_AVX512
-    lea    r0, [r0 + 4 * r1]
-    lea    r2, [r2 + 4 * r3]
-    PROCESS_BLOCKCOPY_SP_64x8_AVX512
-    lea    r0, [r0 + 4 * r1]
-    lea    r2, [r2 + 4 * r3]
-    PROCESS_BLOCKCOPY_SP_64x8_AVX512
-    lea    r0, [r0 + 4 * r1]
-    lea    r2, [r2 + 4 * r3]
-    PROCESS_BLOCKCOPY_SP_64x8_AVX512
-    lea    r0, [r0 + 4 * r1]
-    lea    r2, [r2 + 4 * r3]
-    PROCESS_BLOCKCOPY_SP_64x8_AVX512
-    lea    r0, [r0 + 4 * r1]
-    lea    r2, [r2 + 4 * r3]
-    PROCESS_BLOCKCOPY_SP_64x8_AVX512
+%endrep
+    PROCESS_BLOCKCOPY_SP_64x4_AVX512
     RET
 
 ;-----------------------------------------------------------------------------
