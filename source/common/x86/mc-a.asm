@@ -46,13 +46,10 @@
     %error Unsupport bit depth!
 %endif
 
-SECTION_RODATA 32
+SECTION_RODATA 64
 
-ch_shuf: times 2 db 0,2,2,4,4,6,6,8,1,3,3,5,5,7,7,9
-ch_shuf_adj: times 8 db 0
-             times 8 db 2
-             times 8 db 4
-             times 8 db 6
+ALIGN 64
+const shuf_avx512,  dq 0, 2, 4, 6, 1, 3, 5, 7
 
 SECTION .text
 
@@ -3289,8 +3286,9 @@ ADDAVG_W48_H2_AVX2 64
 %macro PROCESS_ADDAVG_64x2_AVX512 0
     movu            m0, [r0]
     movu            m1, [r1]
-    movu            m2, [r0 + 64]
-    movu            m3, [r1 + 64]
+    movu            m2, [r0 + mmsize]
+    movu            m3, [r1 + mmsize]
+
     paddw           m0, m1
     pmulhrsw        m0, m4
     paddw           m0, m5
@@ -3299,14 +3297,14 @@ ADDAVG_W48_H2_AVX2 64
     paddw           m2, m5
 
     packuswb        m0, m2
-    vpermq          m0, m0, 11011000b
-    vshufi64x2      m0, m0, 11011000b
+    vpermq          m0, m6, m0
     movu            [r2], m0
 
     movu            m0, [r0 + r3]
     movu            m1, [r1 + r4]
-    movu            m2, [r0 + r3 + 64]
-    movu            m3, [r1 + r4 + 64]
+    movu            m2, [r0 + r3 + mmsize]
+    movu            m3, [r1 + r4 + mmsize]
+
     paddw           m0, m1
     pmulhrsw        m0, m4
     paddw           m0, m5
@@ -3315,8 +3313,7 @@ ADDAVG_W48_H2_AVX2 64
     paddw           m2, m5
 
     packuswb        m0, m2
-    vpermq          m0, m0, 11011000b
-    vshufi64x2      m0, m0, 11011000b
+    vpermq          m0, m6, m0
     movu            [r2 + r5], m0
 %endmacro
 
@@ -3325,9 +3322,11 @@ ADDAVG_W48_H2_AVX2 64
 ;--------------------------------------------------------------------------------------------------------------------
 %macro ADDAVG_W64_AVX512 1
 INIT_ZMM avx512
-cglobal addAvg_64x%1, 6,6,6
+cglobal addAvg_64x%1, 6,6,7
     vbroadcasti32x8 m4, [pw_256]
     vbroadcasti32x8 m5, [pw_128]
+    mova            m6, [shuf_avx512]
+
     add             r3, r3
     add             r4, r4
 
