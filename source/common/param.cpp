@@ -1238,10 +1238,10 @@ int x265_check_params(x265_param* param)
           "Video Format must be component,"
           " pal, ntsc, secam, mac or undef");
     CHECK(param->vui.colorPrimaries < 0
-          || param->vui.colorPrimaries > 9
+          || param->vui.colorPrimaries > 12
           || param->vui.colorPrimaries == 3,
           "Color Primaries must be undef, bt709, bt470m,"
-          " bt470bg, smpte170m, smpte240m, film or bt2020");
+          " bt470bg, smpte170m, smpte240m, film, bt2020, smpte-st-428, smpte-rp-431 or smpte-eg-432");
     CHECK(param->vui.transferCharacteristics < 0
           || param->vui.transferCharacteristics > 18
           || param->vui.transferCharacteristics == 3,
@@ -1249,10 +1249,10 @@ int x265_check_params(x265_param* param)
           " smpte170m, smpte240m, linear, log100, log316, iec61966-2-4, bt1361e,"
           " iec61966-2-1, bt2020-10, bt2020-12, smpte-st-2084, smpte-st-428 or arib-std-b67");
     CHECK(param->vui.matrixCoeffs < 0
-          || param->vui.matrixCoeffs > 10
+          || param->vui.matrixCoeffs > 14
           || param->vui.matrixCoeffs == 3,
           "Matrix Coefficients must be undef, bt709, fcc, bt470bg, smpte170m,"
-          " smpte240m, GBR, YCgCo, bt2020nc or bt2020c");
+          " smpte240m, GBR, YCgCo, bt2020nc, bt2020c, smpte-st-2085, chroma-nc, chroma-c or ictcp");
     CHECK(param->vui.chromaSampleLocTypeTopField < 0
           || param->vui.chromaSampleLocTypeTopField > 5,
           "Chroma Sample Location Type Top Field must be 0-5");

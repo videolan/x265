@@ -1912,6 +1912,9 @@ VUI fields must be manually specified.
 	7. smpte240m
 	8. film
 	9. bt2020
+    10. smpte-st-428
+    11. smpte-rp-431
+    12. smpte-eg-432
 
 .. option:: --transfer <integer|string>
 
@@ -1952,6 +1955,10 @@ VUI fields must be manually specified.
 	8. YCgCo
 	9. bt2020nc
 	10. bt2020c
+    11. smpte-st-2085
+    12. chroma-nc
+    13. chroma-c
+    14. ictcp
 
 .. option:: --chromaloc <0..5>
 

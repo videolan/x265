@@ -506,12 +506,12 @@ static void showHelp(x265_param *param)
     H0("   --videoformat <string>        Specify video format from undef, component, pal, ntsc, secam, mac. Default undef\n");
     H0("   --range <string>              Specify black level and range of luma and chroma signals as full or limited Default limited\n");
     H0("   --colorprim <string>          Specify color primaries from undef, bt709, bt470m, bt470bg, smpte170m,\n");
-    H0("                                 smpte240m, film, bt2020. Default undef\n");
+    H0("                                 smpte240m, film, bt2020, smpte-st-428, smpte-rp-431, smpte-eg-432. Default undef\n");
     H0("   --transfer <string>           Specify transfer characteristics from undef, bt709, bt470m, bt470bg, smpte170m,\n");
     H0("                                 smpte240m, linear, log100, log316, iec61966-2-4, bt1361e, iec61966-2-1,\n");
     H0("                                 bt2020-10, bt2020-12, smpte-st-2084, smpte-st-428, arib-std-b67. Default undef\n");
     H1("   --colormatrix <string>        Specify color matrix setting from undef, bt709, fcc, bt470bg, smpte170m,\n");
-    H1("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c. Default undef\n");
+    H1("                                 smpte240m, GBR, YCgCo, bt2020nc, bt2020c, smpte-st-2085, chroma-nc, chroma-c, ictcp. Default undef\n");
     H1("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
     H0("   --master-display <string>     SMPTE ST 2086 master display color volume info SEI (HDR)\n");
     H0("                                    format: G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)\n");
