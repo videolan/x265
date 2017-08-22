@@ -3317,6 +3317,24 @@ ADDAVG_W48_H2_AVX2 64
     movu            [r2 + r5], m0
 %endmacro
 
+%macro PROCESS_ADDAVG_32x2_AVX512 0
+    movu            m0,         [r0]
+    movu            m1,         [r1]
+    movu            m2,         [r0 + r3]
+    movu            m3,         [r1 + r4]
+
+    paddw           m0,         m1
+    pmulhrsw        m0,         m4
+    paddw           m0,         m5
+    paddw           m2,         m3
+    pmulhrsw        m2,         m4
+    paddw           m2,         m5
+
+    packuswb        m0,         m2
+    vpermq          m0,         m6,     m0
+    movu            [r2],       ym0
+    vextracti32x8   [r2 + r5],  m0, 1
+%endmacro
 ;--------------------------------------------------------------------------------------------------------------------
 ;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
 ;--------------------------------------------------------------------------------------------------------------------
@@ -3344,6 +3362,32 @@ ADDAVG_W64_AVX512 16
 ADDAVG_W64_AVX512 32
 ADDAVG_W64_AVX512 48
 ADDAVG_W64_AVX512 64
+
+%macro ADDAVG_W32_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_32x%1, 6,6,7
+    vbroadcasti32x8 m4, [pw_256]
+    vbroadcasti32x8 m5, [pw_128]
+    mova            m6, [shuf_avx512]
+    add             r3, r3
+    add             r4, r4
+
+%rep %1/2 - 1
+    PROCESS_ADDAVG_32x2_AVX512
+    lea             r2, [r2 + 2 * r5]
+    lea             r0, [r0 + 2 * r3]
+    lea             r1, [r1 + 2 * r4]
+%endrep
+    PROCESS_ADDAVG_32x2_AVX512
+    RET
+%endmacro
+
+ADDAVG_W32_AVX512 8
+ADDAVG_W32_AVX512 16
+ADDAVG_W32_AVX512 24
+ADDAVG_W32_AVX512 32
+ADDAVG_W32_AVX512 48
+ADDAVG_W32_AVX512 64
 ;-----------------------------------------------------------------------------
 ; addAvg avx512 code end
 ;-----------------------------------------------------------------------------
