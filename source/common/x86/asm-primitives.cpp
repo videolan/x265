@@ -2276,15 +2276,33 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_32x24].addAvg = PFX(addAvg_32x24_avx512);
         p.pu[LUMA_32x32].addAvg = PFX(addAvg_32x32_avx512);
         p.pu[LUMA_32x64].addAvg = PFX(addAvg_32x64_avx512);
+        p.pu[LUMA_16x4].addAvg = PFX(addAvg_16x4_avx512);
+        p.pu[LUMA_16x8].addAvg = PFX(addAvg_16x8_avx512);
+        p.pu[LUMA_16x12].addAvg = PFX(addAvg_16x12_avx512);
+        p.pu[LUMA_16x16].addAvg = PFX(addAvg_16x16_avx512);
+        p.pu[LUMA_16x32].addAvg = PFX(addAvg_16x32_avx512);
+        p.pu[LUMA_16x64].addAvg = PFX(addAvg_16x64_avx512);
         p.pu[LUMA_48x64].addAvg = PFX(addAvg_48x64_avx512);
+
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].addAvg = PFX(addAvg_32x8_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].addAvg = PFX(addAvg_32x16_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].addAvg = PFX(addAvg_32x24_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].addAvg = PFX(addAvg_32x32_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].addAvg = PFX(addAvg_16x4_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].addAvg = PFX(addAvg_16x8_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].addAvg = PFX(addAvg_16x12_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].addAvg = PFX(addAvg_16x16_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].addAvg = PFX(addAvg_16x32_avx512);
+
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].addAvg = PFX(addAvg_32x16_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].addAvg = PFX(addAvg_32x32_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].addAvg = PFX(addAvg_32x48_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].addAvg = PFX(addAvg_32x64_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].addAvg = PFX(addAvg_16x32_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].addAvg = PFX(addAvg_16x16_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].addAvg = PFX(addAvg_16x64_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].addAvg = PFX(addAvg_16x24_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].addAvg = PFX(addAvg_16x8_avx512);
 
         p.pu[LUMA_32x8].pixelavg_pp = PFX(pixel_avg_32x8_avx512);
         p.pu[LUMA_32x16].pixelavg_pp = PFX(pixel_avg_32x16_avx512);

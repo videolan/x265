@@ -1657,47 +1657,37 @@ ADDAVG_W64_H1_AVX2 64
 ;-----------------------------------------------------------------------------
 ;addAvg avx512 high bit depth code start
 ;-----------------------------------------------------------------------------
-%macro PROCESS_ADDAVG_32x8_HBD_AVX512 0
-    movu        m0,              [r0]
-    movu        m1,              [r1]
-    paddw       m0,              m1
-    pmulhrsw    m0,              m3
-    paddw       m0,              m4
-    pmaxsw      m0,              m2
-    pminsw      m0,              m5
-    movu        [r2],            m0
+%macro PROCESS_ADDAVG_16x4_HBD_AVX512 0
+    movu              ym0,              [r0]
+    vinserti32x8       m0,              [r0 + r3], 1
+    movu              ym1,              [r1]
+    vinserti32x8       m1,              [r1 + r4], 1
 
-    movu        m0,              [r0 + r3]
-    movu        m1,              [r1 + r4]
-    paddw       m0,              m1
-    pmulhrsw    m0,              m3
-    paddw       m0,              m4
-    pmaxsw      m0,              m2
-    pminsw      m0,              m5
-    movu        [r2 + r5],       m0
+    paddw              m0,              m1
+    pmulhrsw           m0,              m3
+    paddw              m0,              m4
+    pmaxsw             m0,              m2
+    pminsw             m0,              m5
 
-    movu        m0,              [r0 + 2 * r3]
-    movu        m1,              [r1 + 2 * r4]
-    paddw       m0,              m1
-    pmulhrsw    m0,              m3
-    paddw       m0,              m4
-    pmaxsw      m0,              m2
-    pminsw      m0,              m5
-    movu        [r2 + 2 * r5],   m0
+    movu             [r2],              ym0
+    vextracti32x8    [r2 + r5],         m0, 1
 
-    movu        m0,              [r0 + r6]
-    movu        m1,              [r1 + r7]
-    paddw       m0,              m1
-    pmulhrsw    m0,              m3
-    paddw       m0,              m4
-    pmaxsw      m0,              m2
-    pminsw      m0,              m5
-    movu        [r2 + r8],       m0
+    movu              ym0,              [r0 + 2 * r3]
+    vinserti32x8       m0,              [r0 + r6], 1
+    movu              ym1,              [r1 + 2 * r4]
+    vinserti32x8       m1,              [r1 + r7], 1
 
-    lea         r2,              [r2 + 4 * r5]
-    lea         r0,              [r0 + 4 * r3]
-    lea         r1,              [r1 + 4 * r4]
+    paddw              m0,              m1
+    pmulhrsw           m0,              m3
+    paddw              m0,              m4
+    pmaxsw             m0,              m2
+    pminsw             m0,              m5
 
+    movu             [r2 + 2 * r5],    ym0
+    vextracti32x8    [r2 + r8],         m0, 1
+%endmacro
+
+%macro PROCESS_ADDAVG_32x4_HBD_AVX512 0
     movu        m0,              [r0]
     movu        m1,              [r1]
     paddw       m0,              m1
@@ -1885,6 +1875,52 @@ ADDAVG_W64_H1_AVX2 64
 ;-----------------------------------------------------------------------------
 ;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
 ;-----------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal addAvg_16x4, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,        m2
+    add         r3,        r3
+    add         r4,        r4
+    add         r5,        r5
+    lea         r6,        [3 * r3]
+    lea         r7,        [3 * r4]
+    lea         r8,        [3 * r5]
+    PROCESS_ADDAVG_16x4_HBD_AVX512
+    RET
+
+%macro ADDAVG_W16_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_16x%1, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,        m2
+    add         r3,        r3
+    add         r4,        r4
+    add         r5,        r5
+    lea         r6,        [3 * r3]
+    lea         r7,        [3 * r4]
+    lea         r8,        [3 * r5]
+
+%rep %1/4 - 1
+    PROCESS_ADDAVG_16x4_HBD_AVX512
+    lea         r2,        [r2 + 4 * r5]
+    lea         r0,        [r0 + 4 * r3]
+    lea         r1,        [r1 + 4 * r4]
+%endrep
+    PROCESS_ADDAVG_16x4_HBD_AVX512
+    RET
+%endmacro
+
+ADDAVG_W16_HBD_AVX512 8
+ADDAVG_W16_HBD_AVX512 12
+ADDAVG_W16_HBD_AVX512 16
+ADDAVG_W16_HBD_AVX512 24
+ADDAVG_W16_HBD_AVX512 32
+ADDAVG_W16_HBD_AVX512 64
+
 %macro ADDAVG_W32_HBD_AVX512 1
 INIT_ZMM avx512
 cglobal addAvg_32x%1, 6,9,6
@@ -1899,13 +1935,13 @@ cglobal addAvg_32x%1, 6,9,6
     lea         r7,              [3 * r4]
     lea         r8,              [3 * r5]
 
-%rep %1/8 - 1
-    PROCESS_ADDAVG_32x8_HBD_AVX512
+%rep %1/4 - 1
+    PROCESS_ADDAVG_32x4_HBD_AVX512
     lea         r2,              [r2 + 4 * r5]
     lea         r0,              [r0 + 4 * r3]
     lea         r1,              [r1 + 4 * r4]
 %endrep
-    PROCESS_ADDAVG_32x8_HBD_AVX512
+    PROCESS_ADDAVG_32x4_HBD_AVX512
     RET
 %endmacro
 
