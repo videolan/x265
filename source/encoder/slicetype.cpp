@@ -1036,6 +1036,18 @@ void Lookahead::slicetypeDecide()
          (m_param->lookaheadDepth && m_param->rc.vbvBufferSize)))
     {
         slicetypeAnalyse(frames, false);
+        bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
+        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->scaleFactor && bIsVbv)
+        {
+            int numFrames;
+            for (numFrames = 0; numFrames < maxSearch; numFrames++)
+            {
+                Lowres *fenc = frames[numFrames + 1];
+                if (!fenc)
+                    break;
+            }
+            vbvLookahead(frames, numFrames, true);
+        }
     }
 
     int bframes, brefs;
@@ -1219,6 +1231,18 @@ void Lookahead::slicetypeDecide()
 
         frames[j + 1] = NULL;
         slicetypeAnalyse(frames, true);
+        bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
+        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->scaleFactor && bIsVbv)
+        {
+            int numFrames;
+            for (numFrames = 0; numFrames < maxSearch; numFrames++)
+            {
+                Lowres *fenc = frames[numFrames + 1];
+                if (!fenc)
+                    break;
+            }
+            vbvLookahead(frames, numFrames, true);
+        }
     }
     m_outputLock.release();
 }
