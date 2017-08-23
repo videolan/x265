@@ -1107,7 +1107,7 @@ BLOCKCOPY_PP_W64_H4_avx 64, 48
 BLOCKCOPY_PP_W64_H4_avx 64, 64
 
 ;----------------------------------------------------------------------------------------------
-; Macro to calculate blockcopy_pp_64x4_avx512
+; blockcopy_pp avx512 code start
 ;----------------------------------------------------------------------------------------------
 %macro PROCESS_BLOCKCOPY_PP_64X4_avx512 0
 movu    m0, [r2]
@@ -1121,16 +1121,28 @@ movu    [r0 + 2 * r1]  , m2
 movu    [r0 + r5] , m3
 %endmacro
 
+%macro PROCESS_BLOCKCOPY_PP_32X4_avx512 0
+movu           ym0, [r2]
+vinserti32x8   m0,  [r2 + r3],     1
+movu           ym1, [r2 + 2 * r3]
+vinserti32x8   m1,  [r2 + r4],     1
+
+movu           [r0] ,              ym0
+vextracti32x8  [r0 + r1] ,         m0,    1
+movu           [r0 + 2 * r1]  ,    ym1
+vextracti32x8  [r0 + r5] ,         m1,    1
+%endmacro
+
 ;----------------------------------------------------------------------------------------------
 ; void blockcopy_pp_64x%1(pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride)
 ;----------------------------------------------------------------------------------------------
 %macro BLOCKCOPY_PP_W64_H4_avx512 1
 INIT_ZMM avx512
-cglobal blockcopy_pp_64x%1, 4, 4, 6
+cglobal blockcopy_pp_64x%1, 4, 6, 4
 lea    r4,  [3 * r3]
 lea    r5,  [3 * r1]
 
-%rep %1/4 - 1         
+%rep %1/4 - 1
 PROCESS_BLOCKCOPY_PP_64X4_avx512
 lea     r2, [r2 + 4 * r3]
 lea     r0, [r0 + 4 * r1] 
@@ -1145,7 +1157,30 @@ BLOCKCOPY_PP_W64_H4_avx512 32
 BLOCKCOPY_PP_W64_H4_avx512 48
 BLOCKCOPY_PP_W64_H4_avx512 64
 
+%macro BLOCKCOPY_PP_W32_H4_avx512 1
+INIT_ZMM avx512
+cglobal blockcopy_pp_32x%1, 4, 6, 2
+    lea    r4,  [3 * r3]
+    lea    r5,  [3 * r1]
 
+%rep %1/4 - 1
+    PROCESS_BLOCKCOPY_PP_32X4_avx512
+    lea     r2, [r2 + 4 * r3]
+    lea     r0, [r0 + 4 * r1] 
+%endrep
+    PROCESS_BLOCKCOPY_PP_32X4_avx512
+    RET
+%endmacro
+
+BLOCKCOPY_PP_W32_H4_avx512 8
+BLOCKCOPY_PP_W32_H4_avx512 16
+BLOCKCOPY_PP_W32_H4_avx512 24
+BLOCKCOPY_PP_W32_H4_avx512 32
+BLOCKCOPY_PP_W32_H4_avx512 48
+BLOCKCOPY_PP_W32_H4_avx512 64
+;----------------------------------------------------------------------------------------------
+; blockcopy_pp avx512 code end
+;----------------------------------------------------------------------------------------------
 
 ;-----------------------------------------------------------------------------
 ; void blockcopy_sp_2x4(pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride)

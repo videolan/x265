@@ -3965,6 +3965,18 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_64x32].copy_pp = PFX(blockcopy_pp_64x32_avx512);
         p.pu[LUMA_64x48].copy_pp = PFX(blockcopy_pp_64x48_avx512);
         p.pu[LUMA_64x16].copy_pp = PFX(blockcopy_pp_64x16_avx512);
+        p.pu[LUMA_32x16].copy_pp = PFX(blockcopy_pp_32x16_avx512);
+        p.pu[LUMA_32x24].copy_pp = PFX(blockcopy_pp_32x24_avx512);
+        p.pu[LUMA_32x32].copy_pp  = PFX(blockcopy_pp_32x32_avx512);
+        p.pu[LUMA_32x64].copy_pp = PFX(blockcopy_pp_32x64_avx512);
+
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].copy_pp = PFX(blockcopy_pp_32x16_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].copy_pp = PFX(blockcopy_pp_32x24_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].copy_pp = PFX(blockcopy_pp_32x32_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].copy_pp = PFX(blockcopy_pp_32x16_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].copy_pp = PFX(blockcopy_pp_32x32_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].copy_pp = PFX(blockcopy_pp_32x48_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].copy_pp = PFX(blockcopy_pp_32x64_avx512);
 
         p.cu[BLOCK_64x64].copy_sp = PFX(blockcopy_sp_64x64_avx512);
         p.cu[BLOCK_32x32].copy_sp = PFX(blockcopy_sp_32x32_avx512);
