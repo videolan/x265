@@ -5958,7 +5958,91 @@ cglobal copy_cnt_32, 3, 5, 5
     movd         eax, xm4
     RET
 
+;--------------------------------------------------------------------------------------
+; copy_cnt avx512 code start
+;--------------------------------------------------------------------------------------
+%macro PROCESS_COPY_CNT_32x4_AVX512 0
+    movu        m0,                  [r1]
+    movu        m1,                  [r1 + r2]
+    movu        [r0],                m0
+    movu        [r0 + mmsize],       m1
+    packsswb    m0,                  m1
+    pminub      m0,                  m3
 
+    movu        m1,                  [r1 + 2 * r2]
+    movu        m2,                  [r1 + r3]
+    movu        [r0 + 2 * mmsize],   m1
+    movu        [r0 + 3 * mmsize],   m2
+    packsswb    m1,                  m2
+    pminub      m1,                  m3
+
+    paddb       m0,                  m1
+    paddb       m4,                  m0
+%endmacro
+
+%macro PROCESS_COPY_CNT_16x4_AVX512 0
+    movu          ym0,               [r1]
+    vinserti32x8   m0,               [r1 + r2],    1
+    movu          ym1,               [r1 + 2 * r2]
+    vinserti32x8   m1,               [r1 + r3],    1
+    movu         [r0],               m0
+    movu         [r0 + mmsize],      m1
+    packsswb       m0,               m1
+    pminub         m0,               m3
+    paddb          m4,               m0
+%endmacro
+
+%macro PROCESS_COPY_CNT_END_AVX512 0
+    pxor           m0,  m0
+    vextracti32x8  ym1, m4, 1
+    paddb          ym4, ym1
+    vextracti32x4  xm1, ym4, 1
+    paddb          xm4, xm1
+    psadbw         xm4, xm0
+    movhlps        xm1, xm4
+    paddd          xm4, xm1
+    movd           eax, xm4
+%endmacro
+
+;--------------------------------------------------------------------------------------
+; uint32_t copy_cnt(int32_t* dst, const int16_t* src, intptr_t stride);
+;--------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal copy_cnt_32, 3, 4, 5
+    add              r2d,  r2d
+    lea              r3,   [3 * r2]
+
+    vbroadcasti32x8  m3,   [pb_1]
+    pxor             m4,   m4
+
+%rep 7
+    PROCESS_COPY_CNT_32x4_AVX512
+    add              r0,  4 * mmsize
+    lea              r1,  [r1 + 4 * r2]
+%endrep
+    PROCESS_COPY_CNT_32x4_AVX512
+    PROCESS_COPY_CNT_END_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal copy_cnt_16, 3, 4, 5
+    add              r2d,  r2d
+    lea              r3,   [3 * r2]
+
+    vbroadcasti32x8  m3,   [pb_1]
+    pxor             m4,   m4
+
+%rep 3
+    PROCESS_COPY_CNT_16x4_AVX512
+    add              r0,  2 * mmsize
+    lea              r1,  [r1 + 4 * r2]
+%endrep
+    PROCESS_COPY_CNT_16x4_AVX512
+    PROCESS_COPY_CNT_END_AVX512
+    RET
+;--------------------------------------------------------------------------------------
+; copy_cnt avx512 code end
+;--------------------------------------------------------------------------------------
 ;--------------------------------------------------------------------------------------
 ; void cpy2Dto1D_shl(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 ;--------------------------------------------------------------------------------------

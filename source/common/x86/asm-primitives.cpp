@@ -2342,6 +2342,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_32x32].cpy1Dto2D_shl = PFX(cpy1Dto2D_shl_32_avx512);
         p.weight_pp = PFX(weight_pp_avx512);
 
+        p.cu[BLOCK_32x32].copy_cnt = PFX(copy_cnt_32_avx512);
+        p.cu[BLOCK_16x16].copy_cnt = PFX(copy_cnt_16_avx512);
+
     }
 }
 #else // if HIGH_BIT_DEPTH
@@ -4053,6 +4056,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_16x16].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_16_avx512);
         p.cu[BLOCK_32x32].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_32_avx512);
         p.cu[BLOCK_32x32].cpy1Dto2D_shl = PFX(cpy1Dto2D_shl_32_avx512);
+
+        p.cu[BLOCK_32x32].copy_cnt = PFX(copy_cnt_32_avx512);
+        p.cu[BLOCK_16x16].copy_cnt = PFX(copy_cnt_16_avx512);
 
         //i444 chroma_hpp
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_hpp = PFX(interp_4tap_horiz_pp_64x64_avx512);

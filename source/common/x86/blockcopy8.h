@@ -46,6 +46,7 @@ FUNCDEF_TU_S(void, cpy1Dto2D_shr, avx2, int16_t* dst, const int16_t* src, intptr
 FUNCDEF_TU_S(uint32_t, copy_cnt, sse2, int16_t* dst, const int16_t* src, intptr_t srcStride);
 FUNCDEF_TU_S(uint32_t, copy_cnt, sse4, int16_t* dst, const int16_t* src, intptr_t srcStride);
 FUNCDEF_TU_S(uint32_t, copy_cnt, avx2, int16_t* dst, const int16_t* src, intptr_t srcStride);
+FUNCDEF_TU_S(uint32_t, copy_cnt, avx512, int16_t* dst, const int16_t* src, intptr_t srcStride);
 
 FUNCDEF_TU(void, blockfill_s, sse2, int16_t* dst, intptr_t dstride, int16_t val);
 FUNCDEF_TU(void, blockfill_s, avx2, int16_t* dst, intptr_t dstride, int16_t val);
