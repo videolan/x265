@@ -4403,6 +4403,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_64x48].pixelavg_pp = PFX(pixel_avg_64x48_avx512);
         p.pu[LUMA_64x64].pixelavg_pp = PFX(pixel_avg_64x64_avx512);
 
+        //luma hps
+        p.pu[LUMA_64x64].luma_hps = PFX(interp_8tap_horiz_ps_64x64_avx512);
+        p.pu[LUMA_64x48].luma_hps = PFX(interp_8tap_horiz_ps_64x48_avx512);
+        p.pu[LUMA_64x32].luma_hps = PFX(interp_8tap_horiz_ps_64x32_avx512);
+        p.pu[LUMA_64x16].luma_hps = PFX(interp_8tap_horiz_ps_64x16_avx512);
     }
 #endif
 }
