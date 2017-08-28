@@ -4094,6 +4094,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I444].pu[LUMA_16x12].filter_hpp = PFX(interp_4tap_horiz_pp_16x12_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_16x4].filter_hpp = PFX(interp_4tap_horiz_pp_16x4_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_16x64].filter_hpp = PFX(interp_4tap_horiz_pp_16x64_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_48x64].filter_hpp = PFX(interp_4tap_horiz_pp_48x64_avx512);
 
         //i422 chroma_hpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].filter_hpp = PFX(interp_4tap_horiz_pp_16x8_avx512);
