@@ -5020,6 +5020,58 @@ cglobal pixel_avg_48x64, 6,7,4
     RET
 %endif
 
+;-----------------------------------------------------------------------------
+;pixel_avg_pp avx512 code start
+;-----------------------------------------------------------------------------
+%macro PROCESS_PIXELAVG_64x4_AVX512 0
+    movu        m0,             [r2]
+    movu        m2,             [r2 + r3]
+    movu        m1,             [r4]
+    movu        m3,             [r4 + r5]
+    pavgb       m0,             m1
+    pavgb       m2,             m3
+    movu        [r0],           m0
+    movu        [r0 + r1],      m2
+
+    movu        m0,             [r2 + 2 * r3]
+    movu        m2,             [r2 + r7]
+    movu        m1,             [r4 + 2 * r5]
+    movu        m3,             [r4 + r8]
+    pavgb       m0,             m1
+    pavgb       m2,             m3
+    movu        [r0 + 2 * r1],  m0
+    movu        [r0 + r6],      m2
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64 && BIT_DEPTH == 8
+%macro PIXEL_AVG_64xN_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_avg_64x%1, 6, 9, 4
+    lea         r6, [3 * r1]
+    lea         r7, [3 * r3]
+    lea         r8, [3 * r5]
+
+%rep %1/4 - 1
+    PROCESS_PIXELAVG_64x4_AVX512
+    lea         r2, [r2 + r3 * 4]
+    lea         r4, [r4 + r5 * 4]
+    lea         r0, [r0 + r1 * 4]
+%endrep
+    PROCESS_PIXELAVG_64x4_AVX512
+    RET
+%endmacro
+
+PIXEL_AVG_64xN_AVX512 16
+PIXEL_AVG_64xN_AVX512 32
+PIXEL_AVG_64xN_AVX512 48
+PIXEL_AVG_64xN_AVX512 64
+%endif
+;-----------------------------------------------------------------------------
+;pixel_avg_pp avx512 code end
+;-----------------------------------------------------------------------------
 ;=============================================================================
 ; pixel avg2
 ;=============================================================================
