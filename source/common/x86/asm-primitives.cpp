@@ -2253,6 +2253,15 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].p2s = PFX(filterPixelToShort_32x32_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = PFX(filterPixelToShort_32x48_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = PFX(filterPixelToShort_32x64_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_32x8].p2s = PFX(filterPixelToShort_32x8_avx2);
+        p.chroma[X265_CSP_I444].pu[LUMA_32x16].p2s = PFX(filterPixelToShort_32x16_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_32x24].p2s = PFX(filterPixelToShort_32x24_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_32x32].p2s = PFX(filterPixelToShort_32x32_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_32x64].p2s = PFX(filterPixelToShort_32x64_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x16].p2s = PFX(filterPixelToShort_64x16_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x32].p2s = PFX(filterPixelToShort_64x32_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x48].p2s = PFX(filterPixelToShort_64x48_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x64].p2s = PFX(filterPixelToShort_64x64_avx512);
 
         p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx512);
 
@@ -4041,6 +4050,15 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].p2s = PFX(filterPixelToShort_32x32_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].p2s = PFX(filterPixelToShort_32x48_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].p2s = PFX(filterPixelToShort_32x64_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_32x8].p2s = PFX(filterPixelToShort_32x8_avx2);
+        p.chroma[X265_CSP_I444].pu[LUMA_32x16].p2s = PFX(filterPixelToShort_32x16_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_32x24].p2s = PFX(filterPixelToShort_32x24_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_32x32].p2s = PFX(filterPixelToShort_32x32_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_32x64].p2s = PFX(filterPixelToShort_32x64_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x16].p2s = PFX(filterPixelToShort_64x16_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x32].p2s = PFX(filterPixelToShort_64x32_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x48].p2s = PFX(filterPixelToShort_64x48_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x64].p2s = PFX(filterPixelToShort_64x64_avx512);
 
         p.cu[BLOCK_64x64].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_ss_64x64_avx512);
         p.cu[BLOCK_32x32].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_ss_32x32_avx512);
