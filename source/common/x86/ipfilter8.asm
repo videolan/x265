@@ -11285,6 +11285,115 @@ IPFILTER_LUMA_PS_32xN_AVX512 16
 IPFILTER_LUMA_PS_32xN_AVX512 24
 IPFILTER_LUMA_PS_32xN_AVX512 32
 IPFILTER_LUMA_PS_32xN_AVX512 64
+
+%macro PROCESS_IPFILTER_LUMA_PS_8TAP_16x2_AVX512 0
+    movu              xm7,           [r0]
+    vinserti32x4      m7,            [r0 + 8],            1
+    vinserti32x4      m7,            [r0 + r1],           2
+    vinserti32x4      m7,            [r0 + r1 + 8],       3
+    pshufb            m8,            m7,                  m3
+    pshufb            m9,            m7,                  m4
+    pshufb            m7,            m2
+
+    pmaddubsw         m7,            m0
+    pmaddubsw         m10,           m8,                  m1
+    pmaddwd           m7,            m5
+    pmaddwd           m10,           m5
+    paddd             m7,            m10
+
+    pmaddubsw         m8,            m0
+    pmaddubsw         m10,           m9,                  m1
+    pmaddwd           m8,            m5
+    pmaddwd           m10,           m5
+    paddd             m8,            m10
+
+    packssdw          m7,            m8
+    psubw             m7,            m6
+    movu              [r2],          ym7
+    vextracti32x8     [r2 + r3],     m7,                  1
+%endmacro
+
+%macro PROCESS_IPFILTER_LUMA_PS_8TAP_16x1_AVX512 0
+    movu              xm7,            [r0]
+    vinserti32x4      m7,             [r0 + 8],             1
+    pshufb            ym8,            ym7,                  ym3
+    pshufb            ym9,            ym7,                  ym4
+    pshufb            ym7,            ym2
+
+    pmaddubsw         ym7,            ym0
+    pmaddubsw         ym10,           ym8,                  ym1
+    pmaddwd           ym7,            ym5
+    pmaddwd           ym10,           ym5
+    paddd             ym7,            ym10
+
+    pmaddubsw         ym8,            ym0
+    pmaddubsw         ym10,           ym9,                  ym1
+    pmaddwd           ym8,            ym5
+    pmaddwd           ym10,           ym5
+    paddd             ym8,            ym10
+
+    packssdw          ym7,            ym8
+    psubw             ym7,            ym6
+    movu              [r2],           ym7
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_horiz_ps_16xN(const pixel* src, intptr_t srcStride, int16_t* dst, intptr_t dstStride, int coeffIdx, int isRowExt)
+;-------------------------------------------------------------------------------------------------------------
+%macro IPFILTER_LUMA_PS_8TAP_16xN_AVX512 1
+INIT_ZMM avx512
+cglobal interp_8tap_horiz_ps_16x%1, 4,7,11
+    mov               r4d,   r4m
+    mov               r5d,   r5m
+    add               r3,    r3
+
+%ifdef PIC
+    lea               r6,        [tab_LumaCoeff]
+    vpbroadcastd      m0,        [r6 + r4 * 8]
+    vpbroadcastd      m1,        [r6 + r4 * 8 + 4]
+%else
+    vpbroadcastd      m0,        [tab_LumaCoeff + r4 * 8]
+    vpbroadcastd      m1,        [tab_LumaCoeff + r4 * 8 + 4]
+%endif
+    vbroadcasti32x8   m2,        [interp4_horiz_shuf_load1_avx512]
+    vbroadcasti32x8   m3,        [interp4_horiz_shuf_load3_avx512]
+    vbroadcasti32x8   m4,        [interp4_horiz_shuf_load2_avx512]
+    vpbroadcastd      m5,        [pw_1]
+    vbroadcasti32x8   m6,        [pw_2000]
+
+    ; register map
+    ; m0 , m1     - interpolate coeff
+    ; m2 , m3, m4 - load shuffle order table
+    ; m5          - pw_1
+    ; m6          - pw_2000
+
+    mov               r4d,       %1
+    sub               r0,        3
+    test              r5d,       r5d
+    jz                .loop
+    lea               r6,        [r1 * 3]
+    sub               r0,        r6                           ; r0(src)-r6
+    add               r4d,       7                            ; blkheight += N - 1
+    PROCESS_IPFILTER_LUMA_PS_8TAP_16x1_AVX512
+    lea               r0,        [r0 + r1]
+    lea               r2,        [r2 + r3]
+    dec               r4d
+
+.loop:
+    PROCESS_IPFILTER_LUMA_PS_8TAP_16x2_AVX512
+    lea               r0,        [r0 + 2 * r1]
+    lea               r2,        [r2 + 2 * r3]
+    sub               r4d,       2
+    jnz               .loop
+    RET
+%endmacro
+
+IPFILTER_LUMA_PS_8TAP_16xN_AVX512 4
+IPFILTER_LUMA_PS_8TAP_16xN_AVX512 8
+IPFILTER_LUMA_PS_8TAP_16xN_AVX512 12
+IPFILTER_LUMA_PS_8TAP_16xN_AVX512 16
+IPFILTER_LUMA_PS_8TAP_16xN_AVX512 32
+IPFILTER_LUMA_PS_8TAP_16xN_AVX512 64
 ;-------------------------------------------------------------------------------------------------------------
 ;ipfilter_luma_avx512 code end
 ;-------------------------------------------------------------------------------------------------------------
