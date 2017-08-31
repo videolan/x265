@@ -2367,6 +2367,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_hpp = PFX(interp_4tap_horiz_pp_32x16_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_hpp = PFX(interp_4tap_horiz_pp_32x24_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_hpp = PFX(interp_4tap_horiz_pp_32x32_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].filter_hpp = PFX(interp_4tap_horiz_pp_24x32_avx512);
 
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].filter_hpp = PFX(interp_4tap_horiz_pp_8x4_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].filter_hpp = PFX(interp_4tap_horiz_pp_8x8_avx512);
@@ -2383,6 +2384,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].filter_hpp = PFX(interp_4tap_horiz_pp_32x32_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].filter_hpp = PFX(interp_4tap_horiz_pp_32x48_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].filter_hpp = PFX(interp_4tap_horiz_pp_32x64_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].filter_hpp = PFX(interp_4tap_horiz_pp_24x64_avx512);
 
         p.chroma[X265_CSP_I444].pu[LUMA_8x4].filter_hpp = PFX(interp_4tap_horiz_pp_8x4_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_8x8].filter_hpp = PFX(interp_4tap_horiz_pp_8x8_avx512);
@@ -2404,6 +2406,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_hpp = PFX(interp_4tap_horiz_pp_64x48_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_hpp = PFX(interp_4tap_horiz_pp_64x64_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_48x64].filter_hpp = PFX(interp_4tap_horiz_pp_48x64_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_24x32].filter_hpp = PFX(interp_4tap_horiz_pp_24x32_avx512);
 
     }
 }
