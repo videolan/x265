@@ -45,7 +45,7 @@
 %endif
 
 
-SECTION_RODATA 32
+SECTION_RODATA 64
 
 tab_c_524800:     times 4 dd 524800
 tab_c_n8192:      times 8 dw -8192
@@ -105,6 +105,12 @@ tab_LumaCoeffVer: times 8 dw 0, 0
                   times 8 dw -5, 17
                   times 8 dw 58, -10
                   times 8 dw 4, -1
+
+const interp8_hpp_shuf1_load_avx512, times 2 db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
+
+const interp8_hpp_shuf2_load_avx512, times 2 db 4, 5, 6, 7, 8, 9, 10, 11, 6, 7, 8, 9, 10, 11, 12, 13
+
+const interp8_hpp_shuf1_store_avx512, times 2 db 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
 
 SECTION .text
 cextern pd_8
@@ -5073,3 +5079,106 @@ cglobal filterPixelToShort_48x64, 3, 7, 5
     jnz        .loop
     RET
 
+;-------------------------------------------------------------------------------------------------------------
+;ipfilter_chroma_avx512 code start
+;-------------------------------------------------------------------------------------------------------------
+%macro PROCESS_IPFILTER_CHROMA_PP_32x2_AVX512 0
+    ; register map
+    ; m0 , m1 interpolate coeff
+    ; m2 , m3  shuffle order table
+    ; m4 - pd_32
+    ; m5 - zero
+    ; m6 - pw_pixel_max
+
+    movu            m7,        [r0]
+    movu            m8,        [r0 + 8]
+
+    pshufb          m9,        m7,        m3
+    pshufb          m7,        m2
+    pmaddwd         m7,        m0
+    pmaddwd         m9,        m1
+    paddd           m7,        m9
+    paddd           m7,        m4
+    psrad           m7,        6
+
+    pshufb          m9,        m8,        m3
+    pshufb          m8,        m2
+    pmaddwd         m8,        m0
+    pmaddwd         m9,        m1
+    paddd           m8,        m9
+    paddd           m8,        m4
+    psrad           m8,        6
+
+    packusdw        m7,        m8
+    CLIPW           m7,        m5,        m6
+    pshufb          m7,        m10
+    movu            [r2],      m7
+
+    movu            m7,        [r0 + r1]
+    movu            m8,        [r0 + r1 + 8]
+
+    pshufb          m9,        m7,        m3
+    pshufb          m7,        m2
+    pmaddwd         m7,        m0
+    pmaddwd         m9,        m1
+    paddd           m7,        m9
+    paddd           m7,        m4
+    psrad           m7,        6
+
+    pshufb          m9,        m8,        m3
+    pshufb          m8,        m2
+    pmaddwd         m8,        m0
+    pmaddwd         m9,        m1
+    paddd           m8,        m9
+    paddd           m8,        m4
+    psrad           m8,        6
+
+    packusdw        m7,        m8
+    CLIPW           m7,        m5,        m6
+    pshufb          m7,        m10
+    movu            [r2 + r3], m7
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------
+; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
+;-------------------------------------------------------------------------------------------------------------
+INIT_ZMM avx512
+%macro IPFILTER_CHROMA_AVX512_32xN 1
+cglobal interp_4tap_horiz_pp_32x%1, 5,6,11
+    add             r1d, r1d
+    add             r3d, r3d
+    sub             r0, 2
+    mov             r4d, r4m
+%ifdef PIC
+    lea             r5, [tab_ChromaCoeff]
+    vpbroadcastd    m0, [r5 + r4 * 8]
+    vpbroadcastd    m1, [r5 + r4 * 8 + 4]
+%else
+    vpbroadcastd    m0, [tab_ChromaCoeff + r4 * 8]
+    vpbroadcastd    m1, [tab_ChromaCoeff + r4 * 8 + 4]
+%endif
+    vbroadcasti32x8 m2, [interp8_hpp_shuf1_load_avx512]
+    vbroadcasti32x8 m3, [interp8_hpp_shuf2_load_avx512]
+    vbroadcasti32x8 m4, [pd_32]
+    pxor            m5, m5
+    vbroadcasti32x8 m6, [pw_pixel_max]
+    vbroadcasti32x8 m10, [interp8_hpp_shuf1_store_avx512]
+
+%rep %1/2 - 1
+    PROCESS_IPFILTER_CHROMA_PP_32x2_AVX512
+    lea             r0, [r0 + 2 * r1]
+    lea             r2, [r2 + 2 * r3]
+%endrep
+    PROCESS_IPFILTER_CHROMA_PP_32x2_AVX512
+    RET
+%endmacro
+
+IPFILTER_CHROMA_AVX512_32xN 8
+IPFILTER_CHROMA_AVX512_32xN 16
+IPFILTER_CHROMA_AVX512_32xN 24
+IPFILTER_CHROMA_AVX512_32xN 32
+IPFILTER_CHROMA_AVX512_32xN 48
+IPFILTER_CHROMA_AVX512_32xN 64
+;-------------------------------------------------------------------------------------------------------------
+;ipfilter_chroma_avx512 code end
+;-------------------------------------------------------------------------------------------------------------
