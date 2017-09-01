@@ -30,6 +30,10 @@ SECTION_RODATA 32
 
 var_shuf_avx512: db 0,-1, 1,-1, 2,-1, 3,-1, 4,-1, 5,-1, 6,-1, 7,-1
                  db 8,-1, 9,-1,10,-1,11,-1,12,-1,13,-1,14,-1,15,-1
+ALIGN 64
+const dequant_shuf1_avx512,  dq 0, 2, 4, 6, 1, 3, 5, 7
+const dequant_shuf2_avx512,  dq 0, 4, 1, 5, 2, 6, 3, 7
+
 %if BIT_DEPTH == 12
 ssim_c1:   times 4 dd 107321.76    ; .01*.01*4095*4095*64
 ssim_c2:   times 4 dd 60851437.92  ; .03*.03*4095*4095*64*63
@@ -1235,6 +1239,90 @@ cglobal dequant_normal, 5,5,7
 
     dec             r2d
     jnz            .loop
+    RET
+
+;----------------------------------------------------------------------------------------------------------------------
+;void dequant_scaling(const int16_t* src, const int32_t* dequantCoef, int16_t* dst, int num, int mcqp_miper, int shift)
+;----------------------------------------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal dequant_scaling, 6,7,8
+    mova        m6,  [dequant_shuf1_avx512]
+    mova        m7,  [dequant_shuf2_avx512]
+    add         r5d, 4
+    mov         r6d, r3d
+    shr         r3d, 5          ; num/32
+    cmp         r5d, r4d
+    jle         .skip
+    sub         r5d, r4d
+    vpbroadcastd m0, [pd_1]
+    movd        xm1, r5d         ; shift - per
+    dec         r5d
+    movd        xm2, r5d         ; shift - per - 1
+    pslld       m0, xm2          ; 1 << shift - per - 1
+
+.part0:
+    pmovsxwd    m2, [r0]
+    pmovsxwd    m4, [r0 + 32]
+    movu        m3, [r1]
+    movu        m5, [r1 + 64]
+    pmulld      m2, m3
+    pmulld      m4, m5
+    paddd       m2, m0
+    paddd       m4, m0
+    psrad       m2, xm1
+    psrad       m4, xm1
+    packssdw    m2, m4
+    vpermq      m2, m6, m2
+    cmp         r6d, 16
+    je          .num16part0
+    movu        [r2], m2
+
+    add         r0, 64
+    add         r1, 128
+    add         r2, 64
+    dec         r3d
+    jnz         .part0
+    jmp         .end
+
+.num16part0:
+    movu        [r2], ym2
+    jmp         .end
+
+.skip:
+    sub         r4d, r5d        ; per - shift
+    movd        xm0, r4d
+
+.part1:
+    pmovsxwd    m2, [r0]
+    pmovsxwd    m4, [r0 + 32]
+    movu        m3, [r1]
+    movu        m5, [r1 + 64]
+    pmulld      m2, m3
+    pmulld      m4, m5
+    packssdw    m2, m4
+
+    vextracti32x8 ym4, m2, 1
+    pmovsxwd    m1, ym2
+    pmovsxwd    m2, ym4
+    pslld       m1, xm0
+    pslld       m2, xm0
+    packssdw    m1, m2
+
+    vpermq      m1, m7, m1
+    cmp         r6d, 16
+    je          .num16part1
+    movu        [r2], m1
+
+    add         r0, 64
+    add         r1, 128
+    add         r2, 64
+    dec         r3d
+    jnz         .part1
+
+.num16part1:
+    movu        [r2], ym1
+
+.end:
     RET
 
 INIT_ZMM avx512
