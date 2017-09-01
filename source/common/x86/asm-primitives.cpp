@@ -4011,22 +4011,29 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_32x32].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_32_avx512);
         p.cu[BLOCK_32x32].cpy1Dto2D_shl = PFX(cpy1Dto2D_shl_32_avx512);
 
+        //i444 chroma_hpp
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_hpp = PFX(interp_4tap_horiz_pp_64x64_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_64x32].filter_hpp = PFX(interp_4tap_horiz_pp_64x32_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_hpp = PFX(interp_4tap_horiz_pp_64x48_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_64x16].filter_hpp = PFX(interp_4tap_horiz_pp_64x16_avx512);
-
         p.chroma[X265_CSP_I444].pu[LUMA_32x16].filter_hpp = PFX(interp_4tap_horiz_pp_32x16_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_32x64].filter_hpp = PFX(interp_4tap_horiz_pp_32x64_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_32x24].filter_hpp = PFX(interp_4tap_horiz_pp_32x24_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_32x8].filter_hpp = PFX(interp_4tap_horiz_pp_32x8_avx512);
-
         p.chroma[X265_CSP_I444].pu[LUMA_32x32].filter_hpp = PFX(interp_4tap_horiz_pp_32x32_avx512);
 
+        //i422 chroma_hpp
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].filter_hpp = PFX(interp_4tap_horiz_pp_32x16_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].filter_hpp = PFX(interp_4tap_horiz_pp_32x32_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].filter_hpp = PFX(interp_4tap_horiz_pp_32x64_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].filter_hpp = PFX(interp_4tap_horiz_pp_32x48_avx512);
+
+        //i420 chroma_hpp
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_hpp = PFX(interp_4tap_horiz_pp_32x32_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_hpp = PFX(interp_4tap_horiz_pp_32x16_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_hpp = PFX(interp_4tap_horiz_pp_32x24_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_hpp = PFX(interp_4tap_horiz_pp_32x8_avx512);
+
         p.weight_pp = PFX(weight_pp_avx512);
 
         //i444 chroma_hps
