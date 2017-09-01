@@ -10182,6 +10182,57 @@ cglobal interp_4tap_horiz_ps_32x%1, 4,7,9
     movu              [r2],     m7
 %endmacro
 
+%macro PROCESS_IPFILTER_LUMA_PP_32x2_AVX512 0
+    ; register map
+    ; m0 , m1 interpolate coeff
+    ; m2 , m3, m4  shuffle order table
+    ; m5 - pw_1
+    ; m6 - pw_512
+
+    movu             ym7,        [r0]
+    vinserti32x8      m7,        [r0 + r1], 1
+    movu             ym9,        [r0 + 8]
+    vinserti32x8      m9,        [r0 + r1 + 8], 1
+
+    pshufb            m8,        m7,        m3
+    pshufb            m7,        m2
+    pshufb            m10,       m9,        m3
+    pshufb            m11,       m9,        m4
+    pshufb            m9,        m2
+
+    pmaddubsw         m7,        m0
+    pmaddubsw         m12,       m8,        m1
+    pmaddwd           m7,        m5
+    pmaddwd           m12,       m5
+    paddd             m7,        m12
+
+    pmaddubsw         m8,        m0
+    pmaddubsw         m12,       m9,        m1
+    pmaddwd           m8,        m5
+    pmaddwd           m12,       m5
+    paddd             m8,        m12
+
+    pmaddubsw         m9,        m0
+    pmaddubsw         m12,       m10,       m1
+    pmaddwd           m9,        m5
+    pmaddwd           m12,       m5
+    paddd             m9,        m12
+
+    pmaddubsw         m10,       m0
+    pmaddubsw         m12,      m11,        m1
+    pmaddwd           m10,      m5
+    pmaddwd           m12,      m5
+    paddd             m10,      m12
+
+    packssdw          m7,       m8
+    packssdw          m9,       m10
+    pmulhrsw          m7,       m6
+    pmulhrsw          m9,       m6
+    packuswb          m7,       m9
+    movu              [r2],     ym7
+    vextracti32x8     [r2 + r3], m7, 1
+%endmacro
+
 %macro IPFILTER_LUMA_64xN_AVX512 1
 INIT_ZMM avx512
 cglobal interp_8tap_horiz_pp_64x%1, 4,6,13
@@ -10214,6 +10265,40 @@ IPFILTER_LUMA_64xN_AVX512 16
 IPFILTER_LUMA_64xN_AVX512 32
 IPFILTER_LUMA_64xN_AVX512 48
 IPFILTER_LUMA_64xN_AVX512 64
+
+%macro IPFILTER_LUMA_32xN_AVX512 1
+INIT_ZMM avx512
+cglobal interp_8tap_horiz_pp_32x%1, 4,6,13
+    sub               r0,    3
+    mov               r4d,   r4m
+%ifdef PIC
+    lea               r5,        [tab_LumaCoeff]
+    vpbroadcastd      m0,        [r5 + r4 * 8]
+    vpbroadcastd      m1,        [r5 + r4 * 8 + 4]
+%else
+    vpbroadcastd      m0,        [tab_LumaCoeff + r4 * 8]
+    vpbroadcastd      m1,        [tab_LumaCoeff + r4 * 8 + 4]
+%endif
+    vbroadcasti32x8   m2,        [interp4_horiz_shuf_load1_avx512]
+    vbroadcasti32x8   m3,        [interp4_horiz_shuf_load3_avx512]
+    vbroadcasti32x8   m4,        [interp4_horiz_shuf_load2_avx512]
+    vpbroadcastd      m5,        [pw_1]
+    vbroadcasti32x8   m6,        [pw_512]
+
+%rep %1/2 -1
+    PROCESS_IPFILTER_LUMA_PP_32x2_AVX512
+    lea               r0,        [r0 + 2 * r1]
+    lea               r2,        [r2 + 2 * r3]
+%endrep
+    PROCESS_IPFILTER_LUMA_PP_32x2_AVX512
+    RET
+%endmacro
+
+IPFILTER_LUMA_32xN_AVX512 8
+IPFILTER_LUMA_32xN_AVX512 16
+IPFILTER_LUMA_32xN_AVX512 24
+IPFILTER_LUMA_32xN_AVX512 32
+IPFILTER_LUMA_32xN_AVX512 64
 ;-------------------------------------------------------------------------------------------------------------
 ;ipfilter_luma_avx512 code end
 ;-------------------------------------------------------------------------------------------------------------
