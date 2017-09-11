@@ -287,6 +287,7 @@ void x265_param_default(x265_param* param)
     param->bUseAnalysisFile = 1;
     param->csvfpt = NULL;
     param->forceFlush = 0;
+    param->bDisableLookahead = 0;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)

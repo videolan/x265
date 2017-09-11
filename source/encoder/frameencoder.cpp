@@ -1376,7 +1376,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             /* TODO: use defines from slicetype.h for lowres block size */
             uint32_t block_y = (ctu->m_cuPelY >> m_param->maxLog2CUSize) * noOfBlocks;
             uint32_t block_x = (ctu->m_cuPelX >> m_param->maxLog2CUSize) * noOfBlocks;
-            if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD || m_param->bUseAnalysisFile || !m_param->scaleFactor)
+            if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD || !m_param->bDisableLookahead)
             {
                 cuStat.vbvCost = 0;
                 cuStat.intraVbvCost = 0;

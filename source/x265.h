@@ -1501,6 +1501,9 @@ typedef struct x265_param
 
     /* Enable skipping split RD analysis when sum of split CU rdCost larger than none split CU rdCost for Intra CU */
     int       bEnableSplitRdSkip;
+
+    /* Disable lookahead */
+    int       bDisableLookahead;
 } x265_param;
 
 /* x265_param_alloc:
