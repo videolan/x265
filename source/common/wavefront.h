@@ -52,6 +52,10 @@ private:
 
     int m_numRows;
 
+protected:
+    uint32_t *m_row_to_idx;
+    uint32_t *m_idx_to_row;
+
 public:
 
     WaveFront()

@@ -701,6 +701,24 @@ void FrameEncoder::compressFrame()
     {
         m_rows[m_sliceBaseRow[sliceId]].active = true;
     }
+    if (m_param->bEnableWavefront)
+    {
+        int i = 0;
+        for (uint32_t rowInSlice = 0; rowInSlice < m_sliceGroupSize; rowInSlice++)
+        {
+            for (uint32_t sliceId = 0; sliceId < m_param->maxSlices; sliceId++)
+            {
+                const uint32_t sliceStartRow = m_sliceBaseRow[sliceId];
+                const uint32_t sliceEndRow = m_sliceBaseRow[sliceId + 1] - 1;
+                const uint32_t row = sliceStartRow + rowInSlice;
+                if (row > sliceEndRow)
+                    continue;
+                m_row_to_idx[row] = i;
+                m_idx_to_row[i] = row;
+                i += 1;
+            }
+        }
+    }
 
     if (m_param->bEnableWavefront)
     {
@@ -735,11 +753,11 @@ void FrameEncoder::compressFrame()
                     }
                 }
 
-                enableRowEncoder(row); /* clear external dependency for this row */
+                enableRowEncoder(m_row_to_idx[row]); /* clear external dependency for this row */
                 if (!rowInSlice)
                 {
                     m_row0WaitTime = x265_mdate();
-                    enqueueRowEncoder(row); /* clear internal dependency, start wavefront */
+                    enqueueRowEncoder(m_row_to_idx[row]); /* clear internal dependency, start wavefront */
                 }
                 tryWakeOne();
             } // end of loop rowInSlice
@@ -1196,8 +1214,8 @@ void FrameEncoder::processRow(int row, int threadId)
     if (ATOMIC_INC(&m_activeWorkerCount) == 1 && m_stallStartTime)
         m_totalNoWorkerTime += x265_mdate() - m_stallStartTime;
 
-    const uint32_t realRow = row >> 1;
-    const uint32_t typeNum = row & 1;
+    const uint32_t realRow = m_idx_to_row[row >> 1];
+    const uint32_t typeNum = m_idx_to_row[row & 1];
 
     if (!typeNum)
         processRowEncoder(realRow, m_tld[threadId]);
@@ -1207,7 +1225,7 @@ void FrameEncoder::processRow(int row, int threadId)
 
         // NOTE: Active next row
         if (realRow != m_sliceBaseRow[m_rows[realRow].sliceId + 1] - 1)
-            enqueueRowFilter(realRow + 1);
+            enqueueRowFilter(m_row_to_idx[realRow + 1]);
     }
 
     if (ATOMIC_DEC(&m_activeWorkerCount) == 0)
@@ -1649,7 +1667,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                 m_rows[row + 1].completed + 2 <= curRow.completed)
             {
                 m_rows[row + 1].active = true;
-                enqueueRowEncoder(row + 1);
+                enqueueRowEncoder(m_row_to_idx[row + 1]);
                 tryWakeOne(); /* wake up a sleeping thread or set the help wanted flag */
             }
         }
@@ -1736,11 +1754,11 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     {
         if (rowInSlice >= m_filterRowDelay)
         {
-            enableRowFilter(row - m_filterRowDelay);
+            enableRowFilter(m_row_to_idx[row - m_filterRowDelay]);
 
             /* NOTE: Activate filter if first row (row 0) */
             if (rowInSlice == m_filterRowDelay)
-                enqueueRowFilter(row - m_filterRowDelay);
+                enqueueRowFilter(m_row_to_idx[row - m_filterRowDelay]);
             tryWakeOne();
         }
 
@@ -1748,7 +1766,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         {
             for (uint32_t i = endRowInSlicePlus1 - m_filterRowDelay; i < endRowInSlicePlus1; i++)
             {
-                enableRowFilter(i);
+                enableRowFilter(m_row_to_idx[i]);
             }
             tryWakeOne();
         }
@@ -1756,7 +1774,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         // handle specially case - single row slice
         if  (bFirstRowInSlice & bLastRowInSlice)
         {
-            enqueueRowFilter(row);
+            enqueueRowFilter(m_row_to_idx[row]);
             tryWakeOne();
         }
     }
