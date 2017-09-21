@@ -1969,29 +1969,7 @@ cglobal filterPixelToShort_32x%1, 3, 7, 3
     P2S_H_32xN_avx2 64
     P2S_H_32xN_avx2 48
 
-%macro PROCESS_P2S_32x8_AVX512 0
-    pmovzxbw    m0, [r0]
-    pmovzxbw    m1, [r0 + r1]
-    pmovzxbw    m2, [r0 + r1 * 2]
-    pmovzxbw    m3, [r0 + r5]
-
-    psllw       m0, 6
-    psllw       m1, 6
-    psllw       m2, 6
-    psllw       m3, 6
-    psubw       m0, m4
-    psubw       m1, m4
-    psubw       m2, m4
-    psubw       m3, m4
-
-    movu        [r2],           m0
-    movu        [r2 + r3],      m1
-    movu        [r2 + r3 * 2],  m2
-    movu        [r2 + r6],      m3
-
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-
+%macro PROCESS_P2S_32x4_AVX512 0
     pmovzxbw    m0, [r0]
     pmovzxbw    m1, [r0 + r1]
     pmovzxbw    m2, [r0 + r1 * 2]
@@ -2025,7 +2003,10 @@ cglobal filterPixelToShort_32x8, 3, 7, 5
     ; load constant
     vpbroadcastd      m4, [pw_2000]
 
-    PROCESS_P2S_32x8_AVX512
+    PROCESS_P2S_32x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+    PROCESS_P2S_32x4_AVX512
     RET
 
 INIT_ZMM avx512
@@ -2038,10 +2019,12 @@ cglobal filterPixelToShort_32x16, 3, 7, 5
     ; load constant
     vpbroadcastd      m4, [pw_2000]
 
-    PROCESS_P2S_32x8_AVX512
+%rep 3
+    PROCESS_P2S_32x4_AVX512
     lea         r0, [r0 + r1 * 4]
     lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
+%endrep
+    PROCESS_P2S_32x4_AVX512
     RET
 
 INIT_ZMM avx512
@@ -2054,13 +2037,12 @@ cglobal filterPixelToShort_32x24, 3, 7, 5
     ; load constant
     vpbroadcastd      m4, [pw_2000]
 
-    PROCESS_P2S_32x8_AVX512
+%rep 5
+    PROCESS_P2S_32x4_AVX512
     lea         r0, [r0 + r1 * 4]
     lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
+%endrep
+    PROCESS_P2S_32x4_AVX512
     RET
 
 INIT_ZMM avx512
@@ -2073,16 +2055,12 @@ cglobal filterPixelToShort_32x32, 3, 7, 5
     ; load constant
     vpbroadcastd      m4, [pw_2000]
 
-    PROCESS_P2S_32x8_AVX512
+%rep 7
+    PROCESS_P2S_32x4_AVX512
     lea         r0, [r0 + r1 * 4]
     lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
+%endrep
+    PROCESS_P2S_32x4_AVX512
     RET
 
 INIT_ZMM avx512
@@ -2095,22 +2073,12 @@ cglobal filterPixelToShort_32x48, 3, 7, 5
     ; load constant
     vpbroadcastd      m4, [pw_2000]
 
-    PROCESS_P2S_32x8_AVX512
+%rep 11
+    PROCESS_P2S_32x4_AVX512
     lea         r0, [r0 + r1 * 4]
     lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
+%endrep
+    PROCESS_P2S_32x4_AVX512
     RET
 
 INIT_ZMM avx512
@@ -2123,28 +2091,12 @@ cglobal filterPixelToShort_32x64, 3, 7, 5
     ; load constant
     vpbroadcastd      m4, [pw_2000]
 
-    PROCESS_P2S_32x8_AVX512
+%rep 15
+    PROCESS_P2S_32x4_AVX512
     lea         r0, [r0 + r1 * 4]
     lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_32x8_AVX512
+%endrep
+    PROCESS_P2S_32x4_AVX512
     RET
 
 ;-----------------------------------------------------------------------------
@@ -2462,46 +2414,7 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     P2S_H_64xN_avx2 32
     P2S_H_64xN_avx2 48
 
-%macro PROCESS_P2S_64x8_AVX512 0
-    pmovzxbw    m0, [r0]
-    pmovzxbw    m1, [r0 + mmsize/2]
-    pmovzxbw    m2, [r0 + r1]
-    pmovzxbw    m3, [r0 + r1 + mmsize/2]
-
-    psllw       m0, 6
-    psllw       m1, 6
-    psllw       m2, 6
-    psllw       m3, 6
-    psubw       m0, m4
-    psubw       m1, m4
-    psubw       m2, m4
-    psubw       m3, m4
-    movu        [r2], m0
-    movu        [r2 + mmsize], m1
-    movu        [r2 + r3], m2
-    movu        [r2 + r3 + mmsize], m3
-
-    pmovzxbw    m0, [r0 + r1 * 2]
-    pmovzxbw    m1, [r0 + r1 * 2 + mmsize/2]
-    pmovzxbw    m2, [r0 + r5]
-    pmovzxbw    m3, [r0 + r5 + mmsize/2]
-
-    psllw       m0, 6
-    psllw       m1, 6
-    psllw       m2, 6
-    psllw       m3, 6
-    psubw       m0, m4
-    psubw       m1, m4
-    psubw       m2, m4
-    psubw       m3, m4
-    movu        [r2 + r3 * 2], m0
-    movu        [r2 + r3 * 2 + mmsize], m1
-    movu        [r2 + r6], m2
-    movu        [r2 + r6 + mmsize], m3
-
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-
+%macro PROCESS_P2S_64x4_AVX512 0
     pmovzxbw    m0, [r0]
     pmovzxbw    m1, [r0 + mmsize/2]
     pmovzxbw    m2, [r0 + r1]
@@ -2552,28 +2465,12 @@ cglobal filterPixelToShort_64x64, 3, 7, 5
     ; load constant
     vpbroadcastd      m4, [pw_2000]
 
-    PROCESS_P2S_64x8_AVX512
+%rep 15
+    PROCESS_P2S_64x4_AVX512
     lea         r0, [r0 + r1 * 4]
     lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
+%endrep
+    PROCESS_P2S_64x4_AVX512
     RET
 
 INIT_ZMM avx512
@@ -2586,22 +2483,12 @@ cglobal filterPixelToShort_64x48, 3, 7, 5
     ; load constant
     vpbroadcastd      m4, [pw_2000]
 
-    PROCESS_P2S_64x8_AVX512
+%rep 11
+    PROCESS_P2S_64x4_AVX512
     lea         r0, [r0 + r1 * 4]
     lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
+%endrep
+    PROCESS_P2S_64x4_AVX512
     RET
 
 INIT_ZMM avx512
@@ -2614,16 +2501,12 @@ cglobal filterPixelToShort_64x32, 3, 7, 5
     ; load constant
     vpbroadcastd      m4, [pw_2000]
 
-    PROCESS_P2S_64x8_AVX512
+%rep 7
+    PROCESS_P2S_64x4_AVX512
     lea         r0, [r0 + r1 * 4]
     lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
-    lea         r0, [r0 + r1 * 4]
-    lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
+%endrep
+    PROCESS_P2S_64x4_AVX512
     RET
 
 INIT_ZMM avx512
@@ -2636,10 +2519,12 @@ cglobal filterPixelToShort_64x16, 3, 7, 5
     ; load constant
     vpbroadcastd      m4, [pw_2000]
 
-    PROCESS_P2S_64x8_AVX512
+%rep 3
+    PROCESS_P2S_64x4_AVX512
     lea         r0, [r0 + r1 * 4]
     lea         r2, [r2 + r3 * 4]
-    PROCESS_P2S_64x8_AVX512
+%endrep
+    PROCESS_P2S_64x4_AVX512
     RET
 
 ;-----------------------------------------------------------------------------

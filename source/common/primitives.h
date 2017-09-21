@@ -248,6 +248,7 @@ struct EncoderPrimitives
 
         copy_pp_t      copy_pp;
         filter_p2s_t   convert_p2s;
+        filter_p2s_t   convert_p2s_aligned;
     }
     pu[NUM_PU_SIZES];
 
@@ -387,6 +388,7 @@ struct EncoderPrimitives
             addAvg_t     addAvg;
             copy_pp_t    copy_pp;
             filter_p2s_t p2s;
+            filter_p2s_t p2s_aligned;
 
         }
         pu[NUM_PU_SIZES];
