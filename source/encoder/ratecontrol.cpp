@@ -732,7 +732,6 @@ void RateControl::reconfigureRC()
     m_bitrate = m_param->rc.bitrate * 1000;
 }
 
-
 void RateControl::initHRD(SPS& sps)
 {
     int vbvBufferSize = m_param->rc.vbvBufferSize * 1000;
@@ -765,6 +764,7 @@ void RateControl::initHRD(SPS& sps)
 
     #undef MAX_DURATION
 }
+
 bool RateControl::analyseABR2Pass(uint64_t allAvailableBits)
 {
     double rateFactor, stepMult;
@@ -1473,6 +1473,7 @@ double RateControl::getDiffLimitedQScale(RateControlEntry *rce, double q)
 
     return q;
 }
+
 double RateControl::countExpectedBits(int startPos, int endPos)
 {
     double expectedBits = 0;
@@ -1484,6 +1485,7 @@ double RateControl::countExpectedBits(int startPos, int endPos)
     }
     return expectedBits;
 }
+
 bool RateControl::findUnderflow(double *fills, int *t0, int *t1, int over, int endPos)
 {
     /* find an interval ending on an overflow or underflow (depending on whether
@@ -1531,6 +1533,7 @@ bool RateControl::fixUnderflow(int t0, int t1, double adjustment, double qscaleM
     }
     return adjusted;
 }
+
 bool RateControl::cuTreeReadFor2Pass(Frame* frame)
 {
     int index = m_encOrder[frame->m_poc];
@@ -1579,24 +1582,24 @@ fail:
 double RateControl::tuneAbrQScaleFromFeedback(double qScale)
 {
     double abrBuffer = 2 * m_rateTolerance * m_bitrate;
-        /* use framesDone instead of POC as poc count is not serial with bframes enabled */
-        double overflow = 1.0;
-        double timeDone = (double)(m_framesDone - m_param->frameNumThreads + 1) * m_frameDuration;
-        double wantedBits = timeDone * m_bitrate;
-        int64_t encodedBits = m_totalBits;
-        if (m_param->totalFrames && m_param->totalFrames <= 2 * m_fps)
-        {
-            abrBuffer = m_param->totalFrames * (m_bitrate / m_fps);
-            encodedBits = m_encodedBits;
-        }
+    /* use framesDone instead of POC as poc count is not serial with bframes enabled */
+    double overflow = 1.0;
+    double timeDone = (double)(m_framesDone - m_param->frameNumThreads + 1) * m_frameDuration;
+    double wantedBits = timeDone * m_bitrate;
+    int64_t encodedBits = m_totalBits;
+    if (m_param->totalFrames && m_param->totalFrames <= 2 * m_fps)
+    {
+        abrBuffer = m_param->totalFrames * (m_bitrate / m_fps);
+        encodedBits = m_encodedBits;
+    }
 
-        if (wantedBits > 0 && encodedBits > 0 && (!m_partialResidualFrames || 
-            m_param->rc.bStrictCbr || m_isGrainEnabled))
-        {
-            abrBuffer *= X265_MAX(1, sqrt(timeDone));
-            overflow = x265_clip3(.5, 2.0, 1.0 + (encodedBits - wantedBits) / abrBuffer);
-            qScale *= overflow;
-        }
+    if (wantedBits > 0 && encodedBits > 0 && (!m_partialResidualFrames || 
+        m_param->rc.bStrictCbr || m_isGrainEnabled))
+    {
+        abrBuffer *= X265_MAX(1, sqrt(timeDone));
+        overflow = x265_clip3(.5, 2.0, 1.0 + (encodedBits - wantedBits) / abrBuffer);
+        qScale *= overflow;
+    }
     return qScale;
 }
 
@@ -2330,17 +2333,18 @@ double RateControl::predictRowsSizeSum(Frame* curFrame, RateControlEntry* rce, d
     return totalSatdBits + encodedBitsSoFar;
 }
 
-int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv)
+int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEntry* rce, double& qpVbv, uint32_t* m_sliceBaseRow, uint32_t sliceId)
 {
     FrameData& curEncData = *curFrame->m_encData;
     double qScaleVbv = x265_qp2qScale(qpVbv);
     uint64_t rowSatdCost = curEncData.m_rowStat[row].rowSatd;
     double encodedBits = curEncData.m_rowStat[row].encodedBits;
+    uint32_t rowInSlice = row - m_sliceBaseRow[sliceId];
 
-    if (m_param->bEnableWavefront && row == 1)
+    if (m_param->bEnableWavefront && rowInSlice == 1)
     {
-        rowSatdCost += curEncData.m_rowStat[0].rowSatd;
-        encodedBits += curEncData.m_rowStat[0].encodedBits;
+        rowSatdCost += curEncData.m_rowStat[row - 1].rowSatd;
+        encodedBits += curEncData.m_rowStat[row - 1].encodedBits;
     }
     rowSatdCost >>= X265_DEPTH - 8;
     updatePredictor(rce->rowPred[0], qScaleVbv, (double)rowSatdCost, encodedBits);
@@ -2350,8 +2354,8 @@ int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEnt
         if (qpVbv < refFrame->m_encData->m_rowStat[row].rowQp)
         {
             uint64_t intraRowSatdCost = curEncData.m_rowStat[row].rowIntraSatd;
-            if (m_param->bEnableWavefront && row == 1)
-                intraRowSatdCost += curEncData.m_rowStat[0].rowIntraSatd;
+            if (m_param->bEnableWavefront && rowInSlice == 1)
+                intraRowSatdCost += curEncData.m_rowStat[row - 1].rowIntraSatd;
             intraRowSatdCost >>= X265_DEPTH - 8;
             updatePredictor(rce->rowPred[1], qScaleVbv, (double)intraRowSatdCost, encodedBits);
         }
@@ -2376,7 +2380,7 @@ int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEnt
     const SPS& sps = *curEncData.m_slice->m_sps;
     double maxFrameError = X265_MAX(0.05, 1.0 / sps.numCuInHeight);
 
-    if (row < sps.numCuInHeight - 1)
+    if (row < m_sliceBaseRow[sliceId + 1] - 1)
     {
         /* More threads means we have to be more cautious in letting ratecontrol use up extra bits. */
         double rcTol = bufferLeftPlanned / m_param->frameNumThreads * m_rateTolerance;
@@ -2693,8 +2697,8 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
             m_encodedBitsWindow[pos % s_slidingWindowFrames] = actualBits;
         if(rce->sliceType != I_SLICE)
         {
-        int qp = int (rce->qpaRc + 0.5);
-        m_qpToEncodedBits[qp] =  m_qpToEncodedBits[qp] == 0 ? actualBits : (m_qpToEncodedBits[qp] + actualBits) * 0.5;
+            int qp = int (rce->qpaRc + 0.5);
+            m_qpToEncodedBits[qp] =  m_qpToEncodedBits[qp] == 0 ? actualBits : (m_qpToEncodedBits[qp] + actualBits) * 0.5;
         }
         curFrame->m_rcData->wantedBitsWindow = m_wantedBitsWindow;
         curFrame->m_rcData->cplxrSum = m_cplxrSum;
@@ -2779,7 +2783,8 @@ int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* r
             curFrame->m_encData->m_frameStats.percent8x8Skip  * m_ncu) < 0)
             goto writeFailure;
     }
-    else{
+    else
+    {
         RPS* rpsWriter = &curFrame->m_encData->m_slice->m_rps;
         int i, num = rpsWriter->numberOfPictures;
         char deltaPOC[128];

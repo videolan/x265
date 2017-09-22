@@ -138,6 +138,7 @@ public:
     volatile bool            m_bAllRowsStop;
     volatile int             m_completionCount;
     volatile int             m_vbvResetTriggerRow;
+    volatile int             m_sliceCnt;
 
     uint32_t                 m_numRows;
     uint32_t                 m_numCols;
@@ -147,8 +148,10 @@ public:
 
     CTURow*                  m_rows;
     uint16_t                 m_sliceAddrBits;
-    uint16_t                 m_sliceGroupSize;
-    uint32_t*                m_sliceBaseRow;
+    uint32_t                 m_sliceGroupSize;
+    uint32_t*                m_sliceBaseRow;    
+    uint32_t*                m_sliceMaxBlockRow;
+    int64_t                  m_rowSliceTotalBits[2];
     RateControlEntry         m_rce;
     SEIDecodedPictureHash    m_seiReconPictureDigest;
 
