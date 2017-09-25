@@ -1969,6 +1969,10 @@ cglobal filterPixelToShort_32x%1, 3, 7, 3
     P2S_H_32xN_avx2 64
     P2S_H_32xN_avx2 48
 
+;-----------------------------------------------------------------------------
+;p2s and p2s_aligned 32xN avx512 code start
+;-----------------------------------------------------------------------------
+
 %macro PROCESS_P2S_32x4_AVX512 0
     pmovzxbw    m0, [r0]
     pmovzxbw    m1, [r0 + r1]
@@ -2099,6 +2103,138 @@ cglobal filterPixelToShort_32x64, 3, 7, 5
     PROCESS_P2S_32x4_AVX512
     RET
 
+%macro PROCESS_P2S_ALIGNED_32x4_AVX512 0
+    pmovzxbw    m0, [r0]
+    pmovzxbw    m1, [r0 + r1]
+    pmovzxbw    m2, [r0 + r1 * 2]
+    pmovzxbw    m3, [r0 + r5]
+
+    psllw       m0, 6
+    psllw       m1, 6
+    psllw       m2, 6
+    psllw       m3, 6
+    psubw       m0, m4
+    psubw       m1, m4
+    psubw       m2, m4
+    psubw       m3, m4
+
+    mova        [r2],           m0
+    mova        [r2 + r3],      m1
+    mova        [r2 + r3 * 2],  m2
+    mova        [r2 + r6],      m3
+%endmacro
+
+;-----------------------------------------------------------------------------
+; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
+;-----------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_32x8, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd      m4, [pw_2000]
+
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_32x16, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd      m4, [pw_2000]
+
+%rep 3
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+%endrep
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_32x24, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd      m4, [pw_2000]
+
+%rep 5
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+%endrep
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_32x32, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd      m4, [pw_2000]
+
+%rep 7
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+%endrep
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_32x48, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd      m4, [pw_2000]
+
+%rep 11
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+%endrep
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_32x64, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd      m4, [pw_2000]
+
+%rep 15
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+%endrep
+    PROCESS_P2S_ALIGNED_32x4_AVX512
+    RET
+;-----------------------------------------------------------------------------
+;p2s and p2s_aligned 32xN avx512 code end
+;-----------------------------------------------------------------------------
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
@@ -2414,6 +2550,9 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     P2S_H_64xN_avx2 32
     P2S_H_64xN_avx2 48
 
+;-----------------------------------------------------------------------------
+;p2s and p2s_aligned 64xN avx512 code start
+;-----------------------------------------------------------------------------
 %macro PROCESS_P2S_64x4_AVX512 0
     pmovzxbw    m0, [r0]
     pmovzxbw    m1, [r0 + mmsize/2]
@@ -2452,6 +2591,43 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     movu        [r2 + r6 + mmsize], m3
 %endmacro
 
+%macro PROCESS_P2S_ALIGNED_64x4_AVX512 0
+    pmovzxbw    m0, [r0]
+    pmovzxbw    m1, [r0 + mmsize/2]
+    pmovzxbw    m2, [r0 + r1]
+    pmovzxbw    m3, [r0 + r1 + mmsize/2]
+
+    psllw       m0, 6
+    psllw       m1, 6
+    psllw       m2, 6
+    psllw       m3, 6
+    psubw       m0, m4
+    psubw       m1, m4
+    psubw       m2, m4
+    psubw       m3, m4
+    mova        [r2], m0
+    mova        [r2 + mmsize], m1
+    mova        [r2 + r3], m2
+    mova        [r2 + r3 + mmsize], m3
+
+    pmovzxbw    m0, [r0 + r1 * 2]
+    pmovzxbw    m1, [r0 + r1 * 2 + mmsize/2]
+    pmovzxbw    m2, [r0 + r5]
+    pmovzxbw    m3, [r0 + r5 + mmsize/2]
+
+    psllw       m0, 6
+    psllw       m1, 6
+    psllw       m2, 6
+    psllw       m3, 6
+    psubw       m0, m4
+    psubw       m1, m4
+    psubw       m2, m4
+    psubw       m3, m4
+    mova        [r2 + r3 * 2], m0
+    mova        [r2 + r3 * 2 + mmsize], m1
+    mova        [r2 + r6], m2
+    mova        [r2 + r6 + mmsize], m3
+%endmacro
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
@@ -2526,6 +2702,81 @@ cglobal filterPixelToShort_64x16, 3, 7, 5
 %endrep
     PROCESS_P2S_64x4_AVX512
     RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_64x64, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd      m4, [pw_2000]
+
+%rep 15
+    PROCESS_P2S_ALIGNED_64x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+%endrep
+    PROCESS_P2S_ALIGNED_64x4_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_64x48, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd      m4, [pw_2000]
+
+%rep 11
+    PROCESS_P2S_ALIGNED_64x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+%endrep
+    PROCESS_P2S_ALIGNED_64x4_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_64x32, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd      m4, [pw_2000]
+
+%rep 7
+    PROCESS_P2S_ALIGNED_64x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+%endrep
+    PROCESS_P2S_ALIGNED_64x4_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_64x16, 3, 7, 5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd      m4, [pw_2000]
+
+%rep 3
+    PROCESS_P2S_ALIGNED_64x4_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+%endrep
+    PROCESS_P2S_ALIGNED_64x4_AVX512
+    RET
+;-----------------------------------------------------------------------------
+;p2s and p2s_aligned 64xN avx512 code end
+;-----------------------------------------------------------------------------
 
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel src, intptr_t srcStride, int16_t dst, int16_t dstStride)
@@ -2948,6 +3199,9 @@ cglobal filterPixelToShort_48x64, 3,7,4
     jnz        .loop
     RET
 
+;-----------------------------------------------------------------------------
+;p2s and p2s_aligned 48xN avx512 code start
+;-----------------------------------------------------------------------------
 %macro PROCESS_P2S_48x8_AVX512 0
     pmovzxbw    m0, [r0]
     pmovzxbw    m1, [r0 + r1]
@@ -3021,6 +3275,78 @@ cglobal filterPixelToShort_48x64, 3,7,4
     movu        [r2 + r6 + 64],      ym3
 %endmacro
 
+%macro PROCESS_P2S_ALIGNED_48x8_AVX512 0
+    pmovzxbw    m0, [r0]
+    pmovzxbw    m1, [r0 + r1]
+    pmovzxbw    m2, [r0 + r1 * 2]
+    pmovzxbw    m3, [r0 + r5]
+    psllw       m0, 6
+    psllw       m1, 6
+    psllw       m2, 6
+    psllw       m3, 6
+    psubw       m0, m4
+    psubw       m1, m4
+    psubw       m2, m4
+    psubw       m3, m4
+    mova        [r2],           m0
+    mova        [r2 + r3],      m1
+    mova        [r2 + r3 * 2],  m2
+    mova        [r2 + r6],      m3
+
+    pmovzxbw    ym0, [r0 + 32]
+    pmovzxbw    ym1, [r0 + r1 + 32]
+    pmovzxbw    ym2, [r0 + r1 * 2 + 32]
+    pmovzxbw    ym3, [r0 + r5 + 32]
+    psllw       ym0, 6
+    psllw       ym1, 6
+    psllw       ym2, 6
+    psllw       ym3, 6
+    psubw       ym0, ym4
+    psubw       ym1, ym4
+    psubw       ym2, ym4
+    psubw       ym3, ym4
+    mova        [r2 + 64],           ym0
+    mova        [r2 + r3 + 64],      ym1
+    mova        [r2 + r3 * 2 + 64],  ym2
+    mova        [r2 + r6 + 64],      ym3
+
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+
+    pmovzxbw    m0, [r0]
+    pmovzxbw    m1, [r0 + r1]
+    pmovzxbw    m2, [r0 + r1 * 2]
+    pmovzxbw    m3, [r0 + r5]
+    psllw       m0, 6
+    psllw       m1, 6
+    psllw       m2, 6
+    psllw       m3, 6
+    psubw       m0, m4
+    psubw       m1, m4
+    psubw       m2, m4
+    psubw       m3, m4
+    mova        [r2],           m0
+    mova        [r2 + r3],      m1
+    mova        [r2 + r3 * 2],  m2
+    mova        [r2 + r6],      m3
+
+    pmovzxbw    ym0, [r0 + 32]
+    pmovzxbw    ym1, [r0 + r1 + 32]
+    pmovzxbw    ym2, [r0 + r1 * 2 + 32]
+    pmovzxbw    ym3, [r0 + r5 + 32]
+    psllw       ym0, 6
+    psllw       ym1, 6
+    psllw       ym2, 6
+    psllw       ym3, 6
+    psubw       ym0, ym4
+    psubw       ym1, ym4
+    psubw       ym2, ym4
+    psubw       ym3, ym4
+    mova        [r2 + 64],           ym0
+    mova        [r2 + r3 + 64],      ym1
+    mova        [r2 + r3 * 2 + 64],  ym2
+    mova        [r2 + r6 + 64],      ym3
+%endmacro
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
@@ -3057,6 +3383,43 @@ cglobal filterPixelToShort_48x64, 3,7,5
     lea         r2, [r2 + r3 * 4]
     PROCESS_P2S_48x8_AVX512
     RET
+
+INIT_ZMM avx512
+cglobal filterPixelToShort_aligned_48x64, 3,7,5
+    mov         r3d, r3m
+    add         r3d, r3d
+    lea         r5, [r1 * 3]
+    lea         r6, [r3 * 3]
+
+    ; load constant
+    vpbroadcastd m4, [pw_2000]
+
+    PROCESS_P2S_ALIGNED_48x8_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+    PROCESS_P2S_ALIGNED_48x8_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+    PROCESS_P2S_ALIGNED_48x8_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+    PROCESS_P2S_ALIGNED_48x8_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+    PROCESS_P2S_ALIGNED_48x8_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+    PROCESS_P2S_ALIGNED_48x8_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+    PROCESS_P2S_ALIGNED_48x8_AVX512
+    lea         r0, [r0 + r1 * 4]
+    lea         r2, [r2 + r3 * 4]
+    PROCESS_P2S_ALIGNED_48x8_AVX512
+    RET
+;-----------------------------------------------------------------------------
+;p2s and p2s_aligned 48xN avx512 code end
+;-----------------------------------------------------------------------------
 
 %macro PROCESS_LUMA_W4_4R 0
     movd        m0, [r0]
