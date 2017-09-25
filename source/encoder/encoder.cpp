@@ -631,12 +631,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 int32_t i = 0;
                 toneMap.payloadSize = 0;
                 while (m_cim[currentPOC][i] == 0xFF)
-                    toneMap.payloadSize += m_cim[currentPOC][i++] + 1;
-                toneMap.payloadSize += m_cim[currentPOC][i] + 1;
+                    toneMap.payloadSize += m_cim[currentPOC][i++];
+                toneMap.payloadSize += m_cim[currentPOC][i];
 
                 toneMap.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * toneMap.payloadSize);
                 toneMap.payloadType = USER_DATA_REGISTERED_ITU_T_T35;
-                memcpy(toneMap.payload, m_cim[currentPOC], toneMap.payloadSize);
+                memcpy(toneMap.payload, &m_cim[currentPOC][i+1], toneMap.payloadSize);
             }
         }
 #endif
