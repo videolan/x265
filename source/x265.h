@@ -100,6 +100,7 @@ typedef struct x265_lookahead_data
     int       keyframe;
     int       lastMiniGopBFrame;
     int       plannedType[X265_LOOKAHEAD_MAX + 1];
+    int64_t   dts;
 } x265_lookahead_data;
 
 /* Stores all analysis data for a single frame */

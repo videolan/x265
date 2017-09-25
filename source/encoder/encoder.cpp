@@ -911,6 +911,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                         if (m_param->scaleFactor)
                             factor = m_param->scaleFactor * 2;
                         pic_out->analysisData.numCuInHeight = outFrame->m_analysisData.numCuInHeight;
+                        pic_out->analysisData.lookahead.dts = outFrame->m_dts;
                         pic_out->analysisData.satdCost *= factor;
                         pic_out->analysisData.lookahead.keyframe = outFrame->m_lowres.bKeyframe;
                         pic_out->analysisData.lookahead.lastMiniGopBFrame = outFrame->m_lowres.bLastMiniGopBFrame;
@@ -1099,6 +1100,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             }
             if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->bDisableLookahead)
             {
+                frameEnc->m_dts = frameEnc->m_analysisData.lookahead.dts;
                 for (uint32_t index = 0; index < frameEnc->m_analysisData.numCuInHeight; index++)
                 {
                     frameEnc->m_encData->m_rowStat[index].intraSatdForVbv = frameEnc->m_analysisData.lookahead.intraSatdForVbv[index];
@@ -1162,16 +1164,19 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             frameEnc->m_encData->m_slice->m_iNumRPSInSPS = m_sps.spsrpsNum;
 
             curEncoder->m_rce.encodeOrder = frameEnc->m_encodeOrder = m_encodedFrameNum++;
-            if (m_bframeDelay)
+            if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD || !m_param->bDisableLookahead)
             {
-                int64_t *prevReorderedPts = m_prevReorderedPts;
-                frameEnc->m_dts = m_encodedFrameNum > m_bframeDelay
-                    ? prevReorderedPts[(m_encodedFrameNum - m_bframeDelay) % m_bframeDelay]
-                    : frameEnc->m_reorderedPts - m_bframeDelayTime;
-                prevReorderedPts[m_encodedFrameNum % m_bframeDelay] = frameEnc->m_reorderedPts;
+                if (m_bframeDelay)
+                {
+                    int64_t *prevReorderedPts = m_prevReorderedPts;
+                    frameEnc->m_dts = m_encodedFrameNum > m_bframeDelay
+                        ? prevReorderedPts[(m_encodedFrameNum - m_bframeDelay) % m_bframeDelay]
+                        : frameEnc->m_reorderedPts - m_bframeDelayTime;
+                    prevReorderedPts[m_encodedFrameNum % m_bframeDelay] = frameEnc->m_reorderedPts;
+                }
+                else
+                    frameEnc->m_dts = frameEnc->m_reorderedPts;
             }
-            else
-                frameEnc->m_dts = frameEnc->m_reorderedPts;
 
             /* Allocate analysis data before encode in save mode. This is allocated in frameEnc */
             if (m_param->analysisReuseMode == X265_ANALYSIS_SAVE)
