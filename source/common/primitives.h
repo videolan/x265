@@ -245,6 +245,7 @@ struct EncoderPrimitives
 
         pixelavg_pp_t  pixelavg_pp; // quick bidir using pixels (borrowed from x264)
         addAvg_t       addAvg;      // bidir motion compensation, uses 16bit values
+        addAvg_t       addAvg_aligned;
 
         copy_pp_t      copy_pp;
         filter_p2s_t   convert_p2s;
@@ -386,6 +387,7 @@ struct EncoderPrimitives
             filter_pp_t  filter_hpp;
             filter_hps_t filter_hps;
             addAvg_t     addAvg;
+            addAvg_t     addAvg_aligned;
             copy_pp_t    copy_pp;
             filter_p2s_t p2s;
             filter_p2s_t p2s_aligned;

@@ -50,6 +50,7 @@ pixel PFX(planeClipAndMax_avx2)(pixel *src, intptr_t stride, int width, int heig
     FUNCDEF_CHROMA_PU(int, pixel_sad, cpu, const pixel*, intptr_t, const pixel*, intptr_t); \
     FUNCDEF_CHROMA_PU(sse_t, pixel_ssd_ss, cpu, const int16_t*, intptr_t, const int16_t*, intptr_t); \
     FUNCDEF_CHROMA_PU(void, addAvg, cpu, const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t); \
+    FUNCDEF_CHROMA_PU(void, addAvg_aligned, cpu, const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t); \
     FUNCDEF_CHROMA_PU(sse_t, pixel_ssd_s, cpu, const int16_t*, intptr_t); \
     FUNCDEF_TU_S(sse_t, pixel_ssd_s, cpu, const int16_t*, intptr_t); \
     FUNCDEF_TU(uint64_t, pixel_var, cpu, const pixel*, intptr_t); \

@@ -987,6 +987,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
 #define LUMA_PU(W, H) \
     p.pu[LUMA_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].addAvg = addAvg<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].addAvg_aligned = addAvg<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].sad = sad<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].sad_x3 = sad_x3<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].sad_x4 = sad_x4<W, H>; \
@@ -1103,6 +1104,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
 
 #define CHROMA_PU_420(W, H) \
     p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].addAvg  = addAvg<W, H>;         \
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].addAvg_aligned  = addAvg<W, H>;         \
     p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
 
     CHROMA_PU_420(2, 2);
@@ -1180,6 +1182,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
 
 #define CHROMA_PU_422(W, H) \
     p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].addAvg  = addAvg<W, H>;         \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].addAvg_aligned  = addAvg<W, H>;         \
     p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
 
     CHROMA_PU_422(2, 4);

@@ -2510,6 +2510,65 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I444].pu[LUMA_48x64].filter_hpp = PFX(interp_4tap_horiz_pp_48x64_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_24x32].filter_hpp = PFX(interp_4tap_horiz_pp_24x32_avx512);
 
+        p.pu[LUMA_8x4].addAvg_aligned   = PFX(addAvg_8x4_avx2);
+        p.pu[LUMA_8x8].addAvg_aligned   = PFX(addAvg_8x8_avx2);
+        p.pu[LUMA_8x16].addAvg_aligned  = PFX(addAvg_8x16_avx2);
+        p.pu[LUMA_8x32].addAvg_aligned  = PFX(addAvg_8x32_avx2);
+        p.pu[LUMA_12x16].addAvg_aligned = PFX(addAvg_12x16_avx2);
+        p.pu[LUMA_16x4].addAvg_aligned = PFX(addAvg_aligned_16x4_avx512);
+        p.pu[LUMA_16x8].addAvg_aligned = PFX(addAvg_aligned_16x8_avx512);
+        p.pu[LUMA_16x12].addAvg_aligned = PFX(addAvg_aligned_16x12_avx512);
+        p.pu[LUMA_16x16].addAvg_aligned = PFX(addAvg_aligned_16x16_avx512);
+        p.pu[LUMA_16x32].addAvg_aligned = PFX(addAvg_aligned_16x32_avx512);
+        p.pu[LUMA_16x64].addAvg_aligned = PFX(addAvg_aligned_16x64_avx512);
+        p.pu[LUMA_48x64].addAvg_aligned = PFX(addAvg_aligned_48x64_avx512);
+        p.pu[LUMA_24x32].addAvg_aligned = PFX(addAvg_24x32_avx2);
+        p.pu[LUMA_32x8].addAvg_aligned = PFX(addAvg_aligned_32x8_avx512);
+        p.pu[LUMA_32x16].addAvg_aligned = PFX(addAvg_aligned_32x16_avx512);
+        p.pu[LUMA_32x24].addAvg_aligned = PFX(addAvg_aligned_32x24_avx512);
+        p.pu[LUMA_32x32].addAvg_aligned = PFX(addAvg_aligned_32x32_avx512);
+        p.pu[LUMA_32x64].addAvg_aligned = PFX(addAvg_aligned_32x64_avx512);
+        p.pu[LUMA_48x64].addAvg_aligned = PFX(addAvg_48x64_avx2);
+        p.pu[LUMA_64x16].addAvg_aligned = PFX(addAvg_aligned_64x16_avx512);
+        p.pu[LUMA_64x32].addAvg_aligned = PFX(addAvg_aligned_64x32_avx512);
+        p.pu[LUMA_64x48].addAvg_aligned = PFX(addAvg_aligned_64x48_avx512);
+        p.pu[LUMA_64x64].addAvg_aligned = PFX(addAvg_aligned_64x64_avx512);
+
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x2].addAvg_aligned   = PFX(addAvg_8x2_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x4].addAvg_aligned   = PFX(addAvg_8x4_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x6].addAvg_aligned   = PFX(addAvg_8x6_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].addAvg_aligned   = PFX(addAvg_8x8_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x16].addAvg_aligned  = PFX(addAvg_8x16_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].addAvg_aligned  = PFX(addAvg_8x32_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].addAvg_aligned = PFX(addAvg_12x16_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].addAvg_aligned = PFX(addAvg_aligned_16x4_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].addAvg_aligned = PFX(addAvg_aligned_16x8_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].addAvg_aligned = PFX(addAvg_aligned_16x12_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].addAvg_aligned = PFX(addAvg_aligned_16x16_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].addAvg_aligned = PFX(addAvg_aligned_16x32_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].addAvg_aligned = PFX(addAvg_aligned_32x8_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].addAvg_aligned = PFX(addAvg_aligned_32x16_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].addAvg_aligned = PFX(addAvg_aligned_32x24_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].addAvg_aligned = PFX(addAvg_aligned_32x32_avx512);
+
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].addAvg_aligned = PFX(addAvg_8x16_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].addAvg_aligned = PFX(addAvg_8x8_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x32].addAvg_aligned = PFX(addAvg_8x32_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x12].addAvg_aligned = PFX(addAvg_8x12_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].addAvg_aligned = PFX(addAvg_8x4_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x64].addAvg_aligned = PFX(addAvg_8x64_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].addAvg_aligned = PFX(addAvg_24x64_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_12x32].addAvg_aligned = PFX(addAvg_12x32_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].addAvg_aligned = PFX(addAvg_aligned_16x32_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].addAvg_aligned = PFX(addAvg_aligned_16x16_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].addAvg_aligned = PFX(addAvg_aligned_16x64_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].addAvg_aligned = PFX(addAvg_aligned_16x24_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].addAvg_aligned = PFX(addAvg_aligned_16x8_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].addAvg_aligned = PFX(addAvg_aligned_32x16_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].addAvg_aligned = PFX(addAvg_aligned_32x32_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].addAvg_aligned = PFX(addAvg_aligned_32x48_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].addAvg_aligned = PFX(addAvg_aligned_32x64_avx512);
+
     }
 }
 #else // if HIGH_BIT_DEPTH
@@ -4175,6 +4234,64 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].addAvg = PFX(addAvg_32x48_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].addAvg = PFX(addAvg_32x64_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].addAvg = PFX(addAvg_32x32_avx512);
+
+        p.pu[LUMA_8x4].addAvg_aligned = PFX(addAvg_8x4_avx2);
+        p.pu[LUMA_8x8].addAvg_aligned = PFX(addAvg_8x8_avx2);
+        p.pu[LUMA_8x16].addAvg_aligned = PFX(addAvg_8x16_avx2);
+        p.pu[LUMA_8x32].addAvg_aligned = PFX(addAvg_8x32_avx2);
+        p.pu[LUMA_12x16].addAvg_aligned = PFX(addAvg_12x16_avx2);
+        p.pu[LUMA_16x4].addAvg_aligned = PFX(addAvg_16x4_avx2);
+        p.pu[LUMA_16x8].addAvg_aligned = PFX(addAvg_16x8_avx2);
+        p.pu[LUMA_16x12].addAvg_aligned = PFX(addAvg_16x12_avx2);
+        p.pu[LUMA_16x16].addAvg_aligned = PFX(addAvg_16x16_avx2);
+        p.pu[LUMA_16x32].addAvg_aligned = PFX(addAvg_16x32_avx2);
+        p.pu[LUMA_16x64].addAvg_aligned = PFX(addAvg_16x64_avx2);
+        p.pu[LUMA_24x32].addAvg_aligned = PFX(addAvg_24x32_avx2);
+        p.pu[LUMA_32x8].addAvg_aligned = PFX(addAvg_aligned_32x8_avx512);
+        p.pu[LUMA_32x16].addAvg_aligned = PFX(addAvg_aligned_32x16_avx512);
+        p.pu[LUMA_32x24].addAvg_aligned = PFX(addAvg_aligned_32x24_avx512);
+        p.pu[LUMA_32x32].addAvg_aligned = PFX(addAvg_aligned_32x32_avx512);
+        p.pu[LUMA_32x64].addAvg_aligned = PFX(addAvg_aligned_32x64_avx512);	
+        p.pu[LUMA_48x64].addAvg_aligned = PFX(addAvg_48x64_avx2);
+        p.pu[LUMA_64x16].addAvg_aligned = PFX(addAvg_aligned_64x16_avx512);
+        p.pu[LUMA_64x32].addAvg_aligned = PFX(addAvg_aligned_64x32_avx512);
+        p.pu[LUMA_64x48].addAvg_aligned = PFX(addAvg_aligned_64x48_avx512);
+        p.pu[LUMA_64x64].addAvg_aligned = PFX(addAvg_aligned_64x64_avx512);
+
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x2].addAvg_aligned = PFX(addAvg_8x2_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x4].addAvg_aligned = PFX(addAvg_8x4_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x6].addAvg_aligned = PFX(addAvg_8x6_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x8].addAvg_aligned = PFX(addAvg_8x8_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x16].addAvg_aligned = PFX(addAvg_8x16_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_8x32].addAvg_aligned = PFX(addAvg_8x32_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_12x16].addAvg_aligned = PFX(addAvg_12x16_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x4].addAvg_aligned = PFX(addAvg_16x4_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].addAvg_aligned = PFX(addAvg_16x8_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].addAvg_aligned = PFX(addAvg_16x12_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].addAvg_aligned = PFX(addAvg_16x16_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].addAvg_aligned = PFX(addAvg_16x32_avx2);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].addAvg_aligned  = PFX(addAvg_aligned_32x8_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].addAvg_aligned = PFX(addAvg_aligned_32x16_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].addAvg_aligned = PFX(addAvg_aligned_32x24_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].addAvg_aligned = PFX(addAvg_aligned_32x32_avx512);
+
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x4].addAvg_aligned = PFX(addAvg_8x4_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x8].addAvg_aligned = PFX(addAvg_8x8_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x12].addAvg_aligned = PFX(addAvg_8x12_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x16].addAvg_aligned = PFX(addAvg_8x16_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x32].addAvg_aligned = PFX(addAvg_8x32_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_8x64].addAvg_aligned = PFX(addAvg_8x64_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_12x32].addAvg_aligned = PFX(addAvg_12x32_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].addAvg_aligned = PFX(addAvg_16x8_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].addAvg_aligned = PFX(addAvg_16x16_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].addAvg_aligned = PFX(addAvg_16x24_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].addAvg_aligned = PFX(addAvg_16x32_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].addAvg_aligned = PFX(addAvg_16x64_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].addAvg_aligned = PFX(addAvg_24x64_avx2);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].addAvg_aligned = PFX(addAvg_aligned_32x16_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].addAvg_aligned = PFX(addAvg_aligned_32x48_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].addAvg_aligned = PFX(addAvg_aligned_32x64_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].addAvg_aligned = PFX(addAvg_aligned_32x32_avx512);
 
         p.cu[BLOCK_32x32].blockfill_s = PFX(blockfill_s_32x32_avx512);
 
