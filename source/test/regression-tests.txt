@@ -13,6 +13,7 @@
 
 BasketballDrive_1920x1080_50.y4m,--preset ultrafast --signhide --colormatrix bt709
 BasketballDrive_1920x1080_50.y4m,--preset superfast --psy-rd 1 --ctu 16 --no-wpp --limit-modes
+BasketballDrive_1920x1080_50.y4m,--preset superfast --tune zerolatency --bitrate 9000 --vbv-maxrate 9000 --vbv-bufsize 9000 -F 1 --slices 2
 BasketballDrive_1920x1080_50.y4m,--preset veryfast --tune zerolatency --no-temporal-mvp
 BasketballDrive_1920x1080_50.y4m,--preset faster --aq-strength 2 --merange 190 --slices 3
 BasketballDrive_1920x1080_50.y4m,--preset medium --ctu 16 --max-tu-size 8 --subme 7 --qg-size 16 --cu-lossless --tu-inter-depth 3 --limit-tu 1
@@ -109,6 +110,7 @@ ducks_take_off_420_720p50.y4m,--preset ultrafast --constrained-intra --rd 1
 ducks_take_off_444_720p50.y4m,--preset superfast --weightp --limit-refs 2
 ducks_take_off_420_720p50.y4m,--preset faster --qp 24 --deblock -6 --limit-refs 2
 ducks_take_off_420_720p50.y4m,--preset fast --deblock 6 --bframes 16 --rc-lookahead 40
+ducks_take_off_420_720p50.y4m,--preset fast --tune zerolatency --crf 21 --vbv-maxrate 6000 --vbv-bufsize 6000 -F 1 --slices 2
 ducks_take_off_420_720p50.y4m,--preset medium --tskip --tskip-fast --constrained-intra
 ducks_take_off_444_720p50.y4m,--preset medium --qp 38 --no-scenecut
 ducks_take_off_420_720p50.y4m,--preset slow --scaling-list default --qp 40
