@@ -3325,8 +3325,17 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
          * resiYuv. Generate the recon pixels by adding it to the prediction */
 
         if (cu.m_cbf[0][0])
-            primitives.cu[sizeIdx].add_ps(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
-                                          predY, resiYuv.m_buf[0], predYuv.m_size, resiYuv.m_size);
+        {
+            bool reconPicAlign = (reconPic.m_cuOffsetY[cu.m_cuAddr] + reconPic.m_buOffsetY[absPartIdx]) % 64 == 0;
+            bool predYalign = predYuv.getAddrOffset(absPartIdx, predYuv.m_size) % 64 == 0;
+            if (reconPicAlign && predYalign && (reconPic.m_stride % 64 == 0) && (predYuv.m_size % 64 == 0) && (resiYuv.m_size % 64 == 0) && 
+                reconPic.m_param->cpuid & X265_CPU_AVX512)
+                primitives.cu[sizeIdx].add_ps_aligned(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
+                    predY, resiYuv.m_buf[0], predYuv.m_size, resiYuv.m_size);
+            else
+                primitives.cu[sizeIdx].add_ps(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
+                    predY, resiYuv.m_buf[0], predYuv.m_size, resiYuv.m_size);
+        }
         else
             primitives.cu[sizeIdx].copy_pp(reconPic.getLumaAddr(cu.m_cuAddr, absPartIdx), reconPic.m_stride,
                                            predY, predYuv.m_size);
@@ -3334,16 +3343,34 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
         {
              pixel* predU = predYuv.getCbAddr(absPartIdx);
              pixel* predV = predYuv.getCrAddr(absPartIdx);
-            if (cu.m_cbf[1][0])
-                primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
-                                                        predU, resiYuv.m_buf[1], predYuv.m_csize, resiYuv.m_csize);
+             if (cu.m_cbf[1][0])
+             {
+                 bool reconPicAlign = (reconPic.m_cuOffsetC[cu.m_cuAddr] + reconPic.m_buOffsetC[absPartIdx]) % 64 == 0;
+                 bool predUalign = predYuv.getChromaAddrOffset(absPartIdx) % 64 == 0;
+                 if (reconPicAlign && predUalign && (reconPic.m_strideC % 64 == 0) && (predYuv.m_csize % 64 == 0) && (resiYuv.m_csize % 64 == 0) &&
+                     reconPic.m_param->cpuid & X265_CPU_AVX512)
+                     primitives.chroma[m_csp].cu[sizeIdx].add_ps_aligned(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+                         predU, resiYuv.m_buf[1], predYuv.m_csize, resiYuv.m_csize);
+                 else
+                     primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+                         predU, resiYuv.m_buf[1], predYuv.m_csize, resiYuv.m_csize);
+             }
             else
                 primitives.chroma[m_csp].cu[sizeIdx].copy_pp(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                          predU, predYuv.m_csize);
 
-            if (cu.m_cbf[2][0])
-                primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
-                                                        predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
+             if (cu.m_cbf[2][0])
+             {
+                 bool reconPicAlign = (reconPic.m_cuOffsetC[cu.m_cuAddr] + reconPic.m_buOffsetC[absPartIdx]) % 64 == 0;
+                 bool predValign = predYuv.getChromaAddrOffset(absPartIdx) % 64 == 0;
+                 if (reconPicAlign && predValign && (reconPic.m_strideC % 64 == 0) && (predYuv.m_csize % 64 == 0) && (resiYuv.m_csize % 64 == 0) &&
+                     reconPic.m_param->cpuid & X265_CPU_AVX512)
+                     primitives.chroma[m_csp].cu[sizeIdx].add_ps_aligned(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+                         predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
+                 else
+                     primitives.chroma[m_csp].cu[sizeIdx].add_ps(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
+                         predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
+             }
             else
                 primitives.chroma[m_csp].cu[sizeIdx].copy_pp(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                          predV, predYuv.m_csize);
