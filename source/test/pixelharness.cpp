@@ -749,8 +749,8 @@ bool PixelHarness::check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt)
 
 bool PixelHarness::check_scale1D_pp(scale1D_t ref, scale1D_t opt)
 {
-    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+    ALIGN_VAR_64(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_64(pixel, opt_dest[64 * 64]);
 
     memset(ref_dest, 0, sizeof(ref_dest));
     memset(opt_dest, 0, sizeof(opt_dest));
@@ -767,6 +767,31 @@ bool PixelHarness::check_scale1D_pp(scale1D_t ref, scale1D_t opt)
 
         reportfail();
         j += INCR;
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_scale1D_pp_aligned(scale1D_t ref, scale1D_t opt)
+{
+    ALIGN_VAR_64(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_64(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0, sizeof(ref_dest));
+    memset(opt_dest, 0, sizeof(opt_dest));
+
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        checked(opt, opt_dest, pixel_test_buff[index] + j);
+        ref(ref_dest, pixel_test_buff[index] + j);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        reportfail();
+        j += INCR * 2;
     }
 
     return true;
@@ -2587,6 +2612,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    if (opt.scale1D_128to64_aligned)
+    {
+        if (!check_scale1D_pp_aligned(ref.scale1D_128to64_aligned, opt.scale1D_128to64_aligned))
+        {
+            printf("scale1D_128to64_aligned failed!\n");
+            return false;
+        }
+    }
+
     if (opt.scale2D_64to32)
     {
         if (!check_scale2D_pp(ref.scale2D_64to32, opt.scale2D_64to32))
@@ -3232,6 +3266,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
     {
         HEADER0("scale1D_128to64");
         REPORT_SPEEDUP(opt.scale1D_128to64, ref.scale1D_128to64, pbuf2, pbuf1);
+    }
+
+    if (opt.scale1D_128to64_aligned)
+    {
+        HEADER0("scale1D_128to64_aligned");
+        REPORT_SPEEDUP(opt.scale1D_128to64_aligned, ref.scale1D_128to64_aligned, pbuf2, pbuf1);
     }
 
     if (opt.scale2D_64to32)

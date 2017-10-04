@@ -4219,6 +4219,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_64x64].copy_ps = PFX(blockcopy_ps_64x64_avx512);
 
         p.scale1D_128to64 = PFX(scale1D_128to64_avx512);
+        p.scale1D_128to64_aligned = PFX(scale1D_128to64_aligned_avx512);
 
         p.pu[LUMA_64x16].addAvg = PFX(addAvg_64x16_avx512);
         p.pu[LUMA_64x32].addAvg = PFX(addAvg_64x32_avx512);

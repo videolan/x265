@@ -37,6 +37,7 @@
     void PFX(weight_pp_ ## cpu(const pixel* src, pixel* dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)); \
     void PFX(weight_sp_ ## cpu(const int16_t* src, pixel* dst, intptr_t srcStride, intptr_t dstStride, int width, int height, int w0, int round, int shift, int offset)); \
     void PFX(scale1D_128to64_ ## cpu(pixel*, const pixel*)); \
+    void PFX(scale1D_128to64_aligned_ ## cpu(pixel*, const pixel*)); \
     void PFX(scale2D_64to32_ ## cpu(pixel*, const pixel*, intptr_t)); \
     uint32_t PFX(costCoeffRemain_ ## cpu(uint16_t *absCoeff, int numNonZero, int idx)); \
     uint32_t PFX(costC1C2Flag_sse2(uint16_t *absCoeff, intptr_t numNonZero, uint8_t *baseCtxMod, intptr_t ctxOffset)); \

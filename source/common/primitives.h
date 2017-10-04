@@ -312,6 +312,7 @@ struct EncoderPrimitives
     dequant_normal_t      dequant_normal;
     denoiseDct_t          denoiseDct;
     scale1D_t             scale1D_128to64;
+    scale1D_t             scale1D_128to64_aligned;
     scale2D_t             scale2D_64to32;
 
     ssim_4x4x2_core_t     ssim_4x4x2_core;

@@ -1264,6 +1264,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.weight_sp = weight_sp_c;
 
     p.scale1D_128to64 = scale1D_128to64;
+    p.scale1D_128to64_aligned = scale1D_128to64;
     p.scale2D_64to32 = scale2D_64to32;
     p.frameInitLowres = frame_init_lowres_core;
     p.ssim_4x4x2_core = ssim_4x4x2_core;
