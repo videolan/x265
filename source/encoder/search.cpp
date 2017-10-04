@@ -120,7 +120,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
             CHECKED_MALLOC(m_rqt[i].coeffRQT[0], coeff_t, sizeL + sizeC * 2);
             m_rqt[i].coeffRQT[1] = m_rqt[i].coeffRQT[0] + sizeL;
             m_rqt[i].coeffRQT[2] = m_rqt[i].coeffRQT[0] + sizeL + sizeC;
-            ok &= m_rqt[i].reconQtYuv.create(param.maxCUSize, param.internalCsp);
+            ok &= m_rqt[i].reconQtYuv.create(param.maxCUSize, param.internalCsp, param.cpuid);
             ok &= m_rqt[i].resiQtYuv.create(param.maxCUSize, param.internalCsp);
         }
     }
@@ -130,7 +130,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
         {
             CHECKED_MALLOC(m_rqt[i].coeffRQT[0], coeff_t, sizeL);
             m_rqt[i].coeffRQT[1] = m_rqt[i].coeffRQT[2] = NULL;
-            ok &= m_rqt[i].reconQtYuv.create(param.maxCUSize, param.internalCsp);
+            ok &= m_rqt[i].reconQtYuv.create(param.maxCUSize, param.internalCsp, param.cpuid);
             ok &= m_rqt[i].resiQtYuv.create(param.maxCUSize, param.internalCsp);
         }
     }
@@ -140,9 +140,9 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     {
         int cuSize = param.maxCUSize >> i;
         ok &= m_rqt[i].tmpResiYuv.create(cuSize, param.internalCsp);
-        ok &= m_rqt[i].tmpPredYuv.create(cuSize, param.internalCsp);
-        ok &= m_rqt[i].bidirPredYuv[0].create(cuSize, param.internalCsp);
-        ok &= m_rqt[i].bidirPredYuv[1].create(cuSize, param.internalCsp);
+        ok &= m_rqt[i].tmpPredYuv.create(cuSize, param.internalCsp, param.cpuid);
+        ok &= m_rqt[i].bidirPredYuv[0].create(cuSize, param.internalCsp, param.cpuid);
+        ok &= m_rqt[i].bidirPredYuv[1].create(cuSize, param.internalCsp, param.cpuid);
     }
 
     if (param.internalCsp != X265_CSP_I400)

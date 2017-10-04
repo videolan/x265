@@ -115,7 +115,7 @@ MotionEstimate::MotionEstimate()
 
 void MotionEstimate::init(int csp)
 {
-    fencPUYuv.create(FENC_STRIDE, csp);
+    fencPUYuv.create(FENC_STRIDE, csp, fencPUYuv.m_cpuid);
 }
 
 void MotionEstimate::initScales(void)
