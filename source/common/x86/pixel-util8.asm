@@ -687,6 +687,133 @@ cglobal getResidual32, 4,5,8
     RET
 %endif
 
+%macro PROCESS_GETRESIDUAL32_ALIGNED_W4_HBD_AVX512 0
+    movu        m0, [r0]
+    movu        m1, [r0 + r3]
+    movu        m2, [r0 + r3 * 2]
+    movu        m3, [r0 + r4]
+    lea         r0, [r0 + r3 * 4]
+
+    movu        m4, [r1]
+    movu        m5, [r1 + r3]
+    movu        m6, [r1 + r3 * 2]
+    movu        m7, [r1 + r4]
+    lea         r1, [r1 + r3 * 4]
+
+    psubw       m0, m4
+    psubw       m1, m5
+    psubw       m2, m6
+    psubw       m3, m7
+
+    movu        [r2], m0
+    movu        [r2 + r3], m1
+    movu        [r2 + r3 * 2], m2
+    movu        [r2 + r4], m3
+    lea         r2, [r2 + r3 * 4]
+%endmacro
+
+%macro PROCESS_GETRESIDUAL32_ALIGNED_W4_HBD_AVX512_END 0
+    movu        m0, [r0]
+    movu        m1, [r0 + r3]
+    movu        m2, [r0 + r3 * 2]
+    movu        m3, [r0 + r4]
+
+    movu        m4, [r1]
+    movu        m5, [r1 + r3]
+    movu        m6, [r1 + r3 * 2]
+    movu        m7, [r1 + r4]
+
+    psubw       m0, m4
+    psubw       m1, m5
+    psubw       m2, m6
+    psubw       m3, m7
+
+    movu        [r2], m0
+    movu        [r2 + r3], m1
+    movu        [r2 + r3 * 2], m2
+    movu        [r2 + r4], m3
+%endmacro
+
+%macro PROCESS_GETRESIDUAL32_ALIGNED_W4_AVX512 0
+    pmovzxbw    m0, [r0]
+    pmovzxbw    m1, [r0 + r3]
+    pmovzxbw    m2, [r0 + r3 * 2]
+    pmovzxbw    m3, [r0 + r4]
+    lea         r0, [r0 + r3 * 4]
+
+    pmovzxbw    m4, [r1]
+    pmovzxbw    m5, [r1 + r3]
+    pmovzxbw    m6, [r1 + r3 * 2]
+    pmovzxbw    m7, [r1 + r4]
+    lea         r1, [r1 + r3 * 4]
+
+    psubw       m0, m4
+    psubw       m1, m5
+    psubw       m2, m6
+    psubw       m3, m7
+
+    movu        [r2], m0
+    movu        [r2 + r3 * 2], m1
+    lea         r2, [r2 + r3 * 4]
+    movu        [r2], m2
+    movu        [r2 + r3 * 2], m3
+    lea         r2, [r2 + r3 * 4]
+%endmacro
+
+%macro PROCESS_GETRESIDUAL32_ALIGNED_W4_AVX512_END 0
+    pmovzxbw    m0, [r0]
+    pmovzxbw    m1, [r0 + r3]
+    pmovzxbw    m2, [r0 + r3 * 2]
+    pmovzxbw    m3, [r0 + r4]
+
+    pmovzxbw    m4, [r1]
+    pmovzxbw    m5, [r1 + r3]
+    pmovzxbw    m6, [r1 + r3 * 2]
+    pmovzxbw    m7, [r1 + r4]
+
+    psubw       m0, m4
+    psubw       m1, m5
+    psubw       m2, m6
+    psubw       m3, m7
+
+    movu        [r2], m0
+    movu        [r2 + r3 * 2], m1
+    lea         r2, [r2 + r3 * 4]
+    movu        [r2], m2
+    movu        [r2 + r3 * 2], m3
+%endmacro
+
+
+%if HIGH_BIT_DEPTH
+INIT_ZMM avx512
+cglobal getResidual_aligned32, 4,5,8
+    add         r3, r3
+    lea         r4, [r3 * 3]
+
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_HBD_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_HBD_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_HBD_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_HBD_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_HBD_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_HBD_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_HBD_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_HBD_AVX512_END
+    RET
+%else
+INIT_ZMM avx512
+cglobal getResidual_aligned32, 4,5,8
+    lea         r4, [r3 * 3]
+
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_AVX512
+    PROCESS_GETRESIDUAL32_ALIGNED_W4_AVX512_END
+    RET
+%endif
 ;-----------------------------------------------------------------------------
 ; uint32_t quant(int16_t *coef, int32_t *quantCoeff, int32_t *deltaU, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------

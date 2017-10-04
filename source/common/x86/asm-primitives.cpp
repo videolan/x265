@@ -4450,6 +4450,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_64x64].copy_ss = PFX(blockcopy_ss_64x64_avx512);
 
         p.cu[BLOCK_32x32].calcresidual = PFX(getResidual32_avx512);
+        p.cu[BLOCK_16x16].calcresidual_aligned = PFX(getResidual16_avx2);
+        p.cu[BLOCK_32x32].calcresidual_aligned = PFX(getResidual_aligned32_avx512);
         p.cu[BLOCK_16x16].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_16_avx512);
         p.cu[BLOCK_32x32].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_32_avx512);
         p.cu[BLOCK_32x32].cpy1Dto2D_shl = PFX(cpy1Dto2D_shl_32_avx512);

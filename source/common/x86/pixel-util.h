@@ -27,6 +27,7 @@
 
 #define DEFINE_UTILS(cpu) \
     FUNCDEF_TU_S2(void, getResidual, cpu, const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride); \
+    FUNCDEF_TU_S2(void, getResidual_aligned, cpu, const pixel* fenc, const pixel* pred, int16_t* residual, intptr_t stride); \
     FUNCDEF_TU_S2(void, transpose, cpu, pixel* dest, const pixel* src, intptr_t stride); \
     FUNCDEF_TU(int, count_nonzero, cpu, const int16_t* quantCoeff); \
     uint32_t PFX(quant_ ## cpu(const int16_t* coef, const int32_t* quantCoeff, int32_t* deltaU, int16_t* qCoef, int qBits, int add, int numCoeff)); \

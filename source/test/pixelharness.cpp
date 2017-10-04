@@ -226,6 +226,31 @@ bool PixelHarness::check_calresidual(calcresidual_t ref, calcresidual_t opt)
     return true;
 }
 
+bool PixelHarness::check_calresidual_aligned(calcresidual_t ref, calcresidual_t opt)
+{
+    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+    memset(ref_dest, 0, 64 * 64 * sizeof(int16_t));
+    memset(opt_dest, 0, 64 * 64 * sizeof(int16_t));
+
+    int j = 0;
+    intptr_t stride = STRIDE;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        checked(opt, pbuf1 + j, pixel_test_buff[index] + j, opt_dest, stride);
+        ref(pbuf1 + j, pixel_test_buff[index] + j, ref_dest, stride);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool PixelHarness::check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt)
 {
     int j = 0;
@@ -2452,6 +2477,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
                 }
             }
 
+            if (opt.cu[i].calcresidual_aligned)
+            {
+                if (!check_calresidual_aligned(ref.cu[i].calcresidual_aligned, opt.cu[i].calcresidual_aligned))
+                {
+                    printf("calcresidual_aligned width: %d failed!\n", 4 << i);
+                    return false;
+                }
+            }
+
             if (opt.cu[i].transpose)
             {
                 if (!check_transpose(ref.cu[i].transpose, opt.cu[i].transpose))
@@ -3106,6 +3140,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             HEADER("residual[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cu[i].calcresidual, ref.cu[i].calcresidual, pbuf1, pbuf2, sbuf1, 64);
+        }
+
+        if (opt.cu[i].calcresidual_aligned)
+        {
+            HEADER("residual[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.cu[i].calcresidual_aligned, ref.cu[i].calcresidual_aligned, pbuf1, pbuf2, sbuf1, 64);
         }
 
         if (opt.cu[i].blockfill_s)

@@ -268,6 +268,7 @@ struct EncoderPrimitives
         dct_t           lowpass_dct;    // lowpass dct approximation
 
         calcresidual_t  calcresidual;
+        calcresidual_t  calcresidual_aligned;
         pixel_sub_ps_t  sub_ps;
         pixel_add_ps_t  add_ps;
         blockfill_s_t   blockfill_s;   // block fill, for DC transforms
