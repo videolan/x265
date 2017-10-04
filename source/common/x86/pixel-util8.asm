@@ -1237,6 +1237,58 @@ cglobal dequant_normal, 5,5,7
     jnz            .loop
     RET
 
+INIT_ZMM avx512
+cglobal dequant_normal, 5,5,7
+    vpbroadcastd    m2, [pw_1]          ; m2 = word [1]
+    vpbroadcastd    m5, [pd_32767]      ; m5 = dword [32767]
+    vpbroadcastd    m6, [pd_n32768]     ; m6 = dword [-32768]
+%if HIGH_BIT_DEPTH
+    cmp             r3d, 32767
+    jle            .skip
+    shr             r3d, (BIT_DEPTH - 8)
+    sub             r4d, (BIT_DEPTH - 8)
+.skip:
+%endif
+    movd            xm0, r4d            ; m0 = shift
+    add             r4d, -1+16
+    bts             r3d, r4d
+
+    movd            xm1, r3d
+    vpbroadcastd    m1, xm1             ; m1 = dword [add scale]
+
+    ; m0 = shift
+    ; m1 = scale
+    ; m2 = word [1]
+    mov             r3d, r2d
+    shr             r2d, 5
+.loop:
+    movu            m3, [r0]
+    punpckhwd       m4, m3, m2
+    punpcklwd       m3, m2
+    pmaddwd         m3, m1              ; m3 = dword (clipQCoef * scale + add)
+    pmaddwd         m4, m1
+    psrad           m3, xm0
+    psrad           m4, xm0
+    pminsd          m3, m5
+    pmaxsd          m3, m6
+    pminsd          m4, m5
+    pmaxsd          m4, m6
+    packssdw        m3, m4
+
+    mova             [r1 + 0 * mmsize/2], ym3
+    cmp              r3d, 16
+    je               .num16
+    vextracti32x8    [r1 + 1 * mmsize/2], m3, 1
+
+    add             r0, mmsize
+    add             r1, mmsize
+
+    dec             r2d
+    jnz            .loop
+    RET
+.num16:
+    RET
+
 
 ;-----------------------------------------------------------------------------
 ; int x265_count_nonzero_4x4_sse2(const int16_t *quantCoeff);
