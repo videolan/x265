@@ -2574,6 +2574,24 @@ lea        r0, [r0 + 4 * r1]
 %endrep
 RET
 
+;--------------------------------------------------------------------
+; void blockfill_s_aligned_32x32(int16_t* dst, intptr_t dstride, int16_t val)
+;--------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal blockfill_s_aligned_32x32, 3, 4, 1
+add          r1, r1
+lea          r3, [3 * r1]
+movd         xm0, r2d
+vpbroadcastw m0, xm0
+
+%rep 8
+mova       [r0], m0
+mova       [r0 + r1], m0
+mova       [r0 + 2 * r1], m0
+mova       [r0 + r3], m0
+lea        r0, [r0 + 4 * r1]
+%endrep
+RET
 ;-----------------------------------------------------------------------------
 ; void blockcopy_ps_2x4(int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 ;-----------------------------------------------------------------------------

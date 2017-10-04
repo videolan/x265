@@ -2569,6 +2569,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].addAvg_aligned = PFX(addAvg_aligned_32x48_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].addAvg_aligned = PFX(addAvg_aligned_32x64_avx512);
 
+        p.cu[BLOCK_16x16].blockfill_s_aligned = PFX(blockfill_s_16x16_avx2);
+        p.cu[BLOCK_32x32].blockfill_s_aligned = PFX(blockfill_s_aligned_32x32_avx512);
+
     }
 }
 #else // if HIGH_BIT_DEPTH
@@ -4294,6 +4297,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].addAvg_aligned = PFX(addAvg_aligned_32x32_avx512);
 
         p.cu[BLOCK_32x32].blockfill_s = PFX(blockfill_s_32x32_avx512);
+        p.cu[BLOCK_16x16].blockfill_s_aligned = PFX(blockfill_s_16x16_avx2);
+        p.cu[BLOCK_32x32].blockfill_s_aligned = PFX(blockfill_s_aligned_32x32_avx512);
 
         p.cu[BLOCK_64x64].add_ps = PFX(pixel_add_ps_64x64_avx512);
         p.cu[BLOCK_32x32].add_ps = PFX(pixel_add_ps_32x32_avx512);

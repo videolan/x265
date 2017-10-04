@@ -271,6 +271,7 @@ struct EncoderPrimitives
         pixel_sub_ps_t  sub_ps;
         pixel_add_ps_t  add_ps;
         blockfill_s_t   blockfill_s;   // block fill, for DC transforms
+        blockfill_s_t   blockfill_s_aligned;   // block fill, for DC transforms
         copy_cnt_t      copy_cnt;      // copy coeff while counting non-zero
         count_nonzero_t count_nonzero;
         cpy2Dto1D_shl_t cpy2Dto1D_shl;

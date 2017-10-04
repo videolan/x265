@@ -645,8 +645,33 @@ bool PixelHarness::check_copy_ss(copy_ss_t ref, copy_ss_t opt)
 
 bool PixelHarness::check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt)
 {
-    ALIGN_VAR_16(int16_t, ref_dest[64 * 64]);
-    ALIGN_VAR_16(int16_t, opt_dest[64 * 64]);
+    ALIGN_VAR_64(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_64(int16_t, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    intptr_t stride = 64;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int16_t value = (rand() % SHORT_MAX) + 1;
+
+        checked(opt, opt_dest, stride, value);
+        ref(ref_dest, stride, value);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(int16_t)))
+            return false;
+
+        reportfail();
+    }
+
+    return true;
+}
+
+bool PixelHarness::check_blockfill_s_aligned(blockfill_s_t ref, blockfill_s_t opt)
+{
+    ALIGN_VAR_64(int16_t, ref_dest[64 * 64]);
+    ALIGN_VAR_64(int16_t, opt_dest[64 * 64]);
 
     memset(ref_dest, 0xCD, sizeof(ref_dest));
     memset(opt_dest, 0xCD, sizeof(opt_dest));
@@ -2388,6 +2413,14 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
         }
 
+        if (opt.cu[i].blockfill_s_aligned)
+        {
+            if (!check_blockfill_s_aligned(ref.cu[i].blockfill_s_aligned, opt.cu[i].blockfill_s_aligned))
+            {
+                printf("blockfill_s_aligned[%dx%d]: failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
         if (opt.cu[i].var)
         {
             if (!check_pixel_var(ref.cu[i].var, opt.cu[i].var))
@@ -3079,6 +3112,12 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             HEADER("blkfill[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cu[i].blockfill_s, ref.cu[i].blockfill_s, sbuf1, 64, SHORT_MAX);
+        }
+
+        if (opt.cu[i].blockfill_s_aligned)
+        {
+            HEADER("blkfill[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.cu[i].blockfill_s_aligned, ref.cu[i].blockfill_s_aligned, sbuf1, 64, SHORT_MAX);
         }
 
         if (opt.cu[i].transpose)

@@ -51,6 +51,7 @@ FUNCDEF_TU_S(uint32_t, copy_cnt, avx512, int16_t* dst, const int16_t* src, intpt
 FUNCDEF_TU(void, blockfill_s, sse2, int16_t* dst, intptr_t dstride, int16_t val);
 FUNCDEF_TU(void, blockfill_s, avx2, int16_t* dst, intptr_t dstride, int16_t val);
 FUNCDEF_TU(void, blockfill_s, avx512, int16_t* dst, intptr_t dstride, int16_t val);
+FUNCDEF_TU(void, blockfill_s_aligned, avx512, int16_t* dst, intptr_t dstride, int16_t val);
 
 FUNCDEF_CHROMA_PU(void, blockcopy_ss, sse2, int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 FUNCDEF_CHROMA_PU(void, blockcopy_ss, avx, int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
