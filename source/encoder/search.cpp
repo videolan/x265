@@ -354,8 +354,10 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
         // store original entropy coding status
         if (bEnableRDOQ)
             m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSize, true);
-
-        primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
+        if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+            primitives.cu[sizeIdx].calcresidual_aligned(fenc, pred, residual, stride);
+        else
+            primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
 
         uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffY, log2TrSize, TEXT_LUMA, absPartIdx, false);
         if (numSig)
@@ -561,7 +563,10 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
         pixel*   tmpRecon = (useTSkip ? m_tsRecon : reconQt);
         uint32_t tmpReconStride = (useTSkip ? MAX_TS_SIZE : reconQtStride);
 
-        primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
+        if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+            primitives.cu[sizeIdx].calcresidual_aligned(fenc, pred, residual, stride);
+        else
+            primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
 
         uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTSkip);
         if (numSig)
@@ -714,7 +719,10 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
         coeff_t* coeffY       = cu.m_trCoeff[0] + coeffOffsetY;
 
         uint32_t sizeIdx   = log2TrSize - 2;
-        primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
+        if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+            primitives.cu[sizeIdx].calcresidual_aligned(fenc, pred, residual, stride);
+        else
+            primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
 
         PicYuv*  reconPic = m_frame->m_reconPic;
         pixel*   picReconY = reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
@@ -893,7 +901,11 @@ void Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDept
             predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC);
             cu.setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
 
-            primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
+            if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+                primitives.cu[sizeIdxC].calcresidual_aligned(fenc, pred, residual, stride);
+            else
+                primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
+
             uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffC, log2TrSizeC, ttype, absPartIdxC, false);
             if (numSig)
             {
@@ -992,7 +1004,10 @@ void Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuD
                 pixel*   recon = (useTSkip ? m_tsRecon : reconQt);
                 uint32_t reconStride = (useTSkip ? MAX_TS_SIZE : reconQtStride);
 
-                primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
+                if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+                    primitives.cu[sizeIdxC].calcresidual_aligned(fenc, pred, residual, stride);
+                else
+                    primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
 
                 uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSizeC, ttype, absPartIdxC, useTSkip);
                 if (numSig)
@@ -1183,7 +1198,11 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
 
             X265_CHECK(!cu.m_transformSkip[ttype][0], "transform skip not supported at low RD levels\n");
 
-            primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
+            if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+                primitives.cu[sizeIdxC].calcresidual_aligned(fenc, pred, residual, stride);
+            else
+                primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
+
             uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffC, log2TrSizeC, ttype, absPartIdxC, false);
             if (numSig)
             {
