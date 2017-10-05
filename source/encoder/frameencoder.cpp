@@ -1730,6 +1730,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     {
         uint32_t rowCount = 0;
         uint32_t maxRows = m_sliceBaseRow[sliceId + 1] - m_sliceBaseRow[sliceId];
+
         if (!m_rce.encodeOrder)
             rowCount = maxRows - 1; 
         else if ((uint32_t)m_rce.encodeOrder <= 2 * (m_param->fpsNum / m_param->fpsDenom))
@@ -1747,10 +1748,10 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             }
             else
             {
-                uint32_t startAddr = rowCount * numCols * sliceId;
-                uint32_t finishAddr = startAddr + rowCount * numCols;
+                uint32_t startAddr = m_sliceBaseRow[sliceId] * numCols;
+				uint32_t finishAddr = startAddr + rowCount * numCols;
                 
-                for (uint32_t cuAddr = startAddr; cuAddr < finishAddr; cuAddr++)
+				for (uint32_t cuAddr = startAddr; cuAddr < finishAddr; cuAddr++)
                     m_rowSliceTotalBits[sliceId] += curEncData.m_cuStat[cuAddr].totalBits;
             }            
 
