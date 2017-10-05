@@ -81,7 +81,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     m_rdCost.setSsimRd(param.bSsimRd);
     m_me.init(param.internalCsp);
 
-    bool ok = m_quant.init(param.psyRdoq, scalingList, m_entropyCoder);
+    bool ok = m_quant.init(param.psyRdoq, scalingList, m_entropyCoder, param.cpuid);
     if (m_param->noiseReductionIntra || m_param->noiseReductionInter || m_param->rc.vbvBufferSize)
         ok &= m_quant.allocNoiseReduction(param);
 
@@ -2914,7 +2914,10 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
         }
         else
         {
-            primitives.cu[sizeIdx].blockfill_s(curResiY, strideResiY, 0);
+            if ((strideResiY % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+                primitives.cu[sizeIdx].blockfill_s_aligned(curResiY, strideResiY, 0);
+            else
+                primitives.cu[sizeIdx].blockfill_s(curResiY, strideResiY, 0);
             cu.setCbfSubParts(0, TEXT_LUMA, absPartIdx, depth);
         }
 
@@ -2947,7 +2950,10 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
                 }
                 else
                 {
-                    primitives.cu[sizeIdxC].blockfill_s(curResiU, strideResiC, 0);
+                    if ((strideResiC % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+                        primitives.cu[sizeIdxC].blockfill_s_aligned(curResiU, strideResiC, 0);
+                    else
+                        primitives.cu[sizeIdxC].blockfill_s(curResiU, strideResiC, 0);
                     cu.setCbfPartRange(0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 }
 
@@ -2961,7 +2967,11 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
                 }
                 else
                 {
-                    primitives.cu[sizeIdxC].blockfill_s(curResiV, strideResiC, 0);
+                    if ((strideResiC % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+                        primitives.cu[sizeIdxC].blockfill_s_aligned(curResiV, strideResiC, 0);
+                    else
+                        primitives.cu[sizeIdxC].blockfill_s(curResiV, strideResiC, 0);
+
                     cu.setCbfPartRange(0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
                 }
             }
@@ -3229,7 +3239,10 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                 {
                     cbfFlag[TEXT_LUMA][0] = 0;
                     singleBits[TEXT_LUMA][0] = 0;
-                    primitives.cu[partSize].blockfill_s(curResiY, strideResiY, 0);
+                    if ((strideResiY % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+                        primitives.cu[partSize].blockfill_s_aligned(curResiY, strideResiY, 0);
+                    else
+                        primitives.cu[partSize].blockfill_s(curResiY, strideResiY, 0);
 #if CHECKED_BUILD || _DEBUG
                     uint32_t numCoeffY = 1 << (log2TrSize << 1);
                     memset(coeffCurY, 0, sizeof(coeff_t)* numCoeffY);
@@ -3252,7 +3265,10 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         {
             if (checkTransformSkipY)
                 minCost[TEXT_LUMA][0] = estimateNullCbfCost(zeroDistY, zeroEnergyY, tuDepth, TEXT_LUMA);
-            primitives.cu[partSize].blockfill_s(curResiY, strideResiY, 0);
+            if ((strideResiY % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+                primitives.cu[partSize].blockfill_s_aligned(curResiY, strideResiY, 0);
+            else
+                primitives.cu[partSize].blockfill_s(curResiY, strideResiY, 0);
             singleDist[TEXT_LUMA][0] = zeroDistY;
             singleBits[TEXT_LUMA][0] = 0;
             singleEnergy[TEXT_LUMA][0] = zeroEnergyY;
@@ -3341,7 +3357,10 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                             {
                                 cbfFlag[chromaId][tuIterator.section] = 0;
                                 singleBits[chromaId][tuIterator.section] = 0;
-                                primitives.cu[partSizeC].blockfill_s(curResiC, strideResiC, 0);
+                                if ((strideResiC % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+                                    primitives.cu[partSizeC].blockfill_s_aligned(curResiC, strideResiC, 0);
+                                else
+                                    primitives.cu[partSizeC].blockfill_s(curResiC, strideResiC, 0);
 #if CHECKED_BUILD || _DEBUG
                                 uint32_t numCoeffC = 1 << (log2TrSizeC << 1);
                                 memset(coeffCurC + subTUOffset, 0, sizeof(coeff_t) * numCoeffC);
@@ -3364,7 +3383,10 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                     {
                         if (checkTransformSkipC)
                             minCost[chromaId][tuIterator.section] = estimateNullCbfCost(zeroDistC, zeroEnergyC, tuDepthC, (TextType)chromaId);
-                        primitives.cu[partSizeC].blockfill_s(curResiC, strideResiC, 0);
+                        if ((strideResiC % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
+                            primitives.cu[partSizeC].blockfill_s_aligned(curResiC, strideResiC, 0);
+                        else
+                            primitives.cu[partSizeC].blockfill_s(curResiC, strideResiC, 0);
                         singleBits[chromaId][tuIterator.section] = 0;
                         singleDist[chromaId][tuIterator.section] = zeroDistC;
                         singleEnergy[chromaId][tuIterator.section] = zeroEnergyC;

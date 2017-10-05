@@ -93,6 +93,7 @@ protected:
 
 public:
 
+    int m_cpuid;
     NoiseReduction*    m_nr;
     NoiseReduction*    m_frameNr; // Array of NR structures, one for each frameEncoder
 
@@ -100,7 +101,7 @@ public:
     ~Quant();
 
     /* one-time setup */
-    bool init(double psyScale, const ScalingList& scalingList, Entropy& entropy);
+    bool init(double psyScale, const ScalingList& scalingList, Entropy& entropy, int cpuid);
     bool allocNoiseReduction(const x265_param& param);
 
     /* CU setup */
