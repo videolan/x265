@@ -2418,6 +2418,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_32x32].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_32_avx512);
         p.cu[BLOCK_32x32].cpy1Dto2D_shl = PFX(cpy1Dto2D_shl_32_avx512);
         p.weight_pp = PFX(weight_pp_avx512);
+        p.weight_sp = PFX(weight_sp_avx512);
         p.dequant_normal = PFX(dequant_normal_avx512);
         p.dequant_scaling = PFX(dequant_scaling_avx512);
         p.cu[BLOCK_32x32].copy_cnt = PFX(copy_cnt_32_avx512);
@@ -4356,6 +4357,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_hpp = PFX(interp_4tap_horiz_pp_32x8_avx512);
 
         p.weight_pp = PFX(weight_pp_avx512);
+        p.weight_sp = PFX(weight_sp_avx512);
 
         //i444 chroma_hps
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_hps = PFX(interp_4tap_horiz_ps_64x64_avx512);

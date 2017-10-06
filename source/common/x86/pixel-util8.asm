@@ -2400,6 +2400,149 @@ cglobal weight_sp, 6, 9, 7
 %endif
 %endif
 
+%if ARCH_X86_64 == 1
+%if HIGH_BIT_DEPTH
+INIT_ZMM avx512
+cglobal weight_sp, 6,9,8
+    vbroadcasti32x8           m1, [pw_pixel_max]
+    vbroadcasti32x8           m2, [pw_1]
+
+    mov                       r6d, r7m
+    shl                       r6d, 16
+    or                        r6d, r6m
+    movd                      xm3, r6d
+    vpbroadcastd               m3, xm3      ; m3 = [round w0]
+    movd                      xm4, r8m      ; m4 = [shift]
+    vpbroadcastd               m5, r9m      ; m5 = [offset]
+
+    ; correct row stride
+    add                       r3d, r3d
+    add                       r2d, r2d
+    mov                       r6d, r4d
+    and                       r6d, ~(mmsize / SIZEOF_PIXEL - 1)
+    shl                       r6d, 1
+    sub                       r3d, r6d
+    sub                       r2d, r6d
+
+    mov                       r6d, r4d
+    and                       r6d, (mmsize / SIZEOF_PIXEL - 1)
+
+.loopH:
+    mov                       r6d, r4d
+
+.loopW:
+    movu                      m6, [r0]
+    vbroadcasti32x8           m8, [pw_2000]
+    paddw                     m6, m8
+
+    punpcklwd                 m7,  m6, m2
+    pmaddwd                   m7,  m3       ;(round w0)
+    psrad                     m7, xm4       ;(shift)
+    paddd                     m7,  m5        ;(offset)
+
+    punpckhwd                 m6,  m2
+    pmaddwd                   m6,  m3
+    psrad                     m6, xm4
+    paddd                     m6,  m5
+
+    packusdw                  m7, m6
+    pminuw                    m7, m1
+
+    sub                       r6d,  (mmsize / SIZEOF_PIXEL)
+    jl                        .widthLess30
+    movu                      [r1], m7
+    lea                       r0,   [r0 + mmsize]
+    lea                       r1,   [r1 + mmsize]
+    je                        .nextH
+    jmp                       .loopW
+
+.widthLess30:
+    mov             r8d, 0xFFFFFFFF
+    NEG             r6d
+    shrx            r8d, r8d, r6d
+    kmovd           k1, r8d
+    vmovdqu16       [r1] {k1}, m7
+    jmp                  .nextH
+
+.nextH:
+    add                       r0, r2
+    add                       r1, r3
+
+    dec                       r5d
+    jnz                       .loopH
+    RET
+
+%else
+INIT_ZMM avx512
+cglobal weight_sp, 6, 10, 7
+    mov                       r7d,       r7m
+    shl                       r7d,       16
+    or                        r7d,       r6m
+    movd                      xm0,       r7d
+    vpbroadcastd              m0,        xm0            ; m0 = times 8 dw w0, round
+    movd                      xm1,       r8m            ; m1 = [shift]
+    vpbroadcastd               m2,       r9m            ; m2 = times 16 dw offset
+    vpbroadcastw               m3,       [pw_1]
+    vpbroadcastw               m4,       [pw_2000]
+
+    add                       r2d,       r2d            ; 2 * srcstride
+
+    mov                       r7,        r0
+    mov                       r8,        r1
+.loopH:
+    mov                       r6d,       r4d            ; width
+
+    ; save old src and dst
+    mov                       r0,        r7              ; src
+    mov                       r1,        r8              ; dst
+
+.loopW:
+    movu                      m5,        [r0]
+    paddw                     m5,         m4
+
+    punpcklwd                 m6,         m5,  m3
+    pmaddwd                   m6,         m0
+    psrad                     m6,        xm1
+    paddd                     m6,         m2
+
+    punpckhwd                 m5,         m3
+    pmaddwd                   m5,         m0
+    psrad                     m5,        xm1
+    paddd                     m5,         m2
+
+    packssdw                  m6,         m5
+    vextracti64x4            ym5,         m6,  1
+    packuswb                 ym6,        ym5
+    vpermq                   ym6,        ym6,  q3120
+
+    sub                      r6d,         32
+    jl                       .widthLess30
+    movu                     [r1],       ym6
+    je                       .nextH
+    add                      r0,          64
+    add                      r1,          32
+    jmp                      .loopW
+
+
+.widthLess30:
+    mov             r9d, 0xFFFFFFFF
+    NEG             r6d
+    shrx            r9d, r9d, r6d
+    kmovd           k1, r9d
+    vmovdqu8        [r1] {k1}, ym6
+    jmp                  .nextH
+
+.nextH:
+    lea             r7, [r7 + r2]
+    lea             r8, [r8 + r3]
+
+    dec             r5d
+    jnz             .loopH
+    RET
+%endif
+%endif
+
+
 ;-----------------------------------------------------------------
 ; void transpose_4x4(pixel *dst, pixel *src, intptr_t stride)
 ;-----------------------------------------------------------------
