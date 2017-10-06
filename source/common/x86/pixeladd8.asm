@@ -1150,27 +1150,27 @@ cglobal pixel_add_ps_64x64, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
 ;-----------------------------------------------------------------------------
 %macro PROCESS_ADD_PS_64x4_AVX512 0
     pmovzxbw    m0,         [r2]
-    pmovzxbw    m1,         [r2 + 32]
+    pmovzxbw    m1,         [r2 + mmsize/2]
     movu        m2,         [r3]
-    movu        m3,         [r3 + 64]
+    movu        m3,         [r3 + mmsize]
     paddw       m0,         m2
     paddw       m1,         m3
     packuswb    m0,         m1
     vpermq      m0,         m4,      m0
     movu        [r0],       m0
     pmovzxbw    m0,         [r2 + r4]
-    pmovzxbw    m1,         [r2 + r4 + 32]
+    pmovzxbw    m1,         [r2 + r4 + mmsize/2]
     movu        m2,         [r3 + r5]
-    movu        m3,         [r3 + r5 + 64]
+    movu        m3,         [r3 + r5 + mmsize]
     paddw       m0,         m2
     paddw       m1,         m3
     packuswb    m0,         m1
     vpermq      m0,         m4,      m0
     movu        [r0 + r1],  m0
     pmovzxbw    m0,         [r2 + 2 * r4]
-    pmovzxbw    m1,         [r2 + 2 * r4 + 32]
+    pmovzxbw    m1,         [r2 + 2 * r4 + mmsize/2]
     movu        m2,         [r3 + 2 * r5]
-    movu        m3,         [r3 + 2 * r5 + 64]
+    movu        m3,         [r3 + 2 * r5 + mmsize]
     paddw       m0,         m2
     paddw       m1,         m3
     packuswb    m0,         m1
@@ -1178,15 +1178,16 @@ cglobal pixel_add_ps_64x64, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
     movu        [r0 + 2 * r1],       m0
 
     pmovzxbw    m0,         [r2 + r7]
-    pmovzxbw    m1,         [r2 + r7 + 32]
+    pmovzxbw    m1,         [r2 + r7 + mmsize/2]
     movu        m2,         [r3 + r8]
-    movu        m3,         [r3 + r8 + 64]
+    movu        m3,         [r3 + r8 + mmsize]
     paddw       m0,         m2
     paddw       m1,         m3
     packuswb    m0,         m1
     vpermq      m0,         m4,      m0
     movu        [r0 + r6],       m0
 %endmacro
+
 %macro PROCESS_ADD_PS_64x4_HBD_AVX512 0
     movu    m0,     [r2]
     movu    m1,     [r2 + mmsize]
@@ -1233,6 +1234,92 @@ cglobal pixel_add_ps_64x64, 6, 7, 8, dest, destride, src0, scr1, srcStride0, src
     movu    [r0 + r8 + mmsize],      m1
 %endmacro
 
+%macro PROCESS_ADD_PS_64x4_ALIGNED_AVX512 0
+    pmovzxbw    m0,         [r2]
+    pmovzxbw    m1,         [r2 + mmsize/2]
+    mova        m2,         [r3]
+    mova        m3,         [r3 + mmsize]
+    paddw       m0,         m2
+    paddw       m1,         m3
+    packuswb    m0,         m1
+    vpermq      m0,         m4,      m0
+    mova        [r0],       m0
+    pmovzxbw    m0,         [r2 + r4]
+    pmovzxbw    m1,         [r2 + r4 + mmsize/2]
+    mova        m2,         [r3 + r5]
+    mova        m3,         [r3 + r5 + mmsize]
+    paddw       m0,         m2
+    paddw       m1,         m3
+    packuswb    m0,         m1
+    vpermq      m0,         m4,      m0
+    mova        [r0 + r1],  m0
+    pmovzxbw    m0,         [r2 + 2 * r4]
+    pmovzxbw    m1,         [r2 + 2 * r4 + mmsize/2]
+    mova        m2,         [r3 + 2 * r5]
+    mova        m3,         [r3 + 2 * r5 + mmsize]
+    paddw       m0,         m2
+    paddw       m1,         m3
+    packuswb    m0,         m1
+    vpermq      m0,         m4,      m0
+    mova        [r0 + 2 * r1],       m0
+
+    pmovzxbw    m0,         [r2 + r7]
+    pmovzxbw    m1,         [r2 + r7 + mmsize/2]
+    mova        m2,         [r3 + r8]
+    mova        m3,         [r3 + r8 + mmsize]
+    paddw       m0,         m2
+    paddw       m1,         m3
+    packuswb    m0,         m1
+    vpermq      m0,         m4,      m0
+    mova        [r0 + r6],       m0
+%endmacro
+
+%macro PROCESS_ADD_PS_64x4_HBD_ALIGNED_AVX512 0
+    mova    m0,     [r2]
+    mova    m1,     [r2 + mmsize]
+    mova    m2,     [r3]
+    mova    m3,     [r3 + mmsize]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    mova    [r0],                m0
+    mova    [r0 + mmsize],       m1
+
+    mova    m0,     [r2 + r4]
+    mova    m1,     [r2 + r4 + mmsize]
+    mova    m2,     [r3 + r5]
+    mova    m3,     [r3 + r5 + mmsize]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    mova    [r0 + r1],           m0
+    mova    [r0 + r1 + mmsize],  m1
+
+    mova    m0,     [r2 + r4 * 2]
+    mova    m1,     [r2 + r4 * 2 + mmsize]
+    mova    m2,     [r3 + r5 * 2]
+    mova    m3,     [r3 + r5 * 2 + mmsize]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    mova    [r0 + r1 * 2],           m0
+    mova    [r0 + r1 * 2 + mmsize],  m1
+
+    mova    m0,     [r2 + r6]
+    mova    m1,     [r2 + r6 + mmsize]
+    mova    m2,     [r3 + r7]
+    mova    m3,     [r3 + r7 + mmsize]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    mova    [r0 + r8],               m0
+    mova    [r0 + r8 + mmsize],      m1
+%endmacro
+
 ;-----------------------------------------------------------------------------
 ; void pixel_add_ps_64x64(pixel *dest, intptr_t destride, pixel *src0, int16_t *scr1, intptr_t srcStride0, intptr_t srcStride1)
 ;-----------------------------------------------------------------------------
@@ -1256,6 +1343,25 @@ cglobal pixel_add_ps_64x64, 6, 9, 6
 %endrep
     PROCESS_ADD_PS_64x4_HBD_AVX512
     RET
+
+INIT_ZMM avx512
+cglobal pixel_add_ps_aligned_64x64, 6, 9, 6
+    vbroadcasti32x8  m5,     [pw_pixel_max]
+    pxor             m4,     m4
+    add             r4d,     r4d
+    add             r5d,     r5d
+    add             r1d,     r1d
+    lea              r6,     [r4 * 3]
+    lea              r7,     [r5 * 3]
+    lea              r8,     [r1 * 3]
+%rep 15
+    PROCESS_ADD_PS_64x4_HBD_ALIGNED_AVX512
+    lea         r2,         [r2 + r4 * 4]
+    lea         r3,         [r3 + r5 * 4]
+    lea         r0,         [r0 + r1 * 4]
+%endrep
+    PROCESS_ADD_PS_64x4_HBD_ALIGNED_AVX512
+    RET
 %endif
 %else
 %if ARCH_X86_64
@@ -1274,8 +1380,25 @@ cglobal pixel_add_ps_64x64, 6, 9, 4
 %endrep
     PROCESS_ADD_PS_64x4_AVX512
     RET
+
+INIT_ZMM avx512
+cglobal pixel_add_ps_aligned_64x64, 6, 9, 4
+    add         r5,         r5
+    lea         r6,         [3 * r1]
+    lea         r7,         [3 * r4]
+    lea         r8,         [3 * r5]
+    mova        m4,         [store_shuf1_avx512]
+%rep 15
+    PROCESS_ADD_PS_64x4_ALIGNED_AVX512
+    lea         r2,         [r2 + r4 * 4]
+    lea         r3,         [r3 + r5 * 4]
+    lea         r0,         [r0 + r1 * 4]
+%endrep
+    PROCESS_ADD_PS_64x4_ALIGNED_AVX512
+    RET
 %endif
 %endif
+
 %macro PROCESS_ADD_PS_32x4_AVX512 0
     pmovzxbw    m0,         [r2]
     movu        m1,         [r3]
@@ -1298,6 +1421,7 @@ cglobal pixel_add_ps_64x64, 6, 9, 4
     movu           [r0 + r1 * 2],   ym0
     vextracti32x8  [r0 + r8],        m0,    1
 %endmacro
+
 %macro PROCESS_ADD_PS_32x4_HBD_AVX512 0
     movu    m0,     [r2]
     movu    m1,     [r2 + r4]
@@ -1320,6 +1444,53 @@ cglobal pixel_add_ps_64x64, 6, 9, 4
     CLIPW2  m0, m1, m4, m5
     movu    [r0 + r1 * 2],           m0
     movu    [r0 + r8],               m1
+%endmacro
+
+%macro PROCESS_ADD_PS_32x4_ALIGNED_AVX512 0
+    pmovzxbw    m0,         [r2]
+    mova        m1,         [r3]
+    pmovzxbw    m2,         [r2 + r4]
+    mova        m3,         [r3 + r5]
+    paddw       m0,         m1
+    paddw       m2,         m3
+    packuswb    m0,         m2
+    vpermq      m0,         m4,      m0
+    mova           [r0],       ym0
+    vextracti32x8  [r0 + r1],   m0,    1
+    pmovzxbw    m0,         [r2 + r4 * 2]
+    mova        m1,         [r3 + r5 * 2]
+    pmovzxbw    m2,         [r2 + r6]
+    mova        m3,         [r3 + r7]
+    paddw       m0,         m1
+    paddw       m2,         m3
+    packuswb    m0,         m2
+    vpermq      m0,         m4,      m0
+    mova           [r0 + r1 * 2],   ym0
+    vextracti32x8  [r0 + r8],        m0,    1
+%endmacro
+
+%macro PROCESS_ADD_PS_32x4_HBD_ALIGNED_AVX512 0
+    mova    m0,     [r2]
+    mova    m1,     [r2 + r4]
+    mova    m2,     [r3]
+    mova    m3,     [r3 + r5]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    mova    [r0],                m0
+    mova    [r0 + r1],           m1
+
+    mova    m0,     [r2 + r4 * 2]
+    mova    m1,     [r2 + r6]
+    mova    m2,     [r3 + r5 * 2]
+    mova    m3,     [r3 + r7]
+    paddw   m0,     m2
+    paddw   m1,     m3
+
+    CLIPW2  m0, m1, m4, m5
+    mova    [r0 + r1 * 2],           m0
+    mova    [r0 + r8],               m1
 %endmacro
 
 ;-----------------------------------------------------------------------------
@@ -1345,6 +1516,7 @@ cglobal pixel_add_ps_32x32, 6, 9, 6
 %endrep
     PROCESS_ADD_PS_32x4_HBD_AVX512
     RET
+
 INIT_ZMM avx512
 cglobal pixel_add_ps_32x64, 6, 9, 6
     vbroadcasti32x8  m5,     [pw_pixel_max]
@@ -1362,6 +1534,44 @@ cglobal pixel_add_ps_32x64, 6, 9, 6
     lea         r0,         [r0 + r1 * 4]
 %endrep
     PROCESS_ADD_PS_32x4_HBD_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_add_ps_aligned_32x32, 6, 9, 6
+    vbroadcasti32x8  m5,     [pw_pixel_max]
+    pxor             m4,     m4
+    add             r4d,     r4d
+    add             r5d,     r5d
+    add             r1d,     r1d
+    lea              r6,     [r4 * 3]
+    lea              r7,     [r5 * 3]
+    lea              r8,     [r1 * 3]
+%rep 7
+    PROCESS_ADD_PS_32x4_HBD_ALIGNED_AVX512
+    lea         r2,         [r2 + r4 * 4]
+    lea         r3,         [r3 + r5 * 4]
+    lea         r0,         [r0 + r1 * 4]
+%endrep
+    PROCESS_ADD_PS_32x4_HBD_ALIGNED_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_add_ps_aligned_32x64, 6, 9, 6
+    vbroadcasti32x8  m5,     [pw_pixel_max]
+    pxor             m4,     m4
+    add             r4d,     r4d
+    add             r5d,     r5d
+    add             r1d,     r1d
+    lea              r6,     [r4 * 3]
+    lea              r7,     [r5 * 3]
+    lea              r8,     [r1 * 3]
+%rep 15
+    PROCESS_ADD_PS_32x4_HBD_ALIGNED_AVX512
+    lea         r2,         [r2 + r4 * 4]
+    lea         r3,         [r3 + r5 * 4]
+    lea         r0,         [r0 + r1 * 4]
+%endrep
+    PROCESS_ADD_PS_32x4_HBD_ALIGNED_AVX512
     RET
 %endif
 %else
@@ -1397,6 +1607,39 @@ cglobal pixel_add_ps_32x64, 6, 9, 5
     lea         r0,         [r0 + r1 * 4]
 %endrep
     PROCESS_ADD_PS_32x4_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_add_ps_aligned_32x32, 6, 9, 5
+    add         r5,         r5
+    lea         r6,         [r4 * 3]
+    lea         r7,         [r5 * 3]
+    lea         r8,         [r1 * 3]
+    mova        m4,         [store_shuf1_avx512]
+%rep 7
+    PROCESS_ADD_PS_32x4_ALIGNED_AVX512
+    lea         r2,         [r2 + r4 * 4]
+    lea         r3,         [r3 + r5 * 4]
+    lea         r0,         [r0 + r1 * 4]
+%endrep
+    PROCESS_ADD_PS_32x4_ALIGNED_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_add_ps_aligned_32x64, 6, 9, 5
+    add         r5,         r5
+    lea         r6,         [r4 * 3]
+    lea         r7,         [r5 * 3]
+    lea         r8,         [r1 * 3]
+    mova        m4,         [store_shuf1_avx512]
+
+%rep 15
+    PROCESS_ADD_PS_32x4_ALIGNED_AVX512
+    lea         r2,         [r2 + r4 * 4]
+    lea         r3,         [r3 + r5 * 4]
+    lea         r0,         [r0 + r1 * 4]
+%endrep
+    PROCESS_ADD_PS_32x4_ALIGNED_AVX512
     RET
 %endif
 %endif

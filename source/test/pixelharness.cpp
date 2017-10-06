@@ -876,6 +876,31 @@ bool PixelHarness::check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt)
     return true;
 }
 
+bool PixelHarness::check_pixel_add_ps_aligned(pixel_add_ps_t ref, pixel_add_ps_t opt)
+{
+    ALIGN_VAR_64(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_64(pixel, opt_dest[64 * 64]);
+
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    int j = 0;
+    intptr_t stride2 = 64, stride = STRIDE;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index1 = rand() % TEST_CASES;
+        int index2 = rand() % TEST_CASES;
+        checked(opt, opt_dest, stride2, pixel_test_buff[index1] + j, short_test_buff[index2] + j, stride, stride);
+        ref(ref_dest, stride2, pixel_test_buff[index1] + j, short_test_buff[index2] + j, stride, stride);
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        reportfail();
+        j += 2 * INCR;
+    }
+    return true;
+}
+
 bool PixelHarness::check_pixel_var(var_t ref, var_t opt)
 {
     int j = 0;
@@ -2288,6 +2313,15 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
             }
         }
 
+        if (opt.cu[part].add_ps_aligned)
+        {
+            if (!check_pixel_add_ps_aligned(ref.cu[part].add_ps_aligned, opt.cu[part].add_ps_aligned))
+            {
+                printf("add_ps_aligned[%s] failed\n", lumaPartStr[part]);
+                return false;
+            }
+        }
+
         if (opt.cu[part].copy_ss)
         {
             if (!check_copy_ss(ref.cu[part].copy_ss, opt.cu[part].copy_ss))
@@ -2373,6 +2407,14 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
                 if (!check_pixel_add_ps(ref.chroma[i].cu[part].add_ps, opt.chroma[i].cu[part].add_ps))
                 {
                     printf("chroma_add_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
+                    return false;
+                }
+            }
+            if (opt.chroma[i].cu[part].add_ps_aligned)
+            {
+                if (!check_pixel_add_ps_aligned(ref.chroma[i].cu[part].add_ps_aligned, opt.chroma[i].cu[part].add_ps_aligned))
+                {
+                    printf("chroma_add_ps_aligned[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                     return false;
                 }
             }
@@ -3042,6 +3084,11 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             HEADER("add_ps[%s]", lumaPartStr[part]);
             REPORT_SPEEDUP(opt.cu[part].add_ps, ref.cu[part].add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
+        if (opt.cu[part].add_ps_aligned)
+        {
+            HEADER("add_ps[%s]", lumaPartStr[part]);
+            REPORT_SPEEDUP(opt.cu[part].add_ps_aligned, ref.cu[part].add_ps_aligned, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+        }
         if (opt.cu[part].copy_ss)
         {
             HEADER("copy_ss[%s]", lumaPartStr[part]);
@@ -3112,6 +3159,11 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             {
                 HEADER("[%s]  add_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
                 REPORT_SPEEDUP(opt.chroma[i].cu[part].add_ps, ref.chroma[i].cu[part].add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+            }
+            if (opt.chroma[i].cu[part].add_ps_aligned)
+            {
+                HEADER("[%s]  add_ps_aligned[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
+                REPORT_SPEEDUP(opt.chroma[i].cu[part].add_ps_aligned, ref.chroma[i].cu[part].add_ps_aligned, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
             }
             if (opt.chroma[i].cu[part].sa8d)
             {

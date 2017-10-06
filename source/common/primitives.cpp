@@ -126,6 +126,7 @@ void setupAliasPrimitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].cu[i].sse_pp  = p.cu[i].sse_pp;
         p.chroma[X265_CSP_I444].cu[i].sub_ps  = p.cu[i].sub_ps;
         p.chroma[X265_CSP_I444].cu[i].add_ps  = p.cu[i].add_ps;
+        p.chroma[X265_CSP_I444].cu[i].add_ps_aligned = p.cu[i].add_ps_aligned;
         p.chroma[X265_CSP_I444].cu[i].copy_ps = p.cu[i].copy_ps;
         p.chroma[X265_CSP_I444].cu[i].copy_sp = p.cu[i].copy_sp;
         p.chroma[X265_CSP_I444].cu[i].copy_ss = p.cu[i].copy_ss;

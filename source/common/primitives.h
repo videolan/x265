@@ -271,6 +271,7 @@ struct EncoderPrimitives
         calcresidual_t  calcresidual_aligned;
         pixel_sub_ps_t  sub_ps;
         pixel_add_ps_t  add_ps;
+        pixel_add_ps_t  add_ps_aligned;
         blockfill_s_t   blockfill_s;   // block fill, for DC transforms
         blockfill_s_t   blockfill_s_aligned;   // block fill, for DC transforms
         copy_cnt_t      copy_cnt;      // copy coeff while counting non-zero
@@ -405,6 +406,7 @@ struct EncoderPrimitives
             pixel_sse_t    sse_pp;
             pixel_sub_ps_t sub_ps;
             pixel_add_ps_t add_ps;
+            pixel_add_ps_t add_ps_aligned;
 
             copy_ps_t      copy_ps;
             copy_sp_t      copy_sp;
