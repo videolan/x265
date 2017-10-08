@@ -307,23 +307,26 @@ bool Y4MInput::parseHeader()
                         break;
                 }
 
-                switch (csp)
+                if (csp / 100 == ('m'-'0')*1000 + ('o'-'0')*100 + ('n'-'0')*10 + ('o'-'0'))
                 {
-                case ('m'-'0')*100000 + ('o'-'0')*10000 + ('n'-'0')*1000 + ('o'-'0')*100 + 16:
                     colorSpace = X265_CSP_I400;
-                    depth = 16;
-                    break;
-
-                case ('m'-'0')*1000 + ('o'-'0')*100 + ('n'-'0')*10 + ('o'-'0'):
-                    colorSpace = X265_CSP_I400;
-                    depth = 8;
-                    break;
-                   
-                default:
-                    if (d >= 8 && d <= 16)
-                        depth = d;
-                    colorSpace = (csp == 444) ? X265_CSP_I444 : (csp == 422) ? X265_CSP_I422 : X265_CSP_I420;
+                    d = csp % 100;
                 }
+                else if (csp / 10 == ('m'-'0')*1000 + ('o'-'0')*100 + ('n'-'0')*10 + ('o'-'0'))
+                {
+                    colorSpace = X265_CSP_I400;
+                    d = csp % 10;
+                }
+                else if (csp == ('m'-'0')*1000 + ('o'-'0')*100 + ('n'-'0')*10 + ('o'-'0'))
+                {
+                    colorSpace = X265_CSP_I400;
+                    d = 8;
+                }
+                else
+                    colorSpace = (csp == 444) ? X265_CSP_I444 : (csp == 422) ? X265_CSP_I422 : X265_CSP_I420;
+
+                if (d >= 8 && d <= 16)
+                    depth = d;
                 break;
 
             default:
