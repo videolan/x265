@@ -1904,7 +1904,7 @@ VUI fields must be manually specified.
 	undefined (not signaled)
 
 	1. bt709
-	2. undef
+	2. unknown
 	3. **reserved**
 	4. bt470m
 	5. bt470bg
@@ -1912,16 +1912,16 @@ VUI fields must be manually specified.
 	7. smpte240m
 	8. film
 	9. bt2020
-    10. smpte-st-428
-    11. smpte-rp-431
-    12. smpte-eg-432
+    10. smpte428
+    11. smpte431
+    12. smpte432
 
 .. option:: --transfer <integer|string>
 
 	Specify transfer characteristics. Default undefined (not signaled)
 
 	1. bt709
-	2. undef
+	2. unknown
 	3. **reserved**
 	4. bt470m
 	5. bt470bg
@@ -1935,8 +1935,8 @@ VUI fields must be manually specified.
 	13. iec61966-2-1
 	14. bt2020-10
 	15. bt2020-12
-	16. smpte-st-2084
-	17. smpte-st-428
+	16. smpte2084
+	17. smpte428
 	18. arib-std-b67
 
 .. option:: --colormatrix <integer|string>
@@ -1955,9 +1955,9 @@ VUI fields must be manually specified.
 	8. YCgCo
 	9. bt2020nc
 	10. bt2020c
-    11. smpte-st-2085
-    12. chroma-nc
-    13. chroma-c
+    11. smpte2085
+    12. chroma-derived-nc
+    13. chroma-derived-c
     14. ictcp
 
 .. option:: --chromaloc <0..5>
