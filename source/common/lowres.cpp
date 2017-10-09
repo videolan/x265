@@ -160,6 +160,9 @@ void Lowres::init(PicYuv *origPic, int poc)
 
     for (int i = 0; i < bframes + 2; i++)
         intraMbs[i] = 0;
+    if (origPic->m_param->rc.vbvBufferSize)
+        for (int i = 0; i < X265_LOOKAHEAD_MAX + 1; i++)
+            plannedType[i] = X265_TYPE_AUTO;
 
     /* downscale and generate 4 hpel planes for lookahead */
     primitives.frameInitLowres(origPic->m_picOrg[0],
