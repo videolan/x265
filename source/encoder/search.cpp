@@ -81,7 +81,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     m_rdCost.setSsimRd(param.bSsimRd);
     m_me.init(param.internalCsp);
 
-    bool ok = m_quant.init(param.psyRdoq, scalingList, m_entropyCoder, param.cpuid);
+    bool ok = m_quant.init(param.psyRdoq, scalingList, m_entropyCoder);
     if (m_param->noiseReductionIntra || m_param->noiseReductionInter || m_param->rc.vbvBufferSize)
         ok &= m_quant.allocNoiseReduction(param);
 
@@ -120,7 +120,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
             CHECKED_MALLOC(m_rqt[i].coeffRQT[0], coeff_t, sizeL + sizeC * 2);
             m_rqt[i].coeffRQT[1] = m_rqt[i].coeffRQT[0] + sizeL;
             m_rqt[i].coeffRQT[2] = m_rqt[i].coeffRQT[0] + sizeL + sizeC;
-            ok &= m_rqt[i].reconQtYuv.create(param.maxCUSize, param.internalCsp, param.cpuid);
+            ok &= m_rqt[i].reconQtYuv.create(param.maxCUSize, param.internalCsp);
             ok &= m_rqt[i].resiQtYuv.create(param.maxCUSize, param.internalCsp);
         }
     }
@@ -130,7 +130,7 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
         {
             CHECKED_MALLOC(m_rqt[i].coeffRQT[0], coeff_t, sizeL);
             m_rqt[i].coeffRQT[1] = m_rqt[i].coeffRQT[2] = NULL;
-            ok &= m_rqt[i].reconQtYuv.create(param.maxCUSize, param.internalCsp, param.cpuid);
+            ok &= m_rqt[i].reconQtYuv.create(param.maxCUSize, param.internalCsp);
             ok &= m_rqt[i].resiQtYuv.create(param.maxCUSize, param.internalCsp);
         }
     }
@@ -140,9 +140,9 @@ bool Search::initSearch(const x265_param& param, ScalingList& scalingList)
     {
         int cuSize = param.maxCUSize >> i;
         ok &= m_rqt[i].tmpResiYuv.create(cuSize, param.internalCsp);
-        ok &= m_rqt[i].tmpPredYuv.create(cuSize, param.internalCsp, param.cpuid);
-        ok &= m_rqt[i].bidirPredYuv[0].create(cuSize, param.internalCsp, param.cpuid);
-        ok &= m_rqt[i].bidirPredYuv[1].create(cuSize, param.internalCsp, param.cpuid);
+        ok &= m_rqt[i].tmpPredYuv.create(cuSize, param.internalCsp);
+        ok &= m_rqt[i].bidirPredYuv[0].create(cuSize, param.internalCsp);
+        ok &= m_rqt[i].bidirPredYuv[1].create(cuSize, param.internalCsp);
     }
 
     if (param.internalCsp != X265_CSP_I400)
@@ -354,10 +354,7 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
         // store original entropy coding status
         if (bEnableRDOQ)
             m_entropyCoder.estBit(m_entropyCoder.m_estBitsSbac, log2TrSize, true);
-        if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-            primitives.cu[sizeIdx].calcresidual_aligned(fenc, pred, residual, stride);
-        else
-            primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
+        primitives.cu[sizeIdx].calcresidual[stride % 64 == 0](fenc, pred, residual, stride);
 
         uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffY, log2TrSize, TEXT_LUMA, absPartIdx, false);
         if (numSig)
@@ -366,10 +363,8 @@ void Search::codeIntraLumaQT(Mode& mode, const CUGeom& cuGeom, uint32_t tuDepth,
             bool reconQtYuvAlign = m_rqt[qtLayer].reconQtYuv.getAddrOffset(absPartIdx, mode.predYuv.m_size) % 64 == 0;
             bool predAlign = mode.predYuv.getAddrOffset(absPartIdx, mode.predYuv.m_size) % 64 == 0;
             bool residualAlign = m_rqt[cuGeom.depth].tmpResiYuv.getAddrOffset(absPartIdx, mode.predYuv.m_size) % 64 == 0;
-            if (reconQtStride % 64 == 0 && stride % 64 == 0 && reconQtYuvAlign && predAlign && residualAlign && cu.m_encData->m_param->cpuid & X265_CPU_AVX512)
-                primitives.cu[sizeIdx].add_ps_aligned(reconQt, reconQtStride, pred, residual, stride, stride);
-            else
-                primitives.cu[sizeIdx].add_ps(reconQt, reconQtStride, pred, residual, stride, stride);
+            bool bufferAlignCheck = (reconQtStride % 64 == 0) && (stride % 64 == 0) && reconQtYuvAlign && predAlign && residualAlign;
+            primitives.cu[sizeIdx].add_ps[bufferAlignCheck](reconQt, reconQtStride, pred, residual, stride, stride);
         }
         else
             // no coded residual, recon = pred
@@ -570,10 +565,7 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
         bool tmpReconAlign = (useTSkip ? 1 : (m_rqt[qtLayer].reconQtYuv.getAddrOffset(absPartIdx, m_rqt[qtLayer].reconQtYuv.m_size) % 64 == 0));
         uint32_t tmpReconStride = (useTSkip ? MAX_TS_SIZE : reconQtStride);
 
-        if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-            primitives.cu[sizeIdx].calcresidual_aligned(fenc, pred, residual, stride);
-        else
-            primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
+        primitives.cu[sizeIdx].calcresidual[stride % 64 == 0](fenc, pred, residual, stride);
 
         uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSize, TEXT_LUMA, absPartIdx, useTSkip);
         if (numSig)
@@ -581,10 +573,8 @@ void Search::codeIntraLumaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuDep
             m_quant.invtransformNxN(cu, residual, stride, coeff, log2TrSize, TEXT_LUMA, true, useTSkip, numSig);
             bool residualAlign = m_rqt[cuGeom.depth].tmpResiYuv.getAddrOffset(absPartIdx, m_rqt[cuGeom.depth].tmpResiYuv.m_size) % 64 == 0;
             bool predAlign = predYuv->getAddrOffset(absPartIdx, predYuv->m_size) % 64 == 0;
-            if (stride % 64 == 0 && tmpReconStride % 64 == 0 && tmpReconAlign && residualAlign && predAlign && m_param->cpuid & X265_CPU_AVX512)
-                primitives.cu[sizeIdx].add_ps_aligned(tmpRecon, tmpReconStride, pred, residual, stride, stride);
-            else
-                primitives.cu[sizeIdx].add_ps(tmpRecon, tmpReconStride, pred, residual, stride, stride);
+            bool bufferAlignCheck = (stride % 64 == 0) && (tmpReconStride % 64 == 0) && tmpReconAlign && residualAlign && predAlign;
+            primitives.cu[sizeIdx].add_ps[bufferAlignCheck](tmpRecon, tmpReconStride, pred, residual, stride, stride);
         }
         else if (useTSkip)
         {
@@ -731,10 +721,7 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
         coeff_t* coeffY       = cu.m_trCoeff[0] + coeffOffsetY;
 
         uint32_t sizeIdx   = log2TrSize - 2;
-        if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-            primitives.cu[sizeIdx].calcresidual_aligned(fenc, pred, residual, stride);
-        else
-            primitives.cu[sizeIdx].calcresidual(fenc, pred, residual, stride);
+        primitives.cu[sizeIdx].calcresidual[stride % 64 == 0](fenc, pred, residual, stride);
 
         PicYuv*  reconPic = m_frame->m_reconPic;
         pixel*   picReconY = reconPic->getLumaAddr(cu.m_cuAddr, cuGeom.absPartIdx + absPartIdx);
@@ -747,10 +734,8 @@ void Search::residualTransformQuantIntra(Mode& mode, const CUGeom& cuGeom, uint3
             bool picReconYAlign = (reconPic->m_cuOffsetY[cu.m_cuAddr] + reconPic->m_buOffsetY[cuGeom.absPartIdx + absPartIdx]) % 64 == 0;
             bool predAlign = mode.predYuv.getAddrOffset(absPartIdx, mode.predYuv.m_size) % 64 == 0;
             bool residualAlign = m_rqt[cuGeom.depth].tmpResiYuv.getAddrOffset(absPartIdx, m_rqt[cuGeom.depth].tmpResiYuv.m_size)% 64 == 0;
-            if (picStride % 64 == 0 && stride % 64 == 0 && picReconYAlign && predAlign && residualAlign && m_param->cpuid & X265_CPU_AVX512)
-                primitives.cu[sizeIdx].add_ps_aligned(picReconY, picStride, pred, residual, stride, stride);
-            else
-                primitives.cu[sizeIdx].add_ps(picReconY, picStride, pred, residual, stride, stride);
+            bool bufferAlignCheck = (picStride % 64 == 0) && (stride % 64 == 0) && picReconYAlign && predAlign && residualAlign;
+            primitives.cu[sizeIdx].add_ps[bufferAlignCheck](picReconY, picStride, pred, residual, stride, stride);
             cu.setCbfSubParts(1 << tuDepth, TEXT_LUMA, absPartIdx, fullDepth);
         }
         else
@@ -919,10 +904,7 @@ void Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDept
             predIntraChromaAng(chromaPredMode, pred, stride, log2TrSizeC);
             cu.setTransformSkipPartRange(0, ttype, absPartIdxC, tuIterator.absPartIdxStep);
 
-            if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-                primitives.cu[sizeIdxC].calcresidual_aligned(fenc, pred, residual, stride);
-            else
-                primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
+            primitives.cu[sizeIdxC].calcresidual[stride % 64 == 0](fenc, pred, residual, stride);
 
             uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffC, log2TrSizeC, ttype, absPartIdxC, false);
             if (numSig)
@@ -931,10 +913,8 @@ void Search::codeIntraChromaQt(Mode& mode, const CUGeom& cuGeom, uint32_t tuDept
                 bool reconQtAlign = m_rqt[qtLayer].reconQtYuv.getChromaAddrOffset(absPartIdxC) % 64 == 0;
                 bool predAlign = mode.predYuv.getChromaAddrOffset(absPartIdxC) % 64 == 0;
                 bool residualAlign = resiYuv.getChromaAddrOffset(absPartIdxC) % 64 == 0;
-                if (reconQtAlign && predAlign && residualAlign && (reconQtStride % 64 == 0) && (stride % 64 == 0) && m_param->cpuid & X265_CPU_AVX512)
-                    primitives.cu[sizeIdxC].add_ps_aligned(reconQt, reconQtStride, pred, residual, stride, stride);
-                else
-                    primitives.cu[sizeIdxC].add_ps(reconQt, reconQtStride, pred, residual, stride, stride);
+                bool bufferAlignCheck = reconQtAlign && predAlign && residualAlign && (reconQtStride % 64 == 0) && (stride % 64 == 0);
+                primitives.cu[sizeIdxC].add_ps[bufferAlignCheck](reconQt, reconQtStride, pred, residual, stride, stride);
                 cu.setCbfPartRange(1 << tuDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
             }
             else
@@ -1028,10 +1008,7 @@ void Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuD
                 pixel*   recon = (useTSkip ? m_tsRecon : reconQt);
                 uint32_t reconStride = (useTSkip ? MAX_TS_SIZE : reconQtStride);
 
-                if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-                    primitives.cu[sizeIdxC].calcresidual_aligned(fenc, pred, residual, stride);
-                else
-                    primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
+                primitives.cu[sizeIdxC].calcresidual[stride % 64 == 0](fenc, pred, residual, stride);
 
                 uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeff, log2TrSizeC, ttype, absPartIdxC, useTSkip);
                 if (numSig)
@@ -1040,10 +1017,8 @@ void Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuD
                     bool reconAlign = (useTSkip ? 1 : m_rqt[qtLayer].reconQtYuv.getChromaAddrOffset(absPartIdxC)) % 64 == 0;
                     bool predYuvAlign = mode.predYuv.getChromaAddrOffset(absPartIdxC) % 64 == 0;
                     bool residualAlign = m_rqt[cuGeom.depth].tmpResiYuv.getChromaAddrOffset(absPartIdxC) % 64 == 0;
-                    if (reconAlign && predYuvAlign && residualAlign && (reconStride % 64 == 0) && (stride % 64 == 0) && m_param->cpuid & X265_CPU_AVX512)
-                        primitives.cu[sizeIdxC].add_ps_aligned(recon, reconStride, pred, residual, stride, stride);
-                    else
-                        primitives.cu[sizeIdxC].add_ps(recon, reconStride, pred, residual, stride, stride);
+                    bool bufferAlignCheck = reconAlign && predYuvAlign && residualAlign && (reconStride % 64 == 0) && (stride % 64 == 0);
+                    primitives.cu[sizeIdxC].add_ps[bufferAlignCheck](recon, reconStride, pred, residual, stride, stride);
                     cu.setCbfPartRange(1 << tuDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
                 }
                 else if (useTSkip)
@@ -1228,10 +1203,7 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
 
             X265_CHECK(!cu.m_transformSkip[ttype][0], "transform skip not supported at low RD levels\n");
 
-            if ((stride % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-                primitives.cu[sizeIdxC].calcresidual_aligned(fenc, pred, residual, stride);
-            else
-                primitives.cu[sizeIdxC].calcresidual(fenc, pred, residual, stride);
+            primitives.cu[sizeIdxC].calcresidual[stride % 64 == 0](fenc, pred, residual, stride);
 
             uint32_t numSig = m_quant.transformNxN(cu, fenc, stride, residual, stride, coeffC, log2TrSizeC, ttype, absPartIdxC, false);
             if (numSig)
@@ -1240,10 +1212,8 @@ void Search::residualQTIntraChroma(Mode& mode, const CUGeom& cuGeom, uint32_t ab
                 bool picReconCAlign = (reconPic->m_cuOffsetC[cu.m_cuAddr] + reconPic->m_buOffsetC[cuGeom.absPartIdx + absPartIdxC]) % 64 == 0;
                 bool predAlign = mode.predYuv.getChromaAddrOffset(absPartIdxC) % 64 == 0;
                 bool residualAlign = resiYuv.getChromaAddrOffset(absPartIdxC)% 64 == 0;
-                if (picReconCAlign && predAlign && residualAlign && (picStride % 64 == 0) && (stride % 64 == 0) && m_param->cpuid & X265_CPU_AVX512)
-                    primitives.cu[sizeIdxC].add_ps_aligned(picReconC, picStride, pred, residual, stride, stride);
-                else
-                    primitives.cu[sizeIdxC].add_ps(picReconC, picStride, pred, residual, stride, stride);
+                bool bufferAlignCheck = picReconCAlign && predAlign && residualAlign && (picStride % 64 == 0) && (stride % 64 == 0);
+                primitives.cu[sizeIdxC].add_ps[bufferAlignCheck](picReconC, picStride, pred, residual, stride, stride);
                 cu.setCbfPartRange(1 << tuDepth, ttype, absPartIdxC, tuIterator.absPartIdxStep);
             }
             else
@@ -1359,7 +1329,7 @@ void Search::checkIntraInInter(Mode& intraMode, const CUGeom& cuGeom)
 
         pixel nScale[129];
         intraNeighbourBuf[1][0] = intraNeighbourBuf[0][0];
-        primitives.scale1D_128to64(nScale + 1, intraNeighbourBuf[0] + 1);
+        primitives.scale1D_128to64[NONALIGNED](nScale + 1, intraNeighbourBuf[0] + 1);
 
         // we do not estimate filtering for downscaled samples
         memcpy(&intraNeighbourBuf[0][1], &nScale[1], 2 * 64 * sizeof(pixel));   // Top & Left pixels
@@ -2969,10 +2939,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
         }
         else
         {
-            if ((strideResiY % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-                primitives.cu[sizeIdx].blockfill_s_aligned(curResiY, strideResiY, 0);
-            else
-                primitives.cu[sizeIdx].blockfill_s(curResiY, strideResiY, 0);
+            primitives.cu[sizeIdx].blockfill_s[strideResiY % 64 == 0](curResiY, strideResiY, 0);
             cu.setCbfSubParts(0, TEXT_LUMA, absPartIdx, depth);
         }
 
@@ -3005,10 +2972,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
                 }
                 else
                 {
-                    if ((strideResiC % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-                        primitives.cu[sizeIdxC].blockfill_s_aligned(curResiU, strideResiC, 0);
-                    else
-                        primitives.cu[sizeIdxC].blockfill_s(curResiU, strideResiC, 0);
+                    primitives.cu[sizeIdxC].blockfill_s[strideResiC % 64 == 0](curResiU, strideResiC, 0);
                     cu.setCbfPartRange(0, TEXT_CHROMA_U, absPartIdxC, tuIterator.absPartIdxStep);
                 }
 
@@ -3022,11 +2986,7 @@ void Search::residualTransformQuantInter(Mode& mode, const CUGeom& cuGeom, uint3
                 }
                 else
                 {
-                    if ((strideResiC % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-                        primitives.cu[sizeIdxC].blockfill_s_aligned(curResiV, strideResiC, 0);
-                    else
-                        primitives.cu[sizeIdxC].blockfill_s(curResiV, strideResiC, 0);
-
+                    primitives.cu[sizeIdxC].blockfill_s[strideResiC % 64 == 0](curResiV, strideResiC, 0);
                     cu.setCbfPartRange(0, TEXT_CHROMA_V, absPartIdxC, tuIterator.absPartIdxStep);
                 }
             }
@@ -3263,10 +3223,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
             uint32_t strideReconY = m_rqt[qtLayer].reconQtYuv.m_size;
             bool predYuvAlign = mode.predYuv.getAddrOffset(absPartIdx, mode.predYuv.m_size) % 64 == 0;
             bool curResiYAlign = m_rqt[qtLayer].resiQtYuv.getAddrOffset(absPartIdx, m_rqt[qtLayer].resiQtYuv.m_size) % 64 == 0;
-            if (curReconYAlign && predYuvAlign && curResiYAlign && (strideReconY % 64 == 0) && (mode.predYuv.m_size % 64 == 0) && (strideResiY % 64 == 0) && m_param->cpuid & X265_CPU_AVX512)
-                primitives.cu[partSize].add_ps_aligned(curReconY, strideReconY, mode.predYuv.getLumaAddr(absPartIdx), curResiY, mode.predYuv.m_size, strideResiY);
-            else
-                primitives.cu[partSize].add_ps(curReconY, strideReconY, mode.predYuv.getLumaAddr(absPartIdx), curResiY, mode.predYuv.m_size, strideResiY);
+            bool bufferAlignCheck = curReconYAlign && predYuvAlign && curResiYAlign && (strideReconY % 64 == 0) && (mode.predYuv.m_size % 64 == 0) && (strideResiY % 64 == 0);
+            primitives.cu[partSize].add_ps[bufferAlignCheck](curReconY, strideReconY, mode.predYuv.getLumaAddr(absPartIdx), curResiY, mode.predYuv.m_size, strideResiY);
 
             const sse_t nonZeroDistY = primitives.cu[partSize].sse_pp(fenc, fencYuv->m_size, curReconY, strideReconY);
             uint32_t nzCbfBitsY = m_entropyCoder.estimateCbfBits(cbfFlag[TEXT_LUMA][0], TEXT_LUMA, tuDepth);
@@ -3300,10 +3258,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                 {
                     cbfFlag[TEXT_LUMA][0] = 0;
                     singleBits[TEXT_LUMA][0] = 0;
-                    if ((strideResiY % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-                        primitives.cu[partSize].blockfill_s_aligned(curResiY, strideResiY, 0);
-                    else
-                        primitives.cu[partSize].blockfill_s(curResiY, strideResiY, 0);
+                    primitives.cu[partSize].blockfill_s[strideResiY % 64 == 0](curResiY, strideResiY, 0);
 #if CHECKED_BUILD || _DEBUG
                     uint32_t numCoeffY = 1 << (log2TrSize << 1);
                     memset(coeffCurY, 0, sizeof(coeff_t)* numCoeffY);
@@ -3326,10 +3281,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
         {
             if (checkTransformSkipY)
                 minCost[TEXT_LUMA][0] = estimateNullCbfCost(zeroDistY, zeroEnergyY, tuDepth, TEXT_LUMA);
-            if ((strideResiY % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-                primitives.cu[partSize].blockfill_s_aligned(curResiY, strideResiY, 0);
-            else
-                primitives.cu[partSize].blockfill_s(curResiY, strideResiY, 0);
+            primitives.cu[partSize].blockfill_s[strideResiY % 64 == 0](curResiY, strideResiY, 0);
             singleDist[TEXT_LUMA][0] = zeroDistY;
             singleBits[TEXT_LUMA][0] = 0;
             singleEnergy[TEXT_LUMA][0] = zeroEnergyY;
@@ -3390,10 +3342,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                         bool curReconCAlign = m_rqt[qtLayer].reconQtYuv.getChromaAddrOffset(absPartIdxC) % 64 == 0;
                         bool predYuvAlign = mode.predYuv.getChromaAddrOffset(absPartIdxC) % 64 == 0;
                         bool curResiCAlign = m_rqt[qtLayer].resiQtYuv.getChromaAddrOffset(absPartIdxC) % 64 == 0;
-                        if (curReconCAlign && predYuvAlign && curResiCAlign && (strideReconC % 64 == 0) && (mode.predYuv.m_csize % 64 == 0) && (strideResiC % 64 == 0) && m_param->cpuid & X265_CPU_AVX512)
-                            primitives.cu[partSizeC].add_ps_aligned(curReconC, strideReconC, mode.predYuv.getChromaAddr(chromaId, absPartIdxC), curResiC, mode.predYuv.m_csize, strideResiC);
-                        else
-                            primitives.cu[partSizeC].add_ps(curReconC, strideReconC, mode.predYuv.getChromaAddr(chromaId, absPartIdxC), curResiC, mode.predYuv.m_csize, strideResiC);
+                        bool bufferAlignCheck = curReconCAlign && predYuvAlign && curResiCAlign && (strideReconC % 64 == 0) && (mode.predYuv.m_csize % 64 == 0) && (strideResiC % 64 == 0);
+                        primitives.cu[partSizeC].add_ps[bufferAlignCheck](curReconC, strideReconC, mode.predYuv.getChromaAddr(chromaId, absPartIdxC), curResiC, mode.predYuv.m_csize, strideResiC);
                         sse_t nonZeroDistC = m_rdCost.scaleChromaDist(chromaId, primitives.cu[partSizeC].sse_pp(fenc, fencYuv->m_csize, curReconC, strideReconC));
                         uint32_t nzCbfBitsC = m_entropyCoder.estimateCbfBits(cbfFlag[chromaId][tuIterator.section], (TextType)chromaId, tuDepth);
                         uint32_t nonZeroEnergyC = 0; uint64_t singleCostC = 0;
@@ -3424,10 +3374,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                             {
                                 cbfFlag[chromaId][tuIterator.section] = 0;
                                 singleBits[chromaId][tuIterator.section] = 0;
-                                if ((strideResiC % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-                                    primitives.cu[partSizeC].blockfill_s_aligned(curResiC, strideResiC, 0);
-                                else
-                                    primitives.cu[partSizeC].blockfill_s(curResiC, strideResiC, 0);
+                                primitives.cu[partSizeC].blockfill_s[strideResiC % 64 == 0](curResiC, strideResiC, 0);
 #if CHECKED_BUILD || _DEBUG
                                 uint32_t numCoeffC = 1 << (log2TrSizeC << 1);
                                 memset(coeffCurC + subTUOffset, 0, sizeof(coeff_t) * numCoeffC);
@@ -3450,10 +3397,7 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                     {
                         if (checkTransformSkipC)
                             minCost[chromaId][tuIterator.section] = estimateNullCbfCost(zeroDistC, zeroEnergyC, tuDepthC, (TextType)chromaId);
-                        if ((strideResiC % 64 == 0) && (m_param->cpuid & X265_CPU_AVX512))
-                            primitives.cu[partSizeC].blockfill_s_aligned(curResiC, strideResiC, 0);
-                        else
-                            primitives.cu[partSizeC].blockfill_s(curResiC, strideResiC, 0);
+                        primitives.cu[partSizeC].blockfill_s[strideResiC % 64 == 0](curResiC, strideResiC, 0);
                         singleBits[chromaId][tuIterator.section] = 0;
                         singleDist[chromaId][tuIterator.section] = zeroDistC;
                         singleEnergy[chromaId][tuIterator.section] = zeroEnergyC;
@@ -3505,10 +3449,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                 m_quant.invtransformNxN(cu, m_tsResidual, trSize, m_tsCoeff, log2TrSize, TEXT_LUMA, false, true, numSigTSkipY);
                 bool predYuvAlign = mode.predYuv.getAddrOffset(absPartIdx, mode.predYuv.m_size) % 64 == 0;
 
-                if (predYuvAlign && (trSize % 64 == 0) && (mode.predYuv.m_size % 64 == 0) && m_param->cpuid & X265_CPU_AVX512)
-                    primitives.cu[partSize].add_ps_aligned(m_tsRecon, trSize, mode.predYuv.getLumaAddr(absPartIdx), m_tsResidual, mode.predYuv.m_size, trSize);
-                else
-                    primitives.cu[partSize].add_ps(m_tsRecon, trSize, mode.predYuv.getLumaAddr(absPartIdx), m_tsResidual, mode.predYuv.m_size, trSize);
+                bool bufferAlignCheck = predYuvAlign && (trSize % 64 == 0) && (mode.predYuv.m_size % 64 == 0);
+                primitives.cu[partSize].add_ps[bufferAlignCheck](m_tsRecon, trSize, mode.predYuv.getLumaAddr(absPartIdx), m_tsResidual, mode.predYuv.m_size, trSize);
                 nonZeroDistY = primitives.cu[partSize].sse_pp(fenc, fencYuv->m_size, m_tsRecon, trSize);
 
                 if (m_rdCost.m_psyRd)
@@ -3586,10 +3528,8 @@ void Search::estimateResidualQT(Mode& mode, const CUGeom& cuGeom, uint32_t absPa
                         m_quant.invtransformNxN(cu, m_tsResidual, trSizeC, m_tsCoeff,
                                                 log2TrSizeC, (TextType)chromaId, false, true, numSigTSkipC);
                         bool predYuvAlign = mode.predYuv.getChromaAddrOffset(absPartIdxC) % 64 == 0;
-                        if (predYuvAlign && (trSizeC % 64 == 0) && (mode.predYuv.m_csize % 64 == 0) && (trSizeC % 64 == 0) && m_param->cpuid & X265_CPU_AVX512)
-                            primitives.cu[partSizeC].add_ps_aligned(m_tsRecon, trSizeC, mode.predYuv.getChromaAddr(chromaId, absPartIdxC), m_tsResidual, mode.predYuv.m_csize, trSizeC);
-                        else
-                            primitives.cu[partSizeC].add_ps(m_tsRecon, trSizeC, mode.predYuv.getChromaAddr(chromaId, absPartIdxC), m_tsResidual, mode.predYuv.m_csize, trSizeC);
+                        bool bufferAlignCheck = predYuvAlign && (trSizeC % 64 == 0) && (mode.predYuv.m_csize % 64 == 0) && (trSizeC % 64 == 0);
+                        primitives.cu[partSizeC].add_ps[bufferAlignCheck](m_tsRecon, trSizeC, mode.predYuv.getChromaAddr(chromaId, absPartIdxC), m_tsResidual, mode.predYuv.m_csize, trSizeC);
                         nonZeroDistC = m_rdCost.scaleChromaDist(chromaId, primitives.cu[partSizeC].sse_pp(fenc, fencYuv->m_csize, m_tsRecon, trSizeC));
                         if (m_rdCost.m_psyRd)
                         {

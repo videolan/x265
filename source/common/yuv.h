@@ -38,7 +38,6 @@ class PicYuv;
 class Yuv
 {
 public:
-    int      m_cpuid;
     pixel*   m_buf[3];
 
     uint32_t m_size;
@@ -52,7 +51,7 @@ public:
 
     Yuv();
 
-    bool   create(uint32_t size, int csp, const int cpuid);
+    bool   create(uint32_t size, int csp);
     void   destroy();
 
     // Copy YUV buffer to picture buffer

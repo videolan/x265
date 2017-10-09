@@ -2257,18 +2257,18 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
         }
     }
 
-    if (opt.pu[part].addAvg)
+    if (opt.pu[part].addAvg[NONALIGNED])
     {
-        if (!check_addAvg(ref.pu[part].addAvg, opt.pu[part].addAvg))
+        if (!check_addAvg(ref.pu[part].addAvg[NONALIGNED], opt.pu[part].addAvg[NONALIGNED]))
         {
             printf("addAvg[%s] failed\n", lumaPartStr[part]);
             return false;
         }
     }
 
-    if (opt.pu[part].addAvg_aligned)
+    if (opt.pu[part].addAvg[ALIGNED])
     {
-        if (!check_addAvg_aligned(ref.pu[part].addAvg_aligned, opt.pu[part].addAvg_aligned))
+        if (!check_addAvg_aligned(ref.pu[part].addAvg[ALIGNED], opt.pu[part].addAvg[ALIGNED]))
         {
             printf("addAvg_aligned[%s] failed\n", lumaPartStr[part]);
             return false;
@@ -2304,18 +2304,18 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
             }
         }
 
-        if (opt.cu[part].add_ps)
+        if (opt.cu[part].add_ps[NONALIGNED])
         {
-            if (!check_pixel_add_ps(ref.cu[part].add_ps, opt.cu[part].add_ps))
+            if (!check_pixel_add_ps(ref.cu[part].add_ps[NONALIGNED], opt.cu[part].add_ps[NONALIGNED]))
             {
                 printf("add_ps[%s] failed\n", lumaPartStr[part]);
                 return false;
             }
         }
 
-        if (opt.cu[part].add_ps_aligned)
+        if (opt.cu[part].add_ps[ALIGNED])
         {
-            if (!check_pixel_add_ps_aligned(ref.cu[part].add_ps_aligned, opt.cu[part].add_ps_aligned))
+            if (!check_pixel_add_ps_aligned(ref.cu[part].add_ps[ALIGNED], opt.cu[part].add_ps[ALIGNED]))
             {
                 printf("add_ps_aligned[%s] failed\n", lumaPartStr[part]);
                 return false;
@@ -2360,17 +2360,17 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
                 return false;
             }
         }
-        if (opt.chroma[i].pu[part].addAvg)
+        if (opt.chroma[i].pu[part].addAvg[NONALIGNED])
         {
-            if (!check_addAvg(ref.chroma[i].pu[part].addAvg, opt.chroma[i].pu[part].addAvg))
+            if (!check_addAvg(ref.chroma[i].pu[part].addAvg[NONALIGNED], opt.chroma[i].pu[part].addAvg[NONALIGNED]))
             {
                 printf("chroma_addAvg[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                 return false;
             }
         }
-        if (opt.chroma[i].pu[part].addAvg_aligned)
+        if (opt.chroma[i].pu[part].addAvg[ALIGNED])
         {
-            if (!check_addAvg_aligned(ref.chroma[i].pu[part].addAvg_aligned, opt.chroma[i].pu[part].addAvg_aligned))
+            if (!check_addAvg_aligned(ref.chroma[i].pu[part].addAvg[ALIGNED], opt.chroma[i].pu[part].addAvg[ALIGNED]))
             {
                 printf("chroma_addAvg_aligned[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                 return false;
@@ -2402,17 +2402,17 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
                     return false;
                 }
             }
-            if (opt.chroma[i].cu[part].add_ps)
+            if (opt.chroma[i].cu[part].add_ps[NONALIGNED])
             {
-                if (!check_pixel_add_ps(ref.chroma[i].cu[part].add_ps, opt.chroma[i].cu[part].add_ps))
+                if (!check_pixel_add_ps(ref.chroma[i].cu[part].add_ps[NONALIGNED], opt.chroma[i].cu[part].add_ps[NONALIGNED]))
                 {
                     printf("chroma_add_ps[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                     return false;
                 }
             }
-            if (opt.chroma[i].cu[part].add_ps_aligned)
+            if (opt.chroma[i].cu[part].add_ps[ALIGNED])
             {
-                if (!check_pixel_add_ps_aligned(ref.chroma[i].cu[part].add_ps_aligned, opt.chroma[i].cu[part].add_ps_aligned))
+                if (!check_pixel_add_ps_aligned(ref.chroma[i].cu[part].add_ps[ALIGNED], opt.chroma[i].cu[part].add_ps[ALIGNED]))
                 {
                     printf("chroma_add_ps_aligned[%s][%s] failed\n", x265_source_csp_names[i], chromaPartStr[i][part]);
                     return false;
@@ -2496,18 +2496,18 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
         }
 
-        if (opt.cu[i].blockfill_s)
+        if (opt.cu[i].blockfill_s[NONALIGNED])
         {
-            if (!check_blockfill_s(ref.cu[i].blockfill_s, opt.cu[i].blockfill_s))
+            if (!check_blockfill_s(ref.cu[i].blockfill_s[NONALIGNED], opt.cu[i].blockfill_s[NONALIGNED]))
             {
                 printf("blockfill_s[%dx%d]: failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
 
-        if (opt.cu[i].blockfill_s_aligned)
+        if (opt.cu[i].blockfill_s[ALIGNED])
         {
-            if (!check_blockfill_s_aligned(ref.cu[i].blockfill_s_aligned, opt.cu[i].blockfill_s_aligned))
+            if (!check_blockfill_s_aligned(ref.cu[i].blockfill_s[ALIGNED], opt.cu[i].blockfill_s[ALIGNED]))
             {
                 printf("blockfill_s_aligned[%dx%d]: failed!\n", 4 << i, 4 << i);
                 return false;
@@ -2535,18 +2535,18 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         {
             /* TU only primitives */
 
-            if (opt.cu[i].calcresidual)
+            if (opt.cu[i].calcresidual[NONALIGNED])
             {
-                if (!check_calresidual(ref.cu[i].calcresidual, opt.cu[i].calcresidual))
+                if (!check_calresidual(ref.cu[i].calcresidual[NONALIGNED], opt.cu[i].calcresidual[NONALIGNED]))
                 {
                     printf("calcresidual width: %d failed!\n", 4 << i);
                     return false;
                 }
             }
 
-            if (opt.cu[i].calcresidual_aligned)
+            if (opt.cu[i].calcresidual[ALIGNED])
             {
-                if (!check_calresidual_aligned(ref.cu[i].calcresidual_aligned, opt.cu[i].calcresidual_aligned))
+                if (!check_calresidual_aligned(ref.cu[i].calcresidual[ALIGNED], opt.cu[i].calcresidual[ALIGNED]))
                 {
                     printf("calcresidual_aligned width: %d failed!\n", 4 << i);
                     return false;
@@ -2645,18 +2645,18 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
-    if (opt.scale1D_128to64)
+    if (opt.scale1D_128to64[NONALIGNED])
     {
-        if (!check_scale1D_pp(ref.scale1D_128to64, opt.scale1D_128to64))
+        if (!check_scale1D_pp(ref.scale1D_128to64[NONALIGNED], opt.scale1D_128to64[NONALIGNED]))
         {
             printf("scale1D_128to64 failed!\n");
             return false;
         }
     }
 
-    if (opt.scale1D_128to64_aligned)
+    if (opt.scale1D_128to64[ALIGNED])
     {
-        if (!check_scale1D_pp_aligned(ref.scale1D_128to64_aligned, opt.scale1D_128to64_aligned))
+        if (!check_scale1D_pp_aligned(ref.scale1D_128to64[ALIGNED], opt.scale1D_128to64[ALIGNED]))
         {
             printf("scale1D_128to64_aligned failed!\n");
             return false;
@@ -3050,15 +3050,15 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         REPORT_SPEEDUP(opt.pu[part].copy_pp, ref.pu[part].copy_pp, pbuf1, 64, pbuf2, 64);
     }
 
-    if (opt.pu[part].addAvg)
+    if (opt.pu[part].addAvg[NONALIGNED])
     {
         HEADER("addAvg[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].addAvg, ref.pu[part].addAvg, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+        REPORT_SPEEDUP(opt.pu[part].addAvg[NONALIGNED], ref.pu[part].addAvg[NONALIGNED], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
     }
-    if (opt.pu[part].addAvg_aligned)
+    if (opt.pu[part].addAvg[ALIGNED])
     {
         HEADER("addAvg_aligned[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].addAvg_aligned, ref.pu[part].addAvg_aligned, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+        REPORT_SPEEDUP(opt.pu[part].addAvg[ALIGNED], ref.pu[part].addAvg[ALIGNED], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
     }
 
     if (part < NUM_CU_SIZES)
@@ -3079,15 +3079,15 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             HEADER("sub_ps[%s]", lumaPartStr[part]);
             REPORT_SPEEDUP(opt.cu[part].sub_ps, ref.cu[part].sub_ps, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
         }
-        if (opt.cu[part].add_ps)
+        if (opt.cu[part].add_ps[NONALIGNED])
         {
             HEADER("add_ps[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.cu[part].add_ps, ref.cu[part].add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+            REPORT_SPEEDUP(opt.cu[part].add_ps[NONALIGNED], ref.cu[part].add_ps[NONALIGNED], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
-        if (opt.cu[part].add_ps_aligned)
+        if (opt.cu[part].add_ps[ALIGNED])
         {
             HEADER("add_ps[%s]", lumaPartStr[part]);
-            REPORT_SPEEDUP(opt.cu[part].add_ps_aligned, ref.cu[part].add_ps_aligned, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+            REPORT_SPEEDUP(opt.cu[part].add_ps[ALIGNED], ref.cu[part].add_ps[ALIGNED], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
         if (opt.cu[part].copy_ss)
         {
@@ -3113,15 +3113,15 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
             HEADER("[%s] copy_pp[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
             REPORT_SPEEDUP(opt.chroma[i].pu[part].copy_pp, ref.chroma[i].pu[part].copy_pp, pbuf1, 64, pbuf2, 128);
         }
-        if (opt.chroma[i].pu[part].addAvg)
+        if (opt.chroma[i].pu[part].addAvg[NONALIGNED])
         {
             HEADER("[%s]  addAvg[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].pu[part].addAvg, ref.chroma[i].pu[part].addAvg, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+            REPORT_SPEEDUP(opt.chroma[i].pu[part].addAvg[NONALIGNED], ref.chroma[i].pu[part].addAvg[NONALIGNED], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
         }
-        if (opt.chroma[i].pu[part].addAvg_aligned)
+        if (opt.chroma[i].pu[part].addAvg[ALIGNED])
         {
             HEADER("[%s]  addAvg_aligned[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-            REPORT_SPEEDUP(opt.chroma[i].pu[part].addAvg_aligned, ref.chroma[i].pu[part].addAvg_aligned, sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
+            REPORT_SPEEDUP(opt.chroma[i].pu[part].addAvg[ALIGNED], ref.chroma[i].pu[part].addAvg[ALIGNED], sbuf1, sbuf2, pbuf1, STRIDE, STRIDE, STRIDE);
         }
         if (opt.chroma[i].pu[part].satd)
         {
@@ -3155,15 +3155,15 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
                 HEADER("[%s]  sub_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
                 REPORT_SPEEDUP(opt.chroma[i].cu[part].sub_ps, ref.chroma[i].cu[part].sub_ps, (int16_t*)pbuf1, FENC_STRIDE, pbuf2, pbuf1, STRIDE, STRIDE);
             }
-            if (opt.chroma[i].cu[part].add_ps)
+            if (opt.chroma[i].cu[part].add_ps[NONALIGNED])
             {
                 HEADER("[%s]  add_ps[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-                REPORT_SPEEDUP(opt.chroma[i].cu[part].add_ps, ref.chroma[i].cu[part].add_ps, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+                REPORT_SPEEDUP(opt.chroma[i].cu[part].add_ps[NONALIGNED], ref.chroma[i].cu[part].add_ps[NONALIGNED], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
             }
-            if (opt.chroma[i].cu[part].add_ps_aligned)
+            if (opt.chroma[i].cu[part].add_ps[ALIGNED])
             {
                 HEADER("[%s]  add_ps_aligned[%s]", x265_source_csp_names[i], chromaPartStr[i][part]);
-                REPORT_SPEEDUP(opt.chroma[i].cu[part].add_ps_aligned, ref.chroma[i].cu[part].add_ps_aligned, pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
+                REPORT_SPEEDUP(opt.chroma[i].cu[part].add_ps[ALIGNED], ref.chroma[i].cu[part].add_ps[ALIGNED], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
             }
             if (opt.chroma[i].cu[part].sa8d)
             {
@@ -3222,28 +3222,28 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             HEADER("sa8d[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cu[i].sa8d, ref.cu[i].sa8d, pbuf1, STRIDE, pbuf2, STRIDE);
         }
-        if (opt.cu[i].calcresidual)
+        if (opt.cu[i].calcresidual[NONALIGNED])
         {
             HEADER("residual[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cu[i].calcresidual, ref.cu[i].calcresidual, pbuf1, pbuf2, sbuf1, 64);
+            REPORT_SPEEDUP(opt.cu[i].calcresidual[NONALIGNED], ref.cu[i].calcresidual[NONALIGNED], pbuf1, pbuf2, sbuf1, 64);
         }
 
-        if (opt.cu[i].calcresidual_aligned)
+        if (opt.cu[i].calcresidual[ALIGNED])
         {
             HEADER("residual[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cu[i].calcresidual_aligned, ref.cu[i].calcresidual_aligned, pbuf1, pbuf2, sbuf1, 64);
+            REPORT_SPEEDUP(opt.cu[i].calcresidual[ALIGNED], ref.cu[i].calcresidual[ALIGNED], pbuf1, pbuf2, sbuf1, 64);
         }
 
-        if (opt.cu[i].blockfill_s)
+        if (opt.cu[i].blockfill_s[NONALIGNED])
         {
             HEADER("blkfill[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cu[i].blockfill_s, ref.cu[i].blockfill_s, sbuf1, 64, SHORT_MAX);
+            REPORT_SPEEDUP(opt.cu[i].blockfill_s[NONALIGNED], ref.cu[i].blockfill_s[NONALIGNED], sbuf1, 64, SHORT_MAX);
         }
 
-        if (opt.cu[i].blockfill_s_aligned)
+        if (opt.cu[i].blockfill_s[ALIGNED])
         {
             HEADER("blkfill[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cu[i].blockfill_s_aligned, ref.cu[i].blockfill_s_aligned, sbuf1, 64, SHORT_MAX);
+            REPORT_SPEEDUP(opt.cu[i].blockfill_s[ALIGNED], ref.cu[i].blockfill_s[ALIGNED], sbuf1, 64, SHORT_MAX);
         }
 
         if (opt.cu[i].transpose)
@@ -3314,16 +3314,16 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         REPORT_SPEEDUP(opt.frameInitLowres, ref.frameInitLowres, pbuf2, pbuf1, pbuf2, pbuf3, pbuf4, 64, 64, 64, 64);
     }
 
-    if (opt.scale1D_128to64)
+    if (opt.scale1D_128to64[NONALIGNED])
     {
         HEADER0("scale1D_128to64");
-        REPORT_SPEEDUP(opt.scale1D_128to64, ref.scale1D_128to64, pbuf2, pbuf1);
+        REPORT_SPEEDUP(opt.scale1D_128to64[NONALIGNED], ref.scale1D_128to64[NONALIGNED], pbuf2, pbuf1);
     }
 
-    if (opt.scale1D_128to64_aligned)
+    if (opt.scale1D_128to64[ALIGNED])
     {
         HEADER0("scale1D_128to64_aligned");
-        REPORT_SPEEDUP(opt.scale1D_128to64_aligned, ref.scale1D_128to64_aligned, pbuf2, pbuf1);
+        REPORT_SPEEDUP(opt.scale1D_128to64[ALIGNED], ref.scale1D_128to64[ALIGNED], pbuf2, pbuf1);
     }
 
     if (opt.scale2D_64to32)

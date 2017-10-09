@@ -614,17 +614,17 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 return false;
             }
         }
-        if (opt.pu[value].convert_p2s)
+        if (opt.pu[value].convert_p2s[NONALIGNED])
         {
-            if (!check_IPFilterLumaP2S_primitive(ref.pu[value].convert_p2s, opt.pu[value].convert_p2s))
+            if (!check_IPFilterLumaP2S_primitive(ref.pu[value].convert_p2s[NONALIGNED], opt.pu[value].convert_p2s[NONALIGNED]))
             {
                 printf("convert_p2s[%s]", lumaPartStr[value]);
                 return false;
             }
         }
-        if (opt.pu[value].convert_p2s_aligned)
+        if (opt.pu[value].convert_p2s[ALIGNED])
         {
-            if (!check_IPFilterLumaP2S_aligned_primitive(ref.pu[value].convert_p2s_aligned, opt.pu[value].convert_p2s_aligned))
+            if (!check_IPFilterLumaP2S_aligned_primitive(ref.pu[value].convert_p2s[ALIGNED], opt.pu[value].convert_p2s[ALIGNED]))
             {
                 printf("convert_p2s_aligned[%s]", lumaPartStr[value]);
                 return false;
@@ -684,17 +684,17 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                     return false;
                 }
             }
-            if (opt.chroma[csp].pu[value].p2s_aligned)
+            if (opt.chroma[csp].pu[value].p2s[ALIGNED])
             {
-                if (!check_IPFilterChromaP2S_aligned_primitive(ref.chroma[csp].pu[value].p2s_aligned, opt.chroma[csp].pu[value].p2s_aligned))
+                if (!check_IPFilterChromaP2S_aligned_primitive(ref.chroma[csp].pu[value].p2s[ALIGNED], opt.chroma[csp].pu[value].p2s[ALIGNED]))
                 {
                     printf("chroma_p2s_aligned[%s]", chromaPartStr[csp][value]);
                     return false;
                 }
             }
-            if (opt.chroma[csp].pu[value].p2s)
+            if (opt.chroma[csp].pu[value].p2s[NONALIGNED])
             {
-                if (!check_IPFilterChromaP2S_primitive(ref.chroma[csp].pu[value].p2s, opt.chroma[csp].pu[value].p2s))
+                if (!check_IPFilterChromaP2S_primitive(ref.chroma[csp].pu[value].p2s[NONALIGNED], opt.chroma[csp].pu[value].p2s[NONALIGNED]))
                 {
                     printf("chroma_p2s[%s]", chromaPartStr[csp][value]);
                     return false;
@@ -768,18 +768,18 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                 pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, srcStride, 1, 3);
         }
 
-        if (opt.pu[value].convert_p2s)
+        if (opt.pu[value].convert_p2s[NONALIGNED])
         {
             printf("convert_p2s[%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.pu[value].convert_p2s, ref.pu[value].convert_p2s,
+            REPORT_SPEEDUP(opt.pu[value].convert_p2s[NONALIGNED], ref.pu[value].convert_p2s[NONALIGNED],
                 pixel_buff, srcStride,
                 IPF_vec_output_s, dstStride);
         }
 
-        if (opt.pu[value].convert_p2s_aligned)
+        if (opt.pu[value].convert_p2s[ALIGNED])
         {
             printf("convert_p2s_aligned[%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.pu[value].convert_p2s_aligned, ref.pu[value].convert_p2s_aligned,
+            REPORT_SPEEDUP(opt.pu[value].convert_p2s[ALIGNED], ref.pu[value].convert_p2s[ALIGNED],
                 pixel_buff, srcStride,
                 IPF_vec_output_s, dstStride);
         }
@@ -830,16 +830,16 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
                     short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
                     IPF_vec_output_s, dstStride, 1);
             }
-            if (opt.chroma[csp].pu[value].p2s)
+            if (opt.chroma[csp].pu[value].p2s[NONALIGNED])
             {
                 printf("chroma_p2s[%s]\t", chromaPartStr[csp][value]);
-                REPORT_SPEEDUP(opt.chroma[csp].pu[value].p2s, ref.chroma[csp].pu[value].p2s,
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].p2s[NONALIGNED], ref.chroma[csp].pu[value].p2s[NONALIGNED],
                     pixel_buff, srcStride, IPF_vec_output_s, dstStride);
             }
-            if (opt.chroma[csp].pu[value].p2s_aligned)
+            if (opt.chroma[csp].pu[value].p2s[ALIGNED])
             {
                 printf("chroma_p2s_aligned[%s]\t", chromaPartStr[csp][value]);
-                REPORT_SPEEDUP(opt.chroma[csp].pu[value].p2s_aligned, ref.chroma[csp].pu[value].p2s_aligned,
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].p2s[ALIGNED], ref.chroma[csp].pu[value].p2s[ALIGNED],
                     pixel_buff, srcStride, IPF_vec_output_s, dstStride);
             }
         }

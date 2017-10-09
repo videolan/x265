@@ -286,10 +286,7 @@ void Predict::predInterLumaShort(const PredictionUnit& pu, ShortYuv& dstSYuv, co
     {
         bool srcbufferAlignCheck = (refPic.m_cuOffsetY[pu.ctuAddr] + refPic.m_buOffsetY[pu.cuAbsPartIdx + pu.puAbsPartIdx] + srcOffset) % 64 == 0;
         bool dstbufferAlignCheck = (dstSYuv.getAddrOffset(pu.puAbsPartIdx, dstSYuv.m_size) % 64) == 0;
-        if (srcStride % 64 == 0 && dstStride % 64 == 0 && srcbufferAlignCheck && dstbufferAlignCheck && (refPic.m_param->cpuid & X265_CPU_AVX512))
-            primitives.pu[partEnum].convert_p2s_aligned(src, srcStride, dst, dstStride);
-        else
-            primitives.pu[partEnum].convert_p2s(src, srcStride, dst, dstStride);
+        primitives.pu[partEnum].convert_p2s[srcStride % 64 == 0 && dstStride % 64 == 0 && srcbufferAlignCheck && dstbufferAlignCheck](src, srcStride, dst, dstStride);
     }
     else if (!yFrac)
         primitives.pu[partEnum].luma_hps(src, srcStride, dst, dstStride, xFrac, 0);
@@ -384,16 +381,8 @@ void Predict::predInterChromaShort(const PredictionUnit& pu, ShortYuv& dstSYuv, 
     {
         bool srcbufferAlignCheckC = (refPic.m_cuOffsetC[pu.ctuAddr] + refPic.m_buOffsetC[pu.cuAbsPartIdx + pu.puAbsPartIdx] + refOffset) % 64 == 0;
         bool dstbufferAlignCheckC = dstSYuv.getChromaAddrOffset(pu.puAbsPartIdx) % 64 == 0;
-        if (refStride % 64 == 0 && dstStride % 64 == 0 && srcbufferAlignCheckC  && dstbufferAlignCheckC && (refPic.m_param->cpuid & X265_CPU_AVX512))
-        {
-            primitives.chroma[m_csp].pu[partEnum].p2s_aligned(refCb, refStride, dstCb, dstStride);
-            primitives.chroma[m_csp].pu[partEnum].p2s_aligned(refCr, refStride, dstCr, dstStride);
-        }
-        else
-        {
-            primitives.chroma[m_csp].pu[partEnum].p2s(refCb, refStride, dstCb, dstStride);
-            primitives.chroma[m_csp].pu[partEnum].p2s(refCr, refStride, dstCr, dstStride);
-        }
+        primitives.chroma[m_csp].pu[partEnum].p2s[refStride % 64 == 0 && dstStride % 64 == 0 && srcbufferAlignCheckC && dstbufferAlignCheckC](refCb, refStride, dstCb, dstStride);
+        primitives.chroma[m_csp].pu[partEnum].p2s[refStride % 64 == 0 && dstStride % 64 == 0 && srcbufferAlignCheckC && dstbufferAlignCheckC](refCr, refStride, dstCr, dstStride);
     }
     else if (!yFrac)
     {

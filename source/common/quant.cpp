@@ -188,9 +188,8 @@ Quant::Quant()
     m_nr           = NULL;
 }
 
-bool Quant::init(double psyScale, const ScalingList& scalingList, Entropy& entropy, int cpuid)
+bool Quant::init(double psyScale, const ScalingList& scalingList, Entropy& entropy)
 {
-    m_cpuid = cpuid;
     m_entropyCoder = &entropy;
     m_psyRdoqScale = (int32_t)(psyScale * 256.0);
     X265_CHECK((psyScale * 256.0) < (double)MAX_INT, "psyScale value too large\n");
@@ -612,10 +611,7 @@ void Quant::invtransformNxN(const CUData& cu, int16_t* residual, uint32_t resiSt
             const int add_2nd = 1 << (shift_2nd - 1);
 
             int dc_val = (((m_resiDctCoeff[0] * (64 >> 6) + add_1st) >> shift_1st) * (64 >> 3) + add_2nd) >> shift_2nd;
-            if ((resiStride % 64 == 0) && (m_cpuid & X265_CPU_AVX512))
-                primitives.cu[sizeIdx].blockfill_s_aligned(residual, resiStride, (int16_t)dc_val);
-            else
-                primitives.cu[sizeIdx].blockfill_s(residual, resiStride, (int16_t)dc_val);
+            primitives.cu[sizeIdx].blockfill_s[resiStride % 64 == 0](residual, resiStride, (int16_t)dc_val);
             return;
         }
 

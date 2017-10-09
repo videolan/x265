@@ -62,6 +62,13 @@ enum LumaCU // can be indexed using log2n(width)-2
     NUM_CU_SIZES
 };
 
+enum AlignPrimitive
+{
+    NONALIGNED,
+    ALIGNED,
+    NUM_ALIGNMENT_TYPES
+};
+
 enum { NUM_TR_SIZE = 4 }; // TU are 4x4, 8x8, 16x16, and 32x32
 
 
@@ -244,12 +251,10 @@ struct EncoderPrimitives
         filter_hv_pp_t luma_hvpp;   // combines hps + vsp
 
         pixelavg_pp_t  pixelavg_pp; // quick bidir using pixels (borrowed from x264)
-        addAvg_t       addAvg;      // bidir motion compensation, uses 16bit values
-        addAvg_t       addAvg_aligned;
+        addAvg_t       addAvg[NUM_ALIGNMENT_TYPES];      // bidir motion compensation, uses 16bit values
 
         copy_pp_t      copy_pp;
-        filter_p2s_t   convert_p2s;
-        filter_p2s_t   convert_p2s_aligned;
+        filter_p2s_t   convert_p2s[NUM_ALIGNMENT_TYPES];
     }
     pu[NUM_PU_SIZES];
 
@@ -267,13 +272,10 @@ struct EncoderPrimitives
         dct_t           standard_dct;   // original dct function, used by lowpass_dct
         dct_t           lowpass_dct;    // lowpass dct approximation
 
-        calcresidual_t  calcresidual;
-        calcresidual_t  calcresidual_aligned;
+        calcresidual_t  calcresidual[NUM_ALIGNMENT_TYPES];
         pixel_sub_ps_t  sub_ps;
-        pixel_add_ps_t  add_ps;
-        pixel_add_ps_t  add_ps_aligned;
-        blockfill_s_t   blockfill_s;   // block fill, for DC transforms
-        blockfill_s_t   blockfill_s_aligned;   // block fill, for DC transforms
+        pixel_add_ps_t  add_ps[NUM_ALIGNMENT_TYPES];
+        blockfill_s_t   blockfill_s[NUM_ALIGNMENT_TYPES];   // block fill, for DC transforms
         copy_cnt_t      copy_cnt;      // copy coeff while counting non-zero
         count_nonzero_t count_nonzero;
         cpy2Dto1D_shl_t cpy2Dto1D_shl;
@@ -312,8 +314,7 @@ struct EncoderPrimitives
     dequant_scaling_t     dequant_scaling;
     dequant_normal_t      dequant_normal;
     denoiseDct_t          denoiseDct;
-    scale1D_t             scale1D_128to64;
-    scale1D_t             scale1D_128to64_aligned;
+    scale1D_t             scale1D_128to64[NUM_ALIGNMENT_TYPES];
     scale2D_t             scale2D_64to32;
 
     ssim_4x4x2_core_t     ssim_4x4x2_core;
@@ -390,11 +391,9 @@ struct EncoderPrimitives
             filter_ss_t  filter_vss;
             filter_pp_t  filter_hpp;
             filter_hps_t filter_hps;
-            addAvg_t     addAvg;
-            addAvg_t     addAvg_aligned;
+            addAvg_t     addAvg[NUM_ALIGNMENT_TYPES];
             copy_pp_t    copy_pp;
-            filter_p2s_t p2s;
-            filter_p2s_t p2s_aligned;
+            filter_p2s_t p2s[NUM_ALIGNMENT_TYPES];
 
         }
         pu[NUM_PU_SIZES];
@@ -405,8 +404,7 @@ struct EncoderPrimitives
             pixelcmp_t     sa8d;    // if chroma CU is not multiple of 8x8, will use satd
             pixel_sse_t    sse_pp;
             pixel_sub_ps_t sub_ps;
-            pixel_add_ps_t add_ps;
-            pixel_add_ps_t add_ps_aligned;
+            pixel_add_ps_t add_ps[NUM_ALIGNMENT_TYPES];
 
             copy_ps_t      copy_ps;
             copy_sp_t      copy_sp;
