@@ -306,11 +306,10 @@ void Analysis::collectPUStatistics(const CUData& ctu, const CUGeom& cuGeom)
                 mode = 2;
             else if (ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_2NxnU || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_2NxnD || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_nLx2N || ctu.m_partSize[puabsPartIdx + absPartIdx] == SIZE_nRx2N)
                  mode = 3;
-
             if (ctu.m_predMode[puabsPartIdx + absPartIdx] == MODE_SKIP)
             {
-                ctu.m_encData->m_frameStats.cntSkipPu[depth] += (uint64_t)(1 << shift);
-                ctu.m_encData->m_frameStats.totalPu[depth] += (uint64_t)(1 << shift);
+                ctu.m_encData->m_frameStats.cntSkipPu[depth] += 1ULL << shift;
+                ctu.m_encData->m_frameStats.totalPu[depth] += 1ULL << shift;
             }
             else if (ctu.m_predMode[puabsPartIdx + absPartIdx] == MODE_INTRA)
             {
@@ -321,14 +320,14 @@ void Analysis::collectPUStatistics(const CUData& ctu, const CUGeom& cuGeom)
                 }
                 else
                 {
-                    ctu.m_encData->m_frameStats.cntIntraPu[depth] += (uint64_t)(1 << shift);
-                    ctu.m_encData->m_frameStats.totalPu[depth] += (uint64_t)(1 << shift);
+                    ctu.m_encData->m_frameStats.cntIntraPu[depth] += 1ULL << shift;
+                    ctu.m_encData->m_frameStats.totalPu[depth] += 1ULL << shift;
                 }
             }
             else if (mode == 3)
             {
-                ctu.m_encData->m_frameStats.cntAmp[depth] += (uint64_t)(1 << shift);
-                ctu.m_encData->m_frameStats.totalPu[depth] += (uint64_t)(1 << shift);
+                ctu.m_encData->m_frameStats.cntAmp[depth] += 1ULL << shift;
+                ctu.m_encData->m_frameStats.totalPu[depth] += 1ULL << shift;
                 break;
             }
             else
