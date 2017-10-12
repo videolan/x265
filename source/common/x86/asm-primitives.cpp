@@ -2521,6 +2521,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_32x24].luma_hpp = PFX(interp_8tap_horiz_pp_32x24_avx512);
         p.pu[LUMA_32x32].luma_hpp = PFX(interp_8tap_horiz_pp_32x32_avx512);
         p.pu[LUMA_32x64].luma_hpp = PFX(interp_8tap_horiz_pp_32x64_avx512);
+        p.pu[LUMA_64x16].luma_hpp = PFX(interp_8tap_horiz_pp_64x16_avx512);
+        p.pu[LUMA_64x32].luma_hpp = PFX(interp_8tap_horiz_pp_64x32_avx512);
+        p.pu[LUMA_64x48].luma_hpp = PFX(interp_8tap_horiz_pp_64x48_avx512);
+        p.pu[LUMA_64x64].luma_hpp = PFX(interp_8tap_horiz_pp_64x64_avx512);
 
     }
 }
