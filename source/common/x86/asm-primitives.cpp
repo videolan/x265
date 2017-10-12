@@ -2516,6 +2516,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         p.cu[BLOCK_32x32].blockfill_s[ALIGNED] = PFX(blockfill_s_aligned_32x32_avx512);
 
+        p.pu[LUMA_32x8].luma_hpp = PFX(interp_8tap_horiz_pp_32x8_avx512);
+        p.pu[LUMA_32x16].luma_hpp = PFX(interp_8tap_horiz_pp_32x16_avx512);
+        p.pu[LUMA_32x24].luma_hpp = PFX(interp_8tap_horiz_pp_32x24_avx512);
+        p.pu[LUMA_32x32].luma_hpp = PFX(interp_8tap_horiz_pp_32x32_avx512);
+        p.pu[LUMA_32x64].luma_hpp = PFX(interp_8tap_horiz_pp_32x64_avx512);
+
     }
 }
 #else // if HIGH_BIT_DEPTH
