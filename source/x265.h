@@ -1485,6 +1485,11 @@ typedef struct x265_param
 
     /* Enable skipping split RD analysis when sum of split CU rdCost larger than none split CU rdCost for Intra CU */
     int       bEnableSplitRdSkip;
+
+    /* Use low-pass truncated dct approximation 
+     * This DCT approximation is less computational intensive and gives results close to 
+     * standard DCT for QP >= 23 */
+    int       bLowPassDct;
 } x265_param;
 
 /* x265_param_alloc:

@@ -58,6 +58,7 @@ void setupIntraPrimitives_c(EncoderPrimitives &p);
 void setupLoopFilterPrimitives_c(EncoderPrimitives &p);
 void setupSaoPrimitives_c(EncoderPrimitives &p);
 void setupSeaIntegralPrimitives_c(EncoderPrimitives &p);
+void setupLowPassPrimitives(EncoderPrimitives& p);
 
 void setupCPrimitives(EncoderPrimitives &p)
 {
@@ -254,6 +255,9 @@ void x265_setup_primitives(x265_param *param)
             setupIntraPrimitives_altivec(primitives);       // intrapred_altivec.cpp, overwrite the initialization for altivec optimizated functions
         }
 #endif
+
+        if (param->bLowPassDct)
+            setupLowPassPrimitives(primitives); 
 
         setupAliasPrimitives(primitives);
     }

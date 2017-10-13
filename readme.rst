@@ -11,4 +11,11 @@ source HEVC encoder. See the developer wiki for instructions for
 downloading and building the source.
 
 x265 is free to use under the `GNU GPL <http://www.gnu.org/licenses/gpl-2.0.html>`_ 
-and is also available under a commercial `license <http://x265.org>`_ 
+and is also available under a commercial `license <http://x265.org>`_
+
+## Modifications ##
+Here the x265 code was modified to support a lowpass subband approximation for the DCT.
+During performance tests this approximation had a gain of around 10% in performance. 
+Thus allowing encoding time to be reduced at the same rate.
+
+It also produced very small loss for 23 <= Qp =< 25 and minimal loss for Qp > 25, compared to the standard DCT.
