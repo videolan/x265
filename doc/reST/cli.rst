@@ -2009,15 +2009,15 @@ VUI fields must be manually specified.
 .. option:: --hdr, --no-hdr
 
 	Force signalling of HDR parameters in SEI packets. Enabled
-	automatically when :option`--master-display` or :option`--max-cll` is
+	automatically when :option:`--master-display` or :option:`--max-cll` is
 	specified. Useful when there is a desire to signal 0 values for max-cll
 	and max-fall. Default disabled.
 	
 .. option:: --hdr-opt, --no-hdr-opt
 
 	Add luma and chroma offsets for HDR/WCG content.
-	Input video should be 10 bit 4:2:0. Applicable for HDR content.
-	Default disabled. **Experimental Feature**
+	Input video should be 10 bit 4:2:0. Applicable for HDR content. It is recommended
+	that AQ-mode be enabled along with this feature. Default disabled.
 	
 .. option:: --dhdr10-info <filename>
 
