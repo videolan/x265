@@ -6244,6 +6244,201 @@ IPFILTER_CHROMA_PS_AVX512_32xN 32
 IPFILTER_CHROMA_PS_AVX512_32xN 48
 IPFILTER_CHROMA_PS_AVX512_32xN 64
 
+%macro PROCESS_IPFILTER_CHROMA_PS_64x2_AVX512 0
+    ; register map
+    ; m0 , m1 - interpolate coeff
+    ; m2 , m3 -shuffle order table
+    ; m4      - INTERP_OFFSET_PS
+    ; m5      - shuffle store order table
+
+
+    movu            m6,        [r0]
+    movu            m7,        [r0 + 8]
+
+    pshufb          m8,        m6,        m3
+    pshufb          m6,        m2
+    pmaddwd         m6,        m0
+    pmaddwd         m8,        m1
+    paddd           m6,        m8
+    paddd           m6,        m4
+    psrad           m6,        INTERP_SHIFT_PS
+
+    pshufb          m8,        m7,        m3
+    pshufb          m7,        m2
+    pmaddwd         m7,        m0
+    pmaddwd         m8,        m1
+    paddd           m7,        m8
+    paddd           m7,        m4
+    psrad           m7,        INTERP_SHIFT_PS
+
+    packssdw        m6,        m7
+    pshufb          m6,        m5
+    movu            [r2],      m6
+
+    movu            m6,        [r0 + mmsize]
+    movu            m7,        [r0 + mmsize + 8]
+
+    pshufb          m8,        m6,        m3
+    pshufb          m6,        m2
+    pmaddwd         m6,        m0
+    pmaddwd         m8,        m1
+    paddd           m6,        m8
+    paddd           m6,        m4
+    psrad           m6,        INTERP_SHIFT_PS
+
+    pshufb          m8,        m7,        m3
+    pshufb          m7,        m2
+    pmaddwd         m7,        m0
+    pmaddwd         m8,        m1
+    paddd           m7,        m8
+    paddd           m7,        m4
+    psrad           m7,        INTERP_SHIFT_PS
+
+    packssdw        m6,        m7
+    pshufb          m6,        m5
+    movu            [r2 + mmsize],        m6
+
+    movu            m6,        [r0 + r1]
+    movu            m7,        [r0 + r1 + 8]
+
+    pshufb          m8,        m6,        m3
+    pshufb          m6,        m2
+    pmaddwd         m6,        m0
+    pmaddwd         m8,        m1
+    paddd           m6,        m8
+    paddd           m6,        m4
+    psrad           m6,        INTERP_SHIFT_PS
+
+    pshufb          m8,        m7,        m3
+    pshufb          m7,        m2
+    pmaddwd         m7,        m0
+    pmaddwd         m8,        m1
+    paddd           m7,        m8
+    paddd           m7,        m4
+    psrad           m7,        INTERP_SHIFT_PS
+
+    packssdw        m6,        m7
+    pshufb          m6,        m5
+    movu            [r2 + r3], m6
+
+    movu            m6,        [r0 + r1 + mmsize]
+    movu            m7,        [r0 + r1 + mmsize + 8]
+
+    pshufb          m8,        m6,        m3
+    pshufb          m6,        m2
+    pmaddwd         m6,        m0
+    pmaddwd         m8,        m1
+    paddd           m6,        m8
+    paddd           m6,        m4
+    psrad           m6,        INTERP_SHIFT_PS
+
+    pshufb          m8,        m7,        m3
+    pshufb          m7,        m2
+    pmaddwd         m7,        m0
+    pmaddwd         m8,        m1
+    paddd           m7,        m8
+    paddd           m7,        m4
+    psrad           m7,        INTERP_SHIFT_PS
+
+    packssdw        m6,        m7
+    pshufb          m6,        m5
+    movu            [r2 + r3 + mmsize],   m6
+%endmacro
+
+%macro PROCESS_IPFILTER_CHROMA_PS_64x1_AVX512 0
+    movu            m6,        [r0]
+    movu            m7,        [r0 + 8]
+
+    pshufb          m8,        m6,        m3
+    pshufb          m6,        m2
+    pmaddwd         m6,        m0
+    pmaddwd         m8,        m1
+    paddd           m6,        m8
+    paddd           m6,        m4
+    psrad           m6,        INTERP_SHIFT_PS
+
+    pshufb          m8,        m7,        m3
+    pshufb          m7,        m2
+    pmaddwd         m7,        m0
+    pmaddwd         m8,        m1
+    paddd           m7,        m8
+    paddd           m7,        m4
+    psrad           m7,        INTERP_SHIFT_PS
+
+    packssdw        m6,        m7
+    pshufb          m6,        m5
+    movu            [r2],      m6
+
+    movu            m6,        [r0 + mmsize]
+    movu            m7,        [r0 + mmsize + 8]
+
+    pshufb          m8,        m6,        m3
+    pshufb          m6,        m2
+    pmaddwd         m6,        m0
+    pmaddwd         m8,        m1
+    paddd           m6,        m8
+    paddd           m6,        m4
+    psrad           m6,        INTERP_SHIFT_PS
+
+    pshufb          m8,        m7,        m3
+    pshufb          m7,        m2
+    pmaddwd         m7,        m0
+    pmaddwd         m8,        m1
+    paddd           m7,        m8
+    paddd           m7,        m4
+    psrad           m7,        INTERP_SHIFT_PS
+
+    packssdw        m6,        m7
+    pshufb          m6,        m5
+    movu            [r2 + mmsize],        m6
+%endmacro
+
+INIT_ZMM avx512
+%if ARCH_X86_64 == 1
+%macro IPFILTER_CHROMA_PS_AVX512_64xN 1
+cglobal interp_4tap_horiz_ps_64x%1, 4,7,9
+    add             r1d, r1d
+    add             r3d, r3d
+    mov             r4d, r4m
+    mov             r5d, r5m
+%ifdef PIC
+    lea             r6, [tab_ChromaCoeff]
+    vpbroadcastd    m0, [r6 + r4 * 8]
+    vpbroadcastd    m1, [r6 + r4 * 8 + 4]
+%else
+    vpbroadcastd    m0, [tab_ChromaCoeff + r4 * 8]
+    vpbroadcastd    m1, [tab_ChromaCoeff + r4 * 8 + 4]
+%endif
+    vbroadcasti32x8 m2, [interp8_hpp_shuf1_load_avx512]
+    vbroadcasti32x8 m3, [interp8_hpp_shuf2_load_avx512]
+    vbroadcasti32x4 m4, [INTERP_OFFSET_PS]
+    vbroadcasti32x8 m5, [interp8_hpp_shuf1_store_avx512]
+    mov               r6d,         %1
+    sub               r0,          2
+    test              r5d,         r5d
+    jz                .loop
+    sub               r0,          r1
+    add               r6d,         3
+    PROCESS_IPFILTER_CHROMA_PS_64x1_AVX512
+    lea               r0, [r0 + r1]
+    lea               r2, [r2 + r3]
+    dec               r6d
+
+.loop:
+    PROCESS_IPFILTER_CHROMA_PS_64x2_AVX512
+    lea             r0,  [r0 + 2 * r1]
+    lea             r2,  [r2 + 2 * r3]
+    sub             r6d, 2
+    jnz             .loop
+    RET
+%endmacro
+%endif
+
+IPFILTER_CHROMA_PS_AVX512_64xN 16
+IPFILTER_CHROMA_PS_AVX512_64xN 32
+IPFILTER_CHROMA_PS_AVX512_64xN 48
+IPFILTER_CHROMA_PS_AVX512_64xN 64
+
 ;-------------------------------------------------------------------------------------------------------------
 ;ipfilter_chroma_avx512 code end
 ;-------------------------------------------------------------------------------------------------------------
