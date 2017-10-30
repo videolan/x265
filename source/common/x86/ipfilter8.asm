@@ -10706,6 +10706,7 @@ cglobal interp_4tap_horiz_ps_16x%1, 4,7,9
     RET
 %endmacro
 
+%if ARCH_X86_64 == 1
     IPFILTER_CHROMA_PS_16xN_AVX512 64
     IPFILTER_CHROMA_PS_16xN_AVX512 32
     IPFILTER_CHROMA_PS_16xN_AVX512 24
@@ -10713,6 +10714,7 @@ cglobal interp_4tap_horiz_ps_16x%1, 4,7,9
     IPFILTER_CHROMA_PS_16xN_AVX512 12
     IPFILTER_CHROMA_PS_16xN_AVX512 8
     IPFILTER_CHROMA_PS_16xN_AVX512 4
+%endif
 
 %macro PROCESS_IPFILTER_CHROMA_PS_48x1_AVX512 0
     movu               ym6,          [r0]
@@ -10790,7 +10792,9 @@ cglobal interp_4tap_horiz_ps_48x%1, 4,7,10
     RET
 %endmacro
 
-IPFILTER_CHROMA_PS_48xN_AVX512 64
+%if ARCH_X86_64 == 1
+    IPFILTER_CHROMA_PS_48xN_AVX512 64
+%endif
 
 %macro PROCESS_CHROMA_VERT_PP_32x8_AVX512 0
     movu             ym0,              [r0]                        ; m0 = row 0
@@ -11583,10 +11587,12 @@ cglobal interp_8tap_horiz_ps_64x%1, 4,7,15
     RET
 %endmacro
 
-IPFILTER_LUMA_PS_64xN_AVX512 16
-IPFILTER_LUMA_PS_64xN_AVX512 32
-IPFILTER_LUMA_PS_64xN_AVX512 48
-IPFILTER_LUMA_PS_64xN_AVX512 64
+%if ARCH_X86_64 == 1
+    IPFILTER_LUMA_PS_64xN_AVX512 16
+    IPFILTER_LUMA_PS_64xN_AVX512 32
+    IPFILTER_LUMA_PS_64xN_AVX512 48
+    IPFILTER_LUMA_PS_64xN_AVX512 64
+%endif
 
 %macro PROCESS_IPFILTER_LUMA_PS_32x1_AVX512 0
     ; register map
@@ -11658,11 +11664,13 @@ cglobal interp_8tap_horiz_ps_32x%1, 4,7,12
     RET
 %endmacro
 
-IPFILTER_LUMA_PS_32xN_AVX512 8
-IPFILTER_LUMA_PS_32xN_AVX512 16
-IPFILTER_LUMA_PS_32xN_AVX512 24
-IPFILTER_LUMA_PS_32xN_AVX512 32
-IPFILTER_LUMA_PS_32xN_AVX512 64
+%if ARCH_X86_64 == 1
+    IPFILTER_LUMA_PS_32xN_AVX512 8
+    IPFILTER_LUMA_PS_32xN_AVX512 16
+    IPFILTER_LUMA_PS_32xN_AVX512 24
+    IPFILTER_LUMA_PS_32xN_AVX512 32
+    IPFILTER_LUMA_PS_32xN_AVX512 64
+%endif
 
 %macro PROCESS_IPFILTER_LUMA_PS_8TAP_16x2_AVX512 0
     movu              xm7,           [r0]
@@ -11766,12 +11774,14 @@ cglobal interp_8tap_horiz_ps_16x%1, 4,7,11
     RET
 %endmacro
 
-IPFILTER_LUMA_PS_8TAP_16xN_AVX512 4
-IPFILTER_LUMA_PS_8TAP_16xN_AVX512 8
-IPFILTER_LUMA_PS_8TAP_16xN_AVX512 12
-IPFILTER_LUMA_PS_8TAP_16xN_AVX512 16
-IPFILTER_LUMA_PS_8TAP_16xN_AVX512 32
-IPFILTER_LUMA_PS_8TAP_16xN_AVX512 64
+%if ARCH_X86_64 == 1
+    IPFILTER_LUMA_PS_8TAP_16xN_AVX512 4
+    IPFILTER_LUMA_PS_8TAP_16xN_AVX512 8
+    IPFILTER_LUMA_PS_8TAP_16xN_AVX512 12
+    IPFILTER_LUMA_PS_8TAP_16xN_AVX512 16
+    IPFILTER_LUMA_PS_8TAP_16xN_AVX512 32
+    IPFILTER_LUMA_PS_8TAP_16xN_AVX512 64
+%endif
 
 %macro PROCESS_IPFILTER_LUMA_PS_48x1_AVX512 0
     ; register map
@@ -11868,8 +11878,9 @@ cglobal interp_8tap_horiz_ps_48x%1, 4,7,12
     RET
 %endmacro
 
-IPFILTER_LUMA_PS_48xN_AVX512 64
-
+%if ARCH_X86_64 == 1
+    IPFILTER_LUMA_PS_48xN_AVX512 64
+%endif
 ;-------------------------------------------------------------------------------------------------------------
 ;ipfilter_luma_avx512 code end
 ;-------------------------------------------------------------------------------------------------------------
