@@ -192,6 +192,15 @@ changes made to the parameters for auto-detection and other reasons::
 	 *      presets is not recommended without a more fine-grained breakdown of
 	 *      parameters to take this into account. */
 	int x265_encoder_reconfig(x265_encoder *, x265_param *);
+
+**x265_get_slicetype_poc_and_scenecut()** may be used to fetch slice type, poc and scene cut information mid-encode::
+
+    /* x265_get_slicetype_poc_and_scenecut:
+     *     get the slice type, poc and scene cut information for the current frame,
+     *     returns negative on error, 0 on success.
+     *     This API must be called after(poc >= lookaheadDepth + bframes + 2) condition check. */
+     int x265_get_slicetype_poc_and_scenecut(x265_encoder *encoder, int *slicetype, int *poc, int* sceneCut);
+
 **x265_encoder_ctu_info**
        /* x265_encoder_ctu_info:
         *    Copy CTU information such as ctu address and ctu partition structure of all

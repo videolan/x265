@@ -1705,6 +1705,13 @@ int x265_encoder_intra_refresh(x265_encoder *);
 int x265_encoder_ctu_info(x265_encoder *, int poc, x265_ctu_info_t** ctu);
 /* x265_cleanup:
  *       release library static allocations, reset configured CTU size */
+
+/* x265_get_slicetype_poc_and_scenecut:
+ *     get the slice type, poc and scene cut information for the current frame,
+ *     returns negative on error, 0 when access unit were output.
+ *     This API must be called after(poc >= lookaheadDepth + bframes + 2) condition check */
+int x265_get_slicetype_poc_and_scenecut(x265_encoder *encoder, int *slicetype, int *poc, int* sceneCut);
+
 void x265_cleanup(void);
 
 #define X265_MAJOR_VERSION 1
@@ -1752,6 +1759,7 @@ typedef struct x265_api
     int           sizeof_frame_stats;   /* sizeof(x265_frame_stats) */
     int           (*encoder_intra_refresh)(x265_encoder*);
     int           (*encoder_ctu_info)(x265_encoder*, int, x265_ctu_info_t**);
+    int           (*x265_get_slicetype_poc_and_scenecut)(x265_encoder*, int*, int*, int*);
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 

@@ -117,6 +117,15 @@ Frame *PicList::popBack()
         return NULL;
 }
 
+Frame* PicList::getCurFrame(void)
+{
+    Frame *curFrame = m_start;
+    if (curFrame != NULL)
+        return curFrame;
+    else
+        return NULL;
+}
+
 void PicList::remove(Frame& curFrame)
 {
 #if _DEBUG

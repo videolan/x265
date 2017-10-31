@@ -429,6 +429,23 @@ void Encoder::stopJobs()
     }
 }
 
+int Encoder::copySlicetypePocAndSceneCut(int *slicetype, int *poc, int *sceneCut)
+{
+    Frame *FramePtr = m_dpb->m_picList.getCurFrame();
+    if (FramePtr != NULL)
+    {
+        *slicetype = FramePtr->m_lowres.sliceType;
+        *poc = FramePtr->m_encData->m_slice->m_poc;
+        *sceneCut = FramePtr->m_lowres.bScenecut;
+    }
+    else
+    {
+        x265_log(NULL, X265_LOG_WARNING, "Frame is still in lookahead pipeline, this API must be called after (poc >= lookaheadDepth + bframes + 2) condition check\n");
+        return -1;
+    }
+    return 0;
+}
+
 void Encoder::destroy()
 {
 #if ENABLE_HDR10_PLUS

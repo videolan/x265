@@ -62,6 +62,9 @@ public:
     /** Find frame with specified POC */
     Frame* getPOC(int poc);
 
+    /** Get the current Frame from the list **/
+    Frame* getCurFrame(void);
+
     /** Remove picture from list */
     void remove(Frame& pic);
 
