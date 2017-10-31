@@ -35,6 +35,10 @@ extern "C" {
  *      opaque handler for encoder */
 typedef struct x265_encoder x265_encoder;
 
+/* x265_picyuv:
+ *      opaque handler for PicYuv */
+typedef struct x265_picyuv x265_picyuv;
+
 /* Application developers planning to link against a shared library version of
  * libx265 from a Microsoft Visual Studio or similar development environment
  * will need to define X265_API_IMPORTS before including this header.
@@ -1712,6 +1716,11 @@ int x265_encoder_ctu_info(x265_encoder *, int poc, x265_ctu_info_t** ctu);
  *     This API must be called after(poc >= lookaheadDepth + bframes + 2) condition check */
 int x265_get_slicetype_poc_and_scenecut(x265_encoder *encoder, int *slicetype, int *poc, int* sceneCut);
 
+/* x265_get_ref_frame_list:
+ *     returns negative on error, 0 when access unit were output.
+ *     This API must be called after(poc >= lookaheadDepth + bframes + 2) condition check */
+int x265_get_ref_frame_list(x265_encoder *encoder, x265_picyuv**, x265_picyuv**, int, int);
+
 void x265_cleanup(void);
 
 #define X265_MAJOR_VERSION 1
@@ -1760,6 +1769,7 @@ typedef struct x265_api
     int           (*encoder_intra_refresh)(x265_encoder*);
     int           (*encoder_ctu_info)(x265_encoder*, int, x265_ctu_info_t**);
     int           (*x265_get_slicetype_poc_and_scenecut)(x265_encoder*, int*, int*, int*);
+    int           (*x265_get_ref_frame_list)(x265_encoder*, x265_picyuv**, x265_picyuv**, int, int);
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 

@@ -207,6 +207,8 @@ public:
 
     int copySlicetypePocAndSceneCut(int *slicetype, int *poc, int *sceneCut);
 
+    int getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc);
+
     void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);

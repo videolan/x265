@@ -201,6 +201,13 @@ changes made to the parameters for auto-detection and other reasons::
      *     This API must be called after(poc >= lookaheadDepth + bframes + 2) condition check. */
      int x265_get_slicetype_poc_and_scenecut(x265_encoder *encoder, int *slicetype, int *poc, int* sceneCut);
 
+**x265_get_ref_frame_list()** may be used to fetch forward and backward refrence list::
+
+    /* x265_get_ref_frame_list:
+     *     returns negative on error, 0 when access unit were output.
+     *     This API must be called after(poc >= lookaheadDepth + bframes + 2) condition check */
+     int x265_get_ref_frame_list(x265_encoder *encoder, x265_picyuv**, x265_picyuv**, int, int);
+ 
 **x265_encoder_ctu_info**
        /* x265_encoder_ctu_info:
         *    Copy CTU information such as ctu address and ctu partition structure of all

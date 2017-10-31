@@ -27,6 +27,7 @@
 #include "common.h"
 #include "md5.h"
 #include "x265.h"
+struct x265_picyuv {};
 
 namespace X265_NS {
 // private namespace
@@ -34,7 +35,7 @@ namespace X265_NS {
 class ShortYuv;
 struct SPS;
 
-class PicYuv
+class PicYuv : public x265_picyuv
 {
 public:
 

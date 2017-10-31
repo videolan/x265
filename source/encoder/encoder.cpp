@@ -446,6 +446,47 @@ int Encoder::copySlicetypePocAndSceneCut(int *slicetype, int *poc, int *sceneCut
     return 0;
 }
 
+int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc)
+{
+    if (!(IS_X265_TYPE_I(sliceType)))
+    {
+        Frame *framePtr = m_dpb->m_picList.getPOC(poc);
+        if (framePtr != NULL)
+        {
+            for (int j = 0; j < framePtr->m_encData->m_slice->m_numRefIdx[0]; j++)    // check only for --ref=n number of frames.
+            {
+                if (framePtr->m_encData->m_slice->m_refFrameList[0][j] && framePtr->m_encData->m_slice->m_refFrameList[0][j]->m_reconPic != NULL)
+                {
+                    int l0POC = framePtr->m_encData->m_slice->m_refFrameList[0][j]->m_poc;
+                    Frame* l0Fp = m_dpb->m_picList.getPOC(l0POC);
+                    if (l0Fp->m_reconPic->m_picOrg[0] == NULL)
+                        l0Fp->m_reconEncoded.wait(); /* If recon is not ready, current frame encoder need to wait. */
+                    l0[j] = l0Fp->m_reconPic;
+                }
+            }
+            for (int j = 0; j < framePtr->m_encData->m_slice->m_numRefIdx[1]; j++)    // check only for --ref=n number of frames.
+            {
+                if (framePtr->m_encData->m_slice->m_refFrameList[1][j] && framePtr->m_encData->m_slice->m_refFrameList[1][j]->m_reconPic != NULL)
+                {
+                    int l1POC = framePtr->m_encData->m_slice->m_refFrameList[1][j]->m_poc;
+                    Frame* l1Fp = m_dpb->m_picList.getPOC(l1POC);
+                    if (l1Fp->m_reconPic->m_picOrg[0] == NULL)
+                        l1Fp->m_reconEncoded.wait(); /* If recon is not ready, current frame encoder need to wait. */
+                    l1[j] = l1Fp->m_reconPic;
+                }
+            }
+        }
+        else
+            x265_log(NULL, X265_LOG_WARNING, "Refrence List is not in piclist\n");
+    }
+    else
+    {
+        x265_log(NULL, X265_LOG_ERROR, "I frames does not have a refrence List\n");
+        return -1;
+    }
+    return 0;
+}
+
 void Encoder::destroy()
 {
 #if ENABLE_HDR10_PLUS

@@ -350,6 +350,15 @@ int x265_get_slicetype_poc_and_scenecut(x265_encoder *enc, int *slicetype, int *
     return -1;
 }
 
+int x265_get_ref_frame_list(x265_encoder *enc, x265_picyuv** l0, x265_picyuv** l1, int sliceType, int poc)
+{
+    if (!enc)
+        return -1;
+
+    Encoder *encoder = static_cast<Encoder*>(enc);
+    return encoder->getRefFrameList((PicYuv**)l0, (PicYuv**)l1, sliceType, poc);
+}
+
 void x265_cleanup(void)
 {
     BitCost::destroy();
@@ -424,6 +433,7 @@ static const x265_api libapi =
     &x265_encoder_intra_refresh,
     &x265_encoder_ctu_info,
     &x265_get_slicetype_poc_and_scenecut,
+    &x265_get_ref_frame_list,
 };
 
 typedef const x265_api* (*api_get_func)(int bitDepth);
