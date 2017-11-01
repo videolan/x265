@@ -2635,6 +2635,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_64x64].luma_hpp = PFX(interp_8tap_horiz_pp_64x64_avx512);
         p.pu[LUMA_48x64].luma_hpp = PFX(interp_8tap_horiz_pp_48x64_avx512);
 
+        p.cu[BLOCK_8x8].dct = PFX(dct8_avx512);
+
     }
 #endif
 }
@@ -4566,6 +4568,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_vpp = PFX(interp_4tap_vert_pp_64x48_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_64x32].filter_vpp = PFX(interp_4tap_vert_pp_64x32_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_64x16].filter_vpp = PFX(interp_4tap_vert_pp_64x16_avx512);
+
+        p.cu[BLOCK_8x8].dct = PFX(dct8_avx512);
 
     }
 #endif

@@ -28,7 +28,15 @@
 
 %include "x86inc.asm"
 %include "x86util.asm"
-SECTION_RODATA 32
+SECTION_RODATA 64
+
+dct8_shuf5_AVX512: dq 0, 2, 4, 6, 1, 3, 5, 7
+dct8_shuf6_AVX512: dq 0, 2, 4, 6, 1, 3, 5, 7
+dct8_shuf8_AVX512: dd 0, 2, 8, 10, 4, 6, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
+dct8_shuf4_AVX512: times 2 dd 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
+dct8_shuf:         times 2 db 6, 7, 4, 5, 2, 3, 0, 1, 14, 15, 12, 13, 10, 11, 8, 9
+dct8_shuf_AVX512:  times 2 db 4, 5, 6, 7, 0, 1, 2, 3, 12, 13, 14, 15, 8, 9, 10, 11
+
 tab_dct8:       dw 64, 64, 64, 64, 64, 64, 64, 64
                 dw 89, 75, 50, 18, -18, -50, -75, -89
                 dw 83, 36, -36, -83, -83, -36, 36, 83
@@ -38,7 +46,10 @@ tab_dct8:       dw 64, 64, 64, 64, 64, 64, 64, 64
                 dw 36, -83, 83, -36, -36, 83, -83, 36
                 dw 18, -50, 75, -89, 89, -75, 50, -18
 
-dct8_shuf:      times 2 db 6, 7, 4, 5, 2, 3, 0, 1, 14, 15, 12, 13, 10, 11, 8, 9
+tab_dct8_avx512: dw 64, 64, 64, 64, 89, 75, 50, 18
+                 dw 83, 36, -36, -83, 75, -18, -89, -50
+                 dw 64, -64, -64, 64, 50, -89, 18, 75
+                 dw 36, -83, 83, -36, 18, -50, 75, -89
 
 tab_dct16_1:    dw 64, 64, 64, 64, 64, 64, 64, 64
                 dw 90, 87, 80, 70, 57, 43, 25,  9
@@ -56,7 +67,6 @@ tab_dct16_1:    dw 64, 64, 64, 64, 64, 64, 64, 64
                 dw 25, -70, 90, -80, 43,  9, -57, 87
                 dw 18, -50, 75, -89, 89, -75, 50, -18
                 dw  9, -25, 43, -57, 70, -80, 87, -90
-
 
 tab_dct16_2:    dw 64, 64, 64, 64, 64, 64, 64, 64
                 dw -9, -25, -43, -57, -70, -80, -87, -90
@@ -2268,6 +2278,162 @@ vbroadcasti128      m5,                [pd_ %+ DCT8_ROUND1]
     movu            [r1 + 64],         m10
     DCT8_PASS_2     6 * 16, 7 * 16
     movu            [r1 + 96],         m10
+    RET
+
+
+%macro DCT8_AVX512_PASS_1 4
+    vpmaddwd        m%2,               m3, m%1
+    vpshufb         m8,                m%2, m6
+    vpaddd          m%2,               m8
+    vpermd          m%2,               m17, m%2
+
+    vpmaddwd        m%4,               m2, m%3
+    vpshufb         m8,                m%4, m6
+    vpaddd          m%4,               m8
+    vpermd          m%4,               m17, m%4
+
+    vinserti64x4    m%2,               m%2, ym%4, 1
+    vpaddd          m%2,               m5
+    vpsrad          m%2,               DCT8_SHIFT1
+    vpackssdw       m%2,               m%2
+    vpermq          m%2,               m1, m%2
+%endmacro
+
+%macro DCT8_AVX512_PASS_2 4
+    vpmaddwd         m0,               m9,  m%1
+    vpmaddwd         m1,               m10, m%1
+    vpshufb          m2,               m0,  m6
+    vpshufb          m3,               m1,  m6
+    vpaddd           m0,               m2
+    vpaddd           m1,               m3
+    vpermd           m0,               m18, m0
+    vpermd           m1,               m18, m1
+    vinserti64x4     m0,               m0, ym1, 1
+    vpshufb          m1,               m0, m6
+    vpaddd           m0,               m1
+    vpermd           m0,               m18, m0
+
+    vpmaddwd         m1,               m9, m%2
+    vpmaddwd         m2,               m10, m%2
+    vpshufb          m3,               m1, m6
+    vpshufb          m4,               m2, m6
+    vpaddd           m1,               m3
+    vpaddd           m2,               m4
+    vpermd           m1,               m18, m1
+    vpermd           m2,               m18, m2
+    vinserti64x4     m1,               m1, ym2, 1
+    vpshufb          m2,               m1, m6
+    vpaddd           m1,               m2
+    vpermd           m1,               m18, m1
+
+    vinserti64x4     m0,               m0, ym1, 1
+    vpaddd           m0,               m5
+    vpsrad           m0,               DCT8_SHIFT2
+
+    vpmaddwd         m1,               m9,  m%3
+    vpmaddwd         m2,               m10, m%3
+    vpshufb          m3,               m1,  m6
+    vpshufb          m4,               m2,  m6
+    vpaddd           m1,               m3
+    vpaddd           m2,               m4
+    vpermd           m1,               m18, m1
+    vpermd           m2,               m18, m2
+    vinserti64x4     m1,               m1, ym2, 1
+    vpshufb          m2,               m1, m6
+    vpaddd           m1,               m2
+    vpermd           m1,               m18, m1
+
+    vpmaddwd         m2,               m9, m%4
+    vpmaddwd         m3,               m10, m%4
+    vpshufb          m4,               m2, m6
+    vpshufb          m7,               m3, m6
+    vpaddd           m2,               m4
+    vpaddd           m3,               m7
+    vpermd           m2,               m18, m2
+    vpermd           m3,               m18, m3
+    vinserti64x4     m2,               m2, ym3, 1
+    vpshufb          m3,               m2, m6
+    vpaddd           m2,               m3
+    vpermd           m2,               m18, m2
+
+    vinserti64x4     m1,               m1, ym2, 1
+    vpaddd           m1,               m5
+    vpsrad           m1,               DCT8_SHIFT2
+
+    vpackssdw        m0,               m1
+    vpermq           m0,               m19, m0
+%endmacro
+
+INIT_ZMM avx512
+cglobal dct8, 3, 7, 28
+
+    vbroadcasti32x4  m5,               [pd_ %+ DCT8_ROUND1]
+    vbroadcasti32x4  m6,               [dct8_shuf_AVX512]
+    vbroadcasti32x8  m18,              [dct8_shuf4_AVX512]
+    vbroadcasti32x8  m4,               [dct8_shuf]
+    mova             m19,              [dct8_shuf5_AVX512]
+    mova             m17,              [dct8_shuf8_AVX512]
+
+    add              r2d,              r2d
+    lea              r3,               [r2 * 3]
+    lea              r4,               [r0 + r2 * 4]
+    lea              r5,               [tab_dct8]
+    lea              r6,               [tab_dct8_avx512]
+
+    ;pass1
+    mova            xm0,               [r0]
+    vinserti128     ym0,               ym0, [r4], 1
+    mova            xm1,               [r0 + r2]
+    vinserti128     ym1,               ym1, [r4 + r2], 1
+    mova            xm2,               [r0 + r2 * 2]
+    vinserti128     ym2,               ym2, [r4 + r2 * 2], 1
+    mova            xm3,               [r0 + r3]
+    vinserti128     ym3,               ym3,  [r4 + r3], 1
+
+    vinserti64x4    m0,                m0, ym2, 1
+    vinserti64x4    m1,                m1, ym3, 1
+
+    vpunpcklqdq     m2,                m0, m1
+    vpunpckhqdq     m0,                m1
+
+    vpshufb         m0,                m4
+    vpaddw          m3,                m2, m0
+    vpsubw          m2,                m0
+    mova            m1,                [dct8_shuf6_AVX512]
+
+    ; Load all the coefficients togather for better caching
+    vpbroadcastq    m20,               [r6 + 0 * 8]
+    vpbroadcastq    m21,               [r6 + 1 * 8]
+    vpbroadcastq    m22,               [r6 + 2 * 8]
+    vpbroadcastq    m23,               [r6 + 3 * 8]
+    vpbroadcastq    m24,               [r6 + 4 * 8]
+    vpbroadcastq    m25,               [r6 + 5 * 8]
+    vpbroadcastq    m26,               [r6 + 6 * 8]
+    vpbroadcastq    m27,               [r6 + 7 * 8]
+
+    DCT8_AVX512_PASS_1     20,       9, 21,      10
+    DCT8_AVX512_PASS_1     22,      11, 23,      12
+    DCT8_AVX512_PASS_1     24,      13, 25,      14
+    DCT8_AVX512_PASS_1     26,      15, 27,      16
+
+    ;pass2
+    vbroadcasti32x4        m5,          [pd_ %+ DCT8_ROUND2]
+
+    vinserti64x4           m9,          m9,  ym11, 1
+    vinserti64x4           m10,         m13, ym15, 1
+
+    ;Load all the coefficients togather for better caching
+    vbroadcasti32x4    m21,                [r5 + 1 * 16]
+    vbroadcasti32x4    m22,                [r5 + 2 * 16]
+    vbroadcasti32x4    m23,                [r5 + 3 * 16]
+    vbroadcasti32x4    m25,                [r5 + 5 * 16]
+    vbroadcasti32x4    m26,                [r5 + 6 * 16]
+    vbroadcasti32x4    m27,                [r5 + 7 * 16]
+
+    DCT8_AVX512_PASS_2     20, 21, 22, 23
+    movu                   [r1],        m0
+    DCT8_AVX512_PASS_2     24, 25, 26, 27
+    movu                   [r1 + 64],   m0
     RET
 
 %macro DCT16_PASS_1_E 2

@@ -28,7 +28,7 @@
 
 %include "x86inc.asm"
 
-SECTION_RODATA 32
+SECTION_RODATA 64
 
 ;; 8-bit constants
 
