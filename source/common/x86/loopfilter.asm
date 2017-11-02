@@ -374,7 +374,7 @@ cglobal saoCuOrgE1, 4,5,8
     pxor        m0, m0                      ; m0 = 0
     mova        m6, [pb_2]                  ; m6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     shr         r4d, 4
-.loop
+.loop:
     movu        m7, [r0]
     movu        m5, [r0 + 16]
     movu        m3, [r0 + r3]
@@ -430,7 +430,7 @@ cglobal saoCuOrgE1, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
     mova        m6,    [pb_2]                  ; m6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     mova        m7,    [pb_128]
     shr         r4d,   4
-.loop
+.loop:
     movu        m1,    [r0]                    ; m1 = pRec[x]
     movu        m2,    [r0 + r3]               ; m2 = pRec[x + iStride]
 
@@ -478,7 +478,7 @@ cglobal saoCuOrgE1, 4,5,6
     mova        m4, [pb_2]
     shr         r4d, 4
     mova        m0, [pw_pixel_max]
-.loop
+.loop:
     movu        m5, [r0]
     movu        m3, [r0 + r3]
 
@@ -523,7 +523,7 @@ cglobal saoCuOrgE1, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuWidth
     mova          xm6,    [pb_2]                  ; xm6 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     mova          xm7,    [pb_128]
     shr           r4d,    4
-.loop
+.loop:
     movu          xm1,    [r0]                    ; xm1 = pRec[x]
     movu          xm2,    [r0 + r3]               ; xm2 = pRec[x + iStride]
 
@@ -572,7 +572,7 @@ cglobal saoCuOrgE1_2Rows, 4,7,8
     mov         r5d, r4d
     shr         r4d, 4
     mov         r6, r0
-.loop
+.loop:
     movu        m7, [r0]
     movu        m5, [r0 + 16]
     movu        m3, [r0 + r3]
@@ -674,7 +674,7 @@ cglobal saoCuOrgE1_2Rows, 3, 5, 8, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuW
     pxor        m0,         m0                      ; m0 = 0
     mova        m7,         [pb_128]
     shr         r4d,        4
-.loop
+.loop:
     movu        m1,         [r0]                    ; m1 = pRec[x]
     movu        m2,         [r0 + r3]               ; m2 = pRec[x + iStride]
 
@@ -748,7 +748,7 @@ cglobal saoCuOrgE1_2Rows, 4,5,8
     mova            m4, [pw_pixel_max]
     vbroadcasti128  m6, [r2]                ; m6 = m_iOffsetEo
     shr             r4d, 4
-.loop
+.loop:
     movu            m7, [r0]
     movu            m5, [r0 + r3]
     movu            m1, [r0 + r3 * 2]
@@ -804,7 +804,7 @@ cglobal saoCuOrgE1_2Rows, 3, 5, 7, pRec, m_iUpBuff1, m_iOffsetEo, iStride, iLcuW
     vbroadcasti128  m5,         [pb_128]
     vbroadcasti128  m6,         [r2]                         ; m6 = m_iOffsetEo
     shr             r4d,        4
-.loop
+.loop:
     movu            xm1,        [r0]                         ; m1 = pRec[x]
     movu            xm2,        [r0 + r3]                    ; m2 = pRec[x + iStride]
     vinserti128     m1,         m1,       xm2,            1
@@ -859,7 +859,7 @@ cglobal saoCuOrgE2, 6,6,8
     movh        m6, [r0 + r4 * 2]
     movhps      m6, [r1 + r4]
 
-.loop
+.loop:
     movu        m7, [r0]
     movu        m5, [r0 + 16]
     movu        m3, [r0 + r5 + 2]
@@ -918,7 +918,7 @@ cglobal saoCuOrgE2, 5, 6, 8, rec, bufft, buff1, offsetEo, lcuWidth
     movh        m5,    [r0 + r4]
     movhps      m5,    [r1 + r4]
 
-.loop
+.loop:
     movu        m1,    [r0]                    ; m1 = rec[x]
     movu        m2,    [r0 + r5 + 1]           ; m2 = rec[x + stride + 1]
     pxor        m3,    m1,    m7
@@ -970,7 +970,7 @@ cglobal saoCuOrgE2, 6,6,7
     movhps          xm4, [r1 + r4]
     vbroadcasti128  m5, [r3]
     mova            m6, [pw_pixel_max]
-.loop
+.loop:
     movu            m1, [r0]
     movu            m3, [r0 + r5 + 2]
 
@@ -1061,7 +1061,7 @@ cglobal saoCuOrgE2_32, 6,6,8
     movhps          xm4, [r1 + r4]
     vbroadcasti128  m5, [r3]
 
-.loop
+.loop:
     movu            m1, [r0]
     movu            m7, [r0 + 32]
     movu            m3, [r0 + r5 + 2]
@@ -1567,11 +1567,11 @@ cglobal saoCuOrgB0, 5,7,8
     movu        m4, [r1 + 16]       ; offset[16-31]
     pxor        m7, m7
 
-.loopH
+.loopH:
     mov         r5d, r2d
     xor         r6,  r6
 
-.loopW
+.loopW:
     movu        m2, [r0 + r6]
     movu        m5, [r0 + r6 + 16]
     psrlw       m0, m2, (BIT_DEPTH - 5)
@@ -1617,11 +1617,11 @@ cglobal saoCuOrgB0, 4, 7, 8
     movu        m3, [r1 + 0]      ; offset[0-15]
     movu        m4, [r1 + 16]     ; offset[16-31]
     pxor        m7, m7            ; m7 =[0]
-.loopH
+.loopH:
     mov         r5d, r2d
     xor         r6,  r6
 
-.loopW
+.loopW:
     movu        m2, [r0 + r6]     ; m0 = [rec]
     psrlw       m1, m2, 3
     pand        m1, [pb_31]       ; m1 = [index]
@@ -1670,9 +1670,9 @@ cglobal saoCuOrgB0, 5,7,8
     mov             r6d, r3d
     shr             r3d, 1
 
-.loopH
+.loopH:
     mov             r5d, r2d
-.loopW
+.loopW:
     movu            m2, [r0]
     movu            m5, [r0 + r4]
     psrlw           m0, m2, (BIT_DEPTH - 5)
@@ -1751,9 +1751,9 @@ cglobal saoCuOrgB0, 4, 7, 8
     shr             r2d,        4
     mov             r1d,        r3d
     shr             r3d,        1
-.loopH
+.loopH:
     mov             r5d,        r2d
-.loopW
+.loopW:
     movu            xm2,        [r0]                ; m2 = [rec]
     vinserti128     m2,         m2,  [r0 + r4],  1
     psrlw           m1,         m2,  3
@@ -1789,7 +1789,7 @@ cglobal saoCuOrgB0, 4, 7, 8
     test            r1b,        1
     jz              .end
     mov             r5d,        r2d
-.loopW1
+.loopW1:
     movu            xm2,        [r0]                ; m2 = [rec]
     psrlw           xm1,        xm2, 3
     pand            xm1,        xm7                 ; m1 = [index]
@@ -1811,7 +1811,7 @@ cglobal saoCuOrgB0, 4, 7, 8
     add             r0,         16
     dec             r5d
     jnz             .loopW1
-.end
+.end:
     RET
 %endif
 
@@ -1827,7 +1827,7 @@ cglobal calSign, 4, 7, 5
     add             r3d, 1
     mov             r5, r0
     movu            m4, [r0 + r4]
-.loop
+.loop:
     movu            m1, [r1]        ; m2 = pRec[x]
     movu            m2, [r2]        ; m3 = pTmpU[x]
 
@@ -1921,7 +1921,7 @@ cglobal calSign, 4, 7, 5
     mov             r5, r0
     movu            m4, [r0 + r4]
 
-.loop
+.loop:
     movu            m1, [r1]        ; m2 = pRec[x]
     movu            m2, [r2]        ; m3 = pTmpU[x]
 

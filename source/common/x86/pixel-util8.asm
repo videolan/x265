@@ -1785,7 +1785,7 @@ cglobal weight_sp, 6,7,9
     movu                      [r1], xm7
     je                        .nextH
 
-.width6
+.width6:
     cmp                       r6d, 6
     jl                        .width4
     movq                      [r1], xm7
@@ -4937,7 +4937,7 @@ cglobal pixel_sub_ps_16x%2, 6, 10, 4, dest, deststride, src0, src1, srcstride0, 
     lea         r9,     [r4 * 3]
     lea         r8,     [r5 * 3]
 
-.loop
+.loop:
     pmovzxbw    m0,     [r2]
     pmovzxbw    m1,     [r3]
     pmovzxbw    m2,     [r2 + r4]
@@ -5150,7 +5150,7 @@ cglobal pixel_sub_ps_32x%1, 6, 10, 4, dest, deststride, src0, src1, srcstride0, 
     lea         r7,     [r4 * 3]
     lea         r8,     [r5 * 3]
 
-.loop
+.loop:
     movu        m0,     [r2]
     movu        m1,     [r2 + 32]
     movu        m2,     [r3]
@@ -5557,7 +5557,7 @@ cglobal pixel_sub_ps_64x64, 6, 10, 8, dest, deststride, src0, src1, srcstride0, 
     lea         r7,     [r4 * 3]
     lea         r8,     [r5 * 3]
 
-.loop
+.loop:
     movu        m0,     [r2]
     movu        m1,     [r2 + 32]
     movu        m2,     [r2 + 64]

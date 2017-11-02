@@ -324,7 +324,7 @@ cextern pw_8192
     paddw       m0, m5
     psraw       m0, 6
     packuswb    m0, m0
-    movd        r4, m0
+    movd        r4d, m0
     mov         [dstq], r4w
     shr         r4, 16
     mov         [dstq + dststrideq], r4w
@@ -3471,7 +3471,7 @@ RET
     phaddw      %2, %2
     pmulhrsw    %2, %3
     packuswb    %2, %2
-    movd        r4, %2
+    movd        r4d, %2
     mov         [dstq], r4w
     shr         r4, 16
     mov         [dstq + dststrideq], r4w
@@ -5336,7 +5336,7 @@ cglobal interp_4tap_horiz_ps_64x%1, 4,7,6
     sub                r0 ,         r1
     add                r6d ,        3
 
-.loop
+.loop:
     ; Row 0
     vbroadcasti128    m3,           [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb            m3,           m1
@@ -5441,7 +5441,7 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,7,6
 
 .preloop:
     lea                         r6,                [r3 * 3]
-.loop
+.loop:
     ; Row 0-1
     vbroadcasti128              m3,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb                      m3,                m1                           ; shuffled based on the col order tab_Lm
@@ -5502,7 +5502,7 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,7,6
     movq                        [r2],              xm3
     movhps                      [r2 + r3],         xm3
     movq                        [r2 + r3 * 2],     xm4
-.end
+.end:
     RET
 %endif
 %endmacro
@@ -5592,7 +5592,7 @@ cglobal interp_8tap_horiz_ps_8x%1, 4,7,6
     paddw                       xm1,        xm2
     psubw                       xm1,        xm0
     movu                        [r2],       xm1                          ;row 0
-.end
+.end:
     RET
 %endif
 %endmacro ; IPFILTER_LUMA_PS_8xN_AVX2
@@ -5634,7 +5634,7 @@ cglobal interp_8tap_horiz_ps_%1x%2, 6, 10, 7
     sub                         r0,                r8                           ; r0(src)-r8
     add                         r9,                7                            ; blkheight += N - 1  (7 - 1 = 6 ; since the last one row not in loop)
 
-.label
+.label:
     ; Row 0
     vbroadcasti128              m3,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb                      m4,                m3,             m6           ; row 0 (col 4 to 7)
@@ -12374,7 +12374,7 @@ cglobal filterPixelToShort_8x%1, 3, 7, 6
     mova        m4, [pb_128]
     mova        m5, [tab_c_64_n64]
 
-.loop
+.loop:
     movh        m0, [r0]
     punpcklbw   m0, m4
     pmaddubsw   m0, m5
@@ -25491,7 +25491,7 @@ cglobal interp_4tap_horiz_ps_32x32, 4,6,8
     sub             r0, r1
     add             r4d, 3
 
-.loop
+.loop:
     ; Row 0
     movu            m2, [r0]
     movu            m3, [r0 + 1]
@@ -25553,7 +25553,7 @@ cglobal interp_4tap_horiz_ps_16x16, 4,7,6
     sub                r0 ,         r1
     add                r6d ,        3
 
-.loop
+.loop:
     ; Row 0
     vbroadcasti128    m3,           [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb            m3,           m1
@@ -25607,7 +25607,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4,7,6
     sub                    r0 ,        r1
     add                    r6d ,       3
 
-.loop
+.loop:
     ; Row 0
     vbroadcasti128         m3,         [r0]
     pshufb                 m3,         m1
@@ -25670,7 +25670,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4,7,6
     sub                r0 ,          r1
     add                r6d ,         3
 
-.loop
+.loop:
     ; Row 0
     vbroadcasti128     m3,           [r0]
     pshufb             m3,           m1
@@ -25743,7 +25743,7 @@ cglobal interp_4tap_horiz_ps_4x4, 4,7,5
     je                 .label
     sub                r0 , r1
 
-.label
+.label:
     ; Row 0-1
     movu              xm3,           [r0]
     vinserti128       m3,           m3,      [r0 + r1],     1
@@ -25795,7 +25795,7 @@ cglobal interp_4tap_horiz_ps_4x4, 4,7,5
     movq              [r2+r3],      xm4
     lea               r2,           [r2 + r3 * 2]
     movhps            [r2],         xm3
-.end
+.end:
     RET
 
 cglobal interp_4tap_horiz_ps_4x2, 4,7,5
@@ -25823,7 +25823,7 @@ cglobal interp_4tap_horiz_ps_4x2, 4,7,5
     je                 .label
     sub                r0 , r1
 
-.label
+.label:
     ; Row 0-1
     movu              xm3,           [r0]
     vinserti128       m3,           m3,      [r0 + r1],     1
@@ -25864,7 +25864,7 @@ cglobal interp_4tap_horiz_ps_4x2, 4,7,5
     movq              [r2+r3],      xm4
     lea               r2,           [r2 + r3 * 2]
     movhps            [r2],         xm3
-.end
+.end:
     RET
 
 ;-----------------------------------------------------------------------------------------------------------------------------
@@ -25899,7 +25899,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4,7,5
     sub              r0 ,               r1
 
 
-.loop
+.loop:
     sub              r4d,           4
     ; Row 0-1
     movu              xm3,          [r0]
@@ -25955,7 +25955,7 @@ cglobal interp_4tap_horiz_ps_%1x%2, 4,7,5
     movq              [r2+r3],      xm4
     lea               r2,           [r2 + r3 * 2]
     movhps            [r2],         xm3
-.end
+.end:
     RET
 %endmacro
 
@@ -25993,7 +25993,7 @@ cglobal interp_4tap_horiz_ps_8x8, 4,7,6
     sub                r0 ,      r1
     add                r6d ,     1
 
-.loop
+.loop:
      dec               r6d
     ; Row 0
     vbroadcasti128    m3,           [r0]
@@ -26032,7 +26032,7 @@ cglobal interp_4tap_horiz_ps_8x8, 4,7,6
     psubw             m3,           m5
     vpermq            m3,           m3,          11011000b
     movu             [r2],         xm3
-.end
+.end:
     RET
 
 INIT_YMM avx2
@@ -26237,7 +26237,7 @@ cglobal interp_4tap_horiz_pp_%1x%2, 4,6,6
 
     dec                r0
 
-.loop
+.loop:
     sub               r4d,          4
     ; Row 0-1
     movu              xm3,          [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
@@ -26306,9 +26306,9 @@ cglobal interp_8tap_horiz_ps_%1x%2, 4, 7, 8
     sub                         r0,                r6
     add                         r4d,                7
 
-.label
+.label:
     lea                         r6,                 [pw_2000]
-.loop
+.loop:
     ; Row 0
     vbroadcasti128              m3,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb                      m4,                m3,             m6           ; row 0 (col 4 to 7)
@@ -26405,9 +26405,9 @@ cglobal interp_8tap_horiz_ps_48x64, 4, 7, 8
     sub                         r0,                r6                           ; r0(src)-r6
     add                         r4d,                7                            ; blkheight += N - 1  (7 - 1 = 6 ; since the last one row not in loop)
 
-.label
+.label:
     lea                         r6,                [interp8_hps_shuf]
-.loop
+.loop:
     ; Row 0
     vbroadcasti128              m3,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb                      m4,                m3,             m6           ; row 0 (col 4 to 7)
@@ -26736,9 +26736,9 @@ cglobal interp_8tap_horiz_ps_64x%1, 4, 7, 8
     sub                         r0,                r6                           ; r0(src)-r6
     add                         r4d,               7                            ; blkheight += N - 1
 
-.label
+.label:
     lea                         r6,                [pw_2000]
-.loop
+.loop:
     ; Row 0
     vbroadcasti128              m3,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb                      m4,                m3,             m6           ; row 0 (col 4 to 7)
@@ -26880,7 +26880,7 @@ cglobal interp_4tap_horiz_ps_8x%1, 4,7,6
     sub                r0 ,             r1
     inc                r6d
 
-.loop
+.loop:
     ; Row 0
     vbroadcasti128     m3,              [r0]
     pshufb             m3,              m1
@@ -26915,7 +26915,7 @@ cglobal interp_4tap_horiz_ps_8x%1, 4,7,6
     psubw              m3,              m5
     vpermq             m3,              m3,          11011000b
     movu               [r2],            xm3
-.end
+.end:
     RET
 %endmacro
 
@@ -26945,7 +26945,7 @@ cglobal interp_4tap_horiz_ps_2x4, 4, 7, 3
     jz                 .label
     sub                r0,             r1
 
-.label
+.label:
     lea                r6,             [r1 * 3]
     movq               xm1,            [r0]
     movhps             xm1,            [r0 + r1]
@@ -26985,7 +26985,7 @@ cglobal interp_4tap_horiz_ps_2x4, 4, 7, 3
     movd               [r2],           xm1
     pextrd             [r2 + r3],      xm1,         1
     pextrd             [r2 + r3 * 2],  xm1,         2
-.end
+.end:
     RET
 
 INIT_YMM avx2
@@ -27005,7 +27005,7 @@ cglobal interp_4tap_horiz_ps_2x8, 4, 7, 7
     jz                .label
     sub               r0,             r1
 
-.label
+.label:
     mova              m4,            [interp4_hpp_shuf]
     mova              m5,            [pw_1]
     dec               r0
@@ -27062,7 +27062,7 @@ cglobal interp_4tap_horiz_ps_2x8, 4, 7, 7
     movd              [r2],          xm1
     pextrd            [r2 + r3],     xm1,         1
     movd              [r2 + r3 * 2], xm2
-.end
+.end:
     RET
 
 INIT_YMM avx2
@@ -27217,7 +27217,7 @@ cglobal interp_4tap_horiz_ps_6x8, 4,7,6
     sub               r0 ,             r1
     inc               r6d
 
-.loop
+.loop:
     ; Row 0
     vbroadcasti128    m3,              [r0]
     pshufb            m3,              m1
@@ -27254,7 +27254,7 @@ cglobal interp_4tap_horiz_ps_6x8, 4,7,6
     vextracti128      xm4,             m3,          1
     movq              [r2],            xm3
     movd              [r2+8],          xm4
-.end
+.end:
     RET
 
 INIT_YMM avx2
@@ -27285,7 +27285,7 @@ cglobal interp_8tap_horiz_ps_12x16, 6, 7, 8
     lea                         r6,                [r1 * 3]                     ; r6 = (N / 2 - 1) * srcStride
     sub                         r0,                r6                           ; r0(src)-r6
     add                         r4d,                7
-.loop
+.loop:
 
     ; Row 0
 
@@ -27350,9 +27350,9 @@ cglobal interp_8tap_horiz_ps_24x32, 4, 7, 8
     sub                         r0,                r6                           ; r0(src)-r6
     add                         r4d,               7                            ; blkheight += N - 1  (7 - 1 = 6 ; since the last one row not in loop)
 
-.label
+.label:
     lea                         r6,                [interp8_hps_shuf]
-.loop
+.loop:
     ; Row 0
     vbroadcasti128              m3,                [r0]                         ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb                      m4,                m3,             m6           ; row 0 (col 4 to 7)
@@ -27430,7 +27430,7 @@ cglobal interp_4tap_horiz_ps_24x32, 4,7,6
     sub                r0 ,            r1
     add                r6d ,           3
 
-.loop
+.loop:
     ; Row 0
     vbroadcasti128     m3,             [r0]                        ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb             m3,             m1
@@ -27988,7 +27988,7 @@ cglobal interp_4tap_horiz_ps_48x64, 4,7,6
     sub               r0 ,          r1
     add               r6d ,         3
 
-.loop
+.loop:
     ; Row 0
     vbroadcasti128    m3,           [r0]                           ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb            m3,           m1
@@ -28067,7 +28067,7 @@ cglobal interp_4tap_horiz_ps_24x64, 4,7,6
     sub                r0 ,            r1
     add                r6d ,           3
 
-.loop
+.loop:
     ; Row 0
     vbroadcasti128     m3,             [r0]                          ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     pshufb             m3,             m1
@@ -28114,7 +28114,7 @@ cglobal interp_4tap_horiz_ps_2x16, 4, 7, 7
     jz                .label
     sub               r0,             r1
 
-.label
+.label:
     mova              m4,            [interp4_hps_shuf]
     mova              m5,            [pw_1]
     dec               r0
@@ -28209,7 +28209,7 @@ cglobal interp_4tap_horiz_ps_2x16, 4, 7, 7
     movd              [r2],          xm1
     pextrd            [r2 + r3],     xm1,          1
     movd              [r2 + r3 * 2], xm2
-.end
+.end:
     RET
 
 INIT_YMM avx2
