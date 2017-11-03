@@ -6447,9 +6447,9 @@ FILTER_VER_PP_CHROMA_64xN_AVX512 64
     movu            [r2],      m6
 %endmacro
 
-INIT_ZMM avx512
-%if ARCH_X86_64 == 1
 %macro IPFILTER_CHROMA_PS_AVX512_32xN 1
+%if ARCH_X86_64 == 1
+INIT_ZMM avx512
 cglobal interp_4tap_horiz_ps_32x%1, 4,7,9
     add             r1d, r1d
     add             r3d, r3d
@@ -6486,8 +6486,8 @@ cglobal interp_4tap_horiz_ps_32x%1, 4,7,9
     sub             r6d, 2
     jnz             .loop
     RET
-%endmacro
 %endif
+%endmacro
 
 IPFILTER_CHROMA_PS_AVX512_32xN 8
 IPFILTER_CHROMA_PS_AVX512_32xN 16
@@ -6645,9 +6645,9 @@ IPFILTER_CHROMA_PS_AVX512_32xN 64
     movu            [r2 + mmsize],        m6
 %endmacro
 
-INIT_ZMM avx512
-%if ARCH_X86_64 == 1
 %macro IPFILTER_CHROMA_PS_AVX512_64xN 1
+%if ARCH_X86_64 == 1
+INIT_ZMM avx512
 cglobal interp_4tap_horiz_ps_64x%1, 4,7,9
     add             r1d, r1d
     add             r3d, r3d
@@ -6683,8 +6683,8 @@ cglobal interp_4tap_horiz_ps_64x%1, 4,7,9
     sub             r6d, 2
     jnz             .loop
     RET
-%endmacro
 %endif
+%endmacro
 
 IPFILTER_CHROMA_PS_AVX512_64xN 16
 IPFILTER_CHROMA_PS_AVX512_64xN 32
@@ -6750,10 +6750,9 @@ IPFILTER_CHROMA_PS_AVX512_64xN 64
     movu            [r2],       ym6
 %endmacro
 
-
-INIT_ZMM avx512
-%if ARCH_X86_64 == 1
 %macro IPFILTER_CHROMA_PS_AVX512_16xN 1
+%if ARCH_X86_64 == 1
+INIT_ZMM avx512
 cglobal interp_4tap_horiz_ps_16x%1, 4,7,9
     add             r1d, r1d
     add             r3d, r3d
@@ -6789,8 +6788,8 @@ cglobal interp_4tap_horiz_ps_16x%1, 4,7,9
     sub             r6d, 2
     jnz             .loop
     RET
-%endmacro
 %endif
+%endmacro
 
 IPFILTER_CHROMA_PS_AVX512_16xN 4
 IPFILTER_CHROMA_PS_AVX512_16xN 8
@@ -6934,8 +6933,8 @@ IPFILTER_CHROMA_PS_AVX512_16xN 64
     movu            [r2 + mmsize],       ym6
 %endmacro
 
-INIT_ZMM avx512
 %if ARCH_X86_64 == 1
+INIT_ZMM avx512
 cglobal interp_4tap_horiz_ps_48x64, 4,7,9
     add             r1d, r1d
     add             r3d, r3d
