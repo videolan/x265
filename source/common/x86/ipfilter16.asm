@@ -5930,15 +5930,10 @@ cglobal interp_4tap_horiz_pp_48x64, 5,6,11
     punpckhwd             m3,                 m4
     pmaddwd               m3,                 [r5]
 
-    lea                   r0,                 [r0 + 2 * r1]
-    lea                   r6,                 [r6 + 2 * r1]
-    lea                   r8,                 [r8 + 2 * r1]
-    lea                   r9,                 [r9 + 2 * r1]
-
-    movu                  xm5,                [r0 + r1]
-    vinserti32x4          m5,                 [r6 + r1],           1
-    vinserti32x4          m5,                 [r8 + r1],           2
-    vinserti32x4          m5,                 [r9 + r1],           3
+    movu                  xm5,                [r0 + r10]
+    vinserti32x4          m5,                 [r6 + r10],          1
+    vinserti32x4          m5,                 [r8 + r10],          2
+    vinserti32x4          m5,                 [r9 + r10],          3
     punpcklwd             m6,                 m4,                  m5
     pmaddwd               m6,                 [r5 + mmsize]
     paddd                 m0,                 m6
@@ -5946,10 +5941,10 @@ cglobal interp_4tap_horiz_pp_48x64, 5,6,11
     pmaddwd               m4,                 [r5 + mmsize]
     paddd                 m1,                 m4
 
-    movu                  xm4,                [r0 + 2 * r1]
-    vinserti32x4          m4,                 [r6 + 2 * r1],       1
-    vinserti32x4          m4,                 [r8 + 2 * r1],       2
-    vinserti32x4          m4,                 [r9 + 2 * r1],       3
+    movu                  xm4,                [r0 + 4 * r1]
+    vinserti32x4          m4,                 [r6 + 4 * r1],       1
+    vinserti32x4          m4,                 [r8 + 4 * r1],       2
+    vinserti32x4          m4,                 [r9 + 4 * r1],       3
     punpcklwd             m6,                 m5,                  m4
     pmaddwd               m6,                 [r5 + mmsize]
     paddd                 m2,                 m6
@@ -5987,7 +5982,7 @@ cglobal interp_4tap_horiz_pp_48x64, 5,6,11
 ;-----------------------------------------------------------------------------------------------------------------
 %if ARCH_X86_64
 INIT_ZMM avx512
-cglobal interp_4tap_vert_pp_8x8, 5, 10, 9
+cglobal interp_4tap_vert_pp_8x8, 5, 11, 9
     add                   r1d,                r1d
     add                   r3d,                r3d
     sub                   r0,                 r1
@@ -6001,6 +5996,7 @@ cglobal interp_4tap_vert_pp_8x8, 5, 10, 9
 %endif
     vbroadcasti32x8       m7,                 [INTERP_OFFSET_PP]
     vbroadcasti32x8       m8,                 [pw_pixel_max]
+    lea                   r10,                [3 * r1]
     lea                   r7,                 [3 * r3]
     PROCESS_CHROMA_VERT_PP_8x8_AVX512
     RET
@@ -6008,7 +6004,7 @@ cglobal interp_4tap_vert_pp_8x8, 5, 10, 9
 
 %macro FILTER_VER_PP_CHROMA_8xN_AVX512 1
 INIT_ZMM avx512
-cglobal interp_4tap_vert_pp_8x%1, 5, 10, 9
+cglobal interp_4tap_vert_pp_8x%1, 5, 11, 9
     add                   r1d,                r1d
     add                   r3d,                r3d
     sub                   r0,                 r1
@@ -6022,10 +6018,11 @@ cglobal interp_4tap_vert_pp_8x%1, 5, 10, 9
 %endif
     vbroadcasti32x8       m7,                 [INTERP_OFFSET_PP]
     vbroadcasti32x8       m8,                 [pw_pixel_max]
+    lea                   r10,                [3 * r1]
     lea                   r7,                 [3 * r3]
 %rep %1/8 - 1
     PROCESS_CHROMA_VERT_PP_8x8_AVX512
-    lea                   r0,                 [r9]
+    lea                   r0,                 [r8 + 4 * r1]
     lea                   r2,                 [r2 + 4 * r3]
 %endrep
     PROCESS_CHROMA_VERT_PP_8x8_AVX512
