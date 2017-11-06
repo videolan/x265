@@ -142,6 +142,7 @@ const tab_LumaCoeffVer_32,  times 16 db 0, 0
                             times 16 db 58, -10
                             times 16 db 4, -1
 
+ALIGN 64
 const tab_ChromaCoeffVer_32_avx512,     times 32 db 0, 64
                                         times 32 db 0, 0
 
@@ -10796,151 +10797,94 @@ cglobal interp_4tap_horiz_ps_48x%1, 4,7,10
     IPFILTER_CHROMA_PS_48xN_AVX512 64
 %endif
 
-%macro PROCESS_CHROMA_VERT_PP_32x8_AVX512 0
-    movu             ym0,              [r0]                        ; m0 = row 0
-    lea               r6,              [r0 + 4 * r1]
-    lea               r7,              [r2 + 4 * r3]
-    vinserti32x8      m0,              [r6],              1        ; m0 = row 4
-    movu             ym1,              [r0 + r1]                   ; m1 = row 1
-    vinserti32x8      m1,              [r6 + r1],         1        ; m1 = row 5
-    punpcklbw         m2,              m0,                m1
-    punpckhbw         m3,              m0,                m1
-    pmaddubsw         m2,              m10
-    pmaddubsw         m3,              m10
+%macro PROCESS_CHROMA_VERT_PP_32x4_AVX512 0
+    movu                  ym1,                [r0]
+    movu                  ym3,                [r0 + r1]
+    vinserti32x8          m1,                 [r0 + 2 * r1],       1
+    vinserti32x8          m3,                 [r0 + r6],           1
+    punpcklbw             m0,                 m1,                  m3
+    pmaddubsw             m0,                 m8
+    punpckhbw             m1,                 m3
+    pmaddubsw             m1,                 m8
 
-    movu             ym0,              [r0 + r1 * 2]               ; m0 = row 2
-    vinserti32x8      m0,              [r6 + r1 * 2],     1        ; m0 = row 6
-    punpcklbw         m4,              m1,                m0
-    punpckhbw         m5,              m1,                m0
-    pmaddubsw         m4,              m10
-    pmaddubsw         m5,              m10
+    movu                  ym4,                [r0 + 2 * r1]
+    vinserti32x8          m4,                 [r0 + 4 * r1],       1
+    punpcklbw             m2,                 m3,                  m4
+    pmaddubsw             m2,                 m8
+    punpckhbw             m3,                 m4
+    pmaddubsw             m3,                 m8
 
-    movu             ym1,              [r0 + r4]                   ; m1 = row 3
-    vinserti32x8      m1,              [r6 + r4],         1        ; m1 = row 7
-    punpcklbw         m6,              m0,                m1
-    punpckhbw         m7,              m0,                m1
-    pmaddubsw         m8,              m6,                m11
-    pmaddubsw         m9,              m7,                m11
-    pmaddubsw         m6,              m10
-    pmaddubsw         m7,              m10
+    lea                   r0,                 [r0 + 2 * r1]
 
-    paddw             m2,              m8
-    paddw             m3,              m9
+    movu                  ym5,                [r0 + r1]
+    vinserti32x8          m5,                 [r0 + r6],           1
+    punpcklbw             m6,                 m4,                  m5
+    pmaddubsw             m6,                 m9
+    paddw                 m0,                 m6
+    punpckhbw             m4,                 m5
+    pmaddubsw             m4,                 m9
+    paddw                 m1,                 m4
 
-    pmulhrsw          m2,              m12
-    pmulhrsw          m3,              m12
-    packuswb          m2,              m3
-    movu              [r2],            ym2
-    vextracti32x8     [r7],            m2,                1
-    lea               r0,              [r0 + r1 * 4]
-    lea               r6,              [r6 + r1 * 4]
+    movu                  ym4,                [r0 + 2 * r1]
+    vinserti32x8          m4,                 [r0 + 4 * r1],       1
+    punpcklbw             m6,                 m5,                  m4
+    pmaddubsw             m6,                 m9
+    paddw                 m2,                 m6
+    punpckhbw             m5,                 m4
+    pmaddubsw             m5,                 m9
+    paddw                 m3,                 m5
 
-    movu             ym0,              [r0]                        ; m0 = row 4
-    vinserti32x8      m0,              [r6],              1        ; m0 = row 8
-    punpcklbw         m2,              m1,                m0
-    punpckhbw         m3,              m1,                m0
-    pmaddubsw         m8,              m2,                m11
-    pmaddubsw         m9,              m3,                m11
-    pmaddubsw         m2,              m10
-    pmaddubsw         m3,              m10
+    pmulhrsw              m0,                 m7
+    pmulhrsw              m1,                 m7
+    pmulhrsw              m2,                 m7
+    pmulhrsw              m3,                 m7
 
-    paddw             m4,              m8
-    paddw             m5,              m9
-    pmulhrsw          m4,              m12
-    pmulhrsw          m5,              m12
-    packuswb          m4,              m5
-    movu              [r2 + r3],       ym4
-    vextracti32x8     [r7 + r3],       m4,                1
-
-    movu             ym1,              [r0 + r1]                   ; m1 = row 5
-    vinserti32x8      m1,              [r6 + r1],         1        ; m1 = row 9
-    punpcklbw         m4,              m0,                m1
-    punpckhbw         m5,              m0,                m1
-    pmaddubsw         m4,              m11
-    pmaddubsw         m5,              m11
-    paddw             m6,              m4
-    paddw             m7,              m5
-
-    pmulhrsw          m6,              m12
-    pmulhrsw          m7,              m12
-    packuswb          m6,              m7
-    movu              [r2 + r3 * 2],   ym6
-    vextracti32x8     [r7 + r3 * 2],   m6,                1
-
-    movu             ym0,              [r0 + r1 * 2]               ; m0 = row 6
-    vinserti32x8      m0,              [r6 + r1 * 2],     1        ; m0 = row 10
-    punpcklbw         m6,              m1,                m0
-    punpckhbw         m7,              m1,                m0
-    pmaddubsw         m6,              m11
-    pmaddubsw         m7,              m11
-    paddw             m2,              m6
-    paddw             m3,              m7
-    pmulhrsw          m2,              m12
-    pmulhrsw          m3,              m12
-    packuswb          m2,              m3
-    movu              [r2 + r5],       ym2
-    vextracti32x8     [r7 + r5],       m2,                1
+    packuswb              m0,                 m1
+    packuswb              m2,                 m3
+    movu                  [r2],               ym0
+    movu                  [r2 + r3],          ym2
+    vextracti32x8         [r2 + 2 * r3],      m0,                  1
+    vextracti32x8         [r2 + r7],          m2,                  1
 %endmacro
 
-%if ARCH_X86_64 == 1
+;-----------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_PP_CHROMA_32xN_AVX512 1
 INIT_ZMM avx512
-cglobal interp_4tap_vert_pp_32x8, 4, 8, 13
-    mov               r4d,             r4m
-    shl               r4d,             7
+cglobal interp_4tap_vert_pp_32x%1, 4, 10, 8
+    mov                   r4d,                r4m
+    shl                   r4d,                7
+    sub                   r0,                 r1
 
 %ifdef PIC
-    lea               r5,              [tab_ChromaCoeffVer_32_avx512]
-    add               r5,              r4
+    lea                   r5,                 [tab_ChromaCoeffVer_32_avx512]
+    lea                   r5,                 [r5 + r4]
 %else
-    lea               r5,              [tab_ChromaCoeffVer_32_avx512 + r4]
+    lea                   r5,                 [tab_ChromaCoeffVer_32_avx512 + r4]
 %endif
-
-    mova              m10,             [r5]
-    mova              m11,             [r5 + mmsize]
-    lea               r4,              [r1 * 3]
-    sub               r0,              r1
-    vbroadcasti32x8   m12,             [pw_512]
-    lea               r5,              [r3 * 3]
-    PROCESS_CHROMA_VERT_PP_32x8_AVX512
-    RET
-%endif
-
-%macro FILTER_VER_PP_CHROMA_AVX512_32xN 1
-%if ARCH_X86_64 == 1
-INIT_ZMM avx512
-cglobal interp_4tap_vert_pp_32x%1, 4, 8, 13
-    mov               r4d,             r4m
-    shl               r4d,             7
-
-%ifdef PIC
-    lea               r5,              [tab_ChromaCoeffVer_32_avx512]
-    add               r5,              r4
-%else
-    lea               r5,              [tab_ChromaCoeffVer_32_avx512 + r4]
-%endif
-
-    mova              m10,             [r5]
-    mova              m11,             [r5 + mmsize]
-    lea               r4,              [r1 * 3]
-    sub               r0,              r1
-    vbroadcasti32x8   m12,             [pw_512]
-    lea               r5,              [r3 * 3]
-
-%rep %1/8 - 1
-    PROCESS_CHROMA_VERT_PP_32x8_AVX512
-    lea               r0, [r0 + r1 * 4]
-    lea               r2, [r7 + r3 * 4]
+    vbroadcasti32x8       m7,                 [pw_512]
+    lea                   r6,                 [3 * r1]
+    lea                   r7,                 [3 * r3]
+    mova                  m8,                 [r5]
+    mova                  m9,                 [r5 + mmsize]
+%rep %1/4 - 1
+    PROCESS_CHROMA_VERT_PP_32x4_AVX512
+    lea                   r0,                 [r0 + 2 * r1]
+    lea                   r2,                 [r2 + 4 * r3]
 %endrep
-    PROCESS_CHROMA_VERT_PP_32x8_AVX512
+    PROCESS_CHROMA_VERT_PP_32x4_AVX512
     RET
-%endif
 %endmacro
 
-FILTER_VER_PP_CHROMA_AVX512_32xN 64
-FILTER_VER_PP_CHROMA_AVX512_32xN 48
-FILTER_VER_PP_CHROMA_AVX512_32xN 32
-FILTER_VER_PP_CHROMA_AVX512_32xN 24
-FILTER_VER_PP_CHROMA_AVX512_32xN 16
+%if ARCH_X86_64
+    FILTER_VER_PP_CHROMA_32xN_AVX512 8
+    FILTER_VER_PP_CHROMA_32xN_AVX512 16
+    FILTER_VER_PP_CHROMA_32xN_AVX512 24
+    FILTER_VER_PP_CHROMA_32xN_AVX512 32
+    FILTER_VER_PP_CHROMA_32xN_AVX512 48
+    FILTER_VER_PP_CHROMA_32xN_AVX512 64
+%endif
 
 %macro PROCESS_CHROMA_VERT_PP_64x4_AVX512 0
     movu              m0,              [r0]                        ; m0 = row 0
