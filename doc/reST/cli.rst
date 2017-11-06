@@ -2142,6 +2142,18 @@ Bitstream options
 
 	Only effective at RD levels 5 and 6
 
+DCT Approximations
+=================
+
+.. option:: --lowpass-dct
+
+    If enabled, x265 will use low-pass truncated dct approximation instead of the
+    standard dct. This approximation is less computational intesive but it generates
+    truncated coefficient matrixes for the transformed block. Empirical analysis shows
+    this approximation gives good PSNR results for QP>=23. 
+
+    This approximation should be considered for platforms with performance and time 
+    constrains.
 
 Debugging options
 =================

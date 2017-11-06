@@ -58,16 +58,31 @@ void setupIntraPrimitives_c(EncoderPrimitives &p);
 void setupLoopFilterPrimitives_c(EncoderPrimitives &p);
 void setupSaoPrimitives_c(EncoderPrimitives &p);
 void setupSeaIntegralPrimitives_c(EncoderPrimitives &p);
+void setupLowPassPrimitives_c(EncoderPrimitives& p);
 
 void setupCPrimitives(EncoderPrimitives &p)
 {
     setupPixelPrimitives_c(p);      // pixel.cpp
     setupDCTPrimitives_c(p);        // dct.cpp
+    setupLowPassPrimitives_c(p);    // lowpassdct.cpp
     setupFilterPrimitives_c(p);     // ipfilter.cpp
     setupIntraPrimitives_c(p);      // intrapred.cpp
     setupLoopFilterPrimitives_c(p); // loopfilter.cpp
     setupSaoPrimitives_c(p);        // sao.cpp
     setupSeaIntegralPrimitives_c(p);  // framefilter.cpp
+}
+
+void enableLowpassDCTPrimitives(EncoderPrimitives &p)
+{
+    // update copies of the standard dct transform
+    p.cu[BLOCK_4x4].standard_dct = p.cu[BLOCK_4x4].dct;
+    p.cu[BLOCK_8x8].standard_dct = p.cu[BLOCK_8x8].dct;
+    p.cu[BLOCK_16x16].standard_dct = p.cu[BLOCK_16x16].dct;
+    p.cu[BLOCK_32x32].standard_dct = p.cu[BLOCK_32x32].dct;
+
+    // replace active dct by lowpass dct for high dct transforms
+    p.cu[BLOCK_16x16].dct = p.cu[BLOCK_16x16].lowpass_dct;
+    p.cu[BLOCK_32x32].dct = p.cu[BLOCK_32x32].lowpass_dct;
 }
 
 void setupAliasPrimitives(EncoderPrimitives &p)
@@ -256,6 +271,11 @@ void x265_setup_primitives(x265_param *param)
 #endif
 
         setupAliasPrimitives(primitives);
+
+        if (param->bLowPassDct && param->rc.qp > 20)
+        {
+            enableLowpassDCTPrimitives(primitives); 
+        }
     }
 
     x265_report_simd(param);

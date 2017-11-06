@@ -259,8 +259,12 @@ struct EncoderPrimitives
      * primitives will leave 64x64 pointers NULL.  Indexed by LumaCU */
     struct CU
     {
-        dct_t           dct;
-        idct_t          idct;
+        dct_t           dct;    // active dct transformation
+        idct_t          idct;   // active idct transformation
+
+        dct_t           standard_dct;   // original dct function, used by lowpass_dct
+        dct_t           lowpass_dct;    // lowpass dct approximation
+
         calcresidual_t  calcresidual;
         pixel_sub_ps_t  sub_ps;
         pixel_add_ps_t  add_ps;

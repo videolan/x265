@@ -1509,6 +1509,11 @@ typedef struct x265_param
 
     /* Disable lookahead */
     int       bDisableLookahead;
+
+    /* Use low-pass truncated dct approximation 
+    *  This DCT approximation is less computational intensive and gives results close to 
+    *  standard DCT for QP >= 23 */
+    int       bLowPassDct;
 } x265_param;
 
 /* x265_param_alloc:

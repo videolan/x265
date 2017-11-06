@@ -282,6 +282,7 @@ static const struct option long_options[] =
     { "force-flush",    required_argument, NULL, 0 },
     { "splitrd-skip",         no_argument, NULL, 0 },
     { "no-splitrd-skip",      no_argument, NULL, 0 },
+    { "lowpass-dct",          no_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -543,6 +544,7 @@ static void showHelp(x265_param *param)
     H1("-r/--recon <filename>            Reconstructed raw image YUV or Y4M output file name\n");
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
     H1("   --recon-y4m-exec <string>     pipe reconstructed frames to Y4M viewer, ex:\"ffplay -i pipe:0 -autoexit\"\n");
+    H0("   --lowpass-dct                 Use low-pass subband dct approximation. Default %s\n", OPT(param->bLowPassDct));
     H1("\nExecutable return codes:\n");
     H1("    0 - encode successful\n");
     H1("    1 - unable to parse command line\n");

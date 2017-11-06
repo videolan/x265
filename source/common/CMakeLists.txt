@@ -131,7 +131,7 @@ endif(WIN32)
 add_library(common OBJECT
     ${ASM_PRIMITIVES} ${VEC_PRIMITIVES} ${ALTIVEC_PRIMITIVES} ${WINXP}
     primitives.cpp primitives.h
-    pixel.cpp dct.cpp ipfilter.cpp intrapred.cpp loopfilter.cpp
+    pixel.cpp dct.cpp lowpassdct.cpp ipfilter.cpp intrapred.cpp loopfilter.cpp
     constants.cpp constants.h
     cpu.cpp cpu.h version.cpp
     threading.cpp threading.h
