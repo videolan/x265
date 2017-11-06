@@ -1555,7 +1555,7 @@ Quality, rate control and rate distortion options
 	Enable adaptive quantization for sub-CTUs. This parameter specifies 
 	the minimum CU size at which QP can be adjusted, ie. Quantization Group
 	size. Allowed range of values are 64, 32, 16, 8 provided this falls within 
-	the inclusive range [maxCUSize, minCUSize]. Experimental.
+	the inclusive range [maxCUSize, minCUSize].
 	Default: same as maxCUSize
 
 .. option:: --cutree, --no-cutree
@@ -1644,7 +1644,7 @@ Quality, rate control and rate distortion options
 	conservative, waiting until there is enough feedback in terms of 
 	encoded frames to control QP. strict-cbr allows the encoder to be 
 	more aggressive in hitting the target bitrate even for short segment 
-	videos. Experimental.
+	videos.
 	
 .. option:: --cbqpoffs <integer>
 
@@ -2037,12 +2037,12 @@ VUI fields must be manually specified.
 .. option:: --min-luma <integer>
 
 	Minimum luma value allowed for input pictures. Any values below min-luma
-	are clipped. Experimental. No default.
+	are clipped.  No default.
 
 .. option:: --max-luma <integer>
 
 	Maximum luma value allowed for input pictures. Any values above max-luma
-	are clipped. Experimental. No default.
+	are clipped.  No default.
 
 Bitstream options
 =================
@@ -2154,6 +2154,8 @@ DCT Approximations
 
     This approximation should be considered for platforms with performance and time 
     constrains.
+
+	Default disabled. **Experimental feature**
 
 Debugging options
 =================

@@ -161,4 +161,8 @@ CrowdRun_1920x1080_50_10bit_422.yuv,--preset fast --interlace bff
 #SEA Implementation Test
 silent_cif_420.y4m,--preset veryslow --me sea
 big_buck_bunny_360p24.y4m,--preset superfast --me sea
+
+#low-pass dct test
+720p50_parkrun_ter.y4m,--preset medium,--lowpass-dct
+
 # vim: tw=200
