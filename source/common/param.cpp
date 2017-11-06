@@ -293,6 +293,7 @@ void x265_param_default(x265_param* param)
 
     /* DCT Approximations */
     param->bLowPassDct = 0;
+    param->bMVType = 0;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -986,6 +987,21 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
 		OPT("lowpass-dct") p->bLowPassDct = atobool(value);
         OPT("vbv-end") p->vbvBufferEnd = atof(value);
         OPT("vbv-end-fr-adj") p->vbvEndFrameAdjust = atof(value);
+        OPT("refine-mv-type")
+        {
+            if (strcmp(strdup(value), "avc") == 0)
+            {
+                p->bMVType = AVC_INFO;
+            }
+            else if (strcmp(strdup(value), "off") == 0)
+            {
+                p->bMVType = NO_INFO;
+            }
+            else
+            {
+                bError = true;
+            }
+         }
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1474,6 +1490,8 @@ void x265_print_params(x265_param* param)
     TOOLVAL(param->lookaheadSlices, "lslices=%d");
     TOOLVAL(param->lookaheadThreads, "lthreads=%d")
     TOOLVAL(param->bCTUInfo, "ctu-info=%d");
+    if (param->bMVType == AVC_INFO)
+        TOOLOPT(param->bMVType, "refine-mv-type=avc");
     if (param->maxSlices > 1)
         TOOLVAL(param->maxSlices, "slices=%d");
     if (param->bEnableLoopFilter)
@@ -1699,6 +1717,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bLimitSAO, "limit-sao");
     s += sprintf(s, " ctu-info=%d", p->bCTUInfo);
     BOOL(p->bLowPassDct, "lowpass-dct");
+    s += sprintf(s, " refine-mv-type=%d", p->bMVType);
 #undef BOOL
     return buf;
 }

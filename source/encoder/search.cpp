@@ -2162,7 +2162,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
 
         /* Uni-directional prediction */
         if ((m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
-            || (m_param->analysisMultiPassRefine && m_param->rc.bStatRead))
+            || (m_param->analysisMultiPassRefine && m_param->rc.bStatRead) || (m_param->bMVType == AVC_INFO))
         {
             for (int list = 0; list < numPredDir; list++)
             {

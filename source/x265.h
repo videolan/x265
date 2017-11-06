@@ -223,6 +223,11 @@ typedef enum
     CTU_INFO_CHANGE = 2,
 }CTUInfo;
 
+typedef enum
+{
+    NO_INFO = 0,
+    AVC_INFO = 1,
+}MVRefineType;
 
 /* Arbitrary User SEI
  * Payload size is in bytes and the payload pointer must be non-NULL. 
@@ -1524,6 +1529,9 @@ typedef struct x265_param
     /* Frame from which qp has to be adjusted to hit final decode buffer emptiness.
     * Specified as a fraction of the total frames. Default 0 */
     double    vbvEndFrameAdjust;
+
+    /* Reuse MV information obtained through API */
+    int       bMVType;
 } x265_param;
 
 /* x265_param_alloc:

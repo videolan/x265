@@ -887,6 +887,11 @@ will not reuse analysis if slice type parameters do not match.
 	| 10     | Level 5 + Full CU analysis-info         |
 	+--------+-----------------------------------------+
 
+.. option:: --refine-mv-type <string>
+
+    Reuse MV information received through API call. Currently receives information for AVC size and the accepted 
+    string input is "avc". Default is disabled.
+
 .. option:: --scale-factor
 
        Factor by which input video is scaled down for analysis save mode.

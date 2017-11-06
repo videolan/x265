@@ -77,6 +77,14 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         }
     }
 
+    if (param->bMVType == AVC_INFO)
+    {
+        m_analysisData.wt = NULL;
+        m_analysisData.intraData = NULL;
+        m_analysisData.interData = NULL;
+        m_analysis2Pass.analysisFramedata = NULL;
+    }
+
     if (m_fencPic->create(param) && m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode || !!param->bAQMotion, param->rc.qgSize))
     {
         X265_CHECK((m_reconColCount == NULL), "m_reconColCount was initialized");

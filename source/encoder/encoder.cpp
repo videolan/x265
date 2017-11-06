@@ -1015,7 +1015,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             x265_frame_stats* frameData = NULL;
 
             /* Free up pic_in->analysisData since it has already been used */
-            if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD)
+            if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD || (m_param->bMVType && slice->m_sliceType != I_SLICE))
                 freeAnalysis(&outFrame->m_analysisData);
 
             if (pic_out)
@@ -2937,7 +2937,8 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
     {
         int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
         uint32_t numPlanes = m_param->internalCsp == X265_CSP_I400 ? 1 : 3;
-        CHECKED_MALLOC_ZERO(analysis->wt, WeightParam, numPlanes * numDir);
+        if (!(m_param->bMVType == AVC_INFO))
+            CHECKED_MALLOC_ZERO(analysis->wt, WeightParam, numPlanes * numDir);
         if (m_param->analysisReuseLevel < 2)
             return;
 
@@ -2993,7 +2994,7 @@ void Encoder::freeAnalysis(x265_analysis_data* analysis)
         X265_FREE(analysis->lookahead.intraVbvCost);
     }
     /* Early exit freeing weights alone if level is 1 (when there is no analysis inter/intra) */
-    if (analysis->sliceType > X265_TYPE_I && analysis->wt)
+    if (analysis->sliceType > X265_TYPE_I && analysis->wt && !(m_param->bMVType == AVC_INFO))
         X265_FREE(analysis->wt);
     if (m_param->analysisReuseLevel < 2)
         return;

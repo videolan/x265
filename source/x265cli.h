@@ -285,6 +285,7 @@ static const struct option long_options[] =
     { "splitrd-skip",         no_argument, NULL, 0 },
     { "no-splitrd-skip",      no_argument, NULL, 0 },
     { "lowpass-dct",          no_argument, NULL, 0 },
+    { "refine-mv-type", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },

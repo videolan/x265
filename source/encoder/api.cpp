@@ -380,7 +380,7 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
     pic->userSEI.payloads = NULL;
     pic->userSEI.numPayloads = 0;
 
-    if (param->analysisReuseMode)
+    if (param->analysisReuseMode || (param->bMVType == AVC_INFO))
     {
         uint32_t widthInCU = (param->sourceWidth + param->maxCUSize - 1) >> param->maxLog2CUSize;
         uint32_t heightInCU = (param->sourceHeight + param->maxCUSize - 1) >> param->maxLog2CUSize;
