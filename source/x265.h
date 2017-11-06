@@ -1514,6 +1514,16 @@ typedef struct x265_param
     *  This DCT approximation is less computational intensive and gives results close to 
     *  standard DCT for QP >= 23 */
     int       bLowPassDct;
+
+    /* Sets the portion of the decode buffer that must be available after all the
+    * specified frames have been inserted into the decode buffer. If it is less
+    * than 1, then the final buffer available is vbv-end * vbvBufferSize.  Otherwise,
+    * it is interpreted as the final buffer available in kbits. Default 0 (disabled) */
+    double    vbvBufferEnd;
+    
+    /* Frame from which qp has to be adjusted to hit final decode buffer emptiness.
+    * Specified as a fraction of the total frames. Default 0 */
+    double    vbvEndFrameAdjust;
 } x265_param;
 
 /* x265_param_alloc:

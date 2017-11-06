@@ -1496,6 +1496,24 @@ Quality, rate control and rate distortion options
 	Default 0.9
 
 	**Range of values:** fractional: 0 - 1.0, or kbits: 2 .. bufsize
+	
+.. option:: --vbv-end <float>
+
+    Final buffer emptiness. The portion of the decode buffer that must be 
+	available after all the specified frames have been inserted into the 
+	decode buffer. Specified as a fractional value between 0 and 1, or in 
+	kbits. Default 0 (disabled)
+	
+	This enables basic support for chunk-parallel encoding where each segment 
+	can specify the starting and ending state of the VBV buffer so that VBV 
+	compliance can be maintained when chunks are independently encoded and 
+	stitched together.
+	
+.. option:: --vbv-end-fr-adj <float>
+
+    Frame from which qp has to be adjusted to achieve final decode buffer
+	emptiness. Specified as a fraction of the total frames. Fractions > 0 are 
+	supported only when the total number of frames is known. Default 0.
 
 .. option:: --qp, -q <integer>
 

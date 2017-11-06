@@ -212,6 +212,8 @@ void x265_param_default(x265_param* param)
     param->rc.vbvMaxBitrate = 0;
     param->rc.vbvBufferSize = 0;
     param->rc.vbvBufferInit = 0.9;
+    param->vbvBufferEnd = 0;
+    param->vbvEndFrameAdjust = 0;
     param->rc.rfConstant = 28;
     param->rc.bitrate = 0;
     param->rc.qCompress = 0.6;
@@ -982,6 +984,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("force-flush")p->forceFlush = atoi(value);
         OPT("splitrd-skip") p->bEnableSplitRdSkip = atobool(value);
 		OPT("lowpass-dct") p->bLowPassDct = atobool(value);
+        OPT("vbv-end") p->vbvBufferEnd = atof(value);
+        OPT("vbv-end-fr-adj") p->vbvEndFrameAdjust = atof(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1300,6 +1304,12 @@ int x265_check_params(x265_param* param)
           "Maximum local bit rate can not be less than zero");
     CHECK(param->rc.vbvBufferInit < 0,
           "Valid initial VBV buffer occupancy must be a fraction 0 - 1, or size in kbits");
+    CHECK(param->vbvBufferEnd < 0,
+        "Valid final VBV buffer emptiness must be a fraction 0 - 1, or size in kbits");
+    CHECK(param->vbvEndFrameAdjust < 0,
+        "Valid vbv-end-fr-adj must be a fraction 0 - 1");
+    CHECK(!param->totalFrames && param->vbvEndFrameAdjust,
+        "vbv-end-fr-adj cannot be enabled when total number of frames is unknown");
     CHECK(param->rc.bitrate < 0,
           "Target bitrate can not be less than zero");
     CHECK(param->rc.qCompress < 0.5 || param->rc.qCompress > 1.0,
@@ -1423,9 +1433,15 @@ void x265_print_params(x265_param* param)
     }
 
     if (param->rc.vbvBufferSize)
-        x265_log(param, X265_LOG_INFO, "VBV/HRD buffer / max-rate / init    : %d / %d / %.3f\n",
-                 param->rc.vbvBufferSize, param->rc.vbvMaxBitrate, param->rc.vbvBufferInit);
-
+    {
+        if (param->vbvBufferEnd)
+            x265_log(param, X265_LOG_INFO, "VBV/HRD buffer / max-rate / init / end / fr-adj: %d / %d / %.3f / %.3f / %.3f\n",
+            param->rc.vbvBufferSize, param->rc.vbvMaxBitrate, param->rc.vbvBufferInit, param->vbvBufferEnd, param->vbvEndFrameAdjust);
+        else
+            x265_log(param, X265_LOG_INFO, "VBV/HRD buffer / max-rate / init    : %d / %d / %.3f\n",
+            param->rc.vbvBufferSize, param->rc.vbvMaxBitrate, param->rc.vbvBufferInit);
+    }
+    
     char buf[80] = { 0 };
     char tmp[40];
 #define TOOLOPT(FLAG, STR) if (FLAG) appendtool(param, buf, sizeof(buf), STR);
@@ -1602,8 +1618,10 @@ char *x265_param2string(x265_param* p, int padx, int pady)
         {
             s += sprintf(s, " vbv-maxrate=%d vbv-bufsize=%d vbv-init=%.1f",
                  p->rc.vbvMaxBitrate, p->rc.vbvBufferSize, p->rc.vbvBufferInit);
+            if (p->vbvBufferEnd)
+                s += sprintf(s, " vbv-end=%.1f vbv-end-fr-adj=%.1f", p->vbvBufferEnd, p->vbvEndFrameAdjust);
             if (p->rc.rateControlMode == X265_RC_CRF)
-                s += sprintf(s, " crf-max=%.1f crf-min=%.1f", p->rc.rfConstantMax, p->rc.rfConstantMin);
+                s += sprintf(s, " crf-max=%.1f crf-min=%.1f", p->rc.rfConstantMax, p->rc.rfConstantMin);   
         }
     }
     else if (p->rc.rateControlMode == X265_RC_CQP)

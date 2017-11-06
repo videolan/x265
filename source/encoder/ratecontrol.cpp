@@ -218,6 +218,7 @@ RateControl::RateControl(x265_param& p)
     m_param->rc.vbvBufferSize = x265_clip3(0, 2000000, m_param->rc.vbvBufferSize);
     m_param->rc.vbvMaxBitrate = x265_clip3(0, 2000000, m_param->rc.vbvMaxBitrate);
     m_param->rc.vbvBufferInit = x265_clip3(0.0, 2000000.0, m_param->rc.vbvBufferInit);
+    m_param->vbvBufferEnd = x265_clip3(0.0, 2000000.0, m_param->vbvBufferEnd);
     m_singleFrameVbv = 0;
     m_rateTolerance = 1.0;
 
@@ -255,6 +256,11 @@ RateControl::RateControl(x265_param& p)
         m_param->rc.vbvMaxBitrate = 0;
     }
     m_isVbv = m_param->rc.vbvMaxBitrate > 0 && m_param->rc.vbvBufferSize > 0;
+    if (m_param->vbvBufferEnd && !m_isVbv)
+    {
+        x265_log(m_param, X265_LOG_WARNING, "vbv-end requires VBV parameters, ignored\n");
+        m_param->vbvBufferEnd = 0;
+    }
     if (m_param->bEmitHRDSEI && !m_isVbv)
     {
         x265_log(m_param, X265_LOG_WARNING, "NAL HRD parameters require VBV parameters, ignored\n");
@@ -339,6 +345,10 @@ bool RateControl::init(const SPS& sps)
 
         if (m_param->rc.vbvBufferInit > 1.)
             m_param->rc.vbvBufferInit = x265_clip3(0.0, 1.0, m_param->rc.vbvBufferInit / m_param->rc.vbvBufferSize);
+        if (m_param->vbvBufferEnd > 1.)
+            m_param->vbvBufferEnd = x265_clip3(0.0, 1.0, m_param->vbvBufferEnd / m_param->rc.vbvBufferSize);
+        if (m_param->vbvEndFrameAdjust > 1.)
+            m_param->vbvEndFrameAdjust = x265_clip3(0.0, 1.0, m_param->vbvEndFrameAdjust);
         m_param->rc.vbvBufferInit = x265_clip3(0.0, 1.0, X265_MAX(m_param->rc.vbvBufferInit, m_bufferRate / m_bufferSize));
         m_bufferFillFinal = m_bufferSize * m_param->rc.vbvBufferInit;
         m_bufferFillActual = m_bufferFillFinal;
@@ -2160,29 +2170,51 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     curBits = predictSize(&m_pred[predType], frameQ[type], (double)satd);
                     bufferFillCur -= curBits;
                 }
-
-                /* Try to get the buffer at least 50% filled, but don't set an impossible goal. */
-                double finalDur = 1;
-                if (m_param->rc.bStrictCbr)
+                if (m_param->vbvBufferEnd && rce->encodeOrder >= m_param->vbvEndFrameAdjust * m_param->totalFrames)
                 {
-                    finalDur = x265_clip3(0.4, 1.0, totalDuration);
+                    bool loopBreak = false;
+                    double bufferDiff = m_param->vbvBufferEnd - (m_bufferFill / m_bufferSize);
+                    targetFill = m_bufferFill + m_bufferSize * (bufferDiff / (m_param->totalFrames - rce->encodeOrder));
+                    if (bufferFillCur < targetFill)
+                    {
+                        q *= 1.01;
+                        loopTerminate |= 1;
+                        loopBreak = true;
+                    }
+                    if (bufferFillCur > m_param->vbvBufferEnd * m_bufferSize)
+                    {
+                        q /= 1.01;
+                        loopTerminate |= 2;
+                        loopBreak = true;
+                    }
+                    if (!loopBreak)
+                        break;
                 }
-                targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5 , m_bufferSize * (1 - 0.5 * finalDur));
-                if (bufferFillCur < targetFill)
+                else
                 {
-                    q *= 1.01;
-                    loopTerminate |= 1;
-                    continue;
+                    /* Try to get the buffer at least 50% filled, but don't set an impossible goal. */
+                    double finalDur = 1;
+                    if (m_param->rc.bStrictCbr)
+                    {
+                        finalDur = x265_clip3(0.4, 1.0, totalDuration);
+                    }
+                    targetFill = X265_MIN(m_bufferFill + totalDuration * m_vbvMaxRate * 0.5, m_bufferSize * (1 - 0.5 * finalDur));
+                    if (bufferFillCur < targetFill)
+                    {
+                        q *= 1.01;
+                        loopTerminate |= 1;
+                        continue;
+                    }
+                    /* Try to get the buffer not more than 80% filled, but don't set an impossible goal. */
+                    targetFill = x265_clip3(m_bufferSize * (1 - 0.2 * finalDur), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
+                    if (m_isCbr && bufferFillCur > targetFill && !m_isSceneTransition)
+                    {
+                        q /= 1.01;
+                        loopTerminate |= 2;
+                        continue;
+                    }
+                    break;
                 }
-                /* Try to get the buffer not more than 80% filled, but don't set an impossible goal. */
-                targetFill = x265_clip3(m_bufferSize * (1 - 0.2 * finalDur), m_bufferSize, m_bufferFill - totalDuration * m_vbvMaxRate * 0.5);
-                if (m_isCbr && bufferFillCur > targetFill && !m_isSceneTransition)
-                {
-                    q /= 1.01;
-                    loopTerminate |= 2;
-                    continue;
-                }
-                break;
             }
             q = X265_MAX(q0 / 2, q);
         }

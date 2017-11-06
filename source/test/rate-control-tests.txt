@@ -25,7 +25,7 @@ BasketballDrive_1920x1080_50.y4m,--preset ultrafast --bitrate 3000 --vbv-bufsize
 big_buck_bunny_360p24.y4m,--preset medium --bitrate 400 --vbv-bufsize 600 --vbv-maxrate 600 --no-wpp --aud --hrd --tune fast-decode
 sita_1920x1080_30.yuv,--preset superfast --bitrate 3000 --vbv-bufsize 3000 --vbv-maxrate 3000 --aud --strict-cbr --no-wpp
 sintel_trailer_2k_480p24.y4m, --preset slow --crf 24 --vbv-bufsize 150 --vbv-maxrate 150 --dynamic-rd 1.53
-
+BasketballDrive_1920x1080_50.y4m,--preset medium --bitrate 10000 --vbv-bufsize 15000 --vbv-maxrate 11500 --vbv-end 0.9 --vbv-end-fr-adj 0.7
 
 
 # multi-pass rate control tests
