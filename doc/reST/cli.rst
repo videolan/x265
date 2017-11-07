@@ -1499,7 +1499,7 @@ Quality, rate control and rate distortion options
 	
 .. option:: --vbv-end <float>
 
-    Final buffer emptiness. The portion of the decode buffer that must be 
+	Final buffer emptiness. The portion of the decode buffer that must be 
 	available after all the specified frames have been inserted into the 
 	decode buffer. Specified as a fractional value between 0 and 1, or in 
 	kbits. Default 0 (disabled)
@@ -1511,7 +1511,7 @@ Quality, rate control and rate distortion options
 	
 .. option:: --vbv-end-fr-adj <float>
 
-    Frame from which qp has to be adjusted to achieve final decode buffer
+	Frame from which qp has to be adjusted to achieve final decode buffer
 	emptiness. Specified as a fraction of the total frames. Fractions > 0 are 
 	supported only when the total number of frames is known. Default 0.
 
