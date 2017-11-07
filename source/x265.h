@@ -1791,8 +1791,8 @@ typedef struct x265_api
     int           sizeof_frame_stats;   /* sizeof(x265_frame_stats) */
     int           (*encoder_intra_refresh)(x265_encoder*);
     int           (*encoder_ctu_info)(x265_encoder*, int, x265_ctu_info_t**);
-    int           (*x265_get_slicetype_poc_and_scenecut)(x265_encoder*, int*, int*, int*);
-    int           (*x265_get_ref_frame_list)(x265_encoder*, x265_picyuv**, x265_picyuv**, int, int);
+    int           (*get_slicetype_poc_and_scenecut)(x265_encoder*, int*, int*, int*);
+    int           (*get_ref_frame_list)(x265_encoder*, x265_picyuv**, x265_picyuv**, int, int);
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 
