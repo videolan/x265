@@ -2639,6 +2639,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I444].pu[LUMA_64x32].filter_vpp = PFX(interp_4tap_vert_pp_64x32_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_vpp = PFX(interp_4tap_vert_pp_64x48_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_vpp = PFX(interp_4tap_vert_pp_64x64_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x16].filter_vps = PFX(interp_4tap_vert_ps_64x16_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x32].filter_vps = PFX(interp_4tap_vert_ps_64x32_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_vps = PFX(interp_4tap_vert_ps_64x48_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_vps = PFX(interp_4tap_vert_ps_64x64_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_48x64].filter_vpp = PFX(interp_4tap_vert_pp_48x64_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_32x8].filter_vpp = PFX(interp_4tap_vert_pp_32x8_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_32x16].filter_vpp = PFX(interp_4tap_vert_pp_32x16_avx512);
