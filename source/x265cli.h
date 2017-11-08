@@ -461,6 +461,7 @@ static void showHelp(x265_param *param)
     H0("   --analysis-reuse-mode <string|int>  save - Dump analysis info into file, load - Load analysis buffers from the file. Default %d\n", param->analysisReuseMode);
     H0("   --analysis-reuse-file <filename>    Specify file name used for either dumping or reading analysis data. Deault x265_analysis.dat\n");
     H0("   --analysis-reuse-level <1..10>      Level of analysis reuse indicates amount of info stored/reused in save/load mode, 1:least..10:most. Default %d\n", param->analysisReuseLevel);
+    H0("   --refine-mv-type <string>     Reuse MV information received through API call. Supported option is avc. Default disabled - %d\n", param->bMVType);
     H0("   --scale-factor <int>          Specify factor by which input video is scaled down for analysis save mode. Default %d\n", param->scaleFactor);
     H0("   --refine-intra <0..3>         Enable intra refinement for encode that uses analysis-reuse-mode=load.\n"
         "                                    - 0 : Forces both mode and depth from the save encode.\n"
