@@ -8272,7 +8272,7 @@ FILTER_VER_PS_CHROMA_64xN_AVX512 48
 FILTER_VER_PS_CHROMA_64xN_AVX512 64
 %endif
 
-%macro PROCESS_CHROMA_VERT_SP_64x2_AVX512 0
+%macro PROCESS_CHROMA_VERT_S_64x2_AVX512 1
     movu                 m1,                  [r0]
     movu                 m3,                  [r0 + r1]
     punpcklwd            m0,                  m1,                     m3
@@ -8332,6 +8332,7 @@ FILTER_VER_PS_CHROMA_64xN_AVX512 64
     pmaddwd              m13,                 m16
     paddd                m11,                 m13
 
+%ifidn %1,sp
     paddd                m0,                  m7
     paddd                m1,                  m7
     paddd                m2,                  m7
@@ -8349,7 +8350,16 @@ FILTER_VER_PS_CHROMA_64xN_AVX512 64
     psrad                m9,                  INTERP_SHIFT_SP
     psrad                m10,                 INTERP_SHIFT_SP
     psrad                m11,                 INTERP_SHIFT_SP
-
+%else
+    psrad                m0,                  6
+    psrad                m1,                  6
+    psrad                m2,                  6
+    psrad                m3,                  6
+    psrad                m8,                  6
+    psrad                m9,                  6
+    psrad                m10,                 6
+    psrad                m11,                 6
+%endif
     packssdw             m0,                  m1
     packssdw             m2,                  m3
     packssdw             m8,                  m9
@@ -8362,9 +8372,9 @@ FILTER_VER_PS_CHROMA_64xN_AVX512 64
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------------------------------------------
-%macro FILTER_VER_SP_CHROMA_64xN_AVX512 1
+%macro FILTER_VER_S_CHROMA_64xN_AVX512 2
 INIT_ZMM avx512
-cglobal interp_4tap_vert_sp_64x%1, 5, 7, 17
+cglobal interp_4tap_vert_%1_64x%2, 5, 7, 17
     add                   r1d,                r1d
     add                   r3d,                r3d
     sub                   r0,                 r1
@@ -8377,23 +8387,29 @@ cglobal interp_4tap_vert_sp_64x%1, 5, 7, 17
     lea                   r5,                 [tab_ChromaCoeffV_avx512 + r4]
 %endif
 
+%ifidn %1, sp
     vbroadcasti32x4       m7,                 [INTERP_OFFSET_SP]
-    mova                  [r5],               m15
-    mova                  [r5 + mmsize],      m16
+%endif
+    mova                  m15,                [r5]
+    mova                  m16,                [r5 + mmsize]
 
-%rep %1/2 - 1
-    PROCESS_CHROMA_VERT_SP_64x2_AVX512
+%rep %2/2 - 1
+    PROCESS_CHROMA_VERT_S_64x2_AVX512 %1
     lea                   r2,                 [r2 + 2 * r3]
 %endrep
-    PROCESS_CHROMA_VERT_SP_64x2_AVX512
+    PROCESS_CHROMA_VERT_S_64x2_AVX512 %1
     RET
 %endmacro
 
 %if ARCH_X86_64
-    FILTER_VER_SP_CHROMA_64xN_AVX512 16
-    FILTER_VER_SP_CHROMA_64xN_AVX512 32
-    FILTER_VER_SP_CHROMA_64xN_AVX512 48
-    FILTER_VER_SP_CHROMA_64xN_AVX512 64
+    FILTER_VER_S_CHROMA_64xN_AVX512 ss, 16
+    FILTER_VER_S_CHROMA_64xN_AVX512 ss, 32
+    FILTER_VER_S_CHROMA_64xN_AVX512 ss, 48
+    FILTER_VER_S_CHROMA_64xN_AVX512 ss, 64
+    FILTER_VER_S_CHROMA_64xN_AVX512 sp, 16
+    FILTER_VER_S_CHROMA_64xN_AVX512 sp, 32
+    FILTER_VER_S_CHROMA_64xN_AVX512 sp, 48
+    FILTER_VER_S_CHROMA_64xN_AVX512 sp, 64
 %endif
 ;-------------------------------------------------------------------------------------------------------------
 ;ipfilter_chroma_avx512 code end
