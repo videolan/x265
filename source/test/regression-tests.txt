@@ -163,6 +163,6 @@ silent_cif_420.y4m,--preset veryslow --me sea
 big_buck_bunny_360p24.y4m,--preset superfast --me sea
 
 #low-pass dct test
-720p50_parkrun_ter.y4m,--preset medium,--lowpass-dct
+720p50_parkrun_ter.y4m,--preset medium --lowpass-dct
 
 # vim: tw=200
