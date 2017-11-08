@@ -2170,15 +2170,16 @@ DCT Approximations
 
 .. option:: --lowpass-dct
 
-    If enabled, x265 will use low-pass truncated dct approximation instead of the
-    standard dct. This approximation is less computational intesive but it generates
-    truncated coefficient matrixes for the transformed block. Empirical analysis shows
-    this approximation gives good PSNR results for QP>=23. 
+    If enabled, x265 will use low-pass subband dct approximation instead of the
+    standard dct for 16x16 and 32x32 blocks. This approximation is less computational 
+    intensive but it generates truncated coefficient matrixes for the transformed block. 
+    Empirical analysis shows marginal loss in compression and performance gains up to 10%,
+    paticularly at moderate bit-rates.
 
     This approximation should be considered for platforms with performance and time 
     constrains.
 
-	Default disabled. **Experimental feature**
+    Default disabled. **Experimental feature**
 
 Debugging options
 =================

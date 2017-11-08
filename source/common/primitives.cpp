@@ -272,7 +272,7 @@ void x265_setup_primitives(x265_param *param)
 
         setupAliasPrimitives(primitives);
 
-        if (param->bLowPassDct && param->rc.qp > 20)
+        if (param->bLowPassDct)
         {
             enableLowpassDCTPrimitives(primitives); 
         }

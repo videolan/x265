@@ -1515,9 +1515,8 @@ typedef struct x265_param
     /* Disable lookahead */
     int       bDisableLookahead;
 
-    /* Use low-pass truncated dct approximation 
-    *  This DCT approximation is less computational intensive and gives results close to 
-    *  standard DCT for QP >= 23 */
+    /* Use low-pass subband dct approximation 
+    *  This DCT approximation is less computational intensive and gives results close to standard DCT */
     int       bLowPassDct;
 
     /* Sets the portion of the decode buffer that must be available after all the
