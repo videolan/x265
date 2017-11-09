@@ -1,10 +1,10 @@
 @echo off
-if "%VS120COMNTOOLS%" == "" (
+if "%VS150COMNTOOLS%" == "" (
   msg "%username%" "Visual Studio 15 not detected"
   exit 1
 )
 
-call "%VS120COMNTOOLS%\..\..\VC\vcvarsall.bat"
+call "%VS150COMNTOOLS%\..\..\VC\vcvarsall.bat"
 
 @mkdir 12bit
 @mkdir 10bit
