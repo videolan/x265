@@ -386,9 +386,7 @@ void Encoder::create()
             }
         }
     }
-
-    m_bZeroLatency = !m_param->bframes && !m_param->lookaheadDepth && m_param->frameNumThreads == 1;
-
+    m_bZeroLatency = !m_param->bframes && !m_param->lookaheadDepth && m_param->frameNumThreads == 1 && m_param->maxSlices == 1;
     m_aborted |= parseLambdaFile(m_param);
 
     m_encodeStartTime = x265_mdate();
