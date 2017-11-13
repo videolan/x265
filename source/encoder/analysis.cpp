@@ -2301,7 +2301,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
             for (uint32_t part = 0; part < numPU; part++)
             {
                 PredictionUnit pu(mode.cu, cuGeom, part);
-                if (m_param->analysisReuseLevel == 10)
+                if (m_param->analysisReuseLevel >= 7)
                 {
                     analysis_inter_data* interDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
                     int cuIdx = (mode.cu.m_cuAddr * parentCTU.m_numPartitions) + cuGeom.absPartIdx;
@@ -2407,7 +2407,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 if (m_slice->m_pps->bUseDQP && nextDepth <= m_slice->m_pps->maxCuDQPDepth)
                     nextQP = setLambdaFromQP(parentCTU, calculateQpforCuSize(parentCTU, childGeom));
 
-                int lamdaQP = m_param->analysisReuseLevel == 10 ? nextQP : lqp;
+                int lamdaQP = (m_param->analysisReuseLevel >= 7) ? nextQP : lqp;
 
                 if (split)
                     m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, childGeom, nextQP) : compressInterCU_rd0_4(parentCTU, childGeom, nextQP);

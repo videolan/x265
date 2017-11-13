@@ -3036,7 +3036,7 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
             CHECKED_MALLOC(interData->mergeFlag, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         }
 
-        if (m_param->analysisReuseLevel == 10)
+        if (m_param->analysisReuseLevel >= 7)
         {
             CHECKED_MALLOC(interData->interDir, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
             for (int dir = 0; dir < numDir; dir++)
@@ -3113,7 +3113,7 @@ void Encoder::freeAnalysis(x265_analysis_data* analysis)
                 X265_FREE(((analysis_inter_data*)analysis->interData)->mergeFlag);
                 X265_FREE(((analysis_inter_data*)analysis->interData)->partSize);
             }
-            if (m_param->analysisReuseLevel == 10)
+            if (m_param->analysisReuseLevel >= 7)
             {
                 X265_FREE(((analysis_inter_data*)analysis->interData)->interDir);
                 int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
