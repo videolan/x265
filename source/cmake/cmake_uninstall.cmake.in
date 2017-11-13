@@ -17,3 +17,7 @@ foreach(file ${files})
         message(STATUS "File '$ENV{DESTDIR}${file}' does not exist.")
     endif()
 endforeach(file)
+
+if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/install_manifest.txt")
+    file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/install_manifest.txt")
+endif()
