@@ -35,8 +35,10 @@ dct8_shuf6_AVX512: dq 0, 2, 4, 6, 1, 3, 5, 7
 dct8_shuf8_AVX512: dd 0, 2, 8, 10, 4, 6, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
 dct8_shuf4_AVX512: times 2 dd 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
 dct8_shuf7_AVX512: dw 0, 2, 16, 18, 8, 10, 24, 26, 4, 6, 20, 22, 12, 14, 28, 30
+dct8_shuf9_AVX512: times 2 dw 0, 8, 16, 24, 4, 12, 20, 28
 dct8_shuf:         times 2 db 6, 7, 4, 5, 2, 3, 0, 1, 14, 15, 12, 13, 10, 11, 8, 9
 dct8_shuf_AVX512:  times 2 db 4, 5, 6, 7, 0, 1, 2, 3, 12, 13, 14, 15, 8, 9, 10, 11
+
 
 tab_dct8:       dw 64, 64, 64, 64, 64, 64, 64, 64
                 dw 89, 75, 50, 18, -18, -50, -75, -89
@@ -2325,77 +2327,83 @@ vbroadcasti128      m5,                [pd_ %+ DCT8_ROUND1]
 %macro DCT8_AVX512_PASS_2 4
     vpmaddwd         m0,               m9,  m%1
     vpmaddwd         m1,               m10, m%1
-    vpshufb          m2,               m0,  m6
-    vpshufb          m3,               m1,  m6
+    vpsrldq          m2,               m0,  8
+    vpsrldq          m3,               m1,  8
     vpaddd           m0,               m2
     vpaddd           m1,               m3
-    vpermd           m0,               m18, m0
-    vpermd           m1,               m18, m1
-    vinserti64x4     m0,               m0, ym1, 1
-    vpshufb          m1,               m0, m6
-    vpaddd           m0,               m1
-    vpermd           m0,               m18, m0
-
-    vpmaddwd         m1,               m9, m%2
-    vpmaddwd         m2,               m10, m%2
-    vpshufb          m3,               m1, m6
-    vpshufb          m4,               m2, m6
+    vpsrlq           m2,               m0,  32
+    vpsrlq           m3,               m1,  32
+    vpaddd           m0,               m2
     vpaddd           m1,               m3
-    vpaddd           m2,               m4
-    vpermd           m1,               m18, m1
-    vpermd           m2,               m18, m2
-    vinserti64x4     m1,               m1, ym2, 1
-    vpshufb          m2,               m1, m6
-    vpaddd           m1,               m2
-    vpermd           m1,               m18, m1
-
-    vinserti64x4     m0,               m0, ym1, 1
     vpaddd           m0,               m5
     vpsrad           m0,               DCT8_SHIFT2
+    vpaddd           m1,               m5
+    vpsrad           m1,               DCT8_SHIFT2
+    vpackssdw        m0,               m1
+    vpermw           m0,               m19, m0
+
+    vpmaddwd         m1,               m9,  m%2
+    vpmaddwd         m2,               m10, m%2
+    vpsrldq          m3,               m1,  8
+    vpsrldq          m4,               m2,  8
+    vpaddd           m1,               m3
+    vpaddd           m2,               m4
+    vpsrlq           m3,               m1,  32
+    vpsrlq           m4,               m2,  32
+    vpaddd           m1,               m3
+    vpaddd           m2,               m4
+    vpaddd           m1,               m5
+    vpsrad           m1,               DCT8_SHIFT2
+    vpaddd           m2,               m5
+    vpsrad           m2,               DCT8_SHIFT2
+    vpackssdw        m1,               m2
+    vpermw           m1,               m19, m1
+    vinserti128      ym0,              ym0, xm1, 1
 
     vpmaddwd         m1,               m9,  m%3
     vpmaddwd         m2,               m10, m%3
-    vpshufb          m3,               m1,  m6
-    vpshufb          m4,               m2,  m6
+    vpsrldq          m3,               m1,  8
+    vpsrldq          m4,               m2,  8
     vpaddd           m1,               m3
     vpaddd           m2,               m4
-    vpermd           m1,               m18, m1
-    vpermd           m2,               m18, m2
-    vinserti64x4     m1,               m1, ym2, 1
-    vpshufb          m2,               m1, m6
-    vpaddd           m1,               m2
-    vpermd           m1,               m18, m1
-
-    vpmaddwd         m2,               m9, m%4
-    vpmaddwd         m3,               m10, m%4
-    vpshufb          m4,               m2, m6
-    vpshufb          m7,               m3, m6
+    vpsrlq           m3,               m1,  32
+    vpsrlq           m4,               m2,  32
+    vpaddd           m1,               m3
     vpaddd           m2,               m4
-    vpaddd           m3,               m7
-    vpermd           m2,               m18, m2
-    vpermd           m3,               m18, m3
-    vinserti64x4     m2,               m2, ym3, 1
-    vpshufb          m3,               m2, m6
-    vpaddd           m2,               m3
-    vpermd           m2,               m18, m2
-
-    vinserti64x4     m1,               m1, ym2, 1
     vpaddd           m1,               m5
     vpsrad           m1,               DCT8_SHIFT2
+    vpaddd           m2,               m5
+    vpsrad           m2,               DCT8_SHIFT2
+    vpackssdw        m1,               m2
+    vpermw           m1,               m19, m1
 
-    vpackssdw        m0,               m1
-    vpermq           m0,               m19, m0
+    vpmaddwd         m2,               m9,  m%4
+    vpmaddwd         m3,               m10, m%4
+    vpsrldq          m4,               m2,  8
+    vpsrldq          m6,               m3,  8
+    vpaddd           m2,               m4
+    vpaddd           m3,               m6
+    vpsrlq           m4,               m2,  32
+    vpsrlq           m6,               m3,  32
+    vpaddd           m2,               m4
+    vpaddd           m3,               m6
+    vpaddd           m2,               m5
+    vpsrad           m2,               DCT8_SHIFT2
+    vpaddd           m3,               m5
+    vpsrad           m3,               DCT8_SHIFT2
+    vpackssdw        m2,               m3
+    vpermw           m2,               m19, m2
+
+    vinserti128      ym1,              ym1, xm2, 1
+    vinserti64x4     m0,               m0, ym1, 1
 %endmacro
 
 INIT_ZMM avx512
 cglobal dct8, 3, 7, 28
 
     vbroadcasti32x4  m5,               [pd_ %+ DCT8_ROUND1]
-    vbroadcasti32x4  m6,               [dct8_shuf_AVX512]
-    vbroadcasti32x8  m18,              [dct8_shuf4_AVX512]
     vbroadcasti32x8  m4,               [dct8_shuf]
-    mova             m19,              [dct8_shuf5_AVX512]
-    mova             m17,              [dct8_shuf8_AVX512]
+    vbroadcasti32x4  m19,              [dct8_shuf9_AVX512]
 
     add              r2d,              r2d
     lea              r3,               [r2 * 3]
@@ -2446,7 +2454,7 @@ cglobal dct8, 3, 7, 28
     vinserti64x4           m9,          m9,  ym11, 1
     vinserti64x4           m10,         m13, ym15, 1
 
-    ;Load all the coefficients togather for better caching
+    ;Load all the coefficients togather for better caching and reuse common coefficients from PASS 1
     vbroadcasti32x4    m21,                [r5 + 1 * 16]
     vbroadcasti32x4    m22,                [r5 + 2 * 16]
     vbroadcasti32x4    m23,                [r5 + 3 * 16]
