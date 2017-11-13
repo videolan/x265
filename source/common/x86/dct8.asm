@@ -2319,7 +2319,7 @@ vbroadcasti128      m5,                [pd_ %+ DCT8_ROUND1]
     vpaddd          m%2,               m5
     vpsrad          m%2,               DCT8_SHIFT1
     vpackssdw       m%2,               m%2
-    vpermq          m%2,               m1, m%2
+    vpermq          m%2,               m19, m%2
 %endmacro
 
 %macro DCT8_AVX512_PASS_2 4
@@ -2422,7 +2422,6 @@ cglobal dct8, 3, 7, 28
     vpshufb         m0,                m4
     vpaddw          m3,                m2, m0
     vpsubw          m2,                m0
-    mova            m1,                [dct8_shuf6_AVX512]
 
     ; Load all the coefficients togather for better caching
     vpbroadcastq    m20,               [r6 + 0 * 8]
