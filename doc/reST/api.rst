@@ -215,6 +215,13 @@ changes made to the parameters for auto-detection and other reasons::
         *    the encoder will wait for this copy to complete if enabled.
         */
 
+**x265_set_analysis_data()** may be used to recive analysis information from external application::
+
+    /* x265_set_analysis_data:
+     *     set the analysis data,
+     *     returns negative on error, 0 access unit were output. */
+     int x265_set_analysis_data(x265_encoder *encoder, x265_analysis_data *analysis_data, int poc, uint32_t cuBytes);
+
 Pictures
 ========
 

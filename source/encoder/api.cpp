@@ -365,6 +365,18 @@ int x265_get_ref_frame_list(x265_encoder *enc, x265_picyuv** l0, x265_picyuv** l
     return encoder->getRefFrameList((PicYuv**)l0, (PicYuv**)l1, sliceType, poc);
 }
 
+int x265_set_analysis_data(x265_encoder *enc, x265_analysis_data *analysis_data, int poc, uint32_t cuBytes)
+{
+    if (!enc)
+        return -1;
+
+    Encoder *encoder = static_cast<Encoder*>(enc);
+    if (!encoder->setAnalysisData(analysis_data, poc, cuBytes))
+        return 0;
+
+    return -1;
+}
+
 void x265_cleanup(void)
 {
     BitCost::destroy();
@@ -444,6 +456,7 @@ static const x265_api libapi =
     &x265_csvlog_frame,
     &x265_csvlog_encode,
     &x265_dither_image,
+    &x265_set_analysis_data
 };
 
 typedef const x265_api* (*api_get_func)(int bitDepth);

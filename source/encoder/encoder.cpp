@@ -574,6 +574,88 @@ int Encoder::setAnalysisDataAfterZScan(x265_analysis_data *analysis_data, Frame*
     return 0;
 }
 
+int Encoder::setAnalysisData(x265_analysis_data *analysis_data, int poc, uint32_t cuBytes)
+{
+    uint32_t widthInCU = (m_param->sourceWidth + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize;
+    uint32_t heightInCU = (m_param->sourceHeight + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize;
+
+    Frame* curFrame = m_dpb->m_picList.getPOC(poc);
+    if (curFrame != NULL)
+    {
+        curFrame->m_analysisData = (*analysis_data);
+        curFrame->m_analysisData.numCUsInFrame = widthInCU * heightInCU;
+        curFrame->m_analysisData.numPartitions = m_param->num4x4Partitions;
+        allocAnalysis(&curFrame->m_analysisData);
+        if (m_param->maxCUSize == 16)
+        {
+            if (analysis_data->sliceType == X265_TYPE_IDR || analysis_data->sliceType == X265_TYPE_I)
+            {
+                curFrame->m_analysisData.sliceType = X265_TYPE_I;
+                if (m_param->analysisReuseLevel < 2)
+                    return -1;
+
+                curFrame->m_analysisData.numPartitions = m_param->num4x4Partitions;
+                size_t count = 0;
+                analysis_intra_data * currIntraData = (analysis_intra_data *)curFrame->m_analysisData.intraData;
+                analysis_intra_data * intraData = (analysis_intra_data *)analysis_data->intraData;
+                for (uint32_t d = 0; d < cuBytes; d++)
+                {
+                    int bytes = curFrame->m_analysisData.numPartitions >> ((intraData)->depth[d] * 2);
+                    memset(&(currIntraData)->depth[count], (intraData)->depth[d], bytes);
+                    memset(&(currIntraData)->chromaModes[count], (intraData)->chromaModes[d], bytes);
+                    memset(&(currIntraData)->partSizes[count], (intraData)->partSizes[d], bytes);
+                    memset(&(currIntraData)->partSizes[count], (intraData)->partSizes[d], bytes);
+                    count += bytes;
+                }
+                memcpy(&(currIntraData)->modes, (intraData)->modes, curFrame->m_analysisData.numPartitions * analysis_data->numCUsInFrame);
+            }
+            else
+            {
+                uint32_t numDir = analysis_data->sliceType == X265_TYPE_P ? 1 : 2;
+                if (m_param->analysisReuseLevel < 2)
+                    return -1;
+
+                curFrame->m_analysisData.numPartitions = m_param->num4x4Partitions;
+                size_t count = 0;
+                analysis_inter_data * currInterData = (analysis_inter_data *)curFrame->m_analysisData.interData;
+                analysis_inter_data * interData = (analysis_inter_data *)analysis_data->interData;
+                for (uint32_t d = 0; d < cuBytes; d++)
+                {
+                    int bytes = curFrame->m_analysisData.numPartitions >> ((interData)->depth[d] * 2);
+                    memset(&(currInterData)->depth[count], (interData)->depth[d], bytes);
+                    memset(&(currInterData)->modes[count], (interData)->modes[d], bytes);
+                    if (m_param->analysisReuseLevel > 4)
+                    {
+                        memset(&(currInterData)->partSize[count], (interData)->partSize[d], bytes);
+                        int numPU = nbPartsTable[(currInterData)->partSize[d]];
+                        for (int pu = 0; pu < numPU; pu++, d++)
+                        {
+                            (currInterData)->mergeFlag[count + pu] = (interData)->mergeFlag[d];
+                            if (m_param->analysisReuseLevel >= 7)
+                            {
+                                (currInterData)->interDir[count + pu] = (interData)->interDir[d];
+                                for (uint32_t i = 0; i < numDir; i++)
+                                {
+                                    (currInterData)->mvpIdx[i][count + pu] = (interData)->mvpIdx[i][d];
+                                    (currInterData)->refIdx[i][count + pu] = (interData)->refIdx[i][d];
+                                    memcpy(&(currInterData)->mv[i][count + pu], &(interData)->mv[i][d], sizeof(MV));
+                                }
+                            }
+                        }
+                    }
+                    count += bytes;
+                }
+            }
+        }
+        else
+            setAnalysisDataAfterZScan(analysis_data, curFrame);
+
+        curFrame->m_copyMVType.trigger();
+        return 0;
+    }
+    return -1;
+}
+
 void Encoder::destroy()
 {
 #if ENABLE_HDR10_PLUS

@@ -30,3 +30,4 @@ x265_csvlog_open
 x265_csvlog_frame
 x265_csvlog_encode
 x265_dither_image
+x265_set_analysis_data

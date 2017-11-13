@@ -212,6 +212,8 @@ public:
 
     int setAnalysisDataAfterZScan(x265_analysis_data *analysis_data, Frame* curFrame);
 
+    int setAnalysisData(x265_analysis_data *analysis_data, int poc, uint32_t cuBytes);
+
     void getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs);
 
     void fetchStats(x265_stats* stats, size_t statsSizeBytes);
