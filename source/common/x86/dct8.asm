@@ -34,6 +34,7 @@ dct8_shuf5_AVX512: dq 0, 2, 4, 6, 1, 3, 5, 7
 dct8_shuf6_AVX512: dq 0, 2, 4, 6, 1, 3, 5, 7
 dct8_shuf8_AVX512: dd 0, 2, 8, 10, 4, 6, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
 dct8_shuf4_AVX512: times 2 dd 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
+dct8_shuf7_AVX512: dw 0, 2, 16, 18, 8, 10, 24, 26, 4, 6, 20, 22, 12, 14, 28, 30
 dct8_shuf:         times 2 db 6, 7, 4, 5, 2, 3, 0, 1, 14, 15, 12, 13, 10, 11, 8, 9
 dct8_shuf_AVX512:  times 2 db 4, 5, 6, 7, 0, 1, 2, 3, 12, 13, 14, 15, 8, 9, 10, 11
 
@@ -2306,20 +2307,19 @@ vbroadcasti128      m5,                [pd_ %+ DCT8_ROUND1]
 
 %macro DCT8_AVX512_PASS_1 4
     vpmaddwd        m%2,               m3, m%1
-    vpshufb         m8,                m%2, m6
+    vpsrlq          m8,                m%2, 32
     vpaddd          m%2,               m8
-    vpermd          m%2,               m17, m%2
-
-    vpmaddwd        m%4,               m2, m%3
-    vpshufb         m8,                m%4, m6
-    vpaddd          m%4,               m8
-    vpermd          m%4,               m17, m%4
-
-    vinserti64x4    m%2,               m%2, ym%4, 1
     vpaddd          m%2,               m5
     vpsrad          m%2,               DCT8_SHIFT1
-    vpackssdw       m%2,               m%2
-    vpermq          m%2,               m19, m%2
+
+    vpmaddwd        m%4,               m2, m%3
+    vpsrlq          m8,                m%4, 32
+    vpaddd          m%4,               m8
+    vpaddd          m%4,               m5
+    vpsrad          m%4,               DCT8_SHIFT1
+
+    vpackssdw       m%2,               m%4
+    vpermw          m%2,               m1, m%2
 %endmacro
 
 %macro DCT8_AVX512_PASS_2 4
@@ -2422,6 +2422,8 @@ cglobal dct8, 3, 7, 28
     vpshufb         m0,                m4
     vpaddw          m3,                m2, m0
     vpsubw          m2,                m0
+
+    vbroadcasti32x8 m1,                [dct8_shuf7_AVX512]
 
     ; Load all the coefficients togather for better caching
     vpbroadcastq    m20,               [r6 + 0 * 8]
