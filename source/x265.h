@@ -1750,20 +1750,20 @@ void x265_cleanup(void);
  * closed by the caller using fclose(). If csv-loglevel is 0, then no frame logging
  * header is written to the file. This function will return NULL if it is unable
  * to open the file for write or if it detects a structure size skew */
-FILE* x265_csvlog_open(const x265_param& param);
+FILE* x265_csvlog_open(const x265_param *);
 
 /* Log frame statistics to the CSV file handle. csv-loglevel should have been non-zero
  * in the call to x265_csvlog_open() if this function is called. */
-void x265_csvlog_frame(const x265_param& param, const x265_picture& pic);
+void x265_csvlog_frame(const x265_param *, const x265_picture *);
 
 /* Log final encode statistics to the CSV file handle. 'argc' and 'argv' are
  * intended to be command line arguments passed to the encoder. Encode
  * statistics should be queried from the encoder just prior to closing it. */
-void x265_csvlog_encode(x265_encoder *encoder, const x265_stats& stats, int argc, char** argv);
+void x265_csvlog_encode(x265_encoder *encoder, const x265_stats *, int argc, char** argv);
 
 /* In-place downshift from a bit-depth greater than 8 to a bit-depth of 8, using
  * the residual bits to dither each row. */
-void x265_dither_image(x265_picture& pic, int picWidth, int picHeight, int16_t *errorBuf, int bitDepth);
+void x265_dither_image(x265_picture *, int picWidth, int picHeight, int16_t *errorBuf, int bitDepth);
 
 #define X265_MAJOR_VERSION 1
 
@@ -1812,10 +1812,10 @@ typedef struct x265_api
     int           (*encoder_ctu_info)(x265_encoder*, int, x265_ctu_info_t**);
     int           (*get_slicetype_poc_and_scenecut)(x265_encoder*, int*, int*, int*);
     int           (*get_ref_frame_list)(x265_encoder*, x265_picyuv**, x265_picyuv**, int, int);
-    FILE*         (*csvlog_open)(const x265_param&);
-    void          (*csvlog_frame)(const x265_param&, const x265_picture&);
-    void          (*csvlog_encode)(x265_encoder*, const x265_stats&, int, char**);
-    void          (*dither_image)(x265_picture&, int, int, int16_t*, int);
+    FILE*         (*csvlog_open)(const x265_param*);
+    void          (*csvlog_frame)(const x265_param*, const x265_picture*);
+    void          (*csvlog_encode)(x265_encoder*, const x265_stats*, int, char**);
+    void          (*dither_image)(x265_picture*, int, int, int16_t*, int);
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 

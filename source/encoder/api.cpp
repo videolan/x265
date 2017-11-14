@@ -127,7 +127,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
     /* Try to open CSV file handle */
     if (encoder->m_param->csvfn)
     {
-        encoder->m_param->csvfpt = x265_csvlog_open(*encoder->m_param);
+        encoder->m_param->csvfpt = x265_csvlog_open(encoder->m_param);
         if (!encoder->m_param->csvfpt)
         {
             x265_log(encoder->m_param, X265_LOG_ERROR, "Unable to open CSV log file <%s>, aborting\n", encoder->m_param->csvfn);
@@ -287,7 +287,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
         *pi_nal = 0;
 
     if (numEncoded && encoder->m_param->csvLogLevel)
-        x265_csvlog_frame(*encoder->m_param, *pic_out);
+        x265_csvlog_frame(encoder->m_param, pic_out);
 
     if (numEncoded < 0)
         encoder->m_aborted = true;
@@ -311,7 +311,7 @@ void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
         Encoder *encoder = static_cast<Encoder*>(enc);
         x265_stats stats;
         encoder->fetchStats(&stats, sizeof(stats));
-        x265_csvlog_encode(enc, stats, argc, argv);
+        x265_csvlog_encode(enc, &stats, argc, argv);
     }
 }
 
@@ -638,86 +638,86 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
     return &libapi;
 }
 
-FILE* x265_csvlog_open(const x265_param& param)
+FILE* x265_csvlog_open(const x265_param* param)
 {
-    FILE *csvfp = x265_fopen(param.csvfn, "r");
+    FILE *csvfp = x265_fopen(param->csvfn, "r");
     if (csvfp)
     {
         /* file already exists, re-open for append */
         fclose(csvfp);
-        return x265_fopen(param.csvfn, "ab");
+        return x265_fopen(param->csvfn, "ab");
     }
     else
     {
         /* new CSV file, write header */
-        csvfp = x265_fopen(param.csvfn, "wb");
+        csvfp = x265_fopen(param->csvfn, "wb");
         if (csvfp)
         {
-            if (param.csvLogLevel)
+            if (param->csvLogLevel)
             {
                 fprintf(csvfp, "Encode Order, Type, POC, QP, Bits, Scenecut, ");
-                if (param.csvLogLevel >= 2)
+                if (param->csvLogLevel >= 2)
                     fprintf(csvfp, "I/P cost ratio, ");
-                if (param.rc.rateControlMode == X265_RC_CRF)
+                if (param->rc.rateControlMode == X265_RC_CRF)
                     fprintf(csvfp, "RateFactor, ");
-                if (param.rc.vbvBufferSize)
+                if (param->rc.vbvBufferSize)
                     fprintf(csvfp, "BufferFill, ");
-                if (param.bEnablePsnr)
+                if (param->bEnablePsnr)
                     fprintf(csvfp, "Y PSNR, U PSNR, V PSNR, YUV PSNR, ");
-                if (param.bEnableSsim)
+                if (param->bEnableSsim)
                     fprintf(csvfp, "SSIM, SSIM(dB), ");
                 fprintf(csvfp, "Latency, ");
                 fprintf(csvfp, "List 0, List 1");
-                uint32_t size = param.maxCUSize;
-                for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+                uint32_t size = param->maxCUSize;
+                for (uint32_t depth = 0; depth <= param->maxCUDepth; depth++)
                 {
                     fprintf(csvfp, ", Intra %dx%d DC, Intra %dx%d Planar, Intra %dx%d Ang", size, size, size, size, size, size);
                     size /= 2;
                 }
                 fprintf(csvfp, ", 4x4");
-                size = param.maxCUSize;
-                if (param.bEnableRectInter)
+                size = param->maxCUSize;
+                if (param->bEnableRectInter)
                 {
-                    for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+                    for (uint32_t depth = 0; depth <= param->maxCUDepth; depth++)
                     {
                         fprintf(csvfp, ", Inter %dx%d, Inter %dx%d (Rect)", size, size, size, size);
-                        if (param.bEnableAMP)
+                        if (param->bEnableAMP)
                             fprintf(csvfp, ", Inter %dx%d (Amp)", size, size);
                         size /= 2;
                     }
                 }
                 else
                 {
-                    for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+                    for (uint32_t depth = 0; depth <= param->maxCUDepth; depth++)
                     {
                         fprintf(csvfp, ", Inter %dx%d", size, size);
                         size /= 2;
                     }
                 }
-                size = param.maxCUSize;
-                for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+                size = param->maxCUSize;
+                for (uint32_t depth = 0; depth <= param->maxCUDepth; depth++)
                 {
                     fprintf(csvfp, ", Skip %dx%d", size, size);
                     size /= 2;
                 }
-                size = param.maxCUSize;
-                for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+                size = param->maxCUSize;
+                for (uint32_t depth = 0; depth <= param->maxCUDepth; depth++)
                 {
                     fprintf(csvfp, ", Merge %dx%d", size, size);
                     size /= 2;
                 }
 
-                if (param.csvLogLevel >= 2)
+                if (param->csvLogLevel >= 2)
                 {
                     fprintf(csvfp, ", Avg Luma Distortion, Avg Chroma Distortion, Avg psyEnergy, Avg Residual Energy,"
                         " Min Luma Level, Max Luma Level, Avg Luma Level");
 
-                    if (param.internalCsp != X265_CSP_I400)
+                    if (param->internalCsp != X265_CSP_I400)
                         fprintf(csvfp, ", Min Cb Level, Max Cb Level, Avg Cb Level, Min Cr Level, Max Cr Level, Avg Cr Level");
 
                     /* PU statistics */
-                    size = param.maxCUSize;
-                    for (uint32_t i = 0; i< param.maxLog2CUSize - (uint32_t)g_log2Size[param.minCUSize] + 1; i++)
+                    size = param->maxCUSize;
+                    for (uint32_t i = 0; i< param->maxLog2CUSize - (uint32_t)g_log2Size[param->minCUSize] + 1; i++)
                     {
                         fprintf(csvfp, ", Intra %dx%d", size, size);
                         fprintf(csvfp, ", Skip %dx%d", size, size);
@@ -731,7 +731,7 @@ FILE* x265_csvlog_open(const x265_param& param)
                         size /= 2;
                     }
 
-                    if ((uint32_t)g_log2Size[param.minCUSize] == 3)
+                    if ((uint32_t)g_log2Size[param->minCUSize] == 3)
                         fprintf(csvfp, ", 4x4");
 
                     /* detailed performance statistics */
@@ -748,113 +748,113 @@ FILE* x265_csvlog_open(const x265_param& param)
 }
 
 // per frame CSV logging
-void x265_csvlog_frame(const x265_param& param, const x265_picture& pic)
+void x265_csvlog_frame(const x265_param* param, const x265_picture* pic)
 {
-    if (!param.csvfpt)
+    if (!param->csvfpt)
         return;
 
-    const x265_frame_stats* frameStats = &pic.frameData;
-    fprintf(param.csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d, %d,", frameStats->encoderOrder, frameStats->sliceType, frameStats->poc,
-                                                                  frameStats->qp, (int)frameStats->bits, frameStats->bScenecut);
-    if (param.csvLogLevel >= 2)
-        fprintf(param.csvfpt, "%.2f,", frameStats->ipCostRatio);
-    if (param.rc.rateControlMode == X265_RC_CRF)
-        fprintf(param.csvfpt, "%.3lf,", frameStats->rateFactor);
-    if (param.rc.vbvBufferSize)
-        fprintf(param.csvfpt, "%.3lf,", frameStats->bufferFill);
-    if (param.bEnablePsnr)
-        fprintf(param.csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", frameStats->psnrY, frameStats->psnrU, frameStats->psnrV, frameStats->psnr);
-    if (param.bEnableSsim)
-        fprintf(param.csvfpt, " %.6f, %6.3f,", frameStats->ssim, x265_ssim2dB(frameStats->ssim));
-    fprintf(param.csvfpt, "%d, ", frameStats->frameLatency);
+    const x265_frame_stats* frameStats = &pic->frameData;
+    fprintf(param->csvfpt, "%d, %c-SLICE, %4d, %2.2lf, %10d, %d,", frameStats->encoderOrder, frameStats->sliceType, frameStats->poc,
+                                                                   frameStats->qp, (int)frameStats->bits, frameStats->bScenecut);
+    if (param->csvLogLevel >= 2)
+        fprintf(param->csvfpt, "%.2f,", frameStats->ipCostRatio);
+    if (param->rc.rateControlMode == X265_RC_CRF)
+        fprintf(param->csvfpt, "%.3lf,", frameStats->rateFactor);
+    if (param->rc.vbvBufferSize)
+        fprintf(param->csvfpt, "%.3lf,", frameStats->bufferFill);
+    if (param->bEnablePsnr)
+        fprintf(param->csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", frameStats->psnrY, frameStats->psnrU, frameStats->psnrV, frameStats->psnr);
+    if (param->bEnableSsim)
+        fprintf(param->csvfpt, " %.6f, %6.3f,", frameStats->ssim, x265_ssim2dB(frameStats->ssim));
+    fprintf(param->csvfpt, "%d, ", frameStats->frameLatency);
     if (frameStats->sliceType == 'I' || frameStats->sliceType == 'i')
-        fputs(" -, -,", param.csvfpt);
+        fputs(" -, -,", param->csvfpt);
     else
     {
         int i = 0;
         while (frameStats->list0POC[i] != -1)
-            fprintf(param.csvfpt, "%d ", frameStats->list0POC[i++]);
-        fprintf(param.csvfpt, ",");
+            fprintf(param->csvfpt, "%d ", frameStats->list0POC[i++]);
+        fprintf(param->csvfpt, ",");
         if (frameStats->sliceType != 'P')
         {
             i = 0;
             while (frameStats->list1POC[i] != -1)
-                fprintf(param.csvfpt, "%d ", frameStats->list1POC[i++]);
-            fprintf(param.csvfpt, ",");
+                fprintf(param->csvfpt, "%d ", frameStats->list1POC[i++]);
+            fprintf(param->csvfpt, ",");
         }
         else
-            fputs(" -,", param.csvfpt);
+            fputs(" -,", param->csvfpt);
     }
 
-    if (param.csvLogLevel)
+    if (param->csvLogLevel)
     {
-        for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
-            fprintf(param.csvfpt, "%5.2lf%%, %5.2lf%%, %5.2lf%%,", frameStats->cuStats.percentIntraDistribution[depth][0],
-                                                                   frameStats->cuStats.percentIntraDistribution[depth][1],
-                                                                   frameStats->cuStats.percentIntraDistribution[depth][2]);
-        fprintf(param.csvfpt, "%5.2lf%%", frameStats->cuStats.percentIntraNxN);
-        if (param.bEnableRectInter)
+        for (uint32_t depth = 0; depth <= param->maxCUDepth; depth++)
+            fprintf(param->csvfpt, "%5.2lf%%, %5.2lf%%, %5.2lf%%,", frameStats->cuStats.percentIntraDistribution[depth][0],
+                                                                    frameStats->cuStats.percentIntraDistribution[depth][1],
+                                                                    frameStats->cuStats.percentIntraDistribution[depth][2]);
+        fprintf(param->csvfpt, "%5.2lf%%", frameStats->cuStats.percentIntraNxN);
+        if (param->bEnableRectInter)
         {
-            for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
+            for (uint32_t depth = 0; depth <= param->maxCUDepth; depth++)
             {
-                fprintf(param.csvfpt, ", %5.2lf%%, %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0],
-                                                              frameStats->cuStats.percentInterDistribution[depth][1]);
-                if (param.bEnableAMP)
-                    fprintf(param.csvfpt, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][2]);
+                fprintf(param->csvfpt, ", %5.2lf%%, %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0],
+                                                               frameStats->cuStats.percentInterDistribution[depth][1]);
+                if (param->bEnableAMP)
+                    fprintf(param->csvfpt, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][2]);
             }
         }
         else
         {
-            for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
-                fprintf(param.csvfpt, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0]);
+            for (uint32_t depth = 0; depth <= param->maxCUDepth; depth++)
+                fprintf(param->csvfpt, ", %5.2lf%%", frameStats->cuStats.percentInterDistribution[depth][0]);
         }
-        for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
-            fprintf(param.csvfpt, ", %5.2lf%%", frameStats->cuStats.percentSkipCu[depth]);
-        for (uint32_t depth = 0; depth <= param.maxCUDepth; depth++)
-            fprintf(param.csvfpt, ", %5.2lf%%", frameStats->cuStats.percentMergeCu[depth]);
+        for (uint32_t depth = 0; depth <= param->maxCUDepth; depth++)
+            fprintf(param->csvfpt, ", %5.2lf%%", frameStats->cuStats.percentSkipCu[depth]);
+        for (uint32_t depth = 0; depth <= param->maxCUDepth; depth++)
+            fprintf(param->csvfpt, ", %5.2lf%%", frameStats->cuStats.percentMergeCu[depth]);
     }
 
-    if (param.csvLogLevel >= 2)
+    if (param->csvLogLevel >= 2)
     {
-        fprintf(param.csvfpt, ", %.2lf, %.2lf, %.2lf, %.2lf ", frameStats->avgLumaDistortion,
-                                                               frameStats->avgChromaDistortion,
-                                                               frameStats->avgPsyEnergy,
-                                                               frameStats->avgResEnergy);
+        fprintf(param->csvfpt, ", %.2lf, %.2lf, %.2lf, %.2lf ", frameStats->avgLumaDistortion,
+                                                                frameStats->avgChromaDistortion,
+                                                                frameStats->avgPsyEnergy,
+                                                                frameStats->avgResEnergy);
 
-        fprintf(param.csvfpt, ", %d, %d, %.2lf", frameStats->minLumaLevel, frameStats->maxLumaLevel, frameStats->avgLumaLevel);
+        fprintf(param->csvfpt, ", %d, %d, %.2lf", frameStats->minLumaLevel, frameStats->maxLumaLevel, frameStats->avgLumaLevel);
 
-        if (param.internalCsp != X265_CSP_I400)
+        if (param->internalCsp != X265_CSP_I400)
         {
-            fprintf(param.csvfpt, ", %d, %d, %.2lf", frameStats->minChromaULevel, frameStats->maxChromaULevel, frameStats->avgChromaULevel);
-            fprintf(param.csvfpt, ", %d, %d, %.2lf", frameStats->minChromaVLevel, frameStats->maxChromaVLevel, frameStats->avgChromaVLevel);
+            fprintf(param->csvfpt, ", %d, %d, %.2lf", frameStats->minChromaULevel, frameStats->maxChromaULevel, frameStats->avgChromaULevel);
+            fprintf(param->csvfpt, ", %d, %d, %.2lf", frameStats->minChromaVLevel, frameStats->maxChromaVLevel, frameStats->avgChromaVLevel);
         }
 
-        for (uint32_t i = 0; i < param.maxLog2CUSize - (uint32_t)g_log2Size[param.minCUSize] + 1; i++)
+        for (uint32_t i = 0; i < param->maxLog2CUSize - (uint32_t)g_log2Size[param->minCUSize] + 1; i++)
         {
-            fprintf(param.csvfpt, ", %.2lf%%", frameStats->puStats.percentIntraPu[i]);
-            fprintf(param.csvfpt, ", %.2lf%%", frameStats->puStats.percentSkipPu[i]);
-            fprintf(param.csvfpt, ",%.2lf%%", frameStats->puStats.percentAmpPu[i]);
+            fprintf(param->csvfpt, ", %.2lf%%", frameStats->puStats.percentIntraPu[i]);
+            fprintf(param->csvfpt, ", %.2lf%%", frameStats->puStats.percentSkipPu[i]);
+            fprintf(param->csvfpt, ",%.2lf%%", frameStats->puStats.percentAmpPu[i]);
             for (uint32_t j = 0; j < 3; j++)
             {
-                fprintf(param.csvfpt, ", %.2lf%%", frameStats->puStats.percentInterPu[i][j]);
-                fprintf(param.csvfpt, ", %.2lf%%", frameStats->puStats.percentMergePu[i][j]);
+                fprintf(param->csvfpt, ", %.2lf%%", frameStats->puStats.percentInterPu[i][j]);
+                fprintf(param->csvfpt, ", %.2lf%%", frameStats->puStats.percentMergePu[i][j]);
             }
         }
-        if ((uint32_t)g_log2Size[param.minCUSize] == 3)
-            fprintf(param.csvfpt, ",%.2lf%%", frameStats->puStats.percentNxN);
+        if ((uint32_t)g_log2Size[param->minCUSize] == 3)
+            fprintf(param->csvfpt, ",%.2lf%%", frameStats->puStats.percentNxN);
 
-        fprintf(param.csvfpt, ", %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf,", frameStats->decideWaitTime, frameStats->row0WaitTime,
-                                                                                    frameStats->wallTime, frameStats->refWaitWallTime,
-                                                                                    frameStats->totalCTUTime, frameStats->stallTime,
-                                                                                    frameStats->totalFrameTime);
+        fprintf(param->csvfpt, ", %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf, %.1lf,", frameStats->decideWaitTime, frameStats->row0WaitTime,
+                                                                                     frameStats->wallTime, frameStats->refWaitWallTime,
+                                                                                     frameStats->totalCTUTime, frameStats->stallTime,
+                                                                                     frameStats->totalFrameTime);
 
-        fprintf(param.csvfpt, " %.3lf, %d", frameStats->avgWPP, frameStats->countRowBlocks);
+        fprintf(param->csvfpt, " %.3lf, %d", frameStats->avgWPP, frameStats->countRowBlocks);
     }
-    fprintf(param.csvfpt, "\n");
+    fprintf(param->csvfpt, "\n");
     fflush(stderr);
 }
 
-void x265_csvlog_encode(x265_encoder *enc, const x265_stats& stats, int argc, char** argv)
+void x265_csvlog_encode(x265_encoder *enc, const x265_stats* stats, int argc, char** argv)
 {
     if (enc)
     {
@@ -907,65 +907,65 @@ void x265_csvlog_encode(x265_encoder *enc, const x265_stats& stats, int argc, ch
 
         // elapsed time, fps, bitrate
         fprintf(encoder->m_param->csvfpt, "%.2f, %.2f, %.2f,",
-            stats.elapsedEncodeTime, stats.encodedPictureCount / stats.elapsedEncodeTime, stats.bitrate);
+            stats->elapsedEncodeTime, stats->encodedPictureCount / stats->elapsedEncodeTime, stats->bitrate);
 
         if (encoder->m_param->bEnablePsnr)
             fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf, %.3lf,",
-            stats.globalPsnrY / stats.encodedPictureCount, stats.globalPsnrU / stats.encodedPictureCount,
-            stats.globalPsnrV / stats.encodedPictureCount, stats.globalPsnr);
+            stats->globalPsnrY / stats->encodedPictureCount, stats->globalPsnrU / stats->encodedPictureCount,
+            stats->globalPsnrV / stats->encodedPictureCount, stats->globalPsnr);
         else
             fprintf(encoder->m_param->csvfpt, " -, -, -, -,");
         if (encoder->m_param->bEnableSsim)
-            fprintf(encoder->m_param->csvfpt, " %.6f, %6.3f,", stats.globalSsim, x265_ssim2dB(stats.globalSsim));
+            fprintf(encoder->m_param->csvfpt, " %.6f, %6.3f,", stats->globalSsim, x265_ssim2dB(stats->globalSsim));
         else
             fprintf(encoder->m_param->csvfpt, " -, -,");
 
-        if (stats.statsI.numPics)
+        if (stats->statsI.numPics)
         {
-            fprintf(encoder->m_param->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats.statsI.numPics, stats.statsI.avgQp, stats.statsI.bitrate);
+            fprintf(encoder->m_param->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsI.numPics, stats->statsI.avgQp, stats->statsI.bitrate);
             if (encoder->m_param->bEnablePsnr)
-                fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf,", stats.statsI.psnrY, stats.statsI.psnrU, stats.statsI.psnrV);
+                fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsI.psnrY, stats->statsI.psnrU, stats->statsI.psnrV);
             else
                 fprintf(encoder->m_param->csvfpt, " -, -, -,");
             if (encoder->m_param->bEnableSsim)
-                fprintf(encoder->m_param->csvfpt, " %.3lf,", stats.statsI.ssim);
+                fprintf(encoder->m_param->csvfpt, " %.3lf,", stats->statsI.ssim);
             else
                 fprintf(encoder->m_param->csvfpt, " -,");
         }
         else
             fprintf(encoder->m_param->csvfpt, " -, -, -, -, -, -, -,");
 
-        if (stats.statsP.numPics)
+        if (stats->statsP.numPics)
         {
-            fprintf(encoder->m_param->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats.statsP.numPics, stats.statsP.avgQp, stats.statsP.bitrate);
+            fprintf(encoder->m_param->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsP.numPics, stats->statsP.avgQp, stats->statsP.bitrate);
             if (encoder->m_param->bEnablePsnr)
-                fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf,", stats.statsP.psnrY, stats.statsP.psnrU, stats.statsP.psnrV);
+                fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsP.psnrY, stats->statsP.psnrU, stats->statsP.psnrV);
             else
                 fprintf(encoder->m_param->csvfpt, " -, -, -,");
             if (encoder->m_param->bEnableSsim)
-                fprintf(encoder->m_param->csvfpt, " %.3lf,", stats.statsP.ssim);
+                fprintf(encoder->m_param->csvfpt, " %.3lf,", stats->statsP.ssim);
             else
                 fprintf(encoder->m_param->csvfpt, " -,");
         }
         else
             fprintf(encoder->m_param->csvfpt, " -, -, -, -, -, -, -,");
 
-        if (stats.statsB.numPics)
+        if (stats->statsB.numPics)
         {
-            fprintf(encoder->m_param->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats.statsB.numPics, stats.statsB.avgQp, stats.statsB.bitrate);
+            fprintf(encoder->m_param->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsB.numPics, stats->statsB.avgQp, stats->statsB.bitrate);
             if (encoder->m_param->bEnablePsnr)
-                fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf,", stats.statsB.psnrY, stats.statsB.psnrU, stats.statsB.psnrV);
+                fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsB.psnrY, stats->statsB.psnrU, stats->statsB.psnrV);
             else
                 fprintf(encoder->m_param->csvfpt, " -, -, -,");
             if (encoder->m_param->bEnableSsim)
-                fprintf(encoder->m_param->csvfpt, " %.3lf,", stats.statsB.ssim);
+                fprintf(encoder->m_param->csvfpt, " %.3lf,", stats->statsB.ssim);
             else
                 fprintf(encoder->m_param->csvfpt, " -,");
         }
         else
             fprintf(encoder->m_param->csvfpt, " -, -, -, -, -, -, -,");
 
-        fprintf(encoder->m_param->csvfpt, " %-6u, %-6u, %s\n", stats.maxCLL, stats.maxFALL, api->version_str);
+        fprintf(encoder->m_param->csvfpt, " %-6u, %-6u, %s\n", stats->maxCLL, stats->maxFALL, api->version_str);
     }
 }
 
@@ -1011,7 +1011,7 @@ static void ditherPlane(uint16_t *src, int srcStride, int width, int height, int
     }
 }
 
-void x265_dither_image(x265_picture& picIn, int picWidth, int picHeight, int16_t *errorBuf, int bitDepth)
+void x265_dither_image(x265_picture* picIn, int picWidth, int picHeight, int16_t *errorBuf, int bitDepth)
 {
     const x265_api* api = x265_api_get(0);
 
@@ -1021,27 +1021,27 @@ void x265_dither_image(x265_picture& picIn, int picWidth, int picHeight, int16_t
         return;
     }
 
-    if (picIn.bitDepth <= 8)
+    if (picIn->bitDepth <= 8)
     {
         fprintf(stderr, "extras [error]: dither support enabled only for input bitdepth > 8\n");
         return;
     }
 
-    if (picIn.bitDepth == bitDepth)
+    if (picIn->bitDepth == bitDepth)
     {
         fprintf(stderr, "extras[error]: dither support enabled only if encoder depth is different from picture depth\n");
         return;
     }
 
     /* This portion of code is from readFrame in x264. */
-    for (int i = 0; i < x265_cli_csps[picIn.colorSpace].planes; i++)
+    for (int i = 0; i < x265_cli_csps[picIn->colorSpace].planes; i++)
     {
-        if (picIn.bitDepth < 16)
+        if (picIn->bitDepth < 16)
         {
             /* upconvert non 16bit high depth planes to 16bit */
-            uint16_t *plane = (uint16_t*)picIn.planes[i];
-            uint32_t pixelCount = x265_picturePlaneSize(picIn.colorSpace, picWidth, picHeight, i);
-            int lShift = 16 - picIn.bitDepth;
+            uint16_t *plane = (uint16_t*)picIn->planes[i];
+            uint32_t pixelCount = x265_picturePlaneSize(picIn->colorSpace, picWidth, picHeight, i);
+            int lShift = 16 - picIn->bitDepth;
 
             /* This loop assumes width is equal to stride which
              * happens to be true for file reader outputs */
@@ -1049,10 +1049,10 @@ void x265_dither_image(x265_picture& picIn, int picWidth, int picHeight, int16_t
                 plane[j] = plane[j] << lShift;
         }
 
-        int height = (int)(picHeight >> x265_cli_csps[picIn.colorSpace].height[i]);
-        int width = (int)(picWidth >> x265_cli_csps[picIn.colorSpace].width[i]);
+        int height = (int)(picHeight >> x265_cli_csps[picIn->colorSpace].height[i]);
+        int width = (int)(picWidth >> x265_cli_csps[picIn->colorSpace].width[i]);
 
-        ditherPlane(((uint16_t*)picIn.planes[i]), picIn.stride[i] / 2, width, height, errorBuf, bitDepth);
+        ditherPlane(((uint16_t*)picIn->planes[i]), picIn->stride[i] / 2, width, height, errorBuf, bitDepth);
     }
 }
 
