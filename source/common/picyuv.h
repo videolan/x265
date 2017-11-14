@@ -76,7 +76,7 @@ public:
 
     PicYuv();
 
-    bool  create(x265_param* param, pixel *pixelbuf = NULL);
+    bool  create(x265_param* param, bool picAlloc = true, pixel *pixelbuf = NULL);
     bool  createOffsets(const SPS& sps);
     void  destroy();
     int   getLumaBufLen(uint32_t picWidth, uint32_t picHeight, uint32_t picCsp);

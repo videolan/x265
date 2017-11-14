@@ -1531,6 +1531,9 @@ typedef struct x265_param
 
     /* Reuse MV information obtained through API */
     int       bMVType;
+
+    /* Allow the encoder to have a copy of the planes of x265_picture in Frame */
+    int       bCopyPicToFrame;
 } x265_param;
 
 /* x265_param_alloc:

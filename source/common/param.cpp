@@ -290,6 +290,7 @@ void x265_param_default(x265_param* param)
     param->csvfpt = NULL;
     param->forceFlush = 0;
     param->bDisableLookahead = 0;
+    param->bCopyPicToFrame = 1;
 
     /* DCT Approximations */
     param->bLowPassDct = 0;
@@ -987,6 +988,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
 		OPT("lowpass-dct") p->bLowPassDct = atobool(value);
         OPT("vbv-end") p->vbvBufferEnd = atof(value);
         OPT("vbv-end-fr-adj") p->vbvEndFrameAdjust = atof(value);
+        OPT("copy-pic") p->bCopyPicToFrame = atobool(value);
         OPT("refine-mv-type")
         {
             if (strcmp(strdup(value), "avc") == 0)
@@ -1718,6 +1720,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " ctu-info=%d", p->bCTUInfo);
     BOOL(p->bLowPassDct, "lowpass-dct");
     s += sprintf(s, " refine-mv-type=%d", p->bMVType);
+    s += sprintf(s, " copy-pic=%d", p->bCopyPicToFrame);
 #undef BOOL
     return buf;
 }

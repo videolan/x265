@@ -286,6 +286,8 @@ static const struct option long_options[] =
     { "no-splitrd-skip",      no_argument, NULL, 0 },
     { "lowpass-dct",          no_argument, NULL, 0 },
     { "refine-mv-type", required_argument, NULL, 0 },
+    { "copy-pic",             no_argument, NULL, 0 },
+    { "no-copy-pic",          no_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -339,6 +341,7 @@ static void showHelp(x265_param *param)
     H0("   --seek <integer>              First frame to encode\n");
     H1("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
     H1("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
+    H0("   --[no-]copy-pic               Copy buffers of input picture in frame. Default %s\n", OPT(param->bCopyPicToFrame));
     H0("\nQuality reporting metrics:\n");
     H0("   --[no-]ssim                   Enable reporting SSIM metric scores. Default %s\n", OPT(param->bEnableSsim));
     H0("   --[no-]psnr                   Enable reporting PSNR metric scores. Default %s\n", OPT(param->bEnablePsnr));

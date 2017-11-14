@@ -399,6 +399,18 @@ Performance Options
 
 	Default: 1 slice per frame. **Experimental feature**
 
+.. option:: --copy-pic, --no-copy-pic
+
+	Allow encoder to copy input x265 pictures to internal frame buffers. When disabled,
+	x265 will not make an internal copy of the input picture and will work with the
+	application's buffers. While this allows for deeper integration, it is the responsbility
+	of the application to (a) ensure that the allocated picture has extra space for padding
+	that will be done by the library, and (b) the buffers aren't recycled until the library
+	has completed encoding this frame (which can be figured out by tracking NALs output by x265)
+
+	Default: enabled
+
+
 Input/Output File Options
 =========================
 

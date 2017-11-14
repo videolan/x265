@@ -69,7 +69,7 @@ PicYuv::PicYuv()
     m_vChromaShift = 0;
 }
 
-bool PicYuv::create(x265_param* param, pixel *pixelbuf)
+bool PicYuv::create(x265_param* param, bool picAlloc, pixel *pixelbuf)
 {
     m_param = param;
     uint32_t picWidth = m_param->sourceWidth;
@@ -93,8 +93,11 @@ bool PicYuv::create(x265_param* param, pixel *pixelbuf)
         m_picOrg[0] = pixelbuf;
     else
     {
-        CHECKED_MALLOC(m_picBuf[0], pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
-        m_picOrg[0] = m_picBuf[0] + m_lumaMarginY * m_stride + m_lumaMarginX;
+        if (picAlloc)
+        {
+            CHECKED_MALLOC(m_picBuf[0], pixel, m_stride * (maxHeight + (m_lumaMarginY * 2)));
+            m_picOrg[0] = m_picBuf[0] + m_lumaMarginY * m_stride + m_lumaMarginX;
+        }
     }
 
     if (picCsp != X265_CSP_I400)
@@ -102,12 +105,14 @@ bool PicYuv::create(x265_param* param, pixel *pixelbuf)
         m_chromaMarginX = m_lumaMarginX;  // keep 16-byte alignment for chroma CTUs
         m_chromaMarginY = m_lumaMarginY >> m_vChromaShift;
         m_strideC = ((numCuInWidth * m_param->maxCUSize) >> m_hChromaShift) + (m_chromaMarginX * 2);
+        if (picAlloc)
+        {
+            CHECKED_MALLOC(m_picBuf[1], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
+            CHECKED_MALLOC(m_picBuf[2], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
 
-        CHECKED_MALLOC(m_picBuf[1], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
-        CHECKED_MALLOC(m_picBuf[2], pixel, m_strideC * ((maxHeight >> m_vChromaShift) + (m_chromaMarginY * 2)));
-
-        m_picOrg[1] = m_picBuf[1] + m_chromaMarginY * m_strideC + m_chromaMarginX;
-        m_picOrg[2] = m_picBuf[2] + m_chromaMarginY * m_strideC + m_chromaMarginX;
+            m_picOrg[1] = m_picBuf[1] + m_chromaMarginY * m_strideC + m_chromaMarginX;
+            m_picOrg[2] = m_picBuf[2] + m_chromaMarginY * m_strideC + m_chromaMarginX;
+        }
     }
     else
     {
@@ -236,8 +241,10 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
     uint64_t crSum;
     lumaSum = cbSum = crSum = 0;
 
-    if (pic.bitDepth == 8)
+    if (m_param->bCopyPicToFrame)
     {
+        if (pic.bitDepth == 8)
+        {
 #if (X265_DEPTH > 8)
         {
             pixel *yPixel = m_picOrg[0];
@@ -260,7 +267,7 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
             }
         }
 #else /* Case for (X265_DEPTH == 8) */
-        // TODO: Does we need this path? may merge into above in future
+            // TODO: Does we need this path? may merge into above in future
         {
             pixel *yPixel = m_picOrg[0];
             uint8_t *yChar = (uint8_t*)pic.planes[0];
@@ -294,46 +301,53 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
             }
         }
 #endif /* (X265_DEPTH > 8) */
-    }
-    else /* pic.bitDepth > 8 */
-    {
-        /* defensive programming, mask off bits that are supposed to be zero */
-        uint16_t mask = (1 << X265_DEPTH) - 1;
-        int shift = abs(pic.bitDepth - X265_DEPTH);
-        pixel *yPixel = m_picOrg[0];
-
-        uint16_t *yShort = (uint16_t*)pic.planes[0];
-
-        if (pic.bitDepth > X265_DEPTH)
-        {
-            /* shift right and mask pixels to final size */
-            primitives.planecopy_sp(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
         }
-        else /* Case for (pic.bitDepth <= X265_DEPTH) */
+        else /* pic.bitDepth > 8 */
         {
-            /* shift left and mask pixels to final size */
-            primitives.planecopy_sp_shl(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
-        }
+            /* defensive programming, mask off bits that are supposed to be zero */
+            uint16_t mask = (1 << X265_DEPTH) - 1;
+            int shift = abs(pic.bitDepth - X265_DEPTH);
+            pixel *yPixel = m_picOrg[0];
 
-        if (param.internalCsp != X265_CSP_I400)
-        {
-            pixel *uPixel = m_picOrg[1];
-            pixel *vPixel = m_picOrg[2];
-
-            uint16_t *uShort = (uint16_t*)pic.planes[1];
-            uint16_t *vShort = (uint16_t*)pic.planes[2];
+            uint16_t *yShort = (uint16_t*)pic.planes[0];
 
             if (pic.bitDepth > X265_DEPTH)
             {
-                primitives.planecopy_sp(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
-                primitives.planecopy_sp(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                /* shift right and mask pixels to final size */
+                primitives.planecopy_sp(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
             }
             else /* Case for (pic.bitDepth <= X265_DEPTH) */
             {
-                primitives.planecopy_sp_shl(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
-                primitives.planecopy_sp_shl(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                /* shift left and mask pixels to final size */
+                primitives.planecopy_sp_shl(yShort, pic.stride[0] / sizeof(*yShort), yPixel, m_stride, width, height, shift, mask);
+            }
+
+            if (param.internalCsp != X265_CSP_I400)
+            {
+                pixel *uPixel = m_picOrg[1];
+                pixel *vPixel = m_picOrg[2];
+
+                uint16_t *uShort = (uint16_t*)pic.planes[1];
+                uint16_t *vShort = (uint16_t*)pic.planes[2];
+
+                if (pic.bitDepth > X265_DEPTH)
+                {
+                    primitives.planecopy_sp(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                    primitives.planecopy_sp(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                }
+                else /* Case for (pic.bitDepth <= X265_DEPTH) */
+                {
+                    primitives.planecopy_sp_shl(uShort, pic.stride[1] / sizeof(*uShort), uPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                    primitives.planecopy_sp_shl(vShort, pic.stride[2] / sizeof(*vShort), vPixel, m_strideC, width >> m_hChromaShift, height >> m_vChromaShift, shift, mask);
+                }
             }
         }
+    }
+    else
+    {
+        m_picOrg[0] = (pixel*)pic.planes[0];
+        m_picOrg[1] = (pixel*)pic.planes[1];
+        m_picOrg[2] = (pixel*)pic.planes[2];
     }
 
     pixel *Y = m_picOrg[0];
