@@ -44,6 +44,6 @@ void PFX(denoise_dct_sse4)(int16_t* dct, uint32_t* sum, const uint16_t* offset, 
 void PFX(denoise_dct_avx2)(int16_t* dct, uint32_t* sum, const uint16_t* offset, int size);
 
 void PFX(dct8_avx512)(const int16_t* src, int16_t* dst, intptr_t srcStride);
-void PFX(idct8_avx512(const int16_t* src, int16_t* dst, intptr_t dstStride));
+void PFX(idct8_avx512)(const int16_t* src, int16_t* dst, intptr_t dstStride);
 
 #endif // ifndef X265_DCT8_H
