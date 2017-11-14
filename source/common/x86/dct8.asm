@@ -2399,7 +2399,7 @@ vbroadcasti128      m5,                [pd_ %+ DCT8_ROUND1]
 %endmacro
 
 INIT_ZMM avx512
-cglobal dct8, 3, 7, 28
+cglobal dct8, 3, 7, 24
 
     vbroadcasti32x4  m5,               [pd_ %+ DCT8_ROUND1]
     vbroadcasti32x8  m4,               [dct8_shuf]
@@ -2438,15 +2438,15 @@ cglobal dct8, 3, 7, 28
     vpbroadcastq    m21,               [r6 + 1 * 8]
     vpbroadcastq    m22,               [r6 + 2 * 8]
     vpbroadcastq    m23,               [r6 + 3 * 8]
-    vpbroadcastq    m24,               [r6 + 4 * 8]
-    vpbroadcastq    m25,               [r6 + 5 * 8]
-    vpbroadcastq    m26,               [r6 + 6 * 8]
-    vpbroadcastq    m27,               [r6 + 7 * 8]
+    vpbroadcastq    m7,                [r6 + 4 * 8]
+    vpbroadcastq    m12,               [r6 + 5 * 8]
+    vpbroadcastq    m14,               [r6 + 6 * 8]
+    vpbroadcastq    m16,               [r6 + 7 * 8]
 
     DCT8_AVX512_PASS_1     20,       9, 21,      10
-    DCT8_AVX512_PASS_1     22,      11, 23,      12
-    DCT8_AVX512_PASS_1     24,      13, 25,      14
-    DCT8_AVX512_PASS_1     26,      15, 27,      16
+    DCT8_AVX512_PASS_1     22,      11, 23,      10
+    DCT8_AVX512_PASS_1     7,       13, 12,      10
+    DCT8_AVX512_PASS_1     14,      15, 16,      10
 
     ;pass2
     vbroadcasti32x4        m5,          [pd_ %+ DCT8_ROUND2]
@@ -2458,13 +2458,13 @@ cglobal dct8, 3, 7, 28
     vbroadcasti32x4    m21,                [r5 + 1 * 16]
     vbroadcasti32x4    m22,                [r5 + 2 * 16]
     vbroadcasti32x4    m23,                [r5 + 3 * 16]
-    vbroadcasti32x4    m25,                [r5 + 5 * 16]
-    vbroadcasti32x4    m26,                [r5 + 6 * 16]
-    vbroadcasti32x4    m27,                [r5 + 7 * 16]
+    vbroadcasti32x4    m12,                [r5 + 5 * 16]
+    vbroadcasti32x4    m14,                [r5 + 6 * 16]
+    vbroadcasti32x4    m16,                [r5 + 7 * 16]
 
     DCT8_AVX512_PASS_2     20, 21, 22, 23
     movu                   [r1],        m0
-    DCT8_AVX512_PASS_2     24, 25, 26, 27
+    DCT8_AVX512_PASS_2     7, 12, 14, 16
     movu                   [r1 + 64],   m0
     RET
 
