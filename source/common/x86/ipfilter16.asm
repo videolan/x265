@@ -8272,7 +8272,7 @@ FILTER_VER_PS_CHROMA_64xN_AVX512 48
 FILTER_VER_PS_CHROMA_64xN_AVX512 64
 %endif
 
-%macro PROCESS_CHROMA_VERT_SP_48x4_AVX512 0
+%macro PROCESS_CHROMA_VERT_S_48x4_AVX512 1
     movu                  m1,                 [r0]
     lea                   r6,                 [r0 + 2 * r1]
     movu                  m10,                [r6]
@@ -8328,6 +8328,7 @@ FILTER_VER_PS_CHROMA_64xN_AVX512 64
     paddd                 m3,                 m5
     paddd                 m12,                m14
 
+%ifidn %1,sp
     paddd                 m0,                 m7
     paddd                 m1,                 m7
     paddd                 m2,                 m7
@@ -8345,6 +8346,16 @@ FILTER_VER_PS_CHROMA_64xN_AVX512 64
     psrad                 m10,                INTERP_SHIFT_SP
     psrad                 m11,                INTERP_SHIFT_SP
     psrad                 m12,                INTERP_SHIFT_SP
+%else
+    psrad                 m0,                 6
+    psrad                 m1,                 6
+    psrad                 m2,                 6
+    psrad                 m3,                 6
+    psrad                 m9,                 6
+    psrad                 m10,                6
+    psrad                 m11,                6
+    psrad                 m12,                6
+%endif
 
     packssdw              m0,                 m1
     packssdw              m2,                 m3
@@ -8389,6 +8400,7 @@ FILTER_VER_PS_CHROMA_64xN_AVX512 64
     pmaddwd               m5,                 m17
     paddd                 m3,                 m5
 
+%ifidn %1,sp
     paddd                 m0,                 m7
     paddd                 m1,                 m7
     paddd                 m2,                 m7
@@ -8398,6 +8410,12 @@ FILTER_VER_PS_CHROMA_64xN_AVX512 64
     psrad                 m1,                 INTERP_SHIFT_SP
     psrad                 m2,                 INTERP_SHIFT_SP
     psrad                 m3,                 INTERP_SHIFT_SP
+%else
+    psrad                 m0,                 6
+    psrad                 m1,                 6
+    psrad                 m2,                 6
+    psrad                 m3,                 6
+%endif
 
     packssdw              m0,                 m1
     packssdw              m2,                 m3
@@ -8407,13 +8425,14 @@ FILTER_VER_PS_CHROMA_64xN_AVX512 64
     vextracti32x8         [r2 + r8 + mmsize],          m2,                  1
 %endmacro
 
+%macro CHROMA_VERT_S_48x4_AVX512 1
 %if ARCH_X86_64
 INIT_ZMM avx512
-cglobal interp_4tap_vert_sp_48x64, 5, 9, 18
-     add                   r1d,                r1d
-     add                   r3d,                r3d
-     sub                   r0,                 r1
-     shl                   r4d,                7
+cglobal interp_4tap_vert_%1_48x64, 5, 9, 18
+    add                   r1d,                r1d
+    add                   r3d,                r3d
+    sub                   r0,                 r1
+    shl                   r4d,                7
 %ifdef PIC
     lea                   r5,                 [tab_ChromaCoeffV_avx512]
     lea                   r5,                 [r5 + r4]
@@ -8422,18 +8441,25 @@ cglobal interp_4tap_vert_sp_48x64, 5, 9, 18
 %endif
     lea                   r7,                 [3 * r1]
     lea                   r8,                 [3 * r3]
+
+%ifidn %1, sp
     vbroadcasti32x4       m7,                 [INTERP_OFFSET_SP]
+%endif
     mova                  m16,                [r5]
     mova                  m17,                [r5 + mmsize]
 
 %rep 15
-    PROCESS_CHROMA_VERT_SP_48x4_AVX512
+    PROCESS_CHROMA_VERT_S_48x4_AVX512 %1
     lea                   r0,                 [r0 + 4 * r1]
     lea                   r2,                 [r2 + 4 * r3]
 %endrep
-    PROCESS_CHROMA_VERT_SP_48x4_AVX512
+    PROCESS_CHROMA_VERT_S_48x4_AVX512 %1
     RET
 %endif
+%endmacro
+
+CHROMA_VERT_S_48x4_AVX512 sp
+CHROMA_VERT_S_48x4_AVX512 ss
 
 %macro PROCESS_CHROMA_VERT_S_64x2_AVX512 1
     movu                 m1,                  [r0]
