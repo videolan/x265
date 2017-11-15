@@ -4328,10 +4328,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
     if (cpuMask & X265_CPU_AVX512)
     {
         p.pu[LUMA_32x8].sad = PFX(pixel_sad_32x8_avx512);
-        p.pu[LUMA_32x16].sad = PFX(pixel_sad_32x16_avx512);
+      //  p.pu[LUMA_32x16].sad = PFX(pixel_sad_32x16_avx512);
         p.pu[LUMA_32x24].sad = PFX(pixel_sad_32x24_avx512);
         p.pu[LUMA_32x32].sad = PFX(pixel_sad_32x32_avx512);
-        p.pu[LUMA_32x64].sad = PFX(pixel_sad_32x64_avx512);
+        //p.pu[LUMA_32x64].sad = PFX(pixel_sad_32x64_avx512);
         p.pu[LUMA_64x16].sad = PFX(pixel_sad_64x16_avx512);
         p.pu[LUMA_64x32].sad = PFX(pixel_sad_64x32_avx512);
         p.pu[LUMA_64x48].sad = PFX(pixel_sad_64x48_avx512);
@@ -4400,14 +4400,14 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_8x32].pixelavg_pp = PFX(pixel_avg_8x32_avx512);
         p.pu[LUMA_8x16].pixelavg_pp = PFX(pixel_avg_8x16_avx512);
         p.pu[LUMA_8x8].pixelavg_pp = PFX(pixel_avg_8x8_avx512);
-        p.pu[LUMA_8x4].pixelavg_pp = PFX(pixel_avg_8x4_avx512);
+        //p.pu[LUMA_8x4].pixelavg_pp = PFX(pixel_avg_8x4_avx512);
 
         p.pu[LUMA_4x4].sad = PFX(pixel_sad_4x4_avx512);
         p.pu[LUMA_4x8].sad = PFX(pixel_sad_4x8_avx512);
         p.pu[LUMA_4x16].sad = PFX(pixel_sad_4x16_avx512);
         p.pu[LUMA_8x4].sad = PFX(pixel_sad_8x4_avx512);
         p.pu[LUMA_8x8].sad = PFX(pixel_sad_8x8_avx512);
-        p.pu[LUMA_8x16].sad = PFX(pixel_sad_8x16_avx512);
+       // p.pu[LUMA_8x16].sad = PFX(pixel_sad_8x16_avx512);
         p.pu[LUMA_16x8].sad = PFX(pixel_sad_16x8_avx512);
         p.pu[LUMA_16x16].sad = PFX(pixel_sad_16x16_avx512);
 
