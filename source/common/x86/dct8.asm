@@ -193,7 +193,6 @@ const idct8_shuf2,    times 2 db 0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 1
 
 idct8_shuf3:    times 2 db 12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3
 
-const idct8_avx512_shuf2,    times 4 db 0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15
 
 idct8_avx512_shuf3:    times 4 db 12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3
 
@@ -3210,6 +3209,8 @@ cglobal idct8, 3, 7, 13, 0-8*16
 
 
 %macro IDCT8_AVX512_PASS_2 0
+    mov             r7d, 0xAAAA
+    kmovd           k1, r7d 
     punpcklqdq      m2,                m3, m13
     punpckhqdq      m0,                m3, m13
 
@@ -3218,25 +3219,18 @@ cglobal idct8, 3, 7, 13, 0-8*16
     pmaddwd         m6,                m2, [r5 + 2 * mmsize]
     pmaddwd         m7,                m2, [r5 + 3 * mmsize]
 
-    pshufd           m14,     m3,     q2301
-    pshufd           m16,     m5,     q2301
-    paddd             m3,    m14
-    paddd             m5,    m16
-    punpckhdq        m14,     m3,      m5
-    punpckldq        m16,     m3,      m5
-    punpckhdq         m3,    m16,     m14
+    vpsrldq         m14,   m3, 4
+    paddd            m3,  m14
+    vpslldq         m16,   m5, 4
+    paddd            m5,  m16
+    vmovdqu32        m3   {k1}, m5
 
-    pshufd           m14,     m6,     q2301
-    pshufd           m16,     m7,     q2301
-    paddd             m6,    m14
-    paddd             m7,    m16
-    punpckhdq        m14,     m6,      m7
-    punpckldq        m16,     m6,      m7
-    punpckhdq         m6,    m16,     m14
+    vpsrldq         m14,   m6, 4
+    paddd            m6,  m14
+    vpslldq         m16,   m7, 4
+    paddd            m7,  m16
+    vmovdqu32        m6   {k1}, m7
 
-
-    pshufb          m3,                [idct8_avx512_shuf2]
-    pshufb          m6,                [idct8_avx512_shuf2]
     punpcklqdq      m7,                m3, m6
     punpckhqdq      m3,                m6
 
@@ -3245,24 +3239,18 @@ cglobal idct8, 3, 7, 13, 0-8*16
     pmaddwd         m8,                m0, [r6 + 2 * mmsize]
     pmaddwd         m9,                m0, [r6 + 3 * mmsize]
 
-    pshufd          m14,     m5,    q2301
-    pshufd          m16,     m6,    q2301
-    paddd            m5,    m14
-    paddd            m6,    m16
-    punpckhdq       m14,     m5,    m6
-    punpckldq       m16,     m5,    m6
-    punpckhdq        m5,    m16,   m14
+    vpsrldq         m14,   m5, 4
+    paddd            m5,  m14
+    vpslldq         m16,   m6, 4
+    paddd            m6,  m16
+    vmovdqu32        m5   {k1}, m6
 
-    pshufd          m14,     m8,    q2301
-    pshufd          m16,     m9,    q2301
-    paddd            m8,    m14
-    paddd            m9,    m16
-    punpckhdq       m14,     m8,    m9
-    punpckldq       m16,     m8,    m9
-    punpckhdq        m8,    m16,   m14
+    vpsrldq         m14,   m8, 4
+    paddd            m8,  m14
+    vpslldq         m16,   m9, 4
+    paddd            m9,  m16
+    vmovdqu32        m8   {k1}, m9
 
-    pshufb          m5,                [idct8_avx512_shuf2]
-    pshufb          m8,                [idct8_avx512_shuf2]
     punpcklqdq      m6,                m5, m8
     punpckhqdq      m5,                m8
 
@@ -3292,7 +3280,7 @@ cglobal idct8, 3, 7, 13, 0-8*16
 
 %if ARCH_X86_64
 INIT_ZMM avx512
-cglobal idct8, 3, 7, 25
+cglobal idct8, 3, 8, 25
 %if BIT_DEPTH == 12
     %define         IDCT_SHIFT2        8
     vpbroadcastd    m12,                [pd_128]
