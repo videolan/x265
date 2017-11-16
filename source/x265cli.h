@@ -474,7 +474,7 @@ static void showHelp(x265_param *param)
         "                                Default:%d\n", param->intraRefine);
     H0("   --refine-inter <0..3>         Enable inter refinement for encode that uses analysis-reuse-mode=load.\n"
         "                                    - 0 : Forces both mode and depth from the save encode.\n"
-        "                                    - 1 : Functionality of (0) + evaluate all inter modes at min-cu-size's depth when current depth is one smaller than "
+        "                                    - 1 : Functionality of (0) + evaluate all inter modes at min-cu-size's depth when current depth is one smaller than\n"
         "                                          min-cu-size's depth. When save encode decides the current block as skip(for all sizes) evaluate skip/merge.\n"
         "                                    - 2 : Functionality of (1) + irrespective of size restrict the modes evaluated when specific modes are decided as the best mode by the save encode.\n"
         "                                    - 3 : Functionality of (1) + irrespective of size evaluate all inter modes.\n"

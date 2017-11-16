@@ -1732,8 +1732,6 @@ int x265_encoder_intra_refresh(x265_encoder *);
  *    the encoder will wait for this copy to complete if enabled.
  */
 int x265_encoder_ctu_info(x265_encoder *, int poc, x265_ctu_info_t** ctu);
-/* x265_cleanup:
- *       release library static allocations, reset configured CTU size */
 
 /* x265_get_slicetype_poc_and_scenecut:
  *     get the slice type, poc and scene cut information for the current frame,
@@ -1747,10 +1745,12 @@ int x265_get_slicetype_poc_and_scenecut(x265_encoder *encoder, int *slicetype, i
 int x265_get_ref_frame_list(x265_encoder *encoder, x265_picyuv**, x265_picyuv**, int, int);
 
 /* x265_set_analysis_data:
- *     set the analysis data,
+ *     set the analysis data. The incoming analysis_data structure is assumed to be AVC-sized blocks.
  *     returns negative on error, 0 access unit were output. */
 int x265_set_analysis_data(x265_encoder *encoder, x265_analysis_data *analysis_data, int poc, uint32_t cuBytes);
 
+/* x265_cleanup:
+ *       release library static allocations, reset configured CTU size */
 void x265_cleanup(void);
 
 /* Open a CSV log file. On success it returns a file handle which must be passed
