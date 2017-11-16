@@ -271,8 +271,8 @@ void x265_param_default(x265_param* param)
 
     param->bEmitVUITimingInfo   = 1;
     param->bEmitVUIHRDInfo      = 1;
-    param->bOptQpPPS            = 1;
-    param->bOptRefListLengthPPS = 1;
+    param->bOptQpPPS            = 0;
+    param->bOptRefListLengthPPS = 0;
     param->bOptCUDeltaQP        = 0;
     param->bAQMotion = 0;
     param->bHDROpt = 0;
