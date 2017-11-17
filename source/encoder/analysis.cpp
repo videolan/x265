@@ -2377,8 +2377,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
     bool bDecidedDepth = parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
 
-    int split = (m_param->interRefine && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1)
-                && bDecidedDepth && parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP);
+    int split = (m_param->interRefine && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1) && bDecidedDepth);
 
     if (bDecidedDepth)
     {
