@@ -195,6 +195,7 @@ struct analysis_inter_data
     uint8_t*    mvpIdx[2];
     int8_t*     refIdx[2];
     MV*         mv[2];
+   int64_t*     sadCost;
 };
 
 struct analysis2PassFrameData

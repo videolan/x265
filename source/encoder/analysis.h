@@ -110,6 +110,9 @@ public:
     bool      m_bChromaSa8d;
     bool      m_bHD;
 
+    bool      m_modeFlag[2];
+    bool      m_checkMergeAndSkipOnly[2];
+
     Analysis();
 
     bool create(ThreadLocalData* tld);

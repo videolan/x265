@@ -75,6 +75,10 @@ Analysis::Analysis()
     m_reuseInterDataCTU = NULL;
     m_reuseRef = NULL;
     m_bHD = false;
+    m_modeFlag[0] = false;
+    m_modeFlag[1] = false;
+    m_checkMergeAndSkipOnly[0] = false;
+    m_checkMergeAndSkipOnly[1] = false;
     m_evaluateInter = 0;
 }
 
@@ -247,6 +251,9 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             memcpy(ctu.m_cuDepth, &interDataCTU->depth[posCTU], sizeof(uint8_t) * numPartition);
             memcpy(ctu.m_predMode, &interDataCTU->modes[posCTU], sizeof(uint8_t) * numPartition);
             memcpy(ctu.m_partSize, &interDataCTU->partSize[posCTU], sizeof(uint8_t) * numPartition);
+            for (int list = 0; list < m_slice->isInterB() + 1; list++)
+                memcpy(ctu.m_skipFlag[list], &m_frame->m_analysisData.modeFlag[list][posCTU], sizeof(uint8_t) * numPartition);
+
             if ((m_slice->m_sliceType == P_SLICE || m_param->bIntraInBFrames) && !m_param->bMVType)
             {
                 analysis_intra_data* intraDataCTU = (analysis_intra_data*)m_frame->m_analysisData.intraData;
@@ -1162,7 +1169,11 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
     PicYuv& reconPic = *m_frame->m_reconPic;
     SplitData splitCUData;
 
-    if ((m_param->bMVType && cuGeom.numPartitions > 16) || !m_param->bMVType)
+    bool bHEVCBlockAnalysis = (m_param->bMVType && cuGeom.numPartitions > 16);
+    bool bRefineAVCAnalysis = (m_param->analysisReuseLevel == 7 && (m_modeFlag[0] || m_modeFlag[1]));
+    bool bNooffloading = !m_param->bMVType;
+
+    if (bHEVCBlockAnalysis || bRefineAVCAnalysis || bNooffloading)
     {
         md.bestMode = NULL;
         bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
@@ -1296,7 +1307,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
         }
 
         /* Step 1. Evaluate Merge/Skip candidates for likely early-outs, if skip mode was not set above */
-        if (mightNotSplit && depth >= minDepth && !md.bestMode && !bCtuInfoCheck) /* TODO: Re-evaluate if analysis load/save still works */
+        if ((mightNotSplit && depth >= minDepth && !md.bestMode && !bCtuInfoCheck) || (m_param->bMVType && (m_modeFlag[0] || m_modeFlag[1]))) /* TODO: Re-evaluate if analysis load/save still works */
         {
             /* Compute Merge Cost */
             md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -1307,7 +1318,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 && md.bestMode && md.bestMode->cu.isSkipped(0); // TODO: sa8d threshold per depth
         }
 
-        if (md.bestMode && m_param->bEnableRecursionSkip && !bCtuInfoCheck)
+        if (md.bestMode && m_param->bEnableRecursionSkip && !bCtuInfoCheck && !(m_param->bMVType && (m_modeFlag[0] || m_modeFlag[1])))
         {
             skipRecursion = md.bestMode->cu.isSkipped(0);
             if (mightSplit && depth >= minDepth && !skipRecursion)
@@ -1318,6 +1329,9 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                     skipRecursion = complexityCheckCU(*md.bestMode);
             }
         }
+
+        if (m_param->bMVType && md.bestMode && cuGeom.numPartitions <= 16)
+            skipRecursion = true;
 
         /* Step 2. Evaluate each of the 4 split sub-blocks in series */
         if (mightSplit && !skipRecursion)
@@ -1373,6 +1387,10 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             else
                 splitPred->sa8dCost = m_rdCost.calcRdSADCost((uint32_t)splitPred->distortion, splitPred->sa8dBits);
         }
+
+        /* If analysis mode is simple do not Evaluate other modes */
+        if ((m_param->bMVType && cuGeom.numPartitions <= 16) && (m_slice->m_sliceType == P_SLICE || m_slice->m_sliceType == B_SLICE))
+            mightNotSplit = !(m_checkMergeAndSkipOnly[0] || (m_checkMergeAndSkipOnly[0] && m_checkMergeAndSkipOnly[1]));
 
         /* Split CUs
          *   0  1
@@ -1838,7 +1856,12 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
     }
 
     SplitData splitCUData;
-    if ((m_param->bMVType && cuGeom.numPartitions > 16) || !m_param->bMVType)
+
+    bool bHEVCBlockAnalysis = (m_param->bMVType && cuGeom.numPartitions > 16);
+    bool bRefineAVCAnalysis = (m_param->analysisReuseLevel == 7 && (m_modeFlag[0] || m_modeFlag[1]));
+    bool bNooffloading = !m_param->bMVType;
+
+    if (bHEVCBlockAnalysis || bRefineAVCAnalysis || bNooffloading)
     {
         bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
         bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
@@ -1977,7 +2000,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
         }
 
         /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
-        if (mightNotSplit && !md.bestMode && !bCtuInfoCheck)
+        if (mightNotSplit && !md.bestMode && !bCtuInfoCheck || (m_param->bMVType && (m_modeFlag[0] || m_modeFlag[1])))
         {
             md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
             md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -1992,6 +2015,9 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             if (m_param->bEnableRecursionSkip && depth && m_modeDepth[depth - 1].bestMode)
                 skipRecursion = md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
         }
+
+        if (m_param->bMVType && md.bestMode && cuGeom.numPartitions <= 16)
+            skipRecursion = true;
 
         // estimate split cost
         /* Step 2. Evaluate each of the 4 split sub-blocks in series */
@@ -2044,6 +2070,10 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
             checkDQPForSplitPred(*splitPred, cuGeom);
         }
+
+        /* If analysis mode is simple do not Evaluate other modes */
+        if ((m_param->bMVType && cuGeom.numPartitions <= 16) && (m_slice->m_sliceType == P_SLICE || m_slice->m_sliceType == B_SLICE))
+            mightNotSplit = !(m_checkMergeAndSkipOnly[0] || (m_checkMergeAndSkipOnly[0] && m_checkMergeAndSkipOnly[1]));
 
         /* Split CUs
          *   0  1
@@ -2476,6 +2506,22 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
 
             if (mightSplit && m_param->rdLevel < 5)
                 checkDQPForSplitPred(*md.bestMode, cuGeom);
+        }
+
+        if (m_param->bMVType && m_param->analysisReuseLevel == 7)
+        {
+            for (int list = 0; list < m_slice->isInterB() + 1; list++)
+            {
+                m_modeFlag[list] = true;
+                if (parentCTU.m_skipFlag[list][cuGeom.absPartIdx] == 1 && cuGeom.numPartitions <= 16)
+                    m_checkMergeAndSkipOnly[list] = true;
+            }
+            m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, cuGeom, qp) : compressInterCU_rd0_4(parentCTU, cuGeom, qp);
+            for (int list = 0; list < m_slice->isInterB() + 1; list++)
+            {
+                m_modeFlag[list] = false;
+                m_checkMergeAndSkipOnly[list] = false;
+            }
         }
 
         if (m_param->interRefine > 1 || (m_param->interRefine && parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP  && !mode.cu.isSkipped(0)))

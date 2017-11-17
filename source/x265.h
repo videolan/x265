@@ -123,6 +123,7 @@ typedef struct x265_analysis_data
     void*            intraData;
     uint32_t         numCuInHeight;
     x265_lookahead_data lookahead;
+    uint8_t*         modeFlag[2];
 } x265_analysis_data;
 
 /* cu statistics */
