@@ -188,10 +188,10 @@ if(MSVC AND (MSVC_VERSION LESS 1800) AND ENABLE_HDR10_PLUS)
     message(FATAL_ERROR "MSVC version 12.0 or above required to support hdr10plus")
 endif()
 if(WIN32 AND (MSVC_VERSION GREATER 1800))
-	if(CMAKE_VERSION VERSION_LESS 3.7)
-		message(FATAL_ERROR "cmake version not compatible for VS 2017. Update the cmake to versions 3.7 or above")
-	endif()
-endif()	
+    if(CMAKE_VERSION VERSION_LESS 3.7)
+        message(FATAL_ERROR "cmake version not compatible for VS 2017. Update the cmake to versions 3.7 or above")
+    endif()
+endif()
 if(GCC)
     add_definitions(-Wall -Wextra -Wshadow)
     add_definitions(-D__STDC_LIMIT_MACROS=1)
@@ -650,13 +650,11 @@ if(X265_LATEST_TAG)
             DESTINATION "${LIB_INSTALL_DIR}/pkgconfig")
 endif()
 
-if(NOT WIN32)
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-                   "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake"
-                   IMMEDIATE @ONLY)
-    add_custom_target(uninstall
-                      "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake")
-endif()
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake"
+               IMMEDIATE @ONLY)
+add_custom_target(uninstall
+                  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake")
 
 # Main CLI application
 set(ENABLE_CLI ON CACHE BOOL "Build standalone CLI application")
@@ -725,13 +723,3 @@ if(hasParent)
         set(PLATFORM_LIBS ${PLATFORM_LIBS} PARENT_SCOPE)
     endif(PLATFORM_LIBS)
 endif(hasParent)
-
-# uninstall target
-if(NOT TARGET UNINSTALL)
-    configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-        IMMEDIATE @ONLY)
-    add_custom_target(UNINSTALL
-        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-endif()
