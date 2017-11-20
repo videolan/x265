@@ -293,6 +293,71 @@ tab_idct32_4:   dw 64, 90, 89, 87, 83, 80, 75, 70, 64, 57, 50, 43, 36, 25, 18, 9
                 dw 64, -87, 75, -57, 36, -9, -18, 43, -64, 80, -89, 90, -83, 70, -50, 25
                 dw 64, -90, 89, -87, 83, -80, 75, -70, 64, -57, 50, -43, 36, -25, 18, -9
 
+
+tab_idct32_AVX512_1:   dw 90 ,90 ,88 ,85, 82, 78, 73, 67, 90 ,90 ,88 ,85, 82, 78, 73, 67, 90, 82, 67, 46, 22, -4, -31, -54, 90, 82, 67, 46, 22, -4, -31, -54
+                       dw 61, 54, 46, 38, 31, 22, 13, 4, 61, 54, 46, 38, 31, 22, 13, 4, -73, -85, -90, -88, -78, -61, -38, -13, -73, -85, -90, -88, -78, -61, -38, -13
+                       dw 88, 67, 31, -13, -54, -82, -90, -78, 88, 67, 31, -13, -54, -82, -90, -78, 85, 46, -13, -67, -90, -73, -22, 38, 85, 46, -13, -67, -90, -73, -22, 38
+                       dw -46, -4, 38, 73, 90, 85, 61, 22, -46, -4, 38, 73, 90, 85, 61, 22, 82, 88, 54, -4, -61, -90, -78, -31, 82, 88, 54, -4, -61, -90, -78, -31
+                       dw 82, 22, -54, -90, -61, 13, 78, 85, 82, 22, -54, -90, -61, 13, 78, 85, 78, -4, -82, -73, 13, 85, 67, -22, 78, -4, -82, -73, 13, 85, 67, -22
+                       dw 31, -46, -90, -67, 4, 73, 88, 38, 31, -46, -90, -67, 4, 73, 88, 38, -88, -61, 31, 90, 54, -38, -90, -46, -88, -61, 31, 90, 54, -38, -90, -46
+                       dw 73, -31, -90, -22, 78, 67, -38, -90, 73, -31, -90, -22, 78, 67, -38, -90, 67, -54, -78, 38, 85, -22, -90, 4, 67, -54, -78, 38, 85, -22, -90, 4
+                       dw -13, 82, 61, -46, -88, -4, 85, 54, -13, 82, 61, -46, -88, -4, 85, 54, 90, 13, -88, -31, 82, 46, -73, -61, 90, 13, -88, -31, 82, 46, -73, -61
+
+tab_idct32_AVX512_5:   dw 4, -13, 22, -31, 38, -46, 54, -61, 4, -13, 22, -31, 38, -46, 54, -61, 13, -38, 61, -78, 88, -90, 85, -73, 13, -38, 61, -78, 88, -90, 85, -73
+                       dw 67, -73, 78, -82, 85, -88, 90, -90, 67, -73, 78, -82, 85, -88, 90, -90, 54, -31, 4, 22, -46, 67, -82, 90, 54, -31, 4, 22, -46, 67, -82, 90
+                       dw 22, -61, 85, -90, 73, -38, -4, 46, 22, -61, 85, -90, 73, -38, -4, 46, 31, -78, 90, -61, 4, 54, -88, 82, 31, -78, 90, -61, 4, 54, -88, 82
+                       dw -78, 90, -82, 54, -13, -31, 67, -88, -78, 90, -82, 54, -13, -31, 67, -88, -38, -22, 73, -90, 67, -13, -46, 85, -38, -22, 73, -90, 67, -13, -46, 85
+                       dw 38, -88, 73, -4, -67, 90, -46, -31, 38, -88, 73, -4, -67, 90, -46, -31, 46, -90, 38, 54, -90, 31, 61, -88, 46, -90, 38, 54, -90, 31, 61, -88
+                       dw 85, -78, 13, 61, -90, 54, 22, -82, 85, -78, 13, 61, -90, 54, 22, -82, 22, 67, -85, 13, 73, -82, 4, 78, 22, 67, -85, 13, 73, -82, 4, 78
+                       dw 54, -85, -4, 88, -46, -61, 82, 13, 54, -85, -4, 88, -46, -61, 82, 13, 61, -73, -46, 82, 31, -88, -13, 90, 61, -73, -46, 82, 31, -88, -13, 90
+                       dw -90, 38, 67, -78, -22, 90, -31, -73, -90, 38, 67, -78, -22, 90, -31, -73, -4, -90, 22, 85, -38, -78, 54, 67, -4, -90, 22, 85, -38, -78, 54, 67
+
+
+tab_idct32_AVX512_2:   dw 64, 89, 83, 75, 64, 50, 36, 18, 64, 89, 83, 75, 64, 50, 36, 18, 64, 75, 36, -18, -64, -89, -83, -50, 64, 75, 36, -18, -64, -89, -83, -50
+                       dw 64, 50, -36, -89, -64, 18, 83, 75, 64, 50, -36, -89, -64, 18, 83, 75, 64, 18, -83, -50, 64, 75, -36, -89, 64, 18, -83, -50, 64, 75, -36, -89
+                       dw 64, -18, -83, 50, 64, -75, -36, 89, 64, -18, -83, 50, 64, -75, -36, 89, 64, -50, -36, 89, -64, -18, 83, -75, 64, -50, -36, 89, -64, -18, 83, -75
+                       dw 64, -75, 36, 18, -64, 89, -83, 50, 64, -75, 36, 18, -64, 89, -83, 50, 64, -89, 83, -75, 64, -50, 36, -18, 64, -89, 83, -75, 64, -50, 36, -18
+
+tab_idct32_AVX512_3:   dw 90, 87, 80, 70, 57, 43, 25, 9, 90, 87, 80, 70, 57, 43, 25, 9, 87, 57, 9, -43, -80, -90, -70, -25, 87, 57, 9, -43, -80, -90, -70, -25
+                       dw 80, 9, -70, -87, -25, 57, 90, 43, 80, 9, -70, -87, -25, 57, 90, 43, 70, -43, -87, 9, 90, 25, -80, -57, 70, -43, -87, 9, 90, 25, -80, -57
+                       dw 57, -80, -25, 90, -9, -87, 43, 70, 57, -80, -25, 90, -9, -87, 43, 70, 43, -90, 57, 25, -87, 70, 9, -80, 43, -90, 57, 25, -87, 70, 9, -80
+                       dw 25, -70, 90, -80, 43, 9, -57, 87, 25, -70, 90, -80, 43, 9, -57, 87, 9, -25, 43, -57, 70, -80, 87, -90, 9, -25, 43, -57, 70, -80, 87, -90
+
+tab_idct32_AVX512_4:   dw 90 ,90 ,88 ,85, 82, 78, 73, 67, 61, 54, 46, 38, 31, 22, 13, 4, 90 ,90 ,88 ,85, 82, 78, 73, 67, 61, 54, 46, 38, 31, 22, 13, 4
+                       dw 90, 82, 67, 46, 22, -4, -31, -54, -73, -85, -90, -88, -78, -61, -38, -13, 90, 82, 67, 46, 22, -4, -31, -54, -73, -85, -90, -88, -78, -61, -38, -13
+                       dw 88, 67, 31, -13, -54, -82, -90, -78, -46, -4, 38, 73, 90, 85, 61, 22, 88, 67, 31, -13, -54, -82, -90, -78, -46, -4, 38, 73, 90, 85, 61, 22
+                       dw 85, 46, -13, -67, -90, -73, -22, 38, 82, 88, 54, -4, -61, -90, -78, -31, 85, 46, -13, -67, -90, -73, -22, 38, 82, 88, 54, -4, -61, -90, -78, -31
+                       dw 82, 22, -54, -90, -61, 13, 78, 85, 31, -46, -90, -67, 4, 73, 88, 38, 82, 22, -54, -90, -61, 13, 78, 85, 31, -46, -90, -67, 4, 73, 88, 38
+                       dw 78, -4, -82, -73, 13, 85, 67, -22, -88, -61, 31, 90, 54, -38, -90, -46, 78, -4, -82, -73, 13, 85, 67, -22, -88, -61, 31, 90, 54, -38, -90, -46
+                       dw 73, -31, -90, -22, 78, 67, -38, -90, -13, 82, 61, -46, -88, -4, 85, 54, 73, -31, -90, -22, 78, 67, -38, -90, -13, 82, 61, -46, -88, -4, 85, 54
+                       dw 67, -54, -78, 38, 85, -22, -90, 4, 90, 13, -88, -31, 82, 46, -73, -61, 67, -54, -78, 38, 85, -22, -90, 4, 90, 13, -88, -31, 82, 46, -73, -61
+                       dw 61, -73, -46, 82, 31, -88, -13, 90, -4, -90, 22, 85, -38, -78, 54, 67, 61, -73, -46, 82, 31, -88, -13, 90, -4, -90, 22, 85, -38, -78, 54, 67
+                       dw 54, -85, -4, 88, -46, -61, 82, 13, -90, 38, 67, -78, -22, 90, -31, -73, 54, -85, -4, 88, -46, -61, 82, 13, -90, 38, 67, -78, -22, 90, -31, -73
+                       dw 46, -90, 38, 54, -90, 31, 61, -88, 22, 67, -85, 13, 73, -82, 4, 78, 46, -90, 38, 54, -90, 31, 61, -88, 22, 67, -85, 13, 73, -82, 4, 78
+                       dw 38, -88, 73, -4, -67, 90, -46, -31, 85, -78, 13, 61, -90, 54, 22, -82, 38, -88, 73, -4, -67, 90, -46, -31, 85, -78, 13, 61, -90, 54, 22, -82
+                       dw 31, -78, 90, -61, 4, 54, -88, 82, -38, -22, 73, -90, 67, -13, -46, 85, 31, -78, 90, -61, 4, 54, -88, 82, -38, -22, 73, -90, 67, -13, -46, 85
+                       dw 22, -61, 85, -90, 73, -38, -4, 46, -78, 90, -82, 54, -13, -31, 67, -88, 22, -61, 85, -90, 73, -38, -4, 46, -78, 90, -82, 54, -13, -31, 67, -88
+                       dw 13, -38, 61, -78, 88, -90, 85, -73, 54, -31, 4, 22, -46, 67, -82, 90, 13, -38, 61, -78, 88, -90, 85, -73, 54, -31, 4, 22, -46, 67, -82, 90
+                       dw 4, -13, 22, -31, 38, -46, 54, -61, 67, -73, 78, -82, 85, -88, 90, -90, 4, -13, 22, -31, 38, -46, 54, -61, 67, -73, 78, -82, 85, -88, 90, -90
+
+tab_idct32_AVX512_6:   dw 64, 90, 89, 87, 83, 80, 75, 70, 64, 57, 50, 43, 36, 25, 18, 9, 64, 90, 89, 87, 83, 80, 75, 70, 64, 57, 50, 43, 36, 25, 18, 9
+                       dw 64, 87, 75, 57, 36, 9, -18, -43, -64, -80, -89, -90, -83, -70, -50, -25, 64, 87, 75, 57, 36, 9, -18, -43, -64, -80, -89, -90, -83, -70, -50, -25
+                       dw 64, 80, 50, 9, -36, -70, -89, -87, -64, -25, 18, 57, 83, 90, 75, 43, 64, 80, 50, 9, -36, -70, -89, -87, -64, -25, 18, 57, 83, 90, 75, 43
+                       dw 64, 70, 18, -43, -83, -87, -50, 9, 64, 90, 75, 25, -36, -80, -89, -57, 64, 70, 18, -43, -83, -87, -50, 9, 64, 90, 75, 25, -36, -80, -89, -57
+                       dw 64, 57, -18, -80, -83, -25, 50, 90, 64, -9, -75, -87, -36, 43, 89, 70, 64, 57, -18, -80, -83, -25, 50, 90, 64, -9, -75, -87, -36, 43, 89, 70
+                       dw 64, 43, -50, -90, -36, 57, 89, 25, -64, -87, -18, 70, 83, 9, -75, -80, 64, 43, -50, -90, -36, 57, 89, 25, -64, -87, -18, 70, 83, 9, -75, -80
+                       dw 64, 25, -75, -70, 36, 90, 18, -80, -64, 43, 89, 9, -83, -57, 50, 87, 64, 25, -75, -70, 36, 90, 18, -80, -64, 43, 89, 9, -83, -57, 50, 87
+                       dw 64, 9, -89, -25, 83, 43, -75, -57, 64, 70, -50, -80, 36, 87, -18, -90, 64, 9, -89, -25, 83, 43, -75, -57, 64, 70, -50, -80, 36, 87, -18, -90
+                       dw 64, -9, -89, 25, 83, -43, -75, 57, 64, -70, -50, 80, 36, -87, -18, 90, 64, -9, -89, 25, 83, -43, -75, 57, 64, -70, -50, 80, 36, -87, -18, 90
+                       dw 64, -25, -75, 70, 36, -90, 18, 80, -64, -43, 89, -9, -83, 57, 50, -87, 64, -25, -75, 70, 36, -90, 18, 80, -64, -43, 89, -9, -83, 57, 50, -87
+                       dw 64, -43, -50, 90, -36, -57, 89, -25, -64, 87, -18, -70, 83, -9, -75, 80, 64, -43, -50, 90, -36, -57, 89, -25, -64, 87, -18, -70, 83, -9, -75, 80
+                       dw 64, -57, -18, 80, -83, 25, 50, -90, 64, 9, -75, 87, -36, -43, 89, -70, 64, -57, -18, 80, -83, 25, 50, -90, 64, 9, -75, 87, -36, -43, 89, -70
+                       dw 64, -70, 18, 43, -83, 87, -50, -9, 64, -90, 75, -25, -36, 80, -89, 57, 64, -70, 18, 43, -83, 87, -50, -9, 64, -90, 75, -25, -36, 80, -89, 57
+                       dw 64, -80, 50, -9, -36, 70, -89, 87, -64, 25, 18, -57, 83, -90, 75, -43, 64, -80, 50, -9, -36, 70, -89, 87, -64, 25, 18, -57, 83, -90, 75, -43
+                       dw 64, -87, 75, -57, 36, -9, -18, 43, -64, 80, -89, 90, -83, 70, -50, 25, 64, -87, 75, -57, 36, -9, -18, 43, -64, 80, -89, 90, -83, 70, -50, 25
+                       dw 64, -90, 89, -87, 83, -80, 75, -70, 64, -57, 50, -43, 36, -25, 18, -9, 64, -90, 89, -87, 83, -80, 75, -70, 64, -57, 50, -43, 36, -25, 18, -9
+
+
 avx2_dct4:      dw 64, 64, 64, 64, 64, 64, 64, 64, 64, -64, 64, -64, 64, -64, 64, -64
                 dw 83, 36, 83, 36, 83, 36, 83, 36, 36, -83, 36, -83, 36, -83, 36, -83
 
@@ -4645,6 +4710,612 @@ cglobal idct32, 3, 6, 16, 0-32*64
 
     add             r1, r2
     add             r3, 64
+    dec             r4d
+    jnz             .pass2
+    RET
+
+
+%macro IDCT32_AVX512_PASS1 5
+    pmaddwd         m9,  m8, m%4
+    pmaddwd         m10, m7, m%5
+
+    vpsrldq          m0,   m9, 4
+    paddd            m9,   m0
+    vpslldq          m5,  m10, 4
+    paddd           m10,   m5
+    vmovdqu32        m9   {k1}, m10
+
+    pmaddwd         m10, m4, m%4
+    pmaddwd         m11, m1, m%5
+
+    vpsrldq          m0,   m10, 4
+    paddd           m10,    m0
+    vpslldq          m5,   m11, 4
+    paddd           m11,    m5
+    vmovdqu32       m10    {k1}, m11
+
+    vpsrldq          m0,   m9, 8
+    paddd            m9,   m0
+    vpslldq          m5,   m10, 8
+    paddd           m10,   m5
+    vmovdqu32        m9   {k2}, m10
+
+    movu            m6,  [tab_idct32_AVX512_5 + %1 * 64]
+    movu            m5,  [tab_idct32_AVX512_5 + %1 * 64 + 64]
+
+    pmaddwd         m10, m8, m6
+    pmaddwd         m11, m7, m5
+
+    vpsrldq          m0,  m10, 4
+    paddd           m10,   m0
+    vpslldq          m5,  m11, 4
+    paddd           m11,   m5
+    vmovdqu32       m10   {k1}, m11
+
+    pmaddwd         m11, m4, m6
+    pmaddwd         m12, m1, [tab_idct32_AVX512_5 + %1 * 64 + 64]
+
+    vpsrldq          m0,   m11, 4
+    paddd           m11,    m0
+    vpslldq          m5,   m12, 4
+    paddd           m12,    m5
+    vmovdqu32       m11    {k1}, m12
+
+    vpsrldq          m0,   m10, 8
+    paddd           m10,    m0
+    vpslldq          m5,   m11, 8
+    paddd           m11,    m5
+    vmovdqu32       m10    {k2}, m11
+
+    pshufd           m0,    m9,  q2301
+    pshufd           m5,   m10,  q2301
+    paddd            m9,    m0
+    paddd           m10,    m5
+    punpckhdq        m0,    m9,  m10
+    punpckldq        m5,    m9,  m10
+    punpckhdq        m9,   m5,   m0
+
+    pmaddwd         m10, m3, m%2
+    pmaddwd         m11, m14, m%2
+
+    vpsrldq          m0,   m10, 4
+    paddd           m10,    m0
+    vpslldq          m5,   m11, 4
+    paddd           m11,    m5
+    vmovdqu32       m10   {k1}, m11
+
+    vpsrldq         m0,    m10, 8
+    paddd           m10,    m0
+
+    pmaddwd         m11, m2, m%3
+    pmaddwd         m12, m13, m%3
+
+    vpsrldq          m0,   m11, 4
+    paddd           m11,    m0
+    vpslldq          m5,   m12, 4
+    paddd           m12,    m5
+    vmovdqu32       m11   {k1}, m12
+
+    vpsrldq          m0,   m11, 8
+    paddd           m11,    m0
+
+    paddd           m12, m10, m11
+    psubd           m10, m11
+
+    punpcklqdq      m12, m10
+    paddd           m10, m9, m12
+    paddd           m10, m15
+    psrad           m10, IDCT_SHIFT1
+
+    psubd           m12, m9
+    paddd           m12, m15
+    psrad           m12, IDCT_SHIFT1
+
+    packssdw        m10, m12
+    vextracti128    xm12, m10, 1
+    vextracti64x4   ym5,  m10, 1
+    vextracti128    xm0, ym5, 1
+
+    movd            [r3 + %1 * 64], xm10
+    movd            [r3 + 32 + %1 * 64], xm12
+    pextrd          [r4 - %1 * 64], xm10, 1
+    pextrd          [r4+ 32 - %1 * 64], xm12, 1
+    pextrd          [r3 + 16 * 64 + %1 *64], xm10, 3
+    pextrd          [r3 + 16 * 64 + 32 + %1 * 64], xm12, 3
+    pextrd          [r4 + 16 * 64 - %1 * 64], xm10, 2
+    pextrd          [r4 + 16 * 64 + 32 - %1 * 64], xm12, 2
+
+    movd            [r3 + (%1 + 1) * 64], xm5
+    movd            [r3 + 32 + (%1 + 1) * 64], xm0
+    pextrd          [r4 - (%1 + 1) * 64], xm5, 1
+    pextrd          [r4+ 32 - (%1 + 1) * 64], xm0, 1
+    pextrd          [r3 + 16 * 64 + (%1 + 1) * 64], xm5, 3
+    pextrd          [r3 + 16 * 64 + 32 + (%1 + 1) * 64], xm0, 3
+    pextrd          [r4 + 16 * 64 - (%1 + 1) * 64], xm5, 2
+    pextrd          [r4 + 16 * 64 + 32 - (%1 + 1) * 64], xm0, 2
+%endmacro
+
+%macro IDCT32_AVX512_PASS2 0
+    pmaddwd         m2, m0, m7
+    pmaddwd         m3, m0, m8
+
+    vpsrldq         m24,   m2, 4
+    paddd            m2,  m24
+    vpslldq         m25,   m3, 4
+    paddd            m3,  m25
+    vmovdqu32        m2   {k1}, m3
+
+    pmaddwd         m3, m0, m9
+    pmaddwd         m4, m0, m10
+
+    vpsrldq         m24,   m3, 4
+    paddd            m3,  m24
+    vpslldq         m25,   m4, 4
+    paddd            m4,  m25
+    vmovdqu32        m3   {k1}, m4
+
+    vpsrldq         m24,   m2, 8
+    paddd            m2,  m24
+    vpslldq         m25,   m3, 8
+    paddd            m3,  m25
+    vmovdqu32        m2   {k2}, m3
+
+    pmaddwd         m3, m0, m11
+    pmaddwd         m4, m0, m12
+
+    vpsrldq         m24,   m3, 4
+    paddd            m3,  m24
+    vpslldq         m25,   m4, 4
+    paddd            m4,  m25
+    vmovdqu32        m3   {k1}, m4
+
+    pmaddwd         m4, m0, m13
+    pmaddwd         m5, m0, m14
+
+    vpsrldq         m24,   m4, 4
+    paddd            m4,  m24
+    vpslldq         m25,   m5, 4
+    paddd            m5,  m25
+    vmovdqu32        m4   {k1}, m5
+
+    vpsrldq         m24,   m3, 8
+    paddd            m3,  m24
+    vpslldq         m25,   m4, 8
+    paddd            m4,  m25
+    vmovdqu32        m3   {k2}, m4
+
+    movu           m24,        [idct16_AVX512_shuff3]
+    movu           m25,        [idct16_AVX512_shuff2]
+    vpermi2q       m24,        m2,       m3
+    vpermi2q       m25,        m2,       m3
+    paddd           m2, m25, m24
+
+    pmaddwd         m3, m0, m16
+    pmaddwd         m4, m0, m17
+
+    vpsrldq         m24,   m3, 4
+    paddd            m3,  m24
+    vpslldq         m25,   m4, 4
+    paddd            m4,  m25
+    vmovdqu32        m3   {k1}, m4
+
+    pmaddwd         m4, m0, m18
+    pmaddwd         m5, m0, m19
+
+    vpsrldq         m24,   m4, 4
+    paddd            m4,  m24
+    vpslldq         m25,   m5, 4
+    paddd            m5,  m25
+    vmovdqu32        m4   {k1}, m5
+
+    vpsrldq         m24,   m3, 8
+    paddd            m3,  m24
+    vpslldq         m25,   m4, 8
+    paddd            m4,  m25
+    vmovdqu32        m3   {k2}, m4
+
+    pmaddwd         m4, m0, m20
+    pmaddwd         m5, m0, m21
+
+    vpsrldq         m24,   m4, 4
+    paddd            m4,  m24
+    vpslldq         m25,   m5, 4
+    paddd            m5,  m25
+    vmovdqu32        m4   {k1}, m5
+
+    pmaddwd         m5, m0, m22
+    pmaddwd         m0,     m23
+
+    vpsrldq         m24,   m5, 4
+    paddd            m5,  m24
+    vpslldq         m25,   m0, 4
+    paddd            m0,  m25
+    vmovdqu32        m5   {k1}, m0
+
+    vpsrldq         m24,   m4, 8
+    paddd            m4,  m24
+    vpslldq         m25,   m5, 8
+    paddd            m5,  m25
+    vmovdqu32        m4   {k2}, m5
+
+    movu           m24,        [idct16_AVX512_shuff3]
+    movu           m25,        [idct16_AVX512_shuff2]
+    vpermi2q       m24,        m3,       m4
+    vpermi2q       m25,        m3,       m4
+    paddd           m3, m25, m24
+
+    pmaddwd         m4, m1, m26
+    pmaddwd         m0, m1, m27
+
+    vpsrldq         m24,   m4, 4
+    paddd            m4,  m24
+    vpslldq         m25,   m0, 4
+    paddd            m0,  m25
+    vmovdqu32        m4   {k1}, m0
+
+    pmaddwd         m5, m1, m28
+    pmaddwd         m0, m1, m29
+
+    vpsrldq         m24,   m5, 4
+    paddd            m5,  m24
+    vpslldq         m25,   m0, 4
+    paddd            m0,  m25
+    vmovdqu32        m5   {k1}, m0
+
+
+    vpsrldq         m24,   m4, 8
+    paddd            m4,  m24
+    vpslldq         m25,   m5, 8
+    paddd            m5,  m25
+    vmovdqu32        m4   {k2}, m5
+
+    pmaddwd         m5, m1, m30
+    pmaddwd         m0, m1, m31
+
+    vpsrldq         m24,   m5, 4
+    paddd            m5,  m24
+    vpslldq         m25,   m0, 4
+    paddd            m0,  m25
+    vmovdqu32        m5   {k1}, m0
+
+    pmaddwd         m6, m1, [tab_idct32_AVX512_4 + 6 * mmsize]
+    pmaddwd         m0, m1, [tab_idct32_AVX512_4 + 7 * mmsize]
+
+    vpsrldq         m24,   m6, 4
+    paddd            m6,  m24
+    vpslldq         m25,   m0, 4
+    paddd            m0,  m25
+    vmovdqu32        m6   {k1}, m0
+
+    vpsrldq         m24,   m5, 8
+    paddd            m5,  m24
+    vpslldq         m25,   m6, 8
+    paddd            m6,  m25
+    vmovdqu32        m5   {k2}, m6
+
+    movu           m24,        [idct16_AVX512_shuff3]
+    movu           m25,        [idct16_AVX512_shuff2]
+    vpermi2q       m24,        m4,       m5
+    vpermi2q       m25,        m4,       m5
+    paddd           m4, m25, m24
+
+    pmaddwd         m5, m1, [tab_idct32_AVX512_4 + 8 * mmsize]
+    pmaddwd         m0, m1, [tab_idct32_AVX512_4 + 9 * mmsize]
+
+    vpsrldq         m24,   m5, 4
+    paddd            m5,  m24
+    vpslldq         m25,   m0, 4
+    paddd            m0,  m25
+    vmovdqu32        m5   {k1}, m0
+
+    pmaddwd         m6, m1, [tab_idct32_AVX512_4 + 10 * mmsize]
+    pmaddwd         m0, m1, [tab_idct32_AVX512_4 + 11 * mmsize]
+
+    vpsrldq         m24,   m6, 4
+    paddd            m6,  m24
+    vpslldq         m25,   m0, 4
+    paddd            m0,  m25
+    vmovdqu32        m6   {k1}, m0
+
+    vpsrldq         m24,   m5, 8
+    paddd            m5,  m24
+    vpslldq         m25,   m6, 8
+    paddd            m6,  m25
+    vmovdqu32        m5   {k2}, m6
+
+    pmaddwd         m6, m1, [tab_idct32_AVX512_4 + 12 * mmsize]
+    pmaddwd         m0, m1, [tab_idct32_AVX512_4 + 13 * mmsize]
+
+    vpsrldq         m24,   m6, 4
+    paddd            m6,  m24
+    vpslldq         m25,   m0, 4
+    paddd            m0,  m25
+    vmovdqu32        m6   {k1}, m0
+
+    pmaddwd         m0, m1, [tab_idct32_AVX512_4 + 14 * mmsize]
+    pmaddwd         m1,     [tab_idct32_AVX512_4 + 15 * mmsize]
+
+    vpsrldq         m24,   m0, 4
+    paddd            m0,  m24
+    vpslldq         m25,   m1, 4
+    paddd            m1,  m25
+    vmovdqu32        m0   {k1}, m1
+
+    vpsrldq         m24,   m6, 8
+    paddd            m6,  m24
+    vpslldq         m25,   m0, 8
+    paddd            m0,  m25
+    vmovdqu32        m6   {k2}, m0
+
+    movu           m24,        [idct16_AVX512_shuff3]
+    movu           m25,        [idct16_AVX512_shuff2]
+    vpermi2q       m24,        m5,       m6
+    vpermi2q       m25,        m5,       m6
+    paddd           m5, m25, m24
+
+    paddd           m6, m2, m4
+    paddd           m6, m15
+    psrad           m6, IDCT_SHIFT2
+
+    psubd           m2, m4
+    paddd           m2, m15
+    psrad           m2, IDCT_SHIFT2
+
+    paddd           m4, m3, m5
+    paddd           m4, m15
+    psrad           m4, IDCT_SHIFT2
+
+    psubd           m3, m5
+    paddd           m3, m15
+    psrad           m3, IDCT_SHIFT2
+
+    packssdw        m6, m4
+    packssdw        m2, m3
+
+    vpermq          m6, m6, 0xD8
+    vpermq          m2, m2, 0x8D
+    pshufb          m2, [idct16_AVX512_shuff6]
+%endmacro
+
+;-------------------------------------------------------------------
+; void idct32(const int16_t* src, int16_t* dst, intptr_t dstStride)
+;-------------------------------------------------------------------
+
+INIT_ZMM avx512
+cglobal idct32, 3, 8, 32, 0-32*64
+
+%define             IDCT_SHIFT1         7
+
+    vbroadcasti128  m15, [pd_64]
+
+    mov             r3,  rsp
+    lea             r4,  [r3 + 15 * 64]
+    mov             r5d, 8
+    mov             r7d, 0xAAAA
+    kmovd            k1, r7d
+    mov             r7d, 0xCCCC
+    kmovd            k2, r7d
+
+
+    movu            m16, [tab_idct32_AVX512_2 + 0 * 64]
+    movu            m17, [tab_idct32_AVX512_2 + 1 * 64]
+    movu            m18, [tab_idct32_AVX512_2 + 2 * 64]
+    movu            m19, [tab_idct32_AVX512_2 + 3 * 64]
+
+    movu            m20, [tab_idct32_AVX512_3 + 0 * 64]
+    movu            m21, [tab_idct32_AVX512_3 + 1 * 64]
+    movu            m22, [tab_idct32_AVX512_3 + 2 * 64]
+    movu            m23, [tab_idct32_AVX512_3 + 3 * 64]
+
+    movu            m24, [tab_idct32_AVX512_1 + 0 * 64]
+    movu            m25, [tab_idct32_AVX512_1 + 1 * 64]
+    movu            m26, [tab_idct32_AVX512_1 + 2 * 64]
+    movu            m27, [tab_idct32_AVX512_1 + 3 * 64]
+    movu            m28, [tab_idct32_AVX512_1 + 4 * 64]
+    movu            m29, [tab_idct32_AVX512_1 + 5 * 64]
+    movu            m30, [tab_idct32_AVX512_1 + 6 * 64]
+    movu            m31, [tab_idct32_AVX512_1 + 7 * 64]
+
+.pass1:
+    movq            xm0,    [r0 +  2 * 64]
+    movq            xm1,    [r0 + 18 * 64]
+    punpcklqdq      xm0,    xm0,  xm1
+    movq            xm1,    [r0 +  0 * 64]
+    movq            xm2,    [r0 + 16 * 64]
+    punpcklqdq      xm1,    xm1,  xm2
+    vinserti128     ym0,    ym0,  xm1, 1             ;[2 18 0 16]
+
+    movq            xm1,    [r0 + 1 * 64]
+    movq            xm2,    [r0 + 9 * 64]
+    punpcklqdq      xm1,    xm1,  xm2
+    movq            xm2,    [r0 + 17 * 64]
+    movq            xm3,    [r0 + 25 * 64]
+    punpcklqdq      xm2,    xm2,  xm3
+    vinserti128     ym1,    ym1,  xm2, 1             ;[1 9 17 25]
+
+    movq            xm2,    [r0 + 6 * 64]
+    movq            xm3,    [r0 + 22 * 64]
+    punpcklqdq      xm2,    xm2,  xm3
+    movq            xm3,    [r0 + 4 * 64]
+    movq            xm4,    [r0 + 20 * 64]
+    punpcklqdq      xm3,    xm3,  xm4
+    vinserti128     ym2,    ym2,  xm3, 1             ;[6 22 4 20]
+
+    movq            xm3,    [r0 + 3 * 64]
+    movq            xm4,    [r0 + 11 * 64]
+    punpcklqdq      xm3,    xm3,  xm4
+    movq            xm4,    [r0 + 19 * 64]
+    movq            xm5,    [r0 + 27 * 64]
+    punpcklqdq      xm4,    xm4,  xm5
+    vinserti128     ym3,    ym3,  xm4, 1             ;[3 11 17 25]
+
+    movq            xm4,    [r0 + 10 * 64]
+    movq            xm5,    [r0 + 26 * 64]
+    punpcklqdq      xm4,    xm4,  xm5
+    movq            xm5,    [r0 + 8 * 64]
+    movq            xm6,    [r0 + 24 * 64]
+    punpcklqdq      xm5,    xm5,  xm6
+    vinserti128     ym4,    ym4,  xm5, 1             ;[10 26 8 24]
+
+    movq            xm5,    [r0 + 5 * 64]
+    movq            xm6,    [r0 + 13 * 64]
+    punpcklqdq      xm5,    xm5,  xm6
+    movq            xm6,    [r0 + 21 * 64]
+    movq            xm7,    [r0 + 29 * 64]
+    punpcklqdq      xm6,    xm6,  xm7
+    vinserti128     ym5,    ym5,  xm6, 1             ;[5 13 21 9]
+
+    movq            xm6,    [r0 + 14 * 64]
+    movq            xm7,    [r0 + 30 * 64]
+    punpcklqdq      xm6,    xm6,  xm7
+    movq            xm7,    [r0 + 12 * 64]
+    movq            xm8,    [r0 + 28 * 64]
+    punpcklqdq      xm7,    xm7,  xm8
+    vinserti128     ym6,    ym6,  xm7, 1             ;[14 30 12 28]
+
+    movq            xm7,    [r0 + 7 * 64]
+    movq            xm8,    [r0 + 15 * 64]
+    punpcklqdq      xm7,    xm7,  xm8
+    movq            xm8,    [r0 + 23 * 64]
+    movq            xm9,    [r0 + 31 * 64]
+    punpcklqdq      xm8,    xm8,  xm9
+    vinserti128     ym7,    ym7,  xm8, 1             ;[7 15 23 31]
+
+    punpckhwd       ym8, ym0, ym2                  ;[18 22 16 20]
+    punpcklwd       ym0, ym2                       ;[2 6 0 4]
+
+    punpckhwd       ym2, ym1, ym3                  ;[9 11 25 27]
+    punpcklwd       ym1, ym3                       ;[1 3 17 19]
+
+    punpckhwd       ym3, ym4, ym6                  ;[26 30 24 28]
+    punpcklwd       ym4, ym6                       ;[10 14 8 12]
+
+    punpckhwd       ym6, ym5, ym7                  ;[13 15 29 31]
+    punpcklwd       ym5, ym7                       ;[5 7 21 23]
+
+    punpckhdq       ym7, ym0, ym4                  ;[22 62 102 142 23 63 103 143 02 42 82 122 03 43 83 123]
+    punpckldq       ym0, ym4                       ;[20 60 100 140 21 61 101 141 00 40 80 120 01 41 81 121]
+
+    punpckhdq       ym4, ym8, ym3                  ;[182 222 262 302 183 223 263 303 162 202 242 282 163 203 243 283]
+    punpckldq       ym8, ym3                       ;[180 220 260 300 181 221 261 301 160 200 240 280 161 201 241 281]
+
+    punpckhdq       ym3, ym1, ym5                  ;[12 32 52 72 13 33 53 73 172 192 212 232 173 193 213 233]
+    punpckldq       ym1, ym5                       ;[10 30 50 70 11 31 51 71 170 190 210 230 171 191 211 231]
+
+    punpckhdq       ym5, ym2, ym6                  ;[92 112 132 152 93 113 133 153 252 272 292 312 253 273 293 313]
+    punpckldq       ym2, ym6                       ;[90 110 130 150 91 111 131 151 250 270 290 310 251 271 291 311]
+
+    punpckhqdq      ym6, ym0, ym8                  ;[21 61 101 141 181 221 261 301 01 41 81 121 161 201 241 281]
+    punpcklqdq      ym0, ym8                       ;[20 60 100 140 180 220 260 300 00 40 80 120 160 200 240 280]
+
+    punpckhqdq      ym8, ym7, ym4                  ;[23 63 103 143 183 223 263 303 03 43 83 123 163 203 243 283]
+    punpcklqdq      ym7, ym4                       ;[22 62 102 142 182 222 262 302 02 42 82 122 162 202 242 282]
+
+    punpckhqdq      ym4, ym1, ym2                  ;[11 31 51 71 91 111 131 151 171 191 211 231 251 271 291 311]
+    punpcklqdq      ym1, ym2                       ;[10 30 50 70 90 110 130 150 170 190 210 230 250 270 290 310]
+
+    punpckhqdq      ym2, ym3, ym5                  ;[13 33 53 73 93 113 133 153 173 193 213 233 253 273 293 313]
+    punpcklqdq      ym3, ym5                       ;[12 32 52 72 92 112 132 152 172 192 212 232 252 272 292 312]
+
+    vinserti64x4    m7,        m7,      ym7, 1
+    vinserti64x4    m8,        m8,      ym8, 1
+    movu           m13,        [idct16_AVX512_shuff2]
+    movu           m14,        [idct16_AVX512_shuff3]
+    vpermi2q       m13,        m7,       m8
+    vpermi2q       m14,        m7,       m8
+
+    vinserti64x4    m1,        m1,      ym1, 1
+    vinserti64x4    m4,        m4,      ym4, 1
+    movu            m7,        [idct16_AVX512_shuff3]
+    movu            m8,        [idct16_AVX512_shuff2]
+    vpermi2q        m7,        m1,       m4
+    vpermi2q        m8,        m1,       m4
+
+    vinserti64x4    m3,        m3,      ym3, 1
+    vinserti64x4    m2,        m2,      ym2, 1
+    movu            m1,        [idct16_AVX512_shuff3]
+    movu            m4,        [idct16_AVX512_shuff2]
+    vpermi2q        m1,        m3,       m2
+    vpermi2q        m4,        m3,       m2
+
+    vinserti64x4    m0,        m0,      ym0, 1
+    vinserti64x4    m6,        m6,      ym6, 1
+    movu            m2,        [idct16_AVX512_shuff2]
+    movu            m3,        [idct16_AVX512_shuff3]
+    vpermi2q        m2,        m0,       m6
+    vpermi2q        m3,        m0,       m6
+
+
+    IDCT32_AVX512_PASS1 0, 16, 20, 24, 25
+    IDCT32_AVX512_PASS1 2, 17, 21, 26, 27
+    IDCT32_AVX512_PASS1 4, 18, 22, 28, 29
+    IDCT32_AVX512_PASS1 6, 19, 23, 30, 31
+
+    add             r0, 8
+    add             r3, 4
+    add             r4, 4
+    dec             r5d
+    jnz             .pass1
+
+%if BIT_DEPTH == 12
+    %define         IDCT_SHIFT2        8
+    vpbroadcastd    m15,                [pd_128]
+%elif BIT_DEPTH == 10
+    %define         IDCT_SHIFT2        10
+    vpbroadcastd    m15,                [pd_512]
+%elif BIT_DEPTH == 8
+    %define         IDCT_SHIFT2        12
+    vpbroadcastd    m15,                [pd_2048]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    mov             r3,  rsp
+    add             r2d, r2d
+    mov             r4d, 16
+    mov             r6d, 0xFFFF0000
+    kmovd            k3, r6d
+
+    movu            m7,  [tab_idct32_AVX512_6]
+    movu            m8,  [tab_idct32_AVX512_6 + 1 * mmsize]
+    movu            m9,  [tab_idct32_AVX512_6 + 2 * mmsize]
+    movu            m10, [tab_idct32_AVX512_6 + 3 * mmsize]
+    movu            m11, [tab_idct32_AVX512_6 + 4 * mmsize]
+    movu            m12, [tab_idct32_AVX512_6 + 5 * mmsize]
+    movu            m13, [tab_idct32_AVX512_6 + 6 * mmsize]
+    movu            m14, [tab_idct32_AVX512_6 + 7 * mmsize]
+    movu            m16, [tab_idct32_AVX512_6 + 8 * mmsize]
+    movu            m17, [tab_idct32_AVX512_6 + 9 * mmsize]
+    movu            m18, [tab_idct32_AVX512_6 + 10 * mmsize]
+    movu            m19, [tab_idct32_AVX512_6 + 11 * mmsize]
+    movu            m20, [tab_idct32_AVX512_6 + 12 * mmsize]
+    movu            m21, [tab_idct32_AVX512_6 + 13 * mmsize]
+    movu            m22, [tab_idct32_AVX512_6 + 14 * mmsize]
+    movu            m23, [tab_idct32_AVX512_6 + 15 * mmsize]
+    movu            m26, [tab_idct32_AVX512_4]
+    movu            m27, [tab_idct32_AVX512_4 + 1 * mmsize]
+    movu            m28, [tab_idct32_AVX512_4 + 2 * mmsize]
+    movu            m29, [tab_idct32_AVX512_4 + 3 * mmsize]
+    movu            m30, [tab_idct32_AVX512_4 + 4 * mmsize]
+    movu            m31, [tab_idct32_AVX512_4 + 5 * mmsize]
+
+.pass2:
+    movu            ym0, [r3]
+    movu            ym1, [r3 + 32]
+    vmovdqu16        m0  {k3}, [r3 + 32]
+    vmovdqu16        m1  {k3}, [r3 + 64]
+
+    IDCT32_AVX512_PASS2
+    movu            [r1],      ym6
+    movu            [r1 + 32], ym2
+    vextracti64x4   ym24,       m6, 1
+    vextracti64x4   ym25,       m2, 1
+    add             r1,         r2
+    movu            [r1 ],     ym24
+    movu            [r1 + 32], ym25
+
+    add             r1, r2
+    add             r3, 128
     dec             r4d
     jnz             .pass2
     RET
