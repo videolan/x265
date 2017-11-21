@@ -2000,7 +2000,8 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
         }
 
         /* Step 1. Evaluate Merge/Skip candidates for likely early-outs */
-        if (mightNotSplit && !md.bestMode && !bCtuInfoCheck || (m_param->bMVType && (m_modeFlag[0] || m_modeFlag[1])))
+        if ((mightNotSplit && !md.bestMode && !bCtuInfoCheck) ||
+            (m_param->bMVType && (m_modeFlag[0] || m_modeFlag[1])))
         {
             md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
             md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
