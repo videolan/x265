@@ -119,6 +119,7 @@ static const struct option long_options[] =
     { "open-gop",             no_argument, NULL, 0 },
     { "keyint",         required_argument, NULL, 'I' },
     { "min-keyint",     required_argument, NULL, 'i' },
+    { "gop-lookahead",  required_argument, NULL, 0 },
     { "scenecut",       required_argument, NULL, 0 },
     { "no-scenecut",          no_argument, NULL, 0 },
     { "scenecut-bias",  required_argument, NULL, 0 },
@@ -418,6 +419,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]open-gop               Enable open-GOP, allows I slices to be non-IDR. Default %s\n", OPT(param->bOpenGOP));
     H0("-I/--keyint <integer>            Max IDR period in frames. -1 for infinite-gop. Default %d\n", param->keyframeMax);
     H0("-i/--min-keyint <integer>        Scenecuts closer together than this are coded as I, not IDR. Default: auto\n");
+    H0("   --gop-lookahead <integer>     Extends gop boundary if a scenecut is found within this from keyint boundary. Default 0\n");
     H0("   --no-scenecut                 Disable adaptive I-frame decision\n");
     H0("   --scenecut <integer>          How aggressively to insert extra I-frames. Default %d\n", param->scenecutThreshold);
     H1("   --scenecut-bias <0..100.0>    Bias for scenecut detection. Default %.2f\n", param->scenecutBias);

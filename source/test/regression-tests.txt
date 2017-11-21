@@ -150,7 +150,7 @@ Kimono1_1920x1080_24_400.yuv,--preset ultrafast --slices 1 --weightp --tu-intra-
 Kimono1_1920x1080_24_400.yuv,--preset medium --rdoq-level 0 --limit-refs 3 --slices 2
 Kimono1_1920x1080_24_400.yuv,--preset veryslow --crf 4 --cu-lossless --slices 2 --limit-refs 3 --limit-modes
 Kimono1_1920x1080_24_400.yuv,--preset placebo --ctu 32 --max-tu-size 8 --limit-tu 2
-
+big_buck_bunny_360p24.y4m, --keyint 60 --min-keyint 40 --gop-lookahead 20
 # Main12 intraCost overflow bug test
 720p50_parkrun_ter.y4m,--preset medium
 
