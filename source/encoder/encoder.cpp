@@ -1155,6 +1155,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     pic_out->analysisData.wt = outFrame->m_analysisData.wt;
                     pic_out->analysisData.interData = outFrame->m_analysisData.interData;
                     pic_out->analysisData.intraData = outFrame->m_analysisData.intraData;
+                    pic_out->analysisData.modeFlag[0] = outFrame->m_analysisData.modeFlag[0];
+                    pic_out->analysisData.modeFlag[1] = outFrame->m_analysisData.modeFlag[1];
                     if (m_param->bDisableLookahead)
                     {
                         int factor = 1;
@@ -3067,6 +3069,7 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
                 CHECKED_MALLOC(interData->mvpIdx[dir], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
                 CHECKED_MALLOC(interData->refIdx[dir], int8_t, analysis->numPartitions * analysis->numCUsInFrame);
                 CHECKED_MALLOC(interData->mv[dir], MV, analysis->numPartitions * analysis->numCUsInFrame);
+                CHECKED_MALLOC(analysis->modeFlag[dir], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
             }
 
             /* Allocate intra in inter */
@@ -3146,7 +3149,11 @@ void Encoder::freeAnalysis(x265_analysis_data* analysis)
                     X265_FREE(((analysis_inter_data*)analysis->interData)->mvpIdx[dir]);
                     X265_FREE(((analysis_inter_data*)analysis->interData)->refIdx[dir]);
                     X265_FREE(((analysis_inter_data*)analysis->interData)->mv[dir]);
-                    X265_FREE(analysis->modeFlag[dir]);
+                    if (analysis->modeFlag[dir] != NULL)
+                    {
+                        X265_FREE(analysis->modeFlag[dir]);
+                        analysis->modeFlag[dir] = NULL;
+                    }
                 }
             }
             else
