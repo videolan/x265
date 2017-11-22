@@ -11261,6 +11261,116 @@ cglobal interp_4tap_vert_ss_32x%1, 4, 7, 18
     FILTER_VER_SS_CHROMA_32xN_AVX512 64
 %endif
 
+%macro PROCESS_CHROMA_VERT_SS_64x2_AVX512 0
+    movu                 m1,                  [r0]
+    movu                 m3,                  [r0 + r1]
+    punpcklwd            m0,                  m1,                     m3
+    pmaddwd              m0,                  m15
+    punpckhwd            m1,                  m3
+    pmaddwd              m1,                  m15
+
+    movu                 m9,                  [r0 + mmsize]
+    movu                 m11,                 [r0 + r1 + mmsize]
+    punpcklwd            m8,                  m9,                     m11
+    pmaddwd              m8,                  m15
+    punpckhwd            m9,                  m11
+    pmaddwd              m9,                  m15
+    movu                 m4,                  [r0 + 2 * r1]
+    punpcklwd            m2,                  m3,                     m4
+    pmaddwd              m2,                  m15
+    punpckhwd            m3,                  m4
+    pmaddwd              m3,                  m15
+    movu                 m12,                 [r0 + 2 * r1 + mmsize]
+    punpcklwd            m10,                 m11,                    m12
+    pmaddwd              m10,                 m15
+    punpckhwd            m11,                 m12
+    pmaddwd              m11,                 m15
+
+    lea                  r0,                  [r0 + 2 * r1]
+    movu                 m5,                  [r0 + r1]
+    punpcklwd            m6,                  m4,                     m5
+    pmaddwd              m6,                  m16
+    paddd                m0,                  m6
+    punpckhwd            m4,                  m5
+    pmaddwd              m4,                  m16
+    paddd                m1,                  m4
+
+    movu                 m13,                 [r0 + r1 + mmsize]
+    punpcklwd            m14,                 m12,                    m13
+    pmaddwd              m14,                 m16
+    paddd                m8,                  m14
+    punpckhwd            m12,                 m13
+    pmaddwd              m12,                 m16
+    paddd                m9,                  m12
+
+    movu                 m4,                  [r0 + 2 * r1]
+    punpcklwd            m6,                  m5,                     m4
+    pmaddwd              m6,                  m16
+    paddd                m2,                  m6
+    punpckhwd            m5,                  m4
+    pmaddwd              m5,                  m16
+    paddd                m3,                  m5
+
+    movu                 m12,                 [r0 + 2 * r1 + mmsize]
+    punpcklwd            m14,                 m13,                    m12
+    pmaddwd              m14,                 m16
+    paddd                m10,                 m14
+    punpckhwd            m13,                 m12
+    pmaddwd              m13,                 m16
+    paddd                m11,                 m13
+
+    psrad                m0,                  6
+    psrad                m1,                  6
+    psrad                m2,                  6
+    psrad                m3,                  6
+    psrad                m8,                  6
+    psrad                m9,                  6
+    psrad                m10,                 6
+    psrad                m11,                 6
+
+    packssdw             m0,                  m1
+    packssdw             m2,                  m3
+    packssdw             m8,                  m9
+    packssdw             m10,                 m11
+
+    movu                 [r2],                m0
+    movu                 [r2 + r3],           m2
+    movu                 [r2 + mmsize],       m8
+    movu                 [r2 + r3 + mmsize],  m10
+%endmacro
+
+%macro FILTER_VER_SS_CHROMA_64xN_AVX512 1
+INIT_ZMM avx512
+cglobal interp_4tap_vert_ss_64x%1, 4, 7, 17
+    mov               r4d,             r4m
+    shl               r4d,             7
+
+%ifdef PIC
+    lea               r5,              [pw_ChromaCoeffVer_32_avx512]
+    mova              m15,             [r5 + r4]
+    mova              m16,             [r5 + r4 + mmsize]
+%else
+    mova              m15,             [pw_ChromaCoeffVer_32_avx512 + r4]
+    mova              m16,             [pw_ChromaCoeffVer_32_avx512 + r4 + mmsize]
+%endif
+    add               r1d,             r1d
+    add               r3d,             r3d
+    sub               r0,              r1
+
+%rep %1/2 - 1
+    PROCESS_CHROMA_VERT_SS_64x2_AVX512
+    lea               r2,              [r2 + r3 * 2]
+%endrep
+    PROCESS_CHROMA_VERT_SS_64x2_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+    FILTER_VER_SS_CHROMA_64xN_AVX512 16
+    FILTER_VER_SS_CHROMA_64xN_AVX512 32
+    FILTER_VER_SS_CHROMA_64xN_AVX512 48
+    FILTER_VER_SS_CHROMA_64xN_AVX512 64
+%endif
 ;-------------------------------------------------------------------------------------------------------------
 ;avx512 chroma_vss code end
 ;-------------------------------------------------------------------------------------------------------------
