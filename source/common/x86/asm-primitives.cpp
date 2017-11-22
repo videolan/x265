@@ -4832,6 +4832,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x12].filter_vss = PFX(interp_4tap_vert_ss_16x12_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].filter_vss = PFX(interp_4tap_vert_ss_16x16_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].filter_vss = PFX(interp_4tap_vert_ss_16x32_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_24x32].filter_vss = PFX(interp_4tap_vert_ss_24x32_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].filter_vss = PFX(interp_4tap_vert_ss_32x8_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].filter_vss = PFX(interp_4tap_vert_ss_32x16_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].filter_vss = PFX(interp_4tap_vert_ss_32x24_avx512);
@@ -4856,6 +4857,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].filter_vss = PFX(interp_4tap_vert_ss_16x24_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].filter_vss = PFX(interp_4tap_vert_ss_16x32_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].filter_vss = PFX(interp_4tap_vert_ss_16x64_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].filter_vss = PFX(interp_4tap_vert_ss_24x64_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].filter_vss = PFX(interp_4tap_vert_ss_32x16_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].filter_vss = PFX(interp_4tap_vert_ss_32x32_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].filter_vss = PFX(interp_4tap_vert_ss_32x48_avx512);
@@ -4884,6 +4886,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I444].pu[LUMA_16x16].filter_vss = PFX(interp_4tap_vert_ss_16x16_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_16x32].filter_vss = PFX(interp_4tap_vert_ss_16x32_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_16x64].filter_vss = PFX(interp_4tap_vert_ss_16x64_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_24x32].filter_vss = PFX(interp_4tap_vert_ss_24x32_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_32x8].filter_vss = PFX(interp_4tap_vert_ss_32x8_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_32x16].filter_vss = PFX(interp_4tap_vert_ss_32x16_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_32x24].filter_vss = PFX(interp_4tap_vert_ss_32x24_avx512);
