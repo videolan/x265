@@ -10795,7 +10795,7 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
 ;-------------------------------------------------------------------------------------------------------------
 ;avx512 luma_vss and luma_vsp code start
 ;-------------------------------------------------------------------------------------------------------------
-%macro PROCESS_LUMA_VERT_SS_32x2_AVX512 0
+%macro PROCESS_LUMA_VERT_S_32x2_AVX512 1
     movu                 m1,                  [r0]                           ;0 row
     movu                 m3,                  [r0 + r1]                      ;1 row
     punpcklwd            m0,                  m1,                     m3
@@ -10863,6 +10863,21 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
     paddd                m2,                  m10
     paddd                m3,                  m11
 
+%ifidn %1, sp
+    paddd                m0,                  m19
+    paddd                m1,                  m19
+    paddd                m2,                  m19
+    paddd                m3,                  m19
+
+    psrad                m0,                  INTERP_SHIFT_SP
+    psrad                m1,                  INTERP_SHIFT_SP
+    psrad                m2,                  INTERP_SHIFT_SP
+    psrad                m3,                  INTERP_SHIFT_SP
+
+    packssdw             m0,                  m1
+    packssdw             m2,                  m3
+    CLIPW2               m0,                  m2,                   m20,                 m21
+%else
     psrad                m0,                  6
     psrad                m1,                  6
     psrad                m2,                  6
@@ -10870,6 +10885,7 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
 
     packssdw             m0,                  m1
     packssdw             m2,                  m3
+%endif
 
     movu                 [r2],                m0
     movu                 [r2 + r3],           m2
@@ -10877,9 +10893,9 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------------------------------------------
-%macro FILTER_VER_SS_LUMA_32xN_AVX512 1
+%macro FILTER_VER_S_LUMA_32xN_AVX512 2
 INIT_ZMM avx512
-cglobal interp_8tap_vert_ss_32x%1, 5, 8, 19
+cglobal interp_8tap_vert_%1_32x%2, 5, 8, 22
     add                   r1d,                r1d
     add                   r3d,                r3d
     lea                   r7,                 [3 * r1]
@@ -10898,22 +10914,32 @@ cglobal interp_8tap_vert_ss_32x%1, 5, 8, 19
     mova                  m17,                [r5 + 2 * mmsize]
     mova                  m18,                [r5 + 3 * mmsize]
 %endif
+%ifidn %1, sp
+    vbroadcasti32x4       m19,                [INTERP_OFFSET_SP]
+    pxor                  m20,                m20
+    vbroadcasti32x8       m21,                [pw_pixel_max]
+%endif
 
-%rep %1/2 - 1
-    PROCESS_LUMA_VERT_SS_32x2_AVX512
+%rep %2/2 - 1
+    PROCESS_LUMA_VERT_S_32x2_AVX512 %1
     lea                   r0,                 [r0 + 2 * r1]
     lea                   r2,                 [r2 + 2 * r3]
 %endrep
-    PROCESS_LUMA_VERT_SS_32x2_AVX512
+    PROCESS_LUMA_VERT_S_32x2_AVX512 %1
     RET
 %endmacro
 
 %if ARCH_X86_64
-    FILTER_VER_SS_LUMA_32xN_AVX512 8
-    FILTER_VER_SS_LUMA_32xN_AVX512 16
-    FILTER_VER_SS_LUMA_32xN_AVX512 32
-    FILTER_VER_SS_LUMA_32xN_AVX512 24
-    FILTER_VER_SS_LUMA_32xN_AVX512 64
+    FILTER_VER_S_LUMA_32xN_AVX512 ss, 8
+    FILTER_VER_S_LUMA_32xN_AVX512 ss, 16
+    FILTER_VER_S_LUMA_32xN_AVX512 ss, 32
+    FILTER_VER_S_LUMA_32xN_AVX512 ss, 24
+    FILTER_VER_S_LUMA_32xN_AVX512 ss, 64
+    FILTER_VER_S_LUMA_32xN_AVX512 sp, 8
+    FILTER_VER_S_LUMA_32xN_AVX512 sp, 16
+    FILTER_VER_S_LUMA_32xN_AVX512 sp, 32
+    FILTER_VER_S_LUMA_32xN_AVX512 sp, 24
+    FILTER_VER_S_LUMA_32xN_AVX512 sp, 64
 %endif
 ;-------------------------------------------------------------------------------------------------------------
 ;avx512 luma_vss and luma_vsp code end
