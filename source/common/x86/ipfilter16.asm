@@ -10514,6 +10514,281 @@ IPFILTER_LUMA_PS_AVX512_32xN 32
 IPFILTER_LUMA_PS_AVX512_32xN 64
 %endif
 
+%macro PROCESS_IPFILTER_LUMA_PS_64x2_AVX512 0
+    ; register map
+    ; m0, m1, m2, m3 - interpolate coeff
+    ; m4, m5         - shuffle load order table
+    ; m6             - INTERP_OFFSET_PS
+    ; m7             - shuffle store order table
+
+    movu            m8,       [r0]
+    movu            m9,       [r0 + 8]
+    movu            m10,      [r0 + 16]
+
+    pshufb          m11,      m8,        m5
+    pshufb          m8,       m4
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
+
+    pmaddwd         m8,       m0
+    pmaddwd         m11,      m1
+    paddd           m8,       m11
+    pmaddwd         m11,      m12,       m3
+    pmaddwd         m14,      m9,        m2
+    paddd           m11,      m14
+    paddd           m8,       m11
+    paddd           m8,       m6
+    psrad           m8,       INTERP_SHIFT_PS
+
+    pmaddwd         m9,       m0
+    pmaddwd         m12,      m1
+    paddd           m9,       m12
+    pmaddwd         m13,      m3
+    pmaddwd         m10,      m2
+    paddd           m10,      m13
+    paddd           m9,       m10
+    paddd           m9,       m6
+    psrad           m9,       INTERP_SHIFT_PS
+
+    packssdw        m8,       m9
+    pshufb          m8,       m7
+    movu            [r2],     m8
+
+    movu            m8,       [r0 + mmsize]
+    movu            m9,       [r0 + mmsize + 8]
+    movu            m10,      [r0 + mmsize + 16]
+
+    pshufb          m11,      m8,        m5
+    pshufb          m8,       m4
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
+
+    pmaddwd         m8,       m0
+    pmaddwd         m11,      m1
+    paddd           m8,       m11
+    pmaddwd         m11,      m12,       m3
+    pmaddwd         m14,      m9,        m2
+    paddd           m11,      m14
+    paddd           m8,       m11
+    paddd           m8,       m6
+    psrad           m8,       INTERP_SHIFT_PS
+
+    pmaddwd         m9,       m0
+    pmaddwd         m12,      m1
+    paddd           m9,       m12
+    pmaddwd         m13,      m3
+    pmaddwd         m10,      m2
+    paddd           m10,      m13
+    paddd           m9,       m10
+    paddd           m9,       m6
+    psrad           m9,       INTERP_SHIFT_PS
+
+    packssdw        m8,       m9
+    pshufb          m8,       m7
+    movu            [r2 + mmsize],       m8
+
+    movu            m8,       [r0 + r1]
+    movu            m9,       [r0 + r1 + 8]
+    movu            m10,      [r0 + r1 + 16]
+
+    pshufb          m11,      m8,        m5
+    pshufb          m8,       m4
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
+
+    pmaddwd         m8,       m0
+    pmaddwd         m11,      m1
+    paddd           m8,       m11
+    pmaddwd         m11,      m12,       m3
+    pmaddwd         m14,      m9,        m2
+    paddd           m11,      m14
+    paddd           m8,       m11
+    paddd           m8,       m6
+    psrad           m8,       INTERP_SHIFT_PS
+
+    pmaddwd         m9,       m0
+    pmaddwd         m12,       m1
+    paddd           m9,       m12
+    pmaddwd         m12,       m13,      m3
+    pmaddwd         m14,       m10,      m2
+    paddd           m12,       m14
+    paddd           m9,       m12
+    paddd           m9,       m6
+    psrad           m9,       INTERP_SHIFT_PS
+
+    packssdw        m8,       m9
+    pshufb          m8,       m7
+    movu            [r2 + r3],m8
+
+    movu            m8,       [r0 + r1 + mmsize]
+    movu            m9,       [r0 + r1 + mmsize + 8]
+    movu            m10,      [r0 + r1 + mmsize + 16]
+
+    pshufb          m11,      m8,        m5
+    pshufb          m8,       m4
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
+
+    pmaddwd         m8,       m0
+    pmaddwd         m11,      m1
+    paddd           m8,       m11
+    pmaddwd         m11,      m12,       m3
+    pmaddwd         m14,      m9,        m2
+    paddd           m11,      m14
+    paddd           m8,       m11
+    paddd           m8,       m6
+    psrad           m8,       INTERP_SHIFT_PS
+
+    pmaddwd         m9,       m0
+    pmaddwd         m12,      m1
+    paddd           m9,       m12
+    pmaddwd         m12,      m13,       m3
+    pmaddwd         m14,      m10,       m2
+    paddd           m12,      m14
+    paddd           m9,       m12
+    paddd           m9,       m6
+    psrad           m9,       INTERP_SHIFT_PS
+
+    packssdw        m8,       m9
+    pshufb          m8,       m7
+    movu            [r2 + r3 + mmsize],  m8
+%endmacro
+
+%macro PROCESS_IPFILTER_LUMA_PS_64x1_AVX512 0
+
+    movu            m8,       [r0]
+    movu            m9,       [r0 + 8]
+    movu            m10,      [r0 + 16]
+
+    pshufb          m11,      m8,        m5
+    pshufb          m8,       m4
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
+
+    pmaddwd         m8,       m0
+    pmaddwd         m11,      m1
+    paddd           m8,       m11
+    pmaddwd         m11,      m12,       m3
+    pmaddwd         m14,      m9,        m2
+    paddd           m11,      m14
+    paddd           m8,       m11
+    paddd           m8,       m6
+    psrad           m8,       INTERP_SHIFT_PS
+
+    pmaddwd         m9,       m0
+    pmaddwd         m12,      m1
+    paddd           m9,       m12
+    pmaddwd         m13,      m3
+    pmaddwd         m10,      m2
+    paddd           m10,      m13
+    paddd           m9,       m10
+    paddd           m9,       m6
+    psrad           m9,       INTERP_SHIFT_PS
+
+    packssdw        m8,       m9
+    pshufb          m8,       m7
+    movu            [r2],     m8
+
+    movu            m8,       [r0 + mmsize]
+    movu            m9,       [r0 + mmsize + 8]
+    movu            m10,      [r0 + mmsize + 16]
+
+    pshufb          m11,      m8,        m5
+    pshufb          m8,       m4
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
+
+    pmaddwd         m8,       m0
+    pmaddwd         m11,      m1
+    paddd           m8,       m11
+    pmaddwd         m11,      m12,       m3
+    pmaddwd         m14,      m9,        m2
+    paddd           m11,      m14
+    paddd           m8,       m11
+    paddd           m8,       m6
+    psrad           m8,       INTERP_SHIFT_PS
+
+    pmaddwd         m9,       m0
+    pmaddwd         m12,      m1
+    paddd           m9,       m12
+    pmaddwd         m13,      m3
+    pmaddwd         m10,      m2
+    paddd           m10,      m13
+    paddd           m9,       m10
+    paddd           m9,       m6
+    psrad           m9,       INTERP_SHIFT_PS
+
+    packssdw        m8,       m9
+    pshufb          m8,       m7
+    movu            [r2 + mmsize],       m8
+%endmacro
+
+%macro IPFILTER_LUMA_PS_AVX512_64xN 1
+INIT_ZMM avx512
+cglobal interp_8tap_horiz_ps_64x%1, 4,7,15
+    add              r1d,        r1d
+    add              r3d,        r3d
+    mov              r4d,        r4m
+    mov              r5d,        r5m
+    shl              r4d,        6
+
+%ifdef PIC
+    lea              r6,         [tab_LumaCoeffH_avx512]
+    vpbroadcastd     m0,         [r6 + r4]
+    vpbroadcastd     m1,         [r6 + r4 + 4]
+    vpbroadcastd     m2,         [r6 + r4 + 8]
+    vpbroadcastd     m3,         [r6 + r4 + 12]
+%else
+    vpbroadcastd     m0,         [tab_LumaCoeffH_avx512 + r4]
+    vpbroadcastd     m1,         [tab_LumaCoeffH_avx512 + r4 + 4]
+    vpbroadcastd     m2,         [tab_LumaCoeffH_avx512 + r4 + 8]
+    vpbroadcastd     m3,         [tab_LumaCoeffH_avx512 + r4 + 12]
+%endif
+    vbroadcasti32x8  m4,         [interp8_hpp_shuf1_load_avx512]
+    vbroadcasti32x8  m5,         [interp8_hpp_shuf2_load_avx512]
+    vbroadcasti32x4  m6,         [INTERP_OFFSET_PS]
+    vbroadcasti32x8  m7,         [interp8_hpp_shuf1_store_avx512]
+
+    sub              r0,  6
+    mov              r4d, %1
+    test             r5d, r5d
+    jz               .loop
+    lea              r6,  [r1 * 3]
+    sub              r0,  r6
+    add              r4d, 7
+    PROCESS_IPFILTER_LUMA_PS_64x1_AVX512
+    lea              r0,  [r0 + r1]
+    lea              r2,  [r2 + r3]
+    dec              r4d
+
+.loop:
+    PROCESS_IPFILTER_LUMA_PS_64x2_AVX512
+    lea              r0,  [r0 + 2 * r1]
+    lea              r2,  [r2 + 2 * r3]
+    sub              r4d, 2
+    jnz              .loop
+    RET
+%endmacro
+
+%if ARCH_X86_64
+IPFILTER_LUMA_PS_AVX512_64xN 16
+IPFILTER_LUMA_PS_AVX512_64xN 32
+IPFILTER_LUMA_PS_AVX512_64xN 48
+IPFILTER_LUMA_PS_AVX512_64xN 64
+%endif
+
 ;-------------------------------------------------------------------------------------------------------------
 ;avx512 luma_hps code end
 ;-------------------------------------------------------------------------------------------------------------
