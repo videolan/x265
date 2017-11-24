@@ -2882,6 +2882,18 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_64x64].luma_vsp = PFX(interp_8tap_vert_sp_64x64_avx512);
         p.pu[LUMA_48x64].luma_vsp = PFX(interp_8tap_vert_sp_48x64_avx512);
 
+        p.pu[LUMA_32x8].luma_vpp = PFX(interp_8tap_vert_pp_32x8_avx512);
+        p.pu[LUMA_32x16].luma_vpp = PFX(interp_8tap_vert_pp_32x16_avx512);
+        p.pu[LUMA_32x32].luma_vpp = PFX(interp_8tap_vert_pp_32x32_avx512);
+        p.pu[LUMA_32x24].luma_vpp = PFX(interp_8tap_vert_pp_32x24_avx512);
+        p.pu[LUMA_32x64].luma_vpp = PFX(interp_8tap_vert_pp_32x64_avx512);
+
+        p.pu[LUMA_32x8].luma_vps = PFX(interp_8tap_vert_ps_32x8_avx512);
+        p.pu[LUMA_32x16].luma_vps = PFX(interp_8tap_vert_ps_32x16_avx512);
+        p.pu[LUMA_32x32].luma_vps = PFX(interp_8tap_vert_ps_32x32_avx512);
+        p.pu[LUMA_32x24].luma_vps = PFX(interp_8tap_vert_ps_32x24_avx512);
+        p.pu[LUMA_32x64].luma_vps = PFX(interp_8tap_vert_ps_32x64_avx512);
+
         p.cu[BLOCK_8x8].dct = PFX(dct8_avx512);
         /* TODO: Currently these kernels performance are similar to AVX2 version, we need a to improve them further to ebable
         * it. Probably a Vtune analysis will help here.
