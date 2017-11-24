@@ -4719,26 +4719,22 @@ cglobal idct32, 3, 6, 16, 0-32*64
     pmaddwd         m9,  m8, m%4
     pmaddwd         m10, m7, m%5
 
+    paddd            m9,  m10
+    vpsrldq          m0,   m9, 8
+    paddd            m9,   m0
     vpsrldq          m0,   m9, 4
     paddd            m9,   m0
-    vpslldq          m5,  m10, 4
-    paddd           m10,   m5
-    vmovdqu32        m9   {k1}, m10
 
     pmaddwd         m10, m4, m%4
     pmaddwd         m11, m1, m%5
 
-    vpsrldq          m0,   m10, 4
+    paddd           m10,   m11
+    vpsrldq          m0,   m10, 8
+    paddd           m10,   m0
+    vpslldq          m0,   m10, 4
     paddd           m10,    m0
-    vpslldq          m5,   m11, 4
-    paddd           m11,    m5
-    vmovdqu32       m10    {k1}, m11
 
-    vpsrldq          m0,   m9, 8
-    paddd            m9,   m0
-    vpslldq          m5,   m10, 8
-    paddd           m10,   m5
-    vmovdqu32        m9   {k2}, m10
+    vmovdqu32       m9 {k3}, m10
 
     movu            m6,  [tab_idct32_AVX512_5 + %1 * 64]
     movu            m5,  [tab_idct32_AVX512_5 + %1 * 64 + 64]
@@ -4746,34 +4742,23 @@ cglobal idct32, 3, 6, 16, 0-32*64
     pmaddwd         m10, m8, m6
     pmaddwd         m11, m7, m5
 
+    paddd           m10,  m11
+    vpslldq         m0,   m10, 8
+    paddd           m10,   m0
     vpsrldq          m0,  m10, 4
     paddd           m10,   m0
-    vpslldq          m5,  m11, 4
-    paddd           m11,   m5
-    vmovdqu32       m10   {k1}, m11
 
     pmaddwd         m11, m4, m6
-    pmaddwd         m12, m1, [tab_idct32_AVX512_5 + %1 * 64 + 64]
+    pmaddwd         m12, m1, m5
 
-    vpsrldq          m0,   m11, 4
+    paddd           m11,   m12
+    vpslldq          m0,   m11, 8
     paddd           m11,    m0
-    vpslldq          m5,   m12, 4
-    paddd           m12,    m5
-    vmovdqu32       m11    {k1}, m12
+    vpslldq          m0,   m11, 4
+    paddd           m11,    m0
 
-    vpsrldq          m0,   m10, 8
-    paddd           m10,    m0
-    vpslldq          m5,   m11, 8
-    paddd           m11,    m5
-    vmovdqu32       m10    {k2}, m11
-
-    pshufd           m0,    m9,  q2301
-    pshufd           m5,   m10,  q2301
-    paddd            m9,    m0
-    paddd           m10,    m5
-    punpckhdq        m0,    m9,  m10
-    punpckldq        m5,    m9,  m10
-    punpckhdq        m9,   m5,   m0
+    vmovdqu32        m10  {k4},  m11
+    vmovdqu32        m9  {k2}, m10
 
     pmaddwd         m10, m3, m%2
     pmaddwd         m11, m14, m%2
@@ -5095,6 +5080,10 @@ cglobal idct32, 3, 8, 32, 0-32*64
     kmovd            k1, r7d
     mov             r7d, 0xCCCC
     kmovd            k2, r7d
+    mov             r7d, 0x2222
+    kmovd            k3, r7d
+    mov             r7d, 0x8888
+    kmovd            k4, r7d
 
 
     movu            m16, [tab_idct32_AVX512_2 + 0 * 64]
