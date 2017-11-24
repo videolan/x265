@@ -2835,6 +2835,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_24x64].filter_vsp = PFX(interp_4tap_vert_sp_24x64_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_24x32].filter_vsp = PFX(interp_4tap_vert_sp_24x32_avx512);
 
+        p.pu[LUMA_8x8].luma_vss = PFX(interp_8tap_vert_ss_8x8_avx512);
+        p.pu[LUMA_8x16].luma_vss = PFX(interp_8tap_vert_ss_8x16_avx512);
+        p.pu[LUMA_8x32].luma_vss = PFX(interp_8tap_vert_ss_8x32_avx512);
         p.pu[LUMA_16x4].luma_vss = PFX(interp_8tap_vert_ss_16x4_avx512);
         p.pu[LUMA_16x8].luma_vss = PFX(interp_8tap_vert_ss_16x8_avx512);
         p.pu[LUMA_16x12].luma_vss = PFX(interp_8tap_vert_ss_16x12_avx512);
@@ -2852,6 +2855,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_64x64].luma_vss = PFX(interp_8tap_vert_ss_64x64_avx512);
         p.pu[LUMA_48x64].luma_vss = PFX(interp_8tap_vert_ss_48x64_avx512);
 
+        p.pu[LUMA_8x8].luma_vsp = PFX(interp_8tap_vert_sp_8x8_avx512);
+        p.pu[LUMA_8x16].luma_vsp = PFX(interp_8tap_vert_sp_8x16_avx512);
+        p.pu[LUMA_8x32].luma_vsp = PFX(interp_8tap_vert_sp_8x32_avx512);
         p.pu[LUMA_16x4].luma_vsp = PFX(interp_8tap_vert_sp_16x4_avx512);
         p.pu[LUMA_16x8].luma_vsp = PFX(interp_8tap_vert_sp_16x8_avx512);
         p.pu[LUMA_16x12].luma_vsp = PFX(interp_8tap_vert_sp_16x12_avx512);
