@@ -243,10 +243,13 @@ const interp4_horiz_shuf_load2_avx512,  times 2 db 8, 9, 10, 11, 9, 10, 11, 12, 
 const interp4_horiz_shuf_load3_avx512,  times 2 db 4, 5, 6, 7, 5, 6, 7, 8, 6, 7, 8, 9, 7, 8, 9, 10
 
 ALIGN 64
+interp4_vps_store1_avx512:   dq 0, 1, 8, 9, 2, 3, 10, 11
+interp4_vps_store2_avx512:   dq 4, 5, 12, 13, 6, 7, 14, 15
 const interp4_hps_shuf_avx512,  dq 0, 4, 1, 5, 2, 6, 3, 7
 const interp4_hps_store_16xN_avx512,  dq 0, 2, 1, 3, 4, 6, 5, 7
 const interp8_hps_store_avx512,  dq 0, 1, 4, 5, 2, 3, 6, 7
 const interp8_vsp_store_avx512,  dq 0, 2, 4, 6, 1, 3, 5, 7
+
 SECTION .text
 cextern pb_128
 cextern pw_1
@@ -10864,7 +10867,7 @@ cglobal interp_4tap_horiz_ps_48x%1, 4,7,10
 %endif
 
 ;-------------------------------------------------------------------------------------------------------------
-;avx512 chroma_vpp code start
+;avx512 chroma_vpp and chroma_vps code start
 ;-------------------------------------------------------------------------------------------------------------
 %macro PROCESS_CHROMA_VERT_PP_16x4_AVX512 0
     lea                   r5,                 [r0 + 4 * r1]
@@ -11157,7 +11160,7 @@ cglobal interp_4tap_vert_pp_48x64, 4, 10, 8
     RET
 %endif
 
-%macro PROCESS_CHROMA_VERT_PP_64x4_AVX512 0
+%macro PROCESS_CHROMA_VERT_64x4_AVX512 1
     movu              m0,              [r0]                        ; m0 = row 0
     movu              m1,              [r0 + r1]                   ; m1 = row 1
     punpcklbw         m2,              m0,                m1
@@ -11179,10 +11182,21 @@ cglobal interp_4tap_vert_pp_48x64, 4, 10, 8
     paddw             m2,              m8
     paddw             m3,              m9
 
+%ifidn %1,pp
     pmulhrsw          m2,              m12
     pmulhrsw          m3,              m12
     packuswb          m2,              m3
     movu              [r2],            m2
+%else
+    psubw             m2, m12
+    psubw             m3, m12
+    movu              m8, m13
+    movu              m9, m14
+    vpermi2q          m8, m2, m3
+    vpermi2q          m9, m2, m3
+    movu              [r2], m8
+    movu              [r2 + mmsize], m9
+%endif
 
     lea               r0,              [r0 + r1 * 4]
     movu              m0,              [r0]                        ; m0 = row 4
@@ -11194,10 +11208,22 @@ cglobal interp_4tap_vert_pp_48x64, 4, 10, 8
     pmaddubsw         m3,              m10
     paddw             m4,              m8
     paddw             m5,              m9
+
+%ifidn %1,pp
     pmulhrsw          m4,              m12
     pmulhrsw          m5,              m12
     packuswb          m4,              m5
     movu              [r2 + r3],       m4
+%else
+    psubw             m4, m12
+    psubw             m5, m12
+    movu              m8, m13
+    movu              m9, m14
+    vpermi2q          m8, m4, m5
+    vpermi2q          m9, m4, m5
+    movu              [r2 + r3], m8
+    movu              [r2 + r3 + mmsize], m9
+%endif
 
     movu              m1,              [r0 + r1]                   ; m1 = row 5
     punpcklbw         m4,              m0,                m1
@@ -11207,11 +11233,21 @@ cglobal interp_4tap_vert_pp_48x64, 4, 10, 8
     paddw             m6,              m4
     paddw             m7,              m5
 
+%ifidn %1,pp
     pmulhrsw          m6,              m12
     pmulhrsw          m7,              m12
     packuswb          m6,              m7
     movu              [r2 + r3 * 2],   m6
-
+%else
+    psubw             m6, m12
+    psubw             m7, m12
+    movu              m8, m13
+    movu              m9, m14
+    vpermi2q          m8, m6, m7
+    vpermi2q          m9, m6, m7
+    movu              [r2 + 2 * r3], m8
+    movu              [r2 + 2 * r3 + mmsize], m9
+%endif
     movu              m0,              [r0 + r1 * 2]               ; m0 = row 6
     punpcklbw         m6,              m1,                m0
     punpckhbw         m7,              m1,                m0
@@ -11219,16 +11255,27 @@ cglobal interp_4tap_vert_pp_48x64, 4, 10, 8
     pmaddubsw         m7,              m11
     paddw             m2,              m6
     paddw             m3,              m7
+
+%ifidn %1,pp
     pmulhrsw          m2,              m12
     pmulhrsw          m3,              m12
     packuswb          m2,              m3
     movu              [r2 + r5],       m2
+%else
+    psubw             m2, m12
+    psubw             m3, m12
+    movu              m8, m13
+    movu              m9, m14
+    vpermi2q          m8, m2, m3
+    vpermi2q          m9, m2, m3
+    movu              [r2 + r5], m8
+    movu              [r2 + r5 + mmsize], m9
+%endif
 %endmacro
 
-%macro FILTER_VER_PP_CHROMA_AVX512_64xN 1
-%if ARCH_X86_64 == 1
+%macro FILTER_VER_CHROMA_AVX512_64xN 2
 INIT_ZMM avx512
-cglobal interp_4tap_vert_pp_64x%1, 4, 6, 13
+cglobal interp_4tap_vert_%1_64x%2, 4, 6, 15
     mov               r4d,             r4m
     shl               r4d,             7
 
@@ -11241,26 +11288,39 @@ cglobal interp_4tap_vert_pp_64x%1, 4, 6, 13
     mova              m11,             [tab_ChromaCoeffVer_32_avx512 + r4 + mmsize]
 %endif
 
+%ifidn %1,pp
+    vbroadcasti32x8            m12, [pw_512]
+%else
+    add                        r3d, r3d
+    vbroadcasti32x8            m12, [pw_2000]
+    mova                       m13, [interp4_vps_store1_avx512]
+    mova                       m14, [interp4_vps_store2_avx512]
+%endif
     lea               r4,              [r1 * 3]
     sub               r0,              r1
-    vbroadcasti32x8   m12,             [pw_512]
     lea               r5,              [r3 * 3]
 
-%rep %1/4 - 1
-    PROCESS_CHROMA_VERT_PP_64x4_AVX512
+%rep %2/4 - 1
+    PROCESS_CHROMA_VERT_64x4_AVX512 %1
     lea               r2, [r2 + r3 * 4]
 %endrep
-    PROCESS_CHROMA_VERT_PP_64x4_AVX512
+    PROCESS_CHROMA_VERT_64x4_AVX512 %1
     RET
-%endif
 %endmacro
 
-FILTER_VER_PP_CHROMA_AVX512_64xN 64
-FILTER_VER_PP_CHROMA_AVX512_64xN 48
-FILTER_VER_PP_CHROMA_AVX512_64xN 32
-FILTER_VER_PP_CHROMA_AVX512_64xN 16
+%if ARCH_X86_64 == 1
+FILTER_VER_CHROMA_AVX512_64xN pp, 64
+FILTER_VER_CHROMA_AVX512_64xN pp, 48
+FILTER_VER_CHROMA_AVX512_64xN pp, 32
+FILTER_VER_CHROMA_AVX512_64xN pp, 16
+
+FILTER_VER_CHROMA_AVX512_64xN ps, 64
+FILTER_VER_CHROMA_AVX512_64xN ps, 48
+FILTER_VER_CHROMA_AVX512_64xN ps, 32
+FILTER_VER_CHROMA_AVX512_64xN ps, 16
+%endif
 ;-------------------------------------------------------------------------------------------------------------
-;avx512 chroma_vpp code end
+;avx512 chroma_vpp and chroma_vps code end
 ;-------------------------------------------------------------------------------------------------------------
 ;-------------------------------------------------------------------------------------------------------------
 ;avx512 chroma_vss code start

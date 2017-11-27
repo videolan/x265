@@ -5087,6 +5087,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.quant = PFX(quant_avx512);
         p.nquant = PFX(nquant_avx512);
         p.denoiseDct = PFX(denoise_dct_avx512);
+
+        p.chroma[X265_CSP_I444].pu[LUMA_64x64].filter_vps = PFX(interp_4tap_vert_ps_64x64_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x48].filter_vps = PFX(interp_4tap_vert_ps_64x48_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x32].filter_vps = PFX(interp_4tap_vert_ps_64x32_avx512);
+        p.chroma[X265_CSP_I444].pu[LUMA_64x16].filter_vps = PFX(interp_4tap_vert_ps_64x16_avx512);
     }
 #endif
 }
