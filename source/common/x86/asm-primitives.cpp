@@ -4962,6 +4962,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I444].pu[LUMA_64x16].filter_vss = PFX(interp_4tap_vert_ss_64x16_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_48x64].filter_vss = PFX(interp_4tap_vert_ss_48x64_avx512);
 
+        p.pu[LUMA_8x8].luma_vss = PFX(interp_8tap_vert_ss_8x8_avx512);
+        p.pu[LUMA_8x16].luma_vss = PFX(interp_8tap_vert_ss_8x16_avx512);
+        p.pu[LUMA_8x32].luma_vss = PFX(interp_8tap_vert_ss_8x32_avx512);
         p.pu[LUMA_16x4].luma_vss = PFX(interp_8tap_vert_ss_16x4_avx512);
         p.pu[LUMA_16x8].luma_vss = PFX(interp_8tap_vert_ss_16x8_avx512);
         p.pu[LUMA_16x12].luma_vss = PFX(interp_8tap_vert_ss_16x12_avx512);
