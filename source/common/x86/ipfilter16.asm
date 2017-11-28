@@ -10977,7 +10977,7 @@ cglobal interp_8tap_horiz_ps_16x%1, 4,9,15
 %endif
     vbroadcasti32x8  m4,         [interp8_hpp_shuf1_load_avx512]
     vbroadcasti32x8  m5,         [interp8_hpp_shuf2_load_avx512]
-    vbroadcasti32x8  m6,         [INTERP_OFFSET_PS]
+    vbroadcasti32x4  m6,         [INTERP_OFFSET_PS]
     vbroadcasti32x8  m7,         [interp8_hpp_shuf1_store_avx512]
 
     sub              r0,  6
@@ -11442,7 +11442,7 @@ cglobal interp_8tap_horiz_ps_48x64, 4,9,15
 %endif
     vbroadcasti32x8  m4,         [interp8_hpp_shuf1_load_avx512]
     vbroadcasti32x8  m5,         [interp8_hpp_shuf2_load_avx512]
-    vbroadcasti32x8  m6,         [INTERP_OFFSET_PS]
+    vbroadcasti32x4  m6,         [INTERP_OFFSET_PS]
     vbroadcasti32x8  m7,         [interp8_hpp_shuf1_store_avx512]
 
     sub              r0,  6
