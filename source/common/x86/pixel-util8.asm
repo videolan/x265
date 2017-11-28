@@ -1044,6 +1044,133 @@ cglobal quant, 5,6,8
 %endif ; ARCH_X86_64 == 1
 
 
+%if ARCH_X86_64 == 1
+INIT_ZMM avx512
+cglobal quant, 5, 6, 22
+    ; fill qbits
+    movd            xm4, r4d            ; m4 = qbits
+
+    ; fill qbits-8
+    sub             r4d, 8
+    movd            xm6, r4d            ; m6 = qbits8
+
+    ; fill offset
+%if UNIX64 == 0
+    vpbroadcastd    m5, r5m             ; m5 = add
+%else ; Mac
+    movd           xm5, r5m
+    vpbroadcastd    m5, xm5             ; m5 = add
+%endif
+
+    vbroadcasti32x8  m9, [pw_1]
+
+    mov             r4d, r6m
+    pxor             m7, m7
+    sub             r4d, 32
+    jl              .coeff16
+    add             r4d, 32
+    shr             r4d, 5
+    jmp             .loop
+
+.coeff16:
+    ; 16 coeff
+    pxor             m7,  m7
+    pmovsxwd        m16,  [r0]            ; m16 = level
+    pabsd            m1,  m16
+    pmulld           m1,  [r1]
+    paddd           m17,   m1, m5
+    psrad           m17,  xm4             ; m17 = level1
+
+    pslld            m3,    m17, 8
+    psrad            m1,    xm6
+    psubd            m1,     m3           ; m1 = deltaU1
+    movu             [r2],   m1
+    vextracti64x4    ym19,  m17, 1
+    vextracti64x4    ym20,  m16, 1
+    psignd           ym17, ym16
+    psignd          ym19,  ym20
+    packssdw        ym17,  ym19
+    vpermq          ym17,  ym17, q3120
+    movu            [r3],  ym17
+
+    pminuw          ym17,   ym9
+    paddw           ym7,   ym17
+
+    ; sum count
+    xorpd            m0,  m0
+    psadbw          ym7, ym0
+    vextracti128    xm1, ym7, 1
+    paddd           xm7, xm1
+    movhlps         xm0, xm7
+    paddd           xm7, xm0
+    movd            eax, xm7
+    RET
+
+.loop:
+    ; 16 coeff
+    pmovsxwd        m16,   [r0]            ; m16 = level
+    pabsd            m1,   m16
+    pmulld           m1,   [r1]
+    paddd           m17,   m1,  m5
+    psrad           m17,   xm4             ; m17 = level1
+
+    pslld            m3,   m17, 8
+    psrad            m1,   xm6
+    psubd            m1,    m3             ; m1 = deltaU1
+    movu            [r2],   m1
+    vextracti64x4   ym19,  m17, 1
+    vextracti64x4   ym20,  m16, 1
+    psignd          ym17, ym16
+    psignd          ym19, ym20
+    packssdw        ym17, ym19
+
+    ; 16 coeff
+    pmovsxwd        m16,  [r0 + mmsize/2]  ; m16 = level
+    pabsd            m1,  m16
+    pmulld           m1,  [r1 + mmsize]
+    paddd           m18,   m1, m5
+    psrad           m18,  xm4              ; m2 = level1
+
+    pslld            m8,  m18, 8
+    psrad            m1,  xm6
+    psubd            m1,  m8               ; m1 = deltaU1
+    movu             [r2 + mmsize], m1
+    vextracti64x4   ym21,  m18, 1
+    vextracti64x4   ym20,  m16, 1
+    psignd          ym18, ym16
+    psignd          ym21, ym20
+    packssdw        ym18, ym21
+    vinserti64x4     m17,  m17, ym18, 1
+    vpermq           m17,  m17, q3120
+
+    movu            [r3],  m17
+
+    pminuw          m17,   m9
+    paddw            m7,  m17
+
+    add              r0,  mmsize
+    add              r1,  mmsize * 2
+    add              r2,  mmsize * 2
+    add              r3,  mmsize
+
+    dec             r4d
+    jnz            .loop
+
+    ; sum count
+    xorpd            m0,  m0
+    psadbw           m7,  m0
+    vextracti32x8   ym1,  m7, 1
+    paddd           ym7, ym1
+    vextracti64x2   xm1,  m7, 1
+    paddd           xm7, xm1
+    pshufd          xm1, xm7, 2
+    paddd           xm7, xm1
+    movd            eax, xm7
+    RET
+%endif ; ARCH_X86_64 == 1
+
+
+
 ;-----------------------------------------------------------------------------
 ; uint32_t nquant(int16_t *coef, int32_t *quantCoeff, int16_t *qCoef, int qBits, int add, int numCoeff);
 ;-----------------------------------------------------------------------------

@@ -2886,6 +2886,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_8x8].idct = PFX(idct8_avx512);
         p.cu[BLOCK_16x16].idct = PFX(idct16_avx512);
         p.cu[BLOCK_32x32].idct = PFX(idct32_avx512);
+        p.quant = PFX(quant_avx512);
 
 
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].filter_hps = PFX(interp_4tap_horiz_ps_32x32_avx512);
@@ -5007,6 +5008,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_8x8].idct = PFX(idct8_avx512);
         p.cu[BLOCK_16x16].idct = PFX(idct16_avx512);
         p.cu[BLOCK_32x32].idct = PFX(idct32_avx512);
+        p.quant = PFX(quant_avx512);
 
     }
 #endif
