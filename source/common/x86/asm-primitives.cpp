@@ -4992,6 +4992,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_32x24].luma_vpp = PFX(interp_8tap_vert_pp_32x24_avx512);
         p.pu[LUMA_32x16].luma_vpp = PFX(interp_8tap_vert_pp_32x16_avx512);
         p.pu[LUMA_32x8].luma_vpp = PFX(interp_8tap_vert_pp_32x8_avx512);
+        p.pu[LUMA_48x64].luma_vpp = PFX(interp_8tap_vert_pp_48x64_avx512);
         p.pu[LUMA_64x64].luma_vpp = PFX(interp_8tap_vert_pp_64x64_avx512);
         p.pu[LUMA_64x48].luma_vpp = PFX(interp_8tap_vert_pp_64x48_avx512);
         p.pu[LUMA_64x32].luma_vpp = PFX(interp_8tap_vert_pp_64x32_avx512);
