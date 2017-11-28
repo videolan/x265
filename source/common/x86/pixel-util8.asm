@@ -26,7 +26,7 @@
 %include "x86inc.asm"
 %include "x86util.asm"
 
-SECTION_RODATA 32
+SECTION_RODATA 64
 
 var_shuf_avx512: db 0,-1, 1,-1, 2,-1, 3,-1, 4,-1, 5,-1, 6,-1, 7,-1
                  db 8,-1, 9,-1,10,-1,11,-1,12,-1,13,-1,14,-1,15,-1
@@ -4713,65 +4713,63 @@ cglobal scale1D_128to64, 2, 2, 4
 
 %if HIGH_BIT_DEPTH == 0
 INIT_ZMM avx512
-cglobal scale1D_128to64, 2, 2, 6
+cglobal scale1D_128to64, 2, 2, 7
     pxor            m4, m4
+    mova            m6, [dequant_shuf1_avx512]
     vbroadcasti32x8 m5, [pb_1]
 
     ;Top pixel
     movu            m0, [r1]
-    movu            m1, [r1 + 64]
-    movu            m2, [r1 + 128]
-    movu            m3, [r1 + 192]
+    movu            m1, [r1 + 1 * mmsize]
+    movu            m2, [r1 + 2 * mmsize]
+    movu            m3, [r1 + 3 * mmsize]
 
-    pmaddubsw       m0, m0, m5
+    pmaddubsw       m0, m5
     pavgw           m0, m4
-    pmaddubsw       m1, m1, m5
+    pmaddubsw       m1, m5
     pavgw           m1, m4
     packuswb        m0, m1
-    vpermq          m0, m0, q3120
-    vshufi64x2      m0, m0, q3120
+    vpermq          m0, m6, m0
     movu            [r0], m0
 
     ;Left pixel
-    pmaddubsw       m2, m2, m5
+    pmaddubsw       m2, m5
     pavgw           m2, m4
-    pmaddubsw       m3, m3, m5
+    pmaddubsw       m3, m5
     pavgw           m3, m4
     packuswb        m2, m3
-    vpermq          m2, m2, q3120
-    vshufi64x2      m2, m2, q3120
-    movu            [r0 + 64], m2
+    vpermq          m2, m6, m2
+    movu            [r0 + mmsize], m2
     RET
 
 INIT_ZMM avx512
-cglobal scale1D_128to64_aligned, 2, 2, 6
+cglobal scale1D_128to64_aligned, 2, 2, 7
     pxor            m4, m4
+    mova            m6, [dequant_shuf1_avx512]
     vbroadcasti32x8 m5, [pb_1]
 
     ;Top pixel
     mova            m0, [r1]
-    mova            m1, [r1 + 64]
-    mova            m2, [r1 + 128]
-    mova            m3, [r1 + 192]
+    mova            m1, [r1 + 1 * mmsize]
+    mova            m2, [r1 + 2 * mmsize]
+    mova            m3, [r1 + 3 * mmsize]
 
-    pmaddubsw       m0, m0, m5
+    pmaddubsw       m0, m5
     pavgw           m0, m4
-    pmaddubsw       m1, m1, m5
+    pmaddubsw       m1, m5
     pavgw           m1, m4
     packuswb        m0, m1
-    vpermq          m0, m0, q3120
-    vshufi64x2      m0, m0, q3120
+    vpermq          m0, m6, m0
     mova            [r0], m0
 
     ;Left pixel
-    pmaddubsw       m2, m2, m5
+    pmaddubsw       m2, m5
     pavgw           m2, m4
-    pmaddubsw       m3, m3, m5
+    pmaddubsw       m3, m5
     pavgw           m3, m4
     packuswb        m2, m3
-    vpermq          m2, m2, q3120
-    vshufi64x2      m2, m2, q3120
-    mova            [r0 + 64], m2
+    vpermq          m2, m6, m2
+    mova            [r0 + mmsize], m2
     RET
 %endif
 
