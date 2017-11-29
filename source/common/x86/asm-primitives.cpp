@@ -2618,6 +2618,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         p.cu[BLOCK_32x32].blockfill_s[ALIGNED] = PFX(blockfill_s_aligned_32x32_avx512);
 
+        p.pu[LUMA_8x4].luma_hpp = PFX(interp_8tap_horiz_pp_8x4_avx512);
+        p.pu[LUMA_8x8].luma_hpp = PFX(interp_8tap_horiz_pp_8x8_avx512);
+        p.pu[LUMA_8x16].luma_hpp = PFX(interp_8tap_horiz_pp_8x16_avx512);
+        p.pu[LUMA_8x32].luma_hpp = PFX(interp_8tap_horiz_pp_8x32_avx512);
         p.pu[LUMA_16x4].luma_hpp = PFX(interp_8tap_horiz_pp_16x4_avx512);
         p.pu[LUMA_16x8].luma_hpp = PFX(interp_8tap_horiz_pp_16x8_avx512);
         p.pu[LUMA_16x12].luma_hpp = PFX(interp_8tap_horiz_pp_16x12_avx512);
