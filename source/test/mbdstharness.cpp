@@ -252,12 +252,10 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
 bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
 {
     int j = 0;
-
     for (int i = 0; i < ITERS; i++)
     {
-        int width = (rand() % 4 + 1) * 4;
+        int width = 1 << (rand() % 4 + 2);
         int height = width;
-
         uint32_t optReturnValue = 0;
         uint32_t refReturnValue = 0;
 
