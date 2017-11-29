@@ -2,6 +2,37 @@
 Release Notes
 *************
 
+Version 2.6
+===========
+
+Release date - 29th November, 2017.
+
+New features
+------------
+1. x265 can now refine analysis from a previous HEVC encode (using options :option:`--refine-inter`, and :option:`--refine-intra`), or a previous AVC encode (using option :option:`--refine-mv-type`). The previous encode's information can be packaged using the *x265_analysis_data_t*  data field available in the *x265_picture* object.
+2. Basic support for segmented (or chunked) encoding added with :option:`--vbv-end` that can specify the status of CPB at the end of a segment. String this together with :option:`--vbv-init` to encode a title as chunks while maintaining VBV compliance!
+3. :option:`--force-flush` can be used to trigger a premature flush of the encoder. This option is beneficial when input is known to be bursty, and may be at a rate slower than the encoder.
+4. Experimental feature :option:`--lowpass-dct` that uses truncated DCT for transformation.
+
+Encoder enhancements
+--------------------
+1. Slice-parallel mode gets a significant boost in performance, particularly in low-latency mode.
+2. x265 now officially supported on VS2017.
+3. x265 now supports all depths from mono0 to mono16 for Y4M format.
+
+API changes
+-----------
+1. Options that modified PPS dynamically (:option:`--opt-qp-pps` and :option:`--opt-ref-list-length-pps`) are now disabled by default to enable users to save bits by not sending headers. If these options are enabled, headers have to be repeated for every GOP.
+2. Rate-control and analysis parameters can dynamically be reconfigured simultaneously via the *x265_encoder_reconfig* API.
+3. New API functions to extract intermediate information such as slice-type, scenecut information, reference frames, etc. are now available. This information may be beneficial to integrating applications that are attempting to perform content-adaptive encoding. Refer to documentation on *x265_get_slicetype_poc_and_scenecut*, and *x265_get_ref_frame_list* for more details and suggested usage.
+4. A new API to pass supplemental CTU information to x265 to influence analysis decisions has been added. Refer to documentation on *x265_encoder_ctu_info* for more details.
+
+Bug fixes
+---------
+1. Bug fixes when :option:`--slices` is used with VBV settings.
+2. Minor memory leak fixed for HDR10+ builds, and default x265 when pools option is specified.
+3. HDR10+ bug fix to remove dependence on poc counter to select meta-data information.
+
 Version 2.5
 ===========
 
