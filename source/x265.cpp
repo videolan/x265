@@ -301,9 +301,15 @@ bool CLIOptions::parse(int argc, char **argv)
                 if (!this->qpfile)
                     x265_log_file(param, X265_LOG_ERROR, "%s qpfile not found or error in opening qp file\n", optarg);
             }
+            OPT("fullhelp")
+            {
+                param->logLevel = X265_LOG_FULL;
+                printVersion(param, api);
+                showHelp(param);
+                break;
+            }
             else
                 bError |= !!api->param_parse(param, long_options[long_options_index].name, optarg);
-
             if (bError)
             {
                 const char *name = long_options_index > 0 ? long_options[long_options_index].name : argv[optind - 2];

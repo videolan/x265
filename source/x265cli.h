@@ -38,6 +38,7 @@ static const char short_options[] = "o:D:P:p:f:F:r:I:i:b:s:t:q:m:hwV?";
 static const struct option long_options[] =
 {
     { "help",                 no_argument, NULL, 'h' },
+    { "fullhelp",             no_argument, NULL, 0 },
     { "version",              no_argument, NULL, 'V' },
     { "asm",            required_argument, NULL, 0 },
     { "no-asm",               no_argument, NULL, 0 },
@@ -315,6 +316,7 @@ static void showHelp(x265_param *param)
     H0("    outfile is raw HEVC bitstream\n");
     H0("\nExecutable Options:\n");
     H0("-h/--help                        Show this help text and exit\n");
+    H0("   --fullhelp                    Show all options and exit\n");
     H0("-V/--version                     Show version info and exit\n");
     H0("\nOutput Options:\n");
     H0("-o/--output <filename>           Bitstream output file name\n");
@@ -565,9 +567,8 @@ static void showHelp(x265_param *param)
 #undef OPT
 #undef H0
 #undef H1
-
     if (level < X265_LOG_DEBUG)
-        printf("\nUse --log-level full --help for a full listing\n");
+        printf("\nUse --fullhelp for a full listing (or --log-level full --help)\n");
     printf("\n\nComplete documentation may be found at http://x265.readthedocs.org/en/default/cli.html\n");
     exit(1);
 }
