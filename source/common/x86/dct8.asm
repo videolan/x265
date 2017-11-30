@@ -30,15 +30,60 @@
 %include "x86util.asm"
 SECTION_RODATA 64
 
+tab_dct32:      dw 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64
+                dw 90, 90, 88, 85, 82, 78, 73, 67, 61, 54, 46, 38, 31, 22, 13,  4, -4, -13, -22, -31, -38, -46, -54, -61, -67, -73, -78, -82, -85, -88, -90, -90
+                dw 90, 87, 80, 70, 57, 43, 25,  9, -9, -25, -43, -57, -70, -80, -87, -90, -90, -87, -80, -70, -57, -43, -25, -9,  9, 25, 43, 57, 70, 80, 87, 90
+                dw 90, 82, 67, 46, 22, -4, -31, -54, -73, -85, -90, -88, -78, -61, -38, -13, 13, 38, 61, 78, 88, 90, 85, 73, 54, 31,  4, -22, -46, -67, -82, -90
+                dw 89, 75, 50, 18, -18, -50, -75, -89, -89, -75, -50, -18, 18, 50, 75, 89, 89, 75, 50, 18, -18, -50, -75, -89, -89, -75, -50, -18, 18, 50, 75, 89
+                dw 88, 67, 31, -13, -54, -82, -90, -78, -46, -4, 38, 73, 90, 85, 61, 22, -22, -61, -85, -90, -73, -38,  4, 46, 78, 90, 82, 54, 13, -31, -67, -88
+                dw 87, 57,  9, -43, -80, -90, -70, -25, 25, 70, 90, 80, 43, -9, -57, -87, -87, -57, -9, 43, 80, 90, 70, 25, -25, -70, -90, -80, -43,  9, 57, 87
+                dw 85, 46, -13, -67, -90, -73, -22, 38, 82, 88, 54, -4, -61, -90, -78, -31, 31, 78, 90, 61,  4, -54, -88, -82, -38, 22, 73, 90, 67, 13, -46, -85
+                dw 83, 36, -36, -83, -83, -36, 36, 83, 83, 36, -36, -83, -83, -36, 36, 83, 83, 36, -36, -83, -83, -36, 36, 83, 83, 36, -36, -83, -83, -36, 36, 83
+                dw 82, 22, -54, -90, -61, 13, 78, 85, 31, -46, -90, -67,  4, 73, 88, 38, -38, -88, -73, -4, 67, 90, 46, -31, -85, -78, -13, 61, 90, 54, -22, -82
+                dw 80,  9, -70, -87, -25, 57, 90, 43, -43, -90, -57, 25, 87, 70, -9, -80, -80, -9, 70, 87, 25, -57, -90, -43, 43, 90, 57, -25, -87, -70,  9, 80
+                dw 78, -4, -82, -73, 13, 85, 67, -22, -88, -61, 31, 90, 54, -38, -90, -46, 46, 90, 38, -54, -90, -31, 61, 88, 22, -67, -85, -13, 73, 82,  4, -78
+                dw 75, -18, -89, -50, 50, 89, 18, -75, -75, 18, 89, 50, -50, -89, -18, 75, 75, -18, -89, -50, 50, 89, 18, -75, -75, 18, 89, 50, -50, -89, -18, 75
+                dw 73, -31, -90, -22, 78, 67, -38, -90, -13, 82, 61, -46, -88, -4, 85, 54, -54, -85,  4, 88, 46, -61, -82, 13, 90, 38, -67, -78, 22, 90, 31, -73
+                dw 70, -43, -87,  9, 90, 25, -80, -57, 57, 80, -25, -90, -9, 87, 43, -70, -70, 43, 87, -9, -90, -25, 80, 57, -57, -80, 25, 90,  9, -87, -43, 70
+                dw 67, -54, -78, 38, 85, -22, -90,  4, 90, 13, -88, -31, 82, 46, -73, -61, 61, 73, -46, -82, 31, 88, -13, -90, -4, 90, 22, -85, -38, 78, 54, -67
+                dw 64, -64, -64, 64, 64, -64, -64, 64, 64, -64, -64, 64, 64, -64, -64, 64, 64, -64, -64, 64, 64, -64, -64, 64, 64, -64, -64, 64, 64, -64, -64, 64
+                dw 61, -73, -46, 82, 31, -88, -13, 90, -4, -90, 22, 85, -38, -78, 54, 67, -67, -54, 78, 38, -85, -22, 90,  4, -90, 13, 88, -31, -82, 46, 73, -61
+                dw 57, -80, -25, 90, -9, -87, 43, 70, -70, -43, 87,  9, -90, 25, 80, -57, -57, 80, 25, -90,  9, 87, -43, -70, 70, 43, -87, -9, 90, -25, -80, 57
+                dw 54, -85, -4, 88, -46, -61, 82, 13, -90, 38, 67, -78, -22, 90, -31, -73, 73, 31, -90, 22, 78, -67, -38, 90, -13, -82, 61, 46, -88,  4, 85, -54
+                dw 50, -89, 18, 75, -75, -18, 89, -50, -50, 89, -18, -75, 75, 18, -89, 50, 50, -89, 18, 75, -75, -18, 89, -50, -50, 89, -18, -75, 75, 18, -89, 50
+                dw 46, -90, 38, 54, -90, 31, 61, -88, 22, 67, -85, 13, 73, -82,  4, 78, -78, -4, 82, -73, -13, 85, -67, -22, 88, -61, -31, 90, -54, -38, 90, -46
+                dw 43, -90, 57, 25, -87, 70,  9, -80, 80, -9, -70, 87, -25, -57, 90, -43, -43, 90, -57, -25, 87, -70, -9, 80, -80,  9, 70, -87, 25, 57, -90, 43
+                dw 38, -88, 73, -4, -67, 90, -46, -31, 85, -78, 13, 61, -90, 54, 22, -82, 82, -22, -54, 90, -61, -13, 78, -85, 31, 46, -90, 67,  4, -73, 88, -38
+                dw 36, -83, 83, -36, -36, 83, -83, 36, 36, -83, 83, -36, -36, 83, -83, 36, 36, -83, 83, -36, -36, 83, -83, 36, 36, -83, 83, -36, -36, 83, -83, 36
+                dw 31, -78, 90, -61,  4, 54, -88, 82, -38, -22, 73, -90, 67, -13, -46, 85, -85, 46, 13, -67, 90, -73, 22, 38, -82, 88, -54, -4, 61, -90, 78, -31
+                dw 25, -70, 90, -80, 43,  9, -57, 87, -87, 57, -9, -43, 80, -90, 70, -25, -25, 70, -90, 80, -43, -9, 57, -87, 87, -57,  9, 43, -80, 90, -70, 25
+                dw 22, -61, 85, -90, 73, -38, -4, 46, -78, 90, -82, 54, -13, -31, 67, -88, 88, -67, 31, 13, -54, 82, -90, 78, -46,  4, 38, -73, 90, -85, 61, -22
+                dw 18, -50, 75, -89, 89, -75, 50, -18, -18, 50, -75, 89, -89, 75, -50, 18, 18, -50, 75, -89, 89, -75, 50, -18, -18, 50, -75, 89, -89, 75, -50, 18
+                dw 13, -38, 61, -78, 88, -90, 85, -73, 54, -31,  4, 22, -46, 67, -82, 90, -90, 82, -67, 46, -22, -4, 31, -54, 73, -85, 90, -88, 78, -61, 38, -13
+                dw  9, -25, 43, -57, 70, -80, 87, -90, 90, -87, 80, -70, 57, -43, 25, -9, -9, 25, -43, 57, -70, 80, -87, 90, -90, 87, -80, 70, -57, 43, -25,  9
+                dw  4, -13, 22, -31, 38, -46, 54, -61, 67, -73, 78, -82, 85, -88, 90, -90, 90, -90, 88, -85, 82, -78, 73, -67, 61, -54, 46, -38, 31, -22, 13, -4
+
 dct8_shuf5_AVX512: dq 0, 2, 4, 6, 1, 3, 5, 7
 dct8_shuf6_AVX512: dq 0, 2, 4, 6, 1, 3, 5, 7
 dct8_shuf8_AVX512: dd 0, 2, 8, 10, 4, 6, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
 dct8_shuf4_AVX512: times 2 dd 0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15
+
+dct32_shuf_AVX512:  dd 0, 1, 4, 5, 8, 9, 12, 13, 16, 17, 20 , 21, 24, 25, 28, 29
+dct32_shuf4_AVX512: times 2 dd 0, 4, 8, 12, 0, 4, 8, 12
+dct32_shuf5_AVX512: dd 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0
+dct32_shuf6_AVX512: dd 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0
+dct32_shuf7_AVX512: dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1
+dct32_shuf8_AVX512: dd -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
 dct8_shuf7_AVX512: dw 0, 2, 16, 18, 8, 10, 24, 26, 4, 6, 20, 22, 12, 14, 28, 30
 dct8_shuf9_AVX512: times 2 dw 0, 8, 16, 24, 4, 12, 20, 28
+
+dct32_shuf1_AVX512: dw 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16
+dct32_shuf2_AVX512: dw 0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, 20, 21, 22, 23, 15, 14, 13, 12, 11, 10, 9, 8, 31, 30, 29, 28, 27, 26, 25, 24
+dct32_shuf3_AVX512: times 2 dw 0, 8, 16, 24, 2, 10, 18, 26
+
 dct8_shuf:         times 2 db 6, 7, 4, 5, 2, 3, 0, 1, 14, 15, 12, 13, 10, 11, 8, 9
 dct8_shuf_AVX512:  times 2 db 4, 5, 6, 7, 0, 1, 2, 3, 12, 13, 14, 15, 8, 9, 10, 11
-
 
 tab_dct8:       dw 64, 64, 64, 64, 64, 64, 64, 64
                 dw 89, 75, 50, 18, -18, -50, -75, -89
@@ -3072,6 +3117,521 @@ cglobal dct32, 3, 9, 16, 0-64*mmsize
 
     dec             r4d
     jnz             .pass2
+    RET
+
+
+%macro DCT32_avx512_LOOP 4
+    movu            m1,               [r0]
+    movu            m2,               [r0 + r2]
+
+    vinserti64x4    m3,               m1, ym2, 1    ; row 0l, 1l
+    vextracti64x4   ym4,              m1, 1
+    vinserti64x4    m2,               m2, ym4, 0    ; row 0h, 1h
+    vpermw          m2,               m31, m2
+
+    psubw           m%1,              m3, m2        ; O
+    paddw           m3,               m2            ; E
+    mova            [r9 + %3 * 64],   m3
+
+    movu            m1,               [r0 + 2 * r2]
+    movu            m5,               [r0 + r3]
+
+    vinserti64x4    m6,               m1, ym5, 1    ; row 2l, 3l
+    vextracti64x4   ym7,              m1, 1
+    vinserti64x4    m5,               m5, ym7, 0    ; row 2h, 3h
+    vpermw          m5,               m31, m5
+
+    psubw           m%2,              m6, m5        ; O
+    paddw           m6,               m5            ; E
+    mova            [r9 + %4 * 64],   m6
+%endmacro
+
+%macro DCT32_avx512_PASS_1_O 3
+    pmaddwd          m10,              m%2,  m9
+    vpsrldq          m11,              m10, 8
+    vpaddd           m10,              m11
+
+    pmaddwd          m11,              m%3,  m9
+    vpsrldq          m12,              m11, 8
+    vpaddd           m11,              m12
+
+    mova             m12,              m8
+    vpermi2d         m12,              m10, m11
+    vpsrldq          m10,              m12, 8
+    vpaddd           m12,              m10
+    vpsrldq          m10,              m12, 4
+    vpaddd           m12,              m10
+
+    vpaddd           m12,              m0
+    vpsrad           m12,              DCT_SHIFT
+    vpackssdw        m12,              m12
+    vpermw           m12,              m30, m12
+    movq             [r5 + %1],        xm12
+%endmacro
+
+%macro DCT32_avx512_PASS_1_ROW_O 0
+    vbroadcasti32x8  m9,               [r7 + 1 * 32]
+
+    DCT32_avx512_LOOP 13, 14, 0, 1
+    DCT32_avx512_PASS_1_O              1 * 64 + 0 * 8, 13, 14
+
+    lea             r0,                [r0 + 4 * r2]
+    DCT32_avx512_LOOP 15, 16, 2, 3
+    DCT32_avx512_PASS_1_O              1 * 64 + 1 * 8, 15, 16
+
+    lea             r0,                [r0 + 4 * r2]
+    DCT32_avx512_LOOP 17, 18, 4, 5
+    DCT32_avx512_PASS_1_O              1 * 64 + 2 * 8, 17, 18
+
+    lea             r0,                [r0 + 4 * r2]
+    DCT32_avx512_LOOP 19, 20, 6, 7
+    DCT32_avx512_PASS_1_O              1 * 64 + 3 * 8, 19, 20
+
+    lea             r0,                [r0 + 4 * r2]
+    DCT32_avx512_LOOP 21, 22, 8, 9
+    DCT32_avx512_PASS_1_O              1 * 64 + 4 * 8, 21, 22
+
+    lea             r0,                [r0 + 4 * r2]
+    DCT32_avx512_LOOP 23, 24, 10, 11
+    DCT32_avx512_PASS_1_O              1 * 64 + 5 * 8, 23, 24
+
+    lea             r0,                [r0 + 4 * r2]
+    DCT32_avx512_LOOP 25, 26, 12, 13
+    DCT32_avx512_PASS_1_O              1 * 64 + 6 * 8, 25, 26
+
+    lea             r0,                [r0 + 4 * r2]
+    DCT32_avx512_LOOP 27, 28, 14, 15
+    DCT32_avx512_PASS_1_O              1 * 64 + 7 * 8, 27, 28
+%endmacro
+
+%macro DCT32_avx512_PASS_1_ROW_O_1_7 1
+    vbroadcasti32x8  m9,               [r7 + %1 * 32]
+
+    DCT32_avx512_PASS_1_O              %1 * 64 + 0 * 8, 13, 14
+    DCT32_avx512_PASS_1_O              %1 * 64 + 1 * 8, 15, 16
+    DCT32_avx512_PASS_1_O              %1 * 64 + 2 * 8, 17, 18
+    DCT32_avx512_PASS_1_O              %1 * 64 + 3 * 8, 19, 20
+    DCT32_avx512_PASS_1_O              %1 * 64 + 4 * 8, 21, 22
+    DCT32_avx512_PASS_1_O              %1 * 64 + 5 * 8, 23, 24
+    DCT32_avx512_PASS_1_O              %1 * 64 + 6 * 8, 25, 26
+    DCT32_avx512_PASS_1_O              %1 * 64 + 7 * 8, 27, 28
+%endmacro
+
+%macro DCT32_avx512_LOOP_EO 4
+    mova            m4,                [rsp + 32 * mmsize + %3 * 64]
+    vpermw          m4,                m8, m4
+    vextracti64x4   ym5,               m4, 1
+
+    mova            m6,                [rsp + 32 * mmsize + %4 * 64]
+    vpermw          m6,                m8, m6
+    vextracti64x4   ym7,               m6, 1
+
+    vinserti64x4    m4,                m4, ym6, 1
+    vinserti64x4    m5,                m5, ym7, 1
+
+    psubw           m%1,               m4, m5      ; EO
+    paddw           m%2,               m4, m5      ; EE
+%endmacro
+
+%macro DCT32_avx512_PASS_1_ROW_EO 2
+    pmaddwd          m29,              m%2,  m12
+    vpsrldq          m30,              m29,  8
+    vpaddd           m30,              m29
+    vpsrldq          m29,              m30,  4
+    vpaddd           m29,              m30
+
+    vpaddd           m29,              m0
+    vpsrad           m29,              DCT_SHIFT
+    vpackssdw        m29,              m29
+
+    vpermw           m29,              m11, m29
+    movq             [r5 + %1],        xm29
+%endmacro
+
+%macro DCT32_avx512_PASS_1_ROW_EO_0 0
+
+    mova            m8,               [dct32_shuf2_AVX512]
+    vbroadcasti32x4 m12,              [r7 + 2 * 32]
+
+    DCT32_avx512_LOOP_EO 13, 14, 0, 1
+    DCT32_avx512_PASS_1_ROW_EO    2 * 64 + 0 * 8, 13
+
+    lea             r9,           [r9 + 4 * r2]
+    DCT32_avx512_LOOP_EO 15, 16, 2, 3
+    DCT32_avx512_PASS_1_ROW_EO    2 * 64 + 1 * 8, 15
+
+    lea             r9,           [r9 + 4 * r2]
+    DCT32_avx512_LOOP_EO 17, 18, 4, 5
+    DCT32_avx512_PASS_1_ROW_EO    2 * 64 + 2 * 8, 17
+
+    lea             r9,           [r9 + 4 * r2]
+    DCT32_avx512_LOOP_EO 19, 20, 6, 7
+    DCT32_avx512_PASS_1_ROW_EO    2 * 64 + 3 * 8, 19
+
+    lea             r9,           [r9 + 4 * r2]
+    DCT32_avx512_LOOP_EO 21, 22, 8, 9
+    DCT32_avx512_PASS_1_ROW_EO    2 * 64 + 4 * 8, 21
+
+    lea             r9,           [r9 + 4 * r2]
+    DCT32_avx512_LOOP_EO 23, 24, 10, 11
+    DCT32_avx512_PASS_1_ROW_EO    2 * 64 + 5 * 8, 23
+
+    lea             r9,           [r9 + 4 * r2]
+    DCT32_avx512_LOOP_EO 25, 26, 12, 13
+    DCT32_avx512_PASS_1_ROW_EO    2 * 64 + 6 * 8, 25
+
+    lea             r9,           [r9 + 4 * r2]
+    DCT32_avx512_LOOP_EO 27, 28, 14, 15
+    DCT32_avx512_PASS_1_ROW_EO    2 * 64 + 7 * 8, 27
+
+%endmacro
+
+%macro DCT32_avx512_PASS_1_ROW_EO_1_7 1
+
+    vbroadcasti32x4 m12,         [r7 + %1 * 32]
+
+    DCT32_avx512_PASS_1_ROW_EO   %1 * 64 + 0 * 8, 13
+    DCT32_avx512_PASS_1_ROW_EO   %1 * 64 + 1 * 8, 15
+    DCT32_avx512_PASS_1_ROW_EO   %1 * 64 + 2 * 8, 17
+    DCT32_avx512_PASS_1_ROW_EO   %1 * 64 + 3 * 8, 19
+    DCT32_avx512_PASS_1_ROW_EO   %1 * 64 + 4 * 8, 21
+    DCT32_avx512_PASS_1_ROW_EO   %1 * 64 + 5 * 8, 23
+    DCT32_avx512_PASS_1_ROW_EO   %1 * 64 + 6 * 8, 25
+    DCT32_avx512_PASS_1_ROW_EO   %1 * 64 + 7 * 8, 27
+
+%endmacro
+
+%macro DCT32_avx512_LOOP_EEO 0
+    vpunpcklqdq        m2,  m14, m16
+    vpunpckhqdq        m14, m16
+    vpshufb            m14, m31
+
+    vpaddw             m16, m2, m14     ; EEE
+    vpsubw             m2,  m14         ; EE0
+
+    vpunpcklqdq        m3,  m18, m20
+    vpunpckhqdq        m18, m20
+    vpshufb            m18, m31
+
+    vpaddw             m20, m3, m18     ; EEE
+    vpsubw             m3,  m18         ; EE0
+
+    vpunpcklqdq        m4,  m22, m24
+    vpunpckhqdq        m22, m24
+    vpshufb            m22, m31
+
+    vpaddw             m24, m4, m22     ; EEE
+    vpsubw             m4,  m22         ; EE0
+
+    vpunpcklqdq        m5,  m26, m28
+    vpunpckhqdq        m26, m28
+    vpshufb            m26, m31
+
+    vpaddw             m28, m5, m26     ; EEE
+    vpsubw             m5,  m26         ; EE0
+%endmacro
+
+%macro DCT32_avx512_PASS_1_ROW_EEO 2
+    pmaddwd          m30,              m%2,  m1
+    vpsrldq          m29,              m30,  4
+    vpaddd           m29,              m30
+
+    vpaddd           m29,              m0
+    vpsrad           m29,              DCT_SHIFT
+    vpackssdw        m29,              m29
+
+    vpermw           m29,              m27, m29
+    movu             [r5 + %1],        xm29
+%endmacro
+
+%macro DCT32_avx512_PASS_1_ROW_EEO_1_4 1
+
+vpbroadcastq     m1,            [r7 + %1 * 32]
+DCT32_avx512_PASS_1_ROW_EEO     %1 * 64 + 0 * 16, 2
+DCT32_avx512_PASS_1_ROW_EEO     %1 * 64 + 1 * 16, 3
+DCT32_avx512_PASS_1_ROW_EEO     %1 * 64 + 2 * 16, 4
+DCT32_avx512_PASS_1_ROW_EEO     %1 * 64 + 3 * 16, 5
+
+%endmacro
+
+%macro DCT32_avx512_PASS_1_ROW_EEEO_1_4 1
+
+vpbroadcastq     m1,            [r7 + %1 * 32]
+DCT32_avx512_PASS_1_ROW_EEO     %1 * 64 + 0 * 16, 16
+DCT32_avx512_PASS_1_ROW_EEO     %1 * 64 + 1 * 16, 20
+DCT32_avx512_PASS_1_ROW_EEO     %1 * 64 + 2 * 16, 24
+DCT32_avx512_PASS_1_ROW_EEO     %1 * 64 + 3 * 16, 28
+
+%endmacro
+
+%macro DCT32_avx512_PASS2_OPT 5
+    pmaddwd         m9,                m1,  m%1
+    vpsrldq         m10,               m9,  8
+    vpaddd          m9,                m10
+
+    pmaddwd         m10,               m1,  m%2
+    vpsrldq         m11,               m10, 8
+    vpaddd          m10,               m11
+
+    pmaddwd         m11,               m1,  m%3
+    vpsrldq         m12,               m11, 8
+    vpaddd          m11,               m12
+
+    pmaddwd         m12,               m1,  m%4
+    vpsrldq         m13,               m12, 8
+    vpaddd          m12,               m13
+
+    vpsrldq         m13,               m9,  4
+    vpaddd          m9,                m13
+    vpsrldq         m13,               m10, 4
+    vpaddd          m10,               m13
+    vpsrldq         m13,               m11, 4
+    vpaddd          m11,               m13
+    vpsrldq         m13,               m12, 4
+    vpaddd          m12,               m13
+
+    vpermd           m9,               m31,  m9
+    vpermd          m10,               m31, m10
+    vpermd          m11,               m31, m11
+    vpermd          m12,               m31, m12
+
+    vpandd          m9,                m27
+    vpandd          m10,               m30
+    vpandd          m11,               m29
+    vpandd          m12,               m28
+
+    vpaddd          m9,                m10
+    vpaddd          m11,               m12
+    vpaddd          m9,                m11
+
+    vpsrldq         m10,               m9, 8
+    vpaddd          m9,                m10
+    vpsrldq         m10,               m9, 4
+    vpaddd          m9,                m10
+
+    vpermd          m9,                m31, m9
+    vpaddd          m9,                m0
+    vpsrad          m9,                DCT_SHIFT2
+    vpackssdw       m9,                m9
+    movq            [r1 + %5],         xm9
+
+%endmacro
+
+%macro DCT32_avx512_PASS2 5
+
+    mova            m9,                [r5 + %1]
+    mova            m10,               [r5 + %2]
+    mova            m11,               [r5 + %3]
+    mova            m12,               [r5 + %4]
+
+    pmaddwd         m9,                m1,  m9
+    vpsrldq         m13,               m9,  8
+    vpaddd          m9,                m13
+
+    pmaddwd         m10,               m1,  m10
+    vpsrldq         m13,               m10, 8
+    vpaddd          m10,               m13
+
+    pmaddwd         m11,               m1,  m11
+    vpsrldq         m13,               m11, 8
+    vpaddd          m11,               m13
+
+    pmaddwd         m12,               m1,  m12
+    vpsrldq         m13,               m12, 8
+    vpaddd          m12,               m13
+
+    vpsrldq         m13,               m9,  4
+    vpaddd          m9,                m13
+    vpsrldq         m13,               m10, 4
+    vpaddd          m10,               m13
+    vpsrldq         m13,               m11, 4
+    vpaddd          m11,               m13
+    vpsrldq         m13,               m12, 4
+    vpaddd          m12,               m13
+
+    vpermd           m9,               m31,  m9
+    vpermd          m10,               m31, m10
+    vpermd          m11,               m31, m11
+    vpermd          m12,               m31, m12
+
+    vpandd          m9,                m27
+    vpandd          m10,               m30
+    vpandd          m11,               m29
+    vpandd          m12,               m28
+
+    vpaddd          m9,                m10
+    vpaddd          m11,               m12
+    vpaddd          m9,                m11
+
+    vpsrldq         m10,               m9, 8
+    vpaddd          m9,                m10
+    vpsrldq         m10,               m9, 4
+    vpaddd          m9,                m10
+
+    vpermd          m9,                m31, m9
+    vpaddd          m9,                m0
+    vpsrad          m9,                DCT_SHIFT2
+    vpackssdw       m9,                m9
+    movq            [r1 + %5],         xm9
+
+%endmacro
+
+%macro DCT32_avx512_PASS2_1_ROW 1
+
+mova            m1,                [r8 + %1 * 64]
+
+DCT32_avx512_PASS2_OPT  2,  3,  4, 14, %1 * 64 + 0 * 8
+DCT32_avx512_PASS2_OPT 15, 16, 17, 18, %1 * 64 + 1 * 8
+DCT32_avx512_PASS2_OPT 19, 20, 21, 22, %1 * 64 + 2 * 8
+DCT32_avx512_PASS2_OPT 23, 24, 25, 26, %1 * 64 + 3 * 8
+DCT32_avx512_PASS2_OPT  5,  6,  7,  8, %1 * 64 + 4 * 8
+
+DCT32_avx512_PASS2 20 * 64, 21 * 64, 22 * 64, 23 * 64, %1 * 64 + 5 * 8
+DCT32_avx512_PASS2 24 * 64, 25 * 64, 26 * 64, 27 * 64, %1 * 64 + 6 * 8
+DCT32_avx512_PASS2 28 * 64, 29 * 64, 30 * 64, 31 * 64, %1 * 64 + 7 * 8
+
+%endmacro
+
+INIT_ZMM avx512
+cglobal dct32, 3, 10, 32, 0-(32*mmsize + 16*mmsize)
+
+%if BIT_DEPTH == 12
+    %define         DCT_SHIFT          8
+    vpbroadcastq    m0,                [pd_128]
+%elif BIT_DEPTH == 10
+    %define         DCT_SHIFT          6
+    vpbroadcastq    m0,                [pd_32]
+%elif BIT_DEPTH == 8
+    %define         DCT_SHIFT          4
+    vpbroadcastq    m0,                [pd_8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+%define             DCT_SHIFT2         11
+
+    add             r2d,               r2d
+    lea             r7,                [tab_dct32_1]
+    lea             r8,                [tab_dct32]
+    lea             r3,                [r2 * 3]
+    mov             r5,                rsp
+    mov             r9,                2048    ; 32 * mmsize
+    add             r9,                rsp
+
+    mova            m31,               [dct32_shuf1_AVX512]
+
+    ; PASSS 1
+
+    vbroadcasti32x8 m30,               [dct8_shuf9_AVX512]
+    mova            m8,                [dct32_shuf_AVX512]
+
+    DCT32_avx512_PASS_1_ROW_O
+    DCT32_avx512_PASS_1_ROW_O_1_7  3
+    DCT32_avx512_PASS_1_ROW_O_1_7  5
+    DCT32_avx512_PASS_1_ROW_O_1_7  7
+    DCT32_avx512_PASS_1_ROW_O_1_7  9
+    DCT32_avx512_PASS_1_ROW_O_1_7 11
+    DCT32_avx512_PASS_1_ROW_O_1_7 13
+    DCT32_avx512_PASS_1_ROW_O_1_7 15
+    DCT32_avx512_PASS_1_ROW_O_1_7 17
+    DCT32_avx512_PASS_1_ROW_O_1_7 19
+    DCT32_avx512_PASS_1_ROW_O_1_7 20
+    DCT32_avx512_PASS_1_ROW_O_1_7 21
+    DCT32_avx512_PASS_1_ROW_O_1_7 23
+    DCT32_avx512_PASS_1_ROW_O_1_7 25
+    DCT32_avx512_PASS_1_ROW_O_1_7 27
+    DCT32_avx512_PASS_1_ROW_O_1_7 29
+    DCT32_avx512_PASS_1_ROW_O_1_7 31
+
+    vbroadcasti32x8  m11,               [dct8_shuf9_AVX512]
+
+    DCT32_avx512_PASS_1_ROW_EO_0
+    DCT32_avx512_PASS_1_ROW_EO_1_7 6
+    DCT32_avx512_PASS_1_ROW_EO_1_7 10
+    DCT32_avx512_PASS_1_ROW_EO_1_7 14
+    DCT32_avx512_PASS_1_ROW_EO_1_7 18
+    DCT32_avx512_PASS_1_ROW_EO_1_7 22
+    DCT32_avx512_PASS_1_ROW_EO_1_7 26
+    DCT32_avx512_PASS_1_ROW_EO_1_7 30
+
+    vbroadcasti32x4  m31,               [dct8_shuf]
+    vbroadcasti32x8  m27,               [dct32_shuf3_AVX512]
+
+    DCT32_avx512_LOOP_EEO
+    DCT32_avx512_PASS_1_ROW_EEO_1_4 4
+    DCT32_avx512_PASS_1_ROW_EEO_1_4 12
+    DCT32_avx512_PASS_1_ROW_EEO_1_4 20
+    DCT32_avx512_PASS_1_ROW_EEO_1_4 28
+
+    DCT32_avx512_PASS_1_ROW_EEEO_1_4 0
+    DCT32_avx512_PASS_1_ROW_EEEO_1_4 16
+    DCT32_avx512_PASS_1_ROW_EEEO_1_4 8
+    DCT32_avx512_PASS_1_ROW_EEEO_1_4 24
+
+    ; PASS 2
+
+    vpbroadcastq    m0,               [pd_1024]
+    vbroadcasti32x8 m31,              [dct32_shuf4_AVX512]
+    movu            m30,              [dct32_shuf5_AVX512]
+    movu            m29,              [dct32_shuf6_AVX512]
+    movu            m28,              [dct32_shuf7_AVX512]
+    movu            m27,              [dct32_shuf8_AVX512]
+
+    ;Load the source coefficents into free registers and reuse them for all rows
+
+    mova            m2,               [r5 +  0 * 64]
+    mova            m3,               [r5 +  1 * 64]
+    mova            m4,               [r5 +  2 * 64]
+    mova            m14,              [r5 +  3 * 64]
+    mova            m15,              [r5 +  4 * 64]
+    mova            m16,              [r5 +  5 * 64]
+    mova            m17,              [r5 +  6 * 64]
+    mova            m18,              [r5 +  7 * 64]
+    mova            m19,              [r5 +  8 * 64]
+    mova            m20,              [r5 +  9 * 64]
+    mova            m21,              [r5 + 10 * 64]
+    mova            m22,              [r5 + 11 * 64]
+    mova            m23,              [r5 + 12 * 64]
+    mova            m24,              [r5 + 13 * 64]
+    mova            m25,              [r5 + 14 * 64]
+    mova            m26,              [r5 + 15 * 64]
+    mova             m5,              [r5 + 16 * 64]
+    mova             m6,              [r5 + 17 * 64]
+    mova             m7,              [r5 + 18 * 64]
+    mova             m8,              [r5 + 19 * 64]
+
+    DCT32_avx512_PASS2_1_ROW 0
+    DCT32_avx512_PASS2_1_ROW 1
+    DCT32_avx512_PASS2_1_ROW 2
+    DCT32_avx512_PASS2_1_ROW 3
+    DCT32_avx512_PASS2_1_ROW 4
+    DCT32_avx512_PASS2_1_ROW 5
+    DCT32_avx512_PASS2_1_ROW 6
+    DCT32_avx512_PASS2_1_ROW 7
+    DCT32_avx512_PASS2_1_ROW 8
+    DCT32_avx512_PASS2_1_ROW 9
+    DCT32_avx512_PASS2_1_ROW 10
+    DCT32_avx512_PASS2_1_ROW 11
+    DCT32_avx512_PASS2_1_ROW 12
+    DCT32_avx512_PASS2_1_ROW 13
+    DCT32_avx512_PASS2_1_ROW 14
+    DCT32_avx512_PASS2_1_ROW 15
+    DCT32_avx512_PASS2_1_ROW 16
+    DCT32_avx512_PASS2_1_ROW 17
+    DCT32_avx512_PASS2_1_ROW 18
+    DCT32_avx512_PASS2_1_ROW 19
+    DCT32_avx512_PASS2_1_ROW 20
+    DCT32_avx512_PASS2_1_ROW 21
+    DCT32_avx512_PASS2_1_ROW 22
+    DCT32_avx512_PASS2_1_ROW 23
+    DCT32_avx512_PASS2_1_ROW 24
+    DCT32_avx512_PASS2_1_ROW 25
+    DCT32_avx512_PASS2_1_ROW 26
+    DCT32_avx512_PASS2_1_ROW 27
+    DCT32_avx512_PASS2_1_ROW 28
+    DCT32_avx512_PASS2_1_ROW 29
+    DCT32_avx512_PASS2_1_ROW 30
+    DCT32_avx512_PASS2_1_ROW 31
+
     RET
 
 %macro IDCT8_PASS_1 1

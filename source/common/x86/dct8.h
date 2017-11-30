@@ -47,5 +47,6 @@ void PFX(dct8_avx512)(const int16_t* src, int16_t* dst, intptr_t srcStride);
 void PFX(idct8_avx512)(const int16_t* src, int16_t* dst, intptr_t dstStride);
 void PFX(idct16_avx512)(const int16_t* src, int16_t* dst, intptr_t dstStride);
 void PFX(idct32_avx512)(const int16_t* src, int16_t* dst, intptr_t dstStride);
+void PFX(dct32_avx512)(const int16_t* src, int16_t* dst, intptr_t srcStride);
 
 #endif // ifndef X265_DCT8_H
