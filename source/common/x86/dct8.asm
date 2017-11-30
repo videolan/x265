@@ -4761,7 +4761,7 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
     paddd            m10,  m17
     vmovdqu32        m9   {k2}, m10
 
-    movu            m5,  [tab_AVX512_idct16_1 + %1 * 64]
+    mova            m5,  [tab_AVX512_idct16_1 + %1 * 64]
     pmaddwd         m10, m1, m5
     pmaddwd         m11, m3, m5
 
@@ -4794,7 +4794,7 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
     paddd           m9, m14
     psrad           m9, IDCT_SHIFT1
 
-    movu            m5,  [tab_AVX512_idct16_2 + %1 * 64 + 64]
+    mova            m5,  [tab_AVX512_idct16_2 + %1 * 64 + 64]
     pmaddwd         m10, m0, m5
     pmaddwd         m12, m7, m5
 
@@ -4824,7 +4824,7 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
 
 
 
-    movu            m5,  [tab_AVX512_idct16_1 + %1 * 64 + 64] 
+    mova            m5,  [tab_AVX512_idct16_1 + %1 * 64 + 64] 
     pmaddwd         m12, m1, m5
     pmaddwd         m13, m3, m5
 
@@ -4864,8 +4864,8 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
     packssdw        m11, m5
     packssdw        m9, m10
 
-    movu            m10, [idct16_AVX512_shuff]
-    movu            m5,  [idct16_AVX512_shuff1]
+    mova            m10, [idct16_AVX512_shuff]
+    mova            m5,  [idct16_AVX512_shuff1]
 
     vpermd          m%2, m10, m11
     vpermd          m%3, m5, m9
@@ -5232,20 +5232,20 @@ cglobal idct16, 3, 8, 32
     IDCT16_AVX512_PASS1      0, 22, 23
     IDCT16_AVX512_PASS1      2, 24, 25
 
-    movu       m26,    [idct16_AVX512_shuff2]
-    movu       m27,    [idct16_AVX512_shuff3]
+    mova       m26,    [idct16_AVX512_shuff2]
+    mova       m27,    [idct16_AVX512_shuff3]
     vpermi2q   m26,    m18, m22
     vpermi2q   m27,    m18, m22
-    movu       m18,    [idct16_AVX512_shuff2]
-    movu       m22,    [idct16_AVX512_shuff3]
+    mova       m18,    [idct16_AVX512_shuff2]
+    mova       m22,    [idct16_AVX512_shuff3]
     vpermi2q   m18,    m20, m24
     vpermi2q   m22,    m20, m24
-    movu       m20,    [idct16_AVX512_shuff4]
-    movu       m24,    [idct16_AVX512_shuff5]
+    mova       m20,    [idct16_AVX512_shuff4]
+    mova       m24,    [idct16_AVX512_shuff5]
     vpermi2q   m20,    m21, m25
     vpermi2q   m24,    m21, m25
-    movu       m21,    [idct16_AVX512_shuff4]
-    movu       m25,    [idct16_AVX512_shuff5]
+    mova       m21,    [idct16_AVX512_shuff4]
+    mova       m25,    [idct16_AVX512_shuff5]
     vpermi2q   m21,    m19, m23
     vpermi2q   m25,    m19, m23
 
