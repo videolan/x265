@@ -2357,6 +2357,67 @@ cglobal denoise_dct, 4, 4, 6
     dec      r3d
     jnz .loop
     RET
+%if ARCH_X86_64 == 1
+INIT_ZMM avx512
+cglobal denoise_dct, 4, 4, 22
+    pxor     m16,  m16
+    sub      r3d,   16
+    je       .coeff16
+    add      r3d,   16
+    shr      r3d,    5
+    jmp      .loop
+
+.coeff16:
+    movu          ym19,  [r0]
+    pabsw         ym17, ym19
+    movu            m2, [r1]
+    pmovsxwd       m18, ym17
+    paddd           m2,  m18
+    movu          [r1],   m2
+    movu           ym3, [r2]
+    psubusw       ym17, ym3
+    pcmpgtw       ym18, ym17, ym16
+    pand          ym17, ym18
+    psignw        ym17, ym19
+    movu          [r0], ym17
+    RET
+
+.loop:
+    movu          m21, [r0]
+    pabsw         m17, m21
+    movu           m2, [r1]
+    pmovsxwd       m4, ym17
+    paddd          m2,  m4
+    movu         [r1],  m2
+    vextracti64x4 ym4, m17, 1
+
+    movu           m2, [r1 + mmsize]
+    pmovsxwd       m3, ym4
+    paddd          m2, m3
+    movu           [r1 + mmsize], m2
+    movu           m3, [r2]
+    psubusw       m17, m3
+
+    vextracti64x4 ym20,  m17,    1
+    pcmpgtw       ym18, ym17, ym16
+    pcmpgtw       ym19, ym20, ym16
+    vinserti64x4   m18,  m18, ym19, 1
+
+    pand           m17,  m18
+    vextracti64x4 ym19,  m17, 1
+    vextracti64x4 ym20,  m21, 1
+    psignw        ym17, ym21
+    psignw        ym19, ym20
+    vinserti64x4   m17,  m17, ym19, 1
+
+    movu          [r0],  m17
+    add             r0,  mmsize
+    add             r1,  mmsize * 2
+    add             r2,  mmsize
+    dec             r3d
+    jnz             .loop
+    RET
+%endif ; ARCH_X86_64 == 1
 
 %if ARCH_X86_64 == 1
 %macro DCT8_PASS_1 4
