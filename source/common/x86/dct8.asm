@@ -5713,8 +5713,8 @@ cglobal idct32, 3, 6, 16, 0-32*64
 
     vmovdqu32       m9 {k3}, m10
 
-    movu            m6,  [tab_idct32_AVX512_5 + %1 * 64]
-    movu            m5,  [tab_idct32_AVX512_5 + %1 * 64 + 64]
+    mova            m6,  [tab_idct32_AVX512_5 + %1 * 64]
+    mova            m5,  [tab_idct32_AVX512_5 + %1 * 64 + 64]
 
     pmaddwd         m10, m8, m6
     pmaddwd         m11, m7, m5
@@ -5846,8 +5846,8 @@ cglobal idct32, 3, 6, 16, 0-32*64
     paddd            m4,  m25
     vmovdqu32        m3   {k2}, m4
 
-    movu           m24,        [idct16_AVX512_shuff3]
-    movu           m25,        [idct16_AVX512_shuff2]
+    mova           m24,        [idct16_AVX512_shuff3]
+    mova           m25,        [idct16_AVX512_shuff2]
     vpermi2q       m24,        m2,       m3
     vpermi2q       m25,        m2,       m3
     paddd           m2, m25, m24
@@ -5900,8 +5900,8 @@ cglobal idct32, 3, 6, 16, 0-32*64
     paddd            m5,  m25
     vmovdqu32        m4   {k2}, m5
 
-    movu           m24,        [idct16_AVX512_shuff3]
-    movu           m25,        [idct16_AVX512_shuff2]
+    mova           m24,        [idct16_AVX512_shuff3]
+    mova           m25,        [idct16_AVX512_shuff2]
     vpermi2q       m24,        m3,       m4
     vpermi2q       m25,        m3,       m4
     paddd           m3, m25, m24
@@ -5955,8 +5955,8 @@ cglobal idct32, 3, 6, 16, 0-32*64
     paddd            m6,  m25
     vmovdqu32        m5   {k2}, m6
 
-    movu           m24,        [idct16_AVX512_shuff3]
-    movu           m25,        [idct16_AVX512_shuff2]
+    mova           m24,        [idct16_AVX512_shuff3]
+    mova           m25,        [idct16_AVX512_shuff2]
     vpermi2q       m24,        m4,       m5
     vpermi2q       m25,        m4,       m5
     paddd           m4, m25, m24
@@ -6009,8 +6009,8 @@ cglobal idct32, 3, 6, 16, 0-32*64
     paddd            m0,  m25
     vmovdqu32        m6   {k2}, m0
 
-    movu           m24,        [idct16_AVX512_shuff3]
-    movu           m25,        [idct16_AVX512_shuff2]
+    mova           m24,        [idct16_AVX512_shuff3]
+    mova           m25,        [idct16_AVX512_shuff2]
     vpermi2q       m24,        m5,       m6
     vpermi2q       m25,        m5,       m6
     paddd           m5, m25, m24
@@ -6063,24 +6063,24 @@ cglobal idct32, 3, 8, 32, 0-32*64
     kmovd            k4, r7d
 
 
-    movu            m16, [tab_idct32_AVX512_2 + 0 * 64]
-    movu            m17, [tab_idct32_AVX512_2 + 1 * 64]
-    movu            m18, [tab_idct32_AVX512_2 + 2 * 64]
-    movu            m19, [tab_idct32_AVX512_2 + 3 * 64]
+    mova            m16, [tab_idct32_AVX512_2 + 0 * 64]
+    mova            m17, [tab_idct32_AVX512_2 + 1 * 64]
+    mova            m18, [tab_idct32_AVX512_2 + 2 * 64]
+    mova            m19, [tab_idct32_AVX512_2 + 3 * 64]
 
-    movu            m20, [tab_idct32_AVX512_3 + 0 * 64]
-    movu            m21, [tab_idct32_AVX512_3 + 1 * 64]
-    movu            m22, [tab_idct32_AVX512_3 + 2 * 64]
-    movu            m23, [tab_idct32_AVX512_3 + 3 * 64]
+    mova            m20, [tab_idct32_AVX512_3 + 0 * 64]
+    mova            m21, [tab_idct32_AVX512_3 + 1 * 64]
+    mova            m22, [tab_idct32_AVX512_3 + 2 * 64]
+    mova            m23, [tab_idct32_AVX512_3 + 3 * 64]
 
-    movu            m24, [tab_idct32_AVX512_1 + 0 * 64]
-    movu            m25, [tab_idct32_AVX512_1 + 1 * 64]
-    movu            m26, [tab_idct32_AVX512_1 + 2 * 64]
-    movu            m27, [tab_idct32_AVX512_1 + 3 * 64]
-    movu            m28, [tab_idct32_AVX512_1 + 4 * 64]
-    movu            m29, [tab_idct32_AVX512_1 + 5 * 64]
-    movu            m30, [tab_idct32_AVX512_1 + 6 * 64]
-    movu            m31, [tab_idct32_AVX512_1 + 7 * 64]
+    mova            m24, [tab_idct32_AVX512_1 + 0 * 64]
+    mova            m25, [tab_idct32_AVX512_1 + 1 * 64]
+    mova            m26, [tab_idct32_AVX512_1 + 2 * 64]
+    mova            m27, [tab_idct32_AVX512_1 + 3 * 64]
+    mova            m28, [tab_idct32_AVX512_1 + 4 * 64]
+    mova            m29, [tab_idct32_AVX512_1 + 5 * 64]
+    mova            m30, [tab_idct32_AVX512_1 + 6 * 64]
+    mova            m31, [tab_idct32_AVX512_1 + 7 * 64]
 
 .pass1:
     movq            xm0,    [r0 +  2 * 64]
@@ -6242,28 +6242,28 @@ cglobal idct32, 3, 8, 32, 0-32*64
     mov             r6d, 0xFFFF0000
     kmovd            k3, r6d
 
-    movu            m7,  [tab_idct32_AVX512_6]
-    movu            m8,  [tab_idct32_AVX512_6 + 1 * mmsize]
-    movu            m9,  [tab_idct32_AVX512_6 + 2 * mmsize]
-    movu            m10, [tab_idct32_AVX512_6 + 3 * mmsize]
-    movu            m11, [tab_idct32_AVX512_6 + 4 * mmsize]
-    movu            m12, [tab_idct32_AVX512_6 + 5 * mmsize]
-    movu            m13, [tab_idct32_AVX512_6 + 6 * mmsize]
-    movu            m14, [tab_idct32_AVX512_6 + 7 * mmsize]
-    movu            m16, [tab_idct32_AVX512_6 + 8 * mmsize]
-    movu            m17, [tab_idct32_AVX512_6 + 9 * mmsize]
-    movu            m18, [tab_idct32_AVX512_6 + 10 * mmsize]
-    movu            m19, [tab_idct32_AVX512_6 + 11 * mmsize]
-    movu            m20, [tab_idct32_AVX512_6 + 12 * mmsize]
-    movu            m21, [tab_idct32_AVX512_6 + 13 * mmsize]
-    movu            m22, [tab_idct32_AVX512_6 + 14 * mmsize]
-    movu            m23, [tab_idct32_AVX512_6 + 15 * mmsize]
-    movu            m26, [tab_idct32_AVX512_4]
-    movu            m27, [tab_idct32_AVX512_4 + 1 * mmsize]
-    movu            m28, [tab_idct32_AVX512_4 + 2 * mmsize]
-    movu            m29, [tab_idct32_AVX512_4 + 3 * mmsize]
-    movu            m30, [tab_idct32_AVX512_4 + 4 * mmsize]
-    movu            m31, [tab_idct32_AVX512_4 + 5 * mmsize]
+    mova            m7,  [tab_idct32_AVX512_6]
+    mova            m8,  [tab_idct32_AVX512_6 + 1 * mmsize]
+    mova            m9,  [tab_idct32_AVX512_6 + 2 * mmsize]
+    mova            m10, [tab_idct32_AVX512_6 + 3 * mmsize]
+    mova            m11, [tab_idct32_AVX512_6 + 4 * mmsize]
+    mova            m12, [tab_idct32_AVX512_6 + 5 * mmsize]
+    mova            m13, [tab_idct32_AVX512_6 + 6 * mmsize]
+    mova            m14, [tab_idct32_AVX512_6 + 7 * mmsize]
+    mova            m16, [tab_idct32_AVX512_6 + 8 * mmsize]
+    mova            m17, [tab_idct32_AVX512_6 + 9 * mmsize]
+    mova            m18, [tab_idct32_AVX512_6 + 10 * mmsize]
+    mova            m19, [tab_idct32_AVX512_6 + 11 * mmsize]
+    mova            m20, [tab_idct32_AVX512_6 + 12 * mmsize]
+    mova            m21, [tab_idct32_AVX512_6 + 13 * mmsize]
+    mova            m22, [tab_idct32_AVX512_6 + 14 * mmsize]
+    mova            m23, [tab_idct32_AVX512_6 + 15 * mmsize]
+    mova            m26, [tab_idct32_AVX512_4]
+    mova            m27, [tab_idct32_AVX512_4 + 1 * mmsize]
+    mova            m28, [tab_idct32_AVX512_4 + 2 * mmsize]
+    mova            m29, [tab_idct32_AVX512_4 + 3 * mmsize]
+    mova            m30, [tab_idct32_AVX512_4 + 4 * mmsize]
+    mova            m31, [tab_idct32_AVX512_4 + 5 * mmsize]
 
 .pass2:
     movu            ym0, [r3]
