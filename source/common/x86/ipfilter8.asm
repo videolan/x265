@@ -12985,8 +12985,7 @@ cglobal interp_8tap_vert_ss_8x%1, 5, 9, 19
     FILTER_VER_SS_LUMA_8xN_AVX512 16
     FILTER_VER_SS_LUMA_8xN_AVX512 32
 %endif
-
-%macro PROCESS_LUMA_VERT_SS_16x4_AVX512 0
+%macro PROCESS_LUMA_VERT_S_16x4_AVX512 1
     movu                 ym1,                 [r0]
     movu                 ym3,                 [r0 + r1]
     vinserti32x8         m1,                  [r0 + 2 * r1],          1
@@ -13062,7 +13061,26 @@ cglobal interp_8tap_vert_ss_8x%1, 5, 9, 19
     paddd                m11,                 m13
     paddd                m2,                  m10
     paddd                m3,                  m11
+%ifidn %1, sp
+    paddd                m0,                  m19
+    paddd                m1,                  m19
+    paddd                m2,                  m19
+    paddd                m3,                  m19
 
+    psrad                m0,                  12
+    psrad                m1,                  12
+    psrad                m2,                  12
+    psrad                m3,                  12
+
+    packssdw             m0,                  m1
+    packssdw             m2,                  m3
+    packuswb             m0,                  m2
+    vpermq               m0,                  m20,                   m0
+    movu                 [r2],                xm0
+    vextracti32x4        [r2 + r3],           m0,                    2
+    vextracti32x4        [r2 + 2 * r3],       m0,                    1
+    vextracti32x4        [r2 + r5],           m0,                    3
+%else
     psrad                m0,                  6
     psrad                m1,                  6
     psrad                m2,                  6
@@ -13075,15 +13093,15 @@ cglobal interp_8tap_vert_ss_8x%1, 5, 9, 19
     movu                 [r2 + r3],           ym2
     vextracti32x8        [r2 + 2 * r3],       m0,                1
     vextracti32x8        [r2 + r5],           m2,                1
+%endif
 %endmacro
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------------------------------------------
-%macro FILTER_VER_SS_LUMA_16xN_AVX512 1
+%macro FILTER_VER_S_LUMA_16xN_AVX512 2
 INIT_ZMM avx512
-cglobal interp_8tap_vert_ss_16x%1, 5, 8, 19
+cglobal interp_8tap_vert_%1_16x%2, 5, 8, 21
     add                   r1d,                r1d
-    add                   r3d,                r3d
     lea                   r7,                 [3 * r1]
     sub                   r0,                 r7
     shl                   r4d,                8
@@ -13100,28 +13118,39 @@ cglobal interp_8tap_vert_ss_16x%1, 5, 8, 19
     mova                  m17,                [r5 + 2 * mmsize]
     mova                  m18,                [r5 + 3 * mmsize]
 %endif
+%ifidn %1, sp
+    vbroadcasti32x4       m19,                [pd_526336]
+    mova                  m20,                [interp8_vsp_store_avx512]
+%else
+    add                   r3d,                r3d
+%endif
 
     lea                   r5,                 [3 * r3]
-%rep %1/4 - 1
-    PROCESS_LUMA_VERT_SS_16x4_AVX512
+%rep %2/4 - 1
+    PROCESS_LUMA_VERT_S_16x4_AVX512 %1
     lea                   r0,                 [r0 + 4 * r1]
     lea                   r2,                 [r2 + 4 * r3]
 %endrep
-    PROCESS_LUMA_VERT_SS_16x4_AVX512
+    PROCESS_LUMA_VERT_S_16x4_AVX512 %1
     RET
 %endmacro
 
 %if ARCH_X86_64
-    FILTER_VER_SS_LUMA_16xN_AVX512 4
-    FILTER_VER_SS_LUMA_16xN_AVX512 8
-    FILTER_VER_SS_LUMA_16xN_AVX512 12
-    FILTER_VER_SS_LUMA_16xN_AVX512 16
-    FILTER_VER_SS_LUMA_16xN_AVX512 32
-    FILTER_VER_SS_LUMA_16xN_AVX512 64
+    FILTER_VER_S_LUMA_16xN_AVX512 ss, 4
+    FILTER_VER_S_LUMA_16xN_AVX512 ss, 8
+    FILTER_VER_S_LUMA_16xN_AVX512 ss, 12
+    FILTER_VER_S_LUMA_16xN_AVX512 ss, 16
+    FILTER_VER_S_LUMA_16xN_AVX512 ss, 32
+    FILTER_VER_S_LUMA_16xN_AVX512 ss, 64
+    FILTER_VER_S_LUMA_16xN_AVX512 sp, 4
+    FILTER_VER_S_LUMA_16xN_AVX512 sp, 8
+    FILTER_VER_S_LUMA_16xN_AVX512 sp, 12
+    FILTER_VER_S_LUMA_16xN_AVX512 sp, 16
+    FILTER_VER_S_LUMA_16xN_AVX512 sp, 32
+    FILTER_VER_S_LUMA_16xN_AVX512 sp, 64
 %endif
-
 %macro PROCESS_LUMA_VERT_SS_24x8_AVX512 0
-    PROCESS_LUMA_VERT_SS_16x4_AVX512
+    PROCESS_LUMA_VERT_S_16x4_AVX512 ss
     lea                  r4,                  [r6 + 4 * r1]
     lea                  r8,                  [r4 + 4 * r1]
     movu                 ym1,                 [r6]
