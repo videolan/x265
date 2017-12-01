@@ -2883,6 +2883,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_48x64].luma_vsp = PFX(interp_8tap_vert_sp_48x64_avx512);
 
         p.cu[BLOCK_8x8].dct = PFX(dct8_avx512);
+        /* TODO: Currently these kernels performance are similar to AVX2 version, we need a to improve them further to ebable
+        * it. Probably a Vtune analysis will help here.
+
+        * p.cu[BLOCK_16x16].dct  = PFX(dct16_avx512);
+        * p.cu[BLOCK_32x32].dct  = PFX(dct32_avx512); */
+
         p.cu[BLOCK_8x8].idct = PFX(idct8_avx512);
         p.cu[BLOCK_16x16].idct = PFX(idct16_avx512);
         p.cu[BLOCK_32x32].idct = PFX(idct32_avx512);
