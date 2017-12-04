@@ -463,8 +463,8 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc)
                 {
                     int l0POC = framePtr->m_encData->m_slice->m_refFrameList[0][j]->m_poc;
                     Frame* l0Fp = m_dpb->m_picList.getPOC(l0POC);
-                    if (l0Fp->m_reconPic->m_picOrg[0] == NULL)
-                        l0Fp->m_reconEncoded.wait(); /* If recon is not ready, current frame encoder need to wait. */
+                    while (l0Fp->m_reconRowFlag[l0Fp->m_numRows - 1].get() == 0)
+                        l0Fp->m_reconRowFlag[l0Fp->m_numRows - 1].waitForChange(0); /* If recon is not ready, current frame encoder has to wait. */
                     l0[j] = l0Fp->m_reconPic;
                 }
             }
@@ -474,8 +474,8 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc)
                 {
                     int l1POC = framePtr->m_encData->m_slice->m_refFrameList[1][j]->m_poc;
                     Frame* l1Fp = m_dpb->m_picList.getPOC(l1POC);
-                    if (l1Fp->m_reconPic->m_picOrg[0] == NULL)
-                        l1Fp->m_reconEncoded.wait(); /* If recon is not ready, current frame encoder need to wait. */
+                    while (l1Fp->m_reconRowFlag[l1Fp->m_numRows - 1].get() == 0)
+                        l1Fp->m_reconRowFlag[l1Fp->m_numRows - 1].waitForChange(0); /* If recon is not ready, current frame encoder has to wait. */
                     l1[j] = l1Fp->m_reconPic;
                 }
             }
