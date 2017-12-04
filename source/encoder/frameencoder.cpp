@@ -342,8 +342,6 @@ void FrameEncoder::threadMain()
         }
         compressFrame();
         m_done.trigger(); /* FrameEncoder::getEncodedPicture() blocks for this event */
-        if (m_frame != NULL)
-            m_frame->m_reconEncoded.trigger();
         m_enable.wait();
     }
 }
