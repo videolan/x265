@@ -13242,6 +13242,251 @@ cglobal interp_8tap_vert_%1_32x%2, 5, 8, 22
     FILTER_VER_P_LUMA_32xN_AVX512 pp, 64
 %endif
 
+%macro PROCESS_LUMA_VERT_P_48x4_AVX512 1
+    PROCESS_LUMA_VERT_P_32x2_AVX512 %1
+    movu                 m1,                  [r0 + 2 * r1]
+    movu                 m3,                  [r0 + r7]
+    punpcklwd            m0,                  m1,                     m3
+    pmaddwd              m0,                  m15
+    punpckhwd            m1,                  m3
+    pmaddwd              m1,                  m15
+
+    movu                 m4,                  [r0 + 4 * r1]
+    punpcklwd            m2,                  m3,                     m4
+    pmaddwd              m2,                  m15
+    punpckhwd            m3,                  m4
+    pmaddwd              m3,                  m15
+
+    movu                 m5,                  [r6 + r1]
+    punpcklwd            m6,                  m4,                     m5
+    pmaddwd              m6,                  m16
+    punpckhwd            m4,                  m5
+    pmaddwd              m4,                  m16
+
+    paddd                m0,                  m6
+    paddd                m1,                  m4
+
+    movu                 m4,                  [r6 + 2 * r1]
+    punpcklwd            m6,                  m5,                     m4
+    pmaddwd              m6,                  m16
+    punpckhwd            m5,                  m4
+    pmaddwd              m5,                  m16
+
+    paddd                m2,                  m6
+    paddd                m3,                  m5
+
+    lea                  r4,                  [r6 + 4 * r1]
+
+    movu                 m11,                 [r6 + r7]
+    punpcklwd            m8,                  m4,                     m11
+    pmaddwd              m8,                  m17
+    punpckhwd            m4,                  m11
+    pmaddwd              m4,                  m17
+
+    movu                 m12,                 [r6 + 4 * r1]
+    punpcklwd            m10,                 m11,                    m12
+    pmaddwd              m10,                 m17
+    punpckhwd            m11,                 m12
+    pmaddwd              m11,                 m17
+
+    movu                 m13,                 [r4 + r1]
+    punpcklwd            m14,                 m12,                    m13
+    pmaddwd              m14,                 m18
+    punpckhwd            m12,                 m13
+    pmaddwd              m12,                 m18
+
+    paddd                m8,                  m14
+    paddd                m4,                  m12
+    paddd                m0,                  m8
+    paddd                m1,                  m4
+
+    movu                 m12,                 [r4 + 2 * r1]
+    punpcklwd            m14,                 m13,                    m12
+    pmaddwd              m14,                 m18
+    punpckhwd            m13,                 m12
+    pmaddwd              m13,                 m18
+
+    paddd                m10,                 m14
+    paddd                m11,                 m13
+    paddd                m2,                  m10
+    paddd                m3,                  m11
+
+    paddd                m0,                  m19
+    paddd                m1,                  m19
+    paddd                m2,                  m19
+    paddd                m3,                  m19
+
+%ifidn %1, pp
+    psrad                m0,                  INTERP_SHIFT_PP
+    psrad                m1,                  INTERP_SHIFT_PP
+    psrad                m2,                  INTERP_SHIFT_PP
+    psrad                m3,                  INTERP_SHIFT_PP
+
+    packssdw             m0,                  m1
+    packssdw             m2,                  m3
+    CLIPW2               m0,                  m2,                   m20,                 m21
+%else
+    psrad                m0,                  INTERP_SHIFT_PS
+    psrad                m1,                  INTERP_SHIFT_PS
+    psrad                m2,                  INTERP_SHIFT_PS
+    psrad                m3,                  INTERP_SHIFT_PS
+
+    packssdw             m0,                  m1
+    packssdw             m2,                  m3
+%endif
+    movu                 [r2 + 2 * r3],       m0
+    movu                 [r2 + r8],           m2
+
+    movu                 ym1,                 [r0 + mmsize]
+    movu                 ym3,                 [r0 + r1 + mmsize]
+    vinserti32x8         m1,                  [r0 + 2 * r1 + mmsize], 1
+    vinserti32x8         m3,                  [r0 + r7 + mmsize],     1
+    punpcklwd            m0,                  m1,                     m3
+    pmaddwd              m0,                  m15
+    punpckhwd            m1,                  m3
+    pmaddwd              m1,                  m15
+
+    movu                 ym4,                 [r0 + 2 * r1 + mmsize]
+    vinserti32x8         m4,                  [r0 + 4 * r1 + mmsize], 1
+    punpcklwd            m2,                  m3,                     m4
+    pmaddwd              m2,                  m15
+    punpckhwd            m3,                  m4
+    pmaddwd              m3,                  m15
+
+    movu                 ym5,                 [r0 + r7 + mmsize]
+    vinserti32x8         m5,                  [r6 + r1 + mmsize],     1
+    punpcklwd            m6,                  m4,                     m5
+    pmaddwd              m6,                  m16
+    punpckhwd            m4,                  m5
+    pmaddwd              m4,                  m16
+
+    paddd                m0,                  m6
+    paddd                m1,                  m4
+
+    movu                 ym4,                 [r6 + mmsize]
+    vinserti32x8         m4,                  [r6 + 2 * r1 + mmsize], 1
+    punpcklwd            m6,                  m5,                     m4
+    pmaddwd              m6,                  m16
+    punpckhwd            m5,                  m4
+    pmaddwd              m5,                  m16
+
+    paddd                m2,                  m6
+    paddd                m3,                  m5
+
+    movu                 ym11,                [r6 + r1 + mmsize]
+    vinserti32x8         m11,                 [r6 + r7 + mmsize],     1
+    punpcklwd            m8,                  m4,                     m11
+    pmaddwd              m8,                  m17
+    punpckhwd            m4,                  m11
+    pmaddwd              m4,                  m17
+
+    movu                 ym12,                [r6 + 2 * r1 + mmsize]
+    vinserti32x8         m12,                 [r4 + mmsize],          1
+    punpcklwd            m10,                 m11,                    m12
+    pmaddwd              m10,                 m17
+    punpckhwd            m11,                 m12
+    pmaddwd              m11,                 m17
+
+    movu                 ym13,                [r6 + r7 + mmsize]
+    vinserti32x8         m13,                 [r4 + r1 + mmsize],     1
+    punpcklwd            m14,                 m12,                    m13
+    pmaddwd              m14,                 m18
+    punpckhwd            m12,                 m13
+    pmaddwd              m12,                 m18
+
+    paddd                m8,                  m14
+    paddd                m4,                  m12
+    paddd                m0,                  m8
+    paddd                m1,                  m4
+
+    movu                 ym12,                [r4 + mmsize]
+    vinserti32x8         m12,                 [r4 + 2 * r1 + mmsize], 1
+    punpcklwd            m14,                 m13,                    m12
+    pmaddwd              m14,                 m18
+    punpckhwd            m13,                 m12
+    pmaddwd              m13,                 m18
+
+    paddd                m10,                 m14
+    paddd                m11,                 m13
+    paddd                m2,                  m10
+    paddd                m3,                  m11
+
+    paddd                m0,                  m19
+    paddd                m1,                  m19
+    paddd                m2,                  m19
+    paddd                m3,                  m19
+
+%ifidn %1, pp
+    psrad                m0,                  INTERP_SHIFT_PP
+    psrad                m1,                  INTERP_SHIFT_PP
+    psrad                m2,                  INTERP_SHIFT_PP
+    psrad                m3,                  INTERP_SHIFT_PP
+
+    packssdw             m0,                  m1
+    packssdw             m2,                  m3
+    CLIPW2               m0,                  m2,                   m20,                 m21
+%else
+    psrad                m0,                  INTERP_SHIFT_PS
+    psrad                m1,                  INTERP_SHIFT_PS
+    psrad                m2,                  INTERP_SHIFT_PS
+    psrad                m3,                  INTERP_SHIFT_PS
+
+    packssdw             m0,                  m1
+    packssdw             m2,                  m3
+%endif
+
+    movu                 [r2 + mmsize],                ym0
+    movu                 [r2 + r3 + mmsize],           ym2
+    vextracti32x8        [r2 + 2 * r3 + mmsize],       m0,                    1
+    vextracti32x8        [r2 + r8 + mmsize],           m2,                    1
+%endmacro
+;-----------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_P_LUMA_48x64_AVX512 1
+INIT_ZMM avx512
+cglobal interp_8tap_vert_%1_48x64, 5, 9, 22
+    add                   r1d,                r1d
+    add                   r3d,                r3d
+    shl                   r4d,                8
+%ifdef PIC
+    lea                   r5,                 [tab_LumaCoeffVer_avx512]
+    mova                  m15,                [r5 + r4]
+    mova                  m16,                [r5 + r4 + 1 * mmsize]
+    mova                  m17,                [r5 + r4 + 2 * mmsize]
+    mova                  m18,                [r5 + r4 + 3 * mmsize]
+%else
+    lea                   r5,                 [tab_LumaCoeffVer_avx512 + r4]
+    mova                  m15,                [r5]
+    mova                  m16,                [r5 + 1 * mmsize]
+    mova                  m17,                [r5 + 2 * mmsize]
+    mova                  m18,                [r5 + 3 * mmsize]
+%endif
+%ifidn %1, pp
+    vbroadcasti32x4       m19,                [INTERP_OFFSET_PP]
+    pxor                  m20,                m20
+    vbroadcasti32x8       m21,                [pw_pixel_max]
+%else
+    vbroadcasti32x4       m19,                [INTERP_OFFSET_PS]
+%endif
+    lea                   r7,                 [3 * r1]
+    lea                   r8,                 [3 * r3]
+    sub                   r0,                 r7
+
+%rep 15
+    PROCESS_LUMA_VERT_P_48x4_AVX512 %1
+    lea                   r0,                 [r0 + 4 * r1]
+    lea                   r2,                 [r2 + 4 * r3]
+%endrep
+    PROCESS_LUMA_VERT_P_48x4_AVX512 %1
+    RET
+%endmacro
+
+%if ARCH_X86_64
+    FILTER_VER_P_LUMA_48x64_AVX512 ps
+    FILTER_VER_P_LUMA_48x64_AVX512 pp
+%endif
+
 %macro PROCESS_LUMA_VERT_P_64x2_AVX512 1
     PROCESS_LUMA_VERT_P_32x2_AVX512 %1
     movu                 m1,                  [r0 + mmsize]
