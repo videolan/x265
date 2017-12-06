@@ -12931,7 +12931,7 @@ cglobal interp_8tap_vert_%1_64x%2, 5, 8, 22
 ;avx512 luma_vpp and luma_vps code start
 ;-------------------------------------------------------------------------------------------------------------
 %macro PROCESS_LUMA_VERT_P_16x4_AVX512 1
-    lea                  r6,                  [r0 + 4 * r1]
+    lea                  r5,                  [r0 + 4 * r1]
     movu                 ym1,                 [r0]
     movu                 ym3,                 [r0 + r1]
     vinserti32x8         m1,                  [r0 + 2 * r1],          1
@@ -12949,7 +12949,7 @@ cglobal interp_8tap_vert_%1_64x%2, 5, 8, 22
     pmaddwd              m3,                  m15
 
     movu                 ym5,                 [r0 + r7]
-    vinserti32x8         m5,                  [r6 + r1],              1
+    vinserti32x8         m5,                  [r5 + r1],              1
     punpcklwd            m6,                  m4,                     m5
     pmaddwd              m6,                  m16
     punpckhwd            m4,                  m5
@@ -12958,8 +12958,8 @@ cglobal interp_8tap_vert_%1_64x%2, 5, 8, 22
     paddd                m0,                  m6
     paddd                m1,                  m4
 
-    movu                 ym4,                 [r6]
-    vinserti32x8         m4,                  [r6 + 2 * r1],          1
+    movu                 ym4,                 [r5]
+    vinserti32x8         m4,                  [r5 + 2 * r1],          1
     punpcklwd            m6,                  m5,                     m4
     pmaddwd              m6,                  m16
     punpckhwd            m5,                  m4
@@ -12968,22 +12968,22 @@ cglobal interp_8tap_vert_%1_64x%2, 5, 8, 22
     paddd                m2,                  m6
     paddd                m3,                  m5
 
-    lea                  r4,                  [r6 + 4 * r1]
-    movu                 ym11,                [r6 + r1]
-    vinserti32x8         m11,                 [r6 + r7],              1
+    lea                  r4,                  [r5 + 4 * r1]
+    movu                 ym11,                [r5 + r1]
+    vinserti32x8         m11,                 [r5 + r7],              1
     punpcklwd            m8,                  m4,                     m11
     pmaddwd              m8,                  m17
     punpckhwd            m4,                  m11
     pmaddwd              m4,                  m17
 
-    movu                 ym12,                [r6 + 2 * r1]
+    movu                 ym12,                [r5 + 2 * r1]
     vinserti32x8         m12,                 [r4],                   1
     punpcklwd            m10,                 m11,                    m12
     pmaddwd              m10,                 m17
     punpckhwd            m11,                 m12
     pmaddwd              m11,                 m17
 
-    movu                 ym13,                [r6 + r7]
+    movu                 ym13,                [r5 + r7]
     vinserti32x8         m13,                 [r4 + r1],              1
     punpcklwd            m14,                 m12,                    m13
     pmaddwd              m14,                 m18
@@ -13091,6 +13091,138 @@ cglobal interp_8tap_vert_%1_16x%2, 5, 9, 22
     FILTER_VER_P_LUMA_16xN_AVX512 pp, 16
     FILTER_VER_P_LUMA_16xN_AVX512 pp, 32
     FILTER_VER_P_LUMA_16xN_AVX512 pp, 64
+%endif
+
+%macro PROCESS_LUMA_VERT_P_24x4_AVX512 1
+    PROCESS_LUMA_VERT_P_16x4_AVX512 %1
+    movu                  xm1,                [r0 + mmsize/2]
+    movu                  xm3,                [r0 + r1 + mmsize/2]
+    vinserti32x4          m1,                 [r0 + r1 + mmsize/2],           1
+    vinserti32x4          m3,                 [r0 + 2 * r1 + mmsize/2],       1
+    vinserti32x4          m1,                 [r0 + 2 * r1 + mmsize/2],       2
+    vinserti32x4          m3,                 [r0 + r7 + mmsize/2],           2
+    vinserti32x4          m1,                 [r0 + r7 + mmsize/2],           3
+    vinserti32x4          m3,                 [r0 + 4 * r1 + mmsize/2],       3
+
+    punpcklwd             m0,                 m1,                  m3
+    pmaddwd               m0,                 m15
+    punpckhwd             m1,                 m3
+    pmaddwd               m1,                 m15
+
+    movu                  xm4,                [r0 + 2 * r1 + mmsize/2]
+    movu                  xm5,                [r0 + r7 + mmsize/2]
+    vinserti32x4          m4,                 [r0 + r7 + mmsize/2],           1
+    vinserti32x4          m5,                 [r5 + mmsize/2],                1
+    vinserti32x4          m4,                 [r5 + mmsize/2],                2
+    vinserti32x4          m5,                 [r5 + r1 + mmsize/2],           2
+    vinserti32x4          m4,                 [r5 + r1 + mmsize/2],           3
+    vinserti32x4          m5,                 [r5 + 2 * r1 + mmsize/2],       3
+
+    punpcklwd             m3,                 m4,                  m5
+    pmaddwd               m3,                 m16
+    punpckhwd             m4,                 m5
+    pmaddwd               m4,                 m16
+
+    paddd                 m0,                 m3
+    paddd                 m1,                 m4
+
+    movu                  xm3,                [r5 + mmsize/2]
+    movu                  xm5,                [r5 + r1 + mmsize/2]
+    vinserti32x4          m3,                 [r5 + r1 + mmsize/2],           1
+    vinserti32x4          m5,                 [r5 + 2 * r1 + mmsize/2],       1
+    vinserti32x4          m3,                 [r5 + 2 * r1 + mmsize/2],       2
+    vinserti32x4          m5,                 [r5 + r7 + mmsize/2],           2
+    vinserti32x4          m3,                 [r5 + r7 + mmsize/2],           3
+    vinserti32x4          m5,                 [r5 + 4 * r1 + mmsize/2],       3
+
+    punpcklwd             m2,                 m3,                  m5
+    pmaddwd               m2,                 m17
+    punpckhwd             m3,                 m5
+    pmaddwd               m3,                 m17
+
+    movu                  xm6,                [r5 + 2 * r1 + mmsize/2]
+    movu                  xm7,                [r5 + r7 + mmsize/2]
+    vinserti32x4          m6,                 [r5 + r7 + mmsize/2],           1
+    vinserti32x4          m7,                 [r4 + mmsize/2],                1
+    vinserti32x4          m6,                 [r4 + mmsize/2],                2
+    vinserti32x4          m7,                 [r4 + r1 + mmsize/2],           2
+    vinserti32x4          m6,                 [r4 + r1 + mmsize/2],           3
+    vinserti32x4          m7,                 [r4 + 2 * r1 + mmsize/2],       3
+
+    punpcklwd             m5,                 m6,                  m7
+    pmaddwd               m5,                 m18
+    punpckhwd             m6,                 m7
+    pmaddwd               m6,                 m18
+
+    paddd                 m2,                 m5
+    paddd                 m3,                 m6
+    paddd                 m0,                 m2
+    paddd                 m1,                 m3
+
+    paddd                 m0,                 m19
+    paddd                 m1,                 m19
+
+%ifidn %1, pp
+    psrad                 m0,                 INTERP_SHIFT_PP
+    psrad                 m1,                 INTERP_SHIFT_PP
+    packssdw              m0,                 m1
+    CLIPW                 m0,                 m20,                 m21
+%else
+    psrad                 m0,                 INTERP_SHIFT_PS
+    psrad                 m1,                 INTERP_SHIFT_PS
+    packssdw              m0,                 m1
+%endif
+
+    movu                 [r2 + mmsize/2],                xm0
+    vextracti32x4        [r2 + r3 + mmsize/2],           m0,                    1
+    vextracti32x4        [r2 + 2 * r3 + mmsize/2],       m0,                    2
+    vextracti32x4        [r2 + r8 + mmsize/2],           m0,                    3
+%endmacro
+;-----------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_P_LUMA_24xN_AVX512 1
+INIT_ZMM avx512
+cglobal interp_8tap_vert_%1_24x32, 5, 9, 22
+    add                   r1d,                r1d
+    add                   r3d,                r3d
+    shl                   r4d,                8
+%ifdef PIC
+    lea                   r5,                 [tab_LumaCoeffVer_avx512]
+    mova                  m15,                [r5 + r4]
+    mova                  m16,                [r5 + r4 + 1 * mmsize]
+    mova                  m17,                [r5 + r4 + 2 * mmsize]
+    mova                  m18,                [r5 + r4 + 3 * mmsize]
+%else
+    lea                   r5,                 [tab_LumaCoeffVer_avx512 + r4]
+    mova                  m15,                [r5]
+    mova                  m16,                [r5 + 1 * mmsize]
+    mova                  m17,                [r5 + 2 * mmsize]
+    mova                  m18,                [r5 + 3 * mmsize]
+%endif
+%ifidn %1, pp
+    vbroadcasti32x4       m19,                [INTERP_OFFSET_PP]
+    pxor                  m20,                m20
+    vbroadcasti32x8       m21,                [pw_pixel_max]
+%else
+    vbroadcasti32x4       m19,                [INTERP_OFFSET_PS]
+%endif
+    lea                   r7,                 [3 * r1]
+    lea                   r8,                 [3 * r3]
+    sub                   r0,                 r7
+
+%rep 7
+    PROCESS_LUMA_VERT_P_24x4_AVX512 %1
+    lea                   r0,                 [r0 + 4 * r1]
+    lea                   r2,                 [r2 + 4 * r3]
+%endrep
+    PROCESS_LUMA_VERT_P_24x4_AVX512 %1
+    RET
+%endmacro
+
+%if ARCH_X86_64
+    FILTER_VER_P_LUMA_24xN_AVX512 ps
+    FILTER_VER_P_LUMA_24xN_AVX512 pp
 %endif
 
 %macro PROCESS_LUMA_VERT_P_32x2_AVX512 1
