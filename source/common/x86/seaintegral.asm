@@ -36,7 +36,7 @@ cglobal integral4v, 2, 3, 2
     mov r2, r1
     shl r2, 4
 
-.loop
+.loop:
     movu    m0, [r0]
     movu    m1, [r0 + r2]
     psubd   m1, m0
@@ -54,7 +54,7 @@ cglobal integral8v, 2, 3, 2
     mov r2, r1
     shl r2, 5
 
-.loop
+.loop:
     movu    m0, [r0]
     movu    m1, [r0 + r2]
     psubd   m1, m0
@@ -75,7 +75,7 @@ cglobal integral12v, 2, 4, 2
     shl r3, 4
     add r2, r3
 
-.loop
+.loop:
     movu    m0, [r0]
     movu    m1, [r0 + r2]
     psubd   m1, m0
@@ -93,7 +93,7 @@ cglobal integral16v, 2, 3, 2
     mov r2, r1
     shl r2, 6
 
-.loop
+.loop:
     movu    m0, [r0]
     movu    m1, [r0 + r2]
     psubd   m1, m0
@@ -114,7 +114,7 @@ cglobal integral24v, 2, 4, 2
     shl r3, 5
     add r2, r3
 
-.loop
+.loop:
     movu    m0, [r0]
     movu    m1, [r0 + r2]
     psubd   m1, m0
@@ -132,7 +132,7 @@ cglobal integral32v, 2, 3, 2
     mov r2, r1
     shl r2, 7
 
-.loop
+.loop:
     movu    m0, [r0]
     movu    m1, [r0 + r2]
     psubd   m1, m0
@@ -264,7 +264,7 @@ cglobal integral4h, 3, 5, 3
     movu           [r0 + r3], xm0
     jmp            .end
 
-.end
+.end:
     RET
 %endif
 
@@ -379,7 +379,7 @@ cglobal integral8h, 3, 5, 3
     movu           [r0 + r3], m0
     jmp             .end
 
-.end
+.end:
     RET
 %endif
 
@@ -577,7 +577,7 @@ cglobal integral12h, 3, 5, 3
     movu           [r0 + r3], xm0
     jmp            .end
 
-.end
+.end:
     RET
 %endif
 
@@ -740,7 +740,7 @@ cglobal integral16h, 3, 5, 3
     movu           [r0 + r3], m0
     jmp             .end
 
-.end
+.end:
     RET
 %endif
 
@@ -883,7 +883,7 @@ cglobal integral24h, 3, 5, 3
     movu           [r0 + r3], m0
     jmp             .end
 
-.end
+.end:
     RET
 
 %macro INTEGRAL_THIRTYTWO_HORIZONTAL_16 0
@@ -1058,5 +1058,5 @@ cglobal integral32h, 3, 5, 3
     movu           [r0 + r3], m0
     jmp             .end
 
-.end
+.end:
     RET

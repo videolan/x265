@@ -144,6 +144,7 @@ void x265_param_default(x265_param* param)
     /* Coding Structure */
     param->keyframeMin = 0;
     param->keyframeMax = 250;
+    param->gopLookahead = 0;
     param->bOpenGOP = 1;
     param->bframes = 4;
     param->lookaheadDepth = 20;
@@ -1004,6 +1005,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
                 bError = true;
             }
          }
+        OPT("gop-lookahead") p->gopLookahead = atoi(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1314,6 +1316,8 @@ int x265_check_params(x265_param* param)
           "Valid penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum");
     CHECK(param->keyframeMax < -1,
           "Invalid max IDR period in frames. value should be greater than -1");
+    CHECK(param->gopLookahead < -1,
+          "GOP lookahead must be greater than -1");
     CHECK(param->decodedPictureHashSEI < 0 || param->decodedPictureHashSEI > 3,
           "Invalid hash option. Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum");
     CHECK(param->rc.vbvBufferSize < 0,
@@ -1561,6 +1565,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bOpenGOP, "open-gop");
     s += sprintf(s, " min-keyint=%d", p->keyframeMin);
     s += sprintf(s, " keyint=%d", p->keyframeMax);
+    s += sprintf(s, " gop-lookahead=%d", p->gopLookahead);
     s += sprintf(s, " bframes=%d", p->bframes);
     s += sprintf(s, " b-adapt=%d", p->bFrameAdaptive);
     BOOL(p->bBPyramid, "b-pyramid");

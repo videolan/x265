@@ -1373,6 +1373,16 @@ Slice decision options
 	Default 20
 
 	**Range of values:** Between the maximum consecutive bframe count (:option:`--bframes`) and 250
+.. option:: --gop-lookahead <integer>
+
+        Number of frames for GOP boundary decision lookahead. If a scenecut frame is found
+        within this from the gop boundary set by `--keyint`, the GOP will be extented until such a point,
+        otherwise the GOP will be terminated as set by `--keyint`. Default 0.
+
+        **Range of values:** Between 0 and (`--rc-lookahead` - mini-GOP length)
+
+        It is recommended to have `--gop-lookahaed` less than `--min-keyint` as scenecuts beyond
+        `--min-keyint` are already being coded as keyframes.
 
 .. option:: --lookahead-slices <0..16>
 

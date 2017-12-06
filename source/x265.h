@@ -1532,11 +1532,14 @@ typedef struct x265_param
 
     /* Reuse MV information obtained through API */
     int       bMVType;
-
     /* Allow the encoder to have a copy of the planes of x265_picture in Frame */
     int       bCopyPicToFrame;
-} x265_param;
 
+    /*Number of frames for GOP boundary decision lookahead.If a scenecut frame is found
+    * within this from the gop boundary set by keyint, the GOP will be extented until such a point,
+    * otherwise the GOP will be terminated as set by keyint*/
+    int       gopLookahead;
+} x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
  *  special in any way, but using this method together with x265_param_free()

@@ -3850,7 +3850,7 @@ cglobal blockcopy_ss_%1x%2, 4, 5, 6
     mov     r4d, %2/4
     add     r1, r1
     add     r3, r3
-.loop
+.loop:
     movu    m0, [r2]
     movu    m1, [r2 + 16]
     movu    m2, [r2 + 32]
@@ -3905,7 +3905,7 @@ cglobal blockcopy_ss_%1x%2, 4, 7, 2
     lea    r5, [3 * r3]
     lea    r6, [3 * r1]
 
-.loop
+.loop:
     movu    m0, [r2]
     movu    xm1, [r2 + 32]
     movu    [r0], m0
@@ -5085,7 +5085,7 @@ cglobal copy_cnt_16, 3,4,6
      pxor        m4, m4
      pxor        m5, m5
 
-.loop
+.loop:
     ; row 0
     movu        m0, [r1]
     movu        m1, [r1 + 16]
@@ -5196,7 +5196,7 @@ cglobal copy_cnt_32, 3,4,6
     pxor        m4, m4
     pxor        m5, m5
 
-.loop
+.loop:
     ; row 0
     movu        m0, [r1]
     movu        m1, [r1 + 16]

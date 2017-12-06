@@ -55,12 +55,9 @@ public:
     enum { NUM_EDGETYPE = 5 };
     enum { NUM_PLANE = 3 };
     enum { SAO_DEPTHRATE_SIZE = 4 };
-
     static const uint32_t s_eoTable[NUM_EDGETYPE];
-
-    typedef int32_t (PerClass[MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]);
-    typedef int32_t (PerPlane[NUM_PLANE][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS]);
-
+    typedef int32_t PerClass[MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
+    typedef int32_t PerPlane[NUM_PLANE][MAX_NUM_SAO_TYPE][MAX_NUM_SAO_CLASS];
 protected:
 
     /* allocated per part */
