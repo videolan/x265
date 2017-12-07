@@ -2443,6 +2443,54 @@ SAD_X 4, 64, 64
 %endmacro
 
 
+%macro PROCESS_SAD_X3_16x4_AVX512 0
+    movu            ym6, [r0]
+    vinserti64x4     m6, [r0 + 2 * FENC_STRIDE],  1
+    movu            ym3, [r1]
+    vinserti64x4     m3, [r1 + r4],  1
+    movu            ym4, [r2]
+    vinserti64x4     m4, [r2 + r4],  1
+    movu            ym5, [r3]
+    vinserti64x4     m5, [r3 + r4],  1
+
+    psubw   m3, m6
+    psubw   m4, m6
+    psubw   m5, m6
+    pabsw   m3, m3
+    pabsw   m4, m4
+    pabsw   m5, m5
+
+    pmaddwd m3, m7
+    paddd   m0, m3
+    pmaddwd m4, m7
+    paddd   m1, m4
+    pmaddwd m5, m7
+    paddd   m2, m5
+
+    movu            ym6, [r0 + 4 * FENC_STRIDE]
+    vinserti64x4     m6, [r0 + 6 * FENC_STRIDE],  1
+    movu            ym3, [r1 + 2 * r4]
+    vinserti64x4     m3, [r1 + r6],  1
+    movu            ym4, [r2 + 2 * r4]
+    vinserti64x4     m4, [r2 + r6],  1
+    movu            ym5, [r3 + 2 * r4]
+    vinserti64x4     m5, [r3 + r6],  1
+
+    psubw   m3, m6
+    psubw   m4, m6
+    psubw   m5, m6
+    pabsw   m3, m3
+    pabsw   m4, m4
+    pabsw   m5, m5
+
+    pmaddwd m3, m7
+    paddd   m0, m3
+    pmaddwd m4, m7
+    paddd   m1, m4
+    pmaddwd m5, m7
+    paddd   m2, m5
+%endmacro
+
 
 %macro PROCESS_SAD_X3_32x4_AVX512 0
     movu    m6, [r0]
@@ -2698,6 +2746,118 @@ SAD_X 4, 64, 64
 %endif
 %endmacro
 
+
+;------------------------------------------------------------------------------------------------------------------------------------------
+; void pixel_sad_x3_16x%1( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, intptr_t frefstride, int32_t* res )
+;------------------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal pixel_sad_x3_16x8, 6,7,8
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+
+    vbroadcasti32x8 m7, [pw_1]
+
+    add     r4d, r4d
+    lea     r6d, [r4 * 3]
+
+    PROCESS_SAD_X3_16x4_AVX512
+    add             r0, FENC_STRIDE * 8
+    lea             r1, [r1 + r4 * 4]
+    lea             r2, [r2 + r4 * 4]
+    lea             r3, [r3 + r4 * 4]
+    PROCESS_SAD_X3_16x4_AVX512
+    PROCESS_SAD_X3_END_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_x3_16x12, 6,7,8
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+
+    vbroadcasti32x8 m7, [pw_1]
+
+    add     r4d, r4d
+    lea     r6d, [r4 * 3]
+    %rep 2
+        PROCESS_SAD_X3_16x4_AVX512
+        add             r0, FENC_STRIDE * 8
+        lea             r1, [r1 + r4 * 4]
+        lea             r2, [r2 + r4 * 4]
+        lea             r3, [r3 + r4 * 4]
+    %endrep
+    PROCESS_SAD_X3_16x4_AVX512
+    PROCESS_SAD_X3_END_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_x3_16x16, 6,7,8
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+
+    vbroadcasti32x8 m7, [pw_1]
+
+    add     r4d, r4d
+    lea     r6d, [r4 * 3]
+
+    %rep 3
+        PROCESS_SAD_X3_16x4_AVX512
+        add             r0, FENC_STRIDE * 8
+        lea             r1, [r1 + r4 * 4]
+        lea             r2, [r2 + r4 * 4]
+        lea             r3, [r3 + r4 * 4]
+    %endrep
+    PROCESS_SAD_X3_16x4_AVX512
+    PROCESS_SAD_X3_END_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_x3_16x32, 6,7,8
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+
+    vbroadcasti32x8 m7, [pw_1]
+
+    add     r4d, r4d
+    lea     r6d, [r4 * 3]
+
+    %rep 7
+        PROCESS_SAD_X3_16x4_AVX512
+        add             r0, FENC_STRIDE * 8
+        lea             r1, [r1 + r4 * 4]
+        lea             r2, [r2 + r4 * 4]
+        lea             r3, [r3 + r4 * 4]
+    %endrep
+    PROCESS_SAD_X3_16x4_AVX512
+    PROCESS_SAD_X3_END_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_x3_16x64, 6,7,8
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+
+    vbroadcasti32x8 m7, [pw_1]
+
+    add     r4d, r4d
+    lea     r6d, [r4 * 3]
+
+    %rep 15
+        PROCESS_SAD_X3_16x4_AVX512
+        add             r0, FENC_STRIDE * 8
+        lea             r1, [r1 + r4 * 4]
+        lea             r2, [r2 + r4 * 4]
+        lea             r3, [r3 + r4 * 4]
+    %endrep
+    PROCESS_SAD_X3_16x4_AVX512
+    PROCESS_SAD_X3_END_AVX512
+    RET
+%endif
 
 ;------------------------------------------------------------------------------------------------------------------------------------------
 ; void pixel_sad_x3_32x%1( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, intptr_t frefstride, int32_t* res )
