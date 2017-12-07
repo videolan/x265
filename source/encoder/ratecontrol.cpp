@@ -219,6 +219,7 @@ RateControl::RateControl(x265_param& p)
     m_param->rc.vbvMaxBitrate = x265_clip3(0, 2000000, m_param->rc.vbvMaxBitrate);
     m_param->rc.vbvBufferInit = x265_clip3(0.0, 2000000.0, m_param->rc.vbvBufferInit);
     m_param->vbvBufferEnd = x265_clip3(0.0, 2000000.0, m_param->vbvBufferEnd);
+    m_initVbv = false;
     m_singleFrameVbv = 0;
     m_rateTolerance = 1.0;
 
@@ -319,7 +320,7 @@ RateControl::RateControl(x265_param& p)
 
 bool RateControl::init(const SPS& sps)
 {
-    if (m_isVbv)
+    if (m_isVbv && !m_initVbv)
     {
         /* We don't support changing the ABR bitrate right now,
          * so if the stream starts as CBR, keep it CBR. */
@@ -353,6 +354,7 @@ bool RateControl::init(const SPS& sps)
         m_bufferFillFinal = m_bufferSize * m_param->rc.vbvBufferInit;
         m_bufferFillActual = m_bufferFillFinal;
         m_bufferExcess = 0;
+        m_initVbv = true;
     }
 
     m_totalBits = 0;

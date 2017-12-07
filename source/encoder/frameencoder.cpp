@@ -1746,8 +1746,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         if (rowInSlice == rowCount)
         {
             m_rowSliceTotalBits[sliceId] = 0;
-            if (bIsVbv)
-            {                
+            if (bIsVbv && !(m_param->rc.bEnableConstVbv && m_param->bEnableWavefront))
+            {          
                 for (uint32_t i = m_sliceBaseRow[sliceId]; i < rowCount + m_sliceBaseRow[sliceId]; i++)
                     m_rowSliceTotalBits[sliceId] += curEncData.m_rowStat[i].encodedBits;
             }
