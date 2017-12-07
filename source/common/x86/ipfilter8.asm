@@ -11106,8 +11106,7 @@ cglobal interp_4tap_vert_%1_32x%2, 4, 8, 13
     FILTER_VERT_CHROMA_32xN_AVX512 ps, 48
     FILTER_VERT_CHROMA_32xN_AVX512 ps, 64
 %endif
-
-%macro PROCESS_CHROMA_VERT_PP_48x4_AVX512 0
+%macro PROCESS_CHROMA_VERT_48x4_AVX512 1
     movu                  ym1,                [r0]
     movu                  ym3,                [r0 + r1]
     vinserti32x8          m1,                 [r0 + 2 * r1],       1
@@ -11143,7 +11142,7 @@ cglobal interp_4tap_vert_%1_32x%2, 4, 8, 13
     punpckhbw             m5,                 m4
     pmaddubsw             m5,                 m9
     paddw                 m3,                 m5
-
+%ifidn %1, pp
     pmulhrsw              m0,                 m7
     pmulhrsw              m1,                 m7
     pmulhrsw              m2,                 m7
@@ -11155,7 +11154,26 @@ cglobal interp_4tap_vert_%1_32x%2, 4, 8, 13
     movu                  [r2 + r3],          ym2
     vextracti32x8         [r2 + 2 * r3],      m0,                  1
     vextracti32x8         [r2 + r7],          m2,                  1
+%else
+    psubw                 m0,                 m7
+    psubw                 m1,                 m7
+    psubw                 m2,                 m7
+    psubw                 m3,                 m7
 
+    mova                  m4,                 m10
+    mova                  m5,                 m11
+    vpermi2q              m4,                 m0,                m1
+    vpermi2q              m5,                 m0,                m1
+    mova                  m6,                 m10
+    mova                  m12,                m11
+    vpermi2q              m6,                 m2,                m3
+    vpermi2q              m12,                m2,                m3
+
+    movu                  [r2],               m4
+    movu                  [r2 + r3],          m6
+    movu                  [r2 + 2 * r3],      m5
+    movu                  [r2 + r7],          m12
+%endif
     movu                  xm1,                [r0 + mmsize/2]
     movu                  xm3,                [r0 + r1 + mmsize/2]
     vinserti32x4          m1,                 [r0 + r1 + mmsize/2],           1
@@ -11183,9 +11201,9 @@ cglobal interp_4tap_vert_%1_32x%2, 4, 8, 13
     pmaddubsw             m3,                 m9
     punpckhbw             m4,                 m5
     pmaddubsw             m4,                 m9
-
     paddw                 m0,                 m3
     paddw                 m1,                 m4
+%ifidn %1, pp
     pmulhrsw              m0,                 m7
     pmulhrsw              m1,                 m7
     packuswb              m0,                 m1
@@ -11193,14 +11211,27 @@ cglobal interp_4tap_vert_%1_32x%2, 4, 8, 13
     vextracti32x4         [r2 + r3 + mmsize/2],          m0,                  1
     vextracti32x4         [r2 + 2 * r3 + mmsize/2],      m0,                  2
     vextracti32x4         [r2 + r7 + mmsize/2],          m0,                  3
-%endmacro
+%else
+    psubw                 m0,                 m7
+    psubw                 m1,                 m7
+    mova                  m2,                m10
+    mova                  m3,                m11
 
+    vpermi2q              m2,  m0, m1
+    vpermi2q              m3,  m0, m1
+
+    movu                  [r2 + mmsize],               ym2
+    vextracti32x8         [r2 + r3 + mmsize],          m2,                  1
+    movu                  [r2 + 2 * r3 + mmsize],      ym3
+    vextracti32x8         [r2 + r7 + mmsize],          m3,                  1
+%endif
+%endmacro
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------------------------------------------
-%if ARCH_X86_64
+%macro FILTER_VERT_CHROMA_48x64_AVX512 1
 INIT_ZMM avx512
-cglobal interp_4tap_vert_pp_48x64, 4, 10, 8
+cglobal interp_4tap_vert_%1_48x64, 4, 8, 13
     mov                   r4d,                r4m
     shl                   r4d,                7
     sub                   r0,                 r1
@@ -11213,19 +11244,31 @@ cglobal interp_4tap_vert_pp_48x64, 4, 10, 8
     mova                  m8,                 [tab_ChromaCoeffVer_32_avx512 + r4]
     mova                  m9,                 [tab_ChromaCoeffVer_32_avx512 + r4 + mmsize]
 %endif
+
+%ifidn %1, pp
     vbroadcasti32x8       m7,                 [pw_512]
+%else
+    add                   r3d,                r3d
+    vbroadcasti32x8       m7,                 [pw_2000]
+    mova                  m10,                [interp4_vps_store1_avx512]
+    mova                  m11,                [interp4_vps_store2_avx512]
+%endif
+
     lea                   r6,                 [3 * r1]
     lea                   r7,                 [3 * r3]
-
 %rep 15
-    PROCESS_CHROMA_VERT_PP_48x4_AVX512
+    PROCESS_CHROMA_VERT_48x4_AVX512 %1
     lea                   r0,                 [r0 + 4 * r1]
     lea                   r2,                 [r2 + 4 * r3]
 %endrep
-    PROCESS_CHROMA_VERT_PP_48x4_AVX512
+    PROCESS_CHROMA_VERT_48x4_AVX512 %1
     RET
-%endif
+%endmacro
 
+%if ARCH_X86_64
+    FILTER_VERT_CHROMA_48x64_AVX512 pp
+    FILTER_VERT_CHROMA_48x64_AVX512 ps
+%endif
 %macro PROCESS_CHROMA_VERT_64x4_AVX512 1
     movu              m0,              [r0]                        ; m0 = row 0
     movu              m1,              [r0 + r1]                   ; m1 = row 1
