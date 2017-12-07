@@ -2124,6 +2124,67 @@ SAD_X 4, 64, 64
 ; SAD x3/x4 avx512 code start
 ;============================
 
+%macro PROCESS_SAD_X4_16x4_AVX512 0
+    movu            ym8, [r0]
+    vinserti64x4     m8, [r0 + 2 * FENC_STRIDE],  1
+    movu            ym4, [r1]
+    vinserti64x4     m4, [r1 + r5],  1
+    movu            ym5, [r2]
+    vinserti64x4     m5, [r2 + r5],  1
+    movu            ym6, [r3]
+    vinserti64x4     m6, [r3 + r5],  1
+    movu            ym7, [r4]
+    vinserti64x4     m7, [r4 + r5],  1
+
+    
+    psubw   m4, m8
+    psubw   m5, m8
+    psubw   m6, m8
+    psubw   m7, m8
+    pabsw   m4, m4
+    pabsw   m5, m5
+    pabsw   m6, m6
+    pabsw   m7, m7
+
+    pmaddwd m4, m9
+    paddd   m0, m4
+    pmaddwd m5, m9
+    paddd   m1, m5
+    pmaddwd m6, m9
+    paddd   m2, m6
+    pmaddwd m7, m9
+    paddd   m3, m7
+
+    movu            ym8, [r0 + 4 * FENC_STRIDE]
+    vinserti64x4     m8, [r0 + 6 * FENC_STRIDE],  1
+    movu            ym4, [r1 + 2 * r5]
+    vinserti64x4     m4, [r1 + r7],  1
+    movu            ym5, [r2 + 2 * r5]
+    vinserti64x4     m5, [r2 + r7],  1
+    movu            ym6, [r3 +  2 * r5]
+    vinserti64x4     m6, [r3 + r7],  1
+    movu            ym7, [r4 +  2 * r5]
+    vinserti64x4     m7, [r4 + r7],  1
+
+    psubw   m4, m8
+    psubw   m5, m8
+    psubw   m6, m8
+    psubw   m7, m8
+    pabsw   m4, m4
+    pabsw   m5, m5
+    pabsw   m6, m6
+    pabsw   m7, m7
+
+    pmaddwd m4, m9
+    paddd   m0, m4
+    pmaddwd m5, m9
+    paddd   m1, m5
+    pmaddwd m6, m9
+    paddd   m2, m6
+    pmaddwd m7, m9
+    paddd   m3, m7
+%endmacro
+
 %macro PROCESS_SAD_X4_32x4_AVX512 0
     movu    m8, [r0]
     movu    m4, [r1]
@@ -3467,6 +3528,130 @@ cglobal pixel_sad_x3_64x64, 6,7,12
     PROCESS_SAD_X3_END_AVX512
     RET
 %endif
+
+;------------------------------------------------------------------------------------------------------------------------------------------------------------
+; void pixel_sad_x4_16x%1( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, const pixel* pix5, intptr_t frefstride, int32_t* res )
+;------------------------------------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal pixel_sad_x4_16x8, 6,8,10
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+    pxor    m3,  m3
+
+    vbroadcasti32x8 m9, [pw_1]
+
+    add     r5d, r5d
+    lea     r7d, [r5 * 3]
+
+    PROCESS_SAD_X4_16x4_AVX512
+    add             r0, FENC_STRIDE * 8
+    lea             r1, [r1 + r5 * 4]
+    lea             r2, [r2 + r5 * 4]
+    lea             r3, [r3 + r5 * 4]
+    lea             r4, [r4 + r5 * 4]
+    PROCESS_SAD_X4_16x4_AVX512
+    PROCESS_SAD_X4_END_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_x4_16x12, 6,8,10
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+    pxor    m3,  m3
+
+    vbroadcasti32x8 m9, [pw_1]
+
+    add     r5d, r5d
+    lea     r7d, [r5 * 3]
+
+    %rep 2
+        PROCESS_SAD_X4_16x4_AVX512
+        add             r0, FENC_STRIDE * 8
+        lea             r1, [r1 + r5 * 4]
+        lea             r2, [r2 + r5 * 4]
+        lea             r3, [r3 + r5 * 4]
+        lea             r4, [r4 + r5 * 4]
+    %endrep
+    PROCESS_SAD_X4_16x4_AVX512
+    PROCESS_SAD_X4_END_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_x4_16x16, 6,8,10
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+    pxor    m3,  m3
+
+    vbroadcasti32x8 m9, [pw_1]
+
+    add     r5d, r5d
+    lea     r7d, [r5 * 3]
+
+    %rep 3
+        PROCESS_SAD_X4_16x4_AVX512
+        add             r0, FENC_STRIDE * 8
+        lea             r1, [r1 + r5 * 4]
+        lea             r2, [r2 + r5 * 4]
+        lea             r3, [r3 + r5 * 4]
+        lea             r4, [r4 + r5 * 4]
+    %endrep
+    PROCESS_SAD_X4_16x4_AVX512
+    PROCESS_SAD_X4_END_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_x4_16x32, 6,8,10
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+    pxor    m3,  m3
+
+    vbroadcasti32x8 m9, [pw_1]
+
+    add     r5d, r5d
+    lea     r7d, [r5 * 3]
+
+    %rep 7
+        PROCESS_SAD_X4_16x4_AVX512
+        add             r0, FENC_STRIDE * 8
+        lea             r1, [r1 + r5 * 4]
+        lea             r2, [r2 + r5 * 4]
+        lea             r3, [r3 + r5 * 4]
+        lea             r4, [r4 + r5 * 4]
+    %endrep
+    PROCESS_SAD_X4_16x4_AVX512
+    PROCESS_SAD_X4_END_AVX512
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_x4_16x64, 6,8,10
+    pxor    m0,  m0
+    pxor    m1,  m1
+    pxor    m2,  m2
+    pxor    m3,  m3
+
+    vbroadcasti32x8 m9, [pw_1]
+
+    add     r5d, r5d
+    lea     r7d, [r5 * 3]
+
+    %rep 15
+        PROCESS_SAD_X4_16x4_AVX512
+        add             r0, FENC_STRIDE * 8
+        lea             r1, [r1 + r5 * 4]
+        lea             r2, [r2 + r5 * 4]
+        lea             r3, [r3 + r5 * 4]
+        lea             r4, [r4 + r5 * 4]
+    %endrep
+    PROCESS_SAD_X4_16x4_AVX512
+    PROCESS_SAD_X4_END_AVX512
+    RET
+%endif
+
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------
 ; void pixel_sad_x4_32x%1( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, const pixel* pix5, intptr_t frefstride, int32_t* res )
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------
