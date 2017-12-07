@@ -2434,6 +2434,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx512);
 
+        p.pu[LUMA_16x32].sad = PFX(pixel_sad_16x32_avx512);
+        p.pu[LUMA_16x64].sad = PFX(pixel_sad_16x64_avx512);
         p.pu[LUMA_32x8].sad = PFX(pixel_sad_32x8_avx512);
         p.pu[LUMA_32x16].sad = PFX(pixel_sad_32x16_avx512);
         p.pu[LUMA_32x24].sad = PFX(pixel_sad_32x24_avx512);

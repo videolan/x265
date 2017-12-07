@@ -1277,6 +1277,46 @@ SAD_12  12, 16
     paddd   m0, m1
 %endmacro
 
+%macro PROCESS_SAD_16x8_AVX512 0
+    movu            ym1, [r2]
+    vinserti64x4     m1, [r2 + r3],  1
+    movu            ym2, [r2 + 2 * r3]
+    vinserti64x4     m2, [r2 + r5],  1
+    movu            ym3, [r0]
+    vinserti64x4     m3, [r0 + r1],  1
+    movu            ym4, [r0 + 2 * r1]
+    vinserti64x4     m4, [r0 + r4],  1
+
+    psubw   m1, m3
+    psubw   m2, m4
+    pabsw   m1, m1
+    pabsw   m2, m2
+    paddw   m5, m1, m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+
+    movu            ym1, [r2]
+    vinserti64x4     m1, [r2 + r3],  1
+    movu            ym2, [r2 + 2 * r3]
+    vinserti64x4     m2, [r2 + r5],  1
+    movu            ym3, [r0]
+    vinserti64x4     m3, [r0 + r1],  1
+    movu            ym4, [r0 + 2 * r1]
+    vinserti64x4     m4, [r0 + r4],  1
+
+    psubw   m1, m3
+    psubw   m2, m4
+    pabsw   m1, m1
+    pabsw   m2, m2
+    paddw   m1, m2
+
+    pmaddwd m5, m6
+    paddd   m0, m5
+    pmaddwd m1, m6
+    paddd   m0, m1
+%endmacro
+
 %macro PROCESS_SAD_AVX512_END 0
     vextracti32x8  ym1, m0, 1
     paddd          ym0, ym1
@@ -1518,6 +1558,51 @@ cglobal pixel_sad_32x64, 4,6,7
     lea            r2, [r2 + 4 * r3]
     lea            r0, [r0 + 4 * r1]
     PROCESS_SAD_32x8_AVX512
+    PROCESS_SAD_AVX512_END
+    RET
+%endif
+
+;-----------------------------------------------------------------------------
+; int pixel_sad_16x%1( uint16_t *, intptr_t, uint16_t *, intptr_t )
+;-----------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal pixel_sad_16x32, 4,6,7
+    pxor    m0, m0
+
+    vbroadcasti32x8 m6, [pw_1]
+
+    add     r3d, r3d
+    add     r1d, r1d
+    lea     r4d, [r1 * 3]
+    lea     r5d, [r3 * 3]
+
+    %rep 3
+        PROCESS_SAD_16x8_AVX512
+        lea            r2, [r2 + 4 * r3]
+        lea            r0, [r0 + 4 * r1]
+    %endrep
+    PROCESS_SAD_16x8_AVX512
+    PROCESS_SAD_AVX512_END
+    RET
+
+INIT_ZMM avx512
+cglobal pixel_sad_16x64, 4,6,7
+   pxor    m0, m0
+
+    vbroadcasti32x8 m6, [pw_1]
+
+    add     r3d, r3d
+    add     r1d, r1d
+    lea     r4d, [r1 * 3]
+    lea     r5d, [r3 * 3]
+
+    %rep 7
+        PROCESS_SAD_16x8_AVX512
+        lea            r2, [r2 + 4 * r3]
+        lea            r0, [r0 + 4 * r1]
+    %endrep
+    PROCESS_SAD_16x8_AVX512
     PROCESS_SAD_AVX512_END
     RET
 %endif
