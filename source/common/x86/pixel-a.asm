@@ -8227,7 +8227,7 @@ cglobal pixel_sa8d_32x32, 4,8,8
     pmaxsw    m%1, m%3
     pmaxsw    m%2, m%4
 %endmacro
-
+%if HIGH_BIT_DEPTH==0
 INIT_ZMM avx512
 cglobal pixel_satd_16x8_internal
     vbroadcasti64x4 m6, [hmul_16p]
@@ -8381,7 +8381,7 @@ cglobal pixel_sa8d_8x8, 4,6
     SUMSUB_BA      w, 0, 1, 2
     HMAXABSW2      0, 1, 2, 3
     SATD_AVX512_END 1
-
+%endif
 ; Input 10bit, Output 8bit
 ;------------------------------------------------------------------------------------------------------------------------
 ;void planecopy_sc(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
@@ -13971,23 +13971,31 @@ cglobal pixel_satd_64x64, 4,8,8
     paddd           xm6, xm7
     movd            eax, xm6
 %endmacro
-
-%macro PROCESS_SATD_32x8_HBD_AVX512 0        ; function to compute satd cost for 32 columns, 8 rows
+%macro PROCESS_SATD_16x8_HBD_AVX512 0        ; function to compute satd cost for 16 columns, 8 rows
     ; rows 0-3
-    movu            m0, [r0]
-    movu            m4, [r2]
+    lea             r6, [r0 + r1 * 4]
+    lea             r7, [r2 + r3 * 4]
+    movu            ym0, [r0]
+    movu            ym4, [r2]
+    vinserti32x8    m0, [r6], 1
+    vinserti32x8    m4, [r7], 1
     psubw           m0, m4
-    movu            m1, [r0 + r1]
-    movu            m5, [r2 + r3]
+    movu            ym1, [r0 + r1]
+    movu            ym5, [r2 + r3]
+    vinserti32x8    m1, [r6 + r1], 1
+    vinserti32x8    m5, [r7 + r3], 1
     psubw           m1, m5
-    movu            m2, [r0 + r1 * 2]
-    movu            m4, [r2 + r3 * 2]
+    movu            ym2, [r0 + r1 * 2]
+    movu            ym4, [r2 + r3 * 2]
+    vinserti32x8    m2, [r6 + r1 * 2], 1
+    vinserti32x8    m4, [r7 + r3 * 2], 1
     psubw           m2, m4
-    movu            m3, [r0 + r4]
-    movu            m5, [r2 + r5]
+    movu            ym3, [r0 + r4]
+    movu            ym5, [r2 + r5]
+    vinserti32x8    m3, [r6 + r4], 1
+    vinserti32x8    m5, [r7 + r5], 1
     psubw           m3, m5
-    lea             r0, [r0 + r1 * 4]
-    lea             r2, [r2 + r3 * 4]
+
     paddw           m4, m0, m1
     psubw           m1, m0
     paddw           m0, m2, m3
@@ -14032,7 +14040,9 @@ cglobal pixel_satd_64x64, 4,8,8
     mova            m1, m2
     punpckhwd       m1, m7
     paddd           m6, m1
-    ; rows 4-7
+%endmacro
+%macro PROCESS_SATD_32x4_HBD_AVX512 0        ; function to compute satd cost for 32 columns, 4 rows
+    ; rows 0-3
     movu            m0, [r0]
     movu            m4, [r2]
     psubw           m0, m4
@@ -14045,8 +14055,6 @@ cglobal pixel_satd_64x64, 4,8,8
     movu            m3, [r0 + r4]
     movu            m5, [r2 + r5]
     psubw           m3, m5
-    lea             r0, [r0 + r1 * 4]
-    lea             r2, [r2 + r3 * 4]
     paddw           m4, m0, m1
     psubw           m1, m0
     paddw           m0, m2, m3
@@ -14093,6 +14101,30 @@ cglobal pixel_satd_64x64, 4,8,8
     paddd           m6, m1
 %endmacro
 
+%macro SATD_16xN_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_satd_16x%1, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+
+%rep %1/8 - 1
+    PROCESS_SATD_16x8_HBD_AVX512
+    lea             r0, [r6 + 4 * r1]
+    lea             r2, [r7 + 4 * r3]
+%endrep
+    PROCESS_SATD_16x8_HBD_AVX512
+    SATD_HBD_AVX512_END
+    RET
+%endmacro
+
+SATD_16xN_HBD_AVX512 8
+SATD_16xN_HBD_AVX512 16
+SATD_16xN_HBD_AVX512 32
+SATD_16xN_HBD_AVX512 64
+
 %macro SATD_32xN_HBD_AVX512 1
 INIT_ZMM avx512
 cglobal pixel_satd_32x%1, 4,8,8
@@ -14103,10 +14135,12 @@ cglobal pixel_satd_32x%1, 4,8,8
     pxor            m6, m6
     mov             r6, r0
     mov             r7, r2
-
-%rep %1/8
-    PROCESS_SATD_32x8_HBD_AVX512
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
 %endrep
+    PROCESS_SATD_32x4_HBD_AVX512
     SATD_HBD_AVX512_END
     RET
 %endmacro
@@ -14127,15 +14161,20 @@ cglobal pixel_satd_64x%1, 4,8,8
     pxor            m6, m6
     mov             r6, r0
     mov             r7, r2
-
-%rep %1/8
-    PROCESS_SATD_32x8_HBD_AVX512
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
 %endrep
+    PROCESS_SATD_32x4_HBD_AVX512
     lea             r0, [r6 + mmsize]
     lea             r2, [r7 + mmsize]
-%rep %1/8
-    PROCESS_SATD_32x8_HBD_AVX512
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
 %endrep
+    PROCESS_SATD_32x4_HBD_AVX512
     SATD_HBD_AVX512_END
     RET
 %endmacro

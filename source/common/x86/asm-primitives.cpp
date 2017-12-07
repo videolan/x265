@@ -3026,7 +3026,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_16x64].luma_hps = PFX(interp_8tap_horiz_ps_16x64_avx512);
         //Luma_hps_48x64
         p.pu[LUMA_48x64].luma_hps = PFX(interp_8tap_horiz_ps_48x64_avx512);
-
+        p.pu[LUMA_16x8].satd = PFX(pixel_satd_16x8_avx512);
+        p.pu[LUMA_16x16].satd = PFX(pixel_satd_16x16_avx512);
+        p.pu[LUMA_16x32].satd = PFX(pixel_satd_16x32_avx512);
+        p.pu[LUMA_16x64].satd = PFX(pixel_satd_16x64_avx512);
         p.pu[LUMA_32x8].satd = PFX(pixel_satd_32x8_avx512);
         p.pu[LUMA_32x16].satd = PFX(pixel_satd_32x16_avx512);
         p.pu[LUMA_32x24].satd = PFX(pixel_satd_32x24_avx512);
@@ -3036,11 +3039,17 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_64x32].satd = PFX(pixel_satd_64x32_avx512);
         p.pu[LUMA_64x48].satd = PFX(pixel_satd_64x48_avx512);
         p.pu[LUMA_64x64].satd = PFX(pixel_satd_64x64_avx512);
-
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x32].satd = PFX(pixel_satd_16x32_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x16].satd = PFX(pixel_satd_16x16_avx512);
+        p.chroma[X265_CSP_I420].pu[CHROMA_420_16x8].satd = PFX(pixel_satd_16x8_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].satd = PFX(pixel_satd_32x32_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].satd = PFX(pixel_satd_32x16_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].satd = PFX(pixel_satd_32x24_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x8].satd = PFX(pixel_satd_32x8_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].satd = PFX(pixel_satd_16x64_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x32].satd = PFX(pixel_satd_16x32_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x16].satd = PFX(pixel_satd_16x16_avx512);
+        p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].satd = PFX(pixel_satd_16x8_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x64].satd = PFX(pixel_satd_32x64_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].satd = PFX(pixel_satd_32x32_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].satd = PFX(pixel_satd_32x16_avx512);
