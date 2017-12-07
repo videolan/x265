@@ -50,10 +50,8 @@ const char g_sliceTypeToChar[] = {'B', 'P', 'I'};
 
 /* Threshold for motion vection, based on expermental result.
  * TODO: come up an algorithm for adoptive threshold */
-
-#define MVTHRESHOLD 10
+#define MVTHRESHOLD (10*10)
 #define PU_2Nx2N 1
-
 static const char* defaultAnalysisFileName = "x265_analysis.dat";
 
 using namespace X265_NS;
@@ -571,12 +569,12 @@ int Encoder::setAnalysisDataAfterZScan(x265_analysis_data *analysis_data, Frame*
                             (interData)->mvpIdx[k][cuPos + cuOffset] = (srcInterData)->mvpIdx[k][(mbIndex * 16) + cuOffset];
                             (interData)->refIdx[k][cuPos + cuOffset] = (srcInterData)->refIdx[k][(mbIndex * 16) + cuOffset];
                             memcpy(&(interData)->mv[k][cuPos + cuOffset], &(srcInterData)->mv[k][(mbIndex * 16) + cuOffset], sizeof(MV));
-                            if (m_param->analysisReuseLevel == 7)
+                            if (m_param->analysisReuseLevel == 7 && numPU == PU_2Nx2N &&
+                                ((srcInterData)->depth[cuPos + cuOffset] == (m_param->maxCUSize >> 5)))
                             {
                                 int mv_x = ((analysis_inter_data *)curFrame->m_analysisData.interData)->mv[k][(mbIndex * 16) + cuOffset].x;
                                 int mv_y = ((analysis_inter_data *)curFrame->m_analysisData.interData)->mv[k][(mbIndex * 16) + cuOffset].y;
-                                double mv = sqrt((double)(mv_x*mv_x + mv_y*mv_y));
-                                if (numPU == PU_2Nx2N && ((srcInterData)->depth[cuPos + cuOffset] == (m_param->maxCUSize >> 5)) && mv <= MVTHRESHOLD)
+                                if ((mv_x*mv_x + mv_y*mv_y) <= MVTHRESHOLD)
                                     memset(&curFrame->m_analysisData.modeFlag[k][cuPos + cuOffset], 1, bytes);
                             }
                         }
@@ -654,12 +652,11 @@ int Encoder::setAnalysisData(x265_analysis_data *analysis_data, int poc, uint32_
                                     (currInterData)->mvpIdx[i][count + pu] = (interData)->mvpIdx[i][d];
                                     (currInterData)->refIdx[i][count + pu] = (interData)->refIdx[i][d];
                                     memcpy(&(currInterData)->mv[i][count + pu], &(interData)->mv[i][d], sizeof(MV));
-                                    if (m_param->analysisReuseLevel == 7)
+                                    if (m_param->analysisReuseLevel == 7 && numPU == PU_2Nx2N && m_param->num4x4Partitions <= 16)
                                     {
                                         int mv_x = ((analysis_inter_data *)curFrame->m_analysisData.interData)->mv[i][count + pu].x;
                                         int mv_y = ((analysis_inter_data *)curFrame->m_analysisData.interData)->mv[i][count + pu].y;
-                                        double mv = sqrt((double)(mv_x*mv_x + mv_y*mv_y));
-                                        if (numPU == PU_2Nx2N && m_param->num4x4Partitions <= 16 && mv <= MVTHRESHOLD)
+                                        if ((mv_x*mv_x + mv_y*mv_y) <= MVTHRESHOLD)
                                             memset(&curFrame->m_analysisData.modeFlag[i][count + pu], 1, bytes);
                                     }
                                 }
