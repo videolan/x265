@@ -5203,6 +5203,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_32x32].luma_vps = PFX(interp_8tap_vert_ps_32x32_avx512);
         p.pu[LUMA_32x24].luma_vps = PFX(interp_8tap_vert_ps_32x24_avx512);
         p.pu[LUMA_32x64].luma_vps = PFX(interp_8tap_vert_ps_32x64_avx512);
+
+        p.pu[LUMA_16x8].luma_vps = PFX(interp_8tap_vert_ps_16x8_avx512);
+        p.pu[LUMA_16x16].luma_vps = PFX(interp_8tap_vert_ps_16x16_avx512);
+        p.pu[LUMA_16x32].luma_vps = PFX(interp_8tap_vert_ps_16x32_avx512);
+        //p.pu[LUMA_16x64].luma_vps = PFX(interp_8tap_vert_ps_16x64_avx512);
     }
 #endif
 }
