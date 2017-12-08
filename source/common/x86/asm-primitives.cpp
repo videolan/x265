@@ -3080,6 +3080,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_16x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x64>;
         p.pu[LUMA_48x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_48x64>;
 
+        p.cu[BLOCK_16x16].psy_cost_pp = PFX(psyCost_pp_16x16_avx512);
+        p.cu[BLOCK_32x32].psy_cost_pp = PFX(psyCost_pp_32x32_avx512);
+        p.cu[BLOCK_64x64].psy_cost_pp = PFX(psyCost_pp_64x64_avx512);
     }
 #endif
 }
