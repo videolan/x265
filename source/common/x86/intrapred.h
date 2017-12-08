@@ -76,7 +76,7 @@
 FUNCDEF_TU_S2(void, intra_pred_dc, sse2, pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
 FUNCDEF_TU_S2(void, intra_pred_dc, sse4, pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
 FUNCDEF_TU_S2(void, intra_pred_dc, avx2, pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
-
+FUNCDEF_TU_S2(void, intra_pred_dc, avx512, pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
 FUNCDEF_TU_S2(void, intra_pred_planar, sse2, pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
 FUNCDEF_TU_S2(void, intra_pred_planar, sse4, pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
 FUNCDEF_TU_S2(void, intra_pred_planar, avx2, pixel* dst, intptr_t dstStride, const pixel*srcPix, int, int filter);
