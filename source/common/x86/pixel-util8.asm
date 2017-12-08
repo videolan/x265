@@ -7934,8 +7934,7 @@ cglobal pixel_var_64x64, 2,4,7
     movd           edx, xm5
 %endif
 %endmacro
-
-%if HIGH_BIT_DEPTH==0
+%if ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0
 ;-----------------------------------------------------------------------------
 ; int pixel_var_wxh( uint8_t *, intptr_t )
 ;-----------------------------------------------------------------------------
@@ -7954,8 +7953,55 @@ cglobal pixel_var_32x32, 2,4,6
     PROCESS_VAR_32x8_AVX512
     PROCESS_VAR_AVX512_END
     RET
-%endif
 
+INIT_ZMM avx512
+cglobal pixel_var_64x64, 2,4,7
+    pxor            m5, m5    ; sum
+    pxor            m6, m6    ; sum squared
+    mov             r2d, 32
+
+.loop:
+    pmovzxbw        m0, [r0]
+    pmovzxbw        m3, [r0 + mmsize/2]
+    pmovzxbw        m1, [r0 + r1]
+    pmovzxbw        m4, [r0 + r1 + mmsize/2]
+
+    lea             r0, [r0 + 2 * r1]
+
+    paddw           m5, m0
+    paddw           m5, m3
+    paddw           m5, m1
+    paddw           m5, m4
+    pmaddwd         m0, m0
+    pmaddwd         m3, m3
+    pmaddwd         m1, m1
+    pmaddwd         m4, m4
+    paddd           m6, m0
+    paddd           m6, m3
+    paddd           m6, m1
+    paddd           m6, m4
+
+    dec             r2d
+    jg              .loop
+
+    pxor            m1, m1
+    punpcklwd       m0, m5, m1
+    punpckhwd       m5, m1
+    paddd           m5, m0
+    vextracti32x8  ym2, m5, 1
+    vextracti32x8  ym1, m6, 1
+    paddd          ym5, ym2
+    paddd          ym6, ym1
+    vextracti32x4  xm2, m5, 1
+    vextracti32x4  xm1, m6, 1
+    paddd          xm5, xm2
+    paddd          xm6, xm1
+    HADDD          xm5, xm2
+    HADDD          xm6, xm1
+    punpckldq      xm5, xm6
+    movq           rax, xm5
+    RET
+%endif
 %macro VAR_AVX512_CORE 1 ; accum
 %if %1
     paddw    m0, m2
