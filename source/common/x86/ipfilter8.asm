@@ -14456,9 +14456,14 @@ cglobal interp_8tap_vert_%1_32x%2, 5, 8, 18
     FILTER_VERT_LUMA_32xN_AVX512 ps, 32
     FILTER_VERT_LUMA_32xN_AVX512 ps, 64
 %endif
-%macro PROCESS_LUMA_VERT_PP_48x8_AVX512 0
+%macro PROCESS_LUMA_VERT_48x8_AVX512 1
+%ifidn %1, pp
     PROCESS_LUMA_VERT_32x4_AVX512 pp
+%else
+    PROCESS_LUMA_VERT_32x4_AVX512 ps
+%endif
     lea                   r8,                 [r4 + 4 * r1]
+    lea                   r9,                 [r2 + 4 * r3]
     movu                  ym1,                [r5]
     vinserti32x8          m1,                 [r5 + 2 * r1],       1
     movu                  ym3,                [r5 + r1]
@@ -14533,20 +14538,39 @@ cglobal interp_8tap_vert_%1_32x%2, 5, 8, 18
     paddw                 m1,                 m13
     paddw                 m2,                 m14
     paddw                 m3,                 m15
-
+%ifidn %1,pp
     pmulhrsw              m0,                 m7
     pmulhrsw              m1,                 m7
     pmulhrsw              m2,                 m7
     pmulhrsw              m3,                 m7
-
     packuswb              m0,                 m1
     packuswb              m2,                 m3
-    lea                   r9,                 [r2 + 4 * r3]
+
     movu                  [r9],               ym0
     movu                  [r9 + r3],          ym2
     vextracti32x8         [r9 + 2 * r3],      m0,                  1
     vextracti32x8         [r9 + r7],          m2,                  1
+%else
+    psubw                 m0,                 m7
+    psubw                 m1,                 m7
+    psubw                 m2,                 m7
+    psubw                 m3,                 m7
 
+    mova                  m12,                 m16
+    mova                  m13,                 m17
+    mova                  m14,                 m16
+    mova                  m15,                 m17
+
+    vpermi2q              m12,                 m0,                m1
+    vpermi2q              m13,                 m0,                m1
+    vpermi2q              m14,                 m2,                m3
+    vpermi2q              m15,                 m2,                m3
+
+    movu                  [r9],               m12
+    movu                  [r9 + r3],          m14
+    movu                  [r9 + 2 * r3],      m13
+    movu                  [r9 + r7],          m15
+%endif
     movu                  xm1,                [r0 + mmsize/2]
     vinserti32x4          m1,                 [r0 + 2 * r1 + mmsize/2],       1
     vinserti32x4          m1,                 [r5 + mmsize/2],                2
@@ -14639,7 +14663,7 @@ cglobal interp_8tap_vert_%1_32x%2, 5, 8, 18
     paddw                 m1,                 m13
     paddw                 m2,                 m14
     paddw                 m3,                 m15
-
+%ifidn %1, pp
     pmulhrsw              m0,                 m7
     pmulhrsw              m1,                 m7
     pmulhrsw              m2,                 m7
@@ -14656,18 +14680,41 @@ cglobal interp_8tap_vert_%1_32x%2, 5, 8, 18
     vextracti32x4         [r2 + r3 + mmsize/2],          m2,                  2
     vextracti32x4         [r2 + 2 * r3 + mmsize/2],      m0,                  3
     vextracti32x4         [r2 + r7 + mmsize/2],          m2,                  3
+%else
+    psubw                 m0,                 m7
+    psubw                 m1,                 m7
+    psubw                 m2,                 m7
+    psubw                 m3,                 m7
+
+    mova                  m12,                 m16
+    mova                  m13,                 m17
+    mova                  m14,                 m16
+    mova                  m15,                 m17
+
+    vpermi2q              m12,                 m0,                m1
+    vpermi2q              m13,                 m0,                m1
+    vpermi2q              m14,                 m2,                m3
+    vpermi2q              m15,                 m2,                m3
+
+    movu                  [r2 + mmsize],               ym12
+    movu                  [r2 + r3 + mmsize],          ym14
+    vextracti32x8         [r2 + 2 * r3 + mmsize],      m12,                 1
+    vextracti32x8         [r2 + r7 + mmsize],          m14,                 1
+    lea                   r2,                          [r2 + 4 * r3]
+    movu                  [r2 + mmsize],               ym13
+    movu                  [r2 + r3 + mmsize],          ym15
+    vextracti32x8         [r2 + 2 * r3 + mmsize],      m13,                 1
+    vextracti32x8         [r2 + r7 + mmsize],          m15,                 1
+%endif
 %endmacro
 ;-----------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------------------------------------------
-%macro FILTER_VER_PP_LUMA_48x64_AVX512 0
+%macro FILTER_VERT_LUMA_48x64_AVX512 1
 INIT_ZMM avx512
-cglobal interp_8tap_vert_pp_48x64, 5, 10, 16
+cglobal interp_8tap_vert_%1_48x64, 5, 10, 18
     mov                   r4d,                r4m
     shl                   r4d,                8
-    lea                   r6,                 [3 * r1]
-    lea                   r7,                 [3 * r3]
-    sub                   r0,                 r6
 
 %ifdef PIC
     lea                   r5,                 [tab_LumaCoeffVer_32_avx512]
@@ -14681,19 +14728,31 @@ cglobal interp_8tap_vert_pp_48x64, 5, 10, 16
     mova                  m10,                [tab_LumaCoeffVer_32_avx512 + r4 + 2 * mmsize]
     mova                  m11,                [tab_LumaCoeffVer_32_avx512 + r4 + 3 * mmsize]
 %endif
-
+%ifidn %1, pp
     vbroadcasti32x8       m7,                 [pw_512]
+%else
+    add                   r3d,                r3d
+    vbroadcasti32x8       m7,                 [pw_2000]
+    mova                  m16,                [interp4_vps_store1_avx512]
+    mova                  m17,                [interp4_vps_store2_avx512]
+%endif
+
+    lea                   r6,                 [3 * r1]
+    lea                   r7,                 [3 * r3]
+    sub                   r0,                 r6
+
 %rep 7
-    PROCESS_LUMA_VERT_PP_48x8_AVX512
+    PROCESS_LUMA_VERT_48x8_AVX512 %1
     lea                   r0,                 [r4]
     lea                   r2,                 [r2 + 4 * r3]
 %endrep
-    PROCESS_LUMA_VERT_PP_48x8_AVX512
+    PROCESS_LUMA_VERT_48x8_AVX512 %1
     RET
 %endmacro
 
 %if ARCH_X86_64
-    FILTER_VER_PP_LUMA_48x64_AVX512
+    FILTER_VERT_LUMA_48x64_AVX512 pp
+    FILTER_VERT_LUMA_48x64_AVX512 ps
 %endif
 %macro PROCESS_LUMA_VERT_64x2_AVX512 1
     lea                   r5,                 [r0 + 4 * r1]
