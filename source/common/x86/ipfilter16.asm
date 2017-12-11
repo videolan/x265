@@ -11628,7 +11628,6 @@ cglobal interp_8tap_horiz_ps_48x64, 4,9,15
     mov              r4d,        r4m
     mov              r5d,        r5m
     shl              r4d,        6
-
     lea              r6,         [3 * r1]
     lea              r7,         [3 * r3]
 %ifdef PIC
@@ -11668,6 +11667,166 @@ cglobal interp_8tap_horiz_ps_48x64, 4,9,15
     jnz              .loop
     RET
 %endif
+
+%macro PROCESS_IPFILTER_LUMA_PS_24x4_AVX512 0
+    ; register map
+    ; m0 , m1, m2, m3 - interpolate coeff table
+    ; m4 , m5         - load shuffle order table
+    ; m6              - INTERP_OFFSET_PS
+    ; m7              - store shuffle order table
+
+    PROCESS_IPFILTER_LUMA_PS_16x4_AVX512
+
+    movu            xm8,      [r0 + mmsize/2]
+    movu            xm9,      [r0 + mmsize/2 + 8]
+    movu            xm10,     [r0 + mmsize/2 + 16]
+
+    vinserti32x4     m8,      [r0 + r1 + mmsize/2],      1
+    vinserti32x4     m9,      [r0 + r1 + mmsize/2 + 8],  1
+    vinserti32x4     m10,     [r0 + r1 + mmsize/2 + 16], 1
+
+    vinserti32x4     m8,      [r0 + 2 * r1 + mmsize/2],           2
+    vinserti32x4     m9,      [r0 + 2 * r1 + mmsize/2 + 8],       2
+    vinserti32x4     m10,     [r0 + 2 * r1 + mmsize/2 + 16],      2
+
+    vinserti32x4     m8,      [r0 + r6 + mmsize/2],      3
+    vinserti32x4     m9,      [r0 + r6 + mmsize/2 + 8],  3
+    vinserti32x4     m10,     [r0 + r6 + mmsize/2 + 16], 3
+
+    pshufb          m11,      m8,        m5
+    pshufb          m8,       m4
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
+
+    pmaddwd         m8,       m0
+    pmaddwd         m11,      m1
+    paddd           m8,       m11
+    pmaddwd         m11,      m12,       m3
+    pmaddwd         m14,      m9,        m2
+    paddd           m11,      m14
+    paddd           m8,       m11
+    paddd           m8,       m6
+    psrad           m8,       INTERP_SHIFT_PS
+
+    pmaddwd         m9,       m0
+    pmaddwd         m12,      m1
+    paddd           m9,       m12
+    pmaddwd         m13,      m3
+    pmaddwd         m10,      m2
+    paddd           m10,      m13
+    paddd           m9,       m10
+    paddd           m9,       m6
+    psrad           m9,       INTERP_SHIFT_PS
+
+    packssdw        m8,       m9
+    pshufb          m8,       m7
+    movu            [r2 + mmsize/2],      xm8
+    vextracti32x4   [r2 + r3 + mmsize/2],     m8,        1
+    vextracti32x4   [r2 + 2 * r3 + mmsize/2], m8,        2
+    vextracti32x4   [r2 + r7 + mmsize/2],     m8,        3
+%endmacro
+
+%macro PROCESS_IPFILTER_LUMA_PS_24x3_AVX512 0
+
+    PROCESS_IPFILTER_LUMA_PS_16x3_AVX512
+
+    movu            xm8,      [r0 + mmsize/2]
+    movu            xm9,      [r0 + mmsize/2 + 8]
+    movu            xm10,     [r0 + mmsize/2 + 16]
+
+    vinserti32x4     m8,      [r0 + r1 + mmsize/2],      1
+    vinserti32x4     m9,      [r0 + r1 + mmsize/2 + 8],  1
+    vinserti32x4     m10,     [r0 + r1 + mmsize/2 + 16], 1
+
+    vinserti32x4     m8,      [r0 + 2 * r1 + mmsize/2],           2
+    vinserti32x4     m9,      [r0 + 2 * r1 + mmsize/2 + 8],       2
+    vinserti32x4     m10,     [r0 + 2 * r1 + mmsize/2 + 16],      2
+
+    pshufb          m11,      m8,        m5
+    pshufb          m8,       m4
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
+
+    pmaddwd         m8,       m0
+    pmaddwd         m11,      m1
+    paddd           m8,       m11
+    pmaddwd         m11,      m12,       m3
+    pmaddwd         m14,      m9,        m2
+    paddd           m11,      m14
+    paddd           m8,       m11
+    paddd           m8,       m6
+    psrad           m8,       INTERP_SHIFT_PS
+
+    pmaddwd         m9,       m0
+    pmaddwd         m12,      m1
+    paddd           m9,       m12
+    pmaddwd         m13,      m3
+    pmaddwd         m10,      m2
+    paddd           m10,      m13
+    paddd           m9,       m10
+    paddd           m9,       m6
+    psrad           m9,       INTERP_SHIFT_PS
+
+    packssdw        m8,       m9
+    pshufb          m8,       m7
+    movu            [r2 + mmsize/2],      xm8
+    vextracti32x4   [r2 + r3 + mmsize/2],     m8,        1
+    vextracti32x4   [r2 + 2 * r3 + mmsize/2], m8,        2
+%endmacro
+
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal interp_8tap_horiz_ps_24x32, 4, 9, 15
+    add              r1d,        r1d
+    add              r3d,        r3d
+    mov              r4d,        r4m
+    mov              r5d,        r5m
+    shl              r4d,        6
+
+    lea              r6,         [3 * r1]
+    lea              r7,         [3 * r3]
+
+%ifdef PIC
+    lea              r8,         [tab_LumaCoeffH_avx512]
+    vpbroadcastd     m0,         [r8 + r4]
+    vpbroadcastd     m1,         [r8 + r4 + 4]
+    vpbroadcastd     m2,         [r8 + r4 + 8]
+    vpbroadcastd     m3,         [r8 + r4 + 12]
+%else
+    vpbroadcastd     m0,         [tab_LumaCoeffH_avx512 + r4]
+    vpbroadcastd     m1,         [tab_LumaCoeffH_avx512 + r4 + 4]
+    vpbroadcastd     m2,         [tab_LumaCoeffH_avx512 + r4 + 8]
+    vpbroadcastd     m3,         [tab_LumaCoeffH_avx512 + r4 + 12]
+%endif
+    vbroadcasti32x8  m4,         [interp8_hpp_shuf1_load_avx512]
+    vbroadcasti32x8  m5,         [interp8_hpp_shuf2_load_avx512]
+    vbroadcasti32x4  m6,         [INTERP_OFFSET_PS]
+    vbroadcasti32x8  m7,         [interp8_hpp_shuf1_store_avx512]
+
+    sub              r0,         6
+    mov              r4d, 32
+    test             r5d, r5d
+    jz               .loop
+    sub              r0,  r6
+    add              r4d, 7
+    PROCESS_IPFILTER_LUMA_PS_24x3_AVX512
+    lea              r0,  [r0 + r6]
+    lea              r2,  [r2 + r7]
+    sub              r4d, 3
+
+.loop:
+    PROCESS_IPFILTER_LUMA_PS_24x4_AVX512
+    lea              r0,         [r0 + 4 * r1]
+    lea              r2,         [r2 + 4 * r3]
+    sub              r4d,        4
+    jnz              .loop
+    RET
+%endif
+
 ;-------------------------------------------------------------------------------------------------------------
 ;avx512 luma_hps code end
 ;-------------------------------------------------------------------------------------------------------------
