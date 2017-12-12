@@ -1746,7 +1746,7 @@ int x265_get_slicetype_poc_and_scenecut(x265_encoder *encoder, int *slicetype, i
 /* x265_get_ref_frame_list:
  *     returns negative on error, 0 when access unit were output.
  *     This API must be called after(poc >= lookaheadDepth + bframes + 2) condition check */
-int x265_get_ref_frame_list(x265_encoder *encoder, x265_picyuv**, x265_picyuv**, int, int);
+int x265_get_ref_frame_list(x265_encoder *encoder, x265_picyuv**, x265_picyuv**, int, int, int*, int*);
 
 /* x265_set_analysis_data:
  *     set the analysis data. The incoming analysis_data structure is assumed to be AVC-sized blocks.
@@ -1823,7 +1823,7 @@ typedef struct x265_api
     int           (*encoder_intra_refresh)(x265_encoder*);
     int           (*encoder_ctu_info)(x265_encoder*, int, x265_ctu_info_t**);
     int           (*get_slicetype_poc_and_scenecut)(x265_encoder*, int*, int*, int*);
-    int           (*get_ref_frame_list)(x265_encoder*, x265_picyuv**, x265_picyuv**, int, int);
+    int           (*get_ref_frame_list)(x265_encoder*, x265_picyuv**, x265_picyuv**, int, int, int*, int*);
     FILE*         (*csvlog_open)(const x265_param*);
     void          (*csvlog_frame)(const x265_param*, const x265_picture*);
     void          (*csvlog_encode)(x265_encoder*, const x265_stats*, int, char**);

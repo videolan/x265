@@ -448,7 +448,7 @@ int Encoder::copySlicetypePocAndSceneCut(int *slicetype, int *poc, int *sceneCut
     return 0;
 }
 
-int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc)
+int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, int* pocL0, int* pocL1)
 {
     if (!(IS_X265_TYPE_I(sliceType)))
     {
@@ -460,6 +460,7 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc)
                 if (framePtr->m_encData->m_slice->m_refFrameList[0][j] && framePtr->m_encData->m_slice->m_refFrameList[0][j]->m_reconPic != NULL)
                 {
                     int l0POC = framePtr->m_encData->m_slice->m_refFrameList[0][j]->m_poc;
+                    pocL0[j] = l0POC;
                     Frame* l0Fp = m_dpb->m_picList.getPOC(l0POC);
                     while (l0Fp->m_reconRowFlag[l0Fp->m_numRows - 1].get() == 0)
                         l0Fp->m_reconRowFlag[l0Fp->m_numRows - 1].waitForChange(0); /* If recon is not ready, current frame encoder has to wait. */
@@ -471,6 +472,7 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc)
                 if (framePtr->m_encData->m_slice->m_refFrameList[1][j] && framePtr->m_encData->m_slice->m_refFrameList[1][j]->m_reconPic != NULL)
                 {
                     int l1POC = framePtr->m_encData->m_slice->m_refFrameList[1][j]->m_poc;
+                    pocL1[j] = l1POC;
                     Frame* l1Fp = m_dpb->m_picList.getPOC(l1POC);
                     while (l1Fp->m_reconRowFlag[l1Fp->m_numRows - 1].get() == 0)
                         l1Fp->m_reconRowFlag[l1Fp->m_numRows - 1].waitForChange(0); /* If recon is not ready, current frame encoder has to wait. */

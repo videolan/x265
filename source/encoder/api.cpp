@@ -356,13 +356,13 @@ int x265_get_slicetype_poc_and_scenecut(x265_encoder *enc, int *slicetype, int *
     return -1;
 }
 
-int x265_get_ref_frame_list(x265_encoder *enc, x265_picyuv** l0, x265_picyuv** l1, int sliceType, int poc)
+int x265_get_ref_frame_list(x265_encoder *enc, x265_picyuv** l0, x265_picyuv** l1, int sliceType, int poc, int* pocL0, int* pocL1)
 {
     if (!enc)
         return -1;
 
     Encoder *encoder = static_cast<Encoder*>(enc);
-    return encoder->getRefFrameList((PicYuv**)l0, (PicYuv**)l1, sliceType, poc);
+    return encoder->getRefFrameList((PicYuv**)l0, (PicYuv**)l1, sliceType, poc, pocL0, pocL1);
 }
 
 int x265_set_analysis_data(x265_encoder *enc, x265_analysis_data *analysis_data, int poc, uint32_t cuBytes)

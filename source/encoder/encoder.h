@@ -208,7 +208,7 @@ public:
 
     int copySlicetypePocAndSceneCut(int *slicetype, int *poc, int *sceneCut);
 
-    int getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc);
+    int getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, int* pocL0, int* pocL1);
 
     int setAnalysisDataAfterZScan(x265_analysis_data *analysis_data, Frame* curFrame);
 

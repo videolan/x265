@@ -206,7 +206,7 @@ changes made to the parameters for auto-detection and other reasons::
     /* x265_get_ref_frame_list:
      *     returns negative on error, 0 when access unit were output.
      *     This API must be called after(poc >= lookaheadDepth + bframes + 2) condition check */
-     int x265_get_ref_frame_list(x265_encoder *encoder, x265_picyuv**, x265_picyuv**, int, int);
+     int x265_get_ref_frame_list(x265_encoder *encoder, x265_picyuv**, x265_picyuv**, int, int, int*, int*);
  
 **x265_encoder_ctu_info** may be used to provide additional CTU-specific information to the encoder::
 
