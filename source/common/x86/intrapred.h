@@ -85,7 +85,7 @@ DECL_ALL(sse2);
 DECL_ALL(ssse3);
 DECL_ALL(sse4);
 DECL_ALL(avx2);
-
+DECL_ALL(avx512);
 #undef DECL_ALL
 #undef DECL_ANGS
 #undef DECL_ANG
