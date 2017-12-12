@@ -688,26 +688,25 @@ cglobal intra_pred_dc32, 3,3,3
     movu            [r0 + r2 * 1 +  0], m0
     movu            [r0 + r2 * 1 + mmsize], m0
     RET
-
 INIT_ZMM avx512
-cglobal intra_pred_dc32, 3,3,17
+cglobal intra_pred_dc32, 3,3,2
     add              r2, 2
     add             r1d, r1d
-    movu             m16, [r2]
+    movu             m0, [r2]
     movu             m1, [r2 + 2 * mmsize]
-    paddw            m16, m1
-    vextracti32x8   ym1, m16, 1
-    paddw           ym16, ym1
-    vextracti32x4   xm1, m16, 1
-    paddw           xm16, xm1
-    pmaddwd         xm16, [pw_1]
-    movhlps         xm1, xm16
-    paddd           xm16, xm1
-    phaddd          xm16, xm16
-    paddd           xm16, [pd_32]                        ; sum = sum + 32
-    psrld           xm16, 6                              ; sum = sum / 64
-    vpbroadcastw     m0, xm16
-
+    paddw            m0, m1
+    vextracti32x8   ym1, m0, 1
+    paddw           ym0, ym1
+    vextracti32x4   xm1, m0, 1
+    paddw           xm0, xm1
+    pmaddwd         xm0, [pw_1]
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    vpsrldq         xm1, xm0, 4
+    paddd           xm0, xm1
+    paddd           xm0, [pd_32]                        ; sum = sum + 32
+    psrld           xm0, 6                              ; sum = sum / 64
+    vpbroadcastw     m0, xm0
     lea              r2, [r1 * 3]
     ; store DC 32x32
     movu            [r0 + r1 * 0 +  0], m0
