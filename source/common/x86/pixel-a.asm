@@ -47,6 +47,7 @@ hmul_8w:   times 4 dw 1
            times 2 dw 1, -1
 psy_pp_shuff1:   dq 0, 1, 8, 9, 4, 5, 12, 13
 psy_pp_shuff2:   dq 2, 3, 10, 11, 6, 7, 14, 15
+psy_pp_shuff3:   dq 0, 0, 8, 8, 1, 1, 9, 9
 
 ALIGN 32
 transd_shuf1: SHUFFLE_MASK_W 0, 8, 2, 10, 4, 12, 6, 14
@@ -10767,6 +10768,227 @@ cglobal psyCost_pp_4x4, 4, 5, 6
     paddd          xm1, xm3
 %endmacro
 
+%macro PSY_PP_INPUT_AVX512_MAIN 0
+    movu       xm16, [r0 + r1 * 0]
+    movu       xm17, [r0 + r1 * 1]
+    movu       xm18, [r0 + r1 * 2]
+    movu       xm19, [r0 + r4 * 1]
+
+    movu       xm20, [r2 + r3 * 0]
+    movu       xm21, [r2 + r3 * 1]
+    movu       xm22, [r2 + r3 * 2]
+    movu       xm23, [r2 + r7 * 1]
+
+    mova         m0, m26
+    vpermi2q     m0, m16, m20
+    mova         m1, m26
+    vpermi2q     m1, m17, m21
+    mova         m2, m26
+    vpermi2q     m2, m18, m22
+    mova         m3, m26
+    vpermi2q     m3, m19, m23
+
+
+    lea          r5, [r0 + r1 * 4]
+    lea          r6, [r2 + r3 * 4]
+
+    movu      xm16, [r5 + r1 * 0]
+    movu      xm17, [r5 + r1 * 1]
+    movu      xm18, [r5 + r1 * 2]
+    movu      xm19, [r5 + r4 * 1]
+
+    movu      xm20, [r6 + r3 * 0]
+    movu      xm21, [r6 + r3 * 1]
+    movu      xm22, [r6 + r3 * 2]
+    movu      xm23, [r6 + r7 * 1]
+
+    mova        m4, m26
+    vpermi2q    m4, m16, m20
+    mova        m5, m26
+    vpermi2q    m5, m17, m21
+    mova        m6, m26
+    vpermi2q    m6, m18, m22
+    mova        m7, m26
+    vpermi2q    m7, m19, m23
+%endmacro
+
+%macro PSY_PP_16x8_AVX512_MAIN 0
+    pmaddubsw       m0, m8
+    pmaddubsw       m1, m8
+    pmaddubsw       m2, m8
+    pmaddubsw       m3, m8
+    pmaddubsw       m4, m8
+    pmaddubsw       m5, m8
+    pmaddubsw       m6, m8
+    pmaddubsw       m7, m8
+
+    paddw           m11, m0, m1
+    paddw           m11, m2
+    paddw           m11, m3
+    paddw           m11, m4
+    paddw           m11, m5
+    paddw           m11, m6
+    paddw           m11, m7
+
+    pmaddwd         m11, m14
+    psrldq          m10, m11, 4
+    paddd           m11, m10
+    psrld           m11, 2
+
+    mova            m9, m0
+    paddw           m0, m1
+    psubw           m1, m9
+    mova            m9, m2
+    paddw           m2, m3
+    psubw           m3, m9
+    mova            m9, m0
+    paddw           m0, m2
+    psubw           m2, m9
+    mova            m9, m1
+    paddw           m1, m3
+    psubw           m3, m9
+
+    movdqa          m9, m4
+    paddw           m4, m5
+    psubw           m5, m9
+    movdqa          m9, m6
+    paddw           m6, m7
+    psubw           m7, m9
+    movdqa          m9, m4
+    paddw           m4, m6
+    psubw           m6, m9
+    movdqa          m9, m5
+    paddw           m5, m7
+    psubw           m7, m9
+
+    movdqa          m9, m0
+    paddw           m0, m4
+    psubw           m4, m9
+    movdqa          m9, m1
+    paddw           m1, m5
+    psubw           m5, m9
+
+    mova            m9, m0
+    vshufps         m9, m9, m4, 11011101b
+    vshufps         m0, m0, m4, 10001000b
+
+    movdqa          m4, m0
+    paddw           m16, m0, m9
+    psubw           m17, m9, m4
+
+    movaps          m4, m1
+    vshufps         m4, m4, m5, 11011101b
+    vshufps         m1, m1, m5, 10001000b
+
+    movdqa          m5, m1
+    paddw           m18, m1, m4
+    psubw           m19, m4, m5
+
+    movdqa          m5, m2
+    paddw           m2, m6
+    psubw           m6, m5
+    movdqa          m5, m3
+    paddw           m3, m7
+    psubw           m7, m5
+
+    movaps          m5, m2
+    vshufps         m5, m5, m6, 11011101b
+    vshufps         m2, m2, m6, 10001000b
+
+    movdqa          m6, m2
+    paddw           m20, m2, m5
+    psubw           m21, m5, m6
+
+    movaps          m6, m3
+
+    vshufps         m6, m6, m7, 11011101b
+    vshufps         m3, m3, m7, 10001000b
+
+    movdqa          m7, m3
+    paddw           m22, m3, m6
+    psubw           m23, m6, m7
+
+    movdqa          m7, m16
+
+    vextracti64x4    ym24,  m16, 1
+    vextracti64x4    ym25,  m17, 1
+    pblendw          ym16, ym17, 10101010b
+    pblendw          ym24, ym25, 10101010b
+    vinserti64x4     m16, m16, ym24, 1
+
+    pslld           m17, 10h
+    psrld           m7, 10h
+    por             m17, m7
+    pabsw           m16, m16
+    pabsw           m17, m17
+    pmaxsw          m16, m17
+    movdqa          m7, m18
+
+    vextracti64x4    ym24,  m18, 1
+    vextracti64x4    ym25,  m19, 1
+    pblendw          ym18,  ym19, 10101010b
+    pblendw          ym24,  ym25, 10101010b
+    vinserti64x4     m18, m18, ym24, 1
+
+    pslld           m19, 10h
+    psrld           m7, 10h
+    por             m19, m7
+    pabsw           m18, m18
+    pabsw           m19, m19
+    pmaxsw          m18, m19
+    movdqa          m7, m20
+
+    vextracti64x4    ym24,  m20, 1
+    vextracti64x4    ym25,  m21, 1
+    pblendw          ym20,  ym21, 10101010b
+    pblendw          ym24,  ym25, 10101010b
+    vinserti64x4     m20,   m20, ym24, 1
+
+    pslld           m21, 10h
+    psrld           m7, 10h
+    por             m21, m7
+    pabsw           m20, m20
+    pabsw           m21, m21
+    pmaxsw          m20, m21
+    mova            m7, m22
+
+    vextracti64x4    ym24,  m22, 1
+    vextracti64x4    ym25,  m23, 1
+    pblendw          ym22,  ym23, 10101010b
+    pblendw          ym24,  ym25, 10101010b
+    vinserti64x4     m22,   m22,  ym24, 1
+
+    pslld           m23, 10h
+    psrld           m7, 10h
+    por             m23, m7
+    pabsw           m22, m22
+    pabsw           m23, m23
+    pmaxsw          m22, m23
+    paddw           m16, m18
+    paddw           m16, m20
+    paddw           m16, m22
+    pmaddwd         m16, m14
+    psrldq          m1, m16, 8
+    paddd           m16, m1
+
+    pshuflw         m1, m16, 00001110b
+    paddd           m16, m1
+    paddd           m16, m15
+    psrld           m16, 1
+
+    psubd           m16, m11
+    vextracti64x4   ym2, m16, 1
+
+    vextracti128    xm1, ym16, 1
+    psubd           xm16, xm1
+    pabsd           xm16, xm16
+
+    vextracti128   xm3, ym2, 1
+    psubd          xm3, xm2
+    pabsd          xm3, xm3
+    paddd          xm16, xm3
+%endmacro
+
 
 %if ARCH_X86_64
 INIT_YMM avx2
@@ -11087,6 +11309,30 @@ cglobal psyCost_pp_16x16, 4, 10, 16
     movd           eax, xm11
     RET
 %endif
+
+%if BIT_DEPTH == 8
+cglobal psyCost_pp_16x16, 4, 10, 27
+    lea             r4, [3 * r1]
+    lea             r7, [3 * r3]
+    vbroadcasti32x8  m8, [hmul_8p]
+    pxor            m13, m13
+    vbroadcasti32x8 m14, [pw_1]
+    vbroadcasti32x8 m15, [pd_1]
+    movu            m26, [psy_pp_shuff3]
+
+    mov             r8d, 2
+.loopH:
+    PSY_PP_INPUT_AVX512_MAIN
+    PSY_PP_16x8_AVX512_MAIN
+
+    paddd           m13, m16
+    lea             r0, [r0 + r1 * 8]
+    lea             r2, [r2 + r3 * 8]
+    dec             r8d
+    jnz             .loopH
+    movd            eax, xm13
+    RET
+%endif
 %endif
 
 %if ARCH_X86_64
@@ -11145,6 +11391,36 @@ cglobal psyCost_pp_32x32, 4, 10, 16
     movd           eax, xm11
     RET
 %endif
+
+%if BIT_DEPTH == 8
+cglobal psyCost_pp_32x32, 4, 10, 27
+    lea             r4, [3 * r1]
+    lea             r7, [3 * r3]
+    vbroadcasti32x8  m8, [hmul_8p]
+    pxor            m13, m13
+    vbroadcasti32x8 m14, [pw_1]
+    vbroadcasti32x8 m15, [pd_1]
+    movu            m26, [psy_pp_shuff3]
+
+    mov             r8d, 4
+.loopH:
+    mov             r9d, 2
+.loopW:
+    PSY_PP_INPUT_AVX512_MAIN
+    PSY_PP_16x8_AVX512_MAIN
+
+    paddd           m13, m16
+    add             r0, 16
+    add             r2, 16
+    dec             r9d
+    jnz             .loopW
+    lea             r0, [r0 + r1 * 8 - 32]
+    lea             r2, [r2 + r3 * 8 - 32]
+    dec             r8d
+    jnz             .loopH
+    movd            eax, xm13
+    RET
+%endif
 %endif
 
 %if ARCH_X86_64
@@ -11201,6 +11477,36 @@ cglobal psyCost_pp_64x64, 4, 10, 16
     dec            r8d
     jnz            .loopH
     movd           eax, xm11
+    RET
+%endif
+
+%if BIT_DEPTH == 8
+cglobal psyCost_pp_64x64, 4, 10, 27
+    lea             r4, [3 * r1]
+    lea             r7, [3 * r3]
+    vbroadcasti32x8  m8, [hmul_8p]
+    pxor            m13, m13
+    vbroadcasti32x8 m14, [pw_1]
+    vbroadcasti32x8 m15, [pd_1]
+    movu            m26, [psy_pp_shuff3]
+
+    mov             r8d, 8
+.loopH:
+    mov             r9d, 4
+.loopW:
+    PSY_PP_INPUT_AVX512_MAIN
+    PSY_PP_16x8_AVX512_MAIN
+
+    paddd           m13, m16
+    add             r0, 16
+    add             r2, 16
+    dec             r9d
+    jnz             .loopW
+    lea             r0, [r0 + r1 * 8 - 64]
+    lea             r2, [r2 + r3 * 8 - 64]
+    dec             r8d
+    jnz             .loopH
+    movd            eax, xm13
     RET
 %endif
 %endif
