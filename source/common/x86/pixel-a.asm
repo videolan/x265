@@ -14150,6 +14150,32 @@ SATD_32xN_HBD_AVX512 16
 SATD_32xN_HBD_AVX512 24
 SATD_32xN_HBD_AVX512 32
 SATD_32xN_HBD_AVX512 64
+INIT_ZMM avx512
+cglobal pixel_satd_48x64, 4,10,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r8, r0
+    mov             r9, r2
+
+%rep 15
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r8 + mmsize]
+    lea             r2, [r9 + mmsize]
+%rep 7
+    PROCESS_SATD_16x8_HBD_AVX512
+    lea             r0, [r6 + 4 * r1]
+    lea             r2, [r7 + 4 * r3]
+%endrep
+    PROCESS_SATD_16x8_HBD_AVX512
+    SATD_HBD_AVX512_END
+    RET
 
 %macro SATD_64xN_HBD_AVX512 1
 INIT_ZMM avx512
