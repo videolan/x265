@@ -3056,6 +3056,23 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].satd = PFX(pixel_satd_32x16_avx512);
         p.cu[BLOCK_32x32].intra_pred[DC_IDX] = PFX(intra_pred_dc32_avx512);
 
+        p.pu[LUMA_64x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_64x64>;
+        p.pu[LUMA_64x48].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_64x48>;
+        p.pu[LUMA_64x32].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_64x32>;
+        p.pu[LUMA_64x16].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_64x16>;
+        p.pu[LUMA_32x8].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_32x8>;
+        p.pu[LUMA_32x16].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_32x16>;
+        p.pu[LUMA_32x32].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_32x32>;
+        p.pu[LUMA_32x24].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_32x24>;
+        p.pu[LUMA_32x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_32x64>;
+        p.pu[LUMA_16x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x4>;
+        p.pu[LUMA_16x8].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x8>;
+        p.pu[LUMA_16x12].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x12>;
+        p.pu[LUMA_16x16].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x16>;
+        p.pu[LUMA_16x32].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x32>;
+        p.pu[LUMA_16x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x64>;
+        p.pu[LUMA_48x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_48x64>;
+
     }
 #endif
 }
@@ -5220,6 +5237,24 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_16x16].luma_vps = PFX(interp_8tap_vert_ps_16x16_avx512);
         p.pu[LUMA_16x32].luma_vps = PFX(interp_8tap_vert_ps_16x32_avx512);
         //p.pu[LUMA_16x64].luma_vps = PFX(interp_8tap_vert_ps_16x64_avx512);
+
+        p.pu[LUMA_64x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_64x64>;
+        p.pu[LUMA_64x48].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_64x48>;
+        p.pu[LUMA_64x32].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_64x32>;
+        p.pu[LUMA_64x16].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_64x16>;
+        p.pu[LUMA_32x8].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_32x8>;
+        p.pu[LUMA_32x16].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_32x16>;
+        p.pu[LUMA_32x32].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_32x32>;
+        p.pu[LUMA_32x24].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_32x24>;
+        p.pu[LUMA_32x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_32x64>;
+        p.pu[LUMA_16x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x4>;
+        p.pu[LUMA_16x8].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x8>;
+        p.pu[LUMA_16x12].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x12>;
+        p.pu[LUMA_16x16].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x16>;
+        p.pu[LUMA_16x32].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x32>;
+        p.pu[LUMA_16x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x64>;
+        p.pu[LUMA_48x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_48x64>;
+
     }
 #endif
 }
