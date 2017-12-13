@@ -404,36 +404,58 @@ extern "C" {
     p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sa8d = PFX(pixel_sa8d_8x16_ ## cpu); \
     p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sa8d = PFX(pixel_sa8d_16x32_ ## cpu); \
     p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sa8d = PFX(pixel_sa8d_32x64_ ## cpu)
-
 #define PIXEL_AVG(cpu) \
-    p.pu[LUMA_64x64].pixelavg_pp = PFX(pixel_avg_64x64_ ## cpu); \
-    p.pu[LUMA_64x48].pixelavg_pp = PFX(pixel_avg_64x48_ ## cpu); \
-    p.pu[LUMA_64x32].pixelavg_pp = PFX(pixel_avg_64x32_ ## cpu); \
-    p.pu[LUMA_64x16].pixelavg_pp = PFX(pixel_avg_64x16_ ## cpu); \
-    p.pu[LUMA_48x64].pixelavg_pp = PFX(pixel_avg_48x64_ ## cpu); \
-    p.pu[LUMA_32x64].pixelavg_pp = PFX(pixel_avg_32x64_ ## cpu); \
-    p.pu[LUMA_32x32].pixelavg_pp = PFX(pixel_avg_32x32_ ## cpu); \
-    p.pu[LUMA_32x24].pixelavg_pp = PFX(pixel_avg_32x24_ ## cpu); \
-    p.pu[LUMA_32x16].pixelavg_pp = PFX(pixel_avg_32x16_ ## cpu); \
-    p.pu[LUMA_32x8].pixelavg_pp  = PFX(pixel_avg_32x8_ ## cpu); \
-    p.pu[LUMA_24x32].pixelavg_pp = PFX(pixel_avg_24x32_ ## cpu); \
-    p.pu[LUMA_16x64].pixelavg_pp = PFX(pixel_avg_16x64_ ## cpu); \
-    p.pu[LUMA_16x32].pixelavg_pp = PFX(pixel_avg_16x32_ ## cpu); \
-    p.pu[LUMA_16x16].pixelavg_pp = PFX(pixel_avg_16x16_ ## cpu); \
-    p.pu[LUMA_16x12].pixelavg_pp = PFX(pixel_avg_16x12_ ## cpu); \
-    p.pu[LUMA_16x8].pixelavg_pp  = PFX(pixel_avg_16x8_ ## cpu); \
-    p.pu[LUMA_16x4].pixelavg_pp  = PFX(pixel_avg_16x4_ ## cpu); \
-    p.pu[LUMA_12x16].pixelavg_pp = PFX(pixel_avg_12x16_ ## cpu); \
-    p.pu[LUMA_8x32].pixelavg_pp  = PFX(pixel_avg_8x32_ ## cpu); \
-    p.pu[LUMA_8x16].pixelavg_pp  = PFX(pixel_avg_8x16_ ## cpu); \
-    p.pu[LUMA_8x8].pixelavg_pp   = PFX(pixel_avg_8x8_ ## cpu); \
-    p.pu[LUMA_8x4].pixelavg_pp   = PFX(pixel_avg_8x4_ ## cpu);
-
+    p.pu[LUMA_64x64].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_64x64_ ## cpu); \
+    p.pu[LUMA_64x48].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_64x48_ ## cpu); \
+    p.pu[LUMA_64x32].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_64x32_ ## cpu); \
+    p.pu[LUMA_64x16].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_64x16_ ## cpu); \
+    p.pu[LUMA_48x64].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_48x64_ ## cpu); \
+    p.pu[LUMA_32x64].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_32x64_ ## cpu); \
+    p.pu[LUMA_32x32].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_32x32_ ## cpu); \
+    p.pu[LUMA_32x24].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_32x24_ ## cpu); \
+    p.pu[LUMA_32x16].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_32x16_ ## cpu); \
+    p.pu[LUMA_32x8].pixelavg_pp[NONALIGNED]  = PFX(pixel_avg_32x8_ ## cpu); \
+    p.pu[LUMA_24x32].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_24x32_ ## cpu); \
+    p.pu[LUMA_16x64].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_16x64_ ## cpu); \
+    p.pu[LUMA_16x32].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_16x32_ ## cpu); \
+    p.pu[LUMA_16x16].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_16x16_ ## cpu); \
+    p.pu[LUMA_16x12].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_16x12_ ## cpu); \
+    p.pu[LUMA_16x8].pixelavg_pp[NONALIGNED]  = PFX(pixel_avg_16x8_ ## cpu); \
+    p.pu[LUMA_16x4].pixelavg_pp[NONALIGNED]  = PFX(pixel_avg_16x4_ ## cpu); \
+    p.pu[LUMA_12x16].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_12x16_ ## cpu); \
+    p.pu[LUMA_8x32].pixelavg_pp[NONALIGNED]  = PFX(pixel_avg_8x32_ ## cpu); \
+    p.pu[LUMA_8x16].pixelavg_pp[NONALIGNED]  = PFX(pixel_avg_8x16_ ## cpu); \
+    p.pu[LUMA_8x8].pixelavg_pp[NONALIGNED]   = PFX(pixel_avg_8x8_ ## cpu); \
+    p.pu[LUMA_8x4].pixelavg_pp[NONALIGNED]   = PFX(pixel_avg_8x4_ ## cpu); \
+    p.pu[LUMA_64x64].pixelavg_pp[ALIGNED] = PFX(pixel_avg_64x64_ ## cpu); \
+    p.pu[LUMA_64x48].pixelavg_pp[ALIGNED] = PFX(pixel_avg_64x48_ ## cpu); \
+    p.pu[LUMA_64x32].pixelavg_pp[ALIGNED] = PFX(pixel_avg_64x32_ ## cpu); \
+    p.pu[LUMA_64x16].pixelavg_pp[ALIGNED] = PFX(pixel_avg_64x16_ ## cpu); \
+    p.pu[LUMA_48x64].pixelavg_pp[ALIGNED] = PFX(pixel_avg_48x64_ ## cpu); \
+    p.pu[LUMA_32x64].pixelavg_pp[ALIGNED] = PFX(pixel_avg_32x64_ ## cpu); \
+    p.pu[LUMA_32x32].pixelavg_pp[ALIGNED] = PFX(pixel_avg_32x32_ ## cpu); \
+    p.pu[LUMA_32x24].pixelavg_pp[ALIGNED] = PFX(pixel_avg_32x24_ ## cpu); \
+    p.pu[LUMA_32x16].pixelavg_pp[ALIGNED] = PFX(pixel_avg_32x16_ ## cpu); \
+    p.pu[LUMA_32x8].pixelavg_pp[ALIGNED]  = PFX(pixel_avg_32x8_ ## cpu); \
+    p.pu[LUMA_24x32].pixelavg_pp[ALIGNED] = PFX(pixel_avg_24x32_ ## cpu); \
+    p.pu[LUMA_16x64].pixelavg_pp[ALIGNED] = PFX(pixel_avg_16x64_ ## cpu); \
+    p.pu[LUMA_16x32].pixelavg_pp[ALIGNED] = PFX(pixel_avg_16x32_ ## cpu); \
+    p.pu[LUMA_16x16].pixelavg_pp[ALIGNED] = PFX(pixel_avg_16x16_ ## cpu); \
+    p.pu[LUMA_16x12].pixelavg_pp[ALIGNED] = PFX(pixel_avg_16x12_ ## cpu); \
+    p.pu[LUMA_16x8].pixelavg_pp[ALIGNED]  = PFX(pixel_avg_16x8_ ## cpu); \
+    p.pu[LUMA_16x4].pixelavg_pp[ALIGNED]  = PFX(pixel_avg_16x4_ ## cpu); \
+    p.pu[LUMA_12x16].pixelavg_pp[ALIGNED] = PFX(pixel_avg_12x16_ ## cpu); \
+    p.pu[LUMA_8x32].pixelavg_pp[ALIGNED]  = PFX(pixel_avg_8x32_ ## cpu); \
+    p.pu[LUMA_8x16].pixelavg_pp[ALIGNED]  = PFX(pixel_avg_8x16_ ## cpu); \
+    p.pu[LUMA_8x8].pixelavg_pp[ALIGNED]   = PFX(pixel_avg_8x8_ ## cpu); \
+    p.pu[LUMA_8x4].pixelavg_pp[ALIGNED]   = PFX(pixel_avg_8x4_ ## cpu);
 #define PIXEL_AVG_W4(cpu) \
-    p.pu[LUMA_4x4].pixelavg_pp  = PFX(pixel_avg_4x4_ ## cpu); \
-    p.pu[LUMA_4x8].pixelavg_pp  = PFX(pixel_avg_4x8_ ## cpu); \
-    p.pu[LUMA_4x16].pixelavg_pp = PFX(pixel_avg_4x16_ ## cpu);
-
+    p.pu[LUMA_4x4].pixelavg_pp[NONALIGNED]  = PFX(pixel_avg_4x4_ ## cpu); \
+    p.pu[LUMA_4x8].pixelavg_pp[NONALIGNED]  = PFX(pixel_avg_4x8_ ## cpu); \
+    p.pu[LUMA_4x16].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_4x16_ ## cpu); \
+    p.pu[LUMA_4x4].pixelavg_pp[ALIGNED]  = PFX(pixel_avg_4x4_ ## cpu); \
+    p.pu[LUMA_4x8].pixelavg_pp[ALIGNED]  = PFX(pixel_avg_4x8_ ## cpu); \
+    p.pu[LUMA_4x16].pixelavg_pp[ALIGNED] = PFX(pixel_avg_4x16_ ## cpu);
 #define CHROMA_420_FILTERS(cpu) \
     ALL_CHROMA_420_PU(filter_hpp, interp_4tap_horiz_pp, cpu); \
     ALL_CHROMA_420_PU(filter_hps, interp_4tap_horiz_ps, cpu); \
@@ -957,30 +979,29 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         p.ssim_4x4x2_core = PFX(pixel_ssim_4x4x2_core_sse2);
         p.ssim_end_4 = PFX(pixel_ssim_end4_sse2);
-
-        p.pu[LUMA_64x64].pixelavg_pp = PFX(pixel_avg_64x64_sse2);
-        p.pu[LUMA_64x48].pixelavg_pp = PFX(pixel_avg_64x48_sse2);
-        p.pu[LUMA_64x32].pixelavg_pp = PFX(pixel_avg_64x32_sse2);
-        p.pu[LUMA_64x16].pixelavg_pp = PFX(pixel_avg_64x16_sse2);
-        p.pu[LUMA_48x64].pixelavg_pp = PFX(pixel_avg_48x64_sse2);
-        p.pu[LUMA_32x64].pixelavg_pp = PFX(pixel_avg_32x64_sse2);
-        p.pu[LUMA_32x32].pixelavg_pp = PFX(pixel_avg_32x32_sse2);
-        p.pu[LUMA_32x24].pixelavg_pp = PFX(pixel_avg_32x24_sse2);
-        p.pu[LUMA_32x16].pixelavg_pp = PFX(pixel_avg_32x16_sse2);
-        p.pu[LUMA_32x8].pixelavg_pp  = PFX(pixel_avg_32x8_sse2);
-        p.pu[LUMA_24x32].pixelavg_pp = PFX(pixel_avg_24x32_sse2);
-        p.pu[LUMA_16x64].pixelavg_pp = PFX(pixel_avg_16x64_sse2);
-        p.pu[LUMA_16x32].pixelavg_pp = PFX(pixel_avg_16x32_sse2);
-        p.pu[LUMA_16x16].pixelavg_pp = PFX(pixel_avg_16x16_sse2);
-        p.pu[LUMA_16x12].pixelavg_pp = PFX(pixel_avg_16x12_sse2);
-        p.pu[LUMA_16x8].pixelavg_pp  = PFX(pixel_avg_16x8_sse2);
-        p.pu[LUMA_16x4].pixelavg_pp  = PFX(pixel_avg_16x4_sse2);
-        p.pu[LUMA_12x16].pixelavg_pp = PFX(pixel_avg_12x16_sse2);
+        ASSIGN2(p.pu[LUMA_64x64].pixelavg_pp, pixel_avg_64x64_sse2);
+        ASSIGN2(p.pu[LUMA_64x48].pixelavg_pp, pixel_avg_64x48_sse2);
+        ASSIGN2(p.pu[LUMA_64x32].pixelavg_pp, pixel_avg_64x32_sse2);
+        ASSIGN2(p.pu[LUMA_64x16].pixelavg_pp, pixel_avg_64x16_sse2);
+        ASSIGN2(p.pu[LUMA_48x64].pixelavg_pp, pixel_avg_48x64_sse2);
+        ASSIGN2(p.pu[LUMA_32x64].pixelavg_pp, pixel_avg_32x64_sse2);
+        ASSIGN2(p.pu[LUMA_32x32].pixelavg_pp, pixel_avg_32x32_sse2);
+        ASSIGN2(p.pu[LUMA_32x24].pixelavg_pp, pixel_avg_32x24_sse2);
+        ASSIGN2(p.pu[LUMA_32x16].pixelavg_pp, pixel_avg_32x16_sse2);
+        ASSIGN2(p.pu[LUMA_32x8].pixelavg_pp, pixel_avg_32x8_sse2);
+        ASSIGN2(p.pu[LUMA_24x32].pixelavg_pp, pixel_avg_24x32_sse2);
+        ASSIGN2(p.pu[LUMA_16x64].pixelavg_pp, pixel_avg_16x64_sse2);
+        ASSIGN2(p.pu[LUMA_16x32].pixelavg_pp, pixel_avg_16x32_sse2);
+        ASSIGN2(p.pu[LUMA_16x16].pixelavg_pp, pixel_avg_16x16_sse2);
+        ASSIGN2(p.pu[LUMA_16x12].pixelavg_pp, pixel_avg_16x12_sse2);
+        ASSIGN2(p.pu[LUMA_16x8].pixelavg_pp, pixel_avg_16x8_sse2);
+        ASSIGN2(p.pu[LUMA_16x4].pixelavg_pp, pixel_avg_16x4_sse2);
+        ASSIGN2(p.pu[LUMA_12x16].pixelavg_pp, pixel_avg_12x16_sse2);
 #if X86_64
-        p.pu[LUMA_8x32].pixelavg_pp  = PFX(pixel_avg_8x32_sse2);
-        p.pu[LUMA_8x16].pixelavg_pp = PFX(pixel_avg_8x16_sse2);
-        p.pu[LUMA_8x8].pixelavg_pp   = PFX(pixel_avg_8x8_sse2);
-        p.pu[LUMA_8x4].pixelavg_pp   = PFX(pixel_avg_8x4_sse2);
+        ASSIGN2(p.pu[LUMA_8x32].pixelavg_pp, pixel_avg_8x32_sse2);
+        ASSIGN2(p.pu[LUMA_8x16].pixelavg_pp, pixel_avg_8x16_sse2);
+        ASSIGN2(p.pu[LUMA_8x8].pixelavg_pp, pixel_avg_8x8_sse2);
+        ASSIGN2(p.pu[LUMA_8x4].pixelavg_pp, pixel_avg_8x4_sse2);
 #endif
         PIXEL_AVG_W4(mmx2);
         LUMA_VAR(sse2);
@@ -989,6 +1010,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_LUMA_TU(blockfill_s[ALIGNED], blockfill_s, sse2);
         ALL_LUMA_TU(blockfill_s[NONALIGNED], blockfill_s, sse2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, sse2);
+        ALL_LUMA_TU_S(cpy1Dto2D_shl[ALIGNED], cpy1Dto2D_shl_, sse2);
         ALL_LUMA_TU_S(cpy1Dto2D_shl[NONALIGNED], cpy1Dto2D_shl_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shr, cpy2Dto1D_shr_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shl, cpy2Dto1D_shl_, sse2);
@@ -1535,26 +1557,24 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_32x32].intra_pred[32]    = PFX(intra_pred_ang32_32_avx2);
         p.cu[BLOCK_32x32].intra_pred[33]    = PFX(intra_pred_ang32_33_avx2);
         p.cu[BLOCK_32x32].intra_pred[34]    = PFX(intra_pred_ang32_2_avx2);
-
-        p.pu[LUMA_12x16].pixelavg_pp = PFX(pixel_avg_12x16_avx2);
-        p.pu[LUMA_16x4].pixelavg_pp = PFX(pixel_avg_16x4_avx2);
-        p.pu[LUMA_16x8].pixelavg_pp = PFX(pixel_avg_16x8_avx2);
-        p.pu[LUMA_16x12].pixelavg_pp = PFX(pixel_avg_16x12_avx2);
-        p.pu[LUMA_16x16].pixelavg_pp = PFX(pixel_avg_16x16_avx2);
-        p.pu[LUMA_16x32].pixelavg_pp = PFX(pixel_avg_16x32_avx2);
-        p.pu[LUMA_16x64].pixelavg_pp = PFX(pixel_avg_16x64_avx2);
-        p.pu[LUMA_24x32].pixelavg_pp = PFX(pixel_avg_24x32_avx2);
-        p.pu[LUMA_32x8].pixelavg_pp = PFX(pixel_avg_32x8_avx2);
-        p.pu[LUMA_32x16].pixelavg_pp = PFX(pixel_avg_32x16_avx2);
-        p.pu[LUMA_32x24].pixelavg_pp = PFX(pixel_avg_32x24_avx2);
-        p.pu[LUMA_32x32].pixelavg_pp = PFX(pixel_avg_32x32_avx2);
-        p.pu[LUMA_32x64].pixelavg_pp = PFX(pixel_avg_32x64_avx2);
-        p.pu[LUMA_64x16].pixelavg_pp = PFX(pixel_avg_64x16_avx2);
-        p.pu[LUMA_64x32].pixelavg_pp = PFX(pixel_avg_64x32_avx2);
-        p.pu[LUMA_64x48].pixelavg_pp = PFX(pixel_avg_64x48_avx2);
-        p.pu[LUMA_64x64].pixelavg_pp = PFX(pixel_avg_64x64_avx2);
-        p.pu[LUMA_48x64].pixelavg_pp = PFX(pixel_avg_48x64_avx2);
-
+        ASSIGN2(p.pu[LUMA_12x16].pixelavg_pp, pixel_avg_12x16_avx2);
+        ASSIGN2(p.pu[LUMA_16x4].pixelavg_pp, pixel_avg_16x4_avx2);
+        ASSIGN2(p.pu[LUMA_16x8].pixelavg_pp, pixel_avg_16x8_avx2);
+        ASSIGN2(p.pu[LUMA_16x12].pixelavg_pp, pixel_avg_16x12_avx2);
+        ASSIGN2(p.pu[LUMA_16x16].pixelavg_pp, pixel_avg_16x16_avx2);
+        ASSIGN2(p.pu[LUMA_16x32].pixelavg_pp, pixel_avg_16x32_avx2);
+        ASSIGN2(p.pu[LUMA_16x64].pixelavg_pp, pixel_avg_16x64_avx2);
+        ASSIGN2(p.pu[LUMA_24x32].pixelavg_pp, pixel_avg_24x32_avx2);
+        ASSIGN2(p.pu[LUMA_32x8].pixelavg_pp, pixel_avg_32x8_avx2);
+        ASSIGN2(p.pu[LUMA_32x16].pixelavg_pp, pixel_avg_32x16_avx2);
+        ASSIGN2(p.pu[LUMA_32x24].pixelavg_pp, pixel_avg_32x24_avx2);
+        ASSIGN2(p.pu[LUMA_32x32].pixelavg_pp, pixel_avg_32x32_avx2);
+        ASSIGN2(p.pu[LUMA_32x64].pixelavg_pp, pixel_avg_32x64_avx2);
+        ASSIGN2(p.pu[LUMA_64x16].pixelavg_pp, pixel_avg_64x16_avx2);
+        ASSIGN2(p.pu[LUMA_64x32].pixelavg_pp, pixel_avg_64x32_avx2);
+        ASSIGN2(p.pu[LUMA_64x48].pixelavg_pp, pixel_avg_64x48_avx2);
+        ASSIGN2(p.pu[LUMA_64x64].pixelavg_pp, pixel_avg_64x64_avx2);
+        ASSIGN2(p.pu[LUMA_48x64].pixelavg_pp, pixel_avg_48x64_avx2);
         ASSIGN2(p.pu[LUMA_8x4].addAvg, addAvg_8x4_avx2);
         ASSIGN2(p.pu[LUMA_8x8].addAvg, addAvg_8x8_avx2);
         ASSIGN2(p.pu[LUMA_8x16].addAvg, addAvg_8x16_avx2);
@@ -1693,6 +1713,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ASSIGN2(p.cu[BLOCK_16x16].blockfill_s, blockfill_s_16x16_avx2);
         ASSIGN2(p.cu[BLOCK_32x32].blockfill_s, blockfill_s_32x32_avx2);
         ALL_LUMA_TU(count_nonzero, count_nonzero, avx2);
+        ALL_LUMA_TU_S(cpy1Dto2D_shl[ALIGNED], cpy1Dto2D_shl_, avx2);
         ALL_LUMA_TU_S(cpy1Dto2D_shl[NONALIGNED], cpy1Dto2D_shl_, avx2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, avx2);
         p.cu[BLOCK_8x8].copy_cnt = PFX(copy_cnt_8_avx2);
@@ -2481,18 +2502,27 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x64].addAvg[NONALIGNED] = PFX(addAvg_16x64_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x24].addAvg[NONALIGNED] = PFX(addAvg_16x24_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].addAvg[NONALIGNED] = PFX(addAvg_16x8_avx512);
+        p.pu[LUMA_32x8].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_32x8_avx512);
+        p.pu[LUMA_32x16].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_32x16_avx512);
+        p.pu[LUMA_32x24].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_32x24_avx512);
+        p.pu[LUMA_32x32].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_32x32_avx512);
+        p.pu[LUMA_32x64].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_32x64_avx512);
+        p.pu[LUMA_64x16].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_64x16_avx512);
+        p.pu[LUMA_64x32].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_64x32_avx512);
+        p.pu[LUMA_64x48].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_64x48_avx512);
+        p.pu[LUMA_64x64].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_64x64_avx512);
+        p.pu[LUMA_48x64].pixelavg_pp[NONALIGNED] = PFX(pixel_avg_48x64_avx512);
 
-        p.pu[LUMA_32x8].pixelavg_pp = PFX(pixel_avg_32x8_avx512);
-        p.pu[LUMA_32x16].pixelavg_pp = PFX(pixel_avg_32x16_avx512);
-        p.pu[LUMA_32x24].pixelavg_pp = PFX(pixel_avg_32x24_avx512);
-        p.pu[LUMA_32x32].pixelavg_pp = PFX(pixel_avg_32x32_avx512);
-        p.pu[LUMA_32x64].pixelavg_pp = PFX(pixel_avg_32x64_avx512);
-        p.pu[LUMA_64x16].pixelavg_pp = PFX(pixel_avg_64x16_avx512);
-        p.pu[LUMA_64x32].pixelavg_pp = PFX(pixel_avg_64x32_avx512);
-        p.pu[LUMA_64x48].pixelavg_pp = PFX(pixel_avg_64x48_avx512);
-        p.pu[LUMA_64x64].pixelavg_pp = PFX(pixel_avg_64x64_avx512);
-        p.pu[LUMA_48x64].pixelavg_pp = PFX(pixel_avg_48x64_avx512);
-
+        p.pu[LUMA_32x8].pixelavg_pp[ALIGNED] = PFX(pixel_avg_aligned_32x8_avx512);
+        p.pu[LUMA_32x16].pixelavg_pp[ALIGNED] = PFX(pixel_avg_aligned_32x16_avx512);
+        p.pu[LUMA_32x24].pixelavg_pp[ALIGNED] = PFX(pixel_avg_aligned_32x24_avx512);
+        p.pu[LUMA_32x32].pixelavg_pp[ALIGNED] = PFX(pixel_avg_aligned_32x32_avx512);
+        p.pu[LUMA_32x64].pixelavg_pp[ALIGNED] = PFX(pixel_avg_aligned_32x64_avx512);
+        p.pu[LUMA_48x64].pixelavg_pp[ALIGNED] = PFX(pixel_avg_aligned_48x64_avx512);
+        p.pu[LUMA_64x16].pixelavg_pp[ALIGNED] = PFX(pixel_avg_aligned_64x16_avx512);
+        p.pu[LUMA_64x32].pixelavg_pp[ALIGNED] = PFX(pixel_avg_aligned_64x32_avx512);
+        p.pu[LUMA_64x48].pixelavg_pp[ALIGNED] = PFX(pixel_avg_aligned_64x48_avx512);
+        p.pu[LUMA_64x64].pixelavg_pp[ALIGNED] = PFX(pixel_avg_aligned_64x64_avx512);
         p.pu[LUMA_16x8].sad_x3 = PFX(pixel_sad_x3_16x8_avx512);
         p.pu[LUMA_16x12].sad_x3 = PFX(pixel_sad_x3_16x12_avx512);
         p.pu[LUMA_16x16].sad_x3 = PFX(pixel_sad_x3_16x16_avx512);
@@ -3202,6 +3232,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         ALL_LUMA_TU(blockfill_s[ALIGNED], blockfill_s, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shl, cpy2Dto1D_shl_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shr, cpy2Dto1D_shr_, sse2);
+        ALL_LUMA_TU_S(cpy1Dto2D_shl[ALIGNED], cpy1Dto2D_shl_, sse2);
         ALL_LUMA_TU_S(cpy1Dto2D_shl[NONALIGNED], cpy1Dto2D_shl_, sse2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, sse2);
         ALL_LUMA_TU_S(ssd_s, pixel_ssd_s_, sse2);
@@ -3716,25 +3747,23 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sub_ps = PFX(pixel_sub_ps_32x32_avx2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sub_ps = PFX(pixel_sub_ps_16x32_avx2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sub_ps = PFX(pixel_sub_ps_32x64_avx2);
+        ASSIGN2(p.pu[LUMA_16x4].pixelavg_pp, pixel_avg_16x4_avx2);
+        ASSIGN2(p.pu[LUMA_16x8].pixelavg_pp, pixel_avg_16x8_avx2);
+        ASSIGN2(p.pu[LUMA_16x12].pixelavg_pp, pixel_avg_16x12_avx2);
+        ASSIGN2(p.pu[LUMA_16x16].pixelavg_pp, pixel_avg_16x16_avx2);
+        ASSIGN2(p.pu[LUMA_16x32].pixelavg_pp, pixel_avg_16x32_avx2);
+        ASSIGN2(p.pu[LUMA_16x64].pixelavg_pp, pixel_avg_16x64_avx2);
 
-        p.pu[LUMA_16x4].pixelavg_pp = PFX(pixel_avg_16x4_avx2);
-        p.pu[LUMA_16x8].pixelavg_pp = PFX(pixel_avg_16x8_avx2);
-        p.pu[LUMA_16x12].pixelavg_pp = PFX(pixel_avg_16x12_avx2);
-        p.pu[LUMA_16x16].pixelavg_pp = PFX(pixel_avg_16x16_avx2);
-        p.pu[LUMA_16x32].pixelavg_pp = PFX(pixel_avg_16x32_avx2);
-        p.pu[LUMA_16x64].pixelavg_pp = PFX(pixel_avg_16x64_avx2);
-
-        p.pu[LUMA_32x64].pixelavg_pp = PFX(pixel_avg_32x64_avx2);
-        p.pu[LUMA_32x32].pixelavg_pp = PFX(pixel_avg_32x32_avx2);
-        p.pu[LUMA_32x24].pixelavg_pp = PFX(pixel_avg_32x24_avx2);
-        p.pu[LUMA_32x16].pixelavg_pp = PFX(pixel_avg_32x16_avx2);
-        p.pu[LUMA_32x8].pixelavg_pp = PFX(pixel_avg_32x8_avx2);
-        p.pu[LUMA_48x64].pixelavg_pp = PFX(pixel_avg_48x64_avx2);
-        p.pu[LUMA_64x64].pixelavg_pp = PFX(pixel_avg_64x64_avx2);
-        p.pu[LUMA_64x48].pixelavg_pp = PFX(pixel_avg_64x48_avx2);
-        p.pu[LUMA_64x32].pixelavg_pp = PFX(pixel_avg_64x32_avx2);
-        p.pu[LUMA_64x16].pixelavg_pp = PFX(pixel_avg_64x16_avx2);
-
+        ASSIGN2(p.pu[LUMA_32x64].pixelavg_pp, pixel_avg_32x64_avx2);
+        ASSIGN2(p.pu[LUMA_32x32].pixelavg_pp, pixel_avg_32x32_avx2);
+        ASSIGN2(p.pu[LUMA_32x24].pixelavg_pp, pixel_avg_32x24_avx2);
+        ASSIGN2(p.pu[LUMA_32x16].pixelavg_pp, pixel_avg_32x16_avx2);
+        ASSIGN2(p.pu[LUMA_32x8].pixelavg_pp, pixel_avg_32x8_avx2);
+        ASSIGN2(p.pu[LUMA_48x64].pixelavg_pp, pixel_avg_48x64_avx2);
+        ASSIGN2(p.pu[LUMA_64x64].pixelavg_pp, pixel_avg_64x64_avx2);
+        ASSIGN2(p.pu[LUMA_64x48].pixelavg_pp, pixel_avg_64x48_avx2);
+        ASSIGN2(p.pu[LUMA_64x32].pixelavg_pp, pixel_avg_64x32_avx2);
+        ASSIGN2(p.pu[LUMA_64x16].pixelavg_pp, pixel_avg_64x16_avx2);
         p.pu[LUMA_16x16].satd = PFX(pixel_satd_16x16_avx2);
         p.pu[LUMA_16x8].satd  = PFX(pixel_satd_16x8_avx2);
         p.pu[LUMA_8x16].satd  = PFX(pixel_satd_8x16_avx2);
@@ -3800,6 +3829,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_16x16].copy_cnt = PFX(copy_cnt_16_avx2);
         p.cu[BLOCK_32x32].copy_cnt = PFX(copy_cnt_32_avx2);
         ASSIGN2(p.cu[BLOCK_16x16].blockfill_s, blockfill_s_16x16_avx2);
+        ALL_LUMA_TU_S(cpy1Dto2D_shl[ALIGNED], cpy1Dto2D_shl_, avx2);
         ALL_LUMA_TU_S(cpy1Dto2D_shl[NONALIGNED], cpy1Dto2D_shl_, avx2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, avx2);
         p.cu[BLOCK_8x8].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_8_avx2);
@@ -4682,17 +4712,16 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_16x16].var = PFX(pixel_var_16x16_avx512);
         p.cu[BLOCK_32x32].var = PFX(pixel_var_32x32_avx512);
         p.cu[BLOCK_64x64].var = PFX(pixel_var_64x64_avx512);
-        p.pu[LUMA_16x64].pixelavg_pp = PFX(pixel_avg_16x64_avx512);
-        p.pu[LUMA_16x32].pixelavg_pp = PFX(pixel_avg_16x32_avx512);
-        p.pu[LUMA_16x16].pixelavg_pp = PFX(pixel_avg_16x16_avx512);
-        p.pu[LUMA_16x12].pixelavg_pp = PFX(pixel_avg_16x12_avx512);
-        p.pu[LUMA_16x8].pixelavg_pp = PFX(pixel_avg_16x8_avx512);
-        p.pu[LUMA_16x4].pixelavg_pp = PFX(pixel_avg_16x4_avx512);
-        p.pu[LUMA_8x32].pixelavg_pp = PFX(pixel_avg_8x32_avx512);
-        p.pu[LUMA_8x16].pixelavg_pp = PFX(pixel_avg_8x16_avx512);
-        p.pu[LUMA_8x8].pixelavg_pp = PFX(pixel_avg_8x8_avx512);
+        ASSIGN2(p.pu[LUMA_16x64].pixelavg_pp, pixel_avg_16x64_avx512);
+        ASSIGN2(p.pu[LUMA_16x32].pixelavg_pp, pixel_avg_16x32_avx512);
+        ASSIGN2(p.pu[LUMA_16x16].pixelavg_pp, pixel_avg_16x16_avx512);
+        ASSIGN2(p.pu[LUMA_16x12].pixelavg_pp, pixel_avg_16x12_avx512);
+        ASSIGN2(p.pu[LUMA_16x8].pixelavg_pp, pixel_avg_16x8_avx512);
+        ASSIGN2(p.pu[LUMA_16x4].pixelavg_pp, pixel_avg_16x4_avx512);
+        ASSIGN2(p.pu[LUMA_8x32].pixelavg_pp, pixel_avg_8x32_avx512);
+        ASSIGN2(p.pu[LUMA_8x16].pixelavg_pp, pixel_avg_8x16_avx512);
+        ASSIGN2(p.pu[LUMA_8x8].pixelavg_pp, pixel_avg_8x8_avx512);
         //p.pu[LUMA_8x4].pixelavg_pp = PFX(pixel_avg_8x4_avx512);
-
         p.pu[LUMA_4x4].sad = PFX(pixel_sad_4x4_avx512);
         p.pu[LUMA_4x8].sad = PFX(pixel_sad_4x8_avx512);
         p.pu[LUMA_4x16].sad = PFX(pixel_sad_4x16_avx512);
@@ -4954,12 +4983,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_64x48].luma_hpp = PFX(interp_8tap_horiz_pp_64x48_avx512);
         p.pu[LUMA_64x64].luma_hpp = PFX(interp_8tap_horiz_pp_64x64_avx512);
         p.pu[LUMA_48x64].luma_hpp = PFX(interp_8tap_horiz_pp_48x64_avx512);
-
-        p.pu[LUMA_64x16].pixelavg_pp = PFX(pixel_avg_64x16_avx512);
-        p.pu[LUMA_64x32].pixelavg_pp = PFX(pixel_avg_64x32_avx512);
-        p.pu[LUMA_64x48].pixelavg_pp = PFX(pixel_avg_64x48_avx512);
-        p.pu[LUMA_64x64].pixelavg_pp = PFX(pixel_avg_64x64_avx512);
-
+        ASSIGN2(p.pu[LUMA_64x16].pixelavg_pp, pixel_avg_64x16_avx512);
+        ASSIGN2(p.pu[LUMA_64x32].pixelavg_pp, pixel_avg_64x32_avx512);
+        ASSIGN2(p.pu[LUMA_64x48].pixelavg_pp, pixel_avg_64x48_avx512);
+        ASSIGN2(p.pu[LUMA_64x64].pixelavg_pp, pixel_avg_64x64_avx512);
         //luma hps
         p.pu[LUMA_64x64].luma_hps = PFX(interp_8tap_horiz_ps_64x64_avx512);
         p.pu[LUMA_64x48].luma_hps = PFX(interp_8tap_horiz_ps_64x48_avx512);

@@ -550,11 +550,37 @@ bool PixelHarness::check_cpy1Dto2D_shr_t(cpy1Dto2D_shr_t ref, cpy1Dto2D_shr_t op
 
     return true;
 }
-
 bool PixelHarness::check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt)
 {
-    ALIGN_VAR_16(pixel, ref_dest[64 * 64]);
-    ALIGN_VAR_16(pixel, opt_dest[64 * 64]);
+    ALIGN_VAR_64(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_64(pixel, opt_dest[64 * 64]);
+    int j = 0;
+    memset(ref_dest, 0xCD, sizeof(ref_dest));
+    memset(opt_dest, 0xCD, sizeof(opt_dest));
+
+    intptr_t stride = STRIDE;
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index1 = rand() % TEST_CASES;
+        int index2 = rand() % TEST_CASES;
+        checked(ref, ref_dest, stride, pixel_test_buff[index1] + j,
+                stride, pixel_test_buff[index2] + j, stride, 32);
+        opt(opt_dest, stride, pixel_test_buff[index1] + j,
+            stride, pixel_test_buff[index2] + j, stride, 32);
+
+        if (memcmp(ref_dest, opt_dest, 64 * 64 * sizeof(pixel)))
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+bool PixelHarness::check_pixelavg_pp_aligned(pixelavg_pp_t ref, pixelavg_pp_t opt)
+{
+    ALIGN_VAR_64(pixel, ref_dest[64 * 64]);
+    ALIGN_VAR_64(pixel, opt_dest[64 * 64]);
 
     int j = 0;
 
@@ -575,7 +601,7 @@ bool PixelHarness::check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt)
             return false;
 
         reportfail();
-        j += INCR;
+        j += INCR + 32;
     }
 
     return true;
@@ -2263,12 +2289,19 @@ bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderP
             return false;
         }
     }
-
-    if (opt.pu[part].pixelavg_pp)
+    if (opt.pu[part].pixelavg_pp[NONALIGNED])
     {
-        if (!check_pixelavg_pp(ref.pu[part].pixelavg_pp, opt.pu[part].pixelavg_pp))
+        if (!check_pixelavg_pp(ref.pu[part].pixelavg_pp[NONALIGNED], opt.pu[part].pixelavg_pp[NONALIGNED]))
         {
             printf("pixelavg_pp[%s]: failed!\n", lumaPartStr[part]);
+            return false;
+        }
+    }
+    if (opt.pu[part].pixelavg_pp[ALIGNED])
+    {
+        if (!check_pixelavg_pp_aligned(ref.pu[part].pixelavg_pp[ALIGNED], opt.pu[part].pixelavg_pp[ALIGNED]))
+        {
+            printf("pixelavg_pp_aligned[%s]: failed!\n", lumaPartStr[part]);
             return false;
         }
     }
@@ -2632,7 +2665,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
             if (opt.cu[i].cpy1Dto2D_shl[ALIGNED])
             {
-                if (!check_cpy1Dto2D_shl_t(ref.cu[i].cpy1Dto2D_shl[ALIGNED], opt.cu[i].cpy1Dto2D_shl[ALIGNED]))
+                if (!check_cpy1Dto2D_shl_aligned_t(ref.cu[i].cpy1Dto2D_shl[ALIGNED], opt.cu[i].cpy1Dto2D_shl[ALIGNED]))
                 {
                     printf("cpy1Dto2D_shl_aligned[%dx%d] failed!\n", 4 << i, 4 << i);
                     return false;
@@ -3051,13 +3084,17 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         HEADER("satd[%s]", lumaPartStr[part]);
         REPORT_SPEEDUP(opt.pu[part].satd, ref.pu[part].satd, pbuf1, STRIDE, fref, STRIDE);
     }
-
-    if (opt.pu[part].pixelavg_pp)
+    if (opt.pu[part].pixelavg_pp[NONALIGNED])
     {
         HEADER("avg_pp[%s]", lumaPartStr[part]);
-        REPORT_SPEEDUP(opt.pu[part].pixelavg_pp, ref.pu[part].pixelavg_pp, pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 32);
+        REPORT_SPEEDUP(opt.pu[part].pixelavg_pp[NONALIGNED], ref.pu[part].pixelavg_pp[NONALIGNED], pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 32);
     }
 
+    if (opt.pu[part].pixelavg_pp[ALIGNED])
+    {
+        HEADER("avg_pp_aligned[%s]", lumaPartStr[part]);
+        REPORT_SPEEDUP(opt.pu[part].pixelavg_pp[ALIGNED], ref.pu[part].pixelavg_pp[ALIGNED], pbuf1, STRIDE, pbuf2, STRIDE, pbuf3, STRIDE, 32);
+    }
     if (opt.pu[part].sad)
     {
         HEADER("sad[%s]", lumaPartStr[part]);

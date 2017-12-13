@@ -79,6 +79,7 @@ protected:
     bool check_copy_ps(copy_ps_t ref, copy_ps_t opt);
     bool check_copy_ss(copy_ss_t ref, copy_ss_t opt);
     bool check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt);
+    bool check_pixelavg_pp_aligned(pixelavg_pp_t ref, pixelavg_pp_t opt);
     bool check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt);
     bool check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt);
     bool check_pixel_add_ps_aligned(pixel_add_ps_t ref, pixel_add_ps_t opt);

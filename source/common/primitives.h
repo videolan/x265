@@ -249,10 +249,8 @@ struct EncoderPrimitives
         filter_sp_t    luma_vsp;
         filter_ss_t    luma_vss;
         filter_hv_pp_t luma_hvpp;   // combines hps + vsp
-
-        pixelavg_pp_t  pixelavg_pp; // quick bidir using pixels (borrowed from x264)
+        pixelavg_pp_t  pixelavg_pp[NUM_ALIGNMENT_TYPES]; // quick bidir using pixels (borrowed from x264)
         addAvg_t       addAvg[NUM_ALIGNMENT_TYPES];      // bidir motion compensation, uses 16bit values
-
         copy_pp_t      copy_pp;
         filter_p2s_t   convert_p2s[NUM_ALIGNMENT_TYPES];
     }

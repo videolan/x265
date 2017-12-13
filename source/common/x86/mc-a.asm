@@ -6388,6 +6388,47 @@ cglobal pixel_avg_48x64, 6,10,4
     movu    [r0 + r1 * 2], m0
     movu    [r0 + r8], m2
 %endmacro
+%macro PROCESS_PIXELAVG_ALIGNED_32x8_HBD_AVX512 0
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+%endmacro
 
 %macro PROCESS_PIXELAVG_64x8_HBD_AVX512 0
     movu    m0, [r2]
@@ -6465,6 +6506,83 @@ cglobal pixel_avg_48x64, 6,10,4
     pavgw   m2, m3
     movu    [r0 + r1 * 2 + mmsize], m0
     movu    [r0 + r8 + mmsize], m2
+%endmacro
+%macro PROCESS_PIXELAVG_ALIGNED_64x8_HBD_AVX512 0
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    m0, [r2 + mmsize]
+    mova    m1, [r4 + mmsize]
+    mova    m2, [r2 + r3 + mmsize]
+    mova    m3, [r4 + r5 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + mmsize], m0
+    mova    [r0 + r1 + mmsize], m2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+
+    mova    m0, [r2 + r3 * 2 + mmsize]
+    mova    m1, [r4 + r5 * 2 + mmsize]
+    mova    m2, [r2 + r6 + mmsize]
+    mova    m3, [r4 + r7 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2 + mmsize], m0
+    mova    [r0 + r8 + mmsize], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    m0, [r2 + mmsize]
+    mova    m1, [r4 + mmsize]
+    mova    m2, [r2 + r3 + mmsize]
+    mova    m3, [r4 + r5 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + mmsize], m0
+    mova    [r0 + r1 + mmsize], m2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+
+    mova    m0, [r2 + r3 * 2 + mmsize]
+    mova    m1, [r4 + r5 * 2 + mmsize]
+    mova    m2, [r2 + r6 + mmsize]
+    mova    m3, [r4 + r7 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2 + mmsize], m0
+    mova    [r0 + r8 + mmsize], m2
 %endmacro
 
 %macro PROCESS_PIXELAVG_48x8_HBD_AVX512 0
@@ -6544,13 +6662,90 @@ cglobal pixel_avg_48x64, 6,10,4
     movu    [r0 + r1 * 2 + mmsize], ym0
     movu    [r0 + r8 + mmsize], ym2
 %endmacro
+%macro PROCESS_PIXELAVG_ALIGNED_48x8_HBD_AVX512 0
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    ym0, [r2 + mmsize]
+    mova    ym1, [r4 + mmsize]
+    mova    ym2, [r2 + r3 + mmsize]
+    mova    ym3, [r4 + r5 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    mova    [r0 + mmsize], ym0
+    mova    [r0 + r1 + mmsize], ym2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+
+    mova    ym0, [r2 + r3 * 2 + mmsize]
+    mova    ym1, [r4 + r5 * 2 + mmsize]
+    mova    ym2, [r2 + r6 + mmsize]
+    mova    ym3, [r4 + r7 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    mova    [r0 + r1 * 2 + mmsize], ym0
+    mova    [r0 + r8 + mmsize], ym2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    ym0, [r2 + mmsize]
+    mova    ym1, [r4 + mmsize]
+    mova    ym2, [r2 + r3 + mmsize]
+    mova    ym3, [r4 + r5 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    mova    [r0 + mmsize], ym0
+    mova    [r0 + r1 + mmsize], ym2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+
+    mova    ym0, [r2 + r3 * 2 + mmsize]
+    mova    ym1, [r4 + r5 * 2 + mmsize]
+    mova    ym2, [r2 + r6 + mmsize]
+    mova    ym3, [r4 + r7 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    mova    [r0 + r1 * 2 + mmsize], ym0
+    mova    [r0 + r8 + mmsize], ym2
+%endmacro
 
 %macro PIXEL_AVG_HBD_W32 1
 INIT_ZMM avx512
 cglobal pixel_avg_32x%1, 6,9,4
-    add     r1d, r1d
-    add     r3d, r3d
-    add     r5d, r5d
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
     lea     r6, [r3 * 3]
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
@@ -6572,13 +6767,40 @@ PIXEL_AVG_HBD_W32 24
 PIXEL_AVG_HBD_W32 32
 PIXEL_AVG_HBD_W32 64
 %endif
+%macro PIXEL_AVG_HBD_ALIGNED_W32 1
+INIT_ZMM avx512
+cglobal pixel_avg_aligned_32x%1, 6,9,4
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+
+%rep %1/8 - 1
+    PROCESS_PIXELAVG_ALIGNED_32x8_HBD_AVX512
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endrep
+    PROCESS_PIXELAVG_ALIGNED_32x8_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+PIXEL_AVG_HBD_ALIGNED_W32 8
+PIXEL_AVG_HBD_ALIGNED_W32 16
+PIXEL_AVG_HBD_ALIGNED_W32 24
+PIXEL_AVG_HBD_ALIGNED_W32 32
+PIXEL_AVG_HBD_ALIGNED_W32 64
+%endif
 
 %macro PIXEL_AVG_HBD_W64 1
 INIT_ZMM avx512
 cglobal pixel_avg_64x%1, 6,9,4
-    add     r1d, r1d
-    add     r3d, r3d
-    add     r5d, r5d
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
     lea     r6, [r3 * 3]
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
@@ -6599,13 +6821,39 @@ PIXEL_AVG_HBD_W64 32
 PIXEL_AVG_HBD_W64 48
 PIXEL_AVG_HBD_W64 64
 %endif
+%macro PIXEL_AVG_HBD_ALIGNED_W64 1
+INIT_ZMM avx512
+cglobal pixel_avg_aligned_64x%1, 6,9,4
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+
+%rep %1/8 - 1
+    PROCESS_PIXELAVG_ALIGNED_64x8_HBD_AVX512
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endrep
+    PROCESS_PIXELAVG_ALIGNED_64x8_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+PIXEL_AVG_HBD_ALIGNED_W64 16
+PIXEL_AVG_HBD_ALIGNED_W64 32
+PIXEL_AVG_HBD_ALIGNED_W64 48
+PIXEL_AVG_HBD_ALIGNED_W64 64
+%endif
 
 %if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_avg_48x64, 6,9,4
-    add     r1d, r1d
-    add     r3d, r3d
-    add     r5d, r5d
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
     lea     r6, [r3 * 3]
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
@@ -6617,6 +6865,26 @@ cglobal pixel_avg_48x64, 6,9,4
     lea     r4, [r4 + 4 * r5]
 %endrep
     PROCESS_PIXELAVG_48x8_HBD_AVX512
+    RET
+%endif
+
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal pixel_avg_aligned_48x64, 6,9,4
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+
+%rep 7
+    PROCESS_PIXELAVG_ALIGNED_48x8_HBD_AVX512
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endrep
+    PROCESS_PIXELAVG_ALIGNED_48x8_HBD_AVX512
     RET
 %endif
 ;-----------------------------------------------------------------------------
