@@ -97,6 +97,7 @@ protected:
     bool check_cpy2Dto1D_shl_t(cpy2Dto1D_shl_t ref, cpy2Dto1D_shl_t opt);
     bool check_cpy2Dto1D_shr_t(cpy2Dto1D_shr_t ref, cpy2Dto1D_shr_t opt);
     bool check_cpy1Dto2D_shl_t(cpy1Dto2D_shl_t ref, cpy1Dto2D_shl_t opt);
+    bool check_cpy1Dto2D_shl_aligned_t(cpy1Dto2D_shl_t ref, cpy1Dto2D_shl_t opt);
     bool check_cpy1Dto2D_shr_t(cpy1Dto2D_shr_t ref, cpy1Dto2D_shr_t opt);
     bool check_copy_cnt_t(copy_cnt_t ref, copy_cnt_t opt);
     bool check_pixel_var(var_t ref, var_t opt);

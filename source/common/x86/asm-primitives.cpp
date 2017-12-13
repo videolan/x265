@@ -989,7 +989,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_LUMA_TU(blockfill_s[ALIGNED], blockfill_s, sse2);
         ALL_LUMA_TU(blockfill_s[NONALIGNED], blockfill_s, sse2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, sse2);
-        ALL_LUMA_TU_S(cpy1Dto2D_shl, cpy1Dto2D_shl_, sse2);
+        ALL_LUMA_TU_S(cpy1Dto2D_shl[NONALIGNED], cpy1Dto2D_shl_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shr, cpy2Dto1D_shr_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shl, cpy2Dto1D_shl_, sse2);
 #if X86_64
@@ -1692,11 +1692,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         ASSIGN2(p.cu[BLOCK_16x16].blockfill_s, blockfill_s_16x16_avx2);
         ASSIGN2(p.cu[BLOCK_32x32].blockfill_s, blockfill_s_32x32_avx2);
-
         ALL_LUMA_TU(count_nonzero, count_nonzero, avx2);
-        ALL_LUMA_TU_S(cpy1Dto2D_shl, cpy1Dto2D_shl_, avx2);
+        ALL_LUMA_TU_S(cpy1Dto2D_shl[NONALIGNED], cpy1Dto2D_shl_, avx2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, avx2);
-
         p.cu[BLOCK_8x8].copy_cnt = PFX(copy_cnt_8_avx2);
         p.cu[BLOCK_16x16].copy_cnt = PFX(copy_cnt_16_avx2);
         p.cu[BLOCK_32x32].copy_cnt = PFX(copy_cnt_32_avx2);
@@ -2526,10 +2524,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_64x32].sad_x4 = PFX(pixel_sad_x4_64x32_avx512);
         p.pu[LUMA_64x48].sad_x4 = PFX(pixel_sad_x4_64x48_avx512);
         p.pu[LUMA_64x64].sad_x4 = PFX(pixel_sad_x4_64x64_avx512);
-
         p.cu[BLOCK_16x16].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_16_avx512);
         p.cu[BLOCK_32x32].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_32_avx512);
-        p.cu[BLOCK_32x32].cpy1Dto2D_shl = PFX(cpy1Dto2D_shl_32_avx512);
+        p.cu[BLOCK_32x32].cpy1Dto2D_shl[NONALIGNED] = PFX(cpy1Dto2D_shl_32_avx512);
+        p.cu[BLOCK_32x32].cpy1Dto2D_shl[ALIGNED] = PFX(cpy1Dto2D_shl_aligned_32_avx512);
         p.weight_pp = PFX(weight_pp_avx512);
         p.weight_sp = PFX(weight_sp_avx512);
         p.dequant_normal = PFX(dequant_normal_avx512);
@@ -3196,10 +3194,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         ALL_LUMA_TU(blockfill_s[ALIGNED], blockfill_s, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shl, cpy2Dto1D_shl_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shr, cpy2Dto1D_shr_, sse2);
-        ALL_LUMA_TU_S(cpy1Dto2D_shl, cpy1Dto2D_shl_, sse2);
+        ALL_LUMA_TU_S(cpy1Dto2D_shl[NONALIGNED], cpy1Dto2D_shl_, sse2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, sse2);
         ALL_LUMA_TU_S(ssd_s, pixel_ssd_s_, sse2);
-
         ALL_LUMA_TU_S(intra_pred[PLANAR_IDX], intra_pred_planar, sse2);
         ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse2);
 
@@ -3794,12 +3791,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_8x8].copy_cnt = PFX(copy_cnt_8_avx2);
         p.cu[BLOCK_16x16].copy_cnt = PFX(copy_cnt_16_avx2);
         p.cu[BLOCK_32x32].copy_cnt = PFX(copy_cnt_32_avx2);
-
         ASSIGN2(p.cu[BLOCK_16x16].blockfill_s, blockfill_s_16x16_avx2);
-
-        ALL_LUMA_TU_S(cpy1Dto2D_shl, cpy1Dto2D_shl_, avx2);
+        ALL_LUMA_TU_S(cpy1Dto2D_shl[NONALIGNED], cpy1Dto2D_shl_, avx2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, avx2);
-
         p.cu[BLOCK_8x8].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_8_avx2);
         p.cu[BLOCK_16x16].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_16_avx2);
         p.cu[BLOCK_32x32].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_32_avx2);
@@ -4861,7 +4855,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_32x32].calcresidual[ALIGNED] = PFX(getResidual_aligned32_avx512);
         p.cu[BLOCK_16x16].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_16_avx512);
         p.cu[BLOCK_32x32].cpy2Dto1D_shl = PFX(cpy2Dto1D_shl_32_avx512);
-        p.cu[BLOCK_32x32].cpy1Dto2D_shl = PFX(cpy1Dto2D_shl_32_avx512);
+        p.cu[BLOCK_32x32].cpy1Dto2D_shl[NONALIGNED] = PFX(cpy1Dto2D_shl_32_avx512);
+        p.cu[BLOCK_32x32].cpy1Dto2D_shl[ALIGNED] = PFX(cpy1Dto2D_shl_aligned_32_avx512);
 
         p.cu[BLOCK_32x32].copy_cnt = PFX(copy_cnt_32_avx512);
         p.cu[BLOCK_16x16].copy_cnt = PFX(copy_cnt_16_avx512);

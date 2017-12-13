@@ -5599,17 +5599,58 @@ cglobal cpy1Dto2D_shl_32, 4, 4, 5
     add         r2d, r2d
     movd        xm0, r3d
     lea         r3, [3 * r2]
+%rep 3
+    PROCESS_CPY1Dto2D_SHL_32x8_AVX512
+    add         r1, 4 * mmsize
+    lea         r0, [r0 + r2 * 4]
+%endrep
+    PROCESS_CPY1Dto2D_SHL_32x8_AVX512
+    RET
 
-    PROCESS_CPY1Dto2D_SHL_32x8_AVX512
+%macro PROCESS_CPY1Dto2D_SHL_ALIGNED_32x8_AVX512 0
+    mova        m1,            [r1 + 0 * mmsize]
+    mova        m2,            [r1 + 1 * mmsize]
+    mova        m3,            [r1 + 2 * mmsize]
+    mova        m4,            [r1 + 3 * mmsize]
+    psllw       m1,            xm0
+    psllw       m2,            xm0
+    psllw       m3,            xm0
+    psllw       m4,            xm0
+    mova        [r0],          m1
+    mova        [r0 + r2],     m2
+    mova        [r0 + 2 * r2], m3
+    mova        [r0 + r3],     m4
+
+    add         r1,            4 * mmsize
+    lea         r0,            [r0 + r2 * 4]
+
+    mova        m1,            [r1 + 0 * mmsize]
+    mova        m2,            [r1 + 1 * mmsize]
+    mova        m3,            [r1 + 2 * mmsize]
+    mova        m4,            [r1 + 3 * mmsize]
+    psllw       m1,            xm0
+    psllw       m2,            xm0
+    psllw       m3,            xm0
+    psllw       m4,            xm0
+    mova        [r0],          m1
+    mova        [r0 + r2],     m2
+    mova        [r0 + 2 * r2], m3
+    mova        [r0 + r3],     m4
+%endmacro
+;--------------------------------------------------------------------------------------
+; void cpy1Dto2D_shl(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
+;--------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal cpy1Dto2D_shl_aligned_32, 4, 4, 5
+    add         r2d, r2d
+    movd        xm0, r3d
+    lea         r3, [3 * r2]
+%rep 3
+    PROCESS_CPY1Dto2D_SHL_ALIGNED_32x8_AVX512
     add         r1, 4 * mmsize
     lea         r0, [r0 + r2 * 4]
-    PROCESS_CPY1Dto2D_SHL_32x8_AVX512
-    add         r1, 4 * mmsize
-    lea         r0, [r0 + r2 * 4]
-    PROCESS_CPY1Dto2D_SHL_32x8_AVX512
-    add         r1, 4 * mmsize
-    lea         r0, [r0 + r2 * 4]
-    PROCESS_CPY1Dto2D_SHL_32x8_AVX512
+%endrep
+    PROCESS_CPY1Dto2D_SHL_ALIGNED_32x8_AVX512
     RET
 ;--------------------------------------------------------------------------------------
 ; copy_cnt avx512 code end

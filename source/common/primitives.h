@@ -280,9 +280,8 @@ struct EncoderPrimitives
         count_nonzero_t count_nonzero;
         cpy2Dto1D_shl_t cpy2Dto1D_shl;
         cpy2Dto1D_shr_t cpy2Dto1D_shr;
-        cpy1Dto2D_shl_t cpy1Dto2D_shl;
+        cpy1Dto2D_shl_t cpy1Dto2D_shl[NUM_ALIGNMENT_TYPES];
         cpy1Dto2D_shr_t cpy1Dto2D_shr;
-
         copy_sp_t       copy_sp;
         copy_ps_t       copy_ps;
         copy_ss_t       copy_ss;

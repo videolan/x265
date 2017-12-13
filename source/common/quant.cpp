@@ -560,13 +560,11 @@ void Quant::invtransformNxN(const CUData& cu, int16_t* residual, uint32_t resiSt
                             uint32_t log2TrSize, TextType ttype, bool bIntra, bool useTransformSkip, uint32_t numSig)
 {
     const uint32_t sizeIdx = log2TrSize - 2;
-
     if (cu.m_tqBypass[0])
     {
-        primitives.cu[sizeIdx].cpy1Dto2D_shl(residual, coeff, resiStride, 0);
+        primitives.cu[sizeIdx].cpy1Dto2D_shl[resiStride % 64 == 0](residual, coeff, resiStride, 0);
         return;
     }
-
     // Values need to pass as input parameter in dequant
     int rem = m_qpParam[ttype].rem;
     int per = m_qpParam[ttype].per;
@@ -595,7 +593,7 @@ void Quant::invtransformNxN(const CUData& cu, int16_t* residual, uint32_t resiSt
         if (transformShift > 0)
             primitives.cu[sizeIdx].cpy1Dto2D_shr(residual, m_resiDctCoeff, resiStride, transformShift);
         else
-            primitives.cu[sizeIdx].cpy1Dto2D_shl(residual, m_resiDctCoeff, resiStride, -transformShift);
+            primitives.cu[sizeIdx].cpy1Dto2D_shl[resiStride % 64 == 0](residual, m_resiDctCoeff, resiStride, -transformShift);
 #endif
     }
     else
