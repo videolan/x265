@@ -342,10 +342,8 @@ void Encoder::create()
         m_aborted = true;
     if (!m_lookahead->create())
         m_aborted = true;
-
     initRefIdx();
-
-    if (m_param->analysisReuseMode)
+    if (m_param->analysisReuseMode && m_param->bUseAnalysisFile)
     {
         const char* name = m_param->analysisReuseFileName;
         if (!name)
@@ -3248,8 +3246,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     static uint64_t consumedBytes = 0;
     static uint64_t totalConsumedBytes = 0;
     uint32_t depthBytes = 0;
-    fseeko(m_analysisFile, totalConsumedBytes, SEEK_SET);
-
+    if (m_param->bUseAnalysisFile)
+        fseeko(m_analysisFile, totalConsumedBytes, SEEK_SET);
     const x265_analysis_data *picData = &(picIn->analysisData);
     analysis_intra_data *intraPic = (analysis_intra_data *)picData->intraData;
     analysis_inter_data *interPic = (analysis_inter_data *)picData->interData;
