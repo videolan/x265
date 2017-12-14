@@ -1047,11 +1047,14 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 inFrame->m_lowres.sliceType = sliceType;
                 inFrame->m_lowres.bKeyframe = !!inFrame->m_analysisData.lookahead.keyframe;
                 inFrame->m_lowres.bLastMiniGopBFrame = !!inFrame->m_analysisData.lookahead.lastMiniGopBFrame;
-                int vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
-                for (int index = 0; index < vbvCount; index++)
+                if (m_rateControl->m_isVbv)
                 {
-                    inFrame->m_lowres.plannedSatd[index] = inFrame->m_analysisData.lookahead.plannedSatd[index];
-                    inFrame->m_lowres.plannedType[index] = inFrame->m_analysisData.lookahead.plannedType[index];
+                    int vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
+                    for (int index = 0; index < vbvCount; index++)
+                    {
+                        inFrame->m_lowres.plannedSatd[index] = inFrame->m_analysisData.lookahead.plannedSatd[index];
+                        inFrame->m_lowres.plannedType[index] = inFrame->m_analysisData.lookahead.plannedType[index];
+                    }
                 }
             }
         }
@@ -1165,26 +1168,29 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                         pic_out->analysisData.satdCost *= factor;
                         pic_out->analysisData.lookahead.keyframe = outFrame->m_lowres.bKeyframe;
                         pic_out->analysisData.lookahead.lastMiniGopBFrame = outFrame->m_lowres.bLastMiniGopBFrame;
-                        int vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
-                        for (int index = 0; index < vbvCount; index++)
+                        if (m_rateControl->m_isVbv)
                         {
-                            pic_out->analysisData.lookahead.plannedSatd[index] = outFrame->m_lowres.plannedSatd[index] * factor;
-                            pic_out->analysisData.lookahead.plannedType[index] = outFrame->m_lowres.plannedType[index];
+                            int vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
+                            for (int index = 0; index < vbvCount; index++)
+                            {
+                                pic_out->analysisData.lookahead.plannedSatd[index] = outFrame->m_lowres.plannedSatd[index] * factor;
+                                pic_out->analysisData.lookahead.plannedType[index] = outFrame->m_lowres.plannedType[index];
+                            }
+                            for (uint32_t index = 0; index < pic_out->analysisData.numCuInHeight; index++)
+                            {
+                                outFrame->m_analysisData.lookahead.intraSatdForVbv[index] = outFrame->m_encData->m_rowStat[index].intraSatdForVbv * factor;
+                                outFrame->m_analysisData.lookahead.satdForVbv[index] = outFrame->m_encData->m_rowStat[index].satdForVbv * factor;
+                            }
+                            pic_out->analysisData.lookahead.intraSatdForVbv = outFrame->m_analysisData.lookahead.intraSatdForVbv;
+                            pic_out->analysisData.lookahead.satdForVbv = outFrame->m_analysisData.lookahead.satdForVbv;
+                            for (uint32_t index = 0; index < pic_out->analysisData.numCUsInFrame; index++)
+                            {
+                                outFrame->m_analysisData.lookahead.intraVbvCost[index] = outFrame->m_encData->m_cuStat[index].intraVbvCost * factor;
+                                outFrame->m_analysisData.lookahead.vbvCost[index] = outFrame->m_encData->m_cuStat[index].vbvCost * factor;
+                            }
+                            pic_out->analysisData.lookahead.intraVbvCost = outFrame->m_analysisData.lookahead.intraVbvCost;
+                            pic_out->analysisData.lookahead.vbvCost = outFrame->m_analysisData.lookahead.vbvCost;
                         }
-                        for (uint32_t index = 0; index < pic_out->analysisData.numCuInHeight; index++)
-                        {
-                            outFrame->m_analysisData.lookahead.intraSatdForVbv[index] = outFrame->m_encData->m_rowStat[index].intraSatdForVbv * factor;
-                            outFrame->m_analysisData.lookahead.satdForVbv[index] = outFrame->m_encData->m_rowStat[index].satdForVbv * factor;
-                        }
-                        pic_out->analysisData.lookahead.intraSatdForVbv = outFrame->m_analysisData.lookahead.intraSatdForVbv;
-                        pic_out->analysisData.lookahead.satdForVbv = outFrame->m_analysisData.lookahead.satdForVbv;
-                        for (uint32_t index = 0; index < pic_out->analysisData.numCUsInFrame; index++)
-                        {
-                            outFrame->m_analysisData.lookahead.intraVbvCost[index] = outFrame->m_encData->m_cuStat[index].intraVbvCost * factor;
-                            outFrame->m_analysisData.lookahead.vbvCost[index] = outFrame->m_encData->m_cuStat[index].vbvCost * factor;
-                        }
-                        pic_out->analysisData.lookahead.intraVbvCost = outFrame->m_analysisData.lookahead.intraVbvCost;
-                        pic_out->analysisData.lookahead.vbvCost = outFrame->m_analysisData.lookahead.vbvCost;
                     }
                     writeAnalysisFile(&pic_out->analysisData, *outFrame->m_encData);
                     if (m_param->bUseAnalysisFile)
@@ -1351,15 +1357,18 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->bDisableLookahead)
             {
                 frameEnc->m_dts = frameEnc->m_analysisData.lookahead.dts;
-                for (uint32_t index = 0; index < frameEnc->m_analysisData.numCuInHeight; index++)
+                if (m_rateControl->m_isVbv)
                 {
-                    frameEnc->m_encData->m_rowStat[index].intraSatdForVbv = frameEnc->m_analysisData.lookahead.intraSatdForVbv[index];
-                    frameEnc->m_encData->m_rowStat[index].satdForVbv = frameEnc->m_analysisData.lookahead.satdForVbv[index];
-                }
-                for (uint32_t index = 0; index < frameEnc->m_analysisData.numCUsInFrame; index++)
-                {
-                    frameEnc->m_encData->m_cuStat[index].intraVbvCost = frameEnc->m_analysisData.lookahead.intraVbvCost[index];
-                    frameEnc->m_encData->m_cuStat[index].vbvCost = frameEnc->m_analysisData.lookahead.vbvCost[index];
+                    for (uint32_t index = 0; index < frameEnc->m_analysisData.numCuInHeight; index++)
+                    {
+                        frameEnc->m_encData->m_rowStat[index].intraSatdForVbv = frameEnc->m_analysisData.lookahead.intraSatdForVbv[index];
+                        frameEnc->m_encData->m_rowStat[index].satdForVbv = frameEnc->m_analysisData.lookahead.satdForVbv[index];
+                    }
+                    for (uint32_t index = 0; index < frameEnc->m_analysisData.numCUsInFrame; index++)
+                    {
+                        frameEnc->m_encData->m_cuStat[index].intraVbvCost = frameEnc->m_analysisData.lookahead.intraVbvCost[index];
+                        frameEnc->m_encData->m_cuStat[index].vbvCost = frameEnc->m_analysisData.lookahead.vbvCost[index];
+                    }
                 }
             }
             if (m_param->searchMethod == X265_SEA && frameEnc->m_lowres.sliceType != X265_TYPE_B)
@@ -3032,7 +3041,7 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
 {
     X265_CHECK(analysis->sliceType, "invalid slice type\n");
     analysis->interData = analysis->intraData = NULL;
-    if (m_param->bDisableLookahead)
+    if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
     {
         CHECKED_MALLOC_ZERO(analysis->lookahead.intraSatdForVbv, uint32_t, analysis->numCuInHeight);
         CHECKED_MALLOC_ZERO(analysis->lookahead.satdForVbv, uint32_t, analysis->numCuInHeight);
@@ -3103,10 +3112,9 @@ fail:
     freeAnalysis(analysis);
     m_aborted = true;
 }
-
 void Encoder::freeAnalysis(x265_analysis_data* analysis)
 {
-    if (m_param->bDisableLookahead)
+    if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
     {
         X265_FREE(analysis->lookahead.satdForVbv);
         X265_FREE(analysis->lookahead.intraSatdForVbv);
@@ -3309,10 +3317,9 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
 
     if (m_param->scaleFactor)
         analysis->numPartitions *= factor;
-
     /* Memory is allocated for inter and intra analysis data based on the slicetype */
     allocAnalysis(analysis);
-    if (m_param->bDisableLookahead)
+    if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
     {
         X265_FREAD(analysis->lookahead.intraVbvCost, sizeof(uint32_t), analysis->numCUsInFrame, m_analysisFile, picData->lookahead.intraVbvCost);
         X265_FREAD(analysis->lookahead.vbvCost, sizeof(uint32_t), analysis->numCUsInFrame, m_analysisFile, picData->lookahead.vbvCost);
