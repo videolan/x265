@@ -6865,8 +6865,8 @@ FILTER_VER_PP_CHROMA_64xN_AVX512 64
 %if ARCH_X86_64 == 1
 INIT_ZMM avx512
 cglobal interp_4tap_horiz_ps_32x%1, 4,7,9
-    add             r1d, r1d
-    add             r3d, r3d
+    shl             r1d, 1
+    shl             r3d, 1
     mov             r4d, r4m
     mov             r5d, r5m
 %ifdef PIC
@@ -7063,8 +7063,8 @@ IPFILTER_CHROMA_PS_AVX512_32xN 64
 %if ARCH_X86_64 == 1
 INIT_ZMM avx512
 cglobal interp_4tap_horiz_ps_64x%1, 4,7,9
-    add             r1d, r1d
-    add             r3d, r3d
+    shl             r1d, 1
+    shl             r3d, 1
     mov             r4d, r4m
     mov             r5d, r5m
 %ifdef PIC
@@ -7159,8 +7159,8 @@ IPFILTER_CHROMA_PS_AVX512_64xN 64
 %if ARCH_X86_64 == 1
 INIT_ZMM avx512
 cglobal interp_4tap_horiz_ps_16x%1, 4,7,9
-    add             r1d, r1d
-    add             r3d, r3d
+    shl             r1d, 1
+    shl             r3d, 1
     mov             r4d, r4m
     mov             r5d, r5m
 %ifdef PIC
@@ -7341,8 +7341,8 @@ IPFILTER_CHROMA_PS_AVX512_16xN 64
 %if ARCH_X86_64 == 1
 INIT_ZMM avx512
 cglobal interp_4tap_horiz_ps_48x64, 4,7,9
-    add             r1d, r1d
-    add             r3d, r3d
+    shl             r1d, 1
+    shl             r3d, 1
     mov             r4d, r4m
     mov             r5d, r5m
 
@@ -7454,8 +7454,8 @@ cglobal interp_4tap_horiz_ps_48x64, 4,7,9
 %macro IPFILTER_CHROMA_PS_AVX512_8xN 1
 INIT_ZMM avx512
 cglobal interp_4tap_horiz_ps_8x%1, 4,9,9
-    add             r1d, r1d
-    add             r3d, r3d
+    shl             r1d, 1
+    shl             r3d, 1
     mov             r4d, r4m
     mov             r5d, r5m
 
@@ -7680,8 +7680,8 @@ IPFILTER_CHROMA_PS_AVX512_8xN 64
 %macro IPFILTER_CHROMA_PS_AVX512_24xN 1
 INIT_ZMM avx512
 cglobal interp_4tap_horiz_ps_24x%1, 4,9,9
-    add             r1d, r1d
-    add             r3d, r3d
+    shl             r1d, 1
+    shl             r3d, 1
     mov             r4d, r4m
     mov             r5d, r5m
 
@@ -10560,27 +10560,28 @@ cglobal interp_8tap_horiz_pp_48x64, 5,8,17
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
+
     paddd           m8,       m11
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
     pmaddwd         m13,      m3
     pmaddwd         m10,      m2
     paddd           m10,      m13
+
     paddd           m9,       m10
     paddd           m9,       m6
     psrad           m9,       INTERP_SHIFT_PS
@@ -10595,27 +10596,28 @@ cglobal interp_8tap_horiz_pp_48x64, 5,8,17
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
+
     paddd           m8,       m11
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
     pmaddwd         m12,      m13,       m3
     pmaddwd         m14,      m10,       m2
     paddd           m12,      m14
+
     paddd           m9,       m12
     paddd           m9,       m6
     psrad           m9,       INTERP_SHIFT_PS
@@ -10632,27 +10634,28 @@ cglobal interp_8tap_horiz_pp_48x64, 5,8,17
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
+
     paddd           m8,       m11
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
     pmaddwd         m13,      m3
     pmaddwd         m10,      m2
     paddd           m10,      m13
+
     paddd           m9,       m10
     paddd           m9,       m6
     psrad           m9,       INTERP_SHIFT_PS
@@ -10665,8 +10668,8 @@ cglobal interp_8tap_horiz_pp_48x64, 5,8,17
 %macro IPFILTER_LUMA_PS_AVX512_32xN 1
 INIT_ZMM avx512
 cglobal interp_8tap_horiz_ps_32x%1, 4,7,15
-    add              r1d,        r1d
-    add              r3d,        r3d
+    shl              r1d,        1
+    shl              r3d,        1
     mov              r4d,        r4m
     mov              r5d,        r5m
     shl              r4d,        6
@@ -10730,27 +10733,28 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
+
     paddd           m8,       m11
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
     pmaddwd         m13,      m3
     pmaddwd         m10,      m2
     paddd           m10,      m13
+
     paddd           m9,       m10
     paddd           m9,       m6
     psrad           m9,       INTERP_SHIFT_PS
@@ -10765,14 +10769,11 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -10780,6 +10781,8 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -10800,14 +10803,11 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -10815,6 +10815,8 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,       m1
     paddd           m9,       m12
@@ -10835,14 +10837,11 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -10850,6 +10849,8 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -10873,14 +10874,11 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -10888,6 +10886,8 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -10908,14 +10908,11 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -10923,6 +10920,8 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -10941,8 +10940,8 @@ IPFILTER_LUMA_PS_AVX512_32xN 64
 %macro IPFILTER_LUMA_PS_AVX512_64xN 1
 INIT_ZMM avx512
 cglobal interp_8tap_horiz_ps_64x%1, 4,7,15
-    add              r1d,        r1d
-    add              r3d,        r3d
+    shl              r1d,        1
+    shl              r3d,        1
     mov              r4d,        r4m
     mov              r5d,        r5m
     shl              r4d,        6
@@ -11008,14 +11007,11 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11023,6 +11019,8 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11047,14 +11045,11 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11062,6 +11057,8 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11088,14 +11085,11 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
 
     pshufb          m11,      m8,             m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,             m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,            m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,             m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,            m3
     pmaddwd         m14,      m9,             m2
     paddd           m11,      m14
@@ -11103,6 +11097,8 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,            m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11124,14 +11120,11 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
 
     pshufb          ym11,     ym8,            ym5
     pshufb          ym8,      ym4
-    pshufb          ym12,     ym9,            ym5
-    pshufb          ym9,      ym4
-    pshufb          ym13,     ym10,           ym5
-    pshufb          ym10,     ym4
-
     pmaddwd         ym8,      ym0
     pmaddwd         ym11,     ym1
     paddd           ym8,      ym11
+    pshufb          ym12,     ym9,            ym5
+    pshufb          ym9,      ym4
     pmaddwd         ym11,     ym12,           ym3
     pmaddwd         ym14,     ym9,            ym2
     paddd           ym11,     ym14
@@ -11139,6 +11132,8 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
     paddd           ym8,      ym6
     psrad           ym8,      INTERP_SHIFT_PS
 
+    pshufb          ym13,     ym10,           ym5
+    pshufb          ym10,     ym4
     pmaddwd         ym9,      ym0
     pmaddwd         ym12,     ym1
     paddd           ym9,      ym12
@@ -11158,8 +11153,8 @@ IPFILTER_LUMA_PS_AVX512_64xN 64
 %macro IPFILTER_LUMA_PS_AVX512_16xN 1
 INIT_ZMM avx512
 cglobal interp_8tap_horiz_ps_16x%1, 4,9,15
-    add              r1d,        r1d
-    add              r3d,        r3d
+    shl              r1d,        1
+    shl              r3d,        1
     mov              r4d,        r4m
     mov              r5d,        r5m
     shl              r4d,        6
@@ -11226,14 +11221,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11241,6 +11233,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11261,14 +11255,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11276,6 +11267,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11296,14 +11289,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11311,6 +11301,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11331,14 +11323,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11346,6 +11335,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11369,14 +11360,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11384,6 +11372,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11408,14 +11398,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          m11,      m8,       m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,       m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,      m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,       m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,      m3
     pmaddwd         m14,      m9,       m2
     paddd           m11,      m14
@@ -11423,6 +11410,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,      m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11446,14 +11435,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11461,6 +11447,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11481,14 +11469,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11496,6 +11481,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11516,14 +11503,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11531,6 +11515,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11554,14 +11540,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
@@ -11569,6 +11552,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
@@ -11590,14 +11575,11 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 
     pshufb          ym11,      ym8,       ym5
     pshufb          ym8,       ym4
-    pshufb          ym12,      ym9,       ym5
-    pshufb          ym9,       ym4
-    pshufb          ym13,      ym10,      ym5
-    pshufb          ym10,      ym4
-
     pmaddwd         ym8,       ym0
     pmaddwd         ym11,      ym1
     paddd           ym8,       ym11
+    pshufb          ym12,      ym9,       ym5
+    pshufb          ym9,       ym4
     pmaddwd         ym11,      ym12,      ym3
     pmaddwd         ym14,      ym9,       ym2
     paddd           ym11,      ym14
@@ -11605,6 +11587,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
     paddd           ym8,       ym6
     psrad           ym8,       INTERP_SHIFT_PS
 
+    pshufb          ym13,      ym10,      ym5
+    pshufb          ym10,      ym4
     pmaddwd         ym9,       ym0
     pmaddwd         ym12,      ym1
     paddd           ym9,       ym12
@@ -11623,8 +11607,8 @@ IPFILTER_LUMA_PS_AVX512_16xN 64
 %if ARCH_X86_64
 INIT_ZMM avx512
 cglobal interp_8tap_horiz_ps_48x64, 4,9,15
-    add              r1d,        r1d
-    add              r3d,        r3d
+    shl              r1d,        1
+    shl              r3d,        1
     mov              r4d,        r4m
     mov              r5d,        r5m
     shl              r4d,        6
@@ -11695,27 +11679,28 @@ cglobal interp_8tap_horiz_ps_48x64, 4,9,15
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
+
     paddd           m8,       m11
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
     pmaddwd         m13,      m3
     pmaddwd         m10,      m2
     paddd           m10,      m13
+
     paddd           m9,       m10
     paddd           m9,       m6
     psrad           m9,       INTERP_SHIFT_PS
@@ -11746,27 +11731,28 @@ cglobal interp_8tap_horiz_ps_48x64, 4,9,15
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,       m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,        m2
     paddd           m11,      m14
+
     paddd           m8,       m11
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,       m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
     pmaddwd         m13,      m3
     pmaddwd         m10,      m2
     paddd           m10,      m13
+
     paddd           m9,       m10
     paddd           m9,       m6
     psrad           m9,       INTERP_SHIFT_PS
@@ -11781,8 +11767,8 @@ cglobal interp_8tap_horiz_ps_48x64, 4,9,15
 %if ARCH_X86_64
 INIT_ZMM avx512
 cglobal interp_8tap_horiz_ps_24x32, 4, 9, 15
-    add              r1d,        r1d
-    add              r3d,        r3d
+    shl              r1d,        1
+    shl              r3d,        1
     mov              r4d,        r4m
     mov              r5d,        r5m
     shl              r4d,        6
@@ -11851,27 +11837,28 @@ cglobal interp_8tap_horiz_ps_24x32, 4, 9, 15
 
     pshufb          m11,      m8,         m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,         m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,        m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,         m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,       m2
     paddd           m11,      m14
+
     paddd           m8,       m11
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,        m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
     pmaddwd         m13,      m3
     pmaddwd         m10,      m2
     paddd           m10,      m13
+
     paddd           m9,       m10
     paddd           m9,       m6
     psrad           m9,       INTERP_SHIFT_PS
@@ -11899,27 +11886,28 @@ cglobal interp_8tap_horiz_ps_24x32, 4, 9, 15
 
     pshufb          m11,      m8,        m5
     pshufb          m8,       m4
-    pshufb          m12,      m9,        m5
-    pshufb          m9,       m4
-    pshufb          m13,      m10,        m5
-    pshufb          m10,      m4
-
     pmaddwd         m8,       m0
     pmaddwd         m11,      m1
     paddd           m8,       m11
+    pshufb          m12,      m9,        m5
+    pshufb          m9,       m4
     pmaddwd         m11,      m12,       m3
     pmaddwd         m14,      m9,       m2
     paddd           m11,      m14
+
     paddd           m8,       m11
     paddd           m8,       m6
     psrad           m8,       INTERP_SHIFT_PS
 
+    pshufb          m13,      m10,        m5
+    pshufb          m10,      m4
     pmaddwd         m9,       m0
     pmaddwd         m12,      m1
     paddd           m9,       m12
     pmaddwd         m13,      m3
     pmaddwd         m10,      m2
     paddd           m10,      m13
+
     paddd           m9,       m10
     paddd           m9,       m6
     psrad           m9,       INTERP_SHIFT_PS
@@ -11934,8 +11922,8 @@ cglobal interp_8tap_horiz_ps_24x32, 4, 9, 15
 %macro IPFILTER_LUMA_PS_AVX512_8xN 1
 INIT_ZMM avx512
 cglobal interp_8tap_horiz_ps_8x%1, 4, 9, 15
-    add              r1d,        r1d
-    add              r3d,        r3d
+    shl              r1d,        1
+    shl              r3d,        1
     mov              r4d,        r4m
     mov              r5d,        r5m
     shl              r4d,        6
