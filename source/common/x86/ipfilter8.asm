@@ -10947,7 +10947,7 @@ cglobal interp_4tap_vert_%1_16x%2, 4, 10, 12
 %ifidn %1, pp
     vbroadcasti32x8       m7,                 [pw_512]
 %else
-    add                   r3d,                r3d
+    shl                   r3d,                1
     vbroadcasti32x8       m7,                 [pw_2000]
     mova                  m10,                [interp4_vps_store1_avx512]
     mova                  m11,                [interp4_vps_store2_avx512]
@@ -11073,7 +11073,7 @@ cglobal interp_4tap_vert_%1_32x%2, 4, 8, 13
 %ifidn %1,pp
     vbroadcasti32x8       m7,                [pw_512]
 %else
-    add                   r3d,                r3d
+    shl                   r3d,                1
     vbroadcasti32x8       m7,                [pw_2000]
     mova                  m10,                [interp4_vps_store1_avx512]
     mova                  m11,                [interp4_vps_store2_avx512]
@@ -11248,7 +11248,7 @@ cglobal interp_4tap_vert_%1_48x64, 4, 8, 13
 %ifidn %1, pp
     vbroadcasti32x8       m7,                 [pw_512]
 %else
-    add                   r3d,                r3d
+    shl                   r3d,                1
     vbroadcasti32x8       m7,                 [pw_2000]
     mova                  m10,                [interp4_vps_store1_avx512]
     mova                  m11,                [interp4_vps_store2_avx512]
@@ -11400,7 +11400,7 @@ cglobal interp_4tap_vert_%1_64x%2, 4, 6, 15
 %ifidn %1,pp
     vbroadcasti32x8            m12, [pw_512]
 %else
-    add                        r3d, r3d
+    shl                        r3d, 1
     vbroadcasti32x8            m12, [pw_2000]
     mova                       m13, [interp4_vps_store1_avx512]
     mova                       m14, [interp4_vps_store2_avx512]
@@ -14256,24 +14256,23 @@ cglobal interp_8tap_vert_%1_64x%2, 5, 8, 21
 %else
     psubw                 m0,                 m7
     psubw                 m1,                 m7
-    psubw                 m2,                 m7
-    psubw                 m3,                 m7
-
     mova                  m12,                 m16
     mova                  m13,                 m17
-    mova                  m14,                 m16
-    mova                  m15,                 m17
-
     vpermi2q              m12,                 m0,                m1
     vpermi2q              m13,                 m0,                m1
+    movu                  [r2],               ym12
+    vextracti32x8         [r2 + 2 * r3],      m12,                 1
+
+    psubw                 m2,                 m7
+    psubw                 m3,                 m7
+    mova                  m14,                 m16
+    mova                  m15,                 m17
     vpermi2q              m14,                 m2,                m3
     vpermi2q              m15,                 m2,                m3
-
-    movu                  [r2],               ym12
     movu                  [r2 + r3],          ym14
-    vextracti32x8         [r2 + 2 * r3],      m12,                 1
     vextracti32x8         [r2 + r7],          m14,                 1
     lea                   r2,                 [r2 + 4 * r3]
+
     movu                  [r2],               ym13
     movu                  [r2 + r3],          ym15
     vextracti32x8         [r2 + 2 * r3],      m13,                 1
@@ -14303,7 +14302,7 @@ cglobal interp_8tap_vert_%1_16x%2, 5, 9, 18
 %ifidn %1, pp
     vbroadcasti32x8       m7,                 [pw_512]
 %else
-    add                   r3d,                r3d
+    shl                   r3d,                1
     vbroadcasti32x8       m7,                 [pw_2000]
     mova                  m16,                [interp4_vps_store1_avx512]
     mova                  m17,                [interp4_vps_store2_avx512]
@@ -14425,22 +14424,20 @@ cglobal interp_8tap_vert_%1_16x%2, 5, 9, 18
 %else
     psubw                 m0,                 m7
     psubw                 m1,                 m7
-    psubw                 m2,                 m7
-    psubw                 m3,                 m7
-
     mova                  m12,                 m16
     mova                  m13,                 m17
-    mova                  m14,                 m16
-    mova                  m15,                 m17
-
     vpermi2q              m12,                 m0,                m1
     vpermi2q              m13,                 m0,                m1
+    movu                  [r2],               m12
+    movu                  [r2 + 2 * r3],      m13
+
+    psubw                 m2,                 m7
+    psubw                 m3,                 m7
+    mova                  m14,                 m16
+    mova                  m15,                 m17
     vpermi2q              m14,                 m2,                m3
     vpermi2q              m15,                 m2,                m3
-
-    movu                  [r2],               m12
     movu                  [r2 + r3],          m14
-    movu                  [r2 + 2 * r3],      m13
     movu                  [r2 + r7],          m15
 %endif
 %endmacro
@@ -14467,7 +14464,7 @@ cglobal interp_8tap_vert_%1_32x%2, 5, 8, 18
 %ifidn %1, pp
     vbroadcasti32x8       m7,                 [pw_512]
 %else
-    add                   r3d,                r3d
+    shl                   r3d,                1
     vbroadcasti32x8       m7,                 [pw_2000]
     mova                  m16,                [interp4_vps_store1_avx512]
     mova                  m17,                [interp4_vps_store2_avx512]
@@ -14596,22 +14593,20 @@ cglobal interp_8tap_vert_%1_32x%2, 5, 8, 18
 %else
     psubw                 m0,                 m7
     psubw                 m1,                 m7
-    psubw                 m2,                 m7
-    psubw                 m3,                 m7
-
     mova                  m12,                 m16
     mova                  m13,                 m17
-    mova                  m14,                 m16
-    mova                  m15,                 m17
-
     vpermi2q              m12,                 m0,                m1
     vpermi2q              m13,                 m0,                m1
+    movu                  [r9],               m12
+    movu                  [r9 + 2 * r3],      m13
+
+    psubw                 m2,                 m7
+    psubw                 m3,                 m7
+    mova                  m14,                 m16
+    mova                  m15,                 m17
     vpermi2q              m14,                 m2,                m3
     vpermi2q              m15,                 m2,                m3
-
-    movu                  [r9],               m12
     movu                  [r9 + r3],          m14
-    movu                  [r9 + 2 * r3],      m13
     movu                  [r9 + r7],          m15
 %endif
     movu                  xm1,                [r0 + mmsize/2]
@@ -14726,24 +14721,23 @@ cglobal interp_8tap_vert_%1_32x%2, 5, 8, 18
 %else
     psubw                 m0,                 m7
     psubw                 m1,                 m7
-    psubw                 m2,                 m7
-    psubw                 m3,                 m7
-
     mova                  m12,                 m16
     mova                  m13,                 m17
-    mova                  m14,                 m16
-    mova                  m15,                 m17
-
     vpermi2q              m12,                 m0,                m1
     vpermi2q              m13,                 m0,                m1
+    movu                  [r2 + mmsize],               ym12
+    vextracti32x8         [r2 + 2 * r3 + mmsize],      m12,                 1
+
+    psubw                 m2,                 m7
+    psubw                 m3,                 m7
+    mova                  m14,                 m16
+    mova                  m15,                 m17
     vpermi2q              m14,                 m2,                m3
     vpermi2q              m15,                 m2,                m3
-
-    movu                  [r2 + mmsize],               ym12
     movu                  [r2 + r3 + mmsize],          ym14
-    vextracti32x8         [r2 + 2 * r3 + mmsize],      m12,                 1
     vextracti32x8         [r2 + r7 + mmsize],          m14,                 1
     lea                   r2,                          [r2 + 4 * r3]
+
     movu                  [r2 + mmsize],               ym13
     movu                  [r2 + r3 + mmsize],          ym15
     vextracti32x8         [r2 + 2 * r3 + mmsize],      m13,                 1
@@ -14774,7 +14768,7 @@ cglobal interp_8tap_vert_%1_48x64, 5, 10, 18
 %ifidn %1, pp
     vbroadcasti32x8       m7,                 [pw_512]
 %else
-    add                   r3d,                r3d
+    shl                   r3d,                1
     vbroadcasti32x8       m7,                 [pw_2000]
     mova                  m16,                [interp4_vps_store1_avx512]
     mova                  m17,                [interp4_vps_store2_avx512]
@@ -14877,21 +14871,19 @@ cglobal interp_8tap_vert_%1_48x64, 5, 10, 18
 %else
     psubw                 m0,                 m7
     psubw                 m1,                 m7
-    psubw                 m2,                 m7
-    psubw                 m3,                 m7
-
     mova                  m12,                 m16
     mova                  m13,                 m17
-    mova                  m14,                 m16
-    mova                  m15,                 m17
-
     vpermi2q              m12,                 m0,                m1
     vpermi2q              m13,                 m0,                m1
-    vpermi2q              m14,                 m2,                m3
-    vpermi2q              m15,                 m2,                m3
-
     movu                  [r2],               m12
     movu                  [r2 + mmsize],      m13
+
+    psubw                 m2,                 m7
+    psubw                 m3,                 m7
+    mova                  m14,                 m16
+    mova                  m15,                 m17
+    vpermi2q              m14,                 m2,                m3
+    vpermi2q              m15,                 m2,                m3
     movu                  [r2 + r3],          m14
     movu                  [r2 + r3 + mmsize], m15
 %endif
@@ -14919,7 +14911,7 @@ cglobal interp_8tap_vert_%1_64x%2, 5, 8, 18
 %ifidn %1, pp
     vbroadcasti32x8       m7,                 [pw_512]
 %else
-    add                   r3d,                r3d
+    shl                   r3d,                1
     vbroadcasti32x8       m7,                 [pw_2000]
     mova                  m16,                [interp4_vps_store1_avx512]
     mova                  m17,                [interp4_vps_store2_avx512]
