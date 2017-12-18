@@ -3489,3 +3489,116 @@ cglobal pixel_ssd_s_16, 2,4,5
 ;-----------------------------------------------------------------------------
 ; ssd_s avx512 code end
 ;-----------------------------------------------------------------------------
+;-----------------------------------------------------------------------------
+;ALigned version of macro
+;-----------------------------------------------------------------------------
+%macro PROCESS_SSD_S_16x8_ALIGNED_AVX512 0
+    mova             ym1,   [r0]
+    vinserti32x8     m1,    [r0 + r1],     1
+    mova             ym2,   [r0 + 2 * r1]
+    vinserti32x8     m2,    [r0 + r3],     1
+    lea              r0,    [r0 + 4 * r1]
+    mova             ym3,   [r0]
+    vinserti32x8     m3,    [r0 + r1],     1
+    mova             ym4,   [r0 + 2 * r1]
+    vinserti32x8     m4,    [r0 + r3],     1
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+%endmacro
+;---------------------------------------------------------------------------------
+;int pixel_ssd_s_aligned( int16_t *ref, intptr_t i_stride )
+;-----------------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_ZMM avx512
+
+INIT_ZMM avx512
+cglobal pixel_ssd_s_aligned_16, 2,4,5
+    add     r1, r1
+    lea     r3, [r1 * 3]
+    pxor    m0, m0
+
+    PROCESS_SSD_S_16x8_ALIGNED_AVX512
+    lea     r0, [r0 + 4 * r1]
+    PROCESS_SSD_S_16x8_ALIGNED_AVX512
+
+    ; calculate sum and return
+    HADDD   m0, m1
+    movd    eax, xm0
+    RET
+%endif
+;---------------------------------------------------------------------------------------------
+; aligned implementation for 32
+;---------------------------------------------------------------------------------------------
+%macro PROCESS_SSD_S_32x8_ALIGNED_AVX512 0
+    mova    m1, [r0]
+    mova    m2, [r0 + r1]
+    mova    m3, [r0 + 2 * r1]
+    mova    m4, [r0 + r3]
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    lea     r0, [r0 + 4 * r1]
+
+    mova    m1, [r0]
+    mova    m2, [r0 + r1]
+    mova    m3, [r0 + 2 * r1]
+    mova    m4, [r0 + r3]
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+%endmacro
+
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal pixel_ssd_s_aligned_32, 2,4,5
+    add     r1, r1
+    lea     r3, [r1 * 3]
+    pxor    m0, m0
+
+    PROCESS_SSD_S_32x8_AVX512
+    lea     r0, [r0 + 4 * r1]
+    PROCESS_SSD_S_32x8_ALIGNED_AVX512
+    lea     r0, [r0 + 4 * r1]
+    PROCESS_SSD_S_32x8_ALIGNED_AVX512
+    lea     r0, [r0 + 4 * r1]
+    PROCESS_SSD_S_32x8_ALIGNED_AVX512
+
+    ; calculate sum and return
+%if BIT_DEPTH >= 10
+    mova            m1, m0
+    pxor            m2, m2
+    punpckldq       m0, m2
+    punpckhdq       m1, m2
+    paddq           m0, m1
+    vextracti32x8   ym2, m0, 1
+    paddq           ym0, ym2
+    vextracti32x4   xm2, m0, 1
+    paddq           xm2, xm0
+    movhlps         xm1, xm2
+    paddq           xm2, xm1
+    movq            rax, xm2
+%else
+    HADDD   m0, m1
+    movd    eax, xm0
+%endif
+    RET
+%endif

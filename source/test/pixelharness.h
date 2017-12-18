@@ -87,6 +87,7 @@ protected:
     bool check_scale1D_pp_aligned(scale1D_t ref, scale1D_t opt);
     bool check_scale2D_pp(scale2D_t ref, scale2D_t opt);
     bool check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt);
+    bool check_ssd_s_aligned(pixel_ssd_s_t ref, pixel_ssd_s_t opt);
     bool check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt);
     bool check_blockfill_s_aligned(blockfill_s_t ref, blockfill_s_t opt);
     bool check_calresidual(calcresidual_t ref, calcresidual_t opt);

@@ -1009,7 +1009,8 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.cu[BLOCK_ ## W ## x ## H].cpy1Dto2D_shr = cpy1Dto2D_shr<W>; \
     p.cu[BLOCK_ ## W ## x ## H].psy_cost_pp   = psyCost_pp<BLOCK_ ## W ## x ## H>; \
     p.cu[BLOCK_ ## W ## x ## H].transpose     = transpose<W>; \
-    p.cu[BLOCK_ ## W ## x ## H].ssd_s         = pixel_ssd_s_c<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].ssd_s[NONALIGNED]         = pixel_ssd_s_c<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].ssd_s[ALIGNED] = pixel_ssd_s_c<W>; \
     p.cu[BLOCK_ ## W ## x ## H].var           = pixel_var<W>; \
     p.cu[BLOCK_ ## W ## x ## H].calcresidual[NONALIGNED]  = getResidual<W>; \
     p.cu[BLOCK_ ## W ## x ## H].calcresidual[ALIGNED]     = getResidual<W>; \

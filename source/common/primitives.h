@@ -290,9 +290,8 @@ struct EncoderPrimitives
         pixel_sse_t     sse_pp;        // Sum of Square Error (pixel, pixel) fenc alignment not assumed
         pixel_sse_ss_t  sse_ss;        // Sum of Square Error (short, short) fenc alignment not assumed
         pixelcmp_t      psy_cost_pp;   // difference in AC energy between two pixel blocks
-        pixel_ssd_s_t   ssd_s;         // Sum of Square Error (residual coeff to self)
+        pixel_ssd_s_t   ssd_s[NUM_ALIGNMENT_TYPES];         // Sum of Square Error (residual coeff to self)
         pixelcmp_t      sa8d;          // Sum of Transformed Differences (8x8 Hadamard), uses satd for 4x4 intra TU
-
         transpose_t     transpose;     // transpose pixel block; for use with intra all-angs
         intra_allangs_t intra_pred_allangs;
         intra_filter_t  intra_filter;

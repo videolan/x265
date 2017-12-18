@@ -1015,10 +1015,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_LUMA_TU_S(cpy2Dto1D_shr, cpy2Dto1D_shr_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shl, cpy2Dto1D_shl_, sse2);
 #if X86_64
-        p.cu[BLOCK_4x4].ssd_s = PFX(pixel_ssd_s_4_sse2);
-        p.cu[BLOCK_8x8].ssd_s = PFX(pixel_ssd_s_8_sse2);
-        p.cu[BLOCK_16x16].ssd_s = PFX(pixel_ssd_s_16_sse2);
-        p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_sse2);
+        ASSIGN2(p.cu[BLOCK_4x4].ssd_s,pixel_ssd_s_4_sse2 );
+        ASSIGN2(p.cu[BLOCK_8x8].ssd_s,pixel_ssd_s_8_sse2);
+        ASSIGN2(p.cu[BLOCK_16x16].ssd_s,pixel_ssd_s_16_sse2);
+        ASSIGN2(p.cu[BLOCK_32x32].ssd_s,pixel_ssd_s_32_sse2 );
 #endif
         ALL_LUMA_TU_S(calcresidual[ALIGNED], getResidual, sse2);
         ALL_LUMA_TU_S(calcresidual[NONALIGNED], getResidual, sse2);
@@ -1681,9 +1681,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I422].pu[CHROMA_422_16x8].satd = PFX(pixel_satd_16x8_avx2);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].satd = PFX(pixel_satd_32x16_avx2);
 
-        p.cu[BLOCK_16x16].ssd_s = PFX(pixel_ssd_s_16_avx2);
-        p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx2);
-
+        ASSIGN2( p.cu[BLOCK_16x16].ssd_s,pixel_ssd_s_16_avx2);
+        ASSIGN2( p.cu[BLOCK_32x32].ssd_s,pixel_ssd_s_32_avx2);
         p.cu[BLOCK_16x16].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_16x16_avx2);
         p.cu[BLOCK_32x32].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_32x32_avx2);
         p.cu[BLOCK_64x64].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_64x64_avx2);
@@ -2450,9 +2449,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.chroma[X265_CSP_I444].pu[LUMA_64x32].p2s[ALIGNED] = PFX(filterPixelToShort_aligned_64x32_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_64x48].p2s[ALIGNED] = PFX(filterPixelToShort_aligned_64x48_avx512);
         p.chroma[X265_CSP_I444].pu[LUMA_64x64].p2s[ALIGNED] = PFX(filterPixelToShort_aligned_64x64_avx512);
-
-        p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx512);
-
+        p.cu[BLOCK_32x32].ssd_s[NONALIGNED] = PFX(pixel_ssd_s_32_avx512);
+        p.cu[BLOCK_32x32].ssd_s[ALIGNED] = PFX(pixel_ssd_s_aligned_32_avx512);
         p.pu[LUMA_16x32].sad = PFX(pixel_sad_16x32_avx512);
         p.pu[LUMA_16x64].sad = PFX(pixel_sad_16x64_avx512);
         p.pu[LUMA_32x8].sad = PFX(pixel_sad_32x8_avx512);
@@ -3235,10 +3233,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         ALL_LUMA_TU_S(cpy1Dto2D_shl[ALIGNED], cpy1Dto2D_shl_, sse2);
         ALL_LUMA_TU_S(cpy1Dto2D_shl[NONALIGNED], cpy1Dto2D_shl_, sse2);
         ALL_LUMA_TU_S(cpy1Dto2D_shr, cpy1Dto2D_shr_, sse2);
-        ALL_LUMA_TU_S(ssd_s, pixel_ssd_s_, sse2);
+        ALL_LUMA_TU_S(ssd_s[NONALIGNED], pixel_ssd_s_, sse2);
         ALL_LUMA_TU_S(intra_pred[PLANAR_IDX], intra_pred_planar, sse2);
         ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse2);
-
         p.cu[BLOCK_4x4].intra_pred[2] = PFX(intra_pred_ang4_2_sse2);
         p.cu[BLOCK_4x4].intra_pred[3] = PFX(intra_pred_ang4_3_sse2);
         p.cu[BLOCK_4x4].intra_pred[4] = PFX(intra_pred_ang4_4_sse2);
@@ -3822,9 +3819,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I420].cu[BLOCK_420_16x16].sse_pp = PFX(pixel_ssd_16x16_avx2);
         p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = PFX(pixel_ssd_32x32_avx2);
 
-        p.cu[BLOCK_16x16].ssd_s = PFX(pixel_ssd_s_16_avx2);
-        p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx2);
-
+        ASSIGN2(p.cu[BLOCK_16x16].ssd_s, pixel_ssd_s_16_avx2);
+        ASSIGN2(p.cu[BLOCK_32x32].ssd_s, pixel_ssd_s_32_avx2);
         p.cu[BLOCK_8x8].copy_cnt = PFX(copy_cnt_8_avx2);
         p.cu[BLOCK_16x16].copy_cnt = PFX(copy_cnt_16_avx2);
         p.cu[BLOCK_32x32].copy_cnt = PFX(copy_cnt_32_avx2);
@@ -4880,9 +4876,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_64x64].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_ss_64x64_avx512);
         p.cu[BLOCK_32x32].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_ss_32x32_avx512);
         p.cu[BLOCK_16x16].sse_ss = (pixel_sse_ss_t)PFX(pixel_ssd_ss_16x16_avx512);
-        p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_avx512);
-        p.cu[BLOCK_16x16].ssd_s = PFX(pixel_ssd_s_16_avx512);
-
+        p.cu[BLOCK_32x32].ssd_s[NONALIGNED] = PFX(pixel_ssd_s_32_avx512);
+        p.cu[BLOCK_32x32].ssd_s[ALIGNED] = PFX(pixel_ssd_s_32_avx512);
+        p.cu[BLOCK_16x16].ssd_s[NONALIGNED] = PFX(pixel_ssd_s_16_avx512);
+        p.cu[BLOCK_16x16].ssd_s[ALIGNED] = PFX(pixel_ssd_s_aligned_16_avx512);
         p.cu[BLOCK_32x32].copy_ss = PFX(blockcopy_ss_32x32_avx512);
         p.chroma[X265_CSP_I420].cu[CHROMA_420_32x32].copy_ss = PFX(blockcopy_ss_32x32_avx512);
         p.chroma[X265_CSP_I422].cu[CHROMA_422_32x64].copy_ss = PFX(blockcopy_ss_32x64_avx512);

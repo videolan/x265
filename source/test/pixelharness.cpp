@@ -267,10 +267,27 @@ bool PixelHarness::check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt)
         reportfail();
         j += INCR;
     }
+    return true;
+}
+bool PixelHarness::check_ssd_s_aligned(pixel_ssd_s_t ref, pixel_ssd_s_t opt)
+{
+    int j = 0;
+    for (int i = 0; i < ITERS; i++)
+    {
+               // NOTE: stride must be multiple of 16, because minimum block is 4x4
+        int stride = (STRIDE + (rand() % STRIDE)) & ~15;
+        sse_t cres = ref(sbuf1 + j, stride);
+        sse_t vres = (sse_t)checked(opt, sbuf1 + j, (intptr_t)stride);
+
+        if (cres != vres)
+            return false;
+
+        reportfail();
+        j += INCR+32;
+    }
 
     return true;
 }
-
 bool PixelHarness::check_weightp(weightp_sp_t ref, weightp_sp_t opt)
 {
     ALIGN_VAR_16(pixel, ref_dest[64 * (64 + 1)]);
@@ -2619,16 +2636,22 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
                     return false;
                 }
             }
-
-            if (opt.cu[i].ssd_s)
+            if (opt.cu[i].ssd_s[NONALIGNED])
             {
-                if (!check_ssd_s(ref.cu[i].ssd_s, opt.cu[i].ssd_s))
+                if (!check_ssd_s(ref.cu[i].ssd_s[NONALIGNED], opt.cu[i].ssd_s[NONALIGNED]))
                 {
                     printf("ssd_s[%dx%d]: failed!\n", 4 << i, 4 << i);
                     return false;
                 }
             }
-
+            if (opt.cu[i].ssd_s[ALIGNED])
+            {
+                if (!check_ssd_s_aligned(ref.cu[i].ssd_s[ALIGNED], opt.cu[i].ssd_s[ALIGNED]))
+                {
+                    printf("ssd_s_aligned[%dx%d]: failed!\n", 4 << i, 4 << i);
+                    return false;
+                }
+            }
             if (opt.cu[i].copy_cnt)
             {
                 if (!check_copy_cnt_t(ref.cu[i].copy_cnt, opt.cu[i].copy_cnt))
@@ -3278,13 +3301,17 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             measurePartition(part, ref, opt);
         }
     }
-
     for (int i = 0; i < NUM_CU_SIZES; i++)
     {
-        if ((i <= BLOCK_32x32) && opt.cu[i].ssd_s)
+        if ((i <= BLOCK_32x32) && opt.cu[i].ssd_s[NONALIGNED])
         {
             HEADER("ssd_s[%dx%d]", 4 << i, 4 << i);
-            REPORT_SPEEDUP(opt.cu[i].ssd_s, ref.cu[i].ssd_s, sbuf1, STRIDE);
+            REPORT_SPEEDUP(opt.cu[i].ssd_s[NONALIGNED], ref.cu[i].ssd_s[NONALIGNED], sbuf1, STRIDE);
+        }
+        if ((i <= BLOCK_32x32) && opt.cu[i].ssd_s[ALIGNED])
+        {
+            HEADER("ssd_s[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.cu[i].ssd_s[ALIGNED], ref.cu[i].ssd_s[ALIGNED], sbuf1, STRIDE);
         }
         if (opt.cu[i].sa8d)
         {
