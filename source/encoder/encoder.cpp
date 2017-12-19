@@ -562,7 +562,7 @@ int Encoder::setAnalysisDataAfterZScan(x265_analysis_data *analysis_data, Frame*
                     {
                         int cuOffset = cuI * bytes + pu;
                         (interData)->mergeFlag[cuPos + cuOffset] = (srcInterData)->mergeFlag[(mbIndex * 16) + cuOffset];
-
+                        (interData)->sadCost[cuPos + cuOffset] = (srcInterData)->sadCost[(mbIndex * 16) + cuOffset];
                         (interData)->interDir[cuPos + cuOffset] = (srcInterData)->interDir[(mbIndex * 16) + cuOffset];
                         for (uint32_t k = 0; k < numDir; k++)
                         {
@@ -570,10 +570,10 @@ int Encoder::setAnalysisDataAfterZScan(x265_analysis_data *analysis_data, Frame*
                             (interData)->refIdx[k][cuPos + cuOffset] = (srcInterData)->refIdx[k][(mbIndex * 16) + cuOffset];
                             memcpy(&(interData)->mv[k][cuPos + cuOffset], &(srcInterData)->mv[k][(mbIndex * 16) + cuOffset], sizeof(MV));
                             if (m_param->analysisReuseLevel == 7 && numPU == PU_2Nx2N &&
-                                ((srcInterData)->depth[cuPos + cuOffset] == (m_param->maxCUSize >> 5)))
+                                ((interData)->depth[cuPos + cuOffset] == (m_param->maxCUSize >> 5)))
                             {
-                                int mv_x = ((analysis_inter_data *)curFrame->m_analysisData.interData)->mv[k][(mbIndex * 16) + cuOffset].x;
-                                int mv_y = ((analysis_inter_data *)curFrame->m_analysisData.interData)->mv[k][(mbIndex * 16) + cuOffset].y;
+                                int mv_x = (interData)->mv[k][cuPos + cuOffset].x;
+                                int mv_y = (interData)->mv[k][cuPos + cuOffset].y;
                                 if ((mv_x*mv_x + mv_y*mv_y) <= MVTHRESHOLD)
                                     memset(&curFrame->m_analysisData.modeFlag[k][cuPos + cuOffset], 1, bytes);
                             }
@@ -640,9 +640,10 @@ int Encoder::setAnalysisData(x265_analysis_data *analysis_data, int poc, uint32_
                     if (m_param->analysisReuseLevel > 4)
                     {
                         memset(&(currInterData)->partSize[count], (interData)->partSize[d], bytes);
-                        int numPU = nbPartsTable[(currInterData)->partSize[d]];
-                        for (int pu = 0; pu < numPU; pu++, d++)
+                        int numPU = nbPartsTable[(interData)->partSize[d]];
+                        for (int pu = 0; pu < numPU; pu++)
                         {
+                            if (pu) d++;
                             (currInterData)->mergeFlag[count + pu] = (interData)->mergeFlag[d];
                             if (m_param->analysisReuseLevel >= 7)
                             {
@@ -654,8 +655,8 @@ int Encoder::setAnalysisData(x265_analysis_data *analysis_data, int poc, uint32_
                                     memcpy(&(currInterData)->mv[i][count + pu], &(interData)->mv[i][d], sizeof(MV));
                                     if (m_param->analysisReuseLevel == 7 && numPU == PU_2Nx2N && m_param->num4x4Partitions <= 16)
                                     {
-                                        int mv_x = ((analysis_inter_data *)curFrame->m_analysisData.interData)->mv[i][count + pu].x;
-                                        int mv_y = ((analysis_inter_data *)curFrame->m_analysisData.interData)->mv[i][count + pu].y;
+                                        int mv_x = (currInterData)->mv[i][count + pu].x;
+                                        int mv_y = (currInterData)->mv[i][count + pu].y;
                                         if ((mv_x*mv_x + mv_y*mv_y) <= MVTHRESHOLD)
                                             memset(&curFrame->m_analysisData.modeFlag[i][count + pu], 1, bytes);
                                     }
@@ -3061,14 +3062,14 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
         if (m_param->analysisReuseLevel >= 7)
         {
             CHECKED_MALLOC(interData->interDir, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+            CHECKED_MALLOC(interData->sadCost, int64_t, analysis->numPartitions * analysis->numCUsInFrame);
             for (int dir = 0; dir < numDir; dir++)
             {
                 CHECKED_MALLOC(interData->mvpIdx[dir], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
                 CHECKED_MALLOC(interData->refIdx[dir], int8_t, analysis->numPartitions * analysis->numCUsInFrame);
                 CHECKED_MALLOC(interData->mv[dir], MV, analysis->numPartitions * analysis->numCUsInFrame);
-                CHECKED_MALLOC(analysis->modeFlag[dir], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+                CHECKED_MALLOC_ZERO(analysis->modeFlag[dir], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
             }
-
             /* Allocate intra in inter */
             if (analysis->sliceType == X265_TYPE_P || m_param->bIntraInBFrames)
             {
