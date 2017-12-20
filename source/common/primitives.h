@@ -223,7 +223,7 @@ typedef void (*pelFilterChroma_t)(pixel* src, intptr_t srcStep, intptr_t offset,
 
 typedef void (*integralv_t)(uint32_t *sum, intptr_t stride);
 typedef void (*integralh_t)(uint32_t *sum, pixel *pix, intptr_t stride);
-
+typedef void(*nonPsyRdoQuant_t)(int16_t *m_resiDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, uint32_t blkPos);
 /* Function pointers to optimized encoder primitives. Each pointer can reference
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */
 struct EncoderPrimitives
@@ -299,9 +299,9 @@ struct EncoderPrimitives
         intra_allangs_t intra_pred_allangs;
         intra_filter_t  intra_filter;
         intra_pred_t    intra_pred[NUM_INTRA_MODE];
+        nonPsyRdoQuant_t nonPsyRdoQuant;
     }
     cu[NUM_CU_SIZES];
-
     /* These remaining primitives work on either fixed block sizes or take
      * block dimensions as arguments and thus do not belong in either the PU or
      * the CU arrays */

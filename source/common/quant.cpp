@@ -734,12 +734,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                 {
                     int signCoef         = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
                     int predictedCoef    = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
-
-                    costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
-
+                    costUncoded[blkPos + x] = static_cast<int64_t>((double)((signCoef * signCoef) << scaleBits));
                     /* when no residual coefficient is coded, predicted coef == recon coef */
                     costUncoded[blkPos + x] -= PSYVALUE(predictedCoef);
-
                     totalUncodedCost += costUncoded[blkPos + x];
                     totalRdCost += costUncoded[blkPos + x];
                 }
@@ -753,25 +750,11 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
         for (int cgScanPos = cgLastScanPos + 1; cgScanPos < (int)cgNum ; cgScanPos++)
         {
             X265_CHECK(coeffNum[cgScanPos] == 0, "count of coeff failure\n");
-
             uint32_t scanPosBase = (cgScanPos << MLS_CG_SIZE);
             uint32_t blkPos      = codeParams.scan[scanPosBase];
-
-            for (int y = 0; y < MLS_CG_SIZE; y++)
-            {
-                for (int x = 0; x < MLS_CG_SIZE; x++)
-                {
-                    int signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
-                    costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
-
-                    totalUncodedCost += costUncoded[blkPos + x];
-                    totalRdCost += costUncoded[blkPos + x];
-                }
-                blkPos += trSize;
-            }
+            primitives.cu[log2TrSize - 2].nonPsyRdoQuant(m_resiDctCoeff, costUncoded, &totalUncodedCost, &totalRdCost, blkPos);
         }
     }
-
     static const uint8_t table_cnt[5][SCAN_SET_SIZE] =
     {
         // patternSigCtx = 0
@@ -841,12 +824,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
                     {
                         int signCoef         = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
                         int predictedCoef    = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
-
-                        costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
-
+                        costUncoded[blkPos + x] = static_cast<int64_t>((double)((signCoef * signCoef) << scaleBits));
                         /* when no residual coefficient is coded, predicted coef == recon coef */
                         costUncoded[blkPos + x] -= PSYVALUE(predictedCoef);
-
                         totalUncodedCost += costUncoded[blkPos + x];
                         totalRdCost += costUncoded[blkPos + x];
 
@@ -865,16 +845,12 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
             else
             {
                 // non-psy path
+                primitives.cu[log2TrSize - 2].nonPsyRdoQuant(m_resiDctCoeff, costUncoded, &totalUncodedCost, &totalRdCost, blkPos);
+                blkPos = codeParams.scan[scanPosBase];
                 for (int y = 0; y < MLS_CG_SIZE; y++)
                 {
                     for (int x = 0; x < MLS_CG_SIZE; x++)
                     {
-                        int signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
-                        costUncoded[blkPos + x] = ((int64_t)signCoef * signCoef) << scaleBits;
-
-                        totalUncodedCost += costUncoded[blkPos + x];
-                        totalRdCost += costUncoded[blkPos + x];
-
                         const uint32_t scanPosOffset =  y * MLS_CG_SIZE + x;
                         const uint32_t ctxSig = table_cnt[patternSigCtx][g_scan4x4[codeParams.scanType][scanPosOffset]] + ctxSigOffset;
                         X265_CHECK(trSize > 4, "trSize check failure\n");
