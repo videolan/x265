@@ -863,21 +863,22 @@ Analysis re-use options, to improve performance when encoding the same
 sequence multiple times (presumably at varying bitrates). The encoder
 will not reuse analysis if slice type parameters do not match.
 
-.. option:: --analysis-reuse-mode <string|int>
+.. option:: --analysis-save <filename>
 
-	This option allows reuse of analysis information from first pass to second pass.
-	:option:`--analysis-reuse-mode save` specifies that encoder outputs analysis information of each frame.
-	:option:`--analysis-reuse-mode load` specifies that encoder reuses analysis information from first pass.
-	There is no benefit using load mode without running encoder in save mode. Analysis data from save mode is
-	written to a file specified by :option:`--analysis-reuse-file`. The amount of analysis data stored/reused
-	is determined by :option:`--analysis-reuse-level`. By reading the analysis data writen by an earlier encode
-	of the same sequence, substantial redundant work may be avoided. Requires cutree, pmode to be off. Default 0.
+	Encoder outputs analysis information of each frame. Analysis data from save mode is
+	written to the file specified. Requires cutree, pmode to be off. Default disabled.
+	
+.. option:: --analysis-load <filename>
 
-	**Values:** off(0), save(1): dump analysis data, load(2): read analysis data
+	Encoder reuses analysis information from the file specified. By reading the analysis data writen by
+	an earlier encode of the same sequence, substantial redundant work may be avoided. Requires cutree, pmode
+	to be off. Default disabled.
+
+	The amount of analysis data stored/reused is determined by :option:`--analysis-reuse-level`.
 
 .. option:: --analysis-reuse-file <filename>
 
-	Specify a filename for analysis data (see :option:`--analysis-reuse-mode`)
+	Specify a filename for `multi-pass-opt-analysis` and `multi-pass-opt-distortion`.
 	If no filename is specified, x265_analysis.dat is used.
 
 .. option:: --analysis-reuse-level <1..10>

@@ -746,7 +746,7 @@ void Lookahead::destroy()
 /* Called by API thread */
 void Lookahead::addPicture(Frame& curFrame, int sliceType)
 {
-    if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->bDisableLookahead)
+    if (m_param->analysisLoad && m_param->bDisableLookahead)
     {
         if (!m_filled)
             m_filled = true;
@@ -847,7 +847,7 @@ Frame* Lookahead::getDecidedPicture()
             return out;
         }
 
-        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->bDisableLookahead)
+        if (m_param->analysisLoad && m_param->bDisableLookahead)
             return NULL;
 
         findJob(-1); /* run slicetypeDecide() if necessary */
@@ -906,13 +906,13 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     default:
         return;
     }
-    if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD || !m_param->bDisableLookahead)
+    if (!m_param->analysisLoad || !m_param->bDisableLookahead)
     {
         X265_CHECK(curFrame->m_lowres.costEst[b - p0][p1 - b] > 0, "Slice cost not estimated\n")
         if (m_param->rc.cuTree && !m_param->rc.bStatRead)
             /* update row satds based on cutree offsets */
             curFrame->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
-        else if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD || m_param->scaleFactor)
+        else if (!m_param->analysisLoad || m_param->scaleFactor)
         {
             if (m_param->rc.aqMode)
                 curFrame->m_lowres.satdCost = curFrame->m_lowres.costEstAq[b - p0][p1 - b];
@@ -1056,7 +1056,7 @@ void Lookahead::slicetypeDecide()
     {
         slicetypeAnalyse(frames, false);
         bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
-        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->scaleFactor && bIsVbv)
+        if (m_param->analysisLoad && m_param->scaleFactor && bIsVbv)
         {
             int numFrames;
             for (numFrames = 0; numFrames < maxSearch; numFrames++)
@@ -1252,7 +1252,7 @@ void Lookahead::slicetypeDecide()
         frames[j + 1] = NULL;
         slicetypeAnalyse(frames, true);
         bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
-        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->scaleFactor && bIsVbv)
+        if (m_param->analysisLoad && m_param->scaleFactor && bIsVbv)
         {
             int numFrames;
             for (numFrames = 0; numFrames < maxSearch; numFrames++)

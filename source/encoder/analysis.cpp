@@ -207,11 +207,11 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         }
     }
 
-    if (m_param->analysisReuseMode && m_slice->m_sliceType != I_SLICE && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel < 10)
+    if ((m_param->analysisSave || m_param->analysisLoad) && m_slice->m_sliceType != I_SLICE && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel < 10)
     {
         int numPredDir = m_slice->isInterP() ? 1 : 2;
         m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
-        m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
+        m_reuseRef = &m_reuseInterDataCTU->ref [ctu.m_cuAddr * X265_MAX_PRED_MODE_PER_CTU * numPredDir];
         m_reuseDepth = &m_reuseInterDataCTU->depth[ctu.m_cuAddr * ctu.m_numPartitions];
         m_reuseModes = &m_reuseInterDataCTU->modes[ctu.m_cuAddr * ctu.m_numPartitions];
         if (m_param->analysisReuseLevel > 4)
@@ -219,7 +219,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             m_reusePartSize = &m_reuseInterDataCTU->partSize[ctu.m_cuAddr * ctu.m_numPartitions];
             m_reuseMergeFlag = &m_reuseInterDataCTU->mergeFlag[ctu.m_cuAddr * ctu.m_numPartitions];
         }
-        if (m_param->analysisReuseMode == X265_ANALYSIS_SAVE)
+        if (m_param->analysisSave && !m_param->analysisLoad)
             for (int i = 0; i < X265_MAX_PRED_MODE_PER_CTU * numPredDir; i++)
                 m_reuseRef[i] = -1;
     }
@@ -228,7 +228,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     if (m_slice->m_sliceType == I_SLICE)
     {
         analysis_intra_data* intraDataCTU = (analysis_intra_data*)m_frame->m_analysisData.intraData;
-        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->analysisReuseLevel > 1)
+        if (m_param->analysisLoad && m_param->analysisReuseLevel > 1)
         {
             memcpy(ctu.m_cuDepth, &intraDataCTU->depth[ctu.m_cuAddr * numPartition], sizeof(uint8_t) * numPartition);
             memcpy(ctu.m_lumaIntraDir, &intraDataCTU->modes[ctu.m_cuAddr * numPartition], sizeof(uint8_t) * numPartition);
@@ -239,7 +239,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     }
     else
     {
-        bool bCopyAnalysis = ((m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->analysisReuseLevel == 10) || (m_param->bMVType && m_param->analysisReuseLevel >= 7 && ctu.m_numPartitions <= 16));
+        bool bCopyAnalysis = ((m_param->analysisLoad && m_param->analysisReuseLevel == 10) || (m_param->bMVType && m_param->analysisReuseLevel >= 7 && ctu.m_numPartitions <= 16));
         bool BCompressInterCUrd0_4 = (m_param->bMVType && m_param->analysisReuseLevel >= 7 && m_param->rdLevel <= 4);
         bool BCompressInterCUrd5_6 = (m_param->bMVType && m_param->analysisReuseLevel >= 7 && m_param->rdLevel >= 5 && m_param->rdLevel <= 6);
         bCopyAnalysis = bCopyAnalysis || BCompressInterCUrd0_4 || BCompressInterCUrd5_6;
@@ -280,7 +280,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             /* generate residual for entire CTU at once and copy to reconPic */
             encodeResidue(ctu, cuGeom);
         }
-        else if ((m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->analysisReuseLevel == 10) || ((m_param->bMVType == AVC_INFO) && m_param->analysisReuseLevel >= 7 && ctu.m_numPartitions <= 16))
+        else if ((m_param->analysisLoad && m_param->analysisReuseLevel == 10) || ((m_param->bMVType == AVC_INFO) && m_param->analysisReuseLevel >= 7 && ctu.m_numPartitions <= 16))
         {
             analysis_inter_data* interDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
             int posCTU = ctu.m_cuAddr * numPartition;
@@ -651,7 +651,7 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
     }
 
     /* Save Intra CUs TU depth only when analysis mode is OFF */
-    if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4 && !m_param->analysisReuseMode)
+    if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4 && (!m_param->analysisSave && !m_param->analysisLoad))
     {
         CUData* ctu = md.bestMode->cu.m_encData->getPicCTU(parentCTU.m_cuAddr);
         int8_t maxTUDepth = -1;
@@ -1263,7 +1263,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 mightSplit &= !bDecidedDepth;
             }
         }
-        if ((m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10))
+        if ((m_param->analysisLoad && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10))
         {
             if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
             {
@@ -1957,7 +1957,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
                 mightSplit &= !bDecidedDepth;
             }
         }
-        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
+        if (m_param->analysisLoad && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
         {
             if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
             {
@@ -2890,7 +2890,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.cu.setPredModeSubParts(MODE_INTER);
     int numPredDir = m_slice->isInterP() ? 1 : 2;
 
-    if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
+    if (m_param->analysisLoad && m_reuseInterDataCTU && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
     {
         int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
         int index = 0;
@@ -2932,7 +2932,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
     }
     interMode.sa8dCost = m_rdCost.calcRdSADCost((uint32_t)interMode.distortion, interMode.sa8dBits);
 
-    if (m_param->analysisReuseMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU && m_param->analysisReuseLevel > 1)
+    if (m_param->analysisSave && m_reuseInterDataCTU && m_param->analysisReuseLevel > 1)
     {
         int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
         int index = 0;
@@ -2954,7 +2954,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     interMode.cu.setPredModeSubParts(MODE_INTER);
     int numPredDir = m_slice->isInterP() ? 1 : 2;
 
-    if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_reuseInterDataCTU && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
+    if (m_param->analysisLoad && m_reuseInterDataCTU && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
     {
         int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
         int index = 0;
@@ -2988,7 +2988,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
     /* predInterSearch sets interMode.sa8dBits, but this is ignored */
     encodeResAndCalcRdInterCU(interMode, cuGeom);
 
-    if (m_param->analysisReuseMode == X265_ANALYSIS_SAVE && m_reuseInterDataCTU && m_param->analysisReuseLevel > 1)
+    if (m_param->analysisSave && m_reuseInterDataCTU && m_param->analysisReuseLevel > 1)
     {
         int refOffset = cuGeom.geomRecurId * 16 * numPredDir + partSize * numPredDir * 2;
         int index = 0;

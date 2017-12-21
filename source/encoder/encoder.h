@@ -130,7 +130,6 @@ public:
     FrameEncoder*      m_frameEncoder[X265_MAX_FRAME_THREADS];
     DPB*               m_dpb;
     Frame*             m_exportedPic;
-    FILE*              m_analysisFile;
     FILE*              m_analysisFileIn;
     FILE*              m_analysisFileOut;
     x265_param*        m_param;

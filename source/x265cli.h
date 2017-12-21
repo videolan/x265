@@ -254,9 +254,11 @@ static const struct option long_options[] =
     { "no-slow-firstpass",    no_argument, NULL, 0 },
     { "multi-pass-opt-rps",   no_argument, NULL, 0 },
     { "no-multi-pass-opt-rps", no_argument, NULL, 0 },
-    { "analysis-reuse-mode",  required_argument, NULL, 0 },
-    { "analysis-reuse-file",  required_argument, NULL, 0 },
+    { "analysis-reuse-mode", required_argument, NULL, 0 }, /* DEPRECATED */
+    { "analysis-reuse-file", required_argument, NULL, 0 },
     { "analysis-reuse-level", required_argument, NULL, 0 },
+    { "analysis-save",  required_argument, NULL, 0 },
+    { "analysis-load",  required_argument, NULL, 0 },
     { "scale-factor",   required_argument, NULL, 0 },
     { "refine-intra",   required_argument, NULL, 0 },
     { "refine-inter",   required_argument, NULL, 0 },
@@ -465,18 +467,19 @@ static void showHelp(x265_param *param)
     H0("   --[no-]analyze-src-pics       Motion estimation uses source frame planes. Default disable\n");
     H0("   --[no-]slow-firstpass         Enable a slow first pass in a multipass rate control mode. Default %s\n", OPT(param->rc.bEnableSlowFirstPass));
     H0("   --[no-]strict-cbr             Enable stricter conditions and tolerance for bitrate deviations in CBR mode. Default %s\n", OPT(param->rc.bStrictCbr));
-    H0("   --analysis-reuse-mode <string|int>  save - Dump analysis info into file, load - Load analysis buffers from the file. Default %d\n", param->analysisReuseMode);
+    H0("   --analysis-save <filename>    Dump analysis info into the specified file. Default Disabled\n");
+    H0("   --analysis-load <filename>    Load analysis buffers from the file specified. Default Disabled\n");
     H0("   --analysis-reuse-file <filename>    Specify file name used for either dumping or reading analysis data. Deault x265_analysis.dat\n");
     H0("   --analysis-reuse-level <1..10>      Level of analysis reuse indicates amount of info stored/reused in save/load mode, 1:least..10:most. Default %d\n", param->analysisReuseLevel);
     H0("   --refine-mv-type <string>     Reuse MV information received through API call. Supported option is avc. Default disabled - %d\n", param->bMVType);
     H0("   --scale-factor <int>          Specify factor by which input video is scaled down for analysis save mode. Default %d\n", param->scaleFactor);
-    H0("   --refine-intra <0..3>         Enable intra refinement for encode that uses analysis-reuse-mode=load.\n"
+    H0("   --refine-intra <0..3>         Enable intra refinement for encode that uses analysis-load.\n"
         "                                    - 0 : Forces both mode and depth from the save encode.\n"
         "                                    - 1 : Functionality of (0) + evaluate all intra modes at min-cu-size's depth when current depth is one smaller than min-cu-size's depth.\n"
         "                                    - 2 : Functionality of (1) + irrespective of size evaluate all angular modes when the save encode decides the best mode as angular.\n"
         "                                    - 3 : Functionality of (1) + irrespective of size evaluate all intra modes.\n"
         "                                Default:%d\n", param->intraRefine);
-    H0("   --refine-inter <0..3>         Enable inter refinement for encode that uses analysis-reuse-mode=load.\n"
+    H0("   --refine-inter <0..3>         Enable inter refinement for encode that uses analysis-load.\n"
         "                                    - 0 : Forces both mode and depth from the save encode.\n"
         "                                    - 1 : Functionality of (0) + evaluate all inter modes at min-cu-size's depth when current depth is one smaller than\n"
         "                                          min-cu-size's depth. When save encode decides the current block as skip(for all sizes) evaluate skip/merge.\n"

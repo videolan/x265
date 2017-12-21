@@ -327,15 +327,15 @@ typedef struct x265_picture
      * to allow the encoder to determine base QP */
     int     forceqp;
 
-    /* If param.analysisReuseMode is X265_ANALYSIS_OFF this field is ignored on input
-     * and output. Else the user must call x265_alloc_analysis_data() to
-     * allocate analysis buffers for every picture passed to the encoder.
+    /* If param.analysisLoad and param.analysisSave are disabled, this field is
+     * ignored on input and output. Else the user must call x265_alloc_analysis_data()
+     * to allocate analysis buffers for every picture passed to the encoder.
      *
-     * On input when param.analysisReuseMode is X265_ANALYSIS_LOAD and analysisData
+     * On input when param.analysisLoad is enabled and analysisData
      * member pointers are valid, the encoder will use the data stored here to
      * reduce encoder work.
      *
-     * On output when param.analysisReuseMode is X265_ANALYSIS_SAVE and analysisData
+     * On output when param.analysisSave is enabled and analysisData
      * member pointers are valid, the encoder will write output analysis into
      * this data structure */
     x265_analysis_data analysisData;
@@ -483,11 +483,6 @@ typedef enum
 #define X265_CSP_MAX            9  /* end of list */
 
 #define X265_EXTENDED_SAR       255 /* aspect ratio explicitly specified as width:height */
-
-/* Analysis options */
-#define X265_ANALYSIS_OFF  0
-#define X265_ANALYSIS_SAVE 1
-#define X265_ANALYSIS_LOAD 2
 
 typedef struct x265_cli_csp
 {
@@ -1129,13 +1124,13 @@ typedef struct x265_param
      * Default disabled */
     int       bEnableRdRefine;
 
-    /* If X265_ANALYSIS_SAVE, write per-frame analysis information into analysis
-     * buffers.  if X265_ANALYSIS_LOAD, read analysis information into analysis
-     * buffer and use this analysis information to reduce the amount of work
-     * the encoder must perform. Default X265_ANALYSIS_OFF */
+    /* If save, write per-frame analysis information into analysis buffers.
+     * If load, read analysis information into analysis buffer and use this
+     * analysis information to reduce the amount of work the encoder must perform.
+     * Default disabled. Now deprecated*/
     int       analysisReuseMode;
 
-    /* Filename for analysisReuseMode save/load. Default name is "x265_analysis.dat" */
+    /* Filename for multi-pass-opt-analysis/distortion. Default name is "x265_analysis.dat" */
     const char* analysisReuseFileName;
 
     /*== Rate Control ==*/
@@ -1455,7 +1450,7 @@ typedef struct x265_param
     int       bHDROpt;
 
     /* A value between 1 and 10 (both inclusive) determines the level of
-    * information stored/reused in save/load analysis-reuse-mode. Higher the refine
+    * information stored/reused in analysis save/load. Higher the refine
     * level higher the information stored/reused. Default is 5 */
     int       analysisReuseLevel;
 
@@ -1539,7 +1534,16 @@ typedef struct x265_param
     * within this from the gop boundary set by keyint, the GOP will be extented until such a point,
     * otherwise the GOP will be terminated as set by keyint*/
     int       gopLookahead;
+
+    /*Write per-frame analysis information into analysis buffers. Default disabled. */
+    const char* analysisSave;
+
+    /* Read analysis information into analysis buffer and use this analysis information
+     * to reduce the amount of work the encoder must perform. Default disabled. */
+    const char* analysisLoad;
+
 } x265_param;
+
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
  *  special in any way, but using this method together with x265_param_free()
