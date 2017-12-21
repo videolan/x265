@@ -2449,6 +2449,18 @@ void Encoder::configure(x265_param *p)
         this->m_externalFlush = true;
     else 
         this->m_externalFlush = false;
+
+    if (p->bMVType == AVC_INFO && (p->limitTU == 3 || p->limitTU == 4))
+    {
+        x265_log(p, X265_LOG_WARNING, "limit TU = 3 or 4 with MVType AVCINFO produces inconsistent output\n");
+    }
+
+    if (p->bMVType == AVC_INFO && p->minCUSize != 8)
+    {
+        p->minCUSize = 8;
+        x265_log(p, X265_LOG_WARNING, "Setting minCuSize = 8, AVCINFO expects 8x8 blocks\n");
+    }
+
     if (p->keyframeMax < 0)
     {
         /* A negative max GOP size indicates the user wants only one I frame at
