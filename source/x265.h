@@ -481,8 +481,11 @@ typedef enum
 #define X265_CSP_BGRA           7  /* packed bgr 32bits   */
 #define X265_CSP_RGB            8  /* packed rgb 24bits   */
 #define X265_CSP_MAX            9  /* end of list */
-
 #define X265_EXTENDED_SAR       255 /* aspect ratio explicitly specified as width:height */
+/* Analysis options */
+#define X265_ANALYSIS_OFF  0
+#define X265_ANALYSIS_SAVE 1
+#define X265_ANALYSIS_LOAD 2
 
 typedef struct x265_cli_csp
 {
