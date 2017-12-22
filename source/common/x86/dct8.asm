@@ -288,6 +288,10 @@ tab_idct16_2:   dw 64, 89, 83, 75, 64, 50, 36, 18
 idct16_shuff:   dd 0, 4, 2, 6, 1, 5, 3, 7
 
 idct16_shuff1:  dd 2, 6, 0, 4, 3, 7, 1, 5
+idct16_shuff2:  dw 0, 16, 2, 18, 4, 20, 6, 22, 8, 24, 10, 26, 12, 28, 14, 30
+idct16_shuff3:  dw 1, 17, 3, 19, 5, 21, 7, 23, 9, 25, 11, 27, 13, 29, 15, 31
+idct16_shuff4:  dd 0, 8, 2, 10, 4, 12, 6, 14
+idct16_shuff5:  dd 1, 9, 3, 11, 5, 13, 7, 15
 
 
 tab_AVX512_idct16_1:   dw 90, 87, 80, 70, 57, 43, 25, 9, 90, 87, 80, 70, 57, 43, 25, 9, 80, 9, -70, -87, -25, 57, 90, 43, 80, 9, -70, -87, -25, 57, 90, 43
@@ -4797,8 +4801,8 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
 
 %macro IDCT16_AVX512_PASS1 3
     movu            m5,  [tab_AVX512_idct16_2 + %1 * 64]
-    pmaddwd         m9, m0, m5
-    pmaddwd         m10, m7, m5
+    pmaddwd         m9, m4, m5
+    pmaddwd         m10, m6, m5
 
     vpsrldq         m16,   m9, 4
     paddd            m9,  m16
@@ -4806,7 +4810,7 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
     paddd            m10,  m17
     vmovdqu32        m9   {k1}, m10
 
-    pmaddwd         m10, m6, m5
+    pmaddwd         m10, m7, m5
     pmaddwd         m11, m8, m5
 
     vpsrldq         m16,   m10, 4
@@ -4822,8 +4826,8 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
     vmovdqu32        m9   {k2}, m10
 
     mova            m5,  [tab_AVX512_idct16_1 + %1 * 64]
-    pmaddwd         m10, m1, m5
-    pmaddwd         m11, m3, m5
+    pmaddwd         m10, m28, m5
+    pmaddwd         m11, m29, m5
 
     vpsrldq         m16,   m10, 4
     paddd            m10,  m16
@@ -4831,8 +4835,8 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
     paddd            m11,  m17
     vmovdqu32        m10   {k1}, m11
 
-    pmaddwd         m11, m4, m5
-    pmaddwd         m12, m2, m5
+    pmaddwd         m11, m30, m5
+    pmaddwd         m12, m31, m5
 
     vpsrldq         m16,   m11, 4
     paddd            m11,  m16
@@ -4855,8 +4859,8 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
     psrad           m9, IDCT_SHIFT1
 
     mova            m5,  [tab_AVX512_idct16_2 + %1 * 64 + 64]
-    pmaddwd         m10, m0, m5
-    pmaddwd         m12, m7, m5
+    pmaddwd         m10, m4, m5
+    pmaddwd         m12, m6, m5
 
 
     vpsrldq         m16,   m10, 4
@@ -4865,7 +4869,7 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
     paddd            m12,  m17
     vmovdqu32        m10   {k1}, m12
 
-    pmaddwd         m12, m6, m5
+    pmaddwd         m12, m7, m5
     pmaddwd         m13, m8, m5
 
 
@@ -4885,8 +4889,8 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
 
 
     mova            m5,  [tab_AVX512_idct16_1 + %1 * 64 + 64] 
-    pmaddwd         m12, m1, m5
-    pmaddwd         m13, m3, m5
+    pmaddwd         m12, m28, m5
+    pmaddwd         m13, m29, m5
 
 
     vpsrldq         m16,   m12, 4
@@ -4895,8 +4899,8 @@ cglobal idct16, 3, 7, 16, 0-16*mmsize
     paddd            m13,  m17
     vmovdqu32        m12   {k1}, m13
 
-    pmaddwd         m13, m4, m5
-    pmaddwd         m5, m2
+    pmaddwd         m13, m30, m5
+    pmaddwd         m5, m31
 
 
     vpsrldq         m16,   m13, 4
@@ -5094,199 +5098,174 @@ cglobal idct16, 3, 8, 32
     kmovd            k1,    r7d
     mov             r7d,    0xCCCC
     kmovd            k2,    r7d
+    mova          ym2, [idct16_shuff2]
+    mova          ym3, [idct16_shuff3]
+    mova         ym26, [idct16_shuff4]
+    mova         ym27, [idct16_shuff5]
 
 .pass1:
-     movu            xm0, [r0 +  0 * 32]
-     movu            xm1, [r0 +  8 * 32]
-     punpckhqdq      xm2, xm0, xm1
-     punpcklqdq      xm0, xm1
-     vinserti128     ym0, ym0, xm2, 1
+    movu          xm0, [r0 + 0 * 32]
+    vinserti128   ym0, ym0, [r0 + 8 * 32], 1
+    movu          xm1, [r0 + 2 * 32]
+    vinserti128   ym1, ym1, [r0 + 10 * 32], 1
 
-     movu            xm1, [r0 +  1 * 32]
-     movu            xm2, [r0 +  9 * 32]
-     punpckhqdq      xm3, xm1, xm2
-     punpcklqdq      xm1, xm2
-     vinserti128     ym1, ym1, xm3, 1
+    mova          ym9, ym2
+    mova         ym10, ym3
+    vpermi2w      ym9, ym0, ym1
+    vpermi2w     ym10, ym0, ym1
 
-     movu            xm2, [r0 + 2  * 32]
-     movu            xm3, [r0 + 10 * 32]
-     punpckhqdq      xm4, xm2, xm3
-     punpcklqdq      xm2, xm3
-     vinserti128     ym2, ym2, xm4, 1
+    movu          xm0, [r0 + 4 * 32]
+    vinserti128   ym0, ym0, [r0 + 12 * 32], 1
+    movu          xm1, [r0 + 6 * 32]
+    vinserti128   ym1, ym1, [r0 + 14 * 32], 1
 
-     movu            xm3, [r0 + 3  * 32]
-     movu            xm4, [r0 + 11 * 32]
-     punpckhqdq      xm5, xm3, xm4
-     punpcklqdq      xm3, xm4
-     vinserti128     ym3, ym3, xm5, 1
+    mova         ym11, ym2
+    mova         ym12, ym3
+    vpermi2w     ym11, ym0,  ym1
+    vpermi2w     ym12, ym0,  ym1
 
-     movu            xm4, [r0 + 4  * 32]
-     movu            xm5, [r0 + 12 * 32]
-     punpckhqdq      xm6, xm4, xm5
-     punpcklqdq      xm4, xm5
-     vinserti128     ym4, ym4, xm6, 1
+    mova         ym4,  ym26
+    mova         ym6,  ym27
+    vpermi2d     ym4,   ym9, ym11
+    vpermi2d     ym6,   ym9, ym11
 
-     movu            xm5, [r0 + 5  * 32]
-     movu            xm6, [r0 + 13 * 32]
-     punpckhqdq      xm7, xm5, xm6
-     punpcklqdq      xm5, xm6
-     vinserti128     ym5, ym5, xm7, 1
+    mova         ym7, ym26
+    mova         ym8, ym27
+    vpermi2d     ym7, ym10, ym12
+    vpermi2d     ym8, ym10, ym12
 
-     movu            xm6, [r0 + 6  * 32]
-     movu            xm7, [r0 + 14 * 32]
-     punpckhqdq      xm8, xm6, xm7
-     punpcklqdq      xm6, xm7
-     vinserti128     ym6, ym6, xm8, 1
+    vpermq       ym4, ym4,  q3120
+    vpermq       ym6, ym6,  q3120
+    vpermq       ym7, ym7,  q3120
+    vpermq       ym8, ym8,  q3120
 
-     movu            xm7, [r0 + 7  * 32]
-     movu            xm8, [r0 + 15 * 32]
-     punpckhqdq      xm9, xm7, xm8
-     punpcklqdq      xm7, xm8
-     vinserti128     ym7, ym7, xm9, 1
+    movu          xm0, [r0 + 1 * 32]
+    vinserti128   ym0, ym0, [r0 + 9 * 32], 1
+    movu          xm1, [r0 + 3 * 32]
+    vinserti128   ym1, ym1, [r0 + 11 * 32], 1
 
-    punpckhwd       ym8, ym0, ym2                ;[8 10]
-    punpcklwd       ym0, ym2                    ;[0 2]
+    mova          ym9, ym2
+    mova         ym10, ym3
+    vpermi2w      ym9,  ym0, ym1
+    vpermi2w     ym10,  ym0, ym1
 
-    punpckhwd       ym2, ym1, ym3                ;[9 11]
-    punpcklwd       ym1, ym3                    ;[1 3]
+    movu          xm0, [r0 + 5 * 32]
+    vinserti128   ym0, ym0, [r0 + 13 * 32], 1
+    movu          xm1, [r0 + 7 * 32]
+    vinserti128   ym1, ym1, [r0 + 15 * 32], 1
 
-    punpckhwd       ym3, ym4, ym6                ;[12 14]
-    punpcklwd       ym4, ym6                    ;[4 6]
+    mova         ym11,  ym2
+    mova         ym12,  ym3
+    vpermi2w     ym11,  ym0,  ym1
+    vpermi2w     ym12,  ym0,  ym1
 
-    punpckhwd       ym6, ym5, ym7                ;[13 15]
-    punpcklwd       ym5, ym7                    ;[5 7]
+    mova         ym28,  ym26
+    mova         ym29,  ym27
+    vpermi2d     ym28,  ym9, ym11
+    vpermi2d     ym29,  ym9, ym11
 
-    punpckhdq       ym7, ym0, ym4                ;[02 22 42 62 03 23 43 63 06 26 46 66 07 27 47 67]
-    punpckldq       ym0, ym4                    ;[00 20 40 60 01 21 41 61 04 24 44 64 05 25 45 65]
+    mova         ym30, ym26
+    mova         ym31, ym27
+    vpermi2d     ym30, ym10, ym12
+    vpermi2d     ym31, ym10, ym12
 
-    punpckhdq       ym4, ym8, ym3                ;[82 102 122 142 83 103 123 143 86 106 126 146 87 107 127 147]
-    punpckldq       ym8, ym3                    ;[80 100 120 140 81 101 121 141 84 104 124 144 85 105 125 145]
+    vpermq       ym28, ym28,  q3120
+    vpermq       ym29, ym29,  q3120
+    vpermq       ym30, ym30,  q3120
+    vpermq       ym31, ym31,  q3120
 
-    punpckhdq       ym3, ym1, ym5                ;[12 32 52 72 13 33 53 73 16 36 56 76 17 37 57 77]
-    punpckldq       ym1, ym5                    ;[10 30 50 70 11 31 51 71 14 34 54 74 15 35 55 75]
-
-    punpckhdq       ym5, ym2, ym6                ;[92 112 132 152 93 113 133 153 96 116 136 156 97 117 137 157]
-    punpckldq       ym2, ym6                    ;[90 110 130 150 91 111 131 151 94 114 134 154 95 115 135 155]
-
-    punpckhqdq      ym6, ym0, ym8                ;[01 21 41 61 81 101 121 141 05 25 45 65 85 105 125 145]
-    punpcklqdq      ym0, ym8                    ;[00 20 40 60 80 100 120 140 04 24 44 64 84 104 124 144]
-
-    punpckhqdq      ym8, ym7, ym4                ;[03 23 43 63 43 103 123 143 07 27 47 67 87 107 127 147]
-    punpcklqdq      ym7, ym4                    ;[02 22 42 62 82 102 122 142 06 26 46 66 86 106 126 146]
-
-    punpckhqdq      ym4, ym1, ym2                ;[11 31 51 71 91 111 131 151 15 35 55 75 95 115 135 155]
-    punpcklqdq      ym1, ym2                    ;[10 30 50 70 90 110 130 150 14 34 54 74 94 114 134 154]
-
-    punpckhqdq      ym2, ym3, ym5                ;[13 33 53 73 93 113 133 153 17 37 57 77 97 117 137 157]
-    punpcklqdq      ym3, ym5                    ;[12 32 52 72 92 112 132 152 16 36 56 76 96 116 136 156]
-
-    vinserti64x4    m6,        m6,      ym6, 1
-    vinserti64x4    m0,        m0,      ym0, 1
-    vinserti64x4    m8,        m8,      ym8, 1
-    vinserti64x4    m7,        m7,      ym7, 1
-    vinserti64x4    m4,        m4,      ym4, 1
-    vinserti64x4    m1,        m1,      ym1, 1
-    vinserti64x4    m2,        m2,      ym2, 1
-    vinserti64x4    m3,        m3,      ym3, 1
-
+    vinserti64x4    m4,          m4,      ym4, 1
+    vinserti64x4    m6,          m6,      ym6, 1
+    vinserti64x4    m7,          m7,      ym7, 1
+    vinserti64x4    m8,          m8,      ym8, 1
+    vinserti64x4    m28,        m28,      ym28, 1
+    vinserti64x4    m29,        m29,      ym29, 1
+    vinserti64x4    m30,        m30,      ym30, 1
+    vinserti64x4    m31,        m31,      ym31, 1
 
     IDCT16_AVX512_PASS1      0, 18, 19
     IDCT16_AVX512_PASS1      2, 20, 21
 
     add             r0, 16
 
-     movu            xm0, [r0 +  0 * 32]
-     movu            xm1, [r0 +  8 * 32]
-     punpckhqdq      xm2, xm0, xm1
-     punpcklqdq      xm0, xm1
-     vinserti128     ym0, ym0, xm2, 1
+    movu          xm0, [r0 + 0 * 32]
+    vinserti128   ym0, ym0, [r0 + 8 * 32], 1
+    movu          xm1, [r0 + 2 * 32]
+    vinserti128   ym1, ym1, [r0 + 10 * 32], 1
 
-     movu            xm1, [r0 +  1 * 32]
-     movu            xm2, [r0 +  9 * 32]
-     punpckhqdq      xm3, xm1, xm2
-     punpcklqdq      xm1, xm2
-     vinserti128     ym1, ym1, xm3, 1
+    mova          ym9, ym2
+    mova         ym10, ym3
+    vpermi2w      ym9, ym0, ym1
+    vpermi2w     ym10, ym0, ym1
 
-     movu            xm2, [r0 + 2  * 32]
-     movu            xm3, [r0 + 10 * 32]
-     punpckhqdq      xm4, xm2, xm3
-     punpcklqdq      xm2, xm3
-     vinserti128     ym2, ym2, xm4, 1
+    movu          xm0, [r0 + 4 * 32]
+    vinserti128   ym0, ym0, [r0 + 12 * 32], 1
+    movu          xm1, [r0 + 6 * 32]
+    vinserti128   ym1, ym1, [r0 + 14 * 32], 1
 
-     movu            xm3, [r0 + 3  * 32]
-     movu            xm4, [r0 + 11 * 32]
-     punpckhqdq      xm5, xm3, xm4
-     punpcklqdq      xm3, xm4
-     vinserti128     ym3, ym3, xm5, 1
+    mova         ym11, ym2
+    mova         ym12, ym3
+    vpermi2w     ym11, ym0,  ym1
+    vpermi2w     ym12, ym0,  ym1
 
-     movu            xm4, [r0 + 4  * 32]
-     movu            xm5, [r0 + 12 * 32]
-     punpckhqdq      xm6, xm4, xm5
-     punpcklqdq      xm4, xm5
-     vinserti128     ym4, ym4, xm6, 1
+    mova         ym4,  ym26
+    mova         ym6,  ym27
+    vpermi2d     ym4,   ym9, ym11
+    vpermi2d     ym6,   ym9, ym11
 
-     movu            xm5, [r0 + 5  * 32]
-     movu            xm6, [r0 + 13 * 32]
-     punpckhqdq      xm7, xm5, xm6
-     punpcklqdq      xm5, xm6
-     vinserti128     ym5, ym5, xm7, 1
+    mova         ym7, ym26
+    mova         ym8, ym27
+    vpermi2d     ym7, ym10, ym12
+    vpermi2d     ym8, ym10, ym12
 
-     movu            xm6, [r0 + 6  * 32]
-     movu            xm7, [r0 + 14 * 32]
-     punpckhqdq      xm8, xm6, xm7
-     punpcklqdq      xm6, xm7
-     vinserti128     ym6, ym6, xm8, 1
+    vpermq       ym4, ym4,  q3120
+    vpermq       ym6, ym6,  q3120
+    vpermq       ym7, ym7,  q3120
+    vpermq       ym8, ym8,  q3120
 
-     movu            xm7, [r0 + 7  * 32]
-     movu            xm8, [r0 + 15 * 32]
-     punpckhqdq      xm9, xm7, xm8
-     punpcklqdq      xm7, xm8
-     vinserti128     ym7, ym7, xm9, 1
+    movu          xm0, [r0 + 1 * 32]
+    vinserti128   ym0, ym0, [r0 + 9 * 32], 1
+    movu          xm1, [r0 + 3 * 32]
+    vinserti128   ym1, ym1, [r0 + 11 * 32], 1
 
-    punpckhwd       ym8, ym0, ym2                ;[8 10]
-    punpcklwd       ym0, ym2                    ;[0 2]
+    mova          ym9, ym2
+    mova         ym10, ym3
+    vpermi2w      ym9,  ym0, ym1
+    vpermi2w     ym10,  ym0, ym1
 
-    punpckhwd       ym2, ym1, ym3                ;[9 11]
-    punpcklwd       ym1, ym3                    ;[1 3]
+    movu          xm0, [r0 + 5 * 32]
+    vinserti128   ym0, ym0, [r0 + 13 * 32], 1
+    movu          xm1, [r0 + 7 * 32]
+    vinserti128   ym1, ym1, [r0 + 15 * 32], 1
 
-    punpckhwd       ym3, ym4, ym6                ;[12 14]
-    punpcklwd       ym4, ym6                    ;[4 6]
+    mova         ym11,  ym2
+    mova         ym12,  ym3
+    vpermi2w     ym11,  ym0,  ym1
+    vpermi2w     ym12,  ym0,  ym1
 
-    punpckhwd       ym6, ym5, ym7                ;[13 15]
-    punpcklwd       ym5, ym7                    ;[5 7]
+    mova         ym28,  ym26
+    mova         ym29,  ym27
+    vpermi2d     ym28,  ym9, ym11
+    vpermi2d     ym29,  ym9, ym11
 
-    punpckhdq       ym7, ym0, ym4                ;[02 22 42 62 03 23 43 63 06 26 46 66 07 27 47 67]
-    punpckldq       ym0, ym4                    ;[00 20 40 60 01 21 41 61 04 24 44 64 05 25 45 65]
+    mova         ym30, ym26
+    mova         ym31, ym27
+    vpermi2d     ym30, ym10, ym12
+    vpermi2d     ym31, ym10, ym12
 
-    punpckhdq       ym4, ym8, ym3                ;[82 102 122 142 83 103 123 143 86 106 126 146 87 107 127 147]
-    punpckldq       ym8, ym3                    ;[80 100 120 140 81 101 121 141 84 104 124 144 85 105 125 145]
+    vpermq       ym28, ym28,  q3120
+    vpermq       ym29, ym29,  q3120
+    vpermq       ym30, ym30,  q3120
+    vpermq       ym31, ym31,  q3120
 
-    punpckhdq       ym3, ym1, ym5                ;[12 32 52 72 13 33 53 73 16 36 56 76 17 37 57 77]
-    punpckldq       ym1, ym5                    ;[10 30 50 70 11 31 51 71 14 34 54 74 15 35 55 75]
-
-    punpckhdq       ym5, ym2, ym6                ;[92 112 132 152 93 113 133 153 96 116 136 156 97 117 137 157]
-    punpckldq       ym2, ym6                    ;[90 110 130 150 91 111 131 151 94 114 134 154 95 115 135 155]
-
-    punpckhqdq      ym6, ym0, ym8                ;[01 21 41 61 81 101 121 141 05 25 45 65 85 105 125 145]
-    punpcklqdq      ym0, ym8                    ;[00 20 40 60 80 100 120 140 04 24 44 64 84 104 124 144]
-
-    punpckhqdq      ym8, ym7, ym4                ;[03 23 43 63 43 103 123 143 07 27 47 67 87 107 127 147]
-    punpcklqdq      ym7, ym4                    ;[02 22 42 62 82 102 122 142 06 26 46 66 86 106 126 146]
-
-    punpckhqdq      ym4, ym1, ym2                ;[11 31 51 71 91 111 131 151 15 35 55 75 95 115 135 155]
-    punpcklqdq      ym1, ym2                    ;[10 30 50 70 90 110 130 150 14 34 54 74 94 114 134 154]
-
-    punpckhqdq      ym2, ym3, ym5                ;[13 33 53 73 93 113 133 153 17 37 57 77 97 117 137 157]
-    punpcklqdq      ym3, ym5                    ;[12 32 52 72 92 112 132 152 16 36 56 76 96 116 136 156]
-
-    vinserti64x4    m6,        m6,      ym6, 1
-    vinserti64x4    m0,        m0,      ym0, 1
-    vinserti64x4    m8,        m8,      ym8, 1
-    vinserti64x4    m7,        m7,      ym7, 1
-    vinserti64x4    m4,        m4,      ym4, 1
-    vinserti64x4    m1,        m1,      ym1, 1
-    vinserti64x4    m2,        m2,      ym2, 1
-    vinserti64x4    m3,        m3,      ym3, 1
+    vinserti64x4    m4,          m4,      ym4, 1
+    vinserti64x4    m6,          m6,      ym6, 1
+    vinserti64x4    m7,          m7,      ym7, 1
+    vinserti64x4    m8,          m8,      ym8, 1
+    vinserti64x4    m28,        m28,      ym28, 1
+    vinserti64x4    m29,        m29,      ym29, 1
+    vinserti64x4    m30,        m30,      ym30, 1
+    vinserti64x4    m31,        m31,      ym31, 1
 
 
     IDCT16_AVX512_PASS1      0, 22, 23
