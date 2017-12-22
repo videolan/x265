@@ -1268,6 +1268,7 @@ typedef struct x265_param
 
         /* internally enable if tune grain is set */
         int      bEnableConstVbv;
+
     } rc;
 
     /*== Video Usability Information ==*/
@@ -1542,6 +1543,8 @@ typedef struct x265_param
      * to reduce the amount of work the encoder must perform. Default disabled. */
     const char* analysisLoad;
 
+    /*Number of RADL pictures allowed in front of IDR*/
+    int radl;
 } x265_param;
 
 /* x265_param_alloc:

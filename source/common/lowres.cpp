@@ -89,7 +89,7 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled, uint32_t qgS
         }
     }
 
-    for (int i = 0; i < bframes + 1; i++)
+    for (int i = 0; i < bframes + 2; i++)
     {
         CHECKED_MALLOC(lowresMvs[0][i], MV, cuCount);
         CHECKED_MALLOC(lowresMvs[1][i], MV, cuCount);
@@ -118,7 +118,7 @@ void Lowres::destroy()
         }
     }
 
-    for (int i = 0; i < bframes + 1; i++)
+    for (int i = 0; i < bframes + 2; i++)
     {
         X265_FREE(lowresMvs[0][i]);
         X265_FREE(lowresMvs[1][i]);
@@ -152,7 +152,7 @@ void Lowres::init(PicYuv *origPic, int poc)
         for (int x = 0; x < bframes + 2; x++)
             rowSatds[y][x][0] = -1;
 
-    for (int i = 0; i < bframes + 1; i++)
+    for (int i = 0; i < bframes + 2; i++)
     {
         lowresMvs[0][i][0].x = 0x7FFF;
         lowresMvs[1][i][0].x = 0x7FFF;

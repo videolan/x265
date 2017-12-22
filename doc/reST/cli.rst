@@ -1345,7 +1345,14 @@ Slice decision options
 	This value represents the percentage difference between the inter cost and
 	intra cost of a frame used in scenecut detection. For example, a value of 5 indicates,
 	if the inter cost of a frame is greater than or equal to 95 percent of the intra cost of the frame,
-	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5.	
+	then detect this frame as scenecut. Values between 5 and 15 are recommended. Default 5.
+	
+.. option:: --radl <integer>
+	
+	Number of RADL pictures allowed infront of IDR. Requires fixed keyframe interval.
+	Recommended value is 2-3. Default 0 (disabled).
+	
+	**Range of values: Between 0 and `--bframes`
 
 .. option:: --ctu-info <0, 1, 2, 4, 6>
 

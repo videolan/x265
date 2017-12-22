@@ -1947,7 +1947,7 @@ MV Search::getLowresMV(const CUData& cu, const PredictionUnit& pu, int list, int
         /* poc difference is out of range for lookahead */
         return 0;
 
-    MV* mvs = m_frame->m_lowres.lowresMvs[list][diffPoc - 1];
+    MV* mvs = m_frame->m_lowres.lowresMvs[list][diffPoc];
     if (mvs[0].x == 0x7FFF)
         /* this motion search was not estimated by lookahead */
         return 0;

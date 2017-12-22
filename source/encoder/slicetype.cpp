@@ -879,7 +879,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     Slice *slice = curFrame->m_encData->m_slice;
     int p0 = 0, p1, b;
     int poc = slice->m_poc;
-    int l0poc = slice->m_refPOCList[0][0];
+    int l0poc = slice->m_rps.numberOfNegativePictures ? slice->m_refPOCList[0][0] : -1;
     int l1poc = slice->m_refPOCList[1][0];
 
     switch (slice->m_sliceType)
@@ -896,11 +896,22 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
         break;
 
     case B_SLICE:
-        b = poc - l0poc;
-        p1 = b + l1poc - poc;
-        frames[p0] = &slice->m_refFrameList[0][0]->m_lowres;
-        frames[b] = &curFrame->m_lowres;
-        frames[p1] = &slice->m_refFrameList[1][0]->m_lowres;
+        if (l0poc >= 0)
+        {
+            b = poc - l0poc;
+            p1 = b + l1poc - poc;
+            frames[p0] = &slice->m_refFrameList[0][0]->m_lowres;
+            frames[b] = &curFrame->m_lowres;
+            frames[p1] = &slice->m_refFrameList[1][0]->m_lowres;
+        }
+        else 
+        {
+            p0 = b = 0;
+            p1 = b + l1poc - poc;
+            frames[p0] = frames[b] = &curFrame->m_lowres;
+            frames[p1] = &slice->m_refFrameList[1][0]->m_lowres;
+        }
+        
         break;
 
     default:
@@ -1120,12 +1131,20 @@ void Lookahead::slicetypeDecide()
             /* Closed GOP */
             m_lastKeyframe = frm.frameNum;
             frm.bKeyframe = true;
-            if (bframes > 0)
+            if (bframes > 0 && !m_param->radl)
             {
                 list[bframes - 1]->m_lowres.sliceType = X265_TYPE_P;
                 bframes--;
             }
         }
+        if (m_param->radl && !m_param->bOpenGOP && list[bframes + 1])
+        {
+            if ((frm.frameNum - m_lastKeyframe) >  (m_param->keyframeMax - m_param->radl - 1) && (frm.frameNum - m_lastKeyframe) <  m_param->keyframeMax)
+                frm.sliceType = X265_TYPE_B;
+            if ((frm.frameNum - m_lastKeyframe) == (m_param->keyframeMax - m_param->radl - 1))
+                frm.sliceType = X265_TYPE_P;
+        }
+
         if (bframes == m_param->bframes || !list[bframes + 1])
         {
             if (IS_X265_TYPE_B(frm.sliceType))
@@ -1175,8 +1194,13 @@ void Lookahead::slicetypeDecide()
         if (bframes)
         {
             p0 = 0; // last nonb
+            bool isp0available = frames[bframes + 1]->sliceType == X265_TYPE_IDR ? false : true;
+
             for (b = 1; b <= bframes; b++)
             {
+                if (!isp0available)
+                    p0 = b;
+
                 if (frames[b]->sliceType == X265_TYPE_B)
                     for (p1 = b; frames[p1]->sliceType == X265_TYPE_B; p1++)
                         ; // find new nonb or bref
@@ -1186,7 +1210,10 @@ void Lookahead::slicetypeDecide()
                 estGroup.singleCost(p0, p1, b);
 
                 if (frames[b]->sliceType == X265_TYPE_BREF)
+                {
                     p0 = b;
+                    isp0available = true;
+                }
             }
         }
     }
@@ -1413,12 +1440,12 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
                     continue;
 
                 /* Skip search if already done */
-                if (frames[b]->lowresMvs[0][i - 1][0].x != 0x7FFF)
+                if (frames[b]->lowresMvs[0][i][0].x != 0x7FFF)
                     continue;
 
                 /* perform search to p1 at same distance, if possible */
                 int p1 = b + i;
-                if (p1 >= numFrames || frames[b]->lowresMvs[1][i - 1][0].x != 0x7FFF)
+                if (p1 >= numFrames || frames[b]->lowresMvs[1][i][0].x != 0x7FFF)
                     p1 = b;
 
                 estGroup.add(p0, p1, b);
@@ -1440,7 +1467,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 
                     /* only measure frame cost in this pass if motion searches
                      * are already done */
-                    if (frames[b]->lowresMvs[0][i - 1][0].x == 0x7FFF)
+                    if (frames[b]->lowresMvs[0][i][0].x == 0x7FFF)
                         continue;
 
                     int p0 = b - i;
@@ -1452,7 +1479,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
                             break;
 
                         /* ensure P1 search is done */
-                        if (j && frames[b]->lowresMvs[1][j - 1][0].x == 0x7FFF)
+                        if (j && frames[b]->lowresMvs[1][j][0].x == 0x7FFF)
                             continue;
 
                         /* ensure frame cost is not done */
@@ -1867,7 +1894,7 @@ void Lookahead::aqMotion(Lowres **frames, bool bIntra)
 
 void Lookahead::calcMotionAdaptiveQuantFrame(Lowres **frames, int p0, int p1, int b)
 {
-    int listDist[2] = { b - p0 - 1, p1 - b - 1 };
+    int listDist[2] = { b - p0, p1 - b };
     int32_t strideInCU = m_8x8Width;
     double qp_adj = 0, avg_adj = 0, avg_adj_pow2 = 0, sd;
     for (uint16_t blocky = 0; blocky < m_8x8Height; blocky++)
@@ -2030,7 +2057,7 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
     int32_t distScaleFactor = (((b - p0) << 8) + ((p1 - p0) >> 1)) / (p1 - p0);
     int32_t bipredWeight = m_param->bEnableWeightedBiPred ? 64 - (distScaleFactor >> 2) : 32;
     int32_t bipredWeights[2] = { bipredWeight, 64 - bipredWeight };
-    int listDist[2] = { b - p0 - 1, p1 - b - 1 };
+    int listDist[2] = { b - p0, p1 - b };
 
     memset(m_scratch, 0, m_8x8Width * sizeof(int));
 
@@ -2305,17 +2332,15 @@ int64_t CostEstimateGroup::estimateFrameCost(LookaheadTLD& tld, int p0, int p1, 
         score = fenc->costEst[b - p0][p1 - b];
     else
     {
-        X265_CHECK(p0 != b, "I frame estimates should always be pre-calculated\n");
-
         bool bDoSearch[2];
-        bDoSearch[0] = p0 < b && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFF;
-        bDoSearch[1] = p1 > b && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFF;
+        bDoSearch[0] = fenc->lowresMvs[0][b - p0][0].x == 0x7FFF;
+        bDoSearch[1] = p1 > b && fenc->lowresMvs[1][p1 - b][0].x == 0x7FFF;
 
 #if CHECKED_BUILD
-        X265_CHECK(!(p0 < b && fenc->lowresMvs[0][b - p0 - 1][0].x == 0x7FFE), "motion search batch duplication L0\n");
-        X265_CHECK(!(p1 > b && fenc->lowresMvs[1][p1 - b - 1][0].x == 0x7FFE), "motion search batch duplication L1\n");
-        if (bDoSearch[0]) fenc->lowresMvs[0][b - p0 - 1][0].x = 0x7FFE;
-        if (bDoSearch[1]) fenc->lowresMvs[1][p1 - b - 1][0].x = 0x7FFE;
+        X265_CHECK(!(p0 < b && fenc->lowresMvs[0][b - p0][0].x == 0x7FFE), "motion search batch duplication L0\n");
+        X265_CHECK(!(p1 > b && fenc->lowresMvs[1][p1 - b][0].x == 0x7FFE), "motion search batch duplication L1\n");
+        if (bDoSearch[0]) fenc->lowresMvs[0][b - p0][0].x = 0x7FFE;
+        if (bDoSearch[1]) fenc->lowresMvs[1][p1 - b][0].x = 0x7FFE;
 #endif
 
         fenc->weightedRef[b - p0].isWeighted = false;
@@ -2406,7 +2431,7 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
     /* A small, arbitrary bias to avoid VBV problems caused by zero-residual lookahead blocks. */
     int lowresPenalty = 4;
-    int listDist[2] = { b - p0 - 1, p1 - b - 1 };
+    int listDist[2] = { b - p0, p1 - b};
 
     MV mvmin, mvmax;
     int bcost = tld.me.COST_MAX;

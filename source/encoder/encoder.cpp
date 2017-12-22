@@ -3046,6 +3046,12 @@ void Encoder::configure(x265_param *p)
     p->maxCUDepth    = p->maxLog2CUSize - g_log2Size[p->minCUSize];
     p->unitSizeDepth = p->maxLog2CUSize - LOG2_UNIT_SIZE;
     p->num4x4Partitions = (1U << (p->unitSizeDepth << 1));
+
+    if (p->radl && (p->keyframeMax != p->keyframeMin))
+    {
+        p->radl = 0;
+        x265_log(p, X265_LOG_WARNING, "Radl requires fixed gop-length (keyint == min-keyint). Disabling radl.\n");
+    }
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)

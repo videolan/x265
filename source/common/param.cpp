@@ -154,6 +154,7 @@ void x265_param_default(x265_param* param)
     param->lookaheadSlices = 8;
     param->lookaheadThreads = 0;
     param->scenecutBias = 5.0;
+    param->radl = 0;
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
     param->bEnableStrongIntraSmoothing = 1;
@@ -1010,6 +1011,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("gop-lookahead") p->gopLookahead = atoi(value);
         OPT("analysis-save") p->analysisSave = strdup(value);
         OPT("analysis-load") p->analysisLoad = strdup(value);
+        OPT("radl") p->radl = atoi(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1316,6 +1318,8 @@ int x265_check_params(x265_param* param)
           "scenecutThreshold must be greater than 0");
     CHECK(param->scenecutBias < 0 || 100 < param->scenecutBias,
            "scenecut-bias must be between 0 and 100");
+    CHECK(param->radl < 0 || param->radl > param->bframes,
+          "radl must be between 0 and bframes");
     CHECK(param->rdPenalty < 0 || param->rdPenalty > 2,
           "Valid penalty for 32x32 intra TU in non-I slices. 0:disabled 1:RD-penalty 2:maximum");
     CHECK(param->keyframeMax < -1,
@@ -1575,6 +1579,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " rc-lookahead=%d", p->lookaheadDepth);
     s += sprintf(s, " lookahead-slices=%d", p->lookaheadSlices);
     s += sprintf(s, " scenecut=%d", p->scenecutThreshold);
+    s += sprintf(s, " radl=%d", p->radl);
     BOOL(p->bIntraRefresh, "intra-refresh");
     s += sprintf(s, " ctu=%d", p->maxCUSize);
     s += sprintf(s, " min-cu-size=%d", p->minCUSize);
