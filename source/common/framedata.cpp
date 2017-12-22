@@ -40,11 +40,12 @@ bool FrameData::create(const x265_param& param, const SPS& sps, int csp)
     m_spsrpsIdx = -1;
     if (param.rc.bStatWrite)
         m_spsrps = const_cast<RPS*>(sps.spsrps);
-
-    m_cuMemPool.create(0, param.internalCsp, sps.numCUsInFrame, param);
-    for (uint32_t ctuAddr = 0; ctuAddr < sps.numCUsInFrame; ctuAddr++)
-        m_picCTU[ctuAddr].initialize(m_cuMemPool, 0, param, ctuAddr);
-
+    bool isallocated = m_cuMemPool.create(0, param.internalCsp, sps.numCUsInFrame, param);
+    if (isallocated)
+        for (uint32_t ctuAddr = 0; ctuAddr < sps.numCUsInFrame; ctuAddr++)
+            m_picCTU[ctuAddr].initialize(m_cuMemPool, 0, param, ctuAddr);
+    else
+        return false;
     CHECKED_MALLOC_ZERO(m_cuStat, RCStatCU, sps.numCUsInFrame);
     CHECKED_MALLOC(m_rowStat, RCStatRow, sps.numCuInHeight);
     reinit(sps);

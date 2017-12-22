@@ -100,16 +100,17 @@ bool Analysis::create(ThreadLocalData *tld)
     for (uint32_t depth = 0; depth <= m_param->maxCUDepth; depth++, cuSize >>= 1)
     {
         ModeDepth &md = m_modeDepth[depth];
-
-        md.cuMemPool.create(depth, csp, MAX_PRED_TYPES, *m_param);
+        ok &= md.cuMemPool.create(depth, csp, MAX_PRED_TYPES, *m_param);
         ok &= md.fencYuv.create(cuSize, csp);
-
-        for (int j = 0; j < MAX_PRED_TYPES; j++)
+        if (ok)
         {
-            md.pred[j].cu.initialize(md.cuMemPool, depth, *m_param, j);
-            ok &= md.pred[j].predYuv.create(cuSize, csp);
-            ok &= md.pred[j].reconYuv.create(cuSize, csp);
-            md.pred[j].fencYuv = &md.fencYuv;
+            for (int j = 0; j < MAX_PRED_TYPES; j++)
+            {
+                md.pred[j].cu.initialize(md.cuMemPool, depth, *m_param, j);
+                ok &= md.pred[j].predYuv.create(cuSize, csp);
+                ok &= md.pred[j].reconYuv.create(cuSize, csp);
+                md.pred[j].fencYuv = &md.fencYuv;
+            }
         }
     }
     if (m_param->sourceHeight >= 1080)
