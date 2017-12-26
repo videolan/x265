@@ -4292,12 +4292,12 @@ cglobal idct8, 3, 7, 13, 0-8*16
 
 
 %macro IDCT8_AVX512_PASS_1 0
-    pmaddwd         m5,                m4, m17
-    pmaddwd         m6,                m0, m18
+    pmaddwd         m5,                m29, m17
+    pmaddwd         m6,                m25, m18
     paddd           m5,                m6
 
-    pmaddwd         m6,                m1, m21
-    pmaddwd         m3,                m2, m22
+    pmaddwd         m6,                m30, m21
+    pmaddwd         m3,                m26, m22
     paddd           m6,                m3
 
     paddd           m3,                m5, m6
@@ -4308,12 +4308,12 @@ cglobal idct8, 3, 7, 13, 0-8*16
     paddd           m5,                m11
     psrad           m5,                IDCT_SHIFT1
 
-    pmaddwd         m6,                m4, m19
-    pmaddwd         m8,                m0, m20
+    pmaddwd         m6,                m29, m19
+    pmaddwd         m8,                m25, m20
     paddd           m6,                m8
 
-    pmaddwd         m8,                m1, m23
-    pmaddwd         m9,                m2, m24
+    pmaddwd         m8,                m30, m23
+    pmaddwd         m9,                m26, m24
     paddd           m8,                m9
 
     paddd           m9,                m6, m8
@@ -4334,7 +4334,7 @@ cglobal idct8, 3, 7, 13, 0-8*16
 
 %macro IDCT8_AVX512_PASS_2 0
     mov             r7d, 0xAAAA
-    kmovd           k1, r7d 
+    kmovd           k1, r7d
     punpcklqdq      m2,                m3, m13
     punpckhqdq      m0,                m3, m13
 
@@ -4404,7 +4404,7 @@ cglobal idct8, 3, 7, 13, 0-8*16
 
 %if ARCH_X86_64
 INIT_ZMM avx512
-cglobal idct8, 3, 8, 25
+cglobal idct8, 3, 8, 31
 %if BIT_DEPTH == 12
     %define         IDCT_SHIFT2        8
     vpbroadcastd    m12,                [pd_128]
@@ -4424,34 +4424,33 @@ cglobal idct8, 3, 8, 25
     lea             r4,                [avx512_idct8_3]
     lea             r5,                [avx2_idct8_1]
     lea             r6,                [avx2_idct8_2]
+    movu           m16,                [idct16_shuff2]
+    movu           m17,                [idct16_shuff3]
 
     ;pass1
-    mova            ym1,                [r0 + 0 * 32]      ; [0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1]
-    mova            ym0,                [r0 + 1 * 32]      ; [2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3]
-    vpunpcklwd      ym5,      ym1,      ym0                ; [0 2 0 2 0 2 0 2 1 3 1 3 1 3 1 3]
-    vpunpckhwd      ym1,      ym0                          ; [0 2 0 2 0 2 0 2 1 3 1 3 1 3 1 3]
-    vinserti128     ym4,      ym5,      xm1,       1       ; [0 2 0 2 0 2 0 2 0 2 0 2 0 2 0 2]
-    vextracti128    xm2,      ym5,      1                  ; [1 3 1 3 1 3 1 3]
-    vinserti128     ym1,      ym1,      xm2,       0       ; [1 3 1 3 1 3 1 3 1 3 1 3 1 3 1 3]
+    mova            ym1, [r0 + 0 * 32]
+    mova            ym0, [r0 + 1 * 32]
+    mova            ym25, ym16
+    mova            ym26, ym17
+    vpermi2w        ym25,  ym1, ym0
+    vpermi2w        ym26,  ym1, ym0
 
-    mova            ym2,                [r0 + 2 * 32]      ; [4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5]
-    mova            ym0,                [r0 + 3 * 32]      ; [6 6 6 6 6 6 6 6 7 7 7 7 7 7 7 7]
-    vpunpcklwd      ym5,      ym2,      ym0                ; [4 6 4 6 4 6 4 6 5 7 5 7 5 7 5 7]
-    vpunpckhwd      ym2,      ym0                          ; [4 6 4 6 4 6 4 6 5 7 5 7 5 7 5 7]
-    vinserti128     ym0,      ym5,      xm2,       1       ; [4 6 4 6 4 6 4 6 4 6 4 6 4 6 4 6]
-    vextracti128    xm5,      ym5,      1                  ; [5 7 5 7 5 7 5 7]
-    vinserti128     ym2,      ym2,      xm5,       0       ; [5 7 5 7 5 7 5 7 5 7 5 7 5 7 5 7]
+    mova            ym1, [r0 + 2 * 32]
+    mova            ym0, [r0 + 3 * 32]
+    mova            ym27, ym16
+    mova            ym28, ym17
+    vpermi2w        ym27,  ym1, ym0
+    vpermi2w        ym28,  ym1, ym0
+    
+    vperm2i128      ym29, ym25, ym26, 0x20
+    vperm2i128      ym30, ym25, ym26, 0x31
+    vperm2i128      ym25, ym27, ym28, 0x20
+    vperm2i128      ym26, ym27, ym28, 0x31
 
-    mova            ym5,                [idct8_shuf1]
-    vpermd          ym4,                ym5, ym4
-    vpermd          ym0,                ym5, ym0
-    vpermd          ym1,                ym5, ym1
-    vpermd          ym2,                ym5, ym2
-
-    vinserti64x4    m4,        m4,      ym4, 1
-    vinserti64x4    m0,        m0,      ym0, 1
-    vinserti64x4    m1,        m1,      ym1, 1
-    vinserti64x4    m2,        m2,      ym2, 1
+    vinserti64x4    m29,        m29,      ym29, 1
+    vinserti64x4    m25,        m25,      ym25, 1
+    vinserti64x4    m30,        m30,      ym30, 1
+    vinserti64x4    m26,        m26,      ym26, 1
 
     movu            m17,                [r4]
     movu            m18,                [r4 + 1 * mmsize]
