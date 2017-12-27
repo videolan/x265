@@ -18389,6 +18389,100 @@ cglobal intra_pred_ang32_2, 3,5,3
     palignr     m2,                 m0, m1, 14
     movu        [r0 + r3],          m2
     RET
+
+cglobal intra_pred_ang32_10, 3,4,2
+    add             r2, mmsize*2
+    add             r1d, r1d
+    lea             r3, [r1 * 3]
+
+    vpbroadcastw    m0, [r2 + 2]       ; [1...]
+    vpbroadcastw    m1, [r2 + 2 + 2]   ; [2...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 4]   ; [3...]
+    vpbroadcastw    m1, [r2 + 2 + 6]   ; [4...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 * 4]
+
+    vpbroadcastw    m0, [r2 + 2 + 8]   ; [5...]
+    vpbroadcastw    m1, [r2 + 2 + 10]  ; [6...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 12]  ; [7...]
+    vpbroadcastw    m1, [r2 + 2 + 14]  ; [8...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 16]  ; [9...]
+    vpbroadcastw    m1, [r2 + 2 + 18]  ; [10...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 20]  ; [11...]
+    vpbroadcastw    m1, [r2 + 2 + 22]  ; [12...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 24]  ; [13...]
+    vpbroadcastw    m1, [r2 + 2 + 26]  ; [14...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 28]  ; [15...]
+    vpbroadcastw    m1, [r2 + 2 + 30]  ; [16...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 32]  ; [17...]
+    vpbroadcastw    m1, [r2 + 2 + 34]  ; [18...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 36]  ; [19...]
+    vpbroadcastw    m1, [r2 + 2 + 38]  ; [20...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 40]  ; [21...]
+    vpbroadcastw    m1, [r2 + 2 + 42]  ; [22...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 44]  ; [23...]
+    vpbroadcastw    m1, [r2 + 2 + 46]  ; [24...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 48]  ; [25...]
+    vpbroadcastw    m1, [r2 + 2 + 50]  ; [26...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 52]  ; [27...]
+    vpbroadcastw    m1, [r2 + 2 + 54]  ; [28...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 56]  ; [29...]
+    vpbroadcastw    m1, [r2 + 2 + 58]  ; [30...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 60]  ; [31...]
+    vpbroadcastw    m1, [r2 + 2 + 62]  ; [32...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+
+    RET
 ;-------------------------------------------------------------------------------------------------------
 ; avx512 code for intra_pred_ang32 mode 2 to 34 end
 ;-------------------------------------------------------------------------------------------------------
