@@ -192,9 +192,10 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
 {
     if (!enc || !param_in)
         return -1;
-
     x265_param save;
     Encoder* encoder = static_cast<Encoder*>(enc);
+    if (encoder->m_param->csvfn == NULL && param_in->csvfpt != NULL)
+         encoder->m_param->csvfpt = param_in->csvfpt;
     if (encoder->m_latestParam->forceFlush != param_in->forceFlush)
         return encoder->reconfigureParam(encoder->m_latestParam, param_in);
     bool isReconfigureRc = encoder->isReconfigureRc(encoder->m_latestParam, param_in);
