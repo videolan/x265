@@ -71,7 +71,7 @@ const pw_ang8_15,                   db  0,  0,  0,  0,  0,  0,  0,  0, 12, 13,  
 const pw_ang8_16,                   db  0,  0,  0,  0,  0,  0, 12, 13, 10, 11,  6,  7,  4,  5,  0,  1
 const pw_ang8_17,                   db  0,  0, 14, 15, 12, 13, 10, 11,  8,  9,  4,  5,  2,  3,  0,  1
 const pw_swap16,            times 2 db 14, 15, 12, 13, 10, 11,  8,  9,  6,  7,  4,  5,  2,  3,  0,  1
-
+const pw_swap16_avx512,     times 4 db 14, 15, 12, 13, 10, 11,  8,  9,  6,  7,  4,  5,  2,  3,  0,  1
 const pw_ang16_13,                  db 14, 15,  8,  9,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 const pw_ang16_16,                  db  0,  0,  0,  0,  0,  0, 10, 11,  8,  9,  6,  7,  2,  3,  0,  1
 
@@ -18481,8 +18481,122 @@ cglobal intra_pred_ang32_10, 3,4,2
     vpbroadcastw    m1, [r2 + 2 + 62]  ; [32...]
     movu            [r0 + r1 * 2], m0
     movu            [r0 + r3], m1
+    RET
+
+cglobal intra_pred_ang32_18, 3,6,6
+    mov         r4,                 rsp
+    sub         rsp,                4*(mmsize/2)+gprsize
+    and         rsp,                ~63
+    mov         [rsp+4*(mmsize/2)],     r4
+
+    movu        m0,                 [r2]
+    mova                            [rsp + 2*(mmsize/2)],   ym0
+    vextracti32x8                   [rsp + 3*(mmsize/2)],   m0, 1
+
+    movu        m2,                 [r2 + 130]
+    pshufb      m2,                 [pw_swap16_avx512]
+    vpermq      m2,                 m2, q1032
+    mova                            [rsp + 1*(mmsize/2)],   ym2
+    vextracti32x8                   [rsp + 0*(mmsize/2)],   m2, 1
+
+    add         r1d,                r1d
+    lea         r2,                 [rsp+2*(mmsize/2)]
+    lea         r4,                 [r1 * 2]
+    lea         r3,                 [r1 * 3]
+    lea         r5,                 [r1 * 4]
+
+    movu        m0,                 [r2]
+    movu        m2,                 [r2 - 16]
+    movu        [r0],               m0
+
+    palignr     m4,                 m0, m2, 14
+    palignr     m5,                 m0, m2, 12
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m0, m2, 10
+    palignr     m5,                 m0, m2, 8
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m5
+
+    palignr     m4,                 m0, m2, 6
+    palignr     m5,                 m0, m2, 4
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m0, m2, 2
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m2
+
+    movu        m0,                 [r2 - 32]
+    palignr     m4,                 m2, m0, 14
+    palignr     m5,                 m2, m0, 12
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m2, m0, 10
+    palignr     m5,                 m2, m0, 8
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m5
+
+    palignr     m4,                 m2, m0, 6
+    palignr     m5,                 m2, m0, 4
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m2, m0, 2
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m0
+
+    movu        m2,                 [r2 - 48]
+    palignr     m4,                 m0, m2, 14
+    palignr     m5,                 m0, m2, 12
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m0, m2, 10
+    palignr     m5,                 m0, m2, 8
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m5
+
+    palignr     m4,                 m0, m2, 6
+    palignr     m5,                 m0, m2, 4
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m0, m2, 2
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m2
+
+    movu        m0,                 [r2 - 64]
+    palignr     m4,                 m2, m0, 14
+    palignr     m5,                 m2, m0, 12
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m2, m0, 10
+    palignr     m5,                 m2, m0, 8
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m5
+
+    palignr     m4,                 m2, m0, 6
+    palignr     m5,                 m2, m0, 4
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m2, m0, 2
+    movu        [r0 + r3],          m4
+    mov         rsp,                [rsp+4*(mmsize/2)]
 
     RET
+
 ;-------------------------------------------------------------------------------------------------------
 ; avx512 code for intra_pred_ang32 mode 2 to 34 end
 ;-------------------------------------------------------------------------------------------------------
