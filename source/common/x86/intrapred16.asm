@@ -18594,9 +18594,52 @@ cglobal intra_pred_ang32_18, 3,6,6
     palignr     m4,                 m2, m0, 2
     movu        [r0 + r3],          m4
     mov         rsp,                [rsp+4*(mmsize/2)]
-
     RET
-
+INIT_ZMM avx512
+cglobal intra_pred_ang32_26, 3,3,2
+    movu        m0,                 [r2 + 2]
+    add         r1d,                r1d
+    lea         r2,                 [r1 * 3]
+    movu        [r0],               m0
+   movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    RET
 ;-------------------------------------------------------------------------------------------------------
 ; avx512 code for intra_pred_ang32 mode 2 to 34 end
 ;-------------------------------------------------------------------------------------------------------
