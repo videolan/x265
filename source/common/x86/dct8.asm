@@ -511,22 +511,11 @@ tab_idct8_1:    times 1 dw 64, -64, 36, -83, 64, 64, 83, 36
 tab_idct8_2:    times 1 dw 89, 75, 50, 18, 75, -18, -89, -50
                 times 1 dw 50, -89, 18, 75, 18, -50, 75, -89
 pb_idct8odd:    db 2, 3, 6, 7, 10, 11, 14, 15, 2, 3, 6, 7, 10, 11, 14, 15
-;Transform shift and scale bits table for rdoQuant
-tab_nonpsyRdo8 : dq 5, 5
-                 dq 4, 7
-                 dq 3, 9
-                 dq 2, 11
 
-tab_nonpsyRdo10: dq 3, 9
-                 dq 2, 11
-                 dq 1, 13
-                 dq 0, 15
-
-tab_nonpsyRdo12: dq 1, 13
-                 dq 0, 15
-                 dq -1, 17
-                 dq -2, 19
-
+;Scale bits table for rdoQuant
+tab_nonpsyRdo8 : dq 5, 7, 9, 11
+tab_nonpsyRdo10: dq 9, 11, 13, 15
+tab_nonpsyRdo12: dq 13, 15, 17, 19
 SECTION .text
 cextern pd_1
 cextern pd_2
@@ -6437,64 +6426,43 @@ cglobal idct4, 3, 4, 6
 ; void nonPsyRdoQuant_c(int16_t *m_resiDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, uint32_t blkPos)
 ;---------------------------------------------------------------------------------------------------------------------------------------------------------
 INIT_ZMM avx512
-cglobal nonPsyRdoQuant4, 5, 8, 8
-
+cglobal nonPsyRdoQuant4, 5, 5, 8
     mov            r4d,        r4m
     lea             r0,        [r0 + 2 * r4]
-    lea             r7,        [4 * r4]
-    lea             r1,        [r1 + 2 * r7]
-
+    lea             r4,        [4 * r4]
+    lea             r1,        [r1 + 2 * r4]
 %if BIT_DEPTH == 12
-    mov            r5q,        [tab_nonpsyRdo12]                 ; transformShift
-    mov            r6q,        [tab_nonpsyRdo12 + 8]             ; scaleBits
+    mov             r4,        [tab_nonpsyRdo12]
 %elif BIT_DEPTH == 10
-    mov            r5q,        [tab_nonpsyRdo10]
-    mov            r6q,        [tab_nonpsyRdo10 + 8]
+    mov             r4,        [tab_nonpsyRdo10]
 %elif BIT_DEPTH == 8
-    mov            r5q,        [tab_nonpsyRdo8]
-    mov            r6q,        [tab_nonpsyRdo8 + 8]
+    mov             r4,        [tab_nonpsyRdo8]
 %else
     %error Unsupported BIT_DEPTH!
  %endif
-
-    movq           xm3,        r6
+    movq           xm3,        r4
     movq           xm6,        [r2]
     movq           xm7,        [r3]
     vpxor           m4,        m4
     vpxor           m5,        m5
-
 ;Row 1, 2
-    movq           xm0,        [r0]
-    pinsrq         xm0,        [r0 + 8],       1
+    movu           xm0,        [r0]
     vpmovsxwq      m1,         xm0
     vcvtqq2pd      m2,         m1                              ; Convert packed 64-bit integers to packed double-precision (64-bit) floating-point elements
-
-    vfmadd132pd    m2,         m2,             m5              ; Multiply packed double-precision (64-bit) floating-point elements
-    vfmadd213pd    m2,         m2,             m5
-    vfmadd231pd    m2,         m2,             m5
-
+    vfmadd213pd    m2,         m2,             m5              ; Multiply packed double-precision (64-bit) floating-point elements
     vcvtpd2qq      m1,         m2
     vpsllq         m1,         xm3                              ; costUncoded
     paddq          m4,         m1
-    movu           [r1],       ym1
-    vextracti32x8  [r1 + 32],  m1 ,     1
-
+    movu           [r1],       m1
     ;Row 3, 4
-    movq           xm0,        [r0 + 16]
-    pinsrq         xm0,        [r0 + 24],      1
+    movu           xm0,        [r0 + 16]
     vpmovsxwq      m1,         xm0
     vcvtqq2pd      m2,         m1
-
-    vfmadd132pd    m2,         m2,             m5
     vfmadd213pd    m2,         m2,             m5
-    vfmadd231pd    m2,         m2,             m5
-
     vcvtpd2qq      m1,         m2
     vpsllq         m1,         xm3                              ; costUncoded
     paddq          m4,         m1
-    movu           [r1 + 64],  ym1
-    vextracti32x8  [r1 + 96],  m1 ,            1
-
+    movu           [r1 + 64],  m1
     vextracti32x8  ym2,        m4,             1
     paddq          ym4,        ym2
     vextracti32x4  xm2,        m4,             1
@@ -6508,29 +6476,22 @@ cglobal nonPsyRdoQuant4, 5, 8, 8
     movq           [r2],       xm6
     movq           [r3],       xm7
     RET
-
 INIT_ZMM avx512
-cglobal nonPsyRdoQuant8, 5, 8, 8
-
+cglobal nonPsyRdoQuant8, 5, 5, 8
     mov            r4d,        r4m
     lea             r0,        [r0 + 2 * r4]
-    lea             r7,        [4 * r4]
-    lea             r1,        [r1 + 2 * r7]
-
+    lea             r4,        [4 * r4]
+    lea             r1,        [r1 + 2 * r4]
 %if BIT_DEPTH == 12
-    mov            r5q,        [tab_nonpsyRdo12 + 16]             ; transformShift
-    mov            r6q,        [tab_nonpsyRdo12 + 24]             ; scaleBits
+    mov             r4,        [tab_nonpsyRdo12 + 8]
 %elif BIT_DEPTH == 10
-    mov            r5q,        [tab_nonpsyRdo10 + 16]
-    mov            r6q,        [tab_nonpsyRdo10 + 24]
+    mov             r4,        [tab_nonpsyRdo10 + 8]
 %elif BIT_DEPTH == 8
-    mov            r5q,        [tab_nonpsyRdo8 + 16]
-    mov            r6q,        [tab_nonpsyRdo8 + 24]
+    mov             r4,        [tab_nonpsyRdo8 + 8]
 %else
     %error Unsupported BIT_DEPTH!
  %endif
-
-    movq           xm3,        r6
+    movq           xm3,        r4
     movq           xm6,        [r2]
     movq           xm7,        [r3]
     vpxor           m4,        m4
@@ -6541,11 +6502,7 @@ cglobal nonPsyRdoQuant8, 5, 8, 8
     pinsrq         xm0,        [r0 + mmsize/4], 1
     vpmovsxwq      m1,         xm0
     vcvtqq2pd      m2,         m1                              ; Convert packed 64-bit integers to packed double-precision (64-bit) floating-point elements
-
-    vfmadd132pd    m2,         m2,             m5              ; Multiply packed double-precision (64-bit) floating-point elements
-    vfmadd213pd    m2,         m2,             m5
-    vfmadd231pd    m2,         m2,             m5
-
+    vfmadd213pd    m2,         m2,             m5              ; Multiply packed double-precision (64-bit) floating-point elements
     vcvtpd2qq      m1,         m2
     vpsllq         m1,         xm3                              ; costUncoded
     paddq          m4,         m1
@@ -6557,11 +6514,7 @@ cglobal nonPsyRdoQuant8, 5, 8, 8
     pinsrq         xm0,        [r0 + 3 * mmsize/4],      1
     vpmovsxwq      m1,         xm0
     vcvtqq2pd      m2,         m1
-
-    vfmadd132pd    m2,         m2,             m5
     vfmadd213pd    m2,         m2,             m5
-    vfmadd231pd    m2,         m2,             m5
-
     vcvtpd2qq      m1,         m2
     vpsllq         m1,         xm3                              ; costUncoded
     paddq          m4,         m1
@@ -6581,29 +6534,22 @@ cglobal nonPsyRdoQuant8, 5, 8, 8
     movq           [r2],       xm6
     movq           [r3],       xm7
     RET
-
 INIT_ZMM avx512
-cglobal nonPsyRdoQuant16, 5, 8, 8
-
+cglobal nonPsyRdoQuant16, 5, 5, 8
     mov            r4d,        r4m
     lea             r0,        [r0 + 2 * r4]
-    lea             r7,        [4 * r4]
-    lea             r1,        [r1 + 2 * r7]
-
+    lea             r4,        [4 * r4]
+    lea             r1,        [r1 + 2 * r4]
 %if BIT_DEPTH == 12
-    mov            r5q,        [tab_nonpsyRdo12 + 32]             ; transformShift
-    mov            r6q,        [tab_nonpsyRdo12 + 40]             ; scaleBits
+    mov             r4,        [tab_nonpsyRdo12 + 16]
 %elif BIT_DEPTH == 10
-    mov            r5q,        [tab_nonpsyRdo10 + 32]
-    mov            r6q,        [tab_nonpsyRdo10 + 40]
+    mov             r4,        [tab_nonpsyRdo10 + 16]
 %elif BIT_DEPTH == 8
-    mov            r5q,        [tab_nonpsyRdo8 + 32]
-    mov            r6q,        [tab_nonpsyRdo8 + 40]
+    mov             r4,        [tab_nonpsyRdo8 + 16]
 %else
     %error Unsupported BIT_DEPTH!
  %endif
-
-    movq           xm3,        r6
+    movq           xm3,        r4
     movq           xm6,        [r2]
     movq           xm7,        [r3]
     vpxor           m4,        m4
@@ -6614,11 +6560,7 @@ cglobal nonPsyRdoQuant16, 5, 8, 8
     pinsrq         xm0,        [r0 + mmsize/2],       1
     vpmovsxwq      m1,         xm0
     vcvtqq2pd      m2,         m1                              ; Convert packed 64-bit integers to packed double-precision (64-bit) floating-point elements
-
-    vfmadd132pd    m2,         m2,             m5              ; Multiply packed double-precision (64-bit) floating-point elements
-    vfmadd213pd    m2,         m2,             m5
-    vfmadd231pd    m2,         m2,             m5
-
+    vfmadd213pd    m2,         m2,             m5              ; Multiply packed double-precision (64-bit) floating-point elements
     vcvtpd2qq      m1,         m2
     vpsllq         m1,         xm3                              ; costUncoded
     paddq          m4,         m1
@@ -6630,11 +6572,7 @@ cglobal nonPsyRdoQuant16, 5, 8, 8
     pinsrq         xm0,        [r0 + 3 * mmsize/2],      1
     vpmovsxwq      m1,         xm0
     vcvtqq2pd      m2,         m1
-
-    vfmadd132pd    m2,         m2,             m5
     vfmadd213pd    m2,         m2,             m5
-    vfmadd231pd    m2,         m2,             m5
-
     vcvtpd2qq      m1,         m2
     vpsllq         m1,         xm3                              ; costUncoded
     paddq          m4,         m1
@@ -6654,29 +6592,22 @@ cglobal nonPsyRdoQuant16, 5, 8, 8
     movq           [r2],       xm6
     movq           [r3],       xm7
     RET
-
 INIT_ZMM avx512
-cglobal nonPsyRdoQuant32, 5, 8, 8
-
+cglobal nonPsyRdoQuant32, 5, 5, 8
     mov            r4d,        r4m
     lea             r0,        [r0 + 2 * r4]
-    lea             r7,        [4 * r4]
-    lea             r1,        [r1 + 2 * r7]
-
+    lea             r4,        [4 * r4]
+    lea             r1,        [r1 + 2 * r4]
 %if BIT_DEPTH == 12
-    mov            r5q,        [tab_nonpsyRdo12 + 48]             ; transformShift
-    mov            r6q,        [tab_nonpsyRdo12 + 56]             ; scaleBits
+    mov             r4,        [tab_nonpsyRdo12 + 24]
 %elif BIT_DEPTH == 10
-    mov            r5q,        [tab_nonpsyRdo10 + 48]
-    mov            r6q,        [tab_nonpsyRdo10 + 56]
+    mov             r4,        [tab_nonpsyRdo10 + 24]
 %elif BIT_DEPTH == 8
-    mov            r5q,        [tab_nonpsyRdo8 + 48]
-    mov            r6q,        [tab_nonpsyRdo8 + 56]
+    mov             r4,        [tab_nonpsyRdo8 + 24]
 %else
     %error Unsupported BIT_DEPTH!
  %endif
-
-    movq           xm3,        r6
+    movq           xm3,        r4
     movq           xm6,        [r2]
     movq           xm7,        [r3]
     vpxor           m4,        m4
@@ -6687,11 +6618,7 @@ cglobal nonPsyRdoQuant32, 5, 8, 8
     pinsrq         xm0,        [r0 + mmsize],  1
     vpmovsxwq      m1,         xm0
     vcvtqq2pd      m2,         m1                              ; Convert packed 64-bit integers to packed double-precision (64-bit) floating-point elements
-
-    vfmadd132pd    m2,         m2,             m5              ; Multiply packed double-precision (64-bit) floating-point elements
-    vfmadd213pd    m2,         m2,             m5
-    vfmadd231pd    m2,         m2,             m5
-
+    vfmadd213pd    m2,         m2,             m5              ; Multiply packed double-precision (64-bit) floating-point elements
     vcvtpd2qq      m1,         m2
     vpsllq         m1,         xm3                              ; costUncoded
     paddq          m4,         m1
@@ -6703,11 +6630,7 @@ cglobal nonPsyRdoQuant32, 5, 8, 8
     pinsrq         xm0,        [r0 + 3 * mmsize],      1
     vpmovsxwq      m1,         xm0
     vcvtqq2pd      m2,         m1
-
-    vfmadd132pd    m2,         m2,             m5
     vfmadd213pd    m2,         m2,             m5
-    vfmadd231pd    m2,         m2,             m5
-
     vcvtpd2qq      m1,         m2
     vpsllq         m1,         xm3                              ; costUncoded
     paddq          m4,         m1
