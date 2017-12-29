@@ -3120,7 +3120,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_8x8].nonPsyRdoQuant = PFX(nonPsyRdoQuant8_avx512);
         p.cu[BLOCK_16x16].nonPsyRdoQuant = PFX(nonPsyRdoQuant16_avx512);
         p.cu[BLOCK_32x32].nonPsyRdoQuant = PFX(nonPsyRdoQuant32_avx512);
-
+        p.cu[BLOCK_4x4].psyRdoQuant = PFX(psyRdoQuant4_avx512);
+        p.cu[BLOCK_8x8].psyRdoQuant = PFX(psyRdoQuant8_avx512);
+        p.cu[BLOCK_16x16].psyRdoQuant = PFX(psyRdoQuant16_avx512);
+        p.cu[BLOCK_32x32].psyRdoQuant = PFX(psyRdoQuant32_avx512);
     }
 #endif
 }
@@ -5302,10 +5305,16 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_16x32].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x32>;
         p.pu[LUMA_16x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_16x64>;
         p.pu[LUMA_48x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_48x64>;
+
         p.cu[BLOCK_4x4].nonPsyRdoQuant = PFX(nonPsyRdoQuant4_avx512);
         p.cu[BLOCK_8x8].nonPsyRdoQuant = PFX(nonPsyRdoQuant8_avx512);
         p.cu[BLOCK_16x16].nonPsyRdoQuant = PFX(nonPsyRdoQuant16_avx512);
         p.cu[BLOCK_32x32].nonPsyRdoQuant = PFX(nonPsyRdoQuant32_avx512);
+        p.cu[BLOCK_4x4].psyRdoQuant = PFX(psyRdoQuant4_avx512);
+        p.cu[BLOCK_8x8].psyRdoQuant = PFX(psyRdoQuant8_avx512);
+        p.cu[BLOCK_16x16].psyRdoQuant = PFX(psyRdoQuant16_avx512);
+        p.cu[BLOCK_32x32].psyRdoQuant = PFX(psyRdoQuant32_avx512);
+
     }
 #endif
 }

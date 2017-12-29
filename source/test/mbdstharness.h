@@ -51,11 +51,10 @@ protected:
     int     mintbuf2[MAX_TU_SIZE];
     int     mintbuf3[MAX_TU_SIZE];
     int     mintbuf4[MAX_TU_SIZE];
-
     int16_t short_test_buff[TEST_CASES][TEST_BUF_SIZE];
+    int16_t short_test_buff1[TEST_CASES][TEST_BUF_SIZE];
     int     int_test_buff[TEST_CASES][TEST_BUF_SIZE];
     int     int_idct_test_buff[TEST_CASES][TEST_BUF_SIZE];
-
     uint32_t mubuf1[MAX_TU_SIZE];
     uint32_t mubuf2[MAX_TU_SIZE];
     uint16_t mushortbuf1[MAX_TU_SIZE];
@@ -65,6 +64,7 @@ protected:
     bool check_dequant_primitive(dequant_scaling_t ref, dequant_scaling_t opt);
     bool check_dequant_primitive(dequant_normal_t ref, dequant_normal_t opt);
     bool check_nonPsyRdoQuant_primitive(nonPsyRdoQuant_t ref, nonPsyRdoQuant_t opt);
+    bool check_psyRdoQuant_primitive(psyRdoQuant_t ref, psyRdoQuant_t opt);
     bool check_quant_primitive(quant_t ref, quant_t opt);
     bool check_nquant_primitive(nquant_t ref, nquant_t opt);
     bool check_dct_primitive(dct_t ref, dct_t opt, intptr_t width);

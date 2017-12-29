@@ -642,11 +642,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
     X265_CHECK((int)numSig == primitives.cu[log2TrSize - 2].count_nonzero(dstCoeff), "numSig differ\n");
     if (!numSig)
         return 0;
-
     const uint32_t trSize = 1 << log2TrSize;
     int64_t lambda2 = m_qpParam[ttype].lambda2;
-    const int64_t psyScale = ((int64_t)m_psyRdoqScale * m_qpParam[ttype].lambda);
-
+    int64_t psyScale = ((int64_t)m_psyRdoqScale * m_qpParam[ttype].lambda);
     /* unquant constants for measuring distortion. Scaling list quant coefficients have a (1 << 4)
      * scale applied that must be removed during unquant. Note that in real dequant there is clipping
      * at several stages. We skip the clipping for simplicity when measuring RD cost */
@@ -723,25 +721,9 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
         for (int cgScanPos = cgLastScanPos + 1; cgScanPos < (int)cgNum ; cgScanPos++)
         {
             X265_CHECK(coeffNum[cgScanPos] == 0, "count of coeff failure\n");
-
             uint32_t scanPosBase = (cgScanPos << MLS_CG_SIZE);
             uint32_t blkPos      = codeParams.scan[scanPosBase];
-
-            // TODO: we can't SIMD optimize because PSYVALUE need 64-bits multiplication, convert to Double can work faster by FMA
-            for (int y = 0; y < MLS_CG_SIZE; y++)
-            {
-                for (int x = 0; x < MLS_CG_SIZE; x++)
-                {
-                    int signCoef         = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
-                    int predictedCoef    = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
-                    costUncoded[blkPos + x] = static_cast<int64_t>((double)((signCoef * signCoef) << scaleBits));
-                    /* when no residual coefficient is coded, predicted coef == recon coef */
-                    costUncoded[blkPos + x] -= PSYVALUE(predictedCoef);
-                    totalUncodedCost += costUncoded[blkPos + x];
-                    totalRdCost += costUncoded[blkPos + x];
-                }
-                blkPos += trSize;
-            }
+            primitives.cu[log2TrSize - 2].psyRdoQuant(m_resiDctCoeff, m_fencDctCoeff, costUncoded, &totalUncodedCost, &totalRdCost, &psyScale, blkPos);
         }
     }
     else
@@ -814,22 +796,14 @@ uint32_t Quant::rdoQuant(const CUData& cu, int16_t* dstCoeff, TextType ttype, ui
             // TODO: does we need zero-coeff cost?
             const uint32_t scanPosBase = (cgScanPos << MLS_CG_SIZE);
             uint32_t blkPos = codeParams.scan[scanPosBase];
-
             if (usePsyMask)
             {
-                // TODO: we can't SIMD optimize because PSYVALUE need 64-bits multiplication, convert to Double can work faster by FMA
+                primitives.cu[log2TrSize - 2].psyRdoQuant(m_resiDctCoeff, m_fencDctCoeff, costUncoded, &totalUncodedCost, &totalRdCost, &psyScale, blkPos);
+                blkPos = codeParams.scan[scanPosBase];
                 for (int y = 0; y < MLS_CG_SIZE; y++)
                 {
                     for (int x = 0; x < MLS_CG_SIZE; x++)
                     {
-                        int signCoef         = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
-                        int predictedCoef    = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
-                        costUncoded[blkPos + x] = static_cast<int64_t>((double)((signCoef * signCoef) << scaleBits));
-                        /* when no residual coefficient is coded, predicted coef == recon coef */
-                        costUncoded[blkPos + x] -= PSYVALUE(predictedCoef);
-                        totalUncodedCost += costUncoded[blkPos + x];
-                        totalRdCost += costUncoded[blkPos + x];
-
                         const uint32_t scanPosOffset =  y * MLS_CG_SIZE + x;
                         const uint32_t ctxSig = table_cnt[patternSigCtx][g_scan4x4[codeParams.scanType][scanPosOffset]] + ctxSigOffset;
                         X265_CHECK(trSize > 4, "trSize check failure\n");

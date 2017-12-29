@@ -516,6 +516,7 @@ pb_idct8odd:    db 2, 3, 6, 7, 10, 11, 14, 15, 2, 3, 6, 7, 10, 11, 14, 15
 tab_nonpsyRdo8 : dq 5, 7, 9, 11
 tab_nonpsyRdo10: dq 9, 11, 13, 15
 tab_nonpsyRdo12: dq 13, 15, 17, 19
+
 SECTION .text
 cextern pd_1
 cextern pd_2
@@ -542,6 +543,10 @@ cextern trans8_shuf
     %define     DST4_ROUND          16
     %define     DCT8_SHIFT1         6
     %define     DCT8_ROUND1         32
+    %define     RDO_MAX_4           3
+    %define     RDO_MAX_8           1
+    %define     RDO_MAX_16          0
+    %define     RDO_MAX_32          0
 %elif BIT_DEPTH == 10
     %define     DCT4_SHIFT          3
     %define     DCT4_ROUND          4
@@ -551,6 +556,10 @@ cextern trans8_shuf
     %define     DST4_ROUND          4
     %define     DCT8_SHIFT1         4
     %define     DCT8_ROUND1         8
+    %define     RDO_MAX_4           7
+    %define     RDO_MAX_8           5
+    %define     RDO_MAX_16          3
+    %define     RDO_MAX_32          1
 %elif BIT_DEPTH == 8
     %define     DCT4_SHIFT          1
     %define     DCT4_ROUND          1
@@ -560,6 +569,10 @@ cextern trans8_shuf
     %define     DST4_ROUND          1
     %define     DCT8_SHIFT1         2
     %define     DCT8_ROUND1         2
+    %define     RDO_MAX_4           11
+    %define     RDO_MAX_8           9
+    %define     RDO_MAX_16          7
+    %define     RDO_MAX_32          5
 %else
     %error Unsupported BIT_DEPTH!
 %endif
@@ -6650,5 +6663,391 @@ cglobal nonPsyRdoQuant32, 5, 5, 8
     movq           [r2],       xm6
     movq           [r3],       xm7
     RET
+;static void psyRdoQuant_c(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t psyScale, uint32_t blkPos)
+;{
+;    const int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
+;    const int scaleBits = SCALE_BITS - 2 * transformShift;
+;    const uint32_t trSize = 1 << log2TrSize;
+;    int max = X265_MAX(0, (2 * transformShift + 1));
+;
+;    for (int y = 0; y < MLS_CG_SIZE; y++)
+;    {
+;        for (int x = 0; x < MLS_CG_SIZE; x++)
+;        {
+;            int64_t signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+;            int64_t predictedCoef = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
+;
+;            costUncoded[blkPos + x] = static_cast<int64_t>((double)(signCoef * signCoef) << scaleBits);
+;
+;            /* when no residual coefficient is coded, predicted coef == recon coef */
+;            costUncoded[blkPos + x] -= static_cast<int64_t>((psyScale * (predictedCoef)) >> max);
+;
+;            *totalUncodedCost += costUncoded[blkPos + x];
+;            *totalRdCost += costUncoded[blkPos + x];
+;        }
+;        blkPos += trSize;
+;    }
+;}
 
+;---------------------------------------------------------------------------------------------------------------------------------------------------------
+; void psyRdoQuant(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t *psyScale, uint32_t blkPos)
+;---------------------------------------------------------------------------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal psyRdoQuant4, 5, 9, 13
+    mov             r5,        r5m
+    mov            r6d,        r6m
+    vpbroadcastq   m12,        [r5]                              ; psyScale
+    lea             r0,        [r0 + 2 * r6]
+    lea             r1,        [r1 + 2 * r6]
+    lea             r6,        [4 * r6]
+    lea             r2,        [r2 + 2 * r6]
+    movq           xm0,        [r3]
+    movq           xm1,        [r4]
+
+%if BIT_DEPTH == 12
+    mov            r5,         [tab_nonpsyRdo12]                 ; scaleBits
+%elif BIT_DEPTH == 10
+    mov            r5,         [tab_nonpsyRdo10]
+%elif BIT_DEPTH == 8
+    mov            r5,         [tab_nonpsyRdo8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    movq           xm2,        r5
+    vpxor           m4,        m4
+    vpxor           m3,        m3
+
+;Row 1, 2
+    vpmovsxwq       m6,        [r0]
+    vpmovsxwq       m7,        [r1]
+    psubq           m7,        m6                              ; predictedCoef
+
+    vcvtqq2pd       m9,        m6
+    vfmadd213pd     m9,        m9,             m3
+    vcvtpd2qq       m8,        m9
+    vpsllq          m8,        xm2                             ;(signCoef * signCoef) << scaleBits
+
+    vcvtqq2pd      m10,        m7
+    vcvtqq2pd      m11,        m12
+    vfmadd213pd    m10,        m11,            m3
+    vcvtpd2qq       m9,        m10
+    vpsraq          m9,        RDO_MAX_4                       ;(psyScale * predictedCoef) >> max
+
+    psubq           m8,        m9
+    paddq           m4,        m8
+    movu           [r2],       m8
+
+    ;Row 3, 4
+    vpmovsxwq       m6,        [r0 + 16]
+    vpmovsxwq       m7,        [r1 + 16]
+    psubq           m7,        m6                              ; predictedCoef
+
+    vcvtqq2pd       m9,        m6
+    vfmadd213pd     m9,        m9,             m3
+    vcvtpd2qq       m8,        m9
+    vpsllq          m8,        xm2                             ;(signCoef * signCoef) << scaleBits
+
+    vcvtqq2pd      m10,        m7
+    vcvtqq2pd      m11,        m12
+    vfmadd213pd    m10,        m11,             m3
+    vcvtpd2qq       m9,        m10
+    vpsraq          m9,        RDO_MAX_4                      ;(psyScale * predictedCoef) >> max
+
+    psubq           m8,         m9
+    paddq           m4,         m8
+    movu           [r2 + 64],   m8
+
+    vextracti32x8  ym2,         m4,            1
+    paddq          ym4,        ym2
+    vextracti32x4  xm2,         m4,            1
+    paddq          xm4,        xm2
+    punpckhqdq     xm2,        xm4,            xm3
+    paddq          xm4,        xm2
+
+    paddq          xm0,        xm4
+    paddq          xm1,        xm4
+
+    movq           [r3],       xm0
+    movq           [r4],       xm1
+    RET
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------
+; void psyRdoQuant(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t *psyScale, uint32_t blkPos)
+;---------------------------------------------------------------------------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal psyRdoQuant8, 5, 9, 15
+    mov             r5,        r5m
+    mov            r6d,        r6m
+    vpbroadcastq   m12,        [r5]                              ; psyScale
+    lea             r0,        [r0 + 2 * r6]
+    lea             r1,        [r1 + 2 * r6]
+    lea             r6,        [4 * r6]
+    lea             r2,        [r2 + 2 * r6]
+    movq           xm0,        [r3]
+    movq           xm1,        [r4]
+
+%if BIT_DEPTH == 12
+    mov            r5,         [tab_nonpsyRdo12 + 8]                 ; scaleBits
+%elif BIT_DEPTH == 10
+    mov            r5,         [tab_nonpsyRdo10 + 8]
+%elif BIT_DEPTH == 8
+    mov            r5,         [tab_nonpsyRdo8 + 8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    movq           xm2,        r5
+    vpxor           m4,        m4
+    vpxor           m3,        m3
+
+;Row 1, 2
+    movq           xm13,       [r0]
+    movq           xm14,       [r1]
+    pinsrq         xm13,       [r0 + mmsize/4], 1
+    pinsrq         xm14,       [r1 + mmsize/4], 1
+    vpmovsxwq       m6,        xm13
+    vpmovsxwq       m7,        xm14
+    psubq           m7,        m6                              ; predictedCoef
+
+    vcvtqq2pd       m9,        m6
+    vfmadd213pd     m9,        m9,             m3
+    vcvtpd2qq       m8,        m9
+    vpsllq          m8,        xm2                             ;(signCoef * signCoef) << scaleBits
+
+    vcvtqq2pd      m10,        m7
+    vcvtqq2pd      m11,        m12
+    vfmadd213pd    m10,        m11,            m3
+    vcvtpd2qq       m9,        m10
+    vpsraq          m9,        RDO_MAX_8                       ;(psyScale * predictedCoef) >> max
+
+    psubq           m8,        m9
+    paddq           m4,        m8
+    movu           [r2],       ym8
+    vextracti32x8  [r2 + mmsize],  m8 ,        1
+
+    ;Row 3, 4
+    movq           xm13,       [r0 + mmsize/2]
+    movq           xm14,       [r1 + mmsize/2]
+    pinsrq         xm13,       [r0 + 3 * mmsize/4],      1
+    pinsrq         xm14,       [r1 + 3 * mmsize/4],      1
+    vpmovsxwq       m6,        xm13
+    vpmovsxwq       m7,        xm14
+    psubq           m7,        m6                              ; predictedCoef
+
+    vcvtqq2pd       m9,        m6
+    vfmadd213pd     m9,        m9,             m3
+    vcvtpd2qq       m8,        m9
+    vpsllq          m8,        xm2                             ;(signCoef * signCoef) << scaleBits
+
+    vcvtqq2pd      m10,        m7
+    vcvtqq2pd      m11,        m12
+    vfmadd213pd    m10,        m11,             m3
+    vcvtpd2qq       m9,        m10
+    vpsraq          m9,        RDO_MAX_8                      ;(psyScale * predictedCoef) >> max
+
+    psubq           m8,         m9
+    paddq           m4,         m8
+    movu           [r2 + 2 * mmsize],       ym8
+    vextracti32x8  [r2 + 3 * mmsize],  m8 ,    1
+
+    vextracti32x8  ym2,         m4,            1
+    paddq          ym4,        ym2
+    vextracti32x4  xm2,         m4,            1
+    paddq          xm4,        xm2
+    punpckhqdq     xm2,        xm4,            xm3
+    paddq          xm4,        xm2
+
+    paddq          xm0,        xm4
+    paddq          xm1,        xm4
+
+    movq           [r3],       xm0
+    movq           [r4],       xm1
+    RET
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------
+; void psyRdoQuant(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t *psyScale, uint32_t blkPos)
+;---------------------------------------------------------------------------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal psyRdoQuant16, 5, 9, 15
+    mov             r5,        r5m
+    mov            r6d,        r6m
+    vpbroadcastq   m12,        [r5]                              ; psyScale
+    lea             r0,        [r0 + 2 * r6]
+    lea             r1,        [r1 + 2 * r6]
+    lea             r6,        [4 * r6]
+    lea             r2,        [r2 + 2 * r6]
+    movq           xm0,        [r3]
+    movq           xm1,        [r4]
+
+%if BIT_DEPTH == 12
+    mov            r5,         [tab_nonpsyRdo12 + 16]                 ; scaleBits
+%elif BIT_DEPTH == 10
+    mov            r5,         [tab_nonpsyRdo10 + 16]
+%elif BIT_DEPTH == 8
+    mov            r5,         [tab_nonpsyRdo8 + 16]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    movq           xm2,        r5
+    vpxor           m4,        m4
+    vpxor           m3,        m3
+
+;Row 1, 2
+    movq           xm13,       [r0]
+    movq           xm14,       [r1]
+    pinsrq         xm13,       [r0 + mmsize/2], 1
+    pinsrq         xm14,       [r1 + mmsize/2], 1
+    vpmovsxwq       m6,        xm13
+    vpmovsxwq       m7,        xm14
+    psubq           m7,        m6                              ; predictedCoef
+
+    vcvtqq2pd       m9,        m6
+    vfmadd213pd     m9,        m9,             m3
+    vcvtpd2qq       m8,        m9
+    vpsllq          m8,        xm2                             ;(signCoef * signCoef) << scaleBits
+
+    vcvtqq2pd      m10,        m7
+    vcvtqq2pd      m11,        m12
+    vfmadd213pd    m10,        m11,            m3
+    vcvtpd2qq       m9,        m10
+    vpsraq          m9,        RDO_MAX_16                      ;(psyScale * predictedCoef) >> max
+
+    psubq           m8,        m9
+    paddq           m4,        m8
+    movu           [r2],       ym8
+    vextracti32x8  [r2 + 2 * mmsize],  m8 ,        1
+
+    ;Row 3, 4
+    movq           xm13,       [r0 + mmsize]
+    movq           xm14,       [r1 + mmsize]
+    pinsrq         xm13,       [r0 + 3 * mmsize/2],      1
+    pinsrq         xm14,       [r1 + 3 * mmsize/2],      1
+    vpmovsxwq       m6,        xm13
+    vpmovsxwq       m7,        xm14
+    psubq           m7,        m6                              ; predictedCoef
+
+    vcvtqq2pd       m9,        m6
+    vfmadd213pd     m9,        m9,             m3
+    vcvtpd2qq       m8,        m9
+    vpsllq          m8,        xm2                             ;(signCoef * signCoef) << scaleBits
+
+    vcvtqq2pd      m10,        m7
+    vcvtqq2pd      m11,        m12
+    vfmadd213pd    m10,        m11,             m3
+    vcvtpd2qq       m9,        m10
+    vpsraq          m9,        RDO_MAX_16                      ;(psyScale * predictedCoef) >> max
+
+    psubq           m8,         m9
+    paddq           m4,         m8
+    movu           [r2 + 4 * mmsize],       ym8
+    vextracti32x8  [r2 + 6 * mmsize],  m8 ,    1
+
+    vextracti32x8  ym2,         m4,            1
+    paddq          ym4,        ym2
+    vextracti32x4  xm2,         m4,            1
+    paddq          xm4,        xm2
+    punpckhqdq     xm2,        xm4,            xm3
+    paddq          xm4,        xm2
+
+    paddq          xm0,        xm4
+    paddq          xm1,        xm4
+
+    movq           [r3],       xm0
+    movq           [r4],       xm1
+    RET
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------
+; void psyRdoQuant(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t *psyScale, uint32_t blkPos)
+;---------------------------------------------------------------------------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal psyRdoQuant32, 5, 9, 15
+    mov             r5,        r5m
+    mov            r6d,        r6m
+    vpbroadcastq   m12,        [r5]                              ; psyScale
+    lea             r0,        [r0 + 2 * r6]
+    lea             r1,        [r1 + 2 * r6]
+    lea             r6,        [4 * r6]
+    lea             r2,        [r2 + 2 * r6]
+    movq           xm0,        [r3]
+    movq           xm1,        [r4]
+
+%if BIT_DEPTH == 12
+    mov            r5,         [tab_nonpsyRdo12 + 24]                 ; scaleBits
+%elif BIT_DEPTH == 10
+    mov            r5,         [tab_nonpsyRdo10 + 24]
+%elif BIT_DEPTH == 8
+    mov            r5,         [tab_nonpsyRdo8 + 24]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    movq           xm2,        r5
+    vpxor           m4,        m4
+    vpxor           m3,        m3
+
+;Row 1, 2
+    movq           xm13,       [r0]
+    movq           xm14,       [r1]
+    pinsrq         xm13,       [r0 + mmsize], 1
+    pinsrq         xm14,       [r1 + mmsize], 1
+    vpmovsxwq       m6,        xm13
+    vpmovsxwq       m7,        xm14
+    psubq           m7,        m6                              ; predictedCoef
+
+    vcvtqq2pd       m9,        m6
+    vfmadd213pd     m9,        m9,             m3
+    vcvtpd2qq       m8,        m9
+    vpsllq          m8,        xm2                             ;(signCoef * signCoef) << scaleBits
+
+    vcvtqq2pd      m10,        m7
+    vcvtqq2pd      m11,        m12
+    vfmadd213pd    m10,        m11,            m3
+    vcvtpd2qq       m9,        m10
+    vpsraq          m9,        RDO_MAX_32                      ;(psyScale * predictedCoef) >> max
+
+    psubq           m8,        m9
+    paddq           m4,        m8
+    movu           [r2],       ym8
+    vextracti32x8  [r2 + 4 * mmsize],  m8 ,        1
+
+    ;Row 3, 4
+    movq           xm13,       [r0 + 2 * mmsize]
+    movq           xm14,       [r1 + 2 * mmsize]
+    pinsrq         xm13,       [r0 + 3 * mmsize],      1
+    pinsrq         xm14,       [r1 + 3 * mmsize],      1
+    vpmovsxwq       m6,        xm13
+    vpmovsxwq       m7,        xm14
+    psubq           m7,        m6                              ; predictedCoef
+
+    vcvtqq2pd       m9,        m6
+    vfmadd213pd     m9,        m9,             m3
+    vcvtpd2qq       m8,        m9
+    vpsllq          m8,        xm2                             ;(signCoef * signCoef) << scaleBits
+
+    vcvtqq2pd      m10,        m7
+    vcvtqq2pd      m11,        m12
+    vfmadd213pd    m10,        m11,             m3
+    vcvtpd2qq       m9,        m10
+    vpsraq          m9,        RDO_MAX_32                      ;(psyScale * predictedCoef) >> max
+
+    psubq           m8,         m9
+    paddq           m4,         m8
+    movu           [r2 + 8 * mmsize],       ym8
+    vextracti32x8  [r2 + 12 * mmsize], m8 ,    1
+
+    vextracti32x8  ym2,         m4,            1
+    paddq          ym4,        ym2
+    vextracti32x4  xm2,         m4,            1
+    paddq          xm4,        xm2
+    punpckhqdq     xm2,        xm4,            xm3
+    paddq          xm4,        xm2
+
+    paddq          xm0,        xm4
+    paddq          xm1,        xm4
+
+    movq           [r3],       xm0
+    movq           [r4],       xm1
+    RET
 %endif
