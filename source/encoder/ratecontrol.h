@@ -132,6 +132,7 @@ public:
     bool   m_isGrainEnabled;
     bool   m_isAbrReset;
     bool   m_isNextGop;
+    bool   m_initVbv;
     int    m_lastAbrResetPoc;
 
     double m_rateTolerance;
