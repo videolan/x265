@@ -301,9 +301,15 @@ bool CLIOptions::parse(int argc, char **argv)
                 if (!this->qpfile)
                     x265_log_file(param, X265_LOG_ERROR, "%s qpfile not found or error in opening qp file\n", optarg);
             }
+            OPT("fullhelp")
+            {
+                param->logLevel = X265_LOG_FULL;
+                printVersion(param, api);
+                showHelp(param);
+                break;
+            }
             else
                 bError |= !!api->param_parse(param, long_options[long_options_index].name, optarg);
-
             if (bError)
             {
                 const char *name = long_options_index > 0 ? long_options[long_options_index].name : argv[optind - 2];
@@ -579,9 +585,9 @@ int main(int argc, char **argv)
 
     x265_picture pic_orig, pic_out;
     x265_picture *pic_in = &pic_orig;
-    /* Allocate recon picture if analysisReuseMode is enabled */
+    /* Allocate recon picture if analysis save/load is enabled */
     std::priority_queue<int64_t>* pts_queue = cliopt.output->needPTS() ? new std::priority_queue<int64_t>() : NULL;
-    x265_picture *pic_recon = (cliopt.recon || !!param->analysisReuseMode || pts_queue || reconPlay || param->csvLogLevel) ? &pic_out : NULL;
+    x265_picture *pic_recon = (cliopt.recon || param->analysisSave || param->analysisLoad || pts_queue || reconPlay || param->csvLogLevel) ? &pic_out : NULL;
     uint32_t inFrameCount = 0;
     uint32_t outFrameCount = 0;
     x265_nal *p_nal;

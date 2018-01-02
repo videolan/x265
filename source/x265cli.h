@@ -38,6 +38,7 @@ static const char short_options[] = "o:D:P:p:f:F:r:I:i:b:s:t:q:m:hwV?";
 static const struct option long_options[] =
 {
     { "help",                 no_argument, NULL, 'h' },
+    { "fullhelp",             no_argument, NULL, 0 },
     { "version",              no_argument, NULL, 'V' },
     { "asm",            required_argument, NULL, 0 },
     { "no-asm",               no_argument, NULL, 0 },
@@ -119,9 +120,11 @@ static const struct option long_options[] =
     { "open-gop",             no_argument, NULL, 0 },
     { "keyint",         required_argument, NULL, 'I' },
     { "min-keyint",     required_argument, NULL, 'i' },
+    { "gop-lookahead",  required_argument, NULL, 0 },
     { "scenecut",       required_argument, NULL, 0 },
     { "no-scenecut",          no_argument, NULL, 0 },
     { "scenecut-bias",  required_argument, NULL, 0 },
+    { "radl",           required_argument, NULL, 0 },
     { "ctu-info",       required_argument, NULL, 0 },
     { "intra-refresh",        no_argument, NULL, 0 },
     { "rc-lookahead",   required_argument, NULL, 0 },
@@ -252,9 +255,11 @@ static const struct option long_options[] =
     { "no-slow-firstpass",    no_argument, NULL, 0 },
     { "multi-pass-opt-rps",   no_argument, NULL, 0 },
     { "no-multi-pass-opt-rps", no_argument, NULL, 0 },
-    { "analysis-reuse-mode",  required_argument, NULL, 0 },
-    { "analysis-reuse-file",  required_argument, NULL, 0 },
+    { "analysis-reuse-mode", required_argument, NULL, 0 }, /* DEPRECATED */
+    { "analysis-reuse-file", required_argument, NULL, 0 },
     { "analysis-reuse-level", required_argument, NULL, 0 },
+    { "analysis-save",  required_argument, NULL, 0 },
+    { "analysis-load",  required_argument, NULL, 0 },
     { "scale-factor",   required_argument, NULL, 0 },
     { "refine-intra",   required_argument, NULL, 0 },
     { "refine-inter",   required_argument, NULL, 0 },
@@ -314,6 +319,7 @@ static void showHelp(x265_param *param)
     H0("    outfile is raw HEVC bitstream\n");
     H0("\nExecutable Options:\n");
     H0("-h/--help                        Show this help text and exit\n");
+    H0("   --fullhelp                    Show all options and exit\n");
     H0("-V/--version                     Show version info and exit\n");
     H0("\nOutput Options:\n");
     H0("-o/--output <filename>           Bitstream output file name\n");
@@ -418,9 +424,11 @@ static void showHelp(x265_param *param)
     H0("   --[no-]open-gop               Enable open-GOP, allows I slices to be non-IDR. Default %s\n", OPT(param->bOpenGOP));
     H0("-I/--keyint <integer>            Max IDR period in frames. -1 for infinite-gop. Default %d\n", param->keyframeMax);
     H0("-i/--min-keyint <integer>        Scenecuts closer together than this are coded as I, not IDR. Default: auto\n");
+    H0("   --gop-lookahead <integer>     Extends gop boundary if a scenecut is found within this from keyint boundary. Default 0\n");
     H0("   --no-scenecut                 Disable adaptive I-frame decision\n");
     H0("   --scenecut <integer>          How aggressively to insert extra I-frames. Default %d\n", param->scenecutThreshold);
     H1("   --scenecut-bias <0..100.0>    Bias for scenecut detection. Default %.2f\n", param->scenecutBias);
+    H0("   --radl <integer>              Number of RADL pictures allowed in front of IDR. Default %d\n", param->radl);
     H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
     H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
     H1("   --lookahead-slices <0..16>    Number of slices to use per lookahead cost estimate. Default %d\n", param->lookaheadSlices);
@@ -461,18 +469,19 @@ static void showHelp(x265_param *param)
     H0("   --[no-]analyze-src-pics       Motion estimation uses source frame planes. Default disable\n");
     H0("   --[no-]slow-firstpass         Enable a slow first pass in a multipass rate control mode. Default %s\n", OPT(param->rc.bEnableSlowFirstPass));
     H0("   --[no-]strict-cbr             Enable stricter conditions and tolerance for bitrate deviations in CBR mode. Default %s\n", OPT(param->rc.bStrictCbr));
-    H0("   --analysis-reuse-mode <string|int>  save - Dump analysis info into file, load - Load analysis buffers from the file. Default %d\n", param->analysisReuseMode);
+    H0("   --analysis-save <filename>    Dump analysis info into the specified file. Default Disabled\n");
+    H0("   --analysis-load <filename>    Load analysis buffers from the file specified. Default Disabled\n");
     H0("   --analysis-reuse-file <filename>    Specify file name used for either dumping or reading analysis data. Deault x265_analysis.dat\n");
     H0("   --analysis-reuse-level <1..10>      Level of analysis reuse indicates amount of info stored/reused in save/load mode, 1:least..10:most. Default %d\n", param->analysisReuseLevel);
     H0("   --refine-mv-type <string>     Reuse MV information received through API call. Supported option is avc. Default disabled - %d\n", param->bMVType);
     H0("   --scale-factor <int>          Specify factor by which input video is scaled down for analysis save mode. Default %d\n", param->scaleFactor);
-    H0("   --refine-intra <0..3>         Enable intra refinement for encode that uses analysis-reuse-mode=load.\n"
+    H0("   --refine-intra <0..3>         Enable intra refinement for encode that uses analysis-load.\n"
         "                                    - 0 : Forces both mode and depth from the save encode.\n"
         "                                    - 1 : Functionality of (0) + evaluate all intra modes at min-cu-size's depth when current depth is one smaller than min-cu-size's depth.\n"
         "                                    - 2 : Functionality of (1) + irrespective of size evaluate all angular modes when the save encode decides the best mode as angular.\n"
         "                                    - 3 : Functionality of (1) + irrespective of size evaluate all intra modes.\n"
         "                                Default:%d\n", param->intraRefine);
-    H0("   --refine-inter <0..3>         Enable inter refinement for encode that uses analysis-reuse-mode=load.\n"
+    H0("   --refine-inter <0..3>         Enable inter refinement for encode that uses analysis-load.\n"
         "                                    - 0 : Forces both mode and depth from the save encode.\n"
         "                                    - 1 : Functionality of (0) + evaluate all inter modes at min-cu-size's depth when current depth is one smaller than\n"
         "                                          min-cu-size's depth. When save encode decides the current block as skip(for all sizes) evaluate skip/merge.\n"
@@ -563,9 +572,8 @@ static void showHelp(x265_param *param)
 #undef OPT
 #undef H0
 #undef H1
-
     if (level < X265_LOG_DEBUG)
-        printf("\nUse --log-level full --help for a full listing\n");
+        printf("\nUse --fullhelp for a full listing (or --log-level full --help)\n");
     printf("\n\nComplete documentation may be found at http://x265.readthedocs.org/en/default/cli.html\n");
     exit(1);
 }

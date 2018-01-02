@@ -323,7 +323,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
 
             if (!plane && diffPoc <= param.bframes + 1)
             {
-                mvs = fenc.lowresMvs[list][diffPoc - 1];
+                mvs = fenc.lowresMvs[list][diffPoc];
 
                 /* test whether this motion search was performed by lookahead */
                 if (mvs[0].x != 0x7FFF)

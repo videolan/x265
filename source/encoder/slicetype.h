@@ -132,6 +132,7 @@ public:
     bool          m_filled;
     bool          m_isSceneTransition;
     int           m_numPools;
+    bool          m_extendGopBoundary;
     Lookahead(x265_param *param, ThreadPool *pool);
 #if DETAILED_CU_STATS
     int64_t       m_slicetypeDecideElapsedTime;

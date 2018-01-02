@@ -72,12 +72,12 @@ if(ENABLE_ASSEMBLY AND X86)
     endif()
 
     if(MSVC_IDE OR XCODE)
-        # MSVC requires custom build rules in the main cmake script for yasm
-        set(MSVC_ASMS "${A_SRCS}" CACHE INTERNAL "yasm sources")
+        # MSVC requires custom build rules in the main cmake script for nasm
+        set(MSVC_ASMS "${A_SRCS}" CACHE INTERNAL "nasm sources")
         set(A_SRCS)
     endif()
 
-    enable_language(ASM_YASM)
+    enable_language(ASM_NASM)
 
     foreach(SRC ${A_SRCS} ${C_SRCS})
         set(ASM_PRIMITIVES ${ASM_PRIMITIVES} x86/${SRC})

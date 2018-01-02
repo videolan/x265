@@ -207,21 +207,18 @@ uint8_t Deblock::getBoundaryStrength(const CUData* cuQ, int32_t dir, uint32_t pa
     static const MV zeroMv(0, 0);
     const Slice* const sliceQ = cuQ->m_slice;
     const Slice* const sliceP = cuP->m_slice;
-
-    const Frame* refP0 = sliceP->m_refFrameList[0][cuP->m_refIdx[0][partP]];
-    const Frame* refQ0 = sliceQ->m_refFrameList[0][cuQ->m_refIdx[0][partQ]];
+    const Frame* refP0 = (cuP->m_refIdx[0][partP] >= 0) ? sliceP->m_refFrameList[0][cuP->m_refIdx[0][partP]] : NULL;
+    const Frame* refQ0 = (cuQ->m_refIdx[0][partQ] >= 0) ? sliceQ->m_refFrameList[0][cuQ->m_refIdx[0][partQ]] : NULL;
     const MV& mvP0 = refP0 ? cuP->m_mv[0][partP] : zeroMv;
     const MV& mvQ0 = refQ0 ? cuQ->m_mv[0][partQ] : zeroMv;
-
     if (sliceQ->isInterP() && sliceP->isInterP())
     {
         return ((refP0 != refQ0) ||
                 (abs(mvQ0.x - mvP0.x) >= 4) || (abs(mvQ0.y - mvP0.y) >= 4)) ? 1 : 0;
     }
-
     // (sliceQ->isInterB() || sliceP->isInterB())
-    const Frame* refP1 = sliceP->m_refFrameList[1][cuP->m_refIdx[1][partP]];
-    const Frame* refQ1 = sliceQ->m_refFrameList[1][cuQ->m_refIdx[1][partQ]];
+    const Frame* refP1 = (cuP->m_refIdx[1][partP] >= 0) ? sliceP->m_refFrameList[1][cuP->m_refIdx[1][partP]] : NULL;
+    const Frame* refQ1 = (cuQ->m_refIdx[1][partQ] >= 0) ? sliceQ->m_refFrameList[1][cuQ->m_refIdx[1][partQ]] : NULL;
     const MV& mvP1 = refP1 ? cuP->m_mv[1][partP] : zeroMv;
     const MV& mvQ1 = refQ1 ? cuQ->m_mv[1][partQ] : zeroMv;
 

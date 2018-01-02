@@ -130,7 +130,6 @@ public:
     FrameEncoder*      m_frameEncoder[X265_MAX_FRAME_THREADS];
     DPB*               m_dpb;
     Frame*             m_exportedPic;
-    FILE*              m_analysisFile;
     FILE*              m_analysisFileIn;
     FILE*              m_analysisFileOut;
     x265_param*        m_param;
@@ -208,7 +207,7 @@ public:
 
     int copySlicetypePocAndSceneCut(int *slicetype, int *poc, int *sceneCut);
 
-    int getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc);
+    int getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, int* pocL0, int* pocL1);
 
     int setAnalysisDataAfterZScan(x265_analysis_data *analysis_data, Frame* curFrame);
 

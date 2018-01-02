@@ -4115,7 +4115,7 @@ cglobal pixel_avg_8x16, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 4
-.loop
+.loop:
     pixel_avg_W8
     dec     r9d
     jnz     .loop
@@ -4129,7 +4129,7 @@ cglobal pixel_avg_8x32, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 8
-.loop
+.loop:
     pixel_avg_W8
     dec     r9d
     jnz     .loop
@@ -4697,7 +4697,7 @@ cglobal pixel_avg_12x16, 6,10,4
     lea     r8, [r1 * 3]
     mov     r9d, 4
 
-.loop
+.loop:
     movu    m0, [r2]
     movu    m1, [r4]
     pavgw   m0, m1
@@ -4834,7 +4834,7 @@ cglobal pixel_avg_16x16, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 4
-.loop
+.loop:
     pixel_avg_H16
     dec r9d
     jnz .loop
@@ -4848,7 +4848,7 @@ cglobal pixel_avg_16x32, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 4
-.loop
+.loop:
     pixel_avg_H16
     pixel_avg_H16
     dec r9d
@@ -4863,7 +4863,7 @@ cglobal pixel_avg_16x64, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 4
-.loop
+.loop:
     pixel_avg_H16
     pixel_avg_H16
     pixel_avg_H16
@@ -4887,7 +4887,7 @@ cglobal pixel_avg_24x32, 6,10,4
     lea     r8, [r1 * 3]
     mov     r9d, 8
 
-.loop
+.loop:
     movu    m0, [r2]
     movu    m1, [r4]
     pavgw   m0, m1
@@ -4987,7 +4987,7 @@ cglobal pixel_avg_32x8, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 2
-.loop
+.loop:
     pixel_avg_W32
     dec     r9d
     jnz     .loop
@@ -5001,7 +5001,7 @@ cglobal pixel_avg_32x16, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 4
-.loop
+.loop:
     pixel_avg_W32
     dec     r9d
     jnz     .loop
@@ -5015,7 +5015,7 @@ cglobal pixel_avg_32x24, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 6
-.loop
+.loop:
     pixel_avg_W32
     dec     r9d
     jnz     .loop
@@ -5029,7 +5029,7 @@ cglobal pixel_avg_32x32, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 8
-.loop
+.loop:
     pixel_avg_W32
     dec     r9d
     jnz     .loop
@@ -5043,7 +5043,7 @@ cglobal pixel_avg_32x64, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 16
-.loop
+.loop:
     pixel_avg_W32
     dec     r9d
     jnz     .loop
@@ -5141,7 +5141,7 @@ cglobal pixel_avg_64x16, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 4
-.loop
+.loop:
     pixel_avg_W64
     dec     r9d
     jnz     .loop
@@ -5155,7 +5155,7 @@ cglobal pixel_avg_64x32, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 8
-.loop
+.loop:
     pixel_avg_W64
     dec     r9d
     jnz     .loop
@@ -5169,7 +5169,7 @@ cglobal pixel_avg_64x48, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 12
-.loop
+.loop:
     pixel_avg_W64
     dec     r9d
     jnz     .loop
@@ -5183,7 +5183,7 @@ cglobal pixel_avg_64x64, 6,10,4
     lea     r7, [r5 * 3]
     lea     r8, [r1 * 3]
     mov     r9d, 16
-.loop
+.loop:
     pixel_avg_W64
     dec     r9d
     jnz     .loop
@@ -5204,7 +5204,7 @@ cglobal pixel_avg_48x64, 6,10,4
     lea     r8, [r1 * 3]
     mov     r9d, 16
 
-.loop
+.loop:
     movu    m0, [r2]
     movu    m1, [r4]
     pavgw   m0, m1

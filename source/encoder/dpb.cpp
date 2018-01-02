@@ -181,7 +181,10 @@ void DPB::prepareEncode(Frame *newFrame)
     // Mark pictures in m_piclist as unreferenced if they are not included in RPS
     applyReferencePictureSet(&slice->m_rps, pocCurr);
 
-    slice->m_numRefIdx[0] = X265_MIN(newFrame->m_param->maxNumReferences, slice->m_rps.numberOfNegativePictures); // Ensuring L0 contains just the -ve POC
+    if (slice->m_sliceType != I_SLICE)
+        slice->m_numRefIdx[0] = x265_clip3(1, newFrame->m_param->maxNumReferences, slice->m_rps.numberOfNegativePictures);
+    else
+        slice->m_numRefIdx[0] = X265_MIN(newFrame->m_param->maxNumReferences, slice->m_rps.numberOfNegativePictures); // Ensuring L0 contains just the -ve POC
     slice->m_numRefIdx[1] = X265_MIN(newFrame->m_param->bBPyramid ? 2 : 1, slice->m_rps.numberOfPositivePictures);
     slice->setRefPicList(m_picList);
 
@@ -230,11 +233,14 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
     {
         if ((iterPic->m_poc != curPoc) && iterPic->m_encData->m_bHasReferences)
         {
-            rps->poc[poci] = iterPic->m_poc;
-            rps->deltaPOC[poci] = rps->poc[poci] - curPoc;
-            (rps->deltaPOC[poci] < 0) ? numNeg++ : numPos++;
-            rps->bUsed[poci] = !isRAP;
-            poci++;
+            if ((m_lastIDR >= curPoc) || (m_lastIDR <= iterPic->m_poc))
+            {
+                    rps->poc[poci] = iterPic->m_poc;
+                    rps->deltaPOC[poci] = rps->poc[poci] - curPoc;
+                    (rps->deltaPOC[poci] < 0) ? numNeg++ : numPos++;
+                    rps->bUsed[poci] = !isRAP;
+                    poci++;
+            }
         }
         iterPic = iterPic->m_next;
     }

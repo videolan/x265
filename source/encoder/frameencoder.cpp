@@ -335,7 +335,7 @@ void FrameEncoder::threadMain()
             while (!m_frame->m_ctuInfo)
                 m_frame->m_copied.wait();
         }
-        if ((m_param->bMVType == AVC_INFO) && !m_param->analysisReuseMode && !(IS_X265_TYPE_I(m_frame->m_lowres.sliceType)))
+        if ((m_param->bMVType == AVC_INFO) && !m_param->analysisSave && !m_param->analysisLoad && !(IS_X265_TYPE_I(m_frame->m_lowres.sliceType)))
         {
             while (((m_frame->m_analysisData.interData == NULL && m_frame->m_analysisData.intraData == NULL) || (uint32_t)m_frame->m_poc != m_frame->m_analysisData.poc))
                 m_frame->m_copyMVType.wait();
@@ -430,7 +430,7 @@ void FrameEncoder::compressFrame()
     bool bUseWeightB = slice->m_sliceType == B_SLICE && slice->m_pps->bUseWeightedBiPred;
 
     WeightParam* reuseWP = NULL;
-    if (m_param->analysisReuseMode && (bUseWeightP || bUseWeightB))
+    if (m_param->analysisLoad && (bUseWeightP || bUseWeightB))
         reuseWP = (WeightParam*)m_frame->m_analysisData.wt;
 
     if (bUseWeightP || bUseWeightB)
@@ -439,7 +439,7 @@ void FrameEncoder::compressFrame()
         m_cuStats.countWeightAnalyze++;
         ScopedElapsedTime time(m_cuStats.weightAnalyzeTime);
 #endif
-        if (m_param->analysisReuseMode == X265_ANALYSIS_LOAD)
+        if (m_param->analysisLoad)
         {
             for (int list = 0; list < slice->isInterB() + 1; list++) 
             {
@@ -466,6 +466,8 @@ void FrameEncoder::compressFrame()
     else
         slice->disableWeights();
 
+    if (m_param->analysisSave && (bUseWeightP || bUseWeightB))
+        reuseWP = (WeightParam*)m_frame->m_analysisData.wt;
     // Generate motion references
     int numPredDir = slice->isInterP() ? 1 : slice->isInterB() ? 2 : 0;
     for (int l = 0; l < numPredDir; l++)
@@ -478,7 +480,7 @@ void FrameEncoder::compressFrame()
             slice->m_refReconPicList[l][ref] = slice->m_refFrameList[l][ref]->m_reconPic;
             m_mref[l][ref].init(slice->m_refReconPicList[l][ref], w, *m_param);
         }
-        if (m_param->analysisReuseMode == X265_ANALYSIS_SAVE && (bUseWeightP || bUseWeightB))
+        if (m_param->analysisSave && (bUseWeightP || bUseWeightB))
         {
             for (int i = 0; i < (m_param->internalCsp != X265_CSP_I400 ? 3 : 1); i++)
                 *(reuseWP++) = slice->m_weightPredTable[l][0][i];
@@ -1411,7 +1413,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             /* TODO: use defines from slicetype.h for lowres block size */
             uint32_t block_y = (ctu->m_cuPelY >> m_param->maxLog2CUSize) * noOfBlocks;
             uint32_t block_x = (ctu->m_cuPelX >> m_param->maxLog2CUSize) * noOfBlocks;
-            if (m_param->analysisReuseMode != X265_ANALYSIS_LOAD || !m_param->bDisableLookahead)
+            if (!m_param->analysisLoad || !m_param->bDisableLookahead)
             {
                 cuStat.vbvCost = 0;
                 cuStat.intraVbvCost = 0;
