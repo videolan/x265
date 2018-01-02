@@ -275,7 +275,7 @@ bool PixelHarness::check_ssd_s_aligned(pixel_ssd_s_t ref, pixel_ssd_s_t opt)
     for (int i = 0; i < ITERS; i++)
     {
                // NOTE: stride must be multiple of 16, because minimum block is 4x4
-        int stride = (STRIDE + (rand() % STRIDE)) & ~15;
+        int stride = STRIDE;
         sse_t cres = ref(sbuf1 + j, stride);
         sse_t vres = (sse_t)checked(opt, sbuf1 + j, (intptr_t)stride);
 
