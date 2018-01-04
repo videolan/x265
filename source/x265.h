@@ -1779,9 +1779,10 @@ FILE* x265_csvlog_open(const x265_param *);
 void x265_csvlog_frame(const x265_param *, const x265_picture *);
 
 /* Log final encode statistics to the CSV file handle. 'argc' and 'argv' are
- * intended to be command line arguments passed to the encoder. Encode
+ * intended to be command line arguments passed to the encoder. padx and pady are
+ * padding offsets for conformance and can be given from sps settings. Encode
  * statistics should be queried from the encoder just prior to closing it. */
-void x265_csvlog_encode(x265_encoder *encoder, const x265_stats *, int argc, char** argv);
+void x265_csvlog_encode(const x265_param*, const x265_stats *, int padx, int pady, int argc, char** argv);
 
 /* In-place downshift from a bit-depth greater than 8 to a bit-depth of 8, using
  * the residual bits to dither each row. */
@@ -1836,7 +1837,7 @@ typedef struct x265_api
     int           (*get_ref_frame_list)(x265_encoder*, x265_picyuv**, x265_picyuv**, int, int, int*, int*);
     FILE*         (*csvlog_open)(const x265_param*);
     void          (*csvlog_frame)(const x265_param*, const x265_picture*);
-    void          (*csvlog_encode)(x265_encoder*, const x265_stats*, int, char**);
+    void          (*csvlog_encode)(const x265_param*, const x265_stats *, int, int, int, char**);
     void          (*dither_image)(x265_picture*, int, int, int16_t*, int);
     int           (*set_analysis_data)(x265_encoder *encoder, x265_analysis_data *analysis_data, int poc, uint32_t cuBytes);
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */

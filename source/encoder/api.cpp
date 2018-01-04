@@ -312,7 +312,9 @@ void x265_encoder_log(x265_encoder* enc, int argc, char **argv)
         Encoder *encoder = static_cast<Encoder*>(enc);
         x265_stats stats;
         encoder->fetchStats(&stats, sizeof(stats));
-        x265_csvlog_encode(enc, &stats, argc, argv);
+        int padx = encoder->m_sps.conformanceWindow.rightOffset;
+        int pady = encoder->m_sps.conformanceWindow.bottomOffset;
+        x265_csvlog_encode(encoder->m_param, &stats, padx, pady, argc, argv);
     }
 }
 
@@ -868,45 +870,38 @@ void x265_csvlog_frame(const x265_param* param, const x265_picture* pic)
     fflush(stderr);
 }
 
-void x265_csvlog_encode(x265_encoder *enc, const x265_stats* stats, int argc, char** argv)
+void x265_csvlog_encode(const x265_param *p, const x265_stats *stats, int padx, int pady, int argc, char** argv)
 {
-    if (enc)
+    if (p && p->csvfpt)
     {
-        Encoder *encoder = static_cast<Encoder*>(enc);
-        int padx = encoder->m_sps.conformanceWindow.rightOffset;
-        int pady = encoder->m_sps.conformanceWindow.bottomOffset;
         const x265_api * api = x265_api_get(0);
 
-        if (!encoder->m_param->csvfpt)
-            return;
-
-        if (encoder->m_param->csvLogLevel)
+        if (p->csvLogLevel)
         {
             // adding summary to a per-frame csv log file, so it needs a summary header
-            fprintf(encoder->m_param->csvfpt, "\nSummary\n");
-            fputs(summaryCSVHeader, encoder->m_param->csvfpt);
+            fprintf(p->csvfpt, "\nSummary\n");
+            fputs(summaryCSVHeader, p->csvfpt);
         }
 
         // CLI arguments or other
         if (argc)
         {
-            fputc('"', encoder->m_param->csvfpt);
+            fputc('"', p->csvfpt);
             for (int i = 1; i < argc; i++)
             {
-                fputc(' ', encoder->m_param->csvfpt);
-                fputs(argv[i], encoder->m_param->csvfpt);
+                fputc(' ', p->csvfpt);
+                fputs(argv[i], p->csvfpt);
             }
-            fputc('"', encoder->m_param->csvfpt);
+            fputc('"', p->csvfpt);
         }
         else
         {
-            const x265_param* paramTemp = encoder->m_param;
-            char *opts = x265_param2string((x265_param*)paramTemp, padx, pady);
+            char *opts = x265_param2string((x265_param*)p, padx, pady);
             if (opts)
             {
-                fputc('"', encoder->m_param->csvfpt);
-                fputs(opts, encoder->m_param->csvfpt);
-                fputc('"', encoder->m_param->csvfpt);
+                fputc('"', p->csvfpt);
+                fputs(opts, p->csvfpt);
+                fputc('"', p->csvfpt);
             }
         }
 
@@ -917,70 +912,71 @@ void x265_csvlog_encode(x265_encoder *enc, const x265_stats* stats, int argc, ch
         timeinfo = localtime(&now);
         char buffer[200];
         strftime(buffer, 128, "%c", timeinfo);
-        fprintf(encoder->m_param->csvfpt, ", %s, ", buffer);
+        fprintf(p->csvfpt, ", %s, ", buffer);
 
         // elapsed time, fps, bitrate
-        fprintf(encoder->m_param->csvfpt, "%.2f, %.2f, %.2f,",
+        fprintf(p->csvfpt, "%.2f, %.2f, %.2f,",
             stats->elapsedEncodeTime, stats->encodedPictureCount / stats->elapsedEncodeTime, stats->bitrate);
 
-        if (encoder->m_param->bEnablePsnr)
-            fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf, %.3lf,",
+        if (p->bEnablePsnr)
+            fprintf(p->csvfpt, " %.3lf, %.3lf, %.3lf, %.3lf,",
             stats->globalPsnrY / stats->encodedPictureCount, stats->globalPsnrU / stats->encodedPictureCount,
             stats->globalPsnrV / stats->encodedPictureCount, stats->globalPsnr);
         else
-            fprintf(encoder->m_param->csvfpt, " -, -, -, -,");
-        if (encoder->m_param->bEnableSsim)
-            fprintf(encoder->m_param->csvfpt, " %.6f, %6.3f,", stats->globalSsim, x265_ssim2dB(stats->globalSsim));
+            fprintf(p->csvfpt, " -, -, -, -,");
+        if (p->bEnableSsim)
+            fprintf(p->csvfpt, " %.6f, %6.3f,", stats->globalSsim, x265_ssim2dB(stats->globalSsim));
         else
-            fprintf(encoder->m_param->csvfpt, " -, -,");
+            fprintf(p->csvfpt, " -, -,");
 
         if (stats->statsI.numPics)
         {
-            fprintf(encoder->m_param->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsI.numPics, stats->statsI.avgQp, stats->statsI.bitrate);
-            if (encoder->m_param->bEnablePsnr)
-                fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsI.psnrY, stats->statsI.psnrU, stats->statsI.psnrV);
+            fprintf(p->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsI.numPics, stats->statsI.avgQp, stats->statsI.bitrate);
+            if (p->bEnablePsnr)
+                fprintf(p->csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsI.psnrY, stats->statsI.psnrU, stats->statsI.psnrV);
             else
-                fprintf(encoder->m_param->csvfpt, " -, -, -,");
-            if (encoder->m_param->bEnableSsim)
-                fprintf(encoder->m_param->csvfpt, " %.3lf,", stats->statsI.ssim);
+                fprintf(p->csvfpt, " -, -, -,");
+            if (p->bEnableSsim)
+                fprintf(p->csvfpt, " %.3lf,", stats->statsI.ssim);
             else
-                fprintf(encoder->m_param->csvfpt, " -,");
+                fprintf(p->csvfpt, " -,");
         }
         else
-            fprintf(encoder->m_param->csvfpt, " -, -, -, -, -, -, -,");
+            fprintf(p->csvfpt, " -, -, -, -, -, -, -,");
 
         if (stats->statsP.numPics)
         {
-            fprintf(encoder->m_param->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsP.numPics, stats->statsP.avgQp, stats->statsP.bitrate);
-            if (encoder->m_param->bEnablePsnr)
-                fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsP.psnrY, stats->statsP.psnrU, stats->statsP.psnrV);
+            fprintf(p->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsP.numPics, stats->statsP.avgQp, stats->statsP.bitrate);
+            if (p->bEnablePsnr)
+                fprintf(p->csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsP.psnrY, stats->statsP.psnrU, stats->statsP.psnrV);
             else
-                fprintf(encoder->m_param->csvfpt, " -, -, -,");
-            if (encoder->m_param->bEnableSsim)
-                fprintf(encoder->m_param->csvfpt, " %.3lf,", stats->statsP.ssim);
+                fprintf(p->csvfpt, " -, -, -,");
+            if (p->bEnableSsim)
+                fprintf(p->csvfpt, " %.3lf,", stats->statsP.ssim);
             else
-                fprintf(encoder->m_param->csvfpt, " -,");
+                fprintf(p->csvfpt, " -,");
         }
         else
-            fprintf(encoder->m_param->csvfpt, " -, -, -, -, -, -, -,");
+            fprintf(p->csvfpt, " -, -, -, -, -, -, -,");
 
         if (stats->statsB.numPics)
         {
-            fprintf(encoder->m_param->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsB.numPics, stats->statsB.avgQp, stats->statsB.bitrate);
-            if (encoder->m_param->bEnablePsnr)
-                fprintf(encoder->m_param->csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsB.psnrY, stats->statsB.psnrU, stats->statsB.psnrV);
+            fprintf(p->csvfpt, " %-6u, %2.2lf, %-8.2lf,", stats->statsB.numPics, stats->statsB.avgQp, stats->statsB.bitrate);
+            if (p->bEnablePsnr)
+                fprintf(p->csvfpt, " %.3lf, %.3lf, %.3lf,", stats->statsB.psnrY, stats->statsB.psnrU, stats->statsB.psnrV);
             else
-                fprintf(encoder->m_param->csvfpt, " -, -, -,");
-            if (encoder->m_param->bEnableSsim)
-                fprintf(encoder->m_param->csvfpt, " %.3lf,", stats->statsB.ssim);
+                fprintf(p->csvfpt, " -, -, -,");
+            if (p->bEnableSsim)
+                fprintf(p->csvfpt, " %.3lf,", stats->statsB.ssim);
             else
-                fprintf(encoder->m_param->csvfpt, " -,");
+                fprintf(p->csvfpt, " -,");
         }
         else
-            fprintf(encoder->m_param->csvfpt, " -, -, -, -, -, -, -,");
+            fprintf(p->csvfpt, " -, -, -, -, -, -, -,");
 
-        fprintf(encoder->m_param->csvfpt, " %-6u, %-6u, %s\n", stats->maxCLL, stats->maxFALL, api->version_str);
+        fprintf(p->csvfpt, " %-6u, %-6u, %s\n", stats->maxCLL, stats->maxFALL, api->version_str);
     }
+
 }
 
 /* The dithering algorithm is based on Sierra-2-4A error diffusion.
