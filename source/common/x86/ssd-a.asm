@@ -703,8 +703,109 @@ cglobal pixel_ssd_64x64, 4,5,5
     paddq           xm3, xm4
     movq            rax, xm3
     RET
-%endif
 
+INIT_ZMM avx512
+cglobal pixel_ssd_32x2
+    pxor            m0, m0
+    movu            m1, [r0]
+    psubw           m1, [r2]
+    pmaddwd         m1, m1
+    paddd           m0, m1
+    movu            m1, [r0 + r1]
+    psubw           m1, [r2 + r3]
+    pmaddwd         m1, m1
+    paddd           m0, m1
+    lea             r0, [r0 + r1 * 2]
+    lea             r2, [r2 + r3 * 2]
+
+    mova            m1, m0
+    pxor            m2, m2
+    punpckldq       m0, m2
+    punpckhdq       m1, m2
+
+    paddq           m3, m0
+    paddq           m3, m1
+ret
+
+INIT_ZMM avx512
+cglobal pixel_ssd_32x32, 4,5,5
+    shl             r1d, 1
+    shl             r3d, 1
+    pxor            m3, m3
+    mov             r4, 16
+.iterate:
+    call            pixel_ssd_32x2
+    dec             r4d
+    jne             .iterate
+
+    vextracti32x8   ym4, m3, 1
+    paddq           ym3, ym4
+    vextracti32x4   xm4, m3, 1
+    paddq           xm3, xm4
+    movhlps         xm4, xm3
+    paddq           xm3, xm4
+    movq            rax, xm3
+RET
+
+INIT_ZMM avx512
+cglobal pixel_ssd_32x64, 4,5,5
+    shl             r1d, 1
+    shl             r3d, 1
+    pxor            m3, m3
+    mov             r4, 32
+.iterate:
+    call            pixel_ssd_32x2
+    dec             r4d
+    jne             .iterate
+
+    vextracti32x8   ym4, m3, 1
+    paddq           ym3, ym4
+    vextracti32x4   xm4, m3, 1
+    paddq           xm3, xm4
+    movhlps         xm4, xm3
+    paddq           xm3, xm4
+    movq            rax, xm3
+RET
+
+INIT_ZMM avx512
+cglobal pixel_ssd_64x64, 4,5,5
+    FIX_STRIDES     r1, r3
+    mov             r4d, 64
+    pxor            m3, m3
+
+.loop:
+    pxor            m0, m0
+    movu            m1, [r0]
+    psubw           m1, [r2]
+    pmaddwd         m1, m1
+    paddd           m0, m1
+    movu            m1, [r0 + mmsize]
+    psubw           m1, [r2 + mmsize]
+    pmaddwd         m1, m1
+    paddd           m0, m1
+
+    lea             r0, [r0 + r1]
+    lea             r2, [r2 + r3]
+
+    mova            m1, m0
+    pxor            m2, m2
+    punpckldq       m0, m2
+    punpckhdq       m1, m2
+    paddq           m3, m0
+    paddq           m3, m1
+
+    dec             r4d
+    jg              .loop
+
+    vextracti32x8   ym4, m3, 1
+    paddq           ym3, ym4
+    vextracti32x4   xm4, m3, 1
+    paddq           xm3, xm4
+    movhlps         xm4, xm3
+    paddq           xm3, xm4
+    movq            rax, xm3
+    RET
+%endif
 INIT_MMX mmx2
 SSD_ONE     4,  4
 SSD_ONE     4,  8
