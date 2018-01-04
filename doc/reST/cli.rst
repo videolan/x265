@@ -2058,7 +2058,7 @@ VUI fields must be manually specified.
 	Example for MaxCLL=1000 candela per square meter, MaxFALL=400
 	candela per square meter:
 
-		--max-cll “1000,400”
+		--max-cll "1000,400"
 
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
