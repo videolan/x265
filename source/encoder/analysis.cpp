@@ -159,38 +159,34 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     if (m_param->bCTUInfo && (*m_frame->m_ctuInfo + ctu.m_cuAddr))
     {
         x265_ctu_info_t* ctuTemp = *m_frame->m_ctuInfo + ctu.m_cuAddr;
-        if (ctuTemp->ctuPartitions)
+        int32_t depthIdx = 0;
+        uint32_t maxNum8x8Partitions = 64;
+        uint8_t* depthInfoPtr = m_frame->m_addOnDepth[ctu.m_cuAddr];
+        uint8_t* contentInfoPtr = m_frame->m_addOnCtuInfo[ctu.m_cuAddr];
+        int* prevCtuInfoChangePtr = m_frame->m_addOnPrevChange[ctu.m_cuAddr];
+        do
         {
-            int32_t depthIdx = 0;
-            uint32_t maxNum8x8Partitions = 64;
-            uint8_t* depthInfoPtr = m_frame->m_addOnDepth[ctu.m_cuAddr];
-            uint8_t* contentInfoPtr = m_frame->m_addOnCtuInfo[ctu.m_cuAddr];
-            int* prevCtuInfoChangePtr = m_frame->m_addOnPrevChange[ctu.m_cuAddr];
-            do
-            {
-                uint8_t depth = (uint8_t)ctuTemp->ctuPartitions[depthIdx];
-                uint8_t content = (uint8_t)(*((int32_t *)ctuTemp->ctuInfo + depthIdx));
-                int prevCtuInfoChange = m_frame->m_prevCtuInfoChange[ctu.m_cuAddr * maxNum8x8Partitions + depthIdx];
-                memset(depthInfoPtr, depth, sizeof(uint8_t) * numPartition >> 2 * depth);
-                memset(contentInfoPtr, content, sizeof(uint8_t) * numPartition >> 2 * depth);
-                memset(prevCtuInfoChangePtr, 0, sizeof(int) * numPartition >> 2 * depth);
-                for (uint32_t l = 0; l < numPartition >> 2 * depth; l++)
-                    prevCtuInfoChangePtr[l] = prevCtuInfoChange;
-                depthInfoPtr += ctu.m_numPartitions >> 2 * depth;
-                contentInfoPtr += ctu.m_numPartitions >> 2 * depth;
-                prevCtuInfoChangePtr += ctu.m_numPartitions >> 2 * depth;
-                depthIdx++;
-            } while (ctuTemp->ctuPartitions[depthIdx] != 0);
+            uint8_t depth = (uint8_t)ctuTemp->ctuPartitions[depthIdx];
+            uint8_t content = (uint8_t)(*((int32_t *)ctuTemp->ctuInfo + depthIdx));
+            int prevCtuInfoChange = m_frame->m_prevCtuInfoChange[ctu.m_cuAddr * maxNum8x8Partitions + depthIdx];
+            memset(depthInfoPtr, depth, sizeof(uint8_t) * numPartition >> 2 * depth);
+            memset(contentInfoPtr, content, sizeof(uint8_t) * numPartition >> 2 * depth);
+            memset(prevCtuInfoChangePtr, 0, sizeof(int) * numPartition >> 2 * depth);
+            for (uint32_t l = 0; l < numPartition >> 2 * depth; l++)
+                prevCtuInfoChangePtr[l] = prevCtuInfoChange;
+            depthInfoPtr += ctu.m_numPartitions >> 2 * depth;
+            contentInfoPtr += ctu.m_numPartitions >> 2 * depth;
+            prevCtuInfoChangePtr += ctu.m_numPartitions >> 2 * depth;
+            depthIdx++;
+        } while (ctuTemp->ctuPartitions[depthIdx] != 0);
 
-            m_additionalCtuInfo = m_frame->m_addOnCtuInfo[ctu.m_cuAddr];
-            m_prevCtuInfoChange = m_frame->m_addOnPrevChange[ctu.m_cuAddr];
-            memcpy(ctu.m_cuDepth, m_frame->m_addOnDepth[ctu.m_cuAddr], sizeof(uint8_t) * numPartition);
-            //Calculate log2CUSize from depth
-            for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
-                ctu.m_log2CUSize[i] = (uint8_t)m_param->maxLog2CUSize - ctu.m_cuDepth[i];
-        }
+        m_additionalCtuInfo = m_frame->m_addOnCtuInfo[ctu.m_cuAddr];
+        m_prevCtuInfoChange = m_frame->m_addOnPrevChange[ctu.m_cuAddr];
+        memcpy(ctu.m_cuDepth, m_frame->m_addOnDepth[ctu.m_cuAddr], sizeof(uint8_t) * numPartition);
+        //Calculate log2CUSize from depth
+        for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
+            ctu.m_log2CUSize[i] = (uint8_t)m_param->maxLog2CUSize - ctu.m_cuDepth[i];
     }
-
     if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead)
     {
         m_multipassAnalysis = (analysis2PassFrameData*)m_frame->m_analysis2Pass.analysisFramedata;

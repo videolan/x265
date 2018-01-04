@@ -92,19 +92,14 @@ void DPB::recycleUnreferenced()
             m_freeList.pushBack(*curFrame);
             curFrame->m_encData->m_freeListNext = m_frameDataFreeList;
             m_frameDataFreeList = curFrame->m_encData;
-
-            if (curFrame->m_encData->m_meBuffer)
+            for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
             {
-                for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
+                if (curFrame->m_encData->m_meBuffer[i] != NULL)
                 {
-                    if (curFrame->m_encData->m_meBuffer[i] != NULL)
-                    {
-                        X265_FREE(curFrame->m_encData->m_meBuffer[i]);
-                        curFrame->m_encData->m_meBuffer[i] = NULL;
-                    }
+                    X265_FREE(curFrame->m_encData->m_meBuffer[i]);
+                    curFrame->m_encData->m_meBuffer[i] = NULL;
                 }
             }
-
             if (curFrame->m_ctuInfo != NULL)
             {
                 uint32_t widthInCU = (curFrame->m_param->sourceWidth + curFrame->m_param->maxCUSize - 1) >> curFrame->m_param->maxLog2CUSize;

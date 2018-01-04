@@ -77,16 +77,12 @@ void FrameData::destroy()
 
     X265_FREE(m_cuStat);
     X265_FREE(m_rowStat);
-
-    if (m_meBuffer)
+    for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
     {
-        for (int i = 0; i < INTEGRAL_PLANE_NUM; i++)
+        if (m_meBuffer[i] != NULL)
         {
-            if (m_meBuffer[i] != NULL)
-            {
-                X265_FREE(m_meBuffer[i]);
-                m_meBuffer[i] = NULL;
-            }
+            X265_FREE(m_meBuffer[i]);
+            m_meBuffer[i] = NULL;
         }
     }
 }
