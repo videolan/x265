@@ -3178,7 +3178,7 @@ void PixelHarness::measurePartition(int part, const EncoderPrimitives& ref, cons
         }
         if (opt.cu[part].add_ps[ALIGNED])
         {
-            HEADER("add_ps[%s]", lumaPartStr[part]);
+            HEADER("add_ps_aligned[%s]", lumaPartStr[part]);
             REPORT_SPEEDUP(opt.cu[part].add_ps[ALIGNED], ref.cu[part].add_ps[ALIGNED], pbuf1, FENC_STRIDE, pbuf2, sbuf1, STRIDE, STRIDE);
         }
         if (opt.cu[part].copy_ss)
@@ -3310,7 +3310,7 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         }
         if ((i <= BLOCK_32x32) && opt.cu[i].ssd_s[ALIGNED])
         {
-            HEADER("ssd_s[%dx%d]", 4 << i, 4 << i);
+            HEADER("ssd_s_aligned[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cu[i].ssd_s[ALIGNED], ref.cu[i].ssd_s[ALIGNED], sbuf1, STRIDE);
         }
         if (opt.cu[i].sa8d)
@@ -3323,22 +3323,19 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             HEADER("residual[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cu[i].calcresidual[NONALIGNED], ref.cu[i].calcresidual[NONALIGNED], pbuf1, pbuf2, sbuf1, 64);
         }
-
         if (opt.cu[i].calcresidual[ALIGNED])
         {
-            HEADER("residual[%dx%d]", 4 << i, 4 << i);
+            HEADER("residual_aligned[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cu[i].calcresidual[ALIGNED], ref.cu[i].calcresidual[ALIGNED], pbuf1, pbuf2, sbuf1, 64);
         }
-
         if (opt.cu[i].blockfill_s[NONALIGNED])
         {
             HEADER("blkfill[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cu[i].blockfill_s[NONALIGNED], ref.cu[i].blockfill_s[NONALIGNED], sbuf1, 64, SHORT_MAX);
         }
-
         if (opt.cu[i].blockfill_s[ALIGNED])
         {
-            HEADER("blkfill[%dx%d]", 4 << i, 4 << i);
+            HEADER("blkfill_aligned[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cu[i].blockfill_s[ALIGNED], ref.cu[i].blockfill_s[ALIGNED], sbuf1, 64, SHORT_MAX);
         }
 
