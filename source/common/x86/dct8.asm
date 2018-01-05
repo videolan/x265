@@ -6694,7 +6694,9 @@ cglobal nonPsyRdoQuant32, 5, 5, 8
 ;---------------------------------------------------------------------------------------------------------------------------------------------------------
 INIT_ZMM avx512
 cglobal psyRdoQuant4, 5, 9, 13
+%if WIN64
     mov             r5,        r5m
+%endif
     mov            r6d,        r6m
     vpbroadcastq   m12,        [r5]                              ; psyScale
     lea             r0,        [r0 + 2 * r6]
@@ -6777,7 +6779,9 @@ cglobal psyRdoQuant4, 5, 9, 13
 ;---------------------------------------------------------------------------------------------------------------------------------------------------------
 INIT_ZMM avx512
 cglobal psyRdoQuant8, 5, 9, 15
+%if WIN64
     mov             r5,        r5m
+%endif
     mov            r6d,        r6m
     vpbroadcastq   m12,        [r5]                              ; psyScale
     lea             r0,        [r0 + 2 * r6]
@@ -6870,7 +6874,9 @@ cglobal psyRdoQuant8, 5, 9, 15
 ;---------------------------------------------------------------------------------------------------------------------------------------------------------
 INIT_ZMM avx512
 cglobal psyRdoQuant16, 5, 9, 15
+%if WIN64
     mov             r5,        r5m
+%endif
     mov            r6d,        r6m
     vpbroadcastq   m12,        [r5]                              ; psyScale
     lea             r0,        [r0 + 2 * r6]
@@ -6963,7 +6969,9 @@ cglobal psyRdoQuant16, 5, 9, 15
 ;---------------------------------------------------------------------------------------------------------------------------------------------------------
 INIT_ZMM avx512
 cglobal psyRdoQuant32, 5, 9, 15
+%if WIN64
     mov             r5,        r5m
+%endif
     mov            r6d,        r6m
     vpbroadcastq   m12,        [r5]                              ; psyScale
     lea             r0,        [r0 + 2 * r6]
