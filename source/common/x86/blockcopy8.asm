@@ -6809,3 +6809,30 @@ cglobal cpy1Dto2D_shr_32, 3, 4, 6
     dec         r3d
     jnz        .loop
     RET
+
+INIT_ZMM avx512
+cglobal cpy1Dto2D_shr_32, 3, 4, 6
+    shl                 r2d,             1
+    movd                xm0,             r3m
+    pcmpeqw             ymm1,            ymm1
+    psllw               ym1,             ymm1,       xm0
+    psraw               ym1,             1
+    vinserti32x8        m1,              ym1,        1
+    mov                 r3d,             16
+
+.loop:
+    ; Row 0-1
+    movu                m2,              [r1]
+    movu                m3,              [r1 + mmsize]
+    psubw               m2,              m1
+    psubw               m3,              m1
+    psraw               m2,              xm0
+    psraw               m3,              xm0
+    movu                [r0],            m2
+    movu                [r0 + r2],       m3
+
+    add                 r1,              2 * mmsize
+    lea                 r0,              [r0 + r2 * 2]
+    dec                 r3d
+    jnz                 .loop
+    RET
