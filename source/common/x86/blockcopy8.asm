@@ -5199,6 +5199,53 @@ cglobal cpy2Dto1D_shr_16, 4, 5, 4
     jnz        .loop
     RET
 
+INIT_ZMM avx512
+cglobal cpy2Dto1D_shr_16, 4, 5, 4
+    shl                 r2d,             1
+    movd                xm0,             r3d
+    pcmpeqw             ymm1,            ymm1
+    psllw               ym1,             ymm1,        xm0
+    psraw               ym1,             1
+    vinserti32x8        m1,              ym1,         1
+    lea                 r3,              [r2 * 3]
+    mov                 r4d,             2
+
+.loop:
+    ; Row 0-1
+    movu                ym2,             [r1]
+    vinserti32x8        m2,              [r1 + r2],   1
+    psubw               m2,              m1
+    psraw               m2,              xm0
+    movu                [r0],            m2
+
+    ; Row 2-3
+    movu                ym2,             [r1 + 2 * r2]
+    vinserti32x8        m2,              [r1 + r3],   1
+    psubw               m2,              m1
+    psraw               m2,              xm0
+    movu                [r0 + mmsize],   m2
+
+    lea        r1, [r1 + 4 * r2]
+    ; Row 4-5
+
+    movu                ym2,             [r1]
+    vinserti32x8        m2,              [r1 + r2],   1
+    psubw               m2,              m1
+    psraw               m2,              xm0
+    movu                [r0 + 2 * mmsize], m2
+
+    ; Row 6-7
+    movu                ym2,             [r1 + 2 * r2]
+    vinserti32x8        m2,              [r1 + r3],   1
+    psubw               m2,              m1
+    psraw               m2,              xm0
+    movu                [r0 + 3 * mmsize], m2
+
+    add                 r0,              4 * mmsize
+    lea                 r1,              [r1 + 4 * r2]
+    dec                 r4d
+    jnz                 .loop
+    RET
 
 ;--------------------------------------------------------------------------------------
 ; void cpy2Dto1D_shr(int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
