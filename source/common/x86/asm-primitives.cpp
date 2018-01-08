@@ -2559,6 +2559,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_16x16].cpy1Dto2D_shr = PFX(cpy1Dto2D_shr_16_avx512);
         p.cu[BLOCK_32x32].cpy1Dto2D_shr = PFX(cpy1Dto2D_shr_32_avx512);
 
+        p.cu[BLOCK_32x32].cpy2Dto1D_shr = PFX(cpy2Dto1D_shr_32_avx512);
+
         p.weight_pp = PFX(weight_pp_avx512);
         p.weight_sp = PFX(weight_sp_avx512);
         p.dequant_normal = PFX(dequant_normal_avx512);
@@ -4911,6 +4913,8 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_32x32].cpy1Dto2D_shl[ALIGNED] = PFX(cpy1Dto2D_shl_aligned_32_avx512);
         p.cu[BLOCK_16x16].cpy1Dto2D_shr = PFX(cpy1Dto2D_shr_16_avx512);
         p.cu[BLOCK_32x32].cpy1Dto2D_shr = PFX(cpy1Dto2D_shr_32_avx512);
+
+        p.cu[BLOCK_32x32].cpy2Dto1D_shr = PFX(cpy2Dto1D_shr_32_avx512);
 
         p.cu[BLOCK_32x32].copy_cnt = PFX(copy_cnt_32_avx512);
         p.cu[BLOCK_16x16].copy_cnt = PFX(copy_cnt_16_avx512);
