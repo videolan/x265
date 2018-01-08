@@ -6688,6 +6688,37 @@ cglobal cpy1Dto2D_shr_16, 3, 5, 4
     jnz        .loop
     RET
 
+INIT_ZMM avx512
+cglobal cpy1Dto2D_shr_16, 3, 5, 4
+    shl                 r2d,             1
+    movd                xm0,             r3m
+    pcmpeqw             ymm1,            ymm1
+    psllw               ym1,             ymm1,       xm0
+    psraw               ym1,             1
+    vinserti32x8        m1,              ym1,        1
+    mov                 r3d,             4
+    lea                 r4,              [r2 * 3]
+
+.loop:
+    ; Row 0-1
+    movu                m2,              [r1]
+    psubw               m2,              m1
+    psraw               m2,              xm0
+    movu                [r0],            ym2
+    vextracti32x8       [r0 + r2],       m2,         1
+
+    ; Row 2-3
+    movu                m2,              [r1 + mmsize]
+    psubw               m2,              m1
+    psraw               m2,              xm0
+    movu                [r0 + r2 * 2],   ym2
+    vextracti32x8       [r0 + r4],       m2,         1
+
+    add                 r1,              2 * mmsize
+    lea                 r0,              [r0 + r2 * 4]
+    dec                 r3d
+    jnz                 .loop
+    RET
 
 ;--------------------------------------------------------------------------------------
 ; void cpy1Dto2D_shr(int16_t* dst, const int16_t* src, intptr_t dstStride, int shift)
