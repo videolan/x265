@@ -18779,6 +18779,26 @@ cglobal intra_pred_ang32_27, 3,7,17
     add         r2,        2
     call        ang16_mode_9_27
     RET
+
+cglobal intra_pred_ang16_9, 3,7,17
+    add         r2,        64
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_9_27
+    RET
+
+cglobal intra_pred_ang16_27, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_9_27
+    RET
 ;-------------------------------------------------------------------------------------------------------
 ; avx512 code for intra_pred_ang32 mode 2 to 34 end
 ;-------------------------------------------------------------------------------------------------------
