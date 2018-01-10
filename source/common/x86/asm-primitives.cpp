@@ -3097,9 +3097,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_32x32].intra_pred[DC_IDX] = PFX(intra_pred_dc32_avx512);
         p.cu[BLOCK_32x32].intra_pred[2]      = PFX(intra_pred_ang32_2_avx512);
         p.cu[BLOCK_32x32].intra_pred[34]     = PFX(intra_pred_ang32_2_avx512);
+        p.cu[BLOCK_32x32].intra_pred[9] = PFX(intra_pred_ang32_9_avx512);
         p.cu[BLOCK_32x32].intra_pred[10] = PFX(intra_pred_ang32_10_avx512);
         p.cu[BLOCK_32x32].intra_pred[18]    = PFX(intra_pred_ang32_18_avx512);
         p.cu[BLOCK_32x32].intra_pred[26]    = PFX(intra_pred_ang32_26_avx512);
+        p.cu[BLOCK_32x32].intra_pred[27]    = PFX(intra_pred_ang32_27_avx512);
 
         p.pu[LUMA_64x64].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_64x64>;
         p.pu[LUMA_64x48].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_64x48>;
