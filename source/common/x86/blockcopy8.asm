@@ -6781,10 +6781,10 @@ INIT_ZMM avx512
 cglobal cpy1Dto2D_shr_16, 3, 5, 4
     shl                 r2d,             1
     movd                xm0,             r3m
-    pcmpeqw             ymm1,            ymm1
-    psllw               ym1,             ymm1,       xm0
-    psraw               ym1,             1
-    vinserti32x8        m1,              ym1,        1
+    pcmpeqw             xmm1,            xmm1
+    psllw               xm1,             xmm1,       xm0
+    psraw               xm1,             1
+    vpbroadcastw         m1,              xm1
     mov                 r3d,             4
     lea                 r4,              [r2 * 3]
 
@@ -6903,10 +6903,10 @@ INIT_ZMM avx512
 cglobal cpy1Dto2D_shr_32, 3, 4, 6
     shl                 r2d,             1
     movd                xm0,             r3m
-    pcmpeqw             ymm1,            ymm1
-    psllw               ym1,             ymm1,       xm0
-    psraw               ym1,             1
-    vinserti32x8        m1,              ym1,        1
+    pcmpeqw             xmm1,            xmm1
+    psllw               xm1,             xmm1,       xm0
+    psraw               xm1,             1
+    vpbroadcastw        m1,              xm1
     mov                 r3d,             16
 
 .loop:
