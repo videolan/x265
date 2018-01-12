@@ -5347,7 +5347,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.pu[LUMA_32x24].satd = PFX(pixel_satd_32x24_avx512);
         p.pu[LUMA_32x32].satd = PFX(pixel_satd_32x32_avx512);
         p.pu[LUMA_32x64].satd = PFX(pixel_satd_32x64_avx512);
-
+        p.pu[LUMA_64x16].satd = PFX(pixel_satd_64x16_avx512);
+        p.pu[LUMA_64x32].satd = PFX(pixel_satd_64x32_avx512);
+        p.pu[LUMA_64x48].satd = PFX(pixel_satd_64x48_avx512);
+        p.pu[LUMA_64x64].satd = PFX(pixel_satd_64x64_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x32].satd = PFX(pixel_satd_32x32_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x16].satd = PFX(pixel_satd_32x16_avx512);
         p.chroma[X265_CSP_I420].pu[CHROMA_420_32x24].satd = PFX(pixel_satd_32x24_avx512);

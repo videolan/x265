@@ -14163,6 +14163,38 @@ SATD_32xN_AVX512 24
 SATD_32xN_AVX512 32
 SATD_32xN_AVX512 48
 SATD_32xN_AVX512 64
+
+%macro SATD_64xN_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_satd_64x%1, 4,8,8
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_AVX512
+    lea             r0, [r6 + mmsize/2]
+    lea             r2, [r7 + mmsize/2]
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_AVX512
+    SATD_MAIN_AVX512_END
+    RET
+%endmacro
+
+SATD_64xN_AVX512 16
+SATD_64xN_AVX512 32
+SATD_64xN_AVX512 48
+SATD_64xN_AVX512 64
 %endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0
 %if ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 1
 INIT_YMM avx2
