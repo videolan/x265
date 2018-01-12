@@ -14068,8 +14068,102 @@ cglobal pixel_satd_64x64, 4,8,10        ; if WIN64 && cpuflag(avx2)
     paddd           xm0, xm1
     movd            eax, xm0
     RET
-%endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0
 
+%macro PROCESS_SATD_32x4_AVX512 0        ; function to compute satd cost for 32 columns, 4 rows
+    ; rows 0-3
+    pmovzxbw         m0, [r0]
+    pmovzxbw         m4, [r2]
+    psubw           m0, m4
+    pmovzxbw         m1, [r0 + r1]
+    pmovzxbw         m5, [r2 + r3]
+    psubw           m1, m5
+    pmovzxbw         m2, [r0 + r1 * 2]
+    pmovzxbw         m4, [r2 + r3 * 2]
+    psubw           m2, m4
+    pmovzxbw         m3, [r0 + r4]
+    pmovzxbw         m5, [r2 + r5]
+    psubw           m3, m5
+    paddw           m4, m0, m1
+    psubw           m1, m0
+    paddw           m0, m2, m3
+    psubw           m3, m2
+    punpckhwd       m2, m4, m1
+    punpcklwd       m4, m1
+    punpckhwd       m1, m0, m3
+    punpcklwd       m0, m3
+    paddw           m3, m4, m0
+    psubw           m0, m4
+    paddw           m4, m2, m1
+    psubw           m1, m2
+    punpckhdq       m2, m3, m0
+    punpckldq       m3, m0
+    paddw           m0, m3, m2
+    psubw           m2, m3
+    punpckhdq       m3, m4, m1
+    punpckldq       m4, m1
+    paddw           m1, m4, m3
+    psubw           m3, m4
+    punpckhqdq      m4, m0, m1
+    punpcklqdq      m0, m1
+    pabsw           m0, m0
+    pabsw           m4, m4
+    pmaxsw          m0, m0, m4
+    punpckhqdq      m1, m2, m3
+    punpcklqdq      m2, m3
+    pabsw           m2, m2
+    pabsw           m1, m1
+    pmaxsw          m2, m1
+    pxor            m7, m7
+    mova            m1, m0
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m0
+    punpckhwd       m1, m7
+    paddd           m6, m1
+    pxor            m7, m7
+    mova            m1, m2
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m2
+    punpckhwd       m1, m7
+    paddd           m6, m1
+%endmacro
+
+%macro SATD_MAIN_AVX512_END 0
+    vextracti32x8   ym7,   m6,   1
+    paddd           ym6,   ym7
+    vextracti128    xm7,   ym6,  1
+    paddd           xm6,   xm6,  xm7
+    punpckhqdq      xm7,   xm6,  xm6
+    paddd           xm6,   xm7
+    movq            rax,   xm6
+    rorx            rdx,   rax,  32
+    add             eax,   edx
+%endmacro
+
+%macro SATD_32xN_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_satd_32x%1, 4,6,8
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_AVX512
+    SATD_MAIN_AVX512_END
+    RET
+%endmacro
+
+SATD_32xN_AVX512 8
+SATD_32xN_AVX512 16
+SATD_32xN_AVX512 24
+SATD_32xN_AVX512 32
+SATD_32xN_AVX512 48
+SATD_32xN_AVX512 64
+%endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0
 %if ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 1
 INIT_YMM avx2
 cglobal calc_satd_16x8    ; function to compute satd cost for 16 columns, 8 rows
