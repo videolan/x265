@@ -1530,11 +1530,15 @@ void x265_print_params(x265_param* param)
 char *x265_param2string(x265_param* p, int padx, int pady)
 {
     char *buf, *s;
+    int bufSize = 4000 + p->rc.zoneCount * 64;
+    if (p->numaPools)
+        bufSize += strlen(p->numaPools);
+    if (p->masteringDisplayColorVolume)
+        bufSize += strlen(p->masteringDisplayColorVolume);
 
-    buf = s = X265_MALLOC(char, MAXPARAMSIZE);
+    buf = s = X265_MALLOC(char, bufSize);
     if (!buf)
         return NULL;
-
 #define BOOL(param, cliopt) \
     s += sprintf(s, " %s", (param) ? cliopt : "no-" cliopt);
 
@@ -1549,7 +1553,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnableSsim, "ssim");
     s += sprintf(s, " log-level=%d", p->logLevel);
     if (p->csvfn)
-        s += sprintf(s, " csvfn=%s csv-log-level=%d", p->csvfn, p->csvLogLevel);
+        s += sprintf(s, " csv csv-log-level=%d", p->csvLogLevel);
     s += sprintf(s, " bitdepth=%d", p->internalBitDepth);
     s += sprintf(s, " input-csp=%d", p->internalCsp);
     s += sprintf(s, " fps=%u/%u", p->fpsNum, p->fpsDenom);
@@ -1722,8 +1726,10 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEmitHDRSEI, "hdr");
     BOOL(p->bHDROpt, "hdr-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
-    s += sprintf(s, " analysis-save=%s", p->analysisSave);
-    s += sprintf(s, " analysis-load=%s", p->analysisLoad);
+    if (p->analysisSave)
+        s += sprintf(s, " analysis-save");
+    if (p->analysisLoad)
+        s += sprintf(s, " analysis-load");
     s += sprintf(s, " analysis-reuse-level=%d", p->analysisReuseLevel);
     s += sprintf(s, " scale-factor=%d", p->scaleFactor);
     s += sprintf(s, " refine-intra=%d", p->intraRefine);
