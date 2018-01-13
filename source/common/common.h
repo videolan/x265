@@ -75,11 +75,10 @@
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
 #define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
 #define ALIGN_VAR_32(T, var) T var __attribute__((aligned(32)))
-
 #if defined(__MINGW32__)
 #define fseeko fseeko64
+#define ftello ftello64
 #endif
-
 #elif defined(_MSC_VER)
 
 #define ALIGN_VAR_4(T, var)  __declspec(align(4)) T var
@@ -87,9 +86,8 @@
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
 #define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
 #define fseeko _fseeki64
-
+#define ftello _ftelli64
 #endif // if defined(__GNUC__)
-
 #if HAVE_INT_TYPES_H
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

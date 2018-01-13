@@ -60,13 +60,9 @@ protected:
     ThreadSafeInteger readCount;
 
     ThreadSafeInteger writeCount;
-
     char* buf[QUEUE_SIZE];
-
-    std::istream *ifs;
-
+    FILE *ifs;
     bool parseHeader();
-
     void threadMain();
 
     bool populateFrameQueue();
@@ -76,15 +72,10 @@ public:
     Y4MInput(InputFileInfo& info);
 
     virtual ~Y4MInput();
-
     void release();
-
-    bool isEof() const            { return ifs && ifs->eof();  }
-
-    bool isFail()                 { return !(ifs && !ifs->fail() && threadActive); }
-
+    bool isEof() const            { return ifs && feof(ifs); }
+    bool isFail()                 { return !(ifs && !ferror(ifs) && threadActive); }
     void startReader();
-
     bool readPicture(x265_picture&);
 
     const char *getName() const   { return "y4m"; }
