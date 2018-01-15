@@ -8763,8 +8763,53 @@ cglobal upShift_16, 4,7,4
 
 .end:
     RET
+INIT_ZMM avx512
+cglobal upShift_16, 4,7,4
+    mov         r4d, r4m
+    mov         r5d, r5m
+    movd        xm0, r6m        ; m0 = shift
+    vbroadcasti32x4 m3, [pw_pixel_max]
+    FIX_STRIDES r1d, r3d
+    dec         r5d
+.loopH:
+    xor         r6d, r6d
+.loopW:
+    movu        m1, [r0 + r6 * SIZEOF_PIXEL]
+    psllw       m1, xm0
+    pand        m1, m3
+    movu        [r2 + r6 * SIZEOF_PIXEL], m1
 
+    add         r6, mmsize / SIZEOF_PIXEL
+    cmp         r6d, r4d
+    jl         .loopW
 
+    ; move to next row
+    add         r0, r1
+    add         r2, r3
+    dec         r5d
+    jnz        .loopH
+
+    ; processing last row of every frame [To handle width which not a multiple of 32]
+
+.loop32:
+    movu        m1, [r0 + (r4 - mmsize/2) * 2]
+    psllw       m1, xm0
+    pand        m1, m3
+    movu        [r2 + (r4 - mmsize/2) * 2], m1
+
+    sub         r4d, mmsize/2
+    jz         .end
+    cmp         r4d, mmsize/2
+    jge        .loop32
+
+    ; process partial pixels
+    movu        m1, [r0]
+    psllw       m1, xm0
+    pand        m1, m3
+    movu        [r2], m1
+
+.end:
+    RET
 ;---------------------------------------------------------------------------------------------------------------------
 ;int psyCost_pp(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride)
 ;---------------------------------------------------------------------------------------------------------------------

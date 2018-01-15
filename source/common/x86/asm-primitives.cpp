@@ -3149,6 +3149,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_64x64].sse_pp = PFX(pixel_ssd_64x64_avx512);
         p.chroma[X265_CSP_I420].cu[BLOCK_420_32x32].sse_pp = (pixel_sse_t)PFX(pixel_ssd_32x32_avx512);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = (pixel_sse_t)PFX(pixel_ssd_32x64_avx512);
+        p.planecopy_sp_shl = PFX(upShift_16_avx512);
 
     }
 #endif
@@ -5362,6 +5363,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x48].satd = PFX(pixel_satd_32x48_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x32].satd = PFX(pixel_satd_32x32_avx512);
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].satd = PFX(pixel_satd_32x16_avx512);
+        p.planecopy_sp_shl = PFX(upShift_16_avx512);
 
     }
 #endif
