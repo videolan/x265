@@ -647,7 +647,9 @@ if(X265_LATEST_TAG)
     endforeach()
     if(PLIBLIST)
         # blacklist of libraries that should not be in Libs.private
-        list(REMOVE_ITEM PLIBLIST "-lc" "-lpthread")
+        list(REMOVE_ITEM PLIBLIST "-lc" "-lpthread" "-lmingwex" "-lmingwthrd"
+            "-lmingw32" "-lmoldname" "-lmsvcrt" "-ladvapi32" "-lshell32"
+            "-luser32" "-lkernel32")
         string(REPLACE ";" " " PRIVATE_LIBS "${PLIBLIST}")
     else()
         set(PRIVATE_LIBS "")
