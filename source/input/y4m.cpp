@@ -20,7 +20,8 @@
  * This program is also available under a commercial proprietary license.
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
-
+#define _FILE_OFFSET_BITS 64
+#define _LARGEFILE_SOURCE
 #include "y4m.h"
 #include "common.h"
 
