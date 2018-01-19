@@ -19236,8 +19236,7 @@ cglobal ang32_mode_5_31
     packusdw        m2, m1
     TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 2, 0, 1, 16
     ret
-
-cglobal intra_pred_ang32_5, 3,8,13
+cglobal intra_pred_ang32_5, 3,8,17
     add         r2,        128
     xor         r6d,       r6d
     lea         r3,        [ang_table_avx2 + 16 * 32]
@@ -19259,11 +19258,9 @@ cglobal intra_pred_ang32_5, 3,8,13
     vbroadcasti32x8  m15,  [pd_16]
     add         r2,        18
     lea         r0,        [r0 + 32]
-
     call        ang32_mode_5_31
     RET
-
-cglobal intra_pred_ang32_31, 3,7,13
+cglobal intra_pred_ang32_31, 3,7,17
     xor         r6d,       r6d
     inc         r6d
     lea         r3,        [ang_table_avx2 + 16 * 32]
@@ -19285,18 +19282,16 @@ cglobal intra_pred_ang32_31, 3,7,13
     add         r2,        18
     call        ang32_mode_5_31
     RET
-cglobal intra_pred_ang16_5, 3,7,13
+cglobal intra_pred_ang16_5, 3,7,17
     add         r2,        64
     xor         r6d,       r6d
     vbroadcasti32x8  m15,  [pd_16]
     lea         r3,        [ang_table_avx2 + 16 * 32]
     add         r1d,       r1d
     lea         r4,        [r1 * 3]
-
     call        ang16_mode_5_31
     RET
-
-cglobal intra_pred_ang16_31, 3,7,13
+cglobal intra_pred_ang16_31, 3,7,17
     xor         r6d,       r6d
     inc         r6d
     vbroadcasti32x8  m15,  [pd_16]
@@ -19609,8 +19604,7 @@ cglobal ang32_mode_4_32
     packusdw        m3, m0
     TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 3, 0, 1, 16
     ret
-
-cglobal intra_pred_ang32_4, 3,8,13
+cglobal intra_pred_ang32_4, 3,8,17
     add         r2,        128
     xor         r6d,       r6d
     lea         r3,        [ang_table_avx2 + 18 * 32]
@@ -19632,11 +19626,9 @@ cglobal intra_pred_ang32_4, 3,8,13
 
     add         r2,        22
     lea         r0,        [r0 + 32]
-
     call        ang32_mode_4_32
     RET
-
-cglobal intra_pred_ang32_32, 3,7,13
+cglobal intra_pred_ang32_32, 3,7,17
     xor         r6d,       r6d
     inc         r6d
     lea         r3,        [ang_table_avx2 + 18 * 32]
@@ -19654,23 +19646,19 @@ cglobal intra_pred_ang32_32, 3,7,13
     mov         r0,        r5
 
     call        ang16_mode_4_32
-
     add         r2,        22
-
     call        ang32_mode_4_32
     RET
-cglobal intra_pred_ang16_4, 3,7,13
+cglobal intra_pred_ang16_4, 3,7,17
     add         r2,        64
     xor         r6d,       r6d
     vbroadcasti32x8  m15,  [pd_16]
     lea         r3,        [ang_table_avx2 + 18 * 32]
     add         r1d,       r1d
     lea         r4,        [r1 * 3]
-
     call        ang16_mode_4_32
     RET
-
-cglobal intra_pred_ang16_32, 3,7,13
+cglobal intra_pred_ang16_32, 3,7,17
     xor         r6d,       r6d
     inc         r6d
     vbroadcasti32x8  m15,  [pd_16]
@@ -19949,8 +19937,7 @@ cglobal ang32_mode_6_30
     packusdw        m11, m3
     TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 16
     ret
-
-cglobal intra_pred_ang32_6, 3,8,14
+cglobal intra_pred_ang32_6, 3,8,17
     add         r2,        128
     xor         r6d,       r6d
     lea         r3,        [ang_table_avx2 + 15 * 32]
@@ -19972,11 +19959,9 @@ cglobal intra_pred_ang32_6, 3,8,14
 
     add         r2,        12
     lea         r0,        [r0 + 32]
-
     call        ang32_mode_6_30
     RET
-
-cglobal intra_pred_ang32_30, 3,7,14
+cglobal intra_pred_ang32_30, 3,7,17
     xor         r6d,       r6d
     inc         r6d
     lea         r3,        [ang_table_avx2 + 15 * 32]
@@ -19998,18 +19983,16 @@ cglobal intra_pred_ang32_30, 3,7,14
     add         r2,        12
     call        ang32_mode_6_30
     RET
-cglobal intra_pred_ang16_6, 3,7,14
+cglobal intra_pred_ang16_6, 3,7,17
     add         r2,        64
     xor         r6d,       r6d
     vbroadcasti32x8  m15,  [pd_16]
     lea         r3,        [ang_table_avx2 + 15 * 32]
     shl         r1d,       1
     lea         r4,        [r1 * 3]
-
     call        ang16_mode_6_30
     RET
-
-cglobal intra_pred_ang16_30, 3,7,14
+cglobal intra_pred_ang16_30, 3,7,17
     xor         r6d,       r6d
     inc         r6d
     vbroadcasti32x8  m15,  [pd_16]
