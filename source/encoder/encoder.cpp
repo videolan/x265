@@ -490,7 +490,10 @@ int Encoder::getRefFrameList(PicYuv** l0, PicYuv** l1, int sliceType, int poc, i
             }
         }
         else
-            x265_log(NULL, X265_LOG_WARNING, "Refrence List is not in piclist\n");
+        {
+            x265_log(NULL, X265_LOG_WARNING, "Current frame is not in DPB piclist.\n");
+            return 1;
+        }
     }
     else
     {
