@@ -2107,18 +2107,24 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
         bestME[list].mvCost  = mvCost;
     }
 }
-
-void Search::searchMV(Mode& interMode, const PredictionUnit& pu, int list, int ref, MV& outmv)
+void Search::searchMV(Mode& interMode, const PredictionUnit& pu, int list, int ref, MV& outmv, MV mvp, int numMvc, MV* mvc)
 {
     CUData& cu = interMode.cu;
     const Slice *slice = m_slice;
-    MV mv = cu.m_mv[list][pu.puAbsPartIdx];
+    MV mv;
+    if (m_param->interRefine == 1)
+        mv = mvp;
+    else
+        mv = cu.m_mv[list][pu.puAbsPartIdx];
     cu.clipMv(mv);
     MV mvmin, mvmax;
     setSearchRange(cu, mv, m_param->searchRange, mvmin, mvmax);
-    m_me.refineMV(&slice->m_mref[list][ref], mvmin, mvmax, mv, outmv);
+    if (m_param->interRefine == 1)
+        m_me.motionEstimate(&m_slice->m_mref[list][ref], mvmin, mvmax, mv, numMvc, mvc, m_param->searchRange, outmv, m_param->maxSlices,
+        m_param->bSourceReferenceEstimation ? m_slice->m_refFrameList[list][ref]->m_fencPic->getLumaAddr(0) : 0);
+    else
+        m_me.refineMV(&slice->m_mref[list][ref], mvmin, mvmax, mv, outmv);
 }
-
 /* find the best inter prediction for each PU of specified mode */
 void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChromaMC, uint32_t refMasks[2])
 {
@@ -2138,20 +2144,29 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
     int      totalmebits = 0;
     MV       mvzero(0, 0);
     Yuv&     tmpPredYuv = m_rqt[cuGeom.depth].tmpPredYuv;
-
     MergeData merge;
     memset(&merge, 0, sizeof(merge));
-
+    bool useAsMVP = false;
     for (int puIdx = 0; puIdx < numPart; puIdx++)
     {
         MotionData* bestME = interMode.bestME[puIdx];
         PredictionUnit pu(cu, cuGeom, puIdx);
-
         m_me.setSourcePU(*interMode.fencYuv, pu.ctuAddr, pu.cuAbsPartIdx, pu.puAbsPartIdx, pu.width, pu.height, m_param->searchMethod, m_param->subpelRefine, bChromaMC);
-
+        useAsMVP = false;
+        analysis_inter_data* interDataCTU = NULL;
+        int cuIdx;
+        cuIdx = (interMode.cu.m_cuAddr * m_param->num4x4Partitions) + cuGeom.absPartIdx;
+        if (m_param->analysisReuseLevel == 10 && m_param->interRefine > 1)
+        {
+            interDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
+            if ((cu.m_predMode[pu.puAbsPartIdx] == interDataCTU->modes[cuIdx + pu.puAbsPartIdx])
+                && (cu.m_partSize[pu.puAbsPartIdx] == interDataCTU->partSize[cuIdx + pu.puAbsPartIdx])
+                && !(interDataCTU->mergeFlag[cuIdx + puIdx])
+                && (cu.m_cuDepth[0] == interDataCTU->depth[cuIdx]))
+                useAsMVP = true;
+        }
         /* find best cost merge candidate. note: 2Nx2N merge and bidir are handled as separate modes */
         uint32_t mrgCost = numPart == 1 ? MAX_UINT : mergeEstimation(cu, cuGeom, pu, puIdx, merge);
-
         bestME[0].cost = MAX_UINT;
         bestME[1].cost = MAX_UINT;
 
@@ -2159,26 +2174,37 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
         bool bDoUnidir = true;
 
         cu.getNeighbourMV(puIdx, pu.puAbsPartIdx, interMode.interNeighbours);
-
         /* Uni-directional prediction */
         if ((m_param->analysisLoad && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
-            || (m_param->analysisMultiPassRefine && m_param->rc.bStatRead) || (m_param->bMVType == AVC_INFO))
+            || (m_param->analysisMultiPassRefine && m_param->rc.bStatRead) || (m_param->bMVType == AVC_INFO) || (useAsMVP))
         {
             for (int list = 0; list < numPredDir; list++)
             {
-                int ref = bestME[list].ref;
-                if (ref < 0)
-                    continue;
 
+                int ref = -1;
+                if (useAsMVP)
+                    ref = interDataCTU->refIdx[list][cuIdx + puIdx];
+
+                else
+                    ref = bestME[list].ref;
+                if (ref < 0)
+                {
+                    continue;
+                }
                 uint32_t bits = m_listSelBits[list] + MVP_IDX_BITS;
                 bits += getTUBits(ref, numRefIdx[list]);
 
                 int numMvc = cu.getPMV(interMode.interNeighbours, list, ref, interMode.amvpCand[list][ref], mvc);
-
                 const MV* amvp = interMode.amvpCand[list][ref];
                 int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
-                MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
-
+                MV mvmin, mvmax, outmv, mvp;
+                if (useAsMVP)
+                {
+                    mvp = interDataCTU->mv[list][cuIdx + puIdx];
+                    mvpIdx = interDataCTU->mvpIdx[list][cuIdx + puIdx];
+                }
+                else
+                    mvp = amvp[mvpIdx];
                 if (m_param->searchMethod == X265_SEA)
                 {
                     int puX = puIdx & 1;
@@ -2198,9 +2224,8 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 bits += m_me.bitcost(outmv);
                 uint32_t mvCost = m_me.mvcost(outmv);
                 uint32_t cost = (satdCost - mvCost) + m_rdCost.getCost(bits);
-
                 /* Refine MVP selection, updates: mvpIdx, bits, cost */
-                if (!m_param->analysisMultiPassRefine)
+                if (!(m_param->analysisMultiPassRefine || useAsMVP))
                     mvp = checkBestMVP(amvp, outmv, mvpIdx, bits, cost);
                 else
                 {
@@ -2225,6 +2250,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     bestME[list].cost = cost;
                     bestME[list].bits = bits;
                     bestME[list].mvCost  = mvCost;
+                    bestME[list].ref = ref;
                 }
                 bDoUnidir = false;
             }            

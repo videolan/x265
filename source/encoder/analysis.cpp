@@ -2460,7 +2460,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                     }
                     if (!mode.cu.m_mergeFlag[pu.puAbsPartIdx])
                     {
-                        if (m_param->mvRefine)
+                        if (m_param->mvRefine || m_param->interRefine == 1)
                             m_me.setSourcePU(*mode.fencYuv, pu.ctuAddr, pu.cuAbsPartIdx, pu.puAbsPartIdx, pu.width, pu.height, m_param->searchMethod, m_param->subpelRefine, false);
                         //AMVP
                         MV mvc[(MD_ABOVE_LEFT + 1) * 2 + 2];
@@ -2470,15 +2470,20 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                             int ref = mode.cu.m_refIdx[list][pu.puAbsPartIdx];
                             if (ref == -1)
                                 continue;
-                            mode.cu.getPMV(mode.interNeighbours, list, ref, mode.amvpCand[list][ref], mvc);
-                            MV mvp = mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]];
-                            if (m_param->mvRefine)
+                            MV mvp;
+
+                            int numMvc = mode.cu.getPMV(mode.interNeighbours, list, ref, mode.amvpCand[list][ref], mvc);
+                            if (m_param->interRefine != 1)
+                                mvp = mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]];
+                            else
+                                mvp = interDataCTU->mv[list][cuIdx + part];
+                            if (m_param->mvRefine || m_param->interRefine == 1)
                             {
                                 MV outmv;
-                                searchMV(mode, pu, list, ref, outmv);
+                                searchMV(mode, pu, list, ref, outmv, mvp, numMvc, mvc);
                                 mode.cu.setPUMv(list, outmv, pu.puAbsPartIdx, part);
                             }
-                            mode.cu.m_mvd[list][pu.puAbsPartIdx] = mode.cu.m_mv[list][pu.puAbsPartIdx] - mvp;
+                            mode.cu.m_mvd[list][pu.puAbsPartIdx] = mode.cu.m_mv[list][pu.puAbsPartIdx] - mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]]/*mvp*/;
                         }
                     }
                     else if(m_param->scaleFactor)

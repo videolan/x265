@@ -3096,9 +3096,8 @@ void Encoder::allocAnalysis(x265_analysis_data* analysis)
         if (m_param->analysisReuseLevel > 4)
         {
             CHECKED_MALLOC(interData->partSize, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-            CHECKED_MALLOC(interData->mergeFlag, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+            CHECKED_MALLOC_ZERO(interData->mergeFlag, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
         }
-
         if (m_param->analysisReuseLevel >= 7)
         {
             CHECKED_MALLOC(interData->interDir, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
