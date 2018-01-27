@@ -154,7 +154,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
     int blockXY = 0;
     int blockX = 0, blockY = 0;
     double strength = 0.f;
-    if (param->rc.aqMode == X265_AQ_NONE || param->rc.aqStrength == 0)
+    if ((param->rc.aqMode == X265_AQ_NONE || param->rc.aqStrength == 0) || (param->rc.bStatRead && param->rc.cuTree && IS_REFERENCED(curFrame)))
     {
         /* Need to init it anyways for CU tree */
         int cuCount = blockCount;
@@ -982,11 +982,8 @@ void PreLookaheadGroup::processTasks(int workerThreadID)
         ProfileLookaheadTime(m_lookahead.m_preLookaheadElapsedTime, m_lookahead.m_countPreLookahead);
         ProfileScopeEvent(prelookahead);
         m_lock.release();
-
         preFrame->m_lowres.init(preFrame->m_fencPic, preFrame->m_poc);
-        if (m_lookahead.m_param->rc.bStatRead && m_lookahead.m_param->rc.cuTree && IS_REFERENCED(preFrame))
-            /* cu-tree offsets were read from stats file */;
-        else if (m_lookahead.m_bAdaptiveQuant)
+        if (m_lookahead.m_bAdaptiveQuant)
             tld.calcAdaptiveQuantFrame(preFrame, m_lookahead.m_param);
         tld.lowresIntraEstimate(preFrame->m_lowres, m_lookahead.m_param->rc.qgSize);
         preFrame->m_lowresInit = true;
