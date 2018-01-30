@@ -20,7 +20,8 @@
  * This program is also available under a commercial proprietary license.
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
-
+#define _FILE_OFFSET_BITS 64
+#define _LARGEFILE_SOURCE
 #include "yuv.h"
 #include "common.h"
 
@@ -65,23 +66,21 @@ YUVInput::YUVInput(InputFileInfo& info)
         x265_log(NULL, X265_LOG_ERROR, "yuv: width, height, and FPS must be specified\n");
         return;
     }
-
     if (!strcmp(info.filename, "-"))
     {
-        ifs = &cin;
+        ifs = stdin;
 #if _WIN32
         setmode(fileno(stdin), O_BINARY);
 #endif
     }
     else
-        ifs = new ifstream(info.filename, ios::binary | ios::in);
-
-    if (ifs && ifs->good())
+        ifs = x265_fopen(info.filename, "rb");
+    if (ifs && !ferror(ifs))
         threadActive = true;
     else
     {
-        if (ifs && ifs != &cin)
-            delete ifs;
+        if (ifs && ifs != stdin)
+            fclose(ifs);
         ifs = NULL;
         return;
     }
@@ -98,55 +97,33 @@ YUVInput::YUVInput(InputFileInfo& info)
     }
 
     info.frameCount = -1;
-
     /* try to estimate frame count, if this is not stdin */
-    if (ifs != &cin)
+    if (ifs != stdin)
     {
-        istream::pos_type cur = ifs->tellg();
-
-#if defined(_MSC_VER) && _MSC_VER < 1700
-        /* Older MSVC versions cannot handle 64bit file sizes properly, so go native */
-        HANDLE hFile = CreateFileA(info.filename, GENERIC_READ,
-                                   FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-                                   FILE_ATTRIBUTE_NORMAL, NULL);
-        if (hFile != INVALID_HANDLE_VALUE)
-        {
-            LARGE_INTEGER size;
-            if (GetFileSizeEx(hFile, &size))
-                info.frameCount = (int)((size.QuadPart - (int64_t)cur) / framesize);
-            CloseHandle(hFile);
-        }
-#else // if defined(_MSC_VER) && _MSC_VER < 1700
+        int64_t cur = ftello(ifs);
         if (cur >= 0)
         {
-            ifs->seekg(0, ios::end);
-            istream::pos_type size = ifs->tellg();
-            ifs->seekg(cur, ios::beg);
+            fseeko(ifs, 0, SEEK_END);
+            int64_t size = ftello(ifs);
+            fseeko(ifs, cur, SEEK_SET);
             if (size > 0)
                 info.frameCount = (int)((size - cur) / framesize);
         }
-#endif // if defined(_MSC_VER) && _MSC_VER < 1700
     }
-
     if (info.skipFrames)
     {
-#if X86_64
-        if (ifs != &cin)
-            ifs->seekg((uint64_t)framesize * info.skipFrames, ios::cur);
+        if (ifs != stdin)
+            fseeko(ifs, (int64_t)framesize * info.skipFrames, SEEK_CUR);
         else
             for (int i = 0; i < info.skipFrames; i++)
-                ifs->read(buf[0], framesize);
-#else
-        for (int i = 0; i < info.skipFrames; i++)
-            ifs->ignore(framesize);
-#endif
+                if (fread(buf[0], framesize, 1, ifs) != 1)
+                    break;
     }
 }
-
 YUVInput::~YUVInput()
 {
-    if (ifs && ifs != &cin)
-        delete ifs;
+    if (ifs && ifs != stdin)
+        fclose(ifs);
     for (int i = 0; i < QUEUE_SIZE; i++)
         X265_FREE(buf[i]);
 }
@@ -179,12 +156,10 @@ void YUVInput::threadMain()
     threadActive = false;
     writeCount.poke();
 }
-
 bool YUVInput::populateFrameQueue()
 {
-    if (!ifs || ifs->fail())
+    if (!ifs || ferror(ifs))
         return false;
-
     /* wait for room in the ring buffer */
     int written = writeCount.get();
     int read = readCount.get();
@@ -195,10 +170,8 @@ bool YUVInput::populateFrameQueue()
             // release() has been called
             return false;
     }
-
     ProfileScopeEvent(frameRead);
-    ifs->read(buf[written % QUEUE_SIZE], framesize);
-    if (ifs->good())
+    if (fread(buf[written % QUEUE_SIZE], framesize, 1, ifs) == 1)
     {
         writeCount.incr();
         return true;

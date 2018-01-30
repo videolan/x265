@@ -795,7 +795,7 @@ void FrameFilter::processPostRow(int row)
 void FrameFilter::computeMEIntegral(int row)
 {
     int lastRow = row == (int)m_frame->m_encData->m_slice->m_sps->numCuInHeight - 1;
-    if (m_frame->m_encData->m_meIntegral && m_frame->m_lowres.sliceType != X265_TYPE_B)
+    if (m_frame->m_lowres.sliceType != X265_TYPE_B)
     {
         /* If WPP, other than first row, integral calculation for current row needs to wait till the
         * integral for the previous row is computed */

@@ -53,8 +53,5 @@ int x265_param_apply_profile(x265_param *, const char *profile);
 int x265_param_parse(x265_param *p, const char *name, const char *value);
 #define PARAM_NS X265_NS
 #endif
-
-#define MAXPARAMSIZE 2000
 }
-
 #endif // ifndef X265_PARAM_H

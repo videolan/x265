@@ -52,13 +52,9 @@ protected:
     ThreadSafeInteger readCount;
 
     ThreadSafeInteger writeCount;
-
     char* buf[QUEUE_SIZE];
-
-    std::istream *ifs;
-
+    FILE *ifs;
     int guessFrameCount();
-
     void threadMain();
 
     bool populateFrameQueue();
@@ -68,13 +64,9 @@ public:
     YUVInput(InputFileInfo& info);
 
     virtual ~YUVInput();
-
     void release();
-
-    bool isEof() const                            { return ifs && ifs->eof();  }
-
-    bool isFail()                                 { return !(ifs && !ifs->fail() && threadActive); }
-
+    bool isEof() const                            { return ifs && feof(ifs); }
+    bool isFail()                                 { return !(ifs && !ferror(ifs) && threadActive); }
     void startReader();
 
     bool readPicture(x265_picture&);

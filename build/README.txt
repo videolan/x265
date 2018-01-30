@@ -9,7 +9,8 @@ Note: MSVC12 requires cmake 2.8.11 or later
 
 = Optional Prerequisites =
 
-1. Yasm 1.2.0 or later, to compile assembly primitives (performance)
+1. To compile assembly primitives (performance) 
+   a) If you are using release 2.6 or older, download and install Yasm 1.2.0 or later, 
 
    For Windows, download the latest yasm executable
    http://yasm.tortall.net/Download.html and copy the EXE into
@@ -32,6 +33,24 @@ Note: MSVC12 requires cmake 2.8.11 or later
 
    If cpu capabilities line says 'none!', then the encoder was built
    without yasm.
+
+   b) If you are building from the default branch after release 2.6, download and install nasm 2.13 or newer
+   
+   For windows and linux, you can download the nasm installer from http://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D.
+   Make sure that it is in your PATH environment variable (%PATH% in windows, and $PATH in linux) so that cmake
+   can find it.
+
+   Once NASM is properly installed, run cmake to regenerate projects. If you
+   do not see the below line in the cmake output, NASM is not in the PATH.
+
+   -- Found Nasm 2.13 to build assembly primitives
+
+   Now build the encoder and run x265 -V:
+
+   x265 [info]: using cpu capabilities: MMX, SSE2, ...
+
+   If cpu capabilities line says 'none!', then the encoder was built
+   without nasm and will be considerably slower for performance.
 
 2. VisualLeakDetector (Windows Only)
 

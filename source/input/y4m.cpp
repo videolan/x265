@@ -20,7 +20,8 @@
  * This program is also available under a commercial proprietary license.
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
-
+#define _FILE_OFFSET_BITS 64
+#define _LARGEFILE_SOURCE
 #include "y4m.h"
 #include "common.h"
 
@@ -38,9 +39,7 @@
 
 using namespace X265_NS;
 using namespace std;
-
-static const char header[] = "FRAME";
-
+static const char header[] = {'F','R','A','M','E'};
 Y4MInput::Y4MInput(InputFileInfo& info)
 {
     for (int i = 0; i < QUEUE_SIZE; i++)
@@ -60,15 +59,14 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     ifs = NULL;
     if (!strcmp(info.filename, "-"))
     {
-        ifs = &cin;
+        ifs = stdin;
 #if _WIN32
         setmode(fileno(stdin), O_BINARY);
 #endif
     }
     else
-        ifs = new ifstream(info.filename, ios::binary | ios::in);
-
-    if (ifs && ifs->good() && parseHeader())
+        ifs = x265_fopen(info.filename, "rb");
+    if (ifs && !ferror(ifs) && parseHeader())
     {
         int pixelbytes = depth > 8 ? 2 : 1;
         for (int i = 0; i < x265_cli_csps[colorSpace].planes; i++)
@@ -91,8 +89,8 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     }
     if (!threadActive)
     {
-        if (ifs && ifs != &cin)
-            delete ifs;
+        if (ifs && ifs != stdin)
+            fclose(ifs);
         ifs = NULL;
         return;
     }
@@ -106,61 +104,34 @@ Y4MInput::Y4MInput(InputFileInfo& info)
     info.csp = colorSpace;
     info.depth = depth;
     info.frameCount = -1;
-
-    size_t estFrameSize = framesize + strlen(header) + 1; /* assume basic FRAME\n headers */
-
+    size_t estFrameSize = framesize + sizeof(header) + 1; /* assume basic FRAME\n headers */
     /* try to estimate frame count, if this is not stdin */
-    if (ifs != &cin)
+    if (ifs != stdin)
     {
-        istream::pos_type cur = ifs->tellg();
-
-#if defined(_MSC_VER) && _MSC_VER < 1700
-        /* Older MSVC versions cannot handle 64bit file sizes properly, so go native */
-        HANDLE hFile = CreateFileA(info.filename, GENERIC_READ,
-                                   FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-                                   FILE_ATTRIBUTE_NORMAL, NULL);
-        if (hFile != INVALID_HANDLE_VALUE)
-        {
-            LARGE_INTEGER size;
-            if (GetFileSizeEx(hFile, &size))
-                info.frameCount = (int)((size.QuadPart - (int64_t)cur) / estFrameSize);
-            CloseHandle(hFile);
-        }
-#else // if defined(_MSC_VER) && _MSC_VER < 1700
+        int64_t cur = ftello(ifs);
         if (cur >= 0)
         {
-            ifs->seekg(0, ios::end);
-            istream::pos_type size = ifs->tellg();
-            ifs->seekg(cur, ios::beg);
+            fseeko(ifs, 0, SEEK_END);
+            int64_t size = ftello(ifs);
+            fseeko(ifs, cur, SEEK_SET);
             if (size > 0)
                 info.frameCount = (int)((size - cur) / estFrameSize);
         }
-#endif // if defined(_MSC_VER) && _MSC_VER < 1700
     }
-
     if (info.skipFrames)
     {
-#if X86_64
-        if (ifs != &cin)
-            ifs->seekg((uint64_t)estFrameSize * info.skipFrames, ios::cur);
+        if (ifs != stdin)
+            fseeko(ifs, (int64_t)estFrameSize * info.skipFrames, SEEK_CUR);
         else
             for (int i = 0; i < info.skipFrames; i++)
-            {
-                ifs->read(buf[0], estFrameSize - framesize);
-                ifs->read(buf[0], framesize);
-            }
-#else
-        for (int i = 0; i < info.skipFrames; i++)
-            ifs->ignore(estFrameSize);
-#endif
+                if (fread(buf[0], estFrameSize - framesize, 1, ifs) + fread(buf[0], framesize, 1, ifs) != 2)
+                    break;
     }
 }
-
 Y4MInput::~Y4MInput()
 {
-    if (ifs && ifs != &cin)
-        delete ifs;
-
+    if (ifs && ifs != stdin)
+        fclose(ifs);
     for (int i = 0; i < QUEUE_SIZE; i++)
         X265_FREE(buf[i]);
 }
@@ -180,37 +151,31 @@ bool Y4MInput::parseHeader()
 
     int csp = 0;
     int d = 0;
-
-    while (ifs->good())
+    int c;
+    while ((c = fgetc(ifs)) != EOF)
     {
         // Skip Y4MPEG string
-        int c = ifs->get();
-        while (ifs->good() && (c != ' ') && (c != '\n'))
-            c = ifs->get();
-
-        while (c == ' ' && ifs->good())
+        while ((c != EOF) && (c != ' ') && (c != '\n'))
+            c = fgetc(ifs);
+        while (c == ' ')
         {
             // read parameter identifier
-            switch (ifs->get())
+            switch (fgetc(ifs))
             {
             case 'W':
                 width = 0;
-                while (ifs->good())
+                while ((c = fgetc(ifs)) != EOF)
                 {
-                    c = ifs->get();
-
                     if (c == ' ' || c == '\n')
                         break;
                     else
                         width = width * 10 + (c - '0');
                 }
                 break;
-
             case 'H':
                 height = 0;
-                while (ifs->good())
+                while ((c = fgetc(ifs)) != EOF)
                 {
-                    c = ifs->get();
                     if (c == ' ' || c == '\n')
                         break;
                     else
@@ -221,15 +186,13 @@ bool Y4MInput::parseHeader()
             case 'F':
                 rateNum = 0;
                 rateDenom = 0;
-                while (ifs->good())
+                while ((c = fgetc(ifs)) != EOF)
                 {
-                    c = ifs->get();
                     if (c == '.')
                     {
                         rateDenom = 1;
-                        while (ifs->good())
+                        while ((c = fgetc(ifs)) != EOF)
                         {
-                            c = ifs->get();
                             if (c == ' ' || c == '\n')
                                 break;
                             else
@@ -242,9 +205,8 @@ bool Y4MInput::parseHeader()
                     }
                     else if (c == ':')
                     {
-                        while (ifs->good())
+                        while ((c = fgetc(ifs)) != EOF)
                         {
-                            c = ifs->get();
                             if (c == ' ' || c == '\n')
                                 break;
                             else
@@ -260,14 +222,12 @@ bool Y4MInput::parseHeader()
             case 'A':
                 sarWidth = 0;
                 sarHeight = 0;
-                while (ifs->good())
+                while ((c = fgetc(ifs)) != EOF)
                 {
-                    c = ifs->get();
                     if (c == ':')
                     {
-                        while (ifs->good())
+                        while ((c = fgetc(ifs)) != EOF)
                         {
-                            c = ifs->get();
                             if (c == ' ' || c == '\n')
                                 break;
                             else
@@ -283,19 +243,15 @@ bool Y4MInput::parseHeader()
             case 'C':
                 csp = 0;
                 d = 0;
-                while (ifs->good())
+                while ((c = fgetc(ifs)) != EOF)
                 {
-                    c = ifs->get();
-
                     if (c <= 'o' && c >= '0')
                         csp = csp * 10 + (c - '0');
                     else if (c == 'p')
                     {
                         // example: C420p16
-                        while (ifs->good())
+                        while ((c = fgetc(ifs)) != EOF)
                         {
-                            c = ifs->get();
-
                             if (c <= '9' && c >= '0')
                                 d = d * 10 + (c - '0');
                             else
@@ -328,12 +284,10 @@ bool Y4MInput::parseHeader()
                 if (d >= 8 && d <= 16)
                     depth = d;
                 break;
-
             default:
-                while (ifs->good())
+                while ((c = fgetc(ifs)) != EOF)
                 {
                     // consume this unsupported configuration word
-                    c = ifs->get();
                     if (c == ' ' || c == '\n')
                         break;
                 }
@@ -375,30 +329,23 @@ void Y4MInput::threadMain()
     threadActive = false;
     writeCount.poke();
 }
-
 bool Y4MInput::populateFrameQueue()
 {
-    if (!ifs || ifs->fail())
+    if (!ifs || ferror(ifs))
         return false;
-
-    /* strip off the FRAME header */
-    char hbuf[sizeof(header)];
-
-    ifs->read(hbuf, strlen(header));
-    if (ifs->eof())
-        return false;
-
-    if (!ifs->good() || memcmp(hbuf, header, strlen(header)))
+    /* strip off the FRAME\n header */
+    char hbuf[sizeof(header) + 1];
+    if (fread(hbuf, sizeof(hbuf), 1, ifs) != 1 || memcmp(hbuf, header, sizeof(header)))
     {
-        x265_log(NULL, X265_LOG_ERROR, "y4m: frame header missing\n");
+        if (!feof(ifs))
+            x265_log(NULL, X265_LOG_ERROR, "y4m: frame header missing\n");
         return false;
     }
-
     /* consume bytes up to line feed */
-    int c = ifs->get();
-    while (c != '\n' && ifs->good())
-        c = ifs->get();
-
+    int c = hbuf[sizeof(header)];
+    while (c != '\n')
+        if ((c = fgetc(ifs)) == EOF)
+            break;
     /* wait for room in the ring buffer */
     int written = writeCount.get();
     int read = readCount.get();
@@ -408,10 +355,8 @@ bool Y4MInput::populateFrameQueue()
         if (!threadActive)
             return false;
     }
-
     ProfileScopeEvent(frameRead);
-    ifs->read(buf[written % QUEUE_SIZE], framesize);
-    if (ifs->good())
+    if (fread(buf[written % QUEUE_SIZE], framesize, 1, ifs) == 1)
     {
         writeCount.incr();
         return true;

@@ -1947,7 +1947,7 @@ MV Search::getLowresMV(const CUData& cu, const PredictionUnit& pu, int list, int
         /* poc difference is out of range for lookahead */
         return 0;
 
-    MV* mvs = m_frame->m_lowres.lowresMvs[list][diffPoc - 1];
+    MV* mvs = m_frame->m_lowres.lowresMvs[list][diffPoc];
     if (mvs[0].x == 0x7FFF)
         /* this motion search was not estimated by lookahead */
         return 0;
@@ -2073,7 +2073,7 @@ void Search::singleMotionEstimation(Search& master, Mode& interMode, const Predi
     int mvpIdx = selectMVP(interMode.cu, pu, amvp, list, ref);
     MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
 
-    if (!m_param->analysisReuseMode) /* Prevents load/save outputs from diverging if lowresMV is not available */
+    if (!m_param->analysisSave && !m_param->analysisLoad) /* Prevents load/save outputs from diverging if lowresMV is not available */
     {
         MV lmv = getLowresMV(interMode.cu, pu, list, ref);
         if (lmv.notZero())
@@ -2161,7 +2161,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
         cu.getNeighbourMV(puIdx, pu.puAbsPartIdx, interMode.interNeighbours);
 
         /* Uni-directional prediction */
-        if ((m_param->analysisReuseMode == X265_ANALYSIS_LOAD && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
+        if ((m_param->analysisLoad && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
             || (m_param->analysisMultiPassRefine && m_param->rc.bStatRead) || (m_param->bMVType == AVC_INFO))
         {
             for (int list = 0; list < numPredDir; list++)
@@ -2297,7 +2297,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                     int mvpIdx = selectMVP(cu, pu, amvp, list, ref);
                     MV mvmin, mvmax, outmv, mvp = amvp[mvpIdx];
 
-                    if (!m_param->analysisReuseMode) /* Prevents load/save outputs from diverging when lowresMV is not available */
+                    if (!m_param->analysisSave && !m_param->analysisLoad) /* Prevents load/save outputs from diverging when lowresMV is not available */
                     {
                         MV lmv = getLowresMV(cu, pu, list, ref);
                         if (lmv.notZero())

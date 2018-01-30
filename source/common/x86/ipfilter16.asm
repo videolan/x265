@@ -9103,7 +9103,7 @@ cglobal filterPixelToShort_6x%1, 3, 7, 3
     ; load constant
     mova       m2, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + r1]
     psllw      m0, (14 - BIT_DEPTH)
@@ -9156,7 +9156,7 @@ cglobal filterPixelToShort_8x%1, 3, 7, 2
     ; load constant
     mova       m1, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     psllw      m0, (14 - BIT_DEPTH)
     psubw      m0, m1
@@ -9277,7 +9277,7 @@ cglobal filterPixelToShort_16x%1, 3, 7, 3
     ; load constant
     mova       m2, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + r1]
     psllw      m0, (14 - BIT_DEPTH)
@@ -9351,7 +9351,7 @@ cglobal filterPixelToShort_16x%1, 3, 7, 3
     ; load constant
     mova       m2, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + r1]
     psllw      m0, (14 - BIT_DEPTH)
@@ -9405,7 +9405,7 @@ cglobal filterPixelToShort_32x%1, 3, 7, 5
     ; load constant
     mova       m4, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + r1]
     movu       m2, [r0 + r1 * 2]
@@ -9510,7 +9510,7 @@ cglobal filterPixelToShort_32x%1, 3, 7, 3
     ; load constant
     mova       m2, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + r1]
     psllw      m0, (14 - BIT_DEPTH)
@@ -9583,7 +9583,7 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
     ; load constant
     mova       m4, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + r1]
     movu       m2, [r0 + r1 * 2]
@@ -9758,7 +9758,7 @@ cglobal filterPixelToShort_64x%1, 3, 7, 3
     ; load constant
     mova       m2, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + r1]
     psllw      m0, (14 - BIT_DEPTH)
@@ -9869,7 +9869,7 @@ cglobal filterPixelToShort_24x%1, 3, 7, 5
     ; load constant
     mova       m4, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + r1]
     movu       m2, [r0 + r1 * 2]
@@ -9952,7 +9952,7 @@ cglobal filterPixelToShort_24x%1, 3, 7, 3
     ; load constant
     mova       m2, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + 32]
     psllw      m0, (14 - BIT_DEPTH)
@@ -10017,7 +10017,7 @@ cglobal filterPixelToShort_12x%1, 3, 7, 3
     ; load constant
     mova       m2, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + r1]
     psllw      m0, (14 - BIT_DEPTH)
@@ -10081,7 +10081,7 @@ cglobal filterPixelToShort_48x64, 3, 7, 5
     ; load constant
     mova       m4, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + r1]
     movu       m2, [r0 + r1 * 2]
@@ -10214,7 +10214,7 @@ cglobal filterPixelToShort_48x64, 3, 7, 4
     ; load constant
     mova       m3, [pw_2000]
 
-.loop
+.loop:
     movu       m0, [r0]
     movu       m1, [r0 + 32]
     movu       m2, [r0 + 64]
@@ -10314,7 +10314,7 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,8,7
 
 .preloop:
     lea                         r6,                [r3 * 3]
-.loop
+.loop:
     ; Row 0
     movu                        xm3,                [r0]                                 ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
     movu                        xm4,                [r0 + 2]                             ; [x x x x x A 9 8 7 6 5 4 3 2 1 0]
@@ -10381,7 +10381,7 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,8,7
     packssdw                    xm4,               xm4
 
     movq                        [r2],              xm3                                   ;row 0
-.end
+.end:
     RET
 %endif
 %endmacro

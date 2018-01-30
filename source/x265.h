@@ -327,15 +327,15 @@ typedef struct x265_picture
      * to allow the encoder to determine base QP */
     int     forceqp;
 
-    /* If param.analysisReuseMode is X265_ANALYSIS_OFF this field is ignored on input
-     * and output. Else the user must call x265_alloc_analysis_data() to
-     * allocate analysis buffers for every picture passed to the encoder.
+    /* If param.analysisLoad and param.analysisSave are disabled, this field is
+     * ignored on input and output. Else the user must call x265_alloc_analysis_data()
+     * to allocate analysis buffers for every picture passed to the encoder.
      *
-     * On input when param.analysisReuseMode is X265_ANALYSIS_LOAD and analysisData
+     * On input when param.analysisLoad is enabled and analysisData
      * member pointers are valid, the encoder will use the data stored here to
      * reduce encoder work.
      *
-     * On output when param.analysisReuseMode is X265_ANALYSIS_SAVE and analysisData
+     * On output when param.analysisSave is enabled and analysisData
      * member pointers are valid, the encoder will write output analysis into
      * this data structure */
     x265_analysis_data analysisData;
@@ -481,9 +481,7 @@ typedef enum
 #define X265_CSP_BGRA           7  /* packed bgr 32bits   */
 #define X265_CSP_RGB            8  /* packed rgb 24bits   */
 #define X265_CSP_MAX            9  /* end of list */
-
 #define X265_EXTENDED_SAR       255 /* aspect ratio explicitly specified as width:height */
-
 /* Analysis options */
 #define X265_ANALYSIS_OFF  0
 #define X265_ANALYSIS_SAVE 1
@@ -1129,13 +1127,13 @@ typedef struct x265_param
      * Default disabled */
     int       bEnableRdRefine;
 
-    /* If X265_ANALYSIS_SAVE, write per-frame analysis information into analysis
-     * buffers.  if X265_ANALYSIS_LOAD, read analysis information into analysis
-     * buffer and use this analysis information to reduce the amount of work
-     * the encoder must perform. Default X265_ANALYSIS_OFF */
+    /* If save, write per-frame analysis information into analysis buffers.
+     * If load, read analysis information into analysis buffer and use this
+     * analysis information to reduce the amount of work the encoder must perform.
+     * Default disabled. Now deprecated*/
     int       analysisReuseMode;
 
-    /* Filename for analysisReuseMode save/load. Default name is "x265_analysis.dat" */
+    /* Filename for multi-pass-opt-analysis/distortion. Default name is "x265_analysis.dat" */
     const char* analysisReuseFileName;
 
     /*== Rate Control ==*/
@@ -1273,6 +1271,7 @@ typedef struct x265_param
 
         /* internally enable if tune grain is set */
         int      bEnableConstVbv;
+
     } rc;
 
     /*== Video Usability Information ==*/
@@ -1455,7 +1454,7 @@ typedef struct x265_param
     int       bHDROpt;
 
     /* A value between 1 and 10 (both inclusive) determines the level of
-    * information stored/reused in save/load analysis-reuse-mode. Higher the refine
+    * information stored/reused in analysis save/load. Higher the refine
     * level higher the information stored/reused. Default is 5 */
     int       analysisReuseLevel;
 
@@ -1532,9 +1531,23 @@ typedef struct x265_param
 
     /* Reuse MV information obtained through API */
     int       bMVType;
-
     /* Allow the encoder to have a copy of the planes of x265_picture in Frame */
     int       bCopyPicToFrame;
+
+    /*Number of frames for GOP boundary decision lookahead.If a scenecut frame is found
+    * within this from the gop boundary set by keyint, the GOP will be extented until such a point,
+    * otherwise the GOP will be terminated as set by keyint*/
+    int       gopLookahead;
+
+    /*Write per-frame analysis information into analysis buffers. Default disabled. */
+    const char* analysisSave;
+
+    /* Read analysis information into analysis buffer and use this analysis information
+     * to reduce the amount of work the encoder must perform. Default disabled. */
+    const char* analysisLoad;
+
+    /*Number of RADL pictures allowed in front of IDR*/
+    int radl;
 } x265_param;
 
 /* x265_param_alloc:
@@ -1743,7 +1756,7 @@ int x265_get_slicetype_poc_and_scenecut(x265_encoder *encoder, int *slicetype, i
 /* x265_get_ref_frame_list:
  *     returns negative on error, 0 when access unit were output.
  *     This API must be called after(poc >= lookaheadDepth + bframes + 2) condition check */
-int x265_get_ref_frame_list(x265_encoder *encoder, x265_picyuv**, x265_picyuv**, int, int);
+int x265_get_ref_frame_list(x265_encoder *encoder, x265_picyuv**, x265_picyuv**, int, int, int*, int*);
 
 /* x265_set_analysis_data:
  *     set the analysis data. The incoming analysis_data structure is assumed to be AVC-sized blocks.
@@ -1766,9 +1779,10 @@ FILE* x265_csvlog_open(const x265_param *);
 void x265_csvlog_frame(const x265_param *, const x265_picture *);
 
 /* Log final encode statistics to the CSV file handle. 'argc' and 'argv' are
- * intended to be command line arguments passed to the encoder. Encode
+ * intended to be command line arguments passed to the encoder. padx and pady are
+ * padding offsets for conformance and can be given from sps settings. Encode
  * statistics should be queried from the encoder just prior to closing it. */
-void x265_csvlog_encode(x265_encoder *encoder, const x265_stats *, int argc, char** argv);
+void x265_csvlog_encode(const x265_param*, const x265_stats *, int padx, int pady, int argc, char** argv);
 
 /* In-place downshift from a bit-depth greater than 8 to a bit-depth of 8, using
  * the residual bits to dither each row. */
@@ -1820,10 +1834,10 @@ typedef struct x265_api
     int           (*encoder_intra_refresh)(x265_encoder*);
     int           (*encoder_ctu_info)(x265_encoder*, int, x265_ctu_info_t**);
     int           (*get_slicetype_poc_and_scenecut)(x265_encoder*, int*, int*, int*);
-    int           (*get_ref_frame_list)(x265_encoder*, x265_picyuv**, x265_picyuv**, int, int);
+    int           (*get_ref_frame_list)(x265_encoder*, x265_picyuv**, x265_picyuv**, int, int, int*, int*);
     FILE*         (*csvlog_open)(const x265_param*);
     void          (*csvlog_frame)(const x265_param*, const x265_picture*);
-    void          (*csvlog_encode)(x265_encoder*, const x265_stats*, int, char**);
+    void          (*csvlog_encode)(const x265_param*, const x265_stats *, int, int, int, char**);
     void          (*dither_image)(x265_picture*, int, int, int16_t*, int);
     int           (*set_analysis_data)(x265_encoder *encoder, x265_analysis_data *analysis_data, int poc, uint32_t cuBytes);
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
