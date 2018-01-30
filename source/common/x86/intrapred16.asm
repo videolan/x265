@@ -11843,6 +11843,27 @@ cglobal ang16_mode_6_30
     packusdw        m11, m3
     TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 16
     ret
+cglobal intra_pred_ang16_8, 3,7,16
+    add         r2,        64
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 15 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    vbroadcasti32x8  m15,  [pd_16]
+
+    call        ang16_mode_8_28
+    RET
+
+cglobal intra_pred_ang16_28, 3,7,16
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 15 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    vbroadcasti32x8  m15,  [pd_16]
+
+    call        ang16_mode_8_28
+    RET
 
 ;; angle 16, modes 7 and 29
 cglobal ang16_mode_7_29
