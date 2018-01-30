@@ -1932,6 +1932,30 @@ cglobal count_nonzero_32x32, 1,1,3
     RET
 
 
+;-----------------------------------------------------------------------------
+; int x265_count_nonzero_32x32_avx512(const int16_t *quantCoeff);
+;-----------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal count_nonzero_32x32, 1,4,2
+    mov             r1, 0xFFFFFFFFFFFFFFFF
+    kmovq           k2, r1
+    xor             r3, r3
+    pxor            m0, m0
+
+%assign x 0
+%rep 16
+    movu            m1, [r0 + x]
+    vpacksswb       m1, [r0 + x + 64]
+%assign x x+128
+    vpcmpb          k1 {k2}, m1, m0, 00000100b
+    kmovq           r1, k1
+    popcnt          r2, r1
+    add             r3d, r2d
+%endrep
+    mov             eax, r3d
+
+    RET
+
 ;-----------------------------------------------------------------------------------------------------------------------------------------------
 ;void weight_pp(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
 ;-----------------------------------------------------------------------------------------------------------------------------------------------

@@ -5376,6 +5376,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.chroma[X265_CSP_I422].pu[CHROMA_422_32x16].satd = PFX(pixel_satd_32x16_avx512);
         p.planecopy_sp_shl = PFX(upShift_16_avx512);
         p.cu[BLOCK_16x16].count_nonzero = PFX(count_nonzero_16x16_avx512);
+        p.cu[BLOCK_32x32].count_nonzero = PFX(count_nonzero_32x32_avx512);
 
     }
 #endif
