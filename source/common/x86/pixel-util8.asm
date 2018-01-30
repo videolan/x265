@@ -4,6 +4,7 @@
 ;* Authors: Min Chen <chenm003@163.com> <min.chen@multicorewareinc.com>
 ;*          Nabajit Deka <nabajit@multicorewareinc.com>
 ;*          Rajesh Paulraj <rajesh@multicorewareinc.com>
+;*          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
 ;*
 ;* This program is free software; you can redistribute it and/or modify
 ;* it under the terms of the GNU General Public License as published by
@@ -1855,6 +1856,30 @@ cglobal count_nonzero_16x16, 1,1,3
     pshufd          m1, m0, 2
     paddd           m0, m1
     movd            eax, xm0
+    RET
+
+;-----------------------------------------------------------------------------
+; int x265_count_nonzero_16x16_avx512(const int16_t *quantCoeff);
+;-----------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal count_nonzero_16x16, 1,4,2
+    mov             r1, 0xFFFFFFFFFFFFFFFF
+    kmovq           k2, r1
+    xor             r3, r3
+    pxor            m0, m0
+
+%assign x 0
+%rep 4
+    movu            m1, [r0 + x]
+    vpacksswb       m1, [r0 + x + 64]
+%assign x x+128
+    vpcmpb          k1 {k2}, m1, m0, 00000100b
+    kmovq           r1, k1
+    popcnt          r2, r1
+    add             r3d, r2d
+%endrep
+    mov             eax, r3d
+
     RET
 
 
