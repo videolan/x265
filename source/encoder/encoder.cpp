@@ -1983,11 +1983,12 @@ void Encoder::fetchStats(x265_stats *stats, size_t statsSizeBytes)
         stats->statsB.psnrU   = m_analyzeB.m_psnrSumU / (double)m_analyzeB.m_numPics;
         stats->statsB.psnrV   = m_analyzeB.m_psnrSumV / (double)m_analyzeB.m_numPics;
         stats->statsB.ssim    = x265_ssim2dB(m_analyzeB.m_globalSsim / (double)m_analyzeB.m_numPics);
-
-        stats->maxCLL         = m_analyzeAll.m_maxCLL;
-        stats->maxFALL        = (uint16_t)(m_analyzeAll.m_maxFALL / m_analyzeAll.m_numPics);
+        if (m_param->csvLogLevel >= 2 || m_param->maxCLL || m_param->maxFALL)
+        {
+            stats->maxCLL = m_analyzeAll.m_maxCLL;
+            stats->maxFALL = (uint16_t)(m_analyzeAll.m_maxFALL / m_analyzeAll.m_numPics);
+        }
     }
-
     /* If new statistics are added to x265_stats, we must check here whether the
      * structure provided by the user is the new structure or an older one (for
      * future safety) */
@@ -2059,10 +2060,11 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
         if (m_param->bEnableSsim)
             m_analyzeB.addSsim(ssim);
     }
-
-    m_analyzeAll.m_maxFALL += curFrame->m_fencPic->m_avgLumaLevel;
-    m_analyzeAll.m_maxCLL = X265_MAX(m_analyzeAll.m_maxCLL, curFrame->m_fencPic->m_maxLumaLevel);
-
+    if (m_param->csvLogLevel >= 2 || m_param->maxCLL || m_param->maxFALL)
+    {
+        m_analyzeAll.m_maxFALL += curFrame->m_fencPic->m_avgLumaLevel;
+        m_analyzeAll.m_maxCLL = X265_MAX(m_analyzeAll.m_maxCLL, curFrame->m_fencPic->m_maxLumaLevel);
+    }
     char c = (slice->isIntra() ? (curFrame->m_lowres.sliceType == X265_TYPE_IDR ? 'I' : 'i') : slice->isInterP() ? 'P' : 'B');
     int poc = slice->m_poc;
     if (!IS_REFERENCED(curFrame))
@@ -2101,13 +2103,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
                     frameStats->list1POC[ref] = ref < slice->m_numRefIdx[1] ? slice->m_refPOCList[1][ref] - slice->m_lastIDR : -1;
             }
         }
-
 #define ELAPSED_MSEC(start, end) (((double)(end) - (start)) / 1000)
-
-        frameStats->maxLumaLevel = curFrame->m_fencPic->m_maxLumaLevel;
-        frameStats->minLumaLevel = curFrame->m_fencPic->m_minLumaLevel;
-        frameStats->avgLumaLevel = curFrame->m_fencPic->m_avgLumaLevel;
-
         if (m_param->csvLogLevel >= 2)
         {
             frameStats->decideWaitTime = ELAPSED_MSEC(0, curEncoder->m_slicetypeWaitTime);
@@ -2127,6 +2123,9 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
             frameStats->avgLumaDistortion = curFrame->m_encData->m_frameStats.avgLumaDistortion;
             frameStats->avgPsyEnergy = curFrame->m_encData->m_frameStats.avgPsyEnergy;
             frameStats->avgResEnergy = curFrame->m_encData->m_frameStats.avgResEnergy;
+            frameStats->maxLumaLevel = curFrame->m_fencPic->m_maxLumaLevel;
+            frameStats->minLumaLevel = curFrame->m_fencPic->m_minLumaLevel;
+            frameStats->avgLumaLevel = curFrame->m_fencPic->m_avgLumaLevel;
 
             frameStats->maxChromaULevel = curFrame->m_fencPic->m_maxChromaULevel;
             frameStats->minChromaULevel = curFrame->m_fencPic->m_minChromaULevel;

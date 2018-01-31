@@ -358,18 +358,20 @@ void PicYuv::copyFromPicture(const x265_picture& pic, const x265_param& param, i
     pixel *uPic = m_picOrg[1];
     pixel *vPic = m_picOrg[2];
 
-    for (int r = 0; r < height; r++)
+    if (param.csvLogLevel >= 2 || param.maxCLL || param.maxFALL)
     {
-        for (int c = 0; c < width; c++)
+        for (int r = 0; r < height; r++)
         {
-            m_maxLumaLevel = X265_MAX(yPic[c], m_maxLumaLevel);
-            m_minLumaLevel = X265_MIN(yPic[c], m_minLumaLevel);
-            lumaSum += yPic[c];
+            for (int c = 0; c < width; c++)
+            {
+                m_maxLumaLevel = X265_MAX(yPic[c], m_maxLumaLevel);
+                m_minLumaLevel = X265_MIN(yPic[c], m_minLumaLevel);
+                lumaSum += yPic[c];
+            }
+            yPic += m_stride;
         }
-        yPic += m_stride;
+        m_avgLumaLevel = (double)lumaSum / (m_picHeight * m_picWidth);
     }
-    m_avgLumaLevel = (double)lumaSum / (m_picHeight * m_picWidth);
-
     if (param.csvLogLevel >= 2)
     {
         if (param.internalCsp != X265_CSP_I400)

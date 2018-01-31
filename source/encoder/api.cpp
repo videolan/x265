@@ -67,9 +67,7 @@ static const char* summaryCSVHeader =
     "Y PSNR, U PSNR, V PSNR, Global PSNR, SSIM, SSIM (dB), "
     "I count, I ave-QP, I kbps, I-PSNR Y, I-PSNR U, I-PSNR V, I-SSIM (dB), "
     "P count, P ave-QP, P kbps, P-PSNR Y, P-PSNR U, P-PSNR V, P-SSIM (dB), "
-    "B count, B ave-QP, B kbps, B-PSNR Y, B-PSNR U, B-PSNR V, B-SSIM (dB), "
-    "MaxCLL, MaxFALL, Version\n";
-
+    "B count, B ave-QP, B kbps, B-PSNR Y, B-PSNR U, B-PSNR V, B-SSIM (dB), ";
 x265_encoder *x265_encoder_open(x265_param *p)
 {
     if (!p)
@@ -757,7 +755,12 @@ FILE* x265_csvlog_open(const x265_param* param)
                 fprintf(csvfp, "\n");
             }
             else
+            {
                 fputs(summaryCSVHeader, csvfp);
+                if (param->csvLogLevel >= 2 || param->maxCLL || param->maxFALL)
+                    fputs("MaxCLL, MaxFALL,", csvfp);
+                fputs(" Version\n", csvfp);
+            }
         }
         return csvfp;
     }
@@ -881,8 +884,10 @@ void x265_csvlog_encode(const x265_param *p, const x265_stats *stats, int padx, 
             // adding summary to a per-frame csv log file, so it needs a summary header
             fprintf(p->csvfpt, "\nSummary\n");
             fputs(summaryCSVHeader, p->csvfpt);
+            if (p->csvLogLevel >= 2 || p->maxCLL || p->maxFALL)
+                fputs("MaxCLL, MaxFALL,", p->csvfpt);
+            fputs(" Version\n",p->csvfpt);
         }
-
         // CLI arguments or other
         if (argc)
         {
@@ -973,10 +978,10 @@ void x265_csvlog_encode(const x265_param *p, const x265_stats *stats, int padx, 
         }
         else
             fprintf(p->csvfpt, " -, -, -, -, -, -, -,");
-
-        fprintf(p->csvfpt, " %-6u, %-6u, %s\n", stats->maxCLL, stats->maxFALL, api->version_str);
+        if (p->csvLogLevel >= 2 || p->maxCLL || p->maxFALL)
+            fprintf(p->csvfpt, " %-6u, %-6u,", stats->maxCLL, stats->maxFALL);
+        fprintf(p->csvfpt, " %s\n", api->version_str);
     }
-
 }
 
 /* The dithering algorithm is based on Sierra-2-4A error diffusion.
