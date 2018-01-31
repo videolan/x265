@@ -1234,9 +1234,8 @@ void Lookahead::slicetypeDecide()
     int idx = 0;
     list[bframes]->m_reorderedPts = pts[idx++];
     m_outputQueue.pushBack(*list[bframes]);
-
     /* Add B-ref frame next to P frame in output queue, the B-ref encode before non B-ref frame */
-    if (bframes > 1 && m_param->bBPyramid)
+    if (brefs)
     {
         for (int i = 0; i < bframes; i++)
         {
