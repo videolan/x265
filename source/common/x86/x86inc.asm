@@ -82,7 +82,13 @@
 %endif
 
 %macro SECTION_RODATA 0-1 32
-    SECTION .rodata align=%1
+    %ifidn __OUTPUT_FORMAT__,win32
+        SECTION .rdata align=%1
+    %elif WIN64
+        SECTION .rdata align=%1
+    %else
+        SECTION .rodata align=%1
+    %endif
 %endmacro
 
 %if WIN64
