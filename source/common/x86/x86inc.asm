@@ -728,6 +728,16 @@ BRANCH_INSTR jz, je, jnz, jne, jl, jle, jnl, jnle, jg, jge, jng, jnge, ja, jae, 
     %endif
 %endmacro
 
+; Create a global symbol from a local label with the correct name mangling and type
+%macro cglobal_label 1
+    %if FORMAT_ELF
+        global current_function %+ %1:function hidden
+    %else
+        global current_function %+ %1
+    %endif
+    %1:
+%endmacro
+
 %macro cextern 1
     %xdefine %1 mangle(private_prefix %+ _ %+ %1)
     CAT_XDEFINE cglobaled_, %1, 1
