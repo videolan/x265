@@ -21,18 +21,26 @@
  * This program is also available under a commercial proprietary license.
  * For more information, contact us at license @ x265.com.
  *****************************************************************************/
-
 #include "raw.h"
+#if _WIN32
+#include <io.h>
+#include <fcntl.h>
+#if defined(_MSC_VER)
+#pragma warning(disable: 4996) // POSIX setmode and fileno deprecated
+#endif
+#endif
 
 using namespace X265_NS;
 using namespace std;
-
 RAWOutput::RAWOutput(const char* fname, InputFileInfo&)
 {
     b_fail = false;
     if (!strcmp(fname, "-"))
     {
         ofs = stdout;
+#if _WIN32
+        setmode(fileno(stdout), O_BINARY);
+#endif
         return;
     }
     ofs = x265_fopen(fname, "wb");
