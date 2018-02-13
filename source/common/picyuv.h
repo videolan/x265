@@ -72,6 +72,7 @@ public:
     pixel   m_maxChromaVLevel;
     pixel   m_minChromaVLevel;
     double  m_avgChromaVLevel;
+    double  m_vmafScore;
     x265_param *m_param;
 
     PicYuv();

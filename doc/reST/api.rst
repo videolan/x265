@@ -398,7 +398,30 @@ CTU size::
 	 *     release library static allocations, reset configured CTU size */
 	void x265_cleanup(void);
 
+VMAF (Video Multi-Method Assessment Fusion)
+==========================================
 
+If you set the ENABLE_LIBVMAF cmake option to ON, then x265 will report per frame
+and aggregate VMAF score for the given input and dump the scores in csv file.
+The user also need to specify the :option:`--recon` in command line to get the VMAF scores.
+ 
+    /* x265_calculate_vmafScore:
+     *    returns VMAF score for the input video.
+     *    This api must be called only after encoding was done. */
+    double x265_calculate_vmafscore(x265_param*, x265_vmaf_data*);
+
+    /* x265_calculate_vmaf_framelevelscore:
+     *    returns VMAF score for each frame in a given input video. */
+    double x265_calculate_vmaf_framelevelscore(x265_vmaf_framedata*);
+    
+.. Note::
+
+    When setting ENABLE_LIBVMAF cmake option to ON, it is recommended to
+    also set ENABLE_SHARED to OFF to prevent build problems.  
+    We only need the static library from these builds.
+    
+    Binaries build with windows will not have VMAF support.
+      
 Multi-library Interface
 =======================
 

@@ -2127,6 +2127,9 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
 #define ELAPSED_MSEC(start, end) (((double)(end) - (start)) / 1000)
         if (m_param->csvLogLevel >= 2)
         {
+#if ENABLE_LIBVMAF
+            frameStats->vmafFrameScore = curFrame->m_fencPic->m_vmafScore;
+#endif
             frameStats->decideWaitTime = ELAPSED_MSEC(0, curEncoder->m_slicetypeWaitTime);
             frameStats->row0WaitTime = ELAPSED_MSEC(curEncoder->m_startCompressTime, curEncoder->m_row0WaitTime);
             frameStats->wallTime = ELAPSED_MSEC(curEncoder->m_row0WaitTime, curEncoder->m_endCompressTime);

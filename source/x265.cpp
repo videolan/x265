@@ -75,6 +75,7 @@ struct CLIOptions
     const char* reconPlayCmd;
     const x265_api* api;
     x265_param* param;
+    x265_vmaf_data* vmafData;
     bool bProgress;
     bool bForceY4m;
     bool bDither;
@@ -96,6 +97,7 @@ struct CLIOptions
         reconPlayCmd = NULL;
         api = NULL;
         param = NULL;
+        vmafData = NULL;
         framesToBeEncoded = seek = 0;
         totalbytes = 0;
         bProgress = true;
@@ -216,6 +218,14 @@ bool CLIOptions::parse(int argc, char **argv)
         x265_log(NULL, X265_LOG_ERROR, "param alloc failed\n");
         return true;
     }
+#if ENABLE_LIBVMAF
+    vmafData = (x265_vmaf_data*)x265_malloc(sizeof(x265_vmaf_data));
+    if(!vmafData)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "vmaf data alloc failed\n");
+        return true;
+    }
+#endif
 
     if (api->param_default_preset(param, preset, tune) < 0)
     {
@@ -363,6 +373,7 @@ bool CLIOptions::parse(int argc, char **argv)
     info.frameCount = 0;
     getParamAspectRatio(param, info.sarWidth, info.sarHeight);
 
+
     this->input = InputFile::open(info, this->bForceY4m);
     if (!this->input || this->input->isFail())
     {
@@ -439,7 +450,30 @@ bool CLIOptions::parse(int argc, char **argv)
                     param->sourceWidth, param->sourceHeight, param->fpsNum, param->fpsDenom,
                     x265_source_csp_names[param->internalCsp]);
     }
+#if ENABLE_LIBVMAF
+    if (!reconfn)
+    {
+        x265_log(param, X265_LOG_ERROR, "recon file must be specified to get VMAF score, try --help for help\n");
+        return true;
+    }
+    const char *str = strrchr(info.filename, '.');
 
+    if (!strcmp(str, ".y4m"))
+    {
+        x265_log(param, X265_LOG_ERROR, "VMAF supports YUV file format only.\n");
+        return true; 
+    }
+    if(param->internalCsp == X265_CSP_I420 || param->internalCsp == X265_CSP_I422 || param->internalCsp == X265_CSP_I444)
+    {
+        vmafData->reference_file = x265_fopen(inputfn, "rb");
+        vmafData->distorted_file = x265_fopen(reconfn, "rb");
+    }
+    else
+    {
+        x265_log(param, X265_LOG_ERROR, "VMAF will support only yuv420p, yu422p, yu444p, yuv420p10le, yuv422p10le, yuv444p10le formats.\n");
+        return true;
+    }
+#endif
     this->output = OutputFile::open(outputfn, info);
     if (this->output->isFail())
     {
@@ -555,7 +589,9 @@ int main(int argc, char **argv)
 
     x265_param* param = cliopt.param;
     const x265_api* api = cliopt.api;
-
+#if ENABLE_LIBVMAF
+    x265_vmaf_data* vmafdata = cliopt.vmafData;
+#endif
     /* This allows muxers to modify bitstream format */
     cliopt.output->setParam(param);
 
@@ -712,7 +748,7 @@ int main(int argc, char **argv)
         if (!numEncoded)
             break;
     }
-
+  
     /* clear progress report */
     if (cliopt.bProgress)
         fprintf(stderr, "%*s\r", 80, " ");
@@ -723,7 +759,11 @@ fail:
 
     api->encoder_get_stats(encoder, &stats, sizeof(stats));
     if (param->csvfn && !b_ctrl_c)
+#if ENABLE_LIBVMAF
+        api->vmaf_encoder_log(encoder, argc, argv, param, vmafdata);
+#else
         api->encoder_log(encoder, argc, argv);
+#endif
     api->encoder_close(encoder);
 
     int64_t second_largest_pts = 0;

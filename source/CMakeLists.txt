@@ -29,7 +29,7 @@ option(NATIVE_BUILD "Target the build CPU" OFF)
 option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
 mark_as_advanced(FPROFILE_USE FPROFILE_GENERATE NATIVE_BUILD)
 # X265_BUILD must be incremented each time the public API is changed
-set(X265_BUILD 157)
+set(X265_BUILD 158)
 configure_file("${PROJECT_SOURCE_DIR}/x265.def.in"
                "${PROJECT_BINARY_DIR}/x265.def")
 configure_file("${PROJECT_SOURCE_DIR}/x265_config.h.in"
@@ -109,6 +109,11 @@ if(UNIX)
     if(NO_ATOMICS)
         add_definitions(-DNO_ATOMICS=1)
     endif(NO_ATOMICS)
+    find_library(VMAF vmaf)
+    option(ENABLE_LIBVMAF "Enable VMAF" OFF)
+    if(ENABLE_LIBVMAF)
+        add_definitions(-DENABLE_LIBVMAF)
+    endif()
 endif(UNIX)
 
 if(X64 AND NOT WIN32)
@@ -535,6 +540,9 @@ if(NOT MSVC)
 endif()
 if(EXTRA_LIB)
     target_link_libraries(x265-static ${EXTRA_LIB})
+endif()
+if(ENABLE_LIBVMAF)
+    target_link_libraries(x265-static ${VMAF})
 endif()
 install(TARGETS x265-static
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}

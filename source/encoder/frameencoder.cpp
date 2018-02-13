@@ -864,6 +864,9 @@ void FrameEncoder::compressFrame()
                 m_frameFilter.processRow(i - m_filterRowDelay);
         }
     }
+#if ENABLE_LIBVMAF
+    vmafFrameLevelScore();
+#endif
 
     if (m_param->maxSlices > 1)
     {
@@ -932,7 +935,7 @@ void FrameEncoder::compressFrame()
                 updateChecksum(reconPic->m_picOrg[1], m_checksum[1], height, width, stride, 0, cuHeight);
                 updateChecksum(reconPic->m_picOrg[2], m_checksum[2], height, width, stride, 0, cuHeight);
             }
-        }
+        }  
     } // end of (m_param->maxSlices > 1)
 
     if (m_param->rc.bStatWrite)
@@ -1189,7 +1192,7 @@ void FrameEncoder::compressFrame()
         m_cuStats.accumulate(m_tld[i].analysis.m_stats[m_jpId], *m_param);
 #endif
 
-    m_endFrameTime = x265_mdate();
+    m_endFrameTime = x265_mdate();  
 }
 
 void FrameEncoder::encodeSlice(uint32_t sliceAddr)
@@ -2058,11 +2061,36 @@ void FrameEncoder::noiseReductionUpdate()
         m_nr->nrOffsetDenoise[cat][0] = 0;
     }
 }
+#if ENABLE_LIBVMAF
+void FrameEncoder::vmafFrameLevelScore()
+{
+    PicYuv *fenc = m_frame->m_fencPic;
+    PicYuv *recon = m_frame->m_reconPic;
+
+    x265_vmaf_framedata *vmafframedata = (x265_vmaf_framedata*)x265_malloc(sizeof(x265_vmaf_framedata));
+    if (!vmafframedata)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "vmaf frame data alloc failed\n");
+    }
+
+    vmafframedata->height = fenc->m_picHeight;
+    vmafframedata->width = fenc->m_picWidth;
+    vmafframedata->frame_set = 0;
+    vmafframedata->internalBitDepth = m_param->internalBitDepth;
+    vmafframedata->reference_frame = fenc;
+    vmafframedata->distorted_frame = recon;
+
+    fenc->m_vmafScore = x265_calculate_vmaf_framelevelscore(vmafframedata);
+
+    if (vmafframedata)
+    x265_free(vmafframedata);
+}
+#endif
 
 Frame *FrameEncoder::getEncodedPicture(NALList& output)
 {
     if (m_frame)
-    {
+    {    
         /* block here until worker thread completes */
         m_done.wait();
 

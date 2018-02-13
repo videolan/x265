@@ -209,6 +209,7 @@ typedef struct x265_frame_stats
     x265_cu_stats    cuStats;
     x265_pu_stats    puStats;
     double           totalFrameTime;
+    double           vmafFrameScore;
 } x265_frame_stats;
 
 typedef struct x265_ctu_info_t
@@ -536,6 +537,7 @@ typedef struct x265_stats
     double                elapsedEncodeTime;    /* wall time since encoder was opened */
     double                elapsedVideoTime;     /* encoded picture count / frame rate */
     double                bitrate;              /* accBits / elapsed video time */
+    double                aggregateVmafScore;   /* aggregate VMAF score for input video*/
     uint64_t              accBits;              /* total bits output thus far */
     uint32_t              encodedPictureCount;  /* number of output pictures thus far */
     uint32_t              totalWPFrames;        /* number of uni-directional weighted frames used */
@@ -572,6 +574,47 @@ typedef struct x265_zone
     float bitrateFactor;
 } x265_zone;
     
+/* data to calculate aggregate VMAF score */
+typedef struct x265_vmaf_data
+{   
+    int width;
+    int height;
+    size_t offset; 
+    int internalBitDepth;
+    FILE *reference_file; /* FILE pointer for input file */
+    FILE *distorted_file; /* FILE pointer for recon file generated*/
+}x265_vmaf_data;
+
+/* data to calculate frame level VMAF score */
+typedef struct x265_vmaf_framedata
+{
+    int width;
+    int height;
+    int frame_set; 
+    int internalBitDepth; 
+    void *reference_frame; /* points to fenc of particular frame */
+    void *distorted_frame; /* points to recon of particular frame */
+}x265_vmaf_framedata;
+
+/* common data needed to calculate both frame level and video level VMAF scores */
+typedef struct x265_vmaf_commondata
+{
+    char *format;
+    char *model_path;
+    char *log_path;
+    char *log_fmt;
+    int disable_clip;
+    int disable_avx;
+    int enable_transform;
+    int phone_model;
+    int psnr;
+    int ssim;
+    int ms_ssim;
+    char *pool;
+}x265_vmaf_commondata;
+
+static const x265_vmaf_commondata vcd[] = {NULL, (char *)"/usr/local/share/model/vmaf_v0.6.1.pkl", NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL};
+
 /* x265 input parameters
  *
  * For version safety you may use x265_param_alloc/free() to manage the
@@ -1811,6 +1854,22 @@ void x265_csvlog_encode(const x265_param*, const x265_stats *, int padx, int pad
 /* In-place downshift from a bit-depth greater than 8 to a bit-depth of 8, using
  * the residual bits to dither each row. */
 void x265_dither_image(x265_picture *, int picWidth, int picHeight, int16_t *errorBuf, int bitDepth);
+#if ENABLE_LIBVMAF
+/* x265_calculate_vmafScore:
+ *    returns VMAF score for the input video.
+ *    This api must be called only after encoding was done. */
+double x265_calculate_vmafscore(x265_param*, x265_vmaf_data*);
+
+/* x265_calculate_vmaf_framelevelscore:
+ *    returns VMAF score for each frame in a given input video. */
+double x265_calculate_vmaf_framelevelscore(x265_vmaf_framedata*);
+/* x265_vmaf_encoder_log:
+ *       write a line to the configured CSV file.  If a CSV filename was not
+ *       configured, or file open failed, this function will perform no write.
+ *       This api will be called only when ENABLE_LIBVMAF cmake option is set */
+void x265_vmaf_encoder_log(x265_encoder *encoder, int argc, char **argv, x265_param*, x265_vmaf_data*);
+
+#endif
 
 #define X265_MAJOR_VERSION 1
 
@@ -1864,6 +1923,11 @@ typedef struct x265_api
     void          (*csvlog_encode)(const x265_param*, const x265_stats *, int, int, int, char**);
     void          (*dither_image)(x265_picture*, int, int, int16_t*, int);
     int           (*set_analysis_data)(x265_encoder *encoder, x265_analysis_data *analysis_data, int poc, uint32_t cuBytes);
+#if ENABLE_LIBVMAF
+    double        (*calculate_vmafscore)(x265_param *, x265_vmaf_data *);
+    double        (*calculate_vmaf_framelevelscore)(x265_vmaf_framedata *);
+    void          (*vmaf_encoder_log)(x265_encoder*, int, char**, x265_param *, x265_vmaf_data *);
+#endif
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 
