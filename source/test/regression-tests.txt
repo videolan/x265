@@ -23,7 +23,7 @@ BasketballDrive_1920x1080_50.y4m,--preset slow --nr-intra 100 -F4 --aq-strength 
 BasketballDrive_1920x1080_50.y4m,--preset slower --lossless --chromaloc 3 --subme 0 --limit-tu 4
 BasketballDrive_1920x1080_50.y4m,--preset slower --no-cutree --analysis-save x265_analysis.dat --analysis-reuse-level 10 --bitrate 7000 --limit-tu 0::--preset slower --no-cutree --analysis-load x265_analysis.dat --analysis-reuse-level 10 --bitrate 7000 --limit-tu 0
 BasketballDrive_1920x1080_50.y4m,--preset veryslow --crf 4 --cu-lossless --pmode --limit-refs 1 --aq-mode 3 --limit-tu 3
-BasketballDrive_1920x1080_50.y4m,--preset veryslow --no-cutree --analysis-save x265_analysis.dat --bitrate 7000 --tskip-fast --limit-tu 4::--preset veryslow --no-cutree --analysis-load x265_analysis.dat --bitrate 7000  --tskip-fast --limit-tu 4
+BasketballDrive_1920x1080_50.y4m,--preset veryslow --no-cutree --analysis-save x265_analysis.dat --bitrate 7000 --tskip-fast --limit-tu 2::--preset veryslow --no-cutree --analysis-load x265_analysis.dat --bitrate 7000  --tskip-fast --limit-tu 2
 BasketballDrive_1920x1080_50.y4m,--preset veryslow --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 Coastguard-4k.y4m,--preset ultrafast --recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 Coastguard-4k.y4m,--preset superfast --tune grain --overscan=crop

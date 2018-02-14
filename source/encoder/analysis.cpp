@@ -647,13 +647,12 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
         cacheCost[cuIdx] = md.bestMode->rdCost;
     }
 
-    /* Save Intra CUs TU depth only when analysis mode is OFF */
-    if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4 && (!m_param->analysisSave && !m_param->analysisLoad))
+    if ((m_limitTU & X265_TU_LIMIT_NEIGH) && cuGeom.log2CUSize >= 4)
     {
         CUData* ctu = md.bestMode->cu.m_encData->getPicCTU(parentCTU.m_cuAddr);
         int8_t maxTUDepth = -1;
         for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
-            maxTUDepth = X265_MAX(maxTUDepth, md.pred[PRED_INTRA].cu.m_tuDepth[i]);
+            maxTUDepth = X265_MAX(maxTUDepth, md.bestMode->cu.m_tuDepth[i]);
         ctu->m_refTuDepth[cuGeom.geomRecurId] = maxTUDepth;
     }
 

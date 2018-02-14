@@ -1029,7 +1029,13 @@ as the residual quad-tree (RQT).
 	Level 4 - uses the depth of the neighbouring/ co-located CUs TU depth 
 	to limit the 1st subTU depth. The 1st subTU depth is taken as the 
 	limiting depth for the other subTUs.
-
+	
+	Enabling levels 3 or 4 may cause a mismatch in the output bitstreams 
+	between option:`--analysis-save` and option:`--analysis-load`
+	as all neighbouring CUs TU depth may not be available in the 
+	option:`--analysis-load` run as only the best mode's information is 
+	available to it.
+	
 	Default: 0
 
 .. option:: --nr-intra <integer>, --nr-inter <integer>
