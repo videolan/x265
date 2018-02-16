@@ -139,21 +139,13 @@ JsonObject JsonHelper::readJson(string path)
         return JsonObject();
     }
 
-    ifstream tfile;
-    string json_str;
-    string json_str2;
-    string err = "";
-    tfile.open(path);
-    while(tfile)
-    {
-        std::getline(tfile, json_str);
-        json_str2.append(json_str);
-    }
+    std::ifstream ifs(path);
+    const std::string json_str2((std::istreambuf_iterator<char>(ifs)),
+                                (std::istreambuf_iterator<char>()));
 
-    tfile.close();
-    size_t beginning = json_str2.find_first_of("{");
-    int fixchar = json_str2[json_str2.size() - 2] == '}' ? 1 : 0;
-    return Json::parse(json_str2.substr(beginning,json_str2.size() - fixchar),err).object_items();
+    string err = "";
+
+    return Json::parse(json_str2,err, JsonParse::COMMENTS).object_items();
 }
 
 JsonArray JsonHelper::readJsonArray(const string &path)
@@ -174,28 +166,13 @@ JsonArray JsonHelper::readJsonArray(const string &path)
         return JsonArray();
     }
 
-    ifstream tfile;
-    string json_str;
-    string json_str2;
+    std::ifstream ifs(path);
+    const std::string json_str2((std::istreambuf_iterator<char>(ifs)),
+                                (std::istreambuf_iterator<char>()));
+
     string err = "";
-    tfile.open(path);
-    while(tfile)
-    {
-        std::getline(tfile, json_str);
-        json_str2.append(json_str);
-    }
 
-    tfile.close();
-
-    vector<Json> data;
-    if (json_str2.size() != 0)
-    {
-        size_t beginning = json_str2.find_first_of("[");
-        int fixchar = json_str2[json_str2.size() - 2] == ']' ? 1 : 0;
-        return Json::parse(json_str2.substr(beginning, json_str2.size() - fixchar), err).array_items();
-    }
-    else
-        return data;
+    return Json::parse(json_str2,err, JsonParse::COMMENTS).array_items();
 }
 
 bool JsonHelper::validatePathExtension(string &path)
