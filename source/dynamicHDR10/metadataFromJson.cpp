@@ -372,7 +372,7 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
     const uint16_t terminalProviderCode = 0x003C;
     const uint16_t terminalProviderOrientedCode = 0x0001;
     const uint8_t applicationIdentifier = 4;
-    const uint8_t applicationVersion = 0;
+    const uint8_t applicationVersion = 1;
 
     mPimpl->appendBits(metadata, countryCode, 8);
     mPimpl->appendBits(metadata, terminalProviderCode, 16);
@@ -384,9 +384,7 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
     //Note: Validated only add up to two local selections, ignore the rest
     JsonArray jsonArray = fileData[frame][JsonDataKeys::LocalParameters].array_items();
     int ellipsesNum = static_cast<int>(jsonArray.size() > 2 ? 2 : jsonArray.size());
-
-    uint16_t numWindows = 1 + static_cast<uint16_t>(ellipsesNum);
-
+    uint16_t numWindows = (uint16_t)fileData[frame][JsonDataKeys::NumberOfWindows].int_value();
     mPimpl->appendBits(metadata, numWindows, 2);
     for (int i = 0; i < ellipsesNum; ++i)
     {
@@ -426,16 +424,15 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
 
         mPimpl->appendBits(metadata, semimajorExternalAxis, 16);
         mPimpl->appendBits(metadata, semiminorExternalAxis, 16);
-        /*bool*/ uint8_t overlapProcessOption = static_cast<uint8_t>(ellipseJsonObject[EllipseNames::OverlapProcessOption].int_value()); //1; 
+        uint8_t overlapProcessOption = static_cast<uint8_t>(ellipseJsonObject[EllipseNames::OverlapProcessOption].int_value());
         //TODO: Uses Layering method, the value is "1"
         mPimpl->appendBits(metadata, overlapProcessOption, 1);
     }
     /* Targeted System Display Data */
-    uint32_t TEMPmonitorPeak = fileData[frame][JsonDataKeys::TargetDisplayLuminance].int_value();     //500;
-    mPimpl->appendBits(metadata, TEMPmonitorPeak, 27);
-
+    uint32_t monitorPeak = fileData[frame][JsonDataKeys::TargetDisplayLuminance].int_value();     //500;
+    mPimpl->appendBits(metadata, monitorPeak, 27);
     //NOTE: Set as false for now, as requested
-    /*bool*/uint8_t targetedSystemDisplayActualPeakLuminanceFlag = 0; /*false*/
+    uint8_t targetedSystemDisplayActualPeakLuminanceFlag = 0;
     mPimpl->appendBits(metadata, targetedSystemDisplayActualPeakLuminanceFlag, 1);
     if (targetedSystemDisplayActualPeakLuminanceFlag)
     {
@@ -463,7 +460,6 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
         mPimpl->appendBits(metadata, static_cast<uint16_t>((int)luminanceData.maxGLuminance & 0xFFFF), 16);
         mPimpl->appendBits(metadata, static_cast<uint8_t>(((int)luminanceData.maxBLuminance & 0x10000) >> 16), 1);
         mPimpl->appendBits(metadata, static_cast<uint16_t>((int)luminanceData.maxBLuminance & 0xFFFF), 16);
-        /* changed from maxRGBLuminance to average luminance to match stms implementation */
         mPimpl->appendBits(metadata, static_cast<uint8_t>(((int)luminanceData.averageLuminance & 0x10000) >> 16), 1);
         mPimpl->appendBits(metadata, static_cast<uint16_t>((int)luminanceData.averageLuminance & 0xFFFF), 16);
 
@@ -478,7 +474,7 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
             uint8_t distributionMaxrgbPercentage = static_cast<uint8_t>(percentilPercentages.at(i));
             mPimpl->appendBits(metadata, distributionMaxrgbPercentage, 7);
 
-            // 17bits: 1bit then 16
+            /* 17bits: 1bit then 16 */
             unsigned int ithPercentile = luminanceData.percentiles.at(i);
             uint8_t highValue = static_cast<uint8_t>((ithPercentile & 0x10000) >> 16);
             uint16_t lowValue = static_cast<uint16_t>(ithPercentile & 0xFFFF);
@@ -499,33 +495,32 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
     {
         //TODO
     }
-    // BEZIER CURVE DATA
+    /* Bezier Curve Data */
     for (int w = 0; w < numWindows; ++w)
     {
-        //TODO: 
         uint8_t toneMappingFlag = 1;
+		/* Check if the window contains tone mapping bezier curve data and set toneMappingFlag appropriately */
+		//Json bezierData = fileData[frame][BezierCurveNames::TagName];
+        BezierCurveData curveData;
+		/* Select curve data based on global window */
+        if (w == 0)
+        {
+            if (!mPimpl->bezierCurveFromJson(fileData[frame][BezierCurveNames::TagName], curveData))
+            {
+				toneMappingFlag = 0;
+            }
+        }
+	    /* Select curve data based on local window */
+        else
+        {
+            if (!mPimpl->bezierCurveFromJson(jsonArray[w - 1][BezierCurveNames::TagName], curveData))
+            {
+				toneMappingFlag = 0;
+            }
+        }		
         mPimpl->appendBits(metadata, toneMappingFlag, 1);
         if (toneMappingFlag)
         {
-            Json bezierData = fileData[frame][BezierCurveNames::TagName];
-            BezierCurveData curveData;
-
-            /* Select curve data based on global window or local window */
-            if (w == 0)
-            {
-                if (!mPimpl->bezierCurveFromJson(bezierData, curveData))
-                {
-                    std::cout << "error parsing bezierCurve frame: " << w << std::endl;
-                }
-            }
-            else
-            {
-                if (!mPimpl->bezierCurveFromJson(jsonArray[w - 1][BezierCurveNames::TagName], curveData))
-                {
-                    std::cout << "error parsing bezierCurve ellipse: " << w - 1 << std::endl;
-                }
-            }
-
             uint16_t kneePointX = static_cast<uint16_t>(curveData.sPx);
             mPimpl->appendBits(metadata, kneePointX, 12);
             uint16_t kneePointY = static_cast<uint16_t>(curveData.sPy);
@@ -541,7 +536,7 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
                 mPimpl->appendBits(metadata, anchor, 10);
             }
         }
-    }
+	}
     /* Set to false as requested */
     bool colorSaturationMappingFlag = 0;
     mPimpl->appendBits(metadata, colorSaturationMappingFlag, 1);

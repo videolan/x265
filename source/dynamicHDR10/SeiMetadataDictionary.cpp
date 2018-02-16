@@ -28,6 +28,7 @@ using namespace SeiMetadataDictionary;
 
 const std::string JsonDataKeys::LocalParameters = std::string("LocalParameters");
 const std::string JsonDataKeys::TargetDisplayLuminance = std::string("TargetedSystemDisplayMaximumLuminance");
+const std::string JsonDataKeys::NumberOfWindows = std::string("NumberOfWindows");
 
 const std::string BezierCurveNames::TagName = std::string("BezierCurveData");
 const std::string BezierCurveNames::NumberOfAnchors = std::string("NumberOfAnchors");

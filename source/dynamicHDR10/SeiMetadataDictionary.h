@@ -37,6 +37,7 @@ namespace SeiMetadataDictionary
         public:
         static const std::string LocalParameters;
         static const std::string TargetDisplayLuminance;
+        static const std::string NumberOfWindows;		
     };
 
     //Bezier Curve Data
