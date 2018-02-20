@@ -115,7 +115,6 @@ extern "C" {
 #include "intrapred.h"
 #include "dct8.h"
 #include "seaintegral.h"
-#include "h-ipfilter8.h"
 }
 #define ALL_LUMA_CU_TYPED(prim, fncdef, fname, cpu) \
     p.cu[BLOCK_8x8].prim   = fncdef PFX(fname ## _8x8_ ## cpu); \
