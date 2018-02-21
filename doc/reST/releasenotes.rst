@@ -2,6 +2,32 @@
 Release Notes
 *************
 
+Version 2.7
+===========
+
+Release date - 21st Feb, 2018.
+
+New features
+------------
+1. :option:`--gop-lookahead` can be used to extend the gop boundary(set by `--keyint`). The GOP will be extended, if a scene-cut frame is found within this many number of frames. 
+2. Support for RADL pictures added in x265.
+   :option:`--radl` can be used to decide number of RADL pictures preceding the IDR picture.
+
+Encoder enhancements
+--------------------
+1. Moved from YASM to NASM assembler. Supports NASM assembler version 2.13 and greater.
+2. Enable analysis save and load in a single run. Introduces two new cli options `--analysis-save <filename>` and `--analysis-load <filename>`.
+3. Comply to HDR10+ LLC specification.
+4. Reduced x265 build time by more than 50% by re-factoring ipfilter.asm.  
+
+Bug fixes
+---------
+1. Fixed inconsistent output issue in deblock filter and --const-vbv.
+2. Fixed Mac OS build warnings.
+3. Fixed inconsistency in pass-2 when weightp and cutree are enabled.
+4. Fixed deadlock issue due to dropping of BREF frames, while forcing slice types through qp file.
+
+
 Version 2.6
 ===========
 
