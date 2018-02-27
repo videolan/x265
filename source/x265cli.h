@@ -293,6 +293,7 @@ static const struct option long_options[] =
     { "refine-mv-type", required_argument, NULL, 0 },
     { "copy-pic",             no_argument, NULL, 0 },
     { "no-copy-pic",          no_argument, NULL, 0 },
+    { "max-ausize-factor", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -516,6 +517,8 @@ static void showHelp(x265_param *param)
     H1("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
     H1("                                 Blank lines and lines starting with hash(#) are ignored\n");
     H1("                                 Comma is considered to be white-space\n");
+    H0("   --max-ausize-factor <float>   This value controls the maximum AU size defined in specification.\n");
+    H0("                                 It represents the percentage of maximum AU size used. Default %.1f\n", param->maxAUSizeFactor);
     H0("\nLoop filters (deblock and SAO):\n");
     H0("   --[no-]deblock                Enable Deblocking Loop Filter, optionally specify tC:Beta offsets Default %s\n", OPT(param->bEnableLoopFilter));
     H0("   --[no-]sao                    Enable Sample Adaptive Offset. Default %s\n", OPT(param->bEnableSAO));

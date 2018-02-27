@@ -1857,6 +1857,11 @@ other levels.
 	the more bits it will try to spend on signaling information (motion
 	vectors and splits) and less on residual. This feature is intended
 	for experimentation.
+	
+.. option:: --max-ausize-factor <float>
+
+        It controls the maximum AU size defined in specification. It represents
+        the percentage of maximum AU size used. Default is 1. Range is 0.5 to 1.
 
 Loop filters
 ============

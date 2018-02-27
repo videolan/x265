@@ -1548,6 +1548,11 @@ typedef struct x265_param
 
     /*Number of RADL pictures allowed in front of IDR*/
     int radl;
+
+    /* This value controls the maximum AU size defined in specification
+     * It represents the percentage of maximum AU size used.
+     * Default is 1 (which is 100%). Range is 0.5 to 1. */
+    double maxAUSizeFactor;
 } x265_param;
 
 /* x265_param_alloc:

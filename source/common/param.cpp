@@ -295,6 +295,7 @@ void x265_param_default(x265_param* param)
     param->forceFlush = 0;
     param->bDisableLookahead = 0;
     param->bCopyPicToFrame = 1;
+    param->maxAUSizeFactor = 1;
 
     /* DCT Approximations */
     param->bLowPassDct = 0;
@@ -1012,6 +1013,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("analysis-save") p->analysisSave = strdup(value);
         OPT("analysis-load") p->analysisLoad = strdup(value);
         OPT("radl") p->radl = atoi(value);
+        OPT("max-ausize-factor") p->maxAUSizeFactor = atof(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1367,6 +1369,8 @@ int x265_check_params(x265_param* param)
         "Invalid refine-inter value, refine-inter levels 0 to 3 supported");
     CHECK(param->intraRefine > 4 || param->intraRefine < 0,
         "Invalid refine-intra value, refine-intra levels 0 to 3 supported");
+    CHECK(param->maxAUSizeFactor < 0.5 || param->maxAUSizeFactor > 1.0,
+        "Supported factor for controlling max AU size is from 0.5 to 1");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
@@ -1740,6 +1744,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bLowPassDct, "lowpass-dct");
     s += sprintf(s, " refine-mv-type=%d", p->bMVType);
     s += sprintf(s, " copy-pic=%d", p->bCopyPicToFrame);
+    s += sprintf(s, " max-ausize-factor=%.1f", p->maxAUSizeFactor);
 #undef BOOL
     return buf;
 }
