@@ -915,7 +915,7 @@ will not reuse analysis if slice type parameters do not match.
        This option should be coupled with analysis-reuse-mode option, --analysis-reuse-level 10.
        The ctu size of load should be double the size of save. Default 0.
 
-.. option:: --refine-intra <0..3>
+.. option:: --refine-intra <0..4>
 	
 	Enables refinement of intra blocks in current encode. 
 	
@@ -930,6 +930,8 @@ will not reuse analysis if slice type parameters do not match.
 	(b) depth and mode when other intra modes are chosen by the save encode.
 	
 	Level 3 - Perform analysis of intra modes for depth reused from first encode.
+	
+	Level 4 - Does not reuse any analysis information - redo analysis for the intra block.
 	
 	Default 0.
 	

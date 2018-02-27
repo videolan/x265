@@ -475,11 +475,12 @@ static void showHelp(x265_param *param)
     H0("   --analysis-reuse-level <1..10>      Level of analysis reuse indicates amount of info stored/reused in save/load mode, 1:least..10:most. Default %d\n", param->analysisReuseLevel);
     H0("   --refine-mv-type <string>     Reuse MV information received through API call. Supported option is avc. Default disabled - %d\n", param->bMVType);
     H0("   --scale-factor <int>          Specify factor by which input video is scaled down for analysis save mode. Default %d\n", param->scaleFactor);
-    H0("   --refine-intra <0..3>         Enable intra refinement for encode that uses analysis-load.\n"
+    H0("   --refine-intra <0..4>         Enable intra refinement for encode that uses analysis-load.\n"
         "                                    - 0 : Forces both mode and depth from the save encode.\n"
         "                                    - 1 : Functionality of (0) + evaluate all intra modes at min-cu-size's depth when current depth is one smaller than min-cu-size's depth.\n"
         "                                    - 2 : Functionality of (1) + irrespective of size evaluate all angular modes when the save encode decides the best mode as angular.\n"
         "                                    - 3 : Functionality of (1) + irrespective of size evaluate all intra modes.\n"
+        "                                    - 4 : Re-evaluate all intra blocks, does not reuse data from save encode.\n"
         "                                Default:%d\n", param->intraRefine);
     H0("   --refine-inter <0..3>         Enable inter refinement for encode that uses analysis-load.\n"
         "                                    - 0 : Forces both mode and depth from the save encode.\n"

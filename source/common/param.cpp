@@ -1365,7 +1365,7 @@ int x265_check_params(x265_param* param)
         "Supported values for bCTUInfo are 0, 1, 2, 4, 6");
     CHECK(param->interRefine > 3 || param->interRefine < 0,
         "Invalid refine-inter value, refine-inter levels 0 to 3 supported");
-    CHECK(param->intraRefine > 3 || param->intraRefine < 0,
+    CHECK(param->intraRefine > 4 || param->intraRefine < 0,
         "Invalid refine-intra value, refine-intra levels 0 to 3 supported");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),

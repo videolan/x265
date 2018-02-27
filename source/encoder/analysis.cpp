@@ -518,10 +518,10 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
 
-    bool bAlreadyDecided = parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] != (uint8_t)ALL_IDX;
-    bool bDecidedDepth = parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
+    bool bAlreadyDecided = m_param->intraRefine != 4 && parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] != (uint8_t)ALL_IDX;
+    bool bDecidedDepth = m_param->intraRefine != 4 && parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
     int split = 0;
-    if (m_param->intraRefine)
+    if (m_param->intraRefine && m_param->intraRefine != 4)
     {
         split = ((cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1)) && bDecidedDepth);
         if (cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize]) && !bDecidedDepth)
@@ -2425,14 +2425,19 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         PartSize size = (PartSize)parentCTU.m_partSize[cuGeom.absPartIdx];
         if (parentCTU.isIntra(cuGeom.absPartIdx) && m_param->interRefine < 2)
         {
-            bool reuseModes = !((m_param->intraRefine == 3) ||
-                                (m_param->intraRefine == 2 && parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] > DC_IDX));
-            if (reuseModes)
+            if (m_param->intraRefine == 4)
+                compressIntraCU(parentCTU, cuGeom, qp);
+            else
             {
-                memcpy(mode.cu.m_lumaIntraDir, parentCTU.m_lumaIntraDir + cuGeom.absPartIdx, cuGeom.numPartitions);
-                memcpy(mode.cu.m_chromaIntraDir, parentCTU.m_chromaIntraDir + cuGeom.absPartIdx, cuGeom.numPartitions);
+                bool reuseModes = !((m_param->intraRefine == 3) ||
+                    (m_param->intraRefine == 2 && parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] > DC_IDX));
+                if (reuseModes)
+                {
+                    memcpy(mode.cu.m_lumaIntraDir, parentCTU.m_lumaIntraDir + cuGeom.absPartIdx, cuGeom.numPartitions);
+                    memcpy(mode.cu.m_chromaIntraDir, parentCTU.m_chromaIntraDir + cuGeom.absPartIdx, cuGeom.numPartitions);
+                }
+                checkIntra(mode, cuGeom, size);
             }
-            checkIntra(mode, cuGeom, size);
         }
         else if (!parentCTU.isIntra(cuGeom.absPartIdx) && m_param->interRefine < 2)
         {
