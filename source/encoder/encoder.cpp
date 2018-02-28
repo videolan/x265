@@ -3334,10 +3334,33 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     int scaledNumPartition = analysis->numPartitions;
     int factor = 1 << m_param->scaleFactor;
 
+    int numPartitions = analysis->numPartitions;
+    int numCUsInFrame = analysis->numCUsInFrame;
+    cuLocation cuLoc;
+    cuLoc.init(m_param);
+
     if (m_param->scaleFactor)
-        analysis->numPartitions *= factor;
+    {
+        /* Allocate memory for scaled resoultion's numPartitions and numCUsInFrame*/
+        analysis->numPartitions = m_param->num4x4Partitions;
+        analysis->numCUsInFrame = cuLoc.heightInCU * cuLoc.widthInCU;
+
+        /* Set skipWidth/skipHeight flags when the out of bound pixels in lowRes is greater than half of maxCUSize */
+        int extendedWidth = ((m_param->sourceWidth / 2 + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize) * m_param->maxCUSize;
+        int extendedHeight = ((m_param->sourceHeight / 2 + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize) * m_param->maxCUSize;
+        uint32_t outOfBoundaryLowres = extendedWidth - m_param->sourceWidth / 2;
+        if (outOfBoundaryLowres * 2 >= m_param->maxCUSize)
+            cuLoc.skipWidth = true;
+        uint32_t outOfBoundaryLowresH = extendedHeight - m_param->sourceHeight / 2;
+        if (outOfBoundaryLowresH * 2 >= m_param->maxCUSize)
+            cuLoc.skipHeight = true;
+    }
+
     /* Memory is allocated for inter and intra analysis data based on the slicetype */
     allocAnalysis(analysis);
+
+    analysis->numPartitions = numPartitions * factor;
+    analysis->numCUsInFrame = numCUsInFrame;
     if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
     {
         X265_FREAD(analysis->lookahead.intraVbvCost, sizeof(uint32_t), analysis->numCUsInFrame, m_analysisFileIn, picData->lookahead.intraVbvCost);
@@ -3345,6 +3368,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         X265_FREAD(analysis->lookahead.satdForVbv, sizeof(uint32_t), analysis->numCuInHeight, m_analysisFileIn, picData->lookahead.satdForVbv);
         X265_FREAD(analysis->lookahead.intraSatdForVbv, sizeof(uint32_t), analysis->numCuInHeight, m_analysisFileIn, picData->lookahead.intraSatdForVbv);
     }
+
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
     {
         if (m_param->analysisReuseLevel < 2)
@@ -3361,21 +3385,34 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         X265_FREAD(modeBuf, sizeof(uint8_t), depthBytes, m_analysisFileIn, intraPic->chromaModes);
         X265_FREAD(partSizes, sizeof(uint8_t), depthBytes, m_analysisFileIn, intraPic->partSizes);
 
-        size_t count = 0;
+        uint32_t count = 0;
         for (uint32_t d = 0; d < depthBytes; d++)
         {
             int bytes = analysis->numPartitions >> (depthBuf[d] * 2);
+            int numCTUCopied = 1;
+
             if (m_param->scaleFactor)
             {
-                if (depthBuf[d] == 0)
-                    depthBuf[d] = 1;
+                if (!depthBuf[d]) //copy data of one 64x64 to four scaled 64x64 CTUs.
+                {
+                    bytes /= 4;
+                    numCTUCopied = 4;
+                }
+
                 if (partSizes[d] == SIZE_NxN)
                     partSizes[d] = SIZE_2Nx2N;
+                if ((depthBuf[d] > 1 && m_param->maxCUSize == 64) || (depthBuf[d] && m_param->maxCUSize != 64))
+                    depthBuf[d]--;
             }
-            memset(&((analysis_intra_data *)analysis->intraData)->depth[count], depthBuf[d], bytes);
-            memset(&((analysis_intra_data *)analysis->intraData)->chromaModes[count], modeBuf[d], bytes);
-            memset(&((analysis_intra_data *)analysis->intraData)->partSizes[count], partSizes[d], bytes);
-            count += bytes;
+            for (int numCTU = 0; numCTU < numCTUCopied; numCTU++)
+            {
+                memset(&((analysis_intra_data *)analysis->intraData)->depth[count], depthBuf[d], bytes);
+                memset(&((analysis_intra_data *)analysis->intraData)->chromaModes[count], modeBuf[d], bytes);
+                memset(&((analysis_intra_data *)analysis->intraData)->partSizes[count], partSizes[d], bytes);
+                count += bytes;
+                if (m_param->scaleFactor)
+                    d += getCUIndex(&cuLoc, &count, bytes, 1);
+            }
         }
 
         if (!m_param->scaleFactor)
@@ -3384,10 +3421,18 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         }
         else
         {
+            cuLoc.evenRowIndex = 0;
+            cuLoc.oddRowIndex = m_param->num4x4Partitions * cuLoc.widthInCU;
+            cuLoc.switchCondition = 0;
             uint8_t *tempLumaBuf = X265_MALLOC(uint8_t, analysis->numCUsInFrame * scaledNumPartition);
             X265_FREAD(tempLumaBuf, sizeof(uint8_t), analysis->numCUsInFrame * scaledNumPartition, m_analysisFileIn, intraPic->modes);
-            for (uint32_t ctu32Idx = 0, cnt = 0; ctu32Idx < analysis->numCUsInFrame * scaledNumPartition; ctu32Idx++, cnt += factor)
+            uint32_t cnt = 0;
+            for (uint32_t ctu32Idx = 0; ctu32Idx < analysis->numCUsInFrame * scaledNumPartition; ctu32Idx++)
+            {
                 memset(&((analysis_intra_data *)analysis->intraData)->modes[cnt], tempLumaBuf[ctu32Idx], factor);
+                cnt += factor;
+                ctu32Idx += getCUIndex(&cuLoc, &cnt, factor, 0);
+            }
             X265_FREE(tempLumaBuf);
         }
         X265_FREE(tempBuf);
@@ -3451,44 +3496,94 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
             }
         }
 
-        size_t count = 0;
+        uint32_t count = 0;
+        cuLoc.switchCondition = 0;
         for (uint32_t d = 0; d < depthBytes; d++)
         {
             int bytes = analysis->numPartitions >> (depthBuf[d] * 2);
-            if (m_param->scaleFactor && modeBuf[d] == MODE_INTRA && depthBuf[d] == 0)
-                 depthBuf[d] = 1;
-            memset(&((analysis_inter_data *)analysis->interData)->depth[count], depthBuf[d], bytes);
-            memset(&((analysis_inter_data *)analysis->interData)->modes[count], modeBuf[d], bytes);
-            if (m_param->analysisReuseLevel > 4)
+            bool isScaledMaxCUSize = false;
+            int numCTUCopied = 1;
+            int writeDepth = depthBuf[d];
+            if (m_param->scaleFactor)
             {
-                if (m_param->scaleFactor && modeBuf[d] == MODE_INTRA && partSize[d] == SIZE_NxN)
-                     partSize[d] = SIZE_2Nx2N;
-                memset(&((analysis_inter_data *)analysis->interData)->partSize[count], partSize[d], bytes);
-                int numPU = (modeBuf[d] == MODE_INTRA) ? 1 : nbPartsTable[(int)partSize[d]];
-                for (int pu = 0; pu < numPU; pu++)
+                if (!depthBuf[d]) //copy data of one 64x64 to four scaled 64x64 CTUs.
                 {
-                    if (pu) d++;
-                    ((analysis_inter_data *)analysis->interData)->mergeFlag[count + pu] = mergeFlag[d];
-                    if (m_param->analysisReuseLevel == 10)
+                    isScaledMaxCUSize = true;
+                    bytes /= 4;
+                    numCTUCopied = 4;
+                }
+                if ((modeBuf[d] != MODE_INTRA && depthBuf[d] != 0) || (modeBuf[d] == MODE_INTRA && depthBuf[d] > 1))
+                    writeDepth--;
+            }
+
+            for (int numCTU = 0; numCTU < numCTUCopied; numCTU++)
+            {
+                memset(&((analysis_inter_data *)analysis->interData)->depth[count], writeDepth, bytes);
+                memset(&((analysis_inter_data *)analysis->interData)->modes[count], modeBuf[d], bytes);
+                if (m_param->analysisReuseLevel == 10 && bIntraInInter)
+                    memset(&((analysis_intra_data *)analysis->intraData)->chromaModes[count], chromaDir[d], bytes);
+
+                if (m_param->analysisReuseLevel > 4)
+                {
+                    puOrientation puOrient;
+                    puOrient.init();
+                    if (m_param->scaleFactor && modeBuf[d] == MODE_INTRA && partSize[d] == SIZE_NxN)
+                        partSize[d] = SIZE_2Nx2N;
+                    int partitionSize = partSize[d];
+                    if (isScaledMaxCUSize && partSize[d] != SIZE_2Nx2N)
+                        partitionSize = getPuShape(&puOrient, partSize[d], numCTU);
+                    memset(&((analysis_inter_data *)analysis->interData)->partSize[count], partitionSize, bytes);
+                    int numPU = (modeBuf[d] == MODE_INTRA) ? 1 : nbPartsTable[(int)partSize[d]];
+                    for (int pu = 0; pu < numPU; pu++)
                     {
-                        ((analysis_inter_data *)analysis->interData)->interDir[count + pu] = interDir[d];
-                        for (uint32_t i = 0; i < numDir; i++)
+                        if (!isScaledMaxCUSize && pu)
+                            d++;
+                        int restoreD = d;
+                        /* Adjust d value when the current CTU takes data from 2nd PU */
+                        if (puOrient.isRect || (puOrient.isAmp && partitionSize == SIZE_2Nx2N))
                         {
-                            ((analysis_inter_data *)analysis->interData)->mvpIdx[i][count + pu] = mvpIdx[i][d];
-                            ((analysis_inter_data *)analysis->interData)->refIdx[i][count + pu] = refIdx[i][d];
-                            if (m_param->scaleFactor)
+                            if ((numCTU > 1 && !puOrient.isVert) || ((numCTU % 2 == 1) && puOrient.isVert))
+                                d++;
+                        }
+                        if (puOrient.isAmp && pu)
+                            d++;
+
+                        ((analysis_inter_data *)analysis->interData)->mergeFlag[count + pu] = mergeFlag[d];
+                        if (m_param->analysisReuseLevel == 10)
+                        {
+                            ((analysis_inter_data *)analysis->interData)->interDir[count + pu] = interDir[d];
+                            MV mvCopy[2];
+                            for (uint32_t i = 0; i < numDir; i++)
                             {
-                                mv[i][d].x *= (int16_t)m_param->scaleFactor;
-                                mv[i][d].y *= (int16_t)m_param->scaleFactor;
+                                ((analysis_inter_data *)analysis->interData)->mvpIdx[i][count + pu] = mvpIdx[i][d];
+                                ((analysis_inter_data *)analysis->interData)->refIdx[i][count + pu] = refIdx[i][d];
+                                mvCopy[i].x = mv[i][d].x;
+                                mvCopy[i].y = mv[i][d].y;
+                                if (m_param->scaleFactor)
+                                {
+                                    mvCopy[i].x = mv[i][d].x * (int16_t)m_param->scaleFactor;
+                                    mvCopy[i].y = mv[i][d].y * (int16_t)m_param->scaleFactor;
+                                }
+                                memcpy(&((analysis_inter_data *)analysis->interData)->mv[i][count + pu], &mvCopy[i], sizeof(MV));
                             }
-                            memcpy(&((analysis_inter_data *)analysis->interData)->mv[i][count + pu], &mv[i][d], sizeof(MV));
+                        }
+                        d = restoreD; // Restore d value after copying each of the 4 64x64 CTUs
+
+                        if (isScaledMaxCUSize && (puOrient.isRect || puOrient.isAmp))
+                        {
+                            /* Skip PU index when current CTU is a 2Nx2N */
+                            if (partitionSize == SIZE_2Nx2N)
+                                pu++;
+                            /* Adjust d after completion of all 4 CTU copies */
+                            if (numCTU == 3 && (pu == (numPU - 1)))
+                                d++;
                         }
                     }
                 }
-                if (m_param->analysisReuseLevel == 10 && bIntraInInter)
-                    memset(&((analysis_intra_data *)analysis->intraData)->chromaModes[count], chromaDir[d], bytes);
+                count += bytes;
+                if (m_param->scaleFactor)
+                    d += getCUIndex(&cuLoc, &count, bytes, 1);
             }
-            count += bytes;
         }
 
         X265_FREE(tempBuf);
@@ -3509,10 +3604,18 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
                 }
                 else
                 {
+                    cuLoc.evenRowIndex = 0;
+                    cuLoc.oddRowIndex = m_param->num4x4Partitions * cuLoc.widthInCU;
+                    cuLoc.switchCondition = 0;
                     uint8_t *tempLumaBuf = X265_MALLOC(uint8_t, analysis->numCUsInFrame * scaledNumPartition);
                     X265_FREAD(tempLumaBuf, sizeof(uint8_t), analysis->numCUsInFrame * scaledNumPartition, m_analysisFileIn, intraPic->modes);
-                    for (uint32_t ctu32Idx = 0, cnt = 0; ctu32Idx < analysis->numCUsInFrame * scaledNumPartition; ctu32Idx++, cnt += factor)
+                    uint32_t cnt = 0;
+                    for (uint32_t ctu32Idx = 0; ctu32Idx < analysis->numCUsInFrame * scaledNumPartition; ctu32Idx++)
+                    {
                         memset(&((analysis_intra_data *)analysis->intraData)->modes[cnt], tempLumaBuf[ctu32Idx], factor);
+                        cnt += factor;
+                        ctu32Idx += getCUIndex(&cuLoc, &cnt, factor, 0);
+                    }
                     X265_FREE(tempLumaBuf);
                 }
             }
@@ -3524,7 +3627,121 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         if (numDir == 1)
             totalConsumedBytes = consumedBytes;
     }
+
+    /* Restore to the current encode's numPartitions and numCUsInFrame */
+    if (m_param->scaleFactor)
+    {
+        analysis->numPartitions = m_param->num4x4Partitions;
+        analysis->numCUsInFrame = cuLoc.heightInCU * cuLoc.widthInCU;
+    }
 #undef X265_FREAD
+}
+
+/* Toggle between two consecutive CTU rows. The save's CTU is copied
+twice consecutively in the first and second CTU row of load*/
+
+int Encoder::getCUIndex(cuLocation* cuLoc, uint32_t* count, int bytes, int flag)
+{
+    int index = 0;
+    cuLoc->switchCondition += bytes;
+    int isBoundaryW = (*count % (m_param->num4x4Partitions * cuLoc->widthInCU) == 0);
+
+    /* Width boundary case :
+    Skip to appropriate index when out of boundary cases occur
+    Out of boundary may occur when the out of bound pixels along
+    the width in low resoultion is greater than half of the maxCUSize */
+    if (cuLoc->skipWidth && isBoundaryW)
+    {
+        if (flag)
+            index++;
+        else
+        {
+            /* Number of 4x4 blocks in out of bound region */
+            int outOfBound = m_param->maxCUSize / 2;
+            uint32_t sum = (uint32_t)pow((outOfBound >> 2), 2);
+            index += sum;
+        }
+        cuLoc->switchCondition += m_param->num4x4Partitions;
+    }
+
+    /* Completed writing 2 CTUs - move to the last remembered index of the next CTU row*/
+    if (cuLoc->switchCondition == 2 * m_param->num4x4Partitions)
+    {
+        if (isBoundaryW)
+            cuLoc->evenRowIndex = *count + (m_param->num4x4Partitions * cuLoc->widthInCU); // end of row - skip to the next even row
+        else
+            cuLoc->evenRowIndex = *count;
+        *count = cuLoc->oddRowIndex;
+
+        /* Height boundary case :
+        Skip to appropriate index when out of boundary cases occur
+        Out of boundary may occur when the out of bound pixels along
+        the height in low resoultion is greater than half of the maxCUSize */
+        int isBoundaryH = (*count >= (m_param->num4x4Partitions * cuLoc->heightInCU * cuLoc->widthInCU));
+        if (cuLoc->skipHeight && isBoundaryH)
+        {
+            if (flag)
+                index += 2;
+            else
+            {
+                int outOfBound = m_param->maxCUSize / 2;
+                uint32_t sum = (uint32_t)(2 * pow((abs(outOfBound) >> 2), 2));
+                index += sum;
+            }
+            *count = cuLoc->evenRowIndex;
+            cuLoc->switchCondition = 0;
+        }
+    }
+    /* Completed writing 4 CTUs - move to the last remembered index of
+    the previous CTU row to copy the next save CTU's data*/
+    else if (cuLoc->switchCondition == 4 * m_param->num4x4Partitions)
+    {
+        if (isBoundaryW)
+            cuLoc->oddRowIndex = *count + (m_param->num4x4Partitions * cuLoc->widthInCU); // end of row - skip to the next odd row
+        else
+            cuLoc->oddRowIndex = *count;
+        *count = cuLoc->evenRowIndex;
+        cuLoc->switchCondition = 0;
+    }
+    return index;
+}
+
+/*      save                        load
+                       CTU0    CTU1    CTU2    CTU3
+        2NxN          2Nx2N   2Nx2N   2Nx2N   2Nx2N
+        NX2N          2Nx2N   2Nx2N   2Nx2N   2Nx2N
+        2NxnU          2NxN    2NxN   2Nx2N   2Nx2N
+        2NxnD         2Nx2N   2Nx2N    2NxN    2NxN
+        nLx2N          Nx2N   2Nx2N    Nx2N   2Nx2N
+        nRx2N         2Nx2N    Nx2N    2Nx2N   Nx2N
+*/
+int Encoder::getPuShape(puOrientation* puOrient, int partSize, int numCTU)
+{
+    puOrient->isRect = true;
+    if (partSize == SIZE_Nx2N)
+        puOrient->isVert = true;
+    if (partSize >= SIZE_2NxnU) // All AMP modes
+    {
+        puOrient->isAmp = true;
+        puOrient->isRect = false;
+        if (partSize == SIZE_2NxnD && numCTU > 1)
+            return SIZE_2NxN;
+        else if (partSize == SIZE_2NxnU && numCTU < 2)
+            return SIZE_2NxN;
+        else if (partSize == SIZE_nLx2N)
+        {
+            puOrient->isVert = true;
+            if (!(numCTU % 2))
+                return SIZE_Nx2N;
+        }
+        else if (partSize == SIZE_nRx2N)
+        {
+            puOrient->isVert = true;
+            if (numCTU % 2)
+                return SIZE_Nx2N;
+        }
+    }
+    return SIZE_2Nx2N;
 }
 
 void Encoder::readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int curPoc, int sliceType)
