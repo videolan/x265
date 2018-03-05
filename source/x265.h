@@ -105,6 +105,7 @@ typedef struct x265_lookahead_data
     int       lastMiniGopBFrame;
     int       plannedType[X265_LOOKAHEAD_MAX + 1];
     int64_t   dts;
+    int64_t   reorderedPts;
 } x265_lookahead_data;
 
 /* Stores all analysis data for a single frame */
@@ -363,6 +364,9 @@ typedef struct x265_picture
     int    height;
 
     x265_analysis_2Pass analysis2Pass;
+
+    // pts is reordered in the order of encoding.
+    int64_t reorderedPts;
 } x265_picture;
 
 typedef enum

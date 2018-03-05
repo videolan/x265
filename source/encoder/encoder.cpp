@@ -1146,6 +1146,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
                 pic_out->pts = outFrame->m_pts;
                 pic_out->dts = outFrame->m_dts;
+                pic_out->reorderedPts = outFrame->m_reorderedPts;
                 pic_out->sliceType = outFrame->m_lowres.sliceType;
                 pic_out->planes[0] = recpic->m_picOrg[0];
                 pic_out->stride[0] = (int)(recpic->m_stride * sizeof(pixel));
@@ -1178,6 +1179,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                             factor = m_param->scaleFactor * 2;
                         pic_out->analysisData.numCuInHeight = outFrame->m_analysisData.numCuInHeight;
                         pic_out->analysisData.lookahead.dts = outFrame->m_dts;
+                        pic_out->analysisData.lookahead.reorderedPts = outFrame->m_reorderedPts;
                         pic_out->analysisData.satdCost *= factor;
                         pic_out->analysisData.lookahead.keyframe = outFrame->m_lowres.bKeyframe;
                         pic_out->analysisData.lookahead.lastMiniGopBFrame = outFrame->m_lowres.bLastMiniGopBFrame;
@@ -1370,6 +1372,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (m_param->analysisLoad && m_param->bDisableLookahead)
             {
                 frameEnc->m_dts = frameEnc->m_analysisData.lookahead.dts;
+                frameEnc->m_reorderedPts = frameEnc->m_analysisData.lookahead.reorderedPts;
                 if (m_rateControl->m_isVbv)
                 {
                     for (uint32_t index = 0; index < frameEnc->m_analysisData.numCuInHeight; index++)
