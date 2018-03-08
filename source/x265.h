@@ -1557,6 +1557,11 @@ typedef struct x265_param
      * It represents the percentage of maximum AU size used.
      * Default is 1 (which is 100%). Range is 0.5 to 1. */
     double maxAUSizeFactor;
+
+    /* Enables the emission of a Recovery Point SEI with the stream headers
+    * at each IDR frame describing poc of the recovery point, exact matching flag
+    * and broken link flag. Default is disabled. */
+    int       bEmitIDRRecoverySEI;
 } x265_param;
 
 /* x265_param_alloc:

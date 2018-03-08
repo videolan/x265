@@ -133,7 +133,7 @@ void x265_param_default(x265_param* param)
     param->bEmitHRDSEI = 0;
     param->bEmitInfoSEI = 1;
     param->bEmitHDRSEI = 0;
-
+    param->bEmitIDRRecoverySEI = 0;
     /* CU definitions */
     param->maxCUSize = 64;
     param->minCUSize = 8;
@@ -982,6 +982,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("limit-sao") p->bLimitSAO = atobool(value);
         OPT("dhdr10-info") p->toneMapFile = strdup(value);
         OPT("dhdr10-opt") p->bDhdr10opt = atobool(value);
+        OPT("idr-recovery-sei") p->bEmitIDRRecoverySEI = atobool(value);
         OPT("const-vbv") p->rc.bEnableConstVbv = atobool(value);
         OPT("ctu-info") p->bCTUInfo = atoi(value);
         OPT("scale-factor") p->scaleFactor = atoi(value);
@@ -1730,6 +1731,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEmitHDRSEI, "hdr");
     BOOL(p->bHDROpt, "hdr-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
+    BOOL(p->bEmitIDRRecoverySEI, "idr-recovery-sei");
     if (p->analysisSave)
         s += sprintf(s, " analysis-save");
     if (p->analysisLoad)

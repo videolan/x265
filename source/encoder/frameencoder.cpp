@@ -594,7 +594,6 @@ void FrameEncoder::compressFrame()
 
     /* reset entropy coders and compute slice id */
     m_entropyCoder.load(m_initSliceContext);
-	
     for (uint32_t sliceId = 0; sliceId < m_param->maxSlices; sliceId++)   
         for (uint32_t row = m_sliceBaseRow[sliceId]; row < m_sliceBaseRow[sliceId + 1]; row++)
             m_rows[row].init(m_initSliceContext, sliceId);   
@@ -643,6 +642,19 @@ void FrameEncoder::compressFrame()
             m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
 
             m_top->m_lastBPSEI = m_rce.encodeOrder;
+        }
+
+        if (m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_param->bEmitIDRRecoverySEI)
+        {
+            /* Recovery Point SEI require the SPS to be "activated" */
+            SEIRecoveryPoint sei;
+            sei.m_recoveryPocCnt = 0;
+            sei.m_exactMatchingFlag = true;
+            sei.m_brokenLinkFlag = false;
+            m_bs.resetBits();
+            sei.write(m_bs, *slice->m_sps);
+            m_bs.writeByteAlignment();
+            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
         }
     }
 

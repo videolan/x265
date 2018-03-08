@@ -253,6 +253,11 @@ public:
 class SEIRecoveryPoint : public SEI
 {
 public:
+    SEIRecoveryPoint()
+    {
+        m_payloadType = RECOVERY_POINT;
+        m_payloadSize = 0;
+    }
     int  m_recoveryPocCnt;
     bool m_exactMatchingFlag;
     bool m_brokenLinkFlag;

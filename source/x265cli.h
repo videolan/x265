@@ -294,6 +294,8 @@ static const struct option long_options[] =
     { "copy-pic",             no_argument, NULL, 0 },
     { "no-copy-pic",          no_argument, NULL, 0 },
     { "max-ausize-factor", required_argument, NULL, 0 },
+    { "idr-recovery-sei",     no_argument, NULL, 0 },
+    { "no-idr-recovery-sei",  no_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -552,6 +554,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]repeat-headers         Emit SPS and PPS headers at each keyframe. Default %s\n", OPT(param->bRepeatHeaders));
     H0("   --[no-]info                   Emit SEI identifying encoder and parameters. Default %s\n", OPT(param->bEmitInfoSEI));
     H0("   --[no-]hrd                    Enable HRD parameters signaling. Default %s\n", OPT(param->bEmitHRDSEI));
+    H0("   --[no-]idr-recovery-sei      Emit recovery point infor SEI at each IDR frame \n");
     H0("   --[no-]temporal-layers        Enable a temporal sublayer for unreferenced B frames. Default %s\n", OPT(param->bEnableTemporalSubLayers));
     H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
     H1("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);

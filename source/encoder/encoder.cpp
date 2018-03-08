@@ -2268,7 +2268,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     list.serialize(NAL_UNIT_SPS, bs);
 
     bs.resetBits();
-    sbacCoder.codePPS( m_pps, (m_param->maxSlices <= 1), m_iPPSQpMinus26);
+    sbacCoder.codePPS(m_pps, (m_param->maxSlices <= 1), m_iPPSQpMinus26);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
 
@@ -2303,14 +2303,14 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         if (opts)
         {
             char *buffer = X265_MALLOC(char, strlen(opts) + strlen(PFX(version_str)) +
-                                             strlen(PFX(build_info_str)) + 200);
+                strlen(PFX(build_info_str)) + 200);
             if (buffer)
             {
                 sprintf(buffer, "x265 (build %d) - %s:%s - H.265/HEVC codec - "
-                        "Copyright 2013-2018 (c) Multicoreware, Inc - "
-                        "http://x265.org - options: %s",
-                        X265_BUILD, PFX(version_str), PFX(build_info_str), opts);
-                
+                    "Copyright 2013-2018 (c) Multicoreware, Inc - "
+                    "http://x265.org - options: %s",
+                    X265_BUILD, PFX(version_str), PFX(build_info_str), opts);
+
                 bs.resetBits();
                 SEIuserDataUnregistered idsei;
                 idsei.m_userData = (uint8_t*)buffer;

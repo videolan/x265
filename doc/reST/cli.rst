@@ -2212,6 +2212,9 @@ Bitstream options
 
 	Only effective at RD levels 5 and 6
 
+.. option:: --idr-recovery-sei, --no-idr-recoveery-sei
+    Emit RecoveryPoint info as sei in bitstream for each IDR frame. Default disabled.
+
 DCT Approximations
 =================
 
