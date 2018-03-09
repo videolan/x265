@@ -202,7 +202,6 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                 for (blockX = 0; blockX < maxCol; blockX += loopIncr)
                 {
                     uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
-                    curFrame->m_lowres.blockVariance[blockXY] = energy;
                     rowVariance += energy;
                     qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
                     curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
