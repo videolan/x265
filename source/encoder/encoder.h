@@ -221,6 +221,13 @@ public:
 
     x265_sei_payload        m_prevTonemapPayload;
 
+    /* Collect frame level feature data */
+    uint64_t*               m_rdCost;
+    uint64_t*               m_variance;
+    uint32_t*               m_trainingCount;
+    int32_t                 m_startPoint;
+    Lock                    m_dynamicRefineLock;
+
     Encoder();
     ~Encoder()
     {

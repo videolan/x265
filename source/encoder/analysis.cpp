@@ -1184,7 +1184,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
 
         if (m_evaluateInter)
         {
-            if (m_param->interRefine == 2)
+            if (m_refineLevel == 2)
             {
                 if (parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP)
                     skipModes = true;
@@ -1307,7 +1307,7 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
             md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
             checkMerge2Nx2N_rd0_4(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
             if (m_param->rdLevel)
-                skipModes = (m_param->bEnableEarlySkip || m_param->interRefine == 2)
+                skipModes = (m_param->bEnableEarlySkip || m_refineLevel == 2)
                 && md.bestMode && md.bestMode->cu.isSkipped(0); // TODO: sa8d threshold per depth
         }
         if (md.bestMode && m_param->bEnableRecursionSkip && !bCtuInfoCheck && !(m_param->bMVType && m_param->analysisReuseLevel == 7 && (m_modeFlag[0] || m_modeFlag[1])))
@@ -1874,7 +1874,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
 
         if (m_evaluateInter)
         {
-            if (m_param->interRefine == 2)
+            if (m_refineLevel == 2)
             {
                 if (parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP)
                     skipModes = true;
@@ -2004,7 +2004,7 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
             md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
             checkMerge2Nx2N_rd5_6(md.pred[PRED_SKIP], md.pred[PRED_MERGE], cuGeom);
-            skipModes = (m_param->bEnableEarlySkip || m_param->interRefine == 2) &&
+            skipModes = (m_param->bEnableEarlySkip || m_refineLevel == 2) &&
                 md.bestMode && !md.bestMode->cu.getQtRootCbf(0);
             refMasks[0] = allSplitRefs;
             md.pred[PRED_2Nx2N].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -2413,7 +2413,16 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
     bool bDecidedDepth = parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
 
-    int split = (m_param->interRefine && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1) && bDecidedDepth);
+    TrainingData td;
+    td.init(parentCTU, cuGeom);
+
+    if (!m_param->bDynamicRefine)
+        m_refineLevel = m_param->interRefine;
+    else
+        m_refineLevel = m_frame->m_classifyFrame ? 0 : 3;
+
+    int split = (m_refineLevel && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1) && bDecidedDepth);
+    td.split = split;
 
     if (bDecidedDepth)
     {
@@ -2423,7 +2432,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         md.bestMode = &mode;
         mode.cu.initSubCU(parentCTU, cuGeom, qp);
         PartSize size = (PartSize)parentCTU.m_partSize[cuGeom.absPartIdx];
-        if (parentCTU.isIntra(cuGeom.absPartIdx) && m_param->interRefine < 2)
+        if (parentCTU.isIntra(cuGeom.absPartIdx) && m_refineLevel < 2)
         {
             if (m_param->intraRefine == 4)
                 compressIntraCU(parentCTU, cuGeom, qp);
@@ -2439,7 +2448,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 checkIntra(mode, cuGeom, size);
             }
         }
-        else if (!parentCTU.isIntra(cuGeom.absPartIdx) && m_param->interRefine < 2)
+        else if (!parentCTU.isIntra(cuGeom.absPartIdx) && m_refineLevel < 2)
         {
             mode.cu.copyFromPic(parentCTU, cuGeom, m_csp, false);
             uint32_t numPU = parentCTU.getNumPartInter(cuGeom.absPartIdx);
@@ -2501,7 +2510,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 }
                 motionCompensation(mode.cu, pu, mode.predYuv, true, (m_csp != X265_CSP_I400 && m_frame->m_fencPic->m_picCsp != X265_CSP_I400));
             }
-            if (!m_param->interRefine && parentCTU.isSkipped(cuGeom.absPartIdx))
+            if (!m_param->interRefine && !m_param->bDynamicRefine && parentCTU.isSkipped(cuGeom.absPartIdx))
                 encodeResAndCalcRdSkipCU(mode);
             else
                 encodeResAndCalcRdInterCU(mode, cuGeom);
@@ -2512,7 +2521,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                 checkDQP(mode, cuGeom);
         }
 
-        if (m_param->interRefine < 2)
+        if (m_refineLevel < 2)
         {
             if (m_bTryLossless)
                 tryLossless(cuGeom);
@@ -2540,7 +2549,10 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
             }
         }
 
-        if (m_param->interRefine > 1 || (m_param->interRefine && parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP  && !mode.cu.isSkipped(0)))
+        if (m_param->bDynamicRefine)
+            classifyCU(parentCTU,cuGeom, *md.bestMode, td);
+
+        if (m_refineLevel > 1 || (m_refineLevel && parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP  && !mode.cu.isSkipped(0)))
         {
             m_evaluateInter = 1;
             m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, cuGeom, qp) : compressInterCU_rd0_4(parentCTU, cuGeom, qp);
@@ -2599,7 +2611,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         else
             updateModeCost(*splitPred);
 
-        if (m_param->interRefine)
+        if (m_refineLevel)
         {
             if (m_param->rdLevel > 1)
                 checkBestMode(*splitPred, cuGeom.depth);
@@ -2613,6 +2625,83 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         md.bestMode->cu.copyToPic(depth);
         md.bestMode->reconYuv.copyToPicYuv(*m_frame->m_reconPic, parentCTU.m_cuAddr, cuGeom.absPartIdx);
     }
+    if (m_param->bDynamicRefine && bDecidedDepth)
+        trainCU(parentCTU, cuGeom, *md.bestMode, td);
+}
+
+void Analysis::classifyCU(const CUData& ctu, const CUGeom& cuGeom, const Mode& bestMode, TrainingData& trainData)
+{
+    uint32_t depth = cuGeom.depth;
+    trainData.cuVariance = calculateCUVariance(ctu, cuGeom);
+    if (m_frame->m_classifyFrame)
+    {
+        uint64_t diffRefine[X265_REFINE_INTER_LEVELS];
+        uint64_t diffRefineRd[X265_REFINE_INTER_LEVELS];
+        float probRefine[X265_REFINE_INTER_LEVELS] = { 0 };
+        uint8_t varRefineLevel = 0;
+        uint8_t rdRefineLevel = 0;
+        uint64_t cuCost = bestMode.rdCost;
+
+        int offset = (depth * X265_REFINE_INTER_LEVELS) + 1;
+        if (cuCost < m_frame->m_classifyRd[offset])
+            m_refineLevel = 1;
+        else
+        {
+            uint64_t trainingCount = 0;
+            for (uint8_t i = 0; i < X265_REFINE_INTER_LEVELS; i++)
+            {
+                offset = (depth * X265_REFINE_INTER_LEVELS) + i;
+                trainingCount += m_frame->m_classifyCount[offset];
+            }
+            for (uint8_t i = 0; i < X265_REFINE_INTER_LEVELS; i++)
+            {
+                offset = (depth * X265_REFINE_INTER_LEVELS) + i;
+                /* Calculate distance values */
+                diffRefine[i] = abs((int64_t)(trainData.cuVariance - m_frame->m_classifyVariance[offset]));
+                diffRefineRd[i] = abs((int64_t)(cuCost - m_frame->m_classifyRd[offset]));
+
+                /* Calculate prior probability - ranges between 0 and 1 */
+                if (trainingCount)
+                    probRefine[i] = ((float)m_frame->m_classifyCount[offset] / (float)trainingCount);
+
+                /* Bayesian classification - P(c|x)P(x) = P(x|c)P(c)
+                P(c|x) is the posterior probability of class given predictor.
+                P(c) is the prior probability of class.
+                P(x|c) is the likelihood which is the probability of predictor given class.
+                P(x) is the prior probability of predictor.*/
+                if ((diffRefine[i] * probRefine[m_refineLevel]) < (diffRefine[m_refineLevel] * probRefine[i]))
+                    varRefineLevel = i;
+                if ((diffRefineRd[i] * probRefine[m_refineLevel]) < (diffRefineRd[m_refineLevel] * probRefine[i]))
+                    rdRefineLevel = i;
+            }
+            m_refineLevel = X265_MAX(varRefineLevel, rdRefineLevel);
+        }
+    }
+}
+
+void Analysis::trainCU(const CUData& ctu, const CUGeom& cuGeom, const Mode& bestMode, TrainingData& trainData)
+{
+    uint32_t depth = cuGeom.depth;
+    int classify = 0;
+    if (!m_frame->m_classifyFrame)
+    {
+        if (trainData.predMode == ctu.m_predMode[cuGeom.absPartIdx] && trainData.partSize == ctu.m_partSize[cuGeom.absPartIdx]
+            && trainData.mergeFlag == ctu.m_mergeFlag[cuGeom.absPartIdx])
+            classify = 0;
+        else if ((depth == m_param->maxCUDepth - 1) && trainData.split)
+            classify = 1;
+        else if (trainData.partSize == SIZE_2Nx2N && trainData.partSize == ctu.m_partSize[cuGeom.absPartIdx])
+            classify = 2;
+        else
+            classify = 3;
+    }
+    else
+        classify = m_refineLevel;
+    uint64_t cuCost = bestMode.rdCost;
+    int offset = (depth * X265_REFINE_INTER_LEVELS) + classify;
+    ctu.m_collectCURd[offset] += cuCost;
+    ctu.m_collectCUVariance[offset] += trainData.cuVariance;
+    ctu.m_collectCUCount[offset]++;
 }
 
 /* sets md.bestMode if a valid merge candidate is found, else leaves it NULL */
@@ -3412,6 +3501,33 @@ bool Analysis::complexityCheckCU(const Mode& bestMode)
         return true;
 
     return false;
+}
+
+uint32_t Analysis::calculateCUVariance(const CUData& ctu, const CUGeom& cuGeom)
+{
+    uint32_t cuVariance = 0;
+    uint32_t *blockVariance = m_frame->m_lowres.blockVariance;
+    int loopIncr = (m_param->rc.qgSize == 8) ? 8 : 16;
+
+    uint32_t width = m_frame->m_fencPic->m_picWidth;
+    uint32_t height = m_frame->m_fencPic->m_picHeight;
+    uint32_t block_x = ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx];
+    uint32_t block_y = ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx];
+    uint32_t maxCols = (m_frame->m_fencPic->m_picWidth + (loopIncr - 1)) / loopIncr;
+    uint32_t blockSize = m_param->maxCUSize >> cuGeom.depth;
+    uint32_t cnt = 0; 
+
+    for (uint32_t block_yy = block_y; block_yy < block_y + blockSize && block_yy < height; block_yy += loopIncr)
+    {
+        for (uint32_t block_xx = block_x; block_xx < block_x + blockSize && block_xx < width; block_xx += loopIncr)
+        {
+            uint32_t idx = ((block_yy / loopIncr) * (maxCols)) + (block_xx / loopIncr);
+            cuVariance += blockVariance[idx];
+            cnt++;
+        }
+    }
+    
+    return cuVariance / cnt;
 }
 
 int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int32_t complexCheck, double baseQp)

@@ -178,12 +178,12 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
             }
         }
 
-        /* Need variance data for weighted prediction */
+        /* Need variance data for weighted prediction and dynamic refinement*/
         if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
-        {
+        {            
             for (blockY = 0; blockY < maxRow; blockY += loopIncr)
-                for (blockX = 0; blockX < maxCol; blockX += loopIncr)
-                    acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+                for (blockX = 0; blockX < maxCol; blockX += loopIncr)                
+                    acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);                
         }
     }
     else
@@ -240,7 +240,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                 else
                 {
                     uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp,param->rc.qgSize);
-                    qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));
+                    qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));                    
                 }
 
                 if (param->bHDROpt)
@@ -307,6 +307,17 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
             ssd = curFrame->m_lowres.wp_ssd[i];
             curFrame->m_lowres.wp_ssd[i] = ssd - (sum * sum + (width[i] * height[i]) / 2) / (width[i] * height[i]);
         }
+    }
+
+    if (param->bDynamicRefine)
+    {
+        blockXY = 0;
+        for (blockY = 0; blockY < maxRow; blockY += loopIncr)
+            for (blockX = 0; blockX < maxCol; blockX += loopIncr)
+            {
+                curFrame->m_lowres.blockVariance[blockXY] = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+                blockXY++;
+            }
     }
 }
 

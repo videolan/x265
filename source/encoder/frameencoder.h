@@ -230,6 +230,7 @@ protected:
     void threadMain();
     int  collectCTUStatistics(const CUData& ctu, FrameStats* frameLog);
     void noiseReductionUpdate();
+    void computeAvgTrainingData();
 
     /* Called by WaveFront::findJob() */
     virtual void processRow(int row, int threadId);

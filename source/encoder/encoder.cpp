@@ -96,6 +96,7 @@ Encoder::Encoder()
 #endif
 
     m_prevTonemapPayload.payload = NULL;
+    m_startPoint = 0;
 }
 inline char *strcatFilename(const char *input, const char *suffix)
 {
@@ -412,6 +413,17 @@ void Encoder::create()
     if (m_bToneMap)
         m_numCimInfo = m_hdr10plus_api->hdr10plus_json_to_movie_cim(m_param->toneMapFile, m_cim);
 #endif
+
+    if (m_param->bDynamicRefine)
+    {
+        int size = m_param->totalFrames * m_param->maxCUDepth * X265_REFINE_INTER_LEVELS;
+        CHECKED_MALLOC_ZERO(m_variance, uint64_t, size);
+        CHECKED_MALLOC_ZERO(m_rdCost, uint64_t, size);
+        CHECKED_MALLOC_ZERO(m_trainingCount, uint32_t, size);
+        return;
+    fail:
+        m_aborted = true;
+    }
 }
 
 void Encoder::stopJobs()
@@ -697,7 +709,13 @@ void Encoder::destroy()
     if (m_bToneMap)
         m_hdr10plus_api->hdr10plus_clear_movie(m_cim, m_numCimInfo);
 #endif
-        
+
+    if (m_param->bDynamicRefine)
+    {
+        X265_FREE(m_variance);
+        X265_FREE(m_rdCost);
+        X265_FREE(m_trainingCount);
+    }
     if (m_exportedPic)
     {
         ATOMIC_DEC(&m_exportedPic->m_countRefEncoders);

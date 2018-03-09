@@ -59,10 +59,12 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled, uint32_t qgS
         CHECKED_MALLOC_ZERO(qpAqMotionOffset, double, cuCountFullRes);
         CHECKED_MALLOC_ZERO(invQscaleFactor, int, cuCountFullRes);
         CHECKED_MALLOC_ZERO(qpCuTreeOffset, double, cuCountFullRes);
-        CHECKED_MALLOC_ZERO(blockVariance, uint32_t, cuCountFullRes);
         if (qgSize == 8)
             CHECKED_MALLOC_ZERO(invQscaleFactor8x8, int, cuCount);
     }
+
+    if (origPic->m_param->bDynamicRefine)
+        CHECKED_MALLOC_ZERO(blockVariance, uint32_t, cuCountFullRes);
     CHECKED_MALLOC(propagateCost, uint16_t, cuCount);
 
     /* allocate lowres buffers */
