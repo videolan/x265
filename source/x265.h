@@ -466,6 +466,8 @@ typedef enum
 
 #define x265_ADAPT_RD_STRENGTH   4
 
+#define X265_REFINE_INTER_LEVELS 4
+
 /* NOTE! For this release only X265_CSP_I420 and X265_CSP_I444 are supported */
 
 /* Supported internal color space types (according to semantics of chroma_format_idc) */
@@ -1562,6 +1564,9 @@ typedef struct x265_param
     * at each IDR frame describing poc of the recovery point, exact matching flag
     * and broken link flag. Default is disabled. */
     int       bEmitIDRRecoverySEI;
+
+    /* Dynamically change refine-inter at block level*/
+    int       bDynamicRefine;
 } x265_param;
 
 /* x265_param_alloc:

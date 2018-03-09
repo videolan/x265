@@ -955,6 +955,12 @@ will not reuse analysis if slice type parameters do not match.
 	Level 3 - Perform analysis of inter modes while reusing depths from the save encode.
 	
 	Default 0.
+	
+.. option:: --dynamic-refine, --no-dynamic-refine
+
+	Dynamically switches :option:`--refine-inter` levels 0-3 based on the content and 
+	the encoder settings. It is recommended to use :option:`--refine-intra` 4 with dynamic 
+	refinement. Default disabled.
 
 .. option:: --refine-mv
 	

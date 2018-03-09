@@ -289,6 +289,7 @@ void x265_param_default(x265_param* param)
     param->scaleFactor = 0;
     param->intraRefine = 0;
     param->interRefine = 0;
+    param->bDynamicRefine = 0;
     param->mvRefine = 0;
     param->bUseAnalysisFile = 1;
     param->csvfpt = NULL;
@@ -1015,6 +1016,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("analysis-load") p->analysisLoad = strdup(value);
         OPT("radl") p->radl = atoi(value);
         OPT("max-ausize-factor") p->maxAUSizeFactor = atof(value);
+        OPT("dynamic-refine") p->bDynamicRefine = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1509,6 +1511,7 @@ void x265_print_params(x265_param* param)
     TOOLVAL(param->bCTUInfo, "ctu-info=%d");
     if (param->bMVType == AVC_INFO)
         TOOLOPT(param->bMVType, "refine-mv-type=avc");
+    TOOLOPT(param->bDynamicRefine, "dynamic-refine");
     if (param->maxSlices > 1)
         TOOLVAL(param->maxSlices, "slices=%d");
     if (param->bEnableLoopFilter)
@@ -1747,6 +1750,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " refine-mv-type=%d", p->bMVType);
     s += sprintf(s, " copy-pic=%d", p->bCopyPicToFrame);
     s += sprintf(s, " max-ausize-factor=%.1f", p->maxAUSizeFactor);
+    BOOL(p->bDynamicRefine, "dynamic-refine");
 #undef BOOL
     return buf;
 }

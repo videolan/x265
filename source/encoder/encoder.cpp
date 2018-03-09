@@ -2688,7 +2688,21 @@ void Encoder::configure(x265_param *p)
         }
     }
 
-    if (p->limitTU && p->interRefine)
+    if (p->bDynamicRefine)
+    {
+        if (!p->analysisLoad || p->analysisReuseLevel < 10 || !p->scaleFactor)
+        {
+            x265_log(p, X265_LOG_WARNING, "Dynamic refinement requires analysis load, analysis-reuse-level 10, scale factor. Disabling dynamic refine.\n");
+            p->bDynamicRefine = 0;
+        }
+        if (p->interRefine)
+        {
+            x265_log(p, X265_LOG_WARNING, "Inter refine cannot be used with dynamic refine. Disabling refine-inter.\n");
+            p->interRefine = 0;
+        }
+    }
+
+    if (p->limitTU && (p->interRefine || p->bDynamicRefine))
     {
         x265_log(p, X265_LOG_WARNING, "Inter refinement does not support limitTU. Disabling limitTU.\n");
         p->limitTU = 0;
