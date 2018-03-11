@@ -907,6 +907,7 @@ void x265_csvlog_encode(const x265_param *p, const x265_stats *stats, int padx, 
                 fputc('"', p->csvfpt);
                 fputs(opts, p->csvfpt);
                 fputc('"', p->csvfpt);
+                X265_FREE(opts);
             }
         }
 
