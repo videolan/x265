@@ -631,10 +631,10 @@ void FrameEncoder::compressFrame()
             bpSei->m_auCpbRemovalDelayDelta = 1;
             bpSei->m_cpbDelayOffset = 0;
             bpSei->m_dpbDelayOffset = 0;
-
             // hrdFullness() calculates the initial CPB removal delay and offset
             m_top->m_rateControl->hrdFullness(bpSei);
-
+            int payloadSize = bpSei->countPayloadSize(*slice->m_sps);
+            bpSei->setSize(payloadSize);
             m_bs.resetBits();
             bpSei->write(m_bs, *slice->m_sps);
             m_bs.writeByteAlignment();
@@ -651,6 +651,7 @@ void FrameEncoder::compressFrame()
             sei.m_recoveryPocCnt = 0;
             sei.m_exactMatchingFlag = true;
             sei.m_brokenLinkFlag = false;
+            sei.setSize(sei.countPayloadSize(*slice->m_sps));
             m_bs.resetBits();
             sei.write(m_bs, *slice->m_sps);
             m_bs.writeByteAlignment();
@@ -686,8 +687,9 @@ void FrameEncoder::compressFrame()
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, m_rce.encodeOrder - prevBPSEI), (1 << hrd->cpbRemovalDelayLength));
             sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics + poc - m_rce.encodeOrder;
         }
-
         m_bs.resetBits();
+        int payloadSize = sei->countPayloadSize(*slice->m_sps);
+        sei->setSize(payloadSize);
         sei->write(m_bs, *slice->m_sps);
         m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
@@ -702,7 +704,7 @@ void FrameEncoder::compressFrame()
             SEIuserDataUnregistered sei;
             sei.m_userData = payload->payload;
             m_bs.resetBits();
-            sei.setSize(payload->payloadSize);
+            sei.setSize(payload->payloadSize + 16);
             sei.write(m_bs, *slice->m_sps);
             m_bs.writeByteAlignment();
             m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);

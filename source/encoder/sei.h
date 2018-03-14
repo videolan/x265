@@ -37,7 +37,7 @@ public:
     /* SEI users call write() to marshal an SEI to a bitstream.
      * The write() method calls writeSEI() which encodes the header */
     void write(Bitstream& bs, const SPS& sps);
-
+    int countPayloadSize(const SPS& sps);
     void setSize(uint32_t size);
     virtual ~SEI() {}
 protected:
