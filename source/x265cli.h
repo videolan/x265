@@ -152,6 +152,8 @@ static const struct option long_options[] =
     { "vbv-init",       required_argument, NULL, 0 },
     { "vbv-end",        required_argument, NULL, 0 },
     { "vbv-end-fr-adj", required_argument, NULL, 0 },
+    { "chunk-start",    required_argument, NULL, 0 },
+    { "chunk-end",      required_argument, NULL, 0 },
     { "bitrate",        required_argument, NULL, 0 },
     { "qp",             required_argument, NULL, 'q' },
     { "aq-mode",        required_argument, NULL, 0 },
@@ -468,6 +470,8 @@ static void showHelp(x265_param *param)
     H0("   --vbv-init <float>            Initial VBV buffer occupancy (fraction of bufsize or in kbits). Default %.2f\n", param->rc.vbvBufferInit);
     H0("   --vbv-end <float>             Final VBV buffer emptiness (fraction of bufsize or in kbits). Default 0 (disabled)\n");
     H0("   --vbv-end-fr-adj <float>      Frame from which qp has to be adjusted to achieve final decode buffer emptiness. Default 0\n");
+    H0("   --chunk-start <integer>       First frame of the chunk. Default 0 (disabled)\n");
+    H0("   --chunk-end <integer>         Last frame of the chunk. Default 0 (disabled)\n");
     H0("   --pass                        Multi pass rate control.\n"
        "                                   - 1 : First pass, creates stats file\n"
        "                                   - 2 : Last pass, does not overwrite stats file\n"

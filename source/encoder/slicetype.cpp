@@ -1108,8 +1108,9 @@ void Lookahead::slicetypeDecide()
             x265_log(m_param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid and %d reference frames\n",
                      frm.sliceType, m_param->maxNumReferences);
         }
-        if ((!m_param->bIntraRefresh || frm.frameNum == 0) && frm.frameNum - m_lastKeyframe >= m_param->keyframeMax &&
-            (!m_extendGopBoundary || frm.frameNum - m_lastKeyframe >= m_param->keyframeMax + m_param->gopLookahead))
+        if (((!m_param->bIntraRefresh || frm.frameNum == 0) && frm.frameNum - m_lastKeyframe >= m_param->keyframeMax &&
+            (!m_extendGopBoundary || frm.frameNum - m_lastKeyframe >= m_param->keyframeMax + m_param->gopLookahead)) ||
+            (frm.frameNum == (m_param->chunkStart - 1)) || (frm.frameNum == m_param->chunkEnd))
         {
             if (frm.sliceType == X265_TYPE_AUTO || frm.sliceType == X265_TYPE_I)
                 frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
@@ -1123,7 +1124,7 @@ void Lookahead::slicetypeDecide()
                 frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
             }
         }
-        if (frm.sliceType == X265_TYPE_I && frm.frameNum - m_lastKeyframe >= m_param->keyframeMin)
+        if ((frm.sliceType == X265_TYPE_I && frm.frameNum - m_lastKeyframe >= m_param->keyframeMin) || (frm.frameNum == (m_param->chunkStart - 1)) || (frm.frameNum == m_param->chunkEnd))
         {
             if (m_param->bOpenGOP)
             {
@@ -1416,7 +1417,19 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         return;
     }
     frames[framecnt + 1] = NULL;
-    int keyFrameLimit = m_param->keyframeMax + m_lastKeyframe - frames[0]->frameNum - 1;
+
+    int keylimit = m_param->keyframeMax;
+    if (frames[0]->frameNum < m_param->chunkEnd)
+    {
+        int chunkStart = (m_param->chunkStart - m_lastKeyframe - 1);
+        int chunkEnd = (m_param->chunkEnd - m_lastKeyframe);
+        if ((chunkStart > 0) && (chunkStart < m_param->keyframeMax))
+            keylimit = chunkStart;
+        else if ((chunkEnd > 0) && (chunkEnd < m_param->keyframeMax))
+            keylimit = chunkEnd;
+    }
+
+    int keyFrameLimit = keylimit + m_lastKeyframe - frames[0]->frameNum - 1;
     if (m_param->gopLookahead && keyFrameLimit <= m_param->bframes + 1)
         keyintLimit = keyFrameLimit + m_param->gopLookahead;
     else

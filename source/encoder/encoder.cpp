@@ -889,7 +889,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         m_exportedPic = NULL;
         m_dpb->recycleUnreferenced();
     }
-    if (pic_in)
+    if (pic_in && (!m_param->chunkEnd || (m_encodedFrameNum < m_param->chunkEnd)))
     {
         if (m_latestParam->forceFlush == 1)
         {
@@ -1319,7 +1319,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (m_aborted)
                 return -1;
 
-            finishFrameStats(outFrame, curEncoder, frameData, m_pocLast);
+            if ((m_outputCount + 1)  >= m_param->chunkStart)
+                finishFrameStats(outFrame, curEncoder, frameData, m_pocLast);
 
             /* Write RateControl Frame level stats in multipass encodes */
             if (m_param->rc.bStatWrite)
@@ -1354,8 +1355,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             }
             else
                 m_exportedPic = outFrame;
-
-            m_numDelayedPic--;
+            
+            m_outputCount++;
+            if (m_param->chunkEnd == m_outputCount)
+                m_numDelayedPic = 0;
+            else 
+                m_numDelayedPic--;
 
             ret = 1;
         }
@@ -1364,7 +1369,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
          * curEncoder is guaranteed to be idle at this point */
         if (!pass)
             frameEnc = m_lookahead->getDecidedPicture();
-        if (frameEnc && !pass)
+        if (frameEnc && !pass && (!m_param->chunkEnd || (m_encodedFrameNum < m_param->chunkEnd)))
         {
             if (m_param->analysisMultiPassRefine || m_param->analysisMultiPassDistortion)
             {
@@ -1485,6 +1490,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             frameEnc->m_encData->m_slice->m_iNumRPSInSPS = m_sps.spsrpsNum;
 
             curEncoder->m_rce.encodeOrder = frameEnc->m_encodeOrder = m_encodedFrameNum++;
+
             if (!m_param->analysisLoad || !m_param->bDisableLookahead)
             {
                 if (m_bframeDelay)
@@ -2123,7 +2129,7 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
     {
         const int picOrderCntLSB = slice->m_poc - slice->m_lastIDR;
 
-        frameStats->encoderOrder = m_outputCount++;
+        frameStats->encoderOrder = m_outputCount;
         frameStats->sliceType = c;
         frameStats->poc = picOrderCntLSB;
         frameStats->qp = curEncData.m_avgQpAq;
@@ -3124,6 +3130,19 @@ void Encoder::configure(x265_param *p)
         p->radl = 0;
         x265_log(p, X265_LOG_WARNING, "Radl requires fixed gop-length (keyint == min-keyint). Disabling radl.\n");
     }
+
+    if ((p->chunkStart || p->chunkEnd) && p->bOpenGOP)
+    {
+        p->chunkStart = p->chunkEnd = 0;
+        x265_log(p, X265_LOG_WARNING, "Chunking requires closed gop structure. Disabling chunking.\n");
+    }
+
+    if (p->chunkEnd < p->chunkStart)
+    {
+        p->chunkStart = p->chunkEnd = 0;
+        x265_log(p, X265_LOG_WARNING, "chunk-end cannot be less than chunk-start. Disabling chunking.\n");
+    }
+
 }
 
 void Encoder::allocAnalysis(x265_analysis_data* analysis)

@@ -1638,6 +1638,18 @@ typedef struct x265_param
 
     /* Enable writing all SEI messgaes in one single NAL instead of mul*/
     int       bSingleSeiNal;
+
+
+    /* First frame of the chunk. Frames preceeding this in display order will
+	* be encoded, however, they will be discarded in the bitstream.
+    * Default 0 (disabled). */
+    int       chunkStart;
+
+    /* Last frame of the chunk. Frames following this in display order will be
+	* used in taking lookahead decisions, but, they will not be encoded.
+    * Default 0 (disabled). */
+    int       chunkEnd;
+
 } x265_param;
 
 /* x265_param_alloc:

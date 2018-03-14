@@ -535,6 +535,20 @@ frame counts) are only applicable to the CLI application.
 
 	**CLI ONLY**
 
+.. option:: --chunk-start <integer>
+
+	First frame of the chunk. Frames preceeding this in display order will
+	be encoded, however, they will be discarded in the bitstream. This
+	feature can be enabled only in closed GOP structures.
+	Default 0 (disabled).
+	
+.. option:: --chunk-end <integer>
+
+	Last frame of the chunk. Frames following this in display order will be
+	used in taking lookahead decisions, but, they will not be encoded.
+	This feature can be enabled only in closed GOP structures.
+	Default 0 (disabled).
+
 Profile, Level, Tier
 ====================
 

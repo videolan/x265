@@ -281,7 +281,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
         pic_in->analysis2Pass.analysisFramedata = NULL;
     }
 
-    if (pp_nal && numEncoded > 0)
+    if (pp_nal && numEncoded > 0 && encoder->m_outputCount >= encoder->m_latestParam->chunkStart)
     {
         *pp_nal = &encoder->m_nalList.m_nal[0];
         if (pi_nal) *pi_nal = encoder->m_nalList.m_numNal;
@@ -289,7 +289,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     else if (pi_nal)
         *pi_nal = 0;
 
-    if (numEncoded && encoder->m_param->csvLogLevel)
+    if (numEncoded && encoder->m_param->csvLogLevel && encoder->m_outputCount >= encoder->m_latestParam->chunkStart)
         x265_csvlog_frame(encoder->m_param, pic_out);
 
     if (numEncoded < 0)
