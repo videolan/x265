@@ -131,9 +131,8 @@ void DPB::prepareEncode(Frame *newFrame)
     int pocCurr = slice->m_poc;
     int type = newFrame->m_lowres.sliceType;
     bool bIsKeyFrame = newFrame->m_lowres.bKeyframe;
-
     slice->m_nalUnitType = getNalUnitType(pocCurr, bIsKeyFrame);
-    if (slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL)
+    if (slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL || slice->m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP)
         m_lastIDR = pocCurr;
     slice->m_lastIDR = m_lastIDR;
     slice->m_sliceType = IS_X265_TYPE_B(type) ? B_SLICE : (type == X265_TYPE_P) ? P_SLICE : I_SLICE;
@@ -250,7 +249,7 @@ void DPB::computeRPS(int curPoc, bool isRAP, RPS * rps, unsigned int maxDecPicBu
 /* Marking reference pictures when an IDR/CRA is encountered. */
 void DPB::decodingRefreshMarking(int pocCurr, NalUnitType nalUnitType)
 {
-    if (nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL)
+    if (nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL || nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP)
     {
         /* If the nal_unit_type is IDR, all pictures in the reference picture
          * list are marked as "unused for reference" */
@@ -326,11 +325,9 @@ void DPB::applyReferencePictureSet(RPS *rps, int curPoc)
 NalUnitType DPB::getNalUnitType(int curPOC, bool bIsKeyFrame)
 {
     if (!curPOC)
-        return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
-
+        return NAL_UNIT_CODED_SLICE_IDR_N_LP;
     if (bIsKeyFrame)
-        return m_bOpenGOP ? NAL_UNIT_CODED_SLICE_CRA : NAL_UNIT_CODED_SLICE_IDR_W_RADL;
-
+        return m_bOpenGOP ? NAL_UNIT_CODED_SLICE_CRA : m_bhasLeadingPicture ? NAL_UNIT_CODED_SLICE_IDR_W_RADL : NAL_UNIT_CODED_SLICE_IDR_N_LP;
     if (m_pocCRA && curPOC < m_pocCRA)
         // All leading pictures are being marked as TFD pictures here since
         // current encoder uses all reference pictures while encoding leading
