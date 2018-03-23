@@ -594,7 +594,6 @@ void FrameEncoder::compressFrame()
 
     /* reset entropy coders and compute slice id */
     m_entropyCoder.load(m_initSliceContext);
-	
     for (uint32_t sliceId = 0; sliceId < m_param->maxSlices; sliceId++)   
         for (uint32_t row = m_sliceBaseRow[sliceId]; row < m_sliceBaseRow[sliceId + 1]; row++)
             m_rows[row].init(m_initSliceContext, sliceId);   
@@ -632,10 +631,10 @@ void FrameEncoder::compressFrame()
             bpSei->m_auCpbRemovalDelayDelta = 1;
             bpSei->m_cpbDelayOffset = 0;
             bpSei->m_dpbDelayOffset = 0;
-
             // hrdFullness() calculates the initial CPB removal delay and offset
             m_top->m_rateControl->hrdFullness(bpSei);
-
+            int payloadSize = bpSei->countPayloadSize(*slice->m_sps);
+            bpSei->setSize(payloadSize);
             m_bs.resetBits();
             bpSei->write(m_bs, *slice->m_sps);
             m_bs.writeByteAlignment();
@@ -643,6 +642,20 @@ void FrameEncoder::compressFrame()
             m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
 
             m_top->m_lastBPSEI = m_rce.encodeOrder;
+        }
+
+        if (m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_param->bEmitIDRRecoverySEI)
+        {
+            /* Recovery Point SEI require the SPS to be "activated" */
+            SEIRecoveryPoint sei;
+            sei.m_recoveryPocCnt = 0;
+            sei.m_exactMatchingFlag = true;
+            sei.m_brokenLinkFlag = false;
+            sei.setSize(sei.countPayloadSize(*slice->m_sps));
+            m_bs.resetBits();
+            sei.write(m_bs, *slice->m_sps);
+            m_bs.writeByteAlignment();
+            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
         }
     }
 
@@ -674,8 +687,9 @@ void FrameEncoder::compressFrame()
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, m_rce.encodeOrder - prevBPSEI), (1 << hrd->cpbRemovalDelayLength));
             sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics + poc - m_rce.encodeOrder;
         }
-
         m_bs.resetBits();
+        int payloadSize = sei->countPayloadSize(*slice->m_sps);
+        sei->setSize(payloadSize);
         sei->write(m_bs, *slice->m_sps);
         m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
@@ -690,7 +704,7 @@ void FrameEncoder::compressFrame()
             SEIuserDataUnregistered sei;
             sei.m_userData = payload->payload;
             m_bs.resetBits();
-            sei.setSize(payload->payloadSize);
+            sei.setSize(payload->payloadSize + 16);
             sei.write(m_bs, *slice->m_sps);
             m_bs.writeByteAlignment();
             m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
@@ -723,6 +737,9 @@ void FrameEncoder::compressFrame()
         if (m_rce.encodeOrder < m_param->frameNumThreads - 1)
             m_top->m_rateControl->m_startEndOrder.incr(); // faked rateControlEnd calls for negative frames
     }
+
+    if (m_param->bDynamicRefine)
+        computeAvgTrainingData();
 
     /* Analyze CTU rows, most of the hard work is done here.  Frame is
      * compressed in a wave-front pattern if WPP is enabled. Row based loop
@@ -1445,6 +1462,30 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         // Does all the CU analysis, returns best top level mode decision
         Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, m_cuGeoms[m_ctuGeomMap[cuAddr]], rowCoder);
 
+        if (m_param->bDynamicRefine)
+        {
+            {
+                ScopedLock dynLock(m_top->m_dynamicRefineLock);
+                for (uint32_t i = 0; i < X265_REFINE_INTER_LEVELS; i++)
+                {
+                    for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
+                    {
+                        int offset = (depth * X265_REFINE_INTER_LEVELS) + i;
+                        int index = (m_frame->m_encodeOrder * X265_REFINE_INTER_LEVELS * m_param->maxCUDepth) + offset;
+                        if (ctu->m_collectCUCount[offset])
+                        {
+                            m_top->m_variance[index] += ctu->m_collectCUVariance[offset];
+                            m_top->m_rdCost[index] += ctu->m_collectCURd[offset];
+                            m_top->m_trainingCount[index] += ctu->m_collectCUCount[offset];
+                        }
+                    }
+                }
+            }
+            X265_FREE_ZERO(ctu->m_collectCUVariance);
+            X265_FREE_ZERO(ctu->m_collectCURd);
+            X265_FREE_ZERO(ctu->m_collectCUCount);
+        }
+
         // take a sample of the current active worker count
         ATOMIC_ADD(&m_totalActiveWorkerCount, m_activeWorkerCount);
         ATOMIC_INC(&m_activeWorkerCountSamples);
@@ -1825,6 +1866,58 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     // CHECK_ME: Does it always FALSE condition?
     if (ATOMIC_INC(&m_completionCount) == 2 * (int)m_numRows)
         m_completionEvent.trigger();
+}
+
+void FrameEncoder::computeAvgTrainingData()
+{
+    if (m_frame->m_lowres.bScenecut)
+        m_top->m_startPoint = m_frame->m_encodeOrder;
+
+    if (m_frame->m_encodeOrder - m_top->m_startPoint < 2 * m_param->frameNumThreads)
+        m_frame->m_classifyFrame = false;
+    else
+        m_frame->m_classifyFrame = true;
+
+    int size = m_param->maxCUDepth * X265_REFINE_INTER_LEVELS;
+    memset(m_frame->m_classifyRd, 0, size * sizeof(uint64_t));
+    memset(m_frame->m_classifyVariance, 0, size * sizeof(uint64_t));
+    memset(m_frame->m_classifyCount, 0, size * sizeof(uint32_t));
+
+    if (m_frame->m_classifyFrame)
+    {
+        uint32_t limit = m_frame->m_encodeOrder - m_param->frameNumThreads - 1;
+        for (uint32_t i = m_top->m_startPoint + 1; i < limit; i++)
+        {
+            for (uint32_t j = 0; j < X265_REFINE_INTER_LEVELS; j++)
+            {
+                for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
+                {
+                    int offset = (depth * X265_REFINE_INTER_LEVELS) + j;
+                    int index = (i* X265_REFINE_INTER_LEVELS * m_param->maxCUDepth) + offset;
+                    if (m_top->m_trainingCount[index])
+                    {
+                        m_frame->m_classifyRd[offset] += m_top->m_rdCost[index] / m_top->m_trainingCount[index];
+                        m_frame->m_classifyVariance[offset] += m_top->m_variance[index] / m_top->m_trainingCount[index];
+                        m_frame->m_classifyCount[offset] += m_top->m_trainingCount[index];
+                    }
+                }
+            }
+        }
+        /* Calculates the average feature values of historic frames that are being considered for the current frame */
+        int historyCount = m_frame->m_encodeOrder - m_param->frameNumThreads - m_top->m_startPoint - 1;
+        if (historyCount)
+        {
+            for (uint32_t j = 0; j < X265_REFINE_INTER_LEVELS; j++)
+            {
+                for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
+                {
+                    int offset = (depth * X265_REFINE_INTER_LEVELS) + j;
+                    m_frame->m_classifyRd[offset] /= historyCount;
+                    m_frame->m_classifyVariance[offset] /= historyCount;
+                }
+            }
+        }
+    }
 }
 
 /* collect statistics about CU coding decisions, return total QP */

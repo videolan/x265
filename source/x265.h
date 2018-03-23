@@ -105,6 +105,7 @@ typedef struct x265_lookahead_data
     int       lastMiniGopBFrame;
     int       plannedType[X265_LOOKAHEAD_MAX + 1];
     int64_t   dts;
+    int64_t   reorderedPts;
 } x265_lookahead_data;
 
 /* Stores all analysis data for a single frame */
@@ -363,6 +364,9 @@ typedef struct x265_picture
     int    height;
 
     x265_analysis_2Pass analysis2Pass;
+
+    // pts is reordered in the order of encoding.
+    int64_t reorderedPts;
 } x265_picture;
 
 typedef enum
@@ -461,6 +465,8 @@ typedef enum
 #define X265_AQ_AUTO_VARIANCE_BIASED 3
 
 #define x265_ADAPT_RD_STRENGTH   4
+
+#define X265_REFINE_INTER_LEVELS 4
 
 /* NOTE! For this release only X265_CSP_I420 and X265_CSP_I444 are supported */
 
@@ -1548,6 +1554,19 @@ typedef struct x265_param
 
     /*Number of RADL pictures allowed in front of IDR*/
     int radl;
+
+    /* This value controls the maximum AU size defined in specification
+     * It represents the percentage of maximum AU size used.
+     * Default is 1 (which is 100%). Range is 0.5 to 1. */
+    double maxAUSizeFactor;
+
+    /* Enables the emission of a Recovery Point SEI with the stream headers
+    * at each IDR frame describing poc of the recovery point, exact matching flag
+    * and broken link flag. Default is disabled. */
+    int       bEmitIDRRecoverySEI;
+
+    /* Dynamically change refine-inter at block level*/
+    int       bDynamicRefine;
 } x265_param;
 
 /* x265_param_alloc:

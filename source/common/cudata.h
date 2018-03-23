@@ -224,6 +224,11 @@ public:
     uint64_t      m_fAc_den[3];
     uint64_t      m_fDc_den[3];
 
+    /* Feature values per CTU for dynamic refinement */
+    uint64_t*       m_collectCURd;
+    uint32_t*       m_collectCUVariance;
+    uint32_t*       m_collectCUCount;
+
     CUData();
 
     void     initialize(const CUDataMemPool& dataPool, uint32_t depth, const x265_param& param, int instance);

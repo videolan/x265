@@ -133,7 +133,7 @@ void x265_param_default(x265_param* param)
     param->bEmitHRDSEI = 0;
     param->bEmitInfoSEI = 1;
     param->bEmitHDRSEI = 0;
-
+    param->bEmitIDRRecoverySEI = 0;
     /* CU definitions */
     param->maxCUSize = 64;
     param->minCUSize = 8;
@@ -289,12 +289,14 @@ void x265_param_default(x265_param* param)
     param->scaleFactor = 0;
     param->intraRefine = 0;
     param->interRefine = 0;
+    param->bDynamicRefine = 0;
     param->mvRefine = 0;
     param->bUseAnalysisFile = 1;
     param->csvfpt = NULL;
     param->forceFlush = 0;
     param->bDisableLookahead = 0;
     param->bCopyPicToFrame = 1;
+    param->maxAUSizeFactor = 1;
 
     /* DCT Approximations */
     param->bLowPassDct = 0;
@@ -981,6 +983,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("limit-sao") p->bLimitSAO = atobool(value);
         OPT("dhdr10-info") p->toneMapFile = strdup(value);
         OPT("dhdr10-opt") p->bDhdr10opt = atobool(value);
+        OPT("idr-recovery-sei") p->bEmitIDRRecoverySEI = atobool(value);
         OPT("const-vbv") p->rc.bEnableConstVbv = atobool(value);
         OPT("ctu-info") p->bCTUInfo = atoi(value);
         OPT("scale-factor") p->scaleFactor = atoi(value);
@@ -1012,6 +1015,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("analysis-save") p->analysisSave = strdup(value);
         OPT("analysis-load") p->analysisLoad = strdup(value);
         OPT("radl") p->radl = atoi(value);
+        OPT("max-ausize-factor") p->maxAUSizeFactor = atof(value);
+        OPT("dynamic-refine") p->bDynamicRefine = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1365,8 +1370,10 @@ int x265_check_params(x265_param* param)
         "Supported values for bCTUInfo are 0, 1, 2, 4, 6");
     CHECK(param->interRefine > 3 || param->interRefine < 0,
         "Invalid refine-inter value, refine-inter levels 0 to 3 supported");
-    CHECK(param->intraRefine > 3 || param->intraRefine < 0,
+    CHECK(param->intraRefine > 4 || param->intraRefine < 0,
         "Invalid refine-intra value, refine-intra levels 0 to 3 supported");
+    CHECK(param->maxAUSizeFactor < 0.5 || param->maxAUSizeFactor > 1.0,
+        "Supported factor for controlling max AU size is from 0.5 to 1");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
@@ -1504,6 +1511,7 @@ void x265_print_params(x265_param* param)
     TOOLVAL(param->bCTUInfo, "ctu-info=%d");
     if (param->bMVType == AVC_INFO)
         TOOLOPT(param->bMVType, "refine-mv-type=avc");
+    TOOLOPT(param->bDynamicRefine, "dynamic-refine");
     if (param->maxSlices > 1)
         TOOLVAL(param->maxSlices, "slices=%d");
     if (param->bEnableLoopFilter)
@@ -1726,6 +1734,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEmitHDRSEI, "hdr");
     BOOL(p->bHDROpt, "hdr-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
+    BOOL(p->bEmitIDRRecoverySEI, "idr-recovery-sei");
     if (p->analysisSave)
         s += sprintf(s, " analysis-save");
     if (p->analysisLoad)
@@ -1740,6 +1749,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bLowPassDct, "lowpass-dct");
     s += sprintf(s, " refine-mv-type=%d", p->bMVType);
     s += sprintf(s, " copy-pic=%d", p->bCopyPicToFrame);
+    s += sprintf(s, " max-ausize-factor=%.1f", p->maxAUSizeFactor);
+    BOOL(p->bDynamicRefine, "dynamic-refine");
 #undef BOOL
     return buf;
 }

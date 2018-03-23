@@ -37,7 +37,7 @@ public:
     /* SEI users call write() to marshal an SEI to a bitstream.
      * The write() method calls writeSEI() which encodes the header */
     void write(Bitstream& bs, const SPS& sps);
-
+    int countPayloadSize(const SPS& sps);
     void setSize(uint32_t size);
     virtual ~SEI() {}
 protected:
@@ -253,6 +253,11 @@ public:
 class SEIRecoveryPoint : public SEI
 {
 public:
+    SEIRecoveryPoint()
+    {
+        m_payloadType = RECOVERY_POINT;
+        m_payloadSize = 0;
+    }
     int  m_recoveryPocCnt;
     bool m_exactMatchingFlag;
     bool m_brokenLinkFlag;

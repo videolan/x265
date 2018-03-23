@@ -56,13 +56,15 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled, uint32_t qgS
     if (bAQEnabled)
     {
         CHECKED_MALLOC_ZERO(qpAqOffset, double, cuCountFullRes);
-        CHECKED_MALLOC_ZERO(qpAqMotionOffset, double, cuCountFullRes);
         CHECKED_MALLOC_ZERO(invQscaleFactor, int, cuCountFullRes);
         CHECKED_MALLOC_ZERO(qpCuTreeOffset, double, cuCountFullRes);
-        CHECKED_MALLOC_ZERO(blockVariance, uint32_t, cuCountFullRes);
         if (qgSize == 8)
             CHECKED_MALLOC_ZERO(invQscaleFactor8x8, int, cuCount);
     }
+       if (origPic->m_param->bAQMotion)
+               CHECKED_MALLOC_ZERO(qpAqMotionOffset, double, cuCountFullRes);
+    if (origPic->m_param->bDynamicRefine)
+        CHECKED_MALLOC_ZERO(blockVariance, uint32_t, cuCountFullRes);
     CHECKED_MALLOC(propagateCost, uint16_t, cuCount);
 
     /* allocate lowres buffers */
@@ -126,14 +128,13 @@ void Lowres::destroy()
         X265_FREE(lowresMvCosts[1][i]);
     }
     X265_FREE(qpAqOffset);
-    X265_FREE(qpAqMotionOffset);
     X265_FREE(invQscaleFactor);
     X265_FREE(qpCuTreeOffset);
     X265_FREE(propagateCost);
+       X265_FREE(invQscaleFactor8x8);
+       X265_FREE(qpAqMotionOffset);
     X265_FREE(blockVariance);
-    X265_FREE(invQscaleFactor8x8);
 }
-
 // (re) initialize lowres state
 void Lowres::init(PicYuv *origPic, int poc)
 {

@@ -122,6 +122,14 @@ public:
     uint8_t**              m_addOnDepth;
     uint8_t**              m_addOnCtuInfo;
     int**                  m_addOnPrevChange;
+
+    /* Average feature values of frames being considered for classification */
+    uint64_t*              m_classifyRd;
+    uint64_t*              m_classifyVariance;
+    uint32_t*              m_classifyCount;
+
+    bool                   m_classifyFrame;
+
     Frame();
 
     bool create(x265_param *param, float* quantOffsets);
