@@ -1290,7 +1290,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         else
         {
             /* The spec has a special case for the first frame. */
-            if (rce->encodeOrder == 0)
+            if (curFrame->m_lowres.bKeyframe)
             {
                 /* 1.5 * (Max( PicSizeInSamplesY, fR * MaxLumaSr) + MaxLumaSr * (AuCpbRemovalTime[ 0 ] -AuNominalRemovalTime[ 0 ])) ? MinCr */
                 double fr = 1. / 300;
