@@ -37,11 +37,10 @@ const uint8_t SEIuserDataUnregistered::m_uuid_iso_iec_11578[16] = {
 int SEI::countPayloadSize(const SPS& sps)
 {
     BitCounter counter;
-    int count = 0;
     m_bitIf = &counter;
     writeSEI(sps);
-    X265_CHECK(0 == (count.getNumberOfWrittenBits() & 7), "payload unaligned\n");
-    count = counter.getNumberOfWrittenBits() >> 3;
+    X265_CHECK(0 == (counter.getNumberOfWrittenBits() & 7), "payload unaligned\n");
+    int count = counter.getNumberOfWrittenBits() >> 3;
     return count;
 }
 
