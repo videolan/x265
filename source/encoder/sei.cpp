@@ -51,6 +51,8 @@ void SEI::write(Bitstream& bs, const SPS& sps)
     uint32_t type = m_payloadType;
     m_bitIf = &bs;
     uint32_t payloadSize = m_payloadSize;
+    if (m_payloadType == USER_DATA_UNREGISTERED)
+        payloadSize = m_payloadSize + 16;
     uint32_t payloadType = m_payloadType;
     for (; payloadType >= 0xff; payloadType -= 0xff)
         WRITE_CODE(0xff, 8, "payload_type");

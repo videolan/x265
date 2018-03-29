@@ -2332,7 +2332,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
                 bs.resetBits();
                 SEIuserDataUnregistered idsei;
                 idsei.m_userData = (uint8_t*)buffer;
-                idsei.setSize((uint32_t)strlen(buffer) + 16);
+                idsei.setSize((uint32_t)strlen(buffer));
                 idsei.write(bs, m_sps);
                 bs.writeByteAlignment();
                 list.serialize(NAL_UNIT_PREFIX_SEI, bs);
@@ -2350,9 +2350,9 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         SEIActiveParameterSets sei;
         sei.m_selfContainedCvsFlag = true;
         sei.m_noParamSetUpdateFlag = true;
+        bs.resetBits();
         int payloadSize = sei.countPayloadSize(m_sps);
         sei.setSize(payloadSize);
-        bs.resetBits();
         sei.write(bs, m_sps);
         bs.writeByteAlignment();
         list.serialize(NAL_UNIT_PREFIX_SEI, bs);
