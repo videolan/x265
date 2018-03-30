@@ -413,10 +413,10 @@ void Encoder::create()
     if (m_bToneMap)
         m_numCimInfo = m_hdr10plus_api->hdr10plus_json_to_movie_cim(m_param->toneMapFile, m_cim);
 #endif
-
     if (m_param->bDynamicRefine)
     {
-        int size = m_param->totalFrames * m_param->maxCUDepth * X265_REFINE_INTER_LEVELS;
+        /* Allocate memory for 1 GOP and reuse it for the subsequent GOPs */
+        int size = (m_param->keyframeMax + m_param->lookaheadDepth) * m_param->maxCUDepth * X265_REFINE_INTER_LEVELS;
         CHECKED_MALLOC_ZERO(m_variance, uint64_t, size);
         CHECKED_MALLOC_ZERO(m_rdCost, uint64_t, size);
         CHECKED_MALLOC_ZERO(m_trainingCount, uint32_t, size);

@@ -1460,9 +1460,9 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
         // Does all the CU analysis, returns best top level mode decision
         Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, m_cuGeoms[m_ctuGeomMap[cuAddr]], rowCoder);
-
         if (m_param->bDynamicRefine)
         {
+            if (m_top->m_startPoint <= m_frame->m_encodeOrder) // Avoid collecting data that will not be used by future frames.
             {
                 ScopedLock dynLock(m_top->m_dynamicRefineLock);
                 for (uint32_t i = 0; i < X265_REFINE_INTER_LEVELS; i++)
@@ -1470,7 +1470,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
                     for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
                     {
                         int offset = (depth * X265_REFINE_INTER_LEVELS) + i;
-                        int index = (m_frame->m_encodeOrder * X265_REFINE_INTER_LEVELS * m_param->maxCUDepth) + offset;
+                        int curFrameIndex = m_frame->m_encodeOrder - m_top->m_startPoint;
+                        int index = (curFrameIndex * X265_REFINE_INTER_LEVELS * m_param->maxCUDepth) + offset;
                         if (ctu->m_collectCUCount[offset])
                         {
                             m_top->m_variance[index] += ctu->m_collectCUVariance[offset];
@@ -1866,12 +1867,16 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     if (ATOMIC_INC(&m_completionCount) == 2 * (int)m_numRows)
         m_completionEvent.trigger();
 }
-
 void FrameEncoder::computeAvgTrainingData()
 {
-    if (m_frame->m_lowres.bScenecut)
+    if (m_frame->m_lowres.bScenecut || m_frame->m_lowres.bKeyframe)
+    {
         m_top->m_startPoint = m_frame->m_encodeOrder;
-
+        int size = (m_param->keyframeMax + m_param->lookaheadDepth) * m_param->maxCUDepth * X265_REFINE_INTER_LEVELS;
+        memset(m_top->m_variance, 0, size * sizeof(uint64_t));
+        memset(m_top->m_rdCost, 0, size * sizeof(uint64_t));
+        memset(m_top->m_trainingCount, 0, size * sizeof(uint32_t));
+    }
     if (m_frame->m_encodeOrder - m_top->m_startPoint < 2 * m_param->frameNumThreads)
         m_frame->m_classifyFrame = false;
     else
@@ -1881,11 +1886,10 @@ void FrameEncoder::computeAvgTrainingData()
     memset(m_frame->m_classifyRd, 0, size * sizeof(uint64_t));
     memset(m_frame->m_classifyVariance, 0, size * sizeof(uint64_t));
     memset(m_frame->m_classifyCount, 0, size * sizeof(uint32_t));
-
     if (m_frame->m_classifyFrame)
     {
-        uint32_t limit = m_frame->m_encodeOrder - m_param->frameNumThreads - 1;
-        for (uint32_t i = m_top->m_startPoint + 1; i < limit; i++)
+        uint32_t limit = m_frame->m_encodeOrder - m_top->m_startPoint - m_param->frameNumThreads;
+        for (uint32_t i = 1; i < limit; i++)
         {
             for (uint32_t j = 0; j < X265_REFINE_INTER_LEVELS; j++)
             {
