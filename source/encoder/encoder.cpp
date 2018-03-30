@@ -2720,8 +2720,7 @@ void Encoder::configure(x265_param *p)
             p->interRefine = 0;
         }
     }
-
-    if (p->scaleFactor && p->analysisLoad && !p->interRefine)
+    if (p->scaleFactor && p->analysisLoad && !p->interRefine && !p->bDynamicRefine)
     {
         x265_log(p, X265_LOG_WARNING, "Inter refinement 0 is not supported with scaling. Enabling refine-inter 1.\n");
         p->interRefine = 1;

@@ -2419,8 +2419,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
     if (!m_param->bDynamicRefine)
         m_refineLevel = m_param->interRefine;
     else
-        m_refineLevel = m_frame->m_classifyFrame ? 0 : 3;
-
+        m_refineLevel = m_frame->m_classifyFrame ? 1 : 3;
     int split = (m_refineLevel && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1) && bDecidedDepth);
     td.split = split;
 
@@ -2638,11 +2637,10 @@ void Analysis::classifyCU(const CUData& ctu, const CUGeom& cuGeom, const Mode& b
         uint64_t diffRefine[X265_REFINE_INTER_LEVELS];
         uint64_t diffRefineRd[X265_REFINE_INTER_LEVELS];
         float probRefine[X265_REFINE_INTER_LEVELS] = { 0 };
-        uint8_t varRefineLevel = 0;
-        uint8_t rdRefineLevel = 0;
+        uint8_t varRefineLevel = 1;
+        uint8_t rdRefineLevel = 1;
         uint64_t cuCost = bestMode.rdCost;
-
-        int offset = (depth * X265_REFINE_INTER_LEVELS) + 1;
+        int offset = (depth * X265_REFINE_INTER_LEVELS);
         if (cuCost < m_frame->m_classifyRd[offset])
             m_refineLevel = 1;
         else
@@ -2669,10 +2667,11 @@ void Analysis::classifyCU(const CUData& ctu, const CUGeom& cuGeom, const Mode& b
                 P(c) is the prior probability of class.
                 P(x|c) is the likelihood which is the probability of predictor given class.
                 P(x) is the prior probability of predictor.*/
-                if ((diffRefine[i] * probRefine[m_refineLevel]) < (diffRefine[m_refineLevel] * probRefine[i]))
-                    varRefineLevel = i;
-                if ((diffRefineRd[i] * probRefine[m_refineLevel]) < (diffRefineRd[m_refineLevel] * probRefine[i]))
-                    rdRefineLevel = i;
+                int curRefineLevel = m_refineLevel - 1;
+                if ((diffRefine[i] * probRefine[curRefineLevel]) < (diffRefine[curRefineLevel] * probRefine[i]))
+                    varRefineLevel = i + 1;
+                if ((diffRefineRd[i] * probRefine[curRefineLevel]) < (diffRefineRd[curRefineLevel] * probRefine[i]))
+                    rdRefineLevel = i + 1;
             }
             m_refineLevel = X265_MAX(varRefineLevel, rdRefineLevel);
         }
@@ -2682,13 +2681,19 @@ void Analysis::classifyCU(const CUData& ctu, const CUGeom& cuGeom, const Mode& b
 void Analysis::trainCU(const CUData& ctu, const CUGeom& cuGeom, const Mode& bestMode, TrainingData& trainData)
 {
     uint32_t depth = cuGeom.depth;
-    int classify = 0;
+    int classify = 1;
     if (!m_frame->m_classifyFrame)
     {
-        if (trainData.predMode == ctu.m_predMode[cuGeom.absPartIdx] && trainData.partSize == ctu.m_partSize[cuGeom.absPartIdx]
-            && trainData.mergeFlag == ctu.m_mergeFlag[cuGeom.absPartIdx])
-            classify = 0;
-        else if ((depth == m_param->maxCUDepth - 1) && trainData.split)
+        /* classify = 1 : CUs for which the save data matches with that after encoding with refine-inter 3
+                          and CUs that has split.
+           classify = 2 : CUs which are encoded as simple modes (Skip/Merge/2Nx2N).
+           classify = 3 : CUs encoded as any other mode. */
+
+        bool refineInter0 = (trainData.predMode == ctu.m_predMode[cuGeom.absPartIdx] &&
+            trainData.partSize == ctu.m_partSize[cuGeom.absPartIdx] &&
+            trainData.mergeFlag == ctu.m_mergeFlag[cuGeom.absPartIdx]);
+        bool refineInter1 = (depth == m_param->maxCUDepth - 1) && trainData.split;
+        if (refineInter0 || refineInter1)
             classify = 1;
         else if (trainData.partSize == SIZE_2Nx2N && trainData.partSize == ctu.m_partSize[cuGeom.absPartIdx])
             classify = 2;
@@ -2698,7 +2703,7 @@ void Analysis::trainCU(const CUData& ctu, const CUGeom& cuGeom, const Mode& best
     else
         classify = m_refineLevel;
     uint64_t cuCost = bestMode.rdCost;
-    int offset = (depth * X265_REFINE_INTER_LEVELS) + classify;
+    int offset = (depth * X265_REFINE_INTER_LEVELS) + classify - 1;
     ctu.m_collectCURd[offset] += cuCost;
     ctu.m_collectCUVariance[offset] += trainData.cuVariance;
     ctu.m_collectCUCount[offset]++;
