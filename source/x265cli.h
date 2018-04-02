@@ -298,6 +298,8 @@ static const struct option long_options[] =
     { "max-ausize-factor", required_argument, NULL, 0 },
     { "idr-recovery-sei",     no_argument, NULL, 0 },
     { "no-idr-recovery-sei",  no_argument, NULL, 0 },
+    { "single-sei", no_argument, NULL, 0 },
+    { "no-single-sei", no_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },

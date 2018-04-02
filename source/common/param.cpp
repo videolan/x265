@@ -301,6 +301,7 @@ void x265_param_default(x265_param* param)
     /* DCT Approximations */
     param->bLowPassDct = 0;
     param->bMVType = 0;
+    param->bSingleSeiNal = 0;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -1017,6 +1018,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("radl") p->radl = atoi(value);
         OPT("max-ausize-factor") p->maxAUSizeFactor = atof(value);
         OPT("dynamic-refine") p->bDynamicRefine = atobool(value);
+        OPT("single-sei") p->bSingleSeiNal = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1382,6 +1384,14 @@ int x265_check_params(x265_param* param)
     if (param->masteringDisplayColorVolume || param->maxFALL || param->maxCLL)
         param->bEmitHDRSEI = 1;
 
+    bool isSingleSEI = ((param->bEmitHRDSEI || param->bEmitInfoSEI || param->decodedPictureHashSEI ||
+                         param->masteringDisplayColorVolume || param->maxCLL || param->maxFALL || 
+                         param->bEmitHDRSEI || param->bEmitIDRRecoverySEI) && param->bSingleSeiNal);
+    if (!isSingleSEI)
+    {
+        param->bSingleSeiNal = 0;
+        x265_log(param, X265_LOG_WARNING, "None of the SEI messages are enabled. Diabling Single SEI NAL\n");
+    }
     return check_failed;
 }
 
@@ -1528,6 +1538,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(!param->bSaoNonDeblocked && param->bEnableSAO, "sao");
     TOOLOPT(param->rc.bStatWrite, "stats-write");
     TOOLOPT(param->rc.bStatRead,  "stats-read");
+    TOOLOPT(param->bSingleSeiNal, "single-sei");
 #if ENABLE_HDR10_PLUS
     TOOLOPT(param->toneMapFile != NULL, "dhdr10-info");
 #endif
@@ -1751,6 +1762,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " copy-pic=%d", p->bCopyPicToFrame);
     s += sprintf(s, " max-ausize-factor=%.1f", p->maxAUSizeFactor);
     BOOL(p->bDynamicRefine, "dynamic-refine");
+    BOOL(p->bSingleSeiNal, "single-sei");
 #undef BOOL
     return buf;
 }

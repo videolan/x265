@@ -1563,6 +1563,9 @@ typedef struct x265_param
 
     /* Dynamically change refine-inter at block level*/
     int       bDynamicRefine;
+
+    /* Enable writing all SEI messgaes in one single NAL instead of mul*/
+    int       bSingleSeiNal;
 } x265_param;
 
 /* x265_param_alloc:

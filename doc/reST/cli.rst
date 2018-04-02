@@ -2221,6 +2221,10 @@ Bitstream options
 .. option:: --idr-recovery-sei, --no-idr-recoveery-sei
     Emit RecoveryPoint info as sei in bitstream for each IDR frame. Default disabled.
 
+.. option:: --single-sei, --no-single-sei
+    Emit SEI messages in a single NAL unit instead of multiple NALs. Default disabled.
+    When HRD SEI is enabled the HM decoder will throw a warning.
+
 DCT Approximations
 =================
 

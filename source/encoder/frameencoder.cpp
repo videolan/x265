@@ -393,6 +393,7 @@ void FrameEncoder::compressFrame()
      * not repeating headers (since AUD is supposed to be the first NAL in the access
      * unit) */
     Slice* slice = m_frame->m_encData->m_slice;
+
     if (m_param->bEnableAccessUnitDelimiters && (m_frame->m_poc || m_param->bRepeatHeaders))
     {
         m_bs.resetBits();
@@ -400,6 +401,8 @@ void FrameEncoder::compressFrame()
         m_entropyCoder.codeAUD(*slice);
         m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
+        if (m_param->bSingleSeiNal)
+            m_bs.resetBits();
     }
     if (m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders)
     {
@@ -527,7 +530,7 @@ void FrameEncoder::compressFrame()
                 }
 
                 bool isIDR = m_frame->m_lowres.sliceType == X265_TYPE_IDR;
-                writeSei = payloadChange || isIDR;
+                writeSei = (payloadChange || isIDR);
             }
         }
     }
@@ -633,12 +636,12 @@ void FrameEncoder::compressFrame()
             bpSei->m_dpbDelayOffset = 0;
             // hrdFullness() calculates the initial CPB removal delay and offset
             m_top->m_rateControl->hrdFullness(bpSei);
-            m_bs.resetBits();
+            if (!m_param->bSingleSeiNal)
+                m_bs.resetBits();
             int payloadSize = bpSei->countPayloadSize(*slice->m_sps);
             bpSei->setSize(payloadSize);
             bpSei->write(m_bs, *slice->m_sps);
-            m_bs.writeByteAlignment();
-            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+            bpSei->alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
 
             m_top->m_lastBPSEI = m_rce.encodeOrder;
         }
@@ -650,11 +653,11 @@ void FrameEncoder::compressFrame()
             sei.m_recoveryPocCnt = 0;
             sei.m_exactMatchingFlag = true;
             sei.m_brokenLinkFlag = false;
-            m_bs.resetBits();
+            if (!m_param->bSingleSeiNal)
+                m_bs.resetBits();
             sei.setSize(sei.countPayloadSize(*slice->m_sps));
             sei.write(m_bs, *slice->m_sps);
-            m_bs.writeByteAlignment();
-            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+            sei.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
         }
     }
 
@@ -686,12 +689,12 @@ void FrameEncoder::compressFrame()
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, m_rce.encodeOrder - prevBPSEI), (1 << hrd->cpbRemovalDelayLength));
             sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics + poc - m_rce.encodeOrder;
         }
-        m_bs.resetBits();
+        if (!m_param->bSingleSeiNal)
+            m_bs.resetBits();
         int payloadSize = sei->countPayloadSize(*slice->m_sps);
         sei->setSize(payloadSize);
         sei->write(m_bs, *slice->m_sps);
-        m_bs.writeByteAlignment();
-        m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+        sei->alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
     }
 
     /* Write user SEI */
@@ -702,11 +705,11 @@ void FrameEncoder::compressFrame()
         {
             SEIuserDataUnregistered sei;
             sei.m_userData = payload->payload;
-            m_bs.resetBits();
+            if (!m_param->bSingleSeiNal)
+                m_bs.resetBits();
             sei.setSize(payload->payloadSize);
             sei.write(m_bs, *slice->m_sps);
-            m_bs.writeByteAlignment();
-            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+            sei.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
         }
         else if (payload->payloadType == USER_DATA_REGISTERED_ITU_T_T35)
         {
@@ -717,12 +720,20 @@ void FrameEncoder::compressFrame()
                 m_bs.resetBits();
                 sei.setSize(payload->payloadSize);
                 sei.write(m_bs, *slice->m_sps);
-                m_bs.writeByteAlignment();
-                m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+                sei.alignAndSerialize(m_bs, true, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
             }
         }
         else
             x265_log(m_param, X265_LOG_ERROR, "Unrecognized SEI type\n");
+    }
+    bool isSei = (m_frame->m_lowres.bKeyframe && 
+            (m_param->bRepeatHeaders || m_param->bEmitHRDSEI 
+            || !!m_param->interlaceMode || m_param->bEmitIDRRecoverySEI));
+
+    if (isSei && m_param->bSingleSeiNal)
+    {
+        m_bs.writeByteAlignment();
+        m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
     /* CQP and CRF (without capped VBV) doesn't use mid-frame statistics to 
      * tune RateControl parameters for other frames.
@@ -1055,7 +1066,8 @@ void FrameEncoder::compressFrame()
 
         m_nalList.serialize(slice->m_nalUnitType, m_bs);
     }
-
+    if (isSei && m_param->bSingleSeiNal)
+        m_bs.resetBits();
 
     if (m_param->decodedPictureHashSEI)
     {
@@ -1085,8 +1097,7 @@ void FrameEncoder::compressFrame()
         m_bs.resetBits();
         m_seiReconPictureDigest.setSize(payloadSize);
         m_seiReconPictureDigest.write(m_bs, *slice->m_sps);
-        m_bs.writeByteAlignment();
-        m_nalList.serialize(NAL_UNIT_SUFFIX_SEI, m_bs);
+        m_seiReconPictureDigest.alignAndSerialize(m_bs, true, m_param->bSingleSeiNal, NAL_UNIT_SUFFIX_SEI, m_nalList);
     }
 
     uint64_t bytes = 0;

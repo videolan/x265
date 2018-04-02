@@ -2289,26 +2289,26 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
     sbacCoder.codePPS(m_pps, (m_param->maxSlices <= 1), m_iPPSQpMinus26);
     bs.writeByteAlignment();
     list.serialize(NAL_UNIT_PPS, bs);
-
+    if (m_param->bSingleSeiNal)
+        bs.resetBits();
     if (m_param->bEmitHDRSEI)
     {
         SEIContentLightLevel cllsei;
         cllsei.max_content_light_level = m_param->maxCLL;
         cllsei.max_pic_average_light_level = m_param->maxFALL;
-        bs.resetBits();
+        if (!m_param->bSingleSeiNal)
+            bs.resetBits();
         cllsei.write(bs, m_sps);
-        bs.writeByteAlignment();
-        list.serialize(NAL_UNIT_PREFIX_SEI, bs);
-
+        cllsei.alignAndSerialize(bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, list);
         if (m_param->masteringDisplayColorVolume)
         {
             SEIMasteringDisplayColorVolume mdsei;
             if (mdsei.parse(m_param->masteringDisplayColorVolume))
             {
-                bs.resetBits();
+                if (!m_param->bSingleSeiNal)
+                    bs.resetBits();
                 mdsei.write(bs, m_sps);
-                bs.writeByteAlignment();
-                list.serialize(NAL_UNIT_PREFIX_SEI, bs);
+                mdsei.alignAndSerialize(bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, list);
             }
             else
                 x265_log(m_param, X265_LOG_WARNING, "unable to parse mastering display color volume info\n");
@@ -2328,15 +2328,13 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
                     "Copyright 2013-2018 (c) Multicoreware, Inc - "
                     "http://x265.org - options: %s",
                     X265_BUILD, PFX(version_str), PFX(build_info_str), opts);
-
-                bs.resetBits();
+                if (!m_param->bSingleSeiNal)
+                    bs.resetBits();
                 SEIuserDataUnregistered idsei;
                 idsei.m_userData = (uint8_t*)buffer;
                 idsei.setSize((uint32_t)strlen(buffer));
                 idsei.write(bs, m_sps);
-                bs.writeByteAlignment();
-                list.serialize(NAL_UNIT_PREFIX_SEI, bs);
-
+                idsei.alignAndSerialize(bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, list);
                 X265_FREE(buffer);
             }
 
@@ -2350,12 +2348,12 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
         SEIActiveParameterSets sei;
         sei.m_selfContainedCvsFlag = true;
         sei.m_noParamSetUpdateFlag = true;
-        bs.resetBits();
+        if (!m_param->bSingleSeiNal)
+            bs.resetBits();
         int payloadSize = sei.countPayloadSize(m_sps);
         sei.setSize(payloadSize);
         sei.write(bs, m_sps);
-        bs.writeByteAlignment();
-        list.serialize(NAL_UNIT_PREFIX_SEI, bs);
+        sei.alignAndSerialize(bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, list);
     }
 }
 

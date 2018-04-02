@@ -27,6 +27,7 @@
 #include "common.h"
 #include "bitstream.h"
 #include "slice.h"
+#include "nal.h"
 
 namespace X265_NS {
 // private namespace
@@ -37,6 +38,7 @@ public:
     /* SEI users call write() to marshal an SEI to a bitstream.
      * The write() method calls writeSEI() which encodes the header */
     void write(Bitstream& bs, const SPS& sps);
+    void alignAndSerialize(Bitstream& bs, int lastSei, int isSingleSei, NalUnitType nalUnitType, NALList& list);
     int countPayloadSize(const SPS& sps);
     void setSize(uint32_t size);
     virtual ~SEI() {}
