@@ -1842,7 +1842,8 @@ other levels.
     
 	All other strings indicate a filename containing custom scaling
 	lists in the HM format. The encode will abort if the file is not
-	parsed correctly. Custom lists must be signaled in the SPS
+	parsed correctly. Custom lists must be signaled in the SPS. A sample
+	scaling list file is available in `the downloads page <https://bitbucket.org/multicoreware/x265/downloads/reference_scalinglist.txt>`_
 
 .. option:: --lambda-file <filename>
 
