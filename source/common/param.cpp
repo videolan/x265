@@ -1386,11 +1386,11 @@ int x265_check_params(x265_param* param)
 
     bool isSingleSEI = ((param->bEmitHRDSEI || param->bEmitInfoSEI || param->decodedPictureHashSEI ||
                          param->masteringDisplayColorVolume || param->maxCLL || param->maxFALL || 
-                         param->bEmitHDRSEI || param->bEmitIDRRecoverySEI) && param->bSingleSeiNal);
-    if (!isSingleSEI)
+                         param->bEmitHDRSEI || param->bEmitIDRRecoverySEI));
+    if (!isSingleSEI && param->bSingleSeiNal)
     {
         param->bSingleSeiNal = 0;
-        x265_log(param, X265_LOG_WARNING, "None of the SEI messages are enabled. Diabling Single SEI NAL\n");
+        x265_log(param, X265_LOG_WARNING, "None of the SEI messages are enabled. Disabling Single SEI NAL\n");
     }
     return check_failed;
 }
