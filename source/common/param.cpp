@@ -99,13 +99,13 @@ void x265_param_free(x265_param* p)
 {
     x265_free(p);
 }
-
+bool  benableavx512 = false;
 void x265_param_default(x265_param* param)
 {
     memset(param, 0, sizeof(x265_param));
 
     /* Applying default values to all elements in the param structure */
-    param->cpuid = X265_NS::cpu_detect();
+    param->cpuid = X265_NS::cpu_detect(benableavx512);
     param->bEnableWavefront = 1;
     param->frameNumThreads = 0;
 
@@ -609,6 +609,17 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     if (0) ;
     OPT("asm")
     {
+        sscanf(value, "%s", p->asmname);
+        if (strcmp(value, "avx512")==0)
+        {
+            p->bEnableavx512 = 1;
+            benableavx512 = true;
+        }
+        else
+        {
+            p->bEnableavx512 = 0;
+            benableavx512 = false;
+        }
         if (bValueWasNull)
             p->cpuid = atobool(value);
         else
@@ -1072,7 +1083,7 @@ int parseCpuName(const char* value, bool& bError)
     if (isdigit(value[0]))
         cpu = x265_atoi(value, bError);
     else
-        cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? X265_NS::cpu_detect() : 0;
+        cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? X265_NS::cpu_detect(benableavx512) : 0;
 
     if (bError)
     {

@@ -96,7 +96,8 @@ IntraPredHarness HIPred;
 
 int main(int argc, char *argv[])
 {
-    int cpuid = X265_NS::cpu_detect();
+    bool enableavx512 = true;
+    int cpuid = X265_NS::cpu_detect(enableavx512);
     const char *testname = 0;
 
     if (!(argc & 1))

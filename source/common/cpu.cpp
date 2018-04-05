@@ -122,7 +122,7 @@ uint64_t PFX(cpu_xgetbv)(int xcr);
 #pragma warning(disable: 4309) // truncation of constant value
 #endif
 
-uint32_t cpu_detect(void)
+uint32_t cpu_detect(bool benableavx512 )
 {
     uint32_t cpu = 0;
 
@@ -184,11 +184,13 @@ uint32_t cpu_detect(void)
         {
             if (ebx & 0x00000020)
                 cpu |= X265_CPU_AVX2;
-
-            if ((xcr0 & 0xE0) == 0xE0) /* OPMASK/ZMM state */
+            if (benableavx512)
             {
-                if ((ebx & 0xD0030000) == 0xD0030000)
-                    cpu |= X265_CPU_AVX512;
+                if ((xcr0 & 0xE0) == 0xE0) /* OPMASK/ZMM state */
+                {
+                    if ((ebx & 0xD0030000) == 0xD0030000)
+                        cpu |= X265_CPU_AVX512;
+                }
             }
         }
     }
@@ -327,7 +329,7 @@ void PFX(cpu_neon_test)(void);
 int PFX(cpu_fast_neon_mrc_test)(void);
 }
 
-uint32_t cpu_detect(void)
+uint32_t cpu_detect(bool benableavx512)
 {
     int flags = 0;
 
@@ -370,7 +372,7 @@ uint32_t cpu_detect(void)
 
 #elif X265_ARCH_POWER8
 
-uint32_t cpu_detect(void)
+uint32_t cpu_detect(bool benableavx512)
 {
 #if HAVE_ALTIVEC
     return X265_CPU_ALTIVEC;
@@ -381,7 +383,7 @@ uint32_t cpu_detect(void)
 
 #else // if X265_ARCH_POWER8
 
-uint32_t cpu_detect(void)
+uint32_t cpu_detect(bool benableavx512)
 {
     return 0;
 }
