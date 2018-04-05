@@ -105,6 +105,31 @@ tab_LumaCoeffVer: times 8 dw 0, 0
                   times 8 dw -5, 17
                   times 8 dw 58, -10
                   times 8 dw 4, -1
+				  
+ALIGN 64
+const tab_ChromaCoeffV_avx512,  times 16 dw 0, 64
+                                times 16 dw 0, 0
+
+                                times 16 dw -2, 58
+                                times 16 dw 10, -2
+
+                                times 16 dw -4, 54
+                                times 16 dw 16, -2
+
+                                times 16 dw -6, 46
+                                times 16 dw 28, -4
+
+                                times 16 dw -4, 36
+                                times 16 dw 36, -4
+
+                                times 16 dw -4, 28
+                                times 16 dw 46, -6
+
+                                times 16 dw -2, 16
+                                times 16 dw 54, -4
+
+                                times 16 dw -2, 10
+                                times 16 dw 58, -2
 
 const interp8_hpp_shuf1_load_avx512, times 2 db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
 
@@ -5877,6 +5902,92 @@ cglobal interp_4tap_horiz_pp_48x64, 5,6,11
 %endrep
     PROCESS_IPFILTER_CHROMA_PP_48x2_AVX512
     RET
+%endif
+
+%macro PROCESS_CHROMA_VERT_PP_32x2_AVX512 0
+    movu                  m1,                 [r0]
+    movu                  m3,                 [r0 + r1]
+    punpcklwd             m0,                 m1,                  m3
+    pmaddwd               m0,                 [r5]
+    punpckhwd             m1,                 m3
+    pmaddwd               m1,                 [r5]
+
+    movu                  m4,                 [r0 + 2 * r1]
+    punpcklwd             m2,                 m3,                  m4
+    pmaddwd               m2,                 [r5]
+    punpckhwd             m3,                 m4
+    pmaddwd               m3,                 [r5]
+
+    lea                   r0,                 [r0 + 2 * r1]
+    movu                  m5,                 [r0 + r1]
+    punpcklwd             m6,                 m4,                  m5
+    pmaddwd               m6,                 [r5 + mmsize]
+    paddd                 m0,                 m6
+    punpckhwd             m4,                 m5
+    pmaddwd               m4,                 [r5 + mmsize]
+    paddd                 m1,                 m4
+
+    movu                  m4,                 [r0 + 2 * r1]
+    punpcklwd             m6,                 m5,                  m4
+    pmaddwd               m6,                 [r5 + mmsize]
+    paddd                 m2,                 m6
+    punpckhwd             m5,                 m4
+    pmaddwd               m5,                 [r5 + mmsize]
+    paddd                 m3,                 m5
+
+    paddd                 m0,                 m7
+    paddd                 m1,                 m7
+    paddd                 m2,                 m7
+    paddd                 m3,                 m7
+
+    psrad                 m0,                 INTERP_SHIFT_PP
+    psrad                 m1,                 INTERP_SHIFT_PP
+    psrad                 m2,                 INTERP_SHIFT_PP
+    psrad                 m3,                 INTERP_SHIFT_PP
+
+    packssdw              m0,                 m1
+    packssdw              m2,                 m3
+    pxor                  m5,                 m5
+    CLIPW2                m0,                 m2,                m5,       m8
+    movu                  [r2],               m0
+    movu                  [r2 + r3],          m2
+%endmacro
+
+;-----------------------------------------------------------------------------------------------------------------
+; void interp_4tap_vert(int16_t *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx)
+;-----------------------------------------------------------------------------------------------------------------
+%macro FILTER_VER_PP_CHROMA_32xN_AVX512 1
+INIT_ZMM avx512
+cglobal interp_4tap_vert_pp_32x%1, 5, 7, 9
+    add                   r1d,                r1d
+    add                   r3d,                r3d
+    sub                   r0,                 r1
+    shl                   r4d,                7
+
+%ifdef PIC
+    lea                   r5,                 [tab_ChromaCoeffV_avx512]
+    lea                   r5,                 [r5 + r4]
+%else
+    lea                   r5,                 [tab_ChromaCoeffV_avx512 + r4]
+%endif
+    vbroadcasti32x8       m7,                 [INTERP_OFFSET_PP]
+    vbroadcasti32x8       m8,                 [pw_pixel_max]
+
+%rep %1/2 - 1
+    PROCESS_CHROMA_VERT_PP_32x2_AVX512
+    lea                   r2,                 [r2 + 2 * r3]
+%endrep
+    PROCESS_CHROMA_VERT_PP_32x2_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+FILTER_VER_PP_CHROMA_32xN_AVX512 8
+FILTER_VER_PP_CHROMA_32xN_AVX512 16
+FILTER_VER_PP_CHROMA_32xN_AVX512 24
+FILTER_VER_PP_CHROMA_32xN_AVX512 32
+FILTER_VER_PP_CHROMA_32xN_AVX512 48
+FILTER_VER_PP_CHROMA_32xN_AVX512 64
 %endif
 ;-------------------------------------------------------------------------------------------------------------
 ;ipfilter_chroma_avx512 code end
