@@ -51,6 +51,20 @@ tab_c_524800:     times 4 dd 524800
 tab_c_n8192:      times 8 dw -8192
 pd_524800:        times 8 dd 524800
 
+tab_ChromaCoeff:  dw  0, 64,  0,  0
+                  dw -2, 58, 10, -2
+                  dw -4, 54, 16, -2
+                  dw -6, 46, 28, -4
+                  dw -4, 36, 36, -4
+                  dw -4, 28, 46, -6
+                  dw -2, 16, 54, -4
+                  dw -2, 10, 58, -2
+				
+tab_LumaCoeff:    dw   0, 0,  0,  64,  0,   0,  0,  0
+                  dw  -1, 4, -10, 58,  17, -5,  1,  0
+                  dw  -1, 4, -11, 40,  40, -11, 4, -1
+                  dw   0, 1, -5,  17,  58, -10, 4, -1
+
 ALIGN 32
 tab_LumaCoeffV:   times 4 dw 0, 0
                   times 4 dw 0, 64
