@@ -1999,6 +1999,7 @@ cglobal filterPixelToShort_32x%1, 3, 7, 3
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal filterPixelToShort_32x8, 3, 7, 5
     mov         r3d, r3m
@@ -2104,6 +2105,7 @@ cglobal filterPixelToShort_32x64, 3, 7, 5
 %endrep
     PROCESS_P2S_32x4_AVX512
     RET
+%endif
 
 %macro PROCESS_P2S_ALIGNED_32x4_AVX512 0
     pmovzxbw    m0, [r0]
@@ -2129,6 +2131,7 @@ cglobal filterPixelToShort_32x64, 3, 7, 5
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal filterPixelToShort_aligned_32x8, 3, 7, 5
     mov         r3d, r3m
@@ -2234,6 +2237,7 @@ cglobal filterPixelToShort_aligned_32x64, 3, 7, 5
 %endrep
     PROCESS_P2S_ALIGNED_32x4_AVX512
     RET
+%endif
 ;-----------------------------------------------------------------------------
 ;p2s and p2s_aligned 32xN avx512 code end
 ;-----------------------------------------------------------------------------
@@ -2633,6 +2637,7 @@ cglobal filterPixelToShort_64x%1, 3, 7, 5
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal filterPixelToShort_64x64, 3, 7, 5
     mov         r3d, r3m
@@ -2776,6 +2781,7 @@ cglobal filterPixelToShort_aligned_64x16, 3, 7, 5
 %endrep
     PROCESS_P2S_ALIGNED_64x4_AVX512
     RET
+%endif
 ;-----------------------------------------------------------------------------
 ;p2s and p2s_aligned 64xN avx512 code end
 ;-----------------------------------------------------------------------------
@@ -3352,6 +3358,7 @@ cglobal filterPixelToShort_48x64, 3,7,4
 ;-----------------------------------------------------------------------------
 ; void filterPixelToShort(pixel *src, intptr_t srcStride, int16_t *dst, int16_t dstStride)
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal filterPixelToShort_48x64, 3,7,5
     mov         r3d, r3m
@@ -3419,6 +3426,7 @@ cglobal filterPixelToShort_aligned_48x64, 3,7,5
     lea         r2, [r2 + r3 * 4]
     PROCESS_P2S_ALIGNED_48x8_AVX512
     RET
+%endif
 ;-----------------------------------------------------------------------------
 ;p2s and p2s_aligned 48xN avx512 code end
 ;-----------------------------------------------------------------------------
@@ -10326,10 +10334,12 @@ cglobal interp_4tap_horiz_pp_64x%1, 4,6,9
     RET
 %endmacro
 
+%if ARCH_X86_64
     IPFILTER_CHROMA_PP_64xN_AVX512  64
     IPFILTER_CHROMA_PP_64xN_AVX512  32
     IPFILTER_CHROMA_PP_64xN_AVX512  48
     IPFILTER_CHROMA_PP_64xN_AVX512  16
+%endif
 
 %macro IPFILTER_CHROMA_PP_32xN_AVX512 1
 INIT_ZMM avx512
@@ -10358,12 +10368,14 @@ cglobal interp_4tap_horiz_pp_32x%1, 4,6,9
     RET
 %endmacro
 
+%if ARCH_X86_64
     IPFILTER_CHROMA_PP_32xN_AVX512 16
     IPFILTER_CHROMA_PP_32xN_AVX512 24
     IPFILTER_CHROMA_PP_32xN_AVX512 8
     IPFILTER_CHROMA_PP_32xN_AVX512 32
     IPFILTER_CHROMA_PP_32xN_AVX512 64
     IPFILTER_CHROMA_PP_32xN_AVX512 48
+%endif
 
 %macro IPFILTER_CHROMA_PP_16xN_AVX512 1
 INIT_ZMM avx512
@@ -10393,6 +10405,7 @@ cglobal interp_4tap_horiz_pp_16x%1, 4,8,9
     RET
 %endmacro
 
+%if ARCH_X86_64
     IPFILTER_CHROMA_PP_16xN_AVX512 4
     IPFILTER_CHROMA_PP_16xN_AVX512 8
     IPFILTER_CHROMA_PP_16xN_AVX512 12
@@ -10400,7 +10413,9 @@ cglobal interp_4tap_horiz_pp_16x%1, 4,8,9
     IPFILTER_CHROMA_PP_16xN_AVX512 24
     IPFILTER_CHROMA_PP_16xN_AVX512 32
     IPFILTER_CHROMA_PP_16xN_AVX512 64
+%endif
 
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal interp_4tap_horiz_pp_48x64, 4,8,9
     mov               r4d,          r4m
@@ -10426,6 +10441,7 @@ cglobal interp_4tap_horiz_pp_48x64, 4,8,9
 %endrep
     PROCESS_IPFILTER_CHROMA_PP_48x4_AVX512
     RET
+%endif
 
 %macro PROCESS_IPFILTER_CHROMA_PS_64x1_AVX512 0
     movu               ym6,          [r0]
@@ -10501,10 +10517,12 @@ cglobal interp_4tap_horiz_ps_64x%1, 4,7,11
     RET
 %endmacro
 
+%if ARCH_X86_64
     IPFILTER_CHROMA_PS_64xN_AVX512 64
     IPFILTER_CHROMA_PS_64xN_AVX512 32
     IPFILTER_CHROMA_PS_64xN_AVX512 48
     IPFILTER_CHROMA_PS_64xN_AVX512 16
+%endif
 
 %macro PROCESS_IPFILTER_CHROMA_PS_32x1_AVX512 0
     movu               ym6,          [r0]
@@ -10567,12 +10585,14 @@ cglobal interp_4tap_horiz_ps_32x%1, 4,7,9
     RET
 %endmacro
 
+%if ARCH_X86_64
     IPFILTER_CHROMA_PS_32xN_AVX512 64
     IPFILTER_CHROMA_PS_32xN_AVX512 48
     IPFILTER_CHROMA_PS_32xN_AVX512 32
     IPFILTER_CHROMA_PS_32xN_AVX512 24
     IPFILTER_CHROMA_PS_32xN_AVX512 16
     IPFILTER_CHROMA_PS_32xN_AVX512 8
+%endif
 
 %macro PROCESS_IPFILTER_CHROMA_PS_16x2_AVX512 0
     movu               xm6,         [r0]
@@ -11085,10 +11105,12 @@ cglobal interp_8tap_horiz_pp_64x%1, 4,6,13
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_LUMA_64xN_AVX512 16
 IPFILTER_LUMA_64xN_AVX512 32
 IPFILTER_LUMA_64xN_AVX512 48
 IPFILTER_LUMA_64xN_AVX512 64
+%endif
 
 %macro IPFILTER_LUMA_32xN_AVX512 1
 INIT_ZMM avx512
@@ -11118,11 +11140,13 @@ cglobal interp_8tap_horiz_pp_32x%1, 4,6,13
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_LUMA_32xN_AVX512 8
 IPFILTER_LUMA_32xN_AVX512 16
 IPFILTER_LUMA_32xN_AVX512 24
 IPFILTER_LUMA_32xN_AVX512 32
 IPFILTER_LUMA_32xN_AVX512 64
+%endif
 
 %macro IPFILTER_LUMA_16xN_AVX512 1
 INIT_ZMM avx512
@@ -11154,13 +11178,16 @@ cglobal interp_8tap_horiz_pp_16x%1, 4,8,14
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_LUMA_16xN_AVX512 4
 IPFILTER_LUMA_16xN_AVX512 8
 IPFILTER_LUMA_16xN_AVX512 12
 IPFILTER_LUMA_16xN_AVX512 16
 IPFILTER_LUMA_16xN_AVX512 32
 IPFILTER_LUMA_16xN_AVX512 64
+%endif
 
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal interp_8tap_horiz_pp_48x64, 4,8,14
     sub               r0,    3
@@ -11188,6 +11215,7 @@ cglobal interp_8tap_horiz_pp_48x64, 4,8,14
 %endrep
     PROCESS_IPFILTER_LUMA_PP_48x4_AVX512
     RET
+%endif
 
 %macro PROCESS_IPFILTER_LUMA_PS_64x1_AVX512 0
     ; register map

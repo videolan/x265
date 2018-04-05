@@ -1034,6 +1034,7 @@ ADDAVG_W64_H1 64
 ;------------------------------------------------------------------------------
 ; avx2 asm for addAvg high_bit_depth
 ;------------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_YMM avx2
 cglobal addAvg_8x2, 6,6,2, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movu        xm0,         [r0]
@@ -1111,6 +1112,7 @@ cglobal addAvg_8x6, 6,6,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movu        [r2],        xm0
     movu        [r2 + r5],   xm2
     RET
+%endif
 
 %macro ADDAVG_W8_H4_AVX2 1
 cglobal addAvg_8x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
@@ -1165,13 +1167,16 @@ cglobal addAvg_8x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W8_H4_AVX2 4
 ADDAVG_W8_H4_AVX2 8
 ADDAVG_W8_H4_AVX2 12
 ADDAVG_W8_H4_AVX2 16
 ADDAVG_W8_H4_AVX2 32
 ADDAVG_W8_H4_AVX2 64
+%endif
 
+%if ARCH_X86_64
 cglobal addAvg_12x16, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     mova           m4,             [pw_ %+ ADDAVG_ROUND]
     mova           m5,             [pw_pixel_max]
@@ -1255,6 +1260,7 @@ cglobal addAvg_12x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     dec            r6d
     jnz            .loop
     RET
+%endif
 
 %macro ADDAVG_W16_H4_AVX2 1
 cglobal addAvg_16x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
@@ -1296,6 +1302,7 @@ cglobal addAvg_16x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W16_H4_AVX2 4
 ADDAVG_W16_H4_AVX2 8
 ADDAVG_W16_H4_AVX2 12
@@ -1303,7 +1310,9 @@ ADDAVG_W16_H4_AVX2 16
 ADDAVG_W16_H4_AVX2 24
 ADDAVG_W16_H4_AVX2 32
 ADDAVG_W16_H4_AVX2 64
+%endif
 
+%if ARCH_X86_64
 cglobal addAvg_24x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     mova        m4,              [pw_ %+ ADDAVG_ROUND]
     mova        m5,              [pw_pixel_max]
@@ -1415,6 +1424,7 @@ cglobal addAvg_24x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     dec         r6d
     jnz         .loop
     RET
+%endif
 
 %macro ADDAVG_W32_H2_AVX2 1
 cglobal addAvg_32x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
@@ -1474,13 +1484,16 @@ cglobal addAvg_32x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W32_H2_AVX2 8
 ADDAVG_W32_H2_AVX2 16
 ADDAVG_W32_H2_AVX2 24
 ADDAVG_W32_H2_AVX2 32
 ADDAVG_W32_H2_AVX2 48
 ADDAVG_W32_H2_AVX2 64
+%endif
 
+%if ARCH_X86_64
 cglobal addAvg_48x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     mova        m4,              [pw_ %+ ADDAVG_ROUND]
     mova        m5,              [pw_pixel_max]
@@ -1554,6 +1567,7 @@ cglobal addAvg_48x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     dec         r6d
     jnz        .loop
     RET
+%endif
 
 %macro ADDAVG_W64_H1_AVX2 1
 cglobal addAvg_64x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
@@ -1649,11 +1663,12 @@ cglobal addAvg_64x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W64_H1_AVX2 16
 ADDAVG_W64_H1_AVX2 32
 ADDAVG_W64_H1_AVX2 48
 ADDAVG_W64_H1_AVX2 64
-
+%endif
 ;-----------------------------------------------------------------------------
 ;addAvg avx512 high bit depth code start
 ;-----------------------------------------------------------------------------
@@ -1875,6 +1890,7 @@ ADDAVG_W64_H1_AVX2 64
 ;-----------------------------------------------------------------------------
 ;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal addAvg_16x4, 6,9,6
     vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
@@ -1889,6 +1905,7 @@ cglobal addAvg_16x4, 6,9,6
     lea         r8,        [3 * r5]
     PROCESS_ADDAVG_16x4_HBD_AVX512
     RET
+%endif
 
 %macro ADDAVG_W16_HBD_AVX512 1
 INIT_ZMM avx512
@@ -1914,12 +1931,14 @@ cglobal addAvg_16x%1, 6,9,6
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W16_HBD_AVX512 8
 ADDAVG_W16_HBD_AVX512 12
 ADDAVG_W16_HBD_AVX512 16
 ADDAVG_W16_HBD_AVX512 24
 ADDAVG_W16_HBD_AVX512 32
 ADDAVG_W16_HBD_AVX512 64
+%endif
 
 %macro ADDAVG_W32_HBD_AVX512 1
 INIT_ZMM avx512
@@ -1945,12 +1964,14 @@ cglobal addAvg_32x%1, 6,9,6
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W32_HBD_AVX512 8
 ADDAVG_W32_HBD_AVX512 16
 ADDAVG_W32_HBD_AVX512 24
 ADDAVG_W32_HBD_AVX512 32
 ADDAVG_W32_HBD_AVX512 48
 ADDAVG_W32_HBD_AVX512 64
+%endif
 
 %macro ADDAVG_W64_HBD_AVX512 1
 INIT_ZMM avx512
@@ -1976,11 +1997,14 @@ cglobal addAvg_64x%1, 6,9,6
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W64_HBD_AVX512 16
 ADDAVG_W64_HBD_AVX512 32
 ADDAVG_W64_HBD_AVX512 48
 ADDAVG_W64_HBD_AVX512 64
+%endif
 
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal addAvg_48x64, 6,9,6
     vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
@@ -2002,6 +2026,7 @@ cglobal addAvg_48x64, 6,9,6
 %endrep
     PROCESS_ADDAVG_48x4_HBD_AVX512
     RET
+%endif
 
 %macro PROCESS_ADDAVG_ALIGNED_16x4_HBD_AVX512 0
     movu              ym0,              [r0]
@@ -2221,6 +2246,7 @@ cglobal addAvg_48x64, 6,9,6
 ;-----------------------------------------------------------------------------
 ;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal addAvg_aligned_16x4, 6,9,6
     vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
@@ -2235,6 +2261,7 @@ cglobal addAvg_aligned_16x4, 6,9,6
     lea         r8,        [3 * r5]
     PROCESS_ADDAVG_ALIGNED_16x4_HBD_AVX512
     RET
+%endif
 
 %macro ADDAVG_ALIGNED_W16_HBD_AVX512 1
 INIT_ZMM avx512
@@ -2260,12 +2287,14 @@ cglobal addAvg_aligned_16x%1, 6,9,6
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_ALIGNED_W16_HBD_AVX512 8
 ADDAVG_ALIGNED_W16_HBD_AVX512 12
 ADDAVG_ALIGNED_W16_HBD_AVX512 16
 ADDAVG_ALIGNED_W16_HBD_AVX512 24
 ADDAVG_ALIGNED_W16_HBD_AVX512 32
 ADDAVG_ALIGNED_W16_HBD_AVX512 64
+%endif
 
 %macro ADDAVG_ALIGNED_W32_HBD_AVX512 1
 INIT_ZMM avx512
@@ -2291,12 +2320,14 @@ cglobal addAvg_aligned_32x%1, 6,9,6
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_ALIGNED_W32_HBD_AVX512 8
 ADDAVG_ALIGNED_W32_HBD_AVX512 16
 ADDAVG_ALIGNED_W32_HBD_AVX512 24
 ADDAVG_ALIGNED_W32_HBD_AVX512 32
 ADDAVG_ALIGNED_W32_HBD_AVX512 48
 ADDAVG_ALIGNED_W32_HBD_AVX512 64
+%endif
 
 %macro ADDAVG_ALIGNED_W64_HBD_AVX512 1
 INIT_ZMM avx512
@@ -2322,11 +2353,14 @@ cglobal addAvg_aligned_64x%1, 6,9,6
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_ALIGNED_W64_HBD_AVX512 16
 ADDAVG_ALIGNED_W64_HBD_AVX512 32
 ADDAVG_ALIGNED_W64_HBD_AVX512 48
 ADDAVG_ALIGNED_W64_HBD_AVX512 64
+%endif
 
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal addAvg_aligned_48x64, 6,9,6
     vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
@@ -2348,6 +2382,7 @@ cglobal addAvg_aligned_48x64, 6,9,6
 %endrep
     PROCESS_ADDAVG_ALIGNED_48x4_HBD_AVX512
     RET
+%endif
 ;-----------------------------------------------------------------------------
 ;addAvg avx512 high bit depth code end
 ;-----------------------------------------------------------------------------
@@ -6530,11 +6565,13 @@ cglobal pixel_avg_32x%1, 6,9,4
     RET
 %endmacro
 
+%if ARCH_X86_64
 PIXEL_AVG_HBD_W32 8
 PIXEL_AVG_HBD_W32 16
 PIXEL_AVG_HBD_W32 24
 PIXEL_AVG_HBD_W32 32
 PIXEL_AVG_HBD_W32 64
+%endif
 
 %macro PIXEL_AVG_HBD_W64 1
 INIT_ZMM avx512
@@ -6556,11 +6593,14 @@ cglobal pixel_avg_64x%1, 6,9,4
     RET
 %endmacro
 
+%if ARCH_X86_64
 PIXEL_AVG_HBD_W64 16
 PIXEL_AVG_HBD_W64 32
 PIXEL_AVG_HBD_W64 48
 PIXEL_AVG_HBD_W64 64
+%endif
 
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_avg_48x64, 6,9,4
     add     r1d, r1d
@@ -6578,6 +6618,7 @@ cglobal pixel_avg_48x64, 6,9,4
 %endrep
     PROCESS_PIXELAVG_48x8_HBD_AVX512
     RET
+%endif
 ;-----------------------------------------------------------------------------
 ;pixel_avg_pp avx512 high bit depth code end
 ;-----------------------------------------------------------------------------
@@ -6709,6 +6750,7 @@ cglobal pixel_avg2_w20_sse2, 6,7
     jg .height_loop
     RET
 
+%if ARCH_X86_64
 INIT_YMM avx2
 cglobal pixel_avg2_w20, 6,7
     sub    r2, r4
@@ -6725,6 +6767,7 @@ cglobal pixel_avg2_w20, 6,7
     sub    r5d, 2
     jg     .height_loop
     RET
+%endif
 
 ; Cacheline split code for processors with high latencies for loads
 ; split over cache lines.  See sad-a.asm for a more detailed explanation.

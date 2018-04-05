@@ -7707,8 +7707,13 @@ cglobal pixel_var_64x64, 2,4,7
     paddd          xm5, xm1
     HADDW          xm4, xm2
     HADDD          xm5, xm1
+%if ARCH_X86_64
     punpckldq      xm4, xm5
     movq           rax, xm4
+%else
+    movd           eax, xm4
+    movd           edx, xm5
+%endif
 %endmacro
 
 %if HIGH_BIT_DEPTH==0

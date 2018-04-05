@@ -377,6 +377,7 @@ cglobal interp_4tap_horiz_%3_%1x%2, 4, 7, 8
 ; void interp_4tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-----------------------------------------------------------------------------
 
+%if ARCH_X86_64
 FILTER_HOR_CHROMA_sse3 2, 4, pp
 FILTER_HOR_CHROMA_sse3 2, 8, pp
 FILTER_HOR_CHROMA_sse3 2, 16, pp
@@ -462,6 +463,7 @@ FILTER_HOR_CHROMA_sse3 64, 16, ps
 FILTER_HOR_CHROMA_sse3 64, 32, ps
 FILTER_HOR_CHROMA_sse3 64, 48, ps
 FILTER_HOR_CHROMA_sse3 64, 64, ps
+%endif
 
 %macro FILTER_W2_2 1
     movu        m3,         [r0]

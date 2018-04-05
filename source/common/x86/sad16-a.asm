@@ -1292,6 +1292,7 @@ SAD_12  12, 16
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_64x%1( uint16_t *, intptr_t, uint16_t *, intptr_t )
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_sad_64x16, 4,6,7
     pxor    m0, m0
@@ -1399,10 +1400,12 @@ cglobal pixel_sad_64x64, 4,6,7
     PROCESS_SAD_64x8_AVX512
     PROCESS_SAD_AVX512_END
     RET
+%endif
 
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_32x%1( uint16_t *, intptr_t, uint16_t *, intptr_t )
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_sad_32x8, 4,6,7
     pxor    m0, m0
@@ -1517,10 +1520,12 @@ cglobal pixel_sad_32x64, 4,6,7
     PROCESS_SAD_32x8_AVX512
     PROCESS_SAD_AVX512_END
     RET
+%endif
 
 ;-----------------------------------------------------------------------------
 ; int pixel_sad_48x64( uint16_t *, intptr_t, uint16_t *, intptr_t )
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_sad_48x64, 4, 7, 9
     pxor    m0,  m0
@@ -1622,6 +1627,7 @@ cglobal pixel_sad_48x64, 4, 7, 9
 
     PROCESS_SAD_AVX512_END
     RET
+%endif
 
 ;=============================================================================
 ; SAD x3/x4
@@ -2611,7 +2617,7 @@ SAD_X 4, 64, 64
 ;------------------------------------------------------------------------------------------------------------------------------------------
 ; void pixel_sad_x3_32x%1( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, intptr_t frefstride, int32_t* res )
 ;------------------------------------------------------------------------------------------------------------------------------------------
-
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_sad_x3_32x8, 6,7,8
     pxor    m0,  m0
@@ -2970,11 +2976,12 @@ cglobal pixel_sad_x3_48x64, 4, 8, 17
 
     PROCESS_SAD_X3_END_AVX512
     RET
+%endif
 
 ;------------------------------------------------------------------------------------------------------------------------------------------
 ; void pixel_sad_x3_64x%1( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, intptr_t frefstride, int32_t* res )
 ;------------------------------------------------------------------------------------------------------------------------------------------
-
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_sad_x3_64x16, 6,7,12
     pxor    m0,  m0
@@ -3214,11 +3221,11 @@ cglobal pixel_sad_x3_64x64, 6,7,12
     PROCESS_SAD_X3_64x4_AVX512
     PROCESS_SAD_X3_END_AVX512
     RET
-
+%endif
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------
 ; void pixel_sad_x4_32x%1( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, const pixel* pix5, intptr_t frefstride, int32_t* res )
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_sad_x4_32x8, 6,8,10
     pxor    m0,  m0
@@ -3485,10 +3492,11 @@ cglobal pixel_sad_x4_32x64, 6,8,10
     PROCESS_SAD_X4_32x4_AVX512
     PROCESS_SAD_X4_END_AVX512
     RET
-
+%endif
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------
 ; void pixel_sad_x4_48x64( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, const pixel* pix5, intptr_t frefstride, int32_t* res )
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_sad_x4_48x64, 4, 9, 20
     pxor    m0,  m0
@@ -3644,11 +3652,12 @@ cglobal pixel_sad_x4_48x64, 4, 9, 20
 
     PROCESS_SAD_X4_END_AVX512
     RET
+%endif
 
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------
 ; void pixel_sad_x4_64x%1( const pixel* pix1, const pixel* pix2, const pixel* pix3, const pixel* pix4, const pixel* pix5, intptr_t frefstride, int32_t* res )
 ;------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_sad_x4_64x16, 6,8,15
     pxor    m0,  m0
@@ -3928,3 +3937,4 @@ cglobal pixel_sad_x4_64x64, 6,8,15
     PROCESS_SAD_X4_64x4_AVX512
     PROCESS_SAD_X4_END_AVX512
     RET
+%endif

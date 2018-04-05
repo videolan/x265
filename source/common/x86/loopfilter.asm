@@ -58,6 +58,7 @@ cextern pw_shuf_off4
 ;============================================================================================================
 INIT_XMM sse4
 %if HIGH_BIT_DEPTH
+%if ARCH_X86_64
 cglobal saoCuOrgE0, 4,5,9
     mov         r4d, r4m
     movh        m6,  [r1]
@@ -157,7 +158,7 @@ cglobal saoCuOrgE0, 4,5,9
     sub         r4d, 16
     jnz        .loopH
     RET
-
+%endif
 %else ; HIGH_BIT_DEPTH == 1
 
 cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
@@ -249,6 +250,7 @@ cglobal saoCuOrgE0, 5, 5, 8, rec, offsetEo, lcuWidth, signLeft, stride
 
 INIT_YMM avx2
 %if HIGH_BIT_DEPTH
+%if ARCH_X86_64
 cglobal saoCuOrgE0, 4,4,9
     vbroadcasti128  m6, [r1]
     movzx           r1d, byte [r3]
@@ -308,6 +310,7 @@ cglobal saoCuOrgE0, 4,4,9
     dec             r2d
     jnz             .loop
     RET
+%endif
 %else ; HIGH_BIT_DEPTH
 cglobal saoCuOrgE0, 5, 5, 7, rec, offsetEo, lcuWidth, signLeft, stride
 
@@ -1655,6 +1658,7 @@ cglobal saoCuOrgB0, 4, 7, 8
     RET
 %endif
 
+%if ARCH_X86_64
 INIT_YMM avx2
 %if HIGH_BIT_DEPTH
 cglobal saoCuOrgB0, 5,7,8
@@ -1813,6 +1817,7 @@ cglobal saoCuOrgB0, 4, 7, 8
     jnz             .loopW1
 .end:
     RET
+%endif
 %endif
 
 ;============================================================================================================

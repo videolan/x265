@@ -141,6 +141,8 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
 
 ; Function to find ssd for 32x16 block, sse2, 12 bit depth
 ; Defined sepeartely to be called from SSD_ONE_32 macro
+%if ARCH_X86_64
+;This code is written for 64 bit architecture
 INIT_XMM sse2
 cglobal ssd_ss_32x16
     pxor        m8, m8
@@ -180,8 +182,10 @@ cglobal ssd_ss_32x16
     paddq       m4, m5
     paddq       m9, m4
     ret
+%endif
 
 %macro SSD_ONE_32 0
+%if ARCH_X86_64
 cglobal pixel_ssd_ss_32x64, 4,7,10
     add         r1d, r1d
     add         r3d, r3d
@@ -193,7 +197,9 @@ cglobal pixel_ssd_ss_32x64, 4,7,10
     call        ssd_ss_32x16
     movq        rax, m9
     RET
+%endif
 %endmacro
+
 %macro SSD_ONE_SS_32 0
 cglobal pixel_ssd_ss_32x32, 4,5,8
     add         r1d, r1d
@@ -554,6 +560,7 @@ cglobal pixel_ssd_ss_%1x%2, 4,7,8
     RET
 %endmacro
 
+%if ARCH_X86_64
 INIT_YMM avx2
 cglobal pixel_ssd_16x16, 4,7,3
     FIX_STRIDES r1, r3
@@ -696,6 +703,7 @@ cglobal pixel_ssd_64x64, 4,5,5
     paddq           xm3, xm4
     movq            rax, xm3
     RET
+%endif
 
 INIT_MMX mmx2
 SSD_ONE     4,  4
@@ -726,7 +734,9 @@ SSD_ONE    32, 24
 %if BIT_DEPTH <= 10
     SSD_ONE    32, 64
     SSD_ONE    32, 32
+%if ARCH_X86_64
     SSD_TWO    64, 64
+%endif
 %else
     SSD_ONE_32
     SSD_ONE_SS_32
@@ -3246,7 +3256,7 @@ cglobal pixel_ssd_s_16, 2,3,5
     movd    eax, m0
     RET
 
-
+%if ARCH_X86_64 && BIT_DEPTH >= 10
 INIT_XMM sse2
 cglobal pixel_ssd_s_32, 2,3,5
     add     r1, r1
@@ -3287,7 +3297,6 @@ cglobal pixel_ssd_s_32, 2,3,5
     dec     r2d
     jnz    .loop
 
-%if BIT_DEPTH >= 10
     movu            m1, m0
     pxor            m2, m2
     punpckldq       m0, m2
@@ -3296,13 +3305,56 @@ cglobal pixel_ssd_s_32, 2,3,5
     movhlps         m1, m0
     paddq           m0, m1
     movq            rax, xm0
-%else
+    RET
+%endif
+
+%if BIT_DEPTH == 8
+INIT_XMM sse2
+cglobal pixel_ssd_s_32, 2,3,5
+    add     r1, r1
+
+    mov     r2d, 16
+    pxor    m0, m0
+.loop:
+    movu    m1, [r0 + 0 * mmsize]
+    movu    m2, [r0 + 1 * mmsize]
+    movu    m3, [r0 + 2 * mmsize]
+    movu    m4, [r0 + 3 * mmsize]
+    add     r0, r1
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    movu    m1, [r0 + 0 * mmsize]
+    movu    m2, [r0 + 1 * mmsize]
+    movu    m3, [r0 + 2 * mmsize]
+    movu    m4, [r0 + 3 * mmsize]
+    add     r0, r1
+
+    pmaddwd m1, m1
+    pmaddwd m2, m2
+    pmaddwd m3, m3
+    pmaddwd m4, m4
+    paddd   m1, m2
+    paddd   m3, m4
+    paddd   m1, m3
+    paddd   m0, m1
+
+    dec     r2d
+    jnz    .loop
     ; calculate sum and return
     HADDD   m0, m1
     movd    eax, m0
-%endif
     RET
+%endif
 
+%if ARCH_X86_64
 INIT_YMM avx2
 cglobal pixel_ssd_s_16, 2,4,5
     add     r1, r1
@@ -3389,7 +3441,7 @@ cglobal pixel_ssd_s_32, 2,4,5
     movd    eax, xm0
 %endif
     RET
-
+%endif
 ;-----------------------------------------------------------------------------
 ; ssd_s avx512 code start
 ;-----------------------------------------------------------------------------
@@ -3447,6 +3499,7 @@ cglobal pixel_ssd_s_32, 2,4,5
 ;-----------------------------------------------------------------------------
 ; int pixel_ssd_s( int16_t *ref, intptr_t i_stride )
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal pixel_ssd_s_32, 2,4,5
     add     r1, r1
@@ -3495,6 +3548,7 @@ cglobal pixel_ssd_s_16, 2,4,5
     HADDD   m0, m1
     movd    eax, xm0
     RET
+%endif
 ;-----------------------------------------------------------------------------
 ; ssd_s avx512 code end
 ;-----------------------------------------------------------------------------

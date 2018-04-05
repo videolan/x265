@@ -196,6 +196,7 @@ cglobal intra_pred_dc4, 5,6,2
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
 ;-----------------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_XMM sse2
 cglobal intra_pred_dc8, 5, 8, 2
     movu            m0,            [r2 + 34]
@@ -275,10 +276,13 @@ cglobal intra_pred_dc8, 5, 8, 2
     mov             [r0 + r7],     r3w
 .end:
     RET
+%endif
 
 ;-------------------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+;This code is meant for 64 bit architecture
 INIT_XMM sse2
 cglobal intra_pred_dc16, 5, 10, 4
     lea             r3,                  [r2 + 66]
@@ -410,6 +414,7 @@ cglobal intra_pred_dc16, 5, 10, 4
     mov             [r9 + r1 * 8],       r3w
 .end:
     RET
+%endif
 
 ;-------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
@@ -474,6 +479,7 @@ cglobal intra_pred_dc32, 3, 4, 6
 ;-------------------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_YMM avx2
 cglobal intra_pred_dc16, 3, 9, 4
     mov             r3d,                 r4m
@@ -682,6 +688,7 @@ cglobal intra_pred_dc32, 3,3,3
     movu            [r0 + r2 * 1 +  0], m0
     movu            [r0 + r2 * 1 + mmsize], m0
     RET
+%endif
 
 ;---------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
@@ -1104,6 +1111,7 @@ cglobal intra_pred_planar32, 3,7,16
 ;---------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
 ;---------------------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_XMM sse2
 cglobal intra_pred_planar32, 3,3,16
     movd            m3, [r2 + 66]               ; topRight   = above[32]
@@ -1209,7 +1217,7 @@ cglobal intra_pred_planar32, 3,3,16
 %endrep
     RET
 %endif
-
+%endif
 ;---------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
 ;---------------------------------------------------------------------------------------
@@ -2063,6 +2071,7 @@ cglobal intra_pred_ang4_25, 3,3,5
     STORE_4x4
     RET
 
+%if ARCH_X86_64
 cglobal intra_pred_ang4_26, 3,3,3
     movh        m0,             [r2 + 2] ;[8 7 6 5 4 3 2 1]
     add         r1d,            r1d
@@ -2098,6 +2107,7 @@ cglobal intra_pred_ang4_26, 3,3,3
     mov         [r0 + r3],      r2w
 .quit:
     RET
+%endif
 
 cglobal intra_pred_ang4_27, 3,3,5
     movu        m0, [r2 + 2]            ;[8 7 6 5 4 3 2 1]
@@ -11122,6 +11132,7 @@ cglobal intra_pred_ang16_2, 3,5,3
 .end%11:
 %endmacro
 
+%if ARCH_X86_64
 ;; angle 16, modes 3 and 33
 cglobal ang16_mode_3_33
     test            r6d, r6d
@@ -18220,6 +18231,7 @@ cglobal intra_pred_ang32_18, 3,6,6
 
     mov         rsp,                [rsp+4*mmsize]
     RET
+%endif
 ;-------------------------------------------------------------------------------------------------------
 ; end of avx2 code for intra_pred_ang32 mode 2 to 34
 ;-------------------------------------------------------------------------------------------------------

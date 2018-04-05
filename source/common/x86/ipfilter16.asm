@@ -266,6 +266,7 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_vert_pp_%2x%3(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
 ;-------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
     FILTER_VER_LUMA_sse2 pp, 4, 4
     FILTER_VER_LUMA_sse2 pp, 8, 8
     FILTER_VER_LUMA_sse2 pp, 8, 4
@@ -320,6 +321,7 @@ cglobal interp_8tap_vert_%1_%2x%3, 5, 7, 8
     FILTER_VER_LUMA_sse2 ps, 48, 64
     FILTER_VER_LUMA_sse2 ps, 64, 16
     FILTER_VER_LUMA_sse2 ps, 16, 64
+%endif
 
 ;-----------------------------------------------------------------------------
 ;p2s and p2s_aligned avx512 code start
@@ -5620,6 +5622,7 @@ cglobal filterPixelToShort_48x64, 3, 7, 5
 ;-------------------------------------------------------------------------------------------------------------
 ; void interp_4tap_horiz_pp(pixel *src, intptr_t srcStride, int16_t *dst, intptr_t dstStride, int coeffIdx
 ;-------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal interp_4tap_horiz_pp_8x4, 5,8,11
     add             r1d, r1d
@@ -5645,9 +5648,10 @@ cglobal interp_4tap_horiz_pp_8x4, 5,8,11
 
     PROCESS_IPFILTER_CHROMA_PP_8x4_AVX512
     RET
+%endif
 
-INIT_ZMM avx512
 %macro IPFILTER_CHROMA_AVX512_8xN 1
+INIT_ZMM avx512
 cglobal interp_4tap_horiz_pp_8x%1, 5,8,11
     add             r1d, r1d
     add             r3d, r3d
@@ -5679,14 +5683,16 @@ cglobal interp_4tap_horiz_pp_8x%1, 5,8,11
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_CHROMA_AVX512_8xN 8
 IPFILTER_CHROMA_AVX512_8xN 12
 IPFILTER_CHROMA_AVX512_8xN 16
 IPFILTER_CHROMA_AVX512_8xN 32
 IPFILTER_CHROMA_AVX512_8xN 64
+%endif
 
-INIT_ZMM avx512
 %macro IPFILTER_CHROMA_AVX512_16xN 1
+INIT_ZMM avx512
 cglobal interp_4tap_horiz_pp_16x%1, 5,6,11
     add             r1d, r1d
     add             r3d, r3d
@@ -5716,6 +5722,7 @@ cglobal interp_4tap_horiz_pp_16x%1, 5,6,11
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_CHROMA_AVX512_16xN 4
 IPFILTER_CHROMA_AVX512_16xN 8
 IPFILTER_CHROMA_AVX512_16xN 12
@@ -5723,9 +5730,10 @@ IPFILTER_CHROMA_AVX512_16xN 16
 IPFILTER_CHROMA_AVX512_16xN 24
 IPFILTER_CHROMA_AVX512_16xN 32
 IPFILTER_CHROMA_AVX512_16xN 64
+%endif
 
-INIT_ZMM avx512
 %macro IPFILTER_CHROMA_AVX512_24xN 1
+INIT_ZMM avx512
 cglobal interp_4tap_horiz_pp_24x%1, 5,8,11
     add             r1d, r1d
     add             r3d, r3d
@@ -5757,11 +5765,13 @@ cglobal interp_4tap_horiz_pp_24x%1, 5,8,11
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_CHROMA_AVX512_24xN 32
 IPFILTER_CHROMA_AVX512_24xN 64
+%endif
 
-INIT_ZMM avx512
 %macro IPFILTER_CHROMA_AVX512_32xN 1
+INIT_ZMM avx512
 cglobal interp_4tap_horiz_pp_32x%1, 5,6,11
     add             r1d, r1d
     add             r3d, r3d
@@ -5791,15 +5801,17 @@ cglobal interp_4tap_horiz_pp_32x%1, 5,6,11
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_CHROMA_AVX512_32xN 8
 IPFILTER_CHROMA_AVX512_32xN 16
 IPFILTER_CHROMA_AVX512_32xN 24
 IPFILTER_CHROMA_AVX512_32xN 32
 IPFILTER_CHROMA_AVX512_32xN 48
 IPFILTER_CHROMA_AVX512_32xN 64
+%endif
 
-INIT_ZMM avx512
 %macro IPFILTER_CHROMA_AVX512_64xN 1
+INIT_ZMM avx512
 cglobal interp_4tap_horiz_pp_64x%1, 5,6,11
     add             r1d, r1d
     add             r3d, r3d
@@ -5829,11 +5841,14 @@ cglobal interp_4tap_horiz_pp_64x%1, 5,6,11
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_CHROMA_AVX512_64xN 16
 IPFILTER_CHROMA_AVX512_64xN 32
 IPFILTER_CHROMA_AVX512_64xN 48
 IPFILTER_CHROMA_AVX512_64xN 64
+%endif
 
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal interp_4tap_horiz_pp_48x64, 5,6,11
     add             r1d, r1d
@@ -5862,6 +5877,7 @@ cglobal interp_4tap_horiz_pp_48x64, 5,6,11
 %endrep
     PROCESS_IPFILTER_CHROMA_PP_48x2_AVX512
     RET
+%endif
 ;-------------------------------------------------------------------------------------------------------------
 ;ipfilter_chroma_avx512 code end
 ;-------------------------------------------------------------------------------------------------------------
@@ -6428,8 +6444,8 @@ cglobal interp_4tap_horiz_pp_48x64, 5,6,11
     movu            [r2 + r3 + mmsize],    m10
 %endmacro
 
-INIT_ZMM avx512
 %macro IPFILTER_LUMA_AVX512_16xN 1
+INIT_ZMM avx512
 cglobal interp_8tap_horiz_pp_16x%1, 5,8,17
     add              r1d,        r1d
     add              r3d,        r3d
@@ -6467,15 +6483,17 @@ cglobal interp_8tap_horiz_pp_16x%1, 5,8,17
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_LUMA_AVX512_16xN 4
 IPFILTER_LUMA_AVX512_16xN 8
 IPFILTER_LUMA_AVX512_16xN 12
 IPFILTER_LUMA_AVX512_16xN 16
 IPFILTER_LUMA_AVX512_16xN 32
 IPFILTER_LUMA_AVX512_16xN 64
+%endif
 
-INIT_ZMM avx512
 %macro IPFILTER_LUMA_AVX512_32xN 1
+INIT_ZMM avx512
 cglobal interp_8tap_horiz_pp_32x%1, 5,6,17
     add              r1d,        r1d
     add              r3d,        r3d
@@ -6511,14 +6529,16 @@ cglobal interp_8tap_horiz_pp_32x%1, 5,6,17
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_LUMA_AVX512_32xN 8
 IPFILTER_LUMA_AVX512_32xN 16
 IPFILTER_LUMA_AVX512_32xN 24
 IPFILTER_LUMA_AVX512_32xN 32
 IPFILTER_LUMA_AVX512_32xN 64
+%endif
 
-INIT_ZMM avx512
 %macro IPFILTER_LUMA_AVX512_64xN 1
+INIT_ZMM avx512
 cglobal interp_8tap_horiz_pp_64x%1, 5,6,17
     add              r1d,        r1d
     add              r3d,        r3d
@@ -6554,11 +6574,14 @@ cglobal interp_8tap_horiz_pp_64x%1, 5,6,17
     RET
 %endmacro
 
+%if ARCH_X86_64
 IPFILTER_LUMA_AVX512_64xN 16
 IPFILTER_LUMA_AVX512_64xN 32
 IPFILTER_LUMA_AVX512_64xN 48
 IPFILTER_LUMA_AVX512_64xN 64
+%endif
 
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal interp_8tap_horiz_pp_48x64, 5,8,17
     add              r1d,        r1d
@@ -6595,6 +6618,7 @@ cglobal interp_8tap_horiz_pp_48x64, 5,8,17
 %endrep
     PROCESS_IPFILTER_LUMA_PP_48x4_AVX512
     RET
+%endif
 ;-------------------------------------------------------------------------------------------------------------
 ;ipfilter_luma_avx512 code end
 ;-------------------------------------------------------------------------------------------------------------

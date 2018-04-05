@@ -285,7 +285,8 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
 ;------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx
 ;------------------------------------------------------------------------------------------------------------
-    FILTER_HOR_LUMA_sse2 4, 4, pp
+%if ARCH_X86_64
+	FILTER_HOR_LUMA_sse2 4, 4, pp
     FILTER_HOR_LUMA_sse2 4, 8, pp
     FILTER_HOR_LUMA_sse2 4, 16, pp
     FILTER_HOR_LUMA_sse2 8, 4, pp
@@ -339,6 +340,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     FILTER_HOR_LUMA_sse2 64, 32, ps
     FILTER_HOR_LUMA_sse2 64, 48, ps
     FILTER_HOR_LUMA_sse2 64, 64, ps
+%endif
 
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_%3_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)

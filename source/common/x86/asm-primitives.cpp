@@ -886,10 +886,6 @@ void interp_8tap_hv_pp_cpu(const pixel* src, intptr_t srcStride, pixel* dst, int
 
 void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 {
-#if !defined(X86_64)
-#error "Unsupported build configuration (32bit x86 and HIGH_BIT_DEPTH), you must configure ENABLE_ASSEMBLY=OFF"
-#endif
-
 #if X86_64
     p.scanPosLast = PFX(scanPosLast_x64);
 #endif
@@ -950,16 +946,42 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         CHROMA_422_VERT_FILTERS(_sse2);
         CHROMA_444_VERT_FILTERS(sse2);
 
+#if X86_64
         ALL_LUMA_PU(luma_hpp, interp_8tap_horiz_pp, sse2);
         p.pu[LUMA_4x4].luma_hpp = PFX(interp_8tap_horiz_pp_4x4_sse2);
         ALL_LUMA_PU(luma_hps, interp_8tap_horiz_ps, sse2);
         p.pu[LUMA_4x4].luma_hps = PFX(interp_8tap_horiz_ps_4x4_sse2);
         ALL_LUMA_PU(luma_vpp, interp_8tap_vert_pp, sse2);
         ALL_LUMA_PU(luma_vps, interp_8tap_vert_ps, sse2);
+#endif
 
         p.ssim_4x4x2_core = PFX(pixel_ssim_4x4x2_core_sse2);
         p.ssim_end_4 = PFX(pixel_ssim_end4_sse2);
-        PIXEL_AVG(sse2);
+
+        p.pu[LUMA_64x64].pixelavg_pp = PFX(pixel_avg_64x64_sse2);
+        p.pu[LUMA_64x48].pixelavg_pp = PFX(pixel_avg_64x48_sse2);
+        p.pu[LUMA_64x32].pixelavg_pp = PFX(pixel_avg_64x32_sse2);
+        p.pu[LUMA_64x16].pixelavg_pp = PFX(pixel_avg_64x16_sse2);
+        p.pu[LUMA_48x64].pixelavg_pp = PFX(pixel_avg_48x64_sse2);
+        p.pu[LUMA_32x64].pixelavg_pp = PFX(pixel_avg_32x64_sse2);
+        p.pu[LUMA_32x32].pixelavg_pp = PFX(pixel_avg_32x32_sse2);
+        p.pu[LUMA_32x24].pixelavg_pp = PFX(pixel_avg_32x24_sse2);
+        p.pu[LUMA_32x16].pixelavg_pp = PFX(pixel_avg_32x16_sse2);
+        p.pu[LUMA_32x8].pixelavg_pp  = PFX(pixel_avg_32x8_sse2);
+        p.pu[LUMA_24x32].pixelavg_pp = PFX(pixel_avg_24x32_sse2);
+        p.pu[LUMA_16x64].pixelavg_pp = PFX(pixel_avg_16x64_sse2);
+        p.pu[LUMA_16x32].pixelavg_pp = PFX(pixel_avg_16x32_sse2);
+        p.pu[LUMA_16x16].pixelavg_pp = PFX(pixel_avg_16x16_sse2);
+        p.pu[LUMA_16x12].pixelavg_pp = PFX(pixel_avg_16x12_sse2);
+        p.pu[LUMA_16x8].pixelavg_pp  = PFX(pixel_avg_16x8_sse2);
+        p.pu[LUMA_16x4].pixelavg_pp  = PFX(pixel_avg_16x4_sse2);
+        p.pu[LUMA_12x16].pixelavg_pp = PFX(pixel_avg_12x16_sse2);
+#if X86_64
+        p.pu[LUMA_8x32].pixelavg_pp  = PFX(pixel_avg_8x32_sse2);
+        p.pu[LUMA_8x16].pixelavg_pp = PFX(pixel_avg_8x16_sse2);
+        p.pu[LUMA_8x8].pixelavg_pp   = PFX(pixel_avg_8x8_sse2);
+        p.pu[LUMA_8x4].pixelavg_pp   = PFX(pixel_avg_8x4_sse2);
+#endif
         PIXEL_AVG_W4(mmx2);
         LUMA_VAR(sse2);
 
@@ -970,7 +992,12 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         ALL_LUMA_TU_S(cpy1Dto2D_shl, cpy1Dto2D_shl_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shr, cpy2Dto1D_shr_, sse2);
         ALL_LUMA_TU_S(cpy2Dto1D_shl, cpy2Dto1D_shl_, sse2);
-        ALL_LUMA_TU_S(ssd_s, pixel_ssd_s_, sse2);
+#if X86_64
+        p.cu[BLOCK_4x4].ssd_s = PFX(pixel_ssd_s_4_sse2);
+        p.cu[BLOCK_8x8].ssd_s = PFX(pixel_ssd_s_8_sse2);
+        p.cu[BLOCK_16x16].ssd_s = PFX(pixel_ssd_s_16_sse2);
+        p.cu[BLOCK_32x32].ssd_s = PFX(pixel_ssd_s_32_sse2);
+#endif
         ALL_LUMA_TU_S(calcresidual[ALIGNED], getResidual, sse2);
         ALL_LUMA_TU_S(calcresidual[NONALIGNED], getResidual, sse2);
         ALL_LUMA_TU_S(transpose, transpose, sse2);
@@ -978,9 +1005,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_4x4].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar4_sse2);
         p.cu[BLOCK_8x8].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar8_sse2);
         p.cu[BLOCK_16x16].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar16_sse2);
+#if X86_64
         p.cu[BLOCK_32x32].intra_pred[PLANAR_IDX] = PFX(intra_pred_planar32_sse2);
         ALL_LUMA_TU_S(intra_pred[DC_IDX], intra_pred_dc, sse2);
-
+#endif
         p.cu[BLOCK_4x4].intra_pred[2] = PFX(intra_pred_ang4_2_sse2);
         p.cu[BLOCK_4x4].intra_pred[3] = PFX(intra_pred_ang4_3_sse2);
         p.cu[BLOCK_4x4].intra_pred[4] = PFX(intra_pred_ang4_4_sse2);
@@ -1005,7 +1033,9 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_4x4].intra_pred[23] = PFX(intra_pred_ang4_23_sse2);
         p.cu[BLOCK_4x4].intra_pred[24] = PFX(intra_pred_ang4_24_sse2);
         p.cu[BLOCK_4x4].intra_pred[25] = PFX(intra_pred_ang4_25_sse2);
+#if X86_64
         p.cu[BLOCK_4x4].intra_pred[26] = PFX(intra_pred_ang4_26_sse2);
+#endif
         p.cu[BLOCK_4x4].intra_pred[27] = PFX(intra_pred_ang4_27_sse2);
         p.cu[BLOCK_4x4].intra_pred[28] = PFX(intra_pred_ang4_28_sse2);
         p.cu[BLOCK_4x4].intra_pred[29] = PFX(intra_pred_ang4_29_sse2);
@@ -1014,19 +1044,24 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_4x4].intra_pred[32] = PFX(intra_pred_ang4_32_sse2);
         p.cu[BLOCK_4x4].intra_pred[33] = PFX(intra_pred_ang4_33_sse2);
 
+#if X86_64 && X265_DEPTH <= 10
+        p.cu[BLOCK_4x4].sse_ss = PFX(pixel_ssd_ss_4x4_mmx2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_32x64].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_32x64_sse2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_4x8].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_4x8_mmx2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_8x16].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_8x16_sse2);
         p.chroma[X265_CSP_I422].cu[BLOCK_422_16x32].sse_pp = (pixel_sse_t)PFX(pixel_ssd_ss_16x32_sse2);
-#if X265_DEPTH <= 10
-        p.cu[BLOCK_4x4].sse_ss = PFX(pixel_ssd_ss_4x4_mmx2);
-        ALL_LUMA_CU(sse_ss, pixel_ssd_ss, sse2);
+
+        p.cu[BLOCK_8x8].sse_ss = PFX(pixel_ssd_ss_8x8_sse2);
+        p.cu[BLOCK_16x16].sse_ss = PFX(pixel_ssd_ss_16x16_sse2);
+        p.cu[BLOCK_32x32].sse_ss = PFX(pixel_ssd_ss_32x32_sse2);
+        p.cu[BLOCK_64x64].sse_ss = PFX(pixel_ssd_ss_64x64_sse2);
 #endif
         p.cu[BLOCK_4x4].dct = PFX(dct4_sse2);
         p.cu[BLOCK_8x8].dct = PFX(dct8_sse2);
         p.cu[BLOCK_4x4].idct = PFX(idct4_sse2);
+#if X86_64
         p.cu[BLOCK_8x8].idct = PFX(idct8_sse2);
-
+#endif
         p.idst4x4 = PFX(idst4_sse2);
         p.dst4x4 = PFX(dst4_sse2);
 
@@ -1050,12 +1085,14 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     }
     if (cpuMask & X265_CPU_SSE3)
     {
+#if X86_64
         ALL_CHROMA_420_PU(filter_hpp, interp_4tap_horiz_pp, sse3);
         ALL_CHROMA_422_PU(filter_hpp, interp_4tap_horiz_pp, sse3);
         ALL_CHROMA_444_PU(filter_hpp, interp_4tap_horiz_pp, sse3);
         ALL_CHROMA_420_PU(filter_hps, interp_4tap_horiz_ps, sse3);
         ALL_CHROMA_422_PU(filter_hps, interp_4tap_horiz_ps, sse3);
         ALL_CHROMA_444_PU(filter_hps, interp_4tap_horiz_ps, sse3);
+#endif
     }
     if (cpuMask & X265_CPU_SSSE3)
     {
@@ -1126,12 +1163,13 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
     }
     if (cpuMask & X265_CPU_SSE4)
     {
+#if X86_64
         p.pelFilterLumaStrong[0] = PFX(pelFilterLumaStrong_V_sse4);
         p.pelFilterLumaStrong[1] = PFX(pelFilterLumaStrong_H_sse4);
         p.pelFilterChroma[0] = PFX(pelFilterChroma_V_sse4);
         p.pelFilterChroma[1] = PFX(pelFilterChroma_H_sse4);
-
         p.saoCuOrgE0 = PFX(saoCuOrgE0_sse4);
+#endif
         p.saoCuOrgE1 = PFX(saoCuOrgE1_sse4);
         p.saoCuOrgE1_2Rows = PFX(saoCuOrgE1_2Rows_sse4);
         p.saoCuOrgE2[0] = PFX(saoCuOrgE2_sse4);
@@ -1146,6 +1184,68 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         CHROMA_422_ADDAVG(sse4);
 
         LUMA_FILTERS(sse4);
+
+#if X86_64
+        p.pu[LUMA_4x4].luma_hpp = PFX(interp_8tap_horiz_pp_4x4_sse4);
+        p.pu[LUMA_4x8].luma_hpp = PFX(interp_8tap_horiz_pp_4x8_sse4);
+        p.pu[LUMA_4x16].luma_hpp = PFX(interp_8tap_horiz_pp_4x16_sse4);
+        p.pu[LUMA_4x4].luma_hps = PFX(interp_8tap_horiz_ps_4x4_sse4);
+        p.pu[LUMA_4x8].luma_hps = PFX(interp_8tap_horiz_ps_4x8_sse4);
+        p.pu[LUMA_4x16].luma_hps = PFX(interp_8tap_horiz_ps_4x16_sse4);
+#endif
+
+        p.pu[LUMA_8x8].luma_hpp = PFX(interp_8tap_horiz_pp_8x8_sse4);
+        p.pu[LUMA_16x16].luma_hpp = PFX(interp_8tap_horiz_pp_16x16_sse4);
+        p.pu[LUMA_32x32].luma_hpp = PFX(interp_8tap_horiz_pp_32x32_sse4);
+        p.pu[LUMA_64x64].luma_hpp = PFX(interp_8tap_horiz_pp_64x64_sse4);
+        p.pu[LUMA_8x4].luma_hpp = PFX(interp_8tap_horiz_pp_8x4_sse4);
+
+        p.pu[LUMA_16x8].luma_hpp = PFX(interp_8tap_horiz_pp_16x8_sse4);
+        p.pu[LUMA_8x16].luma_hpp = PFX(interp_8tap_horiz_pp_8x16_sse4);
+        p.pu[LUMA_16x32].luma_hpp = PFX(interp_8tap_horiz_pp_16x32_sse4);
+        p.pu[LUMA_32x16].luma_hpp = PFX(interp_8tap_horiz_pp_32x16_sse4);
+        p.pu[LUMA_64x32].luma_hpp = PFX(interp_8tap_horiz_pp_64x32_sse4);
+        p.pu[LUMA_32x64].luma_hpp = PFX(interp_8tap_horiz_pp_32x64_sse4);
+        p.pu[LUMA_16x12].luma_hpp = PFX(interp_8tap_horiz_pp_16x12_sse4);
+        p.pu[LUMA_12x16].luma_hpp = PFX(interp_8tap_horiz_pp_12x16_sse4);
+        p.pu[LUMA_16x4].luma_hpp = PFX(interp_8tap_horiz_pp_16x4_sse4);
+
+        p.pu[LUMA_32x24].luma_hpp = PFX(interp_8tap_horiz_pp_32x24_sse4);
+        p.pu[LUMA_24x32].luma_hpp = PFX(interp_8tap_horiz_pp_24x32_sse4);
+        p.pu[LUMA_32x8].luma_hpp = PFX(interp_8tap_horiz_pp_32x8_sse4);
+        p.pu[LUMA_8x32].luma_hpp = PFX(interp_8tap_horiz_pp_8x32_sse4);
+        p.pu[LUMA_64x48].luma_hpp = PFX(interp_8tap_horiz_pp_64x48_sse4);
+        p.pu[LUMA_48x64].luma_hpp = PFX(interp_8tap_horiz_pp_48x64_sse4);
+        p.pu[LUMA_64x16].luma_hpp = PFX(interp_8tap_horiz_pp_64x16_sse4);
+        p.pu[LUMA_16x64].luma_hpp = PFX(interp_8tap_horiz_pp_16x64_sse4);
+
+        p.pu[LUMA_8x8].luma_hps = PFX(interp_8tap_horiz_ps_8x8_sse4);
+        p.pu[LUMA_16x16].luma_hps = PFX(interp_8tap_horiz_ps_16x16_sse4);
+        p.pu[LUMA_32x32].luma_hps = PFX(interp_8tap_horiz_ps_32x32_sse4);
+        p.pu[LUMA_64x64].luma_hps = PFX(interp_8tap_horiz_ps_64x64_sse4);
+        p.pu[LUMA_8x4].luma_hps = PFX(interp_8tap_horiz_ps_8x4_sse4);
+        p.pu[LUMA_16x8].luma_hps = PFX(interp_8tap_horiz_ps_16x8_sse4);
+        p.pu[LUMA_8x16].luma_hps = PFX(interp_8tap_horiz_ps_8x16_sse4);
+        p.pu[LUMA_16x32].luma_hps = PFX(interp_8tap_horiz_ps_16x32_sse4);
+        p.pu[LUMA_32x16].luma_hps = PFX(interp_8tap_horiz_ps_32x16_sse4);
+        p.pu[LUMA_64x32].luma_hps = PFX(interp_8tap_horiz_ps_64x32_sse4);
+        p.pu[LUMA_32x64].luma_hps = PFX(interp_8tap_horiz_ps_32x64_sse4);
+        p.pu[LUMA_16x12].luma_hps = PFX(interp_8tap_horiz_ps_16x12_sse4);
+        p.pu[LUMA_12x16].luma_hps = PFX(interp_8tap_horiz_ps_12x16_sse4);
+        p.pu[LUMA_16x4].luma_hps = PFX(interp_8tap_horiz_ps_16x4_sse4);
+        p.pu[LUMA_32x24].luma_hps = PFX(interp_8tap_horiz_ps_32x24_sse4);
+        p.pu[LUMA_24x32].luma_hps = PFX(interp_8tap_horiz_ps_24x32_sse4);
+        p.pu[LUMA_32x8].luma_hps = PFX(interp_8tap_horiz_ps_32x8_sse4);
+        p.pu[LUMA_8x32].luma_hps = PFX(interp_8tap_horiz_ps_8x32_sse4);
+        p.pu[LUMA_64x48].luma_hps = PFX(interp_8tap_horiz_ps_64x48_sse4);
+        p.pu[LUMA_48x64].luma_hps = PFX(interp_8tap_horiz_ps_48x64_sse4);
+        p.pu[LUMA_64x16].luma_hps = PFX(interp_8tap_horiz_ps_64x16_sse4);
+        p.pu[LUMA_16x64].luma_hps = PFX(interp_8tap_horiz_ps_16x64_sse4);
+
+        ALL_LUMA_PU(luma_vpp, interp_8tap_vert_pp, sse4); p.pu[LUMA_4x4].luma_vpp = PFX(interp_8tap_vert_pp_4x4_sse4);
+        ALL_LUMA_PU(luma_vps, interp_8tap_vert_ps, sse4); p.pu[LUMA_4x4].luma_vps = PFX(interp_8tap_vert_ps_4x4_sse4);
+        ALL_LUMA_PU(luma_vsp, interp_8tap_vert_sp, sse4); p.pu[LUMA_4x4].luma_vsp = PFX(interp_8tap_vert_sp_4x4_sse4);
+        ALL_LUMA_PU_T(luma_hvpp, interp_8tap_hv_pp_cpu); p.pu[LUMA_4x4].luma_hvpp = interp_8tap_hv_pp_cpu<LUMA_4x4>;
         CHROMA_420_HORIZ_FILTERS(sse4);
         CHROMA_420_VERT_FILTERS_SSE4(_sse4);
         CHROMA_422_HORIZ_FILTERS(_sse4);
@@ -1185,7 +1285,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
 
         // TODO: check POPCNT flag!
         ALL_LUMA_TU_S(copy_cnt, copy_cnt_, sse4);
-#if X265_DEPTH <= 10
+#if X86_64 && X265_DEPTH <= 10
         ALL_LUMA_CU(psy_cost_pp, psyCost_pp, sse4);
 #endif
 
@@ -1203,6 +1303,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.saoCuStatsE3 = PFX(saoCuStatsE3_sse4);
 #endif
     }
+#if X86_64
     if (cpuMask & X265_CPU_AVX)
     {
         // p.pu[LUMA_4x4].satd = p.cu[BLOCK_4x4].sa8d = PFX(pixel_satd_4x4_avx); fails tests
@@ -2535,6 +2636,7 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.pu[LUMA_48x64].luma_hpp = PFX(interp_8tap_horiz_pp_48x64_avx512);
 
     }
+#endif
 }
 #else // if HIGH_BIT_DEPTH
 

@@ -14055,6 +14055,7 @@ cglobal planeClipAndMax, 5,7,8
     ;lea %8, [%8+4*r3]
 %endmacro
 
+%if ARCH_X86_64
 INIT_YMM avx2
 cglobal pixel_satd_8x8, 4,4,7
 
@@ -14620,5 +14621,5 @@ cglobal pixel_sa8d_32x32, 4,8,14
 
     movd eax, xm0
     RET
-
+%endif
 %endif ; HIGH_BIT_DEPTH == 1 && BIT_DEPTH == 10
