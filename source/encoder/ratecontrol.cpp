@@ -1282,6 +1282,12 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         m_predictedBits = m_totalBits;
         updateVbvPlan(enc);
         rce->bufferFill = m_bufferFill;
+        rce->vbvEndAdj = false;
+        if (m_param->vbvBufferEnd && rce->encodeOrder >= m_param->vbvEndFrameAdjust * m_param->totalFrames)
+        {
+            rce->vbvEndAdj = true;
+            rce->targetFill = 0;
+        }
 
         int mincr = enc->m_vps.ptl.minCrForLevel;
         /* Profiles above Main10 don't require maxAU size check, so just set the maximum to a large value. */
@@ -2173,12 +2179,12 @@ double RateControl::clipQscale(Frame* curFrame, RateControlEntry* rce, double q)
                     curBits = predictSize(&m_pred[predType], frameQ[type], (double)satd);
                     bufferFillCur -= curBits;
                 }
-                if (m_param->vbvBufferEnd && rce->encodeOrder >= m_param->vbvEndFrameAdjust * m_param->totalFrames)
+                if (rce->vbvEndAdj)
                 {
                     bool loopBreak = false;
                     double bufferDiff = m_param->vbvBufferEnd - (m_bufferFill / m_bufferSize);
-                    targetFill = m_bufferFill + m_bufferSize * (bufferDiff / (m_param->totalFrames - rce->encodeOrder));
-                    if (bufferFillCur < targetFill)
+                    rce->targetFill = m_bufferFill + m_bufferSize * (bufferDiff / (m_param->totalFrames - rce->encodeOrder));
+                    if (bufferFillCur < rce->targetFill)
                     {
                         q *= 1.01;
                         loopTerminate |= 1;
@@ -2421,6 +2427,7 @@ int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEnt
         double rcTol = bufferLeftPlanned / m_param->frameNumThreads * m_rateTolerance;
         int32_t encodedBitsSoFar = 0;
         double accFrameBits = predictRowsSizeSum(curFrame, rce, qpVbv, encodedBitsSoFar);
+        double vbvEndBias = 0.95;
 
         /* * Don't increase the row QPs until a sufficent amount of the bits of
          * the frame have been processed, in case a flat area at the top of the
@@ -2442,7 +2449,8 @@ int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEnt
         while (qpVbv < qpMax
                && (((accFrameBits > rce->frameSizePlanned + rcTol) ||
                    (rce->bufferFill - accFrameBits < bufferLeftPlanned * 0.5) ||
-                   (accFrameBits > rce->frameSizePlanned && qpVbv < rce->qpNoVbv))
+                   (accFrameBits > rce->frameSizePlanned && qpVbv < rce->qpNoVbv) ||
+                   (rce->vbvEndAdj && ((rce->bufferFill - accFrameBits) < (rce->targetFill * vbvEndBias))))
                    && (!m_param->rc.bStrictCbr ? 1 : abrOvershoot > 0.1)))
         {
             qpVbv += stepSize;
@@ -2453,7 +2461,8 @@ int RateControl::rowVbvRateControl(Frame* curFrame, uint32_t row, RateControlEnt
         while (qpVbv > qpMin
                && (qpVbv > curEncData.m_rowStat[0].rowQp || m_singleFrameVbv)
                && (((accFrameBits < rce->frameSizePlanned * 0.8f && qpVbv <= prevRowQp)
-                   || accFrameBits < (rce->bufferFill - m_bufferSize + m_bufferRate) * 1.1)
+                   || accFrameBits < (rce->bufferFill - m_bufferSize + m_bufferRate) * 1.1
+                   || (rce->vbvEndAdj && ((rce->bufferFill - accFrameBits) > (rce->targetFill * vbvEndBias))))
                    && (!m_param->rc.bStrictCbr ? 1 : abrOvershoot < 0)))
         {
             qpVbv -= stepSize;
