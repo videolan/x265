@@ -160,12 +160,15 @@ tab_LumaCoeffVer_avx512: times 16 dw 0, 0
                          times 16 dw 58, -10
                          times 16 dw 4, -1
 
-const interp8_hpp_shuf1_load_avx512, times 2 db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
+ALIGN 64
+const interp8_hpp_shuf1_load_avx512, times 4 db 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 4, 5, 6, 7, 8, 9
 
-const interp8_hpp_shuf2_load_avx512, times 2 db 4, 5, 6, 7, 8, 9, 10, 11, 6, 7, 8, 9, 10, 11, 12, 13
+ALIGN 64
+const interp8_hpp_shuf2_load_avx512, times 4 db 4, 5, 6, 7, 8, 9, 10, 11, 6, 7, 8, 9, 10, 11, 12, 13
 
-const interp8_hpp_shuf1_store_avx512, times 2 db 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
-
+ALIGN 64
+const interp8_hpp_shuf1_store_avx512, times 4 db 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
+ 
 SECTION .text
 cextern pd_8
 cextern pd_32
@@ -7135,32 +7138,23 @@ IPFILTER_CHROMA_PS_AVX512_64xN 64
     movu            [r2],      ym6
     vextracti32x8   [r2 + r3], m6,        1
 %endmacro
-
 %macro PROCESS_IPFILTER_CHROMA_PS_16x1_AVX512 0
     movu            ym6,       [r0]
-    movu            ym7,       [r0 + 8]
+    vinserti32x8    m6,        [r0 + 8],  1
 
-    pshufb          ym8,        ym6,        ym3
-    pshufb          ym6,        ym2
-    pmaddwd         ym6,        ym0
-    pmaddwd         ym8,        ym1
-    paddd           ym6,        ym8
-    paddd           ym6,        ym4
-    psrad           ym6,        INTERP_SHIFT_PS
+    pshufb          m8,        m6,        m3
+    pshufb          m6,        m2
+    pmaddwd         m6,        m0
+    pmaddwd         m8,        m1
+    paddd           m6,        m8
+    paddd           m6,        m4
+    psrad           m6,        INTERP_SHIFT_PS
 
-    pshufb          ym8,        ym7,        ym3
-    pshufb          ym7,        ym2
-    pmaddwd         ym7,        ym0
-    pmaddwd         ym8,        ym1
-    paddd           ym7,        ym8
-    paddd           ym7,        ym4
-    psrad           ym7,        INTERP_SHIFT_PS
-
-    packssdw        ym6,        ym7
-    pshufb          ym6,        ym5
-    movu            [r2],       ym6
+    vextracti32x8   ym7,       m6,        1
+    packssdw        ym6,       ym7
+    pshufb          ym6,       ym5
+    movu            [r2],      ym6
 %endmacro
-
 %macro IPFILTER_CHROMA_PS_AVX512_16xN 1
 %if ARCH_X86_64 == 1
 INIT_ZMM avx512
@@ -7177,10 +7171,10 @@ cglobal interp_4tap_horiz_ps_16x%1, 4,7,9
     vpbroadcastd    m0, [tab_ChromaCoeff + r4 * 8]
     vpbroadcastd    m1, [tab_ChromaCoeff + r4 * 8 + 4]
 %endif
-    vbroadcasti32x8 m2, [interp8_hpp_shuf1_load_avx512]
-    vbroadcasti32x8 m3, [interp8_hpp_shuf2_load_avx512]
+    mova            m2, [interp8_hpp_shuf1_load_avx512]
+    mova            m3, [interp8_hpp_shuf2_load_avx512]
     vbroadcasti32x4 m4, [INTERP_OFFSET_PS]
-    vbroadcasti32x8 m5,[interp8_hpp_shuf1_store_avx512]
+    mova            m5, [interp8_hpp_shuf1_store_avx512]
     mov               r6d,         %1
     sub               r0,          2
     test              r5d,         r5d
