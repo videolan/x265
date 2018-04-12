@@ -1861,6 +1861,7 @@ cglobal count_nonzero_16x16, 1,1,3
 ;-----------------------------------------------------------------------------
 ; int x265_count_nonzero_16x16_avx512(const int16_t *quantCoeff);
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal count_nonzero_16x16, 1,4,2
     mov             r1, 0xFFFFFFFFFFFFFFFF
@@ -1879,10 +1880,8 @@ cglobal count_nonzero_16x16, 1,4,2
     add             r3d, r2d
 %endrep
     mov             eax, r3d
-
     RET
-
-
+%endif
 ;-----------------------------------------------------------------------------
 ; int x265_count_nonzero_32x32_sse2(const int16_t *quantCoeff);
 ;-----------------------------------------------------------------------------
@@ -1935,6 +1934,7 @@ cglobal count_nonzero_32x32, 1,1,3
 ;-----------------------------------------------------------------------------
 ; int x265_count_nonzero_32x32_avx512(const int16_t *quantCoeff);
 ;-----------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_ZMM avx512
 cglobal count_nonzero_32x32, 1,4,2
     mov             r1, 0xFFFFFFFFFFFFFFFF
@@ -1953,9 +1953,8 @@ cglobal count_nonzero_32x32, 1,4,2
     add             r3d, r2d
 %endrep
     mov             eax, r3d
-
     RET
-
+%endif
 ;-----------------------------------------------------------------------------------------------------------------------------------------------
 ;void weight_pp(pixel *src, pixel *dst, intptr_t stride, int width, int height, int w0, int round, int shift, int offset)
 ;-----------------------------------------------------------------------------------------------------------------------------------------------
