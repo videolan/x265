@@ -317,6 +317,16 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
     m_cuAboveLeft = (m_cuLeft && m_cuAbove) ? m_encData->getPicCTU(m_cuAddr - widthInCU - 1) : NULL;
     m_cuAboveRight = (m_cuAbove && ((m_cuAddr % widthInCU) < (widthInCU - 1))) ? m_encData->getPicCTU(m_cuAddr - widthInCU + 1) : NULL;
     memset(m_distortion, 0, m_numPartitions * sizeof(sse_t));
+
+    if (m_encData->m_param->bDynamicRefine)
+    {
+        int size = m_encData->m_param->maxCUDepth * X265_REFINE_INTER_LEVELS;
+        CHECKED_MALLOC_ZERO(m_collectCURd, uint64_t, size);
+        CHECKED_MALLOC_ZERO(m_collectCUVariance, uint32_t, size);
+        CHECKED_MALLOC_ZERO(m_collectCUCount, uint32_t, size);
+    }
+fail:
+    return;
 }
 
 // initialize Sub partition

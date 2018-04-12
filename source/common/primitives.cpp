@@ -114,9 +114,11 @@ void setupAliasPrimitives(EncoderPrimitives &p)
     for (int i = 0; i < NUM_PU_SIZES; i++)
     {
         p.chroma[X265_CSP_I444].pu[i].copy_pp = p.pu[i].copy_pp;
-        p.chroma[X265_CSP_I444].pu[i].addAvg  = p.pu[i].addAvg;
+        p.chroma[X265_CSP_I444].pu[i].addAvg[NONALIGNED]  = p.pu[i].addAvg[NONALIGNED];
+        p.chroma[X265_CSP_I444].pu[i].addAvg[ALIGNED] = p.pu[i].addAvg[ALIGNED];
         p.chroma[X265_CSP_I444].pu[i].satd    = p.pu[i].satd;
-        p.chroma[X265_CSP_I444].pu[i].p2s     = p.pu[i].convert_p2s;
+        p.chroma[X265_CSP_I444].pu[i].p2s[NONALIGNED]     = p.pu[i].convert_p2s[NONALIGNED];
+        p.chroma[X265_CSP_I444].pu[i].p2s[ALIGNED] = p.pu[i].convert_p2s[ALIGNED];
     }
 
     for (int i = 0; i < NUM_CU_SIZES; i++)
@@ -124,7 +126,8 @@ void setupAliasPrimitives(EncoderPrimitives &p)
         p.chroma[X265_CSP_I444].cu[i].sa8d    = p.cu[i].sa8d;
         p.chroma[X265_CSP_I444].cu[i].sse_pp  = p.cu[i].sse_pp;
         p.chroma[X265_CSP_I444].cu[i].sub_ps  = p.cu[i].sub_ps;
-        p.chroma[X265_CSP_I444].cu[i].add_ps  = p.cu[i].add_ps;
+        p.chroma[X265_CSP_I444].cu[i].add_ps[NONALIGNED]  = p.cu[i].add_ps[NONALIGNED];
+        p.chroma[X265_CSP_I444].cu[i].add_ps[ALIGNED] = p.cu[i].add_ps[ALIGNED];
         p.chroma[X265_CSP_I444].cu[i].copy_ps = p.cu[i].copy_ps;
         p.chroma[X265_CSP_I444].cu[i].copy_sp = p.cu[i].copy_sp;
         p.chroma[X265_CSP_I444].cu[i].copy_ss = p.cu[i].copy_ss;

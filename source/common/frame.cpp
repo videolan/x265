@@ -53,6 +53,7 @@ Frame::Frame()
     m_addOnDepth = NULL;
     m_addOnCtuInfo = NULL;
     m_addOnPrevChange = NULL;
+    m_classifyFrame = false;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)
@@ -83,6 +84,14 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         m_analysisData.intraData = NULL;
         m_analysisData.interData = NULL;
         m_analysis2Pass.analysisFramedata = NULL;
+    }
+
+    if (param->bDynamicRefine)
+    {
+        int size = m_param->maxCUDepth * X265_REFINE_INTER_LEVELS;
+        CHECKED_MALLOC_ZERO(m_classifyRd, uint64_t, size);
+        CHECKED_MALLOC_ZERO(m_classifyVariance, uint64_t, size);
+        CHECKED_MALLOC_ZERO(m_classifyCount, uint32_t, size);
     }
 
     if (m_fencPic->create(param, !!m_param->bCopyPicToFrame) && m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode || !!param->bAQMotion, param->rc.qgSize))
@@ -226,4 +235,11 @@ void Frame::destroy()
     }
     m_lowres.destroy();
     X265_FREE(m_rcData);
+
+    if (m_param->bDynamicRefine)
+    {
+        X265_FREE_ZERO(m_classifyRd);
+        X265_FREE_ZERO(m_classifyVariance);
+        X265_FREE_ZERO(m_classifyCount);
+    }
 }

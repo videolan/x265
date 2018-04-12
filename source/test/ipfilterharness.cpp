@@ -489,6 +489,26 @@ bool IPFilterHarness::check_IPFilterLumaP2S_primitive(filter_p2s_t ref, filter_p
     return true;
 }
 
+bool IPFilterHarness::check_IPFilterLumaP2S_aligned_primitive(filter_p2s_t ref, filter_p2s_t opt)
+{
+    for (int i = 0; i < TEST_CASES; i++)
+    {
+        int index = i % TEST_CASES;
+        intptr_t rand_srcStride[] = { 128, 192, 256, 512 };
+        intptr_t dstStride[] = { 192, 256, 512, 576 };
+        for (int p = 0; p < 4; p++)
+        {
+            ref(pixel_test_buff[index], rand_srcStride[p], IPF_C_output_s, dstStride[p]);
+            checked(opt, pixel_test_buff[index] + (64 * i), rand_srcStride[p], IPF_vec_output_s, dstStride[p]);
+            if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(int16_t)))
+                return false;
+        }
+        reportfail();
+    }
+
+    return true;
+}
+
 bool IPFilterHarness::check_IPFilterChromaP2S_primitive(filter_p2s_t ref, filter_p2s_t opt)
 {
     for (int i = 0; i < ITERS; i++)
@@ -504,6 +524,29 @@ bool IPFilterHarness::check_IPFilterChromaP2S_primitive(filter_p2s_t ref, filter
         if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(int16_t)))
             return false;
 
+        reportfail();
+    }
+
+    return true;
+}
+
+bool IPFilterHarness::check_IPFilterChromaP2S_aligned_primitive(filter_p2s_t ref, filter_p2s_t opt)
+{
+    for (int i = 0; i < TEST_CASES; i++)
+    {
+        int index = i % TEST_CASES;
+        intptr_t rand_srcStride[] = { 128, 192, 256, 512};
+        intptr_t dstStride[] = { 192, 256, 512, 576 };
+
+        for (int p = 0; p < 4; p++)
+        {
+            ref(pixel_test_buff[index], rand_srcStride[p], IPF_C_output_s, dstStride[p]);
+
+            checked(opt, pixel_test_buff[index], rand_srcStride[p], IPF_vec_output_s, dstStride[p]);
+
+            if (memcmp(IPF_vec_output_s, IPF_C_output_s, TEST_BUF_SIZE * sizeof(int16_t)))
+                return false;
+        }
         reportfail();
     }
 
@@ -571,11 +614,19 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                 return false;
             }
         }
-        if (opt.pu[value].convert_p2s)
+        if (opt.pu[value].convert_p2s[NONALIGNED])
         {
-            if (!check_IPFilterLumaP2S_primitive(ref.pu[value].convert_p2s, opt.pu[value].convert_p2s))
+            if (!check_IPFilterLumaP2S_primitive(ref.pu[value].convert_p2s[NONALIGNED], opt.pu[value].convert_p2s[NONALIGNED]))
             {
                 printf("convert_p2s[%s]", lumaPartStr[value]);
+                return false;
+            }
+        }
+        if (opt.pu[value].convert_p2s[ALIGNED])
+        {
+            if (!check_IPFilterLumaP2S_aligned_primitive(ref.pu[value].convert_p2s[ALIGNED], opt.pu[value].convert_p2s[ALIGNED]))
+            {
+                printf("convert_p2s_aligned[%s]", lumaPartStr[value]);
                 return false;
             }
         }
@@ -633,9 +684,17 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
                     return false;
                 }
             }
-            if (opt.chroma[csp].pu[value].p2s)
+            if (opt.chroma[csp].pu[value].p2s[ALIGNED])
             {
-                if (!check_IPFilterChromaP2S_primitive(ref.chroma[csp].pu[value].p2s, opt.chroma[csp].pu[value].p2s))
+                if (!check_IPFilterChromaP2S_aligned_primitive(ref.chroma[csp].pu[value].p2s[ALIGNED], opt.chroma[csp].pu[value].p2s[ALIGNED]))
+                {
+                    printf("chroma_p2s_aligned[%s]", chromaPartStr[csp][value]);
+                    return false;
+                }
+            }
+            if (opt.chroma[csp].pu[value].p2s[NONALIGNED])
+            {
+                if (!check_IPFilterChromaP2S_primitive(ref.chroma[csp].pu[value].p2s[NONALIGNED], opt.chroma[csp].pu[value].p2s[NONALIGNED]))
                 {
                     printf("chroma_p2s[%s]", chromaPartStr[csp][value]);
                     return false;
@@ -649,8 +708,8 @@ bool IPFilterHarness::testCorrectness(const EncoderPrimitives& ref, const Encode
 
 void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
-    int16_t srcStride = 96;
-    int16_t dstStride = 96;
+    int16_t srcStride = 192;  /* Multiple of 64 */
+    int16_t dstStride = 192;
     int maxVerticalfilterHalfDistance = 3;
 
     for (int value = 0; value < NUM_PU_SIZES; value++)
@@ -659,62 +718,70 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
         {
             printf("luma_hpp[%s]\t", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.pu[value].luma_hpp, ref.pu[value].luma_hpp,
-                           pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
+                pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
         }
 
         if (opt.pu[value].luma_hps)
         {
             printf("luma_hps[%s]\t", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.pu[value].luma_hps, ref.pu[value].luma_hps,
-                           pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                           IPF_vec_output_s, dstStride, 1, 1);
+                pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                IPF_vec_output_s, dstStride, 1, 1);
         }
 
         if (opt.pu[value].luma_vpp)
         {
             printf("luma_vpp[%s]\t", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.pu[value].luma_vpp, ref.pu[value].luma_vpp,
-                           pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                           IPF_vec_output_p, dstStride, 1);
+                pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                IPF_vec_output_p, dstStride, 1);
         }
 
         if (opt.pu[value].luma_vps)
         {
             printf("luma_vps[%s]\t", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.pu[value].luma_vps, ref.pu[value].luma_vps,
-                           pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                           IPF_vec_output_s, dstStride, 1);
+                pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                IPF_vec_output_s, dstStride, 1);
         }
 
         if (opt.pu[value].luma_vsp)
         {
             printf("luma_vsp[%s]\t", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.pu[value].luma_vsp, ref.pu[value].luma_vsp,
-                           short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                           IPF_vec_output_p, dstStride, 1);
+                short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                IPF_vec_output_p, dstStride, 1);
         }
 
         if (opt.pu[value].luma_vss)
         {
             printf("luma_vss[%s]\t", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.pu[value].luma_vss, ref.pu[value].luma_vss,
-                           short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                           IPF_vec_output_s, dstStride, 1);
+                short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                IPF_vec_output_s, dstStride, 1);
         }
 
         if (opt.pu[value].luma_hvpp)
         {
             printf("luma_hv [%s]\t", lumaPartStr[value]);
             REPORT_SPEEDUP(opt.pu[value].luma_hvpp, ref.pu[value].luma_hvpp,
-                           pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, srcStride, 1, 3);
+                pixel_buff + 3 * srcStride, srcStride, IPF_vec_output_p, srcStride, 1, 3);
         }
 
-        if (opt.pu[value].convert_p2s)
+        if (opt.pu[value].convert_p2s[NONALIGNED])
         {
             printf("convert_p2s[%s]\t", lumaPartStr[value]);
-            REPORT_SPEEDUP(opt.pu[value].convert_p2s, ref.pu[value].convert_p2s,
-                               pixel_buff, srcStride,
-                               IPF_vec_output_s, dstStride);
+            REPORT_SPEEDUP(opt.pu[value].convert_p2s[NONALIGNED], ref.pu[value].convert_p2s[NONALIGNED],
+                pixel_buff, srcStride,
+                IPF_vec_output_s, dstStride);
+        }
+
+        if (opt.pu[value].convert_p2s[ALIGNED])
+        {
+            printf("convert_p2s_aligned[%s]\t", lumaPartStr[value]);
+            REPORT_SPEEDUP(opt.pu[value].convert_p2s[ALIGNED], ref.pu[value].convert_p2s[ALIGNED],
+                pixel_buff, srcStride,
+                IPF_vec_output_s, dstStride);
         }
     }
 
@@ -727,47 +794,53 @@ void IPFilterHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPr
             {
                 printf("chroma_hpp[%s]", chromaPartStr[csp][value]);
                 REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_hpp, ref.chroma[csp].pu[value].filter_hpp,
-                               pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
+                    pixel_buff + srcStride, srcStride, IPF_vec_output_p, dstStride, 1);
             }
             if (opt.chroma[csp].pu[value].filter_hps)
             {
                 printf("chroma_hps[%s]", chromaPartStr[csp][value]);
                 REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_hps, ref.chroma[csp].pu[value].filter_hps,
-                               pixel_buff + srcStride, srcStride, IPF_vec_output_s, dstStride, 1, 1);
+                    pixel_buff + srcStride, srcStride, IPF_vec_output_s, dstStride, 1, 1);
             }
             if (opt.chroma[csp].pu[value].filter_vpp)
             {
                 printf("chroma_vpp[%s]", chromaPartStr[csp][value]);
                 REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_vpp, ref.chroma[csp].pu[value].filter_vpp,
-                               pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                               IPF_vec_output_p, dstStride, 1);
+                    pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                    IPF_vec_output_p, dstStride, 1);
             }
             if (opt.chroma[csp].pu[value].filter_vps)
             {
                 printf("chroma_vps[%s]", chromaPartStr[csp][value]);
                 REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_vps, ref.chroma[csp].pu[value].filter_vps,
-                               pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                               IPF_vec_output_s, dstStride, 1);
+                    pixel_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                    IPF_vec_output_s, dstStride, 1);
             }
             if (opt.chroma[csp].pu[value].filter_vsp)
             {
                 printf("chroma_vsp[%s]", chromaPartStr[csp][value]);
                 REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_vsp, ref.chroma[csp].pu[value].filter_vsp,
-                               short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                               IPF_vec_output_p, dstStride, 1);
+                    short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                    IPF_vec_output_p, dstStride, 1);
             }
             if (opt.chroma[csp].pu[value].filter_vss)
             {
                 printf("chroma_vss[%s]", chromaPartStr[csp][value]);
                 REPORT_SPEEDUP(opt.chroma[csp].pu[value].filter_vss, ref.chroma[csp].pu[value].filter_vss,
-                               short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
-                               IPF_vec_output_s, dstStride, 1);
+                    short_buff + maxVerticalfilterHalfDistance * srcStride, srcStride,
+                    IPF_vec_output_s, dstStride, 1);
             }
-            if (opt.chroma[csp].pu[value].p2s)
+            if (opt.chroma[csp].pu[value].p2s[NONALIGNED])
             {
                 printf("chroma_p2s[%s]\t", chromaPartStr[csp][value]);
-                REPORT_SPEEDUP(opt.chroma[csp].pu[value].p2s, ref.chroma[csp].pu[value].p2s,
-                               pixel_buff, srcStride, IPF_vec_output_s, dstStride);
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].p2s[NONALIGNED], ref.chroma[csp].pu[value].p2s[NONALIGNED],
+                    pixel_buff, srcStride, IPF_vec_output_s, dstStride);
+            }
+            if (opt.chroma[csp].pu[value].p2s[ALIGNED])
+            {
+                printf("chroma_p2s_aligned[%s]\t", chromaPartStr[csp][value]);
+                REPORT_SPEEDUP(opt.chroma[csp].pu[value].p2s[ALIGNED], ref.chroma[csp].pu[value].p2s[ALIGNED],
+                    pixel_buff, srcStride, IPF_vec_output_s, dstStride);
             }
         }
     }

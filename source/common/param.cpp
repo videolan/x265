@@ -99,13 +99,13 @@ void x265_param_free(x265_param* p)
 {
     x265_free(p);
 }
-
+bool  benableavx512 = false;
 void x265_param_default(x265_param* param)
 {
     memset(param, 0, sizeof(x265_param));
 
     /* Applying default values to all elements in the param structure */
-    param->cpuid = X265_NS::cpu_detect();
+    param->cpuid = X265_NS::cpu_detect(benableavx512);
     param->bEnableWavefront = 1;
     param->frameNumThreads = 0;
 
@@ -133,8 +133,9 @@ void x265_param_default(x265_param* param)
     param->bEmitHRDSEI = 0;
     param->bEmitInfoSEI = 1;
     param->bEmitHDRSEI = 0;
-
-    /* CU definitions */
+    param->bEmitIDRRecoverySEI = 0;
+    
+	/* CU definitions */
     param->maxCUSize = 64;
     param->minCUSize = 8;
     param->tuQTMaxInterDepth = 1;
@@ -192,7 +193,8 @@ void x265_param_default(x265_param* param)
     param->bEnableSAO = 1;
     param->bSaoNonDeblocked = 0;
     param->bLimitSAO = 0;
-    /* Coding Quality */
+    
+	/* Coding Quality */
     param->cbQpOffset = 0;
     param->crQpOffset = 0;
     param->rdPenalty = 0;
@@ -289,16 +291,23 @@ void x265_param_default(x265_param* param)
     param->scaleFactor = 0;
     param->intraRefine = 0;
     param->interRefine = 0;
+    param->bDynamicRefine = 0;
     param->mvRefine = 0;
     param->bUseAnalysisFile = 1;
     param->csvfpt = NULL;
     param->forceFlush = 0;
     param->bDisableLookahead = 0;
     param->bCopyPicToFrame = 1;
+    param->maxAUSizeFactor = 1;
 
     /* DCT Approximations */
     param->bLowPassDct = 0;
     param->bMVType = 0;
+    param->bSingleSeiNal = 0;
+
+	/* SEI messages */
+	param->preferredTransferCharacteristics = -1;
+	param->pictureStructure = -1;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -606,6 +615,17 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     if (0) ;
     OPT("asm")
     {
+        sscanf(value, "%s", p->asmname);
+        if (strcmp(value, "avx512")==0)
+        {
+            p->bEnableavx512 = 1;
+            benableavx512 = true;
+        }
+        else
+        {
+            p->bEnableavx512 = 0;
+            benableavx512 = false;
+        }
         if (bValueWasNull)
             p->cpuid = atobool(value);
         else
@@ -981,6 +1001,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("limit-sao") p->bLimitSAO = atobool(value);
         OPT("dhdr10-info") p->toneMapFile = strdup(value);
         OPT("dhdr10-opt") p->bDhdr10opt = atobool(value);
+        OPT("idr-recovery-sei") p->bEmitIDRRecoverySEI = atobool(value);
         OPT("const-vbv") p->rc.bEnableConstVbv = atobool(value);
         OPT("ctu-info") p->bCTUInfo = atoi(value);
         OPT("scale-factor") p->scaleFactor = atoi(value);
@@ -1012,6 +1033,11 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("analysis-save") p->analysisSave = strdup(value);
         OPT("analysis-load") p->analysisLoad = strdup(value);
         OPT("radl") p->radl = atoi(value);
+        OPT("max-ausize-factor") p->maxAUSizeFactor = atof(value);
+        OPT("dynamic-refine") p->bDynamicRefine = atobool(value);
+        OPT("single-sei") p->bSingleSeiNal = atobool(value);
+		OPT("atc-sei") p->preferredTransferCharacteristics = atoi(value);
+		OPT("pic-struct") p->pictureStructure = atoi(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1065,7 +1091,7 @@ int parseCpuName(const char* value, bool& bError)
     if (isdigit(value[0]))
         cpu = x265_atoi(value, bError);
     else
-        cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? X265_NS::cpu_detect() : 0;
+        cpu = !strcmp(value, "auto") || x265_atobool(value, bError) ? X265_NS::cpu_detect(benableavx512) : 0;
 
     if (bError)
     {
@@ -1365,8 +1391,10 @@ int x265_check_params(x265_param* param)
         "Supported values for bCTUInfo are 0, 1, 2, 4, 6");
     CHECK(param->interRefine > 3 || param->interRefine < 0,
         "Invalid refine-inter value, refine-inter levels 0 to 3 supported");
-    CHECK(param->intraRefine > 3 || param->intraRefine < 0,
+    CHECK(param->intraRefine > 4 || param->intraRefine < 0,
         "Invalid refine-intra value, refine-intra levels 0 to 3 supported");
+    CHECK(param->maxAUSizeFactor < 0.5 || param->maxAUSizeFactor > 1.0,
+        "Supported factor for controlling max AU size is from 0.5 to 1");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
@@ -1375,6 +1403,14 @@ int x265_check_params(x265_param* param)
     if (param->masteringDisplayColorVolume || param->maxFALL || param->maxCLL)
         param->bEmitHDRSEI = 1;
 
+    bool isSingleSEI = ((param->bEmitHRDSEI || param->bEmitInfoSEI || param->decodedPictureHashSEI ||
+                         param->masteringDisplayColorVolume || param->maxCLL || param->maxFALL || 
+                         param->bEmitHDRSEI || param->bEmitIDRRecoverySEI));
+    if (!isSingleSEI && param->bSingleSeiNal)
+    {
+        param->bSingleSeiNal = 0;
+        x265_log(param, X265_LOG_WARNING, "None of the SEI messages are enabled. Disabling Single SEI NAL\n");
+    }
     return check_failed;
 }
 
@@ -1504,6 +1540,7 @@ void x265_print_params(x265_param* param)
     TOOLVAL(param->bCTUInfo, "ctu-info=%d");
     if (param->bMVType == AVC_INFO)
         TOOLOPT(param->bMVType, "refine-mv-type=avc");
+    TOOLOPT(param->bDynamicRefine, "dynamic-refine");
     if (param->maxSlices > 1)
         TOOLVAL(param->maxSlices, "slices=%d");
     if (param->bEnableLoopFilter)
@@ -1520,6 +1557,7 @@ void x265_print_params(x265_param* param)
     TOOLOPT(!param->bSaoNonDeblocked && param->bEnableSAO, "sao");
     TOOLOPT(param->rc.bStatWrite, "stats-write");
     TOOLOPT(param->rc.bStatRead,  "stats-read");
+    TOOLOPT(param->bSingleSeiNal, "single-sei");
 #if ENABLE_HDR10_PLUS
     TOOLOPT(param->toneMapFile != NULL, "dhdr10-info");
 #endif
@@ -1726,6 +1764,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEmitHDRSEI, "hdr");
     BOOL(p->bHDROpt, "hdr-opt");
     BOOL(p->bDhdr10opt, "dhdr10-opt");
+    BOOL(p->bEmitIDRRecoverySEI, "idr-recovery-sei");
     if (p->analysisSave)
         s += sprintf(s, " analysis-save");
     if (p->analysisLoad)
@@ -1740,6 +1779,9 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bLowPassDct, "lowpass-dct");
     s += sprintf(s, " refine-mv-type=%d", p->bMVType);
     s += sprintf(s, " copy-pic=%d", p->bCopyPicToFrame);
+    s += sprintf(s, " max-ausize-factor=%.1f", p->maxAUSizeFactor);
+    BOOL(p->bDynamicRefine, "dynamic-refine");
+    BOOL(p->bSingleSeiNal, "single-sei");
 #undef BOOL
     return buf;
 }

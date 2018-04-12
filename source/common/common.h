@@ -75,6 +75,7 @@
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
 #define ALIGN_VAR_16(T, var) T var __attribute__((aligned(16)))
 #define ALIGN_VAR_32(T, var) T var __attribute__((aligned(32)))
+#define ALIGN_VAR_64(T, var) T var __attribute__((aligned(64)))
 #if defined(__MINGW32__)
 #define fseeko fseeko64
 #define ftello ftello64
@@ -85,6 +86,7 @@
 #define ALIGN_VAR_8(T, var)  __declspec(align(8)) T var
 #define ALIGN_VAR_16(T, var) __declspec(align(16)) T var
 #define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
+#define ALIGN_VAR_64(T, var) __declspec(align(64)) T var
 #define fseeko _fseeki64
 #define ftello _ftelli64
 #endif // if defined(__GNUC__)

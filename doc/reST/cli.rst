@@ -915,7 +915,7 @@ will not reuse analysis if slice type parameters do not match.
        This option should be coupled with analysis-reuse-mode option, --analysis-reuse-level 10.
        The ctu size of load should be double the size of save. Default 0.
 
-.. option:: --refine-intra <0..3>
+.. option:: --refine-intra <0..4>
 	
 	Enables refinement of intra blocks in current encode. 
 	
@@ -930,6 +930,8 @@ will not reuse analysis if slice type parameters do not match.
 	(b) depth and mode when other intra modes are chosen by the save encode.
 	
 	Level 3 - Perform analysis of intra modes for depth reused from first encode.
+	
+	Level 4 - Does not reuse any analysis information - redo analysis for the intra block.
 	
 	Default 0.
 	
@@ -953,6 +955,12 @@ will not reuse analysis if slice type parameters do not match.
 	Level 3 - Perform analysis of inter modes while reusing depths from the save encode.
 	
 	Default 0.
+	
+.. option:: --dynamic-refine, --no-dynamic-refine
+
+	Dynamically switches :option:`--refine-inter` levels 0-3 based on the content and 
+	the encoder settings. It is recommended to use :option:`--refine-intra` 4 with dynamic 
+	refinement. Default disabled.
 
 .. option:: --refine-mv
 	
@@ -1834,7 +1842,8 @@ other levels.
     
 	All other strings indicate a filename containing custom scaling
 	lists in the HM format. The encode will abort if the file is not
-	parsed correctly. Custom lists must be signaled in the SPS
+	parsed correctly. Custom lists must be signaled in the SPS. A sample
+	scaling list file is available in `the downloads page <https://bitbucket.org/multicoreware/x265/downloads/reference_scalinglist.txt>`_
 
 .. option:: --lambda-file <filename>
 
@@ -1855,6 +1864,11 @@ other levels.
 	the more bits it will try to spend on signaling information (motion
 	vectors and splits) and less on residual. This feature is intended
 	for experimentation.
+	
+.. option:: --max-ausize-factor <float>
+
+        It controls the maximum AU size defined in specification. It represents
+        the percentage of maximum AU size used. Default is 1. Range is 0.5 to 1.
 
 Loop filters
 ============
@@ -2204,6 +2218,13 @@ Bitstream options
 	minimizing fluctuations in deltaQP signalling. Default disabled.
 
 	Only effective at RD levels 5 and 6
+
+.. option:: --idr-recovery-sei, --no-idr-recoveery-sei
+    Emit RecoveryPoint info as sei in bitstream for each IDR frame. Default disabled.
+
+.. option:: --single-sei, --no-single-sei
+    Emit SEI messages in a single NAL unit instead of multiple NALs. Default disabled.
+    When HRD SEI is enabled the HM decoder will throw a warning.
 
 DCT Approximations
 =================

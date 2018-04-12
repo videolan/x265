@@ -43,7 +43,7 @@ const v4_interp4_vpp_shuf, times 2 db 0, 4, 1, 5, 2, 6, 3, 7, 8, 12, 9, 13, 10, 
 const v4_interp4_vpp_shuf1, dd 0, 1, 1, 2, 2, 3, 3, 4
                          dd 2, 3, 3, 4, 4, 5, 5, 6
 
-const tab_ChromaCoeff, db  0, 64,  0,  0
+const v4_tab_ChromaCoeff, db  0, 64,  0,  0
                        db -2, 58, 10, -2
                        db -4, 54, 16, -2
                        db -6, 46, 28, -4
@@ -1031,8 +1031,8 @@ cglobal interp_4tap_vert_%1_8x%2, 4, 6, 11
     mova        m6,        [r5 + r4]
     mova        m5,        [r5 + r4 + 16]
 %else
-    mova        m6,        [tab_ChromaCoeff + r4]
-    mova        m5,        [tab_ChromaCoeff + r4 + 16]
+    mova        m6,        [v4_tab_ChromaCoeff + r4]
+    mova        m5,        [v4_tab_ChromaCoeff + r4 + 16]
 %endif
 
 %ifidn %1,pp
@@ -2114,10 +2114,10 @@ cglobal interp_4tap_vert_pp_2x4, 4, 6, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m0,        [r5 + r4 * 4]
 %else
-    movd        m0,        [tab_ChromaCoeff + r4 * 4]
+    movd        m0,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
     lea         r4,        [r1 * 3]
     lea         r5,        [r0 + 4 * r1]
@@ -2430,10 +2430,10 @@ cglobal interp_4tap_vert_pp_2x%2, 4, 6, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m0,        [r5 + r4 * 4]
 %else
-    movd        m0,        [tab_ChromaCoeff + r4 * 4]
+    movd        m0,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m0,        [tab_Cm]
@@ -2515,10 +2515,10 @@ cglobal interp_4tap_vert_pp_4x2, 4, 6, 6
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m0,        [r5 + r4 * 4]
 %else
-    movd        m0,        [tab_ChromaCoeff + r4 * 4]
+    movd        m0,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m0,        [tab_Cm]
@@ -2611,10 +2611,10 @@ cglobal interp_4tap_vert_pp_4x4, 4, 6, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m0,        [r5 + r4 * 4]
 %else
-    movd        m0,        [tab_ChromaCoeff + r4 * 4]
+    movd        m0,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m0,        [tab_Cm]
@@ -2984,10 +2984,10 @@ cglobal interp_4tap_vert_pp_%1x%2, 4, 6, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m0,        [r5 + r4 * 4]
 %else
-    movd        m0,        [tab_ChromaCoeff + r4 * 4]
+    movd        m0,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m0,        [tab_Cm]
@@ -3180,10 +3180,10 @@ cglobal interp_4tap_vert_pp_%1x%2, 4, 7, 8
     punpcklbw   m4,        m2,          m3
 
 %ifdef PIC
-    lea         r6,        [tab_ChromaCoeff]
+    lea         r6,        [v4_tab_ChromaCoeff]
     movd        m5,        [r6 + r4 * 4]
 %else
-    movd        m5,        [tab_ChromaCoeff + r4 * 4]
+    movd        m5,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m6,        m5,       [tab_Vm]
@@ -3233,10 +3233,10 @@ cglobal interp_4tap_vert_ps_4x2, 4, 6, 6
     add         r3d, r3d
 
 %ifdef PIC
-    lea         r5, [tab_ChromaCoeff]
+    lea         r5, [v4_tab_ChromaCoeff]
     movd        m0, [r5 + r4 * 4]
 %else
-    movd        m0, [tab_ChromaCoeff + r4 * 4]
+    movd        m0, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m0, [tab_Cm]
@@ -3280,10 +3280,10 @@ cglobal interp_4tap_vert_ps_4x4, 4, 6, 7
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m0, [r5 + r4 * 4]
 %else
-    movd       m0, [tab_ChromaCoeff + r4 * 4]
+    movd       m0, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m0, [tab_Cm]
@@ -3355,10 +3355,10 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m0, [r5 + r4 * 4]
 %else
-    movd       m0, [tab_ChromaCoeff + r4 * 4]
+    movd       m0, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m0, [tab_Cm]
@@ -3442,10 +3442,10 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 7
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m5, [r5 + r4 * 4]
 %else
-    movd       m5, [tab_ChromaCoeff + r4 * 4]
+    movd       m5, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m6, m5, [tab_Vm]
@@ -3513,10 +3513,10 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m5, [r5 + r4 * 4]
 %else
-    movd       m5, [tab_ChromaCoeff + r4 * 4]
+    movd       m5, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m6, m5, [tab_Vm]
@@ -3605,10 +3605,10 @@ cglobal interp_4tap_vert_ps_6x%2, 4, 6, 8
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m5, [r5 + r4 * 4]
 %else
-    movd       m5, [tab_ChromaCoeff + r4 * 4]
+    movd       m5, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m6, m5, [tab_Vm]
@@ -3700,10 +3700,10 @@ cglobal interp_4tap_vert_ps_12x%2, 4, 6, 8
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m0, [r5 + r4 * 4]
 %else
-    movd       m0, [tab_ChromaCoeff + r4 * 4]
+    movd       m0, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m1, m0, [tab_Vm]
@@ -3786,10 +3786,10 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m0, [r5 + r4 * 4]
 %else
-    movd       m0, [tab_ChromaCoeff + r4 * 4]
+    movd       m0, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m1, m0, [tab_Vm]
@@ -3877,10 +3877,10 @@ cglobal interp_4tap_vert_ps_24x%2, 4, 6, 8
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m0, [r5 + r4 * 4]
 %else
-    movd       m0, [tab_ChromaCoeff + r4 * 4]
+    movd       m0, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m1, m0, [tab_Vm]
@@ -3995,10 +3995,10 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 6, 8
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m0, [r5 + r4 * 4]
 %else
-    movd       m0, [tab_ChromaCoeff + r4 * 4]
+    movd       m0, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m1, m0, [tab_Vm]
@@ -4091,10 +4091,10 @@ cglobal interp_4tap_vert_pp_%1x%2, 4, 6, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m5,        [r5 + r4 * 4]
 %else
-    movd        m5,        [tab_ChromaCoeff + r4 * 4]
+    movd        m5,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m6,        m5,       [tab_Vm]
@@ -4942,10 +4942,10 @@ cglobal interp_4tap_vert_pp_6x%2, 4, 6, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m5,        [r5 + r4 * 4]
 %else
-    movd        m5,        [tab_ChromaCoeff + r4 * 4]
+    movd        m5,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m6,        m5,       [tab_Vm]
@@ -5040,10 +5040,10 @@ cglobal interp_4tap_vert_pp_12x%2, 4, 6, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m0,        [r5 + r4 * 4]
 %else
-    movd        m0,        [tab_ChromaCoeff + r4 * 4]
+    movd        m0,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m1,        m0,       [tab_Vm]
@@ -5130,10 +5130,10 @@ cglobal interp_4tap_vert_pp_16x%2, 4, 6, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m0,        [r5 + r4 * 4]
 %else
-    movd        m0,        [tab_ChromaCoeff + r4 * 4]
+    movd        m0,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m1,        m0,       [tab_Vm]
@@ -7543,10 +7543,10 @@ cglobal interp_4tap_vert_pp_24x%2, 4, 6, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m0,        [r5 + r4 * 4]
 %else
-    movd        m0,        [tab_ChromaCoeff + r4 * 4]
+    movd        m0,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m1,        m0,       [tab_Vm]
@@ -7666,10 +7666,10 @@ cglobal interp_4tap_vert_pp_%1x%2, 4, 6, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m0,        [r5 + r4 * 4]
 %else
-    movd        m0,        [tab_ChromaCoeff + r4 * 4]
+    movd        m0,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m1,        m0,       [tab_Vm]
@@ -8267,10 +8267,10 @@ cglobal interp_4tap_vert_pp_%1x%2, 4, 7, 8
     sub         r0,        r1
 
 %ifdef PIC
-    lea         r5,        [tab_ChromaCoeff]
+    lea         r5,        [v4_tab_ChromaCoeff]
     movd        m0,        [r5 + r4 * 4]
 %else
-    movd        m0,        [tab_ChromaCoeff + r4 * 4]
+    movd        m0,        [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m1,        m0,       [tab_Vm]
@@ -8808,10 +8808,10 @@ cglobal interp_4tap_vert_ps_%1x%2, 4, 7, 8
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m0, [r5 + r4 * 4]
 %else
-    movd       m0, [tab_ChromaCoeff + r4 * 4]
+    movd       m0, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m1, m0, [tab_Vm]
@@ -8907,10 +8907,10 @@ cglobal interp_4tap_vert_ps_2x4, 4, 6, 7
     add         r3d, r3d
 
 %ifdef PIC
-    lea         r5, [tab_ChromaCoeff]
+    lea         r5, [v4_tab_ChromaCoeff]
     movd        m0, [r5 + r4 * 4]
 %else
-    movd        m0, [tab_ChromaCoeff + r4 * 4]
+    movd        m0, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb      m0, [tab_Cm]
@@ -8981,10 +8981,10 @@ cglobal interp_4tap_vert_ps_2x%2, 4, 6, 8
     add        r3d, r3d
 
 %ifdef PIC
-    lea        r5, [tab_ChromaCoeff]
+    lea        r5, [v4_tab_ChromaCoeff]
     movd       m0, [r5 + r4 * 4]
 %else
-    movd       m0, [tab_ChromaCoeff + r4 * 4]
+    movd       m0, [v4_tab_ChromaCoeff + r4 * 4]
 %endif
 
     pshufb     m0, [tab_Cm]

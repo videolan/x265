@@ -44,30 +44,30 @@ protected:
     enum { RMAX = PIXEL_MAX - PIXEL_MIN }; //The maximum value obtained by subtracting pixel values (residual max)
     enum { RMIN = PIXEL_MIN - PIXEL_MAX }; //The minimum value obtained by subtracting pixel values (residual min)
 
-    ALIGN_VAR_32(pixel, pbuf1[BUFFSIZE]);
-    pixel    pbuf2[BUFFSIZE];
-    pixel    pbuf3[BUFFSIZE];
-    pixel    pbuf4[BUFFSIZE];
-    int      ibuf1[BUFFSIZE];
-    int8_t   psbuf1[BUFFSIZE];
-    int8_t   psbuf2[BUFFSIZE];
-    int8_t   psbuf3[BUFFSIZE];
-    int8_t   psbuf4[BUFFSIZE];
-    int8_t   psbuf5[BUFFSIZE];
+    ALIGN_VAR_64(pixel, pbuf1[BUFFSIZE]);
+    ALIGN_VAR_64(pixel,    pbuf2[BUFFSIZE]);
+    ALIGN_VAR_64(pixel,    pbuf3[BUFFSIZE]);
+    ALIGN_VAR_64(pixel,    pbuf4[BUFFSIZE]);
+    ALIGN_VAR_64(int,      ibuf1[BUFFSIZE]);
+    ALIGN_VAR_64(int8_t,   psbuf1[BUFFSIZE]);
+    ALIGN_VAR_64(int8_t,   psbuf2[BUFFSIZE]);
+    ALIGN_VAR_64(int8_t,   psbuf3[BUFFSIZE]);
+    ALIGN_VAR_64(int8_t,   psbuf4[BUFFSIZE]);
+    ALIGN_VAR_64(int8_t,   psbuf5[BUFFSIZE]);
 
-    int16_t  sbuf1[BUFFSIZE];
-    int16_t  sbuf2[BUFFSIZE];
-    int16_t  sbuf3[BUFFSIZE];
+    ALIGN_VAR_64(int16_t,  sbuf1[BUFFSIZE]);
+    ALIGN_VAR_64(int16_t,  sbuf2[BUFFSIZE]);
+    ALIGN_VAR_64(int16_t,  sbuf3[BUFFSIZE]);
 
-    pixel    pixel_test_buff[TEST_CASES][BUFFSIZE];
-    int16_t  short_test_buff[TEST_CASES][BUFFSIZE];
-    int16_t  short_test_buff1[TEST_CASES][BUFFSIZE];
-    int16_t  short_test_buff2[TEST_CASES][BUFFSIZE];
-    int      int_test_buff[TEST_CASES][BUFFSIZE];
-    uint16_t ushort_test_buff[TEST_CASES][BUFFSIZE];
-    uint8_t  uchar_test_buff[TEST_CASES][BUFFSIZE];
-    double   double_test_buff[TEST_CASES][BUFFSIZE];
-    int16_t  residual_test_buff[TEST_CASES][BUFFSIZE];
+    ALIGN_VAR_64(pixel,    pixel_test_buff[TEST_CASES][BUFFSIZE]);
+    ALIGN_VAR_64(int16_t,  short_test_buff[TEST_CASES][BUFFSIZE]);
+    ALIGN_VAR_64(int16_t,  short_test_buff1[TEST_CASES][BUFFSIZE]);
+    ALIGN_VAR_64(int16_t,  short_test_buff2[TEST_CASES][BUFFSIZE]);
+    ALIGN_VAR_64(int,      int_test_buff[TEST_CASES][BUFFSIZE]);
+    ALIGN_VAR_64(uint16_t, ushort_test_buff[TEST_CASES][BUFFSIZE]);
+    ALIGN_VAR_64(uint8_t,  uchar_test_buff[TEST_CASES][BUFFSIZE]);
+    ALIGN_VAR_64(double,   double_test_buff[TEST_CASES][BUFFSIZE]);
+    ALIGN_VAR_64(int16_t,  residual_test_buff[TEST_CASES][BUFFSIZE]);
 
     bool check_pixelcmp(pixelcmp_t ref, pixelcmp_t opt);
     bool check_pixel_sse(pixel_sse_t ref, pixel_sse_t opt);
@@ -79,13 +79,19 @@ protected:
     bool check_copy_ps(copy_ps_t ref, copy_ps_t opt);
     bool check_copy_ss(copy_ss_t ref, copy_ss_t opt);
     bool check_pixelavg_pp(pixelavg_pp_t ref, pixelavg_pp_t opt);
+    bool check_pixelavg_pp_aligned(pixelavg_pp_t ref, pixelavg_pp_t opt);
     bool check_pixel_sub_ps(pixel_sub_ps_t ref, pixel_sub_ps_t opt);
     bool check_pixel_add_ps(pixel_add_ps_t ref, pixel_add_ps_t opt);
+    bool check_pixel_add_ps_aligned(pixel_add_ps_t ref, pixel_add_ps_t opt);
     bool check_scale1D_pp(scale1D_t ref, scale1D_t opt);
+    bool check_scale1D_pp_aligned(scale1D_t ref, scale1D_t opt);
     bool check_scale2D_pp(scale2D_t ref, scale2D_t opt);
     bool check_ssd_s(pixel_ssd_s_t ref, pixel_ssd_s_t opt);
+    bool check_ssd_s_aligned(pixel_ssd_s_t ref, pixel_ssd_s_t opt);
     bool check_blockfill_s(blockfill_s_t ref, blockfill_s_t opt);
+    bool check_blockfill_s_aligned(blockfill_s_t ref, blockfill_s_t opt);
     bool check_calresidual(calcresidual_t ref, calcresidual_t opt);
+    bool check_calresidual_aligned(calcresidual_t ref, calcresidual_t opt);
     bool check_transpose(transpose_t ref, transpose_t opt);
     bool check_weightp(weightp_pp_t ref, weightp_pp_t opt);
     bool check_weightp(weightp_sp_t ref, weightp_sp_t opt);
@@ -93,12 +99,14 @@ protected:
     bool check_cpy2Dto1D_shl_t(cpy2Dto1D_shl_t ref, cpy2Dto1D_shl_t opt);
     bool check_cpy2Dto1D_shr_t(cpy2Dto1D_shr_t ref, cpy2Dto1D_shr_t opt);
     bool check_cpy1Dto2D_shl_t(cpy1Dto2D_shl_t ref, cpy1Dto2D_shl_t opt);
+    bool check_cpy1Dto2D_shl_aligned_t(cpy1Dto2D_shl_t ref, cpy1Dto2D_shl_t opt);
     bool check_cpy1Dto2D_shr_t(cpy1Dto2D_shr_t ref, cpy1Dto2D_shr_t opt);
     bool check_copy_cnt_t(copy_cnt_t ref, copy_cnt_t opt);
     bool check_pixel_var(var_t ref, var_t opt);
     bool check_ssim_4x4x2_core(ssim_4x4x2_core_t ref, ssim_4x4x2_core_t opt);
     bool check_ssim_end(ssim_end4_t ref, ssim_end4_t opt);
     bool check_addAvg(addAvg_t, addAvg_t);
+    bool check_addAvg_aligned(addAvg_t, addAvg_t);
     bool check_saoCuOrgE0_t(saoCuOrgE0_t ref, saoCuOrgE0_t opt);
     bool check_saoCuOrgE1_t(saoCuOrgE1_t ref, saoCuOrgE1_t opt);
     bool check_saoCuOrgE2_t(saoCuOrgE2_t ref[], saoCuOrgE2_t opt[]);

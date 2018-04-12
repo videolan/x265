@@ -27,6 +27,7 @@
 #include "common.h"
 #include "bitstream.h"
 #include "slice.h"
+#include "nal.h"
 
 namespace X265_NS {
 // private namespace
@@ -37,7 +38,8 @@ public:
     /* SEI users call write() to marshal an SEI to a bitstream.
      * The write() method calls writeSEI() which encodes the header */
     void write(Bitstream& bs, const SPS& sps);
-
+    void alignAndSerialize(Bitstream& bs, int lastSei, int isSingleSei, NalUnitType nalUnitType, NALList& list);
+    int countPayloadSize(const SPS& sps);
     void setSize(uint32_t size);
     virtual ~SEI() {}
 protected:
@@ -253,6 +255,11 @@ public:
 class SEIRecoveryPoint : public SEI
 {
 public:
+    SEIRecoveryPoint()
+    {
+        m_payloadType = RECOVERY_POINT;
+        m_payloadSize = 0;
+    }
     int  m_recoveryPocCnt;
     bool m_exactMatchingFlag;
     bool m_brokenLinkFlag;
@@ -289,5 +296,23 @@ public:
             WRITE_CODE(m_payload[i], 8, "creative_intent_metadata");
     }
 };
+
+class SEIAlternativeTC : public SEI
+{
+public:
+    int m_preferredTransferCharacteristics;
+    SEIAlternativeTC()
+    {
+	    m_payloadType = ALTERNATIVE_TRANSFER_CHARACTERISTICS;
+		m_payloadSize = 0;
+		m_preferredTransferCharacteristics = -1;
+	}	
+	
+	void writeSEI(const SPS&)
+	{
+	    WRITE_CODE(m_preferredTransferCharacteristics, 8, "Preferred transfer characteristics");
+	}
+};
+
 }
 #endif // ifndef X265_SEI_H

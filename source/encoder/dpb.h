@@ -40,6 +40,7 @@ public:
     int                m_lastIDR;
     int                m_pocCRA;
     int                m_bOpenGOP;
+    int                m_bhasLeadingPicture;
     bool               m_bRefreshPending;
     bool               m_bTemporalSublayer;
     PicList            m_picList;
@@ -50,6 +51,7 @@ public:
     {
         m_lastIDR = 0;
         m_pocCRA = 0;
+        m_bhasLeadingPicture = param->radl;
         m_bRefreshPending = false;
         m_frameDataFreeList = NULL;
         m_bOpenGOP = param->bOpenGOP;

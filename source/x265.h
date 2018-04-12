@@ -105,6 +105,7 @@ typedef struct x265_lookahead_data
     int       lastMiniGopBFrame;
     int       plannedType[X265_LOOKAHEAD_MAX + 1];
     int64_t   dts;
+    int64_t   reorderedPts;
 } x265_lookahead_data;
 
 /* Stores all analysis data for a single frame */
@@ -208,6 +209,7 @@ typedef struct x265_frame_stats
     x265_cu_stats    cuStats;
     x265_pu_stats    puStats;
     double           totalFrameTime;
+    double           vmafFrameScore;
 } x265_frame_stats;
 
 typedef struct x265_ctu_info_t
@@ -264,6 +266,7 @@ typedef enum
     REGION_REFRESH_INFO                  = 134,
     MASTERING_DISPLAY_INFO               = 137,
     CONTENT_LIGHT_LEVEL_INFO             = 144,
+	ALTERNATIVE_TRANSFER_CHARACTERISTICS = 147,
 } SEIPayloadType;
 
 typedef struct x265_sei_payload
@@ -363,6 +366,9 @@ typedef struct x265_picture
     int    height;
 
     x265_analysis_2Pass analysis2Pass;
+
+    // pts is reordered in the order of encoding.
+    int64_t reorderedPts;
 } x265_picture;
 
 typedef enum
@@ -378,39 +384,38 @@ typedef enum
 /* CPU flags */
 
 /* x86 */
-#define X265_CPU_CMOV            0x0000001
-#define X265_CPU_MMX             0x0000002
-#define X265_CPU_MMX2            0x0000004  /* MMX2 aka MMXEXT aka ISSE */
+#define X265_CPU_MMX             (1 << 0)
+#define X265_CPU_MMX2            (1 << 1)  /* MMX2 aka MMXEXT aka ISSE */
 #define X265_CPU_MMXEXT          X265_CPU_MMX2
-#define X265_CPU_SSE             0x0000008
-#define X265_CPU_SSE2            0x0000010
-#define X265_CPU_SSE3            0x0000020
-#define X265_CPU_SSSE3           0x0000040
-#define X265_CPU_SSE4            0x0000080  /* SSE4.1 */
-#define X265_CPU_SSE42           0x0000100  /* SSE4.2 */
-#define X265_CPU_LZCNT           0x0000200  /* Phenom support for "leading zero count" instruction. */
-#define X265_CPU_AVX             0x0000400  /* AVX support: requires OS support even if YMM registers aren't used. */
-#define X265_CPU_XOP             0x0000800  /* AMD XOP */
-#define X265_CPU_FMA4            0x0001000  /* AMD FMA4 */
-#define X265_CPU_AVX2            0x0002000  /* AVX2 */
-#define X265_CPU_FMA3            0x0004000  /* Intel FMA3 */
-#define X265_CPU_BMI1            0x0008000  /* BMI1 */
-#define X265_CPU_BMI2            0x0010000  /* BMI2 */
+#define X265_CPU_SSE             (1 << 2)
+#define X265_CPU_SSE2            (1 << 3)
+#define X265_CPU_LZCNT           (1 << 4)
+#define X265_CPU_SSE3            (1 << 5)
+#define X265_CPU_SSSE3           (1 << 6)
+#define X265_CPU_SSE4            (1 << 7)  /* SSE4.1 */
+#define X265_CPU_SSE42           (1 << 8)  /* SSE4.2 */
+#define X265_CPU_AVX             (1 << 9)  /* Requires OS support even if YMM registers aren't used. */
+#define X265_CPU_XOP             (1 << 10)  /* AMD XOP */
+#define X265_CPU_FMA4            (1 << 11)  /* AMD FMA4 */
+#define X265_CPU_FMA3            (1 << 12)  /* Intel FMA3 */
+#define X265_CPU_BMI1            (1 << 13)  /* BMI1 */
+#define X265_CPU_BMI2            (1 << 14)  /* BMI2 */
+#define X265_CPU_AVX2            (1 << 15)  /* AVX2 */
+#define X265_CPU_AVX512          (1 << 16)  /* AVX-512 {F, CD, BW, DQ, VL}, requires OS support */
 /* x86 modifiers */
-#define X265_CPU_CACHELINE_32    0x0020000  /* avoid memory loads that span the border between two cachelines */
-#define X265_CPU_CACHELINE_64    0x0040000  /* 32/64 is the size of a cacheline in bytes */
-#define X265_CPU_SSE2_IS_SLOW    0x0080000  /* avoid most SSE2 functions on Athlon64 */
-#define X265_CPU_SSE2_IS_FAST    0x0100000  /* a few functions are only faster on Core2 and Phenom */
-#define X265_CPU_SLOW_SHUFFLE    0x0200000  /* The Conroe has a slow shuffle unit (relative to overall SSE performance) */
-#define X265_CPU_STACK_MOD4      0x0400000  /* if stack is only mod4 and not mod16 */
-#define X265_CPU_SLOW_CTZ        0x0800000  /* BSR/BSF x86 instructions are really slow on some CPUs */
-#define X265_CPU_SLOW_ATOM       0x1000000  /* The Atom is terrible: slow SSE unaligned loads, slow
+#define X265_CPU_CACHELINE_32    (1 << 17)  /* avoid memory loads that span the border between two cachelines */
+#define X265_CPU_CACHELINE_64    (1 << 18)  /* 32/64 is the size of a cacheline in bytes */
+#define X265_CPU_SSE2_IS_SLOW    (1 << 19)  /* avoid most SSE2 functions on Athlon64 */
+#define X265_CPU_SSE2_IS_FAST    (1 << 20)  /* a few functions are only faster on Core2 and Phenom */
+#define X265_CPU_SLOW_SHUFFLE    (1 << 21)  /* The Conroe has a slow shuffle unit (relative to overall SSE performance) */
+#define X265_CPU_STACK_MOD4      (1 << 22)  /* if stack is only mod4 and not mod16 */
+#define X265_CPU_SLOW_ATOM       (1 << 23)  /* The Atom is terrible: slow SSE unaligned loads, slow
                                              * SIMD multiplies, slow SIMD variable shifts, slow pshufb,
                                              * cacheline split penalties -- gather everything here that
                                              * isn't shared by other CPUs to avoid making half a dozen
                                              * new SLOW flags. */
-#define X265_CPU_SLOW_PSHUFB     0x2000000  /* such as on the Intel Atom */
-#define X265_CPU_SLOW_PALIGNR    0x4000000  /* such as on the AMD Bobcat */
+#define X265_CPU_SLOW_PSHUFB     (1 << 24)  /* such as on the Intel Atom */
+#define X265_CPU_SLOW_PALIGNR    (1 << 25)  /* such as on the AMD Bobcat */
 
 /* ARM */
 #define X265_CPU_ARMV6           0x0000001
@@ -459,11 +464,9 @@ typedef enum
 #define X265_AQ_VARIANCE             1
 #define X265_AQ_AUTO_VARIANCE        2
 #define X265_AQ_AUTO_VARIANCE_BIASED 3
-
 #define x265_ADAPT_RD_STRENGTH   4
-
+#define X265_REFINE_INTER_LEVELS 3
 /* NOTE! For this release only X265_CSP_I420 and X265_CSP_I444 are supported */
-
 /* Supported internal color space types (according to semantics of chroma_format_idc) */
 #define X265_CSP_I400           0  /* yuv 4:0:0 planar */
 #define X265_CSP_I420           1  /* yuv 4:2:0 planar */
@@ -535,6 +538,7 @@ typedef struct x265_stats
     double                elapsedEncodeTime;    /* wall time since encoder was opened */
     double                elapsedVideoTime;     /* encoded picture count / frame rate */
     double                bitrate;              /* accBits / elapsed video time */
+    double                aggregateVmafScore;   /* aggregate VMAF score for input video*/
     uint64_t              accBits;              /* total bits output thus far */
     uint32_t              encodedPictureCount;  /* number of output pictures thus far */
     uint32_t              totalWPFrames;        /* number of uni-directional weighted frames used */
@@ -571,6 +575,47 @@ typedef struct x265_zone
     float bitrateFactor;
 } x265_zone;
     
+/* data to calculate aggregate VMAF score */
+typedef struct x265_vmaf_data
+{   
+    int width;
+    int height;
+    size_t offset; 
+    int internalBitDepth;
+    FILE *reference_file; /* FILE pointer for input file */
+    FILE *distorted_file; /* FILE pointer for recon file generated*/
+}x265_vmaf_data;
+
+/* data to calculate frame level VMAF score */
+typedef struct x265_vmaf_framedata
+{
+    int width;
+    int height;
+    int frame_set; 
+    int internalBitDepth; 
+    void *reference_frame; /* points to fenc of particular frame */
+    void *distorted_frame; /* points to recon of particular frame */
+}x265_vmaf_framedata;
+
+/* common data needed to calculate both frame level and video level VMAF scores */
+typedef struct x265_vmaf_commondata
+{
+    char *format;
+    char *model_path;
+    char *log_path;
+    char *log_fmt;
+    int disable_clip;
+    int disable_avx;
+    int enable_transform;
+    int phone_model;
+    int psnr;
+    int ssim;
+    int ms_ssim;
+    char *pool;
+}x265_vmaf_commondata;
+
+static const x265_vmaf_commondata vcd[] = {NULL, (char *)"/usr/local/share/model/vmaf_v0.6.1.pkl", NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL};
+
 /* x265 input parameters
  *
  * For version safety you may use x265_param_alloc/free() to manage the
@@ -584,7 +629,14 @@ typedef struct x265_param
      * somehow flawed on your target hardware. The asm function tables are
      * process global, the first encoder configures them for all encoders */
     int       cpuid;
-
+     /*==Assembly features ==*/
+     /*  x265_param_parse() will detect if the avx512 is enabled (in cli )and set 
+     *  bEnableavx512 to 1 to use avx512 SIMD. By default this flag will not be set , 
+     *  hence the encoding will happen without avx512 assembly primitives even if the cpu has 
+     *  avx512 capabilities. 
+     *  Ensure to use --asm avx512 if you need to encode with avx512 assembly primitives*/
+    int     bEnableavx512;
+    char*   asmname;
     /*== Parallelism Features ==*/
 
     /* Number of concurrently encoded frames between 1 and X265_MAX_FRAME_THREADS
@@ -1153,6 +1205,18 @@ typedef struct x265_param
      * Default is 0, which is recommended */
     int       crQpOffset;
 
+	/* Specifies the preferred transfer characteristics syntax element in the
+	 * alternative transfer characteristics SEI message (see. D.2.38 and D.3.38 of
+	 * JCTVC-W1005 http://phenix.it-sudparis.eu/jct/doc_end_user/documents/23_San%20Diego/wg11/JCTVC-W1005-v4.zip
+	 * */
+	int       preferredTransferCharacteristics;
+	
+	/*
+	 * Specifies the value for the pic_struc syntax element of the picture timing SEI message (See D2.3 and D3.3)
+	 * of the HEVC spec. for a detailed explanation
+	 * */
+	int       pictureStructure;	
+
     struct
     {
         /* Explicit mode of rate-control, necessary for API users. It must
@@ -1548,6 +1612,22 @@ typedef struct x265_param
 
     /*Number of RADL pictures allowed in front of IDR*/
     int radl;
+
+    /* This value controls the maximum AU size defined in specification
+     * It represents the percentage of maximum AU size used.
+     * Default is 1 (which is 100%). Range is 0.5 to 1. */
+    double maxAUSizeFactor;
+
+    /* Enables the emission of a Recovery Point SEI with the stream headers
+    * at each IDR frame describing poc of the recovery point, exact matching flag
+    * and broken link flag. Default is disabled. */
+    int       bEmitIDRRecoverySEI;
+
+    /* Dynamically change refine-inter at block level*/
+    int       bDynamicRefine;
+
+    /* Enable writing all SEI messgaes in one single NAL instead of mul*/
+    int       bSingleSeiNal;
 } x265_param;
 
 /* x265_param_alloc:
@@ -1787,6 +1867,22 @@ void x265_csvlog_encode(const x265_param*, const x265_stats *, int padx, int pad
 /* In-place downshift from a bit-depth greater than 8 to a bit-depth of 8, using
  * the residual bits to dither each row. */
 void x265_dither_image(x265_picture *, int picWidth, int picHeight, int16_t *errorBuf, int bitDepth);
+#if ENABLE_LIBVMAF
+/* x265_calculate_vmafScore:
+ *    returns VMAF score for the input video.
+ *    This api must be called only after encoding was done. */
+double x265_calculate_vmafscore(x265_param*, x265_vmaf_data*);
+
+/* x265_calculate_vmaf_framelevelscore:
+ *    returns VMAF score for each frame in a given input video. */
+double x265_calculate_vmaf_framelevelscore(x265_vmaf_framedata*);
+/* x265_vmaf_encoder_log:
+ *       write a line to the configured CSV file.  If a CSV filename was not
+ *       configured, or file open failed, this function will perform no write.
+ *       This api will be called only when ENABLE_LIBVMAF cmake option is set */
+void x265_vmaf_encoder_log(x265_encoder *encoder, int argc, char **argv, x265_param*, x265_vmaf_data*);
+
+#endif
 
 #define X265_MAJOR_VERSION 1
 
@@ -1840,6 +1936,11 @@ typedef struct x265_api
     void          (*csvlog_encode)(const x265_param*, const x265_stats *, int, int, int, char**);
     void          (*dither_image)(x265_picture*, int, int, int16_t*, int);
     int           (*set_analysis_data)(x265_encoder *encoder, x265_analysis_data *analysis_data, int poc, uint32_t cuBytes);
+#if ENABLE_LIBVMAF
+    double        (*calculate_vmafscore)(x265_param *, x265_vmaf_data *);
+    double        (*calculate_vmaf_framelevelscore)(x265_vmaf_framedata *);
+    void          (*vmaf_encoder_log)(x265_encoder*, int, char**, x265_param *, x265_vmaf_data *);
+#endif
     /* add new pointers to the end, or increment X265_MAJOR_VERSION */
 } x265_api;
 

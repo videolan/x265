@@ -230,6 +230,7 @@ protected:
     void threadMain();
     int  collectCTUStatistics(const CUData& ctu, FrameStats* frameLog);
     void noiseReductionUpdate();
+    void computeAvgTrainingData();
 
     /* Called by WaveFront::findJob() */
     virtual void processRow(int row, int threadId);
@@ -239,6 +240,9 @@ protected:
     void enqueueRowFilter(int row)  { WaveFront::enqueueRow(row * 2 + 1); }
     void enableRowEncoder(int row)  { WaveFront::enableRow(row * 2 + 0); }
     void enableRowFilter(int row)   { WaveFront::enableRow(row * 2 + 1); }
+#if ENABLE_LIBVMAF
+    void vmafFrameLevelScore();
+#endif
 };
 }
 

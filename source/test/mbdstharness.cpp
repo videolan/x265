@@ -61,16 +61,17 @@ MBDstHarness::MBDstHarness()
     for (int i = 0; i < TEST_BUF_SIZE; i++)
     {
         short_test_buff[0][i]    = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
+        short_test_buff1[0][i]   = (rand() & PIXEL_MAX) - (rand() & PIXEL_MAX);
         int_test_buff[0][i]      = rand() % PIXEL_MAX;
         int_idct_test_buff[0][i] = (rand() % (SHORT_MAX - SHORT_MIN)) - SHORT_MAX;
         short_denoise_test_buff1[0][i] = short_denoise_test_buff2[0][i] = (rand() & SHORT_MAX) - (rand() & SHORT_MAX);
-
         short_test_buff[1][i]    = -PIXEL_MAX;
+        short_test_buff1[1][i]   = -PIXEL_MAX;
         int_test_buff[1][i]      = -PIXEL_MAX;
         int_idct_test_buff[1][i] = SHORT_MIN;
         short_denoise_test_buff1[1][i] = short_denoise_test_buff2[1][i] = -SHORT_MAX;
-
         short_test_buff[2][i]    = PIXEL_MAX;
+        short_test_buff1[2][i]   = PIXEL_MAX;
         int_test_buff[2][i]      = PIXEL_MAX;
         int_idct_test_buff[2][i] = SHORT_MAX;
         short_denoise_test_buff1[2][i] = short_denoise_test_buff2[2][i] = SHORT_MAX;
@@ -252,12 +253,10 @@ bool MBDstHarness::check_quant_primitive(quant_t ref, quant_t opt)
 bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
 {
     int j = 0;
-
     for (int i = 0; i < ITERS; i++)
     {
-        int width = (rand() % 4 + 1) * 4;
+        int width = 1 << (rand() % 4 + 2);
         int height = width;
-
         uint32_t optReturnValue = 0;
         uint32_t refReturnValue = 0;
 
@@ -281,9 +280,97 @@ bool MBDstHarness::check_nquant_primitive(nquant_t ref, nquant_t opt)
         reportfail();
         j += INCR;
     }
+    return true;
+}
+
+bool MBDstHarness::check_nonPsyRdoQuant_primitive(nonPsyRdoQuant_t ref, nonPsyRdoQuant_t opt)
+{
+    int j = 0;
+    int trSize[4] = { 16, 64, 256, 1024 };
+
+    ALIGN_VAR_32(int64_t, ref_dest[4 * MAX_TU_SIZE]);
+    ALIGN_VAR_32(int64_t, opt_dest[4 * MAX_TU_SIZE]);
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int64_t totalRdCostRef = rand();
+        int64_t totalUncodedCostRef = rand();
+        int64_t totalRdCostOpt = totalRdCostRef;
+        int64_t totalUncodedCostOpt = totalUncodedCostRef;
+
+        int index = rand() % 4;
+        uint32_t blkPos = trSize[index];
+        int cmp_size = 4 * MAX_TU_SIZE;
+
+        memset(ref_dest, 0, MAX_TU_SIZE * sizeof(int64_t));
+        memset(opt_dest, 0, MAX_TU_SIZE * sizeof(int64_t));
+
+        int index1 = rand() % TEST_CASES;
+
+        ref(short_test_buff[index1] + j, ref_dest, &totalUncodedCostRef, &totalRdCostRef, blkPos);
+        checked(opt, short_test_buff[index1] + j, opt_dest, &totalUncodedCostOpt, &totalRdCostOpt, blkPos);
+
+        if (memcmp(ref_dest, opt_dest, cmp_size))
+            return false;
+
+        if (totalUncodedCostRef != totalUncodedCostOpt)
+            return false;
+
+        if (totalRdCostRef != totalRdCostOpt)
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
 
     return true;
 }
+bool MBDstHarness::check_psyRdoQuant_primitive(psyRdoQuant_t ref, psyRdoQuant_t opt)
+{
+    int j = 0;
+    int trSize[4] = { 16, 64, 256, 1024 };
+
+    ALIGN_VAR_32(int64_t, ref_dest[4 * MAX_TU_SIZE]);
+    ALIGN_VAR_32(int64_t, opt_dest[4 * MAX_TU_SIZE]);
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int64_t totalRdCostRef = rand();
+        int64_t totalUncodedCostRef = rand();
+        int64_t totalRdCostOpt = totalRdCostRef;
+        int64_t totalUncodedCostOpt = totalUncodedCostRef;
+        int64_t *psyScale = X265_MALLOC(int64_t, 1);
+        *psyScale = rand();
+
+        int index = rand() % 4;
+        uint32_t blkPos = trSize[index];
+        int cmp_size = 4 * MAX_TU_SIZE;
+
+        memset(ref_dest, 0, MAX_TU_SIZE * sizeof(int64_t));
+        memset(opt_dest, 0, MAX_TU_SIZE * sizeof(int64_t));
+
+        int index1 = rand() % TEST_CASES;
+
+        ref(short_test_buff[index1] + j, short_test_buff1[index1] + j, ref_dest, &totalUncodedCostRef, &totalRdCostRef, psyScale, blkPos);
+        checked(opt, short_test_buff[index1] + j, short_test_buff1[index1] + j, opt_dest, &totalUncodedCostOpt, &totalRdCostOpt, psyScale, blkPos);
+
+        X265_FREE(psyScale);
+        if (memcmp(ref_dest, opt_dest, cmp_size))
+            return false;
+
+        if (totalUncodedCostRef != totalUncodedCostOpt)
+            return false;
+
+        if (totalRdCostRef != totalRdCostOpt)
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
+
 bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonzero_t opt)
 {
     int j = 0;
@@ -420,6 +507,30 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
+
+    for (int i = 0; i < NUM_TR_SIZE; i++)
+    {
+        if (opt.cu[i].nonPsyRdoQuant)
+        {
+            if (!check_nonPsyRdoQuant_primitive(ref.cu[i].nonPsyRdoQuant, opt.cu[i].nonPsyRdoQuant))
+            {
+                printf("nonPsyRdoQuant[%dx%d]: Failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+    }
+    for (int i = 0; i < NUM_TR_SIZE; i++)
+    {
+        if (opt.cu[i].psyRdoQuant)
+        {
+            if (!check_psyRdoQuant_primitive(ref.cu[i].psyRdoQuant, opt.cu[i].psyRdoQuant))
+            {
+                printf("psyRdoQuant[%dx%d]: Failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+    }
+
     for (int i = 0; i < NUM_TR_SIZE; i++)
     {
         if (opt.cu[i].count_nonzero)
@@ -507,6 +618,32 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         printf("nquant\t\t");
         REPORT_SPEEDUP(opt.nquant, ref.nquant, short_test_buff[0], int_test_buff[1], mshortbuf2, 23, 23785, 32 * 32);
     }
+
+    for (int value = 0; value < NUM_TR_SIZE; value++)
+    {
+        if (opt.cu[value].nonPsyRdoQuant)
+        {
+            ALIGN_VAR_32(int64_t, opt_dest[4 * MAX_TU_SIZE]);
+            int64_t totalRdCost = 0;
+            int64_t totalUncodedCost = 0;
+            printf("nonPsyRdoQuant[%dx%d]", 4 << value, 4 << value);
+            REPORT_SPEEDUP(opt.cu[value].nonPsyRdoQuant, ref.cu[value].nonPsyRdoQuant, short_test_buff[0], opt_dest, &totalUncodedCost, &totalRdCost, 0);
+        }
+    }
+    for (int value = 0; value < NUM_TR_SIZE; value++)
+    {
+        if (opt.cu[value].psyRdoQuant)
+        {
+            ALIGN_VAR_32(int64_t, opt_dest[4 * MAX_TU_SIZE]);
+            int64_t totalRdCost = 0;
+            int64_t totalUncodedCost = 0;
+            int64_t *psyScale = X265_MALLOC(int64_t, 1);
+            *psyScale = 0;
+            printf("psyRdoQuant[%dx%d]", 4 << value, 4 << value);
+            REPORT_SPEEDUP(opt.cu[value].psyRdoQuant, ref.cu[value].psyRdoQuant, short_test_buff[0], short_test_buff1[0], opt_dest, &totalUncodedCost, &totalRdCost, psyScale, 0);
+        }
+    }
+
     for (int value = 0; value < NUM_TR_SIZE; value++)
     {
         if (opt.cu[value].count_nonzero)

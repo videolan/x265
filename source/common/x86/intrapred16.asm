@@ -71,7 +71,7 @@ const pw_ang8_15,                   db  0,  0,  0,  0,  0,  0,  0,  0, 12, 13,  
 const pw_ang8_16,                   db  0,  0,  0,  0,  0,  0, 12, 13, 10, 11,  6,  7,  4,  5,  0,  1
 const pw_ang8_17,                   db  0,  0, 14, 15, 12, 13, 10, 11,  8,  9,  4,  5,  2,  3,  0,  1
 const pw_swap16,            times 2 db 14, 15, 12, 13, 10, 11,  8,  9,  6,  7,  4,  5,  2,  3,  0,  1
-
+const pw_swap16_avx512,     times 4 db 14, 15, 12, 13, 10, 11,  8,  9,  6,  7,  4,  5,  2,  3,  0,  1
 const pw_ang16_13,                  db 14, 15,  8,  9,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 const pw_ang16_16,                  db  0,  0,  0,  0,  0,  0, 10, 11,  8,  9,  6,  7,  2,  3,  0,  1
 
@@ -196,6 +196,7 @@ cglobal intra_pred_dc4, 5,6,2
 ;-----------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* above, int, int filter)
 ;-----------------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_XMM sse2
 cglobal intra_pred_dc8, 5, 8, 2
     movu            m0,            [r2 + 34]
@@ -275,10 +276,13 @@ cglobal intra_pred_dc8, 5, 8, 2
     mov             [r0 + r7],     r3w
 .end:
     RET
+%endif
 
 ;-------------------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
+;This code is meant for 64 bit architecture
 INIT_XMM sse2
 cglobal intra_pred_dc16, 5, 10, 4
     lea             r3,                  [r2 + 66]
@@ -410,6 +414,7 @@ cglobal intra_pred_dc16, 5, 10, 4
     mov             [r9 + r1 * 8],       r3w
 .end:
     RET
+%endif
 
 ;-------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* above, pixel* left, pixel* dst, intptr_t dstStride, int filter)
@@ -474,6 +479,7 @@ cglobal intra_pred_dc32, 3, 4, 6
 ;-------------------------------------------------------------------------------------------------------
 ; void intra_pred_dc(pixel* dst, intptr_t dstStride, pixel* left, pixel* above, int dirMode, int filter)
 ;-------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_YMM avx2
 cglobal intra_pred_dc16, 3, 9, 4
     mov             r3d,                 r4m
@@ -682,6 +688,68 @@ cglobal intra_pred_dc32, 3,3,3
     movu            [r0 + r2 * 1 +  0], m0
     movu            [r0 + r2 * 1 + mmsize], m0
     RET
+INIT_ZMM avx512
+cglobal intra_pred_dc32, 3,3,2
+    add              r2, 2
+    add             r1d, r1d
+    movu             m0, [r2]
+    movu             m1, [r2 + 2 * mmsize]
+    paddw            m0, m1
+    vextracti32x8   ym1, m0, 1
+    paddw           ym0, ym1
+    vextracti32x4   xm1, m0, 1
+    paddw           xm0, xm1
+    pmaddwd         xm0, [pw_1]
+    movhlps         xm1, xm0
+    paddd           xm0, xm1
+    vpsrldq         xm1, xm0, 4
+    paddd           xm0, xm1
+    paddd           xm0, [pd_32]                        ; sum = sum + 32
+    psrld           xm0, 6                              ; sum = sum / 64
+    vpbroadcastw     m0, xm0
+    lea              r2, [r1 * 3]
+    ; store DC 32x32
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    lea             r0, [r0 + r1 * 4]
+    movu            [r0 + r1 * 0 +  0], m0
+    movu            [r0 + r1 * 1 +  0], m0
+    movu            [r0 + r1 * 2 +  0], m0
+    movu            [r0 + r2 * 1 +  0], m0
+    RET
+%endif
 
 ;---------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
@@ -1104,6 +1172,7 @@ cglobal intra_pred_planar32, 3,7,16
 ;---------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
 ;---------------------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_XMM sse2
 cglobal intra_pred_planar32, 3,3,16
     movd            m3, [r2 + 66]               ; topRight   = above[32]
@@ -1209,7 +1278,7 @@ cglobal intra_pred_planar32, 3,3,16
 %endrep
     RET
 %endif
-
+%endif
 ;---------------------------------------------------------------------------------------
 ; void intra_pred_planar(pixel* dst, intptr_t dstStride, pixel*srcPix, int, int filter)
 ;---------------------------------------------------------------------------------------
@@ -2063,6 +2132,7 @@ cglobal intra_pred_ang4_25, 3,3,5
     STORE_4x4
     RET
 
+%if ARCH_X86_64
 cglobal intra_pred_ang4_26, 3,3,3
     movh        m0,             [r2 + 2] ;[8 7 6 5 4 3 2 1]
     add         r1d,            r1d
@@ -2098,6 +2168,7 @@ cglobal intra_pred_ang4_26, 3,3,3
     mov         [r0 + r3],      r2w
 .quit:
     RET
+%endif
 
 cglobal intra_pred_ang4_27, 3,3,5
     movu        m0, [r2 + 2]            ;[8 7 6 5 4 3 2 1]
@@ -11054,35 +11125,35 @@ cglobal intra_pred_ang16_2, 3,5,3
 
 %macro TRANSPOSE_STORE_AVX2 11
     jnz             .skip%11
-    punpckhwd       m%9,  m%1,  m%2
-    punpcklwd       m%1,  m%2
-    punpckhwd       m%2,  m%3,  m%4
-    punpcklwd       m%3,  m%4
+    punpckhwd       ym%9,  ym%1,  ym%2
+    punpcklwd       ym%1,  ym%2
+    punpckhwd       ym%2,  ym%3,  ym%4
+    punpcklwd       ym%3,  ym%4
 
-    punpckldq       m%4,  m%1,  m%3
-    punpckhdq       m%1,  m%3
-    punpckldq       m%3,  m%9,  m%2
-    punpckhdq       m%9,  m%2
+    punpckldq       ym%4,  ym%1,  ym%3
+    punpckhdq       ym%1,  ym%3
+    punpckldq       ym%3,  ym%9,  ym%2
+    punpckhdq       ym%9,  ym%2
 
-    punpckhwd       m%10, m%5,  m%6
-    punpcklwd       m%5,  m%6
-    punpckhwd       m%6,  m%7,  m%8
-    punpcklwd       m%7,  m%8
+    punpckhwd       ym%10, ym%5,  ym%6
+    punpcklwd       ym%5,  ym%6
+    punpckhwd       ym%6,  ym%7,  ym%8
+    punpcklwd       ym%7,  ym%8
 
-    punpckldq       m%8,  m%5,  m%7
-    punpckhdq       m%5,  m%7
-    punpckldq       m%7,  m%10, m%6
-    punpckhdq       m%10, m%6
+    punpckldq       ym%8,  ym%5,  ym%7
+    punpckhdq       ym%5,  ym%7
+    punpckldq       ym%7,  ym%10, ym%6
+    punpckhdq       ym%10, ym%6
 
-    punpcklqdq      m%6,  m%4,  m%8
-    punpckhqdq      m%2,  m%4,  m%8
-    punpcklqdq      m%4,  m%1,  m%5
-    punpckhqdq      m%8,  m%1,  m%5
+    punpcklqdq      ym%6,  ym%4,  ym%8
+    punpckhqdq      ym%2,  ym%4,  ym%8
+    punpcklqdq      ym%4,  ym%1,  ym%5
+    punpckhqdq      ym%8,  ym%1,  ym%5
 
-    punpcklqdq      m%1,  m%3,  m%7
-    punpckhqdq      m%5,  m%3,  m%7
-    punpcklqdq      m%3,  m%9,  m%10
-    punpckhqdq      m%7,  m%9,  m%10
+    punpcklqdq      ym%1,  ym%3,  ym%7
+    punpckhqdq      ym%5,  ym%3,  ym%7
+    punpcklqdq      ym%3,  ym%9,  ym%10
+    punpckhqdq      ym%7,  ym%9,  ym%10
 
     movu            [r0 + r1 * 0 + %11], xm%6
     movu            [r0 + r1 * 1 + %11], xm%2
@@ -11096,32 +11167,33 @@ cglobal intra_pred_ang16_2, 3,5,3
     movu            [r5 + r4 * 1 + %11], xm%7
 
     lea             r5, [r5 + r1 * 4]
-    vextracti128    [r5 + r1 * 0 + %11], m%6, 1
-    vextracti128    [r5 + r1 * 1 + %11], m%2, 1
-    vextracti128    [r5 + r1 * 2 + %11], m%4, 1
-    vextracti128    [r5 + r4 * 1 + %11], m%8, 1
+    vextracti128    [r5 + r1 * 0 + %11], ym%6, 1
+    vextracti128    [r5 + r1 * 1 + %11], ym%2, 1
+    vextracti128    [r5 + r1 * 2 + %11], ym%4, 1
+    vextracti128    [r5 + r4 * 1 + %11], ym%8, 1
 
     lea             r5, [r5 + r1 * 4]
-    vextracti128    [r5 + r1 * 0 + %11], m%1, 1
-    vextracti128    [r5 + r1 * 1 + %11], m%5, 1
-    vextracti128    [r5 + r1 * 2 + %11], m%3, 1
-    vextracti128    [r5 + r4 * 1 + %11], m%7, 1
+    vextracti128    [r5 + r1 * 0 + %11], ym%1, 1
+    vextracti128    [r5 + r1 * 1 + %11], ym%5, 1
+    vextracti128    [r5 + r1 * 2 + %11], ym%3, 1
+    vextracti128    [r5 + r4 * 1 + %11], ym%7, 1
     jmp             .end%11
 .skip%11:
-    movu            [r0 + r1 * 0], m%1
-    movu            [r0 + r1 * 1], m%2
-    movu            [r0 + r1 * 2], m%3
-    movu            [r0 + r4 * 1], m%4
+    movu            [r0 + r1 * 0], ym%1
+    movu            [r0 + r1 * 1], ym%2
+    movu            [r0 + r1 * 2], ym%3
+    movu            [r0 + r4 * 1], ym%4
 
     lea             r0, [r0 + r1 * 4]
-    movu            [r0 + r1 * 0], m%5
-    movu            [r0 + r1 * 1], m%6
-    movu            [r0 + r1 * 2], m%7
-    movu            [r0 + r4 * 1], m%8
+    movu            [r0 + r1 * 0], ym%5
+    movu            [r0 + r1 * 1], ym%6
+    movu            [r0 + r1 * 2], ym%7
+    movu            [r0 + r4 * 1], ym%8
     lea             r0, [r0 + r1 * 4]
 .end%11:
 %endmacro
 
+%if ARCH_X86_64
 ;; angle 16, modes 3 and 33
 cglobal ang16_mode_3_33
     test            r6d, r6d
@@ -11771,7 +11843,6 @@ cglobal ang16_mode_6_30
     packusdw        m11, m3
     TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 16
     ret
-
 ;; angle 16, modes 7 and 29
 cglobal ang16_mode_7_29
     test            r6d, r6d
@@ -18220,10 +18291,2364 @@ cglobal intra_pred_ang32_18, 3,6,6
 
     mov         rsp,                [rsp+4*mmsize]
     RET
+%endif
 ;-------------------------------------------------------------------------------------------------------
 ; end of avx2 code for intra_pred_ang32 mode 2 to 34
 ;-------------------------------------------------------------------------------------------------------
+;-------------------------------------------------------------------------------------------------------
+; avx512 code for intra_pred_ang32 mode 2 to 34 start
+;-------------------------------------------------------------------------------------------------------
+INIT_ZMM avx512
+cglobal intra_pred_ang32_2, 3,5,3
+    lea         r4,                 [r2]
+    add         r2,                 128
+    cmp         r3m,                byte 34
+    cmove       r2,                 r4
+    add         r1d,                 r1d
+    lea         r3,                 [r1 * 3]
+    movu        m0,                 [r2 + 4]
+    movu        m1,                 [r2 + 20]
 
+    movu        [r0],               m0
+    palignr     m2,                 m1, m0, 2
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m1, m0, 4
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m1, m0, 6
+    movu        [r0 + r3],          m2
+
+    lea         r0,                 [r0 + r1 * 4]
+    palignr     m2,                 m1, m0, 8
+    movu        [r0],               m2
+    palignr     m2,                 m1, m0, 10
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m1, m0, 12
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m1, m0, 14
+    movu        [r0 + r3],          m2
+
+    movu        m0,                 [r2 + 36]
+    lea         r0,                 [r0 + r1 * 4]
+    movu        [r0],               m1
+    palignr     m2,                 m0, m1, 2
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m0, m1, 4
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m0, m1, 6
+    movu        [r0 + r3],          m2
+
+    lea         r0,                 [r0 + r1 * 4]
+    palignr     m2,                 m0, m1, 8
+    movu        [r0],               m2
+    palignr     m2,                 m0, m1, 10
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m0, m1, 12
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m0, m1, 14
+    movu        [r0 + r3],          m2
+
+    lea         r0,                 [r0 + r1 * 4]
+    movu        m1,                 [r2 + 52]
+
+    movu        [r0],               m0
+    palignr     m2,                 m1, m0, 2
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m1, m0, 4
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m1, m0, 6
+    movu        [r0 + r3],          m2
+
+    lea         r0,                 [r0 + r1 * 4]
+    palignr     m2,                 m1, m0, 8
+    movu        [r0],               m2
+    palignr     m2,                 m1, m0, 10
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m1, m0, 12
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m1, m0, 14
+    movu        [r0 + r3],          m2
+
+    movu        m0,                 [r2 + 68]
+    lea         r0,                 [r0 + r1 * 4]
+    movu        [r0],               m1
+    palignr     m2,                 m0, m1, 2
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m0, m1, 4
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m0, m1, 6
+    movu        [r0 + r3],          m2
+
+    lea         r0,                 [r0 + r1 * 4]
+    palignr     m2,                 m0, m1, 8
+    movu        [r0],               m2
+    palignr     m2,                 m0, m1, 10
+    movu        [r0 + r1],          m2
+    palignr     m2,                 m0, m1, 12
+    movu        [r0 + r1 * 2],      m2
+    palignr     m2,                 m0, m1, 14
+    movu        [r0 + r3],          m2
+    RET
+
+cglobal intra_pred_ang32_10, 3,4,2
+    add             r2, mmsize*2
+    add             r1d, r1d
+    lea             r3, [r1 * 3]
+
+    vpbroadcastw    m0, [r2 + 2]       ; [1...]
+    vpbroadcastw    m1, [r2 + 2 + 2]   ; [2...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 4]   ; [3...]
+    vpbroadcastw    m1, [r2 + 2 + 6]   ; [4...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 * 4]
+
+    vpbroadcastw    m0, [r2 + 2 + 8]   ; [5...]
+    vpbroadcastw    m1, [r2 + 2 + 10]  ; [6...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 12]  ; [7...]
+    vpbroadcastw    m1, [r2 + 2 + 14]  ; [8...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 16]  ; [9...]
+    vpbroadcastw    m1, [r2 + 2 + 18]  ; [10...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 20]  ; [11...]
+    vpbroadcastw    m1, [r2 + 2 + 22]  ; [12...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 24]  ; [13...]
+    vpbroadcastw    m1, [r2 + 2 + 26]  ; [14...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 28]  ; [15...]
+    vpbroadcastw    m1, [r2 + 2 + 30]  ; [16...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 32]  ; [17...]
+    vpbroadcastw    m1, [r2 + 2 + 34]  ; [18...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 36]  ; [19...]
+    vpbroadcastw    m1, [r2 + 2 + 38]  ; [20...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 40]  ; [21...]
+    vpbroadcastw    m1, [r2 + 2 + 42]  ; [22...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 44]  ; [23...]
+    vpbroadcastw    m1, [r2 + 2 + 46]  ; [24...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 48]  ; [25...]
+    vpbroadcastw    m1, [r2 + 2 + 50]  ; [26...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 52]  ; [27...]
+    vpbroadcastw    m1, [r2 + 2 + 54]  ; [28...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    lea             r0, [r0 + r1 *4]
+
+    vpbroadcastw    m0, [r2 + 2 + 56]  ; [29...]
+    vpbroadcastw    m1, [r2 + 2 + 58]  ; [30...]
+    movu            [r0], m0
+    movu            [r0 + r1], m1
+
+    vpbroadcastw    m0, [r2 + 2 + 60]  ; [31...]
+    vpbroadcastw    m1, [r2 + 2 + 62]  ; [32...]
+    movu            [r0 + r1 * 2], m0
+    movu            [r0 + r3], m1
+    RET
+
+cglobal intra_pred_ang32_18, 3,6,6
+    mov         r4,                 rsp
+    sub         rsp,                4*(mmsize/2)+gprsize
+    and         rsp,                ~63
+    mov         [rsp+4*(mmsize/2)],     r4
+
+    movu        m0,                 [r2]
+    mova                            [rsp + 2*(mmsize/2)],   ym0
+    vextracti32x8                   [rsp + 3*(mmsize/2)],   m0, 1
+
+    movu        m2,                 [r2 + 130]
+    pshufb      m2,                 [pw_swap16_avx512]
+    vpermq      m2,                 m2, q1032
+    mova                            [rsp + 1*(mmsize/2)],   ym2
+    vextracti32x8                   [rsp + 0*(mmsize/2)],   m2, 1
+
+    add         r1d,                r1d
+    lea         r2,                 [rsp+2*(mmsize/2)]
+    lea         r4,                 [r1 * 2]
+    lea         r3,                 [r1 * 3]
+    lea         r5,                 [r1 * 4]
+
+    movu        m0,                 [r2]
+    movu        m2,                 [r2 - 16]
+    movu        [r0],               m0
+
+    palignr     m4,                 m0, m2, 14
+    palignr     m5,                 m0, m2, 12
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m0, m2, 10
+    palignr     m5,                 m0, m2, 8
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m5
+
+    palignr     m4,                 m0, m2, 6
+    palignr     m5,                 m0, m2, 4
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m0, m2, 2
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m2
+
+    movu        m0,                 [r2 - 32]
+    palignr     m4,                 m2, m0, 14
+    palignr     m5,                 m2, m0, 12
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m2, m0, 10
+    palignr     m5,                 m2, m0, 8
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m5
+
+    palignr     m4,                 m2, m0, 6
+    palignr     m5,                 m2, m0, 4
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m2, m0, 2
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m0
+
+    movu        m2,                 [r2 - 48]
+    palignr     m4,                 m0, m2, 14
+    palignr     m5,                 m0, m2, 12
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m0, m2, 10
+    palignr     m5,                 m0, m2, 8
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m5
+
+    palignr     m4,                 m0, m2, 6
+    palignr     m5,                 m0, m2, 4
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m0, m2, 2
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m2
+
+    movu        m0,                 [r2 - 64]
+    palignr     m4,                 m2, m0, 14
+    palignr     m5,                 m2, m0, 12
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m2, m0, 10
+    palignr     m5,                 m2, m0, 8
+    movu        [r0 + r3],          m4
+    add         r0,                 r5
+    movu        [r0],               m5
+
+    palignr     m4,                 m2, m0, 6
+    palignr     m5,                 m2, m0, 4
+    movu        [r0 + r1],          m4
+    movu        [r0 + r4],          m5
+
+    palignr     m4,                 m2, m0, 2
+    movu        [r0 + r3],          m4
+    mov         rsp,                [rsp+4*(mmsize/2)]
+    RET
+INIT_ZMM avx512
+cglobal intra_pred_ang32_26, 3,3,2
+    movu        m0,                 [r2 + 2]
+    add         r1d,                r1d
+    lea         r2,                 [r1 * 3]
+    movu        [r0],               m0
+   movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    lea         r0,                 [r0 + r1 *4]
+    movu        [r0],               m0
+    movu        [r0 + r1],          m0
+    movu        [r0 + r1 * 2],      m0
+    movu        [r0 + r2],          m0
+    RET
+
+;; angle 16, modes 9 and 27
+cglobal ang16_mode_9_27
+    test            r6d, r6d
+
+    vbroadcasti32x8 m0, [r2 + 2]                    ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8 m1, [r2 + 4]                    ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                       ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                           ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+    vbroadcasti32x8 m2, [r2 + 18]                    ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+    vbroadcasti32x8 m4, [r2 + 20]                    ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m4                           ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+
+    movu            ym16, [r3 - 14 * 32]            ; [2]
+    vinserti32x8    m16,  [r3 - 12 * 32], 1         ; [4]
+    pmaddwd         m4, m3, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+    movu            ym16, [r3 - 10 * 32]            ; [6]
+    vinserti32x8    m16,  [r3 - 8 * 32], 1          ; [8]
+    pmaddwd         m6, m3, m16
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m9, m0, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m6, m9
+    vextracti32x8   ym7, m6, 1
+    movu            ym16, [r3 - 6 * 32]             ; [10]
+    vinserti32x8    m16,  [r3 - 4 * 32], 1          ; [12]
+    pmaddwd         m8, m3, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m9, m0, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+    vextracti32x8   ym9, m8, 1
+    movu            ym16, [r3 - 2 * 32]             ; [14]
+    vinserti32x8    m16,  [r3], 1                   ; [16]
+    pmaddwd         m10, m3, m16
+    paddd           m10, m15
+    psrld           m10, 5
+    pmaddwd         m1, m0, m16
+    paddd           m1, m15
+    psrld           m1, 5
+    packusdw        m10, m1
+    vextracti32x8   ym11, m10, 1
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 2, 1, 0
+
+    movu            ym16, [r3 + 2 * 32]             ; [18]
+    vinserti32x8    m16,  [r3 + 4 * 32], 1          ; [20]
+    pmaddwd         m4, m3, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+    movu            ym16, [r3 + 6 * 32]             ; [22]
+    vinserti32x8    m16,  [r3 + 8 * 32], 1          ; [24]
+    pmaddwd         m6, m3, m16
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m8, m0, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m6, m8
+    vextracti32x8   ym7, m6, 1
+    movu            ym16, [r3 + 10 * 32]            ; [26]
+    vinserti32x8    m16,  [r3 + 12 * 32], 1         ; [28]
+    pmaddwd         m8, m3, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m9, m0, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+    vextracti32x8   ym9, m8, 1
+    movu            ym16, [r3 + 14 * 32]            ; [30]
+    pmaddwd         ym3, ym16
+    paddd           ym3, ym15
+    psrld           ym3, 5
+    pmaddwd         ym0, ym16
+    paddd           ym0, ym15
+    psrld           ym0, 5
+    packusdw        ym3, ym0
+
+    movu            ym1, [r2 + 4]
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 3, 1, 0, 2, 16
+    ret
+
+cglobal intra_pred_ang32_9, 3,8,17
+    add         r2,        128
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    lea         r7,        [r0 + 8 * r1]
+    vbroadcasti32x8  m15,  [pd_16]
+
+    call        ang16_mode_9_27
+    add         r2,        2
+    lea         r0,        [r0 + 32]
+    call        ang16_mode_9_27
+    add         r2,        30
+    lea         r0,        [r7 + 8 * r1]
+    call        ang16_mode_9_27
+    add         r2,        2
+    lea         r0,        [r0 + 32]
+    call        ang16_mode_9_27
+    RET
+
+cglobal intra_pred_ang32_27, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    lea         r5,        [r0 + 32]
+    vbroadcasti32x8  m15,  [pd_16]
+
+    call        ang16_mode_9_27
+    add         r2,        2
+    call        ang16_mode_9_27
+    add         r2,        30
+    mov         r0,        r5
+    call        ang16_mode_9_27
+    add         r2,        2
+    call        ang16_mode_9_27
+    RET
+;; angle 16, modes 11 and 25
+cglobal ang16_mode_11_25
+    test            r6d, r6d
+
+    vbroadcasti32x8  m0, [r2]                        ; [15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0]
+    vbroadcasti32x8  m1, [r2 + 2]                    ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+
+    punpcklwd       m3, m0, m1                      ; [12 11 11 10 10  9  9  8  4  3  3  2  2  1  1  0]
+    punpckhwd       m0, m1                          ; [16 15 15 14 14 13 13 12  8  7  7  6  6  5  5  4]
+
+    movu            ym16, [r3 + 14 * 32]          ; [30]
+    vinserti32x8    m16, [r3 + 12 * 32], 1           ; [28]
+    pmaddwd         m4, m3, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+    movu            ym16, [r3 + 10 * 32]          ; [26]
+    vinserti32x8    m16, [r3 + 8 * 32], 1            ; [24]
+    pmaddwd         m6, m3, m16
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m9, m0, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m6, m9
+    vextracti32x8   ym7, m6, 1
+    movu            ym16, [r3 + 6 * 32]           ; [22]
+    vinserti32x8    m16, [r3 + 4 * 32], 1            ; [20]
+    pmaddwd         m8, m3, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m9, m0, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+    vextracti32x8   ym9, m8, 1
+    movu            ym16, [r3 + 2 * 32]           ; [18]
+    vinserti32x8    m16, [r3], 1                     ; [16]
+    pmaddwd         m10, m3, m16
+    paddd           m10, m15
+    psrld           m10, 5
+    pmaddwd         m1, m0, m16
+    paddd           m1, m15
+    psrld           m1, 5
+    packusdw        m10, m1
+    vextracti32x8   ym11, m10, 1
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 2, 1, 0
+
+    movu            ym16, [r3 - 2 * 32]             ; [14]
+    vinserti32x8    m16, [r3 - 4 * 32], 1              ; [12]
+    pmaddwd         m4, m3, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+    movu            ym16, [r3 - 6 * 32]             ; [10]
+    vinserti32x8    m16, [r3 - 8 * 32], 1              ; [8]
+    pmaddwd         m6, m3, m16
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m8, m0, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m6, m8
+    vextracti32x8   ym7, m6, 1
+    movu            ym16, [r3 - 10 * 32]             ; [6]
+    vinserti32x8    m16, [r3 - 12 * 32], 1              ; [4]
+    pmaddwd         m8, m3, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m9, m0, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+    vextracti32x8   ym9, m8, 1
+    pmaddwd         ym3, [r3 - 14 * 32]              ; [2]
+    paddd           ym3, ym15
+    psrld           ym3, 5
+    pmaddwd         ym0, [r3 - 14 * 32]
+    paddd           ym0, ym15
+    psrld           ym0, 5
+    packusdw        ym3, ym0
+
+    movu            ym1, [r2]
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 3, 1, 0, 2, 16
+    ret
+
+cglobal intra_pred_ang32_11, 3,8,17, 0-8
+    movzx       r5d,        word [r2 + 128]  ; [0]
+    movzx       r6d,        word [r2]
+    mov         [rsp],      r5w
+    mov         [r2 + 128], r6w
+
+    movzx       r5d,        word [r2 + 126]  ; [16]
+    movzx       r6d,        word [r2 + 32]
+    mov         [rsp + 4],  r5w
+    mov         [r2 + 126], r6w
+    vbroadcasti32x8  m15,  [pd_16]
+    add         r2,         128
+    xor         r6d,        r6d
+    lea         r3,         [ang_table_avx2 + 16 * 32]
+    shl         r1d,        1
+    lea         r4,         [r1 * 3]
+    lea         r7,         [r0 + 8 * r1]
+
+    call        ang16_mode_11_25
+    sub         r2,         2
+    lea         r0,         [r0 + 32]
+    call        ang16_mode_11_25
+    add         r2,         34
+    lea         r0,         [r7 + 8 * r1]
+    call        ang16_mode_11_25
+    sub         r2,         2
+    lea         r0,         [r0 + 32]
+    call        ang16_mode_11_25
+    mov         r6d,        [rsp]
+    mov         [r2 - 30], r6w
+    mov         r6d,       [rsp + 4]
+    mov         [r2 - 32], r6w
+    RET
+
+cglobal intra_pred_ang32_25, 3,7,17, 0-4
+    xor         r6d,        r6d
+    inc         r6d
+    lea         r3,         [ang_table_avx2 + 16 * 32]
+    shl         r1d,        1
+    vbroadcasti32x8  m15,  [pd_16]
+    movzx       r4d,        word [r2 - 2]
+    movzx       r5d,        word [r2 + 160]     ; [16]
+    mov         [rsp],      r4w
+    mov         [r2 - 2],   r5w
+
+    lea         r4,         [r1 * 3]
+    lea         r5,         [r0 + 32]
+    call        ang16_mode_11_25
+    sub         r2,         2
+    call        ang16_mode_11_25
+    add         r2,         34
+    mov         r0,         r5
+    call        ang16_mode_11_25
+    sub         r2,         2
+    call        ang16_mode_11_25
+    mov         r5d,        [rsp]
+    mov         [r2 - 32],  r5w
+    RET
+
+cglobal intra_pred_ang16_9, 3,7,17
+    add         r2,        64
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_9_27
+    RET
+
+cglobal intra_pred_ang16_27, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_9_27
+    RET
+
+cglobal intra_pred_ang16_11, 3,7,17, 0-4
+    movzx       r5d,       word [r2 + 64]
+    movzx       r6d,       word [r2]
+    mov         [rsp],     r5w
+    mov         [r2 + 64], r6w
+    vbroadcasti32x8  m15,  [pd_16]
+    add         r2,        64
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    call        ang16_mode_11_25
+    mov         r6d,       [rsp]
+    mov         [r2],      r6w
+    RET
+
+cglobal intra_pred_ang16_25, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    vbroadcasti32x8  m15,  [pd_16]
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    call        ang16_mode_11_25
+    RET
+cglobal ang16_mode_5_31
+    test            r6d, r6d
+
+    vbroadcasti32x8            m0, [r2 + 2]                    ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8            m1, [r2 + 4]                    ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                      ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                          ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+    vbroadcasti32x8            m1, [r2 + 18]                   ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+    vbroadcasti32x8            m4, [r2 + 20]                   ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m1, m4                      ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+    punpckhwd       m1, m4                          ; [25 24 24 23 23 22 22 21 17 16 16 15 15 14 14 13]
+
+    pmaddwd         m4, m3, [r3 + 1 * 32]           ; [17]
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, [r3 + 1 * 32]
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    movu            ym16, [r3 - 14 * 32]          ; [2]
+    vinserti32x8    m16, [r3 + 3 * 32] ,1         ; [19]
+    palignr         m6, m0, m3, 4
+    pmaddwd         m5, m6, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    palignr         m7, m2, m0, 4
+    pmaddwd         m8, m7, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m5, m8
+    vextracti32x8   ym6, m5, 1
+
+    palignr         m8, m0, m3, 8
+    palignr         m9, m2, m0, 8
+    movu            ym16, [r3 - 12 * 32]          ; [4]
+    vinserti32x8    m16, [r3 + 5 * 32],1          ; [21]
+    pmaddwd         m7, m8, m16
+    paddd           m7, m15
+    psrld           m7, 5
+    pmaddwd         m10, m9,m16
+    paddd           m10, m15
+    psrld           m10, 5
+    packusdw        m7, m10
+    vextracti32x8   ym8, m7, 1
+
+    palignr         m10, m0, m3, 12
+    palignr         m11, m2, m0, 12
+    movu            ym16,[r3 - 10 * 32]         ; [6]
+    vinserti32x8    m16,  [r3 + 7 * 32] ,1      ; [23]
+    pmaddwd         m9, m10, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    pmaddwd         m3, m11, m16
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m9, m3
+    vextracti32x8   ym10, m9, 1
+
+    pmaddwd         m11, m0, [r3 - 8 * 32]          ; [8]
+    paddd           m11, m15
+    psrld           m11, 5
+    pmaddwd         m3, m2, [r3 - 8 * 32]
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m11, m3
+
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 0
+
+    pmaddwd         m4, m0, [r3 + 9 * 32]           ; [25]
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m2, [r3 + 9  * 32]
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    palignr         m6, m2, m0, 4
+    movu            ym16, [r3 - 6 * 32]           ; [10]
+    vinserti32x8    m16, [r3 + 11 * 32] ,1        ; [27]
+    pmaddwd         m5, m6,m16
+    paddd           m5, m15
+    psrld           m5, 5
+    palignr         m7, m1, m2, 4
+    pmaddwd         m3, m7,m16
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m5, m3
+    vextracti32x8   ym6, m5, 1
+
+    palignr         m8, m2, m0, 8
+    palignr         m9, m1, m2, 8
+    movu            ym16, [r3 - 4 * 32]           ; [12]
+    vinserti32x8    m16, [r3 + 13 * 32]  ,1       ; [29]
+    pmaddwd         m7, m8, m16
+    paddd           m7, m15
+    psrld           m7, 5
+    pmaddwd         m3, m9, m16
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m7, m3
+    vextracti32x8   ym8, m7, 1
+
+
+    palignr         m10, m2, m0, 12
+    palignr         m11, m1, m2, 12
+    movu            ym16, [r3 - 2 * 32]          ; [14]
+    vinserti32x8    m16,  [r3 + 15 * 32],1       ; [31]
+    pmaddwd         m9, m10, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    pmaddwd         m3, m11, m16
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m9, m3
+    vextracti32x8   ym10, m9, 1
+
+    pmaddwd         m2, [r3]                        ; [16]
+    paddd           m2, m15
+    psrld           m2, 5
+    pmaddwd         m1, [r3]
+    paddd           m1, m15
+    psrld           m1, 5
+    packusdw        m2, m1
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 2, 0, 1, 16
+    ret
+;; angle 32, modes 5 and 31
+cglobal ang32_mode_5_31
+    test            r6d, r6d
+
+    vbroadcasti32x8            m0, [r2 + 2]                    ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8            m1, [r2 + 4]                    ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                      ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                          ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+    vbroadcasti32x8            m1, [r2 + 18]                   ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+    vbroadcasti32x8            m4, [r2 + 20]                   ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m1, m4                      ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+    punpckhwd       m1, m4                          ; [25 24 24 23 23 22 22 21 17 16 16 15 15 14 14 13]
+
+   movu            ym16, [r3 - 15 * 32]          ; [1]
+    vinserti32x8    m16, [r3 + 2 * 32],1         ; [18]
+    pmaddwd         m4, m3, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+
+
+    palignr         m7, m0, m3, 4
+    movu            ym16, [r3 - 13 * 32]          ; [3]
+    vinserti32x8    m16, [r3 + 4 * 32] ,1         ; [20]
+    pmaddwd         m6, m7, m16
+    paddd           m6, m15
+    psrld           m6, 5
+    palignr         m8, m2, m0, 4
+    pmaddwd         m9, m8,m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m6, m9
+    vextracti32x8   ym7, m6, 1
+
+
+    palignr         m9, m0, m3, 8
+    movu            ym16, [r3 - 11 * 32]          ; [5]
+    vinserti32x8    m16, [r3 + 6 * 32] ,1         ; [22]
+    pmaddwd         m8, m9,m16
+    paddd           m8, m15
+    psrld           m8, 5
+    palignr         m10, m2, m0, 8
+    pmaddwd         m11, m10,m16
+    paddd           m11, m15
+    psrld           m11, 5
+    packusdw        m8, m11
+    vextracti32x8   ym9, m8, 1
+
+
+    palignr         m11, m0, m3, 12
+    movu            ym16, [r3 - 9 * 32]         ; [7]
+    vinserti32x8    m16, [r3 + 8 * 32] ,1       ; [24]
+    pmaddwd         m10, m11,m16
+    paddd           m10, m15
+    psrld           m10, 5
+    palignr         m12, m2, m0, 12
+    pmaddwd         m3, m12, m16
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m10, m3
+    vextracti32x8   ym11, m10, 1
+
+
+
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 0
+
+    movu            ym16, [r3 - 7 * 32]           ; [9]
+    vinserti32x8    m16, [r3 + 10 * 32]  ,1       ; [26]
+    pmaddwd         m4, m0, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m2, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+
+
+    palignr         m7, m2, m0, 4
+    movu            ym16, [r3 - 5 * 32]           ; [11]
+    vinserti32x8    m16, [r3 + 12 * 32],1         ; [28]
+    pmaddwd         m6, m7, m16
+    paddd           m6, m15
+    psrld           m6, 5
+    palignr         m8, m1, m2, 4
+    pmaddwd         m9, m8,m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m6, m9
+    vextracti32x8   ym7, m6, 1
+
+    palignr         m9, m2, m0, 8
+    movu            ym16, [r3 - 3 * 32]           ; [13]
+    vinserti32x8    m16, [r3 + 14 * 32]  ,1       ; [30]
+    pmaddwd         m8, m9, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    palignr         m3, m1, m2, 8
+    pmaddwd         m10, m3, m16
+    paddd           m10, m15
+    psrld           m10, 5
+    packusdw        m8, m10
+    vextracti32x8    ym9, m8, 1
+
+
+
+    palignr         m10, m2, m0, 12
+    pmaddwd         m10, [r3 - 1 * 32]              ; [15]
+    paddd           m10, m15
+    psrld           m10, 5
+    palignr         m11, m1, m2, 12
+    pmaddwd         m11, [r3 - 1 * 32]
+    paddd           m11, m15
+    psrld           m11, 5
+    packusdw        m10, m11
+
+    pmaddwd         m2, [r3 - 16 * 32]              ; [0]
+    paddd           m2, m15
+    psrld           m2, 5
+    pmaddwd         m1, [r3 - 16 * 32]
+    paddd           m1, m15
+    psrld           m1, 5
+    packusdw        m2, m1
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 2, 0, 1, 16
+    ret
+cglobal intra_pred_ang32_5, 3,8,17
+    add         r2,        128
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r7,        [r0 + 8 * r1]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_5_31
+
+    add         r2,        18
+    lea         r0,        [r0 + 32]
+
+    call        ang32_mode_5_31
+
+    add         r2,        14
+    lea         r0,        [r7 + 8 * r1]
+
+    call        ang16_mode_5_31
+    vbroadcasti32x8  m15,  [pd_16]
+    add         r2,        18
+    lea         r0,        [r0 + 32]
+    call        ang32_mode_5_31
+    RET
+cglobal intra_pred_ang32_31, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r5,        [r0 + 32]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_5_31
+
+    add         r2,        18
+
+    call        ang32_mode_5_31
+
+    add         r2,        14
+    mov         r0,        r5
+
+    call        ang16_mode_5_31
+
+    add         r2,        18
+    call        ang32_mode_5_31
+    RET
+cglobal intra_pred_ang16_5, 3,7,17
+    add         r2,        64
+    xor         r6d,       r6d
+    vbroadcasti32x8  m15,  [pd_16]
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    call        ang16_mode_5_31
+    RET
+cglobal intra_pred_ang16_31, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    vbroadcasti32x8  m15,  [pd_16]
+    lea         r3,        [ang_table_avx2 + 16 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    call        ang16_mode_5_31
+    RET
+;; angle 16, modes 4 and 32
+cglobal ang16_mode_4_32
+    test            r6d, r6d
+
+    vbroadcasti32x8            m0, [r2 + 2]                    ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8            m1, [r2 + 4]                    ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                      ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                          ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+    vbroadcasti32x8            m1, [r2 + 18]                   ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+    vbroadcasti32x8            m4, [r2 + 20]                   ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m1, m4                      ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+    punpckhwd       m1, m4                          ; [25 24 24 23 23 22 22 21 17 16 16 15 15 14 14 13]
+
+    pmaddwd         m4, m3, [r3 + 3 * 32]           ; [21]
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, [r3 + 3 * 32]
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    palignr         m6, m0, m3, 4                   ; [14 13 13 12 12 11 11 10  6  5  5  4  4  3  3  2]
+    palignr         m7, m2, m0, 4                   ; [18 17 17 16 16 15 15 14 10  9  9  8  8  7  7  6]
+    movu            ym16,[r3 - 8 * 32]           ; [10]
+    vinserti32x8    m16, [r3 + 13 * 32] ,1             ; [31]
+    pmaddwd         m5, m6, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    pmaddwd         m8, m7,m16
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m5, m8
+    vextracti32x8   ym6, m5, 1
+
+
+    palignr         m7, m0, m3, 8                   ; [15 14 14 13 13 12 12 11  7  6  6  5  5  4  4  3]
+    pmaddwd         m7, [r3 + 2 * 32]               ; [20]
+    paddd           m7, m15
+    psrld           m7, 5
+    palignr         m8, m2, m0, 8                   ; [19 18 18 17 17 16 16 15 11 10 10  9  9  8  8  7]
+    pmaddwd         m8, [r3 + 2 * 32]
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m7, m8
+
+    palignr         m9, m0, m3, 12
+    palignr         m3, m2, m0, 12
+    movu            ym16,[r3 - 9 * 32]           ; [9]
+    vinserti32x8    m16, [r3 + 12 * 32] ,1      ; [30]
+    pmaddwd         m8, m9, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m10, m3,m16
+    paddd           m10,m15
+    psrld           m10, 5
+    packusdw        m8, m10
+    vextracti32x8   ym9, m8, 1
+
+
+    pmaddwd         m10, m0, [r3 + 1 * 32]          ; [19]
+    paddd           m10,m15
+    psrld           m10, 5
+    pmaddwd         m3, m2, [r3 + 1 * 32]
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m10, m3
+
+    palignr         m11, m2, m0, 4
+    pmaddwd         m11, [r3 - 10 * 32]             ; [8]
+    paddd           m11, m15
+    psrld           m11, 5
+    palignr         m3, m1, m2, 4
+    pmaddwd         m3, [r3 - 10 * 32]
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m11, m3
+
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 0
+
+    palignr         m4, m2, m0, 4
+    pmaddwd         m4, [r3 + 11 * 32]              ; [29]
+    paddd           m4, m15
+    psrld           m4, 5
+    palignr         m5, m1, m2, 4
+    pmaddwd         m5, [r3 + 11  * 32]
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    palignr         m5, m2, m0, 8
+    pmaddwd         m5, [r3]                        ; [18]
+    paddd           m5, m15
+    psrld           m5, 5
+    palignr         m6, m1, m2, 8
+    pmaddwd         m6, [r3]
+    paddd           m6, m15
+    psrld           m6, 5
+    packusdw        m5, m6
+
+    palignr         m7, m2, m0, 12
+    palignr         m8, m1, m2, 12
+    movu            ym16,[r3 - 11 * 32]          ; [7]
+    vinserti32x8    m16, [r3 + 10 * 32],1        ; [28]
+    pmaddwd         m6, m7, m16
+    paddd           m6, m15
+    psrld           m6, 5
+    palignr         m8, m1, m2, 12
+    pmaddwd         m3, m8, m16
+    paddd           m3,m15
+    psrld           m3, 5
+    packusdw        m6, m3
+    vextracti32x8   ym7, m6, 1
+
+    movu            m0, [r2 + 34]                   ; [32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17]
+    pmaddwd         m8, m2, [r3 - 1 * 32]           ; [17]
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m9, m1, [r3 - 1 * 32]
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+
+    palignr         m3, m0, m0, 2                   ; [ x 32 31 30 29 28 27 26  x 24 23 22 21 20 19 18]
+    punpcklwd       m0, m3                          ; [29 29 28 28 27 27 26 22 21 20 20 19 19 18 18 17]
+
+    palignr         m10, m1, m2, 4
+    pmaddwd         m9, m10, [r3 - 12 * 32]         ; [6]
+    paddd           m9, m15
+    psrld           m9, 5
+    palignr         m11, m0, m1, 4
+    pmaddwd         m3, m11, [r3 - 12 * 32]
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m9, m3
+
+    pmaddwd         m10, [r3 + 9 * 32]              ; [27]
+    paddd           m10,m15
+    psrld           m10, 5
+    pmaddwd         m11, [r3 + 9 * 32]
+    paddd           m11, m15
+    psrld           m11, 5
+    packusdw        m10, m11
+
+    palignr         m3, m1, m2, 8
+    pmaddwd         m3, [r3 - 2 * 32]               ; [16]
+    paddd           m3, m15
+    psrld           m3, 5
+    palignr         m0, m1, 8
+    pmaddwd         m0, [r3 - 2 * 32]
+    paddd           m0,m15
+    psrld           m0, 5
+    packusdw        m3, m0
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 3, 0, 1, 16
+    ret
+;; angle 32, modes 4 and 32
+cglobal ang32_mode_4_32
+    test            r6d, r6d
+
+    vbroadcasti32x8            m0, [r2 + 2]                    ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8            m1, [r2 + 4]                    ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                      ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                          ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+   vbroadcasti32x8          m1, [r2 + 18]                   ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+   vbroadcasti32x8           m4, [r2 + 20]                   ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m1, m4                      ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+    punpckhwd       m1, m4                          ; [25 24 24 23 23 22 22 21 17 16 16 15 15 14 14 13]
+
+    movu            ym16, [r3 - 13 * 32]          ; [5]
+    vinserti32x8    m16, [r3 + 8 * 32],1          ; [26]
+    pmaddwd         m4, m3, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0,m16
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+   vextracti32x8   ym5, m4, 1
+
+    palignr         m6, m0, m3, 4                   ; [14 13 13 12 12 11 11 10  6  5  5  4  4  3  3  2]
+    pmaddwd         m6, [r3 - 3 * 32]               ; [15]
+    paddd           m6, m15
+    psrld           m6, 5
+    palignr         m7, m2, m0, 4                   ; [18 17 17 16 16 15 15 14 10  9  9  8  8  7  7  6]
+    pmaddwd         m7, [r3 - 3 * 32]
+    paddd           m7, m15
+    psrld           m7, 5
+    packusdw        m6, m7
+
+    palignr         m8, m0, m3, 8                   ; [15 14 14 13 13 12 12 11  7  6  6  5  5  4  4  3]
+    palignr         m9, m2, m0, 8                   ; [19 18 18 17 17 16 16 15 11 10 10  9  9  8  8  7]
+    movu            ym16,  [r3 - 14 * 32]              ; [4]
+    vinserti32x8    m16, [r3 + 7 * 32] ,1               ; [25]
+    pmaddwd         m7, m8, m16
+    paddd           m7, m15
+    psrld           m7, 5
+    pmaddwd         m10, m9, m16
+    paddd           m10, m15
+    psrld           m10, 5
+    packusdw        m7, m10
+    vextracti32x8    ym8, m7, 1
+
+    palignr         m9, m0, m3, 12
+    pmaddwd         m9, [r3 - 4 * 32]               ; [14]
+    paddd           m9, m15
+    psrld           m9, 5
+    palignr         m3, m2, m0, 12
+    pmaddwd         m3, [r3 - 4 * 32]
+    paddd           m3,m15
+    psrld           m3, 5
+    packusdw        m9, m3
+
+    movu            ym16,   [r3 - 15 * 32]         ; [3]
+    vinserti32x8    m16, [r3 + 6 * 32]  ,1        ; [24]
+    pmaddwd         m10, m0, m16
+    paddd           m10, m15
+    psrld           m10, 5
+    pmaddwd         m3, m2, m16
+    paddd           m3,m15
+    psrld           m3, 5
+    packusdw        m10, m3
+    vextracti32x8    ym11, m10, 1
+
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 0
+
+    palignr         m4, m2, m0, 4
+    pmaddwd         m4, [r3 - 5* 32]                ; [13]
+    paddd           m4, m15
+    psrld           m4, 5
+    palignr         m5, m1, m2, 4
+    pmaddwd         m5, [r3 - 5  * 32]
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    palignr         m6, m2, m0, 8
+    palignr         m7, m1, m2, 8
+    movu            ym16, [r3 - 16 * 32]          ; [2]
+    vinserti32x8    m16, [r3 + 5 * 32] ,1        ; [23]
+    pmaddwd         m5, m6, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    palignr         m7, m1, m2, 8
+    pmaddwd         m8, m7,m16
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m5, m8
+   vextracti32x8   ym6, m5, 1
+
+
+    palignr         m7, m2, m0, 12
+    pmaddwd         m7, [r3 - 6 * 32]               ; [12]
+    paddd           m7, m15
+    psrld           m7, 5
+    palignr         m8, m1, m2, 12
+    pmaddwd         m8, [r3 - 6 * 32]
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m7, m8
+
+    movu            m0, [r2 + 34]                   ; [32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17]
+    pmaddwd         m8, m2, [r3 - 17 * 32]          ; [1]
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m9, m1, [r3 - 17 * 32]
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+
+    palignr         m3, m0, m0, 2                   ; [ x 32 31 30 29 28 27 26  x 24 23 22 21 20 19 18]
+    punpcklwd       m0, m3                          ; [29 29 28 28 27 27 26 22 21 20 20 19 19 18 18 17]
+
+    pmaddwd         m9, m2, [r3 + 4 * 32]           ; [22]
+    paddd           m9, m15
+    psrld           m9, 5
+    pmaddwd         m3, m1, [r3 + 4 * 32]
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m9, m3
+
+    palignr         m10, m1, m2, 4
+    pmaddwd         m10, [r3 - 7 * 32]              ; [11]
+    paddd           m10, m15
+    psrld           m10, 5
+    palignr         m11, m0, m1, 4
+    pmaddwd         m11, [r3 - 7 * 32]
+    paddd           m11, m15
+    psrld           m11, 5
+    packusdw        m10, m11
+
+    palignr         m3, m1, m2, 8
+    pmaddwd         m3, [r3 - 18 * 32]              ; [0]
+    paddd           m3, m15
+    psrld           m3, 5
+    palignr         m0, m1, 8
+    pmaddwd         m0, [r3 - 18 * 32]
+    paddd           m0, m15
+    psrld           m0, 5
+    packusdw        m3, m0
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 3, 0, 1, 16
+    ret
+cglobal intra_pred_ang32_4, 3,8,17
+    add         r2,        128
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 18 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r7,        [r0 + 8 * r1]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_4_32
+
+    add         r2,        22
+    lea         r0,        [r0 + 32]
+
+    call        ang32_mode_4_32
+
+    add         r2,        10
+    lea         r0,        [r7 + 8 * r1]
+
+    call        ang16_mode_4_32
+
+    add         r2,        22
+    lea         r0,        [r0 + 32]
+    call        ang32_mode_4_32
+    RET
+cglobal intra_pred_ang32_32, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 18 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r5,        [r0 + 32]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_4_32
+
+    add         r2,        22
+
+    call        ang32_mode_4_32
+
+    add         r2,        10
+    mov         r0,        r5
+
+    call        ang16_mode_4_32
+    add         r2,        22
+    call        ang32_mode_4_32
+    RET
+cglobal intra_pred_ang16_4, 3,7,17
+    add         r2,        64
+    xor         r6d,       r6d
+    vbroadcasti32x8  m15,  [pd_16]
+    lea         r3,        [ang_table_avx2 + 18 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    call        ang16_mode_4_32
+    RET
+cglobal intra_pred_ang16_32, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    vbroadcasti32x8  m15,  [pd_16]
+    lea         r3,        [ang_table_avx2 + 18 * 32]
+    shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    call        ang16_mode_4_32
+    RET
+;; angle 16, modes 6 and 30
+cglobal ang16_mode_6_30
+    test            r6d, r6d
+
+    vbroadcasti32x8            m0, [r2 + 2]                    ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8            m1, [r2 + 4]                    ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                      ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                          ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+    vbroadcasti32x8            m1, [r2 + 18]                   ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+    vbroadcasti32x8            m4, [r2 + 20]                   ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m1, m4                      ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+    punpckhwd       m1, m4                          ; [25 24 24 23 23 22 22 21 17 16 16 15 15 14 14 13]
+
+    movu            ym16,  [r3 - 2 * 32]           ; [13]
+    vinserti32x8    m16, [r3 + 11 * 32] ,1         ; [26]
+    pmaddwd         m4, m3, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+
+    palignr         m7, m0, m3, 4
+    palignr         m8, m2, m0, 4
+    movu            ym16, [r3 - 8 * 32]           ; [7]
+    vinserti32x8    m16, [r3 + 5 * 32] ,1              ; [20]
+    pmaddwd         m6, m7, m16
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m9, m8, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m6, m9
+    vextracti32x8   ym7, m6, 1
+
+    palignr         m10, m0, m3, 8
+    palignr         m11, m2, m0, 8
+    movu            ym16,  [r3 - 14 * 32]         ; [1]
+    vinserti32x8    m16, [r3 - 1 * 32],1          ; [14]
+    pmaddwd         m8, m10, m16
+    paddd           m8,m15
+    psrld           m8, 5
+    palignr         m11, m2, m0, 8
+    pmaddwd         m9, m11, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+    vextracti32x8   ym9, m8, 1
+
+    pmaddwd         m10, [r3 + 12 * 32]             ; [27]
+    paddd           m10,m15
+    psrld           m10, 5
+    pmaddwd         m11, [r3 + 12 * 32]
+    paddd           m11, m15
+    psrld           m11, 5
+    packusdw        m10, m11
+
+    palignr         m11, m0, m3, 12
+    pmaddwd         m11, [r3 - 7 * 32]              ; [8]
+    paddd           m11, m15
+    psrld           m11, 5
+    palignr         m12, m2, m0, 12
+    pmaddwd         m12, [r3 - 7 * 32]
+    paddd           m12, m15
+    psrld           m12, 5
+    packusdw        m11, m12
+
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0
+
+    palignr         m4, m0, m3, 12
+    pmaddwd         m4, [r3 + 6 * 32]               ; [21]
+    paddd           m4, m15
+    psrld           m4, 5
+    palignr         m5, m2, m0, 12
+    pmaddwd         m5, [r3 + 6  * 32]
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    movu            ym16,  [r3 - 13 * 32]          ; [2]
+    vinserti32x8    m16,  [r3]   ,1                ; [15]
+    pmaddwd         m5, m0, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    pmaddwd         m3, m2,m16
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m5, m3
+    vextracti32x8   ym6, m5, 1
+
+    pmaddwd         m7, m0, [r3 + 13 * 32]          ; [28]
+    paddd           m7, m15
+    psrld           m7, 5
+    pmaddwd         m3, m2, [r3 + 13 * 32]
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m7, m3
+
+    palignr         m9, m2, m0, 4
+    palignr         m3, m1, m2, 4
+    movu            ym16, [r3 - 6 * 32]           ; [9]
+    vinserti32x8    m16,  [r3 + 7 * 32],1               ; [22]
+    pmaddwd         m8, m9, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m10, m3, m16
+    paddd           m10,m15
+    psrld           m10, 5
+    packusdw        m8, m10
+    vextracti32x8   ym9, m8, 1
+
+
+    palignr         m11, m2, m0, 8
+    pmaddwd         m10, m11, [r3 - 12 * 32]        ; [3]
+    paddd           m10, m15
+    psrld           m10, 5
+    palignr         m3, m1, m2, 8
+    pmaddwd         m12, m3, [r3 - 12 * 32]
+    paddd           m12, m15
+    psrld           m12, 5
+    packusdw        m10, m12
+
+    pmaddwd         m11, [r3 + 1 * 32]              ; [16]
+    paddd           m11, m15
+    psrld           m11, 5
+    pmaddwd         m3, [r3 + 1 * 32]
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m11, m3
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 16
+    ret
+;; angle 32, modes 6 and 30
+cglobal ang32_mode_6_30
+    test            r6d, r6d
+
+    vbroadcasti32x8            m0, [r2 + 2]                    ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8            m1, [r2 + 4]                    ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                      ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                          ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+    vbroadcasti32x8            m1, [r2 + 18]                   ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+    vbroadcasti32x8            m4, [r2 + 20]                   ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m1, m4                      ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+    punpckhwd       m1, m4                          ; [25 24 24 23 23 22 22 21 17 16 16 15 15 14 14 13]
+
+    pmaddwd         m4, m3, [r3 + 14 * 32]          ; [29]
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, [r3 + 14 * 32]
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    palignr         m6, m0, m3, 4
+    palignr         m7, m2, m0, 4
+    movu            ym16, [r3 - 5 * 32]           ; [10]
+    vinserti32x8    m16,  [r3 + 8 * 32] ,1              ; [23]
+    pmaddwd         m5, m6, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    pmaddwd         m8, m7, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m5, m8
+    vextracti32x8   ym6, m5, 1
+
+    palignr         m9, m0, m3, 8
+    palignr         m12, m2, m0, 8
+    movu            ym16, [r3 - 11 * 32]          ; [4]
+    vinserti32x8    m16, [r3 + 2 * 32] ,1          ; [17]
+    pmaddwd         m7, m9, m16
+    paddd           m7,m15
+    psrld           m7, 5
+    palignr         m12, m2, m0, 8
+    pmaddwd         m11, m12,m16
+    paddd           m11,m15
+    psrld           m11, 5
+    packusdw        m7, m11
+    vextracti32x8   ym8, m7, 1
+
+    pmaddwd         m9, [r3 + 15 * 32]              ; [30]
+    paddd           m9, m15
+    psrld           m9, 5
+    pmaddwd         m12, [r3 + 15 * 32]
+    paddd           m12, m15
+    psrld           m12, 5
+    packusdw        m9, m12
+
+    palignr         m11, m0, m3, 12
+    pmaddwd         m10, m11, [r3 - 4 * 32]         ; [11]
+    paddd           m10, m15
+    psrld           m10, 5
+    palignr         m12, m2, m0, 12
+    pmaddwd         m3, m12, [r3 - 4 * 32]
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m10, m3
+
+    pmaddwd         m11, [r3 + 9 * 32]              ; [24]
+    paddd           m11, m15
+    psrld           m11, 5
+    pmaddwd         m12, [r3 + 9 * 32]
+    paddd           m12,m15
+    psrld           m12, 5
+    packusdw        m11, m12
+
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0
+
+    movu            ym16,  [r3 - 10 * 32]          ; [5]
+    vinserti32x8    m16,  [r3 + 3 * 32] ,1          ; [18]
+    pmaddwd         m4, m0, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m2, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+
+    pmaddwd         m6, m0, [r3 + 16 * 32]          ; [31]
+    paddd           m6,m15
+    psrld           m6, 5
+    pmaddwd         m7, m2, [r3 + 16 * 32]
+    paddd           m7,m15
+    psrld           m7, 5
+    packusdw        m6, m7
+
+    palignr         m8, m2, m0, 4
+    palignr         m9, m1, m2, 4
+    movu            ym16, [r3 - 3 * 32]           ; [12]
+    vinserti32x8    m16, [r3 + 10 * 32],1              ; [25]
+    pmaddwd         m7, m8,m16
+    paddd           m7,m15
+    psrld           m7, 5
+    pmaddwd         m3, m9, m16
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m7, m3
+    vextracti32x8   ym8, m7, 1
+
+    palignr         m10, m2, m0, 8
+    palignr         m12, m1, m2, 8
+    movu            ym16,  [r3 - 9 * 32]          ; [6]
+    vinserti32x8    m16, [r3 + 4 * 32]  ,1            ; [19]
+    pmaddwd         m9, m10, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    pmaddwd         m3, m12,m16
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m9, m3
+    vextracti32x8   ym10, m9, 1
+
+
+    palignr         m11, m2, m0, 12
+    pmaddwd         m11, [r3 - 15 * 32]             ; [0]
+    paddd           m11, m15
+    psrld           m11, 5
+    palignr         m3, m1, m2, 12
+    pmaddwd         m3, [r3 - 15 * 32]
+    paddd           m3, m15
+    psrld           m3, 5
+    packusdw        m11, m3
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 16
+    ret
+cglobal intra_pred_ang32_6, 3,8,17
+    add         r2,        128
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 15 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r7,        [r0 + 8 * r1]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_6_30
+
+    add         r2,        12
+    lea         r0,        [r0 + 32]
+
+    call        ang32_mode_6_30
+
+    add         r2,        20
+    lea         r0,        [r7 + 8 * r1]
+
+    call        ang16_mode_6_30
+
+    add         r2,        12
+    lea         r0,        [r0 + 32]
+    call        ang32_mode_6_30
+    RET
+cglobal intra_pred_ang32_30, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 15 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r5,        [r0 + 32]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_6_30
+
+    add         r2,        12
+
+    call        ang32_mode_6_30
+
+    add         r2,        20
+    mov         r0,        r5
+
+    call        ang16_mode_6_30
+
+    add         r2,        12
+    call        ang32_mode_6_30
+    RET
+cglobal intra_pred_ang16_6, 3,7,17
+    add         r2,        64
+    xor         r6d,       r6d
+    vbroadcasti32x8  m15,  [pd_16]
+    lea         r3,        [ang_table_avx2 + 15 * 32]
+    shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    call        ang16_mode_6_30
+    RET
+cglobal intra_pred_ang16_30, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    vbroadcasti32x8  m15,  [pd_16]
+    lea         r3,        [ang_table_avx2 + 15 * 32]
+     shl         r1d,       1
+    lea         r4,        [r1 * 3]
+    call        ang16_mode_6_30
+    RET
+
+;; angle 16, modes 8 and 28
+cglobal ang16_mode_8_28
+    test            r6d, r6d
+
+    vbroadcasti32x8            m0, [r2 + 2]         ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8            m1, [r2 + 4]         ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                      ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                          ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+    vbroadcasti32x8            m2, [r2 + 18]        ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+    vbroadcasti32x8            m4, [r2 + 20]        ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m4                          ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+
+    movu            ym14, [r3 - 10 * 32]
+    vinserti32x8    m14, [r3 - 5 * 32], 1
+    pmaddwd         m4, m3, m14                    ; [5], [10]
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, m14
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+
+    movu            ym14, [r3]
+    vinserti32x8    m14, [r3 + 5 * 32], 1
+    pmaddwd         m6, m3, m14                    ; [15], [20]
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m9, m0, m14
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m6, m9
+    vextracti32x8   ym7, m6, 1
+
+    movu            ym14, [r3 + 10 * 32]
+    vinserti32x8    m14, [r3 +  15 * 32], 1
+    pmaddwd         m8, m3, m14                     ; [25], [30]
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m9, m0, m14
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+    vextracti32x8   ym9, m8, 1
+
+    palignr         m11, m0, m3, 4
+    movu            ym14, [r3 - 12 * 32]
+    vinserti32x8    m14, [r3 - 7 * 32], 1
+    pmaddwd         m10, m11, m14                     ; [3], [8]
+    paddd           m10, m15
+    psrld           m10, 5
+    palignr         m1, m2, m0, 4
+    pmaddwd         m12, m1, m14
+    paddd           m12, m15
+    psrld           m12, 5
+    packusdw        m10, m12
+    vextracti32x8   ym11, m10, 1
+
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 0
+
+    palignr         m7, m0, m3, 4
+    movu            ym14, [r3 - 2 * 32]
+    vinserti32x8    m14, [r3 + 3 * 32], 1
+    pmaddwd         m4, m7, m14                      ; [13], [18]
+    paddd           m4, m15
+    psrld           m4, 5
+    palignr         m1, m2, m0, 4
+    pmaddwd         m5, m1, m14
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+
+    movu            ym14, [r3 + 8 * 32]
+    vinserti32x8    m14, [r3 + 13 * 32], 1
+    pmaddwd         m6, m7, m14                      ; [23], [28]
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m8, m1, m14
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m6, m8
+    vextracti32x8   ym7, m6, 1
+
+    movu            ym14, [r3 - 14 * 32]
+    vinserti32x8    m14, [r3 - 9 * 32], 1
+    palignr         m1, m0, m3, 8
+    pmaddwd         m8, m1, m14                      ; [1], [6]
+    paddd           m8, m15
+    psrld           m8, 5
+    palignr         m2, m0, 8
+    pmaddwd         m9, m2, m14
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+    vextracti32x8   ym9, m8, 1
+
+    movu            ym14, [r3 - 4 * 32]
+    vinserti32x8    m14, [r3 + 1 * 32], 1
+    pmaddwd         m3, m1, m14                      ; [11], [16]
+    paddd           m3, m15
+    psrld           m3, 5
+    pmaddwd         m0, m2, m14
+    paddd           m0, m15
+    psrld           m0, 5
+    packusdw        m3, m0
+    vextracti32x8   ym1, m3, 1
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 3, 1, 0, 2, 16
+    ret
+
+;; angle 32, modes 8 and 28
+cglobal ang32_mode_8_28
+    test            r6d, r6d
+
+    vbroadcasti32x8            m0, [r2 + 2]         ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8            m1, [r2 + 4]         ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                      ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                          ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+    vbroadcasti32x8            m2, [r2 + 18]        ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+    vbroadcasti32x8            m4, [r2 + 20]        ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m4                          ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+
+    movu            ym14, [r3 + 6 * 32]
+    vinserti32x8    m14, [r3 + 11 * 32], 1
+    pmaddwd         m4, m3, m14                     ; [21], [26]
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, m14
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+
+    pmaddwd         m6, m3, [r3 + 16 * 32]          ; [31]
+    paddd           m6, [pd_16]
+    psrld           m6, 5
+    pmaddwd         m9, m0, [r3 + 16 * 32]
+    paddd           m9, [pd_16]
+    psrld           m9, 5
+    packusdw        m6, m9
+
+    palignr         m11, m0, m3, 4
+    movu            ym14, [r3 - 11 * 32]
+    vinserti32x8    m14, [r3 - 6 * 32], 1
+    pmaddwd         m7, m11, m14                    ; [4], [9]
+    paddd           m7, m15
+    psrld           m7, 5
+    palignr         m1, m2, m0, 4
+    pmaddwd         m8, m1, m14
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m7, m8
+    vextracti32x8   ym8, m7, 1
+
+    movu            ym14, [r3 - 1 * 32]
+    vinserti32x8    m14, [r3 + 4 * 32], 1
+    pmaddwd         m9, m11, m14                     ; [14], [19]
+    paddd           m9, m15
+    psrld           m9, 5
+    pmaddwd         m10, m1, m14
+    paddd           m10, m15
+    psrld           m10, 5
+    packusdw        m9, m10
+    vextracti32x8   ym10, m9, 1
+
+    pmaddwd         m11, [r3 + 9 * 32]              ; [24]
+    paddd           m11, [pd_16]
+    psrld           m11, 5
+    pmaddwd         m1, [r3 + 9 * 32]
+    paddd           m1, [pd_16]
+    psrld           m1, 5
+    packusdw        m11, m1
+
+TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 0
+
+    palignr         m4, m0, m3, 4
+    pmaddwd         m4, [r3 + 14 * 32]              ; [29]
+    paddd           m4, m15
+    psrld           m4, 5
+    palignr         m5, m2, m0, 4
+    pmaddwd         m5, [r3 + 14 * 32]
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    palignr         m1, m0, m3, 8
+    pmaddwd         m5, m1, [r3 - 13 * 32]          ; [2]
+    paddd           m5, m15
+    psrld           m5, 5
+    palignr         m10, m2, m0, 8
+    pmaddwd         m6, m10, [r3 - 13 * 32]
+    paddd           m6, m15
+    psrld           m6, 5
+    packusdw        m5, m6
+
+    movu            ym14, [r3 - 8 * 32]
+    vinserti32x8    m14, [r3 - 3 * 32], 1
+    pmaddwd         m6, m1, m14                     ; [7], [12]
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m8, m10, m14
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m6, m8
+    vextracti32x8   ym7, m6, 1
+
+    movu            ym14, [r3 + 2 * 32]
+    vinserti32x8    m14, [r3 + 7 * 32], 1
+    pmaddwd         m8, m1, m14                     ; [17], [22]
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m9, m10, m14
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+    vextracti32x8   ym9, m8, 1
+
+    pmaddwd         m1, [r3 + 12 * 32]              ; [27]
+    paddd           m1, [pd_16]
+    psrld           m1, 5
+    pmaddwd         m10, [r3 + 12 * 32]
+    paddd           m10, [pd_16]
+    psrld           m10, 5
+    packusdw        m1, m10
+
+    palignr         m11, m0, m3, 12
+    pmaddwd         m11, [r3 - 15 * 32]             ; [0]
+    paddd           m11, [pd_16]
+    psrld           m11, 5
+    palignr         m2, m0, 12
+    pmaddwd         m2, [r3 - 15 * 32]
+    paddd           m2, [pd_16]
+    psrld           m2, 5
+    packusdw        m11, m2
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 1, 11, 0, 2, 16
+    ret
+
+
+cglobal intra_pred_ang32_8, 3,8,16
+    add         r2,        128
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 15 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r7,        [r0 + 8 * r1]
+    vbroadcasti32x8        m15, [pd_16]
+
+    call        ang16_mode_8_28
+
+    add         r2,        4
+    lea         r0,        [r0 + 32]
+
+    call        ang32_mode_8_28
+
+    add         r2,        28
+    lea         r0,        [r7 + 8 * r1]
+
+    call        ang16_mode_8_28
+
+    add         r2,        4
+    lea         r0,        [r0 + 32]
+
+    call        ang32_mode_8_28
+    RET
+
+cglobal intra_pred_ang32_28, 3,7,16
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 15 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r5,        [r0 + 32]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_8_28
+
+    add         r2,        4
+
+    call        ang32_mode_8_28
+
+    add         r2,        28
+    mov         r0,        r5
+
+    call        ang16_mode_8_28
+
+    add         r2,        4
+    call        ang32_mode_8_28
+    RET
+
+    cglobal intra_pred_ang16_8, 3,7,16
+    add         r2,        64
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 15 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    vbroadcasti32x8  m15,  [pd_16]
+
+    call        ang16_mode_8_28
+    RET
+
+cglobal intra_pred_ang16_28, 3,7,16
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 15 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    vbroadcasti32x8  m15,  [pd_16]
+
+    call        ang16_mode_8_28
+    RET
+
+;; angle 16, modes 7 and 29
+cglobal ang16_mode_7_29
+    test            r6d, r6d
+
+    vbroadcasti32x8             m0, [r2 + 2]                    ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8            m1, [r2 + 4]                    ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                      ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                          ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+    vbroadcasti32x8             m2, [r2 + 18]                   ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+    vbroadcasti32x8            m4, [r2 + 20]                   ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m4                          ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+
+    movu            ym16, [r3 - 8 * 32]           ; [9]
+    vinserti32x8    m16,  [r3 + 1 * 32] ,1          ; [18]
+    pmaddwd         m4, m3,m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, m16
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+    vextracti32x8   ym5, m4, 1
+
+    pmaddwd         m6, m3, [r3 + 10 * 32]          ; [27]
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m9, m0, [r3 + 10 * 32]
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m6, m9
+
+    palignr         m10, m0, m3, 4
+    pmaddwd         m7, m10, [r3 - 13 * 32]         ; [4]
+    paddd           m7, m15
+    psrld           m7, 5
+    palignr         m11, m2, m0, 4
+    pmaddwd         m8, m11, [r3 - 13 * 32]
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m7, m8
+
+    movu            ym16,  [r3 - 4 * 32]          ; [13]
+    vinserti32x8    m16,  [r3 + 5 * 32],1          ; [22]
+    pmaddwd         m8, m10, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m9, m11, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+    vextracti32x8   ym9, m8, 1
+
+    pmaddwd         m10, [r3 + 14 * 32]             ; [31]
+    paddd           m10, m15
+    psrld           m10, 5
+    pmaddwd         m11, [r3 + 14 * 32]
+    paddd           m11, m15
+    psrld           m11, 5
+    packusdw        m10, m11
+
+    palignr         m11, m0, m3, 8
+    pmaddwd         m11, [r3 - 9 * 32]              ; [8]
+    paddd           m11, m15
+    psrld           m11, 5
+    palignr         m12, m2, m0, 8
+    pmaddwd         m12, [r3 - 9 * 32]
+    paddd           m12, m15
+    psrld           m12, 5
+    packusdw        m11, m12
+
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 0
+
+    palignr         m5, m0, m3, 8
+    palignr         m6, m2, m0, 8
+    movu            ym16, [r3]                    ; [17]
+    vinserti32x8    m16,  [r3 + 9 * 32] ,1              ; [26]
+    pmaddwd         m4, m5, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m7, m6, m16
+    paddd           m7, m15
+    psrld           m7, 5
+    packusdw        m4, m7
+    vextracti32x8   ym5, m4, 1
+
+
+    palignr         m9, m0, m3, 12
+    palignr         m3, m2, m0, 12
+    movu            ym16, [r3 - 14 * 32]          ; [3]
+    vinserti32x8    m16, [r3 - 5 * 32] ,1          ; [12]
+    pmaddwd         m6, m9,m16
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m7, m3,m16
+    paddd           m7, m15
+    psrld           m7, 5
+    packusdw        m6, m7
+    vextracti32x8   ym7, m6, 1
+
+    movu            ym16, [r3 + 4 * 32]           ; [21]
+    vinserti32x8    m16, [r3 + 13 * 32] ,1             ; [30]
+    pmaddwd         m8, m9,m16
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m10, m3, m16
+    paddd           m10, m15
+    psrld           m10, 5
+    packusdw        m8, m10
+    vextracti32x8   ym9, m8, 1
+
+    movu            ym16,[r3 - 10 * 32]         ; [7]
+    vinserti32x8    m16, [r3 - 1 * 32] ,1              ; [16]
+    pmaddwd         m10, m0, m16
+    paddd           m10, m15
+    psrld           m10, 5
+    pmaddwd         m12, m2, m16
+    paddd           m12, m15
+    psrld           m12, 5
+    packusdw        m10, m12
+    vextracti32x8   ym0, m10, 1
+
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 0, 1, 2, 16
+    ret
+;; angle 32, modes 7 and 29
+cglobal ang32_mode_7_29
+    test            r6d, r6d
+
+    vbroadcasti32x8             m0, [r2 + 2]                    ; [16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1]
+    vbroadcasti32x8             m1, [r2 + 4]                    ; [17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2]
+
+    punpcklwd       m3, m0, m1                      ; [13 12 12 11 11 10 10  9  5  4  4  3  3  2  2  1]
+    punpckhwd       m0, m1                          ; [17 16 16 15 15 14 14 13  9  8  8  7  7  6  6  5]
+
+    vbroadcasti32x8             m1, [r2 + 18]                   ; [24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9]
+    vbroadcasti32x8            m4, [r2 + 20]                   ; [25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10]
+    punpcklwd       m2, m1, m4                      ; [21 20 20 19 19 18 18 17 13 12 12 11 11 10 10  9]
+    punpckhwd       m1, m4                          ; [25 24 24 23 23 22 22 21 17 16 16 15 15 14 14 13]
+
+    pmaddwd         m4, m3, [r3 + 8 * 32]           ; [25]
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m5, m0, [r3 + 8 * 32]
+    paddd           m5, m15
+    psrld           m5, 5
+    packusdw        m4, m5
+
+    palignr         m8, m0, m3, 4
+    pmaddwd         m5, m8, [r3 - 15 * 32]          ; [2]
+    paddd           m5, m15
+    psrld           m5, 5
+    palignr         m9, m2, m0, 4
+    pmaddwd         m10, m9, [r3 - 15 * 32]
+    paddd           m10, m15
+    psrld           m10, 5
+    packusdw        m5, m10
+
+    movu            ym16,[r3 - 6 * 32]           ; [11]
+    vinserti32x8    m16, [r3 + 3 * 32],1           ; [20]
+    pmaddwd         m6, m8, m16
+    paddd           m6, m15
+    psrld           m6, 5
+    pmaddwd         m7, m9, m16
+    paddd           m7, m15
+    psrld           m7, 5
+    packusdw        m6, m7
+    vextracti32x8   ym7, m6, 1
+
+    pmaddwd         m8, [r3 + 12 * 32]              ; [29]
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m9, [r3 + 12 * 32]
+    paddd           m9, m15
+    psrld           m9, 5
+    packusdw        m8, m9
+
+    palignr         m11, m0, m3, 8
+    palignr         m12, m2, m0, 8
+    movu            ym16, [r3 - 11 * 32]         ; [6]
+    vinserti32x8    m16, [r3 - 2 * 32] ,1        ; [15]
+    pmaddwd         m9, m11, m16
+    paddd           m9, m15
+    psrld           m9, 5
+    palignr         m12, m2, m0, 8
+    pmaddwd         m10, m12, m16
+    paddd           m10, m15
+    psrld           m10, 5
+    packusdw        m9, m10
+    vextracti32x8   ym10, m9, 1
+
+    pmaddwd         m11, [r3 + 7 * 32]              ; [24]
+    paddd           m11, m15
+    psrld           m11, 5
+    pmaddwd         m12, [r3 + 7 * 32]
+    paddd           m12, m15
+    psrld           m12, 5
+    packusdw        m11, m12
+
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0
+
+    palignr         m5, m0, m3, 12
+    palignr         m6, m2, m0, 12
+    movu            ym16, [r3 - 16 * 32]          ; [1]
+    vinserti32x8    m16, [r3 - 7 * 32]  ,1             ; [10]
+    pmaddwd         m4, m5, m16
+    paddd           m4, m15
+    psrld           m4, 5
+    pmaddwd         m7, m6, m16
+    paddd           m7, m15
+    psrld           m7, 5
+    packusdw        m4, m7
+    vextracti32x8   ym5, m4, 1
+
+    palignr         m9, m0, m3, 12
+    pmaddwd         m6, m9, [r3 + 2 * 32]           ; [19]
+    paddd           m6, m15
+    psrld           m6, 5
+    palignr         m3, m2, m0, 12
+    pmaddwd         m7, m3, [r3 + 2 * 32]
+    paddd           m7, m15
+    psrld           m7, 5
+    packusdw        m6, m7
+
+    pmaddwd         m7, m9, [r3 + 11 * 32]          ; [28]
+    paddd           m7, m15
+    psrld           m7, 5
+    pmaddwd         m8, m3, [r3 + 11 * 32]
+    paddd           m8, m15
+    psrld           m8, 5
+    packusdw        m7, m8
+
+    movu            ym16, [r3 - 12 * 32]          ; [5]
+    vinserti32x8    m16, [r3 - 3 * 32]  ,1         ; [14]
+    pmaddwd         m8, m0, m16
+    paddd           m8, m15
+    psrld           m8, 5
+    pmaddwd         m10, m2, m16
+    paddd           m10,m15
+    psrld           m10, 5
+    packusdw        m8, m10
+    vextracti32x8   ym9, m8, 1
+
+    pmaddwd         m10, m0, [r3 + 6 * 32]          ; [23]
+    paddd           m10,m15
+    psrld           m10, 5
+    pmaddwd         m12, m2, [r3 + 6 * 32]
+    paddd           m12, m15
+    psrld           m12, 5
+    packusdw        m10, m12
+
+    palignr         m11, m2, m0, 4
+    pmaddwd         m11, [r3 - 17 * 32]             ; [0]
+    paddd           m11, m15
+    psrld           m11, 5
+    palignr         m12, m1, m2, 4
+    pmaddwd         m12, [r3 - 17 * 32]
+    paddd           m12, m15
+    psrld           m12, 5
+    packusdw        m11, m12
+    TRANSPOSE_STORE_AVX2 4, 5, 6, 7, 8, 9, 10, 11, 3, 2, 16
+    ret
+
+cglobal intra_pred_ang32_7, 3,8,17
+    add         r2,        128
+    xor         r6d,       r6d
+    lea         r3,        [ang_table_avx2 + 17 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r7,        [r0 + 8 * r1]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_7_29
+
+    add         r2,        8
+    lea         r0,        [r0 + 32]
+
+    call        ang32_mode_7_29
+
+    add         r2,        24
+    lea         r0,        [r7 + 8 * r1]
+
+    call        ang16_mode_7_29
+
+    add         r2,        8
+    lea         r0,        [r0 + 32]
+
+    call        ang32_mode_7_29
+    RET
+
+cglobal intra_pred_ang32_29, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    lea         r3,        [ang_table_avx2 + 17 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+    lea         r5,        [r0 + 32]
+    vbroadcasti32x8  m15,  [pd_16]
+    call        ang16_mode_7_29
+
+    add         r2,        8
+
+    call        ang32_mode_7_29
+
+    add         r2,        24
+    mov         r0,        r5
+
+    call        ang16_mode_7_29
+    add         r2,        8
+    call        ang32_mode_7_29
+    RET
+cglobal intra_pred_ang16_7, 3,7,17
+    add         r2,        64
+    xor         r6d,       r6d
+    vbroadcasti32x8  m15,  [pd_16]
+    lea         r3,        [ang_table_avx2 + 17 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+
+    call        ang16_mode_7_29
+    RET
+
+cglobal intra_pred_ang16_29, 3,7,17
+    xor         r6d,       r6d
+    inc         r6d
+    vbroadcasti32x8  m15,  [pd_16]
+    lea         r3,        [ang_table_avx2 + 17 * 32]
+    add         r1d,       r1d
+    lea         r4,        [r1 * 3]
+
+    call        ang16_mode_7_29
+    RET
+;-------------------------------------------------------------------------------------------------------
+; avx512 code for intra_pred_ang32 mode 2 to 34 end
+;-------------------------------------------------------------------------------------------------------
 %macro MODE_2_34 0
     movu            m0, [r2 + 4]
     movu            m1, [r2 + 20]

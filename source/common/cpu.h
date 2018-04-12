@@ -50,7 +50,7 @@ extern "C" void PFX(safe_intel_cpu_indicator_init)(void);
 #endif
 
 namespace X265_NS {
-uint32_t cpu_detect(void);
+uint32_t cpu_detect(bool);
 
 struct cpu_name_t
 {

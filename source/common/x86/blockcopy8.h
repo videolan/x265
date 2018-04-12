@@ -28,37 +28,48 @@
 FUNCDEF_TU_S(void, cpy2Dto1D_shl, sse2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy2Dto1D_shl, sse4, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy2Dto1D_shl, avx2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+FUNCDEF_TU_S(void, cpy2Dto1D_shl, avx512, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 
 FUNCDEF_TU_S(void, cpy2Dto1D_shr, sse2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy2Dto1D_shr, sse4, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy2Dto1D_shr, avx2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+FUNCDEF_TU_S(void, cpy2Dto1D_shr, avx512, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 
 FUNCDEF_TU_S(void, cpy1Dto2D_shl, sse2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy1Dto2D_shl, sse4, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy1Dto2D_shl, avx2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
-
+FUNCDEF_TU_S(void, cpy1Dto2D_shl, avx512, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+FUNCDEF_TU_S(void, cpy1Dto2D_shl_aligned, avx512, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy1Dto2D_shr, sse2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy1Dto2D_shr, sse4, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 FUNCDEF_TU_S(void, cpy1Dto2D_shr, avx2, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
+FUNCDEF_TU_S(void, cpy1Dto2D_shr, avx512, int16_t* dst, const int16_t* src, intptr_t srcStride, int shift);
 
 FUNCDEF_TU_S(uint32_t, copy_cnt, sse2, int16_t* dst, const int16_t* src, intptr_t srcStride);
 FUNCDEF_TU_S(uint32_t, copy_cnt, sse4, int16_t* dst, const int16_t* src, intptr_t srcStride);
 FUNCDEF_TU_S(uint32_t, copy_cnt, avx2, int16_t* dst, const int16_t* src, intptr_t srcStride);
+FUNCDEF_TU_S(uint32_t, copy_cnt, avx512, int16_t* dst, const int16_t* src, intptr_t srcStride);
 
 FUNCDEF_TU(void, blockfill_s, sse2, int16_t* dst, intptr_t dstride, int16_t val);
 FUNCDEF_TU(void, blockfill_s, avx2, int16_t* dst, intptr_t dstride, int16_t val);
+FUNCDEF_TU(void, blockfill_s, avx512, int16_t* dst, intptr_t dstride, int16_t val);
+FUNCDEF_TU(void, blockfill_s_aligned, avx512, int16_t* dst, intptr_t dstride, int16_t val);
 
 FUNCDEF_CHROMA_PU(void, blockcopy_ss, sse2, int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 FUNCDEF_CHROMA_PU(void, blockcopy_ss, avx, int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+FUNCDEF_CHROMA_PU(void, blockcopy_ss, avx512, int16_t* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 
 FUNCDEF_CHROMA_PU(void, blockcopy_pp, sse2, pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 FUNCDEF_CHROMA_PU(void, blockcopy_pp, avx, pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+FUNCDEF_CHROMA_PU(void, blockcopy_pp, avx512, pixel* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 
 FUNCDEF_PU(void, blockcopy_sp, sse2, pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 FUNCDEF_PU(void, blockcopy_sp, sse4, pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 FUNCDEF_PU(void, blockcopy_sp, avx2, pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
+FUNCDEF_PU(void, blockcopy_sp, avx512, pixel* dst, intptr_t dstStride, const int16_t* src, intptr_t srcStride);
 FUNCDEF_PU(void, blockcopy_ps, sse2, int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 FUNCDEF_PU(void, blockcopy_ps, sse4, int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 FUNCDEF_PU(void, blockcopy_ps, avx2, int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
+FUNCDEF_PU(void, blockcopy_ps, avx512, int16_t* dst, intptr_t dstStride, const pixel* src, intptr_t srcStride);
 
 #endif // ifndef X265_I386_PIXEL_H

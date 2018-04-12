@@ -980,19 +980,69 @@ static uint32_t costC1C2Flag_c(uint16_t *absCoeff, intptr_t numC1Flag, uint8_t *
             sum += sbacGetEntropyBits(mstate, firstC2Flag);
         }
     }
-
     return (sum & 0x00FFFFFF) + (c1 << 26) + (firstC2Idx << 28);
 }
+template<int log2TrSize>
+static void nonPsyRdoQuant_c(int16_t *m_resiDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, uint32_t blkPos)
+{
+    const int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
+    const int scaleBits = SCALE_BITS - 2 * transformShift;
+    const uint32_t trSize = 1 << log2TrSize;
 
+    for (int y = 0; y < MLS_CG_SIZE; y++)
+    {
+        for (int x = 0; x < MLS_CG_SIZE; x++)
+        {
+             int64_t signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+             costUncoded[blkPos + x] = static_cast<int64_t>((double)((signCoef * signCoef) << scaleBits));
+             *totalUncodedCost += costUncoded[blkPos + x];
+             *totalRdCost += costUncoded[blkPos + x];
+        }
+        blkPos += trSize;
+    }
+}
+template<int log2TrSize>
+static void psyRdoQuant_c(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t *psyScale, uint32_t blkPos)
+{
+    const int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
+    const int scaleBits = SCALE_BITS - 2 * transformShift;
+    const uint32_t trSize = 1 << log2TrSize;
+    int max = X265_MAX(0, (2 * transformShift + 1));
+
+    for (int y = 0; y < MLS_CG_SIZE; y++)
+    {
+        for (int x = 0; x < MLS_CG_SIZE; x++)
+        {
+            int64_t signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+            int64_t predictedCoef = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
+
+            costUncoded[blkPos + x] = static_cast<int64_t>((double)((signCoef * signCoef) << scaleBits));
+
+            /* when no residual coefficient is coded, predicted coef == recon coef */
+            costUncoded[blkPos + x] -= static_cast<int64_t>((double)(((*psyScale) * predictedCoef) >> max));
+
+            *totalUncodedCost += costUncoded[blkPos + x];
+            *totalRdCost += costUncoded[blkPos + x];
+        }
+        blkPos += trSize;
+    }
+}
 namespace X265_NS {
 // x265 private namespace
-
 void setupDCTPrimitives_c(EncoderPrimitives& p)
 {
     p.dequant_scaling = dequant_scaling_c;
     p.dequant_normal = dequant_normal_c;
     p.quant = quant_c;
     p.nquant = nquant_c;
+    p.cu[BLOCK_4x4].nonPsyRdoQuant   = nonPsyRdoQuant_c<2>;
+    p.cu[BLOCK_8x8].nonPsyRdoQuant   = nonPsyRdoQuant_c<3>;
+    p.cu[BLOCK_16x16].nonPsyRdoQuant = nonPsyRdoQuant_c<4>;
+    p.cu[BLOCK_32x32].nonPsyRdoQuant = nonPsyRdoQuant_c<5>;
+    p.cu[BLOCK_4x4].psyRdoQuant = psyRdoQuant_c<2>;
+    p.cu[BLOCK_8x8].psyRdoQuant = psyRdoQuant_c<3>;
+    p.cu[BLOCK_16x16].psyRdoQuant = psyRdoQuant_c<4>;
+    p.cu[BLOCK_32x32].psyRdoQuant = psyRdoQuant_c<5>;
     p.dst4x4 = dst4_c;
     p.cu[BLOCK_4x4].dct   = dct4_c;
     p.cu[BLOCK_8x8].dct   = dct8_c;

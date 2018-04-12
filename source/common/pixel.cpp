@@ -986,28 +986,34 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
 {
 #define LUMA_PU(W, H) \
     p.pu[LUMA_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
-    p.pu[LUMA_ ## W ## x ## H].addAvg = addAvg<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].addAvg[NONALIGNED] = addAvg<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].addAvg[ALIGNED] = addAvg<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].sad = sad<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].sad_x3 = sad_x3<W, H>; \
     p.pu[LUMA_ ## W ## x ## H].sad_x4 = sad_x4<W, H>; \
-    p.pu[LUMA_ ## W ## x ## H].pixelavg_pp = pixelavg_pp<W, H>;
-
+    p.pu[LUMA_ ## W ## x ## H].pixelavg_pp[NONALIGNED] = pixelavg_pp<W, H>; \
+    p.pu[LUMA_ ## W ## x ## H].pixelavg_pp[ALIGNED] = pixelavg_pp<W, H>;
 #define LUMA_CU(W, H) \
     p.cu[BLOCK_ ## W ## x ## H].sub_ps        = pixel_sub_ps_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].add_ps        = pixel_add_ps_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].add_ps[NONALIGNED]    = pixel_add_ps_c<W, H>; \
+    p.cu[BLOCK_ ## W ## x ## H].add_ps[ALIGNED] = pixel_add_ps_c<W, H>; \
     p.cu[BLOCK_ ## W ## x ## H].copy_sp       = blockcopy_sp_c<W, H>; \
     p.cu[BLOCK_ ## W ## x ## H].copy_ps       = blockcopy_ps_c<W, H>; \
     p.cu[BLOCK_ ## W ## x ## H].copy_ss       = blockcopy_ss_c<W, H>; \
-    p.cu[BLOCK_ ## W ## x ## H].blockfill_s   = blockfill_s_c<W>;  \
+    p.cu[BLOCK_ ## W ## x ## H].blockfill_s[NONALIGNED] = blockfill_s_c<W>;  \
+    p.cu[BLOCK_ ## W ## x ## H].blockfill_s[ALIGNED]    = blockfill_s_c<W>;  \
     p.cu[BLOCK_ ## W ## x ## H].cpy2Dto1D_shl = cpy2Dto1D_shl<W>; \
     p.cu[BLOCK_ ## W ## x ## H].cpy2Dto1D_shr = cpy2Dto1D_shr<W>; \
-    p.cu[BLOCK_ ## W ## x ## H].cpy1Dto2D_shl = cpy1Dto2D_shl<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].cpy1Dto2D_shl[NONALIGNED] = cpy1Dto2D_shl<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].cpy1Dto2D_shl[ALIGNED] = cpy1Dto2D_shl<W>; \
     p.cu[BLOCK_ ## W ## x ## H].cpy1Dto2D_shr = cpy1Dto2D_shr<W>; \
     p.cu[BLOCK_ ## W ## x ## H].psy_cost_pp   = psyCost_pp<BLOCK_ ## W ## x ## H>; \
     p.cu[BLOCK_ ## W ## x ## H].transpose     = transpose<W>; \
-    p.cu[BLOCK_ ## W ## x ## H].ssd_s         = pixel_ssd_s_c<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].ssd_s[NONALIGNED]         = pixel_ssd_s_c<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].ssd_s[ALIGNED] = pixel_ssd_s_c<W>; \
     p.cu[BLOCK_ ## W ## x ## H].var           = pixel_var<W>; \
-    p.cu[BLOCK_ ## W ## x ## H].calcresidual  = getResidual<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].calcresidual[NONALIGNED]  = getResidual<W>; \
+    p.cu[BLOCK_ ## W ## x ## H].calcresidual[ALIGNED]     = getResidual<W>; \
     p.cu[BLOCK_ ## W ## x ## H].sse_pp        = sse<W, H, pixel, pixel>; \
     p.cu[BLOCK_ ## W ## x ## H].sse_ss        = sse<W, H, int16_t, int16_t>;
 
@@ -1102,7 +1108,8 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.cu[BLOCK_64x64].sa8d = sa8d16<64, 64>;
 
 #define CHROMA_PU_420(W, H) \
-    p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].addAvg  = addAvg<W, H>;         \
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].addAvg[NONALIGNED]  = addAvg<W, H>;         \
+    p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].addAvg[ALIGNED]  = addAvg<W, H>;         \
     p.chroma[X265_CSP_I420].pu[CHROMA_420_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
 
     CHROMA_PU_420(2, 2);
@@ -1165,7 +1172,8 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].cu[BLOCK_420_ ## W ## x ## H].copy_ps = blockcopy_ps_c<W, H>; \
     p.chroma[X265_CSP_I420].cu[BLOCK_420_ ## W ## x ## H].copy_ss = blockcopy_ss_c<W, H>; \
     p.chroma[X265_CSP_I420].cu[BLOCK_420_ ## W ## x ## H].sub_ps = pixel_sub_ps_c<W, H>;  \
-    p.chroma[X265_CSP_I420].cu[BLOCK_420_ ## W ## x ## H].add_ps = pixel_add_ps_c<W, H>;
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_ ## W ## x ## H].add_ps[NONALIGNED] = pixel_add_ps_c<W, H>; \
+    p.chroma[X265_CSP_I420].cu[BLOCK_420_ ## W ## x ## H].add_ps[ALIGNED] = pixel_add_ps_c<W, H>;
 
     CHROMA_CU_420(2, 2)
     CHROMA_CU_420(4, 4)
@@ -1179,7 +1187,8 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.chroma[X265_CSP_I420].cu[BLOCK_64x64].sa8d = sa8d16<32, 32>;
 
 #define CHROMA_PU_422(W, H) \
-    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].addAvg  = addAvg<W, H>;         \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].addAvg[NONALIGNED]  = addAvg<W, H>;         \
+    p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].addAvg[ALIGNED]  = addAvg<W, H>;         \
     p.chroma[X265_CSP_I422].pu[CHROMA_422_ ## W ## x ## H].copy_pp = blockcopy_pp_c<W, H>; \
 
     CHROMA_PU_422(2, 4);
@@ -1242,7 +1251,8 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.chroma[X265_CSP_I422].cu[BLOCK_422_ ## W ## x ## H].copy_ps = blockcopy_ps_c<W, H>; \
     p.chroma[X265_CSP_I422].cu[BLOCK_422_ ## W ## x ## H].copy_ss = blockcopy_ss_c<W, H>; \
     p.chroma[X265_CSP_I422].cu[BLOCK_422_ ## W ## x ## H].sub_ps = pixel_sub_ps_c<W, H>; \
-    p.chroma[X265_CSP_I422].cu[BLOCK_422_ ## W ## x ## H].add_ps = pixel_add_ps_c<W, H>;
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_ ## W ## x ## H].add_ps[NONALIGNED] = pixel_add_ps_c<W, H>; \
+    p.chroma[X265_CSP_I422].cu[BLOCK_422_ ## W ## x ## H].add_ps[ALIGNED] = pixel_add_ps_c<W, H>;
 
     CHROMA_CU_422(2, 4)
     CHROMA_CU_422(4, 8)
@@ -1258,7 +1268,7 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.weight_pp = weight_pp_c;
     p.weight_sp = weight_sp_c;
 
-    p.scale1D_128to64 = scale1D_128to64;
+    p.scale1D_128to64[NONALIGNED] = p.scale1D_128to64[ALIGNED] = scale1D_128to64;
     p.scale2D_64to32 = scale2D_64to32;
     p.frameInitLowres = frame_init_lowres_core;
     p.ssim_4x4x2_core = ssim_4x4x2_core;

@@ -90,6 +90,43 @@ struct RPSListNode
     RPSListNode* prior;
 };
 
+struct cuLocation
+{
+    bool skipWidth;
+    bool skipHeight;
+    uint32_t heightInCU;
+    uint32_t widthInCU;
+    uint32_t oddRowIndex;
+    uint32_t evenRowIndex;
+    uint32_t switchCondition;
+
+    void init(x265_param* param)
+    {
+        skipHeight = false;
+        skipWidth = false;
+        heightInCU = (param->sourceHeight + param->maxCUSize - 1) >> param->maxLog2CUSize;
+        widthInCU = (param->sourceWidth + param->maxCUSize - 1) >> param->maxLog2CUSize;
+        evenRowIndex = 0;
+        oddRowIndex = param->num4x4Partitions * widthInCU;
+        switchCondition = 0; // To switch between odd and even rows
+    }
+};
+
+struct puOrientation
+{
+    bool isVert;
+    bool isRect;
+    bool isAmp;
+
+    void init()
+    {
+        isRect = false;
+        isAmp = false;
+        isVert = false;
+    }
+};
+
+
 class FrameEncoder;
 class DPB;
 class Lookahead;
@@ -184,6 +221,13 @@ public:
 
     x265_sei_payload        m_prevTonemapPayload;
 
+    /* Collect frame level feature data */
+    uint64_t*               m_rdCost;
+    uint64_t*               m_variance;
+    uint32_t*               m_trainingCount;
+    int32_t                 m_startPoint;
+    Lock                    m_dynamicRefineLock;
+
     Encoder();
     ~Encoder()
     {
@@ -236,6 +280,10 @@ public:
     void freeAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType);
 
     void readAnalysisFile(x265_analysis_data* analysis, int poc, const x265_picture* picIn);
+
+    int getCUIndex(cuLocation* cuLoc, uint32_t* count, int bytes, int flag);
+
+    int getPuShape(puOrientation* puOrient, int partSize, int numCTU);
 
     void writeAnalysisFile(x265_analysis_data* pic, FrameData &curEncData);
     void readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int poc, int sliceType);

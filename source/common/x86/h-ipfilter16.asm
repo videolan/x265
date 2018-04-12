@@ -47,7 +47,7 @@ SECTION_RODATA 32
 
 h_pd_524800:        times 8 dd 524800
                                     
-tab_LumaCoeff:    dw   0, 0,  0,  64,  0,   0,  0,  0
+h_tab_LumaCoeff:    dw   0, 0,  0,  64,  0,   0,  0,  0
                   dw  -1, 4, -10, 58,  17, -5,  1,  0
                   dw  -1, 4, -11, 40,  40, -11, 4, -1
                   dw   0, 1, -5,  17,  58, -10, 4, -1
@@ -207,10 +207,10 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     add         r3d,    r3d
 
 %ifdef PIC
-    lea         r6,     [tab_LumaCoeff]
+    lea         r6,     [h_tab_LumaCoeff]
     mova        m0,     [r6 + r4]
 %else
-    mova        m0,     [tab_LumaCoeff + r4]
+    mova        m0,     [h_tab_LumaCoeff + r4]
 %endif
 
 %ifidn %3, pp
@@ -285,7 +285,8 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
 ;------------------------------------------------------------------------------------------------------------
 ; void interp_8tap_horiz_pp_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx
 ;------------------------------------------------------------------------------------------------------------
-    FILTER_HOR_LUMA_sse2 4, 4, pp
+%if ARCH_X86_64
+	FILTER_HOR_LUMA_sse2 4, 4, pp
     FILTER_HOR_LUMA_sse2 4, 8, pp
     FILTER_HOR_LUMA_sse2 4, 16, pp
     FILTER_HOR_LUMA_sse2 8, 4, pp
@@ -339,6 +340,7 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     FILTER_HOR_LUMA_sse2 64, 32, ps
     FILTER_HOR_LUMA_sse2 64, 48, ps
     FILTER_HOR_LUMA_sse2 64, 64, ps
+%endif
 
 ;-----------------------------------------------------------------------------
 ; void interp_4tap_horiz_%3_%1x%2(pixel *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int coeffIdx)
@@ -625,10 +627,10 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     add         r3, r3
 
 %ifdef PIC
-    lea         r6, [tab_LumaCoeff]
+    lea         r6, [h_tab_LumaCoeff]
     mova        m0, [r6 + r4]
 %else
-    mova        m0, [tab_LumaCoeff + r4]
+    mova        m0, [h_tab_LumaCoeff + r4]
 %endif
 
 %ifidn %3, pp
@@ -712,10 +714,10 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     shl         r4d, 4
 
 %ifdef PIC
-    lea         r6, [tab_LumaCoeff]
+    lea         r6, [h_tab_LumaCoeff]
     mova        m0, [r6 + r4]
 %else
-    mova        m0, [tab_LumaCoeff + r4]
+    mova        m0, [h_tab_LumaCoeff + r4]
 %endif
 
 %ifidn %3, pp
@@ -815,10 +817,10 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     shl         r4d, 4
 
 %ifdef PIC
-    lea         r6, [tab_LumaCoeff]
+    lea         r6, [h_tab_LumaCoeff]
     mova        m0, [r6 + r4]
 %else
-    mova        m0, [tab_LumaCoeff + r4]
+    mova        m0, [h_tab_LumaCoeff + r4]
 %endif
 %ifidn %3, pp
     mova        m1, [INTERP_OFFSET_PP]
@@ -936,10 +938,10 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     shl         r4d, 4
 
 %ifdef PIC
-    lea         r6, [tab_LumaCoeff]
+    lea         r6, [h_tab_LumaCoeff]
     mova        m0, [r6 + r4]
 %else
-    mova        m0, [tab_LumaCoeff + r4]
+    mova        m0, [h_tab_LumaCoeff + r4]
 %endif
 
 %ifidn %3, pp
@@ -1132,10 +1134,10 @@ cglobal interp_8tap_horiz_%3_%1x%2, 4, 7, 8
     shl         r4d, 4
 
 %ifdef PIC
-    lea         r6, [tab_LumaCoeff]
+    lea         r6, [h_tab_LumaCoeff]
     mova        m0, [r6 + r4]
 %else
-    mova        m0, [tab_LumaCoeff + r4]
+    mova        m0, [h_tab_LumaCoeff + r4]
 %endif
 %ifidn %3, pp
     mova        m1, [pd_32]
@@ -1307,12 +1309,12 @@ cglobal interp_8tap_horiz_pp_4x%1, 4,7,7
     mov              r4d, r4m
     shl              r4d, 4
 %ifdef PIC
-    lea              r5, [tab_LumaCoeff]
+    lea              r5, [h_tab_LumaCoeff]
     vpbroadcastq     m0, [r5 + r4]
     vpbroadcastq     m1, [r5 + r4 + 8]
 %else
-    vpbroadcastq     m0, [tab_LumaCoeff + r4]
-    vpbroadcastq     m1, [tab_LumaCoeff + r4 + 8]
+    vpbroadcastq     m0, [h_tab_LumaCoeff + r4]
+    vpbroadcastq     m1, [h_tab_LumaCoeff + r4 + 8]
 %endif
     lea              r6, [pw_pixel_max]
     mova             m3, [interp8_hpp_shuf]
@@ -1385,11 +1387,11 @@ cglobal interp_8tap_horiz_pp_8x%1, 4,6,8
     mov              r4d, r4m
     shl              r4d, 4
 %ifdef PIC
-    lea              r5, [tab_LumaCoeff]
+    lea              r5, [h_tab_LumaCoeff]
     vpbroadcastq     m0, [r5 + r4]
     vpbroadcastq     m1, [r5 + r4 + 8]
 %else
-    vpbroadcastq     m0, [tab_LumaCoeff + r4]
+    vpbroadcastq     m0, [h_tab_LumaCoeff + r4]
     vpbroadcastq     m1, [h_ab_LumaCoeff + r4 + 8]
 %endif
     mova             m3, [interp8_hpp_shuf]
@@ -1481,12 +1483,12 @@ cglobal interp_8tap_horiz_pp_16x%1, 4,6,8
     mov              r4d, r4m
     shl              r4d, 4
 %ifdef PIC
-    lea              r5, [tab_LumaCoeff]
+    lea              r5, [h_tab_LumaCoeff]
     vpbroadcastq     m0, [r5 + r4]
     vpbroadcastq     m1, [r5 + r4 + 8]
 %else
-    vpbroadcastq     m0, [tab_LumaCoeff + r4]
-    vpbroadcastq     m1, [tab_LumaCoeff + r4 + 8]
+    vpbroadcastq     m0, [h_tab_LumaCoeff + r4]
+    vpbroadcastq     m1, [h_tab_LumaCoeff + r4 + 8]
 %endif
     mova             m3, [interp8_hpp_shuf]
     mova             m7, [pd_32]
@@ -1579,12 +1581,12 @@ cglobal interp_8tap_horiz_pp_%1x%2, 4,6,8
     mov              r4d, r4m
     shl              r4d, 4
 %ifdef PIC
-    lea              r5, [tab_LumaCoeff]
+    lea              r5, [h_tab_LumaCoeff]
     vpbroadcastq     m0, [r5 + r4]
     vpbroadcastq     m1, [r5 + r4 + 8]
 %else
-    vpbroadcastq     m0, [tab_LumaCoeff + r4]
-    vpbroadcastq     m1, [tab_LumaCoeff + r4 + 8]
+    vpbroadcastq     m0, [h_tab_LumaCoeff + r4]
+    vpbroadcastq     m1, [h_tab_LumaCoeff + r4 + 8]
 %endif
     mova             m3, [interp8_hpp_shuf]
     mova             m7, [pd_32]
@@ -1684,12 +1686,12 @@ cglobal interp_8tap_horiz_pp_12x16, 4,6,8
     mov              r4d, r4m
     shl              r4d, 4
 %ifdef PIC
-    lea              r5, [tab_LumaCoeff]
+    lea              r5, [h_tab_LumaCoeff]
     vpbroadcastq     m0, [r5 + r4]
     vpbroadcastq     m1, [r5 + r4 + 8]
 %else
-    vpbroadcastq     m0, [tab_LumaCoeff + r4]
-    vpbroadcastq     m1, [tab_LumaCoeff + r4 + 8]
+    vpbroadcastq     m0, [h_tab_LumaCoeff + r4]
+    vpbroadcastq     m1, [h_tab_LumaCoeff + r4 + 8]
 %endif
     mova             m3, [interp8_hpp_shuf]
     mova             m7, [pd_32]
@@ -1774,12 +1776,12 @@ cglobal interp_8tap_horiz_pp_24x32, 4,6,8
     mov              r4d, r4m
     shl              r4d, 4
 %ifdef PIC
-    lea              r5, [tab_LumaCoeff]
+    lea              r5, [h_tab_LumaCoeff]
     vpbroadcastq     m0, [r5 + r4]
     vpbroadcastq     m1, [r5 + r4 + 8]
 %else
-    vpbroadcastq     m0, [tab_LumaCoeff + r4]
-    vpbroadcastq     m1, [tab_LumaCoeff + r4 + 8]
+    vpbroadcastq     m0, [h_tab_LumaCoeff + r4]
+    vpbroadcastq     m1, [h_tab_LumaCoeff + r4 + 8]
 %endif
     mova             m3, [interp8_hpp_shuf]
     mova             m7, [pd_32]
@@ -1892,12 +1894,12 @@ cglobal interp_8tap_horiz_pp_48x64, 4,6,8
     mov              r4d, r4m
     shl              r4d, 4
 %ifdef PIC
-    lea              r5, [tab_LumaCoeff]
+    lea              r5, [h_tab_LumaCoeff]
     vpbroadcastq     m0, [r5 + r4]
     vpbroadcastq     m1, [r5 + r4 + 8]
 %else
-    vpbroadcastq     m0, [tab_LumaCoeff + r4]
-    vpbroadcastq     m1, [tab_LumaCoeff + r4 + 8]
+    vpbroadcastq     m0, [h_tab_LumaCoeff + r4]
+    vpbroadcastq     m1, [h_tab_LumaCoeff + r4 + 8]
 %endif
     mova             m3, [interp8_hpp_shuf]
     mova             m7, [pd_32]
@@ -2018,12 +2020,12 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,8,7
     add                         r3d,               r3d
 
 %ifdef PIC
-    lea                         r6,                [tab_LumaCoeff]
+    lea                         r6,                [h_tab_LumaCoeff]
     lea                         r4,                [r4 * 8]
     vbroadcasti128              m0,                [r6 + r4 * 2]
 %else
     lea                         r4,                [r4 * 8]
-    vbroadcasti128              m0,                [tab_LumaCoeff + r4 * 2]
+    vbroadcasti128              m0,                [h_tab_LumaCoeff + r4 * 2]
 %endif
 
     vbroadcasti128              m2,                [INTERP_OFFSET_PS]
@@ -2129,12 +2131,12 @@ cglobal interp_8tap_horiz_ps_8x%1, 4, 6, 8
     mov                 r5d, r5m
     shl                 r4d, 4
 %ifdef PIC
-    lea                 r6, [tab_LumaCoeff]
+    lea                 r6, [h_tab_LumaCoeff]
     vpbroadcastq        m0, [r6 + r4]
     vpbroadcastq        m1, [r6 + r4 + 8]
 %else
-    vpbroadcastq        m0, [tab_LumaCoeff + r4]
-    vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
+    vpbroadcastq        m0, [h_tab_LumaCoeff + r4]
+    vpbroadcastq        m1, [h_tab_LumaCoeff + r4 + 8]
 %endif
     mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
@@ -2197,12 +2199,12 @@ cglobal interp_8tap_horiz_ps_24x32, 4, 6, 8
     mov                 r5d, r5m
     shl                 r4d, 4
 %ifdef PIC
-    lea                 r6, [tab_LumaCoeff]
+    lea                 r6, [h_tab_LumaCoeff]
     vpbroadcastq        m0, [r6 + r4]
     vpbroadcastq        m1, [r6 + r4 + 8]
 %else
-    vpbroadcastq        m0, [tab_LumaCoeff + r4]
-    vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
+    vpbroadcastq        m0, [h_tab_LumaCoeff + r4]
+    vpbroadcastq        m1, [h_tab_LumaCoeff + r4 + 8]
 %endif
     mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
@@ -2376,12 +2378,12 @@ cglobal interp_8tap_horiz_ps_16x%1, 4, 6, 8
     mov                 r5d, r5m
     shl                 r4d, 4
 %ifdef PIC
-    lea                 r6, [tab_LumaCoeff]
+    lea                 r6, [h_tab_LumaCoeff]
     vpbroadcastq        m0, [r6 + r4]
     vpbroadcastq        m1, [r6 + r4 + 8]
 %else
-    vpbroadcastq        m0, [tab_LumaCoeff + r4]
-    vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
+    vpbroadcastq        m0, [h_tab_LumaCoeff + r4]
+    vpbroadcastq        m1, [h_tab_LumaCoeff + r4 + 8]
 %endif
     mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]
@@ -2469,12 +2471,12 @@ cglobal interp_8tap_horiz_ps_12x16, 4, 6, 8
     mov                 r5d, r5m
     shl                 r4d, 4
 %ifdef PIC
-    lea                 r6, [tab_LumaCoeff]
+    lea                 r6, [h_tab_LumaCoeff]
     vpbroadcastq        m0, [r6 + r4]
     vpbroadcastq        m1, [r6 + r4 + 8]
 %else
-    vpbroadcastq        m0, [tab_LumaCoeff + r4]
-    vpbroadcastq        m1, [tab_LumaCoeff + r4 + 8]
+    vpbroadcastq        m0, [h_tab_LumaCoeff + r4]
+    vpbroadcastq        m1, [h_tab_LumaCoeff + r4 + 8]
 %endif
     mova                m3, [interp8_hpp_shuf]
     vbroadcasti128      m2, [INTERP_OFFSET_PS]

@@ -38,7 +38,6 @@ class PicYuv;
 class Yuv
 {
 public:
-
     pixel*   m_buf[3];
 
     uint32_t m_size;

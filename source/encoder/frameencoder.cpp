@@ -393,6 +393,7 @@ void FrameEncoder::compressFrame()
      * not repeating headers (since AUD is supposed to be the first NAL in the access
      * unit) */
     Slice* slice = m_frame->m_encData->m_slice;
+
     if (m_param->bEnableAccessUnitDelimiters && (m_frame->m_poc || m_param->bRepeatHeaders))
     {
         m_bs.resetBits();
@@ -400,6 +401,8 @@ void FrameEncoder::compressFrame()
         m_entropyCoder.codeAUD(*slice);
         m_bs.writeByteAlignment();
         m_nalList.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, m_bs);
+        if (m_param->bSingleSeiNal)
+            m_bs.resetBits();
     }
     if (m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders)
     {
@@ -527,7 +530,7 @@ void FrameEncoder::compressFrame()
                 }
 
                 bool isIDR = m_frame->m_lowres.sliceType == X265_TYPE_IDR;
-                writeSei = payloadChange || isIDR;
+                writeSei = (payloadChange || isIDR);
             }
         }
     }
@@ -594,7 +597,6 @@ void FrameEncoder::compressFrame()
 
     /* reset entropy coders and compute slice id */
     m_entropyCoder.load(m_initSliceContext);
-	
     for (uint32_t sliceId = 0; sliceId < m_param->maxSlices; sliceId++)   
         for (uint32_t row = m_sliceBaseRow[sliceId]; row < m_sliceBaseRow[sliceId + 1]; row++)
             m_rows[row].init(m_initSliceContext, sliceId);   
@@ -632,17 +634,30 @@ void FrameEncoder::compressFrame()
             bpSei->m_auCpbRemovalDelayDelta = 1;
             bpSei->m_cpbDelayOffset = 0;
             bpSei->m_dpbDelayOffset = 0;
-
             // hrdFullness() calculates the initial CPB removal delay and offset
             m_top->m_rateControl->hrdFullness(bpSei);
-
-            m_bs.resetBits();
+            if (!m_param->bSingleSeiNal)
+                m_bs.resetBits();
+            int payloadSize = bpSei->countPayloadSize(*slice->m_sps);
+            bpSei->setSize(payloadSize);
             bpSei->write(m_bs, *slice->m_sps);
-            m_bs.writeByteAlignment();
-
-            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+            bpSei->alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
 
             m_top->m_lastBPSEI = m_rce.encodeOrder;
+        }
+
+        if (m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_param->bEmitIDRRecoverySEI)
+        {
+            /* Recovery Point SEI require the SPS to be "activated" */
+            SEIRecoveryPoint sei;
+            sei.m_recoveryPocCnt = 0;
+            sei.m_exactMatchingFlag = true;
+            sei.m_brokenLinkFlag = false;
+            if (!m_param->bSingleSeiNal)
+                m_bs.resetBits();
+            sei.setSize(sei.countPayloadSize(*slice->m_sps));
+            sei.write(m_bs, *slice->m_sps);
+            sei.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
         }
     }
 
@@ -659,9 +674,14 @@ void FrameEncoder::compressFrame()
                 sei->m_picStruct = (poc & 1) ? 1 /* top */ : 2 /* bottom */;
             else if (m_param->interlaceMode == 1)
                 sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
-            else
-                sei->m_picStruct = 0;
-            sei->m_sourceScanType = 0;
+			else
+				sei->m_picStruct = m_param->pictureStructure;
+			
+		    if (m_param->interlaceMode)
+				 sei->m_sourceScanType = 0;
+			else
+				 sei->m_sourceScanType = 1;
+			
             sei->m_duplicateFlag = false;
         }
 
@@ -674,13 +694,26 @@ void FrameEncoder::compressFrame()
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, m_rce.encodeOrder - prevBPSEI), (1 << hrd->cpbRemovalDelayLength));
             sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics + poc - m_rce.encodeOrder;
         }
-
-        m_bs.resetBits();
+        if (!m_param->bSingleSeiNal)
+            m_bs.resetBits();
+        int payloadSize = sei->countPayloadSize(*slice->m_sps);
+        sei->setSize(payloadSize);
         sei->write(m_bs, *slice->m_sps);
-        m_bs.writeByteAlignment();
-        m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+        sei->alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
     }
 
+	if (m_param->preferredTransferCharacteristics > -1 && slice->isIRAP())
+	{
+	    SEIAlternativeTC m_seiAlternativeTC;
+		m_seiAlternativeTC.m_preferredTransferCharacteristics = m_param->preferredTransferCharacteristics;
+		m_bs.resetBits();
+		int payloadSize = m_seiAlternativeTC.countPayloadSize(*slice->m_sps);
+		m_seiAlternativeTC.setSize(payloadSize);
+		m_seiAlternativeTC.write(m_bs, *slice->m_sps);
+		m_seiAlternativeTC.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+	}
+	
+    bool isSei = false;
     /* Write user SEI */
     for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
     {
@@ -689,11 +722,12 @@ void FrameEncoder::compressFrame()
         {
             SEIuserDataUnregistered sei;
             sei.m_userData = payload->payload;
-            m_bs.resetBits();
+            if (!m_param->bSingleSeiNal)
+                m_bs.resetBits();
             sei.setSize(payload->payloadSize);
             sei.write(m_bs, *slice->m_sps);
-            m_bs.writeByteAlignment();
-            m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+            sei.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+            isSei = true;
         }
         else if (payload->payloadType == USER_DATA_REGISTERED_ITU_T_T35)
         {
@@ -701,15 +735,25 @@ void FrameEncoder::compressFrame()
             {
                 SEICreativeIntentMeta sei;
                 sei.m_payload = payload->payload;
-                m_bs.resetBits();
+                if (!m_param->bSingleSeiNal)
+                    m_bs.resetBits();
                 sei.setSize(payload->payloadSize);
                 sei.write(m_bs, *slice->m_sps);
-                m_bs.writeByteAlignment();
-                m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
+                sei.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+                isSei = true;
             }
         }
         else
             x265_log(m_param, X265_LOG_ERROR, "Unrecognized SEI type\n");
+    }
+
+    isSei |= ((m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders) || m_param->bEmitHRDSEI ||
+             !!m_param->interlaceMode || (m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_param->bEmitIDRRecoverySEI));
+
+    if (isSei && m_param->bSingleSeiNal)
+    {
+        m_bs.writeByteAlignment();
+        m_nalList.serialize(NAL_UNIT_PREFIX_SEI, m_bs);
     }
     /* CQP and CRF (without capped VBV) doesn't use mid-frame statistics to 
      * tune RateControl parameters for other frames.
@@ -723,6 +767,9 @@ void FrameEncoder::compressFrame()
         if (m_rce.encodeOrder < m_param->frameNumThreads - 1)
             m_top->m_rateControl->m_startEndOrder.incr(); // faked rateControlEnd calls for negative frames
     }
+
+    if (m_param->bDynamicRefine)
+        computeAvgTrainingData();
 
     /* Analyze CTU rows, most of the hard work is done here.  Frame is
      * compressed in a wave-front pattern if WPP is enabled. Row based loop
@@ -835,6 +882,9 @@ void FrameEncoder::compressFrame()
                 m_frameFilter.processRow(i - m_filterRowDelay);
         }
     }
+#if ENABLE_LIBVMAF
+    vmafFrameLevelScore();
+#endif
 
     if (m_param->maxSlices > 1)
     {
@@ -903,7 +953,7 @@ void FrameEncoder::compressFrame()
                 updateChecksum(reconPic->m_picOrg[1], m_checksum[1], height, width, stride, 0, cuHeight);
                 updateChecksum(reconPic->m_picOrg[2], m_checksum[2], height, width, stride, 0, cuHeight);
             }
-        }
+        }  
     } // end of (m_param->maxSlices > 1)
 
     if (m_param->rc.bStatWrite)
@@ -1039,7 +1089,8 @@ void FrameEncoder::compressFrame()
 
         m_nalList.serialize(slice->m_nalUnitType, m_bs);
     }
-
+    if (isSei && m_param->bSingleSeiNal)
+        m_bs.resetBits();
 
     if (m_param->decodedPictureHashSEI)
     {
@@ -1069,8 +1120,7 @@ void FrameEncoder::compressFrame()
         m_bs.resetBits();
         m_seiReconPictureDigest.setSize(payloadSize);
         m_seiReconPictureDigest.write(m_bs, *slice->m_sps);
-        m_bs.writeByteAlignment();
-        m_nalList.serialize(NAL_UNIT_SUFFIX_SEI, m_bs);
+        m_seiReconPictureDigest.alignAndSerialize(m_bs, true, m_param->bSingleSeiNal, NAL_UNIT_SUFFIX_SEI, m_nalList);
     }
 
     uint64_t bytes = 0;
@@ -1160,7 +1210,7 @@ void FrameEncoder::compressFrame()
         m_cuStats.accumulate(m_tld[i].analysis.m_stats[m_jpId], *m_param);
 #endif
 
-    m_endFrameTime = x265_mdate();
+    m_endFrameTime = x265_mdate();  
 }
 
 void FrameEncoder::encodeSlice(uint32_t sliceAddr)
@@ -1444,6 +1494,31 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
         // Does all the CU analysis, returns best top level mode decision
         Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, m_cuGeoms[m_ctuGeomMap[cuAddr]], rowCoder);
+        if (m_param->bDynamicRefine)
+        {
+            if (m_top->m_startPoint <= m_frame->m_encodeOrder) // Avoid collecting data that will not be used by future frames.
+            {
+                ScopedLock dynLock(m_top->m_dynamicRefineLock);
+                for (uint32_t i = 0; i < X265_REFINE_INTER_LEVELS; i++)
+                {
+                    for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
+                    {
+                        int offset = (depth * X265_REFINE_INTER_LEVELS) + i;
+                        int curFrameIndex = m_frame->m_encodeOrder - m_top->m_startPoint;
+                        int index = (curFrameIndex * X265_REFINE_INTER_LEVELS * m_param->maxCUDepth) + offset;
+                        if (ctu->m_collectCUCount[offset])
+                        {
+                            m_top->m_variance[index] += ctu->m_collectCUVariance[offset];
+                            m_top->m_rdCost[index] += ctu->m_collectCURd[offset];
+                            m_top->m_trainingCount[index] += ctu->m_collectCUCount[offset];
+                        }
+                    }
+                }
+            }
+            X265_FREE_ZERO(ctu->m_collectCUVariance);
+            X265_FREE_ZERO(ctu->m_collectCURd);
+            X265_FREE_ZERO(ctu->m_collectCUCount);
+        }
 
         // take a sample of the current active worker count
         ATOMIC_ADD(&m_totalActiveWorkerCount, m_activeWorkerCount);
@@ -1826,6 +1901,61 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     if (ATOMIC_INC(&m_completionCount) == 2 * (int)m_numRows)
         m_completionEvent.trigger();
 }
+void FrameEncoder::computeAvgTrainingData()
+{
+    if (m_frame->m_lowres.bScenecut || m_frame->m_lowres.bKeyframe)
+    {
+        m_top->m_startPoint = m_frame->m_encodeOrder;
+        int size = (m_param->keyframeMax + m_param->lookaheadDepth) * m_param->maxCUDepth * X265_REFINE_INTER_LEVELS;
+        memset(m_top->m_variance, 0, size * sizeof(uint64_t));
+        memset(m_top->m_rdCost, 0, size * sizeof(uint64_t));
+        memset(m_top->m_trainingCount, 0, size * sizeof(uint32_t));
+    }
+    if (m_frame->m_encodeOrder - m_top->m_startPoint < 2 * m_param->frameNumThreads)
+        m_frame->m_classifyFrame = false;
+    else
+        m_frame->m_classifyFrame = true;
+
+    int size = m_param->maxCUDepth * X265_REFINE_INTER_LEVELS;
+    memset(m_frame->m_classifyRd, 0, size * sizeof(uint64_t));
+    memset(m_frame->m_classifyVariance, 0, size * sizeof(uint64_t));
+    memset(m_frame->m_classifyCount, 0, size * sizeof(uint32_t));
+    if (m_frame->m_classifyFrame)
+    {
+        uint32_t limit = m_frame->m_encodeOrder - m_top->m_startPoint - m_param->frameNumThreads;
+        for (uint32_t i = 1; i < limit; i++)
+        {
+            for (uint32_t j = 0; j < X265_REFINE_INTER_LEVELS; j++)
+            {
+                for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
+                {
+                    int offset = (depth * X265_REFINE_INTER_LEVELS) + j;
+                    int index = (i* X265_REFINE_INTER_LEVELS * m_param->maxCUDepth) + offset;
+                    if (m_top->m_trainingCount[index])
+                    {
+                        m_frame->m_classifyRd[offset] += m_top->m_rdCost[index] / m_top->m_trainingCount[index];
+                        m_frame->m_classifyVariance[offset] += m_top->m_variance[index] / m_top->m_trainingCount[index];
+                        m_frame->m_classifyCount[offset] += m_top->m_trainingCount[index];
+                    }
+                }
+            }
+        }
+        /* Calculates the average feature values of historic frames that are being considered for the current frame */
+        int historyCount = m_frame->m_encodeOrder - m_param->frameNumThreads - m_top->m_startPoint - 1;
+        if (historyCount)
+        {
+            for (uint32_t j = 0; j < X265_REFINE_INTER_LEVELS; j++)
+            {
+                for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
+                {
+                    int offset = (depth * X265_REFINE_INTER_LEVELS) + j;
+                    m_frame->m_classifyRd[offset] /= historyCount;
+                    m_frame->m_classifyVariance[offset] /= historyCount;
+                }
+            }
+        }
+    }
+}
 
 /* collect statistics about CU coding decisions, return total QP */
 int FrameEncoder::collectCTUStatistics(const CUData& ctu, FrameStats* log)
@@ -1949,11 +2079,36 @@ void FrameEncoder::noiseReductionUpdate()
         m_nr->nrOffsetDenoise[cat][0] = 0;
     }
 }
+#if ENABLE_LIBVMAF
+void FrameEncoder::vmafFrameLevelScore()
+{
+    PicYuv *fenc = m_frame->m_fencPic;
+    PicYuv *recon = m_frame->m_reconPic;
+
+    x265_vmaf_framedata *vmafframedata = (x265_vmaf_framedata*)x265_malloc(sizeof(x265_vmaf_framedata));
+    if (!vmafframedata)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "vmaf frame data alloc failed\n");
+    }
+
+    vmafframedata->height = fenc->m_picHeight;
+    vmafframedata->width = fenc->m_picWidth;
+    vmafframedata->frame_set = 0;
+    vmafframedata->internalBitDepth = m_param->internalBitDepth;
+    vmafframedata->reference_frame = fenc;
+    vmafframedata->distorted_frame = recon;
+
+    fenc->m_vmafScore = x265_calculate_vmaf_framelevelscore(vmafframedata);
+
+    if (vmafframedata)
+    x265_free(vmafframedata);
+}
+#endif
 
 Frame *FrameEncoder::getEncodedPicture(NALList& output)
 {
     if (m_frame)
-    {
+    {    
         /* block here until worker thread completes */
         m_done.wait();
 

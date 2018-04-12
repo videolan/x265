@@ -45,6 +45,9 @@ hmul_8w:   times 4 dw 1
            times 2 dw 1, -1
            times 4 dw 1
            times 2 dw 1, -1
+psy_pp_shuff1:   dq 0, 1, 8, 9, 4, 5, 12, 13
+psy_pp_shuff2:   dq 2, 3, 10, 11, 6, 7, 14, 15
+psy_pp_shuff3:   dq 0, 0, 8, 8, 1, 1, 9, 9
 
 ALIGN 32
 transd_shuf1: SHUFFLE_MASK_W 0, 8, 2, 10, 4, 12, 6, 14
@@ -8145,6 +8148,243 @@ cglobal pixel_sa8d_32x32, 4,8,8
 %endif ; ARCH_X86_64=1
 %endif ; HIGH_BIT_DEPTH
 
+%macro SATD_AVX512_LOAD4 2 ; size, opmask
+    vpbroadcast%1 m0, [r0]
+    vpbroadcast%1 m0 {%2}, [r0+2*r1]
+    vpbroadcast%1 m2, [r2]
+    vpbroadcast%1 m2 {%2}, [r2+2*r3]
+    add           r0, r1
+    add           r2, r3
+    vpbroadcast%1 m1, [r0]
+    vpbroadcast%1 m1 {%2}, [r0+2*r1]
+    vpbroadcast%1 m3, [r2]
+    vpbroadcast%1 m3 {%2}, [r2+2*r3]
+%endmacro
+
+%macro SATD_AVX512_LOAD8 5 ; size, halfreg, opmask1, opmask2, opmask3
+    vpbroadcast%1 %{2}0, [r0]
+    vpbroadcast%1 %{2}0 {%3}, [r0+2*r1]
+    vpbroadcast%1 %{2}2, [r2]
+    vpbroadcast%1 %{2}2 {%3}, [r2+2*r3]
+    vpbroadcast%1    m0 {%4}, [r0+4*r1]
+    vpbroadcast%1    m2 {%4}, [r2+4*r3]
+    vpbroadcast%1    m0 {%5}, [r0+2*r4]
+    vpbroadcast%1    m2 {%5}, [r2+2*r5]
+    vpbroadcast%1 %{2}1, [r0+r1]
+    vpbroadcast%1 %{2}1 {%3}, [r0+r4]
+    vpbroadcast%1 %{2}3, [r2+r3]
+    vpbroadcast%1 %{2}3 {%3}, [r2+r5]
+    lea              r0, [r0+4*r1]
+    lea              r2, [r2+4*r3]
+    vpbroadcast%1    m1 {%4}, [r0+r1]
+    vpbroadcast%1    m3 {%4}, [r2+r3]
+    vpbroadcast%1    m1 {%5}, [r0+r4]
+    vpbroadcast%1    m3 {%5}, [r2+r5]
+%endmacro
+
+%macro SATD_AVX512_PACKED 0
+    DIFF_SUMSUB_SSSE3 0, 2, 1, 3, 4
+    SUMSUB_BA      w, 0, 1, 2
+    SBUTTERFLY   qdq, 0, 1, 2
+    SUMSUB_BA      w, 0, 1, 2
+    HMAXABSW2         0, 1, 2, 3
+%endmacro
+
+%macro SATD_AVX512_END 0-1 0 ; sa8d
+    paddw          m0 {k1}{z}, m1 ; zero-extend to dwords
+%if ARCH_X86_64
+%if mmsize == 64
+    vextracti32x8 ym1, m0, 1
+    paddd         ym0, ym1
+%endif
+%if mmsize >= 32
+    vextracti128  xm1, ym0, 1
+    paddd        xmm0, xm0, xm1
+%endif
+    punpckhqdq   xmm1, xmm0, xmm0
+    paddd        xmm0, xmm1
+    movq          rax, xmm0
+    rorx          rdx, rax, 32
+%if %1
+    lea           eax, [rax+rdx+1]
+    shr           eax, 1
+%else
+    add           eax, edx
+%endif
+%else
+    HADDD          m0, m1
+    movd          eax, xm0
+%if %1
+    inc           eax
+    shr           eax, 1
+%endif
+%endif
+    RET
+%endmacro
+
+%macro HMAXABSW2 4 ; a, b, tmp1, tmp2
+    pabsw     m%1, m%1
+    pabsw     m%2, m%2
+    psrldq    m%3, m%1, 2
+    psrld     m%4, m%2, 16
+    pmaxsw    m%1, m%3
+    pmaxsw    m%2, m%4
+%endmacro
+%if HIGH_BIT_DEPTH==0
+INIT_ZMM avx512
+cglobal pixel_satd_16x8_internal
+    vbroadcasti64x4 m6, [hmul_16p]
+    kxnorb           k2, k2, k2
+    mov             r4d, 0x55555555
+    knotw            k2, k2
+    kmovd            k1, r4d
+    lea              r4, [3*r1]
+    lea              r5, [3*r3]
+satd_16x8_avx512:
+    vbroadcasti128  ym0,      [r0]
+    vbroadcasti32x4  m0 {k2}, [r0+4*r1] ; 0 0 4 4
+    vbroadcasti128  ym4,      [r2]
+    vbroadcasti32x4  m4 {k2}, [r2+4*r3]
+    vbroadcasti128  ym2,      [r0+2*r1]
+    vbroadcasti32x4  m2 {k2}, [r0+2*r4] ; 2 2 6 6
+    vbroadcasti128  ym5,      [r2+2*r3]
+    vbroadcasti32x4  m5 {k2}, [r2+2*r5]
+    DIFF_SUMSUB_SSSE3 0, 4, 2, 5, 6
+    vbroadcasti128  ym1,      [r0+r1]
+    vbroadcasti128  ym4,      [r2+r3]
+    vbroadcasti128  ym3,      [r0+r4]
+    vbroadcasti128  ym5,      [r2+r5]
+    lea              r0, [r0+4*r1]
+    lea              r2, [r2+4*r3]
+    vbroadcasti32x4  m1 {k2}, [r0+r1] ; 1 1 5 5
+    vbroadcasti32x4  m4 {k2}, [r2+r3]
+    vbroadcasti32x4  m3 {k2}, [r0+r4] ; 3 3 7 7
+    vbroadcasti32x4  m5 {k2}, [r2+r5]
+    DIFF_SUMSUB_SSSE3 1, 4, 3, 5, 6
+    HADAMARD4_V       0, 1, 2, 3, 4
+    HMAXABSW2         0, 2, 4, 5
+    HMAXABSW2         1, 3, 4, 5
+    paddw            m4, m0, m2 ; m1
+    paddw            m2, m1, m3 ; m0
+    ret
+
+cglobal pixel_satd_8x8_internal
+    vbroadcasti64x4 m4, [hmul_16p]
+    mov     r4d, 0x55555555
+    kmovd    k1, r4d   ; 01010101
+    kshiftlb k2, k1, 5 ; 10100000
+    kshiftlb k3, k1, 4 ; 01010000
+    lea      r4, [3*r1]
+    lea      r5, [3*r3]
+satd_8x8_avx512:
+    SATD_AVX512_LOAD8 q, ym, k1, k2, k3 ; 2 0 2 0 6 4 6 4
+    SATD_AVX512_PACKED                  ; 3 1 3 1 7 5 7 5
+    ret
+
+cglobal pixel_satd_16x8, 4,6
+    call pixel_satd_16x8_internal_avx512
+    jmp satd_zmm_avx512_end
+
+cglobal pixel_satd_16x16, 4,6
+    call pixel_satd_16x8_internal_avx512
+    lea      r0, [r0+4*r1]
+    lea      r2, [r2+4*r3]
+    paddw    m7, m0, m1
+    call satd_16x8_avx512
+    paddw    m1, m7
+    jmp satd_zmm_avx512_end
+
+cglobal pixel_satd_8x8, 4,6
+    call pixel_satd_8x8_internal_avx512
+satd_zmm_avx512_end:
+    SATD_AVX512_END
+
+cglobal pixel_satd_8x16, 4,6
+    call pixel_satd_8x8_internal_avx512
+    lea      r0, [r0+4*r1]
+    lea      r2, [r2+4*r3]
+    paddw    m5, m0, m1
+    call satd_8x8_avx512
+    paddw    m1, m5
+    jmp satd_zmm_avx512_end
+
+INIT_YMM avx512
+cglobal pixel_satd_4x8_internal
+    vbroadcasti128 m4, [hmul_4p]
+    mov     r4d, 0x55550c
+    kmovd    k2, r4d   ; 00001100
+    kshiftlb k3, k2, 2 ; 00110000
+    kshiftlb k4, k2, 4 ; 11000000
+    kshiftrd k1, k2, 8 ; 01010101
+    lea      r4, [3*r1]
+    lea      r5, [3*r3]
+satd_4x8_avx512:
+    SATD_AVX512_LOAD8 d, xm, k2, k3, k4 ; 0 0 2 2 4 4 6 6
+satd_ymm_avx512:                        ; 1 1 3 3 5 5 7 7
+    SATD_AVX512_PACKED
+    ret
+
+cglobal pixel_satd_8x4, 4,5
+    mova     m4, [hmul_16p]
+    mov     r4d, 0x5555
+    kmovw    k1, r4d
+    SATD_AVX512_LOAD4 q, k1 ; 2 0 2 0
+    call satd_ymm_avx512    ; 3 1 3 1
+    jmp satd_ymm_avx512_end2
+
+cglobal pixel_satd_4x8, 4,6
+    call pixel_satd_4x8_internal_avx512
+satd_ymm_avx512_end:
+%if ARCH_X86_64 == 0
+    pop     r5d
+    %assign regs_used 5
+%endif
+satd_ymm_avx512_end2:
+    SATD_AVX512_END
+
+cglobal pixel_satd_4x16, 4,6
+    call pixel_satd_4x8_internal_avx512
+    lea      r0, [r0+4*r1]
+    lea      r2, [r2+4*r3]
+    paddw    m5, m0, m1
+    call satd_4x8_avx512
+    paddw    m1, m5
+    jmp satd_ymm_avx512_end
+
+INIT_XMM avx512
+cglobal pixel_satd_4x4, 4,5
+    mova     m4, [hmul_4p]
+    mov     r4d, 0x550c
+    kmovw    k2, r4d
+    kshiftrw k1, k2, 8
+    SATD_AVX512_LOAD4 d, k2 ; 0 0 2 2
+    SATD_AVX512_PACKED      ; 1 1 3 3
+    SWAP      0, 1
+    SATD_AVX512_END
+
+INIT_ZMM avx512
+cglobal pixel_sa8d_8x8, 4,6
+    vbroadcasti64x4 m4, [hmul_16p]
+    mov     r4d, 0x55555555
+    kmovd    k1, r4d   ; 01010101
+    kshiftlb k2, k1, 5 ; 10100000
+    kshiftlb k3, k1, 4 ; 01010000
+    lea      r4, [3*r1]
+    lea      r5, [3*r3]
+    SATD_AVX512_LOAD8 q, ym, k1, k2, k3 ; 2 0 2 0 6 4 6 4
+    DIFF_SUMSUB_SSSE3 0, 2, 1, 3, 4     ; 3 1 3 1 7 5 7 5
+    SUMSUB_BA      w, 0, 1, 2
+    SBUTTERFLY   qdq, 0, 1, 2
+    SUMSUB_BA      w, 0, 1, 2
+    shufps        m2, m0, m1, q2020
+    shufps        m1, m0, m1, q3131
+    SUMSUB_BA      w, 2, 1, 0
+    vshufi32x4    m0, m2, m1, q1010
+    vshufi32x4    m1, m2, m1, q3232
+    SUMSUB_BA      w, 0, 1, 2
+    HMAXABSW2      0, 1, 2, 3
+    SATD_AVX512_END 1
+%endif
 ; Input 10bit, Output 8bit
 ;------------------------------------------------------------------------------------------------------------------------
 ;void planecopy_sc(uint16_t *src, intptr_t srcStride, pixel *dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask)
@@ -8523,8 +8763,53 @@ cglobal upShift_16, 4,7,4
 
 .end:
     RET
+INIT_ZMM avx512
+cglobal upShift_16, 4,7,4
+    mov         r4d, r4m
+    mov         r5d, r5m
+    movd        xm0, r6m        ; m0 = shift
+    vbroadcasti32x4 m3, [pw_pixel_max]
+    FIX_STRIDES r1d, r3d
+    dec         r5d
+.loopH:
+    xor         r6d, r6d
+.loopW:
+    movu        m1, [r0 + r6 * SIZEOF_PIXEL]
+    psllw       m1, xm0
+    pand        m1, m3
+    movu        [r2 + r6 * SIZEOF_PIXEL], m1
 
+    add         r6, mmsize / SIZEOF_PIXEL
+    cmp         r6d, r4d
+    jl         .loopW
 
+    ; move to next row
+    add         r0, r1
+    add         r2, r3
+    dec         r5d
+    jnz        .loopH
+
+    ; processing last row of every frame [To handle width which not a multiple of 32]
+
+.loop32:
+    movu        m1, [r0 + (r4 - mmsize/2) * 2]
+    psllw       m1, xm0
+    pand        m1, m3
+    movu        [r2 + (r4 - mmsize/2) * 2], m1
+
+    sub         r4d, mmsize/2
+    jz         .end
+    cmp         r4d, mmsize/2
+    jge        .loop32
+
+    ; process partial pixels
+    movu        m1, [r0]
+    psllw       m1, xm0
+    pand        m1, m3
+    movu        [r2], m1
+
+.end:
+    RET
 ;---------------------------------------------------------------------------------------------------------------------
 ;int psyCost_pp(const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride)
 ;---------------------------------------------------------------------------------------------------------------------
@@ -10166,6 +10451,590 @@ cglobal psyCost_pp_4x4, 4, 5, 6
     pabsd          m11, m11
 %endmacro
 
+%macro PSY_COST_PP_8x8_AVX512_MAIN12 0
+    ; load source and recon pixels
+    lea             r4, [r1 * 3]
+    pmovzxwd        ym0, [r0]
+    pmovzxwd        ym1, [r0 + r1]
+    pmovzxwd        ym2, [r0 + r1 * 2]
+    pmovzxwd        ym3, [r0 + r4]
+    lea             r5, [r0 + r1 * 4]
+    pmovzxwd        ym4, [r5]
+    pmovzxwd        ym5, [r5 + r1]
+    pmovzxwd        ym6, [r5 + r1 * 2]
+    pmovzxwd        ym7, [r5 + r4]
+
+    lea             r4, [r3 * 3]
+    pmovzxwd        ym16, [r2]
+    pmovzxwd        ym17, [r2 + r3]
+    pmovzxwd        ym18, [r2 + r3 * 2]
+    pmovzxwd        ym19, [r2 + r4]
+    lea               r5, [r2 + r3 * 4]
+    pmovzxwd        ym20, [r5]
+    pmovzxwd        ym21, [r5 + r3]
+    pmovzxwd        ym22, [r5 + r3 * 2]
+    pmovzxwd        ym23, [r5 + r4]
+
+    vinserti64x4    m0, m0, ym16, 1
+    vinserti64x4    m1, m1, ym17, 1
+    vinserti64x4    m2, m2, ym18, 1
+    vinserti64x4    m3, m3, ym19, 1
+    vinserti64x4    m4, m4, ym20, 1
+    vinserti64x4    m5, m5, ym21, 1
+    vinserti64x4    m6, m6, ym22, 1
+    vinserti64x4    m7, m7, ym23, 1
+
+    ; source +  recon SAD
+    paddd           m8, m0, m1
+    paddd           m8, m2
+    paddd           m8, m3
+    paddd           m8, m4
+    paddd           m8, m5
+    paddd           m8, m6
+    paddd           m8, m7
+
+    vextracti64x4   ym15, m8, 1
+
+    vextracti128    xm9, ym8, 1
+    paddd           ym8, ym9              ; sad_8x8
+    movhlps         xm9, xm8
+    paddd           xm8, xm9
+    pshuflw         xm9, xm8, 0Eh
+    paddd           xm8, xm9
+    psrld           ym8, 2
+
+    vextracti128    xm9, ym15, 1
+    paddd           ym15, ym9              ; sad_8x8
+    movhlps         xm9, xm15
+    paddd           xm15, xm9
+    pshuflw         xm9, xm15, 0Eh
+    paddd           xm15, xm9
+    psrld           ym15, 2
+
+    ; source and recon SA8D
+    psubd           m9, m1, m0
+    paddd           m0, m1
+    psubd           m1, m3, m2
+    paddd           m2, m3
+    punpckhdq       m3, m0, m9
+    punpckldq       m0, m9
+    psubd           m9, m3, m0
+    paddd           m0, m3
+    punpckhdq       m3, m2, m1
+    punpckldq       m2, m1
+    psubd           m10, m3, m2
+    paddd           m2, m3
+    psubd           m3, m5, m4
+    paddd           m4, m5
+    psubd           m5, m7, m6
+    paddd           m6, m7
+    punpckhdq       m1, m4, m3
+    punpckldq       m4, m3
+    psubd           m7, m1, m4
+    paddd           m4, m1
+    punpckhdq       m3, m6, m5
+    punpckldq       m6, m5
+    psubd           m1, m3, m6
+    paddd           m6, m3
+    psubd           m3, m2, m0
+    paddd           m0, m2
+    psubd           m2, m10, m9
+    paddd           m9, m10
+    punpckhqdq      m5, m0, m3
+    punpcklqdq      m0, m3
+    psubd           m10, m5, m0
+    paddd           m0, m5
+    punpckhqdq      m3, m9, m2
+    punpcklqdq      m9, m2
+    psubd           m5, m3, m9
+    paddd           m9, m3
+    psubd           m3, m6, m4
+    paddd           m4, m6
+    psubd           m6, m1, m7
+    paddd           m7, m1
+    punpckhqdq      m2, m4, m3
+    punpcklqdq      m4, m3
+    psubd           m1, m2, m4
+    paddd           m4, m2
+    punpckhqdq      m3, m7, m6
+    punpcklqdq      m7, m6
+
+    psubd           m2, m3, m7
+    paddd           m7, m3
+    psubd           m3, m4, m0
+    paddd           m0, m4
+    psubd           m4, m1, m10
+    paddd           m10, m1
+
+    mova       m16,    m13
+    mova       m17,    m14
+    vpermi2q   m16,    m0, m3
+    vpermi2q   m17,    m0, m3
+
+    pabsd           m17, m17
+    pabsd           m16, m16
+    pmaxsd          m17, m16
+
+    mova       m18,    m13
+    mova       m19,    m14
+    vpermi2q   m18,    m10, m4
+    vpermi2q   m19,    m10, m4
+
+    pabsd           m19, m19
+    pabsd           m18, m18
+    pmaxsd          m19, m18
+    psubd           m18, m7, m9
+    paddd           m9, m7
+    psubd           m7, m2, m5
+    paddd           m5, m2
+
+    mova       m20,    m13
+    mova       m21,    m14
+    vpermi2q   m20,    m9, m18
+    vpermi2q   m21,    m9, m18
+
+    pabsd           m21, m21
+    pabsd           m20, m20
+    pmaxsd          m21, m20
+
+    mova       m22,    m13
+    mova       m23,    m14
+    vpermi2q   m22,    m5, m7
+    vpermi2q   m23,    m5, m7
+
+    pabsd           m23, m23
+    pabsd           m22, m22
+    pmaxsd          m23, m22
+    paddd           m17, m21
+    paddd           m17, m19
+    paddd           m17, m23
+
+    vextracti64x4   ym26, m17, 1
+
+    vextracti128    xm9, m17, 1
+    paddd           ym17, ym9              ; sad_8x8
+    movhlps         xm9, xm17
+    paddd           xm17, xm9
+    pshuflw         xm9, xm17, 0Eh
+    paddd           xm17, xm9
+    paddd           ym17, [pd_1]
+    psrld           ym17, 1               ; sa8d_8x8
+
+    vextracti128    xm9, ym26, 1
+    paddd           ym26, ym9              ; sad_8x8
+    movhlps         xm9, xm26
+    paddd           xm26, xm9
+    pshuflw         xm9, xm26, 0Eh
+    paddd           xm26, xm9
+    paddd           ym26, [pd_1]
+    psrld           ym26, 1               ; sa8d_8x8
+
+
+
+    psubd           ym11, ym17, ym8         ; sa8d_8x8 - sad_8x8
+    psubd           ym12, ym26, ym15        ; sa8d_8x8 - sad_8x8
+
+    psubd          ym11, ym12
+    pabsd          ym11, ym11
+%endmacro
+
+%macro PSY_PP_INPUT_AVX512_MAIN10 0
+    lea             r4, [r1 * 3]
+    movu           xm0, [r0]
+    movu           xm1, [r0 + r1]
+    movu           xm2, [r0 + r1 * 2]
+    movu           xm3, [r0 + r4]
+    lea             r5, [r0 + r1 * 4]
+    movu           xm4, [r5]
+    movu           xm5, [r5 + r1]
+    movu           xm6, [r5 + r1 * 2]
+    movu           xm7, [r5 + r4]
+
+    lea             r4, [r3 * 3]
+    vinserti128     ym0, ym0, [r2], 1
+    vinserti128     ym1, ym1, [r2 + r3], 1
+    vinserti128     ym2, ym2, [r2 + r3 * 2], 1
+    vinserti128     ym3, ym3, [r2 + r4], 1
+    lea             r5, [r2 + r3 * 4]
+    vinserti128     ym4, ym4, [r5], 1
+    vinserti128     ym5, ym5, [r5 + r3], 1
+    vinserti128     ym6, ym6, [r5 + r3 * 2], 1
+    vinserti128     ym7, ym7, [r5 + r4], 1
+
+    add             r0, 16
+    add             r2, 16
+
+    lea             r4, [r1 * 3]
+    vinserti32x4    m0, m0, [r0], 2
+    vinserti32x4    m1, m1, [r0 + r1], 2
+    vinserti32x4    m2, m2, [r0 + r1 * 2], 2
+    vinserti32x4    m3, m3, [r0 + r4], 2
+    lea             r5, [r0 + r1 * 4]
+    vinserti32x4    m4, m4, [r5], 2
+    vinserti32x4    m5, m5, [r5 + r1], 2
+    vinserti32x4    m6, m6, [r5 + r1 * 2], 2
+    vinserti32x4    m7, m7, [r5 + r4], 2
+
+    lea             r4, [r3 * 3]
+    vinserti32x4    m0, m0, [r2], 3
+    vinserti32x4    m1, m1, [r2 + r3], 3
+    vinserti32x4    m2, m2, [r2 + r3 * 2], 3
+    vinserti32x4    m3, m3, [r2 + r4], 3
+    lea             r5, [r2 + r3 * 4]
+    vinserti32x4    m4, m4, [r5], 3
+    vinserti32x4    m5, m5, [r5 + r3], 3
+    vinserti32x4    m6, m6, [r5 + r3 * 2], 3
+    vinserti32x4    m7, m7, [r5 + r4], 3
+%endmacro
+
+
+%macro PSY_PP_16x8_AVX512_MAIN10 0
+    paddw           m8, m0, m1
+    paddw           m8, m2
+    paddw           m8, m3
+    paddw           m8, m4
+    paddw           m8, m5
+    paddw           m8, m6
+    paddw           m8, m7
+    pmaddwd         m8, m14
+
+    psrldq          m9, m8, 8
+    paddd           m8, m9
+    psrldq          m9, m8, 4
+    paddd           m8, m9
+    psrld           m8, 2
+
+    psubw           m9, m1, m0
+    paddw           m0, m1
+    psubw           m1, m3, m2
+    paddw           m2, m3
+    punpckhwd       m3, m0, m9
+    punpcklwd       m0, m9
+    psubw           m9, m3, m0
+    paddw           m0, m3
+    punpckhwd       m3, m2, m1
+    punpcklwd       m2, m1
+    psubw           m10, m3, m2
+    paddw           m2, m3
+
+    psubw           m3, m5, m4
+    paddw           m4, m5
+    psubw           m5, m7, m6
+    paddw           m6, m7
+    punpckhwd       m1, m4, m3
+    punpcklwd       m4, m3
+    psubw           m7, m1, m4
+    paddw           m4, m1
+    punpckhwd       m3, m6, m5
+    punpcklwd       m6, m5
+    psubw           m1, m3, m6
+    paddw           m6, m3
+
+    psubw           m3, m2, m0
+    paddw           m0, m2
+    psubw           m2, m10, m9
+    paddw           m9, m10
+    punpckhdq       m5, m0, m3
+    punpckldq       m0, m3
+    psubw           m10, m5, m0
+    paddw           m0, m5
+    punpckhdq       m3, m9, m2
+    punpckldq       m9, m2
+    psubw           m5, m3, m9
+    paddw           m9, m3
+
+    psubw           m3, m6, m4
+    paddw           m4, m6
+    psubw           m6, m1, m7
+    paddw           m7, m1
+    punpckhdq       m2, m4, m3
+    punpckldq       m4, m3
+    psubw           m1, m2, m4
+    paddw           m4, m2
+    punpckhdq       m3, m7, m6
+    punpckldq       m7, m6
+    psubw           m2, m3, m7
+    paddw           m7, m3
+
+    psubw           m3, m4, m0
+    paddw           m0, m4
+    psubw           m4, m1, m10
+    paddw           m10, m1
+    punpckhqdq      m6, m0, m3
+    punpcklqdq      m0, m3
+    pabsw           m0, m0
+    pabsw           m6, m6
+    pmaxsw          m0, m6
+    punpckhqdq      m3, m10, m4
+    punpcklqdq      m10, m4
+    pabsw           m10, m10
+    pabsw           m3, m3
+    pmaxsw          m10, m3
+
+    psubw           m3, m7, m9
+    paddw           m9, m7
+    psubw           m7, m2, m5
+    paddw           m5, m2
+    punpckhqdq      m4, m9, m3
+    punpcklqdq      m9, m3
+    pabsw           m9, m9
+    pabsw           m4, m4
+    pmaxsw          m9, m4
+    punpckhqdq      m3, m5, m7
+    punpcklqdq      m5, m7
+    pabsw           m5, m5
+    pabsw           m3, m3
+    pmaxsw          m5, m3
+
+    paddd           m0, m9
+    paddd           m0, m10
+    paddd           m0, m5
+    psrld           m9, m0, 16
+    pslld           m0, 16
+    psrld           m0, 16
+    paddd           m0, m9
+    psrldq          m9, m0, 8
+    paddd           m0, m9
+    psrldq          m9, m0, 4
+    paddd           m0, m9
+    paddd           m0, m15
+    psrld           m0, 1
+    psubd           m0, m8
+
+    vextracti64x4   ym2, m0, 1
+
+    vextracti128   xm3, ym2, 1
+    psubd          xm3, xm2
+    pabsd          xm3, xm3
+
+    vextracti128   xm1, ym0, 1
+    psubd          xm1, xm0
+    pabsd          xm1, xm1
+    paddd          xm1, xm3
+%endmacro
+
+%macro PSY_PP_INPUT_AVX512_MAIN 0
+    movu       xm16, [r0 + r1 * 0]
+    movu       xm17, [r0 + r1 * 1]
+    movu       xm18, [r0 + r1 * 2]
+    movu       xm19, [r0 + r4 * 1]
+
+    movu       xm20, [r2 + r3 * 0]
+    movu       xm21, [r2 + r3 * 1]
+    movu       xm22, [r2 + r3 * 2]
+    movu       xm23, [r2 + r7 * 1]
+
+    mova         m0, m26
+    vpermi2q     m0, m16, m20
+    mova         m1, m26
+    vpermi2q     m1, m17, m21
+    mova         m2, m26
+    vpermi2q     m2, m18, m22
+    mova         m3, m26
+    vpermi2q     m3, m19, m23
+
+
+    lea          r5, [r0 + r1 * 4]
+    lea          r6, [r2 + r3 * 4]
+
+    movu      xm16, [r5 + r1 * 0]
+    movu      xm17, [r5 + r1 * 1]
+    movu      xm18, [r5 + r1 * 2]
+    movu      xm19, [r5 + r4 * 1]
+
+    movu      xm20, [r6 + r3 * 0]
+    movu      xm21, [r6 + r3 * 1]
+    movu      xm22, [r6 + r3 * 2]
+    movu      xm23, [r6 + r7 * 1]
+
+    mova        m4, m26
+    vpermi2q    m4, m16, m20
+    mova        m5, m26
+    vpermi2q    m5, m17, m21
+    mova        m6, m26
+    vpermi2q    m6, m18, m22
+    mova        m7, m26
+    vpermi2q    m7, m19, m23
+%endmacro
+
+%macro PSY_PP_16x8_AVX512_MAIN 0
+    pmaddubsw       m0, m8
+    pmaddubsw       m1, m8
+    pmaddubsw       m2, m8
+    pmaddubsw       m3, m8
+    pmaddubsw       m4, m8
+    pmaddubsw       m5, m8
+    pmaddubsw       m6, m8
+    pmaddubsw       m7, m8
+
+    paddw           m11, m0, m1
+    paddw           m11, m2
+    paddw           m11, m3
+    paddw           m11, m4
+    paddw           m11, m5
+    paddw           m11, m6
+    paddw           m11, m7
+
+    pmaddwd         m11, m14
+    psrldq          m10, m11, 4
+    paddd           m11, m10
+    psrld           m11, 2
+
+    mova            m9, m0
+    paddw           m0, m1
+    psubw           m1, m9
+    mova            m9, m2
+    paddw           m2, m3
+    psubw           m3, m9
+    mova            m9, m0
+    paddw           m0, m2
+    psubw           m2, m9
+    mova            m9, m1
+    paddw           m1, m3
+    psubw           m3, m9
+
+    movdqa          m9, m4
+    paddw           m4, m5
+    psubw           m5, m9
+    movdqa          m9, m6
+    paddw           m6, m7
+    psubw           m7, m9
+    movdqa          m9, m4
+    paddw           m4, m6
+    psubw           m6, m9
+    movdqa          m9, m5
+    paddw           m5, m7
+    psubw           m7, m9
+
+    movdqa          m9, m0
+    paddw           m0, m4
+    psubw           m4, m9
+    movdqa          m9, m1
+    paddw           m1, m5
+    psubw           m5, m9
+
+    mova            m9, m0
+    vshufps         m9, m9, m4, 11011101b
+    vshufps         m0, m0, m4, 10001000b
+
+    movdqa          m4, m0
+    paddw           m16, m0, m9
+    psubw           m17, m9, m4
+
+    movaps          m4, m1
+    vshufps         m4, m4, m5, 11011101b
+    vshufps         m1, m1, m5, 10001000b
+
+    movdqa          m5, m1
+    paddw           m18, m1, m4
+    psubw           m19, m4, m5
+
+    movdqa          m5, m2
+    paddw           m2, m6
+    psubw           m6, m5
+    movdqa          m5, m3
+    paddw           m3, m7
+    psubw           m7, m5
+
+    movaps          m5, m2
+    vshufps         m5, m5, m6, 11011101b
+    vshufps         m2, m2, m6, 10001000b
+
+    movdqa          m6, m2
+    paddw           m20, m2, m5
+    psubw           m21, m5, m6
+
+    movaps          m6, m3
+
+    vshufps         m6, m6, m7, 11011101b
+    vshufps         m3, m3, m7, 10001000b
+
+    movdqa          m7, m3
+    paddw           m22, m3, m6
+    psubw           m23, m6, m7
+
+    movdqa          m7, m16
+
+    vextracti64x4    ym24,  m16, 1
+    vextracti64x4    ym25,  m17, 1
+    pblendw          ym16, ym17, 10101010b
+    pblendw          ym24, ym25, 10101010b
+    vinserti64x4     m16, m16, ym24, 1
+
+    pslld           m17, 10h
+    psrld           m7, 10h
+    por             m17, m7
+    pabsw           m16, m16
+    pabsw           m17, m17
+    pmaxsw          m16, m17
+    movdqa          m7, m18
+
+    vextracti64x4    ym24,  m18, 1
+    vextracti64x4    ym25,  m19, 1
+    pblendw          ym18,  ym19, 10101010b
+    pblendw          ym24,  ym25, 10101010b
+    vinserti64x4     m18, m18, ym24, 1
+
+    pslld           m19, 10h
+    psrld           m7, 10h
+    por             m19, m7
+    pabsw           m18, m18
+    pabsw           m19, m19
+    pmaxsw          m18, m19
+    movdqa          m7, m20
+
+    vextracti64x4    ym24,  m20, 1
+    vextracti64x4    ym25,  m21, 1
+    pblendw          ym20,  ym21, 10101010b
+    pblendw          ym24,  ym25, 10101010b
+    vinserti64x4     m20,   m20, ym24, 1
+
+    pslld           m21, 10h
+    psrld           m7, 10h
+    por             m21, m7
+    pabsw           m20, m20
+    pabsw           m21, m21
+    pmaxsw          m20, m21
+    mova            m7, m22
+
+    vextracti64x4    ym24,  m22, 1
+    vextracti64x4    ym25,  m23, 1
+    pblendw          ym22,  ym23, 10101010b
+    pblendw          ym24,  ym25, 10101010b
+    vinserti64x4     m22,   m22,  ym24, 1
+
+    pslld           m23, 10h
+    psrld           m7, 10h
+    por             m23, m7
+    pabsw           m22, m22
+    pabsw           m23, m23
+    pmaxsw          m22, m23
+    paddw           m16, m18
+    paddw           m16, m20
+    paddw           m16, m22
+    pmaddwd         m16, m14
+    psrldq          m1, m16, 8
+    paddd           m16, m1
+
+    pshuflw         m1, m16, 00001110b
+    paddd           m16, m1
+    paddd           m16, m15
+    psrld           m16, 1
+
+    psubd           m16, m11
+    vextracti64x4   ym2, m16, 1
+
+    vextracti128    xm1, ym16, 1
+    psubd           xm16, xm1
+    pabsd           xm16, xm16
+
+    vextracti128   xm3, ym2, 1
+    psubd          xm3, xm2
+    pabsd          xm3, xm3
+    paddd          xm16, xm3
+%endmacro
+
+
 %if ARCH_X86_64
 INIT_YMM avx2
 %if HIGH_BIT_DEPTH && BIT_DEPTH == 12
@@ -10425,6 +11294,257 @@ cglobal psyCost_pp_64x64, 4, 10, 14
     paddd           m13, m0
     add             r0, 8
     add             r2, 8
+    dec             r9d
+    jnz             .loopW
+    lea             r0, [r0 + r1 * 8 - 64]
+    lea             r2, [r2 + r3 * 8 - 64]
+    dec             r8d
+    jnz             .loopH
+    movd            eax, xm13
+    RET
+%endif
+%endif
+%if ARCH_X86_64
+INIT_ZMM avx512
+%if HIGH_BIT_DEPTH && BIT_DEPTH == 12
+cglobal psyCost_pp_16x16, 4, 10, 27
+    add            r1d, r1d
+    add            r3d, r3d
+    pxor           m24, m24
+    movu       m13,    [psy_pp_shuff1]
+    movu       m14,    [psy_pp_shuff2]
+
+    mov            r8d, 2
+.loopH:
+    mov            r9d, 2
+.loopW:
+    PSY_COST_PP_8x8_AVX512_MAIN12
+
+    paddd         xm24, xm11
+    add             r0, 16
+    add             r2, 16
+    dec            r9d
+    jnz            .loopW
+    lea             r0, [r0 + r1 * 8 - 32]
+    lea             r2, [r2 + r3 * 8 - 32]
+    dec            r8d
+    jnz            .loopH
+    movd           eax, xm24
+    RET
+%endif
+
+%if HIGH_BIT_DEPTH && BIT_DEPTH == 10
+cglobal psyCost_pp_16x16, 4, 10, 16
+    add            r1d, r1d
+    add            r3d, r3d
+    pxor           m11, m11
+    vbroadcasti32x8 m14, [pw_1]
+    vbroadcasti32x8 m15, [pd_1]
+
+    mov            r8d, 2
+.loopH:
+    PSY_PP_INPUT_AVX512_MAIN10
+    PSY_PP_16x8_AVX512_MAIN10
+
+    paddd         xm11, xm1
+    lea             r0, [r0 + r1 * 8 - 16]
+    lea             r2, [r2 + r3 * 8 - 16]
+    dec            r8d
+    jnz            .loopH
+    movd           eax, xm11
+    RET
+%endif
+
+%if BIT_DEPTH == 8
+cglobal psyCost_pp_16x16, 4, 10, 27
+    lea             r4, [3 * r1]
+    lea             r7, [3 * r3]
+    vbroadcasti32x8  m8, [hmul_8p]
+    pxor            m13, m13
+    vbroadcasti32x8 m14, [pw_1]
+    vbroadcasti32x8 m15, [pd_1]
+    movu            m26, [psy_pp_shuff3]
+
+    mov             r8d, 2
+.loopH:
+    PSY_PP_INPUT_AVX512_MAIN
+    PSY_PP_16x8_AVX512_MAIN
+
+    paddd           m13, m16
+    lea             r0, [r0 + r1 * 8]
+    lea             r2, [r2 + r3 * 8]
+    dec             r8d
+    jnz             .loopH
+    movd            eax, xm13
+    RET
+%endif
+%endif
+
+%if ARCH_X86_64
+INIT_ZMM avx512
+%if HIGH_BIT_DEPTH && BIT_DEPTH == 12
+cglobal psyCost_pp_32x32, 4, 10, 27
+    add            r1d, r1d
+    add            r3d, r3d
+    pxor           m24, m24
+    movu       m13,    [psy_pp_shuff1]
+    movu       m14,    [psy_pp_shuff2]
+
+    mov            r8d, 4
+.loopH:
+    mov            r9d, 4
+.loopW:
+    PSY_COST_PP_8x8_AVX512_MAIN12
+
+    paddd         xm24, xm11
+    add             r0, 16
+    add             r2, 16
+    dec            r9d
+    jnz            .loopW
+    lea             r0, [r0 + r1 * 8 - 64]
+    lea             r2, [r2 + r3 * 8 - 64]
+    dec            r8d
+    jnz            .loopH
+    movd           eax, xm24
+    RET
+%endif
+
+%if HIGH_BIT_DEPTH && BIT_DEPTH == 10
+cglobal psyCost_pp_32x32, 4, 10, 16
+    add            r1d, r1d
+    add            r3d, r3d
+    pxor           m11, m11
+    vbroadcasti32x8 m14, [pw_1]
+    vbroadcasti32x8 m15, [pd_1]
+
+    mov            r8d, 4
+.loopH:
+    mov            r9d, 2
+.loopW:
+    PSY_PP_INPUT_AVX512_MAIN10
+    PSY_PP_16x8_AVX512_MAIN10
+
+    paddd         xm11, xm1
+    add             r0, 16
+    add             r2, 16
+    dec            r9d
+    jnz            .loopW
+    lea             r0, [r0 + r1 * 8 - 64]
+    lea             r2, [r2 + r3 * 8 - 64]
+    dec            r8d
+    jnz            .loopH
+    movd           eax, xm11
+    RET
+%endif
+
+%if BIT_DEPTH == 8
+cglobal psyCost_pp_32x32, 4, 10, 27
+    lea             r4, [3 * r1]
+    lea             r7, [3 * r3]
+    vbroadcasti32x8  m8, [hmul_8p]
+    pxor            m13, m13
+    vbroadcasti32x8 m14, [pw_1]
+    vbroadcasti32x8 m15, [pd_1]
+    movu            m26, [psy_pp_shuff3]
+
+    mov             r8d, 4
+.loopH:
+    mov             r9d, 2
+.loopW:
+    PSY_PP_INPUT_AVX512_MAIN
+    PSY_PP_16x8_AVX512_MAIN
+
+    paddd           m13, m16
+    add             r0, 16
+    add             r2, 16
+    dec             r9d
+    jnz             .loopW
+    lea             r0, [r0 + r1 * 8 - 32]
+    lea             r2, [r2 + r3 * 8 - 32]
+    dec             r8d
+    jnz             .loopH
+    movd            eax, xm13
+    RET
+%endif
+%endif
+
+%if ARCH_X86_64
+INIT_ZMM avx512
+%if HIGH_BIT_DEPTH && BIT_DEPTH == 12
+cglobal psyCost_pp_64x64, 4, 10, 27
+    add            r1d, r1d
+    add            r3d, r3d
+    pxor           m24, m24
+    movu       m13,    [psy_pp_shuff1]
+    movu       m14,    [psy_pp_shuff2]
+
+    mov            r8d, 8
+.loopH:
+    mov            r9d, 8
+.loopW:
+    PSY_COST_PP_8x8_AVX512_MAIN12
+
+    paddd         xm24, xm11
+    add             r0, 16
+    add             r2, 16
+    dec            r9d
+    jnz            .loopW
+    lea             r0, [r0 + r1 * 8 - 128]
+    lea             r2, [r2 + r3 * 8 - 128]
+    dec            r8d
+    jnz            .loopH
+    movd           eax, xm24
+    RET
+%endif
+
+%if HIGH_BIT_DEPTH && BIT_DEPTH == 10
+cglobal psyCost_pp_64x64, 4, 10, 16
+    add            r1d, r1d
+    add            r3d, r3d
+    pxor           m11, m11
+    vbroadcasti32x8 m14, [pw_1]
+    vbroadcasti32x8 m15, [pd_1]
+
+    mov            r8d, 8
+.loopH:
+    mov            r9d, 4
+.loopW:
+    PSY_PP_INPUT_AVX512_MAIN10
+    PSY_PP_16x8_AVX512_MAIN10
+
+    paddd         xm11, xm1
+    add             r0, 16
+    add             r2, 16
+    dec            r9d
+    jnz            .loopW
+    lea             r0, [r0 + r1 * 8 - 128]
+    lea             r2, [r2 + r3 * 8 - 128]
+    dec            r8d
+    jnz            .loopH
+    movd           eax, xm11
+    RET
+%endif
+
+%if BIT_DEPTH == 8
+cglobal psyCost_pp_64x64, 4, 10, 27
+    lea             r4, [3 * r1]
+    lea             r7, [3 * r3]
+    vbroadcasti32x8  m8, [hmul_8p]
+    pxor            m13, m13
+    vbroadcasti32x8 m14, [pw_1]
+    vbroadcasti32x8 m15, [pd_1]
+    movu            m26, [psy_pp_shuff3]
+
+    mov             r8d, 8
+.loopH:
+    mov             r9d, 4
+.loopW:
+    PSY_PP_INPUT_AVX512_MAIN
+    PSY_PP_16x8_AVX512_MAIN
+
+    paddd           m13, m16
+    add             r0, 16
+    add             r2, 16
     dec             r9d
     jnz             .loopW
     lea             r0, [r0 + r1 * 8 - 64]
@@ -12993,8 +14113,134 @@ cglobal pixel_satd_64x64, 4,8,10        ; if WIN64 && cpuflag(avx2)
     paddd           xm0, xm1
     movd            eax, xm0
     RET
-%endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0
 
+%macro PROCESS_SATD_32x4_AVX512 0        ; function to compute satd cost for 32 columns, 4 rows
+    ; rows 0-3
+    pmovzxbw         m0, [r0]
+    pmovzxbw         m4, [r2]
+    psubw           m0, m4
+    pmovzxbw         m1, [r0 + r1]
+    pmovzxbw         m5, [r2 + r3]
+    psubw           m1, m5
+    pmovzxbw         m2, [r0 + r1 * 2]
+    pmovzxbw         m4, [r2 + r3 * 2]
+    psubw           m2, m4
+    pmovzxbw         m3, [r0 + r4]
+    pmovzxbw         m5, [r2 + r5]
+    psubw           m3, m5
+    paddw           m4, m0, m1
+    psubw           m1, m0
+    paddw           m0, m2, m3
+    psubw           m3, m2
+    punpckhwd       m2, m4, m1
+    punpcklwd       m4, m1
+    punpckhwd       m1, m0, m3
+    punpcklwd       m0, m3
+    paddw           m3, m4, m0
+    psubw           m0, m4
+    paddw           m4, m2, m1
+    psubw           m1, m2
+    punpckhdq       m2, m3, m0
+    punpckldq       m3, m0
+    paddw           m0, m3, m2
+    psubw           m2, m3
+    punpckhdq       m3, m4, m1
+    punpckldq       m4, m1
+    paddw           m1, m4, m3
+    psubw           m3, m4
+    punpckhqdq      m4, m0, m1
+    punpcklqdq      m0, m1
+    pabsw           m0, m0
+    pabsw           m4, m4
+    pmaxsw          m0, m0, m4
+    punpckhqdq      m1, m2, m3
+    punpcklqdq      m2, m3
+    pabsw           m2, m2
+    pabsw           m1, m1
+    pmaxsw          m2, m1
+    pxor            m7, m7
+    mova            m1, m0
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m0
+    punpckhwd       m1, m7
+    paddd           m6, m1
+    pxor            m7, m7
+    mova            m1, m2
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m2
+    punpckhwd       m1, m7
+    paddd           m6, m1
+%endmacro
+
+%macro SATD_MAIN_AVX512_END 0
+    vextracti32x8   ym7,   m6,   1
+    paddd           ym6,   ym7
+    vextracti128    xm7,   ym6,  1
+    paddd           xm6,   xm6,  xm7
+    punpckhqdq      xm7,   xm6,  xm6
+    paddd           xm6,   xm7
+    movq            rax,   xm6
+    rorx            rdx,   rax,  32
+    add             eax,   edx
+%endmacro
+
+%macro SATD_32xN_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_satd_32x%1, 4,6,8
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_AVX512
+    SATD_MAIN_AVX512_END
+    RET
+%endmacro
+
+SATD_32xN_AVX512 8
+SATD_32xN_AVX512 16
+SATD_32xN_AVX512 24
+SATD_32xN_AVX512 32
+SATD_32xN_AVX512 48
+SATD_32xN_AVX512 64
+
+%macro SATD_64xN_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_satd_64x%1, 4,8,8
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_AVX512
+    lea             r0, [r6 + mmsize/2]
+    lea             r2, [r7 + mmsize/2]
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_AVX512
+    SATD_MAIN_AVX512_END
+    RET
+%endmacro
+
+SATD_64xN_AVX512 16
+SATD_64xN_AVX512 32
+SATD_64xN_AVX512 48
+SATD_64xN_AVX512 64
+%endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 0
 %if ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 1
 INIT_YMM avx2
 cglobal calc_satd_16x8    ; function to compute satd cost for 16 columns, 8 rows
@@ -13721,6 +14967,257 @@ cglobal pixel_satd_64x64, 4,8,8
     paddd           xm6, xm7
     movd            eax, xm6
     RET
+
+%macro SATD_HBD_AVX512_END 0
+    vextracti32x8   ym7, m6, 1
+    paddd           ym6, ym7
+    vextracti128    xm7, ym6, 1
+    paddd           xm6, xm7
+    pxor            xm7, xm7
+    movhlps         xm7, xm6
+    paddd           xm6, xm7
+    pshufd          xm7, xm6, 1
+    paddd           xm6, xm7
+    movd            eax, xm6
+%endmacro
+%macro PROCESS_SATD_16x8_HBD_AVX512 0        ; function to compute satd cost for 16 columns, 8 rows
+    ; rows 0-3
+    lea             r6, [r0 + r1 * 4]
+    lea             r7, [r2 + r3 * 4]
+    movu            ym0, [r0]
+    movu            ym4, [r2]
+    vinserti32x8    m0, [r6], 1
+    vinserti32x8    m4, [r7], 1
+    psubw           m0, m4
+    movu            ym1, [r0 + r1]
+    movu            ym5, [r2 + r3]
+    vinserti32x8    m1, [r6 + r1], 1
+    vinserti32x8    m5, [r7 + r3], 1
+    psubw           m1, m5
+    movu            ym2, [r0 + r1 * 2]
+    movu            ym4, [r2 + r3 * 2]
+    vinserti32x8    m2, [r6 + r1 * 2], 1
+    vinserti32x8    m4, [r7 + r3 * 2], 1
+    psubw           m2, m4
+    movu            ym3, [r0 + r4]
+    movu            ym5, [r2 + r5]
+    vinserti32x8    m3, [r6 + r4], 1
+    vinserti32x8    m5, [r7 + r5], 1
+    psubw           m3, m5
+
+    paddw           m4, m0, m1
+    psubw           m1, m0
+    paddw           m0, m2, m3
+    psubw           m3, m2
+    punpckhwd       m2, m4, m1
+    punpcklwd       m4, m1
+    punpckhwd       m1, m0, m3
+    punpcklwd       m0, m3
+    paddw           m3, m4, m0
+    psubw           m0, m4
+    paddw           m4, m2, m1
+    psubw           m1, m2
+    punpckhdq       m2, m3, m0
+    punpckldq       m3, m0
+    paddw           m0, m3, m2
+    psubw           m2, m3
+    punpckhdq       m3, m4, m1
+    punpckldq       m4, m1
+    paddw           m1, m4, m3
+    psubw           m3, m4
+    punpckhqdq      m4, m0, m1
+    punpcklqdq      m0, m1
+    pabsw           m0, m0
+    pabsw           m4, m4
+    pmaxsw          m0, m0, m4
+    punpckhqdq      m1, m2, m3
+    punpcklqdq      m2, m3
+    pabsw           m2, m2
+    pabsw           m1, m1
+    pmaxsw          m2, m1
+    pxor            m7, m7
+    mova            m1, m0
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m0
+    punpckhwd       m1, m7
+    paddd           m6, m1
+    pxor            m7, m7
+    mova            m1, m2
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m2
+    punpckhwd       m1, m7
+    paddd           m6, m1
+%endmacro
+%macro PROCESS_SATD_32x4_HBD_AVX512 0        ; function to compute satd cost for 32 columns, 4 rows
+    ; rows 0-3
+    movu            m0, [r0]
+    movu            m4, [r2]
+    psubw           m0, m4
+    movu            m1, [r0 + r1]
+    movu            m5, [r2 + r3]
+    psubw           m1, m5
+    movu            m2, [r0 + r1 * 2]
+    movu            m4, [r2 + r3 * 2]
+    psubw           m2, m4
+    movu            m3, [r0 + r4]
+    movu            m5, [r2 + r5]
+    psubw           m3, m5
+    paddw           m4, m0, m1
+    psubw           m1, m0
+    paddw           m0, m2, m3
+    psubw           m3, m2
+    punpckhwd       m2, m4, m1
+    punpcklwd       m4, m1
+    punpckhwd       m1, m0, m3
+    punpcklwd       m0, m3
+    paddw           m3, m4, m0
+    psubw           m0, m4
+    paddw           m4, m2, m1
+    psubw           m1, m2
+    punpckhdq       m2, m3, m0
+    punpckldq       m3, m0
+    paddw           m0, m3, m2
+    psubw           m2, m3
+    punpckhdq       m3, m4, m1
+    punpckldq       m4, m1
+    paddw           m1, m4, m3
+    psubw           m3, m4
+    punpckhqdq      m4, m0, m1
+    punpcklqdq      m0, m1
+    pabsw           m0, m0
+    pabsw           m4, m4
+    pmaxsw          m0, m0, m4
+    punpckhqdq      m1, m2, m3
+    punpcklqdq      m2, m3
+    pabsw           m2, m2
+    pabsw           m1, m1
+    pmaxsw          m2, m1
+    pxor            m7, m7
+    mova            m1, m0
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m0
+    punpckhwd       m1, m7
+    paddd           m6, m1
+    pxor            m7, m7
+    mova            m1, m2
+    punpcklwd       m1, m7
+    paddd           m6, m1
+    mova            m1, m2
+    punpckhwd       m1, m7
+    paddd           m6, m1
+%endmacro
+
+%macro SATD_16xN_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_satd_16x%1, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+
+%rep %1/8 - 1
+    PROCESS_SATD_16x8_HBD_AVX512
+    lea             r0, [r6 + 4 * r1]
+    lea             r2, [r7 + 4 * r3]
+%endrep
+    PROCESS_SATD_16x8_HBD_AVX512
+    SATD_HBD_AVX512_END
+    RET
+%endmacro
+
+SATD_16xN_HBD_AVX512 8
+SATD_16xN_HBD_AVX512 16
+SATD_16xN_HBD_AVX512 32
+SATD_16xN_HBD_AVX512 64
+
+%macro SATD_32xN_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_satd_32x%1, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_HBD_AVX512
+    SATD_HBD_AVX512_END
+    RET
+%endmacro
+
+SATD_32xN_HBD_AVX512 8
+SATD_32xN_HBD_AVX512 16
+SATD_32xN_HBD_AVX512 24
+SATD_32xN_HBD_AVX512 32
+SATD_32xN_HBD_AVX512 64
+INIT_ZMM avx512
+cglobal pixel_satd_48x64, 4,10,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r8, r0
+    mov             r9, r2
+
+%rep 15
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r8 + mmsize]
+    lea             r2, [r9 + mmsize]
+%rep 7
+    PROCESS_SATD_16x8_HBD_AVX512
+    lea             r0, [r6 + 4 * r1]
+    lea             r2, [r7 + 4 * r3]
+%endrep
+    PROCESS_SATD_16x8_HBD_AVX512
+    SATD_HBD_AVX512_END
+    RET
+
+%macro SATD_64xN_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_satd_64x%1, 4,8,8
+    add             r1d, r1d
+    add             r3d, r3d
+    lea             r4, [3 * r1]
+    lea             r5, [3 * r3]
+    pxor            m6, m6
+    mov             r6, r0
+    mov             r7, r2
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r6 + mmsize]
+    lea             r2, [r7 + mmsize]
+%rep %1/4 - 1
+    PROCESS_SATD_32x4_HBD_AVX512
+    lea             r0, [r0 + 4 * r1]
+    lea             r2, [r2 + 4 * r3]
+%endrep
+    PROCESS_SATD_32x4_HBD_AVX512
+    SATD_HBD_AVX512_END
+    RET
+%endmacro
+
+SATD_64xN_HBD_AVX512 16
+SATD_64xN_HBD_AVX512 32
+SATD_64xN_HBD_AVX512 48
+SATD_64xN_HBD_AVX512 64
 %endif ; ARCH_X86_64 == 1 && HIGH_BIT_DEPTH == 1
 
 
@@ -13818,6 +15315,7 @@ cglobal planeClipAndMax, 5,7,8
     ;lea %8, [%8+4*r3]
 %endmacro
 
+%if ARCH_X86_64
 INIT_YMM avx2
 cglobal pixel_satd_8x8, 4,4,7
 
@@ -14383,5 +15881,5 @@ cglobal pixel_sa8d_32x32, 4,8,14
 
     movd eax, xm0
     RET
-
+%endif
 %endif ; HIGH_BIT_DEPTH == 1 && BIT_DEPTH == 10

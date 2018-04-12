@@ -178,12 +178,12 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
             }
         }
 
-        /* Need variance data for weighted prediction */
+        /* Need variance data for weighted prediction and dynamic refinement*/
         if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
-        {
+        {            
             for (blockY = 0; blockY < maxRow; blockY += loopIncr)
-                for (blockX = 0; blockX < maxCol; blockX += loopIncr)
-                    acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+                for (blockX = 0; blockX < maxCol; blockX += loopIncr)                
+                    acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);                
         }
     }
     else
@@ -202,7 +202,6 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                 for (blockX = 0; blockX < maxCol; blockX += loopIncr)
                 {
                     uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
-                    curFrame->m_lowres.blockVariance[blockXY] = energy;
                     rowVariance += energy;
                     qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
                     curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
@@ -240,7 +239,7 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                 else
                 {
                     uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp,param->rc.qgSize);
-                    qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));
+                    qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));                    
                 }
 
                 if (param->bHDROpt)
@@ -307,6 +306,17 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
             ssd = curFrame->m_lowres.wp_ssd[i];
             curFrame->m_lowres.wp_ssd[i] = ssd - (sum * sum + (width[i] * height[i]) / 2) / (width[i] * height[i]);
         }
+    }
+
+    if (param->bDynamicRefine)
+    {
+        blockXY = 0;
+        for (blockY = 0; blockY < maxRow; blockY += loopIncr)
+            for (blockX = 0; blockX < maxCol; blockX += loopIncr)
+            {
+                curFrame->m_lowres.blockVariance[blockXY] = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+                blockXY++;
+            }
     }
 }
 
@@ -2513,19 +2523,16 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
         intptr_t stride0 = X265_LOWRES_CU_SIZE, stride1 = X265_LOWRES_CU_SIZE;
         pixel *src0 = fref0->lowresMC(pelOffset, fenc->lowresMvs[0][listDist[0]][cuXY], subpelbuf0, stride0);
         pixel *src1 = fref1->lowresMC(pelOffset, fenc->lowresMvs[1][listDist[1]][cuXY], subpelbuf1, stride1);
-
         ALIGN_VAR_32(pixel, ref[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
-        primitives.pu[LUMA_8x8].pixelavg_pp(ref, X265_LOWRES_CU_SIZE, src0, stride0, src1, stride1, 32);
+        primitives.pu[LUMA_8x8].pixelavg_pp[NONALIGNED](ref, X265_LOWRES_CU_SIZE, src0, stride0, src1, stride1, 32);
         int bicost = tld.me.bufSATD(ref, X265_LOWRES_CU_SIZE);
         COPY2_IF_LT(bcost, bicost, listused, 3);
-
         /* coloc candidate */
         src0 = fref0->lowresPlane[0] + pelOffset;
         src1 = fref1->lowresPlane[0] + pelOffset;
-        primitives.pu[LUMA_8x8].pixelavg_pp(ref, X265_LOWRES_CU_SIZE, src0, fref0->lumaStride, src1, fref1->lumaStride, 32);
+        primitives.pu[LUMA_8x8].pixelavg_pp[NONALIGNED](ref, X265_LOWRES_CU_SIZE, src0, fref0->lumaStride, src1, fref1->lumaStride, 32);
         bicost = tld.me.bufSATD(ref, X265_LOWRES_CU_SIZE);
         COPY2_IF_LT(bcost, bicost, listused, 3);
-
         bcost += lowresPenalty;
     }
     else /* P, also consider intra */

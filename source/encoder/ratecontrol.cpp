@@ -1290,7 +1290,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         else
         {
             /* The spec has a special case for the first frame. */
-            if (rce->encodeOrder == 0)
+            if (curFrame->m_lowres.bKeyframe)
             {
                 /* 1.5 * (Max( PicSizeInSamplesY, fR * MaxLumaSr) + MaxLumaSr * (AuCpbRemovalTime[ 0 ] -AuNominalRemovalTime[ 0 ])) ? MinCr */
                 double fr = 1. / 300;
@@ -1302,6 +1302,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
                 /* 1.5 * MaxLumaSr * (AuCpbRemovalTime[ n ] - AuCpbRemovalTime[ n - 1 ]) / MinCr */
                 rce->frameSizeMaximum = 8 * 1.5 * enc->m_vps.ptl.maxLumaSrForLevel * m_frameDuration / mincr;
             }
+            rce->frameSizeMaximum *= m_param->maxAUSizeFactor;
         }
     }
     if (!m_isAbr && m_2pass && m_param->rc.rateControlMode == X265_RC_CRF)

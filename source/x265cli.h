@@ -263,6 +263,8 @@ static const struct option long_options[] =
     { "scale-factor",   required_argument, NULL, 0 },
     { "refine-intra",   required_argument, NULL, 0 },
     { "refine-inter",   required_argument, NULL, 0 },
+    { "dynamic-refine",       no_argument, NULL, 0 },
+    { "no-dynamic-refine",    no_argument, NULL, 0 },
     { "strict-cbr",           no_argument, NULL, 0 },
     { "temporal-layers",      no_argument, NULL, 0 },
     { "no-temporal-layers",   no_argument, NULL, 0 },
@@ -293,6 +295,13 @@ static const struct option long_options[] =
     { "refine-mv-type", required_argument, NULL, 0 },
     { "copy-pic",             no_argument, NULL, 0 },
     { "no-copy-pic",          no_argument, NULL, 0 },
+    { "max-ausize-factor", required_argument, NULL, 0 },
+    { "idr-recovery-sei",     no_argument, NULL, 0 },
+    { "no-idr-recovery-sei",  no_argument, NULL, 0 },
+    { "single-sei", no_argument, NULL, 0 },
+    { "no-single-sei", no_argument, NULL, 0 },
+	{ "atc-sei", required_argument, NULL, 0 },
+	{ "pic-struct", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -475,11 +484,12 @@ static void showHelp(x265_param *param)
     H0("   --analysis-reuse-level <1..10>      Level of analysis reuse indicates amount of info stored/reused in save/load mode, 1:least..10:most. Default %d\n", param->analysisReuseLevel);
     H0("   --refine-mv-type <string>     Reuse MV information received through API call. Supported option is avc. Default disabled - %d\n", param->bMVType);
     H0("   --scale-factor <int>          Specify factor by which input video is scaled down for analysis save mode. Default %d\n", param->scaleFactor);
-    H0("   --refine-intra <0..3>         Enable intra refinement for encode that uses analysis-load.\n"
+    H0("   --refine-intra <0..4>         Enable intra refinement for encode that uses analysis-load.\n"
         "                                    - 0 : Forces both mode and depth from the save encode.\n"
         "                                    - 1 : Functionality of (0) + evaluate all intra modes at min-cu-size's depth when current depth is one smaller than min-cu-size's depth.\n"
         "                                    - 2 : Functionality of (1) + irrespective of size evaluate all angular modes when the save encode decides the best mode as angular.\n"
         "                                    - 3 : Functionality of (1) + irrespective of size evaluate all intra modes.\n"
+        "                                    - 4 : Re-evaluate all intra blocks, does not reuse data from save encode.\n"
         "                                Default:%d\n", param->intraRefine);
     H0("   --refine-inter <0..3>         Enable inter refinement for encode that uses analysis-load.\n"
         "                                    - 0 : Forces both mode and depth from the save encode.\n"
@@ -488,6 +498,7 @@ static void showHelp(x265_param *param)
         "                                    - 2 : Functionality of (1) + irrespective of size restrict the modes evaluated when specific modes are decided as the best mode by the save encode.\n"
         "                                    - 3 : Functionality of (1) + irrespective of size evaluate all inter modes.\n"
         "                                Default:%d\n", param->interRefine);
+    H0("   --[no-]dynamic-refine         Dynamically changes refine-inter level for each CU. Default %s\n", OPT(param->bDynamicRefine));
     H0("   --[no-]refine-mv              Enable mv refinement for load mode. Default %s\n", OPT(param->mvRefine));
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance 3:auto variance with bias to dark scenes. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
@@ -515,6 +526,8 @@ static void showHelp(x265_param *param)
     H1("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
     H1("                                 Blank lines and lines starting with hash(#) are ignored\n");
     H1("                                 Comma is considered to be white-space\n");
+    H0("   --max-ausize-factor <float>   This value controls the maximum AU size defined in specification.\n");
+    H0("                                 It represents the percentage of maximum AU size used. Default %.1f\n", param->maxAUSizeFactor);
     H0("\nLoop filters (deblock and SAO):\n");
     H0("   --[no-]deblock                Enable Deblocking Loop Filter, optionally specify tC:Beta offsets Default %s\n", OPT(param->bEnableLoopFilter));
     H0("   --[no-]sao                    Enable Sample Adaptive Offset. Default %s\n", OPT(param->bEnableSAO));
@@ -548,9 +561,12 @@ static void showHelp(x265_param *param)
     H0("   --[no-]repeat-headers         Emit SPS and PPS headers at each keyframe. Default %s\n", OPT(param->bRepeatHeaders));
     H0("   --[no-]info                   Emit SEI identifying encoder and parameters. Default %s\n", OPT(param->bEmitInfoSEI));
     H0("   --[no-]hrd                    Enable HRD parameters signaling. Default %s\n", OPT(param->bEmitHRDSEI));
+    H0("   --[no-]idr-recovery-sei      Emit recovery point infor SEI at each IDR frame \n");
     H0("   --[no-]temporal-layers        Enable a temporal sublayer for unreferenced B frames. Default %s\n", OPT(param->bEnableTemporalSubLayers));
     H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
     H1("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
+	H0("   --atc-sei <integer>           Emit the alternative transfer characteristics SEI message where the integer is the preferred transfer characteristics. Default disabled\n");
+	H0("   --pic-struct <integer>        Set the picture structure and emits it in the picture timing SEI message. Values in the range 0..12. See D.3.3 of the HEVC spec. for a detailed explanation.");
     H0("   --log2-max-poc-lsb <integer>  Maximum of the picture order count\n");
     H0("   --[no-]vui-timing-info        Emit VUI timing information in the bistream. Default %s\n", OPT(param->bEmitVUITimingInfo));
     H0("   --[no-]vui-hrd-info           Emit VUI HRD information in the bistream. Default %s\n", OPT(param->bEmitVUIHRDInfo));

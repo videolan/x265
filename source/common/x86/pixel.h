@@ -34,6 +34,7 @@ void PFX(downShift_16_sse2)(const uint16_t* src, intptr_t srcStride, pixel* dst,
 void PFX(downShift_16_avx2)(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 void PFX(upShift_16_sse2)(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 void PFX(upShift_16_avx2)(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
+void PFX(upShift_16_avx512)(const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 void PFX(upShift_8_sse4)(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 void PFX(upShift_8_avx2)(const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 pixel PFX(planeClipAndMax_avx2)(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, const pixel minPix, const pixel maxPix);
@@ -44,14 +45,19 @@ pixel PFX(planeClipAndMax_avx2)(pixel *src, intptr_t stride, int width, int heig
     FUNCDEF_PU(void, pixel_sad_x3, cpu, const pixel*, const pixel*, const pixel*, const pixel*, intptr_t, int32_t*); \
     FUNCDEF_PU(void, pixel_sad_x4, cpu, const pixel*, const pixel*, const pixel*, const pixel*, const pixel*, intptr_t, int32_t*); \
     FUNCDEF_PU(void, pixel_avg, cpu, pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int); \
+    FUNCDEF_PU(void, pixel_avg_aligned, cpu, pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int); \
     FUNCDEF_PU(void, pixel_add_ps, cpu, pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1); \
+    FUNCDEF_PU(void, pixel_add_ps_aligned, cpu, pixel* a, intptr_t dstride, const pixel* b0, const int16_t* b1, intptr_t sstride0, intptr_t sstride1); \
     FUNCDEF_PU(void, pixel_sub_ps, cpu, int16_t* a, intptr_t dstride, const pixel* b0, const pixel* b1, intptr_t sstride0, intptr_t sstride1); \
     FUNCDEF_CHROMA_PU(int, pixel_satd, cpu, const pixel*, intptr_t, const pixel*, intptr_t); \
     FUNCDEF_CHROMA_PU(int, pixel_sad, cpu, const pixel*, intptr_t, const pixel*, intptr_t); \
     FUNCDEF_CHROMA_PU(sse_t, pixel_ssd_ss, cpu, const int16_t*, intptr_t, const int16_t*, intptr_t); \
     FUNCDEF_CHROMA_PU(void, addAvg, cpu, const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t); \
+    FUNCDEF_CHROMA_PU(void, addAvg_aligned, cpu, const int16_t*, const int16_t*, pixel*, intptr_t, intptr_t, intptr_t); \
     FUNCDEF_CHROMA_PU(sse_t, pixel_ssd_s, cpu, const int16_t*, intptr_t); \
+    FUNCDEF_CHROMA_PU(sse_t, pixel_ssd_s_aligned, cpu, const int16_t*, intptr_t); \
     FUNCDEF_TU_S(sse_t, pixel_ssd_s, cpu, const int16_t*, intptr_t); \
+    FUNCDEF_TU_S(sse_t, pixel_ssd_s_aligned, cpu, const int16_t*, intptr_t); \
     FUNCDEF_TU(uint64_t, pixel_var, cpu, const pixel*, intptr_t); \
     FUNCDEF_TU(int, psyCost_pp, cpu, const pixel* source, intptr_t sstride, const pixel* recon, intptr_t rstride); \
     FUNCDEF_TU(int, psyCost_ss, cpu, const int16_t* source, intptr_t sstride, const int16_t* recon, intptr_t rstride)
@@ -65,6 +71,7 @@ DECL_PIXELS(ssse3);
 DECL_PIXELS(avx);
 DECL_PIXELS(xop);
 DECL_PIXELS(avx2);
+DECL_PIXELS(avx512);
 
 #undef DECL_PIXELS
 

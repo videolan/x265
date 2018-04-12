@@ -46,13 +46,10 @@
     %error Unsupport bit depth!
 %endif
 
-SECTION_RODATA 32
+SECTION_RODATA 64
 
-ch_shuf: times 2 db 0,2,2,4,4,6,6,8,1,3,3,5,5,7,7,9
-ch_shuf_adj: times 8 db 0
-             times 8 db 2
-             times 8 db 4
-             times 8 db 6
+ALIGN 64
+const shuf_avx512,  dq 0, 2, 4, 6, 1, 3, 5, 7
 
 SECTION .text
 
@@ -1037,6 +1034,7 @@ ADDAVG_W64_H1 64
 ;------------------------------------------------------------------------------
 ; avx2 asm for addAvg high_bit_depth
 ;------------------------------------------------------------------------------
+%if ARCH_X86_64
 INIT_YMM avx2
 cglobal addAvg_8x2, 6,6,2, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movu        xm0,         [r0]
@@ -1114,6 +1112,7 @@ cglobal addAvg_8x6, 6,6,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     movu        [r2],        xm0
     movu        [r2 + r5],   xm2
     RET
+%endif
 
 %macro ADDAVG_W8_H4_AVX2 1
 cglobal addAvg_8x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
@@ -1168,13 +1167,16 @@ cglobal addAvg_8x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W8_H4_AVX2 4
 ADDAVG_W8_H4_AVX2 8
 ADDAVG_W8_H4_AVX2 12
 ADDAVG_W8_H4_AVX2 16
 ADDAVG_W8_H4_AVX2 32
 ADDAVG_W8_H4_AVX2 64
+%endif
 
+%if ARCH_X86_64
 cglobal addAvg_12x16, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     mova           m4,             [pw_ %+ ADDAVG_ROUND]
     mova           m5,             [pw_pixel_max]
@@ -1258,6 +1260,7 @@ cglobal addAvg_12x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     dec            r6d
     jnz            .loop
     RET
+%endif
 
 %macro ADDAVG_W16_H4_AVX2 1
 cglobal addAvg_16x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
@@ -1299,6 +1302,7 @@ cglobal addAvg_16x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W16_H4_AVX2 4
 ADDAVG_W16_H4_AVX2 8
 ADDAVG_W16_H4_AVX2 12
@@ -1306,7 +1310,9 @@ ADDAVG_W16_H4_AVX2 16
 ADDAVG_W16_H4_AVX2 24
 ADDAVG_W16_H4_AVX2 32
 ADDAVG_W16_H4_AVX2 64
+%endif
 
+%if ARCH_X86_64
 cglobal addAvg_24x32, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     mova        m4,              [pw_ %+ ADDAVG_ROUND]
     mova        m5,              [pw_pixel_max]
@@ -1418,6 +1424,7 @@ cglobal addAvg_24x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     dec         r6d
     jnz         .loop
     RET
+%endif
 
 %macro ADDAVG_W32_H2_AVX2 1
 cglobal addAvg_32x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
@@ -1477,13 +1484,16 @@ cglobal addAvg_32x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W32_H2_AVX2 8
 ADDAVG_W32_H2_AVX2 16
 ADDAVG_W32_H2_AVX2 24
 ADDAVG_W32_H2_AVX2 32
 ADDAVG_W32_H2_AVX2 48
 ADDAVG_W32_H2_AVX2 64
+%endif
 
+%if ARCH_X86_64
 cglobal addAvg_48x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     mova        m4,              [pw_ %+ ADDAVG_ROUND]
     mova        m5,              [pw_pixel_max]
@@ -1557,6 +1567,7 @@ cglobal addAvg_48x64, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     dec         r6d
     jnz        .loop
     RET
+%endif
 
 %macro ADDAVG_W64_H1_AVX2 1
 cglobal addAvg_64x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
@@ -1652,10 +1663,729 @@ cglobal addAvg_64x%1, 6,7,6, pSrc0, pSrc1, pDst, iStride0, iStride1, iDstStride
     RET
 %endmacro
 
+%if ARCH_X86_64
 ADDAVG_W64_H1_AVX2 16
 ADDAVG_W64_H1_AVX2 32
 ADDAVG_W64_H1_AVX2 48
 ADDAVG_W64_H1_AVX2 64
+%endif
+;-----------------------------------------------------------------------------
+;addAvg avx512 high bit depth code start
+;-----------------------------------------------------------------------------
+%macro PROCESS_ADDAVG_16x4_HBD_AVX512 0
+    movu              ym0,              [r0]
+    vinserti32x8       m0,              [r0 + r3], 1
+    movu              ym1,              [r1]
+    vinserti32x8       m1,              [r1 + r4], 1
+
+    paddw              m0,              m1
+    pmulhrsw           m0,              m3
+    paddw              m0,              m4
+    pmaxsw             m0,              m2
+    pminsw             m0,              m5
+
+    movu             [r2],              ym0
+    vextracti32x8    [r2 + r5],         m0, 1
+
+    movu              ym0,              [r0 + 2 * r3]
+    vinserti32x8       m0,              [r0 + r6], 1
+    movu              ym1,              [r1 + 2 * r4]
+    vinserti32x8       m1,              [r1 + r7], 1
+
+    paddw              m0,              m1
+    pmulhrsw           m0,              m3
+    paddw              m0,              m4
+    pmaxsw             m0,              m2
+    pminsw             m0,              m5
+
+    movu             [r2 + 2 * r5],    ym0
+    vextracti32x8    [r2 + r8],         m0, 1
+%endmacro
+
+%macro PROCESS_ADDAVG_32x4_HBD_AVX512 0
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        m0,              [r0 + 2 * r3]
+    movu        m1,              [r1 + 2 * r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 2 * r5],   m0
+
+    movu        m0,              [r0 + r6]
+    movu        m1,              [r1 + r7]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r8],       m0
+%endmacro
+
+%macro PROCESS_ADDAVG_64x4_HBD_AVX512 0
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + mmsize]
+    movu        m1,              [r1 + mmsize]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + mmsize],   m0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        m0,              [r0 + r3 + mmsize]
+    movu        m1,              [r1 + r4 + mmsize]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5 + mmsize],       m0
+
+    movu        m0,              [r0 + 2 * r3]
+    movu        m1,              [r1 + 2 * r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 2 * r5],   m0
+
+    movu        m0,              [r0 + 2 * r3 + mmsize]
+    movu        m1,              [r1 + 2 * r4 + mmsize]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 2 * r5 + mmsize],   m0
+
+    movu        m0,              [r0 + r6]
+    movu        m1,              [r1 + r7]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r8],       m0
+
+    movu        m0,              [r0 + r6 + mmsize]
+    movu        m1,              [r1 + r7 + mmsize]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r8 + mmsize],       m0
+%endmacro
+
+%macro PROCESS_ADDAVG_48x4_HBD_AVX512 0
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        ym0,              [r0 + mmsize]
+    movu        ym1,              [r1 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + mmsize],    ym0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        ym0,              [r0 + r3 + mmsize]
+    movu        ym1,              [r1 + r4 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + r5 + mmsize],       ym0
+
+    movu        m0,              [r0 + 2 * r3]
+    movu        m1,              [r1 + 2 * r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 2 * r5],   m0
+
+    movu        ym0,              [r0 + 2 * r3 + mmsize]
+    movu        ym1,              [r1 + 2 * r4 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + 2 * r5 + mmsize],   ym0
+
+    movu        m0,              [r0 + r6]
+    movu        m1,              [r1 + r7]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r8],       m0
+
+    movu        ym0,              [r0 + r6 + mmsize]
+    movu        ym1,              [r1 + r7 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + r8 + mmsize],       ym0
+%endmacro
+;-----------------------------------------------------------------------------
+;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal addAvg_16x4, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,        m2
+    add         r3,        r3
+    add         r4,        r4
+    add         r5,        r5
+    lea         r6,        [3 * r3]
+    lea         r7,        [3 * r4]
+    lea         r8,        [3 * r5]
+    PROCESS_ADDAVG_16x4_HBD_AVX512
+    RET
+%endif
+
+%macro ADDAVG_W16_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_16x%1, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,        m2
+    add         r3,        r3
+    add         r4,        r4
+    add         r5,        r5
+    lea         r6,        [3 * r3]
+    lea         r7,        [3 * r4]
+    lea         r8,        [3 * r5]
+
+%rep %1/4 - 1
+    PROCESS_ADDAVG_16x4_HBD_AVX512
+    lea         r2,        [r2 + 4 * r5]
+    lea         r0,        [r0 + 4 * r3]
+    lea         r1,        [r1 + 4 * r4]
+%endrep
+    PROCESS_ADDAVG_16x4_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+ADDAVG_W16_HBD_AVX512 8
+ADDAVG_W16_HBD_AVX512 12
+ADDAVG_W16_HBD_AVX512 16
+ADDAVG_W16_HBD_AVX512 24
+ADDAVG_W16_HBD_AVX512 32
+ADDAVG_W16_HBD_AVX512 64
+%endif
+
+%macro ADDAVG_W32_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_32x%1, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,              m2
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+    lea         r6,              [3 * r3]
+    lea         r7,              [3 * r4]
+    lea         r8,              [3 * r5]
+
+%rep %1/4 - 1
+    PROCESS_ADDAVG_32x4_HBD_AVX512
+    lea         r2,              [r2 + 4 * r5]
+    lea         r0,              [r0 + 4 * r3]
+    lea         r1,              [r1 + 4 * r4]
+%endrep
+    PROCESS_ADDAVG_32x4_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+ADDAVG_W32_HBD_AVX512 8
+ADDAVG_W32_HBD_AVX512 16
+ADDAVG_W32_HBD_AVX512 24
+ADDAVG_W32_HBD_AVX512 32
+ADDAVG_W32_HBD_AVX512 48
+ADDAVG_W32_HBD_AVX512 64
+%endif
+
+%macro ADDAVG_W64_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_64x%1, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,              m2
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+    lea         r6,              [3 * r3]
+    lea         r7,              [3 * r4]
+    lea         r8,              [3 * r5]
+
+%rep %1/4 - 1
+    PROCESS_ADDAVG_64x4_HBD_AVX512
+    lea         r2,              [r2 + 4 * r5]
+    lea         r0,              [r0 + 4 * r3]
+    lea         r1,              [r1 + 4 * r4]
+%endrep
+    PROCESS_ADDAVG_64x4_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+ADDAVG_W64_HBD_AVX512 16
+ADDAVG_W64_HBD_AVX512 32
+ADDAVG_W64_HBD_AVX512 48
+ADDAVG_W64_HBD_AVX512 64
+%endif
+
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal addAvg_48x64, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,              m2
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+    lea         r6,              [3 * r3]
+    lea         r7,              [3 * r4]
+    lea         r8,              [3 * r5]
+
+%rep 15
+    PROCESS_ADDAVG_48x4_HBD_AVX512
+    lea         r2,              [r2 + 4 * r5]
+    lea         r0,              [r0 + 4 * r3]
+    lea         r1,              [r1 + 4 * r4]
+%endrep
+    PROCESS_ADDAVG_48x4_HBD_AVX512
+    RET
+%endif
+
+%macro PROCESS_ADDAVG_ALIGNED_16x4_HBD_AVX512 0
+    movu              ym0,              [r0]
+    vinserti32x8       m0,              [r0 + r3], 1
+    movu              ym1,              [r1]
+    vinserti32x8       m1,              [r1 + r4], 1
+
+    paddw              m0,              m1
+    pmulhrsw           m0,              m3
+    paddw              m0,              m4
+    pmaxsw             m0,              m2
+    pminsw             m0,              m5
+
+    movu             [r2],              ym0
+    vextracti32x8    [r2 + r5],         m0, 1
+
+    movu              ym0,              [r0 + 2 * r3]
+    vinserti32x8       m0,              [r0 + r6], 1
+    movu              ym1,              [r1 + 2 * r4]
+    vinserti32x8       m1,              [r1 + r7], 1
+
+    paddw              m0,              m1
+    pmulhrsw           m0,              m3
+    paddw              m0,              m4
+    pmaxsw             m0,              m2
+    pminsw             m0,              m5
+
+    movu             [r2 + 2 * r5],    ym0
+    vextracti32x8    [r2 + r8],         m0, 1
+%endmacro
+
+%macro PROCESS_ADDAVG_ALIGNED_32x4_HBD_AVX512 0
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        m0,              [r0 + 2 * r3]
+    movu        m1,              [r1 + 2 * r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 2 * r5],   m0
+
+    movu        m0,              [r0 + r6]
+    movu        m1,              [r1 + r7]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r8],       m0
+%endmacro
+
+%macro PROCESS_ADDAVG_ALIGNED_64x4_HBD_AVX512 0
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        m0,              [r0 + mmsize]
+    movu        m1,              [r1 + mmsize]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + mmsize],   m0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        m0,              [r0 + r3 + mmsize]
+    movu        m1,              [r1 + r4 + mmsize]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5 + mmsize],       m0
+
+    movu        m0,              [r0 + 2 * r3]
+    movu        m1,              [r1 + 2 * r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 2 * r5],   m0
+
+    movu        m0,              [r0 + 2 * r3 + mmsize]
+    movu        m1,              [r1 + 2 * r4 + mmsize]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 2 * r5 + mmsize],   m0
+
+    movu        m0,              [r0 + r6]
+    movu        m1,              [r1 + r7]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r8],       m0
+
+    movu        m0,              [r0 + r6 + mmsize]
+    movu        m1,              [r1 + r7 + mmsize]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r8 + mmsize],       m0
+%endmacro
+
+%macro PROCESS_ADDAVG_ALIGNED_48x4_HBD_AVX512 0
+    movu        m0,              [r0]
+    movu        m1,              [r1]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2],            m0
+
+    movu        ym0,              [r0 + mmsize]
+    movu        ym1,              [r1 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + mmsize],    ym0
+
+    movu        m0,              [r0 + r3]
+    movu        m1,              [r1 + r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r5],       m0
+
+    movu        ym0,              [r0 + r3 + mmsize]
+    movu        ym1,              [r1 + r4 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + r5 + mmsize],       ym0
+
+    movu        m0,              [r0 + 2 * r3]
+    movu        m1,              [r1 + 2 * r4]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + 2 * r5],   m0
+
+    movu        ym0,              [r0 + 2 * r3 + mmsize]
+    movu        ym1,              [r1 + 2 * r4 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + 2 * r5 + mmsize],   ym0
+
+    movu        m0,              [r0 + r6]
+    movu        m1,              [r1 + r7]
+    paddw       m0,              m1
+    pmulhrsw    m0,              m3
+    paddw       m0,              m4
+    pmaxsw      m0,              m2
+    pminsw      m0,              m5
+    movu        [r2 + r8],       m0
+
+    movu        ym0,              [r0 + r6 + mmsize]
+    movu        ym1,              [r1 + r7 + mmsize]
+    paddw       ym0,              ym1
+    pmulhrsw    ym0,              ym3
+    paddw       ym0,              ym4
+    pmaxsw      ym0,              ym2
+    pminsw      ym0,              ym5
+    movu        [r2 + r8 + mmsize],       ym0
+%endmacro
+;-----------------------------------------------------------------------------
+;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
+;-----------------------------------------------------------------------------
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal addAvg_aligned_16x4, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,        m2
+    add         r3,        r3
+    add         r4,        r4
+    add         r5,        r5
+    lea         r6,        [3 * r3]
+    lea         r7,        [3 * r4]
+    lea         r8,        [3 * r5]
+    PROCESS_ADDAVG_ALIGNED_16x4_HBD_AVX512
+    RET
+%endif
+
+%macro ADDAVG_ALIGNED_W16_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_aligned_16x%1, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,        m2
+    add         r3,        r3
+    add         r4,        r4
+    add         r5,        r5
+    lea         r6,        [3 * r3]
+    lea         r7,        [3 * r4]
+    lea         r8,        [3 * r5]
+
+%rep %1/4 - 1
+    PROCESS_ADDAVG_ALIGNED_16x4_HBD_AVX512
+    lea         r2,        [r2 + 4 * r5]
+    lea         r0,        [r0 + 4 * r3]
+    lea         r1,        [r1 + 4 * r4]
+%endrep
+    PROCESS_ADDAVG_ALIGNED_16x4_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+ADDAVG_ALIGNED_W16_HBD_AVX512 8
+ADDAVG_ALIGNED_W16_HBD_AVX512 12
+ADDAVG_ALIGNED_W16_HBD_AVX512 16
+ADDAVG_ALIGNED_W16_HBD_AVX512 24
+ADDAVG_ALIGNED_W16_HBD_AVX512 32
+ADDAVG_ALIGNED_W16_HBD_AVX512 64
+%endif
+
+%macro ADDAVG_ALIGNED_W32_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_aligned_32x%1, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,              m2
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+    lea         r6,              [3 * r3]
+    lea         r7,              [3 * r4]
+    lea         r8,              [3 * r5]
+
+%rep %1/4 - 1
+    PROCESS_ADDAVG_ALIGNED_32x4_HBD_AVX512
+    lea         r2,              [r2 + 4 * r5]
+    lea         r0,              [r0 + 4 * r3]
+    lea         r1,              [r1 + 4 * r4]
+%endrep
+    PROCESS_ADDAVG_ALIGNED_32x4_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+ADDAVG_ALIGNED_W32_HBD_AVX512 8
+ADDAVG_ALIGNED_W32_HBD_AVX512 16
+ADDAVG_ALIGNED_W32_HBD_AVX512 24
+ADDAVG_ALIGNED_W32_HBD_AVX512 32
+ADDAVG_ALIGNED_W32_HBD_AVX512 48
+ADDAVG_ALIGNED_W32_HBD_AVX512 64
+%endif
+
+%macro ADDAVG_ALIGNED_W64_HBD_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_aligned_64x%1, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,              m2
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+    lea         r6,              [3 * r3]
+    lea         r7,              [3 * r4]
+    lea         r8,              [3 * r5]
+
+%rep %1/4 - 1
+    PROCESS_ADDAVG_ALIGNED_64x4_HBD_AVX512
+    lea         r2,              [r2 + 4 * r5]
+    lea         r0,              [r0 + 4 * r3]
+    lea         r1,              [r1 + 4 * r4]
+%endrep
+    PROCESS_ADDAVG_ALIGNED_64x4_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+ADDAVG_ALIGNED_W64_HBD_AVX512 16
+ADDAVG_ALIGNED_W64_HBD_AVX512 32
+ADDAVG_ALIGNED_W64_HBD_AVX512 48
+ADDAVG_ALIGNED_W64_HBD_AVX512 64
+%endif
+
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal addAvg_aligned_48x64, 6,9,6
+    vbroadcasti32x8        m4,              [pw_ %+ ADDAVG_ROUND]
+    vbroadcasti32x8        m5,              [pw_pixel_max]
+    vbroadcasti32x8        m3,              [pw_ %+ ADDAVG_FACTOR]
+    pxor        m2,              m2
+    add         r3,              r3
+    add         r4,              r4
+    add         r5,              r5
+    lea         r6,              [3 * r3]
+    lea         r7,              [3 * r4]
+    lea         r8,              [3 * r5]
+
+%rep 15
+    PROCESS_ADDAVG_ALIGNED_48x4_HBD_AVX512
+    lea         r2,              [r2 + 4 * r5]
+    lea         r0,              [r0 + 4 * r3]
+    lea         r1,              [r1 + 4 * r4]
+%endrep
+    PROCESS_ADDAVG_ALIGNED_48x4_HBD_AVX512
+    RET
+%endif
+;-----------------------------------------------------------------------------
+;addAvg avx512 high bit depth code end
+;-----------------------------------------------------------------------------
 ;-----------------------------------------------------------------------------
 %else ; !HIGH_BIT_DEPTH
 ;-----------------------------------------------------------------------------
@@ -2968,7 +3698,221 @@ ADDAVG_W48_H2_AVX2 64
 ;-----------------------------------------------------------------------------
 ; addAvg avx2 code end
 ;-----------------------------------------------------------------------------
+; addAvg avx512 code start
+;-----------------------------------------------------------------------------
+%macro PROCESS_ADDAVG_64x2_AVX512 0
+    movu            m0, [r0]
+    movu            m1, [r1]
+    movu            m2, [r0 + mmsize]
+    movu            m3, [r1 + mmsize]
 
+    paddw           m0, m1
+    pmulhrsw        m0, m4
+    paddw           m0, m5
+    paddw           m2, m3
+    pmulhrsw        m2, m4
+    paddw           m2, m5
+
+    packuswb        m0, m2
+    vpermq          m0, m6, m0
+    movu            [r2], m0
+
+    movu            m0, [r0 + r3]
+    movu            m1, [r1 + r4]
+    movu            m2, [r0 + r3 + mmsize]
+    movu            m3, [r1 + r4 + mmsize]
+
+    paddw           m0, m1
+    pmulhrsw        m0, m4
+    paddw           m0, m5
+    paddw           m2, m3
+    pmulhrsw        m2, m4
+    paddw           m2, m5
+
+    packuswb        m0, m2
+    vpermq          m0, m6, m0
+    movu            [r2 + r5], m0
+%endmacro
+
+%macro PROCESS_ADDAVG_32x2_AVX512 0
+    movu            m0,         [r0]
+    movu            m1,         [r1]
+    movu            m2,         [r0 + r3]
+    movu            m3,         [r1 + r4]
+
+    paddw           m0,         m1
+    pmulhrsw        m0,         m4
+    paddw           m0,         m5
+    paddw           m2,         m3
+    pmulhrsw        m2,         m4
+    paddw           m2,         m5
+
+    packuswb        m0,         m2
+    vpermq          m0,         m6,     m0
+    movu            [r2],       ym0
+    vextracti32x8   [r2 + r5],  m0, 1
+%endmacro
+;--------------------------------------------------------------------------------------------------------------------
+;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
+;--------------------------------------------------------------------------------------------------------------------
+%macro ADDAVG_W64_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_64x%1, 6,6,7
+    vbroadcasti32x8 m4, [pw_256]
+    vbroadcasti32x8 m5, [pw_128]
+    mova            m6, [shuf_avx512]
+
+    add             r3, r3
+    add             r4, r4
+
+%rep %1/2 - 1
+    PROCESS_ADDAVG_64x2_AVX512
+    lea             r2, [r2 + 2 * r5]
+    lea             r0, [r0 + 2 * r3]
+    lea             r1, [r1 + 2 * r4]
+%endrep
+    PROCESS_ADDAVG_64x2_AVX512
+    RET
+%endmacro
+
+ADDAVG_W64_AVX512 16
+ADDAVG_W64_AVX512 32
+ADDAVG_W64_AVX512 48
+ADDAVG_W64_AVX512 64
+
+%macro ADDAVG_W32_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_32x%1, 6,6,7
+    vbroadcasti32x8 m4, [pw_256]
+    vbroadcasti32x8 m5, [pw_128]
+    mova            m6, [shuf_avx512]
+    add             r3, r3
+    add             r4, r4
+
+%rep %1/2 - 1
+    PROCESS_ADDAVG_32x2_AVX512
+    lea             r2, [r2 + 2 * r5]
+    lea             r0, [r0 + 2 * r3]
+    lea             r1, [r1 + 2 * r4]
+%endrep
+    PROCESS_ADDAVG_32x2_AVX512
+    RET
+%endmacro
+
+ADDAVG_W32_AVX512 8
+ADDAVG_W32_AVX512 16
+ADDAVG_W32_AVX512 24
+ADDAVG_W32_AVX512 32
+ADDAVG_W32_AVX512 48
+ADDAVG_W32_AVX512 64
+
+%macro PROCESS_ADDAVG_ALIGNED_64x2_AVX512 0
+    mova            m0, [r0]
+    mova            m1, [r1]
+    mova            m2, [r0 + mmsize]
+    mova            m3, [r1 + mmsize]
+
+    paddw           m0, m1
+    pmulhrsw        m0, m4
+    paddw           m0, m5
+    paddw           m2, m3
+    pmulhrsw        m2, m4
+    paddw           m2, m5
+
+    packuswb        m0, m2
+    vpermq          m0, m6, m0
+    mova            [r2], m0
+
+    mova            m0, [r0 + r3]
+    mova            m1, [r1 + r4]
+    mova            m2, [r0 + r3 + mmsize]
+    mova            m3, [r1 + r4 + mmsize]
+
+    paddw           m0, m1
+    pmulhrsw        m0, m4
+    paddw           m0, m5
+    paddw           m2, m3
+    pmulhrsw        m2, m4
+    paddw           m2, m5
+
+    packuswb        m0, m2
+    vpermq          m0, m6, m0
+    mova            [r2 + r5], m0
+%endmacro
+
+%macro PROCESS_ADDAVG_ALIGNED_32x2_AVX512 0
+    mova            m0,         [r0]
+    mova            m1,         [r1]
+    mova            m2,         [r0 + r3]
+    mova            m3,         [r1 + r4]
+
+    paddw           m0,         m1
+    pmulhrsw        m0,         m4
+    paddw           m0,         m5
+    paddw           m2,         m3
+    pmulhrsw        m2,         m4
+    paddw           m2,         m5
+
+    packuswb        m0,         m2
+    vpermq          m0,         m6,     m0
+    mova            [r2],       ym0
+    vextracti32x8   [r2 + r5],  m0, 1
+%endmacro
+;--------------------------------------------------------------------------------------------------------------------
+;void addAvg (int16_t* src0, int16_t* src1, pixel* dst, intptr_t src0Stride, intptr_t src1Stride, intptr_t dstStride)
+;--------------------------------------------------------------------------------------------------------------------
+%macro ADDAVG_ALIGNED_W64_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_aligned_64x%1, 6,6,7
+    vbroadcasti32x8 m4, [pw_256]
+    vbroadcasti32x8 m5, [pw_128]
+    mova            m6, [shuf_avx512]
+
+    add             r3, r3
+    add             r4, r4
+
+%rep %1/2 - 1
+    PROCESS_ADDAVG_ALIGNED_64x2_AVX512
+    lea             r2, [r2 + 2 * r5]
+    lea             r0, [r0 + 2 * r3]
+    lea             r1, [r1 + 2 * r4]
+%endrep
+    PROCESS_ADDAVG_ALIGNED_64x2_AVX512
+    RET
+%endmacro
+
+ADDAVG_ALIGNED_W64_AVX512 16
+ADDAVG_ALIGNED_W64_AVX512 32
+ADDAVG_ALIGNED_W64_AVX512 48
+ADDAVG_ALIGNED_W64_AVX512 64
+
+%macro ADDAVG_ALIGNED_W32_AVX512 1
+INIT_ZMM avx512
+cglobal addAvg_aligned_32x%1, 6,6,7
+    vbroadcasti32x8 m4, [pw_256]
+    vbroadcasti32x8 m5, [pw_128]
+    mova            m6, [shuf_avx512]
+    add             r3, r3
+    add             r4, r4
+
+%rep %1/2 - 1
+    PROCESS_ADDAVG_ALIGNED_32x2_AVX512
+    lea             r2, [r2 + 2 * r5]
+    lea             r0, [r0 + 2 * r3]
+    lea             r1, [r1 + 2 * r4]
+%endrep
+    PROCESS_ADDAVG_ALIGNED_32x2_AVX512
+    RET
+%endmacro
+
+ADDAVG_ALIGNED_W32_AVX512 8
+ADDAVG_ALIGNED_W32_AVX512 16
+ADDAVG_ALIGNED_W32_AVX512 24
+ADDAVG_ALIGNED_W32_AVX512 32
+ADDAVG_ALIGNED_W32_AVX512 48
+ADDAVG_ALIGNED_W32_AVX512 64
+;-----------------------------------------------------------------------------
+; addAvg avx512 code end
 ;-----------------------------------------------------------------------------
 %macro ADDAVG_W24_H2 2
 INIT_XMM sse4
@@ -3367,11 +4311,11 @@ ADDAVG_W64_H1 64
     %endmacro
 %endif
 
-%macro AVG_END 0
-    lea  t4, [t4+t5*2*SIZEOF_PIXEL]
+%macro AVG_END 0-1 2;rows
     lea  t2, [t2+t3*2*SIZEOF_PIXEL]
+    lea  t4, [t4+t5*2*SIZEOF_PIXEL]
     lea  t0, [t0+t1*2*SIZEOF_PIXEL]
-    sub eax, 2
+    sub eax, %1
     jg .height_loop
  %ifidn movu,movq ; detect MMX
     EMMS
@@ -3434,17 +4378,24 @@ ADDAVG_W64_H1 64
 %endmacro
 
 %macro BIWEIGHT_START_SSSE3 0
-    movzx  t6d, byte r6m ; FIXME x86_64
-    mov    t7d, 64
-    sub    t7d, t6d
-    shl    t7d, 8
-    add    t6d, t7d
-    mova    m4, [pw_512]
-    movd   xm3, t6d
-%if cpuflag(avx2)
-    vpbroadcastw m3, xm3
+    movzx         t6d, byte r6m ; FIXME x86_64
+%if mmsize > 16
+    vbroadcasti128 m4, [pw_512]
 %else
-    SPLATW  m3, m3   ; weight_dst,src
+    mova           m4, [pw_512]
+%endif
+    lea           t7d, [t6+(64<<8)]
+    shl           t6d, 8
+    sub           t7d, t6d
+%if cpuflag(avx512)
+    vpbroadcastw   m3, t7d
+%else
+    movd          xm3, t7d
+%if cpuflag(avx2)
+    vpbroadcastw   m3, xm3
+%else
+    SPLATW         m3, m3   ; weight_dst,src
+%endif
 %endif
 %endmacro
 
@@ -3567,6 +4518,38 @@ AVG_WEIGHT 64, 7
 AVG_WEIGHT 24, 7
 AVG_WEIGHT 48, 7
 
+INIT_YMM avx512
+cglobal pixel_avg_weight_w8
+    BIWEIGHT_START
+    kxnorb         k1, k1, k1
+    kaddb          k1, k1, k1
+    AVG_START 5
+.height_loop:
+    movq          xm0, [t2]
+    movq          xm2, [t4]
+    movq          xm1, [t2+t3]
+    movq          xm5, [t4+t5]
+    lea            t2, [t2+t3*2]
+    lea            t4, [t4+t5*2]
+    vpbroadcastq   m0 {k1}, [t2]
+    vpbroadcastq   m2 {k1}, [t4]
+    vpbroadcastq   m1 {k1}, [t2+t3]
+    vpbroadcastq   m5 {k1}, [t4+t5]
+    punpcklbw      m0, m2
+    punpcklbw      m1, m5
+    pmaddubsw      m0, m3
+    pmaddubsw      m1, m3
+    pmulhrsw       m0, m4
+    pmulhrsw       m1, m4
+    packuswb       m0, m1
+    vextracti128 xmm1, m0, 1
+    movq         [t0], xm0
+    movhps    [t0+t1], xm0
+    lea            t0, [t0+t1*2]
+    movq         [t0], xmm1
+    movhps    [t0+t1], xmm1
+    AVG_END 4
+
 INIT_YMM avx2
 cglobal pixel_avg_weight_w16
     BIWEIGHT_START
@@ -3586,6 +4569,35 @@ cglobal pixel_avg_weight_w16
     vextracti128 [t0+t1], m0, 1
     AVG_END
 
+INIT_ZMM avx512
+ cglobal pixel_avg_weight_w16
+    BIWEIGHT_START
+    AVG_START 5
+.height_loop:
+    movu        xm0, [t2]
+    movu        xm1, [t4]
+    vinserti128 ym0, [t2+t3], 1
+    vinserti128 ym1, [t4+t5], 1
+    lea          t2, [t2+t3*2]
+    lea          t4, [t4+t5*2]
+    vinserti32x4 m0, [t2], 2
+    vinserti32x4 m1, [t4], 2
+    vinserti32x4 m0, [t2+t3], 3
+    vinserti32x4 m1, [t4+t5], 3
+    SBUTTERFLY   bw, 0, 1, 2
+    pmaddubsw    m0, m3
+    pmaddubsw    m1, m3
+    pmulhrsw     m0, m4
+    pmulhrsw     m1, m4
+    packuswb     m0, m1
+    mova       [t0], xm0
+    vextracti128 [t0+t1], ym0, 1
+    lea          t0, [t0+t1*2]
+    vextracti32x4 [t0], m0, 2
+    vextracti32x4 [t0+t1], m0, 3
+    AVG_END 4
+
+INIT_YMM avx2
 cglobal pixel_avg_weight_w32
     BIWEIGHT_START
     AVG_START 5
@@ -3601,6 +4613,7 @@ cglobal pixel_avg_weight_w32
     mova    [t0], m0
     AVG_END
 
+INIT_YMM avx2
 cglobal pixel_avg_weight_w64
     BIWEIGHT_START
     AVG_START 5
@@ -4345,6 +5358,18 @@ AVGH 16, 12
 AVGH 16, 8
 AVGH 16, 4
 
+INIT_XMM avx512
+AVGH 16, 64
+AVGH 16, 32
+AVGH 16, 16
+AVGH 16, 12
+AVGH 16,  8
+AVGH 16,  4
+AVGH  8, 32
+AVGH  8, 16
+AVGH  8,  8
+AVGH  8,  4
+
 %endif ;HIGH_BIT_DEPTH
 
 ;-------------------------------------------------------------------------------------------------------------------------------
@@ -4482,6 +5507,58 @@ cglobal pixel_avg_48x64, 6,7,4
     RET
 %endif
 
+;-----------------------------------------------------------------------------
+;pixel_avg_pp avx512 code start
+;-----------------------------------------------------------------------------
+%macro PROCESS_PIXELAVG_64x4_AVX512 0
+    movu        m0,             [r2]
+    movu        m2,             [r2 + r3]
+    movu        m1,             [r4]
+    movu        m3,             [r4 + r5]
+    pavgb       m0,             m1
+    pavgb       m2,             m3
+    movu        [r0],           m0
+    movu        [r0 + r1],      m2
+
+    movu        m0,             [r2 + 2 * r3]
+    movu        m2,             [r2 + r7]
+    movu        m1,             [r4 + 2 * r5]
+    movu        m3,             [r4 + r8]
+    pavgb       m0,             m1
+    pavgb       m2,             m3
+    movu        [r0 + 2 * r1],  m0
+    movu        [r0 + r6],      m2
+%endmacro
+
+;-------------------------------------------------------------------------------------------------------------------------------
+;void pixelavg_pp(pixel* dst, intptr_t dstride, const pixel* src0, intptr_t sstride0, const pixel* src1, intptr_t sstride1, int)
+;-------------------------------------------------------------------------------------------------------------------------------
+%if ARCH_X86_64 && BIT_DEPTH == 8
+%macro PIXEL_AVG_64xN_AVX512 1
+INIT_ZMM avx512
+cglobal pixel_avg_64x%1, 6, 9, 4
+    lea         r6, [3 * r1]
+    lea         r7, [3 * r3]
+    lea         r8, [3 * r5]
+
+%rep %1/4 - 1
+    PROCESS_PIXELAVG_64x4_AVX512
+    lea         r2, [r2 + r3 * 4]
+    lea         r4, [r4 + r5 * 4]
+    lea         r0, [r0 + r1 * 4]
+%endrep
+    PROCESS_PIXELAVG_64x4_AVX512
+    RET
+%endmacro
+
+PIXEL_AVG_64xN_AVX512 16
+PIXEL_AVG_64xN_AVX512 32
+PIXEL_AVG_64xN_AVX512 48
+PIXEL_AVG_64xN_AVX512 64
+%endif
+;-----------------------------------------------------------------------------
+;pixel_avg_pp avx512 code end
+;-----------------------------------------------------------------------------
 ;=============================================================================
 ; pixel avg2
 ;=============================================================================
@@ -5267,6 +6344,552 @@ cglobal pixel_avg_48x64, 6,10,4
     RET
 %endif
 
+;-----------------------------------------------------------------------------
+;pixel_avg_pp avx512 high bit depth code start
+;-----------------------------------------------------------------------------
+%macro PROCESS_PIXELAVG_32x8_HBD_AVX512 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0], m0
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2], m0
+    movu    [r0 + r8], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+
+    movu    m0, [r2]
+    movu    m1, [r4]
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0], m0
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2], m0
+    movu    [r0 + r8], m2
+%endmacro
+%macro PROCESS_PIXELAVG_ALIGNED_32x8_HBD_AVX512 0
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+%endmacro
+
+%macro PROCESS_PIXELAVG_64x8_HBD_AVX512 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0], m0
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + mmsize]
+    movu    m1, [r4 + mmsize]
+    movu    m2, [r2 + r3 + mmsize]
+    movu    m3, [r4 + r5 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + mmsize], m0
+    movu    [r0 + r1 + mmsize], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2], m0
+    movu    [r0 + r8], m2
+
+    movu    m0, [r2 + r3 * 2 + mmsize]
+    movu    m1, [r4 + r5 * 2 + mmsize]
+    movu    m2, [r2 + r6 + mmsize]
+    movu    m3, [r4 + r7 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2 + mmsize], m0
+    movu    [r0 + r8 + mmsize], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+
+    movu    m0, [r2]
+    movu    m1, [r4]
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0], m0
+    movu    [r0 + r1], m2
+
+    movu    m0, [r2 + mmsize]
+    movu    m1, [r4 + mmsize]
+    movu    m2, [r2 + r3 + mmsize]
+    movu    m3, [r4 + r5 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + mmsize], m0
+    movu    [r0 + r1 + mmsize], m2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2], m0
+    movu    [r0 + r8], m2
+
+    movu    m0, [r2 + r3 * 2 + mmsize]
+    movu    m1, [r4 + r5 * 2 + mmsize]
+    movu    m2, [r2 + r6 + mmsize]
+    movu    m3, [r4 + r7 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2 + mmsize], m0
+    movu    [r0 + r8 + mmsize], m2
+%endmacro
+%macro PROCESS_PIXELAVG_ALIGNED_64x8_HBD_AVX512 0
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    m0, [r2 + mmsize]
+    mova    m1, [r4 + mmsize]
+    mova    m2, [r2 + r3 + mmsize]
+    mova    m3, [r4 + r5 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + mmsize], m0
+    mova    [r0 + r1 + mmsize], m2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+
+    mova    m0, [r2 + r3 * 2 + mmsize]
+    mova    m1, [r4 + r5 * 2 + mmsize]
+    mova    m2, [r2 + r6 + mmsize]
+    mova    m3, [r4 + r7 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2 + mmsize], m0
+    mova    [r0 + r8 + mmsize], m2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    m0, [r2 + mmsize]
+    mova    m1, [r4 + mmsize]
+    mova    m2, [r2 + r3 + mmsize]
+    mova    m3, [r4 + r5 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + mmsize], m0
+    mova    [r0 + r1 + mmsize], m2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+
+    mova    m0, [r2 + r3 * 2 + mmsize]
+    mova    m1, [r4 + r5 * 2 + mmsize]
+    mova    m2, [r2 + r6 + mmsize]
+    mova    m3, [r4 + r7 + mmsize]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2 + mmsize], m0
+    mova    [r0 + r8 + mmsize], m2
+%endmacro
+
+%macro PROCESS_PIXELAVG_48x8_HBD_AVX512 0
+    movu    m0, [r2]
+    movu    m1, [r4]
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0], m0
+    movu    [r0 + r1], m2
+
+    movu    ym0, [r2 + mmsize]
+    movu    ym1, [r4 + mmsize]
+    movu    ym2, [r2 + r3 + mmsize]
+    movu    ym3, [r4 + r5 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    movu    [r0 + mmsize], ym0
+    movu    [r0 + r1 + mmsize], ym2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2], m0
+    movu    [r0 + r8], m2
+
+    movu    ym0, [r2 + r3 * 2 + mmsize]
+    movu    ym1, [r4 + r5 * 2 + mmsize]
+    movu    ym2, [r2 + r6 + mmsize]
+    movu    ym3, [r4 + r7 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    movu    [r0 + r1 * 2 + mmsize], ym0
+    movu    [r0 + r8 + mmsize], ym2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+
+    movu    m0, [r2]
+    movu    m1, [r4]
+    movu    m2, [r2 + r3]
+    movu    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0], m0
+    movu    [r0 + r1], m2
+
+    movu    ym0, [r2 + mmsize]
+    movu    ym1, [r4 + mmsize]
+    movu    ym2, [r2 + r3 + mmsize]
+    movu    ym3, [r4 + r5 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    movu    [r0 + mmsize], ym0
+    movu    [r0 + r1 + mmsize], ym2
+
+    movu    m0, [r2 + r3 * 2]
+    movu    m1, [r4 + r5 * 2]
+    movu    m2, [r2 + r6]
+    movu    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    movu    [r0 + r1 * 2], m0
+    movu    [r0 + r8], m2
+
+    movu    ym0, [r2 + r3 * 2 + mmsize]
+    movu    ym1, [r4 + r5 * 2 + mmsize]
+    movu    ym2, [r2 + r6 + mmsize]
+    movu    ym3, [r4 + r7 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    movu    [r0 + r1 * 2 + mmsize], ym0
+    movu    [r0 + r8 + mmsize], ym2
+%endmacro
+%macro PROCESS_PIXELAVG_ALIGNED_48x8_HBD_AVX512 0
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    ym0, [r2 + mmsize]
+    mova    ym1, [r4 + mmsize]
+    mova    ym2, [r2 + r3 + mmsize]
+    mova    ym3, [r4 + r5 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    mova    [r0 + mmsize], ym0
+    mova    [r0 + r1 + mmsize], ym2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+
+    mova    ym0, [r2 + r3 * 2 + mmsize]
+    mova    ym1, [r4 + r5 * 2 + mmsize]
+    mova    ym2, [r2 + r6 + mmsize]
+    mova    ym3, [r4 + r7 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    mova    [r0 + r1 * 2 + mmsize], ym0
+    mova    [r0 + r8 + mmsize], ym2
+
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+
+    mova    m0, [r2]
+    mova    m1, [r4]
+    mova    m2, [r2 + r3]
+    mova    m3, [r4 + r5]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0], m0
+    mova    [r0 + r1], m2
+
+    mova    ym0, [r2 + mmsize]
+    mova    ym1, [r4 + mmsize]
+    mova    ym2, [r2 + r3 + mmsize]
+    mova    ym3, [r4 + r5 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    mova    [r0 + mmsize], ym0
+    mova    [r0 + r1 + mmsize], ym2
+
+    mova    m0, [r2 + r3 * 2]
+    mova    m1, [r4 + r5 * 2]
+    mova    m2, [r2 + r6]
+    mova    m3, [r4 + r7]
+    pavgw   m0, m1
+    pavgw   m2, m3
+    mova    [r0 + r1 * 2], m0
+    mova    [r0 + r8], m2
+
+    mova    ym0, [r2 + r3 * 2 + mmsize]
+    mova    ym1, [r4 + r5 * 2 + mmsize]
+    mova    ym2, [r2 + r6 + mmsize]
+    mova    ym3, [r4 + r7 + mmsize]
+    pavgw   ym0, ym1
+    pavgw   ym2, ym3
+    mova    [r0 + r1 * 2 + mmsize], ym0
+    mova    [r0 + r8 + mmsize], ym2
+%endmacro
+
+%macro PIXEL_AVG_HBD_W32 1
+INIT_ZMM avx512
+cglobal pixel_avg_32x%1, 6,9,4
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+
+%rep %1/8 - 1
+    PROCESS_PIXELAVG_32x8_HBD_AVX512
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endrep
+    PROCESS_PIXELAVG_32x8_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+PIXEL_AVG_HBD_W32 8
+PIXEL_AVG_HBD_W32 16
+PIXEL_AVG_HBD_W32 24
+PIXEL_AVG_HBD_W32 32
+PIXEL_AVG_HBD_W32 64
+%endif
+%macro PIXEL_AVG_HBD_ALIGNED_W32 1
+INIT_ZMM avx512
+cglobal pixel_avg_aligned_32x%1, 6,9,4
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+
+%rep %1/8 - 1
+    PROCESS_PIXELAVG_ALIGNED_32x8_HBD_AVX512
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endrep
+    PROCESS_PIXELAVG_ALIGNED_32x8_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+PIXEL_AVG_HBD_ALIGNED_W32 8
+PIXEL_AVG_HBD_ALIGNED_W32 16
+PIXEL_AVG_HBD_ALIGNED_W32 24
+PIXEL_AVG_HBD_ALIGNED_W32 32
+PIXEL_AVG_HBD_ALIGNED_W32 64
+%endif
+
+%macro PIXEL_AVG_HBD_W64 1
+INIT_ZMM avx512
+cglobal pixel_avg_64x%1, 6,9,4
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+
+%rep %1/8 - 1
+    PROCESS_PIXELAVG_64x8_HBD_AVX512
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endrep
+    PROCESS_PIXELAVG_64x8_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+PIXEL_AVG_HBD_W64 16
+PIXEL_AVG_HBD_W64 32
+PIXEL_AVG_HBD_W64 48
+PIXEL_AVG_HBD_W64 64
+%endif
+%macro PIXEL_AVG_HBD_ALIGNED_W64 1
+INIT_ZMM avx512
+cglobal pixel_avg_aligned_64x%1, 6,9,4
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+
+%rep %1/8 - 1
+    PROCESS_PIXELAVG_ALIGNED_64x8_HBD_AVX512
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endrep
+    PROCESS_PIXELAVG_ALIGNED_64x8_HBD_AVX512
+    RET
+%endmacro
+
+%if ARCH_X86_64
+PIXEL_AVG_HBD_ALIGNED_W64 16
+PIXEL_AVG_HBD_ALIGNED_W64 32
+PIXEL_AVG_HBD_ALIGNED_W64 48
+PIXEL_AVG_HBD_ALIGNED_W64 64
+%endif
+
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal pixel_avg_48x64, 6,9,4
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+
+%rep 7
+    PROCESS_PIXELAVG_48x8_HBD_AVX512
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endrep
+    PROCESS_PIXELAVG_48x8_HBD_AVX512
+    RET
+%endif
+
+%if ARCH_X86_64
+INIT_ZMM avx512
+cglobal pixel_avg_aligned_48x64, 6,9,4
+    shl     r1d, 1
+    shl     r3d, 1
+    shl     r5d, 1
+    lea     r6, [r3 * 3]
+    lea     r7, [r5 * 3]
+    lea     r8, [r1 * 3]
+
+%rep 7
+    PROCESS_PIXELAVG_ALIGNED_48x8_HBD_AVX512
+    lea     r0, [r0 + 4 * r1]
+    lea     r2, [r2 + 4 * r3]
+    lea     r4, [r4 + 4 * r5]
+%endrep
+    PROCESS_PIXELAVG_ALIGNED_48x8_HBD_AVX512
+    RET
+%endif
+;-----------------------------------------------------------------------------
+;pixel_avg_pp avx512 high bit depth code end
+;-----------------------------------------------------------------------------
 %endif ; HIGH_BIT_DEPTH
 
 %if HIGH_BIT_DEPTH == 0
@@ -5395,6 +7018,7 @@ cglobal pixel_avg2_w20_sse2, 6,7
     jg .height_loop
     RET
 
+%if ARCH_X86_64
 INIT_YMM avx2
 cglobal pixel_avg2_w20, 6,7
     sub    r2, r4
@@ -5411,6 +7035,7 @@ cglobal pixel_avg2_w20, 6,7
     sub    r5d, 2
     jg     .height_loop
     RET
+%endif
 
 ; Cacheline split code for processors with high latencies for loads
 ; split over cache lines.  See sad-a.asm for a more detailed explanation.
