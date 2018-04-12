@@ -674,9 +674,14 @@ void FrameEncoder::compressFrame()
                 sei->m_picStruct = (poc & 1) ? 1 /* top */ : 2 /* bottom */;
             else if (m_param->interlaceMode == 1)
                 sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
-            else
-                sei->m_picStruct = 0;
-            sei->m_sourceScanType = 0;
+			else
+				sei->m_picStruct = m_param->pictureStructure;
+			
+		    if (m_param->interlaceMode)
+				 sei->m_sourceScanType = 0;
+			else
+				 sei->m_sourceScanType = 1;
+			
             sei->m_duplicateFlag = false;
         }
 
@@ -696,6 +701,18 @@ void FrameEncoder::compressFrame()
         sei->write(m_bs, *slice->m_sps);
         sei->alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
     }
+
+	if (m_param->preferredTransferCharacteristics > -1 && slice->isIRAP())
+	{
+	    SEIAlternativeTC m_seiAlternativeTC;
+		m_seiAlternativeTC.m_preferredTransferCharacteristics = m_param->preferredTransferCharacteristics;
+		m_bs.resetBits();
+		int payloadSize = m_seiAlternativeTC.countPayloadSize(*slice->m_sps);
+		m_seiAlternativeTC.setSize(payloadSize);
+		m_seiAlternativeTC.write(m_bs, *slice->m_sps);
+		m_seiAlternativeTC.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+	}
+	
     bool isSei = false;
     /* Write user SEI */
     for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
@@ -729,8 +746,9 @@ void FrameEncoder::compressFrame()
         else
             x265_log(m_param, X265_LOG_ERROR, "Unrecognized SEI type\n");
     }
-    isSei |= ((m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders) || m_param->bEmitHRDSEI 
-        || !!m_param->interlaceMode || (m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_param->bEmitIDRRecoverySEI));
+
+    isSei |= ((m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders) || m_param->bEmitHRDSEI ||
+             !!m_param->interlaceMode || (m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_param->bEmitIDRRecoverySEI));
 
     if (isSei && m_param->bSingleSeiNal)
     {

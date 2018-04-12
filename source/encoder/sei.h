@@ -296,5 +296,23 @@ public:
             WRITE_CODE(m_payload[i], 8, "creative_intent_metadata");
     }
 };
+
+class SEIAlternativeTC : public SEI
+{
+public:
+    int m_preferredTransferCharacteristics;
+    SEIAlternativeTC()
+    {
+	    m_payloadType = ALTERNATIVE_TRANSFER_CHARACTERISTICS;
+		m_payloadSize = 0;
+		m_preferredTransferCharacteristics = -1;
+	}	
+	
+	void writeSEI(const SPS&)
+	{
+	    WRITE_CODE(m_preferredTransferCharacteristics, 8, "Preferred transfer characteristics");
+	}
+};
+
 }
 #endif // ifndef X265_SEI_H

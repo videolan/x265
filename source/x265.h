@@ -266,6 +266,7 @@ typedef enum
     REGION_REFRESH_INFO                  = 134,
     MASTERING_DISPLAY_INFO               = 137,
     CONTENT_LIGHT_LEVEL_INFO             = 144,
+	ALTERNATIVE_TRANSFER_CHARACTERISTICS = 147,
 } SEIPayloadType;
 
 typedef struct x265_sei_payload
@@ -1203,6 +1204,18 @@ typedef struct x265_param
      * the Cr chroma residual (delta from luma QP specified by rate-control).
      * Default is 0, which is recommended */
     int       crQpOffset;
+
+	/* Specifies the preferred transfer characteristics syntax element in the
+	 * alternative transfer characteristics SEI message (see. D.2.38 and D.3.38 of
+	 * JCTVC-W1005 http://phenix.it-sudparis.eu/jct/doc_end_user/documents/23_San%20Diego/wg11/JCTVC-W1005-v4.zip
+	 * */
+	int       preferredTransferCharacteristics;
+	
+	/*
+	 * Specifies the value for the pic_struc syntax element of the picture timing SEI message (See D2.3 and D3.3)
+	 * of the HEVC spec. for a detailed explanation
+	 * */
+	int       pictureStructure;	
 
     struct
     {

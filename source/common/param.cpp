@@ -134,7 +134,8 @@ void x265_param_default(x265_param* param)
     param->bEmitInfoSEI = 1;
     param->bEmitHDRSEI = 0;
     param->bEmitIDRRecoverySEI = 0;
-    /* CU definitions */
+    
+	/* CU definitions */
     param->maxCUSize = 64;
     param->minCUSize = 8;
     param->tuQTMaxInterDepth = 1;
@@ -192,7 +193,8 @@ void x265_param_default(x265_param* param)
     param->bEnableSAO = 1;
     param->bSaoNonDeblocked = 0;
     param->bLimitSAO = 0;
-    /* Coding Quality */
+    
+	/* Coding Quality */
     param->cbQpOffset = 0;
     param->crQpOffset = 0;
     param->rdPenalty = 0;
@@ -302,6 +304,10 @@ void x265_param_default(x265_param* param)
     param->bLowPassDct = 0;
     param->bMVType = 0;
     param->bSingleSeiNal = 0;
+
+	/* SEI messages */
+	param->preferredTransferCharacteristics = -1;
+	param->pictureStructure = -1;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -1030,6 +1036,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("max-ausize-factor") p->maxAUSizeFactor = atof(value);
         OPT("dynamic-refine") p->bDynamicRefine = atobool(value);
         OPT("single-sei") p->bSingleSeiNal = atobool(value);
+		OPT("atc-sei") p->preferredTransferCharacteristics = atoi(value);
+		OPT("pic-struct") p->pictureStructure = atoi(value);
         else
             return X265_PARAM_BAD_NAME;
     }

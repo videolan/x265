@@ -338,10 +338,12 @@ void Encoder::create()
 
     if (m_param->bEmitHRDSEI)
         m_rateControl->initHRD(m_sps);
+
     if (!m_rateControl->init(m_sps))
         m_aborted = true;
     if (!m_lookahead->create())
         m_aborted = true;
+
     initRefIdx();
     if (m_param->analysisSave && m_param->bUseAnalysisFile)
     {
@@ -2439,7 +2441,7 @@ void Encoder::initSPS(SPS *sps)
     vui.defaultDisplayWindow.bottomOffset = m_param->vui.defDispWinBottomOffset;
     vui.defaultDisplayWindow.leftOffset = m_param->vui.defDispWinLeftOffset;
 
-    vui.frameFieldInfoPresentFlag = !!m_param->interlaceMode;
+	vui.frameFieldInfoPresentFlag = !!m_param->interlaceMode || (m_param->pictureStructure >= 0);
     vui.fieldSeqFlag = !!m_param->interlaceMode;
 
     vui.hrdParametersPresentFlag = m_param->bEmitHRDSEI;

@@ -300,6 +300,8 @@ static const struct option long_options[] =
     { "no-idr-recovery-sei",  no_argument, NULL, 0 },
     { "single-sei", no_argument, NULL, 0 },
     { "no-single-sei", no_argument, NULL, 0 },
+	{ "atc-sei", required_argument, NULL, 0 },
+	{ "pic-struct", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -563,6 +565,8 @@ static void showHelp(x265_param *param)
     H0("   --[no-]temporal-layers        Enable a temporal sublayer for unreferenced B frames. Default %s\n", OPT(param->bEnableTemporalSubLayers));
     H0("   --[no-]aud                    Emit access unit delimiters at the start of each access unit. Default %s\n", OPT(param->bEnableAccessUnitDelimiters));
     H1("   --hash <integer>              Decoded Picture Hash SEI 0: disabled, 1: MD5, 2: CRC, 3: Checksum. Default %d\n", param->decodedPictureHashSEI);
+	H0("   --atc-sei <integer>           Emit the alternative transfer characteristics SEI message where the integer is the preferred transfer characteristics. Default disabled\n");
+	H0("   --pic-struct <integer>        Set the picture structure and emits it in the picture timing SEI message. Values in the range 0..12. See D.3.3 of the HEVC spec. for a detailed explanation.");
     H0("   --log2-max-poc-lsb <integer>  Maximum of the picture order count\n");
     H0("   --[no-]vui-timing-info        Emit VUI timing information in the bistream. Default %s\n", OPT(param->bEmitVUITimingInfo));
     H0("   --[no-]vui-hrd-info           Emit VUI HRD information in the bistream. Default %s\n", OPT(param->bEmitVUIHRDInfo));
