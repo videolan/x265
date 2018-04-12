@@ -696,7 +696,7 @@ void FrameEncoder::compressFrame()
         sei->write(m_bs, *slice->m_sps);
         sei->alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
     }
-
+    bool isSei = false;
     /* Write user SEI */
     for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
     {
@@ -710,6 +710,7 @@ void FrameEncoder::compressFrame()
             sei.setSize(payload->payloadSize);
             sei.write(m_bs, *slice->m_sps);
             sei.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+            isSei = true;
         }
         else if (payload->payloadType == USER_DATA_REGISTERED_ITU_T_T35)
         {
@@ -717,18 +718,19 @@ void FrameEncoder::compressFrame()
             {
                 SEICreativeIntentMeta sei;
                 sei.m_payload = payload->payload;
-                m_bs.resetBits();
+                if (!m_param->bSingleSeiNal)
+                    m_bs.resetBits();
                 sei.setSize(payload->payloadSize);
                 sei.write(m_bs, *slice->m_sps);
-                sei.alignAndSerialize(m_bs, true, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+                sei.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+                isSei = true;
             }
         }
         else
             x265_log(m_param, X265_LOG_ERROR, "Unrecognized SEI type\n");
     }
-    bool isSei = (m_frame->m_lowres.bKeyframe && 
-            (m_param->bRepeatHeaders || m_param->bEmitHRDSEI 
-            || !!m_param->interlaceMode || m_param->bEmitIDRRecoverySEI));
+    isSei |= ((m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders) || m_param->bEmitHRDSEI 
+        || !!m_param->interlaceMode || (m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_param->bEmitIDRRecoverySEI));
 
     if (isSei && m_param->bSingleSeiNal)
     {
