@@ -614,7 +614,7 @@ typedef struct x265_vmaf_commondata
     char *pool;
 }x265_vmaf_commondata;
 
-static const x265_vmaf_commondata vcd[] = {NULL, (char *)"/usr/local/share/model/vmaf_v0.6.1.pkl", NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL};
+static const x265_vmaf_commondata vcd[] = { { NULL, (char *)"/usr/local/share/model/vmaf_v0.6.1.pkl", NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL } };
 
 /* x265 input parameters
  *
