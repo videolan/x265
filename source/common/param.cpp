@@ -615,7 +615,6 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
     if (0) ;
     OPT("asm")
     {
-        sscanf(value, "%s", p->asmname);
         if (strcmp(value, "avx512")==0)
         {
             p->bEnableavx512 = 1;
