@@ -26,7 +26,6 @@
 #define X265_CPU_H
 
 #include "common.h"
-
 /* All assembly functions are prefixed with X265_NS (macro expanded) */
 #define PFX3(prefix, name) prefix ## _ ## name
 #define PFX2(prefix, name) PFX3(prefix, name)
@@ -51,6 +50,7 @@ extern "C" void PFX(safe_intel_cpu_indicator_init)(void);
 
 namespace X265_NS {
 uint32_t cpu_detect(bool);
+bool detect512();
 
 struct cpu_name_t
 {

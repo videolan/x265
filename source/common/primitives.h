@@ -225,7 +225,8 @@ typedef void (*integralv_t)(uint32_t *sum, intptr_t stride);
 typedef void (*integralh_t)(uint32_t *sum, pixel *pix, intptr_t stride);
 typedef void(*nonPsyRdoQuant_t)(int16_t *m_resiDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, uint32_t blkPos);
 typedef void(*psyRdoQuant_t)(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t *psyScale, uint32_t blkPos);
-
+typedef void(*psyRdoQuant_t1)(int16_t *m_resiDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost,uint32_t blkPos);
+typedef void(*psyRdoQuant_t2)(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t *psyScale, uint32_t blkPos);
 /* Function pointers to optimized encoder primitives. Each pointer can reference
  * either an assembly routine, a SIMD intrinsic primitive, or a C function */
 struct EncoderPrimitives
@@ -300,6 +301,8 @@ struct EncoderPrimitives
         intra_pred_t    intra_pred[NUM_INTRA_MODE];
         nonPsyRdoQuant_t nonPsyRdoQuant;
         psyRdoQuant_t    psyRdoQuant;
+		psyRdoQuant_t1   psyRdoQuant_1p;
+		psyRdoQuant_t2   psyRdoQuant_2p;
     }
     cu[NUM_CU_SIZES];
     /* These remaining primitives work on either fixed block sizes or take

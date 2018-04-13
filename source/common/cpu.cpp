@@ -58,6 +58,7 @@ static void sigill_handler(int sig)
 #endif // if X265_ARCH_ARM
 
 namespace X265_NS {
+static bool enable512 = false;
 const cpu_name_t cpu_names[] =
 {
 #if X265_ARCH_X86
@@ -122,10 +123,14 @@ uint64_t PFX(cpu_xgetbv)(int xcr);
 #pragma warning(disable: 4309) // truncation of constant value
 #endif
 
+bool detect512()
+{
+    return(enable512);
+}
 uint32_t cpu_detect(bool benableavx512 )
 {
-    uint32_t cpu = 0;
 
+    uint32_t cpu = 0; 
     uint32_t eax, ebx, ecx, edx;
     uint32_t vendor[4] = { 0 };
     uint32_t max_extended_cap, max_basic_cap;
@@ -189,7 +194,10 @@ uint32_t cpu_detect(bool benableavx512 )
                 if ((xcr0 & 0xE0) == 0xE0) /* OPMASK/ZMM state */
                 {
                     if ((ebx & 0xD0030000) == 0xD0030000)
+                    {
                         cpu |= X265_CPU_AVX512;
+                        enable512 = true;
+                    }
                 }
             }
         }
@@ -390,3 +398,4 @@ uint32_t cpu_detect(bool benableavx512)
 
 #endif // if X265_ARCH_X86
 }
+

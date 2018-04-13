@@ -2314,6 +2314,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_8x8].nonPsyRdoQuant = PFX(nonPsyRdoQuant8_avx2);
         p.cu[BLOCK_16x16].nonPsyRdoQuant = PFX(nonPsyRdoQuant16_avx2);
         p.cu[BLOCK_32x32].nonPsyRdoQuant = PFX(nonPsyRdoQuant32_avx2);
+        p.cu[BLOCK_4x4].psyRdoQuant_1p = PFX(psyRdoQuant_1p4_avx2);
+        p.cu[BLOCK_8x8].psyRdoQuant_1p = PFX(psyRdoQuant_1p8_avx2);
+        p.cu[BLOCK_16x16].psyRdoQuant_1p = PFX(psyRdoQuant_1p16_avx2);
+        p.cu[BLOCK_32x32].psyRdoQuant_1p = PFX(psyRdoQuant_1p32_avx2);
 
         /* TODO: This kernel needs to be modified to work with HIGH_BIT_DEPTH only 
         p.planeClipAndMax = PFX(planeClipAndMax_avx2); */
@@ -4697,6 +4701,10 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_8x8].nonPsyRdoQuant = PFX(nonPsyRdoQuant8_avx2);
         p.cu[BLOCK_16x16].nonPsyRdoQuant = PFX(nonPsyRdoQuant16_avx2);
         p.cu[BLOCK_32x32].nonPsyRdoQuant = PFX(nonPsyRdoQuant32_avx2);
+        p.cu[BLOCK_4x4].psyRdoQuant_1p = PFX(psyRdoQuant_1p4_avx2);
+        p.cu[BLOCK_8x8].psyRdoQuant_1p = PFX(psyRdoQuant_1p8_avx2);
+        p.cu[BLOCK_16x16].psyRdoQuant_1p = PFX(psyRdoQuant_1p16_avx2);
+        p.cu[BLOCK_32x32].psyRdoQuant_1p = PFX(psyRdoQuant_1p32_avx2);
 
     }
     if (cpuMask & X265_CPU_AVX512)

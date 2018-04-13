@@ -7353,4 +7353,289 @@ cglobal nonPsyRdoQuant32, 5, 5, 8
     movq           [r2],       xm6
     movq           [r3],       xm7
     RET
+
+INIT_YMM avx2
+cglobal psyRdoQuant_1p4, 5, 9, 16
+    mov            r4d,        r4m
+    lea             r0,        [r0 + 2 * r4]
+    lea             r4,        [4 * r4]
+    lea             r1,        [r1 + 2 * r4]
+    movq           xm0,        [r2]
+    movq           xm1,        [r3]
+
+%if BIT_DEPTH == 12
+    mov            r5,         [tab_nonpsyRdo12]                 ; scaleBits
+%elif BIT_DEPTH == 10
+    mov            r5,         [tab_nonpsyRdo10]
+%elif BIT_DEPTH == 8
+    mov            r5,         [tab_nonpsyRdo8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+    movq           xm2,        r5
+    vpxor           m4,        m4
+    vpxor           m3,        m3
+    vpxor           m13,       m13
+
+    vpmovsxwd                  m6,        [r0]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1],       m13
+
+    vpmovsxwd                 m6,        [r0 + 8]
+    vcvtdq2pd                 m9,        xm6
+    vfmadd213pd               m9,        m9,             m3
+    vcvtpd2dq                 xm8,       m9
+    vpmovsxdq                 m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                    m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                     m4,        m13
+    movu                      [r1 + 32], m13
+
+    vpmovsxwd                 m6,        [r0 + 16]
+    vcvtdq2pd                 m9,        xm6
+    vfmadd213pd               m9,        m9,             m3
+    vcvtpd2dq                 xm8,       m9
+    vpmovsxdq                 m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                    m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                     m4,        m13
+    movu                      [r1 + 64], m13
+
+    vpmovsxwd                 m6,        [r0 +24]
+    vcvtdq2pd                 m9,        xm6
+    vfmadd213pd               m9,        m9,             m3
+    vcvtpd2dq                 xm8,       m9
+    vpmovsxdq                 m13,       xm8                              ; 32 bit int to 64 bit int 
+    vpsllq                    m13,       xm2                             ;(signCoef * signCoef) << scaleBits
+    paddq                     m4,        m13
+    movu                      [r1 + 96], m13
+
+
+    vextracti128              xm2,       m4,            1
+    paddq                     xm4,       xm2
+    punpckhqdq                xm2,       xm4,            xm3
+    paddq                     xm4,       xm2
+
+    paddq                     xm0,       xm4
+    paddq                     xm1,       xm4
+
+    movq                      [r2],      xm0
+    movq                      [r3],      xm1
+    RET
+INIT_YMM avx2
+cglobal psyRdoQuant_1p8, 7, 9, 16
+    mov            r4d,        r4m
+    lea             r0,        [r0 + 2 * r4]
+    lea             r4,        [4 * r4]
+    lea             r1,        [r1 + 2 * r4]
+    movq           xm0,        [r2]
+    movq           xm1,        [r3]
+%if BIT_DEPTH == 12
+    mov            r5,         [tab_nonpsyRdo12 +8]                 ; scaleBits
+%elif BIT_DEPTH == 10
+    mov            r5,         [tab_nonpsyRdo10 +8]
+%elif BIT_DEPTH == 8
+    mov            r5,         [tab_nonpsyRdo8 + 8 ]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+    movq           xm2,        r5
+    vpxor           m4,        m4
+    vpxor           m3,        m3
+    vpxor           m13,       m13
+
+
+    vpmovsxwd                  m6,        [r0]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1],       m13
+
+    vpmovsxwd                  m6,        [r0 + 16]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1 + 64],       m13
+
+    vpmovsxwd                  m6,        [r0 +32]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1 +128],       m13
+
+    vpmovsxwd                  m6,        [r0 + 48]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1 + 192],       m13
+
+    vextracti128              xm2,       m4,            1
+    paddq                     xm4,       xm2
+    punpckhqdq                xm2,       xm4,            xm3
+    paddq                     xm4,       xm2
+
+    paddq                     xm0,       xm4
+    paddq                     xm1,       xm4
+
+    movq                      [r2],      xm0
+    movq                      [r3],      xm1
+    RET
+
+INIT_YMM avx2
+cglobal psyRdoQuant_1p16, 7, 9, 16
+    mov            r4d,        r4m
+    lea             r0,        [r0 + 2 * r4]
+    lea             r4,        [4 * r4]
+    lea             r1,        [r1 + 2 * r4]
+    movq           xm0,        [r2]
+    movq           xm1,        [r3]
+%if BIT_DEPTH == 12
+    mov            r5,         [tab_nonpsyRdo12 + 16]                 ; scaleBits
+%elif BIT_DEPTH == 10
+    mov            r5,         [tab_nonpsyRdo10 + 16]
+%elif BIT_DEPTH == 8
+    mov            r5,         [tab_nonpsyRdo8 + 16 ]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+    movq           xm2,        r5
+    vpxor           m4,        m4
+    vpxor           m3,        m3
+    vpxor           m13,       m13
+
+    vpmovsxwd                  m6,        [r0]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1],       m13
+
+    vpmovsxwd                  m6,        [r0 + mmsize]
+
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1 + 4*mmsize],       m13
+
+    vpmovsxwd                  m6,        [r0 + 2 * mmsize]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1 + 8*mmsize],       m13
+
+    vpmovsxwd                  m6,        [r0 + 3 * mmsize]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1 + 12*mmsize],       m13
+
+    vextracti128              xm2,       m4,            1
+    paddq                     xm4,       xm2
+    punpckhqdq                xm2,       xm4,            xm3
+    paddq                     xm4,       xm2
+
+    paddq                     xm0,       xm4
+    paddq                     xm1,       xm4
+
+    movq                      [r2],      xm0
+    movq                      [r3],      xm1
+    RET
+
+INIT_YMM avx2
+cglobal psyRdoQuant_1p32, 7, 9, 16
+   mov            r4d,        r4m
+    lea             r0,        [r0 + 2 * r4]
+    lea             r4,        [4 * r4]
+    lea             r1,        [r1 + 2 * r4]
+    movq           xm0,        [r2]
+    movq           xm1,        [r3]
+%if BIT_DEPTH == 12
+    mov            r5,         [tab_nonpsyRdo12 + 24]                 ; scaleBits
+%elif BIT_DEPTH == 10
+    mov            r5,         [tab_nonpsyRdo10 + 24]
+%elif BIT_DEPTH == 8
+    mov            r5,         [tab_nonpsyRdo8 + 24]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+    movq           xm2,        r5
+    vpxor           m4,        m4
+    vpxor           m3,        m3
+    vpxor           m13,       m13
+
+
+    vpmovsxwd                  m6,        [r0]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1],       m13
+
+    vpmovsxwd                  m6,        [r0 + 2 * mmsize]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1 + 8 * mmsize],       m13
+
+    vpmovsxwd                  m6,        [r0 + 4 * mmsize]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1 + 16 * mmsize],       m13
+
+    vpmovsxwd                  m6,        [r0 + 6 * mmsize]
+    vcvtdq2pd                  m9,        xm6
+    vfmadd213pd                m9,        m9,             m3
+    vcvtpd2dq                  xm8,       m9
+    vpmovsxdq                  m13,       xm8                              ; 32 bit int to 64 bit int
+    vpsllq                     m13,       xm2                             ;(signCoef * signCoef) << scaleBits 
+    paddq                      m4,        m13
+    movu                       [r1  + 24 *mmsize],       m13
+
+    vextracti128              xm2,       m4,            1
+    paddq                     xm4,       xm2
+    punpckhqdq                xm2,       xm4,            xm3
+    paddq                     xm4,       xm2
+
+    paddq                     xm0,       xm4
+    paddq                     xm1,       xm4
+
+    movq                      [r2],      xm0
+    movq                      [r3],      xm1
+    RET
+
 %endif

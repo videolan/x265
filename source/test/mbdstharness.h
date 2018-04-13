@@ -71,6 +71,7 @@ protected:
     bool check_idct_primitive(idct_t ref, idct_t opt, intptr_t width);
     bool check_count_nonzero_primitive(count_nonzero_t ref, count_nonzero_t opt);
     bool check_denoise_dct_primitive(denoiseDct_t ref, denoiseDct_t opt);
+    bool check_psyRdoQuant_primitive_avx2(psyRdoQuant_t1 ref, psyRdoQuant_t1 opt);
 
 public:
 

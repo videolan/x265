@@ -1027,6 +1027,47 @@ static void psyRdoQuant_c(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int6
         blkPos += trSize;
     }
 }
+template<int log2TrSize>
+static void psyRdoQuant_c_1(int16_t *m_resiDctCoeff, /*int16_t  *m_fencDctCoeff, */ int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, /* int64_t *psyScale,*/ uint32_t blkPos)
+{
+	const int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
+	const int scaleBits = SCALE_BITS - 2 * transformShift;
+	const uint32_t trSize = 1 << log2TrSize;
+
+	for (int y = 0; y < MLS_CG_SIZE; y++)
+	{
+		for (int x = 0; x < MLS_CG_SIZE; x++)
+		{
+			int64_t signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+			costUncoded[blkPos + x] = static_cast<int64_t>((double)((signCoef * signCoef) << scaleBits));
+			*totalUncodedCost += costUncoded[blkPos + x];
+			*totalRdCost += costUncoded[blkPos + x];
+		}
+		blkPos += trSize;
+	}
+}
+template<int log2TrSize>
+static void psyRdoQuant_c_2(int16_t *m_resiDctCoeff, int16_t *m_fencDctCoeff, int64_t *costUncoded, int64_t *totalUncodedCost, int64_t *totalRdCost, int64_t *psyScale, uint32_t blkPos)
+{
+	const int transformShift = MAX_TR_DYNAMIC_RANGE - X265_DEPTH - log2TrSize; /* Represents scaling through forward transform */
+
+	const uint32_t trSize = 1 << log2TrSize;
+	int max = X265_MAX(0, (2 * transformShift + 1));
+
+	for (int y = 0; y < MLS_CG_SIZE; y++)
+	{
+		for (int x = 0; x < MLS_CG_SIZE; x++)
+		{
+			int64_t signCoef = m_resiDctCoeff[blkPos + x];            /* pre-quantization DCT coeff */
+			int64_t predictedCoef = m_fencDctCoeff[blkPos + x] - signCoef; /* predicted DCT = source DCT - residual DCT*/
+			costUncoded[blkPos + x] -= static_cast<int64_t>((double)(((*psyScale) * predictedCoef) >> max));
+			*totalUncodedCost += costUncoded[blkPos + x];
+			*totalRdCost += costUncoded[blkPos + x];
+		}
+		blkPos += trSize;
+	}
+}
+
 namespace X265_NS {
 // x265 private namespace
 void setupDCTPrimitives_c(EncoderPrimitives& p)
@@ -1063,7 +1104,14 @@ void setupDCTPrimitives_c(EncoderPrimitives& p)
     p.cu[BLOCK_8x8].copy_cnt   = copy_count<8>;
     p.cu[BLOCK_16x16].copy_cnt = copy_count<16>;
     p.cu[BLOCK_32x32].copy_cnt = copy_count<32>;
-
+	p.cu[BLOCK_4x4].psyRdoQuant_1p = psyRdoQuant_c_1<2>;
+	p.cu[BLOCK_4x4].psyRdoQuant_2p = psyRdoQuant_c_2<2>;
+	p.cu[BLOCK_8x8].psyRdoQuant_1p = psyRdoQuant_c_1<3>;
+	p.cu[BLOCK_8x8].psyRdoQuant_2p = psyRdoQuant_c_2<3>;
+	p.cu[BLOCK_16x16].psyRdoQuant_1p = psyRdoQuant_c_1<4>;
+	p.cu[BLOCK_16x16].psyRdoQuant_2p = psyRdoQuant_c_2<4>;
+	p.cu[BLOCK_32x32].psyRdoQuant_1p = psyRdoQuant_c_1<5>;
+	p.cu[BLOCK_32x32].psyRdoQuant_2p = psyRdoQuant_c_2<5>;
     p.scanPosLast = scanPosLast_c;
     p.findPosFirstLast = findPosFirstLast_c;
     p.costCoeffNxN = costCoeffNxN_c;
