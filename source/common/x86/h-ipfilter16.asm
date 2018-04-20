@@ -2379,26 +2379,66 @@ cglobal interp_8tap_horiz_ps_%1x%2, 4, 6, 8
 
     IPFILTER_LUMA_PS_32_64_AVX2 48, 64
 
+%macro PROCESS_IPFILTER_LUMA_PS_16x1_AVX2 0
+    movu            m7,        [r0]
+    movu            m8,        [r0 + 8]
+    pshufb          m10,       m7,        m14
+    pshufb          m7,                   m13
+    pshufb          m11,       m8,        m14
+    pshufb          m8,                   m13
+
+    pmaddwd         m7,        m0
+    pmaddwd         m10,       m1
+    paddd           m7,        m10
+    pmaddwd         m10,       m11,       m3
+    pmaddwd         m9,        m8,        m2
+    paddd           m10,       m9
+    paddd           m7,        m10
+    paddd           m7,        m4
+    psrad           m7,        INTERP_SHIFT_PS
+    movu            m9,        [r0 + 16]
+    pshufb          m10,       m9,        m14
+    pshufb          m9,                   m13
+    pmaddwd         m8,        m0
+    pmaddwd         m11,       m1
+    paddd           m8,        m11
+    pmaddwd         m10,       m3
+    pmaddwd         m9,        m2
+    paddd           m9,        m10
+    paddd           m8,        m9
+    paddd           m8,        m4
+    psrad           m8,        INTERP_SHIFT_PS
+    packssdw        m7,        m8
+    pshufb          m7,        m12
+    movu            [r2],      m7
+%endmacro
+
 %macro IPFILTER_LUMA_PS_16xN_AVX2 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
-cglobal interp_8tap_horiz_ps_16x%1, 4, 6, 8
+cglobal interp_8tap_horiz_ps_16x%1, 5, 6, 15
 
-    add                 r1d, r1d
-    add                 r3d, r3d
+    shl                 r1d, 1
+    shl                 r3d, 1
     mov                 r4d, r4m
     mov                 r5d, r5m
     shl                 r4d, 4
 %ifdef PIC
     lea                 r6, [h_tab_LumaCoeff]
-    vpbroadcastq        m0, [r6 + r4]
-    vpbroadcastq        m1, [r6 + r4 + 8]
+    vpbroadcastd     m0,         [r6 + r4]
+    vpbroadcastd     m1,         [r6 + r4 + 4]
+    vpbroadcastd     m2,         [r6 + r4 + 8]
+    vpbroadcastd     m3,         [r6 + r4 + 12]
 %else
-    vpbroadcastq        m0, [h_tab_LumaCoeff + r4]
-    vpbroadcastq        m1, [h_tab_LumaCoeff + r4 + 8]
+    vpbroadcastd     m0,         [h_tab_LumaCoeff + r4]
+    vpbroadcastd     m1,         [h_tab_LumaCoeff + r4 + 4]
+    vpbroadcastd     m2,         [h_tab_LumaCoeff + r4 + 8]
+    vpbroadcastd     m3,         [h_tab_LumaCoeff + r4 + 12]
 %endif
-    mova                m3, [interp8_hpp_shuf]
-    vbroadcasti128      m2, [INTERP_OFFSET_PS]
+    mova             m13,        [interp8_hpp_shuf1_load_avx512]
+    mova             m14,        [interp8_hpp_shuf2_load_avx512]
+    mova             m12,        [interp8_hpp_shuf1_store_avx512]
+    vbroadcasti128           m4,         [INTERP_OFFSET_PS]
 
     ; register map
     ; m0 , m1 interpolate coeff
@@ -2412,55 +2452,12 @@ cglobal interp_8tap_horiz_ps_16x%1, 4, 6, 8
     add                 r4d, 7
 
 .loop0:
-    vbroadcasti128      m4, [r0]
-    vbroadcasti128      m5, [r0 + 8]
-    pshufb              m4, m3
-    pshufb              m7, m5, m3
-    pmaddwd             m4, m0
-    pmaddwd             m7, m1
-    paddd               m4, m7
 
-    vbroadcasti128      m6, [r0 + 16]
-    pshufb              m5, m3
-    pshufb              m7, m6, m3
-    pmaddwd             m5, m0
-    pmaddwd             m7, m1
-    paddd               m5, m7
-
-    phaddd              m4, m5
-    vpermq              m4, m4, q3120
-    paddd               m4, m2
-    vextracti128        xm5, m4, 1
-    psrad               xm4, INTERP_SHIFT_PS
-    psrad               xm5, INTERP_SHIFT_PS
-    packssdw            xm4, xm5
-    movu                [r2], xm4
-
-    vbroadcasti128      m5, [r0 + 24]
-    pshufb              m6, m3
-    pshufb              m7, m5, m3
-    pmaddwd             m6, m0
-    pmaddwd             m7, m1
-    paddd               m6, m7
-
-    vbroadcasti128      m7, [r0 + 32]
-    pshufb              m5, m3
-    pshufb              m7, m3
-    pmaddwd             m5, m0
-    pmaddwd             m7, m1
-    paddd               m5, m7
-
-    phaddd              m6, m5
-    vpermq              m6, m6, q3120
-    paddd               m6, m2
-    vextracti128        xm5,m6, 1
-    psrad               xm6, INTERP_SHIFT_PS
-    psrad               xm5, INTERP_SHIFT_PS
-    packssdw            xm6, xm5
-    movu                [r2 + 16], xm6
-
-    add                 r2, r3
-    add                 r0, r1
+     PROCESS_IPFILTER_LUMA_PS_16x1_AVX2
+     lea              r0,         [r0 + r1]
+    lea              r2,         [r2 + r3]
+    ;add                 r2, r3
+    ;add                 r0, r1
     dec                 r4d
     jnz                 .loop0
     RET
