@@ -2133,12 +2133,43 @@ cglobal interp_8tap_horiz_ps_4x%1, 6,8,7
     IPFILTER_LUMA_PS_4xN_AVX2 8
     IPFILTER_LUMA_PS_4xN_AVX2 16
 
+   %macro PROCESS_IPFILTER_LUMA_PS_8x1_AVX2 1
+
+     %assign x 0
+    %rep %1/8
+    vbroadcasti128      m4, [r0 + x]
+    vbroadcasti128      m5, [r0 + 8+ x]
+    pshufb              m4, m3
+    pshufb              m7, m5, m3
+    pmaddwd             m4, m0
+    pmaddwd             m7, m1
+    paddd               m4, m7
+
+    vbroadcasti128      m6, [r0 + 16 + x]
+    pshufb              m5, m3
+    pshufb              m6, m3
+    pmaddwd             m5, m0
+    pmaddwd             m6, m1
+    paddd               m5, m6
+
+    phaddd              m4, m5
+    vpermq              m4, m4, q3120
+    paddd               m4, m2
+    vextracti128        xm5,m4, 1
+    psrad               xm4, INTERP_SHIFT_PS
+    psrad               xm5, INTERP_SHIFT_PS
+    packssdw            xm4, xm5
+    movu                [r2 + x], xm4
+    %assign x x+16
+     %endrep
+    %endmacro
+
 %macro IPFILTER_LUMA_PS_8xN_AVX2 1
 INIT_YMM avx2
 %if ARCH_X86_64 == 1
 cglobal interp_8tap_horiz_ps_8x%1, 4, 6, 8
-    add                 r1d, r1d
-    add                 r3d, r3d
+    shl                 r1d, 1
+    shl                 r3d, 1
     mov                 r4d, r4m
     mov                 r5d, r5m
     shl                 r4d, 4
@@ -2165,30 +2196,7 @@ cglobal interp_8tap_horiz_ps_8x%1, 4, 6, 8
     add                 r4d, 7
 
 .loop0:
-    vbroadcasti128      m4, [r0]
-    vbroadcasti128      m5, [r0 + 8]
-    pshufb              m4, m3
-    pshufb              m7, m5, m3
-    pmaddwd             m4, m0
-    pmaddwd             m7, m1
-    paddd               m4, m7
-
-    vbroadcasti128      m6, [r0 + 16]
-    pshufb              m5, m3
-    pshufb              m6, m3
-    pmaddwd             m5, m0
-    pmaddwd             m6, m1
-    paddd               m5, m6
-
-    phaddd              m4, m5
-    vpermq              m4, m4, q3120
-    paddd               m4, m2
-    vextracti128        xm5,m4, 1
-    psrad               xm4, INTERP_SHIFT_PS
-    psrad               xm5, INTERP_SHIFT_PS
-    packssdw            xm4, xm5
-
-    movu                [r2], xm4
+    PROCESS_IPFILTER_LUMA_PS_8x1_AVX2 8
     add                 r2, r3
     add                 r0, r1
     dec                 r4d
@@ -2232,36 +2240,9 @@ cglobal interp_8tap_horiz_ps_24x32, 4, 6, 8
     sub                 r0, r6
     add                 r4d, 7
 
+
 .loop0:
-%assign x 0
-%rep 24/8
-    vbroadcasti128      m4, [r0 + x]
-    vbroadcasti128      m5, [r0 + 8 + x]
-    pshufb              m4, m3
-    pshufb              m7, m5, m3
-    pmaddwd             m4, m0
-    pmaddwd             m7, m1
-    paddd               m4, m7
-
-    vbroadcasti128      m6, [r0 + 16 + x]
-    pshufb              m5, m3
-    pshufb              m6, m3
-    pmaddwd             m5, m0
-    pmaddwd             m6, m1
-    paddd               m5, m6
-
-    phaddd              m4, m5
-    vpermq              m4, m4, q3120
-    paddd               m4, m2
-    vextracti128        xm5,m4, 1
-    psrad               xm4, INTERP_SHIFT_PS
-    psrad               xm5, INTERP_SHIFT_PS
-    packssdw            xm4, xm5
-
-    movu                [r2 + x], xm4
-    %assign x x+16
-    %endrep
-
+    PROCESS_IPFILTER_LUMA_PS_8x1_AVX2 24
     add                 r2, r3
     add                 r0, r1
     dec                 r4d
