@@ -33,7 +33,7 @@ void  x265_param_apply_fastfirstpass(x265_param *p);
 char* x265_param2string(x265_param *param, int padx, int pady);
 int   x265_atoi(const char *str, bool& bError);
 double x265_atof(const char *str, bool& bError);
-int   parseCpuName(const char *value, bool& bError);
+int   parseCpuName(const char *value, bool& bError, bool bEnableavx512);
 void  setParamAspectRatio(x265_param *p, int width, int height);
 void  getParamAspectRatio(x265_param *p, int& width, int& height);
 bool  parseLambdaFile(x265_param *param);

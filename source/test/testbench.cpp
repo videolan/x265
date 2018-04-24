@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
         if (!strncmp(name, "cpuid", strlen(name)))
         {
             bool bError = false;
-            cpuid = parseCpuName(value, bError);
+            cpuid = parseCpuName(value, bError, enableavx512);
             if (bError)
             {
                 printf("Invalid CPU name: %s\n", value);

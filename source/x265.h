@@ -635,7 +635,8 @@ typedef struct x265_param
      *  hence the encoding will happen without avx512 assembly primitives even if the cpu has 
      *  avx512 capabilities. 
      *  Ensure to use --asm avx512 if you need to encode with avx512 assembly primitives*/
-    int     bEnableavx512;
+
+    bool  bEnableavx512;
     /*== Parallelism Features ==*/
 
     /* Number of concurrently encoded frames between 1 and X265_MAX_FRAME_THREADS
