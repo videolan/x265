@@ -2694,27 +2694,27 @@ void Encoder::configure(x265_param *p)
 
     if (p->intraRefine)
     {
-        if (!p->analysisLoad || p->analysisReuseLevel < 10 || !p->scaleFactor)
+        if (!p->analysisLoad || p->analysisReuseLevel < 10)
         {
-            x265_log(p, X265_LOG_WARNING, "Intra refinement requires analysis load, analysis-reuse-level 10, scale factor. Disabling intra refine.\n");
+            x265_log(p, X265_LOG_WARNING, "Intra refinement requires analysis load, analysis-reuse-level 10. Disabling intra refine.\n");
             p->intraRefine = 0;
         }
     }
 
     if (p->interRefine)
     {
-        if (!p->analysisLoad || p->analysisReuseLevel < 10 || !p->scaleFactor)
+        if (!p->analysisLoad || p->analysisReuseLevel < 10)
         {
-            x265_log(p, X265_LOG_WARNING, "Inter refinement requires analysis load, analysis-reuse-level 10, scale factor. Disabling inter refine.\n");
+            x265_log(p, X265_LOG_WARNING, "Inter refinement requires analysis load, analysis-reuse-level 10. Disabling inter refine.\n");
             p->interRefine = 0;
         }
     }
 
     if (p->bDynamicRefine)
     {
-        if (!p->analysisLoad || p->analysisReuseLevel < 10 || !p->scaleFactor)
+        if (!p->analysisLoad || p->analysisReuseLevel < 10)
         {
-            x265_log(p, X265_LOG_WARNING, "Dynamic refinement requires analysis load, analysis-reuse-level 10, scale factor. Disabling dynamic refine.\n");
+            x265_log(p, X265_LOG_WARNING, "Dynamic refinement requires analysis load, analysis-reuse-level 10. Disabling dynamic refine.\n");
             p->bDynamicRefine = 0;
         }
         if (p->interRefine)
@@ -2737,9 +2737,9 @@ void Encoder::configure(x265_param *p)
 
     if (p->mvRefine)
     {
-        if (!p->analysisLoad || p->analysisReuseLevel < 10 || !p->scaleFactor)
+        if (!p->analysisLoad || p->analysisReuseLevel < 10)
         {
-            x265_log(p, X265_LOG_WARNING, "MV refinement requires analysis load, analysis-reuse-level 10, scale factor. Disabling MV refine.\n");
+            x265_log(p, X265_LOG_WARNING, "MV refinement requires analysis load, analysis-reuse-level 10. Disabling MV refine.\n");
             p->mvRefine = 0;
         }
         else if (p->interRefine >= 2)

@@ -523,7 +523,7 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
     int split = 0;
     if (m_param->intraRefine && m_param->intraRefine != 4)
     {
-        split = ((cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1)) && bDecidedDepth);
+        split = m_param->scaleFactor && ((cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1)) && bDecidedDepth);
         if (cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize]) && !bDecidedDepth)
             bAlreadyDecided = false;
     }
@@ -2420,7 +2420,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         m_refineLevel = m_param->interRefine;
     else
         m_refineLevel = m_frame->m_classifyFrame ? 1 : 3;
-    int split = (m_refineLevel && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1) && bDecidedDepth);
+    int split = (m_param->scaleFactor && m_refineLevel && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1) && bDecidedDepth);
     td.split = split;
 
     if (bDecidedDepth)
@@ -2494,7 +2494,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                             mode.cu.m_mvd[list][pu.puAbsPartIdx] = mode.cu.m_mv[list][pu.puAbsPartIdx] - mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]]/*mvp*/;
                         }
                     }
-                    else if(m_param->scaleFactor)
+                    else
                     {
                         MVField candMvField[MRG_MAX_NUM_CANDS][2]; // double length for mv of both lists
                         uint8_t candDir[MRG_MAX_NUM_CANDS];
