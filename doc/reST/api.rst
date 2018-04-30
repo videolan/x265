@@ -411,7 +411,7 @@ The user also need to specify the :option:`--recon` in command line to get the V
     double x265_calculate_vmafscore(x265_param*, x265_vmaf_data*);
 
     /* x265_calculate_vmaf_framelevelscore:
-     *    returns VMAF score for each frame in a given input video. */
+     *    returns VMAF score for each frame in a given input video. The frame level VMAF score does not include temporal scores. */
     double x265_calculate_vmaf_framelevelscore(x265_vmaf_framedata*);
     
 .. Note::

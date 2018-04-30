@@ -614,7 +614,7 @@ typedef struct x265_vmaf_commondata
     char *pool;
 }x265_vmaf_commondata;
 
-static const x265_vmaf_commondata vcd[] = {NULL, (char *)"/usr/local/share/model/vmaf_v0.6.1.pkl", NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL};
+static const x265_vmaf_commondata vcd[] = { { NULL, (char *)"/usr/local/share/model/vmaf_v0.6.1.pkl", NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL } };
 
 /* x265 input parameters
  *
@@ -636,7 +636,6 @@ typedef struct x265_param
      *  avx512 capabilities. 
      *  Ensure to use --asm avx512 if you need to encode with avx512 assembly primitives*/
     int     bEnableavx512;
-    char*   asmname;
     /*== Parallelism Features ==*/
 
     /* Number of concurrently encoded frames between 1 and X265_MAX_FRAME_THREADS
