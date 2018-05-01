@@ -618,20 +618,16 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
 #if X265_ARCH_X86
         if (!strcasecmp(value, "avx512"))
         {
-            p->bEnableavx512 = true;
-
-            p->cpuid = X265_NS::cpu_detect(p->bEnableavx512);
+            p->cpuid = X265_NS::cpu_detect(true);
             if (!(p->cpuid & X265_CPU_AVX512))
                 x265_log(p, X265_LOG_WARNING, "AVX512 is not supported\n");
         }
         else
         {
-            p->bEnableavx512 = false;
-
             if (bValueWasNull)
                 p->cpuid = atobool(value);
             else
-                p->cpuid = parseCpuName(value, bError, p->bEnableavx512);
+                p->cpuid = parseCpuName(value, bError, false);
         }
 #else
         if (bValueWasNull)
