@@ -254,7 +254,7 @@ Performance Options
 	"*"       - same as default
 	"none"    - no thread pools are created, only frame parallelism possible
 	"-"       - same as "none"
-	"10"      - allocate one pool, using up to 10 cores on node 0
+	"10"      - allocate one pool, using up to 10 cores on all available nodes
 	"-,+"     - allocate one pool, using all cores on node 1
 	"+,-,+"   - allocate one pool, using only cores on nodes 0 and 2
 	"+,-,+,-" - allocate one pool, using only cores on nodes 0 and 2
