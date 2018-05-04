@@ -2500,6 +2500,15 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                         uint8_t candDir[MRG_MAX_NUM_CANDS];
                         mode.cu.getInterMergeCandidates(pu.puAbsPartIdx, part, candMvField, candDir);
                         uint8_t mvpIdx = mode.cu.m_mvpIdx[0][pu.puAbsPartIdx];
+                        if (mode.cu.isBipredRestriction())
+                        {
+                            /* do not allow bidir merge candidates if PU is smaller than 8x8, drop L1 reference */
+                            if (candDir[mvpIdx] == 3)
+                            {
+                                candDir[mvpIdx] = 1;
+                                candMvField[mvpIdx][1].refIdx = REF_NOT_VALID;
+                            }
+                        }
                         mode.cu.setPUInterDir(candDir[mvpIdx], pu.puAbsPartIdx, part);
                         mode.cu.setPUMv(0, candMvField[mvpIdx][0].mv, pu.puAbsPartIdx, part);
                         mode.cu.setPUMv(1, candMvField[mvpIdx][1].mv, pu.puAbsPartIdx, part);
