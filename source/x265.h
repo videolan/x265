@@ -108,6 +108,23 @@ typedef struct x265_lookahead_data
     int64_t   reorderedPts;
 } x265_lookahead_data;
 
+typedef struct x265_analysis_validate
+{
+    int     maxNumReferences;
+    int     analysisReuseLevel;
+    int     scaleFactor;
+    int     keyframeMax;
+    int     keyframeMin;
+    int     openGOP;
+    int     bframes;
+    int     bPyramid;
+    int     maxCUSize;
+    int     minCUSize;
+    int     radl;
+    int     lookaheadDepth;
+    int     gopLookahead;
+}x265_analysis_validate;
+
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
@@ -125,6 +142,7 @@ typedef struct x265_analysis_data
     uint32_t         numCuInHeight;
     x265_lookahead_data lookahead;
     uint8_t*         modeFlag[2];
+    x265_analysis_validate saveParam;
 } x265_analysis_data;
 
 /* cu statistics */

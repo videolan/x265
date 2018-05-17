@@ -1069,8 +1069,16 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         /* Load analysis data before lookahead->addPicture, since sliceType has been decided */
         if (m_param->analysisLoad)
         {
-            /* readAnalysisFile reads analysis data for the frame and allocates memory based on slicetype */
-            readAnalysisFile(&inFrame->m_analysisData, inFrame->m_poc, pic_in);
+            /* reads analysis data for the frame and allocates memory based on slicetype */
+            static int paramBytes = 0;
+            if (!inFrame->m_poc)
+            {
+                x265_analysis_data analysisData = pic_in->analysisData;
+                paramBytes = validateAnalysisData(&analysisData, 0);
+                if (paramBytes == -1)
+                    m_aborted = true;
+            }
+            readAnalysisFile(&inFrame->m_analysisData, inFrame->m_poc, pic_in, paramBytes);
             inFrame->m_poc = inFrame->m_analysisData.poc;
             sliceType = inFrame->m_analysisData.sliceType;
             inFrame->m_lowres.bScenecut = !!inFrame->m_analysisData.bScenecut;
@@ -3310,7 +3318,7 @@ void Encoder::freeAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType)
     }
 }
 
-void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x265_picture* picIn)
+void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x265_picture* picIn, int paramBytes)
 {
 
 #define X265_FREAD(val, size, readSize, fileOffset, src)\
@@ -3330,7 +3338,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     static uint64_t totalConsumedBytes = 0;
     uint32_t depthBytes = 0;
     if (m_param->bUseAnalysisFile)
-        fseeko(m_analysisFileIn, totalConsumedBytes, SEEK_SET);
+        fseeko(m_analysisFileIn, totalConsumedBytes + paramBytes, SEEK_SET);
+
     const x265_analysis_data *picData = &(picIn->analysisData);
     analysis_intra_data *intraPic = (analysis_intra_data *)picData->intraData;
     analysis_inter_data *interPic = (analysis_inter_data *)picData->interData;
@@ -3348,7 +3357,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         while (poc != curPoc && !feof(m_analysisFileIn))
         {
             currentOffset += frameRecordSize;
-            fseeko(m_analysisFileIn, currentOffset, SEEK_SET);
+            fseeko(m_analysisFileIn, currentOffset + paramBytes, SEEK_SET);
             X265_FREAD(&frameRecordSize, sizeof(uint32_t), 1, m_analysisFileIn, &(picData->frameRecordSize));
             X265_FREAD(&depthBytes, sizeof(uint32_t), 1, m_analysisFileIn, &(picData->depthBytes));
             X265_FREAD(&poc, sizeof(int), 1, m_analysisFileIn, &(picData->poc));
@@ -3680,6 +3689,57 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
 #undef X265_FREAD
 }
 
+
+int Encoder::validateAnalysisData(x265_analysis_data* analysis, int writeFlag)
+{
+#define X265_PARAM_VALIDATE(analysisParam, size, bytes, param)\
+    if(!writeFlag)\
+    {\
+        fileOffset = m_analysisFileIn;\
+        if ((!m_param->bUseAnalysisFile && analysisParam != (int)*param) || \
+            (m_param->bUseAnalysisFile && (fread(&readValue, size, bytes, fileOffset) != bytes || (readValue != (int)*param))))\
+        {\
+            x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Mismatch in params.\n");\
+            m_aborted = true;\
+            return -1;\
+        }\
+    }\
+    if(writeFlag)\
+    {\
+        fileOffset = m_analysisFileOut;\
+        if(!m_param->bUseAnalysisFile)\
+            analysisParam = *param;\
+        else if(fwrite(param, size, bytes, fileOffset) < bytes)\
+        {\
+            x265_log(NULL, X265_LOG_ERROR, "Error writing analysis data\n"); \
+            m_aborted = true;\
+            return -1; \
+        }\
+    }\
+    count++;\
+
+    x265_analysis_validate saveParam = analysis->saveParam;
+    FILE*     fileOffset = NULL;
+    int       readValue = 0;
+    int       count = 0;
+
+    X265_PARAM_VALIDATE(saveParam.maxNumReferences, sizeof(int), 1, &m_param->maxNumReferences);
+    X265_PARAM_VALIDATE(saveParam.analysisReuseLevel, sizeof(int), 1, &m_param->analysisReuseLevel);
+    X265_PARAM_VALIDATE(saveParam.scaleFactor, sizeof(int), 1, &m_param->scaleFactor);
+    X265_PARAM_VALIDATE(saveParam.keyframeMax, sizeof(int), 1, &m_param->keyframeMax);
+    X265_PARAM_VALIDATE(saveParam.keyframeMin, sizeof(int), 1, &m_param->keyframeMin);
+    X265_PARAM_VALIDATE(saveParam.openGOP, sizeof(int), 1, &m_param->bOpenGOP);
+    X265_PARAM_VALIDATE(saveParam.bframes, sizeof(int), 1, &m_param->bframes);
+    X265_PARAM_VALIDATE(saveParam.bPyramid, sizeof(int), 1, &m_param->bBPyramid);
+    X265_PARAM_VALIDATE(saveParam.maxCUSize, sizeof(int), 1, &m_param->maxCUSize);
+    X265_PARAM_VALIDATE(saveParam.minCUSize, sizeof(int), 1, &m_param->minCUSize);
+    X265_PARAM_VALIDATE(saveParam.radl, sizeof(int), 1, &m_param->radl);
+    X265_PARAM_VALIDATE(saveParam.lookaheadDepth, sizeof(int), 1, &m_param->lookaheadDepth);
+    X265_PARAM_VALIDATE(saveParam.gopLookahead, sizeof(int), 1, &m_param->gopLookahead);
+    return (count * sizeof(int));
+#undef X265_PARAM_VALIDATE
+}
+
 /* Toggle between two consecutive CTU rows. The save's CTU is copied
 twice consecutively in the first and second CTU row of load*/
 
@@ -3927,6 +3987,9 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     uint32_t depthBytes = 0;
     uint32_t numDir, numPlanes;
     bool bIntraInInter = false;
+
+    if (!analysis->poc)
+        validateAnalysisData(analysis, 1);
 
     /* calculate frameRecordSize */
     analysis->frameRecordSize = sizeof(analysis->frameRecordSize) + sizeof(depthBytes) + sizeof(analysis->poc) + sizeof(analysis->sliceType) +
