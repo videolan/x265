@@ -911,9 +911,10 @@ will not reuse analysis if slice type parameters do not match.
 
 .. option:: --scale-factor
 
-       Factor by which input video is scaled down for analysis save mode.
-       This option should be coupled with analysis-reuse-mode option, --analysis-reuse-level 10.
-       The ctu size of load should be double the size of save. Default 0.
+	Factor by which input video is scaled down for analysis save mode.
+	This option should be coupled with analysis-reuse-mode option, 
+	--analysis-reuse-level 10. The ctu size of load can either be the 
+	same as that of save or double the size of save. Default 0.
 
 .. option:: --refine-intra <0..4>
 	

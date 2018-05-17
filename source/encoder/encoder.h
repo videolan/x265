@@ -228,6 +228,8 @@ public:
     int32_t                 m_startPoint;
     Lock                    m_dynamicRefineLock;
 
+    bool                    m_saveCTUSize;
+
     Encoder();
     ~Encoder()
     {
@@ -280,6 +282,8 @@ public:
     void freeAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType);
 
     void readAnalysisFile(x265_analysis_data* analysis, int poc, const x265_picture* picIn, int paramBytes);
+
+    void readAnalysisFile(x265_analysis_data* analysis, int poc, const x265_picture* picIn, int paramBytes, cuLocation cuLoc);
 
     int getCUIndex(cuLocation* cuLoc, uint32_t* count, int bytes, int flag);
 
