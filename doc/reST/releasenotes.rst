@@ -2,6 +2,43 @@
 Release Notes
 *************
 
+Version 2.8
+===========
+
+Release date - 21/05/2018
+
+New features
+-------------
+1. :option:`--asm avx512` used to enable AVX-512 in x265. Default disabled.	
+    For 4K main10 high-quality encoding, we are seeing good gains; for other resolutions and presets, we don't recommend using this setting for now.
+
+2. :option:`--dynamic-refine` dynamically switches between different inter refine levels. Default disabled.
+    It is recommended to use :option:`--refine-intra 4' with dynamic refinement for a better trade-off between encode efficiency and performance than using static refinement.
+
+3. :option:`--single-sei`
+    Encode SEI messages in a single NAL unit instead of multiple NAL units. Default disabled. 
+
+4. :option:`--max-ausize-factor` controls the maximum AU size defined in HEVC specification.
+    It represents the percentage of maximum AU size used. Default is 1. 
+	  
+5. VMAF (Video Multi-Method Assessment Fusion)
+   Added VMAF support for objective quality measurement of a video sequence. 
+   Enable cmake option ENABLE_LIBVMAF to report per frame and aggregate VMAF score. The frame level VMAF score does not include temporal scores.
+   This is supported only on linux for now.
+ 
+Encoder enhancements
+--------------------
+1. Introduced refine-intra level 4 to improve quality. 
+2. Support for HLG-graded content and pic_struct in SEI message.
+
+Bug Fixes
+---------
+1. Fix 32 bit build error (using CMAKE GUI) in Linux.
+2. Fix 32 bit build error for asm primitives.
+3. Fix build error on mac OS.
+4. Fix VBV Lookahead in analysis load to achieve target bitrate.
+
+
 Version 2.7
 ===========
 
