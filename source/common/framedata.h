@@ -203,13 +203,8 @@ struct analysis_inter_data
    int64_t*     sadCost;
 };
 
-struct analysis2PassFrameData
+struct analysisDistortionData
 {
-    uint8_t*      depth;
-    MV*           m_mv[2];
-    int*          mvpIdx[2];
-    int32_t*      ref[2];
-    uint8_t*      modes;
     sse_t*        distortion;
     sse_t*        ctuDistortion;
     double*       scaledDistortion;

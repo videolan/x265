@@ -187,23 +187,20 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
         for (uint32_t i = 0; i < cuGeom.numPartitions; i++)
             ctu.m_log2CUSize[i] = (uint8_t)m_param->maxLog2CUSize - ctu.m_cuDepth[i];
     }
-    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead)
+    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && (m_slice->m_sliceType != I_SLICE))
     {
-        m_multipassAnalysis = (analysis2PassFrameData*)m_frame->m_analysis2Pass.analysisFramedata;
-        m_multipassDepth = &m_multipassAnalysis->depth[ctu.m_cuAddr * ctu.m_numPartitions];
-        if (m_slice->m_sliceType != I_SLICE)
+        int numPredDir = m_slice->isInterP() ? 1 : 2;
+        m_reuseInterDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
+        for (int dir = 0; dir < numPredDir; dir++)
         {
-            int numPredDir = m_slice->isInterP() ? 1 : 2;
-            for (int dir = 0; dir < numPredDir; dir++)
-            {
-                m_multipassMv[dir] = &m_multipassAnalysis->m_mv[dir][ctu.m_cuAddr * ctu.m_numPartitions];
-                m_multipassMvpIdx[dir] = &m_multipassAnalysis->mvpIdx[dir][ctu.m_cuAddr * ctu.m_numPartitions];
-                m_multipassRef[dir] = &m_multipassAnalysis->ref[dir][ctu.m_cuAddr * ctu.m_numPartitions];
-            }
-            m_multipassModes = &m_multipassAnalysis->modes[ctu.m_cuAddr * ctu.m_numPartitions];
+            m_reuseMv[dir] = &m_reuseInterDataCTU->mv[dir][ctu.m_cuAddr * ctu.m_numPartitions];
+            m_reuseMvpIdx[dir] = &m_reuseInterDataCTU->mvpIdx[dir][ctu.m_cuAddr * ctu.m_numPartitions];
         }
+        m_reuseRef = &m_reuseInterDataCTU->ref[ctu.m_cuAddr * ctu.m_numPartitions];
+        m_reuseModes = &m_reuseInterDataCTU->modes[ctu.m_cuAddr * ctu.m_numPartitions];
+        m_reuseDepth = &m_reuseInterDataCTU->depth[ctu.m_cuAddr * ctu.m_numPartitions];
     }
-
+    
     if ((m_param->analysisSave || m_param->analysisLoad) && m_slice->m_sliceType != I_SLICE && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel < 10)
     {
         int numPredDir = m_slice->isInterP() ? 1 : 2;
@@ -1284,11 +1281,11 @@ SplitData Analysis::compressInterCU_rd0_4(const CUData& parentCTU, const CUGeom&
                 }
             }
         }
-        if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_multipassAnalysis)
+        if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_reuseInterDataCTU)
         {
-            if (mightNotSplit && depth == m_multipassDepth[cuGeom.absPartIdx])
+            if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
             {
-                if (m_multipassModes[cuGeom.absPartIdx] == MODE_SKIP)
+                if (m_reuseModes[cuGeom.absPartIdx] == MODE_SKIP)
                 {
                     md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
                     md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -1977,11 +1974,11 @@ SplitData Analysis::compressInterCU_rd5_6(const CUData& parentCTU, const CUGeom&
             }
         }
 
-        if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_multipassAnalysis)
+        if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_reuseInterDataCTU)
         {
-            if (mightNotSplit && depth == m_multipassDepth[cuGeom.absPartIdx])
+            if (mightNotSplit && depth == m_reuseDepth[cuGeom.absPartIdx])
             {
-                if (m_multipassModes[cuGeom.absPartIdx] == MODE_SKIP)
+                if (m_reuseModes[cuGeom.absPartIdx] == MODE_SKIP)
                 {
                     md.pred[PRED_MERGE].cu.initSubCU(parentCTU, cuGeom, qp);
                     md.pred[PRED_SKIP].cu.initSubCU(parentCTU, cuGeom, qp);
@@ -3015,7 +3012,7 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
         }
     }
 
-    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_multipassAnalysis)
+    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_reuseInterDataCTU)
     {
         uint32_t numPU = interMode.cu.getNumPartInter(0);
         for (uint32_t part = 0; part < numPU; part++)
@@ -3023,9 +3020,10 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                bestME[i].ref = m_multipassRef[i][cuGeom.absPartIdx];
-                bestME[i].mv = m_multipassMv[i][cuGeom.absPartIdx];
-                bestME[i].mvpIdx = m_multipassMvpIdx[i][cuGeom.absPartIdx];
+                int* ref = &m_reuseRef[i * m_frame->m_analysisData.numPartitions * m_frame->m_analysisData.numCUsInFrame];
+                bestME[i].ref = ref[cuGeom.absPartIdx];
+                bestME[i].mv = m_reuseMv[i][cuGeom.absPartIdx];
+                bestME[i].mvpIdx = m_reuseMvpIdx[i][cuGeom.absPartIdx];
             }
         }
     }
@@ -3079,7 +3077,7 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
         }
     }
 
-    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_multipassAnalysis)
+    if (m_param->analysisMultiPassRefine && m_param->rc.bStatRead && m_reuseInterDataCTU)
     {
         uint32_t numPU = interMode.cu.getNumPartInter(0);
         for (uint32_t part = 0; part < numPU; part++)
@@ -3087,9 +3085,10 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                bestME[i].ref = m_multipassRef[i][cuGeom.absPartIdx];
-                bestME[i].mv = m_multipassMv[i][cuGeom.absPartIdx];
-                bestME[i].mvpIdx = m_multipassMvpIdx[i][cuGeom.absPartIdx];
+                int* ref = &m_reuseRef[i * m_frame->m_analysisData.numPartitions * m_frame->m_analysisData.numCUsInFrame];
+                bestME[i].ref = ref[cuGeom.absPartIdx];
+                bestME[i].mv = m_reuseMv[i][cuGeom.absPartIdx];
+                bestME[i].mvpIdx = m_reuseMvpIdx[i][cuGeom.absPartIdx];
             }
         }
     }
@@ -3563,10 +3562,10 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
 
     if (m_param->analysisMultiPassDistortion && m_param->rc.bStatRead)
     {
-        m_multipassAnalysis = (analysis2PassFrameData*)m_frame->m_analysis2Pass.analysisFramedata;
-        if ((m_multipassAnalysis->threshold[ctu.m_cuAddr] < 0.9 || m_multipassAnalysis->threshold[ctu.m_cuAddr] > 1.1)
-            && m_multipassAnalysis->highDistortionCtuCount && m_multipassAnalysis->lowDistortionCtuCount)
-            qp += m_multipassAnalysis->offset[ctu.m_cuAddr];
+        analysisDistortionData* distortionData = (analysisDistortionData*)m_frame->m_analysisData.distortionData;
+        if ((distortionData->threshold[ctu.m_cuAddr] < 0.9 || distortionData->threshold[ctu.m_cuAddr] > 1.1)
+            && distortionData->highDistortionCtuCount && distortionData->lowDistortionCtuCount)
+            qp += distortionData->offset[ctu.m_cuAddr];
     }
 
     int loopIncr;

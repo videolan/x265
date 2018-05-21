@@ -275,11 +275,13 @@ public:
 
     void allocAnalysis(x265_analysis_data* analysis);
 
+    void allocAnalysis(x265_analysis_data* analysis, int sliceType);
+
     void freeAnalysis(x265_analysis_data* analysis);
 
-    void allocAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType);
+    void freeAnalysis(x265_analysis_data* analysis, int sliceType);
 
-    void freeAnalysis2Pass(x265_analysis_2Pass* analysis, int sliceType);
+    void readAnalysisFile(x265_analysis_data* analysis, int poc, int sliceType);
 
     void readAnalysisFile(x265_analysis_data* analysis, int poc, const x265_picture* picIn, int paramBytes);
 
@@ -289,9 +291,10 @@ public:
 
     int getPuShape(puOrientation* puOrient, int partSize, int numCTU);
 
-    void writeAnalysisFile(x265_analysis_data* pic, FrameData &curEncData);
-    void readAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, int poc, int sliceType);
-    void writeAnalysis2PassFile(x265_analysis_2Pass* analysis2Pass, FrameData &curEncData, int slicetype);
+    void writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncData);
+
+    void writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncData, int slicetype);
+
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 
     int validateAnalysisData(x265_analysis_data* analysis, int readWriteFlag);

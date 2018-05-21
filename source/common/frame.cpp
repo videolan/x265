@@ -83,7 +83,7 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         m_analysisData.wt = NULL;
         m_analysisData.intraData = NULL;
         m_analysisData.interData = NULL;
-        m_analysis2Pass.analysisFramedata = NULL;
+        m_analysisData.distortionData = NULL;
     }
 
     if (param->bDynamicRefine)

@@ -109,7 +109,6 @@ public:
     Frame*                 m_prev;
     x265_param*            m_param;              // Points to the latest param set for the frame.
     x265_analysis_data     m_analysisData;
-    x265_analysis_2Pass    m_analysis2Pass;
     RcStats*               m_rcData;
 
     Event                  m_copyMVType;

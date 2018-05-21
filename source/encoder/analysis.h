@@ -129,17 +129,11 @@ protected:
     uint8_t*             m_reuseModes;
     uint8_t*             m_reusePartSize;
     uint8_t*             m_reuseMergeFlag;
+    MV*                  m_reuseMv[2];
+    uint8_t*             m_reuseMvpIdx[2];
 
     uint32_t             m_splitRefIdx[4];
     uint64_t*            cacheCost;
-
-
-    analysis2PassFrameData* m_multipassAnalysis;
-    uint8_t*                m_multipassDepth;
-    MV*                     m_multipassMv[2];
-    int*                    m_multipassMvpIdx[2];
-    int32_t*                m_multipassRef[2];
-    uint8_t*                m_multipassModes;
 
     uint8_t                 m_evaluateInter;
     int32_t                 m_refineLevel;

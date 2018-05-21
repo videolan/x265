@@ -143,6 +143,7 @@ typedef struct x265_analysis_data
     x265_lookahead_data lookahead;
     uint8_t*         modeFlag[2];
     x265_analysis_validate saveParam;
+    void*            distortionData;
 } x265_analysis_data;
 
 /* cu statistics */
@@ -170,14 +171,6 @@ typedef struct x265_pu_stats
 
     /* All the above values will add up to 100%. */
 } x265_pu_stats;
-
-
-typedef struct x265_analysis_2Pass
-{
-    uint32_t      poc;
-    uint32_t      frameRecordSize;
-    void*         analysisFramedata;
-}x265_analysis_2Pass;
 
 /* Frame level statistics */
 typedef struct x265_frame_stats
@@ -382,8 +375,6 @@ typedef struct x265_picture
     uint64_t framesize;
 
     int    height;
-
-    x265_analysis_2Pass analysis2Pass;
 
     // pts is reordered in the order of encoding.
     int64_t reorderedPts;
