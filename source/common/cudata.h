@@ -353,8 +353,12 @@ struct CUDataMemPool
     coeff_t* trCoeffMemBlock;
     MV*      mvMemBlock;
     sse_t*   distortionMemBlock;
+    uint64_t* dynRefineRdBlock;
+    uint32_t* dynRefCntBlock;
+    uint32_t* dynRefVarBlock;
 
-    CUDataMemPool() { charMemBlock = NULL; trCoeffMemBlock = NULL; mvMemBlock = NULL; distortionMemBlock = NULL; }
+    CUDataMemPool() { charMemBlock = NULL; trCoeffMemBlock = NULL; mvMemBlock = NULL; distortionMemBlock = NULL; 
+                      dynRefineRdBlock = NULL; dynRefCntBlock = NULL; dynRefVarBlock = NULL;}
 
     bool create(uint32_t depth, uint32_t csp, uint32_t numInstances, const x265_param& param)
     {

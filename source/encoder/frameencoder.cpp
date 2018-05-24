@@ -956,6 +956,9 @@ void FrameEncoder::compressFrame()
         }  
     } // end of (m_param->maxSlices > 1)
 
+    if (m_param->bDynamicRefine && m_top->m_startPoint <= m_frame->m_encodeOrder) //Avoid collecting data that will not be used by future frames.
+        collectDynDataFrame();
+
     if (m_param->rc.bStatWrite)
     {
         int totalI = 0, totalP = 0, totalSkip = 0;
@@ -1494,31 +1497,12 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
         // Does all the CU analysis, returns best top level mode decision
         Mode& best = tld.analysis.compressCTU(*ctu, *m_frame, m_cuGeoms[m_ctuGeomMap[cuAddr]], rowCoder);
-        if (m_param->bDynamicRefine)
-        {
-            if (m_top->m_startPoint <= m_frame->m_encodeOrder) // Avoid collecting data that will not be used by future frames.
-            {
-                ScopedLock dynLock(m_top->m_dynamicRefineLock);
-                for (uint32_t i = 0; i < X265_REFINE_INTER_LEVELS; i++)
-                {
-                    for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
-                    {
-                        int offset = (depth * X265_REFINE_INTER_LEVELS) + i;
-                        int curFrameIndex = m_frame->m_encodeOrder - m_top->m_startPoint;
-                        int index = (curFrameIndex * X265_REFINE_INTER_LEVELS * m_param->maxCUDepth) + offset;
-                        if (ctu->m_collectCUCount[offset])
-                        {
-                            m_top->m_variance[index] += ctu->m_collectCUVariance[offset];
-                            m_top->m_rdCost[index] += ctu->m_collectCURd[offset];
-                            m_top->m_trainingCount[index] += ctu->m_collectCUCount[offset];
-                        }
-                    }
-                }
-            }
-            X265_FREE_ZERO(ctu->m_collectCUVariance);
-            X265_FREE_ZERO(ctu->m_collectCURd);
-            X265_FREE_ZERO(ctu->m_collectCUCount);
-        }
+
+        /* startPoint > encodeOrder is true when the start point changes for
+        a new GOP but few frames from the previous GOP is still incomplete.
+        The data of frames in this interval will not be used by any future frames. */
+        if (m_param->bDynamicRefine && m_top->m_startPoint <= m_frame->m_encodeOrder)
+            collectDynDataRow(*ctu, &curRow.rowStats);
 
         // take a sample of the current active worker count
         ATOMIC_ADD(&m_totalActiveWorkerCount, m_activeWorkerCount);
@@ -1901,6 +1885,46 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     if (ATOMIC_INC(&m_completionCount) == 2 * (int)m_numRows)
         m_completionEvent.trigger();
 }
+
+void FrameEncoder::collectDynDataRow(CUData& ctu, FrameStats* rowStats)
+{
+    for (uint32_t i = 0; i < X265_REFINE_INTER_LEVELS; i++)
+    {
+        for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
+        {
+            int offset = (depth * X265_REFINE_INTER_LEVELS) + i;
+            if (ctu.m_collectCUCount[offset])
+            {
+                rowStats->rowVarDyn[offset] += ctu.m_collectCUVariance[offset];
+                rowStats->rowRdDyn[offset] += ctu.m_collectCURd[offset];
+                rowStats->rowCntDyn[offset] += ctu.m_collectCUCount[offset];
+            }
+        }
+    }
+}
+
+void FrameEncoder::collectDynDataFrame()
+{
+    for (uint32_t row = 0; row < m_numRows; row++)
+    {
+        for (uint32_t refLevel = 0; refLevel < X265_REFINE_INTER_LEVELS; refLevel++)
+        {
+            for (uint32_t depth = 0; depth < m_param->maxCUDepth; depth++)
+            {
+                int offset = (depth * X265_REFINE_INTER_LEVELS) + refLevel;
+                int curFrameIndex = m_frame->m_encodeOrder - m_top->m_startPoint;
+                int index = (curFrameIndex * X265_REFINE_INTER_LEVELS * m_param->maxCUDepth) + offset;
+                if (m_rows[row].rowStats.rowCntDyn[offset])
+                {
+                    m_top->m_variance[index] += m_rows[row].rowStats.rowVarDyn[offset];
+                    m_top->m_rdCost[index] += m_rows[row].rowStats.rowRdDyn[offset];
+                    m_top->m_trainingCount[index] += m_rows[row].rowStats.rowCntDyn[offset];
+                }
+            }
+        }
+    }
+}
+
 void FrameEncoder::computeAvgTrainingData()
 {
     if (m_frame->m_lowres.bScenecut || m_frame->m_lowres.bKeyframe)

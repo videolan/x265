@@ -88,6 +88,11 @@ struct FrameStats
     uint64_t    cntInterPu[NUM_CU_DEPTH][INTER_MODES - 1];
     uint64_t    cntMergePu[NUM_CU_DEPTH][INTER_MODES - 1];
 
+    /* Feature values per row for dynamic refinement */
+    uint64_t       rowRdDyn[MAX_NUM_DYN_REFINE];
+    uint32_t       rowVarDyn[MAX_NUM_DYN_REFINE];
+    uint32_t       rowCntDyn[MAX_NUM_DYN_REFINE];
+
     FrameStats()
     {
         memset(this, 0, sizeof(FrameStats));

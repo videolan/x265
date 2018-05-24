@@ -332,6 +332,8 @@ typedef int16_t  coeff_t;      // transform coefficient
 #define START_CODE_OVERHEAD 3 
 #define FILLER_OVERHEAD (NAL_TYPE_OVERHEAD + START_CODE_OVERHEAD + 1)
 
+#define MAX_NUM_DYN_REFINE          (NUM_CU_DEPTH * X265_REFINE_INTER_LEVELS)
+
 namespace X265_NS {
 
 enum { SAO_NUM_OFFSET = 4 };

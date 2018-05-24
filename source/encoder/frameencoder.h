@@ -243,6 +243,8 @@ protected:
 #if ENABLE_LIBVMAF
     void vmafFrameLevelScore();
 #endif
+    void collectDynDataRow(CUData& ctu, FrameStats* rowStats);
+    void collectDynDataFrame();
 };
 }
 
