@@ -633,7 +633,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         if (bValueWasNull)
             p->cpuid = atobool(value);
         else
-            p->cpuid = parseCpuName(value, bError);
+            p->cpuid = parseCpuName(value, bError, false);
 #endif
     }
     OPT("fps")
