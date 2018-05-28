@@ -179,7 +179,7 @@ bool FrameEncoder::init(Encoder *top, int numRows, int numCols)
         ok &= m_rce.picTimingSEI && m_rce.hrdTiming;
     }
 
-    if (m_param->noiseReductionIntra || m_param->noiseReductionInter || m_param->rc.vbvBufferSize)
+    if (m_param->noiseReductionIntra || m_param->noiseReductionInter)
         m_nr = X265_MALLOC(NoiseReduction, 1);
     if (m_nr)
         memset(m_nr, 0, sizeof(NoiseReduction));
