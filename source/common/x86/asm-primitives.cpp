@@ -5402,7 +5402,7 @@ int __intel_cpu_indicator = 0;
 // CPU dispatcher function
 void PFX(intel_cpu_indicator_init)(void)
 {
-    uint32_t cpu = x265::cpu_detect();
+    uint32_t cpu = x265::cpu_detect(false);
 
     if (cpu & X265_CPU_AVX)
         __intel_cpu_indicator = 0x20000;
