@@ -3408,24 +3408,28 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     allocAnalysis(analysis);
     if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
     {
+        int vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
         X265_FREAD(analysis->lookahead.intraVbvCost, sizeof(uint32_t), analysis->numCUsInFrame, m_analysisFileIn, picData->lookahead.intraVbvCost);
         X265_FREAD(analysis->lookahead.vbvCost, sizeof(uint32_t), analysis->numCUsInFrame, m_analysisFileIn, picData->lookahead.vbvCost);
         X265_FREAD(analysis->lookahead.satdForVbv, sizeof(uint32_t), analysis->numCuInHeight, m_analysisFileIn, picData->lookahead.satdForVbv);
         X265_FREAD(analysis->lookahead.intraSatdForVbv, sizeof(uint32_t), analysis->numCuInHeight, m_analysisFileIn, picData->lookahead.intraSatdForVbv);
+        X265_FREAD(analysis->lookahead.plannedSatd, sizeof(int64_t), vbvCount, m_analysisFileIn, picData->lookahead.plannedSatd);
 
-        int vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
-        for (int index = 0; index < vbvCount; index++)
-            analysis->lookahead.plannedSatd[index] = picData->lookahead.plannedSatd[index] * (2 * m_param->scaleFactor);
+        if (m_param->scaleFactor)
+        {
+            for (int index = 0; index < vbvCount; index++)
+                analysis->lookahead.plannedSatd[index] *= factor;
 
-        for (uint32_t i = 0; i < analysis->numCuInHeight; i++)
-        {
-            analysis->lookahead.satdForVbv[i] = analysis->lookahead.satdForVbv[i] * (2* m_param->scaleFactor);
-            analysis->lookahead.intraSatdForVbv[i] = analysis->lookahead.intraSatdForVbv[i] * (2 * m_param->scaleFactor);
-        }
-        for (uint32_t i = 0; i < analysis->numCUsInFrame; i++)
-        {
-            analysis->lookahead.vbvCost[i] = analysis->lookahead.vbvCost[i] * (2 * m_param->scaleFactor);
-            analysis->lookahead.intraVbvCost[i] = analysis->lookahead.intraVbvCost[i] * (2 * m_param->scaleFactor);
+            for (uint32_t i = 0; i < analysis->numCuInHeight; i++)
+            {
+                analysis->lookahead.satdForVbv[i] *= factor;
+                analysis->lookahead.intraSatdForVbv[i] *= factor;
+            }
+            for (uint32_t i = 0; i < analysis->numCUsInFrame; i++)
+            {
+                analysis->lookahead.vbvCost[i] *= factor;
+                analysis->lookahead.intraVbvCost[i] *= factor;
+            }
         }
     }
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
