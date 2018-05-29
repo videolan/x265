@@ -523,14 +523,15 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
     int split = 0;
     if (m_param->intraRefine && m_param->intraRefine != 4)
     {
-        split = m_param->scaleFactor && ((cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1)) && bDecidedDepth);
+        split = m_param->scaleFactor && bDecidedDepth && (!mightNotSplit || 
+            ((cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1))));
         if (cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize]) && !bDecidedDepth)
             bAlreadyDecided = false;
     }
 
     if (bAlreadyDecided)
     {
-        if (bDecidedDepth)
+        if (bDecidedDepth && mightNotSplit)
         {
             Mode& mode = md.pred[0];
             md.bestMode = &mode;
@@ -2420,10 +2421,11 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         m_refineLevel = m_param->interRefine;
     else
         m_refineLevel = m_frame->m_classifyFrame ? 1 : 3;
-    int split = (m_param->scaleFactor && m_refineLevel && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1) && bDecidedDepth);
+    int split = (m_param->scaleFactor && bDecidedDepth && (!mightNotSplit || 
+        (m_refineLevel && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1))));
     td.split = split;
 
-    if (bDecidedDepth)
+    if (bDecidedDepth && mightNotSplit)
     {
         setLambdaFromQP(parentCTU, qp, lqp);
 
