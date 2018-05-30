@@ -3408,12 +3408,12 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     allocAnalysis(analysis);
     if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
     {
-        uint64_t vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
+        size_t vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
         X265_FREAD(analysis->lookahead.intraVbvCost, sizeof(uint32_t), analysis->numCUsInFrame, m_analysisFileIn, picData->lookahead.intraVbvCost);
         X265_FREAD(analysis->lookahead.vbvCost, sizeof(uint32_t), analysis->numCUsInFrame, m_analysisFileIn, picData->lookahead.vbvCost);
         X265_FREAD(analysis->lookahead.satdForVbv, sizeof(uint32_t), analysis->numCuInHeight, m_analysisFileIn, picData->lookahead.satdForVbv);
         X265_FREAD(analysis->lookahead.intraSatdForVbv, sizeof(uint32_t), analysis->numCuInHeight, m_analysisFileIn, picData->lookahead.intraSatdForVbv);
-        X265_FREAD(analysis->lookahead.plannedSatd, sizeof(uint64_t), vbvCount, m_analysisFileIn, picData->lookahead.plannedSatd);
+        X265_FREAD(analysis->lookahead.plannedSatd, sizeof(int64_t), vbvCount, m_analysisFileIn, picData->lookahead.plannedSatd);
 
         if (m_param->scaleFactor)
         {
