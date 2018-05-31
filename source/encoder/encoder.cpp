@@ -2711,9 +2711,9 @@ void Encoder::configure(x265_param *p)
         {
             p->scaleFactor = 0;
         }
-        else if ((!p->analysisLoad && !p->analysisSave) || p->analysisReuseLevel < 10)
+        else if ((!p->analysisLoad && !p->analysisSave) || (p->analysisReuseLevel > 6 && p->analysisReuseLevel != 10))
         {
-            x265_log(p, X265_LOG_WARNING, "Input scaling works with analysis load/save, analysis-reuse-level 10. Disabling scale-factor.\n");
+            x265_log(p, X265_LOG_WARNING, "Input scaling works with analysis load/save and analysis-reuse-level 1-6 and 10. Disabling scale-factor.\n");
             p->scaleFactor = 0;
         }
     }
@@ -2749,9 +2749,9 @@ void Encoder::configure(x265_param *p)
             p->interRefine = 0;
         }
     }
-    if (p->scaleFactor && p->analysisLoad && !p->interRefine && !p->bDynamicRefine)
+    if (p->scaleFactor && p->analysisLoad && !p->interRefine && !p->bDynamicRefine && p->analysisReuseLevel == 10)
     {
-        x265_log(p, X265_LOG_WARNING, "Inter refinement 0 is not supported with scaling. Enabling refine-inter 1.\n");
+        x265_log(p, X265_LOG_WARNING, "Inter refinement 0 is not supported with scaling and analysis-reuse-level=10. Enabling refine-inter 1.\n");
         p->interRefine = 1;
     }
 
