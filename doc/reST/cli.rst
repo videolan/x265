@@ -2122,6 +2122,18 @@ VUI fields must be manually specified.
 	Maximum luma value allowed for input pictures. Any values above max-luma
 	are clipped.  No default.
 
+.. option:: --atc-sei <integer>
+
+	Emit the alternative transfer characteristics SEI message where the integer
+	is the preferred transfer characteristics. Required for HLG (Hybrid Log Gamma)
+	signalling. Not signalled by default.
+
+.. option:: --pic-struct <integer>
+
+	Set the picture structure and emits it in the picture timing SEI message.
+	Values in the range 0..12. See D.3.3 of the HEVC spec. for a detailed explanation.
+	Required for HLG (Hybrid Log Gamma) signalling. Not signalled by default.
+
 Bitstream options
 =================
 
