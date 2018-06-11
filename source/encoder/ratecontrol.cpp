@@ -1582,8 +1582,8 @@ int RateControl::cuTree_rescale_init()
     /* Use fractional QP array dimensions to compensate for edge padding */
     float srcdim[2] = {m_cuTreeStats.srcdim[0] / 16.f, m_cuTreeStats.srcdim[1] / 16.f};
     float dstdim[2] = {m_param->sourceWidth / 16.f,   m_param->sourceHeight/ 16.f};
-    int srcdimi[2] = {ceil(srcdim[0]), ceil(srcdim[1])};
-    int dstdimi[2] = {ceil(dstdim[0]), ceil(dstdim[1])};
+    int srcdimi[2] = {(int)ceil(srcdim[0]), (int)ceil(srcdim[1])};
+    int dstdimi[2] = {(int)ceil(dstdim[0]), (int)ceil(dstdim[1])};
     
     m_cuTreeStats.src_mb_count = srcdimi[0] * srcdimi[1];
     if (m_param->rc.qgSize == 8)
@@ -1734,7 +1734,7 @@ bool RateControl::cuTreeReadFor2Pass(Frame* frame)
 
                 if (!fread(&type, 1, 1, m_cutreeStatFileIn))
                     goto fail;
-                if( fread( m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], sizeof(uint16_t), m_cuTreeStats.src_mb_count, m_cutreeStatFileIn ) != m_cuTreeStats.src_mb_count )
+                if( fread( m_cuTreeStats.qpBuffer[m_cuTreeStats.qpBufPos], sizeof(uint16_t), m_cuTreeStats.src_mb_count, m_cutreeStatFileIn ) != (unsigned int)m_cuTreeStats.src_mb_count )
                     goto fail;
 
                 if (type != sliceTypeActual && m_cuTreeStats.qpBufPos == 1)
