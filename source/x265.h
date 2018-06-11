@@ -112,7 +112,8 @@ typedef struct x265_analysis_validate
 {
     int     maxNumReferences;
     int     analysisReuseLevel;
-    int     scaleFactor;
+    int     sourceWidth;
+    int     sourceHeight;
     int     keyframeMax;
     int     keyframeMin;
     int     openGOP;

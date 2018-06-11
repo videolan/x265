@@ -1077,7 +1077,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 x265_analysis_data analysisData = pic_in->analysisData;
                 paramBytes = validateAnalysisData(&analysisData, 0);
                 if (paramBytes == -1)
+                {
                     m_aborted = true;
+                    return -1;
+                }
             }
             if (m_saveCTUSize)
             {
@@ -4030,14 +4033,14 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
 
 int Encoder::validateAnalysisData(x265_analysis_data* analysis, int writeFlag)
 {
-#define X265_PARAM_VALIDATE(analysisParam, size, bytes, param)\
+#define X265_PARAM_VALIDATE(analysisParam, size, bytes, param, errorMsg)\
     if(!writeFlag)\
     {\
         fileOffset = m_analysisFileIn;\
         if ((!m_param->bUseAnalysisFile && analysisParam != (int)*param) || \
             (m_param->bUseAnalysisFile && (fread(&readValue, size, bytes, fileOffset) != bytes || (readValue != (int)*param))))\
         {\
-            x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Mismatch in params.\n");\
+            x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Incompatible option : <%s> \n", #errorMsg);\
             m_aborted = true;\
             return -1;\
         }\
@@ -4054,52 +4057,77 @@ int Encoder::validateAnalysisData(x265_analysis_data* analysis, int writeFlag)
             return -1; \
         }\
     }\
-    count++;\
+    count++;
+
+#define X265_FREAD(val, size, readSize, fileOffset, src)\
+    if (!m_param->bUseAnalysisFile)\
+    {\
+        memcpy(val, src, (size * readSize));\
+    }\
+    else if (fread(val, size, readSize, fileOffset) != readSize)\
+    {\
+        x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data\n");\
+        m_aborted = true;\
+        return -1;\
+    }\
+    count++;
 
     x265_analysis_validate *saveParam = &analysis->saveParam;
     FILE*     fileOffset = NULL;
     int       readValue = 0;
     int       count = 0;
 
-    X265_PARAM_VALIDATE(saveParam->maxNumReferences, sizeof(int), 1, &m_param->maxNumReferences);
-    X265_PARAM_VALIDATE(saveParam->analysisReuseLevel, sizeof(int), 1, &m_param->analysisReuseLevel);
-    X265_PARAM_VALIDATE(saveParam->scaleFactor, sizeof(int), 1, &m_param->scaleFactor);
-    X265_PARAM_VALIDATE(saveParam->keyframeMax, sizeof(int), 1, &m_param->keyframeMax);
-    X265_PARAM_VALIDATE(saveParam->keyframeMin, sizeof(int), 1, &m_param->keyframeMin);
-    X265_PARAM_VALIDATE(saveParam->openGOP, sizeof(int), 1, &m_param->bOpenGOP);
-    X265_PARAM_VALIDATE(saveParam->bframes, sizeof(int), 1, &m_param->bframes);
-    X265_PARAM_VALIDATE(saveParam->bPyramid, sizeof(int), 1, &m_param->bBPyramid);
-    /* Enable m_saveCTUSize if the save and load encodes have the same maxCU size */
+    X265_PARAM_VALIDATE(saveParam->maxNumReferences, sizeof(int), 1, &m_param->maxNumReferences, ref);
+    X265_PARAM_VALIDATE(saveParam->analysisReuseLevel, sizeof(int), 1, &m_param->analysisReuseLevel, analysis-reuse-level);
+    X265_PARAM_VALIDATE(saveParam->keyframeMax, sizeof(int), 1, &m_param->keyframeMax, keyint);
+    X265_PARAM_VALIDATE(saveParam->keyframeMin, sizeof(int), 1, &m_param->keyframeMin, min-keyint);
+    X265_PARAM_VALIDATE(saveParam->openGOP, sizeof(int), 1, &m_param->bOpenGOP, open-gop);
+    X265_PARAM_VALIDATE(saveParam->bframes, sizeof(int), 1, &m_param->bframes, bframes);
+    X265_PARAM_VALIDATE(saveParam->bPyramid, sizeof(int), 1, &m_param->bBPyramid, bPyramid);
+    X265_PARAM_VALIDATE(saveParam->minCUSize, sizeof(int), 1, &m_param->minCUSize, min - cu - size);
+    X265_PARAM_VALIDATE(saveParam->radl, sizeof(int), 1, &m_param->radl, radl);
+    X265_PARAM_VALIDATE(saveParam->lookaheadDepth, sizeof(int), 1, &m_param->lookaheadDepth, rc - lookahead);
+    X265_PARAM_VALIDATE(saveParam->gopLookahead, sizeof(int), 1, &m_param->gopLookahead, gop - lookahead);
+
+    int sourceHeight, sourceWidth;
     if (writeFlag)
     {
-        X265_PARAM_VALIDATE(saveParam->maxCUSize, sizeof(int), 1, &m_param->maxCUSize);
+        sourceHeight = m_param->sourceHeight - m_conformanceWindow.bottomOffset;
+        sourceWidth = m_param->sourceWidth - m_conformanceWindow.rightOffset;
+        X265_PARAM_VALIDATE(saveParam->sourceWidth, sizeof(int), 1, &sourceWidth, res-width);
+        X265_PARAM_VALIDATE(saveParam->sourceHeight, sizeof(int), 1, &sourceHeight, res-height);
+        X265_PARAM_VALIDATE(saveParam->maxCUSize, sizeof(int), 1, &m_param->maxCUSize, ctu);
     }
     else
     {
         fileOffset = m_analysisFileIn;
-        if (m_param->bUseAnalysisFile && fread(&readValue, sizeof(int), 1, fileOffset) != 1)
-        {
-            x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data.\n");
-            m_aborted = true;
-        }
-        else if (!m_param->bUseAnalysisFile)
-            readValue = saveParam->maxCUSize;
+        bool error = false;
+        int curSourceHeight = m_param->sourceHeight - m_conformanceWindow.bottomOffset;
+        int curSourceWidth = m_param->sourceWidth - m_conformanceWindow.rightOffset;
 
-        m_saveCTUSize = 0;
-        if (m_param->scaleFactor && g_log2Size[m_param->maxCUSize] == g_log2Size[readValue])
+        X265_FREAD(&sourceWidth, sizeof(int), 1, m_analysisFileIn, &(saveParam->sourceHeight));
+        X265_FREAD(&sourceHeight, sizeof(int), 1, m_analysisFileIn, &(saveParam->sourceWidth));
+        X265_FREAD(&readValue, sizeof(int), 1, m_analysisFileIn, &(saveParam->maxCUSize));
+
+        bool isScaledRes = (2 * sourceHeight == curSourceHeight) && (2 * sourceWidth == curSourceWidth);
+        if (!isScaledRes && (sourceHeight != curSourceHeight || sourceWidth != curSourceWidth 
+                            || readValue != (int)m_param->maxCUSize || m_param->scaleFactor))
+            error = true;
+        else if (isScaledRes && (!m_param->scaleFactor || (g_log2Size[m_param->maxCUSize] - g_log2Size[readValue]) != 1))
+            error = true;
+        else if (isScaledRes && (int)m_param->maxCUSize == readValue)
             m_saveCTUSize = 1;
-        else if (readValue != (int)m_param->maxCUSize && (g_log2Size[m_param->maxCUSize] - g_log2Size[readValue]) != 1)
+
+        if (error)
         {
-            x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Mismatch in params.\n");
+            x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data. Incompatible option : <input-res / scale-factor / ctu> \n");
             m_aborted = true;
+            return -1;
         }
-        count++;
     }
-    X265_PARAM_VALIDATE(saveParam->minCUSize, sizeof(int), 1, &m_param->minCUSize);
-    X265_PARAM_VALIDATE(saveParam->radl, sizeof(int), 1, &m_param->radl);
-    X265_PARAM_VALIDATE(saveParam->lookaheadDepth, sizeof(int), 1, &m_param->lookaheadDepth);
-    X265_PARAM_VALIDATE(saveParam->gopLookahead, sizeof(int), 1, &m_param->gopLookahead);
     return (count * sizeof(int));
+
+#undef X265_FREAD
 #undef X265_PARAM_VALIDATE
 }
 
@@ -4357,7 +4385,13 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     bool bIntraInInter = false;
 
     if (!analysis->poc)
-        validateAnalysisData(analysis, 1);
+    {
+        if (validateAnalysisData(analysis, 1) == -1)
+        {
+            m_aborted = true;
+            return;
+        }
+    }
 
     /* calculate frameRecordSize */
     analysis->frameRecordSize = sizeof(analysis->frameRecordSize) + sizeof(depthBytes) + sizeof(analysis->poc) + sizeof(analysis->sliceType) +
