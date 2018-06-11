@@ -79,6 +79,7 @@ Encoder::Encoder()
     m_threadPool = NULL;
     m_analysisFileIn = NULL;
     m_analysisFileOut = NULL;
+    m_seiFile = NULL;
     m_offsetEmergency = NULL;
     m_iFrameNum = 0;
     m_iPPSQpMinus26 = 0;
@@ -411,6 +412,20 @@ void Encoder::create()
     m_nalList.m_annexB = !!m_param->bAnnexB;
 
     m_emitCLLSEI = p->maxCLL || p->maxFALL;
+
+    if (m_param->userSeiFile)
+    {
+        m_seiFile = x265_fopen(m_param->userSeiFile, "r");
+        if (!m_seiFile)
+        {
+            x265_log_file(NULL, X265_LOG_ERROR, "%s file not found or Failed to open\n", m_param->userSeiFile);
+            m_aborted = true;
+        }
+        else
+             m_enableUserSei = 1;
+    }
+    else
+         m_enableUserSei = 0;
 
 #if ENABLE_HDR10_PLUS
     if (m_bToneMap)
@@ -782,6 +797,8 @@ void Encoder::destroy()
         }
         X265_FREE(temp);
      }
+    if (m_seiFile)
+        fclose(m_seiFile);
     if (m_param)
     {
         if (m_param->csvfpt)
@@ -922,7 +939,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             }
         }
 #endif
-
+/* seiMsg will contain SEI messages specified in a fixed file format in POC order.
+* Format of the file : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload> */
+        x265_sei_payload seiMsg;
+        seiMsg.payload = NULL;
+        if (m_enableUserSei)
+            readUserSeiFile(seiMsg, m_pocLast);
         if (pic_in->bitDepth < 8 || pic_in->bitDepth > 16)
         {
             x265_log(m_param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n",
@@ -1008,6 +1030,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_bToneMap && toneMap.payload)
             toneMapEnable = 1;
         int numPayloads = pic_in->userSEI.numPayloads + toneMapEnable;
+        if (m_enableUserSei && seiMsg.payload)
+            numPayloads += m_enableUserSei;
         inFrame->m_userSEI.numPayloads = numPayloads;
 
         if (inFrame->m_userSEI.numPayloads)
@@ -1023,6 +1047,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 x265_sei_payload input;
                 if ((i == (numPayloads - 1)) && toneMapEnable)
                     input = toneMap;
+                else if (m_enableUserSei)
+                    input = seiMsg;
                 else
                     input = pic_in->userSEI.payloads[i];
                 int size = inFrame->m_userSEI.payloads[i].payloadSize = input.payloadSize;
@@ -1033,6 +1059,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             }
             if (toneMap.payload)
                 x265_free(toneMap.payload);
+            if (seiMsg.payload)
+                x265_free(seiMsg.payload);
         }
 
         if (pic_in->quantOffsets != NULL)
@@ -4706,6 +4734,52 @@ void Encoder::printReconfigureParams()
     TOOLCMP(oldParam->rc.vbvBufferSize, newParam->rc.vbvBufferSize, "vbv-bufsize=%d to %d\n");
     TOOLCMP(oldParam->rc.bitrate, newParam->rc.bitrate, "bitrate=%d to %d\n");
     TOOLCMP(oldParam->rc.rfConstant, newParam->rc.rfConstant, "crf=%f to %f\n");
+}
+
+void Encoder::readUserSeiFile(x265_sei_payload& seiMsg, int curPoc)
+{
+    char line[1024];
+    while (!feof(m_seiFile))
+    {
+        fgets(line, sizeof(line), m_seiFile);
+        int poc = atoi(strtok(line, " "));
+        char *prefix = strtok(NULL, " ");
+        int nalType = atoi(strtok(NULL, "/"));
+        int payloadType = atoi(strtok(NULL, " "));
+        char *base64Encode = strtok(NULL, "\n");
+        int base64EncodeLength = (int)strlen(base64Encode);
+        char *base64Decode = SEI::base64Decode(base64Encode, base64EncodeLength);
+        if (nalType == NAL_UNIT_PREFIX_SEI && (!strcmp(prefix, "PREFIX")))
+        {
+            int currentPOC = curPoc + 1;
+            if (currentPOC == poc)
+            {
+                seiMsg.payloadSize = (base64EncodeLength / 4) * 3;
+                seiMsg.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * seiMsg.payloadSize);
+                if (!seiMsg.payload)
+                {
+                    x265_log(m_param, X265_LOG_ERROR, "Unable to allocate memory for SEI payload\n");
+                    break;
+                }
+                if (payloadType == 4)
+                    seiMsg.payloadType = USER_DATA_REGISTERED_ITU_T_T35;
+                else if (payloadType == 5)
+                    seiMsg.payloadType = USER_DATA_UNREGISTERED;
+                else
+                {
+                    x265_log(m_param, X265_LOG_WARNING, "Unsupported SEI payload Type for frame %d\n", poc);
+                    break;
+                }
+                memcpy(seiMsg.payload, base64Decode, seiMsg.payloadSize);
+                break;
+            }
+        }
+        else
+        {
+            x265_log(m_param, X265_LOG_WARNING, "SEI message for frame %d is not inserted. Will support only PREFIX SEI messages.\n", poc);
+            break;
+        }
+    }
 }
 
 bool Encoder::computeSPSRPSIndex()

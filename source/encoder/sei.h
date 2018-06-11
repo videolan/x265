@@ -41,6 +41,7 @@ public:
     void alignAndSerialize(Bitstream& bs, int lastSei, int isSingleSei, NalUnitType nalUnitType, NALList& list);
     int countPayloadSize(const SPS& sps);
     void setSize(uint32_t size);
+    static char* base64Decode(char encodedString[], int base64EncodeLength);
     virtual ~SEI() {}
 protected:
     SEIPayloadType  m_payloadType;

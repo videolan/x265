@@ -2135,6 +2135,12 @@ VUI fields must be manually specified.
 
 	Maximum luma value allowed for input pictures. Any values above max-luma
 	are clipped.  No default.
+    
+.. option:: --usersei-file <filename>
+
+    Text file containing userSEI in POC order : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload>
+    Parse the input file specified and inserts SEI messages into the bitstream. 
+    Currently, we support only PREFIX SEI messages. This is an "application-only" feature.
 
 .. option:: --atc-sei <integer>
 

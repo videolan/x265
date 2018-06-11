@@ -1641,6 +1641,8 @@ typedef struct x265_param
 	* used in taking lookahead decisions, but, they will not be encoded.
     * Default 0 (disabled). */
     int       chunkEnd;
+    /* File containing base64 encoded SEI messages in POC order */
+    const char*    userSeiFile;
 
 } x265_param;
 
