@@ -125,6 +125,9 @@ public:
     int         m_ncu;           /* number of CUs in a frame */
     int         m_qp;            /* updated qp for current frame */
 
+    int m_lowresCuWidth;
+    int m_lowresCuHeight;
+	
     bool   m_isAbr;
     bool   m_isVbv;
     bool   m_isCbr;
@@ -230,6 +233,15 @@ public:
         uint16_t *qpBuffer[2]; /* Global buffers for converting MB-tree quantizer data. */
         int qpBufPos;          /* In order to handle pyramid reordering, QP buffer acts as a stack.
                                 * This value is the current position (0 or 1). */
+        int src_mb_count;
+                                
+        /* For rescaling */
+        int rescale_enabled;
+        double *scale_buffer[2]; /* Intermediate buffers */
+        int filtersize[2];       /* filter size (H/V) */
+        float *coeffs[2];
+        int *pos[2];
+        int srcdim[2];           /* Source dimensions (W/H) */                        
     } m_cuTreeStats;
 
     RateControl(x265_param& p);
@@ -288,6 +300,10 @@ protected:
     double tuneQScaleForGrain(double rcOverflow);
     void   splitdeltaPOC(char deltapoc[], RateControlEntry *rce);
     void   splitbUsed(char deltapoc[], RateControlEntry *rce);
+	
+    int    cuTree_rescale_init();
+    void   cuTree_rescale_destroy();
+    void   cuTree_rescale( double *dst );
 };
 }
 #endif // ifndef X265_RATECONTROL_H
