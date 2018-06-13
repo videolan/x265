@@ -2453,7 +2453,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
             for (uint32_t part = 0; part < numPU; part++)
             {
                 PredictionUnit pu(mode.cu, cuGeom, part);
-                if (m_param->analysisReuseLevel >= 7)
+                if ((m_param->analysisLoad && m_param->analysisReuseLevel == 10) || (m_param->bMVType == AVC_INFO && m_param->analysisReuseLevel >= 7))
                 {
                     analysis_inter_data* interDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
                     int cuIdx = (mode.cu.m_cuAddr * parentCTU.m_numPartitions) + cuGeom.absPartIdx;
