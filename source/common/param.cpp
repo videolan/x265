@@ -1407,6 +1407,8 @@ int x265_check_params(x265_param* param)
         "Invalid refine-intra value, refine-intra levels 0 to 3 supported");
     CHECK(param->maxAUSizeFactor < 0.5 || param->maxAUSizeFactor > 1.0,
         "Supported factor for controlling max AU size is from 0.5 to 1");
+    CHECK(param->minLuma < 0 || param->maxLuma > PIXEL_MAX,
+        "Supported minLuma or maxLuma is from 0 to ((1 << X265_DEPTH) - 1)");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
