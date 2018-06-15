@@ -88,7 +88,7 @@ public:
             if(!percentileData.empty())
             {
                 JsonArray distributionValues = percentileData[PercentileNames::DistributionValues].array_items();
-                obj.order = distributionValues.size();
+                obj.order = static_cast<int>(distributionValues.size());
                 obj.percentiles.resize(obj.order);
                 for(int i = 0; i < obj.order; ++i)
                 {
@@ -127,7 +127,7 @@ public:
             if(!percentileData.empty())
             {
                 JsonArray percentageValues = percentileData[PercentileNames::DistributionIndex].array_items();
-                int order = percentageValues.size();
+                int order = static_cast<int>(percentageValues.size());
                 percentages.resize(order);
                 for(int i = 0; i < order; ++i)
                 {
@@ -165,7 +165,7 @@ public:
             obj.sPx = jsonData[BezierCurveNames::KneePointX].int_value();
             obj.sPy = jsonData[BezierCurveNames::KneePointY].int_value();
             JsonArray anchorValues = data[BezierCurveNames::AnchorsTag].array_items();
-            obj.order = anchorValues.size();
+            obj.order = static_cast<int>(anchorValues.size());
             obj.coeff.resize(obj.order);
             for(int i = 0; i < obj.order; ++i)
             {
@@ -489,7 +489,7 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, c
         Json lumObj = fileData[frame][LuminanceNames::TagName];
         LuminanceParameters luminanceData;
         if(!((isLLCJson && mPimpl->luminanceParamFromLLCJson(lumObj, luminanceData)) ||
-            !(isLLCJson && mPimpl->luminanceParamFromJson(lumObj, luminanceData))))
+            !(mPimpl->luminanceParamFromJson(lumObj, luminanceData) && isLLCJson)))
         {
             std::cout << "error parsing luminance parameters frame: " << w << std::endl;
         }
@@ -559,7 +559,7 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, c
         if (w == 0)
         {
             if(!((isLLCJson && mPimpl->bezierCurveFromLLCJson(fileData[frame][BezierCurveNames::TagName], curveData)) ||
-                !(isLLCJson && mPimpl->bezierCurveFromJson(fileData[frame][BezierCurveNames::TagName], curveData))))
+                !(mPimpl->bezierCurveFromJson(fileData[frame][BezierCurveNames::TagName], curveData) && isLLCJson)))
             {
                 toneMappingFlag = 0;
             }
