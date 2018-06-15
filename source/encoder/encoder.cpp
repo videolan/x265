@@ -4113,10 +4113,12 @@ int Encoder::validateAnalysisData(x265_analysis_data* analysis, int writeFlag)
         if (!isScaledRes && (sourceHeight != curSourceHeight || sourceWidth != curSourceWidth 
                             || readValue != (int)m_param->maxCUSize || m_param->scaleFactor))
             error = true;
-        else if (isScaledRes && (!m_param->scaleFactor || (g_log2Size[m_param->maxCUSize] - g_log2Size[readValue]) != 1))
+        else if (isScaledRes && !m_param->scaleFactor)
             error = true;
         else if (isScaledRes && (int)m_param->maxCUSize == readValue)
             m_saveCTUSize = 1;
+        else if (isScaledRes && (g_log2Size[m_param->maxCUSize] - g_log2Size[readValue]) != 1)
+            error = true;
 
         if (error)
         {
