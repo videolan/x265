@@ -1642,7 +1642,7 @@ typedef struct x265_param
     * Default 0 (disabled). */
     int       chunkEnd;
     /* File containing base64 encoded SEI messages in POC order */
-    const char*    userSeiFile;
+    const char*    naluFile;
 
 } x265_param;
 

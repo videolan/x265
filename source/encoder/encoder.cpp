@@ -79,7 +79,7 @@ Encoder::Encoder()
     m_threadPool = NULL;
     m_analysisFileIn = NULL;
     m_analysisFileOut = NULL;
-    m_seiFile = NULL;
+    m_naluFile = NULL;
     m_offsetEmergency = NULL;
     m_iFrameNum = 0;
     m_iPPSQpMinus26 = 0;
@@ -413,19 +413,19 @@ void Encoder::create()
 
     m_emitCLLSEI = p->maxCLL || p->maxFALL;
 
-    if (m_param->userSeiFile)
+    if (m_param->naluFile)
     {
-        m_seiFile = x265_fopen(m_param->userSeiFile, "r");
-        if (!m_seiFile)
+        m_naluFile = x265_fopen(m_param->naluFile, "r");
+        if (!m_naluFile)
         {
-            x265_log_file(NULL, X265_LOG_ERROR, "%s file not found or Failed to open\n", m_param->userSeiFile);
+            x265_log_file(NULL, X265_LOG_ERROR, "%s file not found or Failed to open\n", m_param->naluFile);
             m_aborted = true;
         }
         else
-             m_enableUserSei = 1;
+             m_enableNal = 1;
     }
     else
-         m_enableUserSei = 0;
+         m_enableNal = 0;
 
 #if ENABLE_HDR10_PLUS
     if (m_bToneMap)
@@ -797,8 +797,8 @@ void Encoder::destroy()
         }
         X265_FREE(temp);
      }
-    if (m_seiFile)
-        fclose(m_seiFile);
+    if (m_naluFile)
+        fclose(m_naluFile);
     if (m_param)
     {
         if (m_param->csvfpt)
@@ -943,7 +943,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 * Format of the file : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload> */
         x265_sei_payload seiMsg;
         seiMsg.payload = NULL;
-        if (m_enableUserSei)
+        if (m_enableNal)
             readUserSeiFile(seiMsg, m_pocLast);
         if (pic_in->bitDepth < 8 || pic_in->bitDepth > 16)
         {
@@ -1030,8 +1030,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         if (m_bToneMap && toneMap.payload)
             toneMapEnable = 1;
         int numPayloads = pic_in->userSEI.numPayloads + toneMapEnable;
-        if (m_enableUserSei && seiMsg.payload)
-            numPayloads += m_enableUserSei;
+        if (m_enableNal && seiMsg.payload)
+            numPayloads += m_enableNal;
         inFrame->m_userSEI.numPayloads = numPayloads;
 
         if (inFrame->m_userSEI.numPayloads)
@@ -1047,7 +1047,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 x265_sei_payload input;
                 if ((i == (numPayloads - 1)) && toneMapEnable)
                     input = toneMap;
-                else if (m_enableUserSei)
+                else if (m_enableNal)
                     input = seiMsg;
                 else
                     input = pic_in->userSEI.payloads[i];
@@ -4739,9 +4739,9 @@ void Encoder::printReconfigureParams()
 void Encoder::readUserSeiFile(x265_sei_payload& seiMsg, int curPoc)
 {
     char line[1024];
-    while (!feof(m_seiFile))
+    while (!feof(m_naluFile))
     {
-        fgets(line, sizeof(line), m_seiFile);
+        fgets(line, sizeof(line), m_naluFile);
         int poc = atoi(strtok(line, " "));
         char *prefix = strtok(NULL, " ");
         int nalType = atoi(strtok(NULL, "/"));

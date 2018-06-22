@@ -302,7 +302,7 @@ void x265_param_default(x265_param* param)
     param->bDisableLookahead = 0;
     param->bCopyPicToFrame = 1;
     param->maxAUSizeFactor = 1;
-    param->userSeiFile = NULL;
+    param->naluFile = NULL;
 
     /* DCT Approximations */
     param->bLowPassDct = 0;
@@ -1049,7 +1049,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
 		OPT("pic-struct") p->pictureStructure = atoi(value);
         OPT("chunk-start") p->chunkStart = atoi(value);
         OPT("chunk-end") p->chunkEnd = atoi(value);
-        OPT("usersei-file") p->userSeiFile = strdup(value);
+        OPT("nalu-file") p->naluFile = strdup(value);
         else
             return X265_PARAM_BAD_NAME;
     }

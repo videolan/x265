@@ -169,7 +169,7 @@ public:
     Frame*             m_exportedPic;
     FILE*              m_analysisFileIn;
     FILE*              m_analysisFileOut;
-    FILE*              m_seiFile;
+    FILE*              m_naluFile;
     x265_param*        m_param;
     x265_param*        m_latestParam;     // Holds latest param during a reconfigure
     RateControl*       m_rateControl;
@@ -213,7 +213,7 @@ public:
     double                m_cR;
 
     int                     m_bToneMap; // Enables tone-mapping
-    int                     m_enableUserSei;
+    int                     m_enableNal;
 
 #ifdef ENABLE_HDR10_PLUS
     const hdr10plus_api     *m_hdr10plus_api;

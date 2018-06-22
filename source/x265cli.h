@@ -304,7 +304,7 @@ static const struct option long_options[] =
     { "no-single-sei", no_argument, NULL, 0 },
 	{ "atc-sei", required_argument, NULL, 0 },
 	{ "pic-struct", required_argument, NULL, 0 },
-    { "usersei-file", required_argument, NULL, 0 },
+    { "nalu-file", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -355,7 +355,7 @@ static void showHelp(x265_param *param)
     H0("   --dhdr10-info <filename>      JSON file containing the Creative Intent Metadata to be encoded as Dynamic Tone Mapping\n");
     H0("   --[no-]dhdr10-opt             Insert tone mapping SEI only for IDR frames and when the tone mapping information changes. Default disabled\n");
 #endif
-    H0("   --usersei-file <filename>     Text file containing SEI messages in the following format : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload>\n");
+    H0("   --nalu-file <filename>        Text file containing SEI messages in the following format : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload>\n");
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("   --seek <integer>              First frame to encode\n");
     H1("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
