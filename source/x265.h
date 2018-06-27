@@ -121,9 +121,10 @@ typedef struct x265_analysis_validate
     int     bPyramid;
     int     maxCUSize;
     int     minCUSize;
-    int     radl;
+    int     intraRefresh;
     int     lookaheadDepth;
-    int     gopLookahead;
+    int     chunkStart;
+    int     chunkEnd;
 }x265_analysis_validate;
 
 /* Stores all analysis data for a single frame */

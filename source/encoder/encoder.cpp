@@ -4105,6 +4105,7 @@ int Encoder::validateAnalysisData(x265_analysis_data* analysis, int writeFlag)
     int       readValue = 0;
     int       count = 0;
 
+    X265_PARAM_VALIDATE(saveParam->intraRefresh, sizeof(int), 1, &m_param->bIntraRefresh, intra-refresh);
     X265_PARAM_VALIDATE(saveParam->maxNumReferences, sizeof(int), 1, &m_param->maxNumReferences, ref);
     X265_PARAM_VALIDATE(saveParam->analysisReuseLevel, sizeof(int), 1, &m_param->analysisReuseLevel, analysis-reuse-level);
     X265_PARAM_VALIDATE(saveParam->keyframeMax, sizeof(int), 1, &m_param->keyframeMax, keyint);
@@ -4113,9 +4114,9 @@ int Encoder::validateAnalysisData(x265_analysis_data* analysis, int writeFlag)
     X265_PARAM_VALIDATE(saveParam->bframes, sizeof(int), 1, &m_param->bframes, bframes);
     X265_PARAM_VALIDATE(saveParam->bPyramid, sizeof(int), 1, &m_param->bBPyramid, bPyramid);
     X265_PARAM_VALIDATE(saveParam->minCUSize, sizeof(int), 1, &m_param->minCUSize, min - cu - size);
-    X265_PARAM_VALIDATE(saveParam->radl, sizeof(int), 1, &m_param->radl, radl);
     X265_PARAM_VALIDATE(saveParam->lookaheadDepth, sizeof(int), 1, &m_param->lookaheadDepth, rc - lookahead);
-    X265_PARAM_VALIDATE(saveParam->gopLookahead, sizeof(int), 1, &m_param->gopLookahead, gop - lookahead);
+    X265_PARAM_VALIDATE(saveParam->chunkStart, sizeof(int), 1, &m_param->chunkStart, chunk-start);
+    X265_PARAM_VALIDATE(saveParam->chunkEnd, sizeof(int), 1, &m_param->chunkEnd, chunk-end);
 
     int sourceHeight, sourceWidth;
     if (writeFlag)
@@ -4133,8 +4134,8 @@ int Encoder::validateAnalysisData(x265_analysis_data* analysis, int writeFlag)
         int curSourceHeight = m_param->sourceHeight - m_conformanceWindow.bottomOffset;
         int curSourceWidth = m_param->sourceWidth - m_conformanceWindow.rightOffset;
 
-        X265_FREAD(&sourceWidth, sizeof(int), 1, m_analysisFileIn, &(saveParam->sourceHeight));
-        X265_FREAD(&sourceHeight, sizeof(int), 1, m_analysisFileIn, &(saveParam->sourceWidth));
+        X265_FREAD(&sourceWidth, sizeof(int), 1, m_analysisFileIn, &(saveParam->sourceWidth));
+        X265_FREAD(&sourceHeight, sizeof(int), 1, m_analysisFileIn, &(saveParam->sourceHeight));
         X265_FREAD(&readValue, sizeof(int), 1, m_analysisFileIn, &(saveParam->maxCUSize));
 
         bool isScaledRes = (2 * sourceHeight == curSourceHeight) && (2 * sourceWidth == curSourceWidth);
