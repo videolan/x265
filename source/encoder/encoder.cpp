@@ -2522,12 +2522,18 @@ void Encoder::initSPS(SPS *sps)
 void Encoder::initPPS(PPS *pps)
 {
     bool bIsVbv = m_param->rc.vbvBufferSize > 0 && m_param->rc.vbvMaxBitrate > 0;
+    bool bEnableDistOffset = m_param->analysisMultiPassDistortion && m_param->rc.bStatRead;
 
     if (!m_param->bLossless && (m_param->rc.aqMode || bIsVbv || m_param->bAQMotion))
     {
         pps->bUseDQP = true;
         pps->maxCuDQPDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
         X265_CHECK(pps->maxCuDQPDepth <= 3, "max CU DQP depth cannot be greater than 3\n");
+    }
+    else if (!m_param->bLossless && bEnableDistOffset)
+    {
+        pps->bUseDQP = true;
+        pps->maxCuDQPDepth = 0;
     }
     else
     {

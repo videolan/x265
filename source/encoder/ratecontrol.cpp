@@ -2640,8 +2640,9 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
     FrameData& curEncData = *curFrame->m_encData;
     int64_t actualBits = bits;
     Slice *slice = curEncData.m_slice;
+    bool bEnableDistOffset = m_param->analysisMultiPassDistortion && m_param->rc.bStatRead;
 
-    if (m_param->rc.aqMode || m_isVbv || m_param->bAQMotion)
+    if (m_param->rc.aqMode || m_isVbv || m_param->bAQMotion || bEnableDistOffset)
     {
         if (m_isVbv && !(m_2pass && m_param->rc.rateControlMode == X265_RC_CRF))
         {
@@ -2655,10 +2656,10 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
             rce->qpaRc = curEncData.m_avgQpRc;
         }
 
-        if (m_param->rc.aqMode || m_param->bAQMotion)
+        if (m_param->rc.aqMode || m_param->bAQMotion || bEnableDistOffset)
         {
             double avgQpAq = 0;
-            /* determine actual avg encoded QP, after AQ/cutree adjustments */
+            /* determine actual avg encoded QP, after AQ/cutree/distortion adjustments */
             for (uint32_t i = 0; i < slice->m_sps->numCuInHeight; i++)
                 avgQpAq += curEncData.m_rowStat[i].sumQpAq;
 
