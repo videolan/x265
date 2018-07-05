@@ -4740,9 +4740,8 @@ void Encoder::printReconfigureParams()
 void Encoder::readUserSeiFile(x265_sei_payload& seiMsg, int curPoc)
 {
     char line[1024];
-    while (!feof(m_naluFile))
+    while (fgets(line, sizeof(line), m_naluFile))
     {
-        fgets(line, sizeof(line), m_naluFile);
         int poc = atoi(strtok(line, " "));
         char *prefix = strtok(NULL, " ");
         int nalType = atoi(strtok(NULL, "/"));
