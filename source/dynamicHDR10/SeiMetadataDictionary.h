@@ -48,6 +48,7 @@ namespace SeiMetadataDictionary
         static const std::string NumberOfAnchors;
         static const std::string KneePointX;
         static const std::string KneePointY;
+        static const std::string AnchorsTag;
         static const std::string Anchors[14];
     };
     //Ellipse Selection Data
@@ -79,6 +80,8 @@ namespace SeiMetadataDictionary
         public:
         static const std::string TagName;
         static const std::string NumberOfPercentiles;
+        static const std::string DistributionIndex;
+        static const std::string DistributionValues;
         static const std::string PercentilePercentageValue[15];
         static const std::string PercentileLuminanceValue[15];
     };
@@ -87,7 +90,9 @@ namespace SeiMetadataDictionary
     {
         public:
         static const std::string TagName;
+        static const std::string LlcTagName;
         static const std::string AverageRGB;
+        static const std::string MaxSCL;
         static const std::string MaxSCL0;
         static const std::string MaxSCL1;
         static const std::string MaxSCL2;

@@ -98,7 +98,7 @@ private:
 
     class DynamicMetaIO;
     DynamicMetaIO *mPimpl;
-    void fillMetadataArray(const JsonArray &fileData, int frame, uint8_t *&metadata);
+    void fillMetadataArray(const JsonArray &fileData, int frame, const bool isLLCJson, uint8_t *&metadata);
 };
 
 #endif // METADATAFROMJSON_H

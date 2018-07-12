@@ -34,6 +34,7 @@ const std::string BezierCurveNames::TagName = std::string("BezierCurveData");
 const std::string BezierCurveNames::NumberOfAnchors = std::string("NumberOfAnchors");
 const std::string BezierCurveNames::KneePointX = std::string("KneePointX");
 const std::string BezierCurveNames::KneePointY = std::string("KneePointY");
+const std::string BezierCurveNames::AnchorsTag = std::string("Anchors");
 const std::string BezierCurveNames::Anchors[] = {std::string("Anchor0"),
                                                  std::string("Anchor1"),
                                                  std::string("Anchor2"),
@@ -69,6 +70,8 @@ const std::string EllipseNames::SemiMajorAxisInternalEllipse = std::string("Semi
 
 const std::string PercentileNames::TagName = std::string("PercentileLuminance");
 const std::string PercentileNames::NumberOfPercentiles = std::string("NumberOfPercentiles");
+const std::string PercentileNames::DistributionIndex = std::string("DistributionIndex");
+const std::string PercentileNames::DistributionValues = std::string("DistributionValues");
 const std::string PercentileNames::PercentilePercentageValue[] = {std::string("PercentilePercentage0"),
                                                                   std::string("PercentilePercentage1"),
                                                                   std::string("PercentilePercentage2"),
@@ -104,7 +107,9 @@ const std::string PercentileNames::PercentileLuminanceValue[] = {std::string("Pe
 
 
 const std::string LuminanceNames::TagName = std::string("LuminanceParameters");
+const std::string LuminanceNames::LlcTagName = std::string("LuminanceDistributions");
 const std::string LuminanceNames::AverageRGB = std::string("AverageRGB");
+const std::string LuminanceNames::MaxSCL = std::string("MaxScl");
 const std::string LuminanceNames::MaxSCL0 = std::string("MaxScl0");
 const std::string LuminanceNames::MaxSCL1 = std::string("MaxScl1");
 const std::string LuminanceNames::MaxSCL2 = std::string("MaxScl2");

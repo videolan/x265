@@ -51,14 +51,13 @@ public:
         JsonObject lumJsonData = data.object_items();
         if(!lumJsonData.empty())
         {
-            JsonObject percentileData = lumJsonData[PercentileNames::TagName].object_items();
-            obj.order = percentileData[PercentileNames::NumberOfPercentiles].int_value();
-
             obj.averageLuminance = static_cast<float>(lumJsonData[LuminanceNames::AverageRGB].number_value());
             obj.maxRLuminance = static_cast<float>(lumJsonData[LuminanceNames::MaxSCL0].number_value());
             obj.maxGLuminance = static_cast<float>(lumJsonData[LuminanceNames::MaxSCL1].number_value());
             obj.maxBLuminance = static_cast<float>(lumJsonData[LuminanceNames::MaxSCL2].number_value());
 
+            JsonObject percentileData = lumJsonData[PercentileNames::TagName].object_items();
+            obj.order = percentileData[PercentileNames::NumberOfPercentiles].int_value();
             if(!percentileData.empty())
             {
                 obj.percentiles.resize(obj.order);
@@ -69,7 +68,33 @@ public:
                     obj.percentiles[i] = static_cast<unsigned int>(percentileData[percentileTag].int_value());
                 }
             }
+            return true;
+        }
+        return false;
+    }
 
+    bool luminanceParamFromLLCJson(const Json &data, LuminanceParameters &obj)
+    {
+        JsonObject lumJsonData = data.object_items();
+        if(!lumJsonData.empty())
+        {
+            obj.averageLuminance = static_cast<float>(lumJsonData[LuminanceNames::AverageRGB].number_value());
+            JsonArray maxScl = lumJsonData[LuminanceNames::MaxSCL].array_items();
+            obj.maxRLuminance = static_cast<float>(maxScl[0].number_value());
+            obj.maxGLuminance = static_cast<float>(maxScl[1].number_value());
+            obj.maxBLuminance = static_cast<float>(maxScl[2].number_value());
+
+            JsonObject percentileData = lumJsonData[LuminanceNames::LlcTagName].object_items();
+            if(!percentileData.empty())
+            {
+                JsonArray distributionValues = percentileData[PercentileNames::DistributionValues].array_items();
+                obj.order = distributionValues.size();
+                obj.percentiles.resize(obj.order);
+                for(int i = 0; i < obj.order; ++i)
+                {
+                    obj.percentiles[i] = static_cast<unsigned int>(distributionValues[i].int_value());
+                }
+            }
             return true;
         }
         return false;
@@ -82,33 +107,33 @@ public:
         {
             JsonObject percentileData = jsonData[PercentileNames::TagName].object_items();
             int order = percentileData[PercentileNames::NumberOfPercentiles].int_value();
-
             percentages.resize(order);
             for(int i = 0; i < order; ++i)
             {
                 std::string percentileTag = PercentileNames::PercentilePercentageValue[i];
                 percentages[i] = static_cast<unsigned int>(percentileData[percentileTag].int_value());
             }
-
             return true;
         }
         return false;
     }
 
-    bool percentagesFromJson(const Json &data, unsigned int *percentages)
+    bool percentagesFromLLCJson(const Json &data, std::vector<unsigned int> &percentages)
     {
-        JsonObject jsonData = data.object_items();
-        if(!jsonData.empty())
-        {
-            JsonObject percentileData = jsonData[PercentileNames::TagName].object_items();
-            int order = percentileData[PercentileNames::NumberOfPercentiles].int_value();
-
-            for(int i = 0; i < order; ++i)
+        JsonObject lumJsonData = data.object_items();
+        if(!lumJsonData.empty())
+        {            
+            JsonObject percentileData = lumJsonData[LuminanceNames::LlcTagName].object_items();
+            if(!percentileData.empty())
             {
-                std::string percentileTag = PercentileNames::PercentilePercentageValue[i];
-                percentages[i] = static_cast<unsigned int>(percentileData[percentileTag].int_value());
+                JsonArray percentageValues = percentileData[PercentileNames::DistributionIndex].array_items();
+                int order = percentageValues.size();
+                percentages.resize(order);
+                for(int i = 0; i < order; ++i)
+                {
+                    percentages[i] = static_cast<unsigned int>(percentageValues[i].int_value());
+                }
             }
-
             return true;
         }
         return false;
@@ -119,15 +144,33 @@ public:
         JsonObject jsonData = data.object_items();
         if(!jsonData.empty())
         {
-            obj.order = jsonData[BezierCurveNames::NumberOfAnchors].int_value();
-            obj.coeff.resize(obj.order);
             obj.sPx = jsonData[BezierCurveNames::KneePointX].int_value();
             obj.sPy = jsonData[BezierCurveNames::KneePointY].int_value();
+            obj.order = jsonData[BezierCurveNames::NumberOfAnchors].int_value();
+            obj.coeff.resize(obj.order);
             for(int i = 0; i < obj.order; ++i)
             {
                 obj.coeff[i] = jsonData[BezierCurveNames::Anchors[i]].int_value();
             }
+            return true;
+        }
+        return false;
+    }
 
+    bool bezierCurveFromLLCJson(const Json &data, BezierCurveData &obj)
+    {
+        JsonObject jsonData = data.object_items();
+        if(!jsonData.empty())
+        {
+            obj.sPx = jsonData[BezierCurveNames::KneePointX].int_value();
+            obj.sPy = jsonData[BezierCurveNames::KneePointY].int_value();
+            JsonArray anchorValues = data[BezierCurveNames::AnchorsTag].array_items();
+            obj.order = anchorValues.size();
+            obj.coeff.resize(obj.order);
+            for(int i = 0; i < obj.order; ++i)
+            {
+                obj.coeff[i] = anchorValues[i].int_value();
+            }
             return true;
         }
         return false;
@@ -162,9 +205,7 @@ public:
     void setPayloadSize(uint8_t *dataStream, int positionOnStream, int payload)
     {
         int payloadBytes = 1;
-
         for(;payload >= 0xFF; payload -= 0xFF, ++payloadBytes);
-
         if(payloadBytes > 1)
         {
             shiftData(dataStream, payloadBytes-1, mCurrentStreamByte, positionOnStream);
@@ -196,8 +237,6 @@ public:
         }
     }
 
-//    const std::string LocalParameters = std::string("LocalParameters");
-//    const std::string TargetDisplayLuminance = std::string("TargetedSystemDisplayMaximumLuminance");
 };
 
 metadataFromJson::metadataFromJson() :
@@ -211,17 +250,17 @@ metadataFromJson::~metadataFromJson()
     delete mPimpl;
 }
 
-
 bool metadataFromJson::frameMetadataFromJson(const char* filePath,
                                               int frame,
                                               uint8_t *&metadata)
 {
     std::string path(filePath);
     JsonArray fileData = JsonHelper::readJsonArray(path);
-
+    bool isLLCJson = false;
     if(fileData.empty())
     {
-        return false;
+        isLLCJson = true;
+        fileData = JsonHelper::readJson(filePath).at("SceneInfo").array_items();
     }
 
 //    frame = frame + 1; //index on the array start at 0 frames starts at 1
@@ -233,7 +272,6 @@ bool metadataFromJson::frameMetadataFromJson(const char* filePath,
     }
 
     int mSEIBytesToRead = 509;
-
     if(metadata)
     {
         delete(metadata);
@@ -241,13 +279,9 @@ bool metadataFromJson::frameMetadataFromJson(const char* filePath,
     metadata = new uint8_t[mSEIBytesToRead];
     mPimpl->mCurrentStreamBit = 8;
     mPimpl->mCurrentStreamByte = 1;
+    memset(metadata, 0, mSEIBytesToRead);
 
-    for(int j = 0; j < mSEIBytesToRead; ++j)
-    {
-        (metadata)[j] = 0;
-    }
-
-    fillMetadataArray(fileData, frame, metadata);
+    fillMetadataArray(fileData, frame, isLLCJson, metadata);
     mPimpl->setPayloadSize(metadata, 0, mPimpl->mCurrentStreamByte);
     return true;
 }
@@ -256,9 +290,12 @@ int metadataFromJson::movieMetadataFromJson(const char* filePath, uint8_t **&met
 {
     std::string path(filePath);
     JsonArray fileData = JsonHelper::readJsonArray(path);
+    bool isLLCJson = false;
+
     if (fileData.empty())
     {
-        return -1;
+        isLLCJson = true;
+        fileData = JsonHelper::readJson(filePath).at("SceneInfo").array_items();
     }
 
     int numFrames = static_cast<int>(fileData.size());
@@ -266,17 +303,12 @@ int metadataFromJson::movieMetadataFromJson(const char* filePath, uint8_t **&met
     for (int frame = 0; frame < numFrames; ++frame)
     {
         metadata[frame] = new uint8_t[509];
-        for (int i = 0; i < 509; ++i)
-        {
-            metadata[frame][i] = 0;
-        }
+        memset(metadata[frame], 0, 509);
         mPimpl->mCurrentStreamBit = 8;
         mPimpl->mCurrentStreamByte = 1;
 
-        fillMetadataArray(fileData, frame, metadata[frame]);
-
+        fillMetadataArray(fileData, frame, isLLCJson, metadata[frame]);
         mPimpl->setPayloadSize(metadata[frame], 0, mPimpl->mCurrentStreamByte);
-
     }
 
     return numFrames;
@@ -321,7 +353,7 @@ bool metadataFromJson::extendedInfoFrameMetadataFromJson(const char* filePath,
     /* NOTE: We leave TWO BYTES of space for the payload */
     mPimpl->mCurrentStreamByte += 2;
 
-    fillMetadataArray(fileData, frame, metadata);
+    fillMetadataArray(fileData, frame, false, metadata);
 
     /* Set payload in bytes 2 & 3 as indicated in Extended InfoFrame Type syntax */
     metadata[2] = (mPimpl->mCurrentStreamByte & 0xFF00) >> 8;
@@ -331,7 +363,7 @@ bool metadataFromJson::extendedInfoFrameMetadataFromJson(const char* filePath,
 
 int metadataFromJson::movieExtendedInfoFrameMetadataFromJson(const char* filePath, uint8_t **&metadata)
 {
-	std::string path(filePath);
+    std::string path(filePath);
     JsonArray fileData = JsonHelper::readJsonArray(path);
     if(fileData.empty())
     {
@@ -344,9 +376,9 @@ int metadataFromJson::movieExtendedInfoFrameMetadataFromJson(const char* filePat
     {
         metadata[frame] = new uint8_t[509];
         for(int i = 0; i < 509; ++i) 
-		{
-			metadata[frame][i] = 0;
-		}
+        {
+            metadata[frame][i] = 0;
+        }
         mPimpl->mCurrentStreamBit = 8;
         mPimpl->mCurrentStreamByte = 0;
 
@@ -356,7 +388,7 @@ int metadataFromJson::movieExtendedInfoFrameMetadataFromJson(const char* filePat
         /* NOTE: We leave TWO BYTES of space for the payload */
         mPimpl->mCurrentStreamByte += 2;
 
-        fillMetadataArray(fileData, frame, metadata[frame]);
+        fillMetadataArray(fileData, frame, false, metadata[frame]);
 
         /* Set payload in bytes 2 & 3 as indicated in Extended InfoFrame Type syntax */
         metadata[frame][2] = (mPimpl->mCurrentStreamByte & 0xFF00) >> 8;
@@ -366,7 +398,7 @@ int metadataFromJson::movieExtendedInfoFrameMetadataFromJson(const char* filePat
     return numFrames;
 }
 
-void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, uint8_t *&metadata)
+void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, const bool isLLCJson, uint8_t *&metadata)
 {
     const uint8_t countryCode = 0xB5;
     const uint16_t terminalProviderCode = 0x003C;
@@ -381,57 +413,68 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
     mPimpl->appendBits(metadata, applicationIdentifier, 8);
     mPimpl->appendBits(metadata, applicationVersion, 8);
 
-    //Note: Validated only add up to two local selections, ignore the rest
-    JsonArray jsonArray = fileData[frame][JsonDataKeys::LocalParameters].array_items();
-    int ellipsesNum = static_cast<int>(jsonArray.size() > 2 ? 2 : jsonArray.size());
-    uint16_t numWindows = (uint16_t)fileData[frame][JsonDataKeys::NumberOfWindows].int_value();
-    mPimpl->appendBits(metadata, numWindows, 2);
-    for (int i = 0; i < ellipsesNum; ++i)
+    uint16_t numWindows = 0;
+    /* HDR10+ LLC doesn't consider local windows */
+    if(isLLCJson)
     {
-        mPimpl->appendBits(metadata, jsonArray[i][EllipseSelectionNames::WindowData]
-            [EllipseSelectionNames::WindowUpperLeftCornerX].int_value(), 16);
-        mPimpl->appendBits(metadata, jsonArray[i][EllipseSelectionNames::WindowData]
-            [EllipseSelectionNames::WindowUpperLeftCornerY].int_value(), 16);
-        mPimpl->appendBits(metadata, jsonArray[i][EllipseSelectionNames::WindowData]
-            [EllipseSelectionNames::WindowLowerRightCornerX].int_value(), 16);
-        mPimpl->appendBits(metadata, jsonArray[i][EllipseSelectionNames::WindowData]
-            [EllipseSelectionNames::WindowLowerRightCornerY].int_value(), 16);
-
-        JsonObject ellipseJsonObject = jsonArray[i][EllipseNames::TagName].object_items();
-
-        mPimpl->appendBits(metadata,
-            static_cast<uint16_t>(ellipseJsonObject[EllipseNames::CenterOfEllipseX].int_value()),
-            16);
-
-        mPimpl->appendBits(metadata,
-            static_cast<uint16_t>(ellipseJsonObject[EllipseNames::CenterOfEllipseY].int_value()),
-            16);
-
-        int angle = ellipseJsonObject[EllipseNames::RotationAngle].int_value();
-        uint8_t rotationAngle = static_cast<uint8_t>((angle > 180.0) ? angle - 180.0 : angle);
-        mPimpl->appendBits(metadata, rotationAngle, 8);
-
-        uint16_t semimajorExternalAxis =
-            static_cast<uint16_t>(ellipseJsonObject[EllipseNames::SemiMajorAxisExternalEllipse].int_value());
-
-        uint16_t semiminorExternalAxis =
-            static_cast<uint16_t>(ellipseJsonObject[EllipseNames::SemiMinorAxisExternalEllipse].int_value());
-
-        uint16_t semimajorInternalEllipse =
-            static_cast<uint16_t>(ellipseJsonObject[EllipseNames::SemiMajorAxisInternalEllipse].int_value());
-
-        mPimpl->appendBits(metadata, semimajorInternalEllipse, 16);
-
-        mPimpl->appendBits(metadata, semimajorExternalAxis, 16);
-        mPimpl->appendBits(metadata, semiminorExternalAxis, 16);
-        uint8_t overlapProcessOption = static_cast<uint8_t>(ellipseJsonObject[EllipseNames::OverlapProcessOption].int_value());
-        //TODO: Uses Layering method, the value is "1"
-        mPimpl->appendBits(metadata, overlapProcessOption, 1);
+        numWindows = 1;
+        mPimpl->appendBits(metadata, numWindows, 2);
     }
+    else
+    {
+        //Note: Validated only add up to two local selections, ignore the rest
+        JsonArray jsonArray = fileData[frame][JsonDataKeys::LocalParameters].array_items();
+        int ellipsesNum = static_cast<int>(jsonArray.size() > 2 ? 2 : jsonArray.size());
+        numWindows = (uint16_t)fileData[frame][JsonDataKeys::NumberOfWindows].int_value();
+        mPimpl->appendBits(metadata, numWindows, 2);
+        for (int i = 0; i < ellipsesNum; ++i)
+        {
+            mPimpl->appendBits(metadata, jsonArray[i][EllipseSelectionNames::WindowData]
+                    [EllipseSelectionNames::WindowUpperLeftCornerX].int_value(), 16);
+            mPimpl->appendBits(metadata, jsonArray[i][EllipseSelectionNames::WindowData]
+                    [EllipseSelectionNames::WindowUpperLeftCornerY].int_value(), 16);
+            mPimpl->appendBits(metadata, jsonArray[i][EllipseSelectionNames::WindowData]
+                    [EllipseSelectionNames::WindowLowerRightCornerX].int_value(), 16);
+            mPimpl->appendBits(metadata, jsonArray[i][EllipseSelectionNames::WindowData]
+                    [EllipseSelectionNames::WindowLowerRightCornerY].int_value(), 16);
+
+            JsonObject ellipseJsonObject = jsonArray[i][EllipseNames::TagName].object_items();
+
+            mPimpl->appendBits(metadata,
+                               static_cast<uint16_t>(ellipseJsonObject[EllipseNames::CenterOfEllipseX].int_value()),
+                    16);
+
+            mPimpl->appendBits(metadata,
+                               static_cast<uint16_t>(ellipseJsonObject[EllipseNames::CenterOfEllipseY].int_value()),
+                    16);
+
+            int angle = ellipseJsonObject[EllipseNames::RotationAngle].int_value();
+            uint8_t rotationAngle = static_cast<uint8_t>((angle > 180.0) ? angle - 180.0 : angle);
+            mPimpl->appendBits(metadata, rotationAngle, 8);
+
+            uint16_t semimajorExternalAxis =
+                    static_cast<uint16_t>(ellipseJsonObject[EllipseNames::SemiMajorAxisExternalEllipse].int_value());
+
+            uint16_t semiminorExternalAxis =
+                    static_cast<uint16_t>(ellipseJsonObject[EllipseNames::SemiMinorAxisExternalEllipse].int_value());
+
+            uint16_t semimajorInternalEllipse =
+                    static_cast<uint16_t>(ellipseJsonObject[EllipseNames::SemiMajorAxisInternalEllipse].int_value());
+
+            mPimpl->appendBits(metadata, semimajorInternalEllipse, 16);
+
+            mPimpl->appendBits(metadata, semimajorExternalAxis, 16);
+            mPimpl->appendBits(metadata, semiminorExternalAxis, 16);
+            uint8_t overlapProcessOption = static_cast<uint8_t>(ellipseJsonObject[EllipseNames::OverlapProcessOption].int_value());
+            //TODO: Uses Layering method, the value is "1"
+            mPimpl->appendBits(metadata, overlapProcessOption, 1);
+        }
+    }
+
     /* Targeted System Display Data */
-    uint32_t monitorPeak = fileData[frame][JsonDataKeys::TargetDisplayLuminance].int_value();     //500;
+    uint32_t monitorPeak = fileData[frame][JsonDataKeys::TargetDisplayLuminance].int_value();
     mPimpl->appendBits(metadata, monitorPeak, 27);
-    //NOTE: Set as false for now, as requested
+
     uint8_t targetedSystemDisplayActualPeakLuminanceFlag = 0;
     mPimpl->appendBits(metadata, targetedSystemDisplayActualPeakLuminanceFlag, 1);
     if (targetedSystemDisplayActualPeakLuminanceFlag)
@@ -439,21 +482,21 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
         //TODO
     }
 
-    /* Max rgb values (maxScl)*/
+    /* Max RGB values (maxScl)*/
     /* Luminance values/percentile for each window */
     for (int w = 0; w < numWindows; ++w)
     {
         Json lumObj = fileData[frame][LuminanceNames::TagName];
         LuminanceParameters luminanceData;
-        if (!mPimpl->luminanceParamFromJson(lumObj, luminanceData))
+        if(!((isLLCJson && mPimpl->luminanceParamFromLLCJson(lumObj, luminanceData)) ||
+            !(isLLCJson && mPimpl->luminanceParamFromJson(lumObj, luminanceData))))
         {
             std::cout << "error parsing luminance parameters frame: " << w << std::endl;
         }
 
-        /* NOTE: Maxscl from 0 t 100,000 based on data that says in values of 0.00001
+        /* NOTE: Maxscl from 0 to 100,000 based on data that says in values of 0.00001
         * one for each channel R,G,B
         */
-
         mPimpl->appendBits(metadata, static_cast<uint8_t>(((int)luminanceData.maxRLuminance & 0x10000) >> 16), 1);
         mPimpl->appendBits(metadata, static_cast<uint16_t>((int)luminanceData.maxRLuminance & 0xFFFF), 16);
         mPimpl->appendBits(metadata, static_cast<uint8_t>(((int)luminanceData.maxGLuminance & 0x10000) >> 16), 1);
@@ -467,11 +510,21 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
         uint8_t numDistributionMaxrgbPercentiles = static_cast<uint8_t>(luminanceData.order);
         mPimpl->appendBits(metadata, numDistributionMaxrgbPercentiles, 4);
 
-        std::vector<unsigned int>percentilPercentages;
-        mPimpl->percentagesFromJson(lumObj, percentilPercentages);
+        std::vector<unsigned int>percentilePercentages;
+
+        if(isLLCJson)
+        {
+            mPimpl->percentagesFromLLCJson(lumObj, percentilePercentages);
+        }
+        else
+        {
+            mPimpl->percentagesFromJson(lumObj, percentilePercentages);
+        }
+
+
         for (int i = 0; i < numDistributionMaxrgbPercentiles; ++i)
         {
-            uint8_t distributionMaxrgbPercentage = static_cast<uint8_t>(percentilPercentages.at(i));
+            uint8_t distributionMaxrgbPercentage = static_cast<uint8_t>(percentilePercentages.at(i));
             mPimpl->appendBits(metadata, distributionMaxrgbPercentage, 7);
 
             /* 17bits: 1bit then 16 */
@@ -483,7 +536,7 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
         }
 
         /* 10bits: Fraction bright pixels */
-        uint16_t fractionBrightPixels = 1;
+        uint16_t fractionBrightPixels = 0;
         mPimpl->appendBits(metadata, fractionBrightPixels, 10);
 
     }
@@ -505,17 +558,20 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, u
 		/* Select curve data based on global window */
         if (w == 0)
         {
-            if (!mPimpl->bezierCurveFromJson(fileData[frame][BezierCurveNames::TagName], curveData))
+            if(!((isLLCJson && mPimpl->bezierCurveFromLLCJson(fileData[frame][BezierCurveNames::TagName], curveData)) ||
+                !(isLLCJson && mPimpl->bezierCurveFromJson(fileData[frame][BezierCurveNames::TagName], curveData))))
             {
-				toneMappingFlag = 0;
+                toneMappingFlag = 0;
             }
         }
-	    /* Select curve data based on local window */
+
+        /* Select curve data based on local window */
         else
         {
+            JsonArray jsonArray = fileData[frame][JsonDataKeys::LocalParameters].array_items();
             if (!mPimpl->bezierCurveFromJson(jsonArray[w - 1][BezierCurveNames::TagName], curveData))
             {
-				toneMappingFlag = 0;
+                toneMappingFlag = 0;
             }
         }		
         mPimpl->appendBits(metadata, toneMappingFlag, 1);
