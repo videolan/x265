@@ -26,7 +26,7 @@
 #define METADATAFROMJSON_H
 
 #include<stdint.h>
-#include "string"
+#include<cstring>
 #include "JsonHelper.h"
 
 class metadataFromJson
