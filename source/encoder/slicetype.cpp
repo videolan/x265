@@ -1147,14 +1147,6 @@ void Lookahead::slicetypeDecide()
                     bframes--;
                 }
             }
-            if (m_param->radl && !m_param->bOpenGOP && list[bframes + 1])
-            {
-                if ((frm.frameNum - m_lastKeyframe) > (m_param->keyframeMax - m_param->radl - 1) && (frm.frameNum - m_lastKeyframe) < m_param->keyframeMax)
-                    frm.sliceType = X265_TYPE_B;
-                if ((frm.frameNum - m_lastKeyframe) == (m_param->keyframeMax - m_param->radl - 1))
-                    frm.sliceType = X265_TYPE_P;
-            }
-
             if (bframes == m_param->bframes || !list[bframes + 1])
             {
                 if (IS_X265_TYPE_B(frm.sliceType))
@@ -1538,6 +1530,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     int numBFrames = 0;
     int numAnalyzed = numFrames;
     bool isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
+
     /* When scenecut threshold is set, use scenecut detection for I frame placements */
     if (m_param->scenecutThreshold && isScenecut)
     {
@@ -1645,14 +1638,28 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
             frames[numFrames]->sliceType = X265_TYPE_P;
         }
 
-        /* Check scenecut on the first minigop. */
-        for (int j = 1; j < numBFrames + 1; j++)
+        bool bForceRADL = m_param->radl && !m_param->bOpenGOP;
+        bool bLastMiniGop = (framecnt >= m_param->bframes + 1) ? false : true;
+        int preRADL = m_lastKeyframe + m_param->keyframeMax - m_param->radl - 1; /*Frame preceeding RADL in POC order*/
+        if (bForceRADL && (frames[0]->frameNum == preRADL) && !bLastMiniGop)
         {
-            if (scenecut(frames, j, j + 1, false, origNumFrames))
+            int j = 1;
+            numBFrames = m_param->radl;
+            for (; j <= m_param->radl; j++)
+                frames[j]->sliceType = X265_TYPE_B;
+            frames[j]->sliceType = X265_TYPE_I;
+        }
+        else /* Check scenecut and RADL on the first minigop. */
+        {
+            for (int j = 1; j < numBFrames + 1; j++)
             {
-                frames[j]->sliceType = X265_TYPE_P;
-                numAnalyzed = j;
-                break;
+                if (scenecut(frames, j, j + 1, false, origNumFrames) || 
+                    (bForceRADL && (frames[j]->frameNum == preRADL)))
+                {
+                    frames[j]->sliceType = X265_TYPE_P;
+                    numAnalyzed = j;
+                    break;
+                }
             }
         }
         resetStart = bKeyframe ? 1 : X265_MIN(numBFrames + 2, numAnalyzed + 1);
