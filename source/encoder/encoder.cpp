@@ -641,7 +641,7 @@ int Encoder::setAnalysisData(x265_analysis_data *analysis_data, int poc, uint32_
         curFrame->m_analysisData = (*analysis_data);
         curFrame->m_analysisData.numCUsInFrame = widthInCU * heightInCU;
         curFrame->m_analysisData.numPartitions = m_param->num4x4Partitions;
-        allocAnalysis(&curFrame->m_analysisData);
+        x265_alloc_analysis_data(m_param, &curFrame->m_analysisData);
         if (m_param->maxCUSize == 16)
         {
             if (analysis_data->sliceType == X265_TYPE_IDR || analysis_data->sliceType == X265_TYPE_I)
@@ -901,7 +901,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
     if (m_exportedPic)
     {
         if (!m_param->bUseAnalysisFile && m_param->analysisSave)
-            freeAnalysis(&m_exportedPic->m_analysisData);
+            x265_free_analysis_data(m_param, &m_exportedPic->m_analysisData);
         ATOMIC_DEC(&m_exportedPic->m_countRefEncoders);
         m_exportedPic = NULL;
         m_dpb->recycleUnreferenced();
@@ -1209,7 +1209,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
             /* Free up pic_in->analysisData since it has already been used */
             if ((m_param->analysisLoad && !m_param->analysisSave) || (m_param->bMVType && slice->m_sliceType != I_SLICE))
-                freeAnalysis(&outFrame->m_analysisData);
+                x265_free_analysis_data(m_param, &outFrame->m_analysisData);
 
             if (pic_out)
             {
@@ -1248,6 +1248,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     pic_out->analysisData.intraData = outFrame->m_analysisData.intraData;
                     pic_out->analysisData.modeFlag[0] = outFrame->m_analysisData.modeFlag[0];
                     pic_out->analysisData.modeFlag[1] = outFrame->m_analysisData.modeFlag[1];
+                    pic_out->analysisData.distortionData = outFrame->m_analysisData.distortionData;
                     if (m_param->bDisableLookahead)
                     {
                         int factor = 1;
@@ -1286,7 +1287,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     writeAnalysisFile(&pic_out->analysisData, *outFrame->m_encData);
                     pic_out->analysisData.saveParam = pic_out->analysisData.saveParam;
                     if (m_param->bUseAnalysisFile)
-                        freeAnalysis(&pic_out->analysisData);
+                        x265_free_analysis_data(m_param, &pic_out->analysisData);
                 }
             }
             if (m_param->rc.bStatWrite && (m_param->analysisMultiPassRefine || m_param->analysisMultiPassDistortion))
@@ -1298,10 +1299,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     pic_out->analysisData.intraData = outFrame->m_analysisData.intraData;
                     pic_out->analysisData.distortionData = outFrame->m_analysisData.distortionData;
                 }
-                writeAnalysisFile(&outFrame->m_analysisData, *outFrame->m_encData, outFrame->m_lowres.sliceType);
+                writeAnalysisFileRefine(&outFrame->m_analysisData, *outFrame->m_encData);
             }
             if (m_param->analysisMultiPassRefine || m_param->analysisMultiPassDistortion)
-                freeAnalysis(&outFrame->m_analysisData, outFrame->m_lowres.sliceType);
+                x265_free_analysis_data(m_param, &outFrame->m_analysisData);
             if (m_param->internalCsp == X265_CSP_I400)
             {
                 if (slice->m_sliceType == P_SLICE)
@@ -1410,7 +1411,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 uint32_t heightInCU = (m_param->sourceHeight + m_param->maxCUSize - 1) >> m_param->maxLog2CUSize;
                 frameEnc->m_analysisData.numCUsInFrame = widthInCU * heightInCU;
                 frameEnc->m_analysisData.numPartitions = m_param->num4x4Partitions;
-                allocAnalysis(&frameEnc->m_analysisData, frameEnc->m_lowres.sliceType);
+                x265_alloc_analysis_data(m_param, &frameEnc->m_analysisData);
                 frameEnc->m_analysisData.poc = frameEnc->m_poc;
                 if (m_param->rc.bStatRead)
                     readAnalysisFile(&frameEnc->m_analysisData, frameEnc->m_poc, frameEnc->m_lowres.sliceType);
@@ -1555,7 +1556,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 analysis->numCUsInFrame  = numCUsInFrame;
                 analysis->numCuInHeight = heightInCU;
                 analysis->numPartitions  = m_param->num4x4Partitions;
-                allocAnalysis(analysis);
+                x265_alloc_analysis_data(m_param, analysis);
             }
             /* determine references, setup RPS, etc */
             m_dpb->prepareEncode(frameEnc);
@@ -3181,232 +3182,6 @@ void Encoder::configure(x265_param *p)
 
 }
 
-void Encoder::allocAnalysis(x265_analysis_data* analysis)
-{
-    X265_CHECK(analysis->sliceType, "invalid slice type\n");
-    analysis->interData = analysis->intraData = NULL;
-    if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
-    {
-        CHECKED_MALLOC_ZERO(analysis->lookahead.intraSatdForVbv, uint32_t, analysis->numCuInHeight);
-        CHECKED_MALLOC_ZERO(analysis->lookahead.satdForVbv, uint32_t, analysis->numCuInHeight);
-        CHECKED_MALLOC_ZERO(analysis->lookahead.intraVbvCost, uint32_t, analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(analysis->lookahead.vbvCost, uint32_t, analysis->numCUsInFrame);
-    }
-    if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
-    {
-        if (m_param->analysisReuseLevel < 2)
-            return;
-
-        analysis_intra_data *intraData = (analysis_intra_data*)analysis->intraData;
-        CHECKED_MALLOC_ZERO(intraData, analysis_intra_data, 1);
-        CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC(intraData->partSizes, char, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC(intraData->chromaModes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        analysis->intraData = intraData;
-    }
-    else
-    {
-        int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
-        uint32_t numPlanes = m_param->internalCsp == X265_CSP_I400 ? 1 : 3;
-        if (!(m_param->bMVType == AVC_INFO))
-            CHECKED_MALLOC_ZERO(analysis->wt, WeightParam, numPlanes * numDir);
-        if (m_param->analysisReuseLevel < 2)
-            return;
-
-        analysis_inter_data *interData = (analysis_inter_data*)analysis->interData;
-        CHECKED_MALLOC_ZERO(interData, analysis_inter_data, 1);
-        CHECKED_MALLOC(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        if (m_param->analysisReuseLevel > 4)
-        {
-            CHECKED_MALLOC(interData->partSize, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-            CHECKED_MALLOC_ZERO(interData->mergeFlag, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        }
-        if (m_param->analysisReuseLevel >= 7)
-        {
-            CHECKED_MALLOC(interData->interDir, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-            CHECKED_MALLOC(interData->sadCost, int64_t, analysis->numPartitions * analysis->numCUsInFrame);
-            for (int dir = 0; dir < numDir; dir++)
-            {
-                CHECKED_MALLOC(interData->mvpIdx[dir], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-                CHECKED_MALLOC(interData->refIdx[dir], int8_t, analysis->numPartitions * analysis->numCUsInFrame);
-                CHECKED_MALLOC(interData->mv[dir], MV, analysis->numPartitions * analysis->numCUsInFrame);
-                CHECKED_MALLOC_ZERO(analysis->modeFlag[dir], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-            }
-            /* Allocate intra in inter */
-            if (analysis->sliceType == X265_TYPE_P || m_param->bIntraInBFrames)
-            {
-                analysis_intra_data *intraData = (analysis_intra_data*)analysis->intraData;
-                CHECKED_MALLOC_ZERO(intraData, analysis_intra_data, 1);
-                CHECKED_MALLOC(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-                CHECKED_MALLOC(intraData->chromaModes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-                analysis->intraData = intraData;
-            }
-        }
-        else
-            CHECKED_MALLOC_ZERO(interData->ref, int32_t, analysis->numCUsInFrame * X265_MAX_PRED_MODE_PER_CTU * numDir);
-
-        analysis->interData = interData;
-    }
-    return;
-
-fail:
-    freeAnalysis(analysis);
-    m_aborted = true;
-}
-void Encoder::freeAnalysis(x265_analysis_data* analysis)
-{
-    if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
-    {
-        X265_FREE(analysis->lookahead.satdForVbv);
-        X265_FREE(analysis->lookahead.intraSatdForVbv);
-        X265_FREE(analysis->lookahead.vbvCost);
-        X265_FREE(analysis->lookahead.intraVbvCost);
-    }
-    /* Early exit freeing weights alone if level is 1 (when there is no analysis inter/intra) */
-    if (analysis->sliceType > X265_TYPE_I && analysis->wt && !(m_param->bMVType == AVC_INFO))
-        X265_FREE(analysis->wt);
-    if (m_param->analysisReuseLevel < 2)
-        return;
-
-    if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
-    {
-        if (analysis->intraData)
-        {
-            X265_FREE(((analysis_intra_data*)analysis->intraData)->depth);
-            X265_FREE(((analysis_intra_data*)analysis->intraData)->modes);
-            X265_FREE(((analysis_intra_data*)analysis->intraData)->partSizes);
-            X265_FREE(((analysis_intra_data*)analysis->intraData)->chromaModes);
-            X265_FREE(analysis->intraData);
-            analysis->intraData = NULL;
-        }
-    }
-    else
-    {
-        if (analysis->intraData)
-        {
-            X265_FREE(((analysis_intra_data*)analysis->intraData)->modes);
-            X265_FREE(((analysis_intra_data*)analysis->intraData)->chromaModes);
-            X265_FREE(analysis->intraData);
-            analysis->intraData = NULL;
-        }
-        if (analysis->interData)
-        {
-            X265_FREE(((analysis_inter_data*)analysis->interData)->depth);
-            X265_FREE(((analysis_inter_data*)analysis->interData)->modes);
-            if (m_param->analysisReuseLevel > 4)
-            {
-                X265_FREE(((analysis_inter_data*)analysis->interData)->mergeFlag);
-                X265_FREE(((analysis_inter_data*)analysis->interData)->partSize);
-            }
-            if (m_param->analysisReuseLevel >= 7)
-            {
-                X265_FREE(((analysis_inter_data*)analysis->interData)->interDir);
-                X265_FREE(((analysis_inter_data*)analysis->interData)->sadCost);
-                int numDir = analysis->sliceType == X265_TYPE_P ? 1 : 2;
-                for (int dir = 0; dir < numDir; dir++)
-                {
-                    X265_FREE(((analysis_inter_data*)analysis->interData)->mvpIdx[dir]);
-                    X265_FREE(((analysis_inter_data*)analysis->interData)->refIdx[dir]);
-                    X265_FREE(((analysis_inter_data*)analysis->interData)->mv[dir]);
-                    if (analysis->modeFlag[dir] != NULL)
-                    {
-                        X265_FREE(analysis->modeFlag[dir]);
-                        analysis->modeFlag[dir] = NULL;
-                    }
-                }
-            }
-            else
-                X265_FREE(((analysis_inter_data*)analysis->interData)->ref);
-
-            X265_FREE(analysis->interData);
-            analysis->interData = NULL;
-        }
-    }
-}
-
-void Encoder::allocAnalysis(x265_analysis_data* analysis, int sliceType)
-{
-    analysis->interData = analysis->intraData = analysis->distortionData = NULL;
-
-    analysisDistortionData *distortionData = (analysisDistortionData*)analysis->distortionData;
-    CHECKED_MALLOC_ZERO(distortionData, analysisDistortionData, 1);
-    CHECKED_MALLOC_ZERO(distortionData->distortion, sse_t, analysis->numPartitions * analysis->numCUsInFrame);
-    if (m_param->rc.bStatRead)
-    {
-        CHECKED_MALLOC_ZERO(distortionData->ctuDistortion, sse_t, analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(distortionData->scaledDistortion, double, analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(distortionData->offset, double, analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(distortionData->threshold, double, analysis->numCUsInFrame);
-    }
-    analysis->distortionData = distortionData;
-
-    if (IS_X265_TYPE_I(sliceType))
-    {
-        analysis_intra_data *intraData = (analysis_intra_data*)analysis->intraData;
-        CHECKED_MALLOC_ZERO(intraData, analysis_intra_data, 1);
-        CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        analysis->intraData = intraData;
-    }
-    else
-    {
-        analysis_inter_data *interData = (analysis_inter_data*)analysis->interData;
-        CHECKED_MALLOC_ZERO(interData, analysis_inter_data, 1);
-        CHECKED_MALLOC_ZERO(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(interData->mvpIdx[0], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(interData->mvpIdx[1], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(interData->mv[0], MV, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(interData->mv[1], MV, analysis->numPartitions * analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(interData->ref, int32_t, 2 * analysis->numPartitions * analysis->numCUsInFrame);
-        analysis->interData = interData;
-    }
-    return;
-
-fail:
-    freeAnalysis(analysis, sliceType);
-    m_aborted = true;
-}
-
-void Encoder::freeAnalysis(x265_analysis_data* analysis, int sliceType)
-{
-    if (analysis->distortionData)
-    {
-        X265_FREE(((analysisDistortionData*)analysis->distortionData)->distortion);
-        if (m_param->rc.bStatRead)
-        {
-            X265_FREE(((analysisDistortionData*)analysis->distortionData)->ctuDistortion);
-            X265_FREE(((analysisDistortionData*)analysis->distortionData)->scaledDistortion);
-            X265_FREE(((analysisDistortionData*)analysis->distortionData)->offset);
-            X265_FREE(((analysisDistortionData*)analysis->distortionData)->threshold);
-        }
-        X265_FREE(analysis->distortionData);
-    }
-    if (IS_X265_TYPE_I(sliceType))
-    {
-        if (analysis->intraData)
-        {
-            X265_FREE(((analysis_intra_data*)analysis->intraData)->depth);
-            X265_FREE(analysis->intraData);
-        }
-    }
-    else
-    {
-        if (analysis->interData)
-        {
-            X265_FREE(((analysis_inter_data*)analysis->interData)->mvpIdx[0]);
-            X265_FREE(((analysis_inter_data*)analysis->interData)->mvpIdx[1]);
-            X265_FREE(((analysis_inter_data*)analysis->interData)->mv[0]);
-            X265_FREE(((analysis_inter_data*)analysis->interData)->mv[1]);
-            X265_FREE(((analysis_inter_data*)analysis->interData)->ref);
-            X265_FREE(((analysis_inter_data*)analysis->interData)->depth);
-            X265_FREE(((analysis_inter_data*)analysis->interData)->modes);
-            X265_FREE(analysis->interData);
-        }
-    }
-}
-
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x265_picture* picIn, int paramBytes)
 {
 #define X265_FREAD(val, size, readSize, fileOffset, src)\
@@ -3417,7 +3192,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         else if (fread(val, size, readSize, fileOffset) != readSize)\
     {\
         x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data\n");\
-        freeAnalysis(analysis);\
+        x265_free_analysis_data(m_param, analysis);\
         m_aborted = true;\
         return;\
     }\
@@ -3452,7 +3227,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         if (poc != curPoc || feof(m_analysisFileIn))
         {
             x265_log(NULL, X265_LOG_WARNING, "Error reading analysis data: Cannot find POC %d\n", curPoc);
-            freeAnalysis(analysis);
+            x265_free_analysis_data(m_param, analysis);
             return;
         }
     }
@@ -3476,7 +3251,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     if (m_param->scaleFactor)
         analysis->numPartitions *= factor;
     /* Memory is allocated for inter and intra analysis data based on the slicetype */
-    allocAnalysis(analysis);
+    x265_alloc_analysis_data(m_param, analysis);
     if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
     {
         size_t vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
@@ -3695,7 +3470,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     else if (fread(val, size, readSize, fileOffset) != readSize)\
     {\
         x265_log(NULL, X265_LOG_ERROR, "Error reading analysis data\n");\
-        freeAnalysis(analysis);\
+        x265_free_analysis_data(m_param, analysis);\
         m_aborted = true;\
         return;\
     }\
@@ -3731,7 +3506,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         if (poc != curPoc || feof(m_analysisFileIn))
         {
             x265_log(NULL, X265_LOG_WARNING, "Error reading analysis data: Cannot find POC %d\n", curPoc);
-            freeAnalysis(analysis);
+            x265_free_analysis_data(m_param, analysis);
             return;
         }
     }
@@ -3761,7 +3536,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     analysis->numCuInHeight = cuLoc.heightInCU;
 
     /* Memory is allocated for inter and intra analysis data based on the slicetype */
-    allocAnalysis(analysis);
+    x265_alloc_analysis_data(m_param, analysis);
 
     analysis->numPartitions = numPartitions * factor;
     analysis->numCUsInFrame = numCUsInFrame;
@@ -4275,7 +4050,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, int sli
     if (fread(val, size, readSize, fileOffset) != readSize)\
     {\
     x265_log(NULL, X265_LOG_ERROR, "Error reading analysis 2 pass data\n"); \
-    freeAnalysis(analysis, sliceType); \
+    x265_alloc_analysis_data(m_param, analysis); \
     m_aborted = true; \
     return; \
 }\
@@ -4289,7 +4064,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, int sli
     if (poc != curPoc || feof(m_analysisFileIn))
     {
         x265_log(NULL, X265_LOG_WARNING, "Error reading analysis 2 pass data: Cannot find POC %d\n", curPoc);
-        freeAnalysis(analysis, sliceType);
+        x265_free_analysis_data(m_param, analysis);
         return;
     }
     /* Now arrived at the right frame, read the record */
@@ -4405,7 +4180,7 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     if (fwrite(val, size, writeSize, fileOffset) < writeSize)\
     {\
         x265_log(NULL, X265_LOG_ERROR, "Error writing analysis data\n");\
-        freeAnalysis(analysis);\
+        x265_free_analysis_data(m_param, analysis);\
         m_aborted = true;\
         return;\
     }\
@@ -4598,13 +4373,13 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
 #undef X265_FWRITE
 }
 
-void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncData, int slicetype)
+void Encoder::writeAnalysisFileRefine(x265_analysis_data* analysis, FrameData &curEncData)
 {
 #define X265_FWRITE(val, size, writeSize, fileOffset)\
     if (fwrite(val, size, writeSize, fileOffset) < writeSize)\
     {\
     x265_log(NULL, X265_LOG_ERROR, "Error writing analysis 2 pass data\n"); \
-    freeAnalysis(analysis, slicetype); \
+    x265_free_analysis_data(m_param, analysis); \
     m_aborted = true; \
     return; \
 }\

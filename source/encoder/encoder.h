@@ -275,14 +275,6 @@ public:
 
     void updateVbvPlan(RateControl* rc);
 
-    void allocAnalysis(x265_analysis_data* analysis);
-
-    void allocAnalysis(x265_analysis_data* analysis, int sliceType);
-
-    void freeAnalysis(x265_analysis_data* analysis);
-
-    void freeAnalysis(x265_analysis_data* analysis, int sliceType);
-
     void readAnalysisFile(x265_analysis_data* analysis, int poc, int sliceType);
 
     void readAnalysisFile(x265_analysis_data* analysis, int poc, const x265_picture* picIn, int paramBytes);
@@ -295,7 +287,7 @@ public:
 
     void writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncData);
 
-    void writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncData, int slicetype);
+    void writeAnalysisFileRefine(x265_analysis_data* analysis, FrameData &curEncData);
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 

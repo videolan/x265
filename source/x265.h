@@ -1757,6 +1757,14 @@ X265_API extern const char *x265_version_str;
  *      A static string describing the compiler and target architecture */
 X265_API extern const char *x265_build_info_str;
 
+/* x265_alloc_analysis_data:
+*     Allocate memory for the x265_analysis_data object's internal structures. */
+void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis);
+
+/*
+*    Free the allocated memory for x265_analysis_data object's internal structures. */
+void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis);
+
 /* Force a link error in the case of linking against an incompatible API version.
  * Glue #defines exist to force correct macro expansion; the final output of the macro
  * is x265_encoder_open_##X265_BUILD (for purposes of dlopen). */
