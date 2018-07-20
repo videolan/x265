@@ -406,14 +406,16 @@ int x265_set_analysis_data(x265_encoder *enc, x265_analysis_data *analysis_data,
 void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
 {
     X265_CHECK(analysis->sliceType, "invalid slice type\n");
-    analysis->interData = analysis->intraData = analysis->distortionData = NULL;
+    analysis->interData = NULL;
+    analysis->intraData = NULL;
+    analysis->distortionData = NULL;
     bool isVbv = param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0;
     int numDir = 2; //irrespective of P or B slices set direction as 2
     uint32_t numPlanes = param->internalCsp == X265_CSP_I400 ? 1 : 3;
 
     //Allocate memory for distortionData pointer
-    analysisDistortionData *distortionData = (analysisDistortionData*)analysis->distortionData;
-    CHECKED_MALLOC_ZERO(distortionData, analysisDistortionData, 1);
+    x265_analysis_distortion_data *distortionData = analysis->distortionData;
+    CHECKED_MALLOC_ZERO(distortionData, x265_analysis_distortion_data, 1);
     CHECKED_MALLOC_ZERO(distortionData->distortion, sse_t, analysis->numPartitions * analysis->numCUsInFrame);
     if (param->rc.bStatRead)
     {
@@ -434,14 +436,14 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
 
     //Allocate memory for weightParam pointer
     if (!(param->bMVType == AVC_INFO))
-        CHECKED_MALLOC_ZERO(analysis->wt, WeightParam, numPlanes * numDir);
+        CHECKED_MALLOC_ZERO(analysis->wt, x265_weight_param, numPlanes * numDir);
 
     if (param->analysisReuseLevel < 2)
         return;
 
     //Allocate memory for intraData pointer
-    analysis_intra_data *intraData = (analysis_intra_data*)analysis->intraData;
-    CHECKED_MALLOC_ZERO(intraData, analysis_intra_data, 1);
+    x265_analysis_intra_data *intraData = analysis->intraData;
+    CHECKED_MALLOC_ZERO(intraData, x265_analysis_intra_data, 1);
     CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC(intraData->partSizes, char, analysis->numPartitions * analysis->numCUsInFrame);
@@ -449,15 +451,15 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     analysis->intraData = intraData;
 
     //Allocate memory for interData pointer based on ReuseLevels
-    analysis_inter_data *interData = (analysis_inter_data*)analysis->interData;
-    CHECKED_MALLOC_ZERO(interData, analysis_inter_data, 1);
+    x265_analysis_inter_data *interData = analysis->interData;
+    CHECKED_MALLOC_ZERO(interData, x265_analysis_inter_data, 1);
     CHECKED_MALLOC(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
 
     CHECKED_MALLOC_ZERO(interData->mvpIdx[0], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC_ZERO(interData->mvpIdx[1], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC_ZERO(interData->mv[0], MV, analysis->numPartitions * analysis->numCUsInFrame);
-    CHECKED_MALLOC_ZERO(interData->mv[1], MV, analysis->numPartitions * analysis->numCUsInFrame);
+    CHECKED_MALLOC_ZERO(interData->mv[0], x265_analysis_MV, analysis->numPartitions * analysis->numCUsInFrame);
+    CHECKED_MALLOC_ZERO(interData->mv[1], x265_analysis_MV, analysis->numPartitions * analysis->numCUsInFrame);
 
     if (param->analysisReuseLevel > 4)
     {
@@ -506,13 +508,13 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
     //Free memory for distortionData pointers
     if (analysis->distortionData)
     {
-        X265_FREE(((analysisDistortionData*)analysis->distortionData)->distortion);
+        X265_FREE((analysis->distortionData)->distortion);
         if (param->rc.bStatRead)
         {
-            X265_FREE(((analysisDistortionData*)analysis->distortionData)->ctuDistortion);
-            X265_FREE(((analysisDistortionData*)analysis->distortionData)->scaledDistortion);
-            X265_FREE(((analysisDistortionData*)analysis->distortionData)->offset);
-            X265_FREE(((analysisDistortionData*)analysis->distortionData)->threshold);
+            X265_FREE((analysis->distortionData)->ctuDistortion);
+            X265_FREE((analysis->distortionData)->scaledDistortion);
+            X265_FREE((analysis->distortionData)->offset);
+            X265_FREE((analysis->distortionData)->threshold);
         }
         X265_FREE(analysis->distortionData);
     }
@@ -527,10 +529,10 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
     //Free memory for intraData pointers
     if (analysis->intraData)
     {
-        X265_FREE(((analysis_intra_data*)analysis->intraData)->depth);
-        X265_FREE(((analysis_intra_data*)analysis->intraData)->modes);
-        X265_FREE(((analysis_intra_data*)analysis->intraData)->partSizes);
-        X265_FREE(((analysis_intra_data*)analysis->intraData)->chromaModes);
+        X265_FREE((analysis->intraData)->depth);
+        X265_FREE((analysis->intraData)->modes);
+        X265_FREE((analysis->intraData)->partSizes);
+        X265_FREE((analysis->intraData)->chromaModes);
         X265_FREE(analysis->intraData);
         analysis->intraData = NULL;
     }
@@ -538,26 +540,26 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
     //Free interData pointers
     if (analysis->interData)
     {
-        X265_FREE(((analysis_inter_data*)analysis->interData)->depth);
-        X265_FREE(((analysis_inter_data*)analysis->interData)->modes);
-        X265_FREE(((analysis_inter_data*)analysis->interData)->mvpIdx[0]);
-        X265_FREE(((analysis_inter_data*)analysis->interData)->mvpIdx[1]);
-        X265_FREE(((analysis_inter_data*)analysis->interData)->mv[0]);
-        X265_FREE(((analysis_inter_data*)analysis->interData)->mv[1]);
+        X265_FREE((analysis->interData)->depth);
+        X265_FREE((analysis->interData)->modes);
+        X265_FREE((analysis->interData)->mvpIdx[0]);
+        X265_FREE((analysis->interData)->mvpIdx[1]);
+        X265_FREE((analysis->interData)->mv[0]);
+        X265_FREE((analysis->interData)->mv[1]);
 
         if (param->analysisReuseLevel > 4)
         {
-            X265_FREE(((analysis_inter_data*)analysis->interData)->mergeFlag);
-            X265_FREE(((analysis_inter_data*)analysis->interData)->partSize);
+            X265_FREE((analysis->interData)->mergeFlag);
+            X265_FREE((analysis->interData)->partSize);
         }
         if (param->analysisReuseLevel >= 7)
         {
             int numDir = 2;
-            X265_FREE(((analysis_inter_data*)analysis->interData)->interDir);
-            X265_FREE(((analysis_inter_data*)analysis->interData)->sadCost);
+            X265_FREE((analysis->interData)->interDir);
+            X265_FREE((analysis->interData)->sadCost);
             for (int dir = 0; dir < numDir; dir++)
             {
-                X265_FREE(((analysis_inter_data*)analysis->interData)->refIdx[dir]);
+                X265_FREE((analysis->interData)->refIdx[dir]);
                 if (analysis->modeFlag[dir] != NULL)
                 {
                     X265_FREE(analysis->modeFlag[dir]);
@@ -566,7 +568,7 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
             }
         }
         else
-            X265_FREE(((analysis_inter_data*)analysis->interData)->ref);
+            X265_FREE((analysis->interData)->ref);
         X265_FREE(analysis->interData);
         analysis->interData = NULL;
     }

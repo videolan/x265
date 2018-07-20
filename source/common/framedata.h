@@ -179,42 +179,5 @@ public:
     inline CUData* getPicCTU(uint32_t ctuAddr) { return &m_picCTU[ctuAddr]; }
 };
 
-/* Stores intra analysis data for a single frame. This struct needs better packing */
-struct analysis_intra_data
-{
-    uint8_t*  depth;
-    uint8_t*  modes;
-    char*     partSizes;
-    uint8_t*  chromaModes;
-};
-
-/* Stores inter analysis data for a single frame */
-struct analysis_inter_data
-{
-    int32_t*    ref;
-    uint8_t*    depth;
-    uint8_t*    modes;
-    uint8_t*    partSize;
-    uint8_t*    mergeFlag;
-    uint8_t*    interDir;
-    uint8_t*    mvpIdx[2];
-    int8_t*     refIdx[2];
-    MV*         mv[2];
-   int64_t*     sadCost;
-};
-
-struct analysisDistortionData
-{
-    sse_t*        distortion;
-    sse_t*        ctuDistortion;
-    double*       scaledDistortion;
-    double        averageDistortion;
-    double        sdDistortion;
-    uint32_t      highDistortionCtuCount;
-    uint32_t      lowDistortionCtuCount;
-    double*       offset;
-    double*       threshold;
-};
-
 }
 #endif // ifndef X265_FRAMEDATA_H

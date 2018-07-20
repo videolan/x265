@@ -2178,12 +2178,12 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
         PredictionUnit pu(cu, cuGeom, puIdx);
         m_me.setSourcePU(*interMode.fencYuv, pu.ctuAddr, pu.cuAbsPartIdx, pu.puAbsPartIdx, pu.width, pu.height, m_param->searchMethod, m_param->subpelRefine, bChromaMC);
         useAsMVP = false;
-        analysis_inter_data* interDataCTU = NULL;
+        x265_analysis_inter_data* interDataCTU = NULL;
         int cuIdx;
         cuIdx = (interMode.cu.m_cuAddr * m_param->num4x4Partitions) + cuGeom.absPartIdx;
         if (m_param->analysisReuseLevel == 10 && m_param->interRefine > 1)
         {
-            interDataCTU = (analysis_inter_data*)m_frame->m_analysisData.interData;
+            interDataCTU = m_frame->m_analysisData.interData;
             if ((cu.m_predMode[pu.puAbsPartIdx] == interDataCTU->modes[cuIdx + pu.puAbsPartIdx])
                 && (cu.m_partSize[pu.puAbsPartIdx] == interDataCTU->partSize[cuIdx + pu.puAbsPartIdx])
                 && !(interDataCTU->mergeFlag[cuIdx + puIdx])
@@ -2225,7 +2225,9 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 MV mvmin, mvmax, outmv, mvp;
                 if (useAsMVP)
                 {
-                    mvp = interDataCTU->mv[list][cuIdx + puIdx];
+                    mvp.x = interDataCTU->mv[list][cuIdx + puIdx].x;
+                    mvp.y = interDataCTU->mv[list][cuIdx + puIdx].y;
+                    mvp.word = interDataCTU->mv[list][cuIdx + puIdx].word;
                     mvpIdx = interDataCTU->mvpIdx[list][cuIdx + puIdx];
                 }
                 else

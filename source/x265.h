@@ -26,9 +26,14 @@
 #define X265_H
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "x265_config.h"
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#if _MSC_VER
+#pragma warning(disable: 4201) // non-standard extension used (nameless struct/union)
 #endif
 
 /* x265_encoder:
@@ -127,25 +132,85 @@ typedef struct x265_analysis_validate
     int     chunkEnd;
 }x265_analysis_validate;
 
+/* Stores intra analysis data for a single frame. This struct needs better packing */
+typedef struct x265_analysis_intra_data
+{
+    uint8_t*  depth;
+    uint8_t*  modes;
+    char*     partSizes;
+    uint8_t*  chromaModes;
+}x265_analysis_intra_data;
+
+typedef struct x265_analysis_MV
+{
+    union{
+        struct { int16_t x, y; };
+
+        int32_t word;
+    };
+}x265_analysis_MV;
+
+/* Stores inter analysis data for a single frame */
+typedef struct x265_analysis_inter_data
+{
+    int32_t*    ref;
+    uint8_t*    depth;
+    uint8_t*    modes;
+    uint8_t*    partSize;
+    uint8_t*    mergeFlag;
+    uint8_t*    interDir;
+    uint8_t*    mvpIdx[2];
+    int8_t*     refIdx[2];
+    x265_analysis_MV*         mv[2];
+    int64_t*     sadCost;
+}x265_analysis_inter_data;
+
+typedef struct x265_weight_param
+{
+    uint32_t log2WeightDenom;
+    int      inputWeight;
+    int      inputOffset;
+    bool     bPresentFlag;
+}x265_weight_param;
+
+#if X265_DEPTH < 10
+typedef uint32_t sse_t;
+#else
+typedef uint64_t sse_t;
+#endif
+
+typedef struct x265_analysis_distortion_data
+{
+    sse_t*        distortion;
+    sse_t*        ctuDistortion;
+    double*       scaledDistortion;
+    double        averageDistortion;
+    double        sdDistortion;
+    uint32_t      highDistortionCtuCount;
+    uint32_t      lowDistortionCtuCount;
+    double*       offset;
+    double*       threshold;
+}x265_analysis_distortion_data;
+
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
-    int64_t          satdCost;
-    uint32_t         frameRecordSize;
-    uint32_t         poc;
-    uint32_t         sliceType;
-    uint32_t         numCUsInFrame;
-    uint32_t         numPartitions;
-    uint32_t         depthBytes;
-    int              bScenecut;
-    void*            wt;
-    void*            interData;
-    void*            intraData;
-    uint32_t         numCuInHeight;
-    x265_lookahead_data lookahead;
-    uint8_t*         modeFlag[2];
-    x265_analysis_validate saveParam;
-    void*            distortionData;
+    int64_t                           satdCost;
+    uint32_t                          frameRecordSize;
+    uint32_t                          poc;
+    uint32_t                          sliceType;
+    uint32_t                          numCUsInFrame;
+    uint32_t                          numPartitions;
+    uint32_t                          depthBytes;
+    int                               bScenecut;
+    x265_weight_param*                wt;
+    x265_analysis_inter_data*         interData;
+    x265_analysis_intra_data*         intraData;
+    uint32_t                          numCuInHeight;
+    x265_lookahead_data               lookahead;
+    uint8_t*                          modeFlag[2];
+    x265_analysis_validate            saveParam;
+    x265_analysis_distortion_data*    distortionData;
 } x265_analysis_data;
 
 /* cu statistics */
