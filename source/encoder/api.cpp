@@ -406,15 +406,14 @@ int x265_set_analysis_data(x265_encoder *enc, x265_analysis_data *analysis_data,
 void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
 {
     X265_CHECK(analysis->sliceType, "invalid slice type\n");
-    analysis->interData = NULL;
-    analysis->intraData = NULL;
-    analysis->distortionData = NULL;
+    x265_analysis_inter_data *interData = analysis->interData = NULL;
+    x265_analysis_intra_data *intraData = analysis->intraData = NULL;
+    x265_analysis_distortion_data *distortionData = analysis->distortionData = NULL;
     bool isVbv = param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0;
     int numDir = 2; //irrespective of P or B slices set direction as 2
     uint32_t numPlanes = param->internalCsp == X265_CSP_I400 ? 1 : 3;
 
     //Allocate memory for distortionData pointer
-    x265_analysis_distortion_data *distortionData = analysis->distortionData;
     CHECKED_MALLOC_ZERO(distortionData, x265_analysis_distortion_data, 1);
     CHECKED_MALLOC_ZERO(distortionData->distortion, sse_t, analysis->numPartitions * analysis->numCUsInFrame);
     if (param->rc.bStatRead)
@@ -442,7 +441,6 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
         return;
 
     //Allocate memory for intraData pointer
-    x265_analysis_intra_data *intraData = analysis->intraData;
     CHECKED_MALLOC_ZERO(intraData, x265_analysis_intra_data, 1);
     CHECKED_MALLOC(intraData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
@@ -451,7 +449,6 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     analysis->intraData = intraData;
 
     //Allocate memory for interData pointer based on ReuseLevels
-    x265_analysis_inter_data *interData = analysis->interData;
     CHECKED_MALLOC_ZERO(interData, x265_analysis_inter_data, 1);
     CHECKED_MALLOC(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
