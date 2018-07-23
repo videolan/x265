@@ -3032,9 +3032,9 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             for (int32_t i = 0; i < numPredDir; i++)
             {
                 int* ref = &m_reuseRef[i * m_frame->m_analysisData.numPartitions * m_frame->m_analysisData.numCUsInFrame];
-                x265_analysis_MV src = m_reuseMv[i][cuGeom.absPartIdx]; MV dst = bestME[i].mv;
+                x265_analysis_MV src = m_reuseMv[i][cuGeom.absPartIdx];
                 bestME[i].ref = ref[cuGeom.absPartIdx];
-                COPY_TO_MV(src.x, src.y, dst.x, dst.y);
+                COPY_TO_MV(src.x, src.y, bestME[i].mv.x, bestME[i].mv.y);
                 bestME[i].mvpIdx = m_reuseMvpIdx[i][cuGeom.absPartIdx];
             }
         }
@@ -3097,10 +3097,10 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                x265_analysis_MV src = m_reuseMv[i][cuGeom.absPartIdx]; MV dst = bestME[i].mv;
+                x265_analysis_MV src = m_reuseMv[i][cuGeom.absPartIdx];
                 int* ref = &m_reuseRef[i * m_frame->m_analysisData.numPartitions * m_frame->m_analysisData.numCUsInFrame];
                 bestME[i].ref = ref[cuGeom.absPartIdx];
-                COPY_TO_MV(src.x, src.y, dst.x, dst.y);
+                COPY_TO_MV(src.x, src.y, bestME[i].mv.x, bestME[i].mv.y);
                 bestME[i].mvpIdx = m_reuseMvpIdx[i][cuGeom.absPartIdx];
             }
         }
