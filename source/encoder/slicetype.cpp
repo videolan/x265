@@ -436,7 +436,7 @@ uint32_t LookaheadTLD::weightCostLuma(Lowres& fenc, Lowres& ref, WeightParam& wp
     pixel *src = ref.fpelPlane[0];
     intptr_t stride = fenc.lumaStride;
 
-    if (wp.bPresentFlag)
+    if (wp.wtPresent)
     {
         int offset = wp.inputOffset << (X265_DEPTH - 8);
         int scale = wp.inputWeight;
@@ -490,7 +490,7 @@ void LookaheadTLD::weightsAnalyse(Lowres& fenc, Lowres& ref)
     int deltaIndex = fenc.frameNum - ref.frameNum;
 
     WeightParam wp;
-    wp.bPresentFlag = false;
+    wp.wtPresent = 0;
 
     if (!wbuffer[0])
     {

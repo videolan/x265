@@ -1307,7 +1307,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             {
                 if (slice->m_sliceType == P_SLICE)
                 {
-                    if (slice->m_weightPredTable[0][0][0].bPresentFlag)
+                    if (slice->m_weightPredTable[0][0][0].wtPresent)
                         m_numLumaWPFrames++;
                 }
                 else if (slice->m_sliceType == B_SLICE)
@@ -1315,7 +1315,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     bool bLuma = false;
                     for (int l = 0; l < 2; l++)
                     {
-                        if (slice->m_weightPredTable[l][0][0].bPresentFlag)
+                        if (slice->m_weightPredTable[l][0][0].wtPresent)
                             bLuma = true;
                     }
                     if (bLuma)
@@ -1326,10 +1326,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             {
                 if (slice->m_sliceType == P_SLICE)
                 {
-                    if (slice->m_weightPredTable[0][0][0].bPresentFlag)
+                    if (slice->m_weightPredTable[0][0][0].wtPresent)
                         m_numLumaWPFrames++;
-                    if (slice->m_weightPredTable[0][0][1].bPresentFlag ||
-                        slice->m_weightPredTable[0][0][2].bPresentFlag)
+                    if (slice->m_weightPredTable[0][0][1].wtPresent ||
+                        slice->m_weightPredTable[0][0][2].wtPresent)
                         m_numChromaWPFrames++;
                 }
                 else if (slice->m_sliceType == B_SLICE)
@@ -1337,10 +1337,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     bool bLuma = false, bChroma = false;
                     for (int l = 0; l < 2; l++)
                     {
-                        if (slice->m_weightPredTable[l][0][0].bPresentFlag)
+                        if (slice->m_weightPredTable[l][0][0].wtPresent)
                             bLuma = true;
-                        if (slice->m_weightPredTable[l][0][1].bPresentFlag ||
-                            slice->m_weightPredTable[l][0][2].bPresentFlag)
+                        if (slice->m_weightPredTable[l][0][1].wtPresent ||
+                            slice->m_weightPredTable[l][0][2].wtPresent)
                             bChroma = true;
                     }
 

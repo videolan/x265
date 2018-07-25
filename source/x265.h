@@ -169,7 +169,7 @@ typedef struct x265_weight_param
     uint32_t log2WeightDenom;
     int      inputWeight;
     int      inputOffset;
-    bool     bPresentFlag;
+    int      wtPresent;
 }x265_weight_param;
 
 #if X265_DEPTH < 10

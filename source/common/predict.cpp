@@ -91,7 +91,7 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
         MV mv0 = cu.m_mv[0][pu.puAbsPartIdx];
         cu.clipMv(mv0);
 
-        if (cu.m_slice->m_pps->bUseWeightPred && wp0->bPresentFlag)
+        if (cu.m_slice->m_pps->bUseWeightPred && wp0->wtPresent)
         {
             for (int plane = 0; plane < (bChroma ? 3 : 1); plane++)
             {
@@ -133,7 +133,7 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
             pwp0 = refIdx0 >= 0 ? cu.m_slice->m_weightPredTable[0][refIdx0] : NULL;
             pwp1 = refIdx1 >= 0 ? cu.m_slice->m_weightPredTable[1][refIdx1] : NULL;
 
-            if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
+            if (pwp0 && pwp1 && (pwp0->wtPresent || pwp1->wtPresent))
             {
                 /* biprediction weighting */
                 for (int plane = 0; plane < (bChroma ? 3 : 1); plane++)
@@ -183,7 +183,7 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
                 predInterChromaShort(pu, m_predShortYuv[1], *cu.m_slice->m_refReconPicList[1][refIdx1], mv1);
             }
 
-            if (pwp0 && pwp1 && (pwp0->bPresentFlag || pwp1->bPresentFlag))
+            if (pwp0 && pwp1 && (pwp0->wtPresent || pwp1->wtPresent))
                 addWeightBi(pu, predYuv, m_predShortYuv[0], m_predShortYuv[1], wv0, wv1, bLuma, bChroma);
             else
                 predYuv.addAvg(m_predShortYuv[0], m_predShortYuv[1], pu.puAbsPartIdx, pu.width, pu.height, bLuma, bChroma);
@@ -193,7 +193,7 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
             MV mv0 = cu.m_mv[0][pu.puAbsPartIdx];
             cu.clipMv(mv0);
 
-            if (pwp0 && pwp0->bPresentFlag)
+            if (pwp0 && pwp0->wtPresent)
             {
                 ShortYuv& shortYuv = m_predShortYuv[0];
 
@@ -220,7 +220,7 @@ void Predict::motionCompensation(const CUData& cu, const PredictionUnit& pu, Yuv
             /* uniprediction to L1 */
             X265_CHECK(refIdx1 >= 0, "refidx1 was not positive\n");
 
-            if (pwp1 && pwp1->bPresentFlag)
+            if (pwp1 && pwp1->wtPresent)
             {
                 ShortYuv& shortYuv = m_predShortYuv[0];
 

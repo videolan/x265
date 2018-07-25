@@ -298,7 +298,7 @@ struct WeightParam
     uint32_t log2WeightDenom;
     int      inputWeight;
     int      inputOffset;
-    bool     bPresentFlag;
+    int      wtPresent;
 
     /* makes a non-h265 weight (i.e. fix7), into an h265 weight */
     void setFromWeightAndOffset(int w, int o, int denom, bool bNormalize)
@@ -321,7 +321,7 @@ struct WeightParam
         (w).inputWeight = (s); \
         (w).log2WeightDenom = (d); \
         (w).inputOffset = (o); \
-        (w).bPresentFlag = (b); \
+        (w).wtPresent = (b); \
     }
 
 class Slice

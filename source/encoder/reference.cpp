@@ -89,7 +89,7 @@ int MotionReference::init(PicYuv* recPic, WeightParam *wp, const x265_param& p)
                 cuHeight >>= reconPic->m_vChromaShift;
             }
 
-            if (wp[c].bPresentFlag)
+            if (wp[c].wtPresent)
             {
                 if (!weightBuffer[c])
                 {
