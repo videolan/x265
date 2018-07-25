@@ -1239,7 +1239,7 @@ Temporal / motion search options
 
 .. option:: --analyze-src-pics, --no-analyze-src-pics
 
-    Enalbe motion estimation with source frame pixels, in this mode, 
+    Enable motion estimation with source frame pixels, in this mode, 
     motion estimation can be computed independently. Default disabled.
 
 Spatial/intra options
