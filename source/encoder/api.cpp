@@ -405,7 +405,6 @@ int x265_set_analysis_data(x265_encoder *enc, x265_analysis_data *analysis_data,
 
 void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
 {
-    X265_CHECK(analysis->sliceType, "invalid slice type\n");
     x265_analysis_inter_data *interData = analysis->interData = NULL;
     x265_analysis_intra_data *intraData = analysis->intraData = NULL;
     x265_analysis_distortion_data *distortionData = analysis->distortionData = NULL;
