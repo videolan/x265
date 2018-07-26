@@ -134,8 +134,8 @@ void x265_param_default(x265_param* param)
     param->bEmitInfoSEI = 1;
     param->bEmitHDRSEI = 0;
     param->bEmitIDRRecoverySEI = 0;
-    
-	/* CU definitions */
+
+    /* CU definitions */
     param->maxCUSize = 64;
     param->minCUSize = 8;
     param->tuQTMaxInterDepth = 1;
@@ -196,8 +196,8 @@ void x265_param_default(x265_param* param)
     param->bEnableSAO = 1;
     param->bSaoNonDeblocked = 0;
     param->bLimitSAO = 0;
-    
-	/* Coding Quality */
+
+    /* Coding Quality */
     param->cbQpOffset = 0;
     param->crQpOffset = 0;
     param->rdPenalty = 0;
@@ -309,9 +309,9 @@ void x265_param_default(x265_param* param)
     param->bMVType = 0;
     param->bSingleSeiNal = 0;
 
-	/* SEI messages */
-	param->preferredTransferCharacteristics = -1;
-	param->pictureStructure = -1;
+    /* SEI messages */
+    param->preferredTransferCharacteristics = -1;
+    param->pictureStructure = -1;
 }
 
 int x265_param_default_preset(x265_param* param, const char* preset, const char* tune)
@@ -1019,7 +1019,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("refine-mv")p->mvRefine = atobool(value);
         OPT("force-flush")p->forceFlush = atoi(value);
         OPT("splitrd-skip") p->bEnableSplitRdSkip = atobool(value);
-		OPT("lowpass-dct") p->bLowPassDct = atobool(value);
+        OPT("lowpass-dct") p->bLowPassDct = atobool(value);
         OPT("vbv-end") p->vbvBufferEnd = atof(value);
         OPT("vbv-end-fr-adj") p->vbvEndFrameAdjust = atof(value);
         OPT("copy-pic") p->bCopyPicToFrame = atobool(value);
@@ -1037,7 +1037,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             {
                 bError = true;
             }
-         }
+        }
         OPT("gop-lookahead") p->gopLookahead = atoi(value);
         OPT("analysis-save") p->analysisSave = strdup(value);
         OPT("analysis-load") p->analysisLoad = strdup(value);
@@ -1045,8 +1045,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("max-ausize-factor") p->maxAUSizeFactor = atof(value);
         OPT("dynamic-refine") p->bDynamicRefine = atobool(value);
         OPT("single-sei") p->bSingleSeiNal = atobool(value);
-		OPT("atc-sei") p->preferredTransferCharacteristics = atoi(value);
-		OPT("pic-struct") p->pictureStructure = atoi(value);
+        OPT("atc-sei") p->preferredTransferCharacteristics = atoi(value);
+        OPT("pic-struct") p->pictureStructure = atoi(value);
         OPT("chunk-start") p->chunkStart = atoi(value);
         OPT("chunk-end") p->chunkEnd = atoi(value);
         OPT("nalu-file") p->naluFile = strdup(value);

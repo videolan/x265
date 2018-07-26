@@ -343,7 +343,7 @@ typedef enum
     REGION_REFRESH_INFO                  = 134,
     MASTERING_DISPLAY_INFO               = 137,
     CONTENT_LIGHT_LEVEL_INFO             = 144,
-	ALTERNATIVE_TRANSFER_CHARACTERISTICS = 147,
+    ALTERNATIVE_TRANSFER_CHARACTERISTICS = 147,
 } SEIPayloadType;
 
 typedef struct x265_sei_payload
@@ -652,7 +652,7 @@ typedef struct x265_zone
     
 /* data to calculate aggregate VMAF score */
 typedef struct x265_vmaf_data
-{   
+{
     int width;
     int height;
     size_t offset; 
@@ -1698,12 +1698,12 @@ typedef struct x265_param
 
 
     /* First frame of the chunk. Frames preceeding this in display order will
-	* be encoded, however, they will be discarded in the bitstream.
+    * be encoded, however, they will be discarded in the bitstream.
     * Default 0 (disabled). */
     int       chunkStart;
 
     /* Last frame of the chunk. Frames following this in display order will be
-	* used in taking lookahead decisions, but, they will not be encoded.
+    * used in taking lookahead decisions, but, they will not be encoded.
     * Default 0 (disabled). */
     int       chunkEnd;
     /* File containing base64 encoded SEI messages in POC order */

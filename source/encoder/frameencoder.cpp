@@ -674,14 +674,14 @@ void FrameEncoder::compressFrame()
                 sei->m_picStruct = (poc & 1) ? 1 /* top */ : 2 /* bottom */;
             else if (m_param->interlaceMode == 1)
                 sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
-			else
-				sei->m_picStruct = m_param->pictureStructure;
-			
-		    if (m_param->interlaceMode)
-				 sei->m_sourceScanType = 0;
-			else
-				 sei->m_sourceScanType = 1;
-			
+            else
+                sei->m_picStruct = m_param->pictureStructure;
+
+            if (m_param->interlaceMode)
+                sei->m_sourceScanType = 0;
+            else
+                sei->m_sourceScanType = 1;
+
             sei->m_duplicateFlag = false;
         }
 
@@ -702,17 +702,17 @@ void FrameEncoder::compressFrame()
         sei->alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
     }
 
-	if (m_param->preferredTransferCharacteristics > -1 && slice->isIRAP())
-	{
-	    SEIAlternativeTC m_seiAlternativeTC;
-		m_seiAlternativeTC.m_preferredTransferCharacteristics = m_param->preferredTransferCharacteristics;
-		m_bs.resetBits();
-		int payloadSize = m_seiAlternativeTC.countPayloadSize(*slice->m_sps);
-		m_seiAlternativeTC.setSize(payloadSize);
-		m_seiAlternativeTC.write(m_bs, *slice->m_sps);
-		m_seiAlternativeTC.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
-	}
-	
+    if (m_param->preferredTransferCharacteristics > -1 && slice->isIRAP())
+    {
+        SEIAlternativeTC m_seiAlternativeTC;
+        m_seiAlternativeTC.m_preferredTransferCharacteristics = m_param->preferredTransferCharacteristics;
+        m_bs.resetBits();
+        int payloadSize = m_seiAlternativeTC.countPayloadSize(*slice->m_sps);
+        m_seiAlternativeTC.setSize(payloadSize);
+        m_seiAlternativeTC.write(m_bs, *slice->m_sps);
+        m_seiAlternativeTC.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+    }
+
     bool isSei = false;
     /* Write user SEI */
     for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
@@ -1420,7 +1420,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             }
             curRow.avgQPComputed = 1;
         }
-    }    
+    }
 
     // Initialize restrict on MV range in slices
     tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * m_param->maxCUSize * 4) + 3 * 4;
@@ -1525,7 +1525,7 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         {
             // NOTE: in VBV mode, we may reencode anytime, so we can't do Deblock stage-Horizon and SAO
             if (!bIsVbv)
-            {                
+            {
                 // Delay one row to avoid intra prediction conflict
                 if (m_pool && !bFirstRowInSlice)
                 {                    
@@ -1802,24 +1802,24 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
         else if ((uint32_t)m_rce.encodeOrder <= 2 * (m_param->fpsNum / m_param->fpsDenom))
             rowCount = X265_MIN((maxRows + 1) / 2, maxRows - 1);
         else
-			rowCount = X265_MIN(m_refLagRows / m_param->maxSlices, maxRows - 1);
+            rowCount = X265_MIN(m_refLagRows / m_param->maxSlices, maxRows - 1);
 
         if (rowInSlice == rowCount)
         {
             m_rowSliceTotalBits[sliceId] = 0;
             if (bIsVbv && !(m_param->rc.bEnableConstVbv && m_param->bEnableWavefront))
-            {          
+            {
                 for (uint32_t i = m_sliceBaseRow[sliceId]; i < rowCount + m_sliceBaseRow[sliceId]; i++)
                     m_rowSliceTotalBits[sliceId] += curEncData.m_rowStat[i].encodedBits;
             }
             else
             {
                 uint32_t startAddr = m_sliceBaseRow[sliceId] * numCols;
-				uint32_t finishAddr = startAddr + rowCount * numCols;
+                uint32_t finishAddr = startAddr + rowCount * numCols;
                 
-				for (uint32_t cuAddr = startAddr; cuAddr < finishAddr; cuAddr++)
+                for (uint32_t cuAddr = startAddr; cuAddr < finishAddr; cuAddr++)
                     m_rowSliceTotalBits[sliceId] += curEncData.m_cuStat[cuAddr].totalBits;
-            }            
+            }
 
             if (ATOMIC_INC(&m_sliceCnt) == (int)m_param->maxSlices)
             {
@@ -2132,7 +2132,7 @@ void FrameEncoder::vmafFrameLevelScore()
 Frame *FrameEncoder::getEncodedPicture(NALList& output)
 {
     if (m_frame)
-    {    
+    {
         /* block here until worker thread completes */
         m_done.wait();
 
