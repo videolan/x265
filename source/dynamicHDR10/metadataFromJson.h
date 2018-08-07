@@ -36,6 +36,11 @@ public:
     metadataFromJson();
     ~metadataFromJson();
 
+	enum JsonType{
+		LEGACY,
+		LLC
+	};
+		
 
     /**
      * @brief frameMetadataFromJson: Generates a sigle frame metadata array from Json file with all
@@ -98,7 +103,7 @@ private:
 
     class DynamicMetaIO;
     DynamicMetaIO *mPimpl;
-    void fillMetadataArray(const JsonArray &fileData, int frame, const bool isLLCJson, uint8_t *&metadata);
+    void fillMetadataArray(const JsonArray &fileData, int frame, const JsonType jsonType, uint8_t *&metadata);
 };
 
 #endif // METADATAFROMJSON_H

@@ -46,132 +46,133 @@ public:
     int mCurrentStreamBit;
     int mCurrentStreamByte;
 
-    bool luminanceParamFromJson(const Json &data, LuminanceParameters &obj)
+    bool luminanceParamFromJson(const Json &data, LuminanceParameters &obj, const JsonType jsonType)
     {
         JsonObject lumJsonData = data.object_items();
         if(!lumJsonData.empty())
         {
-            obj.averageLuminance = static_cast<float>(lumJsonData[LuminanceNames::AverageRGB].number_value());
-            obj.maxRLuminance = static_cast<float>(lumJsonData[LuminanceNames::MaxSCL0].number_value());
-            obj.maxGLuminance = static_cast<float>(lumJsonData[LuminanceNames::MaxSCL1].number_value());
-            obj.maxBLuminance = static_cast<float>(lumJsonData[LuminanceNames::MaxSCL2].number_value());
+			switch(jsonType)
+			{
+				case LEGACY:
+				{
+					obj.averageLuminance = static_cast<float>(lumJsonData[LuminanceNames::AverageRGB].number_value());
+					obj.maxRLuminance = static_cast<float>(lumJsonData[LuminanceNames::MaxSCL0].number_value());
+					obj.maxGLuminance = static_cast<float>(lumJsonData[LuminanceNames::MaxSCL1].number_value());
+					obj.maxBLuminance = static_cast<float>(lumJsonData[LuminanceNames::MaxSCL2].number_value());
 
-            JsonObject percentileData = lumJsonData[PercentileNames::TagName].object_items();
-            obj.order = percentileData[PercentileNames::NumberOfPercentiles].int_value();
-            if(!percentileData.empty())
-            {
-                obj.percentiles.resize(obj.order);
-                for(int i = 0; i < obj.order; ++i)
-                {
-                    std::string percentileTag = PercentileNames::TagName;
-                    percentileTag += std::to_string(i);
-                    obj.percentiles[i] = static_cast<unsigned int>(percentileData[percentileTag].int_value());
-                }
-            }
-            return true;
-        }
+					JsonObject percentileData = lumJsonData[PercentileNames::TagName].object_items();
+					obj.order = percentileData[PercentileNames::NumberOfPercentiles].int_value();
+					if(!percentileData.empty())
+					{
+						obj.percentiles.resize(obj.order);
+						for(int i = 0; i < obj.order; ++i)
+						{
+							std::string percentileTag = PercentileNames::TagName;
+							percentileTag += std::to_string(i);
+							obj.percentiles[i] = static_cast<unsigned int>(percentileData[percentileTag].int_value());
+						}
+					}
+					return true;
+				} break;
+				case LLC:
+				{
+					obj.averageLuminance = static_cast<float>(lumJsonData[LuminanceNames::AverageRGB].number_value());
+					JsonArray maxScl = lumJsonData[LuminanceNames::MaxSCL].array_items();
+					obj.maxRLuminance = static_cast<float>(maxScl[0].number_value());
+					obj.maxGLuminance = static_cast<float>(maxScl[1].number_value());
+					obj.maxBLuminance = static_cast<float>(maxScl[2].number_value());
+
+					JsonObject percentileData = lumJsonData[LuminanceNames::LlcTagName].object_items();
+					if(!percentileData.empty())
+					{
+						JsonArray distributionValues = percentileData[PercentileNames::DistributionValues].array_items();
+						obj.order = static_cast<int>(distributionValues.size());
+						obj.percentiles.resize(obj.order);
+						for(int i = 0; i < obj.order; ++i)
+						{
+							obj.percentiles[i] = static_cast<unsigned int>(distributionValues[i].int_value());
+						}
+					}
+					return true;
+				} break;
+			}
+		}
         return false;
     }
 
-    bool luminanceParamFromLLCJson(const Json &data, LuminanceParameters &obj)
-    {
-        JsonObject lumJsonData = data.object_items();
-        if(!lumJsonData.empty())
-        {
-            obj.averageLuminance = static_cast<float>(lumJsonData[LuminanceNames::AverageRGB].number_value());
-            JsonArray maxScl = lumJsonData[LuminanceNames::MaxSCL].array_items();
-            obj.maxRLuminance = static_cast<float>(maxScl[0].number_value());
-            obj.maxGLuminance = static_cast<float>(maxScl[1].number_value());
-            obj.maxBLuminance = static_cast<float>(maxScl[2].number_value());
-
-            JsonObject percentileData = lumJsonData[LuminanceNames::LlcTagName].object_items();
-            if(!percentileData.empty())
-            {
-                JsonArray distributionValues = percentileData[PercentileNames::DistributionValues].array_items();
-                obj.order = static_cast<int>(distributionValues.size());
-                obj.percentiles.resize(obj.order);
-                for(int i = 0; i < obj.order; ++i)
-                {
-                    obj.percentiles[i] = static_cast<unsigned int>(distributionValues[i].int_value());
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
-    bool percentagesFromJson(const Json &data, std::vector<unsigned int> &percentages)
-    {
-        JsonObject jsonData = data.object_items();
-        if(!jsonData.empty())
-        {
-            JsonObject percentileData = jsonData[PercentileNames::TagName].object_items();
-            int order = percentileData[PercentileNames::NumberOfPercentiles].int_value();
-            percentages.resize(order);
-            for(int i = 0; i < order; ++i)
-            {
-                std::string percentileTag = PercentileNames::PercentilePercentageValue[i];
-                percentages[i] = static_cast<unsigned int>(percentileData[percentileTag].int_value());
-            }
-            return true;
-        }
-        return false;
-    }
-
-    bool percentagesFromLLCJson(const Json &data, std::vector<unsigned int> &percentages)
-    {
-        JsonObject lumJsonData = data.object_items();
-        if(!lumJsonData.empty())
-        {            
-            JsonObject percentileData = lumJsonData[LuminanceNames::LlcTagName].object_items();
-            if(!percentileData.empty())
-            {
-                JsonArray percentageValues = percentileData[PercentileNames::DistributionIndex].array_items();
-                int order = static_cast<int>(percentageValues.size());
-                percentages.resize(order);
-                for(int i = 0; i < order; ++i)
-                {
-                    percentages[i] = static_cast<unsigned int>(percentageValues[i].int_value());
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
-    bool bezierCurveFromJson(const Json &data, BezierCurveData &obj)
+    bool percentagesFromJson(const Json &data, std::vector<unsigned int> &percentages, const JsonType jsonType)
     {
         JsonObject jsonData = data.object_items();
         if(!jsonData.empty())
         {
-            obj.sPx = jsonData[BezierCurveNames::KneePointX].int_value();
-            obj.sPy = jsonData[BezierCurveNames::KneePointY].int_value();
-            obj.order = jsonData[BezierCurveNames::NumberOfAnchors].int_value();
-            obj.coeff.resize(obj.order);
-            for(int i = 0; i < obj.order; ++i)
-            {
-                obj.coeff[i] = jsonData[BezierCurveNames::Anchors[i]].int_value();
-            }
-            return true;
+			switch(jsonType)
+			{
+				case LEGACY:
+				{
+					JsonObject percentileData = jsonData[PercentileNames::TagName].object_items();
+					int order = percentileData[PercentileNames::NumberOfPercentiles].int_value();
+					percentages.resize(order);
+					for(int i = 0; i < order; ++i)
+					{
+						std::string percentileTag = PercentileNames::PercentilePercentageValue[i];
+						percentages[i] = static_cast<unsigned int>(percentileData[percentileTag].int_value());
+					}
+					return true;
+				} break;
+				case LLC:
+				{
+					JsonObject percentileData = jsonData[LuminanceNames::LlcTagName].object_items();
+					if(!percentileData.empty())
+					{
+						JsonArray percentageValues = percentileData[PercentileNames::DistributionIndex].array_items();
+						int order = static_cast<int>(percentageValues.size());
+						percentages.resize(order);
+						for(int i = 0; i < order; ++i)
+						{
+							percentages[i] = static_cast<unsigned int>(percentageValues[i].int_value());
+						}
+					} 
+					return true;
+				} break;
+			}
+
         }
         return false;
     }
 
-    bool bezierCurveFromLLCJson(const Json &data, BezierCurveData &obj)
+    bool bezierCurveFromJson(const Json &data, BezierCurveData &obj, const JsonType jsonType)
     {
         JsonObject jsonData = data.object_items();
         if(!jsonData.empty())
         {
-            obj.sPx = jsonData[BezierCurveNames::KneePointX].int_value();
-            obj.sPy = jsonData[BezierCurveNames::KneePointY].int_value();
-            JsonArray anchorValues = data[BezierCurveNames::AnchorsTag].array_items();
-            obj.order = static_cast<int>(anchorValues.size());
-            obj.coeff.resize(obj.order);
-            for(int i = 0; i < obj.order; ++i)
-            {
-                obj.coeff[i] = anchorValues[i].int_value();
-            }
-            return true;
+			switch(jsonType)
+			{
+				case LEGACY:
+				{
+				    obj.sPx = jsonData[BezierCurveNames::KneePointX].int_value();
+					obj.sPy = jsonData[BezierCurveNames::KneePointY].int_value();
+					obj.order = jsonData[BezierCurveNames::NumberOfAnchors].int_value();
+					obj.coeff.resize(obj.order);
+					for(int i = 0; i < obj.order; ++i)
+					{
+						obj.coeff[i] = jsonData[BezierCurveNames::Anchors[i]].int_value();
+					}
+					return true;	
+				} break;
+				case LLC:
+				{
+					obj.sPx = jsonData[BezierCurveNames::KneePointX].int_value();
+					obj.sPy = jsonData[BezierCurveNames::KneePointY].int_value();
+					JsonArray anchorValues = data[BezierCurveNames::AnchorsTag].array_items();
+					obj.order = static_cast<int>(anchorValues.size());
+					obj.coeff.resize(obj.order);
+					for(int i = 0; i < obj.order; ++i)
+					{
+						obj.coeff[i] = anchorValues[i].int_value();
+					}
+					return true;
+				} break;
+			}
         }
         return false;
     }
@@ -256,10 +257,10 @@ bool metadataFromJson::frameMetadataFromJson(const char* filePath,
 {
     std::string path(filePath);
     JsonArray fileData = JsonHelper::readJsonArray(path);
-    bool isLLCJson = false;
+	JsonType jsonType = LEGACY;
     if(fileData.empty())
     {
-        isLLCJson = true;
+		jsonType = LLC;
         fileData = JsonHelper::readJson(filePath).at("SceneInfo").array_items();
     }
 
@@ -281,7 +282,7 @@ bool metadataFromJson::frameMetadataFromJson(const char* filePath,
     mPimpl->mCurrentStreamByte = 1;
     memset(metadata, 0, mSEIBytesToRead);
 
-    fillMetadataArray(fileData, frame, isLLCJson, metadata);
+    fillMetadataArray(fileData, frame, jsonType, metadata);
     mPimpl->setPayloadSize(metadata, 0, mPimpl->mCurrentStreamByte);
     return true;
 }
@@ -290,11 +291,10 @@ int metadataFromJson::movieMetadataFromJson(const char* filePath, uint8_t **&met
 {
     std::string path(filePath);
     JsonArray fileData = JsonHelper::readJsonArray(path);
-    bool isLLCJson = false;
-
+	JsonType jsonType = LEGACY;
     if (fileData.empty())
     {
-        isLLCJson = true;
+		jsonType = LLC;
         fileData = JsonHelper::readJson(filePath).at("SceneInfo").array_items();
     }
 
@@ -307,7 +307,7 @@ int metadataFromJson::movieMetadataFromJson(const char* filePath, uint8_t **&met
         mPimpl->mCurrentStreamBit = 8;
         mPimpl->mCurrentStreamByte = 1;
 
-        fillMetadataArray(fileData, frame, isLLCJson, metadata[frame]);
+        fillMetadataArray(fileData, frame, jsonType, metadata[frame]);
         mPimpl->setPayloadSize(metadata[frame], 0, mPimpl->mCurrentStreamByte);
     }
 
@@ -353,7 +353,7 @@ bool metadataFromJson::extendedInfoFrameMetadataFromJson(const char* filePath,
     /* NOTE: We leave TWO BYTES of space for the payload */
     mPimpl->mCurrentStreamByte += 2;
 
-    fillMetadataArray(fileData, frame, false, metadata);
+    fillMetadataArray(fileData, frame, LEGACY, metadata);
 
     /* Set payload in bytes 2 & 3 as indicated in Extended InfoFrame Type syntax */
     metadata[2] = (mPimpl->mCurrentStreamByte & 0xFF00) >> 8;
@@ -388,7 +388,7 @@ int metadataFromJson::movieExtendedInfoFrameMetadataFromJson(const char* filePat
         /* NOTE: We leave TWO BYTES of space for the payload */
         mPimpl->mCurrentStreamByte += 2;
 
-        fillMetadataArray(fileData, frame, false, metadata[frame]);
+        fillMetadataArray(fileData, frame, LEGACY, metadata[frame]);
 
         /* Set payload in bytes 2 & 3 as indicated in Extended InfoFrame Type syntax */
         metadata[frame][2] = (mPimpl->mCurrentStreamByte & 0xFF00) >> 8;
@@ -398,7 +398,7 @@ int metadataFromJson::movieExtendedInfoFrameMetadataFromJson(const char* filePat
     return numFrames;
 }
 
-void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, const bool isLLCJson, uint8_t *&metadata)
+void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, const JsonType jsonType, uint8_t *&metadata)
 {
     const uint8_t countryCode = 0xB5;
     const uint16_t terminalProviderCode = 0x003C;
@@ -415,7 +415,7 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, c
 
     uint16_t numWindows = 0;
     /* HDR10+ LLC doesn't consider local windows */
-    if(isLLCJson)
+    if(jsonType & LLC)
     {
         numWindows = 1;
         mPimpl->appendBits(metadata, numWindows, 2);
@@ -488,8 +488,7 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, c
     {
         Json lumObj = fileData[frame][LuminanceNames::TagName];
         LuminanceParameters luminanceData;
-        if(!((isLLCJson && mPimpl->luminanceParamFromLLCJson(lumObj, luminanceData)) ||
-            !(mPimpl->luminanceParamFromJson(lumObj, luminanceData) && isLLCJson)))
+        if(!mPimpl->luminanceParamFromJson(lumObj, luminanceData, jsonType))
         {
             std::cout << "error parsing luminance parameters frame: " << w << std::endl;
         }
@@ -511,16 +510,7 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, c
         mPimpl->appendBits(metadata, numDistributionMaxrgbPercentiles, 4);
 
         std::vector<unsigned int>percentilePercentages;
-
-        if(isLLCJson)
-        {
-            mPimpl->percentagesFromLLCJson(lumObj, percentilePercentages);
-        }
-        else
-        {
-            mPimpl->percentagesFromJson(lumObj, percentilePercentages);
-        }
-
+        mPimpl->percentagesFromJson(lumObj, percentilePercentages, jsonType);
 
         for (int i = 0; i < numDistributionMaxrgbPercentiles; ++i)
         {
@@ -551,27 +541,24 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, c
     /* Bezier Curve Data */
     for (int w = 0; w < numWindows; ++w)
     {
-        uint8_t toneMappingFlag = 1;
+        uint8_t toneMappingFlag = 0;
 		/* Check if the window contains tone mapping bezier curve data and set toneMappingFlag appropriately */
-		//Json bezierData = fileData[frame][BezierCurveNames::TagName];
         BezierCurveData curveData;
 		/* Select curve data based on global window */
         if (w == 0)
-        {
-            if(!((isLLCJson && mPimpl->bezierCurveFromLLCJson(fileData[frame][BezierCurveNames::TagName], curveData)) ||
-                !(mPimpl->bezierCurveFromJson(fileData[frame][BezierCurveNames::TagName], curveData) && isLLCJson)))
+        {			
+            if (mPimpl->bezierCurveFromJson(fileData[frame][BezierCurveNames::TagName], curveData, jsonType))
             {
-                toneMappingFlag = 0;
+                toneMappingFlag = 1;
             }
         }
-
         /* Select curve data based on local window */
         else
         {
             JsonArray jsonArray = fileData[frame][JsonDataKeys::LocalParameters].array_items();
-            if (!mPimpl->bezierCurveFromJson(jsonArray[w - 1][BezierCurveNames::TagName], curveData))
+            if (mPimpl->bezierCurveFromJson(jsonArray[w - 1][BezierCurveNames::TagName], curveData, jsonType))
             {
-                toneMappingFlag = 0;
+                toneMappingFlag = 1;
             }
         }		
         mPimpl->appendBits(metadata, toneMappingFlag, 1);
