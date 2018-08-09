@@ -535,6 +535,20 @@ frame counts) are only applicable to the CLI application.
 
 	**CLI ONLY**
 
+.. option:: --chunk-start <integer>
+
+	First frame of the chunk. Frames preceeding this in display order will
+	be encoded, however, they will be discarded in the bitstream. This
+	feature can be enabled only in closed GOP structures.
+	Default 0 (disabled).
+	
+.. option:: --chunk-end <integer>
+
+	Last frame of the chunk. Frames following this in display order will be
+	used in taking lookahead decisions, but, they will not be encoded.
+	This feature can be enabled only in closed GOP structures.
+	Default 0 (disabled).
+
 Profile, Level, Tier
 ====================
 
@@ -895,11 +909,11 @@ will not reuse analysis if slice type parameters do not match.
     +--------------+------------------------------------------+
     | 2 to 4       | Level 1 + intra/inter modes, ref's       |
     +--------------+------------------------------------------+
-    | 5,6 and 9    | Level 2 + rect-amp                       |
+    | 5 and 6      | Level 2 + rect-amp                       |
     +--------------+------------------------------------------+
     | 7            | Level 5 + AVC size CU refinement         |
     +--------------+------------------------------------------+
-    | 8            | Level 5 + AVC size Full CU analysis-info |
+    | 8 and 9      | Level 5 + AVC size Full CU analysis-info |
     +--------------+------------------------------------------+
     | 10           | Level 5 + Full CU analysis-info          |
     +--------------+------------------------------------------+
@@ -1225,7 +1239,7 @@ Temporal / motion search options
 
 .. option:: --analyze-src-pics, --no-analyze-src-pics
 
-    Enalbe motion estimation with source frame pixels, in this mode, 
+    Enable motion estimation with source frame pixels, in this mode, 
     motion estimation can be computed independently. Default disabled.
 
 Spatial/intra options
@@ -2121,6 +2135,24 @@ VUI fields must be manually specified.
 
 	Maximum luma value allowed for input pictures. Any values above max-luma
 	are clipped.  No default.
+    
+.. option:: --nalu-file <filename>
+
+    Text file containing userSEI in POC order : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload>
+    Parse the input file specified and inserts SEI messages into the bitstream. 
+    Currently, we support only PREFIX SEI messages. This is an "application-only" feature.
+
+.. option:: --atc-sei <integer>
+
+	Emit the alternative transfer characteristics SEI message where the integer
+	is the preferred transfer characteristics. Required for HLG (Hybrid Log Gamma)
+	signalling. Not signalled by default.
+
+.. option:: --pic-struct <integer>
+
+	Set the picture structure and emits it in the picture timing SEI message.
+	Values in the range 0..12. See D.3.3 of the HEVC spec. for a detailed explanation.
+	Required for HLG (Hybrid Log Gamma) signalling. Not signalled by default.
 
 Bitstream options
 =================

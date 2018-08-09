@@ -370,7 +370,49 @@ bool MBDstHarness::check_psyRdoQuant_primitive(psyRdoQuant_t ref, psyRdoQuant_t 
 
     return true;
 }
+bool MBDstHarness::check_psyRdoQuant_primitive_avx2(psyRdoQuant_t1 ref, psyRdoQuant_t1 opt)
+{
+    int j = 0;
+    int trSize[4] = { 16, 64, 256, 1024 };
 
+    ALIGN_VAR_32(int64_t, ref_dest[4 * MAX_TU_SIZE]);
+    ALIGN_VAR_32(int64_t, opt_dest[4 * MAX_TU_SIZE]);
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int64_t totalRdCostRef = rand();
+        int64_t totalUncodedCostRef = rand();
+        int64_t totalRdCostOpt = totalRdCostRef;
+        int64_t totalUncodedCostOpt = totalUncodedCostRef;
+
+        int index = rand() % 4;
+        uint32_t blkPos =  trSize[index];
+        int cmp_size = 4 * MAX_TU_SIZE;
+
+        memset(ref_dest, 0, MAX_TU_SIZE * sizeof(int64_t));
+        memset(opt_dest, 0, MAX_TU_SIZE * sizeof(int64_t));
+
+        int index1 = rand() % TEST_CASES;
+
+        ref(short_test_buff[index1] + j, ref_dest, &totalUncodedCostRef, &totalRdCostRef, blkPos);
+        checked(opt, short_test_buff[index1] + j, opt_dest, &totalUncodedCostOpt, &totalRdCostOpt, blkPos);
+
+        
+        if (memcmp(ref_dest, opt_dest, cmp_size))
+            return false;
+
+        if (totalUncodedCostRef != totalUncodedCostOpt)
+            return false;
+
+        if (totalRdCostRef != totalRdCostOpt)
+            return false;
+
+        reportfail();
+        j += INCR;
+    }
+
+    return true;
+}
 bool MBDstHarness::check_count_nonzero_primitive(count_nonzero_t ref, count_nonzero_t opt)
 {
     int j = 0;
@@ -530,7 +572,17 @@ bool MBDstHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             }
         }
     }
-
+    for (int i = 0; i < NUM_TR_SIZE; i++)
+    {
+        if (opt.cu[i].psyRdoQuant_1p)
+        {
+            if (!check_psyRdoQuant_primitive_avx2(ref.cu[i].psyRdoQuant_1p, opt.cu[i].psyRdoQuant_1p))
+            {
+                printf("psyRdoQuant_1p[%dx%d]: Failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+    }
     for (int i = 0; i < NUM_TR_SIZE; i++)
     {
         if (opt.cu[i].count_nonzero)
@@ -643,7 +695,17 @@ void MBDstHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
             REPORT_SPEEDUP(opt.cu[value].psyRdoQuant, ref.cu[value].psyRdoQuant, short_test_buff[0], short_test_buff1[0], opt_dest, &totalUncodedCost, &totalRdCost, psyScale, 0);
         }
     }
-
+    for (int value = 0; value < NUM_TR_SIZE; value++)
+    {
+        if (opt.cu[value].psyRdoQuant_1p)
+        {
+            ALIGN_VAR_32(int64_t, opt_dest[4 * MAX_TU_SIZE]);
+            int64_t totalRdCost = 0;
+            int64_t totalUncodedCost = 0;
+            printf("psyRdoQuant_1p[%dx%d]", 4 << value, 4 << value);
+            REPORT_SPEEDUP(opt.cu[value].psyRdoQuant_1p, ref.cu[value].psyRdoQuant_1p, short_test_buff[0], opt_dest, &totalUncodedCost, &totalRdCost, 0);
+        }
+    }
     for (int value = 0; value < NUM_TR_SIZE; value++)
     {
         if (opt.cu[value].count_nonzero)

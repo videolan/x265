@@ -82,7 +82,13 @@
 %endif
 
 %macro SECTION_RODATA 0-1 32
-    SECTION .rodata align=%1
+    %ifidn __OUTPUT_FORMAT__,win32
+        SECTION .rdata align=%1
+    %elif WIN64
+        SECTION .rdata align=%1
+    %else
+        SECTION .rodata align=%1
+    %endif
 %endmacro
 
 %if WIN64
@@ -722,6 +728,16 @@ BRANCH_INSTR jz, je, jnz, jne, jl, jle, jnl, jnle, jg, jge, jng, jnge, ja, jae, 
     %endif
 %endmacro
 
+; Create a global symbol from a local label with the correct name mangling and type
+%macro cglobal_label 1
+    %if FORMAT_ELF
+        global current_function %+ %1:function hidden
+    %else
+        global current_function %+ %1
+    %endif
+    %1:
+%endmacro
+
 %macro cextern 1
     %xdefine %1 mangle(private_prefix %+ _ %+ %1)
     CAT_XDEFINE cglobaled_, %1, 1
@@ -850,6 +866,36 @@ BRANCH_INSTR jz, je, jnz, jne, jl, jle, jnl, jnle, jg, jge, jng, jnge, ja, jae, 
     %undef %1%2
 %endmacro
 
+%macro DEFINE_MMREGS 1 ; mmtype
+    %assign %%prev_mmregs 0
+    %ifdef num_mmregs
+        %assign %%prev_mmregs num_mmregs
+    %endif
+
+    %assign num_mmregs 8
+    %if ARCH_X86_64 && mmsize >= 16
+        %assign num_mmregs 16
+        %if cpuflag(avx512) || mmsize == 64
+            %assign num_mmregs 32
+        %endif
+    %endif
+
+    %assign %%i 0
+    %rep num_mmregs
+        CAT_XDEFINE m, %%i, %1 %+ %%i
+        CAT_XDEFINE nn%1, %%i, %%i
+        %assign %%i %%i+1
+    %endrep
+    %if %%prev_mmregs > num_mmregs
+        %rep %%prev_mmregs - num_mmregs
+            CAT_UNDEF m, %%i
+            CAT_UNDEF nn %+ mmtype, %%i
+            %assign %%i %%i+1
+        %endrep
+    %endif
+    %xdefine mmtype %1
+%endmacro
+
 ; Prefer registers 16-31 over 0-15 to avoid having to use vzeroupper
 %macro AVX512_MM_PERMUTATION 0-1 0 ; start_reg
     %if ARCH_X86_64 && cpuflag(avx512)
@@ -866,44 +912,24 @@ BRANCH_INSTR jz, je, jnz, jne, jl, jle, jnl, jnle, jg, jge, jng, jnge, ja, jae, 
     %assign avx_enabled 0
     %define RESET_MM_PERMUTATION INIT_MMX %1
     %define mmsize 8
-    %define num_mmregs 8
     %define mova movq
     %define movu movq
     %define movh movd
     %define movnta movntq
-    %assign %%i 0
-    %rep 8
-        CAT_XDEFINE m, %%i, mm %+ %%i
-        CAT_XDEFINE nnmm, %%i, %%i
-        %assign %%i %%i+1
-    %endrep
-    %rep 24
-        CAT_UNDEF m, %%i
-        CAT_UNDEF nnmm, %%i
-        %assign %%i %%i+1
-    %endrep
     INIT_CPUFLAGS %1
+    DEFINE_MMREGS mm
 %endmacro
 
 %macro INIT_XMM 0-1+
     %assign avx_enabled 0
     %define RESET_MM_PERMUTATION INIT_XMM %1
     %define mmsize 16
-    %define num_mmregs 8
-    %if ARCH_X86_64
-        %define num_mmregs 32
-    %endif
     %define mova movdqa
     %define movu movdqu
     %define movh movq
     %define movnta movntdq
-    %assign %%i 0
-    %rep num_mmregs
-        CAT_XDEFINE m, %%i, xmm %+ %%i
-        CAT_XDEFINE nnxmm, %%i, %%i
-        %assign %%i %%i+1
-    %endrep
     INIT_CPUFLAGS %1
+    DEFINE_MMREGS xmm
     %if WIN64
         ; Swap callee-saved registers with volatile registers
         AVX512_MM_PERMUTATION 6
@@ -914,21 +940,12 @@ BRANCH_INSTR jz, je, jnz, jne, jl, jle, jnl, jnle, jg, jge, jng, jnge, ja, jae, 
     %assign avx_enabled 1
     %define RESET_MM_PERMUTATION INIT_YMM %1
     %define mmsize 32
-    %define num_mmregs 8
-    %if ARCH_X86_64
-        %define num_mmregs 32
-    %endif
     %define mova movdqa
     %define movu movdqu
     %undef movh
     %define movnta movntdq
-    %assign %%i 0
-    %rep num_mmregs
-        CAT_XDEFINE m, %%i, ymm %+ %%i
-        CAT_XDEFINE nnymm, %%i, %%i
-        %assign %%i %%i+1
-    %endrep
     INIT_CPUFLAGS %1
+    DEFINE_MMREGS ymm
     AVX512_MM_PERMUTATION
 %endmacro
 
@@ -936,21 +953,12 @@ BRANCH_INSTR jz, je, jnz, jne, jl, jle, jnl, jnle, jg, jge, jng, jnge, ja, jae, 
     %assign avx_enabled 1
     %define RESET_MM_PERMUTATION INIT_ZMM %1
     %define mmsize 64
-    %define num_mmregs 8
-    %if ARCH_X86_64
-        %define num_mmregs 32
-    %endif
     %define mova movdqa
     %define movu movdqu
     %undef movh
     %define movnta movntdq
-    %assign %%i 0
-    %rep num_mmregs
-        CAT_XDEFINE m, %%i, zmm %+ %%i
-        CAT_XDEFINE nnzmm, %%i, %%i
-        %assign %%i %%i+1
-    %endrep
     INIT_CPUFLAGS %1
+    DEFINE_MMREGS zmm
     AVX512_MM_PERMUTATION
 %endmacro
 
@@ -1249,12 +1257,12 @@ AVX_INSTR addsd, sse2, 1, 0, 0
 AVX_INSTR addss, sse, 1, 0, 0
 AVX_INSTR addsubpd, sse3, 1, 0, 0
 AVX_INSTR addsubps, sse3, 1, 0, 0
-AVX_INSTR aesdec, fnord, 0, 0, 0
-AVX_INSTR aesdeclast, fnord, 0, 0, 0
-AVX_INSTR aesenc, fnord, 0, 0, 0
-AVX_INSTR aesenclast, fnord, 0, 0, 0
-AVX_INSTR aesimc
-AVX_INSTR aeskeygenassist
+AVX_INSTR aesdec, aesni, 0, 0, 0
+AVX_INSTR aesdeclast, aesni, 0, 0, 0
+AVX_INSTR aesenc, aesni, 0, 0, 0
+AVX_INSTR aesenclast, aesni, 0, 0, 0
+AVX_INSTR aesimc, aesni
+AVX_INSTR aeskeygenassist, aesni
 AVX_INSTR andnpd, sse2, 1, 0, 0
 AVX_INSTR andnps, sse, 1, 0, 0
 AVX_INSTR andpd, sse2, 1, 0, 1
@@ -1263,10 +1271,42 @@ AVX_INSTR blendpd, sse4, 1, 1, 0
 AVX_INSTR blendps, sse4, 1, 1, 0
 AVX_INSTR blendvpd, sse4 ; can't be emulated
 AVX_INSTR blendvps, sse4 ; can't be emulated
+AVX_INSTR cmpeqpd, sse2, 1, 0, 1
+AVX_INSTR cmpeqps, sse, 1, 0, 1
+AVX_INSTR cmpeqsd, sse2, 1, 0, 0
+AVX_INSTR cmpeqss, sse, 1, 0, 0
+AVX_INSTR cmplepd, sse2, 1, 0, 0
+AVX_INSTR cmpleps, sse, 1, 0, 0
+AVX_INSTR cmplesd, sse2, 1, 0, 0
+AVX_INSTR cmpless, sse, 1, 0, 0
+AVX_INSTR cmpltpd, sse2, 1, 0, 0
+AVX_INSTR cmpltps, sse, 1, 0, 0
+AVX_INSTR cmpltsd, sse2, 1, 0, 0
+AVX_INSTR cmpltss, sse, 1, 0, 0
+AVX_INSTR cmpneqpd, sse2, 1, 0, 1
+AVX_INSTR cmpneqps, sse, 1, 0, 1
+AVX_INSTR cmpneqsd, sse2, 1, 0, 0
+AVX_INSTR cmpneqss, sse, 1, 0, 0
+AVX_INSTR cmpnlepd, sse2, 1, 0, 0
+AVX_INSTR cmpnleps, sse, 1, 0, 0
+AVX_INSTR cmpnlesd, sse2, 1, 0, 0
+AVX_INSTR cmpnless, sse, 1, 0, 0
+AVX_INSTR cmpnltpd, sse2, 1, 0, 0
+AVX_INSTR cmpnltps, sse, 1, 0, 0
+AVX_INSTR cmpnltsd, sse2, 1, 0, 0
+AVX_INSTR cmpnltss, sse, 1, 0, 0
+AVX_INSTR cmpordpd, sse2 1, 0, 1
+AVX_INSTR cmpordps, sse 1, 0, 1
+AVX_INSTR cmpordsd, sse2 1, 0, 0
+AVX_INSTR cmpordss, sse 1, 0, 0
 AVX_INSTR cmppd, sse2, 1, 1, 0
 AVX_INSTR cmpps, sse, 1, 1, 0
 AVX_INSTR cmpsd, sse2, 1, 1, 0
 AVX_INSTR cmpss, sse, 1, 1, 0
+AVX_INSTR cmpunordpd, sse2, 1, 0, 1
+AVX_INSTR cmpunordps, sse, 1, 0, 1
+AVX_INSTR cmpunordsd, sse2, 1, 0, 0
+AVX_INSTR cmpunordss, sse, 1, 0, 0
 AVX_INSTR comisd, sse2
 AVX_INSTR comiss, sse
 AVX_INSTR cvtdq2pd, sse2

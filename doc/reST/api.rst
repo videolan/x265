@@ -223,6 +223,18 @@ changes made to the parameters for auto-detection and other reasons::
      *     returns negative on error, 0 access unit were output.*/
      int x265_set_analysis_data(x265_encoder *encoder, x265_analysis_data *analysis_data, int poc, uint32_t cuBytes);
 
+**x265_alloc_analysis_data()** may be used to allocate memory for the x265_analysis_data::
+
+    /* x265_alloc_analysis_data:
+     *     Allocate memory for the x265_analysis_data object's internal structures. */
+     void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis);
+
+**x265_free_analysis_data()** may be used to free memory for the x265_analysis_data::
+
+    /* x265_free_analysis_data:
+     *    Free the allocated memory for x265_analysis_data object's internal structures. */
+     void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis);
+
 Pictures
 ========
 

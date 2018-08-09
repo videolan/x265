@@ -31,6 +31,10 @@
 extern "C" {
 #endif
 
+#if _MSC_VER
+#pragma warning(disable: 4201) // non-standard extension used (nameless struct/union)
+#endif
+
 /* x265_encoder:
  *      opaque handler for encoder */
 typedef struct x265_encoder x265_encoder;
@@ -112,7 +116,8 @@ typedef struct x265_analysis_validate
 {
     int     maxNumReferences;
     int     analysisReuseLevel;
-    int     scaleFactor;
+    int     sourceWidth;
+    int     sourceHeight;
     int     keyframeMax;
     int     keyframeMin;
     int     openGOP;
@@ -120,29 +125,91 @@ typedef struct x265_analysis_validate
     int     bPyramid;
     int     maxCUSize;
     int     minCUSize;
-    int     radl;
+    int     intraRefresh;
     int     lookaheadDepth;
-    int     gopLookahead;
+    int     chunkStart;
+    int     chunkEnd;
 }x265_analysis_validate;
+
+/* Stores intra analysis data for a single frame. This struct needs better packing */
+typedef struct x265_analysis_intra_data
+{
+    uint8_t*  depth;
+    uint8_t*  modes;
+    char*     partSizes;
+    uint8_t*  chromaModes;
+}x265_analysis_intra_data;
+
+typedef struct x265_analysis_MV
+{
+    union{
+        struct { int16_t x, y; };
+
+        int32_t word;
+    };
+}x265_analysis_MV;
+
+/* Stores inter analysis data for a single frame */
+typedef struct x265_analysis_inter_data
+{
+    int32_t*    ref;
+    uint8_t*    depth;
+    uint8_t*    modes;
+    uint8_t*    partSize;
+    uint8_t*    mergeFlag;
+    uint8_t*    interDir;
+    uint8_t*    mvpIdx[2];
+    int8_t*     refIdx[2];
+    x265_analysis_MV*         mv[2];
+    int64_t*     sadCost;
+}x265_analysis_inter_data;
+
+typedef struct x265_weight_param
+{
+    uint32_t log2WeightDenom;
+    int      inputWeight;
+    int      inputOffset;
+    int      wtPresent;
+}x265_weight_param;
+
+#if X265_DEPTH < 10
+typedef uint32_t sse_t;
+#else
+typedef uint64_t sse_t;
+#endif
+
+typedef struct x265_analysis_distortion_data
+{
+    sse_t*        distortion;
+    sse_t*        ctuDistortion;
+    double*       scaledDistortion;
+    double        averageDistortion;
+    double        sdDistortion;
+    uint32_t      highDistortionCtuCount;
+    uint32_t      lowDistortionCtuCount;
+    double*       offset;
+    double*       threshold;
+}x265_analysis_distortion_data;
 
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
-    int64_t          satdCost;
-    uint32_t         frameRecordSize;
-    uint32_t         poc;
-    uint32_t         sliceType;
-    uint32_t         numCUsInFrame;
-    uint32_t         numPartitions;
-    uint32_t         depthBytes;
-    int              bScenecut;
-    void*            wt;
-    void*            interData;
-    void*            intraData;
-    uint32_t         numCuInHeight;
-    x265_lookahead_data lookahead;
-    uint8_t*         modeFlag[2];
-    x265_analysis_validate saveParam;
+    int64_t                           satdCost;
+    uint32_t                          frameRecordSize;
+    uint32_t                          poc;
+    uint32_t                          sliceType;
+    uint32_t                          numCUsInFrame;
+    uint32_t                          numPartitions;
+    uint32_t                          depthBytes;
+    int                               bScenecut;
+    x265_weight_param*                wt;
+    x265_analysis_inter_data*         interData;
+    x265_analysis_intra_data*         intraData;
+    uint32_t                          numCuInHeight;
+    x265_lookahead_data               lookahead;
+    uint8_t*                          modeFlag[2];
+    x265_analysis_validate            saveParam;
+    x265_analysis_distortion_data*    distortionData;
 } x265_analysis_data;
 
 /* cu statistics */
@@ -170,14 +237,6 @@ typedef struct x265_pu_stats
 
     /* All the above values will add up to 100%. */
 } x265_pu_stats;
-
-
-typedef struct x265_analysis_2Pass
-{
-    uint32_t      poc;
-    uint32_t      frameRecordSize;
-    void*         analysisFramedata;
-}x265_analysis_2Pass;
 
 /* Frame level statistics */
 typedef struct x265_frame_stats
@@ -284,7 +343,7 @@ typedef enum
     REGION_REFRESH_INFO                  = 134,
     MASTERING_DISPLAY_INFO               = 137,
     CONTENT_LIGHT_LEVEL_INFO             = 144,
-	ALTERNATIVE_TRANSFER_CHARACTERISTICS = 147,
+    ALTERNATIVE_TRANSFER_CHARACTERISTICS = 147,
 } SEIPayloadType;
 
 typedef struct x265_sei_payload
@@ -382,8 +441,6 @@ typedef struct x265_picture
     uint64_t framesize;
 
     int    height;
-
-    x265_analysis_2Pass analysis2Pass;
 
     // pts is reordered in the order of encoding.
     int64_t reorderedPts;
@@ -595,7 +652,7 @@ typedef struct x265_zone
     
 /* data to calculate aggregate VMAF score */
 typedef struct x265_vmaf_data
-{   
+{
     int width;
     int height;
     size_t offset; 
@@ -1638,6 +1695,20 @@ typedef struct x265_param
 
     /* Enable writing all SEI messgaes in one single NAL instead of mul*/
     int       bSingleSeiNal;
+
+
+    /* First frame of the chunk. Frames preceeding this in display order will
+    * be encoded, however, they will be discarded in the bitstream.
+    * Default 0 (disabled). */
+    int       chunkStart;
+
+    /* Last frame of the chunk. Frames following this in display order will be
+    * used in taking lookahead decisions, but, they will not be encoded.
+    * Default 0 (disabled). */
+    int       chunkEnd;
+    /* File containing base64 encoded SEI messages in POC order */
+    const char*    naluFile;
+
 } x265_param;
 
 /* x265_param_alloc:
@@ -1749,6 +1820,14 @@ X265_API extern const char *x265_version_str;
 /* x265_build_info:
  *      A static string describing the compiler and target architecture */
 X265_API extern const char *x265_build_info_str;
+
+/* x265_alloc_analysis_data:
+*     Allocate memory for the x265_analysis_data object's internal structures. */
+void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis);
+
+/*
+*    Free the allocated memory for x265_analysis_data object's internal structures. */
+void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis);
 
 /* Force a link error in the case of linking against an incompatible API version.
  * Glue #defines exist to force correct macro expansion; the final output of the macro

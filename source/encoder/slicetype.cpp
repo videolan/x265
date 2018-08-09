@@ -436,7 +436,7 @@ uint32_t LookaheadTLD::weightCostLuma(Lowres& fenc, Lowres& ref, WeightParam& wp
     pixel *src = ref.fpelPlane[0];
     intptr_t stride = fenc.lumaStride;
 
-    if (wp.bPresentFlag)
+    if (wp.wtPresent)
     {
         int offset = wp.inputOffset << (X265_DEPTH - 8);
         int scale = wp.inputWeight;
@@ -490,7 +490,7 @@ void LookaheadTLD::weightsAnalyse(Lowres& fenc, Lowres& ref)
     int deltaIndex = fenc.frameNum - ref.frameNum;
 
     WeightParam wp;
-    wp.bPresentFlag = false;
+    wp.wtPresent = 0;
 
     if (!wbuffer[0])
     {
@@ -1088,85 +1088,97 @@ void Lookahead::slicetypeDecide()
     }
 
     int bframes, brefs;
-    for (bframes = 0, brefs = 0;; bframes++)
+    if (!m_param->analysisLoad)
     {
-        Lowres& frm = list[bframes]->m_lowres;
+        for (bframes = 0, brefs = 0;; bframes++)
+        {
+            Lowres& frm = list[bframes]->m_lowres;
 
-        if (frm.sliceType == X265_TYPE_BREF && !m_param->bBPyramid && brefs == m_param->bBPyramid)
-        {
-            frm.sliceType = X265_TYPE_B;
-            x265_log(m_param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid\n",
-                     frm.frameNum);
-        }
-
-        /* pyramid with multiple B-refs needs a big enough dpb that the preceding P-frame stays available.
-         * smaller dpb could be supported by smart enough use of mmco, but it's easier just to forbid it. */
-        else if (frm.sliceType == X265_TYPE_BREF && m_param->bBPyramid && brefs &&
-                 m_param->maxNumReferences <= (brefs + 3))
-        {
-            frm.sliceType = X265_TYPE_B;
-            x265_log(m_param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid and %d reference frames\n",
-                     frm.sliceType, m_param->maxNumReferences);
-        }
-        if ((!m_param->bIntraRefresh || frm.frameNum == 0) && frm.frameNum - m_lastKeyframe >= m_param->keyframeMax &&
-            (!m_extendGopBoundary || frm.frameNum - m_lastKeyframe >= m_param->keyframeMax + m_param->gopLookahead))
-        {
-            if (frm.sliceType == X265_TYPE_AUTO || frm.sliceType == X265_TYPE_I)
-                frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
-            bool warn = frm.sliceType != X265_TYPE_IDR;
-            if (warn && m_param->bOpenGOP)
-                warn &= frm.sliceType != X265_TYPE_I;
-            if (warn)
+            if (frm.sliceType == X265_TYPE_BREF && !m_param->bBPyramid && brefs == m_param->bBPyramid)
             {
-                x265_log(m_param, X265_LOG_WARNING, "specified frame type (%d) at %d is not compatible with keyframe interval\n",
-                         frm.sliceType, frm.frameNum);
-                frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
+                frm.sliceType = X265_TYPE_B;
+                x265_log(m_param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid\n",
+                    frm.frameNum);
             }
+
+            /* pyramid with multiple B-refs needs a big enough dpb that the preceding P-frame stays available.
+             * smaller dpb could be supported by smart enough use of mmco, but it's easier just to forbid it. */
+            else if (frm.sliceType == X265_TYPE_BREF && m_param->bBPyramid && brefs &&
+                m_param->maxNumReferences <= (brefs + 3))
+            {
+                frm.sliceType = X265_TYPE_B;
+                x265_log(m_param, X265_LOG_WARNING, "B-ref at frame %d incompatible with B-pyramid and %d reference frames\n",
+                    frm.sliceType, m_param->maxNumReferences);
+            }
+            if (((!m_param->bIntraRefresh || frm.frameNum == 0) && frm.frameNum - m_lastKeyframe >= m_param->keyframeMax &&
+                (!m_extendGopBoundary || frm.frameNum - m_lastKeyframe >= m_param->keyframeMax + m_param->gopLookahead)) ||
+                (frm.frameNum == (m_param->chunkStart - 1)) || (frm.frameNum == m_param->chunkEnd))
+            {
+                if (frm.sliceType == X265_TYPE_AUTO || frm.sliceType == X265_TYPE_I)
+                    frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
+                bool warn = frm.sliceType != X265_TYPE_IDR;
+                if (warn && m_param->bOpenGOP)
+                    warn &= frm.sliceType != X265_TYPE_I;
+                if (warn)
+                {
+                    x265_log(m_param, X265_LOG_WARNING, "specified frame type (%d) at %d is not compatible with keyframe interval\n",
+                        frm.sliceType, frm.frameNum);
+                    frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
+                }
+            }
+            if ((frm.sliceType == X265_TYPE_I && frm.frameNum - m_lastKeyframe >= m_param->keyframeMin) || (frm.frameNum == (m_param->chunkStart - 1)) || (frm.frameNum == m_param->chunkEnd))
+            {
+                if (m_param->bOpenGOP)
+                {
+                    m_lastKeyframe = frm.frameNum;
+                    frm.bKeyframe = true;
+                }
+                else
+                    frm.sliceType = X265_TYPE_IDR;
+            }
+            if (frm.sliceType == X265_TYPE_IDR)
+            {
+                /* Closed GOP */
+                m_lastKeyframe = frm.frameNum;
+                frm.bKeyframe = true;
+                if (bframes > 0 && !m_param->radl)
+                {
+                    list[bframes - 1]->m_lowres.sliceType = X265_TYPE_P;
+                    bframes--;
+                }
+            }
+            if (bframes == m_param->bframes || !list[bframes + 1])
+            {
+                if (IS_X265_TYPE_B(frm.sliceType))
+                    x265_log(m_param, X265_LOG_WARNING, "specified frame type is not compatible with max B-frames\n");
+                if (frm.sliceType == X265_TYPE_AUTO || IS_X265_TYPE_B(frm.sliceType))
+                    frm.sliceType = X265_TYPE_P;
+            }
+            if (frm.sliceType == X265_TYPE_BREF)
+                brefs++;
+            if (frm.sliceType == X265_TYPE_AUTO)
+                frm.sliceType = X265_TYPE_B;
+            else if (!IS_X265_TYPE_B(frm.sliceType))
+                break;
         }
-        if (frm.sliceType == X265_TYPE_I && frm.frameNum - m_lastKeyframe >= m_param->keyframeMin)
+    }
+    else
+    {
+        for (bframes = 0, brefs = 0;; bframes++)
         {
-            if (m_param->bOpenGOP)
+            Lowres& frm = list[bframes]->m_lowres;
+            if (frm.sliceType == X265_TYPE_BREF)
+                brefs++;
+            if ((IS_X265_TYPE_I(frm.sliceType) && frm.frameNum - m_lastKeyframe >= m_param->keyframeMin)
+                || (frm.frameNum == (m_param->chunkStart - 1)) || (frm.frameNum == m_param->chunkEnd))
             {
                 m_lastKeyframe = frm.frameNum;
                 frm.bKeyframe = true;
             }
-            else
-                frm.sliceType = X265_TYPE_IDR;
+            if (!IS_X265_TYPE_B(frm.sliceType))
+                break;
         }
-        if (frm.sliceType == X265_TYPE_IDR)
-        {
-            /* Closed GOP */
-            m_lastKeyframe = frm.frameNum;
-            frm.bKeyframe = true;
-            if (bframes > 0 && !m_param->radl)
-            {
-                list[bframes - 1]->m_lowres.sliceType = X265_TYPE_P;
-                bframes--;
-            }
-        }
-        if (m_param->radl && !m_param->bOpenGOP && list[bframes + 1])
-        {
-            if ((frm.frameNum - m_lastKeyframe) >  (m_param->keyframeMax - m_param->radl - 1) && (frm.frameNum - m_lastKeyframe) <  m_param->keyframeMax)
-                frm.sliceType = X265_TYPE_B;
-            if ((frm.frameNum - m_lastKeyframe) == (m_param->keyframeMax - m_param->radl - 1))
-                frm.sliceType = X265_TYPE_P;
-        }
-
-        if (bframes == m_param->bframes || !list[bframes + 1])
-        {
-            if (IS_X265_TYPE_B(frm.sliceType))
-                x265_log(m_param, X265_LOG_WARNING, "specified frame type is not compatible with max B-frames\n");
-            if (frm.sliceType == X265_TYPE_AUTO || IS_X265_TYPE_B(frm.sliceType))
-                frm.sliceType = X265_TYPE_P;
-        }
-        if (frm.sliceType == X265_TYPE_BREF)
-            brefs++;
-        if (frm.sliceType == X265_TYPE_AUTO)
-            frm.sliceType = X265_TYPE_B;
-        else if (!IS_X265_TYPE_B(frm.sliceType))
-            break;
     }
-
     if (bframes)
         list[bframes - 1]->m_lowres.bLastMiniGopBFrame = true;
     list[bframes]->m_lowres.leadingBframes = bframes;
@@ -1416,7 +1428,19 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
         return;
     }
     frames[framecnt + 1] = NULL;
-    int keyFrameLimit = m_param->keyframeMax + m_lastKeyframe - frames[0]->frameNum - 1;
+
+    int keylimit = m_param->keyframeMax;
+    if (frames[0]->frameNum < m_param->chunkEnd)
+    {
+        int chunkStart = (m_param->chunkStart - m_lastKeyframe - 1);
+        int chunkEnd = (m_param->chunkEnd - m_lastKeyframe);
+        if ((chunkStart > 0) && (chunkStart < m_param->keyframeMax))
+            keylimit = chunkStart;
+        else if ((chunkEnd > 0) && (chunkEnd < m_param->keyframeMax))
+            keylimit = chunkEnd;
+    }
+
+    int keyFrameLimit = keylimit + m_lastKeyframe - frames[0]->frameNum - 1;
     if (m_param->gopLookahead && keyFrameLimit <= m_param->bframes + 1)
         keyintLimit = keyFrameLimit + m_param->gopLookahead;
     else
@@ -1506,6 +1530,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
     int numBFrames = 0;
     int numAnalyzed = numFrames;
     bool isScenecut = scenecut(frames, 0, 1, true, origNumFrames);
+
     /* When scenecut threshold is set, use scenecut detection for I frame placements */
     if (m_param->scenecutThreshold && isScenecut)
     {
@@ -1613,14 +1638,28 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
             frames[numFrames]->sliceType = X265_TYPE_P;
         }
 
-        /* Check scenecut on the first minigop. */
-        for (int j = 1; j < numBFrames + 1; j++)
+        bool bForceRADL = m_param->radl && !m_param->bOpenGOP;
+        bool bLastMiniGop = (framecnt >= m_param->bframes + 1) ? false : true;
+        int preRADL = m_lastKeyframe + m_param->keyframeMax - m_param->radl - 1; /*Frame preceeding RADL in POC order*/
+        if (bForceRADL && (frames[0]->frameNum == preRADL) && !bLastMiniGop)
         {
-            if (scenecut(frames, j, j + 1, false, origNumFrames))
+            int j = 1;
+            numBFrames = m_param->radl;
+            for (; j <= m_param->radl; j++)
+                frames[j]->sliceType = X265_TYPE_B;
+            frames[j]->sliceType = X265_TYPE_I;
+        }
+        else /* Check scenecut and RADL on the first minigop. */
+        {
+            for (int j = 1; j < numBFrames + 1; j++)
             {
-                frames[j]->sliceType = X265_TYPE_P;
-                numAnalyzed = j;
-                break;
+                if (scenecut(frames, j, j + 1, false, origNumFrames) || 
+                    (bForceRADL && (frames[j]->frameNum == preRADL)))
+                {
+                    frames[j]->sliceType = X265_TYPE_P;
+                    numAnalyzed = j;
+                    break;
+                }
             }
         }
         resetStart = bKeyframe ? 1 : X265_MIN(numBFrames + 2, numAnalyzed + 1);

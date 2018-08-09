@@ -293,7 +293,7 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
         for (int plane = 0; plane < (param.internalCsp != X265_CSP_I400 ? 3 : 1); plane++)
         {
             denom = plane ? chromaDenom : lumaDenom;
-            if (plane && !weights[0].bPresentFlag)
+            if (plane && !weights[0].wtPresent)
                 break;
 
             /* Early termination */
@@ -476,12 +476,12 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
             }
         }
 
-        if (weights[0].bPresentFlag)
+        if (weights[0].wtPresent)
         {
             // Make sure both chroma channels match
-            if (weights[1].bPresentFlag != weights[2].bPresentFlag)
+            if (weights[1].wtPresent != weights[2].wtPresent)
             {
-                if (weights[1].bPresentFlag)
+                if (weights[1].wtPresent)
                     weights[2] = weights[1];
                 else
                     weights[1] = weights[2];
@@ -515,15 +515,15 @@ void weightAnalyse(Slice& slice, Frame& frame, x265_param& param)
         for (int list = 0; list < numPredDir; list++)
         {
             WeightParam* w = &wp[list][0][0];
-            if (w[0].bPresentFlag || w[1].bPresentFlag || w[2].bPresentFlag)
+            if (w[0].wtPresent || w[1].wtPresent || w[2].wtPresent)
             {
                 bWeighted = true;
                 p += sprintf(buf + p, " [L%d:R0 ", list);
-                if (w[0].bPresentFlag)
+                if (w[0].wtPresent)
                     p += sprintf(buf + p, "Y{%d/%d%+d}", w[0].inputWeight, 1 << w[0].log2WeightDenom, w[0].inputOffset);
-                if (w[1].bPresentFlag)
+                if (w[1].wtPresent)
                     p += sprintf(buf + p, "U{%d/%d%+d}", w[1].inputWeight, 1 << w[1].log2WeightDenom, w[1].inputOffset);
-                if (w[2].bPresentFlag)
+                if (w[2].wtPresent)
                     p += sprintf(buf + p, "V{%d/%d%+d}", w[2].inputWeight, 1 << w[2].log2WeightDenom, w[2].inputOffset);
                 p += sprintf(buf + p, "]");
             }

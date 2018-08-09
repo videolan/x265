@@ -82,6 +82,8 @@ struct RateControlEntry
     double  rowCplxrSum;
     double  qpNoVbv;
     double  bufferFill;
+    double  targetFill;
+    bool    vbvEndAdj;
     double  frameDuration;
     double  clippedDuration;
     double  frameSizeEstimated; /* hold frameSize, updated from cu level vbv rc */

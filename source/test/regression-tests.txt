@@ -74,7 +74,6 @@ News-4k.y4m,--preset ultrafast --no-cutree --analysis-save x265_analysis.dat --a
 News-4k.y4m,--preset superfast --lookahead-slices 6 --aq-mode 0
 News-4k.y4m,--preset superfast --slices 4 --aq-mode 0 
 News-4k.y4m,--preset medium --tune ssim --no-sao --qg-size 16
-News-4k.y4m,--preset slower --opt-cu-delta-qp
 News-4k.y4m,--preset veryslow --no-rskip
 News-4k.y4m,--preset veryslow --pme --crf 40
 OldTownCross_1920x1080_50_10bit_422.yuv,--preset superfast --weightp
@@ -104,7 +103,6 @@ big_buck_bunny_360p24.y4m,--preset slow --psy-rdoq 2.0 --rdoq-level 1 --no-b-int
 city_4cif_60fps.y4m,--preset superfast --rdpenalty 1 --tu-intra-depth 2
 city_4cif_60fps.y4m,--preset medium --crf 4 --cu-lossless --sao-non-deblock
 city_4cif_60fps.y4m,--preset slower --scaling-list default
-city_4cif_60fps.y4m,--preset veryslow --opt-cu-delta-qp
 city_4cif_60fps.y4m,--preset veryslow --rdpenalty 2 --sao-non-deblock --no-b-intra --limit-refs 0
 ducks_take_off_420_720p50.y4m,--preset ultrafast --constrained-intra --rd 1
 ducks_take_off_444_720p50.y4m,--preset superfast --weightp --limit-refs 2
@@ -151,7 +149,7 @@ Kimono1_1920x1080_24_400.yuv,--preset medium --rdoq-level 0 --limit-refs 3 --sli
 Kimono1_1920x1080_24_400.yuv,--preset veryslow --crf 4 --cu-lossless --slices 2 --limit-refs 3 --limit-modes
 Kimono1_1920x1080_24_400.yuv,--preset placebo --ctu 32 --max-tu-size 8 --limit-tu 2
 big_buck_bunny_360p24.y4m, --keyint 60 --min-keyint 40 --gop-lookahead 14
-BasketballDrive_1920x1080_50.y4m, --preset medium --no-open-gop --keyint 50 --min-keyint 50 --radl 2
+BasketballDrive_1920x1080_50.y4m, --preset medium --no-open-gop --keyint 50 --min-keyint 50 --radl 2 --vbv-maxrate 5000 --vbv-bufsize 5000
 
 # Main12 intraCost overflow bug test
 720p50_parkrun_ter.y4m,--preset medium
@@ -168,7 +166,14 @@ big_buck_bunny_360p24.y4m,--preset superfast --me sea
 720p50_parkrun_ter.y4m,--preset medium --lowpass-dct
 
 #scaled save/load test
+crowd_run_1080p50.y4m,--preset ultrafast --no-cutree --analysis-save x265_analysis.dat  --analysis-reuse-level 1 --scale-factor 2 --crf 26 --vbv-maxrate 8000 --vbv-bufsize 8000::crowd_run_2160p50.y4m, --preset ultrafast --no-cutree --analysis-load x265_analysis.dat  --analysis-reuse-level 1 --scale-factor 2 --crf 26 --vbv-maxrate 12000 --vbv-bufsize 12000 
+crowd_run_1080p50.y4m,--preset superfast --no-cutree --analysis-save x265_analysis.dat  --analysis-reuse-level 2 --scale-factor 2 --crf 22 --vbv-maxrate 5000 --vbv-bufsize 5000::crowd_run_2160p50.y4m, --preset superfast --no-cutree --analysis-load x265_analysis.dat  --analysis-reuse-level 2 --scale-factor 2 --crf 22 --vbv-maxrate 10000 --vbv-bufsize 10000 
+crowd_run_1080p50.y4m,--preset fast --no-cutree --analysis-save x265_analysis.dat  --analysis-reuse-level 5 --scale-factor 2 --qp 18::crowd_run_2160p50.y4m, --preset fast --no-cutree --analysis-load x265_analysis.dat  --analysis-reuse-level 5 --scale-factor 2 --qp 18
 crowd_run_1080p50.y4m,--preset medium --no-cutree --analysis-save x265_analysis.dat  --analysis-reuse-level 10 --scale-factor 2 --bitrate 5000  --vbv-maxrate 5000 --vbv-bufsize 5000 --early-skip --tu-inter-depth 3::crowd_run_2160p50.y4m, --preset medium --no-cutree --analysis-load x265_analysis.dat  --analysis-reuse-level 10 --scale-factor 2 --bitrate 10000 --vbv-maxrate 10000 --vbv-bufsize 10000 --early-skip --tu-inter-depth 3 --refine-intra 4 --dynamic-refine::crowd_run_2160p50.y4m, --preset medium --no-cutree --analysis-load x265_analysis.dat  --analysis-reuse-level 10 --scale-factor 2 --bitrate 10000 --vbv-maxrate 10000 --vbv-bufsize 10000 --early-skip --tu-inter-depth 3 --refine-intra 3 --refine-inter 3
 RaceHorses_416x240_30.y4m,--preset slow --no-cutree --ctu 16 --analysis-save x265_analysis.dat --analysis-reuse-level 10 --scale-factor 2 --crf 22  --vbv-maxrate 1000 --vbv-bufsize 1000::RaceHorses_832x480_30.y4m, --preset slow --no-cutree --ctu 32 --analysis-load x265_analysis.dat  --analysis-save x265_analysis_2.dat --analysis-reuse-level 10 --scale-factor 2 --crf 16 --vbv-maxrate 4000 --vbv-bufsize 4000 --refine-intra 0 --refine-inter 1::RaceHorses_1664x960_30.y4m,--preset slow --no-cutree --ctu 64 --analysis-load x265_analysis_2.dat  --analysis-reuse-level 10 --scale-factor 2 --crf 12 --vbv-maxrate 7000 --vbv-bufsize 7000 --refine-intra 2 --refine-inter 2
+ElFunete_960x540_60.yuv,--colorprim bt709 --transfer bt709 --chromaloc 2 --aud --repeat-headers --no-opt-qp-pps --no-opt-ref-list-length-pps --wpp --no-interlace --sar 1:1 --min-keyint 60 --no-open-gop --rc-lookahead 180 --bframes 5 --b-intra --ref 4 --cbqpoffs -2 --crqpoffs -2 --lookahead-threads 0 --weightb --qg-size 8 --me star --preset veryslow --frame-threads 1 --b-adapt 2 --aq-mode 3 --rd 6 --pools 15 --colormatrix bt709 --keyint 120 --high-tier --ctu 64 --tune psnr --bitrate 10000 --vbv-bufsize 30000 --vbv-maxrate 17500 --analysis-reuse-level 10 --analysis-save elfuente_960x540.dat --scale-factor 2::ElFunete_1920x1080_60.yuv,--colorprim bt709 --transfer bt709 --chromaloc 2 --aud --repeat-headers --no-opt-qp-pps --no-opt-ref-list-length-pps --wpp --no-interlace --sar 1:1 --min-keyint 60 --no-open-gop --rc-lookahead 180 --bframes 5 --b-intra --ref 4 --cbqpoffs -2 --crqpoffs -2 --lookahead-threads 0 --weightb --qg-size 8 --me star --preset veryslow --frame-threads 1 --b-adapt 2 --aq-mode 3 --rd 6 --pools 15 --colormatrix bt709 --keyint 120 --high-tier --ctu 64 --tune psnr --bitrate 10000 --vbv-bufsize 30000 --vbv-maxrate 17500 --analysis-reuse-level 10 --analysis-save elfuente_1920x1080.dat --limit-tu 0 --scale-factor 2 --analysis-load elfuente_960x540.dat --refine-intra 4 --refine-inter 2::ElFuente_3840x2160_60.yuv,--colorprim bt709 --transfer bt709 --chromaloc 2 --aud --repeat-headers --no-opt-qp-pps --no-opt-ref-list-length-pps --wpp --no-interlace --sar 1:1 --min-keyint 60 --no-open-gop --rc-lookahead 180 --bframes 5 --b-intra --ref 4 --cbqpoffs -2 --crqpoffs -2 --lookahead-threads 0 --weightb --qg-size 8 --me star --preset veryslow --frame-threads 1 --b-adapt 2 --aq-mode 3 --rd 6 --pools 15 --colormatrix bt709 --keyint 120 --high-tier --ctu 64 --tune=psnr --bitrate 24000 --vbv-bufsize 84000 --vbv-maxrate 49000 --analysis-reuse-level 10 --limit-tu 0 --scale-factor 2 --analysis-load elfuente_1920x1080.dat --refine-intra 4 --refine-inter 2
+
+#segment encoding
+BasketballDrive_1920x1080_50.y4m, --preset ultrafast --no-open-gop --chunk-start 100 --chunk-end 200
 
 # vim: tw=200

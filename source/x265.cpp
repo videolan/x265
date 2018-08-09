@@ -144,7 +144,7 @@ void CLIOptions::printStatus(uint32_t frameNum)
     {
         int eta = (int)(elapsed * (framesToBeEncoded - frameNum) / ((int64_t)frameNum * 1000000));
         sprintf(buf, "x265 [%.1f%%] %d/%d frames, %.2f fps, %.2f kb/s, eta %d:%02d:%02d",
-                100. * frameNum / framesToBeEncoded, frameNum, framesToBeEncoded, fps, bitrate,
+            100. * frameNum / (param->chunkEnd ? param->chunkEnd : param->totalFrames), frameNum, (param->chunkEnd ? param->chunkEnd : param->totalFrames), fps, bitrate,
                 eta / 3600, (eta / 60) % 60, eta % 60);
     }
     else
@@ -403,7 +403,7 @@ bool CLIOptions::parse(int argc, char **argv)
     if (this->framesToBeEncoded == 0 && info.frameCount > (int)seek)
         this->framesToBeEncoded = info.frameCount - seek;
     param->totalFrames = this->framesToBeEncoded;
-
+    
     /* Force CFR until we have support for VFR */
     info.timebaseNum = param->fpsDenom;
     info.timebaseDenom = param->fpsNum;

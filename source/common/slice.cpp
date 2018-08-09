@@ -138,7 +138,7 @@ void Slice::disableWeights()
             for (int yuv = 0; yuv < 3; yuv++)
             {
                 WeightParam& wp = m_weightPredTable[l][i][yuv];
-                wp.bPresentFlag = false;
+                wp.wtPresent = 0;
                 wp.log2WeightDenom = 0;
                 wp.inputWeight = 1;
                 wp.inputOffset = 0;

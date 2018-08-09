@@ -156,7 +156,10 @@ It also enables a specialised ratecontrol algorithm :option:`--rc-grain`
 that strictly minimises QP fluctuations across frames, while still allowing 
 the encoder to hit bitrate targets and VBV buffer limits (with a slightly 
 higher margin of error than normal). It is highly recommended that this 
-algorithm is used only through the :option:`--tune` *grain* feature.
+algorithm is used only through the :option:`--tune` *grain* feature. 
+Overriding the `--tune` *grain* settings might result in grain strobing, especially
+when enabling features like :option:`--aq-mode` and :option:`--cutree` that modify
+per-block QPs within a given frame.
 
 Fast Decode
 ~~~~~~~~~~~
