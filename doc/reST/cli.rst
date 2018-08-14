@@ -787,7 +787,7 @@ the prediction quad-tree.
 	Default 3.
 
 .. option:: --limit-modes, --no-limit-modes
-    
+
 	When enabled, limit-modes will limit modes analyzed for each CU	using cost 
 	metrics from the 4 sub-CUs. When multiple inter modes like :option:`--rect`
 	and/or :option:`--amp` are enabled, this feature will use motion cost 
@@ -833,6 +833,11 @@ the prediction quad-tree.
 	Provides minimal quality degradation at good performance gains when enabled. 
 
 	Default: enabled, disabled for :option:`--tune grain`
+
+.. option:: --splitrd-skip, --no-splitrd-skip
+
+	Enable skipping split RD analysis when sum of split CU rdCost larger than one
+	split CU rdCost for Intra CU. Default disabled.
 
 .. option:: --fast-intra, --no-fast-intra
 
