@@ -1764,8 +1764,8 @@ Quality, rate control and rate distortion options
 
 	qComp sets the quantizer curve compression factor. It weights the
 	frame quantizer based on the complexity of residual (measured by
-	lookahead).  Default value is 0.6. Increasing it to 1 will
-	effectively generate CQP
+	lookahead). It's value must be between 0.5 and 1.0. Default value is
+	0.6. Increasing it to 1.0 will effectively generate CQP.
 
 .. option:: --qpstep <integer>
 
