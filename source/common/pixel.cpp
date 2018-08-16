@@ -922,7 +922,7 @@ static void estimateCUPropagateCost(int* dst, const uint16_t* propagateIn, const
 static void cuTreeFix8Pack(uint16_t *dst, double *src, int count)
 {
     for (int i = 0; i < count; i++)
-        dst[i] = (uint16_t)(src[i] * 256.0);
+        dst[i] = (uint16_t)(int16_t)(src[i] * 256.0);
 }
 
 static void cuTreeFix8Unpack(double *dst, uint16_t *src, int count)
