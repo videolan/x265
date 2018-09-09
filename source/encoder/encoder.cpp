@@ -4281,8 +4281,6 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
                                 {
                                     interDataCTU->mvpIdx[dir][depthBytes] = ctu->m_mvpIdx[dir][puabsPartIdx];
                                     interDataCTU->refIdx[dir][depthBytes] = ctu->m_refIdx[dir][puabsPartIdx];
-                                    interDataCTU->mv[dir][depthBytes].x = ctu->m_mv[dir][puabsPartIdx].x;
-                                    interDataCTU->mv[dir][depthBytes].y = ctu->m_mv[dir][puabsPartIdx].y;
                                     interDataCTU->mv[dir][depthBytes].word = ctu->m_mv[dir][puabsPartIdx].word;
                                 }
                             }
@@ -4425,16 +4423,12 @@ void Encoder::writeAnalysisFileRefine(x265_analysis_data* analysis, FrameData &c
             for (uint32_t absPartIdx = 0; absPartIdx < ctu->m_numPartitions; depthBytes++)
             {
                 depth = ctu->m_cuDepth[absPartIdx];
-                interData->mv[0][depthBytes].x = ctu->m_mv[0][absPartIdx].x;
-                interData->mv[0][depthBytes].y = ctu->m_mv[0][absPartIdx].y;
                 interData->mv[0][depthBytes].word = ctu->m_mv[0][absPartIdx].word;
                 interData->mvpIdx[0][depthBytes] = ctu->m_mvpIdx[0][absPartIdx];
                 ref[0][depthBytes] = ctu->m_refIdx[0][absPartIdx];
                 predMode = ctu->m_predMode[absPartIdx];
                 if (ctu->m_refIdx[1][absPartIdx] != -1)
                 {
-                    interData->mv[1][depthBytes].x = ctu->m_mv[1][absPartIdx].x;
-                    interData->mv[1][depthBytes].y = ctu->m_mv[1][absPartIdx].y;
                     interData->mv[1][depthBytes].word = ctu->m_mv[1][absPartIdx].word;
                     interData->mvpIdx[1][depthBytes] = ctu->m_mvpIdx[1][absPartIdx];
                     ref[1][depthBytes] = ctu->m_refIdx[1][absPartIdx];

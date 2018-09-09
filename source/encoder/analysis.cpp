@@ -70,12 +70,6 @@ using namespace X265_NS;
  * rd-level 5,6 does RDO for each inter mode
  */
 
-#define COPY_TO_MV(s1, s2, d1, d2)\
-    {\
-        d1 = s1; \
-        d2 = s2; \
-    }
-
 Analysis::Analysis()
 {
     m_reuseInterDataCTU = NULL;
@@ -2467,9 +2461,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                     mode.cu.setPUInterDir(interDataCTU->interDir[cuIdx + part], pu.puAbsPartIdx, part);
                     for (int list = 0; list < m_slice->isInterB() + 1; list++)
                     {
-                        MV dst; x265_analysis_MV src = interDataCTU->mv[list][cuIdx + part];
-                        COPY_TO_MV(src.x, src.y, dst.x, dst.y);
-                        mode.cu.setPUMv(list, dst, pu.puAbsPartIdx, part);
+                        mode.cu.setPUMv(list, interDataCTU->mv[list][cuIdx + part].word, pu.puAbsPartIdx, part);
                         mode.cu.setPURefIdx(list, interDataCTU->refIdx[list][cuIdx + part], pu.puAbsPartIdx, part);
                         mode.cu.m_mvpIdx[list][pu.puAbsPartIdx] = interDataCTU->mvpIdx[list][cuIdx + part];
                     }
@@ -2491,10 +2483,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                             if (m_param->interRefine != 1)
                                 mvp = mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]];
                             else
-                            {
-                                x265_analysis_MV src = interDataCTU->mv[list][cuIdx + part];
-                                COPY_TO_MV(src.x, src.y, mvp.x, mvp.y);
-                            }
+                                mvp = interDataCTU->mv[list][cuIdx + part].word;
                             if (m_param->mvRefine || m_param->interRefine == 1)
                             {
                                 MV outmv;
@@ -3032,9 +3021,8 @@ void Analysis::checkInter_rd0_4(Mode& interMode, const CUGeom& cuGeom, PartSize 
             for (int32_t i = 0; i < numPredDir; i++)
             {
                 int* ref = &m_reuseRef[i * m_frame->m_analysisData.numPartitions * m_frame->m_analysisData.numCUsInFrame];
-                x265_analysis_MV src = m_reuseMv[i][cuGeom.absPartIdx];
                 bestME[i].ref = ref[cuGeom.absPartIdx];
-                COPY_TO_MV(src.x, src.y, bestME[i].mv.x, bestME[i].mv.y);
+                bestME[i].mv = m_reuseMv[i][cuGeom.absPartIdx].word;
                 bestME[i].mvpIdx = m_reuseMvpIdx[i][cuGeom.absPartIdx];
             }
         }
@@ -3097,10 +3085,9 @@ void Analysis::checkInter_rd5_6(Mode& interMode, const CUGeom& cuGeom, PartSize 
             MotionData* bestME = interMode.bestME[part];
             for (int32_t i = 0; i < numPredDir; i++)
             {
-                x265_analysis_MV src = m_reuseMv[i][cuGeom.absPartIdx];
                 int* ref = &m_reuseRef[i * m_frame->m_analysisData.numPartitions * m_frame->m_analysisData.numCUsInFrame];
                 bestME[i].ref = ref[cuGeom.absPartIdx];
-                COPY_TO_MV(src.x, src.y, bestME[i].mv.x, bestME[i].mv.y);
+                bestME[i].mv = m_reuseMv[i][cuGeom.absPartIdx].word;
                 bestME[i].mvpIdx = m_reuseMvpIdx[i][cuGeom.absPartIdx];
             }
         }
