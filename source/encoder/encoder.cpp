@@ -875,6 +875,77 @@ void Encoder::calcRefreshInterval(Frame* frameEnc)
     }
 }
 
+void Encoder::copyUserSEIMessages(Frame *frame, const x265_picture* pic_in)
+{
+    x265_sei_payload toneMap;
+    toneMap.payload = NULL;
+    int toneMapPayload = 0;
+
+#if ENABLE_HDR10_PLUS
+    if (m_bToneMap)
+    {
+        int currentPOC = m_pocLast;
+        if (currentPOC < m_numCimInfo)
+        {
+            int32_t i = 0;
+            toneMap.payloadSize = 0;
+            while (m_cim[currentPOC][i] == 0xFF)
+                toneMap.payloadSize += m_cim[currentPOC][i++];
+            toneMap.payloadSize += m_cim[currentPOC][i];
+
+            toneMap.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * toneMap.payloadSize);
+            toneMap.payloadType = USER_DATA_REGISTERED_ITU_T_T35;
+            memcpy(toneMap.payload, &m_cim[currentPOC][i + 1], toneMap.payloadSize);
+            toneMapPayload = 1;
+        }
+    }
+#endif
+    /* seiMsg will contain SEI messages specified in a fixed file format in POC order.
+    * Format of the file : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload> */
+    x265_sei_payload seiMsg;
+    seiMsg.payload = NULL;
+    int userPayload = 0;
+    if (m_enableNal)
+    {
+        readUserSeiFile(seiMsg, m_pocLast);
+        if (seiMsg.payload)
+            userPayload = 1;;
+    }
+
+    int numPayloads = pic_in->userSEI.numPayloads + toneMapPayload + userPayload;
+    frame->m_userSEI.numPayloads = numPayloads;
+
+    if (frame->m_userSEI.numPayloads)
+    {
+        if (!frame->m_userSEI.payloads)
+        {
+            frame->m_userSEI.payloads = new x265_sei_payload[numPayloads];
+            for (int i = 0; i < numPayloads; i++)
+                frame->m_userSEI.payloads[i].payload = NULL;
+        }
+        for (int i = 0; i < numPayloads; i++)
+        {
+            x265_sei_payload input;
+            if ((i == (numPayloads - 1)) && toneMapPayload)
+                input = toneMap;
+            else if (m_enableNal)
+                input = seiMsg;
+            else
+                input = pic_in->userSEI.payloads[i];
+
+            if (!frame->m_userSEI.payloads[i].payload)
+                frame->m_userSEI.payloads[i].payload = new uint8_t[input.payloadSize];
+            memcpy(frame->m_userSEI.payloads[i].payload, input.payload, input.payloadSize);
+            frame->m_userSEI.payloads[i].payloadSize = input.payloadSize;
+            frame->m_userSEI.payloads[i].payloadType = input.payloadType;
+        }
+        if (toneMap.payload)
+            x265_free(toneMap.payload);
+        if (seiMsg.payload)
+            x265_free(seiMsg.payload);
+    }
+}
+
 /**
  * Feed one new input frame into the encoder, get one frame out. If pic_in is
  * NULL, a flush condition is implied and pic_in must be NULL for all subsequent
@@ -919,32 +990,6 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             m_latestParam->forceFlush = 0;
         }
 
-        x265_sei_payload toneMap;
-        toneMap.payload = NULL;
-#if ENABLE_HDR10_PLUS
-        if (m_bToneMap)
-        {
-            int currentPOC = m_pocLast + 1;
-            if (currentPOC < m_numCimInfo)
-            {
-                int32_t i = 0;
-                toneMap.payloadSize = 0;
-                while (m_cim[currentPOC][i] == 0xFF)
-                    toneMap.payloadSize += m_cim[currentPOC][i++];
-                toneMap.payloadSize += m_cim[currentPOC][i];
-
-                toneMap.payload = (uint8_t*)x265_malloc(sizeof(uint8_t) * toneMap.payloadSize);
-                toneMap.payloadType = USER_DATA_REGISTERED_ITU_T_T35;
-                memcpy(toneMap.payload, &m_cim[currentPOC][i+1], toneMap.payloadSize);
-            }
-        }
-#endif
-/* seiMsg will contain SEI messages specified in a fixed file format in POC order.
-* Format of the file : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload> */
-        x265_sei_payload seiMsg;
-        seiMsg.payload = NULL;
-        if (m_enableNal)
-            readUserSeiFile(seiMsg, m_pocLast);
         if (pic_in->bitDepth < 8 || pic_in->bitDepth > 16)
         {
             x265_log(m_param, X265_LOG_ERROR, "Input bit depth (%d) must be between 8 and 16\n",
@@ -1026,42 +1071,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_forceqp   = pic_in->forceqp;
         inFrame->m_param     = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
 
-        int toneMapEnable = 0;
-        if (m_bToneMap && toneMap.payload)
-            toneMapEnable = 1;
-        int numPayloads = pic_in->userSEI.numPayloads + toneMapEnable;
-        if (m_enableNal && seiMsg.payload)
-            numPayloads += m_enableNal;
-        inFrame->m_userSEI.numPayloads = numPayloads;
-
-        if (inFrame->m_userSEI.numPayloads)
-        {
-            if (!inFrame->m_userSEI.payloads)
-            {
-                inFrame->m_userSEI.payloads = new x265_sei_payload[numPayloads];
-                for (int i = 0; i < numPayloads; i++)
-                    inFrame->m_userSEI.payloads[i].payload = NULL;
-            }
-            for (int i = 0; i < numPayloads; i++)
-            {
-                x265_sei_payload input;
-                if ((i == (numPayloads - 1)) && toneMapEnable)
-                    input = toneMap;
-                else if (m_enableNal)
-                    input = seiMsg;
-                else
-                    input = pic_in->userSEI.payloads[i];
-                int size = inFrame->m_userSEI.payloads[i].payloadSize = input.payloadSize;
-                inFrame->m_userSEI.payloads[i].payloadType = input.payloadType;
-                if (!inFrame->m_userSEI.payloads[i].payload)
-                    inFrame->m_userSEI.payloads[i].payload = new uint8_t[size];
-                memcpy(inFrame->m_userSEI.payloads[i].payload, input.payload, size);
-            }
-            if (toneMap.payload)
-                x265_free(toneMap.payload);
-            if (seiMsg.payload)
-                x265_free(seiMsg.payload);
-        }
+        copyUserSEIMessages(inFrame, pic_in);
 
         if (pic_in->quantOffsets != NULL)
         {
@@ -4525,7 +4535,7 @@ void Encoder::readUserSeiFile(x265_sei_payload& seiMsg, int curPoc)
         char *base64Decode = SEI::base64Decode(base64Encode, base64EncodeLength);
         if (nalType == NAL_UNIT_PREFIX_SEI && (!strcmp(prefix, "PREFIX")))
         {
-            int currentPOC = curPoc + 1;
+            int currentPOC = curPoc;
             if (currentPOC == poc)
             {
                 seiMsg.payloadSize = (base64EncodeLength / 4) * 3;

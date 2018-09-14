@@ -302,6 +302,8 @@ public:
     void updateRefIdx();
     bool computeSPSRPSIndex();
 
+    void copyUserSEIMessages(Frame *frame, const x265_picture* pic_in);
+
 protected:
 
     void initVPS(VPS *vps);
