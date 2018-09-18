@@ -33,44 +33,42 @@ const uint8_t SEIuserDataUnregistered::m_uuid_iso_iec_11578[16] = {
     0x2C, 0xA2, 0xDE, 0x09, 0xB5, 0x17, 0x47, 0xDB,
     0xBB, 0x55, 0xA4, 0xFE, 0x7F, 0xC2, 0xFC, 0x4E
 };
-/* count the size of the payload and return the size in bits */
-int SEI::countPayloadSize(const SPS& sps)
+
+/* marshal a single SEI message sei, storing the marshalled representation
+* in bitstream bs */
+void SEI::writeSEImessages(Bitstream& bs, const SPS& sps, NalUnitType nalUnitType, NALList& list, int isNested)
 {
+    if (!isNested)
+        bs.resetBits();
+
     BitCounter counter;
     m_bitIf = &counter;
     writeSEI(sps);
+    /* count the size of the payload and return the size in bits */
     X265_CHECK(0 == (counter.getNumberOfWrittenBits() & 7), "payload unaligned\n");
-    int count = counter.getNumberOfWrittenBits() >> 3;
-    return count;
-}
+    uint32_t payloadData = counter.getNumberOfWrittenBits() >> 3;
 
-void SEI::alignAndSerialize(Bitstream& bs, int lastSei, int isSingleSei, NalUnitType nalUnitType, NALList& list)
-{
-    if (lastSei || !isSingleSei)
+    // set bitstream
+    m_bitIf = &bs;
+
+    uint32_t payloadType = m_payloadType;
+    for (; payloadType >= 0xff; payloadType -= 0xff)
+        WRITE_CODE(0xff, 8, "payload_type");
+    WRITE_CODE(payloadType, 8, "payload_type");
+
+    uint32_t payloadSize = payloadData;
+    for (; payloadSize >= 0xff; payloadSize -= 0xff)
+        WRITE_CODE(0xff, 8, "payload_size");
+    WRITE_CODE(payloadSize, 8, "payload_size");
+
+    // virtual writeSEI method, write to bs 
+    writeSEI(sps);
+
+    if (!isNested)
     {
         bs.writeByteAlignment();
         list.serialize(nalUnitType, bs);
     }
-}
-
-/* marshal a single SEI message sei, storing the marshalled representation
- * in bitstream bs */
-void SEI::write(Bitstream& bs, const SPS& sps)
-{
-    uint32_t type = m_payloadType;
-    m_bitIf = &bs;
-    uint32_t payloadSize = m_payloadSize;
-    if (m_payloadType == USER_DATA_UNREGISTERED)
-        payloadSize = m_payloadSize + 16;
-    uint32_t payloadType = m_payloadType;
-    for (; payloadType >= 0xff; payloadType -= 0xff)
-        WRITE_CODE(0xff, 8, "payload_type");
-    WRITE_CODE(type, 8, "payload_type");
-    for (; payloadSize >= 0xff; payloadSize -= 0xff)
-        WRITE_CODE(0xff, 8, "payload_size");
-    WRITE_CODE(payloadSize, 8, "payload_size");
-    /* virtual writeSEI method, write to bs */
-    writeSEI(sps);
 }
 
 void SEI::writeByteAlign()

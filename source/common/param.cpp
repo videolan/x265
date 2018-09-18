@@ -1415,9 +1415,16 @@ int x265_check_params(x265_param* param)
     if (param->masteringDisplayColorVolume || param->maxFALL || param->maxCLL)
         param->bEmitHDRSEI = 1;
 
-    bool isSingleSEI = ((param->bEmitHRDSEI || param->bEmitInfoSEI || param->decodedPictureHashSEI ||
-                         param->masteringDisplayColorVolume || param->maxCLL || param->maxFALL || 
-                         param->bEmitHDRSEI || param->bEmitIDRRecoverySEI));
+    bool isSingleSEI = (param->bRepeatHeaders
+                     || param->bEmitHRDSEI
+                     || param->bEmitInfoSEI
+                     || param->bEmitHDRSEI
+                     || param->bEmitIDRRecoverySEI
+                   || !!param->interlaceMode
+                     || param->preferredTransferCharacteristics > 1
+                     || param->toneMapFile
+                     || param->naluFile);
+
     if (!isSingleSEI && param->bSingleSeiNal)
     {
         param->bSingleSeiNal = 0;

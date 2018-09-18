@@ -36,11 +36,9 @@ namespace X265_NS {
 class SEI : public SyntaxElementWriter
 {
 public:
-    /* SEI users call write() to marshal an SEI to a bitstream.
-     * The write() method calls writeSEI() which encodes the header */
-    void write(Bitstream& bs, const SPS& sps);
-    void alignAndSerialize(Bitstream& bs, int lastSei, int isSingleSei, NalUnitType nalUnitType, NALList& list);
-    int countPayloadSize(const SPS& sps);
+    /* SEI users call writeSEImessages() to marshal an SEI to a bitstream.
+    * The writeSEImessages() method calls writeSEI() which encodes the header */
+    void writeSEImessages(Bitstream& bs, const SPS& sps, NalUnitType nalUnitType, NALList& list, int isNested);
     void setSize(uint32_t size);
     static char* base64Decode(char encodedString[], int base64EncodeLength);
     virtual ~SEI() {}
@@ -51,6 +49,32 @@ protected:
     void writeByteAlign();
 };
 
+//seongnam.oh@samsung.com :: for the Creative Intent Meta Data Encoding
+class SEIuserDataRegistered : public SEI
+{
+public:
+    SEIuserDataRegistered()
+    {
+        m_payloadType = USER_DATA_REGISTERED_ITU_T_T35;
+        m_payloadSize = 0;
+    }
+
+    uint8_t *m_userData;
+
+    // daniel.vt@samsung.com :: for the Creative Intent Meta Data Encoding ( seongnam.oh@samsung.com )
+    void writeSEI(const SPS&)
+    {
+        if (!m_userData)
+            return;
+
+        uint32_t i = 0;
+        for (; i < m_payloadSize; ++i)
+            WRITE_CODE(m_userData[i], 8, "creative_intent_metadata");
+    }
+};
+
+static const uint32_t ISO_IEC_11578_LEN = 16;
+
 class SEIuserDataUnregistered : public SEI
 {
 public:
@@ -59,11 +83,11 @@ public:
         m_payloadType = USER_DATA_UNREGISTERED;
         m_payloadSize = 0;
     }
-    static const uint8_t m_uuid_iso_iec_11578[16];
+    static const uint8_t m_uuid_iso_iec_11578[ISO_IEC_11578_LEN];
     uint8_t *m_userData;
     void writeSEI(const SPS&)
     {
-        for (uint32_t i = 0; i < 16; i++)
+        for (uint32_t i = 0; i < ISO_IEC_11578_LEN; i++)
             WRITE_CODE(m_uuid_iso_iec_11578[i], 8, "sei.uuid_iso_iec_11578[i]");
         for (uint32_t i = 0; i < m_payloadSize; i++)
             WRITE_CODE(m_userData[i], 8, "user_data");
@@ -280,45 +304,21 @@ public:
     }
 };
 
-//seongnam.oh@samsung.com :: for the Creative Intent Meta Data Encoding
-class SEICreativeIntentMeta : public SEI
-{
-public:
-    SEICreativeIntentMeta()
-    {
-        m_payloadType = USER_DATA_REGISTERED_ITU_T_T35;
-        m_payloadSize = 0;
-    }
-
-    uint8_t *m_payload;
-
-    // daniel.vt@samsung.com :: for the Creative Intent Meta Data Encoding ( seongnam.oh@samsung.com )
-    void writeSEI(const SPS&)
-    {
-        if (!m_payload)
-            return;
-
-        uint32_t i = 0;
-        for (; i < m_payloadSize; ++i)
-            WRITE_CODE(m_payload[i], 8, "creative_intent_metadata");
-    }
-};
-
 class SEIAlternativeTC : public SEI
 {
 public:
     int m_preferredTransferCharacteristics;
     SEIAlternativeTC()
     {
-	    m_payloadType = ALTERNATIVE_TRANSFER_CHARACTERISTICS;
-		m_payloadSize = 0;
-		m_preferredTransferCharacteristics = -1;
-	}	
-	
-	void writeSEI(const SPS&)
-	{
-	    WRITE_CODE(m_preferredTransferCharacteristics, 8, "Preferred transfer characteristics");
-	}
+        m_payloadType = ALTERNATIVE_TRANSFER_CHARACTERISTICS;
+        m_payloadSize = 0;
+        m_preferredTransferCharacteristics = -1;
+    }
+
+    void writeSEI(const SPS&)
+    {
+        WRITE_CODE(m_preferredTransferCharacteristics, 8, "Preferred transfer characteristics");
+    }
 };
 
 }

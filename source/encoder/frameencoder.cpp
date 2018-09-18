@@ -365,6 +365,33 @@ uint32_t getBsLength( int32_t code )
     return length;
 }
 
+bool FrameEncoder::writeToneMapInfo(x265_sei_payload *payload)
+{
+    bool payloadChange = false;
+    if (m_top->m_prevTonemapPayload.payload != NULL && payload->payloadSize == m_top->m_prevTonemapPayload.payloadSize)
+    {
+        if (memcmp(m_top->m_prevTonemapPayload.payload, payload->payload, payload->payloadSize) != 0)
+            payloadChange = true;
+    }
+    else
+    {
+        payloadChange = true;
+        if (m_top->m_prevTonemapPayload.payload != NULL)
+            x265_free(m_top->m_prevTonemapPayload.payload);
+        m_top->m_prevTonemapPayload.payload = (uint8_t*)x265_malloc(sizeof(uint8_t)* payload->payloadSize);
+    }
+
+    if (payloadChange)
+    {
+        m_top->m_prevTonemapPayload.payloadType = payload->payloadType;
+        m_top->m_prevTonemapPayload.payloadSize = payload->payloadSize;
+        memcpy(m_top->m_prevTonemapPayload.payload, payload->payload, payload->payloadSize);
+    }
+
+    bool isIDR = m_frame->m_lowres.sliceType == X265_TYPE_IDR;
+    return (payloadChange || isIDR);
+}
+
 void FrameEncoder::writeTrailingSEIMessages()
 {
     Slice* slice = m_frame->m_encData->m_slice;
@@ -393,10 +420,8 @@ void FrameEncoder::writeTrailingSEIMessages()
         payloadSize = 1 + 4 * planes;
     }
 
-    m_bs.resetBits();
     m_seiReconPictureDigest.setSize(payloadSize);
-    m_seiReconPictureDigest.write(m_bs, *slice->m_sps);
-    m_seiReconPictureDigest.alignAndSerialize(m_bs, true, m_param->bSingleSeiNal, NAL_UNIT_SUFFIX_SEI, m_nalList);
+    m_seiReconPictureDigest.writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_SUFFIX_SEI, m_nalList, false);
 }
 
 void FrameEncoder::compressFrame()
@@ -496,9 +521,7 @@ void FrameEncoder::compressFrame()
                 wa.waitForExit();
             else
                 weightAnalyse(*slice, *m_frame, *m_param);
-
         }
-
     }
     else
         slice->disableWeights();
@@ -670,12 +693,7 @@ void FrameEncoder::compressFrame()
             bpSei->m_dpbDelayOffset = 0;
             // hrdFullness() calculates the initial CPB removal delay and offset
             m_top->m_rateControl->hrdFullness(bpSei);
-            if (!m_param->bSingleSeiNal)
-                m_bs.resetBits();
-            int payloadSize = bpSei->countPayloadSize(*slice->m_sps);
-            bpSei->setSize(payloadSize);
-            bpSei->write(m_bs, *slice->m_sps);
-            bpSei->alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+            bpSei->writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
 
             m_top->m_lastBPSEI = m_rce.encodeOrder;
         }
@@ -687,11 +705,7 @@ void FrameEncoder::compressFrame()
             sei.m_recoveryPocCnt = 0;
             sei.m_exactMatchingFlag = true;
             sei.m_brokenLinkFlag = false;
-            if (!m_param->bSingleSeiNal)
-                m_bs.resetBits();
-            sei.setSize(sei.countPayloadSize(*slice->m_sps));
-            sei.write(m_bs, *slice->m_sps);
-            sei.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+            sei.writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
         }
     }
 
@@ -711,10 +725,7 @@ void FrameEncoder::compressFrame()
             else
                 sei->m_picStruct = m_param->pictureStructure;
 
-            if (m_param->interlaceMode)
-                sei->m_sourceScanType = 0;
-            else
-                sei->m_sourceScanType = 1;
+            sei->m_sourceScanType = m_param->interlaceMode ? 0 : 1;
 
             sei->m_duplicateFlag = false;
         }
@@ -728,26 +739,17 @@ void FrameEncoder::compressFrame()
             sei->m_auCpbRemovalDelay = X265_MIN(X265_MAX(1, m_rce.encodeOrder - prevBPSEI), (1 << hrd->cpbRemovalDelayLength));
             sei->m_picDpbOutputDelay = slice->m_sps->numReorderPics + poc - m_rce.encodeOrder;
         }
-        if (!m_param->bSingleSeiNal)
-            m_bs.resetBits();
-        int payloadSize = sei->countPayloadSize(*slice->m_sps);
-        sei->setSize(payloadSize);
-        sei->write(m_bs, *slice->m_sps);
-        sei->alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+
+        sei->writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
     }
 
     if (m_param->preferredTransferCharacteristics > -1 && slice->isIRAP())
     {
         SEIAlternativeTC m_seiAlternativeTC;
         m_seiAlternativeTC.m_preferredTransferCharacteristics = m_param->preferredTransferCharacteristics;
-        m_bs.resetBits();
-        int payloadSize = m_seiAlternativeTC.countPayloadSize(*slice->m_sps);
-        m_seiAlternativeTC.setSize(payloadSize);
-        m_seiAlternativeTC.write(m_bs, *slice->m_sps);
-        m_seiAlternativeTC.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
+        m_seiAlternativeTC.writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
     }
 
-    bool isSei = false;
     /* Write user SEI */
     for (int i = 0; i < m_frame->m_userSEI.numPayloads; i++)
     {
@@ -756,33 +758,27 @@ void FrameEncoder::compressFrame()
         {
             SEIuserDataUnregistered sei;
             sei.m_userData = payload->payload;
-            if (!m_param->bSingleSeiNal)
-                m_bs.resetBits();
             sei.setSize(payload->payloadSize);
-            sei.write(m_bs, *slice->m_sps);
-            sei.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
-            isSei = true;
+            sei.writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
         }
         else if (payload->payloadType == USER_DATA_REGISTERED_ITU_T_T35)
         {
+            bool writeSei = m_param->bDhdr10opt ? writeToneMapInfo(payload) : true;
             if (writeSei)
             {
-                SEICreativeIntentMeta sei;
-                sei.m_payload = payload->payload;
-                if (!m_param->bSingleSeiNal)
-                    m_bs.resetBits();
+                SEIuserDataRegistered sei;
+                sei.m_userData = payload->payload;
                 sei.setSize(payload->payloadSize);
-                sei.write(m_bs, *slice->m_sps);
-                sei.alignAndSerialize(m_bs, false, m_param->bSingleSeiNal, NAL_UNIT_PREFIX_SEI, m_nalList);
-                isSei = true;
+                sei.writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);
             }
         }
         else
             x265_log(m_param, X265_LOG_ERROR, "Unrecognized SEI type\n");
     }
 
-    isSei |= ((m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders) || m_param->bEmitHRDSEI ||
-             !!m_param->interlaceMode || (m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_param->bEmitIDRRecoverySEI));
+    bool isSei = ((m_frame->m_lowres.bKeyframe && m_param->bRepeatHeaders) || m_param->bEmitHRDSEI ||
+                 !!m_param->interlaceMode || (m_frame->m_lowres.sliceType == X265_TYPE_IDR && m_param->bEmitIDRRecoverySEI) ||
+                   m_frame->m_userSEI.numPayloads);
 
     if (isSei && m_param->bSingleSeiNal)
     {
@@ -1061,10 +1057,8 @@ void FrameEncoder::compressFrame()
 
         m_nalList.serialize(slice->m_nalUnitType, m_bs);
     }
-    if (isSei && m_param->bSingleSeiNal)
-        m_bs.resetBits();
 
-    if (m_param->decodedPictureHashSEI)    
+    if (m_param->decodedPictureHashSEI)
         writeTrailingSEIMessages();
 
     uint64_t bytes = 0;

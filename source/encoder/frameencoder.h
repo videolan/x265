@@ -230,6 +230,7 @@ protected:
     int  collectCTUStatistics(const CUData& ctu, FrameStats* frameLog);
     void noiseReductionUpdate();
     void writeTrailingSEIMessages();
+    bool writeToneMapInfo(x265_sei_payload *payload);
 
     /* Called by WaveFront::findJob() */
     virtual void processRow(int row, int threadId);
