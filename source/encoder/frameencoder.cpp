@@ -365,6 +365,40 @@ uint32_t getBsLength( int32_t code )
     return length;
 }
 
+void FrameEncoder::writeTrailingSEIMessages()
+{
+    Slice* slice = m_frame->m_encData->m_slice;
+    int planes = (m_param->internalCsp != X265_CSP_I400) ? 3 : 1;
+    int32_t payloadSize = 0;
+
+    if (m_param->decodedPictureHashSEI == 1)
+    {
+        m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::MD5;
+        for (int i = 0; i < planes; i++)
+            MD5Final(&m_seiReconPictureDigest.m_state[i], m_seiReconPictureDigest.m_digest[i]);
+        payloadSize = 1 + 16 * planes;
+    }
+    else if (m_param->decodedPictureHashSEI == 2)
+    {
+        m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CRC;
+        for (int i = 0; i < planes; i++)
+            crcFinish(m_seiReconPictureDigest.m_crc[i], m_seiReconPictureDigest.m_digest[i]);
+        payloadSize = 1 + 2 * planes;
+    }
+    else if (m_param->decodedPictureHashSEI == 3)
+    {
+        m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CHECKSUM;
+        for (int i = 0; i < planes; i++)
+            checksumFinish(m_seiReconPictureDigest.m_checksum[i], m_seiReconPictureDigest.m_digest[i]);
+        payloadSize = 1 + 4 * planes;
+    }
+
+    m_bs.resetBits();
+    m_seiReconPictureDigest.setSize(payloadSize);
+    m_seiReconPictureDigest.write(m_bs, *slice->m_sps);
+    m_seiReconPictureDigest.alignAndSerialize(m_bs, true, m_param->bSingleSeiNal, NAL_UNIT_SUFFIX_SEI, m_nalList);
+}
+
 void FrameEncoder::compressFrame()
 {
     ProfileScopeEvent(frameThread);
@@ -890,71 +924,8 @@ void FrameEncoder::compressFrame()
     {
         PicYuv *reconPic = m_frame->m_reconPic;
         uint32_t height = reconPic->m_picHeight;
-        uint32_t width = reconPic->m_picWidth;
-        intptr_t stride = reconPic->m_stride;
-        const uint32_t hChromaShift = CHROMA_H_SHIFT(m_param->internalCsp);
-        const uint32_t vChromaShift = CHROMA_V_SHIFT(m_param->internalCsp);
-
-        if (m_param->decodedPictureHashSEI == 1)
-        {
-
-            MD5Init(&m_state[0]);
-
-            updateMD5Plane(m_state[0], reconPic->m_picOrg[0], width, height, stride);
-
-            if (m_param->internalCsp != X265_CSP_I400)
-            {
-                MD5Init(&m_state[1]);
-                MD5Init(&m_state[2]);
-
-                width >>= hChromaShift;
-                height >>= vChromaShift;
-                stride = reconPic->m_strideC;
-
-                updateMD5Plane(m_state[1], reconPic->m_picOrg[1], width, height, stride);
-                updateMD5Plane(m_state[2], reconPic->m_picOrg[2], width, height, stride);
-            }
-        }
-        // TODO: NOT verify code in below mode
-        else if (m_param->decodedPictureHashSEI == 2)
-        {
-            m_crc[0] = 0xffff;
-
-            updateCRC(reconPic->m_picOrg[0], m_crc[0], height, width, stride);
-
-            if (m_param->internalCsp != X265_CSP_I400)
-            {
-                width >>= hChromaShift;
-                height >>= vChromaShift;
-                stride = reconPic->m_strideC;
-                m_crc[1] = m_crc[2] = 0xffff;
-
-                updateCRC(reconPic->m_picOrg[1], m_crc[1], height, width, stride);
-                updateCRC(reconPic->m_picOrg[2], m_crc[2], height, width, stride);
-            }
-        }
-        else if (m_param->decodedPictureHashSEI == 3)
-        {
-            uint32_t cuHeight = m_param->maxCUSize;
-
-            m_checksum[0] = 0;
-
-            updateChecksum(reconPic->m_picOrg[0], m_checksum[0], height, width, stride, 0, cuHeight);
-
-            if (m_param->internalCsp != X265_CSP_I400)
-            {
-                width >>= hChromaShift;
-                height >>= vChromaShift;
-                stride = reconPic->m_strideC;
-                cuHeight >>= vChromaShift;
-
-                m_checksum[1] = m_checksum[2] = 0;
-
-                updateChecksum(reconPic->m_picOrg[1], m_checksum[1], height, width, stride, 0, cuHeight);
-                updateChecksum(reconPic->m_picOrg[2], m_checksum[2], height, width, stride, 0, cuHeight);
-            }
-        }  
-    } // end of (m_param->maxSlices > 1)
+        initDecodedPictureHashSEI(0, 0, height);
+    } 
 
     if (m_param->bDynamicRefine && m_top->m_startPoint <= m_frame->m_encodeOrder) //Avoid collecting data that will not be used by future frames.
         collectDynDataFrame();
@@ -1045,8 +1016,6 @@ void FrameEncoder::compressFrame()
             m_bs.resetBits();
 
             const uint32_t sliceAddr = nextSliceRow * m_numCols;
-            //CUData* ctu = m_frame->m_encData->getPicCTU(sliceAddr);
-            //const int sliceQp = ctu->m_qp[0];
             if (m_param->bOptRefListLengthPPS)
             {
                 ScopedLock refIdxLock(m_top->m_sliceRefIdxLock);
@@ -1095,36 +1064,8 @@ void FrameEncoder::compressFrame()
     if (isSei && m_param->bSingleSeiNal)
         m_bs.resetBits();
 
-    if (m_param->decodedPictureHashSEI)
-    {
-        int planes = (m_frame->m_param->internalCsp != X265_CSP_I400) ? 3 : 1;
-        int32_t payloadSize = 0;
-        if (m_param->decodedPictureHashSEI == 1)
-        {
-            m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::MD5;
-            for (int i = 0; i < planes; i++)
-                MD5Final(&m_state[i], m_seiReconPictureDigest.m_digest[i]);
-            payloadSize = 1 + 16 * planes;
-        }
-        else if (m_param->decodedPictureHashSEI == 2)
-        {
-            m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CRC;
-            for (int i = 0; i < planes; i++)
-                crcFinish(m_crc[i], m_seiReconPictureDigest.m_digest[i]);
-            payloadSize = 1 + 2 * planes;
-        }
-        else if (m_param->decodedPictureHashSEI == 3)
-        {
-            m_seiReconPictureDigest.m_method = SEIDecodedPictureHash::CHECKSUM;
-            for (int i = 0; i < planes; i++)
-                checksumFinish(m_checksum[i], m_seiReconPictureDigest.m_digest[i]);
-            payloadSize = 1 + 4 * planes;
-        }
-        m_bs.resetBits();
-        m_seiReconPictureDigest.setSize(payloadSize);
-        m_seiReconPictureDigest.write(m_bs, *slice->m_sps);
-        m_seiReconPictureDigest.alignAndSerialize(m_bs, true, m_param->bSingleSeiNal, NAL_UNIT_SUFFIX_SEI, m_nalList);
-    }
+    if (m_param->decodedPictureHashSEI)    
+        writeTrailingSEIMessages();
 
     uint64_t bytes = 0;
     for (uint32_t i = 0; i < m_nalList.m_numNal; i++)
@@ -1214,6 +1155,78 @@ void FrameEncoder::compressFrame()
 #endif
 
     m_endFrameTime = x265_mdate();  
+}
+
+void FrameEncoder::initDecodedPictureHashSEI(int row, int cuAddr, int height)
+{
+    PicYuv *reconPic = m_frame->m_reconPic;
+    uint32_t width = reconPic->m_picWidth;	
+    intptr_t stride = reconPic->m_stride;
+    uint32_t maxCUHeight = m_param->maxCUSize;
+
+    const uint32_t hChromaShift = CHROMA_H_SHIFT(m_param->internalCsp);
+    const uint32_t vChromaShift = CHROMA_V_SHIFT(m_param->internalCsp);
+
+    if (m_param->decodedPictureHashSEI == 1)
+    {
+        if (!row)
+            MD5Init(&m_seiReconPictureDigest.m_state[0]);
+
+        updateMD5Plane(m_seiReconPictureDigest.m_state[0], reconPic->getLumaAddr(cuAddr), width, height, stride);
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            if (!row)
+            {
+                MD5Init(&m_seiReconPictureDigest.m_state[1]);
+                MD5Init(&m_seiReconPictureDigest.m_state[2]);
+            }
+
+            width >>= hChromaShift;
+            height >>= vChromaShift;
+            stride = reconPic->m_strideC;
+
+            updateMD5Plane(m_seiReconPictureDigest.m_state[1], reconPic->getCbAddr(cuAddr), width, height, stride);
+            updateMD5Plane(m_seiReconPictureDigest.m_state[2], reconPic->getCrAddr(cuAddr), width, height, stride);
+        }
+    }
+    else if (m_param->decodedPictureHashSEI == 2)
+    {
+
+        if (!row)
+            m_seiReconPictureDigest.m_crc[0] = 0xffff;
+
+        updateCRC(reconPic->getLumaAddr(cuAddr), m_seiReconPictureDigest.m_crc[0], height, width, stride);
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            width >>= hChromaShift;
+            height >>= vChromaShift;
+            stride = reconPic->m_strideC;
+            m_seiReconPictureDigest.m_crc[1] = m_seiReconPictureDigest.m_crc[2] = 0xffff;
+
+            updateCRC(reconPic->getCbAddr(cuAddr), m_seiReconPictureDigest.m_crc[1], height, width, stride);
+            updateCRC(reconPic->getCrAddr(cuAddr), m_seiReconPictureDigest.m_crc[2], height, width, stride);
+        }
+    }
+    else if (m_param->decodedPictureHashSEI == 3)
+    {
+        if (!row)
+            m_seiReconPictureDigest.m_checksum[0] = 0;
+
+        updateChecksum(reconPic->m_picOrg[0], m_seiReconPictureDigest.m_checksum[0], height, width, stride, row, maxCUHeight);
+        if (m_param->internalCsp != X265_CSP_I400)
+        {
+            width >>= hChromaShift;
+            height >>= vChromaShift;
+            stride = reconPic->m_strideC;
+            maxCUHeight >>= vChromaShift;
+
+            if (!row)
+                m_seiReconPictureDigest.m_checksum[1] = m_seiReconPictureDigest.m_checksum[2] = 0;
+
+            updateChecksum(reconPic->m_picOrg[1], m_seiReconPictureDigest.m_checksum[1], height, width, stride, row, maxCUHeight);
+            updateChecksum(reconPic->m_picOrg[2], m_seiReconPictureDigest.m_checksum[2], height, width, stride, row, maxCUHeight);
+        }
+    }
 }
 
 void FrameEncoder::encodeSlice(uint32_t sliceAddr)

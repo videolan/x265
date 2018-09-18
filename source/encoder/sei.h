@@ -28,6 +28,7 @@
 #include "bitstream.h"
 #include "slice.h"
 #include "nal.h"
+#include "md5.h"
 
 namespace X265_NS {
 // private namespace
@@ -136,7 +137,12 @@ public:
         CRC,
         CHECKSUM,
     } m_method;
-    uint8_t m_digest[3][16];
+
+    MD5Context m_state[3];
+    uint32_t   m_crc[3];
+    uint32_t   m_checksum[3];
+    uint8_t    m_digest[3][16];
+
     void writeSEI(const SPS& sps)
     {
         int planes = (sps.chromaFormatIdc != X265_CSP_I400) ? 3 : 1;

@@ -129,6 +129,8 @@ public:
     /* blocks until worker thread is done, returns access unit */
     Frame *getEncodedPicture(NALList& list);
 
+    void initDecodedPictureHashSEI(int row, int cuAddr, int height);
+
     Event                    m_enable;
     Event                    m_done;
     Event                    m_completionEvent;
@@ -161,9 +163,6 @@ public:
     double                   m_ssim;
     uint64_t                 m_accessUnitBits;
     uint32_t                 m_ssimCnt;
-    MD5Context               m_state[3];
-    uint32_t                 m_crc[3];
-    uint32_t                 m_checksum[3];
 
     volatile int             m_activeWorkerCount;        // count of workers currently encoding or filtering CTUs
     volatile int             m_totalActiveWorkerCount;   // sum of m_activeWorkerCount sampled at end of each CTU
@@ -230,7 +229,7 @@ protected:
     void threadMain();
     int  collectCTUStatistics(const CUData& ctu, FrameStats* frameLog);
     void noiseReductionUpdate();
-    void computeAvgTrainingData();
+    void writeTrailingSEIMessages();
 
     /* Called by WaveFront::findJob() */
     virtual void processRow(int row, int threadId);
@@ -243,8 +242,9 @@ protected:
 #if ENABLE_LIBVMAF
     void vmafFrameLevelScore();
 #endif
-    void collectDynDataRow(CUData& ctu, FrameStats* rowStats);
     void collectDynDataFrame();
+    void computeAvgTrainingData();
+    void collectDynDataRow(CUData& ctu, FrameStats* rowStats);    
 };
 }
 

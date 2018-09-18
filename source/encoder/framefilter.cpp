@@ -712,78 +712,8 @@ void FrameFilter::processPostRow(int row)
 
     if (m_param->maxSlices == 1)
     {
-        if (m_param->decodedPictureHashSEI == 1)
-        {
-            uint32_t height = m_parallelFilter[row].getCUHeight();
-            uint32_t width = reconPic->m_picWidth;
-            intptr_t stride = reconPic->m_stride;
-
-            if (!row)
-                MD5Init(&m_frameEncoder->m_state[0]);
-
-            updateMD5Plane(m_frameEncoder->m_state[0], reconPic->getLumaAddr(cuAddr), width, height, stride);
-            if (m_param->internalCsp != X265_CSP_I400)
-            {
-                if (!row)
-                {
-                    MD5Init(&m_frameEncoder->m_state[1]);
-                    MD5Init(&m_frameEncoder->m_state[2]);
-                }
-
-                width >>= m_hChromaShift;
-                height >>= m_vChromaShift;
-                stride = reconPic->m_strideC;
-
-                updateMD5Plane(m_frameEncoder->m_state[1], reconPic->getCbAddr(cuAddr), width, height, stride);
-                updateMD5Plane(m_frameEncoder->m_state[2], reconPic->getCrAddr(cuAddr), width, height, stride);
-            }
-        }
-        else if (m_param->decodedPictureHashSEI == 2)
-        {
-            uint32_t height = m_parallelFilter[row].getCUHeight();
-            uint32_t width = reconPic->m_picWidth;
-            intptr_t stride = reconPic->m_stride;
-
-            if (!row)
-                m_frameEncoder->m_crc[0] = 0xffff;
-
-            updateCRC(reconPic->getLumaAddr(cuAddr), m_frameEncoder->m_crc[0], height, width, stride);
-            if (m_param->internalCsp != X265_CSP_I400)
-            {
-                width >>= m_hChromaShift;
-                height >>= m_vChromaShift;
-                stride = reconPic->m_strideC;
-                m_frameEncoder->m_crc[1] = m_frameEncoder->m_crc[2] = 0xffff;
-
-                updateCRC(reconPic->getCbAddr(cuAddr), m_frameEncoder->m_crc[1], height, width, stride);
-                updateCRC(reconPic->getCrAddr(cuAddr), m_frameEncoder->m_crc[2], height, width, stride);
-            }
-        }
-        else if (m_param->decodedPictureHashSEI == 3)
-        {
-            uint32_t width = reconPic->m_picWidth;
-            uint32_t height = m_parallelFilter[row].getCUHeight();
-            intptr_t stride = reconPic->m_stride;
-            uint32_t cuHeight = m_param->maxCUSize;
-
-            if (!row)
-                m_frameEncoder->m_checksum[0] = 0;
-
-            updateChecksum(reconPic->m_picOrg[0], m_frameEncoder->m_checksum[0], height, width, stride, row, cuHeight);
-            if (m_param->internalCsp != X265_CSP_I400)
-            {
-                width >>= m_hChromaShift;
-                height >>= m_vChromaShift;
-                stride = reconPic->m_strideC;
-                cuHeight >>= m_vChromaShift;
-
-                if (!row)
-                    m_frameEncoder->m_checksum[1] = m_frameEncoder->m_checksum[2] = 0;
-
-                updateChecksum(reconPic->m_picOrg[1], m_frameEncoder->m_checksum[1], height, width, stride, row, cuHeight);
-                updateChecksum(reconPic->m_picOrg[2], m_frameEncoder->m_checksum[2], height, width, stride, row, cuHeight);
-            }
-        }
+        uint32_t height = m_parallelFilter[row].getCUHeight();
+        m_frameEncoder->initDecodedPictureHashSEI(row, cuAddr, height);
     } // end of (m_param->maxSlices == 1)
 
     if (ATOMIC_INC(&m_frameEncoder->m_completionCount) == 2 * (int)m_frameEncoder->m_numRows)
