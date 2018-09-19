@@ -335,7 +335,7 @@ void FrameEncoder::threadMain()
             while (!m_frame->m_ctuInfo)
                 m_frame->m_copied.wait();
         }
-        if ((m_param->bMVType == AVC_INFO) && !m_param->analysisSave && !m_param->analysisLoad && !(IS_X265_TYPE_I(m_frame->m_lowres.sliceType)))
+        if ((m_param->bAnalysisType == AVC_INFO) && !m_param->analysisSave && !m_param->analysisLoad && !(IS_X265_TYPE_I(m_frame->m_lowres.sliceType)))
         {
             while (((m_frame->m_analysisData.interData == NULL && m_frame->m_analysisData.intraData == NULL) || (uint32_t)m_frame->m_poc != m_frame->m_analysisData.poc))
                 m_frame->m_copyMVType.wait();

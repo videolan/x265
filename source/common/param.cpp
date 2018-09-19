@@ -311,7 +311,7 @@ void x265_param_default(x265_param* param)
 
     /* DCT Approximations */
     param->bLowPassDct = 0;
-    param->bMVType = 0;
+    param->bAnalysisType = 0;
     param->bSingleSeiNal = 0;
 
     /* SEI messages */
@@ -1151,15 +1151,15 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("vbv-end") p->vbvBufferEnd = atof(value);
         OPT("vbv-end-fr-adj") p->vbvEndFrameAdjust = atof(value);
         OPT("copy-pic") p->bCopyPicToFrame = atobool(value);
-        OPT("refine-mv-type")
+        OPT("refine-analysis-type")
         {
             if (strcmp(strdup(value), "avc") == 0)
             {
-                p->bMVType = AVC_INFO;
+                p->bAnalysisType = AVC_INFO;
             }
             else if (strcmp(strdup(value), "off") == 0)
             {
-                p->bMVType = NO_INFO;
+                p->bAnalysisType = NO_INFO;
             }
             else
             {
@@ -1713,8 +1713,8 @@ void x265_print_params(x265_param* param)
     TOOLVAL(param->lookaheadSlices, "lslices=%d");
     TOOLVAL(param->lookaheadThreads, "lthreads=%d")
     TOOLVAL(param->bCTUInfo, "ctu-info=%d");
-    if (param->bMVType == AVC_INFO)
-        TOOLOPT(param->bMVType, "refine-mv-type=avc");
+    if (param->bAnalysisType == AVC_INFO)
+        TOOLOPT(param->bAnalysisType, "refine-analysis-type=avc");
     TOOLOPT(param->bDynamicRefine, "dynamic-refine");
     if (param->maxSlices > 1)
         TOOLVAL(param->maxSlices, "slices=%d");
@@ -1958,7 +1958,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bLimitSAO, "limit-sao");
     s += sprintf(s, " ctu-info=%d", p->bCTUInfo);
     BOOL(p->bLowPassDct, "lowpass-dct");
-    s += sprintf(s, " refine-mv-type=%d", p->bMVType);
+    s += sprintf(s, " refine-analysis-type=%d", p->bAnalysisType);
     s += sprintf(s, " copy-pic=%d", p->bCopyPicToFrame);
     s += sprintf(s, " max-ausize-factor=%.1f", p->maxAUSizeFactor);
     BOOL(p->bDynamicRefine, "dynamic-refine");

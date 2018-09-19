@@ -454,7 +454,7 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     }
 
     //Allocate memory for weightParam pointer
-    if (!(param->bMVType == AVC_INFO))
+    if (!(param->bAnalysisType == AVC_INFO))
         CHECKED_MALLOC_ZERO(analysis->wt, x265_weight_param, numPlanes * numDir);
 
     if (param->analysisReuseLevel < 2)
@@ -540,7 +540,7 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
     }
 
     /* Early exit freeing weights alone if level is 1 (when there is no analysis inter/intra) */
-    if (analysis->wt && !(param->bMVType == AVC_INFO))
+    if (analysis->wt && !(param->bAnalysisType == AVC_INFO))
         X265_FREE(analysis->wt);
 
     if (param->analysisReuseLevel < 2)
@@ -621,7 +621,7 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
     pic->rpu.payloadSize = 0;
     pic->rpu.payload = NULL;
 
-    if ((param->analysisSave || param->analysisLoad) || (param->bMVType == AVC_INFO))
+    if ((param->analysisSave || param->analysisLoad) || (param->bAnalysisType == AVC_INFO))
     {
         uint32_t widthInCU = (param->sourceWidth + param->maxCUSize - 1) >> param->maxLog2CUSize;
         uint32_t heightInCU = (param->sourceHeight + param->maxCUSize - 1) >> param->maxLog2CUSize;

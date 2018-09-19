@@ -1253,7 +1253,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             x265_frame_stats* frameData = NULL;
 
             /* Free up pic_in->analysisData since it has already been used */
-            if ((m_param->analysisLoad && !m_param->analysisSave) || (m_param->bMVType && slice->m_sliceType != I_SLICE))
+            if ((m_param->analysisLoad && !m_param->analysisSave) || ((m_param->bAnalysisType == AVC_INFO) && slice->m_sliceType != I_SLICE))
                 x265_free_analysis_data(m_param, &outFrame->m_analysisData);
 
             if (pic_out)
@@ -2710,17 +2710,17 @@ void Encoder::configureDolbyVisionParams(x265_param* p)
 void Encoder::configure(x265_param *p)
 {
     this->m_param = p;
-    if (p->bMVType == AVC_INFO)
+    if (p->bAnalysisType == AVC_INFO)
         this->m_externalFlush = true;
     else 
         this->m_externalFlush = false;
 
-    if (p->bMVType == AVC_INFO && (p->limitTU == 3 || p->limitTU == 4))
+    if (p->bAnalysisType == AVC_INFO && (p->limitTU == 3 || p->limitTU == 4))
     {
         x265_log(p, X265_LOG_WARNING, "limit TU = 3 or 4 with MVType AVCINFO produces inconsistent output\n");
     }
 
-    if (p->bMVType == AVC_INFO && p->minCUSize != 8)
+    if (p->bAnalysisType == AVC_INFO && p->minCUSize != 8)
     {
         p->minCUSize = 8;
         x265_log(p, X265_LOG_WARNING, "Setting minCuSize = 8, AVCINFO expects 8x8 blocks\n");

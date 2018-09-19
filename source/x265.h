@@ -317,7 +317,7 @@ typedef enum
 {
     NO_INFO = 0,
     AVC_INFO = 1,
-}MVRefineType;
+}AnalysisRefineType;
 
 /* Arbitrary User SEI
  * Payload size is in bytes and the payload pointer must be non-NULL. 
@@ -1701,7 +1701,7 @@ typedef struct x265_param
     double    vbvEndFrameAdjust;
 
     /* Reuse MV information obtained through API */
-    int       bMVType;
+    int       bAnalysisType;
     /* Allow the encoder to have a copy of the planes of x265_picture in Frame */
     int       bCopyPicToFrame;
 

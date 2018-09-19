@@ -2201,7 +2201,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
         cu.getNeighbourMV(puIdx, pu.puAbsPartIdx, interMode.interNeighbours);
         /* Uni-directional prediction */
         if ((m_param->analysisLoad && m_param->analysisReuseLevel > 1 && m_param->analysisReuseLevel != 10)
-            || (m_param->analysisMultiPassRefine && m_param->rc.bStatRead) || (m_param->bMVType == AVC_INFO) || (useAsMVP))
+            || (m_param->analysisMultiPassRefine && m_param->rc.bStatRead) || (m_param->bAnalysisType == AVC_INFO) || (useAsMVP))
         {
             for (int list = 0; list < numPredDir; list++)
             {
