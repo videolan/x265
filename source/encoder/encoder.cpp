@@ -1145,7 +1145,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         {
             /* reads analysis data for the frame and allocates memory based on slicetype */
             static int paramBytes = 0;
-            if (!inFrame->m_poc)
+            if (!inFrame->m_poc && m_param->bAnalysisType != HEVC_INFO)
             {
                 x265_analysis_data analysisData = pic_in->analysisData;
                 paramBytes = validateAnalysisData(&analysisData, 0);
@@ -2885,7 +2885,7 @@ void Encoder::configure(x265_param *p)
         p->rc.rfConstantMin = 0;
     }
 
-    if ((p->analysisLoad || p->analysisSave) && p->rc.cuTree && p->analysisReuseLevel < 10)
+    if (!(p->bAnalysisType == HEVC_INFO) && (p->analysisLoad || p->analysisSave) && p->rc.cuTree && p->analysisReuseLevel < 10)
     {
         x265_log(p, X265_LOG_WARNING, "cu-tree works only with analysis reuse level 10, Disabling cu-tree\n");
         p->rc.cuTree = 0;
@@ -2954,7 +2954,7 @@ void Encoder::configure(x265_param *p)
         p->interRefine = 1;
     }
 
-    if (p->limitTU && (p->interRefine || p->bDynamicRefine))
+    if (!(p->bAnalysisType == HEVC_INFO) && p->limitTU && (p->interRefine || p->bDynamicRefine))
     {
         x265_log(p, X265_LOG_WARNING, "Inter refinement does not support limitTU. Disabling limitTU.\n");
         p->limitTU = 0;
@@ -3465,6 +3465,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     }
     if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
     {
+        if (m_param->bAnalysisType == HEVC_INFO)
+            return;
         if (m_param->analysisReuseLevel < 2)
             return;
 
@@ -3542,98 +3544,107 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
             bIntraInInter = (analysis->sliceType == X265_TYPE_P || m_param->bIntraInBFrames);
             if (bIntraInInter) numBuf++;
         }
-
-        tempBuf = X265_MALLOC(uint8_t, depthBytes * numBuf);
-        depthBuf = tempBuf;
-        modeBuf = tempBuf + depthBytes;
-        if (m_param->rc.cuTree)
-            cuQPBuf = X265_MALLOC(int8_t, depthBytes);
-
-        X265_FREAD(depthBuf, sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->depth);
-        X265_FREAD(modeBuf, sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->modes);
-        if (m_param->rc.cuTree) { X265_FREAD(cuQPBuf, sizeof(int8_t), depthBytes, m_analysisFileIn, interPic->cuQPOff); }
-
-        if (m_param->analysisReuseLevel > 4)
+        if (m_param->bAnalysisType == HEVC_INFO)
         {
-            partSize = modeBuf + depthBytes;
-            mergeFlag = partSize + depthBytes;
-            X265_FREAD(partSize, sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->partSize);
-            X265_FREAD(mergeFlag, sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->mergeFlag);
-
-            if (m_param->analysisReuseLevel == 10)
-            {
-                interDir = mergeFlag + depthBytes;
-                X265_FREAD(interDir, sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->interDir);
-                if (bIntraInInter)
-                {
-                    chromaDir = interDir + depthBytes;
-                    X265_FREAD(chromaDir, sizeof(uint8_t), depthBytes, m_analysisFileIn, intraPic->chromaModes);
-                }
-                for (uint32_t i = 0; i < numDir; i++)
-                {
-                    mvpIdx[i] = X265_MALLOC(uint8_t, depthBytes);
-                    refIdx[i] = X265_MALLOC(int8_t, depthBytes);
-                    mv[i] = X265_MALLOC(MV, depthBytes);
-                    X265_FREAD(mvpIdx[i], sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->mvpIdx[i]);
-                    X265_FREAD(refIdx[i], sizeof(int8_t), depthBytes, m_analysisFileIn, interPic->refIdx[i]);
-                    X265_FREAD(mv[i], sizeof(MV), depthBytes, m_analysisFileIn, interPic->mv[i]);
-                }
-            }
+            depthBytes = analysis->numCUsInFrame * analysis->numPartitions;
+            memcpy(((x265_analysis_inter_data *)analysis->interData)->depth, interPic->depth, depthBytes);
         }
-
-        size_t count = 0;
-        for (uint32_t d = 0; d < depthBytes; d++)
+        else
         {
-            int bytes = analysis->numPartitions >> (depthBuf[d] * 2);
-            if (m_param->scaleFactor && modeBuf[d] == MODE_INTRA && depthBuf[d] == 0)
-                depthBuf[d] = 1;
-            memset(&(analysis->interData)->depth[count], depthBuf[d], bytes);
-            memset(&(analysis->interData)->modes[count], modeBuf[d], bytes);
+            tempBuf = X265_MALLOC(uint8_t, depthBytes * numBuf);
+            depthBuf = tempBuf;
+            modeBuf = tempBuf + depthBytes;
             if (m_param->rc.cuTree)
-                memset(&(analysis->interData)->cuQPOff[count], cuQPBuf[d], bytes);
+                cuQPBuf = X265_MALLOC(int8_t, depthBytes);
+
+            X265_FREAD(depthBuf, sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->depth);
+            X265_FREAD(modeBuf, sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->modes);
+            if (m_param->rc.cuTree) { X265_FREAD(cuQPBuf, sizeof(int8_t), depthBytes, m_analysisFileIn, interPic->cuQPOff); }
+
             if (m_param->analysisReuseLevel > 4)
             {
-                if (m_param->scaleFactor && modeBuf[d] == MODE_INTRA && partSize[d] == SIZE_NxN)
-                    partSize[d] = SIZE_2Nx2N;
-                memset(&(analysis->interData)->partSize[count], partSize[d], bytes);
-                int numPU = (modeBuf[d] == MODE_INTRA) ? 1 : nbPartsTable[(int)partSize[d]];
-                for (int pu = 0; pu < numPU; pu++)
+                partSize = modeBuf + depthBytes;
+                mergeFlag = partSize + depthBytes;
+                X265_FREAD(partSize, sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->partSize);
+                X265_FREAD(mergeFlag, sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->mergeFlag);
+
+                if (m_param->analysisReuseLevel == 10)
                 {
-                    if (pu) d++;
-                    (analysis->interData)->mergeFlag[count + pu] = mergeFlag[d];
-                    if (m_param->analysisReuseLevel == 10)
+                    interDir = mergeFlag + depthBytes;
+                    X265_FREAD(interDir, sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->interDir);
+                    if (bIntraInInter)
                     {
-                        (analysis->interData)->interDir[count + pu] = interDir[d];
-                        for (uint32_t i = 0; i < numDir; i++)
-                        {
-                            (analysis->interData)->mvpIdx[i][count + pu] = mvpIdx[i][d];
-                            (analysis->interData)->refIdx[i][count + pu] = refIdx[i][d];
-                            if (m_param->scaleFactor)
-                            {
-                                mv[i][d].x *= (int16_t)m_param->scaleFactor;
-                                mv[i][d].y *= (int16_t)m_param->scaleFactor;
-                            }
-                            memcpy(&(analysis->interData)->mv[i][count + pu], &mv[i][d], sizeof(MV));
-                        }
+                        chromaDir = interDir + depthBytes;
+                        X265_FREAD(chromaDir, sizeof(uint8_t), depthBytes, m_analysisFileIn, intraPic->chromaModes);
+                    }
+                    for (uint32_t i = 0; i < numDir; i++)
+                    {
+                        mvpIdx[i] = X265_MALLOC(uint8_t, depthBytes);
+                        refIdx[i] = X265_MALLOC(int8_t, depthBytes);
+                        mv[i] = X265_MALLOC(MV, depthBytes);
+                        X265_FREAD(mvpIdx[i], sizeof(uint8_t), depthBytes, m_analysisFileIn, interPic->mvpIdx[i]);
+                        X265_FREAD(refIdx[i], sizeof(int8_t), depthBytes, m_analysisFileIn, interPic->refIdx[i]);
+                        X265_FREAD(mv[i], sizeof(MV), depthBytes, m_analysisFileIn, interPic->mv[i]);
                     }
                 }
-                if (m_param->analysisReuseLevel == 10 && bIntraInInter)
-                    memset(&(analysis->intraData)->chromaModes[count], chromaDir[d], bytes);
             }
-            count += bytes;
+
+            size_t count = 0;
+            for (uint32_t d = 0; d < depthBytes; d++)
+            {
+                int bytes = analysis->numPartitions >> (depthBuf[d] * 2);
+                if (m_param->scaleFactor && modeBuf[d] == MODE_INTRA && depthBuf[d] == 0)
+                    depthBuf[d] = 1;
+                memset(&(analysis->interData)->depth[count], depthBuf[d], bytes);
+                memset(&(analysis->interData)->modes[count], modeBuf[d], bytes);
+                if (m_param->rc.cuTree)
+                    memset(&(analysis->interData)->cuQPOff[count], cuQPBuf[d], bytes);
+                if (m_param->analysisReuseLevel > 4)
+                {
+                    if (m_param->scaleFactor && modeBuf[d] == MODE_INTRA && partSize[d] == SIZE_NxN)
+                        partSize[d] = SIZE_2Nx2N;
+                    memset(&(analysis->interData)->partSize[count], partSize[d], bytes);
+                    int numPU = (modeBuf[d] == MODE_INTRA) ? 1 : nbPartsTable[(int)partSize[d]];
+                    for (int pu = 0; pu < numPU; pu++)
+                    {
+                        if (pu) d++;
+                        (analysis->interData)->mergeFlag[count + pu] = mergeFlag[d];
+                        if (m_param->analysisReuseLevel == 10)
+                        {
+                            (analysis->interData)->interDir[count + pu] = interDir[d];
+                            for (uint32_t i = 0; i < numDir; i++)
+                            {
+                                (analysis->interData)->mvpIdx[i][count + pu] = mvpIdx[i][d];
+                                (analysis->interData)->refIdx[i][count + pu] = refIdx[i][d];
+                                if (m_param->scaleFactor)
+                                {
+                                    mv[i][d].x *= (int16_t)m_param->scaleFactor;
+                                    mv[i][d].y *= (int16_t)m_param->scaleFactor;
+                                }
+                                memcpy(&(analysis->interData)->mv[i][count + pu], &mv[i][d], sizeof(MV));
+                            }
+                        }
+                    }
+                    if (m_param->analysisReuseLevel == 10 && bIntraInInter)
+                        memset(&(analysis->intraData)->chromaModes[count], chromaDir[d], bytes);
+                }
+                count += bytes;
+            }
+
+            if (m_param->rc.cuTree)
+                X265_FREE(cuQPBuf);
+            X265_FREE(tempBuf);
         }
-
-        if (m_param->rc.cuTree)
-            X265_FREE(cuQPBuf);
-        X265_FREE(tempBuf);
-
         if (m_param->analysisReuseLevel == 10)
         {
-            for (uint32_t i = 0; i < numDir; i++)
+            if (m_param->bAnalysisType != HEVC_INFO)
             {
-                X265_FREE(mvpIdx[i]);
-                X265_FREE(refIdx[i]);
-                X265_FREE(mv[i]);
+                for (uint32_t i = 0; i < numDir; i++)
+                {
+                    X265_FREE(mvpIdx[i]);
+                    X265_FREE(refIdx[i]);
+                    X265_FREE(mv[i]);
+                }
             }
             if (bIntraInInter)
             {

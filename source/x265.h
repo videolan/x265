@@ -317,6 +317,7 @@ typedef enum
 {
     NO_INFO = 0,
     AVC_INFO = 1,
+    HEVC_INFO = 2,
 }AnalysisRefineType;
 
 /* Arbitrary User SEI

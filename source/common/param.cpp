@@ -1157,6 +1157,10 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             {
                 p->bAnalysisType = AVC_INFO;
             }
+            else if (strcmp(strdup(value), "hevc") == 0)
+            {
+                p->bAnalysisType = HEVC_INFO;
+            }
             else if (strcmp(strdup(value), "off") == 0)
             {
                 p->bAnalysisType = NO_INFO;
@@ -1714,7 +1718,11 @@ void x265_print_params(x265_param* param)
     TOOLVAL(param->lookaheadThreads, "lthreads=%d")
     TOOLVAL(param->bCTUInfo, "ctu-info=%d");
     if (param->bAnalysisType == AVC_INFO)
+    {
         TOOLOPT(param->bAnalysisType, "refine-analysis-type=avc");
+    }
+    else if (param->bAnalysisType == HEVC_INFO)
+        TOOLOPT(param->bAnalysisType, "refine-analysis-type=hevc");
     TOOLOPT(param->bDynamicRefine, "dynamic-refine");
     if (param->maxSlices > 1)
         TOOLVAL(param->maxSlices, "slices=%d");

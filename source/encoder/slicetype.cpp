@@ -1090,7 +1090,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
         if (m_param->rc.cuTree && !m_param->rc.bStatRead)
             /* update row satds based on cutree offsets */
             curFrame->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
-        else if (!m_param->analysisLoad || m_param->scaleFactor)
+        else if (!m_param->analysisLoad || m_param->scaleFactor || m_param->bAnalysisType == HEVC_INFO)
         {
             if (m_param->rc.aqMode)
                 curFrame->m_lowres.satdCost = curFrame->m_lowres.costEstAq[b - p0][p1 - b];
@@ -1245,7 +1245,7 @@ void Lookahead::slicetypeDecide()
     }
 
     int bframes, brefs;
-    if (!m_param->analysisLoad)
+    if (!m_param->analysisLoad || m_param->bAnalysisType == HEVC_INFO)
     {
         for (bframes = 0, brefs = 0;; bframes++)
         {

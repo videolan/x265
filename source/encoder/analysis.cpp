@@ -275,7 +275,8 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
             /* generate residual for entire CTU at once and copy to reconPic */
             encodeResidue(ctu, cuGeom);
         }
-        else if ((m_param->analysisLoad && m_param->analysisReuseLevel == 10) || ((m_param->bAnalysisType == AVC_INFO) && m_param->analysisReuseLevel >= 7 && ctu.m_numPartitions <= 16))
+        else if ((m_param->analysisLoad && m_param->analysisReuseLevel == 10 && (!(m_param->bAnalysisType == HEVC_INFO) || m_slice->m_sliceType != P_SLICE)) ||
+                 ((m_param->bAnalysisType == AVC_INFO) && m_param->analysisReuseLevel >= 7 && ctu.m_numPartitions <= 16))
         {
             x265_analysis_inter_data* interDataCTU = m_frame->m_analysisData.interData;
             int posCTU = ctu.m_cuAddr * numPartition;
@@ -516,7 +517,7 @@ uint64_t Analysis::compressIntraCU(const CUData& parentCTU, const CUGeom& cuGeom
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
 
-    bool bAlreadyDecided = m_param->intraRefine != 4 && parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] != (uint8_t)ALL_IDX;
+    bool bAlreadyDecided = m_param->intraRefine != 4 && parentCTU.m_lumaIntraDir[cuGeom.absPartIdx] != (uint8_t)ALL_IDX && !(m_param->bAnalysisType == HEVC_INFO);
     bool bDecidedDepth = m_param->intraRefine != 4 && parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
     int split = 0;
     if (m_param->intraRefine && m_param->intraRefine != 4)
@@ -2423,7 +2424,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         (m_refineLevel && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1))));
     td.split = split;
 
-    if (bDecidedDepth && mightNotSplit)
+    if ((bDecidedDepth && mightNotSplit) || (m_param->bAnalysisType == HEVC_INFO && parentCTU.m_cuDepth[cuGeom.absPartIdx] == 4))
     {
         setLambdaFromQP(parentCTU, qp, lqp);
 
@@ -2562,7 +2563,10 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
 
         if (m_refineLevel > 1 || (m_refineLevel && parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP  && !mode.cu.isSkipped(0)))
         {
-            m_evaluateInter = 1;
+            if (parentCTU.m_cuDepth[cuGeom.absPartIdx] < 4 && mightNotSplit)
+                m_evaluateInter = 1;
+            else
+                bDecidedDepth = true;
             m_param->rdLevel > 4 ? compressInterCU_rd5_6(parentCTU, cuGeom, qp) : compressInterCU_rd0_4(parentCTU, cuGeom, qp);
             m_evaluateInter = 0;
         }
