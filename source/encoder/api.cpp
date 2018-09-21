@@ -412,12 +412,20 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     int numDir = 2; //irrespective of P or B slices set direction as 2
     uint32_t numPlanes = param->internalCsp == X265_CSP_I400 ? 1 : 3;
 
+#if X265_DEPTH < 10 && (LINKED_10BIT || LINKED_12BIT)
+    uint32_t numCUs_sse_t = param->internalBitDepth > 8 ? analysis->numCUsInFrame << 1 : analysis->numCUsInFrame;
+#elif X265_DEPTH >= 10 && LINKED_8BIT
+    uint32_t numCUs_sse_t = param->internalBitDepth > 8 ? analysis->numCUsInFrame : (analysis->numCUsInFrame + 1U) >> 1;
+#else
+    uint32_t numCUs_sse_t = analysis->numCUsInFrame;
+#endif
+
     //Allocate memory for distortionData pointer
     CHECKED_MALLOC_ZERO(distortionData, x265_analysis_distortion_data, 1);
-    CHECKED_MALLOC_ZERO(distortionData->distortion, sse_t, analysis->numPartitions * analysis->numCUsInFrame);
+    CHECKED_MALLOC_ZERO(distortionData->distortion, sse_t, analysis->numPartitions * numCUs_sse_t);
     if (param->rc.bStatRead)
     {
-        CHECKED_MALLOC_ZERO(distortionData->ctuDistortion, sse_t, analysis->numCUsInFrame);
+        CHECKED_MALLOC_ZERO(distortionData->ctuDistortion, sse_t, numCUs_sse_t);
         CHECKED_MALLOC_ZERO(distortionData->scaledDistortion, double, analysis->numCUsInFrame);
         CHECKED_MALLOC_ZERO(distortionData->offset, double, analysis->numCUsInFrame);
         CHECKED_MALLOC_ZERO(distortionData->threshold, double, analysis->numCUsInFrame);
@@ -873,7 +881,7 @@ FILE* x265_csvlog_open(const x265_param* param)
                 if (param->rc.rateControlMode == X265_RC_CRF)
                     fprintf(csvfp, "RateFactor, ");
                 if (param->rc.vbvBufferSize)
-                    fprintf(csvfp, "BufferFill, ");
+                    fprintf(csvfp, "BufferFill, BufferFillFinal, ");
                 if (param->bEnablePsnr)
                     fprintf(csvfp, "Y PSNR, U PSNR, V PSNR, YUV PSNR, ");
                 if (param->bEnableSsim)
@@ -984,7 +992,7 @@ void x265_csvlog_frame(const x265_param* param, const x265_picture* pic)
     if (param->rc.rateControlMode == X265_RC_CRF)
         fprintf(param->csvfpt, "%.3lf,", frameStats->rateFactor);
     if (param->rc.vbvBufferSize)
-        fprintf(param->csvfpt, "%.3lf,", frameStats->bufferFill);
+        fprintf(param->csvfpt, "%.3lf, %.3lf,", frameStats->bufferFill, frameStats->bufferFillFinal);
     if (param->bEnablePsnr)
         fprintf(param->csvfpt, "%.3lf, %.3lf, %.3lf, %.3lf,", frameStats->psnrY, frameStats->psnrU, frameStats->psnrV, frameStats->psnr);
     if (param->bEnableSsim)

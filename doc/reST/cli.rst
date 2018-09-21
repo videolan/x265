@@ -52,7 +52,7 @@ Command line executable return codes::
 	2. unable to open encoder
 	3. unable to generate stream headers
 	4. encoder abort
-	
+
 Logging/Statistic Options
 =========================
 
@@ -103,6 +103,8 @@ Logging/Statistic Options
 	
 	**BufferFill** Bits available for the next frame. Includes bits carried
 	over from the current frame.
+	
+	**BufferFillFinal** Buffer bits available after removing the frame out of CPB.
 	
 	**Latency** Latency in terms of number of frames between when the frame 
 	was given in and when the frame is given out.
@@ -183,11 +185,11 @@ Logging/Statistic Options
 	
 .. option:: --csv-log-level <integer>
 
-    Controls the level of detail (and size) of --csv log files
-		
-    0. summary **(default)**
-    1. frame level logging
-    2. frame level logging with performance statistics
+	Controls the level of detail (and size) of --csv log files
+
+	0. summary **(default)**
+	1. frame level logging
+	2. frame level logging with performance statistics
 
 .. option:: --ssim, --no-ssim
 
@@ -660,9 +662,9 @@ Profile, Level, Tier
     encoding options, the encoder will attempt to modify/set the right 
     encode specifications. If the encoder is unable to do so, this option
     will be turned OFF. Highly experimental.
-	
+
     Default: disabled
-	
+
 .. note::
 
 	:option:`--profile`, :option:`--level-idc`, and
@@ -787,7 +789,7 @@ the prediction quad-tree.
 	Default 3.
 
 .. option:: --limit-modes, --no-limit-modes
-    
+
 	When enabled, limit-modes will limit modes analyzed for each CU	using cost 
 	metrics from the 4 sub-CUs. When multiple inter modes like :option:`--rect`
 	and/or :option:`--amp` are enabled, this feature will use motion cost 
@@ -833,6 +835,11 @@ the prediction quad-tree.
 	Provides minimal quality degradation at good performance gains when enabled. 
 
 	Default: enabled, disabled for :option:`--tune grain`
+
+.. option:: --splitrd-skip, --no-splitrd-skip
+
+	Enable skipping split RD analysis when sum of split CU rdCost larger than one
+	split CU rdCost for Intra CU. Default disabled.
 
 .. option:: --fast-intra, --no-fast-intra
 
@@ -902,26 +909,26 @@ will not reuse analysis if slice type parameters do not match.
 
 	Note that --analysis-reuse-level must be paired with analysis-reuse-mode.
 
-    +--------------+------------------------------------------+
-    | Level        | Description                              |
-    +==============+==========================================+
-    | 1            | Lookahead information                    |
-    +--------------+------------------------------------------+
-    | 2 to 4       | Level 1 + intra/inter modes, ref's       |
-    +--------------+------------------------------------------+
-    | 5 and 6      | Level 2 + rect-amp                       |
-    +--------------+------------------------------------------+
-    | 7            | Level 5 + AVC size CU refinement         |
-    +--------------+------------------------------------------+
-    | 8 and 9      | Level 5 + AVC size Full CU analysis-info |
-    +--------------+------------------------------------------+
-    | 10           | Level 5 + Full CU analysis-info          |
-    +--------------+------------------------------------------+
+	+--------------+------------------------------------------+
+	| Level        | Description                              |
+	+==============+==========================================+
+	| 1            | Lookahead information                    |
+	+--------------+------------------------------------------+
+	| 2 to 4       | Level 1 + intra/inter modes, ref's       |
+	+--------------+------------------------------------------+
+	| 5 and 6      | Level 2 + rect-amp                       |
+	+--------------+------------------------------------------+
+	| 7            | Level 5 + AVC size CU refinement         |
+	+--------------+------------------------------------------+
+	| 8 and 9      | Level 5 + AVC size Full CU analysis-info |
+	+--------------+------------------------------------------+
+	| 10           | Level 5 + Full CU analysis-info          |
+	+--------------+------------------------------------------+
 
 .. option:: --refine-mv-type <string>
 
-    Reuse MV information received through API call. Currently receives information for AVC size and the accepted 
-    string input is "avc". Default is disabled.
+	Reuse MV information received through API call. Currently receives information for AVC size and the accepted 
+	string input is "avc". Default is disabled.
 
 .. option:: --scale-factor
 
@@ -931,7 +938,7 @@ will not reuse analysis if slice type parameters do not match.
 	same as that of save or double the size of save. Default 0.
 
 .. option:: --refine-intra <0..4>
-	
+
 	Enables refinement of intra blocks in current encode. 
 	
 	Level 0 - Forces both mode and depth from the save encode.
@@ -949,7 +956,7 @@ will not reuse analysis if slice type parameters do not match.
 	Level 4 - Does not reuse any analysis information - redo analysis for the intra block.
 	
 	Default 0.
-	
+
 .. option:: --refine-inter <0..3>
 
 	Enables refinement of inter blocks in current encode. 
@@ -970,7 +977,7 @@ will not reuse analysis if slice type parameters do not match.
 	Level 3 - Perform analysis of inter modes while reusing depths from the save encode.
 	
 	Default 0.
-	
+
 .. option:: --dynamic-refine, --no-dynamic-refine
 
 	Dynamically switches :option:`--refine-inter` levels 0-3 based on the content and 
@@ -981,7 +988,7 @@ will not reuse analysis if slice type parameters do not match.
 	
 	Enables refinement of motion vector for scaled video. Evaluates the best 
 	motion vector by searching the surrounding eight integer and subpel pixel
-    positions.
+	positions.
 
 Options which affect the transform unit quad-tree, sometimes referred to
 as the residual quad-tree (RQT).
@@ -1117,9 +1124,9 @@ as the residual quad-tree (RQT).
 	quad-tree begins at the same depth of the coded tree unit, but if the
 	maximum TU size is smaller than the CU size then transform QT begins 
 	at the depth of the max-tu-size. Default: 32.
-	
+
 .. option:: --dynamic-rd <0..4>
-	
+
 	Increases the RD level at points where quality drops due to VBV rate 
 	control enforcement. The number of CUs for which the RD is reconfigured 
 	is determined based on the strength. Strength 1 gives the best FPS, 
@@ -1130,13 +1137,13 @@ as the residual quad-tree (RQT).
 
 .. option:: --ssim-rd, --no-ssim-rd
 
-    Enable/Disable SSIM RDO. SSIM is a better perceptual quality assessment
-    method as compared to MSE. SSIM based RDO calculation is based on residual
-    divisive normalization scheme. This normalization is consistent with the 
-    luminance and contrast masking effect of Human Visual System. It is used
-    for mode selection during analysis of CTUs and can achieve significant 
-    gain in terms of objective quality metrics SSIM and PSNR. It only has effect
-    on presets which use RDO-based mode decisions (:option:`--rd` 3 and above).
+	Enable/Disable SSIM RDO. SSIM is a better perceptual quality assessment
+	method as compared to MSE. SSIM based RDO calculation is based on residual
+	divisive normalization scheme. This normalization is consistent with the 
+	luminance and contrast masking effect of Human Visual System. It is used
+	for mode selection during analysis of CTUs and can achieve significant 
+	gain in terms of objective quality metrics SSIM and PSNR. It only has effect
+	on presets which use RDO-based mode decisions (:option:`--rd` 3 and above).
 
 Temporal / motion search options
 ================================
@@ -1239,8 +1246,8 @@ Temporal / motion search options
 
 .. option:: --analyze-src-pics, --no-analyze-src-pics
 
-    Enable motion estimation with source frame pixels, in this mode, 
-    motion estimation can be computed independently. Default disabled.
+	Enable motion estimation with source frame pixels, in this mode, 
+	motion estimation can be computed independently. Default disabled.
 
 Spatial/intra options
 =====================
@@ -1385,12 +1392,12 @@ Slice decision options
 
 .. option:: --ctu-info <0, 1, 2, 4, 6>
 
-   This value enables receiving CTU information asynchronously and determine reaction to the CTU information. Default 0.
-   1: force the partitions if CTU information is present.
-   2: functionality of (1) and reduce qp if CTU information has changed.
-   4: functionality of (1) and force Inter modes when CTU Information has changed, merge/skip otherwise.
-   This option should be enabled only when planning to invoke the API function x265_encoder_ctu_info to copy ctu-info asynchronously. 
-   If enabled without calling the API function, the encoder will wait indefinitely.
+	This value enables receiving CTU information asynchronously and determine reaction to the CTU information. Default 0.
+	1: force the partitions if CTU information is present.
+	2: functionality of (1) and reduce qp if CTU information has changed.
+	4: functionality of (1) and force Inter modes when CTU Information has changed, merge/skip otherwise.
+	This option should be enabled only when planning to invoke the API function x265_encoder_ctu_info to copy ctu-info asynchronously. 
+	If enabled without calling the API function, the encoder will wait indefinitely.
 
 .. option:: --intra-refresh
 
@@ -1410,16 +1417,17 @@ Slice decision options
 	Default 20
 
 	**Range of values:** Between the maximum consecutive bframe count (:option:`--bframes`) and 250
+
 .. option:: --gop-lookahead <integer>
 
-        Number of frames for GOP boundary decision lookahead. If a scenecut frame is found
-        within this from the gop boundary set by `--keyint`, the GOP will be extented until such a point,
-        otherwise the GOP will be terminated as set by `--keyint`. Default 0.
+	Number of frames for GOP boundary decision lookahead. If a scenecut frame is found
+	within this from the gop boundary set by `--keyint`, the GOP will be extented until such a point,
+	otherwise the GOP will be terminated as set by `--keyint`. Default 0.
 
-        **Range of values:** Between 0 and (`--rc-lookahead` - mini-GOP length)
+	**Range of values:** Between 0 and (`--rc-lookahead` - mini-GOP length)
 
-        It is recommended to have `--gop-lookahaed` less than `--min-keyint` as scenecuts beyond
-        `--min-keyint` are already being coded as keyframes.
+	It is recommended to have `--gop-lookahaed` less than `--min-keyint` as scenecuts beyond
+	`--min-keyint` are already being coded as keyframes.
 
 .. option:: --lookahead-slices <0..16>
 
@@ -1435,30 +1443,30 @@ Slice decision options
 	on systems with many threads.
 
 	The encoder may internally lower the number of slices or disable
-    slicing to ensure each slice codes at least 10 16x16 rows of lowres
-    blocks to minimize the impact on quality. For example, for 720p and
-    1080p videos, the number of slices is capped to 4 and 6, respectively.
-    For resolutions lesser than 720p, slicing is auto-disabled.
-        
-    If slices are used in lookahead, they are logged in the list of tools
-    as *lslices*
+	slicing to ensure each slice codes at least 10 16x16 rows of lowres
+	blocks to minimize the impact on quality. For example, for 720p and
+	1080p videos, the number of slices is capped to 4 and 6, respectively.
+	For resolutions lesser than 720p, slicing is auto-disabled.
+
+	If slices are used in lookahead, they are logged in the list of tools
+	as *lslices*
 
 	**Values:** 0 - disabled. 1 is the same as 0. Max 16.
-    Default: 8 for ultrafast, superfast, faster, fast, medium
-             4 for slow, slower
-             disabled for veryslow, slower
-			 
+	Default: 8 for ultrafast, superfast, faster, fast, medium
+			 4 for slow, slower
+			 disabled for veryslow, slower
+
 .. option:: --lookahead-threads <integer>
 
-    Use multiple worker threads dedicated to doing only lookahead instead of sharing
-    the worker threads with frame Encoders. A dedicated lookahead threadpool is created with the
-    specified number of worker threads. This can range from 0 upto half the
-    hardware threads available for encoding. Using too many threads for lookahead can starve
-    resources for frame Encoder and can harm performance. Default is 0 - disabled, Lookahead 
+	Use multiple worker threads dedicated to doing only lookahead instead of sharing
+	the worker threads with frame Encoders. A dedicated lookahead threadpool is created with the
+	specified number of worker threads. This can range from 0 upto half the
+	hardware threads available for encoding. Using too many threads for lookahead can starve
+	resources for frame Encoder and can harm performance. Default is 0 - disabled, Lookahead 
 	shares worker threads with other FrameEncoders . 
 
     **Values:** 0 - disabled(default). Max - Half of available hardware threads.
-	
+
 .. option:: --b-adapt <integer>
 
 	Set the level of effort in determining B frame placement.
@@ -1489,11 +1497,11 @@ Slice decision options
 .. option:: --b-pyramid, --no-b-pyramid
 
 	Use B-frames as references, when possible. Default enabled
-	
+
 .. option:: --force-flush <integer>
 
 	Force the encoder to flush frames. Default is 0.
-	
+
 	Values:
 	0 - flush the encoder only when all the input pictures are over.
 	1 - flush all the frames even when the input is not over. 
@@ -1525,7 +1533,7 @@ Quality, rate control and rate distortion options
 	any given frame (ensuring a max QP).  This is dangerous when CRF is
 	used in combination with VBV as it may result in buffer underruns.
 	Default disabled
-        
+
 .. option:: --crf-min <0..51.0>
 
 	Specify an lower limit to the rate factor which may be assigned to
@@ -1564,7 +1572,7 @@ Quality, rate control and rate distortion options
 	Default 0.9
 
 	**Range of values:** fractional: 0 - 1.0, or kbits: 2 .. bufsize
-	
+
 .. option:: --vbv-end <float>
 
 	Final buffer emptiness. The portion of the decode buffer that must be 
@@ -1576,7 +1584,7 @@ Quality, rate control and rate distortion options
 	can specify the starting and ending state of the VBV buffer so that VBV 
 	compliance can be maintained when chunks are independently encoded and 
 	stitched together.
-	
+
 .. option:: --vbv-end-fr-adj <float>
 
 	Frame from which qp has to be adjusted to achieve final decode buffer
@@ -1694,31 +1702,31 @@ Quality, rate control and rate distortion options
 
 .. option:: --multi-pass-opt-analysis, --no-multi-pass-opt-analysis
 
-    Enable/Disable multipass analysis refinement along with multipass ratecontrol. Based on 
-    the information stored in pass 1, in subsequent passes analysis data is refined 
-    and also redundant steps are skipped.
-    In pass 1 analysis information like motion vector, depth, reference and prediction
-    modes of the final best CTU partition is stored for each CTU.
-    Multipass analysis refinement cannot be enabled when 'analysis-save/analysis-load' option
-    is enabled and both will be disabled when enabled together. This feature requires 'pmode/pme'
-    to be disabled and hence pmode/pme will be disabled when enabled at the same time.
+	Enable/Disable multipass analysis refinement along with multipass ratecontrol. Based on 
+	the information stored in pass 1, in subsequent passes analysis data is refined 
+	and also redundant steps are skipped.
+	In pass 1 analysis information like motion vector, depth, reference and prediction
+	modes of the final best CTU partition is stored for each CTU.
+	Multipass analysis refinement cannot be enabled when 'analysis-save/analysis-load' option
+	is enabled and both will be disabled when enabled together. This feature requires 'pmode/pme'
+	to be disabled and hence pmode/pme will be disabled when enabled at the same time.
 
-    Default: disabled.
+	Default: disabled.
 
 .. option:: --multi-pass-opt-distortion, --no-multi-pass-opt-distortion
 
-    Enable/Disable multipass refinement of qp based on distortion data along with multipass
-    ratecontrol. In pass 1 distortion of best CTU partition is stored. CTUs with high
-    distortion get lower(negative)qp offsets and vice-versa for low distortion CTUs in pass 2.
-    This helps to improve the subjective quality.
-    Multipass refinement of qp cannot be enabled when 'analysis-save/analysis-load' option
-    is enabled and both will be disabled when enabled together. 'multi-pass-opt-distortion' 
-    requires 'pmode/pme' to be disabled and hence pmode/pme will be disabled when enabled along with it.
+	Enable/Disable multipass refinement of qp based on distortion data along with multipass
+	ratecontrol. In pass 1 distortion of best CTU partition is stored. CTUs with high
+	distortion get lower(negative)qp offsets and vice-versa for low distortion CTUs in pass 2.
+	This helps to improve the subjective quality.
+	Multipass refinement of qp cannot be enabled when 'analysis-save/analysis-load' option
+	is enabled and both will be disabled when enabled together. 'multi-pass-opt-distortion' 
+	requires 'pmode/pme' to be disabled and hence pmode/pme will be disabled when enabled along with it.
 
-    Default: disabled.
+	Default: disabled.
 
 .. option:: --strict-cbr, --no-strict-cbr
-	
+
 	Enables stricter conditions to control bitrate deviance from the 
 	target bitrate in ABR mode. Bit rate adherence is prioritised
 	over quality. Rate tolerance is reduced to 50%. Default disabled.
@@ -1731,7 +1739,7 @@ Quality, rate control and rate distortion options
 	encoded frames to control QP. strict-cbr allows the encoder to be 
 	more aggressive in hitting the target bitrate even for short segment 
 	videos.
-	
+
 .. option:: --cbqpoffs <integer>
 
 	Offset of Cb chroma QP from the luma QP selected by rate control.
@@ -1764,14 +1772,13 @@ Quality, rate control and rate distortion options
 
 	qComp sets the quantizer curve compression factor. It weights the
 	frame quantizer based on the complexity of residual (measured by
-	lookahead).  Default value is 0.6. Increasing it to 1 will
-	effectively generate CQP
+	lookahead). It's value must be between 0.5 and 1.0. Default value is
+	0.6. Increasing it to 1.0 will effectively generate CQP.
 
 .. option:: --qpstep <integer>
 
-	The maximum single adjustment in QP allowed to rate control. Default
-	4
-	
+	The maximum single adjustment in QP allowed to rate control. Default 4
+
 .. option:: --qpmin <integer>
 
 	sets a hard lower limit on QP allowed to ratecontrol. Default 0
@@ -1779,21 +1786,21 @@ Quality, rate control and rate distortion options
 .. option:: --qpmax <integer>
 
 	sets a hard upper limit on QP allowed to ratecontrol. Default 69
-	
+
 .. option:: --rc-grain, --no-rc-grain
 
-   Enables a specialised ratecontrol algorithm for film grain content. This 
-   parameter strictly minimises QP fluctuations within and across frames 
-   and removes pulsing of grain. Default disabled. 
-   Enabled when :option:'--tune' grain is applied. It is highly recommended 
-   that this option is used through the tune grain feature where a combination 
-   of param options are used to improve visual quality.
-   
+	Enables a specialised ratecontrol algorithm for film grain content. This 
+	parameter strictly minimises QP fluctuations within and across frames 
+	and removes pulsing of grain. Default disabled. 
+	Enabled when :option:'--tune' grain is applied. It is highly recommended 
+	that this option is used through the tune grain feature where a combination 
+	of param options are used to improve visual quality.
+
 .. option:: --const-vbv, --no-const-vbv
 
-   Enables VBV algorithm to be consistent across runs. Default disabled. 
-   Enabled when :option:'--tune' grain is applied.
-   
+	Enables VBV algorithm to be consistent across runs. Default disabled. 
+	Enabled when :option:'--tune' grain is applied.
+
 .. option:: --qblur <float>
 
 	Temporally blur quants. Default 0.5
@@ -1854,7 +1861,7 @@ other levels.
 	HEVC specifies a default set of scaling lists which may be enabled
 	without requiring them to be signaled in the SPS. Those scaling
 	lists can be enabled via :option:`--scaling-list` *default*.
-    
+
 	All other strings indicate a filename containing custom scaling
 	lists in the HM format. The encode will abort if the file is not
 	parsed correctly. Custom lists must be signaled in the SPS. A sample
@@ -1865,7 +1872,7 @@ other levels.
 	Specify a text file containing values for x265_lambda_tab and
 	x265_lambda2_tab. Each table requires MAX_MAX_QP+1 (70) float
 	values.
-	
+
 	The text file syntax is simple. Comma is considered to be
 	white-space. All white-space is ignored. Lines must be less than 2k
 	bytes in length. Content following hash (#) characters are ignored.
@@ -1879,11 +1886,11 @@ other levels.
 	the more bits it will try to spend on signaling information (motion
 	vectors and splits) and less on residual. This feature is intended
 	for experimentation.
-	
+
 .. option:: --max-ausize-factor <float>
 
-        It controls the maximum AU size defined in specification. It represents
-        the percentage of maximum AU size used. Default is 1. Range is 0.5 to 1.
+	It controls the maximum AU size defined in specification. It represents
+	the percentage of maximum AU size used. Default is 1. Range is 0.5 to 1.
 
 Loop filters
 ============
@@ -2004,9 +2011,9 @@ VUI fields must be manually specified.
 	7. smpte240m
 	8. film
 	9. bt2020
-    10. smpte428
-    11. smpte431
-    12. smpte432
+	10. smpte428
+	11. smpte431
+	12. smpte432
 
 .. option:: --transfer <integer|string>
 
@@ -2047,10 +2054,10 @@ VUI fields must be manually specified.
 	8. YCgCo
 	9. bt2020nc
 	10. bt2020c
-    11. smpte2085
-    12. chroma-derived-nc
-    13. chroma-derived-c
-    14. ictcp
+	11. smpte2085
+	12. chroma-derived-nc
+	13. chroma-derived-c
+	14. ictcp
 
 .. option:: --chromaloc <0..5>
 
@@ -2104,13 +2111,13 @@ VUI fields must be manually specified.
 	automatically when :option:`--master-display` or :option:`--max-cll` is
 	specified. Useful when there is a desire to signal 0 values for max-cll
 	and max-fall. Default disabled.
-	
+
 .. option:: --hdr-opt, --no-hdr-opt
 
 	Add luma and chroma offsets for HDR/WCG content.
 	Input video should be 10 bit 4:2:0. Applicable for HDR content. It is recommended
 	that AQ-mode be enabled along with this feature. Default disabled.
-	
+
 .. option:: --dhdr10-info <filename>
 
 	Inserts tone mapping information as an SEI message. It takes as input, 
@@ -2135,12 +2142,12 @@ VUI fields must be manually specified.
 
 	Maximum luma value allowed for input pictures. Any values above max-luma
 	are clipped.  No default.
-    
+
 .. option:: --nalu-file <filename>
 
-    Text file containing userSEI in POC order : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload>
-    Parse the input file specified and inserts SEI messages into the bitstream. 
-    Currently, we support only PREFIX SEI messages. This is an "application-only" feature.
+	Text file containing userSEI in POC order : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload>
+	Parse the input file specified and inserts SEI messages into the bitstream. 
+	Currently, we support only PREFIX SEI messages. This is an "application-only" feature.
 
 .. option:: --atc-sei <integer>
 
@@ -2220,7 +2227,7 @@ Bitstream options
 
 .. option:: --log2-max-poc-lsb <integer>
 
-  Maximum of the picture order count. Default 8
+	Maximum of the picture order count. Default 8
 
 .. option:: --vui-timing-info, --no-vui-timing-info
 
@@ -2252,28 +2259,28 @@ Bitstream options
 
 	Only effective at RD levels 5 and 6
 
-.. option:: --idr-recovery-sei, --no-idr-recoveery-sei
-    Emit RecoveryPoint info as sei in bitstream for each IDR frame. Default disabled.
+.. option:: --idr-recovery-sei, --no-idr-recovery-sei
+	Emit RecoveryPoint info as sei in bitstream for each IDR frame. Default disabled.
 
 .. option:: --single-sei, --no-single-sei
-    Emit SEI messages in a single NAL unit instead of multiple NALs. Default disabled.
-    When HRD SEI is enabled the HM decoder will throw a warning.
+	Emit SEI messages in a single NAL unit instead of multiple NALs. Default disabled.
+	When HRD SEI is enabled the HM decoder will throw a warning.
 
 DCT Approximations
 =================
 
 .. option:: --lowpass-dct
 
-    If enabled, x265 will use low-pass subband dct approximation instead of the
-    standard dct for 16x16 and 32x32 blocks. This approximation is less computational 
-    intensive but it generates truncated coefficient matrixes for the transformed block. 
-    Empirical analysis shows marginal loss in compression and performance gains up to 10%,
-    paticularly at moderate bit-rates.
+	If enabled, x265 will use low-pass subband dct approximation instead of the
+	standard dct for 16x16 and 32x32 blocks. This approximation is less computational 
+	intensive but it generates truncated coefficient matrixes for the transformed block. 
+	Empirical analysis shows marginal loss in compression and performance gains up to 10%,
+	paticularly at moderate bit-rates.
 
-    This approximation should be considered for platforms with performance and time 
-    constrains.
+	This approximation should be considered for platforms with performance and time 
+	constrains.
 
-    Default disabled. **Experimental feature**
+	Default disabled. **Experimental feature**
 
 Debugging options
 =================

@@ -287,6 +287,7 @@ typedef struct x265_frame_stats
     x265_pu_stats    puStats;
     double           totalFrameTime;
     double           vmafFrameScore;
+    double           bufferFillFinal;
 } x265_frame_stats;
 
 typedef struct x265_ctu_info_t

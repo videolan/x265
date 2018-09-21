@@ -2225,9 +2225,7 @@ void Search::predInterSearch(Mode& interMode, const CUGeom& cuGeom, bool bChroma
                 MV mvmin, mvmax, outmv, mvp;
                 if (useAsMVP)
                 {
-                    mvp.x = interDataCTU->mv[list][cuIdx + puIdx].x;
-                    mvp.y = interDataCTU->mv[list][cuIdx + puIdx].y;
-                    mvp.word = interDataCTU->mv[list][cuIdx + puIdx].word;
+                    mvp = interDataCTU->mv[list][cuIdx + puIdx].word;
                     mvpIdx = interDataCTU->mvpIdx[list][cuIdx + puIdx];
                 }
                 else
