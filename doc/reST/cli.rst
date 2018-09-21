@@ -104,6 +104,8 @@ Logging/Statistic Options
 	**BufferFill** Bits available for the next frame. Includes bits carried
 	over from the current frame.
 	
+	**BufferFillFinal** Buffer bits available after removing the frame out of CPB.
+	
 	**Latency** Latency in terms of number of frames between when the frame 
 	was given in and when the frame is given out.
 	
