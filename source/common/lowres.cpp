@@ -27,10 +27,10 @@
 
 using namespace X265_NS;
 
-bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled, uint32_t qgSize)
+bool Lowres::create(x265_param* param, PicYuv *origPic, uint32_t qgSize)
 {
     isLowres = true;
-    bframes = _bframes;
+    bframes = param->bframes;
     width = origPic->m_picWidth / 2;
     lines = origPic->m_picHeight / 2;
     lumaStride = width + 2 * origPic->m_lumaMarginX;
@@ -41,11 +41,7 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled, uint32_t qgS
     maxBlocksInRowFullRes = maxBlocksInRow * 2;
     maxBlocksInColFullRes = maxBlocksInCol * 2;
     int cuCount = maxBlocksInRow * maxBlocksInCol;
-    int cuCountFullRes;
-    if (qgSize == 8)
-        cuCountFullRes = maxBlocksInRowFullRes * maxBlocksInColFullRes;
-    else
-        cuCountFullRes = cuCount;
+    int cuCountFullRes = (qgSize > 8) ? cuCount : cuCount << 2;
 
     /* rounding the width to multiple of lowres CU size */
     width = maxBlocksInRow * X265_LOWRES_CU_SIZE;
@@ -53,7 +49,7 @@ bool Lowres::create(PicYuv *origPic, int _bframes, bool bAQEnabled, uint32_t qgS
 
     size_t planesize = lumaStride * (lines + 2 * origPic->m_lumaMarginY);
     size_t padoffset = lumaStride * origPic->m_lumaMarginY + origPic->m_lumaMarginX;
-    if (bAQEnabled)
+    if (!!param->rc.aqMode)
     {
         CHECKED_MALLOC_ZERO(qpAqOffset, double, cuCountFullRes);
         CHECKED_MALLOC_ZERO(invQscaleFactor, int, cuCountFullRes);

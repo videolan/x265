@@ -152,14 +152,12 @@ struct Lowres : public ReferencePlanes
     uint32_t* blockVariance;
     uint64_t  wp_ssd[3];       // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
     uint64_t  wp_sum[3];
-    uint64_t  frameVariance;
 
     /* cutree intermediate data */
     uint16_t* propagateCost;
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
     ReferencePlanes weightedRef[X265_BFRAME_MAX + 2];
-
-    bool create(PicYuv *origPic, int _bframes, bool bAqEnabled, uint32_t qgSize);
+    bool create(x265_param* param, PicYuv *origPic, uint32_t qgSize);
     void destroy();
     void init(PicYuv *origPic, int poc);
 };

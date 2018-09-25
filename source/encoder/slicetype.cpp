@@ -150,20 +150,14 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
         curFrame->m_lowres.wp_sum[y] = 0;
     }
 
-    /* Calculate Qp offset for each 16x16 or 8x8 block in the frame */
-    int blockXY = 0;
-    int blockX = 0, blockY = 0;
-    double strength = 0.f;
+    /* Calculate Qp offset for each 16x16 or 8x8 block in the frame */    
     if ((param->rc.aqMode == X265_AQ_NONE || param->rc.aqStrength == 0) || (param->rc.bStatRead && param->rc.cuTree && IS_REFERENCED(curFrame)))
     {
-        /* Need to init it anyways for CU tree */
-        int cuCount = blockCount;
-
         if (param->rc.aqMode && param->rc.aqStrength == 0)
         {
             if (quantOffsets)
             {
-                for (int cuxy = 0; cuxy < cuCount; cuxy++)
+                for (int cuxy = 0; cuxy < blockCount; cuxy++)
                 {
                     curFrame->m_lowres.qpCuTreeOffset[cuxy] = curFrame->m_lowres.qpAqOffset[cuxy] = quantOffsets[cuxy];
                     curFrame->m_lowres.invQscaleFactor[cuxy] = x265_exp2fix8(curFrame->m_lowres.qpCuTreeOffset[cuxy]);
@@ -171,60 +165,55 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
             }
             else
             {
-                memset(curFrame->m_lowres.qpCuTreeOffset, 0, cuCount * sizeof(double));
-                memset(curFrame->m_lowres.qpAqOffset, 0, cuCount * sizeof(double));
-                for (int cuxy = 0; cuxy < cuCount; cuxy++)
-                    curFrame->m_lowres.invQscaleFactor[cuxy] = 256;
+               memset(curFrame->m_lowres.qpCuTreeOffset, 0, blockCount * sizeof(double));
+               memset(curFrame->m_lowres.qpAqOffset, 0, blockCount * sizeof(double));
+               for (int cuxy = 0; cuxy < blockCount; cuxy++)
+                   curFrame->m_lowres.invQscaleFactor[cuxy] = 256;
             }
         }
 
         /* Need variance data for weighted prediction and dynamic refinement*/
         if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
-        {            
-            for (blockY = 0; blockY < maxRow; blockY += loopIncr)
-                for (blockX = 0; blockX < maxCol; blockX += loopIncr)                
+        {
+            for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
+                for (int blockX = 0; blockX < maxCol; blockX += loopIncr)                
                     acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);                
         }
     }
     else
     {
-        blockXY = 0;
-        double avg_adj_pow2 = 0, avg_adj = 0, qp_adj = 0;
-        double bias_strength = 0.f;
+        int blockXY = 0;
+        double avg_adj_pow2 = 0.f, avg_adj = 0.f, qp_adj = 0.f;
+        double bias_strength = 0.f, strength = 0.f;
         if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
         {
-            double bit_depth_correction = 1.f / (1 << (2*(X265_DEPTH-8)));
-            curFrame->m_lowres.frameVariance = 0;
-            uint64_t rowVariance = 0;
-            for (blockY = 0; blockY < maxRow; blockY += loopIncr)
-            {
-                rowVariance = 0;
-                for (blockX = 0; blockX < maxCol; blockX += loopIncr)
+            double bit_depth_correction = 1.f / (1 << (2*(X265_DEPTH-8)));            
+            
+            for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
+            {                
+                for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
                 {
-                    uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
-                    rowVariance += energy;
+                    uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);                    
                     qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
                     curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
                     avg_adj += qp_adj;
                     avg_adj_pow2 += qp_adj * qp_adj;
                     blockXY++;
                 }
-                curFrame->m_lowres.frameVariance += (rowVariance / maxCol);
             }
-            curFrame->m_lowres.frameVariance /= maxRow;
             avg_adj /= blockCount;
             avg_adj_pow2 /= blockCount;
             strength = param->rc.aqStrength * avg_adj;
-            avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - (modeTwoConst)) / avg_adj;
+            avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - modeTwoConst) / avg_adj;
             bias_strength = param->rc.aqStrength;
         }
         else
             strength = param->rc.aqStrength * 1.0397f;
 
         blockXY = 0;
-        for (blockY = 0; blockY < maxRow; blockY += loopIncr)
+        for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
         {
-            for (blockX = 0; blockX < maxCol; blockX += loopIncr)
+            for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
             {
                 if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
                 {
@@ -310,9 +299,9 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
 
     if (param->bDynamicRefine)
     {
-        blockXY = 0;
-        for (blockY = 0; blockY < maxRow; blockY += loopIncr)
-            for (blockX = 0; blockX < maxCol; blockX += loopIncr)
+        int blockXY = 0;
+        for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
+            for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
             {
                 curFrame->m_lowres.blockVariance[blockXY] = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
                 blockXY++;

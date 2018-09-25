@@ -94,7 +94,7 @@ bool Frame::create(x265_param *param, float* quantOffsets)
         CHECKED_MALLOC_ZERO(m_classifyCount, uint32_t, size);
     }
 
-    if (m_fencPic->create(param, !!m_param->bCopyPicToFrame) && m_lowres.create(m_fencPic, param->bframes, !!param->rc.aqMode || !!param->bAQMotion, param->rc.qgSize))
+    if (m_fencPic->create(param, !!m_param->bCopyPicToFrame) && m_lowres.create(param, m_fencPic, param->rc.qgSize))
     {
         X265_CHECK((m_reconColCount == NULL), "m_reconColCount was initialized");
         m_numRows = (m_fencPic->m_picHeight + param->maxCUSize - 1)  / param->maxCUSize;
@@ -103,11 +103,8 @@ bool Frame::create(x265_param *param, float* quantOffsets)
 
         if (quantOffsets)
         {
-            int32_t cuCount;
-            if (param->rc.qgSize == 8)
-                cuCount = m_lowres.maxBlocksInRowFullRes * m_lowres.maxBlocksInColFullRes;
-            else
-                cuCount = m_lowres.maxBlocksInRow * m_lowres.maxBlocksInCol;
+            int32_t cuCount = (param->rc.qgSize == 8) ? m_lowres.maxBlocksInRowFullRes * m_lowres.maxBlocksInColFullRes :
+                                                        m_lowres.maxBlocksInRow * m_lowres.maxBlocksInCol;
             m_quantOffsets = new float[cuCount];
         }
         return true;

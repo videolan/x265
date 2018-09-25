@@ -3357,13 +3357,13 @@ void Analysis::encodeResidue(const CUData& ctu, const CUGeom& cuGeom)
                 primitives.chroma[m_csp].cu[sizeIdx].copy_pp(reconPic.getCbAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                          predU, predYuv.m_csize);
 
-             if (cu.m_cbf[2][0])
-             {
-                 bool reconPicAlign = (reconPic.m_cuOffsetC[cu.m_cuAddr] + reconPic.m_buOffsetC[absPartIdx]) % 64 == 0;
-                 bool predValign = predYuv.getChromaAddrOffset(absPartIdx) % 64 == 0;
-                 primitives.chroma[m_csp].cu[sizeIdx].add_ps[reconPicAlign && predValign && (reconPic.m_strideC % 64 == 0) && (predYuv.m_csize % 64 == 0) &&
-                     (resiYuv.m_csize % 64 == 0)](reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC, predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
-             }
+            if (cu.m_cbf[2][0])
+            {
+                bool reconPicAlign = (reconPic.m_cuOffsetC[cu.m_cuAddr] + reconPic.m_buOffsetC[absPartIdx]) % 64 == 0;
+                bool predValign = predYuv.getChromaAddrOffset(absPartIdx) % 64 == 0;
+                primitives.chroma[m_csp].cu[sizeIdx].add_ps[reconPicAlign && predValign && (reconPic.m_strideC % 64 == 0) && (predYuv.m_csize % 64 == 0) &&
+                    (resiYuv.m_csize % 64 == 0)](reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC, predV, resiYuv.m_buf[2], predYuv.m_csize, resiYuv.m_csize);
+            }
             else
                 primitives.chroma[m_csp].cu[sizeIdx].copy_pp(reconPic.getCrAddr(cu.m_cuAddr, absPartIdx), reconPic.m_strideC,
                                                          predV, predYuv.m_csize);
@@ -3568,18 +3568,12 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
             qp += distortionData->offset[ctu.m_cuAddr];
     }
 
-    int loopIncr;
-    if (m_param->rc.qgSize == 8)
-        loopIncr = 8;
-    else
-        loopIncr = 16;
+    int loopIncr = (m_param->rc.qgSize == 8) ? 8 : 16;
+
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
     bool isReferenced = IS_REFERENCED(m_frame);
-    double *qpoffs;
-    if (complexCheck)
-        qpoffs = m_frame->m_lowres.qpAqOffset;
-    else
-        qpoffs = (isReferenced && m_param->rc.cuTree) ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
+    double *qpoffs = (isReferenced && m_param->rc.cuTree && !complexCheck) ? m_frame->m_lowres.qpCuTreeOffset :
+                                                                             m_frame->m_lowres.qpAqOffset;
     if (qpoffs)
     {
         uint32_t width = m_frame->m_fencPic->m_picWidth;
@@ -3590,13 +3584,11 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
         uint32_t blockSize = m_param->maxCUSize >> cuGeom.depth;
         double qp_offset = 0;
         uint32_t cnt = 0;
-        uint32_t idx;
-
         for (uint32_t block_yy = block_y; block_yy < block_y + blockSize && block_yy < height; block_yy += loopIncr)
         {
             for (uint32_t block_xx = block_x; block_xx < block_x + blockSize && block_xx < width; block_xx += loopIncr)
             {
-                idx = ((block_yy / loopIncr) * (maxCols)) + (block_xx / loopIncr);
+                uint32_t idx = ((block_yy / loopIncr) * (maxCols)) + (block_xx / loopIncr);
                 qp_offset += qpoffs[idx];
                 cnt++;
             }
@@ -3609,10 +3601,7 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
             int32_t offset = (int32_t)(qp_offset * 100 + .5);
             double threshold = (1 - ((x265_ADAPT_RD_STRENGTH - m_param->dynamicRd) * 0.5));
             int32_t max_threshold = (int32_t)(threshold * 100 + .5);
-            if (offset < max_threshold)
-                return 1;
-            else
-                return 0;
+            return (offset < max_threshold);
         }
     }
 

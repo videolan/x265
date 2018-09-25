@@ -2803,12 +2803,8 @@ int RateControl::rateControlEnd(Frame* curFrame, int64_t bits, RateControlEntry*
 /* called to write out the rate control frame stats info in multipass encodes */
 int RateControl::writeRateControlFrameStats(Frame* curFrame, RateControlEntry* rce)
 {
-    FrameData& curEncData = *curFrame->m_encData;
-    int ncu;
-    if (m_param->rc.qgSize == 8)
-        ncu = m_ncu * 4;
-    else
-        ncu = m_ncu;
+    FrameData& curEncData = *curFrame->m_encData;    
+    int ncu = (m_param->rc.qgSize == 8) ? m_ncu * 4 : m_ncu;
     char cType = rce->sliceType == I_SLICE ? (curFrame->m_lowres.sliceType == X265_TYPE_IDR ? 'I' : 'i')
         : rce->sliceType == P_SLICE ? 'P'
         : IS_REFERENCED(curFrame) ? 'B' : 'b';
