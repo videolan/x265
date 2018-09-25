@@ -1713,8 +1713,14 @@ typedef struct x265_param
     /* File containing base64 encoded SEI messages in POC order */
     const char*    naluFile;
 
-} x265_param;
+    /* Generate bitstreams confirming to the specified dolby vision profile,
+     * note that 0x7C01 makes RPU appear to be an unspecified NAL type in
+     * HEVC stream. if BL is backward compatible, Dolby Vision single
+     * layer VES will be equivalent to a backward compatible BL VES on legacy
+     * device as RPU will be ignored. Default 0 (disabled) */
+    int dolbyProfile;
 
+} x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
  *  special in any way, but using this method together with x265_param_free()

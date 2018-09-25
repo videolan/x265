@@ -3,6 +3,8 @@
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Min Chen <chenm003@163.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
+ *          Aruna Matheswaran <aruna@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -3182,7 +3184,22 @@ void Encoder::configure(x265_param *p)
         p->chunkStart = p->chunkEnd = 0;
         x265_log(p, X265_LOG_WARNING, "chunk-end cannot be less than chunk-start. Disabling chunking.\n");
     }
-
+    if (p->dolbyProfile)     // Default disabled.
+    {
+        if (p->dolbyProfile == 50)
+        {
+            p->bEmitHRDSEI = true;
+            p->vui.bEnableVideoSignalTypePresentFlag = 1;
+            p->vui.bEnableColorDescriptionPresentFlag = 1;
+            p->vui.transferCharacteristics = 2;
+            p->vui.colorPrimaries = 2;
+            p->vui.matrixCoeffs = 2;
+            p->vui.bEnableVideoFullRangeFlag = 1;
+            p->vui.videoFormat = 5;
+            p->bEnableAccessUnitDelimiters = 1;
+            p->bAnnexB = 1;
+        }
+    }
 }
 
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x265_picture* picIn, int paramBytes)

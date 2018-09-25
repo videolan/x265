@@ -2195,6 +2195,19 @@ Bitstream options
 	Picture Timing SEI messages providing timing information to the
 	decoder. Default disabled
 
+.. option:: --dolby-vision-profile <integer|float>
+
+    Generate bitstreams confirming to the specified Dolby Vision profile,
+    note that 0x7C01 makes RPU appear to be an unspecified NAL type in
+    HEVC stream. If BL is backward compatible, Dolby Vision single
+    layer VES will be equivalent to a backward compatible BL VES on legacy
+    device as RPU will be ignored.
+    
+    The value is specified as a float or as an integer with the profile times 10,
+    for example profile 5 is specified as "5" or "5.0" or "50".
+    
+    Currently only profile 5 enabled, Default 0 (disabled)
+
 .. option:: --info, --no-info
 
 	Emit an informational SEI with the stream headers which describes

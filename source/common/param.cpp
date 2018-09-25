@@ -286,9 +286,9 @@ void x265_param_default(x265_param* param)
     param->bAQMotion = 0;
     param->bHDROpt = 0;
     param->analysisReuseLevel = 5;
-
     param->toneMapFile = NULL;
     param->bDhdr10opt = 0;
+    param->dolbyProfile = 0;
     param->bCTUInfo = 0;
     param->bUseRcStats = 0;
     param->scaleFactor = 0;
@@ -1050,6 +1050,15 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("chunk-start") p->chunkStart = atoi(value);
         OPT("chunk-end") p->chunkEnd = atoi(value);
         OPT("nalu-file") p->naluFile = strdup(value);
+        OPT("dolby-vision-profile")
+        {
+            if (atof(value) < 10)
+                p->dolbyProfile = (int)(10 * atof(value) + .5);
+            else if (atoi(value) < 100)
+                p->dolbyProfile = atoi(value);
+            else
+                bError = true;
+        }
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1407,6 +1416,15 @@ int x265_check_params(x265_param* param)
         "Invalid refine-intra value, refine-intra levels 0 to 3 supported");
     CHECK(param->maxAUSizeFactor < 0.5 || param->maxAUSizeFactor > 1.0,
         "Supported factor for controlling max AU size is from 0.5 to 1");
+    CHECK((param->dolbyProfile != 0) && (param->dolbyProfile != 50),
+        "Unsupported Dolby Vision profile, only profile 5 enabled");
+    if (param->dolbyProfile == 50)
+    {
+        CHECK((param->rc.vbvMaxBitrate < 0 && param->rc.vbvBufferSize < 0), "Dolby Vision requires VBV settings to enable HRD.\n");
+        CHECK((param->sourceWidth > 3840 || param->sourceHeight > 2160), "Maximum supported resolution for Dolby Vision profile - 5 is 4k UHD\n");
+        CHECK((param->internalBitDepth != 10), "Dolby Vision profile - 5 is Main10 only\n");
+        CHECK((param->internalCsp != X265_CSP_I420), "Dolby Vision profile - 5 requires YCbCr 4:2:0 color space\n");
+    }
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
