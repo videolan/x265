@@ -598,6 +598,8 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
     pic->quantOffsets = NULL;
     pic->userSEI.payloads = NULL;
     pic->userSEI.numPayloads = 0;
+    pic->rpu.payloadSize = 0;
+    pic->rpu.payload = NULL;
 
     if ((param->analysisSave || param->analysisLoad) || (param->bMVType == AVC_INFO))
     {
@@ -612,6 +614,8 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
 
 void x265_picture_free(x265_picture *p)
 {
+    if (p->rpu.payload)
+        X265_FREE(p->rpu.payload);
     return x265_free(p);
 }
 

@@ -1063,6 +1063,14 @@ void FrameEncoder::compressFrame()
         m_accessUnitBits = bytes << 3;
     }
 
+    if (m_frame->m_rpu.payloadSize)
+    {
+        m_bs.resetBits();
+        for (int i = 0; i < m_frame->m_rpu.payloadSize; i++)
+            m_bs.write(m_frame->m_rpu.payload[i], 8);
+        m_nalList.serialize(NAL_UNIT_UNSPECIFIED, m_bs);
+    }
+
     m_endCompressTime = x265_mdate();
 
     /* Decrement referenced frame reference counts, allow them to be recycled */

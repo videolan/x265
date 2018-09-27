@@ -2208,6 +2208,15 @@ Bitstream options
     
     Currently only profile 5 enabled, Default 0 (disabled)
 
+.. option:: --dolby-vision-rpu
+
+    File containing Dolby Vision RPU metadata. If given, x265's Dolby Vision 
+    metadata parser will fill the RPU field of input pictures with the metadata
+    read from the file. The library will interleave access units with RPUs in the 
+    bitstream. Default NULL (disabled).
+   
+    **CLI ONLY**
+
 .. option:: --info, --no-info
 
 	Emit an informational SEI with the stream headers which describes

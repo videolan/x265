@@ -1075,6 +1075,14 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
         copyUserSEIMessages(inFrame, pic_in);
 
+        /*Copy Dolby Vision RPU from pic_in to frame*/
+        if (pic_in->rpu.payloadSize)
+        {
+            inFrame->m_rpu.payloadSize = pic_in->rpu.payloadSize;
+            inFrame->m_rpu.payload = new uint8_t[pic_in->rpu.payloadSize];
+            memcpy(inFrame->m_rpu.payload, pic_in->rpu.payload, pic_in->rpu.payloadSize);
+        }
+
         if (pic_in->quantOffsets != NULL)
         {
             int cuCount;
@@ -2362,6 +2370,13 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 {
     sbacCoder.setBitstream(&bs);
 
+    if (m_param->dolbyProfile && !m_param->bRepeatHeaders)
+    {
+        bs.resetBits();
+        bs.write(0x10, 8);
+        list.serialize(NAL_UNIT_ACCESS_UNIT_DELIMITER, bs);
+    }
+    
     /* headers for start of bitstream */
     bs.resetBits();
     sbacCoder.codeVPS(m_vps);

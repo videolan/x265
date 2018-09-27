@@ -97,7 +97,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
         /* Will write size later */
         bytes += 4;
     }
-    else if (!m_numNal || nalUnitType == NAL_UNIT_VPS || nalUnitType == NAL_UNIT_SPS || nalUnitType == NAL_UNIT_PPS)
+    else if (!m_numNal || nalUnitType == NAL_UNIT_VPS || nalUnitType == NAL_UNIT_SPS || nalUnitType == NAL_UNIT_PPS || nalUnitType == NAL_UNIT_UNSPECIFIED)
     {
         memcpy(out, startCodePrefix, 4);
         bytes += 4;
@@ -124,7 +124,7 @@ void NALList::serialize(NalUnitType nalUnitType, const Bitstream& bs)
      *  - 0x000002 */
     for (uint32_t i = 0; i < payloadSize; i++)
     {
-        if (i > 2 && !out[bytes - 2] && !out[bytes - 3] && out[bytes - 1] <= 0x03)
+        if (i > 2 && !out[bytes - 2] && !out[bytes - 3] && out[bytes - 1] <= 0x03 && nalUnitType != NAL_UNIT_UNSPECIFIED)
         {
             /* inject 0x03 to prevent emulating a start code */
             out[bytes] = out[bytes - 1];

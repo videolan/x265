@@ -44,6 +44,8 @@ Frame::Frame()
     m_param = NULL;
     m_userSEI.numPayloads = 0;
     m_userSEI.payloads = NULL;
+    m_rpu.payloadSize = 0;
+    m_rpu.payload = NULL;
     memset(&m_lowres, 0, sizeof(m_lowres));
     m_rcData = NULL;
     m_encodeStartTime = 0;

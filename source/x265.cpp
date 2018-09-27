@@ -65,6 +65,8 @@ static void sigint_handler(int)
 {
     b_ctrl_c = 1;
 }
+#define START_CODE 0x00000001
+#define START_CODE_BYTES 4
 
 struct CLIOptions
 {
@@ -72,6 +74,7 @@ struct CLIOptions
     ReconFile* recon;
     OutputFile* output;
     FILE*       qpfile;
+    FILE*    dolbyVisionRpu;    /* File containing Dolby Vision BL RPU metadata */
     const char* reconPlayCmd;
     const x265_api* api;
     x265_param* param;
@@ -94,6 +97,7 @@ struct CLIOptions
         recon = NULL;
         output = NULL;
         qpfile = NULL;
+        dolbyVisionRpu = NULL;
         reconPlayCmd = NULL;
         api = NULL;
         param = NULL;
@@ -124,6 +128,9 @@ void CLIOptions::destroy()
     if (qpfile)
         fclose(qpfile);
     qpfile = NULL;
+    if (dolbyVisionRpu)
+        fclose(dolbyVisionRpu);
+    dolbyVisionRpu = NULL;
     if (output)
         output->release();
     output = NULL;
@@ -310,6 +317,15 @@ bool CLIOptions::parse(int argc, char **argv)
                 this->qpfile = x265_fopen(optarg, "rb");
                 if (!this->qpfile)
                     x265_log_file(param, X265_LOG_ERROR, "%s qpfile not found or error in opening qp file\n", optarg);
+            }
+            OPT("dolby-vision-rpu")
+            {
+                this->dolbyVisionRpu = x265_fopen(optarg, "rb");
+                if (!this->dolbyVisionRpu)
+                {
+                    x265_log_file(param, X265_LOG_ERROR, "Dolby Vision RPU metadata file %s not found or error in opening file\n", optarg);
+                    return true;
+                }
             }
             OPT("fullhelp")
             {
@@ -552,6 +568,59 @@ static int get_argv_utf8(int *argc_ptr, char ***argv_ptr)
 }
 #endif
 
+/* Parse the RPU file and extract the RPU corresponding to the current picture 
+ * and fill the rpu field of the input picture */
+static int rpuParser(x265_picture * pic, FILE * ptr)
+{
+    uint8_t byte;
+    uint32_t code = 0;
+    int bytesRead = 0;
+    pic->rpu.payloadSize = 0;
+
+    if (!pic->pts)
+    {
+        while (bytesRead++ < 4 && fread(&byte, sizeof(uint8_t), 1, ptr))
+            code = (code << 8) | byte;
+      
+        if (code != START_CODE)
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Invalid Dolby Vision RPU startcode in POC %d\n", pic->pts);
+            return 1;
+        }
+    } 
+
+    bytesRead = 0;
+    while (fread(&byte, sizeof(uint8_t), 1, ptr))
+    {
+        code = (code << 8) | byte;
+        if (bytesRead++ < 3)
+            continue;
+        if (bytesRead >= 1024)
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Invalid Dolby Vision RPU size in POC %d\n", pic->pts);
+            return 1;
+        }
+        
+        if (code != START_CODE)
+            pic->rpu.payload[pic->rpu.payloadSize++] = (code >> (3 * 8)) & 0xFF;
+        else
+            return 0;       
+    }
+
+    int ShiftBytes = START_CODE_BYTES - (bytesRead - pic->rpu.payloadSize);
+    int bytesLeft = bytesRead - pic->rpu.payloadSize;
+    code = (code << ShiftBytes * 8);
+    for (int i = 0; i < bytesLeft; i++)
+    {
+        pic->rpu.payload[pic->rpu.payloadSize++] = (code >> (3 * 8)) & 0xFF;
+        code = (code << 8);
+    }
+    if (!pic->rpu.payloadSize)
+        x265_log(NULL, X265_LOG_WARNING, "Dolby Vision RPU not found for POC %d\n", pic->pts);
+    return 0;
+}
+
+
 /* CLI return codes:
  *
  * 0 - encode successful
@@ -630,7 +699,9 @@ int main(int argc, char **argv)
     x265_stats stats;
     uint32_t nal;
     int16_t *errorBuf = NULL;
+    bool bDolbyVisionRPU = false;
     int ret = 0;
+
 
     if (!param->bRepeatHeaders)
     {
@@ -646,6 +717,13 @@ int main(int argc, char **argv)
 
     api->picture_init(param, pic_in);
 
+    if (param->dolbyProfile && cliopt.dolbyVisionRpu)
+    {
+        pic_in->rpu.payload = X265_MALLOC(uint8_t, 1024);
+        if (pic_in->rpu.payload)
+            bDolbyVisionRPU = true;
+    }
+    
     if (cliopt.bDither)
     {
         errorBuf = X265_MALLOC(int16_t, param->sourceWidth + 1);
@@ -685,8 +763,13 @@ int main(int argc, char **argv)
             }
             /* Overwrite PTS */
             pic_in->pts = pic_in->poc;
-        }
 
+            if (bDolbyVisionRPU)
+            {
+                if (rpuParser(pic_in, cliopt.dolbyVisionRpu) > 0)
+                    goto fail;
+            }
+        }
         int numEncoded = api->encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
         if (numEncoded < 0)
         {
@@ -749,6 +832,13 @@ int main(int argc, char **argv)
             break;
     }
   
+    if (bDolbyVisionRPU)
+    {
+        if(fgetc(cliopt.dolbyVisionRpu) != EOF)
+            x265_log(NULL, X265_LOG_WARNING, "Dolby Vision RPU count is greater than frame count\n");
+        x265_log(NULL, X265_LOG_INFO, "VES muxing with Dolby Vision RPU file successful\n");
+    }
+
     /* clear progress report */
     if (cliopt.bProgress)
         fprintf(stderr, "%*s\r", 80, " ");

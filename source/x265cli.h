@@ -306,6 +306,7 @@ static const struct option long_options[] =
     { "atc-sei", required_argument, NULL, 0 },
     { "pic-struct", required_argument, NULL, 0 },
     { "nalu-file", required_argument, NULL, 0 },
+    { "dolby-vision-rpu", required_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -357,6 +358,8 @@ static void showHelp(x265_param *param)
     H0("   --[no-]dhdr10-opt             Insert tone mapping SEI only for IDR frames and when the tone mapping information changes. Default disabled\n");
 #endif
     H0("  --dolby-vision-profile <float|integer> Specifies Dolby Vision profile ID. Currently only profile 5 enabled. Specified as '5' or '50'. Default 0 (disabled).\n");
+    H0("   --dolby-vision-rpu <filename> File containing Dolby Vision RPU metadata.\n"
+       "                                 If given, x265's Dolby Vision metadata parser will fill the RPU field of input pictures with the metadata read from the file. Default NULL(disabled).\n");
     H0("   --nalu-file <filename>        Text file containing SEI messages in the following format : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload>\n");
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("   --seek <integer>              First frame to encode\n");

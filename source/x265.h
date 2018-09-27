@@ -81,6 +81,7 @@ typedef enum
     NAL_UNIT_FILLER_DATA,
     NAL_UNIT_PREFIX_SEI,
     NAL_UNIT_SUFFIX_SEI,
+    NAL_UNIT_UNSPECIFIED = 62,
     NAL_UNIT_INVALID = 64,
 } NalUnitType;
 
@@ -360,6 +361,12 @@ typedef struct x265_sei
     x265_sei_payload *payloads;
 } x265_sei;
 
+typedef struct x265_dolby_vision_rpu
+{
+    int payloadSize;
+    uint8_t* payload;
+}x265_dolby_vision_rpu;
+
 /* Used to pass pictures into the encoder, and to get picture data back out of
  * the encoder.  The input and output semantics are different */
 typedef struct x265_picture
@@ -445,6 +452,9 @@ typedef struct x265_picture
 
     // pts is reordered in the order of encoding.
     int64_t reorderedPts;
+
+    //Dolby Vision RPU metadata
+    x265_dolby_vision_rpu rpu;
 } x265_picture;
 
 typedef enum

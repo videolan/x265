@@ -66,7 +66,8 @@ void SEI::writeSEImessages(Bitstream& bs, const SPS& sps, NalUnitType nalUnitTyp
 
     if (!isNested)
     {
-        bs.writeByteAlignment();
+        if (nalUnitType != NAL_UNIT_UNSPECIFIED)
+            bs.writeByteAlignment();
         list.serialize(nalUnitType, bs);
     }
 }
