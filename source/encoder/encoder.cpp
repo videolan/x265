@@ -3198,6 +3198,9 @@ void Encoder::configure(x265_param *p)
             p->vui.videoFormat = 5;
             p->bEnableAccessUnitDelimiters = 1;
             p->bAnnexB = 1;
+
+            if (p->noiseReductionIntra && p->noiseReductionInter)    // when noise reduction is enabled, preserve the film grain.
+                p->crQpOffset = 4;
         }
     }
 }
