@@ -1506,7 +1506,7 @@ Slice decision options
 	0 - flush the encoder only when all the input pictures are over.
 	1 - flush all the frames even when the input is not over. 
 	    slicetype decision may change with this option.
-	2 - flush the slicetype decided frames only.     
+	2 - flush the slicetype decided frames only.   
 
 Quality, rate control and rate distortion options
 =================================================
@@ -2194,6 +2194,14 @@ Bitstream options
 	parameters are carried by the Buffering Period SEI messages and
 	Picture Timing SEI messages providing timing information to the
 	decoder. Default disabled
+
+    	
+.. option:: --hrd-concat, --no-hrd-concat
+
+    Set concantenation flag for the first keyframe in the HRD buffering period SEI. This
+    is to signal the decoder if splicing is performed during bitstream generation. 
+    Recommended to enable this option during chunked encoding, except for the first chunk.
+    Default disabled.
 
 .. option:: --dolby-vision-profile <integer|float>
 

@@ -1730,6 +1730,9 @@ typedef struct x265_param
      * device as RPU will be ignored. Default 0 (disabled) */
     int dolbyProfile;
 
+    /* Set concantenation flag for the first keyframe in the HRD buffering period SEI. */
+    int bEnableHRDConcatFlag;
+
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not

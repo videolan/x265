@@ -307,6 +307,8 @@ static const struct option long_options[] =
     { "pic-struct", required_argument, NULL, 0 },
     { "nalu-file", required_argument, NULL, 0 },
     { "dolby-vision-rpu", required_argument, NULL, 0 },
+    { "hrd-concat",          no_argument, NULL, 0},
+    { "no-hrd-concat",       no_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -463,6 +465,7 @@ static void showHelp(x265_param *param)
     H1("                                 0 - flush the encoder only when all the input pictures are over.\n");
     H1("                                 1 - flush all the frames even when the input is not over. Slicetype decision may change with this option.\n");
     H1("                                 2 - flush the slicetype decided frames only.\n");
+    H0("   --[no-]-hrd-concat            Set HRD concatenation flag for the first keyframe in the buffering period SEI. Default %s\n", OPT(param->bEnableHRDConcatFlag));
     H0("\nRate control, Adaptive Quantization:\n");
     H0("   --bitrate <integer>           Target bitrate (kbps) for ABR (implied). Default %d\n", param->rc.bitrate);
     H1("-q/--qp <integer>                QP for P slices in CQP mode (implied). --ipratio and --pbration determine other slice QPs\n");

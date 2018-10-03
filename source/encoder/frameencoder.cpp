@@ -657,6 +657,8 @@ void FrameEncoder::compressFrame()
             bpSei->m_auCpbRemovalDelayDelta = 1;
             bpSei->m_cpbDelayOffset = 0;
             bpSei->m_dpbDelayOffset = 0;
+            bpSei->m_concatenationFlag = (m_param->bEnableHRDConcatFlag && !m_frame->m_poc) ? true : false;
+
             // hrdFullness() calculates the initial CPB removal delay and offset
             m_top->m_rateControl->hrdFullness(bpSei);
             bpSei->writeSEImessages(m_bs, *slice->m_sps, NAL_UNIT_PREFIX_SEI, m_nalList, m_param->bSingleSeiNal);

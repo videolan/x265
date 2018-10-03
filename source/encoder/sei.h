@@ -220,6 +220,7 @@ public:
     SEIBufferingPeriod()
         : m_cpbDelayOffset(0)
         , m_dpbDelayOffset(0)
+        , m_concatenationFlag(0)
         , m_auCpbRemovalDelayDelta(1)
     {
         m_payloadType = BUFFERING_PERIOD;
@@ -227,6 +228,7 @@ public:
     }
     bool     m_cpbDelayOffset;
     bool     m_dpbDelayOffset;
+    bool     m_concatenationFlag;
     uint32_t m_initialCpbRemovalDelay;
     uint32_t m_initialCpbRemovalDelayOffset;
     uint32_t m_auCpbRemovalDelayDelta;
@@ -237,7 +239,7 @@ public:
 
         WRITE_UVLC(0, "bp_seq_parameter_set_id");
         WRITE_FLAG(0, "rap_cpb_params_present_flag");
-        WRITE_FLAG(0, "concatenation_flag");
+        WRITE_FLAG(m_concatenationFlag, "concatenation_flag");
         WRITE_CODE(m_auCpbRemovalDelayDelta - 1,   hrd.cpbRemovalDelayLength,       "au_cpb_removal_delay_delta_minus1");
         WRITE_CODE(m_initialCpbRemovalDelay,       hrd.initialCpbRemovalDelayLength,        "initial_cpb_removal_delay");
         WRITE_CODE(m_initialCpbRemovalDelayOffset, hrd.initialCpbRemovalDelayLength, "initial_cpb_removal_delay_offset");

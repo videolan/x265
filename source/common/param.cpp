@@ -158,6 +158,7 @@ void x265_param_default(x265_param* param)
     param->radl = 0;
     param->chunkStart = 0;
     param->chunkEnd = 0;
+    param->bEnableHRDConcatFlag = 0;
 
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
@@ -1059,6 +1060,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
             else
                 bError = true;
         }
+        OPT("hrd-concat") p->bEnableHRDConcatFlag = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1663,6 +1665,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " lookahead-slices=%d", p->lookaheadSlices);
     s += sprintf(s, " scenecut=%d", p->scenecutThreshold);
     s += sprintf(s, " radl=%d", p->radl);
+    BOOL(p->bEnableHRDConcatFlag, "splice");
     BOOL(p->bIntraRefresh, "intra-refresh");
     s += sprintf(s, " ctu=%d", p->maxCUSize);
     s += sprintf(s, " min-cu-size=%d", p->minCUSize);
