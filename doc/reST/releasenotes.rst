@@ -2,6 +2,32 @@
 Release Notes
 *************
 
+Version 2.9
+===========
+
+Release date - 05/10/2018
+
+New features
+-------------
+1. Support for chunked encoding
+
+   :option:`--chunk-start and --chunk-end` 
+   Frames preceding first frame of chunk in display order will be encoded, however, they will be discarded in the bitstream.
+   Frames following last frame of the chunk in display order will be used in taking lookahead decisions, but, they will not be encoded. 
+   This feature can be enabled only in closed GOP structures. Default disabled.
+
+2. Support for HDR10+ version 1 SEI messages.
+
+Encoder enhancements
+--------------------
+1. Create API function for allocating and freeing x265_analysis_data.
+2. CEA 608/708 support: Read SEI messages from text file and encode it using userSEI message.
+
+Bug fixes
+---------
+1. Disable noise reduction when vbv is enabled.
+2. Support minLuma and maxLuma values changed by the commandline.
+
 Version 2.8
 ===========
 
