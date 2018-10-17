@@ -3568,6 +3568,14 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
             qp += distortionData->offset[ctu.m_cuAddr];
     }
 
+    if (m_param->analysisLoad && m_param->analysisReuseLevel == 10 && m_param->rc.cuTree)
+    {
+        int cuIdx = (ctu.m_cuAddr * ctu.m_numPartitions) + cuGeom.absPartIdx;
+        if (ctu.m_slice->m_sliceType == I_SLICE)
+            return x265_clip3(m_param->rc.qpMin, m_param->rc.qpMax, (int32_t)(qp + 0.5 + ((x265_analysis_intra_data*)m_frame->m_analysisData.intraData)->cuQPOff[cuIdx]));
+        else
+            return x265_clip3(m_param->rc.qpMin, m_param->rc.qpMax, (int32_t)(qp + 0.5 + ((x265_analysis_inter_data*)m_frame->m_analysisData.interData)->cuQPOff[cuIdx]));
+    }
     int loopIncr = (m_param->rc.qgSize == 8) ? 8 : 16;
 
     /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */

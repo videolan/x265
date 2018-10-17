@@ -453,6 +453,8 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     CHECKED_MALLOC(intraData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC(intraData->partSizes, char, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC(intraData->chromaModes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
+    if (param->rc.cuTree)
+        CHECKED_MALLOC(intraData->cuQPOff, int8_t, analysis->numPartitions * analysis->numCUsInFrame);
     analysis->intraData = intraData;
 
     //Allocate memory for interData pointer based on ReuseLevels
@@ -460,6 +462,8 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     CHECKED_MALLOC(interData->depth, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC(interData->modes, uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
 
+    if (param->rc.cuTree)
+        CHECKED_MALLOC(interData->cuQPOff, int8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC_ZERO(interData->mvpIdx[0], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC_ZERO(interData->mvpIdx[1], uint8_t, analysis->numPartitions * analysis->numCUsInFrame);
     CHECKED_MALLOC_ZERO(interData->mv[0], x265_analysis_MV, analysis->numPartitions * analysis->numCUsInFrame);
@@ -537,6 +541,8 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
         X265_FREE((analysis->intraData)->modes);
         X265_FREE((analysis->intraData)->partSizes);
         X265_FREE((analysis->intraData)->chromaModes);
+        if (param->rc.cuTree)
+            X265_FREE((analysis->intraData)->cuQPOff);
         X265_FREE(analysis->intraData);
         analysis->intraData = NULL;
     }
@@ -546,6 +552,8 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
     {
         X265_FREE((analysis->interData)->depth);
         X265_FREE((analysis->interData)->modes);
+        if (param->rc.cuTree)
+            X265_FREE((analysis->interData)->cuQPOff);
         X265_FREE((analysis->interData)->mvpIdx[0]);
         X265_FREE((analysis->interData)->mvpIdx[1]);
         X265_FREE((analysis->interData)->mv[0]);

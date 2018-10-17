@@ -193,6 +193,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, const x26
         uint8_t *charBuf = dataPool.charMemBlock + (m_numPartitions * (BytesPerPartition - 4)) * instance;
 
         m_qp        = (int8_t*)charBuf; charBuf += m_numPartitions;
+        m_qpAnalysis = (int8_t*)charBuf; charBuf += m_numPartitions;
         m_log2CUSize         = charBuf; charBuf += m_numPartitions;
         m_lumaIntraDir       = charBuf; charBuf += m_numPartitions;
         m_tqBypass           = charBuf; charBuf += m_numPartitions;
@@ -233,6 +234,7 @@ void CUData::initialize(const CUDataMemPool& dataPool, uint32_t depth, const x26
         uint8_t *charBuf = dataPool.charMemBlock + (m_numPartitions * BytesPerPartition) * instance;
 
         m_qp        = (int8_t*)charBuf; charBuf += m_numPartitions;
+        m_qpAnalysis = (int8_t*)charBuf; charBuf += m_numPartitions;
         m_log2CUSize         = charBuf; charBuf += m_numPartitions;
         m_lumaIntraDir       = charBuf; charBuf += m_numPartitions;
         m_tqBypass           = charBuf; charBuf += m_numPartitions;
@@ -291,6 +293,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
 
     /* sequential memsets */
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);
+    m_partSet((uint8_t*)m_qpAnalysis, (uint8_t)qp);
     m_partSet(m_log2CUSize,   (uint8_t)m_slice->m_param->maxLog2CUSize);
     m_partSet(m_lumaIntraDir, (uint8_t)ALL_IDX);
     m_partSet(m_chromaIntraDir, (uint8_t)ALL_IDX);
@@ -304,7 +307,7 @@ void CUData::initCTU(const Frame& frame, uint32_t cuAddr, int qp, uint32_t first
     X265_CHECK(!(frame.m_encData->m_param->bLossless && !m_slice->m_pps->bTransquantBypassEnabled), "lossless enabled without TQbypass in PPS\n");
 
     /* initialize the remaining CU data in one memset */
-    memset(m_cuDepth, 0, (frame.m_param->internalCsp == X265_CSP_I400 ? BytesPerPartition - 11 : BytesPerPartition - 7) * m_numPartitions);
+    memset(m_cuDepth, 0, (frame.m_param->internalCsp == X265_CSP_I400 ? BytesPerPartition - 12 : BytesPerPartition - 8) * m_numPartitions);
 
     for (int8_t i = 0; i < NUM_TU_DEPTH; i++)
         m_refTuDepth[i] = -1;
@@ -344,6 +347,7 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp)
     X265_CHECK(m_numPartitions == cuGeom.numPartitions, "initSubCU() size mismatch\n");
 
     m_partSet((uint8_t*)m_qp, (uint8_t)qp);
+    m_partSet((uint8_t*)m_qpAnalysis, (uint8_t)qp);
 
     m_partSet(m_log2CUSize,   (uint8_t)cuGeom.log2CUSize);
     m_partSet(m_lumaIntraDir, (uint8_t)ALL_IDX);
@@ -354,7 +358,7 @@ void CUData::initSubCU(const CUData& ctu, const CUGeom& cuGeom, int qp)
     m_partSet(m_cuDepth,      (uint8_t)cuGeom.depth);
 
     /* initialize the remaining CU data in one memset */
-    memset(m_predMode, 0, (ctu.m_chromaFormat == X265_CSP_I400 ? BytesPerPartition - 12 : BytesPerPartition - 8) * m_numPartitions);
+    memset(m_predMode, 0, (ctu.m_chromaFormat == X265_CSP_I400 ? BytesPerPartition - 13 : BytesPerPartition - 9) * m_numPartitions);
     memset(m_distortion, 0, m_numPartitions * sizeof(sse_t));
 }
 
@@ -369,6 +373,7 @@ void CUData::copyPartFrom(const CUData& subCU, const CUGeom& childGeom, uint32_t
     m_bLastCuInSlice = subCU.m_bLastCuInSlice;
 
     m_subPartCopy((uint8_t*)m_qp + offset, (uint8_t*)subCU.m_qp);
+    m_subPartCopy((uint8_t*)m_qpAnalysis + offset, (uint8_t*)subCU.m_qpAnalysis);
     m_subPartCopy(m_log2CUSize + offset, subCU.m_log2CUSize);
     m_subPartCopy(m_lumaIntraDir + offset, subCU.m_lumaIntraDir);
     m_subPartCopy(m_tqBypass + offset, subCU.m_tqBypass);
@@ -469,6 +474,7 @@ void CUData::copyToPic(uint32_t depth) const
     CUData& ctu = *m_encData->getPicCTU(m_cuAddr);
 
     m_partCopy((uint8_t*)ctu.m_qp + m_absIdxInCTU, (uint8_t*)m_qp);
+    m_partCopy((uint8_t*)ctu.m_qpAnalysis + m_absIdxInCTU, (uint8_t*)m_qpAnalysis);
     m_partCopy(ctu.m_log2CUSize + m_absIdxInCTU, m_log2CUSize);
     m_partCopy(ctu.m_lumaIntraDir + m_absIdxInCTU, m_lumaIntraDir);
     m_partCopy(ctu.m_tqBypass + m_absIdxInCTU, m_tqBypass);
@@ -523,7 +529,11 @@ void CUData::copyFromPic(const CUData& ctu, const CUGeom& cuGeom, int csp, bool 
     m_numPartitions = cuGeom.numPartitions;
 
     /* copy out all prediction info for this part */
-    if (copyQp) m_partCopy((uint8_t*)m_qp, (uint8_t*)ctu.m_qp + m_absIdxInCTU);
+    if (copyQp)
+    {
+        m_partCopy((uint8_t*)m_qp, (uint8_t*)ctu.m_qp + m_absIdxInCTU);
+        m_partCopy((uint8_t*)m_qpAnalysis, (uint8_t*)ctu.m_qpAnalysis + m_absIdxInCTU);
+    }
 
     m_partCopy(m_log2CUSize,   ctu.m_log2CUSize + m_absIdxInCTU);
     m_partCopy(m_lumaIntraDir, ctu.m_lumaIntraDir + m_absIdxInCTU);
@@ -566,6 +576,7 @@ void CUData::updatePic(uint32_t depth, int picCsp) const
     CUData& ctu = *m_encData->getPicCTU(m_cuAddr);
 
     m_partCopy((uint8_t*)ctu.m_qp + m_absIdxInCTU, (uint8_t*)m_qp);
+    m_partCopy((uint8_t*)ctu.m_qpAnalysis + m_absIdxInCTU, (uint8_t*)m_qpAnalysis);
     m_partCopy(ctu.m_transformSkip[0] + m_absIdxInCTU, m_transformSkip[0]);
     m_partCopy(ctu.m_predMode + m_absIdxInCTU, m_predMode);
     m_partCopy(ctu.m_tuDepth + m_absIdxInCTU, m_tuDepth);

@@ -191,6 +191,7 @@ public:
 
     /* Per-part data, stored contiguously */
     int8_t*       m_qp;               // array of QP values
+    int8_t*       m_qpAnalysis;       // array of QP values for analysis reuse
     uint8_t*      m_log2CUSize;       // array of cu log2Size TODO: seems redundant to depth
     uint8_t*      m_lumaIntraDir;     // array of intra directions (luma)
     uint8_t*      m_tqBypass;         // array of CU lossless flags
@@ -206,7 +207,7 @@ public:
     uint8_t*      m_transformSkip[3]; // array of transform skipping flags per plane
     uint8_t*      m_cbf[3];           // array of coded block flags (CBF) per plane
     uint8_t*      m_chromaIntraDir;   // array of intra directions (chroma)
-    enum { BytesPerPartition = 23 };  // combined sizeof() of all per-part data
+    enum { BytesPerPartition = 24 };  // combined sizeof() of all per-part data
 
     sse_t*        m_distortion;
     coeff_t*      m_trCoeff[3];       // transformed coefficient buffer per plane

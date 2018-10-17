@@ -130,6 +130,7 @@ typedef struct x265_analysis_validate
     int     lookaheadDepth;
     int     chunkStart;
     int     chunkEnd;
+    int     cuTree;
 }x265_analysis_validate;
 
 /* Stores intra analysis data for a single frame. This struct needs better packing */
@@ -139,6 +140,7 @@ typedef struct x265_analysis_intra_data
     uint8_t*  modes;
     char*     partSizes;
     uint8_t*  chromaModes;
+    int8_t*    cuQPOff;
 }x265_analysis_intra_data;
 
 typedef struct x265_analysis_MV
@@ -163,6 +165,7 @@ typedef struct x265_analysis_inter_data
     int8_t*     refIdx[2];
     x265_analysis_MV*         mv[2];
     int64_t*     sadCost;
+    int8_t*    cuQPOff;
 }x265_analysis_inter_data;
 
 typedef struct x265_weight_param
