@@ -93,9 +93,9 @@ static inline uint32_t __rdtsc(void)
 
 #define BENCH_RUNS 2000
 
-// Adapted from checkasm.c, runs each optimized primitive four times, measures rdtsc
-// and discards invalid times.  Repeats 1000 times to get a good average.  Then measures
-// the C reference with fewer runs and reports X factor and average cycles.
+/* Adapted from checkasm.c, runs each optimized primitive four times, measures rdtsc
+ * and discards invalid times. Repeats BENCH_RUNS times to get a good average.
+ * Then measures the C reference with BENCH_RUNS / 4 runs and reports X factor and average cycles.*/
 #define REPORT_SPEEDUP(RUNOPT, RUNREF, ...) \
     { \
         uint32_t cycles = 0; int runs = 0; \
