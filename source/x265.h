@@ -688,9 +688,12 @@ typedef struct x265_vmaf_commondata
     int ssim;
     int ms_ssim;
     char *pool;
+    int thread;
+    int subsample;
+    int enable_conf_interval;
 }x265_vmaf_commondata;
 
-static const x265_vmaf_commondata vcd[] = { { NULL, (char *)"/usr/local/share/model/vmaf_v0.6.1.pkl", NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL } };
+static const x265_vmaf_commondata vcd[] = { { NULL, (char *)"/usr/local/share/model/vmaf_v0.6.1.pkl", NULL, NULL, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 1, 0 } };
 
 /* x265 input parameters
  *
