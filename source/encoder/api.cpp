@@ -1483,11 +1483,11 @@ fail_or_end:
 double x265_calculate_vmafscore(x265_param *param, x265_vmaf_data *data)
 {
     double score;
-    
+
     data->width = param->sourceWidth;
     data->height = param->sourceHeight;
     data->internalBitDepth = param->internalBitDepth;
-   
+
     if (param->internalCsp == X265_CSP_I420)
     {
         if ((param->sourceWidth * param->sourceHeight) % 2 != 0)
@@ -1500,8 +1500,8 @@ double x265_calculate_vmafscore(x265_param *param, x265_vmaf_data *data)
         data->offset = param->sourceWidth * param->sourceHeight * 2;
     else
         x265_log(NULL, X265_LOG_ERROR, "Invalid format\n");
-  
-    compute_vmaf(&score, vcd->format, data->width, data->height, read_frame, data, vcd->model_path, vcd->log_path, vcd->log_fmt, vcd->disable_clip, vcd->disable_avx, vcd->enable_transform, vcd->phone_model, vcd->psnr, vcd->ssim, vcd->ms_ssim, vcd->pool, vcd->thread, vcd->subsample, vcd->enable_conf_interval); 
+
+    compute_vmaf(&score, vcd->format, data->width, data->height, read_frame, data, vcd->model_path, vcd->log_path, vcd->log_fmt, vcd->disable_clip, vcd->disable_avx, vcd->enable_transform, vcd->phone_model, vcd->psnr, vcd->ssim, vcd->ms_ssim, vcd->pool, vcd->thread, vcd->subsample, vcd->enable_conf_interval);
 
     return score;
 }
@@ -1514,11 +1514,11 @@ int read_frame_10bit(float *reference_data, float *distorted_data, float *temp_d
     PicYuv *distorted_frame = (PicYuv *)user_data->distorted_frame;
 
     if(!user_data->frame_set) {
- 
+
         int reference_stride = reference_frame->m_stride;
         int distorted_stride = distorted_frame->m_stride;
 
-        const uint16_t *reference_ptr = (const uint16_t *)reference_frame->m_picOrg[0]; 
+        const uint16_t *reference_ptr = (const uint16_t *)reference_frame->m_picOrg[0];
         const uint16_t *distorted_ptr = (const uint16_t *)distorted_frame->m_picOrg[0];
 
         temp_data = reference_data;
@@ -1534,7 +1534,7 @@ int read_frame_10bit(float *reference_data, float *distorted_data, float *temp_d
             reference_ptr += reference_stride;
             temp_data += stride / sizeof(*temp_data);
         }
-        
+
         temp_data = distorted_data;
         for (i = 0; i < height; i++) {
             for (j = 0; j < width; j++) {
@@ -1546,8 +1546,8 @@ int read_frame_10bit(float *reference_data, float *distorted_data, float *temp_d
 
         user_data->frame_set = 1;
         return 0;
-    }                                                             
-    return 2;                                                               
+    }
+    return 2;
 }
 
 int read_frame_8bit(float *reference_data, float *distorted_data, float *temp_data, int stride, void *s)
@@ -1578,7 +1578,7 @@ int read_frame_8bit(float *reference_data, float *distorted_data, float *temp_da
             reference_ptr += reference_stride;
             temp_data += stride / sizeof(*temp_data);
         }
-        
+
         temp_data = distorted_data;
         for (i = 0; i < height; i++) {
             for (j = 0; j < width; j++) {
@@ -1590,8 +1590,8 @@ int read_frame_8bit(float *reference_data, float *distorted_data, float *temp_da
 
         user_data->frame_set = 1;
         return 0;
-    }                                                             
-    return 2;                                                               
+    }
+    return 2;
 }
 
 double x265_calculate_vmaf_framelevelscore(x265_vmaf_framedata *vmafframedata)
@@ -1604,7 +1604,7 @@ double x265_calculate_vmaf_framelevelscore(x265_vmaf_framedata *vmafframedata)
     else
         read_frame = read_frame_10bit;
     compute_vmaf(&score, vcd->format, vmafframedata->width, vmafframedata->height, read_frame, vmafframedata, vcd->model_path, vcd->log_path, vcd->log_fmt, vcd->disable_clip, vcd->disable_avx, vcd->enable_transform, vcd->phone_model, vcd->psnr, vcd->ssim, vcd->ms_ssim, vcd->pool, vcd->thread, vcd->subsample, vcd->enable_conf_interval);
- 
+
     return score;
 }
 #endif
