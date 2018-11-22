@@ -2381,10 +2381,13 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 
     if (m_param->bEmitHDRSEI)
     {
-        SEIContentLightLevel cllsei;
-        cllsei.max_content_light_level = m_param->maxCLL;
-        cllsei.max_pic_average_light_level = m_param->maxFALL;
-        cllsei.writeSEImessages(bs, m_sps, NAL_UNIT_PREFIX_SEI, list, m_param->bSingleSeiNal);
+        if (m_emitCLLSEI)
+        {
+            SEIContentLightLevel cllsei;
+            cllsei.max_content_light_level = m_param->maxCLL;
+            cllsei.max_pic_average_light_level = m_param->maxFALL;
+            cllsei.writeSEImessages(bs, m_sps, NAL_UNIT_PREFIX_SEI, list, m_param->bSingleSeiNal);
+        }
 
         if (m_param->masteringDisplayColorVolume)
         {

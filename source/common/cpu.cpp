@@ -127,6 +127,7 @@ bool detect512()
 {
     return(enable512);
 }
+
 uint32_t cpu_detect(bool benableavx512 )
 {
 

@@ -83,9 +83,9 @@ void FrameData::reinit(const SPS& sps)
     memset(m_rowStat, 0, sps.numCuInHeight * sizeof(*m_rowStat));
     if (m_param->bDynamicRefine)
     {
-        memset(m_picCTU->m_collectCURd, 0, MAX_NUM_DYN_REFINE * sizeof(uint64_t));
-        memset(m_picCTU->m_collectCUVariance, 0, MAX_NUM_DYN_REFINE * sizeof(uint32_t));
-        memset(m_picCTU->m_collectCUCount, 0, MAX_NUM_DYN_REFINE * sizeof(uint32_t));
+        memset(m_picCTU->m_collectCURd, 0, MAX_NUM_DYN_REFINE * sps.numCUsInFrame * sizeof(uint64_t));
+        memset(m_picCTU->m_collectCUVariance, 0, MAX_NUM_DYN_REFINE * sps.numCUsInFrame * sizeof(uint32_t));
+        memset(m_picCTU->m_collectCUCount, 0, MAX_NUM_DYN_REFINE * sps.numCUsInFrame * sizeof(uint32_t));
     }
 }
 
