@@ -388,7 +388,7 @@ Performance Options
 	be applied after :option:`--preset` but before all other parameters. Default none.
 	See :ref:`tunings <tunings>` for more detail.
 
-	**Values:** psnr, ssim, grain, zero-latency, fast-decode.
+	**Values:** psnr, ssim, grain, zero-latency, fast-decode, animation.
 
 .. option:: --slices <integer>
 

@@ -128,6 +128,8 @@ after the preset.
 +--------------+-----------------------------------------------------+
 | zerolatency  | no lookahead, no B frames, no cutree                |
 +--------------+-----------------------------------------------------+
+| animation    | improves encode quality for animated content        |
++--------------+-----------------------------------------------------+
 
 
 
@@ -203,3 +205,14 @@ settings disable frame parallelism, which is an important component for
 x265 performance. If you can tolerate any latency on the encoder, you
 can increase performance by increasing the number of frame threads. Each
 additional frame thread adds one frame of latency.
+
+Animation
+~~~~~~~~~
+
+:option:`--tune` *animation* adjusts encoder settings to optimize the encode 
+quality for animation content without impacting the encode speed. This is done by:
+
+    * :option:`--psy-rd` 0.4
+    * :option:`--aq-strength` 0.4
+    * :option:`--deblock` 1:1
+    * :option:`--bframes` Increase by 2

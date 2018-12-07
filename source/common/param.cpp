@@ -536,6 +536,14 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bEnableSAO = 0;
             param->rc.bEnableConstVbv = 1;
         }
+        else if (!strcmp(tune, "animation"))
+        {
+            param->bframes = (param->bframes + 2) >= param->lookaheadDepth? param->bframes : param->bframes + 2;
+            param->psyRd = 0.4;
+            param->rc.aqStrength = 0.4;
+            param->deblockingFilterBetaOffset = 1;
+            param->deblockingFilterTCOffset = 1;
+        }
         else
             return -1;
     }
