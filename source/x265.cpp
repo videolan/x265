@@ -572,15 +572,15 @@ static int get_argv_utf8(int *argc_ptr, char ***argv_ptr)
  * and fill the rpu field of the input picture */
 static int rpuParser(x265_picture * pic, FILE * ptr)
 {
-    uint8_t byte;
+    uint8_t byteVal;
     uint32_t code = 0;
     int bytesRead = 0;
     pic->rpu.payloadSize = 0;
 
     if (!pic->pts)
     {
-        while (bytesRead++ < 4 && fread(&byte, sizeof(uint8_t), 1, ptr))
-            code = (code << 8) | byte;
+        while (bytesRead++ < 4 && fread(&byteVal, sizeof(uint8_t), 1, ptr))
+            code = (code << 8) | byteVal;
       
         if (code != START_CODE)
         {
@@ -590,9 +590,9 @@ static int rpuParser(x265_picture * pic, FILE * ptr)
     } 
 
     bytesRead = 0;
-    while (fread(&byte, sizeof(uint8_t), 1, ptr))
+    while (fread(&byteVal, sizeof(uint8_t), 1, ptr))
     {
-        code = (code << 8) | byte;
+        code = (code << 8) | byteVal;
         if (bytesRead++ < 3)
             continue;
         if (bytesRead >= 1024)
