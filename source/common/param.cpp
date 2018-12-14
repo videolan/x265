@@ -625,6 +625,7 @@ int x265_zone_param_parse(x265_param* p, const char* name, const char* value)
     OPT("amp") p->bEnableAMP = atobool(value);
     OPT("max-merge") p->maxNumMergeCand = (uint32_t)atoi(value);
     OPT("rd") p->rdLevel = atoi(value);
+    OPT("radl") p->radl = atoi(value);
     OPT2("rdoq", "rdoq-level")
     {
         int bval = atobool(value);
