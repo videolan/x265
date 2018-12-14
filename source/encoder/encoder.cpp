@@ -2643,6 +2643,16 @@ void Encoder::configureZone(x265_param *p, x265_param *zone)
     p->bEnableTransformSkip = zone->bEnableTransformSkip;
     p->bEnableAMP = zone->bEnableAMP;
 
+    if (m_param->rc.rateControlMode == X265_RC_ABR)
+        p->rc.bitrate = zone->rc.bitrate;
+    if (m_param->rc.rateControlMode == X265_RC_CRF)
+        p->rc.rfConstant = zone->rc.rfConstant;
+    if (m_param->rc.rateControlMode == X265_RC_CQP)
+    {
+        p->rc.qp = zone->rc.qp;
+        p->rc.aqMode = X265_AQ_NONE;
+    }
+
     memcpy(zone, p, sizeof(x265_param));
 }
 

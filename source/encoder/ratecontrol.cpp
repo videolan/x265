@@ -741,6 +741,20 @@ void RateControl::reconfigureRC()
         if (m_param->rc.rfConstantMin)
             m_rateFactorMaxDecrement = m_param->rc.rfConstant - m_param->rc.rfConstantMin;
     }
+    if (m_param->rc.rateControlMode == X265_RC_CQP)
+    {
+        m_qp = m_param->rc.qp;
+        if (m_qp && !m_param->bLossless)
+        {
+            m_qpConstant[P_SLICE] = m_qp;
+            m_qpConstant[I_SLICE] = x265_clip3(QP_MIN, QP_MAX_MAX, (int)(m_qp - m_ipOffset + 0.5));
+            m_qpConstant[B_SLICE] = x265_clip3(QP_MIN, QP_MAX_MAX, (int)(m_qp + m_pbOffset + 0.5));
+        }
+        else
+        {
+            m_qpConstant[P_SLICE] = m_qpConstant[I_SLICE] = m_qpConstant[B_SLICE] = m_qp;
+        }
+    }
     m_bitrate = m_param->rc.bitrate * 1000;
 }
 
@@ -1231,6 +1245,17 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
         rce->keptAsRef = IS_REFERENCED(curFrame);
     m_predType = getPredictorType(curFrame->m_lowres.sliceType, m_sliceType);
     rce->poc = m_curSlice->m_poc;
+
+    /* change ratecontrol stats for next zone if specified */
+    for (int i = 0; i < m_param->rc.zonefileCount; i++)
+    {
+        if (m_param->rc.zones[i].startFrame == curFrame->m_encodeOrder)
+        {
+            m_param = m_param->rc.zones[i].zoneParam;
+            reconfigureRC();
+            init(*m_curSlice->m_sps);
+        }
+    }
     if (m_param->rc.bStatRead)
     {
         X265_CHECK(rce->poc >= 0 && rce->poc < m_numEntries, "bad encode ordinal\n");

@@ -638,6 +638,21 @@ int x265_zone_param_parse(x265_param* p, const char* name, const char* value)
     }
     OPT("b-intra") p->bIntraInBFrames = atobool(value);
     OPT("scaling-list") p->scalingLists = strdup(value);
+    OPT("crf")
+    {
+        p->rc.rfConstant = atof(value);
+        p->rc.rateControlMode = X265_RC_CRF;
+    }
+    OPT("qp")
+    {
+        p->rc.qp = atoi(value);
+        p->rc.rateControlMode = X265_RC_CQP;
+    }
+    OPT("bitrate")
+    {
+        p->rc.bitrate = atoi(value);
+        p->rc.rateControlMode = X265_RC_ABR;
+    }
     OPT("aq-mode") p->rc.aqMode = atoi(value);
     OPT("aq-strength") p->rc.aqStrength = atof(value);
     OPT("nr-intra") p->noiseReductionIntra = atoi(value);
