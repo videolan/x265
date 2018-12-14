@@ -1663,6 +1663,11 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
         encParam->dynamicRd = param->dynamicRd;
         encParam->bEnableTransformSkip = param->bEnableTransformSkip;
         encParam->bEnableAMP = param->bEnableAMP;
+
+        /* Resignal changes in params in Parameter Sets */
+        m_sps.maxAMPDepth = (m_sps.bUseAMP = param->bEnableAMP && param->bEnableAMP) ? param->maxCUDepth : 0;
+        m_pps.bTransformSkipEnabled = param->bEnableTransformSkip ? 1 : 0;
+
     }
     encParam->forceFlush = param->forceFlush;
     /* To add: Loop Filter/deblocking controls, transform skip, signhide require PPS to be resent */
@@ -3288,6 +3293,12 @@ void Encoder::configure(x265_param *p)
     {
         p->bOpenGOP = 0;
         x265_log(p, X265_LOG_WARNING, "Zone encoding requires closed gop structure. Enabling closed GOP.\n");
+    }
+
+    if (m_param->rc.zonefileCount && !p->bRepeatHeaders)
+    {
+        p->bRepeatHeaders = 1;
+        x265_log(p, X265_LOG_WARNING, "Turning on repeat - headers for zone encoding\n");
     }
 }
 

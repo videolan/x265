@@ -259,6 +259,9 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
         }
         encoder->printReconfigureParams();
     }
+    /* Zones support modifying num of Refs. Requires determining level at each zone start*/
+    if (encoder->m_param->rc.zonefileCount)
+        determineLevel(*encoder->m_latestParam, encoder->m_vps);
     return ret;
 }
 
