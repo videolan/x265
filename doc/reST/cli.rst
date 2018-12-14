@@ -1826,6 +1826,20 @@ Quality, rate control and rate distortion options
 
 	If zones overlap, whichever comes later in the list takes precedence.
 	Default none
+	
+	
+.. option:: --zonefile <filename>
+
+	Specify a text file which contains the boundaries of the zones where 
+	each of zones are configurable. The format of each line is:
+
+	<frame number> <options to be configured>
+
+	The frame number indicates the beginning of a zone. The options 
+	following this is applied until another zone begins. The reconfigurable 
+	options can be spcified as --<feature name> <feature value>
+	
+	**CLI ONLY**
 
 Quantization Options
 ====================

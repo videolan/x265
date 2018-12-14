@@ -51,6 +51,7 @@ void x265_param_default(x265_param *param);
 int x265_param_default_preset(x265_param *, const char *preset, const char *tune);
 int x265_param_apply_profile(x265_param *, const char *profile);
 int x265_param_parse(x265_param *p, const char *name, const char *value);
+int x265_zone_param_parse(x265_param* p, const char* name, const char* value);
 #define PARAM_NS X265_NS
 #endif
 }

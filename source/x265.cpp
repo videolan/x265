@@ -74,6 +74,7 @@ struct CLIOptions
     ReconFile* recon;
     OutputFile* output;
     FILE*       qpfile;
+    FILE*       zoneFile;
     FILE*    dolbyVisionRpu;    /* File containing Dolby Vision BL RPU metadata */
     const char* reconPlayCmd;
     const x265_api* api;
@@ -97,6 +98,7 @@ struct CLIOptions
         recon = NULL;
         output = NULL;
         qpfile = NULL;
+        zoneFile = NULL;
         dolbyVisionRpu = NULL;
         reconPlayCmd = NULL;
         api = NULL;
@@ -114,7 +116,9 @@ struct CLIOptions
     void destroy();
     void printStatus(uint32_t frameNum);
     bool parse(int argc, char **argv);
+    bool parseZoneParam(int argc, char **argv, x265_param* globalParam, int zonefileCount);
     bool parseQPFile(x265_picture &pic_org);
+    bool parseZoneFile();
 };
 
 void CLIOptions::destroy()
@@ -128,6 +132,9 @@ void CLIOptions::destroy()
     if (qpfile)
         fclose(qpfile);
     qpfile = NULL;
+    if (zoneFile)
+        fclose(zoneFile);
+    zoneFile = NULL;
     if (dolbyVisionRpu)
         fclose(dolbyVisionRpu);
     dolbyVisionRpu = NULL;
@@ -161,6 +168,110 @@ void CLIOptions::printStatus(uint32_t frameNum)
     SetConsoleTitle(buf);
     fflush(stderr); // needed in windows
     prevUpdateTime = time;
+}
+
+bool CLIOptions::parseZoneParam(int argc, char **argv, x265_param* globalParam, int zonefileCount)
+{
+    bool bError = false;
+    int bShowHelp = false;
+    int outputBitDepth = 0;
+    const char *profile = NULL;
+
+    /* Presets are applied before all other options. */
+    for (optind = 0;;)
+    {
+        int c = getopt_long(argc, argv, short_options, long_options, NULL);
+        if (c == -1)
+            break;
+        else if (c == 'D')
+            outputBitDepth = atoi(optarg);
+        else if (c == 'P')
+            profile = optarg;
+        else if (c == '?')
+            bShowHelp = true;
+    }
+
+    if (!outputBitDepth && profile)
+    {
+        /* try to derive the output bit depth from the requested profile */
+        if (strstr(profile, "10"))
+            outputBitDepth = 10;
+        else if (strstr(profile, "12"))
+            outputBitDepth = 12;
+        else
+            outputBitDepth = 8;
+    }
+
+    api = x265_api_get(outputBitDepth);
+    if (!api)
+    {
+        x265_log(NULL, X265_LOG_WARNING, "falling back to default bit-depth\n");
+        api = x265_api_get(0);
+    }
+
+    if (bShowHelp)
+    {
+        printVersion(globalParam, api);
+        showHelp(globalParam);
+    }
+
+    globalParam->rc.zones[zonefileCount].zoneParam = api->param_alloc();
+    if (!globalParam->rc.zones[zonefileCount].zoneParam)
+    {
+        x265_log(NULL, X265_LOG_ERROR, "param alloc failed\n");
+        return true;
+    }
+
+    memcpy(globalParam->rc.zones[zonefileCount].zoneParam, globalParam, sizeof(x265_param));
+
+    for (optind = 0;;)
+    {
+        int long_options_index = -1;
+        int c = getopt_long(argc, argv, short_options, long_options, &long_options_index);
+        if (c == -1)
+            break;
+
+        if (long_options_index < 0 && c > 0)
+        {
+            for (size_t i = 0; i < sizeof(long_options) / sizeof(long_options[0]); i++)
+            {
+                if (long_options[i].val == c)
+                {
+                    long_options_index = (int)i;
+                    break;
+                }
+            }
+
+            if (long_options_index < 0)
+            {
+                /* getopt_long might have already printed an error message */
+                if (c != 63)
+                    x265_log(NULL, X265_LOG_WARNING, "internal error: short option '%c' has no long option\n", c);
+                return true;
+            }
+        }
+        if (long_options_index < 0)
+        {
+            x265_log(NULL, X265_LOG_WARNING, "short option '%c' unrecognized\n", c);
+            return true;
+        }
+
+        bError |= !!api->zone_param_parse(globalParam->rc.zones[zonefileCount].zoneParam, long_options[long_options_index].name, optarg);
+
+        if (bError)
+        {
+            const char *name = long_options_index > 0 ? long_options[long_options_index].name : argv[optind - 2];
+            x265_log(NULL, X265_LOG_ERROR, "invalid argument: %s = %s\n", name, optarg);
+            return true;
+        }
+    }
+
+    if (optind < argc)
+    {
+        x265_log(param, X265_LOG_WARNING, "extra unused command arguments given <%s>\n", argv[optind]);
+        return true;
+    }
+    return false;
 }
 
 bool CLIOptions::parse(int argc, char **argv)
@@ -326,6 +437,12 @@ bool CLIOptions::parse(int argc, char **argv)
                     x265_log_file(param, X265_LOG_ERROR, "Dolby Vision RPU metadata file %s not found or error in opening file\n", optarg);
                     return true;
                 }
+            }
+            OPT("zonefile")
+            {
+                this->zoneFile = x265_fopen(optarg, "rb");
+                if (!this->zoneFile)
+                    x265_log_file(param, X265_LOG_ERROR, "%s zone file not found or error in opening zone file\n", optarg);
             }
             OPT("fullhelp")
             {
@@ -535,6 +652,59 @@ bool CLIOptions::parseQPFile(x265_picture &pic_org)
     return 1;
 }
 
+bool CLIOptions::parseZoneFile()
+{
+    char line[256];
+    char* argLine;
+    param->rc.zonefileCount = 0;
+
+    while (fgets(line, sizeof(line), zoneFile))
+    {
+        if (!((*line == '#') || (strcmp(line, "\r\n") == 0)))
+            param->rc.zonefileCount++;
+    }
+
+    rewind(zoneFile);
+    param->rc.zones = X265_MALLOC(x265_zone, param->rc.zonefileCount);
+    for (int i = 0; i < param->rc.zonefileCount; i++)
+    {
+        while (fgets(line, sizeof(line), zoneFile))
+        {
+            if (*line == '#' || (strcmp(line, "\r\n") == 0))
+                continue;
+            param->rc.zones[i].zoneParam = X265_MALLOC(x265_param, 1);
+            int index = (int)strcspn(line, "\r\n");
+            line[index] = '\0';
+            argLine = line;
+            while (isspace((unsigned char)*argLine)) argLine++;
+            char* start = strchr(argLine, ' ');
+            start++;
+            param->rc.zones[i].startFrame = atoi(argLine);
+            int argCount = 0;
+            char **args = (char**)malloc(256 * sizeof(char *));
+            // Adding a dummy string to avoid file parsing error
+            args[argCount++] = (char *)"x265";
+            char* token = strtok(start, " ");
+            while (token) 
+            {
+                args[argCount++] = token;
+                token = strtok(NULL, " ");
+            }
+            args[argCount] = '\0';
+            CLIOptions cliopt;
+            if (cliopt.parseZoneParam(argCount, args,param, i))
+            {
+                cliopt.destroy();
+                if (cliopt.api)
+                    cliopt.api->param_free(cliopt.param);
+                exit(1);
+            }
+            break;
+        }
+    }
+    return 1;
+}
+
 #ifdef _WIN32
 /* Copy of x264 code, which allows for Unicode characters in the command line.
  * Retrieve command line arguments as UTF-8. */
@@ -666,6 +836,16 @@ int main(int argc, char **argv)
 
     if (cliopt.reconPlayCmd)
         reconPlay = new ReconPlay(cliopt.reconPlayCmd, *param);
+
+    if (cliopt.zoneFile)
+    {
+        if (!cliopt.parseZoneFile())
+        {
+            x265_log(NULL, X265_LOG_ERROR, "Unable to parse zonefile\n");
+            fclose(cliopt.zoneFile);
+            cliopt.zoneFile = NULL;
+        }
+    }
 
     /* note: we could try to acquire a different libx265 API here based on
      * the profile found during option parsing, but it must be done before

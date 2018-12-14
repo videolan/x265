@@ -674,9 +674,9 @@ static const x265_api libapi =
 #if ENABLE_LIBVMAF
     &x265_calculate_vmafscore,
     &x265_calculate_vmaf_framelevelscore,
-    &x265_vmaf_encoder_log
+    &x265_vmaf_encoder_log,
 #endif
-
+    &PARAM_NS::x265_zone_param_parse
 };
 
 typedef const x265_api* (*api_get_func)(int bitDepth);

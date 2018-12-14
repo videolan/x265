@@ -244,6 +244,7 @@ void x265_param_default(x265_param* param)
     param->rc.complexityBlur = 20;
     param->rc.qblur = 0.5;
     param->rc.zoneCount = 0;
+    param->rc.zonefileCount = 0;
     param->rc.zones = NULL;
     param->rc.bEnableSlowFirstPass = 1;
     param->rc.bStrictCbr = 0;
@@ -564,6 +565,104 @@ static int parseName(const char* arg, const char* const* names, bool& bError)
 
     return x265_atoi(arg, bError);
 }
+/* internal versions of string-to-int with additional error checking */
+#undef atoi
+#undef atof
+#define atoi(str) x265_atoi(str, bError)
+#define atof(str) x265_atof(str, bError)
+#define atobool(str) (x265_atobool(str, bError))
+
+int x265_zone_param_parse(x265_param* p, const char* name, const char* value)
+{
+    bool bError = false;
+    char nameBuf[64];
+
+    if (!name)
+        return X265_PARAM_BAD_NAME;
+
+    // skip -- prefix if provided
+    if (name[0] == '-' && name[1] == '-')
+        name += 2;
+
+    // s/_/-/g
+    if (strlen(name) + 1 < sizeof(nameBuf) && strchr(name, '_'))
+    {
+        char *c;
+        strcpy(nameBuf, name);
+        while ((c = strchr(nameBuf, '_')) != 0)
+            *c = '-';
+
+        name = nameBuf;
+    }
+
+    if (!strncmp(name, "no-", 3))
+    {
+        name += 3;
+        value = !value || x265_atobool(value, bError) ? "false" : "true";
+    }
+    else if (!strncmp(name, "no", 2))
+    {
+        name += 2;
+        value = !value || x265_atobool(value, bError) ? "false" : "true";
+    }
+    else if (!value)
+        value = "true";
+    else if (value[0] == '=')
+        value++;
+
+#define OPT(STR) else if (!strcmp(name, STR))
+#define OPT2(STR1, STR2) else if (!strcmp(name, STR1) || !strcmp(name, STR2))
+
+    if (0);
+    OPT("ref") p->maxNumReferences = atoi(value);
+    OPT("fast-intra") p->bEnableFastIntra = atobool(value);
+    OPT("early-skip") p->bEnableEarlySkip = atobool(value);
+    OPT("rskip") p->bEnableRecursionSkip = atobool(value);
+    OPT("me")p->searchMethod = parseName(value, x265_motion_est_names, bError);
+    OPT("subme") p->subpelRefine = atoi(value);
+    OPT("merange") p->searchRange = atoi(value);
+    OPT("rect") p->bEnableRectInter = atobool(value);
+    OPT("amp") p->bEnableAMP = atobool(value);
+    OPT("max-merge") p->maxNumMergeCand = (uint32_t)atoi(value);
+    OPT("rd") p->rdLevel = atoi(value);
+    OPT2("rdoq", "rdoq-level")
+    {
+        int bval = atobool(value);
+        if (bError || bval)
+        {
+            bError = false;
+            p->rdoqLevel = atoi(value);
+        }
+        else
+            p->rdoqLevel = 0;
+    }
+    OPT("b-intra") p->bIntraInBFrames = atobool(value);
+    OPT("scaling-list") p->scalingLists = strdup(value);
+    OPT("aq-mode") p->rc.aqMode = atoi(value);
+    OPT("aq-strength") p->rc.aqStrength = atof(value);
+    OPT("nr-intra") p->noiseReductionIntra = atoi(value);
+    OPT("nr-inter") p->noiseReductionInter = atoi(value);
+    OPT("limit-modes") p->limitModes = atobool(value);
+    OPT("splitrd-skip") p->bEnableSplitRdSkip = atobool(value);
+    OPT("cu-lossless") p->bCULossless = atobool(value);
+    OPT("rd-refine") p->bEnableRdRefine = atobool(value);
+    OPT("limit-tu") p->limitTU = atoi(value);
+    OPT("tskip") p->bEnableTransformSkip = atobool(value);
+    OPT("tskip-fast") p->bEnableTSkipFast = atobool(value);
+    OPT("rdpenalty") p->rdPenalty = atoi(value);
+    OPT("dynamic-rd") p->dynamicRd = atof(value);
+    else
+        return X265_PARAM_BAD_NAME;
+
+#undef OPT
+#undef OPT2
+
+    return bError ? X265_PARAM_BAD_VALUE : 0;
+}
+
+#undef atobool
+#undef atoi
+#undef atof
 
 /* internal versions of string-to-int with additional error checking */
 #undef atoi

@@ -242,6 +242,7 @@ static const struct option long_options[] =
     { "no-info",              no_argument, NULL, 0 },
     { "zones",          required_argument, NULL, 0 },
     { "qpfile",         required_argument, NULL, 0 },
+    { "zonefile",       required_argument, NULL, 0 },
     { "lambda-file",    required_argument, NULL, 0 },
     { "b-intra",              no_argument, NULL, 0 },
     { "no-b-intra",           no_argument, NULL, 0 },
@@ -541,6 +542,7 @@ static void showHelp(x265_param *param)
     H1("                                   where <option> is either\n");
     H1("                                       q=<integer> (force QP)\n");
     H1("                                   or  b=<float> (bitrate multiplier)\n");
+    H0("   --zonefile <filename>         Zone file containing the zone boundaries and the parameters to be reconfigured.\n");
     H1("   --lambda-file <string>        Specify a file containing replacement values for the lambda tables\n");
     H1("                                 MAX_MAX_QP+1 floats for lambda table, then again for lambda2 table\n");
     H1("                                 Blank lines and lines starting with hash(#) are ignored\n");
