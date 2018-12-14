@@ -94,6 +94,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
     Encoder* encoder = NULL;
     x265_param* param = PARAM_NS::x265_param_alloc();
     x265_param* latestParam = PARAM_NS::x265_param_alloc();
+    x265_param* zoneParam = PARAM_NS::x265_param_alloc();
     if (!param || !latestParam)
         goto fail;
 
@@ -126,6 +127,13 @@ x265_encoder *x265_encoder_open(x265_param *p)
     }
 
     encoder->create();
+
+    memcpy(zoneParam, param, sizeof(x265_param));
+    for (int i = 0; i < param->rc.zonefileCount; i++)
+    {
+        encoder->configureZone(zoneParam, param->rc.zones[i].zoneParam);
+    }
+
     /* Try to open CSV file handle */
     if (encoder->m_param->csvfn)
     {

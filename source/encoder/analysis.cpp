@@ -140,6 +140,7 @@ Mode& Analysis::compressCTU(CUData& ctu, Frame& frame, const CUGeom& cuGeom, con
     m_slice = ctu.m_slice;
     m_frame = &frame;
     m_bChromaSa8d = m_param->rdLevel >= 3;
+    m_param = m_frame->m_param;
 
 #if _DEBUG || CHECKED_BUILD
     invalidateContexts(0);

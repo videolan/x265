@@ -1000,11 +1000,11 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         }
 
         Frame *inFrame;
+        x265_param* p = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
         if (m_dpb->m_freeList.empty())
         {
             inFrame = new Frame;
             inFrame->m_encodeStartTime = x265_mdate();
-            x265_param* p = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
             if (inFrame->create(p, pic_in->quantOffsets))
             {
                 /* the first PicYuv created is asked to generate the CU and block unit offset
@@ -1437,6 +1437,12 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     readAnalysisFile(&frameEnc->m_analysisData, frameEnc->m_poc, frameEnc->m_lowres.sliceType);
              }
 
+            for (int i = 0; i < m_param->rc.zonefileCount; i++)
+            {
+                if (m_param->rc.zones[i].startFrame == frameEnc->m_poc)
+                    x265_encoder_reconfig(this, m_param->rc.zones[i].zoneParam);
+            }
+
             if (frameEnc->m_reconfigureRc && m_reconfigureRc)
             {
                 memcpy(m_param, m_latestParam, sizeof(x265_param));
@@ -1641,6 +1647,22 @@ int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
         encParam->bIntraInBFrames = param->bIntraInBFrames;
         if (param->scalingLists && !encParam->scalingLists)
             encParam->scalingLists = strdup(param->scalingLists);
+
+        encParam->rc.aqMode = param->rc.aqMode;
+        encParam->rc.aqStrength = param->rc.aqStrength;
+        encParam->noiseReductionInter = param->noiseReductionInter;
+        encParam->noiseReductionIntra = param->noiseReductionIntra;
+
+        encParam->limitModes = param->limitModes;
+        encParam->bEnableSplitRdSkip = param->bEnableSplitRdSkip;
+        encParam->bCULossless = param->bCULossless;
+        encParam->bEnableRdRefine = param->bEnableRdRefine;
+        encParam->limitTU = param->limitTU;
+        encParam->bEnableTSkipFast = param->bEnableTSkipFast;
+        encParam->rdPenalty = param->rdPenalty;
+        encParam->dynamicRd = param->dynamicRd;
+        encParam->bEnableTransformSkip = param->bEnableTransformSkip;
+        encParam->bEnableAMP = param->bEnableAMP;
     }
     encParam->forceFlush = param->forceFlush;
     /* To add: Loop Filter/deblocking controls, transform skip, signhide require PPS to be resent */
@@ -2584,6 +2606,41 @@ void Encoder::initPPS(PPS *pps)
     pps->numRefIdxDefault[1] = 1;
 }
 
+void Encoder::configureZone(x265_param *p, x265_param *zone)
+{
+    p->maxNumReferences = zone->maxNumReferences;
+    p->bEnableFastIntra = zone->bEnableFastIntra;
+    p->bEnableEarlySkip = zone->bEnableEarlySkip;
+    p->bEnableRecursionSkip = zone->bEnableRecursionSkip;
+    p->searchMethod = zone->searchMethod;
+    p->searchRange = zone->searchRange;
+    p->subpelRefine = zone->subpelRefine;
+    p->rdoqLevel = zone->rdoqLevel;
+    p->rdLevel = zone->rdLevel;
+    p->bEnableRectInter = zone->bEnableRectInter;
+    p->maxNumMergeCand = zone->maxNumMergeCand;
+    p->bIntraInBFrames = zone->bIntraInBFrames;
+    p->scalingLists = strdup(zone->scalingLists);
+
+    p->rc.aqMode = zone->rc.aqMode;
+    p->rc.aqStrength = zone->rc.aqStrength;
+    p->noiseReductionInter = zone->noiseReductionInter;
+    p->noiseReductionIntra = zone->noiseReductionIntra;
+
+    p->limitModes = zone->limitModes;
+    p->bEnableSplitRdSkip = zone->bEnableSplitRdSkip;
+    p->bCULossless = zone->bCULossless;
+    p->bEnableRdRefine = zone->bEnableRdRefine;
+    p->limitTU = zone->limitTU;
+    p->bEnableTSkipFast = zone->bEnableTSkipFast;
+    p->rdPenalty = zone->rdPenalty;
+    p->dynamicRd = zone->dynamicRd;
+    p->bEnableTransformSkip = zone->bEnableTransformSkip;
+    p->bEnableAMP = zone->bEnableAMP;
+
+    memcpy(zone, p, sizeof(x265_param));
+}
+
 void Encoder::configure(x265_param *p)
 {
     this->m_param = p;
@@ -3225,6 +3282,12 @@ void Encoder::configure(x265_param *p)
             if (p->noiseReductionIntra && p->noiseReductionInter)    // when noise reduction is enabled, preserve the film grain.
                 p->crQpOffset = 4;
         }
+    }
+
+    if (m_param->rc.zonefileCount && p->bOpenGOP)
+    {
+        p->bOpenGOP = 0;
+        x265_log(p, X265_LOG_WARNING, "Zone encoding requires closed gop structure. Enabling closed GOP.\n");
     }
 }
 

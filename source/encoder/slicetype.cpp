@@ -1115,6 +1115,11 @@ void Lookahead::slicetypeDecide()
                     frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
                 }
             }
+            for (int i = 0; i < m_param->rc.zonefileCount; i++)
+            {
+                if (m_param->rc.zones[i].startFrame == frm.frameNum)
+                    frm.sliceType = X265_TYPE_IDR;
+            }
             if ((frm.sliceType == X265_TYPE_I && frm.frameNum - m_lastKeyframe >= m_param->keyframeMin) || (frm.frameNum == (m_param->chunkStart - 1)) || (frm.frameNum == m_param->chunkEnd))
             {
                 if (m_param->bOpenGOP)

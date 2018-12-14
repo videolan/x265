@@ -193,6 +193,7 @@ public:
     bool               m_aborted;          // fatal error detected
     bool               m_reconfigure;      // Encoder reconfigure in progress
     bool               m_reconfigureRc;
+    bool               m_reconfigureZone;
 
     int               m_saveCtuDistortionLevel;
 
@@ -274,6 +275,8 @@ public:
     char* statsString(EncStats&, char*);
 
     void configure(x265_param *param);
+
+    void configureZone(x265_param *p, x265_param *zone);
 
     void updateVbvPlan(RateControl* rc);
 
