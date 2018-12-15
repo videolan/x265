@@ -705,9 +705,11 @@ typedef const x265_api* (*api_query_func)(int bitDepth, int apiVersion, int* err
 #include <dlfcn.h>
 #define ext ".so"
 #endif
+#if defined(__GNUC__) && __GNUC__ >= 8
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
 
 static int g_recursion /* = 0 */;
-
 const x265_api* x265_api_get(int bitDepth)
 {
     if (bitDepth && bitDepth != X265_DEPTH)
