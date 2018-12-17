@@ -131,6 +131,7 @@ typedef struct x265_analysis_validate
     int     chunkStart;
     int     chunkEnd;
     int     cuTree;
+    int     ctuDistortionRefine;
 }x265_analysis_validate;
 
 /* Stores intra analysis data for a single frame. This struct needs better packing */
@@ -182,9 +183,12 @@ typedef uint32_t sse_t;
 typedef uint64_t sse_t;
 #endif
 
+#define CTU_DISTORTION_OFF 0
+#define CTU_DISTORTION_INTERNAL 1
+#define CTU_DISTORTION_EXTERNAL 2
+
 typedef struct x265_analysis_distortion_data
 {
-    sse_t*        distortion;
     sse_t*        ctuDistortion;
     double*       scaledDistortion;
     double        averageDistortion;
@@ -193,6 +197,7 @@ typedef struct x265_analysis_distortion_data
     uint32_t      lowDistortionCtuCount;
     double*       offset;
     double*       threshold;
+
 }x265_analysis_distortion_data;
 
 /* Stores all analysis data for a single frame */
@@ -1736,6 +1741,11 @@ typedef struct x265_param
     /* Set concantenation flag for the first keyframe in the HRD buffering period SEI. */
     int bEnableHRDConcatFlag;
 
+
+    /* Store/normalize ctu distortion in analysis-save/load. Ranges from 0 - 1.
+    *  0 - Disabled. 1 - Save/Load ctu distortion to/from the file specified 
+    * analysis-save/load. Default 0. */
+    int       ctuDistortionRefine;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not

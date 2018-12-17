@@ -3560,7 +3560,7 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
     FrameData& curEncData = *m_frame->m_encData;
     double qp = baseQp >= 0 ? baseQp : curEncData.m_cuStat[ctu.m_cuAddr].baseQp;
 
-    if (m_param->analysisMultiPassDistortion && m_param->rc.bStatRead)
+    if ((m_param->analysisMultiPassDistortion && m_param->rc.bStatRead) || (m_param->ctuDistortionRefine && m_param->analysisLoad))
     {
         x265_analysis_distortion_data* distortionData = m_frame->m_analysisData.distortionData;
         if ((distortionData->threshold[ctu.m_cuAddr] < 0.9 || distortionData->threshold[ctu.m_cuAddr] > 1.1)

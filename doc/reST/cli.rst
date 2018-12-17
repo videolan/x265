@@ -930,6 +930,14 @@ will not reuse analysis if slice type parameters do not match.
 	Reuse MV information received through API call. Currently receives information for AVC size and the accepted 
 	string input is "avc". Default is disabled.
 
+.. option:: --refine-ctu-distortion <0/1>
+
+    Store/normalize ctu distortion in analysis-save/load.
+    0 - Disabled.
+    1 - Save ctu distortion to the analysis file specified during analysis-save.
+        Load CTU distortion from the analysis file and normalize it across every frame during analysis-load.
+    Default 0.
+
 .. option:: --scale-factor
 
 	Factor by which input video is scaled down for analysis save mode.

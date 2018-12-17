@@ -297,6 +297,7 @@ void x265_param_default(x265_param* param)
     param->interRefine = 0;
     param->bDynamicRefine = 0;
     param->mvRefine = 0;
+    param->ctuDistortionRefine = 0;
     param->bUseAnalysisFile = 1;
     param->csvfpt = NULL;
     param->forceFlush = 0;
@@ -1061,6 +1062,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
                 bError = true;
         }
         OPT("hrd-concat") p->bEnableHRDConcatFlag = atobool(value);
+        OPT("refine-ctu-distortion") p->ctuDistortionRefine = atoi(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1416,6 +1418,8 @@ int x265_check_params(x265_param* param)
         "Invalid refine-inter value, refine-inter levels 0 to 3 supported");
     CHECK(param->intraRefine > 4 || param->intraRefine < 0,
         "Invalid refine-intra value, refine-intra levels 0 to 3 supported");
+    CHECK(param->ctuDistortionRefine < 0 || param->ctuDistortionRefine > 1,
+        "Invalid refine-ctu-distortion value, must be either 0 or 1");
     CHECK(param->maxAUSizeFactor < 0.5 || param->maxAUSizeFactor > 1.0,
         "Supported factor for controlling max AU size is from 0.5 to 1");
     CHECK((param->dolbyProfile != 0) && (param->dolbyProfile != 50),
@@ -1818,6 +1822,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " refine-intra=%d", p->intraRefine);
     s += sprintf(s, " refine-inter=%d", p->interRefine);
     s += sprintf(s, " refine-mv=%d", p->mvRefine);
+    s += sprintf(s, " refine-ctu-distortion=%d", p->ctuDistortionRefine);
     BOOL(p->bLimitSAO, "limit-sao");
     s += sprintf(s, " ctu-info=%d", p->bCTUInfo);
     BOOL(p->bLowPassDct, "lowpass-dct");

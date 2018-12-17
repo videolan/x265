@@ -194,6 +194,8 @@ public:
     bool               m_reconfigure;      // Encoder reconfigure in progress
     bool               m_reconfigureRc;
 
+    int               m_saveCtuDistortionLevel;
+
     /* Begin intra refresh when one not in progress or else begin one as soon as the current 
      * one is done. Requires bIntraRefresh to be set.*/
     int                m_bQueuedIntraRefresh;
@@ -281,6 +283,8 @@ public:
 
     void readAnalysisFile(x265_analysis_data* analysis, int poc, const x265_picture* picIn, int paramBytes, cuLocation cuLoc);
 
+    void computeDistortionOffset(x265_analysis_data* analysis);
+
     int getCUIndex(cuLocation* cuLoc, uint32_t* count, int bytes, int flag);
 
     int getPuShape(puOrientation* puOrient, int partSize, int numCTU);
@@ -288,6 +292,8 @@ public:
     void writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncData);
 
     void writeAnalysisFileRefine(x265_analysis_data* analysis, FrameData &curEncData);
+
+    void copyDistortionData(x265_analysis_data* analysis, FrameData &curEncData);
 
     void finishFrameStats(Frame* pic, FrameEncoder *curEncoder, x265_frame_stats* frameStats, int inPoc);
 

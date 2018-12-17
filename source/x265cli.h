@@ -291,6 +291,7 @@ static const struct option long_options[] =
     { "dolby-vision-profile",  required_argument, NULL, 0 },
     { "refine-mv",            no_argument, NULL, 0 },
     { "no-refine-mv",         no_argument, NULL, 0 },
+    { "refine-ctu-distortion", required_argument, NULL, 0 },
     { "force-flush",    required_argument, NULL, 0 },
     { "splitrd-skip",         no_argument, NULL, 0 },
     { "no-splitrd-skip",      no_argument, NULL, 0 },
@@ -514,6 +515,10 @@ static void showHelp(x265_param *param)
         "                                Default:%d\n", param->interRefine);
     H0("   --[no-]dynamic-refine         Dynamically changes refine-inter level for each CU. Default %s\n", OPT(param->bDynamicRefine));
     H0("   --[no-]refine-mv              Enable mv refinement for load mode. Default %s\n", OPT(param->mvRefine));
+    H0("   --refine-ctu-distortion       Store/normalize ctu distortion in analysis-save/load.\n"
+        "                                    - 0 : Disabled.\n"
+        "                                    - 1 : Store/Load ctu distortion to/from the file specified in analysis-save/load.\n"
+        "                                Default 0 - Disabled\n");
     H0("   --aq-mode <integer>           Mode for Adaptive Quantization - 0:none 1:uniform AQ 2:auto variance 3:auto variance with bias to dark scenes. Default %d\n", param->rc.aqMode);
     H0("   --aq-strength <float>         Reduces blocking and blurring in flat and textured areas (0 to 3.0). Default %.2f\n", param->rc.aqStrength);
     H0("   --[no-]aq-motion              Adaptive Quantization based on the relative motion of each CU w.r.t., frame. Default %s\n", OPT(param->bOptCUDeltaQP));

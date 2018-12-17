@@ -1266,9 +1266,9 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                     pic_out->analysisData.wt = outFrame->m_analysisData.wt;
                     pic_out->analysisData.interData = outFrame->m_analysisData.interData;
                     pic_out->analysisData.intraData = outFrame->m_analysisData.intraData;
+                    pic_out->analysisData.distortionData = outFrame->m_analysisData.distortionData;
                     pic_out->analysisData.modeFlag[0] = outFrame->m_analysisData.modeFlag[0];
                     pic_out->analysisData.modeFlag[1] = outFrame->m_analysisData.modeFlag[1];
-                    pic_out->analysisData.distortionData = outFrame->m_analysisData.distortionData;
                     if (m_param->bDisableLookahead)
                     {
                         int factor = 1;
@@ -2839,6 +2839,20 @@ void Encoder::configure(x265_param *p)
         }
     }
 
+    if (p->ctuDistortionRefine == CTU_DISTORTION_INTERNAL)
+    {
+        if (!p->analysisLoad && !p->analysisSave)
+        {
+            x265_log(p, X265_LOG_WARNING, "refine-ctu-distortion 1 requires analysis save/load. Disabling refine-ctu-distortion\n");
+            p->ctuDistortionRefine = 0;
+        }
+        if (p->scaleFactor && p->analysisLoad)
+        {
+            x265_log(p, X265_LOG_WARNING, "refine-ctu-distortion 1 cannot be enabled along with multi resolution analysis refinement. Disabling refine-ctu-distortion\n");
+            p->ctuDistortionRefine = 0;
+        }
+    }
+
     if ((p->analysisMultiPassRefine || p->analysisMultiPassDistortion) && (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation))
     {
         x265_log(p, X265_LOG_WARNING, "multi-pass-opt-analysis/multi-pass-opt-distortion incompatible with pmode/pme, Disabling pmode/pme\n");
@@ -3237,6 +3251,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     const x265_analysis_data *picData = &(picIn->analysisData);
     x265_analysis_intra_data *intraPic = picData->intraData;
     x265_analysis_inter_data *interPic = picData->interData;
+    x265_analysis_distortion_data *picDistortion = picData->distortionData;
 
     int poc; uint32_t frameRecordSize;
     X265_FREAD(&frameRecordSize, sizeof(uint32_t), 1, m_analysisFileIn, &(picData->frameRecordSize));
@@ -3272,6 +3287,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     X265_FREAD(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFileIn, &(picData->satdCost));
     X265_FREAD(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFileIn, &(picData->numCUsInFrame));
     X265_FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFileIn, &(picData->numPartitions));
+
     if (m_param->bDisableLookahead)
     {
         X265_FREAD(&analysis->numCuInHeight, sizeof(uint32_t), 1, m_analysisFileIn, &(picData->numCuInHeight));
@@ -3284,6 +3300,12 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
         analysis->numPartitions *= factor;
     /* Memory is allocated for inter and intra analysis data based on the slicetype */
     x265_alloc_analysis_data(m_param, analysis);
+
+    if (m_param->ctuDistortionRefine == CTU_DISTORTION_INTERNAL)
+    {
+        X265_FREAD((analysis->distortionData)->ctuDistortion, sizeof(sse_t), analysis->numCUsInFrame, m_analysisFileIn, picDistortion);
+        computeDistortionOffset(analysis);
+    }
     if (m_param->bDisableLookahead && m_rateControl->m_isVbv)
     {
         size_t vbvCount = m_param->lookaheadDepth + m_param->bframes + 2;
@@ -3532,6 +3554,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     const x265_analysis_data *picData = &(picIn->analysisData);
     x265_analysis_intra_data *intraPic = picData->intraData;
     x265_analysis_inter_data *interPic = picData->interData;
+    x265_analysis_distortion_data *picDistortion = picData->distortionData;
 
     int poc; uint32_t frameRecordSize;
     X265_FREAD(&frameRecordSize, sizeof(uint32_t), 1, m_analysisFileIn, &(picData->frameRecordSize));
@@ -3567,6 +3590,7 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
     X265_FREAD(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFileIn, &(picData->satdCost));
     X265_FREAD(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFileIn, &(picData->numCUsInFrame));
     X265_FREAD(&analysis->numPartitions, sizeof(int), 1, m_analysisFileIn, &(picData->numPartitions));
+    
     if (m_param->bDisableLookahead)
     {
         X265_FREAD(&analysis->numCuInHeight, sizeof(uint32_t), 1, m_analysisFileIn, &(picData->numCuInHeight));
@@ -3585,6 +3609,12 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
 
     /* Memory is allocated for inter and intra analysis data based on the slicetype */
     x265_alloc_analysis_data(m_param, analysis);
+
+    if (m_param->ctuDistortionRefine == CTU_DISTORTION_INTERNAL)
+    {
+        X265_FREAD((analysis->distortionData)->ctuDistortion, sizeof(sse_t), analysis->numCUsInFrame, m_analysisFileIn, picDistortion);
+        computeDistortionOffset(analysis);
+    }
 
     analysis->numPartitions = numPartitions * factor;
     analysis->numCUsInFrame = numCUsInFrame;
@@ -3956,6 +3986,7 @@ int Encoder::validateAnalysisData(x265_analysis_data* analysis, int writeFlag)
     X265_PARAM_VALIDATE(saveParam->chunkStart, sizeof(int), 1, &m_param->chunkStart, chunk-start);
     X265_PARAM_VALIDATE(saveParam->chunkEnd, sizeof(int), 1, &m_param->chunkEnd, chunk-end);
     X265_PARAM_VALIDATE(saveParam->cuTree,sizeof(int),1,&m_param->rc.cuTree, cutree - offset);
+    X265_PARAM_VALIDATE(saveParam->ctuDistortionRefine, sizeof(int), 1, &m_param->ctuDistortionRefine, ctu - distortion);
 
     int sourceHeight, sourceWidth;
     if (writeFlag)
@@ -4107,7 +4138,31 @@ int Encoder::getPuShape(puOrientation* puOrient, int partSize, int numCTU)
     }
     return SIZE_2Nx2N;
 }
+void Encoder::computeDistortionOffset(x265_analysis_data* analysis)
+{
+    x265_analysis_distortion_data *distortionData = analysis->distortionData;
 
+    double sum = 0.0, sqrSum = 0.0;
+    for (uint32_t i = 0; i < analysis->numCUsInFrame; ++i)
+    {
+        distortionData->scaledDistortion[i] = X265_LOG2(X265_MAX(distortionData->ctuDistortion[i], 1));
+        sum += distortionData->scaledDistortion[i];
+        sqrSum += distortionData->scaledDistortion[i] * distortionData->scaledDistortion[i];
+    }
+    double avg = sum / analysis->numCUsInFrame;
+    distortionData->sdDistortion = pow(((sqrSum / analysis->numCUsInFrame) - (avg * avg)), 0.5);
+    distortionData->averageDistortion = avg;
+    distortionData->highDistortionCtuCount = distortionData->lowDistortionCtuCount = 0;
+    for (uint32_t i = 0; i < analysis->numCUsInFrame; ++i)
+    {
+        distortionData->threshold[i] = distortionData->scaledDistortion[i] / distortionData->averageDistortion;
+        distortionData->offset[i] = (distortionData->averageDistortion - distortionData->scaledDistortion[i]) / distortionData->sdDistortion;
+        if (distortionData->threshold[i] < 0.9 && distortionData->offset[i] >= 1)
+            distortionData->lowDistortionCtuCount++;
+        else if (distortionData->threshold[i] > 1.1 && distortionData->offset[i] <= -1)
+            distortionData->highDistortionCtuCount++;
+    }
+}
 void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, int sliceType)
 {
 
@@ -4135,21 +4190,16 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, int sli
     /* Now arrived at the right frame, read the record */
     analysis->frameRecordSize = frameRecordSize;
     uint8_t* tempBuf = NULL, *depthBuf = NULL;
-    sse_t *tempdistBuf = NULL, *distortionBuf = NULL;
+    X265_FREAD((analysis->distortionData)->ctuDistortion, sizeof(sse_t), analysis->numCUsInFrame, m_analysisFileIn);
     tempBuf = X265_MALLOC(uint8_t, depthBytes);
     X265_FREAD(tempBuf, sizeof(uint8_t), depthBytes, m_analysisFileIn);
-    tempdistBuf = X265_MALLOC(sse_t, depthBytes);
-    X265_FREAD(tempdistBuf, sizeof(sse_t), depthBytes, m_analysisFileIn);
     depthBuf = tempBuf;
-    distortionBuf = tempdistBuf;
     x265_analysis_data *analysisData = (x265_analysis_data*)analysis;
     x265_analysis_intra_data *intraData = analysisData->intraData;
     x265_analysis_inter_data *interData = analysisData->interData;
-    x265_analysis_distortion_data *distortionData = analysisData->distortionData;
 
+    computeDistortionOffset(analysis);
     size_t count = 0;
-    uint32_t ctuCount = 0;
-    double sum = 0, sqrSum = 0;
     for (uint32_t d = 0; d < depthBytes; d++)
     {
         int bytes = analysis->numPartitions >> (depthBuf[d] * 2);
@@ -4157,30 +4207,10 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, int sli
             memset(&intraData->depth[count], depthBuf[d], bytes);
         else
             memset(&interData->depth[count], depthBuf[d], bytes);
-        distortionData->distortion[count] = distortionBuf[d];
-        distortionData->ctuDistortion[ctuCount] += distortionData->distortion[count];
         count += bytes;
-        if ((count % (unsigned)analysis->numPartitions) == 0)
-        {
-            distortionData->scaledDistortion[ctuCount] = X265_LOG2(X265_MAX(distortionData->ctuDistortion[ctuCount], 1));
-            sum += distortionData->scaledDistortion[ctuCount];
-            sqrSum += distortionData->scaledDistortion[ctuCount] * distortionData->scaledDistortion[ctuCount];
-            ctuCount++;
-        }
     }
-    double avg = sum / analysis->numCUsInFrame;
-    distortionData->sdDistortion = pow(((sqrSum / analysis->numCUsInFrame) - (avg * avg)), 0.5);
-    distortionData->averageDistortion = avg;
-    distortionData->highDistortionCtuCount = distortionData->lowDistortionCtuCount = 0;
-    for (uint32_t i = 0; i < analysis->numCUsInFrame; ++i)
-    {
-        distortionData->threshold[i] = distortionData->scaledDistortion[i] / distortionData->averageDistortion;
-        distortionData->offset[i] = (distortionData->averageDistortion - distortionData->scaledDistortion[i]) / distortionData->sdDistortion;
-        if (distortionData->threshold[i] < 0.9 && distortionData->offset[i] >= 1)
-            distortionData->lowDistortionCtuCount++;
-        else if (distortionData->threshold[i] > 1.1 && distortionData->offset[i] <= -1)
-            distortionData->highDistortionCtuCount++;
-    }
+
+
     if (!IS_X265_TYPE_I(sliceType))
     {
         MV *tempMVBuf[2], *MVBuf[2];
@@ -4233,9 +4263,25 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, int sli
         X265_FREE(tempModeBuf);
     }
     X265_FREE(tempBuf);
-    X265_FREE(tempdistBuf);
 
 #undef X265_FREAD
+}
+
+void Encoder::copyDistortionData(x265_analysis_data* analysis, FrameData &curEncData)
+{
+    for (uint32_t cuAddr = 0; cuAddr < analysis->numCUsInFrame; cuAddr++)
+    {
+        uint8_t depth = 0;
+        CUData* ctu = curEncData.getPicCTU(cuAddr);
+        x265_analysis_distortion_data *distortionData = (x265_analysis_distortion_data *)analysis->distortionData;
+        distortionData->ctuDistortion[cuAddr] = 0;
+        for (uint32_t absPartIdx = 0; absPartIdx < ctu->m_numPartitions;)
+        {
+            depth = ctu->m_cuDepth[absPartIdx];
+            distortionData->ctuDistortion[cuAddr] += ctu->m_distortion[absPartIdx];
+            absPartIdx += ctu->m_numPartitions >> (depth * 2);
+        }
+    }
 }
 
 void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncData)
@@ -4273,8 +4319,15 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
         analysis->frameRecordSize += sizeof(WeightParam) * numPlanes * numDir;
     }
 
+    if (m_param->ctuDistortionRefine == CTU_DISTORTION_INTERNAL)
+    {
+        copyDistortionData(analysis, curEncData);
+        analysis->frameRecordSize += analysis->numCUsInFrame * sizeof(sse_t);
+    }
+
     if (m_param->analysisReuseLevel > 1)
     {
+
         if (analysis->sliceType == X265_TYPE_IDR || analysis->sliceType == X265_TYPE_I)
         {
             for (uint32_t cuAddr = 0; cuAddr < analysis->numCUsInFrame; cuAddr++)
@@ -4406,6 +4459,8 @@ void Encoder::writeAnalysisFile(x265_analysis_data* analysis, FrameData &curEncD
     X265_FWRITE(&analysis->satdCost, sizeof(int64_t), 1, m_analysisFileOut);
     X265_FWRITE(&analysis->numCUsInFrame, sizeof(int), 1, m_analysisFileOut);
     X265_FWRITE(&analysis->numPartitions, sizeof(int), 1, m_analysisFileOut);
+    if (m_param->ctuDistortionRefine == CTU_DISTORTION_INTERNAL)
+        X265_FWRITE((analysis->distortionData)->ctuDistortion, sizeof(sse_t), analysis->numCUsInFrame, m_analysisFileOut);
     if (analysis->sliceType > X265_TYPE_I)
         X265_FWRITE((WeightParam*)analysis->wt, sizeof(WeightParam), numPlanes * numDir, m_analysisFileOut);
 
@@ -4469,25 +4524,24 @@ void Encoder::writeAnalysisFileRefine(x265_analysis_data* analysis, FrameData &c
     x265_analysis_inter_data *interData = analysisData->interData;
     x265_analysis_distortion_data *distortionData = analysisData->distortionData;
 
-    for (uint32_t cuAddr = 0; cuAddr < analysis->numCUsInFrame; cuAddr++)
+    copyDistortionData(analysis, curEncData);
+
+    if (curEncData.m_slice->m_sliceType == I_SLICE)
     {
-        uint8_t depth = 0;
-
-        CUData* ctu = curEncData.getPicCTU(cuAddr);
-
-        for (uint32_t absPartIdx = 0; absPartIdx < ctu->m_numPartitions; depthBytes++)
+        for (uint32_t cuAddr = 0; cuAddr < analysis->numCUsInFrame; cuAddr++)
         {
-            depth = ctu->m_cuDepth[absPartIdx];
-            if (curEncData.m_slice->m_sliceType == I_SLICE)
+            uint8_t depth = 0;
+            CUData* ctu = curEncData.getPicCTU(cuAddr);
+            for (uint32_t absPartIdx = 0; absPartIdx < ctu->m_numPartitions; depthBytes++)
+            {
+                depth = ctu->m_cuDepth[absPartIdx];
                 intraData->depth[depthBytes] = depth;
-            else
-                interData->depth[depthBytes] = depth;
-            distortionData->distortion[depthBytes] = ctu->m_distortion[absPartIdx];
-            absPartIdx += ctu->m_numPartitions >> (depth * 2);
+                absPartIdx += ctu->m_numPartitions >> (depth * 2);
+            }
         }
     }
 
-    if (curEncData.m_slice->m_sliceType != I_SLICE)
+    else
     {
         int32_t* ref[2];
         ref[0] = (analysis->interData)->ref;
@@ -4502,6 +4556,7 @@ void Encoder::writeAnalysisFileRefine(x265_analysis_data* analysis, FrameData &c
             for (uint32_t absPartIdx = 0; absPartIdx < ctu->m_numPartitions; depthBytes++)
             {
                 depth = ctu->m_cuDepth[absPartIdx];
+                interData->depth[depthBytes] = depth;
                 interData->mv[0][depthBytes].word = ctu->m_mv[0][absPartIdx].word;
                 interData->mvpIdx[0][depthBytes] = ctu->m_mvpIdx[0][absPartIdx];
                 ref[0][depthBytes] = ctu->m_refIdx[0][absPartIdx];
@@ -4523,7 +4578,7 @@ void Encoder::writeAnalysisFileRefine(x265_analysis_data* analysis, FrameData &c
     /* calculate frameRecordSize */
     analysis->frameRecordSize = sizeof(analysis->frameRecordSize) + sizeof(depthBytes) + sizeof(analysis->poc);
     analysis->frameRecordSize += depthBytes * sizeof(uint8_t);
-    analysis->frameRecordSize += depthBytes * sizeof(sse_t);
+    analysis->frameRecordSize += analysis->numCUsInFrame * sizeof(sse_t);
     if (curEncData.m_slice->m_sliceType != I_SLICE)
     {
         int numDir = (curEncData.m_slice->m_sliceType == P_SLICE) ? 1 : 2;
@@ -4535,6 +4590,7 @@ void Encoder::writeAnalysisFileRefine(x265_analysis_data* analysis, FrameData &c
     X265_FWRITE(&analysis->frameRecordSize, sizeof(uint32_t), 1, m_analysisFileOut);
     X265_FWRITE(&depthBytes, sizeof(uint32_t), 1, m_analysisFileOut);
     X265_FWRITE(&analysis->poc, sizeof(uint32_t), 1, m_analysisFileOut);
+    X265_FWRITE(distortionData->ctuDistortion, sizeof(sse_t), analysis->numCUsInFrame, m_analysisFileOut);
     if (curEncData.m_slice->m_sliceType == I_SLICE)
     {
         X265_FWRITE((analysis->intraData)->depth, sizeof(uint8_t), depthBytes, m_analysisFileOut);
@@ -4543,7 +4599,6 @@ void Encoder::writeAnalysisFileRefine(x265_analysis_data* analysis, FrameData &c
     {
         X265_FWRITE((analysis->interData)->depth, sizeof(uint8_t), depthBytes, m_analysisFileOut);
     }
-    X265_FWRITE(distortionData->distortion, sizeof(sse_t), depthBytes, m_analysisFileOut);
     if (curEncData.m_slice->m_sliceType != I_SLICE)
     {
         int numDir = curEncData.m_slice->m_sliceType == P_SLICE ? 1 : 2;

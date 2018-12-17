@@ -408,6 +408,7 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
     x265_analysis_inter_data *interData = analysis->interData = NULL;
     x265_analysis_intra_data *intraData = analysis->intraData = NULL;
     x265_analysis_distortion_data *distortionData = analysis->distortionData = NULL;
+
     bool isVbv = param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0;
     int numDir = 2; //irrespective of P or B slices set direction as 2
     uint32_t numPlanes = param->internalCsp == X265_CSP_I400 ? 1 : 3;
@@ -419,18 +420,19 @@ void x265_alloc_analysis_data(x265_param *param, x265_analysis_data* analysis)
 #else
     uint32_t numCUs_sse_t = analysis->numCUsInFrame;
 #endif
-
-    //Allocate memory for distortionData pointer
-    CHECKED_MALLOC_ZERO(distortionData, x265_analysis_distortion_data, 1);
-    CHECKED_MALLOC_ZERO(distortionData->distortion, sse_t, analysis->numPartitions * numCUs_sse_t);
-    if (param->rc.bStatRead)
+    if (param->analysisMultiPassRefine || param->analysisMultiPassDistortion || param->ctuDistortionRefine)
     {
-        CHECKED_MALLOC_ZERO(distortionData->ctuDistortion, sse_t, numCUs_sse_t);
-        CHECKED_MALLOC_ZERO(distortionData->scaledDistortion, double, analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(distortionData->offset, double, analysis->numCUsInFrame);
-        CHECKED_MALLOC_ZERO(distortionData->threshold, double, analysis->numCUsInFrame);
+        //Allocate memory for distortionData pointer
+        CHECKED_MALLOC_ZERO(distortionData, x265_analysis_distortion_data, 1);
+        CHECKED_MALLOC_ZERO(distortionData->ctuDistortion, sse_t, analysis->numPartitions * numCUs_sse_t);
+        if (param->analysisLoad || param->rc.bStatRead)
+        {
+            CHECKED_MALLOC_ZERO(distortionData->scaledDistortion, double, analysis->numCUsInFrame);
+            CHECKED_MALLOC_ZERO(distortionData->offset, double, analysis->numCUsInFrame);
+            CHECKED_MALLOC_ZERO(distortionData->threshold, double, analysis->numCUsInFrame);
+        }
+        analysis->distortionData = distortionData;
     }
-    analysis->distortionData = distortionData;
 
     if (param->bDisableLookahead && isVbv)
     {
@@ -516,10 +518,9 @@ void x265_free_analysis_data(x265_param *param, x265_analysis_data* analysis)
     //Free memory for distortionData pointers
     if (analysis->distortionData)
     {
-        X265_FREE((analysis->distortionData)->distortion);
-        if (param->rc.bStatRead)
+        X265_FREE((analysis->distortionData)->ctuDistortion);
+        if (param->rc.bStatRead || param->analysisLoad)
         {
-            X265_FREE((analysis->distortionData)->ctuDistortion);
             X265_FREE((analysis->distortionData)->scaledDistortion);
             X265_FREE((analysis->distortionData)->offset);
             X265_FREE((analysis->distortionData)->threshold);
