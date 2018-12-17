@@ -1344,7 +1344,7 @@ typedef struct x265_param
         /* Enable adaptive quantization. This mode distributes available bits between all
          * CTUs of a frame, assigning more bits to low complexity areas. Turning
          * this ON will usually affect PSNR negatively, however SSIM and visual quality
-         * generally improves. Default: X265_AQ_VARIANCE */
+         * generally improves. Default: X265_AQ_AUTO_VARIANCE */
         int       aqMode;
 
         /* Sets the strength of AQ bias towards low detail CTUs. Valid only if

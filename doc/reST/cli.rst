@@ -1630,8 +1630,8 @@ Quality, rate control and rate distortion options
 	and not enough in flat areas.
 
 	0. disabled
-	1. AQ enabled **(default)**
-	2. AQ enabled with auto-variance
+	1. AQ enabled 
+	2. AQ enabled with auto-variance **(default)**
 	3. AQ enabled with auto-variance and bias to dark scenes. This is 
 	recommended for 8-bit encodes or low-bitrate 10-bit encodes, to 
 	prevent color banding/blocking. 
