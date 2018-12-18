@@ -2829,6 +2829,12 @@ void Encoder::configure(x265_param *p)
         p->rc.rfConstantMin = 0;
     }
 
+    if ((p->analysisLoad || p->analysisSave) && p->rc.cuTree && p->analysisReuseLevel < 10)
+    {
+        x265_log(p, X265_LOG_WARNING, "cu-tree works only with analysis reuse level 10, Disabling cu-tree\n");
+        p->rc.cuTree = 0;
+    }
+
     if ((p->analysisLoad || p->analysisSave) && (p->bDistributeModeAnalysis || p->bDistributeMotionEstimation))
     {
         x265_log(p, X265_LOG_WARNING, "Analysis load/save options incompatible with pmode/pme, Disabling pmode/pme\n");
