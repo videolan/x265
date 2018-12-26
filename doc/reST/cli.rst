@@ -2236,7 +2236,7 @@ Bitstream options
     The value is specified as a float or as an integer with the profile times 10,
     for example profile 5 is specified as "5" or "5.0" or "50".
     
-    Currently only profile 5 enabled, Default 0 (disabled)
+    Currently only profile 5 and profile 8.1 enabled, Default 0 (disabled)
 
 .. option:: --dolby-vision-rpu <filename>
 

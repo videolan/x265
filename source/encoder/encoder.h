@@ -313,6 +313,8 @@ public:
 
     void copyUserSEIMessages(Frame *frame, const x265_picture* pic_in);
 
+    void configureDolbyVisionParams(x265_param* p);
+
 protected:
 
     void initVPS(VPS *vps);

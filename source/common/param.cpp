@@ -1545,14 +1545,16 @@ int x265_check_params(x265_param* param)
         "Invalid refine-ctu-distortion value, must be either 0 or 1");
     CHECK(param->maxAUSizeFactor < 0.5 || param->maxAUSizeFactor > 1.0,
         "Supported factor for controlling max AU size is from 0.5 to 1");
-    CHECK((param->dolbyProfile != 0) && (param->dolbyProfile != 50),
-        "Unsupported Dolby Vision profile, only profile 5 enabled");
-    if (param->dolbyProfile == 50)
+    CHECK((param->dolbyProfile != 0) && (param->dolbyProfile != 50) && (param->dolbyProfile != 81),
+        "Unsupported Dolby Vision profile, only profile 5 and profile 8.1 enabled");
+    if (param->dolbyProfile)
     {
-        CHECK((param->rc.vbvMaxBitrate < 0 && param->rc.vbvBufferSize < 0), "Dolby Vision requires VBV settings to enable HRD.\n");
-        CHECK((param->sourceWidth > 3840 || param->sourceHeight > 2160), "Maximum supported resolution for Dolby Vision profile - 5 is 4k UHD\n");
-        CHECK((param->internalBitDepth != 10), "Dolby Vision profile - 5 is Main10 only\n");
-        CHECK((param->internalCsp != X265_CSP_I420), "Dolby Vision profile - 5 requires YCbCr 4:2:0 color space\n");
+        CHECK((param->rc.vbvMaxBitrate <= 0 || param->rc.vbvBufferSize <= 0), "Dolby Vision requires VBV settings to enable HRD.\n");
+        CHECK((param->internalBitDepth != 10), "Dolby Vision profile - 5 and profile - 8.1 is Main10 only\n");
+        CHECK((param->internalCsp != X265_CSP_I420), "Dolby Vision profile - 5 and profile - 8.1 requires YCbCr 4:2:0 color space\n");
+
+        if (param->dolbyProfile == 81)
+            CHECK(!(param->masteringDisplayColorVolume), "Dolby Vision profile - 8.1 requires Mastering display color volume information\n");
     }
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),

@@ -50,6 +50,30 @@ namespace X265_NS {
 const char g_sliceTypeToChar[] = {'B', 'P', 'I'};
 }
 
+/* Dolby Vision profile specific settings */
+typedef struct
+{
+    int bEmitHRDSEI;
+    int bEnableVideoSignalTypePresentFlag;
+    int bEnableColorDescriptionPresentFlag;
+    int bEnableAccessUnitDelimiters;
+    int bAnnexB;
+
+    /* VUI parameters specific to Dolby Vision Profile */
+    int videoFormat;
+    int bEnableVideoFullRangeFlag;
+    int transferCharacteristics;
+    int colorPrimaries;
+    int matrixCoeffs;
+
+    int doviProfileId;
+}DolbyVisionProfileSpec;
+
+DolbyVisionProfileSpec dovi[] =
+{
+    { 1, 1, 1, 1, 1, 5, 1,  2, 2, 2, 50 },
+    { 1, 1, 1, 1, 1, 5, 0, 16, 9, 9, 81 },
+};
 /* Threshold for motion vection, based on expermental result.
  * TODO: come up an algorithm for adoptive threshold */
 #define MVTHRESHOLD (10*10)
@@ -413,7 +437,7 @@ void Encoder::create()
 
     m_nalList.m_annexB = !!m_param->bAnnexB;
 
-    m_emitCLLSEI = p->maxCLL || p->maxFALL;
+    m_emitCLLSEI = p->maxCLL || p->maxFALL || (p->dolbyProfile == 81);
 
     if (m_param->naluFile)
     {
@@ -2657,6 +2681,31 @@ void Encoder::configureZone(x265_param *p, x265_param *zone)
     memcpy(zone, p, sizeof(x265_param));
 }
 
+void Encoder::configureDolbyVisionParams(x265_param* p)
+{
+    uint32_t doviProfile = 0;
+
+    while (dovi[doviProfile].doviProfileId != p->dolbyProfile && doviProfile + 1 < sizeof(dovi) / sizeof(dovi[0]))
+        doviProfile++;
+
+    p->bEmitHRDSEI = dovi[doviProfile].bEmitHRDSEI;
+    p->vui.bEnableVideoSignalTypePresentFlag = dovi[doviProfile].bEnableVideoSignalTypePresentFlag;
+    p->vui.bEnableColorDescriptionPresentFlag = dovi[doviProfile].bEnableColorDescriptionPresentFlag;
+    p->bEnableAccessUnitDelimiters = dovi[doviProfile].bEnableAccessUnitDelimiters;
+    p->bAnnexB = dovi[doviProfile].bAnnexB;
+    p->vui.videoFormat = dovi[doviProfile].videoFormat;
+    p->vui.bEnableVideoFullRangeFlag = dovi[doviProfile].bEnableVideoFullRangeFlag;
+    p->vui.transferCharacteristics = dovi[doviProfile].transferCharacteristics;
+    p->vui.colorPrimaries = dovi[doviProfile].colorPrimaries;
+    p->vui.matrixCoeffs = dovi[doviProfile].matrixCoeffs;
+
+    if (dovi[doviProfile].doviProfileId == 81)
+        p->bEmitHDRSEI = 1;
+
+    if (dovi[doviProfile].doviProfileId == 50 && p->noiseReductionIntra && p->noiseReductionInter)
+        p->crQpOffset = 4;
+}
+
 void Encoder::configure(x265_param *p)
 {
     this->m_param = p;
@@ -3286,25 +3335,9 @@ void Encoder::configure(x265_param *p)
         p->chunkStart = p->chunkEnd = 0;
         x265_log(p, X265_LOG_WARNING, "chunk-end cannot be less than chunk-start. Disabling chunking.\n");
     }
-    if (p->dolbyProfile)     // Default disabled.
-    {
-        if (p->dolbyProfile == 50)
-        {
-            p->bEmitHRDSEI = true;
-            p->vui.bEnableVideoSignalTypePresentFlag = 1;
-            p->vui.bEnableColorDescriptionPresentFlag = 1;
-            p->vui.transferCharacteristics = 2;
-            p->vui.colorPrimaries = 2;
-            p->vui.matrixCoeffs = 2;
-            p->vui.bEnableVideoFullRangeFlag = 1;
-            p->vui.videoFormat = 5;
-            p->bEnableAccessUnitDelimiters = 1;
-            p->bAnnexB = 1;
 
-            if (p->noiseReductionIntra && p->noiseReductionInter)    // when noise reduction is enabled, preserve the film grain.
-                p->crQpOffset = 4;
-        }
-    }
+    if (p->dolbyProfile)     // Default disabled.
+        configureDolbyVisionParams(p);
 
     if (m_param->rc.zonefileCount && p->bOpenGOP)
     {
