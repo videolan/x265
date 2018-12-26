@@ -361,7 +361,7 @@ static void showHelp(x265_param *param)
     H0("   --dhdr10-info <filename>      JSON file containing the Creative Intent Metadata to be encoded as Dynamic Tone Mapping\n");
     H0("   --[no-]dhdr10-opt             Insert tone mapping SEI only for IDR frames and when the tone mapping information changes. Default disabled\n");
 #endif
-    H0("   --dolby-vision-profile <float|integer> Specifies Dolby Vision profile ID. Currently only profile 5 and profile 8.1 enabled. Specified as '5' or '50'. Default 0 (disabled).\n");
+    H0("   --dolby-vision-profile <float|integer> Specifies Dolby Vision profile ID. Currently only profile 5, profile 8.1 and profile 8.2 enabled. Specified as '5' or '50'. Default 0 (disabled).\n");
     H0("   --dolby-vision-rpu <filename> File containing Dolby Vision RPU metadata.\n"
        "                                 If given, x265's Dolby Vision metadata parser will fill the RPU field of input pictures with the metadata read from the file. Default NULL(disabled).\n");
     H0("   --nalu-file <filename>        Text file containing SEI messages in the following format : <POC><space><PREFIX><space><NAL UNIT TYPE>/<SEI TYPE><space><SEI Payload>\n");

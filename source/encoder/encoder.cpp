@@ -73,6 +73,7 @@ DolbyVisionProfileSpec dovi[] =
 {
     { 1, 1, 1, 1, 1, 5, 1,  2, 2, 2, 50 },
     { 1, 1, 1, 1, 1, 5, 0, 16, 9, 9, 81 },
+    { 1, 1, 1, 1, 1, 5, 0,  1, 1, 1, 82 }
 };
 /* Threshold for motion vection, based on expermental result.
  * TODO: come up an algorithm for adoptive threshold */
