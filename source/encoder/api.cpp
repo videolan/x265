@@ -221,6 +221,7 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
     }
     else
     {
+        encoder->configure(encoder->m_latestParam);
         if (encoder->m_latestParam->scalingLists && encoder->m_latestParam->scalingLists != encoder->m_param->scalingLists)
         {
             if (encoder->m_param->bRepeatHeaders)
