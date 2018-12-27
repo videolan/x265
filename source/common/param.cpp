@@ -233,8 +233,10 @@ void x265_param_default(x265_param* param)
     param->rc.rateControlMode = X265_RC_CRF;
     param->rc.qp = 32;
     param->rc.aqMode = X265_AQ_AUTO_VARIANCE;
+    param->rc.hevcAq = 0;
     param->rc.qgSize = 32;
     param->rc.aqStrength = 1.0;
+    param->rc.qpAdaptationRange = 1.0;
     param->rc.cuTree = 1;
     param->rc.rfConstantMax = 0;
     param->rc.rfConstantMin = 0;
@@ -528,6 +530,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->rc.pbFactor = 1.0;
             param->rc.cuTree = 0;
             param->rc.aqMode = 0;
+            param->rc.hevcAq = 0;
             param->rc.qpStep = 1;
             param->rc.bEnableGrain = 1;
             param->bEnableRecursionSkip = 0;
@@ -1186,6 +1189,8 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         }
         OPT("hrd-concat") p->bEnableHRDConcatFlag = atobool(value);
         OPT("refine-ctu-distortion") p->ctuDistortionRefine = atoi(value);
+        OPT("hevc-aq") p->rc.hevcAq = atobool(value);
+        OPT("qp-adaptation-range") p->rc.qpAdaptationRange = atof(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1430,6 +1435,8 @@ int x265_check_params(x265_param* param)
           "Aq-Mode is out of range");
     CHECK(param->rc.aqStrength < 0 || param->rc.aqStrength > 3,
           "Aq-Strength is out of range");
+    CHECK(param->rc.qpAdaptationRange < 1.0f || param->rc.qpAdaptationRange > 6.0f,
+        "qp adaptation range is out of range");
     CHECK(param->deblockingFilterTCOffset < -6 || param->deblockingFilterTCOffset > 6,
           "deblocking filter tC offset must be in the range of -6 to +6");
     CHECK(param->deblockingFilterBetaOffset < -6 || param->deblockingFilterBetaOffset > 6,
@@ -1956,6 +1963,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " max-ausize-factor=%.1f", p->maxAUSizeFactor);
     BOOL(p->bDynamicRefine, "dynamic-refine");
     BOOL(p->bSingleSeiNal, "single-sei");
+    BOOL(p->rc.hevcAq, "hevc-aq");
+    s += sprintf(s, " qp-adaptation-range=%.2f", p->rc.qpAdaptationRange);
 #undef BOOL
     return buf;
 }

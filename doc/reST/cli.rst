@@ -1646,6 +1646,21 @@ Quality, rate control and rate distortion options
 	Default 1.0.
 	**Range of values:** 0.0 to 3.0
 
+.. option:: --hevc-aq
+
+	Enable adaptive quantization
+	It scales the quantization step size according to the spatial activity of one
+	coding unit relative to frame average spatial activity. This AQ method utilizes
+	the minimum variance of sub-unit in each coding unit to represent the coding
+	unit’s spatial complexity.
+
+.. option:: --qp-adaptation-range
+
+	Delta-QP range by QP adaptation based on a psycho-visual model.
+
+	Default 1.0.
+	**Range of values:** 1.0 to 6.0
+
 .. option:: --aq-motion, --no-aq-motion
 
 	Adjust the AQ offsets based on the relative motion of each block with

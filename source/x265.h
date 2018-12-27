@@ -1347,9 +1347,21 @@ typedef struct x265_param
          * generally improves. Default: X265_AQ_AUTO_VARIANCE */
         int       aqMode;
 
+        /*
+         * Enable adaptive quantization.
+         * It scales the quantization step size according to the spatial activity of one
+         * coding unit relative to frame average spatial activity. This AQ method utilizes
+         * the minimum variance of sub-unit in each coding unit to represent the coding
+         * unit’s spatial complexity. */
+        int       hevcAq;
+
         /* Sets the strength of AQ bias towards low detail CTUs. Valid only if
          * AQ is enabled. Default value: 1.0. Acceptable values between 0.0 and 3.0 */
         double    aqStrength;
+
+        /* Delta QP range by QP adaptation based on a psycho-visual model.
+         * Acceptable values between 1.0 to 6.0 */
+        double    qpAdaptationRange;
 
         /* Sets the maximum rate the VBV buffer should be assumed to refill at
          * Default is zero */

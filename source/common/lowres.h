@@ -103,6 +103,49 @@ struct ReferencePlanes
     }
 };
 
+static const uint32_t aqLayerDepth[3][4][4] = {
+    {  // ctu size 64
+        { 1, 0, 1, 0 },
+        { 1, 1, 1, 0 },
+        { 1, 1, 1, 0 },
+        { 1, 1, 1, 1 }
+    },
+    {  // ctu size 32
+        { 1, 1, 0, 0 },
+        { 1, 1, 0, 0 },
+        { 1, 1, 1, 0 },
+        { 0, 0, 0, 0 },
+    },
+    {  // ctu size 16
+        { 1, 0, 0, 0 },
+        { 1, 1, 0, 0 },
+        { 0, 0, 0, 0 },
+        { 0, 0, 0, 0 }
+    }
+};
+
+// min aq size for ctu size 64, 32 and 16
+static const uint32_t minAQSize[3] = { 3, 2, 1 };
+
+struct PicQPAdaptationLayer
+{
+    uint32_t aqPartWidth;
+    uint32_t aqPartHeight;
+    uint32_t numAQPartInWidth;
+    uint32_t numAQPartInHeight;
+    uint32_t minAQDepth;
+    double*  dActivity;
+    double*  dQpOffset;
+
+    double*  dCuTreeOffset;
+    double*  dCuTreeOffset8x8;
+    double   dAvgActivity;
+    bool     bQpSize;
+
+    bool  create(uint32_t width, uint32_t height, uint32_t aqPartWidth, uint32_t aqPartHeight, uint32_t numAQPartInWidthExt, uint32_t numAQPartInHeightExt);
+    void  destroy();
+};
+
 /* lowres buffers, sizes and strides */
 struct Lowres : public ReferencePlanes
 {
@@ -154,6 +197,13 @@ struct Lowres : public ReferencePlanes
     uint64_t  wp_sum[3];
 
     /* cutree intermediate data */
+    PicQPAdaptationLayer* pAQLayer;
+    uint32_t maxAQDepth;
+    uint32_t widthFullRes;
+    uint32_t heightFullRes;
+    uint32_t m_maxCUSize;
+    uint32_t m_qgSize;
+    
     uint16_t* propagateCost;
     double    weightedCostDelta[X265_BFRAME_MAX + 2];
     ReferencePlanes weightedRef[X265_BFRAME_MAX + 2];

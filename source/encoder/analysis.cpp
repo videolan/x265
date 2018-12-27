@@ -3556,10 +3556,39 @@ uint32_t Analysis::calculateCUVariance(const CUData& ctu, const CUGeom& cuGeom)
     return cuVariance / cnt;
 }
 
+double Analysis::aqQPOffset(const CUData& ctu, const CUGeom& cuGeom)
+{
+    uint32_t aqDepth = X265_MIN(cuGeom.depth, m_frame->m_lowres.maxAQDepth - 1);
+    PicQPAdaptationLayer* pQPLayer = &m_frame->m_lowres.pAQLayer[aqDepth];
+
+    uint32_t aqPosX = (ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx]) / pQPLayer->aqPartWidth;
+    uint32_t aqPosY = (ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx]) / pQPLayer->aqPartHeight;
+
+    uint32_t aqStride = pQPLayer->numAQPartInWidth;
+
+    double dQpOffset = pQPLayer->dQpOffset[aqPosY * aqStride + aqPosX];
+    return dQpOffset;
+}
+
+double Analysis::cuTreeQPOffset(const CUData& ctu, const CUGeom& cuGeom)
+{
+    uint32_t aqDepth = X265_MIN(cuGeom.depth, m_frame->m_lowres.maxAQDepth - 1);
+    PicQPAdaptationLayer* pcAQLayer = &m_frame->m_lowres.pAQLayer[aqDepth];
+
+    uint32_t aqPosX = (ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx]) / pcAQLayer->aqPartWidth;
+    uint32_t aqPosY = (ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx]) / pcAQLayer->aqPartHeight;
+
+    uint32_t aqStride = pcAQLayer->numAQPartInWidth;
+
+    double dQpOffset = pcAQLayer->dCuTreeOffset[aqPosY * aqStride + aqPosX];
+    return dQpOffset;
+}
+
 int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int32_t complexCheck, double baseQp)
 {
     FrameData& curEncData = *m_frame->m_encData;
     double qp = baseQp >= 0 ? baseQp : curEncData.m_cuStat[ctu.m_cuAddr].baseQp;
+    bool bCuTreeOffset = IS_REFERENCED(m_frame) && m_param->rc.cuTree && !complexCheck;
 
     if ((m_param->analysisMultiPassDistortion && m_param->rc.bStatRead) || (m_param->ctuDistortionRefine && m_param->analysisLoad))
     {
@@ -3577,40 +3606,60 @@ int Analysis::calculateQpforCuSize(const CUData& ctu, const CUGeom& cuGeom, int3
         else
             return x265_clip3(m_param->rc.qpMin, m_param->rc.qpMax, (int32_t)(qp + 0.5 + ((x265_analysis_inter_data*)m_frame->m_analysisData.interData)->cuQPOff[cuIdx]));
     }
-    int loopIncr = (m_param->rc.qgSize == 8) ? 8 : 16;
-
-    /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
-    bool isReferenced = IS_REFERENCED(m_frame);
-    double *qpoffs = (isReferenced && m_param->rc.cuTree && !complexCheck) ? m_frame->m_lowres.qpCuTreeOffset :
-                                                                             m_frame->m_lowres.qpAqOffset;
-    if (qpoffs)
+    if (m_param->rc.hevcAq)
     {
-        uint32_t width = m_frame->m_fencPic->m_picWidth;
-        uint32_t height = m_frame->m_fencPic->m_picHeight;
-        uint32_t block_x = ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx];
-        uint32_t block_y = ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx];
-        uint32_t maxCols = (m_frame->m_fencPic->m_picWidth + (loopIncr - 1)) / loopIncr;
-        uint32_t blockSize = m_param->maxCUSize >> cuGeom.depth;
-        double qp_offset = 0;
-        uint32_t cnt = 0;
-        for (uint32_t block_yy = block_y; block_yy < block_y + blockSize && block_yy < height; block_yy += loopIncr)
+        /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
+        double dQpOffset = 0;
+        if (bCuTreeOffset)
         {
-            for (uint32_t block_xx = block_x; block_xx < block_x + blockSize && block_xx < width; block_xx += loopIncr)
+            dQpOffset = cuTreeQPOffset(ctu, cuGeom);
+        }
+        else
+        {
+            dQpOffset = aqQPOffset(ctu, cuGeom);
+            if (complexCheck)
             {
-                uint32_t idx = ((block_yy / loopIncr) * (maxCols)) + (block_xx / loopIncr);
-                qp_offset += qpoffs[idx];
-                cnt++;
+                int32_t offset = (int32_t)(dQpOffset * 100 + .5);
+                double threshold = (1 - ((x265_ADAPT_RD_STRENGTH - m_param->dynamicRd) * 0.5));
+                int32_t max_threshold = (int32_t)(threshold * 100 + .5);
+                return (offset < max_threshold);
             }
         }
-
-        qp_offset /= cnt;
-        qp += qp_offset;
-        if (complexCheck)
+        qp += dQpOffset;
+    }
+    else
+    {
+        int loopIncr = (m_param->rc.qgSize == 8) ? 8 : 16;
+        /* Use cuTree offsets if cuTree enabled and frame is referenced, else use AQ offsets */
+        double *qpoffs = bCuTreeOffset ? m_frame->m_lowres.qpCuTreeOffset : m_frame->m_lowres.qpAqOffset;
+        if (qpoffs)
         {
-            int32_t offset = (int32_t)(qp_offset * 100 + .5);
-            double threshold = (1 - ((x265_ADAPT_RD_STRENGTH - m_param->dynamicRd) * 0.5));
-            int32_t max_threshold = (int32_t)(threshold * 100 + .5);
-            return (offset < max_threshold);
+            uint32_t width = m_frame->m_fencPic->m_picWidth;
+            uint32_t height = m_frame->m_fencPic->m_picHeight;
+            uint32_t block_x = ctu.m_cuPelX + g_zscanToPelX[cuGeom.absPartIdx];
+            uint32_t block_y = ctu.m_cuPelY + g_zscanToPelY[cuGeom.absPartIdx];
+            uint32_t maxCols = (m_frame->m_fencPic->m_picWidth + (loopIncr - 1)) / loopIncr;
+            uint32_t blockSize = m_param->maxCUSize >> cuGeom.depth;
+            double dQpOffset = 0;
+            uint32_t cnt = 0;
+            for (uint32_t block_yy = block_y; block_yy < block_y + blockSize && block_yy < height; block_yy += loopIncr)
+            {
+                for (uint32_t block_xx = block_x; block_xx < block_x + blockSize && block_xx < width; block_xx += loopIncr)
+                {
+                    uint32_t idx = ((block_yy / loopIncr) * (maxCols)) + (block_xx / loopIncr);
+                    dQpOffset += qpoffs[idx];
+                    cnt++;
+                }
+            }
+            dQpOffset /= cnt;
+            qp += dQpOffset;
+            if (complexCheck)
+            {
+                int32_t offset = (int32_t)(dQpOffset * 100 + .5);
+                double threshold = (1 - ((x265_ADAPT_RD_STRENGTH - m_param->dynamicRd) * 0.5));
+                int32_t max_threshold = (int32_t)(threshold * 100 + .5);
+                return (offset < max_threshold);
+            }
         }
     }
 

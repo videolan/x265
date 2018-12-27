@@ -3,6 +3,7 @@
  *
  * Authors: Gopu Govindaswamy <gopu@multicorewareinc.com>
  *          Steve Borho <steve@borho.org>
+ *          Ashok Kumar Mishra <ashok@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -105,6 +106,7 @@ uint32_t LookaheadTLD::acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blo
     x265_emms();
     return var;
 }
+
 /* Find the sum of pixels of each block for luma plane */
 uint32_t LookaheadTLD::lumaSumCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, uint32_t qgSize)
 {
@@ -119,6 +121,157 @@ uint32_t LookaheadTLD::lumaSumCu(Frame* curFrame, uint32_t blockX, uint32_t bloc
 
     x265_emms();
     return (uint32_t)sum_ssd;
+}
+
+void LookaheadTLD::xPreanalyzeQp(Frame* curFrame)
+{
+    const uint32_t width = curFrame->m_fencPic->m_picWidth;
+    const uint32_t height = curFrame->m_fencPic->m_picHeight;
+
+    for (uint32_t d = 0; d < 4; d++)
+    {
+        int ctuSizeIdx = 6 - g_log2Size[curFrame->m_param->maxCUSize];
+        int aqDepth = g_log2Size[curFrame->m_param->maxCUSize] - g_log2Size[curFrame->m_param->rc.qgSize];
+        if (!aqLayerDepth[ctuSizeIdx][aqDepth][d])
+            continue;
+
+        PicQPAdaptationLayer* pcAQLayer = &curFrame->m_lowres.pAQLayer[d];
+        const uint32_t aqPartWidth = pcAQLayer->aqPartWidth;
+        const uint32_t aqPartHeight = pcAQLayer->aqPartHeight;
+        double* pcAQU = pcAQLayer->dActivity;
+        double* pcQP = pcAQLayer->dQpOffset;
+        double* pcCuTree = pcAQLayer->dCuTreeOffset;
+
+        for (uint32_t y = 0; y < height; y += aqPartHeight)
+        {
+            for (uint32_t x = 0; x < width; x += aqPartWidth, pcAQU++, pcQP++, pcCuTree++)
+            {
+                double dMaxQScale = pow(2.0, curFrame->m_param->rc.qpAdaptationRange / 6.0);
+                double dCUAct = *pcAQU;
+                double dAvgAct = pcAQLayer->dAvgActivity;
+
+                double dNormAct = (dMaxQScale*dCUAct + dAvgAct) / (dCUAct + dMaxQScale*dAvgAct);
+                double dQpOffset = (X265_LOG2(dNormAct) / X265_LOG2(2.0)) * 6.0;
+                *pcQP = dQpOffset;
+                *pcCuTree = dQpOffset;
+            }
+        }
+    }
+}
+
+void LookaheadTLD::xPreanalyze(Frame* curFrame)
+{
+    const uint32_t width = curFrame->m_fencPic->m_picWidth;
+    const uint32_t height = curFrame->m_fencPic->m_picHeight;
+    const intptr_t stride = curFrame->m_fencPic->m_stride;
+
+    for (uint32_t d = 0; d < 4; d++)
+    {
+        int ctuSizeIdx = 6 - g_log2Size[curFrame->m_param->maxCUSize];
+        int aqDepth = g_log2Size[curFrame->m_param->maxCUSize] - g_log2Size[curFrame->m_param->rc.qgSize];
+        if (!aqLayerDepth[ctuSizeIdx][aqDepth][d])
+            continue;
+
+        const pixel* src = curFrame->m_fencPic->m_picOrg[0];;
+        PicQPAdaptationLayer* pQPLayer = &curFrame->m_lowres.pAQLayer[d];
+        const uint32_t aqPartWidth = pQPLayer->aqPartWidth;
+        const uint32_t aqPartHeight = pQPLayer->aqPartHeight;
+        double* pcAQU = pQPLayer->dActivity;
+
+        double dSumAct = 0.0;
+        for (uint32_t y = 0; y < height; y += aqPartHeight)
+        {
+            const uint32_t currAQPartHeight = X265_MIN(aqPartHeight, height - y);
+            for (uint32_t x = 0; x < width; x += aqPartWidth, pcAQU++)
+            {
+                const uint32_t currAQPartWidth = X265_MIN(aqPartWidth, width - x);
+                const pixel* pBlkY = &src[x];
+                uint64_t sum[4] = { 0, 0, 0, 0 };
+                uint64_t sumSq[4] = { 0, 0, 0, 0 };
+                uint32_t by = 0;
+                for (; by < currAQPartHeight >> 1; by++)
+                {
+                    uint32_t bx = 0;
+                    for (; bx < currAQPartWidth >> 1; bx++)
+                    {
+                        sum[0] += pBlkY[bx];
+                        sumSq[0] += pBlkY[bx] * pBlkY[bx];
+                    }
+                    for (; bx < currAQPartWidth; bx++)
+                    {
+                        sum[1] += pBlkY[bx];
+                        sumSq[1] += pBlkY[bx] * pBlkY[bx];
+                    }
+                    pBlkY += stride;
+                }
+                for (; by < currAQPartHeight; by++)
+                {
+                    uint32_t bx = 0;
+                    for (; bx < currAQPartWidth >> 1; bx++)
+                    {
+                        sum[2] += pBlkY[bx];
+                        sumSq[2] += pBlkY[bx] * pBlkY[bx];
+                    }
+                    for (; bx < currAQPartWidth; bx++)
+                    {
+                        sum[3] += pBlkY[bx];
+                        sumSq[3] += pBlkY[bx] * pBlkY[bx];
+                    }
+                    pBlkY += stride;
+                }
+
+                assert((currAQPartWidth & 1) == 0);
+                assert((currAQPartHeight & 1) == 0);
+                const uint32_t pixelWidthOfQuadrants = currAQPartWidth >> 1;
+                const uint32_t pixelHeightOfQuadrants = currAQPartHeight >> 1;
+                const uint32_t numPixInAQPart = pixelWidthOfQuadrants * pixelHeightOfQuadrants;
+
+                double dMinVar = MAX_DOUBLE;
+                if (numPixInAQPart != 0)
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        const double dAverage = double(sum[i]) / numPixInAQPart;
+                        const double dVariance = double(sumSq[i]) / numPixInAQPart - dAverage * dAverage;
+                        dMinVar = X265_MIN(dMinVar, dVariance);
+                    }
+                }
+                else
+                {
+                    dMinVar = 0.0;
+                }
+                double dActivity = 1.0 + dMinVar;
+                *pcAQU = dActivity;
+                dSumAct += dActivity;
+            }
+            src += stride * currAQPartHeight;
+        }
+
+        const double dAvgAct = dSumAct / (pQPLayer->numAQPartInWidth * pQPLayer->numAQPartInHeight);
+        pQPLayer->dAvgActivity = dAvgAct;
+    }
+
+    xPreanalyzeQp(curFrame);
+
+    int minAQDepth = curFrame->m_lowres.pAQLayer->minAQDepth;
+
+    PicQPAdaptationLayer* pQPLayer = &curFrame->m_lowres.pAQLayer[minAQDepth];
+    const uint32_t aqPartWidth = pQPLayer->aqPartWidth;
+    const uint32_t aqPartHeight = pQPLayer->aqPartHeight;
+    double* pcQP = pQPLayer->dQpOffset;
+
+    // Use new qp offset values for qpAqOffset, qpCuTreeOffset and invQscaleFactor buffer
+    int blockXY = 0;
+    for (uint32_t y = 0; y < height; y += aqPartHeight)
+    {
+        for (uint32_t x = 0; x < width; x += aqPartWidth, pcQP++)
+        {
+            curFrame->m_lowres.invQscaleFactor[blockXY] = x265_exp2fix8(*pcQP);
+            blockXY++;
+
+            acEnergyCu(curFrame, x, y, curFrame->m_param->internalCsp, curFrame->m_param->rc.qgSize);
+        }
+    }
 }
 
 void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
@@ -176,90 +329,99 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
         if (param->bEnableWeightedPred || param->bEnableWeightedBiPred)
         {
             for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
-                for (int blockX = 0; blockX < maxCol; blockX += loopIncr)                
-                    acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);                
+                for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
+                    acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
         }
     }
     else
     {
-        int blockXY = 0;
-        double avg_adj_pow2 = 0.f, avg_adj = 0.f, qp_adj = 0.f;
-        double bias_strength = 0.f, strength = 0.f;
-        if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
+        if (param->rc.hevcAq)
         {
-            double bit_depth_correction = 1.f / (1 << (2*(X265_DEPTH-8)));            
-            
-            for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
-            {                
-                for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
-                {
-                    uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);                    
-                    qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
-                    curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
-                    avg_adj += qp_adj;
-                    avg_adj_pow2 += qp_adj * qp_adj;
-                    blockXY++;
-                }
-            }
-            avg_adj /= blockCount;
-            avg_adj_pow2 /= blockCount;
-            strength = param->rc.aqStrength * avg_adj;
-            avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - modeTwoConst) / avg_adj;
-            bias_strength = param->rc.aqStrength;
+            // New method for calculating variance and qp offset
+            xPreanalyze(curFrame);
         }
         else
-            strength = param->rc.aqStrength * 1.0397f;
-
-        blockXY = 0;
-        for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
         {
-            for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
+            int blockXY = 0;
+            double avg_adj_pow2 = 0, avg_adj = 0, qp_adj = 0;
+            double bias_strength = 0.f;
+            double strength = 0.f;
+            if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
             {
-                if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
-                {
-                    qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
-                    qp_adj = strength * (qp_adj - avg_adj) + bias_strength * (1.f - modeTwoConst / (qp_adj * qp_adj));
-                }
-                else if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE)
-                {
-                    qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
-                    qp_adj = strength * (qp_adj - avg_adj);
-                }
-                else
-                {
-                    uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp,param->rc.qgSize);
-                    qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));                    
-                }
+                double bit_depth_correction = 1.f / (1 << (2 * (X265_DEPTH - 8)));
 
-                if (param->bHDROpt)
+                for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
                 {
-                    uint32_t sum = lumaSumCu(curFrame, blockX, blockY, param->rc.qgSize);
-                    uint32_t lumaAvg = sum / (loopIncr * loopIncr);
-                    if (lumaAvg < 301)
-                        qp_adj += 3;
-                    else if (lumaAvg >= 301 && lumaAvg < 367)
-                        qp_adj += 2;
-                    else if (lumaAvg >= 367 && lumaAvg < 434)
-                        qp_adj += 1;
-                    else if (lumaAvg >= 501 && lumaAvg < 567)
-                        qp_adj -= 1;
-                    else if (lumaAvg >= 567 && lumaAvg < 634)
-                        qp_adj -= 2;
-                    else if (lumaAvg >= 634 && lumaAvg < 701)
-                        qp_adj -= 3;
-                    else if (lumaAvg >= 701 && lumaAvg < 767)
-                        qp_adj -= 4;
-                    else if (lumaAvg >= 767 && lumaAvg < 834)
-                        qp_adj -= 5;
-                    else if (lumaAvg >= 834)
-                        qp_adj -= 6;
+                    for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
+                    {
+                        uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+                        qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
+                        curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
+                        avg_adj += qp_adj;
+                        avg_adj_pow2 += qp_adj * qp_adj;
+                        blockXY++;
+                    }
                 }
-                if (quantOffsets != NULL)
-                    qp_adj += quantOffsets[blockXY];
-                curFrame->m_lowres.qpAqOffset[blockXY] = qp_adj;
-                curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
-                curFrame->m_lowres.invQscaleFactor[blockXY] = x265_exp2fix8(qp_adj);
-                blockXY++;
+                avg_adj /= blockCount;
+                avg_adj_pow2 /= blockCount;
+                strength = param->rc.aqStrength * avg_adj;
+                avg_adj = avg_adj - 0.5f * (avg_adj_pow2 - modeTwoConst) / avg_adj;
+                bias_strength = param->rc.aqStrength;
+            }
+            else
+                strength = param->rc.aqStrength * 1.0397f;
+
+            blockXY = 0;
+            for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
+            {
+                for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
+                {
+                    if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
+                    {
+                        qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
+                        qp_adj = strength * (qp_adj - avg_adj) + bias_strength * (1.f - modeTwoConst / (qp_adj * qp_adj));
+                    }
+                    else if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE)
+                    {
+                        qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
+                        qp_adj = strength * (qp_adj - avg_adj);
+                    }
+                    else
+                    {
+                        uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+                        qp_adj = strength * (X265_LOG2(X265_MAX(energy, 1)) - (modeOneConst + 2 * (X265_DEPTH - 8)));
+                    }
+
+                    if (param->bHDROpt)
+                    {
+                        uint32_t sum = lumaSumCu(curFrame, blockX, blockY, param->rc.qgSize);
+                        uint32_t lumaAvg = sum / (loopIncr * loopIncr);
+                        if (lumaAvg < 301)
+                            qp_adj += 3;
+                        else if (lumaAvg >= 301 && lumaAvg < 367)
+                            qp_adj += 2;
+                        else if (lumaAvg >= 367 && lumaAvg < 434)
+                            qp_adj += 1;
+                        else if (lumaAvg >= 501 && lumaAvg < 567)
+                            qp_adj -= 1;
+                        else if (lumaAvg >= 567 && lumaAvg < 634)
+                            qp_adj -= 2;
+                        else if (lumaAvg >= 634 && lumaAvg < 701)
+                            qp_adj -= 3;
+                        else if (lumaAvg >= 701 && lumaAvg < 767)
+                            qp_adj -= 4;
+                        else if (lumaAvg >= 767 && lumaAvg < 834)
+                            qp_adj -= 5;
+                        else if (lumaAvg >= 834)
+                            qp_adj -= 6;
+                    }
+                    if (quantOffsets != NULL)
+                        qp_adj += quantOffsets[blockXY];
+                    curFrame->m_lowres.qpAqOffset[blockXY] = qp_adj;
+                    curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
+                    curFrame->m_lowres.invQscaleFactor[blockXY] = x265_exp2fix8(qp_adj);
+                    blockXY++;
+                }
             }
         }
     }
@@ -301,11 +463,13 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
     {
         int blockXY = 0;
         for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
+        {
             for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
             {
                 curFrame->m_lowres.blockVariance[blockXY] = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
                 blockXY++;
             }
+        }
     }
 }
 
@@ -596,13 +760,16 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
 
     /* Allow the strength to be adjusted via qcompress, since the two concepts
      * are very similar. */
-
-    m_cuTreeStrength = 5.0 * (1.0 - m_param->rc.qCompress);
+    m_cuTreeStrength = (m_param->rc.hevcAq ? 6.0 : 5.0) * (1.0 - m_param->rc.qCompress);
 
     m_lastKeyframe = -m_param->keyframeMax;
     m_sliceTypeBusy = false;
     m_fullQueueSize = X265_MAX(1, m_param->lookaheadDepth);
-    m_bAdaptiveQuant = m_param->rc.aqMode || m_param->bEnableWeightedPred || m_param->bEnableWeightedBiPred || m_param->bAQMotion;
+    m_bAdaptiveQuant = m_param->rc.aqMode ||
+                       m_param->bEnableWeightedPred ||
+                       m_param->bEnableWeightedBiPred ||
+                       m_param->bAQMotion ||
+                       m_param->rc.hevcAq;
 
     /* If we have a thread pool and are using --b-adapt 2, it is generally
      * preferable to perform all motion searches for each lowres frame in large
@@ -919,6 +1086,7 @@ void Lookahead::getEstimatedPictureCost(Frame *curFrame)
     if (!m_param->analysisLoad || !m_param->bDisableLookahead)
     {
         X265_CHECK(curFrame->m_lowres.costEst[b - p0][p1 - b] > 0, "Slice cost not estimated\n")
+
         if (m_param->rc.cuTree && !m_param->rc.bStatRead)
             /* update row satds based on cutree offsets */
             curFrame->m_lowres.satdCost = frameCostRecalculate(frames, p0, p1, b);
@@ -1695,6 +1863,7 @@ void Lookahead::slicetypeAnalyse(Lowres **frames, bool bKeyframe)
 
     if (m_param->rc.cuTree)
         cuTree(frames, X265_MIN(numFrames, m_param->keyframeMax), bKeyframe);
+
     if (m_param->gopLookahead && (keyFrameLimit >= 0) && (keyFrameLimit <= m_param->bframes + 1) && !m_extendGopBoundary)
         keyintLimit = keyFrameLimit;
 
@@ -1928,6 +2097,7 @@ int64_t Lookahead::slicetypePathCost(Lowres **frames, char *path, int64_t thresh
 
     return cost;
 }
+
 void Lookahead::aqMotion(Lowres **frames, bool bIntra)
 {
     if (!bIntra)
@@ -2223,44 +2393,191 @@ void Lookahead::estimateCUPropagate(Lowres **frames, double averageDuration, int
         cuTreeFinish(frames[b], averageDuration, b == p1 ? b - p0 : 0);
 }
 
-void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance)
+void Lookahead::computeCUTreeQpOffset(Lowres *frame, double averageDuration, int ref0Distance)
 {
     int fpsFactor = (int)(CLIP_DURATION(averageDuration) / CLIP_DURATION((double)m_param->fpsDenom / m_param->fpsNum) * 256);
-    double weightdelta = 0.0;
+    uint32_t loopIncr = (m_param->rc.qgSize == 8) ? 8 : 16;
 
+    double weightdelta = 0.0;
     if (ref0Distance && frame->weightedCostDelta[ref0Distance - 1] > 0)
         weightdelta = (1.0 - frame->weightedCostDelta[ref0Distance - 1]);
 
+    uint32_t widthFullRes = frame->widthFullRes;
+    uint32_t heightFullRes = frame->heightFullRes;
+
     if (m_param->rc.qgSize == 8)
     {
+        int minAQDepth = frame->pAQLayer->minAQDepth;
+
+        PicQPAdaptationLayer* pQPLayerMin = &frame->pAQLayer[minAQDepth];
+        double* pcCuTree8x8 = pQPLayerMin->dCuTreeOffset8x8;
+
         for (int cuY = 0; cuY < m_8x8Height; cuY++)
         {
             for (int cuX = 0; cuX < m_8x8Width; cuX++)
             {
                 const int cuXY = cuX + cuY * m_8x8Width;
-                int intracost = ((frame->intraCost[cuXY]) / 4 * frame->invQscaleFactor8x8[cuXY] + 128) >> 8;
+                int intracost = ((frame->intraCost[cuXY] / 4) * frame->invQscaleFactor8x8[cuXY] + 128) >> 8;
                 if (intracost)
                 {
-                    int propagateCost = ((frame->propagateCost[cuXY]) / 4 * fpsFactor + 128) >> 8;
+                    int propagateCost = ((frame->propagateCost[cuXY] / 4)  * fpsFactor + 128) >> 8;
                     double log2_ratio = X265_LOG2(intracost + propagateCost) - X265_LOG2(intracost) + weightdelta;
-                    frame->qpCuTreeOffset[cuX * 2 + cuY * m_8x8Width * 4] = frame->qpAqOffset[cuX * 2 + cuY * m_8x8Width * 4] - m_cuTreeStrength * (log2_ratio);
-                    frame->qpCuTreeOffset[cuX * 2 + cuY * m_8x8Width * 4 + 1] = frame->qpAqOffset[cuX * 2 + cuY * m_8x8Width * 4 + 1] - m_cuTreeStrength * (log2_ratio);
-                    frame->qpCuTreeOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes] = frame->qpAqOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes] - m_cuTreeStrength * (log2_ratio);
-                    frame->qpCuTreeOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes + 1] = frame->qpAqOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes + 1] - m_cuTreeStrength * (log2_ratio);
+
+                    pcCuTree8x8[cuX * 2 + cuY * m_8x8Width * 4] = log2_ratio;
+                    pcCuTree8x8[cuX * 2 + cuY * m_8x8Width * 4 + 1] = log2_ratio;
+                    pcCuTree8x8[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes] = log2_ratio;
+                    pcCuTree8x8[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes + 1] = log2_ratio;
+                }
+            }
+        }
+
+        for (uint32_t d = 0; d < 4; d++)
+        {
+            int ctuSizeIdx = 6 - g_log2Size[m_param->maxCUSize];
+            int aqDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
+            if (!aqLayerDepth[ctuSizeIdx][aqDepth][d])
+                continue;
+
+            PicQPAdaptationLayer* pQPLayer = &frame->pAQLayer[d];
+            const uint32_t aqPartWidth = pQPLayer->aqPartWidth;
+            const uint32_t aqPartHeight = pQPLayer->aqPartHeight;
+
+            const uint32_t numAQPartInWidth = pQPLayer->numAQPartInWidth;
+            const uint32_t numAQPartInHeight = pQPLayer->numAQPartInHeight;
+
+            double* pcQP = pQPLayer->dQpOffset;
+            double* pcCuTree = pQPLayer->dCuTreeOffset;
+
+            uint32_t maxCols = frame->maxBlocksInRowFullRes;
+
+            for (uint32_t y = 0; y < numAQPartInHeight; y++)
+            {
+                for (uint32_t x = 0; x < numAQPartInWidth; x++, pcQP++, pcCuTree++)
+                {
+                    uint32_t block_x = x * aqPartWidth;
+                    uint32_t block_y = y * aqPartHeight;
+
+                    uint32_t blockXY = 0;
+                    double log2_ratio = 0;
+                    for (uint32_t block_yy = block_y; block_yy < block_y + aqPartHeight && block_yy < heightFullRes; block_yy += loopIncr)
+                    {
+                        for (uint32_t block_xx = block_x; block_xx < block_x + aqPartWidth && block_xx < widthFullRes; block_xx += loopIncr)
+                        {
+                            uint32_t idx = ((block_yy / loopIncr) * (maxCols)) + (block_xx / loopIncr);
+
+                            log2_ratio += *(pcCuTree8x8 + idx);
+                            
+                            blockXY++;
+                        }
+                    }
+
+                    double qp_offset = (m_cuTreeStrength * log2_ratio) / blockXY;
+
+                    *pcCuTree = *pcQP - qp_offset;
                 }
             }
         }
     }
     else
     {
-        for (int cuIndex = 0; cuIndex < m_cuCount; cuIndex++)
+        for (uint32_t d = 0; d < 4; d++)
         {
-            int intracost = (frame->intraCost[cuIndex] * frame->invQscaleFactor[cuIndex] + 128) >> 8;
-            if (intracost)
+            int ctuSizeIdx = 6 - g_log2Size[m_param->maxCUSize];
+            int aqDepth = g_log2Size[m_param->maxCUSize] - g_log2Size[m_param->rc.qgSize];
+            if (!aqLayerDepth[ctuSizeIdx][aqDepth][d])
+                continue;
+
+            PicQPAdaptationLayer* pQPLayer = &frame->pAQLayer[d];
+            const uint32_t aqPartWidth = pQPLayer->aqPartWidth;
+            const uint32_t aqPartHeight = pQPLayer->aqPartHeight;
+
+            const uint32_t numAQPartInWidth = pQPLayer->numAQPartInWidth;
+            const uint32_t numAQPartInHeight = pQPLayer->numAQPartInHeight;
+
+            double* pcQP = pQPLayer->dQpOffset;
+            double* pcCuTree = pQPLayer->dCuTreeOffset;
+
+            uint32_t maxCols = frame->maxBlocksInRow;
+
+            for (uint32_t y = 0; y < numAQPartInHeight; y++)
             {
-                int propagateCost = (frame->propagateCost[cuIndex] * fpsFactor + 128) >> 8;
-                double log2_ratio = X265_LOG2(intracost + propagateCost) - X265_LOG2(intracost) + weightdelta;
-                frame->qpCuTreeOffset[cuIndex] = frame->qpAqOffset[cuIndex] - m_cuTreeStrength * log2_ratio;
+                for (uint32_t x = 0; x < numAQPartInWidth; x++, pcQP++, pcCuTree++)
+                {
+                    uint32_t block_x = x * aqPartWidth;
+                    uint32_t block_y = y * aqPartHeight;
+
+                    uint32_t blockXY = 0;
+                    double log2_ratio = 0;
+                    for (uint32_t block_yy = block_y; block_yy < block_y + aqPartHeight && block_yy < heightFullRes; block_yy += loopIncr)
+                    {
+                        for (uint32_t block_xx = block_x; block_xx < block_x + aqPartWidth && block_xx < widthFullRes; block_xx += loopIncr)
+                        {
+                            uint32_t idx = ((block_yy / loopIncr) * (maxCols)) + (block_xx / loopIncr);
+
+                            int intraCost = (frame->intraCost[idx] * frame->invQscaleFactor[idx] + 128) >> 8;
+                            int propagateCost = (frame->propagateCost[idx] * fpsFactor + 128) >> 8;
+
+                            log2_ratio += (X265_LOG2(intraCost + propagateCost) - X265_LOG2(intraCost) + weightdelta);
+
+                            blockXY++;
+                        }
+                    }
+
+                    double qp_offset = (m_cuTreeStrength * log2_ratio) / blockXY;
+
+                    *pcCuTree = *pcQP - qp_offset;
+
+                }
+            }
+        }
+    }
+}
+
+void Lookahead::cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance)
+{
+    if (m_param->rc.hevcAq)
+    {
+        computeCUTreeQpOffset(frame, averageDuration, ref0Distance);
+    }
+    else
+    {
+        int fpsFactor = (int)(CLIP_DURATION(averageDuration) / CLIP_DURATION((double)m_param->fpsDenom / m_param->fpsNum) * 256);
+        double weightdelta = 0.0;
+
+        if (ref0Distance && frame->weightedCostDelta[ref0Distance - 1] > 0)
+            weightdelta = (1.0 - frame->weightedCostDelta[ref0Distance - 1]);
+
+        if (m_param->rc.qgSize == 8)
+        {
+            for (int cuY = 0; cuY < m_8x8Height; cuY++)
+            {
+                for (int cuX = 0; cuX < m_8x8Width; cuX++)
+                {
+                    const int cuXY = cuX + cuY * m_8x8Width;
+                    int intracost = ((frame->intraCost[cuXY]) / 4 * frame->invQscaleFactor8x8[cuXY] + 128) >> 8;
+                    if (intracost)
+                    {
+                        int propagateCost = ((frame->propagateCost[cuXY]) / 4 * fpsFactor + 128) >> 8;
+                        double log2_ratio = X265_LOG2(intracost + propagateCost) - X265_LOG2(intracost) + weightdelta;
+                        frame->qpCuTreeOffset[cuX * 2 + cuY * m_8x8Width * 4] = frame->qpAqOffset[cuX * 2 + cuY * m_8x8Width * 4] - m_cuTreeStrength * (log2_ratio);
+                        frame->qpCuTreeOffset[cuX * 2 + cuY * m_8x8Width * 4 + 1] = frame->qpAqOffset[cuX * 2 + cuY * m_8x8Width * 4 + 1] - m_cuTreeStrength * (log2_ratio);
+                        frame->qpCuTreeOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes] = frame->qpAqOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes] - m_cuTreeStrength * (log2_ratio);
+                        frame->qpCuTreeOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes + 1] = frame->qpAqOffset[cuX * 2 + cuY * m_8x8Width * 4 + frame->maxBlocksInRowFullRes + 1] - m_cuTreeStrength * (log2_ratio);
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (int cuIndex = 0; cuIndex < m_cuCount; cuIndex++)
+            {
+                int intracost = (frame->intraCost[cuIndex] * frame->invQscaleFactor[cuIndex] + 128) >> 8;
+                if (intracost)
+                {
+                    int propagateCost = (frame->propagateCost[cuIndex] * fpsFactor + 128) >> 8;
+                    double log2_ratio = X265_LOG2(intracost + propagateCost) - X265_LOG2(intracost) + weightdelta;
+                    frame->qpCuTreeOffset[cuIndex] = frame->qpAqOffset[cuIndex] - m_cuTreeStrength * log2_ratio;
+                }
             }
         }
     }
@@ -2275,31 +2592,71 @@ int64_t Lookahead::frameCostRecalculate(Lowres** frames, int p0, int p1, int b)
 
     int64_t score = 0;
     int *rowSatd = frames[b]->rowSatds[b - p0][p1 - b];
-    double *qp_offset = frames[b]->qpCuTreeOffset;
 
     x265_emms();
-    for (int cuy = m_8x8Height - 1; cuy >= 0; cuy--)
+
+    if (m_param->rc.hevcAq)
     {
-        rowSatd[cuy] = 0;
-        for (int cux = m_8x8Width - 1; cux >= 0; cux--)
+        int minAQDepth = frames[b]->pAQLayer->minAQDepth;
+        PicQPAdaptationLayer* pQPLayer = &frames[b]->pAQLayer[minAQDepth];
+        double* pcQPCuTree = pQPLayer->dCuTreeOffset;
+
+        // Use new qp offset values for qpAqOffset, qpCuTreeOffset and invQscaleFactor buffer
+        for (int cuy = m_8x8Height - 1; cuy >= 0; cuy--)
         {
-            int cuxy = cux + cuy * m_8x8Width;
-            int cuCost = frames[b]->lowresCosts[b - p0][p1 - b][cuxy] & LOWRES_COST_MASK;
-            double qp_adj;
-            if (m_param->rc.qgSize == 8)
-                qp_adj = (qp_offset[cux * 2 + cuy * m_8x8Width * 4] +
-                          qp_offset[cux * 2 + cuy * m_8x8Width * 4 + 1] +
-                          qp_offset[cux * 2 + cuy * m_8x8Width * 4 + frames[b]->maxBlocksInRowFullRes] +
-                          qp_offset[cux * 2 + cuy * m_8x8Width * 4 + frames[b]->maxBlocksInRowFullRes + 1]) / 4;
-            else 
-                qp_adj = qp_offset[cuxy];
-            cuCost = (cuCost * x265_exp2fix8(qp_adj) + 128) >> 8;
-            rowSatd[cuy] += cuCost;
-            if ((cuy > 0 && cuy < m_8x8Height - 1 &&
-                 cux > 0 && cux < m_8x8Width - 1) ||
-                m_8x8Width <= 2 || m_8x8Height <= 2)
+            rowSatd[cuy] = 0;
+            for (int cux = m_8x8Width - 1; cux >= 0; cux--)
             {
-                score += cuCost;
+                int cuxy = cux + cuy * m_8x8Width;
+                int cuCost = frames[b]->lowresCosts[b - p0][p1 - b][cuxy] & LOWRES_COST_MASK;
+                double qp_adj;
+
+                if (m_param->rc.qgSize == 8)
+                    qp_adj = (pcQPCuTree[cux * 2 + cuy * m_8x8Width * 4] +
+                    pcQPCuTree[cux * 2 + cuy * m_8x8Width * 4 + 1] +
+                    pcQPCuTree[cux * 2 + cuy * m_8x8Width * 4 + frames[b]->maxBlocksInRowFullRes] +
+                    pcQPCuTree[cux * 2 + cuy * m_8x8Width * 4 + frames[b]->maxBlocksInRowFullRes + 1]) / 4;
+                else
+                    qp_adj = *(pcQPCuTree + cuxy);
+
+                cuCost = (cuCost * x265_exp2fix8(qp_adj) + 128) >> 8;
+                rowSatd[cuy] += cuCost;
+                if ((cuy > 0 && cuy < m_8x8Height - 1 &&
+                    cux > 0 && cux < m_8x8Width - 1) ||
+                    m_8x8Width <= 2 || m_8x8Height <= 2)
+                {
+                    score += cuCost;
+                }
+            }
+        }
+    }
+    else
+    {
+        double *qp_offset = frames[b]->qpCuTreeOffset;
+
+        for (int cuy = m_8x8Height - 1; cuy >= 0; cuy--)
+        {
+            rowSatd[cuy] = 0;
+            for (int cux = m_8x8Width - 1; cux >= 0; cux--)
+            {
+                int cuxy = cux + cuy * m_8x8Width;
+                int cuCost = frames[b]->lowresCosts[b - p0][p1 - b][cuxy] & LOWRES_COST_MASK;
+                double qp_adj;
+                if (m_param->rc.qgSize == 8)
+                    qp_adj = (qp_offset[cux * 2 + cuy * m_8x8Width * 4] +
+                    qp_offset[cux * 2 + cuy * m_8x8Width * 4 + 1] +
+                    qp_offset[cux * 2 + cuy * m_8x8Width * 4 + frames[b]->maxBlocksInRowFullRes] +
+                    qp_offset[cux * 2 + cuy * m_8x8Width * 4 + frames[b]->maxBlocksInRowFullRes + 1]) / 4;
+                else 
+                    qp_adj = qp_offset[cuxy];
+                cuCost = (cuCost * x265_exp2fix8(qp_adj) + 128) >> 8;
+                rowSatd[cuy] += cuCost;
+                if ((cuy > 0 && cuy < m_8x8Height - 1 &&
+                    cux > 0 && cux < m_8x8Width - 1) ||
+                    m_8x8Width <= 2 || m_8x8Height <= 2)
+                {
+                    score += cuCost;
+                }
             }
         }
     }

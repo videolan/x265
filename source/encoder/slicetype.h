@@ -87,7 +87,8 @@ struct LookaheadTLD
     void lowresIntraEstimate(Lowres& fenc, uint32_t qgSize);
 
     void weightsAnalyse(Lowres& fenc, Lowres& ref);
-
+    void xPreanalyze(Frame* curFrame);
+    void xPreanalyzeQp(Frame* curFrame);
 protected:
 
     uint32_t acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, int csp, uint32_t qgSize);
@@ -175,6 +176,7 @@ protected:
     void    cuTree(Lowres **frames, int numframes, bool bintra);
     void    estimateCUPropagate(Lowres **frames, double average_duration, int p0, int p1, int b, int referenced);
     void    cuTreeFinish(Lowres *frame, double averageDuration, int ref0Distance);
+    void    computeCUTreeQpOffset(Lowres *frame, double averageDuration, int ref0Distance);
 
     /* called by getEstimatedPictureCost() to finalize cuTree costs */
     int64_t frameCostRecalculate(Lowres **frames, int p0, int p1, int b);

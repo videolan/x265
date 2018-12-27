@@ -201,7 +201,8 @@ protected:
 
     void classifyCU(const CUData& ctu, const CUGeom& cuGeom, const Mode& bestMode, TrainingData& trainData);
     void trainCU(const CUData& ctu, const CUGeom& cuGeom, const Mode& bestMode, TrainingData& trainData);
-
+    double aqQPOffset(const CUData& ctu, const CUGeom& cuGeom);
+    double cuTreeQPOffset(const CUData& ctu, const CUGeom& cuGeom);
     void calculateNormFactor(CUData& ctu, int qp);
     void normFactor(const pixel* src, uint32_t blockSize, CUData& ctu, int qp, TextType ttype);
 

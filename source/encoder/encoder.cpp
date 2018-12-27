@@ -2839,6 +2839,12 @@ void Encoder::configure(x265_param *p)
     if (p->rc.aqMode == X265_AQ_NONE && p->rc.cuTree == 0)
         p->rc.aqStrength = 0;
 
+    if (p->rc.hevcAq && p->rc.aqMode)
+    {
+        p->rc.aqMode = X265_AQ_NONE;
+        x265_log(p, X265_LOG_WARNING, "hevc-aq enabled, disabling other aq-modes\n");
+    }
+
     if (p->totalFrames && p->totalFrames <= 2 * ((float)p->fpsNum) / p->fpsDenom && p->rc.bStrictCbr)
         p->lookaheadDepth = p->totalFrames;
     if (p->bIntraRefresh)
