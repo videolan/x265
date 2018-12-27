@@ -423,28 +423,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bEnableWeightedBiPred = 1;
             param->bEnableAMP = 1;
             param->bEnableRectInter = 1;
-            param->lookaheadDepth = 30;
-            param->bframes = 8;
-            param->tuQTMaxInterDepth = 2;
-            param->tuQTMaxIntraDepth = 2;
-            param->rdLevel = 6;
-            param->rdoqLevel = 2;
-            param->psyRdoq = 1.0;
-            param->subpelRefine = 3;
-            param->maxNumMergeCand = 3;
-            param->searchMethod = X265_STAR_SEARCH;
-            param->maxNumReferences = 4;
-            param->limitReferences = 2;
-            param->limitModes = 1;
-            param->bIntraInBFrames = 1;
-            param->lookaheadSlices = 4; // limit parallelism as already enough work exists
-            param->limitTU = 4;
-        }
-        else if (!strcmp(preset, "veryslow"))
-        {
-            param->bEnableWeightedBiPred = 1;
-            param->bEnableAMP = 1;
-            param->bEnableRectInter = 1;
             param->lookaheadDepth = 40;
             param->bframes = 8;
             param->tuQTMaxInterDepth = 3;
@@ -461,6 +439,28 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bIntraInBFrames = 1;
             param->lookaheadSlices = 0; // disabled for best quality
             param->limitTU = 4;
+        }
+        else if (!strcmp(preset, "veryslow"))
+        {
+            param->bEnableWeightedBiPred = 1;
+            param->bEnableAMP = 1;
+            param->bEnableRectInter = 1;
+            param->lookaheadDepth = 40;
+            param->bframes = 8;
+            param->tuQTMaxInterDepth = 3;
+            param->tuQTMaxIntraDepth = 3;
+            param->rdLevel = 6;
+            param->rdoqLevel = 2;
+            param->psyRdoq = 1.0;
+            param->subpelRefine = 4;
+            param->maxNumMergeCand = 5;
+            param->searchMethod = X265_STAR_SEARCH;
+            param->maxNumReferences = 5;
+            param->limitReferences = 0;
+            param->limitModes = 0;
+            param->bIntraInBFrames = 1;
+            param->lookaheadSlices = 0; // disabled for best quality
+            param->limitTU = 0;
         }
         else if (!strcmp(preset, "placebo"))
         {
