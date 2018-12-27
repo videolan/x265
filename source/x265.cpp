@@ -690,7 +690,7 @@ bool CLIOptions::parseZoneFile()
                 args[argCount++] = token;
                 token = strtok(NULL, " ");
             }
-            args[argCount] = '\0';
+            args[argCount] = NULL;
             CLIOptions cliopt;
             if (cliopt.parseZoneParam(argCount, args,param, i))
             {
