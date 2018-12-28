@@ -48,7 +48,6 @@
 
 namespace X265_NS {
 const char g_sliceTypeToChar[] = {'B', 'P', 'I'};
-}
 
 /* Dolby Vision profile specific settings */
 typedef struct
@@ -75,6 +74,8 @@ DolbyVisionProfileSpec dovi[] =
     { 1, 1, 1, 1, 1, 5, 0, 16, 9, 9, 81 },
     { 1, 1, 1, 1, 1, 5, 0,  1, 1, 1, 82 }
 };
+}
+
 /* Threshold for motion vection, based on expermental result.
  * TODO: come up an algorithm for adoptive threshold */
 #define MVTHRESHOLD (10*10)
