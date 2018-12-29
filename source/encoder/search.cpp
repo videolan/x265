@@ -1048,12 +1048,12 @@ void Search::codeIntraChromaTSkip(Mode& mode, const CUGeom& cuGeom, uint32_t tuD
                 uint64_t tmpCost;
                 if (m_rdCost.m_psyRd)
                 {
-                    tmpEnergy = m_rdCost.psyCost(sizeIdxC, fenc, stride, reconQt, reconQtStride);
+                    tmpEnergy = m_rdCost.psyCost(sizeIdxC, fenc, stride, recon, reconStride);
                     tmpCost = m_rdCost.calcPsyRdCost(tmpDist, tmpBits, tmpEnergy);
                 }
                 else if(m_rdCost.m_ssimRd)
                 {
-                    tmpEnergy = m_quant.ssimDistortion(cu, fenc, stride, reconQt, reconQtStride, log2TrSizeC, ttype, absPartIdxC);
+                    tmpEnergy = m_quant.ssimDistortion(cu, fenc, stride, recon, reconStride, log2TrSizeC, ttype, absPartIdxC);
                     tmpCost = m_rdCost.calcSsimRdCost(tmpDist, tmpBits, tmpEnergy);
                 }
                 else
