@@ -670,7 +670,7 @@ typedef struct x265_zone
     int   bForceQp;             /* whether to use qp vs bitrate factor */
     int   qp;
     float bitrateFactor;
-    x265_param* zoneParam;
+    struct x265_param* zoneParam;
 } x265_zone;
     
 /* data to calculate aggregate VMAF score */
