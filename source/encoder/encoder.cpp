@@ -2677,9 +2677,9 @@ void Encoder::configureZone(x265_param *p, x265_param *zone)
     {
         p->rc.qp = zone->rc.qp;
         p->rc.aqMode = X265_AQ_NONE;
+        p->rc.hevcAq = 0;
     }
     p->radl = zone->radl;
-
     memcpy(zone, p, sizeof(x265_param));
 }
 
@@ -2811,6 +2811,7 @@ void Encoder::configure(x265_param *p)
     if (p->rc.rateControlMode == X265_RC_CQP)
     {
         p->rc.aqMode = X265_AQ_NONE;
+        p->rc.hevcAq = 0;
         p->rc.bitrate = 0;
         p->rc.cuTree = 0;
         p->rc.aqStrength = 0;
@@ -2833,16 +2834,15 @@ void Encoder::configure(x265_param *p)
         x265_log(p, X265_LOG_WARNING, "Max TU size should be less than or equal to max CU size, setting max TU size = %d\n", p->maxCUSize);
         p->maxTUSize = p->maxCUSize;
     }
-
     if (p->rc.aqStrength == 0 && p->rc.cuTree == 0)
-        p->rc.aqMode = X265_AQ_NONE;
-
-    if (p->rc.aqMode == X265_AQ_NONE && p->rc.cuTree == 0)
-        p->rc.aqStrength = 0;
-
-    if (p->rc.hevcAq && p->rc.aqMode)
     {
         p->rc.aqMode = X265_AQ_NONE;
+        p->rc.hevcAq = 0;
+    }
+    if (p->rc.aqMode == X265_AQ_NONE && p->rc.cuTree == 0)
+        p->rc.aqStrength = 0;
+    if (p->rc.hevcAq && p->rc.aqMode)
+    {
         x265_log(p, X265_LOG_WARNING, "hevc-aq enabled, disabling other aq-modes\n");
     }
 
