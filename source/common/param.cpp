@@ -353,7 +353,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->limitReferences = 0;
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
-            param->rc.hevcAq = 0;
             param->rc.qgSize = 32;
             param->bEnableFastIntra = 1;
         }
@@ -371,7 +370,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->limitReferences = 0;
             param->rc.aqStrength = 0.0;
             param->rc.aqMode = X265_AQ_NONE;
-            param->rc.hevcAq = 0;
             param->rc.qgSize = 32;
             param->bEnableSAO = 0;
             param->bEnableFastIntra = 1;
