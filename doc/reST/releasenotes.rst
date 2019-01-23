@@ -1,6 +1,43 @@
 *************
 Release Notes
 *************
+Version 3.0
+===========
+
+Release date - 23/01/2019 
+
+New features
+-------------
+1. option:: '--dolby-vision-profile <integer|float>' generates bitstreams confirming to the specified Dolby Vision profile. Currently profile 5, profile 8.1 and profile 8.2 enabled, Default 0 (disabled)
+
+2. option:: '--dolby-vision-rpu' File containing Dolby Vision RPU metadata. If given, x265's Dolby Vision metadata parser will fill the RPU field of input pictures with the metadata
+    read from the file. The library will interleave access units with RPUs in the bitstream. Default NULL (disabled).	
+
+3. option:: '--zonefile <filename>' specifies a text file which contains the boundaries of the zones where each of zones are configurable.
+
+4. option:: '--qp-adaptation-range'	Delta-QP range by QP adaptation based on a psycho-visual model. Default 1.0. 
+
+5. option:: '--refine-ctu-distortion <0/1>' store/normalize ctu distortion in analysis-save/load. Default 0. 
+
+6. Experimental feature option:: '--hevc-aq' enables adaptive quantization
+	It scales the quantization step size according to the spatial activity of one coding unit relative to frame average spatial activity. This AQ method utilizes
+	the minimum variance of sub-unit in each coding unit to represent the coding unit’s spatial complexity. 
+
+Encoder enhancements
+--------------------
+1. Preset: change param defaults for veryslow and slower preset. Replace slower preset with defaults used in veryslow preset and change param defaults in veryslow preset as per experimental results.
+2. AQ: change default AQ mode to auto-variance
+3. Cutree offset reuse: restricted to analysis reuse-level 10 for analysis-save -> analysis-load 
+4. Tune: introduce --tune animation option which improves encode quality for animated content 
+5. Reuse CU depth for B frame and allow I, P frame to follow x265 depth decision
+
+Bug fixes
+---------
+1. RC: fix rowStat computation in const-vbv
+2. Dynamic-refine: fix memory reset size.
+3. Fix Issue #442: linking issue on non x86 platform
+4. Encoder: Do not include CLL SEI message if empty
+5. Fix issue #441 build error in VMAF lib
 
 Version 2.9
 ===========
