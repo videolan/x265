@@ -635,8 +635,6 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
 
 void x265_picture_free(x265_picture *p)
 {
-    if (p->rpu.payload)
-        X265_FREE(p->rpu.payload);
     return x265_free(p);
 }
 

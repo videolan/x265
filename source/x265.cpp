@@ -880,6 +880,7 @@ int main(int argc, char **argv)
     uint32_t nal;
     int16_t *errorBuf = NULL;
     bool bDolbyVisionRPU = false;
+    uint8_t *rpuPayload = NULL;
     int ret = 0;
 
 
@@ -899,7 +900,8 @@ int main(int argc, char **argv)
 
     if (param->dolbyProfile && cliopt.dolbyVisionRpu)
     {
-        pic_in->rpu.payload = X265_MALLOC(uint8_t, 1024);
+        rpuPayload = X265_MALLOC(uint8_t, 1024);
+        pic_in->rpu.payload = rpuPayload;
         if (pic_in->rpu.payload)
             bDolbyVisionRPU = true;
     }
@@ -1060,6 +1062,7 @@ fail:
     api->param_free(param);
 
     X265_FREE(errorBuf);
+    X265_FREE(rpuPayload);
 
     SetConsoleTitle(orgConsoleTitle);
     SetThreadExecutionState(ES_CONTINUOUS);
