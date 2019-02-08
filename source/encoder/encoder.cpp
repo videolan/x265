@@ -2651,7 +2651,8 @@ void Encoder::configureZone(x265_param *p, x265_param *zone)
     p->bEnableRectInter = zone->bEnableRectInter;
     p->maxNumMergeCand = zone->maxNumMergeCand;
     p->bIntraInBFrames = zone->bIntraInBFrames;
-    p->scalingLists = strdup(zone->scalingLists);
+    if(zone->scalingLists)
+        p->scalingLists = strdup(zone->scalingLists);
 
     p->rc.aqMode = zone->rc.aqMode;
     p->rc.aqStrength = zone->rc.aqStrength;
