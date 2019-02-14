@@ -314,6 +314,24 @@ static const struct option long_options[] =
     { "hevc-aq", no_argument, NULL, 0 },
     { "no-hevc-aq", no_argument, NULL, 0 },
     { "qp-adaptation-range", required_argument, NULL, 0 },
+#ifdef SVT_HEVC
+    { "svt",     no_argument, NULL, 0 },
+    { "no-svt",  no_argument, NULL, 0 },
+    { "svt-hme",     no_argument, NULL, 0 },
+    { "no-svt-hme",  no_argument, NULL, 0 },
+    { "svt-search-width",      required_argument, NULL, 0 },
+    { "svt-search-height",     required_argument, NULL, 0 },
+    { "svt-compressed-ten-bit-format",    no_argument, NULL, 0 },
+    { "no-svt-compressed-ten-bit-format", no_argument, NULL, 0 },
+    { "svt-speed-control",     no_argument  , NULL, 0 },
+    { "no-svt-speed-control",  no_argument  , NULL, 0 },
+    { "svt-preset-tuner",  required_argument  , NULL, 0 },
+    { "svt-hierarchical-level",  required_argument  , NULL, 0 },
+    { "svt-base-layer-switch-mode",  required_argument  , NULL, 0 },
+    { "svt-pred-struct",  required_argument  , NULL, 0 },
+    { "svt-fps-in-vps",  no_argument  , NULL, 0 },
+    { "no-svt-fps-in-vps",  no_argument  , NULL, 0 },
+#endif
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -605,6 +623,19 @@ static void showHelp(x265_param *param)
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
     H1("   --recon-y4m-exec <string>     pipe reconstructed frames to Y4M viewer, ex:\"ffplay -i pipe:0 -autoexit\"\n");
     H0("   --lowpass-dct                 Use low-pass subband dct approximation. Default %s\n", OPT(param->bLowPassDct));
+#ifdef SVT_HEVC
+    H0("   --[no]svt                     Enable SVT HEVC encoder %s\n", OPT(param->bEnableSvtHevc));
+    H0("   --[no-]svt-hme                Enable Hierarchial motion estimation(HME) in SVT HEVC encoder \n");
+    H0("   --svt-search-width            Motion estimation search area width for SVT HEVC encoder \n");
+    H0("   --svt-search-height           Motion estimation search area height for SVT HEVC encoder \n");
+    H0("   --[no-]svt-compressed-ten-bit-format  Enable 8+2 encoding mode for 10bit input in SVT HEVC encoder \n");
+    H0("   --[no-]svt-speed-control      Enable speed control functionality to achieve real time encoding speed for  SVT HEVC encoder \n");
+    H0("   --svt-preset-tuner            Enable additional faster presets of SVT; This only has to be used on top of x265's ultrafast preset. Accepts values in the range of 0-2 \n");
+    H0("   --svt-hierarchical-level      Hierarchical layer for SVT-HEVC encoder; Accepts inputs in the range 0-3 \n");
+    H0("   --svt-base-layer-switch-mode  Select whether B/P slice should be used in base layer for SVT-HEVC encoder. 0-Use B-frames; 1-Use P frames in the base layer \n");
+    H0("   --svt-pred-struct             Select pred structure for SVT HEVC encoder;  Accepts inputs in the range 0-2 \n");
+    H0("   --[no-]svt-fps-in-vps         Enable VPS timing info for SVT HEVC encoder  \n");
+#endif
     H1("\nExecutable return codes:\n");
     H1("    0 - encode successful\n");
     H1("    1 - unable to parse command line\n");

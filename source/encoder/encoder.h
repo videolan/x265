@@ -31,6 +31,7 @@
 #include "x265.h"
 #include "nal.h"
 #include "framedata.h"
+#include "svt.h"
 #ifdef ENABLE_HDR10_PLUS
     #include "dynamicHDR10/hdr10plus.h"
 #endif
@@ -40,6 +41,20 @@ namespace X265_NS {
 extern const char g_sliceTypeToChar[3];
 
 class Entropy;
+
+#ifdef SVT_HEVC
+typedef struct SvtAppContext
+{
+    EB_COMPONENTTYPE*          svtEncoderHandle;
+    EB_H265_ENC_CONFIGURATION* svtHevcParams;
+
+    // Buffer Pools
+    EB_BUFFERHEADERTYPE*       inputPictureBuffer;
+    uint64_t                   byteCount;
+    uint64_t                   outFrameCount;
+
+}SvtAppContext;
+#endif
 
 struct EncStats
 {
@@ -222,6 +237,10 @@ public:
     const hdr10plus_api     *m_hdr10plus_api;
     uint8_t                 **m_cim;
     int                     m_numCimInfo;
+#endif
+
+#ifdef SVT_HEVC
+    SvtAppContext*          m_svtAppData;
 #endif
 
     x265_sei_payload        m_prevTonemapPayload;

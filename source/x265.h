@@ -1765,6 +1765,12 @@ typedef struct x265_param
     *  0 - Disabled. 1 - Save/Load ctu distortion to/from the file specified 
     * analysis-save/load. Default 0. */
     int       ctuDistortionRefine;
+
+    /* Enable SVT HEVC Encoder */
+    int bEnableSvtHevc;
+
+    /* SVT-HEVC param structure. For internal use when SVT HEVC encoder is enabled */
+    void* svtHevcParam;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not

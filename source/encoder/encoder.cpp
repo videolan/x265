@@ -124,6 +124,10 @@ Encoder::Encoder()
     m_cim = NULL;
 #endif
 
+#if SVT_HEVC
+    m_svtAppData = NULL;
+#endif
+
     m_prevTonemapPayload.payload = NULL;
     m_startPoint = 0;
     m_saveCTUSize = 0;
@@ -827,6 +831,10 @@ void Encoder::destroy()
      }
     if (m_naluFile)
         fclose(m_naluFile);
+
+#ifdef SVT_HEVC
+    X265_FREE(m_svtAppData);
+#endif
     if (m_param)
     {
         if (m_param->csvfpt)
@@ -1471,7 +1479,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
             if (frameEnc->m_reconfigureRc && m_reconfigureRc)
             {
-                memcpy(m_param, m_latestParam, sizeof(x265_param));
+                x265_copy_params(m_param, m_latestParam);
                 m_rateControl->reconfigureRC();
                 m_reconfigureRc = false;
             }
@@ -1483,7 +1491,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 /* Safe to copy m_latestParam to Encoder::m_param, encoder reconfigure complete */
                 for (int frameEncId = 0; frameEncId < m_param->frameNumThreads; frameEncId++)
                     m_frameEncoder[frameEncId]->m_reconfigure = false;
-                memcpy (m_param, m_latestParam, sizeof(x265_param));
+                x265_copy_params(m_param, m_latestParam);
                 m_reconfigure = false;
             }
 

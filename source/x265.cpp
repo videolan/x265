@@ -31,6 +31,7 @@
 #include "input/input.h"
 #include "output/output.h"
 #include "output/reconplay.h"
+#include "svt.h"
 
 #if HAVE_VLD
 /* Visual Leak Detector */
@@ -287,6 +288,7 @@ bool CLIOptions::parse(int argc, char **argv)
     const char *preset = NULL;
     const char *tune = NULL;
     const char *profile = NULL;
+    int svtEnabled = 0;
 
     if (argc <= 1)
     {
@@ -297,7 +299,8 @@ bool CLIOptions::parse(int argc, char **argv)
     /* Presets are applied before all other options. */
     for (optind = 0;; )
     {
-        int c = getopt_long(argc, argv, short_options, long_options, NULL);
+        int optionsIndex = -1;
+        int c = getopt_long(argc, argv, short_options, long_options, &optionsIndex);
         if (c == -1)
             break;
         else if (c == 'p')
@@ -310,6 +313,8 @@ bool CLIOptions::parse(int argc, char **argv)
             profile = optarg;
         else if (c == '?')
             bShowHelp = true;
+        else if (!c && !strcmp(long_options[optionsIndex].name, "svt"))
+            svtEnabled = 1;
     }
 
     if (!outputBitDepth && profile)
@@ -356,6 +361,9 @@ bool CLIOptions::parse(int argc, char **argv)
         printVersion(param, api);
         showHelp(param);
     }
+
+    //Set enable SVT-HEVC encoder first if found in the command line
+    if (svtEnabled) api->param_parse(param, "svt", NULL);
 
     for (optind = 0;; )
     {
@@ -423,6 +431,7 @@ bool CLIOptions::parse(int argc, char **argv)
             OPT("tune")    /* handled above */;
             OPT("output-depth")   /* handled above */;
             OPT("recon-y4m-exec") reconPlayCmd = optarg;
+            OPT("svt")    /* handled above */;
             OPT("qpfile")
             {
                 this->qpfile = x265_fopen(optarg, "rb");
@@ -492,6 +501,18 @@ bool CLIOptions::parse(int argc, char **argv)
         return true;
     }
 
+#ifdef SVT_HEVC
+    if (svtEnabled)
+    {
+        EB_H265_ENC_CONFIGURATION* svtParam = (EB_H265_ENC_CONFIGURATION*)param->svtHevcParam;
+        param->sourceWidth = svtParam->sourceWidth;
+        param->sourceHeight = svtParam->sourceHeight;
+        param->fpsNum = svtParam->frameRateNumerator;
+        param->fpsDenom = svtParam->frameRateDenominator;
+        svtParam->encoderBitDepth = inputBitDepth;
+    }
+#endif
+
     InputFileInfo info;
     info.filename = inputfn;
     info.depth = inputBitDepth;
@@ -536,6 +557,18 @@ bool CLIOptions::parse(int argc, char **argv)
     if (this->framesToBeEncoded == 0 && info.frameCount > (int)seek)
         this->framesToBeEncoded = info.frameCount - seek;
     param->totalFrames = this->framesToBeEncoded;
+
+#ifdef SVT_HEVC
+    if (svtEnabled)
+    {
+        EB_H265_ENC_CONFIGURATION* svtParam = (EB_H265_ENC_CONFIGURATION*)param->svtHevcParam;
+        svtParam->sourceWidth = param->sourceWidth;
+        svtParam->sourceHeight = param->sourceHeight;
+        svtParam->frameRateNumerator = param->fpsNum;
+        svtParam->frameRateDenominator = param->fpsDenom;
+        svtParam->framesToBeEncoded = param->totalFrames;
+    }
+#endif
     
     /* Force CFR until we have support for VFR */
     info.timebaseNum = param->fpsDenom;
@@ -884,7 +917,7 @@ int main(int argc, char **argv)
     int ret = 0;
 
 
-    if (!param->bRepeatHeaders)
+    if (!param->bRepeatHeaders && !param->bEnableSvtHevc)
     {
         if (api->encoder_headers(encoder, &p_nal, &nal) < 0)
         {
