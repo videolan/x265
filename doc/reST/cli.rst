@@ -2390,42 +2390,60 @@ This section lists options which are SVT-HEVC encoder specific.
 See section :ref:`svthevc <SvtHevc>` for more details.
 
 .. option:: --svt, --no-svt
-    Enable SVT-HEVC encoder if x265 is built with SVT-HEVC library. Default disabled.
+
+    Enable SVT-HEVC encoder if x265 is built with SVT-HEVC library. Default
+    disabled.
 
 .. option:: --svt-hme, --no-svt-hme
+
     Enable Hierarchical Motion Estimation(HME) in SVT-HEVC. Default enabled.
 
     **CLI_ONLY**
 
 .. option:: --svt-search-width <integer>
+
     Search Area Width used during motion estimation. It depends on input resolution.
     Values: [1-256]
 
     **CLI_ONLY**
 
 .. option:: --svt-search-height <integer>
+
     Search Area Height used during motion estimation. It depends on input resolution. 
     Values: [1-256]
 
     **CLI_ONLY**
 
 .. option:: --svt-compressed-ten-bit-format, --no-svt-compressed-ten-bit-format
-    In order to reduce the size of input YUV and to increase channel density, SVT-HEVC accetps inputs in compressed-ten-bit-format. The conversion between yuv420p10le and compressed ten bit format is a lossless operation. For more details about the conversion refer `here<https://github.com/intel/SVT-HEVC/blob/master/Docs/SVT-HEVC_Encoder_User_Guide.pdf>'_.
+
+    In order to reduce the size of input YUV and to increase channel density,
+    SVT-HEVC accetps inputs in compressed-ten-bit-format. The conversion between
+    yuv420p10le and compressed ten bit format is a lossless operation. For more
+    details about the conversion refer
+    `here<https://github.com/intel/SVT-HEVC/blob/master/Docs/SVT-HEVC_Encoder_User_Guide.pdf>'_.
 
     **CLI_ONLY**
 
 .. option:: --svt-speed-control, --no-svt-speed-control
-    Enable speed control functionality to achieve real time encoding speed defined by :option:`--fps`. Default disabled.
+
+    Enable speed control functionality to achieve real time encoding speed defined
+    by :option:`--fps`. Default disabled.
 
     **CLI_ONLY**
 
 .. option:: --svt-preset-tuner <integer>
-    SVT-HEVC exposes 13 presets. Presets [3-12] of SVT-HEVC is mapped to x265's presets [placebo-ultrafast]. Ultrafast is mapped to preset(12) of SVT-HEVC, superfast to preset(11), placebo to preset(3) and so on. svt-preset-tuner works only on top of placebo preset and maps to presets (0-2) of SVT-HEVC.
+
+    SVT-HEVC exposes 13 presets. Presets [3-12] of SVT-HEVC is mapped to x265's
+    presets [placebo-ultrafast]. Ultrafast is mapped to preset(12) of SVT-HEVC,
+    superfast to preset(11), placebo to preset(3) and so on. svt-preset-tuner works
+    only on top of placebo preset and maps to presets (0-2) of SVT-HEVC.
+
     Values: [0-2]
 
     **CLI_ONLY**
 
 .. option:: --svt-hierarchical-level <integer>
+
     Enables multiple hierarchical levels in SVT-HEVC. Accepts values in the range [0-3].
     0    -  Flat
     1    -  2-Level Hierarchy
@@ -2437,6 +2455,7 @@ See section :ref:`svthevc <SvtHevc>` for more details.
     **CLI_ONLY**
 
 .. option:: --svt-base-layer-switch-mode <integer>
+
     Choose type of slices to be in base layer. Accepts values 0,1.
     0    -  Use B-frames in the base layer
     1    -  Use P-frames in the base layer
@@ -2446,7 +2465,15 @@ See section :ref:`svthevc <SvtHevc>` for more details.
     **CLI_ONLY**
 
 .. option:: --svt-pred-struct <integer>
-    Prediction structure forms the basis in deciding the GOP structure. SVT-HEVC supports Low delay(P/B) and random access prediction structure. In a low delay structure, pictures within a mini-gop can only refer to the previous pictures in display order. In other words, picture with display order N can only refer to pictures of display order lower than N. In random acccess method, pictures can be referenced from both the directions. It accepts values in the range [0-2]
+
+    Prediction structure forms the basis in deciding the GOP structure. SVT-HEVC
+    supports Low delay(P/B) and random access prediction structure. In a low delay
+    structure, pictures within a mini-gop can only refer to the previous pictures
+    in display order. In other words, picture with display order N can only refer
+    to pictures of display order lower than N. In random acccess method, pictures
+    can be referenced from both the directions. It accepts values in the range
+    [0-2]
+
     0    -  Low Delay P
     1    -  Low Delay B
     2    -  Random Access
@@ -2456,6 +2483,7 @@ See section :ref:`svthevc <SvtHevc>` for more details.
     **CLI_ONLY**
 
 .. option:: --svt-fps-in-vps, --no-svt-fps-in-vps
+
     Enable sending timing info in VPS. Default disabled.    
 
     **CLI_ONLY**
