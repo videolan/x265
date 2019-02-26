@@ -177,12 +177,14 @@ Below table shows the actual mapping of presets,
 +----------------------------------------+------------------------------+
 
 x265 has 5 tune modes (psnr, ssim, grain, zero-latency, animation) whereas SVT-HEVC
-has only 2 tune modes (0 - Subjective Quality Mode, 1 - Objective Quality Mode). Below 
+has only 3 tune modes (0 - visual quality, 1 - PSNR / SSIM and 2 - VMAF). Below 
 table shows the mapping of tune modes,
 
 +-----------------------+---------------------------+
 | x265 Tune Modes       | SVT-HEVC Tune Modes       |
 +=======================+===========================+
+| vmaf                  | 2                         |
++-----------------------+---------------------------+
 | psnr                  | 1                         |
 +-----------------------+---------------------------+
 | ssim                  | 1                         |
@@ -196,4 +198,5 @@ table shows the mapping of tune modes,
 | animation             | 0                         |
 +-----------------------+---------------------------+
 
-Note that :option:`--tune` animation is also mapped to "LatencyMode" of SVT-HEVC.
+Note that : 1.option:`--tune` animation is also mapped to "LatencyMode" of SVT-HEVC.
+            2.option: '--tune' vmaf is not supported in x265, its under development.

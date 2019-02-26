@@ -570,6 +570,10 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->deblockingFilterBetaOffset = 1;
             param->deblockingFilterTCOffset = 1;
         }
+		else if (!strcmp(tune, "vmaf"))  /*Adding vmaf for x265 + SVT-HEVC integration support*/
+		{
+			/*vmaf is under development, currently x265 won't support vmaf*/
+		}
         else
             return -1;
     }
@@ -2482,7 +2486,8 @@ int svt_set_preset_tune(x265_param* param, const char* preset, const char* tune)
         if (!strcmp(tune, "psnr")) svtHevcParam->tune = 1;
         else if (!strcmp(tune, "ssim")) svtHevcParam->tune = 1;
         else if (!strcmp(tune, "grain")) svtHevcParam->tune = 0;
-        else if (!strcmp(tune, "animation")) svtHevcParam->tune = 1;
+        else if (!strcmp(tune, "animation")) svtHevcParam->tune = 0;
+		else if (!strcmp(tune, "vmaf")) svtHevcParam->tune = 2;
         else if (!strcmp(tune, "zero-latency") || !strcmp(tune, "zerolatency")) svtHevcParam->latencyMode = 1;
         else  return -1;
     }
