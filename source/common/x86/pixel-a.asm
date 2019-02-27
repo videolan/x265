@@ -73,6 +73,16 @@ cextern pb_movemask
 cextern pb_movemask_32
 cextern pw_pixel_max
 
+%if BIT_DEPTH == 12
+    %define     SSIMRD_SHIFT          4
+%elif BIT_DEPTH == 10
+    %define     SSIMRD_SHIFT          2
+%elif BIT_DEPTH == 8
+    %define     SSIMRD_SHIFT          0
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
 ;=============================================================================
 ; SATD
 ;=============================================================================
@@ -358,6 +368,24 @@ cextern pw_pixel_max
 %endif ; HIGH_BIT_DEPTH
     EMMS
     RET
+%endmacro
+
+%macro SSIM_RD_COL 2
+    vpsrld         m6,         m0,        SSIMRD_SHIFT
+    vpsubd         m0,         m1
+
+    vpmuldq        m2,         m0,        m0
+    vpsrldq        m0,         m0,        4
+    vpmuldq        m0,         m0,        m0
+    vpaddq         m0,         m2
+
+    vpmuldq        m2,         m6,        m6
+    vpsrldq        m6,         m6,        4
+    vpmuldq        m6,         m6,        m6
+    vpaddq         m6,         m2
+
+    vpaddq         m4,         m0
+    vpaddq         m7,         m6
 %endmacro
 
 ; FIXME avoid the spilling of regs to hold 3*stride.
@@ -15883,3 +15911,395 @@ cglobal pixel_sa8d_32x32, 4,8,14
     RET
 %endif
 %endif ; HIGH_BIT_DEPTH == 1 && BIT_DEPTH == 10
+
+;template<int log2TrSize>
+;static void ssimDist_c(const pixel* fenc, uint32_t fStride, const pixel* recon, intptr_t rstride, uint64_t *ssBlock, int shift, uint64_t *ac_k)
+;{
+;    *ssBlock = 0;
+;    const uint32_t trSize = 1 << log2TrSize;
+;    for (int y = 0; y < trSize; y++)
+;    {
+;        for (int x = 0; x < trSize; x++)
+;        {
+;            int temp = fenc[y * fStride + x] - recon[y * rstride + x]; // copy of residual coeff
+;            *ssBlock += temp * temp;
+;        }
+;    }
+;
+;    *ac_k = 0;
+;    for (int block_yy = 0; block_yy < trSize; block_yy += 1)
+;    {
+;        for (int block_xx = 0; block_xx < trSize; block_xx += 1)
+;        {
+;            uint32_t temp = fenc[block_yy * fStride + block_xx] >> shift;
+;            *ac_k += temp * temp;
+;        }
+;    }
+;}
+;-----------------------------------------------------------------------------------------------------------------
+; void ssimDist_c(const pixel* fenc, uint32_t fStride, const pixel* recon, intptr_t rstride, uint64_t *ssBlock, int shift, uint64_t *ac_k)
+;-----------------------------------------------------------------------------------------------------------------
+
+INIT_YMM avx2
+cglobal ssimDist4, 7, 8, 8
+    mov            r7d,        4
+    vpxor          m4,         m4                              ;ssBlock
+    vpxor          m3,         m3
+    vpxor          m7,         m7                              ;ac_k
+.row:
+%if HIGH_BIT_DEPTH
+    vpmovzxwq      m0,        [r0]                             ;fenc
+    vpmovzxwq      m1,        [r2]                             ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbq      m0,        [r0]
+    vpmovzxbq      m1,        [r2]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+    vpsrlq         m6,        m0,        SSIMRD_SHIFT
+    vpsubq         m0,        m1
+    vpmuldq        m0,        m0,        m0
+    vpmuldq        m6,        m6,        m6
+    vpaddq         m4,        m0
+    vpaddq         m7,        m6
+
+%if HIGH_BIT_DEPTH
+    lea            r0,        [r0 + 2 * r1]
+    lea            r2,        [r2 + 2 * r3]
+%else
+    lea            r0,        [r0 + r1]
+    lea            r2,        [r2 + r3]
+%endif
+    dec            r7d
+    jnz           .row
+    vextracti128   xm5,       m4,        1
+    vpaddq         xm4,       xm5
+    punpckhqdq     xm2,       xm4,       xm3
+    paddq          xm4,       xm2
+
+    vextracti128   xm5,       m7,        1
+    vpaddq         xm7,       xm5
+    punpckhqdq     xm2,       xm7,       xm3
+    paddq          xm7,       xm2
+
+    movq          [r4],       xm4
+    movq          [r6],       xm7
+    RET
+
+
+INIT_YMM avx2
+cglobal ssimDist8, 7, 8, 8
+    mov            r7d,        8
+    vpxor          m4,         m4                              ;ssBlock
+    vpxor          m3,         m3
+    vpxor          m7,         m7                              ;ac_k
+.row:
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,        [r0]                             ;fenc
+    vpmovzxwd      m1,        [r2]                             ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,        [r0]
+    vpmovzxbd      m1,        [r2]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+%if HIGH_BIT_DEPTH
+    lea            r0,         [r0 + 2 * r1]
+    lea            r2,         [r2 + 2 * r3]
+%else
+    lea            r0,         [r0 + r1]
+    lea            r2,         [r2 + r3]
+%endif
+    dec            r7d
+    jnz            .row
+    vextracti128   xm5,        m4,        1
+    vpaddq         xm4,        xm5
+    punpckhqdq     xm2,        xm4,       xm3
+    paddq          xm4,        xm2
+
+    vextracti128   xm5,        m7,       1
+    vpaddq         xm7,        xm5
+    punpckhqdq     xm2,        xm7,      xm3
+    paddq          xm7,        xm2
+
+    movq           [r4],       xm4
+    movq           [r6],       xm7
+    RET
+
+
+INIT_YMM avx2
+cglobal ssimDist16, 7, 8, 8
+    mov            r7d,         16
+    vpxor          m4,          m4                                ;ssBlock
+    vpxor          m3,          m3
+    vpxor          m7,          m7                                ;ac_k
+.row:
+;Col 1-8
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0]                              ;fenc
+    vpmovzxwd      m1,          [r2]                              ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0]
+    vpmovzxbd      m1,          [r2]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 9-16
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 16]                         ;fenc
+    vpmovzxwd      m1,          [r2 + 16]                         ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 8]
+    vpmovzxbd      m1,          [r2 + 8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+%if HIGH_BIT_DEPTH
+    lea            r0,         [r0 + 2 * r1]
+    lea            r2,         [r2 + 2 * r3]
+%else
+    lea            r0,         [r0 + r1]
+    lea            r2,         [r2 + r3]
+%endif
+    dec            r7d
+    jnz           .row
+    vextracti128   xm5,        m4,        1
+    vpaddq         xm4,        xm5
+    punpckhqdq     xm2,        xm4,       xm3
+    paddq          xm4,        xm2
+
+    vextracti128   xm5,        m7,        1
+    vpaddq         xm7,        xm5
+    punpckhqdq     xm2,        xm7,       xm3
+    paddq          xm7,        xm2
+
+    movq           [r4],       xm4
+    movq           [r6],       xm7
+    RET
+
+
+INIT_YMM avx2
+cglobal ssimDist32, 7, 8, 8 
+    mov            r7d,        32
+    vpxor          m4,         m4                              ;ssBlock
+    vpxor          m3,         m3
+    vpxor          m7,         m7                              ;ac_k
+.row:
+;Col 1-8
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,         [r0]                            ;fenc
+    vpmovzxwd      m1,         [r2]                            ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,         [r0]
+    vpmovzxbd      m1,         [r2]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 9-16
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 16]                      ;fenc
+    vpmovzxwd      m1,          [r2 + 16]                      ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 8]
+    vpmovzxbd      m1,          [r2 + 8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 17-24
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 32]                      ;fenc
+    vpmovzxwd      m1,          [r2 + 32]                      ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 16]
+    vpmovzxbd      m1,          [r2 + 16]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 25-32
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 48]                      ;fenc
+    vpmovzxwd      m1,          [r2 + 48]                      ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 24]
+    vpmovzxbd      m1,          [r2 + 24]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+%if HIGH_BIT_DEPTH
+    lea            r0,          [r0 + 2 * r1]
+    lea            r2,          [r2 + 2 * r3]
+%else
+    lea            r0,          [r0 + r1]
+    lea            r2,          [r2 + r3]
+%endif
+    dec            r7d
+    jnz           .row
+    vextracti128   xm5,         m4,        1
+    vpaddq         xm4,         xm5
+    punpckhqdq     xm2,         xm4,       xm3
+    paddq          xm4,         xm2
+
+    vextracti128   xm5,         m7,        1
+    vpaddq         xm7,         xm5
+    punpckhqdq     xm2,         xm7,       xm3
+    paddq          xm7,         xm2
+
+    movq           [r4],        xm4
+    movq           [r6],        xm7
+    RET
+
+
+INIT_YMM avx2
+cglobal ssimDist64, 7, 8, 8 
+    mov            r7d,         64
+    vpxor          m4,          m4                             ;ssBlock
+    vpxor          m3,          m3
+    vpxor          m7,          m7                             ;ac_k
+.row:
+;Col 1-8
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0]                           ;fenc
+    vpmovzxwd      m1,          [r2]                           ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0]
+    vpmovzxbd      m1,          [r2]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 9-16
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 16]                      ;fenc
+    vpmovzxwd      m1,          [r2 + 16]                      ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 8]
+    vpmovzxbd      m1,          [r2 + 8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 17-24
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 32]                      ;fenc
+    vpmovzxwd      m1,          [r2 + 32]                      ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 16]
+    vpmovzxbd      m1,          [r2 + 16]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 25-32
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 48]                      ;fenc
+    vpmovzxwd      m1,          [r2 + 48]                      ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 24]
+    vpmovzxbd      m1,          [r2 + 24]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 33-40
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 64]                      ;fenc
+    vpmovzxwd      m1,          [r2 + 64]                      ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 32]
+    vpmovzxbd      m1,          [r2 + 32]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 41-48
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 80]                      ;fenc
+    vpmovzxwd      m1,          [r2 + 80]                      ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 40]
+    vpmovzxbd      m1,          [r2 + 40]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 49-56
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 96]                      ;fenc
+    vpmovzxwd      m1,          [r2 + 96]                      ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 48]
+    vpmovzxbd      m1,          [r2 + 48]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+;Col 57-64
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 112]                     ;fenc
+    vpmovzxwd      m1,          [r2 + 112]                     ;recon
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 56]
+    vpmovzxbd      m1,          [r2 + 56]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    SSIM_RD_COL    m0,          m1
+
+%if HIGH_BIT_DEPTH
+    lea            r0,          [r0 + 2 * r1]
+    lea            r2,          [r2 + 2 * r3]
+%else
+    lea            r0,          [r0 + r1]
+    lea            r2,          [r2 + r3]
+%endif
+    dec            r7d
+    jnz            .row
+    vextracti128   xm5,          m4,        1
+    vpaddq         xm4,          xm5
+    punpckhqdq     xm2,          xm4,       xm3
+    paddq          xm4,          xm2
+
+    vextracti128   xm5,          m7,        1
+    vpaddq         xm7,          xm5
+    punpckhqdq     xm2,          xm7,       xm3
+    paddq          xm7,          xm2
+
+    movq           [r4],         xm4
+    movq           [r6],         xm7
+    RET

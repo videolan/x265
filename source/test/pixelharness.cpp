@@ -2270,6 +2270,32 @@ bool PixelHarness::check_integral_inith(integralh_t ref, integralh_t opt)
     return true;
 }
 
+bool PixelHarness::check_ssimDist(ssimDistortion_t ref, ssimDistortion_t opt)
+{
+    uint32_t srcStride[5] = { 4, 8, 16, 32, 64 };
+    intptr_t dstStride[5] = { 4, 8, 16, 32, 64 };
+    int shift = X265_DEPTH - 8;
+    uint64_t opt_dest1 = 0, ref_dest1 = 0, opt_dest2 = 0, ref_dest2 = 0;
+    int j = 0;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        int k1 = rand() % 5, k2 = rand() % 5;
+        ref(pixel_test_buff[index] + j, srcStride[k1], pixel_test_buff[index + 10] + j, dstStride[k2], &ref_dest1, shift, &ref_dest2);
+        opt(pixel_test_buff[index] + j, srcStride[k1], pixel_test_buff[index + 10] + j, dstStride[k2], &opt_dest1, shift, &opt_dest2);
+
+        if (opt_dest1 != ref_dest1 && opt_dest2 != ref_dest2)
+        {
+            return false;
+        }
+
+        reportfail()
+        j += INCR;
+    }
+    return true;
+}
+
 bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.pu[part].satd)
@@ -2603,6 +2629,15 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             if (!check_psyCost_pp(ref.cu[i].psy_cost_pp, opt.cu[i].psy_cost_pp))
             {
                 printf("\npsy_cost_pp[%dx%d] failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+
+        if (opt.cu[i].ssimDist)
+        {
+            if (!check_ssimDist(ref.cu[i].ssimDist, opt.cu[i].ssimDist))
+            {
+                printf("\nssimDist[%dx%d] failed!\n", 4 << i, 4 << i);
                 return false;
             }
         }
@@ -3093,6 +3128,7 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
             return false;
         }
     }
+
     return true;
 }
 
@@ -3391,6 +3427,14 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
         {
             HEADER("psy_cost_pp[%dx%d]", 4 << i, 4 << i);
             REPORT_SPEEDUP(opt.cu[i].psy_cost_pp, ref.cu[i].psy_cost_pp, pbuf1, STRIDE, pbuf2, STRIDE);
+        }
+
+        if (opt.cu[i].ssimDist)
+        {
+            uint64_t dst1 = 0, dst2 = 0;
+            int shift = X265_DEPTH - 8;
+            printf("ssimDist[%dx%d]", 4 << i, 4 << i);
+            REPORT_SPEEDUP(opt.cu[i].ssimDist, ref.cu[i].ssimDist, pixel_test_buff[0], 32, pixel_test_buff[5], 64, &dst1, shift, &dst2);
         }
     }
 
