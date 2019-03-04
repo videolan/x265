@@ -2296,6 +2296,30 @@ bool PixelHarness::check_ssimDist(ssimDistortion_t ref, ssimDistortion_t opt)
     return true;
 }
 
+bool PixelHarness::check_normFact(normFactor_t ref, normFactor_t opt, int block)
+{
+    int shift = X265_DEPTH - 8;
+    uint64_t opt_dest = 0, ref_dest = 0;
+    int j = 0;
+    int blockSize = 4 << block;
+
+    for (int i = 0; i < ITERS; i++)
+    {
+        int index = i % TEST_CASES;
+        ref(pixel_test_buff[index] + j, blockSize, shift, &ref_dest);
+        opt(pixel_test_buff[index] + j, blockSize, shift, &opt_dest);
+
+        if (opt_dest != ref_dest)
+        {
+            return false;
+        }
+
+        reportfail()
+            j += INCR;
+    }
+    return true;
+}
+
 bool PixelHarness::testPU(int part, const EncoderPrimitives& ref, const EncoderPrimitives& opt)
 {
     if (opt.pu[part].satd)
@@ -3129,6 +3153,18 @@ bool PixelHarness::testCorrectness(const EncoderPrimitives& ref, const EncoderPr
         }
     }
 
+    for (int i = BLOCK_8x8; i < NUM_CU_SIZES; i++)
+    {
+        if (opt.cu[i].normFact)
+        {
+            if (!check_normFact(ref.cu[i].normFact, opt.cu[i].normFact, i))
+            {
+                printf("\nnormFact[%dx%d] failed!\n", 4 << i, 4 << i);
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 
@@ -3767,6 +3803,18 @@ void PixelHarness::measureSpeed(const EncoderPrimitives& ref, const EncoderPrimi
                 break;
             }
             REPORT_SPEEDUP(opt.integral_inith[k], ref.integral_inith[k], dst_buf, pbuf1, STRIDE);
+        }
+    }
+
+    for (int i = BLOCK_8x8; i < NUM_CU_SIZES; i++)
+    {
+        if (opt.cu[i].normFact)
+        {
+            uint64_t dst = 0;
+            int blockSize = 4 << i;
+            int shift = X265_DEPTH - 8;
+            printf("normFact[%dx%d]", blockSize, blockSize);
+            REPORT_SPEEDUP(opt.cu[i].normFact, ref.cu[i].normFact, pixel_test_buff[0], blockSize, shift, &dst);
         }
     }
 }

@@ -137,6 +137,7 @@ protected:
     bool check_integral_initv(integralv_t ref, integralv_t opt);
     bool check_integral_inith(integralh_t ref, integralh_t opt);
     bool check_ssimDist(ssimDistortion_t ref, ssimDistortion_t opt);
+    bool check_normFact(normFactor_t ref, normFactor_t opt, int block);
 
 public:
 

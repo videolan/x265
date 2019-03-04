@@ -2325,6 +2325,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main10
         p.cu[BLOCK_32x32].ssimDist = PFX(ssimDist32_avx2);
         p.cu[BLOCK_64x64].ssimDist = PFX(ssimDist64_avx2);
 
+        p.cu[BLOCK_8x8].normFact = PFX(normFact8_avx2);
+        p.cu[BLOCK_16x16].normFact = PFX(normFact16_avx2);
+        p.cu[BLOCK_32x32].normFact = PFX(normFact32_avx2);
+        p.cu[BLOCK_64x64].normFact = PFX(normFact64_avx2);
+
         /* TODO: This kernel needs to be modified to work with HIGH_BIT_DEPTH only 
         p.planeClipAndMax = PFX(planeClipAndMax_avx2); */
 
@@ -4717,6 +4722,11 @@ void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask) // Main
         p.cu[BLOCK_16x16].ssimDist = PFX(ssimDist16_avx2);
         p.cu[BLOCK_32x32].ssimDist = PFX(ssimDist32_avx2);
         p.cu[BLOCK_64x64].ssimDist = PFX(ssimDist64_avx2);
+
+        p.cu[BLOCK_8x8].normFact = PFX(normFact8_avx2);
+        p.cu[BLOCK_16x16].normFact = PFX(normFact16_avx2);
+        p.cu[BLOCK_32x32].normFact = PFX(normFact32_avx2);
+        p.cu[BLOCK_64x64].normFact = PFX(normFact64_avx2);
 
     }
     if (cpuMask & X265_CPU_AVX512)

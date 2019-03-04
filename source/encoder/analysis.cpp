@@ -3696,14 +3696,8 @@ void Analysis::normFactor(const pixel* src, uint32_t blockSize, CUData& ctu, int
 
     // 2. Calculate ac component
     uint64_t z_k = 0;
-    for (uint32_t block_yy = 0; block_yy < blockSize; block_yy += 1)
-    {
-        for (uint32_t block_xx = 0; block_xx < blockSize; block_xx += 1)
-        {
-            uint32_t temp = src[block_yy * blockSize + block_xx] >> shift;
-            z_k += temp * temp;
-        }
-    }
+    int block = (int)((log(blockSize) / log(2)) - 2);
+    primitives.cu[block].normFact(src, blockSize, shift, &z_k);
 
     // Remove the DC part
     z_k -= z_o;

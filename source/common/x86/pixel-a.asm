@@ -388,6 +388,16 @@ cextern pw_pixel_max
     vpaddq         m7,         m6
 %endmacro
 
+%macro NORM_FACT_COL 1
+    vpsrld         m1,          m0,        SSIMRD_SHIFT
+    vpmuldq        m2,          m1,        m1
+    vpsrldq        m1,          m1,        4
+    vpmuldq        m1,          m1,        m1
+
+    vpaddq         m1,          m2
+    vpaddq         m3,          m1
+%endmacro
+
 ; FIXME avoid the spilling of regs to hold 3*stride.
 ; for small blocks on x86_32, modify pixel pointer instead.
 
@@ -16302,4 +16312,267 @@ cglobal ssimDist64, 7, 8, 8
 
     movq           [r4],         xm4
     movq           [r6],         xm7
+    RET
+
+
+;static void normFact_c(const pixel* src, uint32_t blockSize, int shift, uint64_t *z_k)
+;{
+;    *z_k = 0;
+;    for (uint32_t block_yy = 0; block_yy < blockSize; block_yy += 1)
+;    {
+;        for (uint32_t block_xx = 0; block_xx < blockSize; block_xx += 1)
+;        {
+;            uint32_t temp = src[block_yy * blockSize + block_xx] >> shift;
+;            *z_k += temp * temp;
+;        }
+;    }
+;}
+;--------------------------------------------------------------------------------------
+; void normFact_c(const pixel* src, uint32_t blockSize, int shift, uint64_t *z_k)
+;--------------------------------------------------------------------------------------
+INIT_YMM avx2
+cglobal normFact8, 4, 5, 6
+    mov            r4d,       8
+    vpxor          m3,        m3                               ;z_k
+    vpxor          m5,        m5
+.row:
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,        [r0]                             ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,        [r0]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+%if HIGH_BIT_DEPTH
+    lea            r0,         [r0 + 2 * r1]
+%else
+    lea            r0,         [r0 + r1]
+%endif
+    dec            r4d
+    jnz           .row
+    vextracti128   xm4,         m3,        1
+    vpaddq         xm3,         xm4
+    punpckhqdq     xm2,         xm3,       xm5
+    paddq          xm3,         xm2
+    movq           [r3],        xm3
+    RET
+
+
+INIT_YMM avx2
+cglobal normFact16, 4, 5, 6
+    mov            r4d,         16
+    vpxor          m3,          m3                                ;z_k
+    vpxor          m5,          m5
+.row:
+;Col 1-8
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0]                              ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 9-16
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 16]                         ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+%if HIGH_BIT_DEPTH
+    lea            r0,         [r0 + 2 * r1]
+%else
+    lea            r0,         [r0 + r1]
+%endif
+    dec            r4d
+    jnz           .row
+    vextracti128   xm4,         m3,        1
+    vpaddq         xm3,         xm4
+    punpckhqdq     xm2,         xm3,       xm5
+    paddq          xm3,         xm2
+    movq           [r3],        xm3
+    RET
+
+
+INIT_YMM avx2
+cglobal normFact32, 4, 5, 6 
+    mov            r4d,         32
+    vpxor          m3,          m3                              ;z_k
+    vpxor          m5,          m5
+.row:
+;Col 1-8
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,         [r0]                             ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,         [r0]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 9-16
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 16]                      ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 17-24
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 32]                      ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 16]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 25-32
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 48]                      ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 24]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+%if HIGH_BIT_DEPTH
+    lea            r0,          [r0 + 2 * r1]
+%else
+    lea            r0,          [r0 + r1]
+%endif
+    dec            r4d
+    jnz           .row
+    vextracti128   xm4,         m3,        1
+    vpaddq         xm3,         xm4
+    punpckhqdq     xm2,         xm3,       xm5
+    paddq          xm3,         xm2
+    movq           [r3],        xm3
+    RET
+
+
+INIT_YMM avx2
+cglobal normFact64, 4, 5, 6 
+    mov            r4d,         64
+    vpxor          m3,          m3                             ;z_k
+    vpxor          m5,          m5
+.row:
+;Col 1-8
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0]                           ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 9-16
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 16]                      ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 8]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 17-24
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 32]                      ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 16]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 25-32
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 48]                      ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 24]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 33-40
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 64]                      ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 32]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 41-48
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 80]                      ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 40]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 49-56
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 96]                      ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 48]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+;Col 57-64
+%if HIGH_BIT_DEPTH
+    vpmovzxwd      m0,          [r0 + 112]                     ;src
+%elif BIT_DEPTH == 8
+    vpmovzxbd      m0,          [r0 + 56]
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
+    NORM_FACT_COL  m0
+
+%if HIGH_BIT_DEPTH
+    lea            r0,          [r0 + 2 * r1]
+%else
+    lea            r0,          [r0 + r1]
+%endif
+    dec            r4d
+    jnz           .row
+    vextracti128   xm4,         m3,        1
+    vpaddq         xm3,         xm4
+    punpckhqdq     xm2,         xm3,       xm5
+    paddq          xm3,         xm2
+    movq           [r3],        xm3
     RET

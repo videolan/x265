@@ -959,6 +959,19 @@ static void ssimDist_c(const pixel* fenc, uint32_t fStride, const pixel* recon, 
     }
 }
 
+static void normFact_c(const pixel* src, uint32_t blockSize, int shift, uint64_t *z_k)
+{
+    *z_k = 0;
+    for (uint32_t block_yy = 0; block_yy < blockSize; block_yy += 1)
+    {
+        for (uint32_t block_xx = 0; block_xx < blockSize; block_xx += 1)
+        {
+            uint32_t temp = src[block_yy * blockSize + block_xx] >> shift;
+            *z_k += temp * temp;
+        }
+    }
+}
+
 #if HIGH_BIT_DEPTH
 static pixel planeClipAndMax_c(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, 
                                const pixel minPix, const pixel maxPix)
@@ -1314,5 +1327,10 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.cu[BLOCK_16x16].ssimDist = ssimDist_c<4>;
     p.cu[BLOCK_32x32].ssimDist = ssimDist_c<5>;
     p.cu[BLOCK_64x64].ssimDist = ssimDist_c<6>;
+
+    p.cu[BLOCK_8x8].normFact = normFact_c;
+    p.cu[BLOCK_16x16].normFact = normFact_c;
+    p.cu[BLOCK_32x32].normFact = normFact_c;
+    p.cu[BLOCK_64x64].normFact = normFact_c;
 }
 }
