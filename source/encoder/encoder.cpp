@@ -3356,6 +3356,12 @@ void Encoder::configure(x265_param *p)
     if (p->dolbyProfile)     // Default disabled.
         configureDolbyVisionParams(p);
 
+    if (p->rc.zonefileCount && p->rc.zoneCount)
+    {
+        p->rc.zoneCount = 0;
+        x265_log(p, X265_LOG_WARNING, "Only zone or zonefile can be used. Enabling only zonefile\n");
+    }
+
     if (m_param->rc.zonefileCount && p->bOpenGOP)
     {
         p->bOpenGOP = 0;

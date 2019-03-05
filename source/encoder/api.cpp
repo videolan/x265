@@ -98,6 +98,12 @@ x265_encoder *x265_encoder_open(x265_param *p)
     x265_param* zoneParam = PARAM_NS::x265_param_alloc();
     if (!param || !latestParam)
         goto fail;
+    if (p->rc.zoneCount || p->rc.zonefileCount)
+    {
+        int zoneCount = p->rc.zonefileCount ? p->rc.zonefileCount : p->rc.zoneCount;
+        param->rc.zones = x265_zone_alloc(zoneCount, p->rc.zonefileCount ? true : false);
+        latestParam->rc.zones = x265_zone_alloc(zoneCount, p->rc.zonefileCount ? true : false);
+    }
 
     x265_copy_params(param, p);
     x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", PFX(version_str));
@@ -287,6 +293,11 @@ int x265_encoder_reconfig(x265_encoder* enc, x265_param* param_in)
     bool isReconfigureRc = encoder->isReconfigureRc(encoder->m_latestParam, param_in);
     if ((encoder->m_reconfigure && !isReconfigureRc) || (encoder->m_reconfigureRc && isReconfigureRc)) /* Reconfigure in progress */
         return 1;
+    if (encoder->m_latestParam->rc.zoneCount || encoder->m_latestParam->rc.zonefileCount)
+    {
+        int zoneCount = encoder->m_latestParam->rc.zonefileCount ? encoder->m_latestParam->rc.zonefileCount : encoder->m_latestParam->rc.zoneCount;
+        save.rc.zones = x265_zone_alloc(zoneCount, encoder->m_latestParam->rc.zonefileCount ? true : false);
+    }
     x265_copy_params(&save, encoder->m_latestParam);
     int ret = encoder->reconfigureParam(encoder->m_latestParam, param_in);
     if (ret)
@@ -920,6 +931,26 @@ void x265_picture_init(x265_param *param, x265_picture *pic)
 void x265_picture_free(x265_picture *p)
 {
     return x265_free(p);
+}
+
+x265_zone *x265_zone_alloc(int zoneCount, bool isZoneFile)
+{
+    x265_zone* zone = (x265_zone*)x265_malloc(sizeof(x265_zone) * zoneCount);
+    if (isZoneFile) {
+        for (int i = 0; i < zoneCount; i++)
+            zone[i].zoneParam = (x265_param*)x265_malloc(sizeof(x265_param));
+    }
+    return zone;
+}
+
+void x265_zone_free(x265_param *param)
+{
+    if (param->rc.zonefileCount) {
+        for (int i = 0; i < param->rc.zonefileCount; i++)
+            x265_free(param->rc.zones[i].zoneParam);
+    }
+    if (param->rc.zoneCount || param->rc.zonefileCount)
+        x265_free(param->rc.zones);
 }
 
 static const x265_api libapi =

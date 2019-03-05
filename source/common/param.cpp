@@ -102,6 +102,7 @@ x265_param *x265_param_alloc()
 
 void x265_param_free(x265_param* p)
 {
+    x265_zone_free(p);
 #ifdef SVT_HEVC
      x265_free(p->svtHevcParam);
 #endif
@@ -2244,13 +2245,24 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->rc.zoneCount = src->rc.zoneCount;
     dst->rc.zonefileCount = src->rc.zonefileCount;
 
-    if (src->rc.zones)
+    if (src->rc.zonefileCount && src->rc.zones)
     {
-        dst->rc.zones->startFrame = src->rc.zones->startFrame;
-        dst->rc.zones->endFrame = src->rc.zones->endFrame;
-        dst->rc.zones->bForceQp = src->rc.zones->bForceQp;
-        dst->rc.zones->qp = src->rc.zones->qp;
-        dst->rc.zones->bitrateFactor = src->rc.zones->bitrateFactor;
+        for (int i = 0; i < src->rc.zonefileCount; i++)
+        {
+            dst->rc.zones[i].startFrame = src->rc.zones[i].startFrame;
+            memcpy(dst->rc.zones[i].zoneParam, src->rc.zones[i].zoneParam, sizeof(x265_param));
+        }
+    }
+    else if (src->rc.zoneCount && src->rc.zones)
+    {
+        for (int i = 0; i < src->rc.zoneCount; i++)
+        {
+            dst->rc.zones[i].startFrame = src->rc.zones[i].startFrame;
+            dst->rc.zones[i].endFrame = src->rc.zones[i].endFrame;
+            dst->rc.zones[i].bForceQp = src->rc.zones[i].bForceQp;
+            dst->rc.zones[i].qp = src->rc.zones[i].qp;
+            dst->rc.zones[i].bitrateFactor = src->rc.zones[i].bitrateFactor;
+        }
     }
     else
         dst->rc.zones = NULL;
