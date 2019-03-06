@@ -1798,7 +1798,7 @@ void x265_param_default(x265_param *param);
 #define X265_PARAM_BAD_VALUE (-2)
 int x265_param_parse(x265_param *p, const char *name, const char *value);
 
-x265_zone *x265_zone_alloc(int zoneCount, bool isZoneFile);
+x265_zone *x265_zone_alloc(int zoneCount, int isZoneFile);
 
 void x265_zone_free(x265_param *param);
 
