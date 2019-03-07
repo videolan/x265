@@ -15952,7 +15952,7 @@ cglobal pixel_sa8d_32x32, 4,8,14
 
 INIT_YMM avx2
 cglobal ssimDist4, 7, 8, 8
-    mov            r7d,        4
+    mov            r5d,        4
     vpxor          m4,         m4                              ;ssBlock
     vpxor          m3,         m3
     vpxor          m7,         m7                              ;ac_k
@@ -15980,7 +15980,7 @@ cglobal ssimDist4, 7, 8, 8
     lea            r0,        [r0 + r1]
     lea            r2,        [r2 + r3]
 %endif
-    dec            r7d
+    dec            r5d
     jnz           .row
     vextracti128   xm5,       m4,        1
     vpaddq         xm4,       xm5
@@ -15999,7 +15999,7 @@ cglobal ssimDist4, 7, 8, 8
 
 INIT_YMM avx2
 cglobal ssimDist8, 7, 8, 8
-    mov            r7d,        8
+    mov            r5d,        8
     vpxor          m4,         m4                              ;ssBlock
     vpxor          m3,         m3
     vpxor          m7,         m7                              ;ac_k
@@ -16023,7 +16023,7 @@ cglobal ssimDist8, 7, 8, 8
     lea            r0,         [r0 + r1]
     lea            r2,         [r2 + r3]
 %endif
-    dec            r7d
+    dec            r5d
     jnz            .row
     vextracti128   xm5,        m4,        1
     vpaddq         xm4,        xm5
@@ -16042,7 +16042,7 @@ cglobal ssimDist8, 7, 8, 8
 
 INIT_YMM avx2
 cglobal ssimDist16, 7, 8, 8
-    mov            r7d,         16
+    mov            r5d,         16
     vpxor          m4,          m4                                ;ssBlock
     vpxor          m3,          m3
     vpxor          m7,          m7                                ;ac_k
@@ -16080,7 +16080,7 @@ cglobal ssimDist16, 7, 8, 8
     lea            r0,         [r0 + r1]
     lea            r2,         [r2 + r3]
 %endif
-    dec            r7d
+    dec            r5d
     jnz           .row
     vextracti128   xm5,        m4,        1
     vpaddq         xm4,        xm5
@@ -16099,7 +16099,7 @@ cglobal ssimDist16, 7, 8, 8
 
 INIT_YMM avx2
 cglobal ssimDist32, 7, 8, 8 
-    mov            r7d,        32
+    mov            r5d,        32
     vpxor          m4,         m4                              ;ssBlock
     vpxor          m3,         m3
     vpxor          m7,         m7                              ;ac_k
@@ -16163,7 +16163,7 @@ cglobal ssimDist32, 7, 8, 8
     lea            r0,          [r0 + r1]
     lea            r2,          [r2 + r3]
 %endif
-    dec            r7d
+    dec            r5d
     jnz           .row
     vextracti128   xm5,         m4,        1
     vpaddq         xm4,         xm5
@@ -16182,7 +16182,7 @@ cglobal ssimDist32, 7, 8, 8
 
 INIT_YMM avx2
 cglobal ssimDist64, 7, 8, 8 
-    mov            r7d,         64
+    mov            r5d,         64
     vpxor          m4,          m4                             ;ssBlock
     vpxor          m3,          m3
     vpxor          m7,          m7                             ;ac_k
@@ -16298,7 +16298,7 @@ cglobal ssimDist64, 7, 8, 8
     lea            r0,          [r0 + r1]
     lea            r2,          [r2 + r3]
 %endif
-    dec            r7d
+    dec            r5d
     jnz            .row
     vextracti128   xm5,          m4,        1
     vpaddq         xm4,          xm5

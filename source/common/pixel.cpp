@@ -938,7 +938,7 @@ template<int log2TrSize>
 static void ssimDist_c(const pixel* fenc, uint32_t fStride, const pixel* recon, intptr_t rstride, uint64_t *ssBlock, int shift, uint64_t *ac_k)
 {
     *ssBlock = 0;
-    const uint32_t trSize = 1 << log2TrSize;
+    int trSize = 1 << log2TrSize;
     for (int y = 0; y < trSize; y++)
     {
         for (int x = 0; x < trSize; x++)
