@@ -2116,6 +2116,9 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
             if ((underflow < epsilon || rce->isFadeEnd) && !isFrameDone)
             {
                 init(*m_curSlice->m_sps);
+                // Reduce tune complexity factor for scenes that follow blank frames
+                double tuneCplxFactor = (m_ncu > 3600 && m_param->rc.cuTree && !m_param->rc.hevcAq) ? 2.5 : m_param->rc.hevcAq ? 1.5 : m_isGrainEnabled ? 1.9 : 1.0;
+                m_cplxrSum /= tuneCplxFactor;
                 m_shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);
                 m_shortTermCplxCount = 1;
                 m_isAbrReset = true;
