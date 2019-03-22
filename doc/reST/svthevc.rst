@@ -3,7 +3,7 @@ SVT-HEVC
 
 .. _SvtHevc:
 
-x265 has support for open source HEVC encoder `SVT-HEVC <https://github.com/intel/SVT-HEVC>`_ 
+x265 has support for open source HEVC encoder `SVT-HEVC <https://01.org/svt>`_ 
 and can generate SVT-HEVC compliant bitstreams. SVT-HEVC encoder can be enabled at run time 
 using :option:`--svt`. Since SVT-HEVC params/CLI are not exposed outside, it has to be 
 configured only via x265 CLI options. The API's of SVT-HEVC are accessed through x265's API 
