@@ -1641,7 +1641,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
 int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
 {
-    if (isReconfigureRc(encParam, param))
+    if (isReconfigureRc(encParam, param) && !param->rc.zonefileCount)
     {
         /* VBV can't be turned ON if it wasn't ON to begin with and can't be turned OFF if it was ON to begin with*/
         if (param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0 &&
