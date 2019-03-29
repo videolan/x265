@@ -2860,10 +2860,10 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
     // TODO: restrict to slices boundaries
     // establish search bounds that don't cross extended frame boundaries
-    mvmin.x = (int16_t)(-cuX * cuSize - 8);
-    mvmin.y = (int16_t)(-cuY * cuSize - 8);
-    mvmax.x = (int16_t)((widthInCU - cuX - 1) * cuSize + 8);
-    mvmax.y = (int16_t)((heightInCU - cuY - 1) * cuSize + 8);
+    mvmin.x = (int32_t)(-cuX * cuSize - 8);
+    mvmin.y = (int32_t)(-cuY * cuSize - 8);
+    mvmax.x = (int32_t)((widthInCU - cuX - 1) * cuSize + 8);
+    mvmax.y = (int32_t)((heightInCU - cuY - 1) * cuSize + 8);
 
     for (int i = 0; i < 1 + bBidir; i++)
     {

@@ -69,15 +69,15 @@ void mcLuma(pixel* mcout, Lowres& ref, const MV * mvs)
     for (int y = 0; y < ref.lines; y += cuSize)
     {
         intptr_t pixoff = y * stride;
-        mvmin.y = (int16_t)((-y - 8) * mvshift);
-        mvmax.y = (int16_t)((ref.lines - y - 1 + 8) * mvshift);
+        mvmin.y = (int32_t)((-y - 8) * mvshift);
+        mvmax.y = (int32_t)((ref.lines - y - 1 + 8) * mvshift);
 
         for (int x = 0; x < ref.width; x += cuSize, pixoff += cuSize, cu++)
         {
             ALIGN_VAR_16(pixel, buf8x8[8 * 8]);
             intptr_t bstride = 8;
-            mvmin.x = (int16_t)((-x - 8) * mvshift);
-            mvmax.x = (int16_t)((ref.width - x - 1 + 8) * mvshift);
+            mvmin.x = (int32_t)((-x - 8) * mvshift);
+            mvmax.x = (int32_t)((ref.width - x - 1 + 8) * mvshift);
 
             /* clip MV to available pixels */
             MV mv = mvs[cu];
@@ -113,8 +113,8 @@ void mcChroma(pixel *      mcout,
          * into the lowres structures */
         int cu = y * cache.lowresWidthInCU;
         intptr_t pixoff = y * stride;
-        mvmin.y = (int16_t)((-y - 8) * mvshift);
-        mvmax.y = (int16_t)((height - y - 1 + 8) * mvshift);
+        mvmin.y = (int32_t)((-y - 8) * mvshift);
+        mvmax.y = (int32_t)((height - y - 1 + 8) * mvshift);
 
         for (int x = 0; x < width; x += bw, cu++, pixoff += bw)
         {
@@ -126,8 +126,8 @@ void mcChroma(pixel *      mcout,
                 mv.y >>= cache.vshift;
 
                 /* clip MV to available pixels */
-                mvmin.x = (int16_t)((-x - 8) * mvshift);
-                mvmax.x = (int16_t)((width - x - 1 + 8) * mvshift);
+                mvmin.x = (int32_t)((-x - 8) * mvshift);
+                mvmax.x = (int32_t)((width - x - 1 + 8) * mvshift);
                 mv = mv.clipped(mvmin, mvmax);
 
                 intptr_t fpeloffset = (mv.y >> 2) * stride + (mv.x >> 2);

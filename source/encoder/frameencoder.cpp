@@ -1406,8 +1406,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     }
 
     // Initialize restrict on MV range in slices
-    tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * m_param->maxCUSize * 4) + 3 * 4;
-    tld.analysis.m_sliceMaxY = (int16_t)((endRowInSlicePlus1 - 1 - row) * (m_param->maxCUSize * 4) - 4 * 4);
+    tld.analysis.m_sliceMinY = -(int32_t)(rowInSlice * m_param->maxCUSize * 4) + 3 * 4;
+    tld.analysis.m_sliceMaxY = (int32_t)((endRowInSlicePlus1 - 1 - row) * (m_param->maxCUSize * 4) - 4 * 4);
 
     // Handle single row slice
     if (tld.analysis.m_sliceMaxY < tld.analysis.m_sliceMinY)

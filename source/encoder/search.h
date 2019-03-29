@@ -283,8 +283,8 @@ public:
     int32_t         m_maxTUDepth;
     uint16_t        m_limitTU;
 
-    int16_t         m_sliceMaxY;
-    int16_t         m_sliceMinY;
+    int32_t         m_sliceMaxY;
+    int32_t         m_sliceMinY;
 
 #if DETAILED_CU_STATS
     /* Accumulate CU statistics separately for each frame encoder */

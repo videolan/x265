@@ -3631,8 +3631,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
                                 (analysis->interData)->refIdx[i][count + pu] = refIdx[i][d];
                                 if (m_param->scaleFactor)
                                 {
-                                    mv[i][d].x *= (int16_t)m_param->scaleFactor;
-                                    mv[i][d].y *= (int16_t)m_param->scaleFactor;
+                                    mv[i][d].x *= (int32_t)m_param->scaleFactor;
+                                    mv[i][d].y *= (int32_t)m_param->scaleFactor;
                                 }
                                 memcpy(&(analysis->interData)->mv[i][count + pu], &mv[i][d], sizeof(MV));
                             }
@@ -4014,8 +4014,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
                             {
                                 (analysis->interData)->mvpIdx[i][count + pu] = mvpIdx[i][d];
                                 (analysis->interData)->refIdx[i][count + pu] = refIdx[i][d];
-                                mvCopy[i].x = mv[i][d].x * (int16_t)m_param->scaleFactor;
-                                mvCopy[i].y = mv[i][d].y * (int16_t)m_param->scaleFactor;
+                                mvCopy[i].x = mv[i][d].x * (int32_t)m_param->scaleFactor;
+                                mvCopy[i].y = mv[i][d].y * (int32_t)m_param->scaleFactor;
                                 memcpy(&(analysis->interData)->mv[i][count + pu], &mvCopy[i], sizeof(MV));
                             }
                         }

@@ -147,9 +147,9 @@ typedef struct x265_analysis_intra_data
 typedef struct x265_analysis_MV
 {
     union{
-        struct { int16_t x, y; };
+        struct { int32_t x, y; };
 
-        int32_t word;
+        int64_t word;
     };
 }x265_analysis_MV;
 

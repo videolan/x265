@@ -39,16 +39,16 @@ struct MV
 public:
 
     union {
-        struct { int16_t x, y; };
+        struct { int32_t x, y; };
 
-        int32_t word;
+        int64_t word;
     };
 
     MV()                                       {}
-    MV(int32_t w) : word(w)                    {}
-    MV(int16_t _x, int16_t _y) : x(_x), y(_y)  {}
+    MV(int64_t w) : word(w)                    {}
+    MV(int32_t _x, int32_t _y) : x(_x), y(_y)  {}
 
-    MV& operator =(uint32_t w)                 { word = w; return *this; }
+    MV& operator =(uint64_t w)                 { word = w; return *this; }
 
     MV& operator +=(const MV& other)           { x += other.x; y += other.y; return *this; }
 
@@ -67,7 +67,7 @@ public:
 
     MV operator >>(int i) const                { return MV(x >> i, y >> i); }
 
-    MV operator *(int16_t i) const             { return MV(x * i, y * i); }
+    MV operator *(int32_t i) const             { return MV(x * i, y * i); }
 
     MV operator -(const MV& other) const       { return MV(x - other.x, y - other.y); }
 
@@ -87,7 +87,7 @@ public:
 
     bool inline notZero() const                { return this->word != 0; }
 
-    bool inline isSubpel() const               { return (this->word & 0x00030003) != 0; }
+    bool inline isSubpel() const               { return (this->word & 0x0000000300000003ll) != 0; }
 
     MV mvmin(const MV& m) const                { return MV(x > m.x ? m.x : x, y > m.y ? m.y : y); }
 

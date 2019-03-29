@@ -2633,7 +2633,7 @@ const MV& Search::checkBestMVP(const MV* amvpCand, const MV& mv, int& mvpIdx, ui
 
 void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mvmin, MV& mvmax) const
 {
-    MV dist((int16_t)merange << 2, (int16_t)merange << 2);
+    MV dist((int32_t)merange << 2, (int32_t)merange << 2);
     mvmin = mvp - dist;
     mvmax = mvp + dist;
 
@@ -2670,8 +2670,8 @@ void Search::setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mv
     mvmax >>= 2;
 
     /* conditional clipping for frame parallelism */
-    mvmin.y = X265_MIN(mvmin.y, (int16_t)m_refLagPixels);
-    mvmax.y = X265_MIN(mvmax.y, (int16_t)m_refLagPixels);
+    mvmin.y = X265_MIN(mvmin.y, (int32_t)m_refLagPixels);
+    mvmax.y = X265_MIN(mvmax.y, (int32_t)m_refLagPixels);
 
     /* conditional clipping for negative mv range */
     mvmax.y = X265_MAX(mvmax.y, mvmin.y);
