@@ -2426,6 +2426,7 @@ void svt_param_default(x265_param* param)
     svtHevcParam->frameRateNumerator = 0;
     svtHevcParam->frameRateDenominator = 0;
     svtHevcParam->encoderBitDepth = 8;
+	svtHevcParam->encoderColorFormat = EB_YUV420;
     svtHevcParam->compressedTenBitFormat = 0;
     svtHevcParam->rateControlMode = 0;
     svtHevcParam->sceneChangeDetection = 1;

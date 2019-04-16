@@ -567,6 +567,7 @@ bool CLIOptions::parse(int argc, char **argv)
         svtParam->frameRateNumerator = param->fpsNum;
         svtParam->frameRateDenominator = param->fpsDenom;
         svtParam->framesToBeEncoded = param->totalFrames;
+		svtParam->encoderColorFormat = (EB_COLOR_FORMAT)param->internalCsp;
     }
 #endif
     
