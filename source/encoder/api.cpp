@@ -366,7 +366,7 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
     static unsigned char picSendDone = 0;
     numEncoded = 0;
     static int codedNal = 0, eofReached = 0;
-
+	EB_H265_ENC_CONFIGURATION* svtParam = (EB_H265_ENC_CONFIGURATION*)encoder->m_svtAppData->svtHevcParams;
     if (encoder->m_param->bEnableSvtHevc)
     {
         if (pic_in)
@@ -444,7 +444,6 @@ int x265_encoder_encode(x265_encoder *enc, x265_nal **pp_nal, uint32_t *pi_nal, 
             }
         }
 
-        EB_H265_ENC_CONFIGURATION* svtParam = (EB_H265_ENC_CONFIGURATION*)encoder->m_svtAppData->svtHevcParams;
         if (eofReached && svtParam->codeEosNal == 0 && !codedNal)
         {
             EB_BUFFERHEADERTYPE *outputStreamPtr = 0;
