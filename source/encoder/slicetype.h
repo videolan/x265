@@ -134,6 +134,10 @@ public:
     bool          m_isSceneTransition;
     int           m_numPools;
     bool          m_extendGopBoundary;
+    double        m_frameVariance[X265_BFRAME_MAX + 4];
+    bool          m_isFadeIn;
+    uint64_t      m_fadeCount;
+    int           m_fadeStart;
     Lookahead(x265_param *param, ThreadPool *pool);
 #if DETAILED_CU_STATS
     int64_t       m_slicetypeDecideElapsedTime;

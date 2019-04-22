@@ -160,6 +160,7 @@ struct Lowres : public ReferencePlanes
     bool   bScenecut;        // Set to false if the frame cannot possibly be part of a real scenecut.
     bool   bKeyframe;
     bool   bLastMiniGopBFrame;
+    bool   bIsFadeEnd;
 
     double ipCostRatio;
 
@@ -195,6 +196,7 @@ struct Lowres : public ReferencePlanes
     uint32_t* blockVariance;
     uint64_t  wp_ssd[3];       // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
     uint64_t  wp_sum[3];
+    double    frameVariance;
 
     /* cutree intermediate data */
     PicQPAdaptationLayer* pAQLayer;

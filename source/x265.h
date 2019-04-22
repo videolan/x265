@@ -1771,6 +1771,10 @@ typedef struct x265_param
 
     /* SVT-HEVC param structure. For internal use when SVT HEVC encoder is enabled */
     void* svtHevcParam;
+
+    /* Detect fade-in regions. Enforces I-slice for the brightest point.
+       Re-init RC history at that point in ABR mode. Default is disabled. */
+    int       bEnableFades;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not

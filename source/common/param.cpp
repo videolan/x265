@@ -172,6 +172,7 @@ void x265_param_default(x265_param* param)
     param->chunkStart = 0;
     param->chunkEnd = 0;
     param->bEnableHRDConcatFlag = 0;
+    param->bEnableFades = 0;
 
     /* Intra Coding Tools */
     param->bEnableConstrainedIntra = 0;
@@ -1265,6 +1266,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("svt-pred-struct") x265_log(p, X265_LOG_WARNING, "Option %s is SVT-HEVC Encoder specific; Disabling it here \n", name);
         OPT("svt-fps-in-vps") x265_log(p, X265_LOG_WARNING, "Option %s is SVT-HEVC Encoder specific; Disabling it here \n", name);
 #endif
+        OPT("fades") p->bEnableFades = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -2367,6 +2369,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bEnableHRDConcatFlag = src->bEnableHRDConcatFlag;
     dst->dolbyProfile = src->dolbyProfile;
     dst->bEnableSvtHevc = src->bEnableSvtHevc;
+    dst->bEnableFades = src->bEnableFades;
 
 #ifdef SVT_HEVC
     memcpy(dst->svtHevcParam, src->svtHevcParam, sizeof(EB_H265_ENC_CONFIGURATION));

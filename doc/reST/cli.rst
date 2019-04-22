@@ -1520,6 +1520,10 @@ Slice decision options
 	    slicetype decision may change with this option.
 	2 - flush the slicetype decided frames only.   
 
+.. option:: --fades, --no-fades
+
+	Detect and handle fade-in regions. Default disabled.
+
 Quality, rate control and rate distortion options
 =================================================
 
