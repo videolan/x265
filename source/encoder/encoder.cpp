@@ -2710,8 +2710,8 @@ void Encoder::configureDolbyVisionParams(x265_param* p)
     if (dovi[doviProfile].doviProfileId == 81)
         p->bEmitHDRSEI = 1;
 
-    if (dovi[doviProfile].doviProfileId == 50 && p->noiseReductionIntra && p->noiseReductionInter)
-        p->crQpOffset = 4;
+    if (dovi[doviProfile].doviProfileId == 50)
+        p->crQpOffset = 3;
 }
 
 void Encoder::configure(x265_param *p)
