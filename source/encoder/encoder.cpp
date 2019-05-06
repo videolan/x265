@@ -80,6 +80,7 @@ DolbyVisionProfileSpec dovi[] =
  * TODO: come up an algorithm for adoptive threshold */
 #define MVTHRESHOLD (10*10)
 #define PU_2Nx2N 1
+#define MAX_CHROMA_QP_OFFSET 12
 static const char* defaultAnalysisFileName = "x265_analysis.dat";
 
 using namespace X265_NS;
@@ -2802,8 +2803,13 @@ void Encoder::configure(x265_param *p)
     /* In 444, chroma gets twice as much resolution, so halve quality when psy-rd is enabled */
     if (p->internalCsp == X265_CSP_I444 && p->psyRd)
     {
-        p->cbQpOffset += 6;
-        p->crQpOffset += 6;
+        if (!p->cbQpOffset && !p->crQpOffset)
+        {
+            p->cbQpOffset = MAX_CHROMA_QP_OFFSET / 2;
+            p->crQpOffset = MAX_CHROMA_QP_OFFSET / 2;
+            x265_log(p, X265_LOG_WARNING, "halving the quality when psy-rd is enabled for 444 input."
+                     " Setting cbQpOffset = %d and crQpOffset = %d\n", p->cbQpOffset, p->crQpOffset);
+        }
     }
 
     if (p->bLossless)

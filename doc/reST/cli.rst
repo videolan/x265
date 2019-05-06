@@ -1333,6 +1333,10 @@ of energy and no residual cost). One can lower psy-rd settings when
 judder is happening, and allow the encoder to use some blur in these
 areas of high motion.
 
+In 444, chroma gets twice as much resolution, so halve the quality when psy-rd is enabled.
+So when psy-rd is enabled for 444 videos, cbQpOffset and crQpOffset are set to value 6,
+if they are not explicitly set.
+
 .. option:: --psy-rd <float>
 
 	Influence rate distortion optimizated mode decision to preserve the
