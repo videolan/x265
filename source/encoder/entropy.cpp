@@ -530,6 +530,10 @@ void Entropy::codeScalingList(const ScalingList& scalingList, uint32_t sizeId, u
     for (int i = 0; i < coefNum; i++)
     {
         data = src[scan[i]] - nextCoef;
+        if (data < -128)
+            data += 256;
+        if (data > 127)
+            data -= 256;
         nextCoef = (nextCoef + data + 256) % 256;
         WRITE_SVLC(data,  "scaling_list_delta_coef");
     }
