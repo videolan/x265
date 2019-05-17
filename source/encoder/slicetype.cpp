@@ -1165,7 +1165,9 @@ void PreLookaheadGroup::processTasks(int workerThreadID)
         ProfileScopeEvent(prelookahead);
         m_lock.release();
         preFrame->m_lowres.init(preFrame->m_fencPic, preFrame->m_poc);
-        if (m_lookahead.m_bAdaptiveQuant)
+        if (m_lookahead.m_param->rc.bStatRead && m_lookahead.m_param->rc.cuTree && IS_REFERENCED(preFrame))
+            /* cu-tree offsets were read from stats file */;
+        else if (m_lookahead.m_bAdaptiveQuant)
             tld.calcAdaptiveQuantFrame(preFrame, m_lookahead.m_param);
         tld.lowresIntraEstimate(preFrame->m_lowres, m_lookahead.m_param->rc.qgSize);
         preFrame->m_lowresInit = true;
