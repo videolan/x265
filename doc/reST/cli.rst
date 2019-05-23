@@ -2154,6 +2154,12 @@ VUI fields must be manually specified.
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
 
+.. option:: --cll, --no-cll
+
+    Emit content light level SEI. Enabled automatically when :option:`--dolby-vision-profile` 8.1
+    is specified. When enabled, signals max-cll and max-fall as 0 if :option:`max-cll` is unspecified.
+    Default enabled.
+
 .. option:: --hdr, --no-hdr
 
 	Force signalling of HDR parameters in SEI packets. Enabled

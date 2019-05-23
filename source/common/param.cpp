@@ -332,6 +332,7 @@ void x265_param_default(x265_param* param)
     /* SEI messages */
     param->preferredTransferCharacteristics = -1;
     param->pictureStructure = -1;
+    param->bEmitCLL = 1;
 
     /* SVT Hevc Encoder specific params */
     param->bEnableSvtHevc = 0;
@@ -573,10 +574,10 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->deblockingFilterBetaOffset = 1;
             param->deblockingFilterTCOffset = 1;
         }
-		else if (!strcmp(tune, "vmaf"))  /*Adding vmaf for x265 + SVT-HEVC integration support*/
-		{
-			/*vmaf is under development, currently x265 won't support vmaf*/
-		}
+        else if (!strcmp(tune, "vmaf"))  /*Adding vmaf for x265 + SVT-HEVC integration support*/
+        {
+            /*vmaf is under development, currently x265 won't support vmaf*/
+        }
         else
             return -1;
     }
@@ -2016,7 +2017,8 @@ char *x265_param2string(x265_param* p, int padx, int pady)
         p->vui.defDispWinRightOffset, p->vui.defDispWinBottomOffset);
     if (p->masteringDisplayColorVolume)
         s += sprintf(s, " master-display=%s", p->masteringDisplayColorVolume);
-    s += sprintf(s, " max-cll=%hu,%hu", p->maxCLL, p->maxFALL);
+    if (p->bEmitCLL)
+        s += sprintf(s, "cll=%hu,%hu", p->maxCLL, p->maxFALL);
     s += sprintf(s, " min-luma=%hu", p->minLuma);
     s += sprintf(s, " max-luma=%hu", p->maxLuma);
     s += sprintf(s, " log2-max-poc-lsb=%d", p->log2MaxPocLsb);
@@ -2314,6 +2316,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     else dst->masteringDisplayColorVolume = NULL;
     dst->maxLuma = src->maxLuma;
     dst->minLuma = src->minLuma;
+    dst->bEmitCLL = src->bEmitCLL;
     dst->maxCLL = src->maxCLL;
     dst->maxFALL = src->maxFALL;
     dst->log2MaxPocLsb = src->log2MaxPocLsb;
@@ -2439,7 +2442,7 @@ void svt_param_default(x265_param* param)
     svtHevcParam->frameRateNumerator = 0;
     svtHevcParam->frameRateDenominator = 0;
     svtHevcParam->encoderBitDepth = 8;
-	svtHevcParam->encoderColorFormat = EB_YUV420;
+    svtHevcParam->encoderColorFormat = EB_YUV420;
     svtHevcParam->compressedTenBitFormat = 0;
     svtHevcParam->rateControlMode = 0;
     svtHevcParam->sceneChangeDetection = 1;
@@ -2477,11 +2480,11 @@ void svt_param_default(x265_param* param)
     svtHevcParam->maxCLL = 0;
     svtHevcParam->maxFALL = 0;
     svtHevcParam->useMasteringDisplayColorVolume = 0;
-	svtHevcParam->useNaluFile = 0;
-	svtHevcParam->whitePointX = 0;
-	svtHevcParam->whitePointY = 0;
-	svtHevcParam->maxDisplayMasteringLuminance = 0;
-	svtHevcParam->minDisplayMasteringLuminance = 0;
+    svtHevcParam->useNaluFile = 0;
+    svtHevcParam->whitePointX = 0;
+    svtHevcParam->whitePointY = 0;
+    svtHevcParam->maxDisplayMasteringLuminance = 0;
+    svtHevcParam->minDisplayMasteringLuminance = 0;
     svtHevcParam->dolbyVisionProfile = 0;
     svtHevcParam->targetSocket = -1;
     svtHevcParam->logicalProcessors = 0;
@@ -2513,7 +2516,7 @@ int svt_set_preset_tune(x265_param* param, const char* preset, const char* tune)
         else if (!strcmp(tune, "ssim")) svtHevcParam->tune = 1;
         else if (!strcmp(tune, "grain")) svtHevcParam->tune = 0;
         else if (!strcmp(tune, "animation")) svtHevcParam->tune = 0;
-		else if (!strcmp(tune, "vmaf")) svtHevcParam->tune = 2;
+        else if (!strcmp(tune, "vmaf")) svtHevcParam->tune = 2;
         else if (!strcmp(tune, "zero-latency") || !strcmp(tune, "zerolatency")) svtHevcParam->latencyMode = 1;
         else  return -1;
     }

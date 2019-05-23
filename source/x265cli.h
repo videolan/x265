@@ -336,6 +336,8 @@ static const struct option long_options[] =
     { "svt-fps-in-vps",  no_argument  , NULL, 0 },
     { "no-svt-fps-in-vps",  no_argument  , NULL, 0 },
 #endif
+    { "cll", no_argument, NULL, 0 },
+    { "no-cll", no_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -602,7 +604,8 @@ static void showHelp(x265_param *param)
     H1("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
     H0("   --master-display <string>     SMPTE ST 2086 master display color volume info SEI (HDR)\n");
     H0("                                    format: G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)\n");
-    H0("   --max-cll <string>            Emit content light level info SEI as \"cll,fall\" (HDR)\n");
+    H0("   --max-cll <string>            Specify content light level info SEI as \"cll,fall\" (HDR).\n");
+    H0("   --[no-]cll                    Emit content light level info SEI. Default %s\n", OPT(param->bEmitCLL));
     H0("   --[no-]hdr                    Control dumping of HDR SEI packet. If max-cll or master-display has non-zero values, this is enabled. Default %s\n", OPT(param->bEmitHDRSEI));
     H0("   --[no-]hdr-opt                Add luma and chroma offsets for HDR/WCG content. Default %s\n", OPT(param->bHDROpt));
     H0("   --min-luma <integer>          Minimum luma plane value of input source picture\n");

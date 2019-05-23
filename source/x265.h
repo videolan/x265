@@ -1780,6 +1780,9 @@ typedef struct x265_param
 
     /* Enable field coding */
     int bField;
+
+    /*Emit content light level info SEI*/
+    int         bEmitCLL;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not

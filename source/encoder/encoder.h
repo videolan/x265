@@ -203,7 +203,6 @@ public:
     ScalingList        m_scalingList;      // quantization matrix information
     Window             m_conformanceWindow;
 
-    bool               m_emitCLLSEI;
     bool               m_bZeroLatency;     // x265_encoder_encode() returns NALs for the input picture, zero lag
     bool               m_aborted;          // fatal error detected
     bool               m_reconfigure;      // Encoder reconfigure in progress

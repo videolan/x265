@@ -444,8 +444,6 @@ void Encoder::create()
 
     m_nalList.m_annexB = !!m_param->bAnnexB;
 
-    m_emitCLLSEI = p->maxCLL || p->maxFALL || (p->dolbyProfile == 81);
-
     if (m_param->naluFile)
     {
         m_naluFile = x265_fopen(m_param->naluFile, "r");
@@ -2462,10 +2460,13 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 
     if (m_param->bEmitHDRSEI)
     {
-        SEIContentLightLevel cllsei;
-        cllsei.max_content_light_level = m_param->maxCLL;
-        cllsei.max_pic_average_light_level = m_param->maxFALL;
-        cllsei.writeSEImessages(bs, m_sps, NAL_UNIT_PREFIX_SEI, list, m_param->bSingleSeiNal);
+        if (m_param->bEmitCLL)
+        {
+            SEIContentLightLevel cllsei;
+            cllsei.max_content_light_level = m_param->maxCLL;
+            cllsei.max_pic_average_light_level = m_param->maxFALL;
+            cllsei.writeSEImessages(bs, m_sps, NAL_UNIT_PREFIX_SEI, list, m_param->bSingleSeiNal);
+        }
 
         if (m_param->masteringDisplayColorVolume)
         {
@@ -2711,7 +2712,7 @@ void Encoder::configureDolbyVisionParams(x265_param* p)
     p->vui.matrixCoeffs = dovi[doviProfile].matrixCoeffs;
 
     if (dovi[doviProfile].doviProfileId == 81)
-        p->bEmitHDRSEI = 1;
+        p->bEmitHDRSEI = p->bEmitCLL = 1;
 
     if (dovi[doviProfile].doviProfileId == 50)
         p->crQpOffset = 3;
