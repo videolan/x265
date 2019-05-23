@@ -464,6 +464,8 @@ typedef struct x265_picture
 
     //Dolby Vision RPU metadata
     x265_dolby_vision_rpu rpu;
+ 
+    int fieldNum;
 } x265_picture;
 
 typedef enum
@@ -1775,6 +1777,9 @@ typedef struct x265_param
     /* Detect fade-in regions. Enforces I-slice for the brightest point.
        Re-init RC history at that point in ABR mode. Default is disabled. */
     int       bEnableFades;
+
+    /* Enable field coding */
+    int bField;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not

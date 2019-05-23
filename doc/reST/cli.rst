@@ -551,6 +551,10 @@ frame counts) are only applicable to the CLI application.
 	This feature can be enabled only in closed GOP structures.
 	Default 0 (disabled).
 
+.. option:: --field, --no-field
+
+	Enable or disable field coding. Default disabled.
+	
 Profile, Level, Tier
 ====================
 

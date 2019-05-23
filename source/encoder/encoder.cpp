@@ -1107,6 +1107,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_pts       = pic_in->pts;
         inFrame->m_forceqp   = pic_in->forceqp;
         inFrame->m_param     = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
+        if (m_param->bField && m_param->interlaceMode)
+            inFrame->m_fieldNum = pic_in->fieldNum;
 
         copyUserSEIMessages(inFrame, pic_in);
 

@@ -73,6 +73,8 @@ static const struct option long_options[] =
     { "input-csp",      required_argument, NULL, 0 },
     { "interlace",      required_argument, NULL, 0 },
     { "no-interlace",         no_argument, NULL, 0 },
+    { "field",                no_argument, NULL, 0 },
+    { "no-field",             no_argument, NULL, 0 },
     { "fps",            required_argument, NULL, 0 },
     { "seek",           required_argument, NULL, 0 },
     { "frame-skip",     required_argument, NULL, 0 },
@@ -391,6 +393,7 @@ static void showHelp(x265_param *param)
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("   --seek <integer>              First frame to encode\n");
     H1("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
+    H0("   --[no-]field                  Enable or disable field coding. Default %s\n", OPT( param->bField));
     H1("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
     H0("   --[no-]copy-pic               Copy buffers of input picture in frame. Default %s\n", OPT(param->bCopyPicToFrame));
     H0("\nQuality reporting metrics:\n");

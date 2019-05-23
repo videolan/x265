@@ -575,6 +575,15 @@ bool CLIOptions::parse(int argc, char **argv)
     info.timebaseNum = param->fpsDenom;
     info.timebaseDenom = param->fpsNum;
 
+    if (param->bField && param->interlaceMode)
+    {   // Field FPS
+        param->fpsNum *= 2;
+        // Field height
+        param->sourceHeight = param->sourceHeight >> 1;
+        // Number of fields to encode
+        param->totalFrames *= 2;
+    }
+
     if (api->param_apply_profile(param, profile))
         return true;
 
@@ -916,7 +925,8 @@ int main(int argc, char **argv)
     bool bDolbyVisionRPU = false;
     uint8_t *rpuPayload = NULL;
     int ret = 0;
-
+    int inputPicNum = 1;
+    x265_picture picField1, picField2;
 
     if (!param->bRepeatHeaders && !param->bEnableSvtHevc)
     {
@@ -930,7 +940,16 @@ int main(int argc, char **argv)
             cliopt.totalbytes += cliopt.output->writeHeaders(p_nal, nal);
     }
 
-    api->picture_init(param, pic_in);
+    if (param->bField && param->interlaceMode)
+    {
+        api->picture_init(param, &picField1);
+        api->picture_init(param, &picField2);
+        // return back the original height of input
+        param->sourceHeight *= 2;
+        api->picture_init(param, pic_in);
+    }
+    else
+        api->picture_init(param, pic_in);
 
     if (param->dolbyProfile && cliopt.dolbyVisionRpu)
     {
@@ -952,7 +971,7 @@ int main(int argc, char **argv)
     // main encoder loop
     while (pic_in && !b_ctrl_c)
     {
-        pic_orig.poc = inFrameCount;
+        pic_orig.poc = (param->bField && param->interlaceMode) ? inFrameCount * 2 : inFrameCount;
         if (cliopt.qpfile)
         {
             if (!cliopt.parseQPFile(pic_orig))
@@ -980,39 +999,128 @@ int main(int argc, char **argv)
             /* Overwrite PTS */
             pic_in->pts = pic_in->poc;
 
+            // convert to field
+            if (param->bField && param->interlaceMode)
+            {
+                int height = pic_in->height >> 1;
+                
+                int static bCreated = 0;
+                if (bCreated == 0)
+                {
+                    bCreated = 1;
+                    inputPicNum = 2;
+                    picField1.fieldNum = 1;
+                    picField2.fieldNum = 2;
+
+                    picField1.bitDepth = picField2.bitDepth = pic_in->bitDepth;
+                    picField1.colorSpace = picField2.colorSpace = pic_in->colorSpace;
+                    picField1.height = picField2.height = pic_in->height >> 1;
+                    picField1.framesize = picField2.framesize = pic_in->framesize >> 1;
+
+                    char* field1Buf = X265_MALLOC( char, pic_in->framesize >> 1 );
+                    char* field2Buf = X265_MALLOC( char, pic_in->framesize >> 1 );
+  
+                    int stride = picField1.stride[0] = picField2.stride[0] = pic_in->stride[0];
+                    int framesize = stride * (height >> x265_cli_csps[pic_in->colorSpace].height[0]);
+                    picField1.planes[0] = field1Buf;
+                    picField2.planes[0] = field2Buf;
+                    for (int i = 1; i < x265_cli_csps[pic_in->colorSpace].planes; i++)
+                    {
+                        picField1.planes[i] = field1Buf + framesize;
+                        picField2.planes[i] = field2Buf + framesize;
+
+                        stride = picField1.stride[i] = picField2.stride[i] = pic_in->stride[i];
+                        framesize += (stride * (height >> x265_cli_csps[pic_in->colorSpace].height[i]));
+                    }
+                    assert(framesize  == picField1.framesize);
+                }
+
+                picField1.pts = picField1.poc = pic_in->poc;
+                picField2.pts = picField2.poc = pic_in->poc + 1;
+
+                picField1.userSEI = picField2.userSEI = pic_in->userSEI;
+
+                //if (pic_in->userData)
+                //{
+                //    // Have to handle userData here
+                //}
+
+                if (pic_in->framesize)
+                {
+                    for (int i = 0; i < x265_cli_csps[pic_in->colorSpace].planes; i++)
+                    {
+                        char* srcP1 = (char*)pic_in->planes[i];
+                        char* srcP2 = (char*)pic_in->planes[i] + pic_in->stride[i];
+                        char* p1 = (char*)picField1.planes[i];
+                        char* p2 = (char*)picField2.planes[i];
+
+                        int stride = picField1.stride[i];
+
+                        for (int y = 0; y < (height >> x265_cli_csps[pic_in->colorSpace].height[i]); y++)
+                        {
+                            memcpy(p1, srcP1, stride);
+                            memcpy(p2, srcP2, stride);
+                            srcP1 += 2*stride;
+                            srcP2 += 2*stride;
+                            p1 += stride;
+                            p2 += stride;
+                        }
+                    }
+                }
+            }
+
             if (bDolbyVisionRPU)
             {
-                if (rpuParser(pic_in, cliopt.dolbyVisionRpu) > 0)
-                    goto fail;
+                if (param->bField && param->interlaceMode)
+                {
+                    if (rpuParser(&picField1, cliopt.dolbyVisionRpu) > 0)
+                        goto fail;
+                    if (rpuParser(&picField2, cliopt.dolbyVisionRpu) > 0)
+                        goto fail;
+                }
+                else
+                {
+                    if (rpuParser(pic_in, cliopt.dolbyVisionRpu) > 0)
+                        goto fail;
+                }
             }
         }
-        int numEncoded = api->encoder_encode(encoder, &p_nal, &nal, pic_in, pic_recon);
-        if (numEncoded < 0)
-        {
-            b_ctrl_c = 1;
-            ret = 4;
-            break;
-        }
+                
+        for (int inputNum = 0; inputNum < inputPicNum; inputNum++)
+        {  
+            x265_picture *picInput = NULL;
+            if (inputPicNum == 2)
+                picInput = pic_in ? (inputNum ? &picField2 : &picField1) : NULL;
+            else
+                picInput = pic_in;
 
-        if (reconPlay && numEncoded)
-            reconPlay->writePicture(*pic_recon);
-
-        outFrameCount += numEncoded;
-
-        if (numEncoded && pic_recon && cliopt.recon)
-            cliopt.recon->writePicture(pic_out);
-        if (nal)
-        {
-            cliopt.totalbytes += cliopt.output->writeFrame(p_nal, nal, pic_out);
-            if (pts_queue)
+            int numEncoded = api->encoder_encode( encoder, &p_nal, &nal, picInput, pic_recon );
+            if( numEncoded < 0 )
             {
-                pts_queue->push(-pic_out.pts);
-                if (pts_queue->size() > 2)
-                    pts_queue->pop();
+                b_ctrl_c = 1;
+                ret = 4;
+                break;
             }
-        }
 
-        cliopt.printStatus(outFrameCount);
+            if (reconPlay && numEncoded)
+                reconPlay->writePicture(*pic_recon);
+
+            outFrameCount += numEncoded;
+
+            if (numEncoded && pic_recon && cliopt.recon)
+                cliopt.recon->writePicture(pic_out);
+            if (nal)
+            {
+                cliopt.totalbytes += cliopt.output->writeFrame(p_nal, nal, pic_out);
+                if (pts_queue)
+                {
+                    pts_queue->push(-pic_out.pts);
+                    if (pts_queue->size() > 2)
+                        pts_queue->pop();
+                }
+            }
+            cliopt.printStatus( outFrameCount );
+        }
     }
 
     /* Flush the encoder */

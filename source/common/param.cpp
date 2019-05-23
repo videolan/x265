@@ -140,6 +140,7 @@ void x265_param_default(x265_param* param)
     param->uhdBluray = 0;
     param->bHighTier = 1; //Allow high tier by default
     param->interlaceMode = 0;
+    param->bField = 0;
     param->bAnnexB = 1;
     param->bRepeatHeaders = 0;
     param->bEnableAccessUnitDelimiters = 0;
@@ -1267,6 +1268,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("svt-fps-in-vps") x265_log(p, X265_LOG_WARNING, "Option %s is SVT-HEVC Encoder specific; Disabling it here \n", name);
 #endif
         OPT("fades") p->bEnableFades = atobool(value);
+        OPT("field") p->bField = atobool( value );
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1638,6 +1640,12 @@ int x265_check_params(x265_param* param)
 
         if (param->dolbyProfile == 81)
             CHECK(!(param->masteringDisplayColorVolume), "Dolby Vision profile - 8.1 requires Mastering display color volume information\n");
+    }
+
+    if (param->bField && param->interlaceMode)
+    {
+        CHECK( (param->bFrameAdaptive==0), "Adaptive B-frame decision method should be closed for field feature.\n" );
+        // to do
     }
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
@@ -2045,6 +2053,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bSingleSeiNal, "single-sei");
     BOOL(p->rc.hevcAq, "hevc-aq");
     BOOL(p->bEnableSvtHevc, "svt");
+    BOOL(p->bField, "field");
     s += sprintf(s, " qp-adaptation-range=%.2f", p->rc.qpAdaptationRange);
 #undef BOOL
     return buf;
@@ -2370,6 +2379,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->dolbyProfile = src->dolbyProfile;
     dst->bEnableSvtHevc = src->bEnableSvtHevc;
     dst->bEnableFades = src->bEnableFades;
+    dst->bField = src->bField;
 
 #ifdef SVT_HEVC
     memcpy(dst->svtHevcParam, src->svtHevcParam, sizeof(EB_H265_ENC_CONFIGURATION));
