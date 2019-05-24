@@ -1021,7 +1021,7 @@ int main(int argc, char **argv)
                     char* field2Buf = X265_MALLOC( char, pic_in->framesize >> 1 );
   
                     int stride = picField1.stride[0] = picField2.stride[0] = pic_in->stride[0];
-                    int framesize = stride * (height >> x265_cli_csps[pic_in->colorSpace].height[0]);
+                    uint64_t framesize = stride * (height >> x265_cli_csps[pic_in->colorSpace].height[0]);
                     picField1.planes[0] = field1Buf;
                     picField2.planes[0] = field2Buf;
                     for (int i = 1; i < x265_cli_csps[pic_in->colorSpace].planes; i++)
