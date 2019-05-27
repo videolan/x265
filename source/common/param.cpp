@@ -185,12 +185,12 @@ void x265_param_default(x265_param* param)
     param->searchMethod = X265_HEX_SEARCH;
     param->subpelRefine = 2;
     param->searchRange = 57;
-    param->maxNumMergeCand = 2;
-    param->limitReferences = 3;
+	param->maxNumMergeCand = 3;
+	param->limitReferences = 1;
     param->limitModes = 0;
     param->bEnableWeightedPred = 1;
     param->bEnableWeightedBiPred = 0;
-    param->bEnableEarlySkip = 0;
+	param->bEnableEarlySkip = 1;
     param->bEnableRecursionSkip = 1;
     param->bEnableAMP = 0;
     param->bEnableRectInter = 0;
@@ -225,7 +225,7 @@ void x265_param_default(x265_param* param)
     param->analysisReuseFileName = NULL;
     param->analysisSave = NULL;
     param->analysisLoad = NULL;
-    param->bIntraInBFrames = 0;
+	param->bIntraInBFrames = 1;
     param->bLossless = 0;
     param->bCULossless = 0;
     param->bEnableTemporalSubLayers = 0;
