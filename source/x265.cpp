@@ -1017,8 +1017,9 @@ int main(int argc, char **argv)
                     picField1.height = picField2.height = pic_in->height >> 1;
                     picField1.framesize = picField2.framesize = pic_in->framesize >> 1;
 
-                    char* field1Buf = X265_MALLOC( char, pic_in->framesize >> 1 );
-                    char* field2Buf = X265_MALLOC( char, pic_in->framesize >> 1 );
+                    size_t fieldFrameSize = (size_t)pic_in->framesize >> 1;
+                    char* field1Buf = X265_MALLOC(char, fieldFrameSize);
+                    char* field2Buf = X265_MALLOC(char, fieldFrameSize);
   
                     int stride = picField1.stride[0] = picField2.stride[0] = pic_in->stride[0];
                     uint64_t framesize = stride * (height >> x265_cli_csps[pic_in->colorSpace].height[0]);
