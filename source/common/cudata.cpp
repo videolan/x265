@@ -106,7 +106,7 @@ inline MV scaleMv(MV mv, int scale)
     int mvx = x265_clip3(-32768, 32767, (scale * mv.x + 127 + (scale * mv.x < 0)) >> 8);
     int mvy = x265_clip3(-32768, 32767, (scale * mv.y + 127 + (scale * mv.y < 0)) >> 8);
 
-    return MV((int16_t)mvx, (int16_t)mvy);
+    return MV((int32_t)mvx, (int32_t)mvy);
 }
 
 }
@@ -1917,11 +1917,11 @@ void CUData::clipMv(MV& outMV) const
     const uint32_t mvshift = 2;
     uint32_t offset = 8;
 
-    int16_t xmax = (int16_t)((m_slice->m_sps->picWidthInLumaSamples + offset - m_cuPelX - 1) << mvshift);
-    int16_t xmin = -(int16_t)((m_encData->m_param->maxCUSize + offset + m_cuPelX - 1) << mvshift);
+    int32_t xmax = (int32_t)((m_slice->m_sps->picWidthInLumaSamples + offset - m_cuPelX - 1) << mvshift);
+    int32_t xmin = -(int32_t)((m_encData->m_param->maxCUSize + offset + m_cuPelX - 1) << mvshift);
 
-    int16_t ymax = (int16_t)((m_slice->m_sps->picHeightInLumaSamples + offset - m_cuPelY - 1) << mvshift);
-    int16_t ymin = -(int16_t)((m_encData->m_param->maxCUSize + offset + m_cuPelY - 1) << mvshift);
+    int32_t ymax = (int32_t)((m_slice->m_sps->picHeightInLumaSamples + offset - m_cuPelY - 1) << mvshift);
+    int32_t ymin = -(int32_t)((m_encData->m_param->maxCUSize + offset + m_cuPelY - 1) << mvshift);
 
     outMV.x = X265_MIN(xmax, X265_MAX(xmin, outMV.x));
     outMV.y = X265_MIN(ymax, X265_MAX(ymin, outMV.y));

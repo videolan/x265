@@ -1262,6 +1262,7 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
     }
     rce->isActive = true;
     rce->scenecut = false;
+    rce->isFadeEnd = curFrame->m_lowres.bIsFadeEnd;
     bool isRefFrameScenecut = m_sliceType!= I_SLICE && m_curSlice->m_refFrameList[0][0]->m_lowres.bScenecut;
     m_isFirstMiniGop = m_sliceType == I_SLICE ? true : m_isFirstMiniGop;
     if (curFrame->m_lowres.bScenecut)
@@ -1373,6 +1374,8 @@ int RateControl::rateControlStart(Frame* curFrame, RateControlEntry* rce, Encode
                         m_numBframesInPattern++;
                 }
             }
+            if (rce->isFadeEnd)
+                m_isPatternPresent = true;
         }
         /* For a scenecut that occurs within the mini-gop, enable scene transition
          * switch until the next mini-gop to ensure a min qp for all the frames within 
@@ -2097,7 +2100,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
     double abrBuffer = 2 * m_rateTolerance * m_bitrate;
 
     // Check if current Slice is a scene cut that follows low detailed/blank frames
-    if (rce->lastSatd > 4 * rce->movingAvgSum || rce->scenecut)
+    if (rce->lastSatd > 4 * rce->movingAvgSum || rce->scenecut || rce->isFadeEnd)
     {
         if (!m_isAbrReset && rce->movingAvgSum > 0
             && (m_isPatternPresent || !m_param->bframes))
@@ -2110,7 +2113,7 @@ void RateControl::checkAndResetABR(RateControlEntry* rce, bool isFrameDone)
                 shrtTermTotalBitsSum += m_encodedBitsWindow[i];
             double underflow = (shrtTermTotalBitsSum - shrtTermWantedBits) / abrBuffer;
             const double epsilon = 0.0001f;
-            if (underflow < epsilon && !isFrameDone)
+            if ((underflow < epsilon || rce->isFadeEnd) && !isFrameDone)
             {
                 init(*m_curSlice->m_sps);
                 m_shortTermCplxSum = rce->lastSatd / (CLIP_DURATION(m_frameDuration) / BASE_FRAME_DURATION);

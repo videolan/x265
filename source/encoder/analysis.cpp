@@ -2412,6 +2412,7 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
     bool mightSplit = !(cuGeom.flags & CUGeom::LEAF);
     bool mightNotSplit = !(cuGeom.flags & CUGeom::SPLIT_MANDATORY);
     bool bDecidedDepth = parentCTU.m_cuDepth[cuGeom.absPartIdx] == depth;
+    int split = 0;
 
     TrainingData td;
     td.init(parentCTU, cuGeom);
@@ -2420,8 +2421,13 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
         m_refineLevel = m_param->interRefine;
     else
         m_refineLevel = m_frame->m_classifyFrame ? 1 : 3;
-    int split = (m_param->scaleFactor && bDecidedDepth && (!mightNotSplit || 
-        (m_refineLevel && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1))));
+
+    if (m_param->interRefine == 1)
+        split = (m_param->scaleFactor && bDecidedDepth && parentCTU.m_predMode[cuGeom.absPartIdx] == MODE_SKIP && (!mightNotSplit ||
+                (m_refineLevel && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1))));
+    else
+        split = (m_param->scaleFactor && bDecidedDepth && (!mightNotSplit ||
+                (m_refineLevel && cuGeom.log2CUSize == (uint32_t)(g_log2Size[m_param->minCUSize] + 1))));
     td.split = split;
 
     if ((bDecidedDepth && mightNotSplit) || (m_param->bAnalysisType == HEVC_INFO && parentCTU.m_cuDepth[cuGeom.absPartIdx] == 4))
@@ -3696,14 +3702,8 @@ void Analysis::normFactor(const pixel* src, uint32_t blockSize, CUData& ctu, int
 
     // 2. Calculate ac component
     uint64_t z_k = 0;
-    for (uint32_t block_yy = 0; block_yy < blockSize; block_yy += 1)
-    {
-        for (uint32_t block_xx = 0; block_xx < blockSize; block_xx += 1)
-        {
-            uint32_t temp = src[block_yy * blockSize + block_xx] >> shift;
-            z_k += temp * temp;
-        }
-    }
+    int block = (int)(((log(blockSize) / log(2)) - 2) + 0.5);
+    primitives.cu[block].normFact(src, blockSize, shift, &z_k);
 
     // Remove the DC part
     z_k -= z_o;

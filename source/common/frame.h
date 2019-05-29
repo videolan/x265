@@ -129,6 +129,7 @@ public:
     uint32_t*              m_classifyCount;
 
     bool                   m_classifyFrame;
+    int                    m_fieldNum;
 
     Frame();
 

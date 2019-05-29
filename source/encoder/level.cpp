@@ -25,6 +25,7 @@
 #include "common.h"
 #include "slice.h"
 #include "level.h"
+#include "svt.h"
 
 namespace X265_NS {
 typedef struct
@@ -434,6 +435,21 @@ int x265_param_apply_profile(x265_param *param, const char *profile)
 {
     if (!param || !profile)
         return 0;
+
+#ifdef SVT_HEVC
+    if (param->bEnableSvtHevc)
+    {
+        EB_H265_ENC_CONFIGURATION* svtParam = (EB_H265_ENC_CONFIGURATION*)param->svtHevcParam;
+        if (!strcmp(profile, "main"))    svtParam->profile = 1;
+        else if (!strcmp(profile, "main10"))    svtParam->profile = 2;
+        else
+        {
+            x265_log(param, X265_LOG_ERROR, "SVT-HEVC encoder: Unsupported profile %s \n", profile);
+            return -1;
+        }
+        return 0;
+    }
+#endif
 
     /* Check if profile bit-depth requirement is exceeded by internal bit depth */
     bool bInvalidDepth = false;

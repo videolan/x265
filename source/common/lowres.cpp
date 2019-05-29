@@ -82,7 +82,7 @@ bool Lowres::create(x265_param* param, PicYuv *origPic, uint32_t qgSize)
 
     if (origPic->m_param->bAQMotion)
         CHECKED_MALLOC_ZERO(qpAqMotionOffset, double, cuCountFullRes);
-    if (origPic->m_param->bDynamicRefine)
+    if (origPic->m_param->bDynamicRefine || origPic->m_param->bEnableFades)
         CHECKED_MALLOC_ZERO(blockVariance, uint32_t, cuCountFullRes);
 
     if (!!param->rc.hevcAq)
@@ -217,6 +217,7 @@ void Lowres::init(PicYuv *origPic, int poc)
 {
     bLastMiniGopBFrame = false;
     bKeyframe = false; // Not a keyframe unless identified by lookahead
+    bIsFadeEnd = false;
     frameNum = poc;
     leadingBframes = 0;
     indB = 0;

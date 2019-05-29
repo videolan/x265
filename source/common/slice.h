@@ -361,6 +361,7 @@ public:
     int         numRefIdxDefault[2];
     int         m_iNumRPSInSPS;
     const x265_param *m_param;
+    int         m_fieldNum;
 
     Slice()
     {
@@ -376,6 +377,7 @@ public:
         numRefIdxDefault[1] = 1;
         m_rpsIdx = -1;
         m_chromaQpOffset[0] = m_chromaQpOffset[1] = 0;
+        m_fieldNum = 0;
     }
 
     void disableWeights();

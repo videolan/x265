@@ -404,7 +404,12 @@ void metadataFromJson::fillMetadataArray(const JsonArray &fileData, int frame, c
     const uint16_t terminalProviderCode = 0x003C;
     const uint16_t terminalProviderOrientedCode = 0x0001;
     const uint8_t applicationIdentifier = 4;
-    const uint8_t applicationVersion = 1;
+    uint8_t applicationVersion = 0;
+
+    if (jsonType & LLC)
+    {
+        applicationVersion = 1;
+    }
 
     mPimpl->appendBits(metadata, countryCode, 8);
     mPimpl->appendBits(metadata, terminalProviderCode, 16);

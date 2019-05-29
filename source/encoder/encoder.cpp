@@ -80,6 +80,7 @@ DolbyVisionProfileSpec dovi[] =
  * TODO: come up an algorithm for adoptive threshold */
 #define MVTHRESHOLD (10*10)
 #define PU_2Nx2N 1
+#define MAX_CHROMA_QP_OFFSET 12
 static const char* defaultAnalysisFileName = "x265_analysis.dat";
 
 using namespace X265_NS;
@@ -122,6 +123,10 @@ Encoder::Encoder()
     m_hdr10plus_api = hdr10plus_api_get();
     m_numCimInfo = 0;
     m_cim = NULL;
+#endif
+
+#if SVT_HEVC
+    m_svtAppData = NULL;
 #endif
 
     m_prevTonemapPayload.payload = NULL;
@@ -438,8 +443,6 @@ void Encoder::create()
     m_encodeStartTime = x265_mdate();
 
     m_nalList.m_annexB = !!m_param->bAnnexB;
-
-    m_emitCLLSEI = p->maxCLL || p->maxFALL || (p->dolbyProfile == 81);
 
     if (m_param->naluFile)
     {
@@ -827,6 +830,10 @@ void Encoder::destroy()
      }
     if (m_naluFile)
         fclose(m_naluFile);
+
+#ifdef SVT_HEVC
+    X265_FREE(m_svtAppData);
+#endif
     if (m_param)
     {
         if (m_param->csvfpt)
@@ -1098,6 +1105,8 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
         inFrame->m_pts       = pic_in->pts;
         inFrame->m_forceqp   = pic_in->forceqp;
         inFrame->m_param     = (m_reconfigure || m_reconfigureRc) ? m_latestParam : m_param;
+        if (m_param->bField && m_param->interlaceMode)
+            inFrame->m_fieldNum = pic_in->fieldNum;
 
         copyUserSEIMessages(inFrame, pic_in);
 
@@ -1471,7 +1480,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
             if (frameEnc->m_reconfigureRc && m_reconfigureRc)
             {
-                memcpy(m_param, m_latestParam, sizeof(x265_param));
+                x265_copy_params(m_param, m_latestParam);
                 m_rateControl->reconfigureRC();
                 m_reconfigureRc = false;
             }
@@ -1483,7 +1492,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
                 /* Safe to copy m_latestParam to Encoder::m_param, encoder reconfigure complete */
                 for (int frameEncId = 0; frameEncId < m_param->frameNumThreads; frameEncId++)
                     m_frameEncoder[frameEncId]->m_reconfigure = false;
-                memcpy (m_param, m_latestParam, sizeof(x265_param));
+                x265_copy_params(m_param, m_latestParam);
                 m_reconfigure = false;
             }
 
@@ -1632,7 +1641,7 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
 int Encoder::reconfigureParam(x265_param* encParam, x265_param* param)
 {
-    if (isReconfigureRc(encParam, param))
+    if (isReconfigureRc(encParam, param) && !param->rc.zonefileCount)
     {
         /* VBV can't be turned ON if it wasn't ON to begin with and can't be turned OFF if it was ON to begin with*/
         if (param->rc.vbvMaxBitrate > 0 && param->rc.vbvBufferSize > 0 &&
@@ -2451,7 +2460,7 @@ void Encoder::getStreamHeaders(NALList& list, Entropy& sbacCoder, Bitstream& bs)
 
     if (m_param->bEmitHDRSEI)
     {
-        if (m_emitCLLSEI)
+        if (m_param->bEmitCLL)
         {
             SEIContentLightLevel cllsei;
             cllsei.max_content_light_level = m_param->maxCLL;
@@ -2651,7 +2660,8 @@ void Encoder::configureZone(x265_param *p, x265_param *zone)
     p->bEnableRectInter = zone->bEnableRectInter;
     p->maxNumMergeCand = zone->maxNumMergeCand;
     p->bIntraInBFrames = zone->bIntraInBFrames;
-    p->scalingLists = strdup(zone->scalingLists);
+    if(zone->scalingLists)
+        p->scalingLists = strdup(zone->scalingLists);
 
     p->rc.aqMode = zone->rc.aqMode;
     p->rc.aqStrength = zone->rc.aqStrength;
@@ -2702,10 +2712,10 @@ void Encoder::configureDolbyVisionParams(x265_param* p)
     p->vui.matrixCoeffs = dovi[doviProfile].matrixCoeffs;
 
     if (dovi[doviProfile].doviProfileId == 81)
-        p->bEmitHDRSEI = 1;
+        p->bEmitHDRSEI = p->bEmitCLL = 1;
 
-    if (dovi[doviProfile].doviProfileId == 50 && p->noiseReductionIntra && p->noiseReductionInter)
-        p->crQpOffset = 4;
+    if (dovi[doviProfile].doviProfileId == 50)
+        p->crQpOffset = 3;
 }
 
 void Encoder::configure(x265_param *p)
@@ -2796,8 +2806,13 @@ void Encoder::configure(x265_param *p)
     /* In 444, chroma gets twice as much resolution, so halve quality when psy-rd is enabled */
     if (p->internalCsp == X265_CSP_I444 && p->psyRd)
     {
-        p->cbQpOffset += 6;
-        p->crQpOffset += 6;
+        if (!p->cbQpOffset && !p->crQpOffset)
+        {
+            p->cbQpOffset = MAX_CHROMA_QP_OFFSET / 2;
+            p->crQpOffset = MAX_CHROMA_QP_OFFSET / 2;
+            x265_log(p, X265_LOG_WARNING, "halving the quality when psy-rd is enabled for 444 input."
+                     " Setting cbQpOffset = %d and crQpOffset = %d\n", p->cbQpOffset, p->crQpOffset);
+        }
     }
 
     if (p->bLossless)
@@ -3347,6 +3362,12 @@ void Encoder::configure(x265_param *p)
     if (p->dolbyProfile)     // Default disabled.
         configureDolbyVisionParams(p);
 
+    if (p->rc.zonefileCount && p->rc.zoneCount)
+    {
+        p->rc.zoneCount = 0;
+        x265_log(p, X265_LOG_WARNING, "Only zone or zonefile can be used. Enabling only zonefile\n");
+    }
+
     if (m_param->rc.zonefileCount && p->bOpenGOP)
     {
         p->bOpenGOP = 0;
@@ -3619,8 +3640,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
                                 (analysis->interData)->refIdx[i][count + pu] = refIdx[i][d];
                                 if (m_param->scaleFactor)
                                 {
-                                    mv[i][d].x *= (int16_t)m_param->scaleFactor;
-                                    mv[i][d].y *= (int16_t)m_param->scaleFactor;
+                                    mv[i][d].x *= (int32_t)m_param->scaleFactor;
+                                    mv[i][d].y *= (int32_t)m_param->scaleFactor;
                                 }
                                 memcpy(&(analysis->interData)->mv[i][count + pu], &mv[i][d], sizeof(MV));
                             }
@@ -4002,8 +4023,8 @@ void Encoder::readAnalysisFile(x265_analysis_data* analysis, int curPoc, const x
                             {
                                 (analysis->interData)->mvpIdx[i][count + pu] = mvpIdx[i][d];
                                 (analysis->interData)->refIdx[i][count + pu] = refIdx[i][d];
-                                mvCopy[i].x = mv[i][d].x * (int16_t)m_param->scaleFactor;
-                                mvCopy[i].y = mv[i][d].y * (int16_t)m_param->scaleFactor;
+                                mvCopy[i].x = mv[i][d].x * (int32_t)m_param->scaleFactor;
+                                mvCopy[i].y = mv[i][d].y * (int32_t)m_param->scaleFactor;
                                 memcpy(&(analysis->interData)->mv[i][count + pu], &mvCopy[i], sizeof(MV));
                             }
                         }

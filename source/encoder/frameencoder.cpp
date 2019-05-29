@@ -686,10 +686,25 @@ void FrameEncoder::compressFrame()
 
         if (vui->frameFieldInfoPresentFlag)
         {
-            if (m_param->interlaceMode == 2)
-                sei->m_picStruct = (poc & 1) ? 1 /* top */ : 2 /* bottom */;
-            else if (m_param->interlaceMode == 1)
-                sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
+            if (m_param->interlaceMode > 0)
+            {
+                if( m_param->interlaceMode == 2 )
+                {   
+                    // m_picStruct should be set to 3 or 4 when field feature is enabled
+                    if (m_param->bField)
+                        // 3: Top field, bottom field, in that order; 4: Bottom field, top field, in that order
+                        sei->m_picStruct = (slice->m_fieldNum == 1) ? 4 : 3;
+                    else
+                        sei->m_picStruct = (poc & 1) ? 1 /* top */ : 2 /* bottom */;
+                }     
+                else if (m_param->interlaceMode == 1)
+                {
+                    if (m_param->bField)
+                        sei->m_picStruct = (slice->m_fieldNum == 1) ? 3: 4;
+                    else
+                        sei->m_picStruct = (poc & 1) ? 2 /* bottom */ : 1 /* top */;
+                }
+            }
             else
                 sei->m_picStruct = m_param->pictureStructure;
 
@@ -1406,8 +1421,8 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
     }
 
     // Initialize restrict on MV range in slices
-    tld.analysis.m_sliceMinY = -(int16_t)(rowInSlice * m_param->maxCUSize * 4) + 3 * 4;
-    tld.analysis.m_sliceMaxY = (int16_t)((endRowInSlicePlus1 - 1 - row) * (m_param->maxCUSize * 4) - 4 * 4);
+    tld.analysis.m_sliceMinY = -(int32_t)(rowInSlice * m_param->maxCUSize * 4) + 3 * 4;
+    tld.analysis.m_sliceMaxY = (int32_t)((endRowInSlicePlus1 - 1 - row) * (m_param->maxCUSize * 4) - 4 * 4);
 
     // Handle single row slice
     if (tld.analysis.m_sliceMaxY < tld.analysis.m_sliceMinY)

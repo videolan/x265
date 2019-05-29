@@ -56,6 +56,7 @@ Frame::Frame()
     m_addOnCtuInfo = NULL;
     m_addOnPrevChange = NULL;
     m_classifyFrame = false;
+    m_fieldNum = 0;
 }
 
 bool Frame::create(x265_param *param, float* quantOffsets)

@@ -934,6 +934,44 @@ static void cuTreeFix8Unpack(double *dst, uint16_t *src, int count)
     }
 }
 
+template<int log2TrSize>
+static void ssimDist_c(const pixel* fenc, uint32_t fStride, const pixel* recon, intptr_t rstride, uint64_t *ssBlock, int shift, uint64_t *ac_k)
+{
+    *ssBlock = 0;
+    int trSize = 1 << log2TrSize;
+    for (int y = 0; y < trSize; y++)
+    {
+        for (int x = 0; x < trSize; x++)
+        {
+            int temp = fenc[y * fStride + x] - recon[y * rstride + x]; // copy of residual coeff
+            *ssBlock += temp * temp;
+        }
+    }
+
+    *ac_k = 0;
+    for (int block_yy = 0; block_yy < trSize; block_yy += 1)
+    {
+        for (int block_xx = 0; block_xx < trSize; block_xx += 1)
+        {
+            uint32_t temp = fenc[block_yy * fStride + block_xx] >> shift;
+            *ac_k += temp * temp;
+        }
+    }
+}
+
+static void normFact_c(const pixel* src, uint32_t blockSize, int shift, uint64_t *z_k)
+{
+    *z_k = 0;
+    for (uint32_t block_yy = 0; block_yy < blockSize; block_yy += 1)
+    {
+        for (uint32_t block_xx = 0; block_xx < blockSize; block_xx += 1)
+        {
+            uint32_t temp = src[block_yy * blockSize + block_xx] >> shift;
+            *z_k += temp * temp;
+        }
+    }
+}
+
 #if HIGH_BIT_DEPTH
 static pixel planeClipAndMax_c(pixel *src, intptr_t stride, int width, int height, uint64_t *outsum, 
                                const pixel minPix, const pixel maxPix)
@@ -1283,5 +1321,16 @@ void setupPixelPrimitives_c(EncoderPrimitives &p)
     p.propagateCost = estimateCUPropagateCost;
     p.fix8Unpack = cuTreeFix8Unpack;
     p.fix8Pack = cuTreeFix8Pack;
+
+    p.cu[BLOCK_4x4].ssimDist = ssimDist_c<2>;
+    p.cu[BLOCK_8x8].ssimDist = ssimDist_c<3>;
+    p.cu[BLOCK_16x16].ssimDist = ssimDist_c<4>;
+    p.cu[BLOCK_32x32].ssimDist = ssimDist_c<5>;
+    p.cu[BLOCK_64x64].ssimDist = ssimDist_c<6>;
+
+    p.cu[BLOCK_8x8].normFact = normFact_c;
+    p.cu[BLOCK_16x16].normFact = normFact_c;
+    p.cu[BLOCK_32x32].normFact = normFact_c;
+    p.cu[BLOCK_64x64].normFact = normFact_c;
 }
 }

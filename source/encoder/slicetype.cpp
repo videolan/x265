@@ -459,17 +459,21 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
         }
     }
 
-    if (param->bDynamicRefine)
+    if (param->bDynamicRefine || param->bEnableFades)
     {
-        int blockXY = 0;
+        uint64_t blockXY = 0, rowVariance = 0;
+        curFrame->m_lowres.frameVariance = 0;
         for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
         {
             for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
             {
                 curFrame->m_lowres.blockVariance[blockXY] = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+                rowVariance += curFrame->m_lowres.blockVariance[blockXY];
                 blockXY++;
             }
+            curFrame->m_lowres.frameVariance += (rowVariance / maxCol);
         }
+        curFrame->m_lowres.frameVariance /= maxRow;
     }
 }
 
@@ -757,6 +761,9 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_8x8Width = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_cuCount = m_8x8Width * m_8x8Height;
     m_8x8Blocks = m_8x8Width > 2 && m_8x8Height > 2 ? (m_cuCount + 4 - 2 * (m_8x8Width + m_8x8Height)) : m_cuCount;
+    m_isFadeIn = false;
+    m_fadeCount = 0;
+    m_fadeStart = -1;
 
     /* Allow the strength to be adjusted via qcompress, since the two concepts
      * are very similar. */
@@ -1165,7 +1172,9 @@ void PreLookaheadGroup::processTasks(int workerThreadID)
         ProfileScopeEvent(prelookahead);
         m_lock.release();
         preFrame->m_lowres.init(preFrame->m_fencPic, preFrame->m_poc);
-        if (m_lookahead.m_bAdaptiveQuant)
+        if (m_lookahead.m_param->rc.bStatRead && m_lookahead.m_param->rc.cuTree && IS_REFERENCED(preFrame))
+            /* cu-tree offsets were read from stats file */;
+        else if (m_lookahead.m_bAdaptiveQuant)
             tld.calcAdaptiveQuantFrame(preFrame, m_lookahead.m_param);
         tld.lowresIntraEstimate(preFrame->m_lowres, m_lookahead.m_param->rc.qgSize);
         preFrame->m_lowresInit = true;
@@ -1179,7 +1188,6 @@ void PreLookaheadGroup::processTasks(int workerThreadID)
 void Lookahead::slicetypeDecide()
 {
     PreLookaheadGroup pre(*this);
-
     Lowres* frames[X265_LOOKAHEAD_MAX + X265_BFRAME_MAX + 4];
     Frame*  list[X265_BFRAME_MAX + 4];
     memset(frames, 0, sizeof(frames));
@@ -1222,6 +1230,54 @@ void Lookahead::slicetypeDecide()
             pre.tryBondPeers(*m_pool, pre.m_jobTotal);
         pre.processTasks(-1);
         pre.waitForExit();
+    }
+
+    if(m_param->bEnableFades)
+    {
+        int j, endIndex = 0, length = X265_BFRAME_MAX + 4;
+        for (j = 0; j < length; j++)
+            m_frameVariance[j] = -1;
+        for (j = 0; list[j] != NULL; j++)
+            m_frameVariance[list[j]->m_poc % length] = list[j]->m_lowres.frameVariance;
+        for (int k = list[0]->m_poc % length; k <= list[j - 1]->m_poc % length; k++)
+        {
+            if (m_frameVariance[k]  == -1)
+                break;
+            if((k > 0 && m_frameVariance[k] >= m_frameVariance[k - 1]) || 
+                (k == 0 && m_frameVariance[k] >= m_frameVariance[length - 1]))
+            {
+                m_isFadeIn = true;
+                if (m_fadeCount == 0 && m_fadeStart == -1)
+                {
+                    for(int temp = list[0]->m_poc; temp <= list[j - 1]->m_poc; temp++)
+                        if (k == temp % length) {
+                            m_fadeStart = temp ? temp - 1 : 0;
+                            break;
+                        }
+                }
+                m_fadeCount = list[endIndex]->m_poc > m_fadeStart ? list[endIndex]->m_poc - m_fadeStart : 0;
+                endIndex++;
+            }
+            else
+            {
+                if (m_isFadeIn && m_fadeCount >= m_param->fpsNum / m_param->fpsDenom)
+                {
+                    for (int temp = 0; list[temp] != NULL; temp++)
+                    {
+                        if (list[temp]->m_poc == m_fadeStart + (int)m_fadeCount)
+                        {
+                            list[temp]->m_lowres.bIsFadeEnd = true;
+                            break;
+                        }
+                    }
+                }
+                m_isFadeIn = false;
+                m_fadeCount = 0;
+                m_fadeStart = -1;
+            }
+            if (k == length - 1)
+                k = -1;
+        }
     }
 
     if (m_lastNonB && !m_param->rc.bStatRead &&
@@ -1282,6 +1338,9 @@ void Lookahead::slicetypeDecide()
                         frm.sliceType, frm.frameNum);
                     frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
                 }
+            }
+            if (frm.bIsFadeEnd){
+                frm.sliceType = m_param->bOpenGOP && m_lastKeyframe >= 0 ? X265_TYPE_I : X265_TYPE_IDR;
             }
             for (int i = 0; i < m_param->rc.zonefileCount; i++)
             {
@@ -2860,10 +2919,10 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
     // TODO: restrict to slices boundaries
     // establish search bounds that don't cross extended frame boundaries
-    mvmin.x = (int16_t)(-cuX * cuSize - 8);
-    mvmin.y = (int16_t)(-cuY * cuSize - 8);
-    mvmax.x = (int16_t)((widthInCU - cuX - 1) * cuSize + 8);
-    mvmax.y = (int16_t)((heightInCU - cuY - 1) * cuSize + 8);
+    mvmin.x = (int32_t)(-cuX * cuSize - 8);
+    mvmin.y = (int32_t)(-cuY * cuSize - 8);
+    mvmax.x = (int32_t)((widthInCU - cuX - 1) * cuSize + 8);
+    mvmax.y = (int32_t)((heightInCU - cuY - 1) * cuSize + 8);
 
     for (int i = 0; i < 1 + bBidir; i++)
     {

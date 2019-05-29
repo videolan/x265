@@ -382,10 +382,10 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
             4 * 5
               7
          */
-        const int16_t top    = omv.y - dist;
-        const int16_t bottom = omv.y + dist;
-        const int16_t left   = omv.x - dist;
-        const int16_t right  = omv.x + dist;
+        const int32_t top    = omv.y - dist;
+        const int32_t bottom = omv.y + dist;
+        const int32_t left   = omv.x - dist;
+        const int32_t right  = omv.x + dist;
 
         if (top >= mvmin.y && left >= mvmin.x && right <= mvmax.x && bottom <= mvmax.y)
         {
@@ -430,14 +430,14 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
          Points 2, 4, 5, 7 are dist
          Points 1, 3, 6, 8 are dist>>1
          */
-        const int16_t top     = omv.y - dist;
-        const int16_t bottom  = omv.y + dist;
-        const int16_t left    = omv.x - dist;
-        const int16_t right   = omv.x + dist;
-        const int16_t top2    = omv.y - (dist >> 1);
-        const int16_t bottom2 = omv.y + (dist >> 1);
-        const int16_t left2   = omv.x - (dist >> 1);
-        const int16_t right2  = omv.x + (dist >> 1);
+        const int32_t top     = omv.y - dist;
+        const int32_t bottom  = omv.y + dist;
+        const int32_t left    = omv.x - dist;
+        const int32_t right   = omv.x + dist;
+        const int32_t top2    = omv.y - (dist >> 1);
+        const int32_t bottom2 = omv.y + (dist >> 1);
+        const int32_t left2   = omv.x - (dist >> 1);
+        const int32_t right2  = omv.x + (dist >> 1);
         saved = bcost;
 
         if (top >= mvmin.y && left >= mvmin.x &&
@@ -502,10 +502,10 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
 
     for (int16_t dist = 16; dist <= (int16_t)merange; dist <<= 1)
     {
-        const int16_t top    = omv.y - dist;
-        const int16_t bottom = omv.y + dist;
-        const int16_t left   = omv.x - dist;
-        const int16_t right  = omv.x + dist;
+        const int32_t top    = omv.y - dist;
+        const int32_t bottom = omv.y + dist;
+        const int32_t left   = omv.x - dist;
+        const int32_t right  = omv.x + dist;
 
         saved = bcost;
         if (top >= mvmin.y && left >= mvmin.x &&
@@ -530,10 +530,10 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
 
             for (int16_t index = 1; index < 4; index++)
             {
-                int16_t posYT = top    + ((dist >> 2) * index);
-                int16_t posYB = bottom - ((dist >> 2) * index);
-                int16_t posXL = omv.x  - ((dist >> 2) * index);
-                int16_t posXR = omv.x  + ((dist >> 2) * index);
+                int32_t posYT = top    + ((dist >> 2) * index);
+                int32_t posYB = bottom - ((dist >> 2) * index);
+                int32_t posXL = omv.x  - ((dist >> 2) * index);
+                int32_t posXR = omv.x  + ((dist >> 2) * index);
 
                 COST_MV_PT_DIST_X4(posXL, posYT, 0, dist,
                                    posXR, posYT, 0, dist,
@@ -561,10 +561,10 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
             }
             for (int16_t index = 1; index < 4; index++)
             {
-                int16_t posYT = top    + ((dist >> 2) * index);
-                int16_t posYB = bottom - ((dist >> 2) * index);
-                int16_t posXL = omv.x - ((dist >> 2) * index);
-                int16_t posXR = omv.x + ((dist >> 2) * index);
+                int32_t posYT = top    + ((dist >> 2) * index);
+                int32_t posYB = bottom - ((dist >> 2) * index);
+                int32_t posXL = omv.x - ((dist >> 2) * index);
+                int32_t posXR = omv.x + ((dist >> 2) * index);
 
                 if (posYT >= mvmin.y) // check top
                 {
@@ -1235,10 +1235,10 @@ me_hex2:
     case X265_SEA:
     {
         // Successive Elimination Algorithm
-        const int16_t minX = X265_MAX(omv.x - (int16_t)merange, mvmin.x);
-        const int16_t minY = X265_MAX(omv.y - (int16_t)merange, mvmin.y);
-        const int16_t maxX = X265_MIN(omv.x + (int16_t)merange, mvmax.x);
-        const int16_t maxY = X265_MIN(omv.y + (int16_t)merange, mvmax.y);
+        const int32_t minX = X265_MAX(omv.x - (int32_t)merange, mvmin.x);
+        const int32_t minY = X265_MAX(omv.y - (int32_t)merange, mvmin.y);
+        const int32_t maxX = X265_MIN(omv.x + (int32_t)merange, mvmax.x);
+        const int32_t maxY = X265_MIN(omv.y + (int32_t)merange, mvmax.y);
         const uint16_t *p_cost_mvx = m_cost_mvx - qmvp.x;
         const uint16_t *p_cost_mvy = m_cost_mvy - qmvp.y;
         int16_t* meScratchBuffer = NULL;

@@ -73,6 +73,8 @@ static const struct option long_options[] =
     { "input-csp",      required_argument, NULL, 0 },
     { "interlace",      required_argument, NULL, 0 },
     { "no-interlace",         no_argument, NULL, 0 },
+    { "field",                no_argument, NULL, 0 },
+    { "no-field",             no_argument, NULL, 0 },
     { "fps",            required_argument, NULL, 0 },
     { "seek",           required_argument, NULL, 0 },
     { "frame-skip",     required_argument, NULL, 0 },
@@ -124,6 +126,8 @@ static const struct option long_options[] =
     { "scenecut",       required_argument, NULL, 0 },
     { "no-scenecut",          no_argument, NULL, 0 },
     { "scenecut-bias",  required_argument, NULL, 0 },
+    { "fades",                no_argument, NULL, 0 },
+    { "no-fades",             no_argument, NULL, 0 },
     { "radl",           required_argument, NULL, 0 },
     { "ctu-info",       required_argument, NULL, 0 },
     { "intra-refresh",        no_argument, NULL, 0 },
@@ -314,6 +318,26 @@ static const struct option long_options[] =
     { "hevc-aq", no_argument, NULL, 0 },
     { "no-hevc-aq", no_argument, NULL, 0 },
     { "qp-adaptation-range", required_argument, NULL, 0 },
+#ifdef SVT_HEVC
+    { "svt",     no_argument, NULL, 0 },
+    { "no-svt",  no_argument, NULL, 0 },
+    { "svt-hme",     no_argument, NULL, 0 },
+    { "no-svt-hme",  no_argument, NULL, 0 },
+    { "svt-search-width",      required_argument, NULL, 0 },
+    { "svt-search-height",     required_argument, NULL, 0 },
+    { "svt-compressed-ten-bit-format",    no_argument, NULL, 0 },
+    { "no-svt-compressed-ten-bit-format", no_argument, NULL, 0 },
+    { "svt-speed-control",     no_argument  , NULL, 0 },
+    { "no-svt-speed-control",  no_argument  , NULL, 0 },
+    { "svt-preset-tuner",  required_argument  , NULL, 0 },
+    { "svt-hierarchical-level",  required_argument  , NULL, 0 },
+    { "svt-base-layer-switch-mode",  required_argument  , NULL, 0 },
+    { "svt-pred-struct",  required_argument  , NULL, 0 },
+    { "svt-fps-in-vps",  no_argument  , NULL, 0 },
+    { "no-svt-fps-in-vps",  no_argument  , NULL, 0 },
+#endif
+    { "cll", no_argument, NULL, 0 },
+    { "no-cll", no_argument, NULL, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 },
@@ -371,6 +395,7 @@ static void showHelp(x265_param *param)
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("   --seek <integer>              First frame to encode\n");
     H1("   --[no-]interlace <bff|tff>    Indicate input pictures are interlace fields in temporal order. Default progressive\n");
+    H0("   --[no-]field                  Enable or disable field coding. Default %s\n", OPT( param->bField));
     H1("   --dither                      Enable dither if downscaling to 8 bit pixels. Default disabled\n");
     H0("   --[no-]copy-pic               Copy buffers of input picture in frame. Default %s\n", OPT(param->bCopyPicToFrame));
     H0("\nQuality reporting metrics:\n");
@@ -453,6 +478,7 @@ static void showHelp(x265_param *param)
     H0("   --no-scenecut                 Disable adaptive I-frame decision\n");
     H0("   --scenecut <integer>          How aggressively to insert extra I-frames. Default %d\n", param->scenecutThreshold);
     H1("   --scenecut-bias <0..100.0>    Bias for scenecut detection. Default %.2f\n", param->scenecutBias);
+    H0("   --[no-]fades                  Enable detection and handling of fade-in regions. Default %s\n", OPT(param->bEnableFades));
     H0("   --radl <integer>              Number of RADL pictures allowed in front of IDR. Default %d\n", param->radl);
     H0("   --intra-refresh               Use Periodic Intra Refresh instead of IDR frames\n");
     H0("   --rc-lookahead <integer>      Number of frames for frame-type lookahead (determines encoder latency) Default %d\n", param->lookaheadDepth);
@@ -578,7 +604,8 @@ static void showHelp(x265_param *param)
     H1("   --chromaloc <integer>         Specify chroma sample location (0 to 5). Default of %d\n", param->vui.chromaSampleLocTypeTopField);
     H0("   --master-display <string>     SMPTE ST 2086 master display color volume info SEI (HDR)\n");
     H0("                                    format: G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)\n");
-    H0("   --max-cll <string>            Emit content light level info SEI as \"cll,fall\" (HDR)\n");
+    H0("   --max-cll <string>            Specify content light level info SEI as \"cll,fall\" (HDR).\n");
+    H0("   --[no-]cll                    Emit content light level info SEI. Default %s\n", OPT(param->bEmitCLL));
     H0("   --[no-]hdr                    Control dumping of HDR SEI packet. If max-cll or master-display has non-zero values, this is enabled. Default %s\n", OPT(param->bEmitHDRSEI));
     H0("   --[no-]hdr-opt                Add luma and chroma offsets for HDR/WCG content. Default %s\n", OPT(param->bHDROpt));
     H0("   --min-luma <integer>          Minimum luma plane value of input source picture\n");
@@ -605,6 +632,19 @@ static void showHelp(x265_param *param)
     H1("   --recon-depth <integer>       Bit-depth of reconstructed raw image file. Defaults to input bit depth, or 8 if Y4M\n");
     H1("   --recon-y4m-exec <string>     pipe reconstructed frames to Y4M viewer, ex:\"ffplay -i pipe:0 -autoexit\"\n");
     H0("   --lowpass-dct                 Use low-pass subband dct approximation. Default %s\n", OPT(param->bLowPassDct));
+#ifdef SVT_HEVC
+    H0("   --[no]svt                     Enable SVT HEVC encoder %s\n", OPT(param->bEnableSvtHevc));
+    H0("   --[no-]svt-hme                Enable Hierarchial motion estimation(HME) in SVT HEVC encoder \n");
+    H0("   --svt-search-width            Motion estimation search area width for SVT HEVC encoder \n");
+    H0("   --svt-search-height           Motion estimation search area height for SVT HEVC encoder \n");
+    H0("   --[no-]svt-compressed-ten-bit-format  Enable 8+2 encoding mode for 10bit input in SVT HEVC encoder \n");
+    H0("   --[no-]svt-speed-control      Enable speed control functionality to achieve real time encoding speed for  SVT HEVC encoder \n");
+    H0("   --svt-preset-tuner            Enable additional faster presets of SVT; This only has to be used on top of x265's ultrafast preset. Accepts values in the range of 0-2 \n");
+    H0("   --svt-hierarchical-level      Hierarchical layer for SVT-HEVC encoder; Accepts inputs in the range 0-3 \n");
+    H0("   --svt-base-layer-switch-mode  Select whether B/P slice should be used in base layer for SVT-HEVC encoder. 0-Use B-frames; 1-Use P frames in the base layer \n");
+    H0("   --svt-pred-struct             Select pred structure for SVT HEVC encoder;  Accepts inputs in the range 0-2 \n");
+    H0("   --[no-]svt-fps-in-vps         Enable VPS timing info for SVT HEVC encoder  \n");
+#endif
     H1("\nExecutable return codes:\n");
     H1("    0 - encode successful\n");
     H1("    1 - unable to parse command line\n");

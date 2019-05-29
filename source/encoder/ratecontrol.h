@@ -115,6 +115,7 @@ struct RateControlEntry
     HRDTiming        *hrdTiming;
     int      rpsIdx;
     RPS      rpsData;
+    bool     isFadeEnd;
 };
 
 class RateControl

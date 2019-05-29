@@ -551,6 +551,10 @@ frame counts) are only applicable to the CLI application.
 	This feature can be enabled only in closed GOP structures.
 	Default 0 (disabled).
 
+.. option:: --field, --no-field
+
+	Enable or disable field coding. Default disabled.
+	
 Profile, Level, Tier
 ====================
 
@@ -1333,6 +1337,10 @@ of energy and no residual cost). One can lower psy-rd settings when
 judder is happening, and allow the encoder to use some blur in these
 areas of high motion.
 
+In 444, chroma gets twice as much resolution, so halve the quality when psy-rd is enabled.
+So when psy-rd is enabled for 444 videos, cbQpOffset and crQpOffset are set to value 6,
+if they are not explicitly set.
+
 .. option:: --psy-rd <float>
 
 	Influence rate distortion optimizated mode decision to preserve the
@@ -1515,6 +1523,10 @@ Slice decision options
 	1 - flush all the frames even when the input is not over. 
 	    slicetype decision may change with this option.
 	2 - flush the slicetype decided frames only.   
+
+.. option:: --fades, --no-fades
+
+	Detect and handle fade-in regions. Default disabled.
 
 Quality, rate control and rate distortion options
 =================================================
@@ -2142,6 +2154,12 @@ VUI fields must be manually specified.
 	Note that this string value will need to be escaped or quoted to
 	protect against shell expansion on many platforms. No default.
 
+.. option:: --cll, --no-cll
+
+    Emit content light level SEI. Enabled automatically when :option:`--dolby-vision-profile` 8.1
+    is specified. When enabled, signals max-cll and max-fall as 0 if :option:`max-cll` is unspecified.
+    Default enabled.
+
 .. option:: --hdr, --no-hdr
 
 	Force signalling of HDR parameters in SEI packets. Enabled
@@ -2383,5 +2401,109 @@ Debugging options
 	--recon-y4m-exec "ffplay -i pipe:0 -autoexit"
 
 	**CLI ONLY**
+
+SVT-HEVC Encoder Options
+========================
+This section lists options which are SVT-HEVC encoder specific.
+See section :ref:`svthevc <SvtHevc>` for more details.
+
+.. option:: --svt, --no-svt
+
+    Enable SVT-HEVC encoder if x265 is built with SVT-HEVC library. Default
+    disabled.
+
+.. option:: --svt-hme, --no-svt-hme
+
+    Enable Hierarchical Motion Estimation(HME) in SVT-HEVC. Default enabled.
+
+    **CLI_ONLY**
+
+.. option:: --svt-search-width <integer>
+
+    Search Area Width used during motion estimation. It depends on input resolution.
+    Values: [1-256]
+
+    **CLI_ONLY**
+
+.. option:: --svt-search-height <integer>
+
+    Search Area Height used during motion estimation. It depends on input resolution. 
+    Values: [1-256]
+
+    **CLI_ONLY**
+
+.. option:: --svt-compressed-ten-bit-format, --no-svt-compressed-ten-bit-format
+
+    In order to reduce the size of input YUV and to increase channel density,
+    SVT-HEVC accetps inputs in compressed-ten-bit-format. The conversion between
+    yuv420p10le and compressed ten bit format is a lossless operation. For more
+    details about the conversion refer
+    `here<https://github.com/intel/SVT-HEVC/blob/master/Docs/SVT-HEVC_Encoder_User_Guide.pdf>'_.
+
+    **CLI_ONLY**
+
+.. option:: --svt-speed-control, --no-svt-speed-control
+
+    Enable speed control functionality to achieve real time encoding speed defined
+    by :option:`--fps`. Default disabled.
+
+    **CLI_ONLY**
+
+.. option:: --svt-preset-tuner <integer>
+
+    SVT-HEVC exposes 13 presets. Presets [3-12] of SVT-HEVC is mapped to x265's
+    presets [placebo-ultrafast]. Ultrafast is mapped to preset(12) of SVT-HEVC,
+    superfast to preset(11), placebo to preset(3) and so on. svt-preset-tuner works
+    only on top of placebo preset and maps to presets (0-2) of SVT-HEVC.
+
+    Values: [0-2]
+
+    **CLI_ONLY**
+
+.. option:: --svt-hierarchical-level <integer>
+
+    Enables multiple hierarchical levels in SVT-HEVC. Accepts values in the range [0-3].
+    0    -  Flat
+    1    -  2-Level Hierarchy
+    2    -  3-Level Hierarchy
+    3    -  4-Level Hierarchy
+
+    Default: 3
+
+    **CLI_ONLY**
+
+.. option:: --svt-base-layer-switch-mode <integer>
+
+    Choose type of slices to be in base layer. Accepts values 0,1.
+    0    -  Use B-frames in the base layer
+    1    -  Use P-frames in the base layer
+
+    Default: 0
+
+    **CLI_ONLY**
+
+.. option:: --svt-pred-struct <integer>
+
+    Prediction structure forms the basis in deciding the GOP structure. SVT-HEVC
+    supports Low delay(P/B) and random access prediction structure. In a low delay
+    structure, pictures within a mini-gop can only refer to the previous pictures
+    in display order. In other words, picture with display order N can only refer
+    to pictures of display order lower than N. In random acccess method, pictures
+    can be referenced from both the directions. It accepts values in the range
+    [0-2]
+
+    0    -  Low Delay P
+    1    -  Low Delay B
+    2    -  Random Access
+
+    Default: 2
+
+    **CLI_ONLY**
+
+.. option:: --svt-fps-in-vps, --no-svt-fps-in-vps
+
+    Enable sending timing info in VPS. Default disabled.    
+
+    **CLI_ONLY**
 
 .. vim: noet

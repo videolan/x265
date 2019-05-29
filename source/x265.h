@@ -147,9 +147,9 @@ typedef struct x265_analysis_intra_data
 typedef struct x265_analysis_MV
 {
     union{
-        struct { int16_t x, y; };
+        struct { int32_t x, y; };
 
-        int32_t word;
+        int64_t word;
     };
 }x265_analysis_MV;
 
@@ -464,6 +464,8 @@ typedef struct x265_picture
 
     //Dolby Vision RPU metadata
     x265_dolby_vision_rpu rpu;
+ 
+    int fieldNum;
 } x265_picture;
 
 typedef enum
@@ -1765,6 +1767,22 @@ typedef struct x265_param
     *  0 - Disabled. 1 - Save/Load ctu distortion to/from the file specified 
     * analysis-save/load. Default 0. */
     int       ctuDistortionRefine;
+
+    /* Enable SVT HEVC Encoder */
+    int bEnableSvtHevc;
+
+    /* SVT-HEVC param structure. For internal use when SVT HEVC encoder is enabled */
+    void* svtHevcParam;
+
+    /* Detect fade-in regions. Enforces I-slice for the brightest point.
+       Re-init RC history at that point in ABR mode. Default is disabled. */
+    int       bEnableFades;
+
+    /* Enable field coding */
+    int bField;
+
+    /*Emit content light level info SEI*/
+    int         bEmitCLL;
 } x265_param;
 /* x265_param_alloc:
  *  Allocates an x265_param instance. The returned param structure is not
@@ -1791,6 +1809,10 @@ void x265_param_default(x265_param *param);
 #define X265_PARAM_BAD_NAME  (-1)
 #define X265_PARAM_BAD_VALUE (-2)
 int x265_param_parse(x265_param *p, const char *name, const char *value);
+
+x265_zone *x265_zone_alloc(int zoneCount, int isZoneFile);
+
+void x265_zone_free(x265_param *param);
 
 int x265_zone_param_parse(x265_param* p, const char* name, const char* value);
 
@@ -1840,7 +1862,7 @@ static const char * const x265_preset_names[] = { "ultrafast", "superfast", "ver
  *      100 times faster than placebo!
  *
  *      Currently available tunings are: */
-static const char * const x265_tune_names[] = { "psnr", "ssim", "grain", "zerolatency", "fastdecode", 0 };
+static const char * const x265_tune_names[] = { "psnr", "ssim", "grain", "zerolatency", "fastdecode", "animation", 0 };
 
 /*      returns 0 on success, negative on failure (e.g. invalid preset/tune name). */
 int x265_param_default_preset(x265_param *, const char *preset, const char *tune);
