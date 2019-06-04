@@ -1270,6 +1270,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
 #endif
         OPT("fades") p->bEnableFades = atobool(value);
         OPT("field") p->bField = atobool( value );
+        OPT("cll") p->bEmitCLL = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
