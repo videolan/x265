@@ -2491,6 +2491,11 @@ void svt_param_default(x265_param* param)
     svtHevcParam->logicalProcessors = 0;
     svtHevcParam->switchThreadsToRtPriority = 1;
     svtHevcParam->fpsInVps = 0;
+
+    svtHevcParam->tileColumnCount = 1;
+    svtHevcParam->tileRowCount = 1;
+    svtHevcParam->tileSliceMode = 0;
+    svtHevcParam->unrestrictedMotionVector = 1;
 }
 
 int svt_set_preset_tune(x265_param* param, const char* preset, const char* tune)
