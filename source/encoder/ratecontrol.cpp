@@ -2973,8 +2973,7 @@ void RateControl::destroy()
     X265_FREE(m_encOrder);
     for (int i = 0; i < 2; i++)
         X265_FREE(m_cuTreeStats.qpBuffer[i]);
-    
-    X265_FREE(m_param->rc.zones);
+
 }
 
 void RateControl::splitdeltaPOC(char deltapoc[], RateControlEntry *rce)
