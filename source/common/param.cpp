@@ -361,6 +361,8 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
 
         if (!strcmp(preset, "ultrafast"))
         {
+            param->maxNumMergeCand = 2;
+            param->bIntraInBFrames = 0;
             param->lookaheadDepth = 5;
             param->scenecutThreshold = 0; // disable lookahead
             param->maxCUSize = 32;
@@ -369,7 +371,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bFrameAdaptive = 0;
             param->subpelRefine = 0;
             param->searchMethod = X265_DIA_SEARCH;
-            param->bEnableEarlySkip = 1;
             param->bEnableSAO = 0;
             param->bEnableSignHiding = 0;
             param->bEnableWeightedPred = 0;
@@ -384,12 +385,13 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "superfast"))
         {
+            param->maxNumMergeCand = 2;
+            param->bIntraInBFrames = 0;
             param->lookaheadDepth = 10;
             param->maxCUSize = 32;
             param->bframes = 3;
             param->bFrameAdaptive = 0;
             param->subpelRefine = 1;
-            param->bEnableEarlySkip = 1;
             param->bEnableWeightedPred = 0;
             param->rdLevel = 2;
             param->maxNumReferences = 1;
@@ -403,10 +405,12 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "veryfast"))
         {
+            param->maxNumMergeCand = 2;
+            param->limitReferences = 3;
+            param->bIntraInBFrames = 0;
             param->lookaheadDepth = 15;
             param->bFrameAdaptive = 0;
             param->subpelRefine = 1;
-            param->bEnableEarlySkip = 1;
             param->rdLevel = 2;
             param->maxNumReferences = 2;
             param->rc.qgSize = 32;
@@ -414,15 +418,21 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "faster"))
         {
+            param->maxNumMergeCand = 2;
+            param->limitReferences = 3;
+            param->bIntraInBFrames = 0;
             param->lookaheadDepth = 15;
             param->bFrameAdaptive = 0;
-            param->bEnableEarlySkip = 1;
             param->rdLevel = 2;
             param->maxNumReferences = 2;
             param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "fast"))
         {
+            param->maxNumMergeCand = 2;
+            param->limitReferences = 3;
+            param->bEnableEarlySkip = 0;
+            param->bIntraInBFrames = 0;
             param->lookaheadDepth = 15;
             param->bFrameAdaptive = 0;
             param->rdLevel = 2;
@@ -435,13 +445,15 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "slow"))
         {
+            param->limitReferences = 3;
+            param->bEnableEarlySkip = 0;
+            param->bIntraInBFrames = 0;
             param->bEnableRectInter = 1;
             param->lookaheadDepth = 25;
             param->rdLevel = 4;
             param->rdoqLevel = 2;
             param->psyRdoq = 1.0;
             param->subpelRefine = 3;
-            param->maxNumMergeCand = 3;
             param->searchMethod = X265_STAR_SEARCH;
             param->maxNumReferences = 4;
             param->limitModes = 1;
@@ -449,6 +461,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         }
         else if (!strcmp(preset, "slower"))
         {
+            param->bEnableEarlySkip = 0;
             param->bEnableWeightedBiPred = 1;
             param->bEnableAMP = 1;
             param->bEnableRectInter = 1;
@@ -463,14 +476,13 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->maxNumMergeCand = 4;
             param->searchMethod = X265_STAR_SEARCH;
             param->maxNumReferences = 5;
-            param->limitReferences = 1;
             param->limitModes = 1;
-            param->bIntraInBFrames = 1;
             param->lookaheadSlices = 0; // disabled for best quality
             param->limitTU = 4;
         }
         else if (!strcmp(preset, "veryslow"))
         {
+            param->bEnableEarlySkip = 0;
             param->bEnableWeightedBiPred = 1;
             param->bEnableAMP = 1;
             param->bEnableRectInter = 1;
@@ -487,12 +499,12 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->maxNumReferences = 5;
             param->limitReferences = 0;
             param->limitModes = 0;
-            param->bIntraInBFrames = 1;
             param->lookaheadSlices = 0; // disabled for best quality
             param->limitTU = 0;
         }
         else if (!strcmp(preset, "placebo"))
         {
+            param->bEnableEarlySkip = 0;
             param->bEnableWeightedBiPred = 1;
             param->bEnableAMP = 1;
             param->bEnableRectInter = 1;
@@ -511,7 +523,6 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->bEnableRecursionSkip = 0;
             param->maxNumReferences = 5;
             param->limitReferences = 0;
-            param->bIntraInBFrames = 1;
             param->lookaheadSlices = 0; // disabled for best quality
             // TODO: optimized esa
         }
@@ -1270,6 +1281,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
 #endif
         OPT("fades") p->bEnableFades = atobool(value);
         OPT("field") p->bField = atobool( value );
+        OPT("cll") p->bEmitCLL = atobool(value);
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -2490,6 +2502,11 @@ void svt_param_default(x265_param* param)
     svtHevcParam->logicalProcessors = 0;
     svtHevcParam->switchThreadsToRtPriority = 1;
     svtHevcParam->fpsInVps = 0;
+
+    svtHevcParam->tileColumnCount = 1;
+    svtHevcParam->tileRowCount = 1;
+    svtHevcParam->tileSliceMode = 0;
+    svtHevcParam->unrestrictedMotionVector = 1;
 }
 
 int svt_set_preset_tune(x265_param* param, const char* preset, const char* tune)

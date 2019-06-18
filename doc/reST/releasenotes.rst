@@ -1,6 +1,40 @@
 *************
 Release Notes
 *************
+
+Version 3.1
+===========
+
+Release date - 18th June, 2019.
+
+New features
+----------------
+1. x265 can invoke SVT-HEVC library for encoding through :option:`--svt`.
+2. x265 can now accept interlaced inputs directly (no need to separate fields), and sends it to the encoder with proper fps and frame-size through :option:`--field`.
+3. :option:`--fades` can detect and handle fade-in regions. This option will force I-slice and initialize RC history for the brightest frame after fade-in.
+ 
+API changes
+-----------
+1. A new flag to signal MasterDisplayParams and maxCll/Fall separately
+
+Encoder enhancements
+--------------------
+1. Improved the performance of inter-refine level 1 by skipping the evaluation of smaller CUs when the current block is decided as "skip" by the save mode.
+2. New AVX2 primitives to improve the performance of encodes that enable :option:`--ssim-rd`.
+3. Improved performance in medium preset with negligible loss in quality.
+
+Bug fixes
+---------
+1. Bug fixes for zones.
+2. Fixed wrap-around from MV structure overflow occurred around 8K pixels or over.
+3. Fixed issues in configuring cbQpOffset and crQpOffset for 444 input
+4. Fixed cutree offset computation in 2nd pass encodes.
+
+Known issues
+------------
+1. AVX512 main12 asm disabling.
+2. Inconsistent output with 2-pass due to cutree offset sharing.
+
 Version 3.0
 ===========
 
