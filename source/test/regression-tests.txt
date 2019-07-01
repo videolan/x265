@@ -84,6 +84,7 @@ ParkScene_1920x1080_24_10bit_444.yuv,--preset superfast --weightp --lookahead-sl
 ParkScene_1920x1080_24.y4m,--preset medium --qp 40 --rdpenalty 2 --tu-intra-depth 3
 ParkScene_1920x1080_24.y4m,--preset medium --pme --tskip-fast --tskip --min-keyint 48 --weightb --limit-refs 3
 ParkScene_1920x1080_24.y4m,--preset slower --no-weightp
+ParkScene_1920x1080_24.y4m,--tune grain --aq-motion
 RaceHorses_416x240_30.y4m,--preset superfast --no-cutree
 RaceHorses_416x240_30.y4m,--preset medium --tskip-fast --tskip
 RaceHorses_416x240_30.y4m,--preset slower --keyint -1 --rdoq-level 0 --limit-tu 2
