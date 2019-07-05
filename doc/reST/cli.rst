@@ -1261,6 +1261,18 @@ Temporal / motion search options
 	Enable motion estimation with source frame pixels, in this mode, 
 	motion estimation can be computed independently. Default disabled.
 
+.. option:: --hme, --no-hme
+
+       Enable 3-level Hierarchical motion estimation at One-Sixteenth, 
+       Quarter and Full resolution. Default disabled.
+
+.. option:: --hme-search <integer|string>,<integer|string>,<integer|string>
+
+       Motion search method for HME Level 0, 1 and 2. Refer to :option:`--me` for values.
+       Specify search method for each level. Alternatively, specify a single value
+       which will apply to all levels. Default is hex,umh,umh for 
+       levels 0,1,2 respectively.
+
 Spatial/intra options
 =====================
 

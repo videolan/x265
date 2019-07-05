@@ -1172,6 +1172,14 @@ typedef struct x265_param
     /* Enable availability of temporal motion vector for AMVP, default is enabled */
     int       bEnableTemporalMvp;
 
+    /* Enable 3-level Hierarchical motion estimation at One-Sixteenth, Quarter and Full resolution.
+     * Default is disabled */
+    int       bEnableHME;
+
+    /* Enable HME search method (DIA, HEX, UMH, STAR, SEA, FULL) for level 0, 1 and 2.
+     * Default is hex, umh, umh for L0, L1 and L2 respectively. */
+    int       hmeSearchMethod[3];
+
     /* Enable weighted prediction in P slices.  This enables weighting analysis
      * in the lookahead, which influences slice decisions, and enables weighting
      * analysis in the main encoder which allows P reference samples to have a

@@ -95,6 +95,9 @@ static const struct option long_options[] =
     { "max-merge",      required_argument, NULL, 0 },
     { "no-temporal-mvp",      no_argument, NULL, 0 },
     { "temporal-mvp",         no_argument, NULL, 0 },
+    { "hme",                  no_argument, NULL, 0 },
+    { "no-hme",               no_argument, NULL, 0 },
+    { "hme-search",     required_argument, NULL, 0 },
     { "rdpenalty",      required_argument, NULL, 0 },
     { "no-rect",              no_argument, NULL, 0 },
     { "rect",                 no_argument, NULL, 0 },
@@ -464,6 +467,8 @@ static void showHelp(x265_param *param)
     H0("   --[no-]amp                    Enable asymmetric motion partitions, requires --rect. Default %s\n", OPT(param->bEnableAMP));
     H0("   --[no-]limit-modes            Limit rectangular and asymmetric motion predictions. Default %d\n", param->limitModes);
     H1("   --[no-]temporal-mvp           Enable temporal MV predictors. Default %s\n", OPT(param->bEnableTemporalMvp));
+    H1("   --[no-]hme                    Enable Hierarchical Motion Estimation. Default %s\n", OPT(param->bEnableHME));
+    H1("   --hme-search <string>         Motion search-method for HME L0,L1 and L2. Default(L0,L1,L2) is %d,%d,%d\n", param->hmeSearchMethod[0], param->hmeSearchMethod[1], param->hmeSearchMethod[2]);
     H0("\nSpatial / intra options:\n");
     H0("   --[no-]strong-intra-smoothing Enable strong intra smoothing for 32x32 blocks. Default %s\n", OPT(param->bEnableStrongIntraSmoothing));
     H0("   --[no-]constrained-intra      Constrained intra prediction (use only intra coded reference pixels) Default %s\n", OPT(param->bEnableConstrainedIntra));

@@ -349,6 +349,7 @@ struct EncoderPrimitives
     saoCuStatsE3_t        saoCuStatsE3;
 
     downscale_t           frameInitLowres;
+    downscale_t           frameInitLowerRes;
     cutree_propagate_cost propagateCost;
     cutree_fix8_unpack    fix8Unpack;
     cutree_fix8_pack      fix8Pack;

@@ -201,6 +201,9 @@ void x265_param_default(x265_param* param)
     param->bEnableTSkipFast = 0;
     param->maxNumReferences = 3;
     param->bEnableTemporalMvp = 1;
+    param->bEnableHME = 0;
+    param->hmeSearchMethod[0] = X265_HEX_SEARCH;
+    param->hmeSearchMethod[1] = param->hmeSearchMethod[2] = X265_UMH_SEARCH;
     param->bSourceReferenceEstimation = 0;
     param->limitTU = 0;
     param->dynamicRd = 0;
@@ -1282,6 +1285,27 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("fades") p->bEnableFades = atobool(value);
         OPT("field") p->bField = atobool( value );
         OPT("cll") p->bEmitCLL = atobool(value);
+        OPT("hme") p->bEnableHME = atobool(value);
+        OPT("hme-search")
+        {
+            char search[3][5];
+            memset(search, '\0', 15 * sizeof(char));
+            if(3 == sscanf(value, "%d,%d,%d", &p->hmeSearchMethod[0], &p->hmeSearchMethod[1], &p->hmeSearchMethod[2]) ||
+               3 == sscanf(value, "%4[^,],%4[^,],%4[^,]", search[0], search[1], search[2]))
+            {
+                if(search[0][0])
+                    for(int level = 0; level < 3; level++)
+                        p->hmeSearchMethod[level] = parseName(search[level], x265_motion_est_names, bError);
+            }
+            else if (sscanf(value, "%d", &p->hmeSearchMethod[0]) || sscanf(value, "%s", search[0]))
+            {
+                if (search[0][0]) {
+                    p->hmeSearchMethod[0] = parseName(search[0], x265_motion_est_names, bError);
+                    p->hmeSearchMethod[1] = p->hmeSearchMethod[2] = p->hmeSearchMethod[0];
+                }
+            }
+            p->bEnableHME = true;
+        }
         else
             return X265_PARAM_BAD_NAME;
     }
@@ -1732,8 +1756,13 @@ void x265_print_params(x265_param* param)
     x265_log(param, X265_LOG_INFO, "Residual QT: max TU size, max depth : %d / %d inter / %d intra\n",
              param->maxTUSize, param->tuQTMaxInterDepth, param->tuQTMaxIntraDepth);
 
-    x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
-             x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
+    if (param->bEnableHME)
+        x265_log(param, X265_LOG_INFO, "HME L0,1,2 / range / subpel / merge : %s, %s, %s / %d / %d / %d\n",
+            x265_motion_est_names[param->hmeSearchMethod[0]], x265_motion_est_names[param->hmeSearchMethod[1]], x265_motion_est_names[param->hmeSearchMethod[2]], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
+    else
+        x265_log(param, X265_LOG_INFO, "ME / range / subpel / merge         : %s / %d / %d / %d\n",
+            x265_motion_est_names[param->searchMethod], param->searchRange, param->subpelRefine, param->maxNumMergeCand);
+
     if (param->keyframeMax != INT_MAX || param->scenecutThreshold)
         x265_log(param, X265_LOG_INFO, "Keyframe min / max / scenecut / bias: %d / %d / %d / %.2lf\n", param->keyframeMin, param->keyframeMax, param->scenecutThreshold, param->scenecutBias * 100);
     else
@@ -1928,6 +1957,9 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     s += sprintf(s, " subme=%d", p->subpelRefine);
     s += sprintf(s, " merange=%d", p->searchRange);
     BOOL(p->bEnableTemporalMvp, "temporal-mvp");
+    BOOL(p->bEnableHME, "hme");
+    if (p->bEnableHME)
+        s += sprintf(s, " Level 0,1,2=%d,%d,%d", p->hmeSearchMethod[0], p->hmeSearchMethod[1], p->hmeSearchMethod[2]);
     BOOL(p->bEnableWeightedPred, "weightp");
     BOOL(p->bEnableWeightedBiPred, "weightb");
     BOOL(p->bSourceReferenceEstimation, "analyze-src-pics");
@@ -2215,6 +2247,12 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->subpelRefine = src->subpelRefine;
     dst->searchRange = src->searchRange;
     dst->bEnableTemporalMvp = src->bEnableTemporalMvp;
+    dst->bEnableHME = src->bEnableHME;
+    if (src->bEnableHME)
+    {
+        for (int level = 0; level < 3; level++)
+            dst->hmeSearchMethod[level] = src->hmeSearchMethod[level];
+    }
     dst->bEnableWeightedBiPred = src->bEnableWeightedBiPred;
     dst->bEnableWeightedPred = src->bEnableWeightedPred;
     dst->bSourceReferenceEstimation = src->bSourceReferenceEstimation;

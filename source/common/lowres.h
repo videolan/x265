@@ -40,6 +40,10 @@ struct ReferencePlanes
     pixel*   lowresPlane[4];
     PicYuv*  reconPic;
 
+    /* 1/16th resolution : Level-0 HME planes */
+    pixel*   fpelLowerResPlane[3];
+    pixel*   lowerResPlane[4];
+
     bool     isWeighted;
     bool     isLowres;
 
@@ -150,6 +154,7 @@ struct PicQPAdaptationLayer
 struct Lowres : public ReferencePlanes
 {
     pixel *buffer[4];
+    pixel *lowerResBuffer[4]; // Level-0 buffer
 
     int    frameNum;         // Presentation frame number
     int    sliceType;        // Slice type decided by lookahead
@@ -180,6 +185,9 @@ struct Lowres : public ReferencePlanes
     uint32_t  maxBlocksInCol;
     uint32_t  maxBlocksInRowFullRes;
     uint32_t  maxBlocksInColFullRes;
+
+    /* Hierarchical Motion Estimation */
+    bool      bEnableHME;
 
     /* used for vbvLookahead */
     int       plannedType[X265_LOOKAHEAD_MAX + 1];
