@@ -425,6 +425,7 @@ protected:
     void     setSearchRange(const CUData& cu, const MV& mvp, int merange, MV& mvmin, MV& mvmax) const;
     uint32_t mergeEstimation(CUData& cu, const CUGeom& cuGeom, const PredictionUnit& pu, int puIdx, MergeData& m);
     static void getBlkBits(PartSize cuMode, bool bPSlice, int puIdx, uint32_t lastMode, uint32_t blockBit[3]);
+    void      updateMVP(const MV amvp, const MV& mv, uint32_t& outBits, uint32_t& outCost, const MV& alterMVP);
 
     /* intra helper functions */
     enum { MAX_RD_INTRA_MODES = 16 };

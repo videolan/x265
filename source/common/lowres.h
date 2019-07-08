@@ -46,6 +46,7 @@ struct ReferencePlanes
 
     bool     isWeighted;
     bool     isLowres;
+    bool     isHMELowres;
 
     intptr_t lumaStride;
     intptr_t chromaStride;
@@ -63,46 +64,58 @@ struct ReferencePlanes
 
     /* lowres motion compensation, you must provide a buffer and stride for QPEL averaged pixels
      * in case QPEL is required.  Else it returns a pointer to the HPEL pixels */
-    inline pixel *lowresMC(intptr_t blockOffset, const MV& qmv, pixel *buf, intptr_t& outstride)
+    inline pixel *lowresMC(intptr_t blockOffset, const MV& qmv, pixel *buf, intptr_t& outstride, bool hme)
     {
+        intptr_t YStride = hme ? lumaStride / 2 : lumaStride;
+        pixel *plane[4];
+        for (int i = 0; i < 4; i++)
+        {
+            plane[i] = hme ? lowerResPlane[i] : lowresPlane[i];
+        }
         if ((qmv.x | qmv.y) & 1)
         {
             int hpelA = (qmv.y & 2) | ((qmv.x & 2) >> 1);
-            pixel *frefA = lowresPlane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * lumaStride;
+            pixel *frefA = plane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * YStride;
             int qmvx = qmv.x + (qmv.x & 1);
             int qmvy = qmv.y + (qmv.y & 1);
             int hpelB = (qmvy & 2) | ((qmvx & 2) >> 1);
-            pixel *frefB = lowresPlane[hpelB] + blockOffset + (qmvx >> 2) + (qmvy >> 2) * lumaStride;
-            primitives.pu[LUMA_8x8].pixelavg_pp[(outstride % 64 == 0) && (lumaStride % 64 == 0)](buf, outstride, frefA, lumaStride, frefB, lumaStride, 32);
+            pixel *frefB = plane[hpelB] + blockOffset + (qmvx >> 2) + (qmvy >> 2) * YStride;
+            primitives.pu[LUMA_8x8].pixelavg_pp[(outstride % 64 == 0) && (YStride % 64 == 0)](buf, outstride, frefA, YStride, frefB, YStride, 32);
             return buf;
         }
         else
         {
-            outstride = lumaStride;
+            outstride = YStride;
             int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
-            return lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * lumaStride;
+            return plane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * YStride;
         }
     }
 
-    inline int lowresQPelCost(pixel *fenc, intptr_t blockOffset, const MV& qmv, pixelcmp_t comp)
+    inline int lowresQPelCost(pixel *fenc, intptr_t blockOffset, const MV& qmv, pixelcmp_t comp, bool hme)
     {
+        intptr_t YStride = hme ? lumaStride / 2 : lumaStride;
+        pixel *plane[4];
+        for (int i = 0; i < 4; i++)
+        {
+            plane[i] = hme ? lowerResPlane[i] : lowresPlane[i];
+        }
         if ((qmv.x | qmv.y) & 1)
         {
             ALIGN_VAR_16(pixel, subpelbuf[8 * 8]);
             int hpelA = (qmv.y & 2) | ((qmv.x & 2) >> 1);
-            pixel *frefA = lowresPlane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * lumaStride;
+            pixel *frefA = plane[hpelA] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * YStride;
             int qmvx = qmv.x + (qmv.x & 1);
             int qmvy = qmv.y + (qmv.y & 1);
             int hpelB = (qmvy & 2) | ((qmvx & 2) >> 1);
-            pixel *frefB = lowresPlane[hpelB] + blockOffset + (qmvx >> 2) + (qmvy >> 2) * lumaStride;
-            primitives.pu[LUMA_8x8].pixelavg_pp[NONALIGNED](subpelbuf, 8, frefA, lumaStride, frefB, lumaStride, 32);
+            pixel *frefB = plane[hpelB] + blockOffset + (qmvx >> 2) + (qmvy >> 2) * YStride;
+            primitives.pu[LUMA_8x8].pixelavg_pp[NONALIGNED](subpelbuf, 8, frefA, YStride, frefB, YStride, 32);
             return comp(fenc, FENC_STRIDE, subpelbuf, 8);
         }
         else
         {
             int hpel = (qmv.y & 2) | ((qmv.x & 2) >> 1);
-            pixel *fref = lowresPlane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * lumaStride;
-            return comp(fenc, FENC_STRIDE, fref, lumaStride);
+            pixel *fref = plane[hpel] + blockOffset + (qmv.x >> 2) + (qmv.y >> 2) * YStride;
+            return comp(fenc, FENC_STRIDE, fref, YStride);
         }
     }
 };
@@ -188,6 +201,8 @@ struct Lowres : public ReferencePlanes
 
     /* Hierarchical Motion Estimation */
     bool      bEnableHME;
+    int32_t*  lowerResMvCosts[2][X265_BFRAME_MAX + 2];
+    MV*       lowerResMvs[2][X265_BFRAME_MAX + 2];
 
     /* used for vbvLookahead */
     int       plannedType[X265_LOOKAHEAD_MAX + 1];

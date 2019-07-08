@@ -124,6 +124,10 @@ public:
     int           m_inputCount;
     double        m_cuTreeStrength;
 
+    /* HME */
+    int           m_4x4Width;
+    int           m_4x4Height;
+
     bool          m_isActive;
     bool          m_sliceTypeBusy;
     bool          m_bAdaptiveQuant;
@@ -246,7 +250,7 @@ protected:
     void    processTasks(int workerThreadID);
 
     int64_t estimateFrameCost(LookaheadTLD& tld, int p0, int p1, int b, bool intraPenalty);
-    void    estimateCUCost(LookaheadTLD& tld, int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2], bool lastRow, int slice);
+    void    estimateCUCost(LookaheadTLD& tld, int cux, int cuy, int p0, int p1, int b, bool bDoSearch[2], bool lastRow, int slice, bool hme);
 
     CostEstimateGroup& operator=(const CostEstimateGroup&);
 };

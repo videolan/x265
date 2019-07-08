@@ -65,6 +65,7 @@ bool Lowres::create(x265_param* param, PicYuv *origPic, uint32_t qgSize)
     maxBlocksInColFullRes = maxBlocksInCol * 2;
     int cuCount = maxBlocksInRow * maxBlocksInCol;
     int cuCountFullRes = (qgSize > 8) ? cuCount : cuCount << 2;
+    isHMELowres = param->bEnableHME ? 1 : 0;
 
     /* rounding the width to multiple of lowres CU size */
     width = maxBlocksInRow * X265_LOWRES_CU_SIZE;
@@ -176,6 +177,16 @@ bool Lowres::create(x265_param* param, PicYuv *origPic, uint32_t qgSize)
         CHECKED_MALLOC(lowresMvs[1][i], MV, cuCount);
         CHECKED_MALLOC(lowresMvCosts[0][i], int32_t, cuCount);
         CHECKED_MALLOC(lowresMvCosts[1][i], int32_t, cuCount);
+        if (bEnableHME)
+        {
+            int maxBlocksInRowLowerRes = ((width/2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+            int maxBlocksInColLowerRes = ((lines/2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+            int cuCountLowerRes = maxBlocksInRowLowerRes * maxBlocksInColLowerRes;
+            CHECKED_MALLOC(lowerResMvs[0][i], MV, cuCountLowerRes);
+            CHECKED_MALLOC(lowerResMvs[1][i], MV, cuCountLowerRes);
+            CHECKED_MALLOC(lowerResMvCosts[0][i], int32_t, cuCountLowerRes);
+            CHECKED_MALLOC(lowerResMvCosts[1][i], int32_t, cuCountLowerRes);
+        }
     }
 
     return true;
@@ -207,6 +218,13 @@ void Lowres::destroy()
         X265_FREE(lowresMvs[1][i]);
         X265_FREE(lowresMvCosts[0][i]);
         X265_FREE(lowresMvCosts[1][i]);
+        if (bEnableHME)
+        {
+            X265_FREE(lowerResMvs[0][i]);
+            X265_FREE(lowerResMvs[1][i]);
+            X265_FREE(lowerResMvCosts[0][i]);
+            X265_FREE(lowerResMvCosts[1][i]);
+        }
     }
     X265_FREE(qpAqOffset);
     X265_FREE(invQscaleFactor);

@@ -104,6 +104,8 @@ MotionEstimate::MotionEstimate()
     ctuAddr = -1;
     absPartIdx = -1;
     searchMethod = X265_HEX_SEARCH;
+    searchMethodL0 = X265_HEX_SEARCH;
+    searchMethodL1 = X265_HEX_SEARCH;
     subpelRefine = 2;
     blockwidth = blockheight = 0;
     blockOffset = 0;
@@ -162,7 +164,7 @@ MotionEstimate::~MotionEstimate()
 }
 
 /* Called by lookahead, luma only, no use of PicYuv */
-void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset, int pwidth, int pheight, const int method, const int refine)
+void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset, int pwidth, int pheight, const int method, const int searchL0, const int searchL1, const int refine)
 {
     partEnum = partitionFromSizes(pwidth, pheight);
     X265_CHECK(LUMA_4x4 != partEnum, "4x4 inter partition detected!\n");
@@ -179,6 +181,8 @@ void MotionEstimate::setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset,
 
     /* Search params */
     searchMethod = method;
+    searchMethodL0 = searchL0;
+    searchMethodL1 = searchL1;
     subpelRefine = refine;
 
     /* copy PU block into cache */
@@ -743,9 +747,10 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
                                    pixel *          srcReferencePlane)
 {
     ALIGN_VAR_16(int, costs[16]);
+    bool hme = srcReferencePlane && srcReferencePlane == ref->fpelLowerResPlane[0];
     if (ctuAddr >= 0)
         blockOffset = ref->reconPic->getLumaAddr(ctuAddr, absPartIdx) - ref->reconPic->getLumaAddr(0);
-    intptr_t stride = ref->lumaStride;
+    intptr_t stride = hme ? ref->lumaStride / 2 : ref->lumaStride;
     pixel* fenc = fencPUYuv.m_buf[0];
     pixel* fref = srcReferencePlane == 0 ? ref->fpelPlane[0] + blockOffset : srcReferencePlane + blockOffset;
 
@@ -767,7 +772,7 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
     int bprecost;
 
     if (ref->isLowres)
-        bprecost = ref->lowresQPelCost(fenc, blockOffset, pmv, sad);
+        bprecost = ref->lowresQPelCost(fenc, blockOffset, pmv, sad, hme);
     else
         bprecost = subpelCompare(ref, pmv, sad);
 
@@ -808,7 +813,8 @@ int MotionEstimate::motionEstimate(ReferencePlanes *ref,
     pmv = pmv.roundToFPel();
     MV omv = bmv;  // current search origin or starting point
 
-    switch (searchMethod)
+    int search = ref->isHMELowres ? (hme ? searchMethodL0 : searchMethodL1) : searchMethod;
+    switch (search)
     {
     case X265_DIA_SEARCH:
     {
@@ -1391,11 +1397,20 @@ me_hex2:
     {
         // dead slow exhaustive search, but at least it uses sad_x4()
         MV tmv;
-        for (tmv.y = mvmin.y; tmv.y <= mvmax.y; tmv.y++)
+        int32_t mvmin_y = mvmin.y, mvmin_x = mvmin.x, mvmax_y = mvmax.y, mvmax_x = mvmax.x;
+        if (ref->isHMELowres)
         {
-            for (tmv.x = mvmin.x; tmv.x <= mvmax.x; tmv.x++)
+            merange = (merange < 0 ? -merange : merange);
+            mvmin_y = X265_MAX(mvmin.y, -merange);
+            mvmin_x = X265_MAX(mvmin.x, -merange);
+            mvmax_y = X265_MIN(mvmax.y, merange);
+            mvmax_x = X265_MIN(mvmax.x, merange);
+        }
+        for (tmv.y = mvmin_y; tmv.y <= mvmax_y; tmv.y++)
+        {
+            for (tmv.x = mvmin_x; tmv.x <= mvmax_x; tmv.x++)
             {
-                if (tmv.x + 3 <= mvmax.x)
+                if (tmv.x + 3 <= mvmax_x)
                 {
                     pixel *pix_base = fref + tmv.y * stride + tmv.x;
                     sad_x4(fenc,
@@ -1463,12 +1478,12 @@ me_hex2:
             if ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y))
                 continue;
 
-            int cost = ref->lowresQPelCost(fenc, blockOffset, qmv, sad) + mvcost(qmv);
+            int cost = ref->lowresQPelCost(fenc, blockOffset, qmv, sad, hme) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
 
         bmv += square1[bdir] * 2;
-        bcost = ref->lowresQPelCost(fenc, blockOffset, bmv, satd) + mvcost(bmv);
+        bcost = ref->lowresQPelCost(fenc, blockOffset, bmv, satd, hme) + mvcost(bmv);
 
         bdir = 0;
         for (int i = 1; i <= wl.qpel_dirs; i++)
@@ -1479,7 +1494,7 @@ me_hex2:
             if ((qmv.y < qmvmin.y) | (qmv.y > qmvmax.y))
                 continue;
 
-            int cost = ref->lowresQPelCost(fenc, blockOffset, qmv, satd) + mvcost(qmv);
+            int cost = ref->lowresQPelCost(fenc, blockOffset, qmv, satd, hme) + mvcost(qmv);
             COPY2_IF_LT(bcost, cost, bdir, i);
         }
 

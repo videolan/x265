@@ -44,6 +44,8 @@ protected:
     int absPartIdx;  // part index of PU, including CU offset within CTU
 
     int searchMethod;
+    int searchMethodL0;
+    int searchMethodL1;
     int subpelRefine;
 
     int blockwidth;
@@ -76,7 +78,7 @@ public:
 
     /* Methods called at slice setup */
 
-    void setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset, int pwidth, int pheight, const int searchMethod, const int subpelRefine);
+    void setSourcePU(pixel *fencY, intptr_t stride, intptr_t offset, int pwidth, int pheight, const int searchMethod, const int searchL0, const int searchL1, const int subpelRefine);
     void setSourcePU(const Yuv& srcFencYuv, int ctuAddr, int cuPartIdx, int puPartIdx, int pwidth, int pheight, const int searchMethod, const int subpelRefine, bool bChroma);
 
     /* buf*() and motionEstimate() methods all use cached fenc pixels and thus

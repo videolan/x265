@@ -664,6 +664,7 @@ void LookaheadTLD::weightsAnalyse(Lowres& fenc, Lowres& ref)
     weightedRef.lumaStride = fenc.lumaStride;
     weightedRef.isLowres = true;
     weightedRef.isWeighted = false;
+    weightedRef.isHMELowres = ref.bEnableHME;
 
     /* epsilon is chosen to require at least a numerator of 127 (with denominator = 128) */
     float guessScale, fencMean, refMean;
@@ -759,6 +760,8 @@ Lookahead::Lookahead(x265_param *param, ThreadPool* pool)
     m_extendGopBoundary = false;
     m_8x8Height = ((m_param->sourceHeight / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_8x8Width = ((m_param->sourceWidth / 2) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    m_4x4Height = ((m_param->sourceHeight / 4) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
+    m_4x4Width = ((m_param->sourceWidth / 4) + X265_LOWRES_CU_SIZE - 1) >> X265_LOWRES_CU_BITS;
     m_cuCount = m_8x8Width * m_8x8Height;
     m_8x8Blocks = m_8x8Width > 2 && m_8x8Height > 2 ? (m_cuCount + 4 - 2 * (m_8x8Width + m_8x8Height)) : m_cuCount;
     m_isFadeIn = false;
@@ -2782,16 +2785,32 @@ void CostEstimateGroup::processTasks(int workerThreadID)
 
             X265_CHECK(i < MAX_COOP_SLICES, "impossible number of coop slices\n");
 
-            int firstY = m_lookahead.m_numRowsPerSlice * i;
-            int lastY = (i == m_jobTotal - 1) ? m_lookahead.m_8x8Height - 1 : m_lookahead.m_numRowsPerSlice * (i + 1) - 1;
+            int firstY, lastY;
+            bool lastRow;
+            if (m_lookahead.m_param->bEnableHME)
+            {
+                int numRowsPerSlice = m_lookahead.m_4x4Height / m_lookahead.m_param->lookaheadSlices;
+                numRowsPerSlice = X265_MIN(X265_MAX(numRowsPerSlice, 5), m_lookahead.m_4x4Height);
+                firstY = numRowsPerSlice * i;
+                lastY = (i == m_jobTotal - 1) ? m_lookahead.m_4x4Height - 1 : numRowsPerSlice * (i + 1) - 1;
+                lastRow = true;
+                for (int cuY = lastY; cuY >= firstY; cuY--)
+                {
+                    for (int cuX = m_lookahead.m_4x4Width - 1; cuX >= 0; cuX--)
+                        estimateCUCost(tld, cuX, cuY, m_coop.p0, m_coop.p1, m_coop.b, m_coop.bDoSearch, lastRow, i, 1);
+                    lastRow = false;
+                }
+            }
 
-            bool lastRow = true;
+            firstY = m_lookahead.m_numRowsPerSlice * i;
+            lastY = (i == m_jobTotal - 1) ? m_lookahead.m_8x8Height - 1 : m_lookahead.m_numRowsPerSlice * (i + 1) - 1;
+            lastRow = true;
             for (int cuY = lastY; cuY >= firstY; cuY--)
             {
                 m_frames[m_coop.b]->rowSatds[m_coop.b - m_coop.p0][m_coop.p1 - m_coop.b][cuY] = 0;
 
                 for (int cuX = m_lookahead.m_8x8Width - 1; cuX >= 0; cuX--)
-                    estimateCUCost(tld, cuX, cuY, m_coop.p0, m_coop.p1, m_coop.b, m_coop.bDoSearch, lastRow, i);
+                    estimateCUCost(tld, cuX, cuY, m_coop.p0, m_coop.p1, m_coop.b, m_coop.bDoSearch, lastRow, i, 0);
 
                 lastRow = false;
             }
@@ -2864,13 +2883,25 @@ int64_t CostEstimateGroup::estimateFrameCost(LookaheadTLD& tld, int p0, int p1, 
         }
         else
         {
-            bool lastRow = true;
+            /* Calculate MVs for 1/16th resolution*/
+            bool lastRow;
+            if (param->bEnableHME)
+            {
+                lastRow = true;
+                for (int cuY = m_lookahead.m_4x4Height - 1; cuY >= 0; cuY--)
+                {
+                    for (int cuX = m_lookahead.m_4x4Width - 1; cuX >= 0; cuX--)
+                        estimateCUCost(tld, cuX, cuY, p0, p1, b, bDoSearch, lastRow, -1, 1);
+                    lastRow = false;
+                }
+            }
+            lastRow = true;
             for (int cuY = m_lookahead.m_8x8Height - 1; cuY >= 0; cuY--)
             {
                 fenc->rowSatds[b - p0][p1 - b][cuY] = 0;
 
                 for (int cuX = m_lookahead.m_8x8Width - 1; cuX >= 0; cuX--)
-                    estimateCUCost(tld, cuX, cuY, p0, p1, b, bDoSearch, lastRow, -1);
+                    estimateCUCost(tld, cuX, cuY, p0, p1, b, bDoSearch, lastRow, -1, 0);
 
                 lastRow = false;
             }
@@ -2891,23 +2922,27 @@ int64_t CostEstimateGroup::estimateFrameCost(LookaheadTLD& tld, int p0, int p1, 
     return score;
 }
 
-void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int p0, int p1, int b, bool bDoSearch[2], bool lastRow, int slice)
+void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int p0, int p1, int b, bool bDoSearch[2], bool lastRow, int slice, bool hme)
 {
     Lowres *fref0 = m_frames[p0];
     Lowres *fref1 = m_frames[p1];
     Lowres *fenc  = m_frames[b];
 
-    ReferencePlanes *wfref0 = fenc->weightedRef[b - p0].isWeighted ? &fenc->weightedRef[b - p0] : fref0;
+    ReferencePlanes *wfref0 = fenc->weightedRef[b - p0].isWeighted && !hme ? &fenc->weightedRef[b - p0] : fref0;
 
-    const int widthInCU = m_lookahead.m_8x8Width;
-    const int heightInCU = m_lookahead.m_8x8Height;
+    const int widthInCU = hme ? m_lookahead.m_4x4Width : m_lookahead.m_8x8Width;
+    const int heightInCU = hme ? m_lookahead.m_4x4Height : m_lookahead.m_8x8Height;
     const int bBidir = (b < p1);
     const int cuXY = cuX + cuY * widthInCU;
+    const int cuXY_4x4 = (cuX / 2) + (cuY / 2) * widthInCU / 2;
     const int cuSize = X265_LOWRES_CU_SIZE;
-    const intptr_t pelOffset = cuSize * cuX + cuSize * cuY * fenc->lumaStride;
+    const intptr_t pelOffset = cuSize * cuX + cuSize * cuY * (hme ? fenc->lumaStride/2 : fenc->lumaStride);
 
-    if (bBidir || bDoSearch[0] || bDoSearch[1])
-        tld.me.setSourcePU(fenc->lowresPlane[0], fenc->lumaStride, pelOffset, cuSize, cuSize, X265_HEX_SEARCH, 1);
+    if ((bBidir || bDoSearch[0] || bDoSearch[1]) && hme)
+        tld.me.setSourcePU(fenc->lowerResPlane[0], fenc->lumaStride / 2, pelOffset, cuSize, cuSize, X265_HEX_SEARCH, m_lookahead.m_param->hmeSearchMethod[0], m_lookahead.m_param->hmeSearchMethod[1], 1);
+    else if((bBidir || bDoSearch[0] || bDoSearch[1]) && !hme)
+        tld.me.setSourcePU(fenc->lowresPlane[0], fenc->lumaStride, pelOffset, cuSize, cuSize, X265_HEX_SEARCH, m_lookahead.m_param->hmeSearchMethod[0], m_lookahead.m_param->hmeSearchMethod[1], 1);
+
 
     /* A small, arbitrary bias to avoid VBV problems caused by zero-residual lookahead blocks. */
     int lowresPenalty = 4;
@@ -2926,7 +2961,7 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
     for (int i = 0; i < 1 + bBidir; i++)
     {
-        int& fencCost = fenc->lowresMvCosts[i][listDist[i]][cuXY];
+        int& fencCost = hme ? fenc->lowerResMvCosts[i][listDist[i]][cuXY] : fenc->lowresMvCosts[i][listDist[i]][cuXY];
         int skipCost = INT_MAX;
 
         if (!bDoSearch[i])
@@ -2936,8 +2971,8 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
         }
 
         int numc = 0;
-        MV mvc[4], mvp;
-        MV* fencMV = &fenc->lowresMvs[i][listDist[i]][cuXY];
+        MV mvc[5], mvp;
+        MV* fencMV = hme ? &fenc->lowerResMvs[i][listDist[i]][cuXY] : &fenc->lowresMvs[i][listDist[i]][cuXY];
         ReferencePlanes* fref = i ? fref1 : wfref0;
 
         /* Reverse-order MV prediction */
@@ -2951,6 +2986,10 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
                 MVC(fencMV[widthInCU - 1]);
             if (cuX < widthInCU - 1)
                 MVC(fencMV[widthInCU + 1]);
+        }
+        if (fenc->lowerResMvs[0][0] && !hme && fenc->lowerResMvCosts[i][listDist[i]][cuXY_4x4] > 0)
+        {
+            MVC((fenc->lowerResMvs[i][listDist[i]][cuXY_4x4]) * 2);
         }
 #undef MVC
 
@@ -2967,7 +3006,7 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
             for (int idx = 0; idx < numc; idx++)
             {
                 intptr_t stride = X265_LOWRES_CU_SIZE;
-                pixel *src = fref->lowresMC(pelOffset, mvc[idx], subpelbuf, stride);
+                pixel *src = fref->lowresMC(pelOffset, mvc[idx], subpelbuf, stride, hme);
                 int cost = tld.me.bufSATD(src, stride);
                 COPY2_IF_LT(mvpcost, cost, mvp, mvc[idx]);
                 /* Except for mv0 case, everyting else is likely to have enough residual to not trigger the skip. */
@@ -2978,7 +3017,10 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
 
         /* ME will never return a cost larger than the cost @MVP, so we do not
          * have to check that ME cost is more than the estimated merge cost */
-        fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV, m_lookahead.m_param->maxSlices);
+        if(!hme)
+            fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV, m_lookahead.m_param->maxSlices);
+        else
+            fencCost = tld.me.motionEstimate(fref, mvmin, mvmax, mvp, 0, NULL, s_merange, *fencMV, m_lookahead.m_param->maxSlices, fref->lowerResPlane[0]);
         if (skipCost < 64 && skipCost < fencCost && bBidir)
         {
             fencCost = skipCost;
@@ -2986,6 +3028,8 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
         }
         COPY2_IF_LT(bcost, fencCost, listused, i + 1);
     }
+    if (hme)
+        return;
 
     if (bBidir) /* B, also consider bidir */
     {
@@ -2995,8 +3039,8 @@ void CostEstimateGroup::estimateCUCost(LookaheadTLD& tld, int cuX, int cuY, int 
         ALIGN_VAR_32(pixel, subpelbuf0[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
         ALIGN_VAR_32(pixel, subpelbuf1[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
         intptr_t stride0 = X265_LOWRES_CU_SIZE, stride1 = X265_LOWRES_CU_SIZE;
-        pixel *src0 = fref0->lowresMC(pelOffset, fenc->lowresMvs[0][listDist[0]][cuXY], subpelbuf0, stride0);
-        pixel *src1 = fref1->lowresMC(pelOffset, fenc->lowresMvs[1][listDist[1]][cuXY], subpelbuf1, stride1);
+        pixel *src0 = fref0->lowresMC(pelOffset, fenc->lowresMvs[0][listDist[0]][cuXY], subpelbuf0, stride0, 0);
+        pixel *src1 = fref1->lowresMC(pelOffset, fenc->lowresMvs[1][listDist[1]][cuXY], subpelbuf1, stride1, 0);
         ALIGN_VAR_32(pixel, ref[X265_LOWRES_CU_SIZE * X265_LOWRES_CU_SIZE]);
         primitives.pu[LUMA_8x8].pixelavg_pp[NONALIGNED](ref, X265_LOWRES_CU_SIZE, src0, stride0, src1, stride1, 32);
         int bicost = tld.me.bufSATD(ref, X265_LOWRES_CU_SIZE);
