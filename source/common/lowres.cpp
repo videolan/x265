@@ -71,7 +71,7 @@ bool Lowres::create(x265_param* param, PicYuv *origPic, uint32_t qgSize)
 
     size_t planesize = lumaStride * (lines + 2 * origPic->m_lumaMarginY);
     size_t padoffset = lumaStride * origPic->m_lumaMarginY + origPic->m_lumaMarginX;
-    if (!!param->rc.aqMode || !!param->rc.hevcAq)
+    if (!!param->rc.aqMode || !!param->rc.hevcAq || !!param->bAQMotion)
     {
         CHECKED_MALLOC_ZERO(qpAqOffset, double, cuCountFullRes);
         CHECKED_MALLOC_ZERO(invQscaleFactor, int, cuCountFullRes);
