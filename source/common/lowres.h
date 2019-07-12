@@ -220,6 +220,8 @@ struct Lowres : public ReferencePlanes
     uint64_t  wp_ssd[3];       // This is different than SSDY, this is sum(pixel^2) - sum(pixel)^2 for entire frame
     uint64_t  wp_sum[3];
     double    frameVariance;
+    int* edgeInclined;
+
 
     /* cutree intermediate data */
     PicQPAdaptationLayer* pAQLayer;

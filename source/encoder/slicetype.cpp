@@ -85,6 +85,140 @@ inline uint32_t acEnergyPlane(Frame *curFrame, pixel* src, intptr_t srcStride, i
 
 } // end anonymous namespace
 
+void edgeFilter(Frame *curFrame, pixel *pic1, pixel *pic2, pixel *pic3, intptr_t stride, int height, int width)
+{
+    pixel *src = (pixel*)curFrame->m_fencPic->m_picOrg[0];
+    pixel *edgePic = pic1 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel *refPic = pic2 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel *edgeTheta = pic3 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+
+    for (int i = 0; i < height; i++)
+    {
+        memcpy(edgePic, src, width * sizeof(pixel));
+        memcpy(refPic, src, width * sizeof(pixel));
+        src += stride;
+        edgePic += stride;
+        refPic += stride;
+    }
+
+    //Applying Gaussian filter on the picture
+    src = (pixel*)curFrame->m_fencPic->m_picOrg[0];
+    refPic = pic2 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    pixel pixelValue = 0;
+
+    for (int rowNum = 0; rowNum < height; rowNum++)
+    {
+        for (int colNum = 0; colNum < width; colNum++)
+        {
+            if ((rowNum >= 2) && (colNum >= 2) && (rowNum != height - 2) && (colNum != width - 2)) //Ignoring the border pixels of the picture
+            {
+                /*  5x5 Gaussian filter
+                    [2   4   5   4   2]
+                 1  [4   9   12  9   4]
+                --- [5   12  15  12  5]
+                159 [4   9   12  9   4]
+                    [2   4   5   4   2]*/
+
+                const intptr_t rowOne = (rowNum - 2)*stride, colOne = colNum - 2;
+                const intptr_t rowTwo = (rowNum - 1)*stride, colTwo = colNum - 1;
+                const intptr_t rowThree = rowNum * stride, colThree = colNum;
+                const intptr_t rowFour = (rowNum + 1)*stride, colFour = colNum + 1;
+                const intptr_t rowFive = (rowNum + 2)*stride, colFive = colNum + 2;
+                const intptr_t index = (rowNum*stride) + colNum;
+
+                pixelValue = ((2 * src[rowOne + colOne] + 4 * src[rowOne + colTwo] + 5 * src[rowOne + colThree] + 4 * src[rowOne + colFour] + 2 * src[rowOne + colFive] +
+                    4 * src[rowTwo + colOne] + 9 * src[rowTwo + colTwo] + 12 * src[rowTwo + colThree] + 9 * src[rowTwo + colFour] + 4 * src[rowTwo + colFive] +
+                    5 * src[rowThree + colOne] + 12 * src[rowThree + colTwo] + 15 * src[rowThree + colThree] + 12 * src[rowThree + colFour] + 5 * src[rowThree + colFive] +
+                    4 * src[rowFour + colOne] + 9 * src[rowFour + colTwo] + 12 * src[rowFour + colThree] + 9 * src[rowFour + colFour] + 4 * src[rowFour + colFive] +
+                    2 * src[rowFive + colOne] + 4 * src[rowFive + colTwo] + 5 * src[rowFive + colThree] + 4 * src[rowFive + colFour] + 2 * src[rowFive + colFive]) / 159);
+                refPic[index] = pixelValue;
+            }
+        }
+    }
+
+#if HIGH_BIT_DEPTH //10-bit build
+    float_t threshold = 1023;
+    pixel whitePixel = 1023;
+#else
+    float_t threshold = 255;
+    pixel whitePixel = 255;
+#endif
+#define PI 3.14159265 
+
+    float_t gradientH = 0, gradientV = 0, radians = 0, theta = 0;
+    float_t gradientMagnitude = 0;
+    pixel blackPixel = 0;
+    edgePic = pic1 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+    //Applying Sobel filter on the gaussian filtered picture
+    for (int rowNum = 0; rowNum < height; rowNum++)
+    {
+        for (int colNum = 0; colNum < width; colNum++)
+        {
+            edgeTheta[(rowNum*stride) + colNum] = 0;
+            if ((rowNum != 0) && (colNum != 0) && (rowNum != height - 1) && (colNum != width - 1)) //Ignoring the border pixels of the picture
+            {
+                /*Horizontal and vertical gradients
+                       [ -3   0   3 ]        [-3   -10  -3 ]
+                  gH = [ -10  0   10]   gV = [ 0    0    0 ]
+                       [ -3   0   3 ]        [ 3    10   3 ]*/
+
+                const intptr_t rowOne = (rowNum - 1)*stride, colOne = colNum -1;
+                const intptr_t rowTwo = rowNum * stride, colTwo = colNum;
+                const intptr_t rowThree = (rowNum + 1)*stride, colThree = colNum + 1;
+                const intptr_t index = (rowNum*stride) + colNum;
+
+                gradientH = (float_t)(-3 * refPic[rowOne + colOne] + 3 * refPic[rowOne + colThree] - 10 * refPic[rowTwo + colOne] + 10 * refPic[rowTwo + colThree] - 3 * refPic[rowThree + colOne] + 3 * refPic[rowThree + colThree]);
+                gradientV = (float_t)(-3 * refPic[rowOne + colOne] - 10 * refPic[rowOne + colTwo] - 3 * refPic[rowOne + colThree] + 3 * refPic[rowThree + colOne] + 10 * refPic[rowThree + colTwo] + 3 * refPic[rowThree + colThree]);
+
+                gradientMagnitude = sqrtf(gradientH * gradientH + gradientV * gradientV);
+                radians = atan2(gradientV, gradientH);
+                theta = (float_t)((radians * 180) / PI);
+                if (theta < 0)
+                    theta = 180 + theta;
+                edgeTheta[(rowNum*stride) + colNum] = (pixel)theta;
+
+                edgePic[index] = gradientMagnitude >= threshold ? whitePixel : blackPixel;
+            }
+        }
+    }
+}
+
+//Find the angle of a block by averaging the pixel angles 
+inline void findAvgAngle(const pixel* block, intptr_t stride, uint32_t size, uint32_t &angle)
+{
+    int sum = 0;
+    for (uint32_t y = 0; y < size; y++)
+    {
+        for (uint32_t x = 0; x < size; x++)
+        {
+            sum += block[x];
+        }
+        block += stride;
+    }
+    angle = sum / (size*size);
+}
+
+uint32_t LookaheadTLD::edgeDensityCu(Frame* curFrame,pixel *edgeImage, pixel *edgeTheta, uint32_t &avgAngle, uint32_t blockX, uint32_t blockY, uint32_t qgSize)
+{
+    intptr_t srcStride = curFrame->m_fencPic->m_stride;
+    intptr_t blockOffsetLuma = blockX + (blockY * srcStride);
+    int plane = 0; // Sobel filter is applied only on Y component
+    uint32_t var;
+
+    if (qgSize == 8)
+    {
+        findAvgAngle(edgeTheta + blockOffsetLuma, srcStride, qgSize, avgAngle);
+        var = acEnergyVar(curFrame, primitives.cu[BLOCK_8x8].var(edgeImage + blockOffsetLuma, srcStride), 6, plane);
+    }
+    else
+    {
+        findAvgAngle(edgeTheta + blockOffsetLuma, srcStride, 16, avgAngle);
+        var = acEnergyVar(curFrame, primitives.cu[BLOCK_16x16].var(edgeImage + blockOffsetLuma, srcStride), 8, plane);
+    }
+    x265_emms();
+    return var;
+}
+
 /* Find the total AC energy of each block in all planes */
 uint32_t LookaheadTLD::acEnergyCu(Frame* curFrame, uint32_t blockX, uint32_t blockY, int csp, uint32_t qgSize)
 {
@@ -342,20 +476,55 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
         }
         else
         {
-            int blockXY = 0;
+#define AQ_EDGE_BIAS 0.5
+#define EDGE_INCLINATION 45
+            uint32_t numCuInHeight = (maxRow + param->maxCUSize - 1) / param->maxCUSize;
+            int maxHeight = numCuInHeight * param->maxCUSize;
+            intptr_t stride = curFrame->m_fencPic->m_stride;
+            pixel *edgePic = X265_MALLOC(pixel, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)));
+            pixel *gaussianPic = X265_MALLOC(pixel, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)));
+            pixel *thetaPic = X265_MALLOC(pixel, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)));
+            memset(edgePic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
+            memset(gaussianPic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
+            memset(thetaPic, 0, stride * (maxHeight + (curFrame->m_fencPic->m_lumaMarginY * 2)) * sizeof(pixel));
+            if (param->rc.aqMode == X265_AQ_EDGE)
+                edgeFilter(curFrame, edgePic, gaussianPic, thetaPic, stride, maxRow, maxCol);
+
+            int blockXY = 0, inclinedEdge = 0;
             double avg_adj_pow2 = 0, avg_adj = 0, qp_adj = 0;
             double bias_strength = 0.f;
             double strength = 0.f;
-            if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED)
+            if (param->rc.aqMode == X265_AQ_AUTO_VARIANCE || param->rc.aqMode == X265_AQ_AUTO_VARIANCE_BIASED || param->rc.aqMode == X265_AQ_EDGE)
             {
                 double bit_depth_correction = 1.f / (1 << (2 * (X265_DEPTH - 8)));
-
                 for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
                 {
                     for (int blockX = 0; blockX < maxCol; blockX += loopIncr)
                     {
-                        uint32_t energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
-                        qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
+                        uint32_t energy, edgeDensity, avgAngle;
+                        energy = acEnergyCu(curFrame, blockX, blockY, param->internalCsp, param->rc.qgSize);
+                        if (param->rc.aqMode == X265_AQ_EDGE)
+                        {
+                            pixel *edgeImage = edgePic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+                            pixel *edgeTheta = thetaPic + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
+                            edgeDensity = edgeDensityCu(curFrame, edgeImage, edgeTheta, avgAngle, blockX, blockY, param->rc.qgSize);
+                            if (edgeDensity)
+                            {
+                                qp_adj = pow(edgeDensity * bit_depth_correction + 1, 0.1);
+                                //Increasing the QP of a block if its edge orientation lies around the multiples of 45 degree
+                                if ((avgAngle >= EDGE_INCLINATION - 15 && avgAngle <= EDGE_INCLINATION + 15) || (avgAngle >= EDGE_INCLINATION + 75 && avgAngle <= EDGE_INCLINATION + 105))
+                                    curFrame->m_lowres.edgeInclined[blockXY] = 1;
+                                else
+                                    curFrame->m_lowres.edgeInclined[blockXY] = 0;
+                            }
+                            else
+                            {
+                                qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
+                                curFrame->m_lowres.edgeInclined[blockXY] = 0;
+                            }
+                        }
+                        else
+                            qp_adj = pow(energy * bit_depth_correction + 1, 0.1);
                         curFrame->m_lowres.qpCuTreeOffset[blockXY] = qp_adj;
                         avg_adj += qp_adj;
                         avg_adj_pow2 += qp_adj * qp_adj;
@@ -371,6 +540,9 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
             else
                 strength = param->rc.aqStrength * 1.0397f;
 
+            X265_FREE(edgePic);
+            X265_FREE(gaussianPic);
+            X265_FREE(thetaPic);
             blockXY = 0;
             for (int blockY = 0; blockY < maxRow; blockY += loopIncr)
             {
@@ -385,6 +557,15 @@ void LookaheadTLD::calcAdaptiveQuantFrame(Frame *curFrame, x265_param* param)
                     {
                         qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
                         qp_adj = strength * (qp_adj - avg_adj);
+                    }
+                    else if (param->rc.aqMode == X265_AQ_EDGE)
+                    {
+                        inclinedEdge = curFrame->m_lowres.edgeInclined[blockXY];
+                        qp_adj = curFrame->m_lowres.qpCuTreeOffset[blockXY];
+                        if(inclinedEdge && (qp_adj - avg_adj > 0))
+                            qp_adj = ((strength + AQ_EDGE_BIAS) * (qp_adj - avg_adj));
+                        else
+                            qp_adj = strength * (qp_adj - avg_adj);
                     }
                     else
                     {

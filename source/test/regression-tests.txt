@@ -154,6 +154,7 @@ big_buck_bunny_360p24.y4m, --keyint 60 --min-keyint 40 --gop-lookahead 14
 BasketballDrive_1920x1080_50.y4m, --preset medium --no-open-gop --keyint 50 --min-keyint 50 --radl 2 --vbv-maxrate 5000 --vbv-bufsize 5000
 big_buck_bunny_360p24.y4m, --bitrate 500 --fades
 720p50_parkrun_ter.y4m,--preset medium --bitrate 400 --hme
+ducks_take_off_420_1_720p50.y4m,--preset medium --aq-mode 4 --crf 22 --no-cutree
 
 # Main12 intraCost overflow bug test
 720p50_parkrun_ter.y4m,--preset medium
