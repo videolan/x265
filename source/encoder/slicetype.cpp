@@ -137,16 +137,16 @@ void edgeFilter(Frame *curFrame, pixel *pic1, pixel *pic2, pixel *pic3, intptr_t
     }
 
 #if HIGH_BIT_DEPTH //10-bit build
-    float_t threshold = 1023;
+    float threshold = 1023;
     pixel whitePixel = 1023;
 #else
-    float_t threshold = 255;
+    float threshold = 255;
     pixel whitePixel = 255;
 #endif
 #define PI 3.14159265 
 
-    float_t gradientH = 0, gradientV = 0, radians = 0, theta = 0;
-    float_t gradientMagnitude = 0;
+    float gradientH = 0, gradientV = 0, radians = 0, theta = 0;
+    float gradientMagnitude = 0;
     pixel blackPixel = 0;
     edgePic = pic1 + curFrame->m_fencPic->m_lumaMarginY * stride + curFrame->m_fencPic->m_lumaMarginX;
     //Applying Sobel filter on the gaussian filtered picture
@@ -167,12 +167,12 @@ void edgeFilter(Frame *curFrame, pixel *pic1, pixel *pic2, pixel *pic3, intptr_t
                 const intptr_t rowThree = (rowNum + 1)*stride, colThree = colNum + 1;
                 const intptr_t index = (rowNum*stride) + colNum;
 
-                gradientH = (float_t)(-3 * refPic[rowOne + colOne] + 3 * refPic[rowOne + colThree] - 10 * refPic[rowTwo + colOne] + 10 * refPic[rowTwo + colThree] - 3 * refPic[rowThree + colOne] + 3 * refPic[rowThree + colThree]);
-                gradientV = (float_t)(-3 * refPic[rowOne + colOne] - 10 * refPic[rowOne + colTwo] - 3 * refPic[rowOne + colThree] + 3 * refPic[rowThree + colOne] + 10 * refPic[rowThree + colTwo] + 3 * refPic[rowThree + colThree]);
+                gradientH = (float)(-3 * refPic[rowOne + colOne] + 3 * refPic[rowOne + colThree] - 10 * refPic[rowTwo + colOne] + 10 * refPic[rowTwo + colThree] - 3 * refPic[rowThree + colOne] + 3 * refPic[rowThree + colThree]);
+                gradientV = (float)(-3 * refPic[rowOne + colOne] - 10 * refPic[rowOne + colTwo] - 3 * refPic[rowOne + colThree] + 3 * refPic[rowThree + colOne] + 10 * refPic[rowThree + colTwo] + 3 * refPic[rowThree + colThree]);
 
                 gradientMagnitude = sqrtf(gradientH * gradientH + gradientV * gradientV);
                 radians = atan2(gradientV, gradientH);
-                theta = (float_t)((radians * 180) / PI);
+                theta = (float)((radians * 180) / PI);
                 if (theta < 0)
                     theta = 180 + theta;
                 edgeTheta[(rowNum*stride) + colNum] = (pixel)theta;
