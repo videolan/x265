@@ -2410,7 +2410,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     dst->bLowPassDct = src->bLowPassDct;
     dst->vbvBufferEnd = src->vbvBufferEnd;
     dst->vbvEndFrameAdjust = src->vbvEndFrameAdjust;
-
+    dst->bAnalysisType = src->bAnalysisType;
     dst->bCopyPicToFrame = src->bCopyPicToFrame;
     if (src->analysisSave) dst->analysisSave=strdup(src->analysisSave);
     else dst->analysisSave = NULL;
