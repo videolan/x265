@@ -109,7 +109,8 @@ protected:
                                   int &            bPointNr,
                                   int &            bDistance,
                                   int              earlyExitIters,
-                                  int              merange);
+                                  int              merange,
+                                  int              hme);
 };
 }
 

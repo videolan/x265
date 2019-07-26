@@ -367,12 +367,13 @@ void MotionEstimate::StarPatternSearch(ReferencePlanes *ref,
                                        int &            bPointNr,
                                        int &            bDistance,
                                        int              earlyExitIters,
-                                       int              merange)
+                                       int              merange,
+                                       int              hme)
 {
     ALIGN_VAR_16(int, costs[16]);
     pixel* fenc = fencPUYuv.m_buf[0];
-    pixel* fref = ref->fpelPlane[0] + blockOffset;
-    intptr_t stride = ref->lumaStride;
+    pixel* fref = (hme? ref->fpelLowerResPlane[0] : ref->fpelPlane[0]) + blockOffset;
+    intptr_t stride = hme? ref->lumaStride / 2 : ref->lumaStride;
 
     MV omv = bmv;
     int saved = bcost;
@@ -1134,7 +1135,7 @@ me_hex2:
         int bDistance = 0;
 
         const int EarlyExitIters = 3;
-        StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, EarlyExitIters, merange);
+        StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, EarlyExitIters, merange, hme);
         if (bDistance == 1)
         {
             // if best distance was only 1, check two missing points.  If no new point is found, stop
@@ -1207,7 +1208,7 @@ me_hex2:
             bDistance = 0;
             bPointNr = 0;
             const int MaxIters = 32;
-            StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, MaxIters, merange);
+            StarPatternSearch(ref, mvmin, mvmax, bmv, bcost, bPointNr, bDistance, MaxIters, merange, hme);
 
             if (bDistance == 1)
             {
