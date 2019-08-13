@@ -96,7 +96,12 @@ x265_encoder *x265_encoder_open(x265_param *p)
     x265_param* param = PARAM_NS::x265_param_alloc();
     x265_param* latestParam = PARAM_NS::x265_param_alloc();
     x265_param* zoneParam = PARAM_NS::x265_param_alloc();
-    if (!param || !latestParam)
+
+    if(param) PARAM_NS::x265_param_default(param);
+    if(latestParam) PARAM_NS::x265_param_default(latestParam);
+    if(zoneParam) PARAM_NS::x265_param_default(zoneParam);
+
+    if (!param || !latestParam || !zoneParam)
         goto fail;
     if (p->rc.zoneCount || p->rc.zonefileCount)
     {
@@ -106,6 +111,8 @@ x265_encoder *x265_encoder_open(x265_param *p)
     }
 
     x265_copy_params(param, p);
+    x265_copy_params(latestParam, p);
+    x265_copy_params(zoneParam, p);
     x265_log(param, X265_LOG_INFO, "HEVC encoder version %s\n", PFX(version_str));
     x265_log(param, X265_LOG_INFO, "build info %s\n", PFX(build_info_str));
 
@@ -212,6 +219,7 @@ fail:
     delete encoder;
     PARAM_NS::x265_param_free(param);
     PARAM_NS::x265_param_free(latestParam);
+    PARAM_NS::x265_param_free(zoneParam);
     return NULL;
 }
 
@@ -944,11 +952,11 @@ x265_zone *x265_zone_alloc(int zoneCount, int isZoneFile)
 
 void x265_zone_free(x265_param *param)
 {
-    if (param->rc.zonefileCount) {
+    if (param && param->rc.zonefileCount) {
         for (int i = 0; i < param->rc.zonefileCount; i++)
             x265_free(param->rc.zones[i].zoneParam);
     }
-    if (param->rc.zoneCount || param->rc.zonefileCount)
+    if (param && (param->rc.zoneCount || param->rc.zonefileCount))
         x265_free(param->rc.zones);
 }
 
