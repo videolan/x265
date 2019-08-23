@@ -297,8 +297,7 @@ static const struct option long_options[] =
     { "dhdr10-opt",           no_argument, NULL, 0},
     { "no-dhdr10-opt",        no_argument, NULL, 0},
     { "dolby-vision-profile",  required_argument, NULL, 0 },
-    { "refine-mv",            no_argument, NULL, 0 },
-    { "no-refine-mv",         no_argument, NULL, 0 },
+    { "refine-mv",      required_argument, NULL, 0 },
     { "refine-ctu-distortion", required_argument, NULL, 0 },
     { "force-flush",    required_argument, NULL, 0 },
     { "splitrd-skip",         no_argument, NULL, 0 },
@@ -549,7 +548,7 @@ static void showHelp(x265_param *param)
         "                                    - 3 : Functionality of (1) + irrespective of size evaluate all inter modes.\n"
         "                                Default:%d\n", param->interRefine);
     H0("   --[no-]dynamic-refine         Dynamically changes refine-inter level for each CU. Default %s\n", OPT(param->bDynamicRefine));
-    H0("   --[no-]refine-mv              Enable mv refinement for load mode. Default %s\n", OPT(param->mvRefine));
+    H0("   --refine-mv <0..3>            Enable mv refinement for load mode. Default %d\n", param->mvRefine);
     H0("   --refine-ctu-distortion       Store/normalize ctu distortion in analysis-save/load.\n"
         "                                    - 0 : Disabled.\n"
         "                                    - 1 : Store/Load ctu distortion to/from the file specified in analysis-save/load.\n"

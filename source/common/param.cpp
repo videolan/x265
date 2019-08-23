@@ -1209,7 +1209,7 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("scale-factor") p->scaleFactor = atoi(value);
         OPT("refine-intra")p->intraRefine = atoi(value);
         OPT("refine-inter")p->interRefine = atoi(value);
-        OPT("refine-mv")p->mvRefine = atobool(value);
+        OPT("refine-mv")p->mvRefine = atoi(value);
         OPT("force-flush")p->forceFlush = atoi(value);
         OPT("splitrd-skip") p->bEnableSplitRdSkip = atobool(value);
         OPT("lowpass-dct") p->bLowPassDct = atobool(value);
@@ -1650,6 +1650,8 @@ int x265_check_params(x265_param* param)
           "Strict-cbr cannot be applied without specifying target bitrate or vbv bufsize");
     CHECK((param->analysisSave || param->analysisLoad) && (param->analysisReuseLevel < 1 || param->analysisReuseLevel > 10),
         "Invalid analysis refine level. Value must be between 1 and 10 (inclusive)");
+    CHECK(param->analysisLoad && (param->mvRefine < 0 || param->mvRefine > 3),
+        "Invalid mv refinement level. Value must be between 0 and 3 (inclusive)");
     CHECK(param->scaleFactor > 2, "Invalid scale-factor. Supports factor <= 2");
     CHECK(param->rc.qpMax < QP_MIN || param->rc.qpMax > QP_MAX_MAX,
         "qpmax exceeds supported range (0 to 69)");

@@ -997,11 +997,14 @@ will not reuse analysis if slice type parameters do not match.
 	the encoder settings. It is recommended to use :option:`--refine-intra` 4 with dynamic 
 	refinement. Default disabled.
 
-.. option:: --refine-mv
-	
+.. option:: --refine-mv <0..3>
+
 	Enables refinement of motion vector for scaled video. Evaluates the best 
-	motion vector by searching the surrounding eight integer and subpel pixel
-	positions.
+	motion vector based on the level selected. Default 0 - disabled.
+
+	Level 1 - Search around scaled MV.
+	Level 2 - Level 1 + Search around best AMVP cand.
+	Level 3 - Level 2 + Search around the other AMVP cand.
 
 Options which affect the transform unit quad-tree, sometimes referred to
 as the residual quad-tree (RQT).

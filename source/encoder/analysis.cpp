@@ -2488,14 +2488,18 @@ void Analysis::recodeCU(const CUData& parentCTU, const CUGeom& cuGeom, int32_t q
                             MV mvp;
 
                             int numMvc = mode.cu.getPMV(mode.interNeighbours, list, ref, mode.amvpCand[list][ref], mvc);
-                            if (m_param->interRefine != 1)
-                                mvp = mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]];
-                            else
-                                mvp = interDataCTU->mv[list][cuIdx + part].word;
+                            mvp = mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]];
                             if (m_param->mvRefine || m_param->interRefine == 1)
                             {
-                                MV outmv;
-                                searchMV(mode, pu, list, ref, outmv, mvp, numMvc, mvc);
+                                MV outmv, mvpSelect[3];
+                                mvpSelect[0] = interDataCTU->mv[list][cuIdx + part].word;
+                                switch (m_param->mvRefine)
+                                {
+                                case 3: mvpSelect[2] = mode.amvpCand[list][ref][!(mode.cu.m_mvpIdx[list][pu.puAbsPartIdx])];
+                                case 2: mvpSelect[1] = mvp;
+                                default: break;
+                                }
+                                searchMV(mode, list, ref, outmv, mvpSelect, numMvc, mvc);
                                 mode.cu.setPUMv(list, outmv, pu.puAbsPartIdx, part);
                             }
                             mode.cu.m_mvd[list][pu.puAbsPartIdx] = mode.cu.m_mv[list][pu.puAbsPartIdx] - mode.amvpCand[list][ref][mode.cu.m_mvpIdx[list][pu.puAbsPartIdx]]/*mvp*/;

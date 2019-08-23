@@ -2983,11 +2983,11 @@ void Encoder::configure(x265_param *p)
             x265_log(p, X265_LOG_WARNING, "MV refinement requires analysis load, analysis-reuse-level 10. Disabling MV refine.\n");
             p->mvRefine = 0;
         }
-        else if (p->interRefine >= 2)
-        {
-            x265_log(p, X265_LOG_WARNING, "MVs are recomputed when refine-inter >= 2. MV refinement not applicable. Disabling MV refine\n");
-            p->mvRefine = 0;
-        }
+    }
+    if (p->scaleFactor && p->analysisLoad && p->interRefine && p->analysisReuseLevel == 10 && !p->mvRefine)
+    {
+        x265_log(p, X265_LOG_WARNING, "Enabling MV refinement level 1 with scaling and analysis-reuse-level=10.\n");
+        p->mvRefine = 1;
     }
 
     if (p->ctuDistortionRefine == CTU_DISTORTION_INTERNAL)
