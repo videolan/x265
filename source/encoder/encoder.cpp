@@ -1807,6 +1807,10 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
 
             if ((m_outputCount + 1)  >= m_param->chunkStart)
                 finishFrameStats(outFrame, curEncoder, frameData, m_pocLast);
+            if (m_param->analysisSave)
+            {
+                pic_out->analysisData.frameBits = frameData->bits;
+            }
 
             /* Write RateControl Frame level stats in multipass encodes */
             if (m_param->rc.bStatWrite)

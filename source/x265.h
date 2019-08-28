@@ -219,6 +219,7 @@ typedef struct x265_analysis_data
     uint8_t*                          modeFlag[2];
     x265_analysis_validate            saveParam;
     x265_analysis_distortion_data*    distortionData;
+    uint64_t                          frameBits;
 } x265_analysis_data;
 
 /* cu statistics */

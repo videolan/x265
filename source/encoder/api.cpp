@@ -190,6 +190,7 @@ x265_encoder *x265_encoder_open(x265_param *p)
     }
 
     encoder->create();
+    p->frameNumThreads = encoder->m_param->frameNumThreads;
 
     if (!param->bResetZoneConfig)
     {
