@@ -1810,6 +1810,17 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             if (m_param->analysisSave)
             {
                 pic_out->analysisData.frameBits = frameData->bits;
+                if (!slice->isIntra())
+                {
+                    for (int ref = 0; ref < MAX_NUM_REF; ref++)
+                        pic_out->analysisData.list0POC[ref] = frameData->list0POC[ref];
+
+                    if (!slice->isInterP())
+                    {
+                        for (int ref = 0; ref < MAX_NUM_REF; ref++)
+                            pic_out->analysisData.list1POC[ref] = frameData->list1POC[ref];
+                    }
+                }
             }
 
             /* Write RateControl Frame level stats in multipass encodes */
@@ -2696,12 +2707,12 @@ void Encoder::finishFrameStats(Frame* curFrame, FrameEncoder *curEncoder, x265_f
         frameStats->ssim = ssim;
         if (!slice->isIntra())
         {
-            for (int ref = 0; ref < 16; ref++)
+            for (int ref = 0; ref < MAX_NUM_REF; ref++)
                 frameStats->list0POC[ref] = ref < slice->m_numRefIdx[0] ? slice->m_refPOCList[0][ref] - slice->m_lastIDR : -1;
 
             if (!slice->isInterP())
             {
-                for (int ref = 0; ref < 16; ref++)
+                for (int ref = 0; ref < MAX_NUM_REF; ref++)
                     frameStats->list1POC[ref] = ref < slice->m_numRefIdx[1] ? slice->m_refPOCList[1][ref] - slice->m_lastIDR : -1;
             }
         }

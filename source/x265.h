@@ -200,6 +200,7 @@ typedef struct x265_analysis_distortion_data
 
 }x265_analysis_distortion_data;
 
+#define MAX_NUM_REF 16
 /* Stores all analysis data for a single frame */
 typedef struct x265_analysis_data
 {
@@ -220,6 +221,8 @@ typedef struct x265_analysis_data
     x265_analysis_validate            saveParam;
     x265_analysis_distortion_data*    distortionData;
     uint64_t                          frameBits;
+    int                               list0POC[MAX_NUM_REF];
+    int                               list1POC[MAX_NUM_REF];
 } x265_analysis_data;
 
 /* cu statistics */
@@ -275,8 +278,8 @@ typedef struct x265_frame_stats
     int              encoderOrder;
     int              poc;
     int              countRowBlocks;
-    int              list0POC[16];
-    int              list1POC[16];
+    int              list0POC[MAX_NUM_REF];
+    int              list1POC[MAX_NUM_REF];
     uint16_t         maxLumaLevel;
     uint16_t         minLumaLevel;
 
