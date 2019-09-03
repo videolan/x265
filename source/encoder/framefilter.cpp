@@ -163,7 +163,7 @@ void FrameFilter::destroy()
 
     if (m_parallelFilter)
     {
-        if (m_param->bEnableSAO)
+        if (m_useSao)
         {
             for(int row = 0; row < m_numRows; row++)
                 m_parallelFilter[row].m_sao.destroy((row == 0 ? 1 : 0));
@@ -178,6 +178,7 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
 {
     m_param = frame->m_param;
     m_frameEncoder = frame;
+    m_useSao = 1;
     m_numRows = numRows;
     m_numCols = numCols;
     m_hChromaShift = CHROMA_H_SHIFT(m_param->internalCsp);
@@ -196,12 +197,12 @@ void FrameFilter::init(Encoder *top, FrameEncoder *frame, int numRows, uint32_t 
 
     if (m_parallelFilter)
     {
-        if (m_param->bEnableSAO)
+        if (m_useSao)
         {
             for(int row = 0; row < numRows; row++)
             {
                 if (!m_parallelFilter[row].m_sao.create(m_param, (row == 0 ? 1 : 0)))
-                    m_param->bEnableSAO = 0;
+                    m_useSao = 0;
                 else
                 {
                     if (row != 0)
@@ -235,7 +236,7 @@ void FrameFilter::start(Frame *frame, Entropy& initState)
     {
         for(int row = 0; row < m_numRows; row++)
         {
-            if (m_param->bEnableSAO)
+            if (m_useSao)
                 m_parallelFilter[row].m_sao.startSlice(frame, initState);
 
             m_parallelFilter[row].m_lastCol.set(0);
@@ -245,7 +246,7 @@ void FrameFilter::start(Frame *frame, Entropy& initState)
         }
 
         // Reset SAO common statistics
-        if (m_param->bEnableSAO)
+        if (m_useSao)
             m_parallelFilter[0].m_sao.resetStats();
     }
 }
@@ -472,11 +473,11 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
                 deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr - 1]], Deblock::EDGE_HOR);
 
                 // When SAO Disable, setting column counter here
-                if (!m_frameFilter->m_param->bEnableSAO & !ctuPrev->m_bFirstRowInSlice)
+                if (!m_frameFilter->m_useSao & !ctuPrev->m_bFirstRowInSlice)
                     m_prevRow->processPostCu(col - 1);
             }
 
-            if (m_frameFilter->m_param->bEnableSAO)
+            if (m_frameFilter->m_useSao)
             {
                 // Save SAO bottom row reference pixels
                 copySaoAboveRef(ctuPrev, reconPic, cuAddr - 1, col - 1);
@@ -514,12 +515,12 @@ void FrameFilter::ParallelFilter::processTasks(int /*workerThreadId*/)
             deblockCTU(ctuPrev, cuGeoms[ctuGeomMap[cuAddr]], Deblock::EDGE_HOR);
 
             // When SAO Disable, setting column counter here
-            if (!m_frameFilter->m_param->bEnableSAO & !ctuPrev->m_bFirstRowInSlice)
+            if (!m_frameFilter->m_useSao & !ctuPrev->m_bFirstRowInSlice)
                 m_prevRow->processPostCu(numCols - 1);
         }
 
         // TODO: move processPostCu() into processSaoUnitCu()
-        if (m_frameFilter->m_param->bEnableSAO)
+        if (m_frameFilter->m_useSao)
         {
             const CUData* ctu = m_encData->getPicCTU(m_rowAddr + numCols - 2);
 
@@ -570,7 +571,7 @@ void FrameFilter::processRow(int row)
     m_frameEncoder->m_cuStats.countLoopFilter++;
 #endif
 
-    if (!m_param->bEnableLoopFilter && !m_param->bEnableSAO)
+    if (!m_param->bEnableLoopFilter && !m_useSao)
     {
         processPostRow(row);
         return;
@@ -596,7 +597,7 @@ void FrameFilter::processRow(int row)
                 x265_log(m_param, X265_LOG_WARNING, "detected ParallelFilter race condition on last row\n");
 
             /* Apply SAO on last row of CUs, because we always apply SAO on row[X-1] */
-            if (m_param->bEnableSAO)
+            if (m_useSao)
             {
                 for(int col = 0; col < m_numCols; col++)
                 {
@@ -634,7 +635,7 @@ void FrameFilter::processRow(int row)
 
     if (numRowFinished == m_numRows)
     {
-        if (m_param->bEnableSAO)
+        if (m_useSao)
         {
             // Merge numNoSao into RootNode (Node0)
             for(int i = 1; i < m_numRows; i++)

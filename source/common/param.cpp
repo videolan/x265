@@ -215,6 +215,7 @@ void x265_param_default(x265_param* param)
     param->bEnableSAO = 1;
     param->bSaoNonDeblocked = 0;
     param->bLimitSAO = 0;
+    param->selectiveSAO = 4;
 
     /* Coding Quality */
     param->cbQpOffset = 0;
@@ -375,6 +376,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->subpelRefine = 0;
             param->searchMethod = X265_DIA_SEARCH;
             param->bEnableSAO = 0;
+            param->selectiveSAO = 0;
             param->bEnableSignHiding = 0;
             param->bEnableWeightedPred = 0;
             param->rdLevel = 2;
@@ -404,6 +406,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->rc.hevcAq = 0;
             param->rc.qgSize = 32;
             param->bEnableSAO = 0;
+            param->selectiveSAO = 0;
             param->bEnableFastIntra = 1;
         }
         else if (!strcmp(preset, "veryfast"))
@@ -551,6 +554,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
         {
             param->bEnableLoopFilter = 0;
             param->bEnableSAO = 0;
+            param->selectiveSAO = 0;
             param->bEnableWeightedPred = 0;
             param->bEnableWeightedBiPred = 0;
             param->bIntraInBFrames = 0;
@@ -578,6 +582,7 @@ int x265_param_default_preset(x265_param* param, const char* preset, const char*
             param->psyRd = 4.0;
             param->psyRdoq = 10.0;
             param->bEnableSAO = 0;
+            param->selectiveSAO = 0;
             param->rc.bEnableConstVbv = 1;
         }
         else if (!strcmp(tune, "animation"))
@@ -1282,6 +1287,10 @@ int x265_param_parse(x265_param* p, const char* name, const char* value)
         OPT("svt-pred-struct") x265_log(p, X265_LOG_WARNING, "Option %s is SVT-HEVC Encoder specific; Disabling it here \n", name);
         OPT("svt-fps-in-vps") x265_log(p, X265_LOG_WARNING, "Option %s is SVT-HEVC Encoder specific; Disabling it here \n", name);
 #endif
+        OPT("selective-sao")
+        {
+            p->selectiveSAO = atoi(value);
+        }
         OPT("fades") p->bEnableFades = atobool(value);
         OPT("field") p->bField = atobool( value );
         OPT("cll") p->bEmitCLL = atobool(value);
@@ -1686,6 +1695,8 @@ int x265_check_params(x265_param* param)
         CHECK( (param->bFrameAdaptive==0), "Adaptive B-frame decision method should be closed for field feature.\n" );
         // to do
     }
+    CHECK(param->selectiveSAO < 0 || param->selectiveSAO > 4,
+        "Invalid SAO tune level. Value must be between 0 and 4 (inclusive)");
 #if !X86_64
     CHECK(param->searchMethod == X265_SEA && (param->sourceWidth > 840 || param->sourceHeight > 480),
         "SEA motion search does not support resolutions greater than 480p in 32 bit build");
@@ -1862,6 +1873,8 @@ void x265_print_params(x265_param* param)
     }
     TOOLOPT(param->bSaoNonDeblocked, "sao-non-deblock");
     TOOLOPT(!param->bSaoNonDeblocked && param->bEnableSAO, "sao");
+    if (param->selectiveSAO != 4)
+        TOOLOPT(param->selectiveSAO, "selective-sao");
     TOOLOPT(param->rc.bStatWrite, "stats-write");
     TOOLOPT(param->rc.bStatRead,  "stats-read");
     TOOLOPT(param->bSingleSeiNal, "single-sei");
@@ -1971,6 +1984,7 @@ char *x265_param2string(x265_param* p, int padx, int pady)
     BOOL(p->bEnableSAO, "sao");
     BOOL(p->bSaoNonDeblocked, "sao-non-deblock");
     s += sprintf(s, " rd=%d", p->rdLevel);
+    s += sprintf(s, "selective-sao=%d", p->selectiveSAO);
     BOOL(p->bEnableEarlySkip, "early-skip");
     BOOL(p->bEnableRecursionSkip, "rskip");
     BOOL(p->bEnableFastIntra, "fast-intra");
@@ -2420,6 +2434,7 @@ void x265_copy_params(x265_param* dst, x265_param* src)
     else dst->analysisLoad = NULL;
     dst->gopLookahead = src->gopLookahead;
     dst->radl = src->radl;
+    dst->selectiveSAO = src->selectiveSAO;
     dst->maxAUSizeFactor = src->maxAUSizeFactor;
     dst->bEmitIDRRecoverySEI = src->bEmitIDRRecoverySEI;
     dst->bDynamicRefine = src->bDynamicRefine;

@@ -641,11 +641,17 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
             WRITE_FLAG(1, "slice_temporal_mvp_enable_flag");
     }
     const SAOParam *saoParam = encData.m_saoParam;
-    if (slice.m_sps->bUseSAO)
+    if (slice.m_bUseSao)
     {
         WRITE_FLAG(saoParam->bSaoFlag[0], "slice_sao_luma_flag");
         if (encData.m_param->internalCsp != X265_CSP_I400)
             WRITE_FLAG(saoParam->bSaoFlag[1], "slice_sao_chroma_flag");
+    }
+    else if(encData.m_param->selectiveSAO)
+    {
+        WRITE_FLAG(0, "slice_sao_luma_flag");
+        if (encData.m_param->internalCsp != X265_CSP_I400)
+            WRITE_FLAG(0, "slice_sao_chroma_flag");
     }
 
     // check if numRefIdx match the defaults (1, hard-coded in PPS). If not, override
@@ -706,7 +712,7 @@ void Entropy::codeSliceHeader(const Slice& slice, FrameData& encData, uint32_t s
 
     if (encData.m_param->maxSlices <= 1)
     {
-        bool isSAOEnabled = slice.m_sps->bUseSAO ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1] : false;
+        bool isSAOEnabled = slice.m_sps->bUseSAO && slice.m_bUseSao ? saoParam->bSaoFlag[0] || saoParam->bSaoFlag[1] : false;
         bool isDBFEnabled = !slice.m_pps->bPicDisableDeblockingFilter;
 
         if (isSAOEnabled || isDBFEnabled)

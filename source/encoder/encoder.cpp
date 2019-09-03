@@ -1621,6 +1621,28 @@ int Encoder::encode(const x265_picture* pic_in, x265_picture* pic_out)
             }
             /* determine references, setup RPS, etc */
             m_dpb->prepareEncode(frameEnc);
+            if (!!m_param->selectiveSAO)
+            {
+                Slice* slice = frameEnc->m_encData->m_slice;
+                slice->m_bUseSao = curEncoder->m_frameFilter.m_useSao = 1;
+                switch (m_param->selectiveSAO)
+                {
+                case 3: if (!IS_REFERENCED(frameEnc))
+                            slice->m_bUseSao = curEncoder->m_frameFilter.m_useSao = 0;
+                        break;
+                case 2: if (!!m_param->bframes && slice->m_sliceType == B_SLICE)
+                            slice->m_bUseSao = curEncoder->m_frameFilter.m_useSao = 0;
+                        break;
+                case 1: if (slice->m_sliceType != I_SLICE)
+                            slice->m_bUseSao = curEncoder->m_frameFilter.m_useSao = 0;
+                        break;
+                }
+            }
+            else
+            {
+                Slice* slice = frameEnc->m_encData->m_slice;
+                slice->m_bUseSao = curEncoder->m_frameFilter.m_useSao = 0;
+            }
 
             if (m_param->rc.rateControlMode != X265_RC_CQP)
                 m_lookahead->getEstimatedPictureCost(frameEnc);
@@ -2891,6 +2913,14 @@ void Encoder::configure(x265_param *p)
 
     }
 
+    if (p->selectiveSAO && !p->bEnableSAO)
+    {
+        p->bEnableSAO = 1;
+        x265_log(p, X265_LOG_WARNING, "SAO turned ON when selective-sao is ON\n");
+    }
+
+    if (!p->selectiveSAO && p->bEnableSAO)
+        p->selectiveSAO = 4;
 
     if (p->interlaceMode)
         x265_log(p, X265_LOG_WARNING, "Support for interlaced video is experimental\n");

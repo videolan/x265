@@ -356,6 +356,7 @@ public:
     bool        m_bCheckLDC;       // TODO: is this necessary?
     bool        m_sLFaseFlag;      // loop filter boundary flag
     bool        m_colFromL0Flag;   // collocated picture from List0 or List1 flag
+    int         m_bUseSao;
 
     int         m_iPPSQpMinus26;
     int         numRefIdxDefault[2];

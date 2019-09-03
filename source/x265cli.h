@@ -200,6 +200,7 @@ static const struct option long_options[] =
     { "no-deblock",           no_argument, NULL, 0 },
     { "deblock",        required_argument, NULL, 0 },
     { "no-sao",               no_argument, NULL, 0 },
+    { "selective-sao",  required_argument, NULL, 0 },
     { "sao",                  no_argument, NULL, 0 },
     { "no-sao-non-deblock",   no_argument, NULL, 0 },
     { "sao-non-deblock",      no_argument, NULL, 0 },
@@ -589,6 +590,7 @@ static void showHelp(x265_param *param)
     H0("   --[no-]sao                    Enable Sample Adaptive Offset. Default %s\n", OPT(param->bEnableSAO));
     H1("   --[no-]sao-non-deblock        Use non-deblocked pixels, else right/bottom boundary areas skipped. Default %s\n", OPT(param->bSaoNonDeblocked));
     H0("   --[no-]limit-sao              Limit Sample Adaptive Offset types. Default %s\n", OPT(param->bLimitSAO));
+    H0("   --selective-sao <int>         Enable slice-level SAO filter. Default %d\n", param->selectiveSAO);
     H0("\nVUI options:\n");
     H0("   --sar <width:height|int>      Sample Aspect Ratio, the ratio of width to height of an individual pixel.\n");
     H0("                                 Choose from 0=undef, 1=1:1(\"square\"), 2=12:11, 3=10:11, 4=16:11,\n");

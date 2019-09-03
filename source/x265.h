@@ -1223,6 +1223,12 @@ typedef struct x265_param
      * non-deblocked pixels are used entirely. Default is disabled */
     int       bSaoNonDeblocked;
 
+    /* Select tune rate in which SAO has to be applied.
+    1 - Filtering applied only on I-frames(I) [Light tune]
+    2 - No Filtering on B frames (I, P) [Medium tune]
+    3 - No Filtering on non-ref b frames  (I, P, B) [Strong tune] */
+    int       selectiveSAO;
+
     /*== Analysis tools ==*/
 
     /* A value between 1 and 6 (both inclusive) which determines the level of 

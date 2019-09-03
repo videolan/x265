@@ -1996,6 +1996,24 @@ Loop filters
 	on inter prediction mode, CTU spatial-domain correlations, and relations
 	between luma and chroma.
 	Default disabled
+	
+.. option:: --selective-sao <0..4>
+
+	Toggles SAO at slice level. Default 4.
+
+	+--------------+---------------------------------------+
+	|     Level    |              Description              |     
+	+==============+=======================================+
+	|      0       | Disable SAO for all slices            |
+	+--------------+---------------------------------------+
+	|      1       | Enable SAO only for I-slices          |
+	+--------------+---------------------------------------+
+	|      2       | Enable SAO for I-slices & P-slices    |                                  |
+	+--------------+---------------------------------------+
+	|      3       | Enable SAO for all reference slices   |
+	+--------------+---------------------------------------+
+	|      4       | Enable SAO for all slices             |
+	+--------------+---------------------------------------+
 
 VUI (Video Usability Information) options
 =========================================
