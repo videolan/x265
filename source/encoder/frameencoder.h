@@ -150,6 +150,7 @@ public:
     uint32_t                 m_filterRowDelay;
     uint32_t                 m_filterRowDelayCus;
     uint32_t                 m_refLagRows;
+    bool                     m_bUseSao;
 
     CTURow*                  m_rows;
     uint16_t                 m_sliceAddrBits;

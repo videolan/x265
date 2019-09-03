@@ -634,14 +634,22 @@ void FrameEncoder::compressFrame()
         if (!m_param->bEnableWavefront)
             m_backupStreams = new Bitstream[numSubstreams];
         m_substreamSizes = X265_MALLOC(uint32_t, numSubstreams);
-        if (!m_param->bEnableSAO)
+        if (!slice->m_bUseSao)
+        {
             for (uint32_t i = 0; i < numSubstreams; i++)
                 m_rows[i].rowGoOnCoder.setBitstream(&m_outStreams[i]);
+        }
     }
     else
     {
         for (uint32_t i = 0; i < numSubstreams; i++)
+        {
             m_outStreams[i].resetBits();
+            if (!slice->m_bUseSao)
+                m_rows[i].rowGoOnCoder.setBitstream(&m_outStreams[i]);
+            else
+                m_rows[i].rowGoOnCoder.setBitstream(NULL);
+        }
     }
 
     m_rce.encodeOrder = m_frame->m_encodeOrder;
@@ -981,7 +989,7 @@ void FrameEncoder::compressFrame()
     m_entropyCoder.setBitstream(&m_bs);
 
     // finish encode of each CTU row, only required when SAO is enabled
-    if (m_param->bEnableSAO)
+    if (slice->m_bUseSao)
         encodeSlice(0);
 
     m_entropyCoder.setBitstream(&m_bs);
@@ -1221,7 +1229,7 @@ void FrameEncoder::encodeSlice(uint32_t sliceAddr)
     const uint32_t lastCUAddr = (slice->m_endCUAddr + m_param->num4x4Partitions - 1) / m_param->num4x4Partitions;
     const uint32_t numSubstreams = m_param->bEnableWavefront ? slice->m_sps->numCuInHeight : 1;
 
-    SAOParam* saoParam = slice->m_sps->bUseSAO ? m_frame->m_encData->m_saoParam : NULL;
+    SAOParam* saoParam = slice->m_sps->bUseSAO && slice->m_bUseSao ? m_frame->m_encData->m_saoParam : NULL;
     for (uint32_t cuAddr = sliceAddr; cuAddr < lastCUAddr; cuAddr++)
     {
         uint32_t col = cuAddr % widthInLCUs;
@@ -1515,11 +1523,11 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
             curRow.bufferedEntropy.loadContexts(rowCoder);
 
         /* SAO parameter estimation using non-deblocked pixels for CTU bottom and right boundary areas */
-        if (m_param->bEnableSAO && m_param->bSaoNonDeblocked)
+        if (slice->m_bUseSao && m_param->bSaoNonDeblocked)
             m_frameFilter.m_parallelFilter[row].m_sao.calcSaoStatsCu_BeforeDblk(m_frame, col, row);
 
         /* Deblock with idle threading */
-        if (m_param->bEnableLoopFilter | m_param->bEnableSAO)
+        if (m_param->bEnableLoopFilter | slice->m_bUseSao)
         {
             // NOTE: in VBV mode, we may reencode anytime, so we can't do Deblock stage-Horizon and SAO
             if (!bIsVbv)
@@ -1833,12 +1841,12 @@ void FrameEncoder::processRowEncoder(int intRow, ThreadLocalData& tld)
 
     /* flush row bitstream (if WPP and no SAO) or flush frame if no WPP and no SAO */
     /* end_of_sub_stream_one_bit / end_of_slice_segment_flag */
-    if (!m_param->bEnableSAO && (m_param->bEnableWavefront || bLastRowInSlice))
-        rowCoder.finishSlice();
+       if (!slice->m_bUseSao && (m_param->bEnableWavefront || bLastRowInSlice))
+               rowCoder.finishSlice();
 
 
     /* Processing left Deblock block with current threading */
-    if ((m_param->bEnableLoopFilter | m_param->bEnableSAO) & (rowInSlice >= 2))
+    if ((m_param->bEnableLoopFilter | slice->m_bUseSao) & (rowInSlice >= 2))
     {
         /* Check conditional to start previous row process with current threading */
         if (m_frameFilter.m_parallelFilter[row - 2].m_lastDeblocked.get() == (int)numCols)
